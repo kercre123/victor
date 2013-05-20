@@ -101,8 +101,6 @@ labelsTrain   = vertcat(labels{trainIndex});
 
 % Get histogram bin:
 featuresScaled = (numIntensityHistBins-1)*(double(featuresTrain)/255);
-bin = floor(featuresScaled) + 1;
-
 
 
 if useBilinearBinning
@@ -111,6 +109,7 @@ if useBilinearBinning
     dC = featuresScaled - (centerBin-1); %#ok<UNRCH>
     dE = edgeScaled - (edgeBins-1);
     
+    bin = floor(featuresScaled) + 1;
     rightIndex = sub2ind([numIntensityHistBins numIntensityHistBins], ...
         edgeBins, min(numIntensityHistBins, (centerBin+1)*ones(size(edgeBins))));
     downIndex = sub2ind([numIntensityHistBins numIntensityHistBins], ...
@@ -135,6 +134,7 @@ if useBilinearBinning
     
 else
     % Simple binning   
+    bin = round(featuresScaled) + 1;
     posLabels = labelsTrain > 0;
     negLabels = labelsTrain < 0;
     positiveHist = full(sparse(bin(posLabels,1), bin(posLabels,2), 1, ...
