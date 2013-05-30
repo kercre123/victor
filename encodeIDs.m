@@ -42,6 +42,7 @@ binaryCode(checkBits(1)) = xor(binaryCode(blockBits(1)), binaryCode(blockBits(2)
 binaryCode(checkBits(2)) = xor(binaryCode(blockBits(3)), binaryCode(blockBits(4)));
 binaryCode(checkBits(3)) = xor(binaryCode(blockBits(5)), binaryCode(blockBits(6)));
 binaryCode(checkBits(4)) = xor(binaryCode(faceBits(1)),  binaryCode(faceBits(2)));
+binaryCode(checkBits(5)) = xor(binaryCode(faceBits(3)),  binaryCode(faceBits(4)));
 binaryCode(checkBits(5)) = xor(binaryCode(checkBits(5)), binaryCode(blockBits(7)));
 
 value = bin2dec(num2str(binaryCode));

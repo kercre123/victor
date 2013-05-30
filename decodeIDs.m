@@ -23,19 +23,24 @@ binaryCode = dec2bin(value, totalBits);
 blockType = bin2dec(binaryCode(blockBits));
 faceType  = bin2dec(binaryCode(faceBits));
 
-binaryCode = binaryCode == '1'; % make logical
-
-% Compare check bits in the incoming value to what they should be according
-% to the decoded block and and face code
-checksum = binaryCode(checkBits);
-
-checksumTruth = false(1,5);
-checksumTruth(1) = xor(binaryCode(blockBits(1)), binaryCode(blockBits(2)));
-checksumTruth(2) = xor(binaryCode(blockBits(3)), binaryCode(blockBits(4)));
-checksumTruth(3) = xor(binaryCode(blockBits(5)), binaryCode(blockBits(6)));
-checksumTruth(4) = xor(binaryCode(faceBits(1)),  binaryCode(faceBits(2)));
-checksumTruth(5) = xor(binaryCode(checkBits(5)), binaryCode(blockBits(7)));
-
-isValid = all(checksum == checksumTruth);
+if blockType == 0 || faceType == 0
+    isValid = false;
+else
+    binaryCode = binaryCode == '1'; % make logical
+    
+    % Compare check bits in the incoming value to what they should be according
+    % to the decoded block and and face code
+    checksum = binaryCode(checkBits);
+    
+    checksumTruth = false(1,5);
+    checksumTruth(1) = xor(binaryCode(blockBits(1)), binaryCode(blockBits(2)));
+    checksumTruth(2) = xor(binaryCode(blockBits(3)), binaryCode(blockBits(4)));
+    checksumTruth(3) = xor(binaryCode(blockBits(5)), binaryCode(blockBits(6)));
+    checksumTruth(4) = xor(binaryCode(faceBits(1)),  binaryCode(faceBits(2)));
+    checksumTruth(5) = xor(binaryCode(faceBits(3)),  binaryCode(faceBits(4)));
+    checksumTruth(5) = xor(checksumTruth(5), binaryCode(blockBits(7)));
+    
+    isValid = all(checksum == checksumTruth);
+end
 
 end
