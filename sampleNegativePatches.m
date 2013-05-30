@@ -1,11 +1,11 @@
 function sampleNegativePatches(varargin)
 
-negativeImageDir = '/Users/andrew/Code/blockIdentification/negativeImages';
-negativePatchDir = '/Users/andrew/Code/blockIdentification/negativePatches';
-numScales = 4;
+negativeImageDir = '/Users/andrew/Code/blockIdentificationData/negativeImages';
+negativePatchDir = '/Users/andrew/Code/blockIdentificationData/negativePatches';
+numScales = 5;
 scaleFactor = 1.5;
-winSize = 12;
-sampleFraction = 0.1;
+winSize = 13;
+sampleFraction = 0.2;
 
 parseVarargin(varargin{:});
 

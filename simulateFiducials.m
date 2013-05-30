@@ -1,7 +1,7 @@
-function simulateFiducials2(varargin)
+function simulateFiducials(varargin)
 
 saveImages = false;
-saveDir = '/Users/andrew/Code/blockIdentification/positivePatches';
+saveDir = '/Users/andrew/Code/blockIdentificationData/positivePatches';
 
 baseImageDim = 64;
 
@@ -26,6 +26,10 @@ contrastOvershoot = 0.1;
 numContrast = 4;
 
 parseVarargin(varargin{:});
+
+if saveImages && ~isdir(saveDir)
+    mkdir(saveDir)
+end
 
 blockSize = 2*blockHalfWidth + 1;
 
