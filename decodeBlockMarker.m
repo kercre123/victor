@@ -63,20 +63,36 @@ ycen = imresize(reshape(accumarray(squares(:), ygrid(:), [n^2 1], @mean), [n n])
 weightSigma = nrows/n/6;
 weights = exp(-.5 * ((xgrid-xcen).^2 + (ygrid-ycen).^2)/weightSigma^2);
 
-%namedFigure('DecodeWeights'), subplot 121, imshow(img), overlay_image(weights, 'r'); 
+% namedFigure('DecodeWeights'), subplot 121, imshow(img), overlay_image(weights, 'r'); 
 
 means = reshape(accumarray(squares(:), weights(:).*img(:), [n^2 1]), [n n]);
 totalWeight = reshape(accumarray(squares(:), weights(:), [n^2 1]), [n n]);
 means = means ./ totalWeight;
 
-% Compute threshold as halfway b/w darkest and brightest mean
-if isempty(darkCorners)
-    threshold = (max(means(:)) + min(means(:)))/2;
+% Not sure if this is gonna be so great in general, especially the
+% weighting by the counts when computing the average at the end.  It might
+% also be too computationally expensive.
+bins = linspace(0,1,20);
+counts = hist(img(:), bins);
+localMaxima = find(counts > counts([2 1:end-1]) & counts > counts([2:end end-1]));
+if length(localMaxima) > 1
+    [~,whichMaxima] = sort(counts(localMaxima), 'descend');
+    bin1 = bins(localMaxima(whichMaxima(1)));
+    w1 = counts(localMaxima(whichMaxima(1)));
+    bin2 = bins(localMaxima(whichMaxima(2)));
+    w2 = counts(localMaxima(whichMaxima(2)));
+    threshold = (w1*bin1+w2*bin2)/(w1+w2);
 else
-    threshold = (max(means(:)) + darkCorners)/2;
+    % Fallback (old, simple method):
+    % Compute threshold as halfway b/w darkest and brightest mean
+    if isempty(darkCorners)
+        threshold = (max(means(:)) + min(means(:)))/2;
+    else
+        threshold = (max(means(:)) + darkCorners)/2;
+    end
 end
 
-%namedFigure('DecodeWeights'), subplot 122, imshow(means > threshold), pause
+% namedFigure('DecodeWeights'), subplot 122, imshow(means > threshold), pause
 
 if all(means > threshold)
     % empty square
