@@ -1,6 +1,7 @@
 function simpleDetector(img, svmModel, varargin)
 
 fiducialType = 'square'; % 'dots' or 'square'
+usePerimeterCheck = false;
 avgSigma = 30;
 thresholdFraction = 0.75; % fraction of local mean to use as threshld
 minDotRadius = 1;
@@ -11,7 +12,7 @@ paddingFraction = 0.25; % fraction of major axis length to use for padding for S
 codeN = 5;  % number of squares along each dim of 2d barcode
 computeTransformFromBoundary = true;
 drawInvalidMarkers = false;
-
+cornerMethod = 'laplacianPeaks'; % 'laplacianPeaks', 'harrisScore', or 'radiusPeaks'
 DEBUG_DISPLAY = nargout==0;
 
 parseVarargin(varargin{:});
@@ -181,8 +182,11 @@ switch(fiducialType)
         title('Initial Binary Image')
         
         t_squareDetect = tic;
-        stats = regionprops(binaryImg, 1-img, ...
-            {'Area', 'PixelIdxList', 'BoundingBox', 'Centroid', 'Perimeter'});
+        statTypes = {'Area', 'PixelIdxList', 'BoundingBox', 'Centroid'};
+        if usePerimeterCheck
+            statTypes{end+1} = 'Perimeter';
+        end
+        stats = regionprops(binaryImg, statTypes);
         
         minSideLength = .05*max(nrows,ncols);
         maxSideLength = .9*min(nrows,ncols);
@@ -224,6 +228,7 @@ switch(fiducialType)
 %         imshow(binaryImg)
 %         title('Re-thresholded')
         
+if usePerimeterCheck
         % perimter vs. area
         tooWonky = [stats.Perimeter] ./ [stats.Area] > .5; 
         binaryImg(vertcat(stats(tooWonky).PixelIdxList)) = false;
@@ -232,7 +237,8 @@ switch(fiducialType)
         subplot 224
         imshow(binaryImg)
         title('Perimeter vs. Area')
-        
+end
+
         linkaxes
         
         if DEBUG_DISPLAY
@@ -258,8 +264,7 @@ switch(fiducialType)
             stats = regionprops(binaryImgSkel, 'PixelIdxList');
         end
         
-        useCornerScore = false;
-        if useCornerScore
+        if strcmp(cornerMethod, 'harrisScore')
             Ix = image_right(img) - img; Iy = image_down(img) - img;
             g = gaussian_kernel(.75);
             Ix2 = separable_filter(Ix.^2, g);
@@ -333,24 +338,36 @@ switch(fiducialType)
                 %plot(boundary(:,2), boundary(:,1), 'b-', 'LineWidth', 2);
                 %keyboard
                 
-                if useCornerScore
-                    temp = sub2ind([nrows ncols], boundary(:,1), boundary(:,2));
-                    r = cornerScore(temp);
-                else
-                    xcen = mean(boundary(:,2));
-                    ycen = mean(boundary(:,1));
-                    [~,r] = cart2pol(boundary(:,2)-xcen, boundary(:,1)-ycen);
-                    % [~, sortIndex] = sort(theta); % already sorted, thanks to bwtraceboundary
-                end
+                switch(cornerMethod)
+                    case 'harrisScore'
+                        temp = sub2ind([nrows ncols], boundary(:,1), boundary(:,2));
+                        r = cornerScore(temp);
+                    case 'radiusPeaks'
+                        xcen = mean(boundary(:,2));
+                        ycen = mean(boundary(:,1));
+                        [~,r] = cart2pol(boundary(:,2)-xcen, boundary(:,1)-ycen);
+                        % [~, sortIndex] = sort(theta); % already sorted, thanks to bwtraceboundary
+                    case 'laplacianPeaks'
+                        % TODO: vary the smoothing/spacing with boundary
+                        % length?
+                        dg2 = conv([1 0 0 0 -2 0 0 0 1], gaussian_kernel(1));
+                        r_smooth = imfilter(boundary, dg2(:), 'circular');
+                        r_smooth = sum(r_smooth.^2, 2);
+                        
+                    otherwise
+                        error('Unrecognzed cornerMethod "%s"', cornerMethod)
+                end % SWITCH(cornerMethod)
             end
             
-            % Smooth the radial distance from the center according to the
-            % total perimeter.
-            % TODO: Is there a way to set this magic number in a
-            % principaled fashion?
-            sigma = size(boundary,1)/128;
-            g = gaussian_kernel(sigma); g= g(:);
-            r_smooth = imfilter(r, g, 'circular');
+            if any(strcmp(cornerMethod, {'harrisScore', 'radiusPeaks'}))
+                % Smooth the radial distance from the center according to the
+                % total perimeter.
+                % TODO: Is there a way to set this magic number in a
+                % principaled fashion?
+                sigma = size(boundary,1)/128;
+                g = gaussian_kernel(sigma); g= g(:);
+                r_smooth = imfilter(r, g, 'circular');
+            end
             
             % Find local maxima -- these should correspond to the corners
             % of the square
@@ -362,7 +379,7 @@ switch(fiducialType)
                                 
                 index = localMaxima(whichMaxima([1 4 2 3]));
                 
-                plot(boundary(index,2), boundary(index,1), 'y+')
+                % plot(boundary(index,2), boundary(index,1), 'y+')
 
                
                 
@@ -508,7 +525,12 @@ switch(fiducialType)
                             quadTforms{end+1} = tform;
                             
                             [x,y] = tforminv(tform, [0 0 1 1]', [0 1 0 1]');
-                            corners = [x y];
+                            if all(x >= 1 & x <= ncols & y >= 1 & y<= nrows)
+                                corners = [x y];
+                                
+                                plot(corners(:,1), corners(:,2), 'y+');
+                            end
+                            
                             
                             %[x,y] = tforminv(tform, ...
                             %    canonicalBoundary(:,1), canonicalBoundary(:,2));
@@ -573,7 +595,8 @@ if ~isempty(quads)
             'Parent', h_quadAxes(1));
         
         if computeTransformFromBoundary
-            diagLength = sqrt(sum((quads{i_quad}(1,:)-quads{i_quad}(4,:)).^2));
+            diagLength = min(sqrt(nrows^2+ncols^2), ...
+                sqrt(sum((quads{i_quad}(1,:)-quads{i_quad}(4,:)).^2)));
             [xgrid,ygrid] = meshgrid(linspace(cropFactor,codeN-cropFactor,ceil(diagLength/sqrt(2)))/codeN);
             [xi,yi] = tforminv(quadTforms{i_quad}, xgrid, ygrid);
             imgWin = interp2(img, xi, yi, 'nearest');
