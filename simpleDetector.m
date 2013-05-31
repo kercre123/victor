@@ -570,6 +570,7 @@ end % SWITCH(fiducialType)
 
 
 if ~isempty(quads)
+    t_quads = tic;
     
     namedFigure('SimpleDetector')
     h_quadAxes(1) = subplot(223);
@@ -595,18 +596,17 @@ if ~isempty(quads)
             'Parent', h_quadAxes(1));
         
         if computeTransformFromBoundary
-            diagLength = min(sqrt(nrows^2+ncols^2), ...
-                sqrt(sum((quads{i_quad}(1,:)-quads{i_quad}(4,:)).^2)));
-            [xgrid,ygrid] = meshgrid(linspace(cropFactor,codeN-cropFactor,ceil(diagLength/sqrt(2)))/codeN);
-            [xi,yi] = tforminv(quadTforms{i_quad}, xgrid, ygrid);
-            imgWin = interp2(img, xi, yi, 'nearest');
             
             [blockType, faceType, isValid, keyOrient] = ...
-                decodeBlockMarker(imgWin);
+                decodeBlockMarker(img, 'tform', quadTforms{i_quad}, ...
+                'corners', quads{i_quad}, ... 
+                'method', 'warpImage', ... % or 'warpProbes' ??
+                'cropFactor', cropFactor);
             
         else
             [blockType, faceType, isValid, keyOrient] = ...
-                decodeBlockMarker(img, quads{i_quad}, cropFactor);
+                decodeBlockMarker(img, 'corners', quads{i_quad}, ...
+                'cropFactor', cropFactor);
         end
         
         drawThisMarker = false;
@@ -649,6 +649,8 @@ if ~isempty(quads)
     else
         title(h_quadAxes(2), sprintf('%d Markers Detected', numMarkers));
     end
+    
+    fprintf('Quad extraction/decoding took %.2f seconds.\n', toc(t_quads));
     
 end % IF any quads found
 
