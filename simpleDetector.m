@@ -1,4 +1,4 @@
-function simpleDetector(img, svmModel, varargin)
+function detections = simpleDetector(img, svmModel, varargin)
 
 fiducialType = 'square'; % 'dots' or 'square'
 usePerimeterCheck = false;
@@ -10,12 +10,15 @@ maxViewAngle = 70;
 winSize = 13;
 paddingFraction = 0.25; % fraction of major axis length to use for padding for SVM classification
 codeN = 5;  % number of squares along each dim of 2d barcode
+minQuadArea = 100; % about 10 pixels per side
 computeTransformFromBoundary = true;
 drawInvalidMarkers = false;
 cornerMethod = 'laplacianPeaks'; % 'laplacianPeaks', 'harrisScore', or 'radiusPeaks'
 DEBUG_DISPLAY = nargout==0;
 
 parseVarargin(varargin{:});
+
+detections = {};
 
 if ischar(img)
     img = imread(img);
@@ -176,10 +179,12 @@ switch(fiducialType)
         cropFactor = 0.5;
         
     case 'square'
-        namedFigure('InitialFiltering')
-        subplot(2,2,1)
-        imshow(binaryImg)
-        title('Initial Binary Image')
+        if DEBUG_DISPLAY
+            namedFigure('InitialFiltering')
+            subplot(2,2,1)
+            imshow(binaryImg)
+            title('Initial Binary Image')
+        end
         
         t_squareDetect = tic;
         statTypes = {'Area', 'PixelIdxList', 'BoundingBox', 'Centroid'};
@@ -188,20 +193,28 @@ switch(fiducialType)
         end
         stats = regionprops(binaryImg, statTypes);
         
+        if isempty(stats)
+            % Didn't even find any regions in the binary image, nothing to
+            % do!
+            return;
+        end
+        
         minSideLength = .05*max(nrows,ncols);
         maxSideLength = .9*min(nrows,ncols);
         
-        minArea = minSideLength^2 - (.9*minSideLength)^2;
-        maxArea = maxSideLength^2 - (.9*maxSideLength)^2;
+        minArea = minSideLength^2 - (.8*minSideLength)^2;
+        maxArea = maxSideLength^2 - (.8*maxSideLength)^2;
         
         area = [stats.Area];
         tooBigOrSmall = area < minArea | area > maxArea;
         binaryImg(vertcat(stats(tooBigOrSmall).PixelIdxList)) = false;
         stats(tooBigOrSmall) = [];
         
-        subplot(2,2,2)
-        imshow(binaryImg)
-        title('Area check')
+        if DEBUG_DISPLAY
+            subplot(2,2,2)
+            imshow(binaryImg)
+            title('Area check')
+        end
         
         bb = vertcat(stats.BoundingBox);
         bbArea = prod(bb(:,3:4),2);
@@ -209,10 +222,11 @@ switch(fiducialType)
         binaryImg(vertcat(stats(tooSolid).PixelIdxList)) = false;
         stats(tooSolid) = [];
         
-        subplot(2,2,3)
-        imshow(binaryImg)
-        title('tooSolid Check')
-        
+        if DEBUG_DISPLAY
+            subplot(2,2,3)
+            imshow(binaryImg)
+            title('tooSolid Check')
+        end
 %         % re-threshold using mean of region inside bounding box of each
 %         % region
 %         [~,ordering] = sort([stats.Area], 'ascend');
@@ -224,9 +238,11 @@ switch(fiducialType)
 %             binaryImg(rows,cols) = img(rows,cols) < thresh;
 %         end
 %         
-%         subplot 224
-%         imshow(binaryImg)
-%         title('Re-thresholded')
+%         if DEBUG_DISPLAY
+%            subplot 224
+%            imshow(binaryImg)
+%            title('Re-thresholded')
+%         end
         
 if usePerimeterCheck
         % perimter vs. area
@@ -234,18 +250,19 @@ if usePerimeterCheck
         binaryImg(vertcat(stats(tooWonky).PixelIdxList)) = false;
         stats(tooWonky) = [];
         
-        subplot 224
-        imshow(binaryImg)
-        title('Perimeter vs. Area')
-end
-
-        linkaxes
+        if DEBUG_DISPLAY
+            subplot 224
+            imshow(binaryImg)
+            title('Perimeter vs. Area')
+            linkaxes
+        end
+end     
         
         if DEBUG_DISPLAY
             % Show what's left
             namedFigure('SimpleDetector');
             
-            subplot 221
+            h_initialAxes = subplot(221);
             hold off, imshow(img)
             overlay_image(binaryImg, 'r', 0, .3);
             hold on
@@ -328,14 +345,19 @@ end
                     continue
                 end
                 
-                boundary = bwtraceboundary(regionImg == i_region, ...
-                    [rowStart colStart], 'N');
+                try
+                    boundary = bwtraceboundary(regionImg == i_region, ...
+                        [rowStart colStart], 'N');
+                catch E
+                    warning(E.message);
+                    continue
+                end
                 
                 if isempty(boundary)
                     continue
                 end
                 
-                %plot(boundary(:,2), boundary(:,1), 'b-', 'LineWidth', 2);
+                %plot(boundary(:,2), boundary(:,1), 'b-', 'LineWidth', 2, 'Parent', h_initialAxes);
                 %keyboard
                 
                 switch(cornerMethod)
@@ -348,9 +370,9 @@ end
                         [~,r] = cart2pol(boundary(:,2)-xcen, boundary(:,1)-ycen);
                         % [~, sortIndex] = sort(theta); % already sorted, thanks to bwtraceboundary
                     case 'laplacianPeaks'
-                        % TODO: vary the smoothing/spacing with boundary
-                        % length?
-                        dg2 = conv([1 0 0 0 -2 0 0 0 1], gaussian_kernel(1));
+                        % TODO: vary the smoothing/spacing with boundary length?
+                        sigma = size(boundary,1)/64;
+                        dg2 = conv([1 0 0 0 -2 0 0 0 1], gaussian_kernel(sigma));
                         r_smooth = imfilter(boundary, dg2(:), 'circular');
                         r_smooth = sum(r_smooth.^2, 2);
                         
@@ -364,7 +386,7 @@ end
                 % total perimeter.
                 % TODO: Is there a way to set this magic number in a
                 % principaled fashion?
-                sigma = size(boundary,1)/128;
+                sigma = size(boundary,1)/64;
                 g = gaussian_kernel(sigma); g= g(:);
                 r_smooth = imfilter(r, g, 'circular');
             end
@@ -380,37 +402,12 @@ end
                 index = localMaxima(whichMaxima([1 4 2 3]));
                 
                 % plot(boundary(index,2), boundary(index,1), 'y+')
-
-               
-                
-%                 for i_maxima = 1:4
-%                     localWindow = (-1:1) + index(i_maxima);
-%                     pre = localWindow < 1;
-%                     localWindow(pre) = length(r) + localWindow(pre);
-%                     post = localWindow > length(r);
-%                     localWindow(post) = localWindow(post) - length(r);
-%                     
-%                     [~,winIndex] = max(r(localWindow));
-%                     index(i_maxima) = localWindow(winIndex);                    
-%                 end
                 
                 corners = fliplr(boundary(index,:));
                 
-                plot(corners(:,1), corners(:,2), 'gx')
-                
-%                 % Extract profile from each corner in the direction of the
-%                 % center and look for max change from dark to bright
-%                 for i_corner = 1:4
-%                     [px,py,P] = improfile(img, ...
-%                         [corners(i_corner,1) xcen], [corners(i_corner,2) ycen]);
-%                     
-%                     L = sqrt(sum( (corners(i_corner,:)-[xcen ycen]).^2));
-%                     L = max(3,ceil(L/5));
-%                     dP = P(2:L) - P(1:(L-1));
-%                     
-%                     [~,maxIndex] = max(dP);
-%                     corners(i_corner,:) = [px(maxIndex) py(maxIndex)];
-%                 end 
+                if DEBUG_DISPLAY
+                    plot(corners(:,1), corners(:,2), 'gx', 'Parent', h_initialAxes);
+                end
                 
                 % Verfiy corners are in a clockwise direction, so we don't get an
                 % accidental projective mirroring when we do the tranformation below to
@@ -419,142 +416,96 @@ end
                 A = [corners(2,:) - corners(1,:);
                     corners(3,:) - corners(1,:)];
                 detA = det(A);
-                if detA > 0
-                    corners([2 3],:) = corners([3 2],:);
-                    index([2 3]) = index([3 2]);
-                    detA = -detA;
-                end
-                
-                % One last check: make sure we've got roughly a symmetric
-                % quadrilateral (a parallelogram?) by seeing if the area
-                % computed using the cross product (via determinates)
-                % referenced to opposite corners are similar (and the signs
-                % are in agreement, so that two of the sides don't cross
-                % each other in the middle).
-                B = [corners(3,:) - corners(4,:);
-                    corners(2,:) - corners(4,:)];
-                detB = det(B);
-                if sign(detA) == sign(detB)
-                    detA = abs(detA);
-                    detB = abs(detB);
-                    if max(detA,detB) / min(detA,detB) < 1.5
-                        
-                        if computeTransformFromBoundary
-                            % Define each side independently:
-                            N = size(boundary,1);
+                if abs(detA) >= minQuadArea
+                    
+                    if detA > 0
+                        corners([2 3],:) = corners([3 2],:);
+                        index([2 3]) = index([3 2]);
+                        detA = -detA;
+                    end
+                    
+                    % One last check: make sure we've got roughly a symmetric
+                    % quadrilateral (a parallelogram?) by seeing if the area
+                    % computed using the cross product (via determinates)
+                    % referenced to opposite corners are similar (and the signs
+                    % are in agreement, so that two of the sides don't cross
+                    % each other in the middle).
+                    B = [corners(3,:) - corners(4,:);
+                        corners(2,:) - corners(4,:)];
+                    detB = det(B);
+                    if sign(detA) == sign(detB)
+                        detA = abs(detA);
+                        detB = abs(detB);
+                        if max(detA,detB) / min(detA,detB) < 1.5
                             
-                            Nside = ceil(N/4);
+                            tform = [];
+                            if computeTransformFromBoundary
+                                % Define each side independently:
+                                N = size(boundary,1);
+                                
+                                Nside = ceil(N/4);
+                                
+                                try
+                                    tformInit = cp2tform(corners, [0 0; 0 1; 1 0; 1 1], 'projective');
+                                    canonicalBoundary = ...
+                                        [zeros(Nside,1) linspace(0,1,Nside)';  % left side
+                                        linspace(0,1,Nside)' ones(Nside,1);  % top
+                                        ones(Nside,1) linspace(1,0,Nside)'; % right
+                                        linspace(1,0,Nside)' zeros(Nside,1)]; % bottom
+                                    tform = ICP(fliplr(boundary), canonicalBoundary, ...
+                                        'projective', 'tformInit', tformInit, ...
+                                        'maxIterations', 10, 'tolerance', .01);
+                                catch E
+                                    warning(E.message)
+                                    tform = [];
+                                end
+                                
+                                if ~isempty(tform)
+                                    % The original corners must have been
+                                    % visible in the image, and we'd expect
+                                    % them to all still be within the image
+                                    % after the transformation adjustment.
+                                    % Also, the area should still be large
+                                    % enough
+                                    % TODO: repeat all the other sanity
+                                    % checks on the quadrilateral here?
+                                    [x,y] = tforminv(tform, [0 0 1 1]', [0 1 0 1]');
+                                    area = abs((x(2)-x(1))*(y(3)-y(1)) - (x(3)-x(1))*(y(2)-y(1)));
+                                    if all(x >= 1 & x <= ncols & y >= 1 & y<= nrows) && ...
+                                             area >= minQuadArea
+                                        
+                                        corners = [x y];
+                                        
+                                        if DEBUG_DISPLAY
+                                            plot(corners(:,1), corners(:,2), 'y+', 'Parent', h_initialAxes);
+                                        end
+                                    else
+                                        tform = [];
+                                    end
+                                end
+                                
+                                
+                                %[x,y] = tforminv(tform, ...
+                                %    canonicalBoundary(:,1), canonicalBoundary(:,2));
+                                %
+                                %plot(x, y, 'LineWidth', 2, ...
+                                %    'Color', 'm', 'LineWidth', 2);
+                                
+                                
+                            end % IF computeTransformFromBoundary
                             
-                            tformInit = cp2tform(corners, [0 0; 0 1; 1 0; 1 1], 'projective');
-                            canonicalBoundary = ...
-                                [zeros(Nside,1) linspace(0,1,Nside)';  % left side
-                                linspace(0,1,Nside)' ones(Nside,1);  % top
-                                ones(Nside,1) linspace(1,0,Nside)'; % right
-                                linspace(1,0,Nside)' zeros(Nside,1)]; % bottom
-                            tform = ICP(fliplr(boundary), canonicalBoundary, ...
-                                'projective', 'tformInit', tformInit, ...
-                                'maxIterations', 10, 'tolerance', .01);
-                            
-                            %{
-                            if index(1) < index(2)
-                                leftSideIndex = index(1):index(2);
-                            else
-                                leftSideIndex = [index(2):N 1:index(1)];
-                            end
-                            
-                            if index(2) < index(4)
-                                topSideIndex = index(2):index(4);
-                            else
-                                topSideIndex = [index(2):N 1:index(4)];
-                            end
-                            
-                            if index(4) < index(3)
-                                rightSideIndex = index(4):index(3);
-                            else
-                                rightSideIndex = [index(4):N 1:index(3)];
-                            end
-                            
-                            if index(3) < index(1)
-                                bottomSideIndex = index(3):index(1);
-                            else
-                                bottomSideIndex = [index(3):N 1:index(1)];
-                            end
-                            
-                            %{
-                        namedFigure('Sides')
-                        subplot 121
-                        hold off, imshow(regionImg == i_region), hold on
-                        plot(boundary(leftSideIndex,2),   boundary(leftSideIndex,1), 'r');
-                        plot(boundary(leftSideIndex(1),2),   boundary(leftSideIndex(1),1), 'ro', 'MarkerSize', 10);
-                        plot(boundary(leftSideIndex(end),2),   boundary(leftSideIndex(end),1), 'rx', 'MarkerSize', 10);
-                        
-                        
-                        plot(boundary(bottomSideIndex,2), boundary(bottomSideIndex,1), 'g');
-                        plot(boundary(bottomSideIndex(1),2),   boundary(bottomSideIndex(1),1), 'go', 'MarkerSize', 10);
-                        plot(boundary(bottomSideIndex(end),2),   boundary(bottomSideIndex(end),1), 'gx', 'MarkerSize', 10);
-                        
-                        plot(boundary(rightSideIndex,2),  boundary(rightSideIndex,1), 'b');
-                        plot(boundary(rightSideIndex(1),2),  boundary(rightSideIndex(1),1), 'bo', 'MarkerSize', 10);
-                        plot(boundary(rightSideIndex(end),2),  boundary(rightSideIndex(end),1), 'bx', 'MarkerSize', 10);
-                        
-                        plot(boundary(topSideIndex,2),    boundary(topSideIndex,1), 'm');
-                        plot(boundary(topSideIndex(1),2),    boundary(topSideIndex(1),1), 'mo', 'MarkerSize', 10);
-                        plot(boundary(topSideIndex(end),2),    boundary(topSideIndex(end),1), 'mx', 'MarkerSize', 10);
-                            %}
-                            
-                            % Define corresponding canonical square:
-                            Nleft = length(leftSideIndex);
-                            Nright = length(rightSideIndex);
-                            Ntop = length(topSideIndex);
-                            Nbottom = length(bottomSideIndex);
-                            
-                            canonicalBoundary = ...
-                                [zeros(Nleft,1) linspace(0,1,Nleft)';  % left side
-                                linspace(0,1,Ntop)' ones(Ntop,1);  % top
-                                ones(Nright,1) linspace(1,0,Nright)'; % right
-                                linspace(1,0,Nbottom)' zeros(Nbottom,1)]; % bottom
-                            
-                            %Ix = [ones(Nleft,1); zeros(Ntop,1); -ones(Nright,1); zeros(Nbottom,1)];
-                            %Iy = [zeros(Nleft,1); -ones(Ntop,1); zeros(Nright,1); ones(Nbottom,1)];
-                            
-                            % Compute transform
-                            tform = cp2tform(canonicalBoundary, ...
-                                fliplr(boundary([leftSideIndex topSideIndex rightSideIndex bottomSideIndex],:)), ...
-                                'projective');
-                            %}
+                            quads{end+1} = corners;
                             quadTforms{end+1} = tform;
                             
-                            [x,y] = tforminv(tform, [0 0 1 1]', [0 1 0 1]');
-                            if all(x >= 1 & x <= ncols & y >= 1 & y<= nrows)
-                                corners = [x y];
-                                
-                                plot(corners(:,1), corners(:,2), 'y+');
-                            end
-                            
-                            
-                            %[x,y] = tforminv(tform, ...
-                            %    canonicalBoundary(:,1), canonicalBoundary(:,2));
-                            %
-                            %plot(x, y, 'LineWidth', 2, ...
-                            %    'Color', 'm', 'LineWidth', 2);
-                           
-                            
-                            
-                        end
+                        end % IF areas of parallelgrams are similar
                         
-                        quads{end+1} = corners;
-                        
-                    end
-                end
+                    end % IF signs of determinants match
+                    
+                end % IF quadrilateral has enough area
                 
-                
-                
-%                     B(localMaxima(whichMaxima([1 3 2 4 1])),1)
-%                 plot(B(localMaxima(whichMaxima([1 3 2 4 1])),2), ...
-%                     B(localMaxima(whichMaxima([1 3 2 4 1])),1), ...
-%                     'g.-', 'MarkerSize', 15, 'LineWidth', 2);
-            end
-        end
+            end % IF we have at least 4 local maxima
+            
+        end % FOR each region
         
         cropFactor = .7;
         fprintf('Square detection took %.3f seconds.\n', toc(t_squareDetect));
@@ -572,31 +523,47 @@ end % SWITCH(fiducialType)
 if ~isempty(quads)
     t_quads = tic;
     
-    namedFigure('SimpleDetector')
-    h_quadAxes(1) = subplot(223);
-    hold off, imshow(img), hold on
-    title(sprintf('%d Quadrilaterals Returned', length(quads)))
-    
     numQuads = length(quads);
-    if numQuads==1
-        quadColors = [1 0 0];
-    else
-        quadColors = im2double(squeeze(label2rgb((1:numQuads)', ...
-            jet(numQuads), 'k', 'shuffle')));
-    end
     
-    h_quadAxes(2) = subplot(224);
-    hold off, imshow(img), hold on
+    if DEBUG_DISPLAY
+        namedFigure('SimpleDetector')
+        h_quadAxes(1) = subplot(223);
+        hold off, imshow(img), hold on
+        title(sprintf('%d Quadrilaterals Returned', length(quads)))
+        
+        if numQuads==1
+            quadColors = [1 0 0];
+        else
+            quadColors = im2double(squeeze(label2rgb((1:numQuads)', ...
+                jet(numQuads), 'k', 'shuffle')));
+        end
+        
+        h_quadAxes(2) = subplot(224);
+        hold off, imshow(img), hold on
+    end
     
     numMarkers = 0;
     numValidMarkers = 0;
+    
     for i_quad = 1:numQuads
-        plot(quads{i_quad}([1 2 4 3 1],1), quads{i_quad}([1 2 4 3 1],2), ...
-            'Color', quadColors(i_quad,:), 'LineWidth', 1, ...
-            'Parent', h_quadAxes(1));
+        if DEBUG_DISPLAY
+            plot(quads{i_quad}([1 2 4 3 1],1), quads{i_quad}([1 2 4 3 1],2), ...
+                'Color', quadColors(i_quad,:), 'LineWidth', 1, ...
+                'Parent', h_quadAxes(1));
+        end
         
         if computeTransformFromBoundary
-            
+
+            if true
+                corners = quads{i_quad};
+                A = [corners(2,:) - corners(1,:);
+                    corners(3,:) - corners(1,:)];
+                if abs(det(A)) < minQuadArea
+                    disp('How is this possible!!??')
+                    keyboard
+                end
+            end
+
             [blockType, faceType, isValid, keyOrient] = ...
                 decodeBlockMarker(img, 'tform', quadTforms{i_quad}, ...
                 'corners', quads{i_quad}, ... 
@@ -609,51 +576,70 @@ if ~isempty(quads)
                 'cropFactor', cropFactor);
         end
         
-        drawThisMarker = false;
         if isValid
-            edgeColor = 'g';
-            numValidMarkers = numValidMarkers + 1;
-            drawThisMarker = true;
-        elseif drawInvalidMarkers
-            edgeColor = 'r';
-            drawThisMarker = true;
+            detections{end+1} = BlockDetection(blockType, faceType, ...
+                quads{i_quad}, keyOrient);
         end
         
-        if drawThisMarker
-            patch(quads{i_quad}([1 2 4 3 1],1), quads{i_quad}([1 2 4 3 1],2), ...
-                'g', 'EdgeColor', edgeColor, 'LineWidth', 2, ...
-                'FaceColor', 'r', 'FaceAlpha', .3, ...
-                'Parent', h_quadAxes(2));
-            if ~strcmp(keyOrient, 'none')
-                topSideLUT = struct('down', [2 4], 'up', [1 3], ...
-                    'left', [1 2], 'right', [3 4]);
-                plot(quads{i_quad}(topSideLUT.(keyOrient),1), ...
-                    quads{i_quad}(topSideLUT.(keyOrient),2), ...
-                    'Color', 'b', 'LineWidth', 3, 'Parent', h_quadAxes(2));
+        if DEBUG_DISPLAY
+            if isValid
+                draw(detections{end}, h_quadAxes(2));
+                numMarkers = numMarkers + 1;
             end
-            text(mean(quads{i_quad}([1 4],1)), mean(quads{i_quad}([1 4],2)), ...
-                sprintf('Block %d, Face %d', blockType, faceType), ...
-                'Color', 'b', 'FontSize', 14, 'FontWeight', 'b', ...
-                'BackgroundColor', 'w', ...
-                'Hor', 'center', 'Parent', h_quadAxes(2));
+            
+            
+            %{
+            drawThisMarker = false;
+            if isValid
+                edgeColor = 'g';
+                numValidMarkers = numValidMarkers + 1;
+                drawThisMarker = true;
+            elseif drawInvalidMarkers
+                edgeColor = 'r';
+                drawThisMarker = true;
+            end
+            
+            if drawThisMarker
+                patch(quads{i_quad}([1 2 4 3 1],1), quads{i_quad}([1 2 4 3 1],2), ...
+                    'g', 'EdgeColor', edgeColor, 'LineWidth', 2, ...
+                    'FaceColor', 'r', 'FaceAlpha', .3, ...
+                    'Parent', h_quadAxes(2));
+                if ~strcmp(keyOrient, 'none')
+                    topSideLUT = struct('down', [2 4], 'up', [1 3], ...
+                        'left', [1 2], 'right', [3 4]);
+                    plot(quads{i_quad}(topSideLUT.(keyOrient),1), ...
+                        quads{i_quad}(topSideLUT.(keyOrient),2), ...
+                        'Color', 'b', 'LineWidth', 3, 'Parent', h_quadAxes(2));
+                end
+                text(mean(quads{i_quad}([1 4],1)), mean(quads{i_quad}([1 4],2)), ...
+                    sprintf('Block %d, Face %d', blockType, faceType), ...
+                    'Color', 'b', 'FontSize', 14, 'FontWeight', 'b', ...
+                    'BackgroundColor', 'w', ...
+                    'Hor', 'center', 'Parent', h_quadAxes(2));
                 
-            numMarkers = numMarkers + 1;
-        end
-        
+                numMarkers = numMarkers + 1;
+            end
+            %}
+        end % IF DEBUG_DISPLAY
         
     end % FOR each quad
     
-    if drawInvalidMarkers
-        title(h_quadAxes(2), sprintf('%d Markers Detected (%d valid)',  ...
-            numMarkers, numValidMarkers))
-    else
-        title(h_quadAxes(2), sprintf('%d Markers Detected', numMarkers));
+    if DEBUG_DISPLAY
+        if drawInvalidMarkers
+            title(h_quadAxes(2), sprintf('%d Markers Detected (%d valid)',  ...
+                numMarkers, numValidMarkers))
+        else
+            title(h_quadAxes(2), sprintf('%d Markers Detected', numMarkers));
+        end
     end
     
     fprintf('Quad extraction/decoding took %.2f seconds.\n', toc(t_quads));
     
 end % IF any quads found
 
-subplot_expand on
+if DEBUG_DISPLAY
+    subplot_expand on
+end
 
+end % FUNCTION simpleDetector()
 

@@ -10,6 +10,8 @@ parseVarargin(varargin{:});
 
 mid = (n+1)/2;
 
+assert(~isempty(img), 'Image should not be empty!');
+
 assert(ismatrix(img), 'Grayscale image required.');
 
 % Get means either by warping the image according to a given transform, or
@@ -65,7 +67,11 @@ switch(method)
         
         %numBits = n^2 - 2*n + 1;
         
-        squares = imresize(reshape(1:n^2, [n n]), size(img), 'nearest');
+        try 
+            squares = imresize(reshape(1:n^2, [n n]), size(img), 'nearest');
+        catch E
+            keyboard
+        end
         
         [xgrid,ygrid] = meshgrid(1:size(squares,2), 1:size(squares,1));
         
