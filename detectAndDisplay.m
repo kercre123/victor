@@ -5,8 +5,7 @@ if isempty(img) || any(size(img)==0)
     return
 end
 
-detections = simpleDetector(img, [], 'thresholdFraction', 1, ...
-    'computeTransformFromBoundary', true, 'usePerimeterCheck', false);
+detections = simpleDetector(img, [], 'thresholdFraction', 1);
 
 numDetections = length(detections);
 if numDetections > 0
