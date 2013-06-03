@@ -142,74 +142,59 @@ for i_region = 1:length(stats)
     
     regionImg(stats(i_region).PixelIdxList) = i_region;
     
-    if useSkel
-        % If I skeletonized the binaryImage with bwmorph, I can avoid
-        % the bwtraceboundary call and just sort by theta to get an
-        % ordered list. Is this actually faster?
-        [rows,cols] = ind2sub([nrows ncols], ...
-            stats(i_region).PixelIdxList);
-        boundary = [rows(:) cols(:)];
-        
-        xcen = mean(boundary(:,2));
-        ycen = mean(boundary(:,1));
-        [theta,r] = cart2pol(boundary(:,2)-xcen, boundary(:,1)-ycen);
-        [~, sortIndex] = sort(theta);
-        r = r(sortIndex);
-        boundary = boundary(sortIndex,:);
-    else
-        % % External boundary
-        % [rowStart,colStart] = ind2sub([nrows ncols], ...
-        %    stats(i_region).PixelIdxList(1));
-        
-        % Internal boundary
-        rowStart = round(stats(i_region).Centroid(2));
-        colStart = round(stats(i_region).Centroid(1));
-        if regionImg(rowStart,colStart) == i_region
-            continue;
-        end
-        while colStart > 1 && regionImg(rowStart,colStart) ~= i_region
-            colStart = colStart - 1;
-        end
-        
-        if colStart == 1 && regionImg(rowStart,colStart) ~= i_region
-            continue
-        end
-        
-        try
-            boundary = bwtraceboundary(regionImg == i_region, ...
-                [rowStart colStart], 'N');
-        catch E
-            warning(E.message);
-            continue
-        end
-        
-        if isempty(boundary)
-            continue
-        end
-        
-        %plot(boundary(:,2), boundary(:,1), 'b-', 'LineWidth', 2, 'Parent', h_initialAxes);
-        %keyboard
-        
-        switch(cornerMethod)
-            case 'harrisScore'
-                temp = sub2ind([nrows ncols], boundary(:,1), boundary(:,2));
-                r = cornerScore(temp);
-            case 'radiusPeaks'
-                xcen = mean(boundary(:,2));
-                ycen = mean(boundary(:,1));
-                [~,r] = cart2pol(boundary(:,2)-xcen, boundary(:,1)-ycen);
-                % [~, sortIndex] = sort(theta); % already sorted, thanks to bwtraceboundary
-            case 'laplacianPeaks'
-                % TODO: vary the smoothing/spacing with boundary length?
-                sigma = size(boundary,1)/64;
-                dg2 = conv([1 0 0 0 -2 0 0 0 1], gaussian_kernel(sigma));
-                r_smooth = imfilter(boundary, dg2(:), 'circular');
-                r_smooth = sum(r_smooth.^2, 2);
-                
-            otherwise
-                error('Unrecognzed cornerMethod "%s"', cornerMethod)
-        end % SWITCH(cornerMethod)
+    % % External boundary
+    % [rowStart,colStart] = ind2sub([nrows ncols], ...
+    %    stats(i_region).PixelIdxList(1));
+    
+    % Internal boundary
+    rowStart = round(stats(i_region).Centroid(2));
+    colStart = round(stats(i_region).Centroid(1));
+    if regionImg(rowStart,colStart) == i_region
+        continue;
     end
+    while colStart > 1 && regionImg(rowStart,colStart) ~= i_region
+        colStart = colStart - 1;
+    end
+    
+    if colStart == 1 && regionImg(rowStart,colStart) ~= i_region
+        continue
+    end
+    
+    try
+        boundary = bwtraceboundary(regionImg == i_region, ...
+            [rowStart colStart], 'N');
+    catch E
+        warning(E.message);
+        continue
+    end
+    
+    if isempty(boundary)
+        continue
+    end
+    
+    %plot(boundary(:,2), boundary(:,1), 'b-', 'LineWidth', 2, 'Parent', h_initialAxes);
+    %keyboard
+    
+    switch(cornerMethod)
+        case 'harrisScore'
+            temp = sub2ind([nrows ncols], boundary(:,1), boundary(:,2));
+            r = cornerScore(temp);
+        case 'radiusPeaks'
+            xcen = mean(boundary(:,2));
+            ycen = mean(boundary(:,1));
+            [~,r] = cart2pol(boundary(:,2)-xcen, boundary(:,1)-ycen);
+            % [~, sortIndex] = sort(theta); % already sorted, thanks to bwtraceboundary
+        case 'laplacianPeaks'
+            % TODO: vary the smoothing/spacing with boundary length?
+            sigma = size(boundary,1)/64;
+            dg2 = conv([1 0 0 0 -2 0 0 0 1], gaussian_kernel(sigma));
+            r_smooth = imfilter(boundary, dg2(:), 'circular');
+            r_smooth = sum(r_smooth.^2, 2);
+            
+        otherwise
+            error('Unrecognzed cornerMethod "%s"', cornerMethod)
+    end % SWITCH(cornerMethod)
+    
     
     if any(strcmp(cornerMethod, {'harrisScore', 'radiusPeaks'}))
         % Smooth the radial distance from the center according to the
