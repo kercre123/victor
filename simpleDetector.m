@@ -1,7 +1,9 @@
 function detections = simpleDetector(img, varargin)
 
+maxSmoothingFraction = 0.1; % fraction of max dim
+downsampleFactor = 2;
 usePerimeterCheck = false;
-thresholdFraction = 0.75; % fraction of local mean to use as threshld
+thresholdFraction = 1; % fraction of local mean to use as threshld
 minQuadArea = 100; % about 10 pixels per side
 computeTransformFromBoundary = true;
 cornerMethod = 'laplacianPeaks'; % 'laplacianPeaks', 'harrisScore', or 'radiusPeaks'
@@ -25,12 +27,15 @@ img = mean(im2double(img),3);
 % averageImg = separable_filter(img, gaussian_kernel(avgSigma));
 
 % Create a set of "average" images with different-sized Gaussian kernels
-numScales = 6;
-G = cell(1,numScales); 
-G{1} = img;
-% TODO: make the filtering progressive (filter previous level an add'l sigma)
-for i = 1:(numScales-1)
-    G{i+1} = separable_filter(img, gaussian_kernel(2^(i-1))); 
+numScales = round(log(maxSmoothingFraction*max(nrows,ncols)) / log(downsampleFactor));
+G = cell(1,numScales+1); 
+prevSigma = 0.5;
+G{1} = separable_filter(img, gaussian_kernel(prevSigma));
+for i = 1:numScales
+    crntSigma = downsampleFactor^(i-1);
+    addlSigma = sqrt(crntSigma^2 - prevSigma^2);
+    G{i+1} = separable_filter(G{i}, gaussian_kernel(addlSigma)); 
+    prevSigma = crntSigma;
 end
 
 % Find characteristic scale using DoG stack (approx. Laplacian)
@@ -38,24 +43,17 @@ G = cat(3, G{:});
 L = G(:,:,2:end) - G(:,:,1:end-1);
 [~,whichScale] = max(abs(L),[],3);
 [xgrid,ygrid] = meshgrid(1:ncols, 1:nrows);
-index = ygrid + (xgrid-1)*nrows + (whichScale)*nrows*ncols;
+index = ygrid + (xgrid-1)*nrows + (whichScale)*nrows*ncols; % not whichScale-1 on purpose!
 averageImg = G(index);
 
 % Threshold:
 binaryImg = img < thresholdFraction*averageImg;
 
 % % Get rid of spurious detections on the edges of the image
-% binaryImg([1:minDotRadius end:(end-minDotRadius+1)],:) = false;
+% binaryImg([1:minDotRadius end:(end-miTnDotRadius+1)],:) = false;
 % binaryImg(:,[1:minDotRadius end:(end-minDotRadius+1)]) = false;
 
-if DEBUG_DISPLAY
-    namedFigure('InitialFiltering')
-    subplot(2,2,1)
-    imshow(binaryImg)
-    title('Initial Binary Image')
-end
-
-t_squareDetect = tic;
+t_binaryRegions = tic;
 statTypes = {'Area', 'PixelIdxList', 'BoundingBox', 'Centroid'};
 if usePerimeterCheck
     statTypes{end+1} = 'Perimeter'; %#ok<UNRCH>
@@ -68,7 +66,14 @@ if isempty(stats)
     return;
 end
 
-minSideLength = .05*max(nrows,ncols);
+if DEBUG_DISPLAY
+    namedFigure('InitialFiltering')
+    subplot(2,2,1)
+    imshow(binaryImg)
+    title(sprintf('Initial Binary Image: %d regions', length(stats)))
+end
+
+minSideLength = .03*max(nrows,ncols);
 maxSideLength = .9*min(nrows,ncols);
 
 minArea = minSideLength^2 - (.8*minSideLength)^2;
@@ -82,7 +87,7 @@ stats(tooBigOrSmall) = [];
 if DEBUG_DISPLAY
     subplot(2,2,2)
     imshow(binaryImg)
-    title('Area check')
+    title(sprintf('After Area check: %d regions', length(stats)))
 end
 
 bb = vertcat(stats.BoundingBox);
@@ -94,7 +99,7 @@ stats(tooSolid) = [];
 if DEBUG_DISPLAY
     subplot(2,2,3)
     imshow(binaryImg)
-    title('tooSolid Check')
+    title(sprintf('After tooSolid Check: %d regions', length(stats)))
 end
 
 if usePerimeterCheck
@@ -106,10 +111,14 @@ if usePerimeterCheck
     if DEBUG_DISPLAY
         subplot 224
         imshow(binaryImg)
-        title('Perimeter vs. Area')
+        title(sprintf('After Perimeter vs. Area: %d regions', length(stats)))
         linkaxes
     end
 end
+
+fprintf('Binary region detection took %.2f seconds.\n', toc(t_binaryRegions));
+
+t_squareDetect = tic;
 
 if DEBUG_DISPLAY
     % Show what's left
@@ -142,11 +151,25 @@ for i_region = 1:length(stats)
     
     regionImg(stats(i_region).PixelIdxList) = i_region;
     
+    % Check to see if interior of this region is roughly empty: 
+    x = xgrid(stats(i_region).PixelIdxList);
+    y = ygrid(stats(i_region).PixelIdxList);
+    xcen = stats(i_region).Centroid(1);
+    ycen = stats(i_region).Centroid(2);
+    x = round(0.5*(x-xcen)+xcen);
+    y = round(0.5*(y-ycen)+ycen);
+    interiorIdx = sub2ind([nrows ncols], y, x);
+    if any(regionImg(interiorIdx) == i_region)
+       continue; 
+    end
+    
     % % External boundary
     % [rowStart,colStart] = ind2sub([nrows ncols], ...
     %    stats(i_region).PixelIdxList(1));
     
     % Internal boundary
+    % Find starting pixel by walking from centroid outward until we hit a
+    % pixel in this region:
     rowStart = round(stats(i_region).Centroid(2));
     colStart = round(stats(i_region).Centroid(1));
     if regionImg(rowStart,colStart) == i_region
@@ -186,8 +209,11 @@ for i_region = 1:length(stats)
             % [~, sortIndex] = sort(theta); % already sorted, thanks to bwtraceboundary
         case 'laplacianPeaks'
             % TODO: vary the smoothing/spacing with boundary length?
-            sigma = size(boundary,1)/64;
-            dg2 = conv([1 0 0 0 -2 0 0 0 1], gaussian_kernel(sigma));
+            boundaryLength = size(boundary,1);
+            sigma = boundaryLength/64;
+            spacing = max(3, round(boundaryLength/16)); % spacing about 1/4 of side-length
+            stencil = [1 zeros(1, spacing-2) -2 zeros(1, spacing-2) 1];
+            dg2 = conv(stencil, gaussian_kernel(sigma));
             r_smooth = imfilter(boundary, dg2(:), 'circular');
             r_smooth = sum(r_smooth.^2, 2);
             
