@@ -1,4 +1,4 @@
-classdef Robot
+classdef Robot < handle
     
     properties(GetAccess = 'public', SetAccess = 'protected')
         
@@ -7,9 +7,9 @@ classdef Robot
         
     end % PROPERTIES (get-public, set-protected)
     
-    properties(GetAccess = 'protected', SetAccess = 'protected')
+    properties(GetAccess = 'public', SetAccess = 'protected')
         
-        
+        handles;        
         
     end % PROPERTIES (get-public, set-protected)
     
