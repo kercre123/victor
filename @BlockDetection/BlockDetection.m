@@ -23,21 +23,21 @@ classdef BlockDetection
             this.corners   = corners_;
             this.topOrient = topOrient_;
             
-%             switch(this.topOrient)
-%                 case 'up'
-%                     % nothing to do
-%                 case 'right'
-%                     this.corners = this.corners([3 1 4 2],:);
-%                     this.marker = this.marker([3 1 4 2],:);
-%                 case 'left'
-%                     this.corners = this.corners([2 4 1 3],:);
-%                     this.marker = this.marker([2 4 1 3],:);
-%                 case 'down'
-%                     this.corners = this.corners([4 3 2 1],:);
-%                     this.marker = this.marker([4 3 2 1],:);
-%                 otherwise
-%                     error('Unrecognized topOrient "%s"', this.topOrient);
-%             end
+            switch(this.topOrient)
+                case 'up'
+                    % nothing to do
+                case 'right'
+                    this.corners = this.corners([3 1 4 2],:);
+                    this.marker = this.marker([3 1 4 2],:);
+                case 'left'
+                    this.corners = this.corners([2 4 1 3],:);
+                    this.marker = this.marker([2 4 1 3],:);
+                case 'down'
+                    this.corners = this.corners([4 3 2 1],:);
+                    this.marker = this.marker([4 3 2 1],:);
+                otherwise
+                    error('Unrecognized topOrient "%s"', this.topOrient);
+            end
             
         end
          
