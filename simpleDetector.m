@@ -1,4 +1,4 @@
-function detections = simpleDetector(img, varargin)
+function markers = simpleDetector(img, varargin)
 
 maxSmoothingFraction = 0.1; % fraction of max dim
 downsampleFactor = 2;
@@ -6,12 +6,13 @@ usePerimeterCheck = false;
 thresholdFraction = 1; % fraction of local mean to use as threshld
 minQuadArea = 100; % about 10 pixels per side
 computeTransformFromBoundary = true;
+quadRefinementMethod = 'ICP'; % 'ICP' or 'fminsearch'
 cornerMethod = 'laplacianPeaks'; % 'laplacianPeaks', 'harrisScore', or 'radiusPeaks'
 DEBUG_DISPLAY = nargout==0;
 
 parseVarargin(varargin{:});
 
-detections = {};
+markers = {};
 
 if ischar(img)
     img = imread(img);
@@ -293,13 +294,32 @@ for i_region = 1:length(stats)
                                 linspace(0,1,Nside)' ones(Nside,1);  % top
                                 ones(Nside,1) linspace(1,0,Nside)'; % right
                                 linspace(1,0,Nside)' zeros(Nside,1)]; % bottom
-                            tform = ICP(fliplr(boundary), canonicalBoundary, ...
-                                'projective', 'tformInit', tformInit, ...
-                                'maxIterations', 10, 'tolerance', .01);
+                            switch(quadRefinementMethod)
+                                case 'ICP'
+                                    tform = ICP(fliplr(boundary), canonicalBoundary, ...
+                                        'projective', 'tformInit', tformInit, ...
+                                        'maxIterations', 10, 'tolerance', .001);
+                                
+                                case 'fminsearch'
+                                    mag = smoothgradient(img, 1);
+                                    %namedFigure('refineHelper')
+                                    %hold off, imagesc(mag), axis image off, hold on
+                                    %colormap(gray)
+                                    options = optimset('TolFun', .1, 'MaxIter', 50);
+                                    tform = fminsearch(@(x)refineHelper(x,mag,canonicalBoundary), tformInit.tdata.T, options);
+                                    tform = maketform('projective', tform);
+                                    
+                                otherwise
+                                    error('Unrecognized quadRefinementMethod "%s"', quadRefinementMethod);
+                            end
+                            
                         catch E
                             warning(E.message)
                             tform = [];
                         end
+                        
+                        
+                                                
                         
                         if ~isempty(tform)
                             % The original corners must have been
@@ -411,13 +431,13 @@ if ~isempty(quads)
         end
         
         if isValid
-            detections{end+1} = BlockDetection(blockType, faceType, ...
+            markers{end+1} = BlockMarker(blockType, faceType, ...
                 quads{i_quad}, keyOrient); %#ok<AGROW>
         end
         
         if DEBUG_DISPLAY
             if isValid
-                draw(detections{end}, h_quadAxes(2));
+                draw(markers{end}, h_quadAxes(2));
                 numMarkers = numMarkers + 1;
             else
                 numInvalidMarkers = numInvalidMarkers + 1;

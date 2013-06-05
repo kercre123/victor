@@ -8,10 +8,37 @@ Y = [0 0 1 1; 0 0 1 1; 0 0 1 1; 0 0 1 1; 1 1 1 1; 0 0 0 0]';
 Z = -[0 0 0 0; 1 1 1 1; 0 1 1 0; 0 1 1 0; 0 0 1 1; 0 0 1 1]';
 
 originOffset = zeros(1,3);
-scale = 10;
+scale = 10*ones(1,3);
 color = 'k';
 
 switch(blockType)
+    
+    case 3
+        switch(faceType)
+            case 9
+                % Blue clipboard
+                originOffset = [16.5 49 0];
+                scale = [225 317 2.5];
+                    
+                color = 'b';
+                
+            otherwise
+                warning('Unrecognized face for blockType %d', blockType);
+        end
+        
+    case 17
+        switch(faceType)
+            case 9
+                % Angel Cards box
+                originOffset = [32 46 0];
+                scale = [101 101 32];
+                
+                color = [.4 .3 .7];
+                
+            otherwise
+                warning('Unrecognized face for blockType %d', blockType);
+        end
+        
     case 78
         switch(faceType)
             case 1
@@ -37,7 +64,7 @@ switch(blockType)
             case 1
                 % Staples
                 originOffset = [35 45 0];
-                scale = [103 52 23];
+                scale = [103 57 23];
                 
                 color = 'y';
                 

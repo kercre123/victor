@@ -1,4 +1,4 @@
-classdef BlockDetection
+classdef BlockMarker
     
     properties(GetAccess = 'public', SetAccess = 'protected')
         blockType;
@@ -15,7 +15,7 @@ classdef BlockDetection
     
     methods(Access = 'public')
        
-        function this = BlockDetection(blockType_, faceType_, corners_, topOrient_)
+        function this = BlockMarker(blockType_, faceType_, corners_, topOrient_)
             this.marker = [0 0; 1 0; 0 1; 1 1];
             
             this.blockType = blockType_;
@@ -44,4 +44,4 @@ classdef BlockDetection
     end
    
     
-end % CLASSDEF BlockDetection
+end % CLASSDEF BlockMarker
