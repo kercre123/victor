@@ -1,8 +1,8 @@
-function varargout = projectPoints(varargin)
+function varargout = projectPoints(this, varargin)
 % Project 3D world coordinates onto the image plane of a calibrated camera.
 %
-% [u,v] = projectPoints(X,Y,Z, calibration)
-% [p]   = projectPoints(P, calibration)
+% [u,v] = camera.projectPoints(X,Y,Z)
+% [p]   = camera.projectPoints(P)
 %
 %   Inputs are 3D (X,Y,Z) coordinates, separated or combined into 
 %    P = [X(:) Y(:) Z(:)]
@@ -39,27 +39,22 @@ switch(nargin)
         assert(size(varargin{1},2)==3, 'P should be Nx3.');
         
         P = varargin{1};
-        calibration = varargin{2};
-        
+                
     case 4
         assert(all(cellfun(@isvector, varargin(1:3))), ...
             'X, Y, and Z should be vectors.');
         
         P = [varargin{1}(:) varargin{2}(:) varargin{3}(:)];
-        calibration = varargin{4};
-        
+                
     otherwise
         error('Unexpected number of inputs.');
 end
 
-assert(isstruct(calibration), 'Calibration data should be a struct.');
-assert(all(isfield(calibration, {'kc', 'fc', 'cc'})), ...
-    'Calibration struct should have fields "kc", "fc", and "cc".');
 
-if length(calibration.kc)>4 && calibration.kc(5)~=0
+if length(this.distortionCoeffs)>4 && this.distortionCoeffs(5)~=0
     warning('Ignoring fifth-order non-zero radial distortion');
 end
-k = [calibration.kc(1:4); 1];
+k = [this.distortionCoeffs(1:4); 1];
 a = P(:,1) ./ P(:,3);
 b = P(:,2) ./ P(:,3);
 a2 = a.^2;
@@ -69,8 +64,8 @@ r2 = a2 + b2;
 r4 = r2.^2;
 uDistorted = [a.*r2  a.*r4  2*ab    2*a2+r2 a] * k;
 vDistorted = [b.*r2  b.*r4  r2+2*b2 2*ab    b] * k;
-u = calibration.fc(1) * uDistorted + calibration.cc(1);
-v = calibration.fc(2) * vDistorted + calibration.cc(2);
+u = this.focalLengthX * uDistorted + this.centerX;
+v = this.focalLengthY * vDistorted + this.centerY;
 
 if nargout==1
     varargout{1} = [u v];
