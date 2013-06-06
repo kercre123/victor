@@ -91,8 +91,8 @@ switch(topSide)
         Rtop = rodrigues(pi/2*[0 0 1]);
 end
 P = [X(:) Y(:) Z(:)] * Rtop';
-X = reshape(P(:,1), [], 4);
-Y = reshape(P(:,2), [], 4);
-Z = reshape(P(:,3), [], 4);
+X = reshape(P(:,1), 4, []);
+Y = reshape(P(:,2), 4, []);
+Z = reshape(P(:,3), 4, []);
 
 end
