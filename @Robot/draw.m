@@ -77,16 +77,17 @@ tire{1} = rotateAndTranslate(wheelX_L, wheelY_F, wheelZ, R, t);
 tire{2} = rotateAndTranslate(wheelX_R, wheelY_F, wheelZ, R, t);
 tire{3} = rotateAndTranslate(wheelX_L, wheelY_B, wheelZ, R, t);
 tire{4} = rotateAndTranslate(wheelX_R, wheelY_B, wheelZ, R, t);
+row = [2 1 2 1];
 if initHandles
     for i = 1:4
         this.handles.tire(i) = surf(tire{i}{:}, WheelColor, 'Parent', AxesHandle);
-        this.handles.hub(i) = patch(tire{i}{1}(2,:), tire{i}{2}(2,:), tire{i}{3}(2,:), WheelColor, 'Parent', AxesHandle);
+        this.handles.hub(i) = patch(tire{i}{1}(row(i),:), tire{i}{2}(row(i),:), tire{i}{3}(row(i),:), WheelColor, 'Parent', AxesHandle);
     end
     set(this.handles.tire, 'FaceColor', WheelColor, 'EdgeColor', .5*WheelColor);
 else
     for i = 1:4
         updateHelper(this.handles.tire(i), tire{i});
-        updateHelper(this.handles.hub(i), tire{i}, 2);
+        updateHelper(this.handles.hub(i), tire{i}, row(i));
     end
 end
 
