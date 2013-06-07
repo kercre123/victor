@@ -52,12 +52,22 @@ classdef Robot < handle
             
             this.appearance = parseVarargin(this.appearance, varargin{:});
             
-            this.camera = Camera(cameraCalibration);
-                        
             this.appearance.EyeLength = this.appearance.EyeLengthFraction * ...
                 this.appearance.BodyLength;
             this.appearance.EyeRadius = this.appearance.EyeRadiusFraction * ...
                 this.appearance.BodyWidth/2;
+            
+            % From robot to camera frame:
+            % Rotation 90 degrees around x axis:
+            Rrc = [1 0 0; 0 0 -1; 0 1 0];
+            Trc = [0; ...
+                this.appearance.BodyLength/2; ...
+                this.appearance.BodyHeight + this.appearance.EyeRadius];
+        
+            this.camera = Camera('calibration', cameraCalibration, ...
+                'frame', inv(Frame(Rrc, Trc)));
+                        
+           
         end
         
     end % METHODS (public)

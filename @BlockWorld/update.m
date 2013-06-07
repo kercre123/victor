@@ -22,20 +22,7 @@ if this.numBlocks == 0
     % for each marker we detected.
     for i_marker = 1:numSeenMarkers
     
-        % Figure out where the marker is in 3D space:
-        seenMarkers{i_marker}.frame = camera.computeExtrinsics( ...
-            seenMarkers{i_marker}.imgCorners, ...
-            seenMarkers{i_marker}.Pmodel);
-        
-        this.markers{seenMarkers{i_marker}.blockType, ...
-            seenMarkers{i_marker}.faceType} = seenMarkers{i_marker};
-        
-        % Rotate the block to match the marker and set it's origin to the
-        % marker's origin:
-        blockFrame = Frame(seenMarkers{i_marker}.frame.Rmat, ...
-            seenMarkers{i_marker}.origin);
-        this.blocks{seenMarkers{i_marker}.blockType} = ...
-            Block(seenMarkers{i_marker}, blockFrame);
+        addMarkerAndBlock(this, this.robots{1}, seenMarkers{i_marker});
         
     end
     
@@ -51,22 +38,24 @@ else
     %    seems pretty error-prone, since we presumably moved if we're
     %    seeing a new block...
     
-    matchedBlocks = false(1,numSeenMarkers);
+    % Find markers we've seen before
+    matchedMarkers = false(1,numSeenMarkers);
     p_marker = cell(1,numSeenMarkers);
     P_marker = cell(1,numSeenMarkers);
     for i_marker = 1:numSeenMarkers
         bType = seenMarkers{i_marker}.blockType;
         fType = seenMarkers{i_marker}.faceType;
         if ~isempty(this.markers{bType, fType})
-            matchedBlocks(i_marker) = true;
+            matchedMarkers(i_marker) = true;
             p_marker{i_marker} = seenMarkers{i_marker}.imgCorners;
             P_marker{i_marker} = this.markers{bType, fType}.P;
         end
         
     end
     
-    if ~any(matchedBlocks)
-        warning(['No blocks found matched one seen before. Not sure yet ' ...
+    % Use previously-seen markers to update the robot/camera's position
+    if ~any(matchedMarkers)
+        warning(['No markers found matched one seen before. Not sure yet ' ...
             'what to do in this case.']);
     else
         p_marker = vertcat(p_marker{:});
@@ -74,7 +63,34 @@ else
         invRobotFrame = camera.computeExtrinsics(p_marker, P_marker);
         this.robots{1}.frame = inv(invRobotFrame);
     end
-        
+    
+    % Add new markers/blocks to world, relative to robot's updated position
+    for i_marker = 1:numSeenMarkers
+        if ~matchedMarkers(i_marker)
+            addMarkerAndBlock(this, this.robots{1}, seenMarkers{i_marker});        
+        end
+    end % FOR each marker
+    
 end
 
 end % FUNCTION BlockWorld/update()
+
+
+function addMarkerAndBlock(this, robot, marker)
+
+% Figure out where the marker is in 3D space, in camera's world
+% coordinates, which is the robot's frame!
+marker.frame = robot.camera.computeExtrinsics(marker.imgCorners, marker.Pmodel);
+
+% Put the marker into the robot's world frame
+marker.frame = robot.frame * marker.frame;
+
+% Add the marker to the world's list
+this.markers{marker.blockType, marker.faceType} = marker;
+
+% Rotate the block to match the marker and set it's origin to the
+% marker's origin:
+blockFrame = Frame(marker.frame.Rmat, marker.origin);
+this.blocks{marker.blockType} = Block(marker, blockFrame);
+
+end % FUNCTION addMarkerAndBlock()

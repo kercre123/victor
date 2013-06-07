@@ -90,4 +90,6 @@ for i_robot = 1:this.numRobots
     
 end % FOR each robot
 
+drawnow
+
 end % FUNCTION draw()

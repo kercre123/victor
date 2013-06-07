@@ -58,7 +58,7 @@ end
 
 % Put world coordinates into camera coordinates so we can project them
 % below
-P = this.frame_w2c.applyTo(P);
+P = this.frame.applyInvTo(P);
 
 if length(this.distortionCoeffs)>4 && this.distortionCoeffs(5)~=0
     warning('Ignoring fifth-order non-zero radial distortion');

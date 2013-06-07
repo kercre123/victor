@@ -39,7 +39,7 @@ classdef Frame
         end % FUNCTION Frame() [Constructor]
         
         function F = inv(this)
-            F = Frame(this.Rmat', -this.T);
+            F = Frame(this.Rmat', -this.Rmat'*this.T);
         end
         
         

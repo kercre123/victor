@@ -22,14 +22,14 @@ else
     Rmat = rodrigues(Rvec);
 end
 
-% Move from camera frame to world frame:
-Rmat = this.frame_c2w.Rmat * Rmat;
-T = this.frame_c2w.Rmat * T;
+% Put camera coordinates into "world" coordinates (or the coordinates of
+% whatever is holding this camera, e.g. a Robot)
+F = this.frame * Frame(Rmat, T);
 
 if nargout == 2
-    varargout = {Rmat, T};
+    varargout = {F.Rmat, F.T};
 else
-    varargout = {Frame(Rmat, T)};
+    varargout = {F};
 end
     
 end % FUNCTION computeExtrinsics()

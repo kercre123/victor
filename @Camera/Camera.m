@@ -3,6 +3,7 @@ classdef Camera < handle
     properties(GetAccess = 'public', SetAccess = 'public')
         
         image;
+        frame;
         
     end
         
@@ -16,14 +17,16 @@ classdef Camera < handle
         
         alpha;
         
-        frame_c2w; % _coordinate_ frame, not image!
-        frame_w2c;
     end
-        
+    
     methods(Access = 'public')
         
-        function this = Camera(calibration)
+        function this = Camera(varargin)
+            calibration = [];
+            frame = Frame(); %#ok<PROP>
            
+            parseVarargin(varargin{:});
+            
             if ~isstruct(calibration)
                 if ~exist(calibration, 'file')
                     error('Specified calibration file does not exist.');
@@ -40,11 +43,8 @@ classdef Camera < handle
             
             this.alpha = calibration.alpha_c;
             
-            % Camera to world frame:
-            %  Rotation -90 degrees around x axis:
-            Rcw = [1 0 0; 0 0 1; 0 -1 0];
-            this.frame_c2w = Frame(Rcw, zeros(3,1));
-            this.frame_w2c = inv(this.frame_c2w);
+            this.frame = frame; %#ok<PROP>
+            
         end
         
         function grabFrame(this, usbDevice)
@@ -57,5 +57,6 @@ classdef Camera < handle
         
          
     end % METHODS (public)
+    
     
 end % CLASSDEF Camera
