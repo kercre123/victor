@@ -14,22 +14,30 @@ color = 'k';
 switch(blockType)
     
     case 3
+        % puzzleMaster box
         switch(faceType)
             case 9
-                % Blue clipboard
-                originOffset = [16.5 49 0];
-                scale = [225 317 2.5];
-                    
-                color = 'b';
+                
+                originOffset = [25 55 0];
+                scale = [86 122 31];
+                
+                color = 'r';
+%                 
+%                 % Blue clipboard
+%                 originOffset = [16.5 49 0];
+%                 scale = [225 317 2.5];
+%                     
+%                 color = 'b';
                 
             otherwise
                 warning('Unrecognized face for blockType %d', blockType);
         end
         
     case 17
+        % Angel Cards box
         switch(faceType)
             case 9
-                % Angel Cards box
+                
                 originOffset = [32 46 0];
                 scale = [101 101 32];
                 
@@ -40,29 +48,27 @@ switch(blockType)
         end
         
     case 78
+        % Cat cube
         switch(faceType)
             case 1
-                % Cat cube
+                
                 originOffset = [15 47 0];
                 scale = [70 70 70];
                     
                 color = [.6 .5 .5];
                 
             case 12
-                % puzzleMaster box
-                originOffset = [28 51 0];
-                scale = [86 122 31];
-                
-                color = 'r';
+                warning('Have not set up second face of same block yet.');
                 
             otherwise
                 warning('Unrecognized face for blockType %d', blockType);
         end
         
     case 90
+        % Staples
         switch(faceType)
             case 1
-                % Staples
+                
                 originOffset = [35 45 0];
                 scale = [103 57 23];
                 

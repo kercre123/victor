@@ -34,6 +34,7 @@ function varargout = projectPoints(this, varargin)
 % Andrew Stein
 %
 
+origDims = [];
 switch(nargin)
     case 2
         assert(size(varargin{1},2)==3, 'P should be Nx3.');
@@ -41,15 +42,23 @@ switch(nargin)
         P = varargin{1};
                 
     case 4
-        assert(all(cellfun(@isvector, varargin(1:3))), ...
-            'X, Y, and Z should be vectors.');
+        X = varargin{1};
+        Y = varargin{2};
+        Z = varargin{3};
         
-        P = [varargin{1}(:) varargin{2}(:) varargin{3}(:)];
+        origDims = size(X);
+        assert(isequal(size(Y),origDims) && isequal(size(Z),origDims), ...
+            'X, Y, and Z should be the same size.');
+        
+        P = [X(:) Y(:) Z(:)];
                 
     otherwise
         error('Unexpected number of inputs.');
 end
 
+% Put world coordinates into camera coordinates so we can project them
+% below
+P = this.frame_w2c.applyTo(P);
 
 if length(this.distortionCoeffs)>4 && this.distortionCoeffs(5)~=0
     warning('Ignoring fifth-order non-zero radial distortion');
@@ -64,12 +73,17 @@ r2 = a2 + b2;
 r4 = r2.^2;
 uDistorted = [a.*r2  a.*r4  2*ab    2*a2+r2 a] * k;
 vDistorted = [b.*r2  b.*r4  r2+2*b2 2*ab    b] * k;
-u = this.focalLengthX * uDistorted + this.centerX;
-v = this.focalLengthY * vDistorted + this.centerY;
+u = this.focalLength(1) * uDistorted + this.center(1);
+v = this.focalLength(2) * vDistorted + this.center(2);
 
 if nargout==1
     varargout{1} = [u v];
 elseif nargout==2
+    if ~isempty(origDims)
+        u = reshape(u, origDims);
+        v = reshape(v, origDims);
+    end
+    
     varargout{1} = u;
     varargout{2} = v;
 end

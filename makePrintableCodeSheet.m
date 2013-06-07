@@ -1,7 +1,7 @@
 namedFigure('Code Sheet', 'Color', 'w')
 
-blocks = [3 17 78 90];
-faces = [1 9 12];
+blocks = [14 22 33 40];
+faces = [2 8 10];
 ctr = 1;
 for i = 1:length(blocks) 
     for j = 1:length(faces)
@@ -17,3 +17,5 @@ for i = 1:length(blocks)
 end
 
 fix_subplots(length(faces), length(blocks))
+
+figure_margin([.1 .1 .8 .8])

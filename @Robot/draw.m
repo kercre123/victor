@@ -1,27 +1,16 @@
 function draw(this, varargin)
 
 AxesHandle = [];
-BodyColor = [.7 .7 0];
-BodyHeight = 30;
-BodyWidth = 60;
-BodyLength = 75;
-
-WheelWidth = 15;
-WheelRadius = 15;
-WheelColor = 0.25*ones(1,3);
-
-EyeLength = .65*BodyLength;
-EyeRadius = .47*BodyWidth/2;
-EyeColor = [.5 0 0];
-
-Position = this.position;
-Rotation = this.orientation;
+Position = this.frame.T;
+Rotation = this.frame.Rmat;
 
 parseVarargin(varargin{:});
 
 if isempty(AxesHandle)
     AxesHandle = gca;
 end
+
+app = this.appearance;
 
 % Canonical block coordinates
 % Note that Z coords are negative because they go backward from marker on
@@ -30,9 +19,9 @@ cubeX = [0 1 1 0; 0 1 1 0; 0 0 0 0; 1 1 1 1; 0 1 1 0; 0 1 1 0]' - .5;
 cubeY = [0 0 1 1; 0 0 1 1; 0 0 1 1; 0 0 1 1; 1 1 1 1; 0 0 0 0]' - .5;
 cubeZ = [0 0 0 0; 1 1 1 1; 0 1 1 0; 0 1 1 0; 0 0 1 1; 0 0 1 1]' - .5;
 
-bodyX = BodyWidth * cubeX;
-bodyY = BodyLength * cubeY;
-bodyZ = BodyHeight * cubeZ +.5*WheelRadius+.5*BodyHeight;
+bodyX = app.BodyWidth * cubeX;
+bodyY = app.BodyLength * cubeY;
+bodyZ = app.BodyHeight * cubeZ +.5*app.WheelRadius+.5*app.BodyHeight;
  
 % this.position = [200 300 0];
 % this.orientation = [0 0 pi/30];
@@ -43,13 +32,14 @@ if isvector(R)
 end
 t = Position;
 
-initHandles = isempty(this.handles) || ...
+initHandles = isempty(this.handles) || ~ishandle(this.handles.body) || ...
     get(this.handles.body, 'Parent') ~= AxesHandle;
 
 body = rotateAndTranslate(bodyX, bodyY, bodyZ, R, t);
 if initHandles
-    this.handles.body = patch(body{:}, BodyColor, ...
-        'FaceColor', BodyColor, 'EdgeColor', 0.5*BodyColor, 'Parent', AxesHandle);
+    this.handles.body = patch(body{:}, app.BodyColor, ...
+        'FaceColor', app.BodyColor, 'EdgeColor', 0.5*app.BodyColor, ...
+        'Parent', AxesHandle);
 else
     updateHelper(this.handles.body, body);
 end
@@ -63,15 +53,15 @@ end
 [cylX, cylY, cylZ] = cylinder([1 1], 50);
 cylZ = cylZ - .5;
 
-wheelX = WheelWidth * cylZ;
-wheelY = WheelRadius * cylX;
-wheelZ = WheelRadius * cylY;
+wheelX = app.WheelWidth * cylZ;
+wheelY = app.WheelRadius * cylX;
+wheelZ = app.WheelRadius * cylY;
 
-wheelX_L = wheelX + .5*BodyWidth + .5*WheelWidth;
-wheelY_F = wheelY + .5*BodyLength - WheelRadius;
-wheelX_R = wheelX - .5*BodyWidth - .5*WheelWidth;
-wheelY_B = wheelY - .5*BodyLength + WheelRadius;
-wheelZ   = wheelZ + WheelRadius;
+wheelX_L = wheelX + .5*app.BodyWidth + .5*app.WheelWidth;
+wheelY_F = wheelY + .5*app.BodyLength - app.WheelRadius;
+wheelX_R = wheelX - .5*app.BodyWidth - .5*app.WheelWidth;
+wheelY_B = wheelY - .5*app.BodyLength + app.WheelRadius;
+wheelZ   = wheelZ + app.WheelRadius;
 
 tire{1} = rotateAndTranslate(wheelX_L, wheelY_F, wheelZ, R, t);
 tire{2} = rotateAndTranslate(wheelX_R, wheelY_F, wheelZ, R, t);
@@ -80,10 +70,10 @@ tire{4} = rotateAndTranslate(wheelX_R, wheelY_B, wheelZ, R, t);
 row = [2 1 2 1];
 if initHandles
     for i = 1:4
-        this.handles.tire(i) = surf(tire{i}{:}, WheelColor, 'Parent', AxesHandle);
-        this.handles.hub(i) = patch(tire{i}{1}(row(i),:), tire{i}{2}(row(i),:), tire{i}{3}(row(i),:), WheelColor, 'Parent', AxesHandle);
+        this.handles.tire(i) = surf(tire{i}{:}, app.WheelColor, 'Parent', AxesHandle);
+        this.handles.hub(i) = patch(tire{i}{1}(row(i),:), tire{i}{2}(row(i),:), tire{i}{3}(row(i),:), app.WheelColor, 'Parent', AxesHandle);
     end
-    set(this.handles.tire, 'FaceColor', WheelColor, 'EdgeColor', .5*WheelColor);
+    set(this.handles.tire, 'FaceColor', app.WheelColor, 'EdgeColor', .5*app.WheelColor);
 else
     for i = 1:4
         updateHelper(this.handles.tire(i), tire{i});
@@ -91,18 +81,18 @@ else
     end
 end
 
-eyeX = EyeRadius * cylX ;
-eyeX_L = eyeX - EyeRadius;
-eyeX_R = eyeX + EyeRadius;
-eyeY = EyeLength * cylZ + BodyLength/2 - EyeLength/3;
-eyeZ = EyeRadius * cylY + EyeRadius + BodyHeight + .5*WheelRadius;
+eyeX = app.EyeRadius * cylX ;
+eyeX_L = eyeX - app.EyeRadius;
+eyeX_R = eyeX + app.EyeRadius;
+eyeY = app.EyeLength * cylZ + app.BodyLength/2 - app.EyeLength/3;
+eyeZ = app.EyeRadius * cylY + app.EyeRadius + app.BodyHeight + .5*app.WheelRadius;
 
 eyeL = rotateAndTranslate(eyeX_L, eyeY, eyeZ, R, t);
 eyeR = rotateAndTranslate(eyeX_R, eyeY, eyeZ, R, t);
 if initHandles
-    this.handles.eye(1) = surf(eyeL{:}, EyeColor, 'Parent', AxesHandle);
-    this.handles.eye(2) = surf(eyeR{:}, EyeColor, 'Parent', AxesHandle);
-    set(this.handles.eye, 'FaceColor', EyeColor, 'EdgeColor', 'none', 'Parent', AxesHandle);
+    this.handles.eye(1) = surf(eyeL{:}, app.EyeColor, 'Parent', AxesHandle);
+    this.handles.eye(2) = surf(eyeR{:}, app.EyeColor, 'Parent', AxesHandle);
+    set(this.handles.eye, 'FaceColor', app.EyeColor, 'EdgeColor', 'none', 'Parent', AxesHandle);
 else
     updateHelper(this.handles.eye(1), eyeL);
     updateHelper(this.handles.eye(2), eyeR);
@@ -111,7 +101,7 @@ end
 
 eyeWhiteX_L = eyeX_L;
 eyeWhiteX_R = eyeX_R;
-eyeWhiteY = eyeY - .1*EyeLength;
+eyeWhiteY = eyeY - .1*app.EyeLength;
 eyeWhiteZ = eyeZ;
 
 eyeWhite1 = rotateAndTranslate(eyeWhiteX_L, eyeWhiteY, eyeWhiteZ, R, t);
@@ -126,10 +116,10 @@ else
     updateHelper(this.handles.eyeWhite(2), eyeWhite2, 2);
 end
 
-pupilX_L = .5*EyeRadius * cylX - EyeRadius ;
-pupilX_R = .5*EyeRadius * cylX + EyeRadius ;
-pupilY = eyeY - .09*EyeLength;
-pupilZ = .5*EyeRadius * cylY + EyeRadius + BodyHeight + .5*WheelRadius;
+pupilX_L = .5*app.EyeRadius * cylX - app.EyeRadius ;
+pupilX_R = .5*app.EyeRadius * cylX + app.EyeRadius ;
+pupilY = eyeY - .09*app.EyeLength;
+pupilZ = .5*app.EyeRadius * cylY + app.EyeRadius + app.BodyHeight + .5*app.WheelRadius;
 
 pupil1 = rotateAndTranslate(pupilX_L(2,:), pupilY(2,:), pupilZ(2,:), R, t);
 pupil2 = rotateAndTranslate(pupilX_R(2,:), pupilY(2,:), pupilZ(2,:), R, t);
