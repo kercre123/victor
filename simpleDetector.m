@@ -55,23 +55,39 @@ binaryImg = img < thresholdFraction*averageImg;
 % binaryImg(:,[1:minDotRadius end:(end-minDotRadius+1)]) = false;
 
 t_binaryRegions = tic;
-statTypes = {'Area', 'PixelIdxList', 'BoundingBox', 'Centroid'};
-if usePerimeterCheck
-    statTypes{end+1} = 'Perimeter'; %#ok<UNRCH>
-end
-stats = regionprops(binaryImg, statTypes);
 
-if isempty(stats)
+if usePerimeterCheck
+    % Perimeter not supported by mexRegionprops yet.
+    statTypes = {'Area', 'PixelIdxList', 'BoundingBox', ...
+        'Centroid', 'Perimeter'}; %#ok<UNRCH>
+    stats = regionprops(binaryImg, statTypes);
+    
+    numRegions = length(stats);
+    
+    indexList = {stats.PixelIdxList};
+    area = [stats.area];
+    bb = vercat(stats.BoundinBox);
+    centroid = vertcat(stats.Centroid);
+else
+    [regionMap, numRegions] = bwlabel(binaryImg);
+    
+    [area, indexList, bb, centroid] = mexRegionProps( ...
+        uint32(regionMap), numRegions);
+    area = double(area);
+end
+
+if numRegions == 0
     % Didn't even find any regions in the binary image, nothing to
     % do!
     return;
 end
 
+
 if DEBUG_DISPLAY
     namedFigure('InitialFiltering')
     subplot(2,2,1)
     imshow(binaryImg)
-    title(sprintf('Initial Binary Image: %d regions', length(stats)))
+    title(sprintf('Initial Binary Image: %d regions', numRegions))
 end
 
 minSideLength = .03*max(nrows,ncols);
@@ -80,27 +96,33 @@ maxSideLength = .9*min(nrows,ncols);
 minArea = minSideLength^2 - (.8*minSideLength)^2;
 maxArea = maxSideLength^2 - (.8*maxSideLength)^2;
 
-area = [stats.Area];
 tooBigOrSmall = area < minArea | area > maxArea;
-binaryImg(vertcat(stats(tooBigOrSmall).PixelIdxList)) = false;
-stats(tooBigOrSmall) = [];
+updateStats(tooBigOrSmall);
+
+    function updateStats(toRemove)
+        binaryImg(vertcat(indexList{toRemove})) = false;
+        
+        area(toRemove) = [];
+        indexList(toRemove) = [];
+        bb(toRemove,:) = [];
+        centroid(toRemove,:) = [];
+        numRegions = numRegions - sum(toRemove);
+    end
 
 if DEBUG_DISPLAY
     subplot(2,2,2)
     imshow(binaryImg)
-    title(sprintf('After Area check: %d regions', length(stats)))
+    title(sprintf('After Area check: %d regions', numRegions))
 end
 
-bb = vertcat(stats.BoundingBox);
 bbArea = prod(bb(:,3:4),2);
-tooSolid = [stats.Area]'./ bbArea > .5;
-binaryImg(vertcat(stats(tooSolid).PixelIdxList)) = false;
-stats(tooSolid) = [];
+tooSolid = area./ bbArea > .5;
+updateStats(tooSolid);
 
 if DEBUG_DISPLAY
     subplot(2,2,3)
     imshow(binaryImg)
-    title(sprintf('After tooSolid Check: %d regions', length(stats)))
+    title(sprintf('After tooSolid Check: %d regions', numRegions))
 end
 
 if usePerimeterCheck
@@ -132,7 +154,7 @@ if DEBUG_DISPLAY
     
     %centroids = vertcat(stats.WeightedCentroid);
     %plot(centroids(:,1), centroids(:,2), 'b*');
-    title(sprintf('%d Initial Detections', length(stats)))
+    title(sprintf('%d Initial Detections', numRegions))
 end
 
 if strcmp(cornerMethod, 'harrisScore')
@@ -147,20 +169,20 @@ end
 quads = {};
 quadTforms = {};
 
-regionImg = zeros(nrows,ncols);
-for i_region = 1:length(stats)
+regionMap = zeros(nrows,ncols);
+for i_region = 1:numRegions
     
-    regionImg(stats(i_region).PixelIdxList) = i_region;
+    regionMap(indexList{i_region}) = i_region;
     
     % Check to see if interior of this region is roughly empty: 
-    x = xgrid(stats(i_region).PixelIdxList);
-    y = ygrid(stats(i_region).PixelIdxList);
-    xcen = stats(i_region).Centroid(1);
-    ycen = stats(i_region).Centroid(2);
+    x = xgrid(indexList{i_region});
+    y = ygrid(indexList{i_region});
+    xcen = centroid(i_region,1);
+    ycen = centroid(i_region,2);
     x = round(0.5*(x-xcen)+xcen);
     y = round(0.5*(y-ycen)+ycen);
     interiorIdx = sub2ind([nrows ncols], y, x);
-    if any(regionImg(interiorIdx) == i_region)
+    if any(regionMap(interiorIdx) == i_region)
        continue; 
     end
     
@@ -171,21 +193,21 @@ for i_region = 1:length(stats)
     % Internal boundary
     % Find starting pixel by walking from centroid outward until we hit a
     % pixel in this region:
-    rowStart = round(stats(i_region).Centroid(2));
-    colStart = round(stats(i_region).Centroid(1));
-    if regionImg(rowStart,colStart) == i_region
+    rowStart = round(centroid(i_region,2));
+    colStart = round(centroid(i_region,1));
+    if regionMap(rowStart,colStart) == i_region
         continue;
     end
-    while colStart > 1 && regionImg(rowStart,colStart) ~= i_region
+    while colStart > 1 && regionMap(rowStart,colStart) ~= i_region
         colStart = colStart - 1;
     end
     
-    if colStart == 1 && regionImg(rowStart,colStart) ~= i_region
+    if colStart == 1 && regionMap(rowStart,colStart) ~= i_region
         continue
     end
     
     try
-        boundary = bwtraceboundary(regionImg == i_region, ...
+        boundary = bwtraceboundary(regionMap == i_region, ...
             [rowStart colStart], 'N');
     catch E
         warning(E.message);
@@ -437,7 +459,7 @@ if ~isempty(quads)
         
         if DEBUG_DISPLAY
             if isValid
-                draw(markers{end}, h_quadAxes(2));
+                draw(markers{end}, 'where', h_quadAxes(2));
                 numMarkers = numMarkers + 1;
             else
                 numInvalidMarkers = numInvalidMarkers + 1;

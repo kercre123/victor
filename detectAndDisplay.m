@@ -18,7 +18,7 @@ axis(h_axes, 'on');
 set(h_axes, 'LineWidth', 5, 'Box', 'on', 'XTick', [], 'YTick', []);
 set(h_img, 'CData', img);
 
-h_detections = findobj(h_axes, 'Tag', 'BlockDetection');
+h_detections = findobj(h_axes, 'Tag', 'BlockMarker');
 if ~isempty(h_detections)
     delete(h_detections)
 end
@@ -26,7 +26,7 @@ end
 if numDetections > 0
     hold(h_axes, 'on')
     for i = 1:numDetections
-        draw(detections{i}, h_axes);
+        draw(detections{i}, 'where', h_axes);
     end
     
     set(h_axes, 'XColor', 'g', 'YColor', 'g');

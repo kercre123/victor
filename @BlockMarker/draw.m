@@ -11,7 +11,7 @@ EdgeColor = 'g';
 FaceAlpha = .3;
 FaceColor = 'r';
 TopColor = 'b';
-Tag = 'BlockDetection';
+Tag = 'BlockMarker';
 
 parseVarargin(varargin{:});
 
@@ -57,7 +57,8 @@ switch(Mode)
             h_top = [];
         end
         
-        h_origin = plot(this.imgCorners(1,1), this.imgCorners(1,2), 'w.', 'MarkerSize', 16);
+        h_origin = plot(this.imgCorners(1,1), this.imgCorners(1,2), ...
+            'w.', 'MarkerSize', 16, 'Tag', Tag);
         
         if drawTextLabels
             h_text = text(mean(this.imgCorners([1 4],1)), mean(this.imgCorners([1 4],2)), ...
