@@ -92,11 +92,20 @@ eyeR = rotateAndTranslate(eyeX_R, eyeY, eyeZ, R, t);
 if initHandles
     this.handles.eye(1) = surf(eyeL{:}, app.EyeColor, 'Parent', AxesHandle);
     this.handles.eye(2) = surf(eyeR{:}, app.EyeColor, 'Parent', AxesHandle);
-    set(this.handles.eye, 'FaceColor', app.EyeColor, 'EdgeColor', 'none', 'Parent', AxesHandle);
+    this.handles.eye(3) = patch(eyeL{1}(1,:), eyeL{2}(1,:), ...
+        eyeL{3}(1,:), app.EyeColor, 'Parent', AxesHandle);
+    this.handles.eye(4) = patch(eyeR{1}(1,:), eyeR{2}(1,:), ...
+        eyeR{3}(1,:), app.EyeColor, 'Parent', AxesHandle);
+    
+    set(this.handles.eye, 'FaceColor', app.EyeColor, ...
+        'EdgeColor', 'none', 'Parent', AxesHandle);
 else
     updateHelper(this.handles.eye(1), eyeL);
     updateHelper(this.handles.eye(2), eyeR);
+    updateHelper(this.handles.eye(3), eyeL, 1);
+    updateHelper(this.handles.eye(4), eyeR, 1);
 end
+
 
 
 eyeWhiteX_L = eyeX_L;
