@@ -33,12 +33,14 @@ G = cell(1,numScales+1);
 numSigma = 2.5;
 prevSigma = 0.5;
 %G{1} = separable_filter(img, gaussian_kernel(prevSigma, numSigma));
-G{1} = imfilter(img, fspecial('gaussian', round(numSigma*prevSigma), prevSigma));
+%G{1} = imfilter(img, fspecial('gaussian', round(numSigma*prevSigma), prevSigma));
+G{1} = mexGaussianBlur(img, prevSigma, numSigma);
 for i = 1:numScales
     crntSigma = downsampleFactor^(i-1);
     addlSigma = sqrt(crntSigma^2 - prevSigma^2);
     %G{i+1} = separable_filter(G{i}, gaussian_kernel(addlSigma, numSigma)); 
-    G{i+1} = imfilter(img, fspecial('gaussian', round(numSigma*addlSigma), addlSigma));
+    %G{i+1} = imfilter(G{i}, fspecial('gaussian', round(numSigma*addlSigma), addlSigma));
+    G{i+1} = mexGaussianBlur(G{i}, addlSigma, numSigma);
     prevSigma = crntSigma;
 end
 
@@ -314,37 +316,46 @@ for i_region = 1:numRegions
                         
                         try
                             tformInit = cp2tform(corners, [0 0; 0 1; 1 0; 1 1], 'projective');
-                            canonicalBoundary = ...
-                                [zeros(Nside,1) linspace(0,1,Nside)';  % left side
-                                linspace(0,1,Nside)' ones(Nside,1);  % top
-                                ones(Nside,1) linspace(1,0,Nside)'; % right
-                                linspace(1,0,Nside)' zeros(Nside,1)]; % bottom
-                            switch(quadRefinementMethod)
-                                case 'ICP'
-                                    tform = ICP(fliplr(boundary), canonicalBoundary, ...
-                                        'projective', 'tformInit', tformInit, ...
-                                        'maxIterations', 10, 'tolerance', .001, ...
-                                        'sampleFraction', 0.25);
-                                
-                                case 'fminsearch'
-                                    mag = smoothgradient(img, 1);
-                                    %namedFigure('refineHelper')
-                                    %hold off, imagesc(mag), axis image off, hold on
-                                    %colormap(gray)
-                                    options = optimset('TolFun', .1, 'MaxIter', 50);
-                                    tform = fminsearch(@(x)refineHelper(x,mag,canonicalBoundary), tformInit.tdata.T, options);
-                                    tform = maketform('projective', tform);
-                                    
-                                otherwise
-                                    error('Unrecognized quadRefinementMethod "%s"', quadRefinementMethod);
-                            end
-                            
                         catch E
-                            warning(E.message)
-                            tform = [];
+                            warning(['While computing tformInit: ' E.message]);
+                            tformInit = [];
                         end
                         
-                        
+                        if ~isempty(tformInit)
+                            try
+                                
+                                canonicalBoundary = ...
+                                    [zeros(Nside,1) linspace(0,1,Nside)';  % left side
+                                    linspace(0,1,Nside)' ones(Nside,1);  % top
+                                    ones(Nside,1) linspace(1,0,Nside)'; % right
+                                    linspace(1,0,Nside)' zeros(Nside,1)]; % bottom
+                                switch(quadRefinementMethod)
+                                    case 'ICP'
+                                        tform = ICP(fliplr(boundary), canonicalBoundary, ...
+                                            'projective', 'tformInit', tformInit, ...
+                                            'maxIterations', 10, 'tolerance', .001, ...
+                                            'sampleFraction', 0.25);
+                                        
+                                    case 'fminsearch'
+                                        mag = smoothgradient(img, 1);
+                                        %namedFigure('refineHelper')
+                                        %hold off, imagesc(mag), axis image off, hold on
+                                        %colormap(gray)
+                                        options = optimset('TolFun', .1, 'MaxIter', 50);
+                                        tform = fminsearch(@(x)refineHelper(x,mag,canonicalBoundary), tformInit.tdata.T, options);
+                                        tform = maketform('projective', tform);
+                                        
+                                    otherwise
+                                        error('Unrecognized quadRefinementMethod "%s"', quadRefinementMethod);
+                                end
+                                
+                            catch E
+                                warning(['While refining tform: ' E.message])
+                                tform = tformInit;
+                            end
+                        else
+                            tform = [];
+                        end
                                                 
                         
                         if ~isempty(tform)

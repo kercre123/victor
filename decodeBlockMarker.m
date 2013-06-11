@@ -14,6 +14,15 @@ assert(~isempty(img), 'Image should not be empty!');
 
 assert(ismatrix(img), 'Grayscale image required.');
 
+ 
+[nrows,ncols] = size(img);
+       
+if isempty(tform) && strcmp(method, 'warpProbes')
+    warning('Forcing "warpImage" mode because given tform is empty.');
+    method = 'warpImage';
+end
+    
+        
 % Get means either by warping the image according to a given transform, or
 % by using the whole image (or extracting a portion of it according to the
 % corners)
@@ -51,8 +60,6 @@ switch(method)
             img = interp2(img, xi, yi, 'nearest');
             
         end
-        
-        nrows = size(img, 1);
         
         % I don't think this is needed any more?
         %         % Remove low-frequency variation
@@ -114,13 +121,20 @@ switch(method)
         w = w(ones(n^2,1),:);
         
         % Transform the probe locations to match the image coordinates
-        [xImg, yImg] = tforminv(tform, xProbes, yProbes);
+        try
+            [xImg, yImg] = tforminv(tform, xProbes, yProbes);
+        catch E
+            warning(E.message)
+            keyboard
+        end
         
         % Get means
         %imgData = interp2(img, xImg, yImg, 'nearest');
+        xImg = max(1, min(ncols, xImg));
+        yImg = max(1, min(nrows, yImg));
         index = round(yImg) + (round(xImg)-1)*size(img,1);
-        imgData = img(index);
-        means = reshape(sum(w.*imgData,2), [n n]);
+        img = img(index);
+        means = reshape(sum(w.*img,2), [n n]);
     
         %{
         namedFigure('decodeBlockMarker')
@@ -147,8 +161,9 @@ numBins = 20;
 bins = linspace(0,1,numBins);
 %counts = hist(img(:), bins);
 img = im2double(img);
-binnedImg = round((numBins-1)*img(:)) + 1;
-counts = accumarray(binnedImg, 1, [numBins 1]);
+%binnedImg = round((numBins-1)*img(:)) + 1;
+%counts = accumarray(binnedImg, 1, [numBins 1]);
+counts = double(mexHist(img(:), numBins));
 
 localMaxima = find(counts > counts([2 1:end-1]) & counts > counts([2:end end-1]));
 if length(localMaxima) > 1
