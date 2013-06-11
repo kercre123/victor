@@ -52,26 +52,23 @@ switch(method)
             
         end
         
-        if isa(img, 'uint8')
-            minValue = 1;
-        else
-            minValue = 1/256;
-        end
-        
-        % Remove low-frequency variation
         nrows = size(img, 1);
-        sigma = 1.5*nrows/n;
-        %g = fspecial('gaussian', max(3, ceil(3*sigma)), sigma);
-        g = gaussian_kernel(sigma);
-        img = min(1, img ./ max(minValue, separable_filter(img, g, g', 'replicate')));
         
-        %numBits = n^2 - 2*n + 1;
+        % I don't think this is needed any more?
+        %         % Remove low-frequency variation
+        %         if isa(img, 'uint8')
+        %             minValue = 1;
+        %         else
+        %             minValue = 1/256;
+        %         end
+        %
+        %         sigma = 1.5*nrows/n;
+        %         %g = fspecial('gaussian', max(3, ceil(3*sigma)), sigma);
+        %         g = gaussian_kernel(sigma);
+        %         img = min(1, img ./ max(minValue, separable_filter(img, g, g', 'replicate')));
+                
         
-        try 
-            squares = imresize(reshape(1:n^2, [n n]), size(img), 'nearest');
-        catch E
-            keyboard
-        end
+        squares = imresize(reshape(1:n^2, [n n]), size(img), 'nearest');
         
         [xgrid,ygrid] = meshgrid(1:size(squares,2), 1:size(squares,1));
         
@@ -120,7 +117,9 @@ switch(method)
         [xImg, yImg] = tforminv(tform, xProbes, yProbes);
         
         % Get means
-        imgData = interp2(img, xImg, yImg, 'nearest');
+        %imgData = interp2(img, xImg, yImg, 'nearest');
+        index = round(yImg) + (round(xImg)-1)*size(img,1);
+        imgData = img(index);
         means = reshape(sum(w.*imgData,2), [n n]);
     
         %{
@@ -144,8 +143,13 @@ end % SWITCH(method)
 % Not sure if this is gonna be so great in general, especially the
 % weighting by the counts when computing the average at the end.  It might
 % also be too computationally expensive.
-bins = linspace(0,1,20);
-counts = hist(img(:), bins);
+numBins = 20;
+bins = linspace(0,1,numBins);
+%counts = hist(img(:), bins);
+img = im2double(img);
+binnedImg = round((numBins-1)*img(:)) + 1;
+counts = accumarray(binnedImg, 1, [numBins 1]);
+
 localMaxima = find(counts > counts([2 1:end-1]) & counts > counts([2:end end-1]));
 if length(localMaxima) > 1
     [~,whichMaxima] = sort(counts(localMaxima), 'descend');

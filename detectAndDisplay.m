@@ -8,7 +8,7 @@ if isempty(img) || any(size(img)==0)
 end
 
 t = tic;
-detections = simpleDetector(img, 'downsampleFactor', 1.5);
+detections = simpleDetector(img);
 fprintf('Detection processing took %.2f seconds.\n', toc(t));
 
 %t = tic;

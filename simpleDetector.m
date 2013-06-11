@@ -30,12 +30,15 @@ img = mean(im2double(img),3);
 % Create a set of "average" images with different-sized Gaussian kernels
 numScales = round(log(maxSmoothingFraction*max(nrows,ncols)) / log(downsampleFactor));
 G = cell(1,numScales+1); 
+numSigma = 2.5;
 prevSigma = 0.5;
-G{1} = separable_filter(img, gaussian_kernel(prevSigma));
+%G{1} = separable_filter(img, gaussian_kernel(prevSigma, numSigma));
+G{1} = imfilter(img, fspecial('gaussian', round(numSigma*prevSigma), prevSigma));
 for i = 1:numScales
     crntSigma = downsampleFactor^(i-1);
     addlSigma = sqrt(crntSigma^2 - prevSigma^2);
-    G{i+1} = separable_filter(G{i}, gaussian_kernel(addlSigma)); 
+    %G{i+1} = separable_filter(G{i}, gaussian_kernel(addlSigma, numSigma)); 
+    G{i+1} = imfilter(img, fspecial('gaussian', round(numSigma*addlSigma), addlSigma));
     prevSigma = crntSigma;
 end
 
@@ -320,7 +323,8 @@ for i_region = 1:numRegions
                                 case 'ICP'
                                     tform = ICP(fliplr(boundary), canonicalBoundary, ...
                                         'projective', 'tformInit', tformInit, ...
-                                        'maxIterations', 10, 'tolerance', .001);
+                                        'maxIterations', 10, 'tolerance', .001, ...
+                                        'sampleFraction', 0.25);
                                 
                                 case 'fminsearch'
                                     mag = smoothgradient(img, 1);
@@ -443,7 +447,7 @@ if ~isempty(quads)
             [blockType, faceType, isValid, keyOrient] = ...
                 decodeBlockMarker(img, 'tform', quadTforms{i_quad}, ...
                 'corners', quads{i_quad}, ... 
-                'method', 'warpImage', ... % or 'warpProbes' ??
+                'method', 'warpProbes', ... 'warpImage' or 'warpProbes' ??
                 'cropFactor', cropFactor);
             
         else
