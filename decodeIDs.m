@@ -9,19 +9,31 @@ function [blockType, faceType, isValid] = decodeIDs(value)
 % Andrew Stein
 %
 
+if nargin < 3
+    layout = ['BCOFB';
+              'FBBBC';
+              'OCXCO';
+              'FBCFC';
+              'BCOCB'];
+end
+layout = layout(:);
 
-totalBits = 16;
-%numBlockBits = 7; % 128 possible blocks
-%numFaceBits  = 4; % 16 possible faces per block
-blockBits = [1 4 6 7 10 13 16];
-faceBits  = [2 3 9 11];
-checkBits = [5 8 12 14 15];
+blockBits = find(layout == 'B');
+numBlockBits = length(blockBits);
+faceBits  = find(layout == 'F');
+numFaceBits = length(faceBits);
+checkBits = find(layout == 'C');
+numCheckBits = length(checkBits);
+
+totalBits = length(layout);
+encodingBits = [blockBits; faceBits; checkBits];
 
 assert(value < 2^totalBits, 'Input code out of range.');
 
-binaryCode = dec2bin(value, totalBits);
-blockType = bin2dec(binaryCode(blockBits));
-faceType  = bin2dec(binaryCode(faceBits));
+binaryCode = repmat('0', [1 totalBits]);
+binaryCode(encodingBits) = dec2bin(value, length(encodingBits));
+blockType = bin2dec(binaryCode(blockBits)) + 1;
+faceType  = bin2dec(binaryCode(faceBits)) + 1;
 
 if blockType == 0 || faceType == 0
     isValid = false;
@@ -31,15 +43,20 @@ else
     % Compare check bits in the incoming value to what they should be according
     % to the decoded block and and face code
     checksum = binaryCode(checkBits);
-    
-    checksumTruth = false(1,5);
-    checksumTruth(1) = xor(binaryCode(blockBits(1)), binaryCode(blockBits(2)));
-    checksumTruth(2) = xor(binaryCode(blockBits(3)), binaryCode(blockBits(4)));
-    checksumTruth(3) = xor(binaryCode(blockBits(5)), binaryCode(blockBits(6)));
-    checksumTruth(4) = xor(binaryCode(faceBits(1)),  binaryCode(faceBits(2)));
-    checksumTruth(5) = xor(binaryCode(faceBits(3)),  binaryCode(faceBits(4)));
-    checksumTruth(5) = xor(checksumTruth(5), binaryCode(blockBits(7)));
-    
+       
+    checksumTruth = false(1, numCheckBits);
+    i_block1 = 1;
+    for i_check = 1:numCheckBits
+        
+        i_block2 = mod(i_block1, numBlockBits) + 1;
+        i_face = mod(i_check-1, numFaceBits) + 1;
+        
+        checksumTruth(i_check) = xor( binaryCode(faceBits(i_face)), ...
+            xor(binaryCode(blockBits(i_block1)), binaryCode(blockBits(i_block2))) );
+        
+        i_block1 = mod(i_block1, numBlockBits) + 1;
+    end
+
     isValid = all(checksum == checksumTruth);
 end
 

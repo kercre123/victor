@@ -1,11 +1,11 @@
-function markerImg = fiducialPlus2DCodeTest(blockType, faceType, varargin)
+function markerImg = generateMarkerImage(blockType, faceType, varargin)
 
 h_axes = [];
 fiducialType = 'none'; % cornerDots, dockingDots, square or none
 centerTargetType = 'circle'; % circle or checker
-targetSize = 40;
-fiducialSize = 5; % radius of dots or width of square
-borderSpacing = 2;
+targetSize = 3.84; % in cm
+fiducialSize = .5; % radius of dots or width of square
+borderSpacing = .25; % in cm
 n = 5; %numSquares, should be odd, so there's a center pixel we can use
 useBarsBetweenDots = false; % only valid when centerTargetType=='cornerDots'
 
@@ -13,7 +13,7 @@ parseVarargin(varargin{:});
 
 value = encodeIDs(blockType, faceType);
 
-numBits = n^2 - 2*n + 1;
+numBits = n^2 - 5; % 5 bits are reserved for orientation and center position
 numValues = 2^numBits;
 
 mid = (n+1)/2;
@@ -22,6 +22,8 @@ if isempty(h_axes)
     h_axes = gca;
 end
 cla(h_axes);
+set(get(h_axes, 'Parent'), 'Units', 'centimeters')
+set(h_axes, 'Units', 'centimeters');
 hold(h_axes, 'off')
 rectangle('Pos', [0 0 targetSize targetSize], ...
     'EdgeColor', .8*ones(1,3), 'LineStyle', '--', ...
@@ -96,16 +98,16 @@ end
     
 
 availableSlots = true(n,n);
-availableSlots(:,mid) = false;
-availableSlots(mid,:) = false;
+availableSlots([1 end],mid) = false;
+availableSlots(mid,[1 end]) = false;
+availableSlots(mid, mid)    = false;
 %availableSlots(n,1) = false;
 %availableSlots(n,n) = false;
 
 code = zeros(n,n);
 %code(1,1) = 1; % upper left always 1 for orientation
-code((mid+1):end,mid) = 1;
-code(mid,:) = 1;
-code(mid,mid) = 0;
+code(end,mid) = 1;
+code(mid,[1 end]) = 1;
 code(availableSlots) = dec2bin(value, numBits) == '1';
 
 pixelWidth = (targetSize - 2*cornerSize)/n;
