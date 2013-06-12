@@ -9,6 +9,10 @@ classdef Camera < handle
         
     properties(GetAccess = 'public', SetAccess = 'protected')
         
+        usbDevice;
+        nrows;
+        ncols; 
+        
         focalLength;
                 
         center;
@@ -22,6 +26,8 @@ classdef Camera < handle
     methods(Access = 'public')
         
         function this = Camera(varargin)
+            device = [];
+            resolution = [640 480];
             calibration = [];
             frame = Frame(); %#ok<PROP>
            
@@ -35,6 +41,10 @@ classdef Camera < handle
                 calibration = load(calibration);
             end
             
+            this.usbDevice = device;
+            this.nrows = resolution(2);
+            this.ncols = resolution(1);
+            
             this.focalLength = calibration.fc;
                         
             this.center = calibration.cc;
@@ -45,14 +55,15 @@ classdef Camera < handle
             
             this.frame = frame; %#ok<PROP>
             
-        end
-        
-        function grabFrame(this, usbDevice)
-            if nargin < 2
-                usbDevice = 0;
+            if ~isempty(this.usbDevice)
+                mexCameraCapture(this.usbDevice, this.ncols, this.nrows);
             end
             
-            this.image = mexCameraCapture(usbDevice);
+        end
+        
+        function grabFrame(this)
+            this.image = mexCameraCapture;
+            this.image = this.image(:,:,[3 2 1]); % BGR to RGB
         end
         
          

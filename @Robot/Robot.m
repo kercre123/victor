@@ -48,7 +48,7 @@ classdef Robot < handle
     
     methods(Access = 'public')
         
-        function this = Robot(cameraCalibration, varargin)
+        function this = Robot(cameraCalibration, cameraDevice, varargin)
             
             this.appearance = parseVarargin(this.appearance, varargin{:});
             
@@ -64,7 +64,8 @@ classdef Robot < handle
                 this.appearance.BodyLength/2; ...
                 this.appearance.BodyHeight + this.appearance.EyeRadius];
         
-            this.camera = Camera('calibration', cameraCalibration, ...
+            this.camera = Camera('device', cameraDevice, ...
+                'calibration', cameraCalibration, ...
                 'frame', inv(Frame(Rrc, Trc)));
                         
            
@@ -80,7 +81,33 @@ classdef Robot < handle
         
         function set.frame(this, F)
             assert(isa(F, 'Frame'), 'Must provide a Frame object.');
-            this.frame_ = F;
+            
+            % Total hack of a filter on the robot's position: if the change
+            % is "too big" average the update with the previous position.
+            % TODO: Full blown Kalman Filter or Bundle Adjustment.
+            prevAngle = norm(this.frame.Rvec);
+            newAngle = norm(F.Rvec);
+            
+            angleChange = abs(newAngle - prevAngle);
+            if angleChange > pi
+                angleChange = 2*pi - angleChange;
+            end
+            
+            Tchange = max(abs(this.frame.T - F.T));
+            
+            angleSigma = 30*pi/180;
+            translationSigma = 30;
+            
+            w_angle = exp(-.5 * angleChange^2 / (2*angleSigma^2));
+            w_T     = exp(-.5 * Tchange^2 / (2*translationSigma^2));
+    
+            w = min(w_angle, w_T);
+            
+            Rvec = w*F.Rvec + (1-w)*this.frame_.Rvec;
+            T = w*F.T + (1-w)*this.frame_.T;
+            
+            this.frame_ = Frame(Rvec, T);
+            
         end
         
     end

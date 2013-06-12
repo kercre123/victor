@@ -25,6 +25,7 @@ classdef Frame
                 if isvector(Rin)
                     this.Rvec = Rin;
                     this.Rmat = rodrigues(Rin);
+                    this.Rvec = rodrigues(this.Rmat);
                     
                 elseif ismatrix(Rin)
                     assert(isequal(size(Rin), [3 3]), ...

@@ -1,12 +1,15 @@
 function testBlockWorld(calibration, frames)
 
-cla
-W = BlockWorld('CameraCalibration', calibration);
+cla(findobj(namedFigure('BlockWorld 3D'), 'Type', 'axes'))
 
 T_update = 0;
 T_draw = 0;
 
 if nargin > 1 && ~isempty(frames)
+    % From canned frames
+    
+    W = BlockWorld('CameraCalibration', calibration);
+
     for i = 1:length(frames)
         t = tic;
         W.update(frames{i});
@@ -17,9 +20,12 @@ if nargin > 1 && ~isempty(frames)
         title(i)
         T_draw = T_draw + toc(t);
         
+        pause
     end
     
 else
+    % From live camera feed
+    W = BlockWorld('CameraCalibration', calibration, 'CameraDevice', 0);
     
     h_fig(1) = namedFigure('BlockWorld 3D');
     h_fig(2) = namedFigure('BlockWorld Reproject');

@@ -27,6 +27,7 @@ classdef BlockWorld < handle
         
         function this = BlockWorld(varargin)
             
+            CameraDevice = {};
             CameraCalibration = {};
             
             parseVarargin(varargin{:});
@@ -41,9 +42,21 @@ classdef BlockWorld < handle
                 CameraCalibration = {CameraCalibration};
             end
             
+            if isempty(CameraDevice)
+                CameraDevice = cell(size(CameraCalibration));
+            else 
+                if ~iscell(CameraDevice)
+                    CameraDevice = {CameraDevice};
+                end
+                if length(CameraDevice) ~= length(CameraCalibration)
+                    error(['You must provide a CameraDevice for each ' ...
+                        'CameraCalibration (or none).']);
+                end
+            end
+            
             this.robots = cell(1, length(CameraCalibration));
             for i=1:this.numRobots
-                this.robots{i} = Robot(CameraCalibration{i});
+                this.robots{i} = Robot(CameraCalibration{i}, CameraDevice{i});
             end
             
         end % FUNCTION BlockWorld()
