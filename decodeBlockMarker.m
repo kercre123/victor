@@ -22,14 +22,13 @@ if isempty(tform) && strcmp(method, 'warpProbes')
     method = 'warpImage';
 end
     
+darkCorners = [];
         
 % Get means either by warping the image according to a given transform, or
 % by using the whole image (or extracting a portion of it according to the
 % corners)
 switch(method)
     case 'warpImage'
-        
-        darkCorners = [];
         
         if ~isempty(corners)
             
@@ -128,6 +127,8 @@ switch(method)
             keyboard
         end
         
+        %imgOrig = img;
+        
         % Get means
         %imgData = interp2(img, xImg, yImg, 'nearest');
         xImg = max(1, min(ncols, xImg));
@@ -138,7 +139,7 @@ switch(method)
     
         %{
         namedFigure('decodeBlockMarker')
-        subplot 121, hold off, imshow(img), hold on
+        subplot 121, hold off, imshow(imgOrig), hold on
         plot(xImg, yImg, 'r.');
         subplot 122
         imshow(reshape(means, [n n]))
@@ -194,13 +195,12 @@ if all(means > threshold)
     return
 end
 
-upBits    = false(n); upBits(1:(mid-1),mid) = true;
-downBits  = false(n); downBits((mid+1):end,mid) = true;
-leftBits  = false(n); leftBits(mid,1:(mid-1)) = true;
-rightBits = false(n); rightBits(mid,(mid+1):end) = true;
+upBit = (mid-1)*n + 1;
+downBit = mid*n;
+leftBit = mid;
+rightBit = n^2 - mid + 1;
 
-dirMeans = [mean(means(upBits)) mean(means(downBits)) mean(means(leftBits)) mean(means(rightBits))];
-[~,whichDir] = max(dirMeans);
+[~,whichDir] = max(means([upBit downBit leftBit rightBit]));
 
 dirs = {'up', 'down', 'left', 'right'};
 keyOrient = dirs{whichDir};
@@ -214,8 +214,8 @@ switch(keyOrient)
 end
 
 valueBits = true(n);
-valueBits(:,mid) = false;
-valueBits(mid,:) = false;
+valueBits(mid,mid) = false; % center marker
+valueBits([upBit downBit leftBit rightBit]) = false;
 
 binaryString = strrep(num2str(row(means(valueBits)) < threshold), ' ', '');
 [blockType, faceType, isValid] = decodeIDs(bin2dec(binaryString));

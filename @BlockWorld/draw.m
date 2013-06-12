@@ -63,6 +63,13 @@ for i_robot = 1:this.numRobots
                 w = zeros(size(u));
                 patch(u,v,w, block.color, 'FaceAlpha', 0.3, ...
                     'LineWidth', 3, 'Parent', AxesReproject(i_robot));
+                
+                % Plot block origin:
+                plot(u(1), v(1), 'o', 'MarkerSize', 12, ...
+                    'MarkerEdgeColor', 'k', 'MarkerFaceColor', block.color, ...
+                    'LineWidth', 2, ...
+                    'Parent', AxesReproject(i_robot));
+                
             end
         end
     end % FOR each block

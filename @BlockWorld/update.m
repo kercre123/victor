@@ -45,6 +45,14 @@ else
     for i_marker = 1:numSeenMarkers
         bType = seenMarkers{i_marker}.blockType;
         fType = seenMarkers{i_marker}.faceType;
+        if bType > this.MaxBlocks
+            warning('Out-of-range block detected! (%d > %d)', bType, this.MaxBlocks);
+            keyboard
+        elseif fType > this.MaxFaces
+            warning('Out-of-range face detected! (%d > %d)', fType, this.MaxFaces);
+            keyboard
+        end
+        
         if ~isempty(this.markers{bType, fType})
             matchedMarkers(i_marker) = true;
             p_marker{i_marker} = seenMarkers{i_marker}.imgCorners;

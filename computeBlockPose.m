@@ -1,13 +1,13 @@
 function computeBlockPose(detections, calibration, varargin)
 
-markerSize = 35;
+markerSize = 38.4;
 maxRefineIterations = 100;
 thresh_cond = 1000000;
 robot = [];
 
 parseVarargin(varargin{:});
 
-camera = Camera(calibration);
+camera = Camera('calibration', calibration);
 
 img = [];
 if ~iscell(detections)

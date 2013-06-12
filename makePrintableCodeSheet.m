@@ -16,12 +16,13 @@ pageWidth  = 11 * 2.54;
 namedFigure('Code Sheet', 'Units', 'centimeters')
 clf
 
-blocks = [10 15 20 25 30 35 40 45 50 100];
-faces = [1 5];
+blocks = [35 40 45 50];
+faces = [8 10];
 
 rowPos = marginSpacing;
 colPos = marginSpacing;
 
+h_axes = zeros(1 + length(blocks)*length(faces));
 h_axes(1) = axes('Units', 'centimeters', 'Pos', [0 0 pageWidth pageHeight], ...
     'Color', 'w', 'XTick', [], 'YTick', [], ...
     'XGrid', 'on', 'YGrid', 'on', 'Box', 'on');
@@ -61,7 +62,6 @@ for i = 1:length(h_axes)
     set(h_axes(i), 'Pos', [pos(1:2)+1 pos(3:4)]);
 end
 
-findobj(gcf, 'Type', 'axes')
 
 %fix_subplots(length(faces), length(blocks))
 

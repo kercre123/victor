@@ -95,8 +95,8 @@ classdef Robot < handle
             
             Tchange = max(abs(this.frame.T - F.T));
             
-            angleSigma = 30*pi/180;
-            translationSigma = 30;
+            angleSigma = 60*pi/180;
+            translationSigma = 50;
             
             w_angle = exp(-.5 * angleChange^2 / (2*angleSigma^2));
             w_T     = exp(-.5 * Tchange^2 / (2*translationSigma^2));

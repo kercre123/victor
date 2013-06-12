@@ -20,7 +20,9 @@ if nargin > 1 && ~isempty(frames)
         title(i)
         T_draw = T_draw + toc(t);
         
-        pause
+        if i < length(frames) 
+            pause
+        end
     end
     
 else

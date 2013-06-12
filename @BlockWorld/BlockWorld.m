@@ -1,8 +1,8 @@
 classdef BlockWorld < handle
     
     properties(GetAccess = 'public', Constant = true)
-        MaxBlocks = 128;
-        MaxFaces = 16;
+        MaxBlocks = 256; % 8 bits
+        MaxFaces = 16;   % 4 bits
     end
     
     properties(GetAccess = 'public', SetAccess = 'protected')

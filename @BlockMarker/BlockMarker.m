@@ -1,7 +1,8 @@
 classdef BlockMarker < handle
     
     properties(GetAccess = 'public', Constant = true)
-        Width = 384; % in mm, sets scale for the whole world
+        % Width of the inside of the square fiducial
+        Width = 25; % in mm, sets scale for the whole world
     end
     
     properties(GetAccess = 'public', SetAccess = 'protected')
