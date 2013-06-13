@@ -2,13 +2,13 @@ classdef Block < handle
        
        
     properties(GetAccess = 'public', SetAccess = 'public')
-        % TODO: these should all probably be set-protected
-        position;
-        orientation;
+        blockType;
         
-        modelX;
-        modelY;
-        modelZ;
+        markers;
+        
+        Xmodel;
+        Ymodel;
+        Zmodel;
         
         X;
         Y;
@@ -22,24 +22,40 @@ classdef Block < handle
             Dependent = true)
         
         origin;
+        faces;
+                
+    end
+    
+    properties(GetAccess = 'public', SetAccess = 'public', ...
+            Dependent = true)
+        
+        frame;
+        
+    end
+    
+    properties(GetAccess = 'protected', SetAccess = 'protected')
+        
+        frameProtected = Frame();
         
     end
     
     methods(Access = 'public')
         
-        function this = Block(marker, frame)
-            [this.modelX, this.modelY, this.modelZ, this.color] = getModel( ...
-                marker.blockType, marker.faceType, marker.topOrient);
+        function this = Block(blockType)
             
-            if nargin < 2 || isempty(frame)
-                this.X = this.modelX;
-                this.Y = this.modelY;
-                this.Z = this.modelZ;
-            else
-                [this.X, this.Y, this.Z] = frame.applyTo( ...
-                    this.modelX, this.modelY, this.modelZ);
-            end
+            this.blockType = blockType;
+            createModel(this);
             
+            this.X = this.Xmodel;
+            this.Y = this.Ymodel;
+            this.Z = this.Zmodel;
+            
+        end
+        
+        function M = getFaceMarker(this, faceType)
+            assert(isKey(this.markers, faceType), ...
+                'Invalid face for this block.');
+            M = this.markers(faceType);
         end
         
     end % METHODS (public)
@@ -49,6 +65,31 @@ classdef Block < handle
         function o = get.origin(this)
             % return current origin
             o = [this.X(1); this.Y(1); this.Z(1)];
+        end
+        
+        function f = get.faces(this)
+            f = row(this.markers.keys);
+        end
+        
+        function F = get.frame(this)
+            F = this.frameProtected;
+        end
+        
+        function set.frame(this, F)
+            assert(isa(F, 'Frame'), ...
+                'Must set frame property to a Frame object.');
+            this.frameProtected = F;
+            
+            % Update this block's position/orientation in the world:
+            [this.X, this.Y, this.Z] = this.frameProtected.applyTo( ...
+                this.Xmodel, this.Ymodel, this.Zmodel);
+            
+            % Also update the constituent faces:
+            faces = this.faces;
+            for i = 1:length(faces)
+                M = this.markers(faces{i});
+                M.frame = this.frameProtected;
+            end
         end
         
     end % METHODS get/set for Dependent Properties

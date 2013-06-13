@@ -1,20 +1,25 @@
 function update(this, img)
 
-assert(this.numRobots == 1, 'Currently only supporting one robot.');
-camera = this.robots{1}.camera;
-
-if nargin < 2 || isempty(img)
-    camera.grabFrame();
-else
-    camera.image = img;
+if nargin < 2
+    img = cell(1, this.numRobots);
+elseif ~iscell(img)
+    img = {img};
 end
 
-seenMarkers = simpleDetector(camera.image);
 
-numSeenMarkers = length(seenMarkers);
-if numSeenMarkers == 0
-    return;
+if length(img) ~= this.numRobots
+    error('You must provide an image for each of the %d robots.', ...
+        this.numRobots);
 end
+
+% Let each robot take a new observation
+for i_robot = 1:this.numRobots
+    this.robots{i_robot}.update(img{i_robot});
+end
+
+% Do bundle adjustment on all the observations of all the robots
+
+return;
 
 if this.numBlocks == 0
     % If we haven't instantiated any blocks in our world, let the world
@@ -79,6 +84,11 @@ else
         end
     end % FOR each marker
     
+    % Do bundle adjustment on all markers' 3D positions and last several
+    % poses
+    [P2,Rvec2,T2,Rmat2] = bundleAdjustment(rodrigues(Rmat), T, p', P', ...
+        this.focalLength, this.center, this.distortionCoeffs, ...
+        this.alpha, maxRefineIterations, threshCond);
 end
 
 end % FUNCTION BlockWorld/update()
@@ -102,3 +112,4 @@ blockFrame = Frame(marker.frame.Rmat, marker.origin);
 this.blocks{marker.blockType} = Block(marker, blockFrame);
 
 end % FUNCTION addMarkerAndBlock()
+

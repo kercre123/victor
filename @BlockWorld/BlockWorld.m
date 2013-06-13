@@ -32,7 +32,7 @@ classdef BlockWorld < handle
             
             parseVarargin(varargin{:});
             
-            this.markers = cell(this.MaxBlocks, this.MaxFaces);
+            %this.markers = cell(this.MaxBlocks, this.MaxFaces);
             this.blocks = cell(this.MaxBlocks,1);
             
             if isempty(CameraCalibration)
@@ -56,7 +56,9 @@ classdef BlockWorld < handle
             
             this.robots = cell(1, length(CameraCalibration));
             for i=1:this.numRobots
-                this.robots{i} = Robot(CameraCalibration{i}, CameraDevice{i});
+                this.robots{i} = Robot('World', this, ...
+                    'CameraCalibration', CameraCalibration{i}, ...
+                    'CameraDevice', CameraDevice{i});
             end
             
         end % FUNCTION BlockWorld()

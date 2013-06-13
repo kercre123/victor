@@ -25,6 +25,7 @@ end
 % Put camera coordinates into "world" coordinates (or the coordinates of
 % whatever is holding this camera, e.g. a Robot)
 F = this.frame * Frame(Rmat, T);
+%F = Frame(Rmat, T);
 
 if nargout == 2
     varargout = {F.Rmat, F.T};

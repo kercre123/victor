@@ -468,7 +468,7 @@ if ~isempty(quads)
         end
         
         if isValid
-            markers{end+1} = BlockMarker(blockType, faceType, ...
+            markers{end+1} = BlockMarker2D(blockType, faceType, ...
                 quads{i_quad}, keyOrient); %#ok<AGROW>
         end
         
