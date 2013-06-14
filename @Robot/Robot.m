@@ -110,7 +110,7 @@ classdef Robot < handle
         function set.frame(this, F)
             assert(isa(F, 'Frame'), 'Must provide a Frame object.');
             
-            if false
+            if true
                 % Total hack of a filter on the robot's position: if the change
                 % is "too big" average the update with the previous position.
                 % TODO: Full blown Kalman Filter or Bundle Adjustment.
@@ -132,8 +132,8 @@ classdef Robot < handle
                 
                 w = min(w_angle, w_T);
                 
-                Rvec = w*F.Rvec + (1-w)*this.frame_.Rvec;
-                T = w*F.T + (1-w)*this.frame_.T;
+                Rvec = w*F.Rvec + (1-w)*this.frameProtected.Rvec;
+                T = w*F.T + (1-w)*this.frameProtected.T;
                 
                 this.frameProtected = Frame(Rvec, T);
             else

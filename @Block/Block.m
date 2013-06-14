@@ -23,6 +23,7 @@ classdef Block < handle
         
         origin;
         faces;
+        numMarkers;
                 
     end
     
@@ -69,6 +70,10 @@ classdef Block < handle
         
         function f = get.faces(this)
             f = row(this.markers.keys);
+        end
+        
+        function N = get.numMarkers(this)
+            N = this.markers.Count;
         end
         
         function F = get.frame(this)

@@ -17,7 +17,52 @@ for i_robot = 1:this.numRobots
     this.robots{i_robot}.update(img{i_robot});
 end
 
+
+return
+ 
+%% TODO:
+
 % Do bundle adjustment on all the observations of all the robots
+uv = cell(this.numRobots, 1);
+XYZ = cell(this.MaxBlocks, 1);
+
+% Get all 3D locations of all markers on all blocks:
+for i_block = 1:this.MaxBlocks
+    B = this.blocks{i_block};
+    if ~isempty(B)
+        N = B.numMarkers;
+        XYZ{i_block} = cell(N,1);
+        faces = B.faces;
+        for i_face = 1:N
+            M = B.markers(faces{i_face});
+            XYZ{i_block}{i_face} = M.P;
+        end
+    end
+    
+    XYZ{i_block} = vertcat(XYZ{i_block}{:});
+end
+XYZ{i_block} = vertcat(XYZ{:});
+
+% Get all observed 2D markers and poses from all robots in all frames
+for i_robot = 1:this.numRobots
+    markers2D = cell(Robot.ObservationWindowLength,1);
+    for i_obs = 1:Robot.ObservationWindowLength
+        obs = this.robots{i_robot}.observationWindow{i_obs};
+        if ~isempty(obs)
+            markers2D{i_obs} = cell(obs.numMarkers,1);
+            for i_marker = 1:obs.numMarkers
+                markers2D{i_obs}{i_marker} = obs.markers{i_marker}.corners;
+            end
+        end
+    end
+    uv{i_robot} = vertcat(markers2D{:});
+end
+uv = vertcat(uv{:});
+    
+
+    
+    
+    
 
 return;
 

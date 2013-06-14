@@ -127,7 +127,7 @@ switch(method)
             keyboard
         end
         
-        imgOrig = img;
+        %imgOrig = img;
         
         % Get means
         %imgData = interp2(img, xImg, yImg, 'nearest');
@@ -137,7 +137,7 @@ switch(method)
         img = img(index);
         means = reshape(sum(w.*img,2), [n n]);
     
-        %
+        %{
         namedFigure('decodeBlockMarker')
         subplot 121, hold off, imshow(imgOrig), hold on
         plot(xImg, yImg, 'r.');
