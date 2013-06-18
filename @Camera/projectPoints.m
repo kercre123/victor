@@ -1,14 +1,17 @@
 function varargout = projectPoints(this, varargin)
 % Project 3D world coordinates onto the image plane of a calibrated camera.
 %
-% [u,v] = camera.projectPoints(X,Y,Z)
-% [p]   = camera.projectPoints(P)
+% [u,v] = camera.projectPoints(X,Y,Z, <Frame>)
+% [p]   = camera.projectPoints(P, <Frame>)
 %
 %   Inputs are 3D (X,Y,Z) coordinates, separated or combined into 
 %    P = [X(:) Y(:) Z(:)]
 %
 %   Outputs are image coordinates (u,v), separated or combined into 
 %    p = [u(:) v(:)]
+%
+%   If a Frame is provided, points are first transformed by that Frame.
+%   Otherwise, they are transformed to be in the camera's frame (default).
 %
 %   (This exactly follows the projection model in Bouguet's camera 
 %    calibration toolbox.)
@@ -34,14 +37,20 @@ function varargout = projectPoints(this, varargin)
 % Andrew Stein
 %
 
+frame = [];
+
 origDims = [];
 switch(nargin)
-    case 2
+    case {2,3}
         assert(size(varargin{1},2)==3, 'P should be Nx3.');
         
         P = varargin{1};
+        
+        if nargin == 3
+            frame = varargin{2};
+        end
                 
-    case 4
+    case {4,5}
         X = varargin{1};
         Y = varargin{2};
         Z = varargin{3};
@@ -51,14 +60,22 @@ switch(nargin)
             'X, Y, and Z should be the same size.');
         
         P = [X(:) Y(:) Z(:)];
-                
+             
+        if nargin == 5
+            frame = varargin{4};
+        end
+        
     otherwise
         error('Unexpected number of inputs.');
 end
 
-% Put world coordinates into camera coordinates so we can project them
-% below
-P = this.frame.applyInvTo(P);
+if isempty(frame)
+    % Put world coordinates into camera coordinates so we can project them
+    % below
+    P = this.frame.applyInvTo(P);
+else
+    P = frame.applyTo(P);
+end
 
 if length(this.distortionCoeffs)>4 && this.distortionCoeffs(5)~=0
     warning('Ignoring fifth-order non-zero radial distortion');

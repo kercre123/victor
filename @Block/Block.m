@@ -1,10 +1,10 @@
 classdef Block < handle
-       
-       
+              
     properties(GetAccess = 'public', SetAccess = 'public')
         blockType;
         
         markers;
+        faceTypeToIndex;
         
         Xmodel;
         Ymodel;
@@ -22,7 +22,6 @@ classdef Block < handle
             Dependent = true)
         
         origin;
-        faces;
         numMarkers;
                 
     end
@@ -42,10 +41,10 @@ classdef Block < handle
     
     methods(Access = 'public')
         
-        function this = Block(blockType)
+        function this = Block(blockType, firstMarkerID)
             
             this.blockType = blockType;
-            createModel(this);
+            createModel(this, firstMarkerID);
             
             this.X = this.Xmodel;
             this.Y = this.Ymodel;
@@ -54,9 +53,10 @@ classdef Block < handle
         end
         
         function M = getFaceMarker(this, faceType)
-            assert(isKey(this.markers, faceType), ...
+            assert(isKey(this.faceTypeToIndex, faceType), ...
                 'Invalid face for this block.');
-            M = this.markers(faceType);
+            index = this.faceTypeToIndex(faceType);
+            M = this.markers{index};
         end
         
     end % METHODS (public)
@@ -67,13 +67,9 @@ classdef Block < handle
             % return current origin
             o = [this.X(1); this.Y(1); this.Z(1)];
         end
-        
-        function f = get.faces(this)
-            f = row(this.markers.keys);
-        end
-        
+                
         function N = get.numMarkers(this)
-            N = this.markers.Count;
+            N = length(this.markers);
         end
         
         function F = get.frame(this)
@@ -90,9 +86,8 @@ classdef Block < handle
                 this.Xmodel, this.Ymodel, this.Zmodel);
             
             % Also update the constituent faces:
-            faces = this.faces;
-            for i = 1:length(faces)
-                M = this.markers(faces{i});
+            for i = 1:length(this.markers)
+                M = this.markers{i};
                 M.frame = this.frameProtected;
             end
         end

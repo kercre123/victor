@@ -21,7 +21,7 @@ imagesc(this.image, 'Parent', AxesHandle), axis(AxesHandle, 'image', 'off')
 hold(AxesHandle, 'on')
 
 % Reproject the blocks and the markers onto the image:
-for i_block = 1:world.MaxBlocks
+for i_block = 1:world.numBlocks
     block = world.blocks{i_block};
     if ~isempty(block)
         [X,Y,Z] = invRobotFrame.applyTo(block.X, block.Y, block.Z);
@@ -41,11 +41,9 @@ for i_block = 1:world.MaxBlocks
                 'Parent', AxesHandle);
             
         end
-        
-        
-        faces = block.faces;
-        for i_face = 1:length(faces)
-            marker = block.getFaceMarker(faces{i_face});
+                
+        for i_marker = 1:block.numMarkers
+            marker = block.markers{i_marker};
             P = invRobotFrame.applyTo(marker.P);
             [u,v] = camera.projectPoints(P);
             

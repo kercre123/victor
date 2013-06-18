@@ -8,7 +8,9 @@ classdef BlockWorld < handle
     properties(GetAccess = 'public', SetAccess = 'protected')
         
         blocks = {};
-        markers = {};
+        blockTypeToIndex;
+        
+        allMarkers3D = {};
         robots = {}; 
         
     end % PROPERTIES (get-public, set-protected)
@@ -32,8 +34,11 @@ classdef BlockWorld < handle
             
             parseVarargin(varargin{:});
             
-            %this.markers = cell(this.MaxBlocks, this.MaxFaces);
-            this.blocks = cell(this.MaxBlocks,1);
+            this.blocks = {};
+            this.allMarkers3D = {};
+            
+            this.blockTypeToIndex = containers.Map('KeyType', 'double', ...
+                'ValueType', 'double');
             
             if isempty(CameraCalibration)
                 error(['You must provide camera calibration ' ...
@@ -63,16 +68,28 @@ classdef BlockWorld < handle
             
         end % FUNCTION BlockWorld()
         
+        function index = getBlockTypeIndex(this, blockType)
+            index = this.blockTypeToIndex(blockType);
+        end
+        
+        function B = getBlock(this, blockType)
+            if isKey(this.blockTypeToIndex, blockType)
+                B = this.blocks{this.blockTypeToIndex(blockType)};
+            else
+                B = [];
+            end
+        end
+        
     end % METHODS (public)
     
     methods % Dependent SET/GET
         
         function N = get.numMarkers(this)
-            N = sum(~cellfun(@isempty, this.markers(:)));
+            N = length(this.allMarkers3D);
         end
         
         function N = get.numBlocks(this)
-            N = sum(~cellfun(@isempty, this.blocks));
+            N = length(this.blocks);
         end
         
         function N = get.numRobots(this)

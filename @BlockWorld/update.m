@@ -1,5 +1,7 @@
 function update(this, img)
 
+doBundleAdjustment = true;
+
 if nargin < 2
     img = cell(1, this.numRobots);
 elseif ~iscell(img)
@@ -17,31 +19,129 @@ for i_robot = 1:this.numRobots
     this.robots{i_robot}.update(img{i_robot});
 end
 
+uv = cell(this.numRobots, Robot.ObservationWindowLength);
+R  = cell(this.numRobots, Robot.ObservationWindowLength);
+T  = cell(this.numRobots, Robot.ObservationWindowLength);
+
+numMarkers3D = this.numMarkers;
+
+seen = false(numMarkers3D*4,1);
+for i_robot = 1:this.numRobots
+    for i_obs = 1:Robot.ObservationWindowLength
+        obs = this.robots{i_robot}.observationWindow{i_obs};
+        if ~isempty(obs) && obs.numMarkers > 0
+            uv{i_robot, i_obs} = obs.getAllPoints2D(numMarkers3D);
+            frame = obs.frame;
+            R{i_robot, i_obs} = frame.Rmat;
+            T{i_robot, i_obs} = frame.T;
+            
+            assert(isequal(size(uv{i_robot,i_obs}), [4*numMarkers3D 2]), ...
+                'Returned marker locations is the wrong size.');
+            
+            seen(all(uv{i_robot,i_obs}>=0,2)) = true;
+        end
+    end
+end
+
+X = this.getAllPoints3D;
+
+% Remove markers that were instantiated but never seen
+for i_robot = 1:this.numRobots
+    for i_obs = 1:Robot.ObservationWindowLength
+        if ~isempty(uv{i_robot,i_obs})
+            uv{i_robot, i_obs} = uv{i_robot, i_obs}(seen,:);
+        end
+    end
+end
+
+
+%% "My" Bundle Adjustment
+if doBundleAdjustment
+    cameras = cell(size(R));
+    [cameras{:}] = deal(this.robots{1}.camera);
+    Rvec = cell(size(R));
+    for i=1:length(R)
+        if ~isempty(R{i})
+            Rvec{i} = rodrigues(R{i});
+        end
+    end
+    
+    [Rvec, T, Xnew] = bundleAdjustment(Rvec, T, uv, X(seen,:), cameras);
+    
+    index = [1 2 3 4];
+    for i_marker = 1:this.numMarkers
+        i_X = (i_marker-1)*4 + 1;
+        if seen(i_X)
+            M = this.allMarkers3D{i_marker};
+            M.P = Xnew(index,:);
+            index = index + 4;
+        end
+    end
+    
+    for i_robot = 1:this.numRobots
+        for i_obs = 1:Robot.ObservationWindowLength
+            obs = this.robots{i_robot}.observationWindow{i_obs};
+            if ~isempty(obs) && obs.numMarkers > 0
+                obs.frame = Frame(Rvec{i_robot, i_obs}, T{i_robot, i_obs});
+            end
+        end
+    end
+end % IF do bundle adjustment
+
+
+return
+
+%% OpenCV Bundle Adjustment
+            
+% Camera calibartion matrix
+% TODO: make these per-robot
+K = this.robots{1}.camera.calibrationMatrix;
+radDistortionCoeffs = this.robots{1}.camera.distortionCoeffs(:);
+if length(radDistortionCoeffs)>4
+    if any(radDistortionCoeffs(5:end) ~= 0)
+        warning('Ignoring any radial distortion coefficients past 4th for bundle adjustment.');
+    end
+    radDistortionCoeffs = column(radDistortionCoeffs(1:4));
+end
+            
+
+
+[X_final, R_final, T_final] = mexBundleAdjust(uv, X, R, T, ...
+    K, radDistortionCoeffs);
+
+%{
+x_obs = cell(this.numRobots, Robot.ObservationWindowLength);
+x_hat = cell(this.numRobots, Robot.ObservationWindowLength);
+X     = cell(this.numRobots, Robot.ObservationWindowLength);
+dx_dX = cell(this.numRobots, Robot.ObservationWindowLength);
+dx_dR = cell(this.numRobots, Robot.ObservationWindowLength);
+dx_dT = cell(this.numRobots, Robot.ObservationWindowLength);
+bookkeeping = cell(this.numRobots, Robot.ObservationWindowLength);
+
+for i_robot = 1:this.numRobots
+    for i_obs = 1:Robot.ObservationWindowLength
+        obs = this.robots{i_robot}.observationWindow{i_obs};
+        if ~isempty(obs)
+            [x_obs{i_robot,i_obs}, x_hat{i_robot,i_obs}, X{i_robot,i_obs}, ...
+                dx_dX{i_robot,i_obs}, dx_dR{i_robot,i_obs}, ...
+                dx_dT{i_robot,i_obs}, book] = ...
+                reproject(obs);
+            rep = ones(size(book,1),1);
+            bookkeeping{i_robot, i_obs} = [i_robot*rep i_obs*rep book];
+        end
+    end
+end
+
+% Assemble all the observations, predictions, 3D world coordinates, and
+% poses into one giant matrix for 
+keyboard
+%}
 
 return
  
 %% TODO:
 
-% Do bundle adjustment on all the observations of all the robots
-uv = cell(this.numRobots, 1);
-XYZ = cell(this.MaxBlocks, 1);
 
-% Get all 3D locations of all markers on all blocks:
-for i_block = 1:this.MaxBlocks
-    B = this.blocks{i_block};
-    if ~isempty(B)
-        N = B.numMarkers;
-        XYZ{i_block} = cell(N,1);
-        faces = B.faces;
-        for i_face = 1:N
-            M = B.markers(faces{i_face});
-            XYZ{i_block}{i_face} = M.P;
-        end
-    end
-    
-    XYZ{i_block} = vertcat(XYZ{i_block}{:});
-end
-XYZ{i_block} = vertcat(XYZ{:});
 
 % Get all observed 2D markers and poses from all robots in all frames
 for i_robot = 1:this.numRobots
@@ -62,99 +162,4 @@ uv = vertcat(uv{:});
 
     
     
-    
-
-return;
-
-if this.numBlocks == 0
-    % If we haven't instantiated any blocks in our world, let the world
-    % origin start at the Robot's current position and instantiate a block
-    % for each marker we detected.
-    for i_marker = 1:numSeenMarkers
-    
-        addMarkerAndBlock(this, this.robots{1}, seenMarkers{i_marker});
-        
-    end
-    
-else
-    % We've already got world coordinates set up
-    
-    % Two cases:
-    % 1. We see at least one block again that we've already seen.  Update
-    %    the robot's position relative to that block's position (or the
-    %    average of where the set of re-detected blocks say the robot is)
-    % 2. We don't see any blocks we've seen before. We could instatiate the
-    %    new blocks based on the last known position of the robot, but this
-    %    seems pretty error-prone, since we presumably moved if we're
-    %    seeing a new block...
-    
-    % Find markers we've seen before
-    matchedMarkers = false(1,numSeenMarkers);
-    p_marker = cell(1,numSeenMarkers);
-    P_marker = cell(1,numSeenMarkers);
-    for i_marker = 1:numSeenMarkers
-        bType = seenMarkers{i_marker}.blockType;
-        fType = seenMarkers{i_marker}.faceType;
-        if bType > this.MaxBlocks
-            warning('Out-of-range block detected! (%d > %d)', bType, this.MaxBlocks);
-            keyboard
-        elseif fType > this.MaxFaces
-            warning('Out-of-range face detected! (%d > %d)', fType, this.MaxFaces);
-            keyboard
-        end
-        
-        if ~isempty(this.markers{bType, fType})
-            matchedMarkers(i_marker) = true;
-            p_marker{i_marker} = seenMarkers{i_marker}.imgCorners;
-            P_marker{i_marker} = this.markers{bType, fType}.P;
-        end
-        
-    end
-    
-    % Use previously-seen markers to update the robot/camera's position
-    if ~any(matchedMarkers)
-        warning(['No markers found matched one seen before. Not sure yet ' ...
-            'what to do in this case.']);
-    else
-        p_marker = vertcat(p_marker{:});
-        P_marker = vertcat(P_marker{:});
-        invRobotFrame = camera.computeExtrinsics(p_marker, P_marker);
-        this.robots{1}.frame = inv(invRobotFrame);
-    end
-    
-    % Add new markers/blocks to world, relative to robot's updated position
-    for i_marker = 1:numSeenMarkers
-        if ~matchedMarkers(i_marker)
-            addMarkerAndBlock(this, this.robots{1}, seenMarkers{i_marker});        
-        end
-    end % FOR each marker
-    
-    % Do bundle adjustment on all markers' 3D positions and last several
-    % poses
-    [P2,Rvec2,T2,Rmat2] = bundleAdjustment(rodrigues(Rmat), T, p', P', ...
-        this.focalLength, this.center, this.distortionCoeffs, ...
-        this.alpha, maxRefineIterations, threshCond);
-end
-
-end % FUNCTION BlockWorld/update()
-
-
-function addMarkerAndBlock(this, robot, marker)
-
-% Figure out where the marker is in 3D space, in camera's world
-% coordinates, which is the robot's frame!
-marker.frame = robot.camera.computeExtrinsics(marker.imgCorners, marker.Pmodel);
-
-% Put the marker into the robot's world frame
-marker.frame = robot.frame * marker.frame;
-
-% Add the marker to the world's list
-this.markers{marker.blockType, marker.faceType} = marker;
-
-% Rotate the block to match the marker and set it's origin to the
-% marker's origin:
-blockFrame = Frame(marker.frame.Rmat, marker.origin);
-this.blocks{marker.blockType} = Block(marker, blockFrame);
-
-end % FUNCTION addMarkerAndBlock()
-
+ 

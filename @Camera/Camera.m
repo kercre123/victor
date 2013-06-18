@@ -23,6 +23,14 @@ classdef Camera < handle
         
     end
     
+    properties(GetAccess = 'public', SetAccess = 'protected', ...
+            Dependent = true)
+        
+        calibrationMatrix;
+        
+    end
+    
+    
     methods(Access = 'public')
         
         function this = Camera(varargin)
@@ -49,8 +57,8 @@ classdef Camera < handle
                         
             this.center = calibration.cc;
                         
-            this.distortionCoeffs = calibration.kc;            
-            
+            this.distortionCoeffs = calibration.kc; 
+                        
             this.alpha = calibration.alpha_c;
             
             this.frame = frame; %#ok<PROP>
@@ -69,5 +77,14 @@ classdef Camera < handle
          
     end % METHODS (public)
     
+    methods % Dependent get/set
+        
+        function K = get.calibrationMatrix(this)
+            K = [this.focalLength(1) this.alpha*this.focalLength(1) this.center(1);
+                 0 this.focalLength(2) this.center(2);
+                 0 0 1];
+        end
+                
+    end % METHODS (Dependent get/set)
     
 end % CLASSDEF Camera

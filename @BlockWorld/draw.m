@@ -22,16 +22,8 @@ for i_robot = 1:this.numRobots
     draw(this.robots{i_robot}, 'AxesHandle', AxesWorld); 
 end
 
-for i_block = 1:this.MaxBlocks
-    if ~isempty(this.blocks{i_block})
-        draw(this.blocks{i_block}, 'AxesHandle', AxesWorld);
-    end
-end
-
-for i_marker = 1:numel(this.markers)
-    if ~isempty(this.markers{i_marker})
-        draw(this.markers{i_marker}, 'Mode', 'world', 'where', AxesWorld);
-    end
+for i_block = 1:this.numBlocks
+    draw(this.blocks{i_block}, 'AxesHandle', AxesWorld);
 end
 
 axis equal

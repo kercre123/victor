@@ -18,9 +18,8 @@ else
     set(this.handle, 'XData', this.X, 'YData', this.Y, 'ZData', this.Z);
 end
 
-faces = this.faces;
-for i = 1:length(faces)
-    draw(this.markers(faces{i}), 'where', AxesHandle);
+for i = 1:length(this.markers)
+    draw(this.markers{i}, 'where', AxesHandle);
 end
 
 end

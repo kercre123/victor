@@ -1,6 +1,6 @@
 classdef Observation
     
-    properties(GetAccess = 'public', SetAccess = 'protected')
+    properties(GetAccess = 'public', SetAccess = 'public')
         image; % should only be used for initialization/visualization!
         robot; % handle to parent robot
         
@@ -30,11 +30,20 @@ classdef Observation
                 % for each marker we detected.
                 this.frame = Frame();
                 
+                % In case we see two sides of the same block at once, we
+                % want to pass in all markers of that block together to get
+                % the most accurate estimate of the block's position, using
+                % all observed markers.
+                blockTypes = cellfun(@(marker)marker.blockType, this.markers);
+                used = false(1,numSeenMarkers);
                 for i_marker = 1:numSeenMarkers
-                    
-                    world.addBlock(this.robot, this.markers{i_marker});
-                    
+                    if ~used(i_marker)
+                        whichMarkers = blockTypes == blockTypes(i_marker);
+                        world.addBlock(this.robot, this.markers(whichMarkers));
+                        used(whichMarkers) = true;
+                    end
                 end
+                
             else
                 % We've already got world coordinates set up around an
                 % earlier observation
@@ -61,11 +70,11 @@ classdef Observation
                         keyboard
                     end
                     
-                    if ~isempty(world.blocks{bType})
+                    B = world.getBlock(bType);
+                    if ~isempty(B)
                         matchedMarkers(i_marker) = true;
                         p_marker{i_marker} = this.markers{i_marker}.corners;
                         
-                        B = world.blocks{bType};
                         M = B.getFaceMarker(this.markers{i_marker}.faceType);
                         P_marker{i_marker} = M.P;
                     end
@@ -85,9 +94,15 @@ classdef Observation
                     this.robot.frame = this.frame;
                     
                     % Add new markers/blocks to world, relative to robot's updated position
+                    
+                    blockTypes = cellfun(@(marker)marker.blockType, this.markers);
+                    used = false(1,numSeenMarkers);
+                
                     for i_marker = 1:numSeenMarkers
-                        if ~matchedMarkers(i_marker)
-                            world.addBlock(this.robot, this.markers{i_marker});
+                        if ~matchedMarkers(i_marker) && ~used(i_marker) 
+                            whichMarkers = blockTypes == blockTypes(i_marker);
+                            world.addBlock(this.robot, this.markers(whichMarkers));
+                            used(whichMarkers) = true;
                         end
                     end % FOR each marker
                     

@@ -5,7 +5,7 @@ classdef BlockMarker3D < handle
         Width = 25; % in mm, sets scale for the whole world
     end
     
-    properties(GetAccess = 'public', SetAccess = 'protected')
+    properties(GetAccess = 'public', SetAccess = 'public')
         
         block; % handle to parent block
         
@@ -14,6 +14,7 @@ classdef BlockMarker3D < handle
         Pmodel;
         P;
         
+        ID;
     end
     
     properties(GetAccess = 'public', SetAccess = 'public', ...
@@ -39,11 +40,14 @@ classdef BlockMarker3D < handle
     
     methods(Access = 'public')
        
-        function this = BlockMarker3D(parentBlock, faceType_, frameInit)
+        function this = BlockMarker3D(parentBlock, faceType_, frameInit, id)
+            
             assert(isa(parentBlock, 'Block'), ...
                 'parentBlock should be a Block object.');
             assert(isa(frameInit, 'Frame'), ...
                 'frameInit should be a Frame object.');
+            
+            this.ID = id;
             
             this.block = parentBlock;
             this.faceType  = faceType_;
