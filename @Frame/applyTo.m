@@ -34,4 +34,5 @@ switch(length(varargin))
     otherwise
         error('Unrecognized number of inputs.');
 end
-end
+
+end % FUNCTION applyTo()

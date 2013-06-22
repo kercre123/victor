@@ -34,8 +34,10 @@ else
     
     set(h_fig, 'CurrentCharacter', ' ');
     
-    while get(h_fig(1), 'CurrentCharacter') ~= 27 && ...
-            get(h_fig(2), 'CurrentCharacter') ~= 27
+    chars = [get(h_fig(1), 'CurrentCharacter') ...
+        get(h_fig(2), 'CurrentCharacter')];
+    
+    while ~any(chars==27)
         
         t = tic;
         W.update();
@@ -46,6 +48,8 @@ else
         T_draw = T_draw + toc(t);
         
         %pause
+        chars = [get(h_fig(1), 'CurrentCharacter') ...
+            get(h_fig(2), 'CurrentCharacter')];
     end
     
 end

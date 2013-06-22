@@ -1,7 +1,7 @@
 function h = draw(this, varargin)
 
 where = [];
-drawTextLabels = true;
+drawTextLabels = 'long'; % 'long', 'short', or 'none'
 FontSize = 14;
 FontWeight = 'b';
 FontColor = 'b';
@@ -55,14 +55,24 @@ end
 h_origin = plot(this.corners(1,1), this.corners(1,2), ...
     'w.', 'MarkerSize', 16, 'Tag', Tag);
 
-if drawTextLabels
+if ~strcmp(drawTextLabels, 'none')
+    
+    if strcmp(drawTextLabels, 'long')
+        blockLabel = 'Block ';
+        faceLabel  = 'Face ';
+    else
+        blockLabel = 'B';
+        faceLabel  = 'F';
+    end
+    
     h_text = text(mean(this.corners([1 4],1)), mean(this.corners([1 4],2)), ...
-        {sprintf('Block %d', this.blockType), sprintf('Face %d', this.faceType)}, ...
+        {sprintf('%s%d', blockLabel, this.blockType), ...
+        sprintf('%s%d', faceLabel, this.faceType)}, ...
         'Color', FontColor, 'FontSize', FontSize, 'FontWeight', FontWeight, ...
         'BackgroundColor', FontBackgroundColor, ...
         'Hor', 'center', 'Parent', h_axes, 'Tag', Tag);
 else
-    h_text = []; %#ok<UNRCH>
+    h_text = []; 
 end
 
 if nargout > 0

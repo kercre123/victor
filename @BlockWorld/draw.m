@@ -26,8 +26,8 @@ for i_block = 1:this.numBlocks
     draw(this.blocks{i_block}, 'AxesHandle', AxesWorld);
 end
 
-axis equal
-grid on
+axis(AxesWorld, 'equal');
+grid(AxesWorld, 'on');
 
 %% Draw the reprojection error
 

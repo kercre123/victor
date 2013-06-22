@@ -98,7 +98,7 @@ switch(method)
         squareCenters = linspace(squareWidth/2, patternWidth-squareWidth/2, n) + patternOrigin;
         
         probeGap = .2; % as a fraction of square width
-        probeRadius = 4; % in number
+        probeRadius = 4; % in number (TODO: this should be adjusted with resolution)
         sigma = 1/6;
         [xgrid, ygrid] = meshgrid((linspace(probeGap*squareWidth, (1-probeGap)*squareWidth, 2*probeRadius+1) - squareWidth/2));
         xgrid = row(xgrid);
@@ -127,7 +127,7 @@ switch(method)
             keyboard
         end
         
-        %imgOrig = img;
+        % imgOrig = img;
         
         % Get means
         %imgData = interp2(img, xImg, yImg, 'nearest');

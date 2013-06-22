@@ -1,6 +1,6 @@
 function update(this, img)
 
-doBundleAdjustment = true;
+doBundleAdjustment = false;
 
 if nargin < 2
     img = cell(1, this.numRobots);

@@ -188,6 +188,19 @@ for i_region = 1:numRegions
     y = round(0.5*(y-ycen)+ycen);
     interiorIdx = sub2ind([nrows ncols], y, x);
     if any(regionMap(interiorIdx) == i_region)
+        
+        if DEBUG_DISPLAY
+            namedFigure('InitialFiltering')
+            binaryImg(indexList{i_region}) = 0;
+            subplot 224
+            imshow(binaryImg)
+            title('After Interior Check')
+            
+            namedFigure('SimpleDetector')
+            subplot(h_initialAxes)
+            overlay_image(binaryImg, 'r', 0, .3);
+        end
+        
        continue; 
     end
     
