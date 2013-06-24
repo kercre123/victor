@@ -86,7 +86,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             mexErrMsgTxt("Empty frame grabbed!");
         }
         else {
-            cv::cvtColor(frame, frame, CV_BGR2RGB);
+            //cv::cvtColor(frame, frame, CV_BGR2RGB);
             DEBUG_MSG(2, "Captured %dx%d frame.\n", frame.cols, frame.rows);
         }
         
