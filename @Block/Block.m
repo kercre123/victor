@@ -6,13 +6,7 @@ classdef Block < handle
         markers;
         faceTypeToIndex;
         
-        Xmodel;
-        Ymodel;
-        Zmodel;
-        
-        X;
-        Y;
-        Z;
+        model;
         
         color;
         handle;
@@ -22,22 +16,22 @@ classdef Block < handle
             Dependent = true)
         
         origin;
-        numMarkers;
-                
+        numMarkers;        
     end
     
     properties(GetAccess = 'public', SetAccess = 'public', ...
             Dependent = true)
         
-        frame;
-        
+        pose;
     end
+        
     
     properties(GetAccess = 'protected', SetAccess = 'protected')
         
-        frameProtected = Frame();
+        poseProtected = Pose();
         
     end
+    
     
     methods(Access = 'public')
         
@@ -46,10 +40,15 @@ classdef Block < handle
             this.blockType = blockType;
             createModel(this, firstMarkerID);
             
-            this.X = this.Xmodel;
-            this.Y = this.Ymodel;
-            this.Z = this.Zmodel;
-            
+        end
+        
+        function varargout = getPosition(this, poseIn)
+            varargout = cell(1,nargout);
+            if nargin < 2
+                [varargout{:}] = this.pose.applyTo(this.model);
+            else
+                [varargout{:}] = poseIn.applyTo(this.model);
+            end
         end
         
         function M = getFaceMarker(this, faceType)
@@ -65,30 +64,26 @@ classdef Block < handle
         
         function o = get.origin(this)
             % return current origin
-            o = [this.X(1); this.Y(1); this.Z(1)];
+            o = this.pose.applyTo(this.model(1,:));
         end
                 
         function N = get.numMarkers(this)
             N = length(this.markers);
         end
         
-        function F = get.frame(this)
-            F = this.frameProtected;
+        function P = get.pose(this)
+            P = this.poseProtected;
         end
         
-        function set.frame(this, F)
-            assert(isa(F, 'Frame'), ...
-                'Must set frame property to a Frame object.');
-            this.frameProtected = F;
+        function set.pose(this, P)
+            assert(isa(P, 'Pose'), ...
+                'Must set pose property to a Pose object.');
+            this.poseProtected = P;
             
-            % Update this block's position/orientation in the world:
-            [this.X, this.Y, this.Z] = this.frameProtected.applyTo( ...
-                this.Xmodel, this.Ymodel, this.Zmodel);
-            
-            % Also update the constituent faces:
+            % Also update the constituent faces' poses:
             for i = 1:length(this.markers)
                 M = this.markers{i};
-                M.frame = this.frameProtected;
+                M.pose = this.poseProtected;
             end
         end
         

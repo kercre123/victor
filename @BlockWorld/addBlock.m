@@ -40,21 +40,21 @@ Pmodel  = cell(1, numMarkers2D);
 for i = 1:numMarkers2D
     corners{i} = markers2D{i}.corners;
     marker3D = B.getFaceMarker(markers2D{i}.faceType);
-    Pmodel{i} = marker3D.Pmodel;
+    Pmodel{i} = marker3D.model;
 end
 corners = vertcat(corners{:});
 Pmodel  = vertcat(Pmodel{:});
 
 % Figure out where the marker we saw is in 3D space, in camera's world 
-% coordinates, which are relative to the robot's frame!
-markerFrame = robot.camera.computeExtrinsics(corners, Pmodel);
+% coordinates, which are relative to the robot's pose!
+markerPose = robot.camera.computeExtrinsics(corners, Pmodel);
 
-% Put the marker into the robot's world frame
-markerFrame = robot.frame * markerFrame;
+% Put the marker into the robot's world pose
+markerPose = robot.pose * markerPose;
 
 % Now, since the markers are all already in world coordinates, we can use
 % that same frame for the block.  And updating the block's frame will also
 % update its' face markers:
-B.frame = markerFrame;
+B.pose = markerPose;
 
 end % FUNCTION addMarkerAndBlock()

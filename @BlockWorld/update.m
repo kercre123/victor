@@ -31,9 +31,9 @@ for i_robot = 1:this.numRobots
         obs = this.robots{i_robot}.observationWindow{i_obs};
         if ~isempty(obs) && obs.numMarkers > 0
             uv{i_robot, i_obs} = obs.getAllPoints2D(numMarkers3D);
-            frame = obs.frame;
-            R{i_robot, i_obs} = frame.Rmat;
-            T{i_robot, i_obs} = frame.T;
+            pose = obs.pose;
+            R{i_robot, i_obs} = pose.Rmat;
+            T{i_robot, i_obs} = pose.T;
             
             assert(isequal(size(uv{i_robot,i_obs}), [4*numMarkers3D 2]), ...
                 'Returned marker locations is the wrong size.');

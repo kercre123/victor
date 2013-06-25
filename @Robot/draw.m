@@ -1,8 +1,8 @@
 function draw(this, varargin)
 
 AxesHandle = [];
-Position = this.frame.T;
-Rotation = this.frame.Rmat;
+Position = this.pose.T;
+Rotation = this.pose.Rmat;
 
 parseVarargin(varargin{:});
 
@@ -149,6 +149,7 @@ end
 end
 
 
+% Use Pose/applyTo here somehow?
 function out = rotateAndTranslate(Xin, Yin, Zin, R, t)
 
 Xout = R(1,1)*Xin + R(1,2)*Yin + R(1,3)*Zin + t(1);

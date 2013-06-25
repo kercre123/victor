@@ -25,9 +25,10 @@ else
     hold on
 end
 
-X = this.P([1 3 4 2], 1);
-Y = this.P([1 3 4 2], 2);
-Z = this.P([1 3 4 2], 3);
+P = getPosition(this);
+X = P([1 3 4 2], 1);
+Y = P([1 3 4 2], 2);
+Z = P([1 3 4 2], 3);
 
 initHandles = isempty(this.handles) || ...
     ~ishandle(this.handles(1)) || ...

@@ -98,9 +98,12 @@ switch(this.blockType)
 end % SWITCH(blockType)
 
 % Scale the canonical unit cube:
-this.Xmodel = scale(1)*[0 1 1 0; 0 1 1 0; 0 0 0 0; 1 1 1 1; 0 1 1 0; 0 1 1 0]';
-this.Ymodel = scale(2)*[0 0 1 1; 0 0 1 1; 0 0 1 1; 0 0 1 1; 1 1 1 1; 0 0 0 0]';
-this.Zmodel = scale(3)*[0 0 0 0; 1 1 1 1; 0 1 1 0; 0 1 1 0; 0 0 1 1; 0 0 1 1]';
+% (each 4 element column -- note the transpose -- is a face)
+X = scale(1)*[0 1 1 0; 0 1 1 0; 0 0 0 0; 1 1 1 1; 0 1 1 0; 0 1 1 0]';
+Y = scale(2)*[0 0 1 1; 0 0 1 1; 0 0 1 1; 0 0 1 1; 1 1 1 1; 0 0 0 0]';
+Z = scale(3)*[0 0 0 0; 1 1 1 1; 0 1 1 0; 0 1 1 0; 0 0 1 1; 0 0 1 1]';
+
+this.model = [X(:) Y(:) Z(:)];
 
 end
 
@@ -121,10 +124,10 @@ end
 
 index = this.faceTypeToIndex.Count + 1;
 this.faceTypeToIndex(faceType) = index;
-frame = Frame(R, origin);
+pose = Pose(R, origin);
 
 assert(index <= length(this.markers), 'Index for markers too large.');
-this.markers{index} = BlockMarker3D(this, faceType, frame, ...
+this.markers{index} = BlockMarker3D(this, faceType, pose, ...
     firstMarkerID + index);
 
 end

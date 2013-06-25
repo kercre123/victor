@@ -12,7 +12,7 @@ cla(AxesHandle)
 
 world = this.robot.world;
 camera = this.robot.camera;
-invRobotFrame = inv(this.robot.frame);
+invRobotPose = inv(this.robot.pose);
 
 [nrows,ncols] = size(this.image);
 
@@ -24,7 +24,11 @@ hold(AxesHandle, 'on')
 for i_block = 1:world.numBlocks
     block = world.blocks{i_block};
     if ~isempty(block)
-        [X,Y,Z] = invRobotFrame.applyTo(block.X, block.Y, block.Z);
+        pos = invRobotPose.applyTo(getPosition(block));
+        X = reshape(pos(:,1), 4, []);
+        Y = reshape(pos(:,2), 4, []);
+        Z = reshape(pos(:,3), 4, []);
+        
         [u,v] = camera.projectPoints(X, Y, Z);
         
         if any(u(:)>=1) || any(u(:)<=ncols) || ...
@@ -44,7 +48,9 @@ for i_block = 1:world.numBlocks
                 
         for i_marker = 1:block.numMarkers
             marker = block.markers{i_marker};
-            P = invRobotFrame.applyTo(marker.P);
+            
+            P = invRobotPose.applyTo(getPosition(marker));
+            
             [u,v] = camera.projectPoints(P);
             
             if any(u(:)>=1) || any(u(:)<=ncols) || ...

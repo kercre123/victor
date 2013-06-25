@@ -4,7 +4,7 @@ classdef Observation
         image; % should only be used for initialization/visualization!
         robot; % handle to parent robot
         
-        frame;
+        pose;
         markers = {};
     end
     
@@ -25,10 +25,10 @@ classdef Observation
             
             world = this.robot.world;
             if world.numBlocks == 0
-                % If we haven't instantiated any blocks in our world, let the world
-                % origin start at the Robot's current position and instantiate a block
-                % for each marker we detected.
-                this.frame = Frame();
+                % If we haven't instantiated any blocks in our world, let 
+                % the world origin start at the Robot's current position 
+                % and instantiate a block for each marker we detected.
+                this.pose = Pose();
                 
                 % In case we see two sides of the same block at once, we
                 % want to pass in all markers of that block together to get
@@ -75,8 +75,8 @@ classdef Observation
                         matchedMarkers(i_marker) = true;
                         p_marker{i_marker} = this.markers{i_marker}.corners;
                         
-                        M = B.getFaceMarker(this.markers{i_marker}.faceType);
-                        P_marker{i_marker} = M.P;
+                        P_marker{i_marker} = getPosition( ...
+                            B.getFaceMarker(this.markers{i_marker}.faceType));
                     end
                     
                 end
@@ -88,10 +88,10 @@ classdef Observation
                 else
                     p_marker = vertcat(p_marker{:});
                     P_marker = vertcat(P_marker{:});
-                    invRobotFrame = this.robot.camera.computeExtrinsics( ...
+                    invRobotPose = this.robot.camera.computeExtrinsics( ...
                         p_marker, P_marker);
-                    this.frame = inv(invRobotFrame);
-                    this.robot.frame = this.frame;
+                    this.pose = inv(invRobotPose);
+                    this.robot.pose = this.pose;
                     
                     % Add new markers/blocks to world, relative to robot's updated position
                     

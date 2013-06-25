@@ -11,10 +11,6 @@ classdef Robot < handle
         modelX;
         modelY;
         modelZ;
-        
-        X;
-        Y;
-        Z;
                 
         camera;
         
@@ -38,7 +34,7 @@ classdef Robot < handle
     properties(GetAccess = 'public', SetAccess = 'public', ...
             Dependent = true)
         
-        frame;
+        pose;
     end
     
     properties(GetAccess = 'public', SetAccess = 'protected', ...
@@ -55,7 +51,7 @@ classdef Robot < handle
     end % PROPERTIES (get-public, set-protected)
     
     properties(GetAccess = 'protected', SetAccess = 'protected')
-        frameProtected = Frame();
+        poseProtected = Pose();
     end
     
     methods(Access = 'public')
@@ -87,7 +83,7 @@ classdef Robot < handle
         
             this.camera = Camera('device', CameraDevice, ...
                 'calibration', CameraCalibration, ...
-                'frame', inv(Frame(Rrc, Trc)));
+                'pose', inv(Pose(Rrc, Trc)));
                         
            
         end
@@ -100,29 +96,29 @@ classdef Robot < handle
             obs = this.observationWindow{1};
         end
         
-        function F = get.frame(this)
-            % Asking for a robot's frame gives you the frame of the 
+        function P = get.pose(this)
+            % Asking for a robot's pose gives you the pose of the 
             % current observation:
-            F = this.frameProtected;
+            P = this.poseProtected;
         end
         
         
-        function set.frame(this, F)
-            assert(isa(F, 'Frame'), 'Must provide a Frame object.');
+        function set.pose(this, P)
+            assert(isa(P, 'Pose'), 'Must provide a Pose object.');
             
             if true
                 % Total hack of a filter on the robot's position: if the change
                 % is "too big" average the update with the previous position.
                 % TODO: Full blown Kalman Filter or Bundle Adjustment.
-                prevAngle = norm(this.frame.Rvec);
-                newAngle = norm(F.Rvec);
+                prevAngle = norm(this.pose.Rvec);
+                newAngle = norm(P.Rvec);
                 
                 angleChange = abs(newAngle - prevAngle);
                 if angleChange > pi
                     angleChange = 2*pi - angleChange;
                 end
                 
-                Tchange = max(abs(this.frame.T - F.T));
+                Tchange = max(abs(this.pose.T - P.T));
                 
                 angleSigma = 60*pi/180;
                 translationSigma = 50;
@@ -132,12 +128,12 @@ classdef Robot < handle
                 
                 w = min(w_angle, w_T);
                 
-                Rvec = w*F.Rvec + (1-w)*this.frameProtected.Rvec;
-                T = w*F.T + (1-w)*this.frameProtected.T;
+                Rvec = w*P.Rvec + (1-w)*this.poseProtected.Rvec;
+                T = w*P.T + (1-w)*this.poseProtected.T;
                 
-                this.frameProtected = Frame(Rvec, T);
+                this.poseProtected = Pose(Rvec, T);
             else
-                this.frameProtected = F;
+                this.poseProtected = P;
             end
         end
         %}

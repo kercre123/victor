@@ -11,11 +11,16 @@ end
 initHandle = isempty(this.handle) || ~ishandle(this.handle) || ...
     get(this.handle, 'Parent') ~= AxesHandle;
 
+pos = getPosition(this);
+X = reshape(pos(:,1), 4, []);
+Y = reshape(pos(:,2), 4, []);
+Z = reshape(pos(:,3), 4, []);
+    
 if initHandle
-    this.handle = patch(this.X, this.Y, this.Z, this.color, ...
+    this.handle = patch(X, Y, Z, this.color, ...
         'Parent', AxesHandle, otherArgs{:});
 else
-    set(this.handle, 'XData', this.X, 'YData', this.Y, 'ZData', this.Z);
+    set(this.handle, 'XData', X, 'YData', Y, 'ZData', Z);
 end
 
 for i = 1:length(this.markers)

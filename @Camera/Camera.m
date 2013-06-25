@@ -3,7 +3,7 @@ classdef Camera < handle
     properties(GetAccess = 'public', SetAccess = 'public')
         
         image;
-        frame;
+        pose;
         
     end
         
@@ -37,7 +37,7 @@ classdef Camera < handle
             device = [];
             resolution = [640 480];
             calibration = [];
-            frame = Frame(); %#ok<PROP>
+            pose = Pose(); %#ok<PROP>
            
             parseVarargin(varargin{:});
             
@@ -61,7 +61,7 @@ classdef Camera < handle
                         
             this.alpha = calibration.alpha_c;
             
-            this.frame = frame; %#ok<PROP>
+            this.pose = pose; %#ok<PROP>
             
             if ~isempty(this.usbDevice)
                 mexCameraCapture(this.usbDevice, this.ncols, this.nrows);

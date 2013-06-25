@@ -37,7 +37,7 @@ function varargout = projectPoints(this, varargin)
 % Andrew Stein
 %
 
-frame = [];
+pose = [];
 
 origDims = [];
 switch(nargin)
@@ -47,7 +47,7 @@ switch(nargin)
         P = varargin{1};
         
         if nargin == 3
-            frame = varargin{2};
+            pose = varargin{2};
         end
                 
     case {4,5}
@@ -62,19 +62,19 @@ switch(nargin)
         P = [X(:) Y(:) Z(:)];
              
         if nargin == 5
-            frame = varargin{4};
+            pose = varargin{4};
         end
         
     otherwise
         error('Unexpected number of inputs.');
 end
 
-if isempty(frame)
+if isempty(pose)
     % Put world coordinates into camera coordinates so we can project them
     % below
-    P = this.frame.applyInvTo(P);
+    P = this.pose.applyInvTo(P);
 else
-    P = frame.applyTo(P);
+    P = pose.applyTo(P);
 end
 
 if length(this.distortionCoeffs)>4 && this.distortionCoeffs(5)~=0

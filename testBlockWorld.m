@@ -5,6 +5,8 @@ cla(findobj(namedFigure('BlockWorld 3D'), 'Type', 'axes'))
 T_update = 0;
 T_draw = 0;
 
+C = onCleanup(@()clear('mexCameraCapture'));
+
 if nargin > 1 && ~isempty(frames)
     % From canned frames
     

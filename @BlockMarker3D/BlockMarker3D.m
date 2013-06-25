@@ -11,69 +11,63 @@ classdef BlockMarker3D < handle
         
         faceType;
                        
-        Pmodel;
-        P;
+        model;
         
         ID;
-    end
-    
-    properties(GetAccess = 'public', SetAccess = 'public', ...
-            Dependent = true)
         
-        frame;
+        pose;
         
     end
     
     properties(GetAccess = 'public', SetAccess = 'protected', ...
             Dependent = true)
-       
+        
         origin;
     end
-    
-    
-    properties(GetAccess = 'protected', SetAccess = 'protected')
         
-        frameProtected = Frame();
+    properties(GetAccess = 'protected', SetAccess = 'protected')
+       
         handles;
         
     end
     
     methods(Access = 'public')
        
-        function this = BlockMarker3D(parentBlock, faceType_, frameInit, id)
+        function this = BlockMarker3D(parentBlock, faceType_, poseInit, id)
             
             assert(isa(parentBlock, 'Block'), ...
                 'parentBlock should be a Block object.');
-            assert(isa(frameInit, 'Frame'), ...
-                'frameInit should be a Frame object.');
+            assert(isa(poseInit, 'Pose'), ...
+                'frameInit should be a Pose object.');
             
             this.ID = id;
             
             this.block = parentBlock;
             this.faceType  = faceType_;
   
-            this.Pmodel = this.Width*[0 0 0; 0 0 -1; 1 0 0; 1 0 -1];
-            this.Pmodel = frameInit.applyTo(this.Pmodel);
+            this.model = this.Width*[0 0 0; 0 0 -1; 1 0 0; 1 0 -1];
+            this.model = poseInit.applyTo(this.model);
             
-            this.P = this.Pmodel;
+        end
+        
+        function varargout = getPosition(this, poseIn)
+            varargout = cell(1,nargout);
+            if nargin < 2
+                [varargout{:}] = this.pose.applyTo(this.model);
+            else
+                [varargout{:}] = poseIn.applyTo(this.model);
+            end
         end
          
     end % METHODS (public)
    
     methods
-        function F = get.frame(this)
-            F = this.frameProtected;
-        end
-        
-        function set.frame(this, F)
-            assert(isa(F, 'Frame'), 'Must provide a Frame object');
-            this.frameProtected = F;
-            this.P = this.frameProtected.applyTo(this.Pmodel);
-        end
         
         function o = get.origin(this)
-            o = this.P(1,:);
+            % return current origin
+            o = this.pose.applyTo(this.model(1,:));
         end
+        
     end
     
 end % CLASSDEF BlockMarker

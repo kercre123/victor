@@ -1,4 +1,4 @@
-classdef Frame
+classdef Pose
     
     properties(GetAccess = 'public', SetAccess = 'protected')
        
@@ -6,11 +6,16 @@ classdef Frame
         Rvec;
         T;
         
+        % Derivative of the elements of the rotation matrix w.r.t. the
+        % elements of the rotation vector
+        dRmat_dRvec;
+        dT;
+        
     end
         
     methods(Access = 'public')
         
-        function this = Frame(Rin,Tin)
+        function this = Pose(Rin,Tin)
             
             if nargin==0
                 this.Rmat = eye(3);
@@ -23,15 +28,16 @@ classdef Frame
                 this.T = Tin(:);
                 
                 if isvector(Rin)
-                    this.Rvec = Rin;
-                    this.Rmat = rodrigues(Rin);
+                    assert(length(Rin)==3, ...
+                        'Rotation vector should have 3 elements.');
+                    [this.Rmat, this.dRmat_dRvec] = rodrigues(Rin);
                     this.Rvec = rodrigues(this.Rmat);
                     
                 elseif ismatrix(Rin)
                     assert(isequal(size(Rin), [3 3]), ...
                         'Rotation matrix should be 3x3.');
-                    this.Rmat = Rin;
                     this.Rvec = rodrigues(Rin);
+                    [this.Rmat, this.dRmat_dRvec] = rodrigues(this.Rvec);
                    
                 else
                     error('Unrecognized form for rotation.');
@@ -39,11 +45,11 @@ classdef Frame
             end
         end % FUNCTION Frame() [Constructor]
         
-        function F = inv(this)
-            F = Frame(this.Rmat', -this.Rmat'*this.T);
+        function P = inv(this)
+            P = Pose(this.Rmat', -this.Rmat'*this.T);
         end
         
         
     end % METHODS (public)
     
-end %CLASSDEF Frame
+end %CLASSDEF Pose
