@@ -20,6 +20,7 @@ classdef Observation
             this.image = img;
             this.markers = simpleDetector(this.image);
             this.robot = parentRobot;
+            this.pose = Pose();
             
             numSeenMarkers = this.numMarkers;
             

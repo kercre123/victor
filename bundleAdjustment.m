@@ -46,6 +46,10 @@ assert(iscell(invRobotPoses) && iscell(blocks) && ...
 
 numPoses = sum(~cellfun(@isempty, invRobotPoses(:)));
 
+if numPoses == 0
+    return;
+end
+
 visible = cell(1, numPoses);
 for i_pose = 1:numPoses
     assert(size(markerCorners{i_pose},2)==2, 'x_images should be Nx2.');
