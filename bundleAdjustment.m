@@ -1,5 +1,5 @@
-function [Rvec,T,X_world, Rmat] = bundleAdjustment(Rvec, T, x_image, ...
-    X_world,camera, varargin)
+function [invRobotPoses, blocks] = bundleAdjustment(invRobotPoses, ...
+    blocks, markerCorners, camera, varargin)
 
 %compute_extrinsic
 %
@@ -40,47 +40,44 @@ reprojErrThreshold = .01;
 
 parseVarargin(varargin{:});
 
-assert(iscell(Rvec) && iscell(T) && iscell(x_image) && iscell(camera), ...
-    'Rvec, T, x_image, and should camera should be cell arrays.');
+assert(iscell(invRobotPoses) && iscell(blocks) && ...
+    iscell(markerCorners) && iscell(camera), ...
+    'robotPoses, blockPoses, markerCorners, and camera should be cell arrays.');
 
-numPoses = sum(~cellfun(@isempty, Rvec(:)));
-
-assert(size(X_world,2)==3, 'X_world should be Nx3.');
-
-X_world = X_world';
+numPoses = sum(~cellfun(@isempty, invRobotPoses(:)));
 
 visible = cell(1, numPoses);
 for i_pose = 1:numPoses
-    assert(size(x_image{i_pose},2)==2, 'x_images should be Nx2.');
-    x_image{i_pose} = x_image{i_pose}';
+    assert(size(markerCorners{i_pose},2)==2, 'x_images should be Nx2.');
+    markerCorners{i_pose} = markerCorners{i_pose}';
     
-    visible{i_pose} = all(x_image{i_pose} >= 0, 1);
+    visible{i_pose} = all(markerCorners{i_pose} >= 0, 1);
     
-    % Fold the camera's frame into the passed-in frames:
-    tempFrame = Frame(Rvec{i_pose}, T{i_pose});
-    tempFrame = inv(camera{i_pose}.frame)*tempFrame; %#ok<MINV>
+    % Fold the camera's pose into the passed-in poses:
+    invRobotPoses{i_pose} = inv(camera{i_pose}.pose)*invRobotPoses{i_pose}; %#ok<MINV>
     
-    Rvec{i_pose} = tempFrame.Rvec;
-    T{i_pose}    = tempFrame.T;
-end
+end % FOR each robot pose
 
-        
-param = [vertcat(Rvec{:});vertcat(T{:});X_world(:)];
+
+% Parameters consist of all robots' poses within their observation windows, 
+% plus the poses of all blocks.
 
 change = 1;
 
 iter = 0;
 
-lambda = 0.5; % LM parameter
+lambda = 10; % LM parameter
 lambdaAdjFactor = 1.5;
 
 %fprintf(1,'Gradient descent iterations: ');
 
-% Get initial reprojection error and Jacobians
-[reprojErr, J] = reprojectionHelper(param, numPoses, x_image, camera, visible);
+% Get initial reprojection error and Jacobian:
+[reprojErr, J] = reprojectionHelper(invRobotPoses, blocks, ...
+    markerCorners, camera, visible);
     
 reprojErrNorm = norm(reprojErr);
     
+
 while norm(reprojErrNorm) > reprojErrThreshold && ...
         change > changeTolerance && iter < maxIterations
     
@@ -90,12 +87,49 @@ while norm(reprojErrNorm) > reprojErrThreshold && ...
         
         JtJ = J'*J;
         
-        paramNew = param;
+        %paramNew = param;
+        param = posesToParamsHelper(invRobotPoses, blocks);
         
+        % Take an optimization step: compute the parameter update amount.
         %param_innov = inv(JJ2)*(JJ')*ex(:);
-        paramUpdate = (JtJ + lambda*diag(diag(JtJ))) \ (J'*reprojErr);
+        paramUpdate = (JtJ + diag(sparse(lambda*max(lambda,diag(JtJ))))) \ (J'*reprojErr);
         %paramUpdate = robust_least_squares(JtJ + mu*eye(size(JtJ)), J'*reprojErr);
-               
+       
+        % Roll the update into the current robot/block poses:
+        [invRobotPoses, blocks] = paramToPosesHelper(paramUpdate, ...
+            invRobotPoses, blocks, 'update');
+        
+        % Compute the new reprojection error, and the Jacobian matrix for
+        % the next step (if we need it):
+        [reprojErrNew, Jnew] = reprojectionHelper(invRobotPoses, blocks, ...
+            markerCorners, camera, visible);
+
+        % Get the norm of the reprojection error to see if we've converged:
+        reprojErrNormNew = norm(reprojErrNew);
+        
+        % See if reprojection error reduced.  If so, use the new parameters
+        % and reduce the LM.  Otherwise, leave the parameters where they
+        % were and increase the LM parameter.
+        if reprojErrNormNew < reprojErrNorm
+            lambda = lambda/lambdaAdjFactor;
+            
+            reprojErr = reprojErrNew;
+            reprojErrNorm = reprojErrNormNew;
+            J = Jnew;
+            
+            fprintf('Successful update (reprojErr = %.4f), lambda now %.2f\n', ...
+                reprojErrNorm, lambda);
+        else
+            % Restore previous parameters/poses:
+            [invRobotPoses, blocks] = paramToPosesHelper(param, ...
+                invRobotPoses, blocks, 'replace');
+        
+            lambda = lambda*lambdaAdjFactor;
+            fprintf('Unsuccessful update (reprojErr = %.4f), lambda now %.2f\n', ...
+                reprojErrNorm, lambda);
+        end
+        
+        %{
         newFrames = cell(1, numPoses);
         
         % Compose the pose frames with the updates:
@@ -119,8 +153,7 @@ while norm(reprojErrNorm) > reprojErrThreshold && ...
         paramNew(Xindex:end) = paramNew(Xindex:end) + paramUpdate(Xindex:end);
         
         [reprojErrNew, Jnew] = reprojectionHelper(paramNew, numPoses, ...
-            x_image, camera, visible);
-        
+            numBlocks, markerCorners, camera, visible);
         
         % See if reprojection error reduced.  If so, use the new parameters
         % and reduce the LM.  Otherwise, leave the parameters where they
@@ -139,7 +172,8 @@ while norm(reprojErrNorm) > reprojErrThreshold && ...
             lambda = lambda*lambdaAdjFactor;
             fprintf('Unsuccessful update, lambda now %.2f\n', lambda);
         end
-        
+        %}
+            
         change = norm(paramUpdate)/norm(param);
         iter = iter + 1;
         
@@ -147,76 +181,171 @@ while norm(reprojErrNorm) > reprojErrThreshold && ...
     
 end;
 
-Rindex = [1 2 3];
-Tindex = [4 5 6];
-X_world = reshape(param((numPoses*6 + 1):end), 3, [])';
-
+% Remove the camera's pose from the final poses:
 for i_pose = 1:numPoses
-    % Remove the camera's frame from the final frames:
-    tempFrame = Frame(param(Rindex), param(Tindex));
-    tempFrame = camera{i_pose}.frame*tempFrame;   
-    Rvec{i_pose} = tempFrame.Rvec;
-    T{i_pose}    = tempFrame.T;
-end
-
-if nargout > 3
-    Rmat = cell(1, numPoses);
-    for i_pose = 1:numPoses
-        Rmat{i_pose} = rodrigues(Rvec{i_pose});
-    end
+    invRobotPoses{i_pose} = camera{i_pose}.pose * invRobotPoses{i_pose};
 end
 
 end % FUNCTION bundleAdjustment()
 
 
-function [reprojErr, J] = reprojectionHelper(params, numPoses, ...
+function param = posesToParamsHelper(robotPoses, blocks)
+% Convert cell arrays of robot poses and block objects to a param vector
+
+numPoses = length(robotPoses);
+Rvec_robot = cell(1,numPoses);
+T_robot    = cell(1,numPoses);
+for i_pose = 1:numPoses
+    Rvec_robot{i_pose} = robotPoses{i_pose}.Rvec;
+    T_robot{i_pose}    = robotPoses{i_pose}.T;
+end % FOR each robot pose
+
+numBlocks = length(blocks);
+Rvec_block = cell(1,numBlocks);
+T_block    = cell(1,numBlocks);
+for i_block = 1:numBlocks
+    pose = blocks{i_block}.pose;
+    Rvec_block{i_block} = pose.Rvec;
+    T_block{i_block}    = pose.T;
+end % FOR each block
+
+param = [vertcat(Rvec_robot{:}); vertcat(T_robot{:}); ...
+    vertcat(Rvec_block{:}); vertcat(T_block{:})];
+
+end % FUNCTION posesToParamsHelper()
+
+
+function [robotPoses, blocks] = paramToPosesHelper(param, robotPoses, blocks, mode)
+% Convert param vector back into cell arrays of robot poses and blocks
+
+numBlocks = length(blocks);
+numPoses  = length(robotPoses);
+
+param = reshape(param, 3, []);
+
+for i_pose = 1:numPoses
+    poseUpdate = Pose(param(:,i_pose), param(:,i_pose+numPoses));
+    switch(mode)
+        case 'update'
+            robotPoses{i_pose} = poseUpdate * robotPoses{i_pose};
+        case 'replace'
+            robotPoses{i_pose} = poseUpdate;
+        otherwise
+            error('Unrecognized mode "%s"', mode);
+    end
+end % FOR each robot pose
+
+R_offset = 2*numPoses;
+T_offset = R_offset + numBlocks;
+for i_block = 1:numBlocks
+    poseUpdate = Pose(param(:,i_block+R_offset), param(:,i_block+T_offset));
+    switch(mode)
+        case 'update'
+            blocks{i_block}.pose = poseUpdate * blocks{i_block}.pose;
+        case 'replace'
+            blocks{i_block}.pose = poseUpdate;
+        otherwise
+            error('Unrecognized mode "%s"', mode);
+    end
+end% FOR each block
+
+end % FUNCTION paramToPosesHelper()
+
+function [X_world, dXdR, dXdT] = getMarker3Dcoords(blocks)
+
+numBlocks = length(blocks);
+
+X_world = cell(1, numBlocks);
+dXdR    = cell(1, numBlocks);
+dXdT    = cell(1, numBlocks);
+for i_block = 1:numBlocks
+    block = blocks{i_block};
+    numMarkers = block.numMarkers;
+    X_world_crnt = cell(1, numMarkers);
+    dXdR_crnt    = cell(1, numMarkers);
+    dXdT_crnt    = cell(1, numMarkers);
+    for i_marker = 1:numMarkers
+        marker = block.markers{i_marker};
+        [X_world_crnt{i_marker}, dXdR_crnt{i_marker}, ...
+            dXdT_crnt{i_marker}] = getPosition(marker);
+    end
+    
+    X_world{i_block} = vertcat(X_world_crnt{:})'; % Note the transpose!
+    dXdR{i_block}    = vertcat(dXdR_crnt{:});
+    dXdT{i_block}    = vertcat(dXdT_crnt{:});
+    
+end % FOR each block
+
+X_world = [X_world{:}];
+dXdR    = blkdiag(dXdR{:});
+dXdT    = blkdiag(dXdT{:});
+
+end % FUNCTION blockPosesToWorldCoords()
+
+
+function [reprojErr, J] = reprojectionHelper(robotPoses, blocks, ...
     x_image, camera, visible)
 
-Rindex = [1 2 3];
-Tindex = [4 5 6];
-X_world = reshape(params((numPoses*6 + 1):end), 3, []);
+[X_world, dXdR_block, dXdT_block] = getMarker3Dcoords(blocks);
 
-dxdX  = cell(1, numPoses);
-dxdR  = cell(1, numPoses);
-dxdT  = cell(1, numPoses);
+numPoses = length(robotPoses);
+
+dxdR_robot = cell(1, numPoses);
+dxdT_robot = cell(1, numPoses);
+dxdR_block = cell(1, numPoses);
+dxdT_block = cell(1, numPoses);
+
 reprojErr = cell(1, numPoses);
 
 for i_pose = 1:numPoses
     vis = visible{i_pose};
     
-    Rvec = params(Rindex);
-    T    = params(Tindex);
-    
-    [x,dX,dxdR{i_pose},dxdT{i_pose}] = project_points3( ...
+    [x, dX, dxdR_robot{i_pose}, dxdT_robot{i_pose}] = project_points3( ...
         X_world(:,vis), ...
-        Rvec, T, ...
+        robotPoses{i_pose}.Rvec, robotPoses{i_pose}.T, ...
         camera{i_pose}.focalLength, camera{i_pose}.center, ...
         camera{i_pose}.distortionCoeffs, camera{i_pose}.alpha);
     
-    dxdX{i_pose} = zeros(size(dX,1), 3*size(X_world,2));
+    % Use chain rule to get derivatives of image coords (x) w.r.t. the
+    % block poses:
+    dxdX = zeros(size(dX,1), 3*size(X_world,2));
     visible3D = [vis; vis; vis];
-    dxdX{i_pose}(:,visible3D(:)) = dX;
+    dxdX(:,visible3D(:)) = dX;
+    dxdR_block{i_pose} = sparse(dxdX * dXdR_block);
+    dxdT_block{i_pose} = sparse(dxdX * dXdT_block);
+    
+    dxdR_robot{i_pose} = sparse(dxdR_robot{i_pose});
+    dxdT_robot{i_pose} = sparse(dxdT_robot{i_pose});
     
     % Compute current reprojection error for this pose
     reprojErr{i_pose} = x_image{i_pose}(:,vis) - x;
     
-    if true
+    if false
         namedFigure('BA Reprojection')
         subplot(1,numPoses,i_pose), hold off
         plot(x_image{i_pose}(1,vis), x_image{i_pose}(2,vis), '.');
         hold on
         plot(x(1,:), x(2,:), 'rx');
+        
+        title(norm(reprojErr{i_pose}))
+        if i_pose==numPoses
+            legend('Observed Points', 'Reprojected Points');
+            pause
+        end
     end
-    
-    Rindex = Rindex + 6;
-    Tindex = Tindex + 6;
-  
-end
+   
+end % FOR each robot pose
+
 
 reprojErr = [reprojErr{:}];
 reprojErr = reprojErr(:);
 
-J = [blkdiag(dxdR{:}) blkdiag(dxdT{:}) vertcat(dxdX{:})];
+J = [blkdiag(dxdR_robot{:}) blkdiag(dxdT_robot{:}) ...
+    blkdiag(dxdR_block{:}) blkdiag(dxdT_block{:})];
     
+assert(issparse(J), 'Expecting sparse Jacobian.');
+
 end % FUNCTIOn reprojectionHelper()
+
+
 

@@ -18,8 +18,9 @@ classdef Pose
         function this = Pose(Rin,Tin)
             
             if nargin==0
-                this.Rmat = eye(3);
-                this.Rvec = rodrigues(this.Rmat);
+                %this.Rmat = eye(3);
+                this.Rvec = zeros(3,1);
+                [this.Rmat, this.dRmat_dRvec] = rodrigues(this.Rvec);
                 this.T = zeros(3,1);
             else
                 assert(isvector(Tin) && length(Tin)==3, ...

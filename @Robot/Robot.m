@@ -29,6 +29,8 @@ classdef Robot < handle
             'EyeRadiusFraction', .47, ... % fraction of BodyWidth/2
             'EyeColor', [.5 0 0]);
         
+        handles; 
+        
     end % PROPERTIES (get-public, set-protected)
     
     properties(GetAccess = 'public', SetAccess = 'public', ...
@@ -43,16 +45,15 @@ classdef Robot < handle
         currentObservation;
     end
     
-    properties(GetAccess = 'public', SetAccess = 'protected')
+    properties(GetAccess = 'public', SetAccess = 'public')
         
-        handles; 
-        observationWindow;
+        observationWindow = {};
         
     end % PROPERTIES (get-public, set-protected)
     
-    properties(GetAccess = 'protected', SetAccess = 'protected')
-        poseProtected = Pose();
-    end
+%     properties(GetAccess = 'protected', SetAccess = 'protected')
+%         poseProtected = Pose();
+%     end
     
     methods(Access = 'public')
         
@@ -99,17 +100,23 @@ classdef Robot < handle
         function P = get.pose(this)
             % Asking for a robot's pose gives you the pose of the 
             % current observation:
-            P = this.poseProtected;
+            %P = this.poseProtected;
+            if isempty(this.currentObservation)
+                P = Pose();
+            else
+                P = this.currentObservation.pose;
+            end
         end
         
         
         function set.pose(this, P)
             assert(isa(P, 'Pose'), 'Must provide a Pose object.');
             
-            if true
+            if false % Pose smoothing hack
+                
                 % Total hack of a filter on the robot's position: if the change
                 % is "too big" average the update with the previous position.
-                % TODO: Full blown Kalman Filter or Bundle Adjustment.
+                % TODO: Full-blown Kalman Filter and/or Bundle Adjustment.
                 prevAngle = norm(this.pose.Rvec);
                 newAngle = norm(P.Rvec);
                 
@@ -128,12 +135,12 @@ classdef Robot < handle
                 
                 w = min(w_angle, w_T);
                 
-                Rvec = w*P.Rvec + (1-w)*this.poseProtected.Rvec;
-                T = w*P.T + (1-w)*this.poseProtected.T;
+                Rvec = w*P.Rvec + (1-w)*this.pose.Rvec;
+                T = w*P.T + (1-w)*this.pose.T;
                 
-                this.poseProtected = Pose(Rvec, T);
+                this.observationWindow{1}.pose = Pose(Rvec, T);
             else
-                this.poseProtected = P;
+                this.observationWindow{1}.pose = P;
             end
         end
         %}

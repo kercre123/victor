@@ -12,7 +12,7 @@ cla(AxesHandle)
 
 world = this.robot.world;
 camera = this.robot.camera;
-invRobotPose = inv(this.robot.pose);
+invRobotPose = inv(this.pose);
 
 [nrows,ncols] = size(this.image);
 

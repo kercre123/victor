@@ -28,7 +28,7 @@ classdef Observation
                 % If we haven't instantiated any blocks in our world, let 
                 % the world origin start at the Robot's current position 
                 % and instantiate a block for each marker we detected.
-                this.pose = Pose();
+                % this.pose = Pose();
                 
                 % In case we see two sides of the same block at once, we
                 % want to pass in all markers of that block together to get
@@ -94,7 +94,6 @@ classdef Observation
                     this.robot.pose = this.pose;
                     
                     % Add new markers/blocks to world, relative to robot's updated position
-                    
                     blockTypes = cellfun(@(marker)marker.blockType, this.markers);
                     used = false(1,numSeenMarkers);
                 

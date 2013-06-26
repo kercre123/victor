@@ -19,7 +19,7 @@ if nargin > 1 && ~isempty(frames)
         
         t = tic;
         draw(W);
-        title(i)
+        %title(i)
         T_draw = T_draw + toc(t);
         
         if i < length(frames) 
