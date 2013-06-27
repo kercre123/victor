@@ -297,7 +297,7 @@ for i_region = 1:numRegions
         % of the two vectors forming the quadrilateral is positive or negative.
         A = [corners(2,:) - corners(1,:);
             corners(3,:) - corners(1,:)];
-        detA = det(A);
+        detA = det(A); % cross product of vectors anchored at corner 1
         if abs(detA) >= minQuadArea
             
             if detA > 0
@@ -311,11 +311,21 @@ for i_region = 1:numRegions
             % computed using the cross product (via determinates)
             % referenced to opposite corners are similar (and the signs
             % are in agreement, so that two of the sides don't cross
-            % each other in the middle).
+            % each other in the middle or form some sort of weird concave
+            % shape).
             B = [corners(3,:) - corners(4,:);
                 corners(2,:) - corners(4,:)];
-            detB = det(B);
-            if sign(detA) == sign(detB)
+            detB = det(B); % cross product of vectors anchored at corner 4
+            
+            C = [corners(4,:) - corners(3,:); 
+                corners(1,:) - corners(3,:)];
+            detC = det(C); % cross product of vectors anchored at corner 3
+            
+            D = [corners(1,:) - corners(2,:);
+                corners(4,:) - corners(2,:)];
+            detD = det(D); % cross product of vectors anchored at corner 2
+            
+            if sign(detA) == sign(detB) && sign(detC) == sign(detD)
                 detA = abs(detA);
                 detB = abs(detB);
                 if max(detA,detB) / min(detA,detB) < 1.5
