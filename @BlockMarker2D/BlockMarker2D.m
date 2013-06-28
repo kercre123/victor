@@ -1,4 +1,4 @@
-classdef BlockMarker2D < handle
+classdef BlockMarker2D %< matlab.mixin.Copyable
     
     properties(GetAccess = 'public', SetAccess = 'protected')
         blockType;
