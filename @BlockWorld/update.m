@@ -20,31 +20,29 @@ for i_robot = 1:this.numRobots
 end
 
 uv = cell(this.numRobots, Robot.ObservationWindowLength);
-R  = cell(this.numRobots, Robot.ObservationWindowLength);
-T  = cell(this.numRobots, Robot.ObservationWindowLength);
+%R  = cell(this.numRobots, Robot.ObservationWindowLength);
+%T  = cell(this.numRobots, Robot.ObservationWindowLength);
+invRobotPoses = cell(this.numRobots, Robot.ObservationWindowLength);
 
 numMarkers3D = this.numMarkers;
 
-seen = false(numMarkers3D*4,1);
+%seen = false(numMarkers3D*4,1);
 for i_robot = 1:this.numRobots
     for i_obs = 1:Robot.ObservationWindowLength
         obs = this.robots{i_robot}.observationWindow{i_obs};
         if ~isempty(obs) && obs.numMarkers > 0
             uv{i_robot, i_obs} = obs.getAllPoints2D(numMarkers3D);
-            pose = obs.pose;
-            R{i_robot, i_obs} = pose.Rmat;
-            T{i_robot, i_obs} = pose.T;
+            invRobotPoses{i_robot, i_obs} = inv(obs.pose);
             
             assert(isequal(size(uv{i_robot,i_obs}), [4*numMarkers3D 2]), ...
                 'Returned marker locations is the wrong size.');
             
-            seen(all(uv{i_robot,i_obs}>=0,2)) = true;
+            %seen(all(uv{i_robot,i_obs}>=0,2)) = true;
         end
     end
 end
 
-X = this.getAllPoints3D;
-
+%{
 % Remove markers that were instantiated but never seen
 for i_robot = 1:this.numRobots
     for i_obs = 1:Robot.ObservationWindowLength
@@ -53,39 +51,45 @@ for i_robot = 1:this.numRobots
         end
     end
 end
+%}
 
+% validPoses    = ~cellfun(@isempty, invRobotPoses(:));
+% invRobotPoses = invRobotPoses(validPoses);
+% uv            = uv(validPoses);
 
 %% "My" Bundle Adjustment
-if doBundleAdjustment
-    cameras = cell(size(R));
+if doBundleAdjustment && all(~cellfun(@isempty, invRobotPoses(:)))
+    
+    % Just assuming all cameras are same here!
+    % TODO: deal with possibly different cameras on each robot?
+    cameras = cell(size(invRobotPoses));
     [cameras{:}] = deal(this.robots{1}.camera);
-    Rvec = cell(size(R));
-    for i=1:length(R)
-        if ~isempty(R{i})
-            Rvec{i} = rodrigues(R{i});
-        end
-    end
     
-    [Rvec, T, Xnew] = bundleAdjustment(Rvec, T, uv, X(seen,:), cameras);
+    %[Rvec, T, Xnew] = bundleAdjustment(Rvec, T, uv, X(seen,:), cameras);
+    numPosesBefore = length(invRobotPoses);
+    [invRobotPoses, this.blocks] = bundleAdjustment(invRobotPoses, ...
+        this.blocks, uv, cameras);
+    assert(length(invRobotPoses) == numPosesBefore, ...
+        'Number of poses changed before and after bundle adjustment!');
     
-    index = [1 2 3 4];
-    for i_marker = 1:this.numMarkers
-        i_X = (i_marker-1)*4 + 1;
-        if seen(i_X)
-            M = this.allMarkers3D{i_marker};
-            M.P = Xnew(index,:);
-            index = index + 4;
-        end
-    end
-    
+    %tempPoses = cell(this.numRobots, Robot.ObservationWindowLength);
+    %tempPoses(validPoses) = invRobotPoses;
+   
     for i_robot = 1:this.numRobots
         for i_obs = 1:Robot.ObservationWindowLength
-            obs = this.robots{i_robot}.observationWindow{i_obs};
-            if ~isempty(obs) && obs.numMarkers > 0
-                obs.frame = Frame(Rvec{i_robot, i_obs}, T{i_robot, i_obs});
+            if ~isempty(this.robots{i_robot}.observationWindow{i_obs}) && ...
+                    this.robots{i_robot}.observationWindow{i_obs}.numMarkers > 0
+                
+                assert(~isempty(invRobotPoses{i_robot, i_obs}), ...
+                    'Pose about to be assigned to observation should not be empty.');
+                
+                this.robots{i_robot}.observationWindow{i_obs}.pose = ...
+                    inv(invRobotPoses{i_robot, i_obs});
             end
+
         end
     end
+    
 end % IF do bundle adjustment
 
 
