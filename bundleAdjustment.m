@@ -35,8 +35,11 @@ function [invRobotPoses, blocks] = bundleAdjustment(invRobotPoses, ...
 changeTolerance = 1e-10;
 maxIterations   = 50;
 conditionThreshold = inf;
-reprojErrThreshold = .01;
+reprojErrThreshold = .05;
 %DEBUG_DISPLAY = false;
+
+reprojErrNormFcn = @(e)norm(e);
+%reprojErrNormFcn = @(e)median(abs(e));
 
 parseVarargin(varargin{:});
 
@@ -73,13 +76,21 @@ iter = 0;
 lambda = 10; % LM parameter
 lambdaAdjFactor = 1.5;
 
-%fprintf(1,'Gradient descent iterations: ');
+
+% %%% DEBUG! %%%
+% % Perturb the state and see if bundle adjustment can correct
+% param = posesToParamsHelper(invRobotPoses, blocks);
+% paramPerturb = param + (.02*param).*randn(size(param));
+% [invRobotPoses, blocks] = paramToPosesHelper(paramPerturb, ...
+%     invRobotPoses, blocks, 'replace');
+% %%% DEBUG! %%%
+
 
 % Get initial reprojection error and Jacobian:
 [reprojErr, J] = reprojectionHelper(invRobotPoses, blocks, ...
     markerCorners, camera, visible);
     
-reprojErrNorm = norm(reprojErr);
+reprojErrNorm = reprojErrNormFcn(reprojErr);
     
 
 while norm(reprojErrNorm) > reprojErrThreshold && ...
@@ -95,13 +106,18 @@ while norm(reprojErrNorm) > reprojErrThreshold && ...
         param = posesToParamsHelper(invRobotPoses, blocks);
         
         % Take an optimization step: compute the parameter update amount.
-        %param_innov = inv(JJ2)*(JJ')*ex(:);
-        paramUpdate = (JtJ + diag(sparse(lambda*max(lambda,diag(JtJ))))) \ (J'*reprojErr);
-        %paramUpdate = robust_least_squares(JtJ + mu*eye(size(JtJ)), J'*reprojErr);
+        A = JtJ + diag(sparse(lambda*max(lambda,diag(JtJ))));
+        b = J'*reprojErr;
+        %paramUpdate = A \ b;
+        paramUpdate = robust_least_squares(A, b);
        
         % Roll the update into the current robot/block poses:
-        [invRobotPoses, blocks] = paramToPosesHelper(paramUpdate, ...
-            invRobotPoses, blocks, 'update');
+        % NOTE: I don't think "update" mode is really working.  Seems 
+        % better to update the params by actually adding the update rather 
+        % than computing a pose update from the updated parmas and 
+        % composing that with the existing poses.
+        [invRobotPoses, blocks] = paramToPosesHelper(param+paramUpdate, ...
+            invRobotPoses, blocks, 'replace');
         
         % Compute the new reprojection error, and the Jacobian matrix for
         % the next step (if we need it):
@@ -109,7 +125,7 @@ while norm(reprojErrNorm) > reprojErrThreshold && ...
             markerCorners, camera, visible);
 
         % Get the norm of the reprojection error to see if we've converged:
-        reprojErrNormNew = norm(reprojErrNew);
+        reprojErrNormNew = reprojErrNormFcn(reprojErrNew);
         
         % See if reprojection error reduced.  If so, use the new parameters
         % and reduce the LM.  Otherwise, leave the parameters where they
@@ -124,7 +140,8 @@ while norm(reprojErrNorm) > reprojErrThreshold && ...
             fprintf('Successful update (reprojErr = %.4f), lambda now %.2f\n', ...
                 reprojErrNorm, lambda);
         else
-            % Restore previous parameters/poses:
+            % Reprojection error did not reduce, so restore previous 
+            % parameters/poses:
             [invRobotPoses, blocks] = paramToPosesHelper(param, ...
                 invRobotPoses, blocks, 'replace');
         
@@ -132,51 +149,6 @@ while norm(reprojErrNorm) > reprojErrThreshold && ...
             fprintf('Unsuccessful update (reprojErr = %.4f), lambda now %.2f\n', ...
                 reprojErrNorm, lambda);
         end
-        
-        %{
-        newFrames = cell(1, numPoses);
-        
-        % Compose the pose frames with the updates:
-        Rindex = 1:3;
-        Tindex = 4:6;
-        for i_pose = 1:numPoses
-            frame = Frame(Rvec{i_pose}, T{i_pose});
-            frameUpdate = Frame(paramUpdate(Rindex), paramUpdate(Tindex));
-            newFrames{i_pose} = frameUpdate * frame;
-            paramNew(Rindex) = newFrames{i_pose}.Rvec;
-            paramNew(Tindex) = newFrames{i_pose}.T;
-            
-            Rindex = Rindex + 6;
-            Tindex = Tindex + 6;
-            %Rvec{i_pose} = frame.Rvec;
-            %T{i_pose} = frame.T;
-        end
-        
-        % Update the world point coordinates
-        Xindex = Tindex(end)+1;
-        paramNew(Xindex:end) = paramNew(Xindex:end) + paramUpdate(Xindex:end);
-        
-        [reprojErrNew, Jnew] = reprojectionHelper(paramNew, numPoses, ...
-            numBlocks, markerCorners, camera, visible);
-        
-        % See if reprojection error reduced.  If so, use the new parameters
-        % and reduce the LM.  Otherwise, leave the parameters where they
-        % were and increase the LM parameter.
-        reprojErrNormNew = norm(reprojErrNew);
-        if reprojErrNormNew < reprojErrNorm
-            lambda = lambda/lambdaAdjFactor;
-            
-            param = paramNew;
-            reprojErr = reprojErrNew;
-            reprojErrNorm = reprojErrNormNew;
-            J = Jnew;
-            
-            fprintf('Successful update, lambda now %.2f\n', lambda);
-        else
-            lambda = lambda*lambdaAdjFactor;
-            fprintf('Unsuccessful update, lambda now %.2f\n', lambda);
-        end
-        %}
             
         change = norm(paramUpdate)/norm(param);
         iter = iter + 1;
@@ -324,7 +296,7 @@ for i_pose = 1:numPoses
     % Compute current reprojection error for this pose
     reprojErr{i_pose} = x_image{i_pose}(:,vis) - x;
     
-    if false
+    if true % DEBUG_DISPLAY of reprojection error
         namedFigure('BA Reprojection')
         subplot(1,numPoses,i_pose), hold off
         plot(x_image{i_pose}(1,vis), x_image{i_pose}(2,vis), '.');
@@ -340,13 +312,14 @@ for i_pose = 1:numPoses
    
 end % FOR each robot pose
 
-
 reprojErr = [reprojErr{:}];
 reprojErr = reprojErr(:);
 
 J = [blkdiag(dxdR_robot{:}) blkdiag(dxdT_robot{:}) ...
-    blkdiag(dxdR_block{:}) blkdiag(dxdT_block{:})];
+    vertcat(dxdR_block{:}) vertcat(dxdT_block{:})];
     
+assert(size(J,2) == (length(blocks)*6 + numPoses*6), ...
+    'Jacobian has an unexpected number of columns.');
 assert(issparse(J), 'Expecting sparse Jacobian.');
 
 end % FUNCTIOn reprojectionHelper()
