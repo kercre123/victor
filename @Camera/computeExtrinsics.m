@@ -1,8 +1,9 @@
 function varargout = computeExtrinsics(this, p, P, varargin)
 
-threshCond = 1e6;
 maxRefineIterations = 20;
 initializeWithCurrentPose = false;
+changeThreshold = 1e-10;
+ridgeWeight = 1e-2;
 
 parseVarargin(varargin{:});
 
@@ -18,16 +19,51 @@ else
 end
 
 if maxRefineIterations > 0
-    %Y_kk = (rodrigues(Rvec)*X_kk' + Tckk(:,ones(1,size(X_kk,1))))';
-    %plot3(Y_kk([1 3 4 2 1],1), Y_kk([1 3 4 2 1], 3), -Y_kk([1 3 4 2 1], 2), 'r--');
+    % Refine by minimizing reprojection error
     
-    % TODO: write my own version instead of using Bouguet's (or use openCV's)
-    [~,T,Rmat] = compute_extrinsic_refine(Rvec, T, p', P', ...
-        this.focalLength, this.center, this.distortionCoeffs, ...
-        this.alpha, maxRefineIterations, threshCond);
+    param = [Rvec; T];
+    
+    change = 1;
+    iter = 0;
+    
+    while change > changeThreshold && iter < maxRefineIterations
+        
+        % TODO: update my Camera/projectPoints function to return the
+        % derivatives w.r.t. R and T
+        [p_obs, dp_dRvec, dp_dT] = project_points2(P', Rvec, T, ...
+            this.focalLength, this.center, this.distortionCoeffs, this.alpha);
+        
+        %     namedFigure('CameraExtrinsicRefine');
+        %     hold off, plot(x_kk(1,:), x_kk(2,:), 'b.');
+        %     hold on, plot(x(1,:), x(2,:), 'rx');
+        %     pause
+        
+        reprojErr = p' - p_obs;
+        
+        J = [dp_dRvec dp_dT];
+        
+        A = J'*J + ridgeWeight*eye(size(J,2));
+        b = J'*reprojErr(:);
+        
+        paramUpdate = A \ b;
+        % paramUpdate = robust_least_squares(A, b);
+        
+        param = param + paramUpdate;
+        change = norm(paramUpdate)/norm(param);
+        
+        iter = iter + 1;
+        
+        Rvec = param(1:3);
+        T    = param(4:6);
+        
+    end % WHILE still refining
+    
+    Rmat = rodrigues(Rvec);
+    
 else
     Rmat = rodrigues(Rvec);
-end
+end % IF do refinement
+
 
 % Put camera coordinates into "world" coordinates (or the coordinates of
 % whatever is holding this camera, e.g. a Robot)

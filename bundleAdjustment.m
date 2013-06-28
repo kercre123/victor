@@ -37,7 +37,7 @@ updateBlocks = nargout > 1;
 
 visible = cell(1, numPoses);
 for i_pose = 1:numPoses
-    assert(size(markerCorners{i_pose},2)==2, 'x_images should be Nx2.');
+    assert(size(markerCorners{i_pose},2)==2, 'markerCorners should be Nx2.');
     markerCorners{i_pose} = markerCorners{i_pose}';
     
     visible{i_pose} = all(markerCorners{i_pose} >= 0, 1);
