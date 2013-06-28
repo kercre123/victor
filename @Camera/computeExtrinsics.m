@@ -2,13 +2,20 @@ function varargout = computeExtrinsics(this, p, P, varargin)
 
 threshCond = 1e6;
 maxRefineIterations = 20;
+initializeWithCurrentPose = false;
 
 parseVarargin(varargin{:});
 
 
-% TODO: write my own version instead of using Bouguet's (or use openCV's)
-[Rvec,T] = compute_extrinsic_init(p', P', ...
-    this.focalLength, this.center, this.distortionCoeffs, this.alpha);
+if initializeWithCurrentPose
+    invPose = inv(this.pose);
+    Rvec = invPose.Rvec;
+    T    = invPose.T;
+else
+    % TODO: write my own version instead of using Bouguet's (or use openCV's)
+    [Rvec,T] = compute_extrinsic_init(p', P', ...
+       this.focalLength, this.center, this.distortionCoeffs, this.alpha);
+end
 
 if maxRefineIterations > 0
     %Y_kk = (rodrigues(Rvec)*X_kk' + Tckk(:,ones(1,size(X_kk,1))))';

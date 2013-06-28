@@ -86,11 +86,16 @@ classdef Observation
                 if ~any(matchedMarkers)
                     warning(['No markers found matched one seen before. Not sure yet ' ...
                         'what to do in this case.']);
+                    
+                    % For now, just leave robot where it was, and pretend
+                    % we didn't see anything
+                    this.pose = this.robot.pose;
+                    this.markers = {};
                 else
                     p_marker = vertcat(p_marker{:});
                     P_marker = vertcat(P_marker{:});
                     invRobotPose = this.robot.camera.computeExtrinsics( ...
-                        p_marker, P_marker);
+                        p_marker, P_marker, 'initializeWithCurrentPose', true);
                     this.pose = inv(invRobotPose);
                     this.robot.pose = this.pose;
                     
