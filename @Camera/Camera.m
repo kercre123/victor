@@ -1,5 +1,11 @@
 classdef Camera < handle
     
+    properties(GetAccess = 'protected', Constant = true)
+        OPEN = 0;
+        GRAB = 1;
+        CLOSE = 2;
+    end
+    
     properties(GetAccess = 'public', SetAccess = 'public')
         
         image;
@@ -36,7 +42,8 @@ classdef Camera < handle
         function this = Camera(varargin)
             device = [];
             resolution = [640 480];
-            calibration = [];
+            calibration = struct('fc', [1000 1000], ...
+                'cc', resolution/2, 'kc', zeros(5,1), 'alpha_c', 0);
             pose = Pose(); %#ok<PROP>
            
             parseVarargin(varargin{:});
@@ -64,14 +71,22 @@ classdef Camera < handle
             this.pose = pose; %#ok<PROP>
             
             if ~isempty(this.usbDevice)
-                mexCameraCapture(this.usbDevice, this.ncols, this.nrows);
+                mexCameraCapture(Camera.OPEN, this.usbDevice, ...
+                    this.ncols, this.nrows);
             end
             
         end
         
-        function grabFrame(this)
-            this.image = mexCameraCapture;
+        function out = grabFrame(this)
+            this.image = mexCameraCapture(Camera.GRAB, this.usbDevice);
             this.image = this.image(:,:,[3 2 1]); % BGR to RGB
+            if nargout > 0
+                out = this.image;
+            end
+        end
+        
+        function close(this)
+            mexCameraCapture(Camera.CLOSE, this.usbDevice);
         end
         
          
