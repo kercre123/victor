@@ -35,10 +35,14 @@ if isempty(displayAxes)
     end
 end
 
+OPEN  = 0;
+GRAB  = 1;
+CLOSE = 2;
+
 try
     
     % Initialize and grab first frame
-    frame = mexCameraCapture(device, resolution(1), resolution(2));
+    frame = mexCameraCapture(OPEN, device, resolution(1), resolution(2));
     
     h_img = imshow(frame, 'Parent', displayAxes);
     if ~isempty(processFcn)
@@ -52,7 +56,7 @@ try
     i_frame = 1;
     while i_frame < numFrames && get(h_fig, 'CurrentCharacter') ~= 27 % ESCAPE
         t = tic;
-        frame = mexCameraCapture;
+        frame = mexCameraCapture(GRAB, device);
         frame = frame(:,:,[3 2 1]); % BGR to RGB
         
         set(h_img, 'CData', frame);
@@ -77,13 +81,12 @@ try
     
 catch E
     iptremovecallback(h_fig, 'KeyPressFcn', keypressID);
-    mexCameraCapture(-1);
+    mexCameraCapture(CLOSE);
     rethrow(E)
 end
 
-mexCameraCapture(-1);
+mexCameraCapture(CLOSE);
 iptremovecallback(h_fig, 'KeyPressFcn', keypressID);
-
 
 if nargout==0
     clear grabs;
