@@ -1,45 +1,76 @@
-classdef BlockMarker2D %< matlab.mixin.Copyable
+classdef BlockMarker2D < Marker2D
     
-    properties(GetAccess = 'public', SetAccess = 'protected')
-        blockType;
-        faceType;
-        corners;
-        topOrient;       
+    properties(GetAccess = 'public', Constant = true)
+        Layout = ['BCOFB';
+                  'FBBBC';
+                  'OCXCO';
+                  'FBCFC';
+                  'BCOCB'];
+              
+        IdChars = {'B', 'F'}; % O and C are reserved!
+        
+        % Use Static methods to set the rest of the constant properties
+        % from the Layout and ValueChars:
+        UpBit    = BlockMarker2D.findUpBit(BlockMarker2D.Layout);
+        DownBit  = BlockMarker2D.findDownBit(BlockMarker2D.Layout);
+        LeftBit  = BlockMarker2D.findLeftBit(BlockMarker2D.Layout);
+        RightBit = BlockMarker2D.findRightBit(BlockMarker2D.Layout);
+        
+        CheckBits = BlockMarker2D.findCheckBits(BlockMarker2D.Layout);
+        IdBits    = BlockMarker2D.findIdBits(BlockMarker2D.Layout, ...
+            BlockMarker2D.IdChars);
+        
+        EncodingBits = BlockMarker2D.getEncodingBits( ...
+            BlockMarker2D.CheckBits, BlockMarker2D.IdBits);
+        
+        % Probe Setup
+        ProbeGap    = .2; 
+        ProbeRadius = 4; 
+        ProbeSigma  = 1/6;
+        CodePadding = 3/25;
+        Xprobes = BlockMarker2D.createProbes('X', ...
+            size(BlockMarker2D.Layout,1), BlockMarker2D.ProbeGap, ...
+            BlockMarker2D.ProbeRadius, BlockMarker2D.CodePadding);
+        Yprobes = BlockMarker2D.createProbes('Y', ...
+            size(BlockMarker2D.Layout,1), BlockMarker2D.ProbeGap, ...
+            BlockMarker2D.ProbeRadius, BlockMarker2D.CodePadding);
+        ProbeWeights = BlockMarker2D.createProbeWeights( ...
+            size(BlockMarker2D.Layout,1), BlockMarker2D.ProbeGap, ...
+            BlockMarker2D.ProbeRadius, BlockMarker2D.ProbeSigma, ...
+            BlockMarker2D.CodePadding);
     end
     
-    properties(GetAccess = 'protected', SetAccess = 'protected')
+    properties(GetAccess = 'public', SetAccess = 'protected', ...
+            Dependent = true)
+        blockType;
+        faceType;   
+    end
+     
+    % Static methods required by abstract base class:
+    methods(Static = true)
         
-        handles;
-        topSideLUT = struct('down', [2 4], 'up', [1 3], ...
-            'left', [1 2], 'right', [3 4]);
+        checksum = computeChecksum(binaryCode);
+        
+        binaryCode = encodeIDs(blockType, faceType);
     end
     
     methods(Access = 'public')
        
-        function this = BlockMarker2D(blockType_, faceType_, corners_, topOrient_)
+        function this = BlockMarker2D(img, corners, tform, varargin)
           
-            this.blockType  = blockType_;
-            this.faceType   = faceType_;
-            this.corners    = corners_;
-            this.topOrient  = topOrient_;
+            this@Marker2D(img, corners, tform, varargin{:});
             
-            switch(this.topOrient)
-                case 'up'
-                    reorder = 1:4;
-                case 'right'
-                    reorder = [3 1 4 2];
-                case 'left'
-                    reorder = [2 4 1 3];
-                case 'down'
-                    reorder = [4 3 2 1];
-                otherwise
-                    error('Unrecognized topOrient "%s"', this.topOrient);
-            end
-            
-            this.corners = this.corners(reorder,:);
-           
         end
          
     end % METHODS (public)
+    
+    methods
+        function b = get.blockType(this)
+            b = this.ids(1);
+        end
+        function f = get.faceType(this)
+            f = this.ids(2);
+        end
+    end
        
 end % CLASSDEF BlockMarker2D

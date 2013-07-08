@@ -428,7 +428,6 @@ for i_region = 1:numRegions
     
 end % FOR each region
 
-cropFactor = .7;
 fprintf('Square detection took %.3f seconds.\n', toc(t_squareDetect));
 
 
@@ -469,34 +468,20 @@ if ~isempty(quads)
                 'Parent', h_quadAxes(1));
         end
         
-        if computeTransformFromBoundary
-
-            % Sanity check:
-            corners = quads{i_quad};
-            A = [corners(2,:) - corners(1,:);
-                corners(3,:) - corners(1,:)];
-            assert(abs(det(A)) >= minQuadArea, 'Area of quad too small.');
-            
-
-            [blockType, faceType, isValid, keyOrient] = ...
-                decodeBlockMarker(img, 'tform', quadTforms{i_quad}, ...
-                'corners', quads{i_quad}, ... 
-                'method', 'warpProbes', ... 'warpImage' or 'warpProbes' ??
-                'cropFactor', cropFactor);
-            
-        else
-            [blockType, faceType, isValid, keyOrient] = ...
-                decodeBlockMarker(img, 'corners', quads{i_quad}, ...
-                'cropFactor', cropFactor); %#ok<UNRCH>
-        end
+        % Sanity check:
+        corners = quads{i_quad};
+        A = [corners(2,:) - corners(1,:);
+            corners(3,:) - corners(1,:)];
+        assert(abs(det(A)) >= minQuadArea, 'Area of quad too small.');
         
-        if isValid
-            markers{end+1} = BlockMarker2D(blockType, faceType, ...
-                quads{i_quad}, keyOrient); %#ok<AGROW>
+        marker = BlockMarker2D(img, quads{i_quad}, quadTforms{i_quad});
+               
+        if marker.isValid
+            markers{end+1} = marker; %#ok<AGROW>
         end
         
         if DEBUG_DISPLAY
-            if isValid
+            if markers{end}.isValid
                 draw(markers{end}, 'where', h_quadAxes(2));
                 numMarkers = numMarkers + 1;
             else

@@ -154,7 +154,6 @@ end % SWITCH(method)
 
 % Now we've got our means for each block.  Proceed with thresholding and
 % decoding:
-
 threshold = [];
 if useHistogramPeaks
     % Not sure if this is gonna be so great in general, especially the
