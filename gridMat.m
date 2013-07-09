@@ -5,23 +5,34 @@ squareSize = 10; % mm
 lineWidth  = 1.5; % mm
 matSize    = 1000; % mm
 codePadding = 1; % mm
+pageDims = [];
+axesHandle = [];
 
 parseVarargin(varargin{:});
 
-h_fig = namedFigure('GridMat');
-figure(h_fig);
-cla
+if isempty(axesHandle)
+    h_fig = namedFigure('GridMat', 'Units', 'centimeters');
+    figure(h_fig);
+    axesHandle = gca;
+    cla(axesHandle);
+    set(axesHandle, 'Units', 'centimeters');
+end
+
+if ~isempty(pageDims)
+    rectangle('Pos', [-squareSize -squareSize pageDims], ...
+        'LineStyle', '--', 'Parent', axesHandle);
+end
 
 % Grid
 gridLines = 0:squareSize:matSize;
 numLines = length(gridLines);
 h_line = zeros(2, numLines);
 for i = 1:numLines
-    h_line(1,i) = rectangle('Pos', [gridLines(i)-lineWidth/2 0 lineWidth matSize]);
-    h_line(2,i) = rectangle('Pos', [0 gridLines(i)-lineWidth/2 matSize lineWidth]);
+    h_line(1,i) = rectangle('Pos', [gridLines(i)-lineWidth/2 0 lineWidth matSize], 'Parent', axesHandle);
+    h_line(2,i) = rectangle('Pos', [0 gridLines(i)-lineWidth/2 matSize lineWidth], 'Parent', axesHandle);
 end
 set(h_line, 'FaceColor', 'k');
-hold on
+hold(axesHandle, 'on');
 
 % % Draw grid lines 
 % % Problem: can't control width precisely
@@ -41,12 +52,13 @@ for i = 1:numRows
         code = MatMarker2D.encodeIDs(j, i);
         
         imagesc([xcen(i,j)-codePos xcen(i,j)+codePos], ...
-            [ycen(i,j)-codePos ycen(i,j)+codePos], ~code);
+            [ycen(i,j)-codePos ycen(i,j)+codePos], ~code, ...
+            'Parent', axesHandle);
             
     end
 end
-axis ij equal
-colormap(gray)
+axis(axesHandle, 'ij', 'equal');
+colormap(axesHandle, gray)
 
 
 end % FUNCTION gridMat()
