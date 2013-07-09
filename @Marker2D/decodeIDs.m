@@ -9,14 +9,11 @@ function this = decodeIDs(this, binaryCode)
 % Andrew Stein
 %
 
-% TODO: This is for legacy support, i.e. for already-printed codes.  But I
-% don't think I should need to reorder with EncodingBits in the future.
-value = bin2dec(binaryCode(sort(this.EncodingBits))); % WHY DO I NEED THE SORT?!?
-binaryCode = repmat('0', [1 numel(this.Layout)]);
-binaryCode(this.EncodingBits) = dec2bin(value, length(this.EncodingBits));
-
+binaryIDs = cell(1, this.numIDs);
 for i = 1:this.numIDs
-    this.ids(i) = bin2dec(binaryCode(this.IdBits(this.IdChars{i}))) + 1;
+    binaryIDs{i} = binaryCode(this.IdBits(this.IdChars{i}));
+    this.ids(i) = bin2dec(binaryIDs{i}) + 1;
+    binaryIDs{i} = binaryIDs{i} == '1'; % make logical
 end
 
 if any(this.ids == 0)
@@ -27,8 +24,8 @@ else
     % Compare check bits in the incoming value to what they should be according
     % to the decoded block and and face code
     checksum = binaryCode(this.CheckBits);
-       
-    checksumTruth = this.computeChecksum(binaryCode);
+    
+    checksumTruth = this.computeChecksum(binaryIDs{:});
     
     this.isValid = all(checksum == checksumTruth);
 end

@@ -22,9 +22,6 @@ classdef Marker2D
         CheckBits;
         IdBits;
         
-        % TODO: remove these.  For now, supports legacy (printed) codes.
-        EncodingBits; % check bits + all value bits
-        
         % Probe Parameters:
         ProbeGap;    % as a fraction of code square width (one of the bits)
         ProbeRadius; % in number 
@@ -89,11 +86,6 @@ classdef Marker2D
             for i = 1:length(idChars)
                 bits(idChars{i}) = find(layout == idChars{i});
             end
-        end
-        
-        function bits = getEncodingBits(checkBits, valueBits)
-            bits = [valueBits.values checkBits];
-            bits = vertcat(bits{:});
         end
         
         w = createProbeWeights(n, probeGap, probeRadius, probeSigma, cropFactor)

@@ -28,14 +28,8 @@ binaryCode = false(1,totalBits);
 
 binaryCode(blockBits) = dec2bin(blockType-1, numBlockBits) == '1';
 binaryCode(faceBits)  = dec2bin(faceType-1,  numFaceBits) == '1';
-binaryCode(checkBits) = BlockMarker2D.computeChecksum(binaryCode);
-
-% This keeps things compatible with old way of producing codes (which have
-% already been printed.  Not sure re-ordering by EncodingBits is strictly
-% necessary though.
-% TODO: remove this.
-% value = bin2dec(strrep(num2str(binaryCode(BlockMarker2D.EncodingBits)),' ', ''));
-binaryCode(sort(BlockMarker2D.EncodingBits)) = binaryCode(BlockMarker2D.EncodingBits);
+binaryCode(checkBits) = BlockMarker2D.computeChecksum( ...
+    binaryCode(blockBits), binaryCode(faceBits));
 
 binaryCode(BlockMarker2D.UpBit) = false;
 binaryCode([BlockMarker2D.LeftBit BlockMarker2D.RightBit ...

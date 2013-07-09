@@ -1,12 +1,20 @@
 classdef BlockMarker2D < Marker2D
     
     properties(GetAccess = 'public', Constant = true)
-        Layout = ['BCOFB';
-                  'FBBBC';
-                  'OCXCO';
-                  'FBCFC';
-                  'BCOCB'];
-              
+        % This is the layout I thought i was using.  But inadvertantly, my
+        % use of an "EncodingBits" vector in the old decoding algorithm
+        % reordered the bits, yielding the actual layout below.
+        %         Layout = ['BCOFB';
+        %                   'FBBBC';
+        %                   'OC CO';
+        %                   'FBCFC';
+        %                   'BCOCB'];    
+        Layout = ['BBOFC';
+                  'BBFCC';
+                  'OB CO';
+                  'BBFCC';
+                  'BFOCC'];
+
         IdChars = {'B', 'F'}; % O and C are reserved!
         
         % Use Static methods to set the rest of the constant properties
@@ -19,10 +27,7 @@ classdef BlockMarker2D < Marker2D
         CheckBits = BlockMarker2D.findCheckBits(BlockMarker2D.Layout);
         IdBits    = BlockMarker2D.findIdBits(BlockMarker2D.Layout, ...
             BlockMarker2D.IdChars);
-        
-        EncodingBits = BlockMarker2D.getEncodingBits( ...
-            BlockMarker2D.CheckBits, BlockMarker2D.IdBits);
-        
+                
         % Probe Setup
         ProbeGap    = .2; 
         ProbeRadius = 4; 
@@ -49,7 +54,7 @@ classdef BlockMarker2D < Marker2D
     % Static methods required by abstract base class:
     methods(Static = true)
         
-        checksum = computeChecksum(binaryCode);
+        checksum = computeChecksum(binaryBlock, binaryFace);
         
         binaryCode = encodeIDs(blockType, faceType);
     end

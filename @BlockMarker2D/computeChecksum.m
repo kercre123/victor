@@ -1,10 +1,7 @@
-function checksumTruth = computeChecksum(binaryCode)
+function checksumTruth = computeChecksum(binaryBlock, binaryFace)
 
-faceBits = BlockMarker2D.IdBits('F');
-blockBits = BlockMarker2D.IdBits('B');
-
-numBlockBits = length(blockBits);
-numFaceBits  = length(faceBits);
+numBlockBits = length(binaryBlock);
+numFaceBits  = length(binaryFace);
 
 numCheckBits = length(BlockMarker2D.CheckBits);
 
@@ -15,8 +12,8 @@ for i_check = 1:numCheckBits
     i_block2 = mod(i_block1, numBlockBits) + 1;
     i_face = mod(i_check-1, numFaceBits) + 1;
     
-    checksumTruth(i_check) = xor( binaryCode(faceBits(i_face)), ...
-        xor(binaryCode(blockBits(i_block1)), binaryCode(blockBits(i_block2))) );
+    checksumTruth(i_check) = xor( binaryFace(i_face), ...
+        xor(binaryBlock(i_block1), binaryBlock(i_block2)) );
     
     i_block1 = mod(i_block1, numBlockBits) + 1;
     

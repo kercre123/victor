@@ -1,11 +1,18 @@
 classdef MatMarker2D < Marker2D
     
     properties(GetAccess = 'public', Constant = true)
-        Layout = ['XXOXX';
-                  'XXCXX';
-                  'OCCCO';
-                  'YYCYY';
-                  'YYOYY'];
+        % Original, intended layout (screwed up by using old EncodingBits)
+        %         Layout = ['XXOXX';
+        %                   'XXCXX';
+        %                   'OCCCO';
+        %                   'YYCYY';
+        %                   'YYOYY'];
+              
+        Layout = ['XXOYC';
+                  'XXYYC';
+                  'OXYYO';
+                  'XXYYC';
+                  'XYOCC'];
               
         IdChars = {'X', 'Y'};
         
@@ -19,10 +26,7 @@ classdef MatMarker2D < Marker2D
         CheckBits = MatMarker2D.findCheckBits(MatMarker2D.Layout);
         IdBits    = MatMarker2D.findIdBits(MatMarker2D.Layout, ...
             MatMarker2D.IdChars);
-        
-        EncodingBits = MatMarker2D.getEncodingBits( ...
-            MatMarker2D.CheckBits, MatMarker2D.IdBits);
-        
+               
         % Probe Setup
         ProbeGap    = .2; 
         ProbeRadius = 3; 
@@ -51,7 +55,7 @@ classdef MatMarker2D < Marker2D
     % Static methods required by abstract base class:
     methods(Static = true)
         
-        checksum = computeChecksum(binaryCode);
+        checksum = computeChecksum(binaryX, binaryY);
         
         binaryCode = encodeIDs(Xpos, Ypos);
     end

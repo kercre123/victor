@@ -1,9 +1,6 @@
-function checksum = computeChecksum(binaryCode)
+function checksum = computeChecksum(binX, binY)
 
-XBits = MatMarker2D.IdBits('X');
-YBits = MatMarker2D.IdBits('Y');
-
-bits = [binaryCode(XBits); binaryCode(YBits)];
+bits = [binX(:); binY(:)];
 assert(numel(bits) == 16, 'Expecting 16 total bits for X and Y encoding.');
 lastBit = bits(end);
 bits = reshape(bits(1:15), [3 5]);
