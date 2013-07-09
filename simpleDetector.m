@@ -415,8 +415,10 @@ for i_region = 1:numRegions
                         
                     end % IF computeTransformFromBoundary
                     
-                    quads{end+1} = corners; %#ok<AGROW>
-                    quadTforms{end+1} = tform; %#ok<AGROW>
+                    if ~isempty(tform) % tfrom now required by new BlockMarker2D
+                        quads{end+1} = corners; %#ok<AGROW>
+                        quadTforms{end+1} = tform; %#ok<AGROW>
+                    end
                     
                 end % IF areas of parallelgrams are similar
                 
