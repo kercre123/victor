@@ -94,16 +94,22 @@ classdef Marker2D
         
     properties(GetAccess = 'public', SetAccess = 'protected')   
         corners;
-        isValid;
+        isValid = true;
         ids;
         threshold;
-        %topOrient;   
+        means;
+        
+        % angle needed to rotate given corners so that top side is "up" (in
+        % image coordinate frame -- upper left is (0,0))
+        upAngle; 
     end
     
     properties(GetAccess = 'public', SetAccess = 'protected', ...
             Dependent = true)
         
         numIDs;
+        origin;
+        
     end
     
     properties(GetAccess = 'protected', SetAccess = 'protected')
@@ -126,26 +132,20 @@ classdef Marker2D
     methods(Access = 'public')
         
         function this = Marker2D(img, corners_, tform)
-                               
-            % Transform the probe locations to match the image coordinates
-            [xImg, yImg] = tforminv(tform, this.Xprobes, this.Yprobes);
-        
-            % Get means
-            assert(ismatrix(img), 'Image should be grayscale.');
-            [nrows,ncols] = size(img);
-            xImg = max(1, min(ncols, xImg));
-            yImg = max(1, min(nrows, yImg));
-            index = round(yImg) + (round(xImg)-1)*size(img,1);
-            img = img(index);
-            means = reshape(sum(this.ProbeWeights.*img,2), size(this.Layout));
-        
-            assert(isequal(size(means), size(this.Layout)), ...
-                'Means size does not match layout size.');
+            % Note that corners are provided in the following order:
+            %   1. Upper left
+            %   2. Lower left
+            %   3. Upper right
+            %   4. Lower right
             
             this.corners = corners_;
             this.ids = zeros(1, this.numIDs);
-            [this, binaryString] = orientAndThreshold(this, means);
-            this = decodeIDs(this, binaryString);
+            
+            this.means = probeMeans(this, img, tform);
+            [this, binaryString] = orientAndThreshold(this, this.means);
+            if this.isValid
+                this = decodeIDs(this, binaryString);
+            end
             
         end % CONSTRUCTOR Marker2D()
                 
@@ -155,6 +155,10 @@ classdef Marker2D
         function n = get.numIDs(this)
             n = length(this.IdChars);
         end    
+        
+        function o = get.origin(this)
+            o = this.corners(1,:);
+        end
             
     end
     

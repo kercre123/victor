@@ -10,27 +10,31 @@ if isempty(this.threshold)
     if bright < this.MinContrastRatio*dark
         % not enough contrast to work with
         this.isValid = false;
+        binaryString = '';
         return
     end
     
     this.threshold = (bright + dark)/2;
 end
 
-dirs = {'up', 'down', 'left', 'right'};
-switch(dirs{whichDir})
-    case 'up'
+switch(whichDir)
+    case 1 % 'up'
         reorder = 1:4;
-    case 'down'
+        this.upAngle = 0;
+    case 2 % 'down'
         means = rot90(rot90(means));
-        reorder = [3 1 4 2];
-    case 'left'
+        reorder = [4 3 2 1];
+        this.upAngle = pi;
+    case 3 % 'left'
         means = rot90(rot90(rot90(means)));
         reorder = [2 4 1 3];
-    case 'right'
+        this.upAngle = pi/2;
+    case 4 % 'right'
         means = rot90(means);
-        reorder = [4 3 2 1];
+        reorder = [3 1 4 2];
+        this.upAngle = 3*pi/2;
     otherwise
-        error('Unrecognized topOrient "%s"', keyOrient);
+        error('Unrecognized whichDir "%d"', whichDir);
 end
             
 this.corners = this.corners(reorder,:);
