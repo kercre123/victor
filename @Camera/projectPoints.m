@@ -80,16 +80,10 @@ end
 if length(this.distortionCoeffs)>4 && this.distortionCoeffs(5)~=0
     warning('Ignoring fifth-order non-zero radial distortion');
 end
-k = [this.distortionCoeffs(1:4); 1];
+
 a = P(:,1) ./ P(:,3);
 b = P(:,2) ./ P(:,3);
-a2 = a.^2;
-b2 = b.^2;
-ab = a.*b;
-r2 = a2 + b2;
-r4 = r2.^2;
-uDistorted = [a.*r2  a.*r4  2*ab    2*a2+r2 a] * k;
-vDistorted = [b.*r2  b.*r4  r2+2*b2 2*ab    b] * k;
+[uDistorted, vDistorted] = this.distort(a, b);
 u = this.focalLength(1) * uDistorted + this.center(1);
 v = this.focalLength(2) * vDistorted + this.center(2);
 

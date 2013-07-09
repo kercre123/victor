@@ -19,12 +19,10 @@ classdef Camera < handle
         nrows;
         ncols; 
         
+        % Calibration parameters:
         focalLength;
-                
         center;
-        
         distortionCoeffs;
-        
         alpha;
         
     end
@@ -71,6 +69,7 @@ classdef Camera < handle
             this.pose = pose; %#ok<PROP>
             
             if ~isempty(this.usbDevice)
+                % If a USB device was provided, open it.
                 mexCameraCapture(Camera.OPEN, this.usbDevice, ...
                     this.ncols, this.nrows);
             end
@@ -89,12 +88,18 @@ classdef Camera < handle
             mexCameraCapture(Camera.CLOSE, this.usbDevice);
         end
         
+        function delete(this)
+            close(this);
+        end
+        
+        % TODO: add calibration function?
          
     end % METHODS (public)
     
     methods % Dependent get/set
         
         function K = get.calibrationMatrix(this)
+            % Return calibration parameters in a calibration matrix.
             K = [this.focalLength(1) this.alpha*this.focalLength(1) this.center(1);
                  0 this.focalLength(2) this.center(2);
                  0 0 1];
