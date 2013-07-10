@@ -49,7 +49,7 @@ h_top = plot(this.corners([1 3],1), ...
     'Color', TopColor, 'LineWidth', 3, 'Parent', h_axes, 'Tag', Tag);
 
 h_origin = plot(this.origin(1), this.origin(2), ...
-    'w.', 'MarkerSize', 16, 'Tag', Tag);
+    'w.', 'MarkerSize', 16, 'Parent', h_axes, 'Tag', Tag);
 
 if ~strcmp(drawTextLabels, 'none')
     
