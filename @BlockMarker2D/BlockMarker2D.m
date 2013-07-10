@@ -16,6 +16,7 @@ classdef BlockMarker2D < Marker2D
                   'BFOCC'];
 
         IdChars = {'B', 'F'}; % O and C are reserved!
+        IdNames = {'Block', 'Face'};
         
         % Use Static methods to set the rest of the constant properties
         % from the Layout and ValueChars:

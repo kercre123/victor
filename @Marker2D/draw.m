@@ -1,4 +1,5 @@
 function h = draw(this, varargin)
+% Draw a Marker2D.
 
 where = [];
 drawTextLabels = 'long'; % 'long', 'short', or 'none'
@@ -10,7 +11,7 @@ EdgeColor = 'g';
 FaceAlpha = .3;
 FaceColor = 'r';
 TopColor = 'b';
-Tag = 'BlockMarker2D';
+Tag = class(this);
 
 parseVarargin(varargin{:});
 
@@ -52,17 +53,20 @@ h_origin = plot(this.origin(1), this.origin(2), ...
 
 if ~strcmp(drawTextLabels, 'none')
     
+    space = '';
+    labels = this.IdChars;
     if strcmp(drawTextLabels, 'long')
-        blockLabel = 'Block ';
-        faceLabel  = 'Face ';
-    else
-        blockLabel = 'B';
-        faceLabel  = 'F';
+        space = ' ';
+        labels = this.IdNames;
     end
-    
+            
+    str = cell(1, this.numIDs);
+    for i = 1:this.numIDs
+        % Note I'm assuming ID values are printable as integers...
+        str{i} = sprintf('%s%s%d', labels{i}, space, this.ids(i));
+    end
     h_text = text(mean(this.corners([1 4],1)), mean(this.corners([1 4],2)), ...
-        {sprintf('%s%d', blockLabel, this.blockType), ...
-        sprintf('%s%d', faceLabel, this.faceType)}, ...
+        str, ...
         'Color', FontColor, 'FontSize', FontSize, 'FontWeight', FontWeight, ...
         'BackgroundColor', FontBackgroundColor, ...
         'Hor', 'center', 'Parent', h_axes, 'Tag', Tag);

@@ -14,6 +14,7 @@ classdef Marker2D
         % 'C' is a reserved character for specifying checsum bits.
         Layout;
         IdChars; % cell array
+        IdNames; % cell array (just for drawing)
         
         % In sub-classes, set the following using the static methods
         % defined below, passing in the above Constant properties.

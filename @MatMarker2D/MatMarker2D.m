@@ -15,6 +15,7 @@ classdef MatMarker2D < Marker2D
                   'XYOCC'];
               
         IdChars = {'X', 'Y'};
+        IdNames = MatMarker2D.IdChars;
         
         % Use Static methods to set the rest of the constant properties
         % from the Layout and ValueChars:
