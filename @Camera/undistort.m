@@ -1,8 +1,7 @@
-function varargout = undistort(this, varargin)
-% Undoes radial distortion.  Can be applied to an image or 2D coordinates.
+function [imgUndist, xDistorted, yDistorted] = undistort(this, img, interpMethod)
+% Undoes radial distortion of an image.
 %
-% imgUndistorted = camera.undistort(imgDistorted)
-% [xUndistorted, yUndistorted] = camera.undistort(xDistorted, yDistorted)
+% [imgUndistorted, xUndistorted, yUndistorted] = camera.undistort(img)
 %
 %   Uses same radial/tangential distortion model as in Bouguet's Camera 
 %   Calibration Toolbox.
@@ -11,70 +10,39 @@ function varargout = undistort(this, varargin)
 % Andrew Stein
 %
 
-assert(nargin == nargout+1, 'Unexpected number of input/output arguments.');
-
-if nargin == 2
-    img = varargin{1};
-    [nrows,ncols,nbands] = size(img);
-    [xgrid,ygrid] = meshgrid(1:ncols, 1:nrows);
-    x_in = xgrid(:);
-    y_in = ygrid(:);
-    
-elseif nargin == 3
-    x_in = varargin{1};
-    y_in = varargin{2};
-    assert(isequal(size(x_in), size(y_in)), ...
-        'X and Y inputs should be the same size.');
-else
-    error('Unexpected number of inputs.');
+if nargin<3 || isempty(interpMethod)
+    interpMethod = 'bilinear';
 end
 
-varargout = cell(1, nargout);
+img = im2double(img);
 
-K = this.calibrationMatrix;
+[nrows,ncols,nbands] = size(img);
+[xgrid,ygrid] = meshgrid(1:ncols, 1:nrows);
 
-rays = K \ [(x_in(:)-1)'; (y_in(:)-1)'; ones(1, numel(x_in))];
+[xDistorted, yDistorted] = this.distort(xgrid, ygrid, true);
+  
+imgUndist = cell(1, nbands);
+for i = 1:nbands
+    imgUndist{i} = interp2(img(:,:,i), xDistorted, yDistorted, interpMethod);
+end
+imgUndist = cat(3, imgUndist{:});
 
-x = rays(1,:)./rays(3,:);
-y = rays(2,:)./rays(3,:);
-
-% Add distortion:
-r2 = x.^2 + y.^2;
-r4 = r2.^2;
-r6 = r2.^3;
-
-% Radial distortion:
-k = this.distortionCoeffs;
-cdist = 1 + (k(1) * r2) + (k(2) * r4) + (k(5) * r6);
-
-xd = x.*cdist;
-yd = y.*cdist;
-
-% Tangential distortion:
-a1 = 2.*x.*y;
-a2 = r2 + 2*x.^2;
-a3 = r2 + 2*y.^2;
-
-xd = xd + k(3)*a1 + k(4)*a2;
-yd = yd + k(3)*a3 + k(4)*a1;
-
-% Put back in pixel coordinates:
-xi = this.focalLength(1)*(xd+this.alpha*yd) + this.center(1);
-yi = this.focalLength(2)*yd + this.center(2);
-
-if nargout == 1
-    xi = reshape(xi, [nrows ncols]);
-    yi = reshape(yi, [nrows ncols]);
+if nargout==0
+    subplot 121, imagesc(img), axis image off
+    hold on, plot(this.center(1), this.center(2), 'r.');
+    boundaryIndex = [1:nrows nrows:nrows:nrows*ncols ...
+        nrows*ncols:-1:(nrows*(ncols-1)+1) ...
+        (nrows*(ncols-1)+1):-nrows:1];
+    plot(xDistorted(boundaryIndex), yDistorted(boundaryIndex), 'r');
+    title('Input Distorted Image')
     
-    imgNew = cell(1, nbands);
-    for i = 1:nbands
-        imgNew{i} = interp2(img(:,:,i), xi, yi, 'bilinear');
-    end
-    imgNew = cat(3, imgNew{:});
-    varargout{1} = imgNew;
-else
-    varargout{1} = reshape(xi, size(x_in));
-    varargout{2} = reshape(yi, size(y_in));
+    subplot 122, imagesc(imgUndist), axis image off
+    hold on, plot(this.center(1), this.center(2), 'r.');
+    title('Undistorted Image')
+    
+    linkaxes
+    
+    clear imgUndist
 end
 
 end % FUNCTION undistortImage()
