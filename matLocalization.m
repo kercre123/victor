@@ -1,6 +1,7 @@
 function [xMat,yMat,orient1] = matLocalization(img, varargin)
 
 %% Params
+orientationSample = 2; % just for speed
 derivSigma = 2;
 pixPerMM = 6;
 squareWidth = 10;
@@ -28,18 +29,19 @@ imgOrig = img;
 if ~isempty(camera)
     % Undo radial distortion according to camera calibration info:
     assert(isa(camera, 'Camera'), 'Expecting a Camera object.');
-    [img, xgrid, ygrid] = camera.undistort(img);
+    [img, xgrid, ygrid] = camera.undistort(img, 'nearest');
     imgCen = camera.center;    
     xgrid = xgrid - imgCen(1);
     ygrid = ygrid - imgCen(2);
-    
-    %[xgrid,ygrid] = meshgrid((1:ncols)-imgCen(1), (1:nrows)-imgCen(2));
 else
     imgCen = [ncols nrows]/2;
     [xgrid,ygrid] = meshgrid((1:ncols)-imgCen(1), (1:nrows)-imgCen(2));
 end
 
-[Ix,Iy] = smoothgradient(img, derivSigma);
+% Note the downsampling here here, since we don't really need to use ALL
+% pixels just to estimate the gradient orientation via a histogram
+[Ix,Iy] = smoothgradient( ...
+    img(1:orientationSample:end, 1:orientationSample:end), derivSigma);
 mag = sqrt(Ix.^2 + Iy.^2);
 orient = atan2(Iy, Ix);
 orient(orient < 0) = pi + orient(orient < 0);
@@ -79,7 +81,7 @@ if orient2 > orient1
 end
 orientDiff = orient1 - orient2; 
 if abs(orientDiff - pi/2) > 5*pi/180
-    error('Found two orientation peaks, but they are not ~90 degrees apart.');
+    warning('Found two orientation peaks, but they are not ~90 degrees apart.');
 end
 
 % Fit a parabola to the peak orientation to get sub-bin orientation
@@ -105,15 +107,10 @@ orient1 = -(-p(2)/(2*p(1)) - 1) * pi/180;
 xgridRot =  xgrid*cos(orient1) + ygrid*sin(orient1) + imgCen(1);
 ygridRot = -xgrid*sin(orient1) + ygrid*cos(orient1) + imgCen(2);
 
-% if ~isempty(camera)
-%     % Undo radial distortion according to camera calibration info:
-%     assert(isa(camera, 'Camera'), 'Expecting a Camera object.');
-%     [xgridRot, ygridRot] = camera.undistort(xgridRot, ygridRot);
-% end
-
 % Note that we use a value of 1 (white) for pixels outside the image, which
 % will effectively give less weight to lines/squares that are closer to
-% the image borders naturally.
+% the image borders naturally. (Still true now that i'm using a derivative
+% stencil?)
 imgRot = interp2(imgOrig, xgridRot, ygridRot, 'nearest', 1);
 
 % Now using stencil that looks for edges of the stripes by using
@@ -121,19 +118,19 @@ imgRot = interp2(imgOrig, xgridRot, ygridRot, 'nearest', 1);
 x = linspace(-squareWidth,squareWidth,pixPerMM*2*squareWidth);
 gridStencil = max(exp(-(x+squareWidth/2).^2/(2*(lineWidth/3)^2)), ...
     exp(-(x-squareWidth/2).^2/(2*(lineWidth/3)^2)));
-gridStencil = image_right(gridStencil) - gridStencil;
+gridStencil = image_right(gridStencil) - gridStencil; % derivative
 
+% Collect average derivatives along the rows and columns, so we can just do
+% simple 1D filtering with the stencil below
 colDeriv = mean(image_right(imgRot)-imgRot,1);
 rowDeriv = mean(image_down(imgRot)-imgRot,2);
 
+% Find where the derivatives agree best with the stencil
 [~,xcenIndex] = max(conv2(colDeriv, gridStencil, 'same'));
 [~,ycenIndex] = max(conv2(rowDeriv', gridStencil, 'same'));
 
 
 %% Square Identification
-% codeWidth = (squareWidth - lineWidth - 2*codePadding)*pixPerMM;
-% codeImg = imgRot(round(ycenIndex + (-codeWidth/2 : codeWidth/2)), ...
-%     round(xcenIndex + (-codeWidth/2 : codeWidth/2)) );
 
 insideSquareWidth = squareWidth - lineWidth;
  
@@ -189,27 +186,68 @@ if nargout == 0
     xcen = xgridRot(ycenIndex,xcenIndex);
     ycen = ygridRot(ycenIndex,xcenIndex);
 
-    namedFigure('MatLocalization');
-    subplot 221
-    hold off, imagesc(imgOrig), axis image, hold on
-    plot(xcen, ycen, 'bx');
-    plot(imgCen(1), imgCen(2), 'r.');
+    h_fig = namedFigure('MatLocalization');
     
-    h_axes = subplot(222);
-    hold off, imagesc(imgRot), axis image, hold on
-    draw(marker, 'where', h_axes, 'drawTextLabels', 'short');
-    plot(imgCen(1), imgCen(2), 'r.', 'MarkerSize', 12);
-    title(sprintf('Orientation = %.1f degrees', orient1*180/pi));
+    % Plot the input image with image/marker centers, or update the
+    % existing one:
+    h_imgOrig = findobj(h_fig, 'Tag', 'imgOrig');
+    if isempty(h_imgOrig)
+        h_imgOrigAxes = subplot(2,2,1, 'Parent', h_fig);
+        hold(h_imgOrigAxes, 'off')
+        imagesc(imgOrig, 'Parent', h_imgOrigAxes, 'Tag', 'imgOrig');
+        axis(h_imgOrigAxes, 'image', 'off');
+        hold(h_imgOrigAxes, 'on');
+        plot(xcen, ycen, 'bx', 'Parent', h_imgOrigAxes, 'Tag', 'imgOrigMarkerCen');
+        plot(imgCen(1), imgCen(2), 'r.', 'Parent', h_imgOrigAxes, 'Tag', 'imgOrigCen');
+    else
+        set(h_imgOrig, 'CData', imgOrig);
+        h_imgOrigAxes = get(h_imgOrig, 'Parent');
+        set(findobj(h_imgOrigAxes, 'Tag', 'imgOrigMarkerCen'), ...
+            'XData', xcen, 'YData', ycen);
+        set(findobj(h_imgOrigAxes, 'Tag', 'imgOrigCen'), ...
+            'XData', imgCen(1), 'YData', imgCen(2));
+    end
+       
+    % Draw the rotated/warped image, with MatMarker2D and image center, or
+    % update the existing ones
+    h_imgRot = findobj(h_fig, 'Tag', 'imgRot');
+    if isempty(h_imgRot)
+        h_imgRotAxes = subplot(2,2,2, 'Parent', h_fig);
+        hold(h_imgRotAxes, 'off');
+        imagesc(imgRot, 'Parent', h_imgRotAxes, 'Tag', 'imgRot');
+        axis(h_imgRotAxes, 'image', 'off');
+        hold(h_imgRotAxes, 'on');
+        plot(imgCen(1), imgCen(2), 'r.', 'MarkerSize', 12, ...
+            'Parent', h_imgRotAxes, 'Tag', 'imgRotCen');
+    else
+        set(h_imgRot, 'CData', imgRot);
+        h_imgRotAxes = get(h_imgRot, 'Parent');
+        delete(findobj(h_imgRotAxes, 'Tag', 'MatMarker2D'));
+        set(findobj(h_imgRotAxes, 'Tag', 'imgRotCen'), ...
+            'XData', imgCen(1), 'YData', imgCen(2));
+    end
+    draw(marker, 'where', h_imgRotAxes, 'drawTextLabels', 'short');
+    title(h_imgRotAxes, sprintf('Orientation = %.1f degrees', orient1*180/pi));
     
-    subplot 234
+    % Draw the (thresholded) marker means, or update the existing ones:
     meansRot = imrotate(marker.means, -marker.upAngle * 180/pi, 'nearest');
     if marker.isValid
-        imagesc(meansRot > marker.threshold, [0 1]), axis image
-        title(sprintf('X = %d, Y = %d', marker.X, marker.Y));
+        meansRot = meansRot > marker.threshold;
+        titleStr = sprintf('X = %d, Y = %d', marker.X, marker.Y);
     else
-        imagesc(meansRot, [0 1]), axis image
-        title('Invalid Marker')
+        titleStr = 'Invalid Marker';
     end
+    h_meansImg = findobj(h_fig, 'Tag', 'meansImg');
+    if isempty(h_meansImg)
+        h_meansImgAxes = subplot(2,3,4, 'Parent', h_fig);
+        imagesc(meansRot, 'Parent', h_meansImgAxes, 'Tag', 'meansImg', [0 1]);
+        axis(h_meansImgAxes, 'image');
+    else
+        set(h_meansImg, 'CData', meansRot);
+        h_meansImgAxes = get(h_meansImg, 'Parent');
+    end
+    title(h_meansImgAxes, titleStr);
+    
     
     % Draw image boundaries on the mat:
     xImg = ncols/2*[-1 1 1 -1 -1] / pixPerMM;
@@ -223,7 +261,7 @@ if nargout == 0
     xMarker = squareWidth/2*[-1 1 1 -1 -1] + xMarkerCen;
     yMarker = squareWidth/2*[-1 -1 1 1 -1] + yMarkerCen;
     
-    h_matAxes = subplot(2,3,[5 6]);
+    h_matAxes = subplot(2,3,[5 6], 'Parent', h_fig);
     if ~strcmp(get(h_matAxes, 'Tag'), 'GridMat')
         gridMat('matSize', 200, 'axesHandle', h_matAxes);
         set(h_matAxes, 'Tag', 'GridMat');
