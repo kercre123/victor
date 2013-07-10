@@ -18,6 +18,8 @@ if size(img,3)>1
     img = mean(img,3);
 end
 
+[nrows,ncols] = size(img);
+
 assert(min(img(:))>=0 && max(img(:))<=1, ...
     'Image should be on the interval [0 1].');
 
@@ -26,7 +28,15 @@ imgOrig = img;
 if ~isempty(camera)
     % Undo radial distortion according to camera calibration info:
     assert(isa(camera, 'Camera'), 'Expecting a Camera object.');
-    img = camera.undistort(img);
+    [img, xgrid, ygrid] = camera.undistort(img);
+    imgCen = camera.center;    
+    xgrid = xgrid - imgCen(1);
+    ygrid = ygrid - imgCen(2);
+    
+    %[xgrid,ygrid] = meshgrid((1:ncols)-imgCen(1), (1:nrows)-imgCen(2));
+else
+    imgCen = [ncols nrows]/2;
+    [xgrid,ygrid] = meshgrid((1:ncols)-imgCen(1), (1:nrows)-imgCen(2));
 end
 
 [Ix,Iy] = smoothgradient(img, derivSigma);
@@ -91,13 +101,9 @@ p = A \ counts(bins)';
 % radians.
 orient1 = -(-p(2)/(2*p(1)) - 1) * pi/180; 
 
-%% Grid Square localization
-[nrows,ncols] = size(img);
-[xgrid,ygrid] = meshgrid(linspace(-ncols/2,ncols/2,ncols), ...
-    linspace(-nrows/2,nrows/2,nrows));
-
-xgridRot =  xgrid*cos(orient1) + ygrid*sin(orient1) + ncols/2;
-ygridRot = -xgrid*sin(orient1) + ygrid*cos(orient1) + nrows/2;
+%% Grid Square localization   
+xgridRot =  xgrid*cos(orient1) + ygrid*sin(orient1) + imgCen(1);
+ygridRot = -xgrid*sin(orient1) + ygrid*cos(orient1) + imgCen(2);
 
 % if ~isempty(camera)
 %     % Undo radial distortion according to camera calibration info:
@@ -108,50 +114,20 @@ ygridRot = -xgrid*sin(orient1) + ygrid*cos(orient1) + nrows/2;
 % Note that we use a value of 1 (white) for pixels outside the image, which
 % will effectively give less weight to lines/squares that are closer to
 % the image borders naturally.
-imgRot = interp2(img, xgridRot, ygridRot, 'nearest', 1);
+imgRot = interp2(imgOrig, xgridRot, ygridRot, 'nearest', 1);
 
-if false
-    % OLD METHOD, using absolute stencil looking for lines
-    % weights = double(imgRot >= 0);
-    %
-    % weights(:,all(weights==0,1)) = 1;
-    % weights(all(weights==0,2),:) = 1;
-    %
-    % assert(all(any(weights > 0, 1)) && all(any(weights > 0, 2)), ...
-    %     'There should be no all-zero rows or cols in weight image.');
-    %
-    % colMeans = sum(weights.*imgRot,1) ./ sum(weights,1);
-    % rowMeans = sum(weights.*imgRot,2) ./ sum(weights,2);
-    colMeans = mean(imgRot,1);
-    rowMeans = mean(imgRot,2);
-    
-    x = linspace(-squareWidth,squareWidth,pixPerMM*2*squareWidth);
-    gridStencil = max(exp(-(x+squareWidth/2).^2/(2*(lineWidth/2)^2)), ...
-        exp(-(x-squareWidth/2).^2/(2*(lineWidth/2)^2)));
-    
-    [~,xcenIndex] = max(conv2(1-colMeans, gridStencil, 'same'));
-    [~,ycenIndex] = max(conv2(1-rowMeans', gridStencil, 'same'));
-else
-    % NEW METHOD, using stencil that looks for edges of the stripes by using
-    % derivatives instead.  The goal is to be less sensitive to lighting
-    x = linspace(-squareWidth,squareWidth,pixPerMM*2*squareWidth);
-    gridStencil = max(exp(-(x+squareWidth/2).^2/(2*(lineWidth/3)^2)), ...
-        exp(-(x-squareWidth/2).^2/(2*(lineWidth/3)^2)));
-    gridStencil = image_right(gridStencil) - gridStencil;
-    
-    colDeriv = mean(image_right(imgRot)-imgRot,1);
-    rowDeriv = mean(image_down(imgRot)-imgRot,2);
-    
-    [~,xcenIndex] = max(conv2(colDeriv, gridStencil, 'same'));
-    [~,ycenIndex] = max(conv2(rowDeriv', gridStencil, 'same'));
-end
+% Now using stencil that looks for edges of the stripes by using
+% derivatives instead.  The goal is to be less sensitive to lighting
+x = linspace(-squareWidth,squareWidth,pixPerMM*2*squareWidth);
+gridStencil = max(exp(-(x+squareWidth/2).^2/(2*(lineWidth/3)^2)), ...
+    exp(-(x-squareWidth/2).^2/(2*(lineWidth/3)^2)));
+gridStencil = image_right(gridStencil) - gridStencil;
 
-xcen = xgridRot(ycenIndex,xcenIndex);
-ycen = ygridRot(ycenIndex,xcenIndex);
+colDeriv = mean(image_right(imgRot)-imgRot,1);
+rowDeriv = mean(image_down(imgRot)-imgRot,2);
 
-if ~isempty(camera)
-    [xcen, ycen] = camera.distort(xcen, ycen, true);
-end
+[~,xcenIndex] = max(conv2(colDeriv, gridStencil, 'same'));
+[~,ycenIndex] = max(conv2(rowDeriv', gridStencil, 'same'));
 
 
 %% Square Identification
@@ -161,9 +137,22 @@ end
 
 insideSquareWidth = squareWidth - lineWidth;
  
+% s = diag(insideSquareWidth * pixPerMM * [1 1]);
+% R = [cos(orient1) sin(orient1); -sin(orient1) cos(orient1)];
+% t = [xcen; ycen] - R*diag(s)/2;
+% tform = maketform('affine', [s*R t; 0 0 1]');
+% 
+% corners = [0 0; ...
+%            0 1; ...
+%            1 0; ...
+%            1 1];
+%         
+% corners = tformfwd(tform, corners);
+%     
+% marker = MatMarker2D(img, corners, maketform('affine', tform.tdata.Tinv));
 s = diag(insideSquareWidth * pixPerMM * [1 1]);
-R = [cos(orient1) sin(orient1); -sin(orient1) cos(orient1)];
-t = [xcen; ycen] - R*diag(s)/2;
+R = eye(2);
+t = [xcenIndex; ycenIndex] - diag(s)/2;
 tform = maketform('affine', [s*R t; 0 0 1]');
 
 corners = [0 0; ...
@@ -173,57 +162,89 @@ corners = [0 0; ...
         
 corners = tformfwd(tform, corners);
 
-if ~isempty(camera)
-    [tempx, tempy] = camera.distort(corners(:,1), corners(:,2), true);
-    corners = [tempx tempy];
-end
-    
-marker = MatMarker2D(imgOrig, corners, maketform('affine', tform.tdata.Tinv));
+% Note we're using the rotated, undistorted image for identifying the code
+marker = MatMarker2D(imgRot, corners, maketform('affine', tform.tdata.Tinv));
 
 if marker.isValid
     % Get camera/image position on mat, in mm:
-    xMat = marker.X * squareWidth - squareWidth/2 + (ncols/2-xcen)/pixPerMM;
-    yMat = marker.Y * squareWidth - squareWidth/2 + (nrows/2-ycen)/pixPerMM;
-    
+    xvec = imgCen(1)-xcenIndex;
+    yvec = imgCen(2)-ycenIndex;
+    xvecRot =  xvec*cos(-marker.upAngle) + yvec*sin(-marker.upAngle);
+    yvecRot = -xvec*sin(-marker.upAngle) + yvec*cos(-marker.upAngle);
+    xMat = xvecRot/pixPerMM + marker.X*squareWidth - squareWidth/2;
+    yMat = yvecRot/pixPerMM + marker.Y*squareWidth - squareWidth/2;
+
     orient1 = orient1 + marker.upAngle;
+    
 else
     xMat = -1;
     yMat = -1;
+    xvecRot = -1;
+    yvecRot = -1;
 end
 
 if nargout == 0
+    % Location of the center of the square in original (distorted) image
+    % coordinates:
+    xcen = xgridRot(ycenIndex,xcenIndex);
+    ycen = ygridRot(ycenIndex,xcenIndex);
+
     namedFigure('MatLocalization');
     subplot 221
     hold off, imagesc(imgOrig), axis image, hold on
-    plot(xcen, ycen, 'r.');
-    plot(marker.corners([1 2 4 3 1],1), marker.corners([1 2 4 3 1],2), 'r', 'LineWidth', 2);
+    plot(xcen, ycen, 'bx');
+    plot(imgCen(1), imgCen(2), 'r.');
+    
+    h_axes = subplot(222);
+    hold off, imagesc(imgRot), axis image, hold on
+    draw(marker, 'where', h_axes, 'drawTextLabels', 'short');
+    plot(imgCen(1), imgCen(2), 'r.', 'MarkerSize', 12);
     title(sprintf('Orientation = %.1f degrees', orient1*180/pi));
     
-    subplot 222
+    subplot 234
+    meansRot = imrotate(marker.means, -marker.upAngle * 180/pi, 'nearest');
     if marker.isValid
-        imagesc(marker.means > marker.threshold, [0 1]), axis image
+        imagesc(meansRot > marker.threshold, [0 1]), axis image
         title(sprintf('X = %d, Y = %d', marker.X, marker.Y));
     else
+        imagesc(meansRot, [0 1]), axis image
         title('Invalid Marker')
     end
     
+    % Draw image boundaries on the mat:
     xImg = ncols/2*[-1 1 1 -1 -1] / pixPerMM;
     yImg = nrows/2*[-1 -1 1 1 -1] / pixPerMM;
     xImgRot = xImg*cos(-orient1) + yImg*sin(-orient1) + xMat;
     yImgRot = -xImg*sin(-orient1) + yImg*cos(-orient1) + yMat;
     
-    h_matAxes = subplot(212);
+    % Compute the marker center location on the mat, in mm:
+    xMarkerCen = xMat - xvecRot/pixPerMM;
+    yMarkerCen = yMat - yvecRot/pixPerMM;
+    xMarker = squareWidth/2*[-1 1 1 -1 -1] + xMarkerCen;
+    yMarker = squareWidth/2*[-1 -1 1 1 -1] + yMarkerCen;
+    
+    h_matAxes = subplot(2,3,[5 6]);
     if ~strcmp(get(h_matAxes, 'Tag'), 'GridMat')
         gridMat('matSize', 200, 'axesHandle', h_matAxes);
         set(h_matAxes, 'Tag', 'GridMat');
         hold on
-        plot(xMat, yMat, 'r.', 'Tag', 'MatPosition', 'Parent', h_matAxes);
-        plot(xImgRot, yImgRot, 'r', 'Tag', 'MatPositionRect', 'Parent', h_matAxes);
+        plot(xMat, yMat, 'r.', 'MarkerSize', 12, ...
+            'Tag', 'MatPosition', 'Parent', h_matAxes);
+        plot(xImgRot, yImgRot, 'r', 'LineWidth', 2, ...
+            'Tag', 'MatPositionRect', 'Parent', h_matAxes);
+        plot(xMarkerCen, yMarkerCen, 'bx', 'LineWidth', 2, ...
+            'Tag', 'MatMarkerCen', 'Parent', h_matAxes);
+        plot(xMarker, yMarker, 'g', 'LineWidth', 3, ...
+            'Tag', 'MatMarker', 'Parent', h_matAxes);
     else 
         set(findobj(h_matAxes, 'Tag', 'MatPosition'), ...
             'XData', xMat, 'YData', yMat);
         set(findobj(h_matAxes, 'Tag', 'MatPositionRect'), ...
             'XData', xImgRot, 'YData', yImgRot);
+        set(findobj(h_matAxes, 'Tag', 'MatMarkerCen'), ...
+            'XData', xMarkerCen, 'YData', yMarkerCen);
+        set(findobj(h_matAxes, 'Tag', 'MatMarker'), ...
+            'XData', xMarker, 'YData', yMarker);
     end
 end
 
