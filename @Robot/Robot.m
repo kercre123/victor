@@ -13,6 +13,7 @@ classdef Robot < handle
         modelZ;
                 
         camera;
+        matCamera;
         
         % For drawing:
         appearance = struct( ...
@@ -61,6 +62,8 @@ classdef Robot < handle
             World = [];
             CameraDevice = [];
             CameraCalibration = [];
+            MatCameraDevice = [];
+            MatCameraCalibration = [];
             
             appearanceArgs = parseVarargin(varargin);
             
@@ -85,7 +88,11 @@ classdef Robot < handle
             this.camera = Camera('device', CameraDevice, ...
                 'calibration', CameraCalibration, ...
                 'pose', inv(Pose(Rrc, Trc)));
-                        
+            
+            if ~isempty(MatCameraDevice)
+                this.matCamera = Camera('device', MatCameraDevice, ...
+                    'calibration', MatCameraCalibration);
+            end
            
         end
         

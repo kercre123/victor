@@ -9,10 +9,16 @@ function draw(this, varargin)
 %     if isempty(AxesProject)
         
 AxesWorld = subplot(1,1,1, 'Parent', namedFigure('BlockWorld 3D'));
-AxesReproject = zeros(1,this.numRobots);
+numCols = 1 + double(this.HasMat);
+AxesReproject = zeros(this.numRobots, numCols);
+h_fig = namedFigure('BlockWorld Reproject');
 for i = 1:this.numRobots
-    AxesReproject(i) = subplot(this.numRobots,1,i, ...
-        'Parent', namedFigure('BlockWorld Reproject'));
+    AxesReproject(i,1) = subplot(this.numRobots,numCols,i, ...
+        'Parent', h_fig);
+    if this.HasMat
+        AxesReproject(i,2) = subplot(this.numRobots, numCols, 2*i, ...
+            'Parent', h_fig);
+    end
 end    
 %     end
 % end
@@ -33,9 +39,13 @@ grid(AxesWorld, 'on');
 
 for i_robot = 1:this.numRobots
     draw(this.robots{i_robot}.currentObservation, ...
-        'AxesHandle', AxesReproject(i_robot));
+        'AxesHandle', AxesReproject(i_robot,:));
     
-    title(AxesReproject(i_robot), sprintf('Robot %d''s View', i_robot));
+    title(AxesReproject(i_robot,1), sprintf('Robot %d''s View', i_robot));
+    
+    if this.HasMat
+        title(AxesReproject(i_robot,2), sprintf('Robot %d''s Mat View', i_robot));
+    end
     
 end % FOR each robot
 

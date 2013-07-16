@@ -1,4 +1,12 @@
-function testBlockWorld(calibration, frames)
+function W = testBlockWorld(varargin)
+
+device = 0;
+calibration = [];
+matDevice = 1;
+matCalibration = [];
+frames = {};
+
+parseVarargin(varargin{:});
 
 cla(findobj(namedFigure('BlockWorld 3D'), 'Type', 'axes'))
 
@@ -29,7 +37,9 @@ if nargin > 1 && ~isempty(frames)
     
 else
     % From live camera feed
-    W = BlockWorld('CameraCalibration', calibration, 'CameraDevice', 0);
+    W = BlockWorld('CameraCalibration', calibration, ...
+        'CameraDevice', device, 'MatCameraDevice', matDevice, ...
+        'MatCameraCalibration', matCalibration);
     
     h_fig(1) = namedFigure('BlockWorld 3D');
     h_fig(2) = namedFigure('BlockWorld Reproject');
@@ -61,6 +71,10 @@ fprintf('Updates took a total of %.2f seconds, or %.1f%%.\n', ...
     T_update, 100*T_update/T);
 fprintf('Drawing took a total of %.2f seconds, or %.1f%%.\n', ...
     T_draw, 100*T_draw/T);
+
+if nargout == 0
+    clear W;
+end
 
 end
     

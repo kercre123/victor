@@ -1,8 +1,12 @@
 function addBlock(this, robot, markers2D)
+% Add a block to a BlockWorld, given observed BlockMarker2Ds.
 
 if ~iscell(markers2D)
     markers2D = {markers2D};
 end
+
+assert(all(cellfun(@(m)isa(m, 'BlockMarker2D'), markers2D)), ...
+    'All markers must be BlockMarker2D objects.');
 
 blockType = markers2D{1}.blockType;
 
@@ -35,25 +39,10 @@ for i=1:numMarkersAdded
     this.allMarkers3D{M.ID} = M;
 end
 
-corners = cell(1, numMarkers2D);
-Pmodel  = cell(1, numMarkers2D);
-for i = 1:numMarkers2D
-    corners{i} = markers2D{i}.corners;
-    marker3D = B.getFaceMarker(markers2D{i}.faceType);
-    Pmodel{i} = marker3D.model;
-end
-corners = vertcat(corners{:});
-Pmodel  = vertcat(Pmodel{:});
-
-% Figure out where the marker we saw is in 3D space, in camera's world 
-% coordinates, which are relative to the robot's pose!
-markerPose = robot.camera.computeExtrinsics(corners, Pmodel);
-
-% Put the marker into the robot's world pose
-markerPose = robot.pose * markerPose;
+markerPose = BlockWorld.blockPoseHelper(robot, B, markers2D);
 
 % Now, since the markers are all already in world coordinates, we can use
-% that same frame for the block.  And updating the block's frame will also
+% that same pose for the block.  And updating the block's pose will also
 % update its' face markers:
 B.pose = markerPose;
 

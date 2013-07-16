@@ -1,8 +1,9 @@
 classdef BlockWorld < handle
     
     properties(GetAccess = 'public', Constant = true)
+        HasMat    = true; % use mat for robot localization
         MaxBlocks = 256; % 8 bits
-        MaxFaces = 16;   % 4 bits
+        MaxFaces  = 16;   % 4 bits
     end
     
     properties(GetAccess = 'public', SetAccess = 'protected')
@@ -31,6 +32,8 @@ classdef BlockWorld < handle
             
             CameraDevice = {};
             CameraCalibration = {};
+            MatCameraDevice = {};
+            MatCameraCalibration = {};
             
             parseVarargin(varargin{:});
             
@@ -59,11 +62,41 @@ classdef BlockWorld < handle
                 end
             end
             
+            if BlockWorld.HasMat
+                if isempty(MatCameraDevice)
+                    MatCameraDevice = cell(size(MatCameraCalibration));
+                else
+                    if ~iscell(MatCameraDevice)
+                        MatCameraDevice = {MatCameraDevice};
+                    end
+                    if length(MatCameraDevice) ~= length(MatCameraCalibration)
+                        error(['You must provide a MatCameraDevice for each ' ...
+                            'MatCameraCalibration (or none).']);
+                    end
+                end
+                
+                if isempty(MatCameraCalibration)
+                    error(['You must provide mat camera calibration ' ...
+                        'information for each robot in the world.']);
+                elseif ~iscell(MatCameraCalibration)
+                    MatCameraCalibration = {MatCameraCalibration};
+                end
+                
+            else
+                MatCameraDevice = cell(size(CameraDevice));
+                MatCameraCalibration = cell(size(CameraDevice));
+            end
+            
+            assert(isequal(size(CameraDevice), size(MatCameraDevice)), ...
+                'There should be a Camera and MatCamera for each robot.');
+            
             this.robots = cell(1, length(CameraCalibration));
             for i=1:this.numRobots
                 this.robots{i} = Robot('World', this, ...
                     'CameraCalibration', CameraCalibration{i}, ...
-                    'CameraDevice', CameraDevice{i});
+                    'CameraDevice', CameraDevice{i}, ...
+                    'MatCameraCalibration', MatCameraCalibration{i}, ...
+                    'MatCameraDevice', MatCameraDevice{i});
             end
             
         end % FUNCTION BlockWorld()
@@ -81,6 +114,12 @@ classdef BlockWorld < handle
         end
         
     end % METHODS (public)
+    
+    methods(Static = true, Access = 'protected')
+        
+        markerPose = blockPoseHelper(robot, B, markers2D);
+        
+    end
     
     methods % Dependent SET/GET
         

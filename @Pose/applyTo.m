@@ -22,8 +22,8 @@ switch(length(varargin))
             % Pin = [X(:) Y(:) Z(:)] 
             % Pout = P*R' + T
             N = size(P,1);
-            t = row(this.T);
-            varargout{1} = P*R' + t(ones(N,1),:);
+            %t = row(this.T);
+            varargout{1} = P*R' + this.T(:,ones(1,N))';
             Pcol = P;
         else
             error('P should be Nx3 or 3xN.');

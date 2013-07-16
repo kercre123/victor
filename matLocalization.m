@@ -7,6 +7,7 @@ pixPerMM = 6;
 squareWidth = 10;
 lineWidth = 1.5;
 camera = [];
+DEBUG_DISPLAY = false;
 
 parseVarargin(varargin{:});
 
@@ -180,7 +181,7 @@ else
     yvecRot = -1;
 end
 
-if nargout == 0
+if nargout == 0 || DEBUG_DISPLAY
     % Location of the center of the square in original (distorted) image
     % coordinates:
     xcen = xgridRot(ycenIndex,xcenIndex);
@@ -230,11 +231,12 @@ if nargout == 0
     title(h_imgRotAxes, sprintf('Orientation = %.1f degrees', orient1*180/pi));
     
     % Draw the (thresholded) marker means, or update the existing ones:
-    meansRot = imrotate(marker.means, -marker.upAngle * 180/pi, 'nearest');
     if marker.isValid
+        meansRot = imrotate(marker.means, -marker.upAngle * 180/pi, 'nearest');
         meansRot = meansRot > marker.threshold;
         titleStr = sprintf('X = %d, Y = %d', marker.X, marker.Y);
     else
+        meansRot = marker.means;
         titleStr = 'Invalid Marker';
     end
     h_meansImg = findobj(h_fig, 'Tag', 'meansImg');
