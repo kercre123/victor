@@ -9,7 +9,7 @@ parseVarargin(varargin{:});
 
 
 if initializeWithCurrentPose
-    invPose = inv(this.pose);
+    invPose = inv(this.pose); %#ok<UNRCH>
     Rvec = invPose.Rvec;
     T    = invPose.T;
 else
@@ -42,7 +42,8 @@ if maxRefineIterations > 0
         
         J = [dp_dRvec dp_dT];
         
-        A = J'*J + ridgeWeight*eye(size(J,2));
+        JtJ = J'*J;
+        A = JtJ + ridgeWeight*eye(size(J,2));
         b = J'*reprojErr(:);
         
         paramUpdate = A \ b;
@@ -67,13 +68,19 @@ end % IF do refinement
 
 % Put camera coordinates into "world" coordinates (or the coordinates of
 % whatever is holding this camera, e.g. a Robot)
-P = this.pose * Pose(Rmat, T);
+poseCov = inv(JtJ);
+P = this.pose * Pose(Rmat, T, poseCov);
 %F = Frame(Rmat, T);
 
-if nargout == 2
-    varargout = {P.Rmat, P.T};
-else
-    varargout = {P};
+switch(nargout)
+    case 3
+        varargout = {P.Rmat, P.T, J};
+    case 2
+        varargout = {P.Rmat, P.T};
+    case 1
+        varargout = {P};
+    otherwise
+        error('Unrecognized number of output arguments.');
 end
     
 end % FUNCTION computeExtrinsics()
