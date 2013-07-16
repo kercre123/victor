@@ -1,24 +1,24 @@
 classdef Marker2D
     
+    %% Constant Properties
     properties(GetAccess = 'public', Constant = true)
         MinContrastRatio = 1.25;  % bright/dark has to be at least this
         
-        
     end
     
+    %% Abstract Constant Properties
     properties(GetAccess = 'public', Constant = true, Abstract = true)
-        % Subclasses must define the layout and values!
+        % Subclasses must define the layout and IDs!
         % 'O' is a reserved character in the layout, meaning Orientation.
         %  The orientation bits are always the four ends of the "plus sign"
         %  in the square.
-        % 'C' is a reserved character for specifying checsum bits.
+        % 'C' is a reserved character for specifying checksum bits.
         Layout;
         IdChars; % cell array
         IdNames; % cell array (just for drawing)
         
         % In sub-classes, set the following using the static methods
-        % defined below, passing in the above Constant properties.
-        %NumValues;
+        % defined below, by passing in the above Constant properties.
         UpBit, DownBit, LeftBit, RightBit;
         CheckBits;
         IdBits;
@@ -35,7 +35,8 @@ classdef Marker2D
         Yprobes;
         ProbeWeights;
     end
-           
+          
+    %% Static Methods
     methods(Static = true, Access = 'protected')
         
         function S = getSize(layout)
@@ -92,7 +93,8 @@ classdef Marker2D
         w = createProbeWeights(n, probeGap, probeRadius, probeSigma, cropFactor)
         probes = createProbes(dir, n, probeGap, probeRadius, cropFactor)
     end
-        
+      
+    %% Get-Public Properties
     properties(GetAccess = 'public', SetAccess = 'protected')   
         corners;
         isValid = true;
@@ -105,6 +107,7 @@ classdef Marker2D
         upAngle; 
     end
     
+    %% Dependent Properties
     properties(GetAccess = 'public', SetAccess = 'protected', ...
             Dependent = true)
         
@@ -113,13 +116,15 @@ classdef Marker2D
         
     end
     
+    %% Protected Properties
     properties(GetAccess = 'protected', SetAccess = 'protected')
         
         handles;
         topSideLUT = struct('down', [2 4], 'up', [1 3], ...
             'left', [1 2], 'right', [3 4]);
     end    
-           
+     
+    %% Abstract Static Methods
     methods(Abstract = true, Static = true)
         % Each subclass must implement a method for computing a checksum
         % from a binaryCode input.
@@ -129,7 +134,8 @@ classdef Marker2D
         % 2D binary code. length(varargin) should == numIDs
         binaryCode = encodeIDs(varargin);
     end
-        
+    
+    %% Public Methods
     methods(Access = 'public')
         
         function this = Marker2D(img, corners_, tform)
@@ -152,6 +158,7 @@ classdef Marker2D
                 
     end 
     
+    %% Dependent Get/Set Methods
     methods
         function n = get.numIDs(this)
             n = length(this.IdChars);

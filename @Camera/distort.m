@@ -1,10 +1,26 @@
 function [uDistorted, vDistorted] = distort(this, a, b, normalize)
 % Apply radial distortion to coordinates.
-
-% If normalize is true, focal length and camera center will be removed
-% first, then distortion will be applied, and then focal length and camera
-% center will be added back.  Otherwise, this is the caller's
-% responsibility.
+%
+% [uDistorted, vDistorted] = camera.distort(this, a, b, <normalize>)
+%
+%  Computes radial distortion.  Let r^2 = a^2 + b^2.  Then the distorted
+%  point coordinates (ud,vd) are:
+%
+%    ud = a * (1 + kc(1)*r^2 + kc(2)*r^4) + 2*kc(3)*a*b + kc(4)*(r^2 + 2*a^2);
+%    vd = b * (1 + kc(1)*r^2 + kc(2)*r^4) + kc(3)*(r^2 + 2*b^2) + 2*kc(4)*a*b;
+%
+%  The left terms correspond to radial distortion, the right terms
+%  correspond to tangential distortion. 'kc' are the calibrated
+%  radial distortion parameters.
+%
+%  If normalize is true (default is false), focal length and camera center 
+%  will be removed first, then distortion will be applied, and then focal 
+%  length and camera center will be added back.  Otherwise, this is the 
+%  caller's responsibility.
+%
+% ------------
+% Andrew Stein
+%
 
 if nargin < 4
     normalize = false;

@@ -1,7 +1,7 @@
 function [imgUndist, xDistorted, yDistorted] = undistort(this, img, interpMethod)
 % Undoes radial distortion of an image.
 %
-% [imgUndistorted, xUndistorted, yUndistorted] = camera.undistort(img)
+% [imgUndistorted, xDistorted, yDistorted] = camera.undistort(img)
 %
 %   Uses same radial/tangential distortion model as in Bouguet's Camera 
 %   Calibration Toolbox.
