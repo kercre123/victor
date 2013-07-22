@@ -24,7 +24,10 @@ figure(h_fig);
 
 if isempty(displayAxes)
     if ~isempty(processFcn)
-        if isempty(processAxes)
+        if strcmp(processAxes, 'none')
+            displayAxes = subplot(1,1,1, 'Parent', h_fig);
+            processAxes = [];
+        elseif isempty(processAxes)
             displayAxes = axes('Pos', [0 .51 1 .45], 'Parent', h_fig);
             processAxes = axes('Pos', [0 .03 1 .45], 'Parent', h_fig);
         else
@@ -44,9 +47,13 @@ try
     % Initialize and grab first frame
     frame = mexCameraCapture(OPEN, device, resolution(1), resolution(2));
     
-    h_img = imshow(frame, 'Parent', displayAxes);
-    if ~isempty(processFcn)
-        h_imgProc = imshow(frame, 'Parent', processAxes);
+    h_img = imagesc(frame, 'Parent', displayAxes);
+    axis(displayAxes, 'image', 'off');
+    if ~isempty(processFcn) && ~isempty(processAxes)
+        h_imgProc = imagesc(frame, 'Parent', processAxes);
+        axis(processAxes, 'image', 'off');
+    else
+        h_imgProc = [];
     end
     
     %set(h_img, 'EraseMode', 'none');
@@ -62,8 +69,15 @@ try
         set(h_img, 'CData', frame);
         if ~isempty(processFcn)
             if doContinuousProcessing || get(h_fig, 'CurrentCharacter') ~= '~' 
-                disp('Processing frame')
-                processFcn(frame, processAxes, h_imgProc); %#ok<NOEFF>
+                if ~doContinuousProcessing
+                    disp('Processing frame')
+                end
+                try
+                    processFcn(frame, processAxes, h_imgProc); %#ok<NOEFF>
+                catch E
+                    warning(E.message)
+                end
+                    
                 set(h_fig, 'CurrentCharacter', '~');
             end
         end
