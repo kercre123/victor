@@ -5,16 +5,21 @@
 
 std::vector<cv::VideoCapture *> capture;
 
+void closeHelper(int device) {
+    if(capture[device] != NULL) {
+        //mexPrintf("Closing VideoCapture camera.\n");
+        capture[device]->release();
+        delete capture[device];
+        capture[device] = NULL;
+    }
+}
+
+
 void closeHelper(void) {
     int numDevices = capture.size();
     for(int i=0; i<numDevices; ++i)
     {
-        if(capture[i] != NULL) {
-            //mexPrintf("Closing VideoCapture camera.\n");
-            capture[i]->release();
-            delete capture[i];
-            capture[i] = NULL;
-        }
+        closeHelper(i);
     }
 }
 
@@ -48,10 +53,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 // Make room for new capture device:
                 capture.resize(device+1, NULL);
             }
-            else if(capture[device] != NULL) {
-                // Close device before reopening it
-                capture[device]->release();
-            }
+            
+            // Close device (if necessary) before reopening it:
+            closeHelper(device);
                
             DEBUG_MSG(0, "Opening capture device %d.\n", device);
             capture[device] = new cv::VideoCapture(device);
