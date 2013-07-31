@@ -4,6 +4,8 @@ classdef Camera < handle
         OPEN = 0;
         GRAB = 1;
         CLOSE = 2;
+        
+        UseDistortionLUTs = true;
     end
     
     properties(GetAccess = 'public', SetAccess = 'public')
@@ -30,6 +32,8 @@ classdef Camera < handle
         distortionCoeffs;
         alpha;
         
+        xDistortedLUT;
+        yDistortedLUT;
     end
     
     properties(GetAccess = 'public', SetAccess = 'public', ...
@@ -79,6 +83,12 @@ classdef Camera < handle
             this.alpha = calibration.alpha_c;
             
             this.pose = pose; %#ok<PROP>
+            
+            if Camera.UseDistortionLUTs
+                [xgrid,ygrid] = meshgrid(1:this.ncols, 1:this.nrows);
+                [this.xDistortedLUT, this.yDistortedLUT] = ...
+                    this.distort(xgrid, ygrid, true);
+            end
             
             if ~isempty(this.usbDevice)
                 % If a USB device was provided, open it.

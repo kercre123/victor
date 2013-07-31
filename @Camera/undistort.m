@@ -17,15 +17,24 @@ end
 img = im2double(img);
 
 [nrows,ncols,nbands] = size(img);
-[xgrid,ygrid] = meshgrid(1:ncols, 1:nrows);
 
-[xDistorted, yDistorted] = this.distort(xgrid, ygrid, true);
-  
-imgUndist = cell(1, nbands);
-for i = 1:nbands
-    imgUndist{i} = interp2(img(:,:,i), xDistorted, yDistorted, interpMethod);
+if Camera.UseDistortionLUTs
+    xDistorted = this.xDistortedLUT;
+    yDistorted = this.yDistortedLUT;
+else
+    [xgrid,ygrid] = meshgrid(1:ncols, 1:nrows);
+    [xDistorted, yDistorted] = this.distort(xgrid, ygrid, true);
 end
-imgUndist = cat(3, imgUndist{:});
+
+if nbands > 1
+    imgUndist = cell(1, nbands);
+    for i = 1:nbands
+        imgUndist{i} = interp2(img(:,:,i), xDistorted, yDistorted, interpMethod);
+    end
+    imgUndist = cat(3, imgUndist{:});
+else
+    imgUndist = interp2(img, xDistorted, yDistorted, interpMethod);
+end
 
 if nargout==0
     subplot 121, imagesc(img), axis image off
