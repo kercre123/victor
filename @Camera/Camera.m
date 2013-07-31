@@ -8,8 +8,13 @@ classdef Camera < handle
     
     properties(GetAccess = 'public', SetAccess = 'public')
         
-        image;
         pose;
+        
+    end
+    
+    properties(GetAccess = 'protected', SetAccess = 'protected')
+        
+        image_;
         
     end
         
@@ -24,6 +29,13 @@ classdef Camera < handle
         center;
         distortionCoeffs;
         alpha;
+        
+    end
+    
+    properties(GetAccess = 'public', SetAccess = 'public', ...
+            Dependent = true)
+       
+        image;
         
     end
     
@@ -103,6 +115,22 @@ classdef Camera < handle
             K = [this.focalLength(1) this.alpha*this.focalLength(1) this.center(1);
                  0 this.focalLength(2) this.center(2);
                  0 0 1];
+        end
+        
+        function I = get.image(this)
+            I = this.image_;
+        end
+        
+        function set.image(this, I)
+            if ischar(I) 
+                if exist(I, 'file')
+                    I = imread(I);
+                else
+                    error('Non-existant image file "%s".', I);
+                end
+            end
+            
+            this.image_ = I;
         end
                 
     end % METHODS (Dependent get/set)

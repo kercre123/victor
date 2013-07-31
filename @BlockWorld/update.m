@@ -1,13 +1,18 @@
-function update(this, img)
+function update(this, img, matImg)
 
 doBundleAdjustment = false;
 
+if nargin < 3 
+    matImg = cell(1, this.numRobots);
+elseif ~iscell(matImg)
+    matImg = {matImg};
+end
+    
 if nargin < 2
     img = cell(1, this.numRobots);
 elseif ~iscell(img)
     img = {img};
 end
-
 
 if length(img) ~= this.numRobots
     error('You must provide an image for each of the %d robots.', ...
@@ -16,7 +21,7 @@ end
 
 % Let each robot take a new observation
 for i_robot = 1:this.numRobots
-    this.robots{i_robot}.update(img{i_robot});
+    this.robots{i_robot}.update(img{i_robot}, matImg{i_robot});
 end
 
 uv = cell(this.numRobots, Robot.ObservationWindowLength);

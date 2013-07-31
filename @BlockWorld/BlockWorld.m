@@ -2,7 +2,7 @@ classdef BlockWorld < handle
     
     properties(GetAccess = 'public', Constant = true)
         HasMat    = true; % use mat for robot localization
-        MaxBlocks = 256; % 8 bits
+        MaxBlocks = 256;  % 8 bits
         MaxFaces  = 16;   % 4 bits
     end
     

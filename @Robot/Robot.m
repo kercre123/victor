@@ -89,11 +89,9 @@ classdef Robot < handle
                 'calibration', CameraCalibration, ...
                 'pose', inv(Pose(Rrc, Trc)));
             
-            if ~isempty(MatCameraDevice)
-                this.matCamera = Camera('device', MatCameraDevice, ...
-                    'calibration', MatCameraCalibration);
-            end
-           
+            this.matCamera = Camera('device', MatCameraDevice, ...
+                'calibration', MatCameraCalibration);
+            
         end
         
     end % METHODS (public)

@@ -13,13 +13,12 @@ if this.world.HasMat
         'Robot in a BlockWorld with a Mat must have a matCamera defined.');
     
     if nargin < 3 || isempty(matImage)
-        matImage = this.matCamera.grabFrame;
+        this.matCamera.grabFrame();
+    else
+        this.matCamera.image = matImage;
     end
-else
-    matImage = [];
 end
 
-this.observationWindow{1} = Observation(this.camera.image, this, matImage);
-% this.frame = this.observationWindow{1}.frame;
+this.observationWindow{1} = Observation(this);
 
 end % FUNCTION Robot/update()

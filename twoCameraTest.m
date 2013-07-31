@@ -1,17 +1,22 @@
-function twoCameraTest
+function twoCameraTest(varargin)
 
+downDevice = 0;
+frontDevice = 1;
 showDown = true;
 showFront = true;
+savePrefix = '';
+
+parseVarargin(varargin{:});
 
 clear mexCameraCapture
 
 if showDown
-    downCamera  = Camera('device', 0);
+    downCamera  = Camera('device', downDevice);
     cleanupDown = onCleanup(@()close(downCamera));
 end
 
 if showFront
-    frontCamera = Camera('device', 1);
+    frontCamera = Camera('device', frontDevice);
     cleanupFront = onCleanup(@()close(frontCamera));
 end
 
@@ -29,6 +34,7 @@ title(h_downAxes, 'Down');
 
 set(h_fig, 'CurrentCharacter', ' ');
 
+frameCtr = 0;
 while get(h_fig, 'CurrentCharacter') ~= 27 
     t = tic;
     if showFront
@@ -41,6 +47,12 @@ while get(h_fig, 'CurrentCharacter') ~= 27
     
     set(h_front, 'CData', front);
     set(h_down,  'CData', down);
+    
+    if ~isempty(savePrefix)
+        imwrite(front, sprintf('%s_front%.5d.png', savePrefix, frameCtr));
+        imwrite(down,  sprintf('%s_down%.5d.png',  savePrefix, frameCtr));
+        frameCtr = frameCtr + 1;
+    end
     
     drawnow
     pause(max(0, 1/30 - toc(t)));

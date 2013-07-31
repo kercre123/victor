@@ -18,15 +18,21 @@ classdef Observation
     
     methods(Access = 'public')
         
-        function this = Observation(img, parentRobot, matImage)
-            this.image = img;
-            this.matImage = matImage;
+        function this = Observation(parentRobot)
+            this.image = parentRobot.camera.image;
             
             this.markers = simpleDetector(this.image);
             this.robot = parentRobot;
             this.pose = Pose();
             
             world = this.robot.world;
+            
+            if world.HasMat
+                assert(~isempty(parentRobot.matCamera), ...
+                    'Robot in a BlockWorld with a Mat must have a matCamera defined.');
+
+                this.matImage = parentRobot.matCamera.image;
+            end
             
             % Find blocks we've seen before (we don't have to have seen
             % the individual marker because we know where all markers
