@@ -34,13 +34,23 @@ numSigma = 2.5;
 prevSigma = 0.5;
 %G{1} = separable_filter(img, gaussian_kernel(prevSigma, numSigma));
 %G{1} = imfilter(img, fspecial('gaussian', round(numSigma*prevSigma), prevSigma));
+
+% Use mexGaussianBlur if available, otherwise fall back on Matlab filtering
+if exist('mexGaussianBlur', 'file')
+    blurFcn = @mexGaussianBlur;
+else
+    blurFcn = @(img_, addlSigma_, numSigma_)separable_filter(img_, gaussian_kernel(addlSigma_, numSigma_));
+end
+    
+
 G{1} = mexGaussianBlur(img, prevSigma, numSigma);
 for i = 1:numScales
     crntSigma = downsampleFactor^(i-1);
     addlSigma = sqrt(crntSigma^2 - prevSigma^2);
+    G{i+1} = blurFcn(G{i}, addlSigma, numSigma);
     %G{i+1} = separable_filter(G{i}, gaussian_kernel(addlSigma, numSigma)); 
     %G{i+1} = imfilter(G{i}, fspecial('gaussian', round(numSigma*addlSigma), addlSigma));
-    G{i+1} = mexGaussianBlur(G{i}, addlSigma, numSigma);
+    %G{i+1} = mexGaussianBlur(G{i}, addlSigma, numSigma);
     prevSigma = crntSigma;
 end
 
