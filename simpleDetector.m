@@ -42,8 +42,7 @@ else
     blurFcn = @(img_, addlSigma_, numSigma_)separable_filter(img_, gaussian_kernel(addlSigma_, numSigma_));
 end
     
-
-G{1} = mexGaussianBlur(img, prevSigma, numSigma);
+G{1} = blurFcn(img, prevSigma, numSigma);
 for i = 1:numScales
     crntSigma = downsampleFactor^(i-1);
     addlSigma = sqrt(crntSigma^2 - prevSigma^2);
