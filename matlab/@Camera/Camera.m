@@ -1,0 +1,148 @@
+classdef Camera < handle
+    
+    properties(GetAccess = 'protected', Constant = true)
+        OPEN = 0;
+        GRAB = 1;
+        CLOSE = 2;
+        
+        UseDistortionLUTs = true;
+    end
+    
+    properties(GetAccess = 'public', SetAccess = 'public')
+        
+        pose;
+        
+    end
+    
+    properties(GetAccess = 'protected', SetAccess = 'protected')
+        
+        image_;
+        
+    end
+        
+    properties(GetAccess = 'public', SetAccess = 'protected')
+        
+        usbDevice;
+        nrows;
+        ncols; 
+        
+        % Calibration parameters:
+        focalLength;
+        center;
+        distortionCoeffs;
+        alpha;
+        
+        xDistortedLUT;
+        yDistortedLUT;
+    end
+    
+    properties(GetAccess = 'public', SetAccess = 'public', ...
+            Dependent = true)
+       
+        image;
+        
+    end
+    
+    properties(GetAccess = 'public', SetAccess = 'protected', ...
+            Dependent = true)
+        
+        calibrationMatrix;
+        
+    end
+    
+    
+    methods(Access = 'public')
+        
+        function this = Camera(varargin)
+            device = [];
+            resolution = [640 480];
+            calibration = struct('fc', [1000 1000], ...
+                'cc', resolution/2, 'kc', zeros(5,1), 'alpha_c', 0);
+            pose = Pose(); %#ok<PROP>
+           
+            parseVarargin(varargin{:});
+            
+            if ~isstruct(calibration)
+                if ~exist(calibration, 'file')
+                    error('Specified calibration file does not exist.');
+                end
+                
+                calibration = load(calibration);
+            end
+            
+            this.usbDevice = device;
+            this.nrows = resolution(2);
+            this.ncols = resolution(1);
+            
+            this.focalLength = calibration.fc;
+                        
+            this.center = calibration.cc;
+                        
+            this.distortionCoeffs = calibration.kc; 
+                        
+            this.alpha = calibration.alpha_c;
+            
+            this.pose = pose; %#ok<PROP>
+            
+            if Camera.UseDistortionLUTs
+                [xgrid,ygrid] = meshgrid(1:this.ncols, 1:this.nrows);
+                [this.xDistortedLUT, this.yDistortedLUT] = ...
+                    this.distort(xgrid, ygrid, true);
+            end
+            
+            if ~isempty(this.usbDevice)
+                % If a USB device was provided, open it.
+                mexCameraCapture(Camera.OPEN, this.usbDevice, ...
+                    this.ncols, this.nrows);
+            end
+            
+        end
+        
+        function out = grabFrame(this)
+            this.image = mexCameraCapture(Camera.GRAB, this.usbDevice);
+            this.image = this.image(:,:,[3 2 1]); % BGR to RGB
+            if nargout > 0
+                out = this.image;
+            end
+        end
+        
+        function close(this)
+            mexCameraCapture(Camera.CLOSE, this.usbDevice);
+        end
+        
+        function delete(this)
+            close(this);
+        end
+        
+        % TODO: add calibration function?
+         
+    end % METHODS (public)
+    
+    methods % Dependent get/set
+        
+        function K = get.calibrationMatrix(this)
+            % Return calibration parameters in a calibration matrix.
+            K = [this.focalLength(1) this.alpha*this.focalLength(1) this.center(1);
+                 0 this.focalLength(2) this.center(2);
+                 0 0 1];
+        end
+        
+        function I = get.image(this)
+            I = this.image_;
+        end
+        
+        function set.image(this, I)
+            if ischar(I) 
+                if exist(I, 'file')
+                    I = imread(I);
+                else
+                    error('Non-existant image file "%s".', I);
+                end
+            end
+            
+            this.image_ = I;
+        end
+                
+    end % METHODS (Dependent get/set)
+    
+end % CLASSDEF Camera
