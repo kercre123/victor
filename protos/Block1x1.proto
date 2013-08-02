@@ -1,0 +1,114 @@
+#A 1x1 block prototype
+PROTO Block1x1 [
+  field SFVec3f translation 0 0.03 0
+  field SFRotation rotation 0 1 0 0
+  field SFFloat density 2000
+]
+{
+Robot {
+  translation IS translation
+  rotation IS rotation
+  contactMaterial "cmat_block"
+  children [
+    DEF Block1x1Texture Transform {
+      children [
+        Connector {
+          translation 0 0 0.03
+          rotation 0 1 0 0
+          model "magnetic"
+          type "passive"
+          autoLock TRUE
+        }
+        Connector {
+          translation 0 0 -0.03
+          rotation 0 1 0 3.14159
+          model "magnetic"
+          type "passive"
+          autoLock TRUE
+        }
+        
+        Connector {
+          translation 0.03 0 0
+          rotation 0 1 0 1.57079
+          model "magnetic"
+          type "passive"
+          autoLock TRUE
+        }
+        Connector {
+          translation -0.03 0 0
+          rotation 0 1 0 -1.57079
+          model "magnetic"
+          type "passive"
+          autoLock TRUE
+        }
+        
+        Connector {
+          translation 0 0.03 0
+          rotation 1 0 0 -1.57079
+          model "magnetic"
+          type "passive"
+          autoLock TRUE
+        }
+        Connector {
+          translation 0 -0.03 0
+          rotation 1 0 0 1.57079
+          model "magnetic"
+          type "passive"
+          autoLock TRUE
+        }
+        
+        Shape {
+          appearance Appearance {
+            texture ImageTexture {
+              url [
+                "textures/code1x1.png"
+              ]
+            }
+          }
+          geometry Box {
+            size 0.06001 0.038 0.038
+          }
+        }
+        Shape {
+          appearance Appearance {
+            texture ImageTexture {
+              url [
+                "textures/code1x1.png"
+              ]
+            }
+          }
+          geometry Box {
+            size 0.038 0.06001 0.038
+          }
+        }
+        Shape {
+          appearance Appearance {
+            texture ImageTexture {
+              url [
+                "textures/code1x1.png"
+              ]
+            }
+          }
+          geometry Box {
+            size 0.038 0.038 0.06001
+          }
+        }
+      ]
+    }
+    DEF Block1x1Shape Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 1 0 0
+        }
+      }
+      geometry Box {
+        size 0.06 0.06 0.06
+      }
+    }
+  ]
+  boundingObject USE Block1x1Shape
+  physics DEF Block1x1Physics Physics {
+    density IS density
+  }
+}
+}

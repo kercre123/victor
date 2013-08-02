@@ -1,0 +1,189 @@
+#VRML_SIM V6.0 utf8
+WorldInfo {
+  info [
+    "Description"
+    "Author: first name last name <e-mail>"
+    "Date: DD MMM YYYY"
+  ]
+  basicTimeStep 16
+}
+Viewpoint {
+  orientation -0.0109234 -0.971094 -0.238449 1.63205
+  position -0.173964 0.0677228 -0.0314788
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 1 -2 1
+  castShadows TRUE
+}
+DEF FLOOR Solid {
+  translation -0.5 0 -0.5
+  children [
+    Shape {
+      geometry ElevationGrid {
+        color Color {
+          color [
+            0.803922 0.498039 0.298039
+            1 1 0
+          ]
+        }
+        colorPerVertex FALSE
+        xDimension 11
+        xSpacing 0.1
+        zDimension 11
+        zSpacing 0.1
+      }
+    }
+  ]
+  boundingObject Transform {
+    translation 0.5 0 0.5
+    children [
+      Plane {
+      }
+    ]
+  }
+}
+DEF WALL_1 Solid {
+  translation 0.5 0.05 0
+  children [
+    DEF WALL_SHAPE Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.12549 0.368627 0.729412
+        }
+      }
+      geometry Box {
+        size 0.02 0.1 0.98
+      }
+    }
+  ]
+  boundingObject USE WALL_SHAPE
+}
+DEF WALL_2 Solid {
+  translation -0.5 0.05 0
+  children [
+    USE WALL_SHAPE
+  ]
+  boundingObject USE WALL_SHAPE
+}
+DEF WALL_3 Solid {
+  translation 0 0.05 -0.5
+  rotation 0 1 0 1.5708
+  children [
+    USE WALL_SHAPE
+  ]
+  boundingObject USE WALL_SHAPE
+}
+DEF WALL_4 Solid {
+  translation 0 0.05 0.5
+  rotation 0 1 0 1.5708
+  children [
+    USE WALL_SHAPE
+  ]
+  boundingObject USE WALL_SHAPE
+}
+DEF Cozmo Robot {
+  rotation 1 0 0 0
+  children [
+    Solid {
+      translation 0 0.006 0
+      children [
+        HingeJoint {
+          jointParameters HingeJointParameters {
+          }
+          device RotationalMotor {
+            name "liftmotor"
+          }
+          endPoint Solid {
+            translation 0 0 -0.03
+            rotation 1 0 0 0
+            children [
+              HingeJoint {
+                jointParameters HingeJointParameters {
+                  anchor 0 0 -0.03
+                }
+                endPoint Solid {
+                  translation 0 0.007 -0.03
+                  children [
+                    HingeJoint {
+                      jointParameters HingeJointParameters {
+                        anchor 0 0.007 0
+                      }
+                      endPoint Solid {
+                        translation 0 0.007 0.03
+                        rotation 1 0 0 0
+                        children [
+                          HingeJoint {
+                            jointParameters HingeJointParameters {
+                              anchor 0 0 0.03
+                            }
+                            endPoint SolidReference {
+                              solidName "LiftBase"
+                            }
+                          }
+                          DEF SHP_LONG_BART Shape {
+                            geometry Box {
+                              size 0.001 0.004 0.06
+                            }
+                          }
+                        ]
+                        boundingObject USE SHP_LONG_BART
+                        physics Physics {
+                          density -1
+                          mass 0.01
+                        }
+                      }
+                    }
+                    DEF SHP_FRONT_BAR Shape {
+                      geometry Box {
+                        size 0.001 0.014 0.003
+                      }
+                    }
+                  ]
+                  name "FRONT_BAR"
+                  boundingObject USE SHP_FRONT_BAR
+                  physics Physics {
+                    density -1
+                    mass 0.01
+                  }
+                }
+              }
+              DEF SHP_LONG_BARB Shape {
+                geometry Box {
+                  size 0.001 0.004 0.06
+                }
+              }
+            ]
+            boundingObject USE SHP_LONG_BARB
+            physics Physics {
+              density -1
+              mass 0.01
+            }
+          }
+        }
+        DEF SHP_LIFT_BASE Shape {
+          geometry Box {
+            size 0.01 0.02 0.01
+          }
+        }
+      ]
+      name "LiftBase"
+      boundingObject USE SHP_LIFT_BASE
+      physics DEF PHY_BASIC001 Physics {
+        density -1
+        mass 0.01
+      }
+    }
+  ]
+  name "Cozmo"
+  physics Physics {
+    density -1
+    mass 1
+  }
+  controller "cozmo_controller01"
+}
