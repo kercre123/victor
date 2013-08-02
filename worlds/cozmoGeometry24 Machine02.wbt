@@ -461,7 +461,8 @@ DEF Cozmo Robot {
     mass 1
   }
   locked TRUE
-  controller "cozmo_basicdrive01"
+  #controller "cozmo_basicdrive01"
+  controller "cozmo_matlab"
 }
 Block1x1 {
   translation 0 0.03 -0.2
