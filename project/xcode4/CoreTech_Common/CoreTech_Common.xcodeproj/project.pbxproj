@@ -205,25 +205,25 @@
 				EXECUTABLE_PREFIX = lib;
 				HEADER_SEARCH_PATHS = (
 					../../../include,
-					/Applications/MATLAB_R2013a.app/extern/include,
-					"/Users/pbarnum/opencv-2.4.6.1/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/calib3d/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/contrib/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/core/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/features2d/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/flann/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/highgui/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/imgproc/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/legacy/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/ml/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/nonfree/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/objdetect/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/ocl/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/photo/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/stitching/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/superres/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/video/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/videostab/include",
+					"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/extern/include",
+					"../../../../coretech-external/opencv-2.4.6.1/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/contrib/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/core/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/features2d/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/flann/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/highgui/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/imgproc/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/legacy/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/ml/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/nonfree/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/objdetect/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/ocl/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/photo/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/stitching/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/superres/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/video/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -235,25 +235,25 @@
 				EXECUTABLE_PREFIX = lib;
 				HEADER_SEARCH_PATHS = (
 					../../../include,
-					/Applications/MATLAB_R2013a.app/extern/include,
-					"/Users/pbarnum/opencv-2.4.6.1/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/calib3d/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/contrib/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/core/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/features2d/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/flann/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/highgui/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/imgproc/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/legacy/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/ml/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/nonfree/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/objdetect/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/ocl/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/photo/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/stitching/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/superres/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/video/include",
-					"/Users/pbarnum/opencv-2.4.6.1/modules/videostab/include",
+					"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/extern/include",
+					"../../../../coretech-external/opencv-2.4.6.1/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/contrib/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/core/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/features2d/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/flann/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/highgui/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/imgproc/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/legacy/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/ml/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/nonfree/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/objdetect/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/ocl/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/photo/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/stitching/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/superres/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/video/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -278,6 +278,7 @@
 				5C7B94DA17AB1FB30020CCF7 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
