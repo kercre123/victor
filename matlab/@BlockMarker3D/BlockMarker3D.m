@@ -41,6 +41,7 @@ classdef BlockMarker3D < handle
                 'frameInit should be a Pose object.');
             
             this.ID = id;
+            this.pose = Pose();
             
             this.block = parentBlock;
             this.faceType  = faceType_;

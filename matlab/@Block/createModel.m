@@ -92,6 +92,15 @@ switch(this.blockType)
         defineFaceHelper(this, 'back',  8, [74 scale(2)+e 38], firstMarkerID);
         defineFaceHelper(this, 'left', 10, [-e 44 39], firstMarkerID);
 
+    case 60 % Webot Simulated Red 1x1 Block
+        scale = makeWebotBlockHelper(this, 'r', firstMarkerID);
+        
+    case 65 % Webot Simulated Green 1x1 Block
+        scale = makeWebotBlockHelper(this, 'g', firstMarkerID);
+        
+    case 70 % Webot Simulated Blue 1x1 Block
+        scale = makeWebotBlockHelper(this, 'b', firstMarkerID);
+        
     otherwise
         error('No model defined for block type %d.', this.blockType);
     
@@ -118,6 +127,10 @@ switch(whichFace)
         R = pi/2*[0 0 1];
     case 'left'
         R = -pi/2*[0 0 1];
+    case 'top'
+        R = -pi/2*[1 0 0];
+    case 'bottom'
+        R = pi/2*[1 0 0];
     otherwise
         error('Unrecognized face "%s"', whichFace);
 end
@@ -130,4 +143,28 @@ assert(index <= length(this.markers), 'Index for markers too large.');
 this.markers{index} = BlockMarker3D(this, faceType, pose, ...
     firstMarkerID + index);
 
+end
+
+
+function scale = makeWebotBlockHelper(this, color, firstMarkerID)
+this.color = color;
+scale = [60 60 60];
+this.markers = cell(1, 6);
+
+e = .1;
+halfwidth = BlockMarker3D.Width / 2;
+offset1 = scale(1)/2 - halfwidth;
+offset2 = scale(1)/2 + halfwidth;
+
+% Note: there is a coordinate change between Webot's world and BlockWorld.
+% In BlockWorld, the ground is (x,y) with x point from left to right and y
+% pointing away from you.  z is elevation off the ground.  However, in
+% Webot's world, x points away from, z points left/right, and y is
+% elevation off the ground.
+defineFaceHelper(this, 'front',  1, [offset1 -e offset2], firstMarkerID);
+defineFaceHelper(this, 'back',   2, [offset2 scale(2)+e offset2], firstMarkerID);
+defineFaceHelper(this, 'top',    3, [offset1 offset2 scale(3)+e], firstMarkerID);
+defineFaceHelper(this, 'bottom', 4, [offset1 offset1 -e], firstMarkerID);
+defineFaceHelper(this, 'left',   5, [-e offset2 offset2], firstMarkerID);
+defineFaceHelper(this, 'right',  6, [scale(1)+e offset1 offset2], firstMarkerID);
 end

@@ -28,7 +28,7 @@ classdef Block < handle
     
     properties(GetAccess = 'protected', SetAccess = 'protected')
         
-        poseProtected = Pose();
+        poseProtected;
         
     end
     
@@ -37,6 +37,7 @@ classdef Block < handle
         
         function this = Block(blockType, firstMarkerID)
             
+            this.poseProtected = Pose();
             this.blockType = blockType;
             createModel(this, firstMarkerID);
             
