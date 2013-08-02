@@ -1,7 +1,8 @@
 % Setup paths
-addpath mex
+cozmoDir = fileparts(which('initCozmo.m')); % includes 'matlab'
+addpath(fullfile(cozmoDir, 'mex'));
 
-rootDir = fileparts(fileparts(fileparts(which('initCozmo.m'))));
+rootDir = fileparts(fileparts(cozmoDir));
 
 dirs = {'coretech-common', 'coretech-vision', 'coretech-math', 'coretech-external'};
 for i = 1:length(dirs)
