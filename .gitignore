@@ -2,10 +2,8 @@
 *.bak
 *~
 matlab.mat
-
 # Mac OS
 *.DS_Store
-
 # Xcode
 *.mexmaci64
 *.o
@@ -19,7 +17,6 @@ matlab.mat
 *.perspectivev3
 *.xcworkspace
 *.moved-aside
-
 # MSVC
 *.res
 *.user
