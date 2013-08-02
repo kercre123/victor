@@ -1,2 +1,37 @@
-.DS_Store
+# Misc
+*.bak
+*~
 matlab.mat
+# Mac OS
+*.DS_Store
+# Xcode
+*.mexmaci64
+*.o
+*.obj
+*.so
+*.la
+*.a
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xcworkspace
+*.moved-aside
+# MSVC
+*.res
+*.user
+*.suo
+*.sdf
+*.opensdf
+*.ncb
+*.exe
+*.dll
+*.lib
+*.aps
+*.layout
+*.log
+*.tlog
+*.pdb
+*.lastbuildstate
+*.idb
+*.ilk
