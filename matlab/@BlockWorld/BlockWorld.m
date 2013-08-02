@@ -1,7 +1,7 @@
 classdef BlockWorld < handle
     
     properties(GetAccess = 'public', Constant = true)
-        HasMat    = true; % use mat for robot localization
+        %HasMat    = true; % use mat for robot localization
         MaxBlocks = 256;  % 8 bits
         MaxFaces  = 16;   % 4 bits
     end
@@ -13,6 +13,8 @@ classdef BlockWorld < handle
         
         allMarkers3D = {};
         robots = {}; 
+        
+        HasMat = true;
         
     end % PROPERTIES (get-public, set-protected)
     
@@ -30,13 +32,16 @@ classdef BlockWorld < handle
         
         function this = BlockWorld(varargin)
             
+            CameraType = 'usb'; % 'usb' or 'webot'
             CameraDevice = {};
             CameraCalibration = {};
             MatCameraDevice = {};
             MatCameraCalibration = {};
+            hasMat = true;
             
             parseVarargin(varargin{:});
             
+            this.HasMat = hasMat;
             this.blocks = {};
             this.allMarkers3D = {};
             
@@ -62,7 +67,7 @@ classdef BlockWorld < handle
                 end
             end
             
-            if BlockWorld.HasMat
+            if this.HasMat
                 if isempty(MatCameraDevice)
                     MatCameraDevice = cell(size(MatCameraCalibration));
                 else
@@ -93,6 +98,7 @@ classdef BlockWorld < handle
             this.robots = cell(1, length(CameraCalibration));
             for i=1:this.numRobots
                 this.robots{i} = Robot('World', this, ...
+                    'CameraType', CameraType, ...
                     'CameraCalibration', CameraCalibration{i}, ...
                     'CameraDevice', CameraDevice{i}, ...
                     'MatCameraCalibration', MatCameraCalibration{i}, ...

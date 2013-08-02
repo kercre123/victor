@@ -60,6 +60,7 @@ classdef Robot < handle
         
         function this = Robot(varargin)
             World = [];
+            CameraType = 'usb'; % 'usb' or 'webot'
             CameraDevice = [];
             CameraCalibration = [];
             MatCameraDevice = [];
@@ -86,12 +87,15 @@ classdef Robot < handle
                 this.appearance.BodyHeight + this.appearance.EyeRadius];
         
             this.camera = Camera('device', CameraDevice, ...
+                'deviceType', CameraType, ...
                 'calibration', CameraCalibration, ...
                 'pose', inv(Pose(Rrc, Trc)));
             
-            this.matCamera = Camera('device', MatCameraDevice, ...
-                'calibration', MatCameraCalibration);
-            
+            if this.world.HasMat
+                this.matCamera = Camera('device', MatCameraDevice, ...
+                    'deviceType', CameraType, ...
+                    'calibration', MatCameraCalibration);
+            end
         end
         
     end % METHODS (public)

@@ -4,6 +4,7 @@ device = 0;
 calibration = [];
 matDevice = 1;
 matCalibration = [];
+deviceType = 'usb'; % 'usb' or 'webot'
 frames = {};
 matFrames = {};
 calibToolboxPath = '~/Code/3rdparty/toolbox_calib';
