@@ -1,0 +1,11 @@
+#ifndef _ANKICORETECH_COMMON_H_
+#define _ANKICORETECH_COMMON_H_
+
+#include "anki/common/config.h"
+
+#include "anki/common/matrix.h"
+#include "anki/common/memory.h"
+#include "anki/common/utilities.h"
+#include "anki/common/DASlight.h"
+
+#endif // _ANKICORETECH_COMMON_H_
