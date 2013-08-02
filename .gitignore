@@ -1,2 +1,4 @@
 .DS_Store
 matlab.mat
+
+*.mexmaci64
