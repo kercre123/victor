@@ -12,7 +12,14 @@
 
 
 blockWorldController = BlockWorldWebotController();
-  
+
+addpath ../../../products-cozmo/matlab
+initCozmo; % Set up paths for BlockWorld to work
+
+blockWorld = BlockWorld('CameraType', 'webot', ...
+    'CameraDevice', blockWorldController.cam_head, ...
+    'CameraCalibration', blockWorldController.GetCalibrationStruct('cam_head'), ...
+    'hasMat', false);
 
 % main loop:
 % perform simulation steps of TIME_STEP milliseconds
@@ -21,7 +28,9 @@ blockWorldController = BlockWorldWebotController();
 while wb_robot_step(blockWorldController.TIME_STEP) ~= -1
 
     blockWorldController.ControlCozmo();
-    drawnow;
+    
+    blockWorld.update();
+    blockWorld.draw();
 
 end
 

@@ -3,6 +3,14 @@ PROTO Block1x1 [
   field SFVec3f translation 0 0.03 0
   field SFRotation rotation 0 1 0 0
   field SFFloat density 2000
+  field SFColor blockcolor 1 0 0
+
+  field MFString facemarker1 "textures/code1x1.png"
+  field MFString facemarker2 "textures/code1x1.png"
+  field MFString facemarker3 "textures/code1x1.png"
+  field MFString facemarker4 "textures/code1x1.png"
+  field MFString facemarker5 "textures/code1x1.png"
+  field MFString facemarker6 "textures/code1x1.png"
 ]
 {
 Robot {
@@ -57,48 +65,126 @@ Robot {
           autoLock TRUE
         }
         
-        Shape {
-          appearance Appearance {
-            texture ImageTexture {
-              url [
-                "textures/code1x1.png"
-              ]
+        # Face 1: (Matlab "Front")
+        Transform {
+          translation -0.015 0 0
+          children [
+
+            Shape {
+	  
+              appearance Appearance {
+                texture ImageTexture {
+                  url IS facemarker1
+                }
+              }
+              geometry Box {
+                size 0.0305 0.038 0.038
+              }
             }
-          }
-          geometry Box {
-            size 0.06001 0.038 0.038
-          }
+          ] 
         }
-        Shape {
-          appearance Appearance {
-            texture ImageTexture {
-              url [
-                "textures/code1x1.png"
-              ]
+        
+        # Face 2: (Matlab "Back")
+        Transform {
+          translation 0.015 0 0
+          children [
+
+            Shape {
+	  
+              appearance Appearance {
+                texture ImageTexture {
+                  url IS facemarker2
+                }
+              }
+              geometry Box {
+                size 0.0305 0.038 0.038
+              }
             }
-          }
-          geometry Box {
-            size 0.038 0.06001 0.038
-          }
+          ] 
         }
-        Shape {
-          appearance Appearance {
-            texture ImageTexture {
-              url [
-                "textures/code1x1.png"
-              ]
+        
+        # Face 3: (Matlab "Top")
+        Transform {
+          translation 0 0.015 0
+          children [
+
+            Shape {
+	  
+              appearance Appearance {
+                texture ImageTexture {
+                  url IS facemarker3
+                }
+              }
+              geometry Box {
+                size 0.038 0.0305 0.038
+              }
             }
-          }
-          geometry Box {
-            size 0.038 0.038 0.06001
-          }
+          ] 
         }
+        
+       # Face 4: (Matlab "Bottom")
+       Transform {
+          translation 0 -0.015 0
+          children [
+
+            Shape {
+	  
+              appearance Appearance {
+                texture ImageTexture {
+                  url IS facemarker4
+                }
+              }
+              geometry Box {
+                size 0.038 0.0305 0.038
+              }
+            }
+          ] 
+        }
+
+        # Face 5: (Matlab "left")
+        Transform {
+          translation 0 0 -0.015
+          children [
+
+            Shape {
+	  
+              appearance Appearance {
+                texture ImageTexture {
+                  url IS facemarker5
+                }
+              }
+              geometry Box {
+                size 0.038 0.038 0.0305 
+              }
+            }
+          ] 
+        }
+        
+        # Face 6: (Matlab "right")
+        Transform {
+          translation 0 0 0.015
+          children [
+
+            Shape {
+	  
+              appearance Appearance {
+                texture ImageTexture {
+                  url IS facemarker6
+                }
+              }
+              geometry Box {
+                size 0.038 0.038 0.0305
+              }
+            }
+          ] 
+        }
+        
       ]
     }
     DEF Block1x1Shape Shape {
       appearance Appearance {
         material Material {
-          diffuseColor 1 0 0
+          diffuseColor IS blockcolor
         }
       }
       geometry Box {

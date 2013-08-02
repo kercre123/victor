@@ -113,7 +113,25 @@ classdef BlockWorldWebotController < handle
             wb_motor_set_velocity(this.wheels(1), -left);
             wb_motor_set_velocity(this.wheels(2), -right);
         end
-        
+                
+        function calib = GetCalibrationStruct(this, whichCam)
+            if nargin < 2
+                whichCam = 'cam_head';
+            elseif ~isprop(this, whichCam)
+                error('Unknown camera "%s".', whichCam);
+            end
+            
+            camera = this.(whichCam);
+            
+            width  = wb_camera_get_width(camera);
+            height = wb_camera_get_height(camera);
+            
+            fov = wb_camera_get_fov(camera);
+            f = width / (2*tan(fov/2));
+            
+            calib = struct('fc', [f f], ...
+                'cc', [width height]/2, 'kc', zeros(5,1), 'alpha_c', 0); 
+        end
     end        
     
 end % CLASSDEF BlockWorldWebotController
