@@ -257,6 +257,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
+				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
 			};
 			name = Debug;
 		};
@@ -282,6 +283,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				SDKROOT = macosx;
+				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
 			};
 			name = Release;
 		};
@@ -320,6 +322,7 @@
 					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/gtest-1.7.0/Debug\"",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
 			};
 			name = Debug;
 		};
@@ -358,6 +361,7 @@
 					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/gtest-1.7.0/Debug\"",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
 			};
 			name = Release;
 		};
