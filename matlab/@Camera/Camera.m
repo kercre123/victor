@@ -22,7 +22,8 @@ classdef Camera < handle
         
     properties(GetAccess = 'public', SetAccess = 'protected')
         
-        usbDevice;
+        deviceType;
+        deviceID;
         nrows;
         ncols; 
         
@@ -55,6 +56,8 @@ classdef Camera < handle
         
         function this = Camera(varargin)
             device = [];
+            timeStep = 64; % in ms, for webot cameras
+            deviceType = 'usb'; %#ok<PROP>
             resolution = [640 480];
             calibration = struct('fc', [1000 1000], ...
                 'cc', resolution/2, 'kc', zeros(5,1), 'alpha_c', 0);
@@ -70,7 +73,8 @@ classdef Camera < handle
                 calibration = load(calibration);
             end
             
-            this.usbDevice = device;
+            this.deviceType = deviceType; %#ok<PROP>
+            this.deviceID = device;
             this.nrows = resolution(2);
             this.ncols = resolution(1);
             
@@ -90,17 +94,36 @@ classdef Camera < handle
                     this.distort(xgrid, ygrid, true);
             end
             
-            if ~isempty(this.usbDevice)
-                % If a USB device was provided, open it.
-                mexCameraCapture(Camera.OPEN, this.usbDevice, ...
-                    this.ncols, this.nrows);
+            if ~isempty(this.deviceID)
+                switch(this.deviceType)
+                    case 'usb'
+                        % If a USB device was provided, open it.
+                        mexCameraCapture(Camera.OPEN, this.deviceID, ...
+                            this.ncols, this.nrows);
+                    case 'webot'
+                        % If a Webot simulatd camera was provided, enable
+                        % it.
+                        wb_camera_enable(this.deviceID, timeStep);
+                    otherwise
+                        error('Unrecognized deviceType "%s".', this.deviceType);
+                        
+                end % SWITCH(deviceType)
             end
             
         end
         
         function out = grabFrame(this)
-            this.image = mexCameraCapture(Camera.GRAB, this.usbDevice);
-            this.image = this.image(:,:,[3 2 1]); % BGR to RGB
+            switch(this.deviceType)
+                case 'usb'
+                    this.image = mexCameraCapture(Camera.GRAB, this.deviceID);
+                    this.image = this.image(:,:,[3 2 1]); % BGR to RGB
+                case 'webot'
+                    this.image = wb_camera_get_image(this.deviceID);
+                otherwise
+                    error('Unrecognized deviceType "%s".', this.deviceType);
+                    
+            end % SWITCH(deviceType)
+            
             if nargout > 0
                 out = this.image;
             end
