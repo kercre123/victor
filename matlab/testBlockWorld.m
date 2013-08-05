@@ -4,21 +4,10 @@ device = 0;
 calibration = [];
 matDevice = 1;
 matCalibration = [];
-deviceType = 'usb'; % 'usb' or 'webot'
 frames = {};
 matFrames = {};
-calibToolboxPath = '~/Code/3rdparty/toolbox_calib';
-cameraCapturePath = '~/Code/CameraCapture';
 
 parseVarargin(varargin{:});
-
-if isdir(calibToolboxPath)
-    addpath(calibToolboxPath);
-end
-
-if isdir(cameraCapturePath)
-    addpath(cameraCapturePath);
-end
 
 if ~isempty(frames) && ~isempty(matFrames)
     assert(length(matFrames)==length(frames), ...
@@ -60,24 +49,22 @@ if nargin > 1 && ~isempty(frames)
         %title(i)
         T_draw = T_draw + toc(t);
         
+        if doPause && i < length(frames)
+            % wait for keystroke (not mouse click)
+            while waitforbuttonpress ~= 1, end 
+        end
+        
         chars = [get(h_fig(1), 'CurrentCharacter') ...
             get(h_fig(2), 'CurrentCharacter')];
         
-        if any(chars == 'q') || any(chars == 27)
+        if doPause && any(chars == 'r')
+            % Press 'r' to switch to pauseless "Run" mode
+            doPause = false;
+                            
+        elseif any(chars == 'q') || any(chars == 27)
+            % Press q or ESC to stop
             break;
         end
-        
-        if doPause
-            if i < length(frames)
-                waitforbuttonpress;
-            end
-            
-            % Press 'r' to switch to pauseless "Run" mode
-            if any(chars == 'r')
-                doPause = false;
-            end
-        end
-            
     end
     
 else
@@ -88,7 +75,7 @@ else
         'CameraDevice', device, 'MatCameraDevice', matDevice, ...
         'MatCameraCalibration', matCalibration);
     
-    while ~any(chars==27)
+    while ~any(chars==27) % Until ESC is pressed
         
         t = tic;
         W.update();
