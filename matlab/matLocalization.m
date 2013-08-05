@@ -112,7 +112,11 @@ ygridRot = -xgrid*sin(orient1) + ygrid*cos(orient1) + imgCen(2);
 % will effectively give less weight to lines/squares that are closer to
 % the image borders naturally. (Still true now that i'm using a derivative
 % stencil?)
-imgRot = interp2(imgOrig, xgridRot, ygridRot, 'nearest', 1);
+%imgRot = interp2(imgOrig, xgridRot, ygridRot, 'nearest', 1);
+inbounds = xgridRot >= 1 & xgridRot <= ncols & ygridRot >= 1 & ygridRot <= nrows;
+index = round(ygridRot(inbounds)) + (round(xgridRot(inbounds))-1)*nrows;
+imgRot = ones(nrows,ncols);
+imgRot(inbounds) = imgOrig(index);
 
 % Now using stencil that looks for edges of the stripes by using
 % derivatives instead.  The goal is to be less sensitive to lighting
