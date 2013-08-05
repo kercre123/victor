@@ -27,11 +27,17 @@ end
 gridLines = 0:squareSize:matSize;
 numLines = length(gridLines);
 h_line = zeros(2, numLines);
+mmPerPix_line = lineWidth/2;
+mmPerPix_mat  = matSize/2;
 for i = 1:numLines
-    h_line(1,i) = rectangle('Pos', [gridLines(i)-lineWidth/2 0 lineWidth matSize], 'Parent', axesHandle);
-    h_line(2,i) = rectangle('Pos', [0 gridLines(i)-lineWidth/2 matSize lineWidth], 'Parent', axesHandle);
+    %h_line(1,i) = rectangle('Pos', [gridLines(i)-lineWidth/2 0 lineWidth matSize], 'Parent', axesHandle);
+    %h_line(2,i) = rectangle('Pos', [0 gridLines(i)-lineWidth/2 matSize lineWidth], 'Parent', axesHandle);
+    h_line(1,i) = imagesc(gridLines(i) + lineWidth/2*[-1 1] + mmPerPix_line/2*[1 -1], [0 matSize] + mmPerPix_mat/2*[1 -1], ...
+        zeros(2,2,3), 'Parent', axesHandle); hold on
+    h_line(2,i) = imagesc([0 matSize] + mmPerPix_mat/2*[1 -1], gridLines(i) + lineWidth/2*[-1 1] + mmPerPix_line/2*[1 -1], ...
+        zeros(2,2,3), 'Parent', axesHandle);
 end
-set(h_line, 'FaceColor', 'k');
+%set(h_line, 'FaceColor', 'k');
 hold(axesHandle, 'on');
 
 % % Draw grid lines 
