@@ -28,7 +28,9 @@ classdef Robot < handle
             'EyeRadius', [], ...
             'EyeLengthFraction', .65, ... % fraction of BodyLength
             'EyeRadiusFraction', .47, ... % fraction of BodyWidth/2
-            'EyeColor', [.5 0 0]);
+            'EyeColor', [.5 0 0], ...
+            'PathHistoryColor', 'k', ...
+            'PathHistoryLength', 500);
         
         handles; 
         
@@ -38,6 +40,8 @@ classdef Robot < handle
             Dependent = true)
         
         pose;
+        origin;
+        
     end
     
     properties(GetAccess = 'public', SetAccess = 'protected', ...
@@ -117,6 +121,9 @@ classdef Robot < handle
             end
         end
         
+        function o = get.origin(this)
+            o = this.pose.T;
+        end
         
         function set.pose(this, P)
             assert(isa(P, 'Pose'), 'Must provide a Pose object.');

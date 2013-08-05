@@ -40,6 +40,7 @@ if initHandles
     this.handles.body = patch(body{:}, app.BodyColor, ...
         'FaceColor', app.BodyColor, 'EdgeColor', 0.5*app.BodyColor, ...
         'Parent', AxesHandle);
+    
 else
     updateHelper(this.handles.body, body);
 end
@@ -49,6 +50,24 @@ if noHold
     hold(AxesHandle, 'on');
 end
 
+% Draw path history:
+if initHandles
+    this.handles.pathHistory = plot3( ...
+        this.origin(1), this.origin(2), this.origin(3), ...
+        '.-', 'MarkerSize', 10, 'Color', app.PathHistoryColor, ...
+        'Parent', AxesHandle);
+    
+else   
+    xHistory = column(get(this.handles.pathHistory, 'XData'));
+    yHistory = column(get(this.handles.pathHistory, 'YData'));
+    zHistory = column(get(this.handles.pathHistory, 'ZData'));
+    
+    set(this.handles.pathHistory, ...
+        'XData', [xHistory(max(1,end-app.PathHistoryLength):end); this.origin(1)], ...
+        'YData', [yHistory(max(1,end-app.PathHistoryLength):end); this.origin(2)], ...
+        'ZData', [zHistory(max(1,end-app.PathHistoryLength):end); this.origin(3)]);
+end
+    
 % Canonical cylinder:
 [cylX, cylY, cylZ] = cylinder([1 1], 50);
 cylZ = cylZ - .5;
@@ -146,8 +165,26 @@ if noHold
     hold(AxesHandle, 'off');
 end
 
-end
+% Make it so double-clicking the axes toggle whether the robot is shown or
+% not
+iptaddcallback(AxesHandle, 'ButtonDownFcn', @(~,~)toggleRobotVisibility(this));    
 
+end % FUNCTION draw()
+
+
+function toggleRobotVisibility(this)
+if strcmp(get(gcbf, 'SelectionType'), 'open') % double-click
+    
+    switch(get(this.handles.body, 'Visible'))
+        case 'on'
+            set(this.handles, 'Visible', 'off');
+            set(this.handles.pathHistory, 'Visible', 'on');
+        case 'off'
+            set(this.handles, 'Visible', 'on');
+    end
+    
+end
+end % FUNCTION toggleRobotVisibility()
 
 % Use Pose/applyTo here somehow?
 function out = rotateAndTranslate(Xin, Yin, Zin, R, t)
