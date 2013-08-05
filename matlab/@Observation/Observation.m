@@ -69,9 +69,17 @@ classdef Observation
                 
                 % Update robot's pose:
                 % TODO: return uncertainty in matLocalization
+                pixPerMM = 18.0;
+                if strcmp(this.robot.matCamera.deviceType, 'webot')
+                    pixPerMM = 20.9;
+                end
                 [xMat, yMat, orient] = matLocalization(this.matImage, ...
-                    'pixPerMM', 18.0, 'camera', this.robot.matCamera);
-                this.pose = Pose(orient*[0 0 -1], [xMat yMat 0]);
+                    'pixPerMM', pixPerMM, 'camera', this.robot.matCamera);
+                % Note the +pi, the sign of the rotation axis and the fact
+                % that the x position is negated.  The latter is due to the
+                % coordinate flip for image coordinates: the mat is in
+                % image coordinates, which are not right-handed...
+                this.pose = Pose((orient+pi)*[0 0 -1], [-xMat yMat 0]); 
                 
                 % Also update the parent robot's pose to match (*before* 
                 % adding new blocks, whose position will depend on this):

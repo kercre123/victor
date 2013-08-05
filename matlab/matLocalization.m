@@ -1,4 +1,4 @@
-function [xMat,yMat,orient1] = matLocalization(img, varargin)
+function [xMat,yMat,orient] = matLocalization(img, varargin)
 
 %% Params
 orientationSample = 2; % just for speed
@@ -73,14 +73,12 @@ end
 [~,sortIndex] = sort(counts(localMaxima), 'descend');
 localMaxima = localMaxima(sortIndex(1:2));
 
-orient1 = -(localMaxima(1)-1)*pi/180; % subtract 1 because of +1 in accumarray above
-orient2 = -(localMaxima(2)-1)*pi/180;
-if orient2 > orient1
-    temp = orient1;
-    orient1 = orient2;
-    orient2 = temp;
+orient = -(localMaxima-1)*pi/180; % subtract 1 because of +1 in accumarray above
+if orient(2) > orient(1)
+    orient = orient([2 1]);
+    localMaxima = localMaxima([2 1]);
 end
-orientDiff = orient1 - orient2; 
+orientDiff = orient(1) - orient(2); 
 if abs(orientDiff - pi/2) > 5*pi/180
     warning('Found two orientation peaks, but they are not ~90 degrees apart.');
 end
@@ -102,11 +100,11 @@ p = A \ counts(bins)';
 % Find max location of the parabola *in terms of bins*.  Remember to
 % subtract 1 again because of +1 in accumarray above.  Then convert to
 % radians.
-orient1 = -(-p(2)/(2*p(1)) - 1) * pi/180; 
+orient = -(-p(2)/(2*p(1)) - 1) * pi/180; 
 
 %% Grid Square localization   
-xgridRot =  xgrid*cos(orient1) + ygrid*sin(orient1) + imgCen(1);
-ygridRot = -xgrid*sin(orient1) + ygrid*cos(orient1) + imgCen(2);
+xgridRot =  xgrid*cos(orient) + ygrid*sin(orient) + imgCen(1);
+ygridRot = -xgrid*sin(orient) + ygrid*cos(orient) + imgCen(2);
 
 % Note that we use a value of 1 (white) for pixels outside the image, which
 % will effectively give less weight to lines/squares that are closer to
@@ -175,8 +173,8 @@ if marker.isValid
     yvecRot = -xvec*sin(-marker.upAngle) + yvec*cos(-marker.upAngle);
     xMat = xvecRot/pixPerMM + marker.X*squareWidth - squareWidth/2;
     yMat = yvecRot/pixPerMM + marker.Y*squareWidth - squareWidth/2;
-
-    orient1 = orient1 + marker.upAngle;
+    
+    orient = orient + marker.upAngle;
     
 else
     xMat = -1;
@@ -200,7 +198,7 @@ if nargout == 0 || DEBUG_DISPLAY
         h_imgOrigAxes = subplot(2,2,1, 'Parent', h_fig);
         hold(h_imgOrigAxes, 'off')
         imagesc(imgOrig, 'Parent', h_imgOrigAxes, 'Tag', 'imgOrig');
-        axis(h_imgOrigAxes, 'image', 'off');
+        axis(h_imgOrigAxes, 'xy', 'tight', 'off');
         hold(h_imgOrigAxes, 'on');
         plot(xcen, ycen, 'bx', 'Parent', h_imgOrigAxes, 'Tag', 'imgOrigMarkerCen');
         plot(imgCen(1), imgCen(2), 'r.', 'Parent', h_imgOrigAxes, 'Tag', 'imgOrigCen');
@@ -232,7 +230,7 @@ if nargout == 0 || DEBUG_DISPLAY
             'XData', imgCen(1), 'YData', imgCen(2));
     end
     draw(marker, 'where', h_imgRotAxes, 'drawTextLabels', 'short');
-    title(h_imgRotAxes, sprintf('Orientation = %.1f degrees', orient1*180/pi));
+    title(h_imgRotAxes, sprintf('Orientation = %.1f degrees', orient*180/pi));
     
     % Draw the (thresholded) marker means, or update the existing ones:
     if marker.isValid
@@ -258,8 +256,8 @@ if nargout == 0 || DEBUG_DISPLAY
     % Draw image boundaries on the mat:
     xImg = ncols/2*[-1 1 1 -1 -1] / pixPerMM;
     yImg = nrows/2*[-1 -1 1 1 -1] / pixPerMM;
-    xImgRot = xImg*cos(-orient1) + yImg*sin(-orient1) + xMat;
-    yImgRot = -xImg*sin(-orient1) + yImg*cos(-orient1) + yMat;
+    xImgRot = xImg*cos(-orient) + yImg*sin(-orient) + xMat;
+    yImgRot = -xImg*sin(-orient) + yImg*cos(-orient) + yMat;
     
     % Compute the marker center location on the mat, in mm:
     xMarkerCen = xMat - xvecRot/pixPerMM;
@@ -269,11 +267,13 @@ if nargout == 0 || DEBUG_DISPLAY
     
     h_matAxes = subplot(2,3,[5 6], 'Parent', h_fig);
     if ~strcmp(get(h_matAxes, 'Tag'), 'GridMat')
-        gridMat('matSize', 200, 'axesHandle', h_matAxes);
+        gridMat('matSize', 1000, 'axesHandle', h_matAxes);
         set(h_matAxes, 'Tag', 'GridMat');
         hold on
-        plot(xMat, yMat, 'r.', 'MarkerSize', 12, ...
+        plot(xMat, yMat, 'ro', 'MarkerSize', 12, ...
             'Tag', 'MatPosition', 'Parent', h_matAxes);
+        plot(xMat, yMat, 'r.', 'MarkerSize', 12, ...
+            'Tag', 'MatPositionHistory', 'Parent', h_matAxes);
         plot(xImgRot, yImgRot, 'r', 'LineWidth', 2, ...
             'Tag', 'MatPositionRect', 'Parent', h_matAxes);
         plot(xMarkerCen, yMarkerCen, 'bx', 'LineWidth', 2, ...
@@ -283,6 +283,12 @@ if nargout == 0 || DEBUG_DISPLAY
     else 
         set(findobj(h_matAxes, 'Tag', 'MatPosition'), ...
             'XData', xMat, 'YData', yMat);
+        h_history = findobj(h_matAxes, 'Tag', 'MatPositionHistory');
+        xMatHistory = column(get(h_history, 'XData'));
+        yMatHistory = column(get(h_history, 'YData'));
+        set(h_history, ...
+            'XData', [xMatHistory((max(1,end-100)):end); xMat], ...
+            'YData', [yMatHistory((max(1,end-100)):end); yMat]);
         set(findobj(h_matAxes, 'Tag', 'MatPositionRect'), ...
             'XData', xImgRot, 'YData', yImgRot);
         set(findobj(h_matAxes, 'Tag', 'MatMarkerCen'), ...
@@ -290,6 +296,10 @@ if nargout == 0 || DEBUG_DISPLAY
         set(findobj(h_matAxes, 'Tag', 'MatMarker'), ...
             'XData', xMarker, 'YData', yMarker);
     end
+    
+    viewWin = 50;
+    set(h_matAxes, 'XLim', [max(0, xMat-viewWin) min(1000, xMat+viewWin)], ...
+        'YLim', [max(0, yMat-viewWin) min(1000, yMat+viewWin)]);
 end
 
 
