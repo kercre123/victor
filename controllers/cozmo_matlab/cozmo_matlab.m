@@ -11,6 +11,8 @@
 %keyboard;
 
 
+profile on
+
 blockWorldController = BlockWorldWebotController();
 
 addpath ../../../products-cozmo/matlab
@@ -18,8 +20,10 @@ initCozmo; % Set up paths for BlockWorld to work
 
 blockWorld = BlockWorld('CameraType', 'webot', ...
     'CameraDevice', blockWorldController.cam_head, ...
-    'CameraCalibration', blockWorldController.GetCalibrationStruct('cam_head'), ...
-    'hasMat', false);
+    'CameraCalibration', blockWorldController.GetCalibrationStruct('cam_head'), ... 
+    'MatCameraDevice', blockWorldController.cam_down, ...
+    'MatCameraCalibration', blockWorldController.GetCalibrationStruct('cam_down'), ...
+    'hasMat', true);
 
 % main loop:
 % perform simulation steps of TIME_STEP milliseconds
@@ -27,11 +31,20 @@ blockWorld = BlockWorld('CameraType', 'webot', ...
 %
 while wb_robot_step(blockWorldController.TIME_STEP) ~= -1
 
-    blockWorldController.ControlCozmo();
+    done = blockWorldController.ControlCozmo();
     
     blockWorld.update();
     blockWorld.draw();
+    
+    if done
+        profile off
+        profsave(profile('info'),'~/temp/SimulatedBlockWorldProfile') 
+        break;
+    end
 
 end
 
 % cleanup code goes here: write data to files, etc.
+
+    
+    

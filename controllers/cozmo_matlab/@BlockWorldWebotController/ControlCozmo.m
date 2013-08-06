@@ -1,7 +1,9 @@
-function ControlCozmo(this)
+function finished = ControlCozmo(this)
 %Check the keyboard keys and issue robot commands
 
 DEBUG = false;
+
+finished = false;
 
 % desktop;
 % keyboard;
@@ -103,10 +105,14 @@ switch (key)
             fprintf('UNLOCKED!\n');
         end
         
+    case {'q', 'Q'}
+        
+        finished = true;
+        
     otherwise
-%         if DEBUG
-%             fprintf('Key pressed: NONE\n');
-%         end
+        if DEBUG
+            fprintf('Key pressed: %s (%d)\n', key);
+        end
         this.SetAngularWheelVelocity(0, 0);
         
 end % SWITCH(key)

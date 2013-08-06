@@ -17,6 +17,7 @@ classdef BlockWorldWebotController < handle
         CONNECTOR   = 'connector';
         CAMERA_HEAD = 'cam_head';
         CAMERA_LIFT = 'cam_lift';
+        CAMERA_DOWN = 'cam_down';
         
         DRIVE_VELOCITY_SLOW = 5.0;
         TURN_VELOCITY_SLOW  = 1.0;
@@ -45,7 +46,7 @@ classdef BlockWorldWebotController < handle
         % Cameras:
         cam_head;
         cam_lift;
-        % cam_down; % for mat
+        cam_down; % for mat
         
         % Count down after unlock until the next lock
         unlockhysteresis = 0;
@@ -79,12 +80,12 @@ classdef BlockWorldWebotController < handle
             wb_motor_set_position(this.lift, this.LIFT_CENTER);
             wb_motor_set_position(this.lift2, -this.LIFT_CENTER);
             
-            % Enable the cameras
+            % NOTE: Cameras will be enabled by the instantiation of the
+            % BlockWorld Camera objects.
             this.cam_head = wb_robot_get_device(this.CAMERA_HEAD);
-            wb_camera_enable(this.cam_head, this.TIME_STEP);
             this.cam_lift = wb_robot_get_device(this.CAMERA_LIFT);
-            wb_camera_enable(this.cam_lift, this.TIME_STEP);
-            
+            this.cam_down = wb_robot_get_device(this.CAMERA_DOWN);
+                        
             % get a handler to the connector and the motor.
             this.con_lift = wb_robot_get_device(this.CONNECTOR);
             
@@ -96,6 +97,7 @@ classdef BlockWorldWebotController < handle
             fprintf('Lift presets: 1/2/3\n');
             fprintf('Head up/down: s/x\n');
             fprintf('Undock: space\n');
+            fprintf('Stop and Save Timing: q\n');
             
             %Update Keyboard every 0.1 seconds
             wb_robot_keyboard_enable(this.TIME_STEP);
