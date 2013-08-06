@@ -192,7 +192,7 @@ for i_region = 1:numRegions
                         Nside = ceil(N/4);
                         
                         homographyIsInitialized = false;
-                        if embeddedConversions.homographyEstimationType == 1
+                        if strcmp(embeddedConversions.homographyEstimationType, 'cp2tform') == 0
                             try
                                 tformInit = cp2tform(corners, [0 0; 0 1; 1 0; 1 1], 'projective');
                                 homographyIsInitialized = true;
@@ -200,8 +200,8 @@ for i_region = 1:numRegions
                                 warning(['While computing tformInit: ' E.message]);
                                 tformInit = [];
                             end
-                        elseif embeddedConversions.homographyEstimationType == 2
-                            homography = mex_cp2tform_projective(corners, [0 0; 0 1; 1 0; 1 1]);
+                        elseif strcmp(embeddedConversions.homographyEstimationType, 'opencv_cp2tform') == 0
+                            homographyInit = mex_cp2tform_projective(corners, [0 0; 0 1; 1 0; 1 1]);
                             homographyIsInitialized = true;
                         end
 
@@ -221,11 +221,17 @@ for i_region = 1:numRegions
                                     linspace(1,0,Nside)' zeros(Nside,1)]; % bottom
                                 switch(quadRefinementMethod)
                                     case 'ICP'
-                                        tform = ICP(fliplr(boundary), canonicalBoundary, ...
-                                            'projective', 'tformInit', tformInit, ...
-                                            'maxIterations', 10, 'tolerance', .001, ...
-                                            'sampleFraction', 1);
-                                        
+                                        if strcmp(embeddedConversions.homographyEstimationType, 'cp2tform') == 0
+                                            tform = ICP(fliplr(boundary), canonicalBoundary, ...
+                                                'projective', 'tformInit', tformInit, ...
+                                                'maxIterations', 10, 'tolerance', .001, ...
+                                                'sampleFraction', 1);
+                                        elseif strcmp(embeddedConversions.homographyEstimationType, 'opencv_cp2tform') == 0
+                                            homography = ICP_projective(fliplr(boundary), canonicalBoundary, ...
+                                                'homographyInit', homographyInit, ...
+                                                'maxIterations', 10, 'tolerance', .001, ...
+                                                'sampleFraction', 1);
+                                        end                                        
                                     case 'fminsearch'
                                         mag = smoothgradient(img, 1);
                                         %namedFigure('refineHelper')

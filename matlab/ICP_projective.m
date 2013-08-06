@@ -19,17 +19,23 @@ tolerance = 1e-3;
 DEBUG_DISPLAY = nargout==0;
 
 parseVarargin(varargin{:});
-  
+
+keyboard
 
 if ~isempty(homographyInit)
     if DEBUG_DISPLAY
         P1_orig = P1;
     end
-    [x,y] = tformfwd(tformInit, P1(:,1), P1(:,2));
-    P1 = [x(:) y(:)];
-    tformTotal = tformInit;
+    
+    projectedPoints = homographyInit * [P1, ones(size(P1,1),1)];
+    
+    projectedPoints = projectedPoints ./ repmat(projectedPoints(:,3), [1,3]);
+    
+    P1 = projectedPoints(:,1:2);
+        
+    homography = homographyInit;
 else
-    tformTotal = maketform(tformType, eye(3));
+    homography = eye(3);
 end
 
 if DEBUG_DISPLAY

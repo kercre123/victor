@@ -9,6 +9,8 @@
 % testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false);
 % testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', false, 'doPause', false);
 
+% testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', false, 'doPause', false, 'embeddedConversions', EmbeddedConversionsManager('homographyEstimationType', 'opencv_cp2tform'));
+
 function W = testBlockWorld(varargin)
 
 device = 0;
@@ -22,7 +24,7 @@ calibToolboxPath = '~/Code/3rdparty/toolbox_calib';
 cameraCapturePath = '~/Code/CameraCapture';
 drawResults = true;
 doPause = true;
-embeddedConversions = EmbeddedConversionsManager('homographyEstimationType', 1);
+embeddedConversions = EmbeddedConversionsManager('homographyEstimationType', 'cp2tform');
 
 parseVarargin(varargin{:});
 
