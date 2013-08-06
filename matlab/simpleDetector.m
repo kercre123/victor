@@ -31,7 +31,7 @@ img = mean(im2double(img),3);
 numScales = round(log(maxSmoothingFraction*max(nrows,ncols)) / log(downsampleFactor));
 G = cell(1,numScales+1); 
 numSigma = 2.5;
-prevSigma = 0.5;
+prevSigma = 0.5 / numSigma;
 %G{1} = separable_filter(img, gaussian_kernel(prevSigma, numSigma));
 %G{1} = imfilter(img, fspecial('gaussian', round(numSigma*prevSigma), prevSigma));
 
@@ -44,7 +44,7 @@ end
     
 G{1} = blurFcn(img, prevSigma, numSigma);
 for i = 1:numScales
-    crntSigma = downsampleFactor^(i-1);
+    crntSigma = downsampleFactor^(i-1) / numSigma;
     addlSigma = sqrt(crntSigma^2 - prevSigma^2);
     G{i+1} = blurFcn(G{i}, addlSigma, numSigma);
     %G{i+1} = separable_filter(G{i}, gaussian_kernel(addlSigma, numSigma)); 
