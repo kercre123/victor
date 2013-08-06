@@ -19,5 +19,10 @@ To build gtest1.7.0 with MSVC2012 on Windows:
 2. Open the MSVC solution. For projects gtest and gtest_main, add "_VARIADIC_MAX=10" to Configuration Properties->C/C++->Preprocessor->Preprocessor Definitions:
 3. Then build as normal
 
-To use Opencv 2.4.6.1 on Windows
-1. Add the full directories for "[PATH]\coretech-external\build\msvc2012\opencv-2.4.6.1\bin\Debug" and "[PATH]\coretech-external\build\msvc2012\opencv-2.4.6.1\bin\Release" to your PATH variable (under Control Panel->All Control Panel Items->System->Advanced system settings->Advanced->Environment Variables->System variables).
+To build and use OpenCV 2.4.6.1 on Mac
+1. Use Cmake as normal, with the build directory as coretech-external/build/xcode4/opencv-2.4.6.1
+
+To build and use OpenCV 2.4.6.1 on Windows
+1. Use Cmake as normal, with the build directory as coretech-external/build/msvc2012/opencv-2.4.6.1
+2. Add the full directories for "[PATH]\coretech-external\build\msvc2012\opencv-2.4.6.1\bin\Debug" and "[PATH]\coretech-external\build\msvc2012\opencv-2.4.6.1\bin\Release" to your PATH variable (under Control Panel->All Control Panel Items->System->Advanced system settings->Advanced->Environment Variables->System variables).
+
