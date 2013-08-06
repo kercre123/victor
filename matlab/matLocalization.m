@@ -97,7 +97,8 @@ else
 end
 % solve for parameters of parabola:
 A = [bins.^2 bins ones(3,1)];
-p = A \ counts(bins)';
+p = linsolve(A, counts(bins)');
+
 
 % Find max location of the parabola *in terms of bins*.  Remember to
 % subtract 1 again because of +1 in accumarray above.  Then convert to

@@ -83,7 +83,7 @@ while norm(reprojErrNorm) > reprojErrThreshold && ...
     % Take an optimization step: compute the parameter update amount.
     A = JtJ + diag(sparse(lambda*max(lambda,diag(JtJ))));
     b = J'*reprojErr;
-    paramUpdate = A \ b;
+    paramUpdate = linsolve(A, b);
     %paramUpdate = robust_least_squares(A, b);
     
     % Roll the update into the current robot/block poses:

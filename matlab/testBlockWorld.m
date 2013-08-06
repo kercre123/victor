@@ -1,3 +1,14 @@
+
+% function W = testBlockWorld(varargin)
+
+% The main function for testing the fiducial detection for both the mat and
+% the blocks.
+
+% Usage examples:
+% testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true);
+% testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false);
+% testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', false, 'doPause', false);
+
 function W = testBlockWorld(varargin)
 
 device = 0;
@@ -9,6 +20,8 @@ frames = {};
 matFrames = {};
 calibToolboxPath = '~/Code/3rdparty/toolbox_calib';
 cameraCapturePath = '~/Code/CameraCapture';
+drawResults = true;
+doPause = true;
 
 parseVarargin(varargin{:});
 
@@ -25,18 +38,22 @@ if ~isempty(frames) && ~isempty(matFrames)
         'frames and matFrames should be same length.');
 end
 
-cla(findobj(namedFigure('BlockWorld 3D'), 'Type', 'axes'))
+if drawResults
+    cla(findobj(namedFigure('BlockWorld 3D'), 'Type', 'axes'))
+end
 
 T_update = 0;
 T_draw = 0;
 
-h_fig(1) = namedFigure('BlockWorld 3D');
-h_fig(2) = namedFigure('BlockWorld Reproject');
+if drawResults
+    h_fig(1) = namedFigure('BlockWorld 3D');
+    h_fig(2) = namedFigure('BlockWorld Reproject');
 
-set(h_fig, 'CurrentCharacter', ' ');
+    set(h_fig, 'CurrentCharacter', ' ');
 
-chars = [get(h_fig(1), 'CurrentCharacter') ...
-    get(h_fig(2), 'CurrentCharacter')];
+    chars = [get(h_fig(1), 'CurrentCharacter') ...
+        get(h_fig(2), 'CurrentCharacter')];
+end
 
 if nargin > 1 && ~isempty(frames)
     % From canned frames
@@ -44,8 +61,6 @@ if nargin > 1 && ~isempty(frames)
     W = BlockWorld('CameraCalibration', calibration, ...
         'MatCameraCalibration', matCalibration);
 
-    doPause = true;
-   
     for i = 1:length(frames)
         t = tic;
         if isempty(matFrames)
@@ -55,29 +70,31 @@ if nargin > 1 && ~isempty(frames)
         end
         T_update = T_update + toc(t);
         
-        t = tic;
-        draw(W);
-        %title(i)
-        T_draw = T_draw + toc(t);
-        
-        chars = [get(h_fig(1), 'CurrentCharacter') ...
-            get(h_fig(2), 'CurrentCharacter')];
-        
-        if any(chars == 'q') || any(chars == 27)
-            break;
-        end
-        
-        if doPause
-            if i < length(frames)
-                waitforbuttonpress;
-            end
+        if drawResults
+            t = tic;
             
-            % Press 'r' to switch to pauseless "Run" mode
-            if any(chars == 'r')
-                doPause = false;
+            draw(W);
+            %title(i)
+            T_draw = T_draw + toc(t);
+
+            chars = [get(h_fig(1), 'CurrentCharacter') ...
+                get(h_fig(2), 'CurrentCharacter')];
+
+            if any(chars == 'q') || any(chars == 27)
+                break;
             end
-        end
-            
+
+            if doPause
+                if i < length(frames)
+                    waitforbuttonpress;
+                end
+
+                % Press 'r' to switch to pauseless "Run" mode
+                if any(chars == 'r')
+                    doPause = false;
+                end
+            end
+        end            
     end
     
 else
@@ -94,13 +111,15 @@ else
         W.update();
         T_update = T_update + toc(t);
         
-        t = tic;
-        draw(W);
-        T_draw = T_draw + toc(t);
-        
-        %pause
-        chars = [get(h_fig(1), 'CurrentCharacter') ...
-            get(h_fig(2), 'CurrentCharacter')];
+        if drawResults
+            t = tic;
+            draw(W);
+            T_draw = T_draw + toc(t);
+
+            %pause
+            chars = [get(h_fig(1), 'CurrentCharacter') ...
+                get(h_fig(2), 'CurrentCharacter')];
+        end
     end
     
 end
