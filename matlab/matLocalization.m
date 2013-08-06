@@ -8,7 +8,7 @@ squareWidth = 10;
 lineWidth = 1.5;
 camera = [];
 DEBUG_DISPLAY = false;
-homographyEstimationType = [];
+embeddedConversions = [];
 
 parseVarargin(varargin{:});
 

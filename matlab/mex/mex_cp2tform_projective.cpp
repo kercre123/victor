@@ -1,4 +1,4 @@
-// function [homography] = cp2tform_projective(input_points, base_points)
+// function [homography] = mex_cp2tform_projective(input_points, base_points)
 
 #include "opencv2/opencv.hpp"
 #include "mexWrappers.h"
@@ -26,8 +26,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     return;
   }
 
-  std::cout << "input_points: " << input_points << "\n";
-  std::cout << "base_points: " << base_points << "\n";
+//  std::cout << "input_points: " << input_points << "\n";
+//  std::cout << "base_points: " << base_points << "\n";
     
   Mat homography = findHomography( input_points, base_points, 0 );
 

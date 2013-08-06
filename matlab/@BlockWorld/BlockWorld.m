@@ -16,7 +16,7 @@ classdef BlockWorld < handle
         
         HasMat = true;
         
-        homographyEstimationType;
+        embeddedConversions;
         
     end % PROPERTIES (get-public, set-protected)
     
@@ -40,7 +40,7 @@ classdef BlockWorld < handle
             MatCameraDevice = {};
             MatCameraCalibration = {};
             hasMat = true;
-            homographyEstimationType = [];
+            embeddedConversions = []; % 1-cp2tform, 2-opencv_cp2tform
             
             parseVarargin(varargin{:});
             
@@ -48,7 +48,7 @@ classdef BlockWorld < handle
             this.blocks = {};
             this.allMarkers3D = {};
             
-            this.homographyEstimationType = homographyEstimationType;
+            this.embeddedConversions = embeddedConversions;
             
             this.blockTypeToIndex = containers.Map('KeyType', 'double', ...
                 'ValueType', 'double');
@@ -108,7 +108,7 @@ classdef BlockWorld < handle
                     'CameraDevice', CameraDevice{i}, ...
                     'MatCameraCalibration', MatCameraCalibration{i}, ...
                     'MatCameraDevice', MatCameraDevice{i}, ...
-                    'homographyEstimationType', homographyEstimationType);
+                    'embeddedConversions', embeddedConversions);
             end
             
         end % FUNCTION BlockWorld()

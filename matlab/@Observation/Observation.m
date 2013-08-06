@@ -21,7 +21,7 @@ classdef Observation
         function this = Observation(parentRobot)
             this.image = parentRobot.camera.image;
             
-            this.markers = simpleDetector(this.image, 'homographyEstimationType', parentRobot.homographyEstimationType);
+            this.markers = simpleDetector(this.image, 'embeddedConversions', parentRobot.embeddedConversions);
             this.robot = parentRobot;
             this.pose = Pose();
             
@@ -70,7 +70,7 @@ classdef Observation
                 % Update robot's pose:
                 % TODO: return uncertainty in matLocalization
                 [xMat, yMat, orient] = matLocalization(this.matImage, ...
-                    'pixPerMM', 18.0, 'camera', this.robot.matCamera, 'homographyEstimationType', this.robot.homographyEstimationType);
+                    'pixPerMM', 18.0, 'camera', this.robot.matCamera, 'embeddedConversions', this.robot.embeddedConversions);
                 this.pose = Pose(orient*[0 0 -1], [xMat yMat 0]);
                 
                 % Also update the parent robot's pose to match (*before* 

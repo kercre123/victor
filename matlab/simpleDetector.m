@@ -9,7 +9,7 @@ computeTransformFromBoundary = true;
 quadRefinementMethod = 'ICP'; % 'ICP' or 'fminsearch'
 cornerMethod = 'laplacianPeaks'; % 'laplacianPeaks', 'harrisScore', or 'radiusPeaks'
 DEBUG_DISPLAY = nargout==0;
-homographyEstimationType = []; % 1-cp2tform, 2-opencv_cp2tform
+embeddedConversions = []; % 1-cp2tform, 2-opencv_cp2tform
 
 parseVarargin(varargin{:});
 
@@ -347,19 +347,29 @@ for i_region = 1:numRegions
                         
                         Nside = ceil(N/4);
                         
-                        if homographyEstimationType == 1
+                        homographyIsInitialized = false;
+                        if embeddedConversions.homographyEstimationType == 1
                             try
                                 tformInit = cp2tform(corners, [0 0; 0 1; 1 0; 1 1], 'projective');
+                                homographyIsInitialized = true;
                             catch E
                                 warning(['While computing tformInit: ' E.message]);
                                 tformInit = [];
                             end
-                        elseif homographyEstimationType == 2
+                        elseif embeddedConversions.homographyEstimationType == 2
+                            homography = mex_cp2tform_projective(corners, [0 0; 0 1; 1 0; 1 1]);
+                            homographyIsInitialized = true;
                         end
+
+                        % Test comparing the matlab and openCV versions
+%                         homography = mex_cp2tform_projective(corners, [0 0; 0 1; 1 0; 1 1]);
+%                         homographyIsInitialized = true;
+%                         
+%                         c1 = tformInit.tdata.T'*[corners,ones(4,1)]';
+%                         c2 = homography*[corners,ones(4,1)]';
                         
-                        if ~isempty(tformInit)
+                        if homographyIsInitialized
                             try
-                                
                                 canonicalBoundary = ...
                                     [zeros(Nside,1) linspace(0,1,Nside)';  % left side
                                     linspace(0,1,Nside)' ones(Nside,1);  % top
