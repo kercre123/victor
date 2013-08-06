@@ -9,6 +9,7 @@ computeTransformFromBoundary = true;
 quadRefinementMethod = 'ICP'; % 'ICP' or 'fminsearch'
 cornerMethod = 'laplacianPeaks'; % 'laplacianPeaks', 'harrisScore', or 'radiusPeaks'
 DEBUG_DISPLAY = nargout==0;
+homographyEstimationType = []; % 1-cp2tform, 2-opencv_cp2tform
 
 parseVarargin(varargin{:});
 
@@ -346,11 +347,14 @@ for i_region = 1:numRegions
                         
                         Nside = ceil(N/4);
                         
-                        try
-                            tformInit = cp2tform(corners, [0 0; 0 1; 1 0; 1 1], 'projective');
-                        catch E
-                            warning(['While computing tformInit: ' E.message]);
-                            tformInit = [];
+                        if homographyEstimationType == 1
+                            try
+                                tformInit = cp2tform(corners, [0 0; 0 1; 1 0; 1 1], 'projective');
+                            catch E
+                                warning(['While computing tformInit: ' E.message]);
+                                tformInit = [];
+                            end
+                        elseif homographyEstimationType == 2
                         end
                         
                         if ~isempty(tformInit)

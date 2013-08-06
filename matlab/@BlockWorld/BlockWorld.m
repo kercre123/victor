@@ -16,6 +16,8 @@ classdef BlockWorld < handle
         
         HasMat = true;
         
+        homographyEstimationType;
+        
     end % PROPERTIES (get-public, set-protected)
     
     properties(GetAccess = 'public', SetAccess = 'protected', ...
@@ -38,12 +40,15 @@ classdef BlockWorld < handle
             MatCameraDevice = {};
             MatCameraCalibration = {};
             hasMat = true;
+            homographyEstimationType = [];
             
             parseVarargin(varargin{:});
             
             this.HasMat = hasMat;
             this.blocks = {};
             this.allMarkers3D = {};
+            
+            this.homographyEstimationType = homographyEstimationType;
             
             this.blockTypeToIndex = containers.Map('KeyType', 'double', ...
                 'ValueType', 'double');
@@ -102,7 +107,8 @@ classdef BlockWorld < handle
                     'CameraCalibration', CameraCalibration{i}, ...
                     'CameraDevice', CameraDevice{i}, ...
                     'MatCameraCalibration', MatCameraCalibration{i}, ...
-                    'MatCameraDevice', MatCameraDevice{i});
+                    'MatCameraDevice', MatCameraDevice{i}, ...
+                    'homographyEstimationType', homographyEstimationType);
             end
             
         end % FUNCTION BlockWorld()

@@ -15,6 +15,8 @@ classdef Robot < handle
         camera;
         matCamera;
         
+        homographyEstimationType;
+        
         % For drawing:
         appearance = struct( ...
             'BodyColor', [.7 .7 0], ...
@@ -65,6 +67,7 @@ classdef Robot < handle
             CameraCalibration = [];
             MatCameraDevice = [];
             MatCameraCalibration = [];
+            homographyEstimationType = [];
             
             appearanceArgs = parseVarargin(varargin);
             
@@ -78,6 +81,8 @@ classdef Robot < handle
                 this.appearance.BodyLength;
             this.appearance.EyeRadius = this.appearance.EyeRadiusFraction * ...
                 this.appearance.BodyWidth/2;
+            
+            this.homographyEstimationType = homographyEstimationType;
             
             % From robot to camera frame:
             % Rotation 90 degrees around x axis:

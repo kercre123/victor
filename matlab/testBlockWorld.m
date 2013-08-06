@@ -22,6 +22,7 @@ calibToolboxPath = '~/Code/3rdparty/toolbox_calib';
 cameraCapturePath = '~/Code/CameraCapture';
 drawResults = true;
 doPause = true;
+homographyEstimationType = 1; % 1-cp2tform, 2-opencv_cp2tform
 
 parseVarargin(varargin{:});
 
@@ -59,7 +60,8 @@ if nargin > 1 && ~isempty(frames)
     % From canned frames
     
     W = BlockWorld('CameraCalibration', calibration, ...
-        'MatCameraCalibration', matCalibration);
+                   'MatCameraCalibration', matCalibration, ...
+                   'homographyEstimationType', homographyEstimationType);
 
     for i = 1:length(frames)
         t = tic;
@@ -102,8 +104,9 @@ else
     
     % From live camera feed
     W = BlockWorld('CameraCalibration', calibration, ...
-        'CameraDevice', device, 'MatCameraDevice', matDevice, ...
-        'MatCameraCalibration', matCalibration);
+                   'CameraDevice', device, 'MatCameraDevice', matDevice, ...
+                   'MatCameraCalibration', matCalibration, ...
+                   'homographyEstimationType', homographyEstimationType);
     
     while ~any(chars==27)
         
