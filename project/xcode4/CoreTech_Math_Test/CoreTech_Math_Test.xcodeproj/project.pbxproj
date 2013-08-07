@@ -1,0 +1,387 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5C60002017B2D23600A75604 /* CoreTech_Math_Test.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5C60001F17B2D23600A75604 /* CoreTech_Math_Test.1 */; };
+		5C60002D17B2D27700A75604 /* math_Test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C60002C17B2D27700A75604 /* math_Test.cpp */; };
+		5C60002F17B2D30200A75604 /* libCoreTech_Math.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60002E17B2D30200A75604 /* libCoreTech_Math.a */; };
+		5C60003217B2D32E00A75604 /* libeng.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60003017B2D32E00A75604 /* libeng.dylib */; };
+		5C60003317B2D32E00A75604 /* libmx.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60003117B2D32E00A75604 /* libmx.dylib */; };
+		5C60004917B2D34300A75604 /* libopencv_calib3d.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60003417B2D34300A75604 /* libopencv_calib3d.dylib */; };
+		5C60004A17B2D34300A75604 /* libopencv_contrib.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60003517B2D34300A75604 /* libopencv_contrib.dylib */; };
+		5C60004B17B2D34300A75604 /* libopencv_core.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60003617B2D34300A75604 /* libopencv_core.dylib */; };
+		5C60004C17B2D34300A75604 /* libopencv_features2d.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60003717B2D34300A75604 /* libopencv_features2d.dylib */; };
+		5C60004D17B2D34300A75604 /* libopencv_flann.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60003817B2D34300A75604 /* libopencv_flann.dylib */; };
+		5C60004E17B2D34300A75604 /* libopencv_gpu.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60003917B2D34300A75604 /* libopencv_gpu.dylib */; };
+		5C60004F17B2D34300A75604 /* libopencv_haartraining_engine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60003A17B2D34300A75604 /* libopencv_haartraining_engine.a */; };
+		5C60005017B2D34300A75604 /* libopencv_highgui.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60003B17B2D34300A75604 /* libopencv_highgui.dylib */; };
+		5C60005117B2D34300A75604 /* libopencv_imgproc.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60003C17B2D34300A75604 /* libopencv_imgproc.dylib */; };
+		5C60005217B2D34300A75604 /* libopencv_java246.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60003D17B2D34300A75604 /* libopencv_java246.dylib */; };
+		5C60005317B2D34300A75604 /* libopencv_legacy.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60003E17B2D34300A75604 /* libopencv_legacy.dylib */; };
+		5C60005417B2D34300A75604 /* libopencv_ml.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60003F17B2D34300A75604 /* libopencv_ml.dylib */; };
+		5C60005517B2D34300A75604 /* libopencv_nonfree.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60004017B2D34300A75604 /* libopencv_nonfree.dylib */; };
+		5C60005617B2D34300A75604 /* libopencv_objdetect.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60004117B2D34300A75604 /* libopencv_objdetect.dylib */; };
+		5C60005717B2D34300A75604 /* libopencv_ocl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60004217B2D34300A75604 /* libopencv_ocl.dylib */; };
+		5C60005817B2D34300A75604 /* libopencv_photo.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60004317B2D34300A75604 /* libopencv_photo.dylib */; };
+		5C60005917B2D34300A75604 /* libopencv_stitching.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60004417B2D34300A75604 /* libopencv_stitching.dylib */; };
+		5C60005A17B2D34300A75604 /* libopencv_superres.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60004517B2D34300A75604 /* libopencv_superres.dylib */; };
+		5C60005B17B2D34300A75604 /* libopencv_ts.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60004617B2D34300A75604 /* libopencv_ts.dylib */; };
+		5C60005C17B2D34300A75604 /* libopencv_video.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60004717B2D34300A75604 /* libopencv_video.dylib */; };
+		5C60005D17B2D34300A75604 /* libopencv_videostab.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60004817B2D34300A75604 /* libopencv_videostab.dylib */; };
+		5C60006017B2D35500A75604 /* libgtest_main.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60005E17B2D35500A75604 /* libgtest_main.a */; };
+		5C60006117B2D35500A75604 /* libgtest.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60005F17B2D35500A75604 /* libgtest.a */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		5C60001817B2D23600A75604 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+				5C60002017B2D23600A75604 /* CoreTech_Math_Test.1 in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		5C60001A17B2D23600A75604 /* CoreTech_Math_Test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CoreTech_Math_Test; sourceTree = BUILT_PRODUCTS_DIR; };
+		5C60001F17B2D23600A75604 /* CoreTech_Math_Test.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = CoreTech_Math_Test.1; sourceTree = "<group>"; };
+		5C60002C17B2D27700A75604 /* math_Test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = math_Test.cpp; path = ../../../test/math_Test.cpp; sourceTree = "<group>"; };
+		5C60002E17B2D30200A75604 /* libCoreTech_Math.a */ = {isa = PBXFileReference; lastKnownFileType = file; name = libCoreTech_Math.a; path = ../CoreTech_Math/build/Release/libCoreTech_Math.a; sourceTree = "<group>"; };
+		5C60003017B2D32E00A75604 /* libeng.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libeng.dylib; path = ../../../../../../../../Applications/MATLAB_R2013a.app/bin/maci64/libeng.dylib; sourceTree = "<group>"; };
+		5C60003117B2D32E00A75604 /* libmx.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libmx.dylib; path = ../../../../../../../../Applications/MATLAB_R2013a.app/bin/maci64/libmx.dylib; sourceTree = "<group>"; };
+		5C60003417B2D34300A75604 /* libopencv_calib3d.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_calib3d.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_calib3d.dylib"; sourceTree = "<group>"; };
+		5C60003517B2D34300A75604 /* libopencv_contrib.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_contrib.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_contrib.dylib"; sourceTree = "<group>"; };
+		5C60003617B2D34300A75604 /* libopencv_core.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_core.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_core.dylib"; sourceTree = "<group>"; };
+		5C60003717B2D34300A75604 /* libopencv_features2d.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_features2d.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_features2d.dylib"; sourceTree = "<group>"; };
+		5C60003817B2D34300A75604 /* libopencv_flann.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_flann.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_flann.dylib"; sourceTree = "<group>"; };
+		5C60003917B2D34300A75604 /* libopencv_gpu.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_gpu.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_gpu.dylib"; sourceTree = "<group>"; };
+		5C60003A17B2D34300A75604 /* libopencv_haartraining_engine.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libopencv_haartraining_engine.a; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_haartraining_engine.a"; sourceTree = "<group>"; };
+		5C60003B17B2D34300A75604 /* libopencv_highgui.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_highgui.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_highgui.dylib"; sourceTree = "<group>"; };
+		5C60003C17B2D34300A75604 /* libopencv_imgproc.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_imgproc.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_imgproc.dylib"; sourceTree = "<group>"; };
+		5C60003D17B2D34300A75604 /* libopencv_java246.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_java246.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_java246.dylib"; sourceTree = "<group>"; };
+		5C60003E17B2D34300A75604 /* libopencv_legacy.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_legacy.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_legacy.dylib"; sourceTree = "<group>"; };
+		5C60003F17B2D34300A75604 /* libopencv_ml.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_ml.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_ml.dylib"; sourceTree = "<group>"; };
+		5C60004017B2D34300A75604 /* libopencv_nonfree.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_nonfree.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_nonfree.dylib"; sourceTree = "<group>"; };
+		5C60004117B2D34300A75604 /* libopencv_objdetect.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_objdetect.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_objdetect.dylib"; sourceTree = "<group>"; };
+		5C60004217B2D34300A75604 /* libopencv_ocl.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_ocl.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_ocl.dylib"; sourceTree = "<group>"; };
+		5C60004317B2D34300A75604 /* libopencv_photo.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_photo.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_photo.dylib"; sourceTree = "<group>"; };
+		5C60004417B2D34300A75604 /* libopencv_stitching.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_stitching.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_stitching.dylib"; sourceTree = "<group>"; };
+		5C60004517B2D34300A75604 /* libopencv_superres.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_superres.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_superres.dylib"; sourceTree = "<group>"; };
+		5C60004617B2D34300A75604 /* libopencv_ts.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_ts.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_ts.dylib"; sourceTree = "<group>"; };
+		5C60004717B2D34300A75604 /* libopencv_video.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_video.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_video.dylib"; sourceTree = "<group>"; };
+		5C60004817B2D34300A75604 /* libopencv_videostab.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_videostab.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_videostab.dylib"; sourceTree = "<group>"; };
+		5C60005E17B2D35500A75604 /* libgtest_main.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libgtest_main.a; path = "../../../../coretech-external/build/xcode4/gtest-1.7.0/Debug/libgtest_main.a"; sourceTree = "<group>"; };
+		5C60005F17B2D35500A75604 /* libgtest.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libgtest.a; path = "../../../../coretech-external/build/xcode4/gtest-1.7.0/Debug/libgtest.a"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5C60001717B2D23600A75604 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5C60006017B2D35500A75604 /* libgtest_main.a in Frameworks */,
+				5C60006117B2D35500A75604 /* libgtest.a in Frameworks */,
+				5C60004917B2D34300A75604 /* libopencv_calib3d.dylib in Frameworks */,
+				5C60004A17B2D34300A75604 /* libopencv_contrib.dylib in Frameworks */,
+				5C60004B17B2D34300A75604 /* libopencv_core.dylib in Frameworks */,
+				5C60004C17B2D34300A75604 /* libopencv_features2d.dylib in Frameworks */,
+				5C60004D17B2D34300A75604 /* libopencv_flann.dylib in Frameworks */,
+				5C60004E17B2D34300A75604 /* libopencv_gpu.dylib in Frameworks */,
+				5C60004F17B2D34300A75604 /* libopencv_haartraining_engine.a in Frameworks */,
+				5C60005017B2D34300A75604 /* libopencv_highgui.dylib in Frameworks */,
+				5C60005117B2D34300A75604 /* libopencv_imgproc.dylib in Frameworks */,
+				5C60005217B2D34300A75604 /* libopencv_java246.dylib in Frameworks */,
+				5C60005317B2D34300A75604 /* libopencv_legacy.dylib in Frameworks */,
+				5C60005417B2D34300A75604 /* libopencv_ml.dylib in Frameworks */,
+				5C60005517B2D34300A75604 /* libopencv_nonfree.dylib in Frameworks */,
+				5C60005617B2D34300A75604 /* libopencv_objdetect.dylib in Frameworks */,
+				5C60005717B2D34300A75604 /* libopencv_ocl.dylib in Frameworks */,
+				5C60005817B2D34300A75604 /* libopencv_photo.dylib in Frameworks */,
+				5C60005917B2D34300A75604 /* libopencv_stitching.dylib in Frameworks */,
+				5C60005A17B2D34300A75604 /* libopencv_superres.dylib in Frameworks */,
+				5C60005B17B2D34300A75604 /* libopencv_ts.dylib in Frameworks */,
+				5C60005C17B2D34300A75604 /* libopencv_video.dylib in Frameworks */,
+				5C60005D17B2D34300A75604 /* libopencv_videostab.dylib in Frameworks */,
+				5C60003217B2D32E00A75604 /* libeng.dylib in Frameworks */,
+				5C60003317B2D32E00A75604 /* libmx.dylib in Frameworks */,
+				5C60002F17B2D30200A75604 /* libCoreTech_Math.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5C60001117B2D23600A75604 = {
+			isa = PBXGroup;
+			children = (
+				5C60005E17B2D35500A75604 /* libgtest_main.a */,
+				5C60005F17B2D35500A75604 /* libgtest.a */,
+				5C60003417B2D34300A75604 /* libopencv_calib3d.dylib */,
+				5C60003517B2D34300A75604 /* libopencv_contrib.dylib */,
+				5C60003617B2D34300A75604 /* libopencv_core.dylib */,
+				5C60003717B2D34300A75604 /* libopencv_features2d.dylib */,
+				5C60003817B2D34300A75604 /* libopencv_flann.dylib */,
+				5C60003917B2D34300A75604 /* libopencv_gpu.dylib */,
+				5C60003A17B2D34300A75604 /* libopencv_haartraining_engine.a */,
+				5C60003B17B2D34300A75604 /* libopencv_highgui.dylib */,
+				5C60003C17B2D34300A75604 /* libopencv_imgproc.dylib */,
+				5C60003D17B2D34300A75604 /* libopencv_java246.dylib */,
+				5C60003E17B2D34300A75604 /* libopencv_legacy.dylib */,
+				5C60003F17B2D34300A75604 /* libopencv_ml.dylib */,
+				5C60004017B2D34300A75604 /* libopencv_nonfree.dylib */,
+				5C60004117B2D34300A75604 /* libopencv_objdetect.dylib */,
+				5C60004217B2D34300A75604 /* libopencv_ocl.dylib */,
+				5C60004317B2D34300A75604 /* libopencv_photo.dylib */,
+				5C60004417B2D34300A75604 /* libopencv_stitching.dylib */,
+				5C60004517B2D34300A75604 /* libopencv_superres.dylib */,
+				5C60004617B2D34300A75604 /* libopencv_ts.dylib */,
+				5C60004717B2D34300A75604 /* libopencv_video.dylib */,
+				5C60004817B2D34300A75604 /* libopencv_videostab.dylib */,
+				5C60003017B2D32E00A75604 /* libeng.dylib */,
+				5C60003117B2D32E00A75604 /* libmx.dylib */,
+				5C60002E17B2D30200A75604 /* libCoreTech_Math.a */,
+				5C60002C17B2D27700A75604 /* math_Test.cpp */,
+				5C60001C17B2D23600A75604 /* CoreTech_Math_Test */,
+				5C60001B17B2D23600A75604 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5C60001B17B2D23600A75604 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5C60001A17B2D23600A75604 /* CoreTech_Math_Test */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		5C60001C17B2D23600A75604 /* CoreTech_Math_Test */ = {
+			isa = PBXGroup;
+			children = (
+				5C60001F17B2D23600A75604 /* CoreTech_Math_Test.1 */,
+			);
+			path = CoreTech_Math_Test;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5C60001917B2D23600A75604 /* CoreTech_Math_Test */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5C60002317B2D23600A75604 /* Build configuration list for PBXNativeTarget "CoreTech_Math_Test" */;
+			buildPhases = (
+				5C60001617B2D23600A75604 /* Sources */,
+				5C60001717B2D23600A75604 /* Frameworks */,
+				5C60001817B2D23600A75604 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CoreTech_Math_Test;
+			productName = CoreTech_Math_Test;
+			productReference = 5C60001A17B2D23600A75604 /* CoreTech_Math_Test */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5C60001217B2D23600A75604 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0460;
+				ORGANIZATIONNAME = "Peter Barnum";
+			};
+			buildConfigurationList = 5C60001517B2D23600A75604 /* Build configuration list for PBXProject "CoreTech_Math_Test" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 5C60001117B2D23600A75604;
+			productRefGroup = 5C60001B17B2D23600A75604 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5C60001917B2D23600A75604 /* CoreTech_Math_Test */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5C60001617B2D23600A75604 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5C60002D17B2D27700A75604 /* math_Test.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		5C60002117B2D23600A75604 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
+			};
+			name = Debug;
+		};
+		5C60002217B2D23600A75604 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				SDKROOT = macosx;
+				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
+			};
+			name = Release;
+		};
+		5C60002417B2D23600A75604 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					../../../include,
+					"../../../../coretech-common/include",
+					"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/extern/include",
+					"../../../../coretech-external/opencv-2.4.6.1/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/contrib/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/core/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/features2d/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/flann/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/highgui/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/imgproc/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/legacy/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/ml/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/nonfree/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/objdetect/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/ocl/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/photo/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/stitching/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/superres/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/video/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/bin/maci64\"",
+					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug\"",
+					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/gtest-1.7.0/Debug\"",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
+			};
+			name = Debug;
+		};
+		5C60002517B2D23600A75604 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					../../../include,
+					"../../../../coretech-common/include",
+					"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/extern/include",
+					"../../../../coretech-external/opencv-2.4.6.1/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/contrib/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/core/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/features2d/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/flann/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/highgui/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/imgproc/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/legacy/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/ml/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/nonfree/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/objdetect/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/ocl/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/photo/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/stitching/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/superres/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/video/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/bin/maci64\"",
+					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug\"",
+					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/gtest-1.7.0/Debug\"",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5C60001517B2D23600A75604 /* Build configuration list for PBXProject "CoreTech_Math_Test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5C60002117B2D23600A75604 /* Debug */,
+				5C60002217B2D23600A75604 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5C60002317B2D23600A75604 /* Build configuration list for PBXNativeTarget "CoreTech_Math_Test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5C60002417B2D23600A75604 /* Debug */,
+				5C60002517B2D23600A75604 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5C60001217B2D23600A75604 /* Project object */;
+}
