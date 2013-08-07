@@ -7,5 +7,6 @@
 #include "anki/common/memory.h"
 #include "anki/common/utilities.h"
 #include "anki/common/DASlight.h"
+#include "anki/common/dataStructures.h"
 
 #endif // _ANKICORETECH_COMMON_H_

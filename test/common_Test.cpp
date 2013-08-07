@@ -211,7 +211,7 @@ TEST(AnkiVision, SimpleAnkiVisionTest)
 
   // Check that the non-templated OpenCV matrix works
   {
-  cv::Mat &myMatrix_cvMat = myMatrix.get_CvMat();
+  cv::Mat &myMatrix_cvMat = myMatrix.get_CvMat_();
   std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat.at<s16>(2,0) << "\n";
   ASSERT_EQ(42, *myMatrix.Pointer(2,0));
   ASSERT_EQ(42, myMatrix_cvMat.at<s16>(2,0));
@@ -230,6 +230,8 @@ TEST(AnkiVision, SimpleAnkiVisionTest)
   }
   #endif //#if defined(ANKICORETECH_USE_OPENCV)
 
+  free(buffer); buffer = NULL;
+  
   std::cout << "\n";
 }
 

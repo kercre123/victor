@@ -6,10 +6,11 @@
 #include "anki/common/memory.h"
 
 #if defined(ANKICORETECH_USE_OPENCV)
-#include "opencv2/opencv.hpp"
+namespace cv
+{
+  template<typename _Tp> class Mat_;
+}
 #endif
-
-
 
 namespace Anki
 { 
@@ -53,12 +54,6 @@ namespace Anki
     #if defined(ANKICORETECH_USE_OPENCV)
     // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Matrix. No data is copied.
     cv::Mat_<T>& get_CvMat_()
-    {
-      return cvMatMirror;
-    }
-
-    // Returns a non-templated cv::Mat that shares the same buffer with this Anki::Matrix. No data is copied.
-    cv::Mat& get_CvMat()
     {
       return cvMatMirror;
     }

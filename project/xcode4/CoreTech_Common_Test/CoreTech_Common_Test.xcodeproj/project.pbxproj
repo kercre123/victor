@@ -316,7 +316,6 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/bin/maci64";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/../../../../../../Library/Developer/Xcode/DerivedData/CoreTech_Common-eqhlqxhoevhxqidsiqphyrydexlr/Build/Products/Debug\"",
 					"\"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/bin/maci64\"",
 					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug\"",
 					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/gtest-1.7.0/Debug\"",
@@ -355,7 +354,6 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/bin/maci64";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/../../../../../../Library/Developer/Xcode/DerivedData/CoreTech_Common-eqhlqxhoevhxqidsiqphyrydexlr/Build/Products/Debug\"",
 					"\"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/bin/maci64\"",
 					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug\"",
 					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/gtest-1.7.0/Debug\"",

@@ -29,6 +29,7 @@
 		5C7B94E917AB1FE40020CCF7 /* dasLight.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dasLight.cpp; path = ../../../src/dasLight.cpp; sourceTree = "<group>"; };
 		5C7B94EA17AB1FE40020CCF7 /* memory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = memory.cpp; path = ../../../src/memory.cpp; sourceTree = "<group>"; };
 		5C7B94EB17AB1FE40020CCF7 /* utilities.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = utilities.cpp; path = ../../../src/utilities.cpp; sourceTree = "<group>"; };
+		5CE1C96D17B2BF7F00974053 /* dataStructures.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = dataStructures.h; path = ../../../include/anki/common/dataStructures.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -45,6 +46,7 @@
 		5C7B94CB17AB1FB30020CCF7 = {
 			isa = PBXGroup;
 			children = (
+				5CE1C96D17B2BF7F00974053 /* dataStructures.h */,
 				5C7B94E917AB1FE40020CCF7 /* dasLight.cpp */,
 				5C7B94EA17AB1FE40020CCF7 /* memory.cpp */,
 				5C7B94EB17AB1FE40020CCF7 /* utilities.cpp */,
