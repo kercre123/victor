@@ -8,6 +8,7 @@ squareWidth = 10;
 lineWidth = 1.5;
 camera = [];
 DEBUG_DISPLAY = false;
+embeddedConversions = [];
 
 parseVarargin(varargin{:});
 
@@ -27,161 +28,25 @@ assert(min(img(:))>=0 && max(img(:))<=1, ...
 
 %% Image Orientation
 imgOrig = img;
-if ~isempty(camera)
-    % Undo radial distortion according to camera calibration info:
-    assert(isa(camera, 'Camera'), 'Expecting a Camera object.');
-    [img, xgrid, ygrid] = camera.undistort(img, 'nearest');
-    imgCen = camera.center;    
-    xgrid = xgrid - imgCen(1);
-    ygrid = ygrid - imgCen(2);
-else
-    imgCen = [ncols nrows]/2;
-    [xgrid,ygrid] = meshgrid((1:ncols)-imgCen(1), (1:nrows)-imgCen(2));
-end
 
-% Note the downsampling here here, since we don't really need to use ALL
-% pixels just to estimate the gradient orientation via a histogram
-[Ix,Iy] = smoothgradient( ...
-    img(1:orientationSample:end, 1:orientationSample:end), derivSigma);
-mag = sqrt(Ix.^2 + Iy.^2);
-orient = atan2(Iy, Ix);
-orient(orient < 0) = pi + orient(orient < 0);
+[img, xgrid, ygrid, imgCen] = matLocalization_step1_undoRadialDistortion(camera, img, embeddedConversions, DEBUG_DISPLAY);
 
-% Bin into 1-degree bins, using linear interpolation
-orient = 180/pi*orient(:);
-leftBin = floor(orient);
-leftBinWeight = 1-(orient-leftBin);
-rightBin = leftBin + 1;
-rightBin(rightBin==181) = 1;
-%counts = row(accumarray(round(180/pi*orient(:))+1, mag(:)));
-assert(all(leftBinWeight>=0 & leftBinWeight <= 1), ...
-    'Bin weights should be [0,1]');
-counts = row(accumarray(leftBin+1, leftBinWeight.*mag(:), [181 1]));
-counts = counts + row(accumarray(rightBin+1, (1-leftBinWeight).*mag(:), [181 1]));
-%counts = imfilter(counts, gaussian_kernel(1), 'circular');
+[orient, mag] = matLocalization_step2_downsampleAndComputeGradientAngles(img, orientationSample, derivSigma, embeddedConversions, DEBUG_DISPLAY);
 
-% First and last bin (0 and 180) are same thing
-counts(1) = counts(1) + counts(181);
-counts = counts(1:180);
-
-% Find peaks
-localMaxima = find(counts > counts([end 1:end-1]) & counts > counts([2:end 1]));
-if length(localMaxima) < 2
-    error('Could not find at least 2 peaks in orientation histogram.');
-end
-
-[~,sortIndex] = sort(counts(localMaxima), 'descend');
-localMaxima = localMaxima(sortIndex(1:2));
-
-orient = -(localMaxima-1)*pi/180; % subtract 1 because of +1 in accumarray above
-if orient(2) > orient(1)
-    orient = orient([2 1]);
-    localMaxima = localMaxima([2 1]);
-end
-orientDiff = orient(1) - orient(2); 
-if abs(orientDiff - pi/2) > 5*pi/180
-    warning('Found two orientation peaks, but they are not ~90 degrees apart.');
-end
-
-% Fit a parabola to the peak orientation to get sub-bin orientation
-% precision
-assert(length(counts)==180, 'Expecting 180 orientation bins');
-if localMaxima(1)==1
-    bins = [180 1 2]';
-elseif localMaxima(1)==180
-    bins = [179 180 1]';
-else
-    bins = localMaxima(1) + [-1 0 1]';
-end
-% solve for parameters of parabola:
-A = [bins.^2 bins ones(3,1)];
-p = A \ counts(bins)';
-
-% Find max location of the parabola *in terms of bins*.  Remember to
-% subtract 1 again because of +1 in accumarray above.  Then convert to
-% radians.
-orient = -(-p(2)/(2*p(1)) - 1) * pi/180; 
+[orient1] = matLocalization_step3_computeImageOrientation(orient, mag, embeddedConversions, DEBUG_DISPLAY);
 
 %% Grid Square localization   
-xgridRot =  xgrid*cos(orient) + ygrid*sin(orient) + imgCen(1);
-ygridRot = -xgrid*sin(orient) + ygrid*cos(orient) + imgCen(2);
 
-% Note that we use a value of 1 (white) for pixels outside the image, which
-% will effectively give less weight to lines/squares that are closer to
-% the image borders naturally. (Still true now that i'm using a derivative
-% stencil?)
-%imgRot = interp2(imgOrig, xgridRot, ygridRot, 'nearest', 1);
-inbounds = xgridRot >= 1 & xgridRot <= ncols & ygridRot >= 1 & ygridRot <= nrows;
-index = round(ygridRot(inbounds)) + (round(xgridRot(inbounds))-1)*nrows;
-imgRot = ones(nrows,ncols);
-imgRot(inbounds) = imgOrig(index);
+[imgRot] = matLocalization_step4_rotateImage(imgOrig, orient1, imgCen, xgrid, ygrid, embeddedConversions, DEBUG_DISPLAY);
 
-% Now using stencil that looks for edges of the stripes by using
-% derivatives instead.  The goal is to be less sensitive to lighting
-x = linspace(-squareWidth,squareWidth,pixPerMM*2*squareWidth);
-gridStencil = max(exp(-(x+squareWidth/2).^2/(2*(lineWidth/3)^2)), ...
-    exp(-(x-squareWidth/2).^2/(2*(lineWidth/3)^2)));
-gridStencil = image_right(gridStencil) - gridStencil; % derivative
-
-% Collect average derivatives along the rows and columns, so we can just do
-% simple 1D filtering with the stencil below
-colDeriv = mean(image_right(imgRot)-imgRot,1);
-rowDeriv = mean(image_down(imgRot)-imgRot,2);
-
-% Find where the derivatives agree best with the stencil
-[~,xcenIndex] = max(conv2(colDeriv, gridStencil, 'same'));
-[~,ycenIndex] = max(conv2(rowDeriv', gridStencil, 'same'));
+[xcenIndex, ycenIndex] = matLocalization_step5_findGrideSquareCenter(imgRot, squareWidth, pixPerMM, lineWidth, embeddedConversions, DEBUG_DISPLAY);
 
 
 %% Square Identification
+[xMat, yMat, xvecRot, yvecRot, orient1] = matLocalization_step6_identifySquare(imgRot, orient1, squareWidth, lineWidth, pixPerMM, imgCen, xcenIndex, ycenIndex, embeddedConversions, DEBUG_DISPLAY);
 
-insideSquareWidth = squareWidth - lineWidth;
- 
-% s = diag(insideSquareWidth * pixPerMM * [1 1]);
-% R = [cos(orient1) sin(orient1); -sin(orient1) cos(orient1)];
-% t = [xcen; ycen] - R*diag(s)/2;
-% tform = maketform('affine', [s*R t; 0 0 1]');
-% 
-% corners = [0 0; ...
-%            0 1; ...
-%            1 0; ...
-%            1 1];
-%         
-% corners = tformfwd(tform, corners);
-%     
-% marker = MatMarker2D(img, corners, maketform('affine', tform.tdata.Tinv));
-s = diag(insideSquareWidth * pixPerMM * [1 1]);
-R = eye(2);
-t = [xcenIndex; ycenIndex] - diag(s)/2;
-tform = maketform('affine', [s*R t; 0 0 1]');
 
-corners = [0 0; ...
-           0 1; ...
-           1 0; ...
-           1 1];
-        
-corners = tformfwd(tform, corners);
-
-% Note we're using the rotated, undistorted image for identifying the code
-marker = MatMarker2D(imgRot, corners, maketform('affine', tform.tdata.Tinv));
-
-if marker.isValid
-    % Get camera/image position on mat, in mm:
-    xvec = imgCen(1)-xcenIndex;
-    yvec = imgCen(2)-ycenIndex;
-    xvecRot =  xvec*cos(-marker.upAngle) + yvec*sin(-marker.upAngle);
-    yvecRot = -xvec*sin(-marker.upAngle) + yvec*cos(-marker.upAngle);
-    xMat = xvecRot/pixPerMM + marker.X*squareWidth - squareWidth/2;
-    yMat = yvecRot/pixPerMM + marker.Y*squareWidth - squareWidth/2;
-    
-    orient = orient + marker.upAngle;
-    
-else
-    xMat = -1;
-    yMat = -1;
-    xvecRot = -1;
-    yvecRot = -1;
-end
+%% Debug output
 
 if nargout == 0 || DEBUG_DISPLAY
     % Location of the center of the square in original (distorted) image

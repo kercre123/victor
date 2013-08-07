@@ -1,0 +1,295 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5C63337C17B18B260004A265 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C63337B17B18B260004A265 /* main.cpp */; };
+		5C63337E17B18B260004A265 /* CozmoMex.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5C63337D17B18B260004A265 /* CozmoMex.1 */; };
+		5C63338A17B18B3E0004A265 /* mex_cp2tform_projective.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C63338417B18B3E0004A265 /* mex_cp2tform_projective.cpp */; };
+		5C63338B17B18B3E0004A265 /* mexBundleAdjust.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C63338517B18B3E0004A265 /* mexBundleAdjust.cpp */; };
+		5C63338C17B18B3E0004A265 /* mexClosestIndex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C63338617B18B3E0004A265 /* mexClosestIndex.cpp */; };
+		5C63338D17B18B3E0004A265 /* mexGaussianBlur.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C63338717B18B3E0004A265 /* mexGaussianBlur.cpp */; };
+		5C63338E17B18B3E0004A265 /* mexHist.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C63338817B18B3E0004A265 /* mexHist.cpp */; };
+		5C63338F17B18B3E0004A265 /* mexRegionprops.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C63338917B18B3E0004A265 /* mexRegionprops.cpp */; };
+		5C63339217B18D330004A265 /* mexWrappers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C63339017B18D330004A265 /* mexWrappers.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		5C63337617B18B260004A265 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+				5C63337E17B18B260004A265 /* CozmoMex.1 in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		5C63337817B18B260004A265 /* CozmoMex */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CozmoMex; sourceTree = BUILT_PRODUCTS_DIR; };
+		5C63337B17B18B260004A265 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		5C63337D17B18B260004A265 /* CozmoMex.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = CozmoMex.1; sourceTree = "<group>"; };
+		5C63338417B18B3E0004A265 /* mex_cp2tform_projective.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mex_cp2tform_projective.cpp; path = ../../mex_cp2tform_projective.cpp; sourceTree = "<group>"; };
+		5C63338517B18B3E0004A265 /* mexBundleAdjust.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mexBundleAdjust.cpp; path = ../../mexBundleAdjust.cpp; sourceTree = "<group>"; };
+		5C63338617B18B3E0004A265 /* mexClosestIndex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mexClosestIndex.cpp; path = ../../mexClosestIndex.cpp; sourceTree = "<group>"; };
+		5C63338717B18B3E0004A265 /* mexGaussianBlur.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mexGaussianBlur.cpp; path = ../../mexGaussianBlur.cpp; sourceTree = "<group>"; };
+		5C63338817B18B3E0004A265 /* mexHist.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mexHist.cpp; path = ../../mexHist.cpp; sourceTree = "<group>"; };
+		5C63338917B18B3E0004A265 /* mexRegionprops.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mexRegionprops.cpp; path = ../../mexRegionprops.cpp; sourceTree = "<group>"; };
+		5C63339017B18D330004A265 /* mexWrappers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mexWrappers.cpp; path = "../../../../../coretech-common/matlab/mex/mexWrappers.cpp"; sourceTree = "<group>"; };
+		5C63339117B18D330004A265 /* mexWrappers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mexWrappers.h; path = "../../../../../coretech-common/matlab/mex/mexWrappers.h"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5C63337517B18B260004A265 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5C63336F17B18B260004A265 = {
+			isa = PBXGroup;
+			children = (
+				5C63337A17B18B260004A265 /* CozmoMex */,
+				5C63337917B18B260004A265 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5C63337917B18B260004A265 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5C63337817B18B260004A265 /* CozmoMex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		5C63337A17B18B260004A265 /* CozmoMex */ = {
+			isa = PBXGroup;
+			children = (
+				5C63339017B18D330004A265 /* mexWrappers.cpp */,
+				5C63339117B18D330004A265 /* mexWrappers.h */,
+				5C63338417B18B3E0004A265 /* mex_cp2tform_projective.cpp */,
+				5C63338517B18B3E0004A265 /* mexBundleAdjust.cpp */,
+				5C63338617B18B3E0004A265 /* mexClosestIndex.cpp */,
+				5C63338717B18B3E0004A265 /* mexGaussianBlur.cpp */,
+				5C63338817B18B3E0004A265 /* mexHist.cpp */,
+				5C63338917B18B3E0004A265 /* mexRegionprops.cpp */,
+				5C63337B17B18B260004A265 /* main.cpp */,
+				5C63337D17B18B260004A265 /* CozmoMex.1 */,
+			);
+			path = CozmoMex;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5C63337717B18B260004A265 /* CozmoMex */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5C63338117B18B260004A265 /* Build configuration list for PBXNativeTarget "CozmoMex" */;
+			buildPhases = (
+				5C63337417B18B260004A265 /* Sources */,
+				5C63337517B18B260004A265 /* Frameworks */,
+				5C63337617B18B260004A265 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CozmoMex;
+			productName = CozmoMex;
+			productReference = 5C63337817B18B260004A265 /* CozmoMex */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5C63337017B18B260004A265 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0460;
+				ORGANIZATIONNAME = "Peter Barnum";
+			};
+			buildConfigurationList = 5C63337317B18B260004A265 /* Build configuration list for PBXProject "CozmoMex" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 5C63336F17B18B260004A265;
+			productRefGroup = 5C63337917B18B260004A265 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5C63337717B18B260004A265 /* CozmoMex */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5C63337417B18B260004A265 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5C63337C17B18B260004A265 /* main.cpp in Sources */,
+				5C63338A17B18B3E0004A265 /* mex_cp2tform_projective.cpp in Sources */,
+				5C63338B17B18B3E0004A265 /* mexBundleAdjust.cpp in Sources */,
+				5C63338C17B18B3E0004A265 /* mexClosestIndex.cpp in Sources */,
+				5C63338D17B18B3E0004A265 /* mexGaussianBlur.cpp in Sources */,
+				5C63338E17B18B3E0004A265 /* mexHist.cpp in Sources */,
+				5C63338F17B18B3E0004A265 /* mexRegionprops.cpp in Sources */,
+				5C63339217B18D330004A265 /* mexWrappers.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		5C63337F17B18B260004A265 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					../../../include,
+					"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/extern/include",
+					"../../../../coretech-external/opencv-2.4.6.1/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/contrib/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/core/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/features2d/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/flann/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/highgui/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/imgproc/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/legacy/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/ml/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/nonfree/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/objdetect/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/ocl/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/photo/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/stitching/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/superres/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/video/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		5C63338017B18B260004A265 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					../../../include,
+					"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/extern/include",
+					"../../../../coretech-external/opencv-2.4.6.1/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/contrib/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/core/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/features2d/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/flann/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/highgui/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/imgproc/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/legacy/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/ml/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/nonfree/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/objdetect/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/ocl/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/photo/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/stitching/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/superres/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/video/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		5C63338217B18B260004A265 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		5C63338317B18B260004A265 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5C63337317B18B260004A265 /* Build configuration list for PBXProject "CozmoMex" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5C63337F17B18B260004A265 /* Debug */,
+				5C63338017B18B260004A265 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5C63338117B18B260004A265 /* Build configuration list for PBXNativeTarget "CozmoMex" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5C63338217B18B260004A265 /* Debug */,
+				5C63338317B18B260004A265 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5C63337017B18B260004A265 /* Project object */;
+}

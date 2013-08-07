@@ -15,6 +15,8 @@ classdef Robot < handle
         camera;
         matCamera;
         
+        embeddedConversions;
+        
         % For drawing:
         appearance = struct( ...
             'BodyColor', [.7 .7 0], ...
@@ -69,6 +71,7 @@ classdef Robot < handle
             CameraCalibration = [];
             MatCameraDevice = [];
             MatCameraCalibration = [];
+            embeddedConversions = [];
             
             appearanceArgs = parseVarargin(varargin);
             
@@ -82,6 +85,8 @@ classdef Robot < handle
                 this.appearance.BodyLength;
             this.appearance.EyeRadius = this.appearance.EyeRadiusFraction * ...
                 this.appearance.BodyWidth/2;
+            
+            this.embeddedConversions = embeddedConversions;
             
             % From robot to camera frame:
             % Rotation 90 degrees around x axis:

@@ -1,3 +1,14 @@
+
+% function W = testBlockWorld(varargin)
+
+% The main function for testing the fiducial detection for both the mat and
+% the blocks.
+
+% Usage examples:
+% testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true);
+% testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false);
+% testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', false, 'doPause', false);
+
 function W = testBlockWorld(varargin)
 
 device = 0;
@@ -6,6 +17,9 @@ matDevice = 1;
 matCalibration = [];
 frames = {};
 matFrames = {};
+drawResults = true;
+doPause = true;
+embeddedConversions = EmbeddedConversionsManager('homographyEstimationType', 1);
 
 parseVarargin(varargin{:});
 
@@ -14,27 +28,30 @@ if ~isempty(frames) && ~isempty(matFrames)
         'frames and matFrames should be same length.');
 end
 
-cla(findobj(namedFigure('BlockWorld 3D'), 'Type', 'axes'))
+if drawResults
+    cla(findobj(namedFigure('BlockWorld 3D'), 'Type', 'axes'))
+end
 
 T_update = 0;
 T_draw = 0;
 
-h_fig(1) = namedFigure('BlockWorld 3D');
-h_fig(2) = namedFigure('BlockWorld Reproject');
+if drawResults
+    h_fig(1) = namedFigure('BlockWorld 3D');
+    h_fig(2) = namedFigure('BlockWorld Reproject');
 
-set(h_fig, 'CurrentCharacter', ' ');
+    set(h_fig, 'CurrentCharacter', ' ');
 
-chars = [get(h_fig(1), 'CurrentCharacter') ...
-    get(h_fig(2), 'CurrentCharacter')];
+    chars = [get(h_fig(1), 'CurrentCharacter') ...
+        get(h_fig(2), 'CurrentCharacter')];
+end
 
 if nargin > 1 && ~isempty(frames)
     % From canned frames
     
     W = BlockWorld('CameraCalibration', calibration, ...
-        'MatCameraCalibration', matCalibration);
+                   'MatCameraCalibration', matCalibration, ...
+                   'embeddedConversions', embeddedConversions);
 
-    doPause = true;
-   
     for i = 1:length(frames)
         t = tic;
         if isempty(matFrames)
@@ -44,27 +61,29 @@ if nargin > 1 && ~isempty(frames)
         end
         T_update = T_update + toc(t);
         
-        t = tic;
-        draw(W);
-        %title(i)
-        T_draw = T_draw + toc(t);
-        
-        if doPause && i < length(frames)
-            % wait for keystroke (not mouse click)
-            while waitforbuttonpress ~= 1, end 
-        end
-        
-        chars = [get(h_fig(1), 'CurrentCharacter') ...
-            get(h_fig(2), 'CurrentCharacter')];
-        
-        if doPause && any(chars == 'r')
-            % Press 'r' to switch to pauseless "Run" mode
-            doPause = false;
-                            
-        elseif any(chars == 'q') || any(chars == 27)
-            % Press q or ESC to stop
-            break;
-        end
+        if drawResults
+            t = tic;
+            draw(W);
+            %title(i)
+            T_draw = T_draw + toc(t);
+            
+            if doPause && i < length(frames)
+                % wait for keystroke (not mouse click)
+                while waitforbuttonpress ~= 1, end
+            end
+            
+            chars = [get(h_fig(1), 'CurrentCharacter') ...
+                get(h_fig(2), 'CurrentCharacter')];
+            
+            if doPause && any(chars == 'r')
+                % Press 'r' to switch to pauseless "Run" mode
+                doPause = false;
+                
+            elseif any(chars == 'q') || any(chars == 27)
+                % Press q or ESC to stop
+                break;
+            end
+        end % IF drawResults
     end
     
 else
@@ -72,8 +91,9 @@ else
     
     % From live camera feed
     W = BlockWorld('CameraCalibration', calibration, ...
-        'CameraDevice', device, 'MatCameraDevice', matDevice, ...
-        'MatCameraCalibration', matCalibration);
+                   'CameraDevice', device, 'MatCameraDevice', matDevice, ...
+                   'MatCameraCalibration', matCalibration, ...
+                   'embeddedConversions', embeddedConversions);
     
     while ~any(chars==27) % Until ESC is pressed
         
@@ -81,13 +101,15 @@ else
         W.update();
         T_update = T_update + toc(t);
         
-        t = tic;
-        draw(W);
-        T_draw = T_draw + toc(t);
-        
-        %pause
-        chars = [get(h_fig(1), 'CurrentCharacter') ...
-            get(h_fig(2), 'CurrentCharacter')];
+        if drawResults
+            t = tic;
+            draw(W);
+            T_draw = T_draw + toc(t);
+
+            %pause
+            chars = [get(h_fig(1), 'CurrentCharacter') ...
+                get(h_fig(2), 'CurrentCharacter')];
+        end
     end
     
 end
