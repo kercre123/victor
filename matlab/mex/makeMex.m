@@ -1,5 +1,5 @@
 
-useAndrewsPaths = true;
+useAndrewsPaths = false;
 
 if useAndrewsPaths
     rootDir = fileparts(fileparts(fileparts(fileparts(which('makeMex.m')))));

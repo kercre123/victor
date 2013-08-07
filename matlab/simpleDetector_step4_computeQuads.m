@@ -191,29 +191,34 @@ for i_region = 1:numRegions
                         
                         Nside = ceil(N/4);
                         
-                        homographyIsInitialized = false;
-                        if embeddedConversions.homographyEstimationType == 1
+                        tformIsInitialized = false;
+                        if strcmp(embeddedConversions.homographyEstimationType, 'matlab_cp2tform')
                             try
                                 tformInit = cp2tform(corners, [0 0; 0 1; 1 0; 1 1], 'projective');
-                                homographyIsInitialized = true;
+                                tformIsInitialized = true;
                             catch E
                                 warning(['While computing tformInit: ' E.message]);
                                 tformInit = [];
                             end
-                        elseif embeddedConversions.homographyEstimationType == 2
-                            homography = mex_cp2tform_projective(corners, [0 0; 0 1; 1 0; 1 1]);
-                            homographyIsInitialized = true;
+                        elseif strcmp(embeddedConversions.homographyEstimationType, 'opencv_cp2tform')
+                            tformInit = mex_cp2tform_projective(corners, [0 0; 0 1; 1 0; 1 1]);
+                            tformIsInitialized = true;
                         end
 
                         % Test comparing the matlab and openCV versions
 %                         homography = mex_cp2tform_projective(corners, [0 0; 0 1; 1 0; 1 1]);
-%                         homographyIsInitialized = true;
+%                         tformIsInitialized = true;
 %                         
 %                         c1 = tformInit.tdata.T'*[corners,ones(4,1)]';
+%                         c1 = c1 ./ repmat(c1(3,:), [3,1]);
+%                         
 %                         c2 = homography*[corners,ones(4,1)]';
+%                         c2 = c2 ./ repmat(c2(3,:), [3,1]);
+%                         
+%                         keyboard
                         
-                        if homographyIsInitialized
-                            try
+                        if tformIsInitialized
+%                             try
                                 canonicalBoundary = ...
                                     [zeros(Nside,1) linspace(0,1,Nside)';  % left side
                                     linspace(0,1,Nside)' ones(Nside,1);  % top
@@ -221,11 +226,17 @@ for i_region = 1:numRegions
                                     linspace(1,0,Nside)' zeros(Nside,1)]; % bottom
                                 switch(quadRefinementMethod)
                                     case 'ICP'
-                                        tform = ICP(fliplr(boundary), canonicalBoundary, ...
-                                            'projective', 'tformInit', tformInit, ...
-                                            'maxIterations', 10, 'tolerance', .001, ...
-                                            'sampleFraction', 1);
-                                        
+                                        if strcmp(embeddedConversions.homographyEstimationType, 'matlab_cp2tform')
+                                            tform = ICP(fliplr(boundary), canonicalBoundary, ...
+                                                'projective', 'tformInit', tformInit, ...
+                                                'maxIterations', 10, 'tolerance', .001, ...
+                                                'sampleFraction', 1);
+                                        elseif strcmp(embeddedConversions.homographyEstimationType, 'opencv_cp2tform')
+                                            tform = ICP_projective(fliplr(boundary), canonicalBoundary, ...
+                                                'homographyInit', tformInit, ...
+                                                'maxIterations', 10, 'tolerance', .001, ...
+                                                'sampleFraction', 1);
+                                        end                                        
                                     case 'fminsearch'
                                         mag = smoothgradient(img, 1);
                                         %namedFigure('refineHelper')
@@ -239,36 +250,58 @@ for i_region = 1:numRegions
                                         error('Unrecognized quadRefinementMethod "%s"', quadRefinementMethod);
                                 end
                                 
-                            catch E
-                                warning(['While refining tform: ' E.message])
-                                tform = tformInit;
-                            end
+%                             catch E
+%                                 warning(['While refining tform: ' E.message])
+%                                 tform = tformInit;
+%                             end
                         else
                             tform = [];
                         end
                                                 
                         
                         if ~isempty(tform)
-                            % The original corners must have been
-                            % visible in the image, and we'd expect
-                            % them to all still be within the image
-                            % after the transformation adjustment.
-                            % Also, the area should still be large
-                            % enough
-                            % TODO: repeat all the other sanity
-                            % checks on the quadrilateral here?
-                            [x,y] = tforminv(tform, [0 0 1 1]', [0 1 0 1]');
-                            area = abs((x(2)-x(1))*(y(3)-y(1)) - (x(3)-x(1))*(y(2)-y(1)));
-                            if all(x >= 1 & x <= ncols & y >= 1 & y<= nrows) && ...
-                                    area >= minQuadArea
+                            if strcmp(quadRefinementMethod, 'ICP') && strcmp(embeddedConversions.homographyEstimationType, 'opencv_cp2tform')
+%                                 [x,y] = tforminv(tform, [0 0 1 1]', [0 1 0 1]');
+                                tformInv = inv(tform);
+                                tformInv = tformInv / tformInv(3,3);
+                                xy = [0,0,1,1;0,1,0,1;1,1,1,1];
+                                keyboard
+
+%                                 area = abs((x(2)-x(1))*(y(3)-y(1)) - (x(3)-x(1))*(y(2)-y(1)));
+%                                 if all(x >= 1 & x <= ncols & y >= 1 & y<= nrows) && ...
+%                                         area >= minQuadArea
+% 
+%                                     corners = [x y];
+% 
+%                                     if DEBUG_DISPLAY
+%                                         plot(corners(:,1), corners(:,2), 'y+', 'Parent', h_initialAxes);
+%                                     end
+%                                 else
+%                                     tform = [];
+%                                 end
                                 
-                                corners = [x y];
-                                
-                                if DEBUG_DISPLAY
-                                    plot(corners(:,1), corners(:,2), 'y+', 'Parent', h_initialAxes);
-                                end
                             else
-                                tform = [];
+                                % The original corners must have been
+                                % visible in the image, and we'd expect
+                                % them to all still be within the image
+                                % after the transformation adjustment.
+                                % Also, the area should still be large
+                                % enough
+                                % TODO: repeat all the other sanity
+                                % checks on the quadrilateral here?
+                                [x,y] = tforminv(tform, [0 0 1 1]', [0 1 0 1]');
+                                area = abs((x(2)-x(1))*(y(3)-y(1)) - (x(3)-x(1))*(y(2)-y(1)));
+                                if all(x >= 1 & x <= ncols & y >= 1 & y<= nrows) && ...
+                                        area >= minQuadArea
+
+                                    corners = [x y];
+
+                                    if DEBUG_DISPLAY
+                                        plot(corners(:,1), corners(:,2), 'y+', 'Parent', h_initialAxes);
+                                    end
+                                else
+                                    tform = [];
+                                end
                             end
                         end
                         
