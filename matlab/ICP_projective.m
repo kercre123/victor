@@ -1,4 +1,4 @@
-function tformTotal = ICP_projective(P1, P2, varargin)
+function homographyTotal = ICP_projective(P1, P2, varargin)
 % Find transformation between point sets using Iterated Closest Point.
 %
 % tform = ICP(P1, P2, tformType, ...)
@@ -19,23 +19,20 @@ tolerance = 1e-3;
 DEBUG_DISPLAY = nargout==0;
 
 parseVarargin(varargin{:});
-
-keyboard
-
 if ~isempty(homographyInit)
     if DEBUG_DISPLAY
         P1_orig = P1;
     end
+
+    projectedPoints = homographyInit * [P1, ones(size(P1,1),1)]';
     
-    projectedPoints = homographyInit * [P1, ones(size(P1,1),1)];
+    projectedPoints = projectedPoints ./ repmat(projectedPoints(3,:), [3,1]);
     
-    projectedPoints = projectedPoints ./ repmat(projectedPoints(:,3), [1,3]);
-    
-    P1 = projectedPoints(:,1:2);
+    P1 = projectedPoints(1:2,:)';
         
-    homography = homographyInit;
+    homographyTotal = homographyInit;
 else
-    homography = eye(3);
+    homographyTotal = eye(3);
 end
 
 if DEBUG_DISPLAY
@@ -68,22 +65,21 @@ while i < maxIterations && (isempty(tolerance) || change > tolerance)
     
     % Compute the transformation to transform P2 into P1, using the
     % current correspondence in "closest"
-    try
-        tform = cp2tform(P1, P2(closest,:), tformType);
-    catch E
-        warning(E.message);
-        tformTotal = tformInit;
-        return
-    end
-    tformTotal = maketform('composite', tform, tformTotal);
-    
-    [x,y] = tformfwd(tform, P1(:,1), P1(:,2));
-    
+    homography = mex_cp2tform_projective(P1, P2(closest,:));
+    homographyTotal = homographyTotal * homography;
+%     homographyTotal = homography * homographyTotal;
+    disp(homography)
+    disp(homographyTotal)
+    disp('');
+   
+    projectedPoints = homographyTotal * [P1, ones(size(P1,1),1)]';
+    projectedPoints = projectedPoints ./ repmat(projectedPoints(3,:), [3,1]);
+           
     if ~isempty(tolerance)
-        change = max(column(abs(P1 - [x(:) y(:)])));
+        change = max(column(abs(P1 - [projectedPoints(1,:)' projectedPoints(2,:)'])));
     end
     
-    P1 = [x(:) y(:)];
+    P1 = projectedPoints(1:2,:)';
     
     if DEBUG_DISPLAY
         set(h, 'XData', x, 'YData', y);
@@ -104,15 +100,15 @@ end
 end
 
 
-function index = closestPoint(P1, P2)
+    function index = closestPoint(P1, P2)
 
-N1 = size(P1,1);
+    N1 = size(P1,1);
 
-index = zeros(N1,1);
-for i = 1:N1
-    Dsq = (P1(i,1)-P2(:,1)).^2 + (P1(i,2)-P2(:,2)).^2;
-    [~,index(i)] = min(Dsq);
-end
+    index = zeros(N1,1);
+    for i = 1:N1
+        Dsq = (P1(i,1)-P2(:,1)).^2 + (P1(i,2)-P2(:,2)).^2;
+        [~,index(i)] = min(Dsq);
+    end
 
 end
 

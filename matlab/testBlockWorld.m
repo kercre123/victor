@@ -24,7 +24,7 @@ calibToolboxPath = '~/Code/3rdparty/toolbox_calib';
 cameraCapturePath = '~/Code/CameraCapture';
 drawResults = true;
 doPause = true;
-embeddedConversions = EmbeddedConversionsManager('homographyEstimationType', 'cp2tform');
+embeddedConversions = EmbeddedConversionsManager('homographyEstimationType', 'matlab_cp2tform');
 
 parseVarargin(varargin{:});
 

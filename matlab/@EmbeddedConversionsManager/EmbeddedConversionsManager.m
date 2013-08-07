@@ -8,13 +8,13 @@ classdef EmbeddedConversionsManager < handle
     methods(Access = 'public')
         
         function this = EmbeddedConversionsManager(varargin)
-            homographyEstimationType = 'cp2tform';
-            homographyEstimationType_acceptable = {'cp2tform', 'opencv_cp2tform'};
+            homographyEstimationType = 'matlab_cp2tform';
+            homographyEstimationType_acceptable = {'matlab_cp2tform', 'opencv_cp2tform'};
             
             parseVarargin(varargin{:});
             
             isAcceptable(homographyEstimationType_acceptable, homographyEstimationType);           
-            this.homographyEstimationType = homographyEstimationType;               
+            this.homographyEstimationType = homographyEstimationType; %#ok<*PROP>
         end
     end % METHODS (public)
 end % classdef OptimizationManager < handle
