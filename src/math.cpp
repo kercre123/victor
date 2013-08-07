@@ -1,4 +1,6 @@
 
+#include <stdio.h>
+
 #include "anki/math.h"
 
 void doNothing()

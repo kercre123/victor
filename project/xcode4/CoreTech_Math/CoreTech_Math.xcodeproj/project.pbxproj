@@ -147,7 +147,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
-				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
+				SYMROOT = build;
 			};
 			name = Debug;
 		};
@@ -173,14 +173,17 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				SDKROOT = macosx;
-				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
+				SYMROOT = build;
 			};
 			name = Release;
 		};
 		5C60000F17B2D21200A75604 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_CXX_LIBRARY = "libc++";
 				EXECUTABLE_PREFIX = lib;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
 				HEADER_SEARCH_PATHS = (
 					../../../include,
 					"../../../../coretech-common/include",
@@ -212,7 +215,10 @@
 		5C60001017B2D21200A75604 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_CXX_LIBRARY = "libc++";
 				EXECUTABLE_PREFIX = lib;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
 				HEADER_SEARCH_PATHS = (
 					../../../include,
 					"../../../../coretech-common/include",
@@ -260,6 +266,7 @@
 				5C60001017B2D21200A75604 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
