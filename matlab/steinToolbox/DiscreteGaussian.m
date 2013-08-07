@@ -59,7 +59,8 @@ g = g/sum(g);
 
 if nargout==0
     x = (length(g)-1)/2;
-    color = random_color(1);
+    %color = random_color(1);
+    color = 'b';
     plot(-x:x, g, 'Color', color);
     hold on
     plot(linspace(-x,x,50), myGaussian(sigma, linspace(-x,x,50)), '--', 'Color', color);
