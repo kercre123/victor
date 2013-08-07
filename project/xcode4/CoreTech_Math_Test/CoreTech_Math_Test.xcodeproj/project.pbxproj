@@ -35,6 +35,7 @@
 		5C60005D17B2D34300A75604 /* libopencv_videostab.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60004817B2D34300A75604 /* libopencv_videostab.dylib */; };
 		5C60006017B2D35500A75604 /* libgtest_main.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60005E17B2D35500A75604 /* libgtest_main.a */; };
 		5C60006117B2D35500A75604 /* libgtest.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C60005F17B2D35500A75604 /* libgtest.a */; };
+		5CAE9A5B17B2FE6D00B93047 /* libCoreTech_Common.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5CAE9A5A17B2FE6D00B93047 /* libCoreTech_Common.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -54,7 +55,7 @@
 		5C60001A17B2D23600A75604 /* CoreTech_Math_Test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CoreTech_Math_Test; sourceTree = BUILT_PRODUCTS_DIR; };
 		5C60001F17B2D23600A75604 /* CoreTech_Math_Test.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = CoreTech_Math_Test.1; sourceTree = "<group>"; };
 		5C60002C17B2D27700A75604 /* math_Test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = math_Test.cpp; path = ../../../test/math_Test.cpp; sourceTree = "<group>"; };
-		5C60002E17B2D30200A75604 /* libCoreTech_Math.a */ = {isa = PBXFileReference; lastKnownFileType = file; name = libCoreTech_Math.a; path = ../CoreTech_Math/build/Release/libCoreTech_Math.a; sourceTree = "<group>"; };
+		5C60002E17B2D30200A75604 /* libCoreTech_Math.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Math.a; path = ../CoreTech_Math/build/Release/libCoreTech_Math.a; sourceTree = "<group>"; };
 		5C60003017B2D32E00A75604 /* libeng.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libeng.dylib; path = ../../../../../../../../Applications/MATLAB_R2013a.app/bin/maci64/libeng.dylib; sourceTree = "<group>"; };
 		5C60003117B2D32E00A75604 /* libmx.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libmx.dylib; path = ../../../../../../../../Applications/MATLAB_R2013a.app/bin/maci64/libmx.dylib; sourceTree = "<group>"; };
 		5C60003417B2D34300A75604 /* libopencv_calib3d.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_calib3d.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_calib3d.dylib"; sourceTree = "<group>"; };
@@ -80,6 +81,7 @@
 		5C60004817B2D34300A75604 /* libopencv_videostab.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_videostab.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_videostab.dylib"; sourceTree = "<group>"; };
 		5C60005E17B2D35500A75604 /* libgtest_main.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libgtest_main.a; path = "../../../../coretech-external/build/xcode4/gtest-1.7.0/Debug/libgtest_main.a"; sourceTree = "<group>"; };
 		5C60005F17B2D35500A75604 /* libgtest.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libgtest.a; path = "../../../../coretech-external/build/xcode4/gtest-1.7.0/Debug/libgtest.a"; sourceTree = "<group>"; };
+		5CAE9A5A17B2FE6D00B93047 /* libCoreTech_Common.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Common.a; path = "../../../../coretech-common/build/xcode4/Debug/libCoreTech_Common.a"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,6 +114,7 @@
 				5C60005D17B2D34300A75604 /* libopencv_videostab.dylib in Frameworks */,
 				5C60003217B2D32E00A75604 /* libeng.dylib in Frameworks */,
 				5C60003317B2D32E00A75604 /* libmx.dylib in Frameworks */,
+				5CAE9A5B17B2FE6D00B93047 /* libCoreTech_Common.a in Frameworks */,
 				5C60002F17B2D30200A75604 /* libCoreTech_Math.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -122,6 +125,7 @@
 		5C60001117B2D23600A75604 = {
 			isa = PBXGroup;
 			children = (
+				5CAE9A5A17B2FE6D00B93047 /* libCoreTech_Common.a */,
 				5C60005E17B2D35500A75604 /* libgtest_main.a */,
 				5C60005F17B2D35500A75604 /* libgtest.a */,
 				5C60003417B2D34300A75604 /* libopencv_calib3d.dylib */,
@@ -312,12 +316,15 @@
 					"../../../../coretech-external/opencv-2.4.6.1/modules/superres/include",
 					"../../../../coretech-external/opencv-2.4.6.1/modules/video/include",
 					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
+					"../../../../coretech-external/gtest/include",
 				);
+				LD_RUNPATH_SEARCH_PATHS = "$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/bin/maci64";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/bin/maci64\"",
 					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug\"",
 					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/gtest-1.7.0/Debug\"",
+					"\"$(SRCROOT)/../../../../coretech-common/build/xcode4/Debug\"",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
@@ -349,12 +356,15 @@
 					"../../../../coretech-external/opencv-2.4.6.1/modules/superres/include",
 					"../../../../coretech-external/opencv-2.4.6.1/modules/video/include",
 					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
+					"../../../../coretech-external/gtest/include",
 				);
+				LD_RUNPATH_SEARCH_PATHS = "$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/bin/maci64";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/bin/maci64\"",
 					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug\"",
 					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/gtest-1.7.0/Debug\"",
+					"\"$(SRCROOT)/../../../../coretech-common/build/xcode4/Debug\"",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
@@ -380,6 +390,7 @@
 				5C60002517B2D23600A75604 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
