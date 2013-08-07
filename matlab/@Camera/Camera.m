@@ -5,7 +5,10 @@ classdef Camera < handle
         GRAB = 1;
         CLOSE = 2;
         
-        UseDistortionLUTs = true;
+        % Resolution (as in downsample factor) of the lookup tables for
+        % radial distortion (use 0 to disable, 1 to get full size tables,
+        % 2 to get halfsize tables, etc.)  Must be integer.
+        DistortionLUTres = 20;
     end
     
     properties(GetAccess = 'public', SetAccess = 'public')
@@ -35,6 +38,8 @@ classdef Camera < handle
         
         xDistortedLUT;
         yDistortedLUT;
+        DistortionLUT_xCoords;
+        DistortionLUT_yCoords;
     end
     
     properties(GetAccess = 'public', SetAccess = 'public', ...
@@ -88,8 +93,13 @@ classdef Camera < handle
             
             this.pose = pose; %#ok<PROP>
             
-            if Camera.UseDistortionLUTs
-                [xgrid,ygrid] = meshgrid(1:this.ncols, 1:this.nrows);
+            if Camera.DistortionLUTres > 0
+                this.DistortionLUT_xCoords = linspace(1, this.ncols, ...
+                    ceil(this.ncols/Camera.DistortionLUTres));
+                this.DistortionLUT_yCoords = linspace(1, this.nrows, ...
+                    ceil(this.nrows/Camera.DistortionLUTres));
+                [xgrid,ygrid] = meshgrid( ...
+                    this.DistortionLUT_xCoords, this.DistortionLUT_yCoords);
                 [this.xDistortedLUT, this.yDistortedLUT] = ...
                     this.distort(xgrid, ygrid, true);
             end

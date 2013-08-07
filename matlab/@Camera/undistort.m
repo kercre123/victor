@@ -18,9 +18,21 @@ img = im2double(img);
 
 [nrows,ncols,nbands] = size(img);
 
-if Camera.UseDistortionLUTs
+if Camera.DistortionLUTres > 0
     xDistorted = this.xDistortedLUT;
     yDistorted = this.yDistortedLUT;
+    
+    if Camera.DistortionLUTres > 1
+        [xgrid,ygrid] = meshgrid(1:ncols, 1:nrows);
+        
+        xDistorted = interp2(this.DistortionLUT_xCoords, ...
+            this.DistortionLUT_yCoords, xDistorted, ...
+            xgrid, ygrid, 'bilinear');
+        
+        yDistorted = interp2(this.DistortionLUT_xCoords, ...
+            this.DistortionLUT_yCoords, yDistorted, ...
+            xgrid, ygrid, 'bilinear');
+    end
 else
     [xgrid,ygrid] = meshgrid(1:ncols, 1:nrows);
     [xDistorted, yDistorted] = this.distort(xgrid, ygrid, true);
