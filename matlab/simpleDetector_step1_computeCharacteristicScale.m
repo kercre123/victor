@@ -1,4 +1,6 @@
-function binaryImg = simpleDetector_step1_computeCharacteristicScale(maxSmoothingFraction, nrows, ncols, downsampleFactor, img, thresholdFraction, embeddedConversions, DEBUG_DISPLAY)
+function binaryImg = simpleDetector_step1_computeCharacteristicScale( ...
+    maxSmoothingFraction, nrows, ncols, downsampleFactor, img, ...
+    thresholdFraction, usePyramid, embeddedConversions, DEBUG_DISPLAY)
 
 % % Simpler method (one window size for whole image)
 % averageImg = separable_filter(img, gaussian_kernel(avgSigma));

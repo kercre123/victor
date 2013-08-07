@@ -74,14 +74,17 @@ classdef Observation
                     pixPerMM = 20.9;
                 end
                 [xMat, yMat, orient] = matLocalization(this.matImage, ...
-                    'pixPerMM', pixPerMM, 'camera', this.robot.matCamera, ...
-                    'embeddedConversions', this.robot.embeddedConversions);
-                
+<<<<<<< HEAD
+                    'pixPerMM', pixPerMM, 'camera', this.robot.matCamera);
                 % Note the +pi, the sign of the rotation axis and the fact
                 % that the x position is negated.  The latter is due to the
                 % coordinate flip for image coordinates: the mat is in
                 % image coordinates, which are not right-handed...
                 this.pose = Pose((orient+pi)*[0 0 -1], [-xMat yMat 0]); 
+=======
+                    'pixPerMM', 18.0, 'camera', this.robot.matCamera, 'embeddedConversions', this.robot.embeddedConversions);
+                this.pose = Pose(orient*[0 0 -1], [xMat yMat 0]);
+>>>>>>> c61ba3eb2af45ffcc9a5641afeadd0e2043c0457
                 
                 % Also update the parent robot's pose to match (*before* 
                 % adding new blocks, whose position will depend on this):

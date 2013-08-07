@@ -1,4 +1,4 @@
-function [xMat,yMat,orient] = matLocalization(img, varargin)
+function [xMat,yMat,orient1] = matLocalization(img, varargin)
 
 %% Params
 orientationSample = 2; % just for speed
@@ -31,9 +31,9 @@ imgOrig = img;
 
 [img, xgrid, ygrid, imgCen] = matLocalization_step1_undoRadialDistortion(camera, img, embeddedConversions, DEBUG_DISPLAY);
 
-[orient, mag] = matLocalization_step2_downsampleAndComputeGradientAngles(img, orientationSample, derivSigma, embeddedConversions, DEBUG_DISPLAY);
+[orient1, mag] = matLocalization_step2_downsampleAndComputeGradientAngles(img, orientationSample, derivSigma, embeddedConversions, DEBUG_DISPLAY);
 
-[orient1] = matLocalization_step3_computeImageOrientation(orient, mag, embeddedConversions, DEBUG_DISPLAY);
+[orient1] = matLocalization_step3_computeImageOrientation(orient1, mag, embeddedConversions, DEBUG_DISPLAY);
 
 %% Grid Square localization   
 

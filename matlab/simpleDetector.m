@@ -24,7 +24,7 @@ img = mean(im2double(img),3);
 
 %% Binary Region Detection
 
-binaryImg = simpleDetector_step1_computeCharacteristicScale(maxSmoothingFraction, nrows, ncols, downsampleFactor, img, thresholdFraction, embeddedConversions, DEBUG_DISPLAY);
+binaryImg = simpleDetector_step1_computeCharacteristicScale(maxSmoothingFraction, nrows, ncols, downsampleFactor, img, thresholdFraction, usePyramid, embeddedConversions, DEBUG_DISPLAY);
 
 t_binaryRegions = tic;
 

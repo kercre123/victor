@@ -8,6 +8,7 @@ ygridRot = -xgrid*sin(orient) + ygrid*cos(orient) + imgCen(2);
 % the image borders naturally. (Still true now that i'm using a derivative
 % stencil?)
 %imgRot = interp2(imgOrig, xgridRot, ygridRot, 'nearest', 1);
+[nrows,ncols] = size(imgOrig);
 inbounds = xgridRot >= 1 & xgridRot <= ncols & ygridRot >= 1 & ygridRot <= nrows;
 index = round(ygridRot(inbounds)) + (round(xgridRot(inbounds))-1)*nrows;
 imgRot = ones(nrows,ncols);
