@@ -6,7 +6,8 @@ classdef Camera < handle
         CLOSE = 2;
         
         % Resolution (as in downsample factor) of the lookup tables for
-        % radial distortion (use 0 to disable, 1 to get full size tables,
+        % radial distortion (use 0 to disable the use LUTs and just compute
+        % the distorted coordinates dynamically, 1 to get full size tables,
         % 2 to get halfsize tables, etc.)  Must be integer.
         DistortionLUTres = 20;
     end
@@ -60,6 +61,46 @@ classdef Camera < handle
     methods(Access = 'public')
         
         function this = Camera(varargin)
+            % Constructs a calibrated Camera object.
+            %
+            % cam = Camera(<Prop1, val1>, <Prop2, val2>, ...)
+            % 
+            %   A Camera object knows how to take images (from a USB or
+            %   Webot simulated camera), knows its pose in the world, and
+            %   knows its calibration parameters.
+            %
+            %   Properties available to set at construction include (with
+            %   defaults in []):
+            % 
+            %   'device', [<empty>]
+            %     The USB device number or Webot camera handle/tag.
+            %
+            %   'deviceType', ['usb']
+            %     Either 'usb' or 'webot', to specify which kind of camera
+            %     is being used.
+            %
+            %   'timeStep', [64]
+            %     For Webot cameras, in milliseconds.
+            %
+            %   'resolution', [640 480]
+            %     The size of the images the camera takes.
+            %
+            %   'calibration' [<struct,seebelow>]
+            %     A struct containing fields corresponding to Bouguet's
+            %     calibration naming convention:
+            %      'fc', [1000 1000], x and y focal length
+            %      'cc', [resolution/2], x and y camera center
+            %      'kc', [zeros(5,1)], radial distortion coefficients
+            %      'alpha_c', [0], skew
+            %
+            %   'Pose', [Pose()]
+            %     A Pose object reporesenting the camera's coordinate
+            %     frame.
+            %
+            % ------------
+            % Andrew Stein
+            %
+            
             device = [];
             timeStep = 64; % in ms, for webot cameras
             deviceType = 'usb'; %#ok<PROP>
@@ -123,6 +164,9 @@ classdef Camera < handle
         end
         
         function out = grabFrame(this)
+            assert(~isempty(this.deviceID), ...
+                'This Camera has no device and thus cannot grab frames.');
+            
             switch(this.deviceType)
                 case 'usb'
                     this.image = mexCameraCapture(Camera.GRAB, this.deviceID);
