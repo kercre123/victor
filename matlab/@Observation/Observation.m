@@ -27,7 +27,7 @@ classdef Observation
             
             world = this.robot.world;
             
-            if world.HasMat
+            if world.hasMat
                 assert(~isempty(parentRobot.matCamera), ...
                     'Robot in a BlockWorld with a Mat must have a matCamera defined.');
 
@@ -62,7 +62,7 @@ classdef Observation
                 
             end
             
-            if world.HasMat
+            if world.hasMat
                 % If there's a mat in the world, use that to update the
                 % robot's pose.  Then update any existing blocks and add
                 % new ones, relative to that updated position.

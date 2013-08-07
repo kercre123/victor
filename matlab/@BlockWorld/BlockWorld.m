@@ -14,7 +14,7 @@ classdef BlockWorld < handle
         allMarkers3D = {};
         robots = {}; 
         
-        HasMat = true;
+        hasMat = true;
         
         embeddedConversions;
         
@@ -39,16 +39,17 @@ classdef BlockWorld < handle
             CameraCalibration = {};
             MatCameraDevice = {};
             MatCameraCalibration = {};
-            hasMat = true;
-            embeddedConversions = []; % 1-cp2tform, 2-opencv_cp2tform
+            HasMat = true;
+            EmbeddedConversions = EmbeddedConversionsManager( ...
+                'homographyEstimationType', 'matlab_cp2tform'); 
             
             parseVarargin(varargin{:});
             
-            this.HasMat = hasMat;
+            this.hasMat = HasMat;
             this.blocks = {};
             this.allMarkers3D = {};
             
-            this.embeddedConversions = embeddedConversions;
+            this.embeddedConversions = EmbeddedConversions;
             
             this.blockTypeToIndex = containers.Map('KeyType', 'double', ...
                 'ValueType', 'double');
@@ -72,7 +73,7 @@ classdef BlockWorld < handle
                 end
             end
             
-            if this.HasMat
+            if this.hasMat
                 if isempty(MatCameraDevice)
                     MatCameraDevice = cell(size(MatCameraCalibration));
                 else
@@ -107,8 +108,7 @@ classdef BlockWorld < handle
                     'CameraCalibration', CameraCalibration{i}, ...
                     'CameraDevice', CameraDevice{i}, ...
                     'MatCameraCalibration', MatCameraCalibration{i}, ...
-                    'MatCameraDevice', MatCameraDevice{i}, ...
-                    'embeddedConversions', embeddedConversions);
+                    'MatCameraDevice', MatCameraDevice{i});
             end
             
         end % FUNCTION BlockWorld()
