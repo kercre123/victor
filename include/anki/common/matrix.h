@@ -5,6 +5,9 @@
 #include "anki/common/utilities.h"
 #include "anki/common/memory.h"
 
+#include <iostream>
+#include <assert.h>
+
 #if defined(ANKICORETECH_USE_OPENCV)
 namespace cv
 {

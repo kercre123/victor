@@ -7,6 +7,11 @@
 #include <sys/time.h>
 #endif
 
+#if defined(ANKICORETECH_USE_OPENCV)
+#include "opencv2/opencv.hpp"
+#endif
+
+
 double Anki::GetTime()
 {
 #if defined(_MSC_VER)

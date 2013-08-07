@@ -1,6 +1,8 @@
 
 #include "anki/common.h"
 
+#include <assert.h>
+
 Anki::MemoryStack::MemoryStack(void *buffer, u32 bufferLength) :
   buffer(buffer), totalBytes(bufferLength), usedBytes(0)
 {
