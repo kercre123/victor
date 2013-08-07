@@ -66,13 +66,9 @@ while i < maxIterations && (isempty(tolerance) || change > tolerance)
     % Compute the transformation to transform P2 into P1, using the
     % current correspondence in "closest"
     homography = mex_cp2tform_projective(P1, P2(closest,:));
-%     homographyTotal = homographyTotal * homography;
+
     homographyTotal = homography * homographyTotal;
-%     disp(homography)
-%     disp(homographyTotal)
-%     disp('');
-    
-%     projectedPoints = homographyTotal * [P1, ones(size(P1,1),1)]';
+
     projectedPoints = homography * [P1, ones(size(P1,1),1)]';
     projectedPoints = projectedPoints ./ repmat(projectedPoints(3,:), [3,1]);
                
@@ -98,10 +94,6 @@ if DEBUG_DISPLAY
     plot(x,y, 'go');
     title('Final');
 end
-
-% homographyTotal = inv(homographyTotal);
-% homographyTotal = homographyTotal / homographyTotal(3,3);
-
 
 end
 

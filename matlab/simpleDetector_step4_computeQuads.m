@@ -232,15 +232,15 @@ for i_region = 1:numRegions
                                                 'maxIterations', 10, 'tolerance', .001, ...
                                                 'sampleFraction', 1);
                                             
-                                            disp('normal ICP');
-                                            disp(computeHomographyFromTform(tform));
+%                                             disp('normal ICP');
+%                                             disp(computeHomographyFromTform(tform));
                                         elseif strcmp(embeddedConversions.homographyEstimationType, 'opencv_cp2tform')
                                             tform = ICP_projective(fliplr(boundary), canonicalBoundary, ...
                                                 'homographyInit', tformInit, ...
                                                 'maxIterations', 10, 'tolerance', .001, ...
                                                 'sampleFraction', 1);
-                                            disp('projective ICP');
-                                            disp(tform);
+%                                             disp('projective ICP');
+%                                             disp(tform);
                                         end                                        
                                     case 'fminsearch'
                                         mag = smoothgradient(img, 1);
@@ -340,3 +340,5 @@ for i_region = 1:numRegions
     end % IF we have at least 4 local maxima
     
 end % FOR each region
+
+keyboard
