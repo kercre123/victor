@@ -71,8 +71,7 @@ classdef Robot < handle
             CameraCalibration = [];
             MatCameraDevice = [];
             MatCameraCalibration = [];
-            embeddedConversions = [];
-            
+                        
             appearanceArgs = parseVarargin(varargin);
             
             this.world = World;
@@ -85,8 +84,6 @@ classdef Robot < handle
                 this.appearance.BodyLength;
             this.appearance.EyeRadius = this.appearance.EyeRadiusFraction * ...
                 this.appearance.BodyWidth/2;
-            
-            this.embeddedConversions = embeddedConversions;
             
             % From robot to camera frame:
             % Rotation 90 degrees around x axis:

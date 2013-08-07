@@ -20,17 +20,18 @@ classdef EmbeddedConversionsManager < handle
 end % classdef OptimizationManager < handle
 
 function isOk = isAcceptable(acceptableList, query)
-    isOk = false;
-    try
-        isOk = ~isempty(find(ismember(acceptableList, query), 1));
-    catch exception
-        exception2 = MException('EmbeddedConversionsManager:isAcceptable', 'The query is not in the list of acceptable queries');
-        exception3 = addCause(exception2, exception);
-        throw(exception3);
-    end
-    
-    if ~isOk
-        exception = MException('EmbeddedConversionsManager:isAcceptable', 'The query is not in the list of acceptable queries');
-        throw(exception);    
-    end
+
+try
+    isOk = ~isempty(find(ismember(acceptableList, query), 1));
+catch exception
+    exception2 = MException('EmbeddedConversionsManager:isAcceptable', 'The query is not in the list of acceptable queries');
+    exception3 = addCause(exception2, exception);
+    throw(exception3);
 end
+
+if ~isOk
+    exception = MException('EmbeddedConversionsManager:isAcceptable', 'The query is not in the list of acceptable queries');
+    throw(exception);
+end
+
+end % FUNCTION isAcceptable()

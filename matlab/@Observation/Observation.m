@@ -21,11 +21,12 @@ classdef Observation
         function this = Observation(parentRobot)
             this.image = parentRobot.camera.image;
             
-            this.markers = simpleDetector(this.image, 'embeddedConversions', parentRobot.embeddedConversions);
             this.robot = parentRobot;
-            this.pose = Pose();
-            
             world = this.robot.world;
+            this.pose = Pose();
+                        
+            this.markers = simpleDetector(this.image, ...
+                'embeddedConversions', world.embeddedConversions);
             
             if world.hasMat
                 assert(~isempty(parentRobot.matCamera), ...

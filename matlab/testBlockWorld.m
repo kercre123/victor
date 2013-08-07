@@ -52,7 +52,7 @@ if nargin > 1 && ~isempty(frames)
     
     W = BlockWorld('CameraCalibration', calibration, ...
                    'MatCameraCalibration', matCalibration, ...
-                   'embeddedConversions', embeddedConversions);
+                   'EmbeddedConversions', embeddedConversions);
 
     for i = 1:length(frames)
         t = tic;
