@@ -10,8 +10,11 @@
 %desktop;
 %keyboard;
 
+doProfile = true;
 
-profile on
+if doProfile
+    profile on
+end
 
 blockWorldController = BlockWorldWebotController();
 
@@ -37,9 +40,12 @@ while wb_robot_step(blockWorldController.TIME_STEP) ~= -1
     blockWorld.update();
     blockWorld.draw();
     
-    if done
-        profile off
-        profsave(profile('info'),'~/temp/SimulatedBlockWorldProfile') 
+    if done 
+        if doProfile
+            profile off
+            profsave(profile('info'),'~/temp/SimulatedBlockWorldProfile')
+        end
+        
         break;
     end
 
