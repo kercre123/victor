@@ -568,19 +568,19 @@ template <class T> std::vector<cv::Point_<T> > mxArray2CvPointVector(const mxArr
   points.resize(numPoints);
 
   if(dimensions[0]==2) {
-    size_t iMatlab = 0;
-    for(size_t iOpenCv=0; iOpenCv<dimensions[1]; ++iOpenCv) {
+    mwSize iMatlab = 0;
+    for(mwSize iOpenCv=0; iOpenCv<dimensions[1]; ++iOpenCv) {
       const T x = array_i[iMatlab++];
       const T y = array_i[iMatlab++];
       points[iOpenCv] = cv::Point_<T>(x, y);
     }
   } else {
-    size_t iMatlab = 0;
-    for(size_t iOpenCv=0; iOpenCv<dimensions[0]; ++iOpenCv) {
+    mwSize iMatlab = 0;
+    for(mwSize iOpenCv=0; iOpenCv<dimensions[0]; ++iOpenCv) {
       const T x = array_i[iMatlab++];
       points[iOpenCv] = cv::Point_<T>(x, -1);
     }
-    for(size_t iOpenCv=0; iOpenCv<dimensions[0]; ++iOpenCv) {
+    for(mwSize iOpenCv=0; iOpenCv<dimensions[0]; ++iOpenCv) {
       const T y = array_i[iMatlab++];
       points[iOpenCv].y = y;
     }

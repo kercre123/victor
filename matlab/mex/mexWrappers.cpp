@@ -13,7 +13,12 @@ mxArray * image2mxArray<double>(const double *img,
     const int npixels = nrows*ncols;
 
   // Get a pointer for each band:
+  #ifdef _MSC_VER
+    double **OutputData_ = (double **) _alloca(nbands);
+  #else
     double *OutputData_[nbands];
+  #endif
+
   OutputData_[0] = mxGetPr(outputArray);
     for(int band=1; band < nbands; band++)
         OutputData_[band] = OutputData_[band-1] + npixels;
