@@ -317,6 +317,7 @@
 					"../../../../coretech-external/opencv-2.4.6.1/modules/video/include",
 					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
 					"../../../../coretech-external/gtest/include",
+					"../../../../coretech-external/",
 				);
 				LD_RUNPATH_SEARCH_PATHS = "$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/bin/maci64";
 				LIBRARY_SEARCH_PATHS = (
@@ -357,6 +358,7 @@
 					"../../../../coretech-external/opencv-2.4.6.1/modules/video/include",
 					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
 					"../../../../coretech-external/gtest/include",
+					"../../../../coretech-external/",
 				);
 				LD_RUNPATH_SEARCH_PATHS = "$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/bin/maci64";
 				LIBRARY_SEARCH_PATHS = (

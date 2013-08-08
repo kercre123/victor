@@ -10,6 +10,8 @@
 		5C60002717B2D24E00A75604 /* math.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C60002617B2D24E00A75604 /* math.cpp */; };
 		5C60002917B2D25500A75604 /* math.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C60002817B2D25500A75604 /* math.h */; };
 		5C60002B17B2D26D00A75604 /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C60002A17B2D26D00A75604 /* config.h */; };
+		5CAE9A5D17B304E000B93047 /* linearAlgebra.h in Headers */ = {isa = PBXBuildFile; fileRef = 5CAE9A5C17B304E000B93047 /* linearAlgebra.h */; };
+		5CAE9A5F17B304E900B93047 /* linearAlgebra.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5CAE9A5E17B304E800B93047 /* linearAlgebra.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -17,6 +19,8 @@
 		5C60002617B2D24E00A75604 /* math.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = math.cpp; path = ../../../src/math.cpp; sourceTree = "<group>"; };
 		5C60002817B2D25500A75604 /* math.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = math.h; path = ../../../include/anki/math.h; sourceTree = "<group>"; };
 		5C60002A17B2D26D00A75604 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = ../../../include/anki/math/config.h; sourceTree = "<group>"; };
+		5CAE9A5C17B304E000B93047 /* linearAlgebra.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = linearAlgebra.h; path = ../../../include/anki/math/linearAlgebra.h; sourceTree = "<group>"; };
+		5CAE9A5E17B304E800B93047 /* linearAlgebra.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = linearAlgebra.cpp; path = ../../../src/linearAlgebra.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -33,6 +37,8 @@
 		5C60000117B2D21100A75604 = {
 			isa = PBXGroup;
 			children = (
+				5CAE9A5E17B304E800B93047 /* linearAlgebra.cpp */,
+				5CAE9A5C17B304E000B93047 /* linearAlgebra.h */,
 				5C60002A17B2D26D00A75604 /* config.h */,
 				5C60002817B2D25500A75604 /* math.h */,
 				5C60002617B2D24E00A75604 /* math.cpp */,
@@ -57,6 +63,7 @@
 			files = (
 				5C60002917B2D25500A75604 /* math.h in Headers */,
 				5C60002B17B2D26D00A75604 /* config.h in Headers */,
+				5CAE9A5D17B304E000B93047 /* linearAlgebra.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +119,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5C60002717B2D24E00A75604 /* math.cpp in Sources */,
+				5CAE9A5F17B304E900B93047 /* linearAlgebra.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -206,6 +214,7 @@
 					"../../../../coretech-external/opencv-2.4.6.1/modules/superres/include",
 					"../../../../coretech-external/opencv-2.4.6.1/modules/video/include",
 					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
+					"../../../../coretech-external/",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
@@ -241,6 +250,7 @@
 					"../../../../coretech-external/opencv-2.4.6.1/modules/superres/include",
 					"../../../../coretech-external/opencv-2.4.6.1/modules/video/include",
 					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
+					"../../../../coretech-external/",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";

@@ -1,5 +1,5 @@
-#ifndef _ANKICORETECH_VISION_VISION_H_
-#define _ANKICORETECH_VISION_VISION_H_
+#ifndef _ANKICORETECH_MATH_H_
+#define _ANKICORETECH_MATH_H_
 
 #include "anki/math/config.h"
 #include "anki/common.h"

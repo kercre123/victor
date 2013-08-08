@@ -15,9 +15,15 @@
     <ClInclude Include="..\..\include\anki\math.h">
       <Filter>Includes</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\anki\math\linearAlgebra.h">
+      <Filter>Includes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\math.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\linearAlgebra.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
