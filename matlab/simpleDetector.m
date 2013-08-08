@@ -10,7 +10,7 @@ computeTransformFromBoundary = true;
 quadRefinementMethod = 'ICP'; % 'ICP' or 'fminsearch'
 cornerMethod = 'laplacianPeaks'; % 'laplacianPeaks', 'harrisScore', or 'radiusPeaks'
 DEBUG_DISPLAY = nargout==0;
-embeddedConversions = []; % 1-cp2tform, 2-opencv_cp2tform
+embeddedConversions = EmbeddedConversionsManager; % 1-cp2tform, 2-opencv_cp2tform
 
 parseVarargin(varargin{:});
 
