@@ -6,15 +6,15 @@ function [scaleImage, whichScale, imgPyr] = computeCharacteristicScaleImage( ...
 %    img, numLevels, <kernel>)
 %
 %  Computes a scale-space pyramid and then finds the characteristic scale
-%  of each pixel by finding extrema in the Laplacian response at each pixel 
+%  of each pixel by finding extrema in the Laplacian response at each pixel
 %  across scales.  Note that (a) the Laplacian is approximated by a
 %  Difference-of-Gaussian (DoG) computation, and (b) bilinear interpolation
 %  is used to resample coarser scales to compare them to finer scales.
-%  
+%
 %  A pixel in the output 'scaleImage' comes from the level of the image
 %  pyramid at the corresponding scale, also computed by bilinear
 %  interpolation.
-%  
+%
 %  Note that no interpolation or parabola-fitting is performed along the
 %  scale dimension to get sub-scale-level characteristic scales.  I.e., the
 %  scale is simpler the integer-level scale.
@@ -28,7 +28,6 @@ function [scaleImage, whichScale, imgPyr] = computeCharacteristicScaleImage( ...
 % Andrew Stein
 %
 
-imgPyr = cell(1, numLevels);
 if nargin < 3 || isempty(kernel)
     kernel = [1 4 6 4 1];
 end
@@ -43,24 +42,26 @@ if nargout > 1 || nargout == 0
     whichScale = ones(nrows,ncols);
 end
 
-imgPyr{1} = img;
-for k = 1:numLevels
-   p1 = separable_filter(imgPyr{k}, kernel);
-   p2 = separable_filter(separable_filter(p1, kernel), kernel);
-   DoG = abs(p1 - p2); % Difference of Gaussians
-  
-   DoG = imresize(DoG, [nrows ncols], 'bilinear');
-   larger = DoG > DoG_max;
-   if any(larger(:))
-       DoG_max(larger) = DoG(larger);
-       p2_upsample = imresize(p2, [nrows ncols], 'bilinear');
-       scaleImage(larger) = p2_upsample(larger);
-       if nargout > 1 || nargout == 0
-           whichScale(larger) = k;
-       end
-   end
-   
-   imgPyr{k+1} = p2(1:2:end,1:2:end);   
+imgPyr = cell(1, numLevels+1);
+imgPyr{1} = separable_filter(img, kernel);
+
+for k = 2:numLevels+1
+    
+    blurred = separable_filter(imgPyr{k-1}, kernel);
+    DoG = abs(blurred - imgPyr{k-1});
+    
+    DoG = imresize(DoG, [nrows ncols], 'bilinear');
+    larger = DoG > DoG_max;
+    if any(larger(:))
+        DoG_max(larger) = DoG(larger);
+        imgPyr_upsample = imresize(imgPyr{k-1}, [nrows ncols], 'bilinear');
+        scaleImage(larger) = imgPyr_upsample(larger);
+        if nargout > 1 || nargout == 0
+            whichScale(larger) = k-1;
+        end
+    end
+    
+    imgPyr{k} = blurred(1:2:end,1:2:end);
 end
 
 if nargout == 0
