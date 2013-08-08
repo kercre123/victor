@@ -7,6 +7,8 @@ matSize    = 1000; % mm
 codePadding = 1; % mm
 pageDims = [];
 axesHandle = [];
+mirrorX = false;
+mirrorY = false;
 
 parseVarargin(varargin{:});
 
@@ -55,7 +57,19 @@ codePos = squareSize/2 - lineWidth/2 - codePadding - .5;
 [numRows, numCols] = size(xcen);
 for i = 1:numRows
     for j = 1:numCols
-        code = MatMarker2D.encodeIDs(j, i);
+        if mirrorX 
+            j_pos = numCols - j + 1;
+        else
+            j_pos = j;
+        end
+        
+        if mirrorY
+            i_pos = numRows - i + 1;
+        else
+            i_pos = i;
+        end
+        
+        code = MatMarker2D.encodeIDs(j_pos, i_pos);
         
         imagesc([xcen(i,j)-codePos xcen(i,j)+codePos], ...
             [ycen(i,j)-codePos ycen(i,j)+codePos], ~code, ...

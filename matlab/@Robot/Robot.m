@@ -6,6 +6,7 @@ classdef Robot < handle
     
     properties(GetAccess = 'public', SetAccess = 'protected')
         
+        name;
         world; % handle to the world this robot lives in
         
         modelX;
@@ -35,7 +36,7 @@ classdef Robot < handle
             'PathHistoryLength', 500);
         
         handles; 
-        
+                
     end % PROPERTIES (get-public, set-protected)
     
     properties(GetAccess = 'public', SetAccess = 'public', ...
@@ -65,15 +66,17 @@ classdef Robot < handle
     methods(Access = 'public')
         
         function this = Robot(varargin)
+            Name = 'Robot';
             World = [];
             CameraType = 'usb'; % 'usb' or 'webot'
             CameraDevice = [];
             CameraCalibration = [];
             MatCameraDevice = [];
             MatCameraCalibration = [];
-                        
+            
             appearanceArgs = parseVarargin(varargin);
             
+            this.name = Name;
             this.world = World;
             
             this.observationWindow = cell(1, this.ObservationWindowLength);
@@ -88,9 +91,9 @@ classdef Robot < handle
             % From robot to camera frame:
             % Rotation 90 degrees around x axis:
             Rrc = [1 0 0; 0 0 -1; 0 1 0];
-            Trc = [0; ...
-                this.appearance.BodyLength/2; ...
-                this.appearance.BodyHeight + this.appearance.EyeRadius];
+            Trc = [0; 25; 28+this.appearance.BodyHeight];
+                %this.appearance.BodyLength/2; ...
+                %this.appearance.BodyHeight + this.appearance.EyeRadius];
         
             this.camera = Camera('device', CameraDevice, ...
                 'deviceType', CameraType, ...
@@ -98,9 +101,13 @@ classdef Robot < handle
                 'pose', inv(Pose(Rrc, Trc)));
             
             if this.world.hasMat
+                % From robot to camera frame:
+                Rrc = [1 0 0; 0 -1 0; 0 0 -1]; % This seems wrong, shouldn't it be negating y and z?
+                Trc = [0; 0; 3]; % Based on Webot down-camera position
                 this.matCamera = Camera('device', MatCameraDevice, ...
                     'deviceType', CameraType, ...
-                    'calibration', MatCameraCalibration);
+                    'calibration', MatCameraCalibration, ...
+                    'pose', inv(Pose(Rrc, Trc)));
             end
         end
         
@@ -122,7 +129,7 @@ classdef Robot < handle
                 P = this.currentObservation.pose;
             end
         end
-        
+                
         function o = get.origin(this)
             o = this.pose.T;
         end

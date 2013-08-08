@@ -24,6 +24,13 @@ for i_robot = 1:this.numRobots
     this.robots{i_robot}.update(img{i_robot}, matImg{i_robot});
 end
 
+if ~isempty(this.groundTruthPoseFcn)
+    for i_robot = 1:this.numRobots
+        this.groundTruthRobots{i_robot}.pose = ...
+            this.getGroundTruthRobotPose(this.robots{i_robot}.name);
+    end
+end
+
 uv = cell(this.numRobots, Robot.ObservationWindowLength);
 %R  = cell(this.numRobots, Robot.ObservationWindowLength);
 %T  = cell(this.numRobots, Robot.ObservationWindowLength);

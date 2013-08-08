@@ -27,6 +27,13 @@ assert(index <= this.MaxBlocks, 'Index for block too large.');
 %this.blocks{index} = B; 
 this.blocks = [this.blocks {B}];
 
+if ~isempty(this.groundTruthPoseFcn)
+    B_true = Block(blockType, this.numMarkers);
+    B_true.pose = this.getGroundTruthBlockPose(B);
+    
+    this.groundTruthBlocks = [this.groundTruthBlocks {B_true}];
+end
+
 assert(index == this.numBlocks, 'Block indexing problem.');
 
 numMarkersAdded = length(B.markers);

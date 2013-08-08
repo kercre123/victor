@@ -32,6 +32,16 @@ for i_block = 1:this.numBlocks
     draw(this.blocks{i_block}, 'AxesHandle', AxesWorld);
 end
 
+for i_block = 1:length(this.groundTruthBlocks)
+    draw(this.groundTruthBlocks{i_block}, 'AxesHandle', AxesWorld, ...
+        'DrawMarkers', false, 'FaceAlpha', .25, 'EdgeAlpha', .5);
+end
+
+for i_robot = 1:length(this.groundTruthRobots)
+    draw(this.groundTruthRobots{i_robot}, 'AxesHandle', AxesWorld, ...
+        'Alpha', .25);
+end
+
 axis(AxesWorld, 'equal');
 grid(AxesWorld, 'on');
 

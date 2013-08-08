@@ -1,6 +1,7 @@
 function draw(this, varargin)
 
 AxesHandle = [];
+DrawMarkers = true;
 
 otherArgs = parseVarargin(varargin{:});
 
@@ -23,8 +24,10 @@ else
     set(this.handle, 'XData', X, 'YData', Y, 'ZData', Z);
 end
 
-for i = 1:length(this.markers)
-    draw(this.markers{i}, 'where', AxesHandle);
+if DrawMarkers
+    for i = 1:length(this.markers)
+        draw(this.markers{i}, 'where', AxesHandle);
+    end
 end
 
 end

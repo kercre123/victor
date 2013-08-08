@@ -70,19 +70,23 @@ classdef Observation
                 
                 % Update robot's pose:
                 % TODO: return uncertainty in matLocalization
+                % TODO: can i dynamically compute pixPerMM from matCamera FOV and Pose?
                 pixPerMM = 18.0;
                 if strcmp(this.robot.matCamera.deviceType, 'webot')
                     pixPerMM = 20.9;
                 end
                 [xMat, yMat, orient] = matLocalization(this.matImage, ...
                     'pixPerMM', pixPerMM, 'camera', this.robot.matCamera, ...
+                    'matSize', world.matSize, 'zDirection', world.zDirection, ...
                     'embeddedConversions', this.robot.embeddedConversions);
                 
                 % Note the +pi, the sign of the rotation axis and the fact
                 % that the x position is negated.  The latter is due to the
                 % coordinate flip for image coordinates: the mat is in
                 % image coordinates, which are not right-handed...
-                this.pose = Pose((orient+pi)*[0 0 -1], [-xMat yMat 0]); 
+                P_cam = Pose(orient*[0 0 -1], [xMat yMat 0]);
+                %P_rob = this.robot.matCamera.pose * P_cam;
+                this.pose = P_cam;
                 
                 % Also update the parent robot's pose to match (*before* 
                 % adding new blocks, whose position will depend on this):

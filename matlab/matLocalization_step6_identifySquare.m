@@ -1,4 +1,4 @@
-function [xMat, yMat, xvecRot, yvecRot, orient1] = matLocalization_step6_identifySquare(imgRot, orient1, squareWidth, lineWidth, pixPerMM, imgCen, xcenIndex, ycenIndex, embeddedConversions, DEBUG_DISPLAY)
+function [xMat, yMat, xvecRot, yvecRot, orient1] = matLocalization_step6_identifySquare(imgRot, orient1, squareWidth, lineWidth, pixPerMM, imgCen, xcenIndex, ycenIndex, matSize, zDirection, embeddedConversions, DEBUG_DISPLAY)
 
 
 insideSquareWidth = squareWidth - lineWidth;
@@ -33,13 +33,29 @@ marker = MatMarker2D(imgRot, corners, maketform('affine', tform.tdata.Tinv));
 
 if marker.isValid
     % Get camera/image position on mat, in mm:
-    xvec = imgCen(1)-xcenIndex;
-    yvec = imgCen(2)-ycenIndex;
+    
+    switch(zDirection)
+        case 'up'
+            xvec = imgCen(1)-xcenIndex;
+            yvec = imgCen(2)-ycenIndex;
+            
+        case 'down'
+            xvec = xcenIndex - imgCen(1);
+            yvec = ycenIndex - imgCen(2);
+            
+        otherwise
+            error('Unrecognized Zdirection "%s".', zDirection);
+    end
+    
     xvecRot =  xvec*cos(-marker.upAngle) + yvec*sin(-marker.upAngle);
     yvecRot = -xvec*sin(-marker.upAngle) + yvec*cos(-marker.upAngle);
-    xMat = xvecRot/pixPerMM + marker.X*squareWidth - squareWidth/2;
-    yMat = yvecRot/pixPerMM + marker.Y*squareWidth - squareWidth/2;
-
+            
+    xMat = xvecRot/pixPerMM + marker.X*squareWidth - squareWidth/2 - matSize(1)/2;
+    if strcmp(zDirection, 'down')
+        xMat = -xMat;
+    end
+    yMat = yvecRot/pixPerMM + marker.Y*squareWidth - squareWidth/2 - matSize(2)/2;
+            
     orient1 = orient1 + marker.upAngle;
     
 else

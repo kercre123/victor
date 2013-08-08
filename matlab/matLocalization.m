@@ -7,6 +7,8 @@ pixPerMM = 6;
 squareWidth = 10;
 lineWidth = 1.5;
 camera = [];
+matSize = [1000 1000];
+zDirection = 'up'; % 'up' or 'down': use 'down' for Webots
 DEBUG_DISPLAY = false;
 embeddedConversions = [];
 
@@ -29,21 +31,28 @@ assert(min(img(:))>=0 && max(img(:))<=1, ...
 %% Image Orientation
 imgOrig = img;
 
-[img, xgrid, ygrid, imgCen] = matLocalization_step1_undoRadialDistortion(camera, img, embeddedConversions, DEBUG_DISPLAY);
+[img, xgrid, ygrid, imgCen] = matLocalization_step1_undoRadialDistortion( ...
+    camera, img, embeddedConversions, DEBUG_DISPLAY);
 
-[orient1, mag] = matLocalization_step2_downsampleAndComputeGradientAngles(img, orientationSample, derivSigma, embeddedConversions, DEBUG_DISPLAY);
+[orient1, mag] = matLocalization_step2_downsampleAndComputeGradientAngles( ...
+    img, orientationSample, derivSigma, embeddedConversions, DEBUG_DISPLAY);
 
-[orient1] = matLocalization_step3_computeImageOrientation(orient1, mag, embeddedConversions, DEBUG_DISPLAY);
+[orient1] = matLocalization_step3_computeImageOrientation(orient1, mag, ...
+    embeddedConversions, DEBUG_DISPLAY);
 
 %% Grid Square localization   
 
-[imgRot] = matLocalization_step4_rotateImage(imgOrig, orient1, imgCen, xgrid, ygrid, embeddedConversions, DEBUG_DISPLAY);
+[imgRot] = matLocalization_step4_rotateImage(imgOrig, orient1, imgCen, ...
+    xgrid, ygrid, embeddedConversions, DEBUG_DISPLAY);
 
-[xcenIndex, ycenIndex] = matLocalization_step5_findGrideSquareCenter(imgRot, squareWidth, pixPerMM, lineWidth, embeddedConversions, DEBUG_DISPLAY);
+[xcenIndex, ycenIndex] = matLocalization_step5_findGrideSquareCenter( ...
+    imgRot, squareWidth, pixPerMM, lineWidth, embeddedConversions, DEBUG_DISPLAY);
 
 
 %% Square Identification
-[xMat, yMat, xvecRot, yvecRot, orient1] = matLocalization_step6_identifySquare(imgRot, orient1, squareWidth, lineWidth, pixPerMM, imgCen, xcenIndex, ycenIndex, embeddedConversions, DEBUG_DISPLAY);
+[xMat, yMat, xvecRot, yvecRot, orient1] = matLocalization_step6_identifySquare( ...
+    imgRot, orient1, squareWidth, lineWidth, pixPerMM, imgCen, ...
+    xcenIndex, ycenIndex, matSize, zDirection, embeddedConversions, DEBUG_DISPLAY);
 
 
 %% Debug output

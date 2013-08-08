@@ -3,6 +3,7 @@ function draw(this, varargin)
 AxesHandle = [];
 Position = this.pose.T;
 Rotation = this.pose.Rmat;
+Alpha = 1;
 
 parseVarargin(varargin{:});
 
@@ -39,6 +40,7 @@ body = rotateAndTranslate(bodyX, bodyY, bodyZ, R, t);
 if initHandles
     this.handles.body = patch(body{:}, app.BodyColor, ...
         'FaceColor', app.BodyColor, 'EdgeColor', 0.5*app.BodyColor, ...
+        'FaceAlpha', Alpha, 'EdgeAlpha', Alpha, ...
         'Parent', AxesHandle);
     
 else
@@ -92,7 +94,9 @@ if initHandles
         this.handles.tire(i) = surf(tire{i}{:}, app.WheelColor, 'Parent', AxesHandle);
         this.handles.hub(i) = patch(tire{i}{1}(row(i),:), tire{i}{2}(row(i),:), tire{i}{3}(row(i),:), app.WheelColor, 'Parent', AxesHandle);
     end
-    set(this.handles.tire, 'FaceColor', app.WheelColor, 'EdgeColor', .5*app.WheelColor);
+    set(this.handles.tire, 'FaceColor', app.WheelColor, ...
+        'EdgeColor', .5*app.WheelColor, ...
+        'FaceAlpha', Alpha, 'EdgeAlpha', Alpha);
 else
     for i = 1:4
         updateHelper(this.handles.tire(i), tire{i});
@@ -116,8 +120,8 @@ if initHandles
     this.handles.eye(4) = patch(eyeR{1}(1,:), eyeR{2}(1,:), ...
         eyeR{3}(1,:), app.EyeColor, 'Parent', AxesHandle);
     
-    set(this.handles.eye, 'FaceColor', app.EyeColor, ...
-        'EdgeColor', 'none', 'Parent', AxesHandle);
+    set(this.handles.eye, 'FaceColor', app.EyeColor, 'EdgeColor', 'none', ...
+        'FaceAlpha', Alpha, 'EdgeAlpha', Alpha, 'Parent', AxesHandle);
 else
     updateHelper(this.handles.eye(1), eyeL);
     updateHelper(this.handles.eye(2), eyeR);
@@ -139,6 +143,7 @@ if initHandles
         eyeWhite1{3}(2,:), 'w', 'Parent', AxesHandle);
     this.handles.eyeWhite(2) = patch(eyeWhite2{1}(2,:), eyeWhite2{2}(2,:), ...
         eyeWhite2{3}(2,:), 'w', 'Parent', AxesHandle);
+    set(this.handles.eyeWhite, 'FaceAlpha', Alpha, 'EdgeAlpha', Alpha);
 else
     updateHelper(this.handles.eyeWhite(1), eyeWhite1, 2);
     updateHelper(this.handles.eyeWhite(2), eyeWhite2, 2);
@@ -154,6 +159,7 @@ pupil2 = rotateAndTranslate(pupilX_R(2,:), pupilY(2,:), pupilZ(2,:), R, t);
 if initHandles
     this.handles.eyePupil(1) = patch(pupil1{:}, 'k', 'Parent', AxesHandle);
     this.handles.eyePupil(2) = patch(pupil2{:}, 'k', 'Parent', AxesHandle);
+    set(this.handles.eyePupil, 'FaceAlpha', Alpha, 'EdgeAlpha', Alpha);
 else
     updateHelper(this.handles.eyePupil(1), pupil1);
     updateHelper(this.handles.eyePupil(2), pupil2);

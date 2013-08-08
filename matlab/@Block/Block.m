@@ -39,6 +39,7 @@ classdef Block < handle
             
             this.poseProtected = Pose();
             this.blockType = blockType;
+                        
             createModel(this, firstMarkerID);
             
         end

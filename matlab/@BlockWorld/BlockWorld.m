@@ -1,7 +1,6 @@
 classdef BlockWorld < handle
     
     properties(GetAccess = 'public', Constant = true)
-        %HasMat    = true; % use mat for robot localization
         MaxBlocks = 256;  % 8 bits
         MaxFaces  = 16;   % 4 bits
     end
@@ -10,13 +9,19 @@ classdef BlockWorld < handle
         
         blocks = {};
         blockTypeToIndex;
+        groundTruthBlocks = {};
         
         allMarkers3D = {};
         robots = {}; 
+        groundTruthRobots = {};
         
         hasMat = true;
+        matSize;
+        zDirection;
         
         embeddedConversions;
+        
+        groundTruthPoseFcn;
         
     end % PROPERTIES (get-public, set-protected)
     
@@ -40,16 +45,28 @@ classdef BlockWorld < handle
             MatCameraDevice = {};
             MatCameraCalibration = {};
             HasMat = true;
+            MatSize = [1000 1000]; % in mm
+            ZDirection = 'up';
             EmbeddedConversions = EmbeddedConversionsManager( ...
                 'homographyEstimationType', 'matlab_cp2tform'); 
-            
+            GroundTruthPoseFcn = [];
+                        
             parseVarargin(varargin{:});
             
-            this.hasMat = HasMat;
+            assert(islogical(HasMat), 'HasMat should be logical.');
+            assert(isvector(MatSize) && length(MatSize)==2, ...
+                'MatSize should be 2-element vector [xSize ySize] in mm.');
+            
+            this.hasMat  = HasMat;
+            this.matSize = MatSize;
+            this.zDirection = ZDirection;
+            
             this.blocks = {};
             this.allMarkers3D = {};
             
             this.embeddedConversions = EmbeddedConversions;
+            
+            this.groundTruthPoseFcn = GroundTruthPoseFcn;
             
             this.blockTypeToIndex = containers.Map('KeyType', 'double', ...
                 'ValueType', 'double');
@@ -103,13 +120,29 @@ classdef BlockWorld < handle
             
             this.robots = cell(1, length(CameraCalibration));
             for i=1:this.numRobots
-                this.robots{i} = Robot('World', this, ...
+                name = 'Cozmo';
+                if i > 1
+                    name = sprintf('%s%d', name, i);
+                end
+                
+                this.robots{i} = Robot('World', this, 'Name', name, ...
                     'CameraType', CameraType, ...
                     'CameraCalibration', CameraCalibration{i}, ...
                     'CameraDevice', CameraDevice{i}, ...
                     'MatCameraCalibration', MatCameraCalibration{i}, ...
                     'MatCameraDevice', MatCameraDevice{i});
             end
+        
+        if ~isempty(this.groundTruthPoseFcn)
+            this.groundTruthRobots = cell(1, this.numRobots);
+        
+            for i=1:this.numRobots
+                this.groundTruthRobots{i} = Robot('World', this, ...
+                    'CameraCalibration', CameraCalibration{i}, ...
+                    'MatCameraCalibration', MatCameraCalibration{i}, ...
+                    'PathHistoryColor', 'r');
+            end
+        end
             
         end % FUNCTION BlockWorld()
         
@@ -122,6 +155,26 @@ classdef BlockWorld < handle
                 B = this.blocks{this.blockTypeToIndex(blockType)};
             else
                 B = [];
+            end
+        end
+        
+        function P = getGroundTruthRobotPose(this, robotName)
+            if isempty(this.groundTruthPoseFcn)
+                P = [];
+            else
+                P = this.groundTruthPoseFcn(robotName);
+            end
+        end
+        
+        function P = getGroundTruthBlockPose(this, blockID)
+            if isempty(this.groundTruthPoseFcn)
+                P = [];
+            else
+                if isa(blockID, 'Block')
+                    blockID = blockID.blockType;
+                end
+                
+                P = this.groundTruthPoseFcn(sprintf('Block%d', blockID));
             end
         end
         
