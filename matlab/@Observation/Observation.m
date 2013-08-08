@@ -80,14 +80,9 @@ classdef Observation
                     'matSize', world.matSize, 'zDirection', world.zDirection, ...
                     'embeddedConversions', this.robot.embeddedConversions);
                 
-                % Note the +pi, the sign of the rotation axis and the fact
-                % that the x position is negated.  The latter is due to the
-                % coordinate flip for image coordinates: the mat is in
-                % image coordinates, which are not right-handed...
-                P_cam = Pose(orient*[0 0 -1], [xMat yMat 0]);
-                %P_rob = this.robot.matCamera.pose * P_cam;
-                this.pose = P_cam;
-                
+                % Set the pose based on the result of the matLocalization
+                this.pose = Pose(orient*[0 0 -1], [xMat yMat 0]);
+                                
                 % Also update the parent robot's pose to match (*before* 
                 % adding new blocks, whose position will depend on this):
                 this.robot.pose = this.pose;
