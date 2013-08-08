@@ -1,0 +1,103 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\vision.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\anki\vision.h" />
+    <ClInclude Include="..\..\include\anki\vision\config.h" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{AF8A5799-B5AE-47D9-BE5B-9596D6DBADB5}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>CoreTech_Common</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(ProjectDir)/../../build/msvc2010/lib/</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IntDir>$(ProjectDir)/../../build/msvc2010/intermediate/$(ProjectName)/$(Configuration)/</IntDir>
+    <TargetName>$(ProjectName)_32Debug</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(ProjectDir)/../../build/msvc2010/lib/</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IntDir>$(ProjectDir)/../../build/msvc2010/intermediate/$(ProjectName)/$(Configuration)/</IntDir>
+    <TargetName>$(ProjectName)_32Release</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)/../../include;$(ProjectDir)/../../../coretech-common/include;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/contrib/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/core/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/features2d/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/flann/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/highgui/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/imgproc/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/legacy/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/ml/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/nonfree/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/objdetect/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/ocl/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/photo/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/stitching/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/superres/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/ts/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/video/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/videostab/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/world/include/;$(ProjectDir)/../../../coretech-external/</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <BuildLog>
+      <Path>$(ProjectDir)/../../../build/msvc2010/intermediate/$(MSBuildProjectName).log</Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)/../../include;$(ProjectDir)/../../../coretech-common/include;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/contrib/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/core/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/features2d/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/flann/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/highgui/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/imgproc/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/legacy/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/ml/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/nonfree/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/objdetect/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/ocl/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/photo/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/stitching/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/superres/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/ts/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/video/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/videostab/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/world/include/;$(ProjectDir)/../../../coretech-external/</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <BuildLog>
+      <Path>$(ProjectDir)/../../../build/msvc2010/intermediate/$(MSBuildProjectName).log</Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
