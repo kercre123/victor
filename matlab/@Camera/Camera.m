@@ -184,14 +184,16 @@ classdef Camera < handle
         end
         
         function close(this)
-            switch(this.deviceType)
-                case 'usb'
-                    mexCameraCapture(Camera.CLOSE, this.deviceID);
-                case 'webot'
-                    wb_camera_disable(this.deviceID);
-                otherwise
-                    error('Unrecognized deviceType "%s".', this.deviceType);
-            end % SWITCH(deviceType)
+            if ~isempty(this.deviceID)
+                switch(this.deviceType)
+                    case 'usb'
+                        mexCameraCapture(Camera.CLOSE, this.deviceID);
+                    case 'webot'
+                        wb_camera_disable(this.deviceID);
+                    otherwise
+                        error('Unrecognized deviceType "%s".', this.deviceType);
+                end % SWITCH(deviceType)
+            end
         end
         
         function delete(this)
