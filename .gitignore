@@ -35,3 +35,4 @@ matlab.mat
 *.lastbuildstate
 *.idb
 *.ilk
+*.pyc
