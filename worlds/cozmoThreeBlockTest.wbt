@@ -91,17 +91,18 @@ DirectionalLight {
   castShadows TRUE
 }
 DEF FLOOR Solid {
-  translation 0 0 0
-  rotation 0 1 0 0
+  rotation 0 1 0 3.1415 # put origin in correct place
   children [
     Shape {
       appearance Appearance {
         texture ImageTexture {
-          url "mat.png"
+          url [
+            "mat.png"
+          ]
         }
       }
       geometry Box {
-        size 1 .001 1
+        size 1 0.001 1
       }
     }
   ]
@@ -114,7 +115,6 @@ DEF FLOOR Solid {
     ]
   }
 }
-
 DEF WALL_1 Solid {
   translation 0.51 0.025 0
   children [
@@ -125,7 +125,7 @@ DEF WALL_1 Solid {
         }
       }
       geometry Box {
-        size 0.02 0.05 1.0
+        size 0.02 0.05 1
       }
     }
   ]
@@ -154,9 +154,14 @@ DEF WALL_4 Solid {
   ]
   boundingObject USE WALL_SHAPE
 }
-DEF Cozmo Robot {
+#DEF CozmoSupervisor Supervisor {
+  #name "CozmoSupervisor"
+  #controller "cozmo_supervisor_matlab"
+#}
+#DEF Cozmo Robot {
+DEF Cozmo Supervisor {
   translation 0 0.015 0.45
-  rotation 0 1 0 0
+  rotation 0 1 0 0.7071
   children [
     Solid {
       translation 0 0.034 0.02
@@ -266,12 +271,12 @@ DEF Cozmo Robot {
           translation 0 -0.005 0.015
           rotation 1 0 0 -1.5708
           name "cam_down"
+          fieldOfView 2.1
           width 640
           height 480
           near 0.001
           pixelSize 0.3
           colorNoise 0.01
-          fieldOfView 2.1
         }
       ]
       boundingObject USE BODYA
@@ -461,39 +466,72 @@ DEF Cozmo Robot {
     mass 1
   }
   locked TRUE
-  #controller "cozmo_basicdrive01"
   controller "cozmo_matlab"
 }
-Block1x1 {
-  blockcolor 1 0 0
+DEF Block60 Block1x1 {
   translation -0.183 0.09 -0.051
-  facemarker1 "textures/Block60_Face01.png"
-  facemarker2 "textures/Block60_Face02.png"
-  facemarker3 "textures/Block60_Face03.png"
-  facemarker4 "textures/Block60_Face04.png"
-  facemarker5 "textures/Block60_Face05.png"
-  facemarker6 "textures/Block60_Face06.png"
+  facemarker1 [
+    "textures/Block60_Face01.png"
+  ]
+  facemarker2 [
+    "textures/Block60_Face02.png"
+  ]
+  facemarker3 [
+    "textures/Block60_Face03.png"
+  ]
+  facemarker4 [
+    "textures/Block60_Face04.png"
+  ]
+  facemarker5 [
+    "textures/Block60_Face05.png"
+  ]
+  facemarker6 [
+    "textures/Block60_Face06.png"
+  ]
 }
-Block1x1 {
-  blockcolor 0 1 0
+DEF Block65 Block1x1 {
   translation 0.2 0.03 -0.1
   rotation 0 1 0 0.3927
-  facemarker1 "textures/Block65_Face01.png"
-  facemarker2 "textures/Block65_Face02.png"
-  facemarker3 "textures/Block65_Face03.png"
-  facemarker4 "textures/Block65_Face04.png"
-  facemarker5 "textures/Block65_Face05.png"
-  facemarker6 "textures/Block65_Face06.png"
+  blockcolor 0 1 0
+  facemarker1 [
+    "textures/Block65_Face01.png"
+  ]
+  facemarker2 [
+    "textures/Block65_Face02.png"
+  ]
+  facemarker3 [
+    "textures/Block65_Face03.png"
+  ]
+  facemarker4 [
+    "textures/Block65_Face04.png"
+  ]
+  facemarker5 [
+    "textures/Block65_Face05.png"
+  ]
+  facemarker6 [
+    "textures/Block65_Face06.png"
+  ]
 }
-Block1x1 {
-  blockcolor 0 0 1
+DEF Block70 Block1x1 {
   translation 0.4 0.03 0
   rotation 0 1 0 -0.1309
-  facemarker1 "textures/Block70_Face01.png"
-  facemarker2 "textures/Block70_Face02.png"
-  facemarker3 "textures/Block70_Face03.png"
-  facemarker4 "textures/Block70_Face04.png"
-  facemarker5 "textures/Block70_Face05.png"
-  facemarker6 "textures/Block70_Face06.png"
+  blockcolor 0 0 1
+  facemarker1 [
+    "textures/Block70_Face01.png"
+  ]
+  facemarker2 [
+    "textures/Block70_Face02.png"
+  ]
+  facemarker3 [
+    "textures/Block70_Face03.png"
+  ]
+  facemarker4 [
+    "textures/Block70_Face04.png"
+  ]
+  facemarker5 [
+    "textures/Block70_Face05.png"
+  ]
+  facemarker6 [
+    "textures/Block70_Face06.png"
+  ]
 }
-

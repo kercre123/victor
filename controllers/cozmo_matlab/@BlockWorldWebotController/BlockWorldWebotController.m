@@ -6,6 +6,8 @@ classdef BlockWorldWebotController < handle
     
         TIME_STEP = 64;
 
+        ROBOT_NAME = 'Cozmo';
+        
         %Names of the wheels used for steering
         WHEEL_FL = 'wheel_fl';
         WHEEL_FR = 'wheel_fr';
@@ -115,7 +117,40 @@ classdef BlockWorldWebotController < handle
             wb_motor_set_velocity(this.wheels(1), -left);
             wb_motor_set_velocity(this.wheels(2), -right);
         end
-                
+              
+        function P = GetGroundTruthPose(~, name)
+            assert(~isempty(name), ...
+                'Cannot request Pose for an empty name string.');
+            
+            node = wb_supervisor_node_get_from_def(name);
+            if isempty(node)
+                error('No such node "%s"', name);
+            end
+           
+            rotField = wb_supervisor_node_get_field(node, 'rotation');
+            assert(~isempty(rotField), ...
+                'Could not find "rotation" field for node named "%s".', name);
+            rotation = wb_supervisor_field_get_sf_rotation(rotField);
+            assert(isvector(rotation) && length(rotation)==4, ...
+                'Expecting 4-vector for rotation of node named "%s".', name);
+            
+            transField = wb_supervisor_node_get_field(node, 'translation');
+            assert(~isempty(transField), ...
+                'Could not find "translation" field for node named "%s".', name);
+            translation = wb_supervisor_field_get_sf_vec3f(transField);
+            assert(isvector(translation) && length(translation)==3, ...
+                'Expecting 3-vector for translation of node named "%s".', name);            
+            
+            % Note the coordinate change here: Webot has y pointing up,
+            % while Matlab has z pointing up.  That swap induces a
+            % right-hand to left-hand coordinate change (I think).  Also,
+            % things in Matlab are defined in millimeters, while Webot is
+            % in meters.
+            rotation = (rotation(4)+pi)*[-rotation(1) rotation(3) rotation(2)];
+            translation = 1000*[-translation(1) translation(3) translation(2)];
+            P = Pose(rotation, translation);            
+        end
+        
         function calib = GetCalibrationStruct(this, whichCam)
             if nargin < 2
                 whichCam = 'cam_head';
@@ -137,3 +172,5 @@ classdef BlockWorldWebotController < handle
     end        
     
 end % CLASSDEF BlockWorldWebotController
+
+
