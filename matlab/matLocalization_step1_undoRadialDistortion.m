@@ -9,7 +9,9 @@ if ~isempty(camera)
     xgrid = xgrid - imgCen(1);
     ygrid = ygrid - imgCen(2);
 else
+    [nrows,ncols,~] = size(img);
     imgCen = [ncols nrows]/2;
     [xgrid,ygrid] = meshgrid((1:ncols)-imgCen(1), (1:nrows)-imgCen(2));
+    imgUndistorted = img;
 end
 
