@@ -14,6 +14,14 @@ classdef Pose
         dT;
         
     end
+    
+    properties(GetAccess = 'public', SetAccess = 'protected', ...
+            Dependent = true)
+        
+        angle;
+        axis;
+        
+    end
         
     methods(Access = 'public')
         
@@ -74,5 +82,15 @@ classdef Pose
         
         
     end % METHODS (public)
+    
+    methods
+        function theta = get.angle(this)
+            theta = norm(this.Rvec);
+        end
+        
+        function v = get.axis(this)
+            v = this.Rvec / this.angle;
+        end
+    end
     
 end %CLASSDEF Pose
