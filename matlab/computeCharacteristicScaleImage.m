@@ -51,6 +51,9 @@ for k = 2:numLevels+1
     DoG = abs(blurred - imgPyr{k-1});
     
     DoG = imresize(DoG, [nrows ncols], 'bilinear');
+%     figure(3); imshow(DoG*20);
+%     keyboard
+     
     larger = DoG > DoG_max;
     if any(larger(:))
         DoG_max(larger) = DoG(larger);
