@@ -231,11 +231,16 @@ for i_region = 1:numRegions
                                                 'projective', 'tformInit', tformInit, ...
                                                 'maxIterations', 10, 'tolerance', .001, ...
                                                 'sampleFraction', 1);
+                                            
+%                                             disp('normal ICP');
+%                                             disp(computeHomographyFromTform(tform));
                                         elseif strcmp(embeddedConversions.homographyEstimationType, 'opencv_cp2tform')
                                             tform = ICP_projective(fliplr(boundary), canonicalBoundary, ...
                                                 'homographyInit', tformInit, ...
                                                 'maxIterations', 10, 'tolerance', .001, ...
                                                 'sampleFraction', 1);
+%                                             disp('projective ICP');
+%                                             disp(tform);
                                         end                                        
                                     case 'fminsearch'
                                         mag = smoothgradient(img, 1);
@@ -264,23 +269,15 @@ for i_region = 1:numRegions
 %                                 [x,y] = tforminv(tform, [0 0 1 1]', [0 1 0 1]');
                                 tformInv = inv(tform);
                                 tformInv = tformInv / tformInv(3,3);
-                                xy = [0,0,1,1;0,1,0,1;1,1,1,1];
-                                keyboard
-
-%                                 area = abs((x(2)-x(1))*(y(3)-y(1)) - (x(3)-x(1))*(y(2)-y(1)));
-%                                 if all(x >= 1 & x <= ncols & y >= 1 & y<= nrows) && ...
-%                                         area >= minQuadArea
-% 
-%                                     corners = [x y];
-% 
-%                                     if DEBUG_DISPLAY
-%                                         plot(corners(:,1), corners(:,2), 'y+', 'Parent', h_initialAxes);
-%                                     end
-%                                 else
-%                                     tform = [];
-%                                 end
+                                xy = tformInv*[0,0,1,1;0,1,0,1;1,1,1,1];
+                                xy = xy ./ repmat(xy(3,:), [3,1]);
+                                x = xy(1,:)';
+                                y = xy(2,:)';
                                 
-                            else
+                                % Make the tform normal, so it works with
+                                % the other pieces
+                                tform = maketform('projective', tform');
+                            else % Just a normal Matlab tform
                                 % The original corners must have been
                                 % visible in the image, and we'd expect
                                 % them to all still be within the image
@@ -290,18 +287,32 @@ for i_region = 1:numRegions
                                 % TODO: repeat all the other sanity
                                 % checks on the quadrilateral here?
                                 [x,y] = tforminv(tform, [0 0 1 1]', [0 1 0 1]');
-                                area = abs((x(2)-x(1))*(y(3)-y(1)) - (x(3)-x(1))*(y(2)-y(1)));
-                                if all(x >= 1 & x <= ncols & y >= 1 & y<= nrows) && ...
-                                        area >= minQuadArea
+                                
+%                                 disp([x,y])
+%                                 
+%                                 tformInv = inv(computeHomographyFromTform(tform));
+%                                 tformInv = tformInv / tformInv(3,3);
+%                                 xy = tformInv*[0,0,1,1;0,1,0,1;1,1,1,1];
+%                                 xy = xy ./ repmat(xy(3,:), [3,1]);
+%                                 x = xy(1,:)';
+%                                 y = xy(2,:)';
+                            end
+                            
+%                             disp([x,y])
+%                             
+%                             keyboard
+                            
+                            area = abs((x(2)-x(1))*(y(3)-y(1)) - (x(3)-x(1))*(y(2)-y(1)));
+                            if all(x >= 1 & x <= ncols & y >= 1 & y<= nrows) && ...
+                                    area >= minQuadArea
 
-                                    corners = [x y];
+                                corners = [x y];
 
-                                    if DEBUG_DISPLAY
-                                        plot(corners(:,1), corners(:,2), 'y+', 'Parent', h_initialAxes);
-                                    end
-                                else
-                                    tform = [];
+                                if DEBUG_DISPLAY
+                                    plot(corners(:,1), corners(:,2), 'y+', 'Parent', h_initialAxes);
                                 end
+                            else
+                                tform = [];
                             end
                         end
                         
@@ -329,3 +340,5 @@ for i_region = 1:numRegions
     end % IF we have at least 4 local maxima
     
 end % FOR each region
+
+% keyboard
