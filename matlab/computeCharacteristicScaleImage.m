@@ -1,6 +1,6 @@
 function [scaleImage, whichScale, imgPyr] = computeCharacteristicScaleImage( ...
-    img, numLevels, kernel)
-% Returns an image with each pixel at it's characteristic scale.
+    img, numLevels, kernel, computeDogAtFullSize)
+% Returns an image with each pixel at its characteristic scale.
 %
 % [scaleImage, whichScale, imgPyr] = computeCharacteristicScaleImage( ...
 %    img, numLevels, <kernel>)
@@ -28,11 +28,16 @@ function [scaleImage, whichScale, imgPyr] = computeCharacteristicScaleImage( ...
 % Andrew Stein
 %
 
+DEBUG_DISPLAY = false;
+
 if nargin < 3 || isempty(kernel)
     kernel = [1 4 6 4 1];
 end
 kernel = kernel / sum(kernel); % make sure kernel is normalized
-% disp(kernel);
+
+if nargin < 4
+    computeDogAtFullSize = true;
+end
 
 assert(size(img,3)==1, 'Image should be scalar-valued.');
 [nrows,ncols] = size(img);
@@ -47,41 +52,33 @@ imgPyr = cell(1, numLevels+1);
 imgPyr{1} = separable_filter(img, kernel);
 
 for k = 2:numLevels+1
-    
+
     blurred = separable_filter(imgPyr{k-1}, kernel);
     
-%     DoG = abs(blurred - imgPyr{k-1});
-%     DoG = imresize(DoG, [nrows ncols], 'bilinear');
-%     DoG = imresize_bilinear(DoG, [nrows ncols]);
-
-    DoG = abs(imresize_bilinear(blurred,[nrows ncols]) - imresize_bilinear(imgPyr{k-1},[nrows ncols]));
-
-%     figure(3); imshow(DoG*20);
-%     keyboard
-     
+    if computeDogAtFullSize
+        DoG = abs( imresize(blurred,[nrows,ncols],'bilinear') - imresize(imgPyr{k-1},[nrows,ncols],'bilinear') );
+    else
+        DoG = abs(blurred - imgPyr{k-1});
+        DoG = imresize(DoG, [nrows ncols], 'bilinear');
+    end
+    
     larger = DoG > DoG_max;
     if any(larger(:))
         DoG_max(larger) = DoG(larger);
-        
-%         imgPyr_upsample = imresize(imgPyr{k-1}, [nrows ncols], 'bilinear');
-        imgPyr_upsample = imresize_bilinear(imgPyr{k-1}, [nrows ncols]);
-        
+        imgPyr_upsample = imresize(imgPyr{k-1}, [nrows ncols], 'bilinear');
         scaleImage(larger) = imgPyr_upsample(larger);
         if nargout > 1 || nargout == 0
             whichScale(larger) = k-1;
         end
     end
+
+    if DEBUG_DISPLAY
+        figureHandle = figure(200+k); imshow(DoG(150:190,260:300)*5);
+    %     figureHandle = figure(200+k); subplot(1,3,1); imshow(imgPyr{k-1}); subplot(1,3,2); imshow(blurred); subplot(1,3,3); imshow(DoG*5);
+        set(figureHandle, 'Units', 'normalized', 'Position', [0, 0, 1, 1]) 
+    end
     
-%     figureHandle = figure(250+k); imshow(DoG*5);
-    figureHandle = figure(250+k); imshow(DoG(150:190,260:300)*5);
-%     figureHandle = figure(200+k); subplot(1,3,1); imshow(imgPyr{k-1}); subplot(1,3,2); imshow(blurred); subplot(1,3,3); imshow(DoG*5);
-%     figureHandle = figure(200+k); imshow(blurred);
-    set(figureHandle, 'Units', 'normalized', 'Position', [0, 0, 1, 1]) 
-    
-%     imgPyr{k} = blurred(1:2:end,1:2:end);
-%     imgPyr{k} = imresize(blurred, size(blurred)/2, 'bilinear');
     imgPyr{k} = imresize_bilinear(blurred, size(blurred)/2);
-%     keyboard
 end
 
 if nargout == 0
@@ -91,7 +88,7 @@ if nargout == 0
     imshow(scaleImage)
     subplot 133
     imagesc(whichScale), axis image
-    
+
     clear scaleImage
 end
 
