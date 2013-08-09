@@ -15,6 +15,7 @@ function W = testBlockWorld(varargin)
 
 device = 0;
 calibration = [];
+useMat = true;
 matDevice = 1;
 matCalibration = [];
 frames = {};
@@ -52,7 +53,8 @@ if nargin > 1 && ~isempty(frames)
     
     W = BlockWorld('CameraCalibration', calibration, ...
                    'MatCameraCalibration', matCalibration, ...
-                   'EmbeddedConversions', embeddedConversions);
+                   'EmbeddedConversions', embeddedConversions, ...
+                   'HasMat', useMat);
 
     for i = 1:length(frames)
         t = tic;
@@ -95,6 +97,7 @@ else
     W = BlockWorld('CameraCalibration', calibration, ...
                    'CameraDevice', device, 'MatCameraDevice', matDevice, ...
                    'MatCameraCalibration', matCalibration, ...
+                   'HasMat', useMat, ...
                    'embeddedConversions', embeddedConversions);
     
     while ~any(chars==27) % Until ESC is pressed
