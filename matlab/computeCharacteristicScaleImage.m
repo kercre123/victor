@@ -50,14 +50,19 @@ for k = 2:numLevels+1
     blurred = separable_filter(imgPyr{k-1}, kernel);
     DoG = abs(blurred - imgPyr{k-1});
     
-    DoG = imresize(DoG, [nrows ncols], 'bilinear');
+%     DoG = imresize(DoG, [nrows ncols], 'bilinear');
+    DoG = imresize_bilinear(DoG, [nrows ncols]);
+
 %     figure(3); imshow(DoG*20);
 %     keyboard
      
     larger = DoG > DoG_max;
     if any(larger(:))
         DoG_max(larger) = DoG(larger);
-        imgPyr_upsample = imresize(imgPyr{k-1}, [nrows ncols], 'bilinear');
+        
+%         imgPyr_upsample = imresize(imgPyr{k-1}, [nrows ncols], 'bilinear');
+        imgPyr_upsample = imresize_bilinear(imgPyr{k-1}, [nrows ncols]);
+        
         scaleImage(larger) = imgPyr_upsample(larger);
         if nargout > 1 || nargout == 0
             whichScale(larger) = k-1;
