@@ -18,6 +18,8 @@ if usePyramid
     assert(downsampleFactor == 2, ...
         'Using image pyramid for characteristic scale requires downsampleFactor=2.');
     
+    keyboard
+    
     averageImg = computeCharacteristicScaleImage(img, numScales);
             
 else % Use a stack of smoothed images, not a pyramid
