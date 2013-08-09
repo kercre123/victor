@@ -160,8 +160,11 @@ DEF WALL_4 Solid {
 #}
 #DEF Cozmo Robot {
 DEF Cozmo Supervisor {
-  translation 0 0.015 0.45
-  rotation 0 1 0 0.7071
+  #translation 0 0.015 0.45
+  #rotation 0 1 0 0.7071
+  translation -0.1157 0.014879 0.10545
+  rotation 0.00110831 0.999999 -2.08023e-05 0.297407
+  
   children [
     Solid {
       translation 0 0.034 0.02
@@ -417,8 +420,9 @@ DEF Cozmo Supervisor {
             name "cam_head"
             width 640
             height 480
-            near 0.001
-            pixelSize 0.1
+            fieldOfView 1.57 # 90 degrees 1.04 # 60 degrees
+            near 0.0001
+            pixelSize 0.25
             colorNoise 0.01
           }
           DEF EYE_LEFT Transform {
