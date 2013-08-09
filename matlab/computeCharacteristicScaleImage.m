@@ -36,7 +36,7 @@ end
 kernel = kernel / sum(kernel); % make sure kernel is normalized
 
 if nargin < 4
-    computeDogAtFullSize = true;
+    computeDogAtFullSize = false;
 end
 
 assert(size(img,3)==1, 'Image should be scalar-valued.');

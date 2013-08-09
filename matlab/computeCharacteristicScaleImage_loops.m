@@ -32,7 +32,7 @@ function scaleImage = computeCharacteristicScaleImage_loops( ...
 DEBUG_DISPLAY = false;
 
 if nargin < 3
-    computeDogAtFullSize = true;
+    computeDogAtFullSize = false;
 end
 
 assert(size(img,3)==1, 'Image should be scalar-valued.');
