@@ -90,17 +90,19 @@ classdef Robot < handle
             
             % From robot to camera frame:
             % Rotation 90 degrees around x axis:
-            Rrc = [1 0 0; 0 0 -1; 0 1 0];
-            Trc = [0; 25; 28+this.appearance.BodyHeight];
+            Rrc = [1 0 0; 0 0 1; 0 -1 0];
+            Trc = [0; this.appearance.BodyLength/2; 28+this.appearance.BodyHeight/2];
                 %this.appearance.BodyLength/2; ...
                 %this.appearance.BodyHeight + this.appearance.EyeRadius];
         
             this.camera = Camera('device', CameraDevice, ...
                 'deviceType', CameraType, ...
                 'calibration', CameraCalibration, ...
-                'pose', inv(Pose(Rrc, Trc)));
+                'pose', Pose(Rrc, Trc));
             
-            if this.world.hasMat
+            if (isempty(this.world) && ~isempty(MatCameraDevice)) ...
+                    || (~isempty(this.world) && this.world.hasMat)
+                
                 % From robot to camera frame:
                 Rrc = [1 0 0; 0 -1 0; 0 0 -1]; % This seems wrong, shouldn't it be negating y and z?
                 Trc = [0; 0; 3]; % Based on Webot down-camera position
