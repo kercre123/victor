@@ -2,7 +2,8 @@ classdef BlockMarker3D < handle
     
     properties(GetAccess = 'public', Constant = true)
         % Width of the inside of the square fiducial
-        Width = 25; % in mm, sets scale for the whole world
+        % NOTE: 24.2 seems to be the right value for the Webot world
+        Width = 24.2; % in mm, sets scale for the whole world
     end
     
     properties(GetAccess = 'public', SetAccess = 'public')
