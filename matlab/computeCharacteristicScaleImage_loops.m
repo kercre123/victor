@@ -28,17 +28,11 @@ function scaleImage = computeCharacteristicScaleImage_loops( ...
 % Andrew Stein
 %
 
-kernelSum = sum([1, 4, 6, 4, 1]);
-
 assert(size(img,3)==1, 'Image should be scalar-valued.');
 
 [nrows,ncols] = size(img);
 scaleImage = img;
 DoG_max = zeros(nrows,ncols);
-
-if nargout > 1 || nargout == 0
-    whichScale = ones(nrows,ncols);
-end
 
 imgPyramid = cell(1, numLevels+1);
 scaleFactors = 2.^[0:(numLevels)]; %#ok<NBRAK>
@@ -48,16 +42,14 @@ imgPyramid{1} = binomialFilter(img);
 for k = 2:numLevels+1
     curPyramidLevel = imgPyramid{k-1};
     curPyramidLevelBlurred = binomialFilter(curPyramidLevel);
-    
-    bigDoG = abs(curPyramidLevelBlurred - curPyramidLevel);
-    bigDoG = imresize(bigDoG, [nrows ncols], 'bilinear');
-    
-    bigDoGG = zeros(size(bigDoG));
-%     curPyramidLevelBig = imresize(curPyramidLevel, [nrows ncols], 'bilinear');
-%     curPyramidLevelBlurredBig = imresize(curPyramidLevelBlurred, [nrows ncols], 'bilinear');
-    curPyramidLevelBig = imresize_bilinear(curPyramidLevel, [nrows ncols]);
-    curPyramidLevelBlurredBig = imresize_bilinear(curPyramidLevelBlurred, [nrows ncols]);
-      
+
+%     bigDoG = abs(curPyramidLevelBlurred - curPyramidLevel);
+%     bigDoG = imresize_bilinear(bigDoG, [nrows ncols]);
+
+    bigDoGG = zeros([nrows ncols]);
+%     curPyramidLevelBig = imresize_bilinear(curPyramidLevel, [nrows ncols]);
+%     curPyramidLevelBlurredBig = imresize_bilinear(curPyramidLevelBlurred, [nrows ncols]);
+
     if k == 2
         for y = 1:nrows
             for x = 1:ncols
@@ -65,31 +57,24 @@ for k = 2:numLevels+1
                 bigDoGG(y,x) = DoG;
                 if DoG > DoG_max(y,x)
                     DoG_max(y,x) = DoG;
-                    scaleImage(y,x) = imgPyramid{1}(y,x);
+                    scaleImage(y,x) = curPyramidLevel(y,x);
                 end
             end
         end
-%         imshows(bigDoG*20, bigDoGG*20);
-%         keyboard
-    else
-        interpolationScaleFactor = scaleFactors(k-1)^2;
-        
-        largeYIndexRange = 1 + [scaleFactors(k-1), nrows-scaleFactors(k-1)-1];
-        largeXIndexRange = 1 + [scaleFactors(k-1), ncols-scaleFactors(k-1)-1];
-        
-%         largeYIndexes = 1 + (scaleFactors(k-1):(nrows-scaleFactors(k-1)-1));
-%         largeXIndexes = 1 + (scaleFactors(k-1):(ncols-scaleFactors(k-1)-1));
-        
+    else % if k == 2
+        largeYIndexRange = 1 + [scaleFactors(k-1)/2, nrows-scaleFactors(k-1)/2-1];
+        largeXIndexRange = 1 + [scaleFactors(k-1)/2, ncols-scaleFactors(k-1)/2-1];
+
         alphas = .5 + (0:(scaleFactors(k-1)-1));
-        
+
         largeY = largeYIndexRange(1);
         for smallY = 1:(size(curPyramidLevel,1)-1)
             for iAlphaY = 1:length(alphas)
                 alphaY = alphas(iAlphaY);
                 alphaYinverse = scaleFactors(k-1) - alphas(iAlphaY);
-                
+
                 largeX = largeXIndexRange(1);
-                
+
                 for smallX = 1:(size(curPyramidLevel,2)-1)
                     curPyramidLevel_00 = curPyramidLevel(smallY, smallX);
                     curPyramidLevel_01 = curPyramidLevel(smallY, smallX+1);
@@ -100,111 +85,41 @@ for k = 2:numLevels+1
                     curPyramidLevelBlurred_01 = curPyramidLevelBlurred(smallY, smallX+1);
                     curPyramidLevelBlurred_10 = curPyramidLevelBlurred(smallY+1, smallX);
                     curPyramidLevelBlurred_11 = curPyramidLevelBlurred(smallY+1, smallX+1);
-                        
+
                     for iAlphaX = 1:length(alphas)
                         alphaX = alphas(iAlphaX);
                         alphaXinverse = scaleFactors(k-1) - alphas(iAlphaX);
-                        
-                        curPyramidLevelInterpolated = interpolate2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse) / (alphaX+alphaXinverse+alphaY+alphaYinverse);
-                        curPyramidLevelBlurredInterpolated = interpolate2d(curPyramidLevelBlurred_00, curPyramidLevelBlurred_01, curPyramidLevelBlurred_10, curPyramidLevelBlurred_11, alphaY, alphaYinverse, alphaX, alphaXinverse) / (alphaX+alphaXinverse+alphaY+alphaYinverse);
-                       
+
+                        curPyramidLevelInterpolated = interpolate2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse) / (scaleFactors(k-1)^2);
+                        curPyramidLevelBlurredInterpolated = interpolate2d(curPyramidLevelBlurred_00, curPyramidLevelBlurred_01, curPyramidLevelBlurred_10, curPyramidLevelBlurred_11, alphaY, alphaYinverse, alphaX, alphaXinverse) / (scaleFactors(k-1)^2);
+
                         DoG = abs(curPyramidLevelInterpolated - curPyramidLevelBlurredInterpolated);
                         bigDoGG(largeY,largeX) = DoG;
-                        
-%                         if largeX == 40 && largeY == 18
-%                             keyboard
-%                         end
-                        
+
                         if DoG > DoG_max(largeY,largeX)
                             DoG_max(largeY,largeX) = DoG;
-                            scaleImage(largeY,largeX) = imgPyramid{1}(largeY,largeX);
+                            scaleImage(largeY,largeX) = curPyramidLevelInterpolated;
                         end
-                        
+
                         largeX = largeX + 1;
-                    end
-                end
-                
+                    end % for iAlphaX = 1:length(alphas)
+                end % for smallX = 1:(size(curPyramidLevel,2)-1)
+
                 largeY = largeY + 1;
-            end            
-        end
-        
-        keyboard
-        
-        
-        
+            end % for iAlphaY = 1:length(alphas)
+        end % for smallY = 1:(size(curPyramidLevel,1)-1)
+    end % if k == 2 ... else
+    
+%     figure(300+k); imshow(bigDoGG*5);
+    figureHandle = figure(100+k); subplot(1,3,1); imshow(curPyramidLevel); subplot(1,3,2); imshow(curPyramidLevelBlurred); subplot(1,3,3); imshow(bigDoGG*5);
+%     figureHandle = figure(100+k); imshow(curPyramidLevelBlurred);
+%     jFrame = get(figureHandle,'JavaFrame');
+%     jFrame.setMaximized(true);
+    set(figureHandle, 'Units', 'normalized', 'Position', [0, 0, 1, 1]) 
 
-%         smallYs = 0.5 + (0:(nrows/scaleFactors(k-1)-1));
-%         largeYs = 0.5 + (0:scaleFactors(k-1):(nrows-1));
-%         largeYIndexes = (1:scaleFactors(k-1):(nrows-scaleFactors(k-1)));
-%         assert(length(largeYs) == length(smallYs));
-%         
-%         smallXs = 0.5 + (0:(ncols/scaleFactors(k-1)++-1));
-%         largeXs = 0.5 + (0:scaleFactors(k-1):(ncols-1));
-%         largeXIndexes = (1:scaleFactors(k-1):(ncols-scaleFactors(k-1)));
-%         assert(length(largeXs) == length(smallXs));
-        
-%         keyboard
-        
-         
-        
-%         for smallY = 1:length(largeYs)
-%             for alphaY = 0:scaleFactors(k-1)
-%                 largeY = largeYs(smallY) + alphaY;
-%                 alphaYinverse = scaleFactors(k-1) - alphaY;
-%                 
-%                 for smallX = 1:length(largeXs)
-%                     % Corners
-%                     % 00 01
-%                     % 10 11
-%                     curPyramidLevel_00 = curPyramidLevel(smallY, smallX);
-%                     curPyramidLevel_01 = curPyramidLevel(smallY, smallX+1);
-%                     curPyramidLevel_10 = curPyramidLevel(smallY+1, smallX);
-%                     curPyramidLevel_11 = curPyramidLevel(smallY+1, smallX+1);
-%                     
-%                     curPyramidLevelBlurred_00 = curPyramidLevelBlurred(smallY, smallX);
-%                     curPyramidLevelBlurred_01 = curPyramidLevelBlurred(smallY, smallX+1);
-%                     curPyramidLevelBlurred_10 = curPyramidLevelBlurred(smallY+1, smallX);
-%                     curPyramidLevelBlurred_11 = curPyramidLevelBlurred(smallY+1, smallX+1);
-%                     
-%                     for alphaX = 0:scaleFactors(k-1)
-%                         largeX = largeXs(smallX) + alphaX;
-%                         alphaXinverse = scaleFactors(k-1) - alphaX;
-%                         
-%                         curPyramidLevelInterpolated = interpolate2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse) / (alphaX+alphaXinverse+alphaY+alphaYinverse);
-%                         curPyramidLevelBlurredInterpolated = interpolate2d(curPyramidLevelBlurred_00, curPyramidLevelBlurred_01, curPyramidLevelBlurred_10, curPyramidLevelBlurred_11, alphaY, alphaYinverse, alphaX, alphaXinverse) / (alphaX+alphaXinverse+alphaY+alphaYinverse);
-%                        
-%                         DoG = abs(curPyramidLevelInterpolated - curPyramidLevelBlurredInterpolated);
-%                         bigDoGG(largeY,largeX) = DoG;
-%                         
-%                         keyboard
-% %                         if largeX == 40 && largeY == 18
-% %                             keyboard
-% %                         end
-%                         
-%                         if DoG > DoG_max(largeY,largeX)
-%                             DoG_max(largeY,largeX) = DoG;
-%                             scaleImage(largeY,largeX) = imgPyramid{1}(largeY,largeX);
-%                         end
-%                     end
-%                 end
-%             end
-%         end
-    end
+%     keyboard
     
-%     keyboard 
-    
-    imgPyramid{k} = curPyramidLevel(1:2:end,1:2:end);
-end
-
-if nargout == 0
-    subplot 131
-    imshow(img)
-    subplot 132
-    imshow(scaleImage)
-    subplot 133
-    imagesc(whichScale), axis image
-    
-    clear scaleImage
+    imgPyramid{k} = curPyramidLevelBlurred(1:2:end,1:2:end);
 end
 
 end % FUNCTION computeCharacteristicScaleImage()
@@ -213,14 +128,14 @@ function interpolated = interpolate2d(img00, img01, img10, img11, alphaY, alphaY
     interpolatedTop = alphaXinverse*img00 + alphaX*img01;
     interpolatedBottom = alphaXinverse*img10 + alphaX*img11;
 
-    interpolated = alphaYinverse*interpolatedTop + alphaY*interpolatedBottom;                                                                                       
+    interpolated = alphaYinverse*interpolatedTop + alphaY*interpolatedBottom;
 end
 
 function imgFiltered = binomialFilter(img)
     kernel = [1, 4, 6, 4, 1];
     kernelSum = sum(kernel);
-%     imgFiltered = imfilter(imfilter(img, kernel, 'same', 'symmetric')/kernelSum, kernel', 'same', 'symmetric')/kernelSum;
-    imgFiltered = imfilter(imfilter(img, kernel, 'same', 'symmetric'), kernel', 'same', 'symmetric')/(kernelSum*kernelSum);
+
+    imgFiltered = imfilter(imfilter(img, kernel, 'same', 'symmetric'), kernel', 'same', 'symmetric') / (kernelSum^2);
 end
 
 

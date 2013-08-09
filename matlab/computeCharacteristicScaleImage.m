@@ -32,6 +32,7 @@ if nargin < 3 || isempty(kernel)
     kernel = [1 4 6 4 1];
 end
 kernel = kernel / sum(kernel); % make sure kernel is normalized
+disp(kernel);
 
 assert(size(img,3)==1, 'Image should be scalar-valued.');
 [nrows,ncols] = size(img);
@@ -50,8 +51,8 @@ for k = 2:numLevels+1
     blurred = separable_filter(imgPyr{k-1}, kernel);
     DoG = abs(blurred - imgPyr{k-1});
     
-%     DoG = imresize(DoG, [nrows ncols], 'bilinear');
-    DoG = imresize_bilinear(DoG, [nrows ncols]);
+    DoG = imresize(DoG, [nrows ncols], 'bilinear');
+%     DoG = imresize_bilinear(DoG, [nrows ncols]);
 
 %     figure(3); imshow(DoG*20);
 %     keyboard
@@ -60,14 +61,21 @@ for k = 2:numLevels+1
     if any(larger(:))
         DoG_max(larger) = DoG(larger);
         
-%         imgPyr_upsample = imresize(imgPyr{k-1}, [nrows ncols], 'bilinear');
-        imgPyr_upsample = imresize_bilinear(imgPyr{k-1}, [nrows ncols]);
+        imgPyr_upsample = imresize(imgPyr{k-1}, [nrows ncols], 'bilinear');
+%         imgPyr_upsample = imresize_bilinear(imgPyr{k-1}, [nrows ncols]);
         
         scaleImage(larger) = imgPyr_upsample(larger);
         if nargout > 1 || nargout == 0
             whichScale(larger) = k-1;
         end
     end
+    
+%     figure(300+k); imshow(DoG*5);
+    figureHandle = figure(200+k); subplot(1,3,1); imshow(imgPyr{k-1}); subplot(1,3,2); imshow(blurred); subplot(1,3,3); imshow(DoG*5);
+%     figureHandle = figure(200+k); imshow(blurred);
+%     jFrame = get(figureHandle,'JavaFrame');
+%     jFrame.setMaximized(true);
+    set(figureHandle, 'Units', 'normalized', 'Position', [0, 0, 1, 1]) 
     
     imgPyr{k} = blurred(1:2:end,1:2:end);
 end
