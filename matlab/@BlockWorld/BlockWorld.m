@@ -163,6 +163,11 @@ classdef BlockWorld < handle
                 P = [];
             else
                 P = this.groundTruthPoseFcn(robotName);
+                
+                if strcmp(this.robots{1}.matCamera.deviceType, 'webot')
+                    % The Webot robot is defined rotated 180 degrees (?)
+                    P = Pose([-1 0 0; 0 -1 0; 0 0 1]*P.Rmat, P.T);
+                end
             end
         end
         
