@@ -43,12 +43,12 @@ for k = 2:numLevels+1
     curPyramidLevel = imgPyramid{k-1};
     curPyramidLevelBlurred = binomialFilter(curPyramidLevel);
 
-%     bigDoG = abs(curPyramidLevelBlurred - curPyramidLevel);
-%     bigDoG = imresize_bilinear(bigDoG, [nrows ncols]);
+    bigDoG = abs(curPyramidLevelBlurred - curPyramidLevel);
+    bigDoG = imresize_bilinear(bigDoG, [nrows ncols]);
 
     bigDoGG = zeros([nrows ncols]);
-%     curPyramidLevelBig = imresize_bilinear(curPyramidLevel, [nrows ncols]);
-%     curPyramidLevelBlurredBig = imresize_bilinear(curPyramidLevelBlurred, [nrows ncols]);
+    curPyramidLevelBig = imresize_bilinear(curPyramidLevel, [nrows ncols]);
+    curPyramidLevelBlurredBig = imresize_bilinear(curPyramidLevelBlurred, [nrows ncols]);
 
     if k == 2
         for y = 1:nrows
@@ -100,7 +100,21 @@ for k = 2:numLevels+1
                             DoG_max(largeY,largeX) = DoG;
                             scaleImage(largeY,largeX) = curPyramidLevelInterpolated;
                         end
-
+                        
+%                         if smallY == 170 && smallX == 280
+%                         if abs(bigDoG(largeY, largeX) - bigDoGG(largeY, largeX)) > .001
+%                             disp(bigDoG(largeY, largeX));
+%                             disp(bigDoGG(largeY, largeX));
+%                             disp(' ');
+%                             disp(curPyramidLevelInterpolated);
+%                             disp(curPyramidLevelBig(largeY, largeX));
+%                             disp(' ');
+%                             disp(curPyramidLevelBlurredInterpolated);
+%                             disp(curPyramidLevelBlurredBig(largeY, largeX));
+%                             disp(' ');
+%                             keyboard
+%                         end
+                        
                         largeX = largeX + 1;
                     end % for iAlphaX = 1:length(alphas)
                 end % for smallX = 1:(size(curPyramidLevel,2)-1)
@@ -110,16 +124,18 @@ for k = 2:numLevels+1
         end % for smallY = 1:(size(curPyramidLevel,1)-1)
     end % if k == 2 ... else
     
-%     figure(300+k); imshow(bigDoGG*5);
-    figureHandle = figure(100+k); subplot(1,3,1); imshow(curPyramidLevel); subplot(1,3,2); imshow(curPyramidLevelBlurred); subplot(1,3,3); imshow(bigDoGG*5);
+%     keyboard
+    
+%     figureHandle = figure(150+k); imshow(bigDoGG*5);
+    figureHandle = figure(150+k); imshow(bigDoGG(150:190,260:300)*5);
+%     figureHandle = figure(100+k); subplot(1,3,1); imshow(curPyramidLevel); subplot(1,3,2); imshow(curPyramidLevelBlurred); subplot(1,3,3); imshow(bigDoGG*5);
 %     figureHandle = figure(100+k); imshow(curPyramidLevelBlurred);
-%     jFrame = get(figureHandle,'JavaFrame');
-%     jFrame.setMaximized(true);
     set(figureHandle, 'Units', 'normalized', 'Position', [0, 0, 1, 1]) 
 
 %     keyboard
     
-    imgPyramid{k} = curPyramidLevelBlurred(1:2:end,1:2:end);
+%     imgPyramid{k} = curPyramidLevelBlurred(1:2:end,1:2:end);
+    imgPyramid{k} = imresize_bilinear(curPyramidLevelBlurred, size(curPyramidLevelBlurred)/2);
 end
 
 end % FUNCTION computeCharacteristicScaleImage()
