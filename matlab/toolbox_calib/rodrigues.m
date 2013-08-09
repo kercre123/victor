@@ -193,10 +193,21 @@ elseif (m==n && m==3 && (norm(in' * in - eye3) < bigeps) ...
                 mvec = [M(1,2), M(2,3), M(1,3)];
                 syn  = ((mvec > 1e-4) - (mvec < -1e-4)); % robust sign() function
                 hash = syn * [9; 3; 1];
-                svec = Smat(hash == hashvec,:)';
+                
 
-                out = theta * [uabs; vabs; wabs] .* svec;
-
+                % ANS modification for case that hash == -2, which is not
+                % in the hashvec (???)
+                % OLD: svec = Smat(hash == hashvec,:)';
+                %      out = theta * [uabs; vabs; wabs] .* svec;
+                hashIndex = hash==hashvec;
+                if any(hashIndex)
+                    svec = Smat(hashIndex,:)';
+                    out = theta * [uabs; vabs; wabs] .* svec;
+                else
+                    % Fall back on Bouguet's old method above??
+                    out = theta * (sqrt((diag(R)+1)/2).*[1;2*(R(1,2:3)>=0)'-1]);
+                end
+                
             end;
 
             if nargout > 1,
