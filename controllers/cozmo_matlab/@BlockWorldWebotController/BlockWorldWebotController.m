@@ -146,7 +146,9 @@ classdef BlockWorldWebotController < handle
             % right-hand to left-hand coordinate change (I think).  Also,
             % things in Matlab are defined in millimeters, while Webot is
             % in meters.
-            rotation = (rotation(4)+pi)*[-rotation(1) rotation(3) rotation(2)];
+            %rotAngle = rotation(4);
+            %rotVec   = [-rotation(1) rotation(3) rotation(2)]
+            rotation = (rotation(4))*[-rotation(1) rotation(3) rotation(2)];
             translation = 1000*[-translation(1) translation(3) translation(2)];
             P = Pose(rotation, translation);            
         end
@@ -162,12 +164,17 @@ classdef BlockWorldWebotController < handle
             
             width  = wb_camera_get_width(camera);
             height = wb_camera_get_height(camera);
+            aspect = width/height;
             
-            fov = wb_camera_get_fov(camera);
-            f = width / (2*tan(fov/2));
+            fov_hor = wb_camera_get_fov(camera);
+            fov_ver = fov_hor / aspect;
             
-            calib = struct('fc', [f f], ...
-                'cc', [width height]/2, 'kc', zeros(5,1), 'alpha_c', 0); 
+            fx = width / (2*tan(fov_hor/2));
+            fy = height / (2*tan(fov_ver/2));
+            %fy = fx / aspect;
+            
+            calib = struct('fc', [fy fy], ...
+                'cc', [width height]/2, 'kc', zeros(5,1), 'alpha_c', 0);
         end
     end        
     
