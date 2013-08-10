@@ -35,3 +35,11 @@ matlab.mat
 *.lastbuildstate
 *.idb
 *.ilk
+*.pyc
+*.mexw32
+*.mexw64
+*.mexmac
+*.mexmaci64
+*.ipch
+build/msvc*
+build/xcode*
