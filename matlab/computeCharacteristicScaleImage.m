@@ -72,7 +72,7 @@ for k = 2:numLevels+1
         end
     end
     
-    disp(sprintf('min:%f max:%f', min(DoG(:)), max(DoG(:))));
+%     disp(sprintf('min:%f max:%f', min(DoG(:)), max(DoG(:))));
 
     if DEBUG_DISPLAY
         figureHandle = figure(200+k); imshow(DoG(150:190,260:300)*5);
