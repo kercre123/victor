@@ -29,6 +29,6 @@ if nargin < 4
 end
 
 response = imfilter(imfilter(img_data, fx, ...
-   'same', 'symmetric'), fy, 'same', padMethod);
+   'same', padMethod), fy, 'same', padMethod);
 
 end
