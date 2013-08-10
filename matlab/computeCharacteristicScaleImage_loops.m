@@ -130,10 +130,10 @@ for k = 2:numLevels+1
     end % if k == 2 ... else
     
     if DEBUG_DISPLAY
-        % figureHandle = figure(150+k); imshow(largeDoG*5);
-        figureHandle = figure(100+k); imshow(largeDoG(150:190,260:300)*5);
-        % figureHandle = figure(100+k); subplot(1,3,1); imshow(curPyramidLevel); subplot(1,3,2); imshow(curPyramidLevelBlurred); subplot(1,3,3); imshow(largeDoG*5);
-        % figureHandle = figure(100+k); imshow(curPyramidLevelBlurred);
+        % figureHandle = figure(250+k); imshow(largeDoG*5);
+        figureHandle = figure(200+k); imshow(largeDoG(150:190,260:300)*5);
+        % figureHandle = figure(200+k); subplot(1,3,1); imshow(curPyramidLevel); subplot(1,3,2); imshow(curPyramidLevelBlurred); subplot(1,3,3); imshow(largeDoG*5);
+        % figureHandle = figure(200+k); imshow(curPyramidLevelBlurred);
         set(figureHandle, 'Units', 'normalized', 'Position', [0, 0, 1, 1]) 
     end
 

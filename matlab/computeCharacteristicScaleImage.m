@@ -29,6 +29,7 @@ function [scaleImage, whichScale, imgPyr] = computeCharacteristicScaleImage( ...
 %
 
 DEBUG_DISPLAY = false;
+% DEBUG_DISPLAY = true;
 
 if nargin < 3 || isempty(kernel)
     kernel = [1 4 6 4 1];
@@ -37,6 +38,7 @@ kernel = kernel / sum(kernel); % make sure kernel is normalized
 
 if nargin < 4
     computeDogAtFullSize = false;
+%     computeDogAtFullSize = true;
 end
 
 assert(size(img,3)==1, 'Image should be scalar-valued.');
@@ -75,8 +77,8 @@ for k = 2:numLevels+1
 %     disp(sprintf('min:%f max:%f', min(DoG(:)), max(DoG(:))));
 
     if DEBUG_DISPLAY
-        figureHandle = figure(200+k); imshow(DoG(150:190,260:300)*5);
-    %     figureHandle = figure(200+k); subplot(1,3,1); imshow(imgPyr{k-1}); subplot(1,3,2); imshow(blurred); subplot(1,3,3); imshow(DoG*5);
+%         figureHandle = figure(100+k); imshow(DoG(150:190,260:300)*5);
+        figureHandle = figure(100+k); subplot(1,3,1); imshow(imgPyr{k-1}); subplot(1,3,2); imshow(blurred); subplot(1,3,3); imshow(DoG*5);
         set(figureHandle, 'Units', 'normalized', 'Position', [0, 0, 1, 1]) 
     end
     

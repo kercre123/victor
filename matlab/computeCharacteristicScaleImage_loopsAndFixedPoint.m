@@ -30,21 +30,23 @@ function scaleImage = computeCharacteristicScaleImage_loopsAndFixedPoint( ...
 %
 
 DEBUG_DISPLAY = false;
+% DEBUG_DISPLAY = true;
 
 if nargin < 3
     computeDogAtFullSize = false;
+%     computeDogAtFullSize = true;
 end
 
 assert(size(img,3)==1, 'Image should be scalar-valued.');
 
-img = int16(img);
+img = im2uint8(img);
 
 [nrows,ncols] = size(img);
-scaleImage = img;
-DoG_max = zeros(nrows,ncols);
+scaleImage = uint16(img)*(2^8); % Q8.8
+DoG_max = zeros(nrows,ncols,'uint8');
 
 imgPyramid = cell(1, numLevels+1);
-scaleFactors = 2.^[0:(numLevels)]; %#ok<NBRAK>
+scaleFactors = int32(2.^[0:(numLevels)]); %#ok<NBRAK>
 
 imgPyramid{1} = binomialFilter(img);
 
@@ -52,16 +54,25 @@ for k = 2:numLevels+1
     curPyramidLevel = imgPyramid{k-1};
     curPyramidLevelBlurred = binomialFilter(curPyramidLevel);
 
-    largeDoG = zeros([nrows,ncols]);
+    if DEBUG_DISPLAY
+        if computeDogAtFullSize
+            DoGorig = abs( imresize(double(curPyramidLevelBlurred),[nrows,ncols],'bilinear') - imresize(double(curPyramidLevel),[nrows,ncols],'bilinear') );
+        else
+            DoGorig = abs(double(curPyramidLevelBlurred) - double(curPyramidLevel));
+            DoGorig = imresize(DoGorig, [nrows ncols], 'bilinear');
+        end
+    end
+    
+    largeDoG = zeros([nrows,ncols],'uint16'); % Q8.8
     
     if k == 2
         for y = 1:nrows
             for x = 1:ncols
-                DoG = abs(curPyramidLevelBlurred(y,x) - curPyramidLevel(y,x));
+                DoG = uint16(abs(int32(curPyramidLevelBlurred(y,x)) - int32(curPyramidLevel(y,x)))) * (2^8);
                 largeDoG(y,x) = DoG;
                 if DoG > DoG_max(y,x)
                     DoG_max(y,x) = DoG;
-                    scaleImage(y,x) = curPyramidLevel(y,x);
+                    scaleImage(y,x) = uint16(curPyramidLevel(y,x)) * (2^8); % Q8.0 -> Q8.8
                 end
             end
         end
@@ -69,56 +80,66 @@ for k = 2:numLevels+1
         largeYIndexRange = 1 + [scaleFactors(k-1)/2, nrows-scaleFactors(k-1)/2-1];
         largeXIndexRange = 1 + [scaleFactors(k-1)/2, ncols-scaleFactors(k-1)/2-1];
 
-        alphas = .5 + (0:(scaleFactors(k-1)-1));
+        alphas = int32((2^8)*(.5 + double(0:(scaleFactors(k-1)-1)))); % SQ23.8
+        maxAlphaInteger = int32(scaleFactors(k-1)); % SQ31.0
+        maxAlpha = int32((2^8)*maxAlphaInteger); % SQ23.8
 
+%         disp(sprintf('(scaleFactors(k-1)^2)) = %d', (scaleFactors(k-1)^2)));
+        
         largeY = largeYIndexRange(1);
         for smallY = 1:(size(curPyramidLevel,1)-1)
             for iAlphaY = 1:length(alphas)
                 alphaY = alphas(iAlphaY);
-                alphaYinverse = scaleFactors(k-1) - alphas(iAlphaY);
+                alphaYinverse = maxAlpha - alphas(iAlphaY);
 
                 largeX = largeXIndexRange(1);
 
                 for smallX = 1:(size(curPyramidLevel,2)-1)
                     if computeDogAtFullSize
-                        curPyramidLevel_00 = curPyramidLevel(smallY, smallX);
-                        curPyramidLevel_01 = curPyramidLevel(smallY, smallX+1);
-                        curPyramidLevel_10 = curPyramidLevel(smallY+1, smallX);
-                        curPyramidLevel_11 = curPyramidLevel(smallY+1, smallX+1);
+                        curPyramidLevel_00 = int32(curPyramidLevel(smallY, smallX)); % SQ31.0
+                        curPyramidLevel_01 = int32(curPyramidLevel(smallY, smallX+1)); % SQ31.0
+                        curPyramidLevel_10 = int32(curPyramidLevel(smallY+1, smallX)); % SQ31.0
+                        curPyramidLevel_11 = int32(curPyramidLevel(smallY+1, smallX+1)); % SQ31.0
 
-                        curPyramidLevelBlurred_00 = curPyramidLevelBlurred(smallY, smallX);
-                        curPyramidLevelBlurred_01 = curPyramidLevelBlurred(smallY, smallX+1);
-                        curPyramidLevelBlurred_10 = curPyramidLevelBlurred(smallY+1, smallX);
-                        curPyramidLevelBlurred_11 = curPyramidLevelBlurred(smallY+1, smallX+1);
+                        curPyramidLevelBlurred_00 = int32(curPyramidLevelBlurred(smallY, smallX)); % SQ31.0
+                        curPyramidLevelBlurred_01 = int32(curPyramidLevelBlurred(smallY, smallX+1)); % SQ31.0
+                        curPyramidLevelBlurred_10 = int32(curPyramidLevelBlurred(smallY+1, smallX)); % SQ31.0
+                        curPyramidLevelBlurred_11 = int32(curPyramidLevelBlurred(smallY+1, smallX+1)); % SQ31.0
                     else
-                        curPyramidLevel_00 = curPyramidLevel(smallY, smallX);
-                        curPyramidLevel_01 = curPyramidLevel(smallY, smallX+1);
-                        curPyramidLevel_10 = curPyramidLevel(smallY+1, smallX);
-                        curPyramidLevel_11 = curPyramidLevel(smallY+1, smallX+1);
+                        curPyramidLevel_00 = int32(curPyramidLevel(smallY, smallX)); % SQ31.0
+                        curPyramidLevel_01 = int32(curPyramidLevel(smallY, smallX+1)); % SQ31.0
+                        curPyramidLevel_10 = int32(curPyramidLevel(smallY+1, smallX)); % SQ31.0
+                        curPyramidLevel_11 = int32(curPyramidLevel(smallY+1, smallX+1)); % SQ31.0
                         
-                        DoG_00 = abs(curPyramidLevel(smallY,   smallX)   - curPyramidLevelBlurred(smallY,   smallX));
-                        DoG_01 = abs(curPyramidLevel(smallY,   smallX+1) - curPyramidLevelBlurred(smallY,   smallX+1));
-                        DoG_10 = abs(curPyramidLevel(smallY+1, smallX)   - curPyramidLevelBlurred(smallY+1, smallX));
-                        DoG_11 = abs(curPyramidLevel(smallY+1, smallX+1) - curPyramidLevelBlurred(smallY+1, smallX+1));
+                        DoG_00 = abs(int32(curPyramidLevel(smallY,   smallX))   - int32(curPyramidLevelBlurred(smallY,   smallX))); % SQ31.0
+                        DoG_01 = abs(int32(curPyramidLevel(smallY,   smallX+1)) - int32(curPyramidLevelBlurred(smallY,   smallX+1))); % SQ31.0
+                        DoG_10 = abs(int32(curPyramidLevel(smallY+1, smallX))   - int32(curPyramidLevelBlurred(smallY+1, smallX))); % SQ31.0
+                        DoG_11 = abs(int32(curPyramidLevel(smallY+1, smallX+1)) - int32(curPyramidLevelBlurred(smallY+1, smallX+1))); % SQ31.0
                     end
 
                     for iAlphaX = 1:length(alphas)
                         alphaX = alphas(iAlphaX);
-                        alphaXinverse = scaleFactors(k-1) - alphas(iAlphaX);
+                        alphaXinverse = maxAlpha - alphas(iAlphaX);
 
                         if computeDogAtFullSize
-                            curPyramidLevelInterpolated = interpolate2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse) / (scaleFactors(k-1)^2);
-                            curPyramidLevelBlurredInterpolated = interpolate2d(curPyramidLevelBlurred_00, curPyramidLevelBlurred_01, curPyramidLevelBlurred_10, curPyramidLevelBlurred_11, alphaY, alphaYinverse, alphaX, alphaXinverse) / (scaleFactors(k-1)^2);
-                            DoG = abs(curPyramidLevelInterpolated - curPyramidLevelBlurredInterpolated);
+                            curPyramidLevelInterpolated = interpolate2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse); % SQ15.16
+                            curPyramidLevelBlurredInterpolated = interpolate2d(curPyramidLevelBlurred_00, curPyramidLevelBlurred_01, curPyramidLevelBlurred_10, curPyramidLevelBlurred_11, alphaY, alphaYinverse, alphaX, alphaXinverse); % SQ15.16
+                            DoG = uint16( abs(curPyramidLevelInterpolated - curPyramidLevelBlurredInterpolated)/(maxAlpha^2/(2^8)) ); % (SQ15.16 - SQ15.16) -> Q8.8
                         else
-                            DoG = interpolate2d(DoG_00, DoG_01, DoG_10, DoG_11, alphaY, alphaYinverse, alphaX, alphaXinverse) / (scaleFactors(k-1)^2);
+                            DoG = uint16( interpolate2d(DoG_00, DoG_01, DoG_10, DoG_11, alphaY, alphaYinverse, alphaX, alphaXinverse)/(maxAlpha^2/(2^8)) );
                         end
                         
                         largeDoG(largeY,largeX) = DoG;
 
+%                         if largeY == 219 && largeX == 334
+%                             disp(sprintf('DoGorig(%d,%d) = %f', largeY, largeX, DoGorig(largeY,largeX)));
+%                             disp(sprintf('DoG(%d,%d) = %f', largeY, largeX, double(DoG)/(2^8)));
+% %                             keyboard
+%                         end
+                        
                         if DoG > DoG_max(largeY,largeX)
                             DoG_max(largeY,largeX) = DoG;
-                            curPyramidLevelInterpolated = interpolate2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse) / (scaleFactors(k-1)^2);
+                            curPyramidLevelInterpolated = uint16( interpolate2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse) / (maxAlpha^2/(2^8)) );  % SQ15.16 -> Q8.8
                             scaleImage(largeY,largeX) = curPyramidLevelInterpolated;
                         end
                         
@@ -132,14 +153,14 @@ for k = 2:numLevels+1
     end % if k == 2 ... else
     
     if DEBUG_DISPLAY
-        % figureHandle = figure(150+k); imshow(largeDoG*5);
-        figureHandle = figure(100+k); imshow(largeDoG(150:190,260:300)*5);
-        % figureHandle = figure(100+k); subplot(1,3,1); imshow(curPyramidLevel); subplot(1,3,2); imshow(curPyramidLevelBlurred); subplot(1,3,3); imshow(largeDoG*5);
-        % figureHandle = figure(100+k); imshow(curPyramidLevelBlurred);
+        % figureHandle = figure(350+k); imshow(largeDoG*5);
+%         figureHandle = figure(300+k); imshow(double(largeDoG(150:190,260:300))/255*5);
+        figureHandle = figure(300+k); subplot(1,3,1); imshow(curPyramidLevel); subplot(1,3,2); imshow(curPyramidLevelBlurred); subplot(1,3,3); imshow(double(largeDoG)/(2^8)/255*5);
+        % figureHandle = figure(300+k); imshow(curPyramidLevelBlurred);
         set(figureHandle, 'Units', 'normalized', 'Position', [0, 0, 1, 1]) 
     end
 
-    imgPyramid{k} = imresize_bilinear(curPyramidLevelBlurred, size(curPyramidLevelBlurred)/2);
+    imgPyramid{k} = uint8(imresize_bilinear(curPyramidLevelBlurred, size(curPyramidLevelBlurred)/2)); % TODO: implement fixed point version
 end
 
 end % FUNCTION computeCharacteristicScaleImage()
@@ -152,22 +173,27 @@ function interpolatedPixel = interpolate2d(pixel00, pixel01, pixel10, pixel11, a
 end
 
 function imgFiltered = binomialFilter(img)
-    kernel = int16([1, 4, 6, 4, 1]);
-    kernelSum = sum(kernel);
+    kernelU32 = uint32([1, 4, 6, 4, 1]);
+    kernelSum = uint32(sum(kernelU32));
+    assert(kernelSum == 16);
+    
+    img = uint32(img);
 
-    imgFilteredTmp = zeros(size(img), 'int16');
+    imgFilteredTmp = zeros(size(img), 'uint32');
     for y = 3:(size(img,1)-2)
         for x = 3:(size(img,2)-2)
-            imgFilteredTmp(y,x) = sum(img(y,(x-2):(x+2)) .* kernel);
+            imgFilteredTmp(y,x) = sum(img(y,(x-2):(x+2)) .* kernelU32);
         end
     end
     
-    imgFiltered = zeros(size(img), 'int16');
+    imgFiltered = zeros(size(img), 'uint8');
     for y = 3:(size(img,1)-2)
         for x = 3:(size(img,2)-2)
-            imgFiltered(y,x) = sum(imgFilteredTmp((y-2):(y+2),x) .* kernel') / (kernelSum^2);
+            imgFiltered(y,x) = uint8( sum(imgFilteredTmp((y-2):(y+2),x) .* kernelU32') / (kernelSum^2) );
         end
     end
+    
+%     keyboard
 end
 
 
