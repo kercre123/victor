@@ -71,6 +71,8 @@ for k = 2:numLevels+1
             whichScale(larger) = k-1;
         end
     end
+    
+    disp(sprintf('min:%f max:%f', min(DoG(:)), max(DoG(:))));
 
     if DEBUG_DISPLAY
         figureHandle = figure(200+k); imshow(DoG(150:190,260:300)*5);
@@ -78,7 +80,7 @@ for k = 2:numLevels+1
         set(figureHandle, 'Units', 'normalized', 'Position', [0, 0, 1, 1]) 
     end
     
-    imgPyr{k} = imresize_bilinear(blurred, size(blurred)/2);
+    imgPyr{k} = imresize_bilinear(blurred, floor(size(blurred)/2));
 end
 
 if nargout == 0
