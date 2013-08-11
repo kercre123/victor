@@ -3,8 +3,13 @@
 
 #include <assert.h>
 
-Anki::MemoryStack::MemoryStack(void *buffer, u32 bufferLength) :
-  buffer(buffer), totalBytes(bufferLength), usedBytes(0)
+Anki::MemoryStack::MemoryStack(void *buffer, u32 bufferLength) 
+  : buffer(buffer), totalBytes(bufferLength), usedBytes(0)
+{
+}
+
+Anki::MemoryStack::MemoryStack(const MemoryStack& ms) 
+  : buffer(ms.buffer), totalBytes(ms.totalBytes), usedBytes(ms.usedBytes)
 {
 }
 
@@ -44,11 +49,6 @@ void* Anki::MemoryStack::Allocate(u32 numBytes)
   usedBytes += requestedBytes;
 
   return segmentMemory;
-}
-
-void Anki::MemoryStack::Clear()
-{
-  usedBytes = 0;
 }
 
 bool Anki::MemoryStack::IsConsistent()
@@ -95,16 +95,6 @@ bool Anki::MemoryStack::IsConsistent()
   }
 }
 
-void* Anki::MemoryStack::get_buffer()
-{
-  return buffer;
-}
-
-const void* Anki::MemoryStack::get_buffer() const
-{
-  return buffer;
-}
-
 u32 Anki::MemoryStack::get_totalBytes()
 {
   return totalBytes;
@@ -114,3 +104,22 @@ u32 Anki::MemoryStack::get_usedBytes()
 {
   return usedBytes;
 }
+
+
+// Not sure if these should be supported. But I'm leaving them here for the time being.
+/*
+void Anki::MemoryStack::Clear()
+{
+  usedBytes = 0;
+}
+
+void* Anki::MemoryStack::get_buffer()
+{
+  return buffer;
+}
+
+const void* Anki::MemoryStack::get_buffer() const
+{
+  return buffer;
+}
+*/

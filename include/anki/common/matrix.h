@@ -34,7 +34,7 @@ namespace Anki
 
     // Constructor for a Matrix, pointing to user-allocated MemoryStack
     Matrix(u32 numRows, u32 numCols, MemoryStack &memory)
-    : stride(static_cast<u32>(Anki::RoundUp<size_t>(sizeof(T)*numCols, Anki::MEMORY_ALIGNMENT)))
+      : stride(static_cast<u32>(Anki::RoundUp<size_t>(sizeof(T)*numCols, Anki::MEMORY_ALIGNMENT)))
     {
       initialize(numRows, 
                  numCols,  

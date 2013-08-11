@@ -16,7 +16,7 @@ AnkiMatlabInterface::Matlab matlab(false);
 TEST(AnkiVision, MemoryStack)
 {
   const u32 numBytes = 100;
-  void * const buffer = calloc(numBytes, 1);
+  void * buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
   Anki::MemoryStack ms(buffer, numBytes);
 
@@ -80,6 +80,46 @@ TEST(AnkiVision, MemoryStack)
   }
 
   std::cout << " ";
+
+  free(buffer); buffer = NULL;
+}
+
+u32 CheckMemoryStackUsage(Anki::MemoryStack ms, u32 numBytes)
+{
+  ms.Allocate(numBytes);
+  return ms.get_usedBytes();
+}
+
+
+u32 CheckConstCasting(const Anki::MemoryStack ms, u32 numBytes)
+{
+  // ms.Allocate(1); // Will not compile
+
+  return CheckMemoryStackUsage(ms, numBytes);
+}
+
+TEST(AnkiVision, MemoryStack_call)
+{
+  const u32 numBytes = 100;
+  void * buffer = calloc(numBytes, 1);
+  ASSERT_TRUE(buffer != NULL);
+  Anki::MemoryStack ms(buffer, numBytes);
+
+  ASSERT_TRUE(ms.get_usedBytes() == 0);
+
+  ms.Allocate(16);
+  const u32 originalUsedBytes = ms.get_usedBytes();
+  ASSERT_TRUE(originalUsedBytes >= 28);
+
+  const u32 inFunctionUsedBytes = CheckMemoryStackUsage(ms, 32);
+  ASSERT_TRUE(inFunctionUsedBytes == (originalUsedBytes+48));
+  ASSERT_TRUE(ms.get_usedBytes() == originalUsedBytes);
+
+  const u32 inFunctionUsedBytes2 = CheckConstCasting(ms, 32);
+  ASSERT_TRUE(inFunctionUsedBytes2 == (originalUsedBytes+48));
+  ASSERT_TRUE(ms.get_usedBytes() == originalUsedBytes);
+
+  free(buffer); buffer = NULL;
 }
 
 #if defined(ANKICORETECH_USE_MATLAB)
