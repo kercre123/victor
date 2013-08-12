@@ -78,7 +78,8 @@ for k = 2:numLevels+1
 
     if DEBUG_DISPLAY
 %         figureHandle = figure(100+k); imshow(DoG(150:190,260:300)*5);
-        figureHandle = figure(100+k); subplot(1,3,1); imshow(imgPyr{k-1}); subplot(1,3,2); imshow(blurred); subplot(1,3,3); imshow(DoG*5);
+%         figureHandle = figure(100+k); subplot(2,2,1); imshow(imgPyr{k-1}); subplot(2,2,2); imshow(blurred); subplot(2,2,3); imshow(DoG*5); subplot(2,2,4); imshow(scaleImage);
+        figureHandle = figure(100+k); subplot(2,4,1); imshow(imgPyr{k-1}); subplot(2,4,3); imshow(blurred); subplot(2,4,5); imshow(DoG*5); subplot(2,4,7); imshow(scaleImage);
         set(figureHandle, 'Units', 'normalized', 'Position', [0, 0, 1, 1]) 
     end
     

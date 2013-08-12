@@ -1,6 +1,6 @@
-% function imgResized = imgresize_bilinear(img, newSize)
+% function imgResized = imresize_bilinear(img, newSize)
 %
-% Resizes an imgage uising bilinear interpolation. Unlike Matlab's built-in
+% Resizes an image uising bilinear interpolation. Unlike Matlab's built-in
 % imgresize, 'bilinear' actually is bilinear interpolation, with NaNs for
 % uncomputable values.
 %
@@ -8,7 +8,7 @@
 
 function imgResized = imresize_bilinear(img, newSize)
 
-interpolationMethod = 'linear'; 
+interpolationMethod = 'linear';
 newSize = double(newSize);
 
 % Compute coordinates corresponding to input and transformed coordinates
