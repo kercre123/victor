@@ -53,4 +53,6 @@ markerPose = BlockWorld.blockPoseHelper(robot, B, markers2D);
 % update its' face markers:
 B.pose = markerPose;
 
+this.updateBlockObservation(B.blockType, B.pose);
+
 end % FUNCTION addMarkerAndBlock()

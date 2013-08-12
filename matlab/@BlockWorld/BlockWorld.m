@@ -22,6 +22,7 @@ classdef BlockWorld < handle
         embeddedConversions;
         
         groundTruthPoseFcn;
+        observedPoseFcn;
         
     end % PROPERTIES (get-public, set-protected)
     
@@ -50,6 +51,7 @@ classdef BlockWorld < handle
             EmbeddedConversions = EmbeddedConversionsManager( ...
                 'homographyEstimationType', 'matlab_cp2tform'); 
             GroundTruthPoseFcn = [];
+            ObservedPoseFcn = [];
                         
             parseVarargin(varargin{:});
             
@@ -67,6 +69,7 @@ classdef BlockWorld < handle
             this.embeddedConversions = EmbeddedConversions;
             
             this.groundTruthPoseFcn = GroundTruthPoseFcn;
+            this.observedPoseFcn = ObservedPoseFcn;
             
             this.blockTypeToIndex = containers.Map('KeyType', 'double', ...
                 'ValueType', 'double');
@@ -182,6 +185,19 @@ classdef BlockWorld < handle
                 end
                 
                 P = this.groundTruthPoseFcn(sprintf('Block%d', blockID));
+            end
+        end
+        
+        function updateBlockObservation(this, blockID, pose)
+           if ~isempty(this.observedPoseFcn)
+               blockName = sprintf('Block%dObservation', blockID);
+               this.observedPoseFcn(blockName, pose, 0.0);
+           end
+        end
+        
+        function updateRobotObservation(this, robotName, pose)
+            if ~isempty(this.observedPoseFcn)
+                this.observedPoseFcn(robotName, pose, 0.6);
             end
         end
         

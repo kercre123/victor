@@ -26,4 +26,6 @@ markerPose = BlockWorld.blockPoseHelper(robot, B, markers2D);
 % TODO: Incorporate uncertainty/weighting into this combination/averaging:
 B.pose = mean(markerPose, B.pose);
 
+this.updateBlockObservation(B.blockType, B.pose);
+
 end % FUNCTION addMarkerAndBlock()
