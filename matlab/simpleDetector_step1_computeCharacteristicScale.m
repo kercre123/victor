@@ -17,11 +17,16 @@ G = cell(1,numScales+1);
 if usePyramid
     assert(downsampleFactor == 2, ...
         'Using image pyramid for characteristic scale requires downsampleFactor=2.');
-    
-    keyboard
-    
-    averageImg = computeCharacteristicScaleImage(img, numScales);
-            
+
+    tic
+    if strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_original')
+        averageImg = computeCharacteristicScaleImage(img, numScales);
+    elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_loops')
+        averageImg = computeCharacteristicScaleImage_loops(img, numScales);
+    elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_loopsAndFixedPoint')
+        averageImg = double(computeCharacteristicScaleImage_loopsAndFixedPoint(img, numScales)) / (255 * 2^16);
+    end
+    disp(sprintf('computeCharacteristicScaleImage took %f', toc));
 else % Use a stack of smoothed images, not a pyramid
     
     
