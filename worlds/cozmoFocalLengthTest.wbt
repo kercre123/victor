@@ -493,3 +493,6 @@ DEF Block60 Block1x1 {
     "textures/Block60_Face06.png"
   ]
 }
+DEF Block60Observation Block1x1Observation {
+  blockcolor 1 1 0
+}

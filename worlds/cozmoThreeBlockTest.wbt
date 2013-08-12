@@ -494,6 +494,9 @@ DEF Block60 Block1x1 {
     "textures/Block60_Face06.png"
   ]
 }
+DEF Block60Observation Block1x1Observation {
+
+}
 DEF Block65 Block1x1 {
   translation 0.2 0.03 -0.1
   rotation 0 1 0 0.3927
@@ -517,6 +520,9 @@ DEF Block65 Block1x1 {
     "textures/Block65_Face06.png"
   ]
 }
+DEF Block65Observation Block1x1Observation {
+
+}
 DEF Block70 Block1x1 {
   translation 0.4 0.03 0
   rotation 0 1 0 -0.1309
@@ -539,4 +545,7 @@ DEF Block70 Block1x1 {
   facemarker6 [
     "textures/Block70_Face06.png"
   ]
+}
+DEF Block70Observation Block1x1Observation {
+
 }

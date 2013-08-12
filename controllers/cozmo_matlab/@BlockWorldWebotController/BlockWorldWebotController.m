@@ -176,6 +176,38 @@ classdef BlockWorldWebotController < handle
             calib = struct('fc', [fy fy], ...
                 'cc', [width height]/2, 'kc', zeros(5,1), 'alpha_c', 0);
         end
+        
+        function UpdatePose(~, name, pose, transparency)
+            
+            if nargin < 4
+                transparency = 0.0; % fully visible
+            end
+            
+            node = wb_supervisor_node_get_from_def(name);
+            if isempty(node)
+                error('No such block observation "%s"', name);
+            end
+                        
+            rotField = wb_supervisor_node_get_field(node, 'rotation');
+            assert(~isempty(rotField), ...
+                'Could not find "rotation" field for node "%s".', name);
+            
+            translationField = wb_supervisor_node_get_field(node, 'translation');
+            assert(~isempty(translationField), ...
+                'Could not find "translation" field for node "%s".', name);
+            
+            transparencyField = wb_supervisor_node_get_field(node, 'transparency');
+            assert(~isempty(transparencyField), ...
+                'Could not find "transparency" field for node "%s".', name);
+            
+            wb_supervisor_field_set_sf_rotation(rotField, ...
+                [-pose.axis(1) pose.axis(3) pose.axis(2) pose.angle]);
+            
+            wb_supervisor_field_set_sf_vec3f(translationField, ...
+                [-pose.T(1) pose.T(3) pose.T(2)]/1000);
+            
+            wb_supervisor_field_set_sf_float(transparencyField, transparency);
+        end
     end        
     
 end % CLASSDEF BlockWorldWebotController
