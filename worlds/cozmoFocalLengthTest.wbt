@@ -401,7 +401,7 @@ DEF Cozmo Supervisor {
         rotation 1 0 0 0
         children [
           DEF CAM_HEAD Camera {
-            translation 0 0.028 -0.025
+            translation 0 0.028 -0.03
             rotation 1 0 0 0
             children [
               Transform {
@@ -417,11 +417,12 @@ DEF Cozmo Supervisor {
               }
             ]
             name "cam_head"
+            spherical FALSE
             width 640
             height 480
             fieldOfView 1.5708 # 90 degrees 1.04 # 60 degrees
-            near 0.00001
-            pixelSize 0.25
+            near 0.001
+            pixelSize 0.3
             colorNoise 0.01
           }
           DEF EYE_LEFT Transform {
