@@ -37,13 +37,15 @@ if nargin < 3
 %     computeDogAtFullSize = true;
 end
 
+assert(numLevels <= 8);
+
 assert(size(img,3)==1, 'Image should be scalar-valued.');
 
-img = im2uint8(img);
+img = im2uint8(img); % UQ8.0
 
 [nrows,ncols] = size(img);
-scaleImage = uint16(img)*(2^8); % Q8.8
-DoG_max = zeros(nrows,ncols,'uint8');
+scaleImage = uint16(img)*(2^8); % UQ8.8
+DoG_max = zeros(nrows,ncols,'uint32'); % UQ16.16
 
 imgPyramid = cell(1, numLevels+1);
 scaleFactors = int32(2.^[0:(numLevels)]); %#ok<NBRAK>
@@ -51,8 +53,8 @@ scaleFactors = int32(2.^[0:(numLevels)]); %#ok<NBRAK>
 imgPyramid{1} = binomialFilter(img);
 
 for k = 2:numLevels+1
-    curPyramidLevel = imgPyramid{k-1};
-    curPyramidLevelBlurred = binomialFilter(curPyramidLevel);
+    curPyramidLevel = imgPyramid{k-1}; %UQ8.0
+    curPyramidLevelBlurred = binomialFilter(curPyramidLevel); %UQ8.0
 
     if DEBUG_DISPLAY
         if computeDogAtFullSize
@@ -63,29 +65,26 @@ for k = 2:numLevels+1
         end
     end
     
-    largeDoG = zeros([nrows,ncols],'uint16'); % Q8.8
+    largeDoG = zeros([nrows,ncols],'uint32'); % UQ16.16
     
     if k == 2
         for y = 1:nrows
             for x = 1:ncols
-                DoG = uint16(abs(int32(curPyramidLevelBlurred(y,x)) - int32(curPyramidLevel(y,x)))) * (2^8);
+                DoG = uint32(abs(int32(curPyramidLevelBlurred(y,x)) - int32(curPyramidLevel(y,x)))) * (2^16); % (SQ15.16 - SQ15.16) -> UQ16.16
                 largeDoG(y,x) = DoG;
                 if DoG > DoG_max(y,x)
                     DoG_max(y,x) = DoG;
-                    scaleImage(y,x) = uint16(curPyramidLevel(y,x)) * (2^8); % Q8.0 -> Q8.8
+                    scaleImage(y,x) = uint32(curPyramidLevel(y,x)) * (2^16); % UQ8.0 -> UQ16.16
                 end
             end
         end
     else % if k == 2
-        largeYIndexRange = 1 + [scaleFactors(k-1)/2, nrows-scaleFactors(k-1)/2-1];
-        largeXIndexRange = 1 + [scaleFactors(k-1)/2, ncols-scaleFactors(k-1)/2-1];
+        largeYIndexRange = int32(1 + [scaleFactors(k-1)/2, nrows-scaleFactors(k-1)/2-1]); % SQ31.0
+        largeXIndexRange = int32(1 + [scaleFactors(k-1)/2, ncols-scaleFactors(k-1)/2-1]); % SQ31.0
 
         alphas = int32((2^8)*(.5 + double(0:(scaleFactors(k-1)-1)))); % SQ23.8
-        maxAlphaInteger = int32(scaleFactors(k-1)); % SQ31.0
-        maxAlpha = int32((2^8)*maxAlphaInteger); % SQ23.8
+        maxAlpha = int32((2^8)*scaleFactors(k-1)); % SQ31.0 -> SQ23.8
 
-%         disp(sprintf('(scaleFactors(k-1)^2)) = %d', (scaleFactors(k-1)^2)));
-        
         largeY = largeYIndexRange(1);
         for smallY = 1:(size(curPyramidLevel,1)-1)
             for iAlphaY = 1:length(alphas)
@@ -124,22 +123,22 @@ for k = 2:numLevels+1
                         if computeDogAtFullSize
                             curPyramidLevelInterpolated = interpolate2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse); % SQ15.16
                             curPyramidLevelBlurredInterpolated = interpolate2d(curPyramidLevelBlurred_00, curPyramidLevelBlurred_01, curPyramidLevelBlurred_10, curPyramidLevelBlurred_11, alphaY, alphaYinverse, alphaX, alphaXinverse); % SQ15.16
-                            DoG = uint16( abs(curPyramidLevelInterpolated - curPyramidLevelBlurredInterpolated)/(maxAlpha^2/(2^8)) ); % (SQ15.16 - SQ15.16) -> Q8.8
+                            DoG = uint32( abs(curPyramidLevelInterpolated - curPyramidLevelBlurredInterpolated)/(maxAlpha^2/(2^16)) ); % (SQ?.? - SQ?.?) -> UQ16.16
                         else
-                            DoG = uint16( interpolate2d(DoG_00, DoG_01, DoG_10, DoG_11, alphaY, alphaYinverse, alphaX, alphaXinverse)/(maxAlpha^2/(2^8)) );
+                            DoG = uint32( interpolate2d(DoG_00, DoG_01, DoG_10, DoG_11, alphaY, alphaYinverse, alphaX, alphaXinverse)/(maxAlpha^2/(2^16)) ); % SQ?.? -> UQ16.16
                         end
                         
                         largeDoG(largeY,largeX) = DoG;
-
+                        
 %                         if largeY == 219 && largeX == 334
 %                             disp(sprintf('DoGorig(%d,%d) = %f', largeY, largeX, DoGorig(largeY,largeX)));
-%                             disp(sprintf('DoG(%d,%d) = %f', largeY, largeX, double(DoG)/(2^8)));
-% %                             keyboard
+%                             disp(sprintf('DoG(%d,%d) = %f', largeY, largeX, double(DoG)/(2^16)));
+%                             keyboard
 %                         end
                         
                         if DoG > DoG_max(largeY,largeX)
                             DoG_max(largeY,largeX) = DoG;
-                            curPyramidLevelInterpolated = uint16( interpolate2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse) / (maxAlpha^2/(2^8)) );  % SQ15.16 -> Q8.8
+                            curPyramidLevelInterpolated = uint32( interpolate2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse) / (maxAlpha^2) );  % SQ?.? -> UQ16.16
                             scaleImage(largeY,largeX) = curPyramidLevelInterpolated;
                         end
                         
@@ -155,7 +154,7 @@ for k = 2:numLevels+1
     if DEBUG_DISPLAY
         % figureHandle = figure(350+k); imshow(largeDoG*5);
 %         figureHandle = figure(300+k); imshow(double(largeDoG(150:190,260:300))/255*5);
-        figureHandle = figure(300+k); subplot(1,3,1); imshow(curPyramidLevel); subplot(1,3,2); imshow(curPyramidLevelBlurred); subplot(1,3,3); imshow(double(largeDoG)/(2^8)/255*5);
+        figureHandle = figure(300+k); subplot(1,3,1); imshow(curPyramidLevel); subplot(1,3,2); imshow(curPyramidLevelBlurred); subplot(1,3,3); imshow(double(largeDoG)/(2^16)/255*5);
         % figureHandle = figure(300+k); imshow(curPyramidLevelBlurred);
         set(figureHandle, 'Units', 'normalized', 'Position', [0, 0, 1, 1]) 
     end
@@ -165,6 +164,8 @@ end
 
 end % FUNCTION computeCharacteristicScaleImage()
 
+% pixel* are UQ8.0
+% alpha* are UQ?.? depending on the level of the pyramid
 function interpolatedPixel = interpolate2d(pixel00, pixel01, pixel10, pixel11, alphaY, alphaYinverse, alphaX, alphaXinverse)
     interpolatedTop = alphaXinverse*pixel00 + alphaX*pixel01;
     interpolatedBottom = alphaXinverse*pixel10 + alphaX*pixel11;
@@ -172,6 +173,8 @@ function interpolatedPixel = interpolate2d(pixel00, pixel01, pixel10, pixel11, a
     interpolatedPixel = alphaYinverse*interpolatedTop + alphaY*interpolatedBottom;
 end
 
+% img is UQ8.0
+% imgFiltered is UQ8.0
 function imgFiltered = binomialFilter(img)
     kernelU32 = uint32([1, 4, 6, 4, 1]);
     kernelSum = uint32(sum(kernelU32));
