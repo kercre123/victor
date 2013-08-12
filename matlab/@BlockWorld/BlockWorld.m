@@ -165,8 +165,10 @@ classdef BlockWorld < handle
                 P = this.groundTruthPoseFcn(robotName);
                 
                 if strcmp(this.robots{1}.matCamera.deviceType, 'webot')
-                    % The Webot robot is defined rotated 180 degrees (?)
-                    P = Pose([-1 0 0; 0 -1 0; 0 0 1]*P.Rmat, P.T);
+                    % The Webot robot is defined rotated 180 degrees (?),
+                    % and the Z origin is in the middle of the robot
+                    % instead of being on the ground as in BlockWorld
+                    P = Pose([-1 0 0; 0 -1 0; 0 0 1]*P.Rmat, P.T - [0;0;15]);
                 end
             end
         end

@@ -91,7 +91,7 @@ classdef Robot < handle
             % From robot to camera frame:
             % Rotation 90 degrees around x axis:
             Rrc = [1 0 0; 0 0 1; 0 -1 0];
-            Trc = [0; this.appearance.BodyLength/2; 28+this.appearance.BodyHeight/2];
+            Trc = [0; 30; 43];
                 %this.appearance.BodyLength/2; ...
                 %this.appearance.BodyHeight + this.appearance.EyeRadius];
         
