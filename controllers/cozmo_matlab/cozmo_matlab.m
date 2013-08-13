@@ -10,9 +10,14 @@
 %desktop;
 %keyboard;
 
-doProfile = true;
+useMatlabDisplay = true;
+doProfile = false;
 
 if doProfile
+    if ~useMatlabDisplay
+        warning(['Profiling information will probably not save ' ...
+            'successfully if useMatlabDisplay = false.']);
+    end
     profile on
 end
 
@@ -39,15 +44,19 @@ while wb_robot_step(blockWorldController.TIME_STEP) ~= -1
     done = blockWorldController.ControlCozmo();
     
     blockWorld.update();
-    blockWorld.draw();
     
-    if done 
-        if doProfile
-            profile off
-            profsave(profile('info'),'~/temp/SimulatedBlockWorldProfile')
-        end
+    if useMatlabDisplay
+        blockWorld.draw('drawWorld', false, 'drawReprojection', false, ...
+            'drawOverheadMap', true);
         
-        break;
+        if done
+            if doProfile
+                profile off
+                profsave(profile('info'),'~/temp/SimulatedBlockWorldProfile')
+            end
+            
+            break;
+        end
     end
 
 end

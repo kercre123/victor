@@ -423,7 +423,7 @@ DEF Cozmo Supervisor {
             height 480
             fieldOfView 1.5708 # 90 degrees 1.04 # 60 degrees
             near 0.001
-            pixelSize 0.3
+            pixelSize 0.5
             colorNoise 0.01
           }
           DEF EYE_LEFT Transform {

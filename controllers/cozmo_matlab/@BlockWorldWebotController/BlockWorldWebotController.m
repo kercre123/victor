@@ -185,7 +185,7 @@ classdef BlockWorldWebotController < handle
             
             node = wb_supervisor_node_get_from_def(name);
             if isempty(node)
-                error('No such block observation "%s"', name);
+                error('No node named "%s"', name);
             end
                         
             rotField = wb_supervisor_node_get_field(node, 'rotation');
