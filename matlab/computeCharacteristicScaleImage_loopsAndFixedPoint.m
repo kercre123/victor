@@ -52,8 +52,8 @@ scaleFactors = int32(2.^[0:(numLevels)]); %#ok<NBRAK>
 
 imgPyramid{1} = binomialFilter(img);
 
-for k = 2:numLevels+1
-    curPyramidLevel = imgPyramid{k-1}; %UQ8.0
+for pyramidLevel = 2:numLevels+1
+    curPyramidLevel = imgPyramid{pyramidLevel-1}; %UQ8.0
     curPyramidLevelBlurred = binomialFilter(curPyramidLevel); %UQ8.0
 
     if DEBUG_DISPLAY
@@ -67,7 +67,7 @@ for k = 2:numLevels+1
     
     largeDoG = zeros([nrows,ncols],'uint32'); % UQ16.16
     
-    if k == 2
+    if pyramidLevel == 2
         for y = 1:nrows
             for x = 1:ncols
                 DoG = uint32(abs(int32(curPyramidLevelBlurred(y,x)) - int32(curPyramidLevel(y,x)))) * (2^16); % (SQ15.16 - SQ15.16) -> UQ16.16
@@ -85,12 +85,12 @@ for k = 2:numLevels+1
             end
         end
 %         keyboard
-    elseif k <= 5 % if k == 2
-        largeYIndexRange = int32(1 + [scaleFactors(k-1)/2, nrows-scaleFactors(k-1)/2-1]); % SQ31.0
-        largeXIndexRange = int32(1 + [scaleFactors(k-1)/2, ncols-scaleFactors(k-1)/2-1]); % SQ31.0
+    elseif pyramidLevel <= 5 % if pyramidLevel == 2
+        largeYIndexRange = int32(1 + [scaleFactors(pyramidLevel-1)/2, nrows-scaleFactors(pyramidLevel-1)/2-1]); % SQ31.0
+        largeXIndexRange = int32(1 + [scaleFactors(pyramidLevel-1)/2, ncols-scaleFactors(pyramidLevel-1)/2-1]); % SQ31.0
 
-        alphas = int32((2^8)*(.5 + double(0:(scaleFactors(k-1)-1)))); % SQ23.8
-        maxAlpha = int32((2^8)*scaleFactors(k-1)); % SQ31.0 -> SQ23.8
+        alphas = int32((2^8)*(.5 + double(0:(scaleFactors(pyramidLevel-1)-1)))); % SQ23.8
+        maxAlpha = int32((2^8)*scaleFactors(pyramidLevel-1)); % SQ31.0 -> SQ23.8
 
         largeY = largeYIndexRange(1);
         for smallY = 1:(size(curPyramidLevel,1)-1)
@@ -156,12 +156,12 @@ for k = 2:numLevels+1
                 largeY = largeY + 1;
             end % for iAlphaY = 1:length(alphas)
         end % for smallY = 1:(size(curPyramidLevel,1)-1)
-    else % if k == 2 ... elseif k <= 5
-        largeYIndexRange = int32(1 + [scaleFactors(k-1)/2, nrows-scaleFactors(k-1)/2-1]); % SQ31.0
-        largeXIndexRange = int32(1 + [scaleFactors(k-1)/2, ncols-scaleFactors(k-1)/2-1]); % SQ31.0
+    else % if pyramidLevel == 2 ... elseif pyramidLevel <= 5
+        largeYIndexRange = int32(1 + [scaleFactors(pyramidLevel-1)/2, nrows-scaleFactors(pyramidLevel-1)/2-1]); % SQ31.0
+        largeXIndexRange = int32(1 + [scaleFactors(pyramidLevel-1)/2, ncols-scaleFactors(pyramidLevel-1)/2-1]); % SQ31.0
 
-        alphas = int64((2^8)*(.5 + double(0:(scaleFactors(k-1)-1)))); % SQ55.8
-        maxAlpha = int64((2^8)*scaleFactors(k-1)); % SQ31.0 -> SQ55.8
+        alphas = int64((2^8)*(.5 + double(0:(scaleFactors(pyramidLevel-1)-1)))); % SQ55.8
+        maxAlpha = int64((2^8)*scaleFactors(pyramidLevel-1)); % SQ31.0 -> SQ55.8
 
         largeY = largeYIndexRange(1);
         for smallY = 1:(size(curPyramidLevel,1)-1)
@@ -230,17 +230,21 @@ for k = 2:numLevels+1
     end % if k == 2 ... else
     
     if DEBUG_DISPLAY
-%         figureHandle = figure(350+k); imshow(double(largeDoG)/(2^16)/255*5);
-%         figureHandle = figure(300+k); subplot(2,2,1); imshow(curPyramidLevel); subplot(2,2,2); imshow(curPyramidLevelBlurred); subplot(2,2,3); imshow(double(largeDoG)/(2^16)/255*5); subplot(2,2,4); imshow(double(scaleImage)/(2^16));
-        figureHandle = figure(100+k); subplot(2,4,2); imshow(curPyramidLevel); subplot(2,4,4); imshow(curPyramidLevelBlurred); subplot(2,4,6); imshow(double(largeDoG)/(2^16)/255*5); subplot(2,4,8); imshow(double(scaleImage)/(255*2^16));
+%         figureHandle = figure(350+pyramidLevel); imshow(double(largeDoG)/(2^16)/255*5);
+%         figureHandle = figure(300+pyramidLevel); subplot(2,2,1); imshow(curPyramidLevel); subplot(2,2,2); imshow(curPyramidLevelBlurred); subplot(2,2,3); imshow(double(largeDoG)/(2^16)/255*5); subplot(2,2,4); imshow(double(scaleImage)/(2^16));
+        figureHandle = figure(100+pyramidLevel); subplot(2,4,2); imshow(curPyramidLevel); subplot(2,4,4); imshow(curPyramidLevelBlurred); subplot(2,4,6); imshow(double(largeDoG)/(2^16)/255*5); subplot(2,4,8); imshow(double(scaleImage)/(255*2^16));
 
-        % figureHandle = figure(300+k); imshow(curPyramidLevelBlurred);
-        set(figureHandle, 'Units', 'normalized', 'Position', [0, 0, 1, 1]) 
+        % figureHandle = figure(300+pyramidLevel); imshow(curPyramidLevelBlurred);
+%         set(figureHandle, 'Units', 'normalized', 'Position', [0, 0, 1, 1]) 
+        jFig = get(handle(figureHandle), 'JavaFrame'); 
+        jFig.setMaximized(true);
         pause(.1);
     end
 
-    %imgPyramid{k} = uint8(imresize_bilinear(curPyramidLevelBlurred, size(curPyramidLevelBlurred)/2)); % TODO: implement fixed point version
-    imgPyramid{k} = uint8(downsample_fixedPoint(curPyramidLevelBlurred, 2));
+    %imgPyramid{pyramidLevel} = uint8(imresize_bilinear(curPyramidLevelBlurred, size(curPyramidLevelBlurred)/2)); % TODO: implement fixed point version
+    imgPyramid{pyramidLevel} = uint8(downsample_fixedPoint(curPyramidLevelBlurred, 2));
+    
+%     keyboard;
 end
 
 end % FUNCTION computeCharacteristicScaleImage()
