@@ -85,6 +85,7 @@ if drawOverheadMap
             end
         end % FOR each robot
         grid(AxesMap, 'on');
+        axis(AxesMap, 'equal');
     else
         h_estimatedPath = findobj(AxesMap, 'Tag', 'EstimatedPath');
         
