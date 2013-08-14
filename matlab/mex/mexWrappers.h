@@ -7,9 +7,15 @@
 #include <sstream>
 
 #define USE_OPENCV 1
+#define USE_ANKI_CORE_LIBRARIES 1
 
 #if USE_OPENCV
 #include "opencv2/core/core.hpp"
+#endif
+
+#if USE_ANKI_CORE_LIBRARIES
+#include "anki/common.h"
+#include "anki/vision.h"
 #endif
 
 #ifndef _NDEBUG
@@ -589,7 +595,64 @@ template <class T> std::vector<cv::Point_<T> > mxArray2CvPointVector(const mxArr
   return points;
 }
 
-#endif
+#endif // #if USE_OPENCV
 
+#ifdef USE_ANKI_CORE_LIBRARIES
+template <class T> void mxArray2AnkiMatrix(const mxArray *array, Anki::Matrix<T> &mat)
+{
+  const int npixels = mat.size(0)*mat.size(1);
+  const int nrows = mat.get_size(0);
+  const int ncols = mat.get_size(1);
 
-#endif
+  const T * const matlabMatrixStartPointer = (const T *) mxGetData(array);
+
+  const mwSize numMatlabElements = mxGetNumberOfElements(array);
+
+  if(numMatlabElements != npixels) {
+    printf("Matlab array has a different number of elements than the Anki Matrix (%d != %d)\n", numMatlabElements, npixels);
+    return;
+  }
+  
+  // TODO: check if the type is correct
+
+  for(u32 y=0; y<nrows; ++y) {
+    T * const ankiMatrix_rowPointer   = mat.Pointer(y, 0);
+    const T * const matlabMatrix_rowPointer = matlabMatrixStartPointer + y*ncols;
+
+    for(u32 x=0; x<ncols; ++x) {
+        ankiMatrix_rowPointer[x] = matlabMatrix_rowPointer[x];
+    }
+  }
+}
+
+template <class T> Anki::Matrix<T> mxArray2AnkiMatrix(const mxArray *array)
+{
+  const T * const matlabMatrixStartPointer = (const T *) mxGetData(array);
+
+  const mwSize numMatlabElements = mxGetNumberOfElements(array);
+  const mwSize numDimensions = mxGetNumberOfDimensions(array);
+  const mwSize *dimensions = mxGetDimensions(array);
+
+  if(numDimensions != 2) {
+    printf("Matlab array must be 2D\n");
+    Anki::Matrix<T> ankiMatrix(0, 0, NULL, 0);
+    return ankiMatrix;
+  }
+  
+  // TODO: check if the type is correct
+  
+  Anki::Matrix<T> ankiMatrix = Anki::Matrix<u8>::AllocateMatrixFromHeap(dimensions[0], dimensions[1]);
+
+  for(s32 y=0; y<dimensions[0]; ++y) {
+    T * const ankiMatrix_rowPointer = ankiMatrix.Pointer(y, 0);
+    
+    for(s32 x=0; x<dimensions[1]; ++x) {
+        ankiMatrix_rowPointer[x] = *(matlabMatrixStartPointer + x*dimensions[0] + y);
+    }
+  }
+  
+  return ankiMatrix;
+}
+#endif // #ifdef USE_ANKI_CORE_LIBRARIES
+
+#endif // #ifndef MEXWRAPPERS_H

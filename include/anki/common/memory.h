@@ -37,9 +37,10 @@ public:
 
   u32 get_totalBytes();
   u32 get_usedBytes();
-    
+  
+  void* get_buffer();  
+
   // Probably these should not be used?
-  // void* get_buffer();
   // const void* get_buffer() const;
   // void Clear(); // Reset usedBytes to zero 
 

@@ -105,17 +105,16 @@ u32 Anki::MemoryStack::get_usedBytes()
   return usedBytes;
 }
 
+void* Anki::MemoryStack::get_buffer()
+{
+  return buffer;
+}
 
 // Not sure if these should be supported. But I'm leaving them here for the time being.
 /*
 void Anki::MemoryStack::Clear()
 {
   usedBytes = 0;
-}
-
-void* Anki::MemoryStack::get_buffer()
-{
-  return buffer;
 }
 
 const void* Anki::MemoryStack::get_buffer() const

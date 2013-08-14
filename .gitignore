@@ -41,5 +41,6 @@ matlab.mat
 *.mexmac
 *.mexmaci64
 *.ipch
+*.asv
 build/msvc*
 build/xcode*
