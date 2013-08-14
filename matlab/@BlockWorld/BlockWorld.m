@@ -1,8 +1,8 @@
 classdef BlockWorld < handle
     
     properties(GetAccess = 'public', Constant = true)
-        MaxBlocks = 256;  % 8 bits
-        MaxFaces  = 16;   % 4 bits
+        MaxBlockTypes = 256;  % 8 bits
+        MaxFaces      = 16;   % 4 bits
     end
     
     properties(GetAccess = 'public', SetAccess = 'protected')
@@ -22,7 +22,8 @@ classdef BlockWorld < handle
         embeddedConversions;
         
         groundTruthPoseFcn;
-        observedPoseFcn;
+        updateObsBlockPoseFcn;
+        updateObsRobotPoseFcn;
         
     end % PROPERTIES (get-public, set-protected)
     
@@ -51,7 +52,8 @@ classdef BlockWorld < handle
             EmbeddedConversions = EmbeddedConversionsManager( ...
                 'homographyEstimationType', 'matlab_cp2tform'); 
             GroundTruthPoseFcn = [];
-            ObservedPoseFcn = [];
+            UpdateObservedRobotPoseFcn = [];
+            UpdateObservedBlockPoseFcn = [];
                         
             parseVarargin(varargin{:});
             
@@ -63,13 +65,15 @@ classdef BlockWorld < handle
             this.matSize = MatSize;
             this.zDirection = ZDirection;
             
-            this.blocks = {};
+            this.blocks = cell(1, BlockWorld.MaxBlockTypes);
             this.allMarkers3D = {};
             
             this.embeddedConversions = EmbeddedConversions;
             
             this.groundTruthPoseFcn = GroundTruthPoseFcn;
-            this.observedPoseFcn = ObservedPoseFcn;
+            
+            this.updateObsBlockPoseFcn = UpdateObservedBlockPoseFcn;
+            this.updateObsRobotPoseFcn = UpdateObservedRobotPoseFcn;
             
             this.blockTypeToIndex = containers.Map('KeyType', 'double', ...
                 'ValueType', 'double');
@@ -153,21 +157,13 @@ classdef BlockWorld < handle
             index = this.blockTypeToIndex(blockType);
         end
         
-        function B = getBlock(this, blockType)
-            if isKey(this.blockTypeToIndex, blockType)
-                B = this.blocks{this.blockTypeToIndex(blockType)};
-            else
-                B = [];
-            end
-        end
-        
         function P = getGroundTruthRobotPose(this, robotName)
             if isempty(this.groundTruthPoseFcn)
                 P = [];
             else
                 P = this.groundTruthPoseFcn(robotName);
                 
-                if strcmp(this.robots{1}.matCamera.deviceType, 'webot')
+                if strcmp(this.robots{1}.camera.deviceType, 'webot')
                     % The Webot robot is defined rotated 180 degrees (?),
                     % and the Z origin is in the middle of the robot
                     % instead of being on the ground as in BlockWorld
@@ -188,24 +184,23 @@ classdef BlockWorld < handle
             end
         end
         
-        function updateBlockObservation(this, blockID, pose)
-           if ~isempty(this.observedPoseFcn)
-               blockName = sprintf('Block%dObservation', blockID);
-               this.observedPoseFcn(blockName, pose, 0.0);
+        function updateObsBlockPose(this, blockID, pose)
+           if ~isempty(this.updateObsBlockPoseFcn)
+               this.updateObsBlockPoseFcn(blockID, pose, 0.0);
            end
         end
         
-        function updateRobotObservation(this, robotName, pose)
-            if ~isempty(this.observedPoseFcn)
-                this.observedPoseFcn(robotName, pose, 0.6);
+        function updateObsRobotPose(this, robotName, pose)
+            if ~isempty(this.updateObsRobotPoseFcn)
+                this.updateObsRobotPoseFcn(robotName, pose, 0.6);
             end
         end
         
     end % METHODS (public)
     
-    methods(Static = true, Access = 'protected')
+    methods(Static = true, Access = 'public')
         
-        markerPose = blockPoseHelper(robot, B, markers2D);
+        markerPose = computeBlockPose(robot, B, markers2D);
         
     end
     
@@ -216,7 +211,7 @@ classdef BlockWorld < handle
         end
         
         function N = get.numBlocks(this)
-            N = length(this.blocks);
+            N = sum(cellfun(@length, this.blocks));
         end
         
         function N = get.numRobots(this)

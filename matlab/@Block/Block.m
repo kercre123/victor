@@ -7,6 +7,7 @@ classdef Block < handle
         faceTypeToIndex;
         
         model;
+        dims;
         
         color;
         handle;
@@ -16,6 +17,7 @@ classdef Block < handle
             Dependent = true)
         
         origin;
+        mindim;
         numMarkers;        
     end
     
@@ -87,6 +89,10 @@ classdef Block < handle
                 M = this.markers{i};
                 M.pose = this.poseProtected;
             end
+        end
+        
+        function d = get.mindim(this)
+            d = min(this.dims);
         end
         
     end % METHODS get/set for Dependent Properties
