@@ -57,6 +57,15 @@ classdef BlockWorldWebotController < handle
         pitch_angle = 0;
         lift_angle  = BlockWorldWebotController.LIFT_CENTER;
         locked      = false;
+        
+        % World Nodes
+        rootNode;
+        sceneNodes;
+        numSceneNodes;
+        
+        blockNodes;
+        robotNodes;
+        
     end
     
     methods
@@ -104,6 +113,83 @@ classdef BlockWorldWebotController < handle
             %Update Keyboard every 0.1 seconds
             wb_robot_keyboard_enable(this.TIME_STEP);
             
+            this.rootNode = wb_supervisor_node_get_root();
+            this.sceneNodes = wb_supervisor_node_get_field(this.rootNode, 'children');
+            this.numSceneNodes = wb_supervisor_field_get_count(this.sceneNodes);
+                
+            % Populate lists of block/robot nodes for later use:
+            this.blockNodes = containers.Map('keyType', 'uint32', 'ValueType', 'any');
+              
+            for i_node = 1:this.numSceneNodes
+                
+                sceneObject = wb_supervisor_field_get_mf_node(this.sceneNodes, i_node-1);
+                nameField = wb_supervisor_node_get_field(sceneObject, 'name');
+                if ~nameField.isNull
+                    objName = wb_supervisor_field_get_sf_string(nameField);
+                    
+                    if ~isempty(objName) 
+                        if strncmp(objName, 'Block', 5)
+                            blockID = str2double(objName(6:8));
+                            assert(blockID > 0 && ...
+                                blockID <= BlockWorld.MaxBlockTypes, ...
+                                'Block node has ID out of range.');
+                            %{                            
+                            % Find the block's child that is an observation
+                            blockChildren = wb_supervisor_node_get_field(sceneObject, 'children');
+                            numChildren = wb_supervisor_field_get_count(blockChildren);
+                            observationNode = [];
+                            for i_child = 1:numChildren
+                                blockChild = wb_supervisor_field_get_mf_node(blockChildren, i_child-1);
+                                childNameField = wb_supervisor_node_get_field(blockChild, 'name');
+                                if ~childNameField.isNull
+                                    childName = wb_supervisor_field_get_sf_string(childNameField);
+                                    
+                                    if strcmp(childName, 'Observation')
+                                        observationNode = blockChild;
+                                        break;
+                                    end
+                                end
+                                        
+                            end % FOR each block child
+                            
+                            assert(~isempty(observationNode), ...
+                                'Could not find Observation Node child of Block %d', ...
+                                blockID);
+                            
+                            blockStruct = struct( ...
+                                    'node', sceneObject, ...
+                                    'pose', GetNodePose(this, sceneObject), ...
+                                    'obsNode', observationNode, ...
+                                    'obsPose', GetNodePose(this, observationNode));
+                                
+                            if isKey(this.blockNodes, blockID)
+                                temp = this.blockNodes(blockID);
+                                temp(end+1) = blockStruct; %#ok<AGROW>
+                                this.blockNodes(blockID) = temp;
+                            else
+                                this.blockNodes(blockID) = blockStruct;
+                            end
+                            %}
+                                if isKey(this.blockNodes, blockID)
+                                    this.blockNodes(blockID) = ...
+                                        [this.blockNodes(blockID) {sceneObject}];
+                                else
+                                    this.blockNodes(blockID) = {sceneObject};
+                                end
+                                    
+                        elseif strncmp(objName, 'Cozmo', 5)
+                            this.robotNodes{end+1} = sceneObject;
+                        end % IF name is Block or Cozmo
+                        
+                    end % IF object name isn't empty
+                       
+                end % IF nameField isn't null
+                
+            end % FOR each scene node
+            
+            fprintf('Found %d block node types and %d robot nodes in the world.\n', ...
+                this.blockNodes.Count, length(this.robotNodes));
+            
         end % CONSTRUCTOR BlockWorldWebotController()
         
         
@@ -117,42 +203,7 @@ classdef BlockWorldWebotController < handle
             wb_motor_set_velocity(this.wheels(1), -left);
             wb_motor_set_velocity(this.wheels(2), -right);
         end
-              
-        function P = GetGroundTruthPose(~, name)
-            assert(~isempty(name), ...
-                'Cannot request Pose for an empty name string.');
-            
-            node = wb_supervisor_node_get_from_def(name);
-            if isempty(node)
-                error('No such node "%s"', name);
-            end
-           
-            rotField = wb_supervisor_node_get_field(node, 'rotation');
-            assert(~isempty(rotField), ...
-                'Could not find "rotation" field for node named "%s".', name);
-            rotation = wb_supervisor_field_get_sf_rotation(rotField);
-            assert(isvector(rotation) && length(rotation)==4, ...
-                'Expecting 4-vector for rotation of node named "%s".', name);
-            
-            transField = wb_supervisor_node_get_field(node, 'translation');
-            assert(~isempty(transField), ...
-                'Could not find "translation" field for node named "%s".', name);
-            translation = wb_supervisor_field_get_sf_vec3f(transField);
-            assert(isvector(translation) && length(translation)==3, ...
-                'Expecting 3-vector for translation of node named "%s".', name);            
-            
-            % Note the coordinate change here: Webot has y pointing up,
-            % while Matlab has z pointing up.  That swap induces a
-            % right-hand to left-hand coordinate change (I think).  Also,
-            % things in Matlab are defined in millimeters, while Webot is
-            % in meters.
-            %rotAngle = rotation(4);
-            %rotVec   = [-rotation(1) rotation(3) rotation(2)]
-            rotation = (rotation(4))*[-rotation(1) rotation(3) rotation(2)];
-            translation = 1000*[-translation(1) translation(3) translation(2)];
-            P = Pose(rotation, translation);            
-        end
-        
+       
         function calib = GetCalibrationStruct(this, whichCam)
             if nargin < 2
                 whichCam = 'cam_head';
@@ -169,7 +220,7 @@ classdef BlockWorldWebotController < handle
             fov_hor = wb_camera_get_fov(camera);
             fov_ver = fov_hor / aspect;
             
-            fx = width / (2*tan(fov_hor/2));
+            %fx = width / (2*tan(fov_hor/2));
             fy = height / (2*tan(fov_ver/2));
             %fy = fx / aspect;
             
@@ -177,37 +228,7 @@ classdef BlockWorldWebotController < handle
                 'cc', [width height]/2, 'kc', zeros(5,1), 'alpha_c', 0);
         end
         
-        function UpdatePose(~, name, pose, transparency)
-            
-            if nargin < 4
-                transparency = 0.0; % fully visible
-            end
-            
-            node = wb_supervisor_node_get_from_def(name);
-            if isempty(node)
-                error('No node named "%s"', name);
-            end
-                        
-            rotField = wb_supervisor_node_get_field(node, 'rotation');
-            assert(~isempty(rotField), ...
-                'Could not find "rotation" field for node "%s".', name);
-            
-            translationField = wb_supervisor_node_get_field(node, 'translation');
-            assert(~isempty(translationField), ...
-                'Could not find "translation" field for node "%s".', name);
-            
-            transparencyField = wb_supervisor_node_get_field(node, 'transparency');
-            assert(~isempty(transparencyField), ...
-                'Could not find "transparency" field for node "%s".', name);
-            
-            wb_supervisor_field_set_sf_rotation(rotField, ...
-                [-pose.axis(1) pose.axis(3) pose.axis(2) pose.angle]);
-            
-            wb_supervisor_field_set_sf_vec3f(translationField, ...
-                [-pose.T(1) pose.T(3) pose.T(2)]/1000);
-            
-            wb_supervisor_field_set_sf_float(transparencyField, transparency);
-        end
+        
     end        
     
 end % CLASSDEF BlockWorldWebotController

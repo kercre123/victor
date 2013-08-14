@@ -1,5 +1,6 @@
 #A 1x1 block *Observation* prototype,
 PROTO Block1x1Observation [
+  field SFString name "Block00Observation"
   field SFVec3f translation 0 0.03 0
   field SFRotation rotation 0 1 0 0
   field SFColor blockcolor 1 1 0
@@ -7,6 +8,7 @@ PROTO Block1x1Observation [
 ]
 {
 Solid {
+    name IS name
     translation IS translation
     rotation IS rotation
     children [

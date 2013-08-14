@@ -21,10 +21,13 @@ if doProfile
     profile on
 end
 
-blockWorldController = BlockWorldWebotController();
-
+% Set up paths for BlockWorld to work (do this before creating the
+% BlockWorldWebotController object, which may rely on things in the Cozmo
+% path)
 addpath ../../../products-cozmo/matlab
-initCozmo; % Set up paths for BlockWorld to work
+initCozmo; 
+
+blockWorldController = BlockWorldWebotController();
 
 blockWorld = BlockWorld('CameraType', 'webot', ...
     'CameraDevice', blockWorldController.cam_head, ...
@@ -32,8 +35,9 @@ blockWorld = BlockWorld('CameraType', 'webot', ...
     'MatCameraDevice', blockWorldController.cam_down, ...
     'MatCameraCalibration', blockWorldController.GetCalibrationStruct('cam_down'), ...
     'HasMat', true, 'ZDirection', 'down', ...
-    'GroundTruthPoseFcn', @(name)GetGroundTruthPose(blockWorldController,name), ...
-    'ObservedPoseFcn', @(name,pose,trans)UpdatePose(blockWorldController,name,pose,trans));
+    'GroundTruthPoseFcn', @(name)GetNodePose(blockWorldController,name), ...
+    'ObservedPoseFcn', @(blockID,pose,trans)UpdateClosestBlockObservation(blockWorldController,blockID,pose,trans));
+% 'ObservedPoseFcn', @(name,pose,trans)SetNodePose(blockWorldController,name,pose,trans));
 
 % main loop:
 % perform simulation steps of TIME_STEP milliseconds
