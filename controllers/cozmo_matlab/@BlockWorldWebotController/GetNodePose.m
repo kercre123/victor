@@ -1,9 +1,16 @@
-function P = GetNodePose(~, node)
+function P = GetNodePose(this, node)
 % Get a Pose object for a node with a specified name.
 
 assert(~isempty(node), 'Cannot GetNodePose for an empty name/node.');
-assert(~ischar(node), 'GetNodePose no longer takes a string name.');
 
+if ischar(node)
+    name = node;
+    if ~isKey(this.nameToNodeLUT, name)
+        error('No node named "%s" in this world.', name);
+    end
+    node = this.nameToNodeLUT(name);
+end
+    
 rotField = wb_supervisor_node_get_field(node, 'rotation');
 assert(~rotField.isNull, ...
     'Could not find "rotation" field for node named "%s".', node);

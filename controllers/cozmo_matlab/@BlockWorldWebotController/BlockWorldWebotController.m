@@ -66,6 +66,7 @@ classdef BlockWorldWebotController < handle
         blockNodes;
         robotNodes;
         
+        nameToNodeLUT;
     end
     
     methods
@@ -103,23 +104,14 @@ classdef BlockWorldWebotController < handle
             % activate them.
             wb_connector_enable_presence(this.con_lift, this.TIME_STEP);
             
-            fprintf('Drive: arrows\n');
-            fprintf('Lift up/down: a/z\n');
-            fprintf('Lift presets: 1/2/3\n');
-            fprintf('Head up/down: s/x\n');
-            fprintf('Undock: space\n');
-            fprintf('Stop and Save Timing: q\n');
-            
-            %Update Keyboard every 0.1 seconds
-            wb_robot_keyboard_enable(this.TIME_STEP);
-            
             this.rootNode = wb_supervisor_node_get_root();
             this.sceneNodes = wb_supervisor_node_get_field(this.rootNode, 'children');
             this.numSceneNodes = wb_supervisor_field_get_count(this.sceneNodes);
                 
             % Populate lists of block/robot nodes for later use:
             this.blockNodes = containers.Map('keyType', 'uint32', 'ValueType', 'any');
-              
+            this.nameToNodeLUT = containers.Map('keyType', 'char', 'ValueType', 'any');
+            
             for i_node = 1:this.numSceneNodes
                 
                 sceneObject = wb_supervisor_field_get_mf_node(this.sceneNodes, i_node-1);
@@ -133,52 +125,29 @@ classdef BlockWorldWebotController < handle
                             assert(blockID > 0 && ...
                                 blockID <= BlockWorld.MaxBlockTypes, ...
                                 'Block node has ID out of range.');
-                            %{                            
-                            % Find the block's child that is an observation
-                            blockChildren = wb_supervisor_node_get_field(sceneObject, 'children');
-                            numChildren = wb_supervisor_field_get_count(blockChildren);
-                            observationNode = [];
-                            for i_child = 1:numChildren
-                                blockChild = wb_supervisor_field_get_mf_node(blockChildren, i_child-1);
-                                childNameField = wb_supervisor_node_get_field(blockChild, 'name');
-                                if ~childNameField.isNull
-                                    childName = wb_supervisor_field_get_sf_string(childNameField);
-                                    
-                                    if strcmp(childName, 'Observation')
-                                        observationNode = blockChild;
-                                        break;
-                                    end
-                                end
-                                        
-                            end % FOR each block child
                             
-                            assert(~isempty(observationNode), ...
-                                'Could not find Observation Node child of Block %d', ...
-                                blockID);
-                            
-                            blockStruct = struct( ...
-                                    'node', sceneObject, ...
-                                    'pose', GetNodePose(this, sceneObject), ...
-                                    'obsNode', observationNode, ...
-                                    'obsPose', GetNodePose(this, observationNode));
-                                
                             if isKey(this.blockNodes, blockID)
-                                temp = this.blockNodes(blockID);
-                                temp(end+1) = blockStruct; %#ok<AGROW>
-                                this.blockNodes(blockID) = temp;
+                                this.blockNodes(blockID) = ...
+                                    [this.blockNodes(blockID) {sceneObject}];
                             else
-                                this.blockNodes(blockID) = blockStruct;
+                                this.blockNodes(blockID) = {sceneObject};
                             end
-                            %}
-                                if isKey(this.blockNodes, blockID)
-                                    this.blockNodes(blockID) = ...
-                                        [this.blockNodes(blockID) {sceneObject}];
-                                else
-                                    this.blockNodes(blockID) = {sceneObject};
-                                end
-                                    
+                            
+                            % Add a lookup-by-name entry:
+                            if isKey(this.nameToNodeLUT, objName)
+                                error('Duplicate object named "%s" found.', objName);
+                            end                            
+                            this.nameToNodeLUT(objName) = sceneObject;
+                            
                         elseif strncmp(objName, 'Cozmo', 5)
                             this.robotNodes{end+1} = sceneObject;
+                            
+                            % Add a lookup-by-name entry:
+                            if isKey(this.nameToNodeLUT, objName)
+                                error('Duplicate object named "%s" found.', objName);
+                            end                            
+                            this.nameToNodeLUT(objName) = sceneObject;
+                            
                         end % IF name is Block or Cozmo
                         
                     end % IF object name isn't empty
@@ -187,8 +156,22 @@ classdef BlockWorldWebotController < handle
                 
             end % FOR each scene node
             
-            fprintf('Found %d block node types and %d robot nodes in the world.\n', ...
-                this.blockNodes.Count, length(this.robotNodes));
+            fprintf(['Found %d block node types, %d individual blocks, ' ...
+                'and %d robot nodes in the world.\n'], ...
+                this.blockNodes.Count, ...
+                this.nameToNodeLUT.Count-length(this.robotNodes), ...
+                length(this.robotNodes));
+            
+            % Get ready for user input via keyboard:
+            fprintf('Drive: arrows\n');
+            fprintf('Lift up/down: a/z\n');
+            fprintf('Lift presets: 1/2/3\n');
+            fprintf('Head up/down: s/x\n');
+            fprintf('Undock: space\n');
+            fprintf('Stop and Save Timing: q\n');
+            
+            wb_robot_keyboard_enable(this.TIME_STEP);
+            
             
         end % CONSTRUCTOR BlockWorldWebotController()
         

@@ -1,8 +1,15 @@
 function SetNodePose(~, node, pose, transparency)
 % Set the Pose of a node in the world, by name.
 
-assert(~isempty(name), 'Cannot SetNodePose for an empty name.');
-assert(~ischar(node), 'SetNodePose no longer takes a string name.');
+assert(~isempty(node), 'Cannot SetNodePose for an empty name.');
+
+if ischar(node)
+    name = node;
+    if ~isKey(this.nameToNodeLUT, name)
+        error('No node named "%s" in this world.', name);
+    end
+    node = this.nameToNodeLUT(name);
+end
 
 if nargin < 4
     transparency = 0.0; % fully visible
