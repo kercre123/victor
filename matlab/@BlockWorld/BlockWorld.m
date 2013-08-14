@@ -1,8 +1,8 @@
 classdef BlockWorld < handle
     
     properties(GetAccess = 'public', Constant = true)
-        MaxBlocks = 256;  % 8 bits
-        MaxFaces  = 16;   % 4 bits
+        MaxBlockTypes = 256;  % 8 bits
+        MaxFaces      = 16;   % 4 bits
     end
     
     properties(GetAccess = 'public', SetAccess = 'protected')
@@ -63,7 +63,7 @@ classdef BlockWorld < handle
             this.matSize = MatSize;
             this.zDirection = ZDirection;
             
-            this.blocks = {};
+            this.blocks = cell(1, BlockWorld.MaxBlockTypes);
             this.allMarkers3D = {};
             
             this.embeddedConversions = EmbeddedConversions;
@@ -153,6 +153,7 @@ classdef BlockWorld < handle
             index = this.blockTypeToIndex(blockType);
         end
         
+        %{
         function B = getBlock(this, blockType)
             if isKey(this.blockTypeToIndex, blockType)
                 B = this.blocks{this.blockTypeToIndex(blockType)};
@@ -160,6 +161,7 @@ classdef BlockWorld < handle
                 B = [];
             end
         end
+        %}
         
         function P = getGroundTruthRobotPose(this, robotName)
             if isempty(this.groundTruthPoseFcn)
@@ -191,7 +193,8 @@ classdef BlockWorld < handle
         function updateBlockObservation(this, blockID, pose)
            if ~isempty(this.observedPoseFcn)
                blockName = sprintf('Block%dObservation', blockID);
-               this.observedPoseFcn(blockName, pose, 0.0);
+               
+               this.observedPoseFcn(blockID, pose, 0.0);
            end
         end
         

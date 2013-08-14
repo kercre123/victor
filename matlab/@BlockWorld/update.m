@@ -31,6 +31,10 @@ if ~isempty(this.groundTruthPoseFcn)
     end
 end
 
+%% "My" Bundle Adjustment
+if doBundleAdjustment && all(~cellfun(@isempty, invRobotPoses(:)))
+
+    
 uv = cell(this.numRobots, Robot.ObservationWindowLength);
 %R  = cell(this.numRobots, Robot.ObservationWindowLength);
 %T  = cell(this.numRobots, Robot.ObservationWindowLength);
@@ -69,8 +73,6 @@ end
 % invRobotPoses = invRobotPoses(validPoses);
 % uv            = uv(validPoses);
 
-%% "My" Bundle Adjustment
-if doBundleAdjustment && all(~cellfun(@isempty, invRobotPoses(:)))
     
     % Just assuming all cameras are same here!
     % TODO: deal with possibly different cameras on each robot?

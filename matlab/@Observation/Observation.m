@@ -35,33 +35,37 @@ classdef Observation
                 this.matImage = parentRobot.matCamera.image;
             end
             
-            % Find blocks we've seen before (we don't have to have seen
-            % the individual marker because we know where all markers
-            % of a block _should_ be in 3D once we've seen one of them)
             numSeenMarkers = this.numMarkers;
-            matchedMarkers = false(1,numSeenMarkers);
-            p_marker = cell(1,numSeenMarkers);
-            P_marker = cell(1,numSeenMarkers);
-            blockTypes = cellfun(@(marker)marker.blockType, this.markers);
             used = false(1,numSeenMarkers);
+            blockTypes = cellfun(@(marker)marker.blockType, this.markers);
             
-            for i_marker = 1:numSeenMarkers
-                bType = blockTypes(i_marker);
-                if bType > world.MaxBlocks
-                    warning('Out-of-range block detected! (%d > %d)', bType, this.MaxBlocks);
-                    keyboard
-                end
-                
-                B = world.getBlock(bType);
-                if ~isempty(B)
-                    matchedMarkers(i_marker) = true;
-                    p_marker{i_marker} = this.markers{i_marker}.corners;
-                    
-                    P_marker{i_marker} = getPosition( ...
-                        B.getFaceMarker(this.markers{i_marker}.faceType));
-                end
-                
-            end
+%             % Find blocks we've seen before (we don't have to have seen
+%             % the individual marker because we know where all markers
+%             % of a block _should_ be in 3D once we've seen one of them)
+%             numSeenMarkers = this.numMarkers;
+%             matchedMarkers = false(1,numSeenMarkers);
+%             p_marker = cell(1,numSeenMarkers);
+%             P_marker = cell(1,numSeenMarkers);
+%             blockTypes = cellfun(@(marker)marker.blockType, this.markers);
+%             used = false(1,numSeenMarkers);
+%             
+%             for i_marker = 1:numSeenMarkers
+%                 bType = blockTypes(i_marker);
+%                 if bType > world.MaxBlockTypes
+%                     warning('Out-of-range block detected! (%d > %d)', bType, this.MaxBlockTypes);
+%                     keyboard
+%                 end
+%                 
+%                 B = world.getBlock(bType);
+%                 if ~isempty(B)
+%                     matchedMarkers(i_marker) = true;
+%                     p_marker{i_marker} = this.markers{i_marker}.corners;
+%                     
+%                     P_marker{i_marker} = getPosition( ...
+%                         B.getFaceMarker(this.markers{i_marker}.faceType));
+%                 end
+%                 
+%             end
             
             if world.hasMat
                 % If there's a mat in the world, use that to update the
@@ -87,22 +91,16 @@ classdef Observation
                 % adding new blocks, whose position will depend on this):
                 this.robot.pose = this.pose;
                 
-                % Add new markers/blocks to world, relative to robot's updated position
+                % Add new markers/blocks to world or merge existing ones, 
+                % relative to robot's updated position
                 for i_marker = 1:numSeenMarkers
-                    
-                    % Update existing blocks:
-                    if matchedMarkers(i_marker) && ~used(i_marker)
+                                        
+                    if ~used(i_marker)
                         whichMarkers = blockTypes == blockTypes(i_marker);
-                        world.updateBlock(this.robot, this.markers(whichMarkers));
+                        world.addOrMergeBlock(this.robot, this.markers(whichMarkers));
                         used(whichMarkers) = true;
                     end
                     
-                    % Add new blocks:
-                    if ~matchedMarkers(i_marker) && ~used(i_marker)
-                        whichMarkers = blockTypes == blockTypes(i_marker);
-                        world.addBlock(this.robot, this.markers(whichMarkers));
-                        used(whichMarkers) = true;
-                    end
                 end % FOR each marker
                         
                 
@@ -121,7 +119,7 @@ classdef Observation
                     for i_marker = 1:numSeenMarkers
                         if ~used(i_marker)
                             whichMarkers = blockTypes == blockTypes(i_marker);
-                            world.addBlock(this.robot, this.markers(whichMarkers));
+                            world.addOrMergeBlock(this.robot, this.markers(whichMarkers));
                             used(whichMarkers) = true;
                         end
                     end
@@ -163,7 +161,7 @@ classdef Observation
                         for i_marker = 1:numSeenMarkers
                             if ~matchedMarkers(i_marker) && ~used(i_marker)
                                 whichMarkers = blockTypes == blockTypes(i_marker);
-                                world.addBlock(this.robot, this.markers(whichMarkers));
+                                world.addOrMergeBlock(this.robot, this.markers(whichMarkers));
                                 used(whichMarkers) = true;
                             end
                         end % FOR each marker

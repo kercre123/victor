@@ -15,8 +15,12 @@ if drawWorld
         draw(this.robots{i_robot}, 'AxesHandle', AxesWorld);
     end
     
-    for i_block = 1:this.numBlocks
-        draw(this.blocks{i_block}, 'AxesHandle', AxesWorld);
+    for i_blockType = 1:BlockWorld.MaxBlockTypes
+        if ~isempty(this.blocks{i_blockType})
+            for i_block = 1:length(this.blocks{i_blockType})
+                draw(this.blocks{i_blockType}{i_block}, 'AxesHandle', AxesWorld);
+            end
+        end
     end
     
     for i_block = 1:length(this.groundTruthBlocks)
@@ -63,6 +67,8 @@ if drawReprojection
     
 end % IF drawReprojection
 
+
+%% Draw a simple overhead 2D map
 if drawOverheadMap
     AxesMap = subplot(1,1,1, 'Parent', namedFigure('BlockWorldOverheadMap')); %#ok<UNRCH>
     
