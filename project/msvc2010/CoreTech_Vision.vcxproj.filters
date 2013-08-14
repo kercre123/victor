@@ -18,12 +18,18 @@
     <ClCompile Include="..\..\src\vision.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\binomialFilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\anki\vision.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\anki\vision\config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\anki\vision\visionKernels.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
