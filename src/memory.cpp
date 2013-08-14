@@ -3,30 +3,28 @@
 
 #include <assert.h>
 
-Anki::MemoryStack::MemoryStack(void *buffer, u32 bufferLength) 
+Anki::MemoryStack::MemoryStack(void *buffer, u32 bufferLength)
   : buffer(buffer), totalBytes(bufferLength), usedBytes(0)
 {
+  DASConditionalError(buffer, "Anki.MemoryStack.MemoryStack", "Buffer must be allocated");
+  DASConditionalError(bufferLength <= 0x3FFFFFFF, "Anki.MemoryStack.MemoryStack", "Maximum size of a MemoryStack is 2^30 - 1");
+  DASConditionalError(MEMORY_ALIGNMENT == 8, "Anki.MemoryStack.MemoryStack", "Currently, only MEMORY_ALIGNMENT == 8 is supported");
 }
 
 Anki::MemoryStack::MemoryStack(const MemoryStack& ms) 
   : buffer(ms.buffer), totalBytes(ms.totalBytes), usedBytes(ms.usedBytes)
 {
+  DASConditionalError(ms.buffer, "Anki.MemoryStack.MemoryStack", "Buffer must be allocated");
+  DASConditionalError(ms.totalBytes <= 0x3FFFFFFF, "Anki.MemoryStack.MemoryStack", "Maximum size of a MemoryStack is 2^30 - 1");
+  DASConditionalError(MEMORY_ALIGNMENT == 8, "Anki.MemoryStack.MemoryStack", "Currently, only MEMORY_ALIGNMENT == 8 is supported");
+  DASConditionalError(ms.totalBytes >= ms.usedBytes, "Anki.MemoryStack.MemoryStack", "Buffer is using more bytes than it has. Try running IsConsistent() to test for memory corruption.");
 }
 
 void* Anki::MemoryStack::Allocate(u32 numBytes)
 {
-  assert(MEMORY_ALIGNMENT == 8);
-
-  if(numBytes == 0) {
-    DASWarn("AnkiVision.MemoryStack.Allocate", "numBytes == 0");
-    return NULL;
-  }
-
-  if(numBytes > s32_MAX) {
-    DASWarn("AnkiVision.MemoryStack.Allocate", "numBytes > s32_MAX");
-    return NULL;
-  }
-
+  DASConditionalWarnAndReturn(numBytes != 0, NULL, "Anki.MemoryStack.Allocate", "numBytes != 0");
+  DASConditionalWarnAndReturn(numBytes <= 0x3FFFFFFF, NULL, "Anki.MemoryStack.Allocate", "numBytes <= 0x3FFFFFFF");
+    
   char * const bufferNextFree = static_cast<char*>(buffer) + usedBytes;
   
   // Get the pointer locations for header, data, and footer
@@ -36,10 +34,7 @@ void* Anki::MemoryStack::Allocate(u32 numBytes)
   
   const u32 requestedBytes = static_cast<u32>( reinterpret_cast<size_t>(segmentFooter+4) - reinterpret_cast<size_t>(bufferNextFree) );
 
-  if(requestedBytes > totalBytes) {
-    DASEvent("AnkiVision.MemoryStack.Allocate", "Ran out of scratch space");
-    return NULL;
-  }
+  DASConditionalEventAndReturn((usedBytes+requestedBytes) <= totalBytes, NULL, "Anki.MemoryStack.Allocate", "Ran out of scratch space");
 
   // Next, add the header for this block
   reinterpret_cast<u32*>(segmentHeader)[0] = numBytes;
@@ -64,22 +59,12 @@ bool Anki::MemoryStack::IsConsistent()
     const u32 segmentHeader = reinterpret_cast<const u32*>(bufferChar+index)[1];
 
     // Simple sanity check
-    if(segmentLength > (usedBytes-index)) {
-      DASWarn("AnkiVision.MemoryStack.IsConsistent", "segmentLength > (usedBytes-index)");
-      return false;
-    }
-
-    if(segmentHeader != FILL_PATTERN_START) {
-      DASWarn("AnkiVision.MemoryStack.IsConsistent", "segmentHeader != FILL_PATTERN_START");
-      return false;
-    }
+    DASConditionalWarnAndReturn(segmentLength <= (usedBytes-index), false, "Anki.MemoryStack.IsConsistent", "segmentLength <= (usedBytes-index)");
+    DASConditionalWarnAndReturn(segmentHeader == FILL_PATTERN_START, false, "Anki.MemoryStack.IsConsistent", "segmentHeader == FILL_PATTERN_START");
 
     const u32 segmentFooter = reinterpret_cast<const u32*>(bufferChar+index+8+segmentLength)[0];
 
-    if(segmentFooter != FILL_PATTERN_END) {
-      DASWarn("AnkiVision.MemoryStack.IsConsistent", "segmentFooter != FILL_PATTERN_END");
-      return false;
-    }
+    DASConditionalWarnAndReturn(segmentFooter == FILL_PATTERN_END, false, "Anki.MemoryStack.IsConsistent", "segmentFooter == FILL_PATTERN_END");
 
     index += 12 + segmentLength;
   }
@@ -87,12 +72,27 @@ bool Anki::MemoryStack::IsConsistent()
   if(index == usedBytes) {
     return true;
   } else if(index == LOOP_MAX){
-    DASError("AnkiVision.MemoryStack.IsConsistent", "Infinite while loop");
+    DASError("Anki.MemoryStack.IsConsistent", "Infinite while loop");
     return false;
   } else {
-    DASError("AnkiVision.MemoryStack.IsConsistent", "Loop exited at an incorrect positi	on, probably due to corruption");
+    DASError("Anki.MemoryStack.IsConsistent", "Loop exited at an incorrect position, probably due to corruption");
     return false;
   }
+}
+
+u32 Anki::MemoryStack::LargestPossibleAllocation()
+{
+  const u32 bufferNextFree = static_cast<u32>(reinterpret_cast<size_t>(buffer)) + usedBytes;
+  const u32 bufferNextFreePlusAlignment = Anki::RoundUp<u32>(bufferNextFree, MEMORY_ALIGNMENT);
+  const u32 bufferEnd = static_cast<u32>(reinterpret_cast<size_t>(buffer)) + totalBytes;
+
+  if(bufferNextFreePlusAlignment >= (bufferEnd-12-MEMORY_ALIGNMENT+1))
+    return 0;
+
+  // The RoundDown handles the requirement for all memory blocks to be multiples of MEMORY_ALIGNMENT
+  const u32 maxBytes = Anki::RoundDown<u32>(bufferEnd-bufferNextFreePlusAlignment-12, MEMORY_ALIGNMENT);
+
+  return maxBytes;
 }
 
 u32 Anki::MemoryStack::get_totalBytes()

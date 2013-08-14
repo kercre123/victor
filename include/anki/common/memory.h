@@ -32,6 +32,9 @@ public:
   // Check if any Allocate() memory was written out of bounds (via fill patterns at the beginning and end)
   bool IsConsistent();
 
+  // Returns the number of bytes that can still be allocated. The max allocation is less than or equal to "get_totalBytes() - get_usedBytes() - 12".
+  u32 LargestPossibleAllocation();
+
   u32 get_totalBytes();
   u32 get_usedBytes();
     

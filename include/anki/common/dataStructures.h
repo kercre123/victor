@@ -21,6 +21,16 @@ template<typename _Tp> class Point3_;
 
 namespace Anki
 {
+  //typedef enum Result {RESULT_SUCCESS, RESULT_FAIL};
+  enum class Result : u32 {
+    OK = 0,
+    FAIL = 1,
+    FAIL_MEMORY = 10000,
+    FAIL_OUT_OF_MEMORY = 10001,
+    FAIL_IO = 20000,
+    FAIL_INVALID_PARAMETERS = 30000
+  };
+
   template<typename T> class Point2
   {
   public:

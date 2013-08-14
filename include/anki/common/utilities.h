@@ -37,11 +37,16 @@
 
 namespace Anki
 {
-template<typename T> T RoundUp(T number, T multiple)
+template<typename T> inline T RoundUp(T number, T multiple)
 {
   return (number + (multiple-1)) & ~(multiple-1);
 }
-  
+
+template<typename T> inline T RoundDown(T number, T multiple)
+{
+  return multiple * (number/multiple);
+}
+
 double GetTime();
 
 #if defined(ANKICORETECH_USE_OPENCV)

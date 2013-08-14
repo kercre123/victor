@@ -25,8 +25,9 @@ TEST(AnkiVision, MemoryStack)
   void * const buffer3 = ms.Allocate(1);
   void * const buffer4 = ms.Allocate(0);
   void * const buffer5 = ms.Allocate(100);
-  void * const buffer6 = ms.Allocate(s32_MAX);
+  void * const buffer6 = ms.Allocate(0x3FFFFFFF);
   void * const buffer7 = ms.Allocate(u32_MAX);
+  void * const buffer8 = ms.Allocate(9);
 
   ASSERT_TRUE(buffer1 != NULL);
   ASSERT_TRUE(buffer2 != NULL);
@@ -35,6 +36,7 @@ TEST(AnkiVision, MemoryStack)
   ASSERT_TRUE(buffer5 == NULL);
   ASSERT_TRUE(buffer6 == NULL);
   ASSERT_TRUE(buffer7 == NULL);
+  ASSERT_TRUE(buffer8 == NULL);
 
   const size_t buffer1U32 = reinterpret_cast<size_t>(buffer1);
   const size_t buffer2U32 = reinterpret_cast<size_t>(buffer2);
@@ -122,8 +124,78 @@ TEST(AnkiVision, MemoryStack_call)
   free(buffer); buffer = NULL;
 }
 
+TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
+{
+  const u32 numBytes = 104; // 12*9 = 104
+  void * buffer = calloc(numBytes+8, 1);
+  ASSERT_TRUE(buffer != NULL);
+
+  ASSERT_TRUE(Anki::MEMORY_ALIGNMENT == 8);  
+
+  void * bufferAligned = reinterpret_cast<void*>(Anki::RoundUp<size_t>(reinterpret_cast<size_t>(buffer), Anki::MEMORY_ALIGNMENT));
+
+  const size_t bufferShift = reinterpret_cast<size_t>(bufferAligned) - reinterpret_cast<size_t>(buffer);
+  ASSERT_TRUE(bufferShift == 0 || bufferShift == static_cast<size_t>(Anki::MEMORY_ALIGNMENT));
+
+  Anki::MemoryStack ms(bufferAligned, numBytes);
+  const u32 largestPossibleAllocation1 = ms.LargestPossibleAllocation();
+  ASSERT_TRUE(largestPossibleAllocation1 == 88);
+
+  const void * const allocatedBuffer1 = ms.Allocate(1);
+  const u32 largestPossibleAllocation2 = ms.LargestPossibleAllocation();
+  ASSERT_TRUE(allocatedBuffer1 != NULL);
+  ASSERT_TRUE(largestPossibleAllocation2 == 64);
+
+  const void * const allocatedBuffer2 = ms.Allocate(65);
+  const u32 largestPossibleAllocation3 = ms.LargestPossibleAllocation();
+  ASSERT_TRUE(allocatedBuffer2 == NULL);
+  ASSERT_TRUE(largestPossibleAllocation3 == 64);
+
+  const void * const allocatedBuffer3 = ms.Allocate(64);
+  const u32 largestPossibleAllocation4 = ms.LargestPossibleAllocation();
+  ASSERT_TRUE(allocatedBuffer3 != NULL);
+  ASSERT_TRUE(largestPossibleAllocation4 == 0);
+
+  free(buffer); buffer = NULL;
+}
+
+TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation2)
+{
+  const u32 numBytes = 103; // 12*8 + 7 = 103
+  void * buffer = calloc(numBytes+8, 1);
+  ASSERT_TRUE(buffer != NULL);
+
+  ASSERT_TRUE(Anki::MEMORY_ALIGNMENT == 8);  
+
+  void * bufferAligned = reinterpret_cast<void*>(Anki::RoundUp<size_t>(reinterpret_cast<size_t>(buffer), Anki::MEMORY_ALIGNMENT));
+
+  const size_t bufferShift = reinterpret_cast<size_t>(bufferAligned) - reinterpret_cast<size_t>(buffer);
+  ASSERT_TRUE(bufferShift == 0 || bufferShift == static_cast<size_t>(Anki::MEMORY_ALIGNMENT));
+
+  Anki::MemoryStack ms(bufferAligned, numBytes);
+  const u32 largestPossibleAllocation1 = ms.LargestPossibleAllocation();
+  ASSERT_TRUE(largestPossibleAllocation1 == 88);
+
+  const void * const allocatedBuffer1 = ms.Allocate(1);
+  const u32 largestPossibleAllocation2 = ms.LargestPossibleAllocation();
+  ASSERT_TRUE(allocatedBuffer1 != NULL);
+  ASSERT_TRUE(largestPossibleAllocation2 == 64);
+
+  const void * const allocatedBuffer2 = ms.Allocate(65);
+  const u32 largestPossibleAllocation3 = ms.LargestPossibleAllocation();
+  ASSERT_TRUE(allocatedBuffer2 == NULL);
+  ASSERT_TRUE(largestPossibleAllocation3 == 64);
+
+  const void * const allocatedBuffer3 = ms.Allocate(64);
+  const u32 largestPossibleAllocation4 = ms.LargestPossibleAllocation();
+  ASSERT_TRUE(allocatedBuffer3 != NULL);
+  ASSERT_TRUE(largestPossibleAllocation4 == 0);
+
+  free(buffer); buffer = NULL;
+}
+
 #if defined(ANKICORETECH_USE_MATLAB)
-TEST(AnkiVision, SimpleMatlabTest1)
+TEST(CoreTech_Common, SimpleMatlabTest1)
 {
   matlab.EvalStringEcho("simpleVector = double([1.1,2.1,3.1,4.1,5.1]);");
   double *simpleVector = matlab.Get<double>("simpleVector");
@@ -141,7 +213,7 @@ TEST(AnkiVision, SimpleMatlabTest1)
 #endif //#if defined(ANKICORETECH_USE_MATLAB)
 
 #if defined(ANKICORETECH_USE_MATLAB)
-TEST(AnkiVision, SimpleMatlabTest2) 
+TEST(CoreTech_Common, SimpleMatlabTest2) 
 {
   matlab.EvalStringEcho("simpleMatrix = int16([1,2,3,4,5;6,7,8,9,10]);");
   Anki::Matrix<s16> simpleMatrix = matlab.GetMatrix<s16>("simpleMatrix");
@@ -164,7 +236,7 @@ TEST(AnkiVision, SimpleMatlabTest2)
 #endif //#if defined(ANKICORETECH_USE_MATLAB)
 
 #if defined(ANKICORETECH_USE_OPENCV)
-TEST(AnkiVision, SimpleOpenCVTest)
+TEST(CoreTech_Common, SimpleOpenCVTest)
 {
   cv::Mat src, dst;
 
@@ -197,7 +269,7 @@ TEST(AnkiVision, SimpleOpenCVTest)
 }
 #endif // #if defined(ANKICORETECH_USE_OPENCV)
 
-TEST(AnkiVision, SimpleAnkiVisionTest)
+TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 {
   // Allocate memory from the heap, for the memory allocator
   const u32 numBytes = 1000;
@@ -240,7 +312,7 @@ TEST(AnkiVision, SimpleAnkiVisionTest)
   ASSERT_EQ(100, *myMatrix.Pointer(2,0));
   ASSERT_EQ(100, myMatrix_cvMat(2,0));
 
-  std::cout << "Setting AnkiVision matrix\n";
+  std::cout << "Setting CoreTech_Common matrix\n";
   *myMatrix.Pointer(2,0) = 42;
   std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat(2,0) << "\n";
   ASSERT_EQ(42, *myMatrix.Pointer(2,0));
@@ -262,7 +334,7 @@ TEST(AnkiVision, SimpleAnkiVisionTest)
   ASSERT_EQ(300, *myMatrix.Pointer(2,0));
   ASSERT_EQ(300, myMatrix_cvMat.at<s16>(2,0));
 
-  std::cout << "Setting AnkiVision matrix\n";
+  std::cout << "Setting CoreTech_Common matrix\n";
   *myMatrix.Pointer(2,0) = 90;
   std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat.at<s16>(2,0) << "\n";
   ASSERT_EQ(90, *myMatrix.Pointer(2,0));
@@ -276,7 +348,7 @@ TEST(AnkiVision, SimpleAnkiVisionTest)
 }
 
 int main(int argc, char ** argv)
-{  
+{
   ::testing::InitGoogleTest(&argc, argv);
 
   RUN_ALL_TESTS();
