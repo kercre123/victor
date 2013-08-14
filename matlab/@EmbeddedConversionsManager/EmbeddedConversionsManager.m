@@ -1,26 +1,26 @@
 
 classdef EmbeddedConversionsManager < handle
-    
+
     properties(GetAccess = 'public', SetAccess = 'protected')
-        homographyEstimationType;        
+        homographyEstimationType;
         computeCharacteristicScaleImageType;
     end % PROPERTIES (get-public, set-protected)
-    
+
     methods(Access = 'public')
-        
+
         function this = EmbeddedConversionsManager(varargin)
             homographyEstimationType = 'matlab_cp2tform';
             homographyEstimationType_acceptable = {'matlab_cp2tform', 'opencv_cp2tform'};
 
             computeCharacteristicScaleImageType = 'matlab_original';
-            computeCharacteristicScaleImageType_acceptable = {'matlab_original', 'matlab_loops', 'matlab_loopsAndFixedPoint'};
-            
+            computeCharacteristicScaleImageType_acceptable = {'matlab_original', 'matlab_loops', 'matlab_loopsAndFixedPoint', 'matlab_loopsAndFixedPoint_mexFiltering'};
+
             parseVarargin(varargin{:});
-            
-            isAcceptable(homographyEstimationType_acceptable, homographyEstimationType);           
+
+            isAcceptable(homographyEstimationType_acceptable, homographyEstimationType);
             this.homographyEstimationType = homographyEstimationType; %#ok<*PROP>
 
-            isAcceptable(computeCharacteristicScaleImageType_acceptable, computeCharacteristicScaleImageType);           
+            isAcceptable(computeCharacteristicScaleImageType_acceptable, computeCharacteristicScaleImageType);
             this.computeCharacteristicScaleImageType = computeCharacteristicScaleImageType; %#ok<*PROP>
         end
     end % METHODS (public)
