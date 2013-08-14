@@ -12,12 +12,18 @@
     <ClCompile Include="..\..\src\vision.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\binomialFilter.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\anki\vision\config.h">
       <Filter>Includes</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\anki\vision.h">
+      <Filter>Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\anki\vision\visionKernels.h">
       <Filter>Includes</Filter>
     </ClInclude>
   </ItemGroup>

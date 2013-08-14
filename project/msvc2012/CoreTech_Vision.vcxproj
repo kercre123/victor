@@ -11,11 +11,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\binomialFilter.cpp" />
     <ClCompile Include="..\..\src\vision.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\anki\vision.h" />
     <ClInclude Include="..\..\include\anki\vision\config.h" />
+    <ClInclude Include="..\..\include\anki\vision\visionKernels.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{1F89D154-F5CD-4C53-8489-E33A06BAE0DB}</ProjectGuid>
