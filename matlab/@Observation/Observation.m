@@ -39,34 +39,6 @@ classdef Observation
             used = false(1,numSeenMarkers);
             blockTypes = cellfun(@(marker)marker.blockType, this.markers);
             
-%             % Find blocks we've seen before (we don't have to have seen
-%             % the individual marker because we know where all markers
-%             % of a block _should_ be in 3D once we've seen one of them)
-%             numSeenMarkers = this.numMarkers;
-%             matchedMarkers = false(1,numSeenMarkers);
-%             p_marker = cell(1,numSeenMarkers);
-%             P_marker = cell(1,numSeenMarkers);
-%             blockTypes = cellfun(@(marker)marker.blockType, this.markers);
-%             used = false(1,numSeenMarkers);
-%             
-%             for i_marker = 1:numSeenMarkers
-%                 bType = blockTypes(i_marker);
-%                 if bType > world.MaxBlockTypes
-%                     warning('Out-of-range block detected! (%d > %d)', bType, this.MaxBlockTypes);
-%                     keyboard
-%                 end
-%                 
-%                 B = world.getBlock(bType);
-%                 if ~isempty(B)
-%                     matchedMarkers(i_marker) = true;
-%                     p_marker{i_marker} = this.markers{i_marker}.corners;
-%                     
-%                     P_marker{i_marker} = getPosition( ...
-%                         B.getFaceMarker(this.markers{i_marker}.faceType));
-%                 end
-%                 
-%             end
-            
             if world.hasMat
                 % If there's a mat in the world, use that to update the
                 % robot's pose.  Then update any existing blocks and add
@@ -94,10 +66,14 @@ classdef Observation
                 % Add new markers/blocks to world or merge existing ones, 
                 % relative to robot's updated position
                 for i_marker = 1:numSeenMarkers
-                                        
+                        
+                    % Pass all unused markers with the same block type to
+                    % addOrMergeBlock.  It will handle figuring out how
+                    % many of that block type were actually observed and
+                    % instantiate as many as needed.
                     if ~used(i_marker)
                         whichMarkers = blockTypes == blockTypes(i_marker);
-                        world.addOrMergeBlock(this.robot, this.markers(whichMarkers));
+                        world.addOrUpdateBlock(this.robot, this.markers(whichMarkers));
                         used(whichMarkers) = true;
                     end
                     
@@ -119,7 +95,7 @@ classdef Observation
                     for i_marker = 1:numSeenMarkers
                         if ~used(i_marker)
                             whichMarkers = blockTypes == blockTypes(i_marker);
-                            world.addOrMergeBlock(this.robot, this.markers(whichMarkers));
+                            world.addOrUpdateBlock(this.robot, this.markers(whichMarkers));
                             used(whichMarkers) = true;
                         end
                     end
@@ -137,8 +113,62 @@ classdef Observation
                     %    seems pretty error-prone, since we presumably moved if we're
                     %    seeing a new block...
                     
+                    % Find blocks we've seen before (we don't have to have seen
+                    % the individual marker because we know where all markers
+                    % of a block _should_ be in 3D once we've seen one of them)
+                    numSeenMarkers = this.numMarkers;
+                    matchedMarkers2D = cell(1,numSeenMarkers);
+                    matchedMarkers3D = cell(1,numSeenMarkers);
+                    used = false(1,numSeenMarkers);
+                    
+                    for i_marker = 1:numSeenMarkers
+                        bType = blockTypes(i_marker);
+                        
+                        if bType > world.MaxBlockTypes
+                            warning('Out-of-range block type detected! (%d > %d)', bType, this.MaxBlockTypes);
+                            keyboard
+                        end
+                        
+                        if ~isempty(world.blocks{bType})
+                            % Create a temporary block of this type and compute
+                            % what its position is according to this marker.
+                            % If it is "close enough" to an existing block of
+                            % the same type, *ASSUME* it is that block,
+                            % *ASSUME* that block has not actually moved since
+                            % we last observed it, and thus use that block to
+                            % help estimate how the robot moved. There is an
+                            % implicit assumption of small motion here: the
+                            % robot should not have moved too much from the
+                            % last time it saw this block AND that block must
+                            % not have been moved.
+                            B_temp = Block(bType, this.numMarkers);
+                            markerPose = BlockWorld.computeBlockPose(...
+                                this.robot, B_temp, this.markers(i_marker));
+                            minDist = compare(markerPose, world.blocks{bType}{1}.pose);
+                            whichBlock = 1;
+                            for i_block = 2:length(world.blocks{bType})
+                                crntDist = compare(markerPose, world.blocks{bType}{i_block}.pose);
+                                if crntDist < minDist
+                                    minDist = crntDist;
+                                    whichBlock = i_block;
+                                end
+                            end % FOR each block of this type
+                            
+                            if minDist < B_temp.mindim
+                                used(i_marker) = true;
+                                matchedMarkers2D{i_marker} = ...
+                                    this.markers{i_marker}.corners;
+                                
+                                matchedMarkers3D{i_marker} = getPosition( ...
+                                    world.blocks{bType}{whichBlock}.getFaceMarker(this.markers{i_marker}.faceType));
+                            end % IF a close-enough block was found
+                            
+                        end % IF there is already a block of this type
+                                                         
+                    end % FOR each marker we observed
+                    
                     % Use previously-seen markers to update the robot/camera's position
-                    if ~any(matchedMarkers)
+                    if ~any(used)
                         warning(['No markers found matched one seen before. Not sure yet ' ...
                             'what to do in this case.']);
                         
@@ -147,21 +177,28 @@ classdef Observation
                         this.pose = this.robot.pose;
                         this.markers = {};
                     else
-                        p_marker = vertcat(p_marker{:});
-                        P_marker = vertcat(P_marker{:});
+                        % Use the corresponding 2D and 3D markers for
+                        % previously-seend blocks to compute the where the 
+                        % robot must have moved to in order to re-see those
+                        % blocks' markers in those locations
+                        matchedMarkers2D = vertcat(matchedMarkers2D{:});
+                        matchedMarkers3D = vertcat(matchedMarkers3D{:});
+                        
                         invRobotPose = this.robot.camera.computeExtrinsics( ...
-                            p_marker, P_marker, 'initializeWithCurrentPose', true);
+                            matchedMarkers2D, matchedMarkers3D, 'initializeWithCurrentPose', true);
                         this.pose = inv(invRobotPose);
                                    
                         % Also update the parent robot's pose to match (*before*
                         % adding new blocks, whose position will depend on this):
                         this.robot.pose = this.pose;
                         
-                        % Add new markers/blocks to world, relative to robot's updated position
+                        % Add new markers/blocks to world, relative to robot's 
+                        % updated position, using all unused markers of
+                        % the same block type.
                         for i_marker = 1:numSeenMarkers
-                            if ~matchedMarkers(i_marker) && ~used(i_marker)
-                                whichMarkers = blockTypes == blockTypes(i_marker);
-                                world.addOrMergeBlock(this.robot, this.markers(whichMarkers));
+                            if ~used(i_marker)
+                                whichMarkers = ~used & blockTypes == blockTypes(i_marker);
+                                world.addOrUpdateBlock(this.robot, this.markers(whichMarkers));
                                 used(whichMarkers) = true;
                             end
                         end % FOR each marker

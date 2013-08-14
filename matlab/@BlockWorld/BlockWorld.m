@@ -206,9 +206,9 @@ classdef BlockWorld < handle
         
     end % METHODS (public)
     
-    methods(Static = true, Access = 'protected')
+    methods(Static = true, Access = 'public')
         
-        markerPose = blockPoseHelper(robot, B, markers2D);
+        markerPose = computeBlockPose(robot, B, markers2D);
         
     end
     
@@ -219,7 +219,7 @@ classdef BlockWorld < handle
         end
         
         function N = get.numBlocks(this)
-            N = length(this.blocks);
+            N = sum(cellfun(@length, this.blocks));
         end
         
         function N = get.numRobots(this)

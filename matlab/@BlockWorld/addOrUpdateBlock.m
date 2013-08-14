@@ -1,5 +1,5 @@
-function addOrMergeBlock(this, robot, markers2D)
-% Add a block to a BlockWorld, given observed BlockMarker2Ds.
+function addOrUpdateBlock(this, robot, markers2D)
+% Adds or updates block(s) in a BlockWorld, given observed BlockMarker2Ds.
 
 if ~iscell(markers2D)
     markers2D = {markers2D};
@@ -35,7 +35,7 @@ B_init = Block(blockType, this.numMarkers);
 % know if we are seeing faces of multiple blocks of the same type)
 markerPose = cell(1, numMarkers2D);
 for i_marker = 1:numMarkers2D
-    markerPose{i_marker} = BlockWorld.blockPoseHelper(robot, B_init, ...
+    markerPose{i_marker} = BlockWorld.computeBlockPose(robot, B_init, ...
         markers2D(i_marker));
 end
 
@@ -55,9 +55,13 @@ if numMarkers2D > 1
             unused = find(whichBlock==0);
             d = compare(markerPose{i_marker}, markerPose(unused));
             
+            % all markers whose corresponding pose is close enough should
+            % be clustered with this one
             whichBlock(unused(d < B_init.mindim)) = numBlocks;            
         end
     end
+    
+    assert(all(whichBlock > 0), 'All markers should have been assigned a block.');
     
     fprintf('Grouping %d observed 2D markers of type %d into %d blocks.\n', ...
         numMarkers2D, B_init.blockType, numBlocks);
@@ -75,7 +79,7 @@ if numMarkers2D > 1
             % No need to re-estimate, just use the one marker we saw.
             B_new{i_blockExist}.pose = markerPose{whichMarkers};
         else
-            B_new{i_blockExist}.pose = BlockWorld.blockPoseHelper(robot, ...
+            B_new{i_blockExist}.pose = BlockWorld.computeBlockPose(robot, ...
                 B_init, markers2D(whichMarkers));            
         end
     end % FOR each of the new blocks
@@ -102,7 +106,7 @@ for i_blockObs = 1:numBlocks
         % For now, just check if we're within a block width of each other
         minDist = min(B_new{i_blockObs}.mindim, B_existing.mindim);
         if compare(B_existing.pose, B_new{i_blockObs}.pose) < minDist
-            i_match = [i_match i_blockExist];
+            i_match = [i_match i_blockExist]; %#ok<AGROW>
         end
         
     end % FOR each block of this type
@@ -113,10 +117,13 @@ for i_blockObs = 1:numBlocks
         fprintf('Adding a new block with type %d.\n', blockType);
         this.blocks{blockType}{end+1} = B_new{i_blockObs}; 
         
-        this.updateBlockObservation(blockType, B_new{i_blockObs}.pose);
+        this.updateObsBlockPose(blockType, B_new{i_blockObs}.pose);
     else
-        assert(length(i_match)==1, ...
-            'More than one overlapping block found, not sure what to do yet!');
+        if length(i_match) > 1
+            warning(['More than one overlapping block found! ' ...
+                'Not sure what to do yet, so just using first match.']);
+            i_match = i_match(1);
+        end
         
         % Merge this new observation into pose of existing block of this type
         B_match = this.blocks{blockType}{i_match};
@@ -124,15 +131,16 @@ for i_blockObs = 1:numBlocks
         % TODO: Incorporate uncertainty/weighting into this combination/averaging:
         B_match.pose = mean(B_new{i_blockObs}.pose, B_match.pose);
         
-        this.updateBlockObservation(blockType, B_match.pose);
+        this.updateObsBlockPose(blockType, B_match.pose);
     end
     
 end % FOR each observed Block
 
 
-%{
-%% TODO: bookkeeping for indexing
 
+%% TODO: bookkeeping for indexing (since bundleAdjustment will now be broken)
+
+%{
 % Bookkeeping for new block
 index = this.blockTypeToIndex.Count + 1;
 this.blockTypeToIndex(B_new.blockType) = index;
