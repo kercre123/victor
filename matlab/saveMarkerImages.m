@@ -28,11 +28,13 @@ markerParams = {'targetSize', 3.84, ...
         
 parseVarargin(varargin{:});
 
+h_fig = namedFigure('MarkerImage');
+
 for block = row(blocks)
     for face = row(faces)
         temp = generateMarkerImage(block, face, markerParams{:}); 
         imwrite(temp, fullfile(savePath, ...
-            sprintf('Block%.2d_Face%.2d.png', block, face))); 
+            sprintf('Block%.3d_Face%.2d.png', block, face))); 
     end
 end
 

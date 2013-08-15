@@ -4,6 +4,7 @@ h_axes = [];
 fiducialType = 'none'; % cornerDots, dockingDots, square or none
 centerTargetType = 'circle'; % circle or checker
 targetSize = 3.84; % in cm
+imgSize = 255; 
 fiducialSize = .5; % radius of dots or width of square
 borderSpacing = .25; % in cm
 n = 5; %numSquares, should be odd, so there's a center pixel we can use
@@ -146,10 +147,10 @@ end
 if nargout>0
     h_fig = get(h_axes, 'Parent');
     axis(h_axes, 'off');
-    set(h_fiducial, 'Visible', 'off');
+    %set(h_fiducial, 'Visible', 'off');
     set(h_fig, 'Color', 'w');
-    truesize(h_fig, 5*[targetSize targetSize])
+    truesize(h_fig, [imgSize imgSize])
     markerImg = getframe;
     markerImg = markerImg.cdata;
-    set(h_fiducial, 'Visible', 'on');
+    %set(h_fiducial, 'Visible', 'on');
 end
