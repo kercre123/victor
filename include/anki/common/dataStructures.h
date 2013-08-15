@@ -14,8 +14,8 @@
 #if defined(ANKICORETECH_USE_OPENCV)
 namespace cv
 {
-template<typename _Tp> class Point_;
-template<typename _Tp> class Point3_;
+  template<typename _Tp> class Point_;
+  template<typename _Tp> class Point3_;
 }
 #endif
 
@@ -42,17 +42,17 @@ namespace Anki
     {
     }
 
-    #if defined(ANKICORETECH_USE_OPENCV)
+#if defined(ANKICORETECH_USE_OPENCV)
     Point2(const cv::Point_<T>& pt) : x(pt.x), y(pt.y)
     {
     }
-    
+
     // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Matrix. No data is copied.
     cv::Point_<T>& get_CvPoint_()
     {
       return cv::Point_<T>(x,y);
     }
-    #endif // #if defined(ANKICORETECH_USE_OPENCV)
+#endif // #if defined(ANKICORETECH_USE_OPENCV)
 
     T x, y;
   };
@@ -63,12 +63,12 @@ namespace Anki
     Point3(T x, T y, T z) : x(x), y(y), z(z)
     {
     }
-    
+
     Point3(const Point3& pt) : x(pt.x), y(pt.y), z(pt.z)
     {
     }
 
-    #if defined(ANKICORETECH_USE_OPENCV)
+#if defined(ANKICORETECH_USE_OPENCV)
     Point3(const cv::Point3_<T>& pt) : x(pt.x), y(pt.y), z(pt.z)
     {
     }
@@ -78,11 +78,10 @@ namespace Anki
     {
       return cv::Point3_<T>(x,y,z);
     }
-    #endif // #if defined(ANKICORETECH_USE_OPENCV)
+#endif // #if defined(ANKICORETECH_USE_OPENCV)
 
     T x, y, z;
   };
 } // namespace Anki
-
 
 #endif // #ifndef _ANKICORETECH_COMMON_DATASTRUCTURES_H_

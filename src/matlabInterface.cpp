@@ -1,4 +1,3 @@
-
 #include "anki/common.h"
 
 #include <stdarg.h>
@@ -94,12 +93,12 @@ std::string Anki::Matlab::EvalString(const char * const format, ...)
   char *buffer;
 
   va_start( args, format );
-  
-  #ifdef _MSC_VER
-    const u32 len = _vscprintf( format, args ) + 1;
-  #else
-    const u32 len = 1024;
-  #endif
+
+#ifdef _MSC_VER
+  const u32 len = _vscprintf( format, args ) + 1;
+#else
+  const u32 len = 1024;
+#endif
 
   buffer = (char*) malloc( len * sizeof(char) );
   vsnprintf( buffer, len, format, args );
@@ -124,11 +123,11 @@ std::string Anki::Matlab::EvalStringEcho(const char * const format, ...)
 
   va_start( args, format );
 
-  #ifdef _MSC_VER
-    const u32 len = _vscprintf( format, args ) + 1;
-  #else
-    const u32 len = 1024;
-  #endif
+#ifdef _MSC_VER
+  const u32 len = _vscprintf( format, args ) + 1;
+#else
+  const u32 len = 1024;
+#endif
 
   buffer = (char*) malloc( len * sizeof(char) );
   vsnprintf( buffer, len, format, args );
@@ -455,16 +454,16 @@ s32 Anki::Matlab::GetIplImage(IplImage *im, const std::string name)
     //EvalString("%s=%s;", nameTmp, name);
   }else if(im->nChannels == 3) {
     EvalString("%s_AnkiTMP(:, :, 3)=%s(:, :, 1);\
-           %s_AnkiTMP(:, :, 2)=%s(:, :, 2);\
-           %s_AnkiTMP(:, :, 1)=%s(:, :, 3);\
-           %s_AnkiTMP=permute(%s_AnkiTMP, [3, 2, 1]);\
-           %s_AnkiTMP=%s_AnkiTMP(:);",
-           name.data(), name.data(),
-           name.data(), name.data(),
-           name.data(), name.data(),
-           name.data(), name.data(),
-           name.data(), name.data(),
-           name.data());
+               %s_AnkiTMP(:, :, 2)=%s(:, :, 2);\
+               %s_AnkiTMP(:, :, 1)=%s(:, :, 3);\
+               %s_AnkiTMP=permute(%s_AnkiTMP, [3, 2, 1]);\
+               %s_AnkiTMP=%s_AnkiTMP(:);",
+               name.data(), name.data(),
+               name.data(), name.data(),
+               name.data(), name.data(),
+               name.data(), name.data(),
+               name.data(), name.data(),
+               name.data());
   } else {
     printf("Error: %d channels not supported for %s.\n", im->nChannels, name.data());
     return -1;
@@ -525,7 +524,7 @@ s32 Anki::Matlab::GetIplImage(IplImage *im, const std::string name)
     }
     /*for(u32 i = 0; i<(s32)size; i++)
     {
-      imageData[i] = matlabData[i];
+    imageData[i] = matlabData[i];
     }*/
     free(matlabData);
   }else if(im->depth == IPL_DEPTH_32S) {
@@ -549,7 +548,7 @@ s32 Anki::Matlab::GetIplImage(IplImage *im, const std::string name)
     }
     /*for(u32 i = 0; i<(s32)size; i++)
     {
-      imageData[i] = matlabData[i];
+    imageData[i] = matlabData[i];
     }*/
     free(matlabData);
   } else {
@@ -596,22 +595,20 @@ s32 Anki::Matlab::PutIplImage(const IplImage *im, const std::string name, bool f
   }else if(nChannels == 3) {
     if(flipRedBlue) {
       EvalString("%s_AnkiTMP=permute(reshape(%s_AnkiTMP, [3, %d, %d]), [3, 2, 1]);\
-           %s(:, :, 3)=%s_AnkiTMP(:, :, 1);\
-           %s(:, :, 2)=%s_AnkiTMP(:, :, 2);\
-           %s(:, :, 1)=%s_AnkiTMP(:, :, 3);\
-           clear %s_AnkiTMP",
-           name.data(), name.data(), width, height,
-           name.data(), name.data(),
-           name.data(), name.data(),
-           name.data(), name.data(),
-           name.data());
+                 %s(:, :, 3)=%s_AnkiTMP(:, :, 1);\
+                 %s(:, :, 2)=%s_AnkiTMP(:, :, 2);\
+                 %s(:, :, 1)=%s_AnkiTMP(:, :, 3);\
+                 clear %s_AnkiTMP",
+                 name.data(), name.data(), width, height,
+                 name.data(), name.data(),
+                 name.data(), name.data(),
+                 name.data(), name.data(),
+                 name.data());
     } else {
       EvalString("%s=permute(reshape(%s_AnkiTMP, [3, %d, %d]), [3, 2, 1]);\
-           clear %s_AnkiTMP",
-           name.data(), name.data(), width, height, name.data());
+                 clear %s_AnkiTMP",
+                 name.data(), name.data(), width, height, name.data());
     }
-
-
   } else {
     printf("Error: %d channels not supported for %s.\n", im->nChannels, name.data());
     return -1;

@@ -1,4 +1,3 @@
-
 #ifndef _ANKICORETECH_COMMON_UTILITIES_H_
 #define _ANKICORETECH_COMMON_UTILITIES_H_
 
@@ -37,22 +36,21 @@
 
 namespace Anki
 {
-template<typename T> inline T RoundUp(T number, T multiple)
-{
-  return (number + (multiple-1)) & ~(multiple-1);
-}
+  template<typename T> inline T RoundUp(T number, T multiple)
+  {
+    return (number + (multiple-1)) & ~(multiple-1);
+  }
 
-template<typename T> inline T RoundDown(T number, T multiple)
-{
-  return multiple * (number/multiple);
-}
+  template<typename T> inline T RoundDown(T number, T multiple)
+  {
+    return multiple * (number/multiple);
+  }
 
-double GetTime();
+  double GetTime();
 
 #if defined(ANKICORETECH_USE_OPENCV)
-int ConvertToOpenCvType(const char *typeName, size_t byteDepth); // Converts from typeid names to openCV types
+  int ConvertToOpenCvType(const char *typeName, size_t byteDepth); // Converts from typeid names to openCV types
 #endif // #if defined(ANKICORETECH_USE_OPENCV)
-
 } // namespace Anki
 
 #endif // _ANKICORETECH_COMMON_UTILITIES_H_

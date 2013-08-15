@@ -1,4 +1,3 @@
-
 #include "anki/common.h"
 
 #if defined(_MSC_VER)
@@ -11,12 +10,11 @@
 #include "opencv2/opencv.hpp"
 #endif
 
-
 double Anki::GetTime()
 {
 #if defined(_MSC_VER)
   LARGE_INTEGER frequency, counter;
-  QueryPerformanceCounter(&counter); 
+  QueryPerformanceCounter(&counter);
   QueryPerformanceFrequency(&frequency);
   return 1000.0*double(counter.QuadPart)/double(frequency.QuadPart);
 #elif defined(__APPLE_CC__)

@@ -1,4 +1,3 @@
-
 #ifndef _ANKICORETECH_COMMON_CONFIG_H_
 #define _ANKICORETECH_COMMON_CONFIG_H_
 
@@ -11,29 +10,29 @@
 
 // Various defines that make different compilers work on the same code
 #if defined(_MSC_VER) // We're using the MSVC compiler
-  #ifndef __PRETTY_FUNCTION__
-  #define __PRETTY_FUNCTION__ __FUNCSIG__
-  #endif
+#ifndef __PRETTY_FUNCTION__
+#define __PRETTY_FUNCTION__ __FUNCSIG__
+#endif
 
-  #ifndef restrict
-  #define restrict
-  #endif
+#ifndef restrict
+#define restrict
+#endif
 
-  #ifndef snprintf
-  #define snprintf sprintf_s
-  #endif
+#ifndef snprintf
+#define snprintf sprintf_s
+#endif
 
-  #ifndef vsprintf_s
-  #define vsnprintf vsprintf_s
-  #endif
+#ifndef vsprintf_s
+#define vsnprintf vsprintf_s
+#endif
 
 #elif defined(__GNUC__) // We're using the GCC compiler
-  #ifndef restrict
-  #define restrict
-  #endif
-  
+#ifndef restrict
+#define restrict
+#endif
+
 #elif defined(__APPLE_CC__) // Apple Xcode
-  
+
 #endif //End if compiler defined checks
 
 #include <stdint.h>

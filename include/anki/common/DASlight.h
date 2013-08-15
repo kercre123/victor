@@ -50,8 +50,8 @@ typedef enum DASLogLevel {
 extern "C" {
 #endif
 
-void _DAS_Logf(DASLogLevel level, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...);
-void _DAS_Log (DASLogLevel level, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...);
+  void _DAS_Logf(DASLogLevel level, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...);
+  void _DAS_Log (DASLogLevel level, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...);
 
 #ifdef __cplusplus
 } // extern "C"

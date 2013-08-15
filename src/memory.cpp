@@ -1,4 +1,3 @@
-
 #include "anki/common.h"
 
 #include <assert.h>
@@ -11,7 +10,7 @@ Anki::MemoryStack::MemoryStack(void *buffer, u32 bufferLength)
   DASConditionalError(MEMORY_ALIGNMENT == 8, "Anki.MemoryStack.MemoryStack", "Currently, only MEMORY_ALIGNMENT == 8 is supported");
 }
 
-Anki::MemoryStack::MemoryStack(const MemoryStack& ms) 
+Anki::MemoryStack::MemoryStack(const MemoryStack& ms)
   : buffer(ms.buffer), totalBytes(ms.totalBytes), usedBytes(ms.usedBytes)
 {
   DASConditionalError(ms.buffer, "Anki.MemoryStack.MemoryStack", "Buffer must be allocated");
@@ -24,14 +23,14 @@ void* Anki::MemoryStack::Allocate(u32 numBytes)
 {
   DASConditionalWarnAndReturn(numBytes != 0, NULL, "Anki.MemoryStack.Allocate", "numBytes != 0");
   DASConditionalWarnAndReturn(numBytes <= 0x3FFFFFFF, NULL, "Anki.MemoryStack.Allocate", "numBytes <= 0x3FFFFFFF");
-    
+
   char * const bufferNextFree = static_cast<char*>(buffer) + usedBytes;
-  
+
   // Get the pointer locations for header, data, and footer
   char * const segmentHeader = reinterpret_cast<char*>( Anki::RoundUp<size_t>(reinterpret_cast<size_t>(bufferNextFree), MEMORY_ALIGNMENT) );
   void * const segmentMemory = reinterpret_cast<void*>(segmentHeader + 8);
   char * const segmentFooter = reinterpret_cast<char*>(segmentMemory) + Anki::RoundUp<u32>(numBytes, MEMORY_ALIGNMENT);
-  
+
   const u32 requestedBytes = static_cast<u32>( reinterpret_cast<size_t>(segmentFooter+4) - reinterpret_cast<size_t>(bufferNextFree) );
 
   DASConditionalEventAndReturn((usedBytes+requestedBytes) <= totalBytes, NULL, "Anki.MemoryStack.Allocate", "Ran out of scratch space");
@@ -114,11 +113,11 @@ void* Anki::MemoryStack::get_buffer()
 /*
 void Anki::MemoryStack::Clear()
 {
-  usedBytes = 0;
+usedBytes = 0;
 }
 
 const void* Anki::MemoryStack::get_buffer() const
 {
-  return buffer;
+return buffer;
 }
 */

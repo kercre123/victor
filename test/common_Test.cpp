@@ -1,4 +1,3 @@
-
 #include "anki/common.h"
 
 #include <iostream>
@@ -47,36 +46,36 @@ TEST(AnkiVision, MemoryStack)
 
   ASSERT_TRUE(ms.IsConsistent());
 
-  #define NUM_EXPECTED_RESULTS 76
+#define NUM_EXPECTED_RESULTS 76
   const bool expectedResults[NUM_EXPECTED_RESULTS] = {
-                                    // Allocation 1
-                                    true,  false, false, false, // #0 just changes 5->6
-                                    false, false, false, false,
-                                    true,  true,  true,  true, 
-                                    true,  true,  true,  true, 
-                                    false, false, false, false,
-                                    true,  true,  true,  true, 
-                                    // Allocation 2
-                                    false, false, false, false,
-                                    false, false, false, false,
-                                    true,  true,  true,  true, 
-                                    true,  true,  true,  true, 
-                                    true,  true,  true,  true, 
-                                    true,  true,  true,  true, 
-                                    false, false, false, false,
-                                    true,  true,  true,  true, 
-                                    // Allocation 3
-                                    true,  false, false, false, // #56 just changes 1->2
-                                    false, false, false, false,
-                                    true,  true,  true,  true, 
-                                    true,  true,  true,  true, 
-                                    false, false, false, false};
+    // Allocation 1
+    true,  false, false, false, // #0 just changes 5->6
+    false, false, false, false,
+    true,  true,  true,  true,
+    true,  true,  true,  true,
+    false, false, false, false,
+    true,  true,  true,  true,
+    // Allocation 2
+    false, false, false, false,
+    false, false, false, false,
+    true,  true,  true,  true,
+    true,  true,  true,  true,
+    true,  true,  true,  true,
+    true,  true,  true,  true,
+    false, false, false, false,
+    true,  true,  true,  true,
+    // Allocation 3
+    true,  false, false, false, // #56 just changes 1->2
+    false, false, false, false,
+    true,  true,  true,  true,
+    true,  true,  true,  true,
+    false, false, false, false};
 
   char * const alignedBufferBeginning = reinterpret_cast<char*>(buffer1) - 8;
   for(u32 i=0; i<NUM_EXPECTED_RESULTS; i++) {
     ASSERT_TRUE(ms.IsConsistent());
     (alignedBufferBeginning[i])++;
-    ASSERT_TRUE(ms.IsConsistent() == expectedResults[i]);    
+    ASSERT_TRUE(ms.IsConsistent() == expectedResults[i]);
     //std::cout << i << " " << ms.IsConsistent() << " " << expectedResults[i] << "\n";
     (alignedBufferBeginning[i])--;
   }
@@ -91,7 +90,6 @@ u32 CheckMemoryStackUsage(Anki::MemoryStack ms, u32 numBytes)
   ms.Allocate(numBytes);
   return ms.get_usedBytes();
 }
-
 
 u32 CheckConstCasting(const Anki::MemoryStack ms, u32 numBytes)
 {
@@ -130,7 +128,7 @@ TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
   void * buffer = calloc(numBytes+8, 1);
   ASSERT_TRUE(buffer != NULL);
 
-  ASSERT_TRUE(Anki::MEMORY_ALIGNMENT == 8);  
+  ASSERT_TRUE(Anki::MEMORY_ALIGNMENT == 8);
 
   void * bufferAligned = reinterpret_cast<void*>(Anki::RoundUp<size_t>(reinterpret_cast<size_t>(buffer), Anki::MEMORY_ALIGNMENT));
 
@@ -165,7 +163,7 @@ TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation2)
   void * buffer = calloc(numBytes+8, 1);
   ASSERT_TRUE(buffer != NULL);
 
-  ASSERT_TRUE(Anki::MEMORY_ALIGNMENT == 8);  
+  ASSERT_TRUE(Anki::MEMORY_ALIGNMENT == 8);
 
   void * bufferAligned = reinterpret_cast<void*>(Anki::RoundUp<size_t>(reinterpret_cast<size_t>(buffer), Anki::MEMORY_ALIGNMENT));
 
@@ -213,13 +211,13 @@ TEST(CoreTech_Common, SimpleMatlabTest1)
 #endif //#if defined(ANKICORETECH_USE_MATLAB)
 
 #if defined(ANKICORETECH_USE_MATLAB)
-TEST(CoreTech_Common, SimpleMatlabTest2) 
+TEST(CoreTech_Common, SimpleMatlabTest2)
 {
   matlab.EvalStringEcho("simpleMatrix = int16([1,2,3,4,5;6,7,8,9,10]);");
   Anki::Matrix<s16> simpleMatrix = matlab.GetMatrix<s16>("simpleMatrix");
   printf("simple matrix:\n");
   simpleMatrix.Print();
-  
+
   ASSERT_EQ(1, *simpleMatrix.Pointer(0,0));
   ASSERT_EQ(2, *simpleMatrix.Pointer(0,1));
   ASSERT_EQ(3, *simpleMatrix.Pointer(0,2));
@@ -230,7 +228,7 @@ TEST(CoreTech_Common, SimpleMatlabTest2)
   ASSERT_EQ(8, *simpleMatrix.Pointer(1,2));
   ASSERT_EQ(9, *simpleMatrix.Pointer(1,3));
   ASSERT_EQ(10, *simpleMatrix.Pointer(1,4));
-  
+
   free(simpleMatrix.get_data());
 }
 #endif //#if defined(ANKICORETECH_USE_MATLAB)
@@ -256,11 +254,11 @@ TEST(CoreTech_Common, SimpleOpenCVTest)
   cv::GaussianBlur(src, dst, ksize, sigma, sigma, cv::BORDER_REFLECT_101);
 
   std::cout << src.at<double>(50, 0) << " "
-            << src.at<double>(50, 1) << "\n"
-            << *( ((double*)src.data) + 50*6) << " "
-            << *( ((double*)src.data) + 50*6 + 1) << "\n"
-            << dst.at<double>(50, 0) << " "
-            << dst.at<double>(50, 1) << "\n";
+    << src.at<double>(50, 1) << "\n"
+    << *( ((double*)src.data) + 50*6) << " "
+    << *( ((double*)src.data) + 50*6 + 1) << "\n"
+    << dst.at<double>(50, 0) << " "
+    << dst.at<double>(50, 1) << "\n";
 
   ASSERT_EQ(5, src.at<double>(50, 0));
   ASSERT_EQ(6, src.at<double>(50, 1));
@@ -276,7 +274,7 @@ TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
   Anki::MemoryStack ms(buffer, numBytes);
-  
+
   // Create a matrix, and manually set a few values
   Anki::Matrix<s16> myMatrix(10, 6, ms);
   ASSERT_TRUE(myMatrix.get_data() != NULL);
@@ -293,57 +291,57 @@ TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   *myMatrix.Pointer(2,4) = 11;
   *myMatrix.Pointer(2,5) = 12;
 
-  #if defined(ANKICORETECH_USE_MATLAB)
+#if defined(ANKICORETECH_USE_MATLAB)
   // Check that the Matlab transfer works (you need to check the Matlab window to verify that this works)
   matlab.PutMatrix(myMatrix, "myMatrix");
-  #endif //#if defined(ANKICORETECH_USE_MATLAB)
-  
-  #if defined(ANKICORETECH_USE_OPENCV)
+#endif //#if defined(ANKICORETECH_USE_MATLAB)
+
+#if defined(ANKICORETECH_USE_OPENCV)
   // Check that the templated OpenCV matrix works
   {
-  cv::Mat_<s16> &myMatrix_cvMat = myMatrix.get_CvMat_();
-  std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat(2,0) << "\n";
-  ASSERT_EQ(7, *myMatrix.Pointer(2,0));
-  ASSERT_EQ(7, myMatrix_cvMat(2,0));
+    cv::Mat_<s16> &myMatrix_cvMat = myMatrix.get_CvMat_();
+    std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat(2,0) << "\n";
+    ASSERT_EQ(7, *myMatrix.Pointer(2,0));
+    ASSERT_EQ(7, myMatrix_cvMat(2,0));
 
-  std::cout << "Setting OpenCV matrix\n";
-  myMatrix_cvMat(2,0) = 100;
-  std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat(2,0) << "\n";
-  ASSERT_EQ(100, *myMatrix.Pointer(2,0));
-  ASSERT_EQ(100, myMatrix_cvMat(2,0));
+    std::cout << "Setting OpenCV matrix\n";
+    myMatrix_cvMat(2,0) = 100;
+    std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat(2,0) << "\n";
+    ASSERT_EQ(100, *myMatrix.Pointer(2,0));
+    ASSERT_EQ(100, myMatrix_cvMat(2,0));
 
-  std::cout << "Setting CoreTech_Common matrix\n";
-  *myMatrix.Pointer(2,0) = 42;
-  std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat(2,0) << "\n";
-  ASSERT_EQ(42, *myMatrix.Pointer(2,0));
-  ASSERT_EQ(42, myMatrix_cvMat(2,0));
+    std::cout << "Setting CoreTech_Common matrix\n";
+    *myMatrix.Pointer(2,0) = 42;
+    std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat(2,0) << "\n";
+    ASSERT_EQ(42, *myMatrix.Pointer(2,0));
+    ASSERT_EQ(42, myMatrix_cvMat(2,0));
   }
 
   std::cout << "\n\n";
 
   // Check that the non-templated OpenCV matrix works
   {
-  cv::Mat &myMatrix_cvMat = myMatrix.get_CvMat_();
-  std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat.at<s16>(2,0) << "\n";
-  ASSERT_EQ(42, *myMatrix.Pointer(2,0));
-  ASSERT_EQ(42, myMatrix_cvMat.at<s16>(2,0));
+    cv::Mat &myMatrix_cvMat = myMatrix.get_CvMat_();
+    std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat.at<s16>(2,0) << "\n";
+    ASSERT_EQ(42, *myMatrix.Pointer(2,0));
+    ASSERT_EQ(42, myMatrix_cvMat.at<s16>(2,0));
 
-  std::cout << "Setting OpenCV matrix\n";
-  myMatrix_cvMat.at<s16>(2,0) = 300;
-  std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat.at<s16>(2,0) << "\n";
-  ASSERT_EQ(300, *myMatrix.Pointer(2,0));
-  ASSERT_EQ(300, myMatrix_cvMat.at<s16>(2,0));
+    std::cout << "Setting OpenCV matrix\n";
+    myMatrix_cvMat.at<s16>(2,0) = 300;
+    std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat.at<s16>(2,0) << "\n";
+    ASSERT_EQ(300, *myMatrix.Pointer(2,0));
+    ASSERT_EQ(300, myMatrix_cvMat.at<s16>(2,0));
 
-  std::cout << "Setting CoreTech_Common matrix\n";
-  *myMatrix.Pointer(2,0) = 90;
-  std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat.at<s16>(2,0) << "\n";
-  ASSERT_EQ(90, *myMatrix.Pointer(2,0));
-  ASSERT_EQ(90, myMatrix_cvMat.at<s16>(2,0));
+    std::cout << "Setting CoreTech_Common matrix\n";
+    *myMatrix.Pointer(2,0) = 90;
+    std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat.at<s16>(2,0) << "\n";
+    ASSERT_EQ(90, *myMatrix.Pointer(2,0));
+    ASSERT_EQ(90, myMatrix_cvMat.at<s16>(2,0));
   }
-  #endif //#if defined(ANKICORETECH_USE_OPENCV)
+#endif //#if defined(ANKICORETECH_USE_OPENCV)
 
   free(buffer); buffer = NULL;
-  
+
   std::cout << "\n";
 }
 
@@ -355,4 +353,3 @@ int main(int argc, char ** argv)
 
   return 0;
 }
-
