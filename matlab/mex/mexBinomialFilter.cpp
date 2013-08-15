@@ -9,7 +9,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
     Anki::Matrix<u8> img = mxArray2AnkiMatrix<u8>(prhs[0]);
 
-    Anki::Matrix<u8> filteredImg = Anki::Matrix<u8>::AllocateMatrixFromHeap(img.get_size(0), img.get_size(1));
+    Anki::Matrix<u8> filteredImg = Anki::AllocateMatrixFromHeap<u8>(img.get_size(0), img.get_size(1));
     
     printf("%d %d\n", *img.Pointer(10,10), *img.Pointer(100,10));
     
