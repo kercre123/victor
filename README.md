@@ -14,10 +14,13 @@ To build gtest1.7.0 with Xcode on Mac:
     b. C++ Standard Library = libc++ (LLVM C++ standard library with C++11 support)
 3. Then build as normal
 
-To build gtest1.7.0 with MSVC2012 on Windows:
+To build gtest1.7.0 with MSVC2012 or MSVC2010 on Windows:
 1. Use Cmake as normal, with the build directory as coretech-external/build/msvc2012/gtest-1.7.0
-2. Open the MSVC solution. For projects gtest and gtest_main, add "_VARIADIC_MAX=10" to Configuration Properties->C/C++->Preprocessor->Preprocessor Definitions:
+2. Open the MSVC solution. For projects gtest and gtest_main:
+	2a. Add "_VARIADIC_MAX=10" to Configuration Properties->C/C++->Preprocessor->Preprocessor Definitions:
+	2b. Change Configuration Properties->C/C++->Code Generation->Runtime Library to "Multi-threaded DLL (/MD)" for Release, and "Multi-threaded Debug DLL (/MDd)" for Debug.
 3. Then build as normal
+4. For your projects that use gtest, you also must add "_VARIADIC_MAX=10" to the project properties
 
 To build and use OpenCV 2.4.6.1 on Mac
 1. Use Cmake as normal, with the build directory as coretech-external/build/xcode4/opencv-2.4.6.1
