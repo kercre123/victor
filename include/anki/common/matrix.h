@@ -4,6 +4,7 @@
 #include "anki/common/config.h"
 #include "anki/common/utilities.h"
 #include "anki/common/memory.h"
+#include "anki/common/DASlight.h"
 
 #include <iostream>
 #include <assert.h>
@@ -17,9 +18,10 @@ namespace cv
 
 namespace Anki
 {
-  // A Matrix is a lightweight templated class for holding two dimentional data. It does not allocate from the heap.
-  // The data from Matrix is OpenCV-compatible, and accessable via get_CvMat_() and get_CvMat()
-  // The MatlabInterface project can send and receive Matrix classes from Matlab
+  // A Matrix is a lightweight templated class for holding two dimentional data. It does no
+  // reference counting, or allocating/freeing from the heap. The data from Matrix is
+  // OpenCV-compatible, and accessable via get_CvMat_(). The matlabInterface.h can send and receive
+  // Matrix classes from Matlab
   template<typename T> class Matrix
   {
   public:
@@ -34,21 +36,27 @@ namespace Anki
     }
 
     // Constructor for a Matrix, pointing to user-allocated data
-    Matrix(u32 numRows, u32 numCols, T* data, u32 stride)
+    Matrix(u32 numRows, u32 numCols, T* data, u32 dataLength, u32 stride)
       : stride(stride)
     {
       initialize(numRows,
         numCols,
-        data);
+        data,
+        dataLength);
     }
 
     // Constructor for a Matrix, pointing to user-allocated MemoryStack
     Matrix(u32 numRows, u32 numCols, MemoryStack &memory)
-      : stride(static_cast<u32>(Anki::RoundUp<size_t>(sizeof(T)*numCols, Anki::MEMORY_ALIGNMENT)))
+      : stride(ComputeMinimumRequiredStride(numCols))
     {
+      u32 numBytesRequested = numRows*this->stride;
+      u32 numBytesAllocated = 0;
+      void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
+
       initialize(numRows,
         numCols,
-        static_cast<T*>(memory.Allocate(numRows*this->stride)));
+        reinterpret_cast<T*>(allocatedBuffer),
+        numBytesAllocated);
     }
 
     // Pointer to the data, at a given (y,x) location
@@ -118,7 +126,23 @@ namespace Anki
     cv::Mat_<T> cvMatMirror;
 #endif // #if defined(ANKICORETECH_USE_OPENCV)
 
-    void initialize(u32 numRows, u32 numCols, T *data) {
+    void initialize(u32 numRows, u32 numCols, T *data, u32 dataLength) {
+      if(ComputeMinimumRequiredStride(numCols)*numRows > dataLength) {
+        DASError("Anki.Matrix.initialize", "input data buffer is not large enough");
+        this->size[0] = 0;
+        this->size[1] = 0;
+        this->data = NULL;
+        return;
+      }
+
+      if(!data) {
+        DASError("Anki.Matrix.initialize", "input data buffer is NULL");
+        this->size[0] = 0;
+        this->size[1] = 0;
+        this->data = NULL;
+        return;
+      }
+
       this->size[0] = numRows;
       this->size[1] = numCols;
       this->data = data;
@@ -158,7 +182,7 @@ namespace Anki
     const u32 stride = Anki::Matrix<T>::ComputeMinimumRequiredStride(numCols);
     const u32 requiredMemory = 64 + 2*Anki::MEMORY_ALIGNMENT + Anki::Matrix<T>::ComputeMinimumRequiredMemory(numRows, numCols); // The required memory, plus a bit more just in case
 
-    Matrix<T> mat(numRows, numCols, reinterpret_cast<u8*>(calloc(requiredMemory, 1)), stride);
+    Matrix<T> mat(numRows, numCols, reinterpret_cast<u8*>(calloc(requiredMemory, 1)), requiredMemory, stride);
 
     return mat;
   }

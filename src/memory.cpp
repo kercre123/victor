@@ -19,28 +19,32 @@ Anki::MemoryStack::MemoryStack(const MemoryStack& ms)
   DASConditionalError(ms.totalBytes >= ms.usedBytes, "Anki.MemoryStack.MemoryStack", "Buffer is using more bytes than it has. Try running IsConsistent() to test for memory corruption.");
 }
 
-void* Anki::MemoryStack::Allocate(u32 numBytes)
+void* Anki::MemoryStack::Allocate(u32 numBytesRequested, u32 *numBytesAllocated)
 {
-  DASConditionalWarnAndReturn(numBytes != 0, NULL, "Anki.MemoryStack.Allocate", "numBytes != 0");
-  DASConditionalWarnAndReturn(numBytes <= 0x3FFFFFFF, NULL, "Anki.MemoryStack.Allocate", "numBytes <= 0x3FFFFFFF");
+  DASConditionalWarnAndReturn(numBytesRequested != 0, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested != 0");
+  DASConditionalWarnAndReturn(numBytesRequested <= 0x3FFFFFFF, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested <= 0x3FFFFFFF");
 
   char * const bufferNextFree = static_cast<char*>(buffer) + usedBytes;
 
   // Get the pointer locations for header, data, and footer
   char * const segmentHeader = reinterpret_cast<char*>( Anki::RoundUp<size_t>(reinterpret_cast<size_t>(bufferNextFree), MEMORY_ALIGNMENT) );
   void * const segmentMemory = reinterpret_cast<void*>(segmentHeader + 8);
-  char * const segmentFooter = reinterpret_cast<char*>(segmentMemory) + Anki::RoundUp<u32>(numBytes, MEMORY_ALIGNMENT);
+  char * const segmentFooter = reinterpret_cast<char*>(segmentMemory) + Anki::RoundUp<u32>(numBytesRequested, MEMORY_ALIGNMENT);
 
   const u32 requestedBytes = static_cast<u32>( reinterpret_cast<size_t>(segmentFooter+4) - reinterpret_cast<size_t>(bufferNextFree) );
 
   DASConditionalEventAndReturn((usedBytes+requestedBytes) <= totalBytes, NULL, "Anki.MemoryStack.Allocate", "Ran out of scratch space");
 
   // Next, add the header for this block
-  reinterpret_cast<u32*>(segmentHeader)[0] = numBytes;
+  reinterpret_cast<u32*>(segmentHeader)[0] = numBytesRequested;
   reinterpret_cast<u32*>(segmentHeader)[1] = FILL_PATTERN_START;
   reinterpret_cast<u32*>(segmentFooter)[0] = FILL_PATTERN_END;
 
   usedBytes += requestedBytes;
+
+  if(numBytesAllocated) {
+    *numBytesAllocated = reinterpret_cast<u32>(segmentFooter) - reinterpret_cast<u32>(segmentMemory);
+  }
 
   return segmentMemory;
 }

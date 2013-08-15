@@ -21,7 +21,6 @@ namespace cv
 
 namespace Anki
 {
-  //typedef enum Result {RESULT_SUCCESS, RESULT_FAIL};
   enum Result {
     RESULT_OK = 0,
     RESULT_FAIL = 1,

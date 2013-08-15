@@ -648,4 +648,4 @@ bool Anki::Matlab::DoesVariableExist(const std::string name)
     return true;
 }
 
-#endif // #if defined(ANKICORETECH_USE_MATLAB)
+#endif // #if defined(ANKICORETECH_USE_MATLAB) 
