@@ -90,7 +90,7 @@ namespace Anki
     {
       if(!ep) {
         DASError("Anki.GetMatrix", "Matlab engine is not started/connected");
-        return Anki::Matrix<T>(0, 0, NULL, 0, 0);
+        return Anki::Matrix<T>(0, 0, NULL, 0, false);
       }
 
       const std::string tmpName = name + std::string("_AnkiTMP");
@@ -100,7 +100,7 @@ namespace Anki
 
       if(!arrayTmp) {
         DASError("Anki.GetMatrix", "%s could not be got from Matlab", tmpName.data());
-        return Anki::Matrix<T>(0, 0, NULL, 0, 0);
+        return Anki::Matrix<T>(0, 0, NULL, 0, false);
       }
 
       const mxClassID ankiVisionClassId = Anki::ConvertToMatlabType(typeid(T).name(), sizeof(T));
@@ -109,14 +109,14 @@ namespace Anki
 
       if(matlabClassId != ankiVisionClassId) {
         DASError("Anki.GetMatrix", "matlabClassId != ankiVisionClassId");
-        return Anki::Matrix<T>(0, 0, NULL, 0, 0);
+        return Anki::Matrix<T>(0, 0, NULL, 0, false);
       }
 
       const size_t numCols = mxGetM(arrayTmp);
       const size_t numRows = mxGetN(arrayTmp);
-      const u32 stride = Anki::RoundUp<u32>(static_cast<u32>(sizeof(T)*numCols), Anki::MEMORY_ALIGNMENT);
+      const u32 stride = Anki::Matrix<u32>::ComputeRequiredStride(numCols,false);
 
-      Anki::Matrix<T> ankiMatrix(static_cast<u32>(numRows), static_cast<u32>(numCols), reinterpret_cast<T*>(calloc(stride*numCols,1)), stride*numCols, stride);
+      Anki::Matrix<T> ankiMatrix(static_cast<u32>(numRows), static_cast<u32>(numCols), reinterpret_cast<T*>(calloc(stride*numCols,1)), stride*numCols, false);
 
       T *matlabArrayTmp = reinterpret_cast<T*>(mxGetPr(arrayTmp));
       u32 matlabIndex = 0;

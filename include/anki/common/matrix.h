@@ -25,46 +25,47 @@ namespace Anki
   template<typename T> class Matrix
   {
   public:
-    static u32 ComputeMinimumRequiredStride(u32 numCols)
+    static u32 ComputeRequiredStride(u32 numCols, bool useBoundaryFillPatterns)
     {
-      return static_cast<u32>(Anki::RoundUp<size_t>(sizeof(T)*numCols, Anki::MEMORY_ALIGNMENT));
+      return static_cast<u32>(Anki::RoundUp<size_t>(sizeof(T)*numCols, Anki::MEMORY_ALIGNMENT)) + 8*static_cast<u32>(useBoundaryFillPatterns);
     }
 
     static u32 ComputeMinimumRequiredMemory(u32 numRows, u32 numCols)
     {
-      return numRows * Anki::Matrix<T>::ComputeMinimumRequiredStride(numCols);
+      return numRows * Anki::Matrix<T>::ComputeRequiredStride(numCols);
     }
 
     // Constructor for a Matrix, pointing to user-allocated data. If the pointer to *data is not
     // aligned to Anki::MEMORY_ALIGNMENT, this Matrix will start at the next aligned location. Unfortunately, this is more
     // restrictive than most matrix libraries, and as an example, it may make it hard to convert from
     // OpenCV to Anki::Matrix, though the reverse is trivial.
-    Matrix(u32 numRows, u32 numCols, void * data, u32 dataLength, u32 stride=0)
+    Matrix(u32 numRows, u32 numCols, void * data, u32 dataLength, bool useBoundaryFillPatterns=false)
+      : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
     {
-      if(stride == 0) {
-        this->stride = ComputeMinimumRequiredStride(numCols);
-      }else{
-        this->stride = stride;
-      }
+      assert(useBoundaryFillPatterns == false); //TODO: implement this
 
       initialize(numRows,
         numCols,
         data,
-        dataLength);
+        dataLength,
+        useBoundaryFillPatterns);
     }
 
     // Constructor for a Matrix, pointing to user-allocated MemoryStack
-    Matrix(u32 numRows, u32 numCols, MemoryStack &memory)
-      : stride(ComputeMinimumRequiredStride(numCols))
+    Matrix(u32 numRows, u32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns=false)
+      : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
     {
-      u32 numBytesRequested = numRows*this->stride;
+      assert(useBoundaryFillPatterns == false); //TODO: implement this
+
+      const u32 numBytesRequested = numRows * this->stride;
       u32 numBytesAllocated = 0;
       void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
 
       initialize(numRows,
         numCols,
         reinterpret_cast<T*>(allocatedBuffer),
-        numBytesAllocated);
+        numBytesAllocated,
+        useBoundaryFillPatterns);
     }
 
     // Pointer to the data, at a given (y,x) location
@@ -122,6 +123,7 @@ namespace Anki
   protected:
     u32 size[2];
     u32 stride;
+    bool useBoundaryFillPatterns;
 
     T * data;
 
@@ -134,7 +136,9 @@ namespace Anki
     cv::Mat_<T> cvMatMirror;
 #endif // #if defined(ANKICORETECH_USE_OPENCV)
 
-    void initialize(u32 numRows, u32 numCols, void * rawData, u32 dataLength) {
+    void initialize(u32 numRows, u32 numCols, void * rawData, u32 dataLength, bool useBoundaryFillPatterns) {
+      this->useBoundaryFillPatterns = useBoundaryFillPatterns;
+
       if(!rawData) {
         DASError("Anki.Matrix.initialize", "input data buffer is NULL");
         this->size[0] = 0;
@@ -146,7 +150,7 @@ namespace Anki
 
       this->rawDataPointer = rawData;
       const u32 extraBytes = RoundUp(reinterpret_cast<u32>(rawData), Anki::MEMORY_ALIGNMENT) - reinterpret_cast<u32>(rawData);
-      const u32 requiredBytes = (ComputeMinimumRequiredStride(numCols)*numRows+extraBytes);
+      const u32 requiredBytes = ComputeRequiredStride(numCols,useBoundaryFillPatterns)*numRows + extraBytes;
 
       if(requiredBytes > dataLength) {
         DASError("Anki.Matrix.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
@@ -193,7 +197,7 @@ namespace Anki
   // This is seperate from the normal constructor, as Matrix objects are not supposed to manage memory
   template<typename T> Matrix<T> AllocateMatrixFromHeap(u32 numRows, u32 numCols)
   {
-    const u32 stride = Anki::Matrix<T>::ComputeMinimumRequiredStride(numCols);
+    const u32 stride = Anki::Matrix<T>::ComputeRequiredStride(numCols);
     const u32 requiredMemory = 64 + 2*Anki::MEMORY_ALIGNMENT + Anki::Matrix<T>::ComputeMinimumRequiredMemory(numRows, numCols); // The required memory, plus a bit more just in case
 
     Matrix<T> mat(numRows, numCols, reinterpret_cast<u8*>(calloc(requiredMemory, 1)), requiredMemory, stride);
