@@ -47,7 +47,8 @@ classdef BlockMarker3D < handle
             this.block = parentBlock;
             this.faceType  = faceType_;
   
-            this.model = this.Width*[0 0 0; 0 0 -1; 1 0 0; 1 0 -1];
+            %this.model = this.Width*[0 0 0; 0 0 -1; 1 0 0; 1 0 -1];
+            this.model = this.Width/2*[-1 0 1; -1 0 -1; 1 0 1; 1 0 -1];
             this.model = poseInit.applyTo(this.model);
             
         end

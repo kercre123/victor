@@ -93,27 +93,34 @@ switch(this.blockType)
         defineFaceHelper(this, 'left', 10, [-e 44 39], scale, firstMarkerID);
 
     case 60 % Webot Simulated Red 1x1 Block
-        scale = makeWebotBlockHelper(this, 'r', firstMarkerID);
+        makeWebotBlock(this, '1x1', 'r', firstMarkerID);
         
     case 65 % Webot Simulated Green 1x1 Block
-        scale = makeWebotBlockHelper(this, 'g', firstMarkerID);
+        makeWebotBlock(this, '1x1', 'g', firstMarkerID);
         
     case 70 % Webot Simulated Blue 1x1 Block
-        scale = makeWebotBlockHelper(this, 'b', firstMarkerID);
+        makeWebotBlock(this, '1x1', 'b', firstMarkerID);
+        
+    case 75 % Webot Simulated Purple 2x1 Block
+        makeWebotBlock(this, '2x1', [0.5 0.1 0.75], firstMarkerID);
         
     otherwise
         error('No model defined for block type %d.', this.blockType);
     
 end % SWITCH(blockType)
 
-% Scale the canonical unit cube:
-% (each 4 element column -- note the transpose -- is a face)
-X = scale(1)*[0 1 1 0; 0 1 1 0; 0 0 0 0; 1 1 1 1; 0 1 1 0; 0 1 1 0]';
-Y = scale(2)*[0 0 1 1; 0 0 1 1; 0 0 1 1; 0 0 1 1; 1 1 1 1; 0 0 0 0]';
-Z = scale(3)*[0 0 0 0; 1 1 1 1; 0 1 1 0; 0 1 1 0; 0 0 1 1; 0 0 1 1]';
 
-this.model = [X(:)-scale(1)/2 Y(:)-scale(2)/2 Z(:)-scale(3)/2];
-this.dims = scale;
+if this.blockType < 60 % HACK: if non-webot block, finish making model
+    % Scale the canonical unit cube:
+    % (each 4 element column -- note the transpose -- is a face)
+    X = scale(1)*[0 1 1 0; 0 1 1 0; 0 0 0 0; 1 1 1 1; 0 1 1 0; 0 1 1 0]';
+    Y = scale(2)*[0 0 1 1; 0 0 1 1; 0 0 1 1; 0 0 1 1; 1 1 1 1; 0 0 0 0]';
+    Z = scale(3)*[0 0 0 0; 1 1 1 1; 0 1 1 0; 0 1 1 0; 0 0 1 1; 0 0 1 1]';
+    
+    this.model = [X(:)-scale(1)/2 Y(:)-scale(2)/2 Z(:)-scale(3)/2];
+    this.dims = scale;
+end
+
 
 end
 
@@ -121,7 +128,7 @@ function defineFaceHelper(this, whichFace, faceType, origin, scale, firstMarkerI
 
 switch(whichFace)
     case 'front'
-        R = eye(3);
+        R = [0 0 0];
     case 'back'
         R = pi*[0 0 1];
     case 'right'
@@ -136,36 +143,93 @@ switch(whichFace)
         error('Unrecognized face "%s"', whichFace);
 end
 
+Rmat = rodrigues(R);
+origin = origin(:) + Rmat*BlockMarker3D.Width/2*[1 0 -1]';
+
 index = this.faceTypeToIndex.Count + 1;
 this.faceTypeToIndex(faceType) = index;
-pose = Pose(R, origin-scale/2);
+pose = Pose(Rmat, origin-scale(:)/2);
 
 assert(index <= length(this.markers), 'Index for markers too large.');
 this.markers{index} = BlockMarker3D(this, faceType, pose, ...
     firstMarkerID + index);
 
-end
+end % FUNCTION defineFaceHelper()
 
 
-function scale = makeWebotBlockHelper(this, color, firstMarkerID)
+function makeWebotBlock(this, shape, color, firstMarkerID)
+
 this.color = color;
-scale = [60 60 60];
-this.markers = cell(1, 6);
 
-e = .1;
-halfwidth = BlockMarker3D.Width / 2;
-offset1 = scale(1)/2 - halfwidth;
-offset2 = scale(1)/2 + halfwidth;
-
-% Note: there is a coordinate change between Webot's world and BlockWorld.
-% In BlockWorld, the ground is (x,y) with x point from left to right and y
-% pointing away from you.  z is elevation off the ground.  However, in
-% Webot's world, x points away from, z points left/right, and y is
-% elevation off the ground.
-defineFaceHelper(this, 'front',  1, [offset1 -e offset2], scale, firstMarkerID);
-defineFaceHelper(this, 'back',   2, [offset2 scale(2)+e offset2], scale, firstMarkerID);
-defineFaceHelper(this, 'top',    3, [offset1 offset2 scale(3)+e], scale, firstMarkerID);
-defineFaceHelper(this, 'bottom', 4, [offset1 offset1 -e], scale, firstMarkerID);
-defineFaceHelper(this, 'left',   5, [-e offset2 offset2], scale, firstMarkerID);
-defineFaceHelper(this, 'right',  6, [scale(1)+e offset1 offset2], scale, firstMarkerID);
+switch(shape)
+    case '1x1'
+        scale = [60 60 60];
+    case '2x1'
+        scale = [120 60 60];
+    otherwise
+        error('Unrecognized shape "%s".', shape);
 end
+
+% Define block faces in Webots coordinate system (where Y points up)
+X = scale(1)*[0 1 1 0; 0 1 1 0; 0 0 0 0; 1 1 1 1; 0 1 1 0; 0 1 1 0]' - scale(1)/2;
+Y = scale(2)*[0 0 1 1; 0 0 1 1; 0 0 1 1; 0 0 1 1; 1 1 1 1; 0 0 0 0]' - scale(2)/2;
+Z = scale(3)*[0 0 0 0; 1 1 1 1; 0 1 1 0; 0 1 1 0; 0 0 1 1; 0 0 1 1]' - scale(3)/2;
+
+% Assume x points right to left, z points away from you, and y points up
+
+% Create Marker3Ds in the correct pose relative to Block origin (center)
+for faceID = 1:6
+    switch(faceID)
+        case 1
+            % Face 1: -x side (rotate around y +90 degrees)
+            angle = pi/2;
+            axis  = [0 1 0];
+            offset = [-scale(1)/2 0 0];
+        case 2
+            % Face 2: +x side (rotate around y -90 degrees)
+            angle = -pi/2;
+            axis = [0 1 0];
+            offset = [scale(1)/2 0 0];
+        case 3
+            % Face 3: +y side (rotate around x +90 degrees)
+            angle = pi/2;
+            axis = [1 0 0];
+            offset = [0 scale(2)/2 0];
+        case 4
+            % Face 4: -y side (rotate around x -90 degrees)
+            angle = -pi/2;
+            axis = [1 0 0];
+            offset = [0 -scale(2)/2 0];
+        case 5
+            % Face 5: -z side (no rotation needed)
+            angle = 0;
+            axis = [0 1 0];
+            offset = [0 0 -scale(3)/2];
+        case 6
+            % Face 6: +z side (rotate around y 180 degrees)
+            angle = pi;
+            axis = [0 1 0];
+            offset = [0 0 scale(3)/2];
+        otherwise
+            error('Unrecognized face ID "%d".', faceID);
+    end % SWITCH(faceID)
+        
+    % Switch to Matlab coordinates (negate x, swap y and z)
+    axis = [-axis(1) axis(3) axis(2)];
+    offset = [-offset(1) offset(3) offset(2)];
+    
+    % Bookkeeping (still needed? this is really only needed for
+    % bundleAdjustment)
+    index = this.faceTypeToIndex.Count + 1;
+    this.faceTypeToIndex(faceID) = index;
+    
+    % Build the corresponding 3D marker at that Pose 
+    P = Pose(angle*axis, offset(:));
+    this.markers{index} = BlockMarker3D(this, faceID, P, ...
+        firstMarkerID + index);
+end
+
+this.model = [X(:) Z(:) Y(:)];
+this.dims = scale([1 3 2]);
+
+end % FUNCTION makeWebotBlock()
