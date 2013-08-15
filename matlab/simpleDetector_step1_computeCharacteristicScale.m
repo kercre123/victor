@@ -24,7 +24,9 @@ if usePyramid
     elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_loops')
         averageImg = computeCharacteristicScaleImage_loops(img, numScales);
     elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_loopsAndFixedPoint')
-        averageImg = double(computeCharacteristicScaleImage_loopsAndFixedPoint(img, numScales)) / (255 * 2^16);
+        averageImg = double(computeCharacteristicScaleImage_loopsAndFixedPoint(img, numScales, false)) / (255 * 2^16);
+    elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_loopsAndFixedPoint_mexFiltering')
+        averageImg = double(computeCharacteristicScaleImage_loopsAndFixedPoint(img, numScales, true)) / (255 * 2^16);
     end
     disp(sprintf('computeCharacteristicScaleImage took %f', toc));
 else % Use a stack of smoothed images, not a pyramid
