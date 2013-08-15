@@ -35,10 +35,18 @@ namespace Anki
       return numRows * Anki::Matrix<T>::ComputeMinimumRequiredStride(numCols);
     }
 
-    // Constructor for a Matrix, pointing to user-allocated data
-    Matrix(u32 numRows, u32 numCols, T* data, u32 dataLength, u32 stride)
-      : stride(stride)
+    // Constructor for a Matrix, pointing to user-allocated data. If the pointer to *data is not
+    // aligned to Anki::MEMORY_ALIGNMENT, this Matrix will start at the next aligned location. Unfortunately, this is more
+    // restrictive than most matrix libraries, and as an example, it may make it hard to convert from
+    // OpenCV to Anki::Matrix, though the reverse is trivial.
+    Matrix(u32 numRows, u32 numCols, void * data, u32 dataLength, u32 stride=0)
     {
+      if(stride == 0) {
+        this->stride = ComputeMinimumRequiredStride(numCols);
+      }else{
+        this->stride = stride;
+      }
+
       initialize(numRows,
         numCols,
         data,
@@ -106,46 +114,52 @@ namespace Anki
       return stride;
     }
 
-    T* get_data()
+    void* get_rawDataPointer()
     {
-      return data;
-    }
-
-    const T* get_data() const
-    {
-      return data;
+      return rawDataPointer;
     }
 
   protected:
     u32 size[2];
     u32 stride;
 
-    T* data;
+    T * data;
+
+    // To enforce alignment, rawDataPointer may be slightly before T * data.
+    // If the inputted data buffer was from malloc, this is the pointer that
+    // should be used to free.
+    void * rawDataPointer;
 
 #if defined(ANKICORETECH_USE_OPENCV)
     cv::Mat_<T> cvMatMirror;
 #endif // #if defined(ANKICORETECH_USE_OPENCV)
 
-    void initialize(u32 numRows, u32 numCols, T *data, u32 dataLength) {
-      if(ComputeMinimumRequiredStride(numCols)*numRows > dataLength) {
-        DASError("Anki.Matrix.initialize", "input data buffer is not large enough");
-        this->size[0] = 0;
-        this->size[1] = 0;
-        this->data = NULL;
-        return;
-      }
-
-      if(!data) {
+    void initialize(u32 numRows, u32 numCols, void * rawData, u32 dataLength) {
+      if(!rawData) {
         DASError("Anki.Matrix.initialize", "input data buffer is NULL");
         this->size[0] = 0;
         this->size[1] = 0;
         this->data = NULL;
+        this->rawDataPointer = NULL;
+        return;
+      }
+
+      this->rawDataPointer = rawData;
+      const u32 extraBytes = RoundUp(reinterpret_cast<u32>(rawData), Anki::MEMORY_ALIGNMENT) - reinterpret_cast<u32>(rawData);
+      const u32 requiredBytes = (ComputeMinimumRequiredStride(numCols)*numRows+extraBytes);
+
+      if(requiredBytes > dataLength) {
+        DASError("Anki.Matrix.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
+        this->size[0] = 0;
+        this->size[1] = 0;
+        this->data = NULL;
+        this->rawDataPointer = NULL;
         return;
       }
 
       this->size[0] = numRows;
       this->size[1] = numCols;
-      this->data = data;
+      this->data = reinterpret_cast<T*>( reinterpret_cast<char*>(rawData) + extraBytes );
 
 #if defined(ANKICORETECH_USE_OPENCV)
       cvMatMirror = cv::Mat_<T>(size[0], size[1], data, stride);

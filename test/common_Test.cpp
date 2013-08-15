@@ -12,7 +12,7 @@ Anki::Matlab matlab(false);
 
 #include "gtest/gtest.h"
 
-TEST(AnkiVision, MemoryStack)
+TEST(CoreTech_Common, MemoryStack)
 {
   const u32 numBytes = 100;
   void * buffer = calloc(numBytes, 1);
@@ -98,7 +98,7 @@ u32 CheckConstCasting(const Anki::MemoryStack ms, u32 numBytes)
   return CheckMemoryStackUsage(ms, numBytes);
 }
 
-TEST(AnkiVision, MemoryStack_call)
+TEST(CoreTech_Common, MemoryStack_call)
 {
   const u32 numBytes = 100;
   void * buffer = calloc(numBytes, 1);
@@ -229,7 +229,7 @@ TEST(CoreTech_Common, SimpleMatlabTest2)
   ASSERT_EQ(9, *simpleMatrix.Pointer(1,3));
   ASSERT_EQ(10, *simpleMatrix.Pointer(1,4));
 
-  free(simpleMatrix.get_data());
+  free(simpleMatrix.get_rawDataPointer());
 }
 #endif //#if defined(ANKICORETECH_USE_MATLAB)
 
@@ -276,73 +276,112 @@ TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   Anki::MemoryStack ms(buffer, numBytes);
 
   // Create a matrix, and manually set a few values
-  Anki::Matrix<s16> myMatrix(10, 6, ms);
-  ASSERT_TRUE(myMatrix.get_data() != NULL);
-  *myMatrix.Pointer(0,0) = 1;
-  *myMatrix.Pointer(0,1) = 2;
-  *myMatrix.Pointer(0,2) = 3;
-  *myMatrix.Pointer(0,3) = 4;
-  *myMatrix.Pointer(0,4) = 5;
-  *myMatrix.Pointer(0,5) = 6;
-  *myMatrix.Pointer(2,0) = 7;
-  *myMatrix.Pointer(2,1) = 8;
-  *myMatrix.Pointer(2,2) = 9;
-  *myMatrix.Pointer(2,3) = 10;
-  *myMatrix.Pointer(2,4) = 11;
-  *myMatrix.Pointer(2,5) = 12;
+  Anki::Matrix<s16> simpleMatrix(10, 6, ms);
+  ASSERT_TRUE(simpleMatrix.get_rawDataPointer() != NULL);
+  *simpleMatrix.Pointer(0,0) = 1;
+  *simpleMatrix.Pointer(0,1) = 2;
+  *simpleMatrix.Pointer(0,2) = 3;
+  *simpleMatrix.Pointer(0,3) = 4;
+  *simpleMatrix.Pointer(0,4) = 5;
+  *simpleMatrix.Pointer(0,5) = 6;
+  *simpleMatrix.Pointer(2,0) = 7;
+  *simpleMatrix.Pointer(2,1) = 8;
+  *simpleMatrix.Pointer(2,2) = 9;
+  *simpleMatrix.Pointer(2,3) = 10;
+  *simpleMatrix.Pointer(2,4) = 11;
+  *simpleMatrix.Pointer(2,5) = 12;
 
 #if defined(ANKICORETECH_USE_MATLAB)
   // Check that the Matlab transfer works (you need to check the Matlab window to verify that this works)
-  matlab.PutMatrix(myMatrix, "myMatrix");
+  matlab.PutMatrix(simpleMatrix, "simpleMatrix");
 #endif //#if defined(ANKICORETECH_USE_MATLAB)
 
 #if defined(ANKICORETECH_USE_OPENCV)
   // Check that the templated OpenCV matrix works
   {
-    cv::Mat_<s16> &myMatrix_cvMat = myMatrix.get_CvMat_();
-    std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat(2,0) << "\n";
-    ASSERT_EQ(7, *myMatrix.Pointer(2,0));
-    ASSERT_EQ(7, myMatrix_cvMat(2,0));
+    cv::Mat_<s16> &simpleMatrix_cvMat = simpleMatrix.get_CvMat_();
+    std::cout << "simpleMatrix(2,0) = " << *simpleMatrix.Pointer(2,0) << "\nsimpleMatrix_cvMat(2,0) = " << simpleMatrix_cvMat(2,0) << "\n";
+    ASSERT_EQ(7, *simpleMatrix.Pointer(2,0));
+    ASSERT_EQ(7, simpleMatrix_cvMat(2,0));
 
     std::cout << "Setting OpenCV matrix\n";
-    myMatrix_cvMat(2,0) = 100;
-    std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat(2,0) << "\n";
-    ASSERT_EQ(100, *myMatrix.Pointer(2,0));
-    ASSERT_EQ(100, myMatrix_cvMat(2,0));
+    simpleMatrix_cvMat(2,0) = 100;
+    std::cout << "simpleMatrix(2,0) = " << *simpleMatrix.Pointer(2,0) << "\nsimpleMatrix_cvMat(2,0) = " << simpleMatrix_cvMat(2,0) << "\n";
+    ASSERT_EQ(100, *simpleMatrix.Pointer(2,0));
+    ASSERT_EQ(100, simpleMatrix_cvMat(2,0));
 
     std::cout << "Setting CoreTech_Common matrix\n";
-    *myMatrix.Pointer(2,0) = 42;
-    std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat(2,0) << "\n";
-    ASSERT_EQ(42, *myMatrix.Pointer(2,0));
-    ASSERT_EQ(42, myMatrix_cvMat(2,0));
+    *simpleMatrix.Pointer(2,0) = 42;
+    std::cout << "simpleMatrix(2,0) = " << *simpleMatrix.Pointer(2,0) << "\nsimpleMatrix_cvMat(2,0) = " << simpleMatrix_cvMat(2,0) << "\n";
+    ASSERT_EQ(42, *simpleMatrix.Pointer(2,0));
+    ASSERT_EQ(42, simpleMatrix_cvMat(2,0));
   }
 
   std::cout << "\n\n";
 
   // Check that the non-templated OpenCV matrix works
   {
-    cv::Mat &myMatrix_cvMat = myMatrix.get_CvMat_();
-    std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat.at<s16>(2,0) << "\n";
-    ASSERT_EQ(42, *myMatrix.Pointer(2,0));
-    ASSERT_EQ(42, myMatrix_cvMat.at<s16>(2,0));
+    cv::Mat &simpleMatrix_cvMat = simpleMatrix.get_CvMat_();
+    std::cout << "simpleMatrix(2,0) = " << *simpleMatrix.Pointer(2,0) << "\nsimpleMatrix_cvMat(2,0) = " << simpleMatrix_cvMat.at<s16>(2,0) << "\n";
+    ASSERT_EQ(42, *simpleMatrix.Pointer(2,0));
+    ASSERT_EQ(42, simpleMatrix_cvMat.at<s16>(2,0));
 
     std::cout << "Setting OpenCV matrix\n";
-    myMatrix_cvMat.at<s16>(2,0) = 300;
-    std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat.at<s16>(2,0) << "\n";
-    ASSERT_EQ(300, *myMatrix.Pointer(2,0));
-    ASSERT_EQ(300, myMatrix_cvMat.at<s16>(2,0));
+    simpleMatrix_cvMat.at<s16>(2,0) = 300;
+    std::cout << "simpleMatrix(2,0) = " << *simpleMatrix.Pointer(2,0) << "\nsimpleMatrix_cvMat(2,0) = " << simpleMatrix_cvMat.at<s16>(2,0) << "\n";
+    ASSERT_EQ(300, *simpleMatrix.Pointer(2,0));
+    ASSERT_EQ(300, simpleMatrix_cvMat.at<s16>(2,0));
 
     std::cout << "Setting CoreTech_Common matrix\n";
-    *myMatrix.Pointer(2,0) = 90;
-    std::cout << "myMatrix(2,0) = " << *myMatrix.Pointer(2,0) << "\nmyMatrix_cvMat(2,0) = " << myMatrix_cvMat.at<s16>(2,0) << "\n";
-    ASSERT_EQ(90, *myMatrix.Pointer(2,0));
-    ASSERT_EQ(90, myMatrix_cvMat.at<s16>(2,0));
+    *simpleMatrix.Pointer(2,0) = 90;
+    std::cout << "simpleMatrix(2,0) = " << *simpleMatrix.Pointer(2,0) << "\nsimpleMatrix_cvMat(2,0) = " << simpleMatrix_cvMat.at<s16>(2,0) << "\n";
+    ASSERT_EQ(90, *simpleMatrix.Pointer(2,0));
+    ASSERT_EQ(90, simpleMatrix_cvMat.at<s16>(2,0));
   }
 #endif //#if defined(ANKICORETECH_USE_OPENCV)
 
   free(buffer); buffer = NULL;
 
   std::cout << "\n";
+}
+
+TEST(CoreTech_Common, MatrixAlignment1)
+{
+  const u32 numBytes = 1000;
+  void *buffer = calloc(numBytes, 1);
+  ASSERT_TRUE(buffer != NULL);
+
+  void *bufferAligned = reinterpret_cast<void*>( Anki::RoundUp(reinterpret_cast<u32>(buffer), Anki::MEMORY_ALIGNMENT) );
+
+  // Check all offsets
+  for(u32 offset=0; offset<8; offset++) {
+    void * const bufferAlignedAndOffset = reinterpret_cast<char*>(bufferAligned) + offset;
+    Anki::Matrix<s16> simpleMatrix(10, 6, bufferAlignedAndOffset, numBytes-offset-8);
+
+    const u32 trueLocation = reinterpret_cast<u32>(simpleMatrix.Pointer(0,0));
+    const u32 expectedLocation = Anki::RoundUp(reinterpret_cast<u32>(bufferAlignedAndOffset), Anki::MEMORY_ALIGNMENT);;
+
+    ASSERT_TRUE(trueLocation ==  expectedLocation);
+  }
+}
+
+TEST(CoreTech_Common, MemoryStackAlignment)
+{
+  const u32 numBytes = 1000;
+  void *buffer = calloc(numBytes, 1);
+  ASSERT_TRUE(buffer != NULL);
+
+  void *bufferAligned = reinterpret_cast<void*>( Anki::RoundUp(reinterpret_cast<u32>(buffer), Anki::MEMORY_ALIGNMENT) );
+
+  // Check all offsets
+  for(u32 offset=0; offset<8; offset++) {
+    void * const bufferAlignedAndOffset = reinterpret_cast<char*>(bufferAligned) + offset;
+    Anki::MemoryStack simpleMemoryStack(bufferAlignedAndOffset, numBytes-offset-8);
+    Anki::Matrix<s16> simpleMatrix(10, 6, simpleMemoryStack);
+
+    const u32 matrixStart = reinterpret_cast<u32>(simpleMatrix.Pointer(0,0));
+    ASSERT_TRUE(matrixStart == Anki::RoundUp(matrixStart, Anki::MEMORY_ALIGNMENT));
+  }
 }
 
 int main(int argc, char ** argv)
