@@ -155,33 +155,36 @@ DEF WALL_4 Solid {
   boundingObject USE WALL_SHAPE
 }
 DEF Cozmo CozmoBot {
-  translation 0.286003 0.0148779 0.0510032
-  rotation 0.000381577 1 -0.000141993 0.7071
+  # In front of two green blocks:
+  #translation 0.286003 0.0148779 0.0510032
+  #rotation 0.000381577 1 -0.000141993 0.7071  
+  
+  # In front of 2x1 purple block
+  translation -0.07 0.014 -0.21
+  rotation 0 1 0 1.262
 }
 Block1x1 {
   name "Block060_1"
   translation -0.183 0.0299152 -0.051
   rotation 0.975737 0.030364 -0.21683 6.32128e-17
   facemarker1 [
-    "textures/Block60_Face01.png"
+    "textures/Block060_Face01.png"
   ]
   facemarker2 [
-    "textures/Block60_Face02.png"
+    "textures/Block060_Face02.png"
   ]
   facemarker3 [
-    "textures/Block60_Face03.png"
+    "textures/Block060_Face03.png"
   ]
   facemarker4 [
-    "textures/Block60_Face04.png"
+    "textures/Block060_Face04.png"
   ]
   facemarker5 [
-    "textures/Block60_Face05.png"
+    "textures/Block060_Face05.png"
   ]
   facemarker6 [
-    "textures/Block60_Face06.png"
+    "textures/Block060_Face06.png"
   ]
-  
-  obsTranslation -0.183 0.09 -0.051
 }
 Block1x1 {
   name "Block065_1"
@@ -190,22 +193,22 @@ Block1x1 {
   blockColor 0 1 0
   
   facemarker1 [
-    "textures/Block65_Face01.png"
+    "textures/Block065_Face01.png"
   ]
   facemarker2 [
-    "textures/Block65_Face02.png"
+    "textures/Block065_Face02.png"
   ]
   facemarker3 [
-    "textures/Block65_Face03.png"
+    "textures/Block065_Face03.png"
   ]
   facemarker4 [
-    "textures/Block65_Face04.png"
+    "textures/Block065_Face04.png"
   ]
   facemarker5 [
-    "textures/Block65_Face05.png"
+    "textures/Block065_Face05.png"
   ]
   facemarker6 [
-    "textures/Block65_Face06.png"
+    "textures/Block065_Face06.png"
   ]
 }
 Block1x1 {
@@ -215,25 +218,48 @@ Block1x1 {
   blockColor 0 1 0
   
   facemarker1 [
-    "textures/Block65_Face01.png"
+    "textures/Block065_Face01.png"
   ]
   facemarker2 [
-    "textures/Block65_Face02.png"
+    "textures/Block065_Face02.png"
   ]
   facemarker3 [
-    "textures/Block65_Face03.png"
+    "textures/Block065_Face03.png"
   ]
   facemarker4 [
-    "textures/Block65_Face04.png"
+    "textures/Block065_Face04.png"
   ]
   facemarker5 [
-    "textures/Block65_Face05.png"
+    "textures/Block065_Face05.png"
   ]
   facemarker6 [
-    "textures/Block65_Face06.png"
+    "textures/Block065_Face06.png"
   ]
+}
+Block1x1 {
+  name "Block065_3"
+  translation 0.3 0.0299152 -0.1
+  rotation -1.29362e-10 1 2.01645e-10 1.24
+  blockColor 0 1 0
   
-  obsTranslation 0.1 0.0299152 -0.1
+  facemarker1 [
+    "textures/Block065_Face01.png"
+  ]
+  facemarker2 [
+    "textures/Block065_Face02.png"
+  ]
+  facemarker3 [
+    "textures/Block065_Face03.png"
+  ]
+  facemarker4 [
+    "textures/Block065_Face04.png"
+  ]
+  facemarker5 [
+    "textures/Block065_Face05.png"
+  ]
+  facemarker6 [
+    "textures/Block065_Face06.png"
+  ]
 }
 Block1x1 {
   name "Block070_1"
@@ -242,23 +268,46 @@ Block1x1 {
   blockColor 0 0 1
   
   facemarker1 [
-    "textures/Block70_Face01.png"
+    "textures/Block070_Face01.png"
   ]
   facemarker2 [
-    "textures/Block70_Face02.png"
+    "textures/Block070_Face02.png"
   ]
   facemarker3 [
-    "textures/Block70_Face03.png"
+    "textures/Block070_Face03.png"
   ]
   facemarker4 [
-    "textures/Block70_Face04.png"
+    "textures/Block070_Face04.png"
   ]
   facemarker5 [
-    "textures/Block70_Face05.png"
+    "textures/Block070_Face05.png"
   ]
   facemarker6 [
-    "textures/Block70_Face06.png"
+    "textures/Block070_Face06.png"
   ]
-
-  obsTranslation 0.4 0.0299152 4.03022e-10
+}
+Block2x1 {
+  name "Block075_1"
+  translation -0.3 0.03 -0.3
+  rotation 0 1 0 0.78
+  blockColor 0.5 0.1 0.75
+  
+  facemarker1 [
+    "textures/Block075_Face01.png"
+  ]
+  facemarker2 [
+    "textures/Block075_Face02.png"
+  ]
+  facemarker3 [
+    "textures/Block075_Face03.png"
+  ]
+  facemarker4 [
+    "textures/Block075_Face04.png"
+  ]
+  facemarker5 [
+    "textures/Block075_Face05.png"
+  ]
+  facemarker6 [
+    "textures/Block075_Face06.png"
+  ]
 }

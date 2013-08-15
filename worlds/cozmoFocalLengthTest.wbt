@@ -165,25 +165,50 @@ DEF Cozmo CozmoBot {
   translation 0 0.03 0
   rotation 0 1 0 3.1415  
 }
-Block1x1 {
-  name "Block060"
-  translation 0 0.03 0.350
+#Block1x1 {
+  #name "Block060"
+  #translation 0 0.03 0.350
+  #facemarker1 [
+    #"textures/Block60_Face01.png"
+  #]
+  #facemarker2 [
+    #"textures/Block60_Face02.png"
+  #]
+  #facemarker3 [
+    #"textures/Block60_Face03.png"
+  #]
+  #facemarker4 [
+    #"textures/Block60_Face04.png"
+  #]
+  #facemarker5 [
+    #"textures/Block60_Face05.png"
+  #]
+  #facemarker6 [
+    #"textures/Block60_Face06.png"
+  #]
+#}
+Block2x1 {
+  name "Block075_1"
+  translation 0 0.03 0.35
+  
+  blockColor 0.5 0.1 0.75
+  
   facemarker1 [
-    "textures/Block60_Face01.png"
+    "textures/Block075_Face01.png"
   ]
   facemarker2 [
-    "textures/Block60_Face02.png"
+    "textures/Block075_Face02.png"
   ]
   facemarker3 [
-    "textures/Block60_Face03.png"
+    "textures/Block075_Face03.png"
   ]
   facemarker4 [
-    "textures/Block60_Face04.png"
+    "textures/Block075_Face04.png"
   ]
   facemarker5 [
-    "textures/Block60_Face05.png"
+    "textures/Block075_Face05.png"
   ]
   facemarker6 [
-    "textures/Block60_Face06.png"
+    "textures/Block075_Face06.png"
   ]
 }
