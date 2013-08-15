@@ -10,7 +10,7 @@
 #include "gtest/gtest.h"
 
 #if defined(ANKICORETECH_USE_MATLAB)
-AnkiMatlabInterface::Matlab matlab(false);
+Anki::Matlab matlab(false);
 #endif
 
 TEST(Cozmo, SimpleCozmoTest)
