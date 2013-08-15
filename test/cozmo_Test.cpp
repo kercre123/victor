@@ -1,4 +1,3 @@
-
 #include "cozmo.h"
 
 #include <iostream>
@@ -17,15 +16,14 @@ TEST(Cozmo, SimpleCozmoTest)
 {
   testFunc();
 
-  ASSERT_TRUE(true);  
+  ASSERT_TRUE(true);
 }
 
 int main(int argc, char ** argv)
-{  
+{
   ::testing::InitGoogleTest(&argc, argv);
 
   RUN_ALL_TESTS();
 
   return 0;
 }
-

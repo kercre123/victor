@@ -24,10 +24,10 @@ else % if useAndrewsPaths
         openCvLibDir = [rootDir, '/coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/'];
         openCvVersionString = '';
     elseif ispc()
-        openCvLibDir = [rootDir, '/coretech-external/build/msvc2010/opencv-2.4.6.1/lib/Release/'];
+        openCvLibDir = [rootDir, '/coretech-external/build/msvc2012/opencv-2.4.6.1/lib/Release/'];
         openCvVersionString = '246';
-        ankiLibDirs = {[rootDir, '/coretech-common/build/msvc2010/lib/'],...
-                       [rootDir, '/coretech-vision/build/msvc2010/lib/']};
+        ankiLibDirs = {[rootDir, '/coretech-common/build/msvc2012/lib/'],...
+                       [rootDir, '/coretech-vision/build/msvc2012/lib/']};
         ankiLibs = {'-lCoreTech_Common_32Release',... 
                     '-lCoreTech_Vision_32Release'};
     end

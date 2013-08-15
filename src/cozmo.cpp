@@ -1,4 +1,3 @@
-
 #include "cozmo.h"
 
 void testFunc()
