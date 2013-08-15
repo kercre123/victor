@@ -27,8 +27,10 @@ if length(AxesHandle) > 1 && ~isempty(this.matImage)
 end
 
 % Reproject the blocks and the markers onto the image:
-for i_block = 1:world.numBlocks
-    block = world.blocks{i_block};
+for i_blockType = 1:BlockWorld.MaxBlockTypes
+    
+for i_block = 1:length(world.blocks{i_blockType})
+    block = world.blocks{i_blockType}{i_block};
     if ~isempty(block)
         pos = invRobotPose.applyTo(getPosition(block));
         X = reshape(pos(:,1), 4, []);
@@ -78,5 +80,8 @@ for i_block = 1:world.numBlocks
     end % IF not empty block
     
 end % FOR each block
+
+end % FOR each block type
+
 
 end %FUNCTION Observation/draw()
