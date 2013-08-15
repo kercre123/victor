@@ -14,19 +14,21 @@ Anki::Matlab matlab(false);
 
 TEST(CoreTech_Common, MemoryStack)
 {
-  const u32 numBytes = 100;
-  void * buffer = calloc(numBytes, 1);
+  ASSERT_TRUE(Anki::MEMORY_ALIGNMENT == 16);
+
+  const u32 numBytes = 200;
+  void * buffer = calloc(numBytes+Anki::MEMORY_ALIGNMENT, 1);
+  void * alignedBuffer = reinterpret_cast<void*>(Anki::RoundUp(reinterpret_cast<size_t>(buffer), Anki::MEMORY_ALIGNMENT));
   ASSERT_TRUE(buffer != NULL);
-  Anki::MemoryStack ms(buffer, numBytes);
+  Anki::MemoryStack ms(alignedBuffer, numBytes);
 
   void * const buffer1 = ms.Allocate(5);
   void * const buffer2 = ms.Allocate(16);
-  void * const buffer3 = ms.Allocate(1);
+  void * const buffer3 = ms.Allocate(17);
   void * const buffer4 = ms.Allocate(0);
   void * const buffer5 = ms.Allocate(100);
   void * const buffer6 = ms.Allocate(0x3FFFFFFF);
   void * const buffer7 = ms.Allocate(u32_MAX);
-  void * const buffer8 = ms.Allocate(9);
 
   ASSERT_TRUE(buffer1 != NULL);
   ASSERT_TRUE(buffer2 != NULL);
@@ -35,52 +37,50 @@ TEST(CoreTech_Common, MemoryStack)
   ASSERT_TRUE(buffer5 == NULL);
   ASSERT_TRUE(buffer6 == NULL);
   ASSERT_TRUE(buffer7 == NULL);
-  ASSERT_TRUE(buffer8 == NULL);
 
-  const size_t buffer1U32 = reinterpret_cast<size_t>(buffer1);
-  const size_t buffer2U32 = reinterpret_cast<size_t>(buffer2);
-  const size_t buffer3U32 = reinterpret_cast<size_t>(buffer3);
+  const size_t alignedBufferSizeT = reinterpret_cast<size_t>(alignedBuffer);
+  const size_t buffer1SizeT = reinterpret_cast<size_t>(buffer1);
+  const size_t buffer2SizeT = reinterpret_cast<size_t>(buffer2);
+  const size_t buffer3SizeT = reinterpret_cast<size_t>(buffer3);
 
-  ASSERT_TRUE((buffer2U32-buffer1U32) == 24);
-  ASSERT_TRUE((buffer3U32-buffer2U32) == 32);
+  ASSERT_TRUE((buffer1SizeT-alignedBufferSizeT) == 16);
+  ASSERT_TRUE((buffer2SizeT-alignedBufferSizeT) == 48);
+  ASSERT_TRUE((buffer3SizeT-alignedBufferSizeT) == 80);
 
   ASSERT_TRUE(ms.IsConsistent());
 
-#define NUM_EXPECTED_RESULTS 76
+#define NUM_EXPECTED_RESULTS 116
   const bool expectedResults[NUM_EXPECTED_RESULTS] = {
     // Allocation 1
-    true,  false, false, false, // #0 just changes 5->6
-    false, false, false, false,
-    true,  true,  true,  true,
-    true,  true,  true,  true,
-    false, false, false, false,
-    true,  true,  true,  true,
-    // Allocation 2
-    false, false, false, false,
-    false, false, false, false,
-    true,  true,  true,  true,
-    true,  true,  true,  true,
-    true,  true,  true,  true,
-    true,  true,  true,  true,
-    false, false, false, false,
-    true,  true,  true,  true,
-    // Allocation 3
-    true,  false, false, false, // #56 just changes 1->2
-    false, false, false, false,
-    true,  true,  true,  true,
-    true,  true,  true,  true,
-    false, false, false, false};
+    true,  true,  true,  true,  true,  true,  true,  true,  // Unallocated space
+    false, false, false, false, false, false, false, false, // Header
+    true,  true,  true,  true,  true,  true,  true,  true,  // Data
+    true,  true,  true,  true,  true,  true,  true,  true,  // Data
+    false, false, false, false,                             // Footer
 
-  char * const alignedBufferBeginning = reinterpret_cast<char*>(buffer1) - 8;
+    // Allocation 2
+    true,  true,  true,  true,                              // Unallocated space
+    false, false, false, false, false, false, false, false, // Header
+    true,  true,  true,  true,  true,  true,  true,  true,  // Data
+    true,  true,  true,  true,  true,  true,  true,  true,  // Data
+    false, false, false, false,                             // Footer
+
+    // Allocation 3
+    true,  true,  true,  true,                              // Unallocated space
+    false, false, false, false, false, false, false, false, // Header
+    true,  true,  true,  true,  true,  true,  true,  true,  // Data
+    true,  true,  true,  true,  true,  true,  true,  true,  // Data
+    true,  true,  true,  true,  true,  true,  true,  true,  // Data
+    true,  true,  true,  true,  true,  true,  true,  true,  // Data
+    false, false, false, false};                            // Footer
+
   for(u32 i=0; i<NUM_EXPECTED_RESULTS; i++) {
     ASSERT_TRUE(ms.IsConsistent());
-    (alignedBufferBeginning[i])++;
-    ASSERT_TRUE(ms.IsConsistent() == expectedResults[i]);
+    (reinterpret_cast<char*>(alignedBuffer)[i])++;
     //std::cout << i << " " << ms.IsConsistent() << " " << expectedResults[i] << "\n";
-    (alignedBufferBeginning[i])--;
+    ASSERT_TRUE(ms.IsConsistent() == expectedResults[i]);
+    (reinterpret_cast<char*>(alignedBuffer)[i])--;
   }
-
-  std::cout << " ";
 
   free(buffer); buffer = NULL;
 }
@@ -124,67 +124,32 @@ TEST(CoreTech_Common, MemoryStack_call)
 
 TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
 {
+  ASSERT_TRUE(Anki::MEMORY_ALIGNMENT == 16);
+
   const u32 numBytes = 104; // 12*9 = 104
-  void * buffer = calloc(numBytes+8, 1);
+  void * buffer = calloc(numBytes+Anki::MEMORY_ALIGNMENT, 1);
   ASSERT_TRUE(buffer != NULL);
-
-  ASSERT_TRUE(Anki::MEMORY_ALIGNMENT == 8);
 
   void * bufferAligned = reinterpret_cast<void*>(Anki::RoundUp<size_t>(reinterpret_cast<size_t>(buffer), Anki::MEMORY_ALIGNMENT));
 
   const size_t bufferShift = reinterpret_cast<size_t>(bufferAligned) - reinterpret_cast<size_t>(buffer);
-  ASSERT_TRUE(bufferShift == 0 || bufferShift == static_cast<size_t>(Anki::MEMORY_ALIGNMENT));
+  ASSERT_TRUE(bufferShift < static_cast<size_t>(Anki::MEMORY_ALIGNMENT));
 
   Anki::MemoryStack ms(bufferAligned, numBytes);
   const u32 largestPossibleAllocation1 = ms.LargestPossibleAllocation();
-  ASSERT_TRUE(largestPossibleAllocation1 == 88);
+  ASSERT_TRUE(largestPossibleAllocation1 == 80);
 
   const void * const allocatedBuffer1 = ms.Allocate(1);
   const u32 largestPossibleAllocation2 = ms.LargestPossibleAllocation();
   ASSERT_TRUE(allocatedBuffer1 != NULL);
-  ASSERT_TRUE(largestPossibleAllocation2 == 64);
+  ASSERT_TRUE(largestPossibleAllocation2 == 48);
 
-  const void * const allocatedBuffer2 = ms.Allocate(65);
+  const void * const allocatedBuffer2 = ms.Allocate(49);
   const u32 largestPossibleAllocation3 = ms.LargestPossibleAllocation();
   ASSERT_TRUE(allocatedBuffer2 == NULL);
-  ASSERT_TRUE(largestPossibleAllocation3 == 64);
+  ASSERT_TRUE(largestPossibleAllocation3 == 48);
 
-  const void * const allocatedBuffer3 = ms.Allocate(64);
-  const u32 largestPossibleAllocation4 = ms.LargestPossibleAllocation();
-  ASSERT_TRUE(allocatedBuffer3 != NULL);
-  ASSERT_TRUE(largestPossibleAllocation4 == 0);
-
-  free(buffer); buffer = NULL;
-}
-
-TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation2)
-{
-  const u32 numBytes = 103; // 12*8 + 7 = 103
-  void * buffer = calloc(numBytes+8, 1);
-  ASSERT_TRUE(buffer != NULL);
-
-  ASSERT_TRUE(Anki::MEMORY_ALIGNMENT == 8);
-
-  void * bufferAligned = reinterpret_cast<void*>(Anki::RoundUp<size_t>(reinterpret_cast<size_t>(buffer), Anki::MEMORY_ALIGNMENT));
-
-  const size_t bufferShift = reinterpret_cast<size_t>(bufferAligned) - reinterpret_cast<size_t>(buffer);
-  ASSERT_TRUE(bufferShift == 0 || bufferShift == static_cast<size_t>(Anki::MEMORY_ALIGNMENT));
-
-  Anki::MemoryStack ms(bufferAligned, numBytes);
-  const u32 largestPossibleAllocation1 = ms.LargestPossibleAllocation();
-  ASSERT_TRUE(largestPossibleAllocation1 == 88);
-
-  const void * const allocatedBuffer1 = ms.Allocate(1);
-  const u32 largestPossibleAllocation2 = ms.LargestPossibleAllocation();
-  ASSERT_TRUE(allocatedBuffer1 != NULL);
-  ASSERT_TRUE(largestPossibleAllocation2 == 64);
-
-  const void * const allocatedBuffer2 = ms.Allocate(65);
-  const u32 largestPossibleAllocation3 = ms.LargestPossibleAllocation();
-  ASSERT_TRUE(allocatedBuffer2 == NULL);
-  ASSERT_TRUE(largestPossibleAllocation3 == 64);
-
-  const void * const allocatedBuffer3 = ms.Allocate(64);
+  const void * const allocatedBuffer3 = ms.Allocate(48);
   const u32 largestPossibleAllocation4 = ms.LargestPossibleAllocation();
   ASSERT_TRUE(allocatedBuffer3 != NULL);
   ASSERT_TRUE(largestPossibleAllocation4 == 0);

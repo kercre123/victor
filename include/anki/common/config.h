@@ -65,7 +65,7 @@ typedef int64_t  s64;
 
 namespace Anki
 {
-  static const u32 MEMORY_ALIGNMENT = 8;
+  static const u32 MEMORY_ALIGNMENT = 16; // To support 128-bit SIMD loads and stores
 }
 
 #endif // _ANKICORETECH_COMMON_CONFIG_H_

@@ -25,9 +25,6 @@ namespace Anki
   class MemoryStack
   {
   public:
-    static const u32 FILL_PATTERN_START = 0xABCD1089;
-    static const u32 FILL_PATTERN_END = 0x89FE0189;
-
     MemoryStack(void *buffer, u32 bufferLength);
     MemoryStack(const MemoryStack &ms); // This is a safe way to remove const by making a copy, rather than using const_cast()
 
@@ -55,6 +52,12 @@ namespace Anki
     // void Clear(); // Reset usedBytes to zero
 
   protected:
+    static const u32 FILL_PATTERN_START = 0xABCD1089;
+    static const u32 FILL_PATTERN_END = 0x89FE0189;
+
+    static const u32 HEADER_LENGTH = 8;
+    static const u32 FOOTER_LENGTH = 4;
+
     void * const buffer;
     const u32 totalBytes;
     u32 usedBytes;
