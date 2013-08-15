@@ -7,5 +7,4 @@
 #include "opencv2/opencv.hpp"
 #endif
 
-
 #endif // _ANKICORETECH_VISION_CONFIG_H_
