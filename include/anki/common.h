@@ -8,5 +8,6 @@
 #include "anki/common/utilities.h"
 #include "anki/common/DASlight.h"
 #include "anki/common/dataStructures.h"
+#include "anki/common/matlabInterface.h"
 
 #endif // _ANKICORETECH_COMMON_H_

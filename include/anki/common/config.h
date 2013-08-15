@@ -6,7 +6,7 @@
 #define ANKICORETECH_VERSION_MINOR 1
 #define ANKICORETECH_VERSION_REVISION 0
 
-//#define ANKICORETECH_USE_MATLAB
+#define ANKICORETECH_USE_MATLAB
 #define ANKICORETECH_USE_OPENCV
 
 // Various defines that make different compilers work on the same code

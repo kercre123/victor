@@ -367,3 +367,64 @@ void pauseMatlab(double time)
   }
 }
 
+mxClassID convertToMatlabType(const char *typeName, size_t byteDepth)
+{
+  if(typeName[0] == 'u') { //unsigned
+    if(byteDepth == 1) {
+      return mxUINT8_CLASS;
+    } else if(byteDepth == 2) {
+      return mxUINT16_CLASS;
+    }else if(byteDepth == 4) {
+      return mxUINT32_CLASS;
+    }else if(byteDepth == 8) {
+      return mxUINT64_CLASS;
+    }
+  } else if(typeName[0] == 'f' && byteDepth == 4) { //float
+    return mxSINGLE_CLASS;
+  } else if(typeName[0] == 'd' && byteDepth == 8) { //double
+    return mxDOUBLE_CLASS;
+  } else { // signed
+    if(byteDepth == 1) {
+      return mxINT8_CLASS;
+    } else if(byteDepth == 2) {
+      return mxINT16_CLASS;
+    }else if(byteDepth == 4) {
+      return mxINT32_CLASS;
+    }else if(byteDepth == 8) {
+      return mxINT64_CLASS;
+    }
+  }
+
+  return mxUNKNOWN_CLASS;
+}
+
+std::string convertToMatlabTypeString(const char *typeName, size_t byteDepth)
+{
+  if(typeName[0] == 'u') { //unsigned
+    if(byteDepth == 1) {
+      return std::string("uint8");
+    } else if(byteDepth == 2) {
+      return std::string("uint16");
+    }else if(byteDepth == 4) {
+      return std::string("uint32");
+    }else if(byteDepth == 8) {
+      return std::string("uint64");
+    }
+  } else if(typeName[0] == 'f' && byteDepth == 4) { //float
+    return std::string("single");
+  } else if(typeName[0] == 'd' && byteDepth == 8) { //double
+    return std::string("double");
+  } else { // signed
+    if(byteDepth == 1) {
+      return std::string("int8");
+    } else if(byteDepth == 2) {
+      return std::string("int16");
+    }else if(byteDepth == 4) {
+      return std::string("int32");
+    }else if(byteDepth == 8) {
+      return std::string("int64");
+    }
+  }
+
+  return std::string("unknown");
+}

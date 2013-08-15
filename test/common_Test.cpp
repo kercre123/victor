@@ -7,11 +7,11 @@
 #include "opencv2/opencv.hpp"
 #endif
 
-#include "gtest/gtest.h"
-
 #if defined(ANKICORETECH_USE_MATLAB)
-AnkiMatlabInterface::Matlab matlab(false);
+Anki::Matlab matlab(false);
 #endif
+
+#include "gtest/gtest.h"
 
 TEST(AnkiVision, MemoryStack)
 {

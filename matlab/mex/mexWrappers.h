@@ -117,6 +117,10 @@ double getScalarDoubleFromMatlab(const char *name,
 // Pause Matlab (with optional duration in seconds).
 void pauseMatlab(double time = 0.0);
 
+mxClassID convertToMatlabType(const char *typeName, size_t byteDepth);
+
+std::string convertToMatlabTypeString(const char *typeName, size_t byteDepth);
+
 ///////////////////////////////////////////////////////////////////////////
 // Implementations:
 
@@ -641,7 +645,7 @@ template <class T> Anki::Matrix<T> mxArray2AnkiMatrix(const mxArray *array)
   
   // TODO: check if the type is correct
   
-  Anki::Matrix<T> ankiMatrix = Anki::Matrix<u8>::AllocateMatrixFromHeap(dimensions[0], dimensions[1]);
+  Anki::Matrix<T> ankiMatrix = Anki::AllocateMatrixFromHeap<u8>(dimensions[0], dimensions[1]);
 
   for(s32 y=0; y<dimensions[0]; ++y) {
     T * const ankiMatrix_rowPointer = ankiMatrix.Pointer(y, 0);
@@ -652,6 +656,25 @@ template <class T> Anki::Matrix<T> mxArray2AnkiMatrix(const mxArray *array)
   }
   
   return ankiMatrix;
+}
+
+template <class T> mxArray* ankiMatrix2mxArray(const Anki::Matrix<T> &ankiMatrix)
+{
+  const mxClassID classId = convertToMatlabType(typeid(T).name(), sizeof(T));
+  
+  const mwSize outputDims[2] = {ankiMatrix.get_size(0), ankiMatrix.get_size(1)};
+  mxArray *outputArray = mxCreateNumericArray(2, outputDims, classId, mxREAL);
+  T * const matlabMatrixStartPointer = (T *) mxGetData(outputArray);
+  
+  for(s32 y=0; y<outputDims[0]; ++y) {
+    const T * const ankiMatrix_rowPointer = ankiMatrix.Pointer(y, 0);
+    
+    for(s32 x=0; x<outputDims[1]; ++x) {
+        *(matlabMatrixStartPointer + x*outputDims[0] + y) = ankiMatrix_rowPointer[x];
+    }
+  }
+  
+  return outputArray;
 }
 #endif // #ifdef USE_ANKI_CORE_LIBRARIES
 

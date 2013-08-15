@@ -33,18 +33,6 @@ namespace Anki
       return numRows * Anki::Matrix<T>::ComputeMinimumRequiredStride(numCols);
     }
 
-    // Factory method to create an AnkiMatrix from the heap. The data of the returned Matrix must be freed by the user.
-    // This is seperate from the normal constructor, as it should not be used sparingly and not interchangably with normal Matrix constructors.
-    static Anki::Matrix<T> AllocateMatrixFromHeap(u32 numRows, u32 numCols)
-    {
-      const u32 stride = Anki::Matrix<T>::ComputeMinimumRequiredStride(numCols);
-      const u32 requiredMemory = 64 + 2*Anki::MEMORY_ALIGNMENT + Anki::Matrix<T>::ComputeMinimumRequiredMemory(numRows, numCols); // The required memory, plus a bit more just in case
-
-      Anki::Matrix<u8> mat(numRows, numCols, reinterpret_cast<u8*>(calloc(requiredMemory, 1)), stride);
-
-      return mat;
-    }
-
     // Constructor for a Matrix, pointing to user-allocated data
     Matrix(u32 numRows, u32 numCols, T* data, u32 stride)
       : stride(stride)
@@ -161,6 +149,18 @@ namespace Anki
     }
 
     return false;
+  }
+
+  // Factory method to create an AnkiMatrix from the heap. The data of the returned Matrix must be freed by the user.
+  // This is seperate from the normal constructor, as Matrix objects are not supposed to manage memory
+  template<typename T> Matrix<T> AllocateMatrixFromHeap(u32 numRows, u32 numCols)
+  {
+    const u32 stride = Anki::Matrix<T>::ComputeMinimumRequiredStride(numCols);
+    const u32 requiredMemory = 64 + 2*Anki::MEMORY_ALIGNMENT + Anki::Matrix<T>::ComputeMinimumRequiredMemory(numRows, numCols); // The required memory, plus a bit more just in case
+
+    Matrix<T> mat(numRows, numCols, reinterpret_cast<u8*>(calloc(requiredMemory, 1)), stride);
+
+    return mat;
   }
   
 } //namespace Anki
