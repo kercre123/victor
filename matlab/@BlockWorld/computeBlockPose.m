@@ -1,4 +1,4 @@
-function markerPose = blockPoseHelper(robot, B, markers2D)
+function markerPose = computeBlockPose(robot, B, markers2D)
 
 assert(iscell(markers2D), 'markers2D should be a cell array.');
 
