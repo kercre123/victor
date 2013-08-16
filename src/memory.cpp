@@ -16,7 +16,7 @@ Anki::MemoryStack::MemoryStack(const MemoryStack& ms)
   DASConditionalError(ms.buffer, "Anki.MemoryStack.MemoryStack", "Buffer must be allocated");
   DASConditionalError(ms.totalBytes <= 0x3FFFFFFF, "Anki.MemoryStack.MemoryStack", "Maximum size of a MemoryStack is 2^30 - 1");
   DASConditionalError(MEMORY_ALIGNMENT == 16, "Anki.MemoryStack.MemoryStack", "Currently, only MEMORY_ALIGNMENT == 16 is supported");
-  DASConditionalError(ms.totalBytes >= ms.usedBytes, "Anki.MemoryStack.MemoryStack", "Buffer is using more bytes than it has. Try running IsConsistent() to test for memory corruption.");
+  DASConditionalError(ms.totalBytes >= ms.usedBytes, "Anki.MemoryStack.MemoryStack", "Buffer is using more bytes than it has. Try running IsValid() to test for memory corruption.");
 }
 
 void* Anki::MemoryStack::Allocate(u32 numBytesRequested, u32 *numBytesAllocated)
@@ -54,7 +54,7 @@ void* Anki::MemoryStack::Allocate(u32 numBytesRequested, u32 *numBytesAllocated)
   return segmentMemory;
 }
 
-bool Anki::MemoryStack::IsConsistent()
+bool Anki::MemoryStack::IsValid()
 {
   const size_t LOOP_MAX = 1000000;
   const char * const bufferCharStar = reinterpret_cast<const char*>(buffer);
@@ -68,18 +68,18 @@ bool Anki::MemoryStack::IsConsistent()
     // A segment's size should only be multiples of MEMORY_ALIGNMENT, but even on the off
     const u32 segmentLength = reinterpret_cast<const u32*>(bufferCharStar+index)[0];
     const u32 roundedSegmentLength = Anki::RoundUp<u32>(segmentLength, MEMORY_ALIGNMENT);
-    DASConditionalWarnAndReturn(segmentLength == roundedSegmentLength, false, "Anki.MemoryStack.IsConsistent", "The segmentLength is not a multiple of MEMORY_ALIGNMENT");
+    DASConditionalWarnAndReturn(segmentLength == roundedSegmentLength, false, "Anki.MemoryStack.IsValid", "The segmentLength is not a multiple of MEMORY_ALIGNMENT");
 
     // Check if the segment end is beyond the end of the buffer (NOTE: this is not conservative enough, though errors should be caught later)
-    DASConditionalWarnAndReturn(segmentLength <= (usedBytes-index-HEADER_LENGTH-FOOTER_LENGTH), false, "Anki.MemoryStack.IsConsistent", "The segment end is beyond the end of the buffer");
+    DASConditionalWarnAndReturn(segmentLength <= (usedBytes-index-HEADER_LENGTH-FOOTER_LENGTH), false, "Anki.MemoryStack.IsValid", "The segment end is beyond the end of the buffer");
 
     const u32 segmentHeader = reinterpret_cast<const u32*>(bufferCharStar+index)[1];
 
-    DASConditionalWarnAndReturn(segmentHeader == FILL_PATTERN_START, false, "Anki.MemoryStack.IsConsistent", "segmentHeader == FILL_PATTERN_START");
+    DASConditionalWarnAndReturn(segmentHeader == FILL_PATTERN_START, false, "Anki.MemoryStack.IsValid", "segmentHeader == FILL_PATTERN_START");
 
     const u32 segmentFooter = reinterpret_cast<const u32*>(bufferCharStar+index+HEADER_LENGTH+segmentLength)[0];
 
-    DASConditionalWarnAndReturn(segmentFooter == FILL_PATTERN_END, false, "Anki.MemoryStack.IsConsistent", "segmentFooter == FILL_PATTERN_END");
+    DASConditionalWarnAndReturn(segmentFooter == FILL_PATTERN_END, false, "Anki.MemoryStack.IsValid", "segmentFooter == FILL_PATTERN_END");
 
     index += HEADER_LENGTH + segmentLength + FOOTER_LENGTH;
   }
@@ -87,10 +87,10 @@ bool Anki::MemoryStack::IsConsistent()
   if(index == usedBytes) {
     return true;
   } else if(index == LOOP_MAX){
-    DASError("Anki.MemoryStack.IsConsistent", "Infinite while loop");
+    DASError("Anki.MemoryStack.IsValid", "Infinite while loop");
     return false;
   } else {
-    DASError("Anki.MemoryStack.IsConsistent", "Loop exited at an incorrect position, probably due to corruption");
+    DASError("Anki.MemoryStack.IsValid", "Loop exited at an incorrect position, probably due to corruption");
     return false;
   }
 }

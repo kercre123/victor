@@ -8,7 +8,7 @@ namespace Anki
   // A MemoryStack keeps track of an external memory buffer, by using the system stack. It is not
   // thread safe. Data that is allocated with Allocate() will be MEMORY_ALIGNMENT bytes-aligned.
   // Allocate() data has fill patterns at the beginning and end, to ensure that buffers did not
-  // overflow. This can be tested with IsConsistent().
+  // overflow. This can be tested with IsValid().
   //
   // The safest way to use a MemoryStack is to pass by value. Passed by value: A copy is made on the
   // system stack. This means that on return of that function, the MemoryStack will be automatically
@@ -37,9 +37,10 @@ namespace Anki
     void* Allocate(u32 numBytesRequested, u32 *numBytesAllocated=NULL);
 
     // Check if any Allocate() memory was written out of bounds (via fill patterns at the beginning and end)
-    bool IsConsistent();
+    bool IsValid();
 
-    // Returns the number of bytes that can still be allocated. The max allocation is less than or equal to "get_totalBytes() - get_usedBytes() - 12".
+    // Returns the number of bytes that can still be allocated.
+    // The max allocation is less than or equal to "get_totalBytes() - get_usedBytes() - 12".
     u32 LargestPossibleAllocation();
 
     u32 get_totalBytes();
@@ -53,7 +54,7 @@ namespace Anki
 
   protected:
     static const u32 FILL_PATTERN_START = 0xABCD1089;
-    static const u32 FILL_PATTERN_END = 0x89FE0189;
+    static const u32 FILL_PATTERN_END = 0x89EF0189;
 
     static const u32 HEADER_LENGTH = 8;
     static const u32 FOOTER_LENGTH = 4;

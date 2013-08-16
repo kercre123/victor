@@ -21,13 +21,14 @@ namespace Anki
   // A Matrix is a lightweight templated class for holding two dimentional data. It does no
   // reference counting, or allocating/freeing from the heap. The data from Matrix is
   // OpenCV-compatible, and accessable via get_CvMat_(). The matlabInterface.h can send and receive
-  // Matrix classes from Matlab
+  // Matrix objects from Matlab
   template<typename T> class Matrix
   {
   public:
     static u32 ComputeRequiredStride(u32 numCols, bool useBoundaryFillPatterns)
     {
-      return static_cast<u32>(Anki::RoundUp<size_t>(sizeof(T)*numCols, Anki::MEMORY_ALIGNMENT)) + 8*static_cast<u32>(useBoundaryFillPatterns);
+      const u32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? 16 : 0);
+      return static_cast<u32>(Anki::RoundUp<size_t>(sizeof(T)*numCols, Anki::MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
     }
 
     static u32 ComputeMinimumRequiredMemory(u32 numRows, u32 numCols)
@@ -42,8 +43,6 @@ namespace Anki
     Matrix(u32 numRows, u32 numCols, void * data, u32 dataLength, bool useBoundaryFillPatterns=false)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
     {
-      assert(useBoundaryFillPatterns == false); //TODO: implement this
-
       initialize(numRows,
         numCols,
         data,
@@ -55,10 +54,10 @@ namespace Anki
     Matrix(u32 numRows, u32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns=false)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
     {
-      assert(useBoundaryFillPatterns == false); //TODO: implement this
-
-      const u32 numBytesRequested = numRows * this->stride;
+      const u32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? Anki::MEMORY_ALIGNMENT : 0);
+      const u32 numBytesRequested = numRows * this->stride + extraBoundaryPatternBytes;
       u32 numBytesAllocated = 0;
+
       void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
 
       initialize(numRows,
@@ -101,6 +100,28 @@ namespace Anki
       }
     }
 
+    // If the Matrix was constructed with the useBoundaryFillPatterns=true, then return if any memory was written out of bounds (via fill patterns at the beginning and end)
+    // If the Matrix wasn't constructed with the useBoundaryFillPatterns=true, this method always returns true
+    bool IsValid()
+    {
+      if(useBoundaryFillPatterns) {
+        const u32 strideWithoutFillPatterns = ComputeRequiredStride(size[1],false);
+
+        for(u32 y=0; y<size[0]; y++) {
+          if((reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[0]) != FILL_PATTERN_START ||
+            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[1]) != FILL_PATTERN_START ||
+            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[0]) != FILL_PATTERN_END ||
+            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[1]) != FILL_PATTERN_END) {
+              return false;
+          }
+        }
+
+        return true;
+      } else { // if(useBoundaryFillPatterns) {
+        return true; // Technically, we don't know if the Matrix is valid. But we don't know it's NOT valid, so just return true.
+      } // if(useBoundaryFillPatterns) { ... else
+    }
+
     // Similar to Matlab's size(matrix, dimension), and dimension is in {0,1}
     u32 get_size(u32 dimension) const
     {
@@ -121,6 +142,14 @@ namespace Anki
     }
 
   protected:
+    static const u32 FILL_PATTERN_START = 0X5432EF76; // Bit-inverse of MemoryStack patterns. The pattern will be put twice at the beginning and end of each line.
+    static const u32 FILL_PATTERN_END = 0X7610FE76;
+    //static const u32 FILL_PATTERN_START = 0xCCCCCCCC;
+    //static const u32 FILL_PATTERN_END = 0xAAAAAAAA;
+
+    static const u32 HEADER_LENGTH = 8;
+    static const u32 FOOTER_LENGTH = 8;
+
     u32 size[2];
     u32 stride;
     bool useBoundaryFillPatterns;
@@ -149,8 +178,10 @@ namespace Anki
       }
 
       this->rawDataPointer = rawData;
-      const u32 extraBytes = RoundUp(reinterpret_cast<u32>(rawData), Anki::MEMORY_ALIGNMENT) - reinterpret_cast<u32>(rawData);
-      const u32 requiredBytes = ComputeRequiredStride(numCols,useBoundaryFillPatterns)*numRows + extraBytes;
+
+      const u32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? HEADER_LENGTH : 0);
+      const u32 extraAlignmentBytes = RoundUp(reinterpret_cast<u32>(rawData)+extraBoundaryPatternBytes, Anki::MEMORY_ALIGNMENT) - extraBoundaryPatternBytes - reinterpret_cast<u32>(rawData);
+      const u32 requiredBytes = ComputeRequiredStride(numCols,useBoundaryFillPatterns)*numRows + extraAlignmentBytes;
 
       if(requiredBytes > dataLength) {
         DASError("Anki.Matrix.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
@@ -163,7 +194,22 @@ namespace Anki
 
       this->size[0] = numRows;
       this->size[1] = numCols;
-      this->data = reinterpret_cast<T*>( reinterpret_cast<char*>(rawData) + extraBytes );
+
+      if(useBoundaryFillPatterns) {
+        const u32 strideWithoutFillPatterns = ComputeRequiredStride(size[1],false);
+        this->data = reinterpret_cast<T*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes + HEADER_LENGTH );
+        for(u32 y=0; y<size[0]; y++) {
+          // Add the fill patterns just before the data on each line
+          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[0] = FILL_PATTERN_START;
+          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[1] = FILL_PATTERN_START;
+
+          // And also just after the data (including normal byte-alignment padding)
+          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[0] = FILL_PATTERN_END;
+          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[1] = FILL_PATTERN_END;
+        }
+      } else {
+        this->data = reinterpret_cast<T*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes );
+      }
 
 #if defined(ANKICORETECH_USE_OPENCV)
       cvMatMirror = cv::Mat_<T>(size[0], size[1], data, stride);
