@@ -71,7 +71,7 @@ classdef Pose
             
             if isempty(this.sigma)
                 % TODO: Is a default of infinitite uncertainty what we want?
-                this.sigma = diag(inf(1,6));
+                this.sigma = eye(6);
             end
             
         end % FUNCTION Frame() [Constructor]
@@ -89,7 +89,12 @@ classdef Pose
         end
         
         function v = get.axis(this)
-            v = this.Rvec / this.angle;
+            theta = this.angle;
+            if theta > 0
+                v = this.Rvec / theta;
+            else
+                v = [1 0 0]';
+            end
         end
     end
     

@@ -8,7 +8,7 @@ switch(class(P2))
         
         T3 = T1*T2;
         
-        out = Pose(T3(1:3,1:3), T3(1:3,4));
+        out = Pose(T3(1:3,1:3), T3(1:3,4), P1.sigma + P2.sigma);
         
     case 'double'
         assert(size(P2,1)==3, ...

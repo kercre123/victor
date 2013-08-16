@@ -1,8 +1,8 @@
 classdef DualQuaternion
     
     properties
-        Qr; % real or rotation quaternion
-        Qd; % dual or displacement quaternion
+        real; % real or rotation quaternion
+        dual; % dual or displacement quaternion
     end
     
     properties(Dependent = true, SetAccess = 'protected')
@@ -10,11 +10,66 @@ classdef DualQuaternion
         rotationMatrix;
         translation;
 
-        conj;
+%         conj;
     end
     
     methods(Access = public)
         
+        function this = DualQuaternion(varargin)
+            switch(nargin)
+                case 0
+                    this.real = Quaternion([0 0 0 1]);
+                    this.dual = Quaternion([0 0 0 0]);
+                    
+                case 1
+                    assert(isa(varargin{1}, 'Pose'), ...
+                        'Expecting a Pose object.');
+                    
+                    P = varargin{1};
+                    this = DualQuaternion(Quaternion(P.angle, P.axis), P.T);
+                    
+                    assert(sqrt(sum( (this.translation - P.T).^2)) < 1e-9, ...
+                        'Translation of DualQuaternion does not match Pose translation.');
+                    
+                case 2
+                    if isa(varargin{1}, 'Quaternion') && ...
+                            isa(varargin{2}, 'Quaternion')
+                        this.real = varargin{1};
+                        this.dual = varargin{2};
+                    elseif isa(varargin{1}, 'Quaternion') && isvector(varargin{2})
+                        rotation = varargin{1};
+                        translation = varargin{2};
+                        
+                        assert(length(translation)==3, ...
+                            'Expecting 3-element translation vector.');
+                        
+                        tx = translation(1);
+                        ty = translation(2);
+                        tz = translation(3);
+                        
+                        qw = rotation.q(1);
+                        qx = rotation.q(2);
+                        qy = rotation.q(3);
+                        qz = rotation.q(4);                        
+                        
+                        this.real = varargin{1}; % Rotation quaternion
+                        this.dual = Quaternion( ...
+                            0.5*[-tx*qx - ty*qy - tz*qz;
+                                  tx*qw + ty*qz - tz*qy;
+                                 -tx*qz + ty*qw + tz*qx; 
+                                  tx*qy - ty*qx + tz*qw] );
+                        
+                    else
+                        error('Unrecognized inputs for DualQuaternion constructor.');
+                        
+                    end
+                otherwise
+                    error('Unrecognized inputs for DualQuaternion constructor.');
+            end % SWITCH(nargin)
+                            
+        end % CONSTRUCTOR DualQuaternion() 
+        
+        %{
         function this = DualQuaternion(varargin)
             switch(nargin)
                 case 2
@@ -26,7 +81,7 @@ classdef DualQuaternion
                         elseif isa(varargin{1}, 'Quaternion')
                             this.Qr = varargin{1};
                             mag = norm(this.Qr);
-                            this.Qr = UnitQuaternion(this.Qr);
+                            this.Qr = Quaternion(this.Qr);
                             this.Qd = 1/mag * this.Qd;
                         else
                             error('Unrecognized inputs for constructing a DualQuaternion.');
@@ -38,7 +93,7 @@ classdef DualQuaternion
                         theta = norm(varargin{1});
                         w     = varargin{1}/theta;
                         t     = varargin{2};
-                        this.Qr = UnitQuaternion([cos(theta/2); sin(theta/2)*w(:)]);
+                        this.Qr = Quaternion([cos(theta/2); sin(theta/2)*w(:)]);
                         
                         % Note the cast to Quaternion, to ensure that the
                         % product does not get normalized to another
@@ -57,10 +112,17 @@ classdef DualQuaternion
             
            
         end
+        %}
         
         function Q = normalize(this)
-            mag = norm(this.Qr);
-            Q = DualQuaternion(1/mag * this.Qr, 1/mag * this.Qd);
+            mag = norm(this.real);
+            if mag > 0
+                realN = (1/mag)*this.real;
+                dualN = (1/mag)*this.dual;
+                Q = DualQuaternion(realN, dualN - realN*dot(realN,dualN));
+            else
+                Q = this;
+            end
         end
         
         
@@ -84,20 +146,20 @@ classdef DualQuaternion
 %         end
         
         function R = get.rotationMatrix(this)
-            q = this.Qr.q;
+            q = this.real.q;
             w = q(1);
             x = q(2);
             y = q(3);
             z = q(4);
             
-            R = [(1 - 2*y*y - 2*z*z)  (2*x*y - 2*w*z)      (2*x*z + 2*w*y);
-                 (2*x*y + 2*w*z)      (1 - 2*x*x - 2*z*z)  (2*y*z - 2*w*x);
-                 (2*x*z - 2*w*y)      (2*y*z + 2*w*x)      (1 - 2*x*x - 2*y*y)];
+            R = [(1 - 2*(y*y + z*z))  2*(x*y - w*z)        2*(x*z + w*y);
+                 2*(x*y + w*z)        (1 - 2*(x*x + z*z))  2*(y*z - w*x);
+                 2*(x*z - w*y)        2*(y*z + w*x)        (1 - 2*(x*x + y*y))];
         end
         
         function t = get.translation(this)
-            qr = this.Qr.q;
-            qd = this.Qd.q;
+            qr = this.real.q;
+            qd = this.dual.q;
             wr = qr(1); xr = qr(2); yr = qr(3); zr = qr(4);
             wd = qd(1); xd = qd(2); yd = qd(3); zd = qd(4);
             
@@ -107,9 +169,9 @@ classdef DualQuaternion
                    -wd*zr - xd*yr + yd*xr + zd*wr];
         end
         
-        function C = get.conj(this)
-            C = DualQuaternion(conj(this.Qr), conj(this.Qd));
-        end
+%         function C = get.conj(this)
+%             C = DualQuaternion(conj(this.Qr), conj(this.Qd));
+%         end
         
     end
     
