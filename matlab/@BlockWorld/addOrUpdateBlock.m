@@ -128,8 +128,17 @@ for i_blockObs = 1:numBlocks
         % Merge this new observation into pose of existing block of this type
         B_match = this.blocks{blockType}{i_match};
         
-        % TODO: Incorporate uncertainty/weighting into this combination/averaging:
-        B_match.pose = mean(B_new{i_blockObs}.pose, B_match.pose);
+        % % TODO: Incorporate uncertainty/weighting into this combination/averaging:
+        %B_match.pose = mean(B_new{i_blockObs}.pose, B_match.pose);
+        
+        % Incorporate the uncertainty, kinda.
+        P_new   = B_new{i_blockObs}.pose;
+        P_match = B_match.pose;
+        w1 = (trace(P_new.sigma));
+        w2 = (trace(P_match.sigma));
+        w = w1/(w1+w2);
+        
+        B_match.pose = interpolate(P_new, P_match, w);
         
         this.updateObsBlockPose(blockType, B_match.pose);
     end
