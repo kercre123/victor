@@ -36,15 +36,18 @@ typedef enum DASLogLevel {
 
 #define DASEvent(eventName, eventValue_format, ...) _DAS_Logf(DASLogLevel_Event, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
 #define DASConditionalEvent(expression, eventName, eventValue_format, ...) if(!(expression)) { _DAS_Logf(DASLogLevel_Event, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); }
-#define DASConditionalEventAndReturn(expression, returnValue, eventName, eventValue_format, ...) if(!(expression)) { _DAS_Logf(DASLogLevel_Event, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); return returnValue;}
+#define DASConditionalEventAndReturn(expression, eventName, eventValue_format, ...) if(!(expression)) { _DAS_Logf(DASLogLevel_Event, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); return;}
+#define DASConditionalEventAndReturnValue(expression, returnValue, eventName, eventValue_format, ...) if(!(expression)) { _DAS_Logf(DASLogLevel_Event, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); return returnValue;}
 
 #define DASWarn(eventName, eventValue_format, ...)  _DAS_Logf(DASLogLevel_Warn, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
 #define DASConditionalWarn(expression, eventName, eventValue_format, ...) if(!(expression)) { _DAS_Logf(DASLogLevel_Warn, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); }
-#define DASConditionalWarnAndReturn(expression, returnValue, eventName, eventValue_format, ...) if(!(expression)) { _DAS_Logf(DASLogLevel_Warn, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); return returnValue;}
+#define DASConditionalWarnAndReturn(expression, eventName, eventValue_format, ...) if(!(expression)) { _DAS_Logf(DASLogLevel_Warn, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); return;}
+#define DASConditionalWarnAndReturnValue(expression, returnValue, eventName, eventValue_format, ...) if(!(expression)) { _DAS_Logf(DASLogLevel_Warn, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); return returnValue;}
 
 #define DASError(eventName, eventValue_format, ...) _DAS_Logf(DASLogLevel_Error, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
 #define DASConditionalError(expression, eventName, eventValue_format, ...) if(!(expression)) { _DAS_Logf(DASLogLevel_Error, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); }
-#define DASConditionalErrorAndReturn(expression, returnValue, eventName, eventValue_format, ...) if(!(expression)) { _DAS_Logf(DASLogLevel_Error, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); return returnValue;}
+#define DASConditionalErrorAndReturn(expression, eventName, eventValue_format, ...) if(!(expression)) { _DAS_Logf(DASLogLevel_Error, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); return;}
+#define DASConditionalErrorAndReturnValue(expression, returnValue, eventName, eventValue_format, ...) if(!(expression)) { _DAS_Logf(DASLogLevel_Error, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); return returnValue;}
 
 #ifdef __cplusplus
 extern "C" {

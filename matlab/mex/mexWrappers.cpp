@@ -1,48 +1,44 @@
 #include "mexWrappers.h"
 
-
 // Specialization for double input:
 template <>
 mxArray * image2mxArray<double>(const double *img,
-    const int nrows, const int ncols, const int nbands)
+                                const int nrows, const int ncols, const int nbands)
 {
-    const mwSize outputDims[3] = {ncols, nrows, nbands};
+  const mwSize outputDims[3] = {ncols, nrows, nbands};
   mxArray *outputArray = mxCreateNumericArray(3, outputDims,
-                                          mxDOUBLE_CLASS, mxREAL);
+    mxDOUBLE_CLASS, mxREAL);
 
-    const int npixels = nrows*ncols;
+  const int npixels = nrows*ncols;
 
   // Get a pointer for each band:
-  #ifdef _MSC_VER
-    double **OutputData_ = (double **) _alloca(nbands);
-  #else
-    double *OutputData_[nbands];
-  #endif
+#ifdef _MSC_VER
+  double **OutputData_ = (double **) _alloca(nbands);
+#else
+  double *OutputData_[nbands];
+#endif
 
   OutputData_[0] = mxGetPr(outputArray);
-    for(int band=1; band < nbands; band++)
-        OutputData_[band] = OutputData_[band-1] + npixels;
+  for(int band=1; band < nbands; band++)
+    OutputData_[band] = OutputData_[band-1] + npixels;
 
-    for(int i=0, i_out=0; i<npixels*nbands; i+=nbands, i_out++) {
-       for(int band=0; band<nbands; band++) {
-           OutputData_[band][i_out] = img[i+band];
-       }
+  for(int i=0, i_out=0; i<npixels*nbands; i+=nbands, i_out++) {
+    for(int band=0; band<nbands; band++) {
+      OutputData_[band][i_out] = img[i+band];
     }
+  }
 
-    mxArray *order = mxCreateDoubleMatrix(1, 3, mxREAL);
-    mxGetPr(order)[0] = 2.0;
-    mxGetPr(order)[1] = 1.0;
-    mxGetPr(order)[2] = 3.0;
+  mxArray *order = mxCreateDoubleMatrix(1, 3, mxREAL);
+  mxGetPr(order)[0] = 2.0;
+  mxGetPr(order)[1] = 1.0;
+  mxGetPr(order)[2] = 3.0;
 
-    mxArray *prhs[2] = {outputArray, order};
-    mxArray *plhs[1];
-    mexCallMATLAB(1, plhs, 2, prhs, "permute");
+  mxArray *prhs[2] = {outputArray, order};
+  mxArray *plhs[1];
+  mexCallMATLAB(1, plhs, 2, prhs, "permute");
 
   return plhs[0];
-
 } // image2mxArray<double>(array)
-
-
 
 // Specialization of generic template when output is double, since
 // we can just copy the data directly.
@@ -80,132 +76,126 @@ mxArray* cvMat2mxArray(const cv::Mat &mat)
   mxArray *outputArray;
   switch(depth)
   {
-    case CV_8U:
+  case CV_8U:
     {
       outputArray = mxCreateNumericArray(3,outputDims,mxUINT8_CLASS,mxREAL);
       mapCvMat2mxArray<uchar>(mat,nbands,outputArray);
       break;
     }
-    case CV_8S:
+  case CV_8S:
     {
       outputArray = mxCreateNumericArray(3,outputDims,mxINT8_CLASS,mxREAL);
       mapCvMat2mxArray<char>(mat,nbands,outputArray);
       break;
     }
-    case CV_16U:
+  case CV_16U:
     {
       outputArray = mxCreateNumericArray(3,outputDims,mxUINT16_CLASS,mxREAL);
       mapCvMat2mxArray<unsigned short>(mat,nbands,outputArray);
       break;
     }
-    case CV_16S:
+  case CV_16S:
     {
       outputArray = mxCreateNumericArray(3,outputDims,mxINT16_CLASS,mxREAL);
       mapCvMat2mxArray<short>(mat,nbands,outputArray);
       break;
     }
-    case CV_32S:
+  case CV_32S:
     {
       outputArray = mxCreateNumericArray(3,outputDims,mxINT32_CLASS,mxREAL);
       mapCvMat2mxArray<int>(mat,nbands,outputArray);
       break;
     }
-    case CV_32F:
+  case CV_32F:
     {
       outputArray = mxCreateNumericArray(3,outputDims,mxSINGLE_CLASS,mxREAL);
       mapCvMat2mxArray<float>(mat,nbands,outputArray);
       break;
     }
-    case CV_64F:
+  case CV_64F:
     {
       outputArray = mxCreateNumericArray(3,outputDims,mxDOUBLE_CLASS,mxREAL);
       mapCvMat2mxArray<double>(mat,nbands,outputArray);
       break;
     }
-    default:
+  default:
     {
       //std::cout << "NOT supported depth!!" << depth << ", type: " << type << std::endl;
       //return NULL
       mexErrMsgTxt("Unsupported cv::Mat depth for conversion to mxArray!");
     }
-
   }
 
   return outputArray;
-
 } // cvMat2mxArray()
-
 
 void mxArray2cvMat(const mxArray *array, cv::Mat &mat)
 {
-    // Find number of channels:
-    int nrows, ncols, numChannels;
+  // Find number of channels:
+  int nrows, ncols, numChannels;
 
-     switch(mxGetNumberOfDimensions(array))
+  switch(mxGetNumberOfDimensions(array))
+  {
+  case 2:
+    numChannels = 1;
+    nrows = mxGetM(array);
+    ncols = mxGetN(array);
+    break;
+  case 3:
+    nrows       = mxGetDimensions(array)[0];
+    ncols       = mxGetDimensions(array)[1];
+    numChannels = mxGetDimensions(array)[2];
+    break;
+  default:
+    mexErrMsgTxt("Image must be scalar or vector valued.");
+  }
+
+  // Find bit depth:
+  switch(mxGetClassID(array))
+  {
+  case mxDOUBLE_CLASS:
     {
-        case 2:
-            numChannels = 1;
-            nrows = mxGetM(array);
-            ncols = mxGetN(array);
-            break;
-        case 3:
-            nrows       = mxGetDimensions(array)[0];
-            ncols       = mxGetDimensions(array)[1];
-            numChannels = mxGetDimensions(array)[2];
-            break;
-        default:
-            mexErrMsgTxt("Image must be scalar or vector valued.");
+      mat = cv::Mat(nrows, ncols, CV_MAKE_TYPE(CV_64F, numChannels));
+      mapMxArray2cvMat<double>(array, numChannels, mat);
+      break;
     }
 
-    // Find bit depth:
-    switch(mxGetClassID(array))
+  case mxSINGLE_CLASS:
     {
-        case mxDOUBLE_CLASS:
-        {
-            mat = cv::Mat(nrows, ncols, CV_MAKE_TYPE(CV_64F, numChannels));
-            mapMxArray2cvMat<double>(array, numChannels, mat);
-            break;
-        }
+      mat = cv::Mat(nrows, ncols, CV_MAKE_TYPE(CV_32F, numChannels));
+      mapMxArray2cvMat<float>(array, numChannels, mat);
+      break;
+    }
+    /* No such thing as CV_32U in OpenCV?
+    case mxUINT32_CLASS:
+    {
+    mat = cv::Mat(nrows, ncols, CV_MAKE_TYPE(CV_32U, numChannels));
+    mapMxArray2cvMat<unsigned int>(array, numChannels, mat);
+    break;
+    }
+    */
+  case mxUINT8_CLASS:
+    {
+      mat = cv::Mat(nrows, ncols, CV_MAKE_TYPE(CV_8U, numChannels));
+      mapMxArray2cvMat<unsigned char>(array, numChannels, mat);
+      break;
+    }
 
-        case mxSINGLE_CLASS:
-        {
-            mat = cv::Mat(nrows, ncols, CV_MAKE_TYPE(CV_32F, numChannels));
-            mapMxArray2cvMat<float>(array, numChannels, mat);
-            break;
-        }
-        /* No such thing as CV_32U in OpenCV?
-        case mxUINT32_CLASS:
-        {
-            mat = cv::Mat(nrows, ncols, CV_MAKE_TYPE(CV_32U, numChannels));
-            mapMxArray2cvMat<unsigned int>(array, numChannels, mat);
-            break;
-        }
-        */
-        case mxUINT8_CLASS:
-        {
-            mat = cv::Mat(nrows, ncols, CV_MAKE_TYPE(CV_8U, numChannels));
-            mapMxArray2cvMat<unsigned char>(array, numChannels, mat);
-            break;
-        }
+  case mxUINT16_CLASS:
+    {
+      mat = cv::Mat(nrows, ncols, CV_MAKE_TYPE(CV_16U, numChannels));
+      mapMxArray2cvMat<unsigned short>(array, numChannels, mat);
+      break;
+    }
 
-        case mxUINT16_CLASS:
-        {
-            mat = cv::Mat(nrows, ncols, CV_MAKE_TYPE(CV_16U, numChannels));
-            mapMxArray2cvMat<unsigned short>(array, numChannels, mat);
-            break;
-        }
+  default:
+    mexErrMsgTxt("Unsupported class for converstion to cv::Mat.");
+  } // SWITCH(mxClassID)
 
-        default:
-            mexErrMsgTxt("Unsupported class for converstion to cv::Mat.");
-
-    } // SWITCH(mxClassID)
-
-    return;
-
+  return;
 } // mxArray2cvMat()
 
 #endif // USE_OPENCV
-
 
 mxArray *imageTranspose(mxArray *input)
 {
@@ -221,9 +211,8 @@ mxArray *imageTranspose(mxArray *input)
   return plhs[0];
 }
 
-
 void safeCallMATLAB(int nlhs, mxArray *plhs[], int nrhs,
-  mxArray *prhs[], const char *functionName)
+                    mxArray *prhs[], const char *functionName)
 {
   // Try the call:
   mxArray *mxErr = mexCallMATLABWithTrap(nlhs, plhs, nrhs, prhs, functionName);
@@ -249,9 +238,7 @@ void safeCallMATLAB(int nlhs, mxArray *plhs[], int nrhs,
     msg += buf;
     mexErrMsgTxt(msg.c_str());
   }
-
 } // safeCallMATLAB()
-
 
 void assignInMatlab(mxArray *var, const char *name, const char *workspace)
 {
@@ -281,9 +268,7 @@ void assignInMatlab(mxArray *var, const char *name, const char *workspace)
 
   // We don't free the variable which was just assigned in Matlab because
   // that's Matlab's memory now.
-
 } // assignInMatlab()
-
 
 mxArray *getFromMatlab(const char *name, const char *workspace)
 {
@@ -307,12 +292,10 @@ mxArray *getFromMatlab(const char *name, const char *workspace)
   }
 
   return plhs[0];
-
 } // getFromMatlab()
 
-
 double getScalarDoubleFromMatlab(const char *name, const char *workspace,
-    const unsigned int handleUndefined)
+                                 const unsigned int handleUndefined)
 {
   mxArray *array = getFromMatlab(name, workspace);
 
@@ -322,27 +305,26 @@ double getScalarDoubleFromMatlab(const char *name, const char *workspace,
 
     switch(handleUndefined)
     {
-      case(0):
-        return 0.0;
+    case(0):
+      return 0.0;
 
-      case(1):
+    case(1):
       {
         msg << ", returning 0.0!";
         mexWarnMsgTxt(msg.str().c_str());
         return 0.0;
       }
-      case(2):
+    case(2):
       {
         msg << "!";
         mexErrMsgTxt(msg.str().c_str());
       }
-      default:
+    default:
       {
         mexErrMsgTxt("handleUndefined must be 0, 1, or 2.");
       }
     } // SWITCH
   } // IF mexCallMATLABWithTrap failed
-
 
   if(mxGetNumberOfElements(array) != 1) {
     std::stringstream msg2;
@@ -353,7 +335,6 @@ double getScalarDoubleFromMatlab(const char *name, const char *workspace,
   // Note this call automatically converts to DOUBLE regardless of
   // array's actual type:
   return mxGetScalar(array);
-
 } // getScalarDoubleFromMatlab()
 
 void pauseMatlab(double time)

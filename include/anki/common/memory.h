@@ -47,9 +47,9 @@ namespace Anki
     u32 get_usedBytes();
 
     void* get_buffer();
+    const void* get_buffer() const;
 
     // Probably these should not be used?
-    // const void* get_buffer() const;
     // void Clear(); // Reset usedBytes to zero
 
   protected:

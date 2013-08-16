@@ -10,10 +10,7 @@
 #include <assert.h>
 
 #if defined(ANKICORETECH_USE_OPENCV)
-namespace cv
-{
-  template<typename _Tp> class Mat_;
-}
+#include "opencv2/opencv.hpp"
 #endif
 
 namespace Anki
@@ -31,9 +28,9 @@ namespace Anki
       return static_cast<u32>(Anki::RoundUp<size_t>(sizeof(T)*numCols, Anki::MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
     }
 
-    static u32 ComputeMinimumRequiredMemory(u32 numRows, u32 numCols)
+    static u32 ComputeMinimumRequiredMemory(u32 numRows, u32 numCols, bool useBoundaryFillPatterns)
     {
-      return numRows * Anki::Matrix<T>::ComputeRequiredStride(numCols);
+      return numRows * Anki::Matrix<T>::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
     }
 
     // Constructor for a Matrix, pointing to user-allocated data. If the pointer to *data is not
@@ -141,6 +138,11 @@ namespace Anki
       return rawDataPointer;
     }
 
+    const void* get_rawDataPointer() const
+    {
+      return rawDataPointer;
+    }
+
   protected:
     static const u32 FILL_PATTERN_START = 0X5432EF76; // Bit-inverse of MemoryStack patterns. The pattern will be put twice at the beginning and end of each line.
     static const u32 FILL_PATTERN_END = 0X7610FE76;
@@ -217,9 +219,19 @@ namespace Anki
     }
   };
 
+  template<> void Matrix<u8>::Print() {
+    for(u32 y=0; y<size[0]; y++) {
+      u8 * rowPointer = Pointer(y, 0);
+      for(u32 x=0; x<size[1]; x++) {
+        std::cout << static_cast<s32>(rowPointer[x]) << " ";
+      }
+      std::cout << "\n";
+    }
+  }
+
   template<typename T1, typename T2> bool AreMatricesEqual_Size(const Matrix<T1> &mat1, const Matrix<T2> &mat2)
   {
-    if(mat1.get_data() && mat2.get_data() &&
+    if(mat1.get_rawDataPointer() && mat2.get_rawDataPointer() &&
       mat1.get_size(0) == mat2.get_size(0) &&
       mat1.get_size(1) == mat2.get_size(1)) {
         return true;
@@ -230,7 +242,7 @@ namespace Anki
 
   template<typename T> bool AreMatricesEqual_SizeAndType(const Matrix<T> &mat1, const Matrix<T> &mat2)
   {
-    if(mat1.get_data() && mat2.get_data() &&
+    if(mat1.get_rawDataPointer() && mat2.get_rawDataPointer() &&
       mat1.get_size(0) == mat2.get_size(0) &&
       mat1.get_size(1) == mat2.get_size(1)) {
         return true;
@@ -241,12 +253,12 @@ namespace Anki
 
   // Factory method to create an AnkiMatrix from the heap. The data of the returned Matrix must be freed by the user.
   // This is seperate from the normal constructor, as Matrix objects are not supposed to manage memory
-  template<typename T> Matrix<T> AllocateMatrixFromHeap(u32 numRows, u32 numCols)
+  template<typename T> Matrix<T> AllocateMatrixFromHeap(u32 numRows, u32 numCols, bool useBoundaryFillPatterns=false)
   {
-    const u32 stride = Anki::Matrix<T>::ComputeRequiredStride(numCols);
-    const u32 requiredMemory = 64 + 2*Anki::MEMORY_ALIGNMENT + Anki::Matrix<T>::ComputeMinimumRequiredMemory(numRows, numCols); // The required memory, plus a bit more just in case
+    const u32 stride = Anki::Matrix<T>::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
+    const u32 requiredMemory = 64 + 2*Anki::MEMORY_ALIGNMENT + Anki::Matrix<T>::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more just in case
 
-    Matrix<T> mat(numRows, numCols, reinterpret_cast<u8*>(calloc(requiredMemory, 1)), requiredMemory, stride);
+    Matrix<T> mat(numRows, numCols, reinterpret_cast<u8*>(calloc(requiredMemory, 1)), requiredMemory, useBoundaryFillPatterns);
 
     return mat;
   }

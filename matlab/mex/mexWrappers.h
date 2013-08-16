@@ -15,7 +15,6 @@
 
 #if USE_ANKI_CORE_LIBRARIES
 #include "anki/common.h"
-#include "anki/vision.h"
 #endif
 
 #ifndef _NDEBUG
@@ -24,11 +23,9 @@
 #define DEBUG_MSG(...)
 #endif
 
-
 ///////////////////////////////////////////////////////////////////////////
 // Prototypes:
 //
-
 
 // Convert an image stored as a simple array stored to an mxArray,
 // switching from C-style row-major ordering to Matlab's column-major.
@@ -53,7 +50,6 @@ mxArray * cvMatVec2mxArray(const cv::Mat_<cv::Vec<T, BANDS> > &Img);
 
 template <class T, int BANDS>
 void mxArray2cvMatVec(const mxArray *array, cv::Mat_<cv::Vec<T, BANDS> > &Img);
-
 
 // Convert from a templated cv::Mat of scalar primitives to an mxArray
 template <class T>
@@ -174,7 +170,6 @@ void mxArray2image(const mxArray *array, T *img)
     mexErrMsgTxt("Unexpected error translating data.");
 
   return;
-
 } // mxArray2image()
 
 #if USE_OPENCV
@@ -208,34 +203,30 @@ void mxArray2cvMatScalar(const mxArray *array, cv::Mat_<T> &img)
       InputData_i += nrows;
     }
   }
-
 } // mxArray2cvMatScalar()
 #endif
 
-
 /*
- * TODO: would like a function like this, but can't template based on
- *       return type.
- *
- template<class T>
- TImage<T> mxArray2Image<T>(const mxArray *array)
- {
- if(mxGetNumberOfDimensions(array) == 3 &&
- mxGetDimensions(array)[2] == 3)
- {
- return mxArray2RGBImage(array);
- }
- else if (mxGetNumberOfDimensions(array) == 2)
- {
- return mxArray2GrayscaleImage(array);
- }
- else {
- mexErrMsgTxt("Input array must have 1 or 3 bands.");
- }
-
- } // mxArray2Image()
- */
-
+* TODO: would like a function like this, but can't template based on
+*       return type.
+*
+template<class T>
+TImage<T> mxArray2Image<T>(const mxArray *array)
+{
+if(mxGetNumberOfDimensions(array) == 3 &&
+mxGetDimensions(array)[2] == 3)
+{
+return mxArray2RGBImage(array);
+}
+else if (mxGetNumberOfDimensions(array) == 2)
+{
+return mxArray2GrayscaleImage(array);
+}
+else {
+mexErrMsgTxt("Input array must have 1 or 3 bands.");
+}
+} // mxArray2Image()
+*/
 
 template <class T>
 mxArray * image2mxArray(const T *img,
@@ -246,7 +237,7 @@ mxArray * image2mxArray(const T *img,
 
   const mwSize outputDims[3] = {ncols, nrows, nbands};
   mxArray *outputArray = mxCreateNumericArray(3, outputDims,
-                                              mxSINGLE_CLASS, mxREAL);
+    mxSINGLE_CLASS, mxREAL);
 
   const int npixels = nrows*ncols;
 
@@ -282,7 +273,7 @@ mxArray * cvMatVec2mxArray(const cv::Mat_<cv::Vec<T, BANDS> > &Img)
 {
   const mwSize outputDims[3] = {Img.rows, Img.cols, BANDS};
   mxArray *outputArray = mxCreateNumericArray(3, outputDims,
-                                              mxDOUBLE_CLASS, mxREAL);
+    mxDOUBLE_CLASS, mxREAL);
 
   const int npixels = Img.rows*Img.cols;
   for(int i=0; i<Img.rows; i++)
@@ -294,7 +285,6 @@ mxArray * cvMatVec2mxArray(const cv::Mat_<cv::Vec<T, BANDS> > &Img)
       cv::Vec<T, BANDS> *Img_i = (cv::Vec<T, BANDS> *) Img.ptr(i);
 
       for(int j=0; j<Img.cols; j++) {
-
         *OutputData_i = (double) Img_i[j][band];
 
         // Shift over a column:
@@ -305,7 +295,6 @@ mxArray * cvMatVec2mxArray(const cv::Mat_<cv::Vec<T, BANDS> > &Img)
 
   return outputArray;
 }
-
 
 template <class T, int BANDS>
 void mxArray2cvMatVec(const mxArray *array, cv::Mat_<cv::Vec<T, BANDS> > &Img)
@@ -360,7 +349,6 @@ void mxArray2cvMatVec(const mxArray *array, cv::Mat_<cv::Vec<T, BANDS> > &Img)
   return;
 }
 
-
 template <class T>
 mxArray * cvMatScalar2mxArray(const cv::Mat_<T> &Img)
 {
@@ -407,9 +395,7 @@ mxArray * simpleArray2mxArray(const T *inputArray, const unsigned long N)
   }
 
   return outputArray;
-
 } // simpleArray2mxArray()
-
 
 template <class T>
 unsigned int mxArray2simpleArray(const mxArray *array, T* &outputArray)
@@ -435,7 +421,6 @@ unsigned int mxArray2simpleArray(const mxArray *array, T* &outputArray)
   return N;
 } // mxArray2simpleArray()
 
-
 template <class T>
 mxArray * stdVector2mxArray(const std::vector<T> &vec)
 {
@@ -448,10 +433,7 @@ mxArray * stdVector2mxArray(const std::vector<T> &vec)
   }
 
   return outputArray;
-
 } // stdVector2mxArray()
-
-
 
 template <class T>
 void mxArray2stdVector(const mxArray *array, std::vector<T> &vec)
@@ -474,7 +456,6 @@ void mxArray2stdVector(const mxArray *array, std::vector<T> &vec)
 
   return;
 } // mxArray2stdVector()
-
 
 #if USE_OPENCV
 // template helper for converting cv::Mat to mx matrix
@@ -616,7 +597,7 @@ template <class T> void mxArray2AnkiMatrix(const mxArray *array, Anki::Matrix<T>
     printf("Matlab array has a different number of elements than the Anki Matrix (%d != %d)\n", numMatlabElements, npixels);
     return;
   }
-  
+
   // TODO: check if the type is correct
 
   for(u32 y=0; y<nrows; ++y) {
@@ -624,7 +605,7 @@ template <class T> void mxArray2AnkiMatrix(const mxArray *array, Anki::Matrix<T>
     const T * const matlabMatrix_rowPointer = matlabMatrixStartPointer + y*ncols;
 
     for(u32 x=0; x<ncols; ++x) {
-        ankiMatrix_rowPointer[x] = matlabMatrix_rowPointer[x];
+      ankiMatrix_rowPointer[x] = matlabMatrix_rowPointer[x];
     }
   }
 }
@@ -642,38 +623,44 @@ template <class T> Anki::Matrix<T> mxArray2AnkiMatrix(const mxArray *array)
     Anki::Matrix<T> ankiMatrix(0, 0, NULL, 0);
     return ankiMatrix;
   }
-  
-  // TODO: check if the type is correct
-  
+
+  const mxClassID matlabClassId = mxGetClassID(array);
+  const mxClassID templateClassId = convertToMatlabType(typeid(T).name(), sizeof(T));
+  if(matlabClassId != templateClassId) {
+    printf("Matlab classId doesn't match with template %d!=%d\n", matlabClassId, templateClassId);
+    Anki::Matrix<T> ankiMatrix(0, 0, NULL, 0);
+    return ankiMatrix;
+  }
+
   Anki::Matrix<T> ankiMatrix = Anki::AllocateMatrixFromHeap<u8>(dimensions[0], dimensions[1]);
 
   for(s32 y=0; y<dimensions[0]; ++y) {
     T * const ankiMatrix_rowPointer = ankiMatrix.Pointer(y, 0);
-    
+
     for(s32 x=0; x<dimensions[1]; ++x) {
-        ankiMatrix_rowPointer[x] = *(matlabMatrixStartPointer + x*dimensions[0] + y);
+      ankiMatrix_rowPointer[x] = *(matlabMatrixStartPointer + x*dimensions[0] + y);
     }
   }
-  
+
   return ankiMatrix;
 }
 
 template <class T> mxArray* ankiMatrix2mxArray(const Anki::Matrix<T> &ankiMatrix)
 {
   const mxClassID classId = convertToMatlabType(typeid(T).name(), sizeof(T));
-  
+
   const mwSize outputDims[2] = {ankiMatrix.get_size(0), ankiMatrix.get_size(1)};
   mxArray *outputArray = mxCreateNumericArray(2, outputDims, classId, mxREAL);
   T * const matlabMatrixStartPointer = (T *) mxGetData(outputArray);
-  
+
   for(s32 y=0; y<outputDims[0]; ++y) {
     const T * const ankiMatrix_rowPointer = ankiMatrix.Pointer(y, 0);
-    
+
     for(s32 x=0; x<outputDims[1]; ++x) {
-        *(matlabMatrixStartPointer + x*outputDims[0] + y) = ankiMatrix_rowPointer[x];
+      *(matlabMatrixStartPointer + x*outputDims[0] + y) = ankiMatrix_rowPointer[x];
     }
   }
-  
+
   return outputArray;
 }
 #endif // #ifdef USE_ANKI_CORE_LIBRARIES
