@@ -1,6 +1,7 @@
-function markers = simpleDetector_step5_decodeMarkers(img, quads, quadTforms, minQuadArea, embeddedConversions, DEBUG_DISPLAY)
+function [markers, validQuads] = simpleDetector_step5_decodeMarkers(img, quads, quadTforms, minQuadArea, embeddedConversions, DEBUG_DISPLAY)
 
 markers = {};
+validQuads = false(size(quads));
 
 % namedFigure('InitialFiltering')
 % subplot(2,2,4)
@@ -46,6 +47,7 @@ if ~isempty(quads)
         
         marker = BlockMarker2D(img, quads{i_quad}, quadTforms{i_quad});
                
+        validQuads(i_quad) = marker.isValid;
         if marker.isValid
             markers{end+1} = marker; %#ok<AGROW>
         end
