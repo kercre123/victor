@@ -93,7 +93,7 @@ classdef Marker2D
         w = createProbeWeights(n, probeGap, probeRadius, probeSigma, cropFactor)
         probes = createProbes(dir, n, probeGap, probeRadius, cropFactor)
     end
-      
+        
     %% Get-Public Properties
     properties(GetAccess = 'public', SetAccess = 'protected')   
         corners;
@@ -119,6 +119,7 @@ classdef Marker2D
     %% Protected Properties
     properties(GetAccess = 'protected', SetAccess = 'protected')
         
+        reorderCorners;
         handles;
         topSideLUT = struct('down', [2 4], 'up', [1 3], ...
             'left', [1 2], 'right', [3 4]);
@@ -155,7 +156,21 @@ classdef Marker2D
             end
             
         end % CONSTRUCTOR Marker2D()
-                
+        
+        function thisTformed = applytform(this, T)
+            thisTformed = this;
+            [x,y] = tformfwd(T, this.corners(:,1), this.corners(:,2));
+            thisTformed.corners = [x(:) y(:)];
+        end     
+        
+        function updated = updateCorners(this, newCorners)
+            assert(isequal(size(newCorners), size(this.corners)), ...
+                'Specified corners should be %dx%d.', ...
+                size(newCorners,1), size(newCorners,2));
+            
+            updated = this;
+            updated.corners = newCorners(this.reorderCorners,:);
+        end
     end 
     
     %% Dependent Get/Set Methods

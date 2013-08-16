@@ -19,25 +19,25 @@ end
 
 switch(whichDir)
     case 1 % 'up'
-        reorder = 1:4;
+        this.reorderCorners = 1:4;
         this.upAngle = 0;
     case 2 % 'down'
         means = rot90(rot90(means));
-        reorder = [4 3 2 1];
+        this.reorderCorners = [4 3 2 1];
         this.upAngle = pi;
     case 3 % 'left'
         means = rot90(rot90(rot90(means)));
-        reorder = [2 4 1 3];
+        this.reorderCorners = [2 4 1 3];
         this.upAngle = pi/2;
     case 4 % 'right'
         means = rot90(means);
-        reorder = [3 1 4 2];
+        this.reorderCorners = [3 1 4 2];
         this.upAngle = 3*pi/2;
     otherwise
         error('Unrecognized whichDir "%d"', whichDir);
 end
             
-this.corners = this.corners(reorder,:);
+this.corners = this.corners(this.reorderCorners,:);
 
 binaryString = strrep(num2str(row(means) < this.threshold), ' ', '');
 
