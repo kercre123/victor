@@ -15,6 +15,9 @@
     <ClCompile Include="..\..\src\binomialFilter.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\downsampleByFactor.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\anki\vision\config.h">

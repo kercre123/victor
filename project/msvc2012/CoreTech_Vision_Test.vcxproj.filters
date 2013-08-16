@@ -8,4 +8,9 @@
       <UniqueIdentifier>{88755ed4-87fb-4490-83ce-52fd8b681506}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\test\vision_Test.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
 </Project>

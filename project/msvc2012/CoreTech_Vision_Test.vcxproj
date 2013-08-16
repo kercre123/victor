@@ -10,6 +10,9 @@
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\test\vision_Test.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E8908FC2-7EB1-47B1-9EB0-CDB355201F24}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>

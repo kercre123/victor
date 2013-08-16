@@ -5,33 +5,27 @@
 
 #define VERBOSITY 0
 
+using namespace Anki;
+
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-    Anki::Matrix<u8> img = mxArray2AnkiMatrix<u8>(prhs[0]);
-    mxArray* imgM = ankiMatrix2mxArray<u8>(img);
-    Anki::Matrix<u8> imgMA = mxArray2AnkiMatrix<u8>(imgM);
+  Matrix<u8> img = mxArray2AnkiMatrix<u8>(prhs[0]);
+  
+  DASConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Matrix img");
+        
+  Matrix<u8> imgFiltered = AllocateMatrixFromHeap<u8>(img.get_size(0), img.get_size(1));
+  DASConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Matrix imgFiltered");
 
-    assignInMatlab(imgM, "test5");
+  const u32 numBytes = img.get_size(0) * img.get_stride() + 1000;
+  MemoryStack scratch(calloc(numBytes,1), numBytes);
 
-    Anki::Matrix<u8> filteredImg = Anki::AllocateMatrixFromHeap<u8>(img.get_size(0), img.get_size(1));
-    
-    printf("%d %d\n"
-           "%d %d\n",
-           *img.Pointer(10,10), *img.Pointer(100,10),
-           *imgMA.Pointer(10,10), *imgMA.Pointer(100,10));
-    
-    delete(img.get_data());
-    delete(imgMA.get_data());
-    
-    plhs[0] = imgM;
-    
-    /*
-    double sigma = mxGetScalar(prhs[1]);
-    double numSigma = mxGetScalar(prhs[2]);
-    int k = 2*int(std::ceil(double(numSigma)*sigma)) + 1;
-    cv::Size ksize(k,k); 
-    
-    cv::GaussianBlur(src, dst, ksize, sigma, sigma, cv::BORDER_REFLECT_101);
-            
-    plhs[0] = cvMat2mxArray(dst);*/
+  if(BinomialFilter(img, imgFiltered, scratch) != RESULT_OK) {
+    printf("Error: mexBinomialFilter\n");
+  }
+  
+  plhs[0] = ankiMatrix2mxArray(imgFiltered);
+  
+  delete(img.get_rawDataPointer());
+  delete(imgFiltered.get_rawDataPointer());
+  free(scratch.get_buffer());
 }

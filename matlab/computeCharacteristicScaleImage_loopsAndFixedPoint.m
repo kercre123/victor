@@ -32,11 +32,6 @@ function scaleImage = computeCharacteristicScaleImage_loopsAndFixedPoint( ...
 DEBUG_DISPLAY = false;
 % DEBUG_DISPLAY = true;
 
-if nargin < 3
-    computeDogAtFullSize = false;
-%     computeDogAtFullSize = true;
-end
-
 assert(numLevels <= 8);
 
 assert(size(img,3)==1, 'Image should be scalar-valued.');
@@ -50,11 +45,20 @@ DoG_max = zeros(nrows,ncols,'uint32'); % UQ16.16
 imgPyramid = cell(1, numLevels+1);
 scaleFactors = int32(2.^[0:(numLevels)]); %#ok<NBRAK>
 
-imgPyramid{1} = binomialFilter(img);
+keyboard
+if filterWithMex
+    imgPyramid{1} = mexBinomialFilter(img);
+else
+    imgPyramid{1} = binomialFilter_loopsAndFixedPoint(img);
+end
 
 for pyramidLevel = 2:numLevels+1
     curPyramidLevel = imgPyramid{pyramidLevel-1}; %UQ8.0
-    curPyramidLevelBlurred = binomialFilter(curPyramidLevel); %UQ8.0
+    if filterWithMex
+        curPyramidLevelBlurred = mexBinomialFilter(curPyramidLevel); %UQ8.0
+    else
+        curPyramidLevelBlurred = binomialFilter_loopsAndFixedPoint(curPyramidLevel); %UQ8.0
+    end
 
     if DEBUG_DISPLAY
         if computeDogAtFullSize
@@ -242,7 +246,7 @@ for pyramidLevel = 2:numLevels+1
     end
 
     %imgPyramid{pyramidLevel} = uint8(imresize_bilinear(curPyramidLevelBlurred, size(curPyramidLevelBlurred)/2)); % TODO: implement fixed point version
-    imgPyramid{pyramidLevel} = uint8(downsample_fixedPoint(curPyramidLevelBlurred, 2));
+    imgPyramid{pyramidLevel} = uint8(downsampleByFactor(curPyramidLevelBlurred, 2));
     
 %     keyboard;
 end
@@ -257,65 +261,4 @@ function interpolatedPixel = interpolate2d(pixel00, pixel01, pixel10, pixel11, a
 
     interpolatedPixel = alphaYinverse*interpolatedTop + alphaY*interpolatedBottom;
 end
-
-% img is UQ8.0
-% imgFiltered is UQ8.0
-% Handles edges by replicating the border pixel
-function imgFiltered = binomialFilter(img, filterWithMex)
-    if filterWithMex
-    else % if filterWithMex
-        kernelU32 = uint32([1, 4, 6, 4, 1]);
-        kernelSum = uint32(sum(kernelU32));
-        assert(kernelSum == 16);
-
-        img = uint32(img);
-
-        imgFilteredTmp = zeros(size(img), 'uint32');
-
-
-        % 1. Horizontally filter
-        for y = 1:size(img,1)
-            imgFilteredTmp(y,1) = sum(img(y,1:3) .* kernelU32(3:end)) + img(y,1)*sum(kernelU32(1:2));
-            imgFilteredTmp(y,2) = sum(img(y,1:4) .* kernelU32(2:end)) + img(y,1)*kernelU32(1);
-
-            for x = 3:(size(img,2)-2)
-                imgFilteredTmp(y,x) = sum(img(y,(x-2):(x+2)) .* kernelU32);
-            end
-
-            imgFilteredTmp(y,size(img,2)-1) = sum(img(y,(size(img,2)-3):size(img,2)) .* kernelU32(1:(end-1))) + img(y,size(img,2))*kernelU32(end);
-            imgFilteredTmp(y,size(img,2))   = sum(img(y,(size(img,2)-2):size(img,2)) .* kernelU32(1:(end-2))) + img(y,size(img,2))*sum(kernelU32((end-1):end));
-        end
-
-
-        % 2. Vertically filter
-        imgFiltered = zeros(size(img), 'uint8');
-
-        % for y = 1:2 unrolled
-        for x = 1:size(img,2)
-            filtered0 = sum(imgFilteredTmp(1:3,x) .* kernelU32(3:end)') + imgFilteredTmp(1,x)*sum(kernelU32(1:2));
-            imgFiltered(1,x) = uint8( filtered0/(kernelSum^2) );
-
-            filtered1 = sum(imgFilteredTmp(1:4,x) .* kernelU32(2:end)') + imgFilteredTmp(1,x)*kernelU32(1);
-            imgFiltered(2,x) = uint8( filtered1/(kernelSum^2) );
-        end
-
-        for y = 3:(size(img,1)-2)
-            for x = 1:size(img,2)
-                imgFiltered(y,x) = uint8( sum(imgFilteredTmp((y-2):(y+2),x) .* kernelU32') / (kernelSum^2) );
-            end
-        end
-
-        % for y = (size(img,1)-2):size(img,1) unrolled
-        for x = 1:size(img,2)
-            filtered0 = sum(imgFilteredTmp((size(img,1)-3):size(img,1),x) .* kernelU32(1:(end-1))') + imgFilteredTmp(size(img,1),x)*kernelU32(end);
-            imgFiltered(size(img,1)-1,x) = uint8( filtered0/(kernelSum^2) );
-
-            filtered1 = sum(imgFilteredTmp((size(img,1)-2):size(img,1),x) .* kernelU32(1:(end-2))') + imgFilteredTmp(size(img,1),x)*sum(kernelU32((end-1):end));
-            imgFiltered(size(img,1),x) = uint8( filtered1/(kernelSum^2) );
-        end
-    end % if filterWithMex ... else
-    
-%     keyboard
-end
-
 

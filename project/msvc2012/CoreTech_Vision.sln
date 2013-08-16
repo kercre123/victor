@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Express 2012 for Windows Desktop
+# Visual Studio 2012
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoreTech_Vision", "CoreTech_Vision.vcxproj", "{1F89D154-F5CD-4C53-8489-E33A06BAE0DB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoreTech_Vision_Test", "CoreTech_Vision_Test.vcxproj", "{E8908FC2-7EB1-47B1-9EB0-CDB355201F24}"
