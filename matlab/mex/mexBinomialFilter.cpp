@@ -9,6 +9,8 @@ using namespace Anki;
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+  DASConditionalErrorAndReturn(nrhs == 1 && nlhs == 1, "mexDownsampleByFactor", "Call this function as following: imgFiltered = mexBinomialFilter(img);");
+    
   Matrix<u8> img = mxArray2AnkiMatrix<u8>(prhs[0]);
   
   DASConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Matrix img");

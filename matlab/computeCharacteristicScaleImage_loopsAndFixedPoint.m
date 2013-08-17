@@ -45,7 +45,7 @@ DoG_max = zeros(nrows,ncols,'uint32'); % UQ16.16
 imgPyramid = cell(1, numLevels+1);
 scaleFactors = int32(2.^[0:(numLevels)]); %#ok<NBRAK>
 
-keyboard
+% keyboard
 if filterWithMex
     imgPyramid{1} = mexBinomialFilter(img);
 else
