@@ -13,6 +13,7 @@ if useAndrewsPaths
         '-l opencv_calib3d');
 else % if useAndrewsPaths
     compileVerbose = '-v';
+    useDebugLibraries = false;
 
     rootDir = fileparts(fileparts(fileparts(fileparts(which('makeMex.m')))));
     rootDir(rootDir == '\') = '/';
@@ -24,13 +25,19 @@ else % if useAndrewsPaths
         openCvLibDir = [rootDir, '/coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/'];
         openCvVersionString = '';
     elseif ispc()
-        openCvLibDir = [rootDir, '/coretech-external/build/msvc2012/opencv-2.4.6.1/lib/Release/'];
         openCvVersionString = '246';
+        
         ankiLibDirs = {[rootDir, '/coretech-common/build/msvc2012/lib/'],...
                        [rootDir, '/coretech-vision/build/msvc2012/lib/']};
-        ankiLibs = {'-lCoreTech_Common_32Release',... 
-                    '-lCoreTech_Vision_32Release'};
-    end
+                   
+        if useDebugLibraries
+            openCvLibDir = [rootDir, '/coretech-external/build/msvc2012/opencv-2.4.6.1/lib/Debug/'];
+            ankiLibs = {'-lCoreTech_Common_32Debug', '-lCoreTech_Vision_32Debug'}; 
+        else
+            openCvLibDir = [rootDir, '/coretech-external/build/msvc2012/opencv-2.4.6.1/lib/Release/'];
+            ankiLibs = {'-lCoreTech_Common_32Release', '-lCoreTech_Vision_32Release'};
+        end
+    end % if ismac() ... elseif ispc()
 
     openCvModules = {'calib3d', 'contrib', 'core', 'features2d', 'flann', 'highgui', 'imgproc', 'legacy', 'ml', 'nonfree', 'objdetect', 'ocl', 'photo', 'stitching', 'superres', 'video', 'videostab'};
     openCvIncludeDirs = cell(length(openCvModules)+1,1);
