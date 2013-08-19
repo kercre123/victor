@@ -33,6 +33,13 @@ namespace Anki
       return numRows * Anki::Matrix<T>::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
     }
 
+    Matrix()
+      : stride(0), useBoundaryFillPatterns(false), data(NULL), rawDataPointer(NULL)
+    {
+      this->size[0] = 0;
+      this->size[1] = 0;
+    }
+
     // Constructor for a Matrix, pointing to user-allocated data. If the pointer to *data is not
     // aligned to Anki::MEMORY_ALIGNMENT, this Matrix will start at the next aligned location. Unfortunately, this is more
     // restrictive than most matrix libraries, and as an example, it may make it hard to convert from
@@ -117,6 +124,17 @@ namespace Anki
       } else { // if(useBoundaryFillPatterns) {
         return true; // Technically, we don't know if the Matrix is valid. But we don't know it's NOT valid, so just return true.
       } // if(useBoundaryFillPatterns) { ... else
+    }
+
+    // Set every element in the Matrix to this value
+    void Set(T value)
+    {
+      for(u32 y=0; y<size[0]; y++) {
+        T * restrict rowPointer = Pointer(y, 0);
+        for(u32 x=0; x<size[1]; x++) {
+          rowPointer[x] = value;
+        }
+      }
     }
 
     // Similar to Matlab's size(matrix, dimension), and dimension is in {0,1}
@@ -228,6 +246,43 @@ namespace Anki
       std::cout << "\n";
     }
   }
+
+  template<typename T> class FixedPointMatrix : public Matrix<T>
+  {
+  public:
+    FixedPointMatrix()
+      : Matrix<T>(), numFractionalBits(numFractionalBits)
+    {
+    }
+
+    // Constructor for a FixedPointMatrix, pointing to user-allocated data. If the pointer to *data is not
+    // aligned to Anki::MEMORY_ALIGNMENT, this Matrix will start at the next aligned location. Unfortunately, this is more
+    // restrictive than most matrix libraries, and as an example, it may make it hard to convert from
+    // OpenCV to Anki::Matrix, though the reverse is trivial.
+    FixedPointMatrix(u32 numRows, u32 numCols, void * data, u32 dataLength, u32 numFractionalBits, bool useBoundaryFillPatterns=false)
+      : Matrix<T>(numRows, numCols, data, dataLength, useBoundaryFillPatterns), numFractionalBits(numFractionalBits)
+    {
+    }
+
+    // Constructor for a FixedPointMatrix, pointing to user-allocated MemoryStack
+    FixedPointMatrix(u32 numRows, u32 numCols, MemoryStack &memory, u32 numFractionalBits, bool useBoundaryFillPatterns=false)
+      : Matrix<T>(numRows, numCols, memory, useBoundaryFillPatterns), numFractionalBits(numFractionalBits)
+    {
+    }
+
+    FixedPointMatrix(Matrix<T> &mat)
+      : Matrix<T>(mat), numFractionalBits(0)
+    {
+    }
+
+    u32 get_numFractionalBits() const
+    {
+      return numFractionalBits;
+    }
+
+  protected:
+    u32 numFractionalBits;
+  };
 
   template<typename T1, typename T2> bool AreMatricesEqual_Size(const Matrix<T1> &mat1, const Matrix<T2> &mat2)
   {
