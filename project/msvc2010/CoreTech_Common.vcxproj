@@ -23,6 +23,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\dasLight.cpp" />
     <ClCompile Include="..\..\src\matlabInterface.cpp" />
+    <ClCompile Include="..\..\src\matrix.cpp" />
     <ClCompile Include="..\..\src\memory.cpp" />
     <ClCompile Include="..\..\src\utilities.cpp" />
   </ItemGroup>

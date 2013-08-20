@@ -18,7 +18,7 @@ namespace Anki
     LARGE_INTEGER frequency, counter;
     QueryPerformanceCounter(&counter);
     QueryPerformanceFrequency(&frequency);
-    return 1000.0*double(counter.QuadPart)/double(frequency.QuadPart);
+    return double(counter.QuadPart)/double(frequency.QuadPart);
 #elif defined(__APPLE_CC__)
     return 0.0;
 #else
