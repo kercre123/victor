@@ -46,14 +46,10 @@ namespace Anki
     return multiple * (number/multiple);
   }
 
-  template<typename T> bool IsPowerOfTwo(T x)
-  {
-    // While x is even and greater than 1, keep dividing by two
-    while (((x & 1) == 0) && x > 1)
-      x >>= 1;
+  bool IsPowerOfTwo(u32 x);
 
-    return static_cast<bool>(x == 1);
-  }
+  u32 Log2(u32 x);
+  u64 Log2(u64 x);
 
   double GetTime();
 

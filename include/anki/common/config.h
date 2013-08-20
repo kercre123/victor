@@ -68,4 +68,10 @@ namespace Anki
   static const u32 MEMORY_ALIGNMENT = 16; // To support 128-bit SIMD loads and stores
 }
 
+#define ANKI_DEBUG_OFF  0
+#define ANKI_DEBUG_LOW  1000
+#define ANKI_DEBUG_HIGH 2000
+
+#define ANKI_DEBUG_LEVEL ANKI_DEBUG_HIGH
+
 #endif // _ANKICORETECH_COMMON_CONFIG_H_

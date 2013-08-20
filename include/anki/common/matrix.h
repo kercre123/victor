@@ -74,27 +74,38 @@ namespace Anki
     // Pointer to the data, at a given (y,x) location
     const inline T* Pointer(u32 index0, u32 index1) const
     {
-      assert(index0 < size[0] && index1 < size[1]);
+      assert(index0 < size[0] && index1 < size[1] && this->rawDataPointer != NULL && this->data != NULL);
       return reinterpret_cast<const T*>( reinterpret_cast<const char*>(this->data) + index1*sizeof(T) + index0*stride );
     }
 
     // Pointer to the data, at a given (y,x) location
     inline T* Pointer(u32 index0, u32 index1)
     {
-      assert(index0 < size[0] && index1 < size[1]);
+      assert(index0 < size[0] && index1 < size[1] && this->rawDataPointer != NULL && this->data != NULL);
       return reinterpret_cast<T*>( reinterpret_cast<char*>(this->data) + index1*sizeof(T) + index0*stride );
     }
 
 #if defined(ANKICORETECH_USE_OPENCV)
+    void Show(const std::string windowName, bool waitForKeypress) const {
+      assert(this->rawDataPointer != NULL && this->data != NULL);
+      cv::imshow(windowName, cvMatMirror);
+      if(waitForKeypress) {
+        cv::waitKey();
+      }
+    }
+
     // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Matrix. No data is copied.
     cv::Mat_<T>& get_CvMat_()
     {
+      assert(this->rawDataPointer != NULL && this->data != NULL);
       return cvMatMirror;
     }
 #endif // #if defined(ANKICORETECH_USE_OPENCV)
 
     // Print out the contents of this matrix
     void Print() {
+      assert(this->rawDataPointer != NULL && this->data != NULL);
+
       for(u32 y=0; y<size[0]; y++) {
         T * rowPointer = Pointer(y, 0);
         for(u32 x=0; x<size[1]; x++) {
@@ -108,6 +119,10 @@ namespace Anki
     // If the Matrix wasn't constructed with the useBoundaryFillPatterns=true, this method always returns true
     bool IsValid()
     {
+      if(this->rawDataPointer == NULL || this->data == NULL) {
+        return false;
+      }
+
       if(useBoundaryFillPatterns) {
         const u32 strideWithoutFillPatterns = ComputeRequiredStride(size[1],false);
 
@@ -127,19 +142,51 @@ namespace Anki
     }
 
     // Set every element in the Matrix to this value
-    void Set(T value)
+    // Returns the number of values set
+    u32 Set(T value)
     {
+      assert(this->rawDataPointer != NULL && this->data != NULL);
+
       for(u32 y=0; y<size[0]; y++) {
         T * restrict rowPointer = Pointer(y, 0);
         for(u32 x=0; x<size[1]; x++) {
           rowPointer[x] = value;
         }
       }
+      return size[0]*size[1];
+    }
+
+    // Parse a space-seperated string, and copy values to this Matrix.
+    // If the string doesn't contain enough elements, the remainded of the Matrix will be filled with zeros.
+    // Returns the number of values set (not counting extra zeros)
+    u32 Set(const std::string values)
+    {
+      assert(this->rawDataPointer != NULL && this->data != NULL);
+
+      std::istringstream iss(values);
+      u32 numValuesSet = 0;
+
+      for(u32 y=0; y<size[0]; y++) {
+        T * restrict rowPointer = Pointer(y, 0);
+        for(u32 x=0; x<size[1]; x++) {
+          T value;
+          if(iss >> value) {
+            rowPointer[x] = value;
+            numValuesSet++;
+          } else {
+            rowPointer[x] = 0;
+          }
+        }
+      }
+
+      return numValuesSet;
     }
 
     // Similar to Matlab's size(matrix, dimension), and dimension is in {0,1}
     u32 get_size(u32 dimension) const
     {
+      assert(this->rawDataPointer != NULL && this->data != NULL);
+
       if(dimension > 1)
         return 0;
 
@@ -237,7 +284,10 @@ namespace Anki
     }
   };
 
-  template<> void Matrix<u8>::Print() {
+  template<> void Matrix<u8>::Print()
+  {
+    assert(this->rawDataPointer != NULL && this->data != NULL);
+
     for(u32 y=0; y<size[0]; y++) {
       u8 * rowPointer = Pointer(y, 0);
       for(u32 x=0; x<size[1]; x++) {
@@ -245,6 +295,29 @@ namespace Anki
       }
       std::cout << "\n";
     }
+  }
+
+  template<> u32 Matrix<u8>::Set(const std::string values)
+  {
+    assert(this->rawDataPointer != NULL && this->data != NULL);
+
+    std::istringstream iss(values);
+    u32 numValuesSet = 0;
+
+    for(u32 y=0; y<size[0]; y++) {
+      u8 * restrict rowPointer = Pointer(y, 0);
+      for(u32 x=0; x<size[1]; x++) {
+        u32 value;
+        if(iss >> value) {
+          rowPointer[x] = static_cast<u8>(value);
+          numValuesSet++;
+        } else {
+          rowPointer[x] = 0;
+        }
+      }
+    }
+
+    return numValuesSet;
   }
 
   template<typename T> class FixedPointMatrix : public Matrix<T>
@@ -259,13 +332,13 @@ namespace Anki
     // aligned to Anki::MEMORY_ALIGNMENT, this Matrix will start at the next aligned location. Unfortunately, this is more
     // restrictive than most matrix libraries, and as an example, it may make it hard to convert from
     // OpenCV to Anki::Matrix, though the reverse is trivial.
-    FixedPointMatrix(u32 numRows, u32 numCols, void * data, u32 dataLength, u32 numFractionalBits, bool useBoundaryFillPatterns=false)
+    FixedPointMatrix(u32 numRows, u32 numCols, u32 numFractionalBits, void * data, u32 dataLength, bool useBoundaryFillPatterns=false)
       : Matrix<T>(numRows, numCols, data, dataLength, useBoundaryFillPatterns), numFractionalBits(numFractionalBits)
     {
     }
 
     // Constructor for a FixedPointMatrix, pointing to user-allocated MemoryStack
-    FixedPointMatrix(u32 numRows, u32 numCols, MemoryStack &memory, u32 numFractionalBits, bool useBoundaryFillPatterns=false)
+    FixedPointMatrix(u32 numRows, u32 numCols, u32 numFractionalBits, MemoryStack &memory, bool useBoundaryFillPatterns=false)
       : Matrix<T>(numRows, numCols, memory, useBoundaryFillPatterns), numFractionalBits(numFractionalBits)
     {
     }

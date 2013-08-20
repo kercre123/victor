@@ -28,6 +28,37 @@ namespace Anki
 #endif
   }
 
+  bool IsPowerOfTwo(u32 x)
+  {
+    // While x is even and greater than 1, keep dividing by two
+    while (((x & 1) == 0) && x > 1)
+      x >>= 1;
+
+    return static_cast<bool>(x == 1);
+  }
+
+  u32 Log2(u32 x)
+  {
+    u32 powerCount = 0;
+    // While x is even and greater than 1, keep dividing by two
+    while (x >>= 1) {
+      powerCount++;
+    }
+
+    return powerCount;
+  }
+
+  u64 Log2(u64 x)
+  {
+    u32 powerCount = 0;
+    // While x is even and greater than 1, keep dividing by two
+    while (x >>= 1) {
+      powerCount++;
+    }
+
+    return powerCount;
+  }
+
 #if defined(ANKICORETECH_USE_OPENCV)
   int ConvertToOpenCvType(const char *typeName, size_t byteDepth)
   {
