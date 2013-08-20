@@ -390,6 +390,16 @@ namespace Anki
 
     return mat;
   }
+
+  template<typename T> FixedPointMatrix<T> AllocateFixedPointMatrixFromHeap(u32 numRows, u32 numCols, u32 numFractionalBits, bool useBoundaryFillPatterns=false)
+  {
+    const u32 stride = Anki::FixedPointMatrix<T>::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
+    const u32 requiredMemory = 64 + 2*Anki::MEMORY_ALIGNMENT + Anki::FixedPointMatrix<T>::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more just in case
+
+    FixedPointMatrix<T> mat(numRows, numCols, numFractionalBits, reinterpret_cast<u8*>(calloc(requiredMemory, 1)), requiredMemory, useBoundaryFillPatterns);
+
+    return mat;
+  }
 } //namespace Anki
 
 #endif // _ANKICORETECH_COMMON_MATRIX_H_
