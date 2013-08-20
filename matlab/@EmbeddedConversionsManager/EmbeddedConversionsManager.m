@@ -13,7 +13,7 @@ classdef EmbeddedConversionsManager < handle
             homographyEstimationType_acceptable = {'matlab_cp2tform', 'opencv_cp2tform'};
 
             computeCharacteristicScaleImageType = 'matlab_original';
-            computeCharacteristicScaleImageType_acceptable = {'matlab_original', 'matlab_loops', 'matlab_loopsAndFixedPoint', 'matlab_loopsAndFixedPoint_mexFiltering'};
+            computeCharacteristicScaleImageType_acceptable = {'matlab_original', 'matlab_loops', 'matlab_loopsAndFixedPoint', 'matlab_loopsAndFixedPoint_mexFiltering', 'c_fixedPoint'};
 
             parseVarargin(varargin{:});
 
