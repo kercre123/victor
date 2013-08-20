@@ -19,8 +19,6 @@
 % img5 = ones(16,16); img5(6:8, 6:8) = 0; img5(3, 4:11) = 0; img5(3:10, 11) = 0; img5(11, 3:11) = 0; img5(3:10, 3) = 0; img5(4:5, 7) = 0;
 % [boundary5, boundaryImg5] = traceBoundary(img5, [7,9], 'n')
 
-
-
 function [boundary, boundaryImg] = traceBoundary(binaryImg, startPoint, initialDirection)
 
 validDirectionStrings = {'n','ne','e','se','s','sw','w','nw'};
@@ -34,6 +32,14 @@ if nargout == 2
     boundaryImg = zeros(size(binaryImg));
 end
 
+checkForOutOfBounds = false;
+
+if ~checkForOutOfBounds
+    % The boundaries are zero, which means we don't have to check for out of bounds
+    binaryImg([1,end],:) = 0;
+    binaryImg(:, [1,end]) = 0;
+end
+
 allDirections = 0:7;
 dx = [0, 1, 1, 1, 0, -1, -1, -1];
 dy = [-1, -1, 0, 1, 1, 1, 0, -1];
@@ -44,7 +50,7 @@ if curDirection == -1
 end
 
 boundary = [startPoint(1), startPoint(2)];
-curPoint = [startPoint(1), startPoint(2)]
+curPoint = [startPoint(1), startPoint(2)];
 
 if nargout == 2
     curBoundaryIndex = 1;
@@ -57,7 +63,6 @@ while true
    if zeroDirection == -1
        break;
    end
-      
    
     % Search counter-clockwise until we find a 1
     zeroDirectionPlusOne = zeroDirection + 1;
@@ -69,9 +74,16 @@ while true
         
     newPoint = [curPoint(1)+dy(oneDirection+1), curPoint(2)+dx(oneDirection+1)];
         
+    curPoint = newPoint;
+    boundary(end+1, :) = newPoint;
+    if nargout == 2
+        curBoundaryIndex = curBoundaryIndex + 1;
+        boundaryImg(newPoint(1), newPoint(2)) = curBoundaryIndex;
+    end
+    
     % If the new point is the same as the last point (or second-to-last to detect oscillations), quit.
-    if sum(newPoint == boundary(end,:)) == 2 || ...
-       (size(boundary,1)>1 && sum(newPoint == boundary(end-1,:)) == 2)
+    if sum(newPoint == boundary(end-1,:)) == 2 || ...
+       (size(boundary,1)>2 && sum(newPoint == boundary(end-2,:)) == 2)
         break;
     end
     
@@ -80,23 +92,13 @@ while true
         break;
     end
     
-    % If the new point is out of bounds, quit.
-    if newPoint(1)<=1 && newPoint(2)<=1 &&...
-       newPoint(1)>=size(img,1) && newPoint(2)>=size(img,2)
-        break;
+    if checkForOutOfBounds
+        % If the new point is out of bounds, quit.
+        if newPoint(1)<=1 || newPoint(2)<=1 ||...
+           newPoint(1)>=size(binaryImg,1) || newPoint(2)>=size(binaryImg,2)
+            break;
+        end
     end
-    
-    curPoint = newPoint;
-    boundary(end+1, :) = newPoint;
-    if nargout == 2
-        curBoundaryIndex = curBoundaryIndex + 1;
-        boundaryImg(newPoint(1), newPoint(2)) = curBoundaryIndex;
-    end
-    
-%     if (size(boundary,1)>2 && sum(abs(newPoint-boundary(1,:)))<= 1)
-%         break;
-%     end    
-%     keyboard
 end % while true
 
 
