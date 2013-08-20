@@ -153,7 +153,7 @@ TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 
   Anki::Matlab matlab(false);
 
-  matlab.EvalStringEcho("img = rgb2gray(imread('Z:/Documents/testSequence/blockWorldTest_front00000.png'));");
+  matlab.EvalStringEcho("img = rgb2gray(imread('e:/Anki/testSequence/blockWorldTest_front00000.png'));");
   //matlab.EvalStringEcho("img = imresize(rgb2gray(imread('Z:/Documents/testSequence/blockWorldTest_front00000.png')), [240,320]);");
   Anki::Matrix<u8> img = matlab.GetMatrix<u8>("img");
   ASSERT_TRUE(img.get_rawDataPointer() != NULL);

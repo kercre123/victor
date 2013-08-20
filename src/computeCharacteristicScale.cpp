@@ -7,6 +7,10 @@ namespace Anki
   // //function scaleImage = computeCharacteristicScaleImage_loopsAndFixedPoint(img, numLevels, computeDogAtFullSize, filterWithMex)
   Result ComputeCharacteristicScaleImage(const Matrix<u8> &img, u32 numLevels, FixedPointMatrix<u32> &scaleImage, MemoryStack scratch)
   {
+    double times[20];
+
+    times[0] = GetTime();
+
     DASConditionalErrorAndReturnValue(numLevels <= MAX_PYRAMID_LEVELS,
       RESULT_FAIL, "ComputeCharacteristicScaleImage", "numLevels must be less than %d", MAX_PYRAMID_LEVELS+1);
 
@@ -313,6 +317,11 @@ namespace Anki
       DASConditionalErrorAndReturnValue(DownsampleByFactor(curPyramidLevelBlurred, 2, imgPyramid[pyramidLevel]) == RESULT_OK,
         RESULT_FAIL, "ComputeCharacteristicScaleImage", "In-loop DownsampleByFactor failed");
     } // for(u32 pyramidLevel=1; pyramidLevel<=numLevels; pyramidLevel++) {
+
+    times[19] = GetTime();
+
+    printf("t20-t0 = %f\n", times[19]-times[0]);
+
     return Anki::RESULT_OK;
   } // Result ComputeCharacteristicScaleImage(const Matrix<u8> &img, u32 numLevels, Matrix<u32> &scaleImage, MemoryStack scratch)
 
