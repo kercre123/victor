@@ -94,45 +94,45 @@ TEST(CoreTech_Vision, DownsampleByFactor)
 
 TEST(CoreTech_Vision, ComputeCharacteristicScale)
 {
-const u32 width = 16;
-const u32 height = 16;
-u32 numLevels = 3;
-const std::string imgData =
-"0	0	0	107	255	255	255	255	0	0	0	0	0	0	160	89 "
-"0	255	0	251	255	0	0	255	0	255	255	255	255	0	197	38 "
-"0	0	0	77	255	0	0	255	0	255	255	255	255	0	238	149 "
-"18	34	27	179	255	255	255	255	0	255	255	255	255	0	248	67 "
-"226	220	173	170	40	210	108	255	0	255	255	255	255	0	49	11 "
-"25	100	51	137	218	251	24	255	0	0	0	0	0	0	35	193 "
-"255	255	255	255	255	255	255	255	255	255	49	162	65	133	178	62 "
-"255	0	0	0	0	0	0	0	0	255	188	241	156	253	24	113 "
-"255	0	0	0	0	0	0	0	0	255	62	53	148	56	134	175 "
-"255	0	0	0	0	0	0	0	0	255	234	181	138	27	135	92 "
-"255	0	0	0	0	0	0	0	0	255	69	60	222	28	220	188 "
-"255	0	0	0	0	0	0	0	0	255	195	30	68	16	124	101 "
-"255	0	0	0	0	0	0	0	0	255	48	155	81	103	100	174 "
-"255	0	0	0	0	0	0	0	0	255	73	115	30	114	171	180 "
-"255	0	0	0	0	0	0	0	0	255	23	117	240	93	189	113 "
-"255	255	255	255	255	255	255	255	255	255	147	169	165	195	133	5";
+  const u32 width = 16;
+  const u32 height = 16;
+  u32 numLevels = 3;
+  const std::string imgData =
+    "0	0	0	107	255	255	255	255	0	0	0	0	0	0	160	89 "
+    "0	255	0	251	255	0	0	255	0	255	255	255	255	0	197	38 "
+    "0	0	0	77	255	0	0	255	0	255	255	255	255	0	238	149 "
+    "18	34	27	179	255	255	255	255	0	255	255	255	255	0	248	67 "
+    "226	220	173	170	40	210	108	255	0	255	255	255	255	0	49	11 "
+    "25	100	51	137	218	251	24	255	0	0	0	0	0	0	35	193 "
+    "255	255	255	255	255	255	255	255	255	255	49	162	65	133	178	62 "
+    "255	0	0	0	0	0	0	0	0	255	188	241	156	253	24	113 "
+    "255	0	0	0	0	0	0	0	0	255	62	53	148	56	134	175 "
+    "255	0	0	0	0	0	0	0	0	255	234	181	138	27	135	92 "
+    "255	0	0	0	0	0	0	0	0	255	69	60	222	28	220	188 "
+    "255	0	0	0	0	0	0	0	0	255	195	30	68	16	124	101 "
+    "255	0	0	0	0	0	0	0	0	255	48	155	81	103	100	174 "
+    "255	0	0	0	0	0	0	0	0	255	73	115	30	114	171	180 "
+    "255	0	0	0	0	0	0	0	0	255	23	117	240	93	189	113 "
+    "255	255	255	255	255	255	255	255	255	255	147	169	165	195	133	5";
 
-// Allocate memory from the heap, for the memory allocator
-const u32 numBytes = 10000;
-void *buffer = calloc(numBytes, 1);
-ASSERT_TRUE(buffer != NULL);
-Anki::MemoryStack ms(buffer, numBytes);
+  // Allocate memory from the heap, for the memory allocator
+  const u32 numBytes = 10000;
+  void *buffer = calloc(numBytes, 1);
+  ASSERT_TRUE(buffer != NULL);
+  Anki::MemoryStack ms(buffer, numBytes);
 
-Anki::Matrix<u8> img(height, width, ms);
-ASSERT_TRUE(img.get_rawDataPointer() != NULL);
-ASSERT_TRUE(img.Set(imgData) == width*height);
+  Anki::Matrix<u8> img(height, width, ms);
+  ASSERT_TRUE(img.get_rawDataPointer() != NULL);
+  ASSERT_TRUE(img.Set(imgData) == width*height);
 
-Anki::FixedPointMatrix<u32> scaleImage(height, width, 16, ms);
-ASSERT_TRUE(scaleImage.get_rawDataPointer() != NULL);
+  Anki::FixedPointMatrix<u32> scaleImage(height, width, 16, ms);
+  ASSERT_TRUE(scaleImage.get_rawDataPointer() != NULL);
 
-ASSERT_TRUE(ComputeCharacteristicScaleImage(img, numLevels, scaleImage, ms) == Anki::RESULT_OK);
+  ASSERT_TRUE(ComputeCharacteristicScaleImage(img, numLevels, scaleImage, ms) == Anki::RESULT_OK);
 
-// TODO: manually compute results, and check
+  // TODO: manually compute results, and check
 
-free(buffer); buffer = NULL;
+  free(buffer); buffer = NULL;
 }
 
 TEST(CoreTech_Vision, ComputeCharacteristicScale2)
@@ -153,7 +153,7 @@ TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 
   Anki::Matlab matlab(false);
 
-  matlab.EvalStringEcho("img = rgb2gray(imread('e:/Anki/testSequence/blockWorldTest_front00000.png'));");
+  matlab.EvalStringEcho("img = rgb2gray(imread('Z:/Documents/testSequence/blockWorldTest_front00000.png'));");
   //matlab.EvalStringEcho("img = imresize(rgb2gray(imread('Z:/Documents/testSequence/blockWorldTest_front00000.png')), [240,320]);");
   Anki::Matrix<u8> img = matlab.GetMatrix<u8>("img");
   ASSERT_TRUE(img.get_rawDataPointer() != NULL);
