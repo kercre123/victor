@@ -89,9 +89,8 @@ classdef Quaternion
                 M = M + (varargin{i}.q*varargin{i}.q');
             end
             
-            [evectors, evalues] = eig(M);
-            [~,index] = max(diag(evalues));
-            Qmean = Quaternion(evectors(:,index));
+            [maxEvector, temp] = eigs(M, 1, 'LM'); %#ok<NASGU>
+            Qmean = Quaternion(maxEvector);
         end
     end
     
