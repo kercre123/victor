@@ -21,6 +21,7 @@ namespace cv
 
 namespace Anki
 {
+  // Return values:
   enum Result {
     RESULT_OK = 0,
     RESULT_FAIL = 1,
@@ -30,6 +31,7 @@ namespace Anki
     RESULT_FAIL_INVALID_PARAMETERS = 30000
   };
 
+  // 2D Point Class:
   template<typename T> class Point2
   {
   public:
@@ -54,8 +56,12 @@ namespace Anki
 #endif // #if defined(ANKICORETECH_USE_OPENCV)
 
     T x, y;
-  };
+  }; // class Point2<T>
 
+  typedef Point2<float> Point2f;
+  
+  
+  // 3D Point Class:
   template<typename T> class Point3
   {
   public:
@@ -80,7 +86,10 @@ namespace Anki
 #endif // #if defined(ANKICORETECH_USE_OPENCV)
 
     T x, y, z;
-  };
+  }; // class Point3<T>
+  
+  typedef Point3<float> Point3f;
+  
 } // namespace Anki
 
 #endif // #ifndef _ANKICORETECH_COMMON_DATASTRUCTURES_H_
