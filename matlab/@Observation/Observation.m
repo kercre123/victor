@@ -78,7 +78,17 @@ classdef Observation
                     end
                     
                 end % FOR each marker
-                        
+                       
+                
+                % TODO: For any existing blocks we did NOT see this
+                % observation, check to see if we *should* have seen them,
+                % given our current pose.  If so, and we didn't see them
+                % and update their position above, then it may (?) mean
+                % they have been moved and we need to delete them or mark
+                % them as having much higher uncertainty b/c we don't know
+                % where they are.
+                % NOTE: "should have seen them" will also need to take
+                % occlusion by other blocks we did see into account!
                 
             else % we have no mat, must use previously-seen blocks to infer robot pose
                 if world.numBlocks == 0
