@@ -50,10 +50,10 @@
     <ClCompile Include="..\..\src\utilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\matlabInterface.cpp">
+    <ClCompile Include="..\..\src\matrix.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\matrix.cpp">
+    <ClCompile Include="..\..\src\matlabInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

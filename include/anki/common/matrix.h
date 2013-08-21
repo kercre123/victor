@@ -5,6 +5,7 @@
 #include "anki/common/utilities.h"
 #include "anki/common/memory.h"
 #include "anki/common/DASlight.h"
+#include "anki/common/dataStructures.h"
 
 #include <iostream>
 #include <assert.h>
@@ -15,21 +16,23 @@
 
 namespace Anki
 {
-  // A Matrix is a lightweight templated class for holding two dimentional data. It does no
+  // A Matrix is a lightweight templated class for holding two dimensional data. It does no
   // reference counting, or allocating/freeing from the heap. The data from Matrix is
   // OpenCV-compatible, and accessable via get_CvMat_(). The matlabInterface.h can send and receive
   // Matrix objects from Matlab
   template<typename T> class Matrix
   {
   public:
-    static u32 ComputeRequiredStride(u32 numCols, bool useBoundaryFillPatterns)
+    static s32 ComputeRequiredStride(s32 numCols, bool useBoundaryFillPatterns)
     {
-      const u32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? 16 : 0);
-      return static_cast<u32>(Anki::RoundUp<size_t>(sizeof(T)*numCols, Anki::MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
+      assert(numCols > 0);
+      const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
+      return static_cast<s32>(Anki::RoundUp<size_t>(sizeof(T)*numCols, Anki::MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
     }
 
-    static u32 ComputeMinimumRequiredMemory(u32 numRows, u32 numCols, bool useBoundaryFillPatterns)
+    static s32 ComputeMinimumRequiredMemory(s32 numRows, s32 numCols, bool useBoundaryFillPatterns)
     {
+      assert(numCols > 0 && numRows > 0);
       return numRows * Anki::Matrix<T>::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
     }
 
@@ -44,9 +47,11 @@ namespace Anki
     // aligned to Anki::MEMORY_ALIGNMENT, this Matrix will start at the next aligned location. Unfortunately, this is more
     // restrictive than most matrix libraries, and as an example, it may make it hard to convert from
     // OpenCV to Anki::Matrix, though the reverse is trivial.
-    Matrix(u32 numRows, u32 numCols, void * data, u32 dataLength, bool useBoundaryFillPatterns=false)
+    Matrix(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns=false)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
     {
+      assert(numCols > 0 && numRows > 0 && dataLength > 0);
+
       initialize(numRows,
         numCols,
         data,
@@ -55,12 +60,14 @@ namespace Anki
     }
 
     // Constructor for a Matrix, pointing to user-allocated MemoryStack
-    Matrix(u32 numRows, u32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns=false)
+    Matrix(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns=false)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
     {
-      const u32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? Anki::MEMORY_ALIGNMENT : 0);
-      const u32 numBytesRequested = numRows * this->stride + extraBoundaryPatternBytes;
-      u32 numBytesAllocated = 0;
+      assert(numCols > 0 && numRows > 0);
+
+      const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? static_cast<s32>(Anki::MEMORY_ALIGNMENT) : 0);
+      const s32 numBytesRequested = numRows * this->stride + extraBoundaryPatternBytes;
+      s32 numBytesAllocated = 0;
 
       void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
 
@@ -72,17 +79,29 @@ namespace Anki
     }
 
     // Pointer to the data, at a given (y,x) location
-    const inline T* Pointer(u32 index0, u32 index1) const
+    const inline T* Pointer(s32 index0, s32 index1) const
     {
-      assert(index0 < size[0] && index1 < size[1] && this->rawDataPointer != NULL && this->data != NULL);
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] && this->rawDataPointer != NULL && this->data != NULL);
       return reinterpret_cast<const T*>( reinterpret_cast<const char*>(this->data) + index1*sizeof(T) + index0*stride );
     }
 
     // Pointer to the data, at a given (y,x) location
-    inline T* Pointer(u32 index0, u32 index1)
+    inline T* Pointer(s32 index0, s32 index1)
     {
-      assert(index0 < size[0] && index1 < size[1] && this->rawDataPointer != NULL && this->data != NULL);
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] && this->rawDataPointer != NULL && this->data != NULL);
       return reinterpret_cast<T*>( reinterpret_cast<char*>(this->data) + index1*sizeof(T) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    template<typename TPoint> const inline T* Pointer(Point2<TPoint> point) const
+    {
+      return Pointer(point.y, point.x);
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    template<typename TPoint> inline T* Pointer(Point2<TPoint> point)
+    {
+      return Pointer(point.y, point.x);
     }
 
 #if defined(ANKICORETECH_USE_OPENCV)
@@ -103,12 +122,13 @@ namespace Anki
 #endif // #if defined(ANKICORETECH_USE_OPENCV)
 
     // Print out the contents of this matrix
-    void Print() {
+    void Print() const
+    {
       assert(this->rawDataPointer != NULL && this->data != NULL);
 
-      for(u32 y=0; y<size[0]; y++) {
-        T * rowPointer = Pointer(y, 0);
-        for(u32 x=0; x<size[1]; x++) {
+      for(s32 y=0; y<size[0]; y++) {
+        const T * rowPointer = Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
           std::cout << rowPointer[x] << " ";
         }
         std::cout << "\n";
@@ -117,16 +137,20 @@ namespace Anki
 
     // If the Matrix was constructed with the useBoundaryFillPatterns=true, then return if any memory was written out of bounds (via fill patterns at the beginning and end)
     // If the Matrix wasn't constructed with the useBoundaryFillPatterns=true, this method always returns true
-    bool IsValid()
+    bool IsValid() const
     {
       if(this->rawDataPointer == NULL || this->data == NULL) {
         return false;
       }
 
-      if(useBoundaryFillPatterns) {
-        const u32 strideWithoutFillPatterns = ComputeRequiredStride(size[1],false);
+      if(size[0] < 1 || size[1] < 1) {
+        return false;
+      }
 
-        for(u32 y=0; y<size[0]; y++) {
+      if(useBoundaryFillPatterns) {
+        const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1],false);
+
+        for(s32 y=0; y<size[0]; y++) {
           if((reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[0]) != FILL_PATTERN_START ||
             (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[1]) != FILL_PATTERN_START ||
             (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[0]) != FILL_PATTERN_END ||
@@ -143,32 +167,33 @@ namespace Anki
 
     // Set every element in the Matrix to this value
     // Returns the number of values set
-    u32 Set(T value)
+    s32 Set(T value)
     {
       assert(this->rawDataPointer != NULL && this->data != NULL);
 
-      for(u32 y=0; y<size[0]; y++) {
+      for(s32 y=0; y<size[0]; y++) {
         T * restrict rowPointer = Pointer(y, 0);
-        for(u32 x=0; x<size[1]; x++) {
+        for(s32 x=0; x<size[1]; x++) {
           rowPointer[x] = value;
         }
       }
+
       return size[0]*size[1];
     }
 
     // Parse a space-seperated string, and copy values to this Matrix.
     // If the string doesn't contain enough elements, the remainded of the Matrix will be filled with zeros.
     // Returns the number of values set (not counting extra zeros)
-    u32 Set(const std::string values)
+    s32 Set(const std::string values)
     {
       assert(this->rawDataPointer != NULL && this->data != NULL);
 
       std::istringstream iss(values);
-      u32 numValuesSet = 0;
+      s32 numValuesSet = 0;
 
-      for(u32 y=0; y<size[0]; y++) {
+      for(s32 y=0; y<size[0]; y++) {
         T * restrict rowPointer = Pointer(y, 0);
-        for(u32 x=0; x<size[1]; x++) {
+        for(s32 x=0; x<size[1]; x++) {
           T value;
           if(iss >> value) {
             rowPointer[x] = value;
@@ -183,17 +208,17 @@ namespace Anki
     }
 
     // Similar to Matlab's size(matrix, dimension), and dimension is in {0,1}
-    u32 get_size(u32 dimension) const
+    s32 get_size(s32 dimension) const
     {
-      assert(this->rawDataPointer != NULL && this->data != NULL);
+      assert(dimension >= 0 && this->rawDataPointer != NULL && this->data != NULL);
 
-      if(dimension > 1)
+      if(dimension > 1 || dimension < 0)
         return 0;
 
       return size[dimension];
     }
 
-    u32 get_stride() const
+    s32 get_stride() const
     {
       return stride;
     }
@@ -211,14 +236,12 @@ namespace Anki
   protected:
     static const u32 FILL_PATTERN_START = 0X5432EF76; // Bit-inverse of MemoryStack patterns. The pattern will be put twice at the beginning and end of each line.
     static const u32 FILL_PATTERN_END = 0X7610FE76;
-    //static const u32 FILL_PATTERN_START = 0xCCCCCCCC;
-    //static const u32 FILL_PATTERN_END = 0xAAAAAAAA;
 
-    static const u32 HEADER_LENGTH = 8;
-    static const u32 FOOTER_LENGTH = 8;
+    static const s32 HEADER_LENGTH = 8;
+    static const s32 FOOTER_LENGTH = 8;
 
-    u32 size[2];
-    u32 stride;
+    s32 size[2];
+    s32 stride;
     bool useBoundaryFillPatterns;
 
     T * data;
@@ -232,7 +255,10 @@ namespace Anki
     cv::Mat_<T> cvMatMirror;
 #endif // #if defined(ANKICORETECH_USE_OPENCV)
 
-    void initialize(u32 numRows, u32 numCols, void * rawData, u32 dataLength, bool useBoundaryFillPatterns) {
+    void initialize(s32 numRows, s32 numCols, void * rawData, s32 dataLength, bool useBoundaryFillPatterns)
+    {
+      assert(numCols > 0 && numRows > 0 && dataLength > 0);
+
       this->useBoundaryFillPatterns = useBoundaryFillPatterns;
 
       if(!rawData) {
@@ -246,9 +272,9 @@ namespace Anki
 
       this->rawDataPointer = rawData;
 
-      const u32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? HEADER_LENGTH : 0);
-      const u32 extraAlignmentBytes = RoundUp(reinterpret_cast<u32>(rawData)+extraBoundaryPatternBytes, Anki::MEMORY_ALIGNMENT) - extraBoundaryPatternBytes - reinterpret_cast<u32>(rawData);
-      const u32 requiredBytes = ComputeRequiredStride(numCols,useBoundaryFillPatterns)*numRows + extraAlignmentBytes;
+      const size_t extraBoundaryPatternBytes = useBoundaryFillPatterns ? static_cast<size_t>(HEADER_LENGTH) : 0;
+      const s32 extraAlignmentBytes = static_cast<s32>(RoundUp<size_t>(reinterpret_cast<size_t>(rawData)+extraBoundaryPatternBytes, Anki::MEMORY_ALIGNMENT) - extraBoundaryPatternBytes - reinterpret_cast<size_t>(rawData));
+      const s32 requiredBytes = ComputeRequiredStride(numCols,useBoundaryFillPatterns)*numRows + extraAlignmentBytes;
 
       if(requiredBytes > dataLength) {
         DASError("Anki.Matrix.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
@@ -263,9 +289,9 @@ namespace Anki
       this->size[1] = numCols;
 
       if(useBoundaryFillPatterns) {
-        const u32 strideWithoutFillPatterns = ComputeRequiredStride(size[1],false);
+        const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1], false);
         this->data = reinterpret_cast<T*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes + HEADER_LENGTH );
-        for(u32 y=0; y<size[0]; y++) {
+        for(s32 y=0; y<size[0]; y++) {
           // Add the fill patterns just before the data on each line
           reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[0] = FILL_PATTERN_START;
           reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[1] = FILL_PATTERN_START;
@@ -285,30 +311,30 @@ namespace Anki
   }; // class Matrix
   
 
-  template<> void Matrix<u8>::Print()
+  template<> void Matrix<u8>::Print() const
   {
     assert(this->rawDataPointer != NULL && this->data != NULL);
 
-    for(u32 y=0; y<size[0]; y++) {
-      u8 * rowPointer = Pointer(y, 0);
-      for(u32 x=0; x<size[1]; x++) {
+    for(s32 y=0; y<size[0]; y++) {
+      const u8 * rowPointer = Pointer(y, 0);
+      for(s32 x=0; x<size[1]; x++) {
         std::cout << static_cast<s32>(rowPointer[x]) << " ";
       }
       std::cout << "\n";
     }
   }
 
-  template<> u32 Matrix<u8>::Set(const std::string values)
+  template<> s32 Matrix<u8>::Set(const std::string values)
   {
     assert(this->rawDataPointer != NULL && this->data != NULL);
 
     std::istringstream iss(values);
-    u32 numValuesSet = 0;
+    s32 numValuesSet = 0;
 
-    for(u32 y=0; y<size[0]; y++) {
+    for(s32 y=0; y<size[0]; y++) {
       u8 * restrict rowPointer = Pointer(y, 0);
-      for(u32 x=0; x<size[1]; x++) {
-        u32 value;
+      for(s32 x=0; x<size[1]; x++) {
+        s32 value;
         if(iss >> value) {
           rowPointer[x] = static_cast<u8>(value);
           numValuesSet++;
@@ -325,23 +351,22 @@ namespace Anki
   {
   public:
     FixedPointMatrix()
-      : Matrix<T>(), numFractionalBits(numFractionalBits)
+      : Matrix<T>(), numFractionalBits(0)
     {
     }
 
-    // Constructor for a FixedPointMatrix, pointing to user-allocated data. If the pointer to *data is not
-    // aligned to Anki::MEMORY_ALIGNMENT, this Matrix will start at the next aligned location. Unfortunately, this is more
-    // restrictive than most matrix libraries, and as an example, it may make it hard to convert from
-    // OpenCV to Anki::Matrix, though the reverse is trivial.
-    FixedPointMatrix(u32 numRows, u32 numCols, u32 numFractionalBits, void * data, u32 dataLength, bool useBoundaryFillPatterns=false)
+    // Constructor for a FixedPointMatrix, pointing to user-allocated data.
+    FixedPointMatrix(s32 numRows, s32 numCols, s32 numFractionalBits, void * data, s32 dataLength, bool useBoundaryFillPatterns=false)
       : Matrix<T>(numRows, numCols, data, dataLength, useBoundaryFillPatterns), numFractionalBits(numFractionalBits)
     {
+      assert(numFractionalBits >= 0 && numFractionalBits <= (sizeof(T)*8));
     }
 
     // Constructor for a FixedPointMatrix, pointing to user-allocated MemoryStack
-    FixedPointMatrix(u32 numRows, u32 numCols, u32 numFractionalBits, MemoryStack &memory, bool useBoundaryFillPatterns=false)
+    FixedPointMatrix(s32 numRows, s32 numCols, s32 numFractionalBits, MemoryStack &memory, bool useBoundaryFillPatterns=false)
       : Matrix<T>(numRows, numCols, memory, useBoundaryFillPatterns), numFractionalBits(numFractionalBits)
     {
+      assert(numFractionalBits >= 0 && numFractionalBits <= (sizeof(T)*8));
     }
 
     FixedPointMatrix(Matrix<T> &mat)
@@ -349,14 +374,108 @@ namespace Anki
     {
     }
 
-    u32 get_numFractionalBits() const
+    bool IsValid() const
+    {
+      if(numFractionalBits > (sizeof(T)*8)) {
+        return false;
+      }
+
+      return Matrix<T>::IsValid();
+    }
+
+    s32 get_numFractionalBits() const
     {
       return numFractionalBits;
     }
 
   protected:
-    u32 numFractionalBits;
+    s32 numFractionalBits;
   }; // class FixedPointMatrix
+
+  template<typename T> class FixedLengthList : public Matrix<T>
+  {
+  public:
+    FixedLengthList()
+      : Matrix<T>(), capacityUsed(0)
+    {
+    }
+
+    // Constructor for a FixedLengthList, pointing to user-allocated data.
+    FixedLengthList(s32 maximumSize, void * data, s32 dataLength, bool useBoundaryFillPatterns=false)
+      : Matrix<T>(1, maximumSize, data, dataLength, useBoundaryFillPatterns), capacityUsed(0)
+    {
+    }
+
+    // Constructor for a FixedLengthList, pointing to user-allocated MemoryStack
+    FixedLengthList(s32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns=false)
+      : Matrix<T>(1, maximumSize, memory, useBoundaryFillPatterns), capacityUsed(0)
+    {
+    }
+
+    bool IsValid() const
+    {
+      if(capacityUsed > this->get_maximumSize()) {
+        return false;
+      }
+
+      return Matrix<T>::IsValid();
+    }
+
+    Result PushBack(const T &value)
+    {
+      if(capacityUsed >= this->get_maximumSize()) {
+        return RESULT_FAIL;
+      }
+
+      *this->Pointer(capacityUsed) = value;
+      capacityUsed++;
+
+      return RESULT_OK;
+    }
+
+    // Will act as a normal pop, except when the list is empty. Then subsequent calls will keep returning the first value in the list.
+    T PopBack()
+    {
+      if(capacityUsed == 0) {
+        return *this->Pointer(0);
+      }
+
+      const T value = *this->Pointer(capacityUsed-1);
+      capacityUsed--;
+
+      return value;
+    }
+
+    void Clear()
+    {
+      this->capacityUsed = 0;
+    }
+
+    // Pointer to the data, at a given location
+    inline T* Pointer(s32 index)
+    {
+      return Matrix<T>::Pointer(0, index);
+    }
+
+    // Pointer to the data, at a given location
+    inline const T* Pointer(s32 index) const
+    {
+      return Matrix<T>::Pointer(0, index);
+    }
+
+    s32 get_maximumSize() const
+    {
+      return Matrix<T>::get_size(1);
+    }
+
+    s32 get_size() const
+    {
+      return capacityUsed;
+    }
+
+  protected:
+    s32 capacityUsed;
+  };
 
   template<typename T1, typename T2> bool AreMatricesEqual_Size(const Matrix<T1> &mat1, const Matrix<T2> &mat2)
   {
@@ -382,20 +501,20 @@ namespace Anki
 
   // Factory method to create an AnkiMatrix from the heap. The data of the returned Matrix must be freed by the user.
   // This is seperate from the normal constructor, as Matrix objects are not supposed to manage memory
-  template<typename T> Matrix<T> AllocateMatrixFromHeap(u32 numRows, u32 numCols, bool useBoundaryFillPatterns=false)
+  template<typename T> Matrix<T> AllocateMatrixFromHeap(s32 numRows, s32 numCols, bool useBoundaryFillPatterns=false)
   {
-    const u32 stride = Anki::Matrix<T>::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
-    const u32 requiredMemory = 64 + 2*Anki::MEMORY_ALIGNMENT + Anki::Matrix<T>::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more just in case
+    const s32 stride = Anki::Matrix<T>::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
+    const s32 requiredMemory = 64 + 2*Anki::MEMORY_ALIGNMENT + Anki::Matrix<T>::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more just in case
 
     Matrix<T> mat(numRows, numCols, reinterpret_cast<u8*>(calloc(requiredMemory, 1)), requiredMemory, useBoundaryFillPatterns);
 
     return mat;
   } // AllocateMatrixFromHeap()
 
-  template<typename T> FixedPointMatrix<T> AllocateFixedPointMatrixFromHeap(u32 numRows, u32 numCols, u32 numFractionalBits, bool useBoundaryFillPatterns=false)
+  template<typename T> FixedPointMatrix<T> AllocateFixedPointMatrixFromHeap(s32 numRows, s32 numCols, s32 numFractionalBits, bool useBoundaryFillPatterns=false)
   {
-    const u32 stride = Anki::FixedPointMatrix<T>::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
-    const u32 requiredMemory = 64 + 2*Anki::MEMORY_ALIGNMENT + Anki::FixedPointMatrix<T>::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more just in case
+    const s32 stride = Anki::FixedPointMatrix<T>::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
+    const s32 requiredMemory = 64 + 2*Anki::MEMORY_ALIGNMENT + Anki::FixedPointMatrix<T>::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more just in case
 
     FixedPointMatrix<T> mat(numRows, numCols, numFractionalBits, reinterpret_cast<u8*>(calloc(requiredMemory, 1)), requiredMemory, useBoundaryFillPatterns);
 

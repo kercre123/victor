@@ -245,7 +245,7 @@ namespace Anki
       //if(mat->type == CV_64F)
       {
         double *valTmp = (double*)mxGetPr(arrayTmp);
-        for(u32 i = 0; i<(s32)size; i++) {
+        for(s32 i = 0; i<size; i++) {
           matrix->data.db[i] = valTmp[i];
         }
         mismatch = false;
@@ -422,7 +422,7 @@ namespace Anki
   }
 #endif // #if defined(ANKI_USE_OPENCV)
 
-  s32 Matlab::PutString(const char * characters, u32 nValues, const std::string name)
+  s32 Matlab::PutString(const char * characters, s32 nValues, const std::string name)
   {
     if(!this->ep) {
       DASError("Anki.", "Matlab engine is not started/connected");
@@ -498,7 +498,7 @@ namespace Anki
       int ciO = 0, ciM = 0;
       for(s32 j = 0; j<im->height; j++) {
         ciO = j*im->widthStep;
-        for(u32 i = 0; i<(u32)(im->width*im->nChannels); i++) {
+        for(s32 i = 0; i<im->width*im->nChannels; i++) {
           imageData[ciO] = matlabData[ciM];
           ciO++;
           ciM++;
@@ -518,13 +518,13 @@ namespace Anki
       int ciO = 0, ciM = 0;
       for(s32 j = 0; j<im->height; j++) {
         ciO = j*im->widthStep/4;
-        for(u32 i = 0; i<(u32)(im->width*im->nChannels); i++) {
+        for(s32 i = 0; i<im->width*im->nChannels; i++) {
           imageData[ciO] = matlabData[ciM];
           ciO++;
           ciM++;
         }
       }
-      /*for(u32 i = 0; i<(s32)size; i++)
+      /*for(s32 i = 0; i<(s32)size; i++)
       {
       imageData[i] = matlabData[i];
       }*/
@@ -542,13 +542,13 @@ namespace Anki
       int ciO = 0, ciM = 0;
       for(s32 j = 0; j<im->height; j++) {
         ciO = j*im->widthStep/4;
-        for(u32 i = 0; i<(u32)(im->width*im->nChannels); i++) {
+        for(s32 i = 0; i<(s32)(im->width*im->nChannels; i++) {
           imageData[ciO] = matlabData[ciM];
-          ciO++;
+            ciO++;
           ciM++;
         }
       }
-      /*for(u32 i = 0; i<(s32)size; i++)
+      /*for(s32 i = 0; i<(s32)size; i++)
       {
       imageData[i] = matlabData[i];
       }*/

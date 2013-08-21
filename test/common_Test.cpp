@@ -16,7 +16,7 @@ TEST(CoreTech_Common, MemoryStack)
 {
   ASSERT_TRUE(Anki::MEMORY_ALIGNMENT == 16);
 
-  const u32 numBytes = 200;
+  const s32 numBytes = 200;
   void * buffer = calloc(numBytes+Anki::MEMORY_ALIGNMENT, 1);
   void * alignedBuffer = reinterpret_cast<void*>(Anki::RoundUp(reinterpret_cast<size_t>(buffer), Anki::MEMORY_ALIGNMENT));
   ASSERT_TRUE(buffer != NULL);
@@ -74,7 +74,7 @@ TEST(CoreTech_Common, MemoryStack)
     true,  true,  true,  true,  true,  true,  true,  true,  // Data
     false, false, false, false};                            // Footer
 
-  for(u32 i=0; i<NUM_EXPECTED_RESULTS; i++) {
+  for(s32 i=0; i<NUM_EXPECTED_RESULTS; i++) {
     ASSERT_TRUE(ms.IsValid());
     (reinterpret_cast<char*>(alignedBuffer)[i])++;
     //std::cout << i << " " << ms.IsValid() << " " << expectedResults[i] << "\n";
@@ -85,13 +85,13 @@ TEST(CoreTech_Common, MemoryStack)
   free(buffer); buffer = NULL;
 }
 
-u32 CheckMemoryStackUsage(Anki::MemoryStack ms, u32 numBytes)
+s32 CheckMemoryStackUsage(Anki::MemoryStack ms, s32 numBytes)
 {
   ms.Allocate(numBytes);
   return ms.get_usedBytes();
 }
 
-u32 CheckConstCasting(const Anki::MemoryStack ms, u32 numBytes)
+s32 CheckConstCasting(const Anki::MemoryStack ms, s32 numBytes)
 {
   // ms.Allocate(1); // Will not compile
 
@@ -100,7 +100,7 @@ u32 CheckConstCasting(const Anki::MemoryStack ms, u32 numBytes)
 
 TEST(CoreTech_Common, MemoryStack_call)
 {
-  const u32 numBytes = 100;
+  const s32 numBytes = 100;
   void * buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
   Anki::MemoryStack ms(buffer, numBytes);
@@ -108,14 +108,14 @@ TEST(CoreTech_Common, MemoryStack_call)
   ASSERT_TRUE(ms.get_usedBytes() == 0);
 
   ms.Allocate(16);
-  const u32 originalUsedBytes = ms.get_usedBytes();
+  const s32 originalUsedBytes = ms.get_usedBytes();
   ASSERT_TRUE(originalUsedBytes >= 28);
 
-  const u32 inFunctionUsedBytes = CheckMemoryStackUsage(ms, 32);
+  const s32 inFunctionUsedBytes = CheckMemoryStackUsage(ms, 32);
   ASSERT_TRUE(inFunctionUsedBytes == (originalUsedBytes+48));
   ASSERT_TRUE(ms.get_usedBytes() == originalUsedBytes);
 
-  const u32 inFunctionUsedBytes2 = CheckConstCasting(ms, 32);
+  const s32 inFunctionUsedBytes2 = CheckConstCasting(ms, 32);
   ASSERT_TRUE(inFunctionUsedBytes2 == (originalUsedBytes+48));
   ASSERT_TRUE(ms.get_usedBytes() == originalUsedBytes);
 
@@ -126,7 +126,7 @@ TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
 {
   ASSERT_TRUE(Anki::MEMORY_ALIGNMENT == 16);
 
-  const u32 numBytes = 104; // 12*9 = 104
+  const s32 numBytes = 104; // 12*9 = 104
   void * buffer = calloc(numBytes+Anki::MEMORY_ALIGNMENT, 1);
   ASSERT_TRUE(buffer != NULL);
 
@@ -136,21 +136,21 @@ TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
   ASSERT_TRUE(bufferShift < static_cast<size_t>(Anki::MEMORY_ALIGNMENT));
 
   Anki::MemoryStack ms(alignedBuffer, numBytes);
-  const u32 largestPossibleAllocation1 = ms.LargestPossibleAllocation();
+  const s32 largestPossibleAllocation1 = ms.LargestPossibleAllocation();
   ASSERT_TRUE(largestPossibleAllocation1 == 80);
 
   const void * const allocatedBuffer1 = ms.Allocate(1);
-  const u32 largestPossibleAllocation2 = ms.LargestPossibleAllocation();
+  const s32 largestPossibleAllocation2 = ms.LargestPossibleAllocation();
   ASSERT_TRUE(allocatedBuffer1 != NULL);
   ASSERT_TRUE(largestPossibleAllocation2 == 48);
 
   const void * const allocatedBuffer2 = ms.Allocate(49);
-  const u32 largestPossibleAllocation3 = ms.LargestPossibleAllocation();
+  const s32 largestPossibleAllocation3 = ms.LargestPossibleAllocation();
   ASSERT_TRUE(allocatedBuffer2 == NULL);
   ASSERT_TRUE(largestPossibleAllocation3 == 48);
 
   const void * const allocatedBuffer3 = ms.Allocate(48);
-  const u32 largestPossibleAllocation4 = ms.LargestPossibleAllocation();
+  const s32 largestPossibleAllocation4 = ms.LargestPossibleAllocation();
   ASSERT_TRUE(allocatedBuffer3 != NULL);
   ASSERT_TRUE(largestPossibleAllocation4 == 0);
 
@@ -235,7 +235,7 @@ TEST(CoreTech_Common, SimpleOpenCVTest)
 TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 {
   // Allocate memory from the heap, for the memory allocator
-  const u32 numBytes = 1000;
+  const s32 numBytes = 1000;
   void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
   Anki::MemoryStack ms(buffer, numBytes);
@@ -310,19 +310,19 @@ TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 
 TEST(CoreTech_Common, MatrixAlignment1)
 {
-  const u32 numBytes = 1000;
+  const s32 numBytes = 1000;
   void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
 
-  void *alignedBuffer = reinterpret_cast<void*>( Anki::RoundUp(reinterpret_cast<u32>(buffer), Anki::MEMORY_ALIGNMENT) );
+  void *alignedBuffer = reinterpret_cast<void*>( Anki::RoundUp(reinterpret_cast<size_t>(buffer), Anki::MEMORY_ALIGNMENT) );
 
   // Check all offsets
-  for(u32 offset=0; offset<8; offset++) {
+  for(s32 offset=0; offset<8; offset++) {
     void * const alignedBufferAndOffset = reinterpret_cast<char*>(alignedBuffer) + offset;
     Anki::Matrix<s16> simpleMatrix(10, 6, alignedBufferAndOffset, numBytes-offset-8);
 
-    const u32 trueLocation = reinterpret_cast<u32>(simpleMatrix.Pointer(0,0));
-    const u32 expectedLocation = Anki::RoundUp(reinterpret_cast<u32>(alignedBufferAndOffset), Anki::MEMORY_ALIGNMENT);;
+    const size_t trueLocation = reinterpret_cast<size_t>(simpleMatrix.Pointer(0,0));
+    const size_t expectedLocation = Anki::RoundUp(reinterpret_cast<size_t>(alignedBufferAndOffset), Anki::MEMORY_ALIGNMENT);;
 
     ASSERT_TRUE(trueLocation ==  expectedLocation);
   }
@@ -332,19 +332,19 @@ TEST(CoreTech_Common, MatrixAlignment1)
 
 TEST(CoreTech_Common, MemoryStackAlignment)
 {
-  const u32 numBytes = 1000;
+  const s32 numBytes = 1000;
   void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
 
-  void *alignedBuffer = reinterpret_cast<void*>( Anki::RoundUp(reinterpret_cast<u32>(buffer), Anki::MEMORY_ALIGNMENT) );
+  void *alignedBuffer = reinterpret_cast<void*>( Anki::RoundUp(reinterpret_cast<size_t>(buffer), Anki::MEMORY_ALIGNMENT) );
 
   // Check all offsets
-  for(u32 offset=0; offset<8; offset++) {
+  for(s32 offset=0; offset<8; offset++) {
     void * const alignedBufferAndOffset = reinterpret_cast<char*>(alignedBuffer) + offset;
     Anki::MemoryStack simpleMemoryStack(alignedBufferAndOffset, numBytes-offset-8);
     Anki::Matrix<s16> simpleMatrix(10, 6, simpleMemoryStack);
 
-    const u32 matrixStart = reinterpret_cast<u32>(simpleMatrix.Pointer(0,0));
+    const size_t matrixStart = reinterpret_cast<size_t>(simpleMatrix.Pointer(0,0));
     ASSERT_TRUE(matrixStart == Anki::RoundUp(matrixStart, Anki::MEMORY_ALIGNMENT));
   }
 
@@ -353,12 +353,12 @@ TEST(CoreTech_Common, MemoryStackAlignment)
 
 TEST(CoreTech_Common, MatrixFillPattern)
 {
-  const u32 width = 6, height = 10;
-  const u32 numBytes = 1000;
+  const s32 width = 6, height = 10;
+  const s32 numBytes = 1000;
   void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
 
-  void *alignedBuffer = reinterpret_cast<void*>( Anki::RoundUp(reinterpret_cast<u32>(buffer), Anki::MEMORY_ALIGNMENT) );
+  void *alignedBuffer = reinterpret_cast<void*>( Anki::RoundUp(reinterpret_cast<size_t>(buffer), Anki::MEMORY_ALIGNMENT) );
 
   Anki::MemoryStack ms(alignedBuffer, numBytes-Anki::MEMORY_ALIGNMENT);
 
@@ -371,7 +371,7 @@ TEST(CoreTech_Common, MatrixFillPattern)
   char * curDataPointer = reinterpret_cast<char*>(simpleMatrix.get_rawDataPointer());
 
   // Unused space
-  for(u32 i=0; i<8; i++) {
+  for(s32 i=0; i<8; i++) {
     ASSERT_TRUE(simpleMatrix.IsValid());
     (*curDataPointer)++;
     ASSERT_TRUE(simpleMatrix.IsValid());
@@ -380,9 +380,9 @@ TEST(CoreTech_Common, MatrixFillPattern)
     curDataPointer++;
   }
 
-  for(u32 y=0; y<height; y++) {
+  for(s32 y=0; y<height; y++) {
     // Header
-    for(u32 x=0; x<8; x++) {
+    for(s32 x=0; x<8; x++) {
       ASSERT_TRUE(simpleMatrix.IsValid());
       (*curDataPointer)++;
       ASSERT_FALSE(simpleMatrix.IsValid());
@@ -392,7 +392,7 @@ TEST(CoreTech_Common, MatrixFillPattern)
     }
 
     // Data
-    for(u32 x=8; x<24; x++) {
+    for(s32 x=8; x<24; x++) {
       ASSERT_TRUE(simpleMatrix.IsValid());
       (*curDataPointer)++;
       ASSERT_TRUE(simpleMatrix.IsValid());
@@ -402,7 +402,7 @@ TEST(CoreTech_Common, MatrixFillPattern)
     }
 
     // Footer
-    for(u32 x=24; x<32; x++) {
+    for(s32 x=24; x<32; x++) {
       ASSERT_TRUE(simpleMatrix.IsValid());
       (*curDataPointer)++;
       ASSERT_FALSE(simpleMatrix.IsValid());

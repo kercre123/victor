@@ -25,7 +25,7 @@ namespace Anki
   class MemoryStack
   {
   public:
-    MemoryStack(void *buffer, u32 bufferLength);
+    MemoryStack(void *buffer, s32 bufferLength);
     MemoryStack(const MemoryStack &ms); // This is a safe way to remove const by making a copy, rather than using const_cast()
 
     // Allocate numBytes worth of memory, with the start byte-aligned to MEMORY_ALIGNMENT
@@ -34,17 +34,17 @@ namespace Anki
     // allocate more than numBytesRequested. numBytesAllocated is the amount of memory available to
     // the user from the returned void* pointer, and doesn't include overhead like the fill
     // patterns.
-    void* Allocate(u32 numBytesRequested, u32 *numBytesAllocated=NULL);
+    void* Allocate(s32 numBytesRequested, s32 *numBytesAllocated=NULL);
 
     // Check if any Allocate() memory was written out of bounds (via fill patterns at the beginning and end)
     bool IsValid();
 
     // Returns the number of bytes that can still be allocated.
     // The max allocation is less than or equal to "get_totalBytes() - get_usedBytes() - 12".
-    u32 LargestPossibleAllocation();
+    s32 LargestPossibleAllocation();
 
-    u32 get_totalBytes();
-    u32 get_usedBytes();
+    s32 get_totalBytes();
+    s32 get_usedBytes();
 
     void* get_buffer();
     const void* get_buffer() const;
@@ -56,14 +56,14 @@ namespace Anki
     static const u32 FILL_PATTERN_START = 0xABCD1089;
     static const u32 FILL_PATTERN_END = 0x89EF0189;
 
-    static const u32 HEADER_LENGTH = 8;
-    static const u32 FOOTER_LENGTH = 4;
+    static const s32 HEADER_LENGTH = 8;
+    static const s32 FOOTER_LENGTH = 4;
 
     void * const buffer;
-    const u32 totalBytes;
-    u32 usedBytes;
+    const s32 totalBytes;
+    s32 usedBytes;
 
-    const void* Allocate(u32 numBytes) const; // Not allowed
+    const void* Allocate(s32 numBytes) const; // Not allowed
   };
 } // namespace Anki
 

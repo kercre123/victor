@@ -26,7 +26,7 @@ namespace Anki
 
   class Matlab {
   public:
-    static const u32 COMMAND_BUFFER_SIZE = 100;
+    static const s32 COMMAND_BUFFER_SIZE = 100;
 
     Engine *ep;
 
@@ -62,7 +62,7 @@ namespace Anki
 #endif //#if defined(ANKI_USE_OPENCV)
 
     //Character strings need to be converted slightly to appear correctly in Matlab
-    s32 PutString(const char * characters, u32 nValues, const std::string name);
+    s32 PutString(const char * characters, s32 nValues, const std::string name);
 
     template<typename T> s32 PutMatrix(const Anki::Matrix<T> &matrix, const std::string name)
     {
@@ -76,7 +76,7 @@ namespace Anki
 
       EvalStringEcho("%s=zeros([%d,%d],'%s');", name.data(), matrix.get_size(0), matrix.get_size(1), matlabTypeName.data());
 
-      for(u32 y=0; y<matrix.get_size(0); y++) {
+      for(s32 y=0; y<matrix.get_size(0); y++) {
         Put<T>(matrix.Pointer(y,0), matrix.get_size(1), tmpName);
         EvalStringEcho("%s(%d,:)=%s;", name.data(), y+1, tmpName.data());
       }
@@ -114,15 +114,15 @@ namespace Anki
 
       const size_t numCols = mxGetM(arrayTmp);
       const size_t numRows = mxGetN(arrayTmp);
-      const u32 stride = Anki::Matrix<u32>::ComputeRequiredStride(numCols,false);
+      const s32 stride = Anki::Matrix<T>::ComputeRequiredStride(numCols,false);
 
-      Anki::Matrix<T> ankiMatrix(static_cast<u32>(numRows), static_cast<u32>(numCols), reinterpret_cast<T*>(calloc(stride*numCols,1)), stride*numCols, false);
+      Anki::Matrix<T> ankiMatrix(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<T*>(calloc(stride*numCols,1)), stride*numCols, false);
 
       T *matlabArrayTmp = reinterpret_cast<T*>(mxGetPr(arrayTmp));
-      u32 matlabIndex = 0;
-      for(u32 y=0; y<ankiMatrix.get_size(0); y++) {
+      s32 matlabIndex = 0;
+      for(s32 y=0; y<ankiMatrix.get_size(0); y++) {
         T * rowPointer = ankiMatrix.Pointer(y, 0);
-        for(u32 x=0; x<ankiMatrix.get_size(1); x++) {
+        for(s32 x=0; x<ankiMatrix.get_size(1); x++) {
           rowPointer[x] = matlabArrayTmp[matlabIndex++];
         }
       }
@@ -134,7 +134,7 @@ namespace Anki
       return ankiMatrix;
     }
 
-    template<typename T> s32 Put(const T * values, u32 nValues, const std::string name)
+    template<typename T> s32 Put(const T * values, s32 nValues, const std::string name)
     {
       if(!ep) {
         DASError("Anki.Put", "Matlab engine is not started/connected");
@@ -145,7 +145,7 @@ namespace Anki
       const mxClassID matlabType = Anki::ConvertToMatlabType(typeid(T).name(), sizeof(T));
       mxArray *arrayTmp = mxCreateNumericArray(1, &dims[0], matlabType, mxREAL);
       T *matlabBufferTmp = (T*) mxGetPr(arrayTmp);
-      for(u32 i = 0; i<nValues; i++) {
+      for(s32 i = 0; i<nValues; i++) {
         matlabBufferTmp[i] = values[i];
       }
       engPutVariable(ep, name.data(), arrayTmp);
@@ -169,7 +169,7 @@ namespace Anki
         const mwSize size = mxGetNumberOfElements(arrayTmp);
         valTmp = reinterpret_cast<T*>(mxGetPr(arrayTmp));
         val = reinterpret_cast<T*>(calloc(size, sizeof(T)));
-        for(u32 i = 0; i<(s32)size; i++) {
+        for(s32 i = 0; i<(s32)size; i++) {
           val[i] = valTmp[i];
         }
         mxDestroyArray(arrayTmp);

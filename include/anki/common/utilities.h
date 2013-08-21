@@ -38,7 +38,10 @@ namespace Anki
 {
   template<typename T> inline T RoundUp(T number, T multiple)
   {
-    return (number + (multiple-1)) & ~(multiple-1);
+    return multiple*( (number-1)/multiple + 1 );
+
+    // For unsigned only?
+    // return (number + (multiple-1)) & ~(multiple-1);
   }
 
   template<typename T> inline T RoundDown(T number, T multiple)
