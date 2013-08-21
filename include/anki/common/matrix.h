@@ -282,7 +282,8 @@ namespace Anki
       cvMatMirror = cv::Mat_<T>(size[0], size[1], data, stride);
 #endif // #if defined(ANKICORETECH_USE_OPENCV)
     }
-  };
+  }; // class Matrix
+  
 
   template<> void Matrix<u8>::Print()
   {
@@ -355,7 +356,7 @@ namespace Anki
 
   protected:
     u32 numFractionalBits;
-  };
+  }; // class FixedPointMatrix
 
   template<typename T1, typename T2> bool AreMatricesEqual_Size(const Matrix<T1> &mat1, const Matrix<T2> &mat2)
   {
@@ -366,7 +367,7 @@ namespace Anki
     }
 
     return false;
-  }
+  } // AreMatricesEqual_Size()
 
   template<typename T> bool AreMatricesEqual_SizeAndType(const Matrix<T> &mat1, const Matrix<T> &mat2)
   {
@@ -377,7 +378,7 @@ namespace Anki
     }
 
     return false;
-  }
+  } // AreMatricesEqual_SizeAndType()
 
   // Factory method to create an AnkiMatrix from the heap. The data of the returned Matrix must be freed by the user.
   // This is seperate from the normal constructor, as Matrix objects are not supposed to manage memory
@@ -389,7 +390,7 @@ namespace Anki
     Matrix<T> mat(numRows, numCols, reinterpret_cast<u8*>(calloc(requiredMemory, 1)), requiredMemory, useBoundaryFillPatterns);
 
     return mat;
-  }
+  } // AllocateMatrixFromHeap()
 
   template<typename T> FixedPointMatrix<T> AllocateFixedPointMatrixFromHeap(u32 numRows, u32 numCols, u32 numFractionalBits, bool useBoundaryFillPatterns=false)
   {
@@ -399,7 +400,8 @@ namespace Anki
     FixedPointMatrix<T> mat(numRows, numCols, numFractionalBits, reinterpret_cast<u8*>(calloc(requiredMemory, 1)), requiredMemory, useBoundaryFillPatterns);
 
     return mat;
-  }
+  } // AllocateFixedPointMatrixFromHeap()
+  
 } //namespace Anki
 
 #endif // _ANKICORETECH_COMMON_MATRIX_H_
