@@ -25,7 +25,11 @@ switch(method)
         
         Qi = (1-w)*Q1 + w*Q2;
         
+        % Need to compute the new covariance too... is this remotely ok?
+        sigma_i = (1-w)*P1.sigma + w*P2.sigma;
+        
     case {'SphericalLinearInterp', 'SLERP'}
+        error('Not working yet.');
         Qi = DualQuaternion(SLERP(Q1.real, Q2.real, w, shortestPath), ...
             SLERP(Q1.dual, Q2.dual, w, shortestPath) );
         Qi = normalize(Qi);
@@ -35,7 +39,7 @@ switch(method)
 
 end % SWITCH(method)
 
-Pavg = Pose(Qi.rotationMatrix, Qi.translation);
+Pavg = Pose(Qi.rotationMatrix, Qi.translation, sigma_i);
 
 end
 
