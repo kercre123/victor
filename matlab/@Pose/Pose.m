@@ -58,7 +58,7 @@ classdef Pose
                         error('Unrecognized form for rotation.');
                     end
                     
-                    if nargin==3
+                    if nargin==3 && ~isempty(varargin{3})
                         this.sigma = varargin{3};
                         assert(ismatrix(this.sigma) && size(this.sigma,1)==6 && ...
                             size(this.sigma,2)==6, 'Expecting 6x6 covariance matrix.');
@@ -69,15 +69,11 @@ classdef Pose
                     
             end % SWITCH(nargin)
             
-            if isempty(this.sigma)
-                % TODO: Is a default of infinitite uncertainty what we want?
-                this.sigma = eye(6);
-            end
-            
         end % FUNCTION Frame() [Constructor]
         
         function P = inv(this)
-            P = Pose(this.Rmat', -this.Rmat'*this.T);
+            % Is this the right thing to do with covariance?
+            P = Pose(this.Rmat', -this.Rmat'*this.T, this.sigma);
         end
         
         

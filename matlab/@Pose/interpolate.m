@@ -25,8 +25,12 @@ switch(method)
         
         Qi = (1-w)*Q1 + w*Q2;
         
-        % Need to compute the new covariance too... is this remotely ok?
-        sigma_i = (1-w)*P1.sigma + w*P2.sigma;
+        if ~isempty(P1.sigma) && ~isempty(P2.sigma)
+            % Need to compute the new covariance too... is this remotely ok?
+            sigma_i = (1-w)*P1.sigma + w*P2.sigma;
+        else
+            sigma_i = [];
+        end
         
     case {'SphericalLinearInterp', 'SLERP'}
         error('Not working yet.');

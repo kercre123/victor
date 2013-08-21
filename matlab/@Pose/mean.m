@@ -1,48 +1,75 @@
 function Pmean = mean(P, varargin)
-% Compute the average of a set of Poses.
+% Compute the average of a set of Poses, weighted by their covariances.
 
+assert(all(cellfun(@(x)isa(x, 'Pose'), varargin)), ...
+    'All inputs should be Pose objects.');
+
+% If ALL poses have covariance information, use it in averaging.
+useCovariance = ~isempty(P.sigma) && ...
+    all(@(p)~isempty(p.sigma), varargin);
+
+% Use Quaternions to get a mean rotation.  Use the upper left 3x3 block of
+% the covariance matrix to weight poses' contributions.
 %
 % Reference:
 %  "Quaternion Averaging", by Markley, Cheng, Crassidis, and Oshman.
 %  http://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/20070017872_2007014421.pdf
 %
+if useCovariance
+    % NOTE: This ignores any dependence/correlation between rotation and 
+    % translation, as revealed by the covariance matrix.  But we will 
+    % assume this to be negligible...
 
-assert(all(cellfun(@(x)isa(x, 'Pose'), varargin)), ...
-    'All inputs should be Pose objects.');
+    Q = Quaternion(P.angle, P.axis);
+    QRmap = createMap(Q);
+    Rsigma = P.sigma(1:3,1:3); % Rotation part of full covariance matrix
+    M = QRmap * (Rsigma\QRmap');
+    for i = 1:length(varargin)
+        Q = Quaternion(varargin{i}.angle, varargin{i}.axis);
+        QRmap = createMap(Q);
+        M = M + QRmap * (Rsigma\QRmap');
+    end
+    [largestEvector, temp] = eigs(M, 1, 'SM');  %#ok<NASGU> NOTE: I *DO* need to return "temp", otherwise Matlab seems to flip the sign of the evector??
+    Qavg = Quaternion(largestEvector);
+    Rmean = Qavg.angle * Qavg.axis; % Rotation vector
+    QRmap = createMap(Qavg);
+    Rsigma = inv(QRmap'*M*QRmap);
+    
+    % Combine the translation estimates as though they are Gaussians.  Just
+    % take the product of the Gaussians:
+    Tmean = P.sigma(4:6,4:6) \ P.T;
+    Tsigma_inv = inv(P.sigma(4:6,4:6)); % Translation part of full covariance matrix
+    for i = 1:length(varargin)
+        sigma_i = varargin{i}.sigma(4:6,4:6);
+        Tmean = Tmean + sigma_i \ varargin{i}.T;
+        Tsigma_inv = Tsigma_inv + inv(sigma_i);
+    end
+    Tmean = Tsigma_inv \ Tmean;
 
-% Use Quaternions to get a mean rotation.  Use the upper left 3x3 block of
-% the covariance matrix to weight poses' contributions.
-Q = Quaternion(P.angle, P.axis);
-QRmap = createMap(Q);
-Rsigma = P.sigma(1:3,1:3);
-M = QRmap * (Rsigma\QRmap');
-for i = 1:length(varargin)
-   Q = Quaternion(varargin{i}.angle, varargin{i}.axis);
-   QRmap = createMap(Q);
-   M = M + QRmap * (Rsigma\QRmap');
-end
-[largestEvector, temp] = eigs(M, 1, 'SM');  %#ok<NASGU> NOTE: I *DO* need to return "temp", otherwise Matlab seems to flip the sign of the evector??
-Qavg = Quaternion(largestEvector);
-Rmean = Qavg.angle * Qavg.axis; % Rotation vector
-QRmap = createMap(Qavg);
-Rsigma = inv(QRmap'*M*QRmap);
+    % Create final average pose, with new covariance info:
+    Pmean = Pose(Rmean, Tmean, blkdiag(Rsigma, inv(Tsigma_inv)));
 
-% Combine the translation estimates as though they are Gaussians.  Just
-% take the product of the Gaussians:
-Tmean = P.sigma(4:6,4:6) \ P.T;
-Tsigma_inv = inv(P.sigma(4:6,4:6));
-for i = 1:length(varargin)
-    sigma_i = varargin{i}.sigma(4:6,4:6);
-    Tmean = Tmean + sigma_i \ varargin{i}.T;
-    Tsigma_inv = Tsigma_inv + inv(sigma_i);
-end
-Tmean = Tsigma_inv \ Tmean;
-
-Pmean = Pose(Rmean, Tmean, blkdiag(Rsigma, inv(Tsigma_inv)));
-
-% NOTE: This ignores any dependence between rotation and translation, as
-% revealed by the covariance matrix.  But we will assume this to be
-% negligible...
+else
+    if ~isempty(P.sigma) || any(@(p)~isempty(p.sigma), varargin)
+        warning(['Taking the mean of Poses with and without ' ...
+            'covariance information: will ignore covariance entirely.']);
+    end
+    
+    % Make a cell array of Quaternions, one for each Pose's rotation:
+    Q = cellfun(@(p)Quaternion(p.angle, p.axis), [{P} varargin], ...
+        'UniformOutput', false);
+    
+    % Compute average quaternion and convert back to rotation vector:
+    Qmean = unitMean(Q{:});
+    Rmean = Qmean.angle * Qmean.axis;
+    
+    % Simple unweighted average of translation vectors:
+    Tmean = mean([P.T cellfun(@(p)p.T, varargin)], 2);
+    
+    % Create final average Pose:
+    Pmean = Pose(Rmean, Tmean);
+    
+end % IF useCovariance
 
 end % FUNCION mean()
 
