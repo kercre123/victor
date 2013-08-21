@@ -5,6 +5,7 @@
 #include "anki/common/utilities.h"
 #include "anki/common/memory.h"
 #include "anki/common/DASlight.h"
+#include "anki/common/dataStructures.h"
 
 #include <iostream>
 #include <assert.h>
@@ -15,7 +16,7 @@
 
 namespace Anki
 {
-  // A Matrix is a lightweight templated class for holding two dimentional data. It does no
+  // A Matrix is a lightweight templated class for holding two dimensional data. It does no
   // reference counting, or allocating/freeing from the heap. The data from Matrix is
   // OpenCV-compatible, and accessable via get_CvMat_(). The matlabInterface.h can send and receive
   // Matrix objects from Matlab
@@ -85,6 +86,18 @@ namespace Anki
       return reinterpret_cast<T*>( reinterpret_cast<char*>(this->data) + index1*sizeof(T) + index0*stride );
     }
 
+    // Pointer to the data, at a given (y,x) location
+    template<typename TPoint> const inline T* Pointer(Point2<TPoint> point) const
+    {
+      return Pointer(point.y, point.x);
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    template<typename TPoint> inline T* Pointer(Point2<TPoint> point)
+    {
+      return Pointer(point.y, point.x);
+    }
+
 #if defined(ANKICORETECH_USE_OPENCV)
     void Show(const std::string windowName, bool waitForKeypress) const {
       assert(this->rawDataPointer != NULL && this->data != NULL);
@@ -103,11 +116,12 @@ namespace Anki
 #endif // #if defined(ANKICORETECH_USE_OPENCV)
 
     // Print out the contents of this matrix
-    void Print() {
+    void Print() const
+    {
       assert(this->rawDataPointer != NULL && this->data != NULL);
 
       for(u32 y=0; y<size[0]; y++) {
-        T * rowPointer = Pointer(y, 0);
+        const T * rowPointer = Pointer(y, 0);
         for(u32 x=0; x<size[1]; x++) {
           std::cout << rowPointer[x] << " ";
         }
@@ -117,7 +131,7 @@ namespace Anki
 
     // If the Matrix was constructed with the useBoundaryFillPatterns=true, then return if any memory was written out of bounds (via fill patterns at the beginning and end)
     // If the Matrix wasn't constructed with the useBoundaryFillPatterns=true, this method always returns true
-    bool IsValid()
+    bool IsValid() const
     {
       if(this->rawDataPointer == NULL || this->data == NULL) {
         return false;
@@ -232,7 +246,8 @@ namespace Anki
     cv::Mat_<T> cvMatMirror;
 #endif // #if defined(ANKICORETECH_USE_OPENCV)
 
-    void initialize(u32 numRows, u32 numCols, void * rawData, u32 dataLength, bool useBoundaryFillPatterns) {
+    void initialize(u32 numRows, u32 numCols, void * rawData, u32 dataLength, bool useBoundaryFillPatterns)
+    {
       this->useBoundaryFillPatterns = useBoundaryFillPatterns;
 
       if(!rawData) {
@@ -284,12 +299,12 @@ namespace Anki
     }
   };
 
-  template<> void Matrix<u8>::Print()
+  template<> void Matrix<u8>::Print() const
   {
     assert(this->rawDataPointer != NULL && this->data != NULL);
 
     for(u32 y=0; y<size[0]; y++) {
-      u8 * rowPointer = Pointer(y, 0);
+      const u8 * rowPointer = Pointer(y, 0);
       for(u32 x=0; x<size[1]; x++) {
         std::cout << static_cast<s32>(rowPointer[x]) << " ";
       }
@@ -324,14 +339,11 @@ namespace Anki
   {
   public:
     FixedPointMatrix()
-      : Matrix<T>(), numFractionalBits(numFractionalBits)
+      : Matrix<T>(), numFractionalBits(0)
     {
     }
 
-    // Constructor for a FixedPointMatrix, pointing to user-allocated data. If the pointer to *data is not
-    // aligned to Anki::MEMORY_ALIGNMENT, this Matrix will start at the next aligned location. Unfortunately, this is more
-    // restrictive than most matrix libraries, and as an example, it may make it hard to convert from
-    // OpenCV to Anki::Matrix, though the reverse is trivial.
+    // Constructor for a FixedPointMatrix, pointing to user-allocated data.
     FixedPointMatrix(u32 numRows, u32 numCols, u32 numFractionalBits, void * data, u32 dataLength, bool useBoundaryFillPatterns=false)
       : Matrix<T>(numRows, numCols, data, dataLength, useBoundaryFillPatterns), numFractionalBits(numFractionalBits)
     {
@@ -348,6 +360,15 @@ namespace Anki
     {
     }
 
+    bool IsValid() const
+    {
+      if(numFractionalBits > (sizeof(T)*8)) {
+        return false;
+      }
+
+      return Matrix<T>::IsValid();
+    }
+
     u32 get_numFractionalBits() const
     {
       return numFractionalBits;
@@ -355,6 +376,91 @@ namespace Anki
 
   protected:
     u32 numFractionalBits;
+  };
+
+  template<typename T> class FixedLengthList : public Matrix<T>
+  {
+  public:
+    FixedLengthList()
+      : Matrix<T>(), capacityUsed(0)
+    {
+    }
+
+    // Constructor for a FixedLengthList, pointing to user-allocated data.
+    FixedLengthList(u32 maximumSize, void * data, u32 dataLength, bool useBoundaryFillPatterns=false)
+      : Matrix<T>(1, maximumSize, data, dataLength, useBoundaryFillPatterns), capacityUsed(0)
+    {
+    }
+
+    // Constructor for a FixedLengthList, pointing to user-allocated MemoryStack
+    FixedLengthList(u32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns=false)
+      : Matrix<T>(1, maximumSize, memory, useBoundaryFillPatterns), capacityUsed(0)
+    {
+    }
+
+    bool IsValid() const
+    {
+      if(capacityUsed > this->get_maximumSize()) {
+        return false;
+      }
+
+      return Matrix<T>::IsValid();
+    }
+
+    Result PushBack(const T &value)
+    {
+      if(capacityUsed >= this->get_maximumSize()) {
+        return RESULT_FAIL;
+      }
+
+      *this->Pointer(capacityUsed) = value;
+      capacityUsed++;
+
+      return RESULT_OK;
+    }
+
+    // Will act as a normal pop, except when the list is empty. Then subsequent calls will keep returning the first value in the list.
+    T PopBack()
+    {
+      if(capacityUsed == 0) {
+        return *this->Pointer(0);
+      }
+
+      const T value = *this->Pointer(capacityUsed-1);
+      capacityUsed--;
+
+      return value;
+    }
+
+    void Clear()
+    {
+      this->capacityUsed = 0;
+    }
+
+    // Pointer to the data, at a given location
+    inline T* Pointer(u32 index)
+    {
+      return Matrix<T>::Pointer(0, index);
+    }
+
+    // Pointer to the data, at a given location
+    inline const T* Pointer(u32 index) const
+    {
+      return Matrix<T>::Pointer(0, index);
+    }
+
+    u32 get_maximumSize() const
+    {
+      return Matrix<T>::get_size(1);
+    }
+
+    u32 get_size() const
+    {
+      return capacityUsed;
+    }
+
+  protected:
+    u32 capacityUsed;
   };
 
   template<typename T1, typename T2> bool AreMatricesEqual_Size(const Matrix<T1> &mat1, const Matrix<T2> &mat2)

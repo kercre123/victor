@@ -46,6 +46,24 @@ namespace Anki
     {
     }
 
+    friend bool operator== (const Point2 &point1, const Point2 &point2)
+    {
+      if(point1.x == point2.x && point1.y == point2.y)
+        return true;
+
+      return false;
+    }
+
+    friend Point2 operator+ (const Point2 &point1, const Point2 &point2)
+    {
+      return Point2(point1.x+point2.x, point1.y+point2.y);
+    }
+
+    friend Point2 operator- (const Point2 &point1, const Point2 &point2)
+    {
+      return Point2(point1.x-point2.x, point1.y-point2.y);
+    }
+
     // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Matrix. No data is copied.
     cv::Point_<T>& get_CvPoint_()
     {
@@ -70,6 +88,24 @@ namespace Anki
 #if defined(ANKICORETECH_USE_OPENCV)
     Point3(const cv::Point3_<T>& pt) : x(pt.x), y(pt.y), z(pt.z)
     {
+    }
+
+    friend bool operator== (const Point3 &point1, const Point3 &point2)
+    {
+      if(point1.x == point2.x && point1.y == point2.y && point1.z == point2.z)
+        return true;
+
+      return false;
+    }
+
+    friend Point3 operator+ (const Point3 &point1, const Point3 &point2)
+    {
+      return Point3(point1.x+point2.x, point1.y+point2.y, point1.z+point2.z);
+    }
+
+    friend Point3 operator- (const Point3 &point1, const Point3 &point2)
+    {
+      return Point3(point1.x-point2.x, point1.y-point2.y, point1.z+point2.z);
     }
 
     // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Matrix. No data is copied.
