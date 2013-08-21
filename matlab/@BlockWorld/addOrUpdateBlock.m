@@ -1,5 +1,9 @@
-function addOrUpdateBlock(this, robot, markers2D)
+function addOrUpdateBlock(this, robot, markers2D, mergeMethod)
 % Adds or updates block(s) in a BlockWorld, given observed BlockMarker2Ds.
+
+if nargin < 4
+    mergeMethod = 'replace';
+end
 
 if ~iscell(markers2D)
     markers2D = {markers2D};
@@ -22,10 +26,9 @@ assert(blockType < this.MaxBlockTypes, ...
 
 %% Determine Pose
 % First figure out where each of the 2D markers implies the 3D block must 
-% be.  We
-% will instantiate a Block to do this, since we need its 3D markers, but
-% that block may not be added to the world list if it gets merged into an
-% existing block below, based on its estimated pose.
+% be.  We will instantiate a Block to do this, since we need its 3D 
+% markers, but that block may not be added to the world list if it gets 
+% merged into an existing block below, based on its estimated pose.
 
 % Instantiate the block (at canonical location).  This in turn will
 % instantiate its faces' 3D markers.
@@ -128,7 +131,16 @@ for i_blockObs = 1:numBlocks
         % Merge this new observation into pose of existing block of this type
         B_match = this.blocks{blockType}{i_match};
         
-        B_match.pose = mean(B_new{i_blockObs}.pose, B_match.pose);
+        switch(mergeMethod)
+            case 'mean'
+                B_match.pose = mean(B_new{i_blockObs}.pose, B_match.pose);
+            case 'interpolate'
+                B_match.pose = interpolate(B_new{i_blockObs}.pose, B_match.pose, 0.5);
+            case 'replace'
+                B_match.pose = B_new{i_blockObs}.pose;
+            otherwise
+                error('Unrecognized block merging method "%s".', mergeMethod);
+        end % SWITCH(mergeMethod)
         
         this.updateObsBlockPose(blockType, B_match.pose);
     end
