@@ -128,7 +128,6 @@ for i_blockObs = 1:numBlocks
         % Merge this new observation into pose of existing block of this type
         B_match = this.blocks{blockType}{i_match};
         
-        % % TODO: Incorporate uncertainty/weighting into this combination/averaging:
         B_match.pose = mean(B_new{i_blockObs}.pose, B_match.pose);
         
         this.updateObsBlockPose(blockType, B_match.pose);
