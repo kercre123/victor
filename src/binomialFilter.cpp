@@ -2,8 +2,6 @@
 
 namespace Anki
 {
-  //using namespace Anki;
-
 #define BINOMIAL_KERNEL_SIZE 5
 
   //% img is UQ8.0

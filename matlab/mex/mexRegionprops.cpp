@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#define ConditionalErrorAndReturn(expression, eventName, eventValue) if(!(expression)) { printf("%s - %s\n", (eventName), (eventValue)); return;}
+
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
     if(nrhs != 2 || nlhs != 4) {

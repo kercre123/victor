@@ -7,6 +7,8 @@
 
 using namespace cv;
 
+#define ConditionalErrorAndReturn(expression, eventName, eventValue) if(!(expression)) { printf("%s - %s\n", (eventName), (eventValue)); return;}
+
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   const mwSize array0_numDimensions = mxGetNumberOfDimensions(prhs[0]);
@@ -17,14 +19,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   std::vector<cv::Point_<double> > input_points = mxArray2CvPointVector<double>(prhs[0]);
   std::vector<cv::Point_<double> > base_points = mxArray2CvPointVector<double>(prhs[1]);
 
-  if(input_points.size()==0 || base_points.size()==0) {
-    return;
-  }
-
-  if(input_points.size() != base_points.size()) {
-    std::cout << "Point lists are of different sizes\n";
-    return;
-  }
+  ConditionalErrorAndReturn(input_points.size()!=0 || base_points.size()!=0, "mex_cp2tform_projective", "input points or base points couln't be parsed");
+  
+  ConditionalErrorAndReturn(input_points.size() == base_points.size(), "mex_cp2tform_projective", "Point lists are of different sizes");
 
 //  std::cout << "input_points: " << input_points << "\n";
 //  std::cout << "base_points: " << base_points << "\n";

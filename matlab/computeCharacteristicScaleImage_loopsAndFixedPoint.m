@@ -45,7 +45,7 @@ DoG_max = zeros(nrows,ncols,'uint32'); % UQ16.16
 imgPyramid = cell(1, numLevels+1);
 scaleFactors = int32(2.^[0:(numLevels)]); %#ok<NBRAK>
 
-keyboard
+% keyboard
 if filterWithMex
     imgPyramid{1} = mexBinomialFilter(img);
 else
@@ -74,7 +74,7 @@ for pyramidLevel = 2:numLevels+1
     if pyramidLevel == 2
         for y = 1:nrows
             for x = 1:ncols
-                DoG = uint32(abs(int32(curPyramidLevelBlurred(y,x)) - int32(curPyramidLevel(y,x)))) * (2^16); % (SQ15.16 - SQ15.16) -> UQ16.16
+                DoG = uint32(abs(int32(curPyramidLevelBlurred(y,x)) - int32(curPyramidLevel(y,x)))) * (2^16); % abs(UQ8.0 - UQ8.0) -> UQ16.16;
                 largeDoG(y,x) = DoG;
 
                 % The first level is always correct

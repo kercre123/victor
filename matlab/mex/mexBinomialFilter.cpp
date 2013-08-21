@@ -7,14 +7,18 @@
 
 using namespace Anki;
 
+#define ConditionalErrorAndReturn(expression, eventName, eventValue) if(!(expression)) { printf("%s - %s\n", (eventName), (eventValue)); return;}
+
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+  ConditionalErrorAndReturn(nrhs == 1 && nlhs == 1, "mexBinomialFilter", "Call this function as following: imgFiltered = mexBinomialFilter(img);");
+    
   Matrix<u8> img = mxArray2AnkiMatrix<u8>(prhs[0]);
   
-  DASConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Matrix img");
+  ConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Matrix img");
         
   Matrix<u8> imgFiltered = AllocateMatrixFromHeap<u8>(img.get_size(0), img.get_size(1));
-  DASConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Matrix imgFiltered");
+  ConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Matrix imgFiltered");
 
   const u32 numBytes = img.get_size(0) * img.get_stride() + 1000;
   MemoryStack scratch(calloc(numBytes,1), numBytes);
