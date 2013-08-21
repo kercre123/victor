@@ -7,12 +7,6 @@ function binaryImg = simpleDetector_step1_computeCharacteristicScale( ...
 
 % Create a set of "average" images with different-sized Gaussian kernels
 numScales = round(log(maxSmoothingFraction*max(nrows,ncols)) / log(downsampleFactor));
-numSigma = 2.5;
-prevSigma = 0.5/numSigma;
-
-G = cell(1,numScales+1);
-
-[xgrid,ygrid] = meshgrid(1:ncols, 1:nrows);
 
 if usePyramid
     assert(downsampleFactor == 2, ...
@@ -27,11 +21,18 @@ if usePyramid
         averageImg = double(computeCharacteristicScaleImage_loopsAndFixedPoint(img, numScales, false, false)) / (255 * 2^16);
     elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_loopsAndFixedPoint_mexFiltering')
         averageImg = double(computeCharacteristicScaleImage_loopsAndFixedPoint(img, numScales, false, true)) / (255 * 2^16);
+    elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'c_fixedPoint')
+        averageImg = double(mexComputeCharacteristicScale(im2uint8(img), numScales)) / (255 * 2^16);        
     end
     disp(sprintf('computeCharacteristicScaleImage took %f', toc));
 else % Use a stack of smoothed images, not a pyramid
-    
-    
+    numSigma = 2.5;
+    prevSigma = 0.5/numSigma;
+
+    G = cell(1,numScales+1);
+
+    [xgrid,ygrid] = meshgrid(1:ncols, 1:nrows);
+
     %G{1} = separable_filter(img, gaussian_kernel(prevSigma, numSigma));
     %G{1} = imfilter(img, fspecial('gaussian', round(numSigma*prevSigma), prevSigma));
     
