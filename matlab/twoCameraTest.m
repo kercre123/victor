@@ -1,4 +1,5 @@
 function twoCameraTest(varargin)
+% Test function for getting two USB cameras running simultaneously.
 
 downDevice = 0;
 frontDevice = 1;
