@@ -11,6 +11,12 @@ namespace Anki
 
     //times[0] = GetTime();
 
+    DASConditionalErrorAndReturnValue(img.IsValid(),
+      RESULT_FAIL, "ComputeCharacteristicScaleImage", "img is not valid");
+
+    DASConditionalErrorAndReturnValue(scaleImage.IsValid(),
+      RESULT_FAIL, "ComputeCharacteristicScaleImage", "scaleImage is not valid");
+
     DASConditionalErrorAndReturnValue(numLevels <= MAX_PYRAMID_LEVELS,
       RESULT_FAIL, "ComputeCharacteristicScaleImage", "numLevels must be less than %d", MAX_PYRAMID_LEVELS+1);
 

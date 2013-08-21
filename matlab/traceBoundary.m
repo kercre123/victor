@@ -45,9 +45,6 @@ dx = [0, 1, 1, 1, 0, -1, -1, -1];
 dy = [-1, -1, 0, 1, 1, 1, 0, -1];
 
 curDirection = initialDirection;
-if curDirection == -1
-    curDirection = 7;
-end
 
 boundary = [startPoint(1), startPoint(2)];
 curPoint = [startPoint(1), startPoint(2)];
@@ -72,7 +69,7 @@ while true
     
     oneDirection = findNewDirection(binaryImg, curPoint, zeroDirectionPlusOne, 1);
         
-    newPoint = [curPoint(1)+dy(oneDirection+1), curPoint(2)+dx(oneDirection+1)];
+    newPoint = [curPoint(1)+dy(oneDirection+1), curPoint(2)+dx(oneDirection+1)]
         
     curPoint = newPoint;
     boundary(end+1, :) = newPoint;
@@ -82,13 +79,17 @@ while true
     end
     
     % If the new point is the same as the last point (or second-to-last to detect oscillations), quit.
-    if sum(newPoint == boundary(end-1,:)) == 2 || ...
-       (size(boundary,1)>2 && sum(newPoint == boundary(end-2,:)) == 2)
+    if sum(newPoint == boundary(end-1,:)) == 2            
+%     if sum(newPoint == boundary(end-1,:)) == 2
+%         || (size(boundary,1)>2 && sum(newPoint == boundary(end-2,:)) == 2)
         break;
     end
     
     % If the new point is the same as the first point, quit.
-    if sum(newPoint == boundary(1,:)) == 2
+    keyboard
+    if sum(newPoint == boundary(1,:)) == 2 || ...
+        (size(boundary,1)>2 && sum(abs(newPoint-boundary(1,:))) <= 1)
+        keyboard
         break;
     end
     

@@ -15,6 +15,12 @@ namespace Anki
     const u32 kernelSum = 16;
     const u32 kernelShift = 4;
 
+    DASConditionalErrorAndReturnValue(img.IsValid(),
+      RESULT_FAIL, "BinomialFilter", "img is not valid");
+
+    DASConditionalErrorAndReturnValue(imgFiltered.IsValid(),
+      RESULT_FAIL, "BinomialFilter", "imgFiltered is not valid");
+
     assert(kernelSum == (kernel[0] + kernel[1] + kernel[2] + kernel[3] + kernel[4]));
     assert(kernelSum == (1 << kernelShift));
 

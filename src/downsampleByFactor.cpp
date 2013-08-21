@@ -4,6 +4,12 @@ namespace Anki
 {
   Result DownsampleByFactor(const Matrix<u8> &img, u32 downsampleFactor, Matrix<u8> &imgDownsampled)
   {
+    DASConditionalErrorAndReturnValue(img.IsValid(),
+      RESULT_FAIL, "DownsampleByFactor", "img is not valid");
+
+    DASConditionalErrorAndReturnValue(imgDownsampled.IsValid(),
+      RESULT_FAIL, "DownsampleByFactor", "imgDownsampled is not valid");
+
     DASConditionalErrorAndReturnValue(downsampleFactor == 2,
       RESULT_FAIL, "DownsampleByFactor", "Currently, only downsampleFactor==2 is supported");
 

@@ -96,7 +96,7 @@ TEST(CoreTech_Vision, ComputeCharacteristicScale)
 {
   const u32 width = 16;
   const u32 height = 16;
-  u32 numLevels = 3;
+  const u32 numLevels = 3;
   const std::string imgData =
     "0	0	0	107	255	255	255	255	0	0	0	0	0	0	160	89 "
     "0	255	0	251	255	0	0	255	0	255	255	255	255	0	197	38 "
@@ -135,15 +135,16 @@ TEST(CoreTech_Vision, ComputeCharacteristicScale)
   free(buffer); buffer = NULL;
 }
 
+#if defined(ANKICORETECH_USE_MATLAB)
 TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 {
   const u32 width = 640;
   const u32 height = 480;
-  u32 numLevels = 6;
+  const u32 numLevels = 6;
 
   /*const u32 width = 320;
   const u32 height = 240;
-  u32 numLevels = 5;*/
+  const u32 numLevels = 5;*/
 
   // Allocate memory from the heap, for the memory allocator
   const u32 numBytes = 10000000;
@@ -164,6 +165,58 @@ TEST(CoreTech_Vision, ComputeCharacteristicScale2)
   ASSERT_TRUE(ComputeCharacteristicScaleImage(img, numLevels, scaleImage, ms) == Anki::RESULT_OK);
 
   matlab.PutMatrix(scaleImage, "scaleImage6_c");
+
+  free(buffer); buffer = NULL;
+}
+#endif // #if defined(ANKICORETECH_USE_MATLAB)
+
+TEST(CoreTech_Vision, TraceBoundary)
+{
+  const u32 width = 16;
+  const u32 height = 16;
+  const std::string imgData =
+    " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 "
+    " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 "
+    " 1 1 0 0 0 0 0 0 0 0 0 1 1 1 1 1 "
+    " 1 1 0 1 1 1 0 1 1 1 0 1 1 1 1 1 "
+    " 1 1 0 1 1 1 0 1 1 1 0 1 1 1 1 1 "
+    " 1 1 0 1 1 0 0 0 1 1 0 1 1 1 1 1 "
+    " 1 1 0 1 1 0 0 0 1 1 0 1 1 1 1 1 "
+    " 1 1 0 1 1 0 0 0 1 1 0 1 1 1 1 1 "
+    " 1 1 0 1 1 1 1 1 1 1 0 1 1 1 1 1 "
+    " 1 1 0 1 1 1 1 1 1 1 0 1 1 1 1 1 "
+    " 1 1 1 0 0 0 0 0 0 0 1 1 1 1 1 1 "
+    " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 "
+    " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 "
+    " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 "
+    " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 "
+    " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 ";
+
+  const u32 numPoints = 9;
+  const Anki::Point2<s16> groundTruth[9] = {Anki::Point2<s16>(8,6), Anki::Point2<s16>(8,5), Anki::Point2<s16>(7,4), Anki::Point2<s16>(7,3), Anki::Point2<s16>(8,3), Anki::Point2<s16>(9,3), Anki::Point2<s16>(9,4), Anki::Point2<s16>(9,5), Anki::Point2<s16>(9,6)};
+
+  // Allocate memory from the heap, for the memory allocator
+  const u32 numBytes = 100000;
+  void *buffer = calloc(numBytes, 1);
+  ASSERT_TRUE(buffer != NULL);
+  Anki::MemoryStack ms(buffer, numBytes);
+
+  Anki::Matrix<u8> binaryImg(16, 16, ms);
+  const Anki::Point2<s16> startPoint(8,6);
+  const Anki::BoundaryDirection initialDirection = Anki::BOUNDARY_N;
+  Anki::FixedLengthList<Anki::Point2<s16>> boundary(Anki::MAX_BOUNDARY_LENGTH, ms);
+
+  ASSERT_TRUE(binaryImg.IsValid());
+  ASSERT_TRUE(boundary.IsValid());
+
+  binaryImg.Set(imgData);
+
+  ASSERT_TRUE(Anki::TraceBoundary(binaryImg, startPoint, initialDirection, boundary) == Anki::RESULT_OK);
+
+  ASSERT_TRUE(boundary.get_size() == numPoints);
+  for(u32 iPoint=0; iPoint<numPoints; iPoint++) {
+    ASSERT_TRUE(*boundary.Pointer(iPoint) == groundTruth[iPoint]);
+  }
 
   free(buffer); buffer = NULL;
 }
