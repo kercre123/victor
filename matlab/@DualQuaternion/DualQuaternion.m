@@ -6,11 +6,12 @@ classdef DualQuaternion
     end
     
     properties(Dependent = true, SetAccess = 'protected')
-        %rotationVector;
+        rotationVector;
         rotationMatrix;
         translation;
 
-%         conj;
+        conj;
+        inv;
     end
     
     methods(Access = public)
@@ -125,6 +126,27 @@ classdef DualQuaternion
             end
         end
         
+        function Qmean = mean(Q, varargin)
+            reals = cellfun(@(x)x.real, varargin, 'UniformOutput', false);
+            %duals = cellfun(@(x)x.dual, varargin, 'UniformOutput', false);
+            rotation = unitMean(Q.real, reals{:});
+            %dualMean = mean(Q.dual, duals{:});
+                                          
+            trans = mean(cellfun(@(x)x.translation, varargin),2);
+            tx = trans(1);  ty = trans(2);  tz = trans(3);
+            
+            qw = rotation.q(1);
+            qx = rotation.q(2);
+            qy = rotation.q(3);
+            qz = rotation.q(4);
+            dualMean = Quaternion( ...
+                0.5*[-tx*qx - ty*qy - tz*qz;
+                      tx*qw + ty*qz - tz*qy;
+                     -tx*qz + ty*qw + tz*qx;
+                      tx*qy - ty*qx + tz*qw] );
+                  
+            Qmean = DualQuaternion(rotation, dualMean);
+        end
         
 %         function tf = isUnit(this)
 %             M = this * this.conj;
@@ -157,6 +179,12 @@ classdef DualQuaternion
                  2*(x*z - w*y)        2*(y*z + w*x)        (1 - 2*(x*x + y*y))];
         end
         
+        function Rvec = get.rotationVector(this)
+            vec = this.real.q(1:3)/norm(this.real.q(1:3));
+            theta = 2*acos(this.real.q(4));
+            Rvec = theta*vec;
+        end
+        
         function t = get.translation(this)
             qr = this.real.q;
             qd = this.dual.q;
@@ -169,9 +197,23 @@ classdef DualQuaternion
                    -wd*zr - xd*yr + yd*xr + zd*wr];
         end
         
-%         function C = get.conj(this)
-%             C = DualQuaternion(conj(this.Qr), conj(this.Qd));
-%         end
+        function C = get.conj(this)
+            % TODO: cache so that this computes only once?
+            C = DualQuaternion(conj(this.Qr), conj(this.Qd));
+        end
+        
+        function thisInv = get.inv(this)
+            % Is this correct?  Copied from:
+            % https://github.com/gravitino/dualQuaternion/blob/master/quaternion.cpp
+            
+            dot1 = dot(this.real, this.real);
+            dot2 = dot(this.real, this.dual);
+            
+            newReal = (1/dot1) * this.real.conj;
+            newDual = (1/dot1) * this.dual.conj + (-2*dot2/dot1)*newReal;
+            
+            thisInv = DualQuaternion(newReal, newDual);
+        end
         
     end
     

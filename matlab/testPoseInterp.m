@@ -14,6 +14,11 @@ draw(B2, 'FaceAlpha', 0.25);
 axis equal, grid on
 set(gca, 'XLim', [-100 100], 'YLim', [-100 100], 'ZLim', [-100 100]);
 
+B.pose = mean(P1, P2);
+draw(B), title('Average Pose')
+
+%%
+title('Pose Interpolation')
 for i = linspace(0,1,100)
     B.pose = interpolate(P1, P2, i);
     draw(B)

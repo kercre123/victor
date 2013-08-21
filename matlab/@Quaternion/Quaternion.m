@@ -10,8 +10,10 @@ classdef Quaternion
     end
     
     properties(Dependent = true)
-        a,b,c,d;
+        %a,b,c,d;
         r, v;
+        angle;
+        axis;
     end
     
     methods(Access = public)
@@ -77,26 +79,40 @@ classdef Quaternion
             
             Qnorm = Quaternion(Q.q / denom);
         end
+        
+        function Qmean = unitMean(Q, varargin)
+            assert(all(cellfun(@(x)isa(x,'Quaternion'), varargin)), ...
+                'All inputs should be Quaternion objects.');
+            
+            M = Q.q * Q.q';
+            for i = 1:length(varargin)
+                M = M + (varargin{i}.q*varargin{i}.q');
+            end
+            
+            [evectors, evalues] = eig(M);
+            [~,index] = max(diag(evalues));
+            Qmean = Quaternion(evectors(:,index));
+        end
     end
     
     methods
-        function a = get.a(this)
-            a = this.q(1);
-        end
-        function b = get.b(this)
-            b = this.q(2);
-        end
-        function c = get.c(this)
-            c = this.q(3);
-        end
-        function d = get.d(this)
-            d = this.q(4);
-        end
         function r = get.r(this)
             r = this.q(1);
         end
         function v = get.v(this)
             v = this.q(2:4);
+        end
+        function theta = get.angle(this)
+            assert(abs(norm(this) - 1) < 10*eps, ...
+                'Quaternion should be Unit for computing rotation angle.');
+            assert(abs(this.q(1))<=1, 'Expecting |q1| <= 1.');
+            
+            theta = 2*acos(this.q(1));
+        end
+        function vec = get.axis(this)
+            assert(abs(norm(this) - 1) < 10*eps, ...
+                'Quaternion should be Unit for computing rotation axis.');
+            vec = this.q(2:4)/norm(this.q(2:4));
         end
     end
     
