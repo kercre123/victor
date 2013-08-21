@@ -18,13 +18,13 @@ namespace Anki
     BOUNDARY_NW = 7
   };
 
-  const u32 MAX_BOUNDARY_LENGTH = 5000;
+  const s32 MAX_BOUNDARY_LENGTH = 5000;
 
   Result BinomialFilter(const Matrix<u8> &img, Matrix<u8> &imgFiltered, MemoryStack scratch);
 
-  Result DownsampleByFactor(const Matrix<u8> &img, u32 downsampleFactor, Matrix<u8> &imgDownsampled);
+  Result DownsampleByFactor(const Matrix<u8> &img, s32 downsampleFactor, Matrix<u8> &imgDownsampled);
 
-  Result ComputeCharacteristicScaleImage(const Matrix<u8> &img, u32 numLevels, FixedPointMatrix<u32> &scaleImage, MemoryStack scratch);
+  Result ComputeCharacteristicScaleImage(const Matrix<u8> &img, s32 numLevels, FixedPointMatrix<u32> &scaleImage, MemoryStack scratch);
 
   Result TraceBoundary(const Matrix<u8> &binaryImg, const Point2<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point2<s16>> &boundary);
 

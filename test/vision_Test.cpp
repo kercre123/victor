@@ -14,10 +14,10 @@ Anki::Matlab matlab(false);
 
 TEST(CoreTech_Vision, BinomialFilter)
 {
-  const u32 width = 10;
-  const u32 height = 5;
+  const s32 width = 10;
+  const s32 height = 5;
   // Allocate memory from the heap, for the memory allocator
-  const u32 numBytes = 10000;
+  const s32 numBytes = 10000;
   void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
   Anki::MemoryStack ms(buffer, numBytes);
@@ -28,8 +28,8 @@ TEST(CoreTech_Vision, BinomialFilter)
   ASSERT_TRUE(img.get_rawDataPointer()!= NULL);
   ASSERT_TRUE(imgFiltered.get_rawDataPointer()!= NULL);
 
-  for(u32 x=0; x<width; x++) {
-    *img.Pointer(2,x) = static_cast<u32>(x);
+  for(s32 x=0; x<width; x++) {
+    *img.Pointer(2,x) = static_cast<u8>(x);
   }
 
   Anki::Result result = Anki::BinomialFilter(img, imgFiltered, ms);
@@ -44,8 +44,8 @@ TEST(CoreTech_Vision, BinomialFilter)
 
   const u8 correctResults[5][10] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 1, 1, 1, 2, 2, 2, 3}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
-  for(u32 y=0; y<height; y++) {
-    for(u32 x=0; x<width; x++) {
+  for(s32 y=0; y<height; y++) {
+    for(s32 x=0; x<width; x++) {
       //printf("(%d,%d) expected:%d actual:%d\n", y, x, correctResults[y][x], *(imgFiltered.Pointer(y,x)));
       ASSERT_TRUE(correctResults[y][x] == *imgFiltered.Pointer(y,x));
     }
@@ -56,12 +56,12 @@ TEST(CoreTech_Vision, BinomialFilter)
 
 TEST(CoreTech_Vision, DownsampleByFactor)
 {
-  const u32 width = 10;
-  const u32 height = 4;
-  const u32 downsampleFactor = 2;
+  const s32 width = 10;
+  const s32 height = 4;
+  const s32 downsampleFactor = 2;
 
   // Allocate memory from the heap, for the memory allocator
-  const u32 numBytes = 10000;
+  const s32 numBytes = 10000;
   void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
   Anki::MemoryStack ms(buffer, numBytes);
@@ -72,8 +72,8 @@ TEST(CoreTech_Vision, DownsampleByFactor)
   ASSERT_TRUE(img.get_rawDataPointer()!= NULL);
   ASSERT_TRUE(imgDownsampled.get_rawDataPointer()!= NULL);
 
-  for(u32 x=0; x<width; x++) {
-    *img.Pointer(2,x) = static_cast<u32>(x);
+  for(s32 x=0; x<width; x++) {
+    *img.Pointer(2,x) = static_cast<u8>(x);
   }
 
   Anki::Result result = Anki::DownsampleByFactor(img, downsampleFactor, imgDownsampled);
@@ -82,8 +82,8 @@ TEST(CoreTech_Vision, DownsampleByFactor)
 
   const u8 correctResults[2][5] = {{0, 0, 0, 0, 0}, {0, 1, 2, 3, 4}};
 
-  for(u32 y=0; y<imgDownsampled.get_size(0); y++) {
-    for(u32 x=0; x<imgDownsampled.get_size(1); x++) {
+  for(s32 y=0; y<imgDownsampled.get_size(0); y++) {
+    for(s32 x=0; x<imgDownsampled.get_size(1); x++) {
       //printf("(%d,%d) expected:%d actual:%d\n", y, x, correctResults[y][x], *(imgDownsampled.Pointer(y,x)));
       ASSERT_TRUE(correctResults[y][x] == *imgDownsampled.Pointer(y,x));
     }
@@ -94,9 +94,9 @@ TEST(CoreTech_Vision, DownsampleByFactor)
 
 TEST(CoreTech_Vision, ComputeCharacteristicScale)
 {
-  const u32 width = 16;
-  const u32 height = 16;
-  const u32 numLevels = 3;
+  const s32 width = 16;
+  const s32 height = 16;
+  const s32 numLevels = 3;
   const std::string imgData =
     "0	0	0	107	255	255	255	255	0	0	0	0	0	0	160	89 "
     "0	255	0	251	255	0	0	255	0	255	255	255	255	0	197	38 "
@@ -116,7 +116,7 @@ TEST(CoreTech_Vision, ComputeCharacteristicScale)
     "255	255	255	255	255	255	255	255	255	255	147	169	165	195	133	5";
 
   // Allocate memory from the heap, for the memory allocator
-  const u32 numBytes = 10000;
+  const s32 numBytes = 10000;
   void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
   Anki::MemoryStack ms(buffer, numBytes);
@@ -138,16 +138,16 @@ TEST(CoreTech_Vision, ComputeCharacteristicScale)
 #if defined(ANKICORETECH_USE_MATLAB)
 TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 {
-  const u32 width = 640;
-  const u32 height = 480;
-  const u32 numLevels = 6;
+  const s32 width = 640;
+  const s32 height = 480;
+  const s32 numLevels = 6;
 
-  /*const u32 width = 320;
-  const u32 height = 240;
-  const u32 numLevels = 5;*/
+  /*const s32 width = 320;
+  const s32 height = 240;
+  const s32 numLevels = 5;*/
 
   // Allocate memory from the heap, for the memory allocator
-  const u32 numBytes = 10000000;
+  const s32 numBytes = 10000000;
   void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
   Anki::MemoryStack ms(buffer, numBytes);
@@ -172,8 +172,8 @@ TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 
 TEST(CoreTech_Vision, TraceBoundary)
 {
-  const u32 width = 16;
-  const u32 height = 16;
+  const s32 width = 16;
+  const s32 height = 16;
   const std::string imgData =
     " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 "
     " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 "
@@ -192,11 +192,11 @@ TEST(CoreTech_Vision, TraceBoundary)
     " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 "
     " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 ";
 
-  const u32 numPoints = 9;
+  const s32 numPoints = 9;
   const Anki::Point2<s16> groundTruth[9] = {Anki::Point2<s16>(8,6), Anki::Point2<s16>(8,5), Anki::Point2<s16>(7,4), Anki::Point2<s16>(7,3), Anki::Point2<s16>(8,3), Anki::Point2<s16>(9,3), Anki::Point2<s16>(9,4), Anki::Point2<s16>(9,5), Anki::Point2<s16>(9,6)};
 
   // Allocate memory from the heap, for the memory allocator
-  const u32 numBytes = 100000;
+  const s32 numBytes = 100000;
   void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
   Anki::MemoryStack ms(buffer, numBytes);
@@ -214,7 +214,7 @@ TEST(CoreTech_Vision, TraceBoundary)
   ASSERT_TRUE(Anki::TraceBoundary(binaryImg, startPoint, initialDirection, boundary) == Anki::RESULT_OK);
 
   ASSERT_TRUE(boundary.get_size() == numPoints);
-  for(u32 iPoint=0; iPoint<numPoints; iPoint++) {
+  for(s32 iPoint=0; iPoint<numPoints; iPoint++) {
     ASSERT_TRUE(*boundary.Pointer(iPoint) == groundTruth[iPoint]);
   }
 

@@ -14,8 +14,8 @@ namespace Anki
   {
     BoundaryDirection newDirection = BOUNDARY_UNKNOWN;
 
-    u32 directionList1Limits[2];
-    u32 directionList2Limits[2];
+    s32 directionList1Limits[2];
+    s32 directionList2Limits[2];
     if(curDirection == 0) {
       directionList1Limits[0] = NUM_DIRECTIONS-1;
       directionList1Limits[1] = NUM_DIRECTIONS;
@@ -28,7 +28,7 @@ namespace Anki
       directionList2Limits[1] = curDirection-1;
     }
 
-    for(u32 newDirection=directionList1Limits[0]; newDirection<directionList1Limits[1]; newDirection++) {
+    for(s32 newDirection=directionList1Limits[0]; newDirection<directionList1Limits[1]; newDirection++) {
       //const u8 imgValue = *(binaryImg.Pointer(curPoint.y+dys[newDirection], curPoint.x+dxs[newDirection]));
       const u8 imgValue = *(binaryImg.Pointer(curPoint + offsets[newDirection]));
       if(imgValue == value) {
@@ -36,7 +36,7 @@ namespace Anki
       }
     }
 
-    for(u32 newDirection=directionList2Limits[0]; newDirection<directionList2Limits[1]; newDirection++) {
+    for(s32 newDirection=directionList2Limits[0]; newDirection<directionList2Limits[1]; newDirection++) {
       //const u8 imgValue = *(binaryImg.Pointer(curPoint.y+dys[newDirection], curPoint.x+dxs[newDirection]));
       const u8 imgValue = *(binaryImg.Pointer(curPoint + offsets[newDirection]));
       if(imgValue == value) {
@@ -59,8 +59,8 @@ namespace Anki
     DASConditionalErrorAndReturnValue(
       startPoint.x > 0 &&
       startPoint.y > 0 &&
-      static_cast<u32>(startPoint.x) < (binaryImg.get_size(1)-1) &&
-      static_cast<u32>(startPoint.y) < (binaryImg.get_size(0)-1),
+      static_cast<s32>(startPoint.x) < (binaryImg.get_size(1)-1) &&
+      static_cast<s32>(startPoint.y) < (binaryImg.get_size(0)-1),
       RESULT_FAIL, "TraceBoundary", "startPoint is out of bounds");
 
     DASConditionalErrorAndReturnValue(boundary.get_maximumSize() == MAX_BOUNDARY_LENGTH,
@@ -119,8 +119,8 @@ namespace Anki
       }*/
       if(newPoint.x <= 0 &&
         newPoint.y <= 0 &&
-        static_cast<u32>(newPoint.x) >= (binaryImg.get_size(1)-1) &&
-        static_cast<u32>(newPoint.y) >= (binaryImg.get_size(0)-1)) {
+        static_cast<s32>(newPoint.x) >= (binaryImg.get_size(1)-1) &&
+        static_cast<s32>(newPoint.y) >= (binaryImg.get_size(0)-1)) {
           return RESULT_OK;
       }
 #endif //#ifdef CHECK_FOR_OUT_OF_BOUNDS
