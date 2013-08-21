@@ -50,7 +50,7 @@ namespace Anki
 
   u64 Log2(u64 x)
   {
-    u32 powerCount = 0;
+    u64 powerCount = 0;
     // While x is even and greater than 1, keep dividing by two
     while (x >>= 1) {
       powerCount++;

@@ -4,7 +4,7 @@
 
 namespace Anki
 {
-  MemoryStack::MemoryStack(void *buffer, u32 bufferLength)
+  MemoryStack::MemoryStack(void *buffer, s32 bufferLength)
     : buffer(buffer), totalBytes(bufferLength), usedBytes(0)
   {
     DASConditionalError(buffer, "Anki.MemoryStack.MemoryStack", "Buffer must be allocated");
@@ -21,9 +21,9 @@ namespace Anki
     DASConditionalError(ms.totalBytes >= ms.usedBytes, "Anki.MemoryStack.MemoryStack", "Buffer is using more bytes than it has. Try running IsValid() to test for memory corruption.");
   }
 
-  void* MemoryStack::Allocate(u32 numBytesRequested, u32 *numBytesAllocated)
+  void* MemoryStack::Allocate(s32 numBytesRequested, s32 *numBytesAllocated)
   {
-    DASConditionalWarnAndReturnValue(numBytesRequested != 0, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested != 0");
+    DASConditionalWarnAndReturnValue(numBytesRequested > 0, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested > 0");
     DASConditionalWarnAndReturnValue(numBytesRequested <= 0x3FFFFFFF, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested <= 0x3FFFFFFF");
 
     char * const bufferNextFree = static_cast<char*>(buffer) + usedBytes;
@@ -36,7 +36,7 @@ namespace Anki
     const u32 numBytesRequestedRounded = RoundUp<u32>(numBytesRequested, MEMORY_ALIGNMENT);
     u32  * const segmentFooter = reinterpret_cast<u32*> (segmentMemory+numBytesRequestedRounded);
 
-    const u32 requestedBytes = static_cast<u32>( reinterpret_cast<size_t>(segmentFooter) + FOOTER_LENGTH - reinterpret_cast<size_t>(bufferNextFree) );
+    const s32 requestedBytes = static_cast<s32>( reinterpret_cast<size_t>(segmentFooter) + FOOTER_LENGTH - reinterpret_cast<size_t>(bufferNextFree) );
 
     DASConditionalEventAndReturnValue((usedBytes+requestedBytes) <= totalBytes, NULL, "Anki.MemoryStack.Allocate", "Ran out of scratch space");
 
@@ -47,7 +47,7 @@ namespace Anki
 
     usedBytes += requestedBytes;
 
-    assert(static_cast<u32>(reinterpret_cast<size_t>(segmentFooter) - reinterpret_cast<size_t>(segmentMemory)) == numBytesRequestedRounded);
+    assert(static_cast<s32>(reinterpret_cast<size_t>(segmentFooter) - reinterpret_cast<size_t>(segmentMemory)) == numBytesRequestedRounded);
 
     if(numBytesAllocated) {
       *numBytesAllocated = numBytesRequestedRounded;
@@ -62,14 +62,14 @@ namespace Anki
     const char * const bufferCharStar = reinterpret_cast<const char*>(buffer);
     const size_t bufferSizeT = reinterpret_cast<size_t>(buffer);
 
-    u32 index = static_cast<u32>( RoundUp<size_t>(bufferSizeT+HEADER_LENGTH, MEMORY_ALIGNMENT) - HEADER_LENGTH - bufferSizeT );
+    s32 index = static_cast<s32>( RoundUp<size_t>(bufferSizeT+HEADER_LENGTH, MEMORY_ALIGNMENT) - HEADER_LENGTH - bufferSizeT );
 
     for(size_t i=0; (i<MIN(LOOP_MAX,totalBytes)) && (index<usedBytes); i++) {
-      index = static_cast<u32>( RoundUp<size_t>(bufferSizeT+index+HEADER_LENGTH, MEMORY_ALIGNMENT) - HEADER_LENGTH - bufferSizeT );
+      index = static_cast<s32>( RoundUp<size_t>(bufferSizeT+index+HEADER_LENGTH, MEMORY_ALIGNMENT) - HEADER_LENGTH - bufferSizeT );
 
       // A segment's size should only be multiples of MEMORY_ALIGNMENT, but even on the off
-      const u32 segmentLength = reinterpret_cast<const u32*>(bufferCharStar+index)[0];
-      const u32 roundedSegmentLength = RoundUp<u32>(segmentLength, MEMORY_ALIGNMENT);
+      const s32 segmentLength = reinterpret_cast<const u32*>(bufferCharStar+index)[0];
+      const s32 roundedSegmentLength = RoundUp<s32>(segmentLength, MEMORY_ALIGNMENT);
       DASConditionalWarnAndReturnValue(segmentLength == roundedSegmentLength, false, "Anki.MemoryStack.IsValid", "The segmentLength is not a multiple of MEMORY_ALIGNMENT");
 
       // Check if the segment end is beyond the end of the buffer (NOTE: this is not conservative enough, though errors should be caught later)
@@ -97,7 +97,7 @@ namespace Anki
     }
   }
 
-  u32 MemoryStack::LargestPossibleAllocation()
+  s32 MemoryStack::LargestPossibleAllocation()
   {
     const size_t bufferNextFree = reinterpret_cast<size_t>(buffer) + usedBytes;
     const size_t bufferNextFreePlusHeaderAndAlignment = RoundUp<size_t>(bufferNextFree+HEADER_LENGTH, MEMORY_ALIGNMENT);
@@ -108,17 +108,17 @@ namespace Anki
       return 0;
 
     // The RoundDown handles the requirement for all memory blocks to be multiples of MEMORY_ALIGNMENT
-    const u32 maxFreeSpace = static_cast<u32>( RoundDown<size_t>(bufferEnd - bufferNextFreePlusHeaderAndAlignment - FOOTER_LENGTH, MEMORY_ALIGNMENT) );
+    const s32 maxFreeSpace = static_cast<s32>( RoundDown<size_t>(bufferEnd - bufferNextFreePlusHeaderAndAlignment - FOOTER_LENGTH, MEMORY_ALIGNMENT) );
 
     return maxFreeSpace;
   }
 
-  u32 MemoryStack::get_totalBytes()
+  s32 MemoryStack::get_totalBytes()
   {
     return totalBytes;
   }
 
-  u32 MemoryStack::get_usedBytes()
+  s32 MemoryStack::get_usedBytes()
   {
     return usedBytes;
   }
