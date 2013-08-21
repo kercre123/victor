@@ -39,6 +39,9 @@ if ~isempty(varargin) && isstruct(varargin{1})
     S = varargin{1};
     varargin = varargin(2:end);
     
+    assert(mod(length(varargin),2)==0, ...
+        'Expecting a list of name/value pairs.');
+
     for i = 1:2:length(varargin)
         if isfield(S, varargin{i})
             % Valid property, assign it:
@@ -59,7 +62,9 @@ if ~isempty(varargin) && isstruct(varargin{1})
     end
     
 else
-    
+    assert(mod(length(varargin),2)==0, ...
+        'Expecting a list of name/value pairs.');
+
     returnUnknowns = nargout > 0;
     
     if returnUnknowns
