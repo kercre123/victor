@@ -41,6 +41,7 @@ matlab.mat
 *.mexmac
 *.mexmaci64
 *.ipch
+*.asv
 matlab/profiling/*
 build/msvc*
 build/xcode*

@@ -78,13 +78,27 @@ for i_region = 1:numRegions
         continue
     end
     
-    try
-        boundary = bwtraceboundary(regionMap == i_region, ...
-            [rowStart colStart], 'N');
-    catch E
-        warning(E.message);
-        continue
+    if strcmp(embeddedConversions.traceBoundaryType, 'matlab_original')
+        try
+            boundary = bwtraceboundary(regionMap == i_region, ...
+                [rowStart colStart], 'N');
+        catch E
+            warning(E.message);
+            continue
+        end
+    elseif strcmp(embeddedConversions.traceBoundaryType, 'matlab_loops')
+        binaryImg = uint8(regionMap == i_region);
+        boundary = traceBoundary(binaryImg, ...
+                [rowStart colStart], 'N');
+    elseif strcmp(embeddedConversions.traceBoundaryType, 'c_fixedPoint')
+        binaryImg = uint8(regionMap == i_region);
+%         keyboard        
+        boundary = mexTraceBoundary(binaryImg, [rowStart, colStart], 'n');
+%         boundary = [];
+    else
+        keyboard
     end
+        
     
     if isempty(boundary)
         continue
@@ -192,7 +206,7 @@ for i_region = 1:numRegions
                         Nside = ceil(N/4);
                         
                         tformIsInitialized = false;
-                        if strcmp(embeddedConversions.homographyEstimationType, 'matlab_cp2tform')
+                        if strcmp(embeddedConversions.homographyEstimationType, 'matlab_original')
                             try
                                 tformInit = cp2tform(corners, [0 0; 0 1; 1 0; 1 1], 'projective');
                                 tformIsInitialized = true;
@@ -226,7 +240,7 @@ for i_region = 1:numRegions
                                     linspace(1,0,Nside)' zeros(Nside,1)]; % bottom
                                 switch(quadRefinementMethod)
                                     case 'ICP'
-                                        if strcmp(embeddedConversions.homographyEstimationType, 'matlab_cp2tform')
+                                        if strcmp(embeddedConversions.homographyEstimationType, 'matlab_original')
                                             tform = ICP(fliplr(boundary), canonicalBoundary, ...
                                                 'projective', 'tformInit', tformInit, ...
                                                 'maxIterations', 10, 'tolerance', .001, ...
@@ -241,6 +255,9 @@ for i_region = 1:numRegions
                                                 'sampleFraction', 1);
 %                                             disp('projective ICP');
 %                                             disp(tform);
+                                            if ~isempty(find(isnan(tform), 1))
+                                                tform = tformInit;
+                                            end
                                         end                                        
                                     case 'fminsearch'
                                         mag = smoothgradient(img, 1);

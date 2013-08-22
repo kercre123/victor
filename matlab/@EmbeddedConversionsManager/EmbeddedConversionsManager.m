@@ -4,16 +4,20 @@ classdef EmbeddedConversionsManager < handle
     properties(GetAccess = 'public', SetAccess = 'protected')
         homographyEstimationType;
         computeCharacteristicScaleImageType;
+        traceBoundaryType;
     end % PROPERTIES (get-public, set-protected)
 
     methods(Access = 'public')
 
         function this = EmbeddedConversionsManager(varargin)
-            homographyEstimationType = 'matlab_cp2tform';
-            homographyEstimationType_acceptable = {'matlab_cp2tform', 'opencv_cp2tform'};
+            homographyEstimationType = 'matlab_original';
+            homographyEstimationType_acceptable = {'matlab_original', 'opencv_cp2tform'};
 
             computeCharacteristicScaleImageType = 'matlab_original';
             computeCharacteristicScaleImageType_acceptable = {'matlab_original', 'matlab_loops', 'matlab_loopsAndFixedPoint', 'matlab_loopsAndFixedPoint_mexFiltering', 'c_fixedPoint'};
+
+            traceBoundaryType = 'matlab_original';
+            traceBoundaryType_acceptable = {'matlab_original', 'matlab_loops', 'c_fixedPoint'};
 
             parseVarargin(varargin{:});
 
@@ -22,23 +26,26 @@ classdef EmbeddedConversionsManager < handle
 
             isAcceptable(computeCharacteristicScaleImageType_acceptable, computeCharacteristicScaleImageType);
             this.computeCharacteristicScaleImageType = computeCharacteristicScaleImageType; %#ok<*PROP>
+
+            isAcceptable(traceBoundaryType_acceptable, traceBoundaryType);
+            this.traceBoundaryType = traceBoundaryType; %#ok<*PROP>
         end
     end % METHODS (public)
 end % classdef OptimizationManager < handle
 
 function isOk = isAcceptable(acceptableList, query)
 
-try
-    isOk = ~isempty(find(ismember(acceptableList, query), 1));
-catch exception
-    exception2 = MException('EmbeddedConversionsManager:isAcceptable', 'The query is not in the list of acceptable queries');
-    exception3 = addCause(exception2, exception);
-    throw(exception3);
-end
+    try
+        isOk = ~isempty(find(ismember(acceptableList, query), 1));
+    catch exception
+        exception2 = MException('EmbeddedConversionsManager:isAcceptable', 'The query is not in the list of acceptable queries');
+        exception3 = addCause(exception2, exception);
+        throw(exception3);
+    end
 
-if ~isOk
-    exception = MException('EmbeddedConversionsManager:isAcceptable', 'The query is not in the list of acceptable queries');
-    throw(exception);
-end
+    if ~isOk
+        exception = MException('EmbeddedConversionsManager:isAcceptable', 'The query is not in the list of acceptable queries');
+        throw(exception);
+    end
 
 end % FUNCTION isAcceptable()

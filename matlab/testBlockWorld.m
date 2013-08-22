@@ -10,7 +10,7 @@
 % testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', false, 'doPause', false);
 
 % testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false, 'embeddedConversions', EmbeddedConversionsManager('homographyEstimationType', 'opencv_cp2tform', 'computeCharacteristicScaleImageType', 'matlab_original'));
-% testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false, 'embeddedConversions', EmbeddedConversionsManager('homographyEstimationType', 'opencv_cp2tform', 'computeCharacteristicScaleImageType', 'matlab_loopsAndFixedPoint'));
+% testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false, 'embeddedConversions', EmbeddedConversionsManager('homographyEstimationType', 'opencv_cp2tform', 'computeCharacteristicScaleImageType', 'c_fixedPoint', 'traceBoundaryType', 'c_fixedPoint'));
 
 function W = testBlockWorld(varargin)
 
@@ -23,7 +23,7 @@ frames = {};
 matFrames = {};
 drawResults = true;
 doPause = true;
-embeddedConversions = EmbeddedConversionsManager('homographyEstimationType', 'matlab_cp2tform');
+embeddedConversions = EmbeddedConversionsManager();
 
 parseVarargin(varargin{:});
 
