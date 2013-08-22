@@ -35,6 +35,10 @@ namespace Anki
   template<typename T> class Point2
   {
   public:
+    Point2( void ) : x(T(0)), y(T(0))
+    {
+    }
+    
     Point2(T x, T y) : x(x), y(y)
     {
     }
@@ -83,6 +87,10 @@ namespace Anki
   template<typename T> class Point3
   {
   public:
+    Point3( void ) : x(T(0)), y(T(0)), z(T(0))
+    {
+    }
+    
     Point3(T x, T y, T z) : x(x), y(y), z(z)
     {
     }
