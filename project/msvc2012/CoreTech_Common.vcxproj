@@ -73,7 +73,7 @@
     <ClCompile>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;_VARIADIC_MAX=10;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)/../../include;$(ProjectDir)/../../../coretech-common/include;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/contrib/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/core/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/features2d/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/flann/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/highgui/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/imgproc/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/legacy/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/ml/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/nonfree/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/objdetect/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/ocl/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/photo/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/stitching/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/superres/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/ts/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/video/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/videostab/include/;$(ProjectDir)/../../../coretech-external/opencv-2.4.6.1/modules/world/include/;$(ANKI_MATLAB_PATH)/extern/include/</AdditionalIncludeDirectories>
@@ -88,7 +88,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>

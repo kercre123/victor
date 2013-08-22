@@ -38,7 +38,7 @@ namespace Anki
     Point2( void ) : x(T(0)), y(T(0))
     {
     }
-    
+
     Point2(T x, T y) : x(x), y(y)
     {
     }
@@ -70,7 +70,7 @@ namespace Anki
       return Point2(point1.x-point2.x, point1.y-point2.y);
     }
 
-    // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Matrix. No data is copied.
+    // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Array2dUnmanaged. No data is copied.
     cv::Point_<T>& get_CvPoint_()
     {
       return cv::Point_<T>(x,y);
@@ -81,8 +81,7 @@ namespace Anki
   }; // class Point2<T>
 
   typedef Point2<float> Point2f;
-  
-  
+
   // 3D Point Class:
   template<typename T> class Point3
   {
@@ -90,7 +89,7 @@ namespace Anki
     Point3( void ) : x(T(0)), y(T(0)), z(T(0))
     {
     }
-    
+
     Point3(T x, T y, T z) : x(x), y(y), z(z)
     {
     }
@@ -122,7 +121,7 @@ namespace Anki
       return Point3(point1.x-point2.x, point1.y-point2.y, point1.z+point2.z);
     }
 
-    // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Matrix. No data is copied.
+    // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Array2dUnmanaged. No data is copied.
     cv::Point3_<T>& get_CvPoint3_()
     {
       return cv::Point3_<T>(x,y,z);
@@ -131,12 +130,11 @@ namespace Anki
 
     T x, y, z;
   }; // class Point3<T>
-  
+
   typedef Point3<float> Point3f;
-  
+
   // TODO: Do we really need a separate Vec3 class or is it the same as Point3?
   typedef Point3<float> Vec3f;
-  
 } // namespace Anki
 
 #endif // #ifndef _ANKICORETECH_COMMON_DATASTRUCTURES_H_

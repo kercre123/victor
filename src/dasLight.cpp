@@ -17,6 +17,8 @@
 extern "C" {
 #endif
 
+#pragma warning(push)
+#pragma warning(disable: 4100) // Unreference formal parameter
   void _DAS_Logf(DASLogLevel level, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
     char renderedLogString[2048];
@@ -38,6 +40,7 @@ extern "C" {
     va_end(argList);
     fflush(stdout);
   }
+#pragma warning(pop)
 
 #ifdef __cplusplus
 } // extern "C"
