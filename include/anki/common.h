@@ -3,7 +3,7 @@
 
 #include "anki/common/config.h"
 
-#include "anki/common/matrix.h"
+#include "anki/common/array2d.h"
 #include "anki/common/memory.h"
 #include "anki/common/utilities.h"
 #include "anki/common/DASlight.h"
