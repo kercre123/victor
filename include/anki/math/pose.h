@@ -1,15 +1,16 @@
 #ifndef _ANKICORETECH_MATH_POSE_H_
 #define _ANKICORETECH_MATH_POSE_H_
 
-#include "anki/common.h"
+#include "anki/math/config.h"
 
 namespace Anki {
-  
-  // Rodrigues' formula for converting between angle+axis representation and 3x3
-  // matrix representation.
-  // TODO: Move to a more general include file?
-  Result Rodrigues(const Vec3f  &Rvec_in, Mat3x3 &Rmat_out);
-  Result Rodrigues(const Mat3x3 &Rmat_in, Vec3f  &Rvec_out);
+
+  // Forward declarations of types used below:
+  class Vec3f;
+  class Point3f;
+  class Mat3x3;
+  class Mat6x6;
+ 
   
   // A class for encapsulating 6DOF pose (3D translation plus 3-axis rotation).
   class Pose { // TODO: rename to Pose6DOF?
