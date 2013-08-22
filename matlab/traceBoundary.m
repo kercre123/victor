@@ -54,7 +54,7 @@ if nargout == 2
     boundaryImg(curPoint(1), curPoint(2)) = curBoundaryIndex;
 end
 
-while true
+while size(boundary,1) < 5000
     % Search counter-clockwise until we find a 0
    zeroDirection = findNewDirection(binaryImg, curPoint, curDirection, 0);
    if zeroDirection == -1
@@ -79,9 +79,8 @@ while true
     end
     
     % If the new point is the same as the last point (or second-to-last to detect oscillations), quit.
-    if sum(newPoint == boundary(end-1,:)) == 2            
-%     if sum(newPoint == boundary(end-1,:)) == 2
-%         || (size(boundary,1)>2 && sum(newPoint == boundary(end-2,:)) == 2)
+    if sum(newPoint == boundary(end-1,:)) == 2 ...
+        || (size(boundary,1)>2 && sum(newPoint == boundary(end-2,:)) == 2)
         break;
     end
     
@@ -102,6 +101,9 @@ while true
     end
 end % while true
 
+if size(boundary,1) > 4000
+    keyboard;
+end
 
 end % function boundary = traceBoundary(binaryImg, startPoint, initialDirection)
 
