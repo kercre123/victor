@@ -82,6 +82,10 @@ namespace Anki
     // Similar to Matlab's size(matrix, dimension), and dimension is in {0,1}
     s32 get_size(s32 dimension) const;
     
+    inline s32 get_nrows(void) const;
+    inline s32 get_ncols(void) const;
+    inline s32 get_numElements(void) const;
+    
     s32 get_stride() const;
 
     void* get_rawDataPointer();
@@ -390,6 +394,24 @@ namespace Anki
       return 0;
     
     return size[dimension];
+  }
+  
+  template<typename T>
+  s32 Matrix<T>::get_nrows(void) const
+  {
+    return this->size[0];
+  }
+  
+  template<typename T>
+  s32 Matrix<T>::get_ncols(void) const
+  {
+    return this->size[1];
+  }
+  
+  template<typename T>
+  s32 Matrix<T>::get_numElements(void) const
+  {
+    return (this->size[0] * this->size[1]);
   }
   
   template<typename T>
