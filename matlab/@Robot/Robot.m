@@ -95,10 +95,16 @@ classdef Robot < handle
                 %this.appearance.BodyLength/2; ...
                 %this.appearance.BodyHeight + this.appearance.EyeRadius];
         
+            % Add uncertainty for Camera pose(s) w.r.t. robot?
+            %   1 degree uncertainty in rotation
+            %   .1mm uncertainty in translation
+            Rcov = pi/180*eye(3); 
+            Tcov = (.1)^2*eye(3);
+            camPoseCov = blkdiag(Rcov,Tcov);
             this.camera = Camera('device', CameraDevice, ...
                 'deviceType', CameraType, ...
                 'calibration', CameraCalibration, ...
-                'pose', Pose(Rrc, Trc));
+                'pose', Pose(Rrc, Trc, camPoseCov));
             
             if (isempty(this.world) && ~isempty(MatCameraDevice)) ...
                     || (~isempty(this.world) && this.world.hasMat)
@@ -109,7 +115,7 @@ classdef Robot < handle
                 this.matCamera = Camera('device', MatCameraDevice, ...
                     'deviceType', CameraType, ...
                     'calibration', MatCameraCalibration, ...
-                    'pose', inv(Pose(Rrc, Trc)));
+                    'pose', inv(Pose(Rrc, Trc, camPoseCov)));
             end
         end
         
