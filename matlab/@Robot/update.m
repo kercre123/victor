@@ -8,7 +8,7 @@ end
 
 this.observationWindow(2:end) = this.observationWindow(1:end-1);
 
-if this.world.hasMat
+if ~isempty(this.world) && this.world.hasMat
     assert(~isempty(this.matCamera), ...
         'Robot in a BlockWorld with a Mat must have a matCamera defined.');
     
