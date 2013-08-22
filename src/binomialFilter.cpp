@@ -8,11 +8,10 @@ namespace Anki
   //% imgFiltered is UQ8.0
   //% Handles edges by replicating the border pixel
   //function imgFiltered = binomialFilter(img)
-  //Result BinomialFilter(const Matrix<u8> &img, Matrix<u8> &imgFiltered, MemoryStack scratch)
-  Result BinomialFilter(const Matrix<u8> &img, Matrix<u8> &imgFiltered, MemoryStack scratch)
+  //Result BinomialFilter(const Array2dUnmanaged<u8> &img, Array2dUnmanaged<u8> &imgFiltered, MemoryStack scratch)
+  Result BinomialFilter(const Array2dUnmanaged<u8> &img, Array2dUnmanaged<u8> &imgFiltered, MemoryStack scratch)
   {
     const u32 kernel[BINOMIAL_KERNEL_SIZE] = {1, 4, 6, 4, 1};
-    const s32 kernelSum = 16;
     const s32 kernelShift = 4;
 
     DASConditionalErrorAndReturnValue(img.IsValid(),
@@ -21,8 +20,8 @@ namespace Anki
     DASConditionalErrorAndReturnValue(imgFiltered.IsValid(),
       RESULT_FAIL, "BinomialFilter", "imgFiltered is not valid");
 
-    assert(kernelSum == (kernel[0] + kernel[1] + kernel[2] + kernel[3] + kernel[4]));
-    assert(kernelSum == (1 << kernelShift));
+    assert(16 == (kernel[0] + kernel[1] + kernel[2] + kernel[3] + kernel[4]));
+    assert(16 == (1 << kernelShift));
 
     DASConditionalErrorAndReturnValue(AreMatricesEqual_SizeAndType<u8>(img, imgFiltered),
       RESULT_FAIL, "BinomialFilter", "size(img) != size(imgFiltered) (%dx%d != %dx%d)", img.get_size(0), img.get_size(1), img.get_size(0), img.get_size(1));
@@ -39,7 +38,7 @@ namespace Anki
       RESULT_FAIL, "BinomialFilter", "Insufficient scratch memory");
 
     //imgFilteredTmp = zeros(size(img), 'uint32');
-    Matrix<u32> imgFilteredTmp(height, width, scratch);
+    Array2dUnmanaged<u32> imgFilteredTmp(height, width, scratch);
 
     //% 1. Horizontally filter
     for(s32 y=0; y<height; y++) {
@@ -83,13 +82,13 @@ namespace Anki
         //imgFiltered(1,x) = uint8( filtered0/(kernelSum^2) );
         const u32 filtered0 = imgFilteredTmp_rowPointerY0[x]*kernel[2] + imgFilteredTmp_rowPointerY1[x]*kernel[3] + imgFilteredTmp_rowPointerY2[x]*kernel[4] +
           imgFilteredTmp_rowPointerY0[x]*(kernel[0]+kernel[1]);
-        imgFiltered_rowPointerY0[x] = filtered0 >> (2*kernelShift);
+        imgFiltered_rowPointerY0[x] = static_cast<u8>(filtered0 >> (2*kernelShift));
 
         //filtered1 = sum(imgFilteredTmp(1:4,x) .* kernelU32(2:end)') + imgFilteredTmp(1,x)*kernelU32(1);
         //imgFiltered(2,x) = uint8( filtered1/(kernelSum^2) );
         const u32 filtered1 = imgFilteredTmp_rowPointerY0[x]*kernel[1] + imgFilteredTmp_rowPointerY1[x]*kernel[2] + imgFilteredTmp_rowPointerY2[x]*kernel[3] + imgFilteredTmp_rowPointerY3[x]*kernel[4] +
           imgFilteredTmp_rowPointerY0[x]*kernel[0];
-        imgFiltered_rowPointerY1[x] = filtered1 >> (2*kernelShift);
+        imgFiltered_rowPointerY1[x] = static_cast<u8>(filtered1 >> (2*kernelShift));
       }
     }
 
@@ -106,7 +105,7 @@ namespace Anki
       for(s32 x=0; x<width; x++) {
         // imgFiltered(y,x) = uint8( sum(imgFilteredTmp((y-2):(y+2),x) .* kernelU32') / (kernelSum^2) );
         const u32 filtered = imgFilteredTmp_rowPointerYm2[x]*kernel[0] + imgFilteredTmp_rowPointerYm1[x]*kernel[1] + imgFilteredTmp_rowPointerY0[x]*kernel[2] + imgFilteredTmp_rowPointerYp1[x]*kernel[3] + imgFilteredTmp_rowPointerYp2[x]*kernel[4];
-        imgFiltered_rowPointerY[x] = filtered >> (2*kernelShift);
+        imgFiltered_rowPointerY[x] = static_cast<u8>(filtered >> (2*kernelShift));
       }
     }
 
@@ -124,13 +123,13 @@ namespace Anki
         //imgFiltered(size(img,1)-1,x) = uint8( filtered0/(kernelSum^2) );
         const u32 filteredm1 = imgFilteredTmp_rowPointerYm3[x]*kernel[0] + imgFilteredTmp_rowPointerYm2[x]*kernel[1] + imgFilteredTmp_rowPointerYm1[x]*kernel[2] +
           imgFilteredTmp_rowPointerYm1[x]*(kernel[3]+kernel[4]);
-        imgFiltered_rowPointerYm1[x] = filteredm1 >> (2*kernelShift);
+        imgFiltered_rowPointerYm1[x] = static_cast<u8>(filteredm1 >> (2*kernelShift));
 
         //filtered1 = sum(imgFilteredTmp((size(img,1)-2):size(img,1),x) .* kernelU32(1:(end-2))') + imgFilteredTmp(size(img,1),x)*sum(kernelU32((end-1):end));
         //imgFiltered(size(img,1),x) = uint8( filtered1/(kernelSum^2) );
         const u32 filteredm2 = imgFilteredTmp_rowPointerYm4[x]*kernel[0] + imgFilteredTmp_rowPointerYm3[x]*kernel[1] + imgFilteredTmp_rowPointerYm2[x]*kernel[2] + imgFilteredTmp_rowPointerYm1[x]*kernel[3] +
           imgFilteredTmp_rowPointerYm1[x]*kernel[4];
-        imgFiltered_rowPointerYm2[x] = filteredm2 >> (2*kernelShift);
+        imgFiltered_rowPointerYm2[x] = static_cast<u8>(filteredm2 >> (2*kernelShift));
       }
     }
 

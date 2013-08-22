@@ -2,7 +2,7 @@
 
 namespace Anki
 {
-  Result DownsampleByFactor(const Matrix<u8> &img, s32 downsampleFactor, Matrix<u8> &imgDownsampled)
+  Result DownsampleByFactor(const Array2dUnmanaged<u8> &img, s32 downsampleFactor, Array2dUnmanaged<u8> &imgDownsampled)
   {
     DASConditionalErrorAndReturnValue(img.IsValid(),
       RESULT_FAIL, "DownsampleByFactor", "img is not valid");

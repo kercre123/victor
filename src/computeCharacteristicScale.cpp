@@ -5,7 +5,7 @@ namespace Anki
 #define MAX_PYRAMID_LEVELS 8
 #define MAX_ALPHAS 128
   // //function scaleImage = computeCharacteristicScaleImage_loopsAndFixedPoint(img, numLevels, computeDogAtFullSize, filterWithMex)
-  Result ComputeCharacteristicScaleImage(const Matrix<u8> &img, s32 numLevels, FixedPointMatrix<u32> &scaleImage, MemoryStack scratch)
+  Result ComputeCharacteristicScaleImage(const Array2dUnmanaged<u8> &img, s32 numLevels, Array2dUnmanagedFixedPoint<u32> &scaleImage, MemoryStack scratch)
   {
     //double times[20];
 
@@ -33,14 +33,14 @@ namespace Anki
 
     //scaleImage = uint32(img)*(2^8); % UQ16.16
     //dogMax = zeros(fullSizeHeight,fullSizeWidth,'uint32'); % UQ16.16
-    FixedPointMatrix<u32> dogMax(fullSizeHeight, fullSizeWidth, 16, scratch); // UQ16.16
+    Array2dUnmanagedFixedPoint<u32> dogMax(fullSizeHeight, fullSizeWidth, 16, scratch); // UQ16.16
     dogMax.Set(0);
 
     //imgPyramid = cell(1, numLevels+1);
-    Matrix<u8> imgPyramid[MAX_PYRAMID_LEVELS+1];
-    imgPyramid[0] = Matrix<u8>(fullSizeHeight, fullSizeWidth, scratch, false);
+    Array2dUnmanaged<u8> imgPyramid[MAX_PYRAMID_LEVELS+1];
+    imgPyramid[0] = Array2dUnmanaged<u8>(fullSizeHeight, fullSizeWidth, scratch, false);
     for(s32 i=1; i<=numLevels; i++) {
-      imgPyramid[i] = Matrix<u8>(fullSizeHeight >> i, fullSizeWidth >> i, scratch, false);
+      imgPyramid[i] = Array2dUnmanaged<u8>(fullSizeHeight >> i, fullSizeWidth >> i, scratch, false);
     }
 
     //scaleFactors = int32(2.^[0:(numLevels)]); %#ok<NBRAK>
@@ -58,8 +58,8 @@ namespace Anki
     /*{
     Anki::Matlab matlab(false);
 
-    matlab.PutMatrix(img, "img");
-    matlab.PutMatrix(imgPyramid[0], "imgPyramid");
+    matlab.PutArray2dUnmanaged(img, "img");
+    matlab.PutArray2dUnmanaged(imgPyramid[0], "imgPyramid");
     }*/
 
     /*
@@ -72,7 +72,7 @@ namespace Anki
       MemoryStack scratch(scratch); // Push the current state of the scratch buffer onto the system stack
 
       //    curPyramidLevel = imgPyramid{pyramidLevel-1}; %UQ8.0
-      const Matrix<u8> curPyramidLevel = imgPyramid[pyramidLevel-1]; // UQ8.0
+      const Array2dUnmanaged<u8> curPyramidLevel = imgPyramid[pyramidLevel-1]; // UQ8.0
       const s32 curLevelHeight = curPyramidLevel.get_size(0);
       const s32 curLevelWidth = curPyramidLevel.get_size(1);
 
@@ -81,14 +81,14 @@ namespace Anki
       //    else
       //        curPyramidLevelBlurred = binomialFilter_loopsAndFixedPoint(curPyramidLevel); %UQ8.0
       //    end
-      Matrix<u8> curPyramidLevelBlurred(curPyramidLevel.get_size(0), curPyramidLevel.get_size(1), scratch);
+      Array2dUnmanaged<u8> curPyramidLevelBlurred(curPyramidLevel.get_size(0), curPyramidLevel.get_size(1), scratch);
 
       DASConditionalErrorAndReturnValue(BinomialFilter(curPyramidLevel, curPyramidLevelBlurred, scratch) == RESULT_OK,
         RESULT_FAIL, "ComputeCharacteristicScaleImage", "In-loop BinomialFilter failed");
 
       //    largeDoG = zeros([fullSizeHeight,fullSizeWidth],'uint32'); % UQ16.16
 #if ANKI_DEBUG_LEVEL > ANKI_DEBUG_OFF
-      Matrix<u32> largeDog(fullSizeHeight, fullSizeWidth, scratch);
+      Array2dUnmanaged<u32> largeDog(fullSizeHeight, fullSizeWidth, scratch);
       largeDog.Set(0);
 #endif
 
@@ -127,11 +127,11 @@ namespace Anki
         //{
         //  Anki::Matlab matlab(false);
 
-        //  matlab.PutMatrix(curPyramidLevel, "curPyramidLevel_c");
-        //  matlab.PutMatrix(curPyramidLevelBlurred, "curPyramidLevelBlurred_c");
-        //  matlab.PutMatrix(dogMax, "dogMax_c");
-        //  matlab.PutMatrix(scaleImage, "scaleImage_c");
-        //  matlab.PutMatrix(largeDog, "largeDog_c");
+        //  matlab.PutArray2dUnmanaged(curPyramidLevel, "curPyramidLevel_c");
+        //  matlab.PutArray2dUnmanaged(curPyramidLevelBlurred, "curPyramidLevelBlurred_c");
+        //  matlab.PutArray2dUnmanaged(dogMax, "dogMax_c");
+        //  matlab.PutArray2dUnmanaged(scaleImage, "scaleImage_c");
+        //  matlab.PutArray2dUnmanaged(largeDog, "largeDog_c");
         //  printf("\n");
         //}
       } else if (pyramidLevel < 5) { //    elseif pyramidLevel <= 5 % if pyramidLevel == 2
@@ -229,11 +229,11 @@ namespace Anki
         /*{
         Anki::Matlab matlab(false);
 
-        matlab.PutMatrix(curPyramidLevel, "curPyramidLevel_c");
-        matlab.PutMatrix(curPyramidLevelBlurred, "curPyramidLevelBlurred_c");
-        matlab.PutMatrix(dogMax, "dogMax_c");
-        matlab.PutMatrix(scaleImage, "scaleImage_c");
-        matlab.PutMatrix(largeDog, "largeDog_c");
+        matlab.PutArray2dUnmanaged(curPyramidLevel, "curPyramidLevel_c");
+        matlab.PutArray2dUnmanaged(curPyramidLevelBlurred, "curPyramidLevelBlurred_c");
+        matlab.PutArray2dUnmanaged(dogMax, "dogMax_c");
+        matlab.PutArray2dUnmanaged(scaleImage, "scaleImage_c");
+        matlab.PutArray2dUnmanaged(largeDog, "largeDog_c");
         printf("\n");
         }*/
       } else {         //    else % if pyramidLevel == 2 ... elseif pyramidLevel <= 5
@@ -309,11 +309,11 @@ namespace Anki
         {
         Anki::Matlab matlab(false);
 
-        matlab.PutMatrix(curPyramidLevel, "curPyramidLevel_c");
-        matlab.PutMatrix(curPyramidLevelBlurred, "curPyramidLevelBlurred_c");
-        matlab.PutMatrix(dogMax, "dogMax_c");
-        matlab.PutMatrix(scaleImage, "scaleImage_c");
-        matlab.PutMatrix(largeDog, "largeDog_c");
+        matlab.PutArray2dUnmanaged(curPyramidLevel, "curPyramidLevel_c");
+        matlab.PutArray2dUnmanaged(curPyramidLevelBlurred, "curPyramidLevelBlurred_c");
+        matlab.PutArray2dUnmanaged(dogMax, "dogMax_c");
+        matlab.PutArray2dUnmanaged(scaleImage, "scaleImage_c");
+        matlab.PutArray2dUnmanaged(largeDog, "largeDog_c");
         printf("\n");
         }*/
       }   //    end % if k == 2 ... else
@@ -328,7 +328,7 @@ namespace Anki
     //printf("t20-t0 = %f\n", times[19]-times[0]);
 
     return Anki::RESULT_OK;
-  } // Result ComputeCharacteristicScaleImage(const Matrix<u8> &img, s32 numLevels, Matrix<u32> &scaleImage, MemoryStack scratch)
+  } // Result ComputeCharacteristicScaleImage(const Array2dUnmanaged<u8> &img, s32 numLevels, Array2dUnmanaged<u32> &scaleImage, MemoryStack scratch)
 
   //end % FUNCTION computeCharacteristicScaleImage()
   //

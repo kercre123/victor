@@ -10,7 +10,7 @@ namespace Anki
   //const s32 dys[NUM_DIRECTIONS] = {-1, -1, 0, 1, 1, 1, 0, -1};
 
   //function newDirection = findNewDirection(img, curPoint, curDirection, value)
-  static BoundaryDirection FindNewDirection(const Matrix<u8> &binaryImg, const Point2<s16> &curPoint, const BoundaryDirection curDirection, const u8 value)
+  static BoundaryDirection FindNewDirection(const Array2dUnmanaged<u8> &binaryImg, const Point2<s16> &curPoint, const BoundaryDirection curDirection, const u8 value)
   {
     BoundaryDirection newDirection = BOUNDARY_UNKNOWN;
 
@@ -47,7 +47,7 @@ namespace Anki
     return BOUNDARY_UNKNOWN;
   }
 
-  Result TraceBoundary(const Matrix<u8> &binaryImg, const Point2<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point2<s16>> &boundary)
+  Result TraceBoundary(const Array2dUnmanaged<u8> &binaryImg, const Point2<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point2<s16>> &boundary)
   {
     DASConditionalErrorAndReturnValue(binaryImg.IsValid(),
       RESULT_FAIL, "TraceBoundary", "binaryImg is not valid");
@@ -83,7 +83,7 @@ namespace Anki
     //curPoint = [startPoint(1), startPoint(2)];
     Point2<s16> curPoint(startPoint);
 
-    DASConditionalErrorAndReturnValue(*(binaryImg.Pointer(curPoint)) == 1,
+    DASConditionalErrorAndReturnValue(*(binaryImg.Pointer(curPoint)) != 0,
       RESULT_FAIL, "TraceBoundary", "startPoint must be on a non-zero pixel of binaryImg");
 
     // printf("0) %d %d\n", curPoint.y+1, curPoint.x+1);
