@@ -77,6 +77,10 @@ else
     P = pose.applyTo(P);
 end
 
+% Only keep Points in front of the camera (those with positive Z 
+% coordinate, now that P is in the camera's frame)
+invisible = P(:,3)<0;
+    
 if length(this.distortionCoeffs)>4 && this.distortionCoeffs(5)~=0
     warning('Ignoring fifth-order non-zero radial distortion');
 end
@@ -86,6 +90,9 @@ b = P(:,2) ./ P(:,3);
 [uDistorted, vDistorted] = this.distort(a, b);
 u = this.focalLength(1) * uDistorted + this.center(1);
 v = this.focalLength(2) * vDistorted + this.center(2);
+    
+u(invisible) = -1;
+v(invisible) = -1;
 
 if nargout==1
     varargout{1} = [u v];

@@ -4,6 +4,7 @@ maxRefineIterations = 20;
 initializeWithCurrentPose = false;
 changeThreshold = 1e-10;
 ridgeWeight = 1e-2;
+useCovariance = true;
 
 parseVarargin(varargin{:});
 
@@ -68,9 +69,12 @@ end % IF do refinement
 
 % Put camera coordinates into "world" coordinates (or the coordinates of
 % whatever is holding this camera, e.g. a Robot)
-poseCov = inv(JtJ);
-P = this.pose * Pose(Rmat, T, poseCov);
-%F = Frame(Rmat, T);
+if useCovariance
+    poseCov = inv(JtJ);
+    P = this.pose * Pose(Rmat, T, poseCov);
+else
+    P = this.pose * Pose(Rmat, T); %#ok<UNRCH>
+end
 
 switch(nargout)
     case 3
