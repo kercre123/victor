@@ -121,6 +121,41 @@ namespace Anki
     
   }; // class Matrix
   
+#pragma mark --- Array2d(Managed) Class Definition ---
+  
+  // A version of Array2d that offers internal memory allocation/deallocation,
+  // but retains the embedded-platform-friendly memory alignment of the parent
+  // class:
+  template<typename T>
+  class Array2d : public Matrix<T> // TODO: replace "Matrix" here with "Array2dUnmanaged"
+  {
+  public:
+    Array2d(s32 nrows, s32 ncols, bool useBoundaryFillPatterns = false);
+    
+  protected:
+    using Matrix<T>::initialize;     // TODO: replace "Matrix" here with "Array2dUnmanaged"
+    
+    // Remove non-const access to raw data pointer inherited from parent class
+    void* get_rawDataPointer();
+    
+    // Currently using OpenCv to manage the data. It will allocate the data
+    // according to the type, and most importantly for us, it gives us nice
+    // smart pointers that handle the deallocation when nobody is still using
+    // the data, allowing us to get "free" assignment without lots of unneeded
+    // copying.
+    cv::Mat_<T> dataManager;
+    int refCount;
+    
+  }; // class Array2d(Managed)
+  
+  
+  // An alternate name to explicitly differentiate Managed vs. Unmanaged
+  // Unfortunately can't use typedef simply (?):
+  //    typedef Array2d Array2dManaged;
+  // But this #define seems like a *horrible* idea:
+  // TODO: Better solution to get an "alias" for Array2dManaged
+#define Array2dManaged Array2d
+  
   
 # pragma mark --- FixedPointMatrix Definition ---
   
@@ -529,6 +564,35 @@ namespace Anki
     return numValuesSet;
   }
 
+  
+#pragma mark --- Array2d(Managed) Implementation ---
+  
+  // This constructor uses the OpenCv managedData matrix to allocate the data,
+  // and then points the inherited (unmanaged) data pointer to that.
+  template<typename T>
+  Array2d<T>::Array2d(s32 numRows, s32 numCols, bool useBoundaryFillPatterns)
+  {
+    
+    // Allocate a memory-aligned array the way we'd expect a user of the
+    // UNmanaged parent class to do it:
+    // TODO: replace "Matrix" here with "Array2dUnmanaged"
+    this->stride = Matrix<T>::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
+    s32 dataLength = Matrix<T>::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns);
+    void *rawData = cv::fastMalloc(dataLength);
+    
+    initialize(numRows, numCols, rawData, dataLength, useBoundaryFillPatterns);
+    
+    // Create an OpenCv header around our data array
+    this->dataManager = cv::Mat_<T>(numRows, numCols, (T *) this->data);
+    
+    // "Trick" OpenCv into doing reference counting, even though we passed in
+    // our own data array.  So now when this class destructs and dataManager
+    // destructs, it will free this->data for us.
+    this->refCount = 1;
+    this->dataManager.refCount = &(this->refCount);
+    
+  } // Constructor: Array2d(rows,cols)
+  
 
 
 #pragma mark --- FixedPointMatrix Implementations ---
