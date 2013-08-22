@@ -141,7 +141,7 @@ namespace Anki
         return -1;
       }
 
-      const mwSize dims[1] = {nValues};
+      const mwSize dims[1] = {static_cast<mwSize>(nValues)};
       const mxClassID matlabType = Anki::ConvertToMatlabType(typeid(T).name(), sizeof(T));
       mxArray *arrayTmp = mxCreateNumericArray(1, &dims[0], matlabType, mxREAL);
       T *matlabBufferTmp = (T*) mxGetPr(arrayTmp);
