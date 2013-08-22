@@ -178,23 +178,23 @@ TEST(CoreTech_Common, SimpleMatlabTest1)
 #if defined(ANKICORETECH_USE_MATLAB)
 TEST(CoreTech_Common, SimpleMatlabTest2)
 {
-  matlab.EvalStringEcho("simpleMatrix = int16([1,2,3,4,5;6,7,8,9,10]);");
-  Anki::Matrix<s16> simpleMatrix = matlab.GetMatrix<s16>("simpleMatrix");
+  matlab.EvalStringEcho("simpleArray2dUnmanaged = int16([1,2,3,4,5;6,7,8,9,10]);");
+  Anki::Array2dUnmanaged<s16> simpleArray2dUnmanaged = matlab.GetArray2dUnmanaged<s16>("simpleArray2dUnmanaged");
   printf("simple matrix:\n");
-  simpleMatrix.Print();
+  simpleArray2dUnmanaged.Print();
 
-  ASSERT_EQ(1, *simpleMatrix.Pointer(0,0));
-  ASSERT_EQ(2, *simpleMatrix.Pointer(0,1));
-  ASSERT_EQ(3, *simpleMatrix.Pointer(0,2));
-  ASSERT_EQ(4, *simpleMatrix.Pointer(0,3));
-  ASSERT_EQ(5, *simpleMatrix.Pointer(0,4));
-  ASSERT_EQ(6, *simpleMatrix.Pointer(1,0));
-  ASSERT_EQ(7, *simpleMatrix.Pointer(1,1));
-  ASSERT_EQ(8, *simpleMatrix.Pointer(1,2));
-  ASSERT_EQ(9, *simpleMatrix.Pointer(1,3));
-  ASSERT_EQ(10, *simpleMatrix.Pointer(1,4));
+  ASSERT_EQ(1, *simpleArray2dUnmanaged.Pointer(0,0));
+  ASSERT_EQ(2, *simpleArray2dUnmanaged.Pointer(0,1));
+  ASSERT_EQ(3, *simpleArray2dUnmanaged.Pointer(0,2));
+  ASSERT_EQ(4, *simpleArray2dUnmanaged.Pointer(0,3));
+  ASSERT_EQ(5, *simpleArray2dUnmanaged.Pointer(0,4));
+  ASSERT_EQ(6, *simpleArray2dUnmanaged.Pointer(1,0));
+  ASSERT_EQ(7, *simpleArray2dUnmanaged.Pointer(1,1));
+  ASSERT_EQ(8, *simpleArray2dUnmanaged.Pointer(1,2));
+  ASSERT_EQ(9, *simpleArray2dUnmanaged.Pointer(1,3));
+  ASSERT_EQ(10, *simpleArray2dUnmanaged.Pointer(1,4));
 
-  free(simpleMatrix.get_rawDataPointer());
+  free(simpleArray2dUnmanaged.get_rawDataPointer());
 }
 #endif //#if defined(ANKICORETECH_USE_MATLAB)
 
@@ -241,74 +241,96 @@ TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   Anki::MemoryStack ms(buffer, numBytes);
 
   // Create a matrix, and manually set a few values
-  Anki::Matrix<s16> simpleMatrix(10, 6, ms);
-  ASSERT_TRUE(simpleMatrix.get_rawDataPointer() != NULL);
-  *simpleMatrix.Pointer(0,0) = 1;
-  *simpleMatrix.Pointer(0,1) = 2;
-  *simpleMatrix.Pointer(0,2) = 3;
-  *simpleMatrix.Pointer(0,3) = 4;
-  *simpleMatrix.Pointer(0,4) = 5;
-  *simpleMatrix.Pointer(0,5) = 6;
-  *simpleMatrix.Pointer(2,0) = 7;
-  *simpleMatrix.Pointer(2,1) = 8;
-  *simpleMatrix.Pointer(2,2) = 9;
-  *simpleMatrix.Pointer(2,3) = 10;
-  *simpleMatrix.Pointer(2,4) = 11;
-  *simpleMatrix.Pointer(2,5) = 12;
+  Anki::Array2dUnmanaged<s16> simpleArray2dUnmanaged(10, 6, ms);
+  ASSERT_TRUE(simpleArray2dUnmanaged.get_rawDataPointer() != NULL);
+  *simpleArray2dUnmanaged.Pointer(0,0) = 1;
+  *simpleArray2dUnmanaged.Pointer(0,1) = 2;
+  *simpleArray2dUnmanaged.Pointer(0,2) = 3;
+  *simpleArray2dUnmanaged.Pointer(0,3) = 4;
+  *simpleArray2dUnmanaged.Pointer(0,4) = 5;
+  *simpleArray2dUnmanaged.Pointer(0,5) = 6;
+  *simpleArray2dUnmanaged.Pointer(2,0) = 7;
+  *simpleArray2dUnmanaged.Pointer(2,1) = 8;
+  *simpleArray2dUnmanaged.Pointer(2,2) = 9;
+  *simpleArray2dUnmanaged.Pointer(2,3) = 10;
+  *simpleArray2dUnmanaged.Pointer(2,4) = 11;
+  *simpleArray2dUnmanaged.Pointer(2,5) = 12;
 
 #if defined(ANKICORETECH_USE_MATLAB)
   // Check that the Matlab transfer works (you need to check the Matlab window to verify that this works)
-  matlab.PutMatrix(simpleMatrix, "simpleMatrix");
+  matlab.PutArray2dUnmanaged(simpleArray2dUnmanaged, "simpleArray2dUnmanaged");
 #endif //#if defined(ANKICORETECH_USE_MATLAB)
 
 #if defined(ANKICORETECH_USE_OPENCV)
   // Check that the templated OpenCV matrix works
   {
-    cv::Mat_<s16> &simpleMatrix_cvMat = simpleMatrix.get_CvMat_();
-    std::cout << "simpleMatrix(2,0) = " << *simpleMatrix.Pointer(2,0) << "\nsimpleMatrix_cvMat(2,0) = " << simpleMatrix_cvMat(2,0) << "\n";
-    ASSERT_EQ(7, *simpleMatrix.Pointer(2,0));
-    ASSERT_EQ(7, simpleMatrix_cvMat(2,0));
+    cv::Mat_<s16> &simpleArray2dUnmanaged_cvMat = simpleArray2dUnmanaged.get_CvMat_();
+    std::cout << "simpleArray2dUnmanaged(2,0) = " << *simpleArray2dUnmanaged.Pointer(2,0) << "\nsimpleArray2dUnmanaged_cvMat(2,0) = " << simpleArray2dUnmanaged_cvMat(2,0) << "\n";
+    ASSERT_EQ(7, *simpleArray2dUnmanaged.Pointer(2,0));
+    ASSERT_EQ(7, simpleArray2dUnmanaged_cvMat(2,0));
 
     std::cout << "Setting OpenCV matrix\n";
-    simpleMatrix_cvMat(2,0) = 100;
-    std::cout << "simpleMatrix(2,0) = " << *simpleMatrix.Pointer(2,0) << "\nsimpleMatrix_cvMat(2,0) = " << simpleMatrix_cvMat(2,0) << "\n";
-    ASSERT_EQ(100, *simpleMatrix.Pointer(2,0));
-    ASSERT_EQ(100, simpleMatrix_cvMat(2,0));
+    simpleArray2dUnmanaged_cvMat(2,0) = 100;
+    std::cout << "simpleArray2dUnmanaged(2,0) = " << *simpleArray2dUnmanaged.Pointer(2,0) << "\nsimpleArray2dUnmanaged_cvMat(2,0) = " << simpleArray2dUnmanaged_cvMat(2,0) << "\n";
+    ASSERT_EQ(100, *simpleArray2dUnmanaged.Pointer(2,0));
+    ASSERT_EQ(100, simpleArray2dUnmanaged_cvMat(2,0));
 
     std::cout << "Setting CoreTech_Common matrix\n";
-    *simpleMatrix.Pointer(2,0) = 42;
-    std::cout << "simpleMatrix(2,0) = " << *simpleMatrix.Pointer(2,0) << "\nsimpleMatrix_cvMat(2,0) = " << simpleMatrix_cvMat(2,0) << "\n";
-    ASSERT_EQ(42, *simpleMatrix.Pointer(2,0));
-    ASSERT_EQ(42, simpleMatrix_cvMat(2,0));
+    *simpleArray2dUnmanaged.Pointer(2,0) = 42;
+    std::cout << "simpleArray2dUnmanaged(2,0) = " << *simpleArray2dUnmanaged.Pointer(2,0) << "\nsimpleArray2dUnmanaged_cvMat(2,0) = " << simpleArray2dUnmanaged_cvMat(2,0) << "\n";
+    ASSERT_EQ(42, *simpleArray2dUnmanaged.Pointer(2,0));
+    ASSERT_EQ(42, simpleArray2dUnmanaged_cvMat(2,0));
   }
 
   std::cout << "\n\n";
 
   // Check that the non-templated OpenCV matrix works
   {
-    cv::Mat &simpleMatrix_cvMat = simpleMatrix.get_CvMat_();
-    std::cout << "simpleMatrix(2,0) = " << *simpleMatrix.Pointer(2,0) << "\nsimpleMatrix_cvMat(2,0) = " << simpleMatrix_cvMat.at<s16>(2,0) << "\n";
-    ASSERT_EQ(42, *simpleMatrix.Pointer(2,0));
-    ASSERT_EQ(42, simpleMatrix_cvMat.at<s16>(2,0));
+    cv::Mat &simpleArray2dUnmanaged_cvMat = simpleArray2dUnmanaged.get_CvMat_();
+    std::cout << "simpleArray2dUnmanaged(2,0) = " << *simpleArray2dUnmanaged.Pointer(2,0) << "\nsimpleArray2dUnmanaged_cvMat(2,0) = " << simpleArray2dUnmanaged_cvMat.at<s16>(2,0) << "\n";
+    ASSERT_EQ(42, *simpleArray2dUnmanaged.Pointer(2,0));
+    ASSERT_EQ(42, simpleArray2dUnmanaged_cvMat.at<s16>(2,0));
 
     std::cout << "Setting OpenCV matrix\n";
-    simpleMatrix_cvMat.at<s16>(2,0) = 300;
-    std::cout << "simpleMatrix(2,0) = " << *simpleMatrix.Pointer(2,0) << "\nsimpleMatrix_cvMat(2,0) = " << simpleMatrix_cvMat.at<s16>(2,0) << "\n";
-    ASSERT_EQ(300, *simpleMatrix.Pointer(2,0));
-    ASSERT_EQ(300, simpleMatrix_cvMat.at<s16>(2,0));
+    simpleArray2dUnmanaged_cvMat.at<s16>(2,0) = 300;
+    std::cout << "simpleArray2dUnmanaged(2,0) = " << *simpleArray2dUnmanaged.Pointer(2,0) << "\nsimpleArray2dUnmanaged_cvMat(2,0) = " << simpleArray2dUnmanaged_cvMat.at<s16>(2,0) << "\n";
+    ASSERT_EQ(300, *simpleArray2dUnmanaged.Pointer(2,0));
+    ASSERT_EQ(300, simpleArray2dUnmanaged_cvMat.at<s16>(2,0));
 
     std::cout << "Setting CoreTech_Common matrix\n";
-    *simpleMatrix.Pointer(2,0) = 90;
-    std::cout << "simpleMatrix(2,0) = " << *simpleMatrix.Pointer(2,0) << "\nsimpleMatrix_cvMat(2,0) = " << simpleMatrix_cvMat.at<s16>(2,0) << "\n";
-    ASSERT_EQ(90, *simpleMatrix.Pointer(2,0));
-    ASSERT_EQ(90, simpleMatrix_cvMat.at<s16>(2,0));
+    *simpleArray2dUnmanaged.Pointer(2,0) = 90;
+    std::cout << "simpleArray2dUnmanaged(2,0) = " << *simpleArray2dUnmanaged.Pointer(2,0) << "\nsimpleArray2dUnmanaged_cvMat(2,0) = " << simpleArray2dUnmanaged_cvMat.at<s16>(2,0) << "\n";
+    ASSERT_EQ(90, *simpleArray2dUnmanaged.Pointer(2,0));
+    ASSERT_EQ(90, simpleArray2dUnmanaged_cvMat.at<s16>(2,0));
   }
 #endif //#if defined(ANKICORETECH_USE_OPENCV)
 
   free(buffer); buffer = NULL;
 }
 
-TEST(CoreTech_Common, MatrixAlignment1)
+TEST(CoreTech_Common, Array2dUnmanagedSpecifiedClass)
+{
+  const s32 numBytes = 1000;
+  void *buffer = calloc(numBytes, 1);
+  ASSERT_TRUE(buffer != NULL);
+
+  Anki::MemoryStack ms(buffer, numBytes);
+
+  Anki::Array2dUnmanaged<u8> simpleArray2dUnmanaged(3, 3, ms);
+
+  const std::string imgData =
+    " 1 1 1 "
+    " 1 1 1 "
+    " 1 1 1 ";
+
+  simpleArray2dUnmanaged.Set(imgData);
+
+  ASSERT_TRUE((*simpleArray2dUnmanaged.Pointer(0,0)) == 1); // If the templating fails, this will equal 49
+
+  free(buffer); buffer = NULL;
+}
+
+TEST(CoreTech_Common, Array2dUnmanagedAlignment1)
 {
   const s32 numBytes = 1000;
   void *buffer = calloc(numBytes, 1);
@@ -319,9 +341,9 @@ TEST(CoreTech_Common, MatrixAlignment1)
   // Check all offsets
   for(s32 offset=0; offset<8; offset++) {
     void * const alignedBufferAndOffset = reinterpret_cast<char*>(alignedBuffer) + offset;
-    Anki::Matrix<s16> simpleMatrix(10, 6, alignedBufferAndOffset, numBytes-offset-8);
+    Anki::Array2dUnmanaged<s16> simpleArray2dUnmanaged(10, 6, alignedBufferAndOffset, numBytes-offset-8);
 
-    const size_t trueLocation = reinterpret_cast<size_t>(simpleMatrix.Pointer(0,0));
+    const size_t trueLocation = reinterpret_cast<size_t>(simpleArray2dUnmanaged.Pointer(0,0));
     const size_t expectedLocation = Anki::RoundUp(reinterpret_cast<size_t>(alignedBufferAndOffset), Anki::MEMORY_ALIGNMENT);;
 
     ASSERT_TRUE(trueLocation ==  expectedLocation);
@@ -342,16 +364,16 @@ TEST(CoreTech_Common, MemoryStackAlignment)
   for(s32 offset=0; offset<8; offset++) {
     void * const alignedBufferAndOffset = reinterpret_cast<char*>(alignedBuffer) + offset;
     Anki::MemoryStack simpleMemoryStack(alignedBufferAndOffset, numBytes-offset-8);
-    Anki::Matrix<s16> simpleMatrix(10, 6, simpleMemoryStack);
+    Anki::Array2dUnmanaged<s16> simpleArray2dUnmanaged(10, 6, simpleMemoryStack);
 
-    const size_t matrixStart = reinterpret_cast<size_t>(simpleMatrix.Pointer(0,0));
+    const size_t matrixStart = reinterpret_cast<size_t>(simpleArray2dUnmanaged.Pointer(0,0));
     ASSERT_TRUE(matrixStart == Anki::RoundUp(matrixStart, Anki::MEMORY_ALIGNMENT));
   }
 
   free(buffer); buffer = NULL;
 }
 
-TEST(CoreTech_Common, MatrixFillPattern)
+TEST(CoreTech_Common, Array2dUnmanagedFillPattern)
 {
   const s32 width = 6, height = 10;
   const s32 numBytes = 1000;
@@ -363,18 +385,18 @@ TEST(CoreTech_Common, MatrixFillPattern)
   Anki::MemoryStack ms(alignedBuffer, numBytes-Anki::MEMORY_ALIGNMENT);
 
   // Create a matrix, and manually set a few values
-  Anki::Matrix<s16> simpleMatrix(height, width, ms, true);
-  ASSERT_TRUE(simpleMatrix.get_rawDataPointer() != NULL);
+  Anki::Array2dUnmanaged<s16> simpleArray2dUnmanaged(height, width, ms, true);
+  ASSERT_TRUE(simpleArray2dUnmanaged.get_rawDataPointer() != NULL);
 
-  ASSERT_TRUE(simpleMatrix.IsValid());
+  ASSERT_TRUE(simpleArray2dUnmanaged.IsValid());
 
-  char * curDataPointer = reinterpret_cast<char*>(simpleMatrix.get_rawDataPointer());
+  char * curDataPointer = reinterpret_cast<char*>(simpleArray2dUnmanaged.get_rawDataPointer());
 
   // Unused space
   for(s32 i=0; i<8; i++) {
-    ASSERT_TRUE(simpleMatrix.IsValid());
+    ASSERT_TRUE(simpleArray2dUnmanaged.IsValid());
     (*curDataPointer)++;
-    ASSERT_TRUE(simpleMatrix.IsValid());
+    ASSERT_TRUE(simpleArray2dUnmanaged.IsValid());
     (*curDataPointer)--;
 
     curDataPointer++;
@@ -383,9 +405,9 @@ TEST(CoreTech_Common, MatrixFillPattern)
   for(s32 y=0; y<height; y++) {
     // Header
     for(s32 x=0; x<8; x++) {
-      ASSERT_TRUE(simpleMatrix.IsValid());
+      ASSERT_TRUE(simpleArray2dUnmanaged.IsValid());
       (*curDataPointer)++;
-      ASSERT_FALSE(simpleMatrix.IsValid());
+      ASSERT_FALSE(simpleArray2dUnmanaged.IsValid());
       (*curDataPointer)--;
 
       curDataPointer++;
@@ -393,9 +415,9 @@ TEST(CoreTech_Common, MatrixFillPattern)
 
     // Data
     for(s32 x=8; x<24; x++) {
-      ASSERT_TRUE(simpleMatrix.IsValid());
+      ASSERT_TRUE(simpleArray2dUnmanaged.IsValid());
       (*curDataPointer)++;
-      ASSERT_TRUE(simpleMatrix.IsValid());
+      ASSERT_TRUE(simpleArray2dUnmanaged.IsValid());
       (*curDataPointer)--;
 
       curDataPointer++;
@@ -403,9 +425,9 @@ TEST(CoreTech_Common, MatrixFillPattern)
 
     // Footer
     for(s32 x=24; x<32; x++) {
-      ASSERT_TRUE(simpleMatrix.IsValid());
+      ASSERT_TRUE(simpleArray2dUnmanaged.IsValid());
       (*curDataPointer)++;
-      ASSERT_FALSE(simpleMatrix.IsValid());
+      ASSERT_FALSE(simpleArray2dUnmanaged.IsValid());
       (*curDataPointer)--;
 
       curDataPointer++;

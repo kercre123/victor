@@ -70,7 +70,7 @@ namespace Anki
       return Point2(point1.x-point2.x, point1.y-point2.y);
     }
 
-    // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Matrix. No data is copied.
+    // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Array2dUnmanaged. No data is copied.
     cv::Point_<T>& get_CvPoint_()
     {
       return cv::Point_<T>(x,y);
@@ -121,7 +121,7 @@ namespace Anki
       return Point3(point1.x-point2.x, point1.y-point2.y, point1.z+point2.z);
     }
 
-    // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Matrix. No data is copied.
+    // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Array2dUnmanaged. No data is copied.
     cv::Point3_<T>& get_CvPoint3_()
     {
       return cv::Point3_<T>(x,y,z);

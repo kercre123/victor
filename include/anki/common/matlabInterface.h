@@ -64,10 +64,10 @@ namespace Anki
     //Character strings need to be converted slightly to appear correctly in Matlab
     s32 PutString(const char * characters, s32 nValues, const std::string name);
 
-    template<typename T> s32 PutMatrix(const Anki::Matrix<T> &matrix, const std::string name)
+    template<typename T> s32 PutArray2dUnmanaged(const Anki::Array2dUnmanaged<T> &matrix, const std::string name)
     {
       if(!ep) {
-        DASError("Anki.PutMatrix", "Matlab engine is not started/connected");
+        DASError("Anki.PutArray2dUnmanaged", "Matlab engine is not started/connected");
         return -1;
       }
 
@@ -86,11 +86,11 @@ namespace Anki
       return 0;
     }
 
-    template<typename T> Anki::Matrix<T> GetMatrix(const std::string name)
+    template<typename T> Anki::Array2dUnmanaged<T> GetArray2dUnmanaged(const std::string name)
     {
       if(!ep) {
-        DASError("Anki.GetMatrix", "Matlab engine is not started/connected");
-        return Anki::Matrix<T>(0, 0, NULL, 0, false);
+        DASError("Anki.GetArray2dUnmanaged", "Matlab engine is not started/connected");
+        return Anki::Array2dUnmanaged<T>(0, 0, NULL, 0, false);
       }
 
       const std::string tmpName = name + std::string("_AnkiTMP");
@@ -99,8 +99,8 @@ namespace Anki
       mxArray *arrayTmp = GetArray(tmpName.data());
 
       if(!arrayTmp) {
-        DASError("Anki.GetMatrix", "%s could not be got from Matlab", tmpName.data());
-        return Anki::Matrix<T>(0, 0, NULL, 0, false);
+        DASError("Anki.GetArray2dUnmanaged", "%s could not be got from Matlab", tmpName.data());
+        return Anki::Array2dUnmanaged<T>(0, 0, NULL, 0, false);
       }
 
       const mxClassID ankiVisionClassId = Anki::ConvertToMatlabType(typeid(T).name(), sizeof(T));
@@ -108,21 +108,21 @@ namespace Anki
       const mxClassID matlabClassId = mxGetClassID(arrayTmp);
 
       if(matlabClassId != ankiVisionClassId) {
-        DASError("Anki.GetMatrix", "matlabClassId != ankiVisionClassId");
-        return Anki::Matrix<T>(0, 0, NULL, 0, false);
+        DASError("Anki.GetArray2dUnmanaged", "matlabClassId != ankiVisionClassId");
+        return Anki::Array2dUnmanaged<T>(0, 0, NULL, 0, false);
       }
 
       const size_t numCols = mxGetM(arrayTmp);
       const size_t numRows = mxGetN(arrayTmp);
-      const s32 stride = Anki::Matrix<T>::ComputeRequiredStride(static_cast<s32>(numCols),false);
+      const s32 stride = Anki::Array2dUnmanaged<T>::ComputeRequiredStride(static_cast<s32>(numCols),false);
 
-      Anki::Matrix<T> ankiMatrix(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<T*>(calloc(stride*numCols,1)), stride*static_cast<s32>(numCols), false);
+      Anki::Array2dUnmanaged<T> ankiArray2dUnmanaged(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<T*>(calloc(stride*numCols,1)), stride*static_cast<s32>(numCols), false);
 
       T *matlabArrayTmp = reinterpret_cast<T*>(mxGetPr(arrayTmp));
       s32 matlabIndex = 0;
-      for(s32 y=0; y<ankiMatrix.get_size(0); y++) {
-        T * rowPointer = ankiMatrix.Pointer(y, 0);
-        for(s32 x=0; x<ankiMatrix.get_size(1); x++) {
+      for(s32 y=0; y<ankiArray2dUnmanaged.get_size(0); y++) {
+        T * rowPointer = ankiArray2dUnmanaged.Pointer(y, 0);
+        for(s32 x=0; x<ankiArray2dUnmanaged.get_size(1); x++) {
           rowPointer[x] = matlabArrayTmp[matlabIndex++];
         }
       }
@@ -131,7 +131,7 @@ namespace Anki
 
       EvalString("clear %s;", tmpName.data());
 
-      return ankiMatrix;
+      return ankiArray2dUnmanaged;
     }
 
     template<typename T> s32 Put(const T * values, s32 nValues, const std::string name)

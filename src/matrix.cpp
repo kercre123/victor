@@ -4,7 +4,7 @@
 
 namespace Anki
 {
-  template<> void Matrix<u8>::Print() const
+  template<> void Array2dUnmanaged<u8>::Print() const
   {
     assert(this->rawDataPointer != NULL && this->data != NULL);
 
@@ -17,7 +17,7 @@ namespace Anki
     }
   }
 
-  template<> s32 Matrix<u8>::Set(const std::string values)
+  template<> s32 Array2dUnmanaged<u8>::Set(const std::string values)
   {
     assert(this->rawDataPointer != NULL && this->data != NULL);
 
