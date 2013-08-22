@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4940AD9617C57C9300778163 /* pose.h in Headers */ = {isa = PBXBuildFile; fileRef = 4940AD9417C57C9300778163 /* pose.h */; };
+		4940AD9717C57C9300778163 /* pose.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4940AD9517C57C9300778163 /* pose.cpp */; };
 		5C60002717B2D24E00A75604 /* math.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C60002617B2D24E00A75604 /* math.cpp */; };
 		5C60002917B2D25500A75604 /* math.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C60002817B2D25500A75604 /* math.h */; };
 		5C60002B17B2D26D00A75604 /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C60002A17B2D26D00A75604 /* config.h */; };
@@ -15,6 +17,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		4940AD9417C57C9300778163 /* pose.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pose.h; path = ../../../include/anki/math/pose.h; sourceTree = "<group>"; };
+		4940AD9517C57C9300778163 /* pose.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = pose.cpp; path = ../../../src/pose.cpp; sourceTree = "<group>"; };
 		5C60000A17B2D21200A75604 /* libCoreTech_Math.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCoreTech_Math.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		5C60002617B2D24E00A75604 /* math.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = math.cpp; path = ../../../src/math.cpp; sourceTree = "<group>"; };
 		5C60002817B2D25500A75604 /* math.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = math.h; path = ../../../include/anki/math.h; sourceTree = "<group>"; };
@@ -42,6 +46,8 @@
 				5C60002A17B2D26D00A75604 /* config.h */,
 				5C60002817B2D25500A75604 /* math.h */,
 				5C60002617B2D24E00A75604 /* math.cpp */,
+				4940AD9417C57C9300778163 /* pose.h */,
+				4940AD9517C57C9300778163 /* pose.cpp */,
 				5C60000B17B2D21200A75604 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -64,6 +70,7 @@
 				5C60002917B2D25500A75604 /* math.h in Headers */,
 				5C60002B17B2D26D00A75604 /* config.h in Headers */,
 				5CAE9A5D17B304E000B93047 /* linearAlgebra.h in Headers */,
+				4940AD9617C57C9300778163 /* pose.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -120,6 +127,7 @@
 			files = (
 				5C60002717B2D24E00A75604 /* math.cpp in Sources */,
 				5CAE9A5F17B304E900B93047 /* linearAlgebra.cpp in Sources */,
+				4940AD9717C57C9300778163 /* pose.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
