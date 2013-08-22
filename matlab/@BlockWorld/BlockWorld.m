@@ -49,8 +49,7 @@ classdef BlockWorld < handle
             HasMat = true;
             MatSize = [1000 1000]; % in mm
             ZDirection = 'up';
-            EmbeddedConversions = EmbeddedConversionsManager( ...
-                'homographyEstimationType', 'matlab_cp2tform'); 
+            EmbeddedConversions = EmbeddedConversionsManager(); 
             GroundTruthPoseFcn = [];
             UpdateObservedRobotPoseFcn = [];
             UpdateObservedBlockPoseFcn = [];
