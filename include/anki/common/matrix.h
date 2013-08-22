@@ -506,7 +506,7 @@ namespace Anki
     const s32 stride = Anki::Matrix<T>::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
     const s32 requiredMemory = 64 + 2*Anki::MEMORY_ALIGNMENT + Anki::Matrix<T>::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more just in case
 
-    Matrix<T> mat(numRows, numCols, reinterpret_cast<u8*>(calloc(requiredMemory, 1)), requiredMemory, useBoundaryFillPatterns);
+    Matrix<T> mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
 
     return mat;
   } // AllocateMatrixFromHeap()
@@ -516,7 +516,17 @@ namespace Anki
     const s32 stride = Anki::FixedPointMatrix<T>::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
     const s32 requiredMemory = 64 + 2*Anki::MEMORY_ALIGNMENT + Anki::FixedPointMatrix<T>::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more just in case
 
-    FixedPointMatrix<T> mat(numRows, numCols, numFractionalBits, reinterpret_cast<u8*>(calloc(requiredMemory, 1)), requiredMemory, useBoundaryFillPatterns);
+    FixedPointMatrix<T> mat(numRows, numCols, numFractionalBits, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+
+    return mat;
+  }
+
+  template<typename T> FixedLengthList<T> AllocateFixedLengthListFromHeap(s32 maximumSize, bool useBoundaryFillPatterns=false)
+  {
+    const s32 stride = Anki::FixedLengthList<T>::ComputeRequiredStride(maximumSize, useBoundaryFillPatterns);
+    const s32 requiredMemory = 64 + 2*Anki::MEMORY_ALIGNMENT + Anki::Matrix<T>::ComputeMinimumRequiredMemory(1, maximumSize, useBoundaryFillPatterns); // The required memory, plus a bit more just in case
+
+    FixedLengthList<T> mat(maximumSize, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
 
     return mat;
   } // AllocateFixedPointMatrixFromHeap()

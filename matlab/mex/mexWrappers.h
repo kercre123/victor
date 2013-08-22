@@ -594,11 +594,17 @@ template <class T> void mxArray2AnkiMatrix(const mxArray *array, Anki::Matrix<T>
   const mwSize numMatlabElements = mxGetNumberOfElements(array);
 
   if(numMatlabElements != npixels) {
-    printf("Matlab array has a different number of elements than the Anki Matrix (%d != %d)\n", numMatlabElements, npixels);
+    printf("mxArray2AnkiMatrix(array,mat) - Matlab array has a different number of elements than the Anki Matrix (%d != %d)\n", numMatlabElements, npixels);
     return;
   }
 
-  // TODO: check if the type is correct
+  const mxClassID matlabClassId = mxGetClassID(array);
+  const mxClassID templateClassId = convertToMatlabType(typeid(T).name(), sizeof(T));
+  if(matlabClassId != templateClassId) {
+    printf("mxArray2AnkiMatrix(array,mat) - Matlab classId doesn't match with template %d!=%d\n", matlabClassId, templateClassId);
+    Anki::Matrix<T> ankiMatrix(0, 0, NULL, 0);
+    return ankiMatrix;
+  }
 
   for(u32 y=0; y<nrows; ++y) {
     T * const ankiMatrix_rowPointer   = mat.Pointer(y, 0);
@@ -619,7 +625,7 @@ template <class T> Anki::Matrix<T> mxArray2AnkiMatrix(const mxArray *array)
   const mwSize *dimensions = mxGetDimensions(array);
 
   if(numDimensions != 2) {
-    printf("Matlab array must be 2D\n");
+    printf("mxArray2AnkiMatrix - Matlab array must be 2D\n");
     Anki::Matrix<T> ankiMatrix(0, 0, NULL, 0);
     return ankiMatrix;
   }
@@ -627,12 +633,12 @@ template <class T> Anki::Matrix<T> mxArray2AnkiMatrix(const mxArray *array)
   const mxClassID matlabClassId = mxGetClassID(array);
   const mxClassID templateClassId = convertToMatlabType(typeid(T).name(), sizeof(T));
   if(matlabClassId != templateClassId) {
-    printf("Matlab classId doesn't match with template %d!=%d\n", matlabClassId, templateClassId);
+    printf("mxArray2AnkiMatrix - Matlab classId doesn't match with template %d!=%d\n", matlabClassId, templateClassId);
     Anki::Matrix<T> ankiMatrix(0, 0, NULL, 0);
     return ankiMatrix;
   }
-
-  Anki::Matrix<T> ankiMatrix = Anki::AllocateMatrixFromHeap<u8>(dimensions[0], dimensions[1]);
+  
+  Anki::Matrix<T> ankiMatrix = Anki::AllocateMatrixFromHeap<T>(dimensions[0], dimensions[1]);
 
   for(s32 y=0; y<dimensions[0]; ++y) {
     T * const ankiMatrix_rowPointer = ankiMatrix.Pointer(y, 0);
