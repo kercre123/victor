@@ -134,6 +134,9 @@ namespace Anki
   
   typedef Point3<float> Point3f;
   
+  // TODO: Do we really need a separate Vec3 class or is it the same as Point3?
+  typedef Point3<float> Vec3f;
+  
 } // namespace Anki
 
 #endif // #ifndef _ANKICORETECH_COMMON_DATASTRUCTURES_H_
