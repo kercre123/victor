@@ -10,6 +10,9 @@
 
 // Various defines that make different compilers work on the same code
 #if defined(_MSC_VER) // We're using the MSVC compiler
+#pragma warning(disable: 4068) // Unknown pragma
+#pragma warning(disable: 4127) // Conditional expression is constant
+
 #ifndef __PRETTY_FUNCTION__
 #define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif

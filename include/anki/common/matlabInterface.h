@@ -114,9 +114,9 @@ namespace Anki
 
       const size_t numCols = mxGetM(arrayTmp);
       const size_t numRows = mxGetN(arrayTmp);
-      const s32 stride = Anki::Matrix<T>::ComputeRequiredStride(numCols,false);
+      const s32 stride = Anki::Matrix<T>::ComputeRequiredStride(static_cast<s32>(numCols),false);
 
-      Anki::Matrix<T> ankiMatrix(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<T*>(calloc(stride*numCols,1)), stride*numCols, false);
+      Anki::Matrix<T> ankiMatrix(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<T*>(calloc(stride*numCols,1)), stride*static_cast<s32>(numCols), false);
 
       T *matlabArrayTmp = reinterpret_cast<T*>(mxGetPr(arrayTmp));
       s32 matlabIndex = 0;

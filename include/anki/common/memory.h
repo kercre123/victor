@@ -64,6 +64,7 @@ namespace Anki
     s32 usedBytes;
 
     const void* Allocate(s32 numBytes) const; // Not allowed
+    MemoryStack & operator= (const MemoryStack & rightHandSide); // Not allowed
   };
 } // namespace Anki
 
