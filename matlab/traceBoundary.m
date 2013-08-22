@@ -69,7 +69,7 @@ while true
     
     oneDirection = findNewDirection(binaryImg, curPoint, zeroDirectionPlusOne, 1);
         
-    newPoint = [curPoint(1)+dy(oneDirection+1), curPoint(2)+dx(oneDirection+1)]
+    newPoint = [curPoint(1)+dy(oneDirection+1), curPoint(2)+dx(oneDirection+1)];
         
     curPoint = newPoint;
     boundary(end+1, :) = newPoint;
@@ -86,10 +86,10 @@ while true
     end
     
     % If the new point is the same as the first point, quit.
-    keyboard
+%     keyboard
     if sum(newPoint == boundary(1,:)) == 2 || ...
         (size(boundary,1)>2 && sum(abs(newPoint-boundary(1,:))) <= 1)
-        keyboard
+%         keyboard
         break;
     end
     
