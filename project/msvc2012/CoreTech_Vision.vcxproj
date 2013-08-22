@@ -14,6 +14,7 @@
     <ClCompile Include="..\..\src\binomialFilter.cpp" />
     <ClCompile Include="..\..\src\computeCharacteristicScale.cpp" />
     <ClCompile Include="..\..\src\downsampleByFactor.cpp" />
+    <ClCompile Include="..\..\src\traceBoundary.cpp" />
     <ClCompile Include="..\..\src\vision.cpp" />
   </ItemGroup>
   <ItemGroup>

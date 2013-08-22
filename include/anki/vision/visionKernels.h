@@ -6,10 +6,27 @@
 
 namespace Anki
 {
-  Result BinomialFilter(const Matrix<u8> &img, Matrix<u8> &imgFiltered, MemoryStack scratch);
-  Result DownsampleByFactor(const Matrix<u8> &img, u32 downsampleFactor, Matrix<u8> &imgDownsampled);
+  enum BoundaryDirection {
+    BOUNDARY_UNKNOWN = -1,
+    BOUNDARY_N  = 0,
+    BOUNDARY_NE = 1,
+    BOUNDARY_E  = 2,
+    BOUNDARY_SE = 3,
+    BOUNDARY_S  = 4,
+    BOUNDARY_SW = 5,
+    BOUNDARY_W  = 6,
+    BOUNDARY_NW = 7
+  };
 
-  Result ComputeCharacteristicScaleImage(const Matrix<u8> &img, u32 numLevels, FixedPointMatrix<u32> &scaleImage, MemoryStack scratch);
+  const s32 MAX_BOUNDARY_LENGTH = 5000;
+
+  Result BinomialFilter(const Matrix<u8> &img, Matrix<u8> &imgFiltered, MemoryStack scratch);
+
+  Result DownsampleByFactor(const Matrix<u8> &img, s32 downsampleFactor, Matrix<u8> &imgDownsampled);
+
+  Result ComputeCharacteristicScaleImage(const Matrix<u8> &img, s32 numLevels, FixedPointMatrix<u32> &scaleImage, MemoryStack scratch);
+
+  Result TraceBoundary(const Matrix<u8> &binaryImg, const Point2<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point2<s16>> &boundary);
 
   template<typename T> inline T Interpolate2d(T pixel00, T pixel01, T pixel10, T pixel11, T alphaY, T alphaYinverse, T alphaX, T alphaXinverse)
   {
