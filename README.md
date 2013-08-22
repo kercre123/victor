@@ -9,6 +9,8 @@ VERY IMPORTANT: The acceptability of the license for any code added here *must* 
 
 To build gtest1.7.0 with Xcode on Mac:
 1. Use Cmake as normal, with the build directory as coretech-external/build/xcode4/gtest-1.7.0
+    e.g.  from the command line, mkdir the above path, cd into it, and then do:
+             cmake ../../../gtest -G "Xcode"
 2. Open the Xcode project. For targets gtest and gtest_main, change
     a. C++ Language Dialect = c++11 [-std=c++11]
     b. C++ Standard Library = libc++ (LLVM C++ standard library with C++11 support)
