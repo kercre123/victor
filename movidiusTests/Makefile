@@ -2,9 +2,18 @@
 # Default application name is the same as the folder it is in.
 # This can be overridden here if something different is required
 #APPNAME ?= $(notdir $(shell pwd))
+APPNAME=movidiusTests
+
+#MDK_DIRECTORY=/cygdrive/c/movidius/mdk_13.08.0_general/mdk
+#MDK_DIRECTORY=c:/movidius/mdk_13.08.0_general/mdk
+MDK_DIRECTORY=	/home/anki/movidius/mdk_13.08.0_general/mdk
+
+
+CORETECH_COMMON_DIRECTORY=../../../coretech-common
+CORETECH_VISION_DIRECTORY=../../../coretech-vision
 
 # Verbose or not, common out for more verbosity
-ECHO=@
+#ECHO=@
 
 # ------------------------------[ Build overrides ]--------------------------------#
 # overrides that need to be set before including generic.mk
@@ -40,7 +49,7 @@ ComponentList := MvCV MvSTL CifGeneric Board LcdGeneric HdmiTxIte CifOV5642
 #MV_TOOLS_VERSION =00.50.23.0
 
 # Set MV_COMMON_BASE relative to mdk directory location (but allow user to override in environment)
-MV_COMMON_BASE   ?= ../../common
+MV_COMMON_BASE   =$(MDK_DIRECTORY)/common
 
 # Include the generic Makefile
 include $(MV_COMMON_BASE)/generic.mk
