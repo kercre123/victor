@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		4940AD9D17C6D36900778163 /* array2d.h in Headers */ = {isa = PBXBuildFile; fileRef = 4940AD9C17C6D36900778163 /* array2d.h */; };
 		4940AD9F17C6D37400778163 /* array2d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4940AD9E17C6D37400778163 /* array2d.cpp */; };
+		4940ADA117C6DB8C00778163 /* point.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4940ADA017C6DB8C00778163 /* point.cpp */; };
+		4940ADA317C6DB9A00778163 /* point.h in Headers */ = {isa = PBXBuildFile; fileRef = 4940ADA217C6DB9A00778163 /* point.h */; };
 		5C7B94DE17AB1FCC0020CCF7 /* common.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C7B94DD17AB1FCC0020CCF7 /* common.h */; };
 		5C7B94E417AB1FD90020CCF7 /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C7B94DF17AB1FD90020CCF7 /* config.h */; };
 		5C7B94E517AB1FD90020CCF7 /* DASlight.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C7B94E017AB1FD90020CCF7 /* DASlight.h */; };
@@ -24,6 +26,8 @@
 /* Begin PBXFileReference section */
 		4940AD9C17C6D36900778163 /* array2d.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = array2d.h; path = ../../../include/anki/common/array2d.h; sourceTree = "<group>"; };
 		4940AD9E17C6D37400778163 /* array2d.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = array2d.cpp; path = ../../../src/array2d.cpp; sourceTree = "<group>"; };
+		4940ADA017C6DB8C00778163 /* point.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = point.cpp; path = ../../../src/point.cpp; sourceTree = "<group>"; };
+		4940ADA217C6DB9A00778163 /* point.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = point.h; path = ../../../include/anki/common/point.h; sourceTree = "<group>"; };
 		5C7B94D417AB1FB30020CCF7 /* libCoreTech_Common.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCoreTech_Common.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		5C7B94DD17AB1FCC0020CCF7 /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = common.h; path = ../../../include/anki/common.h; sourceTree = "<group>"; };
 		5C7B94DF17AB1FD90020CCF7 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = ../../../include/anki/common/config.h; sourceTree = "<group>"; };
@@ -60,6 +64,8 @@
 				5C7B94EB17AB1FE40020CCF7 /* utilities.cpp */,
 				4940AD9C17C6D36900778163 /* array2d.h */,
 				4940AD9E17C6D37400778163 /* array2d.cpp */,
+				4940ADA017C6DB8C00778163 /* point.cpp */,
+				4940ADA217C6DB9A00778163 /* point.h */,
 				5C7B94DF17AB1FD90020CCF7 /* config.h */,
 				5C7B94E017AB1FD90020CCF7 /* DASlight.h */,
 				5C7B94E217AB1FD90020CCF7 /* memory.h */,
@@ -91,6 +97,7 @@
 				5C7B94E817AB1FD90020CCF7 /* utilities.h in Headers */,
 				5CEFBAD917C68BA400C17285 /* matlabInterface.h in Headers */,
 				4940AD9D17C6D36900778163 /* array2d.h in Headers */,
+				4940ADA317C6DB9A00778163 /* point.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -150,6 +157,7 @@
 				5C7B94EE17AB1FE40020CCF7 /* utilities.cpp in Sources */,
 				5CEFBAD717C68B9800C17285 /* matlabInterface.cpp in Sources */,
 				4940AD9F17C6D37400778163 /* array2d.cpp in Sources */,
+				4940ADA117C6DB8C00778163 /* point.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

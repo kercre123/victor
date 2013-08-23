@@ -16,6 +16,8 @@
 
 namespace Anki
 {
+  template<typename T> class Point2;
+  
 #pragma mark --- Array2dUnmanaged Class Definition ---
 
   // A Array2dUnmanaged is a lightweight templated class for holding two dimensional data. It does no
@@ -155,6 +157,7 @@ namespace Anki
   class Array2d : public Array2dUnmanaged<T>
   {
   public:
+    Array2d();
     Array2d(s32 nrows, s32 ncols, bool useBoundaryFillPatterns = false);
     
   protected:
@@ -556,7 +559,7 @@ namespace Anki
     // our own data array.  So now when this class destructs and dataManager
     // destructs, it will free this->data for us.
     this->refCount = 1;
-    this->dataManager.refCount = &(this->refCount);
+    this->dataManager.refcount = &(this->refCount);
     
   } // Constructor: Array2d(rows,cols)
   
