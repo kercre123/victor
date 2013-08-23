@@ -9,8 +9,11 @@
 /* Begin PBXBuildFile section */
 		4940AD9617C57C9300778163 /* pose.h in Headers */ = {isa = PBXBuildFile; fileRef = 4940AD9417C57C9300778163 /* pose.h */; };
 		4940AD9717C57C9300778163 /* pose.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4940AD9517C57C9300778163 /* pose.cpp */; };
-		5C60002717B2D24E00A75604 /* math.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C60002617B2D24E00A75604 /* math.cpp */; };
-		5C60002917B2D25500A75604 /* math.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C60002817B2D25500A75604 /* math.h */; };
+		4940AD9A17C6888600778163 /* matrix.h in Headers */ = {isa = PBXBuildFile; fileRef = 4940AD9817C6888600778163 /* matrix.h */; };
+		4940AD9B17C6888600778163 /* matrix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4940AD9917C6888600778163 /* matrix.cpp */; };
+		4940ADA517C6EAB600778163 /* ankiMath.h in Headers */ = {isa = PBXBuildFile; fileRef = 4940ADA417C6EAB600778163 /* ankiMath.h */; };
+		4940ADA817C6ED6400778163 /* basicMath.h in Headers */ = {isa = PBXBuildFile; fileRef = 4940ADA617C6ED6400778163 /* basicMath.h */; };
+		4940ADA917C6ED6400778163 /* basicMath.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4940ADA717C6ED6400778163 /* basicMath.cpp */; };
 		5C60002B17B2D26D00A75604 /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C60002A17B2D26D00A75604 /* config.h */; };
 		5CAE9A5D17B304E000B93047 /* linearAlgebra.h in Headers */ = {isa = PBXBuildFile; fileRef = 5CAE9A5C17B304E000B93047 /* linearAlgebra.h */; };
 		5CAE9A5F17B304E900B93047 /* linearAlgebra.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5CAE9A5E17B304E800B93047 /* linearAlgebra.cpp */; };
@@ -19,9 +22,12 @@
 /* Begin PBXFileReference section */
 		4940AD9417C57C9300778163 /* pose.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pose.h; path = ../../../include/anki/math/pose.h; sourceTree = "<group>"; };
 		4940AD9517C57C9300778163 /* pose.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = pose.cpp; path = ../../../src/pose.cpp; sourceTree = "<group>"; };
+		4940AD9817C6888600778163 /* matrix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = matrix.h; path = ../../../include/anki/math/matrix.h; sourceTree = "<group>"; };
+		4940AD9917C6888600778163 /* matrix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = matrix.cpp; path = ../../../src/matrix.cpp; sourceTree = "<group>"; };
+		4940ADA417C6EAB600778163 /* ankiMath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ankiMath.h; path = ../../../include/anki/ankiMath.h; sourceTree = "<group>"; };
+		4940ADA617C6ED6400778163 /* basicMath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = basicMath.h; path = ../../../include/anki/math/basicMath.h; sourceTree = "<group>"; };
+		4940ADA717C6ED6400778163 /* basicMath.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = basicMath.cpp; path = ../../../src/basicMath.cpp; sourceTree = "<group>"; };
 		5C60000A17B2D21200A75604 /* libCoreTech_Math.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCoreTech_Math.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		5C60002617B2D24E00A75604 /* math.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = math.cpp; path = ../../../src/math.cpp; sourceTree = "<group>"; };
-		5C60002817B2D25500A75604 /* math.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = math.h; path = ../../../include/anki/math.h; sourceTree = "<group>"; };
 		5C60002A17B2D26D00A75604 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = ../../../include/anki/math/config.h; sourceTree = "<group>"; };
 		5CAE9A5C17B304E000B93047 /* linearAlgebra.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = linearAlgebra.h; path = ../../../include/anki/math/linearAlgebra.h; sourceTree = "<group>"; };
 		5CAE9A5E17B304E800B93047 /* linearAlgebra.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = linearAlgebra.cpp; path = ../../../src/linearAlgebra.cpp; sourceTree = "<group>"; };
@@ -44,10 +50,13 @@
 				5CAE9A5E17B304E800B93047 /* linearAlgebra.cpp */,
 				5CAE9A5C17B304E000B93047 /* linearAlgebra.h */,
 				5C60002A17B2D26D00A75604 /* config.h */,
-				5C60002817B2D25500A75604 /* math.h */,
-				5C60002617B2D24E00A75604 /* math.cpp */,
 				4940AD9417C57C9300778163 /* pose.h */,
+				4940ADA417C6EAB600778163 /* ankiMath.h */,
+				4940ADA617C6ED6400778163 /* basicMath.h */,
+				4940ADA717C6ED6400778163 /* basicMath.cpp */,
 				4940AD9517C57C9300778163 /* pose.cpp */,
+				4940AD9817C6888600778163 /* matrix.h */,
+				4940AD9917C6888600778163 /* matrix.cpp */,
 				5C60000B17B2D21200A75604 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -67,10 +76,12 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5C60002917B2D25500A75604 /* math.h in Headers */,
 				5C60002B17B2D26D00A75604 /* config.h in Headers */,
 				5CAE9A5D17B304E000B93047 /* linearAlgebra.h in Headers */,
 				4940AD9617C57C9300778163 /* pose.h in Headers */,
+				4940AD9A17C6888600778163 /* matrix.h in Headers */,
+				4940ADA517C6EAB600778163 /* ankiMath.h in Headers */,
+				4940ADA817C6ED6400778163 /* basicMath.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,9 +136,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5C60002717B2D24E00A75604 /* math.cpp in Sources */,
 				5CAE9A5F17B304E900B93047 /* linearAlgebra.cpp in Sources */,
 				4940AD9717C57C9300778163 /* pose.cpp in Sources */,
+				4940AD9B17C6888600778163 /* matrix.cpp in Sources */,
+				4940ADA917C6ED6400778163 /* basicMath.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -139,7 +151,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
@@ -147,7 +159,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -172,7 +184,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
@@ -181,7 +193,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -199,7 +211,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				EXECUTABLE_PREFIX = lib;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
 				HEADER_SEARCH_PATHS = (
 					../../../include,
 					"../../../../coretech-common/include",
@@ -224,6 +236,8 @@
 					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
 					"../../../../coretech-external/",
 				);
+				LINK_WITH_STANDARD_LIBRARIES = YES;
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
 			};
@@ -235,7 +249,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				EXECUTABLE_PREFIX = lib;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
 				HEADER_SEARCH_PATHS = (
 					../../../include,
 					"../../../../coretech-common/include",
@@ -260,6 +274,8 @@
 					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
 					"../../../../coretech-external/",
 				);
+				LINK_WITH_STANDARD_LIBRARIES = YES;
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
 			};
