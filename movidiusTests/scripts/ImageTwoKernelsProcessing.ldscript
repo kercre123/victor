@@ -1,0 +1,45 @@
+/*Specific window settings for this app*/
+SECTIONS {
+  /* Define linker symbols with desired location for windows C,D,E,F on each shave */  
+  __WinRegShave0_winC = ABSOLUTE(0x10001800);    /* Default absolute address  */
+  __WinRegShave0_winD = ABSOLUTE(0x10000000);    /* Default absolute address  */
+  __WinRegShave0_winE = ABSOLUTE(0x00000000);    /* not used                  */
+  __WinRegShave0_winF = ABSOLUTE(0x00000000);    /* not used                  */
+
+  __WinRegShave1_winC = ABSOLUTE(0x10021800);    /* Default absolute address  */
+  __WinRegShave1_winD = ABSOLUTE(0x10020000);    /* Default absolute address  */
+  __WinRegShave1_winE = ABSOLUTE(0x00000000);    /* not used                  */
+  __WinRegShave1_winF = ABSOLUTE(0x00000000);    /* not used                  */
+  
+  __WinRegShave2_winC = ABSOLUTE(0x10041800);    /* Default absolute address  */
+  __WinRegShave2_winD = ABSOLUTE(0x10040000);    /* Default absolute address  */
+  __WinRegShave2_winE = ABSOLUTE(0x00000000);    /* not used                  */
+  __WinRegShave2_winF = ABSOLUTE(0x00000000);    /* not used                  */
+
+  __WinRegShave3_winC = ABSOLUTE(0x10061800);    /* Default absolute address  */
+  __WinRegShave3_winD = ABSOLUTE(0x10060000);    /* Default absolute address  */
+  __WinRegShave3_winE = ABSOLUTE(0x00000000);    /* not used                  */
+  __WinRegShave3_winF = ABSOLUTE(0x00000000);    /* not used                  */
+                                                 
+  __WinRegShave4_winC = ABSOLUTE(0x10081800);    /* Default absolute address  */
+  __WinRegShave4_winD = ABSOLUTE(0x10080000);    /* Default absolute address  */
+  __WinRegShave4_winE = ABSOLUTE(0x00000000);    /* not used                  */
+  __WinRegShave4_winF = ABSOLUTE(0x00000000);    /* not used                  */
+
+  __WinRegShave5_winC = ABSOLUTE(0x100A1800);    /* Default absolute address  */
+  __WinRegShave5_winD = ABSOLUTE(0x100A0000);    /* Default absolute address  */
+  __WinRegShave5_winE = ABSOLUTE(0x00000000);    /* not used                  */
+  __WinRegShave5_winF = ABSOLUTE(0x00000000);    /* not used                  */
+                                                 
+  __WinRegShave6_winC = ABSOLUTE(0x100C1800);    /* Default absolute address  */
+  __WinRegShave6_winD = ABSOLUTE(0x100C0000);    /* Default absolute address  */
+  __WinRegShave6_winE = ABSOLUTE(0x00000000);    /* not used                  */
+  __WinRegShave6_winF = ABSOLUTE(0x00000000);    /* not used                  */
+                                                 
+  __WinRegShave7_winC = ABSOLUTE(0x100E1800);    /* Default absolute address  */
+  __WinRegShave7_winD = ABSOLUTE(0x100E0000);    /* Default absolute address  */
+  __WinRegShave7_winE = ABSOLUTE(0x00000000);    /* not used                  */
+  __WinRegShave7_winF = ABSOLUTE(0x00000000);    /* not used                  */
+}
+
+INCLUDE myriad1_default_memory_map.ldscript
