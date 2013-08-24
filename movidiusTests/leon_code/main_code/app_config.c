@@ -25,8 +25,10 @@
 // 3: Global Data (Only if absolutely necessary)
 // ----------------------------------------------------------------------------
 // Sections decoration is require here for downstream tools
+#ifndef __APPLE__
 u32 __cmx_config  __attribute__((section(".cmx.ctrl"))) = CMX_CONFIG;  
 u32 __l2_config   __attribute__((section(".l2.mode")))  = L2CACHE_CFG;
+#endif //#ifndef __APPLE__
 
 // 4: Static Local Data 
 // ----------------------------------------------------------------------------

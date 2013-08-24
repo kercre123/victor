@@ -42,7 +42,12 @@
 #define OUT_FRAME_SIZE      (RES_WIDTH / 2 * RES_HEIGHT / 2 * 3 / 2)
 #define MAX_SHAVE_STACK     0x1C01E7FC
 #define SHAVE_NUMBER        1
+
+#ifdef __APPLE__
+#define DDR_CAMBUF
+#else
 #define DDR_CAMBUF __attribute__((section(".ddr_direct.bss")))
+#endif
 
 // 3: Global Data (Only if absolutely necessary)
 // ----------------------------------------------------------------------------

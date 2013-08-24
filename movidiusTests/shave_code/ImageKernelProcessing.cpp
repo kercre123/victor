@@ -16,7 +16,7 @@
 #include <mvcv.h>
 #else
 #include "../kernels/gaussHx2.h"
-#include "../kernels/gaussVx2.h"
+#include "../k∫ernels/gaussVx2.h"
 #include "myriadModel.h"
 #include <stdio.h>
 #include "../../../common/swCommon/pcModel/myriadModel.h"
