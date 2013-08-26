@@ -128,7 +128,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0460;
-				ORGANIZATIONNAME = "Peter Barnum";
+				ORGANIZATIONNAME = "Anki, Inc.";
 			};
 			buildConfigurationList = 5C7B94CF17AB1FB30020CCF7 /* Build configuration list for PBXProject "CoreTech_Common" */;
 			compatibilityVersion = "Xcode 3.2";
