@@ -20,7 +20,7 @@ CORETECH_VISION_DIRECTORY=../../../coretech-vision
 
 #ShaveSymObject   = $(DirAppObjDir)/$(APPNAME).sym.o
 LinkerScript    =  $(DirLDScript)/$(APPNAME).ldscript
-# Set Shave common mof name (non-mbin flow)  
+# Set Shave common mof name (non-mbin flow)
 #ShaveCommonName = shaves
 
 SH_MLIB  = $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.c, %.mobj, $(wildcard $(MV_COMMON_BASE)/components/MvSTL/shave/*.c))))
@@ -34,11 +34,11 @@ SH_MLIB += $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.asm, %.mobj, $(wi
 SH0_Obj =
 
 SH1_Obj += $(DirAppObjDir)/ImageKernelProcessing.mobj
-SH1_Obj += 
+SH1_Obj += $(DirAppObjDir)/add_simd.mobj $(DirAppObjDir)/init.mobj
 
 # Limit to only needed drivers
-#SysCSrcFiles     = drv_ddr.c drv_uart.c drv_vcs.c drv_print.c drv_timer.c drv_l2cache.c drv_sys_cfg.c drv_cpr.c svu_utils.c  
-#SysASrcFiles     = crt0.S traps.S sysbss.S 
+#SysCSrcFiles     = drv_ddr.c drv_uart.c drv_vcs.c drv_print.c drv_timer.c drv_l2cache.c drv_sys_cfg.c drv_cpr.c svu_utils.c
+#SysASrcFiles     = crt0.S traps.S sysbss.S
 
 #TEST_TYPE     := AUTO
 #ComponentList := UnitTest
@@ -56,9 +56,9 @@ include $(MV_COMMON_BASE)/generic.mk
 
 # Include the PC cross compile Makefile
 include PC_compile.mk
-      
+
 # -------------------------------- [ Build Options ] ------------------------------ #
-# App related build options 
+# App related build options
 
 # Extra app related options
 #CCOPT += -DNAME=VALUE
