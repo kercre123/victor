@@ -26,7 +26,7 @@ namespace Anki
 
   Result ComputeCharacteristicScaleImage(const Array2dUnmanaged<u8> &img, s32 numLevels, Array2dUnmanagedFixedPoint<u32> &scaleImage, MemoryStack scratch);
 
-  Result TraceBoundary(const Array2dUnmanaged<u8> &binaryImg, const Point2<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point2<s16>> &boundary);
+  Result TraceBoundary(const Array2dUnmanaged<u8> &binaryImg, const Point2<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point2<s16> > &boundary);
 
   template<typename T> inline T Interpolate2d(T pixel00, T pixel01, T pixel10, T pixel11, T alphaY, T alphaYinverse, T alphaX, T alphaXinverse)
   {

@@ -13,12 +13,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   ConditionalErrorAndReturn(nrhs == 1 && nlhs == 1, "mexBinomialFilter", "Call this function as following: imgFiltered = mexBinomialFilter(img);");
     
-  Matrix<u8> img = mxArray2AnkiMatrix<u8>(prhs[0]);
+  Array2dUnmanaged<u8> img = mxArray2Array2dUnmanaged<u8>(prhs[0]);
   
-  ConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Matrix img");
+  ConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Array2dUnmanaged img");
         
-  Matrix<u8> imgFiltered = AllocateMatrixFromHeap<u8>(img.get_size(0), img.get_size(1));
-  ConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Matrix imgFiltered");
+  Array2dUnmanaged<u8> imgFiltered = AllocateArray2dUnmanagedFromHeap<u8>(img.get_size(0), img.get_size(1));
+  ConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Array2dUnmanaged imgFiltered");
 
   const u32 numBytes = img.get_size(0) * img.get_stride() + 1000;
   MemoryStack scratch(calloc(numBytes,1), numBytes);
@@ -27,7 +27,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     printf("Error: mexBinomialFilter\n");
   }
   
-  plhs[0] = ankiMatrix2mxArray(imgFiltered);
+  plhs[0] = array2dUnmanaged2mxArray(imgFiltered);
   
   delete(img.get_rawDataPointer());
   delete(imgFiltered.get_rawDataPointer());
