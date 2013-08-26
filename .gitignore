@@ -2,10 +2,11 @@
 *.bak
 *~
 matlab.mat
+*.mexmaci64
+*.pyc
 # Mac OS
 *.DS_Store
 # Xcode
-*.mexmaci64
 *.o
 *.obj
 *.so
