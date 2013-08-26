@@ -150,6 +150,73 @@ namespace Anki
   
 #pragma mark --- Array2d(Managed) Class Definition ---
   
+  //
+  // Array2d Class
+  // A generic, templated 2D storage array.
+  // Currently, this inherits from cv::Mat_<T> in order to provide basic
+  // members and accessors as well as handy smart pointer functionality.
+  //
+  // Despite the name, this class is substantially different from the
+  // Array2dUnmanaged class.
+  //
+  template<typename T>
+  class Array2d : public cv::Mat_<T>
+  {
+  public:
+    // Which features from OpenCv we will use:
+    using cv::Mat_<T>::operator=;
+    using cv::Mat_<T>::operator();
+    using cv::Mat_<T>::size;
+    using cv::Mat_<T>::isContinuous;
+    
+    // Constructors:
+    Array2d();
+    Array2d(s32 nrows, s32 ncols); // alloc/de-alloc handled for you
+    Array2d(s32 nrows, s32 ncols, T *data); // you handle memory yourself
+    Array2d(const Array2dUnmanaged<T> &other); // *copies* data from unmanaged array
+    
+#if defined(ANKICORETECH_USE_OPENCV)
+    Array2d(const cv::Mat_<T> &other);
+#endif
+    
+    // Accessors:
+    inline s32 numRows() const;
+    inline s32 numCols() const;
+    inline s32 numElements() const;
+    
+    const T* getDataPointer() const;
+    
+    // Apply a function to every element, in place:
+    void applyScalarFunction(T (*fcn)(T));
+    
+    // Apply a function pointer to every element, storing the
+    // result in a separate, possibly differently-typed, result:
+    template<class Tresult>
+    void applyScalarFunction(void(*fcn)(const T&, Tresult&),
+                             Array2d<Tresult> &result) const;
+    
+  protected:
+    
+    // Make cv::Mat-inherited rows/cols/data members protected in our
+    // usage
+    using cv::Mat_<T>::data;
+    using cv::Mat_<T>::rows;
+    using cv::Mat_<T>::cols;
+    
+    // Only use [] access for beginning of row internally?
+    //   It's kinda weird syntax that we may not want to expose or rely
+    //   on forever if we create our own OpenCv-independent class later.
+    using cv::Mat_<T>::operator[];
+    
+    // Reserve these for use in Matrix subclass:
+    using cv::Mat_<T>::t; // transpose
+    using cv::Mat_<T>::inv;
+    //using cv::Mat_<T>::operator*;
+    
+  }; // class Array2d(Managed)
+  
+  
+  /* OLD: inherit from unmanged version
   // A version of Array2d that offers internal memory allocation/deallocation,
   // but retains the embedded-platform-friendly memory alignment of the parent
   // class:
@@ -159,6 +226,8 @@ namespace Anki
   public:
     Array2d();
     Array2d(s32 nrows, s32 ncols, bool useBoundaryFillPatterns = false);
+    
+    Array2d<T> operator=(const Array2d<T> &other) const;
     
   protected:
     
@@ -184,7 +253,7 @@ namespace Anki
   // But this #define seems like a *horrible* idea:
   // TODO: Better solution to get an "alias" for Array2dManaged
 #define Array2dManaged Array2d
-  
+  */
   
 #pragma mark --- FixedLengthList Definition ---
 
@@ -522,7 +591,7 @@ namespace Anki
 #endif // #if defined(ANKICORETECH_USE_OPENCV)
   } // Array2dUnmanaged<T>::initialize()
 
-#pragma mark --- Matrix Specializations ---
+#pragma mark --- Array2dUnmanaged Specializations ---
 
   template<> void Array2dUnmanaged<u8>::Print() const;
   template<> s32 Array2dUnmanaged<u8>::Set(const std::string values);
@@ -537,7 +606,120 @@ namespace Anki
 
   
 #pragma mark --- Array2d(Managed) Implementation ---
+  template<typename T>
+  Array2d<T>::Array2d(void)
+  : cv::Mat_<T>()
+  {
+    
+  } // Constructor: Array2d()
   
+  template<typename T>
+  Array2d<T>::Array2d(s32 numRows, s32 numCols)
+  : cv::Mat_<T>(numRows, numCols)
+  {
+    
+  } // Constructor: Array2d(rows,cols)
+  
+  template<typename T>
+  Array2d<T>::Array2d(s32 numRows, s32 numCols, T *data)
+  : cv::Mat_<T>(numRows, numCols, data)
+  {
+    
+  } // Constructor: Array2d(rows, cols, *data)
+
+  template<typename T>
+  Array2d<T>::Array2d(const cv::Mat_<T> &other)
+  : cv::Mat_<T>(other)
+  {
+    
+  } // Constructor: Array2d( cv::Mat_<T> )
+  
+  template<typename T>
+  Array2d<T>::Array2d(const Array2dUnmanaged<T> &other)
+  : Array2d<T>(other.get_cvMat_())
+  {
+    
+  } // Constructor: Array2d( Array2dUnmanaged )
+  
+  template<typename T>
+  s32 Array2d<T>::numRows(void) const
+  {
+    return s32(this->rows);
+  }
+  
+  template<typename T>
+  s32 Array2d<T>::numCols(void) const
+  {
+    return s32(this->cols);
+  }
+  
+  template<typename T>
+  s32 Array2d<T>::numElements(void) const
+  {
+    return this->numRows()*this->numCols();
+  }
+  
+  template<typename T>
+  const T* Array2d<T>::getDataPointer(void) const
+  {
+    return (T*)this->data;
+  }
+  
+  template<typename T>
+  void Array2d<T>::applyScalarFunction(T (*fcn)(T))
+  {
+    s32 nrows = this->numRows();
+    s32 ncols = this->numCols();
+    
+    if (this->isContinuous()) {
+      ncols *= nrows;
+      nrows = 1;
+    }
+    
+    for(s32 i=0; i<nrows; ++i)
+    {
+      T *data_i = (*this)[i];
+      
+      for (s32 j=0; j<ncols; ++j)
+      {
+        data_i[j] = fcn(data_i[j]);
+      }
+    }
+    
+  } // applyScalarFunction() in place
+  
+  
+  template<typename T>
+  template<typename Tresult>
+  void Array2d<T>::applyScalarFunction(void(*fcn)(const T&, Tresult&),
+                                       Array2d<Tresult> &result) const
+  {
+    s32 nrows = this->numRows();
+    s32 ncols = this->numCols();
+    
+    assert(result.size() == this->size());
+    
+    if (this->isContinuous() && result.isContinuous() ) {
+      ncols *= nrows;
+      nrows = 1;
+    }
+    
+    for(s32 i=0; i<nrows; ++i)
+    {
+      const T *data_i = (*this)[i];
+      Tresult *result_i = result[i];
+      
+      for (s32 j=0; j<ncols; ++j)
+      {
+        fcn(data_i[j], result_i[j]);
+      }
+    }
+    
+  } // applyScalarFunction() to separate result
+  
+  
+  /* OLD: Inherit from unmanaged
+   
   // This constructor uses the OpenCv managedData matrix to allocate the data,
   // and then points the inherited (unmanaged) data pointer to that.
   template<typename T>
@@ -562,7 +744,8 @@ namespace Anki
     this->dataManager.refcount = &(this->refCount);
     
   } // Constructor: Array2d(rows,cols)
-  
+
+  */
 
 
 #pragma mark --- FixedPointMatrix Implementations ---
