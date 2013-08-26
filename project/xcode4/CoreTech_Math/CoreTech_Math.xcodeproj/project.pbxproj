@@ -14,6 +14,8 @@
 		4940ADA517C6EAB600778163 /* ankiMath.h in Headers */ = {isa = PBXBuildFile; fileRef = 4940ADA417C6EAB600778163 /* ankiMath.h */; };
 		4940ADA817C6ED6400778163 /* basicMath.h in Headers */ = {isa = PBXBuildFile; fileRef = 4940ADA617C6ED6400778163 /* basicMath.h */; };
 		4940ADA917C6ED6400778163 /* basicMath.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4940ADA717C6ED6400778163 /* basicMath.cpp */; };
+		499D4F0317CB0D760015D685 /* rotation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 499D4F0117CB0D760015D685 /* rotation.cpp */; };
+		499D4F0417CB0D760015D685 /* rotation.h in Headers */ = {isa = PBXBuildFile; fileRef = 499D4F0217CB0D760015D685 /* rotation.h */; };
 		5C60002B17B2D26D00A75604 /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C60002A17B2D26D00A75604 /* config.h */; };
 		5CAE9A5D17B304E000B93047 /* linearAlgebra.h in Headers */ = {isa = PBXBuildFile; fileRef = 5CAE9A5C17B304E000B93047 /* linearAlgebra.h */; };
 		5CAE9A5F17B304E900B93047 /* linearAlgebra.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5CAE9A5E17B304E800B93047 /* linearAlgebra.cpp */; };
@@ -27,6 +29,8 @@
 		4940ADA417C6EAB600778163 /* ankiMath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ankiMath.h; path = ../../../include/anki/ankiMath.h; sourceTree = "<group>"; };
 		4940ADA617C6ED6400778163 /* basicMath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = basicMath.h; path = ../../../include/anki/math/basicMath.h; sourceTree = "<group>"; };
 		4940ADA717C6ED6400778163 /* basicMath.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = basicMath.cpp; path = ../../../src/basicMath.cpp; sourceTree = "<group>"; };
+		499D4F0117CB0D760015D685 /* rotation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = rotation.cpp; path = ../../../src/rotation.cpp; sourceTree = "<group>"; };
+		499D4F0217CB0D760015D685 /* rotation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = rotation.h; path = ../../../include/anki/math/rotation.h; sourceTree = "<group>"; };
 		5C60000A17B2D21200A75604 /* libCoreTech_Math.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCoreTech_Math.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		5C60002A17B2D26D00A75604 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = ../../../include/anki/math/config.h; sourceTree = "<group>"; };
 		5CAE9A5C17B304E000B93047 /* linearAlgebra.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = linearAlgebra.h; path = ../../../include/anki/math/linearAlgebra.h; sourceTree = "<group>"; };
@@ -47,6 +51,8 @@
 		5C60000117B2D21100A75604 = {
 			isa = PBXGroup;
 			children = (
+				499D4F0117CB0D760015D685 /* rotation.cpp */,
+				499D4F0217CB0D760015D685 /* rotation.h */,
 				5CAE9A5E17B304E800B93047 /* linearAlgebra.cpp */,
 				5CAE9A5C17B304E000B93047 /* linearAlgebra.h */,
 				5C60002A17B2D26D00A75604 /* config.h */,
@@ -82,6 +88,7 @@
 				4940AD9A17C6888600778163 /* matrix.h in Headers */,
 				4940ADA517C6EAB600778163 /* ankiMath.h in Headers */,
 				4940ADA817C6ED6400778163 /* basicMath.h in Headers */,
+				499D4F0417CB0D760015D685 /* rotation.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -140,6 +147,7 @@
 				4940AD9717C57C9300778163 /* pose.cpp in Sources */,
 				4940AD9B17C6888600778163 /* matrix.cpp in Sources */,
 				4940ADA917C6ED6400778163 /* basicMath.cpp in Sources */,
+				499D4F0317CB0D760015D685 /* rotation.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

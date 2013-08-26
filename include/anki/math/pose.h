@@ -3,6 +3,7 @@
 
 #include "anki/math/config.h"
 #include "anki/math/matrix.h"
+#include "anki/math/rotation.h"
 
 #include "anki/common/point.h"
 
@@ -12,54 +13,102 @@ namespace Anki {
   typedef Point3f Vec3f;
   template<typename T> class Matrix;
   
+  
+  class Pose2d
+  {
+  public:
+    // Constructors:
+    Pose2d(const float x, const float y, const float angle);
+    Pose2d(const float x, const float y, const float angle,
+           const Matrix<float> &cov);
+    
+    // Accessors:
+    inline float   get_x()     const;
+    inline float   get_y()     const;
+    inline Point2f get_xy()    const;
+    inline float   get_angle() const;
+    
+    Vec3f get_normal(void) const;
+    void  set_normal(const Vec3f &normal_new);
+    
+    RotationMatrix2d get_rotationMatrix() const;
+    
+    // Composition with another Pose2d:
+    void   operator*=(const Pose2d &other); // in place
+    Pose2d operator* (const Pose2d &other) const;
+    
+    // "Apply" Pose to a 2D point (i.e. transform that point by this Pose)
+    Point2f operator*(const Point2f &point) const;
+    
+    Pose2d Inverse(void); // return new Pose
+    void Invert(void); // in place
+    
+  protected:
+    float x, y, angle;
+    
+    // Stores the orientation of this 2D plane in 3D space
+    Vec3f normal;
+    
+    Matrix<float> covariance;
+    
+  }; // class Pose2d
+  
+
+  
+  
   // A class for encapsulating 6DOF pose (3D translation plus 3-axis rotation).
-  class Pose { // TODO: rename to Pose6DOF?
+  class Pose3d {
     
   public:
+    static Pose3d* World;
+    
     // Construct from rotation vector and translation vector
-    Pose(const Vec3f  &Rvec, const Vec3f &T);
-    Pose(const Vec3f  &Rvec, const Vec3f &T, const Matrix<float> &cov);
+    Pose3d(const RotationVector3d &Rvec, const Vec3f &T,
+           const Pose3d *parentPose = Pose3d::World);
+    
+    Pose3d(const RotationVector3d &Rvec, const Vec3f &T, const Matrix<float> &cov,
+           const Pose3d *parentPose = Pose3d::World);
     
     // Construct from rotation matrix and translation vector
     // TODO: do we want a version that takes in covariance too?
-    Pose(const Matrix<float> &Rmat, const Vec3f &T);
+    Pose3d(const RotationMatrix3d &Rmat, const Vec3f &T,
+           const Pose3d *parentPose = Pose3d::World);
     
-    // Construct from rotation angle, rotation axis, and translation vector
-    // (angle in radians)
-    Pose(const float angle, const Vec3f &axis, const Vec3f &T);
-    Pose(const float angle, const Vec3f &axis, const Vec3f &T,
-         const Matrix<float> &covariance);
     
     // TODO: Copy constructor?
     
-    // Destructor
-    ~Pose();
     
     // Composition with another Pose
-    void operator*=(const Pose &other); // in place
-    Pose operator*(const Pose &other) const;
+    void   operator*=(const Pose3d &other); // in place
+    Pose3d operator*(const Pose3d &other) const;
     
     // "Apply" Pose to a 3D point (i.e. transform that point by this Pose)
     Point3f operator*(const Point3f &point) const;
     
-    Pose inverse(void) const;
-    void inverse(void); // in place?
+    Pose3d inverse(void) const;
+    void   inverse(void); // in place?
+    
+    // Get this pose with respect to another pose.  Other pose
+    // must be an ancestor of this pose, otherwise an error
+    // will be generated.  Use Pose3d::World to get the pose with
+    // respect to the root / world pose.
+    Pose3d withRespectTo(const Pose3d *otherPose) const;
     
   protected:
-    // TODO: Explicitly store both angle/axis/vector/matrix info all the time,
-    // or compute-on-demand (and store?) when first requested?
     
-    //float  angle;
-    //Vec3f  axis;
-    Vec3f  Rvector; // angle*axis vector
-    Matrix<float> Rmatrix;
-    Vec3f  translation;
+    RotationVector3d  rotationVector;
+    RotationMatrix3d  rotationMatrix;
+    Vec3f             translation;
     
     // 6x6 covariance matrix (upper-left 3x3 block corresponds to rotation
     // vector elements, lower right 3x3 block corresponds to translation)
     Matrix<float> covariance;
     
-  }; // class Pose
+    // "Parent" for defining linkages or sequences of poses, so we can get
+    // a pose "with respect to" a parent or to root (world) pose.
+    const Pose3d *parent;
+    
+  }; // class Pose3d
   
   
 } // namespace Anki

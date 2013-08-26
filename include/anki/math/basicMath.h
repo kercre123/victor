@@ -10,10 +10,7 @@ namespace Anki {
   template<typename T> class Point3;
   typedef Point3<float> Vec3f;
     
-  // Rodrigues' formula for converting between angle+axis representation and 3x3
-  // matrix representation.
-  Result Rodrigues(const Vec3f  &Rvec_in, Matrix<float> &Rmat_out);
-  Result Rodrigues(const Matrix<float> &Rmat_in, Vec3f &Rvec_out);
+  
   
 } // namespace Anki
 

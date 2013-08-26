@@ -26,7 +26,7 @@ namespace Anki {
 #endif
     
     // Matrix multiplication:
-    Matrix<T> operator*(const Matrix<T> &other);
+    Matrix<T> operator*(const Matrix<T> &other) const;
     
     // Matrix inversion:
     // TODO: provide way to specify method
@@ -36,7 +36,7 @@ namespace Anki {
     Matrix<T> Tranpose(void) const;
     
   }; // class Matrix
-  
+
   
 #pragma mark --- Matrix Implementations ---
   
@@ -44,8 +44,7 @@ namespace Anki {
   Matrix<T>::Matrix()
   : Array2d<T>()
   {
-    assert(false);
-    // TODO: implement default constructor (need one for base class?)
+    
   }
   
   
@@ -58,44 +57,21 @@ namespace Anki {
   
   template<typename T>
   Matrix<T>::Matrix(const cv::Mat_<T> &cvMatrix)
-  : Matrix<T>(cvMatrix.rows, cvMatrix.cols)
+  : Array2d<T>(cvMatrix)
   {
-    assert(this->get_nrows() == cvMatrix.rows &&
-           this->get_ncols() == cvMatrix.cols);
-    
-    // Copy the data into the result.  This ensures that the
-    // result still has memory-aligned data the way we want
-    // (the way our Array2d class assumes), and that we
-    // haven't accidentally let OpenCv's create() do things
-    // differently.
-    // TODO: Find a way to get this without the copy.
-    for(s32 i=0; i<this->get_nrows(); ++i) {
-      
-      // Get pointers to the beginning of the row:
-      const T *cvMatrix_i = cvMatrix[i];
-      T *this_i     = this->cvMatMirror[i];
-      
-      for(s32 j=0; j<this->get_ncols(); ++j) {
-        this_i[j] = cvMatrix_i[j];
-      } // FOR j
-      
-    } // FOR i
     
   } // Constructor: Matrix<T>(cv::Mat_<T>)
   
   
   template<typename T>
-  Matrix<T> Matrix<T>::operator*(const Matrix<T> &other)
+  Matrix<T> Matrix<T>::operator*(const Matrix<T> &other) const
   {
     // Make sure the matrices have compatible sizes for multiplication
-    assert(this->ncols == other.nrows);
-
-    // Create the output matrix:
-    Matrix<T> result(this->get_nrows(), other.get_ncols());
+    assert(this->numCols() == other.numRows());
     
 #if defined(ANKICORETECH_USE_OPENCV)
     // For now (?), rely on OpenCV for matrix multiplication:
-    result.cvMatMirror = this->cvMatMirror * other.cvMatMirror;
+    Matrix<T> result( cv::Mat_<T>(*this) * cv::Mat_<T>(other) );
 #else
     assert(false);
     // TODO: Implement our own matrix multiplication.
@@ -112,7 +88,7 @@ namespace Anki {
     
 #if defined(ANKICORETECH_USE_OPENCV)
     // For now (?), rely on OpenCV for matrix inversion:
-    Matrix<T> result(this->cvMatMirror.inv());
+    Matrix<T> result(this->inv());
 #else
     assert(false);
     // TODO: Define our own opencv-free inverse?
@@ -128,7 +104,7 @@ namespace Anki {
     
 #if defined(ANKICORETECH_USE_OPENCV)
     // For now (?), rely on OpenCV for matrix inversion:
-    Matrix<T> result(this->cvMatMirror.t());
+    Matrix<T> result(this->t());
 #else
     assert(false);
     // TODO: Define our own opencv-free tranpose?

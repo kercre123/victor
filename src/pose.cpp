@@ -4,81 +4,106 @@
 #include "anki/math/pose.h"
 #include "anki/math/matrix.h"
 
+#include <stdexcept>
+
 namespace Anki {
   
-#pragma mark --- Constructors ---
+#pragma mark --- Pose2d Implementations ---
   
-  Pose::Pose(const Vec3f  &Rvec_in, const Vec3f &T_in)
-  : Rvector(Rvec_in), translation(T_in)
+  float Pose2d::get_x(void) const
   {
-    if (Rodrigues(this->Rvector, this->Rmatrix) != RESULT_OK) {
-      // TODO: what to do if this fails? Throw exception??
-    }
-  } // Constructor: Pose(Rvec, T) 
+    return this->x;
+  }
   
-  Pose::Pose(const Vec3f  &Rvec_in, const Vec3f &T_in,
-             const Matrix<float> &cov_in)
-  : Pose(Rvec_in, T_in)
+  float Pose2d::get_y(void) const
+  {
+    return this->y;
+  }
+  
+  Point2f Pose2d::get_xy(void) const
+  {
+    return Point2f(this->x, this->y);
+  }
+  
+  float Pose2d::get_angle(void) const
+  {
+    return this->angle;
+  }
+  
+  RotationMatrix2d Pose2d::get_rotationMatrix(void) const
+  {
+
+    RotationMatrix2d rotMat(this->angle);
+    
+    return rotMat;
+    
+  } // Pose2d::get_rotationMatrix()
+  
+#pragma mark --- Pose3d Implementations ---
+  
+  Pose3d* Pose3d::World = NULL;
+  
+  Pose3d::Pose3d(const RotationVector3d &Rvec_in, const Vec3f &T_in, const Pose3d *parentPose)
+  : rotationVector(Rvec_in), translation(T_in),
+    rotationMatrix(rotationVector), parent(parentPose)
+  {
+
+  } // Constructor: Pose3d(Rvec, T)
+  
+  Pose3d::Pose3d(const RotationVector3d &Rvec_in, const Vec3f &T_in,
+             const Matrix<float> &cov_in, const Pose3d *parentPose)
+  : Pose3d(Rvec_in, T_in, parentPose)
   {
     covariance = cov_in;
-  } // Constructor: Pose(Rvec, T, cov)
+  } // Constructor: Pose3d(Rvec, T, cov)
   
-  Pose::Pose(const Matrix<float> &Rmat_in, const Vec3f &T_in)
-  : Rmatrix(Rmat_in), translation(T_in)
+  Pose3d::Pose3d(const RotationMatrix3d &Rmat_in, const Vec3f &T_in, const Pose3d *parentPose)
+  : rotationMatrix(Rmat_in), translation(T_in), rotationVector(rotationMatrix), parent(parentPose)
   {
-    if (Rodrigues(this->Rmatrix, this->Rvector) != RESULT_OK) {
-      // TODO: what to do if this fails? Throw exception??
-    }
-  } // Constructor: Pose(Rmat, T)
+  } // Constructor: Pose3d(Rmat, T)
   
-  Pose::Pose(const float angle, const Vec3f &axis, const Vec3f &T)
-  : Rvector(axis)
-  {
-    // TODO: should this be an error / exception?
-    assert(axis.length()==1.f); //"Axis should be a unit vector.");
-    
-    // Rvector already contains the axis, multiply in the angle
-    this->Rvector *= angle;
-    
-    if (Rodrigues(this->Rvector, this->Rmatrix) != RESULT_OK) {
-      // TODO: what to do if this fails? Throw exception??
-    }
-    
-  } // Constructor: Pose(angle, axis, T)
-  
-  Pose::Pose(const float angle, const Vec3f &axis, const Vec3f &T,
-             const Matrix<float> &cov_in)
-  : Pose(angle, axis, T)
-  {
-    covariance = cov_in;
-  } // Constructor: Pose(angle, axis, T, cov)
   
 #pragma mark --- Operator Overloads ---
-  void Pose::operator*=(const Pose &other)
+  void Pose3d::operator*=(const Pose3d &other)
   {
     // TODO: Implement [this.Rmat this.t] * [other.Rmat other.t]
     
-  } // operatore*=(Pose)
+  } // operatore*=(Pose3d)
   
-  Pose Pose::operator*(const Pose &other) const
+  Pose3d Pose3d::operator*(const Pose3d &other) const
   {
     // TODO: Implement [this.Rmat this.t] * [other.Rmat other.t]
 
-  } // operator*(Pose)
+  } // operator*(Pose3d)
   
   
 #pragma mark --- Member Methods ---
-  Pose Pose::inverse(void) const
+  Pose3d Pose3d::inverse(void) const
   {
     // TODO: Return inverse(this)
-    Pose returnPose(*this);
-    returnPose.inverse();
-    return returnPose;
+    Pose3d returnPose3d(*this);
+    returnPose3d.inverse();
+    return returnPose3d;
   }
   
-  void Pose::inverse(void)
+  void Pose3d::inverse(void)
   {
      // TODO: Set this to inverse(this)
   }
+  
+  Pose3d Pose3d::withRespectTo(const Anki::Pose3d *otherPose) const
+  {
+    const Pose3d *current = this->parent;
+    while(current != otherPose) {
+      
+      // TODO: Chain pose inversions together here as we work our way to parent
+      
+      if(current->parent == NULL) {
+        // TODO: replace this with some "approved" error handling method
+        throw std::runtime_error("Parent pose not found.");
+      }
+    }
+    
+  } // Pose3d::withRespectTo()
   
 } // namespace Anki
