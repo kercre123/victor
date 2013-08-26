@@ -13,8 +13,7 @@ if useAndrewsPaths
         '-l opencv_calib3d');
 else % if useAndrewsPaths
     compileVerbose = '-v';
-    useDebugLibraries = false;
-
+    
     rootDir = fileparts(fileparts(fileparts(fileparts(which('makeMex.m')))));
     rootDir(rootDir == '\') = '/';
     mexWrapperDir = fullfile(rootDir, 'coretech-common', 'matlab', 'mex');
@@ -22,9 +21,22 @@ else % if useAndrewsPaths
     ankiLibraryDirs = {[rootDir, '/coretech-common/include/'], [rootDir, '/coretech-vision/include/']};
 
     if ismac()
+        useDebugLibraries = true;
         openCvLibDir = [rootDir, '/coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/'];
         openCvVersionString = '';
+        
+        ankiLibDirs = {[rootDir, '/coretech-common/build/xcode4/lib/'],...
+                       [rootDir, '/coretech-vision/build/xcode4/lib/']};
+                   
+        if useDebugLibraries
+            openCvLibDir = [rootDir, '/coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/'];
+            ankiLibs = {'-lCoreTech_Common_32Debug', '-lCoreTech_Vision_32Debug'}; 
+        else
+            openCvLibDir = [rootDir, '/coretech-external/build/xcode4/opencv-2.4.6.1/lib/Release/'];
+            ankiLibs = {'-lCoreTech_Common_32Release', '-lCoreTech_Vision_32Release'};
+        end
     elseif ispc()
+        useDebugLibraries = false;
         openCvVersionString = '246';
         
         ankiLibDirs = {[rootDir, '/coretech-common/build/msvc2012/lib/'],...
