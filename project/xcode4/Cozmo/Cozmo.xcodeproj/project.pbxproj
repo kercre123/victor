@@ -7,11 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		499D4F0717CB154F0015D685 /* block.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 499D4F0517CB154F0015D685 /* block.cpp */; };
+		499D4F0A17CB17D30015D685 /* block.h in Headers */ = {isa = PBXBuildFile; fileRef = 499D4F0917CB17D30015D685 /* block.h */; };
 		5CD3839B17AC529600B75953 /* cozmo.h in Headers */ = {isa = PBXBuildFile; fileRef = 5CD3839A17AC529600B75953 /* cozmo.h */; };
 		5CD3839D17AC529E00B75953 /* cozmo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5CD3839C17AC529E00B75953 /* cozmo.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		499D4F0517CB154F0015D685 /* block.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = block.cpp; path = ../../../src/block.cpp; sourceTree = "<group>"; };
+		499D4F0917CB17D30015D685 /* block.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = block.h; path = ../../../include/anki/cozmo/block.h; sourceTree = "<group>"; };
 		5CD3836117AC522F00B75953 /* libCozmo.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCozmo.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		5CD3839A17AC529600B75953 /* cozmo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cozmo.h; path = ../../../include/cozmo.h; sourceTree = "<group>"; };
 		5CD3839C17AC529E00B75953 /* cozmo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = cozmo.cpp; path = ../../../src/cozmo.cpp; sourceTree = "<group>"; };
@@ -31,7 +35,9 @@
 		5CD3835817AC522F00B75953 = {
 			isa = PBXGroup;
 			children = (
+				499D4F0917CB17D30015D685 /* block.h */,
 				5CD3839C17AC529E00B75953 /* cozmo.cpp */,
+				499D4F0517CB154F0015D685 /* block.cpp */,
 				5CD3839A17AC529600B75953 /* cozmo.h */,
 				5CD3836217AC522F00B75953 /* Products */,
 			);
@@ -53,6 +59,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5CD3839B17AC529600B75953 /* cozmo.h in Headers */,
+				499D4F0A17CB17D30015D685 /* block.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -108,6 +115,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5CD3839D17AC529E00B75953 /* cozmo.cpp in Sources */,
+				499D4F0717CB154F0015D685 /* block.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -179,7 +187,9 @@
 				EXECUTABLE_PREFIX = lib;
 				HEADER_SEARCH_PATHS = (
 					../../../include,
+					"$(SRCROOT)/../../../../coretech-math/include",
 					"$(SRCROOT)/../../../../coretech-common/include",
+					"$(SRCROOT)/../../../../coretech-vision/include",
 					"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/extern/include",
 					"../../../../coretech-external/opencv-2.4.6.1/include",
 					"../../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include",
@@ -211,7 +221,9 @@
 				EXECUTABLE_PREFIX = lib;
 				HEADER_SEARCH_PATHS = (
 					../../../include,
+					"$(SRCROOT)/../../../../coretech-math/include",
 					"$(SRCROOT)/../../../../coretech-common/include",
+					"$(SRCROOT)/../../../../coretech-vision/include",
 					"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/extern/include",
 					"../../../../coretech-external/opencv-2.4.6.1/include",
 					"../../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include",
