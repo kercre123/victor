@@ -583,7 +583,7 @@ template <class T> std::vector<cv::Point_<T> > mxArray2CvPointVector(const mxArr
 #endif // #if USE_OPENCV
 
 #ifdef USE_ANKI_CORE_LIBRARIES
-template <class T> void mxArray2AnkiMatrix(const mxArray *array, Anki::Matrix<T> &mat)
+template <class T> void mxArray2Array2dUnmanaged(const mxArray *array, Anki::Array2dUnmanaged<T> &mat)
 {
   const int npixels = mat.size(0)*mat.size(1);
   const int nrows = mat.get_size(0);
@@ -594,29 +594,29 @@ template <class T> void mxArray2AnkiMatrix(const mxArray *array, Anki::Matrix<T>
   const mwSize numMatlabElements = mxGetNumberOfElements(array);
 
   if(numMatlabElements != npixels) {
-    printf("mxArray2AnkiMatrix(array,mat) - Matlab array has a different number of elements than the Anki Matrix (%d != %d)\n", numMatlabElements, npixels);
+    printf("mxArray2Array2dUnmanaged(array,mat) - Matlab array has a different number of elements than the Anki Matrix (%d != %d)\n", numMatlabElements, npixels);
     return;
   }
 
   const mxClassID matlabClassId = mxGetClassID(array);
   const mxClassID templateClassId = convertToMatlabType(typeid(T).name(), sizeof(T));
   if(matlabClassId != templateClassId) {
-    printf("mxArray2AnkiMatrix(array,mat) - Matlab classId doesn't match with template %d!=%d\n", matlabClassId, templateClassId);
-    Anki::Matrix<T> ankiMatrix(0, 0, NULL, 0);
-    return ankiMatrix;
+    printf("mxArray2Array2dUnmanaged(array,mat) - Matlab classId doesn't match with template %d!=%d\n", matlabClassId, templateClassId);
+    Anki::Array2dUnmanaged<T> array2dUnmanaged(0, 0, NULL, 0);
+    return array2dUnmanaged;
   }
 
   for(u32 y=0; y<nrows; ++y) {
-    T * const ankiMatrix_rowPointer   = mat.Pointer(y, 0);
+    T * const array2dUnmanaged_rowPointer   = mat.Pointer(y, 0);
     const T * const matlabMatrix_rowPointer = matlabMatrixStartPointer + y*ncols;
 
     for(u32 x=0; x<ncols; ++x) {
-      ankiMatrix_rowPointer[x] = matlabMatrix_rowPointer[x];
+      array2dUnmanaged_rowPointer[x] = matlabMatrix_rowPointer[x];
     }
   }
 }
 
-template <class T> Anki::Matrix<T> mxArray2AnkiMatrix(const mxArray *array)
+template <class T> Anki::Array2dUnmanaged<T> mxArray2Array2dUnmanaged(const mxArray *array)
 {
   const T * const matlabMatrixStartPointer = (const T *) mxGetData(array);
 
@@ -625,45 +625,45 @@ template <class T> Anki::Matrix<T> mxArray2AnkiMatrix(const mxArray *array)
   const mwSize *dimensions = mxGetDimensions(array);
 
   if(numDimensions != 2) {
-    printf("mxArray2AnkiMatrix - Matlab array must be 2D\n");
-    Anki::Matrix<T> ankiMatrix(0, 0, NULL, 0);
-    return ankiMatrix;
+    printf("mxArray2Array2dUnmanaged - Matlab array must be 2D\n");
+    Anki::Array2dUnmanaged<T> array2dUnmanaged(0, 0, NULL, 0);
+    return array2dUnmanaged;
   }
 
   const mxClassID matlabClassId = mxGetClassID(array);
   const mxClassID templateClassId = convertToMatlabType(typeid(T).name(), sizeof(T));
   if(matlabClassId != templateClassId) {
-    printf("mxArray2AnkiMatrix - Matlab classId doesn't match with template %d!=%d\n", matlabClassId, templateClassId);
-    Anki::Matrix<T> ankiMatrix(0, 0, NULL, 0);
-    return ankiMatrix;
+    printf("mxArray2Array2dUnmanaged - Matlab classId doesn't match with template %d!=%d\n", matlabClassId, templateClassId);
+    Anki::Array2dUnmanaged<T> array2dUnmanaged(0, 0, NULL, 0);
+    return array2dUnmanaged;
   }
   
-  Anki::Matrix<T> ankiMatrix = Anki::AllocateMatrixFromHeap<T>(dimensions[0], dimensions[1]);
+  Anki::Array2dUnmanaged<T> array2dUnmanaged = Anki::AllocateArray2dUnmanagedFromHeap<T>(dimensions[0], dimensions[1]);
 
   for(s32 y=0; y<dimensions[0]; ++y) {
-    T * const ankiMatrix_rowPointer = ankiMatrix.Pointer(y, 0);
+    T * const array2dUnmanaged_rowPointer = array2dUnmanaged.Pointer(y, 0);
 
     for(s32 x=0; x<dimensions[1]; ++x) {
-      ankiMatrix_rowPointer[x] = *(matlabMatrixStartPointer + x*dimensions[0] + y);
+      array2dUnmanaged_rowPointer[x] = *(matlabMatrixStartPointer + x*dimensions[0] + y);
     }
   }
 
-  return ankiMatrix;
+  return array2dUnmanaged;
 }
 
-template <class T> mxArray* ankiMatrix2mxArray(const Anki::Matrix<T> &ankiMatrix)
+template <class T> mxArray* array2dUnmanaged2mxArray(const Anki::Array2dUnmanaged<T> &array2dUnmanaged)
 {
   const mxClassID classId = convertToMatlabType(typeid(T).name(), sizeof(T));
 
-  const mwSize outputDims[2] = {ankiMatrix.get_size(0), ankiMatrix.get_size(1)};
+  const mwSize outputDims[2] = {array2dUnmanaged.get_size(0), array2dUnmanaged.get_size(1)};
   mxArray *outputArray = mxCreateNumericArray(2, outputDims, classId, mxREAL);
   T * const matlabMatrixStartPointer = (T *) mxGetData(outputArray);
 
   for(s32 y=0; y<outputDims[0]; ++y) {
-    const T * const ankiMatrix_rowPointer = ankiMatrix.Pointer(y, 0);
+    const T * const array2dUnmanaged_rowPointer = array2dUnmanaged.Pointer(y, 0);
 
     for(s32 x=0; x<outputDims[1]; ++x) {
-      *(matlabMatrixStartPointer + x*outputDims[0] + y) = ankiMatrix_rowPointer[x];
+      *(matlabMatrixStartPointer + x*outputDims[0] + y) = array2dUnmanaged_rowPointer[x];
     }
   }
 
