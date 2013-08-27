@@ -59,5 +59,8 @@
     <ClInclude Include="..\..\include\anki\embeddedCommon\utilities.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\anki\embeddedCommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -10,7 +10,7 @@
 #ifndef __DAS_LIGHT_H__
 #define __DAS_LIGHT_H__
 
-#include "anki/common/config.h"
+#include "anki/embeddedCommon/config.h"
 
 #ifdef _MSC_VER
 #ifndef __PRETTY_FUNCTION__

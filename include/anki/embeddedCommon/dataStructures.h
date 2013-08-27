@@ -9,7 +9,7 @@
 #ifndef _ANKICORETECHEMBEDDED_COMMON_DATASTRUCTURES_H_
 #define _ANKICORETECHEMBEDDED_COMMON_DATASTRUCTURES_H_
 
-#include "anki/common/config.h"
+#include "anki/embeddedCommon/config.h"
 
 namespace Anki
 {

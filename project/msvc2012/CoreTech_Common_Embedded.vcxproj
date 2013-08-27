@@ -19,6 +19,7 @@
     <ClCompile Include="..\..\src\embedded\utilities.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\anki\embeddedCommon.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\array2d.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\config.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\DASlight.h" />

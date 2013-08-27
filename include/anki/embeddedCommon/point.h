@@ -3,7 +3,7 @@
 
 #include <cmath>
 
-#include "anki/common/config.h"
+#include "anki/embeddedCommon/config.h"
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 namespace cv
@@ -38,6 +38,13 @@ namespace Anki
       {
       }
 
+      // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Array2dUnmanaged. No data is copied.
+      cv::Point_<T>& get_CvPoint_()
+      {
+        return cv::Point_<T>(x,y);
+      }
+#endif
+
       friend bool operator== (const Point2 &point1, const Point2 &point2)
       {
         if(point1.x == point2.x && point1.y == point2.y)
@@ -55,13 +62,6 @@ namespace Anki
       {
         return Point2(point1.x-point2.x, point1.y-point2.y);
       }
-
-      // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Array2dUnmanaged. No data is copied.
-      cv::Point_<T>& get_CvPoint_()
-      {
-        return cv::Point_<T>(x,y);
-      }
-#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
       void operator*=(const T value)
       {

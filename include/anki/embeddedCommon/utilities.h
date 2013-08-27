@@ -1,7 +1,7 @@
 #ifndef _ANKICORETECHEMBEDDED_COMMON_UTILITIES_H_
 #define _ANKICORETECHEMBEDDED_COMMON_UTILITIES_H_
 
-#include "anki/common/config.h"
+#include "anki/embeddedCommon/config.h"
 
 #ifndef MAX
 #define MAX( a, b ) ( ((a) > (b)) ? (a) : (b) )

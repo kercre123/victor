@@ -2,11 +2,11 @@
 
 #include <iostream>
 
-#if defined(ANKICORETECH_USE_OPENCV)
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 #include "opencv2/opencv.hpp"
 #endif
 
-#if defined(ANKICORETECH_USE_MATLAB)
+#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 Anki::Embedded::Matlab matlab(false);
 #endif
 
@@ -157,7 +157,7 @@ TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
   free(buffer); buffer = NULL;
 }
 
-#if defined(ANKICORETECH_USE_MATLAB)
+#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 TEST(CoreTech_Common, SimpleMatlabTest1)
 {
   matlab.EvalStringEcho("simpleVector = double([1.1,2.1,3.1,4.1,5.1]);");
@@ -173,9 +173,9 @@ TEST(CoreTech_Common, SimpleMatlabTest1)
 
   free(simpleVector); simpleVector = NULL;
 }
-#endif //#if defined(ANKICORETECH_USE_MATLAB)
+#endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
-#if defined(ANKICORETECH_USE_MATLAB)
+#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 TEST(CoreTech_Common, SimpleMatlabTest2)
 {
   matlab.EvalStringEcho("simpleArray2d = int16([1,2,3,4,5;6,7,8,9,10]);");
@@ -196,9 +196,9 @@ TEST(CoreTech_Common, SimpleMatlabTest2)
 
   free(simpleArray2d.get_rawDataPointer());
 }
-#endif //#if defined(ANKICORETECH_USE_MATLAB)
+#endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
-#if defined(ANKICORETECH_USE_OPENCV)
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 TEST(CoreTech_Common, SimpleOpenCVTest)
 {
   cv::Mat src, dst;
@@ -230,7 +230,7 @@ TEST(CoreTech_Common, SimpleOpenCVTest)
   ASSERT_TRUE(abs(1.49208 - dst.at<double>(50, 0)) < .00001);
   ASSERT_TRUE(abs(1.39378 - dst.at<double>(50, 1)) < .00001);
 }
-#endif // #if defined(ANKICORETECH_USE_OPENCV)
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
 TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 {
@@ -256,12 +256,12 @@ TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   *simpleArray2d.Pointer(2,4) = 11;
   *simpleArray2d.Pointer(2,5) = 12;
 
-#if defined(ANKICORETECH_USE_MATLAB)
+#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
   // Check that the Matlab transfer works (you need to check the Matlab window to verify that this works)
   matlab.PutArray2d(simpleArray2d, "simpleArray2d");
-#endif //#if defined(ANKICORETECH_USE_MATLAB)
+#endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
-#if defined(ANKICORETECH_USE_OPENCV)
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
   // Check that the templated OpenCV matrix works
   {
     cv::Mat_<s16> &simpleArray2d_cvMat = simpleArray2d.get_CvMat_();
@@ -303,7 +303,7 @@ TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
     ASSERT_EQ(90, *simpleArray2d.Pointer(2,0));
     ASSERT_EQ(90, simpleArray2d_cvMat.at<s16>(2,0));
   }
-#endif //#if defined(ANKICORETECH_USE_OPENCV)
+#endif //#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
   free(buffer); buffer = NULL;
 }
