@@ -7,7 +7,7 @@
 //  Copyright (c) 2013 Anki. All rights reserved.
 //
 
-#include "anki/common.h"
+#include "anki/embeddedCommon.h"
 
 #include <stdarg.h>
 #include <stdio.h>
