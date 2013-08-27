@@ -1,4 +1,4 @@
-//
+﻿//
 //  camera.cpp
 //  CoreTech_Vision
 //

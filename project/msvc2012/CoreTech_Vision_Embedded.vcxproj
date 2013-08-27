@@ -11,14 +11,21 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\include\anki\vision.h" />
-    <ClInclude Include="..\..\include\anki\vision\config.h" />
+    <ClInclude Include="..\..\include\anki\embeddedVision.h" />
+    <ClInclude Include="..\..\include\anki\embeddedVision\config.h" />
+    <ClInclude Include="..\..\include\anki\embeddedVision\visionKernels.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\embedded\binomialFilter.cpp" />
+    <ClCompile Include="..\..\src\embedded\computeCharacteristicScale.cpp" />
+    <ClCompile Include="..\..\src\embedded\downsampleByFactor.cpp" />
+    <ClCompile Include="..\..\src\embedded\traceBoundary.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{1F89D154-F5CD-4C53-8489-E33A06BAE0DB}</ProjectGuid>
+    <ProjectGuid>{ED4EB204-E2BD-4C5A-A677-FC8C241C7887}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>AnkiVision</RootNamespace>
-    <ProjectName>CoreTech_Vision</ProjectName>
+    <ProjectName>CoreTech_Vision_Embedded</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

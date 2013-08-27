@@ -1,4 +1,4 @@
-#include "anki/vision.h"
+#include "anki/embeddedVision.h"
 
 #include <iostream>
 
@@ -9,7 +9,7 @@
 #include "gtest/gtest.h"
 
 #if defined(ANKICORETECH_USE_MATLAB)
-Anki::Matlab matlab(false);
+Anki::Embedded::Matlab matlab(false);
 #endif
 
 TEST(CoreTech_Vision, BinomialFilter)
@@ -20,10 +20,10 @@ TEST(CoreTech_Vision, BinomialFilter)
   const s32 numBytes = 10000;
   void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
-  Anki::MemoryStack ms(buffer, numBytes);
+  Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
-  Anki::Array2dUnmanaged<u8> img(height, width, ms);
-  Anki::Array2dUnmanaged<u8> imgFiltered(height, width, ms);
+  Anki::Embedded::Array2d<u8> img(height, width, ms);
+  Anki::Embedded::Array2d<u8> imgFiltered(height, width, ms);
 
   ASSERT_TRUE(img.get_rawDataPointer()!= NULL);
   ASSERT_TRUE(imgFiltered.get_rawDataPointer()!= NULL);
@@ -32,7 +32,7 @@ TEST(CoreTech_Vision, BinomialFilter)
     *img.Pointer(2,x) = static_cast<u8>(x);
   }
 
-  Anki::Result result = Anki::BinomialFilter(img, imgFiltered, ms);
+  Anki::Embedded::Result result = Anki::Embedded::BinomialFilter(img, imgFiltered, ms);
 
   //printf("img:\n");
   //img.Print();
@@ -40,7 +40,7 @@ TEST(CoreTech_Vision, BinomialFilter)
   //printf("imgFiltered:\n");
   //imgFiltered.Print();
 
-  ASSERT_TRUE(result == Anki::RESULT_OK);
+  ASSERT_TRUE(result == Anki::Embedded::RESULT_OK);
 
   const u8 correctResults[5][10] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 1, 1, 1, 2, 2, 2, 3}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
@@ -64,10 +64,10 @@ TEST(CoreTech_Vision, DownsampleByFactor)
   const s32 numBytes = 10000;
   void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
-  Anki::MemoryStack ms(buffer, numBytes);
+  Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
-  Anki::Array2dUnmanaged<u8> img(height, width, ms);
-  Anki::Array2dUnmanaged<u8> imgDownsampled(height/downsampleFactor, width/downsampleFactor, ms);
+  Anki::Embedded::Array2d<u8> img(height, width, ms);
+  Anki::Embedded::Array2d<u8> imgDownsampled(height/downsampleFactor, width/downsampleFactor, ms);
 
   ASSERT_TRUE(img.get_rawDataPointer()!= NULL);
   ASSERT_TRUE(imgDownsampled.get_rawDataPointer()!= NULL);
@@ -76,9 +76,9 @@ TEST(CoreTech_Vision, DownsampleByFactor)
     *img.Pointer(2,x) = static_cast<u8>(x);
   }
 
-  Anki::Result result = Anki::DownsampleByFactor(img, downsampleFactor, imgDownsampled);
+  Anki::Embedded::Result result = Anki::Embedded::DownsampleByFactor(img, downsampleFactor, imgDownsampled);
 
-  ASSERT_TRUE(result == Anki::RESULT_OK);
+  ASSERT_TRUE(result == Anki::Embedded::RESULT_OK);
 
   const u8 correctResults[2][5] = {{0, 0, 0, 0, 0}, {0, 1, 2, 3, 4}};
 
@@ -119,16 +119,16 @@ TEST(CoreTech_Vision, ComputeCharacteristicScale)
   const s32 numBytes = 10000;
   void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
-  Anki::MemoryStack ms(buffer, numBytes);
+  Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
-  Anki::Array2dUnmanaged<u8> img(height, width, ms);
+  Anki::Embedded::Array2d<u8> img(height, width, ms);
   ASSERT_TRUE(img.get_rawDataPointer() != NULL);
   ASSERT_TRUE(img.Set(imgData) == width*height);
 
-  Anki::Array2dUnmanagedFixedPoint<u32> scaleImage(height, width, 16, ms);
+  Anki::Embedded::Array2dFixedPoint<u32> scaleImage(height, width, 16, ms);
   ASSERT_TRUE(scaleImage.get_rawDataPointer() != NULL);
 
-  ASSERT_TRUE(ComputeCharacteristicScaleImage(img, numLevels, scaleImage, ms) == Anki::RESULT_OK);
+  ASSERT_TRUE(ComputeCharacteristicScaleImage(img, numLevels, scaleImage, ms) == Anki::Embedded::RESULT_OK);
 
   // TODO: manually compute results, and check
 
@@ -150,21 +150,21 @@ TEST(CoreTech_Vision, ComputeCharacteristicScale2)
   const s32 numBytes = 10000000;
   void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
-  Anki::MemoryStack ms(buffer, numBytes);
+  Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
-  Anki::Matlab matlab(false);
+  Anki::Embedded::Matlab matlab(false);
 
   matlab.EvalStringEcho("img = rgb2gray(imread('Z:/Documents/testSequence/blockWorldTest_front00000.png'));");
   //matlab.EvalStringEcho("img = imresize(rgb2gray(imread('Z:/Documents/testSequence/blockWorldTest_front00000.png')), [240,320]);");
-  Anki::Array2dUnmanaged<u8> img = matlab.GetArray2dUnmanaged<u8>("img");
+  Anki::Embedded::Array2d<u8> img = matlab.GetArray2d<u8>("img");
   ASSERT_TRUE(img.get_rawDataPointer() != NULL);
 
-  Anki::Array2dUnmanagedFixedPoint<u32> scaleImage(height, width, 16, ms);
+  Anki::Embedded::Array2dFixedPoint<u32> scaleImage(height, width, 16, ms);
   ASSERT_TRUE(scaleImage.get_rawDataPointer() != NULL);
 
-  ASSERT_TRUE(ComputeCharacteristicScaleImage(img, numLevels, scaleImage, ms) == Anki::RESULT_OK);
+  ASSERT_TRUE(ComputeCharacteristicScaleImage(img, numLevels, scaleImage, ms) == Anki::Embedded::RESULT_OK);
 
-  matlab.PutArray2dUnmanaged(scaleImage, "scaleImage6_c");
+  matlab.PutArray2d(scaleImage, "scaleImage6_c");
 
   free(buffer); buffer = NULL;
 }
@@ -193,25 +193,25 @@ TEST(CoreTech_Vision, TraceBoundary)
     " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 ";
 
   const s32 numPoints = 9;
-  const Anki::Point2<s16> groundTruth[9] = {Anki::Point2<s16>(8,6), Anki::Point2<s16>(8,5), Anki::Point2<s16>(7,4), Anki::Point2<s16>(7,3), Anki::Point2<s16>(8,3), Anki::Point2<s16>(9,3), Anki::Point2<s16>(9,4), Anki::Point2<s16>(9,5), Anki::Point2<s16>(9,6)};
+  const Anki::Embedded::Point2<s16> groundTruth[9] = {Anki::Embedded::Point2<s16>(8,6), Anki::Embedded::Point2<s16>(8,5), Anki::Embedded::Point2<s16>(7,4), Anki::Embedded::Point2<s16>(7,3), Anki::Embedded::Point2<s16>(8,3), Anki::Embedded::Point2<s16>(9,3), Anki::Embedded::Point2<s16>(9,4), Anki::Embedded::Point2<s16>(9,5), Anki::Embedded::Point2<s16>(9,6)};
 
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = 100000;
   void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
-  Anki::MemoryStack ms(buffer, numBytes);
+  Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
-  Anki::Array2dUnmanaged<u8> binaryImg(height, width, ms);
-  const Anki::Point2<s16> startPoint(8,6);
-  const Anki::BoundaryDirection initialDirection = Anki::BOUNDARY_N;
-  Anki::FixedLengthList<Anki::Point2<s16>> boundary(Anki::MAX_BOUNDARY_LENGTH, ms);
+  Anki::Embedded::Array2d<u8> binaryImg(height, width, ms);
+  const Anki::Embedded::Point2<s16> startPoint(8,6);
+  const Anki::Embedded::BoundaryDirection initialDirection = Anki::Embedded::BOUNDARY_N;
+  Anki::Embedded::FixedLengthList<Anki::Embedded::Point2<s16>> boundary(Anki::Embedded::MAX_BOUNDARY_LENGTH, ms);
 
   ASSERT_TRUE(binaryImg.IsValid());
   ASSERT_TRUE(boundary.IsValid());
 
   binaryImg.Set(imgData);
 
-  ASSERT_TRUE(Anki::TraceBoundary(binaryImg, startPoint, initialDirection, boundary) == Anki::RESULT_OK);
+  ASSERT_TRUE(Anki::Embedded::TraceBoundary(binaryImg, startPoint, initialDirection, boundary) == Anki::Embedded::RESULT_OK);
 
   ASSERT_TRUE(boundary.get_size() == numPoints);
   for(s32 iPoint=0; iPoint<numPoints; iPoint++) {
