@@ -7,26 +7,26 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		499D4EFF17CAFC8B0015D685 /* camera.h in Headers */ = {isa = PBXBuildFile; fileRef = 499D4EFD17CAFC8B0015D685 /* camera.h */; };
-		499D4F0017CAFC8B0015D685 /* camera.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 499D4EFE17CAFC8B0015D685 /* camera.cpp */; };
-		499D4F0D17CB1ACD0015D685 /* marker2d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 499D4F0B17CB1ACD0015D685 /* marker2d.cpp */; };
-		499D4F0E17CB1ACD0015D685 /* marker2d.h in Headers */ = {isa = PBXBuildFile; fileRef = 499D4F0C17CB1ACD0015D685 /* marker2d.h */; };
-		499D4F1117CB1DA50015D685 /* image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 499D4F0F17CB1DA50015D685 /* image.cpp */; };
-		499D4F1217CB1DA50015D685 /* image.h in Headers */ = {isa = PBXBuildFile; fileRef = 499D4F1017CB1DA50015D685 /* image.h */; };
+		499D4F1917CBF87D0015D685 /* camera.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 499D4F1317CBF87D0015D685 /* camera.cpp */; };
+		499D4F1A17CBF87D0015D685 /* marker2d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 499D4F1417CBF87D0015D685 /* marker2d.cpp */; };
+		499D4F1B17CBF87D0015D685 /* image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 499D4F1517CBF87D0015D685 /* image.cpp */; };
+		499D4F1C17CBF87D0015D685 /* camera.h in Headers */ = {isa = PBXBuildFile; fileRef = 499D4F1617CBF87D0015D685 /* camera.h */; };
+		499D4F1D17CBF87D0015D685 /* image.h in Headers */ = {isa = PBXBuildFile; fileRef = 499D4F1717CBF87D0015D685 /* image.h */; };
+		499D4F1E17CBF87D0015D685 /* marker2d.h in Headers */ = {isa = PBXBuildFile; fileRef = 499D4F1817CBF87D0015D685 /* marker2d.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		499D4EF617CAFC420015D685 /* libCoreTech_Vision.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libCoreTech_Vision.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
-		499D4EFD17CAFC8B0015D685 /* camera.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = camera.h; path = ../../../include/anki/vision/camera.h; sourceTree = "<group>"; };
-		499D4EFE17CAFC8B0015D685 /* camera.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = camera.cpp; path = ../../../src/camera.cpp; sourceTree = "<group>"; };
-		499D4F0B17CB1ACD0015D685 /* marker2d.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = marker2d.cpp; path = ../../../src/marker2d.cpp; sourceTree = "<group>"; };
-		499D4F0C17CB1ACD0015D685 /* marker2d.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = marker2d.h; path = ../../../include/anki/vision/marker2d.h; sourceTree = "<group>"; };
-		499D4F0F17CB1DA50015D685 /* image.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image.cpp; path = ../../../src/image.cpp; sourceTree = "<group>"; };
-		499D4F1017CB1DA50015D685 /* image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = image.h; path = ../../../include/anki/vision/image.h; sourceTree = "<group>"; };
+		499D4F1317CBF87D0015D685 /* camera.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = camera.cpp; path = ../../../src/camera.cpp; sourceTree = "<group>"; };
+		499D4F1417CBF87D0015D685 /* marker2d.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = marker2d.cpp; path = ../../../src/marker2d.cpp; sourceTree = "<group>"; };
+		499D4F1517CBF87D0015D685 /* image.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image.cpp; path = ../../../src/image.cpp; sourceTree = "<group>"; };
+		499D4F1617CBF87D0015D685 /* camera.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = camera.h; path = ../../../include/anki/vision/camera.h; sourceTree = "<group>"; };
+		499D4F1717CBF87D0015D685 /* image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = image.h; path = ../../../include/anki/vision/image.h; sourceTree = "<group>"; };
+		499D4F1817CBF87D0015D685 /* marker2d.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = marker2d.h; path = ../../../include/anki/vision/marker2d.h; sourceTree = "<group>"; };
+		5C60000A17B2D21200A75604 /* libCoreTech_Vision.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCoreTech_Vision.a; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		499D4EF317CAFC420015D685 /* Frameworks */ = {
+		5C60000717B2D21200A75604 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -36,23 +36,23 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		499D4EED17CAFC420015D685 = {
+		5C60000117B2D21100A75604 = {
 			isa = PBXGroup;
 			children = (
-				499D4EFD17CAFC8B0015D685 /* camera.h */,
-				499D4F0B17CB1ACD0015D685 /* marker2d.cpp */,
-				499D4F0C17CB1ACD0015D685 /* marker2d.h */,
-				499D4F0F17CB1DA50015D685 /* image.cpp */,
-				499D4F1017CB1DA50015D685 /* image.h */,
-				499D4EFE17CAFC8B0015D685 /* camera.cpp */,
-				499D4EF717CAFC420015D685 /* Products */,
+				499D4F1317CBF87D0015D685 /* camera.cpp */,
+				499D4F1417CBF87D0015D685 /* marker2d.cpp */,
+				499D4F1517CBF87D0015D685 /* image.cpp */,
+				499D4F1617CBF87D0015D685 /* camera.h */,
+				499D4F1717CBF87D0015D685 /* image.h */,
+				499D4F1817CBF87D0015D685 /* marker2d.h */,
+				5C60000B17B2D21200A75604 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		499D4EF717CAFC420015D685 /* Products */ = {
+		5C60000B17B2D21200A75604 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				499D4EF617CAFC420015D685 /* libCoreTech_Vision.dylib */,
+				5C60000A17B2D21200A75604 /* libCoreTech_Vision.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -60,91 +60,90 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
-		499D4EF417CAFC420015D685 /* Headers */ = {
+		5C60000817B2D21200A75604 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				499D4EFF17CAFC8B0015D685 /* camera.h in Headers */,
-				499D4F0E17CB1ACD0015D685 /* marker2d.h in Headers */,
-				499D4F1217CB1DA50015D685 /* image.h in Headers */,
+				499D4F1C17CBF87D0015D685 /* camera.h in Headers */,
+				499D4F1D17CBF87D0015D685 /* image.h in Headers */,
+				499D4F1E17CBF87D0015D685 /* marker2d.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		499D4EF517CAFC420015D685 /* CoreTech_Vision */ = {
+		5C60000917B2D21200A75604 /* CoreTech_Vision */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 499D4EFA17CAFC420015D685 /* Build configuration list for PBXNativeTarget "CoreTech_Vision" */;
+			buildConfigurationList = 5C60000E17B2D21200A75604 /* Build configuration list for PBXNativeTarget "CoreTech_Vision" */;
 			buildPhases = (
-				499D4EF217CAFC420015D685 /* Sources */,
-				499D4EF317CAFC420015D685 /* Frameworks */,
-				499D4EF417CAFC420015D685 /* Headers */,
+				5C60000617B2D21200A75604 /* Sources */,
+				5C60000717B2D21200A75604 /* Frameworks */,
+				5C60000817B2D21200A75604 /* Headers */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			name = CoreTech_Vision;
-			productName = "CoreTech-Vision";
-			productReference = 499D4EF617CAFC420015D685 /* libCoreTech_Vision.dylib */;
-			productType = "com.apple.product-type.library.dynamic";
+			productName = CoreTech_Math;
+			productReference = 5C60000A17B2D21200A75604 /* libCoreTech_Vision.a */;
+			productType = "com.apple.product-type.library.static";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		499D4EEE17CAFC420015D685 /* Project object */ = {
+		5C60000217B2D21100A75604 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0460;
 				ORGANIZATIONNAME = "Anki, Inc.";
 			};
-			buildConfigurationList = 499D4EF117CAFC420015D685 /* Build configuration list for PBXProject "CoreTech_Vision" */;
+			buildConfigurationList = 5C60000517B2D21100A75604 /* Build configuration list for PBXProject "CoreTech_Vision" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 			);
-			mainGroup = 499D4EED17CAFC420015D685;
-			productRefGroup = 499D4EF717CAFC420015D685 /* Products */;
+			mainGroup = 5C60000117B2D21100A75604;
+			productRefGroup = 5C60000B17B2D21200A75604 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				499D4EF517CAFC420015D685 /* CoreTech_Vision */,
+				5C60000917B2D21200A75604 /* CoreTech_Vision */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
-		499D4EF217CAFC420015D685 /* Sources */ = {
+		5C60000617B2D21200A75604 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				499D4F0017CAFC8B0015D685 /* camera.cpp in Sources */,
-				499D4F0D17CB1ACD0015D685 /* marker2d.cpp in Sources */,
-				499D4F1117CB1DA50015D685 /* image.cpp in Sources */,
+				499D4F1917CBF87D0015D685 /* camera.cpp in Sources */,
+				499D4F1A17CBF87D0015D685 /* marker2d.cpp in Sources */,
+				499D4F1B17CBF87D0015D685 /* image.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		499D4EF817CAFC420015D685 /* Debug */ = {
+		5C60000C17B2D21200A75604 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -160,17 +159,17 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
+				SYMROOT = build;
 			};
 			name = Debug;
 		};
-		499D4EF917CAFC420015D685 /* Release */ = {
+		5C60000D17B2D21200A75604 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
@@ -178,7 +177,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -186,13 +185,17 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				SDKROOT = macosx;
+				SYMROOT = build;
 			};
 			name = Release;
 		};
-		499D4EFB17CAFC420015D685 /* Debug */ = {
+		5C60000F17B2D21200A75604 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_CXX_LIBRARY = "libc++";
 				EXECUTABLE_PREFIX = lib;
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
 				HEADER_SEARCH_PATHS = (
 					../../../include,
 					"../../../../coretech-common/include",
@@ -218,14 +221,20 @@
 					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
 					"../../../../coretech-external/",
 				);
-				PRODUCT_NAME = CoreTech_Vision;
+				LINK_WITH_STANDARD_LIBRARIES = YES;
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
 			};
 			name = Debug;
 		};
-		499D4EFC17CAFC420015D685 /* Release */ = {
+		5C60001017B2D21200A75604 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_CXX_LIBRARY = "libc++";
 				EXECUTABLE_PREFIX = lib;
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
 				HEADER_SEARCH_PATHS = (
 					../../../include,
 					"../../../../coretech-common/include",
@@ -251,31 +260,35 @@
 					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
 					"../../../../coretech-external/",
 				);
-				PRODUCT_NAME = CoreTech_Vision;
+				LINK_WITH_STANDARD_LIBRARIES = YES;
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		499D4EF117CAFC420015D685 /* Build configuration list for PBXProject "CoreTech_Vision" */ = {
+		5C60000517B2D21100A75604 /* Build configuration list for PBXProject "CoreTech_Vision" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				499D4EF817CAFC420015D685 /* Debug */,
-				499D4EF917CAFC420015D685 /* Release */,
+				5C60000C17B2D21200A75604 /* Debug */,
+				5C60000D17B2D21200A75604 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		499D4EFA17CAFC420015D685 /* Build configuration list for PBXNativeTarget "CoreTech_Vision" */ = {
+		5C60000E17B2D21200A75604 /* Build configuration list for PBXNativeTarget "CoreTech_Vision" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				499D4EFB17CAFC420015D685 /* Debug */,
-				499D4EFC17CAFC420015D685 /* Release */,
+				5C60000F17B2D21200A75604 /* Debug */,
+				5C60001017B2D21200A75604 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 499D4EEE17CAFC420015D685 /* Project object */;
+	rootObject = 5C60000217B2D21100A75604 /* Project object */;
 }

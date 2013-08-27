@@ -25,12 +25,12 @@ namespace Anki {
                       const std::vector<float> &distCoeffs);
     
     // Accessors:
-    float get_focalLength_x() const;
-    float get_focalLength_y() const;
-    float get_center_x() const;
-    float get_center_y() const;
-    float get_skew() const;
-    const std::vector<float>& get_distortionCoeffs() const;
+    inline float get_focalLength_x() const;
+    inline float get_focalLength_y() const;
+    inline float get_center_x() const;
+    inline float get_center_y() const;
+    inline float get_skew() const;
+    inline const std::vector<float>& get_distortionCoeffs() const;
     
     // Returns the 3x3 camera calibration matrix:
     // [fx   skew*fx   center_x;
@@ -41,11 +41,31 @@ namespace Anki {
   protected:
     
     float focalLength_x, focalLength_y;
-    float center_x, center_y;
+    float center_x, center_y; 
     float skew;
     std::vector<float> distortionCoeffs; // radial distortion coefficients
     
   }; // class CameraCalibration
+  
+  
+  // Inline accessor defitions:
+  float CameraCalibration::get_focalLength_x() const
+  { return this->focalLength_x; }
+  
+  float CameraCalibration::get_focalLength_y() const
+  { return this->focalLength_y; }
+  
+  float CameraCalibration::get_center_x() const
+  { return this->center_x; }
+  
+  float CameraCalibration::get_center_y() const
+  { return this->center_y; }
+  
+  float CameraCalibration::get_skew() const
+  { return this->skew; }
+  
+  const std::vector<float>& CameraCalibration::get_distortionCoeffs() const
+  { return this->distortionCoeffs; }
   
   
   class Camera
@@ -59,7 +79,7 @@ namespace Anki {
     // Accessors:
     const Pose3d& get_pose() const;
     const CameraCalibration& get_calibration() const;
-    
+        
     //
     // Methods:
     //
@@ -79,9 +99,8 @@ namespace Anki {
     
   protected:
     
-    CameraCalibrationData  calibration;
-    Pose3d                 pose;
-    
+    CameraCalibration  calibration;
+    Pose3d             pose;
     
     // TODO: Include const reference or pointer to a parent Robot object?
     
