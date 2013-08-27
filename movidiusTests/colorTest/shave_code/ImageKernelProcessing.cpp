@@ -136,7 +136,52 @@ void kernel(unsigned char* inputLines[LINES_NUM], unsigned char* outLine, unsign
     {
         linesGaussVx2Addr[i] = linesGaussVx2Addr[i + 2];
     }
+}
 
+void kernel2(unsigned char* inputLines[LINES_NUM], unsigned char* outLine, unsigned int lineWidth, unsigned int pos)
+{
+  int i = 0;
+
+  if (first == 0)
+  {
+    /// Gauss horizontal kernel, needs 1 lines to output one line
+    GaussHx2((u8*)&inputLines[pos    ][0], (u8*)&outLine[(pos    ) * lineWidth / 2], lineWidth);
+    GaussHx2((u8*)&inputLines[pos + 1][0], (u8*)&outLine[(pos + 1) * lineWidth / 2], lineWidth);
+    GaussHx2((u8*)&inputLines[pos + 2][0], (u8*)&outLine[(pos + 2) * lineWidth / 2], lineWidth);
+    GaussHx2((u8*)&inputLines[pos + 3][0], (u8*)&outLine[(pos + 3) * lineWidth / 2], lineWidth);
+    GaussHx2((u8*)&inputLines[pos + 4][0], (u8*)&outLine[(pos + 4) * lineWidth / 2], lineWidth);
+
+    /// Gauss vertical kernel, needs 5 lines to output one line
+    /// for first line needs exactly first 5 lines from input
+    for (i = 0; i < GAUSSVX2_MAX; i++)
+    {
+      linesGaussVx2Addr[i] = &outLine[pos + i * lineWidth / 2];
+    }
+    first = 1;
+  }
+  else
+  {
+    GaussHx2((u8*)&inputLines[pos    ][0], (u8*)&outLine[(pos    ) * lineWidth / 2], lineWidth);
+    GaussHx2((u8*)&inputLines[pos + 1][0], (u8*)&outLine[(pos + 1) * lineWidth / 2], lineWidth);
+    /// adding 2 new input lines near the last 3 from the previous output line
+    linesGaussVx2Addr[3] = &outLine[(pos    ) * lineWidth / 2];
+    linesGaussVx2Addr[4] = &outLine[(pos + 1) * lineWidth / 2];
+  }
+
+  /// Gauss vertical kernel, needs 5 lines to output one line
+  GaussVx2((u8**)&linesGaussVx2Addr[0], (u8	*)&outLine[pos * lineWidth / 2], lineWidth / 2);
+
+  for(s32 i=0; i<lineWidth/2; i++) {
+    outLine[pos * lineWidth/2 + i] = i;
+  }
+
+  /// Gauss vertical kernell needs 5 lines to output one line
+  /// after the first out line the rest are made out of the last 3 input lines used for
+  /// the previous output line and 2 new input lines
+  for (i = 0; i < 3; i++)
+  {
+    linesGaussVx2Addr[i] = linesGaussVx2Addr[i + 2];
+  }
 }
 
 void makeBlack(unsigned char* src, unsigned int plane)
@@ -257,7 +302,9 @@ void processPlane(frameBuffer* outFrBuff, frameBuffer* inFrBuff, swcPlaneType pl
             linesCMXCnt = 5;
 
         //Apply kernel to CMX line, inWidth because is Y plane
-        kernel(linesAddr, outLines, inWidth, linesCMXCnt);
+        // kernel(linesAddr, outLines, inWidth, linesCMXCnt);
+        kernel2(linesAddr, outLines, inWidth, linesCMXCnt);
+
 
         if (linesLeft > 0)
         {
