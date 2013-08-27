@@ -19,7 +19,7 @@ namespace Anki {
   class RotationMatrix2d : public Matrix<float>
   {
   public:
-    RotationMatrix2d(const float angle);
+    RotationMatrix2d(const float angle = 0.f);
     
   }; // class RotationMatrix
   
@@ -29,12 +29,13 @@ namespace Anki {
   class RotationVector3d : public Vec3f
   {
   public:
+    RotationVector3d(); // no rotation around z axis
     RotationVector3d(const float angle, const float axis);
     RotationVector3d(const Vec3f &rvec);
     RotationVector3d(const RotationMatrix3d &rmat);
-    
-    float get_angle() const;
-    Vec3f get_axis()  const;
+       
+    inline float        get_angle() const;
+    inline const Vec3f& get_axis()  const;
     
   protected:
     float angle;
@@ -42,18 +43,39 @@ namespace Anki {
     
   }; // class RotationVector3d
   
+  // Inline accessors:
+  float RotationVector3d::get_angle(void) const
+  { return this->angle; }
+  
+  const Vec3f& RotationVector3d::get_axis(void) const
+  { return this->axis; }
+  
   
   class RotationMatrix3d : public Matrix<float>
   {
   public:
+    RotationMatrix3d(); // 3x3 identity matrix (no rotation)
     RotationMatrix3d(const RotationVector3d &rotationVector);
     RotationMatrix3d(const Matrix<float> &matrix3x3);
   
+    Point3f operator*(const Point3f &p) const;
+    
+    inline float        get_angle() const;
+    inline const Vec3f& get_axis() const;
+    
   protected:
     RotationVector3d rotationVector;
     
   }; // class RotationMatrix3d
 
+  // Inline accessors:
+  float RotationMatrix3d::get_angle(void) const
+  { return this->rotationVector.get_angle(); }
+  
+  const Vec3f& RotationMatrix3d::get_axis(void) const
+  { return this->rotationVector.get_axis(); }
+
+  
   
   // Rodrigues' formula for converting between angle+axis representation and 3x3
   // matrix representation.

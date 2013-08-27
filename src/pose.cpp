@@ -43,6 +43,12 @@ namespace Anki {
   
   Pose3d* Pose3d::World = NULL;
   
+  Pose3d::Pose3d()
+  : translation(0.f, 0.f, 0.f)
+  {
+    
+  } // Constructor: Pose3d()  
+  
   Pose3d::Pose3d(const RotationVector3d &Rvec_in, const Vec3f &T_in, const Pose3d *parentPose)
   : rotationVector(Rvec_in), translation(T_in),
     rotationMatrix(rotationVector), parent(parentPose)
@@ -78,20 +84,22 @@ namespace Anki {
   
   
 #pragma mark --- Member Methods ---
-  Pose3d Pose3d::inverse(void) const
+  Pose3d Pose3d::getInverse(void) const
   {
     // TODO: Return inverse(this)
-    Pose3d returnPose3d(*this);
-    returnPose3d.inverse();
-    return returnPose3d;
+    Pose3d returnPose(*this);
+    returnPose.Invert();
+    return returnPose;
   }
   
-  void Pose3d::inverse(void)
+  void Pose3d::Invert(void)
   {
-     // TODO: Set this to inverse(this)
+    this->rotationMatrix.Transpose();
+    this->translation *= -1.f;
+    this->translation = this->rotationMatrix * this->translation;
   }
   
-  Pose3d Pose3d::withRespectTo(const Anki::Pose3d *otherPose) const
+  Pose3d Pose3d::getWithRespectTo(const Anki::Pose3d *otherPose) const
   {
     const Pose3d *current = this->parent;
     while(current != otherPose) {

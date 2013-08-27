@@ -62,6 +62,9 @@ namespace Anki {
   public:
     static Pose3d* World;
     
+    // Default pose: no rotation, no translation, world as parent
+    Pose3d();
+    
     // Construct from rotation vector and translation vector
     Pose3d(const RotationVector3d &Rvec, const Vec3f &T,
            const Pose3d *parentPose = Pose3d::World);
@@ -85,14 +88,14 @@ namespace Anki {
     // "Apply" Pose to a 3D point (i.e. transform that point by this Pose)
     Point3f operator*(const Point3f &point) const;
     
-    Pose3d inverse(void) const;
-    void   inverse(void); // in place?
+    Pose3d getInverse(void) const;
+    void   Invert(void); // in place?
     
     // Get this pose with respect to another pose.  Other pose
     // must be an ancestor of this pose, otherwise an error
     // will be generated.  Use Pose3d::World to get the pose with
     // respect to the root / world pose.
-    Pose3d withRespectTo(const Pose3d *otherPose) const;
+    Pose3d getWithRespectTo(const Pose3d *otherPose) const;
     
   protected:
     

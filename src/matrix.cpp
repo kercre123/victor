@@ -15,9 +15,9 @@ namespace Anki {
     
     Matrix<float> C( A*B );
     
-    Matrix<float> D( C.Inverse() );
+    Matrix<float> D( C.getInverse() );
     
-    Matrix<float> E( D.Tranpose() );
+    Matrix<float> E( D.getTranpose() );
   }
   
 } // namespace Anki
