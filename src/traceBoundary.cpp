@@ -47,7 +47,7 @@ namespace Anki
     return BOUNDARY_UNKNOWN;
   }
 
-  Result TraceBoundary(const Array2dUnmanaged<u8> &binaryImg, const Point2<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point2<s16>> &boundary)
+  Result TraceBoundary(const Array2dUnmanaged<u8> &binaryImg, const Point2<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point2<s16> > &boundary)
   {
     DASConditionalErrorAndReturnValue(binaryImg.IsValid(),
       RESULT_FAIL, "TraceBoundary", "binaryImg is not valid");
