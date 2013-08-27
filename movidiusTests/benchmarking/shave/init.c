@@ -15,8 +15,30 @@ int4 add_simd(int4 input1,int4 input2);
 volatile int myint1[4], myint2[4], myintrez[4];
 int4 myval1, myval2, myrez;
 
+
+//unsigned char image4[30000];
+
+//#pragma DATA_SECTION (".images")
+unsigned char image1[30000] __attribute__ ((section (".images")));
+
+//#pragma DATA_SECTION (".images")
+unsigned char image2[30000] __attribute__ ((section (".images")));
+
+//#pragma sDATA_SECTION (".images")
+//unsigned char image3[30000] __attribute__ ((section (".images2")));
+
+/*void nothing(unsigned char *image1, unsigned char *image2, unsigned char *image3)
+{
+	for(int i=0; i<(320*240); i++) {
+        image2[i] += image1[i] - image3[i];
+    }
+}
+*/
+
 int main( void )
 {
+
+
 	myval1[0] = myint1[0];
 	myval1[1] = myint1[1];
 	myval1[2] = myint1[2];
@@ -34,5 +56,16 @@ int main( void )
 	myintrez[2] = myrez[2];
 	myintrez[3] = myrez[3];
 
+/*
+	for(int i=0; i<(320*240); i++) {
+	    image1[i] = i;
+	    image2[i] = i;
+  	    image3[i] = i;
+	}
+
+	nothing(image1, image2, image3);
+
+    myintrez[3] = myrez[3] + image2[500];
+*/
 	return 0;
 }
