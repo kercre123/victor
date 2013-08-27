@@ -160,23 +160,33 @@ namespace Anki
   // Array2dUnmanaged class.
   //
   template<typename T>
-  class Array2d : public cv::Mat_<T>
+  class Array2d : private cv::Mat_<T> // Note the private inheritance!
   {
   public:
-    // Which features from OpenCv we will use:
-    using cv::Mat_<T>::operator=;
-    using cv::Mat_<T>::operator();
-    using cv::Mat_<T>::size;
-    using cv::Mat_<T>::isContinuous;
-    
+   
     // Constructors:
     Array2d();
     Array2d(s32 nrows, s32 ncols); // alloc/de-alloc handled for you
     Array2d(s32 nrows, s32 ncols, T *data); // you handle memory yourself
     Array2d(const Array2dUnmanaged<T> &other); // *copies* data from unmanaged array
     
+    // Reference counting assignment (does not copy):
+    Array2d<T>& operator= (const Array2d<T> &other);
+    
+    // Access by row, col (for isolated access):
+    T  operator() (const unsigned int row, const unsigned int col) const;
+    T& operator() (const unsigned int row, const unsigned int col);
+    
 #if defined(ANKICORETECH_USE_OPENCV)
+    // Create an Array2d from a cv::Mat_<T> without copying any data
     Array2d(const cv::Mat_<T> &other);
+    Array2d<T>& operator= (const cv::Mat_<T> &other);
+    
+    // Returns a templated cv::Mat_ that shares the same buffer with
+    // this Array2d. No data is copied.
+    cv::Mat_<T>& get_CvMat_();
+    const cv::Mat_<T>& get_CvMat_() const;
+    
 #endif
     
     // Accessors:
@@ -184,6 +194,9 @@ namespace Anki
     inline s32 numCols() const;
     inline s32 numElements() const;
     
+    inline bool isEmpty() const;
+    
+    // Don't let the public mess with my data, but they can see it:
     const T* getDataPointer() const;
     
     // Apply a function to every element, in place:
@@ -196,22 +209,9 @@ namespace Anki
                              Array2d<Tresult> &result) const;
     
   protected:
-    
-    // Make cv::Mat-inherited rows/cols/data members protected in our
-    // usage
-    using cv::Mat_<T>::data;
-    using cv::Mat_<T>::rows;
-    using cv::Mat_<T>::cols;
-    
-    // Only use [] access for beginning of row internally?
-    //   It's kinda weird syntax that we may not want to expose or rely
-    //   on forever if we create our own OpenCv-independent class later.
-    using cv::Mat_<T>::operator[];
-    
-    // Reserve these for use in Matrix subclass:
-    using cv::Mat_<T>::t; // transpose
-    using cv::Mat_<T>::inv;
-    //using cv::Mat_<T>::operator*;
+    // Sub-classes can get write access to the data:
+    T* getDataPointer();
+  
     
   }; // class Array2d(Managed)
   
@@ -627,6 +627,7 @@ namespace Anki
     
   } // Constructor: Array2d(rows, cols, *data)
 
+#if defined(ANKICORETECH_USE_OPENCV)
   template<typename T>
   Array2d<T>::Array2d(const cv::Mat_<T> &other)
   : cv::Mat_<T>(other)
@@ -635,11 +636,70 @@ namespace Anki
   } // Constructor: Array2d( cv::Mat_<T> )
   
   template<typename T>
+  Array2d<T>& Array2d<T>::operator= (const cv::Mat_<T> &other)
+  {
+    cv::Mat_<T>::operator=(other);
+    return *this;
+  }
+#endif
+  
+  template<typename T>
   Array2d<T>::Array2d(const Array2dUnmanaged<T> &other)
   : Array2d<T>(other.get_cvMat_())
   {
     
   } // Constructor: Array2d( Array2dUnmanaged )
+  
+  template<typename T>
+  const T* Array2d<T>::getDataPointer(void) const
+  {
+    return static_cast<T*>(this->data);
+  }
+
+  template<typename T>
+  T* Array2d<T>::getDataPointer(void)
+  {
+    return static_cast<T*>(this->data);
+  }
+
+  template<typename T>
+  Array2d<T>& Array2d<T>::operator=(const Array2d<T> &other)
+  {
+    // Provide thin wrapper to OpenCV's handy reference-counting assignment:
+    cv::Mat_<T>::operator=(other);
+    return *this;
+  }
+  
+  template<typename T>
+  T  Array2d<T>::operator() (const unsigned int row,
+                             const unsigned int col) const
+  {
+    // Provide thin wrapper to OpenCV's (row,col) access:
+    return cv::Mat_<T>::operator()(row,col);
+  }
+  
+  template<typename T>
+  T& Array2d<T>::operator() (const unsigned int row, const unsigned int col)
+  {
+    // Provide thin wrapper to OpenCV's (row,col) access:
+    return cv::Mat_<T>::operator()(row,col);
+  }
+  
+#if defined(ANKICORETECH_USE_OPENCV)
+  
+  template<typename T>
+  cv::Mat_<T>& Array2d<T>::get_CvMat_()
+  {
+    return *this; //static_cast<cv::Mat_<T> >(*this);
+  }
+  
+  template<typename T>
+  const cv::Mat_<T>& Array2d<T>::get_CvMat_() const
+  {
+    return *this; // static_cast<cv::Mat_<T> >(*this);
+  }
+  
+#endif // #if defined(ANKICORETECH_USE_OPENCV)
   
   template<typename T>
   s32 Array2d<T>::numRows(void) const
@@ -660,9 +720,10 @@ namespace Anki
   }
   
   template<typename T>
-  const T* Array2d<T>::getDataPointer(void) const
+  bool Array2d<T>::isEmpty() const
   {
-    return (T*)this->data;
+    // Thin wrapper to OpenCV's empty() check:
+    return this->empty();
   }
   
   template<typename T>
