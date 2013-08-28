@@ -2,8 +2,6 @@
 
 #include "anki/embeddedCommon.h"
 
-//#include <iostream>
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 #include "opencv2/opencv.hpp"
 #endif
@@ -23,7 +21,7 @@ GTEST_TEST(CoreTech_Common, MemoryStack)
 {
   ASSERT_TRUE(Anki::Embedded::MEMORY_ALIGNMENT == 16);
 
-  const s32 numBytes = 200;
+  const s32 numBytes = MIN(MAX_BYTES, 200);
   //void * buffer = calloc(numBytes+Anki::Embedded::MEMORY_ALIGNMENT, 1);
   void * alignedBuffer = reinterpret_cast<void*>(Anki::Embedded::RoundUp(reinterpret_cast<size_t>(buffer), Anki::Embedded::MEMORY_ALIGNMENT));
   ASSERT_TRUE(buffer != NULL);
@@ -109,7 +107,7 @@ s32 CheckConstCasting(const Anki::Embedded::MemoryStack ms, s32 numBytes)
 
 GTEST_TEST(CoreTech_Common, MemoryStack_call)
 {
-  const s32 numBytes = 100;
+  const s32 numBytes = MIN(MAX_BYTES, 100);
   //void * buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
   Anki::Embedded::MemoryStack ms(buffer, numBytes);
@@ -137,7 +135,7 @@ GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
 {
   ASSERT_TRUE(Anki::Embedded::MEMORY_ALIGNMENT == 16);
 
-  const s32 numBytes = 104; // 12*9 = 104
+  const s32 numBytes = MIN(MAX_BYTES, 104); // 12*9 = 104
   //void * buffer = calloc(numBytes+Anki::Embedded::MEMORY_ALIGNMENT, 1);
   ASSERT_TRUE(buffer != NULL);
 
@@ -248,7 +246,7 @@ GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 {
   // Allocate memory from the heap, for the memory allocator
-  const s32 numBytes = 1000;
+  const s32 numBytes = MIN(MAX_BYTES, 1000);
   //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
   Anki::Embedded::MemoryStack ms(buffer, numBytes);
@@ -325,7 +323,7 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 
 GTEST_TEST(CoreTech_Common, Array2dSpecifiedClass)
 {
-  const s32 numBytes = 1000;
+  const s32 numBytes = MIN(MAX_BYTES, 1000);
   //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
 
@@ -349,7 +347,7 @@ GTEST_TEST(CoreTech_Common, Array2dSpecifiedClass)
 
 GTEST_TEST(CoreTech_Common, Array2dAlignment1)
 {
-  const s32 numBytes = 1000;
+  const s32 numBytes = MIN(MAX_BYTES, 1000);
   //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
 
@@ -373,7 +371,7 @@ GTEST_TEST(CoreTech_Common, Array2dAlignment1)
 
 GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
 {
-  const s32 numBytes = 1000;
+  const s32 numBytes = MIN(MAX_BYTES, 1000);
   //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
 
@@ -397,7 +395,7 @@ GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
 GTEST_TEST(CoreTech_Common, Array2dFillPattern)
 {
   const s32 width = 6, height = 10;
-  const s32 numBytes = 1000;
+  const s32 numBytes = MIN(MAX_BYTES, 1000);
   //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
 
