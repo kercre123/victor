@@ -6,6 +6,9 @@ APPNAME=benchmarking
 
 MDK_DIRECTORY=	/home/anki/movidius/mdk_13.08.0_general/mdk
 
+CORETECH_COMMON_DIRECTORY=../../../coretech-common/project/myriad1/src/shave/
+CORETECH_VISION_DIRECTORY=../../../coretech-vision
+
 # Verbose or not, common out for more verbosity
 #ECHO=@
 
@@ -14,11 +17,18 @@ MDK_DIRECTORY=	/home/anki/movidius/mdk_13.08.0_general/mdk
 # overrides that need to be set before including generic.mk
 #ShaveSymObject   = $(DirAppObjDir)/$(APPNAME).sym.o
 #LinkerScript    =  $(DirLDScript)/$(APPNAME).ldscript
+#LinkerScript    =  $(DirLDScript)/benchmarking.ldscript
+
 # Set Shave common mof name (non-mbin flow)
 #ShaveCommonName = shaves
 
+#SH_MLIB  = $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.c, %.mobj, $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/*.c))))
+#SH_MLIB += $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.cpp, %.mobj, $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/*.cpp))))
+
 SH0_Obj  = $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.asm, %.mobj, $(ShaveASrcFiles))))
 SH0_Obj += $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.c,   %.mobj, $(ShaveCSrcFiles))))
+
+SH0_Obj += $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.cpp, %.mobj, $(wildcard $(CORETECH_COMMON_DIRECTORY)/*.cpp))))
 
 # Limit to only needed drivers
 #SysCSrcFiles     = drv_ddr.c drv_uart.c drv_vcs.c drv_print.c drv_timer.c drv_l2cache.c drv_sys_cfg.c drv_cpr.c svu_utils.c
@@ -26,6 +36,8 @@ SH0_Obj += $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.c,   %.mobj, $(Sh
 
 #TEST_TYPE     := AUTO
 #ComponentList := UnitTest
+
+ComponentList := coretech-common
 
 # ------------------------------[ Tools ]------------------------------------------#
 # Hardcode tool version here if needed, otherwise defaults to Latest
@@ -35,7 +47,7 @@ SH0_Obj += $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.c,   %.mobj, $(Sh
 MV_COMMON_BASE   =$(MDK_DIRECTORY)/common
 
 # Include the generic Makefile
-include $(MV_COMMON_BASE)/generic.mk
+include generic_custom.mk
 
 
 # -------------------------------- [ Build Options ] ------------------------------ #
