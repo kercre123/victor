@@ -41,35 +41,35 @@ namespace Anki
       return mxUNKNOWN_CLASS;
     }
 
-    std::string ConvertToMatlabTypeString(const char *typeName, size_t byteDepth)
+    const char* ConvertToMatlabTypeString(const char *typeName, size_t byteDepth)
     {
       if(typeName[0] == 'u') { //unsigned
         if(byteDepth == 1) {
-          return std::string("uint8");
+          return "uint8";
         } else if(byteDepth == 2) {
-          return std::string("uint16");
+          return "uint16";
         }else if(byteDepth == 4) {
-          return std::string("uint32");
+          return "uint32";
         }else if(byteDepth == 8) {
-          return std::string("uint64");
+          return "uint64";
         }
       } else if(typeName[0] == 'f' && byteDepth == 4) { //float
-        return std::string("single");
+        return "single";
       } else if(typeName[0] == 'd' && byteDepth == 8) { //double
-        return std::string("double");
+        return "double";
       } else { // signed
         if(byteDepth == 1) {
-          return std::string("int8");
+          return "int8";
         } else if(byteDepth == 2) {
-          return std::string("int16");
+          return "int16";
         }else if(byteDepth == 4) {
-          return std::string("int32");
+          return "int32";
         }else if(byteDepth == 8) {
-          return std::string("int64");
+          return "int64";
         }
       }
 
-      return std::string("unknown");
+      return "unknown";
     }
 
     Matlab::Matlab(bool clearWorkspace)

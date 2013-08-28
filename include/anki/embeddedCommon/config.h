@@ -7,8 +7,14 @@
 
 #define ANKICORETECHEMBEDDED_USE_MATLAB
 #define ANKICORETECHEMBEDDED_USE_OPENCV
+#define ANKICORETECHEMBEDDED_USE_GTEST
+
+#if defined(__GNUC__) && __GNUC__==4 && __GNUC_MINOR__==2 && __GNUC_PATCHLEVEL__==1 //hack to detect the movidius compiler
+#define USING_MOVIDIUS_COMPILER
+#endif
 
 // Various defines that make different compilers work on the same code
+
 #if defined(_MSC_VER) // We're using the MSVC compiler
 #pragma warning(disable: 4068) // Unknown pragma
 #pragma warning(disable: 4127) // Conditional expression is constant
@@ -29,14 +35,21 @@
 #define vsnprintf vsprintf_s
 #endif
 
-#elif defined(__GNUC__) // We're using the GCC compiler
+#endif // #if defined(_MSC_VER)
+
+#if defined(__APPLE_CC__) // Apple Xcode
+
+#endif // #if defined(__APPLE_CC__)
+
+#if defined(USING_MOVIDIUS_COMPILER)
+#undef ANKICORETECHEMBEDDED_USE_MATLAB
+#undef ANKICORETECHEMBEDDED_USE_OPENCV
+#undef ANKICORETECHEMBEDDED_USE_GTEST
+
 #ifndef restrict
-#define restrict
+#define restrict __restrict
 #endif
-
-#elif defined(__APPLE_CC__) // Apple Xcode
-
-#endif //End if compiler defined checks
+#endif
 
 #include <stdint.h>
 #include <stddef.h>

@@ -10,5 +10,6 @@
 #include "anki/embeddedCommon/dataStructures.h"
 #include "anki/embeddedCommon/matlabInterface.h"
 #include "anki/embeddedCommon/point.h"
+#include "anki/embeddedCommon/gtestLight.h"
 
 #endif // _ANKICORETECHEMBEDDEDEMBEDDED_EMBEDDED_COMMON_H_

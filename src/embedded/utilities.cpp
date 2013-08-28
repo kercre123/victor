@@ -2,6 +2,7 @@
 
 #if defined(_MSC_VER)
 #include <windows.h >
+#elif defined(USING_MOVIDIUS_COMPILER)
 #else
 #include <sys/time.h>
 #endif
@@ -14,6 +15,7 @@ namespace Anki
 {
   namespace Embedded
   {
+#if !defined(USING_MOVIDIUS_COMPILER)
     double GetTime()
     {
 #if defined(_MSC_VER)
@@ -29,6 +31,7 @@ namespace Anki
       return double(ts.tv_sec) + double(ts.tv_nsec)/1000000000.0;
 #endif
     }
+#endif // #if !defined(USING_MOVIDIUS_COMPILER)
 
     bool IsPowerOfTwo(u32 x)
     {

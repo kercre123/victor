@@ -1,3 +1,5 @@
+#define USING_MOVIDIUS_COMPILER
+
 #include "anki/embeddedCommon.h"
 
 #include <iostream>
@@ -10,9 +12,11 @@
 Anki::Embedded::Matlab matlab(false);
 #endif
 
+#if defined(ANKICORETECHEMBEDDED_USE_GTEST)
 #include "gtest/gtest.h"
+#endif
 
-TEST(CoreTech_Common, MemoryStack)
+GTEST_TEST(CoreTech_Common, MemoryStack)
 {
   ASSERT_TRUE(Anki::Embedded::MEMORY_ALIGNMENT == 16);
 
@@ -83,6 +87,8 @@ TEST(CoreTech_Common, MemoryStack)
   }
 
   free(buffer); buffer = NULL;
+
+  GTEST_RETURN_HERE;
 }
 
 s32 CheckMemoryStackUsage(Anki::Embedded::MemoryStack ms, s32 numBytes)
@@ -98,7 +104,7 @@ s32 CheckConstCasting(const Anki::Embedded::MemoryStack ms, s32 numBytes)
   return CheckMemoryStackUsage(ms, numBytes);
 }
 
-TEST(CoreTech_Common, MemoryStack_call)
+GTEST_TEST(CoreTech_Common, MemoryStack_call)
 {
   const s32 numBytes = 100;
   void * buffer = calloc(numBytes, 1);
@@ -120,9 +126,11 @@ TEST(CoreTech_Common, MemoryStack_call)
   ASSERT_TRUE(ms.get_usedBytes() == originalUsedBytes);
 
   free(buffer); buffer = NULL;
+
+  GTEST_RETURN_HERE;
 }
 
-TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
+GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
 {
   ASSERT_TRUE(Anki::Embedded::MEMORY_ALIGNMENT == 16);
 
@@ -155,10 +163,12 @@ TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
   ASSERT_TRUE(largestPossibleAllocation4 == 0);
 
   free(buffer); buffer = NULL;
+
+  GTEST_RETURN_HERE;
 }
 
 #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
-TEST(CoreTech_Common, SimpleMatlabTest1)
+GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
 {
   matlab.EvalStringEcho("simpleVector = double([1.1,2.1,3.1,4.1,5.1]);");
   double *simpleVector = matlab.Get<double>("simpleVector");
@@ -176,7 +186,7 @@ TEST(CoreTech_Common, SimpleMatlabTest1)
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
 #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
-TEST(CoreTech_Common, SimpleMatlabTest2)
+GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
 {
   matlab.EvalStringEcho("simpleArray2d = int16([1,2,3,4,5;6,7,8,9,10]);");
   Anki::Embedded::Array2d<s16> simpleArray2d = matlab.GetArray2d<s16>("simpleArray2d");
@@ -199,7 +209,7 @@ TEST(CoreTech_Common, SimpleMatlabTest2)
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-TEST(CoreTech_Common, SimpleOpenCVTest)
+GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 {
   cv::Mat src, dst;
 
@@ -232,7 +242,7 @@ TEST(CoreTech_Common, SimpleOpenCVTest)
 }
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
-TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
+GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 {
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = 1000;
@@ -306,9 +316,11 @@ TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
   free(buffer); buffer = NULL;
+
+  GTEST_RETURN_HERE;
 }
 
-TEST(CoreTech_Common,Array2dSpecifiedClass)
+GTEST_TEST(CoreTech_Common, Array2dSpecifiedClass)
 {
   const s32 numBytes = 1000;
   void *buffer = calloc(numBytes, 1);
@@ -318,7 +330,7 @@ TEST(CoreTech_Common,Array2dSpecifiedClass)
 
   Anki::Embedded::Array2d<u8> simpleArray2d(3, 3, ms);
 
-  const std::string imgData =
+  const char * imgData =
     " 1 1 1 "
     " 1 1 1 "
     " 1 1 1 ";
@@ -328,9 +340,11 @@ TEST(CoreTech_Common,Array2dSpecifiedClass)
   ASSERT_TRUE((*simpleArray2d.Pointer(0,0)) == 1); // If the templating fails, this will equal 49
 
   free(buffer); buffer = NULL;
+
+  GTEST_RETURN_HERE;
 }
 
-TEST(CoreTech_Common,Array2dAlignment1)
+GTEST_TEST(CoreTech_Common, Array2dAlignment1)
 {
   const s32 numBytes = 1000;
   void *buffer = calloc(numBytes, 1);
@@ -350,9 +364,11 @@ TEST(CoreTech_Common,Array2dAlignment1)
   }
 
   free(buffer); buffer = NULL;
+
+  GTEST_RETURN_HERE;
 }
 
-TEST(CoreTech_Common, MemoryStackAlignment)
+GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
 {
   const s32 numBytes = 1000;
   void *buffer = calloc(numBytes, 1);
@@ -371,9 +387,11 @@ TEST(CoreTech_Common, MemoryStackAlignment)
   }
 
   free(buffer); buffer = NULL;
+
+  GTEST_RETURN_HERE;
 }
 
-TEST(CoreTech_Common,Array2dFillPattern)
+GTEST_TEST(CoreTech_Common, Array2dFillPattern)
 {
   const s32 width = 6, height = 10;
   const s32 numBytes = 1000;
@@ -435,11 +453,34 @@ TEST(CoreTech_Common,Array2dFillPattern)
   }
 
   free(buffer); buffer = NULL;
+
+  GTEST_RETURN_HERE;
 }
+
+#if !defined(ANKICORETECHEMBEDDED_USE_GTEST)
+void RUN_ALL_TESTS()
+{
+  s32 numPassedTests = 0;
+  s32 numFailedTests = 0;
+
+  CALL_GTEST_TEST(CoreTech_Common, MemoryStack);
+  CALL_GTEST_TEST(CoreTech_Common, MemoryStack_call);
+  CALL_GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1);
+  CALL_GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest);
+  CALL_GTEST_TEST(CoreTech_Common, Array2dSpecifiedClass);
+  CALL_GTEST_TEST(CoreTech_Common, Array2dAlignment1);
+  CALL_GTEST_TEST(CoreTech_Common, MemoryStackAlignment);
+  CALL_GTEST_TEST(CoreTech_Common, Array2dFillPattern);
+
+  printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
+} // void RUN_ALL_TESTS()
+#endif // #if !defined(ANKICORETECHEMBEDDED_USE_GTEST)
 
 int main(int argc, char ** argv)
 {
+#if defined(ANKICORETECHEMBEDDED_USE_GTEST)
   ::testing::InitGoogleTest(&argc, argv);
+#endif
 
   RUN_ALL_TESTS();
 

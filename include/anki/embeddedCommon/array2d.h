@@ -1,27 +1,27 @@
-#ifndef _ANKICORETECHEMBEDDED_COMMON_MATRIX_H_
-#define _ANKICORETECHEMBEDDED_COMMON_MATRIX_H_
+#ifndef _ANKICORETECHEMBEDDED_COMMON_ARRAY2D_H_
+#define _ANKICORETECHEMBEDDED_COMMON_ARRAY2D_H_
 
 #include "anki/embeddedCommon/config.h"
 #include "anki/embeddedCommon/utilities.h"
 #include "anki/embeddedCommon/memory.h"
 #include "anki/embeddedCommon/DASlight.h"
 #include "anki/embeddedCommon/dataStructures.h"
+#include "anki/embeddedCommon/point.h"
 
-#include <iostream>
+//#include <iostream>
 #include <assert.h>
+#include <string>
+#include <stdio.h>
+#include <stdlib.h>
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 #include "opencv2/opencv.hpp"
 #endif
 
-
-
 namespace Anki
 {
   namespace Embedded
   {
-    template<typename T> class Point2;
-
 #pragma mark --- Array2d Class Definition ---
 
     // A Array2d is a lightweight templated class for holding two dimensional data. It does no
@@ -60,7 +60,7 @@ namespace Anki
       template<typename TPoint> inline T* Pointer(Point2<TPoint> point);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-      void Show(const std::string windowName, bool waitForKeypress) const;
+      void Show(const char * windowName, bool waitForKeypress) const;
 
       // Returns a templated cv::Mat_ that shares the same buffer with this Array2d. No data is copied.
       cv::Mat_<T>& get_CvMat_();
@@ -80,9 +80,9 @@ namespace Anki
       s32 Set(T value);
 
       // Parse a space-seperated string, and copy values to this Array2d.
-      // If the string doesn't contain enough elements, the remainded of the Array2d will be filled with zeros.
+      // If the string doesn't contain enough elements, the remainder of the Array2d will be filled with zeros.
       // Returns the number of values set (not counting extra zeros)
-      s32 Set(const std::string values);
+      s32 Set(const char * values);
 
       // Similar to Matlab's size(matrix, dimension), and dimension is in {0,1}
       s32 get_size(s32 dimension) const;
@@ -287,7 +287,7 @@ namespace Anki
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     template<typename T>
-    void Array2d<T>::Show(const std::string windowName, bool waitForKeypress) const {
+    void Array2d<T>::Show(const char * windowName, bool waitForKeypress) const {
       assert(this->rawDataPointer != NULL && this->data != NULL);
       cv::imshow(windowName, cvMatMirror);
       if(waitForKeypress) {
@@ -311,9 +311,11 @@ namespace Anki
       for(s32 y=0; y<size[0]; y++) {
         const T * rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
-          std::cout << rowPointer[x] << " ";
+          //std::cout << rowPointer[x] << " ";
+          printf("%d ", rowPointer[x]); // TODO: make general
         }
-        std::cout << "\n";
+        // std::cout << "\n";
+        printf("\n");
       }
     }
 
@@ -361,23 +363,26 @@ namespace Anki
     }
 
     template<typename T>
-    s32 Array2d<T>::Set(const std::string values)
+    s32 Array2d<T>::Set(const char * values)
     {
       assert(this->rawDataPointer != NULL && this->data != NULL);
 
-      std::istringstream iss(values);
       s32 numValuesSet = 0;
+
+      const char * startPointer = values;
+      char * endPointer = NULL;
 
       for(s32 y=0; y<size[0]; y++) {
         T * restrict rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
-          T value;
-          if(iss >> value) {
+          T value = static_cast<T>(strtol(startPointer, &endPointer, 10));
+          if(startPointer != endPointer) {
             rowPointer[x] = value;
             numValuesSet++;
           } else {
             rowPointer[x] = 0;
           }
+          startPointer = endPointer;
         }
       }
 
@@ -490,7 +495,6 @@ namespace Anki
 #pragma mark --- Array2d Specializations ---
 
     template<> void Array2d<u8>::Print() const;
-    template<> s32 Array2d<u8>::Set(const std::string values);
 
 #pragma mark --- Array2dFixedPoint Implementations ---
 
@@ -688,4 +692,4 @@ namespace Anki
   } // namespace Embedded
 } //namespace Anki
 
-#endif // _ANKICORETECHEMBEDDED_COMMON_MATRIX_H_
+#endif // _ANKICORETECHEMBEDDED_COMMON_ARRAY2D_H_

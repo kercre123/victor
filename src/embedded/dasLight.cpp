@@ -17,17 +17,19 @@
 extern "C" {
 #endif
 
+#define DAS_STRING_LENGTH 128
+  static char renderedLogString[DAS_STRING_LENGTH];
+
 #pragma warning(push)
 #pragma warning(disable: 4100) // Unreference formal parameter
   void _DAS_Logf(DASLogLevel level, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
-    char renderedLogString[2048];
     va_list argList;
     va_start(argList, line);
-    vsnprintf(renderedLogString, 2048, eventValue, argList);
+    vsnprintf(renderedLogString, DAS_STRING_LENGTH, eventValue, argList);
     va_end(argList);
     _DAS_Log(level, eventName, renderedLogString, file, funct, line, NULL);
-    fflush(stdout);
+    //fflush(stdout);
   }
 
   void _DAS_Log(DASLogLevel level, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
@@ -38,7 +40,7 @@ extern "C" {
     vprintf(eventValue, argList);
     printf("\n");
     va_end(argList);
-    fflush(stdout);
+    //fflush(stdout);
   }
 #pragma warning(pop)
 

@@ -24,6 +24,7 @@
     <ClInclude Include="..\..\include\anki\embeddedCommon\config.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\DASlight.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\dataStructures.h" />
+    <ClInclude Include="..\..\include\anki\embeddedCommon\gtestLight.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\matlabInterface.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\memory.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\point.h" />
