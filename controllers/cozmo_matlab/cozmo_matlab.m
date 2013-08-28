@@ -10,8 +10,9 @@
 %desktop;
 %keyboard;
 
-useMatlabDisplay = true;
+useMatlabDisplay = false;
 doProfile = false;
+headAngleSigma = 1; % Noise in head pitch angle measurement, in degrees
 
 if doProfile
     if ~useMatlabDisplay
@@ -36,7 +37,9 @@ blockWorld = BlockWorld('CameraType', 'webot', ...
     'MatCameraCalibration', blockWorldController.GetCalibrationStruct('cam_down'), ...
     'HasMat', true, 'ZDirection', 'down', ...
     'GroundTruthPoseFcn', @(name)GetNodePose(blockWorldController,name), ...
-    'UpdateObservedBlockPoseFcn', @(blockID,pose,trans)UpdateClosestBlockObservation(blockWorldController,blockID,pose,trans));
+    'UpdateObservedBlockPoseFcn', @(blockID,pose,trans)UpdateClosestBlockObservation(blockWorldController,blockID,pose,trans), ...
+    'GetHeadPitchFcn', @()GetHeadAngle(blockWorldController, headAngleSigma));
+
 
 % main loop:
 % perform simulation steps of TIME_STEP milliseconds
@@ -51,7 +54,7 @@ while wb_robot_step(blockWorldController.TIME_STEP) ~= -1
     if useMatlabDisplay
         blockWorld.draw('drawWorld', false, 'drawReprojection', false, ...
             'drawOverheadMap', true);
-        
+                
         if done
             if doProfile
                 profile off

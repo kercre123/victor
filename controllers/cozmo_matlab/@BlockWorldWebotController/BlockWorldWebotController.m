@@ -89,6 +89,7 @@ classdef BlockWorldWebotController < handle
             
             % Set the head pitch to 0
             wb_motor_set_position(this.head_pitch, 0);
+            wb_motor_enable_position(this.head_pitch, this.TIME_STEP);
             wb_motor_set_position(this.lift, this.LIFT_CENTER);
             wb_motor_set_position(this.lift2, -this.LIFT_CENTER);
             
@@ -175,6 +176,16 @@ classdef BlockWorldWebotController < handle
             
         end % CONSTRUCTOR BlockWorldWebotController()
         
+        function angle = GetHeadAngle(this, sigmaDegrees)
+            
+            angle = wb_motor_get_position(this.head_pitch);
+            
+            if nargin > 1 && sigmaDegrees > 0
+                % Add noise to the angular measurement:
+                angle = angle + sigmaDegrees*pi/180*randn(1);
+            end
+            
+        end
         
         function SetLiftAngle(this, angle)
             wb_motor_set_position(this.lift,   angle);
