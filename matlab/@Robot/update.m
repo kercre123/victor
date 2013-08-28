@@ -1,5 +1,8 @@
 function update(this, img, matImage)
 
+% Get head camera's current position:
+this.updateHeadPose();
+
 if nargin < 2 || isempty(img)
     this.camera.grabFrame();
 else

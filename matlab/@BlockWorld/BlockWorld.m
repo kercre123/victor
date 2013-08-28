@@ -24,6 +24,7 @@ classdef BlockWorld < handle
         groundTruthPoseFcn;
         updateObsBlockPoseFcn;
         updateObsRobotPoseFcn;
+        getHeadPitchFcn;
         
     end % PROPERTIES (get-public, set-protected)
     
@@ -53,6 +54,7 @@ classdef BlockWorld < handle
             GroundTruthPoseFcn = [];
             UpdateObservedRobotPoseFcn = [];
             UpdateObservedBlockPoseFcn = [];
+            GetHeadPitchFcn = [];
                         
             parseVarargin(varargin{:});
             
@@ -73,6 +75,7 @@ classdef BlockWorld < handle
             
             this.updateObsBlockPoseFcn = UpdateObservedBlockPoseFcn;
             this.updateObsRobotPoseFcn = UpdateObservedRobotPoseFcn;
+            this.getHeadPitchFcn       = GetHeadPitchFcn;
             
             this.blockTypeToIndex = containers.Map('KeyType', 'double', ...
                 'ValueType', 'double');
@@ -135,6 +138,7 @@ classdef BlockWorld < handle
                     'CameraType', CameraType, ...
                     'CameraCalibration', CameraCalibration{i}, ...
                     'CameraDevice', CameraDevice{i}, ...
+                    'GetHeadPitchFcn', this.getHeadPitchFcn, ...
                     'MatCameraCalibration', MatCameraCalibration{i}, ...
                     'MatCameraDevice', MatCameraDevice{i});
             end
