@@ -23,9 +23,9 @@
 // for complex shave modules split to separate shave_export.h file or similar
 extern void*  (SVE0_main);
 
-extern u32 SVE0_myint1;
-extern u32 SVE0_myint2;
-extern u32 SVE0_myintrez;
+//extern u32 SVE0_myint1;
+//extern u32 SVE0_myint2;
+//extern u32 SVE0_myintrez;
 
 performanceStruct perfStr;
 
@@ -44,6 +44,7 @@ int main(void)
     // Set input parameters Shaves
     printf("Start Shave at addr:0x%X \n", (unsigned int)&SVE0_main);
 
+/*
     u32* int1_in = (u32 *)swcSolveShaveRelAddrAHB(((unsigned int)&SVE0_myint1),0);
     u32* int2_in = (u32 *)swcSolveShaveRelAddrAHB(((unsigned int)&SVE0_myint2),0);
 
@@ -59,6 +60,8 @@ int main(void)
 
     printf("Set 1: %d %d %d %d\n",int1_in[0], int1_in[1], int1_in[2], int1_in[3]);
     printf("Set 2: %d %d %d %d\n",int2_in[0], int2_in[1], int2_in[2], int2_in[3]);
+*/
+    printf("Starting profiling\n");
 
     swcShaveProfInit(&perfStr);
 
@@ -73,10 +76,9 @@ int main(void)
     }
     swcShaveProfPrint(0, &perfStr);
 
-
-
     // check the result
 
+/*
     fl = (u32 *)swcSolveShaveRelAddrAHB((unsigned int)&SVE0_myintrez, 0);
     printf("res  : %d %d %d %d\n",fl[0], fl[1], fl[2], fl[3]);
     for (i = 0; i < 3; i++)
@@ -87,6 +89,9 @@ int main(void)
         printf("\n\nShaveHelloWorld Executed Successfully\n\n");
     else
         printf("ShaveHelloWorld failed\n");
+*/
+
+    printf("Finished profiling\n");
 
     return 0;
 }
