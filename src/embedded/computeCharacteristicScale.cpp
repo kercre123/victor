@@ -36,7 +36,7 @@ namespace Anki
       //scaleImage = uint32(img)*(2^8); % UQ16.16
       //dogMax = zeros(fullSizeHeight,fullSizeWidth,'uint32'); % UQ16.16
       Array2dFixedPoint<u32> dogMax(fullSizeHeight, fullSizeWidth, 16, scratch); // UQ16.16
-      dogMax.Set(0);
+      dogMax.Set(u32(0));
 
       //imgPyramid = cell(1, numLevels+1);
       Array2d<u8> imgPyramid[MAX_PYRAMID_LEVELS+1];
@@ -91,7 +91,7 @@ namespace Anki
         //    largeDoG = zeros([fullSizeHeight,fullSizeWidth],'uint32'); % UQ16.16
 #if ANKI_DEBUG_LEVEL > ANKI_DEBUG_OFF
         Array2d<u32> largeDog(fullSizeHeight, fullSizeWidth, scratch);
-        largeDog.Set(0);
+        largeDog.Set(u32(0));
 #endif
 
         //    if pyramidLevel == 2

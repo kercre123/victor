@@ -1,8 +1,8 @@
 #ifndef _ANKICORETECHEMBEDDED_VISION_VISIONKERNELS_H_
 #define _ANKICORETECHEMBEDDED_VISION_VISIONKERNELS_H_
 
-#include "anki/vision/config.h"
-#include "anki/common.h"
+#include "anki/embeddedVision/config.h"
+#include "anki/embeddedCommon.h"
 
 namespace Anki
 {
@@ -20,7 +20,7 @@ namespace Anki
       BOUNDARY_NW = 7
     };
 
-    const s32 MAX_BOUNDARY_LENGTH = 5000;
+    const s32 MAX_BOUNDARY_LENGTH = 1000;
 
     Result BinomialFilter(const Array2d<u8> &img, Array2d<u8> &imgFiltered, MemoryStack scratch);
 
