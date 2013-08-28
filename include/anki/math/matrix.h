@@ -12,6 +12,7 @@ namespace Anki {
   
 #pragma mark --- Matrix Class Definiton ---
   
+  // A class for a general matrix:
   template<typename T>
   class Matrix : public Array2d<T>
   {
@@ -25,6 +26,8 @@ namespace Anki {
     //       is memory-aligned the way want.
     Matrix(const cv::Mat_<T> &cvMatrix);
 #endif
+    
+    // NOTE: element access inherited from Array2d
     
     // Matrix multiplication:
     Matrix<T> operator*(const Matrix<T> &other) const;
@@ -41,52 +44,43 @@ namespace Anki {
     
   }; // class Matrix
 
-  template<typename T>
-  class Matrix3x3
+  
+  // A class for small matrices, whose size is known at compile time
+  template<typename T, unsigned int NROWS, unsigned NCOLS>
+  class SmallMatrix
+#if defined(ANKICORETECH_USE_OPENCV)
+  : private cv::Matx<T,NROWS,NCOLS> // private inheritance from cv::Matx
+#endif
   {
   public:
-    Matrix3x3();
-    Matrix3x3(const Point3<T> &col1, const Point3<T> &col2, const Point3<T> &col3);
-  
-    Point3<T>    operator* (const Point3<T>    &x) const;
-    Matrix3x3<T> operator* (const Matrix3x3<T> &other) const;
-    void         operator*=(const Matrix3x3<T> &other);
+    // Constructors:
+    SmallMatrix();
+    SmallMatrix(const T* vals); // *assumes* vals is NROWS*NCOLS long
     
-  protected:
-    T data[9];
-    T *row[3];
+    // Matrix element access:
+    T&       operator() (unsigned int i, unsigned int j);
+    const T& operator() (unsigned int i, unsigned int j) const;
     
-  }; // class Matrix3x3
-  
-  template<typename T>
-  Matrix3x3<T>::Matrix3x3(void)
-  {
-    this->data = {
-      static_cast<T>(0), static_cast<T>(0), static_cast<T>(0),
-      static_cast<T>(0), static_cast<T>(0), static_cast<T>(0),
-      static_cast<T>(0), static_cast<T>(0), static_cast<T>(0)};
+    // Matrix multiplication:
+    // Matrix[MxN] * Matrix[NxK] = Matrix[MxK]
+    template<unsigned int KCOLS>
+    SmallMatrix<T,NROWS,KCOLS> operator* (const SmallMatrix<T,NCOLS,KCOLS> &other) const;
     
-    this->row[0] = data;
-    this->row[1] = data + 3;
-    this->row[2] = data + 6;
-  }
+    // Matrix inversion:
+    void Invert(void);
+    SmallMatrix<T,NROWS,NCOLS> getInverse(void) const;
+    
+    // Matrix transpose:
+    SmallMatrix<T,NCOLS,NROWS> getTranspose(void) const;
+
+  }; // class SmallMatrix
   
-  template<typename T>
-  Point3<T> Matrix3x3<T>::operator*(const Point3<T> &p) const
-  {
-    return Point3<T>(row[0][0]*p.x + row[0][1]*p.y + row[0][2]*p.z,
-                     row[1][0]*p.x + row[1][1]*p.y + row[1][2]*p.z,
-                     row[2][0]*p.x + row[2][1]*p.y + row[2][2]*p.z);
-  }
   
-  template<typename T>
-  Matrix3x3<T> Matrix3x3<T>::operator*(const Matrix3x3<T> &other) const
-  {
-    assert(false);
-    // TODO: imeplement this
-   
-  }
+  // Typedef some common small matrix sizes, like 3x3
+  typedef SmallMatrix<float,3,3> Matrix_3x3f;
+  typedef SmallMatrix<float,3,4> Matrix_3x4f;
   
+    
   
 #pragma mark --- Matrix Implementations ---
   
@@ -105,12 +99,15 @@ namespace Anki {
     
   }
   
+  
+#if defined(ANKICORETECH_USE_OPENCV)
   template<typename T>
   Matrix<T>::Matrix(const cv::Mat_<T> &cvMatrix)
   : Array2d<T>(cvMatrix)
   {
     
   } // Constructor: Matrix<T>(cv::Mat_<T>)
+#endif
   
   
   template<typename T>
