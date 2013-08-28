@@ -11,25 +11,30 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\include\anki\common.h" />
-    <ClInclude Include="..\..\include\anki\common\array2d.h" />
-    <ClInclude Include="..\..\include\anki\common\config.h" />
-    <ClInclude Include="..\..\include\anki\common\DASlight.h" />
-    <ClInclude Include="..\..\include\anki\common\dataStructures.h" />
-    <ClInclude Include="..\..\include\anki\common\memory.h" />
-    <ClInclude Include="..\..\include\anki\common\point.h" />
-    <ClInclude Include="..\..\include\anki\common\utilities.h" />
+    <ClCompile Include="..\..\src\embedded\array2d.cpp" />
+    <ClCompile Include="..\..\src\embedded\dasLight.cpp" />
+    <ClCompile Include="..\..\src\embedded\matlabInterface.cpp" />
+    <ClCompile Include="..\..\src\embedded\memory.cpp" />
+    <ClCompile Include="..\..\src\embedded\point.cpp" />
+    <ClCompile Include="..\..\src\embedded\utilities.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\array2d.cpp" />
-    <ClCompile Include="..\..\src\memory.cpp" />
-    <ClCompile Include="..\..\src\utilities.cpp" />
+    <ClInclude Include="..\..\include\anki\embeddedCommon.h" />
+    <ClInclude Include="..\..\include\anki\embeddedCommon\array2d.h" />
+    <ClInclude Include="..\..\include\anki\embeddedCommon\config.h" />
+    <ClInclude Include="..\..\include\anki\embeddedCommon\DASlight.h" />
+    <ClInclude Include="..\..\include\anki\embeddedCommon\dataStructures.h" />
+    <ClInclude Include="..\..\include\anki\embeddedCommon\gtestLight.h" />
+    <ClInclude Include="..\..\include\anki\embeddedCommon\matlabInterface.h" />
+    <ClInclude Include="..\..\include\anki\embeddedCommon\memory.h" />
+    <ClInclude Include="..\..\include\anki\embeddedCommon\point.h" />
+    <ClInclude Include="..\..\include\anki\embeddedCommon\utilities.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{7A878DC1-8040-41C3-AA48-EB433B1C2C9B}</ProjectGuid>
+    <ProjectGuid>{B6A2200C-1515-4879-B00A-21481799F0DA}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Core</RootNamespace>
-    <ProjectName>CoreTech_Common</ProjectName>
+    <ProjectName>CoreTech_Common_Embedded</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

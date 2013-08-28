@@ -1,14 +1,20 @@
-#ifndef _ANKICORETECH_COMMON_CONFIG_H_
-#define _ANKICORETECH_COMMON_CONFIG_H_
+#ifndef _ANKICORETECHEMBEDDED_COMMON_CONFIG_H_
+#define _ANKICORETECHEMBEDDED_COMMON_CONFIG_H_
 
-#define ANKICORETECH_VERSION_MAJOR 0
-#define ANKICORETECH_VERSION_MINOR 1
-#define ANKICORETECH_VERSION_REVISION 0
+#define ANKICORETECHEMBEDDED_VERSION_MAJOR 0
+#define ANKICORETECHEMBEDDED_VERSION_MINOR 1
+#define ANKICORETECHEMBEDDED_VERSION_REVISION 0
 
-#define ANKICORETECH_USE_MATLAB
-#define ANKICORETECH_USE_OPENCV
+#define ANKICORETECHEMBEDDED_USE_MATLAB
+#define ANKICORETECHEMBEDDED_USE_OPENCV
+#define ANKICORETECHEMBEDDED_USE_GTEST
+
+#if defined(__GNUC__) && __GNUC__==4 && __GNUC_MINOR__==2 && __GNUC_PATCHLEVEL__==1 //hack to detect the movidius compiler
+#define USING_MOVIDIUS_COMPILER
+#endif
 
 // Various defines that make different compilers work on the same code
+
 #if defined(_MSC_VER) // We're using the MSVC compiler
 #pragma warning(disable: 4068) // Unknown pragma
 #pragma warning(disable: 4127) // Conditional expression is constant
@@ -29,14 +35,24 @@
 #define vsnprintf vsprintf_s
 #endif
 
-#elif defined(__GNUC__) // We're using the GCC compiler
+#endif // #if defined(_MSC_VER)
+
+#if defined(__APPLE_CC__) // Apple Xcode
+
+#endif // #if defined(__APPLE_CC__)
+
+#if defined(USING_MOVIDIUS_COMPILER)
+#undef ANKICORETECHEMBEDDED_USE_MATLAB
+#undef ANKICORETECHEMBEDDED_USE_OPENCV
+#undef ANKICORETECHEMBEDDED_USE_GTEST
+
+// Make it easy to detect usages of iostream
+#define iostream IOSTREAM_DOESNT_WORK
+
 #ifndef restrict
-#define restrict
+#define restrict __restrict
 #endif
-
-#elif defined(__APPLE_CC__) // Apple Xcode
-
-#endif //End if compiler defined checks
+#endif
 
 #include <stdint.h>
 #include <stddef.h>
@@ -66,10 +82,18 @@ typedef int64_t  s64;
 #define s16_MIN ((s16)0x8000)
 #define s32_MIN ((s32)0x80000000)
 
+namespace Anki
+{
+  namespace Embedded
+  {
+    const size_t MEMORY_ALIGNMENT = 16; // To support 128-bit SIMD loads and stores
+  }
+}
+
 #define ANKI_DEBUG_OFF  0
 #define ANKI_DEBUG_LOW  1000
 #define ANKI_DEBUG_HIGH 2000
 
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_HIGH
 
-#endif // _ANKICORETECH_COMMON_CONFIG_H_
+#endif // _ANKICORETECHEMBEDDED_COMMON_CONFIG_H_

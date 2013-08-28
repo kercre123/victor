@@ -4,48 +4,12 @@
 
 namespace Anki
 {
-  template<> void Array2dUnmanaged<u8>::Print() const
-  {
-    assert(this->rawDataPointer != NULL && this->data != NULL);
-
-    for(s32 y=0; y<size[0]; y++) {
-      const u8 * rowPointer = Pointer(y, 0);
-      for(s32 x=0; x<size[1]; x++) {
-        std::cout << static_cast<s32>(rowPointer[x]) << " ";
-      }
-      std::cout << "\n";
-    }
-  }
-
-  template<> s32 Array2dUnmanaged<u8>::Set(const std::string values)
-  {
-    assert(this->rawDataPointer != NULL && this->data != NULL);
-
-    std::istringstream iss(values);
-    s32 numValuesSet = 0;
-
-    for(s32 y=0; y<size[0]; y++) {
-      u8 * restrict rowPointer = Pointer(y, 0);
-      for(s32 x=0; x<size[1]; x++) {
-        s32 value;
-        if(iss >> value) {
-          rowPointer[x] = static_cast<u8>(value);
-          numValuesSet++;
-        } else {
-          rowPointer[x] = 0;
-        }
-      }
-    }
-
-    return numValuesSet;
-  }
-  
   // Force there to be an instantiatino of the templated class with some
   // type, so we can see if it compiles
   void testArray2dInstantiation(void)
   {
     Array2d<float> stuff(100,100);
-    
+
     // Exponentiate "stuff" in place:
     stuff.applyScalarFunction(expf);
   }

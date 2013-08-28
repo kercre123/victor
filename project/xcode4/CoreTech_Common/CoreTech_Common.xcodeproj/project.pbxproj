@@ -16,11 +16,8 @@
 		5C7B94E517AB1FD90020CCF7 /* DASlight.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C7B94E017AB1FD90020CCF7 /* DASlight.h */; };
 		5C7B94E717AB1FD90020CCF7 /* memory.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C7B94E217AB1FD90020CCF7 /* memory.h */; };
 		5C7B94E817AB1FD90020CCF7 /* utilities.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C7B94E317AB1FD90020CCF7 /* utilities.h */; };
-		5C7B94EC17AB1FE40020CCF7 /* dasLight.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C7B94E917AB1FE40020CCF7 /* dasLight.cpp */; };
 		5C7B94ED17AB1FE40020CCF7 /* memory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C7B94EA17AB1FE40020CCF7 /* memory.cpp */; };
 		5C7B94EE17AB1FE40020CCF7 /* utilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C7B94EB17AB1FE40020CCF7 /* utilities.cpp */; };
-		5CEFBAD717C68B9800C17285 /* matlabInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5CEFBAD517C68B9800C17285 /* matlabInterface.cpp */; };
-		5CEFBAD917C68BA400C17285 /* matlabInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 5CEFBAD817C68BA400C17285 /* matlabInterface.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,12 +31,9 @@
 		5C7B94E017AB1FD90020CCF7 /* DASlight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DASlight.h; path = ../../../include/anki/common/DASlight.h; sourceTree = "<group>"; };
 		5C7B94E217AB1FD90020CCF7 /* memory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = memory.h; path = ../../../include/anki/common/memory.h; sourceTree = "<group>"; };
 		5C7B94E317AB1FD90020CCF7 /* utilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = utilities.h; path = ../../../include/anki/common/utilities.h; sourceTree = "<group>"; };
-		5C7B94E917AB1FE40020CCF7 /* dasLight.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dasLight.cpp; path = ../../../src/dasLight.cpp; sourceTree = "<group>"; };
 		5C7B94EA17AB1FE40020CCF7 /* memory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = memory.cpp; path = ../../../src/memory.cpp; sourceTree = "<group>"; };
 		5C7B94EB17AB1FE40020CCF7 /* utilities.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = utilities.cpp; path = ../../../src/utilities.cpp; sourceTree = "<group>"; };
 		5CE1C96D17B2BF7F00974053 /* dataStructures.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = dataStructures.h; path = ../../../include/anki/common/dataStructures.h; sourceTree = "<group>"; };
-		5CEFBAD517C68B9800C17285 /* matlabInterface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = matlabInterface.cpp; path = ../../../src/matlabInterface.cpp; sourceTree = "<group>"; };
-		5CEFBAD817C68BA400C17285 /* matlabInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = matlabInterface.h; path = ../../../include/anki/common/matlabInterface.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,10 +50,7 @@
 		5C7B94CB17AB1FB30020CCF7 = {
 			isa = PBXGroup;
 			children = (
-				5CEFBAD817C68BA400C17285 /* matlabInterface.h */,
-				5CEFBAD517C68B9800C17285 /* matlabInterface.cpp */,
 				5CE1C96D17B2BF7F00974053 /* dataStructures.h */,
-				5C7B94E917AB1FE40020CCF7 /* dasLight.cpp */,
 				5C7B94EA17AB1FE40020CCF7 /* memory.cpp */,
 				5C7B94EB17AB1FE40020CCF7 /* utilities.cpp */,
 				4940AD9C17C6D36900778163 /* array2d.h */,
@@ -95,7 +86,6 @@
 				5C7B94E517AB1FD90020CCF7 /* DASlight.h in Headers */,
 				5C7B94E717AB1FD90020CCF7 /* memory.h in Headers */,
 				5C7B94E817AB1FD90020CCF7 /* utilities.h in Headers */,
-				5CEFBAD917C68BA400C17285 /* matlabInterface.h in Headers */,
 				4940AD9D17C6D36900778163 /* array2d.h in Headers */,
 				4940ADA317C6DB9A00778163 /* point.h in Headers */,
 			);
@@ -152,10 +142,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5C7B94EC17AB1FE40020CCF7 /* dasLight.cpp in Sources */,
 				5C7B94ED17AB1FE40020CCF7 /* memory.cpp in Sources */,
 				5C7B94EE17AB1FE40020CCF7 /* utilities.cpp in Sources */,
-				5CEFBAD717C68B9800C17285 /* matlabInterface.cpp in Sources */,
 				4940AD9F17C6D37400778163 /* array2d.cpp in Sources */,
 				4940ADA117C6DB8C00778163 /* point.cpp in Sources */,
 			);
