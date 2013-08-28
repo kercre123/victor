@@ -46,6 +46,9 @@
 #undef ANKICORETECHEMBEDDED_USE_OPENCV
 #undef ANKICORETECHEMBEDDED_USE_GTEST
 
+// Make it easy to detect usages of iostream
+#define iostream IOSTREAM_DOESNT_WORK
+
 #ifndef restrict
 #define restrict __restrict
 #endif

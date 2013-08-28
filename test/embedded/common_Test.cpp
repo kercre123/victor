@@ -2,7 +2,7 @@
 
 #include "anki/embeddedCommon.h"
 
-#include <iostream>
+//#include <iostream>
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 #include "opencv2/opencv.hpp"
@@ -16,12 +16,15 @@ Anki::Embedded::Matlab matlab(false);
 #include "gtest/gtest.h"
 #endif
 
+#define MAX_BYTES 1000
+char buffer[MAX_BYTES];
+
 GTEST_TEST(CoreTech_Common, MemoryStack)
 {
   ASSERT_TRUE(Anki::Embedded::MEMORY_ALIGNMENT == 16);
 
   const s32 numBytes = 200;
-  void * buffer = calloc(numBytes+Anki::Embedded::MEMORY_ALIGNMENT, 1);
+  //void * buffer = calloc(numBytes+Anki::Embedded::MEMORY_ALIGNMENT, 1);
   void * alignedBuffer = reinterpret_cast<void*>(Anki::Embedded::RoundUp(reinterpret_cast<size_t>(buffer), Anki::Embedded::MEMORY_ALIGNMENT));
   ASSERT_TRUE(buffer != NULL);
   Anki::Embedded::MemoryStack ms(alignedBuffer, numBytes);
@@ -86,7 +89,7 @@ GTEST_TEST(CoreTech_Common, MemoryStack)
     (reinterpret_cast<char*>(alignedBuffer)[i])--;
   }
 
-  free(buffer); buffer = NULL;
+  //free(buffer); buffer = NULL;
 
   GTEST_RETURN_HERE;
 }
@@ -107,7 +110,7 @@ s32 CheckConstCasting(const Anki::Embedded::MemoryStack ms, s32 numBytes)
 GTEST_TEST(CoreTech_Common, MemoryStack_call)
 {
   const s32 numBytes = 100;
-  void * buffer = calloc(numBytes, 1);
+  //void * buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
   Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
@@ -125,7 +128,7 @@ GTEST_TEST(CoreTech_Common, MemoryStack_call)
   ASSERT_TRUE(inFunctionUsedBytes2 == (originalUsedBytes+48));
   ASSERT_TRUE(ms.get_usedBytes() == originalUsedBytes);
 
-  free(buffer); buffer = NULL;
+  //  free(buffer); buffer = NULL;
 
   GTEST_RETURN_HERE;
 }
@@ -135,7 +138,7 @@ GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
   ASSERT_TRUE(Anki::Embedded::MEMORY_ALIGNMENT == 16);
 
   const s32 numBytes = 104; // 12*9 = 104
-  void * buffer = calloc(numBytes+Anki::Embedded::MEMORY_ALIGNMENT, 1);
+  //void * buffer = calloc(numBytes+Anki::Embedded::MEMORY_ALIGNMENT, 1);
   ASSERT_TRUE(buffer != NULL);
 
   void * alignedBuffer = reinterpret_cast<void*>(Anki::Embedded::RoundUp<size_t>(reinterpret_cast<size_t>(buffer), Anki::Embedded::MEMORY_ALIGNMENT));
@@ -162,7 +165,7 @@ GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
   ASSERT_TRUE(allocatedBuffer3 != NULL);
   ASSERT_TRUE(largestPossibleAllocation4 == 0);
 
-  free(buffer); buffer = NULL;
+  ///free(buffer); buffer = NULL;
 
   GTEST_RETURN_HERE;
 }
@@ -246,7 +249,7 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 {
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = 1000;
-  void *buffer = calloc(numBytes, 1);
+  //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
   Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
@@ -315,7 +318,7 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   }
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
-  free(buffer); buffer = NULL;
+  //free(buffer); buffer = NULL;
 
   GTEST_RETURN_HERE;
 }
@@ -323,7 +326,7 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 GTEST_TEST(CoreTech_Common, Array2dSpecifiedClass)
 {
   const s32 numBytes = 1000;
-  void *buffer = calloc(numBytes, 1);
+  //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
 
   Anki::Embedded::MemoryStack ms(buffer, numBytes);
@@ -339,7 +342,7 @@ GTEST_TEST(CoreTech_Common, Array2dSpecifiedClass)
 
   ASSERT_TRUE((*simpleArray2d.Pointer(0,0)) == 1); // If the templating fails, this will equal 49
 
-  free(buffer); buffer = NULL;
+  //free(buffer); buffer = NULL;
 
   GTEST_RETURN_HERE;
 }
@@ -347,7 +350,7 @@ GTEST_TEST(CoreTech_Common, Array2dSpecifiedClass)
 GTEST_TEST(CoreTech_Common, Array2dAlignment1)
 {
   const s32 numBytes = 1000;
-  void *buffer = calloc(numBytes, 1);
+  //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
 
   void *alignedBuffer = reinterpret_cast<void*>( Anki::Embedded::RoundUp(reinterpret_cast<size_t>(buffer), Anki::Embedded::MEMORY_ALIGNMENT) );
@@ -363,7 +366,7 @@ GTEST_TEST(CoreTech_Common, Array2dAlignment1)
     ASSERT_TRUE(trueLocation ==  expectedLocation);
   }
 
-  free(buffer); buffer = NULL;
+  //free(buffer); buffer = NULL;
 
   GTEST_RETURN_HERE;
 }
@@ -371,7 +374,7 @@ GTEST_TEST(CoreTech_Common, Array2dAlignment1)
 GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
 {
   const s32 numBytes = 1000;
-  void *buffer = calloc(numBytes, 1);
+  //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
 
   void *alignedBuffer = reinterpret_cast<void*>( Anki::Embedded::RoundUp(reinterpret_cast<size_t>(buffer), Anki::Embedded::MEMORY_ALIGNMENT) );
@@ -386,7 +389,7 @@ GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
     ASSERT_TRUE(matrixStart == Anki::Embedded::RoundUp(matrixStart, Anki::Embedded::MEMORY_ALIGNMENT));
   }
 
-  free(buffer); buffer = NULL;
+  //free(buffer); buffer = NULL;
 
   GTEST_RETURN_HERE;
 }
@@ -395,7 +398,7 @@ GTEST_TEST(CoreTech_Common, Array2dFillPattern)
 {
   const s32 width = 6, height = 10;
   const s32 numBytes = 1000;
-  void *buffer = calloc(numBytes, 1);
+  //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
 
   void *alignedBuffer = reinterpret_cast<void*>( Anki::Embedded::RoundUp(reinterpret_cast<size_t>(buffer), Anki::Embedded::MEMORY_ALIGNMENT) );
@@ -452,7 +455,7 @@ GTEST_TEST(CoreTech_Common, Array2dFillPattern)
     }
   }
 
-  free(buffer); buffer = NULL;
+  //free(buffer); buffer = NULL;
 
   GTEST_RETURN_HERE;
 }
@@ -476,7 +479,11 @@ void RUN_ALL_TESTS()
 } // void RUN_ALL_TESTS()
 #endif // #if !defined(ANKICORETECHEMBEDDED_USE_GTEST)
 
+#if defined(ANKICORETECHEMBEDDED_USE_GTEST)
 int main(int argc, char ** argv)
+#else
+int main()
+#endif
 {
 #if defined(ANKICORETECHEMBEDDED_USE_GTEST)
   ::testing::InitGoogleTest(&argc, argv);
