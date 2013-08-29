@@ -40,7 +40,7 @@ namespace Anki {
     // "Apply" Pose to a 2D point (i.e. transform that point by this Pose)
     Point2f operator*(const Point2f &point) const;
     
-    Pose2d Inverse(void); // return new Pose
+    Pose2d getInverse(void); const // return new Pose
     void Invert(void); // in place
     
   protected:
@@ -54,6 +54,7 @@ namespace Anki {
   }; // class Pose2d
   
 
+  // TODO: Add thin wrapper or typedef for "Transform2d/3d" objects?
   
   
   // A class for encapsulating 6DOF pose (3D translation plus 3-axis rotation).

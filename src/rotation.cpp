@@ -80,19 +80,13 @@ namespace Anki {
     
   } // RotationMatrix3d::operator*(Point3f)
   
-  Result Rodrigues(const RotationVector3d &Rvec_in,
-                   RotationMatrix3d &Rmat_out)
+  void Rodrigues(const RotationVector3d &Rvec_in,
+                 RotationMatrix3d &Rmat_out)
   {
-    Result returnValue = RESULT_OK;
-    
 #if defined(ANKICORETECH_USE_OPENCV)
     cv::Vec3f cvRvec(Rvec_in.get_CvPoint3_());
     cv::Rodrigues(cvRvec, Rmat_out.get_CvMat_());
     assert(Rmat_out.numRows() == 3 && Rmat_out.numCols() == 3);
-    
-    if(Rmat_out.isEmpty()) {
-      returnValue = RESULT_FAIL;
-    }
     
 #else
     
@@ -100,17 +94,13 @@ namespace Anki {
     // TODO: implement our own version?
 #endif
     
-    return returnValue;
-    
   } // Rodrigues(Rvec, Rmat)
   
   
-  Result Rodrigues(const RotationMatrix3d &Rmat_in,
-                   RotationVector3d &Rvec_out)
+  void Rodrigues(const RotationMatrix3d &Rmat_in,
+                 RotationVector3d &Rvec_out)
   {
     assert(Rmat_in.numRows()==3 && Rmat_in.numCols()==3);
-    
-    Result returnValue = RESULT_OK;
     
 #if defined(ANKICORETECH_USE_OPENCV)
     cv::Vec3f cvRvec;
@@ -124,8 +114,6 @@ namespace Anki {
     // TODO: implement our own version?
     
 #endif
-    
-    return returnValue;
     
   } // Rodrigues(Rmat, Rvec)
   

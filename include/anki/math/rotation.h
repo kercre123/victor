@@ -79,11 +79,11 @@ namespace Anki {
   
   // Rodrigues' formula for converting between angle+axis representation and 3x3
   // matrix representation.
-  Result Rodrigues(const RotationVector3d &Rvec_in,
-                         RotationMatrix3d &Rmat_out);
+  void Rodrigues(const RotationVector3d &Rvec_in,
+                       RotationMatrix3d &Rmat_out);
   
-  Result Rodrigues(const RotationMatrix3d &Rmat_in,
-                         RotationVector3d &Rvec_out);
+  void Rodrigues(const RotationMatrix3d &Rmat_in,
+                       RotationVector3d &Rvec_out);
 
 
 } // namespace Anki
