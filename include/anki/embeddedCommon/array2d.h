@@ -445,7 +445,9 @@ namespace Anki
       this->useBoundaryFillPatterns = useBoundaryFillPatterns;
 
       if(!rawData) {
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "input data buffer is NULL");
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         this->size[0] = 0;
         this->size[1] = 0;
         this->data = NULL;
@@ -460,7 +462,9 @@ namespace Anki
       const s32 requiredBytes = ComputeRequiredStride(numCols,useBoundaryFillPatterns)*numRows + extraAlignmentBytes;
 
       if(requiredBytes > dataLength) {
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         this->size[0] = 0;
         this->size[1] = 0;
         this->data = NULL;
