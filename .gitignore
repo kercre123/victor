@@ -43,3 +43,4 @@ matlab.mat
 build/msvc*
 build/xcode*
 project/xcode4/CoreTech_Math/CoreTech_Math.xcodeproj/xcuserdata
+project/xcode4/CoreTech_Math/CoreTech_Math.xcodeproj/project.xcworkspace/xcuserdata
