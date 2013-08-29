@@ -111,6 +111,7 @@ namespace Anki {
     // "Parent" for defining linkages or sequences of poses, so we can get
     // a pose "with respect to" a parent or to root (world) pose.
     const Pose3d *parent;
+    unsigned int treeDepth; // helps find common ancestor with other poses
     
   }; // class Pose3d
   

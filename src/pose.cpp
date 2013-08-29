@@ -44,7 +44,7 @@ namespace Anki {
   Pose3d* Pose3d::World = NULL;
   
   Pose3d::Pose3d()
-  : translation(0.f, 0.f, 0.f)
+  : translation(0.f, 0.f, 0.f), parent(NULL), treeDepth(0)
   {
     
   } // Constructor: Pose3d()  
@@ -53,7 +53,9 @@ namespace Anki {
   : rotationVector(Rvec_in), translation(T_in),
     rotationMatrix(rotationVector), parent(parentPose)
   {
-
+    if(parentPose != NULL) {
+      treeDepth = parentPose->treeDepth + 1;
+    }
   } // Constructor: Pose3d(Rvec, T)
   
   Pose3d::Pose3d(const RotationVector3d &Rvec_in, const Vec3f &T_in,
@@ -66,6 +68,9 @@ namespace Anki {
   Pose3d::Pose3d(const RotationMatrix3d &Rmat_in, const Vec3f &T_in, const Pose3d *parentPose)
   : rotationMatrix(Rmat_in), translation(T_in), rotationVector(rotationMatrix), parent(parentPose)
   {
+    if(parentPose != NULL) {
+      treeDepth = parentPose->treeDepth + 1;
+    }
   } // Constructor: Pose3d(Rmat, T)
   
   
