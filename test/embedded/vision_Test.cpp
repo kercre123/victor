@@ -14,7 +14,7 @@
 Anki::Embedded::Matlab matlab(false);
 #endif
 
-#define MAX_BYTES 5000
+#define MAX_BYTES 1000
 char buffer[MAX_BYTES];
 
 GTEST_TEST(CoreTech_Vision, BinomialFilter)
@@ -25,19 +25,38 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
   const s32 numBytes = MIN(MAX_BYTES, 5000);
   //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
+
+  printf("1\n");
+
   Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
-  Anki::Embedded::Array2d<u8> img(height, width, ms);
+  ASSERT_TRUE(ms.IsValid());
+
+  printf("1a\n");
+
+  Anki::Embedded::Array2d<u8> img(height, width, ms, false);
+//  Anki::Embedded::Array2d<u8> img(1, 1, ms, false);
+
+  printf("1b\n");
+  /*
   Anki::Embedded::Array2d<u8> imgFiltered(height, width, ms);
+
+  printf("2\n");
 
   ASSERT_TRUE(img.get_rawDataPointer()!= NULL);
   ASSERT_TRUE(imgFiltered.get_rawDataPointer()!= NULL);
 
+  printf("3\n");
+
   for(s32 x=0; x<width; x++) {
-    *img.Pointer(2,x) = static_cast<u8>(x);
+  *img.Pointer(2,x) = static_cast<u8>(x);
   }
 
+  printf("4\n");
+
   Anki::Embedded::Result result = Anki::Embedded::BinomialFilter(img, imgFiltered, ms);
+
+  printf("5\n");
 
   //printf("img:\n");
   //img.Print();
@@ -49,15 +68,17 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
 
   const u8 correctResults[5][10] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 1, 1, 1, 2, 2, 2, 3}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
+  printf("6\n");
+
   for(s32 y=0; y<height; y++) {
-    for(s32 x=0; x<width; x++) {
-      //printf("(%d,%d) expected:%d actual:%d\n", y, x, correctResults[y][x], *(imgFiltered.Pointer(y,x)));
-      ASSERT_TRUE(correctResults[y][x] == *imgFiltered.Pointer(y,x));
-    }
+  for(s32 x=0; x<width; x++) {
+  //printf("(%d,%d) expected:%d actual:%d\n", y, x, correctResults[y][x], *(imgFiltered.Pointer(y,x)));
+  ASSERT_TRUE(correctResults[y][x] == *imgFiltered.Pointer(y,x));
+  }
   }
 
   //free(buffer); buffer = NULL;
-
+  */
   GTEST_RETURN_HERE;
 }
 
@@ -101,6 +122,7 @@ GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
   GTEST_RETURN_HERE;
 }
 
+/*
 GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
 {
   const s32 width = 16;
@@ -145,6 +167,7 @@ GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
 
   GTEST_RETURN_HERE;
 }
+*/
 
 #if defined(ANKICORETECH_USE_MATLAB)
 GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
@@ -183,6 +206,7 @@ GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 }
 #endif // #if defined(ANKICORETECH_USE_MATLAB)
 
+/*
 GTEST_TEST(CoreTech_Vision, TraceBoundary)
 {
   const s32 width = 16;
@@ -217,7 +241,7 @@ GTEST_TEST(CoreTech_Vision, TraceBoundary)
   Anki::Embedded::Array2d<u8> binaryImg(height, width, ms);
   const Anki::Embedded::Point2<s16> startPoint(8,6);
   const Anki::Embedded::BoundaryDirection initialDirection = Anki::Embedded::BOUNDARY_N;
-  Anki::Embedded::FixedLengthList<Anki::Embedded::Point2<s16>> boundary(Anki::Embedded::MAX_BOUNDARY_LENGTH, ms);
+  Anki::Embedded::FixedLengthList<Anki::Embedded::Point2<s16> > boundary(Anki::Embedded::MAX_BOUNDARY_LENGTH, ms);
 
   ASSERT_TRUE(binaryImg.IsValid());
   ASSERT_TRUE(boundary.IsValid());
@@ -235,6 +259,7 @@ GTEST_TEST(CoreTech_Vision, TraceBoundary)
 
   GTEST_RETURN_HERE;
 }
+*/
 
 #if !defined(ANKICORETECHEMBEDDED_USE_GTEST)
 void RUN_ALL_TESTS()
@@ -243,9 +268,9 @@ void RUN_ALL_TESTS()
   s32 numFailedTests = 0;
 
   CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
-  CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
-  CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);
-  CALL_GTEST_TEST(CoreTech_Vision, TraceBoundary);
+  //CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
+  //  CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);
+  //  CALL_GTEST_TEST(CoreTech_Vision, TraceBoundary);
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 } // void RUN_ALL_TESTS()

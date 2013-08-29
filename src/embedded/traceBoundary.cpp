@@ -51,6 +51,7 @@ namespace Anki
 
     Result TraceBoundary(const Array2d<u8> &binaryImg, const Point2<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point2<s16> > &boundary)
     {
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
       DASConditionalErrorAndReturnValue(binaryImg.IsValid(),
         RESULT_FAIL, "TraceBoundary", "binaryImg is not valid");
 
@@ -67,6 +68,7 @@ namespace Anki
 
       DASConditionalErrorAndReturnValue(boundary.get_maximumSize() == MAX_BOUNDARY_LENGTH,
         RESULT_FAIL, "TraceBoundary", "boundary must be have a maximum size of MAX_BOUNDARY_LENGTH");
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
 
       boundary.Clear();
 
@@ -85,8 +87,10 @@ namespace Anki
       //curPoint = [startPoint(1), startPoint(2)];
       Point2<s16> curPoint(startPoint);
 
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
       DASConditionalErrorAndReturnValue(*(binaryImg.Pointer(curPoint)) != 0,
         RESULT_FAIL, "TraceBoundary", "startPoint must be on a non-zero pixel of binaryImg");
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
 
       // printf("0) %d %d\n", curPoint.y+1, curPoint.x+1);
 

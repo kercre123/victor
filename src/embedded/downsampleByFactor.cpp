@@ -6,6 +6,7 @@ namespace Anki
   {
     Result DownsampleByFactor(const Array2d<u8> &img, s32 downsampleFactor, Array2d<u8> &imgDownsampled)
     {
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
       DASConditionalErrorAndReturnValue(img.IsValid(),
         RESULT_FAIL, "DownsampleByFactor", "img is not valid");
 
@@ -20,6 +21,7 @@ namespace Anki
 
       DASConditionalErrorAndReturnValue(imgDownsampled.get_size(0) == (img.get_size(0) / downsampleFactor) && imgDownsampled.get_size(1) == (img.get_size(1) / downsampleFactor),
         RESULT_FAIL, "DownsampleByFactor", "size(imgDownsampled) is not equal to size(img) >> downsampleFactor");
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
 
       const s32 maxY = downsampleFactor * imgDownsampled.get_size(0);
       const s32 maxX = downsampleFactor * imgDownsampled.get_size(1);

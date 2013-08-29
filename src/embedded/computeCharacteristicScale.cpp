@@ -12,7 +12,7 @@ namespace Anki
       //double times[20];
 
       //times[0] = GetTime();
-
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
       DASConditionalErrorAndReturnValue(img.IsValid(),
         RESULT_FAIL, "ComputeCharacteristicScaleImage", "img is not valid");
 
@@ -27,6 +27,7 @@ namespace Anki
 
       DASConditionalErrorAndReturnValue(scaleImage.get_numFractionalBits() == 16,
         RESULT_FAIL, "ComputeCharacteristicScaleImage", "scaleImage must be UQ16.16");
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
 
       // TODO: add check for the required amount of scratch?
 
@@ -54,8 +55,11 @@ namespace Anki
       }
 
       //imgPyramid{1} = mexBinomialFilter(img);
-      DASConditionalErrorAndReturnValue(BinomialFilter(img, imgPyramid[0], scratch) == RESULT_OK,
+      const Result binomialFilterResult = BinomialFilter(img, imgPyramid[0], scratch);
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_LOW
+      DASConditionalErrorAndReturnValue(binomialFilterResult == RESULT_OK,
         RESULT_FAIL, "ComputeCharacteristicScaleImage", "BinomialFilter failed");
+#endif // #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_LOW
 
       /*{
       Anki::Embedded::Matlab matlab(false);
@@ -85,8 +89,11 @@ namespace Anki
         //    end
         Array2d<u8> curPyramidLevelBlurred(curPyramidLevel.get_size(0), curPyramidLevel.get_size(1), scratch);
 
-        DASConditionalErrorAndReturnValue(BinomialFilter(curPyramidLevel, curPyramidLevelBlurred, scratch) == RESULT_OK,
+        const Result binomialFilterResult = BinomialFilter(curPyramidLevel, curPyramidLevelBlurred, scratch);
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_LOW
+        DASConditionalErrorAndReturnValue(binomialFilterResult == RESULT_OK,
           RESULT_FAIL, "ComputeCharacteristicScaleImage", "In-loop BinomialFilter failed");
+#endif // #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_LOW
 
         //    largeDoG = zeros([fullSizeHeight,fullSizeWidth],'uint32'); % UQ16.16
 #if ANKI_DEBUG_LEVEL > ANKI_DEBUG_OFF
@@ -322,8 +329,11 @@ namespace Anki
 
         //    imgPyramid{pyramidLevel} = uint8(downsampleByFactor(curPyramidLevelBlurred, 2));
 
-        DASConditionalErrorAndReturnValue(DownsampleByFactor(curPyramidLevelBlurred, 2, imgPyramid[pyramidLevel]) == RESULT_OK,
+        const Result downsampleByFactorResult = DownsampleByFactor(curPyramidLevelBlurred, 2, imgPyramid[pyramidLevel]);
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_LOW
+        DASConditionalErrorAndReturnValue(downsampleByFactorResult == RESULT_OK,
           RESULT_FAIL, "ComputeCharacteristicScaleImage", "In-loop DownsampleByFactor failed");
+#endif // #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_LOW
       } // for(s32 pyramidLevel=1; pyramidLevel<=numLevels; pyramidLevel++) {
       //times[19] = GetTime();
 

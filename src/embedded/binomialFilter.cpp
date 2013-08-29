@@ -16,6 +16,7 @@ namespace Anki
       const u32 kernel[BINOMIAL_KERNEL_SIZE] = {1, 4, 6, 4, 1};
       const s32 kernelShift = 4;
 
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
       DASConditionalErrorAndReturnValue(img.IsValid(),
         RESULT_FAIL, "BinomialFilter", "img is not valid");
 
@@ -30,14 +31,17 @@ namespace Anki
 
       DASConditionalErrorAndReturnValue(img.get_rawDataPointer() != imgFiltered.get_rawDataPointer(),
         RESULT_FAIL, "BinomialFilter", "img and imgFiltered must be different");
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
 
       const s32 height = img.get_size(0);
       const s32 width = img.get_size(1);
 
       const s32 requiredScratch = img.get_size(0) * RoundUp<s32>(img.get_size(1)*sizeof(u32), MEMORY_ALIGNMENT);
 
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
       DASConditionalErrorAndReturnValue(scratch.LargestPossibleAllocation() >= requiredScratch,
         RESULT_FAIL, "BinomialFilter", "Insufficient scratch memory");
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
 
       //imgFilteredTmp = zeros(size(img), 'uint32');
       Array2d<u32> imgFilteredTmp(height, width, scratch);
