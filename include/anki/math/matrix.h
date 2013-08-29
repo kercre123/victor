@@ -65,18 +65,23 @@ namespace Anki {
     // Matrix[MxN] * Matrix[NxK] = Matrix[MxK]
     template<unsigned int KCOLS>
     SmallMatrix<T,NROWS,KCOLS> operator* (const SmallMatrix<T,NCOLS,KCOLS> &other) const;
-    
+        
     // Matrix inversion:
     void Invert(void);
     SmallMatrix<T,NROWS,NCOLS> getInverse(void) const;
     
     // Matrix transpose:
     SmallMatrix<T,NCOLS,NROWS> getTranspose(void) const;
+    
+#if defined(ANKICORETECH_USE_OPENCV)
+    cv::Matx<T,NROWS,NCOLS>& get_CvMatx_();
+    const cv::Matx<T,NROWS,NCOLS>& get_CvMatx_() const;
+#endif
 
   }; // class SmallMatrix
-  
-  
+    
   // Typedef some common small matrix sizes, like 3x3
+  typedef SmallMatrix<float,2,2> Matrix_2x2f;
   typedef SmallMatrix<float,3,3> Matrix_3x3f;
   typedef SmallMatrix<float,3,4> Matrix_3x4f;
   

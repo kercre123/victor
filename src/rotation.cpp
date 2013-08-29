@@ -12,7 +12,6 @@ namespace Anki {
   
   
   RotationMatrix2d::RotationMatrix2d(const float angle)
-  : Matrix<float>(2,2)
   {
     const float cosAngle = std::cos(angle);
     const float sinAngle = std::sin(angle);
@@ -42,7 +41,6 @@ namespace Anki {
   }
   
   RotationMatrix3d::RotationMatrix3d(void)
-  : Matrix<float>(3,3)
   {
     (*this)(0,0) = 1.f;
     (*this)(0,1) = 0.f;
@@ -59,7 +57,7 @@ namespace Anki {
   } // Constructor: RotationMatrix3d()
   
   RotationMatrix3d::RotationMatrix3d(const RotationVector3d &rotVec_in)
-  : Matrix<float>(3,3), rotationVector(rotVec_in)
+  : rotationVector(rotVec_in)
   {
     Rodrigues(this->rotationVector, *this);
   }
@@ -68,9 +66,8 @@ namespace Anki {
   {
 #if defined(ANKICORETECH_USE_OPENCV)
     // TODO: pretty sure there's a better way to do this:
-    cv::Mat_<float> vec(3,1);
-    vec << p.x, p.y, p.z;
-    cv::Mat_<float> out(this->get_CvMat_() * vec);
+    cv::Matx<float,3,1> vec(p.x, p.y, p.z);
+    cv::Matx<float,3,1> out(this->get_CvMatx_() * vec);
     Point3f rotatedPoint(out(0,0), out(1,0), out(2,0));
 #else
     assert(false);
@@ -85,9 +82,7 @@ namespace Anki {
   {
 #if defined(ANKICORETECH_USE_OPENCV)
     cv::Vec3f cvRvec(Rvec_in.get_CvPoint3_());
-    cv::Rodrigues(cvRvec, Rmat_out.get_CvMat_());
-    assert(Rmat_out.numRows() == 3 && Rmat_out.numCols() == 3);
-    
+    cv::Rodrigues(cvRvec, Rmat_out.get_CvMatx_());    
 #else
     
     assert(false);
@@ -100,11 +95,10 @@ namespace Anki {
   void Rodrigues(const RotationMatrix3d &Rmat_in,
                  RotationVector3d &Rvec_out)
   {
-    assert(Rmat_in.numRows()==3 && Rmat_in.numCols()==3);
-    
+   
 #if defined(ANKICORETECH_USE_OPENCV)
     cv::Vec3f cvRvec;
-    cv::Rodrigues(Rmat_in.get_CvMat_(), cvRvec);
+    cv::Rodrigues(Rmat_in.get_CvMatx_(), cvRvec);
     Rvec_out.x = cvRvec[0];
     Rvec_out.y = cvRvec[1];
     Rvec_out.z = cvRvec[2];

@@ -4,6 +4,7 @@ namespace Anki {
   
   void testMatrixInstantiation(void)
   {
+    // Matrix:
     Matrix<float> A(3,3), B(3,4);
     A(0,0) = 1.f;
     A(1,1) = 2.f;
@@ -18,6 +19,13 @@ namespace Anki {
     Matrix<float> D( C.getInverse() );
     
     Matrix<float> E( D.getTranpose() );
+    
+    // Small Matrix:
+    Matrix_2x2f M;
+    M(0,0) = 1.f;
+    M(1,2) = 2.f;
+    M(2,1) = 3.f;
+    M(2,2) = 4.f;
   }
   
 } // namespace Anki

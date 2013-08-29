@@ -94,7 +94,7 @@ namespace Anki {
   
   void Pose3d::Invert(void)
   {
-    this->rotationMatrix.Transpose();
+    this->rotationMatrix.getTranspose();
     this->translation *= -1.f;
     this->translation = this->rotationMatrix * this->translation;
   }

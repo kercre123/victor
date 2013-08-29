@@ -16,7 +16,7 @@
 
 namespace Anki {
   
-  class RotationMatrix2d : public Matrix<float>
+  class RotationMatrix2d : public Matrix_2x2f
   {
   public:
     RotationMatrix2d(const float angle = 0.f);
@@ -51,7 +51,7 @@ namespace Anki {
   { return this->axis; }
   
   
-  class RotationMatrix3d : public Matrix<float>
+  class RotationMatrix3d : public Matrix_3x3f
   {
   public:
     RotationMatrix3d(); // 3x3 identity matrix (no rotation)
