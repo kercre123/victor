@@ -48,7 +48,7 @@ namespace Anki {
   }; // class CameraCalibration
   
   
-  // Inline accessor defitions:
+  // Inline accessor definitions:
   float CameraCalibration::get_focalLength_x() const
   { return this->focalLength_x; }
   
@@ -77,8 +77,8 @@ namespace Anki {
     Camera(const CameraCalibration &calib, const Pose3d &pose);
     
     // Accessors:
-    const Pose3d& get_pose() const;
-    const CameraCalibration& get_calibration() const;
+    inline const Pose3d&             get_pose()        const;
+    inline const CameraCalibration&  get_calibration() const;
         
     //
     // Methods:
@@ -106,6 +106,12 @@ namespace Anki {
     
   }; // class Camera
   
+  // Inline accessors:
+  const Pose3d& Camera::get_pose(void) const
+  { return this->pose; }
+  
+  const CameraCalibration& Camera::get_calibration(void) const
+  { return this->calibration; }
   
   
 } // namespace Anki
