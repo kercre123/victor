@@ -140,11 +140,22 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         bool success = capture[device]->read(frame);
         
         if(not success) {
-            mexErrMsgTxt("Frame grab failed!");
+            mexWarnMsgTxt("Frame grab failed!");
+        }
+        if(frame.empty()) {
+            mexWarnMsgTxt("Empty frame grabbed!");
+            success = false;
         }
         
-        if(frame.empty()) {
-            mexErrMsgTxt("Empty frame grabbed!");
+        if(not success)
+        {
+            double width = capture[device]->get(CV_CAP_PROP_FRAME_WIDTH);
+            double height = capture[device]->get(CV_CAP_PROP_FRAME_HEIGHT);
+            
+            mwSize dims[3] = {height, width, 3};
+            plhs[0] = mxCreateNumericArray(3, dims, mxDOUBLE_CLASS, mxREAL);
+            
+            return;
         }
         else {
             //cv::cvtColor(frame, frame, CV_BGR2RGB);
