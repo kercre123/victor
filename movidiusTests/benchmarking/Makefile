@@ -6,7 +6,7 @@ APPNAME=benchmarking
 
 MDK_DIRECTORY=	/home/anki/movidius/mdk_13.08.0_general/mdk
 
-CORETECH_COMMON_DIRECTORY=../../../coretech-common/project/myriad1/src/shave/
+CORETECH_COMMON_DIRECTORY=../../../coretech-common
 CORETECH_VISION_DIRECTORY=../../../coretech-vision
 
 # Verbose or not, common out for more verbosity
@@ -17,7 +17,7 @@ CORETECH_VISION_DIRECTORY=../../../coretech-vision
 # overrides that need to be set before including generic.mk
 #ShaveSymObject   = $(DirAppObjDir)/$(APPNAME).sym.o
 #LinkerScript    =  $(DirLDScript)/$(APPNAME).ldscript
-#LinkerScript    =  $(DirLDScript)/benchmarking.ldscript
+LinkerScript    =  $(DirLDScript)/benchmarking.ldscript
 
 # Set Shave common mof name (non-mbin flow)
 #ShaveCommonName = shaves
@@ -25,10 +25,22 @@ CORETECH_VISION_DIRECTORY=../../../coretech-vision
 #SH_MLIB  = $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.c, %.mobj, $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/*.c))))
 #SH_MLIB += $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.cpp, %.mobj, $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/*.cpp))))
 
-SH0_Obj  = $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.asm, %.mobj, $(ShaveASrcFiles))))
-SH0_Obj += $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.c,   %.mobj, $(ShaveCSrcFiles))))
+#SH0_Obj  = $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.asm, %.mobj, $(ShaveASrcFiles))))
+#SH0_Obj += $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.c,   %.mobj, $(ShaveCSrcFiles))))
 
-SH0_Obj += $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.cpp, %.mobj, $(wildcard $(CORETECH_COMMON_DIRECTORY)/*.cpp))))
+SH0_Obj += $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.cpp, %.mobj, $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/embedded/*.cpp))))
+SH0_Obj += $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.cpp, %.mobj, $(wildcard $(CORETECH_COMMON_DIRECTORY)/test/embedded/*.cpp))))
+
+#ShaveCPPSrcFiles += $(notdir $(wildcard $(CORETECH_COMMON_DIRECTORY)/*.cpp))
+#ShaveCPPSrcFiles += /mnt/hgfs/Anki/coretech-common/src/array2d.cpp
+
+ShaveCPPSrcFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/embedded/*.cpp)
+ShaveCPPSrcFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/test/embedded/*.cpp)
+ShaveHeaderFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/include/)
+
+
+#ShaveHeaderFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/include/anki/embeddedCommon.h)
+#ShaveHeaderFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/include/anki/embeddedCommon/*.h)
 
 # Limit to only needed drivers
 #SysCSrcFiles     = drv_ddr.c drv_uart.c drv_vcs.c drv_print.c drv_timer.c drv_l2cache.c drv_sys_cfg.c drv_cpr.c svu_utils.c
@@ -47,7 +59,7 @@ ComponentList := coretech-common
 MV_COMMON_BASE   =$(MDK_DIRECTORY)/common
 
 # Include the generic Makefile
-include generic_custom.mk
+include $(MV_COMMON_BASE)/generic.mk
 
 
 # -------------------------------- [ Build Options ] ------------------------------ #

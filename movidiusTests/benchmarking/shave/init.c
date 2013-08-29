@@ -67,5 +67,7 @@ int main( void )
 
     myintrez[3] = myrez[3] + image2[500];
 */
+printf("versions %d %d %d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+
 	return 0;
 }
