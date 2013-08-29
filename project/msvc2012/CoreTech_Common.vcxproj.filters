@@ -44,9 +44,6 @@
     <ClCompile Include="..\..\src\memory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\utilities.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\array2d.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

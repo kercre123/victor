@@ -23,7 +23,6 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\array2d.cpp" />
     <ClCompile Include="..\..\src\memory.cpp" />
-    <ClCompile Include="..\..\src\utilities.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{7A878DC1-8040-41C3-AA48-EB433B1C2C9B}</ProjectGuid>
