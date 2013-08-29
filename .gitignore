@@ -45,3 +45,4 @@ matlab/profiling/*
 build/msvc*
 build/xcode*
 project/xcode4/Cozmo/Cozmo.xcodeproj/xcuserdata
+project/xcode4/Cozmo/Cozmo.xcodeproj/project.xcworkspace/xcuserdata
