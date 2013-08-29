@@ -11,10 +11,10 @@
 #else
 
 // To prevent a warning (or error) about a function not returning a value, include this macro at the end of any GTEST_TEST
-#define GTEST_RETURN_HERE return 0;
+#define GTEST_RETURN_HERE {printf("Test completed\n"); return 0; }
 
 // Same usage as the Gtest macro
-#define GTEST_TEST(test_case_name, test_name) static s32 test_case_name ## test_name()
+#define GTEST_TEST(test_case_name, test_name) s32 test_case_name ## test_name()
 
 // Same usage as the Gtest macro
 #define ASSERT_TRUE(condition) DASConditionalErrorAndReturnValue((condition), -1, "\n------------------------------------------------------------------------\nUnitTestAssert(" #condition ") is false", "Unit Test Assert Failure\n------------------------------------------------------------------------");
@@ -23,7 +23,7 @@
 #define ASSERT_FALSE(condition) ASSERT_TRUE(!(condition))
 
 // Call a GTEST_TEST, and increment the variable numPassedTests if the test passed, and  the variable numFailedTests if the test failed.
-#define CALL_GTEST_TEST(test_case_name, test_name) if(test_case_name ## test_name() == 0) { printf("\n"); DASEvent("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nPASSED: UnitTest " #test_case_name # test_name, "Unit Test Passed"); printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n"); numPassedTests++; } else {  printf("\n"); DASWarn("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nFAILED: UnitTest " #test_case_name # test_name, "Unit Test Failed");  printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n"); numFailedTests++; };
+#define CALL_GTEST_TEST(test_case_name, test_name) if(test_case_name ## test_name() == 0) { printf("\n"); DASEvent("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nPASSED:" #test_case_name # test_name, ""); printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n"); numPassedTests++; } else {  printf("\n"); DASWarn("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nFAILED:" #test_case_name # test_name, "");  printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n"); numFailedTests++; };
 
 #endif // ANKICORETECHEMBEDDED_USE_GTEST
 

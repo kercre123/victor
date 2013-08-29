@@ -9,24 +9,30 @@ namespace Anki
     MemoryStack::MemoryStack(void *buffer, s32 bufferLength)
       : buffer(buffer), totalBytes(bufferLength), usedBytes(0)
     {
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
       DASConditionalError(buffer, "Anki.MemoryStack.MemoryStack", "Buffer must be allocated");
       DASConditionalError(bufferLength <= 0x3FFFFFFF, "Anki.MemoryStack.MemoryStack", "Maximum size of a MemoryStack is 2^30 - 1");
       DASConditionalError(MEMORY_ALIGNMENT == 16, "Anki.MemoryStack.MemoryStack", "Currently, only MEMORY_ALIGNMENT == 16 is supported");
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
     }
 
     MemoryStack::MemoryStack(const MemoryStack& ms)
       : buffer(ms.buffer), totalBytes(ms.totalBytes), usedBytes(ms.usedBytes)
     {
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
       DASConditionalError(ms.buffer, "Anki.MemoryStack.MemoryStack", "Buffer must be allocated");
       DASConditionalError(ms.totalBytes <= 0x3FFFFFFF, "Anki.MemoryStack.MemoryStack", "Maximum size of a MemoryStack is 2^30 - 1");
       DASConditionalError(MEMORY_ALIGNMENT == 16, "Anki.MemoryStack.MemoryStack", "Currently, only MEMORY_ALIGNMENT == 16 is supported");
       DASConditionalError(ms.totalBytes >= ms.usedBytes, "Anki.MemoryStack.MemoryStack", "Buffer is using more bytes than it has. Try running IsValid() to test for memory corruption.");
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
     }
 
     void* MemoryStack::Allocate(s32 numBytesRequested, s32 *numBytesAllocated)
     {
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
       DASConditionalWarnAndReturnValue(numBytesRequested > 0, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested > 0");
       DASConditionalWarnAndReturnValue(numBytesRequested <= 0x3FFFFFFF, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested <= 0x3FFFFFFF");
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
 
       char * const bufferNextFree = static_cast<char*>(buffer) + usedBytes;
 
@@ -64,6 +70,18 @@ namespace Anki
       const char * const bufferCharStar = reinterpret_cast<const char*>(buffer);
       const size_t bufferSizeT = reinterpret_cast<size_t>(buffer);
 
+      DASConditionalWarnAndReturnValue(buffer != NULL, false, "Anki.MemoryStack.IsValid", "buffer is not allocated");
+
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+      DASConditionalWarnAndReturnValue(usedBytes <= totalBytes, false, "Anki.MemoryStack.IsValid", "usedBytes is greater than totalBytes");
+      DASConditionalWarnAndReturnValue(usedBytes >= 0 && totalBytes >= 0, false, "Anki.MemoryStack.IsValid", "usedBytes or totalBytes is less than zero");
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+
+      if(usedBytes == 0)
+        return true;
+
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_LOW
+
       s32 index = static_cast<s32>( RoundUp<size_t>(bufferSizeT+HEADER_LENGTH, MEMORY_ALIGNMENT) - HEADER_LENGTH - bufferSizeT );
 
       for(size_t i=0; (i<MIN(LOOP_MAX,totalBytes)) && (index<usedBytes); i++) {
@@ -97,6 +115,8 @@ namespace Anki
         DASError("Anki.MemoryStack.IsValid", "Loop exited at an incorrect position, probably due to corruption");
         return false;
       }
+#endif // #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_LOW
+      return true;
     }
 
     s32 MemoryStack::LargestPossibleAllocation()

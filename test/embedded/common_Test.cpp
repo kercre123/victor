@@ -19,6 +19,7 @@ char buffer[MAX_BYTES];
 
 GTEST_TEST(CoreTech_Common, MemoryStack)
 {
+MemoryStackStart:
   ASSERT_TRUE(Anki::Embedded::MEMORY_ALIGNMENT == 16);
 
   const s32 numBytes = MIN(MAX_BYTES, 200);
@@ -38,6 +39,8 @@ GTEST_TEST(CoreTech_Common, MemoryStack)
   ASSERT_TRUE(buffer1 != NULL);
   ASSERT_TRUE(buffer2 != NULL);
   ASSERT_TRUE(buffer3 != NULL);
+
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
   ASSERT_TRUE(buffer4 == NULL);
   ASSERT_TRUE(buffer5 == NULL);
   ASSERT_TRUE(buffer6 == NULL);
@@ -86,6 +89,7 @@ GTEST_TEST(CoreTech_Common, MemoryStack)
     ASSERT_TRUE(ms.IsValid() == expectedResults[i]);
     (reinterpret_cast<char*>(alignedBuffer)[i])--;
   }
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
 
   //free(buffer); buffer = NULL;
 
