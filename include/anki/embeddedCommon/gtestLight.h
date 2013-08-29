@@ -14,7 +14,7 @@
 #define GTEST_RETURN_HERE return 0;
 
 // Same usage as the Gtest macro
-#define GTEST_TEST(test_case_name, test_name) s32 test_case_name ## test_name()
+#define GTEST_TEST(test_case_name, test_name) static s32 test_case_name ## test_name()
 
 // Same usage as the Gtest macro
 #define ASSERT_TRUE(condition) DASConditionalErrorAndReturnValue((condition), -1, "\n------------------------------------------------------------------------\nUnitTestAssert(" #condition ") is false", "Unit Test Assert Failure\n------------------------------------------------------------------------");

@@ -5,16 +5,15 @@
 #define ANKICORETECHEMBEDDED_VERSION_MINOR 1
 #define ANKICORETECHEMBEDDED_VERSION_REVISION 0
 
-#define ANKICORETECHEMBEDDED_USE_MATLAB
-#define ANKICORETECHEMBEDDED_USE_OPENCV
-#define ANKICORETECHEMBEDDED_USE_GTEST
+//#define ANKICORETECHEMBEDDED_USE_MATLAB
+//#define ANKICORETECHEMBEDDED_USE_OPENCV
+//#define ANKICORETECHEMBEDDED_USE_GTEST
 
 #if defined(__GNUC__) && __GNUC__==4 && __GNUC_MINOR__==2 && __GNUC_PATCHLEVEL__==1 //hack to detect the movidius compiler
 #define USING_MOVIDIUS_COMPILER
 #endif
 
 // Various defines that make different compilers work on the same code
-
 #if defined(_MSC_VER) // We're using the MSVC compiler
 #pragma warning(disable: 4068) // Unknown pragma
 #pragma warning(disable: 4127) // Conditional expression is constant
