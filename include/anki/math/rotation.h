@@ -10,9 +10,9 @@
 #define __CoreTech_Math__rotation__
 
 #include "anki/common/datastructures.h"
-#include "anki/common/point.h"
 
 #include "anki/math/matrix.h"
+#include "anki/math/point.h"
 
 namespace Anki {
   

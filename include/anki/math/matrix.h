@@ -6,7 +6,8 @@
 #endif
 
 #include "anki/common/array2d.h"
-#include "anki/common/point.h"
+
+#include "anki/math/point.h"
 
 namespace Anki {
   

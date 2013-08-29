@@ -25,6 +25,12 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		493C9C5F17CFB90A00DBBF6B /* matrix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; name = matrix.cpp; path = ../../../src/matrix.cpp; sourceTree = "<group>"; };
+		493C9C6017CFB90A00DBBF6B /* matrix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; name = matrix.h; path = ../../../include/anki/math/matrix.h; sourceTree = "<group>"; };
+		493C9C6117CFB90A00DBBF6B /* pose.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; name = pose.cpp; path = ../../../src/pose.cpp; sourceTree = "<group>"; };
+		493C9C6217CFB90A00DBBF6B /* pose.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; name = pose.h; path = ../../../include/anki/math/pose.h; sourceTree = "<group>"; };
+		493C9C6317CFB90A00DBBF6B /* rotation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; name = rotation.cpp; path = ../../../src/rotation.cpp; sourceTree = "<group>"; };
+		493C9C6417CFB90A00DBBF6B /* rotation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; name = rotation.h; path = ../../../include/anki/math/rotation.h; sourceTree = "<group>"; };
 		5C268AFF17CD62DF00AF3C6C /* libCoreTech_Common_Embedded.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCoreTech_Common_Embedded.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		5C268B1B17CD632900AF3C6C /* array2d.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = array2d.cpp; path = ../../../src/embedded/array2d.cpp; sourceTree = "<group>"; };
 		5C268B1C17CD632900AF3C6C /* dasLight.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dasLight.cpp; path = ../../../src/embedded/dasLight.cpp; sourceTree = "<group>"; };
@@ -54,6 +60,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		493C9C6517CFB90A00DBBF6B /* Math */ = {
+			isa = PBXGroup;
+			children = (
+				493C9C5F17CFB90A00DBBF6B /* matrix.cpp */,
+				493C9C6017CFB90A00DBBF6B /* matrix.h */,
+				493C9C6117CFB90A00DBBF6B /* pose.cpp */,
+				493C9C6217CFB90A00DBBF6B /* pose.h */,
+				493C9C6317CFB90A00DBBF6B /* rotation.cpp */,
+				493C9C6417CFB90A00DBBF6B /* rotation.h */,
+			);
+			name = Math;
+			path = ../CoreTech_Common;
+			sourceTree = "<group>";
+		};
 		5C268AF617CD62DF00AF3C6C = {
 			isa = PBXGroup;
 			children = (
@@ -72,6 +92,7 @@
 				5C268B1E17CD632900AF3C6C /* memory.cpp */,
 				5C268B1F17CD632900AF3C6C /* point.cpp */,
 				5C268B2017CD632900AF3C6C /* utilities.cpp */,
+				493C9C6517CFB90A00DBBF6B /* Math */,
 				5C268B0017CD62DF00AF3C6C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -306,6 +327,7 @@
 				5C268B0517CD62DF00AF3C6C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

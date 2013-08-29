@@ -1,11 +1,10 @@
 #ifndef _ANKICORETECH_MATH_POSE_H_
 #define _ANKICORETECH_MATH_POSE_H_
 
-#include "anki/math/config.h"
 #include "anki/math/matrix.h"
 #include "anki/math/rotation.h"
 
-#include "anki/common/point.h"
+#include "anki/math/point.h"
 
 namespace Anki {
 
