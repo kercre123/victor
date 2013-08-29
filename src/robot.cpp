@@ -12,7 +12,6 @@ namespace Anki {
   namespace Cozmo {
     
     Robot::Robot( void )
-    : camDown(
     {
       
     } // Constructor: Robot

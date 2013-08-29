@@ -18,6 +18,12 @@ classdef Robot < handle
         
         embeddedConversions;
         
+        R_headCam;
+        T_headCam;
+        headAnchor;
+        camPoseCov;
+        getHeadPitchFcn;
+        
         % For drawing:
         appearance = struct( ...
             'BodyColor', [.7 .7 0], ...
@@ -73,6 +79,7 @@ classdef Robot < handle
             CameraCalibration = [];
             MatCameraDevice = [];
             MatCameraCalibration = [];
+            GetHeadPitchFcn = [];
             
             appearanceArgs = parseVarargin(varargin);
             
@@ -90,21 +97,29 @@ classdef Robot < handle
             
             % From robot to camera frame:
             % Rotation 90 degrees around x axis:
-            Rrc = [1 0 0; 0 0 1; 0 -1 0];
-            Trc = [0; 30; 43];
-                %this.appearance.BodyLength/2; ...
-                %this.appearance.BodyHeight + this.appearance.EyeRadius];
-        
+            this.R_headCam = [1 0 0; 0 0 1; 0 -1 0];
+            this.T_headCam = [0; 30; 43];
+            this.headAnchor = [0; 0; 20];
+            
             % Add uncertainty for Camera pose(s) w.r.t. robot?
             %   1 degree uncertainty in rotation
             %   .1mm uncertainty in translation
-            Rcov = pi/180*eye(3); 
+            Rcov = pi/180*eye(3);
             Tcov = (.1)^2*eye(3);
-            camPoseCov = blkdiag(Rcov,Tcov);
+            this.camPoseCov = blkdiag(Rcov,Tcov);
+            
+            if isempty(GetHeadPitchFcn)    
+                this.getHeadPitchFcn = @()0;
+            else
+                assert(isa(GetHeadPitchFcn, 'function_handle'), ...
+                    'GetHeadCameraPoseFcn should be a function handle.');
+                this.getHeadPitchFcn = GetHeadPitchFcn;
+            end
+            
             this.camera = Camera('device', CameraDevice, ...
                 'deviceType', CameraType, ...
                 'calibration', CameraCalibration, ...
-                'pose', Pose(Rrc, Trc, camPoseCov));
+                'pose', Pose(this.R_headCam, this.T_headCam, this.camPoseCov));
             
             if (isempty(this.world) && ~isempty(MatCameraDevice)) ...
                     || (~isempty(this.world) && this.world.hasMat)
@@ -115,10 +130,25 @@ classdef Robot < handle
                 this.matCamera = Camera('device', MatCameraDevice, ...
                     'deviceType', CameraType, ...
                     'calibration', MatCameraCalibration, ...
-                    'pose', inv(Pose(Rrc, Trc, camPoseCov)));
+                    'pose', inv(Pose(Rrc, Trc, this.camPoseCov)));
             end
         end
         
+        function updateHeadPose(this)
+            % TODO: return error too and adjust covariance
+           
+            angle = this.getHeadPitchFcn();
+            
+            % Get rotation matrix for the current head pitch:
+            Rpitch = rodrigues(angle*[1 0 0]); 
+            
+            % Rotate around the head's anchor point:
+            Rnew = Rpitch * this.R_headCam;
+            Tnew = Rpitch*(this.T_headCam - this.headAnchor) + this.headAnchor;
+            this.camera.pose = Pose(Rnew, Tnew, this.camPoseCov);
+        end
+
+
     end % METHODS (public)
     
     methods

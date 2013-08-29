@@ -54,12 +54,24 @@ classdef BlockMarker3D < handle
         end
         
         function varargout = getPosition(this, poseIn)
+            % Gets position w.r.t. root Pose:
             varargout = cell(1,nargout);
             if nargin < 2
-                [varargout{:}] = this.pose.applyTo(this.model);
+                P = this.pose;
             else
-                [varargout{:}] = poseIn.applyTo(this.model);
+                P = poseIn;
             end
+            
+            % Chain poses together up to root node:
+            while ~isempty(P.parent)
+                %P = P*P.parent;
+                newParent = P.parent.parent;
+                P = P * P.parent;
+                P.parent = newParent;
+            end
+            
+            [varargout{:}] = P.applyTo(this.model);
+            
         end
          
     end % METHODS (public)
