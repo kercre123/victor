@@ -1,24 +1,29 @@
-#include "anki/embeddedVision.h"
+#define USING_MOVIDIUS_COMPILER
 
-#include <iostream>
+#include "anki/embeddedVision.h"
 
 #if defined(ANKICORETECH_USE_OPENCV)
 #include "opencv2/opencv.hpp"
 #endif
 
+#if defined(ANKICORETECHEMBEDDED_USE_GTEST)
 #include "gtest/gtest.h"
+#endif
 
 #if defined(ANKICORETECH_USE_MATLAB)
 Anki::Embedded::Matlab matlab(false);
 #endif
 
-TEST(CoreTech_Vision, BinomialFilter)
+#define MAX_BYTES 5000
+char buffer[MAX_BYTES];
+
+GTEST_TEST(CoreTech_Vision, BinomialFilter)
 {
   const s32 width = 10;
   const s32 height = 5;
   // Allocate memory from the heap, for the memory allocator
-  const s32 numBytes = 10000;
-  void *buffer = calloc(numBytes, 1);
+  const s32 numBytes = MIN(MAX_BYTES, 5000);
+  //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
   Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
@@ -51,18 +56,20 @@ TEST(CoreTech_Vision, BinomialFilter)
     }
   }
 
-  free(buffer); buffer = NULL;
+  //free(buffer); buffer = NULL;
+
+  GTEST_RETURN_HERE;
 }
 
-TEST(CoreTech_Vision, DownsampleByFactor)
+GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
 {
   const s32 width = 10;
   const s32 height = 4;
   const s32 downsampleFactor = 2;
 
   // Allocate memory from the heap, for the memory allocator
-  const s32 numBytes = 10000;
-  void *buffer = calloc(numBytes, 1);
+  const s32 numBytes = MIN(MAX_BYTES, 1000);
+  //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
   Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
@@ -89,15 +96,17 @@ TEST(CoreTech_Vision, DownsampleByFactor)
     }
   }
 
-  free(buffer); buffer = NULL;
+  //free(buffer); buffer = NULL;
+
+  GTEST_RETURN_HERE;
 }
 
-TEST(CoreTech_Vision, ComputeCharacteristicScale)
+GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
 {
   const s32 width = 16;
   const s32 height = 16;
   const s32 numLevels = 3;
-  const std::string imgData =
+  const char * imgData =
     "0	0	0	107	255	255	255	255	0	0	0	0	0	0	160	89 "
     "0	255	0	251	255	0	0	255	0	255	255	255	255	0	197	38 "
     "0	0	0	77	255	0	0	255	0	255	255	255	255	0	238	149 "
@@ -116,8 +125,8 @@ TEST(CoreTech_Vision, ComputeCharacteristicScale)
     "255	255	255	255	255	255	255	255	255	255	147	169	165	195	133	5";
 
   // Allocate memory from the heap, for the memory allocator
-  const s32 numBytes = 10000;
-  void *buffer = calloc(numBytes, 1);
+  const s32 numBytes = MIN(MAX_BYTES, 5000);
+  //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
   Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
@@ -132,11 +141,13 @@ TEST(CoreTech_Vision, ComputeCharacteristicScale)
 
   // TODO: manually compute results, and check
 
-  free(buffer); buffer = NULL;
+  //free(buffer); buffer = NULL;
+
+  GTEST_RETURN_HERE;
 }
 
 #if defined(ANKICORETECH_USE_MATLAB)
-TEST(CoreTech_Vision, ComputeCharacteristicScale2)
+GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 {
   const s32 width = 640;
   const s32 height = 480;
@@ -167,14 +178,16 @@ TEST(CoreTech_Vision, ComputeCharacteristicScale2)
   matlab.PutArray2d(scaleImage, "scaleImage6_c");
 
   free(buffer); buffer = NULL;
+
+  GTEST_RETURN_HERE;
 }
 #endif // #if defined(ANKICORETECH_USE_MATLAB)
 
-TEST(CoreTech_Vision, TraceBoundary)
+GTEST_TEST(CoreTech_Vision, TraceBoundary)
 {
   const s32 width = 16;
   const s32 height = 16;
-  const std::string imgData =
+  const char * imgData =
     " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 "
     " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 "
     " 1 1 0 0 0 0 0 0 0 0 0 1 1 1 1 1 "
@@ -196,8 +209,8 @@ TEST(CoreTech_Vision, TraceBoundary)
   const Anki::Embedded::Point2<s16> groundTruth[9] = {Anki::Embedded::Point2<s16>(8,6), Anki::Embedded::Point2<s16>(8,5), Anki::Embedded::Point2<s16>(7,4), Anki::Embedded::Point2<s16>(7,3), Anki::Embedded::Point2<s16>(8,3), Anki::Embedded::Point2<s16>(9,3), Anki::Embedded::Point2<s16>(9,4), Anki::Embedded::Point2<s16>(9,5), Anki::Embedded::Point2<s16>(9,6)};
 
   // Allocate memory from the heap, for the memory allocator
-  const s32 numBytes = 100000;
-  void *buffer = calloc(numBytes, 1);
+  const s32 numBytes = MIN(MAX_BYTES, 5000);
+  //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
   Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
@@ -218,12 +231,35 @@ TEST(CoreTech_Vision, TraceBoundary)
     ASSERT_TRUE(*boundary.Pointer(iPoint) == groundTruth[iPoint]);
   }
 
-  free(buffer); buffer = NULL;
+  //free(buffer); buffer = NULL;
+
+  GTEST_RETURN_HERE;
 }
 
-int main(int argc, char ** argv)
+#if !defined(ANKICORETECHEMBEDDED_USE_GTEST)
+void RUN_ALL_TESTS()
 {
-  ::testing::InitGoogleTest(&argc, argv);
+  s32 numPassedTests = 0;
+  s32 numFailedTests = 0;
+
+  CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
+  CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
+  CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);
+  CALL_GTEST_TEST(CoreTech_Vision, TraceBoundary);
+
+  printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
+} // void RUN_ALL_TESTS()
+#endif // #if !defined(ANKICORETECHEMBEDDED_USE_GTEST)
+
+#if defined(ANKICORETECHEMBEDDED_USE_GTEST)
+int main(int argc, char ** argv)
+#else
+int main()
+#endif
+{
+#if defined(ANKICORETECHEMBEDDED_USE_GTEST)
+  ::testing::InitGoogleGTEST_TEST(&argc, argv);
+#endif
 
   RUN_ALL_TESTS();
 
