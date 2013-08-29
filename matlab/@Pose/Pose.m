@@ -15,6 +15,11 @@ classdef Pose
         
     end
     
+    properties(GetAccess = 'protected', SetAccess = 'protected')
+        parent_;
+        treeDepth;
+    end
+    
     properties(GetAccess = 'public', SetAccess = 'protected', ...
             Dependent = true)
         
@@ -22,10 +27,20 @@ classdef Pose
         axis;
         
     end
+    
+    properties(GetAccess = 'public', SetAccess = 'public', ...
+            Dependent = true)
         
+        parent;
+    end
+    
+    
     methods(Access = 'public')
         
         function this = Pose(varargin)
+            
+            this.parent = [];
+            this.treeDepth = 0;
             
             switch(nargin)
                 case 0
@@ -91,6 +106,19 @@ classdef Pose
             else
                 v = [1 0 0]';
             end
+        end
+        
+        function set.parent(this, P)
+            if isempty(P)
+                this.treeDepth = 0;
+            else
+                this.treeDepth = P.treeDepth + 1;
+            end
+            this.parent_ = P;
+        end
+        
+        function p = get.parent(this)
+           p = this.parent_; 
         end
     end
     
