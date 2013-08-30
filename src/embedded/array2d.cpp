@@ -1593,7 +1593,7 @@ namespace Anki
         const f32 * rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           //std::cout << rowPointer[x] << " ";
-          printf("%d ", rowPointer[x]); // TODO: make general
+          printf("%f ", rowPointer[x]); // TODO: make general
         }
         // std::cout << "\n";
         printf("\n");
@@ -1844,7 +1844,7 @@ namespace Anki
         const f64 * rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           //std::cout << rowPointer[x] << " ";
-          printf("%d ", rowPointer[x]); // TODO: make general
+          printf("%f ", rowPointer[x]); // TODO: make general
         }
         // std::cout << "\n";
         printf("\n");
@@ -2095,7 +2095,7 @@ namespace Anki
         const Point_s16 * rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           //std::cout << rowPointer[x] << " ";
-          printf("%d ", rowPointer[x]); // TODO: make general
+          printf("(%d,%d) ", rowPointer[x].x, rowPointer[x].y); // TODO: make general
         }
         // std::cout << "\n";
         printf("\n");

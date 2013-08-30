@@ -41,36 +41,16 @@ namespace Anki
       Array_u8(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
-      inline const u8* Array_u8::Pointer(const s32 index0, const s32 index1) const
-      {
-        assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-          this->rawDataPointer != NULL && this->data != NULL);
-
-        return reinterpret_cast<const u8*>( reinterpret_cast<const char*>(this->data) +
-          index1*sizeof(u8) + index0*stride );
-      }
+      const inline u8* Pointer(const s32 index0, const s32 index1) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline u8* Array_u8::Pointer(const s32 index0, const s32 index1)
-      {
-        assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-          this->rawDataPointer != NULL && this->data != NULL);
-
-        return reinterpret_cast<u8*>( reinterpret_cast<char*>(this->data) +
-          index1*sizeof(u8) + index0*stride );
-      }
+      inline u8* Pointer(const s32 index0, const s32 index1);
 
       // Pointer to the data, at a given (y,x) location
-      inline const u8* Array_u8::Pointer(const Point_s16 &point) const
-      {
-        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-      }
+      const inline u8* Pointer(const Point_s16 &point) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline u8* Array_u8::Pointer(const Point_s16 &point)
-      {
-        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-      }
+      inline u8* Pointer(const Point_s16 &point);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       void Show(const char * const windowName, const bool waitForKeypress) const;
@@ -157,36 +137,16 @@ namespace Anki
       Array_s8(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
-      inline const s8* Array_s8::Pointer(const s32 index0, const s32 index1) const
-      {
-        assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-          this->rawDataPointer != NULL && this->data != NULL);
-
-        return reinterpret_cast<const s8*>( reinterpret_cast<const char*>(this->data) +
-          index1*sizeof(s8) + index0*stride );
-      }
+      const inline s8* Pointer(const s32 index0, const s32 index1) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline s8* Array_s8::Pointer(const s32 index0, const s32 index1)
-      {
-        assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-          this->rawDataPointer != NULL && this->data != NULL);
-
-        return reinterpret_cast<s8*>( reinterpret_cast<char*>(this->data) +
-          index1*sizeof(s8) + index0*stride );
-      }
+      inline s8* Pointer(const s32 index0, const s32 index1);
 
       // Pointer to the data, at a given (y,x) location
-      inline const s8* Array_s8::Pointer(const Point_s16 &point) const
-      {
-        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-      }
+      const inline s8* Pointer(const Point_s16 &point) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline s8* Array_s8::Pointer(const Point_s16 &point)
-      {
-        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-      }
+      inline s8* Pointer(const Point_s16 &point);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       void Show(const char * const windowName, const bool waitForKeypress) const;
@@ -272,36 +232,16 @@ namespace Anki
       Array_u16(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
-      inline const u16* Array_u16::Pointer(const s32 index0, const s32 index1) const
-      {
-        assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-          this->rawDataPointer != NULL && this->data != NULL);
-
-        return reinterpret_cast<const u16*>( reinterpret_cast<const char*>(this->data) +
-          index1*sizeof(u16) + index0*stride );
-      }
+      const inline u16* Pointer(const s32 index0, const s32 index1) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline u16* Array_u16::Pointer(const s32 index0, const s32 index1)
-      {
-        assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-          this->rawDataPointer != NULL && this->data != NULL);
-
-        return reinterpret_cast<u16*>( reinterpret_cast<char*>(this->data) +
-          index1*sizeof(u16) + index0*stride );
-      }
+      inline u16* Pointer(const s32 index0, const s32 index1);
 
       // Pointer to the data, at a given (y,x) location
-      inline const u16* Array_u16::Pointer(const Point_s16 &point) const
-      {
-        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-      }
+      const inline u16* Pointer(const Point_s16 &point) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline u16* Array_u16::Pointer(const Point_s16 &point)
-      {
-        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-      }
+      inline u16* Pointer(const Point_s16 &point);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       void Show(const char * const windowName, const bool waitForKeypress) const;
@@ -388,36 +328,16 @@ namespace Anki
       Array_s16(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
-      inline const s16* Array_s16::Pointer(const s32 index0, const s32 index1) const
-      {
-        assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-          this->rawDataPointer != NULL && this->data != NULL);
-
-        return reinterpret_cast<const s16*>( reinterpret_cast<const char*>(this->data) +
-          index1*sizeof(s16) + index0*stride );
-      }
+      const inline s16* Pointer(const s32 index0, const s32 index1) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline s16* Array_s16::Pointer(const s32 index0, const s32 index1)
-      {
-        assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-          this->rawDataPointer != NULL && this->data != NULL);
-
-        return reinterpret_cast<s16*>( reinterpret_cast<char*>(this->data) +
-          index1*sizeof(s16) + index0*stride );
-      }
+      inline s16* Pointer(const s32 index0, const s32 index1);
 
       // Pointer to the data, at a given (y,x) location
-      inline const s16* Array_s16::Pointer(const Point_s16 &point) const
-      {
-        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-      }
+      const inline s16* Pointer(const Point_s16 &point) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline s16* Array_s16::Pointer(const Point_s16 &point)
-      {
-        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-      }
+      inline s16* Pointer(const Point_s16 &point);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       void Show(const char * const windowName, const bool waitForKeypress) const;
@@ -504,36 +424,16 @@ namespace Anki
       Array_u32(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
-      inline const u32* Array_u32::Pointer(const s32 index0, const s32 index1) const
-      {
-        assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-          this->rawDataPointer != NULL && this->data != NULL);
-
-        return reinterpret_cast<const u32*>( reinterpret_cast<const char*>(this->data) +
-          index1*sizeof(u32) + index0*stride );
-      }
+      const inline u32* Pointer(const s32 index0, const s32 index1) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline u32* Array_u32::Pointer(const s32 index0, const s32 index1)
-      {
-        assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-          this->rawDataPointer != NULL && this->data != NULL);
-
-        return reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) +
-          index1*sizeof(u32) + index0*stride );
-      }
+      inline u32* Pointer(const s32 index0, const s32 index1);
 
       // Pointer to the data, at a given (y,x) location
-      inline const u32* Array_u32::Pointer(const Point_s16 &point) const
-      {
-        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-      }
+      const inline u32* Pointer(const Point_s16 &point) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline u32* Array_u32::Pointer(const Point_s16 &point)
-      {
-        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-      }
+      inline u32* Pointer(const Point_s16 &point);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       void Show(const char * const windowName, const bool waitForKeypress) const;
@@ -620,36 +520,16 @@ namespace Anki
       Array_s32(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
-      inline const s32* Array_s32::Pointer(const s32 index0, const s32 index1) const
-      {
-        assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-          this->rawDataPointer != NULL && this->data != NULL);
-
-        return reinterpret_cast<const s32*>( reinterpret_cast<const char*>(this->data) +
-          index1*sizeof(s32) + index0*stride );
-      }
+      const inline s32* Pointer(const s32 index0, const s32 index1) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline s32* Array_s32::Pointer(const s32 index0, const s32 index1)
-      {
-        assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-          this->rawDataPointer != NULL && this->data != NULL);
-
-        return reinterpret_cast<s32*>( reinterpret_cast<char*>(this->data) +
-          index1*sizeof(s32) + index0*stride );
-      }
+      inline s32* Pointer(const s32 index0, const s32 index1);
 
       // Pointer to the data, at a given (y,x) location
-      inline const s32* Array_s32::Pointer(const Point_s16 &point) const
-      {
-        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-      }
+      const inline s32* Pointer(const Point_s16 &point) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline s32* Array_s32::Pointer(const Point_s16 &point)
-      {
-        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-      }
+      inline s32* Pointer(const Point_s16 &point);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       void Show(const char * const windowName, const bool waitForKeypress) const;
@@ -736,36 +616,16 @@ namespace Anki
       Array_f32(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
-      inline const f32* Array_f32::Pointer(const s32 index0, const s32 index1) const
-      {
-        assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-          this->rawDataPointer != NULL && this->data != NULL);
-
-        return reinterpret_cast<const f32*>( reinterpret_cast<const char*>(this->data) +
-          index1*sizeof(f32) + index0*stride );
-      }
+      const inline f32* Pointer(const s32 index0, const s32 index1) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline f32* Array_f32::Pointer(const s32 index0, const s32 index1)
-      {
-        assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-          this->rawDataPointer != NULL && this->data != NULL);
-
-        return reinterpret_cast<f32*>( reinterpret_cast<char*>(this->data) +
-          index1*sizeof(f32) + index0*stride );
-      }
+      inline f32* Pointer(const s32 index0, const s32 index1);
 
       // Pointer to the data, at a given (y,x) location
-      inline const f32* Array_f32::Pointer(const Point_s16 &point) const
-      {
-        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-      }
+      const inline f32* Pointer(const Point_s16 &point) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline f32* Array_f32::Pointer(const Point_s16 &point)
-      {
-        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-      }
+      inline f32* Pointer(const Point_s16 &point);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       void Show(const char * const windowName, const bool waitForKeypress) const;
@@ -852,36 +712,16 @@ namespace Anki
       Array_f64(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
-      inline const f64* Array_f64::Pointer(const s32 index0, const s32 index1) const
-      {
-        assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-          this->rawDataPointer != NULL && this->data != NULL);
-
-        return reinterpret_cast<const f64*>( reinterpret_cast<const char*>(this->data) +
-          index1*sizeof(f64) + index0*stride );
-      }
+      const inline f64* Pointer(const s32 index0, const s32 index1) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline f64* Array_f64::Pointer(const s32 index0, const s32 index1)
-      {
-        assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-          this->rawDataPointer != NULL && this->data != NULL);
-
-        return reinterpret_cast<f64*>( reinterpret_cast<char*>(this->data) +
-          index1*sizeof(f64) + index0*stride );
-      }
+      inline f64* Pointer(const s32 index0, const s32 index1);
 
       // Pointer to the data, at a given (y,x) location
-      inline const f64* Array_f64::Pointer(const Point_s16 &point) const
-      {
-        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-      }
+      const inline f64* Pointer(const Point_s16 &point) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline f64* Array_f64::Pointer(const Point_s16 &point)
-      {
-        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-      }
+      inline f64* Pointer(const Point_s16 &point);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       void Show(const char * const windowName, const bool waitForKeypress) const;
@@ -968,36 +808,16 @@ namespace Anki
       Array_Point_s16(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
-      inline const Point_s16* Array_Point_s16::Pointer(const s32 index0, const s32 index1) const
-      {
-        assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-          this->rawDataPointer != NULL && this->data != NULL);
-
-        return reinterpret_cast<const Point_s16*>( reinterpret_cast<const char*>(this->data) +
-          index1*sizeof(Point_s16) + index0*stride );
-      }
+      const inline Point_s16* Pointer(const s32 index0, const s32 index1) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline Point_s16* Array_Point_s16::Pointer(const s32 index0, const s32 index1)
-      {
-        assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-          this->rawDataPointer != NULL && this->data != NULL);
-
-        return reinterpret_cast<Point_s16*>( reinterpret_cast<char*>(this->data) +
-          index1*sizeof(Point_s16) + index0*stride );
-      }
+      inline Point_s16* Pointer(const s32 index0, const s32 index1);
 
       // Pointer to the data, at a given (y,x) location
-      inline const Point_s16* Array_Point_s16::Pointer(const Point_s16 &point) const
-      {
-        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-      }
+      const inline Point_s16* Pointer(const Point_s16 &point) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline Point_s16* Array_Point_s16::Pointer(const Point_s16 &point)
-      {
-        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-      }
+      inline Point_s16* Pointer(const Point_s16 &point);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       void Show(const char * const windowName, const bool waitForKeypress) const;
@@ -1059,6 +879,293 @@ namespace Anki
     private:
       //Array_Point_s16 & operator= (const Array_Point_s16 & rightHandSide); // Not allowed
     }; // class Array_Point_s16
+
+    // Pointer to the data, at a given (y,x) location
+    const inline u8* Array_u8::Pointer(const s32 index0, const s32 index1) const
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<const u8*>( reinterpret_cast<const char*>(this->data) +
+        index1*sizeof(u8) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    inline u8* Array_u8::Pointer(const s32 index0, const s32 index1)
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<u8*>( reinterpret_cast<char*>(this->data) +
+        index1*sizeof(u8) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const inline u8* Array_u8::Pointer(const Point_s16 &point) const
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    inline u8* Array_u8::Pointer(const Point_s16 &point)
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const inline s8* Array_s8::Pointer(const s32 index0, const s32 index1) const
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<const s8*>( reinterpret_cast<const char*>(this->data) +
+        index1*sizeof(s8) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    inline s8* Array_s8::Pointer(const s32 index0, const s32 index1)
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<s8*>( reinterpret_cast<char*>(this->data) +
+        index1*sizeof(s8) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const inline s8* Array_s8::Pointer(const Point_s16 &point) const
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    inline s8* Array_s8::Pointer(const Point_s16 &point)
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const inline u16* Array_u16::Pointer(const s32 index0, const s32 index1) const
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<const u16*>( reinterpret_cast<const char*>(this->data) +
+        index1*sizeof(u16) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    inline u16* Array_u16::Pointer(const s32 index0, const s32 index1)
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<u16*>( reinterpret_cast<char*>(this->data) +
+        index1*sizeof(u16) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const inline u16* Array_u16::Pointer(const Point_s16 &point) const
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    inline u16* Array_u16::Pointer(const Point_s16 &point)
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const inline s16* Array_s16::Pointer(const s32 index0, const s32 index1) const
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<const s16*>( reinterpret_cast<const char*>(this->data) +
+        index1*sizeof(s16) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    inline s16* Array_s16::Pointer(const s32 index0, const s32 index1)
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<s16*>( reinterpret_cast<char*>(this->data) +
+        index1*sizeof(s16) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const inline s16* Array_s16::Pointer(const Point_s16 &point) const
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    inline s16* Array_s16::Pointer(const Point_s16 &point)
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const inline u32* Array_u32::Pointer(const s32 index0, const s32 index1) const
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<const u32*>( reinterpret_cast<const char*>(this->data) +
+        index1*sizeof(u32) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    inline u32* Array_u32::Pointer(const s32 index0, const s32 index1)
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) +
+        index1*sizeof(u32) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const inline u32* Array_u32::Pointer(const Point_s16 &point) const
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    inline u32* Array_u32::Pointer(const Point_s16 &point)
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+    // Pointer to the data, at a given (y,x) location
+    const inline s32* Array_s32::Pointer(const s32 index0, const s32 index1) const
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<const s32*>( reinterpret_cast<const char*>(this->data) +
+        index1*sizeof(s32) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    inline s32* Array_s32::Pointer(const s32 index0, const s32 index1)
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<s32*>( reinterpret_cast<char*>(this->data) +
+        index1*sizeof(s32) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const inline s32* Array_s32::Pointer(const Point_s16 &point) const
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    inline s32* Array_s32::Pointer(const Point_s16 &point)
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const inline f32* Array_f32::Pointer(const s32 index0, const s32 index1) const
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<const f32*>( reinterpret_cast<const char*>(this->data) +
+        index1*sizeof(f32) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    inline f32* Array_f32::Pointer(const s32 index0, const s32 index1)
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<f32*>( reinterpret_cast<char*>(this->data) +
+        index1*sizeof(f32) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const inline f32* Array_f32::Pointer(const Point_s16 &point) const
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    inline f32* Array_f32::Pointer(const Point_s16 &point)
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const inline f64* Array_f64::Pointer(const s32 index0, const s32 index1) const
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<const f64*>( reinterpret_cast<const char*>(this->data) +
+        index1*sizeof(f64) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    inline f64* Array_f64::Pointer(const s32 index0, const s32 index1)
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<f64*>( reinterpret_cast<char*>(this->data) +
+        index1*sizeof(f64) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const inline f64* Array_f64::Pointer(const Point_s16 &point) const
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    inline f64* Array_f64::Pointer(const Point_s16 &point)
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const inline Point_s16* Array_Point_s16::Pointer(const s32 index0, const s32 index1) const
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<const Point_s16*>( reinterpret_cast<const char*>(this->data) +
+        index1*sizeof(Point_s16) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    inline Point_s16* Array_Point_s16::Pointer(const s32 index0, const s32 index1)
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<Point_s16*>( reinterpret_cast<char*>(this->data) +
+        index1*sizeof(Point_s16) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const inline Point_s16* Array_Point_s16::Pointer(const Point_s16 &point) const
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    inline Point_s16* Array_Point_s16::Pointer(const Point_s16 &point)
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
   } // namespace Embedded
 } //namespace Anki
 
