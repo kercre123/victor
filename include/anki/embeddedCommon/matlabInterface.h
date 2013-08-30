@@ -67,75 +67,93 @@ namespace Anki
       //Character strings need to be converted slightly to appear correctly in Matlab
       s32 PutString(const char * characters, s32 nValues, const std::string name);
 
-      template<typename T> s32 PutArray2d(const Array2d<T> &matrix, const std::string name)
+      s32 PutArray_u8(const Array_u8 &matrix, const std::string name);
+      s32 PutArray_s8(const Array_s8 &matrix, const std::string name);
+      s32 PutArray_u16(const Array_u16 &matrix, const std::string name);
+      s32 PutArray_s16(const Array_s16 &matrix, const std::string name);
+      s32 PutArray_u32(const Array_u32 &matrix, const std::string name);
+      s32 PutArray_s32(const Array_s32 &matrix, const std::string name);
+      s32 PutArray_f32(const Array_f32 &matrix, const std::string name);
+      s32 PutArray_f64(const Array_f64 &matrix, const std::string name);
+
+      Array_u8 GetArray_u8(const std::string name);
+      Array_s8 GetArray_s8(const std::string name);
+      Array_u16 GetArray_u16(const std::string name);
+      Array_s16 GetArray_s16(const std::string name);
+      Array_u32 GetArray_u32(const std::string name);
+      Array_s32 GetArray_s32(const std::string name);
+      Array_f32 GetArray_f32(const std::string name);
+      Array_f64 GetArray_f64(const std::string name);
+
+      /*template<typename T> s32 PutArray2d(const Array2d<T> &matrix, const std::string name)
       {
-        if(!ep) {
-          DASError("Anki.PutArray2d", "Matlab engine is not started/connected");
-          return -1;
-        }
+      if(!ep) {
+      DASError("Anki.PutArray2d", "Matlab engine is not started/connected");
+      return -1;
+      }
 
-        const std::string tmpName = name + std::string("_AnkiTMP");
-        const std::string matlabTypeName = Anki::Embedded::ConvertToMatlabTypeString(typeid(T).name(), sizeof(T));
+      const std::string tmpName = name + std::string("_AnkiTMP");
+      const std::string matlabTypeName = Anki::Embedded::ConvertToMatlabTypeString(typeid(T).name(), sizeof(T));
 
-        EvalStringEcho("%s=zeros([%d,%d],'%s');", name.data(), matrix.get_size(0), matrix.get_size(1), matlabTypeName.data());
+      EvalStringEcho("%s=zeros([%d,%d],'%s');", name.data(), matrix.get_size(0), matrix.get_size(1), matlabTypeName.data());
 
-        for(s32 y=0; y<matrix.get_size(0); y++) {
-          Put<T>(matrix.Pointer(y,0), matrix.get_size(1), tmpName);
-          EvalStringEcho("%s(%d,:)=%s;", name.data(), y+1, tmpName.data());
-        }
+      for(s32 y=0; y<matrix.get_size(0); y++) {
+      Put<T>(matrix.Pointer(y,0), matrix.get_size(1), tmpName);
+      EvalStringEcho("%s(%d,:)=%s;", name.data(), y+1, tmpName.data());
+      }
 
-        EvalString("clear %s;", tmpName.data());
+      EvalString("clear %s;", tmpName.data());
 
-        return 0;
+      return 0;
       }
 
       template<typename T> Array2d<T> GetArray2d(const std::string name)
       {
-        if(!ep) {
-          DASError("Anki.GetArray2d", "Matlab engine is not started/connected");
-          return Array2d<T>(0, 0, NULL, 0, false);
-        }
-
-        const std::string tmpName = name + std::string("_AnkiTMP");
-
-        EvalString("%s=%s';", tmpName.data(), name.data());
-        mxArray *arrayTmp = GetArray(tmpName.data());
-
-        if(!arrayTmp) {
-          DASError("Anki.GetArray2d", "%s could not be got from Matlab", tmpName.data());
-          return Array2d<T>(0, 0, NULL, 0, false);
-        }
-
-        const mxClassID ankiVisionClassId = Anki::Embedded::ConvertToMatlabType(typeid(T).name(), sizeof(T));
-
-        const mxClassID matlabClassId = mxGetClassID(arrayTmp);
-
-        if(matlabClassId != ankiVisionClassId) {
-          DASError("Anki.GetArray2d", "matlabClassId != ankiVisionClassId");
-          return Array2d<T>(0, 0, NULL, 0, false);
-        }
-
-        const size_t numCols = mxGetM(arrayTmp);
-        const size_t numRows = mxGetN(arrayTmp);
-        const s32 stride = Array2d<T>::ComputeRequiredStride(static_cast<s32>(numCols),false);
-
-        Array2d<T> ankiArray2d(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<T*>(calloc(stride*numCols,1)), stride*static_cast<s32>(numCols), false);
-
-        T *matlabArrayTmp = reinterpret_cast<T*>(mxGetPr(arrayTmp));
-        s32 matlabIndex = 0;
-        for(s32 y=0; y<ankiArray2d.get_size(0); y++) {
-          T * rowPointer = ankiArray2d.Pointer(y, 0);
-          for(s32 x=0; x<ankiArray2d.get_size(1); x++) {
-            rowPointer[x] = matlabArrayTmp[matlabIndex++];
-          }
-        }
-
-        mxDestroyArray(arrayTmp);
-
-        EvalString("clear %s;", tmpName.data());
-
-        return ankiArray2d;
+      if(!ep) {
+      DASError("Anki.GetArray2d", "Matlab engine is not started/connected");
+      return Array2d<T>(0, 0, NULL, 0, false);
       }
+
+      const std::string tmpName = name + std::string("_AnkiTMP");
+
+      EvalString("%s=%s';", tmpName.data(), name.data());
+      mxArray *arrayTmp = GetArray(tmpName.data());
+
+      if(!arrayTmp) {
+      DASError("Anki.GetArray2d", "%s could not be got from Matlab", tmpName.data());
+      return Array2d<T>(0, 0, NULL, 0, false);
+      }
+
+      const mxClassID ankiVisionClassId = Anki::Embedded::ConvertToMatlabType(typeid(T).name(), sizeof(T));
+
+      const mxClassID matlabClassId = mxGetClassID(arrayTmp);
+
+      if(matlabClassId != ankiVisionClassId) {
+      DASError("Anki.GetArray2d", "matlabClassId != ankiVisionClassId");
+      return Array2d<T>(0, 0, NULL, 0, false);
+      }
+
+      const size_t numCols = mxGetM(arrayTmp);
+      const size_t numRows = mxGetN(arrayTmp);
+      const s32 stride = Array2d<T>::ComputeRequiredStride(static_cast<s32>(numCols),false);
+
+      Array2d<T> ankiArray2d(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<T*>(calloc(stride*numCols,1)), stride*static_cast<s32>(numCols), false);
+
+      T *matlabArrayTmp = reinterpret_cast<T*>(mxGetPr(arrayTmp));
+      s32 matlabIndex = 0;
+      for(s32 y=0; y<ankiArray2d.get_size(0); y++) {
+      T * rowPointer = ankiArray2d.Pointer(y, 0);
+      for(s32 x=0; x<ankiArray2d.get_size(1); x++) {
+      rowPointer[x] = matlabArrayTmp[matlabIndex++];
+      }
+      }
+
+      mxDestroyArray(arrayTmp);
+
+      EvalString("clear %s;", tmpName.data());
+
+      return ankiArray2d;
+      }*/
 
       template<typename T> s32 Put(const T * values, s32 nValues, const std::string name)
       {

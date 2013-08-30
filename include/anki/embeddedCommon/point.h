@@ -18,132 +18,165 @@ namespace Anki
   namespace Embedded
   {
     // 2D Point Class:
-    template<typename T> class Point2
+    class Point_u8
     {
     public:
-      Point2( void ) : x(T(0)), y(T(0))
-      {
-      }
+      Point_u8();
 
-      Point2(T x, T y) : x(x), y(y)
-      {
-      }
+      Point_u8(const u8 x, const u8 y);
 
-      Point2(const Point2& pt) : x(pt.x), y(pt.y)
-      {
-      }
+      Point_u8(const Point_u8& pt);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-      Point2(const cv::Point_<T>& pt) : x(pt.x), y(pt.y)
-      {
-      }
+      Point_u8(const cv::Point_<u8>& pt);
 
-      // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Array2dUnmanaged. No data is copied.
-      cv::Point_<T>& get_CvPoint_()
-      {
-        return cv::Point_<T>(x,y);
-      }
+      cv::Point_<u8> get_CvPoint_();
 #endif
 
-      friend bool operator== (const Point2 &point1, const Point2 &point2)
-      {
-        if(point1.x == point2.x && point1.y == point2.y)
-          return true;
+      bool operator== (const Point_u8 &point2) const;
 
-        return false;
-      }
+      Point_u8 operator+ (const Point_u8 &point2) const;
 
-      friend Point2 operator+ (const Point2 &point1, const Point2 &point2)
-      {
-        return Point2(point1.x+point2.x, point1.y+point2.y);
-      }
+      Point_u8 operator- (const Point_u8 &point2) const;
 
-      friend Point2 operator- (const Point2 &point1, const Point2 &point2)
-      {
-        return Point2(point1.x-point2.x, point1.y-point2.y);
-      }
+      void operator*=(const u8 value);
 
-      void operator*=(const T value)
-      {
-        this->x *= value;
-        this->y *= value;
-      }
+      u8 x, y;
+    }; // class Point_u8<T>
 
-      T length(void) const
-      {
-        return std::sqrt( this->x*this->x + this->y*this->y);
-      }
-
-      T x, y;
-    }; // class Point2<T>
-
-    typedef Point2<float> Point2f;
-
-    // 3D Point Class:
-    template<typename T> class Point3
+    // 2D Point Class:
+    class Point_s8
     {
     public:
-      Point3( void ) : x(T(0)), y(T(0)), z(T(0))
-      {
-      }
+      Point_s8();
 
-      Point3(T x, T y, T z) : x(x), y(y), z(z)
-      {
-      }
+      Point_s8(const s8 x, const s8 y);
 
-      Point3(const Point3& pt) : x(pt.x), y(pt.y), z(pt.z)
-      {
-      }
+      Point_s8(const Point_s8& pt);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-      Point3(const cv::Point3_<T>& pt) : x(pt.x), y(pt.y), z(pt.z)
-      {
-      }
+      Point_s8(const cv::Point_<s8>& pt);
 
-      // Returns a templated cv::Point3_
-      cv::Point3_<T> get_CvPoint3_(void) const
-      {
-        return cv::Point3_<T>(x,y,z);
-      }
-#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      cv::Point_<s8> get_CvPoint_();
+#endif
 
-      friend bool operator== (const Point3 &point1, const Point3 &point2)
-      {
-        if(point1.x == point2.x && point1.y == point2.y && point1.z == point2.z)
-          return true;
+      bool operator== (const Point_s8 &point2) const;
 
-        return false;
-      }
+      Point_s8 operator+ (const Point_s8 &point2) const;
 
-      friend Point3 operator+ (const Point3 &point1, const Point3 &point2)
-      {
-        return Point3(point1.x+point2.x, point1.y+point2.y, point1.z+point2.z);
-      }
+      Point_s8 operator- (const Point_s8 &point2) const;
 
-      friend Point3 operator- (const Point3 &point1, const Point3 &point2)
-      {
-        return Point3(point1.x-point2.x, point1.y-point2.y, point1.z+point2.z);
-      }
+      void operator*=(const s8 value);
 
-      void operator*=(const T value)
-      {
-        this->x *= value;
-        this->y *= value;
-        this->z *= value;
-      }
+      s8 x, y;
+    }; // class Point_s8<T>
+    // 2D Point Class:
+    class Point_u16
+    {
+    public:
+      Point_u16();
 
-      T length(void) const
-      {
-        return std::sqrt( this->x*this->x + this->y*this->y + this->z*this->z);
-      }
+      Point_u16(const u16 x, const u16 y);
 
-      T x, y, z;
-    }; // class Point3<T>
+      Point_u16(const Point_u16& pt) ;
 
-    typedef Point3<float> Point3f;
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      Point_u16(const cv::Point_<u16>& pt);
 
-    // TODO: Do we really need a separate Vec3 class or is it the same as Point3?
-    typedef Point3<float> Vec3f;
+      cv::Point_<u16> get_CvPoint_();
+#endif
+
+      bool operator== (const Point_u16 &point2) const;
+
+      Point_u16 operator+ (const Point_u16 &point2) const;
+
+      Point_u16 operator- (const Point_u16 &point2) const;
+
+      void operator*=(const u16 value);
+
+      u16 x, y;
+    }; // class Point_u16<T>
+
+    // 2D Point Class:
+    class Point_s16
+    {
+    public:
+      Point_s16();
+
+      Point_s16(const s16 x, const s16 y);
+
+      Point_s16(const Point_s16& pt);
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      Point_s16(const cv::Point_<s16>& pt);
+
+      cv::Point_<s16> get_CvPoint_();
+#endif
+
+      bool operator== (const Point_s16 &point2) const;
+
+      Point_s16 operator+ (const Point_s16 &point2) const;
+
+      Point_s16 operator- (const Point_s16 &point2) const;
+
+      void operator*=(const s16 value);
+
+      s16 x, y;
+    }; // class Point_s16<T>
+
+    // 2D Point Class:
+    class Point_u32
+    {
+    public:
+      Point_u32();
+
+      Point_u32(const u32 x, const u32 y);
+
+      Point_u32(const Point_u32& pt);
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      Point_u32(const cv::Point_<u32>& pt);
+
+      cv::Point_<u32> get_CvPoint_();
+#endif
+
+      bool operator== (const Point_u32 &point2) const;
+
+      Point_u32 operator+ (const Point_u32 &point2) const;
+
+      Point_u32 operator- (const Point_u32 &point2) const;
+
+      void operator*=(const u32 value);
+
+      u32 x, y;
+    }; // class Point_u32<T>
+
+    // 2D Point Class:
+    class Point_s32
+    {
+    public:
+      Point_s32();
+
+      Point_s32(const s32 x, const s32 y);
+
+      Point_s32(const Point_s32& pt);
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      Point_s32(const cv::Point_<s32>& pt);
+
+      cv::Point_<s32> get_CvPoint_();
+#endif
+
+      bool operator== (const Point_s32 &point2) const;
+
+      Point_s32 operator+ (const Point_s32 &point2) const;
+
+      Point_s32 operator- (const Point_s32 &point2) const;
+
+      void operator*=(const s32 value);
+
+      s32 x, y;
+    }; // class Point_s32<T>
   } // namespace Embedded
 } // namespace Anki
 

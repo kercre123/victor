@@ -1,4 +1,4 @@
-#define USING_MOVIDIUS_COMPILER
+//#define USING_MOVIDIUS_COMPILER
 
 #include "anki/embeddedCommon.h"
 
@@ -19,7 +19,6 @@ char buffer[MAX_BYTES];
 
 GTEST_TEST(CoreTech_Common, MemoryStack)
 {
-MemoryStackStart:
   ASSERT_TRUE(Anki::Embedded::MEMORY_ALIGNMENT == 16);
 
   const s32 numBytes = MIN(MAX_BYTES, 200);
@@ -193,23 +192,23 @@ GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
 #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
 {
-  matlab.EvalStringEcho("simpleArray2d = int16([1,2,3,4,5;6,7,8,9,10]);");
-  Anki::Embedded::Array2d<s16> simpleArray2d = matlab.GetArray2d<s16>("simpleArray2d");
+  matlab.EvalStringEcho("simpleArray = int16([1,2,3,4,5;6,7,8,9,10]);");
+  Anki::Embedded::Array_s16 simpleArray = matlab.GetArray_s16("simpleArray");
   printf("simple matrix:\n");
-  simpleArray2d.Print();
+  simpleArray.Print();
 
-  ASSERT_EQ(1, *simpleArray2d.Pointer(0,0));
-  ASSERT_EQ(2, *simpleArray2d.Pointer(0,1));
-  ASSERT_EQ(3, *simpleArray2d.Pointer(0,2));
-  ASSERT_EQ(4, *simpleArray2d.Pointer(0,3));
-  ASSERT_EQ(5, *simpleArray2d.Pointer(0,4));
-  ASSERT_EQ(6, *simpleArray2d.Pointer(1,0));
-  ASSERT_EQ(7, *simpleArray2d.Pointer(1,1));
-  ASSERT_EQ(8, *simpleArray2d.Pointer(1,2));
-  ASSERT_EQ(9, *simpleArray2d.Pointer(1,3));
-  ASSERT_EQ(10, *simpleArray2d.Pointer(1,4));
+  ASSERT_EQ(1, *simpleArray.Pointer(0,0));
+  ASSERT_EQ(2, *simpleArray.Pointer(0,1));
+  ASSERT_EQ(3, *simpleArray.Pointer(0,2));
+  ASSERT_EQ(4, *simpleArray.Pointer(0,3));
+  ASSERT_EQ(5, *simpleArray.Pointer(0,4));
+  ASSERT_EQ(6, *simpleArray.Pointer(1,0));
+  ASSERT_EQ(7, *simpleArray.Pointer(1,1));
+  ASSERT_EQ(8, *simpleArray.Pointer(1,2));
+  ASSERT_EQ(9, *simpleArray.Pointer(1,3));
+  ASSERT_EQ(10, *simpleArray.Pointer(1,4));
 
-  free(simpleArray2d.get_rawDataPointer());
+  free(simpleArray.get_rawDataPointer());
 }
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
@@ -256,67 +255,67 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
   // Create a matrix, and manually set a few values
-  Anki::Embedded::Array2d<s16> simpleArray2d(10, 6, ms);
-  ASSERT_TRUE(simpleArray2d.get_rawDataPointer() != NULL);
-  *simpleArray2d.Pointer(0,0) = 1;
-  *simpleArray2d.Pointer(0,1) = 2;
-  *simpleArray2d.Pointer(0,2) = 3;
-  *simpleArray2d.Pointer(0,3) = 4;
-  *simpleArray2d.Pointer(0,4) = 5;
-  *simpleArray2d.Pointer(0,5) = 6;
-  *simpleArray2d.Pointer(2,0) = 7;
-  *simpleArray2d.Pointer(2,1) = 8;
-  *simpleArray2d.Pointer(2,2) = 9;
-  *simpleArray2d.Pointer(2,3) = 10;
-  *simpleArray2d.Pointer(2,4) = 11;
-  *simpleArray2d.Pointer(2,5) = 12;
+  Anki::Embedded::Array_s16 simpleArray(10, 6, ms);
+  ASSERT_TRUE(simpleArray.get_rawDataPointer() != NULL);
+  *simpleArray.Pointer(0,0) = 1;
+  *simpleArray.Pointer(0,1) = 2;
+  *simpleArray.Pointer(0,2) = 3;
+  *simpleArray.Pointer(0,3) = 4;
+  *simpleArray.Pointer(0,4) = 5;
+  *simpleArray.Pointer(0,5) = 6;
+  *simpleArray.Pointer(2,0) = 7;
+  *simpleArray.Pointer(2,1) = 8;
+  *simpleArray.Pointer(2,2) = 9;
+  *simpleArray.Pointer(2,3) = 10;
+  *simpleArray.Pointer(2,4) = 11;
+  *simpleArray.Pointer(2,5) = 12;
 
 #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
   // Check that the Matlab transfer works (you need to check the Matlab window to verify that this works)
-  matlab.PutArray2d(simpleArray2d, "simpleArray2d");
+  matlab.PutArray_s16(simpleArray, "simpleArray");
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
   // Check that the templated OpenCV matrix works
   {
-    cv::Mat_<s16> &simpleArray2d_cvMat = simpleArray2d.get_CvMat_();
-    std::cout << "simpleArray2d(2,0) = " << *simpleArray2d.Pointer(2,0) << "\nsimpleArray2d_cvMat(2,0) = " << simpleArray2d_cvMat(2,0) << "\n";
-    ASSERT_EQ(7, *simpleArray2d.Pointer(2,0));
-    ASSERT_EQ(7, simpleArray2d_cvMat(2,0));
+    cv::Mat_<s16> &simpleArray_cvMat = simpleArray.get_CvMat_();
+    std::cout << "simpleArray(2,0) = " << *simpleArray.Pointer(2,0) << "\nsimpleArray_cvMat(2,0) = " << simpleArray_cvMat(2,0) << "\n";
+    ASSERT_EQ(7, *simpleArray.Pointer(2,0));
+    ASSERT_EQ(7, simpleArray_cvMat(2,0));
 
     std::cout << "Setting OpenCV matrix\n";
-    simpleArray2d_cvMat(2,0) = 100;
-    std::cout << "simpleArray2d(2,0) = " << *simpleArray2d.Pointer(2,0) << "\nsimpleArray2d_cvMat(2,0) = " << simpleArray2d_cvMat(2,0) << "\n";
-    ASSERT_EQ(100, *simpleArray2d.Pointer(2,0));
-    ASSERT_EQ(100, simpleArray2d_cvMat(2,0));
+    simpleArray_cvMat(2,0) = 100;
+    std::cout << "simpleArray(2,0) = " << *simpleArray.Pointer(2,0) << "\nsimpleArray_cvMat(2,0) = " << simpleArray_cvMat(2,0) << "\n";
+    ASSERT_EQ(100, *simpleArray.Pointer(2,0));
+    ASSERT_EQ(100, simpleArray_cvMat(2,0));
 
     std::cout << "Setting CoreTech_Common matrix\n";
-    *simpleArray2d.Pointer(2,0) = 42;
-    std::cout << "simpleArray2d(2,0) = " << *simpleArray2d.Pointer(2,0) << "\nsimpleArray2d_cvMat(2,0) = " << simpleArray2d_cvMat(2,0) << "\n";
-    ASSERT_EQ(42, *simpleArray2d.Pointer(2,0));
-    ASSERT_EQ(42, simpleArray2d_cvMat(2,0));
+    *simpleArray.Pointer(2,0) = 42;
+    std::cout << "simpleArray(2,0) = " << *simpleArray.Pointer(2,0) << "\nsimpleArray_cvMat(2,0) = " << simpleArray_cvMat(2,0) << "\n";
+    ASSERT_EQ(42, *simpleArray.Pointer(2,0));
+    ASSERT_EQ(42, simpleArray_cvMat(2,0));
   }
 
   std::cout << "\n\n";
 
   // Check that the non-templated OpenCV matrix works
   {
-    cv::Mat &simpleArray2d_cvMat = simpleArray2d.get_CvMat_();
-    std::cout << "simpleArray2d(2,0) = " << *simpleArray2d.Pointer(2,0) << "\nsimpleArray2d_cvMat(2,0) = " << simpleArray2d_cvMat.at<s16>(2,0) << "\n";
-    ASSERT_EQ(42, *simpleArray2d.Pointer(2,0));
-    ASSERT_EQ(42, simpleArray2d_cvMat.at<s16>(2,0));
+    cv::Mat &simpleArray_cvMat = simpleArray.get_CvMat_();
+    std::cout << "simpleArray(2,0) = " << *simpleArray.Pointer(2,0) << "\nsimpleArray_cvMat(2,0) = " << simpleArray_cvMat.at<s16>(2,0) << "\n";
+    ASSERT_EQ(42, *simpleArray.Pointer(2,0));
+    ASSERT_EQ(42, simpleArray_cvMat.at<s16>(2,0));
 
     std::cout << "Setting OpenCV matrix\n";
-    simpleArray2d_cvMat.at<s16>(2,0) = 300;
-    std::cout << "simpleArray2d(2,0) = " << *simpleArray2d.Pointer(2,0) << "\nsimpleArray2d_cvMat(2,0) = " << simpleArray2d_cvMat.at<s16>(2,0) << "\n";
-    ASSERT_EQ(300, *simpleArray2d.Pointer(2,0));
-    ASSERT_EQ(300, simpleArray2d_cvMat.at<s16>(2,0));
+    simpleArray_cvMat.at<s16>(2,0) = 300;
+    std::cout << "simpleArray(2,0) = " << *simpleArray.Pointer(2,0) << "\nsimpleArray_cvMat(2,0) = " << simpleArray_cvMat.at<s16>(2,0) << "\n";
+    ASSERT_EQ(300, *simpleArray.Pointer(2,0));
+    ASSERT_EQ(300, simpleArray_cvMat.at<s16>(2,0));
 
     std::cout << "Setting CoreTech_Common matrix\n";
-    *simpleArray2d.Pointer(2,0) = 90;
-    std::cout << "simpleArray2d(2,0) = " << *simpleArray2d.Pointer(2,0) << "\nsimpleArray2d_cvMat(2,0) = " << simpleArray2d_cvMat.at<s16>(2,0) << "\n";
-    ASSERT_EQ(90, *simpleArray2d.Pointer(2,0));
-    ASSERT_EQ(90, simpleArray2d_cvMat.at<s16>(2,0));
+    *simpleArray.Pointer(2,0) = 90;
+    std::cout << "simpleArray(2,0) = " << *simpleArray.Pointer(2,0) << "\nsimpleArray_cvMat(2,0) = " << simpleArray_cvMat.at<s16>(2,0) << "\n";
+    ASSERT_EQ(90, *simpleArray.Pointer(2,0));
+    ASSERT_EQ(90, simpleArray_cvMat.at<s16>(2,0));
   }
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
@@ -325,7 +324,7 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, Array2dSpecifiedClass)
+GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 {
   const s32 numBytes = MIN(MAX_BYTES, 1000);
   //void *buffer = calloc(numBytes, 1);
@@ -333,23 +332,23 @@ GTEST_TEST(CoreTech_Common, Array2dSpecifiedClass)
 
   Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
-  Anki::Embedded::Array2d<u8> simpleArray2d(3, 3, ms);
+  Anki::Embedded::Array_u8 simpleArray(3, 3, ms);
 
   const char * imgData =
     " 1 1 1 "
     " 1 1 1 "
     " 1 1 1 ";
 
-  simpleArray2d.Set(imgData);
+  simpleArray.Set(imgData);
 
-  ASSERT_TRUE((*simpleArray2d.Pointer(0,0)) == 1); // If the templating fails, this will equal 49
+  ASSERT_TRUE((*simpleArray.Pointer(0,0)) == 1); // If the templating fails, this will equal 49
 
   //free(buffer); buffer = NULL;
 
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, Array2dAlignment1)
+GTEST_TEST(CoreTech_Common, ArrayAlignment1)
 {
   const s32 numBytes = MIN(MAX_BYTES, 1000);
   //void *buffer = calloc(numBytes, 1);
@@ -360,9 +359,9 @@ GTEST_TEST(CoreTech_Common, Array2dAlignment1)
   // Check all offsets
   for(s32 offset=0; offset<8; offset++) {
     void * const alignedBufferAndOffset = reinterpret_cast<char*>(alignedBuffer) + offset;
-    Anki::Embedded::Array2d<s16> simpleArray2d(10, 6, alignedBufferAndOffset, numBytes-offset-8);
+    Anki::Embedded::Array_s16 simpleArray(10, 6, alignedBufferAndOffset, numBytes-offset-8);
 
-    const size_t trueLocation = reinterpret_cast<size_t>(simpleArray2d.Pointer(0,0));
+    const size_t trueLocation = reinterpret_cast<size_t>(simpleArray.Pointer(0,0));
     const size_t expectedLocation = Anki::Embedded::RoundUp(reinterpret_cast<size_t>(alignedBufferAndOffset), Anki::Embedded::MEMORY_ALIGNMENT);;
 
     ASSERT_TRUE(trueLocation ==  expectedLocation);
@@ -385,9 +384,9 @@ GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
   for(s32 offset=0; offset<8; offset++) {
     void * const alignedBufferAndOffset = reinterpret_cast<char*>(alignedBuffer) + offset;
     Anki::Embedded::MemoryStack simpleMemoryStack(alignedBufferAndOffset, numBytes-offset-8);
-    Anki::Embedded::Array2d<s16> simpleArray2d(10, 6, simpleMemoryStack);
+    Anki::Embedded::Array_s16 simpleArray(10, 6, simpleMemoryStack);
 
-    const size_t matrixStart = reinterpret_cast<size_t>(simpleArray2d.Pointer(0,0));
+    const size_t matrixStart = reinterpret_cast<size_t>(simpleArray.Pointer(0,0));
     ASSERT_TRUE(matrixStart == Anki::Embedded::RoundUp(matrixStart, Anki::Embedded::MEMORY_ALIGNMENT));
   }
 
@@ -396,7 +395,7 @@ GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, Array2dFillPattern)
+GTEST_TEST(CoreTech_Common, ArrayFillPattern)
 {
   const s32 width = 6, height = 10;
   const s32 numBytes = MIN(MAX_BYTES, 1000);
@@ -408,18 +407,18 @@ GTEST_TEST(CoreTech_Common, Array2dFillPattern)
   Anki::Embedded::MemoryStack ms(alignedBuffer, numBytes-Anki::Embedded::MEMORY_ALIGNMENT);
 
   // Create a matrix, and manually set a few values
-  Anki::Embedded::Array2d<s16> simpleArray2d(height, width, ms, true);
-  ASSERT_TRUE(simpleArray2d.get_rawDataPointer() != NULL);
+  Anki::Embedded::Array_s16 simpleArray(height, width, ms, true);
+  ASSERT_TRUE(simpleArray.get_rawDataPointer() != NULL);
 
-  ASSERT_TRUE(simpleArray2d.IsValid());
+  ASSERT_TRUE(simpleArray.IsValid());
 
-  char * curDataPointer = reinterpret_cast<char*>(simpleArray2d.get_rawDataPointer());
+  char * curDataPointer = reinterpret_cast<char*>(simpleArray.get_rawDataPointer());
 
   // Unused space
   for(s32 i=0; i<8; i++) {
-    ASSERT_TRUE(simpleArray2d.IsValid());
+    ASSERT_TRUE(simpleArray.IsValid());
     (*curDataPointer)++;
-    ASSERT_TRUE(simpleArray2d.IsValid());
+    ASSERT_TRUE(simpleArray.IsValid());
     (*curDataPointer)--;
 
     curDataPointer++;
@@ -428,9 +427,9 @@ GTEST_TEST(CoreTech_Common, Array2dFillPattern)
   for(s32 y=0; y<height; y++) {
     // Header
     for(s32 x=0; x<8; x++) {
-      ASSERT_TRUE(simpleArray2d.IsValid());
+      ASSERT_TRUE(simpleArray.IsValid());
       (*curDataPointer)++;
-      ASSERT_FALSE(simpleArray2d.IsValid());
+      ASSERT_FALSE(simpleArray.IsValid());
       (*curDataPointer)--;
 
       curDataPointer++;
@@ -438,9 +437,9 @@ GTEST_TEST(CoreTech_Common, Array2dFillPattern)
 
     // Data
     for(s32 x=8; x<24; x++) {
-      ASSERT_TRUE(simpleArray2d.IsValid());
+      ASSERT_TRUE(simpleArray.IsValid());
       (*curDataPointer)++;
-      ASSERT_TRUE(simpleArray2d.IsValid());
+      ASSERT_TRUE(simpleArray.IsValid());
       (*curDataPointer)--;
 
       curDataPointer++;
@@ -448,9 +447,9 @@ GTEST_TEST(CoreTech_Common, Array2dFillPattern)
 
     // Footer
     for(s32 x=24; x<32; x++) {
-      ASSERT_TRUE(simpleArray2d.IsValid());
+      ASSERT_TRUE(simpleArray.IsValid());
       (*curDataPointer)++;
-      ASSERT_FALSE(simpleArray2d.IsValid());
+      ASSERT_FALSE(simpleArray.IsValid());
       (*curDataPointer)--;
 
       curDataPointer++;
@@ -472,10 +471,10 @@ void RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_call);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1);
   CALL_GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest);
-  CALL_GTEST_TEST(CoreTech_Common, Array2dSpecifiedClass);
-  CALL_GTEST_TEST(CoreTech_Common, Array2dAlignment1);
+  CALL_GTEST_TEST(CoreTech_Common, ArraySpecifiedClass);
+  CALL_GTEST_TEST(CoreTech_Common, ArrayAlignment1);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStackAlignment);
-  CALL_GTEST_TEST(CoreTech_Common, Array2dFillPattern);
+  CALL_GTEST_TEST(CoreTech_Common, ArrayFillPattern);
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 } // void RUN_ALL_TESTS()
