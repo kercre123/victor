@@ -55,5 +55,369 @@ namespace Anki
       this->x *= value;
       this->y *= value;
     }
+
+    Point_s8::Point_s8()
+      : x(s8(0)), y(s8(0))
+    {
+    }
+
+    Point_s8::Point_s8(const s8 x, const s8 y)
+      : x(x), y(y)
+    {
+    }
+
+    Point_s8::Point_s8(const Point_s8& pt)
+      : x(pt.x), y(pt.y)
+    {
+    }
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+    Point_s8::Point_s8(const cv::Point_<s8>& pt)
+      : x(pt.x), y(pt.y)
+    {
+    }
+
+    // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Array2dUnmanaged. No data is copied.
+    cv::Point_<s8> Point_s8::get_CvPoint_()
+    {
+      return cv::Point_<s8>(x,y);
+    }
+#endif
+
+    bool Point_s8::operator== (const Point_s8 &point2) const
+    {
+      if(this->x == point2.x && this->y == point2.y)
+        return true;
+
+      return false;
+    }
+
+    Point_s8 Point_s8::operator+ (const Point_s8 &point2) const
+    {
+      return Point_s8(this->x+point2.x, this->y+point2.y);
+    }
+
+    Point_s8 Point_s8::operator- (const Point_s8 &point2) const
+    {
+      return Point_s8(this->x-point2.x, this->y-point2.y);
+    }
+
+    void Point_s8::operator*=(const s8 value)
+    {
+      this->x *= value;
+      this->y *= value;
+    }
+
+    Point_u16::Point_u16()
+      : x(u16(0)), y(u16(0))
+    {
+    }
+
+    Point_u16::Point_u16(const u16 x, const u16 y)
+      : x(x), y(y)
+    {
+    }
+
+    Point_u16::Point_u16(const Point_u16& pt)
+      : x(pt.x), y(pt.y)
+    {
+    }
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+    Point_u16::Point_u16(const cv::Point_<u16>& pt)
+      : x(pt.x), y(pt.y)
+    {
+    }
+
+    // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Array2dUnmanaged. No data is copied.
+    cv::Point_<u16> Point_u16::get_CvPoint_()
+    {
+      return cv::Point_<u16>(x,y);
+    }
+#endif
+
+    bool Point_u16::operator== (const Point_u16 &point2) const
+    {
+      if(this->x == point2.x && this->y == point2.y)
+        return true;
+
+      return false;
+    }
+
+    Point_u16 Point_u16::operator+ (const Point_u16 &point2) const
+    {
+      return Point_u16(this->x+point2.x, this->y+point2.y);
+    }
+
+    Point_u16 Point_u16::operator- (const Point_u16 &point2) const
+    {
+      return Point_u16(this->x-point2.x, this->y-point2.y);
+    }
+
+    void Point_u16::operator*=(const u16 value)
+    {
+      this->x *= value;
+      this->y *= value;
+    }
+
+    Point_s16::Point_s16()
+      : x(s16(0)), y(s16(0))
+    {
+    }
+
+    Point_s16::Point_s16(const s16 x, const s16 y)
+      : x(x), y(y)
+    {
+    }
+
+    Point_s16::Point_s16(const Point_s16& pt)
+      : x(pt.x), y(pt.y)
+    {
+    }
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+    Point_s16::Point_s16(const cv::Point_<s16>& pt)
+      : x(pt.x), y(pt.y)
+    {
+    }
+
+    // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Array2dUnmanaged. No data is copied.
+    cv::Point_<s16> Point_s16::get_CvPoint_()
+    {
+      return cv::Point_<s16>(x,y);
+    }
+#endif
+
+    bool Point_s16::operator== (const Point_s16 &point2) const
+    {
+      if(this->x == point2.x && this->y == point2.y)
+        return true;
+
+      return false;
+    }
+
+    Point_s16 Point_s16::operator+ (const Point_s16 &point2) const
+    {
+      return Point_s16(this->x+point2.x, this->y+point2.y);
+    }
+
+    Point_s16 Point_s16::operator- (const Point_s16 &point2) const
+    {
+      return Point_s16(this->x-point2.x, this->y-point2.y);
+    }
+
+    void Point_s16::operator*=(const s16 value)
+    {
+      this->x *= value;
+      this->y *= value;
+    }
+
+    Point_u32::Point_u32()
+      : x(u32(0)), y(u32(0))
+    {
+    }
+
+    Point_u32::Point_u32(const u32 x, const u32 y)
+      : x(x), y(y)
+    {
+    }
+
+    Point_u32::Point_u32(const Point_u32& pt)
+      : x(pt.x), y(pt.y)
+    {
+    }
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+    Point_u32::Point_u32(const cv::Point_<u32>& pt)
+      : x(pt.x), y(pt.y)
+    {
+    }
+
+    // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Array2dUnmanaged. No data is copied.
+    cv::Point_<u32> Point_u32::get_CvPoint_()
+    {
+      return cv::Point_<u32>(x,y);
+    }
+#endif
+
+    bool Point_u32::operator== (const Point_u32 &point2) const
+    {
+      if(this->x == point2.x && this->y == point2.y)
+        return true;
+
+      return false;
+    }
+
+    Point_u32 Point_u32::operator+ (const Point_u32 &point2) const
+    {
+      return Point_u32(this->x+point2.x, this->y+point2.y);
+    }
+
+    Point_u32 Point_u32::operator- (const Point_u32 &point2) const
+    {
+      return Point_u32(this->x-point2.x, this->y-point2.y);
+    }
+
+    void Point_u32::operator*=(const u32 value)
+    {
+      this->x *= value;
+      this->y *= value;
+    }
+
+    Point_s32::Point_s32()
+      : x(s32(0)), y(s32(0))
+    {
+    }
+
+    Point_s32::Point_s32(const s32 x, const s32 y)
+      : x(x), y(y)
+    {
+    }
+
+    Point_s32::Point_s32(const Point_s32& pt)
+      : x(pt.x), y(pt.y)
+    {
+    }
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+    Point_s32::Point_s32(const cv::Point_<s32>& pt)
+      : x(pt.x), y(pt.y)
+    {
+    }
+
+    // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Array2dUnmanaged. No data is copied.
+    cv::Point_<s32> Point_s32::get_CvPoint_()
+    {
+      return cv::Point_<s32>(x,y);
+    }
+#endif
+
+    bool Point_s32::operator== (const Point_s32 &point2) const
+    {
+      if(this->x == point2.x && this->y == point2.y)
+        return true;
+
+      return false;
+    }
+
+    Point_s32 Point_s32::operator+ (const Point_s32 &point2) const
+    {
+      return Point_s32(this->x+point2.x, this->y+point2.y);
+    }
+
+    Point_s32 Point_s32::operator- (const Point_s32 &point2) const
+    {
+      return Point_s32(this->x-point2.x, this->y-point2.y);
+    }
+
+    void Point_s32::operator*=(const s32 value)
+    {
+      this->x *= value;
+      this->y *= value;
+    }
+
+    Point_f32::Point_f32()
+      : x(f32(0)), y(f32(0))
+    {
+    }
+
+    Point_f32::Point_f32(const f32 x, const f32 y)
+      : x(x), y(y)
+    {
+    }
+
+    Point_f32::Point_f32(const Point_f32& pt)
+      : x(pt.x), y(pt.y)
+    {
+    }
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+    Point_f32::Point_f32(const cv::Point_<f32>& pt)
+      : x(pt.x), y(pt.y)
+    {
+    }
+
+    // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Array2dUnmanaged. No data is copied.
+    cv::Point_<f32> Point_f32::get_CvPoint_()
+    {
+      return cv::Point_<f32>(x,y);
+    }
+#endif
+
+    bool Point_f32::operator== (const Point_f32 &point2) const
+    {
+      if(this->x == point2.x && this->y == point2.y)
+        return true;
+
+      return false;
+    }
+
+    Point_f32 Point_f32::operator+ (const Point_f32 &point2) const
+    {
+      return Point_f32(this->x+point2.x, this->y+point2.y);
+    }
+
+    Point_f32 Point_f32::operator- (const Point_f32 &point2) const
+    {
+      return Point_f32(this->x-point2.x, this->y-point2.y);
+    }
+
+    void Point_f32::operator*=(const f32 value)
+    {
+      this->x *= value;
+      this->y *= value;
+    }
+
+    Point_f64::Point_f64()
+      : x(f64(0)), y(f64(0))
+    {
+    }
+
+    Point_f64::Point_f64(const f64 x, const f64 y)
+      : x(x), y(y)
+    {
+    }
+
+    Point_f64::Point_f64(const Point_f64& pt)
+      : x(pt.x), y(pt.y)
+    {
+    }
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+    Point_f64::Point_f64(const cv::Point_<f64>& pt)
+      : x(pt.x), y(pt.y)
+    {
+    }
+
+    // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Array2dUnmanaged. No data is copied.
+    cv::Point_<f64> Point_f64::get_CvPoint_()
+    {
+      return cv::Point_<f64>(x,y);
+    }
+#endif
+
+    bool Point_f64::operator== (const Point_f64 &point2) const
+    {
+      if(this->x == point2.x && this->y == point2.y)
+        return true;
+
+      return false;
+    }
+
+    Point_f64 Point_f64::operator+ (const Point_f64 &point2) const
+    {
+      return Point_f64(this->x+point2.x, this->y+point2.y);
+    }
+
+    Point_f64 Point_f64::operator- (const Point_f64 &point2) const
+    {
+      return Point_f64(this->x-point2.x, this->y-point2.y);
+    }
+
+    void Point_f64::operator*=(const f64 value)
+    {
+      this->x *= value;
+      this->y *= value;
+    }
   } // namespace Embedded
 } // namespace Anki

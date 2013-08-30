@@ -61,12 +61,12 @@ namespace Anki
       static const s32 HEADER_LENGTH = 8;
       static const s32 FOOTER_LENGTH = 4;
 
-      void * const buffer;
-      const s32 totalBytes;
+      void * buffer;
+      s32 totalBytes;
       s32 usedBytes;
 
       const void* Allocate(s32 numBytes) const; // Not allowed
-      MemoryStack & operator= (const MemoryStack & rightHandSide); // Not allowed
+      //MemoryStack & operator= (const MemoryStack & rightHandSide); // Not allowed
     };
   } // namespace Embedded
 } // namespace Anki

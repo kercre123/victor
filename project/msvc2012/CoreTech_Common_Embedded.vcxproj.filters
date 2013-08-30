@@ -33,6 +33,9 @@
     <ClCompile Include="..\..\src\embedded\utilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\embedded\fixedLengthList.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\anki\embeddedCommon\array2d.h">
@@ -59,10 +62,13 @@
     <ClInclude Include="..\..\include\anki\embeddedCommon\utilities.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\anki\embeddedCommon.h">
+    <ClInclude Include="..\..\include\anki\embeddedCommon\gtestLight.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\anki\embeddedCommon\gtestLight.h">
+    <ClInclude Include="..\..\include\embeddedCommon\fixedLengthList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\anki\embeddedCommon\fixedLengthList.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

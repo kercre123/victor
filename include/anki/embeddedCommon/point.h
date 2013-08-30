@@ -177,6 +177,60 @@ namespace Anki
 
       s32 x, y;
     }; // class Point_s32<T>
+
+    // 2D Point Class:
+    class Point_f32
+    {
+    public:
+      Point_f32();
+
+      Point_f32(const f32 x, const f32 y);
+
+      Point_f32(const Point_f32& pt);
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      Point_f32(const cv::Point_<f32>& pt);
+
+      cv::Point_<f32> get_CvPoint_();
+#endif
+
+      bool operator== (const Point_f32 &point2) const;
+
+      Point_f32 operator+ (const Point_f32 &point2) const;
+
+      Point_f32 operator- (const Point_f32 &point2) const;
+
+      void operator*=(const f32 value);
+
+      f32 x, y;
+    }; // class Point_f32<T>
+
+    // 2D Point Class:
+    class Point_f64
+    {
+    public:
+      Point_f64();
+
+      Point_f64(const f64 x, const f64 y);
+
+      Point_f64(const Point_f64& pt);
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      Point_f64(const cv::Point_<f64>& pt);
+
+      cv::Point_<f64> get_CvPoint_();
+#endif
+
+      bool operator== (const Point_f64 &point2) const;
+
+      Point_f64 operator+ (const Point_f64 &point2) const;
+
+      Point_f64 operator- (const Point_f64 &point2) const;
+
+      void operator*=(const f64 value);
+
+      f64 x, y;
+    }; // class Point_f64<T>
   } // namespace Embedded
 } // namespace Anki
 

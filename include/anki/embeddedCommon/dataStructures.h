@@ -24,6 +24,11 @@ namespace Anki
       RESULT_FAIL_IO = 20000,
       RESULT_FAIL_INVALID_PARAMETERS = 30000
     } Result;
+
+    class SimpleList_Point_s16
+    {
+    public:
+    };
   } // namespace Embedded
 } // namespace Anki
 

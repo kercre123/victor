@@ -60,38 +60,6 @@ namespace Anki
         useBoundaryFillPatterns);
     }
 
-    // Pointer to the data, at a given (y,x) location
-    inline const u8* Array_u8::Pointer(const s32 index0, const s32 index1) const
-    {
-      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-        this->rawDataPointer != NULL && this->data != NULL);
-
-      return reinterpret_cast<const u8*>( reinterpret_cast<const char*>(this->data) +
-        index1*sizeof(u8) + index0*stride );
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline u8* Array_u8::Pointer(const s32 index0, const s32 index1)
-    {
-      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-        this->rawDataPointer != NULL && this->data != NULL);
-
-      return reinterpret_cast<u8*>( reinterpret_cast<char*>(this->data) +
-        index1*sizeof(u8) + index0*stride );
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline const u8* Array_u8::Pointer(const Point_s16 &point) const
-    {
-      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline u8* Array_u8::Pointer(const Point_s16 &point)
-    {
-      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-    }
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     void Array_u8::Show(const char * const windowName, const bool waitForKeypress) const
     {
@@ -341,38 +309,6 @@ namespace Anki
         reinterpret_cast<s8*>(allocatedBuffer),
         numBytesAllocated,
         useBoundaryFillPatterns);
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline const s8* Array_s8::Pointer(const s32 index0, const s32 index1) const
-    {
-      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-        this->rawDataPointer != NULL && this->data != NULL);
-
-      return reinterpret_cast<const s8*>( reinterpret_cast<const char*>(this->data) +
-        index1*sizeof(s8) + index0*stride );
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline s8* Array_s8::Pointer(const s32 index0, const s32 index1)
-    {
-      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-        this->rawDataPointer != NULL && this->data != NULL);
-
-      return reinterpret_cast<s8*>( reinterpret_cast<char*>(this->data) +
-        index1*sizeof(s8) + index0*stride );
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline const s8* Array_s8::Pointer(const Point_s16 &point) const
-    {
-      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline s8* Array_s8::Pointer(const Point_s16 &point)
-    {
-      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
     }
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
@@ -626,38 +562,6 @@ namespace Anki
         useBoundaryFillPatterns);
     }
 
-    // Pointer to the data, at a given (y,x) location
-    inline const u16* Array_u16::Pointer(const s32 index0, const s32 index1) const
-    {
-      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-        this->rawDataPointer != NULL && this->data != NULL);
-
-      return reinterpret_cast<const u16*>( reinterpret_cast<const char*>(this->data) +
-        index1*sizeof(u16) + index0*stride );
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline u16* Array_u16::Pointer(const s32 index0, const s32 index1)
-    {
-      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-        this->rawDataPointer != NULL && this->data != NULL);
-
-      return reinterpret_cast<u16*>( reinterpret_cast<char*>(this->data) +
-        index1*sizeof(u16) + index0*stride );
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline const u16* Array_u16::Pointer(const Point_s16 &point) const
-    {
-      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline u16* Array_u16::Pointer(const Point_s16 &point)
-    {
-      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-    }
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     void Array_u16::Show(const char * const windowName, const bool waitForKeypress) const
     {
@@ -907,38 +811,6 @@ namespace Anki
         reinterpret_cast<s16*>(allocatedBuffer),
         numBytesAllocated,
         useBoundaryFillPatterns);
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline const s16* Array_s16::Pointer(const s32 index0, const s32 index1) const
-    {
-      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-        this->rawDataPointer != NULL && this->data != NULL);
-
-      return reinterpret_cast<const s16*>( reinterpret_cast<const char*>(this->data) +
-        index1*sizeof(s16) + index0*stride );
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline s16* Array_s16::Pointer(const s32 index0, const s32 index1)
-    {
-      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-        this->rawDataPointer != NULL && this->data != NULL);
-
-      return reinterpret_cast<s16*>( reinterpret_cast<char*>(this->data) +
-        index1*sizeof(s16) + index0*stride );
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline const s16* Array_s16::Pointer(const Point_s16 &point) const
-    {
-      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline s16* Array_s16::Pointer(const Point_s16 &point)
-    {
-      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
     }
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
@@ -1192,38 +1064,6 @@ namespace Anki
         useBoundaryFillPatterns);
     }
 
-    // Pointer to the data, at a given (y,x) location
-    inline const u32* Array_u32::Pointer(const s32 index0, const s32 index1) const
-    {
-      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-        this->rawDataPointer != NULL && this->data != NULL);
-
-      return reinterpret_cast<const u32*>( reinterpret_cast<const char*>(this->data) +
-        index1*sizeof(u32) + index0*stride );
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline u32* Array_u32::Pointer(const s32 index0, const s32 index1)
-    {
-      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-        this->rawDataPointer != NULL && this->data != NULL);
-
-      return reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) +
-        index1*sizeof(u32) + index0*stride );
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline const u32* Array_u32::Pointer(const Point_s16 &point) const
-    {
-      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline u32* Array_u32::Pointer(const Point_s16 &point)
-    {
-      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-    }
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     void Array_u32::Show(const char * const windowName, const bool waitForKeypress) const
     {
@@ -1473,38 +1313,6 @@ namespace Anki
         reinterpret_cast<s32*>(allocatedBuffer),
         numBytesAllocated,
         useBoundaryFillPatterns);
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline const s32* Array_s32::Pointer(const s32 index0, const s32 index1) const
-    {
-      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-        this->rawDataPointer != NULL && this->data != NULL);
-
-      return reinterpret_cast<const s32*>( reinterpret_cast<const char*>(this->data) +
-        index1*sizeof(s32) + index0*stride );
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline s32* Array_s32::Pointer(const s32 index0, const s32 index1)
-    {
-      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-        this->rawDataPointer != NULL && this->data != NULL);
-
-      return reinterpret_cast<s32*>( reinterpret_cast<char*>(this->data) +
-        index1*sizeof(s32) + index0*stride );
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline const s32* Array_s32::Pointer(const Point_s16 &point) const
-    {
-      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline s32* Array_s32::Pointer(const Point_s16 &point)
-    {
-      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
     }
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
@@ -1758,38 +1566,6 @@ namespace Anki
         useBoundaryFillPatterns);
     }
 
-    // Pointer to the data, at a given (y,x) location
-    inline const f32* Array_f32::Pointer(const s32 index0, const s32 index1) const
-    {
-      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-        this->rawDataPointer != NULL && this->data != NULL);
-
-      return reinterpret_cast<const f32*>( reinterpret_cast<const char*>(this->data) +
-        index1*sizeof(f32) + index0*stride );
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline f32* Array_f32::Pointer(const s32 index0, const s32 index1)
-    {
-      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-        this->rawDataPointer != NULL && this->data != NULL);
-
-      return reinterpret_cast<f32*>( reinterpret_cast<char*>(this->data) +
-        index1*sizeof(f32) + index0*stride );
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline const f32* Array_f32::Pointer(const Point_s16 &point) const
-    {
-      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline f32* Array_f32::Pointer(const Point_s16 &point)
-    {
-      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-    }
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     void Array_f32::Show(const char * const windowName, const bool waitForKeypress) const
     {
@@ -2041,38 +1817,6 @@ namespace Anki
         useBoundaryFillPatterns);
     }
 
-    // Pointer to the data, at a given (y,x) location
-    inline const f64* Array_f64::Pointer(const s32 index0, const s32 index1) const
-    {
-      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-        this->rawDataPointer != NULL && this->data != NULL);
-
-      return reinterpret_cast<const f64*>( reinterpret_cast<const char*>(this->data) +
-        index1*sizeof(f64) + index0*stride );
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline f64* Array_f64::Pointer(const s32 index0, const s32 index1)
-    {
-      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-        this->rawDataPointer != NULL && this->data != NULL);
-
-      return reinterpret_cast<f64*>( reinterpret_cast<char*>(this->data) +
-        index1*sizeof(f64) + index0*stride );
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline const f64* Array_f64::Pointer(const Point_s16 &point) const
-    {
-      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-    }
-
-    // Pointer to the data, at a given (y,x) location
-    inline f64* Array_f64::Pointer(const Point_s16 &point)
-    {
-      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
-    }
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     void Array_f64::Show(const char * const windowName, const bool waitForKeypress) const
     {
@@ -2264,6 +2008,228 @@ namespace Anki
 
     // Set all the buffers and sizes to zero, to signal an invalid array
     void Array_f64::invalidateArray()
+    {
+      this->size[0] = 0;
+      this->size[1] = 0;
+      this->stride = 0;
+      this->data = NULL;
+      this->rawDataPointer = NULL;
+    }
+
+    s32 Array_Point_s16::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      assert(numCols > 0);
+      const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
+      return static_cast<s32>(RoundUp<size_t>(sizeof(Point_s16)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
+    }
+
+    s32 Array_Point_s16::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      assert(numCols > 0 && numRows > 0);
+      return numRows * Array_Point_s16::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
+    }
+
+    Array_Point_s16::Array_Point_s16()
+    {
+      invalidateArray();
+    }
+
+    // Constructor for a Array_Point_s16, pointing to user-allocated data. If the pointer to *data is not
+    // aligned to MEMORY_ALIGNMENT, this Array_Point_s16 will start at the next aligned location.
+    // Unfortunately, this is more restrictive than most matrix libraries, and as an example,
+    // it may make it hard to convert from OpenCV to Array_Point_s16, though the reverse is trivial.
+    Array_Point_s16::Array_Point_s16(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
+      : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
+    {
+      assert(numCols > 0 && numRows > 0 && dataLength > 0);
+
+      initialize(numRows,
+        numCols,
+        data,
+        dataLength,
+        useBoundaryFillPatterns);
+    }
+
+    Array_Point_s16::Array_Point_s16(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+      : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
+    {
+      assert(numCols > 0 && numRows > 0);
+
+      const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? static_cast<s32>(MEMORY_ALIGNMENT) : 0);
+      const s32 numBytesRequested = numRows * this->stride + extraBoundaryPatternBytes;
+      s32 numBytesAllocated = 0;
+
+      void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
+
+      initialize(numRows,
+        numCols,
+        reinterpret_cast<Point_s16*>(allocatedBuffer),
+        numBytesAllocated,
+        useBoundaryFillPatterns);
+    }
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+    void Array_Point_s16::Show(const char * const windowName, const bool waitForKeypress) const
+    {
+      assert(this->rawDataPointer != NULL && this->data != NULL);
+      cv::imshow(windowName, cvMatMirror);
+      if(waitForKeypress) {
+        cv::waitKey();
+      }
+    }
+
+    // Returns a templated cv::Mat_ that shares the same buffer with this Array_Point_s16. No data is copied.
+    cv::Mat_<Point_s16>& Array_Point_s16::get_CvMat_()
+    {
+      assert(this->rawDataPointer != NULL && this->data != NULL);
+      return cvMatMirror;
+    }
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+    // Print out the contents of this Array_Point_s16
+    void Array_Point_s16::Print() const
+    {
+      assert(this->rawDataPointer != NULL && this->data != NULL);
+
+      for(s32 y=0; y<size[0]; y++) {
+        const Point_s16 * rowPointer = Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          //std::cout << rowPointer[x] << " ";
+          printf("%d ", rowPointer[x]); // TODO: make general
+        }
+        // std::cout << "\n";
+        printf("\n");
+      }
+    }
+
+    // If the Array_Point_s16 was constructed with the useBoundaryFillPatterns=true, then
+    // return if any memory was written out of bounds (via fill patterns at the
+    // beginning and end).  If the Array_Point_s16 wasn't constructed with the
+    // useBoundaryFillPatterns=true, this method always returns true
+    bool Array_Point_s16::IsValid() const
+    {
+      if(this->rawDataPointer == NULL || this->data == NULL) {
+        return false;
+      }
+
+      if(size[0] < 1 || size[1] < 1) {
+        return false;
+      }
+
+      if(useBoundaryFillPatterns) {
+        const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1],false);
+
+        for(s32 y=0; y<size[0]; y++) {
+          if((reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[0]) != FILL_PATTERN_START ||
+            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[1]) != FILL_PATTERN_START ||
+            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[0]) != FILL_PATTERN_END ||
+            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[1]) != FILL_PATTERN_END) {
+              return false;
+          }
+        }
+
+        return true;
+      } else { // if(useBoundaryFillPatterns) {
+        return true; // Technically, we don't know if the Array2d is valid. But we don't know it's NOT valid, so just return true.
+      } // if(useBoundaryFillPatterns) { ... else
+    }
+
+    // Set every element in the Array_Point_s16 to this value
+    // Returns the number of values set
+    s32 Array_Point_s16::Set(const Point_s16 value)
+    {
+      assert(this->rawDataPointer != NULL && this->data != NULL);
+
+      for(s32 y=0; y<size[0]; y++) {
+        Point_s16 * restrict rowPointer = Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          rowPointer[x] = value;
+        }
+      }
+
+      return size[0]*size[1];
+    }
+
+    // Similar to Matlab's size(matrix, dimension), and dimension is in {0,1}
+    s32 Array_Point_s16::get_size(s32 dimension) const
+    {
+      assert(dimension >= 0 && this->rawDataPointer != NULL && this->data != NULL);
+
+      if(dimension > 1 || dimension < 0)
+        return 0;
+
+      return size[dimension];
+    }
+
+    s32 Array_Point_s16::get_stride() const
+    {
+      return stride;
+    }
+
+    void* Array_Point_s16::get_rawDataPointer()
+    {
+      return rawDataPointer;
+    }
+
+    const void* Array_Point_s16::get_rawDataPointer() const
+    {
+      return rawDataPointer;
+    }
+
+    void Array_Point_s16::initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
+    {
+      assert(numCols > 0 && numRows > 0 && dataLength > 0);
+
+      this->useBoundaryFillPatterns = useBoundaryFillPatterns;
+
+      if(!rawData) {
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+        DASError("Anki.Array2d.initialize", "input data buffer is NULL");
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+        invalidateArray();
+        return;
+      }
+
+      this->rawDataPointer = rawData;
+
+      const size_t extraBoundaryPatternBytes = useBoundaryFillPatterns ? static_cast<size_t>(HEADER_LENGTH) : 0;
+      const s32 extraAlignmentBytes = static_cast<s32>(RoundUp<size_t>(reinterpret_cast<size_t>(rawData)+extraBoundaryPatternBytes, MEMORY_ALIGNMENT) - extraBoundaryPatternBytes - reinterpret_cast<size_t>(rawData));
+      const s32 requiredBytes = ComputeRequiredStride(numCols,useBoundaryFillPatterns)*numRows + extraAlignmentBytes;
+
+      if(requiredBytes > dataLength) {
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+        DASError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+        invalidateArray();
+        return;
+      }
+
+      this->size[0] = numRows;
+      this->size[1] = numCols;
+
+      if(useBoundaryFillPatterns) {
+        const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1], false);
+        this->data = reinterpret_cast<Point_s16*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes + HEADER_LENGTH );
+        for(s32 y=0; y<size[0]; y++) {
+          // Add the fill patterns just before the data on each line
+          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[0] = FILL_PATTERN_START;
+          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[1] = FILL_PATTERN_START;
+
+          // And also just after the data (including normal byte-alignment padding)
+          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[0] = FILL_PATTERN_END;
+          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[1] = FILL_PATTERN_END;
+        }
+      } else {
+        this->data = reinterpret_cast<Point_s16*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes );
+      }
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      cvMatMirror = cv::Mat_<Point_s16>(size[0], size[1], data, stride);
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+    } // Array_Point_s16::initialize()
+
+    // Set all the buffers and sizes to zero, to signal an invalid array
+    void Array_Point_s16::invalidateArray()
     {
       this->size[0] = 0;
       this->size[1] = 0;
