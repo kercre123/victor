@@ -2237,5 +2237,295 @@ namespace Anki
       this->data = NULL;
       this->rawDataPointer = NULL;
     }
+
+#ifndef USE_ARRAY_INLINE_POINTERS
+
+    // Pointer to the data, at a given (y,x) location
+    const u8* Array_u8::Pointer(const s32 index0, const s32 index1) const
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<const u8*>( reinterpret_cast<const char*>(this->data) +
+        index1*sizeof(u8) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    u8* Array_u8::Pointer(const s32 index0, const s32 index1)
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<u8*>( reinterpret_cast<char*>(this->data) +
+        index1*sizeof(u8) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const u8* Array_u8::Pointer(const Point_s16 &point) const
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    u8* Array_u8::Pointer(const Point_s16 &point)
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const s8* Array_s8::Pointer(const s32 index0, const s32 index1) const
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<const s8*>( reinterpret_cast<const char*>(this->data) +
+        index1*sizeof(s8) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    s8* Array_s8::Pointer(const s32 index0, const s32 index1)
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<s8*>( reinterpret_cast<char*>(this->data) +
+        index1*sizeof(s8) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const s8* Array_s8::Pointer(const Point_s16 &point) const
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    s8* Array_s8::Pointer(const Point_s16 &point)
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const u16* Array_u16::Pointer(const s32 index0, const s32 index1) const
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<const u16*>( reinterpret_cast<const char*>(this->data) +
+        index1*sizeof(u16) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    u16* Array_u16::Pointer(const s32 index0, const s32 index1)
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<u16*>( reinterpret_cast<char*>(this->data) +
+        index1*sizeof(u16) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const u16* Array_u16::Pointer(const Point_s16 &point) const
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    u16* Array_u16::Pointer(const Point_s16 &point)
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const s16* Array_s16::Pointer(const s32 index0, const s32 index1) const
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<const s16*>( reinterpret_cast<const char*>(this->data) +
+        index1*sizeof(s16) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    s16* Array_s16::Pointer(const s32 index0, const s32 index1)
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<s16*>( reinterpret_cast<char*>(this->data) +
+        index1*sizeof(s16) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const s16* Array_s16::Pointer(const Point_s16 &point) const
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    s16* Array_s16::Pointer(const Point_s16 &point)
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const u32* Array_u32::Pointer(const s32 index0, const s32 index1) const
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<const u32*>( reinterpret_cast<const char*>(this->data) +
+        index1*sizeof(u32) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    u32* Array_u32::Pointer(const s32 index0, const s32 index1)
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) +
+        index1*sizeof(u32) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const u32* Array_u32::Pointer(const Point_s16 &point) const
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    u32* Array_u32::Pointer(const Point_s16 &point)
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+    // Pointer to the data, at a given (y,x) location
+    const s32* Array_s32::Pointer(const s32 index0, const s32 index1) const
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<const s32*>( reinterpret_cast<const char*>(this->data) +
+        index1*sizeof(s32) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    s32* Array_s32::Pointer(const s32 index0, const s32 index1)
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<s32*>( reinterpret_cast<char*>(this->data) +
+        index1*sizeof(s32) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const s32* Array_s32::Pointer(const Point_s16 &point) const
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    s32* Array_s32::Pointer(const Point_s16 &point)
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const f32* Array_f32::Pointer(const s32 index0, const s32 index1) const
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<const f32*>( reinterpret_cast<const char*>(this->data) +
+        index1*sizeof(f32) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    f32* Array_f32::Pointer(const s32 index0, const s32 index1)
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<f32*>( reinterpret_cast<char*>(this->data) +
+        index1*sizeof(f32) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const f32* Array_f32::Pointer(const Point_s16 &point) const
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    f32* Array_f32::Pointer(const Point_s16 &point)
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const f64* Array_f64::Pointer(const s32 index0, const s32 index1) const
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<const f64*>( reinterpret_cast<const char*>(this->data) +
+        index1*sizeof(f64) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    f64* Array_f64::Pointer(const s32 index0, const s32 index1)
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<f64*>( reinterpret_cast<char*>(this->data) +
+        index1*sizeof(f64) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const f64* Array_f64::Pointer(const Point_s16 &point) const
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    f64* Array_f64::Pointer(const Point_s16 &point)
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const Point_s16* Array_Point_s16::Pointer(const s32 index0, const s32 index1) const
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<const Point_s16*>( reinterpret_cast<const char*>(this->data) +
+        index1*sizeof(Point_s16) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    Point_s16* Array_Point_s16::Pointer(const s32 index0, const s32 index1)
+    {
+      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+        this->rawDataPointer != NULL && this->data != NULL);
+
+      return reinterpret_cast<Point_s16*>( reinterpret_cast<char*>(this->data) +
+        index1*sizeof(Point_s16) + index0*stride );
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    const Point_s16* Array_Point_s16::Pointer(const Point_s16 &point) const
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    // Pointer to the data, at a given (y,x) location
+    Point_s16* Array_Point_s16::Pointer(const Point_s16 &point)
+    {
+      return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+#endif // USE_ARRAY_INLINE_POINTERS
   } // namespace Embedded
 } // namespace Anki
