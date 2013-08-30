@@ -7,12 +7,12 @@ namespace Anki
 #define CHECK_FOR_OUT_OF_BOUNDS
 #define NUM_DIRECTIONS 8
 
-    const Point2<s16> offsets[NUM_DIRECTIONS] = {Point2<s16>(0,-1), Point2<s16>(1,-1), Point2<s16>(1,0), Point2<s16>(1,1), Point2<s16>(0,1), Point2<s16>(-1,1), Point2<s16>(-1,0), Point2<s16>(-1,-1)};
+    const Point_s16 offsets[NUM_DIRECTIONS] = {Point_s16(0,-1), Point_s16(1,-1), Point_s16(1,0), Point_s16(1,1), Point_s16(0,1), Point_s16(-1,1), Point_s16(-1,0), Point_s16(-1,-1)};
     //const s32 dxs[NUM_DIRECTIONS] = {0, 1, 1, 1, 0, -1, -1, -1};
     //const s32 dys[NUM_DIRECTIONS] = {-1, -1, 0, 1, 1, 1, 0, -1};
 
     //function newDirection = findNewDirection(img, curPoint, curDirection, value)
-    static BoundaryDirection FindNewDirection(const Array2d<u8> &binaryImg, const Point2<s16> &curPoint, const BoundaryDirection curDirection, const u8 value)
+    static BoundaryDirection FindNewDirection(const Array_u8 &binaryImg, const Point_s16 &curPoint, const BoundaryDirection curDirection, const u8 value)
     {
       BoundaryDirection newDirection = BOUNDARY_UNKNOWN;
 
@@ -49,7 +49,7 @@ namespace Anki
       return BOUNDARY_UNKNOWN;
     }
 
-    Result TraceBoundary(const Array2d<u8> &binaryImg, const Point2<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point2<s16> > &boundary)
+    Result TraceBoundary(const Array_u8 &binaryImg, const Point_s16 &startPoint, BoundaryDirection initialDirection, FixedLengthList_Point_s16 &boundary)
     {
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
       DASConditionalErrorAndReturnValue(binaryImg.IsValid(),
@@ -85,7 +85,7 @@ namespace Anki
       BoundaryDirection curDirection = initialDirection;
 
       //curPoint = [startPoint(1), startPoint(2)];
-      Point2<s16> curPoint(startPoint);
+      Point_s16 curPoint(startPoint);
 
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
       DASConditionalErrorAndReturnValue(*(binaryImg.Pointer(curPoint)) != 0,
@@ -112,7 +112,7 @@ namespace Anki
 
         //newPoint = [curPoint(1)+dy(oneDirection+1), curPoint(2)+dx(oneDirection+1)];
         //const Point2<u16> newPoint(curPoint.x+dxs[oneDirection], curPoint.y+dys[oneDirection]);
-        const Point2<s16> newPoint(curPoint + offsets[oneDirection]);
+        const Point_s16 newPoint(curPoint + offsets[oneDirection]);
 
         // printf("%d) %d %d\n", i, newPoint.y+1, newPoint.x+1);
 

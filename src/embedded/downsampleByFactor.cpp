@@ -4,7 +4,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    Result DownsampleByFactor(const Array2d<u8> &img, s32 downsampleFactor, Array2d<u8> &imgDownsampled)
+    Result DownsampleByFactor(const Array_u8 &img, s32 downsampleFactor, Array_u8 &imgDownsampled)
     {
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
       DASConditionalErrorAndReturnValue(img.IsValid(),

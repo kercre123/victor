@@ -22,13 +22,13 @@ namespace Anki
 
     const s32 MAX_BOUNDARY_LENGTH = 1000;
 
-    Result BinomialFilter(const Array2d<u8> &img, Array2d<u8> &imgFiltered, MemoryStack scratch);
+    Result BinomialFilter(const Array_u8 &img, Array_u8 &imgFiltered, MemoryStack scratch);
 
-    Result DownsampleByFactor(const Array2d<u8> &img, s32 downsampleFactor, Array2d<u8> &imgDownsampled);
+    Result DownsampleByFactor(const Array_u8 &img, s32 downsampleFactor, Array_u8 &imgDownsampled);
 
-    Result ComputeCharacteristicScaleImage(const Array2d<u8> &img, s32 numLevels, Array2dFixedPoint<u32> &scaleImage, MemoryStack scratch);
+    Result ComputeCharacteristicScaleImage(const Array_u8 &img, s32 numLevels, Array_u32 &scaleImage, MemoryStack scratch);
 
-    Result TraceBoundary(const Array2d<u8> &binaryImg, const Point2<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point2<s16> > &boundary);
+    Result TraceBoundary(const Array_u8 &binaryImg, const Point_s16 &startPoint, BoundaryDirection initialDirection, FixedLengthList_Point_s16 &boundary);
 
     template<typename T> inline T Interpolate2d(T pixel00, T pixel01, T pixel10, T pixel11, T alphaY, T alphaYinverse, T alphaX, T alphaXinverse)
     {

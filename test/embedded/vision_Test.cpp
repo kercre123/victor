@@ -1,4 +1,4 @@
-#define USING_MOVIDIUS_COMPILER
+//#define USING_MOVIDIUS_COMPILER
 
 #include "anki/embeddedVision.h"
 
@@ -14,7 +14,7 @@
 Anki::Embedded::Matlab matlab(false);
 #endif
 
-#define MAX_BYTES 1000
+#define MAX_BYTES 5000
 char buffer[MAX_BYTES];
 
 GTEST_TEST(CoreTech_Vision, BinomialFilter)
@@ -24,39 +24,40 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = MIN(MAX_BYTES, 5000);
   //void *buffer = calloc(numBytes, 1);
-  ASSERT_TRUE(buffer != NULL);
+  //ASSERT_TRUE(buffer != NULL);
 
-  printf("1\n");
+  //printf("1\n");
 
+  //Anki::Embedded::MemoryStack ms(&buffer[0], numBytes);
   Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
   ASSERT_TRUE(ms.IsValid());
 
-  printf("1a\n");
+  //printf("1a\n");
 
-  Anki::Embedded::Array2d<u8> img(height, width, ms, false);
-//  Anki::Embedded::Array2d<u8> img(1, 1, ms, false);
+  Anki::Embedded::Array_u8 img(height, width, ms, false);
+  //Anki::Embedded::Array_u8 img(1, 1, ms, false);
 
-  printf("1b\n");
-  /*
-  Anki::Embedded::Array2d<u8> imgFiltered(height, width, ms);
+  //printf("1b\n");
 
-  printf("2\n");
+  Anki::Embedded::Array_u8 imgFiltered(height, width, ms);
+
+  //printf("2\n");
 
   ASSERT_TRUE(img.get_rawDataPointer()!= NULL);
   ASSERT_TRUE(imgFiltered.get_rawDataPointer()!= NULL);
 
-  printf("3\n");
+  //printf("3\n");
 
   for(s32 x=0; x<width; x++) {
-  *img.Pointer(2,x) = static_cast<u8>(x);
+    *img.Pointer(2,x) = static_cast<u8>(x);
   }
 
-  printf("4\n");
+  //printf("4\n");
 
   Anki::Embedded::Result result = Anki::Embedded::BinomialFilter(img, imgFiltered, ms);
 
-  printf("5\n");
+  //printf("5\n");
 
   //printf("img:\n");
   //img.Print();
@@ -68,17 +69,17 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
 
   const u8 correctResults[5][10] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 1, 1, 1, 2, 2, 2, 3}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
-  printf("6\n");
+  //printf("6\n");
 
   for(s32 y=0; y<height; y++) {
-  for(s32 x=0; x<width; x++) {
-  //printf("(%d,%d) expected:%d actual:%d\n", y, x, correctResults[y][x], *(imgFiltered.Pointer(y,x)));
-  ASSERT_TRUE(correctResults[y][x] == *imgFiltered.Pointer(y,x));
-  }
+    for(s32 x=0; x<width; x++) {
+      //printf("(%d,%d) expected:%d actual:%d\n", y, x, correctResults[y][x], *(imgFiltered.Pointer(y,x)));
+      ASSERT_TRUE(correctResults[y][x] == *imgFiltered.Pointer(y,x));
+    }
   }
 
   //free(buffer); buffer = NULL;
-  */
+
   GTEST_RETURN_HERE;
 }
 
@@ -91,11 +92,11 @@ GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = MIN(MAX_BYTES, 1000);
   //void *buffer = calloc(numBytes, 1);
-  ASSERT_TRUE(buffer != NULL);
-  Anki::Embedded::MemoryStack ms(buffer, numBytes);
+  //ASSERT_TRUE(buffer != NULL);
+  Anki::Embedded::MemoryStack ms(&buffer[0], numBytes);
 
-  Anki::Embedded::Array2d<u8> img(height, width, ms);
-  Anki::Embedded::Array2d<u8> imgDownsampled(height/downsampleFactor, width/downsampleFactor, ms);
+  Anki::Embedded::Array_u8 img(height, width, ms);
+  Anki::Embedded::Array_u8 imgDownsampled(height/downsampleFactor, width/downsampleFactor, ms);
 
   ASSERT_TRUE(img.get_rawDataPointer()!= NULL);
   ASSERT_TRUE(imgDownsampled.get_rawDataPointer()!= NULL);
@@ -122,7 +123,6 @@ GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
   GTEST_RETURN_HERE;
 }
 
-/*
 GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
 {
   const s32 width = 16;
@@ -149,14 +149,14 @@ GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = MIN(MAX_BYTES, 5000);
   //void *buffer = calloc(numBytes, 1);
-  ASSERT_TRUE(buffer != NULL);
-  Anki::Embedded::MemoryStack ms(buffer, numBytes);
+  //ASSERT_TRUE(buffer != NULL);
+  Anki::Embedded::MemoryStack ms(&buffer[0], numBytes);
 
-  Anki::Embedded::Array2d<u8> img(height, width, ms);
+  Anki::Embedded::Array_u8 img(height, width, ms);
   ASSERT_TRUE(img.get_rawDataPointer() != NULL);
   ASSERT_TRUE(img.Set(imgData) == width*height);
 
-  Anki::Embedded::Array2dFixedPoint<u32> scaleImage(height, width, 16, ms);
+  Anki::Embedded::Array_u32 scaleImage(height, width, ms);
   ASSERT_TRUE(scaleImage.get_rawDataPointer() != NULL);
 
   ASSERT_TRUE(ComputeCharacteristicScaleImage(img, numLevels, scaleImage, ms) == Anki::Embedded::RESULT_OK);
@@ -167,7 +167,6 @@ GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
 
   GTEST_RETURN_HERE;
 }
-*/
 
 #if defined(ANKICORETECH_USE_MATLAB)
 GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
@@ -183,17 +182,17 @@ GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = 10000000;
   void *buffer = calloc(numBytes, 1);
-  ASSERT_TRUE(buffer != NULL);
-  Anki::Embedded::MemoryStack ms(buffer, numBytes);
+  //ASSERT_TRUE(buffer != NULL);
+  Anki::Embedded::MemoryStack ms(&buffer[0], numBytes);
 
   Anki::Embedded::Matlab matlab(false);
 
   matlab.EvalStringEcho("img = rgb2gray(imread('Z:/Documents/testSequence/blockWorldTest_front00000.png'));");
   //matlab.EvalStringEcho("img = imresize(rgb2gray(imread('Z:/Documents/testSequence/blockWorldTest_front00000.png')), [240,320]);");
-  Anki::Embedded::Array2d<u8> img = matlab.GetArray2d<u8>("img");
+  Anki::Embedded::Array_u8 img = matlab.GetArray_u8("img");
   ASSERT_TRUE(img.get_rawDataPointer() != NULL);
 
-  Anki::Embedded::Array2dFixedPoint<u32> scaleImage(height, width, 16, ms);
+  Anki::Embedded::Array_u32 scaleImage(height, width, 16, ms);
   ASSERT_TRUE(scaleImage.get_rawDataPointer() != NULL);
 
   ASSERT_TRUE(ComputeCharacteristicScaleImage(img, numLevels, scaleImage, ms) == Anki::Embedded::RESULT_OK);
@@ -206,7 +205,6 @@ GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 }
 #endif // #if defined(ANKICORETECH_USE_MATLAB)
 
-/*
 GTEST_TEST(CoreTech_Vision, TraceBoundary)
 {
   const s32 width = 16;
@@ -230,18 +228,18 @@ GTEST_TEST(CoreTech_Vision, TraceBoundary)
     " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 ";
 
   const s32 numPoints = 9;
-  const Anki::Embedded::Point2<s16> groundTruth[9] = {Anki::Embedded::Point2<s16>(8,6), Anki::Embedded::Point2<s16>(8,5), Anki::Embedded::Point2<s16>(7,4), Anki::Embedded::Point2<s16>(7,3), Anki::Embedded::Point2<s16>(8,3), Anki::Embedded::Point2<s16>(9,3), Anki::Embedded::Point2<s16>(9,4), Anki::Embedded::Point2<s16>(9,5), Anki::Embedded::Point2<s16>(9,6)};
+  const Anki::Embedded::Point_s16 groundTruth[9] = {Anki::Embedded::Point_s16(8,6), Anki::Embedded::Point_s16(8,5), Anki::Embedded::Point_s16(7,4), Anki::Embedded::Point_s16(7,3), Anki::Embedded::Point_s16(8,3), Anki::Embedded::Point_s16(9,3), Anki::Embedded::Point_s16(9,4), Anki::Embedded::Point_s16(9,5), Anki::Embedded::Point_s16(9,6)};
 
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = MIN(MAX_BYTES, 5000);
   //void *buffer = calloc(numBytes, 1);
-  ASSERT_TRUE(buffer != NULL);
-  Anki::Embedded::MemoryStack ms(buffer, numBytes);
+  //ASSERT_TRUE(buffer != NULL);
+  Anki::Embedded::MemoryStack ms(&buffer[0], numBytes);
 
-  Anki::Embedded::Array2d<u8> binaryImg(height, width, ms);
-  const Anki::Embedded::Point2<s16> startPoint(8,6);
+  Anki::Embedded::Array_u8 binaryImg(height, width, ms);
+  const Anki::Embedded::Point_s16 startPoint(8,6);
   const Anki::Embedded::BoundaryDirection initialDirection = Anki::Embedded::BOUNDARY_N;
-  Anki::Embedded::FixedLengthList<Anki::Embedded::Point2<s16> > boundary(Anki::Embedded::MAX_BOUNDARY_LENGTH, ms);
+  Anki::Embedded::FixedLengthList_Point_s16 boundary(Anki::Embedded::MAX_BOUNDARY_LENGTH, ms);
 
   ASSERT_TRUE(binaryImg.IsValid());
   ASSERT_TRUE(boundary.IsValid());
@@ -259,7 +257,6 @@ GTEST_TEST(CoreTech_Vision, TraceBoundary)
 
   GTEST_RETURN_HERE;
 }
-*/
 
 #if !defined(ANKICORETECHEMBEDDED_USE_GTEST)
 void RUN_ALL_TESTS()
@@ -268,9 +265,9 @@ void RUN_ALL_TESTS()
   s32 numFailedTests = 0;
 
   CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
-  //CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
-  //  CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);
-  //  CALL_GTEST_TEST(CoreTech_Vision, TraceBoundary);
+  CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
+  CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);
+  CALL_GTEST_TEST(CoreTech_Vision, TraceBoundary);
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 } // void RUN_ALL_TESTS()
@@ -283,7 +280,7 @@ int main()
 #endif
 {
 #if defined(ANKICORETECHEMBEDDED_USE_GTEST)
-  ::testing::InitGoogleGTEST_TEST(&argc, argv);
+  ::testing::InitGoogleTest(&argc, argv);
 #endif
 
   RUN_ALL_TESTS();
