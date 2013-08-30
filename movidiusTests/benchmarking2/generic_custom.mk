@@ -230,7 +230,7 @@ CCOPT    		 += -fno-inline-functions-called-once
 ifeq (,$(findstring 3.4.4,$(GCCVERSION)))
 CCOPT    		 += -fno-inline-small-functions
 endif
-CCOPT            += -Werror-implicit-function-declaration
+#CCOPT            += -Werror-implicit-function-declaration
 CCOPT    		 += -Os -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 $(WARN) $(CC_INCLUDE) 
 ODOPT    		 += -xdsrw
 SDOPT    		 += -t
@@ -256,7 +256,8 @@ MVCC_INCLUDE     += -I $(MV_COMMON_BASE)/swCommon/shave_code/$(MV_SOC_PLATFORM)/
 					
 EXTRA_MLIBS_PATH ?=
 #These refer to moviCompile optimization levels
-MVCC_OPT_LEVEL ?= -O2
+#MVCC_OPT_LEVEL ?= -O2
+MVCC_OPT_LEVEL ?= -O0
 
 #These are arguments that will be passed to moviAsm for assembly files handwritten
 #preferably like -opt:X. If nothing passed optimization level is considered 0. No need for -opt:0 because it is implicit
@@ -364,6 +365,12 @@ LeonCSrcFiles     += $(wildcard $(DirAppRoot)/*leon*/*.c) \
                      $(wildcard $(DirAppRoot)/*/*/*leon*/*.c) \
                      $(wildcard $(DirAppRoot)/*leon*/*/*.c) \
                      $(wildcard $(DirAppRoot)/*leon*/*/*/*.c)
+
+LeonCPPSrcFiles     += $(wildcard $(DirAppRoot)/*leon*/*.cpp) \
+                     $(wildcard $(DirAppRoot)/*/*leon*/*.cpp) \
+                     $(wildcard $(DirAppRoot)/*/*/*leon*/*.cpp) \
+                     $(wildcard $(DirAppRoot)/*leon*/*/*.cpp) \
+                     $(wildcard $(DirAppRoot)/*leon*/*/*/*.cpp)
 
 # Default Leon ASM source files 
 LeonASrcFiles     += $(wildcard $(DirAppRoot)/*leon*/*.S) \
@@ -532,6 +539,7 @@ SysObjFiles      += $(addprefix $(DirAppObjDir)/, $(sort $(notdir $(patsubst %.S
 
 # Derive Leon Object files
 LeonObjFiles      = $(addprefix $(DirAppObjDir)/, $(sort $(notdir $(patsubst %.c, %.o, $(LeonCSrcFiles)))))
+LeonObjFiles      += $(addprefix $(DirAppObjDir)/, $(sort $(notdir $(patsubst %.cpp, %.o, $(LeonCPPSrcFiles)))))
 LeonObjFiles     += $(addprefix $(DirAppObjDir)/, $(sort $(notdir $(patsubst %.S, %.o, $(LeonASrcFiles)))))
 
 # Derive Shave object files
@@ -581,7 +589,7 @@ ShaveCommonMof   ?= $(DirAppObjDir)/$(ShaveCommonName).mof
 
 
 # Create VPATH from places where .c, .cpp, .h and .asm files where found
-VPATH  +=$(sort $(dir $(LeonCSrcFiles) $(LeonASrcFiles) $(LeonHeaderFiles) $(SysCSrcFiles)))
+VPATH  +=$(sort $(dir $(LeonCSrcFiles) $(LeonCPPSrcFiles) $(LeonASrcFiles) $(LeonHeaderFiles) $(SysCSrcFiles)))
 VPATH  +=$(sort $(dir $(ShaveCSrcFiles) $(ShaveCPPSrcFiles) $(ShaveASrcFiles) $(ShaveHeaderFiles)))
 VPATH  +=$(MV_DRIVERS_BASE)/src/common:$(MV_DRIVERS_BASE)/$(MV_SOC_PLATFORM)/system/asm
 VPATH  +=$(MV_DRIVERS_BASE)/src/common:$(MV_DRIVERS_BASE)/$(MV_SOC_PLATFORM)/system/asm/traps
@@ -630,6 +638,7 @@ makeDebug:
 	@echo --------------------------
 	@echo ${SysASrcFiles}
 	@echo ${LeonCSrcFiles}
+	@echo ${LeonCPPSrcFiles}
 	
 # Include the paths Makefile
 -include $(MV_COMMON_BASE)/paths.mk
@@ -698,6 +707,7 @@ size_report: $(LeonCodeSizeRpt)
 	
 # General Purpose for creating dependency trees
 DepFiles = $(patsubst %.c,$(DirAppObjDir)/%.d,$(notdir $(LeonCSrcFiles))) 
+DepFiles += $(patsubst %.cpp,$(DirAppObjDir)/%.d,$(notdir $(LeonCPPSrcFiles))) 
 	
 ifeq ($(wildcard $(DirAppObjDir)/*.d),)
   TakeHeaders	 = $(LeonHeaderFiles)
@@ -720,10 +730,16 @@ $(DirAppObjDir)/%.d: %.c
 	
 # General Purpose Leon Compile rule
 $(DirAppObjDir)/%.o: %.c $(TakeHeaders) $(MV_TOOLS_BASE) Makefile
-	@echo "INFO: Compiling $(<)"
+	@echo "INFO: Compiling c $(<)"
 	@mkdir -p $(dir $@)
 	@echo $(CC) -c $(CCOPT) $(filter %.c, $<) -o $@
 	$(ECHO) $(CC) -c $(CCOPT) $(filter %.c, $<) -o $@
+
+$(DirAppObjDir)/%.o: %.cpp $(TakeHeaders) $(MV_TOOLS_BASE) Makefile
+	@echo "INFO: Compiling c++ $(<)"
+	@mkdir -p $(dir $@)
+	@echo $(CC) -c $(CCOPT) $(filter %.cpp, $<) -o $@
+	$(ECHO) $(CC) -c $(CCOPT) $(filter %.cpp, $<) -o $@
 
 # General Purpose Leon Assembly
 $(DirAppObjDir)/%.o: %.S $(MV_TOOLS_BASE) Makefile
@@ -783,6 +799,7 @@ $(DirAppObjDir)/%.ipp : %.cpp $(MV_TOOLS_BASE) Makefile
 $(DirAppObjDir)/%_gen.asm : %.cpp $(MV_TOOLS_BASE) Makefile
 	@mkdir -p $(dir $@)
 	@echo "INFO: Movi C++ compiling  $(^)"
+	@echo $(MVCC) $(MVCCOPT)  $< -o $(DirAppObjDir)/$*_gen.asm
 	$(ECHO) $(MVCC) $(MVCCOPT)  $< -o $(DirAppObjDir)/$*_gen.asm
 
 # General rule to make MVcmd from a Mof

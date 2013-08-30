@@ -1,7 +1,7 @@
 /*Specific window settings for this app*/
 SECTIONS {
   /* Define linker symbols with desired location for windows C,D,E,F on each shave */  
-  __WinRegShave0_winC = ABSOLUTE(0x10010000);    /* Default absolute address  */
+  __WinRegShave0_winC = ABSOLUTE(0x1001F000);    /* Default absolute address  */
   __WinRegShave0_winD = ABSOLUTE(0x10000000);    /* Default absolute address  */
   __WinRegShave0_winE = ABSOLUTE(0x00000000);    /* not used                  */
   __WinRegShave0_winF = ABSOLUTE(0x00000000);    /* not used                  */
