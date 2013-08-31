@@ -37,7 +37,7 @@ namespace Anki
       //scaleImage = uint32(img)*(2^8); % UQ16.16
       //dogMax = zeros(fullSizeHeight,fullSizeWidth,'uint32'); % UQ16.16
       Array_u32 dogMax(fullSizeHeight, fullSizeWidth, scratch); // UQ16.16
-      dogMax.Set(u32(0));
+      dogMax.Set(static_cast<u32>(0));
 
       //imgPyramid = cell(1, numLevels+1);
       Array_u8 imgPyramid[MAX_PYRAMID_LEVELS+1];
