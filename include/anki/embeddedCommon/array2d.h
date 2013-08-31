@@ -8,9 +8,7 @@
 #include "anki/embeddedCommon/dataStructures.h"
 #include "anki/embeddedCommon/point.h"
 
-//#include <iostream>
 #include <assert.h>
-#include <string>
 #include <stdio.h>
 #include <stdlib.h>
 

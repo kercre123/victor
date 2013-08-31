@@ -9,7 +9,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\test\embedded\common_Test.cpp">
+    <ClCompile Include="..\..\test\embedded\commonTests.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\embedded\run_commonTests.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

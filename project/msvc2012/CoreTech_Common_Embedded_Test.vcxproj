@@ -11,7 +11,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\test\embedded\common_Test.cpp" />
+    <ClCompile Include="..\..\test\embedded\commonTests.cpp" />
+    <ClCompile Include="..\..\test\embedded\run_commonTests.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E8908FC2-7EB1-47B1-9EB0-CDB355201F24}</ProjectGuid>
