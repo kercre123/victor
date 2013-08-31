@@ -26,8 +26,19 @@ LinkerScript    =  $(DirLDScript)/benchmarking.ldscript
 
 SH0_Obj += output/obj/shaveMain.mobj
 
-ShaveCSrcFiles += shave/shaveMain.c leon/main.c
-LeonCPPSrcFiles += testCpp.cpp
+ShaveCSrcFiles += shave/shaveMain.c 
+
+
+LeonCSrcFiles += leon/main.c
+LeonCPPSrcFiles += leon/testCpp.cpp
+
+LeonHeaderFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/include/)
+LeonHeaderFiles += $(wildcard $(CORETECH_VISION_DIRECTORY)/include/)
+
+LeonCPPSrcFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/embedded/*.cpp)
+LeonCPPSrcFiles += $(wildcard $(CORETECH_VISION_DIRECTORY)/src/embedded/*.cpp)
+
+LeonCPPSrcFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/test/embedded/commonTests.cpp)
 
 # Limit to only needed drivers
 #SysCSrcFiles     = drv_ddr.c drv_uart.c drv_vcs.c drv_print.c drv_timer.c drv_l2cache.c drv_sys_cfg.c drv_cpr.c svu_utils.c

@@ -230,8 +230,9 @@ CCOPT    		 += -fno-inline-functions-called-once
 ifeq (,$(findstring 3.4.4,$(GCCVERSION)))
 CCOPT    		 += -fno-inline-small-functions
 endif
-#CCOPT            += -Werror-implicit-function-declaration
+CCOPT            += -Werror-implicit-function-declaration
 CCOPT    		 += -Os -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 $(WARN) $(CC_INCLUDE) 
+CPPOPT                   += -O3 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 $(WARN) $(CC_INCLUDE) 
 ODOPT    		 += -xdsrw
 SDOPT    		 += -t
 LDOPT    		 += -O9 -t --gc-sections -M -warn-common -L $(DirSparcDefaultLibs) -L $(DirAppObjDir) -L $(DirLDScript) -L $(DirLDScrCommon) -T $(LinkerScript)
@@ -721,7 +722,7 @@ depend: $(DepFiles)
  
 	
 $(DirAppObjDir)/%.d: %.c
-	@echo "INFO: Creating dependency file for $(<)"
+	@echo "INFO: Creating Leon dependency file for $(<)"
 	@mkdir -p $(dir $@)
 	$(ECHO) $(CC) -MM $(CCOPT) $(filter %.c, $^) > $@
 	$(ECHO) cp -f $@ $(DirAppObjDir)/$*.d.tmp
@@ -730,20 +731,20 @@ $(DirAppObjDir)/%.d: %.c
 	
 # General Purpose Leon Compile rule
 $(DirAppObjDir)/%.o: %.c $(TakeHeaders) $(MV_TOOLS_BASE) Makefile
-	@echo "INFO: Compiling c $(<)"
+	@echo "INFO: Compiling Leon c $(<)"
 	@mkdir -p $(dir $@)
 	@echo $(CC) -c $(CCOPT) $(filter %.c, $<) -o $@
 	$(ECHO) $(CC) -c $(CCOPT) $(filter %.c, $<) -o $@
 
 $(DirAppObjDir)/%.o: %.cpp $(TakeHeaders) $(MV_TOOLS_BASE) Makefile
-	@echo "INFO: Compiling c++ $(<)"
+	@echo "INFO: Compiling Leon c++ $(<)"
 	@mkdir -p $(dir $@)
-	@echo $(CC) -c $(CCOPT) $(filter %.cpp, $<) -o $@
-	$(ECHO) $(CC) -c $(CCOPT) $(filter %.cpp, $<) -o $@
+	@echo $(CC) -c $(CPPOPT) $(filter %.cpp, $<) -o $@
+	$(ECHO) $(CC) -c $(CPPOPT) $(filter %.cpp, $<) -o $@
 
 # General Purpose Leon Assembly
 $(DirAppObjDir)/%.o: %.S $(MV_TOOLS_BASE) Makefile
-	@echo "INFO: Assembling $(<)"
+	@echo "INFO: Leon Assembling $(<)"
 	@mkdir -p $(dir $@)
 	$(ECHO) $(CC) $(CCOPT) -DASM -c -o $@ $<
 

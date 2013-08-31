@@ -39,6 +39,7 @@ int main(void)
     u32          i;
     u32          *fl;
     u32          test_pass = 1;
+    int dogResult;
 
     initClocksAndMemory();
 
@@ -46,10 +47,21 @@ int main(void)
     printf("Starting profiling\n");
 
     swcShaveProfInit(&perfStr);
+ 
+    perfStr.countShCodeRun = 2;
 
-    printf("%d\n", helloDog(2));
+    swcShaveProfStartGathering(0, &perfStr);
 
-    swcShaveProfPrint(0, &perfStr);
+    dogResult = helloDog(2);
+
+    runTests();
+
+    swcShaveProfStopGathering(0, &perfStr);
+
+    printf("%d\n", dogResult);
+
+//    swcShaveProfPrint(0, &perfStr);
+    printf("\nLeon executed %d cycles in %06d micro seconds ([%d ms])\n",(u32)(perfStr.perfCounterTimer), (u32)(DrvTimerTicksToMs(perfStr.perfCounterTimer)*1000), (u32)(DrvTimerTicksToMs(perfStr.perfCounterTimer)));
 
     printf("Finished profiling\n");
 

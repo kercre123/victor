@@ -8,6 +8,8 @@ extern "C" {
 
 int helloDog(int a);
 
+void runTests();
+
 #ifdef __cplusplus
 }
 #endif

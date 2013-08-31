@@ -3,6 +3,8 @@
 
 #include "testCpp.h"
 
+void RUN_ALL_TESTS();
+
 class Toast
 {
 public:
@@ -16,4 +18,10 @@ int helloDog(int a)
 
   //printf("Here\n");
   return t.get_Toast(a);
+}
+
+void runTests()
+{
+  printf("dogcat\n");
+  RUN_ALL_TESTS();
 }
