@@ -49,6 +49,18 @@ namespace Anki
     protected:
       s32 capacityUsed;
     }; // class FixedLengthList_Point_s16
+
+    inline Point_s16* FixedLengthList_Point_s16::Pointer(s32 index)
+    {
+      return Array_Point_s16::Pointer(0, index);
+    }
+
+    // Pointer to the data, at a given location
+
+    inline const Point_s16* FixedLengthList_Point_s16::Pointer(s32 index) const
+    {
+      return Array_Point_s16::Pointer(0, index);
+    }
   } // namespace Embedded
 } // namespace Anki
 

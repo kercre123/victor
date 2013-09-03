@@ -59,18 +59,6 @@ namespace Anki
       this->capacityUsed = 0;
     }
 
-    Point_s16* FixedLengthList_Point_s16::Pointer(s32 index)
-    {
-      return Array_Point_s16::Pointer(0, index);
-    }
-
-    // Pointer to the data, at a given location
-
-    const Point_s16* FixedLengthList_Point_s16::Pointer(s32 index) const
-    {
-      return Array_Point_s16::Pointer(0, index);
-    }
-
     s32 FixedLengthList_Point_s16::get_maximumSize() const
     {
       return Array_Point_s16::get_size(1);
