@@ -12,7 +12,7 @@
 
 useMatlabDisplay = false;
 doProfile = false;
-headAngleSigma = 1; % Noise in head pitch angle measurement, in degrees
+headAngleSigma = .1; % Noise in head pitch angle measurement, in degrees
 
 if doProfile
     if ~useMatlabDisplay
