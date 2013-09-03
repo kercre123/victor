@@ -25,8 +25,7 @@ end
 % Set up paths for BlockWorld to work (do this before creating the
 % BlockWorldWebotController object, which may rely on things in the Cozmo
 % path)
-addpath ../../../products-cozmo/matlab
-initCozmo; 
+run(fullfile('..', '..', '..', 'products-cozmo', 'matlab', 'initCozmoPath')); 
 
 blockWorldController = BlockWorldWebotController();
 
