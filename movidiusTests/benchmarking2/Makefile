@@ -9,6 +9,8 @@ MDK_DIRECTORY=	/home/anki/movidius/mdk_13.08.0_general/mdk
 CORETECH_COMMON_DIRECTORY=../../../coretech-common
 CORETECH_VISION_DIRECTORY=../../../coretech-vision
 
+MVCC_OPT_LEVEL = -O1
+
 # Verbose or not, common out for more verbosity
 #ECHO=@
 
@@ -22,20 +24,21 @@ LinkerScript    =  $(DirLDScript)/benchmarking.ldscript
 # Set Shave common mof name (non-mbin flow)
 #ShaveCommonName = shaves
 
-SH0_Obj += $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.cpp, %.mobj, $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/embedded/*.cpp))))
-SH0_Obj += $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.cpp, %.mobj, $(wildcard $(CORETECH_VISION_DIRECTORY)/src/embedded/*.cpp))))
+SH0_Obj += output/obj/shaveMain.mobj
 
-#SH0_Obj += $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.cpp, %.mobj, $(wildcard $(CORETECH_COMMON_DIRECTORY)/test/embedded/*.cpp))))
-SH0_Obj += $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.cpp, %.mobj, $(wildcard $(CORETECH_VISION_DIRECTORY)/test/embedded/*.cpp))))
+ShaveCSrcFiles += shave/shaveMain.c 
 
-ShaveHeaderFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/include/)
-ShaveHeaderFiles += $(wildcard $(CORETECH_VISION_DIRECTORY)/include/)
 
-ShaveCPPSrcFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/embedded/*.cpp)
-ShaveCPPSrcFiles += $(wildcard $(CORETECH_VISION_DIRECTORY)/src/embedded/*.cpp)
+LeonCSrcFiles += leon/main.c
+LeonCPPSrcFiles += leon/testCpp.cpp
 
-#ShaveCPPSrcFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/test/embedded/*.cpp)
-ShaveCPPSrcFiles += $(wildcard $(CORETECH_VISION_DIRECTORY)/test/embedded/*.cpp)
+LeonHeaderFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/include/)
+LeonHeaderFiles += $(wildcard $(CORETECH_VISION_DIRECTORY)/include/)
+
+LeonCPPSrcFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/embedded/*.cpp)
+LeonCPPSrcFiles += $(wildcard $(CORETECH_VISION_DIRECTORY)/src/embedded/*.cpp)
+
+LeonCPPSrcFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/test/embedded/commonTests.cpp)
 
 # Limit to only needed drivers
 #SysCSrcFiles     = drv_ddr.c drv_uart.c drv_vcs.c drv_print.c drv_timer.c drv_l2cache.c drv_sys_cfg.c drv_cpr.c svu_utils.c
@@ -54,7 +57,8 @@ ComponentList := coretech-common
 MV_COMMON_BASE   =$(MDK_DIRECTORY)/common
 
 # Include the generic Makefile
-include $(MV_COMMON_BASE)/generic.mk
+#include $(MV_COMMON_BASE)/generic.mk
+include generic_custom.mk
 
 
 # -------------------------------- [ Build Options ] ------------------------------ #
