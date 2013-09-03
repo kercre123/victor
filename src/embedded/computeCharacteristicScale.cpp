@@ -76,7 +76,9 @@ namespace Anki
 
       //for pyramidLevel = 2:numLevels+1
       for(s32 pyramidLevel=1; pyramidLevel<=numLevels; pyramidLevel++) {
-        MemoryStack scratch(scratch); // Push the current state of the scratch buffer onto the system stack
+        // Push the current state of the scratch buffer onto the system stack
+        const MemoryStack scratch_tmp = scratch;
+        MemoryStack scratch(scratch_tmp);
 
         //    curPyramidLevel = imgPyramid{pyramidLevel-1}; %UQ8.0
         const Array_u8 curPyramidLevel = imgPyramid[pyramidLevel-1]; // UQ8.0
