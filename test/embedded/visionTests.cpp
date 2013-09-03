@@ -1,4 +1,4 @@
-//#define USING_MOVIDIUS_COMPILER
+#define USING_MOVIDIUS_COMPILER
 
 #include "anki/embeddedVision.h"
 
@@ -272,18 +272,3 @@ void RUN_ALL_TESTS()
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 } // void RUN_ALL_TESTS()
 #endif // #if !defined(ANKICORETECHEMBEDDED_USE_GTEST)
-
-#if defined(ANKICORETECHEMBEDDED_USE_GTEST)
-int main(int argc, char ** argv)
-#else
-int main()
-#endif
-{
-#if defined(ANKICORETECHEMBEDDED_USE_GTEST)
-  ::testing::InitGoogleTest(&argc, argv);
-#endif
-
-  RUN_ALL_TESTS();
-
-  return 0;
-}

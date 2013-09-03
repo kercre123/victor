@@ -26,11 +26,12 @@ namespace Anki
       assert(16 == (kernel[0] + kernel[1] + kernel[2] + kernel[3] + kernel[4]));
       assert(16 == (1 << kernelShift));
 
-      DASConditionalErrorAndReturnValue(AreMatricesEqual_SizeAndType<u8>(img, imgFiltered),
-        RESULT_FAIL, "BinomialFilter", "size(img) != size(imgFiltered) (%dx%d != %dx%d)", img.get_size(0), img.get_size(1), img.get_size(0), img.get_size(1));
+      // TODO: implement
+      /*DASConditionalErrorAndReturnValue(AreMatricesEqual_SizeAndType<u8>(img, imgFiltered),
+      RESULT_FAIL, "BinomialFilter", "size(img) != size(imgFiltered) (%dx%d != %dx%d)", img.get_size(0), img.get_size(1), img.get_size(0), img.get_size(1));
 
       DASConditionalErrorAndReturnValue(img.get_rawDataPointer() != imgFiltered.get_rawDataPointer(),
-        RESULT_FAIL, "BinomialFilter", "img and imgFiltered must be different");
+      RESULT_FAIL, "BinomialFilter", "img and imgFiltered must be different");*/
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
 
       const s32 height = img.get_size(0);

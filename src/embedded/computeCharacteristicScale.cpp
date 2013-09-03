@@ -22,8 +22,9 @@ namespace Anki
       DASConditionalErrorAndReturnValue(numLevels <= MAX_PYRAMID_LEVELS,
         RESULT_FAIL, "ComputeCharacteristicScaleImage", "numLevels must be less than %d", MAX_PYRAMID_LEVELS+1);
 
-      DASConditionalErrorAndReturnValue(AreMatricesEqual_Size(img, scaleImage),
-        RESULT_FAIL, "ComputeCharacteristicScaleImage", "img and scaleImage must be the same size");
+      // TODO: implement
+      /*DASConditionalErrorAndReturnValue(AreMatricesEqual_Size(img, scaleImage),
+      RESULT_FAIL, "ComputeCharacteristicScaleImage", "img and scaleImage must be the same size");*/
 
       //DASConditionalErrorAndReturnValue(scaleImage.get_numFractionalBits() == 16,
       //RESULT_FAIL, "ComputeCharacteristicScaleImage", "scaleImage must be UQ16.16");
