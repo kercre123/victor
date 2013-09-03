@@ -40,9 +40,17 @@
 #define vsnprintf vsprintf_s
 #endif
 
+#ifndef IN_CACHED_DDR
+#define IN_CACHED_DDR
+#endif
+
 #endif // #if defined(_MSC_VER)
 
 #if defined(__APPLE_CC__) // Apple Xcode
+
+#ifndef IN_CACHED_DDR
+#define IN_CACHED_DDR
+#endif
 
 #endif // #if defined(__APPLE_CC__)
 
@@ -57,7 +65,12 @@
 #ifndef restrict
 #define restrict __restrict
 #endif
+
+#ifndef IN_CACHED_DDR
+#define IN_CACHED_DDR __attribute__((section(".ddr_direct.text")))
 #endif
+
+#endif // #if defined(USING_MOVIDIUS_COMPILER)
 
 #include <stddef.h>
 

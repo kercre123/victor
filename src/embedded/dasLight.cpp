@@ -17,17 +17,24 @@
 extern "C" {
 #endif
 
+#define DAS_STRING_LENGTH 256
+  static char renderedLogString[DAS_STRING_LENGTH];
+
 #ifdef USING_MOVIDIUS_GCC_COMPILER
   void _DAS_Logf(DASLogLevel level, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
+    printf("LOG[%d] - %s - ", level, eventName);
+    printf(eventValue);
+    printf("\n");
   }
 
   void _DAS_Log(DASLogLevel level, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
+    printf("LOG[%d] - %s - ", level, eventName);
+    printf(eventValue);
+    printf("\n");
   }
 #else // #ifdef USING_MOVIDIUS_GCC_COMPILER
-#define DAS_STRING_LENGTH 256
-  static char renderedLogString[DAS_STRING_LENGTH];
 
 #pragma warning(push)
 #pragma warning(disable: 4100) // Unreference formal parameter
