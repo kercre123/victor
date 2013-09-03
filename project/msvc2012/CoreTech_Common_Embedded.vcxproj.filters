@@ -65,9 +65,6 @@
     <ClInclude Include="..\..\include\anki\embeddedCommon\gtestLight.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\embeddedCommon\fixedLengthList.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\anki\embeddedCommon\fixedLengthList.h">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -1,7 +1,7 @@
 #ifndef _ANKICORETECHEMBEDDED_COMMON_POINT_H_
 #define _ANKICORETECHEMBEDDED_COMMON_POINT_H_
 
-#include <cmath>
+//#include <cmath>
 
 #include "anki/embeddedCommon/config.h"
 

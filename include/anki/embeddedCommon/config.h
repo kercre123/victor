@@ -5,11 +5,17 @@
 #define ANKICORETECHEMBEDDED_VERSION_MINOR 1
 #define ANKICORETECHEMBEDDED_VERSION_REVISION 0
 
-#define ANKICORETECHEMBEDDED_USE_MATLAB
-#define ANKICORETECHEMBEDDED_USE_OPENCV
-#define ANKICORETECHEMBEDDED_USE_GTEST
+//#define ANKICORETECHEMBEDDED_USE_MATLAB
+//#define ANKICORETECHEMBEDDED_USE_OPENCV
+//#define ANKICORETECHEMBEDDED_USE_GTEST
 
 #if defined(__GNUC__) && __GNUC__==4 && __GNUC_MINOR__==2 && __GNUC_PATCHLEVEL__==1 //hack to detect the movidius compiler
+#define USING_MOVIDIUS_SHAVE_COMPILER
+#define USING_MOVIDIUS_COMPILER
+#endif
+
+#if defined(__GNUC__) && __GNUC__==4 && __GNUC_MINOR__==4 && __GNUC_PATCHLEVEL__==2 //hack to detect the movidius compiler
+#define USING_MOVIDIUS_GCC_COMPILER
 #define USING_MOVIDIUS_COMPILER
 #endif
 
@@ -53,9 +59,27 @@
 #endif
 #endif
 
-#include <stdint.h>
 #include <stddef.h>
 
+#ifdef USING_MOVIDIUS_GCC_COMPILER
+// We specify types according to their sign and bits. We should use these in
+// our code instead of the normal 'int','short', etc. because different
+// compilers on different architectures treat these differently.
+#ifndef u8
+#define u8 unsigned char
+#define s8 char
+#define u16 unsigned short
+#define s16 short
+#define u32 unsigned int
+#define s32 int
+#define u64 unsigned long long
+#define s64 long long
+#endif
+
+#define f32 float
+#define f64 double
+#else // #ifdef USING_MOVIDIUS_GCC_COMPILER
+#include <stdint.h>
 // We specify types according to their sign and bits. We should use these in
 // our code instead of the normal 'int','short', etc. because different
 // compilers on different architectures treat these differently.
@@ -69,6 +93,7 @@ typedef uint64_t u64;
 typedef int64_t  s64;
 typedef float    f32;
 typedef double   f64;
+#endif // #ifdef USING_MOVIDIUS_GCC_COMPILER
 
 // Maximum and minimum values
 #define u8_MAX  ((u8)0xFF)

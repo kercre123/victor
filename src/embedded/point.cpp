@@ -5,7 +5,7 @@ namespace Anki
   namespace Embedded
   {
     Point_u8::Point_u8()
-      : x(u8(0)), y(u8(0))
+      : x(static_cast<u8>(0)), y(static_cast<u8>(0))
     {
     }
 
@@ -57,7 +57,7 @@ namespace Anki
     }
 
     Point_s8::Point_s8()
-      : x(s8(0)), y(s8(0))
+      : x(static_cast<s8>(0)), y(static_cast<s8>(0))
     {
     }
 
@@ -109,7 +109,7 @@ namespace Anki
     }
 
     Point_u16::Point_u16()
-      : x(u16(0)), y(u16(0))
+      : x(static_cast<u16>(0)), y(static_cast<u16>(0))
     {
     }
 
@@ -161,7 +161,7 @@ namespace Anki
     }
 
     Point_s16::Point_s16()
-      : x(s16(0)), y(s16(0))
+      : x(static_cast<s16>(0)), y(static_cast<s16>(0))
     {
     }
 
@@ -213,7 +213,7 @@ namespace Anki
     }
 
     Point_u32::Point_u32()
-      : x(u32(0)), y(u32(0))
+      : x(static_cast<u32>(0)), y(static_cast<u32>(0))
     {
     }
 
@@ -265,7 +265,7 @@ namespace Anki
     }
 
     Point_s32::Point_s32()
-      : x(s32(0)), y(s32(0))
+      : x(static_cast<s32>(0)), y(static_cast<s32>(0))
     {
     }
 
@@ -317,7 +317,7 @@ namespace Anki
     }
 
     Point_f32::Point_f32()
-      : x(f32(0)), y(f32(0))
+      : x(static_cast<f32>(0)), y(static_cast<f32>(0))
     {
     }
 
@@ -369,7 +369,7 @@ namespace Anki
     }
 
     Point_f64::Point_f64()
-      : x(f64(0)), y(f64(0))
+      : x(static_cast<f64>(0)), y(static_cast<f64>(0))
     {
     }
 

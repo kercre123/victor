@@ -8,14 +8,20 @@
 #include "anki/embeddedCommon/dataStructures.h"
 #include "anki/embeddedCommon/point.h"
 
-//#include <iostream>
 #include <assert.h>
-#include <string>
 #include <stdio.h>
 #include <stdlib.h>
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 #include "opencv2/opencv.hpp"
+#endif
+
+#define USE_ARRAY_INLINE_POINTERS
+
+#ifdef USE_ARRAY_INLINE_POINTERS
+#define ARRAY_INLINE_POINTERS inline
+#else
+#define ARRAY_INLINE_POINTERS
 #endif
 
 namespace Anki
@@ -41,16 +47,16 @@ namespace Anki
       Array_u8(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
-      const inline u8* Pointer(const s32 index0, const s32 index1) const;
+      const ARRAY_INLINE_POINTERS u8* Pointer(const s32 index0, const s32 index1) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline u8* Pointer(const s32 index0, const s32 index1);
+      ARRAY_INLINE_POINTERS u8* Pointer(const s32 index0, const s32 index1);
 
       // Pointer to the data, at a given (y,x) location
-      const inline u8* Pointer(const Point_s16 &point) const;
+      const ARRAY_INLINE_POINTERS u8* Pointer(const Point_s16 &point) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline u8* Pointer(const Point_s16 &point);
+      ARRAY_INLINE_POINTERS u8* Pointer(const Point_s16 &point);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       void Show(const char * const windowName, const bool waitForKeypress) const;
@@ -137,16 +143,16 @@ namespace Anki
       Array_s8(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
-      const inline s8* Pointer(const s32 index0, const s32 index1) const;
+      const ARRAY_INLINE_POINTERS s8* Pointer(const s32 index0, const s32 index1) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline s8* Pointer(const s32 index0, const s32 index1);
+      ARRAY_INLINE_POINTERS s8* Pointer(const s32 index0, const s32 index1);
 
       // Pointer to the data, at a given (y,x) location
-      const inline s8* Pointer(const Point_s16 &point) const;
+      const ARRAY_INLINE_POINTERS s8* Pointer(const Point_s16 &point) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline s8* Pointer(const Point_s16 &point);
+      ARRAY_INLINE_POINTERS s8* Pointer(const Point_s16 &point);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       void Show(const char * const windowName, const bool waitForKeypress) const;
@@ -232,16 +238,16 @@ namespace Anki
       Array_u16(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
-      const inline u16* Pointer(const s32 index0, const s32 index1) const;
+      const ARRAY_INLINE_POINTERS u16* Pointer(const s32 index0, const s32 index1) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline u16* Pointer(const s32 index0, const s32 index1);
+      ARRAY_INLINE_POINTERS u16* Pointer(const s32 index0, const s32 index1);
 
       // Pointer to the data, at a given (y,x) location
-      const inline u16* Pointer(const Point_s16 &point) const;
+      const ARRAY_INLINE_POINTERS u16* Pointer(const Point_s16 &point) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline u16* Pointer(const Point_s16 &point);
+      ARRAY_INLINE_POINTERS u16* Pointer(const Point_s16 &point);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       void Show(const char * const windowName, const bool waitForKeypress) const;
@@ -328,16 +334,16 @@ namespace Anki
       Array_s16(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
-      const inline s16* Pointer(const s32 index0, const s32 index1) const;
+      const ARRAY_INLINE_POINTERS s16* Pointer(const s32 index0, const s32 index1) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline s16* Pointer(const s32 index0, const s32 index1);
+      ARRAY_INLINE_POINTERS s16* Pointer(const s32 index0, const s32 index1);
 
       // Pointer to the data, at a given (y,x) location
-      const inline s16* Pointer(const Point_s16 &point) const;
+      const ARRAY_INLINE_POINTERS s16* Pointer(const Point_s16 &point) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline s16* Pointer(const Point_s16 &point);
+      ARRAY_INLINE_POINTERS s16* Pointer(const Point_s16 &point);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       void Show(const char * const windowName, const bool waitForKeypress) const;
@@ -424,16 +430,16 @@ namespace Anki
       Array_u32(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
-      const inline u32* Pointer(const s32 index0, const s32 index1) const;
+      const ARRAY_INLINE_POINTERS u32* Pointer(const s32 index0, const s32 index1) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline u32* Pointer(const s32 index0, const s32 index1);
+      ARRAY_INLINE_POINTERS u32* Pointer(const s32 index0, const s32 index1);
 
       // Pointer to the data, at a given (y,x) location
-      const inline u32* Pointer(const Point_s16 &point) const;
+      const ARRAY_INLINE_POINTERS u32* Pointer(const Point_s16 &point) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline u32* Pointer(const Point_s16 &point);
+      ARRAY_INLINE_POINTERS u32* Pointer(const Point_s16 &point);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       void Show(const char * const windowName, const bool waitForKeypress) const;
@@ -520,16 +526,16 @@ namespace Anki
       Array_s32(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
-      const inline s32* Pointer(const s32 index0, const s32 index1) const;
+      const ARRAY_INLINE_POINTERS s32* Pointer(const s32 index0, const s32 index1) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline s32* Pointer(const s32 index0, const s32 index1);
+      ARRAY_INLINE_POINTERS s32* Pointer(const s32 index0, const s32 index1);
 
       // Pointer to the data, at a given (y,x) location
-      const inline s32* Pointer(const Point_s16 &point) const;
+      const ARRAY_INLINE_POINTERS s32* Pointer(const Point_s16 &point) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline s32* Pointer(const Point_s16 &point);
+      ARRAY_INLINE_POINTERS s32* Pointer(const Point_s16 &point);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       void Show(const char * const windowName, const bool waitForKeypress) const;
@@ -616,16 +622,16 @@ namespace Anki
       Array_f32(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
-      const inline f32* Pointer(const s32 index0, const s32 index1) const;
+      const ARRAY_INLINE_POINTERS f32* Pointer(const s32 index0, const s32 index1) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline f32* Pointer(const s32 index0, const s32 index1);
+      ARRAY_INLINE_POINTERS f32* Pointer(const s32 index0, const s32 index1);
 
       // Pointer to the data, at a given (y,x) location
-      const inline f32* Pointer(const Point_s16 &point) const;
+      const ARRAY_INLINE_POINTERS f32* Pointer(const Point_s16 &point) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline f32* Pointer(const Point_s16 &point);
+      ARRAY_INLINE_POINTERS f32* Pointer(const Point_s16 &point);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       void Show(const char * const windowName, const bool waitForKeypress) const;
@@ -712,16 +718,16 @@ namespace Anki
       Array_f64(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
-      const inline f64* Pointer(const s32 index0, const s32 index1) const;
+      const ARRAY_INLINE_POINTERS f64* Pointer(const s32 index0, const s32 index1) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline f64* Pointer(const s32 index0, const s32 index1);
+      ARRAY_INLINE_POINTERS f64* Pointer(const s32 index0, const s32 index1);
 
       // Pointer to the data, at a given (y,x) location
-      const inline f64* Pointer(const Point_s16 &point) const;
+      const ARRAY_INLINE_POINTERS f64* Pointer(const Point_s16 &point) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline f64* Pointer(const Point_s16 &point);
+      ARRAY_INLINE_POINTERS f64* Pointer(const Point_s16 &point);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       void Show(const char * const windowName, const bool waitForKeypress) const;
@@ -808,16 +814,16 @@ namespace Anki
       Array_Point_s16(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
-      const inline Point_s16* Pointer(const s32 index0, const s32 index1) const;
+      ARRAY_INLINE_POINTERS const Point_s16* Pointer(const s32 index0, const s32 index1) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline Point_s16* Pointer(const s32 index0, const s32 index1);
+      ARRAY_INLINE_POINTERS Point_s16* Pointer(const s32 index0, const s32 index1);
 
       // Pointer to the data, at a given (y,x) location
-      const inline Point_s16* Pointer(const Point_s16 &point) const;
+      ARRAY_INLINE_POINTERS const Point_s16* Pointer(const Point_s16 &point) const;
 
       // Pointer to the data, at a given (y,x) location
-      inline Point_s16* Pointer(const Point_s16 &point);
+      ARRAY_INLINE_POINTERS Point_s16* Pointer(const Point_s16 &point);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       void Show(const char * const windowName, const bool waitForKeypress) const;
@@ -880,6 +886,7 @@ namespace Anki
       //Array_Point_s16 & operator= (const Array_Point_s16 & rightHandSide); // Not allowed
     }; // class Array_Point_s16
 
+#ifdef USE_ARRAY_INLINE_POINTERS
     // Pointer to the data, at a given (y,x) location
     const inline u8* Array_u8::Pointer(const s32 index0, const s32 index1) const
     {
@@ -1166,6 +1173,8 @@ namespace Anki
     {
       return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
     }
+
+#endif // USE_ARRAY_INLINE_POINTERS
   } // namespace Embedded
 } //namespace Anki
 
