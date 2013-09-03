@@ -58,11 +58,12 @@ classdef Observation
                 
                 % Set the pose based on the result of the matLocalization
                 this.pose = Pose(orient*[0 0 -1], [xMat yMat 0]);
-                                
+                this.pose.name = 'ObservationPose';
+                
                 % Also update the parent robot's pose to match (*before* 
                 % adding new blocks, whose position will depend on this):
                 this.robot.pose = this.pose;
-                
+                                
                 % Add new markers/blocks to world or merge existing ones, 
                 % relative to robot's updated position
                 for i_marker = 1:numSeenMarkers
@@ -152,12 +153,12 @@ classdef Observation
                             % last time it saw this block AND that block must
                             % not have been moved.
                             B_temp = Block(bType, this.numMarkers);
-                            markerPose = BlockWorld.computeBlockPose(...
+                            blockPose = BlockWorld.computeBlockPose(...
                                 this.robot, B_temp, this.markers(i_marker));
-                            minDist = compare(markerPose, world.blocks{bType}{1}.pose);
+                            minDist = compare(blockPose, world.blocks{bType}{1}.pose);
                             whichBlock = 1;
                             for i_block = 2:length(world.blocks{bType})
-                                crntDist = compare(markerPose, world.blocks{bType}{i_block}.pose);
+                                crntDist = compare(blockPose, world.blocks{bType}{i_block}.pose);
                                 if crntDist < minDist
                                     minDist = crntDist;
                                     whichBlock = i_block;
@@ -170,7 +171,7 @@ classdef Observation
                                     this.markers{i_marker}.corners;
                                 
                                 matchedMarkers3D{i_marker} = getPosition( ...
-                                    world.blocks{bType}{whichBlock}.getFaceMarker(this.markers{i_marker}.faceType));
+                                    world.blocks{bType}{whichBlock}.getFaceMarker(this.markers{i_marker}.faceType), 'World');
                             end % IF a close-enough block was found
                             
                         end % IF there is already a block of this type
@@ -194,9 +195,14 @@ classdef Observation
                         matchedMarkers2D = vertcat(matchedMarkers2D{:});
                         matchedMarkers3D = vertcat(matchedMarkers3D{:});
                         
-                        invRobotPose = this.robot.camera.computeExtrinsics( ...
-                            matchedMarkers2D, matchedMarkers3D, 'initializeWithCurrentPose', true);
-                        this.pose = inv(invRobotPose);
+                        % Compute the marker's pose w.r.t. the camera
+                        markerPose_wrt_camera = this.robot.camera.computeExtrinsics( ...
+                            matchedMarkers2D, matchedMarkers3D, ...
+                            'initializeWithCurrentPose', true);
+                        
+                        % Now get the robot's pose w.r.t. that marker,
+                        % using Pose tree chaining:
+                        this.pose = this.robot.pose.getWithRespectTo(markerPose_wrt_camera);
                                    
                         % Also update the parent robot's pose to match (*before*
                         % adding new blocks, whose position will depend on this):

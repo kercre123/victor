@@ -47,20 +47,13 @@ classdef Block < handle
         end
         
         function varargout = getPosition(this, poseIn)
-            % Gets position w.r.t. root Pose:
+            % Gets position of the model points (w.r.t. given pose).
+            
             varargout = cell(1,nargout);
             if nargin < 2
                 P = this.pose;
             else
-                P = poseIn;
-            end
-            
-            % Chain poses together up to root node:
-            while ~isempty(P.parent)
-                %P = P * P.parent;
-                newParent = P.parent.parent;
-                P = P * P.parent;
-                P.parent = newParent;
+                P = this.pose.getWithRespectTo(poseIn);
             end
             
             [varargout{:}] = P.applyTo(this.model);
@@ -94,13 +87,14 @@ classdef Block < handle
         function set.pose(this, P)
             assert(isa(P, 'Pose'), ...
                 'Must set pose property to a Pose object.');
-            this.poseProtected = P;
+            this.poseProtected.update(P.Rmat, P.T, P.sigma);
+            this.poseProtected.parent = P.parent;
             
-            % Also update the constituent faces' poses:
-            for i = 1:length(this.markers)
-                M = this.markers{i};
-                M.pose = this.poseProtected;
-            end
+%             % Also update the constituent faces' poses:
+%             for i = 1:length(this.markers)
+%                 M = this.markers{i};
+%                 M.pose = this.poseProtected;
+%             end
         end
         
         function d = get.mindim(this)

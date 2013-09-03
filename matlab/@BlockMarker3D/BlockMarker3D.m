@@ -42,32 +42,25 @@ classdef BlockMarker3D < handle
                 'frameInit should be a Pose object.');
             
             this.ID = id;
-            this.pose = Pose();
+            %this.pose = Pose();
             
             this.block = parentBlock;
             this.faceType  = faceType_;
   
             %this.model = this.Width*[0 0 0; 0 0 -1; 1 0 0; 1 0 -1];
             this.model = this.Width/2*[-1 0 1; -1 0 -1; 1 0 1; 1 0 -1];
-            this.model = poseInit.applyTo(this.model);
+            %this.model = poseInit.applyTo(this.model);
+            this.pose = poseInit;
             
         end
         
         function varargout = getPosition(this, poseIn)
-            % Gets position w.r.t. root Pose:
+            % Gets position of the model points (w.r.t. given pose).
             varargout = cell(1,nargout);
             if nargin < 2
                 P = this.pose;
             else
-                P = poseIn;
-            end
-            
-            % Chain poses together up to root node:
-            while ~isempty(P.parent)
-                %P = P*P.parent;
-                newParent = P.parent.parent;
-                P = P * P.parent;
-                P.parent = newParent;
+                P = this.pose.getWithRespectTo(poseIn);
             end
             
             [varargout{:}] = P.applyTo(this.model);

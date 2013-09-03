@@ -12,7 +12,8 @@ end
 initHandle = isempty(this.handle) || ~ishandle(this.handle) || ...
     get(this.handle, 'Parent') ~= AxesHandle;
 
-pos = getPosition(this);
+% Get the position of the block w.r.t. the world coordinate system:
+pos = getPosition(this, 'World');
 X = reshape(pos(:,1), 4, []);
 Y = reshape(pos(:,2), 4, []);
 Z = reshape(pos(:,3), 4, []);
