@@ -1,4 +1,8 @@
-classdef Pose
+classdef Pose < handle
+    
+    properties
+        name;
+    end
     
     properties(GetAccess = 'public', SetAccess = 'protected')
        
@@ -39,44 +43,25 @@ classdef Pose
         
         function this = Pose(varargin)
             
+            this.name = '';
             this.parent = [];
             this.treeDepth = 0;
             
             switch(nargin)
                 case 0
-                    %this.Rmat = eye(3);
-                    this.Rvec = zeros(3,1);
-                    [this.Rmat, this.dRmat_dRvec] = rodrigues(this.Rvec);
-                    this.T = zeros(3,1);
+                    this.updateRotation(zeros(3,1));
+                    this.updateTranslation(zeros(3,1));
                     
                 case {2,3}
                     Rin = varargin{1};
                     Tin = varargin{2};
-                    assert(isvector(Tin) && length(Tin)==3, ...
-                        'T should be a 3-element vector.');
                     
-                    this.T = Tin(:);
-                    
-                    if isvector(Rin)
-                        assert(length(Rin)==3, ...
-                            'Rotation vector should have 3 elements.');
-                        [this.Rmat, this.dRmat_dRvec] = rodrigues(Rin);
-                        this.Rvec = rodrigues(this.Rmat);
-                        
-                    elseif ismatrix(Rin)
-                        assert(isequal(size(Rin), [3 3]), ...
-                            'Rotation matrix should be 3x3.');
-                        this.Rvec = rodrigues(Rin);
-                        [this.Rmat, this.dRmat_dRvec] = rodrigues(this.Rvec);
-                        
-                    else
-                        error('Unrecognized form for rotation.');
-                    end
+                    this.updateTranslation(Tin);
+                    this.updateRotation(Rin);
                     
                     if nargin==3 && ~isempty(varargin{3})
-                        this.sigma = varargin{3};
-                        assert(ismatrix(this.sigma) && size(this.sigma,1)==6 && ...
-                            size(this.sigma,2)==6, 'Expecting 6x6 covariance matrix.');
+                        Cin = varargin{3};
+                        this.updateCovariance(Cin);
                     end
                         
                 otherwise
@@ -91,8 +76,61 @@ classdef Pose
             P = Pose(this.Rmat', -this.Rmat'*this.T, this.sigma);
         end
         
+        function update(this, Rnew, Tnew, covNew)
+           % Update R and T (and optionally, covariance) without changing 
+           % pose tree position (parent/treedepth)
+           this.updateRotation(Rnew);
+           this.updateTranslation(Tnew);
+           
+           if nargin > 3 && ~isempty(covNew)
+               this.updateCovariance(covNew);
+           end
+        end
         
     end % METHODS (public)
+    
+    methods(Access = 'protected')
+        % TODO: I could convert all these "udpate" functions to dependent
+        % "set" functions...
+        function updateRotation(this, Rin)
+            if isvector(Rin)
+                assert(length(Rin)==3, ...
+                    'Rotation vector should have 3 elements.');
+                [this.Rmat, this.dRmat_dRvec] = rodrigues(Rin);
+                this.Rvec = rodrigues(this.Rmat);
+                
+            elseif ismatrix(Rin)
+                assert(isequal(size(Rin), [3 3]), ...
+                    'Rotation matrix should be 3x3.');
+                this.Rvec = rodrigues(Rin);
+                [this.Rmat, this.dRmat_dRvec] = rodrigues(this.Rvec);
+                
+            else
+                error('Unrecognized form for rotation.');
+            end
+        end % FUNCTION updateRotation()
+        
+        function updateTranslation(this, Tin)
+            assert(isvector(Tin) && length(Tin)==3, ...
+                'T should be a 3-element vector.');
+            
+            this.T = Tin(:);
+        end % FUNCTION updateTranslation()
+        
+        function updateCovariance(this, Cin)
+            assert(ismatrix(Cin) && size(Cin,1)==6 && ...
+                size(Cin,2)==6, 'Expecting 6x6 covariance matrix.');
+            
+            this.sigma = Cin;
+        end % FUNCTION updateCovariance()
+        
+    end % METHODS (protected)
+    
+    methods(Static = true)
+        function isRoot = isRootPose(P)
+           isRoot = isempty(P) || any(strcmpi(P, {'World', 'Root'}));
+        end
+    end
     
     methods
         function theta = get.angle(this)
@@ -109,7 +147,8 @@ classdef Pose
         end
         
         function set.parent(this, P)
-            if isempty(P)
+            if Pose.isRootPose(P)
+                P = [];
                 this.treeDepth = 0;
             else
                 this.treeDepth = P.treeDepth + 1;

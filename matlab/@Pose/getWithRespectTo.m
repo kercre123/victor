@@ -1,11 +1,17 @@
 function P_wrt_other = getWithRespectTo(this, other)
 % Find this Pose with respect to a different parent.
 
-from = this;
-to   = other;
 
+from = this;
 P_from = Pose(from.Rmat, from.T);
-P_to   = Pose(to.Rmat, to.T);
+
+if Pose.isRootPose(other)    
+    to = Pose();
+    P_to = to;
+else
+    to   = other;
+    P_to = Pose(to.Rmat, to.T);
+end
 
 % First make sure we are pointing at two nodes of the same tree depth,
 % which is the only way they could possibly share the same parent.
@@ -19,7 +25,7 @@ while from.treeDepth > to.treeDepth
         error('The two poses must be part of the same tree.');
     end
     
-    P_from = P_from * from.parent;
+    P_from = from.parent * P_from;
     from = from.parent;
 end
 
@@ -28,7 +34,7 @@ while to.treeDepth > from.treeDepth
         error('The two poses must be part of the same tree.');
     end
     
-    P_to = P_to * to.parent;
+    P_to = to.parent * P_to;
     to = to.parent;
 end
 
@@ -43,8 +49,8 @@ while to.parent ~= from.parent
         error('The two poses must be part of the same tree.');
     end
     
-    P_from = P_from * from.parent;
-    P_to = P_to * to.parent;
+    P_from = from.parent * P_from;
+    P_to = to.parent * P_to;
     
     to = to.parent;
     from = from.parent;
@@ -53,7 +59,7 @@ end
 % Now compute the total transformation from this pose, up the "from" path
 % in the tree, to the common ancestor, and back down the "to" side to the 
 % final other pose.
-P_wrt_other = P_from * P_to.inv; 
+P_wrt_other = P_to.inv * P_from; 
 
 % The Pose we are about to return is w.r.t. the "other" pose provided (that
 % was the whole point of the exercise!), so set its parent accordingly:
@@ -92,5 +98,22 @@ E2.pose = E.pose.getWithRespectTo(D.pose);
 draw(E2, 'FaceColor', 'b', 'FaceAlpha', .25);
 axis equal
 
+%% Test 2
+A = Block(75, 1);  
+B = Block(75, 1); B.pose = Pose([0 0 0], [0 0 100]); B.pose.parent = A.pose;
+C = Block(75, 1); C.pose = Pose([0 0 pi/2], [0 0 100]); C.pose.parent = B.pose;
+
+clf
+draw(A, 'FaceColor', 'r');
+draw(B, 'FaceColor', 'g', 'FaceAlpha', .35);
+draw(C, 'FaceColor', 'b', 'FaceAlpha', .35);
+
+%%
+C2 = Block(75, 1); C2.pose = C.pose.getWithRespectTo(A.pose);
+draw(C2, 'FaceColor', 'g', 'FaceAlpha', .25);
+
+B2 = Block(75, 1); B2.pose = B.pose.getWithRespectTo(C.pose);
+draw(B2, 'FaceColor', 'b', 'FaceAlpha', .25);
+axis equal
 %%
 end % FUCNTION test()
