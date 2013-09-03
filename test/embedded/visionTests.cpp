@@ -14,50 +14,51 @@
 Anki::Embedded::Matlab matlab(false);
 #endif
 
-#define MAX_BYTES 5000
-char buffer[MAX_BYTES];
+#define STATIC_ALLOCATION
 
+#define MAX_BYTES 5000
+
+#ifdef STATIC_ALLOCATION
+#ifdef _MSC_VER
+char buffer[MAX_BYTES];
+#else
+//char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss")));
+char buffer[MAX_BYTES] __attribute__((section(".ddr.bss")));
+#endif // #ifdef USING_MOVIDIUS_COMPILER
+#else // #ifdef STATIC_ALLOCATION
+#include <stdlib.h>
+#endif // #ifdef STATIC_ALLOCATION ... #else
+
+//IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, BinomialFilter)
 GTEST_TEST(CoreTech_Vision, BinomialFilter)
 {
   const s32 width = 10;
   const s32 height = 5;
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = MIN(MAX_BYTES, 5000);
-  //void *buffer = calloc(numBytes, 1);
-  //ASSERT_TRUE(buffer != NULL);
 
-  //printf("1\n");
+#ifndef STATIC_ALLOCATION
+  void *buffer = calloc(numBytes, 1);
+  ASSERT_TRUE(buffer != NULL);
+#endif // #ifndef STATIC_ALLOCATION
 
-  //Anki::Embedded::MemoryStack ms(&buffer[0], numBytes);
   Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
   ASSERT_TRUE(ms.IsValid());
 
-  //printf("1a\n");
-
   Anki::Embedded::Array_u8 img(height, width, ms, false);
-  //Anki::Embedded::Array_u8 img(1, 1, ms, false);
-
-  //printf("1b\n");
+  img.Set(static_cast<u8>(0));
 
   Anki::Embedded::Array_u8 imgFiltered(height, width, ms);
 
-  //printf("2\n");
-
   ASSERT_TRUE(img.get_rawDataPointer()!= NULL);
   ASSERT_TRUE(imgFiltered.get_rawDataPointer()!= NULL);
-
-  //printf("3\n");
 
   for(s32 x=0; x<width; x++) {
     *img.Pointer(2,x) = static_cast<u8>(x);
   }
 
-  //printf("4\n");
-
   Anki::Embedded::Result result = Anki::Embedded::BinomialFilter(img, imgFiltered, ms);
-
-  //printf("5\n");
 
   //printf("img:\n");
   //img.Print();
@@ -69,8 +70,6 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
 
   const u8 correctResults[5][10] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 1, 1, 1, 2, 2, 2, 3}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
-  //printf("6\n");
-
   for(s32 y=0; y<height; y++) {
     for(s32 x=0; x<width; x++) {
       //printf("(%d,%d) expected:%d actual:%d\n", y, x, correctResults[y][x], *(imgFiltered.Pointer(y,x)));
@@ -78,12 +77,14 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
     }
   }
 
-  //free(buffer); buffer = NULL;
+#ifndef STATIC_ALLOCATION
+  free(buffer); buffer = NULL;
+#endif // #ifndef STATIC_ALLOCATION
 
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
+IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
 {
   const s32 width = 10;
   const s32 height = 4;
@@ -91,9 +92,13 @@ GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
 
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = MIN(MAX_BYTES, 1000);
-  //void *buffer = calloc(numBytes, 1);
-  //ASSERT_TRUE(buffer != NULL);
-  Anki::Embedded::MemoryStack ms(&buffer[0], numBytes);
+
+#ifndef STATIC_ALLOCATION
+  void *buffer = calloc(numBytes, 1);
+  ASSERT_TRUE(buffer != NULL);
+#endif // #ifndef STATIC_ALLOCATION
+
+  Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
   Anki::Embedded::Array_u8 img(height, width, ms);
   Anki::Embedded::Array_u8 imgDownsampled(height/downsampleFactor, width/downsampleFactor, ms);
@@ -118,12 +123,14 @@ GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
     }
   }
 
-  //free(buffer); buffer = NULL;
+#ifndef STATIC_ALLOCATION
+  free(buffer); buffer = NULL;
+#endif // #ifndef STATIC_ALLOCATION
 
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
+IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
 {
   const s32 width = 16;
   const s32 height = 16;
@@ -146,11 +153,33 @@ GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
     "255	0	0	0	0	0	0	0	0	255	23	117	240	93	189	113 "
     "255	255	255	255	255	255	255	255	255	255	147	169	165	195	133	5";
 
+  const u32 correctResults[16][16] = {
+    {983040, 2097152, 4390912, 8585216, 12124160, 12976128, 12386304, 10158080, 6488064, 4587520, 4849664, 4849664, 4259840, 4784128, 6225920, 6422528},
+    {1638400, 4063232, 6029312, 8847360, 9580544, 10285056, 9109504, 9519104, 8896512, 8667136, 10747904, 10747904, 7880704, 7344128, 6959104, 7012352},
+    {2293760, 4947968, 6814720, 7451648, 8088576, 8725504, 9028608, 8997888, 8967168, 10043392, 14680064, 14680064, 11599872, 8269824, 7995392, 7471104},
+    {4587520, 6164480, 7009280, 7478272, 9654272, 10133504, 8670208, 8709120, 8748032, 10444800, 14680064, 14680064, 9486336, 8364032, 7331840, 6488064},
+    {7536640, 7712768, 8425472, 9195520, 10022912, 10346496, 10166272, 9998336, 8528896, 8637440, 10084352, 9650176, 8568832, 6094848, 5373952, 5570560},
+    {9699328, 8581120, 8605696, 8863744, 9355264, 9543680, 11403264, 9338880, 8309760, 8192000, 8060928, 7602176, 6356992, 5308416, 5439488, 6160384},
+    {11468800, 8769536, 7925760, 9109504, 9764864, 9764864, 9306112, 9109504, 7880704, 8159232, 8222720, 7536640, 7077888, 7393280, 7073792, 7012352},
+    {12255232, 8323072, 5242880, 6555648, 6420480, 6285312, 6422528, 6832128, 7241728, 9699328, 9961472, 8458240, 8716288, 8192000, 7426048, 7536640},
+    {11796480, 7241728, 1966080, 3457024, 2965504, 2945024, 3395584, 1966080, 6602752, 9371648, 10420224, 8630272, 8097792, 7743488, 7794688, 8257536},
+    {11468800, 6520832, 3735552, 2019328, 1372160, 1335296, 1908736, 3289088, 5963776, 9043968, 10223616, 8482816, 7983104, 7208960, 7979008, 8847360},
+    {11468800, 6160384, 3244032, 1437696, 741376, 696320, 1302528, 2756608, 5795840, 8912896, 9633792, 8015872, 7565312, 6750208, 7979008, 9109504},
+    {11468800, 6205440, 3280896, 1470464, 774144, 724992, 1323008, 2744320, 6098944, 8585216, 8978432, 7766016, 5963776, 6291456, 8036352, 9109504},
+    {11468800, 6656000, 3846144, 2117632, 1470464, 1421312, 1970176, 3252224, 6402048, 8126464, 8454144, 6815744, 5963776, 6553600, 8151040, 9502720},
+    {11796480, 5898240, 1966080, 3846144, 3280896, 3231744, 3698688, 1966080, 6365184, 7270400, 7620608, 7274496, 7974912, 7974912, 8847360, 9437184},
+    {13107200, 9793536, 5898240, 6656000, 6205440, 6156288, 6508544, 7217152, 8282112, 8904704, 9084928, 9056256, 8818688, 9306112, 8781824, 7667712},
+    {15073280, 13107200, 11796480, 11468800, 11468800, 11468800, 11468800, 11796480, 12517376, 12255232, 10813440, 10158080, 10551296, 10158080, 7929856, 5046272}};
+
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = MIN(MAX_BYTES, 5000);
-  //void *buffer = calloc(numBytes, 1);
-  //ASSERT_TRUE(buffer != NULL);
-  Anki::Embedded::MemoryStack ms(&buffer[0], numBytes);
+
+#ifndef STATIC_ALLOCATION
+  void *buffer = calloc(numBytes, 1);
+  ASSERT_TRUE(buffer != NULL);
+#endif // #ifndef STATIC_ALLOCATION
+
+  Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
   Anki::Embedded::Array_u8 img(height, width, ms);
   ASSERT_TRUE(img.get_rawDataPointer() != NULL);
@@ -162,14 +191,24 @@ GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
   ASSERT_TRUE(ComputeCharacteristicScaleImage(img, numLevels, scaleImage, ms) == Anki::Embedded::RESULT_OK);
 
   // TODO: manually compute results, and check
+  //scaleImage.Print();
 
-  //free(buffer); buffer = NULL;
+  for(s32 y=0; y<height; y++) {
+    for(s32 x=0; x<width; x++) {
+      //printf("(%d,%d) expected:%d actual:%d\n", y, x, correctResults[y][x], *(imgDownsampled.Pointer(y,x)));
+      ASSERT_TRUE(correctResults[y][x] == *scaleImage.Pointer(y,x));
+    }
+  }
+
+#ifndef STATIC_ALLOCATION
+  free(buffer); buffer = NULL;
+#endif // #ifndef STATIC_ALLOCATION
 
   GTEST_RETURN_HERE;
 }
 
 #if defined(ANKICORETECH_USE_MATLAB)
-GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
+IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 {
   const s32 width = 640;
   const s32 height = 480;
@@ -205,7 +244,7 @@ GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 }
 #endif // #if defined(ANKICORETECH_USE_MATLAB)
 
-GTEST_TEST(CoreTech_Vision, TraceBoundary)
+IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
 {
   const s32 width = 16;
   const s32 height = 16;
@@ -232,9 +271,13 @@ GTEST_TEST(CoreTech_Vision, TraceBoundary)
 
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = MIN(MAX_BYTES, 5000);
-  //void *buffer = calloc(numBytes, 1);
-  //ASSERT_TRUE(buffer != NULL);
-  Anki::Embedded::MemoryStack ms(&buffer[0], numBytes);
+
+#ifndef STATIC_ALLOCATION
+  void *buffer = calloc(numBytes, 1);
+  ASSERT_TRUE(buffer != NULL);
+#endif // #ifndef STATIC_ALLOCATION
+
+  Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
   Anki::Embedded::Array_u8 binaryImg(height, width, ms);
   const Anki::Embedded::Point_s16 startPoint(8,6);
@@ -250,10 +293,13 @@ GTEST_TEST(CoreTech_Vision, TraceBoundary)
 
   ASSERT_TRUE(boundary.get_size() == numPoints);
   for(s32 iPoint=0; iPoint<numPoints; iPoint++) {
+    //printf("%d) (%d,%d) and (%d,%d)\n", iPoint, boundary.Pointer(iPoint)->x, boundary.Pointer(iPoint)->y, groundTruth[iPoint].x, groundTruth[iPoint].y);
     ASSERT_TRUE(*boundary.Pointer(iPoint) == groundTruth[iPoint]);
   }
 
-  //free(buffer); buffer = NULL;
+#ifndef STATIC_ALLOCATION
+  free(buffer); buffer = NULL;
+#endif // #ifndef STATIC_ALLOCATION
 
   GTEST_RETURN_HERE;
 }
