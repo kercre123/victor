@@ -1,4 +1,13 @@
 function varargout = computeExtrinsics(this, p, P, varargin)
+% Compute the 3D pose of observed points, with respect to the camera.
+%
+% pose = camera.computeExtrinsics(points2D, points3D, <name/value pairs...>)
+% [R,T,<cov>] = camera.computeExtrinsics(...)
+%
+%
+% ------------
+% Andrew Stein
+%
 
 maxRefineIterations = 20;
 initializeWithCurrentPose = false;
@@ -67,14 +76,23 @@ else
 end % IF do refinement
 
 
-% Put camera coordinates into "world" coordinates (or the coordinates of
-% whatever is holding this camera, e.g. a Robot)
+% This is now handled automatically by Pose tree chaining:
+% % Put camera coordinates into "world" coordinates (or the coordinates of
+% % whatever is holding this camera, e.g. a Robot)
+% if useCovariance
+%     poseCov = inv(JtJ);
+%     P = this.pose * Pose(Rmat, T, poseCov);
+% else
+%     P = this.pose * Pose(Rmat, T); %#ok<UNRCH>
+% end
+
 if useCovariance
     poseCov = inv(JtJ);
-    P = this.pose * Pose(Rmat, T, poseCov);
+    P = Pose(Rmat, T, poseCov);
 else
-    P = this.pose * Pose(Rmat, T); %#ok<UNRCH>
+    P = Pose(Rmat, T); %#ok<UNRCH>
 end
+P.parent = this.pose;
 
 switch(nargout)
     case 3

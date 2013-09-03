@@ -1,8 +1,8 @@
 function varargout = projectPoints(this, varargin)
 % Project 3D world coordinates onto the image plane of a calibrated camera.
 %
-% [u,v] = camera.projectPoints(X,Y,Z, <Frame>)
-% [p]   = camera.projectPoints(P, <Frame>)
+% [u,v] = camera.projectPoints(X,Y,Z, <Pose>)
+% [p]   = camera.projectPoints(P, <Pose>)
 %
 %   Inputs are 3D (X,Y,Z) coordinates, separated or combined into 
 %    P = [X(:) Y(:) Z(:)]
@@ -10,8 +10,9 @@ function varargout = projectPoints(this, varargin)
 %   Outputs are image coordinates (u,v), separated or combined into 
 %    p = [u(:) v(:)]
 %
-%   If a Frame is provided, points are first transformed by that Frame.
-%   Otherwise, they are transformed to be in the camera's frame (default).
+%   If a Pose is provided, points are first transformed by that Pose.
+%   Otherwise (default), they are assumed to be in the camera's coordinate
+%   frame, ready for projection.
 %
 %   (This exactly follows the projection model in Bouguet's camera 
 %    calibration toolbox.)
@@ -69,11 +70,7 @@ switch(nargin)
         error('Unexpected number of inputs.');
 end
 
-if isempty(pose)
-    % Put world coordinates into camera coordinates so we can project them
-    % below
-    P = this.pose.applyInvTo(P);
-else
+if ~isempty(pose)
     P = pose.applyTo(P);
 end
 
