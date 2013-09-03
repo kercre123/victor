@@ -18,11 +18,17 @@ classdef Robot < handle
         
         embeddedConversions;
         
+        % The neck is a fixed link on which the head (with camera) pivots.
+        neckPose; 
+        
+        % Keep track of untilted camera pose, since we will adjust from the
+        % untilted position to the current head pitch at each time step
+        % (and not incrementally from the current position)
         R_headCam;
         T_headCam;
-        headAnchor;
+        
         camPoseCov;
-        getHeadPitchFcn;
+        getHeadPitchFcn; % query current head pitch angle
         
         % For drawing:
         appearance = struct( ...
@@ -65,9 +71,9 @@ classdef Robot < handle
         
     end % PROPERTIES (get-public, set-protected)
     
-%     properties(GetAccess = 'protected', SetAccess = 'protected')
-%         poseProtected = Pose();
-%     end
+    properties(GetAccess = 'protected', SetAccess = 'protected')
+        pose_;
+    end
     
     methods(Access = 'public')
         
@@ -95,11 +101,13 @@ classdef Robot < handle
             this.appearance.EyeRadius = this.appearance.EyeRadiusFraction * ...
                 this.appearance.BodyWidth/2;
             
-            % From robot to camera frame:
-            % Rotation 90 degrees around x axis:
+            this.pose_ = Pose();
+            this.pose_.name = 'fromRobot_toWorld';
+            
+            % From camera to robot pose:
+            % Rotation -90 degrees around x axis:
             this.R_headCam = [1 0 0; 0 0 1; 0 -1 0];
-            this.T_headCam = [0; 30; 43];
-            this.headAnchor = [0; 0; 20];
+            this.T_headCam = [0; 30; 23];
             
             % Add uncertainty for Camera pose(s) w.r.t. robot?
             %   1 degree uncertainty in rotation
@@ -107,6 +115,14 @@ classdef Robot < handle
             Rcov = pi/180*eye(3);
             Tcov = (.1)^2*eye(3);
             this.camPoseCov = blkdiag(Rcov,Tcov);
+            
+            this.neckPose = Pose([0 0 0], [0; 0; 20]);
+            this.neckPose.parent = this.pose;
+            this.neckPose.name = 'fromNeck_toRobot';
+            
+            headPose = Pose(this.R_headCam, this.T_headCam, this.camPoseCov);
+            headPose.parent = this.neckPose;
+            headPose.name = 'fromHeadCam_toNeck';
             
             if isempty(GetHeadPitchFcn)    
                 this.getHeadPitchFcn = @()0;
@@ -119,7 +135,7 @@ classdef Robot < handle
             this.camera = Camera('device', CameraDevice, ...
                 'deviceType', CameraType, ...
                 'calibration', CameraCalibration, ...
-                'pose', Pose(this.R_headCam, this.T_headCam, this.camPoseCov));
+                'pose', headPose);
             
             if (isempty(this.world) && ~isempty(MatCameraDevice)) ...
                     || (~isempty(this.world) && this.world.hasMat)
@@ -143,9 +159,8 @@ classdef Robot < handle
             Rpitch = rodrigues(angle*[1 0 0]); 
             
             % Rotate around the head's anchor point:
-            Rnew = Rpitch * this.R_headCam;
-            Tnew = Rpitch*(this.T_headCam - this.headAnchor) + this.headAnchor;
-            this.camera.pose = Pose(Rnew, Tnew, this.camPoseCov);
+            this.camera.pose.update(Rpitch*this.R_headCam, ...
+                Rpitch*this.T_headCam);
         end
 
 
@@ -160,12 +175,7 @@ classdef Robot < handle
         function P = get.pose(this)
             % Asking for a robot's pose gives you the pose of the 
             % current observation:
-            %P = this.poseProtected;
-            if isempty(this.currentObservation)
-                P = Pose();
-            else
-                P = this.currentObservation.pose;
-            end
+            P = this.pose_;
         end
                 
         function o = get.origin(this)
@@ -174,39 +184,9 @@ classdef Robot < handle
         
         function set.pose(this, P)
             assert(isa(P, 'Pose'), 'Must provide a Pose object.');
-            
-            if false % Pose smoothing hack
-                
-                % Total hack of a filter on the robot's position: if the change
-                % is "too big" average the update with the previous position.
-                % TODO: Full-blown Kalman Filter and/or Bundle Adjustment.
-                prevAngle = norm(this.pose.Rvec);
-                newAngle = norm(P.Rvec);
-                
-                angleChange = abs(newAngle - prevAngle);
-                if angleChange > pi
-                    angleChange = 2*pi - angleChange;
-                end
-                
-                Tchange = max(abs(this.pose.T - P.T));
-                
-                angleSigma = 60*pi/180;
-                translationSigma = 50;
-                
-                w_angle = exp(-.5 * angleChange^2 / (2*angleSigma^2));
-                w_T     = exp(-.5 * Tchange^2 / (2*translationSigma^2));
-                
-                w = min(w_angle, w_T);
-                
-                Rvec = w*P.Rvec + (1-w)*this.pose.Rvec;
-                T = w*P.T + (1-w)*this.pose.T;
-                
-                this.observationWindow{1}.pose = Pose(Rvec, T);
-            else
-                this.observationWindow{1}.pose = P;
-            end
+            this.pose_.update(P.Rmat, P.T, P.sigma);
         end
-        %}
+        
     end
     
 end % CLASSDEF Robot

@@ -32,12 +32,15 @@ for i_blockType = 1:BlockWorld.MaxBlockTypes
 for i_block = 1:length(world.blocks{i_blockType})
     block = world.blocks{i_blockType}{i_block};
     if ~isempty(block)
-        pos = invRobotPose.applyTo(getPosition(block));
+        % Get the position of the block w.r.t. the camera, ready for
+        % projection:
+        pos = getPosition(block, camera.pose);
+                
         X = reshape(pos(:,1), 4, []);
         Y = reshape(pos(:,2), 4, []);
         Z = reshape(pos(:,3), 4, []);
         
-        [u,v] = camera.projectPoints(X, Y, Z);
+        [u,v] = camera.projectPoints(X, Y, Z);%, camera.pose);
         
         if any(u(:)>=1) || any(u(:)<=ncols) || ...
                 any(v(:)>=1) || any(v(:)<=nrows)
@@ -57,8 +60,10 @@ for i_block = 1:length(world.blocks{i_blockType})
         for i_marker = 1:block.numMarkers
             marker = block.markers{i_marker};
             
-            P = invRobotPose.applyTo(getPosition(marker));
-            
+            % Get the position of the marker w.r.t. the camera, ready for
+            % projection:
+            P = getPosition(marker, camera.pose);
+                        
             [u,v] = camera.projectPoints(P);
             
             if any(u(:)>=1) || any(u(:)<=ncols) || ...

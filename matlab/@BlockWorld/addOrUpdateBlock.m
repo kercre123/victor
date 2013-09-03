@@ -36,9 +36,9 @@ B_init = Block(blockType, this.numMarkers);
 
 % Estimate a pose for each 3D marker individually (remember, we don't yet
 % know if we are seeing faces of multiple blocks of the same type)
-markerPose = cell(1, numMarkers2D);
+blockPose = cell(1, numMarkers2D);
 for i_marker = 1:numMarkers2D
-    markerPose{i_marker} = BlockWorld.computeBlockPose(robot, B_init, ...
+    blockPose{i_marker} = BlockWorld.computeBlockPose(robot, B_init, ...
         markers2D(i_marker));
 end
 
@@ -56,7 +56,7 @@ if numMarkers2D > 1
             
             % see how far unassigned markers' poses are from this one
             unused = find(whichBlock==0);
-            d = compare(markerPose{i_marker}, markerPose(unused));
+            d = compare(blockPose{i_marker}, blockPose(unused));
             
             % all markers whose corresponding pose is close enough should
             % be clustered with this one
@@ -80,7 +80,7 @@ if numMarkers2D > 1
         B_new{i_blockExist} = Block(blockType, this.numMarkers);
         if length(whichMarkers)==1
             % No need to re-estimate, just use the one marker we saw.
-            B_new{i_blockExist}.pose = markerPose{whichMarkers};
+            B_new{i_blockExist}.pose = blockPose{whichMarkers};
         else
             B_new{i_blockExist}.pose = BlockWorld.computeBlockPose(robot, ...
                 B_init, markers2D(whichMarkers));            
@@ -90,7 +90,7 @@ if numMarkers2D > 1
 else
     numBlocks = 1;
     B_new = {B_init};
-    B_new{1}.pose = markerPose{1};
+    B_new{1}.pose = blockPose{1};
 end % IF numMarkers > 1
 
 %% Add / Merge Block(s)

@@ -26,7 +26,8 @@ else
     hold on
 end
 
-P = getPosition(this);
+% Get the position of the marker w.r.t. the world coordinate system:
+P = getPosition(this, 'World');
 X = P([1 3 4 2], 1);
 Y = P([1 3 4 2], 2);
 Z = P([1 3 4 2], 3);

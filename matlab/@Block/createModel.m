@@ -149,6 +149,9 @@ origin = origin(:) + Rmat*BlockMarker3D.Width/2*[1 0 -1]';
 index = this.faceTypeToIndex.Count + 1;
 this.faceTypeToIndex(faceType) = index;
 pose = Pose(Rmat, origin-scale(:)/2);
+pose.name = sprintf('%sBlockMarkerPose_Face%', ...
+    [upper(whichFace(1)) lower(whichFace(2:end))]);
+pose.parent = this.pose;
 
 assert(index <= length(this.markers), 'Index for markers too large.');
 this.markers{index} = BlockMarker3D(this, faceType, pose, ...
@@ -225,6 +228,9 @@ for faceID = 1:6
     
     % Build the corresponding 3D marker at that Pose 
     P = Pose(angle*axis, offset(:));
+    P.name = sprintf('BlockMarkerPose_Face%d', faceID);
+    P.parent = this.pose;
+    
     this.markers{index} = BlockMarker3D(this, faceID, P, ...
         firstMarkerID + index);
 end

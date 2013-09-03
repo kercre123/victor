@@ -1,4 +1,4 @@
-function markerPose = computeBlockPose(robot, B, markers2D)
+function blockPose = computeBlockPose(robot, B, markers2D)
 
 assert(iscell(markers2D), 'markers2D should be a cell array.');
 
@@ -13,11 +13,14 @@ end
 corners = vertcat(corners{:});
 Pmodel  = vertcat(Pmodel{:});
 
-% Figure out where the marker we saw is in 3D space, in camera's world 
-% coordinates, which are relative to the robot's current pose!
+% Figure out where the marker we saw is in 3D space, in camera's  
+% coordinate frame:
 markerPose = robot.camera.computeExtrinsics(corners, Pmodel);
 
-% Put the marker into the robot's world pose
-markerPose = robot.pose * markerPose;
+% Get the marker pose in World coordinates using the pose tree:
+markerPose = markerPose.getWithRespectTo('World');
 
-end
+% We measured the _marker_ pose.  We are returning the _block_ pose:
+blockPose = markerPose * marker3D.pose.inv;
+
+end % FUNCTION computeBlockPose()
