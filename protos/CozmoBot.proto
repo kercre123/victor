@@ -3,7 +3,7 @@ PROTO CozmoBot [
   field SFRotation rotation 0 1 0 0
   field SFString name "Cozmo"
   field SFFloat fieldOfViewDown 2.1
-  field SFFloat fieldOfViewHead 1.5708
+  field SFFloat fieldOfViewHead 1.04
   field SFBool useSphericalHeadCamera FALSE 
 ]
 {
