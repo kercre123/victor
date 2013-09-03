@@ -232,7 +232,7 @@ CCOPT    		 += -fno-inline-small-functions
 endif
 CCOPT            += -Werror-implicit-function-declaration
 CCOPT    		 += -Os -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 $(WARN) $(CC_INCLUDE) 
-CPPOPT                   += -O3 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 $(WARN) $(CC_INCLUDE) 
+CPPOPT                   += -O1 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 $(WARN) $(CC_INCLUDE) 
 ODOPT    		 += -xdsrw
 SDOPT    		 += -t
 LDOPT    		 += -O9 -t --gc-sections -M -warn-common -L $(DirSparcDefaultLibs) -L $(DirAppObjDir) -L $(DirLDScript) -L $(DirLDScrCommon) -T $(LinkerScript)
