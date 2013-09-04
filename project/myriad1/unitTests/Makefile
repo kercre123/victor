@@ -4,10 +4,10 @@
 #APPNAME ?= $(notdir $(shell pwd))
 APPNAME=coretech-vision-unit-tests
 
-MDK_DIRECTORY?=/home/anki/movidius/mdk_13.08.0_general/mdk
+MDK_DIRECTORY?=../../../../movidius-tools/mdk_13.08.0_general/mdk
 
-CORETECH_COMMON_DIRECTORY?=../../../coretech-common
-CORETECH_VISION_DIRECTORY?=../../../coretech-vision
+CORETECH_COMMON_DIRECTORY?=../../../../coretech-common
+CORETECH_VISION_DIRECTORY?=../../../../coretech-vision
 
 MVCC_OPT_LEVEL ?= -O1
 LEON_CPP_OPTIMIZATION_LEVEL ?= -O3
@@ -16,7 +16,6 @@ LEON_CPP_OPTIMIZATION_LEVEL ?= -O3
 # overrides that need to be set before including generic.mk
 #ShaveSymObject   = $(DirAppObjDir)/$(APPNAME).sym.o
 #LinkerScript    =  $(DirLDScript)/$(APPNAME).ldscript
-LinkerScript    =  $(DirLDScript)/benchmarking.ldscript
 
 # Set Shave common mof name (non-mbin flow)
 #ShaveCommonName = shaves
