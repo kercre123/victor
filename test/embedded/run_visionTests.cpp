@@ -1,4 +1,5 @@
-#define USING_MOVIDIUS_COMPILER
+//#define USING_MOVIDIUS_COMPILER
+#include "anki/embeddedCommon.h"
 
 #if defined(ANKICORETECHEMBEDDED_USE_GTEST)
 #include "gtest/gtest.h"

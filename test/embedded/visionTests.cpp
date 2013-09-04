@@ -1,23 +1,22 @@
-#define USING_MOVIDIUS_COMPILER
+//#define USING_MOVIDIUS_COMPILER
 
 #include "anki/embeddedVision.h"
 
-#if defined(ANKICORETECH_USE_OPENCV)
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 #include "opencv2/opencv.hpp"
+#endif
+
+#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
+Anki::Embedded::Matlab matlab(false);
 #endif
 
 #if defined(ANKICORETECHEMBEDDED_USE_GTEST)
 #include "gtest/gtest.h"
 #endif
-
-#if defined(ANKICORETECH_USE_MATLAB)
-Anki::Embedded::Matlab matlab(false);
-#endif
-
 #define STATIC_ALLOCATION
 
 #define USE_L2_CACHE
-#define MAX_BYTES 5000
+#define MAX_BYTES 10000
 
 #ifdef STATIC_ALLOCATION
 #ifdef _MSC_VER
@@ -46,9 +45,10 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
 #ifndef STATIC_ALLOCATION
   void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
-#endif // #ifndef STATIC_ALLOCATION
-
   Anki::Embedded::MemoryStack ms(buffer, numBytes);
+#else
+  Anki::Embedded::MemoryStack ms(&buffer[0], numBytes);
+#endif // #ifndef STATIC_ALLOCATION
 
   ASSERT_TRUE(ms.IsValid());
 
@@ -102,9 +102,12 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
 #ifndef STATIC_ALLOCATION
   void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
+  Anki::Embedded::MemoryStack ms(buffer, numBytes);
+#else
+  Anki::Embedded::MemoryStack ms(&buffer[0], numBytes);
 #endif // #ifndef STATIC_ALLOCATION
 
-  Anki::Embedded::MemoryStack ms(buffer, numBytes);
+  ASSERT_TRUE(ms.IsValid());
 
   Anki::Embedded::Array_u8 img(height, width, ms);
   Anki::Embedded::Array_u8 imgDownsampled(height/downsampleFactor, width/downsampleFactor, ms);
@@ -183,16 +186,19 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
 #ifndef STATIC_ALLOCATION
   void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
+  Anki::Embedded::MemoryStack ms(buffer, numBytes);
+#else
+  Anki::Embedded::MemoryStack ms(&buffer[0], numBytes);
 #endif // #ifndef STATIC_ALLOCATION
 
-  Anki::Embedded::MemoryStack ms(buffer, numBytes);
+  ASSERT_TRUE(ms.IsValid());
 
   Anki::Embedded::Array_u8 img(height, width, ms);
-  ASSERT_TRUE(img.get_rawDataPointer() != NULL);
+  ASSERT_TRUE(img.IsValid());
   ASSERT_TRUE(img.Set(imgData) == width*height);
 
   Anki::Embedded::Array_u32 scaleImage(height, width, ms);
-  ASSERT_TRUE(scaleImage.get_rawDataPointer() != NULL);
+  ASSERT_TRUE(scaleImage.IsValid());
 
   ASSERT_TRUE(ComputeCharacteristicScaleImage(img, numLevels, scaleImage, ms) == Anki::Embedded::RESULT_OK);
 
@@ -213,7 +219,7 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
   GTEST_RETURN_HERE;
 }
 
-#if defined(ANKICORETECH_USE_MATLAB)
+#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 {
   const s32 width = 640;
@@ -228,7 +234,9 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
   const s32 numBytes = 10000000;
   void *buffer = calloc(numBytes, 1);
   //ASSERT_TRUE(buffer != NULL);
-  Anki::Embedded::MemoryStack ms(&buffer[0], numBytes);
+  Anki::Embedded::MemoryStack ms(buffer, numBytes);
+
+  ASSERT_TRUE(ms.IsValid());
 
   Anki::Embedded::Matlab matlab(false);
 
@@ -237,18 +245,18 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
   Anki::Embedded::Array_u8 img = matlab.GetArray_u8("img");
   ASSERT_TRUE(img.get_rawDataPointer() != NULL);
 
-  Anki::Embedded::Array_u32 scaleImage(height, width, 16, ms);
+  Anki::Embedded::Array_u32 scaleImage(height, width, ms);
   ASSERT_TRUE(scaleImage.get_rawDataPointer() != NULL);
 
   ASSERT_TRUE(ComputeCharacteristicScaleImage(img, numLevels, scaleImage, ms) == Anki::Embedded::RESULT_OK);
 
-  matlab.PutArray2d(scaleImage, "scaleImage6_c");
+  matlab.PutArray_u32(scaleImage, "scaleImage6_c");
 
   free(buffer); buffer = NULL;
 
   GTEST_RETURN_HERE;
 }
-#endif // #if defined(ANKICORETECH_USE_MATLAB)
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
 IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
 {
@@ -276,14 +284,17 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
   const Anki::Embedded::Point_s16 groundTruth[9] = {Anki::Embedded::Point_s16(8,6), Anki::Embedded::Point_s16(8,5), Anki::Embedded::Point_s16(7,4), Anki::Embedded::Point_s16(7,3), Anki::Embedded::Point_s16(8,3), Anki::Embedded::Point_s16(9,3), Anki::Embedded::Point_s16(9,4), Anki::Embedded::Point_s16(9,5), Anki::Embedded::Point_s16(9,6)};
 
   // Allocate memory from the heap, for the memory allocator
-  const s32 numBytes = MIN(MAX_BYTES, 5000);
+  const s32 numBytes = MIN(MAX_BYTES, 10000);
 
 #ifndef STATIC_ALLOCATION
   void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
+  Anki::Embedded::MemoryStack ms(buffer, numBytes);
+#else
+  Anki::Embedded::MemoryStack ms(&buffer[0], numBytes);
 #endif // #ifndef STATIC_ALLOCATION
 
-  Anki::Embedded::MemoryStack ms(buffer, numBytes);
+  ASSERT_TRUE(ms.IsValid());
 
   Anki::Embedded::Array_u8 binaryImg(height, width, ms);
   const Anki::Embedded::Point_s16 startPoint(8,6);

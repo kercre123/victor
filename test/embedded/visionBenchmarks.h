@@ -1,13 +1,15 @@
 #ifndef __VISION_BENCHMARKS_H_
 #define __VISION_BENCHMARKS_H_
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(_MSC_VER)
 extern "C" {
 #endif
 
   int BenchmarkBinomialFilter();
+  int BenchmarkDownsampleByFactor();
+  int BenchmarkComputeCharacteristicScale();
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(_MSC_VER)
 }
 #endif
 
