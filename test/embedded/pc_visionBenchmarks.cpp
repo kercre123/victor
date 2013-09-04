@@ -18,14 +18,18 @@ void RUN_ALL_BENCHMARKS()
   times[2] = Anki::Embedded::GetTime();
   BenchmarkComputeCharacteristicScale();
   times[3] = Anki::Embedded::GetTime();
+  BenchmarkTraceBoundary();
+  times[4] = Anki::Embedded::GetTime();
 
   printf(
     "BenchmarkBinomialFilter: %f ms\n"
     "BenchmarkDownsampleByFactor: %f ms\n"
-    "BenchmarkComputeCharacteristicScale: %f ms\n",
+    "BenchmarkComputeCharacteristicScale: %f ms\n"
+    "BenchmarkTraceBoundary: %f ms\n",
     1000.0*(times[1]-times[0]),
     1000.0*(times[2]-times[1]),
-    1000.0*(times[3]-times[2]));
+    1000.0*(times[3]-times[2]),
+    1000.0*(times[4]-times[3]));
 } // void RUN_ALL_BENCHMARKS()
 
 int main()

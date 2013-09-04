@@ -8,6 +8,7 @@ extern "C" {
   int BenchmarkBinomialFilter();
   int BenchmarkDownsampleByFactor();
   int BenchmarkComputeCharacteristicScale();
+  int BenchmarkTraceBoundary();
 
 #if defined(__cplusplus) && !defined(_MSC_VER)
 }

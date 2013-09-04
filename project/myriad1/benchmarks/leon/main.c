@@ -41,13 +41,13 @@ int main(void)
 
     initClocksAndMemory();
 
-    sparc_leon3_disable_cache();
+//    sparc_leon3_disable_cache();
 
-    printf("Starting benchmarking\n");
+    printf("\nStarting benchmarking\n");
  
     RUN_ALL_BENCHMARKS();
 
-    printf("Finished benchmarking\n");
+    printf("\nFinished benchmarking\n");
 
     return 0;
 }

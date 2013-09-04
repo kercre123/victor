@@ -125,6 +125,9 @@ namespace Anki
 
         const BoundaryDirection oneDirection = FindNewDirection(binaryImg, curPoint, zeroDirectionPlusOne, 1);
 
+        if(zeroDirection == BOUNDARY_UNKNOWN)
+          break;
+
         //newPoint = [curPoint(1)+dy(oneDirection+1), curPoint(2)+dx(oneDirection+1)];
         //const Point2<u16> newPoint(curPoint.x+dxs[oneDirection], curPoint.y+dys[oneDirection]);
         const Point_s16 newPoint(curPoint + offsets[oneDirection]);

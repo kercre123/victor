@@ -3,7 +3,18 @@
 #include "anki/embeddedVision.h"
 #include "visionBenchmarks.h"
 
+#ifdef _MSC_VER
 #include <string.h>
+#else
+static void memset(void * dst, int value, size_t size)
+{
+  size_t i;
+  for(i=0; i<size; i++)
+  {
+    ((char*)dst)[i] = value;
+  }
+}
+#endif
 
 #if defined(ANKICORETECH_USE_OPENCV)
 #include "opencv2/opencv.hpp"
@@ -22,11 +33,13 @@ Anki::Embedded::Matlab matlab(false);
 static char buffer[MAX_BYTES];
 #else
 
-#ifdef USE_L2_CACHE
+/*#ifdef USE_L2_CACHE
 static char buffer[MAX_BYTES] __attribute__((section(".ddr.bss"))); // With L2 cache
 #else
 static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss"))); // No L2 cache
 #endif
+*/
+static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss"))); // No L2 cache
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
@@ -141,7 +154,7 @@ int BenchmarkTraceBoundary()
 #endif
 
   Anki::Embedded::Array_u8 binaryImg(height, width, ms);
-  const Anki::Embedded::Point_s16 startPoint(3,2);
+  const Anki::Embedded::Point_s16 startPoint(3,200);
   const Anki::Embedded::BoundaryDirection initialDirection = Anki::Embedded::BOUNDARY_N;
   Anki::Embedded::FixedLengthList_Point_s16 boundary(Anki::Embedded::MAX_BOUNDARY_LENGTH, ms);
 
@@ -151,25 +164,21 @@ int BenchmarkTraceBoundary()
 #endif
 
   // This is a thin, wide, hollow rectangle in the middle of the image
+  // TODO: check if this initialization takes a long time, relative to the tracing kernel
   {
+    // Clear out a black area
     for(s32 y=196; y<=206; y++) {
       memset(binaryImg.Pointer(y, 0), 0, binaryImg.get_stride());
     }
 
     // Top edge
     for(s32 y=198; y<=199; y++) {
-      u8 * restrict rowPointer = binaryImg.Pointer(y, 0);
-      for(s32 x=3; x<(width-3); x++) {
-        rowPointer[x] = 1;
-      }
+      memset(binaryImg.Pointer(y, 0) + 3, 1, width-6);
     }
 
     //Bottom edge
     for(s32 y=202; y<=203; y++) {
-      u8 * restrict rowPointer = binaryImg.Pointer(y, 0);
-      for(s32 x=3; x<(width-3); x++) {
-        rowPointer[x] = 1;
-      }
+      memset(binaryImg.Pointer(y, 0) + 3, 1, width-6);
     }
 
     //Sides
@@ -179,7 +188,7 @@ int BenchmarkTraceBoundary()
         rowPointer[x] = 1;
       }
 
-      for(s32 x=width-4; x<=(width-3); x++) {
+      for(s32 x=width-5; x<(width-3); x++) {
         rowPointer[x] = 1;
       }
     }
