@@ -1,0 +1,6 @@
+#ifdef _VISION_BENCHMARKS_H_
+#define _VISION_BENCHMARKS_H_
+
+void RUN_ALL_BENCHMARKS();
+
+#endif // _VISION_BENCHMARKS_H_

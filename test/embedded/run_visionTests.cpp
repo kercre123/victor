@@ -1,15 +1,5 @@
 #define USING_MOVIDIUS_COMPILER
 
-#include "anki/embeddedCommon.h"
-
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-#include "opencv2/opencv.hpp"
-#endif
-
-#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
-Anki::Embedded::Matlab matlab(false);
-#endif
-
 #if defined(ANKICORETECHEMBEDDED_USE_GTEST)
 #include "gtest/gtest.h"
 #endif

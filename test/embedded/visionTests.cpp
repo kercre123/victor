@@ -16,14 +16,20 @@ Anki::Embedded::Matlab matlab(false);
 
 #define STATIC_ALLOCATION
 
+#define USE_L2_CACHE
 #define MAX_BYTES 5000
 
 #ifdef STATIC_ALLOCATION
 #ifdef _MSC_VER
 char buffer[MAX_BYTES];
 #else
-//char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss")));
-char buffer[MAX_BYTES] __attribute__((section(".ddr.bss")));
+
+#ifdef USE_L2_CACHE
+char buffer[MAX_BYTES] __attribute__((section(".ddr.bss"))); // With L2 cache
+#else
+char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss"))); // No L2 cache
+#endif
+
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 #else // #ifdef STATIC_ALLOCATION
 #include <stdlib.h>
@@ -34,9 +40,9 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
 {
   const s32 width = 10;
   const s32 height = 5;
-  // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = MIN(MAX_BYTES, 5000);
 
+  // Allocate memory from the heap, for the memory allocator
 #ifndef STATIC_ALLOCATION
   void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
