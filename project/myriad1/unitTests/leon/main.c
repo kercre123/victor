@@ -15,9 +15,6 @@
 #include "DrvTimer.h"
 #include <DrvL2Cache.h>
 
-//#include <sys/time.h>
-//#include <ctime>
-
 #include "swcShaveLoader.h"
 #include "app_config.h"
 #include "swcTestUtils.h"
@@ -25,14 +22,6 @@
 #include "cppInterface.h"
 
 performanceStruct perfStr;
-
-/*
-double GetTime()
-{
-  timespec ts;
-  clock_gettime(CLOCK_MONOTONIC, &ts);
-  return double(ts.tv_sec) + double(ts.tv_nsec)/1000000000.0;
-}*/
 
 // Copied from leon3.h
 __inline__ void sparc_leon3_disable_cache(void) {
@@ -49,7 +38,6 @@ int main(void)
     u32          i;
     u32          *fl;
     u32          test_pass = 1;
-    int dogResult;
 
     initClocksAndMemory();
 
