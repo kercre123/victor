@@ -9,10 +9,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\test\embedded\run_visionBenchmarks.cpp">
+    <ClCompile Include="..\..\test\embedded\visionBenchmarks.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\test\embedded\visionBenchmarks.cpp">
+    <ClCompile Include="..\..\test\embedded\pc_visionBenchmarks.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

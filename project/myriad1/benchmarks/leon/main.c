@@ -19,9 +19,9 @@
 #include "app_config.h"
 #include "swcTestUtils.h"
 
-#include "cppInterface.h"
+#include "visionBenchmarks.h"
 
-performanceStruct perfStr;
+void RUN_ALL_BENCHMARKS();
 
 // Copied from leon3.h
 __inline__ void sparc_leon3_disable_cache(void) {
@@ -30,7 +30,7 @@ __inline__ void sparc_leon3_disable_cache(void) {
                     "set 0x00000f, %%l2\n\t"  \
                     "andn  %%l2, %%l1, %%l2\n\t" \
                     "sta %%l2, [%%g0] 2\n\t"  \
-                    :  : : "l1", "l2");	
+                    :  : : "l1", "l2");
 };
 
 int main(void)
@@ -43,22 +43,11 @@ int main(void)
 
     sparc_leon3_disable_cache();
 
-    printf("Starting unit tests\n");
-
-    swcShaveProfInit(&perfStr);
+    printf("Starting benchmarking\n");
  
-    perfStr.countShCodeRun = 2;
+    RUN_ALL_BENCHMARKS();
 
-    swcShaveProfStartGathering(0, &perfStr);
-
-    runTests();
-
-    swcShaveProfStopGathering(0, &perfStr);
-
-//    The below printf is modified from swcShaveProfPrint(0, &perfStr);
-    printf("\nLeon executed %d cycles in %06d micro seconds ([%d ms])\n",(u32)(perfStr.perfCounterTimer), (u32)(DrvTimerTicksToMs(perfStr.perfCounterTimer)*1000), (u32)(DrvTimerTicksToMs(perfStr.perfCounterTimer)));
-
-    printf("Finished unit tests\n");
+    printf("Finished benchmarking\n");
 
     return 0;
 }

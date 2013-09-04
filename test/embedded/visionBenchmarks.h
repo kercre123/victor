@@ -1,6 +1,14 @@
-#ifdef _VISION_BENCHMARKS_H_
-#define _VISION_BENCHMARKS_H_
+#ifndef __VISION_BENCHMARKS_H_
+#define __VISION_BENCHMARKS_H_
 
-void RUN_ALL_BENCHMARKS();
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#endif // _VISION_BENCHMARKS_H_
+  int BenchmarkBinomialFilter();
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // __VISION_BENCHMARKS_H_
