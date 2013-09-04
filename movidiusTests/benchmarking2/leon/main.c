@@ -34,6 +34,7 @@ double GetTime()
   return double(ts.tv_sec) + double(ts.tv_nsec)/1000000000.0;
 }*/
 
+// Copied from leon3.h
 __inline__ void sparc_leon3_disable_cache(void) {
   /*asi 2*/
   __asm__ volatile ("lda [%%g0] 2, %%l1\n\t"  \
@@ -62,15 +63,11 @@ int main(void)
 
     swcShaveProfStartGathering(0, &perfStr);
 
-    dogResult = helloDog(2);
-
     runTests();
 
     swcShaveProfStopGathering(0, &perfStr);
 
-    printf("%d\n", dogResult);
-
-//    swcShaveProfPrint(0, &perfStr);
+//    The below printf is modified from swcShaveProfPrint(0, &perfStr);
     printf("\nLeon executed %d cycles in %06d micro seconds ([%d ms])\n",(u32)(perfStr.perfCounterTimer), (u32)(DrvTimerTicksToMs(perfStr.perfCounterTimer)*1000), (u32)(DrvTimerTicksToMs(perfStr.perfCounterTimer)));
 
     printf("Finished profiling\n");

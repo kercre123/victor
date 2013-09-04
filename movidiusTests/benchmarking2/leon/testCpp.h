@@ -6,8 +6,6 @@
 extern "C" {
 #endif
 
-int helloDog(int a);
-
 void runTests();
 
 #ifdef __cplusplus

@@ -4,7 +4,7 @@
 #APPNAME ?= $(notdir $(shell pwd))
 APPNAME=benchmarking
 
-MDK_DIRECTORY=	/home/anki/movidius/mdk_13.08.0_general/mdk
+MDK_DIRECTORY=	/home/anki/Anki/movidius-tools/mdk_13.08.0_general/mdk
 
 CORETECH_COMMON_DIRECTORY=../../../coretech-common
 CORETECH_VISION_DIRECTORY=../../../coretech-vision
