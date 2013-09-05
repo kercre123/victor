@@ -275,6 +275,17 @@ namespace Anki
       this->rawDataPointer = NULL;
     }
 
+    // Factory method to create an Array_u8 from the heap. The data of the returned Array_u8 must be freed by the user.
+    // This is separate from the normal constructor, as Array_u8 objects are not supposed to manage memory
+    Array_u8 AllocateArrayFromHeap_u8(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_u8::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
+
+      Array_u8 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+
+      return mat;
+    } // AllocateArrayFromHeap_u8()
+
 
     s32 Array_s8::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
     {
@@ -524,6 +535,17 @@ namespace Anki
       this->data = NULL;
       this->rawDataPointer = NULL;
     }
+
+    // Factory method to create an Array_s8 from the heap. The data of the returned Array_s8 must be freed by the user.
+    // This is separate from the normal constructor, as Array_s8 objects are not supposed to manage memory
+    Array_s8 AllocateArrayFromHeap_s8(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_s8::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
+
+      Array_s8 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+
+      return mat;
+    } // AllocateArrayFromHeap_s8()
 
 
     s32 Array_u16::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
@@ -775,6 +797,17 @@ namespace Anki
       this->rawDataPointer = NULL;
     }
 
+    // Factory method to create an Array_u16 from the heap. The data of the returned Array_u16 must be freed by the user.
+    // This is separate from the normal constructor, as Array_u16 objects are not supposed to manage memory
+    Array_u16 AllocateArrayFromHeap_u16(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_u16::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
+
+      Array_u16 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+
+      return mat;
+    } // AllocateArrayFromHeap_u16()
+
 
     s32 Array_s16::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
     {
@@ -1024,6 +1057,17 @@ namespace Anki
       this->data = NULL;
       this->rawDataPointer = NULL;
     }
+
+    // Factory method to create an Array_s16 from the heap. The data of the returned Array_s16 must be freed by the user.
+    // This is separate from the normal constructor, as Array_s16 objects are not supposed to manage memory
+    Array_s16 AllocateArrayFromHeap_s16(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_s16::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
+
+      Array_s16 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+
+      return mat;
+    } // AllocateArrayFromHeap_s16()
 
 
     s32 Array_u32::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
@@ -1275,6 +1319,17 @@ namespace Anki
       this->rawDataPointer = NULL;
     }
 
+    // Factory method to create an Array_u32 from the heap. The data of the returned Array_u32 must be freed by the user.
+    // This is separate from the normal constructor, as Array_u32 objects are not supposed to manage memory
+    Array_u32 AllocateArrayFromHeap_u32(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_u32::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
+
+      Array_u32 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+
+      return mat;
+    } // AllocateArrayFromHeap_u32()
+
 
     s32 Array_s32::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
     {
@@ -1524,6 +1579,17 @@ namespace Anki
       this->data = NULL;
       this->rawDataPointer = NULL;
     }
+
+    // Factory method to create an Array_s32 from the heap. The data of the returned Array_s32 must be freed by the user.
+    // This is separate from the normal constructor, as Array_s32 objects are not supposed to manage memory
+    Array_s32 AllocateArrayFromHeap_s32(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_s32::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
+
+      Array_s32 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+
+      return mat;
+    } // AllocateArrayFromHeap_s32()
 
 
     s32 Array_u64::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
@@ -1775,6 +1841,17 @@ namespace Anki
       this->rawDataPointer = NULL;
     }
 
+    // Factory method to create an Array_u64 from the heap. The data of the returned Array_u64 must be freed by the user.
+    // This is separate from the normal constructor, as Array_u64 objects are not supposed to manage memory
+    Array_u64 AllocateArrayFromHeap_u64(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_u64::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
+
+      Array_u64 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+
+      return mat;
+    } // AllocateArrayFromHeap_u64()
+
 
     s32 Array_s64::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
     {
@@ -2024,6 +2101,17 @@ namespace Anki
       this->data = NULL;
       this->rawDataPointer = NULL;
     }
+
+    // Factory method to create an Array_s64 from the heap. The data of the returned Array_s64 must be freed by the user.
+    // This is separate from the normal constructor, as Array_s64 objects are not supposed to manage memory
+    Array_s64 AllocateArrayFromHeap_s64(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_s64::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
+
+      Array_s64 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+
+      return mat;
+    } // AllocateArrayFromHeap_s64()
 
 
     s32 Array_f32::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
@@ -2275,6 +2363,17 @@ namespace Anki
       this->rawDataPointer = NULL;
     }
 
+    // Factory method to create an Array_f32 from the heap. The data of the returned Array_f32 must be freed by the user.
+    // This is separate from the normal constructor, as Array_f32 objects are not supposed to manage memory
+    Array_f32 AllocateArrayFromHeap_f32(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_f32::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
+
+      Array_f32 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+
+      return mat;
+    } // AllocateArrayFromHeap_f32()
+
 
     s32 Array_f64::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
     {
@@ -2525,6 +2624,17 @@ namespace Anki
       this->rawDataPointer = NULL;
     }
 
+    // Factory method to create an Array_f64 from the heap. The data of the returned Array_f64 must be freed by the user.
+    // This is separate from the normal constructor, as Array_f64 objects are not supposed to manage memory
+    Array_f64 AllocateArrayFromHeap_f64(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_f64::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
+
+      Array_f64 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+
+      return mat;
+    } // AllocateArrayFromHeap_f64()
+
 
     s32 Array_Point_s16::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
     {
@@ -2737,6 +2847,17 @@ namespace Anki
       this->data = NULL;
       this->rawDataPointer = NULL;
     }
+
+    // Factory method to create an Array_Point_s16 from the heap. The data of the returned Array_Point_s16 must be freed by the user.
+    // This is separate from the normal constructor, as Array_Point_s16 objects are not supposed to manage memory
+    Array_Point_s16 AllocateArrayFromHeap_Point_s16(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_Point_s16::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
+
+      Array_Point_s16 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+
+      return mat;
+    } // AllocateArrayFromHeap_Point_s16()
 
 
   } // namespace Embedded

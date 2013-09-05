@@ -61,6 +61,8 @@ namespace Anki
     {
       return Array_Point_s16::Pointer(0, index);
     }
+
+    FixedLengthList_Point_s16 AllocateFixedLengthListFromHeap_Point_s16(s32 maximumSize, bool useBoundaryFillPatterns=false);
   } // namespace Embedded
 } // namespace Anki
 

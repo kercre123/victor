@@ -172,7 +172,10 @@ def __GenerateDeclarations(whichTypes, includeAllMethods):
             '    private:\n' +\
             '      //Array_' + type + ' & operator= (const Array_' + type + ' & rightHandSide); // In the future, assignment may not be allowed\n' +\
             '    }; // class Array_' + type + '\n' +\
-            '\n\n'
+            '\n' +\
+            '    // Factory method to create an Array_' + type + ' from the heap. The data of the returned Array_' + type + ' must be freed by the user.\n' +\
+            '    // This is separate from the normal constructor, as Array_' + type + ' objects are not supposed to manage memory\n' +\
+            '    Array_' + type + ' AllocateArrayFromHeap_' + type + '(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns=false);\n\n\n'
             
     return methodsString
         

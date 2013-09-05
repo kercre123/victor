@@ -158,6 +158,10 @@ namespace Anki
       //Array_u8 & operator= (const Array_u8 & rightHandSide); // In the future, assignment may not be allowed
     }; // class Array_u8
 
+    // Factory method to create an Array_u8 from the heap. The data of the returned Array_u8 must be freed by the user.
+    // This is separate from the normal constructor, as Array_u8 objects are not supposed to manage memory
+    Array_u8 AllocateArrayFromHeap_u8(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns=false);
+
 
     class Array_s8
     {
@@ -274,6 +278,10 @@ namespace Anki
     private:
       //Array_s8 & operator= (const Array_s8 & rightHandSide); // In the future, assignment may not be allowed
     }; // class Array_s8
+
+    // Factory method to create an Array_s8 from the heap. The data of the returned Array_s8 must be freed by the user.
+    // This is separate from the normal constructor, as Array_s8 objects are not supposed to manage memory
+    Array_s8 AllocateArrayFromHeap_s8(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns=false);
 
 
     class Array_u16
@@ -392,6 +400,10 @@ namespace Anki
       //Array_u16 & operator= (const Array_u16 & rightHandSide); // In the future, assignment may not be allowed
     }; // class Array_u16
 
+    // Factory method to create an Array_u16 from the heap. The data of the returned Array_u16 must be freed by the user.
+    // This is separate from the normal constructor, as Array_u16 objects are not supposed to manage memory
+    Array_u16 AllocateArrayFromHeap_u16(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns=false);
+
 
     class Array_s16
     {
@@ -508,6 +520,10 @@ namespace Anki
     private:
       //Array_s16 & operator= (const Array_s16 & rightHandSide); // In the future, assignment may not be allowed
     }; // class Array_s16
+
+    // Factory method to create an Array_s16 from the heap. The data of the returned Array_s16 must be freed by the user.
+    // This is separate from the normal constructor, as Array_s16 objects are not supposed to manage memory
+    Array_s16 AllocateArrayFromHeap_s16(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns=false);
 
 
     class Array_u32
@@ -626,6 +642,10 @@ namespace Anki
       //Array_u32 & operator= (const Array_u32 & rightHandSide); // In the future, assignment may not be allowed
     }; // class Array_u32
 
+    // Factory method to create an Array_u32 from the heap. The data of the returned Array_u32 must be freed by the user.
+    // This is separate from the normal constructor, as Array_u32 objects are not supposed to manage memory
+    Array_u32 AllocateArrayFromHeap_u32(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns=false);
+
 
     class Array_s32
     {
@@ -742,6 +762,10 @@ namespace Anki
     private:
       //Array_s32 & operator= (const Array_s32 & rightHandSide); // In the future, assignment may not be allowed
     }; // class Array_s32
+
+    // Factory method to create an Array_s32 from the heap. The data of the returned Array_s32 must be freed by the user.
+    // This is separate from the normal constructor, as Array_s32 objects are not supposed to manage memory
+    Array_s32 AllocateArrayFromHeap_s32(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns=false);
 
 
     class Array_u64
@@ -860,6 +884,10 @@ namespace Anki
       //Array_u64 & operator= (const Array_u64 & rightHandSide); // In the future, assignment may not be allowed
     }; // class Array_u64
 
+    // Factory method to create an Array_u64 from the heap. The data of the returned Array_u64 must be freed by the user.
+    // This is separate from the normal constructor, as Array_u64 objects are not supposed to manage memory
+    Array_u64 AllocateArrayFromHeap_u64(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns=false);
+
 
     class Array_s64
     {
@@ -976,6 +1004,10 @@ namespace Anki
     private:
       //Array_s64 & operator= (const Array_s64 & rightHandSide); // In the future, assignment may not be allowed
     }; // class Array_s64
+
+    // Factory method to create an Array_s64 from the heap. The data of the returned Array_s64 must be freed by the user.
+    // This is separate from the normal constructor, as Array_s64 objects are not supposed to manage memory
+    Array_s64 AllocateArrayFromHeap_s64(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns=false);
 
 
     class Array_f32
@@ -1094,6 +1126,10 @@ namespace Anki
       //Array_f32 & operator= (const Array_f32 & rightHandSide); // In the future, assignment may not be allowed
     }; // class Array_f32
 
+    // Factory method to create an Array_f32 from the heap. The data of the returned Array_f32 must be freed by the user.
+    // This is separate from the normal constructor, as Array_f32 objects are not supposed to manage memory
+    Array_f32 AllocateArrayFromHeap_f32(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns=false);
+
 
     class Array_f64
     {
@@ -1211,6 +1247,10 @@ namespace Anki
       //Array_f64 & operator= (const Array_f64 & rightHandSide); // In the future, assignment may not be allowed
     }; // class Array_f64
 
+    // Factory method to create an Array_f64 from the heap. The data of the returned Array_f64 must be freed by the user.
+    // This is separate from the normal constructor, as Array_f64 objects are not supposed to manage memory
+    Array_f64 AllocateArrayFromHeap_f64(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns=false);
+
 
     class Array_Point_s16
     {
@@ -1319,6 +1359,10 @@ namespace Anki
     private:
       //Array_Point_s16 & operator= (const Array_Point_s16 & rightHandSide); // In the future, assignment may not be allowed
     }; // class Array_Point_s16
+
+    // Factory method to create an Array_Point_s16 from the heap. The data of the returned Array_Point_s16 must be freed by the user.
+    // This is separate from the normal constructor, as Array_Point_s16 objects are not supposed to manage memory
+    Array_Point_s16 AllocateArrayFromHeap_Point_s16(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns=false);
 
 
     } // namespace Embedded

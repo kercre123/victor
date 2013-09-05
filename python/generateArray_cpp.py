@@ -294,7 +294,17 @@ def __GenerateDefinitions(whichTypes, includeAllMethods):
             '      this->stride = 0;\n' +\
             '      this->data = NULL;\n' +\
             '      this->rawDataPointer = NULL;\n' +\
-            '    }\n\n\n'
+            '    }\n\n' +\
+            '    // Factory method to create an Array_' + type + ' from the heap. The data of the returned Array_' + type + ' must be freed by the user.\n' +\
+            '    // This is separate from the normal constructor, as Array_' + type + ' objects are not supposed to manage memory\n' +\
+            '    Array_' + type + ' AllocateArrayFromHeap_' + type + '(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)\n' +\
+            '    {\n' +\
+            '      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_' + type + '::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more\n' +\
+            '\n' +\
+            '      Array_' + type + ' mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);\n' +\
+            '\n' +\
+            '      return mat;\n' +\
+            '    } // AllocateArrayFromHeap_' + type + '()\n\n\n'
 
     return methodsString            
             

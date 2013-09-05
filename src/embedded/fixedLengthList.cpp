@@ -68,5 +68,15 @@ namespace Anki
     {
       return capacityUsed;
     }
+
+    FixedLengthList_Point_s16 AllocateFixedLengthListFromHeap_Point_s16(s32 maximumSize, bool useBoundaryFillPatterns)
+    {
+      // const s32 stride = FixedLengthList_Point_s16::ComputeRequiredStride(maximumSize, useBoundaryFillPatterns);
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_Point_s16::ComputeMinimumRequiredMemory(1, maximumSize, useBoundaryFillPatterns); // The required memory, plus a bit more
+
+      FixedLengthList_Point_s16 mat(maximumSize, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+
+      return mat;
+    } // AllocateArray2dFixedPointFromHeap()
   } // namespace Embedded
 } // namespace Anki
