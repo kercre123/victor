@@ -67,11 +67,11 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
 
   Anki::Embedded::Result result = Anki::Embedded::BinomialFilter(img, imgFiltered, ms);
 
-  printf("img:\n");
-  img.Print();
+  //printf("img:\n");
+  //img.Print();
 
-  printf("imgFiltered:\n");
-  imgFiltered.Print();
+  //printf("imgFiltered:\n");
+  //imgFiltered.Print();
 
   ASSERT_TRUE(result == Anki::Embedded::RESULT_OK);
 
