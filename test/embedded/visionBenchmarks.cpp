@@ -29,7 +29,7 @@ Anki::Embedded::Matlab matlab(false);
 // If both are commented, it is buffer in DDR without L2
 // NOTE: Cannot use both CMX and L2 Cache
 //#define BUFFER_IN_DDR_WITH_L2
-#define BUFFER_IN_CMX
+//#define BUFFER_IN_CMX
 
 #if defined(BUFFER_IN_DDR_WITH_L2) && defined(BUFFER_IN_CMX)
 You cannot use both CMX and L2 Cache;
@@ -158,7 +158,7 @@ int BenchmarkTraceBoundary()
 #endif
 
   Anki::Embedded::Array_u8 binaryImg(height, width, ms);
-  const Anki::Embedded::Point_s16 startPoint(3,200);
+  const Anki::Embedded::Point_s16 startPoint(3,3);
   const Anki::Embedded::BoundaryDirection initialDirection = Anki::Embedded::BOUNDARY_N;
   Anki::Embedded::FixedLengthList_Point_s16 boundary(Anki::Embedded::MAX_BOUNDARY_LENGTH, ms);
 

@@ -47,7 +47,7 @@ int main(void)
     DrvL2CacheAllocateSetPartitions();
     SET_REG_WORD(L2C_MXITID_ADR, 0x0);
 
-//    sparc_leon3_disable_cache();
+    sparc_leon3_disable_cache();
 
     printf("Starting unit tests\n");
 
