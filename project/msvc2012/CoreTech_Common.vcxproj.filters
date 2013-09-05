@@ -36,9 +36,6 @@
     <ClInclude Include="..\..\include\anki\common\array2d.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\anki\common\point.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\memory.cpp">
