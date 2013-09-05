@@ -13,26 +13,33 @@ Anki::Embedded::Matlab matlab(false);
 #if defined(ANKICORETECHEMBEDDED_USE_GTEST)
 #include "gtest/gtest.h"
 #endif
-#define STATIC_ALLOCATION
 
-#define USE_L2_CACHE
-#define MAX_BYTES 10000
+//#define BUFFER_IN_DDR_WITH_L2
+#define BUFFER_IN_CMX
 
-#ifdef STATIC_ALLOCATION
-#ifdef _MSC_VER
-char buffer[MAX_BYTES];
-#else
-
-#ifdef USE_L2_CACHE
-char buffer[MAX_BYTES] __attribute__((section(".ddr.bss"))); // With L2 cache
-#else
-char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss"))); // No L2 cache
+#if defined(BUFFER_IN_DDR_WITH_L2) && defined(BUFFER_IN_CMX)
+You cannot use both CMX and L2 Cache;
 #endif
 
+#define MAX_BYTES 10000
+
+#ifdef _MSC_VER
+static char buffer[MAX_BYTES];
+#else
+
+#ifdef BUFFER_IN_CMX
+static char buffer[MAX_BYTES] __attribute__((section(".cmx.bss")));
+#else // #ifdef BUFFER_IN_CMX
+
+#ifdef BUFFER_IN_DDR_WITH_L2
+static char buffer[MAX_BYTES] __attribute__((section(".ddr.bss"))); // With L2 cache
+#else
+static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss"))); // No L2 cache
+#endif
+
+#endif // #ifdef BUFFER_IN_CMX ... #else
+
 #endif // #ifdef USING_MOVIDIUS_COMPILER
-#else // #ifdef STATIC_ALLOCATION
-#include <stdlib.h>
-#endif // #ifdef STATIC_ALLOCATION ... #else
 
 //IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, BinomialFilter)
 GTEST_TEST(CoreTech_Vision, BinomialFilter)
@@ -42,13 +49,7 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
   const s32 numBytes = MIN(MAX_BYTES, 5000);
 
   // Allocate memory from the heap, for the memory allocator
-#ifndef STATIC_ALLOCATION
-  void *buffer = calloc(numBytes, 1);
-  ASSERT_TRUE(buffer != NULL);
-  Anki::Embedded::MemoryStack ms(buffer, numBytes);
-#else
   Anki::Embedded::MemoryStack ms(&buffer[0], numBytes);
-#endif // #ifndef STATIC_ALLOCATION
 
   ASSERT_TRUE(ms.IsValid());
 
@@ -66,11 +67,11 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
 
   Anki::Embedded::Result result = Anki::Embedded::BinomialFilter(img, imgFiltered, ms);
 
-  //printf("img:\n");
-  //img.Print();
+  printf("img:\n");
+  img.Print();
 
-  //printf("imgFiltered:\n");
-  //imgFiltered.Print();
+  printf("imgFiltered:\n");
+  imgFiltered.Print();
 
   ASSERT_TRUE(result == Anki::Embedded::RESULT_OK);
 
@@ -82,10 +83,6 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
       ASSERT_TRUE(correctResults[y][x] == *imgFiltered.Pointer(y,x));
     }
   }
-
-#ifndef STATIC_ALLOCATION
-  free(buffer); buffer = NULL;
-#endif // #ifndef STATIC_ALLOCATION
 
   GTEST_RETURN_HERE;
 }
@@ -99,13 +96,7 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = MIN(MAX_BYTES, 1000);
 
-#ifndef STATIC_ALLOCATION
-  void *buffer = calloc(numBytes, 1);
-  ASSERT_TRUE(buffer != NULL);
-  Anki::Embedded::MemoryStack ms(buffer, numBytes);
-#else
   Anki::Embedded::MemoryStack ms(&buffer[0], numBytes);
-#endif // #ifndef STATIC_ALLOCATION
 
   ASSERT_TRUE(ms.IsValid());
 
@@ -131,10 +122,6 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
       ASSERT_TRUE(correctResults[y][x] == *imgDownsampled.Pointer(y,x));
     }
   }
-
-#ifndef STATIC_ALLOCATION
-  free(buffer); buffer = NULL;
-#endif // #ifndef STATIC_ALLOCATION
 
   GTEST_RETURN_HERE;
 }
@@ -183,13 +170,7 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = MIN(MAX_BYTES, 5000);
 
-#ifndef STATIC_ALLOCATION
-  void *buffer = calloc(numBytes, 1);
-  ASSERT_TRUE(buffer != NULL);
-  Anki::Embedded::MemoryStack ms(buffer, numBytes);
-#else
   Anki::Embedded::MemoryStack ms(&buffer[0], numBytes);
-#endif // #ifndef STATIC_ALLOCATION
 
   ASSERT_TRUE(ms.IsValid());
 
@@ -211,10 +192,6 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
       ASSERT_TRUE(correctResults[y][x] == *scaleImage.Pointer(y,x));
     }
   }
-
-#ifndef STATIC_ALLOCATION
-  free(buffer); buffer = NULL;
-#endif // #ifndef STATIC_ALLOCATION
 
   GTEST_RETURN_HERE;
 }
@@ -286,13 +263,7 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = MIN(MAX_BYTES, 10000);
 
-#ifndef STATIC_ALLOCATION
-  void *buffer = calloc(numBytes, 1);
-  ASSERT_TRUE(buffer != NULL);
-  Anki::Embedded::MemoryStack ms(buffer, numBytes);
-#else
   Anki::Embedded::MemoryStack ms(&buffer[0], numBytes);
-#endif // #ifndef STATIC_ALLOCATION
 
   ASSERT_TRUE(ms.IsValid());
 
@@ -313,10 +284,6 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
     //printf("%d) (%d,%d) and (%d,%d)\n", iPoint, boundary.Pointer(iPoint)->x, boundary.Pointer(iPoint)->y, groundTruth[iPoint].x, groundTruth[iPoint].y);
     ASSERT_TRUE(*boundary.Pointer(iPoint) == groundTruth[iPoint]);
   }
-
-#ifndef STATIC_ALLOCATION
-  free(buffer); buffer = NULL;
-#endif // #ifndef STATIC_ALLOCATION
 
   GTEST_RETURN_HERE;
 }

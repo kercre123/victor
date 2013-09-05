@@ -41,6 +41,10 @@ int main(void)
 
     initClocksAndMemory();
 
+    DrvL2CacheSetupPartition(PART128KB);
+    DrvL2CacheAllocateSetPartitions();
+    SET_REG_WORD(L2C_MXITID_ADR, 0x0);
+
 //    sparc_leon3_disable_cache();
 
     printf("\nStarting benchmarking\n");

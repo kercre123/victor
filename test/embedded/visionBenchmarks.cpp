@@ -26,29 +26,45 @@ Anki::Embedded::Matlab matlab(false);
 
 #define CHECK_FOR_ERRORS
 
-#define USE_L2_CACHE
-#define MAX_BYTES 5000000
+// If both are commented, it is buffer in DDR without L2
+// NOTE: Cannot use both CMX and L2 Cache
+#define BUFFER_IN_DDR_WITH_L2
+//#define BUFFER_IN_CMX
+
+#if defined(BUFFER_IN_DDR_WITH_L2) && defined(BUFFER_IN_CMX)
+You cannot use both CMX and L2 Cache;
+#endif
+
+//#define MAX_BYTES 5000000
+#define MAX_BYTES 100000
 
 #ifdef _MSC_VER
 static char buffer[MAX_BYTES];
 #else
 
-/*#ifdef USE_L2_CACHE
+#ifdef BUFFER_IN_CMX
+static char buffer[MAX_BYTES] __attribute__((section(".cmx.bss")));
+#else // #ifdef BUFFER_IN_CMX
+
+#ifdef BUFFER_IN_DDR_WITH_L2
 static char buffer[MAX_BYTES] __attribute__((section(".ddr.bss"))); // With L2 cache
 #else
 static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss"))); // No L2 cache
 #endif
-*/
-static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss"))); // No L2 cache
+
+#endif // #ifdef BUFFER_IN_CMX ... #else
+
+//static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss"))); // No L2 cache
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+static const s32 width = 640;
+//static const s32 height = 480;
+static const s32 height = 10;
+static const s32 numBytes = MIN(MAX_BYTES, 5000000);
+
 int BenchmarkBinomialFilter()
 {
-  const s32 width = 640;
-  const s32 height = 480;
-  const s32 numBytes = MIN(MAX_BYTES, 5000000);
-
   Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
 #ifdef CHECK_FOR_ERRORS
@@ -74,10 +90,6 @@ int BenchmarkBinomialFilter()
 
 int BenchmarkDownsampleByFactor()
 {
-  const s32 width = 640;
-  const s32 height = 480;
-  const s32 numBytes = MIN(MAX_BYTES, 5000000);
-
   const s32 downsampleFactor = 2;
 
   Anki::Embedded::MemoryStack ms(buffer, numBytes);
@@ -109,10 +121,6 @@ int BenchmarkDownsampleByFactor()
 
 int BenchmarkComputeCharacteristicScale()
 {
-  const s32 width = 640;
-  const s32 height = 480;
-  const s32 numBytes = MIN(MAX_BYTES, 5000000);
-
   const s32 numLevels = 6;
 
   Anki::Embedded::MemoryStack ms(buffer, numBytes);
@@ -143,10 +151,6 @@ int BenchmarkComputeCharacteristicScale()
 
 int BenchmarkTraceBoundary()
 {
-  const s32 width = 640;
-  const s32 height = 480;
-  const s32 numBytes = MIN(MAX_BYTES, 5000000);
-
   Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
 #ifdef CHECK_FOR_ERRORS
@@ -167,22 +171,22 @@ int BenchmarkTraceBoundary()
   // TODO: check if this initialization takes a long time, relative to the tracing kernel
   {
     // Clear out a black area
-    for(s32 y=196; y<=206; y++) {
+    for(s32 y=0; y<=8; y++) {
       memset(binaryImg.Pointer(y, 0), 0, binaryImg.get_stride());
     }
 
     // Top edge
-    for(s32 y=198; y<=199; y++) {
+    for(s32 y=2; y<=3; y++) {
       memset(binaryImg.Pointer(y, 0) + 3, 1, width-6);
     }
 
     //Bottom edge
-    for(s32 y=202; y<=203; y++) {
+    for(s32 y=6; y<=7; y++) {
       memset(binaryImg.Pointer(y, 0) + 3, 1, width-6);
     }
 
     //Sides
-    for(s32 y=200; y<=201; y++) {
+    for(s32 y=4; y<=5; y++) {
       u8 * restrict rowPointer = binaryImg.Pointer(y, 0);
       for(s32 x=3; x<=4; x++) {
         rowPointer[x] = 1;

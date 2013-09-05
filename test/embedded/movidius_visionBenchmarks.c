@@ -1,6 +1,7 @@
+#include "visionBenchmarks.h"
+
 #ifndef _MSC_VER
 #include "swcTestUtils.h"
-#include "visionBenchmarks.h"
 
 #include <stdio.h>
 
@@ -18,7 +19,7 @@ void PrintTime(const performanceStruct * const perfStr, const char * const bench
     (u32)(DrvTimerTicksToMs(perfStr->perfCounterTimer)));
 #else
   printf(
-    "\n%s: %d.0 ms",
+    "\n%s: %d ms",
     benchmarkName,
     (u32)(DrvTimerTicksToMs(perfStr->perfCounterTimer)));
 #endif
@@ -36,19 +37,27 @@ void RUN_ALL_BENCHMARKS()
   }
 
   swcShaveProfStartGathering(0, &perfStr[0]);
-  BenchmarkBinomialFilter();
+  for(i=0; i<48; i++) {
+    BenchmarkBinomialFilter();
+  }
   swcShaveProfStopGathering(0, &perfStr[0]);
 
   swcShaveProfStartGathering(0, &perfStr[1]);
-  BenchmarkDownsampleByFactor();
+  for(i=0; i<48; i++) {
+    BenchmarkDownsampleByFactor();
+  }
   swcShaveProfStopGathering(0, &perfStr[1]);
 
   swcShaveProfStartGathering(0, &perfStr[2]);
-  BenchmarkComputeCharacteristicScale();
+  for(i=0; i<48; i++) {
+    BenchmarkComputeCharacteristicScale();
+  }
   swcShaveProfStopGathering(0, &perfStr[2]);
 
   swcShaveProfStartGathering(0, &perfStr[3]);
-  BenchmarkTraceBoundary();
+  for(i=0; i<48; i++) {
+    BenchmarkTraceBoundary();
+  }
   swcShaveProfStopGathering(0, &perfStr[3]);
 
   PrintTime(&perfStr[0], "BenchmarkBinomialFilter");

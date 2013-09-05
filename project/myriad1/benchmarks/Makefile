@@ -20,9 +20,12 @@ LEON_CPP_OPTIMIZATION_LEVEL ?= -O3
 # Set Shave common mof name (non-mbin flow)
 #ShaveCommonName = shaves
 
-SH0_Obj += output/obj/shaveMain.mobj
+#SH0_Obj += output/obj/shaveMain.mobj
 
-ShaveCSrcFiles += shave/shaveMain.c 
+#ShaveCSrcFiles += shave/shaveMain.c 
+
+# Doesn't include any objects, but appears to be required?
+SH0_Obj  = $(addprefix $(DirAppObjDir)/, $(notdir $(patsubst %.asm, %.mobj, $(ShaveASrcFiles))))
 
 LeonCSrcFiles += leon/main.c
 
@@ -43,7 +46,8 @@ LeonCPPSrcFiles += $(CORETECH_VISION_DIRECTORY)/test/embedded/movidius_visionBen
 #TEST_TYPE     := AUTO
 #ComponentList := UnitTest
 
-ComponentList :=
+#ComponentList :=
+ComponentList := Board
 
 # ------------------------------[ Tools ]------------------------------------------#
 # Hardcode tool version here if needed, otherwise defaults to Latest
