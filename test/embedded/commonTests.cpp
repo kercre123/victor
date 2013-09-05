@@ -1,4 +1,4 @@
-#define USING_MOVIDIUS_COMPILER
+//#define USING_MOVIDIUS_COMPILER
 
 #include "anki/embeddedCommon.h"
 

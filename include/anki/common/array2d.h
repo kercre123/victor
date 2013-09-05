@@ -1,5 +1,5 @@
-#ifndef _ANKICORETECH_COMMON_MATRIX_H_
-#define _ANKICORETECH_COMMON_MATRIX_H_
+#ifndef _ANKICORETECH_COMMON_ARRAY2D_H_
+#define _ANKICORETECH_COMMON_ARRAY2D_H_
 
 #include "anki/common/config.h"
 #include "anki/common/utilities.h"
@@ -320,4 +320,4 @@ namespace Anki
 
 #include "anki/embeddedCommon/array2d.h"
 
-#endif // _ANKICORETECH_COMMON_MATRIX_H_
+#endif // _ANKICORETECH_COMMON_ARRAY2D_H_
