@@ -5,6 +5,7 @@ classdef EmbeddedConversionsManager < handle
         homographyEstimationType;
         computeCharacteristicScaleImageType;
         traceBoundaryType;
+        connectedComponentsType;
     end % PROPERTIES (get-public, set-protected)
 
     methods(Access = 'public')
@@ -18,6 +19,9 @@ classdef EmbeddedConversionsManager < handle
 
             traceBoundaryType = 'matlab_original';
             traceBoundaryType_acceptable = {'matlab_original', 'matlab_loops', 'c_fixedPoint'};
+            
+            connectedComponentsType = 'matlab_original';
+            connectedComponentsType_acceptable = {'matlab_original', 'matlab_approximate'};
 
             parseVarargin(varargin{:});
 
@@ -29,6 +33,9 @@ classdef EmbeddedConversionsManager < handle
 
             isAcceptable(traceBoundaryType_acceptable, traceBoundaryType);
             this.traceBoundaryType = traceBoundaryType; %#ok<*PROP>
+            
+            isAcceptable(connectedComponentsType_acceptable, connectedComponentsType);
+            this.connectedComponentsType = connectedComponentsType; %#ok<*PROP>
         end
     end % METHODS (public)
 end % classdef OptimizationManager < handle

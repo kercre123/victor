@@ -5,12 +5,10 @@
 % the blocks.
 
 % Usage examples:
-% testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true);
 % testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false);
-% testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', false, 'doPause', false);
 
-% testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false, 'embeddedConversions', EmbeddedConversionsManager('homographyEstimationType', 'opencv_cp2tform', 'computeCharacteristicScaleImageType', 'matlab_original'));
-% testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false, 'embeddedConversions', EmbeddedConversionsManager('homographyEstimationType', 'opencv_cp2tform', 'computeCharacteristicScaleImageType', 'c_fixedPoint', 'traceBoundaryType', 'c_fixedPoint'));
+% testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false, 'embeddedConversions', EmbeddedConversionsManager('homographyEstimationType', 'matlab_original', 'computeCharacteristicScaleImageType', 'matlab_original', 'traceBoundaryType', 'matlab_original', 'connectedComponentsType', 'matlab_original'));
+% testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false, 'embeddedConversions', EmbeddedConversionsManager('homographyEstimationType', 'opencv_cp2tform', 'computeCharacteristicScaleImageType', 'c_fixedPoint', 'traceBoundaryType', 'c_fixedPoint', 'connectedComponentsType', 'matlab_approximate'));
 
 function W = testBlockWorld(varargin)
 
@@ -26,6 +24,11 @@ doPause = true;
 embeddedConversions = EmbeddedConversionsManager();
 
 parseVarargin(varargin{:});
+
+if ischar(frames) && ischar(matFrames)
+    frames = {frames};
+    matFrames = {matFrames};
+end
 
 if ~isempty(frames) && ~isempty(matFrames)
     assert(length(matFrames)==length(frames), ...
