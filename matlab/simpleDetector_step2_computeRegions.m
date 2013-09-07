@@ -21,7 +21,7 @@ else
         numRegions = length(components2d);
         regionMap = zeros(size(binaryImg));
         
-        [regionMapOriginal, numRegionsOriginal] = bwlabel(binaryImg);
+%         [regionMapOriginal, numRegionsOriginal] = bwlabel(binaryImg);
         
         for i = 1:length(components2d)
             curComponents = components2d{i};
@@ -29,7 +29,7 @@ else
                 regionMap(curComponents(j, 1), curComponents(j, 2):curComponents(j, 3)) = i;
             end
         end
-        keyboard
+%         keyboard
     end
     
     [area, indexList, bb, centroid] = mexRegionProps( ...
