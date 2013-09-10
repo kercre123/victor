@@ -23,7 +23,11 @@ updateStats(tooBigOrSmall);
         indexList(toRemove) = [];
         bb(toRemove,:) = [];
         centroid(toRemove,:) = [];
-        components2d(toRemove) = [];
+        
+        if ~isempty(components2d)
+            components2d(toRemove) = [];
+        end
+        
         numRegions = numRegions - sum(toRemove);
     end
 

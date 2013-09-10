@@ -95,10 +95,10 @@ if DEBUG_DISPLAY
     title('Final');
 end
 
-end
+end % function homographyTotal = ICP_projective(P1, P2, varargin)
 
 
-    function index = closestPoint(P1, P2)
+function index = closestPoint(P1, P2)
 
     N1 = size(P1,1);
 
@@ -108,6 +108,6 @@ end
         [~,index(i)] = min(Dsq);
     end
 
-end
+end % function index = closestPoint(P1, P2)
 
 
