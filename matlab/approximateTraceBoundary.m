@@ -135,3 +135,12 @@ for x = (edge_left(1)+1):edge_right(1)
     boundary(end+1, :) = [x, edge_top(x)];
 end
 
+boundary(:,1) = boundary(:,1) + coordinate_left - 1;
+boundary(:,2) = boundary(:,2) + coordinate_top - 1;
+
+% Switch to matlab format
+boundaryTmp = zeros(size(boundary));
+boundaryTmp(:,1) = boundary(:,2);
+boundaryTmp(:,2) = boundary(:,1);
+
+
