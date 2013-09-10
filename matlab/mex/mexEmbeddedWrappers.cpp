@@ -151,14 +151,14 @@ namespace Anki
       const mwSize numMatlabElements = mxGetNumberOfElements(array);
     
       if(numMatlabElements != npixels) {
-        printf("mxArrayToArray_u8(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
+        mexPrintf("mxArrayToArray_u8(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
         return;
       }
     
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = convertToMatlabType(typeid(u8).name(), sizeof(u8));
       if(matlabClassId != templateClassId) {
-        printf("mxArrayToArray_u8(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        mexPrintf("mxArrayToArray_u8(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return;
       }
     
@@ -181,14 +181,14 @@ namespace Anki
       const mwSize *dimensions = mxGetDimensions(array);
     
       if(numDimensions != 2) {
-        printf("mxArrayToArray_u8 - Matlab array must be 2D\n");
+        mexPrintf("mxArrayToArray_u8 - Matlab array must be 2D\n");
         return Array_u8();
       }
     
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = convertToMatlabType(typeid(u8).name(), sizeof(u8));
       if(matlabClassId != templateClassId) {
-        printf("mxArrayToArray_u8 - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        mexPrintf("mxArrayToArray_u8 - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return Array_u8();
       }
       
@@ -235,14 +235,14 @@ namespace Anki
       const mwSize numMatlabElements = mxGetNumberOfElements(array);
     
       if(numMatlabElements != npixels) {
-        printf("mxArrayToArray_s8(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
+        mexPrintf("mxArrayToArray_s8(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
         return;
       }
     
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = convertToMatlabType(typeid(s8).name(), sizeof(s8));
       if(matlabClassId != templateClassId) {
-        printf("mxArrayToArray_s8(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        mexPrintf("mxArrayToArray_s8(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return;
       }
     
@@ -265,14 +265,14 @@ namespace Anki
       const mwSize *dimensions = mxGetDimensions(array);
     
       if(numDimensions != 2) {
-        printf("mxArrayToArray_s8 - Matlab array must be 2D\n");
+        mexPrintf("mxArrayToArray_s8 - Matlab array must be 2D\n");
         return Array_s8();
       }
     
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = convertToMatlabType(typeid(s8).name(), sizeof(s8));
       if(matlabClassId != templateClassId) {
-        printf("mxArrayToArray_s8 - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        mexPrintf("mxArrayToArray_s8 - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return Array_s8();
       }
       
@@ -319,14 +319,14 @@ namespace Anki
       const mwSize numMatlabElements = mxGetNumberOfElements(array);
     
       if(numMatlabElements != npixels) {
-        printf("mxArrayToArray_u16(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
+        mexPrintf("mxArrayToArray_u16(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
         return;
       }
     
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = convertToMatlabType(typeid(u16).name(), sizeof(u16));
       if(matlabClassId != templateClassId) {
-        printf("mxArrayToArray_u16(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        mexPrintf("mxArrayToArray_u16(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return;
       }
     
@@ -349,14 +349,14 @@ namespace Anki
       const mwSize *dimensions = mxGetDimensions(array);
     
       if(numDimensions != 2) {
-        printf("mxArrayToArray_u16 - Matlab array must be 2D\n");
+        mexPrintf("mxArrayToArray_u16 - Matlab array must be 2D\n");
         return Array_u16();
       }
     
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = convertToMatlabType(typeid(u16).name(), sizeof(u16));
       if(matlabClassId != templateClassId) {
-        printf("mxArrayToArray_u16 - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        mexPrintf("mxArrayToArray_u16 - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return Array_u16();
       }
       
@@ -403,14 +403,14 @@ namespace Anki
       const mwSize numMatlabElements = mxGetNumberOfElements(array);
     
       if(numMatlabElements != npixels) {
-        printf("mxArrayToArray_s16(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
+        mexPrintf("mxArrayToArray_s16(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
         return;
       }
     
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = convertToMatlabType(typeid(s16).name(), sizeof(s16));
       if(matlabClassId != templateClassId) {
-        printf("mxArrayToArray_s16(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        mexPrintf("mxArrayToArray_s16(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return;
       }
     
@@ -433,14 +433,14 @@ namespace Anki
       const mwSize *dimensions = mxGetDimensions(array);
     
       if(numDimensions != 2) {
-        printf("mxArrayToArray_s16 - Matlab array must be 2D\n");
+        mexPrintf("mxArrayToArray_s16 - Matlab array must be 2D\n");
         return Array_s16();
       }
     
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = convertToMatlabType(typeid(s16).name(), sizeof(s16));
       if(matlabClassId != templateClassId) {
-        printf("mxArrayToArray_s16 - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        mexPrintf("mxArrayToArray_s16 - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return Array_s16();
       }
       
@@ -487,14 +487,14 @@ namespace Anki
       const mwSize numMatlabElements = mxGetNumberOfElements(array);
     
       if(numMatlabElements != npixels) {
-        printf("mxArrayToArray_u32(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
+        mexPrintf("mxArrayToArray_u32(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
         return;
       }
     
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = convertToMatlabType(typeid(u32).name(), sizeof(u32));
       if(matlabClassId != templateClassId) {
-        printf("mxArrayToArray_u32(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        mexPrintf("mxArrayToArray_u32(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return;
       }
     
@@ -517,14 +517,14 @@ namespace Anki
       const mwSize *dimensions = mxGetDimensions(array);
     
       if(numDimensions != 2) {
-        printf("mxArrayToArray_u32 - Matlab array must be 2D\n");
+        mexPrintf("mxArrayToArray_u32 - Matlab array must be 2D\n");
         return Array_u32();
       }
     
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = convertToMatlabType(typeid(u32).name(), sizeof(u32));
       if(matlabClassId != templateClassId) {
-        printf("mxArrayToArray_u32 - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        mexPrintf("mxArrayToArray_u32 - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return Array_u32();
       }
       
@@ -571,14 +571,14 @@ namespace Anki
       const mwSize numMatlabElements = mxGetNumberOfElements(array);
     
       if(numMatlabElements != npixels) {
-        printf("mxArrayToArray_s32(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
+        mexPrintf("mxArrayToArray_s32(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
         return;
       }
     
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = convertToMatlabType(typeid(s32).name(), sizeof(s32));
       if(matlabClassId != templateClassId) {
-        printf("mxArrayToArray_s32(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        mexPrintf("mxArrayToArray_s32(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return;
       }
     
@@ -601,14 +601,14 @@ namespace Anki
       const mwSize *dimensions = mxGetDimensions(array);
     
       if(numDimensions != 2) {
-        printf("mxArrayToArray_s32 - Matlab array must be 2D\n");
+        mexPrintf("mxArrayToArray_s32 - Matlab array must be 2D\n");
         return Array_s32();
       }
     
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = convertToMatlabType(typeid(s32).name(), sizeof(s32));
       if(matlabClassId != templateClassId) {
-        printf("mxArrayToArray_s32 - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        mexPrintf("mxArrayToArray_s32 - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return Array_s32();
       }
       
@@ -655,14 +655,14 @@ namespace Anki
       const mwSize numMatlabElements = mxGetNumberOfElements(array);
     
       if(numMatlabElements != npixels) {
-        printf("mxArrayToArray_u64(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
+        mexPrintf("mxArrayToArray_u64(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
         return;
       }
     
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = convertToMatlabType(typeid(u64).name(), sizeof(u64));
       if(matlabClassId != templateClassId) {
-        printf("mxArrayToArray_u64(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        mexPrintf("mxArrayToArray_u64(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return;
       }
     
@@ -685,14 +685,14 @@ namespace Anki
       const mwSize *dimensions = mxGetDimensions(array);
     
       if(numDimensions != 2) {
-        printf("mxArrayToArray_u64 - Matlab array must be 2D\n");
+        mexPrintf("mxArrayToArray_u64 - Matlab array must be 2D\n");
         return Array_u64();
       }
     
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = convertToMatlabType(typeid(u64).name(), sizeof(u64));
       if(matlabClassId != templateClassId) {
-        printf("mxArrayToArray_u64 - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        mexPrintf("mxArrayToArray_u64 - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return Array_u64();
       }
       
@@ -739,14 +739,14 @@ namespace Anki
       const mwSize numMatlabElements = mxGetNumberOfElements(array);
     
       if(numMatlabElements != npixels) {
-        printf("mxArrayToArray_s64(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
+        mexPrintf("mxArrayToArray_s64(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
         return;
       }
     
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = convertToMatlabType(typeid(s64).name(), sizeof(s64));
       if(matlabClassId != templateClassId) {
-        printf("mxArrayToArray_s64(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        mexPrintf("mxArrayToArray_s64(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return;
       }
     
@@ -769,14 +769,14 @@ namespace Anki
       const mwSize *dimensions = mxGetDimensions(array);
     
       if(numDimensions != 2) {
-        printf("mxArrayToArray_s64 - Matlab array must be 2D\n");
+        mexPrintf("mxArrayToArray_s64 - Matlab array must be 2D\n");
         return Array_s64();
       }
     
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = convertToMatlabType(typeid(s64).name(), sizeof(s64));
       if(matlabClassId != templateClassId) {
-        printf("mxArrayToArray_s64 - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        mexPrintf("mxArrayToArray_s64 - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return Array_s64();
       }
       
@@ -823,14 +823,14 @@ namespace Anki
       const mwSize numMatlabElements = mxGetNumberOfElements(array);
     
       if(numMatlabElements != npixels) {
-        printf("mxArrayToArray_f32(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
+        mexPrintf("mxArrayToArray_f32(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
         return;
       }
     
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = convertToMatlabType(typeid(f32).name(), sizeof(f32));
       if(matlabClassId != templateClassId) {
-        printf("mxArrayToArray_f32(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        mexPrintf("mxArrayToArray_f32(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return;
       }
     
@@ -853,14 +853,14 @@ namespace Anki
       const mwSize *dimensions = mxGetDimensions(array);
     
       if(numDimensions != 2) {
-        printf("mxArrayToArray_f32 - Matlab array must be 2D\n");
+        mexPrintf("mxArrayToArray_f32 - Matlab array must be 2D\n");
         return Array_f32();
       }
     
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = convertToMatlabType(typeid(f32).name(), sizeof(f32));
       if(matlabClassId != templateClassId) {
-        printf("mxArrayToArray_f32 - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        mexPrintf("mxArrayToArray_f32 - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return Array_f32();
       }
       
@@ -907,14 +907,14 @@ namespace Anki
       const mwSize numMatlabElements = mxGetNumberOfElements(array);
     
       if(numMatlabElements != npixels) {
-        printf("mxArrayToArray_f64(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
+        mexPrintf("mxArrayToArray_f64(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
         return;
       }
     
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = convertToMatlabType(typeid(f64).name(), sizeof(f64));
       if(matlabClassId != templateClassId) {
-        printf("mxArrayToArray_f64(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        mexPrintf("mxArrayToArray_f64(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return;
       }
     
@@ -937,14 +937,14 @@ namespace Anki
       const mwSize *dimensions = mxGetDimensions(array);
     
       if(numDimensions != 2) {
-        printf("mxArrayToArray_f64 - Matlab array must be 2D\n");
+        mexPrintf("mxArrayToArray_f64 - Matlab array must be 2D\n");
         return Array_f64();
       }
     
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = convertToMatlabType(typeid(f64).name(), sizeof(f64));
       if(matlabClassId != templateClassId) {
-        printf("mxArrayToArray_f64 - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        mexPrintf("mxArrayToArray_f64 - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return Array_f64();
       }
       

@@ -152,14 +152,14 @@ def __GenerateDefinitions(whichTypes, includeAllMethods):
             '      const mwSize numMatlabElements = mxGetNumberOfElements(array);\n' +\
             '    \n' +\
             '      if(numMatlabElements != npixels) {\n' +\
-            '        printf("mxArrayToArray_' + type + '(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\\n", numMatlabElements, npixels);\n' +\
+            '        mexPrintf("mxArrayToArray_' + type + '(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\\n", numMatlabElements, npixels);\n' +\
             '        return;\n' +\
             '      }\n' +\
             '    \n' +\
             '      const mxClassID matlabClassId = mxGetClassID(array);\n' +\
             '      const mxClassID templateClassId = convertToMatlabType(typeid(' + type + ').name(), sizeof(' + type + '));\n' +\
             '      if(matlabClassId != templateClassId) {\n' +\
-            '        printf("mxArrayToArray_' + type + '(array,mat) - Matlab classId does not match with template %d!=%d\\n", matlabClassId, templateClassId);\n' +\
+            '        mexPrintf("mxArrayToArray_' + type + '(array,mat) - Matlab classId does not match with template %d!=%d\\n", matlabClassId, templateClassId);\n' +\
             '        return;\n' +\
             '      }\n' +\
             '    \n' +\
@@ -182,14 +182,14 @@ def __GenerateDefinitions(whichTypes, includeAllMethods):
             '      const mwSize *dimensions = mxGetDimensions(array);\n' +\
             '    \n' +\
             '      if(numDimensions != 2) {\n' +\
-            '        printf("mxArrayToArray_' + type + ' - Matlab array must be 2D\\n");\n' +\
+            '        mexPrintf("mxArrayToArray_' + type + ' - Matlab array must be 2D\\n");\n' +\
             '        return Array_' + type + '();\n' +\
             '      }\n' +\
             '    \n' +\
             '      const mxClassID matlabClassId = mxGetClassID(array);\n' +\
             '      const mxClassID templateClassId = convertToMatlabType(typeid(' + type + ').name(), sizeof(' + type + '));\n' +\
             '      if(matlabClassId != templateClassId) {\n' +\
-            '        printf("mxArrayToArray_' + type + ' - Matlab classId does not match with template %d!=%d\\n", matlabClassId, templateClassId);\n' +\
+            '        mexPrintf("mxArrayToArray_' + type + ' - Matlab classId does not match with template %d!=%d\\n", matlabClassId, templateClassId);\n' +\
             '        return Array_' + type + '();\n' +\
             '      }\n' +\
             '      \n' +\
