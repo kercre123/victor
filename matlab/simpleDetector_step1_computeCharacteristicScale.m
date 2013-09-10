@@ -66,6 +66,11 @@ end % IF usePyramid
 % Threshold:
 binaryImg = img < thresholdFraction*averageImg;
 
+% keyboard
+
+%figure(3); imshow(binaryImg);
+% figure(3); imshow(imresize(binaryImg, [120,160]));
+
 % % Get rid of spurious detections on the edges of the image
 % binaryImg([1:minDotRadius end:(end-miTnDotRadius+1)],:) = false;
 % binaryImg(:,[1:minDotRadius end:(end-minDotRadius+1)]) = false;

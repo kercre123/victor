@@ -29,7 +29,7 @@ binaryImg = simpleDetector_step1_computeCharacteristicScale(maxSmoothingFraction
 
 t_binaryRegions = tic;
 
-[numRegions, area, indexList, bb, centroid] = simpleDetector_step2_computeRegions(binaryImg, usePerimeterCheck, embeddedConversions, DEBUG_DISPLAY);
+[numRegions, area, indexList, bb, centroid, components2d] = simpleDetector_step2_computeRegions(binaryImg, usePerimeterCheck, embeddedConversions, DEBUG_DISPLAY);
 
 if numRegions == 0
     % Didn't even find any regions in the binary image, nothing to
@@ -37,13 +37,13 @@ if numRegions == 0
     return;
 end
 
-[numRegions, indexList, centroid] = simpleDetector_step3_simpleRejectionTests(nrows, ncols, numRegions, area, indexList, bb, centroid, usePerimeterCheck, embeddedConversions, DEBUG_DISPLAY);
+[numRegions, indexList, centroid, components2d] = simpleDetector_step3_simpleRejectionTests(nrows, ncols, numRegions, area, indexList, bb, centroid, usePerimeterCheck, components2d, embeddedConversions, DEBUG_DISPLAY);
 
 fprintf('Binary region detection took %.2f seconds.\n', toc(t_binaryRegions));
 
 t_squareDetect = tic;
 
-[quads, quadTforms] = simpleDetector_step4_computeQuads(nrows, ncols, numRegions, indexList, centroid, minQuadArea, cornerMethod, computeTransformFromBoundary, quadRefinementMethod, embeddedConversions, DEBUG_DISPLAY);
+[quads, quadTforms] = simpleDetector_step4_computeQuads(nrows, ncols, numRegions, indexList, centroid, minQuadArea, cornerMethod, computeTransformFromBoundary, quadRefinementMethod, components2d, embeddedConversions, DEBUG_DISPLAY);
 
 fprintf('Square detection took %.3f seconds.\n', toc(t_squareDetect));
 

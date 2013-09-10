@@ -1,4 +1,4 @@
-function [quads, quadTforms] = simpleDetector_step4_computeQuads(nrows, ncols, numRegions, indexList, centroid, minQuadArea, cornerMethod, computeTransformFromBoundary, quadRefinementMethod, embeddedConversions, DEBUG_DISPLAY)
+function [quads, quadTforms] = simpleDetector_step4_computeQuads(nrows, ncols, numRegions, indexList, centroid, minQuadArea, cornerMethod, computeTransformFromBoundary, quadRefinementMethod, components2d, embeddedConversions, DEBUG_DISPLAY)
 
 if DEBUG_DISPLAY
     % Show what's left
@@ -92,9 +92,15 @@ for i_region = 1:numRegions
                 [rowStart colStart], 'N');
     elseif strcmp(embeddedConversions.traceBoundaryType, 'c_fixedPoint')
         binaryImg = uint8(regionMap == i_region);
-%         keyboard        
         boundary = mexTraceBoundary(binaryImg, [rowStart, colStart], 'n');
-%         boundary = [];
+    elseif strcmp(embeddedConversions.traceBoundaryType, 'matlab_approximate')
+        if isempty(components2d)
+            disp('embeddedConversions.connectedComponentsType must be a run-length encoding version, like matlab_approximate');
+            keyboard
+        end
+        
+        boundary = approximateTraceBoundary(components2d{i_region});
+%         keyboard
     else
         keyboard
     end

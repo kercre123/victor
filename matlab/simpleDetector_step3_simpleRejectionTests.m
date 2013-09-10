@@ -1,4 +1,4 @@
-function [numRegions, indexList, centroid] = simpleDetector_step3_simpleRejectionTests(nrows, ncols, numRegions, area, indexList, bb, centroid, usePerimeterCheck, embeddedConversions, DEBUG_DISPLAY)
+function [numRegions, indexList, centroid, components2d] = simpleDetector_step3_simpleRejectionTests(nrows, ncols, numRegions, area, indexList, bb, centroid, usePerimeterCheck, components2d, embeddedConversions, DEBUG_DISPLAY)
 
 if DEBUG_DISPLAY
     namedFigure('InitialFiltering')
@@ -23,6 +23,7 @@ updateStats(tooBigOrSmall);
         indexList(toRemove) = [];
         bb(toRemove,:) = [];
         centroid(toRemove,:) = [];
+        components2d(toRemove) = [];
         numRegions = numRegions - sum(toRemove);
     end
 
