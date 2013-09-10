@@ -36,7 +36,7 @@
 		4940AD9C17C6D36900778163 /* array2d.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = array2d.h; path = ../../../include/anki/common/array2d.h; sourceTree = "<group>"; };
 		4940AD9E17C6D37400778163 /* array2d.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = array2d.cpp; path = ../../../src/array2d.cpp; sourceTree = "<group>"; };
 		4940ADA017C6DB8C00778163 /* point.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = point.cpp; path = ../../../src/point.cpp; sourceTree = "<group>"; };
-		5C7B94D417AB1FB30020CCF7 /* libCoreTech_Common.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCoreTech_Common.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		5C7B94D417AB1FB30020CCF7 /* libCoreTech_Common_64Debug.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCoreTech_Common_64Debug.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		5C7B94DD17AB1FCC0020CCF7 /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = common.h; path = ../../../include/anki/common.h; sourceTree = "<group>"; };
 		5C7B94DF17AB1FD90020CCF7 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = ../../../include/anki/common/config.h; sourceTree = "<group>"; };
 		5C7B94E017AB1FD90020CCF7 /* DASlight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DASlight.h; path = ../../../include/anki/common/DASlight.h; sourceTree = "<group>"; };
@@ -92,7 +92,7 @@
 		5C7B94D517AB1FB30020CCF7 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				5C7B94D417AB1FB30020CCF7 /* libCoreTech_Common.a */,
+				5C7B94D417AB1FB30020CCF7 /* libCoreTech_Common_64Debug.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -134,7 +134,7 @@
 			);
 			name = CoreTech_Common;
 			productName = CoreTech_Common;
-			productReference = 5C7B94D417AB1FB30020CCF7 /* libCoreTech_Common.a */;
+			productReference = 5C7B94D417AB1FB30020CCF7 /* libCoreTech_Common_64Debug.a */;
 			productType = "com.apple.product-type.library.static";
 		};
 /* End PBXNativeTarget section */
@@ -242,6 +242,7 @@
 		5C7B94D917AB1FB30020CCF7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(EFFECTIVE_PLATFORM_NAME)/lib";
 				EXECUTABLE_PREFIX = lib;
 				HEADER_SEARCH_PATHS = (
 					../../../include,
@@ -265,7 +266,7 @@
 					"../../../../coretech-external/opencv-2.4.6.1/modules/video/include",
 					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
 				);
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "$(TARGET_NAME)_64$(CONFIGURATION)";
 				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
 			};
 			name = Debug;
@@ -273,6 +274,7 @@
 		5C7B94DA17AB1FB30020CCF7 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(EFFECTIVE_PLATFORM_NAME)/lib";
 				EXECUTABLE_PREFIX = lib;
 				HEADER_SEARCH_PATHS = (
 					../../../include,
@@ -296,7 +298,7 @@
 					"../../../../coretech-external/opencv-2.4.6.1/modules/video/include",
 					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
 				);
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "$(TARGET_NAME)_64$(CONFIGURATION)";
 				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
 			};
 			name = Release;

@@ -13,7 +13,6 @@ ankiLibraryDirs = {[rootDir, '/coretech-common/include/'], [rootDir, '/coretech-
 
 if ismac()
     useDebugLibraries = true;
-    openCvLibDir = [rootDir, '/coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/'];
     openCvVersionString = '';
 
     ankiLibDirs = {[rootDir, '/coretech-common/build/xcode4/lib/'],...
@@ -21,10 +20,10 @@ if ismac()
 
     if useDebugLibraries
         openCvLibDir = [rootDir, '/coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/'];
-        ankiLibs = {'-lCoreTech_Common_32Debug', '-lCoreTech_Common_Embedded_32Debug', '-lCoreTech_Vision_32Debug', '-lCoreTech_Vision_Embedded_32Debug'}; 
+        ankiLibs = {'-lCoreTech_Common_64Debug', '-lCoreTech_Common_Embedded_64Debug', '-lCoreTech_Vision_64Debug', '-lCoreTech_Vision_Embedded_64Debug'}; 
     else
         openCvLibDir = [rootDir, '/coretech-external/build/xcode4/opencv-2.4.6.1/lib/Release/'];
-        ankiLibs = {'-lCoreTech_Common_32Release', '-lCoreTech_Common_Embedded_32Release', '-lCoreTech_Vision_32Release', '-lCoreTech_Vision_Embedded_32Release'};
+        ankiLibs = {'-lCoreTech_Common_64Release', '-lCoreTech_Common_Embedded_64Release', '-lCoreTech_Vision_64Release', '-lCoreTech_Vision_Embedded_64Release'};
     end
 elseif ispc()
     useDebugLibraries = false;

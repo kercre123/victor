@@ -51,7 +51,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		5C268B0F17CD62FB00AF3C6C /* CoreTech_Common_Embedded_Test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CoreTech_Common_Embedded_Test; sourceTree = BUILT_PRODUCTS_DIR; };
+		5C268B0F17CD62FB00AF3C6C /* CoreTech_Common_Embedded_Test_64Debug */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CoreTech_Common_Embedded_Test_64Debug; sourceTree = BUILT_PRODUCTS_DIR; };
 		5C268B1417CD62FB00AF3C6C /* CoreTech_Common_Embedded_Test.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = CoreTech_Common_Embedded_Test.1; sourceTree = "<group>"; };
 		5C268B3917CD63B400AF3C6C /* common_Test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = common_Test.cpp; path = ../../../test/embedded/common_Test.cpp; sourceTree = "<group>"; };
 		5C268B3B17CD640600AF3C6C /* libCoreTech_Common_Embedded.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Common_Embedded.a; path = "/Users/pbarnum/Documents/Anki/coretech-common/project/xcode4/CoreTech_Common_Embedded/../../../build/xcode4/Release/libCoreTech_Common_Embedded.a"; sourceTree = "<absolute>"; };
@@ -157,7 +157,7 @@
 		5C268B1017CD62FB00AF3C6C /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				5C268B0F17CD62FB00AF3C6C /* CoreTech_Common_Embedded_Test */,
+				5C268B0F17CD62FB00AF3C6C /* CoreTech_Common_Embedded_Test_64Debug */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -187,7 +187,7 @@
 			);
 			name = CoreTech_Common_Embedded_Test;
 			productName = CoreTech_Common_Embedded_Test;
-			productReference = 5C268B0F17CD62FB00AF3C6C /* CoreTech_Common_Embedded_Test */;
+			productReference = 5C268B0F17CD62FB00AF3C6C /* CoreTech_Common_Embedded_Test_64Debug */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -290,6 +290,7 @@
 		5C268B1917CD62FB00AF3C6C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(EFFECTIVE_PLATFORM_NAME)/bin";
 				HEADER_SEARCH_PATHS = (
 					../../../include,
 					"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/extern/include",
@@ -321,7 +322,7 @@
 					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/gtest-1.7.0/Debug\"",
 					"\"$(SRCROOT)/../../../build/xcode4/Release\"",
 				);
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "$(TARGET_NAME)_64$(CONFIGURATION)";
 				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
 			};
 			name = Debug;
@@ -329,6 +330,7 @@
 		5C268B1A17CD62FB00AF3C6C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(EFFECTIVE_PLATFORM_NAME)/bin";
 				HEADER_SEARCH_PATHS = (
 					../../../include,
 					"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/extern/include",
@@ -360,7 +362,7 @@
 					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/gtest-1.7.0/Debug\"",
 					"\"$(SRCROOT)/../../../build/xcode4/Release\"",
 				);
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "$(TARGET_NAME)_64$(CONFIGURATION)";
 				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
 			};
 			name = Release;
@@ -384,6 +386,7 @@
 				5C268B1A17CD62FB00AF3C6C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
