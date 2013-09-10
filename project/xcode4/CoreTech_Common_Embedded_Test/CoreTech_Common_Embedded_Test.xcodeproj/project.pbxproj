@@ -8,8 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		5C268B1517CD62FB00AF3C6C /* CoreTech_Common_Embedded_Test.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5C268B1417CD62FB00AF3C6C /* CoreTech_Common_Embedded_Test.1 */; };
-		5C268B3A17CD63B400AF3C6C /* common_Test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C268B3917CD63B400AF3C6C /* common_Test.cpp */; };
-		5C268B3C17CD640600AF3C6C /* libCoreTech_Common_Embedded.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C268B3B17CD640600AF3C6C /* libCoreTech_Common_Embedded.a */; };
 		5C268B4117CD645400AF3C6C /* libgtest_main.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C268B3F17CD645400AF3C6C /* libgtest_main.a */; };
 		5C268B4217CD645400AF3C6C /* libgtest.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C268B4017CD645400AF3C6C /* libgtest.a */; };
 		5C268B5817CD646200AF3C6C /* libopencv_haartraining_engine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C268B4317CD646200AF3C6C /* libopencv_haartraining_engine.a */; };
@@ -35,6 +33,10 @@
 		5C268B6C17CD646200AF3C6C /* libopencv_videostab.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C268B5717CD646200AF3C6C /* libopencv_videostab.dylib */; };
 		5C268B6E17CD648F00AF3C6C /* libmx.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C268B6D17CD648F00AF3C6C /* libmx.dylib */; };
 		5C268B7017CD650B00AF3C6C /* libeng.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C268B6F17CD650B00AF3C6C /* libeng.dylib */; };
+		5CAE412C17DEAC59003C3FF9 /* commonTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5CAE412A17DEAC59003C3FF9 /* commonTests.cpp */; };
+		5CAE412D17DEAC59003C3FF9 /* run_commonTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5CAE412B17DEAC59003C3FF9 /* run_commonTests.cpp */; };
+		5CAE413017DEACA0003C3FF9 /* libCoreTech_Common_64Debug.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5CAE412E17DEACA0003C3FF9 /* libCoreTech_Common_64Debug.a */; };
+		5CAE413117DEACA0003C3FF9 /* libCoreTech_Common_Embedded_64Debug.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5CAE412F17DEACA0003C3FF9 /* libCoreTech_Common_Embedded_64Debug.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -53,7 +55,6 @@
 /* Begin PBXFileReference section */
 		5C268B0F17CD62FB00AF3C6C /* CoreTech_Common_Embedded_Test_64Debug */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CoreTech_Common_Embedded_Test_64Debug; sourceTree = BUILT_PRODUCTS_DIR; };
 		5C268B1417CD62FB00AF3C6C /* CoreTech_Common_Embedded_Test.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = CoreTech_Common_Embedded_Test.1; sourceTree = "<group>"; };
-		5C268B3917CD63B400AF3C6C /* common_Test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = common_Test.cpp; path = ../../../test/embedded/common_Test.cpp; sourceTree = "<group>"; };
 		5C268B3B17CD640600AF3C6C /* libCoreTech_Common_Embedded.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Common_Embedded.a; path = "/Users/pbarnum/Documents/Anki/coretech-common/project/xcode4/CoreTech_Common_Embedded/../../../build/xcode4/Release/libCoreTech_Common_Embedded.a"; sourceTree = "<absolute>"; };
 		5C268B3F17CD645400AF3C6C /* libgtest_main.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libgtest_main.a; path = "../../../../coretech-external/build/xcode4/gtest-1.7.0/Debug/libgtest_main.a"; sourceTree = "<group>"; };
 		5C268B4017CD645400AF3C6C /* libgtest.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libgtest.a; path = "../../../../coretech-external/build/xcode4/gtest-1.7.0/Debug/libgtest.a"; sourceTree = "<group>"; };
@@ -80,6 +81,10 @@
 		5C268B5717CD646200AF3C6C /* libopencv_videostab.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_videostab.dylib; path = "../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/libopencv_videostab.dylib"; sourceTree = "<group>"; };
 		5C268B6D17CD648F00AF3C6C /* libmx.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libmx.dylib; path = ../../../../../../../../Applications/MATLAB_R2013a.app/bin/maci64/libmx.dylib; sourceTree = "<group>"; };
 		5C268B6F17CD650B00AF3C6C /* libeng.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libeng.dylib; path = ../../../../../../../../Applications/MATLAB_R2013a.app/bin/maci64/libeng.dylib; sourceTree = "<group>"; };
+		5CAE412A17DEAC59003C3FF9 /* commonTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = commonTests.cpp; path = ../../../test/embedded/commonTests.cpp; sourceTree = "<group>"; };
+		5CAE412B17DEAC59003C3FF9 /* run_commonTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = run_commonTests.cpp; path = ../../../test/embedded/run_commonTests.cpp; sourceTree = "<group>"; };
+		5CAE412E17DEACA0003C3FF9 /* libCoreTech_Common_64Debug.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Common_64Debug.a; path = ../../../build/xcode4/lib/libCoreTech_Common_64Debug.a; sourceTree = "<group>"; };
+		5CAE412F17DEACA0003C3FF9 /* libCoreTech_Common_Embedded_64Debug.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Common_Embedded_64Debug.a; path = ../../../build/xcode4/lib/libCoreTech_Common_Embedded_64Debug.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -87,6 +92,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5CAE413017DEACA0003C3FF9 /* libCoreTech_Common_64Debug.a in Frameworks */,
+				5CAE413117DEACA0003C3FF9 /* libCoreTech_Common_Embedded_64Debug.a in Frameworks */,
 				5C268B7017CD650B00AF3C6C /* libeng.dylib in Frameworks */,
 				5C268B6E17CD648F00AF3C6C /* libmx.dylib in Frameworks */,
 				5C268B5817CD646200AF3C6C /* libopencv_haartraining_engine.a in Frameworks */,
@@ -112,7 +119,6 @@
 				5C268B6C17CD646200AF3C6C /* libopencv_videostab.dylib in Frameworks */,
 				5C268B4117CD645400AF3C6C /* libgtest_main.a in Frameworks */,
 				5C268B4217CD645400AF3C6C /* libgtest.a in Frameworks */,
-				5C268B3C17CD640600AF3C6C /* libCoreTech_Common_Embedded.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -122,6 +128,10 @@
 		5C268B0617CD62FB00AF3C6C = {
 			isa = PBXGroup;
 			children = (
+				5CAE412E17DEACA0003C3FF9 /* libCoreTech_Common_64Debug.a */,
+				5CAE412F17DEACA0003C3FF9 /* libCoreTech_Common_Embedded_64Debug.a */,
+				5CAE412A17DEAC59003C3FF9 /* commonTests.cpp */,
+				5CAE412B17DEAC59003C3FF9 /* run_commonTests.cpp */,
 				5C268B6F17CD650B00AF3C6C /* libeng.dylib */,
 				5C268B6D17CD648F00AF3C6C /* libmx.dylib */,
 				5C268B4317CD646200AF3C6C /* libopencv_haartraining_engine.a */,
@@ -148,7 +158,6 @@
 				5C268B3F17CD645400AF3C6C /* libgtest_main.a */,
 				5C268B4017CD645400AF3C6C /* libgtest.a */,
 				5C268B3B17CD640600AF3C6C /* libCoreTech_Common_Embedded.a */,
-				5C268B3917CD63B400AF3C6C /* common_Test.cpp */,
 				5C268B1117CD62FB00AF3C6C /* CoreTech_Common_Embedded_Test */,
 				5C268B1017CD62FB00AF3C6C /* Products */,
 			);
@@ -221,7 +230,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5C268B3A17CD63B400AF3C6C /* common_Test.cpp in Sources */,
+				5CAE412C17DEAC59003C3FF9 /* commonTests.cpp in Sources */,
+				5CAE412D17DEAC59003C3FF9 /* run_commonTests.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -321,6 +331,7 @@
 					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug\"",
 					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/gtest-1.7.0/Debug\"",
 					"\"$(SRCROOT)/../../../build/xcode4/Release\"",
+					"\"$(SRCROOT)/../../../build/xcode4/lib\"",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)_64$(CONFIGURATION)";
 				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
@@ -361,6 +372,7 @@
 					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug\"",
 					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/gtest-1.7.0/Debug\"",
 					"\"$(SRCROOT)/../../../build/xcode4/Release\"",
+					"\"$(SRCROOT)/../../../build/xcode4/lib\"",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)_64$(CONFIGURATION)";
 				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";

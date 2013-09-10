@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0A3494C417D0128000E064C5 /* common_Test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0A3494C317D0128000E064C5 /* common_Test.cpp */; };
 		5C268B3E17CD640D00AF3C6C /* libCoreTech_Common_Embedded.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C268B3D17CD640D00AF3C6C /* libCoreTech_Common_Embedded.a */; };
 		5C74C53917AB4289007BD21C /* libCoreTech_Common.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C74C53817AB4289007BD21C /* libCoreTech_Common.a */; };
 		5C74C53C17AB42AF007BD21C /* libeng.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C74C53A17AB42AF007BD21C /* libeng.dylib */; };
@@ -52,7 +51,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		0A3494C317D0128000E064C5 /* common_Test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = common_Test.cpp; path = ../../../test/embedded/common_Test.cpp; sourceTree = "<group>"; };
 		5C268B3D17CD640D00AF3C6C /* libCoreTech_Common_Embedded.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Common_Embedded.a; path = "/Users/pbarnum/Documents/Anki/coretech-common/project/xcode4/CoreTech_Common_Embedded/../../../build/xcode4/Release/libCoreTech_Common_Embedded.a"; sourceTree = "<absolute>"; };
 		5C74C53817AB4289007BD21C /* libCoreTech_Common.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Common.a; path = "../../../../../../Library/Developer/Xcode/DerivedData/CoreTech_Common-eqhlqxhoevhxqidsiqphyrydexlr/Build/Products/Debug/libCoreTech_Common.a"; sourceTree = "<group>"; };
 		5C74C53A17AB42AF007BD21C /* libeng.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libeng.dylib; path = ../../../../../../../../Applications/MATLAB_R2013a.app/bin/maci64/libeng.dylib; sourceTree = "<group>"; };
@@ -125,7 +123,6 @@
 		5C7B94B417AB1F080020CCF7 = {
 			isa = PBXGroup;
 			children = (
-				0A3494C317D0128000E064C5 /* common_Test.cpp */,
 				5C268B3D17CD640D00AF3C6C /* libCoreTech_Common_Embedded.a */,
 				5CCDACCF17AC247E000B4375 /* libgtest_main.a */,
 				5CCDACD017AC247E000B4375 /* libgtest.a */,
@@ -225,7 +222,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0A3494C417D0128000E064C5 /* common_Test.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

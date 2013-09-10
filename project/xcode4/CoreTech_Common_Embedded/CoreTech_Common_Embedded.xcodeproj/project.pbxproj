@@ -22,6 +22,7 @@
 		5C268B3617CD633B00AF3C6C /* memory.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C268B2E17CD633B00AF3C6C /* memory.h */; };
 		5C268B3717CD633B00AF3C6C /* point.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C268B2F17CD633B00AF3C6C /* point.h */; };
 		5C268B3817CD633B00AF3C6C /* utilities.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C268B3017CD633B00AF3C6C /* utilities.h */; };
+		5CAE413317DEB7AF003C3FF9 /* fixedLengthList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5CAE413217DEB7AF003C3FF9 /* fixedLengthList.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,7 +32,7 @@
 		493C9C6217CFB90A00DBBF6B /* pose.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pose.h; path = ../../../include/anki/math/pose.h; sourceTree = "<group>"; };
 		493C9C6317CFB90A00DBBF6B /* rotation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = rotation.cpp; path = ../../../src/rotation.cpp; sourceTree = "<group>"; };
 		493C9C6417CFB90A00DBBF6B /* rotation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = rotation.h; path = ../../../include/anki/math/rotation.h; sourceTree = "<group>"; };
-		5C268AFF17CD62DF00AF3C6C /* libCoreTech_Common_Embedded.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCoreTech_Common_Embedded.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		5C268AFF17CD62DF00AF3C6C /* libCoreTech_Common_Embedded.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; name = libCoreTech_Common_Embedded.a; path = libCoreTech_Common_Embedded_64Debug.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		5C268B1B17CD632900AF3C6C /* array2d.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = array2d.cpp; path = ../../../src/embedded/array2d.cpp; sourceTree = "<group>"; };
 		5C268B1C17CD632900AF3C6C /* dasLight.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dasLight.cpp; path = ../../../src/embedded/dasLight.cpp; sourceTree = "<group>"; };
 		5C268B1D17CD632900AF3C6C /* matlabInterface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = matlabInterface.cpp; path = ../../../src/embedded/matlabInterface.cpp; sourceTree = "<group>"; };
@@ -47,6 +48,7 @@
 		5C268B2E17CD633B00AF3C6C /* memory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = memory.h; path = ../../../include/anki/embeddedCommon/memory.h; sourceTree = "<group>"; };
 		5C268B2F17CD633B00AF3C6C /* point.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = point.h; path = ../../../include/anki/embeddedCommon/point.h; sourceTree = "<group>"; };
 		5C268B3017CD633B00AF3C6C /* utilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = utilities.h; path = ../../../include/anki/embeddedCommon/utilities.h; sourceTree = "<group>"; };
+		5CAE413217DEB7AF003C3FF9 /* fixedLengthList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fixedLengthList.cpp; path = ../../../src/embedded/fixedLengthList.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -77,6 +79,7 @@
 		5C268AF617CD62DF00AF3C6C = {
 			isa = PBXGroup;
 			children = (
+				5CAE413217DEB7AF003C3FF9 /* fixedLengthList.cpp */,
 				5C268B2917CD633B00AF3C6C /* array2d.h */,
 				5C268B2A17CD633B00AF3C6C /* config.h */,
 				5C268B2B17CD633B00AF3C6C /* DASlight.h */,
@@ -181,6 +184,7 @@
 				5C268B2417CD632900AF3C6C /* memory.cpp in Sources */,
 				5C268B2517CD632900AF3C6C /* point.cpp in Sources */,
 				5C268B2617CD632900AF3C6C /* utilities.cpp in Sources */,
+				5CAE413317DEB7AF003C3FF9 /* fixedLengthList.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
