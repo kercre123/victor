@@ -17,7 +17,7 @@ namedFigure('Code Sheet', 'Units', 'centimeters')
 clf
 
 blocks = [35 40 45 50];
-faces = [8 10];
+faces = [1 5 8 10];
 
 rowPos = marginSpacing;
 colPos = marginSpacing;
@@ -38,7 +38,7 @@ for i = 1:length(blocks)
             'targetSize', markerSize, ...
             'fiducialType', 'square', 'h_axes', h_axes(ctr), ...
             'fiducialSize', .4, 'borderSpacing', .3, ...
-            'centerTargetType', 'circle')
+            'centerTargetType', 'dots')
         axis(h_axes(ctr), 'off')
         title(h_axes(ctr), sprintf('Block %d, Face %d', blocks(i), faces(j)))
         

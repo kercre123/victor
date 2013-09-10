@@ -7,17 +7,16 @@ targetSize = 3.84; % in cm
 imgSize = 255; 
 fiducialSize = .5; % radius of dots or width of square
 borderSpacing = .25; % in cm
-n = 5; %numSquares, should be odd, so there's a center pixel we can use
 useBarsBetweenDots = false; % only valid when centerTargetType=='cornerDots'
 
 parseVarargin(varargin{:});
 
-value = encodeIDs(blockType, faceType);
+%value = encodeIDs(blockType, faceType);
+code = BlockMarker2D.encodeIDs(blockType, faceType);
 
-numBits = n^2 - 5; % 5 bits are reserved for orientation and center position
-numValues = 2^numBits;
+n = size(BlockMarker2D.Layout, 1);
 
-mid = (n+1)/2;
+% mid = (n+1)/2;
 
 if isempty(h_axes)
     h_axes = gca;
@@ -29,7 +28,6 @@ hold(h_axes, 'off')
 rectangle('Pos', [0 0 targetSize targetSize], ...
     'EdgeColor', .8*ones(1,3), 'LineStyle', '--', ...
     'LineWidth', .5, 'Parent', h_axes);
-title(sprintf('%d unique values possible', numValues))
 hold(h_axes, 'on');
 
 h_fiducial = [];
@@ -77,10 +75,10 @@ switch(fiducialType)
         
     case 'square'
         h_fiducial(1) = rectangle('Pos', [borderSpacing*[1 1] (targetSize-2*borderSpacing)*[1 1]], ...
-            'FaceColor', 'k', 'EdgeColor', 'k', 'Parent', h_axes);
+            'FaceColor', 'k', 'EdgeColor', 'none', 'Parent', h_axes);
         
         h_fiducial(2) = rectangle('Pos', [(borderSpacing+fiducialSize)*[1 1] (targetSize-2*(fiducialSize+borderSpacing))*[1 1]], ...
-            'FaceColor', 'w', 'EdgeColor', 'w', 'Parent', h_axes);
+            'FaceColor', 'w', 'EdgeColor', 'none', 'Parent', h_axes);
         
         %set(h_fiducial, 'EdgeColor', 'k', 'LineWidth', fiducialSize);
         
@@ -98,22 +96,34 @@ switch(fiducialType)
 end
     
 
-availableSlots = true(n,n);
-availableSlots([1 end],mid) = false;
-availableSlots(mid,[1 end]) = false;
-availableSlots(mid, mid)    = false;
-%availableSlots(n,1) = false;
-%availableSlots(n,n) = false;
-
-code = zeros(n,n);
-%code(1,1) = 1; % upper left always 1 for orientation
-code(end,mid) = 1;
-code(mid,[1 end]) = 1;
-code(availableSlots) = dec2bin(value, numBits) == '1';
+% availableSlots = true(n,n);
+% availableSlots([1 end],mid) = false;
+% availableSlots(mid,[1 end]) = false;
+% availableSlots(mid, mid)    = false;
+% %availableSlots(n,1) = false;
+% %availableSlots(n,n) = false;
+% 
+% code = zeros(n,n);
+% %code(1,1) = 1; % upper left always 1 for orientation
+% code(end,mid) = 1;
+% code(mid,[1 end]) = 1;
+% code(availableSlots) = dec2bin(value, numBits) == '1';
 
 pixelWidth = (targetSize - 2*cornerSize)/n;
-imPos = [cornerSize+pixelWidth/2 targetSize-cornerSize-pixelWidth/2];
-h_code = imagesc(imPos, imPos, ~code, 'Parent', h_axes);
+%imPos = [cornerSize+pixelWidth/2 targetSize-cornerSize-pixelWidth/2];
+%h_code = imagesc(imPos, imPos, ~code, 'Parent', h_axes);
+
+% Draw the squres one by one as rectangles, so that they scale better when
+% printing a sheet:
+for i = 1:n
+    for j = 1:n
+        if code(i,j)
+           rectangle('Pos',  [cornerSize+(j-1)*pixelWidth ...
+               cornerSize+(i-1)*pixelWidth pixelWidth pixelWidth], ...
+               'EdgeColor', 'none', 'FaceColor', 'k');
+        end
+    end
+end
 colormap(gray)
 axis(h_axes, 'image', 'ij') 
 set(h_axes, 'XLim', lim, 'YLim', lim);
@@ -121,18 +131,51 @@ set(h_axes, 'XLim', lim, 'YLim', lim);
 % Center target:
 switch(centerTargetType)
     case 'checker'
-        h_cen(1) = rectangle('Pos', [targetSize/2-pixelWidth/3 targetSize/2-pixelWidth/3 pixelWidth/3 pixelWidth/3], 'Parent', h_axes);
-        h_cen(2) = rectangle('Pos', [targetSize/2 targetSize/2 pixelWidth/3 pixelWidth/3], 'Parent', h_axes);
-        rectangle('Pos', [targetSize/2-5*pixelWidth/12 targetSize/2-5*pixelWidth/12 5*pixelWidth/6 5*pixelWidth/6], 'LineWidth', 2, 'Parent', h_axes);
+        w = .8*pixelWidth/3;
+        h_cen(1) = rectangle('Pos', [targetSize/2-1.5*w targetSize/2-1.5*w w w], 'Parent', h_axes);
+        h_cen(2) = rectangle('Pos', [targetSize/2-1.5*w targetSize/2+0.5*w w w], 'Parent', h_axes);
+        h_cen(3) = rectangle('Pos', [targetSize/2-0.5*w targetSize/2-0.5*w w w], 'Parent', h_axes);
+        h_cen(4) = rectangle('Pos', [targetSize/2+0.5*w targetSize/2-1.5*w w w], 'Parent', h_axes);
+        h_cen(5) = rectangle('Pos', [targetSize/2+0.5*w targetSize/2+0.5*w w w], 'Parent', h_axes);
+        
+        %rectangle('Pos', [targetSize/2-5*pixelWidth/12 targetSize/2-5*pixelWidth/12 5*pixelWidth/6 5*pixelWidth/6], 'LineWidth', 2, 'Parent', h_axes);
+        
+        set(h_cen, 'FaceColor', 'k', 'EdgeColor', 'none');
     case 'circle'
         h_cen = rectangle('Curvature', [1 1], ...
             'Pos', [(targetSize/2-pixelWidth/3)*[1 1] 2/3*pixelWidth*[1 1]], ...
             'Parent', h_axes);
+        
+        set(h_cen, 'FaceColor', 'k', 'EdgeColor', 'none');
+        
+    case 'square'
+        w1 = 1*pixelWidth;
+        h_cen(1) = rectangle('Pos', [(targetSize/2-w1/2)*[1 1] w1 w1], ...
+            'Parent', h_axes, 'EdgeColor', 'none', 'FaceColor', 'k');
+        w2 = .6*pixelWidth;
+        h_cen(2) = rectangle('Pos', [(targetSize/2-w2/2)*[1 1] w2 w2], ...
+            'Parent', h_axes, 'EdgeColor', 'none', 'FaceColor', 'w');
+        
+    case 'dots'
+        spacing = .5*pixelWidth;
+        radius  = .125*pixelWidth;
+        
+        h_dot(1) = rectangle('Curvature', [1 1], 'Parent', h_axes, ...
+            'Pos', [(targetSize/2-radius)+spacing/2*[-1 -1] 2*radius*[1 1]]);
+        h_dot(2) = rectangle('Curvature', [1 1], 'Parent', h_axes, ...
+            'Pos', [(targetSize/2-radius)+spacing/2*[-1  1] 2*radius*[1 1]]);
+        h_dot(3) = rectangle('Curvature', [1 1], 'Parent', h_axes, ...
+            'Pos', [(targetSize/2-radius)+spacing/2*[ 1 -1] 2*radius*[1 1]]);
+        h_dot(4) = rectangle('Curvature', [1 1], 'Parent', h_axes, ...
+            'Pos', [(targetSize/2-radius)+spacing/2*[ 1  1] 2*radius*[1 1]]);
+        
+        set(h_dot, 'EdgeColor', 'none', 'FaceColor', 'k');
+        
     otherwise
         error('Unrecognized centerTargetType "%s"', centerTargetType);
 end
 
-set(h_cen, 'FaceColor', 'k');
+
 
 
 
