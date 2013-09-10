@@ -10,6 +10,10 @@
 
 using namespace Anki::Embedded;
 
+#if defined(__APPLE_CC__) // Apple Xcode
+#define _strcmpi strcmp // TODO: make case insensitive
+#endif
+
 #define ConditionalErrorAndReturn(expression, eventName, eventValue) if(!(expression)) { printf("%s - %s\n", (eventName), (eventValue)); return;}
 
 BoundaryDirection stringToBoundaryDirection(const std::string direction) 
@@ -67,8 +71,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   
   plhs[0] = arrayToMxArray_f64(boundaryMatrix);
   
-  delete(binaryImg.get_rawDataPointer());
-  delete(startPointMatrix.get_rawDataPointer());
-  delete(boundaryMatrix.get_rawDataPointer());
+  free(binaryImg.get_rawDataPointer());
+  free(startPointMatrix.get_rawDataPointer());
+  free(boundaryMatrix.get_rawDataPointer());
   mxFree(initialDirectionString);
 }

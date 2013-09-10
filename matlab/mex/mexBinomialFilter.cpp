@@ -30,7 +30,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   
   plhs[0] = arrayToMxArray_u8(imgFiltered);
   
-  delete(img.get_rawDataPointer());
-  delete(imgFiltered.get_rawDataPointer());
+  free(img.get_rawDataPointer());
+  free(imgFiltered.get_rawDataPointer());
   free(scratch.get_buffer());
 }

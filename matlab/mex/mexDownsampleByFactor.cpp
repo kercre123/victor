@@ -31,7 +31,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   
   plhs[0] = arrayToMxArray_u8(imgDownsampled);
   
-  delete(img.get_rawDataPointer());
-  delete(imgDownsampled.get_rawDataPointer());
+  free(img.get_rawDataPointer());
+  free(imgDownsampled.get_rawDataPointer());
   free(scratch.get_buffer());
 }
