@@ -32,6 +32,8 @@ enum Command {
 // A Simple Camera Capture Framework
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+    const int MAX_READ_TRIES = 50;
+    
     mexAtExit(closeHelper);
     
     mxAssert(nrhs >= 1, "At least one input required.");
@@ -137,7 +139,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         }
         
         cv::Mat frame;
-        bool success = capture[device]->read(frame);
+        bool success = false;
+        int iterations = 0;
+        while(not success && iterations++ < MAX_READ_TRIES) {
+            success = capture[device]->read(frame);
+        }
         
         if(not success) {
             mexWarnMsgTxt("Frame grab failed!");
@@ -154,15 +160,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             
             mwSize dims[3] = {height, width, 3};
             plhs[0] = mxCreateNumericArray(3, dims, mxDOUBLE_CLASS, mxREAL);
-            
-            return;
         }
         else {
             //cv::cvtColor(frame, frame, CV_BGR2RGB);
             DEBUG_MSG(2, "Captured %dx%d frame.\n", frame.cols, frame.rows);
+            plhs[0] = cvMat2mxArray(frame);
         }
-        
-        plhs[0] = cvMat2mxArray(frame);
         
     } // IF(cmd==GRAB)
                 

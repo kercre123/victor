@@ -112,11 +112,11 @@ end
             case 'space'
                 disp('Frame grabbed.');
                 grabs{end+1} = frame;
-            
-%             case {'return', 'enter'}
-%                 if ~isempty(processFcn)
-%                     processFcn(frame);
-%                 end
+                
+                %             case {'return', 'enter'}
+                %                 if ~isempty(processFcn)
+                %                     processFcn(frame);
+                %                 end
                 
         end
     end
