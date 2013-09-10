@@ -1,59 +1,112 @@
+function compileAnkiMex(moduleName, sourceFilename, varargin)
 
-% function compileAnkiMex(filename)
-
-function compileAnkiMex(sourceFilename)
-
-compileVerbose = '-v';
-    
-rootDir = fileparts(fileparts(fileparts(fileparts(which('makeMex.m')))));
-rootDir(rootDir == '\') = '/';
-mexWrapperDir = fullfile(rootDir, 'coretech-common', 'matlab', 'mex');
-mexWrapperDir(mexWrapperDir == '\') = '/';
-ankiLibraryDirs = {[rootDir, '/coretech-common/include/'], [rootDir, '/coretech-vision/include/']};
-
-if ismac()
-    useDebugLibraries = true;
-    openCvVersionString = '';
-
-    ankiLibDirs = {[rootDir, '/coretech-common/build/xcode4/lib/'],...
-                   [rootDir, '/coretech-vision/build/xcode4/lib/']};
-
-    if useDebugLibraries
-        openCvLibDir = [rootDir, '/coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug/'];
-        ankiLibs = {'-lCoreTech_Common_64Debug', '-lCoreTech_Common_Embedded_64Debug', '-lCoreTech_Vision_64Debug', '-lCoreTech_Vision_Embedded_64Debug'}; 
-    else
-        openCvLibDir = [rootDir, '/coretech-external/build/xcode4/opencv-2.4.6.1/lib/Release/'];
-        ankiLibs = {'-lCoreTech_Common_64Release', '-lCoreTech_Common_Embedded_64Release', '-lCoreTech_Vision_64Release', '-lCoreTech_Vision_Embedded_64Release'};
-    end
-elseif ispc()
-    useDebugLibraries = false;
-    openCvVersionString = '246';
-
-    ankiLibDirs = {[rootDir, '/coretech-common/build/msvc2012/lib/'],...
-                   [rootDir, '/coretech-vision/build/msvc2012/lib/']};
-
-    if useDebugLibraries
-        openCvLibDir = [rootDir, '/coretech-external/build/msvc2012/opencv-2.4.6.1/lib/Debug/'];
-        ankiLibs = {'-lCoreTech_Common_32Debug', '-lCoreTech_Common_Embedded_32Debug', '-lCoreTech_Vision_32Debug', '-lCoreTech_Vision_Embedded_32Debug'}; 
-    else
-        openCvLibDir = [rootDir, '/coretech-external/build/msvc2012/opencv-2.4.6.1/lib/Release/'];
-        ankiLibs = {'-lCoreTech_Common_32Release', '-lCoreTech_Common_Embedded_32Release', '-lCoreTech_Vision_32Release', '-lCoreTech_Vision_Embedded_32Release'};
-    end
-end % if ismac() ... elseif ispc()
-
-openCvModules = {'calib3d', 'contrib', 'core', 'features2d', 'flann', 'highgui', 'imgproc', 'legacy', 'ml', 'nonfree', 'objdetect', 'ocl', 'photo', 'stitching', 'superres', 'video', 'videostab'};
-openCvIncludeDirs = cell(length(openCvModules)+1,1);
-openCvIncludeDirs{1} = [rootDir, '/coretech-external/opencv-2.4.6.1/include/'];
-for i = 1:length(openCvModules)
-    openCvIncludeDirs{i+1} = [rootDir, '/coretech-external/opencv-2.4.6.1/modules/', openCvModules{i}, '/include'];
+compileVerbose = false;
+useDebugMode   = false;
+parseVarargin(varargin{:});
+   
+if ~iscell(sourceFilename)
+    sourceFilename = {sourceFilename};
 end
 
-mex(compileVerbose, '-g', '-compatibleArrayDims',  sourceFilename,...
-    fullfile(mexWrapperDir, 'mexWrappers.cpp'), fullfile(mexWrapperDir, 'mexEmbeddedWrappers.cpp'), ...
-    ['-I', ankiLibraryDirs{1}], ['-I', ankiLibraryDirs{2}], ...
-    ['-I', openCvIncludeDirs{1}], ['-I', openCvIncludeDirs{2}], ['-I', openCvIncludeDirs{3}], ['-I', openCvIncludeDirs{4}], ['-I', openCvIncludeDirs{5}], ['-I', openCvIncludeDirs{6}], ['-I', openCvIncludeDirs{7}], ['-I', openCvIncludeDirs{8}], ['-I', openCvIncludeDirs{9}], ['-I', openCvIncludeDirs{10}], ['-I', openCvIncludeDirs{11}], ['-I', openCvIncludeDirs{12}], ['-I', openCvIncludeDirs{13}], ['-I', openCvIncludeDirs{14}], ['-I', openCvIncludeDirs{15}], ['-I', openCvIncludeDirs{16}], ['-I', openCvIncludeDirs{17}], ['-I', openCvIncludeDirs{18}], ...
-    ['-L', ankiLibDirs{1}], ['-L', ankiLibDirs{2}], ankiLibs{1}, ankiLibs{2}, ankiLibs{3}, ankiLibs{4},...
-    ['-I', mexWrapperDir], ...        
-    ['-L', openCvLibDir], ['-lopencv_core', openCvVersionString], ['-lopencv_imgproc', openCvVersionString], ['-lopencv_highgui', openCvVersionString], ['-lopencv_calib3d', openCvVersionString], ['-lopencv_contrib', openCvVersionString]);
+moduleName = lower(moduleName);
+validModules = {'vision', 'common', 'external', 'cozmo'};
+if ~any(strcmp(moduleName, validModules))
+    error('Unrecognized module "%s".', moduleName);
+end
 
+rootDir = fileparts(fileparts(fileparts(fileparts(mfilename('fullpath')))));
+
+mexWrapperDir = fullfile(rootDir, 'coretech-common', 'matlab', 'mex');
+    
+if ismac
+    IDE_name = 'xcode4';
+    openCvVersionString = '';
+    OSbits = 64;
+elseif ispc
+    IDE_name = 'msvc2012';
+    openCvVersionString = '246';
+    OSbits = 32;
+else
+    error('Currently only supporting builds on Mac or PC.');
+end
+
+ankiIncludeDirs = {fullfile(rootDir, 'coretech-common', 'include')};
+ankiLibDirs = {fullfile(rootDir, 'coretech-common', 'build', IDE_name, 'lib')};
+ankiLibs = {'CoreTech_Common', 'CoreTech_Common_Embedded'};
+  
+flags = {};
+
+if useDebugMode
+    configName = 'Debug';
+    flags{end+1} = '-g';
+else
+    configName = 'Release';
+end
+
+if compileVerbose
+    flags{end+1} = '-v';
+end
+
+openCvLibDir = fullfile(rootDir, 'coretech-external', 'build', IDE_name, ...
+    'opencv-2.4.6.1', 'lib', configName);
+
+openCvRoot = fullfile(rootDir, 'coretech-external', 'opencv-2.4.6.1');
+openCvIncludeDirs = [openCvRoot, getdirnames(fullfile(openCvRoot, 'modules'), '*', true)];
+% Unlinked OpenCv modules: (move to used list as needed)
+%'features2d', 'legacy', 'ml', 'nonfree', 'objdetect', 'ocl', 
+% 'stitching', 'superres', 'videostab', 'flann', 'photo' 
+openCvLibs = {'calib3d', 'contrib', 'core', 'highgui', 'imgproc'};
+
+moduleDir  = fullfile(rootDir, ['coretech-' moduleName]);
+
+if ~strcmp(moduleName, 'common')
+    ankiIncludeDirs{end+1} = fullfile(moduleDir, 'include');
+    ankiLibDirs{end+1} = fullfile(moduleDir, 'build', IDE_name, 'lib');
+    moduleLibName = moduleNameHelper(['coretech-' moduleName]);
+    ankiLibs = [ankiLibs {moduleLibName, [moduleLibName '_Embedded']}];
+end
+
+% Add -I, -L, etc.
+openCvIncludeDirs = prefixSuffixHelper('-I', openCvIncludeDirs, [filesep 'include']);
+openCvLibs        = prefixSuffixHelper('-lopencv_', openCvLibs, openCvVersionString);
+ankiIncludeDirs   = prefixSuffixHelper('-I', ankiIncludeDirs, '');
+ankiLibDirs       = prefixSuffixHelper('-L', ankiLibDirs, '');
+ankiLibs          = prefixSuffixHelper('-l', ankiLibs, sprintf('_%d%s', OSbits, configName));
+
+outputDir = fullfile(moduleDir, 'build', 'mex');
+if ~isdir(outputDir)
+    mkdir(outputDir);
+end
+
+numFiles = length(sourceFilename);
+for i_file = 1:numFiles
+    try
+        fprintf('Building %d of %d "%s"...\n', i_file, numFiles, sourceFilename{i_file});
+       
+        mex(flags{:}, '-compatibleArrayDims',  sourceFilename{i_file},...
+            fullfile(mexWrapperDir, 'mexWrappers.cpp'), ...
+            fullfile(mexWrapperDir, 'mexEmbeddedWrappers.cpp'), ...
+            ankiIncludeDirs{:}, openCvIncludeDirs{:}, ankiLibDirs{:}, ankiLibs{:}, ...
+            ['-I', mexWrapperDir], ['-L', openCvLibDir], openCvLibs{:}, ...
+            '-outdir', outputDir);
+    catch E
+       warning('Failed to build "%s": %s', sourceFilename{i_file}, E.message); 
+    end
+    
+end % FOR each sourceFilename
+
+% Make sure we get rid of .o files
+% (Why do i need to do this? Shouldn't the mex call clean up after itself??)
+delete(fullfile(outputDir, '*.o'));
+    
 end % function compileAnkiMex(filename)
+
+function cellArray = prefixSuffixHelper(prefix, cellArray, suffix)
+cellArray = cellfun(@(name) [prefix name suffix], cellArray, 'UniformOutput', false);
+end
+
+function name = moduleNameHelper(name)
+name = strrep(name, '-', '_');
+name = strrep(name, 'coretech', 'CoreTech');
+name(10) = upper(name(10));
+end
