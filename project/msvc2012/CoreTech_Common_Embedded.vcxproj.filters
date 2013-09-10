@@ -36,6 +36,9 @@
     <ClCompile Include="..\..\src\embedded\fixedLengthList.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\embedded\opencv.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\anki\embeddedCommon\array2d.h">
