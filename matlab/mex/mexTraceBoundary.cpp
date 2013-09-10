@@ -1,13 +1,14 @@
 #include "mexWrappers.h"
+#include "mexEmbeddedWrappers.h"
 
-#include "anki/common.h"
-#include "anki/vision.h"
+#include "anki/embeddedCommon.h"
+#include "anki/embeddedVision.h"
 
 #include <string.h>
 
 #define VERBOSITY 0
 
-using namespace Anki;
+using namespace Anki::Embedded;
 
 #define ConditionalErrorAndReturn(expression, eventName, eventValue) if(!(expression)) { printf("%s - %s\n", (eventName), (eventValue)); return;}
 
@@ -38,33 +39,33 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   ConditionalErrorAndReturn(nrhs == 3 && nlhs == 1, "mexTraceBoundary", "Call this function as following: boundary = mexTraceBoundary(uint8(binaryImg), double(startPoint), char(initialDirection));");
     
-  Matrix<u8> binaryImg = mxArray2AnkiMatrix<u8>(prhs[0]);
-  Matrix<double> startPointMatrix = mxArray2AnkiMatrix<double>(prhs[1]);
+  Array_u8 binaryImg = mxArrayToArray_u8(prhs[0]);
+  Array_f64 startPointMatrix = mxArrayToArray_f64(prhs[1]);
   char * initialDirectionString = mxArrayToString(prhs[2]);
 
   //printf("%f %f %s\n", *startPoint.Pointer(0,0), *startPoint.Pointer(0,1), initialDirection.data());
   ConditionalErrorAndReturn(binaryImg.get_rawDataPointer() != 0, "mexTraceBoundary", "Could not allocate Matrix binaryImg");
   ConditionalErrorAndReturn(startPointMatrix.get_rawDataPointer() != 0, "mexTraceBoundary", "Could not allocate Matrix startPointMatrix");
     
-  FixedLengthList<Point2<s16>> boundary = AllocateFixedLengthListFromHeap<Point2<s16>>(MAX_BOUNDARY_LENGTH);
+  FixedLengthList_Point_s16 boundary = AllocateFixedLengthListFromHeap_Point_s16(MAX_BOUNDARY_LENGTH);
   ConditionalErrorAndReturn(boundary.get_rawDataPointer() != 0, "mexTraceBoundary", "Could not allocate FixedLengthList boundary");
   ConditionalErrorAndReturn(initialDirectionString != 0, "mexTraceBoundary", "Could not read initialDirectionString");
   
-  Point2<s16> startPoint(static_cast<s16>(*startPointMatrix.Pointer(0,1)-1), static_cast<s16>(*startPointMatrix.Pointer(0,0)-1));
+  Point_s16 startPoint(static_cast<s16>(*startPointMatrix.Pointer(0,1)-1), static_cast<s16>(*startPointMatrix.Pointer(0,0)-1));
   const BoundaryDirection initialDirection = stringToBoundaryDirection(initialDirectionString);
   
-  if(Anki::TraceBoundary(binaryImg, startPoint, initialDirection, boundary) != RESULT_OK) {
+  if(TraceBoundary(binaryImg, startPoint, initialDirection, boundary) != RESULT_OK) {
     printf("Error: mexTraceBoundary\n");
   }
   
-  Matrix<double> boundaryMatrix = AllocateMatrixFromHeap<double>(boundary.get_size(), 2);
+  Array_f64 boundaryMatrix = AllocateArrayFromHeap_f64(boundary.get_size(), 2);
   
   for(s32 i=0; i<boundary.get_size(); i++) {
       *boundaryMatrix.Pointer(i,1) = boundary.Pointer(i)->x + 1;
       *boundaryMatrix.Pointer(i,0) = boundary.Pointer(i)->y + 1;
   }
   
-  plhs[0] = ankiMatrix2mxArray(boundaryMatrix);
+  plhs[0] = arrayToMxArray_f64(boundaryMatrix);
   
   delete(binaryImg.get_rawDataPointer());
   delete(startPointMatrix.get_rawDataPointer());

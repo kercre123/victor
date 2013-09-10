@@ -7,9 +7,22 @@ namespace Anki
 #define CHECK_FOR_OUT_OF_BOUNDS
 #define NUM_DIRECTIONS 8
 
-    const Point_s16 offsets[NUM_DIRECTIONS] = {Point_s16(0,-1), Point_s16(1,-1), Point_s16(1,0), Point_s16(1,1), Point_s16(0,1), Point_s16(-1,1), Point_s16(-1,0), Point_s16(-1,-1)};
-    //const s32 dxs[NUM_DIRECTIONS] = {0, 1, 1, 1, 0, -1, -1, -1};
-    //const s32 dys[NUM_DIRECTIONS] = {-1, -1, 0, 1, 1, 1, 0, -1};
+    //c++11 style
+    //static Point_s16 offsets[NUM_DIRECTIONS] = {Point_s16(0,-1), Point_s16(1,-1), Point_s16(1,0), Point_s16(1,1), Point_s16(0,1), Point_s16(-1,1), Point_s16(-1,0), Point_s16(-1,-1)};
+
+    static Point_s16 offsets[NUM_DIRECTIONS];
+
+    static void InitializeGlobaloOffsets()
+    {
+      offsets[0] = Point_s16(0,-1);
+      offsets[1] = Point_s16(1,-1);
+      offsets[2] = Point_s16(1,0);
+      offsets[3] = Point_s16(1,1);
+      offsets[4] = Point_s16(0,1);
+      offsets[5] = Point_s16(-1,1);
+      offsets[6] = Point_s16(-1,0);
+      offsets[7] = Point_s16(-1,-1);
+    }
 
     //function newDirection = findNewDirection(img, curPoint, curDirection, value)
     static BoundaryDirection FindNewDirection(const Array_u8 &binaryImg, const Point_s16 &curPoint, const BoundaryDirection curDirection, const u8 value)
@@ -70,6 +83,8 @@ namespace Anki
         RESULT_FAIL, "TraceBoundary", "boundary must be have a maximum size of MAX_BOUNDARY_LENGTH");
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
 
+      InitializeGlobaloOffsets();
+
       boundary.Clear();
 
       if(initialDirection == BOUNDARY_UNKNOWN)
@@ -109,6 +124,9 @@ namespace Anki
         const BoundaryDirection zeroDirectionPlusOne = (zeroDirectionPlusOneS32==NUM_DIRECTIONS) ? static_cast<BoundaryDirection>(0) : static_cast<BoundaryDirection>(zeroDirectionPlusOneS32);
 
         const BoundaryDirection oneDirection = FindNewDirection(binaryImg, curPoint, zeroDirectionPlusOne, 1);
+
+        if(zeroDirection == BOUNDARY_UNKNOWN)
+          break;
 
         //newPoint = [curPoint(1)+dy(oneDirection+1), curPoint(2)+dx(oneDirection+1)];
         //const Point2<u16> newPoint(curPoint.x+dxs[oneDirection], curPoint.y+dys[oneDirection]);

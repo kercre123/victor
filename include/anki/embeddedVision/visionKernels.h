@@ -20,7 +20,7 @@ namespace Anki
       BOUNDARY_NW = 7
     };
 
-    const s32 MAX_BOUNDARY_LENGTH = 1000;
+    const s32 MAX_BOUNDARY_LENGTH = 2000;
 
     Result BinomialFilter(const Array_u8 &img, Array_u8 &imgFiltered, MemoryStack scratch);
 

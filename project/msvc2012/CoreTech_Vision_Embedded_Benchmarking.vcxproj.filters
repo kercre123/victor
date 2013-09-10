@@ -9,14 +9,19 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\test\embedded\run_visionTests.cpp">
+    <ClCompile Include="..\..\test\embedded\visionBenchmarks.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\test\embedded\visionTests.cpp">
+    <ClCompile Include="..\..\test\embedded\pc_visionBenchmarks.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\..\test\embedded\movidius_visionBenchmarks.c">
       <Filter>Source</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\test\embedded\visionBenchmarks.h">
+      <Filter>Includes</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

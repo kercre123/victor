@@ -45,3 +45,5 @@ build/msvc*
 build/xcode*
 project/xcode4/CoreTech-Vision/CoreTech_Vision.xcodeproj/xcuserdata
 project/xcode4/CoreTech-Vision/CoreTech_Vision.xcodeproj/project.xcworkspace/xcuserdata
+project/myriad1/unitTests/output
+project/myriad1/benchmarks/output
