@@ -7,26 +7,55 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		499D4F1917CBF87D0015D685 /* camera.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 499D4F1317CBF87D0015D685 /* camera.cpp */; };
-		499D4F1A17CBF87D0015D685 /* marker2d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 499D4F1417CBF87D0015D685 /* marker2d.cpp */; };
-		499D4F1B17CBF87D0015D685 /* image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 499D4F1517CBF87D0015D685 /* image.cpp */; };
-		499D4F1C17CBF87D0015D685 /* camera.h in Headers */ = {isa = PBXBuildFile; fileRef = 499D4F1617CBF87D0015D685 /* camera.h */; };
-		499D4F1D17CBF87D0015D685 /* image.h in Headers */ = {isa = PBXBuildFile; fileRef = 499D4F1717CBF87D0015D685 /* image.h */; };
-		499D4F1E17CBF87D0015D685 /* marker2d.h in Headers */ = {isa = PBXBuildFile; fileRef = 499D4F1817CBF87D0015D685 /* marker2d.h */; };
+		493C9C8517DEA45400DBBF6B /* camera.h in Headers */ = {isa = PBXBuildFile; fileRef = 493C9C7D17DEA45400DBBF6B /* camera.h */; };
+		493C9C8617DEA45400DBBF6B /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 493C9C7E17DEA45400DBBF6B /* config.h */; };
+		493C9C8717DEA45400DBBF6B /* image.h in Headers */ = {isa = PBXBuildFile; fileRef = 493C9C7F17DEA45400DBBF6B /* image.h */; };
+		493C9C8817DEA45400DBBF6B /* marker2d.h in Headers */ = {isa = PBXBuildFile; fileRef = 493C9C8017DEA45400DBBF6B /* marker2d.h */; };
+		493C9C8917DEA45400DBBF6B /* vision.h in Headers */ = {isa = PBXBuildFile; fileRef = 493C9C8117DEA45400DBBF6B /* vision.h */; };
+		493C9C9617DEA5A400DBBF6B /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 493C9C7A17DEA45400DBBF6B /* config.h */; };
+		493C9C9717DEA5A400DBBF6B /* visionKernels.h in Headers */ = {isa = PBXBuildFile; fileRef = 493C9C7B17DEA45400DBBF6B /* visionKernels.h */; };
+		493C9C9817DEA5A400DBBF6B /* embeddedVision.h in Headers */ = {isa = PBXBuildFile; fileRef = 493C9C7C17DEA45400DBBF6B /* embeddedVision.h */; };
+		493C9C9E17DEA5BF00DBBF6B /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 493C9C7A17DEA45400DBBF6B /* config.h */; };
+		493C9C9F17DEA5BF00DBBF6B /* visionKernels.h in Headers */ = {isa = PBXBuildFile; fileRef = 493C9C7B17DEA45400DBBF6B /* visionKernels.h */; };
+		493C9CA017DEA5BF00DBBF6B /* embeddedVision.h in Headers */ = {isa = PBXBuildFile; fileRef = 493C9C7C17DEA45400DBBF6B /* embeddedVision.h */; };
+		493C9CA817DEA5E800DBBF6B /* camera.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 493C9CA117DEA5E800DBBF6B /* camera.cpp */; };
+		493C9CAD17DEA5E800DBBF6B /* image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 493C9CA617DEA5E800DBBF6B /* image.cpp */; };
+		493C9CAE17DEA5E800DBBF6B /* marker2d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 493C9CA717DEA5E800DBBF6B /* marker2d.cpp */; };
+		493C9CAF17DEA61000DBBF6B /* binomialFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 493C9CA217DEA5E800DBBF6B /* binomialFilter.cpp */; };
+		493C9CB017DEA61000DBBF6B /* computeCharacteristicScale.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 493C9CA317DEA5E800DBBF6B /* computeCharacteristicScale.cpp */; };
+		493C9CB117DEA61000DBBF6B /* downsampleByFactor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 493C9CA417DEA5E800DBBF6B /* downsampleByFactor.cpp */; };
+		493C9CB217DEA61000DBBF6B /* traceBoundary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 493C9CA517DEA5E800DBBF6B /* traceBoundary.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		499D4F1317CBF87D0015D685 /* camera.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = camera.cpp; path = ../../../src/camera.cpp; sourceTree = "<group>"; };
-		499D4F1417CBF87D0015D685 /* marker2d.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = marker2d.cpp; path = ../../../src/marker2d.cpp; sourceTree = "<group>"; };
-		499D4F1517CBF87D0015D685 /* image.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image.cpp; path = ../../../src/image.cpp; sourceTree = "<group>"; };
-		499D4F1617CBF87D0015D685 /* camera.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = camera.h; path = ../../../include/anki/vision/camera.h; sourceTree = "<group>"; };
-		499D4F1717CBF87D0015D685 /* image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = image.h; path = ../../../include/anki/vision/image.h; sourceTree = "<group>"; };
-		499D4F1817CBF87D0015D685 /* marker2d.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = marker2d.h; path = ../../../include/anki/vision/marker2d.h; sourceTree = "<group>"; };
-		5C60000A17B2D21200A75604 /* libCoreTech_Vision.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCoreTech_Vision.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		493C9C7317DEA3E800DBBF6B /* libCoreTech_Vision_64Debug.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCoreTech_Vision_64Debug.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		493C9C7A17DEA45400DBBF6B /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = ../../../include/anki/embeddedVision/config.h; sourceTree = "<group>"; };
+		493C9C7B17DEA45400DBBF6B /* visionKernels.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = visionKernels.h; path = ../../../include/anki/embeddedVision/visionKernels.h; sourceTree = "<group>"; };
+		493C9C7C17DEA45400DBBF6B /* embeddedVision.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = embeddedVision.h; path = ../../../include/anki/embeddedVision.h; sourceTree = "<group>"; };
+		493C9C7D17DEA45400DBBF6B /* camera.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = camera.h; path = ../../../include/anki/vision/camera.h; sourceTree = "<group>"; };
+		493C9C7E17DEA45400DBBF6B /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = ../../../include/anki/vision/config.h; sourceTree = "<group>"; };
+		493C9C7F17DEA45400DBBF6B /* image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = image.h; path = ../../../include/anki/vision/image.h; sourceTree = "<group>"; };
+		493C9C8017DEA45400DBBF6B /* marker2d.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = marker2d.h; path = ../../../include/anki/vision/marker2d.h; sourceTree = "<group>"; };
+		493C9C8117DEA45400DBBF6B /* vision.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = vision.h; path = ../../../include/anki/vision.h; sourceTree = "<group>"; };
+		493C9C8F17DEA53E00DBBF6B /* libCoreTech_Vision_Embedded_64Debug.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCoreTech_Vision_Embedded_64Debug.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		493C9CA117DEA5E800DBBF6B /* camera.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = camera.cpp; path = ../../../src/camera.cpp; sourceTree = "<group>"; };
+		493C9CA217DEA5E800DBBF6B /* binomialFilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = binomialFilter.cpp; path = ../../../src/embedded/binomialFilter.cpp; sourceTree = "<group>"; };
+		493C9CA317DEA5E800DBBF6B /* computeCharacteristicScale.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = computeCharacteristicScale.cpp; path = ../../../src/embedded/computeCharacteristicScale.cpp; sourceTree = "<group>"; };
+		493C9CA417DEA5E800DBBF6B /* downsampleByFactor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = downsampleByFactor.cpp; path = ../../../src/embedded/downsampleByFactor.cpp; sourceTree = "<group>"; };
+		493C9CA517DEA5E800DBBF6B /* traceBoundary.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = traceBoundary.cpp; path = ../../../src/embedded/traceBoundary.cpp; sourceTree = "<group>"; };
+		493C9CA617DEA5E800DBBF6B /* image.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image.cpp; path = ../../../src/image.cpp; sourceTree = "<group>"; };
+		493C9CA717DEA5E800DBBF6B /* marker2d.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = marker2d.cpp; path = ../../../src/marker2d.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		5C60000717B2D21200A75604 /* Frameworks */ = {
+		493C9C7017DEA3E800DBBF6B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		493C9C8C17DEA53E00DBBF6B /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -36,106 +65,168 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		5C60000117B2D21100A75604 = {
+		493C9C6A17DEA3E800DBBF6B = {
 			isa = PBXGroup;
 			children = (
-				499D4F1317CBF87D0015D685 /* camera.cpp */,
-				499D4F1417CBF87D0015D685 /* marker2d.cpp */,
-				499D4F1517CBF87D0015D685 /* image.cpp */,
-				499D4F1617CBF87D0015D685 /* camera.h */,
-				499D4F1717CBF87D0015D685 /* image.h */,
-				499D4F1817CBF87D0015D685 /* marker2d.h */,
-				5C60000B17B2D21200A75604 /* Products */,
+				493C9C7D17DEA45400DBBF6B /* camera.h */,
+				493C9C7E17DEA45400DBBF6B /* config.h */,
+				493C9C7F17DEA45400DBBF6B /* image.h */,
+				493C9C8017DEA45400DBBF6B /* marker2d.h */,
+				493C9C8117DEA45400DBBF6B /* vision.h */,
+				493C9CA117DEA5E800DBBF6B /* camera.cpp */,
+				493C9CA617DEA5E800DBBF6B /* image.cpp */,
+				493C9CA717DEA5E800DBBF6B /* marker2d.cpp */,
+				493C9C8A17DEA47300DBBF6B /* Embedded */,
+				493C9C7417DEA3E800DBBF6B /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		5C60000B17B2D21200A75604 /* Products */ = {
+		493C9C7417DEA3E800DBBF6B /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				5C60000A17B2D21200A75604 /* libCoreTech_Vision.a */,
+				493C9C7317DEA3E800DBBF6B /* libCoreTech_Vision_64Debug.a */,
+				493C9C8F17DEA53E00DBBF6B /* libCoreTech_Vision_Embedded_64Debug.a */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		493C9C8A17DEA47300DBBF6B /* Embedded */ = {
+			isa = PBXGroup;
+			children = (
+				493C9C7A17DEA45400DBBF6B /* config.h */,
+				493C9C7B17DEA45400DBBF6B /* visionKernels.h */,
+				493C9C7C17DEA45400DBBF6B /* embeddedVision.h */,
+				493C9CA217DEA5E800DBBF6B /* binomialFilter.cpp */,
+				493C9CA317DEA5E800DBBF6B /* computeCharacteristicScale.cpp */,
+				493C9CA417DEA5E800DBBF6B /* downsampleByFactor.cpp */,
+				493C9CA517DEA5E800DBBF6B /* traceBoundary.cpp */,
+			);
+			name = Embedded;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
-		5C60000817B2D21200A75604 /* Headers */ = {
+		493C9C7117DEA3E800DBBF6B /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				499D4F1C17CBF87D0015D685 /* camera.h in Headers */,
-				499D4F1D17CBF87D0015D685 /* image.h in Headers */,
-				499D4F1E17CBF87D0015D685 /* marker2d.h in Headers */,
+				493C9C8517DEA45400DBBF6B /* camera.h in Headers */,
+				493C9C8617DEA45400DBBF6B /* config.h in Headers */,
+				493C9C8717DEA45400DBBF6B /* image.h in Headers */,
+				493C9C8817DEA45400DBBF6B /* marker2d.h in Headers */,
+				493C9C8917DEA45400DBBF6B /* vision.h in Headers */,
+				493C9C9617DEA5A400DBBF6B /* config.h in Headers */,
+				493C9C9717DEA5A400DBBF6B /* visionKernels.h in Headers */,
+				493C9C9817DEA5A400DBBF6B /* embeddedVision.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		493C9C8D17DEA53E00DBBF6B /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				493C9C9E17DEA5BF00DBBF6B /* config.h in Headers */,
+				493C9C9F17DEA5BF00DBBF6B /* visionKernels.h in Headers */,
+				493C9CA017DEA5BF00DBBF6B /* embeddedVision.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		5C60000917B2D21200A75604 /* CoreTech_Vision */ = {
+		493C9C7217DEA3E800DBBF6B /* CoreTech_Vision */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5C60000E17B2D21200A75604 /* Build configuration list for PBXNativeTarget "CoreTech_Vision" */;
+			buildConfigurationList = 493C9C7717DEA3E800DBBF6B /* Build configuration list for PBXNativeTarget "CoreTech_Vision" */;
 			buildPhases = (
-				5C60000617B2D21200A75604 /* Sources */,
-				5C60000717B2D21200A75604 /* Frameworks */,
-				5C60000817B2D21200A75604 /* Headers */,
+				493C9C6F17DEA3E800DBBF6B /* Sources */,
+				493C9C7017DEA3E800DBBF6B /* Frameworks */,
+				493C9C7117DEA3E800DBBF6B /* Headers */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			name = CoreTech_Vision;
-			productName = CoreTech_Math;
-			productReference = 5C60000A17B2D21200A75604 /* libCoreTech_Vision.a */;
+			productName = "CoreTech-Vision";
+			productReference = 493C9C7317DEA3E800DBBF6B /* libCoreTech_Vision_64Debug.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		493C9C8E17DEA53E00DBBF6B /* CoreTech_Vision_Embedded */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 493C9C9217DEA53E00DBBF6B /* Build configuration list for PBXNativeTarget "CoreTech_Vision_Embedded" */;
+			buildPhases = (
+				493C9C8B17DEA53E00DBBF6B /* Sources */,
+				493C9C8C17DEA53E00DBBF6B /* Frameworks */,
+				493C9C8D17DEA53E00DBBF6B /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CoreTech_Vision_Embedded;
+			productName = "CoreTech-Vision-Embedded";
+			productReference = 493C9C8F17DEA53E00DBBF6B /* libCoreTech_Vision_Embedded_64Debug.a */;
 			productType = "com.apple.product-type.library.static";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		5C60000217B2D21100A75604 /* Project object */ = {
+		493C9C6B17DEA3E800DBBF6B /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0460;
 				ORGANIZATIONNAME = "Anki, Inc.";
 			};
-			buildConfigurationList = 5C60000517B2D21100A75604 /* Build configuration list for PBXProject "CoreTech_Vision" */;
+			buildConfigurationList = 493C9C6E17DEA3E800DBBF6B /* Build configuration list for PBXProject "CoreTech_Vision" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 			);
-			mainGroup = 5C60000117B2D21100A75604;
-			productRefGroup = 5C60000B17B2D21200A75604 /* Products */;
+			mainGroup = 493C9C6A17DEA3E800DBBF6B;
+			productRefGroup = 493C9C7417DEA3E800DBBF6B /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				5C60000917B2D21200A75604 /* CoreTech_Vision */,
+				493C9C7217DEA3E800DBBF6B /* CoreTech_Vision */,
+				493C9C8E17DEA53E00DBBF6B /* CoreTech_Vision_Embedded */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
-		5C60000617B2D21200A75604 /* Sources */ = {
+		493C9C6F17DEA3E800DBBF6B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				499D4F1917CBF87D0015D685 /* camera.cpp in Sources */,
-				499D4F1A17CBF87D0015D685 /* marker2d.cpp in Sources */,
-				499D4F1B17CBF87D0015D685 /* image.cpp in Sources */,
+				493C9CA817DEA5E800DBBF6B /* camera.cpp in Sources */,
+				493C9CAD17DEA5E800DBBF6B /* image.cpp in Sources */,
+				493C9CAE17DEA5E800DBBF6B /* marker2d.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		493C9C8B17DEA53E00DBBF6B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				493C9CAF17DEA61000DBBF6B /* binomialFilter.cpp in Sources */,
+				493C9CB017DEA61000DBBF6B /* computeCharacteristicScale.cpp in Sources */,
+				493C9CB117DEA61000DBBF6B /* downsampleByFactor.cpp in Sources */,
+				493C9CB217DEA61000DBBF6B /* traceBoundary.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		5C60000C17B2D21200A75604 /* Debug */ = {
+		493C9C7517DEA3E800DBBF6B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
-				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
@@ -143,7 +234,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				GCC_C_LANGUAGE_STANDARD = "compiler-default";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -159,16 +250,15 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
-				SYMROOT = build;
 			};
 			name = Debug;
 		};
-		5C60000D17B2D21200A75604 /* Release */ = {
+		493C9C7617DEA3E800DBBF6B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
-				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
@@ -177,7 +267,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_C_LANGUAGE_STANDARD = "compiler-default";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -185,21 +275,17 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				SDKROOT = macosx;
-				SYMROOT = build;
 			};
 			name = Release;
 		};
-		5C60000F17B2D21200A75604 /* Debug */ = {
+		493C9C7817DEA3E800DBBF6B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
-				CLANG_CXX_LIBRARY = "libc++";
+				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(EFFECTIVE_PLATFORM_NAME)/lib";
 				EXECUTABLE_PREFIX = lib;
-				GCC_C_LANGUAGE_STANDARD = "compiler-default";
 				HEADER_SEARCH_PATHS = (
-					../../../include,
 					"../../../../coretech-common/include",
-					"../../../../coretech-math/include",
+					../../../include,
 					"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/extern/include",
 					"../../../../coretech-external/opencv-2.4.6.1/include",
 					"../../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include",
@@ -219,26 +305,20 @@
 					"../../../../coretech-external/opencv-2.4.6.1/modules/superres/include",
 					"../../../../coretech-external/opencv-2.4.6.1/modules/video/include",
 					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
-					"../../../../coretech-external/",
 				);
-				LINK_WITH_STANDARD_LIBRARIES = YES;
-				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "$(TARGET_NAME)_64$(CONFIGURATION)";
 				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
 			};
 			name = Debug;
 		};
-		5C60001017B2D21200A75604 /* Release */ = {
+		493C9C7917DEA3E800DBBF6B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
-				CLANG_CXX_LIBRARY = "libc++";
+				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(EFFECTIVE_PLATFORM_NAME)/lib";
 				EXECUTABLE_PREFIX = lib;
-				GCC_C_LANGUAGE_STANDARD = "compiler-default";
 				HEADER_SEARCH_PATHS = (
-					../../../include,
 					"../../../../coretech-common/include",
-					"../../../../coretech-math/include",
+					../../../include,
 					"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/extern/include",
 					"../../../../coretech-external/opencv-2.4.6.1/include",
 					"../../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include",
@@ -258,11 +338,74 @@
 					"../../../../coretech-external/opencv-2.4.6.1/modules/superres/include",
 					"../../../../coretech-external/opencv-2.4.6.1/modules/video/include",
 					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
-					"../../../../coretech-external/",
 				);
-				LINK_WITH_STANDARD_LIBRARIES = YES;
-				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "$(TARGET_NAME)_64$(CONFIGURATION)";
+				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
+			};
+			name = Release;
+		};
+		493C9C9017DEA53E00DBBF6B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(EFFECTIVE_PLATFORM_NAME)/lib";
+				EXECUTABLE_PREFIX = lib;
+				HEADER_SEARCH_PATHS = (
+					"../../../../coretech-common/include",
+					../../../include,
+					"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/extern/include",
+					"../../../../coretech-external/opencv-2.4.6.1/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/contrib/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/core/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/features2d/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/flann/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/highgui/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/imgproc/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/legacy/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/ml/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/nonfree/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/objdetect/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/ocl/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/photo/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/stitching/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/superres/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/video/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)_64$(CONFIGURATION)";
+				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
+			};
+			name = Debug;
+		};
+		493C9C9117DEA53E00DBBF6B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(EFFECTIVE_PLATFORM_NAME)/lib";
+				EXECUTABLE_PREFIX = lib;
+				HEADER_SEARCH_PATHS = (
+					"../../../../coretech-common/include",
+					../../../include,
+					"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/extern/include",
+					"../../../../coretech-external/opencv-2.4.6.1/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/contrib/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/core/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/features2d/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/flann/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/highgui/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/imgproc/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/legacy/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/ml/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/nonfree/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/objdetect/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/ocl/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/photo/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/stitching/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/superres/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/video/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)_64$(CONFIGURATION)";
 				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
 			};
 			name = Release;
@@ -270,25 +413,33 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		5C60000517B2D21100A75604 /* Build configuration list for PBXProject "CoreTech_Vision" */ = {
+		493C9C6E17DEA3E800DBBF6B /* Build configuration list for PBXProject "CoreTech_Vision" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				5C60000C17B2D21200A75604 /* Debug */,
-				5C60000D17B2D21200A75604 /* Release */,
+				493C9C7517DEA3E800DBBF6B /* Debug */,
+				493C9C7617DEA3E800DBBF6B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5C60000E17B2D21200A75604 /* Build configuration list for PBXNativeTarget "CoreTech_Vision" */ = {
+		493C9C7717DEA3E800DBBF6B /* Build configuration list for PBXNativeTarget "CoreTech_Vision" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				5C60000F17B2D21200A75604 /* Debug */,
-				5C60001017B2D21200A75604 /* Release */,
+				493C9C7817DEA3E800DBBF6B /* Debug */,
+				493C9C7917DEA3E800DBBF6B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
+		};
+		493C9C9217DEA53E00DBBF6B /* Build configuration list for PBXNativeTarget "CoreTech_Vision_Embedded" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				493C9C9017DEA53E00DBBF6B /* Debug */,
+				493C9C9117DEA53E00DBBF6B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 5C60000217B2D21100A75604 /* Project object */;
+	rootObject = 493C9C6B17DEA3E800DBBF6B /* Project object */;
 }
