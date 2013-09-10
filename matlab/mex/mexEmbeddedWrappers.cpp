@@ -31,37 +31,85 @@ namespace Anki
   {
     mxClassID convertToMatlabType(const char * const typeName, const size_t byteDepth)
     {
-      if(typeName[0] == 'u') { //unsigned
-        if(byteDepth == 1) {
-          return mxUINT8_CLASS;
-        } else if(byteDepth == 2) {
-          return mxUINT16_CLASS;
-        }else if(byteDepth == 4) {
-          return mxUINT32_CLASS;
-        }else if(byteDepth == 8) {
-          return mxUINT64_CLASS;
+      //mexPrintf("typename %s\n", typeName);
+#if defined(__APPLE_CC__) // Apple Xcode
+        if(typeName[0] == 'h') {
+            return mxUINT8_CLASS;
+        } else if(typeName[0] == 'a') {
+            return mxINT8_CLASS;
+        } else if(typeName[0] == 't') {
+            return mxUINT16_CLASS;
+        } else if(typeName[0] == 's') {
+            return mxINT16_CLASS;
+        } else if(typeName[0] == 'j') {
+            return mxUINT32_CLASS;
+        } else if(typeName[0] == 'i') {
+            return mxINT32_CLASS;
+        } else if(typeName[0] == 'y') {
+            return mxUINT64_CLASS;
+        } else if(typeName[0] == 'x') {
+            return mxINT64_CLASS;
+        } else if(typeName[0] == 'f') {
+            return mxSINGLE_CLASS;
+        } else if(typeName[0] == 'd') {
+            return mxDOUBLE_CLASS;
         }
-      } else if(typeName[0] == 'f' && byteDepth == 4) { //float
-        return mxSINGLE_CLASS;
-      } else if(typeName[0] == 'd' && byteDepth == 8) { //double
-        return mxDOUBLE_CLASS;
-      } else { // signed
-        if(byteDepth == 1) {
-          return mxINT8_CLASS;
-        } else if(byteDepth == 2) {
-          return mxINT16_CLASS;
-        }else if(byteDepth == 4) {
-          return mxINT32_CLASS;
-        }else if(byteDepth == 8) {
-          return mxINT64_CLASS;
+#else // #if defined(__APPLE_CC__) // Apple Xcode
+        if(typeName[0] == 'u') { //unsigned
+          if(byteDepth == 1) {
+            return mxUINT8_CLASS;
+          } else if(byteDepth == 2) {
+            return mxUINT16_CLASS;
+          }else if(byteDepth == 4) {
+            return mxUINT32_CLASS;
+          }else if(byteDepth == 8) {
+            return mxUINT64_CLASS;
+          }
+        } else if(typeName[0] == 'f' && byteDepth == 4) { //float
+          return mxSINGLE_CLASS;
+        } else if(typeName[0] == 'd' && byteDepth == 8) { //double
+          return mxDOUBLE_CLASS;
+        } else { // signed
+          if(byteDepth == 1) {
+            return mxINT8_CLASS;
+          } else if(byteDepth == 2) {
+            return mxINT16_CLASS;
+          }else if(byteDepth == 4) {
+            return mxINT32_CLASS;
+          }else if(byteDepth == 8) {
+            return mxINT64_CLASS;
+          }
         }
-      }
-    
-      return mxUNKNOWN_CLASS;
-    }
-    
+#endif // #if defined(__APPLE_CC__) // Apple Xcode ... #else
+
+        return mxUNKNOWN_CLASS;
+    } // mxClassID convertToMatlabType(const char * const typeName, const size_t byteDepth)
+
     std::string convertToMatlabTypeString(const char *typeName, size_t byteDepth)
     {
+        #if defined(__APPLE_CC__) // Apple Xcode
+        if(typeName[0] == 'h') {
+            return std::string("uint8");
+        } else if(typeName[0] == 'a') {
+            return std::string("int8");
+        } else if(typeName[0] == 't') {
+            return std::string("uint16");
+        } else if(typeName[0] == 's') {
+            return std::string("int16");
+        } else if(typeName[0] == 'j') {
+            return std::string("uint32");
+        } else if(typeName[0] == 'i') {
+            return std::string("int32");
+        } else if(typeName[0] == 'y') {
+            return std::string("uint64");
+        } else if(typeName[0] == 'x') {
+            return std::string("int64");
+        } else if(typeName[0] == 'f') {
+            return std::string("single");
+        } else if(typeName[0] == 'd') {
+            return std::string("double");
+        }
+#else // #if defined(__APPLE_CC__) // Apple Xcode
       if(typeName[0] == 'u') { //unsigned
         if(byteDepth == 1) {
           return std::string("uint8");
@@ -87,9 +135,10 @@ namespace Anki
           return std::string("int64");
         }
       }
-    
+#endif // #if defined(__APPLE_CC__) // Apple Xcode ... #else
+
       return std::string("unknown");
-    }
+    } // std::string convertToMatlabTypeString(const char *typeName, size_t byteDepth)
 
     void mxArrayToArray_u8(const mxArray * const array, Array_u8 &mat)
     {
@@ -121,7 +170,7 @@ namespace Anki
           array_u8_rowPointer[x] = matlabMatrix_rowPointer[x];
         }
       }
-    }
+    } // void mxArrayToArray_u8(const mxArray * const array, Array_u8 &mat)
     
     Array_u8 mxArrayToArray_u8(const mxArray * const array)
     {
@@ -154,7 +203,7 @@ namespace Anki
       }
     
       return array_u8;
-    }
+    } // Array_u8 mxArrayToArray_u8(const mxArray * const array)
     
     mxArray* arrayToMxArray_u8(const Array_u8 &array_u8)
     {
@@ -173,7 +222,7 @@ namespace Anki
       }
     
       return outputArray;
-    }
+    } // mxArray* arrayToMxArray_u8(const Array_u8 &array_u8)
 
     void mxArrayToArray_s8(const mxArray * const array, Array_s8 &mat)
     {
@@ -205,7 +254,7 @@ namespace Anki
           array_s8_rowPointer[x] = matlabMatrix_rowPointer[x];
         }
       }
-    }
+    } // void mxArrayToArray_s8(const mxArray * const array, Array_s8 &mat)
     
     Array_s8 mxArrayToArray_s8(const mxArray * const array)
     {
@@ -238,7 +287,7 @@ namespace Anki
       }
     
       return array_s8;
-    }
+    } // Array_s8 mxArrayToArray_s8(const mxArray * const array)
     
     mxArray* arrayToMxArray_s8(const Array_s8 &array_s8)
     {
@@ -257,7 +306,7 @@ namespace Anki
       }
     
       return outputArray;
-    }
+    } // mxArray* arrayToMxArray_s8(const Array_s8 &array_s8)
 
     void mxArrayToArray_u16(const mxArray * const array, Array_u16 &mat)
     {
@@ -289,7 +338,7 @@ namespace Anki
           array_u16_rowPointer[x] = matlabMatrix_rowPointer[x];
         }
       }
-    }
+    } // void mxArrayToArray_u16(const mxArray * const array, Array_u16 &mat)
     
     Array_u16 mxArrayToArray_u16(const mxArray * const array)
     {
@@ -322,7 +371,7 @@ namespace Anki
       }
     
       return array_u16;
-    }
+    } // Array_u16 mxArrayToArray_u16(const mxArray * const array)
     
     mxArray* arrayToMxArray_u16(const Array_u16 &array_u16)
     {
@@ -341,7 +390,7 @@ namespace Anki
       }
     
       return outputArray;
-    }
+    } // mxArray* arrayToMxArray_u16(const Array_u16 &array_u16)
 
     void mxArrayToArray_s16(const mxArray * const array, Array_s16 &mat)
     {
@@ -373,7 +422,7 @@ namespace Anki
           array_s16_rowPointer[x] = matlabMatrix_rowPointer[x];
         }
       }
-    }
+    } // void mxArrayToArray_s16(const mxArray * const array, Array_s16 &mat)
     
     Array_s16 mxArrayToArray_s16(const mxArray * const array)
     {
@@ -406,7 +455,7 @@ namespace Anki
       }
     
       return array_s16;
-    }
+    } // Array_s16 mxArrayToArray_s16(const mxArray * const array)
     
     mxArray* arrayToMxArray_s16(const Array_s16 &array_s16)
     {
@@ -425,7 +474,7 @@ namespace Anki
       }
     
       return outputArray;
-    }
+    } // mxArray* arrayToMxArray_s16(const Array_s16 &array_s16)
 
     void mxArrayToArray_u32(const mxArray * const array, Array_u32 &mat)
     {
@@ -457,7 +506,7 @@ namespace Anki
           array_u32_rowPointer[x] = matlabMatrix_rowPointer[x];
         }
       }
-    }
+    } // void mxArrayToArray_u32(const mxArray * const array, Array_u32 &mat)
     
     Array_u32 mxArrayToArray_u32(const mxArray * const array)
     {
@@ -490,7 +539,7 @@ namespace Anki
       }
     
       return array_u32;
-    }
+    } // Array_u32 mxArrayToArray_u32(const mxArray * const array)
     
     mxArray* arrayToMxArray_u32(const Array_u32 &array_u32)
     {
@@ -509,7 +558,7 @@ namespace Anki
       }
     
       return outputArray;
-    }
+    } // mxArray* arrayToMxArray_u32(const Array_u32 &array_u32)
 
     void mxArrayToArray_s32(const mxArray * const array, Array_s32 &mat)
     {
@@ -541,7 +590,7 @@ namespace Anki
           array_s32_rowPointer[x] = matlabMatrix_rowPointer[x];
         }
       }
-    }
+    } // void mxArrayToArray_s32(const mxArray * const array, Array_s32 &mat)
     
     Array_s32 mxArrayToArray_s32(const mxArray * const array)
     {
@@ -574,7 +623,7 @@ namespace Anki
       }
     
       return array_s32;
-    }
+    } // Array_s32 mxArrayToArray_s32(const mxArray * const array)
     
     mxArray* arrayToMxArray_s32(const Array_s32 &array_s32)
     {
@@ -593,7 +642,7 @@ namespace Anki
       }
     
       return outputArray;
-    }
+    } // mxArray* arrayToMxArray_s32(const Array_s32 &array_s32)
 
     void mxArrayToArray_u64(const mxArray * const array, Array_u64 &mat)
     {
@@ -625,7 +674,7 @@ namespace Anki
           array_u64_rowPointer[x] = matlabMatrix_rowPointer[x];
         }
       }
-    }
+    } // void mxArrayToArray_u64(const mxArray * const array, Array_u64 &mat)
     
     Array_u64 mxArrayToArray_u64(const mxArray * const array)
     {
@@ -658,7 +707,7 @@ namespace Anki
       }
     
       return array_u64;
-    }
+    } // Array_u64 mxArrayToArray_u64(const mxArray * const array)
     
     mxArray* arrayToMxArray_u64(const Array_u64 &array_u64)
     {
@@ -677,7 +726,7 @@ namespace Anki
       }
     
       return outputArray;
-    }
+    } // mxArray* arrayToMxArray_u64(const Array_u64 &array_u64)
 
     void mxArrayToArray_s64(const mxArray * const array, Array_s64 &mat)
     {
@@ -709,7 +758,7 @@ namespace Anki
           array_s64_rowPointer[x] = matlabMatrix_rowPointer[x];
         }
       }
-    }
+    } // void mxArrayToArray_s64(const mxArray * const array, Array_s64 &mat)
     
     Array_s64 mxArrayToArray_s64(const mxArray * const array)
     {
@@ -742,7 +791,7 @@ namespace Anki
       }
     
       return array_s64;
-    }
+    } // Array_s64 mxArrayToArray_s64(const mxArray * const array)
     
     mxArray* arrayToMxArray_s64(const Array_s64 &array_s64)
     {
@@ -761,7 +810,7 @@ namespace Anki
       }
     
       return outputArray;
-    }
+    } // mxArray* arrayToMxArray_s64(const Array_s64 &array_s64)
 
     void mxArrayToArray_f32(const mxArray * const array, Array_f32 &mat)
     {
@@ -793,7 +842,7 @@ namespace Anki
           array_f32_rowPointer[x] = matlabMatrix_rowPointer[x];
         }
       }
-    }
+    } // void mxArrayToArray_f32(const mxArray * const array, Array_f32 &mat)
     
     Array_f32 mxArrayToArray_f32(const mxArray * const array)
     {
@@ -826,7 +875,7 @@ namespace Anki
       }
     
       return array_f32;
-    }
+    } // Array_f32 mxArrayToArray_f32(const mxArray * const array)
     
     mxArray* arrayToMxArray_f32(const Array_f32 &array_f32)
     {
@@ -845,7 +894,7 @@ namespace Anki
       }
     
       return outputArray;
-    }
+    } // mxArray* arrayToMxArray_f32(const Array_f32 &array_f32)
 
     void mxArrayToArray_f64(const mxArray * const array, Array_f64 &mat)
     {
@@ -877,7 +926,7 @@ namespace Anki
           array_f64_rowPointer[x] = matlabMatrix_rowPointer[x];
         }
       }
-    }
+    } // void mxArrayToArray_f64(const mxArray * const array, Array_f64 &mat)
     
     Array_f64 mxArrayToArray_f64(const mxArray * const array)
     {
@@ -910,7 +959,7 @@ namespace Anki
       }
     
       return array_f64;
-    }
+    } // Array_f64 mxArrayToArray_f64(const mxArray * const array)
     
     mxArray* arrayToMxArray_f64(const Array_f64 &array_f64)
     {
@@ -929,7 +978,7 @@ namespace Anki
       }
     
       return outputArray;
-    }
+    } // mxArray* arrayToMxArray_f64(const Array_f64 &array_f64)
 
   } // namespace Embedded
 } // namespace Anki
