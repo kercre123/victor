@@ -9,6 +9,7 @@
 
 % testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false, 'embeddedConversions', EmbeddedConversionsManager('homographyEstimationType', 'matlab_original', 'computeCharacteristicScaleImageType', 'matlab_original', 'traceBoundaryType', 'matlab_original', 'connectedComponentsType', 'matlab_original'));
 % testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false, 'embeddedConversions', EmbeddedConversionsManager('homographyEstimationType', 'opencv_cp2tform', 'computeCharacteristicScaleImageType', 'c_fixedPoint', 'traceBoundaryType', 'c_fixedPoint', 'connectedComponentsType', 'matlab_approximate'));
+% testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false, 'embeddedConversions', EmbeddedConversionsManager('homographyEstimationType', 'opencv_cp2tform', 'computeCharacteristicScaleImageType', 'c_fixedPoint', 'traceBoundaryType', 'matlab_approximate', 'connectedComponentsType', 'matlab_approximate'));
 
 function W = testBlockWorld(varargin)
 

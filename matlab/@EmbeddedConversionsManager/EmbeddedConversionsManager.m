@@ -18,7 +18,7 @@ classdef EmbeddedConversionsManager < handle
             computeCharacteristicScaleImageType_acceptable = {'matlab_original', 'matlab_loops', 'matlab_loopsAndFixedPoint', 'matlab_loopsAndFixedPoint_mexFiltering', 'c_fixedPoint'};
 
             traceBoundaryType = 'matlab_original';
-            traceBoundaryType_acceptable = {'matlab_original', 'matlab_loops', 'c_fixedPoint'};
+            traceBoundaryType_acceptable = {'matlab_original', 'matlab_loops', 'c_fixedPoint', 'matlab_approximate'};
             
             connectedComponentsType = 'matlab_original';
             connectedComponentsType_acceptable = {'matlab_original', 'matlab_approximate'};

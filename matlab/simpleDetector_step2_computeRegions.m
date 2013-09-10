@@ -1,4 +1,4 @@
-function [numRegions, area, indexList, bb, centroid] = simpleDetector_step2_computeRegions(binaryImg, usePerimeterCheck, embeddedConversions, DEBUG_DISPLAY)
+function [numRegions, area, indexList, bb, centroid, components2d] = simpleDetector_step2_computeRegions(binaryImg, usePerimeterCheck, embeddedConversions, DEBUG_DISPLAY)
 
 if usePerimeterCheck
     % Perimeter not supported by mexRegionprops yet.
@@ -35,4 +35,8 @@ else
     [area, indexList, bb, centroid] = mexRegionProps( ...
         uint32(regionMap), numRegions);
     area = double(area);
+end
+
+if ~exist('components2d', 'var')
+    components2d = [];
 end
