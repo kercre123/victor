@@ -79,6 +79,9 @@ namespace Anki {
     // Matrix transpose:
     SmallMatrix<T,NCOLS,NROWS> getTranspose(void) const;
     
+    unsigned int numRows() const;
+    unsigned int numCols() const;
+    
 #if defined(ANKICORETECH_USE_OPENCV)
     SmallMatrix(const cv::Matx<T,NROWS,NCOLS> &cvMatrix);
     cv::Matx<T,NROWS,NCOLS>& get_CvMatx_();
@@ -108,14 +111,14 @@ namespace Anki {
   Matrix<T>::Matrix(s32 nrows, s32 ncols)
   : Array2d<T>(nrows, ncols)
   {
-    
+    CORETECH_THROW_IF(nrows == 0 || ncols == 0);
   }
   
   template<typename T>
   Matrix<T>::Matrix(s32 nrows, s32 ncols, const T &initVal)
   : Array2d<T>(nrows, ncols, initVal)
   {
-    
+    CORETECH_THROW_IF(nrows == 0 || ncols == 0);
   }
   
   
@@ -133,7 +136,8 @@ namespace Anki {
   Matrix<T> Matrix<T>::operator*(const Matrix<T> &other) const
   {
     // Make sure the matrices have compatible sizes for multiplication
-    assert(this->numCols() == other.numRows());
+    CORETECH_THROW_IF(this->numCols() != other.numRows());
+    
     
 #if defined(ANKICORETECH_USE_OPENCV)
     // For now (?), rely on OpenCV for matrix multiplication:
@@ -264,12 +268,16 @@ namespace Anki {
   template<typename T, unsigned int NROWS, unsigned int NCOLS>
   T&  SmallMatrix<T,NROWS,NCOLS>::operator() (unsigned int i, unsigned int j)
   {
+    CORETECH_THROW_IF(i >= NROWS || j >= NCOLS);
+      
     return cv::Matx<T,NROWS,NCOLS>::operator()(i,j);
   }
   
   template<typename T, unsigned int NROWS, unsigned int NCOLS>
   const T& SmallMatrix<T,NROWS,NCOLS>::operator() (unsigned int i, unsigned int j) const
   {
+    CORETECH_THROW_IF(i >= NROWS || j >= NCOLS);
+    
     return cv::Matx<T,NROWS,NCOLS>::operator()(i,j);
   }
   
@@ -329,6 +337,18 @@ namespace Anki {
 #endif
   }
   
+  
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  unsigned int SmallMatrix<T,NROWS,NCOLS>::numRows() const
+  {
+    return NROWS;
+  }
+  
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  unsigned int SmallMatrix<T,NROWS,NCOLS>::numCols() const
+  {
+    return NCOLS;
+  }
 
 #if defined(ANKICORETECH_USE_OPENCV)
   template<typename T, unsigned int NROWS, unsigned int NCOLS>

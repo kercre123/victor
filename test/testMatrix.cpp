@@ -11,7 +11,7 @@
 using namespace std;
 using namespace Anki;
 
-TEST(TestMatrix, ConstructorsAndAccessors)
+TEST(TestMatrix, MatrixConstructorsAndAccessors)
 {
   
   /////////////// Square matrix /////////////////////
@@ -54,6 +54,10 @@ TEST(TestMatrix, ConstructorsAndAccessors)
 #ifdef DEBUG_TEST_MATRIX
   cout << "Matrix A (after): \n" << A << "\n";
 #endif
+  
+  
+  // Try to access invalid inded
+  ASSERT_ANY_THROW(A(3,0));
   
   
   /////////////  Non-square matrix ///////////////////
@@ -100,29 +104,123 @@ TEST(TestMatrix, ConstructorsAndAccessors)
   cout << "Matrix B (after): \n" << B << "\n";
 #endif
   
-  
-  
-  // Small Matrix:
+  /////////////// Empty matrix ///////////////
+  ASSERT_ANY_THROW(Matrix<float> C(0,3,0));
+  ASSERT_ANY_THROW(Matrix<float> C(1,0,0));
+}
+
+
+TEST(TestMatrix, SmallMatrixConstructorsAndAccessors)
+{
+  ///////// SmallMatrix //////////
   Matrix_2x2f M;
 
 #ifdef DEBUG_TEST_MATRIX
   cout << "SmallMatrix M (before): \n" << M << "\n";
 #endif
   
+  // Test accessors
+  // Make sure matrix B initial values are correct
+  for (int r=0; r< M.numRows(); ++r) {
+    for (int c=0; c<M.numCols(); ++c) {
+      ASSERT_EQ(M(r,c), 0.f);
+    }
+  }
   
+  // Assign new values
   M(0,0) = 1.f;
   M(0,1) = 2.f;
+  
+  // Test values
+  ASSERT_EQ(M(0,0), 1.f);
+  ASSERT_EQ(M(0,1), 2.f);
+  
+  ASSERT_EQ(M(1,0), 0.f);
+  ASSERT_EQ(M(1,1), 0.f);
+  
+  
+  // Assign more new values
   M(1,0) = 3.f;
   M(1,1) = 4.f;
+
+  ASSERT_EQ(M(1,0), 3.f);
+  ASSERT_EQ(M(1,1), 4.f);
+  
+  
   
 #ifdef DEBUG_TEST_MATRIX
   cout << "SmallMatrix M (after): \n" << M << "\n";
 #endif
+  
+  // Try to access invalid index
+  ASSERT_ANY_THROW(M(2,2));
+  
+}
+
+TEST(TestMatrix, MatrixMultiplication1)
+{
+  Matrix<float> A(3,3,0.f), B(3,3,0.f);
+  A(0,0) = 1.f;
+  A(1,1) = 2.f;
+  A(2,2) = 3.f;
+  
+  B(0,0) = 10.f;
+  B(1,1) = 10.f;
+  B(2,2) = 10.f;
+  
+  Matrix<float> C;   // TODO: Should matrix operator= throw if dimensions change?
+  C = A*B;
+  
+  ASSERT_EQ(C.numRows(), 3);
+  ASSERT_EQ(C.numCols(), 3);
+  
+  ASSERT_EQ(C(0,0), 10.f);
+  ASSERT_EQ(C(1,1), 20.f);
+  ASSERT_EQ(C(2,2), 30.f);
+  
+  
+#ifdef DEBUG_TEST_MATRIX
+  cout << "Matrix A: \n" << A << "\n";
+  cout << "Matrix B: \n" << B << "\n";
+  cout << "Matrix C = A*B: \n" << C << "\n";
+#endif
 }
 
 
-// TODO:
-// Access invalid element
-// Make matrix too big
-// Make zero size matrix
+TEST(TestMatrix, MatrixMultiplication2)
+{
+  Matrix<float> A(3,3,0.f), B(4,3,0.f);
+  Matrix<float> C;
+  
+  ASSERT_ANY_THROW(C = A*B);
+  
+  
+#ifdef DEBUG_TEST_MATRIX
+  cout << "Matrix A: \n" << A << "\n";
+  cout << "Matrix B: \n" << B << "\n";
+  cout << "Matrix C = A*B: \n" << C << "\n";
+#endif
+}
+
+
+  
+TEST(TestMatrix, SmallMatrixMultiplication1)
+{
+  // SmallMatrix
+  // ...
+}
+
+
+
+TEST(TestMatrix, Inverse)
+{
+  // Matrix
+  
+  // SmallMatrix
+}
+
+TEST(TestMatrix, Transpose)
+{
+  
+}
 
