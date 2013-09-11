@@ -103,6 +103,31 @@ namespace Anki
       return true;
     } // bool Array_u8::IsElementwiseEqual(const Array_u8 &array2, const u8 threshold) const
 
+    // Check every element of this array against the input array. If the arrays are different
+    // sizes or uninitialized, return false. The threshold is between 0.0 and 1.0. If any element
+    // is more than a percentage different than its matching element (calulated from the maximum
+    // of the two), return false.
+    bool Array_u8::IsElementwiseEqual_PercentThreshold(const Array_u8 &array2, const double percentThreshold, const double absoluteThreshold) const
+    {
+      if(!this->IsEqualSize(array2))
+        return false;
+
+      for(s32 y=0; y<size[0]; y++) {
+        const u8 * const this_rowPointer = this->Pointer(y, 0);
+        const u8 * const array2_rowPointer = array2.Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          const double value1 = static_cast<double>(this_rowPointer[x]);
+          const double value2 = static_cast<double>(array2_rowPointer[x]);
+          const double percentThresholdValue = percentThreshold * MAX(value1,value2);
+
+          if(abs(value1 - value2) > percentThresholdValue && abs(value1 - value2) > absoluteThreshold)
+            return false;
+        }
+      }
+
+      return true;
+    } // Array_u8::IsElementwiseEqual_PercentThreshold(const Array_u8 &array2, const double threshold = 0.01) const;
+
     // If this array or array2 are different sizes or uninitialized, then return false.
     bool Array_u8::IsEqualSize(const Array_u8 &array2) const
     {
@@ -139,10 +164,11 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_u8
-    void Array_u8::Print() const
+    void Array_u8::Print(const char * const variableName) const
     {
       assert(this->IsValid());
 
+      printf("%s:\n", variableName);
       for(s32 y=0; y<size[0]; y++) {
         const u8 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
@@ -150,6 +176,7 @@ namespace Anki
         }
         printf("\n");
       }
+      printf("\n");
     } // void Array_u8::Print() const
 
     // If the Array_u8 was constructed with the useBoundaryFillPatterns=true, then
@@ -215,7 +242,7 @@ namespace Anki
       for(s32 y=0; y<size[0]; y++) {
         u8 * restrict rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
-          u8 value = static_cast<u8>(strtol(startPointer, &endPointer, 10));
+          const u8 value = static_cast<u8>(strtol(startPointer, &endPointer, 10));
           if(startPointer != endPointer) {
             rowPointer[x] = value;
             numValuesSet++;
@@ -406,6 +433,31 @@ namespace Anki
       return true;
     } // bool Array_s8::IsElementwiseEqual(const Array_s8 &array2, const s8 threshold) const
 
+    // Check every element of this array against the input array. If the arrays are different
+    // sizes or uninitialized, return false. The threshold is between 0.0 and 1.0. If any element
+    // is more than a percentage different than its matching element (calulated from the maximum
+    // of the two), return false.
+    bool Array_s8::IsElementwiseEqual_PercentThreshold(const Array_s8 &array2, const double percentThreshold, const double absoluteThreshold) const
+    {
+      if(!this->IsEqualSize(array2))
+        return false;
+
+      for(s32 y=0; y<size[0]; y++) {
+        const s8 * const this_rowPointer = this->Pointer(y, 0);
+        const s8 * const array2_rowPointer = array2.Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          const double value1 = static_cast<double>(this_rowPointer[x]);
+          const double value2 = static_cast<double>(array2_rowPointer[x]);
+          const double percentThresholdValue = percentThreshold * MAX(value1,value2);
+
+          if(abs(value1 - value2) > percentThresholdValue && abs(value1 - value2) > absoluteThreshold)
+            return false;
+        }
+      }
+
+      return true;
+    } // Array_s8::IsElementwiseEqual_PercentThreshold(const Array_s8 &array2, const double threshold = 0.01) const;
+
     // If this array or array2 are different sizes or uninitialized, then return false.
     bool Array_s8::IsEqualSize(const Array_s8 &array2) const
     {
@@ -442,10 +494,11 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_s8
-    void Array_s8::Print() const
+    void Array_s8::Print(const char * const variableName) const
     {
       assert(this->IsValid());
 
+      printf("%s:\n", variableName);
       for(s32 y=0; y<size[0]; y++) {
         const s8 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
@@ -453,6 +506,7 @@ namespace Anki
         }
         printf("\n");
       }
+      printf("\n");
     } // void Array_s8::Print() const
 
     // If the Array_s8 was constructed with the useBoundaryFillPatterns=true, then
@@ -518,7 +572,7 @@ namespace Anki
       for(s32 y=0; y<size[0]; y++) {
         s8 * restrict rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
-          s8 value = static_cast<s8>(strtol(startPointer, &endPointer, 10));
+          const s8 value = static_cast<s8>(strtol(startPointer, &endPointer, 10));
           if(startPointer != endPointer) {
             rowPointer[x] = value;
             numValuesSet++;
@@ -709,6 +763,31 @@ namespace Anki
       return true;
     } // bool Array_u16::IsElementwiseEqual(const Array_u16 &array2, const u16 threshold) const
 
+    // Check every element of this array against the input array. If the arrays are different
+    // sizes or uninitialized, return false. The threshold is between 0.0 and 1.0. If any element
+    // is more than a percentage different than its matching element (calulated from the maximum
+    // of the two), return false.
+    bool Array_u16::IsElementwiseEqual_PercentThreshold(const Array_u16 &array2, const double percentThreshold, const double absoluteThreshold) const
+    {
+      if(!this->IsEqualSize(array2))
+        return false;
+
+      for(s32 y=0; y<size[0]; y++) {
+        const u16 * const this_rowPointer = this->Pointer(y, 0);
+        const u16 * const array2_rowPointer = array2.Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          const double value1 = static_cast<double>(this_rowPointer[x]);
+          const double value2 = static_cast<double>(array2_rowPointer[x]);
+          const double percentThresholdValue = percentThreshold * MAX(value1,value2);
+
+          if(abs(value1 - value2) > percentThresholdValue && abs(value1 - value2) > absoluteThreshold)
+            return false;
+        }
+      }
+
+      return true;
+    } // Array_u16::IsElementwiseEqual_PercentThreshold(const Array_u16 &array2, const double threshold = 0.01) const;
+
     // If this array or array2 are different sizes or uninitialized, then return false.
     bool Array_u16::IsEqualSize(const Array_u16 &array2) const
     {
@@ -745,10 +824,11 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_u16
-    void Array_u16::Print() const
+    void Array_u16::Print(const char * const variableName) const
     {
       assert(this->IsValid());
 
+      printf("%s:\n", variableName);
       for(s32 y=0; y<size[0]; y++) {
         const u16 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
@@ -756,6 +836,7 @@ namespace Anki
         }
         printf("\n");
       }
+      printf("\n");
     } // void Array_u16::Print() const
 
     // If the Array_u16 was constructed with the useBoundaryFillPatterns=true, then
@@ -821,7 +902,7 @@ namespace Anki
       for(s32 y=0; y<size[0]; y++) {
         u16 * restrict rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
-          u16 value = static_cast<u16>(strtol(startPointer, &endPointer, 10));
+          const u16 value = static_cast<u16>(strtol(startPointer, &endPointer, 10));
           if(startPointer != endPointer) {
             rowPointer[x] = value;
             numValuesSet++;
@@ -1012,6 +1093,31 @@ namespace Anki
       return true;
     } // bool Array_s16::IsElementwiseEqual(const Array_s16 &array2, const s16 threshold) const
 
+    // Check every element of this array against the input array. If the arrays are different
+    // sizes or uninitialized, return false. The threshold is between 0.0 and 1.0. If any element
+    // is more than a percentage different than its matching element (calulated from the maximum
+    // of the two), return false.
+    bool Array_s16::IsElementwiseEqual_PercentThreshold(const Array_s16 &array2, const double percentThreshold, const double absoluteThreshold) const
+    {
+      if(!this->IsEqualSize(array2))
+        return false;
+
+      for(s32 y=0; y<size[0]; y++) {
+        const s16 * const this_rowPointer = this->Pointer(y, 0);
+        const s16 * const array2_rowPointer = array2.Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          const double value1 = static_cast<double>(this_rowPointer[x]);
+          const double value2 = static_cast<double>(array2_rowPointer[x]);
+          const double percentThresholdValue = percentThreshold * MAX(value1,value2);
+
+          if(abs(value1 - value2) > percentThresholdValue && abs(value1 - value2) > absoluteThreshold)
+            return false;
+        }
+      }
+
+      return true;
+    } // Array_s16::IsElementwiseEqual_PercentThreshold(const Array_s16 &array2, const double threshold = 0.01) const;
+
     // If this array or array2 are different sizes or uninitialized, then return false.
     bool Array_s16::IsEqualSize(const Array_s16 &array2) const
     {
@@ -1048,10 +1154,11 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_s16
-    void Array_s16::Print() const
+    void Array_s16::Print(const char * const variableName) const
     {
       assert(this->IsValid());
 
+      printf("%s:\n", variableName);
       for(s32 y=0; y<size[0]; y++) {
         const s16 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
@@ -1059,6 +1166,7 @@ namespace Anki
         }
         printf("\n");
       }
+      printf("\n");
     } // void Array_s16::Print() const
 
     // If the Array_s16 was constructed with the useBoundaryFillPatterns=true, then
@@ -1124,7 +1232,7 @@ namespace Anki
       for(s32 y=0; y<size[0]; y++) {
         s16 * restrict rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
-          s16 value = static_cast<s16>(strtol(startPointer, &endPointer, 10));
+          const s16 value = static_cast<s16>(strtol(startPointer, &endPointer, 10));
           if(startPointer != endPointer) {
             rowPointer[x] = value;
             numValuesSet++;
@@ -1315,6 +1423,31 @@ namespace Anki
       return true;
     } // bool Array_u32::IsElementwiseEqual(const Array_u32 &array2, const u32 threshold) const
 
+    // Check every element of this array against the input array. If the arrays are different
+    // sizes or uninitialized, return false. The threshold is between 0.0 and 1.0. If any element
+    // is more than a percentage different than its matching element (calulated from the maximum
+    // of the two), return false.
+    bool Array_u32::IsElementwiseEqual_PercentThreshold(const Array_u32 &array2, const double percentThreshold, const double absoluteThreshold) const
+    {
+      if(!this->IsEqualSize(array2))
+        return false;
+
+      for(s32 y=0; y<size[0]; y++) {
+        const u32 * const this_rowPointer = this->Pointer(y, 0);
+        const u32 * const array2_rowPointer = array2.Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          const double value1 = static_cast<double>(this_rowPointer[x]);
+          const double value2 = static_cast<double>(array2_rowPointer[x]);
+          const double percentThresholdValue = percentThreshold * MAX(value1,value2);
+
+          if(abs(value1 - value2) > percentThresholdValue && abs(value1 - value2) > absoluteThreshold)
+            return false;
+        }
+      }
+
+      return true;
+    } // Array_u32::IsElementwiseEqual_PercentThreshold(const Array_u32 &array2, const double threshold = 0.01) const;
+
     // If this array or array2 are different sizes or uninitialized, then return false.
     bool Array_u32::IsEqualSize(const Array_u32 &array2) const
     {
@@ -1351,10 +1484,11 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_u32
-    void Array_u32::Print() const
+    void Array_u32::Print(const char * const variableName) const
     {
       assert(this->IsValid());
 
+      printf("%s:\n", variableName);
       for(s32 y=0; y<size[0]; y++) {
         const u32 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
@@ -1362,6 +1496,7 @@ namespace Anki
         }
         printf("\n");
       }
+      printf("\n");
     } // void Array_u32::Print() const
 
     // If the Array_u32 was constructed with the useBoundaryFillPatterns=true, then
@@ -1427,7 +1562,7 @@ namespace Anki
       for(s32 y=0; y<size[0]; y++) {
         u32 * restrict rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
-          u32 value = static_cast<u32>(strtol(startPointer, &endPointer, 10));
+          const u32 value = static_cast<u32>(strtol(startPointer, &endPointer, 10));
           if(startPointer != endPointer) {
             rowPointer[x] = value;
             numValuesSet++;
@@ -1618,6 +1753,31 @@ namespace Anki
       return true;
     } // bool Array_s32::IsElementwiseEqual(const Array_s32 &array2, const s32 threshold) const
 
+    // Check every element of this array against the input array. If the arrays are different
+    // sizes or uninitialized, return false. The threshold is between 0.0 and 1.0. If any element
+    // is more than a percentage different than its matching element (calulated from the maximum
+    // of the two), return false.
+    bool Array_s32::IsElementwiseEqual_PercentThreshold(const Array_s32 &array2, const double percentThreshold, const double absoluteThreshold) const
+    {
+      if(!this->IsEqualSize(array2))
+        return false;
+
+      for(s32 y=0; y<size[0]; y++) {
+        const s32 * const this_rowPointer = this->Pointer(y, 0);
+        const s32 * const array2_rowPointer = array2.Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          const double value1 = static_cast<double>(this_rowPointer[x]);
+          const double value2 = static_cast<double>(array2_rowPointer[x]);
+          const double percentThresholdValue = percentThreshold * MAX(value1,value2);
+
+          if(abs(value1 - value2) > percentThresholdValue && abs(value1 - value2) > absoluteThreshold)
+            return false;
+        }
+      }
+
+      return true;
+    } // Array_s32::IsElementwiseEqual_PercentThreshold(const Array_s32 &array2, const double threshold = 0.01) const;
+
     // If this array or array2 are different sizes or uninitialized, then return false.
     bool Array_s32::IsEqualSize(const Array_s32 &array2) const
     {
@@ -1654,10 +1814,11 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_s32
-    void Array_s32::Print() const
+    void Array_s32::Print(const char * const variableName) const
     {
       assert(this->IsValid());
 
+      printf("%s:\n", variableName);
       for(s32 y=0; y<size[0]; y++) {
         const s32 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
@@ -1665,6 +1826,7 @@ namespace Anki
         }
         printf("\n");
       }
+      printf("\n");
     } // void Array_s32::Print() const
 
     // If the Array_s32 was constructed with the useBoundaryFillPatterns=true, then
@@ -1730,7 +1892,7 @@ namespace Anki
       for(s32 y=0; y<size[0]; y++) {
         s32 * restrict rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
-          s32 value = static_cast<s32>(strtol(startPointer, &endPointer, 10));
+          const s32 value = static_cast<s32>(strtol(startPointer, &endPointer, 10));
           if(startPointer != endPointer) {
             rowPointer[x] = value;
             numValuesSet++;
@@ -1921,6 +2083,31 @@ namespace Anki
       return true;
     } // bool Array_u64::IsElementwiseEqual(const Array_u64 &array2, const u64 threshold) const
 
+    // Check every element of this array against the input array. If the arrays are different
+    // sizes or uninitialized, return false. The threshold is between 0.0 and 1.0. If any element
+    // is more than a percentage different than its matching element (calulated from the maximum
+    // of the two), return false.
+    bool Array_u64::IsElementwiseEqual_PercentThreshold(const Array_u64 &array2, const double percentThreshold, const double absoluteThreshold) const
+    {
+      if(!this->IsEqualSize(array2))
+        return false;
+
+      for(s32 y=0; y<size[0]; y++) {
+        const u64 * const this_rowPointer = this->Pointer(y, 0);
+        const u64 * const array2_rowPointer = array2.Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          const double value1 = static_cast<double>(this_rowPointer[x]);
+          const double value2 = static_cast<double>(array2_rowPointer[x]);
+          const double percentThresholdValue = percentThreshold * MAX(value1,value2);
+
+          if(abs(value1 - value2) > percentThresholdValue && abs(value1 - value2) > absoluteThreshold)
+            return false;
+        }
+      }
+
+      return true;
+    } // Array_u64::IsElementwiseEqual_PercentThreshold(const Array_u64 &array2, const double threshold = 0.01) const;
+
     // If this array or array2 are different sizes or uninitialized, then return false.
     bool Array_u64::IsEqualSize(const Array_u64 &array2) const
     {
@@ -1957,10 +2144,11 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_u64
-    void Array_u64::Print() const
+    void Array_u64::Print(const char * const variableName) const
     {
       assert(this->IsValid());
 
+      printf("%s:\n", variableName);
       for(s32 y=0; y<size[0]; y++) {
         const u64 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
@@ -1968,6 +2156,7 @@ namespace Anki
         }
         printf("\n");
       }
+      printf("\n");
     } // void Array_u64::Print() const
 
     // If the Array_u64 was constructed with the useBoundaryFillPatterns=true, then
@@ -2033,7 +2222,7 @@ namespace Anki
       for(s32 y=0; y<size[0]; y++) {
         u64 * restrict rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
-          u64 value = static_cast<u64>(strtol(startPointer, &endPointer, 10));
+          const u64 value = static_cast<u64>(strtol(startPointer, &endPointer, 10));
           if(startPointer != endPointer) {
             rowPointer[x] = value;
             numValuesSet++;
@@ -2224,6 +2413,31 @@ namespace Anki
       return true;
     } // bool Array_s64::IsElementwiseEqual(const Array_s64 &array2, const s64 threshold) const
 
+    // Check every element of this array against the input array. If the arrays are different
+    // sizes or uninitialized, return false. The threshold is between 0.0 and 1.0. If any element
+    // is more than a percentage different than its matching element (calulated from the maximum
+    // of the two), return false.
+    bool Array_s64::IsElementwiseEqual_PercentThreshold(const Array_s64 &array2, const double percentThreshold, const double absoluteThreshold) const
+    {
+      if(!this->IsEqualSize(array2))
+        return false;
+
+      for(s32 y=0; y<size[0]; y++) {
+        const s64 * const this_rowPointer = this->Pointer(y, 0);
+        const s64 * const array2_rowPointer = array2.Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          const double value1 = static_cast<double>(this_rowPointer[x]);
+          const double value2 = static_cast<double>(array2_rowPointer[x]);
+          const double percentThresholdValue = percentThreshold * MAX(value1,value2);
+
+          if(abs(value1 - value2) > percentThresholdValue && abs(value1 - value2) > absoluteThreshold)
+            return false;
+        }
+      }
+
+      return true;
+    } // Array_s64::IsElementwiseEqual_PercentThreshold(const Array_s64 &array2, const double threshold = 0.01) const;
+
     // If this array or array2 are different sizes or uninitialized, then return false.
     bool Array_s64::IsEqualSize(const Array_s64 &array2) const
     {
@@ -2260,10 +2474,11 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_s64
-    void Array_s64::Print() const
+    void Array_s64::Print(const char * const variableName) const
     {
       assert(this->IsValid());
 
+      printf("%s:\n", variableName);
       for(s32 y=0; y<size[0]; y++) {
         const s64 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
@@ -2271,6 +2486,7 @@ namespace Anki
         }
         printf("\n");
       }
+      printf("\n");
     } // void Array_s64::Print() const
 
     // If the Array_s64 was constructed with the useBoundaryFillPatterns=true, then
@@ -2336,7 +2552,7 @@ namespace Anki
       for(s32 y=0; y<size[0]; y++) {
         s64 * restrict rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
-          s64 value = static_cast<s64>(strtol(startPointer, &endPointer, 10));
+          const s64 value = static_cast<s64>(strtol(startPointer, &endPointer, 10));
           if(startPointer != endPointer) {
             rowPointer[x] = value;
             numValuesSet++;
@@ -2527,6 +2743,31 @@ namespace Anki
       return true;
     } // bool Array_f32::IsElementwiseEqual(const Array_f32 &array2, const f32 threshold) const
 
+    // Check every element of this array against the input array. If the arrays are different
+    // sizes or uninitialized, return false. The threshold is between 0.0 and 1.0. If any element
+    // is more than a percentage different than its matching element (calulated from the maximum
+    // of the two), return false.
+    bool Array_f32::IsElementwiseEqual_PercentThreshold(const Array_f32 &array2, const double percentThreshold, const double absoluteThreshold) const
+    {
+      if(!this->IsEqualSize(array2))
+        return false;
+
+      for(s32 y=0; y<size[0]; y++) {
+        const f32 * const this_rowPointer = this->Pointer(y, 0);
+        const f32 * const array2_rowPointer = array2.Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          const double value1 = static_cast<double>(this_rowPointer[x]);
+          const double value2 = static_cast<double>(array2_rowPointer[x]);
+          const double percentThresholdValue = percentThreshold * MAX(value1,value2);
+
+          if(abs(value1 - value2) > percentThresholdValue && abs(value1 - value2) > absoluteThreshold)
+            return false;
+        }
+      }
+
+      return true;
+    } // Array_f32::IsElementwiseEqual_PercentThreshold(const Array_f32 &array2, const double threshold = 0.01) const;
+
     // If this array or array2 are different sizes or uninitialized, then return false.
     bool Array_f32::IsEqualSize(const Array_f32 &array2) const
     {
@@ -2563,10 +2804,11 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_f32
-    void Array_f32::Print() const
+    void Array_f32::Print(const char * const variableName) const
     {
       assert(this->IsValid());
 
+      printf("%s:\n", variableName);
       for(s32 y=0; y<size[0]; y++) {
         const f32 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
@@ -2574,6 +2816,7 @@ namespace Anki
         }
         printf("\n");
       }
+      printf("\n");
     } // void Array_f32::Print() const
 
     // If the Array_f32 was constructed with the useBoundaryFillPatterns=true, then
@@ -2639,7 +2882,7 @@ namespace Anki
       for(s32 y=0; y<size[0]; y++) {
         f32 * restrict rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
-          f32 value = static_cast<f32>(strtol(startPointer, &endPointer, 10));
+          const f32 value = static_cast<f32>(strtod(startPointer, &endPointer));
           if(startPointer != endPointer) {
             rowPointer[x] = value;
             numValuesSet++;
@@ -2830,6 +3073,31 @@ namespace Anki
       return true;
     } // bool Array_f64::IsElementwiseEqual(const Array_f64 &array2, const f64 threshold) const
 
+    // Check every element of this array against the input array. If the arrays are different
+    // sizes or uninitialized, return false. The threshold is between 0.0 and 1.0. If any element
+    // is more than a percentage different than its matching element (calulated from the maximum
+    // of the two), return false.
+    bool Array_f64::IsElementwiseEqual_PercentThreshold(const Array_f64 &array2, const double percentThreshold, const double absoluteThreshold) const
+    {
+      if(!this->IsEqualSize(array2))
+        return false;
+
+      for(s32 y=0; y<size[0]; y++) {
+        const f64 * const this_rowPointer = this->Pointer(y, 0);
+        const f64 * const array2_rowPointer = array2.Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          const double value1 = static_cast<double>(this_rowPointer[x]);
+          const double value2 = static_cast<double>(array2_rowPointer[x]);
+          const double percentThresholdValue = percentThreshold * MAX(value1,value2);
+
+          if(abs(value1 - value2) > percentThresholdValue && abs(value1 - value2) > absoluteThreshold)
+            return false;
+        }
+      }
+
+      return true;
+    } // Array_f64::IsElementwiseEqual_PercentThreshold(const Array_f64 &array2, const double threshold = 0.01) const;
+
     // If this array or array2 are different sizes or uninitialized, then return false.
     bool Array_f64::IsEqualSize(const Array_f64 &array2) const
     {
@@ -2866,10 +3134,11 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_f64
-    void Array_f64::Print() const
+    void Array_f64::Print(const char * const variableName) const
     {
       assert(this->IsValid());
 
+      printf("%s:\n", variableName);
       for(s32 y=0; y<size[0]; y++) {
         const f64 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
@@ -2877,6 +3146,7 @@ namespace Anki
         }
         printf("\n");
       }
+      printf("\n");
     } // void Array_f64::Print() const
 
     // If the Array_f64 was constructed with the useBoundaryFillPatterns=true, then
@@ -2942,7 +3212,7 @@ namespace Anki
       for(s32 y=0; y<size[0]; y++) {
         f64 * restrict rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
-          f64 value = static_cast<f64>(strtol(startPointer, &endPointer, 10));
+          const f64 value = static_cast<f64>(strtod(startPointer, &endPointer));
           if(startPointer != endPointer) {
             rowPointer[x] = value;
             numValuesSet++;
@@ -3133,10 +3403,11 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_Point_s16
-    void Array_Point_s16::Print() const
+    void Array_Point_s16::Print(const char * const variableName) const
     {
       assert(this->IsValid());
 
+      printf("%s:\n", variableName);
       for(s32 y=0; y<size[0]; y++) {
         const Point_s16 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
@@ -3145,6 +3416,7 @@ namespace Anki
         }
         printf("\n");
       }
+      printf("\n");
     } // void Array_Point_s16::Print() const
 
     // If the Array_Point_s16 was constructed with the useBoundaryFillPatterns=true, then

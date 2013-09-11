@@ -33,6 +33,22 @@ namespace Anki
     }
 #endif // #if !defined(USING_MOVIDIUS_COMPILER)
 
+    f32 Round(f32 number)
+    {
+      if(number > 0)
+        return floor(number + 0.5f);
+      else
+        return floor(number - 0.5f);
+    }
+
+    f64 Round(f64 number)
+    {
+      if(number > 0)
+        return floor(number + 0.5);
+      else
+        return floor(number - 0.5);
+    }
+
     bool IsPowerOfTwo(u32 x)
     {
       // While x is even and greater than 1, keep dividing by two

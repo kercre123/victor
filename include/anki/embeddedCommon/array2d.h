@@ -106,11 +106,18 @@ namespace Anki
       // return false.
       bool IsElementwiseEqual(const Array_u8 &array2, const u8 threshold = static_cast<u8>(0.0001)) const;
 
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes or uninitialized, return false. The percentThreshold is between 0.0 and 1.0. To
+      // return false, an element must fail both thresholds. The percent threshold fails if an
+      // element is more than a percentage different than its matching element (calulated from the
+      // maximum of the two).
+      bool IsElementwiseEqual_PercentThreshold(const Array_u8 &array2, const double percentThreshold = 0.01, const double absoluteThreshold = 0.0001) const;
+
       // If this array or array2 are different sizes or uninitialized, then return false.
       bool IsEqualSize(const Array_u8 &array2) const;
 
       // Print out the contents of this Array_u8
-      void Print() const;
+      void Print(const char * const variableName = "Array_u8") const;
 
       // If the Array_u8 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -237,11 +244,18 @@ namespace Anki
       // return false.
       bool IsElementwiseEqual(const Array_s8 &array2, const s8 threshold = static_cast<s8>(0.0001)) const;
 
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes or uninitialized, return false. The percentThreshold is between 0.0 and 1.0. To
+      // return false, an element must fail both thresholds. The percent threshold fails if an
+      // element is more than a percentage different than its matching element (calulated from the
+      // maximum of the two).
+      bool IsElementwiseEqual_PercentThreshold(const Array_s8 &array2, const double percentThreshold = 0.01, const double absoluteThreshold = 0.0001) const;
+
       // If this array or array2 are different sizes or uninitialized, then return false.
       bool IsEqualSize(const Array_s8 &array2) const;
 
       // Print out the contents of this Array_s8
-      void Print() const;
+      void Print(const char * const variableName = "Array_s8") const;
 
       // If the Array_s8 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -368,11 +382,18 @@ namespace Anki
       // return false.
       bool IsElementwiseEqual(const Array_u16 &array2, const u16 threshold = static_cast<u16>(0.0001)) const;
 
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes or uninitialized, return false. The percentThreshold is between 0.0 and 1.0. To
+      // return false, an element must fail both thresholds. The percent threshold fails if an
+      // element is more than a percentage different than its matching element (calulated from the
+      // maximum of the two).
+      bool IsElementwiseEqual_PercentThreshold(const Array_u16 &array2, const double percentThreshold = 0.01, const double absoluteThreshold = 0.0001) const;
+
       // If this array or array2 are different sizes or uninitialized, then return false.
       bool IsEqualSize(const Array_u16 &array2) const;
 
       // Print out the contents of this Array_u16
-      void Print() const;
+      void Print(const char * const variableName = "Array_u16") const;
 
       // If the Array_u16 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -499,11 +520,18 @@ namespace Anki
       // return false.
       bool IsElementwiseEqual(const Array_s16 &array2, const s16 threshold = static_cast<s16>(0.0001)) const;
 
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes or uninitialized, return false. The percentThreshold is between 0.0 and 1.0. To
+      // return false, an element must fail both thresholds. The percent threshold fails if an
+      // element is more than a percentage different than its matching element (calulated from the
+      // maximum of the two).
+      bool IsElementwiseEqual_PercentThreshold(const Array_s16 &array2, const double percentThreshold = 0.01, const double absoluteThreshold = 0.0001) const;
+
       // If this array or array2 are different sizes or uninitialized, then return false.
       bool IsEqualSize(const Array_s16 &array2) const;
 
       // Print out the contents of this Array_s16
-      void Print() const;
+      void Print(const char * const variableName = "Array_s16") const;
 
       // If the Array_s16 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -630,11 +658,18 @@ namespace Anki
       // return false.
       bool IsElementwiseEqual(const Array_u32 &array2, const u32 threshold = static_cast<u32>(0.0001)) const;
 
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes or uninitialized, return false. The percentThreshold is between 0.0 and 1.0. To
+      // return false, an element must fail both thresholds. The percent threshold fails if an
+      // element is more than a percentage different than its matching element (calulated from the
+      // maximum of the two).
+      bool IsElementwiseEqual_PercentThreshold(const Array_u32 &array2, const double percentThreshold = 0.01, const double absoluteThreshold = 0.0001) const;
+
       // If this array or array2 are different sizes or uninitialized, then return false.
       bool IsEqualSize(const Array_u32 &array2) const;
 
       // Print out the contents of this Array_u32
-      void Print() const;
+      void Print(const char * const variableName = "Array_u32") const;
 
       // If the Array_u32 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -761,11 +796,18 @@ namespace Anki
       // return false.
       bool IsElementwiseEqual(const Array_s32 &array2, const s32 threshold = static_cast<s32>(0.0001)) const;
 
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes or uninitialized, return false. The percentThreshold is between 0.0 and 1.0. To
+      // return false, an element must fail both thresholds. The percent threshold fails if an
+      // element is more than a percentage different than its matching element (calulated from the
+      // maximum of the two).
+      bool IsElementwiseEqual_PercentThreshold(const Array_s32 &array2, const double percentThreshold = 0.01, const double absoluteThreshold = 0.0001) const;
+
       // If this array or array2 are different sizes or uninitialized, then return false.
       bool IsEqualSize(const Array_s32 &array2) const;
 
       // Print out the contents of this Array_s32
-      void Print() const;
+      void Print(const char * const variableName = "Array_s32") const;
 
       // If the Array_s32 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -892,11 +934,18 @@ namespace Anki
       // return false.
       bool IsElementwiseEqual(const Array_u64 &array2, const u64 threshold = static_cast<u64>(0.0001)) const;
 
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes or uninitialized, return false. The percentThreshold is between 0.0 and 1.0. To
+      // return false, an element must fail both thresholds. The percent threshold fails if an
+      // element is more than a percentage different than its matching element (calulated from the
+      // maximum of the two).
+      bool IsElementwiseEqual_PercentThreshold(const Array_u64 &array2, const double percentThreshold = 0.01, const double absoluteThreshold = 0.0001) const;
+
       // If this array or array2 are different sizes or uninitialized, then return false.
       bool IsEqualSize(const Array_u64 &array2) const;
 
       // Print out the contents of this Array_u64
-      void Print() const;
+      void Print(const char * const variableName = "Array_u64") const;
 
       // If the Array_u64 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -1023,11 +1072,18 @@ namespace Anki
       // return false.
       bool IsElementwiseEqual(const Array_s64 &array2, const s64 threshold = static_cast<s64>(0.0001)) const;
 
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes or uninitialized, return false. The percentThreshold is between 0.0 and 1.0. To
+      // return false, an element must fail both thresholds. The percent threshold fails if an
+      // element is more than a percentage different than its matching element (calulated from the
+      // maximum of the two).
+      bool IsElementwiseEqual_PercentThreshold(const Array_s64 &array2, const double percentThreshold = 0.01, const double absoluteThreshold = 0.0001) const;
+
       // If this array or array2 are different sizes or uninitialized, then return false.
       bool IsEqualSize(const Array_s64 &array2) const;
 
       // Print out the contents of this Array_s64
-      void Print() const;
+      void Print(const char * const variableName = "Array_s64") const;
 
       // If the Array_s64 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -1154,11 +1210,18 @@ namespace Anki
       // return false.
       bool IsElementwiseEqual(const Array_f32 &array2, const f32 threshold = static_cast<f32>(0.0001)) const;
 
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes or uninitialized, return false. The percentThreshold is between 0.0 and 1.0. To
+      // return false, an element must fail both thresholds. The percent threshold fails if an
+      // element is more than a percentage different than its matching element (calulated from the
+      // maximum of the two).
+      bool IsElementwiseEqual_PercentThreshold(const Array_f32 &array2, const double percentThreshold = 0.01, const double absoluteThreshold = 0.0001) const;
+
       // If this array or array2 are different sizes or uninitialized, then return false.
       bool IsEqualSize(const Array_f32 &array2) const;
 
       // Print out the contents of this Array_f32
-      void Print() const;
+      void Print(const char * const variableName = "Array_f32") const;
 
       // If the Array_f32 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -1285,11 +1348,18 @@ namespace Anki
       // return false.
       bool IsElementwiseEqual(const Array_f64 &array2, const f64 threshold = static_cast<f64>(0.0001)) const;
 
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes or uninitialized, return false. The percentThreshold is between 0.0 and 1.0. To
+      // return false, an element must fail both thresholds. The percent threshold fails if an
+      // element is more than a percentage different than its matching element (calulated from the
+      // maximum of the two).
+      bool IsElementwiseEqual_PercentThreshold(const Array_f64 &array2, const double percentThreshold = 0.01, const double absoluteThreshold = 0.0001) const;
+
       // If this array or array2 are different sizes or uninitialized, then return false.
       bool IsEqualSize(const Array_f64 &array2) const;
 
       // Print out the contents of this Array_f64
-      void Print() const;
+      void Print(const char * const variableName = "Array_f64") const;
 
       // If the Array_f64 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -1411,7 +1481,7 @@ namespace Anki
       bool IsEqualSize(const Array_Point_s16 &array2) const;
 
       // Print out the contents of this Array_Point_s16
-      void Print() const;
+      void Print(const char * const variableName = "Array_Point_s16") const;
 
       // If the Array_Point_s16 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the

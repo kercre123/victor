@@ -116,6 +116,13 @@ def __GenerateDeclarations(whichTypes, includeAllMethods):
             '      // sizes, uninitialized, or if any element is more different than the threshold, then\n' +\
             '      // return false.\n' +\
             '      bool IsElementwiseEqual(const Array_' + type + ' &array2, const ' + type + ' threshold = static_cast<' + type + '>(0.0001)) const;\n' +\
+            '\n' +\
+            '      // Check every element of this array against the input array. If the arrays are different\n' +\
+            '      // sizes or uninitialized, return false. The percentThreshold is between 0.0 and 1.0. To\n' +\
+            '      // return false, an element must fail both thresholds. The percent threshold fails if an\n' +\
+            '      // element is more than a percentage different than its matching element (calulated from the\n' +\
+            '      // maximum of the two).\n' +\
+            '      bool IsElementwiseEqual_PercentThreshold(const Array_' + type + ' &array2, const double percentThreshold = 0.01, const double absoluteThreshold = 0.0001) const;\n' +\
             '\n'
 
         methodsString +=\
@@ -123,7 +130,7 @@ def __GenerateDeclarations(whichTypes, includeAllMethods):
             '      bool IsEqualSize(const Array_' + type + ' &array2) const;\n' +\
             '\n' +\
             '      // Print out the contents of this Array_' + type + '\n' +\
-            '      void Print() const;\n' +\
+            '      void Print(const char * const variableName = "Array_' + type + '") const;\n' +\
             '\n' +\
             '      // If the Array_' + type + ' was constructed with the useBoundaryFillPatterns=true, then\n' +\
             '      // return if any memory was written out of bounds (via fill patterns at the\n' +\

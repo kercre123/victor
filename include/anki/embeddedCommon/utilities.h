@@ -51,6 +51,9 @@ namespace Anki
       return multiple * (number/multiple);
     }
 
+    f32 Round(f32 number);
+    f64 Round(f64 number);
+
     bool IsPowerOfTwo(u32 x);
 
     u32 Log2(u32 x);

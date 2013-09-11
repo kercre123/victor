@@ -110,8 +110,31 @@ def __GenerateDefinitions(whichTypes, includeAllMethods):
             '      }\n' +\
             '\n' +\
             '      return true;\n' +\
-            '    } // bool Array_' + type + '::IsElementwiseEqual(const Array_' + type + ' &array2, const ' + type + ' threshold) const\n\n'
-            
+            '    } // bool Array_' + type + '::IsElementwiseEqual(const Array_' + type + ' &array2, const ' + type + ' threshold) const\n\n' +\
+            '    // Check every element of this array against the input array. If the arrays are different\n' +\
+            '    // sizes or uninitialized, return false. The threshold is between 0.0 and 1.0. If any element\n' +\
+            '    // is more than a percentage different than its matching element (calulated from the maximum\n' +\
+            '    // of the two), return false.\n' +\
+            '    bool Array_' + type + '::IsElementwiseEqual_PercentThreshold(const Array_' + type + ' &array2, const double percentThreshold, const double absoluteThreshold) const\n' +\
+            '    {\n' +\
+            '      if(!this->IsEqualSize(array2))\n' +\
+            '        return false;\n' +\
+            '\n' +\
+            '      for(s32 y=0; y<size[0]; y++) {\n' +\
+            '        const ' + type + ' * const this_rowPointer = this->Pointer(y, 0);\n' +\
+            '        const ' + type + ' * const array2_rowPointer = array2.Pointer(y, 0);\n' +\
+            '        for(s32 x=0; x<size[1]; x++) {\n' +\
+            '          const double value1 = static_cast<double>(this_rowPointer[x]);\n' +\
+            '          const double value2 = static_cast<double>(array2_rowPointer[x]);\n' +\
+            '          const double percentThresholdValue = percentThreshold * MAX(value1,value2);\n' +\
+            '\n' +\
+            '          if(abs(value1 - value2) > percentThresholdValue && abs(value1 - value2) > absoluteThreshold)\n' +\
+            '            return false;\n' +\
+            '        }\n' +\
+            '      }\n' +\
+            '\n' +\
+            '      return true;\n' +\
+            '    } // bool Array_' + type + '::IsElementwiseEqual_PercentThreshold(const Array_' + type + ' &array2, const double percentThreshold, const double absoluteThreshold) const\n\n'
             
         methodsString +=\
             '    // If this array or array2 are different sizes or uninitialized, then return false.\n' +\
@@ -155,10 +178,11 @@ def __GenerateDefinitions(whichTypes, includeAllMethods):
             '#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)\n' +\
             '\n' +\
             '    // Print out the contents of this Array_' + type + '\n' +\
-            '    void Array_' + type + '::Print() const\n' +\
+            '    void Array_' + type + '::Print(const char * const variableName) const\n' +\
             '    {\n' +\
             '      assert(this->IsValid());\n' +\
             '\n' +\
+            '      printf("%s:\\n", variableName);\n' +\
             '      for(s32 y=0; y<size[0]; y++) {\n' +\
             '        const ' + type + ' * const rowPointer = Pointer(y, 0);\n' +\
             '        for(s32 x=0; x<size[1]; x++) {\n'
@@ -180,6 +204,7 @@ def __GenerateDefinitions(whichTypes, includeAllMethods):
             '        }\n' +\
             '        printf("\\n");\n' +\
             '      }\n' +\
+            '      printf("\\n");\n' +\
             '    } // void Array_' + type + '::Print() const\n' +\
             '\n' +\
             '    // If the Array_' + type + ' was constructed with the useBoundaryFillPatterns=true, then\n' +\
@@ -247,21 +272,29 @@ def __GenerateDefinitions(whichTypes, includeAllMethods):
             '\n' +\
             '      for(s32 y=0; y<size[0]; y++) {\n' +\
             '        ' + type + ' * restrict rowPointer = Pointer(y, 0);\n' +\
-            '        for(s32 x=0; x<size[1]; x++) {\n' +\
-            '          ' + type + ' value = static_cast<' + type + '>(strtol(startPointer, &endPointer, 10));\n' +\
-            '          if(startPointer != endPointer) {\n' +\
-            '            rowPointer[x] = value;\n' +\
-            '            numValuesSet++;\n' +\
-            '          } else {\n' +\
-            '            rowPointer[x] = 0;\n' +\
-            '          }\n' +\
-            '          startPointer = endPointer;\n' +\
-            '        }\n' +\
-            '      }\n' +\
-            '\n' +\
-            '      return numValuesSet;\n' +\
-            '    } // s32 Array_' + type + '::Set(const char * const values)\n' +\
-            '\n'
+            '        for(s32 x=0; x<size[1]; x++) {\n'
+            
+            if type[0] == 'f':
+                methodsString +=\
+                '          const ' + type + ' value = static_cast<' + type + '>(strtod(startPointer, &endPointer));\n'
+            else:
+                methodsString +=\
+                '          const ' + type + ' value = static_cast<' + type + '>(strtol(startPointer, &endPointer, 10));\n'
+            
+            methodsString +=\
+                '          if(startPointer != endPointer) {\n' +\
+                '            rowPointer[x] = value;\n' +\
+                '            numValuesSet++;\n' +\
+                '          } else {\n' +\
+                '            rowPointer[x] = 0;\n' +\
+                '          }\n' +\
+                '          startPointer = endPointer;\n' +\
+                '        }\n' +\
+                '      }\n' +\
+                '\n' +\
+                '      return numValuesSet;\n' +\
+                '    } // s32 Array_' + type + '::Set(const char * const values)\n' +\
+                '\n'
 
 
         methodsString +=\
