@@ -1,10 +1,26 @@
 classdef BlockMarker3D < handle
     
     properties(GetAccess = 'public', Constant = true)
-        % Width of the inside of the square fiducial
-        % NOTE: 24.2 seems to be the right value for the Webot world
-        Width = 24.2; % in mm, sets scale for the whole world
+        % Width of the inside or outside of the square fiducial in mm.  
+        % Sets scale for the whole world!
+        Width = BlockMarker3D.setWidth(BlockMarker2D.UseOutsideOfSquare);
+        
     end
+    
+    methods(Access = 'protected', Static = true)
+        
+        function width = setWidth(useOutsideOfSquare)
+        % NOTE: These are measured from Webots world
+        
+        if useOutsideOfSquare
+            width = 31.9; 
+        else
+            width = 24.2;
+        end
+        
+        end % FUNCTION setWidth()
+    
+    end    
     
     properties(GetAccess = 'public', SetAccess = 'public')
         

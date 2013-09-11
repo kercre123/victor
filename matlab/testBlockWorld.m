@@ -9,7 +9,13 @@
 
 % testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false, 'embeddedConversions', EmbeddedConversionsManager('homographyEstimationType', 'matlab_original', 'computeCharacteristicScaleImageType', 'matlab_original', 'traceBoundaryType', 'matlab_original', 'connectedComponentsType', 'matlab_original'));
 % testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false, 'embeddedConversions', EmbeddedConversionsManager('homographyEstimationType', 'opencv_cp2tform', 'computeCharacteristicScaleImageType', 'c_fixedPoint', 'traceBoundaryType', 'c_fixedPoint', 'connectedComponentsType', 'matlab_approximate'));
+
+% <Set BlockMarker2D.UseOutsideOfSquare = true in BlockMarker2D.m!!!>
+% close all % Get rid of any instantiated/displayed BlockMarkers
+% clear BlockMarker2D BlockMarker3D
 % testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false, 'embeddedConversions', EmbeddedConversionsManager('homographyEstimationType', 'opencv_cp2tform', 'computeCharacteristicScaleImageType', 'c_fixedPoint', 'traceBoundaryType', 'matlab_approximate', 'connectedComponentsType', 'matlab_approximate'));
+% <Possibly close, clear, and set UseOutsideOfSquares back to false>
+
 
 function W = testBlockWorld(varargin)
 

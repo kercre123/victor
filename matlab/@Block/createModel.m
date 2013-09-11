@@ -126,25 +126,44 @@ end
 
 function defineFaceHelper(this, whichFace, faceType, origin, scale, firstMarkerID)
 
+originAdjustment = 0;
 switch(whichFace)
     case 'front'
         R = [0 0 0];
+        if BlockMarker2D.UseOutsideOfSquare
+            originAdjustment = [-5 0 5];
+        end
     case 'back'
         R = pi*[0 0 1];
+        if BlockMarker2D.UseOutsideOfSquare
+            originAdjustment = [5 0 5];
+        end
     case 'right'
         R = pi/2*[0 0 1];
+        if BlockMarker2D.UseOutsideOfSquare
+            originAdjustment = [0 -5 5];
+        end
     case 'left'
         R = -pi/2*[0 0 1];
+        if BlockMarker2D.UseOutsideOfSquare
+            originAdjustment = [0 5 5];
+        end
     case 'top'
         R = -pi/2*[1 0 0];
+        if BlockMarker2D.UseOutsideOfSquare
+            originAdjustment = [-5 5 0];
+        end
     case 'bottom'
         R = pi/2*[1 0 0];
+        if BlockMarker2D.UseOutsideOfSquare
+            originAdjustment = [-5 -5 0];
+        end
     otherwise
         error('Unrecognized face "%s"', whichFace);
 end
 
 Rmat = rodrigues(R);
-origin = origin(:) + Rmat*BlockMarker3D.Width/2*[1 0 -1]';
+origin = origin(:) + originAdjustment(:) + Rmat*BlockMarker3D.Width/2*[1 0 -1]';
 
 index = this.faceTypeToIndex.Count + 1;
 this.faceTypeToIndex(faceType) = index;

@@ -33,7 +33,9 @@ classdef BlockMarker2D < Marker2D
         ProbeGap    = .2; 
         ProbeRadius = 4; 
         ProbeSigma  = 1/6;
-        CodePadding = 3/25;
+        UseOutsideOfSquare = false;
+        CodePadding = BlockMarker2D.setCodePadding(BlockMarker2D.UseOutsideOfSquare);
+                
         Xprobes = BlockMarker2D.createProbes('X', ...
             size(BlockMarker2D.Layout,1), BlockMarker2D.ProbeGap, ...
             BlockMarker2D.ProbeRadius, BlockMarker2D.CodePadding);
@@ -58,6 +60,15 @@ classdef BlockMarker2D < Marker2D
         checksum = computeChecksum(binaryBlock, binaryFace);
         
         binaryCode = encodeIDs(blockType, faceType);
+        
+        function padding = setCodePadding(useOutsideOfSquare)
+            if useOutsideOfSquare
+                padding = 8/BlockMarker3D.Width;
+            else
+                padding = 3/BlockMarker3D.Width;
+            end
+        end
+        
     end
     
     methods(Access = 'public')
