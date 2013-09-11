@@ -11,10 +11,10 @@
 namespace Anki {
   
   
-  RotationMatrix2d::RotationMatrix2d(const float angle)
+  RotationMatrix2d::RotationMatrix2d(const Radians angle)
   {
-    const float cosAngle = std::cos(angle);
-    const float sinAngle = std::sin(angle);
+    const float cosAngle = std::cos(angle.ToFloat());
+    const float sinAngle = std::sin(angle.ToFloat());
     
     (*this)(0,0) =  cosAngle;
     (*this)(1,0) =  sinAngle;
@@ -32,7 +32,7 @@ namespace Anki {
   RotationVector3d::RotationVector3d(const Vec3f &rvec)
   : angle(rvec.length()), axis(rvec)
   {
-    this->axis *= 1.f/this->angle;
+    this->axis *= 1.f/this->angle.ToFloat();
   }
   
   RotationVector3d::RotationVector3d(const RotationMatrix3d &Rmat)

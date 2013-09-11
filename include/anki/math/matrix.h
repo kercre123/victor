@@ -5,9 +5,13 @@
 #include "opencv2/opencv.hpp"
 #endif
 
+#include <ostream>
+#include <cstdio>
 #include "anki/common/array2d.h"
 
 #include "anki/math/point.h"
+
+using namespace std;
 
 namespace Anki {
   
@@ -20,6 +24,7 @@ namespace Anki {
   public:
     Matrix(); 
     Matrix(s32 nrows, s32 ncols);
+    Matrix(s32 nrows, s32 ncols, const T& initVal);
     
 #if defined(ANKICORETECH_USE_OPENCV)
     // Construct from an OpenCv cv::Mat_<T>.
@@ -47,7 +52,7 @@ namespace Anki {
 
   
   // A class for small matrices, whose size is known at compile time
-  template<typename T, unsigned int NROWS, unsigned NCOLS>
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
   class SmallMatrix
 #if defined(ANKICORETECH_USE_OPENCV)
   : private cv::Matx<T,NROWS,NCOLS> // private inheritance from cv::Matx
@@ -75,6 +80,7 @@ namespace Anki {
     SmallMatrix<T,NCOLS,NROWS> getTranspose(void) const;
     
 #if defined(ANKICORETECH_USE_OPENCV)
+    SmallMatrix(const cv::Matx<T,NROWS,NCOLS> &cvMatrix);
     cv::Matx<T,NROWS,NCOLS>& get_CvMatx_();
     const cv::Matx<T,NROWS,NCOLS>& get_CvMatx_() const;
 #endif
@@ -101,6 +107,13 @@ namespace Anki {
   template<typename T>
   Matrix<T>::Matrix(s32 nrows, s32 ncols)
   : Array2d<T>(nrows, ncols)
+  {
+    
+  }
+  
+  template<typename T>
+  Matrix<T>::Matrix(s32 nrows, s32 ncols, const T &initVal)
+  : Array2d<T>(nrows, ncols, initVal)
   {
     
   }
@@ -192,6 +205,157 @@ namespace Anki {
     // TODO: Define our own opencv-free tranpose?
 #endif
   } // Matrix<T>::Tranpose()
+  
+  
+  template<typename T>
+  ostream& operator<<(ostream& out, const Matrix<T>& m)
+  {
+    for (int i=0; i<m.numRows(); ++i) {
+      for (int j=0; j<m.numCols(); ++j) {
+        out << m(i,j) << " ";
+      }
+      out << "\n";
+    }
+    return out;
+  }
+  
+  
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  SmallMatrix<T,NROWS,NCOLS>::SmallMatrix()
+#if defined(ANKICORETECH_USE_OPENCV)
+  : cv::Matx<T,NROWS,NCOLS>()
+#endif
+  {
+#if (!defined(ANKICORETECH_USE_OPENCV))
+    assert(false);
+    // TODO: Define our own opencv-free tranpose?
+#endif
+  }
+  
+  
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  SmallMatrix<T,NROWS,NCOLS>::SmallMatrix(const T* vals)
+#if defined(ANKICORETECH_USE_OPENCV)
+  : cv::Matx<T,NROWS,NCOLS>(vals)
+#endif
+  {
+#if !defined(ANKICORETECH_USE_OPENCV)
+    assert(false);
+    // TODO: Define our own opencv-free tranpose?
+#endif
+  }
+
+  
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  SmallMatrix<T,NROWS,NCOLS>::SmallMatrix(const cv::Matx<T,NROWS,NCOLS> &cvMatrix)
+#if defined(ANKICORETECH_USE_OPENCV)
+  : cv::Matx<T,NROWS,NCOLS>(cvMatrix)
+#endif
+  {
+#if !defined(ANKICORETECH_USE_OPENCV)
+    assert(false);
+    // TODO: Define our own opencv-free tranpose?
+#endif
+  }
+
+  
+  
+  // Matrix element access:
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  T&  SmallMatrix<T,NROWS,NCOLS>::operator() (unsigned int i, unsigned int j)
+  {
+    return cv::Matx<T,NROWS,NCOLS>::operator()(i,j);
+  }
+  
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  const T& SmallMatrix<T,NROWS,NCOLS>::operator() (unsigned int i, unsigned int j) const
+  {
+    return cv::Matx<T,NROWS,NCOLS>::operator()(i,j);
+  }
+  
+  // Matrix multiplication:
+  // Matrix[MxN] * Matrix[NxK] = Matrix[MxK]
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  template<unsigned int KCOLS>
+  SmallMatrix<T,NROWS,KCOLS> SmallMatrix<T,NROWS,NCOLS>::operator* (const SmallMatrix<T,NCOLS,KCOLS> &other) const
+  {
+#if defined(ANKICORETECH_USE_OPENCV)
+    SmallMatrix<T,NROWS,KCOLS> res;
+    res = (*this) * other;
+    return res;
+#else
+    assert(false);
+    // TODO: Define our own opencv-free tranpose?
+#endif
+  }
+  
+  // Matrix inversion:
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  void SmallMatrix<T,NROWS,NCOLS>::Invert(void)
+  {
+#if defined(ANKICORETECH_USE_OPENCV)
+    (*this) = this->inv();
+#else
+    assert(false);
+    // TODO: Define our own opencv-free tranpose?
+#endif
+    
+  }
+  
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  SmallMatrix<T,NROWS,NCOLS> SmallMatrix<T,NROWS,NCOLS>::getInverse(void) const
+  {
+#if defined(ANKICORETECH_USE_OPENCV)
+    SmallMatrix<T,NROWS,NCOLS> res(this->inv());
+    return res;
+#else
+    assert(false);
+    // TODO: Define our own opencv-free tranpose?
+#endif
+    
+  }
+  
+  
+  
+  // Matrix transpose:
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  SmallMatrix<T,NCOLS,NROWS> SmallMatrix<T,NROWS,NCOLS>::getTranspose(void) const
+  {
+#if defined(ANKICORETECH_USE_OPENCV)
+    return this->t();
+#else
+    assert(false);
+    // TODO: Define our own opencv-free tranpose?
+#endif
+  }
+  
+
+#if defined(ANKICORETECH_USE_OPENCV)
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  cv::Matx<T,NROWS,NCOLS>& SmallMatrix<T,NROWS,NCOLS>::get_CvMatx_()
+  {
+    return (*this);
+  }
+  
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  const cv::Matx<T,NROWS,NCOLS>& SmallMatrix<T,NROWS,NCOLS>::get_CvMatx_() const
+  {
+    return (*this);
+  }
+  
+#endif  
+  
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  ostream& operator<<(ostream& out, const SmallMatrix<T, NROWS, NCOLS>& m)
+  {
+    for (int i=0; i<NROWS; ++i) {
+      for (int j=0; j<NCOLS; ++j) {
+        out << m(i,j) << " ";
+      }
+      out << "\n";
+    }
+    return out;
+  }
   
 
 } // namespace Anki

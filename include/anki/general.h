@@ -1,0 +1,249 @@
+/**
+ * File: general.h
+ *
+ * Author: Boris Sofman (boris)
+ * Created: 6/11/2008
+ * 
+ * Information on last revision to this file:
+ *    $LastChangedDate$
+ *    $LastChangedBy$
+ *    $LastChangedRevision$
+ * 
+ * Description: Generally useful funcitons, defines, and macros.
+ *
+ * Copyright: Anki, Inc. 2011
+ *
+ **/
+
+
+#ifndef BASESTATION_GENERAL_GENERAL_H_
+#define BASESTATION_GENERAL_GENERAL_H_
+
+
+//////////////////////////////////////////////////////////////////////////////
+// INCLUDES
+//////////////////////////////////////////////////////////////////////////////
+#include <math.h>
+#include <stdio.h>
+#include <iostream>
+#include <sys/types.h>
+#include <dirent.h>
+#include <errno.h>
+#include <vector>
+#include <string>
+#include <iostream>
+#include <limits.h>
+#include <float.h>
+#include <assert.h>
+//#ifndef FAKE_DAS
+//#include <DAS/DAS.h>
+//#else
+//#include "basestation/DAS.h"
+//#endif
+//#include "basestation/utils/debug.h"
+
+// for BOUNDED_WHILE exception
+//#include "basestation/utils/exceptions.h"
+
+//#define BASESTATION_EXPORT __attribute__((visibility("default")))
+
+// Using std namespace for easier coding
+using namespace std;
+
+
+namespace Anki {
+
+///////////////////////////////////////////////////////////////////////////////
+// Paths to relevant files
+///////////////////////////////////////////////////////////////////////////////
+
+// Path to directory containing all road network map files (from
+// basestation root path)
+#define ROAD_MAP_FILES_PATH "/basestation/config/mapFiles/"
+
+//////////////////////////////////////////////////////////////////////////////
+// TYPE DEFINITIONS
+//////////////////////////////////////////////////////////////////////////////
+typedef unsigned long long int BaseStationTime_t;
+
+typedef enum {
+  PR_MODE_NONE, // don't do playback or recording
+  PR_MODE_PLAYBACK, // read playback information from file
+  PR_MODE_RECORD // write playback information to file
+} PLAYBACK_AND_RECORDING_MODE;
+
+//////////////////////////////////////////////////////////////////////////////
+// MISCELLANEOUS CONSTANTS
+//////////////////////////////////////////////////////////////////////////////
+#ifndef TRUE
+#define TRUE                  1
+#endif
+#ifndef FALSE
+#define FALSE                 0
+#endif
+
+// used to create hashes for reproducibility.
+#define HASHING_VALUE 19
+
+#define ADD_HASH(v, n) AddHash((v), (n), (#n))
+
+//////////////////////////////////////////////////////////////////////////////
+// MATH CONSTANTS
+//////////////////////////////////////////////////////////////////////////////
+#ifndef PI
+#define PI                    3.14159265358979323846   /* pi */
+#endif
+#ifndef PIDIV2
+#define PIDIV2                1.5707963                /* pi/2 */
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+// CONVERSION MACROS
+//////////////////////////////////////////////////////////////////////////////
+#define DEG_TO_RAD(deg)	  (((double)deg)*0.017453292519943295474)
+#define RAD_TO_DEG(rad)   (((double)rad)*57.295779513082322865)
+
+#define NANOS_TO_SEC(nanos) ((nanos) / 1000000000.0f)
+#define SEC_TO_NANOS(sec) ((sec) * 1000000000.0f)
+
+//////////////////////////////////////////////////////////////////////////////
+// COMPARISON MACROS
+//////////////////////////////////////////////////////////////////////////////
+
+
+// Tolerance for which two floating point numbers are considered equal (to deal
+// with imprecision in floating point representation).
+const double FLOATING_POINT_COMPARISON_TOLERANCE = 1e-5;
+
+// TRUE if x is near y by the amount epsilon, else FALSE
+#define FLT_NEAR(x,y) ((x) == (y) || (((x) > (y)-(FLOATING_POINT_COMPARISON_TOLERANCE)) && ((x) < (y)+(FLOATING_POINT_COMPARISON_TOLERANCE)))) 
+#define NEAR(x,y,epsilon) ((x) == (y) || (((x) > (y)-(epsilon)) && ((x) < (y)+(epsilon)))) 
+
+// TRUE if x is within FLOATING_POINT_COMPARISON_TOLERANCE of 0.0
+#define NEAR_ZERO(x) (NEAR(x, 0.0, FLOATING_POINT_COMPARISON_TOLERANCE))
+
+// TRUE if greater than the negative of the tolerance
+#define FLT_GTR_ZERO(x) ((x) >= -FLOATING_POINT_COMPARISON_TOLERANCE)
+
+// TRUE if x >= y - tolerance
+#define FLT_GE(x,y) ((x) >= (y) || (((x) >= (y)-(FLOATING_POINT_COMPARISON_TOLERANCE))))
+
+// TRUE if x - tolerance <= y
+#define FLT_LE(x,y) ((x) >= (y) || (((x)-(FLOATING_POINT_COMPARISON_TOLERANCE) <= (y))))
+  
+// TRUE if val is within the range [minVal, maxVal], else FALSE
+#define IN_RANGE(val,minVal,maxVal) ((val) >= (minVal) && (val) <= (maxVal))
+
+// Returns the closest value within [lo, hi] to val
+#define CLIP(val,lo,hi) (MIN(MAX((val),(lo)),(hi)))
+
+// Max, min of two numbers and absolute value
+#ifndef MAX
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#endif
+#ifndef MIN
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#endif
+#ifndef ABS
+#define ABS(a)    (((a) >= 0) ? (a) : -(a))
+#endif
+
+// Square of a number
+#define SQUARE(x) ((x) * (x))
+
+// Convert between millimeters and meters
+#define M_TO_MM(x) ( ((double)(x)) * 1000.0 )
+#define MM_TO_M(x) ( ((double)(x)) / 1000.0 )
+
+///////////////////////////////////////////////////////////////////
+// OTHER MACROS
+//////////////////////////////////////////////////////////////////
+
+// macro hacking stuff
+#define CONCAT_IMPL( x, y ) x##y
+#define MACRO_CONCAT( x, y ) CONCAT_IMPL( x, y )
+
+// a while loop that executes a limited number of execution (throws exception)
+#define MAKE_NAME MACRO_CONCAT(_bvar_, __LINE__)
+#define BOUNDED_WHILE(n, exp) unsigned int MAKE_NAME=0; while(MAKE_NAME++ > (n) ? throw ::BaseStation::ET_INFINITE_LOOP : (exp))
+
+// global error flag so we can check if PRINT_ERROR was called for unit testing
+extern bool _errG;
+
+  
+
+#ifdef USE_REAL_DAS
+  
+// Print error message to stderr. First flushes stdout to make sure print order
+// is correct.
+// #define PRINT_ERROR(format, ...) do{ _errG=true; DASErrorAuto(format, ##__VA_ARGS__); }while(0)
+// #define PRINT_WARNING(format, ...) do{DASWarnAuto(format, ##__VA_ARGS__);}while(0)
+#define PRINT_INFO(format, ...) do{DASInfoAuto(format, ##__VA_ARGS__);}while(0)
+#define PRINT_DEBUG(format, ...) do{DASDebugAuto(format, ##__VA_ARGS__);}while(0)
+#define PRINT_DAS_BY_TYPE(type, format, ...) do{ switch(type) { case DAS_CATEGORY_DEBUG: PRINT_DEBUG(format,##__VA_ARGS__); break; \
+                                                                case DAS_CATEGORY_INFO: PRINT_INFO(format,##__VA_ARGS__); break; \
+                                                                case DAS_CATEGORY_WARNING: PRINT_WARNING(format,##__VA_ARGS__); break; \
+                                                                case DAS_CATEGORY_ERROR: PRINT_ERROR(format,##__VA_ARGS__); break; \
+                                                                default: break; }}while(0)
+
+// Logging with names. This is preferable to the PRINT_* messages above
+#define PRINT_NAMED_ERROR(name, format, ...) do{ _errG=true; DASError(name, format, ##__VA_ARGS__); }while(0)
+#define PRINT_NAMED_WARNING(name, format, ...) do{DASWarn(name, format, ##__VA_ARGS__);}while(0)
+#define PRINT_NAMED_INFO(name, format, ...) do{DASInfo(name, format, ##__VA_ARGS__);}while(0)
+#define PRINT_NAMED_DEBUG(name, format, ...) do{DASDebug(name, format, ##__VA_ARGS__);}while(0)
+
+#else 
+#define PRINT_INFO(format, ...)
+#define PRINT_DEBUG(format, ...)
+#define PRINT_DAS_BY_TYPE(type, format, ...)
+#define PRINT_NAMED_ERROR(name, format, ...)
+#define PRINT_NAMED_WARNING(name, format, ...)
+#define PRINT_NAMED_INFO(name, format, ...)
+#define PRINT_NAMED_DEBUG(name, format, ...)
+  
+#endif
+
+//////////////////////////////////////////////////////////////////
+// FUNCTIONS
+//////////////////////////////////////////////////////////////////
+
+// Functions for hashing. updates value by hashing in the given newValue
+void AddHash(unsigned int& value, const unsigned int newValue, const char* str = "");
+void AddHash(unsigned int& value, const int newValue, const char* str = "");
+void AddHash(unsigned int& value, const short newValue, const char* str = "");
+void AddHash(unsigned int& value, const unsigned short newValue, const char* str = "");
+void AddHash(unsigned int& value, const char newValue, const char* str = "");
+void AddHash(unsigned int& value, const unsigned char newValue, const char* str = "");
+
+void AddHash(unsigned int& value, const float newValue, const char* str = "");
+void AddHash(unsigned int& value, const double newValue, const char* str = "");
+
+// Reads formatted line from file (like fscanf), but automatically skips blank
+// lines and lines starting with the comment character '#'. Comments can also be
+// placed on the same line after non-comment text.
+int ReadLine(FILE* stream, const char * format, ...);
+
+// Compare functions for pairs based on first or second element only
+template < class X , class Y >
+bool CompareFirst (const std::pair<X,Y>& a, const std::pair<X,Y>& b) {
+  return a.first < b.first;
+}
+
+template < class X , class Y >
+bool CompareSecond (const std::pair<X,Y>& a, const std::pair<X,Y>& b) {
+  return a.second < b.second;
+}
+
+// Gets a list of all files in a directory
+// 
+// dir: Directory to get list for
+// files: where to store files
+bool GetFilesInDir(string dir, vector<string> &files, char *containsStr = NULL);
+
+// Makes a beep (for debugging?)
+void SystemBeep();
+
+} // namespace BaseStation
+
+#endif // BASESTATION_GENERAL_GENERAL_H_
+
