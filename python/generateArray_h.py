@@ -1,3 +1,7 @@
+"""
+This file generated a c++ file, by automatically "instantiating templates"
+To add some lines to this file, find replace (without the quotes) "\r\n" into "\\n' +\\\r\n            '"
+"""
 
 def __GenerateTopOfFile():
     topString = \
@@ -97,22 +101,26 @@ def __GenerateDeclarations(whichTypes, includeAllMethods):
             '        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));\n' +\
             '      }\n' +\
             '\n' +\
-            '#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)\n'
+            '#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)\n' +\
+            '      // Returns a templated cv::Mat_ that shares the same buffer with this Array_' + type + '. No data is copied.\n' +\
+            '      cv::Mat_<' + type + '>& get_CvMat_();\n' +\
+            '#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)\n\n' 
 
         if includeAllMethods:
             methodsString +=\
+            '#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)\n' +\
             '      void Show(const char * const windowName, const bool waitForKeypress) const;\n' +\
+            '#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)\n' +\
             '\n' +\
             '      // Check every element of this array against the input array. If the arrays are different\n' +\
-            '      // sizes, uninitialized, or if any element is more different than the threshold, then return\n' +\
-            '      // false.\n' +\
-            '      bool IsElementwiseEqual(const Array_' + type + ' &array2, ' + type + ' threshold) const;\n' +\
-            '\n' +\
+            '      // sizes, uninitialized, or if any element is more different than the threshold, then\n' +\
+            '      // return false.\n' +\
+            '      bool IsElementwiseEqual(const Array_' + type + ' &array2, const ' + type + ' threshold = static_cast<' + type + '>(0.0001)) const;\n' +\
+            '\n'
 
         methodsString +=\
-            '      // Returns a templated cv::Mat_ that shares the same buffer with this Array_' + type + '. No data is copied.\n' +\
-            '      cv::Mat_<' + type + '>& get_CvMat_();\n' +\
-            '#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)\n' +\
+            '      // If this array or array2 are different sizes or uninitialized, then return false.\n' +\
+            '      bool IsEqualSize(const Array_' + type + ' &array2) const;\n' +\
             '\n' +\
             '      // Print out the contents of this Array_' + type + '\n' +\
             '      void Print() const;\n' +\
@@ -166,13 +174,13 @@ def __GenerateDeclarations(whichTypes, includeAllMethods):
             '      // should be used to free.\n' +\
             '      void * rawDataPointer;\n' +\
             '\n' +\
-            '      void initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);\n' +\
-            '\n' +\
-            '      void invalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array\n' +\
-            '\n' +\
             '#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)\n' +\
             '      cv::Mat_<' + type + '> cvMatMirror;\n' +\
             '#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)\n' +\
+            '\n' +\
+            '      void Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);\n' +\
+            '\n' +\
+            '      void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array\n' +\
             '\n' +\
             '    private:\n' +\
             '      //Array_' + type + ' & operator= (const Array_' + type + ' & rightHandSide); // In the future, assignment may not be allowed\n' +\

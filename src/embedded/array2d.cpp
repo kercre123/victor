@@ -31,18 +31,18 @@ namespace Anki
       assert(numCols > 0);
       const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
       return static_cast<s32>(RoundUp<size_t>(sizeof(u8)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
-    }
+    } // s32 Array_u8::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
 
     s32 Array_u8::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0);
       return numRows * Array_u8::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
-    }
+    } // s32 Array_u8::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
     Array_u8::Array_u8()
     {
-      invalidateArray();
-    }
+      InvalidateArray();
+    } // Array_u8::Array_u8()
 
     // Constructor for a Array_u8, pointing to user-allocated data. If the pointer to *data is not
     // aligned to MEMORY_ALIGNMENT, this Array_u8 will start at the next aligned location.
@@ -53,12 +53,12 @@ namespace Anki
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         data,
         dataLength,
         useBoundaryFillPatterns);
-    }
+    } // Array_u8::Array_u8(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
 
     Array_u8::Array_u8(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
@@ -71,12 +71,52 @@ namespace Anki
 
       void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         reinterpret_cast<u8*>(allocatedBuffer),
         numBytesAllocated,
         useBoundaryFillPatterns);
-    }
+    } // Array_u8::Array_u8(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+
+    // Check every element of this array against the input array. If the arrays are different
+    // sizes, uninitialized, or if any element is more different than the threshold, then return
+    // false.
+    bool Array_u8::IsElementwiseEqual(const Array_u8 &array2, const u8 threshold) const
+    {
+      if(!this->IsEqualSize(array2))
+        return false;
+
+      for(s32 y=0; y<size[0]; y++) {
+        const u8 * const this_rowPointer = this->Pointer(y, 0);
+        const u8 * const array2_rowPointer = array2.Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          if(this_rowPointer[x] > array2_rowPointer[x]) {
+            if((this_rowPointer[x] - array2_rowPointer[x]) > threshold)
+              return false;
+          } else {
+            if((array2_rowPointer[x] - this_rowPointer[x]) > threshold)
+              return false;
+          }
+        }
+      }
+
+      return true;
+    } // bool Array_u8::IsElementwiseEqual(const Array_u8 &array2, const u8 threshold) const
+
+    // If this array or array2 are different sizes or uninitialized, then return false.
+    bool Array_u8::IsEqualSize(const Array_u8 &array2) const
+    {
+      if(!this->IsValid())
+        return false;
+
+      if(!array2.IsValid())
+        return false;
+
+      if(this->get_size(0) != array2.get_size(0) || this->get_size(1) != array2.get_size(1))
+        return false;
+
+      return true;
+    } // bool Array_u8::IsEqualSize(const Array_u8 &array2) const
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     void Array_u8::Show(const char * const windowName, const bool waitForKeypress) const
@@ -86,14 +126,16 @@ namespace Anki
       if(waitForKeypress) {
         cv::waitKey();
       }
-    }
+    } // void Array_u8::Show(const char * const windowName, const bool waitForKeypress) const
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     // Returns a templated cv::Mat_ that shares the same buffer with this Array_u8. No data is copied.
     cv::Mat_<u8>& Array_u8::get_CvMat_()
     {
       assert(this->IsValid());
       return cvMatMirror;
-    }
+    } // cv::Mat_<u8>& Array_u8::get_CvMat_()
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_u8
@@ -102,13 +144,13 @@ namespace Anki
       assert(this->IsValid());
 
       for(s32 y=0; y<size[0]; y++) {
-        const u8 * rowPointer = Pointer(y, 0);
+        const u8 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           printf("%d ", rowPointer[x]);
         }
         printf("\n");
       }
-    }
+    } // void Array_u8::Print() const
 
     // If the Array_u8 was constructed with the useBoundaryFillPatterns=true, then
     // return if any memory was written out of bounds (via fill patterns at the
@@ -140,7 +182,7 @@ namespace Anki
       } else { // if(useBoundaryFillPatterns) {
         return true;
       } // if(useBoundaryFillPatterns) { ... else
-    }
+    } // bool Array_u8::IsValid() const
 
     // Set every element in the Array_u8 to this value
     // Returns the number of values set
@@ -156,7 +198,7 @@ namespace Anki
       }
 
       return size[0]*size[1];
-    }
+    } // s32 Array_u8::Set(const u8 value)
 
     // Parse a space-seperated string, and copy values to this Array_u8.
     // If the string does not contain enough elements, the remainder of the Array_u8 will be filled with zeros.
@@ -185,7 +227,7 @@ namespace Anki
       }
 
       return numValuesSet;
-    }
+    } // s32 Array_u8::Set(const char * const values)
 
     // Similar to Matlab size(matrix, dimension), and dimension is in {0,1}
     s32 Array_u8::get_size(s32 dimension) const
@@ -196,24 +238,24 @@ namespace Anki
         return 0;
 
       return size[dimension];
-    }
+    } // s32 Array_u8::get_size(s32 dimension) const
 
     s32 Array_u8::get_stride() const
     {
       return stride;
-    }
+    } // s32 Array_u8::get_stride() const
 
     void* Array_u8::get_rawDataPointer()
     {
       return rawDataPointer;
-    }
+    } // void* Array_u8::get_rawDataPointer()
 
     const void* Array_u8::get_rawDataPointer() const
     {
       return rawDataPointer;
-    }
+    } // const void* Array_u8::get_rawDataPointer() const
 
-    void Array_u8::initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
+    void Array_u8::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
@@ -223,7 +265,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "input data buffer is NULL");
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -237,7 +279,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -263,17 +305,17 @@ namespace Anki
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cvMatMirror = cv::Mat_<u8>(size[0], size[1], data, stride);
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-    } // Array_u8::initialize()
+    } // Array_u8::Initialize()
 
     // Set all the buffers and sizes to zero, to signal an invalid array
-    void Array_u8::invalidateArray()
+    void Array_u8::InvalidateArray()
     {
       this->size[0] = 0;
       this->size[1] = 0;
       this->stride = 0;
       this->data = NULL;
       this->rawDataPointer = NULL;
-    }
+    } // void Array_u8::InvalidateArray()
 
     // Factory method to create an Array_u8 from the heap. The data of the returned Array_u8 must be freed by the user.
     // This is separate from the normal constructor, as Array_u8 objects are not supposed to manage memory
@@ -284,7 +326,7 @@ namespace Anki
       Array_u8 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
 
       return mat;
-    } // AllocateArrayFromHeap_u8()
+    } // Array_u8 AllocateArrayFromHeap_u8(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
 
     s32 Array_s8::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
@@ -292,18 +334,18 @@ namespace Anki
       assert(numCols > 0);
       const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
       return static_cast<s32>(RoundUp<size_t>(sizeof(s8)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
-    }
+    } // s32 Array_s8::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
 
     s32 Array_s8::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0);
       return numRows * Array_s8::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
-    }
+    } // s32 Array_s8::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
     Array_s8::Array_s8()
     {
-      invalidateArray();
-    }
+      InvalidateArray();
+    } // Array_s8::Array_s8()
 
     // Constructor for a Array_s8, pointing to user-allocated data. If the pointer to *data is not
     // aligned to MEMORY_ALIGNMENT, this Array_s8 will start at the next aligned location.
@@ -314,12 +356,12 @@ namespace Anki
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         data,
         dataLength,
         useBoundaryFillPatterns);
-    }
+    } // Array_s8::Array_s8(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
 
     Array_s8::Array_s8(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
@@ -332,12 +374,52 @@ namespace Anki
 
       void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         reinterpret_cast<s8*>(allocatedBuffer),
         numBytesAllocated,
         useBoundaryFillPatterns);
-    }
+    } // Array_s8::Array_s8(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+
+    // Check every element of this array against the input array. If the arrays are different
+    // sizes, uninitialized, or if any element is more different than the threshold, then return
+    // false.
+    bool Array_s8::IsElementwiseEqual(const Array_s8 &array2, const s8 threshold) const
+    {
+      if(!this->IsEqualSize(array2))
+        return false;
+
+      for(s32 y=0; y<size[0]; y++) {
+        const s8 * const this_rowPointer = this->Pointer(y, 0);
+        const s8 * const array2_rowPointer = array2.Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          if(this_rowPointer[x] > array2_rowPointer[x]) {
+            if((this_rowPointer[x] - array2_rowPointer[x]) > threshold)
+              return false;
+          } else {
+            if((array2_rowPointer[x] - this_rowPointer[x]) > threshold)
+              return false;
+          }
+        }
+      }
+
+      return true;
+    } // bool Array_s8::IsElementwiseEqual(const Array_s8 &array2, const s8 threshold) const
+
+    // If this array or array2 are different sizes or uninitialized, then return false.
+    bool Array_s8::IsEqualSize(const Array_s8 &array2) const
+    {
+      if(!this->IsValid())
+        return false;
+
+      if(!array2.IsValid())
+        return false;
+
+      if(this->get_size(0) != array2.get_size(0) || this->get_size(1) != array2.get_size(1))
+        return false;
+
+      return true;
+    } // bool Array_s8::IsEqualSize(const Array_s8 &array2) const
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     void Array_s8::Show(const char * const windowName, const bool waitForKeypress) const
@@ -347,14 +429,16 @@ namespace Anki
       if(waitForKeypress) {
         cv::waitKey();
       }
-    }
+    } // void Array_s8::Show(const char * const windowName, const bool waitForKeypress) const
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     // Returns a templated cv::Mat_ that shares the same buffer with this Array_s8. No data is copied.
     cv::Mat_<s8>& Array_s8::get_CvMat_()
     {
       assert(this->IsValid());
       return cvMatMirror;
-    }
+    } // cv::Mat_<s8>& Array_s8::get_CvMat_()
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_s8
@@ -363,13 +447,13 @@ namespace Anki
       assert(this->IsValid());
 
       for(s32 y=0; y<size[0]; y++) {
-        const s8 * rowPointer = Pointer(y, 0);
+        const s8 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           printf("%d ", rowPointer[x]);
         }
         printf("\n");
       }
-    }
+    } // void Array_s8::Print() const
 
     // If the Array_s8 was constructed with the useBoundaryFillPatterns=true, then
     // return if any memory was written out of bounds (via fill patterns at the
@@ -401,7 +485,7 @@ namespace Anki
       } else { // if(useBoundaryFillPatterns) {
         return true;
       } // if(useBoundaryFillPatterns) { ... else
-    }
+    } // bool Array_s8::IsValid() const
 
     // Set every element in the Array_s8 to this value
     // Returns the number of values set
@@ -417,7 +501,7 @@ namespace Anki
       }
 
       return size[0]*size[1];
-    }
+    } // s32 Array_s8::Set(const s8 value)
 
     // Parse a space-seperated string, and copy values to this Array_s8.
     // If the string does not contain enough elements, the remainder of the Array_s8 will be filled with zeros.
@@ -446,7 +530,7 @@ namespace Anki
       }
 
       return numValuesSet;
-    }
+    } // s32 Array_s8::Set(const char * const values)
 
     // Similar to Matlab size(matrix, dimension), and dimension is in {0,1}
     s32 Array_s8::get_size(s32 dimension) const
@@ -457,24 +541,24 @@ namespace Anki
         return 0;
 
       return size[dimension];
-    }
+    } // s32 Array_s8::get_size(s32 dimension) const
 
     s32 Array_s8::get_stride() const
     {
       return stride;
-    }
+    } // s32 Array_s8::get_stride() const
 
     void* Array_s8::get_rawDataPointer()
     {
       return rawDataPointer;
-    }
+    } // void* Array_s8::get_rawDataPointer()
 
     const void* Array_s8::get_rawDataPointer() const
     {
       return rawDataPointer;
-    }
+    } // const void* Array_s8::get_rawDataPointer() const
 
-    void Array_s8::initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
+    void Array_s8::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
@@ -484,7 +568,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "input data buffer is NULL");
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -498,7 +582,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -524,17 +608,17 @@ namespace Anki
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cvMatMirror = cv::Mat_<s8>(size[0], size[1], data, stride);
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-    } // Array_s8::initialize()
+    } // Array_s8::Initialize()
 
     // Set all the buffers and sizes to zero, to signal an invalid array
-    void Array_s8::invalidateArray()
+    void Array_s8::InvalidateArray()
     {
       this->size[0] = 0;
       this->size[1] = 0;
       this->stride = 0;
       this->data = NULL;
       this->rawDataPointer = NULL;
-    }
+    } // void Array_s8::InvalidateArray()
 
     // Factory method to create an Array_s8 from the heap. The data of the returned Array_s8 must be freed by the user.
     // This is separate from the normal constructor, as Array_s8 objects are not supposed to manage memory
@@ -545,7 +629,7 @@ namespace Anki
       Array_s8 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
 
       return mat;
-    } // AllocateArrayFromHeap_s8()
+    } // Array_s8 AllocateArrayFromHeap_s8(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
 
     s32 Array_u16::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
@@ -553,18 +637,18 @@ namespace Anki
       assert(numCols > 0);
       const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
       return static_cast<s32>(RoundUp<size_t>(sizeof(u16)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
-    }
+    } // s32 Array_u16::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
 
     s32 Array_u16::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0);
       return numRows * Array_u16::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
-    }
+    } // s32 Array_u16::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
     Array_u16::Array_u16()
     {
-      invalidateArray();
-    }
+      InvalidateArray();
+    } // Array_u16::Array_u16()
 
     // Constructor for a Array_u16, pointing to user-allocated data. If the pointer to *data is not
     // aligned to MEMORY_ALIGNMENT, this Array_u16 will start at the next aligned location.
@@ -575,12 +659,12 @@ namespace Anki
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         data,
         dataLength,
         useBoundaryFillPatterns);
-    }
+    } // Array_u16::Array_u16(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
 
     Array_u16::Array_u16(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
@@ -593,12 +677,52 @@ namespace Anki
 
       void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         reinterpret_cast<u16*>(allocatedBuffer),
         numBytesAllocated,
         useBoundaryFillPatterns);
-    }
+    } // Array_u16::Array_u16(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+
+    // Check every element of this array against the input array. If the arrays are different
+    // sizes, uninitialized, or if any element is more different than the threshold, then return
+    // false.
+    bool Array_u16::IsElementwiseEqual(const Array_u16 &array2, const u16 threshold) const
+    {
+      if(!this->IsEqualSize(array2))
+        return false;
+
+      for(s32 y=0; y<size[0]; y++) {
+        const u16 * const this_rowPointer = this->Pointer(y, 0);
+        const u16 * const array2_rowPointer = array2.Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          if(this_rowPointer[x] > array2_rowPointer[x]) {
+            if((this_rowPointer[x] - array2_rowPointer[x]) > threshold)
+              return false;
+          } else {
+            if((array2_rowPointer[x] - this_rowPointer[x]) > threshold)
+              return false;
+          }
+        }
+      }
+
+      return true;
+    } // bool Array_u16::IsElementwiseEqual(const Array_u16 &array2, const u16 threshold) const
+
+    // If this array or array2 are different sizes or uninitialized, then return false.
+    bool Array_u16::IsEqualSize(const Array_u16 &array2) const
+    {
+      if(!this->IsValid())
+        return false;
+
+      if(!array2.IsValid())
+        return false;
+
+      if(this->get_size(0) != array2.get_size(0) || this->get_size(1) != array2.get_size(1))
+        return false;
+
+      return true;
+    } // bool Array_u16::IsEqualSize(const Array_u16 &array2) const
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     void Array_u16::Show(const char * const windowName, const bool waitForKeypress) const
@@ -608,14 +732,16 @@ namespace Anki
       if(waitForKeypress) {
         cv::waitKey();
       }
-    }
+    } // void Array_u16::Show(const char * const windowName, const bool waitForKeypress) const
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     // Returns a templated cv::Mat_ that shares the same buffer with this Array_u16. No data is copied.
     cv::Mat_<u16>& Array_u16::get_CvMat_()
     {
       assert(this->IsValid());
       return cvMatMirror;
-    }
+    } // cv::Mat_<u16>& Array_u16::get_CvMat_()
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_u16
@@ -624,13 +750,13 @@ namespace Anki
       assert(this->IsValid());
 
       for(s32 y=0; y<size[0]; y++) {
-        const u16 * rowPointer = Pointer(y, 0);
+        const u16 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           printf("%d ", rowPointer[x]);
         }
         printf("\n");
       }
-    }
+    } // void Array_u16::Print() const
 
     // If the Array_u16 was constructed with the useBoundaryFillPatterns=true, then
     // return if any memory was written out of bounds (via fill patterns at the
@@ -662,7 +788,7 @@ namespace Anki
       } else { // if(useBoundaryFillPatterns) {
         return true;
       } // if(useBoundaryFillPatterns) { ... else
-    }
+    } // bool Array_u16::IsValid() const
 
     // Set every element in the Array_u16 to this value
     // Returns the number of values set
@@ -678,7 +804,7 @@ namespace Anki
       }
 
       return size[0]*size[1];
-    }
+    } // s32 Array_u16::Set(const u16 value)
 
     // Parse a space-seperated string, and copy values to this Array_u16.
     // If the string does not contain enough elements, the remainder of the Array_u16 will be filled with zeros.
@@ -707,7 +833,7 @@ namespace Anki
       }
 
       return numValuesSet;
-    }
+    } // s32 Array_u16::Set(const char * const values)
 
     // Similar to Matlab size(matrix, dimension), and dimension is in {0,1}
     s32 Array_u16::get_size(s32 dimension) const
@@ -718,24 +844,24 @@ namespace Anki
         return 0;
 
       return size[dimension];
-    }
+    } // s32 Array_u16::get_size(s32 dimension) const
 
     s32 Array_u16::get_stride() const
     {
       return stride;
-    }
+    } // s32 Array_u16::get_stride() const
 
     void* Array_u16::get_rawDataPointer()
     {
       return rawDataPointer;
-    }
+    } // void* Array_u16::get_rawDataPointer()
 
     const void* Array_u16::get_rawDataPointer() const
     {
       return rawDataPointer;
-    }
+    } // const void* Array_u16::get_rawDataPointer() const
 
-    void Array_u16::initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
+    void Array_u16::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
@@ -745,7 +871,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "input data buffer is NULL");
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -759,7 +885,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -785,17 +911,17 @@ namespace Anki
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cvMatMirror = cv::Mat_<u16>(size[0], size[1], data, stride);
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-    } // Array_u16::initialize()
+    } // Array_u16::Initialize()
 
     // Set all the buffers and sizes to zero, to signal an invalid array
-    void Array_u16::invalidateArray()
+    void Array_u16::InvalidateArray()
     {
       this->size[0] = 0;
       this->size[1] = 0;
       this->stride = 0;
       this->data = NULL;
       this->rawDataPointer = NULL;
-    }
+    } // void Array_u16::InvalidateArray()
 
     // Factory method to create an Array_u16 from the heap. The data of the returned Array_u16 must be freed by the user.
     // This is separate from the normal constructor, as Array_u16 objects are not supposed to manage memory
@@ -806,7 +932,7 @@ namespace Anki
       Array_u16 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
 
       return mat;
-    } // AllocateArrayFromHeap_u16()
+    } // Array_u16 AllocateArrayFromHeap_u16(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
 
     s32 Array_s16::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
@@ -814,18 +940,18 @@ namespace Anki
       assert(numCols > 0);
       const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
       return static_cast<s32>(RoundUp<size_t>(sizeof(s16)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
-    }
+    } // s32 Array_s16::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
 
     s32 Array_s16::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0);
       return numRows * Array_s16::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
-    }
+    } // s32 Array_s16::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
     Array_s16::Array_s16()
     {
-      invalidateArray();
-    }
+      InvalidateArray();
+    } // Array_s16::Array_s16()
 
     // Constructor for a Array_s16, pointing to user-allocated data. If the pointer to *data is not
     // aligned to MEMORY_ALIGNMENT, this Array_s16 will start at the next aligned location.
@@ -836,12 +962,12 @@ namespace Anki
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         data,
         dataLength,
         useBoundaryFillPatterns);
-    }
+    } // Array_s16::Array_s16(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
 
     Array_s16::Array_s16(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
@@ -854,12 +980,52 @@ namespace Anki
 
       void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         reinterpret_cast<s16*>(allocatedBuffer),
         numBytesAllocated,
         useBoundaryFillPatterns);
-    }
+    } // Array_s16::Array_s16(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+
+    // Check every element of this array against the input array. If the arrays are different
+    // sizes, uninitialized, or if any element is more different than the threshold, then return
+    // false.
+    bool Array_s16::IsElementwiseEqual(const Array_s16 &array2, const s16 threshold) const
+    {
+      if(!this->IsEqualSize(array2))
+        return false;
+
+      for(s32 y=0; y<size[0]; y++) {
+        const s16 * const this_rowPointer = this->Pointer(y, 0);
+        const s16 * const array2_rowPointer = array2.Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          if(this_rowPointer[x] > array2_rowPointer[x]) {
+            if((this_rowPointer[x] - array2_rowPointer[x]) > threshold)
+              return false;
+          } else {
+            if((array2_rowPointer[x] - this_rowPointer[x]) > threshold)
+              return false;
+          }
+        }
+      }
+
+      return true;
+    } // bool Array_s16::IsElementwiseEqual(const Array_s16 &array2, const s16 threshold) const
+
+    // If this array or array2 are different sizes or uninitialized, then return false.
+    bool Array_s16::IsEqualSize(const Array_s16 &array2) const
+    {
+      if(!this->IsValid())
+        return false;
+
+      if(!array2.IsValid())
+        return false;
+
+      if(this->get_size(0) != array2.get_size(0) || this->get_size(1) != array2.get_size(1))
+        return false;
+
+      return true;
+    } // bool Array_s16::IsEqualSize(const Array_s16 &array2) const
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     void Array_s16::Show(const char * const windowName, const bool waitForKeypress) const
@@ -869,14 +1035,16 @@ namespace Anki
       if(waitForKeypress) {
         cv::waitKey();
       }
-    }
+    } // void Array_s16::Show(const char * const windowName, const bool waitForKeypress) const
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     // Returns a templated cv::Mat_ that shares the same buffer with this Array_s16. No data is copied.
     cv::Mat_<s16>& Array_s16::get_CvMat_()
     {
       assert(this->IsValid());
       return cvMatMirror;
-    }
+    } // cv::Mat_<s16>& Array_s16::get_CvMat_()
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_s16
@@ -885,13 +1053,13 @@ namespace Anki
       assert(this->IsValid());
 
       for(s32 y=0; y<size[0]; y++) {
-        const s16 * rowPointer = Pointer(y, 0);
+        const s16 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           printf("%d ", rowPointer[x]);
         }
         printf("\n");
       }
-    }
+    } // void Array_s16::Print() const
 
     // If the Array_s16 was constructed with the useBoundaryFillPatterns=true, then
     // return if any memory was written out of bounds (via fill patterns at the
@@ -923,7 +1091,7 @@ namespace Anki
       } else { // if(useBoundaryFillPatterns) {
         return true;
       } // if(useBoundaryFillPatterns) { ... else
-    }
+    } // bool Array_s16::IsValid() const
 
     // Set every element in the Array_s16 to this value
     // Returns the number of values set
@@ -939,7 +1107,7 @@ namespace Anki
       }
 
       return size[0]*size[1];
-    }
+    } // s32 Array_s16::Set(const s16 value)
 
     // Parse a space-seperated string, and copy values to this Array_s16.
     // If the string does not contain enough elements, the remainder of the Array_s16 will be filled with zeros.
@@ -968,7 +1136,7 @@ namespace Anki
       }
 
       return numValuesSet;
-    }
+    } // s32 Array_s16::Set(const char * const values)
 
     // Similar to Matlab size(matrix, dimension), and dimension is in {0,1}
     s32 Array_s16::get_size(s32 dimension) const
@@ -979,24 +1147,24 @@ namespace Anki
         return 0;
 
       return size[dimension];
-    }
+    } // s32 Array_s16::get_size(s32 dimension) const
 
     s32 Array_s16::get_stride() const
     {
       return stride;
-    }
+    } // s32 Array_s16::get_stride() const
 
     void* Array_s16::get_rawDataPointer()
     {
       return rawDataPointer;
-    }
+    } // void* Array_s16::get_rawDataPointer()
 
     const void* Array_s16::get_rawDataPointer() const
     {
       return rawDataPointer;
-    }
+    } // const void* Array_s16::get_rawDataPointer() const
 
-    void Array_s16::initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
+    void Array_s16::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
@@ -1006,7 +1174,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "input data buffer is NULL");
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -1020,7 +1188,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -1046,17 +1214,17 @@ namespace Anki
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cvMatMirror = cv::Mat_<s16>(size[0], size[1], data, stride);
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-    } // Array_s16::initialize()
+    } // Array_s16::Initialize()
 
     // Set all the buffers and sizes to zero, to signal an invalid array
-    void Array_s16::invalidateArray()
+    void Array_s16::InvalidateArray()
     {
       this->size[0] = 0;
       this->size[1] = 0;
       this->stride = 0;
       this->data = NULL;
       this->rawDataPointer = NULL;
-    }
+    } // void Array_s16::InvalidateArray()
 
     // Factory method to create an Array_s16 from the heap. The data of the returned Array_s16 must be freed by the user.
     // This is separate from the normal constructor, as Array_s16 objects are not supposed to manage memory
@@ -1067,7 +1235,7 @@ namespace Anki
       Array_s16 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
 
       return mat;
-    } // AllocateArrayFromHeap_s16()
+    } // Array_s16 AllocateArrayFromHeap_s16(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
 
     s32 Array_u32::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
@@ -1075,18 +1243,18 @@ namespace Anki
       assert(numCols > 0);
       const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
       return static_cast<s32>(RoundUp<size_t>(sizeof(u32)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
-    }
+    } // s32 Array_u32::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
 
     s32 Array_u32::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0);
       return numRows * Array_u32::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
-    }
+    } // s32 Array_u32::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
     Array_u32::Array_u32()
     {
-      invalidateArray();
-    }
+      InvalidateArray();
+    } // Array_u32::Array_u32()
 
     // Constructor for a Array_u32, pointing to user-allocated data. If the pointer to *data is not
     // aligned to MEMORY_ALIGNMENT, this Array_u32 will start at the next aligned location.
@@ -1097,12 +1265,12 @@ namespace Anki
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         data,
         dataLength,
         useBoundaryFillPatterns);
-    }
+    } // Array_u32::Array_u32(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
 
     Array_u32::Array_u32(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
@@ -1115,12 +1283,52 @@ namespace Anki
 
       void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         reinterpret_cast<u32*>(allocatedBuffer),
         numBytesAllocated,
         useBoundaryFillPatterns);
-    }
+    } // Array_u32::Array_u32(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+
+    // Check every element of this array against the input array. If the arrays are different
+    // sizes, uninitialized, or if any element is more different than the threshold, then return
+    // false.
+    bool Array_u32::IsElementwiseEqual(const Array_u32 &array2, const u32 threshold) const
+    {
+      if(!this->IsEqualSize(array2))
+        return false;
+
+      for(s32 y=0; y<size[0]; y++) {
+        const u32 * const this_rowPointer = this->Pointer(y, 0);
+        const u32 * const array2_rowPointer = array2.Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          if(this_rowPointer[x] > array2_rowPointer[x]) {
+            if((this_rowPointer[x] - array2_rowPointer[x]) > threshold)
+              return false;
+          } else {
+            if((array2_rowPointer[x] - this_rowPointer[x]) > threshold)
+              return false;
+          }
+        }
+      }
+
+      return true;
+    } // bool Array_u32::IsElementwiseEqual(const Array_u32 &array2, const u32 threshold) const
+
+    // If this array or array2 are different sizes or uninitialized, then return false.
+    bool Array_u32::IsEqualSize(const Array_u32 &array2) const
+    {
+      if(!this->IsValid())
+        return false;
+
+      if(!array2.IsValid())
+        return false;
+
+      if(this->get_size(0) != array2.get_size(0) || this->get_size(1) != array2.get_size(1))
+        return false;
+
+      return true;
+    } // bool Array_u32::IsEqualSize(const Array_u32 &array2) const
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     void Array_u32::Show(const char * const windowName, const bool waitForKeypress) const
@@ -1130,14 +1338,16 @@ namespace Anki
       if(waitForKeypress) {
         cv::waitKey();
       }
-    }
+    } // void Array_u32::Show(const char * const windowName, const bool waitForKeypress) const
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     // Returns a templated cv::Mat_ that shares the same buffer with this Array_u32. No data is copied.
     cv::Mat_<u32>& Array_u32::get_CvMat_()
     {
       assert(this->IsValid());
       return cvMatMirror;
-    }
+    } // cv::Mat_<u32>& Array_u32::get_CvMat_()
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_u32
@@ -1146,13 +1356,13 @@ namespace Anki
       assert(this->IsValid());
 
       for(s32 y=0; y<size[0]; y++) {
-        const u32 * rowPointer = Pointer(y, 0);
+        const u32 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           printf("%d ", rowPointer[x]);
         }
         printf("\n");
       }
-    }
+    } // void Array_u32::Print() const
 
     // If the Array_u32 was constructed with the useBoundaryFillPatterns=true, then
     // return if any memory was written out of bounds (via fill patterns at the
@@ -1184,7 +1394,7 @@ namespace Anki
       } else { // if(useBoundaryFillPatterns) {
         return true;
       } // if(useBoundaryFillPatterns) { ... else
-    }
+    } // bool Array_u32::IsValid() const
 
     // Set every element in the Array_u32 to this value
     // Returns the number of values set
@@ -1200,7 +1410,7 @@ namespace Anki
       }
 
       return size[0]*size[1];
-    }
+    } // s32 Array_u32::Set(const u32 value)
 
     // Parse a space-seperated string, and copy values to this Array_u32.
     // If the string does not contain enough elements, the remainder of the Array_u32 will be filled with zeros.
@@ -1229,7 +1439,7 @@ namespace Anki
       }
 
       return numValuesSet;
-    }
+    } // s32 Array_u32::Set(const char * const values)
 
     // Similar to Matlab size(matrix, dimension), and dimension is in {0,1}
     s32 Array_u32::get_size(s32 dimension) const
@@ -1240,24 +1450,24 @@ namespace Anki
         return 0;
 
       return size[dimension];
-    }
+    } // s32 Array_u32::get_size(s32 dimension) const
 
     s32 Array_u32::get_stride() const
     {
       return stride;
-    }
+    } // s32 Array_u32::get_stride() const
 
     void* Array_u32::get_rawDataPointer()
     {
       return rawDataPointer;
-    }
+    } // void* Array_u32::get_rawDataPointer()
 
     const void* Array_u32::get_rawDataPointer() const
     {
       return rawDataPointer;
-    }
+    } // const void* Array_u32::get_rawDataPointer() const
 
-    void Array_u32::initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
+    void Array_u32::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
@@ -1267,7 +1477,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "input data buffer is NULL");
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -1281,7 +1491,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -1307,17 +1517,17 @@ namespace Anki
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cvMatMirror = cv::Mat_<u32>(size[0], size[1], data, stride);
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-    } // Array_u32::initialize()
+    } // Array_u32::Initialize()
 
     // Set all the buffers and sizes to zero, to signal an invalid array
-    void Array_u32::invalidateArray()
+    void Array_u32::InvalidateArray()
     {
       this->size[0] = 0;
       this->size[1] = 0;
       this->stride = 0;
       this->data = NULL;
       this->rawDataPointer = NULL;
-    }
+    } // void Array_u32::InvalidateArray()
 
     // Factory method to create an Array_u32 from the heap. The data of the returned Array_u32 must be freed by the user.
     // This is separate from the normal constructor, as Array_u32 objects are not supposed to manage memory
@@ -1328,7 +1538,7 @@ namespace Anki
       Array_u32 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
 
       return mat;
-    } // AllocateArrayFromHeap_u32()
+    } // Array_u32 AllocateArrayFromHeap_u32(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
 
     s32 Array_s32::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
@@ -1336,18 +1546,18 @@ namespace Anki
       assert(numCols > 0);
       const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
       return static_cast<s32>(RoundUp<size_t>(sizeof(s32)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
-    }
+    } // s32 Array_s32::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
 
     s32 Array_s32::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0);
       return numRows * Array_s32::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
-    }
+    } // s32 Array_s32::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
     Array_s32::Array_s32()
     {
-      invalidateArray();
-    }
+      InvalidateArray();
+    } // Array_s32::Array_s32()
 
     // Constructor for a Array_s32, pointing to user-allocated data. If the pointer to *data is not
     // aligned to MEMORY_ALIGNMENT, this Array_s32 will start at the next aligned location.
@@ -1358,12 +1568,12 @@ namespace Anki
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         data,
         dataLength,
         useBoundaryFillPatterns);
-    }
+    } // Array_s32::Array_s32(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
 
     Array_s32::Array_s32(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
@@ -1376,12 +1586,52 @@ namespace Anki
 
       void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         reinterpret_cast<s32*>(allocatedBuffer),
         numBytesAllocated,
         useBoundaryFillPatterns);
-    }
+    } // Array_s32::Array_s32(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+
+    // Check every element of this array against the input array. If the arrays are different
+    // sizes, uninitialized, or if any element is more different than the threshold, then return
+    // false.
+    bool Array_s32::IsElementwiseEqual(const Array_s32 &array2, const s32 threshold) const
+    {
+      if(!this->IsEqualSize(array2))
+        return false;
+
+      for(s32 y=0; y<size[0]; y++) {
+        const s32 * const this_rowPointer = this->Pointer(y, 0);
+        const s32 * const array2_rowPointer = array2.Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          if(this_rowPointer[x] > array2_rowPointer[x]) {
+            if((this_rowPointer[x] - array2_rowPointer[x]) > threshold)
+              return false;
+          } else {
+            if((array2_rowPointer[x] - this_rowPointer[x]) > threshold)
+              return false;
+          }
+        }
+      }
+
+      return true;
+    } // bool Array_s32::IsElementwiseEqual(const Array_s32 &array2, const s32 threshold) const
+
+    // If this array or array2 are different sizes or uninitialized, then return false.
+    bool Array_s32::IsEqualSize(const Array_s32 &array2) const
+    {
+      if(!this->IsValid())
+        return false;
+
+      if(!array2.IsValid())
+        return false;
+
+      if(this->get_size(0) != array2.get_size(0) || this->get_size(1) != array2.get_size(1))
+        return false;
+
+      return true;
+    } // bool Array_s32::IsEqualSize(const Array_s32 &array2) const
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     void Array_s32::Show(const char * const windowName, const bool waitForKeypress) const
@@ -1391,14 +1641,16 @@ namespace Anki
       if(waitForKeypress) {
         cv::waitKey();
       }
-    }
+    } // void Array_s32::Show(const char * const windowName, const bool waitForKeypress) const
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     // Returns a templated cv::Mat_ that shares the same buffer with this Array_s32. No data is copied.
     cv::Mat_<s32>& Array_s32::get_CvMat_()
     {
       assert(this->IsValid());
       return cvMatMirror;
-    }
+    } // cv::Mat_<s32>& Array_s32::get_CvMat_()
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_s32
@@ -1407,13 +1659,13 @@ namespace Anki
       assert(this->IsValid());
 
       for(s32 y=0; y<size[0]; y++) {
-        const s32 * rowPointer = Pointer(y, 0);
+        const s32 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           printf("%d ", rowPointer[x]);
         }
         printf("\n");
       }
-    }
+    } // void Array_s32::Print() const
 
     // If the Array_s32 was constructed with the useBoundaryFillPatterns=true, then
     // return if any memory was written out of bounds (via fill patterns at the
@@ -1445,7 +1697,7 @@ namespace Anki
       } else { // if(useBoundaryFillPatterns) {
         return true;
       } // if(useBoundaryFillPatterns) { ... else
-    }
+    } // bool Array_s32::IsValid() const
 
     // Set every element in the Array_s32 to this value
     // Returns the number of values set
@@ -1461,7 +1713,7 @@ namespace Anki
       }
 
       return size[0]*size[1];
-    }
+    } // s32 Array_s32::Set(const s32 value)
 
     // Parse a space-seperated string, and copy values to this Array_s32.
     // If the string does not contain enough elements, the remainder of the Array_s32 will be filled with zeros.
@@ -1490,7 +1742,7 @@ namespace Anki
       }
 
       return numValuesSet;
-    }
+    } // s32 Array_s32::Set(const char * const values)
 
     // Similar to Matlab size(matrix, dimension), and dimension is in {0,1}
     s32 Array_s32::get_size(s32 dimension) const
@@ -1501,24 +1753,24 @@ namespace Anki
         return 0;
 
       return size[dimension];
-    }
+    } // s32 Array_s32::get_size(s32 dimension) const
 
     s32 Array_s32::get_stride() const
     {
       return stride;
-    }
+    } // s32 Array_s32::get_stride() const
 
     void* Array_s32::get_rawDataPointer()
     {
       return rawDataPointer;
-    }
+    } // void* Array_s32::get_rawDataPointer()
 
     const void* Array_s32::get_rawDataPointer() const
     {
       return rawDataPointer;
-    }
+    } // const void* Array_s32::get_rawDataPointer() const
 
-    void Array_s32::initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
+    void Array_s32::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
@@ -1528,7 +1780,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "input data buffer is NULL");
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -1542,7 +1794,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -1568,17 +1820,17 @@ namespace Anki
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cvMatMirror = cv::Mat_<s32>(size[0], size[1], data, stride);
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-    } // Array_s32::initialize()
+    } // Array_s32::Initialize()
 
     // Set all the buffers and sizes to zero, to signal an invalid array
-    void Array_s32::invalidateArray()
+    void Array_s32::InvalidateArray()
     {
       this->size[0] = 0;
       this->size[1] = 0;
       this->stride = 0;
       this->data = NULL;
       this->rawDataPointer = NULL;
-    }
+    } // void Array_s32::InvalidateArray()
 
     // Factory method to create an Array_s32 from the heap. The data of the returned Array_s32 must be freed by the user.
     // This is separate from the normal constructor, as Array_s32 objects are not supposed to manage memory
@@ -1589,7 +1841,7 @@ namespace Anki
       Array_s32 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
 
       return mat;
-    } // AllocateArrayFromHeap_s32()
+    } // Array_s32 AllocateArrayFromHeap_s32(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
 
     s32 Array_u64::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
@@ -1597,18 +1849,18 @@ namespace Anki
       assert(numCols > 0);
       const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
       return static_cast<s32>(RoundUp<size_t>(sizeof(u64)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
-    }
+    } // s32 Array_u64::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
 
     s32 Array_u64::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0);
       return numRows * Array_u64::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
-    }
+    } // s32 Array_u64::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
     Array_u64::Array_u64()
     {
-      invalidateArray();
-    }
+      InvalidateArray();
+    } // Array_u64::Array_u64()
 
     // Constructor for a Array_u64, pointing to user-allocated data. If the pointer to *data is not
     // aligned to MEMORY_ALIGNMENT, this Array_u64 will start at the next aligned location.
@@ -1619,12 +1871,12 @@ namespace Anki
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         data,
         dataLength,
         useBoundaryFillPatterns);
-    }
+    } // Array_u64::Array_u64(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
 
     Array_u64::Array_u64(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
@@ -1637,12 +1889,52 @@ namespace Anki
 
       void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         reinterpret_cast<u64*>(allocatedBuffer),
         numBytesAllocated,
         useBoundaryFillPatterns);
-    }
+    } // Array_u64::Array_u64(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+
+    // Check every element of this array against the input array. If the arrays are different
+    // sizes, uninitialized, or if any element is more different than the threshold, then return
+    // false.
+    bool Array_u64::IsElementwiseEqual(const Array_u64 &array2, const u64 threshold) const
+    {
+      if(!this->IsEqualSize(array2))
+        return false;
+
+      for(s32 y=0; y<size[0]; y++) {
+        const u64 * const this_rowPointer = this->Pointer(y, 0);
+        const u64 * const array2_rowPointer = array2.Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          if(this_rowPointer[x] > array2_rowPointer[x]) {
+            if((this_rowPointer[x] - array2_rowPointer[x]) > threshold)
+              return false;
+          } else {
+            if((array2_rowPointer[x] - this_rowPointer[x]) > threshold)
+              return false;
+          }
+        }
+      }
+
+      return true;
+    } // bool Array_u64::IsElementwiseEqual(const Array_u64 &array2, const u64 threshold) const
+
+    // If this array or array2 are different sizes or uninitialized, then return false.
+    bool Array_u64::IsEqualSize(const Array_u64 &array2) const
+    {
+      if(!this->IsValid())
+        return false;
+
+      if(!array2.IsValid())
+        return false;
+
+      if(this->get_size(0) != array2.get_size(0) || this->get_size(1) != array2.get_size(1))
+        return false;
+
+      return true;
+    } // bool Array_u64::IsEqualSize(const Array_u64 &array2) const
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     void Array_u64::Show(const char * const windowName, const bool waitForKeypress) const
@@ -1652,14 +1944,16 @@ namespace Anki
       if(waitForKeypress) {
         cv::waitKey();
       }
-    }
+    } // void Array_u64::Show(const char * const windowName, const bool waitForKeypress) const
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     // Returns a templated cv::Mat_ that shares the same buffer with this Array_u64. No data is copied.
     cv::Mat_<u64>& Array_u64::get_CvMat_()
     {
       assert(this->IsValid());
       return cvMatMirror;
-    }
+    } // cv::Mat_<u64>& Array_u64::get_CvMat_()
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_u64
@@ -1668,13 +1962,13 @@ namespace Anki
       assert(this->IsValid());
 
       for(s32 y=0; y<size[0]; y++) {
-        const u64 * rowPointer = Pointer(y, 0);
+        const u64 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           printf("%d ", rowPointer[x]);
         }
         printf("\n");
       }
-    }
+    } // void Array_u64::Print() const
 
     // If the Array_u64 was constructed with the useBoundaryFillPatterns=true, then
     // return if any memory was written out of bounds (via fill patterns at the
@@ -1706,7 +2000,7 @@ namespace Anki
       } else { // if(useBoundaryFillPatterns) {
         return true;
       } // if(useBoundaryFillPatterns) { ... else
-    }
+    } // bool Array_u64::IsValid() const
 
     // Set every element in the Array_u64 to this value
     // Returns the number of values set
@@ -1722,7 +2016,7 @@ namespace Anki
       }
 
       return size[0]*size[1];
-    }
+    } // s32 Array_u64::Set(const u64 value)
 
     // Parse a space-seperated string, and copy values to this Array_u64.
     // If the string does not contain enough elements, the remainder of the Array_u64 will be filled with zeros.
@@ -1751,7 +2045,7 @@ namespace Anki
       }
 
       return numValuesSet;
-    }
+    } // s32 Array_u64::Set(const char * const values)
 
     // Similar to Matlab size(matrix, dimension), and dimension is in {0,1}
     s32 Array_u64::get_size(s32 dimension) const
@@ -1762,24 +2056,24 @@ namespace Anki
         return 0;
 
       return size[dimension];
-    }
+    } // s32 Array_u64::get_size(s32 dimension) const
 
     s32 Array_u64::get_stride() const
     {
       return stride;
-    }
+    } // s32 Array_u64::get_stride() const
 
     void* Array_u64::get_rawDataPointer()
     {
       return rawDataPointer;
-    }
+    } // void* Array_u64::get_rawDataPointer()
 
     const void* Array_u64::get_rawDataPointer() const
     {
       return rawDataPointer;
-    }
+    } // const void* Array_u64::get_rawDataPointer() const
 
-    void Array_u64::initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
+    void Array_u64::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
@@ -1789,7 +2083,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "input data buffer is NULL");
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -1803,7 +2097,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -1829,17 +2123,17 @@ namespace Anki
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cvMatMirror = cv::Mat_<u64>(size[0], size[1], data, stride);
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-    } // Array_u64::initialize()
+    } // Array_u64::Initialize()
 
     // Set all the buffers and sizes to zero, to signal an invalid array
-    void Array_u64::invalidateArray()
+    void Array_u64::InvalidateArray()
     {
       this->size[0] = 0;
       this->size[1] = 0;
       this->stride = 0;
       this->data = NULL;
       this->rawDataPointer = NULL;
-    }
+    } // void Array_u64::InvalidateArray()
 
     // Factory method to create an Array_u64 from the heap. The data of the returned Array_u64 must be freed by the user.
     // This is separate from the normal constructor, as Array_u64 objects are not supposed to manage memory
@@ -1850,7 +2144,7 @@ namespace Anki
       Array_u64 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
 
       return mat;
-    } // AllocateArrayFromHeap_u64()
+    } // Array_u64 AllocateArrayFromHeap_u64(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
 
     s32 Array_s64::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
@@ -1858,18 +2152,18 @@ namespace Anki
       assert(numCols > 0);
       const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
       return static_cast<s32>(RoundUp<size_t>(sizeof(s64)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
-    }
+    } // s32 Array_s64::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
 
     s32 Array_s64::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0);
       return numRows * Array_s64::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
-    }
+    } // s32 Array_s64::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
     Array_s64::Array_s64()
     {
-      invalidateArray();
-    }
+      InvalidateArray();
+    } // Array_s64::Array_s64()
 
     // Constructor for a Array_s64, pointing to user-allocated data. If the pointer to *data is not
     // aligned to MEMORY_ALIGNMENT, this Array_s64 will start at the next aligned location.
@@ -1880,12 +2174,12 @@ namespace Anki
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         data,
         dataLength,
         useBoundaryFillPatterns);
-    }
+    } // Array_s64::Array_s64(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
 
     Array_s64::Array_s64(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
@@ -1898,12 +2192,52 @@ namespace Anki
 
       void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         reinterpret_cast<s64*>(allocatedBuffer),
         numBytesAllocated,
         useBoundaryFillPatterns);
-    }
+    } // Array_s64::Array_s64(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+
+    // Check every element of this array against the input array. If the arrays are different
+    // sizes, uninitialized, or if any element is more different than the threshold, then return
+    // false.
+    bool Array_s64::IsElementwiseEqual(const Array_s64 &array2, const s64 threshold) const
+    {
+      if(!this->IsEqualSize(array2))
+        return false;
+
+      for(s32 y=0; y<size[0]; y++) {
+        const s64 * const this_rowPointer = this->Pointer(y, 0);
+        const s64 * const array2_rowPointer = array2.Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          if(this_rowPointer[x] > array2_rowPointer[x]) {
+            if((this_rowPointer[x] - array2_rowPointer[x]) > threshold)
+              return false;
+          } else {
+            if((array2_rowPointer[x] - this_rowPointer[x]) > threshold)
+              return false;
+          }
+        }
+      }
+
+      return true;
+    } // bool Array_s64::IsElementwiseEqual(const Array_s64 &array2, const s64 threshold) const
+
+    // If this array or array2 are different sizes or uninitialized, then return false.
+    bool Array_s64::IsEqualSize(const Array_s64 &array2) const
+    {
+      if(!this->IsValid())
+        return false;
+
+      if(!array2.IsValid())
+        return false;
+
+      if(this->get_size(0) != array2.get_size(0) || this->get_size(1) != array2.get_size(1))
+        return false;
+
+      return true;
+    } // bool Array_s64::IsEqualSize(const Array_s64 &array2) const
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     void Array_s64::Show(const char * const windowName, const bool waitForKeypress) const
@@ -1913,14 +2247,16 @@ namespace Anki
       if(waitForKeypress) {
         cv::waitKey();
       }
-    }
+    } // void Array_s64::Show(const char * const windowName, const bool waitForKeypress) const
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     // Returns a templated cv::Mat_ that shares the same buffer with this Array_s64. No data is copied.
     cv::Mat_<s64>& Array_s64::get_CvMat_()
     {
       assert(this->IsValid());
       return cvMatMirror;
-    }
+    } // cv::Mat_<s64>& Array_s64::get_CvMat_()
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_s64
@@ -1929,13 +2265,13 @@ namespace Anki
       assert(this->IsValid());
 
       for(s32 y=0; y<size[0]; y++) {
-        const s64 * rowPointer = Pointer(y, 0);
+        const s64 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           printf("%d ", rowPointer[x]);
         }
         printf("\n");
       }
-    }
+    } // void Array_s64::Print() const
 
     // If the Array_s64 was constructed with the useBoundaryFillPatterns=true, then
     // return if any memory was written out of bounds (via fill patterns at the
@@ -1967,7 +2303,7 @@ namespace Anki
       } else { // if(useBoundaryFillPatterns) {
         return true;
       } // if(useBoundaryFillPatterns) { ... else
-    }
+    } // bool Array_s64::IsValid() const
 
     // Set every element in the Array_s64 to this value
     // Returns the number of values set
@@ -1983,7 +2319,7 @@ namespace Anki
       }
 
       return size[0]*size[1];
-    }
+    } // s32 Array_s64::Set(const s64 value)
 
     // Parse a space-seperated string, and copy values to this Array_s64.
     // If the string does not contain enough elements, the remainder of the Array_s64 will be filled with zeros.
@@ -2012,7 +2348,7 @@ namespace Anki
       }
 
       return numValuesSet;
-    }
+    } // s32 Array_s64::Set(const char * const values)
 
     // Similar to Matlab size(matrix, dimension), and dimension is in {0,1}
     s32 Array_s64::get_size(s32 dimension) const
@@ -2023,24 +2359,24 @@ namespace Anki
         return 0;
 
       return size[dimension];
-    }
+    } // s32 Array_s64::get_size(s32 dimension) const
 
     s32 Array_s64::get_stride() const
     {
       return stride;
-    }
+    } // s32 Array_s64::get_stride() const
 
     void* Array_s64::get_rawDataPointer()
     {
       return rawDataPointer;
-    }
+    } // void* Array_s64::get_rawDataPointer()
 
     const void* Array_s64::get_rawDataPointer() const
     {
       return rawDataPointer;
-    }
+    } // const void* Array_s64::get_rawDataPointer() const
 
-    void Array_s64::initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
+    void Array_s64::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
@@ -2050,7 +2386,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "input data buffer is NULL");
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -2064,7 +2400,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -2090,17 +2426,17 @@ namespace Anki
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cvMatMirror = cv::Mat_<s64>(size[0], size[1], data, stride);
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-    } // Array_s64::initialize()
+    } // Array_s64::Initialize()
 
     // Set all the buffers and sizes to zero, to signal an invalid array
-    void Array_s64::invalidateArray()
+    void Array_s64::InvalidateArray()
     {
       this->size[0] = 0;
       this->size[1] = 0;
       this->stride = 0;
       this->data = NULL;
       this->rawDataPointer = NULL;
-    }
+    } // void Array_s64::InvalidateArray()
 
     // Factory method to create an Array_s64 from the heap. The data of the returned Array_s64 must be freed by the user.
     // This is separate from the normal constructor, as Array_s64 objects are not supposed to manage memory
@@ -2111,7 +2447,7 @@ namespace Anki
       Array_s64 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
 
       return mat;
-    } // AllocateArrayFromHeap_s64()
+    } // Array_s64 AllocateArrayFromHeap_s64(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
 
     s32 Array_f32::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
@@ -2119,18 +2455,18 @@ namespace Anki
       assert(numCols > 0);
       const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
       return static_cast<s32>(RoundUp<size_t>(sizeof(f32)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
-    }
+    } // s32 Array_f32::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
 
     s32 Array_f32::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0);
       return numRows * Array_f32::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
-    }
+    } // s32 Array_f32::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
     Array_f32::Array_f32()
     {
-      invalidateArray();
-    }
+      InvalidateArray();
+    } // Array_f32::Array_f32()
 
     // Constructor for a Array_f32, pointing to user-allocated data. If the pointer to *data is not
     // aligned to MEMORY_ALIGNMENT, this Array_f32 will start at the next aligned location.
@@ -2141,12 +2477,12 @@ namespace Anki
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         data,
         dataLength,
         useBoundaryFillPatterns);
-    }
+    } // Array_f32::Array_f32(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
 
     Array_f32::Array_f32(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
@@ -2159,12 +2495,52 @@ namespace Anki
 
       void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         reinterpret_cast<f32*>(allocatedBuffer),
         numBytesAllocated,
         useBoundaryFillPatterns);
-    }
+    } // Array_f32::Array_f32(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+
+    // Check every element of this array against the input array. If the arrays are different
+    // sizes, uninitialized, or if any element is more different than the threshold, then return
+    // false.
+    bool Array_f32::IsElementwiseEqual(const Array_f32 &array2, const f32 threshold) const
+    {
+      if(!this->IsEqualSize(array2))
+        return false;
+
+      for(s32 y=0; y<size[0]; y++) {
+        const f32 * const this_rowPointer = this->Pointer(y, 0);
+        const f32 * const array2_rowPointer = array2.Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          if(this_rowPointer[x] > array2_rowPointer[x]) {
+            if((this_rowPointer[x] - array2_rowPointer[x]) > threshold)
+              return false;
+          } else {
+            if((array2_rowPointer[x] - this_rowPointer[x]) > threshold)
+              return false;
+          }
+        }
+      }
+
+      return true;
+    } // bool Array_f32::IsElementwiseEqual(const Array_f32 &array2, const f32 threshold) const
+
+    // If this array or array2 are different sizes or uninitialized, then return false.
+    bool Array_f32::IsEqualSize(const Array_f32 &array2) const
+    {
+      if(!this->IsValid())
+        return false;
+
+      if(!array2.IsValid())
+        return false;
+
+      if(this->get_size(0) != array2.get_size(0) || this->get_size(1) != array2.get_size(1))
+        return false;
+
+      return true;
+    } // bool Array_f32::IsEqualSize(const Array_f32 &array2) const
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     void Array_f32::Show(const char * const windowName, const bool waitForKeypress) const
@@ -2174,14 +2550,16 @@ namespace Anki
       if(waitForKeypress) {
         cv::waitKey();
       }
-    }
+    } // void Array_f32::Show(const char * const windowName, const bool waitForKeypress) const
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     // Returns a templated cv::Mat_ that shares the same buffer with this Array_f32. No data is copied.
     cv::Mat_<f32>& Array_f32::get_CvMat_()
     {
       assert(this->IsValid());
       return cvMatMirror;
-    }
+    } // cv::Mat_<f32>& Array_f32::get_CvMat_()
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_f32
@@ -2190,13 +2568,13 @@ namespace Anki
       assert(this->IsValid());
 
       for(s32 y=0; y<size[0]; y++) {
-        const f32 * rowPointer = Pointer(y, 0);
+        const f32 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           printf("%f ", rowPointer[x]);
         }
         printf("\n");
       }
-    }
+    } // void Array_f32::Print() const
 
     // If the Array_f32 was constructed with the useBoundaryFillPatterns=true, then
     // return if any memory was written out of bounds (via fill patterns at the
@@ -2228,7 +2606,7 @@ namespace Anki
       } else { // if(useBoundaryFillPatterns) {
         return true;
       } // if(useBoundaryFillPatterns) { ... else
-    }
+    } // bool Array_f32::IsValid() const
 
     // Set every element in the Array_f32 to this value
     // Returns the number of values set
@@ -2244,7 +2622,7 @@ namespace Anki
       }
 
       return size[0]*size[1];
-    }
+    } // s32 Array_f32::Set(const f32 value)
 
     // Parse a space-seperated string, and copy values to this Array_f32.
     // If the string does not contain enough elements, the remainder of the Array_f32 will be filled with zeros.
@@ -2273,7 +2651,7 @@ namespace Anki
       }
 
       return numValuesSet;
-    }
+    } // s32 Array_f32::Set(const char * const values)
 
     // Similar to Matlab size(matrix, dimension), and dimension is in {0,1}
     s32 Array_f32::get_size(s32 dimension) const
@@ -2284,24 +2662,24 @@ namespace Anki
         return 0;
 
       return size[dimension];
-    }
+    } // s32 Array_f32::get_size(s32 dimension) const
 
     s32 Array_f32::get_stride() const
     {
       return stride;
-    }
+    } // s32 Array_f32::get_stride() const
 
     void* Array_f32::get_rawDataPointer()
     {
       return rawDataPointer;
-    }
+    } // void* Array_f32::get_rawDataPointer()
 
     const void* Array_f32::get_rawDataPointer() const
     {
       return rawDataPointer;
-    }
+    } // const void* Array_f32::get_rawDataPointer() const
 
-    void Array_f32::initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
+    void Array_f32::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
@@ -2311,7 +2689,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "input data buffer is NULL");
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -2325,7 +2703,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -2351,17 +2729,17 @@ namespace Anki
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cvMatMirror = cv::Mat_<f32>(size[0], size[1], data, stride);
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-    } // Array_f32::initialize()
+    } // Array_f32::Initialize()
 
     // Set all the buffers and sizes to zero, to signal an invalid array
-    void Array_f32::invalidateArray()
+    void Array_f32::InvalidateArray()
     {
       this->size[0] = 0;
       this->size[1] = 0;
       this->stride = 0;
       this->data = NULL;
       this->rawDataPointer = NULL;
-    }
+    } // void Array_f32::InvalidateArray()
 
     // Factory method to create an Array_f32 from the heap. The data of the returned Array_f32 must be freed by the user.
     // This is separate from the normal constructor, as Array_f32 objects are not supposed to manage memory
@@ -2372,7 +2750,7 @@ namespace Anki
       Array_f32 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
 
       return mat;
-    } // AllocateArrayFromHeap_f32()
+    } // Array_f32 AllocateArrayFromHeap_f32(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
 
     s32 Array_f64::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
@@ -2380,18 +2758,18 @@ namespace Anki
       assert(numCols > 0);
       const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
       return static_cast<s32>(RoundUp<size_t>(sizeof(f64)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
-    }
+    } // s32 Array_f64::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
 
     s32 Array_f64::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0);
       return numRows * Array_f64::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
-    }
+    } // s32 Array_f64::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
     Array_f64::Array_f64()
     {
-      invalidateArray();
-    }
+      InvalidateArray();
+    } // Array_f64::Array_f64()
 
     // Constructor for a Array_f64, pointing to user-allocated data. If the pointer to *data is not
     // aligned to MEMORY_ALIGNMENT, this Array_f64 will start at the next aligned location.
@@ -2402,12 +2780,12 @@ namespace Anki
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         data,
         dataLength,
         useBoundaryFillPatterns);
-    }
+    } // Array_f64::Array_f64(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
 
     Array_f64::Array_f64(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
@@ -2420,12 +2798,52 @@ namespace Anki
 
       void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         reinterpret_cast<f64*>(allocatedBuffer),
         numBytesAllocated,
         useBoundaryFillPatterns);
-    }
+    } // Array_f64::Array_f64(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+
+    // Check every element of this array against the input array. If the arrays are different
+    // sizes, uninitialized, or if any element is more different than the threshold, then return
+    // false.
+    bool Array_f64::IsElementwiseEqual(const Array_f64 &array2, const f64 threshold) const
+    {
+      if(!this->IsEqualSize(array2))
+        return false;
+
+      for(s32 y=0; y<size[0]; y++) {
+        const f64 * const this_rowPointer = this->Pointer(y, 0);
+        const f64 * const array2_rowPointer = array2.Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          if(this_rowPointer[x] > array2_rowPointer[x]) {
+            if((this_rowPointer[x] - array2_rowPointer[x]) > threshold)
+              return false;
+          } else {
+            if((array2_rowPointer[x] - this_rowPointer[x]) > threshold)
+              return false;
+          }
+        }
+      }
+
+      return true;
+    } // bool Array_f64::IsElementwiseEqual(const Array_f64 &array2, const f64 threshold) const
+
+    // If this array or array2 are different sizes or uninitialized, then return false.
+    bool Array_f64::IsEqualSize(const Array_f64 &array2) const
+    {
+      if(!this->IsValid())
+        return false;
+
+      if(!array2.IsValid())
+        return false;
+
+      if(this->get_size(0) != array2.get_size(0) || this->get_size(1) != array2.get_size(1))
+        return false;
+
+      return true;
+    } // bool Array_f64::IsEqualSize(const Array_f64 &array2) const
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     void Array_f64::Show(const char * const windowName, const bool waitForKeypress) const
@@ -2435,14 +2853,16 @@ namespace Anki
       if(waitForKeypress) {
         cv::waitKey();
       }
-    }
+    } // void Array_f64::Show(const char * const windowName, const bool waitForKeypress) const
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     // Returns a templated cv::Mat_ that shares the same buffer with this Array_f64. No data is copied.
     cv::Mat_<f64>& Array_f64::get_CvMat_()
     {
       assert(this->IsValid());
       return cvMatMirror;
-    }
+    } // cv::Mat_<f64>& Array_f64::get_CvMat_()
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_f64
@@ -2451,13 +2871,13 @@ namespace Anki
       assert(this->IsValid());
 
       for(s32 y=0; y<size[0]; y++) {
-        const f64 * rowPointer = Pointer(y, 0);
+        const f64 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           printf("%f ", rowPointer[x]);
         }
         printf("\n");
       }
-    }
+    } // void Array_f64::Print() const
 
     // If the Array_f64 was constructed with the useBoundaryFillPatterns=true, then
     // return if any memory was written out of bounds (via fill patterns at the
@@ -2489,7 +2909,7 @@ namespace Anki
       } else { // if(useBoundaryFillPatterns) {
         return true;
       } // if(useBoundaryFillPatterns) { ... else
-    }
+    } // bool Array_f64::IsValid() const
 
     // Set every element in the Array_f64 to this value
     // Returns the number of values set
@@ -2505,7 +2925,7 @@ namespace Anki
       }
 
       return size[0]*size[1];
-    }
+    } // s32 Array_f64::Set(const f64 value)
 
     // Parse a space-seperated string, and copy values to this Array_f64.
     // If the string does not contain enough elements, the remainder of the Array_f64 will be filled with zeros.
@@ -2534,7 +2954,7 @@ namespace Anki
       }
 
       return numValuesSet;
-    }
+    } // s32 Array_f64::Set(const char * const values)
 
     // Similar to Matlab size(matrix, dimension), and dimension is in {0,1}
     s32 Array_f64::get_size(s32 dimension) const
@@ -2545,24 +2965,24 @@ namespace Anki
         return 0;
 
       return size[dimension];
-    }
+    } // s32 Array_f64::get_size(s32 dimension) const
 
     s32 Array_f64::get_stride() const
     {
       return stride;
-    }
+    } // s32 Array_f64::get_stride() const
 
     void* Array_f64::get_rawDataPointer()
     {
       return rawDataPointer;
-    }
+    } // void* Array_f64::get_rawDataPointer()
 
     const void* Array_f64::get_rawDataPointer() const
     {
       return rawDataPointer;
-    }
+    } // const void* Array_f64::get_rawDataPointer() const
 
-    void Array_f64::initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
+    void Array_f64::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
@@ -2572,7 +2992,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "input data buffer is NULL");
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -2586,7 +3006,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -2612,17 +3032,17 @@ namespace Anki
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cvMatMirror = cv::Mat_<f64>(size[0], size[1], data, stride);
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-    } // Array_f64::initialize()
+    } // Array_f64::Initialize()
 
     // Set all the buffers and sizes to zero, to signal an invalid array
-    void Array_f64::invalidateArray()
+    void Array_f64::InvalidateArray()
     {
       this->size[0] = 0;
       this->size[1] = 0;
       this->stride = 0;
       this->data = NULL;
       this->rawDataPointer = NULL;
-    }
+    } // void Array_f64::InvalidateArray()
 
     // Factory method to create an Array_f64 from the heap. The data of the returned Array_f64 must be freed by the user.
     // This is separate from the normal constructor, as Array_f64 objects are not supposed to manage memory
@@ -2633,7 +3053,7 @@ namespace Anki
       Array_f64 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
 
       return mat;
-    } // AllocateArrayFromHeap_f64()
+    } // Array_f64 AllocateArrayFromHeap_f64(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
 
     s32 Array_Point_s16::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
@@ -2641,18 +3061,18 @@ namespace Anki
       assert(numCols > 0);
       const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
       return static_cast<s32>(RoundUp<size_t>(sizeof(Point_s16)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
-    }
+    } // s32 Array_Point_s16::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
 
     s32 Array_Point_s16::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0);
       return numRows * Array_Point_s16::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
-    }
+    } // s32 Array_Point_s16::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
     Array_Point_s16::Array_Point_s16()
     {
-      invalidateArray();
-    }
+      InvalidateArray();
+    } // Array_Point_s16::Array_Point_s16()
 
     // Constructor for a Array_Point_s16, pointing to user-allocated data. If the pointer to *data is not
     // aligned to MEMORY_ALIGNMENT, this Array_Point_s16 will start at the next aligned location.
@@ -2663,12 +3083,12 @@ namespace Anki
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         data,
         dataLength,
         useBoundaryFillPatterns);
-    }
+    } // Array_Point_s16::Array_Point_s16(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
 
     Array_Point_s16::Array_Point_s16(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
@@ -2681,12 +3101,27 @@ namespace Anki
 
       void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
 
-      initialize(numRows,
+      Initialize(numRows,
         numCols,
         reinterpret_cast<Point_s16*>(allocatedBuffer),
         numBytesAllocated,
         useBoundaryFillPatterns);
-    }
+    } // Array_Point_s16::Array_Point_s16(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+
+    // If this array or array2 are different sizes or uninitialized, then return false.
+    bool Array_Point_s16::IsEqualSize(const Array_Point_s16 &array2) const
+    {
+      if(!this->IsValid())
+        return false;
+
+      if(!array2.IsValid())
+        return false;
+
+      if(this->get_size(0) != array2.get_size(0) || this->get_size(1) != array2.get_size(1))
+        return false;
+
+      return true;
+    } // bool Array_Point_s16::IsEqualSize(const Array_Point_s16 &array2) const
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     // Returns a templated cv::Mat_ that shares the same buffer with this Array_Point_s16. No data is copied.
@@ -2694,7 +3129,7 @@ namespace Anki
     {
       assert(this->IsValid());
       return cvMatMirror;
-    }
+    } // cv::Mat_<Point_s16>& Array_Point_s16::get_CvMat_()
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_Point_s16
@@ -2703,14 +3138,14 @@ namespace Anki
       assert(this->IsValid());
 
       for(s32 y=0; y<size[0]; y++) {
-        const Point_s16 * rowPointer = Pointer(y, 0);
+        const Point_s16 * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           rowPointer[x].Print();
           printf(" ");
         }
         printf("\n");
       }
-    }
+    } // void Array_Point_s16::Print() const
 
     // If the Array_Point_s16 was constructed with the useBoundaryFillPatterns=true, then
     // return if any memory was written out of bounds (via fill patterns at the
@@ -2742,7 +3177,7 @@ namespace Anki
       } else { // if(useBoundaryFillPatterns) {
         return true;
       } // if(useBoundaryFillPatterns) { ... else
-    }
+    } // bool Array_Point_s16::IsValid() const
 
     // Set every element in the Array_Point_s16 to this value
     // Returns the number of values set
@@ -2758,7 +3193,7 @@ namespace Anki
       }
 
       return size[0]*size[1];
-    }
+    } // s32 Array_Point_s16::Set(const Point_s16 value)
 
     // Similar to Matlab size(matrix, dimension), and dimension is in {0,1}
     s32 Array_Point_s16::get_size(s32 dimension) const
@@ -2769,24 +3204,24 @@ namespace Anki
         return 0;
 
       return size[dimension];
-    }
+    } // s32 Array_Point_s16::get_size(s32 dimension) const
 
     s32 Array_Point_s16::get_stride() const
     {
       return stride;
-    }
+    } // s32 Array_Point_s16::get_stride() const
 
     void* Array_Point_s16::get_rawDataPointer()
     {
       return rawDataPointer;
-    }
+    } // void* Array_Point_s16::get_rawDataPointer()
 
     const void* Array_Point_s16::get_rawDataPointer() const
     {
       return rawDataPointer;
-    }
+    } // const void* Array_Point_s16::get_rawDataPointer() const
 
-    void Array_Point_s16::initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
+    void Array_Point_s16::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
@@ -2796,7 +3231,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "input data buffer is NULL");
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -2810,7 +3245,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
         DASError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        invalidateArray();
+        InvalidateArray();
         return;
       }
 
@@ -2836,17 +3271,17 @@ namespace Anki
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cvMatMirror = cv::Mat_<Point_s16>(size[0], size[1], data, stride);
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-    } // Array_Point_s16::initialize()
+    } // Array_Point_s16::Initialize()
 
     // Set all the buffers and sizes to zero, to signal an invalid array
-    void Array_Point_s16::invalidateArray()
+    void Array_Point_s16::InvalidateArray()
     {
       this->size[0] = 0;
       this->size[1] = 0;
       this->stride = 0;
       this->data = NULL;
       this->rawDataPointer = NULL;
-    }
+    } // void Array_Point_s16::InvalidateArray()
 
     // Factory method to create an Array_Point_s16 from the heap. The data of the returned Array_Point_s16 must be freed by the user.
     // This is separate from the normal constructor, as Array_Point_s16 objects are not supposed to manage memory
@@ -2857,7 +3292,7 @@ namespace Anki
       Array_Point_s16 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
 
       return mat;
-    } // AllocateArrayFromHeap_Point_s16()
+    } // Array_Point_s16 AllocateArrayFromHeap_Point_s16(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
 
   } // namespace Embedded

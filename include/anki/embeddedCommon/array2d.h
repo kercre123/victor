@@ -93,11 +93,21 @@ namespace Anki
       }
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-      void Show(const char * const windowName, const bool waitForKeypress) const;
-
       // Returns a templated cv::Mat_ that shares the same buffer with this Array_u8. No data is copied.
       cv::Mat_<u8>& get_CvMat_();
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      void Show(const char * const windowName, const bool waitForKeypress) const;
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then
+      // return false.
+      bool IsElementwiseEqual(const Array_u8 &array2, const u8 threshold = static_cast<u8>(0.0001)) const;
+
+      // If this array or array2 are different sizes or uninitialized, then return false.
+      bool IsEqualSize(const Array_u8 &array2) const;
 
       // Print out the contents of this Array_u8
       void Print() const;
@@ -107,11 +117,6 @@ namespace Anki
       // beginning and end).  If the Array_u8 was not constructed with the
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
-
-      // Check every element of this array against the input array. If the arrays are different
-      // sizes, uninitialized, or if any element is more different than the threshold, then return
-      // false.
-      bool IsElementwiseEqual(const Array_u8 &array2, u8 threshold) const;
 
       // Set every element in the Array_u8 to this value
       // Returns the number of values set
@@ -151,13 +156,13 @@ namespace Anki
       // should be used to free.
       void * rawDataPointer;
 
-      void initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
-
-      void invalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cv::Mat_<u8> cvMatMirror;
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      void Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
+
+      void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
 
     private:
       //Array_u8 & operator= (const Array_u8 & rightHandSide); // In the future, assignment may not be allowed
@@ -219,11 +224,21 @@ namespace Anki
       }
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-      void Show(const char * const windowName, const bool waitForKeypress) const;
-
       // Returns a templated cv::Mat_ that shares the same buffer with this Array_s8. No data is copied.
       cv::Mat_<s8>& get_CvMat_();
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      void Show(const char * const windowName, const bool waitForKeypress) const;
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then
+      // return false.
+      bool IsElementwiseEqual(const Array_s8 &array2, const s8 threshold = static_cast<s8>(0.0001)) const;
+
+      // If this array or array2 are different sizes or uninitialized, then return false.
+      bool IsEqualSize(const Array_s8 &array2) const;
 
       // Print out the contents of this Array_s8
       void Print() const;
@@ -233,11 +248,6 @@ namespace Anki
       // beginning and end).  If the Array_s8 was not constructed with the
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
-
-      // Check every element of this array against the input array. If the arrays are different
-      // sizes, uninitialized, or if any element is more different than the threshold, then return
-      // false.
-      bool IsElementwiseEqual(const Array_s8 &array2, s8 threshold) const;
 
       // Set every element in the Array_s8 to this value
       // Returns the number of values set
@@ -277,13 +287,13 @@ namespace Anki
       // should be used to free.
       void * rawDataPointer;
 
-      void initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
-
-      void invalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cv::Mat_<s8> cvMatMirror;
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      void Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
+
+      void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
 
     private:
       //Array_s8 & operator= (const Array_s8 & rightHandSide); // In the future, assignment may not be allowed
@@ -345,11 +355,21 @@ namespace Anki
       }
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-      void Show(const char * const windowName, const bool waitForKeypress) const;
-
       // Returns a templated cv::Mat_ that shares the same buffer with this Array_u16. No data is copied.
       cv::Mat_<u16>& get_CvMat_();
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      void Show(const char * const windowName, const bool waitForKeypress) const;
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then
+      // return false.
+      bool IsElementwiseEqual(const Array_u16 &array2, const u16 threshold = static_cast<u16>(0.0001)) const;
+
+      // If this array or array2 are different sizes or uninitialized, then return false.
+      bool IsEqualSize(const Array_u16 &array2) const;
 
       // Print out the contents of this Array_u16
       void Print() const;
@@ -359,11 +379,6 @@ namespace Anki
       // beginning and end).  If the Array_u16 was not constructed with the
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
-
-      // Check every element of this array against the input array. If the arrays are different
-      // sizes, uninitialized, or if any element is more different than the threshold, then return
-      // false.
-      bool IsElementwiseEqual(const Array_u16 &array2, u16 threshold) const;
 
       // Set every element in the Array_u16 to this value
       // Returns the number of values set
@@ -403,13 +418,13 @@ namespace Anki
       // should be used to free.
       void * rawDataPointer;
 
-      void initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
-
-      void invalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cv::Mat_<u16> cvMatMirror;
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      void Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
+
+      void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
 
     private:
       //Array_u16 & operator= (const Array_u16 & rightHandSide); // In the future, assignment may not be allowed
@@ -471,11 +486,21 @@ namespace Anki
       }
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-      void Show(const char * const windowName, const bool waitForKeypress) const;
-
       // Returns a templated cv::Mat_ that shares the same buffer with this Array_s16. No data is copied.
       cv::Mat_<s16>& get_CvMat_();
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      void Show(const char * const windowName, const bool waitForKeypress) const;
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then
+      // return false.
+      bool IsElementwiseEqual(const Array_s16 &array2, const s16 threshold = static_cast<s16>(0.0001)) const;
+
+      // If this array or array2 are different sizes or uninitialized, then return false.
+      bool IsEqualSize(const Array_s16 &array2) const;
 
       // Print out the contents of this Array_s16
       void Print() const;
@@ -485,11 +510,6 @@ namespace Anki
       // beginning and end).  If the Array_s16 was not constructed with the
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
-
-      // Check every element of this array against the input array. If the arrays are different
-      // sizes, uninitialized, or if any element is more different than the threshold, then return
-      // false.
-      bool IsElementwiseEqual(const Array_s16 &array2, s16 threshold) const;
 
       // Set every element in the Array_s16 to this value
       // Returns the number of values set
@@ -529,13 +549,13 @@ namespace Anki
       // should be used to free.
       void * rawDataPointer;
 
-      void initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
-
-      void invalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cv::Mat_<s16> cvMatMirror;
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      void Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
+
+      void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
 
     private:
       //Array_s16 & operator= (const Array_s16 & rightHandSide); // In the future, assignment may not be allowed
@@ -597,11 +617,21 @@ namespace Anki
       }
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-      void Show(const char * const windowName, const bool waitForKeypress) const;
-
       // Returns a templated cv::Mat_ that shares the same buffer with this Array_u32. No data is copied.
       cv::Mat_<u32>& get_CvMat_();
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      void Show(const char * const windowName, const bool waitForKeypress) const;
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then
+      // return false.
+      bool IsElementwiseEqual(const Array_u32 &array2, const u32 threshold = static_cast<u32>(0.0001)) const;
+
+      // If this array or array2 are different sizes or uninitialized, then return false.
+      bool IsEqualSize(const Array_u32 &array2) const;
 
       // Print out the contents of this Array_u32
       void Print() const;
@@ -611,11 +641,6 @@ namespace Anki
       // beginning and end).  If the Array_u32 was not constructed with the
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
-
-      // Check every element of this array against the input array. If the arrays are different
-      // sizes, uninitialized, or if any element is more different than the threshold, then return
-      // false.
-      bool IsElementwiseEqual(const Array_u32 &array2, u32 threshold) const;
 
       // Set every element in the Array_u32 to this value
       // Returns the number of values set
@@ -655,13 +680,13 @@ namespace Anki
       // should be used to free.
       void * rawDataPointer;
 
-      void initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
-
-      void invalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cv::Mat_<u32> cvMatMirror;
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      void Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
+
+      void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
 
     private:
       //Array_u32 & operator= (const Array_u32 & rightHandSide); // In the future, assignment may not be allowed
@@ -723,11 +748,21 @@ namespace Anki
       }
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-      void Show(const char * const windowName, const bool waitForKeypress) const;
-
       // Returns a templated cv::Mat_ that shares the same buffer with this Array_s32. No data is copied.
       cv::Mat_<s32>& get_CvMat_();
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      void Show(const char * const windowName, const bool waitForKeypress) const;
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then
+      // return false.
+      bool IsElementwiseEqual(const Array_s32 &array2, const s32 threshold = static_cast<s32>(0.0001)) const;
+
+      // If this array or array2 are different sizes or uninitialized, then return false.
+      bool IsEqualSize(const Array_s32 &array2) const;
 
       // Print out the contents of this Array_s32
       void Print() const;
@@ -737,11 +772,6 @@ namespace Anki
       // beginning and end).  If the Array_s32 was not constructed with the
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
-
-      // Check every element of this array against the input array. If the arrays are different
-      // sizes, uninitialized, or if any element is more different than the threshold, then return
-      // false.
-      bool IsElementwiseEqual(const Array_s32 &array2, s32 threshold) const;
 
       // Set every element in the Array_s32 to this value
       // Returns the number of values set
@@ -781,13 +811,13 @@ namespace Anki
       // should be used to free.
       void * rawDataPointer;
 
-      void initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
-
-      void invalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cv::Mat_<s32> cvMatMirror;
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      void Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
+
+      void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
 
     private:
       //Array_s32 & operator= (const Array_s32 & rightHandSide); // In the future, assignment may not be allowed
@@ -849,11 +879,21 @@ namespace Anki
       }
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-      void Show(const char * const windowName, const bool waitForKeypress) const;
-
       // Returns a templated cv::Mat_ that shares the same buffer with this Array_u64. No data is copied.
       cv::Mat_<u64>& get_CvMat_();
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      void Show(const char * const windowName, const bool waitForKeypress) const;
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then
+      // return false.
+      bool IsElementwiseEqual(const Array_u64 &array2, const u64 threshold = static_cast<u64>(0.0001)) const;
+
+      // If this array or array2 are different sizes or uninitialized, then return false.
+      bool IsEqualSize(const Array_u64 &array2) const;
 
       // Print out the contents of this Array_u64
       void Print() const;
@@ -863,11 +903,6 @@ namespace Anki
       // beginning and end).  If the Array_u64 was not constructed with the
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
-
-      // Check every element of this array against the input array. If the arrays are different
-      // sizes, uninitialized, or if any element is more different than the threshold, then return
-      // false.
-      bool IsElementwiseEqual(const Array_u64 &array2, u64 threshold) const;
 
       // Set every element in the Array_u64 to this value
       // Returns the number of values set
@@ -907,13 +942,13 @@ namespace Anki
       // should be used to free.
       void * rawDataPointer;
 
-      void initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
-
-      void invalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cv::Mat_<u64> cvMatMirror;
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      void Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
+
+      void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
 
     private:
       //Array_u64 & operator= (const Array_u64 & rightHandSide); // In the future, assignment may not be allowed
@@ -975,11 +1010,21 @@ namespace Anki
       }
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-      void Show(const char * const windowName, const bool waitForKeypress) const;
-
       // Returns a templated cv::Mat_ that shares the same buffer with this Array_s64. No data is copied.
       cv::Mat_<s64>& get_CvMat_();
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      void Show(const char * const windowName, const bool waitForKeypress) const;
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then
+      // return false.
+      bool IsElementwiseEqual(const Array_s64 &array2, const s64 threshold = static_cast<s64>(0.0001)) const;
+
+      // If this array or array2 are different sizes or uninitialized, then return false.
+      bool IsEqualSize(const Array_s64 &array2) const;
 
       // Print out the contents of this Array_s64
       void Print() const;
@@ -989,11 +1034,6 @@ namespace Anki
       // beginning and end).  If the Array_s64 was not constructed with the
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
-
-      // Check every element of this array against the input array. If the arrays are different
-      // sizes, uninitialized, or if any element is more different than the threshold, then return
-      // false.
-      bool IsElementwiseEqual(const Array_s64 &array2, s64 threshold) const;
 
       // Set every element in the Array_s64 to this value
       // Returns the number of values set
@@ -1033,13 +1073,13 @@ namespace Anki
       // should be used to free.
       void * rawDataPointer;
 
-      void initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
-
-      void invalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cv::Mat_<s64> cvMatMirror;
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      void Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
+
+      void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
 
     private:
       //Array_s64 & operator= (const Array_s64 & rightHandSide); // In the future, assignment may not be allowed
@@ -1101,11 +1141,21 @@ namespace Anki
       }
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-      void Show(const char * const windowName, const bool waitForKeypress) const;
-
       // Returns a templated cv::Mat_ that shares the same buffer with this Array_f32. No data is copied.
       cv::Mat_<f32>& get_CvMat_();
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      void Show(const char * const windowName, const bool waitForKeypress) const;
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then
+      // return false.
+      bool IsElementwiseEqual(const Array_f32 &array2, const f32 threshold = static_cast<f32>(0.0001)) const;
+
+      // If this array or array2 are different sizes or uninitialized, then return false.
+      bool IsEqualSize(const Array_f32 &array2) const;
 
       // Print out the contents of this Array_f32
       void Print() const;
@@ -1115,11 +1165,6 @@ namespace Anki
       // beginning and end).  If the Array_f32 was not constructed with the
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
-
-      // Check every element of this array against the input array. If the arrays are different
-      // sizes, uninitialized, or if any element is more different than the threshold, then return
-      // false.
-      bool IsElementwiseEqual(const Array_f32 &array2, f32 threshold) const;
 
       // Set every element in the Array_f32 to this value
       // Returns the number of values set
@@ -1159,13 +1204,13 @@ namespace Anki
       // should be used to free.
       void * rawDataPointer;
 
-      void initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
-
-      void invalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cv::Mat_<f32> cvMatMirror;
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      void Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
+
+      void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
 
     private:
       //Array_f32 & operator= (const Array_f32 & rightHandSide); // In the future, assignment may not be allowed
@@ -1227,11 +1272,21 @@ namespace Anki
       }
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-      void Show(const char * const windowName, const bool waitForKeypress) const;
-
       // Returns a templated cv::Mat_ that shares the same buffer with this Array_f64. No data is copied.
       cv::Mat_<f64>& get_CvMat_();
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      void Show(const char * const windowName, const bool waitForKeypress) const;
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then
+      // return false.
+      bool IsElementwiseEqual(const Array_f64 &array2, const f64 threshold = static_cast<f64>(0.0001)) const;
+
+      // If this array or array2 are different sizes or uninitialized, then return false.
+      bool IsEqualSize(const Array_f64 &array2) const;
 
       // Print out the contents of this Array_f64
       void Print() const;
@@ -1241,11 +1296,6 @@ namespace Anki
       // beginning and end).  If the Array_f64 was not constructed with the
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
-
-      // Check every element of this array against the input array. If the arrays are different
-      // sizes, uninitialized, or if any element is more different than the threshold, then return
-      // false.
-      bool IsElementwiseEqual(const Array_f64 &array2, f64 threshold) const;
 
       // Set every element in the Array_f64 to this value
       // Returns the number of values set
@@ -1285,13 +1335,13 @@ namespace Anki
       // should be used to free.
       void * rawDataPointer;
 
-      void initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
-
-      void invalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cv::Mat_<f64> cvMatMirror;
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      void Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
+
+      void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
 
     private:
       //Array_f64 & operator= (const Array_f64 & rightHandSide); // In the future, assignment may not be allowed
@@ -1357,6 +1407,9 @@ namespace Anki
       cv::Mat_<Point_s16>& get_CvMat_();
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
+      // If this array or array2 are different sizes or uninitialized, then return false.
+      bool IsEqualSize(const Array_Point_s16 &array2) const;
+
       // Print out the contents of this Array_Point_s16
       void Print() const;
 
@@ -1365,11 +1418,6 @@ namespace Anki
       // beginning and end).  If the Array_Point_s16 was not constructed with the
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
-
-      // Check every element of this array against the input array. If the arrays are different
-      // sizes, uninitialized, or if any element is more different than the threshold, then return
-      // false.
-      bool IsElementwiseEqual(const Array_Point_s16 &array2, Point_s16 threshold) const;
 
       // Set every element in the Array_Point_s16 to this value
       // Returns the number of values set
@@ -1403,13 +1451,13 @@ namespace Anki
       // should be used to free.
       void * rawDataPointer;
 
-      void initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
-
-      void invalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cv::Mat_<Point_s16> cvMatMirror;
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      void Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
+
+      void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
 
     private:
       //Array_Point_s16 & operator= (const Array_Point_s16 & rightHandSide); // In the future, assignment may not be allowed
