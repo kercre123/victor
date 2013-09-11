@@ -43,6 +43,7 @@ namespace Anki
     Array2d();
     Array2d(s32 nrows, s32 ncols); // alloc/de-alloc handled for you
     Array2d(s32 nrows, s32 ncols, T *data); // you handle memory yourself
+    Array2d(s32 nrows, s32 ncols, const T &data); // you handle memory yourself
     Array2d(const Embedded::Array2d<T> &other); // *copies* data from unmanaged array
 
     // Reference counting assignment (does not copy):
@@ -128,22 +129,37 @@ namespace Anki
 #pragma mark --- Array2d(Managed) Implementation ---
   template<typename T>
   Array2d<T>::Array2d(void)
+#if defined(ANKICORETECH_USE_OPENCV)
     : cv::Mat_<T>()
+#endif
   {
   } // Constructor: Array2d()
 
   template<typename T>
   Array2d<T>::Array2d(s32 numRows, s32 numCols)
+#if defined(ANKICORETECH_USE_OPENCV)
     : cv::Mat_<T>(numRows, numCols)
+#endif
   {
   } // Constructor: Array2d(rows,cols)
 
   template<typename T>
   Array2d<T>::Array2d(s32 numRows, s32 numCols, T *data)
+#if defined(ANKICORETECH_USE_OPENCV)
     : cv::Mat_<T>(numRows, numCols, data)
+#endif
   {
   } // Constructor: Array2d(rows, cols, *data)
 
+  template<typename T>
+  Array2d<T>::Array2d(s32 numRows, s32 numCols, const T &data)
+#if defined(ANKICORETECH_USE_OPENCV)
+  : cv::Mat_<T>(numRows, numCols, data)
+#endif
+  {
+  } // Constructor: Array2d(rows, cols, &data)
+  
+  
 #if defined(ANKICORETECH_USE_OPENCV)
   template<typename T>
   Array2d<T>::Array2d(const cv::Mat_<T> &other)
@@ -161,7 +177,9 @@ namespace Anki
 
   template<typename T>
   Array2d<T>::Array2d(const Embedded::Array2d<T> &other)
+#if defined(ANKICORETECH_USE_OPENCV)
     : Array2d<T>(other.get_cvMat_())
+#endif
   {
   } // Constructor: Array2d( Embedded::Array2d )
 
@@ -180,24 +198,30 @@ namespace Anki
   template<typename T>
   Array2d<T>& Array2d<T>::operator=(const Array2d<T> &other)
   {
+#if defined(ANKICORETECH_USE_OPENCV)
     // Provide thin wrapper to OpenCV's handy reference-counting assignment:
     cv::Mat_<T>::operator=(other);
     return *this;
+#endif
   }
 
   template<typename T>
   T  Array2d<T>::operator() (const unsigned int row,
     const unsigned int col) const
   {
+#if defined(ANKICORETECH_USE_OPENCV)
     // Provide thin wrapper to OpenCV's (row,col) access:
     return cv::Mat_<T>::operator()(row,col);
+#endif
   }
 
   template<typename T>
   T& Array2d<T>::operator() (const unsigned int row, const unsigned int col)
   {
+#if defined(ANKICORETECH_USE_OPENCV)    
     // Provide thin wrapper to OpenCV's (row,col) access:
     return cv::Mat_<T>::operator()(row,col);
+#endif
   }
 
 #if defined(ANKICORETECH_USE_OPENCV)
@@ -219,13 +243,17 @@ namespace Anki
   template<typename T>
   s32 Array2d<T>::numRows(void) const
   {
+#if defined(ANKICORETECH_USE_OPENCV)
     return s32(this->rows);
+#endif
   }
 
   template<typename T>
   s32 Array2d<T>::numCols(void) const
   {
+#if defined(ANKICORETECH_USE_OPENCV)
     return s32(this->cols);
+#endif
   }
 
   template<typename T>

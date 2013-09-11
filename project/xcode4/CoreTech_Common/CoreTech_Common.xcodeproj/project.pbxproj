@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0A7E658617DFFFB100B058C2 /* coreTechCommonTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0A7E658517DFFFB100B058C2 /* coreTechCommonTests.cpp */; };
+		0AC22F9317E00D8A00C65748 /* testMatrix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0AC22F9217E00D8A00C65748 /* testMatrix.cpp */; };
 		0ADF839917DE72480090B846 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0ADF839817DE72480090B846 /* main.cpp */; };
 		0ADF839B17DE72480090B846 /* UnitTest.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = 0ADF839A17DE72480090B846 /* UnitTest.1 */; };
 		0ADF83A117DE76520090B846 /* matrix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 493C9C5217CFB8A900DBBF6B /* matrix.cpp */; };
@@ -78,6 +79,7 @@
 
 /* Begin PBXFileReference section */
 		0A7E658517DFFFB100B058C2 /* coreTechCommonTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = coreTechCommonTests.cpp; path = ../../../../test/coreTechCommonTests.cpp; sourceTree = "<group>"; };
+		0AC22F9217E00D8A00C65748 /* testMatrix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = testMatrix.cpp; path = ../../../../test/testMatrix.cpp; sourceTree = "<group>"; };
 		0ADF839617DE72480090B846 /* UnitTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = UnitTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0ADF839817DE72480090B846 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		0ADF839A17DE72480090B846 /* UnitTest.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = UnitTest.1; sourceTree = "<group>"; };
@@ -173,6 +175,7 @@
 		0ADF839717DE72480090B846 /* UnitTest */ = {
 			isa = PBXGroup;
 			children = (
+				0AC22F9217E00D8A00C65748 /* testMatrix.cpp */,
 				0A7E658517DFFFB100B058C2 /* coreTechCommonTests.cpp */,
 				0ADF839817DE72480090B846 /* main.cpp */,
 				0ADF839A17DE72480090B846 /* UnitTest.1 */,
@@ -349,6 +352,7 @@
 				0ADF83E517DEB7DB0090B846 /* array2d.cpp in Sources */,
 				0ADF83E617DEB7DE0090B846 /* memory.cpp in Sources */,
 				0A7E658617DFFFB100B058C2 /* coreTechCommonTests.cpp in Sources */,
+				0AC22F9317E00D8A00C65748 /* testMatrix.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -5,9 +5,13 @@
 #include "opencv2/opencv.hpp"
 #endif
 
+#include <ostream>
+#include <cstdio>
 #include "anki/common/array2d.h"
 
 #include "anki/math/point.h"
+
+using namespace std;
 
 namespace Anki {
   
@@ -20,6 +24,7 @@ namespace Anki {
   public:
     Matrix(); 
     Matrix(s32 nrows, s32 ncols);
+    Matrix(s32 nrows, s32 ncols, const T& initVal);
     
 #if defined(ANKICORETECH_USE_OPENCV)
     // Construct from an OpenCv cv::Mat_<T>.
@@ -102,6 +107,13 @@ namespace Anki {
   template<typename T>
   Matrix<T>::Matrix(s32 nrows, s32 ncols)
   : Array2d<T>(nrows, ncols)
+  {
+    
+  }
+  
+  template<typename T>
+  Matrix<T>::Matrix(s32 nrows, s32 ncols, const T &initVal)
+  : Array2d<T>(nrows, ncols, initVal)
   {
     
   }
@@ -194,7 +206,18 @@ namespace Anki {
 #endif
   } // Matrix<T>::Tranpose()
   
-
+  
+  template<typename T>
+  ostream& operator<<(ostream& out, const Matrix<T>& m)
+  {
+    for (int i=0; i<m.numRows(); ++i) {
+      for (int j=0; j<m.numCols(); ++j) {
+        out << m(i,j) << " ";
+      }
+      out << "\n";
+    }
+    return out;
+  }
   
   
   template<typename T, unsigned int NROWS, unsigned int NCOLS>
@@ -241,13 +264,13 @@ namespace Anki {
   template<typename T, unsigned int NROWS, unsigned int NCOLS>
   T&  SmallMatrix<T,NROWS,NCOLS>::operator() (unsigned int i, unsigned int j)
   {
-    return (*this)(i,j);
+    return cv::Matx<T,NROWS,NCOLS>::operator()(i,j);
   }
   
   template<typename T, unsigned int NROWS, unsigned int NCOLS>
   const T& SmallMatrix<T,NROWS,NCOLS>::operator() (unsigned int i, unsigned int j) const
   {
-    return (*this)(i,j);
+    return cv::Matx<T,NROWS,NCOLS>::operator()(i,j);
   }
   
   // Matrix multiplication:
@@ -322,8 +345,17 @@ namespace Anki {
   
 #endif  
   
-  
-  
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  ostream& operator<<(ostream& out, const SmallMatrix<T, NROWS, NCOLS>& m)
+  {
+    for (int i=0; i<NROWS; ++i) {
+      for (int j=0; j<NCOLS; ++j) {
+        out << m(i,j) << " ";
+      }
+      out << "\n";
+    }
+    return out;
+  }
   
 
 } // namespace Anki
