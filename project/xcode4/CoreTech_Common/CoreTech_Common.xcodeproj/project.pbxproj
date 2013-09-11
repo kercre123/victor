@@ -374,9 +374,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_ARC = YES;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-				);
+				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				HEADER_SEARCH_PATHS = (
 					../../../include,
 					"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/extern/include",
@@ -407,6 +405,7 @@
 					"\"$(SYSTEM_APPS_DIR)/MATLAB_R2012b.app/bin/maci64\"",
 					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug\"",
 					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/gtest-1.7.0/Debug\"",
+					"\"$(SRCROOT)/../../../build/xcode4/lib\"",
 				);
 				PRIVATE_HEADERS_FOLDER_PATH = /usr/local/include;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -419,9 +418,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_ARC = YES;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-				);
+				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				HEADER_SEARCH_PATHS = (
 					../../../include,
 					"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/extern/include",
@@ -452,6 +449,7 @@
 					"\"$(SYSTEM_APPS_DIR)/MATLAB_R2012b.app/bin/maci64\"",
 					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/opencv-2.4.6.1/lib/Debug\"",
 					"\"$(SRCROOT)/../../../../coretech-external/build/xcode4/gtest-1.7.0/Debug\"",
+					"\"$(SRCROOT)/../../../build/xcode4/lib\"",
 				);
 				PRIVATE_HEADERS_FOLDER_PATH = /usr/local/include;
 				PRODUCT_NAME = "$(TARGET_NAME)";
