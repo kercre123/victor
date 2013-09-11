@@ -108,6 +108,11 @@ namespace Anki
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
 
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then return
+      // false.
+      bool IsElementwiseEqual(const Array_u8 &array2, u8 threshold) const;
+
       // Set every element in the Array_u8 to this value
       // Returns the number of values set
       s32 Set(const u8 value);
@@ -228,6 +233,11 @@ namespace Anki
       // beginning and end).  If the Array_s8 was not constructed with the
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
+
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then return
+      // false.
+      bool IsElementwiseEqual(const Array_s8 &array2, s8 threshold) const;
 
       // Set every element in the Array_s8 to this value
       // Returns the number of values set
@@ -350,6 +360,11 @@ namespace Anki
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
 
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then return
+      // false.
+      bool IsElementwiseEqual(const Array_u16 &array2, u16 threshold) const;
+
       // Set every element in the Array_u16 to this value
       // Returns the number of values set
       s32 Set(const u16 value);
@@ -470,6 +485,11 @@ namespace Anki
       // beginning and end).  If the Array_s16 was not constructed with the
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
+
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then return
+      // false.
+      bool IsElementwiseEqual(const Array_s16 &array2, s16 threshold) const;
 
       // Set every element in the Array_s16 to this value
       // Returns the number of values set
@@ -592,6 +612,11 @@ namespace Anki
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
 
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then return
+      // false.
+      bool IsElementwiseEqual(const Array_u32 &array2, u32 threshold) const;
+
       // Set every element in the Array_u32 to this value
       // Returns the number of values set
       s32 Set(const u32 value);
@@ -712,6 +737,11 @@ namespace Anki
       // beginning and end).  If the Array_s32 was not constructed with the
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
+
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then return
+      // false.
+      bool IsElementwiseEqual(const Array_s32 &array2, s32 threshold) const;
 
       // Set every element in the Array_s32 to this value
       // Returns the number of values set
@@ -834,6 +864,11 @@ namespace Anki
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
 
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then return
+      // false.
+      bool IsElementwiseEqual(const Array_u64 &array2, u64 threshold) const;
+
       // Set every element in the Array_u64 to this value
       // Returns the number of values set
       s32 Set(const u64 value);
@@ -954,6 +989,11 @@ namespace Anki
       // beginning and end).  If the Array_s64 was not constructed with the
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
+
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then return
+      // false.
+      bool IsElementwiseEqual(const Array_s64 &array2, s64 threshold) const;
 
       // Set every element in the Array_s64 to this value
       // Returns the number of values set
@@ -1076,6 +1116,11 @@ namespace Anki
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
 
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then return
+      // false.
+      bool IsElementwiseEqual(const Array_f32 &array2, f32 threshold) const;
+
       // Set every element in the Array_f32 to this value
       // Returns the number of values set
       s32 Set(const f32 value);
@@ -1197,6 +1242,11 @@ namespace Anki
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
 
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then return
+      // false.
+      bool IsElementwiseEqual(const Array_f64 &array2, f64 threshold) const;
+
       // Set every element in the Array_f64 to this value
       // Returns the number of values set
       s32 Set(const f64 value);
@@ -1315,6 +1365,11 @@ namespace Anki
       // beginning and end).  If the Array_Point_s16 was not constructed with the
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
+
+      // Check every element of this array against the input array. If the arrays are different
+      // sizes, uninitialized, or if any element is more different than the threshold, then return
+      // false.
+      bool IsElementwiseEqual(const Array_Point_s16 &array2, Point_s16 threshold) const;
 
       // Set every element in the Array_Point_s16 to this value
       // Returns the number of values set

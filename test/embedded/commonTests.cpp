@@ -14,8 +14,74 @@ Anki::Embedded::Matlab matlab(false);
 #include "gtest/gtest.h"
 #endif
 
-#define MAX_BYTES 1000
+#define MAX_BYTES 5000
 char buffer[MAX_BYTES];
+
+GTEST_TEST(CoreTech_Common, SVD)
+{
+  const s32 numBytes = MIN(MAX_BYTES, 5000);
+  //void * buffer = calloc(numBytes+Anki::Embedded::MEMORY_ALIGNMENT, 1);
+  void * alignedBuffer = reinterpret_cast<void*>(Anki::Embedded::RoundUp(reinterpret_cast<size_t>(buffer), Anki::Embedded::MEMORY_ALIGNMENT));
+  ASSERT_TRUE(buffer != NULL);
+  Anki::Embedded::MemoryStack ms(alignedBuffer, numBytes);
+  ASSERT_TRUE(ms.IsValid());
+  
+  const char * aData =
+    "1 2 3 5 7 11 13 17 "
+    "19 23 29 31 37 41 43 47 ";
+
+  const char *uGroundTruthData =
+   "-0.237504316543999  -0.971386483137874 "
+   "-0.971386483137875  0.237504316543999 ";
+
+  const char *wGroundTruthData =
+  "101.885662808124  0  0  0  0  0  0  0 "
+  "0  9.29040979446927  0  0  0  0  0  0 ";
+
+  const char *vGroundTruthData =
+  "-0.183478685625953  0.381166774075590  -0.227185052857744  -0.262651399482480  -0.324884751171929  -0.395817444421400  -0.431283791046136  -0.502216484295607 "
+  "-0.223946108965585  0.378866636898153  -0.469620636740071  -0.301123351378262  -0.243759383675343  0.0932351870482750  0.261732472410084  0.598727043133703 "
+  "-0.283481700610061  0.427695421221120  0.828412170627898  -0.120288604832971  -0.107225790475501  -0.00462734139723796  0.0466718831418935  0.149270332220156 "
+  "-0.307212042374800  0.269708382365037  -0.133259849703043  0.894501576357598  -0.104644995857761  -0.0491221437364792  -0.0213607176758380  0.0341621344454443 "
+  "-0.369078720749224  0.213979186509760  -0.130174916014859  -0.112627300393190  0.880843955313500  -0.0840608134431630  -0.0665131978214941  -0.0314179665781565 "
+  "-0.416539404278702  -0.101994891202405  -0.0535189566767408  -0.0830469380120526  -0.113994455451022  0.826949581878355  -0.202578399456957  -0.261634362127581 "
+  "-0.440269746043441  -0.259981930058488  -0.0151909770076815  -0.0682567568214837  -0.111413660833282  -0.217545220460887  0.729388999725311  -0.376742559902293 "
+  "-0.487730429572919  -0.575956007770654  0.0614649823304370  -0.0386763944403458  -0.106252071597804  -0.306534825139369  -0.406676201910152  0.393041044548282 ";
+
+  const s32 m = 2, n = 8;
+
+  Anki::Embedded::Array_f32 a(m, n, ms);
+  Anki::Embedded::Array_f32 w(m, n, ms);
+  Anki::Embedded::Array_f32 uT(m, m, ms);
+  Anki::Embedded::Array_f32 vT(n, n, ms);
+
+  ASSERT_TRUE(a.IsValid());
+  ASSERT_TRUE(w.IsValid());
+  ASSERT_TRUE(uT.IsValid());
+  ASSERT_TRUE(vT.IsValid());
+
+  void * scratch = ms.Allocate(sizeof(float)*(2*n+m));
+  ASSERT_TRUE(scratch);
+
+  a.Set(aData);
+
+  const Anki::Embedded::Result result = svd_f32(a, w, uT, vT, scratch);
+
+  ASSERT_TRUE(result == Anki::Embedded::RESULT_OK);
+
+  printf("\nw:\n");
+  w.Print();
+
+  printf("\nuT:\n");
+  uT.Print();
+
+  printf("\nvT:\n");
+  vT.Print();
+
+  printf("\n");
+
+  GTEST_RETURN_HERE;
+}
 
 GTEST_TEST(CoreTech_Common, MemoryStack)
 {
@@ -26,6 +92,7 @@ GTEST_TEST(CoreTech_Common, MemoryStack)
   void * alignedBuffer = reinterpret_cast<void*>(Anki::Embedded::RoundUp(reinterpret_cast<size_t>(buffer), Anki::Embedded::MEMORY_ALIGNMENT));
   ASSERT_TRUE(buffer != NULL);
   Anki::Embedded::MemoryStack ms(alignedBuffer, numBytes);
+  ASSERT_TRUE(ms.IsValid());
 
   void * const buffer1 = ms.Allocate(5);
   void * const buffer2 = ms.Allocate(16);
@@ -475,6 +542,7 @@ void RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Common, ArrayAlignment1);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStackAlignment);
   CALL_GTEST_TEST(CoreTech_Common, ArrayFillPattern);
+  CALL_GTEST_TEST(CoreTech_Common, SVD);
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 } // void RUN_ALL_TESTS()

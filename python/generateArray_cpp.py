@@ -112,8 +112,13 @@ def __GenerateDefinitions(whichTypes, includeAllMethods):
             '        for(s32 x=0; x<size[1]; x++) {\n'
 
         if includeAllMethods:
-            methodsString +=\
-            '          printf("%d ", rowPointer[x]);\n'
+            if type[0] == 'f':
+                methodsString +=\
+                '          printf("%f ", rowPointer[x]);\n'
+
+            else:
+                methodsString +=\
+                '          printf("%d ", rowPointer[x]);\n'
         else:
             methodsString +=\
             '          rowPointer[x].Print();\n' +\

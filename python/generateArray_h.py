@@ -102,7 +102,12 @@ def __GenerateDeclarations(whichTypes, includeAllMethods):
         if includeAllMethods:
             methodsString +=\
             '      void Show(const char * const windowName, const bool waitForKeypress) const;\n' +\
-            '\n'
+            '\n' +\
+            '      // Check every element of this array against the input array. If the arrays are different\n' +\
+            '      // sizes, uninitialized, or if any element is more different than the threshold, then return\n' +\
+            '      // false.\n' +\
+            '      bool IsElementwiseEqual(const Array_' + type + ' &array2, ' + type + ' threshold) const;\n' +\
+            '\n' +\
 
         methodsString +=\
             '      // Returns a templated cv::Mat_ that shares the same buffer with this Array_' + type + '. No data is copied.\n' +\

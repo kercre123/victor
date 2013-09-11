@@ -2192,7 +2192,7 @@ namespace Anki
       for(s32 y=0; y<size[0]; y++) {
         const f32 * rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
-          printf("%d ", rowPointer[x]);
+          printf("%f ", rowPointer[x]);
         }
         printf("\n");
       }
@@ -2453,7 +2453,7 @@ namespace Anki
       for(s32 y=0; y<size[0]; y++) {
         const f64 * rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
-          printf("%d ", rowPointer[x]);
+          printf("%f ", rowPointer[x]);
         }
         printf("\n");
       }
