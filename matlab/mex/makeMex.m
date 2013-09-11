@@ -34,6 +34,7 @@ else % if useAndrewsPaths
     compileAnkiMex('mexDownsampleByFactor.cpp');
     compileAnkiMex('mexComputeCharacteristicScale.cpp');
     compileAnkiMex('mexTraceBoundary.cpp');
+    compileAnkiMex('mexOpencvLightSvd.cpp');
 
 end % if useAndrewsPaths ... else
    
