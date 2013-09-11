@@ -21,6 +21,9 @@
 
 function boundary = approximateTraceBoundary(component)
 
+assert(BlockMarker2D.UseOutsideOfSquare, ...
+    'You need to set constant property BlockMarker2D.UseOutsideOfSquare = true to use this method.');
+
 coordinate_top = min(component(:,1), [], 1);
 coordinate_bottom = max(component(:,1), [], 1);
 coordinate_left = min(component(:,2), [], 1);
@@ -138,9 +141,4 @@ end
 boundary(:,1) = boundary(:,1) + coordinate_left - 1;
 boundary(:,2) = boundary(:,2) + coordinate_top - 1;
 
-% Switch to matlab format
-boundaryTmp = zeros(size(boundary));
-boundaryTmp(:,1) = boundary(:,2);
-boundaryTmp(:,2) = boundary(:,1);
-
-
+boundary = fliplr(boundary);
