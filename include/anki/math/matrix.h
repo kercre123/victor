@@ -154,9 +154,11 @@ namespace Anki {
   template<typename T>
   void Matrix<T>::Invert(void)
   {
+    CORETECH_THROW_IF(this->numRows() != this->numCols());
+    
 #if defined(ANKICORETECH_USE_OPENCV)
     // For now (?), rely on OpenCV for matrix inversion:
-    *this = this->get_CvMat_().inv();
+    *this = (Matrix<T>)this->get_CvMat_().inv();
 #else
     assert(false);
     // TODO: Define our own opencv-free inverse?
@@ -166,13 +168,14 @@ namespace Anki {
   template<typename T>
   Matrix<T> Matrix<T>::getInverse(void) const
   {
+    CORETECH_THROW_IF(this->numRows() != this->numCols());
     
 #if defined(ANKICORETECH_USE_OPENCV)
     // For now (?), rely on OpenCV for matrix inversion:
     Matrix<T> result(this->get_CvMat_().inv());
 #else
     assert(false);
-    // TODO: Define our own opencv-free inverse?
+    // TODO: Define our own opencv-free transpose?
 #endif
     
     return result;
@@ -185,7 +188,6 @@ namespace Anki {
   {
     
 #if defined(ANKICORETECH_USE_OPENCV)
-    // For now (?), rely on OpenCV for matrix inversion:
     Matrix<T> result;
     cv::transpose(this->get_CvMat_(), result.get_CvMat_());
 #else
@@ -202,8 +204,7 @@ namespace Anki {
   void Matrix<T>::Transpose(void)
   {
 #if defined(ANKICORETECH_USE_OPENCV)
-    // For now (?), rely on OpenCV for matrix transpose:
-    this->get_CvMat_().t();
+    cv::transpose(this->get_CvMat_(), this->get_CvMat_());
 #else
     assert(false);
     // TODO: Define our own opencv-free tranpose?
@@ -232,7 +233,7 @@ namespace Anki {
   {
 #if (!defined(ANKICORETECH_USE_OPENCV))
     assert(false);
-    // TODO: Define our own opencv-free tranpose?
+    // TODO: Define our own opencv-free constructor?
 #endif
   }
   
@@ -245,7 +246,7 @@ namespace Anki {
   {
 #if !defined(ANKICORETECH_USE_OPENCV)
     assert(false);
-    // TODO: Define our own opencv-free tranpose?
+    // TODO: Define our own opencv-free constructor?
 #endif
   }
 
@@ -258,7 +259,7 @@ namespace Anki {
   {
 #if !defined(ANKICORETECH_USE_OPENCV)
     assert(false);
-    // TODO: Define our own opencv-free tranpose?
+    // TODO: Define our own opencv-free constructor?
 #endif
   }
 
@@ -289,11 +290,11 @@ namespace Anki {
   {
 #if defined(ANKICORETECH_USE_OPENCV)
     SmallMatrix<T,NROWS,KCOLS> res;
-    res = (*this) * other;
+    res = this->get_CvMatx_() * other.get_CvMatx_();
     return res;
 #else
     assert(false);
-    // TODO: Define our own opencv-free tranpose?
+    // TODO: Define our own opencv-free multiplication?
 #endif
   }
   
@@ -301,11 +302,13 @@ namespace Anki {
   template<typename T, unsigned int NROWS, unsigned int NCOLS>
   void SmallMatrix<T,NROWS,NCOLS>::Invert(void)
   {
+    CORETECH_THROW_IF(NROWS != NCOLS);
+    
 #if defined(ANKICORETECH_USE_OPENCV)
     (*this) = this->inv();
 #else
     assert(false);
-    // TODO: Define our own opencv-free tranpose?
+    // TODO: Define our own opencv-free inverse?
 #endif
     
   }
@@ -313,12 +316,14 @@ namespace Anki {
   template<typename T, unsigned int NROWS, unsigned int NCOLS>
   SmallMatrix<T,NROWS,NCOLS> SmallMatrix<T,NROWS,NCOLS>::getInverse(void) const
   {
+    CORETECH_THROW_IF(NROWS != NCOLS);
+    
 #if defined(ANKICORETECH_USE_OPENCV)
     SmallMatrix<T,NROWS,NCOLS> res(this->inv());
     return res;
 #else
     assert(false);
-    // TODO: Define our own opencv-free tranpose?
+    // TODO: Define our own opencv-free inverse?
 #endif
     
   }
