@@ -10,7 +10,4 @@
    <FileRef
       location = "group:CoreTech_Common/CoreTech_Common.xcodeproj">
    </FileRef>
-   <FileRef
-      location = "group:CoreTech_Common_Test/CoreTech_Common_Test.xcodeproj">
-   </FileRef>
 </Workspace>
