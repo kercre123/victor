@@ -3,6 +3,7 @@
 
 #include "anki/math/matrix.h"
 #include "anki/math/rotation.h"
+#include "anki/math/radians.h"
 
 #include "anki/math/point.h"
 
@@ -17,15 +18,15 @@ namespace Anki {
   {
   public:
     // Constructors:
-    Pose2d(const float x, const float y, const float angle);
-    Pose2d(const float x, const float y, const float angle,
+    Pose2d(const float x, const float y, const Radians angle);
+    Pose2d(const float x, const float y, const Radians angle,
            const Matrix<float> &cov);
     
     // Accessors:
     inline float   get_x()     const;
     inline float   get_y()     const;
     inline Point2f get_xy()    const;
-    inline float   get_angle() const;
+    inline Radians get_angle() const;
     
     Vec3f get_normal(void) const;
     void  set_normal(const Vec3f &normal_new);
@@ -43,7 +44,8 @@ namespace Anki {
     void Invert(void); // in place
     
   protected:
-    float x, y, angle;
+    float x, y;
+    Radians angle;
     
     // Stores the orientation of this 2D plane in 3D space
     Vec3f normal;
