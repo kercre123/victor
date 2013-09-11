@@ -11,6 +11,7 @@
 
 #include "anki/common/datastructures.h"
 
+#include "anki/math/radians.h"
 #include "anki/math/matrix.h"
 #include "anki/math/point.h"
 
@@ -19,7 +20,7 @@ namespace Anki {
   class RotationMatrix2d : public Matrix_2x2f
   {
   public:
-    RotationMatrix2d(const float angle = 0.f);
+    RotationMatrix2d(const Radians angle = 0.f);
     
   }; // class RotationMatrix
   
@@ -30,21 +31,21 @@ namespace Anki {
   {
   public:
     RotationVector3d(); // no rotation around z axis
-    RotationVector3d(const float angle, const float axis);
+    RotationVector3d(const Radians angle, const float axis);
     RotationVector3d(const Vec3f &rvec);
     RotationVector3d(const RotationMatrix3d &rmat);
        
-    inline float        get_angle() const;
+    inline Radians      get_angle() const;
     inline const Vec3f& get_axis()  const;
     
   protected:
-    float angle;
+    Radians angle;
     Vec3f axis;
     
   }; // class RotationVector3d
   
   // Inline accessors:
-  float RotationVector3d::get_angle(void) const
+  Radians RotationVector3d::get_angle(void) const
   { return this->angle; }
   
   const Vec3f& RotationVector3d::get_axis(void) const
@@ -60,7 +61,7 @@ namespace Anki {
   
     Point3f operator*(const Point3f &p) const;
     
-    inline float        get_angle() const;
+    inline Radians      get_angle() const;
     inline const Vec3f& get_axis() const;
     
   protected:
@@ -69,7 +70,7 @@ namespace Anki {
   }; // class RotationMatrix3d
 
   // Inline accessors:
-  float RotationMatrix3d::get_angle(void) const
+  Radians RotationMatrix3d::get_angle(void) const
   { return this->rotationVector.get_angle(); }
   
   const Vec3f& RotationMatrix3d::get_axis(void) const

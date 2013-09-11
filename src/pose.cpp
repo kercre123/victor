@@ -24,7 +24,7 @@ namespace Anki {
     return Point2f(this->x, this->y);
   }
   
-  float Pose2d::get_angle(void) const
+  Radians Pose2d::get_angle(void) const
   {
     return this->angle;
   }
