@@ -10,9 +10,21 @@
 %desktop;
 %keyboard;
 
+% Set up paths for BlockWorld to work (do this before creating the
+% BlockWorldWebotController object, which may rely on things in the Cozmo
+% path)
+run(fullfile('..', '..', '..', 'products-cozmo', 'matlab', 'initCozmoPath')); 
+
+
 useMatlabDisplay = false;
 doProfile = false;
 headAngleSigma = .1; % Noise in head pitch angle measurement, in degrees
+embeddedConversions = EmbeddedConversionsManager();
+% embeddedConversions = EmbeddedConversionsManager( ...
+%     'homographyEstimationType', 'opencv_cp2tform', ...
+%     'computeCharacteristicScaleImageType', 'c_fixedPoint', ...
+%     'traceBoundaryType', 'matlab_approximate', ...
+%     'connectedComponentsType', 'matlab_approximate');
 
 if doProfile
     if ~useMatlabDisplay
@@ -22,16 +34,13 @@ if doProfile
     profile on
 end
 
-% Set up paths for BlockWorld to work (do this before creating the
-% BlockWorldWebotController object, which may rely on things in the Cozmo
-% path)
-run(fullfile('..', '..', '..', 'products-cozmo', 'matlab', 'initCozmoPath')); 
 
 blockWorldController = BlockWorldWebotController();
 
 blockWorld = BlockWorld('CameraType', 'webot', ...
     'CameraDevice', blockWorldController.cam_head, ...
-    'CameraCalibration', blockWorldController.GetCalibrationStruct('cam_head'), ... 
+    'CameraCalibration', blockWorldController.GetCalibrationStruct('cam_head'), ...
+    'EmbeddedConversions', embeddedConversions, ...
     'MatCameraDevice', blockWorldController.cam_down, ...
     'MatCameraCalibration', blockWorldController.GetCalibrationStruct('cam_down'), ...
     'HasMat', true, 'ZDirection', 'down', ...
