@@ -11,26 +11,50 @@ namespace Anki
 
     /*! Performs an Singular Value Decomposition on the mXn, float32 input array. [u^t,w,v^t] = SVD(a); */
     Result svd_f32(
-      Array_f32 &a, //!< Input array mXn
-      Array_f32 &w, //!< W array mXn
+      Array_f32 &a,  //!< Input array mXn
+      Array_f32 &w,  //!< W array mXn
       Array_f32 &uT, //!< U-transpose array mXm
       Array_f32 &vT, //!< V-transpose array nXn
       void * scratch //!< A scratch buffer, with at least "sizeof(float)*(n*2 + m)" bytes
       );
 
+    /*! Performs an Singular Value Decomposition on the mXn, float64 input array. [u^t,w,v^t] = SVD(a); */
+    Result svd_f64(
+      Array_f64 &a,  //!< Input array mXn
+      Array_f64 &w,  //!< W array mXn
+      Array_f64 &uT, //!< U-transpose array mXm
+      Array_f64 &vT, //!< V-transpose array nXn
+      void * scratch //!< A scratch buffer, with at least "sizeof(f64)*(n*2 + m)" bytes
+      );
+
     /*! Performs an Singular Value Decomposition on the mXn, float32 input array. [w,u^t,v^t] = SVD(a); */
     void icvLightSVD_32f(
-      float* a, //!< Pointer to the upper-left of the input array. Warning: this array will be modified.
-      int lda,  //!< A_stride_in_bytes / sizeof(float)
-      int m,    //!< Number of rows of A
-      int n,    //!< Number of columns of A
-      float* w, //!< Pointer to the upper-left of the W array
-      float* uT,//!< Pointer to the upper-left of the U-transpose array
-      int lduT, //!< U_stride_in_bytes / sizeof(float)
-      int nu,   //!< Number of columns of U
-      float* vT,//!< Pointer to the upper-left of the V-transpose array
-      int ldvT, //!< V_stride_in_bytes / sizeof(float)
-      float* buffer //!< A scratch buffer, with at least "sizeof(float)*(n*2 + m)" bytes
+      f32* a,   //!< Pointer to the upper-left of the input array. Warning: this array will be modified.
+      s32 lda,  //!< A_stride_in_bytes / sizeof(float)
+      s32 m,    //!< Number of rows of A
+      s32 n,    //!< Number of columns of A
+      f32* w,   //!< Pointer to the upper-left of the W array
+      f32* uT,  //!< Pointer to the upper-left of the U-transpose array
+      s32 lduT, //!< U_stride_in_bytes / sizeof(float)
+      s32 nu,   //!< Number of columns of U
+      f32* vT,  //!< Pointer to the upper-left of the V-transpose array
+      s32 ldvT, //!< V_stride_in_bytes / sizeof(float)
+      f32* buffer //!< A scratch buffer, with at least "sizeof(f32)*(n*2 + m)" bytes
+      );
+
+    /*! Performs an Singular Value Decomposition on the mXn, float64 input array. [w,u^t,v^t] = SVD(a); */
+    void icvLightSVD_64f(
+      f64* a,   //!< Pointer to the upper-left of the input array. Warning: this array will be modified.
+      s32 lda,  //!< A_stride_in_bytes / sizeof(float)
+      s32 m,    //!< Number of rows of A
+      s32 n,    //!< Number of columns of A
+      f64* w,   //!< Pointer to the upper-left of the W array
+      f64* uT,  //!< Pointer to the upper-left of the U-transpose array
+      s32 lduT, //!< U_stride_in_bytes / sizeof(float)
+      s32 nu,   //!< Number of columns of U
+      f64* vT,  //!< Pointer to the upper-left of the V-transpose array
+      s32 ldvT, //!< V_stride_in_bytes / sizeof(float)
+      f64* buffer //!< A scratch buffer, with at least "sizeof(float)*(n*2 + m)" bytes
       );
   } // namespace Embedded
 } // namespace Anki
