@@ -126,6 +126,16 @@ namespace Anki
   namespace Embedded
   {
     const size_t MEMORY_ALIGNMENT = 16; // To support 128-bit SIMD loads and stores
+
+    // Return values:
+    typedef enum Result_ {
+      RESULT_OK = 0,
+      RESULT_FAIL = 1,
+      RESULT_FAIL_MEMORY = 10000,
+      RESULT_FAIL_OUT_OF_MEMORY = 10001,
+      RESULT_FAIL_IO = 20000,
+      RESULT_FAIL_INVALID_PARAMETERS = 30000
+    } Result;
   }
 }
 

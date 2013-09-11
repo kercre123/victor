@@ -7,6 +7,8 @@ namespace Anki
 {
   namespace Embedded
   {
+    Result cvHomographyEstimator_runKernel(const FixedLengthList_Point_f64 &m1, const FixedLengthList_Point_f64 &m2, Array_f64 &H, MemoryStack &scratch);
+
     /*! Performs an Singular Value Decomposition on the mXn, float32 input array. [u^t,w,v^t] = SVD(a); */
     Result svd_f32(
       Array_f32 &a, //!< Input array mXn

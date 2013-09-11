@@ -203,7 +203,7 @@ def GenerateAndWriteFile(filename = '../include/anki/embeddedCommon/array2d.h'):
     topString = __GenerateTopOfFile()
 
     methodsDeclarations  = __GenerateDeclarations(['u8', 's8', 'u16', 's16', 'u32', 's32', 'u64', 's64', 'f32', 'f64'], True)
-    methodsDeclarations += __GenerateDeclarations(['Point_s16'], False)
+    methodsDeclarations += __GenerateDeclarations(['Point_s16', 'Point_f32', 'Point_f64'], False)
 
     bottomString = __GenerateBottomOfFile()
 

@@ -616,5 +616,84 @@ namespace Anki
         }
       }
     }
+
+    Result cvHomographyEstimator_runKernel(const FixedLengthList_Point_f64 &m1, const FixedLengthList_Point_f64 &m2, Array_f64 &H, MemoryStack &scratch)
+    {
+      const s32 count = m1.get_size();
+      const Point_f64 * const M = m1.Pointer(0);
+      const Point_f64 * const m = m2.Pointer(0);
+
+      /*Array_f64 _LtL = Array_f64( 9, 9, LtL, 9*16, false);
+      Array_f64 matW = Array_f64( 9, 1, W, 16, false);
+      Array_f64 matV = Array_f64( 9, 9, V, 9*16, false);
+      Array_f64 _H0 = Array_f64( 3, 3, V[8], 3*3, false);
+      Array_f64 _Htemp = Array_f64( 3, 3, V[7], 3*3, false);*/
+
+      Array_f64 _LtL = Array_f64(9, 9, scratch);
+      Array_f64 matW = Array_f64(9, 1, scratch);
+      Array_f64 matV = Array_f64(9, 9, scratch);
+      Array_f64 _H0 = Array_f64(3, 3, scratch);
+      Array_f64 _Htemp = Array_f64(3, 3, scratch);
+
+      //CvPoint2D64f cM={0,0}, cm={0,0}, sM={0,0}, sm={0,0};
+      Point_f64 cM(0,0), cm(0,0), sM(0,0), sm(0,0);
+
+      for(s32 i = 0; i < count; i++) {
+        cm.x += m[i].x; cm.y += m[i].y;
+        cM.x += M[i].x; cM.y += M[i].y;
+      }
+
+      cm.x /= count; cm.y /= count;
+      cM.x /= count; cM.y /= count;
+
+      for(s32 i = 0; i < count; i++) {
+        sm.x += fabs(m[i].x - cm.x);
+        sm.y += fabs(m[i].y - cm.y);
+        sM.x += fabs(M[i].x - cM.x);
+        sM.y += fabs(M[i].y - cM.y);
+      }
+
+      if( fabs(sm.x) < DBL_EPSILON || fabs(sm.y) < DBL_EPSILON || fabs(sM.x) < DBL_EPSILON || fabs(sM.y) < DBL_EPSILON )
+        return RESULT_FAIL;
+
+      sm.x = count/sm.x; sm.y = count/sm.y;
+      sM.x = count/sM.x; sM.y = count/sM.y;
+
+      Array_f64 _invHnorm = Array_f64(3, 3, scratch);
+      Array_f64 _Hnorm2 = Array_f64(3, 3, scratch);
+
+      *_invHnorm.Pointer(0,0) = 1./sm.x;  *_invHnorm.Pointer(0,1) = 0;       *_invHnorm.Pointer(0,2) = cm.x;
+      *_invHnorm.Pointer(1,0) = 0;        *_invHnorm.Pointer(1,1) = 1./sm.y; *_invHnorm.Pointer(1,2) = cm.y;
+      *_invHnorm.Pointer(2,0) = 0;        *_invHnorm.Pointer(2,1) = 0;       *_invHnorm.Pointer(2,2) = 1;
+
+      *_Hnorm2.Pointer(0,0) = sM.x;  *_Hnorm2.Pointer(0,1) = 0;     *_Hnorm2.Pointer(0,2) = -cM.x*sM.x;
+      *_Hnorm2.Pointer(1,0) = 0;     *_Hnorm2.Pointer(1,1) = sM.y;  *_Hnorm2.Pointer(1,2) = -cM.y*sM.y;
+      *_Hnorm2.Pointer(2,0) = 0;     *_Hnorm2.Pointer(2,1) = 0;     *_Hnorm2.Pointer(2,2) = 1;
+
+      //cvZero( &_LtL );
+      _LtL.Set(0.0);
+
+      for(s32 i = 0; i < count; i++) {
+        double x = (m[i].x - cm.x)*sm.x, y = (m[i].y - cm.y)*sm.y;
+        double X = (M[i].x - cM.x)*sM.x, Y = (M[i].y - cM.y)*sM.y;
+        double Lx[] = { X, Y, 1, 0, 0, 0, -x*X, -x*Y, -x };
+        double Ly[] = { 0, 0, 0, X, Y, 1, -y*X, -y*Y, -y };
+
+        for(s32 j = 0; j < 9; j++){
+          for(s32 k = j; k < 9; k++) {
+            *_LtL.Pointer(j,k) += Lx[j]*Lx[k] + Ly[j]*Ly[k];
+          }
+        }
+      }
+      MakeArraySymmetric(_LtL, false);
+
+      ////cvSVD( &_LtL, &matW, 0, &matV, CV_SVD_MODIFY_A + CV_SVD_V_T );
+      //cvEigenVV( &_LtL, &matV, &matW );
+      //cvMatMul( &_invHnorm, &_H0, &_Htemp );
+      //cvMatMul( &_Htemp, &_Hnorm2, &_H0 );
+      //cvConvertScale( &_H0, H, 1./_H0.data.db[8] );
+
+      return RESULT_OK;
+    }
   } // namespace Embedded
 } // namespace Anki

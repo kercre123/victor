@@ -80,6 +80,35 @@ namespace Anki
       return powerCount;
     }
 
+    //// Perform the matrix multiplication "matOut = mat1 * mat2"
+    //// Note that this is the naive O(n^3) implementation
+    //Result MultiplyMatrices(const Array_f64 &mat1, const Array_f64 &mat2, Array_f64 &matOut)
+    //{
+    //  DASConditionalErrorAndReturnValue(mat1.get_size(1) == mat2.get_size(0),
+    //    RESULT_FAIL, "MultiplyMatrices", "Input matrices are incompatible sizes");
+
+    //  DASConditionalErrorAndReturnValue(matOut.get_size(0) == mat1.get_size(0),
+    //    RESULT_FAIL, "MultiplyMatrices", "Input and Output matrices are incompatible sizes");
+
+    //  DASConditionalErrorAndReturnValue(matOut.get_size(1) == mat2.get_size(1),
+    //    RESULT_FAIL, "MultiplyMatrices", "Input and Output matrices are incompatible sizes");
+
+    //  for(s32 y1=0; y1<mat1.get_size(0); y1++) {
+    //    const f64 * restrict mat1_rowPointer = mat1.Pointer(y1, 0);
+    //    f64 * restrict matOut_rowPointer = matOut.Pointer(y1, 0);
+
+    //    for(s32 x1=0; x1<mat1.get_size(1); x1++) {
+    //      matOut_rowPointer[x1] = 0;
+
+    //      for(s32 y2=0; y2<mat1.get_size(0); y2++) {
+    //        matOut_rowPointer[x1] += mat1_rowPointer[y2] * (*mat2.Pointer(y2, x1));
+    //      }
+    //    }
+    //  }
+
+    //  return RESULT_OK;
+    //}
+
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     int ConvertToOpenCvType(const char *typeName, size_t byteDepth)
     {

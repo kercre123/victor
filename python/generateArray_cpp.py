@@ -402,7 +402,7 @@ def GenerateAndWriteFile(filename = '../src/embedded/array2d.cpp'):
     topString = __GenerateTopOfFile()
 
     methodsDefinitions  = __GenerateDefinitions(['u8', 's8', 'u16', 's16', 'u32', 's32', 'u64', 's64', 'f32', 'f64'], True)
-    methodsDefinitions += __GenerateDefinitions(['Point_s16'], False)
+    methodsDefinitions += __GenerateDefinitions(['Point_s16', 'Point_f32', 'Point_f64'], False)
 
     bottomString = __GenerateBottomOfFile()
 

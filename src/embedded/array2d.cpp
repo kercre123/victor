@@ -126,7 +126,7 @@ namespace Anki
       }
 
       return true;
-    } // Array_u8::IsElementwiseEqual_PercentThreshold(const Array_u8 &array2, const double threshold = 0.01) const;
+    } // bool Array_u8::IsElementwiseEqual_PercentThreshold(const Array_u8 &array2, const double percentThreshold, const double absoluteThreshold) const
 
     // If this array or array2 are different sizes or uninitialized, then return false.
     bool Array_u8::IsEqualSize(const Array_u8 &array2) const
@@ -456,7 +456,7 @@ namespace Anki
       }
 
       return true;
-    } // Array_s8::IsElementwiseEqual_PercentThreshold(const Array_s8 &array2, const double threshold = 0.01) const;
+    } // bool Array_s8::IsElementwiseEqual_PercentThreshold(const Array_s8 &array2, const double percentThreshold, const double absoluteThreshold) const
 
     // If this array or array2 are different sizes or uninitialized, then return false.
     bool Array_s8::IsEqualSize(const Array_s8 &array2) const
@@ -786,7 +786,7 @@ namespace Anki
       }
 
       return true;
-    } // Array_u16::IsElementwiseEqual_PercentThreshold(const Array_u16 &array2, const double threshold = 0.01) const;
+    } // bool Array_u16::IsElementwiseEqual_PercentThreshold(const Array_u16 &array2, const double percentThreshold, const double absoluteThreshold) const
 
     // If this array or array2 are different sizes or uninitialized, then return false.
     bool Array_u16::IsEqualSize(const Array_u16 &array2) const
@@ -1116,7 +1116,7 @@ namespace Anki
       }
 
       return true;
-    } // Array_s16::IsElementwiseEqual_PercentThreshold(const Array_s16 &array2, const double threshold = 0.01) const;
+    } // bool Array_s16::IsElementwiseEqual_PercentThreshold(const Array_s16 &array2, const double percentThreshold, const double absoluteThreshold) const
 
     // If this array or array2 are different sizes or uninitialized, then return false.
     bool Array_s16::IsEqualSize(const Array_s16 &array2) const
@@ -1446,7 +1446,7 @@ namespace Anki
       }
 
       return true;
-    } // Array_u32::IsElementwiseEqual_PercentThreshold(const Array_u32 &array2, const double threshold = 0.01) const;
+    } // bool Array_u32::IsElementwiseEqual_PercentThreshold(const Array_u32 &array2, const double percentThreshold, const double absoluteThreshold) const
 
     // If this array or array2 are different sizes or uninitialized, then return false.
     bool Array_u32::IsEqualSize(const Array_u32 &array2) const
@@ -1776,7 +1776,7 @@ namespace Anki
       }
 
       return true;
-    } // Array_s32::IsElementwiseEqual_PercentThreshold(const Array_s32 &array2, const double threshold = 0.01) const;
+    } // bool Array_s32::IsElementwiseEqual_PercentThreshold(const Array_s32 &array2, const double percentThreshold, const double absoluteThreshold) const
 
     // If this array or array2 are different sizes or uninitialized, then return false.
     bool Array_s32::IsEqualSize(const Array_s32 &array2) const
@@ -2106,7 +2106,7 @@ namespace Anki
       }
 
       return true;
-    } // Array_u64::IsElementwiseEqual_PercentThreshold(const Array_u64 &array2, const double threshold = 0.01) const;
+    } // bool Array_u64::IsElementwiseEqual_PercentThreshold(const Array_u64 &array2, const double percentThreshold, const double absoluteThreshold) const
 
     // If this array or array2 are different sizes or uninitialized, then return false.
     bool Array_u64::IsEqualSize(const Array_u64 &array2) const
@@ -2436,7 +2436,7 @@ namespace Anki
       }
 
       return true;
-    } // Array_s64::IsElementwiseEqual_PercentThreshold(const Array_s64 &array2, const double threshold = 0.01) const;
+    } // bool Array_s64::IsElementwiseEqual_PercentThreshold(const Array_s64 &array2, const double percentThreshold, const double absoluteThreshold) const
 
     // If this array or array2 are different sizes or uninitialized, then return false.
     bool Array_s64::IsEqualSize(const Array_s64 &array2) const
@@ -2766,7 +2766,7 @@ namespace Anki
       }
 
       return true;
-    } // Array_f32::IsElementwiseEqual_PercentThreshold(const Array_f32 &array2, const double threshold = 0.01) const;
+    } // bool Array_f32::IsElementwiseEqual_PercentThreshold(const Array_f32 &array2, const double percentThreshold, const double absoluteThreshold) const
 
     // If this array or array2 are different sizes or uninitialized, then return false.
     bool Array_f32::IsEqualSize(const Array_f32 &array2) const
@@ -3096,7 +3096,7 @@ namespace Anki
       }
 
       return true;
-    } // Array_f64::IsElementwiseEqual_PercentThreshold(const Array_f64 &array2, const double threshold = 0.01) const;
+    } // bool Array_f64::IsElementwiseEqual_PercentThreshold(const Array_f64 &array2, const double percentThreshold, const double absoluteThreshold) const
 
     // If this array or array2 are different sizes or uninitialized, then return false.
     bool Array_f64::IsEqualSize(const Array_f64 &array2) const
@@ -3565,6 +3565,488 @@ namespace Anki
 
       return mat;
     } // Array_Point_s16 AllocateArrayFromHeap_Point_s16(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+
+
+    s32 Array_Point_f32::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      assert(numCols > 0);
+      const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
+      return static_cast<s32>(RoundUp<size_t>(sizeof(Point_f32)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
+    } // s32 Array_Point_f32::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
+
+    s32 Array_Point_f32::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      assert(numCols > 0 && numRows > 0);
+      return numRows * Array_Point_f32::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
+    } // s32 Array_Point_f32::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+
+    Array_Point_f32::Array_Point_f32()
+    {
+      InvalidateArray();
+    } // Array_Point_f32::Array_Point_f32()
+
+    // Constructor for a Array_Point_f32, pointing to user-allocated data. If the pointer to *data is not
+    // aligned to MEMORY_ALIGNMENT, this Array_Point_f32 will start at the next aligned location.
+    // Unfortunately, this is more restrictive than most matrix libraries, and as an example,
+    // it may make it hard to convert from OpenCV to Array_Point_f32, though the reverse is trivial.
+    Array_Point_f32::Array_Point_f32(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
+      : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
+    {
+      assert(numCols > 0 && numRows > 0 && dataLength > 0);
+
+      Initialize(numRows,
+        numCols,
+        data,
+        dataLength,
+        useBoundaryFillPatterns);
+    } // Array_Point_f32::Array_Point_f32(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
+
+    Array_Point_f32::Array_Point_f32(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+      : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
+    {
+      assert(numCols > 0 && numRows > 0);
+
+      const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? static_cast<s32>(MEMORY_ALIGNMENT) : 0);
+      const s32 numBytesRequested = numRows * this->stride + extraBoundaryPatternBytes;
+      s32 numBytesAllocated = 0;
+
+      void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
+
+      Initialize(numRows,
+        numCols,
+        reinterpret_cast<Point_f32*>(allocatedBuffer),
+        numBytesAllocated,
+        useBoundaryFillPatterns);
+    } // Array_Point_f32::Array_Point_f32(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+
+    // If this array or array2 are different sizes or uninitialized, then return false.
+    bool Array_Point_f32::IsEqualSize(const Array_Point_f32 &array2) const
+    {
+      if(!this->IsValid())
+        return false;
+
+      if(!array2.IsValid())
+        return false;
+
+      if(this->get_size(0) != array2.get_size(0) || this->get_size(1) != array2.get_size(1))
+        return false;
+
+      return true;
+    } // bool Array_Point_f32::IsEqualSize(const Array_Point_f32 &array2) const
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+    // Returns a templated cv::Mat_ that shares the same buffer with this Array_Point_f32. No data is copied.
+    cv::Mat_<Point_f32>& Array_Point_f32::get_CvMat_()
+    {
+      assert(this->IsValid());
+      return cvMatMirror;
+    } // cv::Mat_<Point_f32>& Array_Point_f32::get_CvMat_()
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+    // Print out the contents of this Array_Point_f32
+    void Array_Point_f32::Print(const char * const variableName) const
+    {
+      assert(this->IsValid());
+
+      printf("%s:\n", variableName);
+      for(s32 y=0; y<size[0]; y++) {
+        const Point_f32 * const rowPointer = Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          rowPointer[x].Print();
+          printf(" ");
+        }
+        printf("\n");
+      }
+      printf("\n");
+    } // void Array_Point_f32::Print() const
+
+    // If the Array_Point_f32 was constructed with the useBoundaryFillPatterns=true, then
+    // return if any memory was written out of bounds (via fill patterns at the
+    // beginning and end).  If the Array_Point_f32 was not constructed with the
+    // useBoundaryFillPatterns=true, this method always returns true
+    bool Array_Point_f32::IsValid() const
+    {
+      if(this->rawDataPointer == NULL || this->data == NULL) {
+        return false;
+      }
+
+      if(size[0] < 1 || size[1] < 1) {
+        return false;
+      }
+
+      if(useBoundaryFillPatterns) {
+        const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1],false);
+
+        for(s32 y=0; y<size[0]; y++) {
+          if((reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[0]) != FILL_PATTERN_START ||
+            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[1]) != FILL_PATTERN_START ||
+            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[0]) != FILL_PATTERN_END ||
+            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[1]) != FILL_PATTERN_END) {
+              return false;
+          }
+        }
+
+        return true;
+      } else { // if(useBoundaryFillPatterns) {
+        return true;
+      } // if(useBoundaryFillPatterns) { ... else
+    } // bool Array_Point_f32::IsValid() const
+
+    // Set every element in the Array_Point_f32 to this value
+    // Returns the number of values set
+    s32 Array_Point_f32::Set(const Point_f32 value)
+    {
+      assert(this->IsValid());
+
+      for(s32 y=0; y<size[0]; y++) {
+        Point_f32 * restrict rowPointer = Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          rowPointer[x] = value;
+        }
+      }
+
+      return size[0]*size[1];
+    } // s32 Array_Point_f32::Set(const Point_f32 value)
+
+    // Similar to Matlab size(matrix, dimension), and dimension is in {0,1}
+    s32 Array_Point_f32::get_size(s32 dimension) const
+    {
+      assert(dimension >= 0 && this->rawDataPointer != NULL && this->data != NULL);
+
+      if(dimension > 1 || dimension < 0)
+        return 0;
+
+      return size[dimension];
+    } // s32 Array_Point_f32::get_size(s32 dimension) const
+
+    s32 Array_Point_f32::get_stride() const
+    {
+      return stride;
+    } // s32 Array_Point_f32::get_stride() const
+
+    void* Array_Point_f32::get_rawDataPointer()
+    {
+      return rawDataPointer;
+    } // void* Array_Point_f32::get_rawDataPointer()
+
+    const void* Array_Point_f32::get_rawDataPointer() const
+    {
+      return rawDataPointer;
+    } // const void* Array_Point_f32::get_rawDataPointer() const
+
+    void Array_Point_f32::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
+    {
+      assert(numCols > 0 && numRows > 0 && dataLength > 0);
+
+      this->useBoundaryFillPatterns = useBoundaryFillPatterns;
+
+      if(!rawData) {
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+        DASError("Anki.Array2d.initialize", "input data buffer is NULL");
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+        InvalidateArray();
+        return;
+      }
+
+      this->rawDataPointer = rawData;
+
+      const size_t extraBoundaryPatternBytes = useBoundaryFillPatterns ? static_cast<size_t>(HEADER_LENGTH) : 0;
+      const s32 extraAlignmentBytes = static_cast<s32>(RoundUp<size_t>(reinterpret_cast<size_t>(rawData)+extraBoundaryPatternBytes, MEMORY_ALIGNMENT) - extraBoundaryPatternBytes - reinterpret_cast<size_t>(rawData));
+      const s32 requiredBytes = ComputeRequiredStride(numCols,useBoundaryFillPatterns)*numRows + extraAlignmentBytes;
+
+      if(requiredBytes > dataLength) {
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+        DASError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+        InvalidateArray();
+        return;
+      }
+
+      this->size[0] = numRows;
+      this->size[1] = numCols;
+
+      if(useBoundaryFillPatterns) {
+        const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1], false);
+        this->data = reinterpret_cast<Point_f32*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes + HEADER_LENGTH );
+        for(s32 y=0; y<size[0]; y++) {
+          // Add the fill patterns just before the data on each line
+          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[0] = FILL_PATTERN_START;
+          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[1] = FILL_PATTERN_START;
+
+          // And also just after the data (including normal byte-alignment padding)
+          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[0] = FILL_PATTERN_END;
+          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[1] = FILL_PATTERN_END;
+        }
+      } else {
+        this->data = reinterpret_cast<Point_f32*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes );
+      }
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      cvMatMirror = cv::Mat_<Point_f32>(size[0], size[1], data, stride);
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+    } // Array_Point_f32::Initialize()
+
+    // Set all the buffers and sizes to zero, to signal an invalid array
+    void Array_Point_f32::InvalidateArray()
+    {
+      this->size[0] = 0;
+      this->size[1] = 0;
+      this->stride = 0;
+      this->data = NULL;
+      this->rawDataPointer = NULL;
+    } // void Array_Point_f32::InvalidateArray()
+
+    // Factory method to create an Array_Point_f32 from the heap. The data of the returned Array_Point_f32 must be freed by the user.
+    // This is separate from the normal constructor, as Array_Point_f32 objects are not supposed to manage memory
+    Array_Point_f32 AllocateArrayFromHeap_Point_f32(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_Point_f32::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
+
+      Array_Point_f32 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+
+      return mat;
+    } // Array_Point_f32 AllocateArrayFromHeap_Point_f32(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+
+
+    s32 Array_Point_f64::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      assert(numCols > 0);
+      const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
+      return static_cast<s32>(RoundUp<size_t>(sizeof(Point_f64)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
+    } // s32 Array_Point_f64::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
+
+    s32 Array_Point_f64::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      assert(numCols > 0 && numRows > 0);
+      return numRows * Array_Point_f64::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
+    } // s32 Array_Point_f64::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+
+    Array_Point_f64::Array_Point_f64()
+    {
+      InvalidateArray();
+    } // Array_Point_f64::Array_Point_f64()
+
+    // Constructor for a Array_Point_f64, pointing to user-allocated data. If the pointer to *data is not
+    // aligned to MEMORY_ALIGNMENT, this Array_Point_f64 will start at the next aligned location.
+    // Unfortunately, this is more restrictive than most matrix libraries, and as an example,
+    // it may make it hard to convert from OpenCV to Array_Point_f64, though the reverse is trivial.
+    Array_Point_f64::Array_Point_f64(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
+      : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
+    {
+      assert(numCols > 0 && numRows > 0 && dataLength > 0);
+
+      Initialize(numRows,
+        numCols,
+        data,
+        dataLength,
+        useBoundaryFillPatterns);
+    } // Array_Point_f64::Array_Point_f64(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
+
+    Array_Point_f64::Array_Point_f64(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+      : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
+    {
+      assert(numCols > 0 && numRows > 0);
+
+      const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? static_cast<s32>(MEMORY_ALIGNMENT) : 0);
+      const s32 numBytesRequested = numRows * this->stride + extraBoundaryPatternBytes;
+      s32 numBytesAllocated = 0;
+
+      void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
+
+      Initialize(numRows,
+        numCols,
+        reinterpret_cast<Point_f64*>(allocatedBuffer),
+        numBytesAllocated,
+        useBoundaryFillPatterns);
+    } // Array_Point_f64::Array_Point_f64(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+
+    // If this array or array2 are different sizes or uninitialized, then return false.
+    bool Array_Point_f64::IsEqualSize(const Array_Point_f64 &array2) const
+    {
+      if(!this->IsValid())
+        return false;
+
+      if(!array2.IsValid())
+        return false;
+
+      if(this->get_size(0) != array2.get_size(0) || this->get_size(1) != array2.get_size(1))
+        return false;
+
+      return true;
+    } // bool Array_Point_f64::IsEqualSize(const Array_Point_f64 &array2) const
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+    // Returns a templated cv::Mat_ that shares the same buffer with this Array_Point_f64. No data is copied.
+    cv::Mat_<Point_f64>& Array_Point_f64::get_CvMat_()
+    {
+      assert(this->IsValid());
+      return cvMatMirror;
+    } // cv::Mat_<Point_f64>& Array_Point_f64::get_CvMat_()
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+    // Print out the contents of this Array_Point_f64
+    void Array_Point_f64::Print(const char * const variableName) const
+    {
+      assert(this->IsValid());
+
+      printf("%s:\n", variableName);
+      for(s32 y=0; y<size[0]; y++) {
+        const Point_f64 * const rowPointer = Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          rowPointer[x].Print();
+          printf(" ");
+        }
+        printf("\n");
+      }
+      printf("\n");
+    } // void Array_Point_f64::Print() const
+
+    // If the Array_Point_f64 was constructed with the useBoundaryFillPatterns=true, then
+    // return if any memory was written out of bounds (via fill patterns at the
+    // beginning and end).  If the Array_Point_f64 was not constructed with the
+    // useBoundaryFillPatterns=true, this method always returns true
+    bool Array_Point_f64::IsValid() const
+    {
+      if(this->rawDataPointer == NULL || this->data == NULL) {
+        return false;
+      }
+
+      if(size[0] < 1 || size[1] < 1) {
+        return false;
+      }
+
+      if(useBoundaryFillPatterns) {
+        const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1],false);
+
+        for(s32 y=0; y<size[0]; y++) {
+          if((reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[0]) != FILL_PATTERN_START ||
+            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[1]) != FILL_PATTERN_START ||
+            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[0]) != FILL_PATTERN_END ||
+            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[1]) != FILL_PATTERN_END) {
+              return false;
+          }
+        }
+
+        return true;
+      } else { // if(useBoundaryFillPatterns) {
+        return true;
+      } // if(useBoundaryFillPatterns) { ... else
+    } // bool Array_Point_f64::IsValid() const
+
+    // Set every element in the Array_Point_f64 to this value
+    // Returns the number of values set
+    s32 Array_Point_f64::Set(const Point_f64 value)
+    {
+      assert(this->IsValid());
+
+      for(s32 y=0; y<size[0]; y++) {
+        Point_f64 * restrict rowPointer = Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          rowPointer[x] = value;
+        }
+      }
+
+      return size[0]*size[1];
+    } // s32 Array_Point_f64::Set(const Point_f64 value)
+
+    // Similar to Matlab size(matrix, dimension), and dimension is in {0,1}
+    s32 Array_Point_f64::get_size(s32 dimension) const
+    {
+      assert(dimension >= 0 && this->rawDataPointer != NULL && this->data != NULL);
+
+      if(dimension > 1 || dimension < 0)
+        return 0;
+
+      return size[dimension];
+    } // s32 Array_Point_f64::get_size(s32 dimension) const
+
+    s32 Array_Point_f64::get_stride() const
+    {
+      return stride;
+    } // s32 Array_Point_f64::get_stride() const
+
+    void* Array_Point_f64::get_rawDataPointer()
+    {
+      return rawDataPointer;
+    } // void* Array_Point_f64::get_rawDataPointer()
+
+    const void* Array_Point_f64::get_rawDataPointer() const
+    {
+      return rawDataPointer;
+    } // const void* Array_Point_f64::get_rawDataPointer() const
+
+    void Array_Point_f64::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
+    {
+      assert(numCols > 0 && numRows > 0 && dataLength > 0);
+
+      this->useBoundaryFillPatterns = useBoundaryFillPatterns;
+
+      if(!rawData) {
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+        DASError("Anki.Array2d.initialize", "input data buffer is NULL");
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+        InvalidateArray();
+        return;
+      }
+
+      this->rawDataPointer = rawData;
+
+      const size_t extraBoundaryPatternBytes = useBoundaryFillPatterns ? static_cast<size_t>(HEADER_LENGTH) : 0;
+      const s32 extraAlignmentBytes = static_cast<s32>(RoundUp<size_t>(reinterpret_cast<size_t>(rawData)+extraBoundaryPatternBytes, MEMORY_ALIGNMENT) - extraBoundaryPatternBytes - reinterpret_cast<size_t>(rawData));
+      const s32 requiredBytes = ComputeRequiredStride(numCols,useBoundaryFillPatterns)*numRows + extraAlignmentBytes;
+
+      if(requiredBytes > dataLength) {
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+        DASError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+        InvalidateArray();
+        return;
+      }
+
+      this->size[0] = numRows;
+      this->size[1] = numCols;
+
+      if(useBoundaryFillPatterns) {
+        const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1], false);
+        this->data = reinterpret_cast<Point_f64*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes + HEADER_LENGTH );
+        for(s32 y=0; y<size[0]; y++) {
+          // Add the fill patterns just before the data on each line
+          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[0] = FILL_PATTERN_START;
+          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[1] = FILL_PATTERN_START;
+
+          // And also just after the data (including normal byte-alignment padding)
+          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[0] = FILL_PATTERN_END;
+          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[1] = FILL_PATTERN_END;
+        }
+      } else {
+        this->data = reinterpret_cast<Point_f64*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes );
+      }
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      cvMatMirror = cv::Mat_<Point_f64>(size[0], size[1], data, stride);
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+    } // Array_Point_f64::Initialize()
+
+    // Set all the buffers and sizes to zero, to signal an invalid array
+    void Array_Point_f64::InvalidateArray()
+    {
+      this->size[0] = 0;
+      this->size[1] = 0;
+      this->stride = 0;
+      this->data = NULL;
+      this->rawDataPointer = NULL;
+    } // void Array_Point_f64::InvalidateArray()
+
+    // Factory method to create an Array_Point_f64 from the heap. The data of the returned Array_Point_f64 must be freed by the user.
+    // This is separate from the normal constructor, as Array_Point_f64 objects are not supposed to manage memory
+    Array_Point_f64 AllocateArrayFromHeap_Point_f64(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_Point_f64::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
+
+      Array_Point_f64 mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+
+      return mat;
+    } // Array_Point_f64 AllocateArrayFromHeap_Point_f64(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
 
   } // namespace Embedded
