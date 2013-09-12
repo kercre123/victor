@@ -1,5 +1,5 @@
 
-% function componentIndexes = approximateConnectedComponents()
+% function [components2d, regionMap1d] = approximateConnectedComponents(binaryImg, minimumComponentWidth, create1dRegionMap)
 
 % Compute approximate 4-way connected components (will work for a ring
 % structure, but not for a U structure.)
@@ -10,8 +10,9 @@
 %              0,0,0,0,0,0,1,1,1,1,0,0,1,1,1,0,0;
 %              0,0,0,0,0,0,0,1,1,0,0,1,1,0,1,1,1];
 % components2d = approximateConnectedComponents(binaryImg, 2);
+% [components2d, regionMap1d] = approximateConnectedComponents(binaryImg, 3, true);
 
-function components2d = approximateConnectedComponents(binaryImg, minimumComponentWidth)
+function [components2d, regionMap1d] = approximateConnectedComponents(binaryImg, minimumComponentWidth, create1dRegionMap)
 
 % 1. Compute 1d connected components
 % 2. Check current 1d components with previous components. Put matches in
@@ -21,21 +22,37 @@ function components2d = approximateConnectedComponents(binaryImg, minimumCompone
 components2d = cell(0,0);
 previousComponents1d = zeros(0,3);
 num2dComponents = 0;
-% 
-% regionMap = zeros(size(binaryImg));
+
+if ~exist('create1dRegionMap', 'var')
+    create1dRegionMap = false;
+end
+
+if create1dRegionMap
+    regionMap1d = zeros(size(binaryImg));
+end
+
+num1dComponents = 0;
+sum1dComponentLength = 0;
 
 for y = 1:size(binaryImg, 1)
     currentComponents1d = compute1dComponents(binaryImg(y,:), minimumComponentWidth);
-%     
-%     for i = 1:size(currentComponents1d,1)
-%         regionMap(y, currentComponents1d(1):currentComponents1d(2)) = 1;
-%     end
-        
+
+    if create1dRegionMap
+        for i = 1:size(currentComponents1d,1)
+            regionMap1d(y, currentComponents1d(i, 1):currentComponents1d(i, 2)) = 1;
+            num1dComponents = num1dComponents + 1;
+            sum1dComponentLength = sum1dComponentLength + (currentComponents1d(i, 2)-currentComponents1d(i, 1)+1);
+        end
+    end
+    
     [components2d, num2dComponents, previousComponents1d] = ...
         addTo2dComponents(currentComponents1d, previousComponents1d, components2d, y, num2dComponents);
 end
 
-% 
+if create1dRegionMap
+    disp(sprintf('%d 1d components found. Average length: %f. Total bytes needed (at 16-bit-precision): %d\n', num1dComponents, sum1dComponentLength/num1dComponents, num1dComponents*4*2));
+end
+
 %     keyboard
 
 end % function componentIndexes = approximateConnectedComponents(binaryImg)
