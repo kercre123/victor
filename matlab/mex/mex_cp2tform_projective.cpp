@@ -20,13 +20,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   std::vector<cv::Point_<double> > base_points = mxArray2CvPointVector<double>(prhs[1]);
 
   ConditionalErrorAndReturn(input_points.size()!=0 || base_points.size()!=0, "mex_cp2tform_projective", "input points or base points couln't be parsed");
-  
+
   ConditionalErrorAndReturn(input_points.size() == base_points.size(), "mex_cp2tform_projective", "Point lists are of different sizes");
 
-//  std::cout << "input_points: " << input_points << "\n";
-//  std::cout << "base_points: " << base_points << "\n";
-    
+  //  std::cout << "input_points: " << input_points << "\n";
+  //  std::cout << "base_points: " << base_points << "\n";
+
   Mat homography = findHomography( input_points, base_points, 0 );
 
-  plhs[0] = cvMat2mxArray(homography);           
+  plhs[0] = cvMat2mxArray(homography);
 }
