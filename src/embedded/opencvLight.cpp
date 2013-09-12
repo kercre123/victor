@@ -238,7 +238,7 @@ namespace Anki
     /*! Performs an Singular Value Decomposition on the mXn, float32 input array. [u^t,w,v^t] = SVD(a); */
     Result svd_f32(
       Array_f32 &a, //!< Input array mXn
-      Array_f32 &w, //!< W array mXn
+      Array_f32 &w, //!< W array 1Xm
       Array_f32 &uT, //!< U-transpose array mXm
       Array_f32 &vT, //!< V-transpose array nXn
       void * scratch //!< A scratch buffer, with at least "sizeof(float)*(n*2 + m)" bytes
@@ -262,7 +262,7 @@ namespace Anki
       DASConditionalErrorAndReturnValue(scratch,
         RESULT_FAIL, "svd_f32", "scratch is null");
 
-      DASConditionalErrorAndReturnValue(w.get_size(0) == m && w.get_size(1) == n,
+      DASConditionalErrorAndReturnValue(w.get_size(0) == 1 && w.get_size(1) == n,
         RESULT_FAIL, "svd_f32", "w is not mXn");
 
       DASConditionalErrorAndReturnValue(uT.get_size(0) == m && uT.get_size(1) == m,
@@ -290,11 +290,11 @@ namespace Anki
     /*! Performs an Singular Value Decomposition on the mXn, float64 input array. [u^t,w,v^t] = SVD(a); */
     Result svd_f64(
       Array_f64 &a,  //!< Input array mXn
-      Array_f64 &w,  //!< W array mXn
+      Array_f64 &w,  //!< W array 1xm
       Array_f64 &uT, //!< U-transpose array mXm
       Array_f64 &vT, //!< V-transpose array nXn
       void * scratch //!< A scratch buffer, with at least "sizeof(f64)*(n*2 + m)" bytes
-      );
+      )
     {
       const s32 m = a.get_size(0); // m
       const s32 n = a.get_size(1); // n
@@ -314,8 +314,8 @@ namespace Anki
       DASConditionalErrorAndReturnValue(scratch,
         RESULT_FAIL, "svd_f64", "scratch is null");
 
-      DASConditionalErrorAndReturnValue(w.get_size(0) == m && w.get_size(1) == n,
-        RESULT_FAIL, "svd_f64", "w is not mXn");
+      DASConditionalErrorAndReturnValue(w.get_size(0) == 1 && w.get_size(1) == m,
+        RESULT_FAIL, "svd_f64", "w is not 1Xm");
 
       DASConditionalErrorAndReturnValue(uT.get_size(0) == m && uT.get_size(1) == m,
         RESULT_FAIL, "svd_f64", "uT is not mXm");
@@ -1151,14 +1151,14 @@ namespace Anki
       const Point_f64 * const m = m2.Pointer(0);
 
       /*Array_f64 _LtL = Array_f64( 9, 9, LtL, 9*16, false);
-      Array_f64 matW = Array_f64( 9, 1, W, 16, false);
-      Array_f64 matV = Array_f64( 9, 9, V, 9*16, false);
+      Array_f64 _W = Array_f64( 9, 1, W, 16, false);
+      Array_f64 _V = Array_f64( 9, 9, V, 9*16, false);
       Array_f64 _H0 = Array_f64( 3, 3, V[8], 3*3, false);
       Array_f64 _Htemp = Array_f64( 3, 3, V[7], 3*3, false);*/
 
       Array_f64 _LtL = Array_f64(9, 9, scratch);
-      Array_f64 matW = Array_f64(9, 1, scratch);
-      Array_f64 matV = Array_f64(9, 9, scratch);
+      Array_f64 _W = Array_f64(1, 9, scratch); // Swapper
+      Array_f64 _V = Array_f64(9, 9, scratch);
       Array_f64 _H0 = Array_f64(3, 3, scratch);
       Array_f64 _Htemp = Array_f64(3, 3, scratch);
 
@@ -1214,23 +1214,47 @@ namespace Anki
       }
       MakeArraySymmetric(_LtL, false);
 
-      ////cvSVD( &_LtL, &matW, 0, &matV, CV_SVD_MODIFY_A + CV_SVD_V_T );
-      //cvEigenVV( &_LtL, &matV, &matW );
+      Result result;
+      {
+        // Push the current state of the scratch buffer onto the system stack
+        const MemoryStack scratch_tmp = scratch;
+        MemoryStack scratch(scratch_tmp);
 
-      Result svd_f32(
-        Array_f32 &a, //!< Input array mXn
-        Array_f32 &w, //!< W array mXn
-        Array_f32 &uT, //!< U-transpose array mXm
-        Array_f32 &vT, //!< V-transpose array nXn
-        void * scratch //!< A scratch buffer, with at least "sizeof(float)*(n*2 + m)" bytes
-        );
+        Array_f64 uT(_LtL.get_size(0), _LtL.get_size(0), scratch);
+        void * svdScratchBuffer = scratch.Allocate(sizeof(f64)*(_LtL.get_size(1)*2 + _LtL.get_size(0)));
 
-      cvSVD( &_LtL, &matW, 0, &matV, CV_SVD_MODIFY_A + CV_SVD_V_T );
+        // cvSVD( &_LtL, &_W, 0, &_V, CV_SVD_MODIFY_A + CV_SVD_V_T );
+        result = svd_f64(_LtL, _W, uT, _V, svdScratchBuffer);
+      }
 
-      //cvMatMul( &_invHnorm, &_H0, &_Htemp );
-      //cvMatMul( &_Htemp, &_Hnorm2, &_H0 );
+      DASConditionalErrorAndReturnValue(result == RESULT_OK,
+        RESULT_FAIL, "cvHomographyEstimator_runKernel", "svd_f64 failed");
+
+      // TODO: pull _H0 from V[8]
+      //CvMat _H0 = cvMat( 3, 3, CV_64F, V[8] );
+      {
+        s32 ci = 0;
+        const f64 * const V_rowPointer = _V.Pointer(8,0);
+        for(s32 y=0; y<3; y++) {
+          for(s32 x=0; x<3; x++) {
+            (*_H0.Pointer(y,x)) = V_rowPointer[ci++];
+          }
+        }
+      }
+
+      MultiplyMatrices<Array_f64,f64>(_invHnorm, _H0, _Htemp);
+      MultiplyMatrices<Array_f64,f64>(_Htemp, _Hnorm2, H);
+
       //cvConvertScale( &_H0, H, 1./_H0.data.db[8] );
-
+      {
+        const f64 inverseHomogeneousScale = 1.0 / (*H.Pointer(2,2));
+        for(s32 y=0; y<3; y++) {
+          for(s32 x=0; x<3; x++) {
+            (*H.Pointer(y,x)) *= inverseHomogeneousScale;
+          }
+        }
+      }
+      
       return RESULT_OK;
     }
   } // namespace Embedded

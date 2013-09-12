@@ -12,7 +12,7 @@ namespace Anki
     /*! Performs an Singular Value Decomposition on the mXn, float32 input array. [u^t,w,v^t] = SVD(a); */
     Result svd_f32(
       Array_f32 &a,  //!< Input array mXn
-      Array_f32 &w,  //!< W array mXn
+      Array_f32 &w,  //!< W array 1Xm
       Array_f32 &uT, //!< U-transpose array mXm
       Array_f32 &vT, //!< V-transpose array nXn
       void * scratch //!< A scratch buffer, with at least "sizeof(float)*(n*2 + m)" bytes
@@ -21,7 +21,7 @@ namespace Anki
     /*! Performs an Singular Value Decomposition on the mXn, float64 input array. [u^t,w,v^t] = SVD(a); */
     Result svd_f64(
       Array_f64 &a,  //!< Input array mXn
-      Array_f64 &w,  //!< W array mXn
+      Array_f64 &w,  //!< W array 1xm
       Array_f64 &uT, //!< U-transpose array mXm
       Array_f64 &vT, //!< V-transpose array nXn
       void * scratch //!< A scratch buffer, with at least "sizeof(f64)*(n*2 + m)" bytes
