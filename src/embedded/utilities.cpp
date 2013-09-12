@@ -7,6 +7,8 @@
 #include <sys/time.h>
 #endif
 
+#include <math.h>
+
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 #include "opencv2/opencv.hpp"
 #endif
