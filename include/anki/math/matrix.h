@@ -5,9 +5,13 @@
 #include "opencv2/opencv.hpp"
 #endif
 
+#include <ostream>
+#include <cstdio>
 #include "anki/common/array2d.h"
 
 #include "anki/math/point.h"
+
+using namespace std;
 
 namespace Anki {
   
@@ -20,6 +24,7 @@ namespace Anki {
   public:
     Matrix(); 
     Matrix(s32 nrows, s32 ncols);
+    Matrix(s32 nrows, s32 ncols, const T& initVal);
     
 #if defined(ANKICORETECH_USE_OPENCV)
     // Construct from an OpenCv cv::Mat_<T>.
@@ -74,6 +79,9 @@ namespace Anki {
     // Matrix transpose:
     SmallMatrix<T,NCOLS,NROWS> getTranspose(void) const;
     
+    unsigned int numRows() const;
+    unsigned int numCols() const;
+    
 #if defined(ANKICORETECH_USE_OPENCV)
     SmallMatrix(const cv::Matx<T,NROWS,NCOLS> &cvMatrix);
     cv::Matx<T,NROWS,NCOLS>& get_CvMatx_();
@@ -103,7 +111,14 @@ namespace Anki {
   Matrix<T>::Matrix(s32 nrows, s32 ncols)
   : Array2d<T>(nrows, ncols)
   {
-    
+    CORETECH_THROW_IF(nrows == 0 || ncols == 0);
+  }
+  
+  template<typename T>
+  Matrix<T>::Matrix(s32 nrows, s32 ncols, const T &initVal)
+  : Array2d<T>(nrows, ncols, initVal)
+  {
+    CORETECH_THROW_IF(nrows == 0 || ncols == 0);
   }
   
   
@@ -121,7 +136,8 @@ namespace Anki {
   Matrix<T> Matrix<T>::operator*(const Matrix<T> &other) const
   {
     // Make sure the matrices have compatible sizes for multiplication
-    assert(this->numCols() == other.numRows());
+    CORETECH_THROW_IF(this->numCols() != other.numRows());
+    
     
 #if defined(ANKICORETECH_USE_OPENCV)
     // For now (?), rely on OpenCV for matrix multiplication:
@@ -138,9 +154,11 @@ namespace Anki {
   template<typename T>
   void Matrix<T>::Invert(void)
   {
+    CORETECH_THROW_IF(this->numRows() != this->numCols());
+    
 #if defined(ANKICORETECH_USE_OPENCV)
     // For now (?), rely on OpenCV for matrix inversion:
-    *this = this->get_CvMat_().inv();
+    *this = (Matrix<T>)this->get_CvMat_().inv();
 #else
     assert(false);
     // TODO: Define our own opencv-free inverse?
@@ -150,13 +168,14 @@ namespace Anki {
   template<typename T>
   Matrix<T> Matrix<T>::getInverse(void) const
   {
+    CORETECH_THROW_IF(this->numRows() != this->numCols());
     
 #if defined(ANKICORETECH_USE_OPENCV)
     // For now (?), rely on OpenCV for matrix inversion:
     Matrix<T> result(this->get_CvMat_().inv());
 #else
     assert(false);
-    // TODO: Define our own opencv-free inverse?
+    // TODO: Define our own opencv-free transpose?
 #endif
     
     return result;
@@ -169,7 +188,6 @@ namespace Anki {
   {
     
 #if defined(ANKICORETECH_USE_OPENCV)
-    // For now (?), rely on OpenCV for matrix inversion:
     Matrix<T> result;
     cv::transpose(this->get_CvMat_(), result.get_CvMat_());
 #else
@@ -186,15 +204,25 @@ namespace Anki {
   void Matrix<T>::Transpose(void)
   {
 #if defined(ANKICORETECH_USE_OPENCV)
-    // For now (?), rely on OpenCV for matrix transpose:
-    this->get_CvMat_().t();
+    cv::transpose(this->get_CvMat_(), this->get_CvMat_());
 #else
     assert(false);
     // TODO: Define our own opencv-free tranpose?
 #endif
   } // Matrix<T>::Tranpose()
   
-
+  
+  template<typename T>
+  ostream& operator<<(ostream& out, const Matrix<T>& m)
+  {
+    for (int i=0; i<m.numRows(); ++i) {
+      for (int j=0; j<m.numCols(); ++j) {
+        out << m(i,j) << " ";
+      }
+      out << "\n";
+    }
+    return out;
+  }
   
   
   template<typename T, unsigned int NROWS, unsigned int NCOLS>
@@ -205,7 +233,7 @@ namespace Anki {
   {
 #if (!defined(ANKICORETECH_USE_OPENCV))
     assert(false);
-    // TODO: Define our own opencv-free tranpose?
+    // TODO: Define our own opencv-free constructor?
 #endif
   }
   
@@ -218,7 +246,7 @@ namespace Anki {
   {
 #if !defined(ANKICORETECH_USE_OPENCV)
     assert(false);
-    // TODO: Define our own opencv-free tranpose?
+    // TODO: Define our own opencv-free constructor?
 #endif
   }
 
@@ -231,7 +259,7 @@ namespace Anki {
   {
 #if !defined(ANKICORETECH_USE_OPENCV)
     assert(false);
-    // TODO: Define our own opencv-free tranpose?
+    // TODO: Define our own opencv-free constructor?
 #endif
   }
 
@@ -241,13 +269,17 @@ namespace Anki {
   template<typename T, unsigned int NROWS, unsigned int NCOLS>
   T&  SmallMatrix<T,NROWS,NCOLS>::operator() (unsigned int i, unsigned int j)
   {
-    return (*this)(i,j);
+    CORETECH_THROW_IF(i >= NROWS || j >= NCOLS);
+      
+    return cv::Matx<T,NROWS,NCOLS>::operator()(i,j);
   }
   
   template<typename T, unsigned int NROWS, unsigned int NCOLS>
   const T& SmallMatrix<T,NROWS,NCOLS>::operator() (unsigned int i, unsigned int j) const
   {
-    return (*this)(i,j);
+    CORETECH_THROW_IF(i >= NROWS || j >= NCOLS);
+    
+    return cv::Matx<T,NROWS,NCOLS>::operator()(i,j);
   }
   
   // Matrix multiplication:
@@ -258,11 +290,11 @@ namespace Anki {
   {
 #if defined(ANKICORETECH_USE_OPENCV)
     SmallMatrix<T,NROWS,KCOLS> res;
-    res = (*this) * other;
+    res = this->get_CvMatx_() * other.get_CvMatx_();
     return res;
 #else
     assert(false);
-    // TODO: Define our own opencv-free tranpose?
+    // TODO: Define our own opencv-free multiplication?
 #endif
   }
   
@@ -270,11 +302,13 @@ namespace Anki {
   template<typename T, unsigned int NROWS, unsigned int NCOLS>
   void SmallMatrix<T,NROWS,NCOLS>::Invert(void)
   {
+    CORETECH_THROW_IF(NROWS != NCOLS);
+    
 #if defined(ANKICORETECH_USE_OPENCV)
     (*this) = this->inv();
 #else
     assert(false);
-    // TODO: Define our own opencv-free tranpose?
+    // TODO: Define our own opencv-free inverse?
 #endif
     
   }
@@ -282,12 +316,14 @@ namespace Anki {
   template<typename T, unsigned int NROWS, unsigned int NCOLS>
   SmallMatrix<T,NROWS,NCOLS> SmallMatrix<T,NROWS,NCOLS>::getInverse(void) const
   {
+    CORETECH_THROW_IF(NROWS != NCOLS);
+    
 #if defined(ANKICORETECH_USE_OPENCV)
     SmallMatrix<T,NROWS,NCOLS> res(this->inv());
     return res;
 #else
     assert(false);
-    // TODO: Define our own opencv-free tranpose?
+    // TODO: Define our own opencv-free inverse?
 #endif
     
   }
@@ -306,6 +342,18 @@ namespace Anki {
 #endif
   }
   
+  
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  unsigned int SmallMatrix<T,NROWS,NCOLS>::numRows() const
+  {
+    return NROWS;
+  }
+  
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  unsigned int SmallMatrix<T,NROWS,NCOLS>::numCols() const
+  {
+    return NCOLS;
+  }
 
 #if defined(ANKICORETECH_USE_OPENCV)
   template<typename T, unsigned int NROWS, unsigned int NCOLS>
@@ -322,8 +370,17 @@ namespace Anki {
   
 #endif  
   
-  
-  
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  ostream& operator<<(ostream& out, const SmallMatrix<T, NROWS, NCOLS>& m)
+  {
+    for (int i=0; i<NROWS; ++i) {
+      for (int j=0; j<NCOLS; ++j) {
+        out << m(i,j) << " ";
+      }
+      out << "\n";
+    }
+    return out;
+  }
   
 
 } // namespace Anki

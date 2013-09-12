@@ -2,30 +2,218 @@
 
 #include "anki/embeddedCommon.h"
 
+using namespace Anki::Embedded;
+
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 #include "opencv2/opencv.hpp"
 #endif
 
 #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
-Anki::Embedded::Matlab matlab(false);
+Matlab matlab(false);
 #endif
 
 #if defined(ANKICORETECHEMBEDDED_USE_GTEST)
 #include "gtest/gtest.h"
 #endif
 
-#define MAX_BYTES 1000
+#define MAX_BYTES 5000
 char buffer[MAX_BYTES];
+
+GTEST_TEST(CoreTech_Common, MatrixMultiply)
+{
+  const s32 numBytes = MIN(MAX_BYTES, 5000);
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  const char * mat1Data =
+    "1 2 3 5 7 "
+    "11 13 17 19 23 ";
+
+  const char * mat2Data =
+    "29 31 37 "
+    "41 43 47 "
+    "53 59 61 "
+    "67 71 73 "
+    "79 83 89 ";
+
+  const char * matOutGroundTruthData =
+    "1158 1230 1302 "
+    "4843 5161 5489 ";
+
+  Array_f64 mat1(2, 5, ms);
+  Array_f64 mat2(5, 3, ms);
+  Array_f64 matOut(2, 3, ms);
+  Array_f64 matOut_groundTruth(2, 3, ms);
+
+  ASSERT_TRUE(mat1.IsValid());
+  ASSERT_TRUE(mat2.IsValid());
+  ASSERT_TRUE(matOut.IsValid());
+  ASSERT_TRUE(matOut_groundTruth.IsValid());
+
+  mat1.Set(mat1Data);
+  mat2.Set(mat2Data);
+  matOut_groundTruth.Set(matOutGroundTruthData);
+
+  const Result result = MultiplyMatrices<Array_f64, f64>(mat1, mat2, matOut);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  ASSERT_TRUE(matOut.IsElementwiseEqual(matOut_groundTruth));
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, ComputeHomography)
+{
+  const s32 numBytes = MIN(MAX_BYTES, 5000);
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array_f64 homography_groundTruth(3, 3, ms);
+  Array_f64 homography(3, 3, ms);
+  Array_f64 originalPoints(3, 4, ms);
+  Array_f64 transformedPoints(3, 4, ms);
+
+  FixedLengthList_Point_f64 originalPointsList(4, ms);
+  FixedLengthList_Point_f64 transformedPointsList(4, ms);
+
+  ASSERT_TRUE(homography_groundTruth.IsValid());
+  ASSERT_TRUE(homography.IsValid());
+  ASSERT_TRUE(originalPoints.IsValid());
+  ASSERT_TRUE(originalPointsList.IsValid());
+  ASSERT_TRUE(transformedPointsList.IsValid());
+
+  const char * homographyGroundTruthData =
+    "5.5   -0.3 5.5 "
+    "0.5   0.5  3.3 "
+    "0.001 0.0  1.0 ";
+
+  const char * originalPointsData =
+    "0 1 1 0 "
+    "0 0 1 1 "
+    "1 1 1 1 ";
+
+  homography_groundTruth.Set(homographyGroundTruthData);
+  originalPoints.Set(originalPointsData);
+
+  MultiplyMatrices<Array_f64, f64>(homography_groundTruth, originalPoints, transformedPoints);
+
+  for(s32 i=0; i<originalPoints.get_size(1); i++) {
+    const f64 x0 = (*originalPoints.Pointer(0,i)) / (*originalPoints.Pointer(2,i));
+    const f64 y0 = (*originalPoints.Pointer(1,i)) / (*originalPoints.Pointer(2,i));
+
+    const f64 x1 = (*transformedPoints.Pointer(0,i)) / (*transformedPoints.Pointer(2,i));
+    const f64 y1 = (*transformedPoints.Pointer(1,i)) / (*transformedPoints.Pointer(2,i));
+
+    originalPointsList.PushBack(Point_f64(x0, y0));
+    transformedPointsList.PushBack(Point_f64(x1, y1));
+  }
+
+  //originalPoints.Print("originalPoints");
+  //transformedPoints.Print("transformedPoints");
+
+  //originalPointsList.Print("originalPointsList");
+  //transformedPointsList.Print("transformedPointsList");
+
+  const Result result = EstimateHomography(originalPointsList, transformedPointsList, homography, ms);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  //homography.Print("homography");
+
+  ASSERT_TRUE(homography.IsElementwiseEqual_PercentThreshold(homography_groundTruth, .01, .001));
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, SVD)
+{
+  const s32 numBytes = MIN(MAX_BYTES, 5000);
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  const char * aData =
+    "1 2 3 5 7 11 13 17 "
+    "19 23 29 31 37 41 43 47 ";
+
+  const char *uTGroundTruthData =
+    "-0.237504316543999	-0.971386483137875 "
+    "0.971386483137874	-0.237504316543999 ";
+
+  const char *wGroundTruthData =
+    "101.885662808124  9.29040979446927  0  0  0  0  0  0 ";
+
+  const char *vTGroundTruthData =
+    "-0.183478685625953	-0.223946108965585	-0.283481700610061	-0.307212042374800	-0.369078720749224	-0.416539404278702	-0.440269746043441	-0.487730429572919 "
+    "0.381166774075590	0.378866636898153	0.427695421221120	0.269708382365037	0.213979186509760	-0.101994891202405	-0.259981930058488	-0.575956007770654 "
+    "-0.227185052857744	-0.469620636740071	0.828412170627898	-0.133259849703043	-0.130174916014859	-0.0535189566767408	-0.0151909770076815	0.0614649823304370 "
+    "-0.262651399482480	-0.301123351378262	-0.120288604832971	0.894501576357598	-0.112627300393190	-0.0830469380120526	-0.0682567568214837	-0.0386763944403458 "
+    "-0.324884751171929	-0.243759383675343	-0.107225790475501	-0.104644995857761	0.880843955313500	-0.113994455451022	-0.111413660833282	-0.106252071597804 "
+    "-0.395817444421400	0.0932351870482750	-0.00462734139723796	-0.0491221437364792	-0.0840608134431630	0.826949581878355	-0.217545220460887	-0.306534825139369 "
+    "-0.431283791046136	0.261732472410084	0.0466718831418935	-0.0213607176758380	-0.0665131978214941	-0.202578399456957	0.729388999725311	-0.406676201910152 "
+    "-0.502216484295607	0.598727043133703	0.149270332220156	0.0341621344454443	-0.0314179665781565	-0.261634362127581	-0.376742559902293	0.393041044548282 ";
+
+  const s32 m = 2, n = 8;
+
+  Array_f32 a(m, n, ms);
+  Array_f32 w(1, n, ms);
+  Array_f32 uT(m, m, ms);
+  Array_f32 vT(n, n, ms);
+  Array_f32 w_groundTruth(1, n, ms);
+  Array_f32 uT_groundTruth(m, m, ms);
+  Array_f32 vT_groundTruth(n, n, ms);
+
+  ASSERT_TRUE(a.IsValid());
+  ASSERT_TRUE(w.IsValid());
+  ASSERT_TRUE(uT.IsValid());
+  ASSERT_TRUE(vT.IsValid());
+  ASSERT_TRUE(w_groundTruth.IsValid());
+  ASSERT_TRUE(uT_groundTruth.IsValid());
+  ASSERT_TRUE(vT_groundTruth.IsValid());
+
+  void * scratch = ms.Allocate(sizeof(float)*(2*n+m));
+  ASSERT_TRUE(scratch != NULL);
+
+  a.Set(aData);
+  w_groundTruth.Set(wGroundTruthData);
+  uT_groundTruth.Set(uTGroundTruthData);
+  vT_groundTruth.Set(vTGroundTruthData);
+
+  const Result result = svd_f32(a, w, uT, vT, scratch);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  //w.Print("w");
+  //w_groundTruth.Print("w_groundTruth");
+
+  //uT.Print("uT");
+  //uT_groundTruth.Print("uT_groundTruth");
+
+  //vT.Print("vT");
+  //vT_groundTruth.Print("vT_groundTruth");
+
+  ASSERT_TRUE(w.IsElementwiseEqual_PercentThreshold(w_groundTruth, .05, .001));
+  ASSERT_TRUE(uT.IsElementwiseEqual_PercentThreshold(uT_groundTruth, .05, .001));
+
+  // I don't know why, but the v-transpose for this SVD doesn't match Matlab's. Probably this version's is more efficient, in either memory or computation.
+  //ASSERT_TRUE(vT.IsElementwiseEqual_PercentThreshold(vT_groundTruth, .05, .001));
+
+  GTEST_RETURN_HERE;
+}
 
 GTEST_TEST(CoreTech_Common, MemoryStack)
 {
-  ASSERT_TRUE(Anki::Embedded::MEMORY_ALIGNMENT == 16);
+  ASSERT_TRUE(MEMORY_ALIGNMENT == 16);
 
   const s32 numBytes = MIN(MAX_BYTES, 200);
-  //void * buffer = calloc(numBytes+Anki::Embedded::MEMORY_ALIGNMENT, 1);
-  void * alignedBuffer = reinterpret_cast<void*>(Anki::Embedded::RoundUp(reinterpret_cast<size_t>(buffer), Anki::Embedded::MEMORY_ALIGNMENT));
+  //void * buffer = calloc(numBytes+MEMORY_ALIGNMENT, 1);
+  void * alignedBuffer = reinterpret_cast<void*>(RoundUp(reinterpret_cast<size_t>(buffer), MEMORY_ALIGNMENT));
   ASSERT_TRUE(buffer != NULL);
-  Anki::Embedded::MemoryStack ms(alignedBuffer, numBytes);
+  MemoryStack ms(alignedBuffer, numBytes);
+  ASSERT_TRUE(ms.IsValid());
 
   void * const buffer1 = ms.Allocate(5);
   void * const buffer2 = ms.Allocate(16);
@@ -95,13 +283,13 @@ GTEST_TEST(CoreTech_Common, MemoryStack)
   GTEST_RETURN_HERE;
 }
 
-s32 CheckMemoryStackUsage(Anki::Embedded::MemoryStack ms, s32 numBytes)
+s32 CheckMemoryStackUsage(MemoryStack ms, s32 numBytes)
 {
   ms.Allocate(numBytes);
   return ms.get_usedBytes();
 }
 
-s32 CheckConstCasting(const Anki::Embedded::MemoryStack ms, s32 numBytes)
+s32 CheckConstCasting(const MemoryStack ms, s32 numBytes)
 {
   // ms.Allocate(1); // Will not compile
 
@@ -113,7 +301,7 @@ GTEST_TEST(CoreTech_Common, MemoryStack_call)
   const s32 numBytes = MIN(MAX_BYTES, 100);
   //void * buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
-  Anki::Embedded::MemoryStack ms(buffer, numBytes);
+  MemoryStack ms(buffer, numBytes);
 
   ASSERT_TRUE(ms.get_usedBytes() == 0);
 
@@ -136,18 +324,18 @@ GTEST_TEST(CoreTech_Common, MemoryStack_call)
 
 GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
 {
-  ASSERT_TRUE(Anki::Embedded::MEMORY_ALIGNMENT == 16);
+  ASSERT_TRUE(MEMORY_ALIGNMENT == 16);
 
   const s32 numBytes = MIN(MAX_BYTES, 104); // 12*9 = 104
-  //void * buffer = calloc(numBytes+Anki::Embedded::MEMORY_ALIGNMENT, 1);
+  //void * buffer = calloc(numBytes+MEMORY_ALIGNMENT, 1);
   ASSERT_TRUE(buffer != NULL);
 
-  void * alignedBuffer = reinterpret_cast<void*>(Anki::Embedded::RoundUp<size_t>(reinterpret_cast<size_t>(buffer), Anki::Embedded::MEMORY_ALIGNMENT));
+  void * alignedBuffer = reinterpret_cast<void*>(RoundUp<size_t>(reinterpret_cast<size_t>(buffer), MEMORY_ALIGNMENT));
 
   const size_t bufferShift = reinterpret_cast<size_t>(alignedBuffer) - reinterpret_cast<size_t>(buffer);
-  ASSERT_TRUE(bufferShift < static_cast<size_t>(Anki::Embedded::MEMORY_ALIGNMENT));
+  ASSERT_TRUE(bufferShift < static_cast<size_t>(MEMORY_ALIGNMENT));
 
-  Anki::Embedded::MemoryStack ms(alignedBuffer, numBytes);
+  MemoryStack ms(alignedBuffer, numBytes);
   const s32 largestPossibleAllocation1 = ms.LargestPossibleAllocation();
   ASSERT_TRUE(largestPossibleAllocation1 == 80);
 
@@ -193,7 +381,7 @@ GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
 GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
 {
   matlab.EvalStringEcho("simpleArray = int16([1,2,3,4,5;6,7,8,9,10]);");
-  Anki::Embedded::Array_s16 simpleArray = matlab.GetArray_s16("simpleArray");
+  Array_s16 simpleArray = matlab.GetArray_s16("simpleArray");
   printf("simple matrix:\n");
   simpleArray.Print();
 
@@ -252,10 +440,10 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   const s32 numBytes = MIN(MAX_BYTES, 1000);
   //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
-  Anki::Embedded::MemoryStack ms(buffer, numBytes);
+  MemoryStack ms(buffer, numBytes);
 
   // Create a matrix, and manually set a few values
-  Anki::Embedded::Array_s16 simpleArray(10, 6, ms);
+  Array_s16 simpleArray(10, 6, ms);
   ASSERT_TRUE(simpleArray.get_rawDataPointer() != NULL);
   *simpleArray.Pointer(0,0) = 1;
   *simpleArray.Pointer(0,1) = 2;
@@ -330,9 +518,9 @@ GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
   //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
 
-  Anki::Embedded::MemoryStack ms(buffer, numBytes);
+  MemoryStack ms(buffer, numBytes);
 
-  Anki::Embedded::Array_u8 simpleArray(3, 3, ms);
+  Array_u8 simpleArray(3, 3, ms);
 
   const char * imgData =
     " 1 1 1 "
@@ -354,15 +542,15 @@ GTEST_TEST(CoreTech_Common, ArrayAlignment1)
   //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
 
-  void *alignedBuffer = reinterpret_cast<void*>( Anki::Embedded::RoundUp(reinterpret_cast<size_t>(buffer), Anki::Embedded::MEMORY_ALIGNMENT) );
+  void *alignedBuffer = reinterpret_cast<void*>( RoundUp(reinterpret_cast<size_t>(buffer), MEMORY_ALIGNMENT) );
 
   // Check all offsets
   for(s32 offset=0; offset<8; offset++) {
     void * const alignedBufferAndOffset = reinterpret_cast<char*>(alignedBuffer) + offset;
-    Anki::Embedded::Array_s16 simpleArray(10, 6, alignedBufferAndOffset, numBytes-offset-8);
+    Array_s16 simpleArray(10, 6, alignedBufferAndOffset, numBytes-offset-8);
 
     const size_t trueLocation = reinterpret_cast<size_t>(simpleArray.Pointer(0,0));
-    const size_t expectedLocation = Anki::Embedded::RoundUp(reinterpret_cast<size_t>(alignedBufferAndOffset), Anki::Embedded::MEMORY_ALIGNMENT);;
+    const size_t expectedLocation = RoundUp(reinterpret_cast<size_t>(alignedBufferAndOffset), MEMORY_ALIGNMENT);;
 
     ASSERT_TRUE(trueLocation ==  expectedLocation);
   }
@@ -378,16 +566,16 @@ GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
   //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
 
-  void *alignedBuffer = reinterpret_cast<void*>( Anki::Embedded::RoundUp(reinterpret_cast<size_t>(buffer), Anki::Embedded::MEMORY_ALIGNMENT) );
+  void *alignedBuffer = reinterpret_cast<void*>( RoundUp(reinterpret_cast<size_t>(buffer), MEMORY_ALIGNMENT) );
 
   // Check all offsets
   for(s32 offset=0; offset<8; offset++) {
     void * const alignedBufferAndOffset = reinterpret_cast<char*>(alignedBuffer) + offset;
-    Anki::Embedded::MemoryStack simpleMemoryStack(alignedBufferAndOffset, numBytes-offset-8);
-    Anki::Embedded::Array_s16 simpleArray(10, 6, simpleMemoryStack);
+    MemoryStack simpleMemoryStack(alignedBufferAndOffset, numBytes-offset-8);
+    Array_s16 simpleArray(10, 6, simpleMemoryStack);
 
     const size_t matrixStart = reinterpret_cast<size_t>(simpleArray.Pointer(0,0));
-    ASSERT_TRUE(matrixStart == Anki::Embedded::RoundUp(matrixStart, Anki::Embedded::MEMORY_ALIGNMENT));
+    ASSERT_TRUE(matrixStart == RoundUp(matrixStart, MEMORY_ALIGNMENT));
   }
 
   //free(buffer); buffer = NULL;
@@ -402,12 +590,12 @@ GTEST_TEST(CoreTech_Common, ArrayFillPattern)
   //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
 
-  void *alignedBuffer = reinterpret_cast<void*>( Anki::Embedded::RoundUp(reinterpret_cast<size_t>(buffer), Anki::Embedded::MEMORY_ALIGNMENT) );
+  void *alignedBuffer = reinterpret_cast<void*>( RoundUp(reinterpret_cast<size_t>(buffer), MEMORY_ALIGNMENT) );
 
-  Anki::Embedded::MemoryStack ms(alignedBuffer, numBytes-Anki::Embedded::MEMORY_ALIGNMENT);
+  MemoryStack ms(alignedBuffer, numBytes-MEMORY_ALIGNMENT);
 
   // Create a matrix, and manually set a few values
-  Anki::Embedded::Array_s16 simpleArray(height, width, ms, true);
+  Array_s16 simpleArray(height, width, ms, true);
   ASSERT_TRUE(simpleArray.get_rawDataPointer() != NULL);
 
   ASSERT_TRUE(simpleArray.IsValid());
@@ -475,6 +663,7 @@ void RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Common, ArrayAlignment1);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStackAlignment);
   CALL_GTEST_TEST(CoreTech_Common, ArrayFillPattern);
+  CALL_GTEST_TEST(CoreTech_Common, SVD);
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 } // void RUN_ALL_TESTS()

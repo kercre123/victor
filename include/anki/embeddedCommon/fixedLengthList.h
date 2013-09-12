@@ -63,6 +63,55 @@ namespace Anki
     }
 
     FixedLengthList_Point_s16 AllocateFixedLengthListFromHeap_Point_s16(s32 maximumSize, bool useBoundaryFillPatterns=false);
+
+    class FixedLengthList_Point_f64 : public Array_Point_f64
+    {
+    public:
+      FixedLengthList_Point_f64();
+
+      // Constructor for a FixedLengthList_Point_f64, pointing to user-allocated data.
+      FixedLengthList_Point_f64(s32 maximumSize, void * data, s32 dataLength, bool useBoundaryFillPatterns=false);
+
+      // Constructor for a FixedLengthList_Point_f64, pointing to user-allocated MemoryStack
+      FixedLengthList_Point_f64(s32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns=false);
+
+      bool IsValid() const;
+
+      Result PushBack(const Point_f64 &value);
+
+      // Will act as a normal pop, except when the list is empty. Then subsequent
+      // calls will keep returning the first value in the list.
+      Point_f64 PopBack();
+
+      void Clear();
+
+      // Pointer to the data, at a given location
+      inline Point_f64* Pointer(s32 index);
+
+      // Pointer to the data, at a given location
+      inline const Point_f64* Pointer(s32 index) const;
+
+      s32 get_maximumSize() const;
+
+      s32 get_size() const;
+
+    protected:
+      s32 capacityUsed;
+    }; // class FixedLengthList_Point_f64
+
+    inline Point_f64* FixedLengthList_Point_f64::Pointer(s32 index)
+    {
+      return Array_Point_f64::Pointer(0, index);
+    }
+
+    // Pointer to the data, at a given location
+
+    inline const Point_f64* FixedLengthList_Point_f64::Pointer(s32 index) const
+    {
+      return Array_Point_f64::Pointer(0, index);
+    }
+
+    FixedLengthList_Point_f64 AllocateFixedLengthListFromHeap_Point_f64(s32 maximumSize, bool useBoundaryFillPatterns=false);
   } // namespace Embedded
 } // namespace Anki
 
