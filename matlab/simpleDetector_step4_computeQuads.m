@@ -223,6 +223,9 @@ for i_region = 1:numRegions
                         elseif strcmp(embeddedConversions.homographyEstimationType, 'opencv_cp2tform')
                             tformInit = mex_cp2tform_projective(corners, [0 0; 0 1; 1 0; 1 1]);
                             tformIsInitialized = true;
+                        elseif strcmp(embeddedConversions.homographyEstimationType, 'c_float64')
+                            tformInit = mexEstimateHomography(corners, [0 0; 0 1; 1 0; 1 1]);
+                            tformIsInitialized = true;
                         end
 
                         % Test comparing the matlab and openCV versions
@@ -254,7 +257,7 @@ for i_region = 1:numRegions
                                             
 %                                             disp('normal ICP');
 %                                             disp(computeHomographyFromTform(tform));
-                                        elseif strcmp(embeddedConversions.homographyEstimationType, 'opencv_cp2tform')
+                                        elseif strcmp(embeddedConversions.homographyEstimationType, 'opencv_cp2tform') || strcmp(embeddedConversions.homographyEstimationType, 'c_float64')
                                             tform = ICP_projective(fliplr(boundary), canonicalBoundary, ...
                                                 'homographyInit', tformInit, ...
                                                 'maxIterations', 10, 'tolerance', .001, ...
@@ -288,7 +291,9 @@ for i_region = 1:numRegions
                                                 
                         
                         if ~isempty(tform)
-                            if strcmp(quadRefinementMethod, 'ICP') && strcmp(embeddedConversions.homographyEstimationType, 'opencv_cp2tform')
+                            if strcmp(quadRefinementMethod, 'ICP') &&...
+                                    (strcmp(embeddedConversions.homographyEstimationType, 'opencv_cp2tform') || strcmp(embeddedConversions.homographyEstimationType, 'c_float64'))
+                                
 %                                 [x,y] = tforminv(tform, [0 0 1 1]', [0 1 0 1]');
                                 tformInv = inv(tform);
                                 tformInv = tformInv / tformInv(3,3);

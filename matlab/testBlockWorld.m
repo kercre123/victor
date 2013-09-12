@@ -13,7 +13,7 @@
 % <Set BlockMarker2D.UseOutsideOfSquare = true in BlockMarker2D.m!!!>
 % close all % Get rid of any instantiated/displayed BlockMarkers
 % clear BlockMarker2D BlockMarker3D
-% testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false, 'embeddedConversions', EmbeddedConversionsManager('homographyEstimationType', 'opencv_cp2tform', 'computeCharacteristicScaleImageType', 'c_fixedPoint', 'traceBoundaryType', 'matlab_approximate', 'connectedComponentsType', 'matlab_approximate'));
+% testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false, 'embeddedConversions', EmbeddedConversionsManager('homographyEstimationType', 'c_float64', 'computeCharacteristicScaleImageType', 'c_fixedPoint', 'traceBoundaryType', 'matlab_approximate', 'connectedComponentsType', 'matlab_approximate'));
 % <Possibly close, clear, and set UseOutsideOfSquares back to false>
 
 
