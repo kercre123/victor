@@ -2,6 +2,7 @@
 #define _ANKICORETECH_COMMON_ARRAY2D_H_
 
 #include "anki/common/config.h"
+#include "anki/exceptions.h"
 #include "anki/common/utilities.h"
 #include "anki/common/memory.h"
 #include "anki/embeddedCommon/DASlight.h"
@@ -209,6 +210,8 @@ namespace Anki
   T  Array2d<T>::operator() (const unsigned int row,
     const unsigned int col) const
   {
+    CORETECH_THROW_IF(row >= numRows() || col >= numCols());
+    
 #if defined(ANKICORETECH_USE_OPENCV)
     // Provide thin wrapper to OpenCV's (row,col) access:
     return cv::Mat_<T>::operator()(row,col);
@@ -218,6 +221,8 @@ namespace Anki
   template<typename T>
   T& Array2d<T>::operator() (const unsigned int row, const unsigned int col)
   {
+    CORETECH_THROW_IF(row >= numRows() || col >= numCols());
+    
 #if defined(ANKICORETECH_USE_OPENCV)    
     // Provide thin wrapper to OpenCV's (row,col) access:
     return cv::Mat_<T>::operator()(row,col);
