@@ -11,8 +11,7 @@ cmake_policy(SET CMP0015 NEW)
 set(OPENCV_DIR opencv-2.4.6.1)
 set(GTEST_DIR gtest-1.7.0)
 
-set(CMAKE_CXX_FLAGS "-std=gnu++11")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
 
 if(WIN32)
 	set(LIBRARY_BITS 32)
@@ -21,6 +20,11 @@ elseif(UNIX)
 else()
 	message(FATAL_ERROR "Not sure what to set LIBRARY_BITS to.")
 endif()
+
+#include(FindMatlab)
+set(MATLAB_INCLUDE_DIR /Applications/MATLAB_R2013a.app/extern/include)
+set(MATLAB_LIB_DIR /Applications/MATLAB_R2013a.app/bin/maci64)
+message(STATUS "Using Matlab include dir ${MATLAB_INCLUDE_DIR}")
 
 project(${PROJECT_NAME})
 
@@ -41,9 +45,10 @@ set(EXTERNAL_DIR ${PROJECT_SOURCE_DIR}/../coretech-external)
 set(OPENCV_MODULES_DIR ${EXTERNAL_DIR}/${OPENCV_DIR}/modules)
 include_directories(
 	${PROJECT_SOURCE_DIR}/include
-	${PROJECT_SOURCE_DIR}/../coretech-common/include
+	${PROJECT_SOURCE_DIR}/../coretech-common/include 
 	${EXTERNAL_DIR}/${OPENCV_DIR}/include 
-	${EXTERNAL_DIR}/${GTEST_DIR}/include)
+	${EXTERNAL_DIR}/${GTEST_DIR}/include
+	${MATLAB_INCLUDE_DIR})
 
 # Add the include directory for each OpenCV module:
 file(GLOB OPENCV_MODULES RELATIVE ${OPENCV_MODULES_DIR} ${OPENCV_MODULES_DIR}/*)
@@ -58,8 +63,6 @@ if(CMAKE_GENERATOR MATCHES "Unix Makefiles")
 	set(BUILD_TYPE_DIR ${CMAKE_BUILD_TYPE})
 else()
 	set(BUILD_TYPE_DIR ./)	
-#	set(LIBRARY_OUTPUT_PATH ${LIBRARY_OUTPUT_PATH}/${CMAKE_BUILD_TYPE})
-#	set(EXECUTABLE_OUTPUT_PATH ${EXECUTABLE_OUTPUT_PATH}/${CMAKE_BUILD_TYPE})
 endif()
 
 # Store our libraries in, e.g., coretech-vision/build/lib/<Debug>
@@ -70,9 +73,9 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin/${BUILD_TYPE_DIR})
 
 link_directories(
 	${PROJECT_SOURCE_DIR}/build/lib/${BUILD_TYPE_DIR}
-	${PROJECT_SOURCE_DIR}/../coretech-common/build/lib/${BUILD_TYPE_DIR}
+	${PROJECT_SOURCE_DIR}/../coretech-common/build/lib/${BUILD_TYPE_DIR} 
 	${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${OPENCV_DIR}/lib/${CMAKE_CFG_INTDIR}
-	${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${GTEST_DIR})
-
+	${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${GTEST_DIR}
+	${MATLAB_LIB_DIR})
 
 endmacro(ankiProject)

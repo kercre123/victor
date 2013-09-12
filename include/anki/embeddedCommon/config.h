@@ -9,12 +9,14 @@
 #define ANKICORETECHEMBEDDED_USE_OPENCV
 #define ANKICORETECHEMBEDDED_USE_GTEST
 
-#if defined(__GNUC__) && __GNUC__==4 && __GNUC_MINOR__==2 && __GNUC_PATCHLEVEL__==1 //hack to detect the movidius compiler
+#if !defined(__APPLE_CC__) && defined(__GNUC__) && __GNUC__==4 && __GNUC_MINOR__==2 && __GNUC_PATCHLEVEL__==1 //hack to detect the movidius compiler
+#warning Using GNUC 4.2.1
 #define USING_MOVIDIUS_SHAVE_COMPILER
 #define USING_MOVIDIUS_COMPILER
 #endif
 
-#if defined(__GNUC__) && __GNUC__==4 && __GNUC_MINOR__==4 && __GNUC_PATCHLEVEL__==2 //hack to detect the movidius compiler
+#if !defined(__APPLE_CC__) && defined(__GNUC__) && __GNUC__==4 && __GNUC_MINOR__==4 && __GNUC_PATCHLEVEL__==2 //hack to detect the movidius compiler
+#warning Using GNUC 4.4.2
 #define USING_MOVIDIUS_GCC_COMPILER
 #define USING_MOVIDIUS_COMPILER
 #endif
@@ -52,9 +54,14 @@
 #define IN_CACHED_DDR
 #endif
 
+#ifndef restrict
+#define restrict
+#endif
+
 #endif // #if defined(__APPLE_CC__)
 
 #if defined(USING_MOVIDIUS_COMPILER)
+#warning USING MOVIDIUS COMPILER!!
 #undef ANKICORETECHEMBEDDED_USE_MATLAB
 #undef ANKICORETECHEMBEDDED_USE_OPENCV
 #undef ANKICORETECHEMBEDDED_USE_GTEST
