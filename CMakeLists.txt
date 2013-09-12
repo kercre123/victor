@@ -11,3 +11,5 @@ ankiProject(CoreTech_Vision)
 
 add_subdirectory(src)
 add_subdirectory(test) 
+add_subdirectory(matlab/mex)
+add_subdirectory(matlab/CameraCapture)

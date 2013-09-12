@@ -3,7 +3,7 @@
 #include "anki/embeddedVision.h"
 #include "visionBenchmarks.h"
 
-#ifdef _MSC_VER
+#if(defined(_MSC_VER) || defined(__APPLE__))
 #include <string.h>
 #else
 static void memset(void * dst, int value, size_t size)
