@@ -11,3 +11,4 @@ ankiProject(CoreTech_Common)
 
 add_subdirectory(src) 
 add_subdirectory(test)
+add_subdirectory(matlab/mex)
