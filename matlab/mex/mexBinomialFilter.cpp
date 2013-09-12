@@ -13,11 +13,11 @@ using namespace Anki::Embedded;
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   ConditionalErrorAndReturn(nrhs == 1 && nlhs == 1, "mexBinomialFilter", "Call this function as following: imgFiltered = mexBinomialFilter(img);");
-    
+
   Array_u8 img = mxArrayToArray_u8(prhs[0]);
-  
+
   ConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Array_u8 img");
-        
+
   Array_u8 imgFiltered = AllocateArrayFromHeap_u8(img.get_size(0), img.get_size(1));
   ConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Array_u8 imgFiltered");
 
@@ -27,9 +27,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   if(BinomialFilter(img, imgFiltered, scratch) != RESULT_OK) {
     printf("Error: mexBinomialFilter\n");
   }
-  
+
   plhs[0] = arrayToMxArray_u8(imgFiltered);
-  
+
   free(img.get_rawDataPointer());
   free(imgFiltered.get_rawDataPointer());
   free(scratch.get_buffer());
