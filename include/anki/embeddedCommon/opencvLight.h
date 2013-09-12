@@ -7,7 +7,13 @@ namespace Anki
 {
   namespace Embedded
   {
-    Result cvHomographyEstimator_runKernel(const FixedLengthList_Point_f64 &m1, const FixedLengthList_Point_f64 &m2, Array_f64 &H, MemoryStack &scratch);
+    /*! Compute the homography such that "transformedPoints = homography * originalPoints" */
+    Result EstimateHomography(
+      const FixedLengthList_Point_f64 &originalPoints,    //!<
+      const FixedLengthList_Point_f64 &transformedPoints, //!<
+      Array_f64 &homography, //!<
+      MemoryStack &scratch //!<
+      );
 
     /*! Performs an Singular Value Decomposition on the mXn, float32 input array. [u^t,w,v^t] = SVD(a); */
     Result svd_f32(

@@ -73,16 +73,16 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
 
   Array_f64 homography_groundTruth(3, 3, ms);
   Array_f64 homography(3, 3, ms);
-  Array_f64 initialPoints(3, 4, ms);
+  Array_f64 originalPoints(3, 4, ms);
   Array_f64 transformedPoints(3, 4, ms);
 
-  FixedLengthList_Point_f64 initialPointsList(4, ms);
+  FixedLengthList_Point_f64 originalPointsList(4, ms);
   FixedLengthList_Point_f64 transformedPointsList(4, ms);
 
   ASSERT_TRUE(homography_groundTruth.IsValid());
   ASSERT_TRUE(homography.IsValid());
-  ASSERT_TRUE(initialPoints.IsValid());
-  ASSERT_TRUE(initialPointsList.IsValid());
+  ASSERT_TRUE(originalPoints.IsValid());
+  ASSERT_TRUE(originalPointsList.IsValid());
   ASSERT_TRUE(transformedPointsList.IsValid());
 
   const char * homographyGroundTruthData =
@@ -90,34 +90,34 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
     "0.5   0.5  3.3 "
     "0.001 0.0  1.0 ";
 
-  const char * initialPointsData =
+  const char * originalPointsData =
     "0 1 1 0 "
     "0 0 1 1 "
     "1 1 1 1 ";
 
   homography_groundTruth.Set(homographyGroundTruthData);
-  initialPoints.Set(initialPointsData);
+  originalPoints.Set(originalPointsData);
 
-  MultiplyMatrices<Array_f64, f64>(homography_groundTruth, initialPoints, transformedPoints);
+  MultiplyMatrices<Array_f64, f64>(homography_groundTruth, originalPoints, transformedPoints);
 
-  for(s32 i=0; i<initialPoints.get_size(1); i++) {
-    const f64 x0 = (*initialPoints.Pointer(0,i)) / (*initialPoints.Pointer(2,i));
-    const f64 y0 = (*initialPoints.Pointer(1,i)) / (*initialPoints.Pointer(2,i));
+  for(s32 i=0; i<originalPoints.get_size(1); i++) {
+    const f64 x0 = (*originalPoints.Pointer(0,i)) / (*originalPoints.Pointer(2,i));
+    const f64 y0 = (*originalPoints.Pointer(1,i)) / (*originalPoints.Pointer(2,i));
 
     const f64 x1 = (*transformedPoints.Pointer(0,i)) / (*transformedPoints.Pointer(2,i));
     const f64 y1 = (*transformedPoints.Pointer(1,i)) / (*transformedPoints.Pointer(2,i));
 
-    initialPointsList.PushBack(Point_f64(x0, y0));
+    originalPointsList.PushBack(Point_f64(x0, y0));
     transformedPointsList.PushBack(Point_f64(x1, y1));
   }
 
-  //initialPoints.Print("initialPoints");
+  //originalPoints.Print("originalPoints");
   //transformedPoints.Print("transformedPoints");
 
-  //initialPointsList.Print("initialPointsList");
+  //originalPointsList.Print("originalPointsList");
   //transformedPointsList.Print("transformedPointsList");
 
-  const Result result = cvHomographyEstimator_runKernel(initialPointsList, transformedPointsList, homography, ms);
+  const Result result = EstimateHomography(originalPointsList, transformedPointsList, homography, ms);
 
   ASSERT_TRUE(result == RESULT_OK);
 

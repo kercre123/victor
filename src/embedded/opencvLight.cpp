@@ -1144,25 +1144,24 @@ namespace Anki
       }
     }
 
-    Result cvHomographyEstimator_runKernel(const FixedLengthList_Point_f64 &m1, const FixedLengthList_Point_f64 &m2, Array_f64 &H, MemoryStack &scratch)
+    /*! Compute the homography such that "transformedPoints = homography * originalPoints" */
+    Result EstimateHomography(
+      const FixedLengthList_Point_f64 &originalPoints,    //!<
+      const FixedLengthList_Point_f64 &transformedPoints, //!<
+      Array_f64 &homography, //!<
+      MemoryStack &scratch //!<
+      )
     {
-      const s32 count = m1.get_size();
-      const Point_f64 * const M = m1.Pointer(0);
-      const Point_f64 * const m = m2.Pointer(0);
-
-      /*Array_f64 _LtL = Array_f64( 9, 9, LtL, 9*16, false);
-      Array_f64 _W = Array_f64( 9, 1, W, 16, false);
-      Array_f64 _V = Array_f64( 9, 9, V, 9*16, false);
-      Array_f64 _H0 = Array_f64( 3, 3, V[8], 3*3, false);
-      Array_f64 _Htemp = Array_f64( 3, 3, V[7], 3*3, false);*/
+      const s32 count = originalPoints.get_size();
+      const Point_f64 * const M = originalPoints.Pointer(0);
+      const Point_f64 * const m = transformedPoints.Pointer(0);
 
       Array_f64 _LtL = Array_f64(9, 9, scratch);
       Array_f64 _W = Array_f64(1, 9, scratch); // Swapper
       Array_f64 _V = Array_f64(9, 9, scratch);
-      Array_f64 _H0 = Array_f64(3, 3, scratch);
-      Array_f64 _Htemp = Array_f64(3, 3, scratch);
+      Array_f64 _homography0 = Array_f64(3, 3, scratch);
+      Array_f64 _homographyTemp = Array_f64(3, 3, scratch);
 
-      //CvPoint2D64f cM={0,0}, cm={0,0}, sM={0,0}, sm={0,0};
       Point_f64 cM(0,0), cm(0,0), sM(0,0), sm(0,0);
 
       for(s32 i = 0; i < count; i++) {
@@ -1186,18 +1185,17 @@ namespace Anki
       sm.x = count/sm.x; sm.y = count/sm.y;
       sM.x = count/sM.x; sM.y = count/sM.y;
 
-      Array_f64 _invHnorm = Array_f64(3, 3, scratch);
-      Array_f64 _Hnorm2 = Array_f64(3, 3, scratch);
+      Array_f64 _invHomographyNorm = Array_f64(3, 3, scratch);
+      Array_f64 _homographyNorm2 = Array_f64(3, 3, scratch);
 
-      *_invHnorm.Pointer(0,0) = 1./sm.x;  *_invHnorm.Pointer(0,1) = 0;       *_invHnorm.Pointer(0,2) = cm.x;
-      *_invHnorm.Pointer(1,0) = 0;        *_invHnorm.Pointer(1,1) = 1./sm.y; *_invHnorm.Pointer(1,2) = cm.y;
-      *_invHnorm.Pointer(2,0) = 0;        *_invHnorm.Pointer(2,1) = 0;       *_invHnorm.Pointer(2,2) = 1;
+      *_invHomographyNorm.Pointer(0,0) = 1./sm.x;  *_invHomographyNorm.Pointer(0,1) = 0;       *_invHomographyNorm.Pointer(0,2) = cm.x;
+      *_invHomographyNorm.Pointer(1,0) = 0;        *_invHomographyNorm.Pointer(1,1) = 1./sm.y; *_invHomographyNorm.Pointer(1,2) = cm.y;
+      *_invHomographyNorm.Pointer(2,0) = 0;        *_invHomographyNorm.Pointer(2,1) = 0;       *_invHomographyNorm.Pointer(2,2) = 1;
 
-      *_Hnorm2.Pointer(0,0) = sM.x;  *_Hnorm2.Pointer(0,1) = 0;     *_Hnorm2.Pointer(0,2) = -cM.x*sM.x;
-      *_Hnorm2.Pointer(1,0) = 0;     *_Hnorm2.Pointer(1,1) = sM.y;  *_Hnorm2.Pointer(1,2) = -cM.y*sM.y;
-      *_Hnorm2.Pointer(2,0) = 0;     *_Hnorm2.Pointer(2,1) = 0;     *_Hnorm2.Pointer(2,2) = 1;
+      *_homographyNorm2.Pointer(0,0) = sM.x;  *_homographyNorm2.Pointer(0,1) = 0;     *_homographyNorm2.Pointer(0,2) = -cM.x*sM.x;
+      *_homographyNorm2.Pointer(1,0) = 0;     *_homographyNorm2.Pointer(1,1) = sM.y;  *_homographyNorm2.Pointer(1,2) = -cM.y*sM.y;
+      *_homographyNorm2.Pointer(2,0) = 0;     *_homographyNorm2.Pointer(2,1) = 0;     *_homographyNorm2.Pointer(2,2) = 1;
 
-      //cvZero( &_LtL );
       _LtL.Set(0.0);
 
       for(s32 i = 0; i < count; i++) {
@@ -1223,38 +1221,34 @@ namespace Anki
         Array_f64 uT(_LtL.get_size(0), _LtL.get_size(0), scratch);
         void * svdScratchBuffer = scratch.Allocate(sizeof(f64)*(_LtL.get_size(1)*2 + _LtL.get_size(0)));
 
-        // cvSVD( &_LtL, &_W, 0, &_V, CV_SVD_MODIFY_A + CV_SVD_V_T );
         result = svd_f64(_LtL, _W, uT, _V, svdScratchBuffer);
       }
 
       DASConditionalErrorAndReturnValue(result == RESULT_OK,
-        RESULT_FAIL, "cvHomographyEstimator_runKernel", "svd_f64 failed");
+        RESULT_FAIL, "EstimateHomography", "svd_f64 failed");
 
-      // TODO: pull _H0 from V[8]
-      //CvMat _H0 = cvMat( 3, 3, CV_64F, V[8] );
       {
         s32 ci = 0;
         const f64 * const V_rowPointer = _V.Pointer(8,0);
         for(s32 y=0; y<3; y++) {
           for(s32 x=0; x<3; x++) {
-            (*_H0.Pointer(y,x)) = V_rowPointer[ci++];
+            (*_homography0.Pointer(y,x)) = V_rowPointer[ci++];
           }
         }
       }
 
-      MultiplyMatrices<Array_f64,f64>(_invHnorm, _H0, _Htemp);
-      MultiplyMatrices<Array_f64,f64>(_Htemp, _Hnorm2, H);
+      MultiplyMatrices<Array_f64,f64>(_invHomographyNorm, _homography0, _homographyTemp);
+      MultiplyMatrices<Array_f64,f64>(_homographyTemp, _homographyNorm2, homography);
 
-      //cvConvertScale( &_H0, H, 1./_H0.data.db[8] );
       {
-        const f64 inverseHomogeneousScale = 1.0 / (*H.Pointer(2,2));
+        const f64 inverseHomogeneousScale = 1.0 / (*homography.Pointer(2,2));
         for(s32 y=0; y<3; y++) {
           for(s32 x=0; x<3; x++) {
-            (*H.Pointer(y,x)) *= inverseHomogeneousScale;
+            (*homography.Pointer(y,x)) *= inverseHomogeneousScale;
           }
         }
       }
-      
+
       return RESULT_OK;
     }
   } // namespace Embedded
