@@ -6,7 +6,7 @@
 file(GLOB CORETECH_VISION_FILES "*.cpp")
 
 add_library(CoreTech_Vision ${CORETECH_VISION_FILES})
-target_link_libraries(CoreTech_Vision opencv_core opencv_imgproc)
+target_link_libraries(CoreTech_Vision)
 
 
 # Vision Embedded Library
