@@ -1,3 +1,7 @@
+"""
+This file generated a c++ file, by automatically "instantiating templates"
+To add some lines to this file, find replace (without the quotes) "\r\n" into "\\n' +\\\r\n            '"
+"""
 
 def __GenerateTopOfFile():
     topString = \
@@ -97,20 +101,36 @@ def __GenerateDeclarations(whichTypes, includeAllMethods):
             '        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));\n' +\
             '      }\n' +\
             '\n' +\
-            '#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)\n'
+            '#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)\n' +\
+            '      // Returns a templated cv::Mat_ that shares the same buffer with this Array_' + type + '. No data is copied.\n' +\
+            '      cv::Mat_<' + type + '>& get_CvMat_();\n' +\
+            '#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)\n\n' 
 
         if includeAllMethods:
             methodsString +=\
+            '#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)\n' +\
             '      void Show(const char * const windowName, const bool waitForKeypress) const;\n' +\
+            '#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)\n' +\
+            '\n' +\
+            '      // Check every element of this array against the input array. If the arrays are different\n' +\
+            '      // sizes, uninitialized, or if any element is more different than the threshold, then\n' +\
+            '      // return false.\n' +\
+            '      bool IsElementwiseEqual(const Array_' + type + ' &array2, const ' + type + ' threshold = static_cast<' + type + '>(0.0001)) const;\n' +\
+            '\n' +\
+            '      // Check every element of this array against the input array. If the arrays are different\n' +\
+            '      // sizes or uninitialized, return false. The percentThreshold is between 0.0 and 1.0. To\n' +\
+            '      // return false, an element must fail both thresholds. The percent threshold fails if an\n' +\
+            '      // element is more than a percentage different than its matching element (calulated from the\n' +\
+            '      // maximum of the two).\n' +\
+            '      bool IsElementwiseEqual_PercentThreshold(const Array_' + type + ' &array2, const double percentThreshold = 0.01, const double absoluteThreshold = 0.0001) const;\n' +\
             '\n'
 
         methodsString +=\
-            '      // Returns a templated cv::Mat_ that shares the same buffer with this Array_' + type + '. No data is copied.\n' +\
-            '      cv::Mat_<' + type + '>& get_CvMat_();\n' +\
-            '#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)\n' +\
+            '      // If this array or array2 are different sizes or uninitialized, then return false.\n' +\
+            '      bool IsEqualSize(const Array_' + type + ' &array2) const;\n' +\
             '\n' +\
             '      // Print out the contents of this Array_' + type + '\n' +\
-            '      void Print() const;\n' +\
+            '      void Print(const char * const variableName = "Array_' + type + '") const;\n' +\
             '\n' +\
             '      // If the Array_' + type + ' was constructed with the useBoundaryFillPatterns=true, then\n' +\
             '      // return if any memory was written out of bounds (via fill patterns at the\n' +\
@@ -161,13 +181,13 @@ def __GenerateDeclarations(whichTypes, includeAllMethods):
             '      // should be used to free.\n' +\
             '      void * rawDataPointer;\n' +\
             '\n' +\
-            '      void initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);\n' +\
-            '\n' +\
-            '      void invalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array\n' +\
-            '\n' +\
             '#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)\n' +\
             '      cv::Mat_<' + type + '> cvMatMirror;\n' +\
             '#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)\n' +\
+            '\n' +\
+            '      void Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);\n' +\
+            '\n' +\
+            '      void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array\n' +\
             '\n' +\
             '    private:\n' +\
             '      //Array_' + type + ' & operator= (const Array_' + type + ' & rightHandSide); // In the future, assignment may not be allowed\n' +\
@@ -183,7 +203,7 @@ def GenerateAndWriteFile(filename = '../include/anki/embeddedCommon/array2d.h'):
     topString = __GenerateTopOfFile()
 
     methodsDeclarations  = __GenerateDeclarations(['u8', 's8', 'u16', 's16', 'u32', 's32', 'u64', 's64', 'f32', 'f64'], True)
-    methodsDeclarations += __GenerateDeclarations(['Point_s16'], False)
+    methodsDeclarations += __GenerateDeclarations(['Point_s16', 'Point_f32', 'Point_f64'], False)
 
     bottomString = __GenerateBottomOfFile()
 

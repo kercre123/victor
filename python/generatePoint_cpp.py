@@ -1,3 +1,7 @@
+"""
+This file generated a c++ file, by automatically "instantiating templates"
+To add some lines to this file, find replace (without the quotes) "\r\n" into "\\n' +\\\r\n            '"
+"""
 
 def __GenerateTopOfFile():
     topString = \

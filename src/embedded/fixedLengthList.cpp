@@ -78,5 +78,80 @@ namespace Anki
 
       return mat;
     } // AllocateArray2dFixedPointFromHeap()
+
+    FixedLengthList_Point_f64::FixedLengthList_Point_f64()
+      : Array_Point_f64(), capacityUsed(0)
+    {
+    }
+
+    FixedLengthList_Point_f64::FixedLengthList_Point_f64(s32 maximumSize, void * data, s32 dataLength,
+      bool useBoundaryFillPatterns)
+      : Array_Point_f64(1, maximumSize, data, dataLength, useBoundaryFillPatterns), capacityUsed(0)
+    {
+    }
+
+    FixedLengthList_Point_f64::FixedLengthList_Point_f64(s32 maximumSize, MemoryStack &memory,
+      bool useBoundaryFillPatterns)
+      : Array_Point_f64(1, maximumSize, memory, useBoundaryFillPatterns), capacityUsed(0)
+    {
+    }
+
+    bool FixedLengthList_Point_f64::IsValid() const
+    {
+      if(capacityUsed > this->get_maximumSize()) {
+        return false;
+      }
+
+      return Array_Point_f64::IsValid();
+    }
+
+    Result FixedLengthList_Point_f64::PushBack(const Point_f64 &value)
+    {
+      if(capacityUsed >= this->get_maximumSize()) {
+        return RESULT_FAIL;
+      }
+
+      *this->Pointer(capacityUsed) = value;
+      capacityUsed++;
+
+      return RESULT_OK;
+    }
+
+    Point_f64 FixedLengthList_Point_f64::PopBack()
+    {
+      if(capacityUsed == 0) {
+        return *this->Pointer(0);
+      }
+
+      const Point_f64 value = *this->Pointer(capacityUsed-1);
+      capacityUsed--;
+
+      return value;
+    }
+
+    void FixedLengthList_Point_f64::Clear()
+    {
+      this->capacityUsed = 0;
+    }
+
+    s32 FixedLengthList_Point_f64::get_maximumSize() const
+    {
+      return Array_Point_f64::get_size(1);
+    }
+
+    s32 FixedLengthList_Point_f64::get_size() const
+    {
+      return capacityUsed;
+    }
+
+    FixedLengthList_Point_f64 AllocateFixedLengthListFromHeap_Point_f64(s32 maximumSize, bool useBoundaryFillPatterns)
+    {
+      // const s32 stride = FixedLengthList_Point_f64::ComputeRequiredStride(maximumSize, useBoundaryFillPatterns);
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_Point_f64::ComputeMinimumRequiredMemory(1, maximumSize, useBoundaryFillPatterns); // The required memory, plus a bit more
+
+      FixedLengthList_Point_f64 mat(maximumSize, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+
+      return mat;
+    } // AllocateArray2dFixedPointFromHeap()
   } // namespace Embedded
 } // namespace Anki

@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		0A7E658617DFFFB100B058C2 /* coreTechCommonTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0A7E658517DFFFB100B058C2 /* coreTechCommonTests.cpp */; };
+		0AC22F9317E00D8A00C65748 /* testMatrix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0AC22F9217E00D8A00C65748 /* testMatrix.cpp */; };
+		0AC22F9C17E042D300C65748 /* exceptions.h in Headers */ = {isa = PBXBuildFile; fileRef = 0AC22F9B17E042D300C65748 /* exceptions.h */; };
 		0ADF839917DE72480090B846 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0ADF839817DE72480090B846 /* main.cpp */; };
 		0ADF839B17DE72480090B846 /* UnitTest.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = 0ADF839A17DE72480090B846 /* UnitTest.1 */; };
 		0ADF83A117DE76520090B846 /* matrix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 493C9C5217CFB8A900DBBF6B /* matrix.cpp */; };
@@ -78,6 +80,8 @@
 
 /* Begin PBXFileReference section */
 		0A7E658517DFFFB100B058C2 /* coreTechCommonTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = coreTechCommonTests.cpp; path = ../../../../test/coreTechCommonTests.cpp; sourceTree = "<group>"; };
+		0AC22F9217E00D8A00C65748 /* testMatrix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = testMatrix.cpp; path = ../../../../test/testMatrix.cpp; sourceTree = "<group>"; };
+		0AC22F9B17E042D300C65748 /* exceptions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = exceptions.h; path = ../../../include/anki/exceptions.h; sourceTree = "<group>"; };
 		0ADF839617DE72480090B846 /* UnitTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = UnitTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0ADF839817DE72480090B846 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		0ADF839A17DE72480090B846 /* UnitTest.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = UnitTest.1; sourceTree = "<group>"; };
@@ -173,6 +177,7 @@
 		0ADF839717DE72480090B846 /* UnitTest */ = {
 			isa = PBXGroup;
 			children = (
+				0AC22F9217E00D8A00C65748 /* testMatrix.cpp */,
 				0A7E658517DFFFB100B058C2 /* coreTechCommonTests.cpp */,
 				0ADF839817DE72480090B846 /* main.cpp */,
 				0ADF839A17DE72480090B846 /* UnitTest.1 */,
@@ -223,6 +228,7 @@
 				0ADF83B617DE794D0090B846 /* libopencv_ts.dylib */,
 				0ADF83B717DE794F0090B846 /* libopencv_video.dylib */,
 				0ADF83B817DE794F0090B846 /* libopencv_videostab.dylib */,
+				0AC22F9B17E042D300C65748 /* exceptions.h */,
 				5CE1C96D17B2BF7F00974053 /* dataStructures.h */,
 				5C7B94EA17AB1FE40020CCF7 /* memory.cpp */,
 				4940AD9C17C6D36900778163 /* array2d.h */,
@@ -268,6 +274,7 @@
 				0ADF83DD17DE7F4E0090B846 /* radians.h in Headers */,
 				0ADF83E117DE7F6D0090B846 /* general.h in Headers */,
 				0ADF83E417DEA1680090B846 /* matrix.h in Headers */,
+				0AC22F9C17E042D300C65748 /* exceptions.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -349,6 +356,7 @@
 				0ADF83E517DEB7DB0090B846 /* array2d.cpp in Sources */,
 				0ADF83E617DEB7DE0090B846 /* memory.cpp in Sources */,
 				0A7E658617DFFFB100B058C2 /* coreTechCommonTests.cpp in Sources */,
+				0AC22F9317E00D8A00C65748 /* testMatrix.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
