@@ -28,13 +28,13 @@ static char buffer[MAX_BYTES];
 #else
 
 #ifdef BUFFER_IN_CMX
-static char buffer[MAX_BYTES] __attribute__((section(".cmx.bss")));
+static char buffer[MAX_BYTES] __attribute__((section(".cmx.bss,CMX")));
 #else // #ifdef BUFFER_IN_CMX
 
 #ifdef BUFFER_IN_DDR_WITH_L2
-static char buffer[MAX_BYTES] __attribute__((section(".ddr.bss"))); // With L2 cache
+static char buffer[MAX_BYTES] __attribute__((section(".ddr.bss,DDR"))); // With L2 cache
 #else
-static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss"))); // No L2 cache
+static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))); // No L2 cache
 #endif
 
 #endif // #ifdef BUFFER_IN_CMX ... #else
