@@ -19,7 +19,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   std::vector<cv::Point_<double> > input_points = mxArray2CvPointVector<double>(prhs[0]);
   std::vector<cv::Point_<double> > base_points = mxArray2CvPointVector<double>(prhs[1]);
 
-  ConditionalErrorAndReturn(input_points.size()!=0 || base_points.size()!=0, "mex_cp2tform_projective", "input points or base points couln't be parsed");
+  ConditionalErrorAndReturn(input_points.size()!=0 || base_points.size()!=0, "mex_cp2tform_projective", "input points or base points couldn't be parsed");
 
   ConditionalErrorAndReturn(input_points.size() == base_points.size(), "mex_cp2tform_projective", "Point lists are of different sizes");
 
