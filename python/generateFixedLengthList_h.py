@@ -57,6 +57,7 @@ def __GenerateDeclarations(whichTypes, includeAllMethods):
             '      // calls will keep returning the first value in the list.\n' +\
             '      ' + type + ' PopBack();\n' +\
             '\n' +\
+            '      // Sets the size to zero, but does not modify any data. Equivalent to set_size(0)\n' +\
             '      void Clear();\n' +\
             '\n' +\
             '      // Does this ever need to be declared explicitly?\n' +\
@@ -71,6 +72,9 @@ def __GenerateDeclarations(whichTypes, includeAllMethods):
             '      s32 get_maximumSize() const;\n' +\
             '\n' +\
             '      s32 get_size() const;\n' +\
+            '\n' +\
+            '      // Attempt to set the size to newSize. Returns the value that was actually set.\n' +\
+            '      s32 set_size(s32 newSize);\n' +\
             '\n' +\
             '    protected:\n' +\
             '      s32 capacityUsed;\n' +\

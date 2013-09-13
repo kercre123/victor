@@ -103,6 +103,13 @@ def __GenerateDefinitions(whichTypes, includeAllMethods):
             '      return capacityUsed;\n' +\
             '    } // s32 FixedLengthList_' + type + '::get_size() const\n' +\
             '\n' +\
+            '    // Attempt to set the size to newSize. Returns the value that was actually set.\n' +\
+            '    s32 FixedLengthList_' + type + '::set_size(s32 newSize)\n' +\
+            '    {\n' +\
+            '      this->capacityUsed = MIN(this->get_maximumSize(), MAX(0,newSize));\n' +\
+            '      return this->capacityUsed;\n' +\
+            '    } // s32 FixedLengthList_' + type + '::set_size(s32 newSize)\n' +\
+            '\n' +\
             '    FixedLengthList_' + type + ' AllocateFixedLengthListFromHeap_' + type + '(s32 maximumSize, bool useBoundaryFillPatterns)\n' +\
             '    {\n' +\
             '      // const s32 stride = FixedLengthList_' + type + '::ComputeRequiredStride(maximumSize, useBoundaryFillPatterns);\n' +\

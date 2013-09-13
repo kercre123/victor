@@ -98,6 +98,13 @@ namespace Anki
       return capacityUsed;
     } // s32 FixedLengthList_Point_s16::get_size() const
 
+    // Attempt to set the size to newSize. Returns the value that was actually set.
+    s32 FixedLengthList_Point_s16::set_size(s32 newSize)
+    {
+      this->capacityUsed = MIN(this->get_maximumSize(), MAX(0,newSize));
+      return this->capacityUsed;
+    } // s32 FixedLengthList_Point_s16::set_size(s32 newSize)
+
     FixedLengthList_Point_s16 AllocateFixedLengthListFromHeap_Point_s16(s32 maximumSize, bool useBoundaryFillPatterns)
     {
       // const s32 stride = FixedLengthList_Point_s16::ComputeRequiredStride(maximumSize, useBoundaryFillPatterns);
@@ -181,6 +188,13 @@ namespace Anki
       return capacityUsed;
     } // s32 FixedLengthList_Point_f32::get_size() const
 
+    // Attempt to set the size to newSize. Returns the value that was actually set.
+    s32 FixedLengthList_Point_f32::set_size(s32 newSize)
+    {
+      this->capacityUsed = MIN(this->get_maximumSize(), MAX(0,newSize));
+      return this->capacityUsed;
+    } // s32 FixedLengthList_Point_f32::set_size(s32 newSize)
+
     FixedLengthList_Point_f32 AllocateFixedLengthListFromHeap_Point_f32(s32 maximumSize, bool useBoundaryFillPatterns)
     {
       // const s32 stride = FixedLengthList_Point_f32::ComputeRequiredStride(maximumSize, useBoundaryFillPatterns);
@@ -263,6 +277,13 @@ namespace Anki
     {
       return capacityUsed;
     } // s32 FixedLengthList_Point_f64::get_size() const
+
+    // Attempt to set the size to newSize. Returns the value that was actually set.
+    s32 FixedLengthList_Point_f64::set_size(s32 newSize)
+    {
+      this->capacityUsed = MIN(this->get_maximumSize(), MAX(0,newSize));
+      return this->capacityUsed;
+    } // s32 FixedLengthList_Point_f64::set_size(s32 newSize)
 
     FixedLengthList_Point_f64 AllocateFixedLengthListFromHeap_Point_f64(s32 maximumSize, bool useBoundaryFillPatterns)
     {

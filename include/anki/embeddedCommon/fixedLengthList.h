@@ -48,6 +48,7 @@ namespace Anki
       // calls will keep returning the first value in the list.
       Point_s16 PopBack();
 
+      // Sets the size to zero, but does not modify any data. Equivalent to set_size(0)
       void Clear();
 
       // Does this ever need to be declared explicitly?
@@ -62,6 +63,9 @@ namespace Anki
       s32 get_maximumSize() const;
 
       s32 get_size() const;
+
+      // Attempt to set the size to newSize. Returns the value that was actually set.
+      s32 set_size(s32 newSize);
 
     protected:
       s32 capacityUsed;
@@ -100,6 +104,7 @@ namespace Anki
       // calls will keep returning the first value in the list.
       Point_f32 PopBack();
 
+      // Sets the size to zero, but does not modify any data. Equivalent to set_size(0)
       void Clear();
 
       // Does this ever need to be declared explicitly?
@@ -114,6 +119,9 @@ namespace Anki
       s32 get_maximumSize() const;
 
       s32 get_size() const;
+
+      // Attempt to set the size to newSize. Returns the value that was actually set.
+      s32 set_size(s32 newSize);
 
     protected:
       s32 capacityUsed;
@@ -152,6 +160,7 @@ namespace Anki
       // calls will keep returning the first value in the list.
       Point_f64 PopBack();
 
+      // Sets the size to zero, but does not modify any data. Equivalent to set_size(0)
       void Clear();
 
       // Does this ever need to be declared explicitly?
@@ -166,6 +175,9 @@ namespace Anki
       s32 get_maximumSize() const;
 
       s32 get_size() const;
+
+      // Attempt to set the size to newSize. Returns the value that was actually set.
+      s32 set_size(s32 newSize);
 
     protected:
       s32 capacityUsed;
