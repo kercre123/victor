@@ -1,0 +1,110 @@
+#ifndef _ANKICORETECHEMBEDDED_VISION_FIXED_LENGTH_LIST_VISION_H_
+#define _ANKICORETECHEMBEDDED_VISION_FIXED_LENGTH_LIST_VISION_H_
+
+#include "anki/embeddedVision/config.h"
+
+namespace Anki
+{
+  namespace Embedded
+  {
+    class FixedLengthList_Component1d : public Array_Component1d
+    {
+    public:
+      FixedLengthList_Component1d();
+
+      // Constructor for a FixedLengthList_Component1d, pointing to user-allocated data.
+      FixedLengthList_Component1d(s32 maximumSize, void * data, s32 dataLength, bool useBoundaryFillPatterns=false);
+
+      // Constructor for a FixedLengthList_Component1d, pointing to user-allocated MemoryStack
+      FixedLengthList_Component1d(s32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns=false);
+
+      bool IsValid() const;
+
+      Result PushBack(const Component1d &value);
+
+      // Will act as a normal pop, except when the list is empty. Then subsequent
+      // calls will keep returning the first value in the list.
+      Component1d PopBack();
+
+      void Clear();
+
+      // Pointer to the data, at a given location
+      inline Component1d* Pointer(s32 index);
+
+      // Pointer to the data, at a given location
+      inline const Component1d* Pointer(s32 index) const;
+
+      s32 get_maximumSize() const;
+
+      s32 get_size() const;
+
+    protected:
+      s32 capacityUsed;
+    }; // class FixedLengthList_Component1d
+
+    inline Component1d* FixedLengthList_Component1d::Pointer(s32 index)
+    {
+      return Array_Component1d::Pointer(0, index);
+    }
+
+    // Pointer to the data, at a given location
+
+    inline const Component1d* FixedLengthList_Component1d::Pointer(s32 index) const
+    {
+      return Array_Component1d::Pointer(0, index);
+    }
+
+    FixedLengthList_Component1d AllocateFixedLengthListFromHeap_Component1d(s32 maximumSize, bool useBoundaryFillPatterns=false);
+
+    class FixedLengthList_Component2d : public Array_Component2d
+    {
+    public:
+      FixedLengthList_Component2d();
+
+      // Constructor for a FixedLengthList_Component2d, pointing to user-allocated data.
+      FixedLengthList_Component2d(s32 maximumSize, void * data, s32 dataLength, bool useBoundaryFillPatterns=false);
+
+      // Constructor for a FixedLengthList_Component2d, pointing to user-allocated MemoryStack
+      FixedLengthList_Component2d(s32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns=false);
+
+      bool IsValid() const;
+
+      Result PushBack(const Component2d &value);
+
+      // Will act as a normal pop, except when the list is empty. Then subsequent
+      // calls will keep returning the first value in the list.
+      Component2d PopBack();
+
+      void Clear();
+
+      // Pointer to the data, at a given location
+      inline Component2d* Pointer(s32 index);
+
+      // Pointer to the data, at a given location
+      inline const Component2d* Pointer(s32 index) const;
+
+      s32 get_maximumSize() const;
+
+      s32 get_size() const;
+
+    protected:
+      s32 capacityUsed;
+    }; // class FixedLengthList_Component2d
+
+    inline Component2d* FixedLengthList_Component2d::Pointer(s32 index)
+    {
+      return Array_Component2d::Pointer(0, index);
+    }
+
+    // Pointer to the data, at a given location
+
+    inline const Component2d* FixedLengthList_Component2d::Pointer(s32 index) const
+    {
+      return Array_Component2d::Pointer(0, index);
+    }
+
+    FixedLengthList_Component2d AllocateFixedLengthListFromHeap_Component2d(s32 maximumSize, bool useBoundaryFillPatterns=false);
+  } // namespace Embedded
+} // namespace Anki
+
+#endif // #ifndef _ANKICORETECHEMBEDDED_VISION_FIXED_LENGTH_LIST_VISION_H_

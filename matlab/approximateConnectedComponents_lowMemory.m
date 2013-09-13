@@ -47,7 +47,7 @@ num1dComponents_previous = 0;
 equivalentComponents = 1:MAX_2D_COMPONENTS;
 
 for y = 1:size(binaryImg, 1)
-    currentComponents1d = compute1dComponents(binaryImg(y,:), minComponentWidth);
+    currentComponents1d = extract1dComponents(binaryImg(y,:), minComponentWidth);
     num1dComponents_current = size(currentComponents1d,1);
     
     newPreviousComponents1d = zeros(num1dComponents_current, 3);

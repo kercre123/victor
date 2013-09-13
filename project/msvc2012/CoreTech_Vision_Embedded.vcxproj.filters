@@ -9,28 +9,21 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\include\anki\embeddedVision.h">
-      <Filter>Includes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\anki\embeddedVision\config.h">
-      <Filter>Includes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\anki\embeddedVision\visionKernels.h">
-      <Filter>Includes</Filter>
-    </ClInclude>
+    <ClCompile Include="..\..\src\embedded\approximateConnectedComponents.cpp" />
+    <ClCompile Include="..\..\src\embedded\binomialFilter.cpp" />
+    <ClCompile Include="..\..\src\embedded\computeCharacteristicScale.cpp" />
+    <ClCompile Include="..\..\src\embedded\downsampleByFactor.cpp" />
+    <ClCompile Include="..\..\src\embedded\fixedLengthList_vision.cpp" />
+    <ClCompile Include="..\..\src\embedded\traceBoundary.cpp" />
+    <ClCompile Include="..\..\src\embedded\array2d_vision.cpp" />
+    <ClCompile Include="..\..\src\embedded\dataStructures_vision.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\embedded\binomialFilter.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\embedded\computeCharacteristicScale.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\embedded\downsampleByFactor.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\embedded\traceBoundary.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
+    <ClInclude Include="..\..\include\anki\embeddedVision.h" />
+    <ClInclude Include="..\..\include\anki\embeddedVision\config.h" />
+    <ClInclude Include="..\..\include\anki\embeddedVision\fixedLengthList_vision.h" />
+    <ClInclude Include="..\..\include\anki\embeddedVision\visionKernels.h" />
+    <ClInclude Include="..\..\include\anki\embeddedVision\array2d_vision.h" />
+    <ClInclude Include="..\..\include\anki\embeddedVision\dataStructures_vision.h" />
   </ItemGroup>
 </Project>

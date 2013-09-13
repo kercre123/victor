@@ -1,7 +1,7 @@
 % Compute 1d conencted components, in a 1xN binaryImageRow.
 % To be detected as a component, a 1D component must be at least minComponentWidth wide
 
-function components1d = compute1dComponents(binaryImgRow, minComponentWidth)
+function components1d = extract1dComponents(binaryImgRow, minComponentWidth)
 
     components1d = zeros(0,2);
 

@@ -35,7 +35,7 @@ num1dComponents = 0;
 sum1dComponentLength = 0;
 
 for y = 1:size(binaryImg, 1)
-    currentComponents1d = compute1dComponents(binaryImg(y,:), minimumComponentWidth);
+    currentComponents1d = extract1dComponents(binaryImg(y,:), minimumComponentWidth);
 
     if create1dRegionMap
         for i = 1:size(currentComponents1d,1)
@@ -92,7 +92,7 @@ function [components2d, num2dComponents, newPreviousComponents1d] =...
     end    
 end % function newComponents2d = addTo2dComponents()
 
-function components1d = compute1dComponents(binaryImgRow, minimumComponentWidth)
+function components1d = extract1dComponents(binaryImgRow, minimumComponentWidth)
 
     components1d = zeros(0,2);
 
@@ -128,4 +128,4 @@ function components1d = compute1dComponents(binaryImgRow, minimumComponentWidth)
         end
     end
     
-end % function components1d = compute1dComponents(binaryImgRow)
+end % function components1d = extract1dComponents(binaryImgRow)

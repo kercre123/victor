@@ -24,8 +24,8 @@ namespace Anki
       offsets[7] = Point_s16(-1,-1);
     }
 
-    //function newDirection = findNewDirection(img, curPoint, curDirection, value)
-    static BoundaryDirection FindNewDirection(const Array_u8 &binaryImg, const Point_s16 &curPoint, const BoundaryDirection curDirection, const u8 value)
+    //function newDirection = findNewDirection(image, curPoint, curDirection, value)
+    static BoundaryDirection FindNewDirection(const Array_u8 &binaryImage, const Point_s16 &curPoint, const BoundaryDirection curDirection, const u8 value)
     {
       BoundaryDirection newDirection = BOUNDARY_UNKNOWN;
 
@@ -44,17 +44,17 @@ namespace Anki
       }
 
       for(s32 newDirection=directionList1Limits[0]; newDirection<directionList1Limits[1]; newDirection++) {
-        //const u8 imgValue = *(binaryImg.Pointer(curPoint.y+dys[newDirection], curPoint.x+dxs[newDirection]));
-        const u8 imgValue = *(binaryImg.Pointer(curPoint + offsets[newDirection]));
-        if(imgValue == value) {
+        //const u8 imageValue = *(binaryImage.Pointer(curPoint.y+dys[newDirection], curPoint.x+dxs[newDirection]));
+        const u8 imageValue = *(binaryImage.Pointer(curPoint + offsets[newDirection]));
+        if(imageValue == value) {
           return static_cast<BoundaryDirection>(newDirection);
         }
       }
 
       for(s32 newDirection=directionList2Limits[0]; newDirection<directionList2Limits[1]; newDirection++) {
-        //const u8 imgValue = *(binaryImg.Pointer(curPoint.y+dys[newDirection], curPoint.x+dxs[newDirection]));
-        const u8 imgValue = *(binaryImg.Pointer(curPoint + offsets[newDirection]));
-        if(imgValue == value) {
+        //const u8 imageValue = *(binaryImage.Pointer(curPoint.y+dys[newDirection], curPoint.x+dxs[newDirection]));
+        const u8 imageValue = *(binaryImage.Pointer(curPoint + offsets[newDirection]));
+        if(imageValue == value) {
           return static_cast<BoundaryDirection>(newDirection);
         }
       }
@@ -62,11 +62,11 @@ namespace Anki
       return BOUNDARY_UNKNOWN;
     }
 
-    Result TraceBoundary(const Array_u8 &binaryImg, const Point_s16 &startPoint, BoundaryDirection initialDirection, FixedLengthList_Point_s16 &boundary)
+    Result TraceBoundary(const Array_u8 &binaryImage, const Point_s16 &startPoint, BoundaryDirection initialDirection, FixedLengthList_Point_s16 &boundary)
     {
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-      DASConditionalErrorAndReturnValue(binaryImg.IsValid(),
-        RESULT_FAIL, "TraceBoundary", "binaryImg is not valid");
+      DASConditionalErrorAndReturnValue(binaryImage.IsValid(),
+        RESULT_FAIL, "TraceBoundary", "binaryImage is not valid");
 
       DASConditionalErrorAndReturnValue(boundary.IsValid(),
         RESULT_FAIL, "TraceBoundary", "boundary is not valid");
@@ -75,8 +75,8 @@ namespace Anki
       DASConditionalErrorAndReturnValue(
         startPoint.x > 0 &&
         startPoint.y > 0 &&
-        static_cast<s32>(startPoint.x) < (binaryImg.get_size(1)-1) &&
-        static_cast<s32>(startPoint.y) < (binaryImg.get_size(0)-1),
+        static_cast<s32>(startPoint.x) < (binaryImage.get_size(1)-1) &&
+        static_cast<s32>(startPoint.y) < (binaryImage.get_size(0)-1),
         RESULT_FAIL, "TraceBoundary", "startPoint is out of bounds");
 
       DASConditionalErrorAndReturnValue(boundary.get_maximumSize() == MAX_BOUNDARY_LENGTH,
@@ -92,8 +92,8 @@ namespace Anki
 
       //if ~checkForOutOfBounds
       //    % The boundaries are zero, which means we don't have to check for out of bounds
-      //    binaryImg([1,end],:) = 0;
-      //    binaryImg(:, [1,end]) = 0;
+      //    binaryImage([1,end],:) = 0;
+      //    binaryImage(:, [1,end]) = 0;
       //end
 
       //curDirection = initialDirection;
@@ -103,8 +103,8 @@ namespace Anki
       Point_s16 curPoint(startPoint);
 
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-      DASConditionalErrorAndReturnValue(*(binaryImg.Pointer(curPoint)) != 0,
-        RESULT_FAIL, "TraceBoundary", "startPoint must be on a non-zero pixel of binaryImg");
+      DASConditionalErrorAndReturnValue(*(binaryImage.Pointer(curPoint)) != 0,
+        RESULT_FAIL, "TraceBoundary", "startPoint must be on a non-zero pixel of binaryImage");
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
 
       // printf("0) %d %d\n", curPoint.y+1, curPoint.x+1);
@@ -114,7 +114,7 @@ namespace Anki
       //while true
       for(s32 i=1; i<MAX_BOUNDARY_LENGTH; i++) {
         //% Search counter-clockwise until we find a 0
-        const BoundaryDirection zeroDirection = FindNewDirection(binaryImg, curPoint, curDirection, 0);
+        const BoundaryDirection zeroDirection = FindNewDirection(binaryImage, curPoint, curDirection, 0);
 
         if(zeroDirection == BOUNDARY_UNKNOWN)
           break;
@@ -123,7 +123,7 @@ namespace Anki
         const s32 zeroDirectionPlusOneS32 = static_cast<s32>(zeroDirection) + 1;
         const BoundaryDirection zeroDirectionPlusOne = (zeroDirectionPlusOneS32==NUM_DIRECTIONS) ? static_cast<BoundaryDirection>(0) : static_cast<BoundaryDirection>(zeroDirectionPlusOneS32);
 
-        const BoundaryDirection oneDirection = FindNewDirection(binaryImg, curPoint, zeroDirectionPlusOne, 1);
+        const BoundaryDirection oneDirection = FindNewDirection(binaryImage, curPoint, zeroDirectionPlusOne, 1);
 
         if(zeroDirection == BOUNDARY_UNKNOWN)
           break;
@@ -137,14 +137,14 @@ namespace Anki
 #ifdef CHECK_FOR_OUT_OF_BOUNDS
         /*if(newPoint.x < 0 &&
         newPoint.y < 0 &&
-        newPoint.x >= binaryImg.get_size(1) &&
-        newPoint.y >= binaryImg.get_size(0)) {
+        newPoint.x >= binaryImage.get_size(1) &&
+        newPoint.y >= binaryImage.get_size(0)) {
         return RESULT_OK;
         }*/
         if(newPoint.x <= 0 &&
           newPoint.y <= 0 &&
-          static_cast<s32>(newPoint.x) >= (binaryImg.get_size(1)-1) &&
-          static_cast<s32>(newPoint.y) >= (binaryImg.get_size(0)-1)) {
+          static_cast<s32>(newPoint.x) >= (binaryImage.get_size(1)-1) &&
+          static_cast<s32>(newPoint.y) >= (binaryImage.get_size(0)-1)) {
             return RESULT_OK;
         }
 #endif //#ifdef CHECK_FOR_OUT_OF_BOUNDS
