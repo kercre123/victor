@@ -4,6 +4,8 @@ import generatePoint_h
 import generatePoint_cpp
 import generateMexEmbeddedWrappers_h
 import generateMexEmbeddedWrappers_cpp
+import generateFixedLengthList_h
+import generateFixedLengthList_cpp
 
 def generateAll():
     generateArray_h.GenerateAndWriteFile()
@@ -14,6 +16,9 @@ def generateAll():
 
     generateMexEmbeddedWrappers_h.GenerateAndWriteFile()
     generateMexEmbeddedWrappers_cpp.GenerateAndWriteFile()
+    
+    generateFixedLengthList_h.GenerateAndWriteFile()
+    generateFixedLengthList_cpp.GenerateAndWriteFile()
 
 if __name__ == "__main__":
     generateAll()
