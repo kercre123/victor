@@ -45,4 +45,12 @@ int main()
   return 0;
 }
 
+#else
+
+#warning pc_visionBenchmarks is a big no-op without MSC!
+int main()
+{
+  return 0;
+}
+
 #endif // #ifdef _MSC_VER ... #else
