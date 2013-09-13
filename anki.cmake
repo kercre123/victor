@@ -23,16 +23,26 @@ set(GTEST_DIR gtest-1.7.0)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
 
-#include(FindMatlab) # This Find script doesn't seem to work on Mac!
-if(NOT DEFINED MATLAB_ROOT_DIR)
-	# TODO: default windows location!
-	set(MATLAB_ROOT_DIR /Applications/MATLAB_R2013a.app)
-endif(NOT DEFINED MATLAB_ROOT_DIR)
-set(MATLAB_INCLUDE_DIR ${MATLAB_ROOT_DIR}/extern/include)
-set(MATLAB_LIB_DIR ${MATLAB_ROOT_DIR}/bin/maci64)
+# Set up Matlab directories and mex extension:
+include(FindMatlab) # This Find script doesn't seem to work on Mac!
+if(NOT MATLAB_FOUND)
+	message(STATUS "FindMatlab failed. Hard coding Matlab paths and mex settings.")
+	set(MATLAB_ROOT /Applications/MATLAB_R2013a.app)
+	set(MATLAB_INCLUDE_DIR ${MATLAB_ROOT}/extern/include)
+	set(MATLAB_LIBRARIES mx eng mex)
+	set(MATLAB_MEX_LIBRARY ${MATLAB_ROOT}/bin/maci64)
+	set(MATLAB_MX_LIBRARY  ${MATLAB_ROOT}/bin/maci64)
+	set(MATLAB_ENG_LIBRARY ${MATLAB_ROOT}/bin/maci64)
+endif(NOT MATLAB_FOUND)
+	
 set(MEX_COMPILER ${MATLAB_ROOT_DIR}/bin/mex)
-set(MATLAB_MEXEXT mexmaci64)
-message(STATUS "Using Matlab include dir ${MATLAB_INCLUDE_DIR}")
+
+# Set the mex extension using Matlab's "mexext" script:
+# (Does this exist on Windows machines?)
+execute_process(COMMAND "${MATLAB_ROOT}/bin/mexext" OUTPUT_VARIABLE MATLAB_MEXEXT)
+string(STRIP ${MATLAB_MEXEXT} MATLAB_MEXEXT)
+
+message(STATUS "Using Matlab in ${MATLAB_ROOT} with mex extension ${MATLAB_MEXEXT}.")
 
 project(${PROJECT_NAME})
 
@@ -74,7 +84,7 @@ endforeach()
 # generator mimic that behavior as follows than to keep those IDEs from 
 # doing what they wanna do.
 if(CMAKE_GENERATOR MATCHES "Unix Makefiles")
-	message("Appending ${CMAKE_BUILD_TYPE} to output directories since Unix Makefiles are being used.")
+	message(STATUS "Appending ${CMAKE_BUILD_TYPE} to output directories since Unix Makefiles are being used.")
 	set(BUILD_TYPE_DIR ${CMAKE_BUILD_TYPE})
 else()
 	set(BUILD_TYPE_DIR ./)	
@@ -91,7 +101,7 @@ link_directories(
 	${PROJECT_SOURCE_DIR}/../coretech-common/build/lib/${BUILD_TYPE_DIR} 
 	${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${OPENCV_DIR}/lib/${CMAKE_CFG_INTDIR}
 	${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${GTEST_DIR}
-	${MATLAB_LIB_DIR}
+	${MATLAB_MEX_LIBRARY} ${MATLAB_MX_LIBRARY} ${MATLAB_ENG_LIBRARY}
 )
 
 endmacro(ankiProject)
