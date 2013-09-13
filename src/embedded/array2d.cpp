@@ -165,19 +165,22 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_u8
-    void Array_u8::Print(const char * const variableName) const
+    Result Array_u8::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      assert(this->IsValid());
+      DASConditionalWarnAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array_u8::Print", "Array_u8 is not valid");
 
       printf("%s:\n", variableName);
-      for(s32 y=0; y<size[0]; y++) {
+      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const u8 * const rowPointer = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
+        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
           printf("%d ", rowPointer[x]);
         }
         printf("\n");
       }
       printf("\n");
+
+      return RESULT_OK;
     } // void Array_u8::Print() const
 
     // If the Array_u8 was constructed with the useBoundaryFillPatterns=true, then
@@ -495,19 +498,22 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_s8
-    void Array_s8::Print(const char * const variableName) const
+    Result Array_s8::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      assert(this->IsValid());
+      DASConditionalWarnAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array_s8::Print", "Array_s8 is not valid");
 
       printf("%s:\n", variableName);
-      for(s32 y=0; y<size[0]; y++) {
+      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const s8 * const rowPointer = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
+        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
           printf("%d ", rowPointer[x]);
         }
         printf("\n");
       }
       printf("\n");
+
+      return RESULT_OK;
     } // void Array_s8::Print() const
 
     // If the Array_s8 was constructed with the useBoundaryFillPatterns=true, then
@@ -825,19 +831,22 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_u16
-    void Array_u16::Print(const char * const variableName) const
+    Result Array_u16::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      assert(this->IsValid());
+      DASConditionalWarnAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array_u16::Print", "Array_u16 is not valid");
 
       printf("%s:\n", variableName);
-      for(s32 y=0; y<size[0]; y++) {
+      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const u16 * const rowPointer = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
+        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
           printf("%d ", rowPointer[x]);
         }
         printf("\n");
       }
       printf("\n");
+
+      return RESULT_OK;
     } // void Array_u16::Print() const
 
     // If the Array_u16 was constructed with the useBoundaryFillPatterns=true, then
@@ -1155,19 +1164,22 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_s16
-    void Array_s16::Print(const char * const variableName) const
+    Result Array_s16::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      assert(this->IsValid());
+      DASConditionalWarnAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array_s16::Print", "Array_s16 is not valid");
 
       printf("%s:\n", variableName);
-      for(s32 y=0; y<size[0]; y++) {
+      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const s16 * const rowPointer = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
+        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
           printf("%d ", rowPointer[x]);
         }
         printf("\n");
       }
       printf("\n");
+
+      return RESULT_OK;
     } // void Array_s16::Print() const
 
     // If the Array_s16 was constructed with the useBoundaryFillPatterns=true, then
@@ -1485,19 +1497,22 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_u32
-    void Array_u32::Print(const char * const variableName) const
+    Result Array_u32::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      assert(this->IsValid());
+      DASConditionalWarnAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array_u32::Print", "Array_u32 is not valid");
 
       printf("%s:\n", variableName);
-      for(s32 y=0; y<size[0]; y++) {
+      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const u32 * const rowPointer = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
+        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
           printf("%d ", rowPointer[x]);
         }
         printf("\n");
       }
       printf("\n");
+
+      return RESULT_OK;
     } // void Array_u32::Print() const
 
     // If the Array_u32 was constructed with the useBoundaryFillPatterns=true, then
@@ -1815,19 +1830,22 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_s32
-    void Array_s32::Print(const char * const variableName) const
+    Result Array_s32::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      assert(this->IsValid());
+      DASConditionalWarnAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array_s32::Print", "Array_s32 is not valid");
 
       printf("%s:\n", variableName);
-      for(s32 y=0; y<size[0]; y++) {
+      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const s32 * const rowPointer = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
+        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
           printf("%d ", rowPointer[x]);
         }
         printf("\n");
       }
       printf("\n");
+
+      return RESULT_OK;
     } // void Array_s32::Print() const
 
     // If the Array_s32 was constructed with the useBoundaryFillPatterns=true, then
@@ -2145,19 +2163,22 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_u64
-    void Array_u64::Print(const char * const variableName) const
+    Result Array_u64::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      assert(this->IsValid());
+      DASConditionalWarnAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array_u64::Print", "Array_u64 is not valid");
 
       printf("%s:\n", variableName);
-      for(s32 y=0; y<size[0]; y++) {
+      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const u64 * const rowPointer = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
+        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
           printf("%d ", rowPointer[x]);
         }
         printf("\n");
       }
       printf("\n");
+
+      return RESULT_OK;
     } // void Array_u64::Print() const
 
     // If the Array_u64 was constructed with the useBoundaryFillPatterns=true, then
@@ -2475,19 +2496,22 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_s64
-    void Array_s64::Print(const char * const variableName) const
+    Result Array_s64::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      assert(this->IsValid());
+      DASConditionalWarnAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array_s64::Print", "Array_s64 is not valid");
 
       printf("%s:\n", variableName);
-      for(s32 y=0; y<size[0]; y++) {
+      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const s64 * const rowPointer = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
+        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
           printf("%d ", rowPointer[x]);
         }
         printf("\n");
       }
       printf("\n");
+
+      return RESULT_OK;
     } // void Array_s64::Print() const
 
     // If the Array_s64 was constructed with the useBoundaryFillPatterns=true, then
@@ -2805,19 +2829,22 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_f32
-    void Array_f32::Print(const char * const variableName) const
+    Result Array_f32::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      assert(this->IsValid());
+      DASConditionalWarnAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array_f32::Print", "Array_f32 is not valid");
 
       printf("%s:\n", variableName);
-      for(s32 y=0; y<size[0]; y++) {
+      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const f32 * const rowPointer = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
+        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
           printf("%f ", rowPointer[x]);
         }
         printf("\n");
       }
       printf("\n");
+
+      return RESULT_OK;
     } // void Array_f32::Print() const
 
     // If the Array_f32 was constructed with the useBoundaryFillPatterns=true, then
@@ -3135,19 +3162,22 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_f64
-    void Array_f64::Print(const char * const variableName) const
+    Result Array_f64::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      assert(this->IsValid());
+      DASConditionalWarnAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array_f64::Print", "Array_f64 is not valid");
 
       printf("%s:\n", variableName);
-      for(s32 y=0; y<size[0]; y++) {
+      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const f64 * const rowPointer = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
+        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
           printf("%f ", rowPointer[x]);
         }
         printf("\n");
       }
       printf("\n");
+
+      return RESULT_OK;
     } // void Array_f64::Print() const
 
     // If the Array_f64 was constructed with the useBoundaryFillPatterns=true, then
@@ -3404,20 +3434,23 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_Point_s16
-    void Array_Point_s16::Print(const char * const variableName) const
+    Result Array_Point_s16::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      assert(this->IsValid());
+      DASConditionalWarnAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array_Point_s16::Print", "Array_Point_s16 is not valid");
 
       printf("%s:\n", variableName);
-      for(s32 y=0; y<size[0]; y++) {
+      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const Point_s16 * const rowPointer = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
+        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
           rowPointer[x].Print();
           printf(" ");
         }
         printf("\n");
       }
       printf("\n");
+
+      return RESULT_OK;
     } // void Array_Point_s16::Print() const
 
     // If the Array_Point_s16 was constructed with the useBoundaryFillPatterns=true, then
@@ -3645,20 +3678,23 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_Point_f32
-    void Array_Point_f32::Print(const char * const variableName) const
+    Result Array_Point_f32::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      assert(this->IsValid());
+      DASConditionalWarnAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array_Point_f32::Print", "Array_Point_f32 is not valid");
 
       printf("%s:\n", variableName);
-      for(s32 y=0; y<size[0]; y++) {
+      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const Point_f32 * const rowPointer = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
+        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
           rowPointer[x].Print();
           printf(" ");
         }
         printf("\n");
       }
       printf("\n");
+
+      return RESULT_OK;
     } // void Array_Point_f32::Print() const
 
     // If the Array_Point_f32 was constructed with the useBoundaryFillPatterns=true, then
@@ -3886,20 +3922,23 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
     // Print out the contents of this Array_Point_f64
-    void Array_Point_f64::Print(const char * const variableName) const
+    Result Array_Point_f64::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      assert(this->IsValid());
+      DASConditionalWarnAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array_Point_f64::Print", "Array_Point_f64 is not valid");
 
       printf("%s:\n", variableName);
-      for(s32 y=0; y<size[0]; y++) {
+      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const Point_f64 * const rowPointer = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
+        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
           rowPointer[x].Print();
           printf(" ");
         }
         printf("\n");
       }
       printf("\n");
+
+      return RESULT_OK;
     } // void Array_Point_f64::Print() const
 
     // If the Array_Point_f64 was constructed with the useBoundaryFillPatterns=true, then

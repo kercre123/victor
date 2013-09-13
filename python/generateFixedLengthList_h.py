@@ -69,6 +69,9 @@ def __GenerateDeclarations(whichTypes, includeAllMethods):
             '      // Pointer to the data, at a given location\n' +\
             '      inline const ' + type + '* Pointer(s32 index) const;\n' +\
             '\n' +\
+            '      // Print out the contents of this FixedLengthList_' + type + '\n' +\
+            '      Result Print(const char * const variableName = "FixedLengthList_' + type + '", const s32 minIndex = 0, const s32 maxIndex = 0x7FFFFFE) const;\n' +\
+            '\n' +\
             '      s32 get_maximumSize() const;\n' +\
             '\n' +\
             '      s32 get_size() const;\n' +\
