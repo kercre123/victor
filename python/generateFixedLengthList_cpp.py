@@ -118,7 +118,12 @@ def __GenerateDefinitions(whichTypes, includeAllMethods):
             '      FixedLengthList_' + type + ' mat(maximumSize, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);\n' +\
             '\n' +\
             '      return mat;\n' +\
-            '    } // FixedLengthList_' + type + ' AllocateFixedLengthListFromHeap_' + type + '(s32 maximumSize, bool useBoundaryFillPatterns)\n\n\n'
+            '    } // FixedLengthList_' + type + ' AllocateFixedLengthListFromHeap_' + type + '(s32 maximumSize, bool useBoundaryFillPatterns)\n\n' +\
+            '    // Print out the contents of this FixedLengthList_' + type + '\n' +\
+            '    Result FixedLengthList_' + type + '::Print(const char * const variableName, const s32 minIndex, const s32 maxIndex) const\n' +\
+            '    {\n' +\
+            '      return Array_' + type + '::Print(variableName, 0, 0, MAX(0,minIndex), MIN(maxIndex, this->get_size()-1));\n' +\
+            '    } // Result FixedLengthList_' + type + '::Print(const char * const variableName, const s32 minIndex, const s32 maxIndex) const\n\n\n'
 
     return methodsString
 

@@ -130,7 +130,7 @@ def __GenerateDeclarations(whichTypes, includeAllMethods):
             '      bool IsEqualSize(const Array_' + type + ' &array2) const;\n' +\
             '\n' +\
             '      // Print out the contents of this Array_' + type + '\n' +\
-            '      void Print(const char * const variableName = "Array_' + type + '") const;\n' +\
+            '      Result Print(const char * const variableName = "Array_' + type + '", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;\n' +\
             '\n' +\
             '      // If the Array_' + type + ' was constructed with the useBoundaryFillPatterns=true, then\n' +\
             '      // return if any memory was written out of bounds (via fill patterns at the\n' +\

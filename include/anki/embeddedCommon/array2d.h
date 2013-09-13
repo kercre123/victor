@@ -117,7 +117,7 @@ namespace Anki
       bool IsEqualSize(const Array_u8 &array2) const;
 
       // Print out the contents of this Array_u8
-      void Print(const char * const variableName = "Array_u8") const;
+      Result Print(const char * const variableName = "Array_u8", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
 
       // If the Array_u8 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -255,7 +255,7 @@ namespace Anki
       bool IsEqualSize(const Array_s8 &array2) const;
 
       // Print out the contents of this Array_s8
-      void Print(const char * const variableName = "Array_s8") const;
+      Result Print(const char * const variableName = "Array_s8", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
 
       // If the Array_s8 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -393,7 +393,7 @@ namespace Anki
       bool IsEqualSize(const Array_u16 &array2) const;
 
       // Print out the contents of this Array_u16
-      void Print(const char * const variableName = "Array_u16") const;
+      Result Print(const char * const variableName = "Array_u16", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
 
       // If the Array_u16 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -531,7 +531,7 @@ namespace Anki
       bool IsEqualSize(const Array_s16 &array2) const;
 
       // Print out the contents of this Array_s16
-      void Print(const char * const variableName = "Array_s16") const;
+      Result Print(const char * const variableName = "Array_s16", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
 
       // If the Array_s16 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -669,7 +669,7 @@ namespace Anki
       bool IsEqualSize(const Array_u32 &array2) const;
 
       // Print out the contents of this Array_u32
-      void Print(const char * const variableName = "Array_u32") const;
+      Result Print(const char * const variableName = "Array_u32", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
 
       // If the Array_u32 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -807,7 +807,7 @@ namespace Anki
       bool IsEqualSize(const Array_s32 &array2) const;
 
       // Print out the contents of this Array_s32
-      void Print(const char * const variableName = "Array_s32") const;
+      Result Print(const char * const variableName = "Array_s32", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
 
       // If the Array_s32 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -945,7 +945,7 @@ namespace Anki
       bool IsEqualSize(const Array_u64 &array2) const;
 
       // Print out the contents of this Array_u64
-      void Print(const char * const variableName = "Array_u64") const;
+      Result Print(const char * const variableName = "Array_u64", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
 
       // If the Array_u64 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -1083,7 +1083,7 @@ namespace Anki
       bool IsEqualSize(const Array_s64 &array2) const;
 
       // Print out the contents of this Array_s64
-      void Print(const char * const variableName = "Array_s64") const;
+      Result Print(const char * const variableName = "Array_s64", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
 
       // If the Array_s64 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -1221,7 +1221,7 @@ namespace Anki
       bool IsEqualSize(const Array_f32 &array2) const;
 
       // Print out the contents of this Array_f32
-      void Print(const char * const variableName = "Array_f32") const;
+      Result Print(const char * const variableName = "Array_f32", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
 
       // If the Array_f32 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -1359,7 +1359,7 @@ namespace Anki
       bool IsEqualSize(const Array_f64 &array2) const;
 
       // Print out the contents of this Array_f64
-      void Print(const char * const variableName = "Array_f64") const;
+      Result Print(const char * const variableName = "Array_f64", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
 
       // If the Array_f64 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -1481,7 +1481,7 @@ namespace Anki
       bool IsEqualSize(const Array_Point_s16 &array2) const;
 
       // Print out the contents of this Array_Point_s16
-      void Print(const char * const variableName = "Array_Point_s16") const;
+      Result Print(const char * const variableName = "Array_Point_s16", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
 
       // If the Array_Point_s16 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -1597,7 +1597,7 @@ namespace Anki
       bool IsEqualSize(const Array_Point_f32 &array2) const;
 
       // Print out the contents of this Array_Point_f32
-      void Print(const char * const variableName = "Array_Point_f32") const;
+      Result Print(const char * const variableName = "Array_Point_f32", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
 
       // If the Array_Point_f32 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
@@ -1713,7 +1713,7 @@ namespace Anki
       bool IsEqualSize(const Array_Point_f64 &array2) const;
 
       // Print out the contents of this Array_Point_f64
-      void Print(const char * const variableName = "Array_Point_f64") const;
+      Result Print(const char * const variableName = "Array_Point_f64", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
 
       // If the Array_Point_f64 was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the

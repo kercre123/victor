@@ -115,6 +115,12 @@ namespace Anki
       return mat;
     } // FixedLengthList_Point_s16 AllocateFixedLengthListFromHeap_Point_s16(s32 maximumSize, bool useBoundaryFillPatterns)
 
+    // Print out the contents of this FixedLengthList_Point_s16
+    Result FixedLengthList_Point_s16::Print(const char * const variableName, const s32 minIndex, const s32 maxIndex) const
+    {
+      return Array_Point_s16::Print(variableName, 0, 0, MAX(0,minIndex), MIN(maxIndex, this->get_size()-1));
+    } // Result FixedLengthList_Point_s16::Print(const char * const variableName, const s32 minIndex, const s32 maxIndex) const
+
 
     FixedLengthList_Point_f32::FixedLengthList_Point_f32()
       : Array_Point_f32(), capacityUsed(0)
@@ -205,6 +211,12 @@ namespace Anki
       return mat;
     } // FixedLengthList_Point_f32 AllocateFixedLengthListFromHeap_Point_f32(s32 maximumSize, bool useBoundaryFillPatterns)
 
+    // Print out the contents of this FixedLengthList_Point_f32
+    Result FixedLengthList_Point_f32::Print(const char * const variableName, const s32 minIndex, const s32 maxIndex) const
+    {
+      return Array_Point_f32::Print(variableName, 0, 0, MAX(0,minIndex), MIN(maxIndex, this->get_size()-1));
+    } // Result FixedLengthList_Point_f32::Print(const char * const variableName, const s32 minIndex, const s32 maxIndex) const
+
 
     FixedLengthList_Point_f64::FixedLengthList_Point_f64()
       : Array_Point_f64(), capacityUsed(0)
@@ -294,6 +306,12 @@ namespace Anki
 
       return mat;
     } // FixedLengthList_Point_f64 AllocateFixedLengthListFromHeap_Point_f64(s32 maximumSize, bool useBoundaryFillPatterns)
+
+    // Print out the contents of this FixedLengthList_Point_f64
+    Result FixedLengthList_Point_f64::Print(const char * const variableName, const s32 minIndex, const s32 maxIndex) const
+    {
+      return Array_Point_f64::Print(variableName, 0, 0, MAX(0,minIndex), MIN(maxIndex, this->get_size()-1));
+    } // Result FixedLengthList_Point_f64::Print(const char * const variableName, const s32 minIndex, const s32 maxIndex) const
 
 
   } // namespace Embedded

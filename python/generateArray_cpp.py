@@ -179,14 +179,15 @@ def __GenerateDefinitions(whichTypes, includeAllMethods):
             '#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)\n' +\
             '\n' +\
             '    // Print out the contents of this Array_' + type + '\n' +\
-            '    void Array_' + type + '::Print(const char * const variableName) const\n' +\
+            '    Result Array_' + type + '::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const\n' +\
             '    {\n' +\
-            '      assert(this->IsValid());\n' +\
+            '      DASConditionalWarnAndReturnValue(this->IsValid(),\n' +\
+            '        RESULT_FAIL, "Array_' + type + '::Print", "Array_' + type + ' is not valid");\n' +\
             '\n' +\
             '      printf("%s:\\n", variableName);\n' +\
-            '      for(s32 y=0; y<size[0]; y++) {\n' +\
+            '      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {\n' +\
             '        const ' + type + ' * const rowPointer = Pointer(y, 0);\n' +\
-            '        for(s32 x=0; x<size[1]; x++) {\n'
+            '        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {\n'
 
         if includeAllMethods:
             if type[0] == 'f':
@@ -206,6 +207,8 @@ def __GenerateDefinitions(whichTypes, includeAllMethods):
             '        printf("\\n");\n' +\
             '      }\n' +\
             '      printf("\\n");\n' +\
+            '\n' +\
+            '      return RESULT_OK;\n' +\
             '    } // void Array_' + type + '::Print() const\n' +\
             '\n' +\
             '    // If the Array_' + type + ' was constructed with the useBoundaryFillPatterns=true, then\n' +\

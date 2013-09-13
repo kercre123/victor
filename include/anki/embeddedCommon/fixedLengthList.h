@@ -60,6 +60,9 @@ namespace Anki
       // Pointer to the data, at a given location
       inline const Point_s16* Pointer(s32 index) const;
 
+      // Print out the contents of this FixedLengthList_Point_s16
+      Result Print(const char * const variableName = "FixedLengthList_Point_s16", const s32 minIndex = 0, const s32 maxIndex = 0x7FFFFFE) const;
+
       s32 get_maximumSize() const;
 
       s32 get_size() const;
@@ -116,6 +119,9 @@ namespace Anki
       // Pointer to the data, at a given location
       inline const Point_f32* Pointer(s32 index) const;
 
+      // Print out the contents of this FixedLengthList_Point_f32
+      Result Print(const char * const variableName = "FixedLengthList_Point_f32", const s32 minIndex = 0, const s32 maxIndex = 0x7FFFFFE) const;
+
       s32 get_maximumSize() const;
 
       s32 get_size() const;
@@ -171,6 +177,9 @@ namespace Anki
 
       // Pointer to the data, at a given location
       inline const Point_f64* Pointer(s32 index) const;
+
+      // Print out the contents of this FixedLengthList_Point_f64
+      Result Print(const char * const variableName = "FixedLengthList_Point_f64", const s32 minIndex = 0, const s32 maxIndex = 0x7FFFFFE) const;
 
       s32 get_maximumSize() const;
 
