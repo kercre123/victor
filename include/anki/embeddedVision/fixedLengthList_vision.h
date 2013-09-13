@@ -50,6 +50,7 @@ namespace Anki
       // calls will keep returning the first value in the list.
       Component1d PopBack();
 
+      // Sets the size to zero, but does not modify any data. Equivalent to set_size(0)
       void Clear();
 
       // Does this ever need to be declared explicitly?
@@ -64,6 +65,9 @@ namespace Anki
       s32 get_maximumSize() const;
 
       s32 get_size() const;
+
+      // Attempt to set the size to newSize. Returns the value that was actually set.
+      s32 set_size(s32 newSize);
 
     protected:
       s32 capacityUsed;
@@ -83,56 +87,60 @@ namespace Anki
     FixedLengthList_Component1d AllocateFixedLengthListFromHeap_Component1d(s32 maximumSize, bool useBoundaryFillPatterns=false);
 
 
-    class FixedLengthList_Component2d : public Array_Component2d
+    class FixedLengthList_Component2dPiece : public Array_Component2dPiece
     {
     public:
-      FixedLengthList_Component2d();
+      FixedLengthList_Component2dPiece();
 
-      // Constructor for a FixedLengthList_Component2d, pointing to user-allocated data.
-      FixedLengthList_Component2d(s32 maximumSize, void * data, s32 dataLength, bool useBoundaryFillPatterns=false);
+      // Constructor for a FixedLengthList_Component2dPiece, pointing to user-allocated data.
+      FixedLengthList_Component2dPiece(s32 maximumSize, void * data, s32 dataLength, bool useBoundaryFillPatterns=false);
 
-      // Constructor for a FixedLengthList_Component2d, pointing to user-allocated MemoryStack
-      FixedLengthList_Component2d(s32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns=false);
+      // Constructor for a FixedLengthList_Component2dPiece, pointing to user-allocated MemoryStack
+      FixedLengthList_Component2dPiece(s32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns=false);
 
       bool IsValid() const;
 
-      Result PushBack(const Component2d &value);
+      Result PushBack(const Component2dPiece &value);
 
       // Will act as a normal pop, except when the list is empty. Then subsequent
       // calls will keep returning the first value in the list.
-      Component2d PopBack();
+      Component2dPiece PopBack();
 
+      // Sets the size to zero, but does not modify any data. Equivalent to set_size(0)
       void Clear();
 
       // Does this ever need to be declared explicitly?
-      //FixedLengthList_Component2d& operator= (const FixedLengthList_Component2d & rightHandSide);
+      //FixedLengthList_Component2dPiece& operator= (const FixedLengthList_Component2dPiece & rightHandSide);
 
       // Pointer to the data, at a given location
-      inline Component2d* Pointer(s32 index);
+      inline Component2dPiece* Pointer(s32 index);
 
       // Pointer to the data, at a given location
-      inline const Component2d* Pointer(s32 index) const;
+      inline const Component2dPiece* Pointer(s32 index) const;
 
       s32 get_maximumSize() const;
 
       s32 get_size() const;
 
+      // Attempt to set the size to newSize. Returns the value that was actually set.
+      s32 set_size(s32 newSize);
+
     protected:
       s32 capacityUsed;
-    }; // class FixedLengthList_Component2d
+    }; // class FixedLengthList_Component2dPiece
 
-    inline Component2d* FixedLengthList_Component2d::Pointer(s32 index)
+    inline Component2dPiece* FixedLengthList_Component2dPiece::Pointer(s32 index)
     {
-      return Array_Component2d::Pointer(0, index);
+      return Array_Component2dPiece::Pointer(0, index);
     }
 
     // Pointer to the data, at a given location
-    inline const Component2d* FixedLengthList_Component2d::Pointer(s32 index) const
+    inline const Component2dPiece* FixedLengthList_Component2dPiece::Pointer(s32 index) const
     {
-      return Array_Component2d::Pointer(0, index);
+      return Array_Component2dPiece::Pointer(0, index);
     }
 
-    FixedLengthList_Component2d AllocateFixedLengthListFromHeap_Component2d(s32 maximumSize, bool useBoundaryFillPatterns=false);
+    FixedLengthList_Component2dPiece AllocateFixedLengthListFromHeap_Component2dPiece(s32 maximumSize, bool useBoundaryFillPatterns=false);
 
 
     } // namespace Embedded

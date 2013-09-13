@@ -83,7 +83,7 @@ for y = 1:size(binaryImg, 1)
                     newPreviousComponents1d(iCurrent, 3) = minId;
                 end
             end
-        end
+        end % for iPrevious = 1:num1dComponents_previous
         
         % If none of the previous components matched, start a new id, equal
         % to num2dComponents
@@ -96,7 +96,7 @@ for y = 1:size(binaryImg, 1)
             numStored1dComponents = numStored1dComponents + 1;
             numStored2dComponents = numStored2dComponents + 1;
         end
-    end
+    end % for iCurrent = 1:num1dComponents_current
     
     previousComponents1d = newPreviousComponents1d;
     num1dComponents_previous = size(previousComponents1d,1);
@@ -104,7 +104,7 @@ for y = 1:size(binaryImg, 1)
 %     disp(components2d(1:numStored1dComponents, :));
 %     disp(equivalentComponents(1:numStored2dComponents))
 %     keyboard
-end
+end % for y = 1:size(binaryImg, 1)
 
 % After all the initial 2d labels have been created, go through
 % equivalentComponents, and update equivalentComponents internally

@@ -267,29 +267,29 @@ namespace Anki
     } // Array_Component1d AllocateArrayFromHeap_Component1d(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
 
-    s32 Array_Component2d::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
+    s32 Array_Component2dPiece::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0);
       const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
-      return static_cast<s32>(RoundUp<size_t>(sizeof(Component2d)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
-    } // s32 Array_Component2d::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
+      return static_cast<s32>(RoundUp<size_t>(sizeof(Component2dPiece)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
+    } // s32 Array_Component2dPiece::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
 
-    s32 Array_Component2d::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    s32 Array_Component2dPiece::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0);
-      return numRows * Array_Component2d::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
-    } // s32 Array_Component2d::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+      return numRows * Array_Component2dPiece::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
+    } // s32 Array_Component2dPiece::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
-    Array_Component2d::Array_Component2d()
+    Array_Component2dPiece::Array_Component2dPiece()
     {
       InvalidateArray();
-    } // Array_Component2d::Array_Component2d()
+    } // Array_Component2dPiece::Array_Component2dPiece()
 
-    // Constructor for a Array_Component2d, pointing to user-allocated data. If the pointer to *data is not
-    // aligned to MEMORY_ALIGNMENT, this Array_Component2d will start at the next aligned location.
+    // Constructor for a Array_Component2dPiece, pointing to user-allocated data. If the pointer to *data is not
+    // aligned to MEMORY_ALIGNMENT, this Array_Component2dPiece will start at the next aligned location.
     // Unfortunately, this is more restrictive than most matrix libraries, and as an example,
-    // it may make it hard to convert from OpenCV to Array_Component2d, though the reverse is trivial.
-    Array_Component2d::Array_Component2d(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
+    // it may make it hard to convert from OpenCV to Array_Component2dPiece, though the reverse is trivial.
+    Array_Component2dPiece::Array_Component2dPiece(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
@@ -299,9 +299,9 @@ namespace Anki
         data,
         dataLength,
         useBoundaryFillPatterns);
-    } // Array_Component2d::Array_Component2d(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
+    } // Array_Component2dPiece::Array_Component2dPiece(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
 
-    Array_Component2d::Array_Component2d(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+    Array_Component2dPiece::Array_Component2dPiece(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
     {
       assert(numCols > 0 && numRows > 0);
@@ -314,13 +314,13 @@ namespace Anki
 
       Initialize(numRows,
         numCols,
-        reinterpret_cast<Component2d*>(allocatedBuffer),
+        reinterpret_cast<Component2dPiece*>(allocatedBuffer),
         numBytesAllocated,
         useBoundaryFillPatterns);
-    } // Array_Component2d::Array_Component2d(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+    } // Array_Component2dPiece::Array_Component2dPiece(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
 
     // If this array or array2 are different sizes or uninitialized, then return false.
-    bool Array_Component2d::IsEqualSize(const Array_Component2d &array2) const
+    bool Array_Component2dPiece::IsEqualSize(const Array_Component2dPiece &array2) const
     {
       if(!this->IsValid())
         return false;
@@ -332,25 +332,25 @@ namespace Anki
         return false;
 
       return true;
-    } // bool Array_Component2d::IsEqualSize(const Array_Component2d &array2) const
+    } // bool Array_Component2dPiece::IsEqualSize(const Array_Component2dPiece &array2) const
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-    // Returns a templated cv::Mat_ that shares the same buffer with this Array_Component2d. No data is copied.
-    cv::Mat_<Component2d>& Array_Component2d::get_CvMat_()
+    // Returns a templated cv::Mat_ that shares the same buffer with this Array_Component2dPiece. No data is copied.
+    cv::Mat_<Component2dPiece>& Array_Component2dPiece::get_CvMat_()
     {
       assert(this->IsValid());
       return cvMatMirror;
-    } // cv::Mat_<Component2d>& Array_Component2d::get_CvMat_()
+    } // cv::Mat_<Component2dPiece>& Array_Component2dPiece::get_CvMat_()
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
-    // Print out the contents of this Array_Component2d
-    void Array_Component2d::Print(const char * const variableName) const
+    // Print out the contents of this Array_Component2dPiece
+    void Array_Component2dPiece::Print(const char * const variableName) const
     {
       assert(this->IsValid());
 
       printf("%s:\n", variableName);
       for(s32 y=0; y<size[0]; y++) {
-        const Component2d * const rowPointer = Pointer(y, 0);
+        const Component2dPiece * const rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           rowPointer[x].Print();
           printf(" ");
@@ -358,13 +358,13 @@ namespace Anki
         printf("\n");
       }
       printf("\n");
-    } // void Array_Component2d::Print() const
+    } // void Array_Component2dPiece::Print() const
 
-    // If the Array_Component2d was constructed with the useBoundaryFillPatterns=true, then
+    // If the Array_Component2dPiece was constructed with the useBoundaryFillPatterns=true, then
     // return if any memory was written out of bounds (via fill patterns at the
-    // beginning and end).  If the Array_Component2d was not constructed with the
+    // beginning and end).  If the Array_Component2dPiece was not constructed with the
     // useBoundaryFillPatterns=true, this method always returns true
-    bool Array_Component2d::IsValid() const
+    bool Array_Component2dPiece::IsValid() const
     {
       if(this->rawDataPointer == NULL || this->data == NULL) {
         return false;
@@ -390,26 +390,26 @@ namespace Anki
       } else { // if(useBoundaryFillPatterns) {
         return true;
       } // if(useBoundaryFillPatterns) { ... else
-    } // bool Array_Component2d::IsValid() const
+    } // bool Array_Component2dPiece::IsValid() const
 
-    // Set every element in the Array_Component2d to this value
+    // Set every element in the Array_Component2dPiece to this value
     // Returns the number of values set
-    s32 Array_Component2d::Set(const Component2d value)
+    s32 Array_Component2dPiece::Set(const Component2dPiece value)
     {
       assert(this->IsValid());
 
       for(s32 y=0; y<size[0]; y++) {
-        Component2d * restrict rowPointer = Pointer(y, 0);
+        Component2dPiece * restrict rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           rowPointer[x] = value;
         }
       }
 
       return size[0]*size[1];
-    } // s32 Array_Component2d::Set(const Component2d value)
+    } // s32 Array_Component2dPiece::Set(const Component2dPiece value)
 
     // Similar to Matlab size(matrix, dimension), and dimension is in {0,1}
-    s32 Array_Component2d::get_size(s32 dimension) const
+    s32 Array_Component2dPiece::get_size(s32 dimension) const
     {
       assert(dimension >= 0 && this->rawDataPointer != NULL && this->data != NULL);
 
@@ -417,24 +417,24 @@ namespace Anki
         return 0;
 
       return size[dimension];
-    } // s32 Array_Component2d::get_size(s32 dimension) const
+    } // s32 Array_Component2dPiece::get_size(s32 dimension) const
 
-    s32 Array_Component2d::get_stride() const
+    s32 Array_Component2dPiece::get_stride() const
     {
       return stride;
-    } // s32 Array_Component2d::get_stride() const
+    } // s32 Array_Component2dPiece::get_stride() const
 
-    void* Array_Component2d::get_rawDataPointer()
+    void* Array_Component2dPiece::get_rawDataPointer()
     {
       return rawDataPointer;
-    } // void* Array_Component2d::get_rawDataPointer()
+    } // void* Array_Component2dPiece::get_rawDataPointer()
 
-    const void* Array_Component2d::get_rawDataPointer() const
+    const void* Array_Component2dPiece::get_rawDataPointer() const
     {
       return rawDataPointer;
-    } // const void* Array_Component2d::get_rawDataPointer() const
+    } // const void* Array_Component2dPiece::get_rawDataPointer() const
 
-    void Array_Component2d::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
+    void Array_Component2dPiece::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
@@ -467,7 +467,7 @@ namespace Anki
 
       if(useBoundaryFillPatterns) {
         const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1], false);
-        this->data = reinterpret_cast<Component2d*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes + HEADER_LENGTH );
+        this->data = reinterpret_cast<Component2dPiece*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes + HEADER_LENGTH );
         for(s32 y=0; y<size[0]; y++) {
           // Add the fill patterns just before the data on each line
           reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[0] = FILL_PATTERN_START;
@@ -478,34 +478,34 @@ namespace Anki
           reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[1] = FILL_PATTERN_END;
         }
       } else {
-        this->data = reinterpret_cast<Component2d*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes );
+        this->data = reinterpret_cast<Component2dPiece*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes );
       }
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-      cvMatMirror = cv::Mat_<Component2d>(size[0], size[1], data, stride);
+      cvMatMirror = cv::Mat_<Component2dPiece>(size[0], size[1], data, stride);
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-    } // Array_Component2d::Initialize()
+    } // Array_Component2dPiece::Initialize()
 
     // Set all the buffers and sizes to zero, to signal an invalid array
-    void Array_Component2d::InvalidateArray()
+    void Array_Component2dPiece::InvalidateArray()
     {
       this->size[0] = 0;
       this->size[1] = 0;
       this->stride = 0;
       this->data = NULL;
       this->rawDataPointer = NULL;
-    } // void Array_Component2d::InvalidateArray()
+    } // void Array_Component2dPiece::InvalidateArray()
 
-    // Factory method to create an Array_Component2d from the heap. The data of the returned Array_Component2d must be freed by the user.
-    // This is separate from the normal constructor, as Array_Component2d objects are not supposed to manage memory
-    Array_Component2d AllocateArrayFromHeap_Component2d(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    // Factory method to create an Array_Component2dPiece from the heap. The data of the returned Array_Component2dPiece must be freed by the user.
+    // This is separate from the normal constructor, as Array_Component2dPiece objects are not supposed to manage memory
+    Array_Component2dPiece AllocateArrayFromHeap_Component2dPiece(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
     {
-      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_Component2d::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_Component2dPiece::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
 
-      Array_Component2d mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+      Array_Component2dPiece mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
 
       return mat;
-    } // Array_Component2d AllocateArrayFromHeap_Component2d(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    } // Array_Component2dPiece AllocateArrayFromHeap_Component2dPiece(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
 
   } // namespace Embedded

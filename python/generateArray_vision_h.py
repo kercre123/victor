@@ -46,7 +46,7 @@ def __GenerateBottomOfFile():
 def GenerateAndWriteFile(filename = '../include/anki/embeddedVision/array2d_vision.h'):
     topString = __GenerateTopOfFile()
 
-    methodsDeclarations = generateArray_h.__GenerateDeclarations(['Component1d', 'Component2d'], False)
+    methodsDeclarations = generateArray_h.__GenerateDeclarations(['Component1d', 'Component2dPiece'], False)
 
     bottomString = __GenerateBottomOfFile()
 

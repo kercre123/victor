@@ -155,76 +155,76 @@ namespace Anki
     Array_Component1d AllocateArrayFromHeap_Component1d(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns=false);
 
 
-    class Array_Component2d
+    class Array_Component2dPiece
     {
     public:
       static s32 ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns);
 
       static s32 ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns);
 
-      Array_Component2d();
+      Array_Component2dPiece();
 
-      // Constructor for a Array_Component2d, pointing to user-allocated data. If the pointer to *data is not
-      // aligned to MEMORY_ALIGNMENT, this Array_Component2d will start at the next aligned location.
+      // Constructor for a Array_Component2dPiece, pointing to user-allocated data. If the pointer to *data is not
+      // aligned to MEMORY_ALIGNMENT, this Array_Component2dPiece will start at the next aligned location.
       // Unfortunately, this is more restrictive than most matrix libraries, and as an example,
-      // it may make it hard to convert from OpenCV to Array_Component2d, though the reverse is trivial.
-      Array_Component2d(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const bool useBoundaryFillPatterns=false);
+      // it may make it hard to convert from OpenCV to Array_Component2dPiece, though the reverse is trivial.
+      Array_Component2dPiece(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const bool useBoundaryFillPatterns=false);
 
-      // Constructor for a Array_Component2d, pointing to user-allocated MemoryStack
-      Array_Component2d(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
+      // Constructor for a Array_Component2dPiece, pointing to user-allocated MemoryStack
+      Array_Component2dPiece(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
-      const inline Component2d* Pointer(const s32 index0, const s32 index1) const
+      const inline Component2dPiece* Pointer(const s32 index0, const s32 index1) const
       {
         assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
           this->rawDataPointer != NULL && this->data != NULL);
 
-        return reinterpret_cast<const Component2d*>( reinterpret_cast<const char*>(this->data) +
-          index1*sizeof(Component2d) + index0*stride );
+        return reinterpret_cast<const Component2dPiece*>( reinterpret_cast<const char*>(this->data) +
+          index1*sizeof(Component2dPiece) + index0*stride );
       }
 
       // Pointer to the data, at a given (y,x) location
-      inline Component2d* Pointer(const s32 index0, const s32 index1)
+      inline Component2dPiece* Pointer(const s32 index0, const s32 index1)
       {
         assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
           this->rawDataPointer != NULL && this->data != NULL);
 
-        return reinterpret_cast<Component2d*>( reinterpret_cast<char*>(this->data) +
-          index1*sizeof(Component2d) + index0*stride );
+        return reinterpret_cast<Component2dPiece*>( reinterpret_cast<char*>(this->data) +
+          index1*sizeof(Component2dPiece) + index0*stride );
       }
 
       // Pointer to the data, at a given (y,x) location
-      const inline Component2d* Pointer(const Point_s16 &point) const
+      const inline Component2dPiece* Pointer(const Point_s16 &point) const
       {
         return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
       }
 
       // Pointer to the data, at a given (y,x) location
-      inline Component2d* Pointer(const Point_s16 &point)
+      inline Component2dPiece* Pointer(const Point_s16 &point)
       {
         return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
       }
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-      // Returns a templated cv::Mat_ that shares the same buffer with this Array_Component2d. No data is copied.
-      cv::Mat_<Component2d>& get_CvMat_();
+      // Returns a templated cv::Mat_ that shares the same buffer with this Array_Component2dPiece. No data is copied.
+      cv::Mat_<Component2dPiece>& get_CvMat_();
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
       // If this array or array2 are different sizes or uninitialized, then return false.
-      bool IsEqualSize(const Array_Component2d &array2) const;
+      bool IsEqualSize(const Array_Component2dPiece &array2) const;
 
-      // Print out the contents of this Array_Component2d
-      void Print(const char * const variableName = "Array_Component2d") const;
+      // Print out the contents of this Array_Component2dPiece
+      void Print(const char * const variableName = "Array_Component2dPiece") const;
 
-      // If the Array_Component2d was constructed with the useBoundaryFillPatterns=true, then
+      // If the Array_Component2dPiece was constructed with the useBoundaryFillPatterns=true, then
       // return if any memory was written out of bounds (via fill patterns at the
-      // beginning and end).  If the Array_Component2d was not constructed with the
+      // beginning and end).  If the Array_Component2dPiece was not constructed with the
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
 
-      // Set every element in the Array_Component2d to this value
+      // Set every element in the Array_Component2dPiece to this value
       // Returns the number of values set
-      s32 Set(const Component2d value);
+      s32 Set(const Component2dPiece value);
 
       s32 get_size(s32 dimension) const;
 
@@ -247,15 +247,15 @@ namespace Anki
       s32 stride;
       bool useBoundaryFillPatterns;
 
-      Component2d * data;
+      Component2dPiece * data;
 
-      // To enforce alignment, rawDataPointer may be slightly before Component2d * data.
+      // To enforce alignment, rawDataPointer may be slightly before Component2dPiece * data.
       // If the inputted data buffer was from malloc, this is the pointer that
       // should be used to free.
       void * rawDataPointer;
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-      cv::Mat_<Component2d> cvMatMirror;
+      cv::Mat_<Component2dPiece> cvMatMirror;
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
       void Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
@@ -263,12 +263,12 @@ namespace Anki
       void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
 
     private:
-      //Array_Component2d & operator= (const Array_Component2d & rightHandSide); // In the future, assignment may not be allowed
-    }; // class Array_Component2d
+      //Array_Component2dPiece & operator= (const Array_Component2dPiece & rightHandSide); // In the future, assignment may not be allowed
+    }; // class Array_Component2dPiece
 
-    // Factory method to create an Array_Component2d from the heap. The data of the returned Array_Component2d must be freed by the user.
-    // This is separate from the normal constructor, as Array_Component2d objects are not supposed to manage memory
-    Array_Component2d AllocateArrayFromHeap_Component2d(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns=false);
+    // Factory method to create an Array_Component2dPiece from the heap. The data of the returned Array_Component2dPiece must be freed by the user.
+    // This is separate from the normal constructor, as Array_Component2dPiece objects are not supposed to manage memory
+    Array_Component2dPiece AllocateArrayFromHeap_Component2dPiece(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns=false);
 
 
     } // namespace Embedded

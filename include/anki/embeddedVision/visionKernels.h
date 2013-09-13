@@ -39,8 +39,8 @@ namespace Anki
       return interpolatedPixel;
     }
 
-    Result extract2dComponents(const Array_u8 &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList_Component2d &extractedComponents, MemoryStack scratch);
-    Result extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList_Component1d &extractedComponents);
+    Result extract2dComponents(const Array_u8 &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList_Component2dPiece &extractedComponentPieces, MemoryStack scratch);
+    Result extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList_Component1d &extractedComponentPieces);
   } // namespace Embedded
 } // namespace Anki
 
