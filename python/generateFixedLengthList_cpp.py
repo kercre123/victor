@@ -85,6 +85,14 @@ def __GenerateDefinitions(whichTypes, includeAllMethods):
             '      this->capacityUsed = 0;\n' +\
             '    } // void FixedLengthList_' + type + '::Clear()\n' +\
             '\n' +\
+            '    // Does this ever need to be declared explicitly?\n' +\
+            '    /*FixedLengthList_' + type + '& FixedLengthList_' + type + '::operator= (const FixedLengthList_' + type + ' & rightHandSide)\n' +\
+            '    {\n' +\
+            '      Array_' + type + '::operator=(static_cast<Array_' + type + '>(rightHandSide));\n' +\
+            '      this->capacityUsed = rightHandSide.capacityUsed;\n' +\
+            '\n' +\
+            '      return *this;\n' +\
+            '    }*/ // FixedLengthList_' + type + '& FixedLengthList_' + type + '::operator= (const FixedLengthList_' + type + ' & rightHandSide)\n\n' +\
             '    s32 FixedLengthList_' + type + '::get_maximumSize() const\n' +\
             '    {\n' +\
             '      return Array_' + type + '::get_size(1);\n' +\

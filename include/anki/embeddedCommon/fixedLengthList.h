@@ -50,6 +50,9 @@ namespace Anki
 
       void Clear();
 
+      // Does this ever need to be declared explicitly?
+      //FixedLengthList_Point_s16& operator= (const FixedLengthList_Point_s16 & rightHandSide);
+
       // Pointer to the data, at a given location
       inline Point_s16* Pointer(s32 index);
 
@@ -99,6 +102,9 @@ namespace Anki
 
       void Clear();
 
+      // Does this ever need to be declared explicitly?
+      //FixedLengthList_Point_f32& operator= (const FixedLengthList_Point_f32 & rightHandSide);
+
       // Pointer to the data, at a given location
       inline Point_f32* Pointer(s32 index);
 
@@ -147,6 +153,9 @@ namespace Anki
       Point_f64 PopBack();
 
       void Clear();
+
+      // Does this ever need to be declared explicitly?
+      //FixedLengthList_Point_f64& operator= (const FixedLengthList_Point_f64 & rightHandSide);
 
       // Pointer to the data, at a given location
       inline Point_f64* Pointer(s32 index);
