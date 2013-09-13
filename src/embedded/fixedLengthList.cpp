@@ -79,6 +79,15 @@ namespace Anki
       this->capacityUsed = 0;
     } // void FixedLengthList_Point_s16::Clear()
 
+    // Does this ever need to be declared explicitly?
+    /*FixedLengthList_Point_s16& FixedLengthList_Point_s16::operator= (const FixedLengthList_Point_s16 & rightHandSide)
+    {
+      Array_Point_s16::operator=(static_cast<Array_Point_s16>(rightHandSide));
+      this->capacityUsed = rightHandSide.capacityUsed;
+
+      return *this;
+    }*/ // FixedLengthList_Point_s16& FixedLengthList_Point_s16::operator= (const FixedLengthList_Point_s16 & rightHandSide)
+
     s32 FixedLengthList_Point_s16::get_maximumSize() const
     {
       return Array_Point_s16::get_size(1);
@@ -153,6 +162,15 @@ namespace Anki
       this->capacityUsed = 0;
     } // void FixedLengthList_Point_f32::Clear()
 
+    // Does this ever need to be declared explicitly?
+    /*FixedLengthList_Point_f32& FixedLengthList_Point_f32::operator= (const FixedLengthList_Point_f32 & rightHandSide)
+    {
+      Array_Point_f32::operator=(static_cast<Array_Point_f32>(rightHandSide));
+      this->capacityUsed = rightHandSide.capacityUsed;
+
+      return *this;
+    }*/ // FixedLengthList_Point_f32& FixedLengthList_Point_f32::operator= (const FixedLengthList_Point_f32 & rightHandSide)
+
     s32 FixedLengthList_Point_f32::get_maximumSize() const
     {
       return Array_Point_f32::get_size(1);
@@ -226,6 +244,15 @@ namespace Anki
     {
       this->capacityUsed = 0;
     } // void FixedLengthList_Point_f64::Clear()
+
+    // Does this ever need to be declared explicitly?
+    /*FixedLengthList_Point_f64& FixedLengthList_Point_f64::operator= (const FixedLengthList_Point_f64 & rightHandSide)
+    {
+      Array_Point_f64::operator=(static_cast<Array_Point_f64>(rightHandSide));
+      this->capacityUsed = rightHandSide.capacityUsed;
+
+      return *this;
+    }*/ // FixedLengthList_Point_f64& FixedLengthList_Point_f64::operator= (const FixedLengthList_Point_f64 & rightHandSide)
 
     s32 FixedLengthList_Point_f64::get_maximumSize() const
     {

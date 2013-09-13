@@ -59,6 +59,9 @@ def __GenerateDeclarations(whichTypes, includeAllMethods):
             '\n' +\
             '      void Clear();\n' +\
             '\n' +\
+            '      // Does this ever need to be declared explicitly?\n' +\
+            '      //FixedLengthList_' + type + '& operator= (const FixedLengthList_' + type + ' & rightHandSide);\n' +\
+            '\n' +\
             '      // Pointer to the data, at a given location\n' +\
             '      inline ' + type + '* Pointer(s32 index);\n' +\
             '\n' +\
