@@ -79,7 +79,6 @@ def __GenerateDeclarations(whichTypes, includeAllMethods):
             '    }\n' +\
             '\n' +\
             '    // Pointer to the data, at a given location\n' +\
-            '\n' +\
             '    inline const ' + type + '* FixedLengthList_' + type + '::Pointer(s32 index) const\n' +\
             '    {\n' +\
             '      return Array_' + type + '::Pointer(0, index);\n' +\

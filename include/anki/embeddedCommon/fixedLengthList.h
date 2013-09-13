@@ -70,7 +70,6 @@ namespace Anki
     }
 
     // Pointer to the data, at a given location
-
     inline const Point_s16* FixedLengthList_Point_s16::Pointer(s32 index) const
     {
       return Array_Point_s16::Pointer(0, index);
@@ -120,7 +119,6 @@ namespace Anki
     }
 
     // Pointer to the data, at a given location
-
     inline const Point_f32* FixedLengthList_Point_f32::Pointer(s32 index) const
     {
       return Array_Point_f32::Pointer(0, index);
@@ -170,7 +168,6 @@ namespace Anki
     }
 
     // Pointer to the data, at a given location
-
     inline const Point_f64* FixedLengthList_Point_f64::Pointer(s32 index) const
     {
       return Array_Point_f64::Pointer(0, index);
