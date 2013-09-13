@@ -9,6 +9,7 @@ def __GenerateTopOfFile():
 
     topString += \
         '#include "anki/embeddedCommon.h"\n' +\
+        '#include <math.h>\n' +\
         '\n' +\
         'namespace Anki\n' +\
         '{\n' +\
@@ -128,7 +129,7 @@ def __GenerateDefinitions(whichTypes, includeAllMethods):
             '          const double value2 = static_cast<double>(array2_rowPointer[x]);\n' +\
             '          const double percentThresholdValue = percentThreshold * MAX(value1,value2);\n' +\
             '\n' +\
-            '          if(abs(value1 - value2) > percentThresholdValue && abs(value1 - value2) > absoluteThreshold)\n' +\
+            '          if(abs(value1 - value2) > percentThresholdValue && fabs(value1 - value2) > absoluteThreshold)\n' +\
             '            return false;\n' +\
             '        }\n' +\
             '      }\n' +\

@@ -47,6 +47,10 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#ifdef _MSC_VER
+#include <malloc.h>
+#endif
+
 /* ! DO NOT make it an inline function */
 #define cvStackAlloc(size) cvAlignPtr( alloca((size) + CV_MALLOC_ALIGN), CV_MALLOC_ALIGN )
 
