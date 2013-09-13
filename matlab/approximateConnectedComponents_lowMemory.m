@@ -21,9 +21,10 @@
 %              1,0,1,1,1,1,1,1,0,1;
 %              1,0,0,0,0,0,0,0,0,1;
 %              1,1,1,1,1,1,1,1,1,1];
-% components2d = approximateConnectedComponents_lowMemory(binaryImg, 1);
+% components2d = approximateConnectedComponents_lowMemory(binaryImg, 1, 0)
+% components2d = approximateConnectedComponents_lowMemory(binaryImg, 1, 1)
 
-function components2d = approximateConnectedComponents_lowMemory(binaryImg, minComponentWidth)
+function components2d = approximateConnectedComponents_lowMemory(binaryImg, minComponentWidth, maxSkipDistance)
 
 MAX_1D_COMPONENTS = floor(size(binaryImg,2)/5);
 MAX_2D_COMPONENTS = 50000;
@@ -47,7 +48,7 @@ num1dComponents_previous = 0;
 equivalentComponents = 1:MAX_2D_COMPONENTS;
 
 for y = 1:size(binaryImg, 1)
-    currentComponents1d = extract1dComponents(binaryImg(y,:), minComponentWidth);
+    currentComponents1d = extract1dComponents(binaryImg(y,:), minComponentWidth, maxSkipDistance);
     num1dComponents_current = size(currentComponents1d,1);
     
     newPreviousComponents1d = zeros(num1dComponents_current, 3);
@@ -153,38 +154,3 @@ end
 % keyboard
 
 end % function componentIndexes = approximateConnectedComponents(binaryImg)
-
-
-% currentComponents1d components is an array of format [xStart, xEnd];
-% previousComponents1d components is an array of format [xStart, xEnd, 2dIndex];    
-function [components2d, num2dComponents, newPreviousComponents1d] =...
-    addTo2dComponents(currentComponents1d, previousComponents1d, components2d, currentRow, num2dComponents)
-
-    newPreviousComponents1d = zeros(size(currentComponents1d,1), 3);
-
-    for iCurrent = 1:size(currentComponents1d,1)
-        foundMatch = false;
-        for iPrevious = 1:size(previousComponents1d, 1)
-            % The current component matches the previous one if 
-            % 1. the previous start is less-than-or-equal the current end, and
-            % 2. the previous end is greater-than-or-equal the current start
-            if previousComponents1d(iPrevious, 1) <= currentComponents1d(iCurrent, 2) &&... 
-               previousComponents1d(iPrevious, 2) >= currentComponents1d(iCurrent, 1) 
-           
-                foundMatch = true;
-                componentId = previousComponents1d(iPrevious, 3);
-                components2d{componentId+1}(end+1,:) = [currentRow, currentComponents1d(iCurrent,1:2)]; % [y, xStart, xEnd]
-                newPreviousComponents1d(iCurrent, :) = [currentComponents1d(iCurrent, 1:2), componentId];
-                
-                break;
-            end
-        end
-        
-        if ~foundMatch
-            componentId = num2dComponents;
-            newPreviousComponents1d(iCurrent, :) = [currentComponents1d(iCurrent, 1:2), componentId];
-            components2d{end+1} = [currentRow, currentComponents1d(iCurrent, 1:2)]; % [y, xStart, xEnd]
-            num2dComponents = num2dComponents + 1;
-        end
-    end    
-end % function newComponents2d = addTo2dComponents()

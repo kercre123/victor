@@ -52,6 +52,9 @@ namespace Anki
 
       void Clear();
 
+      // Does this ever need to be declared explicitly?
+      //FixedLengthList_Component1d& operator= (const FixedLengthList_Component1d & rightHandSide);
+
       // Pointer to the data, at a given location
       inline Component1d* Pointer(s32 index);
 
@@ -100,6 +103,9 @@ namespace Anki
       Component2d PopBack();
 
       void Clear();
+
+      // Does this ever need to be declared explicitly?
+      //FixedLengthList_Component2d& operator= (const FixedLengthList_Component2d & rightHandSide);
 
       // Pointer to the data, at a given location
       inline Component2d* Pointer(s32 index);

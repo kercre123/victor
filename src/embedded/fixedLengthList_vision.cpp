@@ -79,6 +79,15 @@ namespace Anki
       this->capacityUsed = 0;
     } // void FixedLengthList_Component1d::Clear()
 
+    // Does this ever need to be declared explicitly?
+    /*FixedLengthList_Component1d& FixedLengthList_Component1d::operator= (const FixedLengthList_Component1d & rightHandSide)
+    {
+      Array_Component1d::operator=(static_cast<Array_Component1d>(rightHandSide));
+      this->capacityUsed = rightHandSide.capacityUsed;
+
+      return *this;
+    }*/ // FixedLengthList_Component1d& FixedLengthList_Component1d::operator= (const FixedLengthList_Component1d & rightHandSide)
+
     s32 FixedLengthList_Component1d::get_maximumSize() const
     {
       return Array_Component1d::get_size(1);
@@ -152,6 +161,15 @@ namespace Anki
     {
       this->capacityUsed = 0;
     } // void FixedLengthList_Component2d::Clear()
+
+    // Does this ever need to be declared explicitly?
+    /*FixedLengthList_Component2d& FixedLengthList_Component2d::operator= (const FixedLengthList_Component2d & rightHandSide)
+    {
+      Array_Component2d::operator=(static_cast<Array_Component2d>(rightHandSide));
+      this->capacityUsed = rightHandSide.capacityUsed;
+
+      return *this;
+    }*/ // FixedLengthList_Component2d& FixedLengthList_Component2d::operator= (const FixedLengthList_Component2d & rightHandSide)
 
     s32 FixedLengthList_Component2d::get_maximumSize() const
     {
