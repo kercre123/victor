@@ -39,7 +39,7 @@ namespace Anki
       return interpolatedPixel;
     }
 
-    Result extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, FixedLengthList_Component1d &extractedComponents);
+    Result extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList_Component1d &extractedComponents);
   } // namespace Embedded
 } // namespace Anki
 

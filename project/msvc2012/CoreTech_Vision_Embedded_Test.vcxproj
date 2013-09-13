@@ -11,7 +11,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\test\embedded\movidius_visionBenchmarks.c" />
     <ClCompile Include="..\..\test\embedded\run_visionTests.cpp" />
     <ClCompile Include="..\..\test\embedded\visionTests.cpp" />
   </ItemGroup>
