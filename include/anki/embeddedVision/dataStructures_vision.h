@@ -15,32 +15,18 @@ namespace Anki
 {
   namespace Embedded
   {
-    // A 1d component, run-length encoded, at a given y location
-    class Component1d
+    // A 1d, run-length encoded piece of a 2d component
+    class ConnectedComponentSegment
     {
     public:
-      Component1d();
+      ConnectedComponentSegment();
 
-      Component1d(const s16 xStart, const s16 xEnd, const s16 y);
-
-      void Print() const;
-
-      s16 xStart, xEnd;
-      s16 y;
-    }; // class Component1d
-
-    // A 1d component, run-length encoded piece of a 2d component
-    class Component2dPiece
-    {
-    public:
-      Component2dPiece();
-
-      Component2dPiece(const s16 xStart, const s16 xEnd, const s16 y, const u16 id);
+      ConnectedComponentSegment(const s16 xStart, const s16 xEnd, const s16 y = -1, const u16 id = 0);
 
       void Print() const;
 
       s16 xStart, xEnd, y, id;
-    }; // class Component2dPiece
+    }; // class ConnectedComponentSegment
   } // namespace Embedded
 } // namespace Anki
 

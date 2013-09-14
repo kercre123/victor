@@ -31,36 +31,39 @@ namespace Anki
 {
   namespace Embedded
   {
-    class FixedLengthList_Component1d : public Array_Component1d
+    class FixedLengthList_ConnectedComponentSegment : public Array_ConnectedComponentSegment
     {
     public:
-      FixedLengthList_Component1d();
+      FixedLengthList_ConnectedComponentSegment();
 
-      // Constructor for a FixedLengthList_Component1d, pointing to user-allocated data.
-      FixedLengthList_Component1d(s32 maximumSize, void * data, s32 dataLength, bool useBoundaryFillPatterns=false);
+      // Constructor for a FixedLengthList_ConnectedComponentSegment, pointing to user-allocated data.
+      FixedLengthList_ConnectedComponentSegment(s32 maximumSize, void * data, s32 dataLength, bool useBoundaryFillPatterns=false);
 
-      // Constructor for a FixedLengthList_Component1d, pointing to user-allocated MemoryStack
-      FixedLengthList_Component1d(s32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns=false);
+      // Constructor for a FixedLengthList_ConnectedComponentSegment, pointing to user-allocated MemoryStack
+      FixedLengthList_ConnectedComponentSegment(s32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns=false);
 
       bool IsValid() const;
 
-      Result PushBack(const Component1d &value);
+      Result PushBack(const ConnectedComponentSegment &value);
 
       // Will act as a normal pop, except when the list is empty. Then subsequent
       // calls will keep returning the first value in the list.
-      Component1d PopBack();
+      ConnectedComponentSegment PopBack();
 
       // Sets the size to zero, but does not modify any data. Equivalent to set_size(0)
       void Clear();
 
       // Does this ever need to be declared explicitly?
-      //FixedLengthList_Component1d& operator= (const FixedLengthList_Component1d & rightHandSide);
+      //FixedLengthList_ConnectedComponentSegment& operator= (const FixedLengthList_ConnectedComponentSegment & rightHandSide);
 
       // Pointer to the data, at a given location
-      inline Component1d* Pointer(s32 index);
+      inline ConnectedComponentSegment* Pointer(s32 index);
 
       // Pointer to the data, at a given location
-      inline const Component1d* Pointer(s32 index) const;
+      inline const ConnectedComponentSegment* Pointer(s32 index) const;
+
+      // Print out the contents of this FixedLengthList_ConnectedComponentSegment
+      Result Print(const char * const variableName = "FixedLengthList_ConnectedComponentSegment", const s32 minIndex = 0, const s32 maxIndex = 0x7FFFFFE) const;
 
       s32 get_maximumSize() const;
 
@@ -71,76 +74,20 @@ namespace Anki
 
     protected:
       s32 capacityUsed;
-    }; // class FixedLengthList_Component1d
+    }; // class FixedLengthList_ConnectedComponentSegment
 
-    inline Component1d* FixedLengthList_Component1d::Pointer(s32 index)
+    inline ConnectedComponentSegment* FixedLengthList_ConnectedComponentSegment::Pointer(s32 index)
     {
-      return Array_Component1d::Pointer(0, index);
+      return Array_ConnectedComponentSegment::Pointer(0, index);
     }
 
     // Pointer to the data, at a given location
-    inline const Component1d* FixedLengthList_Component1d::Pointer(s32 index) const
+    inline const ConnectedComponentSegment* FixedLengthList_ConnectedComponentSegment::Pointer(s32 index) const
     {
-      return Array_Component1d::Pointer(0, index);
+      return Array_ConnectedComponentSegment::Pointer(0, index);
     }
 
-    FixedLengthList_Component1d AllocateFixedLengthListFromHeap_Component1d(s32 maximumSize, bool useBoundaryFillPatterns=false);
-
-
-    class FixedLengthList_Component2dPiece : public Array_Component2dPiece
-    {
-    public:
-      FixedLengthList_Component2dPiece();
-
-      // Constructor for a FixedLengthList_Component2dPiece, pointing to user-allocated data.
-      FixedLengthList_Component2dPiece(s32 maximumSize, void * data, s32 dataLength, bool useBoundaryFillPatterns=false);
-
-      // Constructor for a FixedLengthList_Component2dPiece, pointing to user-allocated MemoryStack
-      FixedLengthList_Component2dPiece(s32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns=false);
-
-      bool IsValid() const;
-
-      Result PushBack(const Component2dPiece &value);
-
-      // Will act as a normal pop, except when the list is empty. Then subsequent
-      // calls will keep returning the first value in the list.
-      Component2dPiece PopBack();
-
-      // Sets the size to zero, but does not modify any data. Equivalent to set_size(0)
-      void Clear();
-
-      // Does this ever need to be declared explicitly?
-      //FixedLengthList_Component2dPiece& operator= (const FixedLengthList_Component2dPiece & rightHandSide);
-
-      // Pointer to the data, at a given location
-      inline Component2dPiece* Pointer(s32 index);
-
-      // Pointer to the data, at a given location
-      inline const Component2dPiece* Pointer(s32 index) const;
-
-      s32 get_maximumSize() const;
-
-      s32 get_size() const;
-
-      // Attempt to set the size to newSize. Returns the value that was actually set.
-      s32 set_size(s32 newSize);
-
-    protected:
-      s32 capacityUsed;
-    }; // class FixedLengthList_Component2dPiece
-
-    inline Component2dPiece* FixedLengthList_Component2dPiece::Pointer(s32 index)
-    {
-      return Array_Component2dPiece::Pointer(0, index);
-    }
-
-    // Pointer to the data, at a given location
-    inline const Component2dPiece* FixedLengthList_Component2dPiece::Pointer(s32 index) const
-    {
-      return Array_Component2dPiece::Pointer(0, index);
-    }
-
-    FixedLengthList_Component2dPiece AllocateFixedLengthListFromHeap_Component2dPiece(s32 maximumSize, bool useBoundaryFillPatterns=false);
+    FixedLengthList_ConnectedComponentSegment AllocateFixedLengthListFromHeap_ConnectedComponentSegment(s32 maximumSize, bool useBoundaryFillPatterns=false);
 
 
     } // namespace Embedded

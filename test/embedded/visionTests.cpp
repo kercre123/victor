@@ -4,6 +4,8 @@
 
 using namespace Anki::Embedded;
 
+// #define RUN_MATLAB_IMAGE_TEST
+
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 #include "opencv2/opencv.hpp"
 #endif
@@ -43,6 +45,55 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
+{
+  const s32 width = 18;
+  const s32 height = 5;
+  const s32 numBytes = MIN(MAX_BYTES, 10000);
+
+  const s16 minComponentWidth = 2;
+  const s16 maxSkipDistance = 0;
+  const u16 maxComponentSegments = 100;
+
+  // Allocate memory from the heap, for the memory allocator
+  MemoryStack ms(&buffer[0], numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  const char * binaryImageData =
+    "0 1 0 0 1 1 1 1 1 1 1 1 0 0 0 0 0 0 "
+    "0 0 0 1 1 1 0 0 0 0 1 1 0 1 1 1 0 0 "
+    "0 0 0 0 0 1 1 0 0 1 1 1 0 1 1 0 0 0 "
+    "0 0 0 0 0 0 1 1 1 1 0 0 1 1 1 0 1 1 "
+    "0 0 0 0 0 0 0 1 1 0 0 1 1 0 1 1 1 0 ";
+
+  const u16 numComponents_groundTruth = 13;
+  const s16 xStart_groundTruth[] = {4, 3, 10, 13, 5, 9, 13, 6, 12, 16, 7, 11, 14};
+  const s16 xEnd_groundTruth[]   = {11, 5, 11, 15, 6, 11, 14, 9, 14, 17, 8, 12, 16};
+  const s16 y_groundTruth[]      = {0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4};
+  const u16 id_groundTruth[]     = {1, 1, 1, 2, 1, 1, 2, 1, 2, 2, 1, 2, 2};
+
+  Array_u8 binaryImage(height, width, ms);
+  ASSERT_TRUE(binaryImage.IsValid());
+  ASSERT_TRUE(binaryImage.Set(binaryImageData) == width*height);
+
+  FixedLengthList_ConnectedComponentSegment extractedComponentPieces(maxComponentSegments, ms);
+  ASSERT_TRUE(extractedComponentPieces.IsValid());
+
+  const Result result = extract2dComponents(binaryImage, minComponentWidth, maxSkipDistance, extractedComponentPieces, ms);
+  ASSERT_TRUE(result == RESULT_OK);
+
+  ASSERT_TRUE(extractedComponentPieces.get_size() == 13);
+
+  for(u16 i=0; i<numComponents_groundTruth; i++) {
+    ASSERT_TRUE(extractedComponentPieces.Pointer(i)->xStart == xStart_groundTruth[i]);
+    ASSERT_TRUE(extractedComponentPieces.Pointer(i)->xEnd == xEnd_groundTruth[i]);
+    ASSERT_TRUE(extractedComponentPieces.Pointer(i)->y == y_groundTruth[i]);
+    ASSERT_TRUE(extractedComponentPieces.Pointer(i)->id == id_groundTruth[i]);
+  }
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
 {
   const s32 width = 50;
@@ -59,7 +110,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
   u8 * binaryImageRow = reinterpret_cast<u8*>(ms.Allocate(width));
   memset(binaryImageRow, 0, width);
 
-  FixedLengthList_Component1d extractedComponents(maxComponents, ms);
+  FixedLengthList_ConnectedComponentSegment extractedComponentSegments(maxComponents, ms);
 
   for(s32 i=10; i<=15; i++) binaryImageRow[i] = 1;
   for(s32 i=25; i<=35; i++) binaryImageRow[i] = 1;
@@ -67,17 +118,17 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
   for(s32 i=43; i<=45; i++) binaryImageRow[i] = 1;
   for(s32 i=47; i<=49; i++) binaryImageRow[i] = 1;
 
-  const Result result = extract1dComponents(binaryImageRow, width, minComponentWidth, maxSkipDistance, extractedComponents);
+  const Result result = extract1dComponents(binaryImageRow, width, minComponentWidth, maxSkipDistance, extractedComponentSegments);
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  //extractedComponents.Print("extractedComponents");
+  //extractedComponentSegments.Print("extractedComponentSegments");
 
-  ASSERT_TRUE(extractedComponents.get_size() == 3);
+  ASSERT_TRUE(extractedComponentSegments.get_size() == 3);
 
-  ASSERT_TRUE(extractedComponents.Pointer(0)->xStart == 10 && extractedComponents.Pointer(0)->xEnd == 15);
-  ASSERT_TRUE(extractedComponents.Pointer(1)->xStart == 25 && extractedComponents.Pointer(1)->xEnd == 35);
-  ASSERT_TRUE(extractedComponents.Pointer(2)->xStart == 43 && extractedComponents.Pointer(2)->xEnd == 49);
+  ASSERT_TRUE(extractedComponentSegments.Pointer(0)->xStart == 10 && extractedComponentSegments.Pointer(0)->xEnd == 15);
+  ASSERT_TRUE(extractedComponentSegments.Pointer(1)->xStart == 25 && extractedComponentSegments.Pointer(1)->xEnd == 35);
+  ASSERT_TRUE(extractedComponentSegments.Pointer(2)->xStart == 43 && extractedComponentSegments.Pointer(2)->xEnd == 49);
 
   GTEST_RETURN_HERE;
 }
@@ -237,7 +288,7 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
   GTEST_RETURN_HERE;
 }
 
-#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
+#if defined(ANKICORETECHEMBEDDED_USE_MATLAB) && defined(RUN_MATLAB_IMAGE_TEST)
 IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 {
   const s32 width = 640;
@@ -335,6 +386,8 @@ void RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
+  CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d);
   CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);

@@ -26,29 +26,29 @@ namespace Anki
 {
   namespace Embedded
   {
-    s32 Array_Component1d::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
+    s32 Array_ConnectedComponentSegment::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0);
       const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
-      return static_cast<s32>(RoundUp<size_t>(sizeof(Component1d)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
-    } // s32 Array_Component1d::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
+      return static_cast<s32>(RoundUp<size_t>(sizeof(ConnectedComponentSegment)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
+    } // s32 Array_ConnectedComponentSegment::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
 
-    s32 Array_Component1d::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    s32 Array_ConnectedComponentSegment::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0);
-      return numRows * Array_Component1d::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
-    } // s32 Array_Component1d::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+      return numRows * Array_ConnectedComponentSegment::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
+    } // s32 Array_ConnectedComponentSegment::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
-    Array_Component1d::Array_Component1d()
+    Array_ConnectedComponentSegment::Array_ConnectedComponentSegment()
     {
       InvalidateArray();
-    } // Array_Component1d::Array_Component1d()
+    } // Array_ConnectedComponentSegment::Array_ConnectedComponentSegment()
 
-    // Constructor for a Array_Component1d, pointing to user-allocated data. If the pointer to *data is not
-    // aligned to MEMORY_ALIGNMENT, this Array_Component1d will start at the next aligned location.
+    // Constructor for a Array_ConnectedComponentSegment, pointing to user-allocated data. If the pointer to *data is not
+    // aligned to MEMORY_ALIGNMENT, this Array_ConnectedComponentSegment will start at the next aligned location.
     // Unfortunately, this is more restrictive than most matrix libraries, and as an example,
-    // it may make it hard to convert from OpenCV to Array_Component1d, though the reverse is trivial.
-    Array_Component1d::Array_Component1d(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
+    // it may make it hard to convert from OpenCV to Array_ConnectedComponentSegment, though the reverse is trivial.
+    Array_ConnectedComponentSegment::Array_ConnectedComponentSegment(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
@@ -58,9 +58,9 @@ namespace Anki
         data,
         dataLength,
         useBoundaryFillPatterns);
-    } // Array_Component1d::Array_Component1d(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
+    } // Array_ConnectedComponentSegment::Array_ConnectedComponentSegment(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
 
-    Array_Component1d::Array_Component1d(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+    Array_ConnectedComponentSegment::Array_ConnectedComponentSegment(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
     {
       assert(numCols > 0 && numRows > 0);
@@ -73,13 +73,13 @@ namespace Anki
 
       Initialize(numRows,
         numCols,
-        reinterpret_cast<Component1d*>(allocatedBuffer),
+        reinterpret_cast<ConnectedComponentSegment*>(allocatedBuffer),
         numBytesAllocated,
         useBoundaryFillPatterns);
-    } // Array_Component1d::Array_Component1d(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+    } // Array_ConnectedComponentSegment::Array_ConnectedComponentSegment(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
 
     // If this array or array2 are different sizes or uninitialized, then return false.
-    bool Array_Component1d::IsEqualSize(const Array_Component1d &array2) const
+    bool Array_ConnectedComponentSegment::IsEqualSize(const Array_ConnectedComponentSegment &array2) const
     {
       if(!this->IsValid())
         return false;
@@ -91,39 +91,42 @@ namespace Anki
         return false;
 
       return true;
-    } // bool Array_Component1d::IsEqualSize(const Array_Component1d &array2) const
+    } // bool Array_ConnectedComponentSegment::IsEqualSize(const Array_ConnectedComponentSegment &array2) const
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-    // Returns a templated cv::Mat_ that shares the same buffer with this Array_Component1d. No data is copied.
-    cv::Mat_<Component1d>& Array_Component1d::get_CvMat_()
+    // Returns a templated cv::Mat_ that shares the same buffer with this Array_ConnectedComponentSegment. No data is copied.
+    cv::Mat_<ConnectedComponentSegment>& Array_ConnectedComponentSegment::get_CvMat_()
     {
       assert(this->IsValid());
       return cvMatMirror;
-    } // cv::Mat_<Component1d>& Array_Component1d::get_CvMat_()
+    } // cv::Mat_<ConnectedComponentSegment>& Array_ConnectedComponentSegment::get_CvMat_()
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
-    // Print out the contents of this Array_Component1d
-    void Array_Component1d::Print(const char * const variableName) const
+    // Print out the contents of this Array_ConnectedComponentSegment
+    Result Array_ConnectedComponentSegment::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      assert(this->IsValid());
+      DASConditionalWarnAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array_ConnectedComponentSegment::Print", "Array_ConnectedComponentSegment is not valid");
 
       printf("%s:\n", variableName);
-      for(s32 y=0; y<size[0]; y++) {
-        const Component1d * const rowPointer = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
+      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
+        const ConnectedComponentSegment * const rowPointer = Pointer(y, 0);
+        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
           rowPointer[x].Print();
           printf(" ");
         }
         printf("\n");
       }
       printf("\n");
-    } // void Array_Component1d::Print() const
 
-    // If the Array_Component1d was constructed with the useBoundaryFillPatterns=true, then
+      return RESULT_OK;
+    } // void Array_ConnectedComponentSegment::Print() const
+
+    // If the Array_ConnectedComponentSegment was constructed with the useBoundaryFillPatterns=true, then
     // return if any memory was written out of bounds (via fill patterns at the
-    // beginning and end).  If the Array_Component1d was not constructed with the
+    // beginning and end).  If the Array_ConnectedComponentSegment was not constructed with the
     // useBoundaryFillPatterns=true, this method always returns true
-    bool Array_Component1d::IsValid() const
+    bool Array_ConnectedComponentSegment::IsValid() const
     {
       if(this->rawDataPointer == NULL || this->data == NULL) {
         return false;
@@ -149,26 +152,26 @@ namespace Anki
       } else { // if(useBoundaryFillPatterns) {
         return true;
       } // if(useBoundaryFillPatterns) { ... else
-    } // bool Array_Component1d::IsValid() const
+    } // bool Array_ConnectedComponentSegment::IsValid() const
 
-    // Set every element in the Array_Component1d to this value
+    // Set every element in the Array_ConnectedComponentSegment to this value
     // Returns the number of values set
-    s32 Array_Component1d::Set(const Component1d value)
+    s32 Array_ConnectedComponentSegment::Set(const ConnectedComponentSegment value)
     {
       assert(this->IsValid());
 
       for(s32 y=0; y<size[0]; y++) {
-        Component1d * restrict rowPointer = Pointer(y, 0);
+        ConnectedComponentSegment * restrict rowPointer = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           rowPointer[x] = value;
         }
       }
 
       return size[0]*size[1];
-    } // s32 Array_Component1d::Set(const Component1d value)
+    } // s32 Array_ConnectedComponentSegment::Set(const ConnectedComponentSegment value)
 
     // Similar to Matlab size(matrix, dimension), and dimension is in {0,1}
-    s32 Array_Component1d::get_size(s32 dimension) const
+    s32 Array_ConnectedComponentSegment::get_size(s32 dimension) const
     {
       assert(dimension >= 0 && this->rawDataPointer != NULL && this->data != NULL);
 
@@ -176,24 +179,24 @@ namespace Anki
         return 0;
 
       return size[dimension];
-    } // s32 Array_Component1d::get_size(s32 dimension) const
+    } // s32 Array_ConnectedComponentSegment::get_size(s32 dimension) const
 
-    s32 Array_Component1d::get_stride() const
+    s32 Array_ConnectedComponentSegment::get_stride() const
     {
       return stride;
-    } // s32 Array_Component1d::get_stride() const
+    } // s32 Array_ConnectedComponentSegment::get_stride() const
 
-    void* Array_Component1d::get_rawDataPointer()
+    void* Array_ConnectedComponentSegment::get_rawDataPointer()
     {
       return rawDataPointer;
-    } // void* Array_Component1d::get_rawDataPointer()
+    } // void* Array_ConnectedComponentSegment::get_rawDataPointer()
 
-    const void* Array_Component1d::get_rawDataPointer() const
+    const void* Array_ConnectedComponentSegment::get_rawDataPointer() const
     {
       return rawDataPointer;
-    } // const void* Array_Component1d::get_rawDataPointer() const
+    } // const void* Array_ConnectedComponentSegment::get_rawDataPointer() const
 
-    void Array_Component1d::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
+    void Array_ConnectedComponentSegment::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
 
@@ -226,7 +229,7 @@ namespace Anki
 
       if(useBoundaryFillPatterns) {
         const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1], false);
-        this->data = reinterpret_cast<Component1d*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes + HEADER_LENGTH );
+        this->data = reinterpret_cast<ConnectedComponentSegment*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes + HEADER_LENGTH );
         for(s32 y=0; y<size[0]; y++) {
           // Add the fill patterns just before the data on each line
           reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[0] = FILL_PATTERN_START;
@@ -237,275 +240,34 @@ namespace Anki
           reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[1] = FILL_PATTERN_END;
         }
       } else {
-        this->data = reinterpret_cast<Component1d*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes );
+        this->data = reinterpret_cast<ConnectedComponentSegment*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes );
       }
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-      cvMatMirror = cv::Mat_<Component1d>(size[0], size[1], data, stride);
+      cvMatMirror = cv::Mat_<ConnectedComponentSegment>(size[0], size[1], data, stride);
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-    } // Array_Component1d::Initialize()
+    } // Array_ConnectedComponentSegment::Initialize()
 
     // Set all the buffers and sizes to zero, to signal an invalid array
-    void Array_Component1d::InvalidateArray()
+    void Array_ConnectedComponentSegment::InvalidateArray()
     {
       this->size[0] = 0;
       this->size[1] = 0;
       this->stride = 0;
       this->data = NULL;
       this->rawDataPointer = NULL;
-    } // void Array_Component1d::InvalidateArray()
+    } // void Array_ConnectedComponentSegment::InvalidateArray()
 
-    // Factory method to create an Array_Component1d from the heap. The data of the returned Array_Component1d must be freed by the user.
-    // This is separate from the normal constructor, as Array_Component1d objects are not supposed to manage memory
-    Array_Component1d AllocateArrayFromHeap_Component1d(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    // Factory method to create an Array_ConnectedComponentSegment from the heap. The data of the returned Array_ConnectedComponentSegment must be freed by the user.
+    // This is separate from the normal constructor, as Array_ConnectedComponentSegment objects are not supposed to manage memory
+    Array_ConnectedComponentSegment AllocateArrayFromHeap_ConnectedComponentSegment(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
     {
-      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_Component1d::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_ConnectedComponentSegment::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
 
-      Array_Component1d mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+      Array_ConnectedComponentSegment mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
 
       return mat;
-    } // Array_Component1d AllocateArrayFromHeap_Component1d(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
-
-
-    s32 Array_Component2dPiece::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
-    {
-      assert(numCols > 0);
-      const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
-      return static_cast<s32>(RoundUp<size_t>(sizeof(Component2dPiece)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
-    } // s32 Array_Component2dPiece::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
-
-    s32 Array_Component2dPiece::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
-    {
-      assert(numCols > 0 && numRows > 0);
-      return numRows * Array_Component2dPiece::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
-    } // s32 Array_Component2dPiece::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
-
-    Array_Component2dPiece::Array_Component2dPiece()
-    {
-      InvalidateArray();
-    } // Array_Component2dPiece::Array_Component2dPiece()
-
-    // Constructor for a Array_Component2dPiece, pointing to user-allocated data. If the pointer to *data is not
-    // aligned to MEMORY_ALIGNMENT, this Array_Component2dPiece will start at the next aligned location.
-    // Unfortunately, this is more restrictive than most matrix libraries, and as an example,
-    // it may make it hard to convert from OpenCV to Array_Component2dPiece, though the reverse is trivial.
-    Array_Component2dPiece::Array_Component2dPiece(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
-      : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
-    {
-      assert(numCols > 0 && numRows > 0 && dataLength > 0);
-
-      Initialize(numRows,
-        numCols,
-        data,
-        dataLength,
-        useBoundaryFillPatterns);
-    } // Array_Component2dPiece::Array_Component2dPiece(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
-
-    Array_Component2dPiece::Array_Component2dPiece(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
-      : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
-    {
-      assert(numCols > 0 && numRows > 0);
-
-      const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? static_cast<s32>(MEMORY_ALIGNMENT) : 0);
-      const s32 numBytesRequested = numRows * this->stride + extraBoundaryPatternBytes;
-      s32 numBytesAllocated = 0;
-
-      void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
-
-      Initialize(numRows,
-        numCols,
-        reinterpret_cast<Component2dPiece*>(allocatedBuffer),
-        numBytesAllocated,
-        useBoundaryFillPatterns);
-    } // Array_Component2dPiece::Array_Component2dPiece(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
-
-    // If this array or array2 are different sizes or uninitialized, then return false.
-    bool Array_Component2dPiece::IsEqualSize(const Array_Component2dPiece &array2) const
-    {
-      if(!this->IsValid())
-        return false;
-
-      if(!array2.IsValid())
-        return false;
-
-      if(this->get_size(0) != array2.get_size(0) || this->get_size(1) != array2.get_size(1))
-        return false;
-
-      return true;
-    } // bool Array_Component2dPiece::IsEqualSize(const Array_Component2dPiece &array2) const
-
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-    // Returns a templated cv::Mat_ that shares the same buffer with this Array_Component2dPiece. No data is copied.
-    cv::Mat_<Component2dPiece>& Array_Component2dPiece::get_CvMat_()
-    {
-      assert(this->IsValid());
-      return cvMatMirror;
-    } // cv::Mat_<Component2dPiece>& Array_Component2dPiece::get_CvMat_()
-#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-
-    // Print out the contents of this Array_Component2dPiece
-    void Array_Component2dPiece::Print(const char * const variableName) const
-    {
-      assert(this->IsValid());
-
-      printf("%s:\n", variableName);
-      for(s32 y=0; y<size[0]; y++) {
-        const Component2dPiece * const rowPointer = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
-          rowPointer[x].Print();
-          printf(" ");
-        }
-        printf("\n");
-      }
-      printf("\n");
-    } // void Array_Component2dPiece::Print() const
-
-    // If the Array_Component2dPiece was constructed with the useBoundaryFillPatterns=true, then
-    // return if any memory was written out of bounds (via fill patterns at the
-    // beginning and end).  If the Array_Component2dPiece was not constructed with the
-    // useBoundaryFillPatterns=true, this method always returns true
-    bool Array_Component2dPiece::IsValid() const
-    {
-      if(this->rawDataPointer == NULL || this->data == NULL) {
-        return false;
-      }
-
-      if(size[0] < 1 || size[1] < 1) {
-        return false;
-      }
-
-      if(useBoundaryFillPatterns) {
-        const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1],false);
-
-        for(s32 y=0; y<size[0]; y++) {
-          if((reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[0]) != FILL_PATTERN_START ||
-            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[1]) != FILL_PATTERN_START ||
-            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[0]) != FILL_PATTERN_END ||
-            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[1]) != FILL_PATTERN_END) {
-              return false;
-          }
-        }
-
-        return true;
-      } else { // if(useBoundaryFillPatterns) {
-        return true;
-      } // if(useBoundaryFillPatterns) { ... else
-    } // bool Array_Component2dPiece::IsValid() const
-
-    // Set every element in the Array_Component2dPiece to this value
-    // Returns the number of values set
-    s32 Array_Component2dPiece::Set(const Component2dPiece value)
-    {
-      assert(this->IsValid());
-
-      for(s32 y=0; y<size[0]; y++) {
-        Component2dPiece * restrict rowPointer = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
-          rowPointer[x] = value;
-        }
-      }
-
-      return size[0]*size[1];
-    } // s32 Array_Component2dPiece::Set(const Component2dPiece value)
-
-    // Similar to Matlab size(matrix, dimension), and dimension is in {0,1}
-    s32 Array_Component2dPiece::get_size(s32 dimension) const
-    {
-      assert(dimension >= 0 && this->rawDataPointer != NULL && this->data != NULL);
-
-      if(dimension > 1 || dimension < 0)
-        return 0;
-
-      return size[dimension];
-    } // s32 Array_Component2dPiece::get_size(s32 dimension) const
-
-    s32 Array_Component2dPiece::get_stride() const
-    {
-      return stride;
-    } // s32 Array_Component2dPiece::get_stride() const
-
-    void* Array_Component2dPiece::get_rawDataPointer()
-    {
-      return rawDataPointer;
-    } // void* Array_Component2dPiece::get_rawDataPointer()
-
-    const void* Array_Component2dPiece::get_rawDataPointer() const
-    {
-      return rawDataPointer;
-    } // const void* Array_Component2dPiece::get_rawDataPointer() const
-
-    void Array_Component2dPiece::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
-    {
-      assert(numCols > 0 && numRows > 0 && dataLength > 0);
-
-      this->useBoundaryFillPatterns = useBoundaryFillPatterns;
-
-      if(!rawData) {
-#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        DASError("Anki.Array2d.initialize", "input data buffer is NULL");
-#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        InvalidateArray();
-        return;
-      }
-
-      this->rawDataPointer = rawData;
-
-      const size_t extraBoundaryPatternBytes = useBoundaryFillPatterns ? static_cast<size_t>(HEADER_LENGTH) : 0;
-      const s32 extraAlignmentBytes = static_cast<s32>(RoundUp<size_t>(reinterpret_cast<size_t>(rawData)+extraBoundaryPatternBytes, MEMORY_ALIGNMENT) - extraBoundaryPatternBytes - reinterpret_cast<size_t>(rawData));
-      const s32 requiredBytes = ComputeRequiredStride(numCols,useBoundaryFillPatterns)*numRows + extraAlignmentBytes;
-
-      if(requiredBytes > dataLength) {
-#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        DASError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
-#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        InvalidateArray();
-        return;
-      }
-
-      this->size[0] = numRows;
-      this->size[1] = numCols;
-
-      if(useBoundaryFillPatterns) {
-        const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1], false);
-        this->data = reinterpret_cast<Component2dPiece*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes + HEADER_LENGTH );
-        for(s32 y=0; y<size[0]; y++) {
-          // Add the fill patterns just before the data on each line
-          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[0] = FILL_PATTERN_START;
-          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[1] = FILL_PATTERN_START;
-
-          // And also just after the data (including normal byte-alignment padding)
-          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[0] = FILL_PATTERN_END;
-          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[1] = FILL_PATTERN_END;
-        }
-      } else {
-        this->data = reinterpret_cast<Component2dPiece*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes );
-      }
-
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-      cvMatMirror = cv::Mat_<Component2dPiece>(size[0], size[1], data, stride);
-#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-    } // Array_Component2dPiece::Initialize()
-
-    // Set all the buffers and sizes to zero, to signal an invalid array
-    void Array_Component2dPiece::InvalidateArray()
-    {
-      this->size[0] = 0;
-      this->size[1] = 0;
-      this->stride = 0;
-      this->data = NULL;
-      this->rawDataPointer = NULL;
-    } // void Array_Component2dPiece::InvalidateArray()
-
-    // Factory method to create an Array_Component2dPiece from the heap. The data of the returned Array_Component2dPiece must be freed by the user.
-    // This is separate from the normal constructor, as Array_Component2dPiece objects are not supposed to manage memory
-    Array_Component2dPiece AllocateArrayFromHeap_Component2dPiece(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
-    {
-      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_Component2dPiece::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
-
-      Array_Component2dPiece mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
-
-      return mat;
-    } // Array_Component2dPiece AllocateArrayFromHeap_Component2dPiece(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    } // Array_ConnectedComponentSegment AllocateArrayFromHeap_ConnectedComponentSegment(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
 
   } // namespace Embedded

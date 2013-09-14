@@ -9,7 +9,7 @@
 %              0,0,0,0,0,1,1,0,0,1,1,1,0,1,1,0,0,0;
 %              0,0,0,0,0,0,1,1,1,1,0,0,1,1,1,0,1,1;
 %              0,0,0,0,0,0,0,1,1,0,0,1,1,0,1,1,1,0];
-% components2d = approximateConnectedComponents_lowMemory(binaryImg, 2);
+% [components2d, components2d_packed, components2d_unsorted] = approximateConnectedComponents_lowMemory(binaryImg, 2, 0);
 
 % binaryImg = [1,1,1,1,1,1,1,1,1,1;
 %              1,0,0,0,0,0,0,0,0,0;
@@ -21,10 +21,10 @@
 %              1,0,1,1,1,1,1,1,0,1;
 %              1,0,0,0,0,0,0,0,0,1;
 %              1,1,1,1,1,1,1,1,1,1];
-% components2d = approximateConnectedComponents_lowMemory(binaryImg, 1, 0)
-% components2d = approximateConnectedComponents_lowMemory(binaryImg, 1, 1)
+% [components2d, components2d_packed, components2d_unsorted] = approximateConnectedComponents_lowMemory(binaryImg, 1, 0)
+% [components2d, components2d_packed, components2d_unsorted] = approximateConnectedComponents_lowMemory(binaryImg, 1, 1)
 
-function components2d = approximateConnectedComponents_lowMemory(binaryImg, minComponentWidth, maxSkipDistance)
+function [components2d, components2d_packed, components2d_unsorted] = approximateConnectedComponents_lowMemory(binaryImg, minComponentWidth, maxSkipDistance)
 
 MAX_1D_COMPONENTS = floor(size(binaryImg,2)/5);
 MAX_2D_COMPONENTS = 50000;
@@ -136,6 +136,7 @@ components2d = components2d(1:numStored1dComponents, :);
 % disp(components2d);
 
 % Sort all 1D components by id, y, then x
+components2d_unsorted = components2d;
 components2d_packed = sortrows(components2d);
 
 components2d = cell(1,0);

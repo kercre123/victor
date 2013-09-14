@@ -26,31 +26,31 @@ namespace Anki
 {
   namespace Embedded
   {
-    FixedLengthList_Component1d::FixedLengthList_Component1d()
-      : Array_Component1d(), capacityUsed(0)
+    FixedLengthList_ConnectedComponentSegment::FixedLengthList_ConnectedComponentSegment()
+      : Array_ConnectedComponentSegment(), capacityUsed(0)
     {
-    } // FixedLengthList_Component1d::FixedLengthList_Component1d()
+    } // FixedLengthList_ConnectedComponentSegment::FixedLengthList_ConnectedComponentSegment()
 
-    FixedLengthList_Component1d::FixedLengthList_Component1d(s32 maximumSize, void * data, s32 dataLength, bool useBoundaryFillPatterns)
-      : Array_Component1d(1, maximumSize, data, dataLength, useBoundaryFillPatterns), capacityUsed(0)
+    FixedLengthList_ConnectedComponentSegment::FixedLengthList_ConnectedComponentSegment(s32 maximumSize, void * data, s32 dataLength, bool useBoundaryFillPatterns)
+      : Array_ConnectedComponentSegment(1, maximumSize, data, dataLength, useBoundaryFillPatterns), capacityUsed(0)
     {
-    } // FixedLengthList_Component1d::FixedLengthList_Component1d(s32 maximumSize, void * data, s32 dataLength, bool useBoundaryFillPatterns)
+    } // FixedLengthList_ConnectedComponentSegment::FixedLengthList_ConnectedComponentSegment(s32 maximumSize, void * data, s32 dataLength, bool useBoundaryFillPatterns)
 
-    FixedLengthList_Component1d::FixedLengthList_Component1d(s32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns)
-      : Array_Component1d(1, maximumSize, memory, useBoundaryFillPatterns), capacityUsed(0)
+    FixedLengthList_ConnectedComponentSegment::FixedLengthList_ConnectedComponentSegment(s32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns)
+      : Array_ConnectedComponentSegment(1, maximumSize, memory, useBoundaryFillPatterns), capacityUsed(0)
     {
-    } // FixedLengthList_Component1d::FixedLengthList_Component1d(s32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns)
+    } // FixedLengthList_ConnectedComponentSegment::FixedLengthList_ConnectedComponentSegment(s32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns)
 
-    bool FixedLengthList_Component1d::IsValid() const
+    bool FixedLengthList_ConnectedComponentSegment::IsValid() const
     {
       if(capacityUsed > this->get_maximumSize()) {
         return false;
       }
 
-      return Array_Component1d::IsValid();
-    } // bool FixedLengthList_Component1d::IsValid() const
+      return Array_ConnectedComponentSegment::IsValid();
+    } // bool FixedLengthList_ConnectedComponentSegment::IsValid() const
 
-    Result FixedLengthList_Component1d::PushBack(const Component1d &value)
+    Result FixedLengthList_ConnectedComponentSegment::PushBack(const ConnectedComponentSegment &value)
     {
       if(capacityUsed >= this->get_maximumSize()) {
         return RESULT_FAIL;
@@ -60,150 +60,66 @@ namespace Anki
       capacityUsed++;
 
       return RESULT_OK;
-    } // Result FixedLengthList_Component1d::PushBack(const Component1d &value)
+    } // Result FixedLengthList_ConnectedComponentSegment::PushBack(const ConnectedComponentSegment &value)
 
-    Component1d FixedLengthList_Component1d::PopBack()
+    ConnectedComponentSegment FixedLengthList_ConnectedComponentSegment::PopBack()
     {
       if(capacityUsed == 0) {
         return *this->Pointer(0);
       }
 
-      const Component1d value = *this->Pointer(capacityUsed-1);
+      const ConnectedComponentSegment value = *this->Pointer(capacityUsed-1);
       capacityUsed--;
 
       return value;
-    } // Component1d FixedLengthList_Component1d::PopBack()
+    } // ConnectedComponentSegment FixedLengthList_ConnectedComponentSegment::PopBack()
 
-    void FixedLengthList_Component1d::Clear()
+    void FixedLengthList_ConnectedComponentSegment::Clear()
     {
       this->capacityUsed = 0;
-    } // void FixedLengthList_Component1d::Clear()
+    } // void FixedLengthList_ConnectedComponentSegment::Clear()
 
     // Does this ever need to be declared explicitly?
-    /*FixedLengthList_Component1d& FixedLengthList_Component1d::operator= (const FixedLengthList_Component1d & rightHandSide)
+    /*FixedLengthList_ConnectedComponentSegment& FixedLengthList_ConnectedComponentSegment::operator= (const FixedLengthList_ConnectedComponentSegment & rightHandSide)
     {
-      Array_Component1d::operator=(static_cast<Array_Component1d>(rightHandSide));
+      Array_ConnectedComponentSegment::operator=(static_cast<Array_ConnectedComponentSegment>(rightHandSide));
       this->capacityUsed = rightHandSide.capacityUsed;
 
       return *this;
-    }*/ // FixedLengthList_Component1d& FixedLengthList_Component1d::operator= (const FixedLengthList_Component1d & rightHandSide)
+    }*/ // FixedLengthList_ConnectedComponentSegment& FixedLengthList_ConnectedComponentSegment::operator= (const FixedLengthList_ConnectedComponentSegment & rightHandSide)
 
-    s32 FixedLengthList_Component1d::get_maximumSize() const
+    s32 FixedLengthList_ConnectedComponentSegment::get_maximumSize() const
     {
-      return Array_Component1d::get_size(1);
-    } // s32 FixedLengthList_Component1d::get_maximumSize() const
+      return Array_ConnectedComponentSegment::get_size(1);
+    } // s32 FixedLengthList_ConnectedComponentSegment::get_maximumSize() const
 
-    s32 FixedLengthList_Component1d::get_size() const
+    s32 FixedLengthList_ConnectedComponentSegment::get_size() const
     {
       return capacityUsed;
-    } // s32 FixedLengthList_Component1d::get_size() const
+    } // s32 FixedLengthList_ConnectedComponentSegment::get_size() const
 
     // Attempt to set the size to newSize. Returns the value that was actually set.
-    s32 FixedLengthList_Component1d::set_size(s32 newSize)
+    s32 FixedLengthList_ConnectedComponentSegment::set_size(s32 newSize)
     {
       this->capacityUsed = MIN(this->get_maximumSize(), MAX(0,newSize));
       return this->capacityUsed;
-    } // s32 FixedLengthList_Component1d::set_size(s32 newSize)
+    } // s32 FixedLengthList_ConnectedComponentSegment::set_size(s32 newSize)
 
-    FixedLengthList_Component1d AllocateFixedLengthListFromHeap_Component1d(s32 maximumSize, bool useBoundaryFillPatterns)
+    FixedLengthList_ConnectedComponentSegment AllocateFixedLengthListFromHeap_ConnectedComponentSegment(s32 maximumSize, bool useBoundaryFillPatterns)
     {
-      // const s32 stride = FixedLengthList_Component1d::ComputeRequiredStride(maximumSize, useBoundaryFillPatterns);
-      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_Component1d::ComputeMinimumRequiredMemory(1, maximumSize, useBoundaryFillPatterns); // The required memory, plus a bit more
+      // const s32 stride = FixedLengthList_ConnectedComponentSegment::ComputeRequiredStride(maximumSize, useBoundaryFillPatterns);
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_ConnectedComponentSegment::ComputeMinimumRequiredMemory(1, maximumSize, useBoundaryFillPatterns); // The required memory, plus a bit more
 
-      FixedLengthList_Component1d mat(maximumSize, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+      FixedLengthList_ConnectedComponentSegment mat(maximumSize, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
 
       return mat;
-    } // FixedLengthList_Component1d AllocateFixedLengthListFromHeap_Component1d(s32 maximumSize, bool useBoundaryFillPatterns)
+    } // FixedLengthList_ConnectedComponentSegment AllocateFixedLengthListFromHeap_ConnectedComponentSegment(s32 maximumSize, bool useBoundaryFillPatterns)
 
-
-    FixedLengthList_Component2dPiece::FixedLengthList_Component2dPiece()
-      : Array_Component2dPiece(), capacityUsed(0)
+    // Print out the contents of this FixedLengthList_ConnectedComponentSegment
+    Result FixedLengthList_ConnectedComponentSegment::Print(const char * const variableName, const s32 minIndex, const s32 maxIndex) const
     {
-    } // FixedLengthList_Component2dPiece::FixedLengthList_Component2dPiece()
-
-    FixedLengthList_Component2dPiece::FixedLengthList_Component2dPiece(s32 maximumSize, void * data, s32 dataLength, bool useBoundaryFillPatterns)
-      : Array_Component2dPiece(1, maximumSize, data, dataLength, useBoundaryFillPatterns), capacityUsed(0)
-    {
-    } // FixedLengthList_Component2dPiece::FixedLengthList_Component2dPiece(s32 maximumSize, void * data, s32 dataLength, bool useBoundaryFillPatterns)
-
-    FixedLengthList_Component2dPiece::FixedLengthList_Component2dPiece(s32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns)
-      : Array_Component2dPiece(1, maximumSize, memory, useBoundaryFillPatterns), capacityUsed(0)
-    {
-    } // FixedLengthList_Component2dPiece::FixedLengthList_Component2dPiece(s32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns)
-
-    bool FixedLengthList_Component2dPiece::IsValid() const
-    {
-      if(capacityUsed > this->get_maximumSize()) {
-        return false;
-      }
-
-      return Array_Component2dPiece::IsValid();
-    } // bool FixedLengthList_Component2dPiece::IsValid() const
-
-    Result FixedLengthList_Component2dPiece::PushBack(const Component2dPiece &value)
-    {
-      if(capacityUsed >= this->get_maximumSize()) {
-        return RESULT_FAIL;
-      }
-
-      *this->Pointer(capacityUsed) = value;
-      capacityUsed++;
-
-      return RESULT_OK;
-    } // Result FixedLengthList_Component2dPiece::PushBack(const Component2dPiece &value)
-
-    Component2dPiece FixedLengthList_Component2dPiece::PopBack()
-    {
-      if(capacityUsed == 0) {
-        return *this->Pointer(0);
-      }
-
-      const Component2dPiece value = *this->Pointer(capacityUsed-1);
-      capacityUsed--;
-
-      return value;
-    } // Component2dPiece FixedLengthList_Component2dPiece::PopBack()
-
-    void FixedLengthList_Component2dPiece::Clear()
-    {
-      this->capacityUsed = 0;
-    } // void FixedLengthList_Component2dPiece::Clear()
-
-    // Does this ever need to be declared explicitly?
-    /*FixedLengthList_Component2dPiece& FixedLengthList_Component2dPiece::operator= (const FixedLengthList_Component2dPiece & rightHandSide)
-    {
-      Array_Component2dPiece::operator=(static_cast<Array_Component2dPiece>(rightHandSide));
-      this->capacityUsed = rightHandSide.capacityUsed;
-
-      return *this;
-    }*/ // FixedLengthList_Component2dPiece& FixedLengthList_Component2dPiece::operator= (const FixedLengthList_Component2dPiece & rightHandSide)
-
-    s32 FixedLengthList_Component2dPiece::get_maximumSize() const
-    {
-      return Array_Component2dPiece::get_size(1);
-    } // s32 FixedLengthList_Component2dPiece::get_maximumSize() const
-
-    s32 FixedLengthList_Component2dPiece::get_size() const
-    {
-      return capacityUsed;
-    } // s32 FixedLengthList_Component2dPiece::get_size() const
-
-    // Attempt to set the size to newSize. Returns the value that was actually set.
-    s32 FixedLengthList_Component2dPiece::set_size(s32 newSize)
-    {
-      this->capacityUsed = MIN(this->get_maximumSize(), MAX(0,newSize));
-      return this->capacityUsed;
-    } // s32 FixedLengthList_Component2dPiece::set_size(s32 newSize)
-
-    FixedLengthList_Component2dPiece AllocateFixedLengthListFromHeap_Component2dPiece(s32 maximumSize, bool useBoundaryFillPatterns)
-    {
-      // const s32 stride = FixedLengthList_Component2dPiece::ComputeRequiredStride(maximumSize, useBoundaryFillPatterns);
-      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_Component2dPiece::ComputeMinimumRequiredMemory(1, maximumSize, useBoundaryFillPatterns); // The required memory, plus a bit more
-
-      FixedLengthList_Component2dPiece mat(maximumSize, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
-
-      return mat;
-    } // FixedLengthList_Component2dPiece AllocateFixedLengthListFromHeap_Component2dPiece(s32 maximumSize, bool useBoundaryFillPatterns)
+      return Array_ConnectedComponentSegment::Print(variableName, 0, 0, MAX(0,minIndex), MIN(maxIndex, this->get_size()-1));
+    } // Result FixedLengthList_ConnectedComponentSegment::Print(const char * const variableName, const s32 minIndex, const s32 maxIndex) const
 
 
   } // namespace Embedded
