@@ -118,10 +118,19 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
     "0 0 0 0 0 0 0 1 1 0 0 1 1 0 1 1 1 0 ";
 
   const u16 numComponents_groundTruth = 13;
+
+  //#define UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d
+#ifdef UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d
   const s16 xStart_groundTruth[] = {4, 3, 10, 13, 5, 9, 13, 6, 12, 16, 7, 11, 14};
   const s16 xEnd_groundTruth[]   = {11, 5, 11, 15, 6, 11, 14, 9, 14, 17, 8, 12, 16};
   const s16 y_groundTruth[]      = {0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4};
   const u16 id_groundTruth[]     = {1, 1, 1, 2, 1, 1, 2, 1, 2, 2, 1, 2, 2};
+#else // #ifdef UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d
+  const s16 xStart_groundTruth[] = {4, 3, 10, 5, 9, 6, 7, 13, 13, 12, 16, 11, 14};
+  const s16 xEnd_groundTruth[]   = {11, 5, 11, 6, 11, 9, 8, 15, 14, 14, 17, 12, 16};
+  const s16 y_groundTruth[]      = {0, 1, 1, 2, 2, 3, 4, 1, 2, 3, 3, 4, 4};
+  const u16 id_groundTruth[]     = {1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2};
+#endif // #ifdef UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d ... #else
 
   Array_u8 binaryImage(height, width, ms);
   ASSERT_TRUE(binaryImage.IsValid());

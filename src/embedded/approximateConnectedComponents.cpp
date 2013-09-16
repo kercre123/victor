@@ -154,12 +154,11 @@ namespace Anki
       //extractedComponents.Print();
 
       //% Sort all 1D components by id, y, then x
-      //extractedComponents_packed = sortrows(extractedComponents);
-      // TODO: sort the rows
+      const Result result = SortConnectedComponentSegments(extractedComponents);
 
       // TODO: convert the pieces into regular components?
 
-      return RESULT_OK;
+      return result;
     }
 
     Result Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList_ConnectedComponentSegment &extractedComponents)
