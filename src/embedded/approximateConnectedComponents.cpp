@@ -5,11 +5,11 @@ namespace Anki
   namespace Embedded
   {
     // Extract 2d connected components from binaryImage
-    // All extracted components are stored in a single list "extractedComponentPieces", which is sorted by id, y, then xStart
-    Result extract2dComponents(const Array_u8 &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList_ConnectedComponentSegment &extractedComponentPieces, MemoryStack scratch)
+    // All extracted components are stored in a single list "extractedComponents", which is sorted by id, y, then xStart
+    Result Extract2dComponents(const Array_u8 &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList_ConnectedComponentSegment &extractedComponents, MemoryStack scratch)
     {
       const s32 MAX_1D_COMPONENTS = binaryImage.get_size(1) / (minComponentWidth+1);
-      const u16 MAX_2D_COMPONENTS = extractedComponentPieces.get_maximumSize();
+      const u16 MAX_2D_COMPONENTS = static_cast<u16>(extractedComponents.get_maximumSize());
       const s32 MAX_EQUIVALENT_ITERATIONS = 3;
 
       const s32 height = binaryImage.get_size(0);
@@ -17,7 +17,7 @@ namespace Anki
 
       u16 numStored2dComponents = 0;
 
-      extractedComponentPieces.Clear();
+      extractedComponents.Clear();
 
       FixedLengthList_ConnectedComponentSegment currentComponents1d(MAX_1D_COMPONENTS, scratch);
       FixedLengthList_ConnectedComponentSegment previousComponents1d(MAX_1D_COMPONENTS, scratch);
@@ -35,8 +35,8 @@ namespace Anki
         const ConnectedComponentSegment * restrict previousComponents1d_rowPointer = previousComponents1d.Pointer(0);
         ConnectedComponentSegment * restrict newPreviousComponents1d_rowPointer = newPreviousComponents1d.Pointer(0);
 
-        // currentComponents1d = extract1dComponents(binaryImg(y,:), minComponentWidth, maxSkipDistance);
-        extract1dComponents(binaryImage_rowPointer, static_cast<s16>(width), minComponentWidth, maxSkipDistance, currentComponents1d);
+        // currentComponents1d = Extract1dComponents(binaryImg(y,:), minComponentWidth, maxSkipDistance);
+        Extract1dComponents(binaryImage_rowPointer, static_cast<s16>(width), minComponentWidth, maxSkipDistance, currentComponents1d);
         //currentComponents1d.Print();
 
         // newPreviousComponents1d = zeros(num1dComponents_current, 3);
@@ -58,15 +58,15 @@ namespace Anki
               previousComponents1d_rowPointer[iPrevious].xEnd >= currentComponents1d_rowPointer[iCurrent].xStart) {
                 if(!foundMatch) {
                   //% If this is the first match we've found, add this 1d
-                  //% component to extractedComponentPieces, using that previous component's id.
+                  //% component to extractedComponents, using that previous component's id.
                   foundMatch = true;
                   firstMatchedPreviousId = previousComponents1d_rowPointer[iPrevious].id;
 
                   const ConnectedComponentSegment newComponent(currentComponents1d_rowPointer[iCurrent].xStart, currentComponents1d_rowPointer[iCurrent].xEnd, y, firstMatchedPreviousId);
 
-                  //extractedComponentPieces(numStored1dComponents+1, :) = [firstMatchedPreviousId, y, currentComponents1d(iCurrent, 1:2)]; % [firstMatchedPreviousId, y, xStart, xEnd]
+                  //extractedComponents(numStored1dComponents+1, :) = [firstMatchedPreviousId, y, currentComponents1d(iCurrent, 1:2)]; % [firstMatchedPreviousId, y, xStart, xEnd]
                   //newPreviousComponents1d(iCurrent, :) = [currentComponents1d(iCurrent, 1:2), firstMatchedPreviousId];
-                  if(extractedComponentPieces.PushBack(newComponent) != RESULT_OK) {
+                  if(extractedComponents.PushBack(newComponent) != RESULT_OK) {
                     // TODO: sort the components before returning
                     DASWarnAndReturnValue(RESULT_FAIL, "extract2dComponents", "Extracted maximum number of 2d components");
                   }
@@ -96,22 +96,18 @@ namespace Anki
             const ConnectedComponentSegment newComponent(currentComponents1d_rowPointer[iCurrent].xStart, currentComponents1d_rowPointer[iCurrent].xEnd, y, firstMatchedPreviousId);
 
             //newPreviousComponents1d(iCurrent, :) = [currentComponents1d(iCurrent, 1:2), firstMatchedPreviousId];
-            //extractedComponentPieces(numStored1dComponents+1, :) = [firstMatchedPreviousId, y, currentComponents1d(iCurrent, 1:2)]; % [firstMatchedPreviousId, y, xStart, xEnd]
+            //extractedComponents(numStored1dComponents+1, :) = [firstMatchedPreviousId, y, currentComponents1d(iCurrent, 1:2)]; % [firstMatchedPreviousId, y, xStart, xEnd]
             newPreviousComponents1d_rowPointer[iCurrent] = newComponent;
 
-            if(extractedComponentPieces.PushBack(newComponent) != RESULT_OK) {
+            if(extractedComponents.PushBack(newComponent) != RESULT_OK) {
               // TODO: sort the components before returning
               DASWarnAndReturnValue(RESULT_FAIL, "extract2dComponents", "Extracted maximum number of 2d components");
             }
           } // if(!foundMatch)
         } // for(s32 iCurrent=0; iCurrent<currentComponents1d.get_size(); iCurrent++)
 
-        // Swap previousComponents1d for newPreviousComponents1d
-        {
-          const FixedLengthList_ConnectedComponentSegment previousComponents1d_tmp = previousComponents1d;
-          previousComponents1d = newPreviousComponents1d;
-          newPreviousComponents1d = previousComponents1d_tmp;
-        }
+        // Update previousComponents1d to be newPreviousComponents1d
+        std::swap(previousComponents1d, newPreviousComponents1d);
       } // for(s32 y=0; y<height; y++)
 
       //% After all the initial 2d labels have been created, go through
@@ -120,7 +116,7 @@ namespace Anki
         const s32 MAX_RECURSION_LEVEL = 1000; // If it gets anywhere near this high, there's a bug
         s32 numChanges = 0;
 
-        for(s32 iComponent=0; iComponent<extractedComponentPieces.get_size(); iComponent++) {
+        for(s32 iComponent=0; iComponent<extractedComponents.get_size(); iComponent++) {
           // Trace back along the equivalentComponents list, to find the joined component with the minimum id
           u16 minNeighbor = equivalentComponents[iComponent];
           if(equivalentComponents[minNeighbor] != minNeighbor) {
@@ -133,7 +129,7 @@ namespace Anki
             numChanges++;
             equivalentComponents[minNeighbor] = minNeighbor;
           } // if(equivalentComponents[minNeighbor] != minNeighbor)
-        } //  for(s32 iComponent=0; iComponent<extractedComponentPieces.get_size(); iComponent++)
+        } //  for(s32 iComponent=0; iComponent<extractedComponents.get_size(); iComponent++)
 
         if(numChanges == 0) {
           break;
@@ -142,23 +138,23 @@ namespace Anki
         }
       } // for(s32 iEquivalent=0; iEquivalent<MAX_EQUIVALENT_ITERATIONS; iEquivalent++)
 
-      //% disp(extractedComponentPieces(1:numStored1dComponents, :));
-      //extractedComponentPieces.Print();
+      //% disp(extractedComponents(1:numStored1dComponents, :));
+      //extractedComponents.Print();
 
       //% Replace the id of all 1d components with their minimum equivalent id
       {
-        ConnectedComponentSegment * restrict extractedComponentPieces_rowPointer = extractedComponentPieces.Pointer(0);
-        for(s32 iComponent=0; iComponent<extractedComponentPieces.get_size(); iComponent++) {
-          // extractedComponentPieces(iComponent, 1) = equivalentComponents(extractedComponentPieces(iComponent, 1));
-          extractedComponentPieces_rowPointer[iComponent].id = equivalentComponents[extractedComponentPieces_rowPointer[iComponent].id];
+        ConnectedComponentSegment * restrict extractedComponents_rowPointer = extractedComponents.Pointer(0);
+        for(s32 iComponent=0; iComponent<extractedComponents.get_size(); iComponent++) {
+          // extractedComponents(iComponent, 1) = equivalentComponents(extractedComponents(iComponent, 1));
+          extractedComponents_rowPointer[iComponent].id = equivalentComponents[extractedComponents_rowPointer[iComponent].id];
         }
       }
 
-      //% disp(extractedComponentPieces);
-      //extractedComponentPieces.Print();
+      //% disp(extractedComponents);
+      //extractedComponents.Print();
 
       //% Sort all 1D components by id, y, then x
-      //extractedComponentPieces_packed = sortrows(extractedComponentPieces);
+      //extractedComponents_packed = sortrows(extractedComponents);
       // TODO: sort the rows
 
       // TODO: convert the pieces into regular components?
@@ -166,13 +162,13 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList_ConnectedComponentSegment &extractedComponentPieces)
+    Result Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList_ConnectedComponentSegment &extractedComponents)
     {
       bool onComponent;
       s16 componentStart;
       s16 numSkipped = 0;
 
-      extractedComponentPieces.Clear();
+      extractedComponents.Clear();
 
       // If the first pixel is nonzero, we start a component at the far left
       if(binaryImageRow[0] == 0) {
@@ -190,7 +186,7 @@ namespace Anki
             if(numSkipped > maxSkipDistance) {
               const s16 componentWidth = x - componentStart;
               if(componentWidth >= minComponentWidth) {
-                extractedComponentPieces.PushBack(ConnectedComponentSegment(componentStart, x-numSkipped));
+                extractedComponents.PushBack(ConnectedComponentSegment(componentStart, x-numSkipped));
               }
               onComponent = false;
             }
@@ -209,11 +205,36 @@ namespace Anki
       if(onComponent) {
         const s16 componentWidth = binaryImageWidth - componentStart;
         if(componentWidth >= minComponentWidth) {
-          extractedComponentPieces.PushBack(ConnectedComponentSegment(componentStart, binaryImageWidth-numSkipped-1));
+          extractedComponents.PushBack(ConnectedComponentSegment(componentStart, binaryImageWidth-numSkipped-1));
         }
       }
 
       return RESULT_OK;
-    } // Result extract1dComponents(const u8 * restrict binaryImageRow, const s32 binaryImageWidth, const s32 minComponentWidth, FixedLengthList_Point_s16 &extractedComponentPieces)
+    } // Result Extract1dComponents(const u8 * restrict binaryImageRow, const s32 binaryImageWidth, const s32 minComponentWidth, FixedLengthList_Point_s16 &extractedComponents)
+
+    // Sort the components by id, y, then xStart
+    // TODO: determine how fast this method is, then suggest usage
+    Result SortConnectedComponentSegments(FixedLengthList_ConnectedComponentSegment &components)
+    {
+      // Performs insersion sort
+      // TODO: do bucket sort by id first, then run this
+
+      ConnectedComponentSegment * restrict components_rowPointer = components.Pointer(0);
+
+      for(s32 i=1; i<components.get_size(); i++) {
+        const ConnectedComponentSegment segmentToInsert = components_rowPointer[i];
+
+        s32 holePosition = i;
+
+        while(holePosition > 0 && CompareConnectedComponentSegments(segmentToInsert, components_rowPointer[holePosition-1]) < 0) {
+          components_rowPointer[holePosition] = components_rowPointer[holePosition-1];
+          holePosition--;
+        }
+
+        components_rowPointer[holePosition] = segmentToInsert;
+      } // for(s32 i=0; i<components.size(); i++)
+
+      return RESULT_OK;
+    } // Result SortConnectedComponentSegments(FixedLengthList_ConnectedComponentSegment &components)
   } // namespace Embedded
 } // namespace Anki

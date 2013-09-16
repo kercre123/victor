@@ -25,7 +25,10 @@ namespace Anki
 
       void Print() const;
 
-      s16 xStart, xEnd, y, id;
+      bool operator== (const ConnectedComponentSegment &component2) const;
+
+      s16 xStart, xEnd, y;
+      u16 id;
     }; // class ConnectedComponentSegment
   } // namespace Embedded
 } // namespace Anki

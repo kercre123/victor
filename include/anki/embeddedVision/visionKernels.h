@@ -39,8 +39,23 @@ namespace Anki
       return interpolatedPixel;
     }
 
-    Result extract2dComponents(const Array_u8 &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList_ConnectedComponentSegment &extractedComponentPieces, MemoryStack scratch);
-    Result extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList_ConnectedComponentSegment &extractedComponentPieces);
+    Result Extract2dComponents(const Array_u8 &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList_ConnectedComponentSegment &extractedComponents, MemoryStack scratch);
+    Result Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList_ConnectedComponentSegment &extractedComponents);
+
+    // Sort the components by id, y, then xStart
+    // TODO: determine how fast this method is, then suggest usage
+    Result SortConnectedComponentSegments(FixedLengthList_ConnectedComponentSegment &components);
+
+    // Returns a positive s64 if a > b, a negative s64 is a < b, or zero if they are identical
+    // TODO: Doublecheck that this is correct for corner cases
+    inline s64 CompareConnectedComponentSegments(const ConnectedComponentSegment &a, const ConnectedComponentSegment &b)
+    {
+      const s64 idDifference = static_cast<s64>(u16_MAX) * static_cast<s64>(u16_MAX) * (static_cast<s64>(a.id) - static_cast<s64>(b.id));
+      const s64 yDifference = static_cast<s64>(u16_MAX) * (static_cast<s64>(a.y) - static_cast<s64>(b.y));
+      const s64 xStartDifference = (static_cast<s64>(a.xStart) - static_cast<s64>(b.xStart));
+
+      return idDifference + yDifference + xStartDifference;
+    }
   } // namespace Embedded
 } // namespace Anki
 

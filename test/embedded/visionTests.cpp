@@ -45,6 +45,57 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Vision, SortComponents)
+{
+  const s32 numComponents = 10;
+  const s32 numBytes = MIN(MAX_BYTES, 1000);
+
+  // Allocate memory from the heap, for the memory allocator
+  MemoryStack ms(&buffer[0], numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  FixedLengthList_ConnectedComponentSegment components(numComponents, ms);
+  components.set_size(numComponents);
+
+  const ConnectedComponentSegment component0 = ConnectedComponentSegment(50, 100, 50, MAX_uint16_T); // 7
+  const ConnectedComponentSegment component1 = ConnectedComponentSegment(MAX_int16_T, MAX_int16_T, MAX_int16_T, 0); // 4
+  const ConnectedComponentSegment component2 = ConnectedComponentSegment(MAX_int16_T, MAX_int16_T, 0, 0); // 2
+  const ConnectedComponentSegment component3 = ConnectedComponentSegment(MAX_int16_T, MAX_int16_T, MAX_int16_T, MAX_uint16_T); // 9
+  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, MAX_int16_T, 0, 0); // 0
+  const ConnectedComponentSegment component5 = ConnectedComponentSegment(0, MAX_int16_T, MAX_int16_T, 0); // 3
+  const ConnectedComponentSegment component6 = ConnectedComponentSegment(0, MAX_int16_T, MAX_int16_T, MAX_uint16_T); // 8
+  const ConnectedComponentSegment component7 = ConnectedComponentSegment(MAX_int16_T, MAX_int16_T, 0, MAX_uint16_T); // 6
+  const ConnectedComponentSegment component8 = ConnectedComponentSegment(0, MAX_int16_T, 0, 0); // 1
+  const ConnectedComponentSegment component9 = ConnectedComponentSegment(42, 42, 42, 42); // 5
+
+  *components.Pointer(0) = component0;
+  *components.Pointer(1) = component1;
+  *components.Pointer(2) = component2;
+  *components.Pointer(3) = component3;
+  *components.Pointer(4) = component4;
+  *components.Pointer(5) = component5;
+  *components.Pointer(6) = component6;
+  *components.Pointer(7) = component7;
+  *components.Pointer(8) = component8;
+  *components.Pointer(9) = component9;
+
+  const Result result = SortConnectedComponentSegments(components);
+  ASSERT_TRUE(result == RESULT_OK);
+
+  ASSERT_TRUE(*components.Pointer(0) == component4);
+  ASSERT_TRUE(*components.Pointer(1) == component8);
+  ASSERT_TRUE(*components.Pointer(2) == component2);
+  ASSERT_TRUE(*components.Pointer(3) == component5);
+  ASSERT_TRUE(*components.Pointer(4) == component1);
+  ASSERT_TRUE(*components.Pointer(5) == component9);
+  ASSERT_TRUE(*components.Pointer(6) == component7);
+  ASSERT_TRUE(*components.Pointer(7) == component0);
+  ASSERT_TRUE(*components.Pointer(8) == component6);
+  ASSERT_TRUE(*components.Pointer(9) == component3);
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 {
   const s32 width = 18;
@@ -76,19 +127,19 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
   ASSERT_TRUE(binaryImage.IsValid());
   ASSERT_TRUE(binaryImage.Set(binaryImageData) == width*height);
 
-  FixedLengthList_ConnectedComponentSegment extractedComponentPieces(maxComponentSegments, ms);
-  ASSERT_TRUE(extractedComponentPieces.IsValid());
+  FixedLengthList_ConnectedComponentSegment extractedComponents(maxComponentSegments, ms);
+  ASSERT_TRUE(extractedComponents.IsValid());
 
-  const Result result = extract2dComponents(binaryImage, minComponentWidth, maxSkipDistance, extractedComponentPieces, ms);
+  const Result result = Extract2dComponents(binaryImage, minComponentWidth, maxSkipDistance, extractedComponents, ms);
   ASSERT_TRUE(result == RESULT_OK);
 
-  ASSERT_TRUE(extractedComponentPieces.get_size() == 13);
+  ASSERT_TRUE(extractedComponents.get_size() == 13);
 
   for(u16 i=0; i<numComponents_groundTruth; i++) {
-    ASSERT_TRUE(extractedComponentPieces.Pointer(i)->xStart == xStart_groundTruth[i]);
-    ASSERT_TRUE(extractedComponentPieces.Pointer(i)->xEnd == xEnd_groundTruth[i]);
-    ASSERT_TRUE(extractedComponentPieces.Pointer(i)->y == y_groundTruth[i]);
-    ASSERT_TRUE(extractedComponentPieces.Pointer(i)->id == id_groundTruth[i]);
+    ASSERT_TRUE(extractedComponents.Pointer(i)->xStart == xStart_groundTruth[i]);
+    ASSERT_TRUE(extractedComponents.Pointer(i)->xEnd == xEnd_groundTruth[i]);
+    ASSERT_TRUE(extractedComponents.Pointer(i)->y == y_groundTruth[i]);
+    ASSERT_TRUE(extractedComponents.Pointer(i)->id == id_groundTruth[i]);
   }
 
   GTEST_RETURN_HERE;
@@ -118,7 +169,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
   for(s32 i=43; i<=45; i++) binaryImageRow[i] = 1;
   for(s32 i=47; i<=49; i++) binaryImageRow[i] = 1;
 
-  const Result result = extract1dComponents(binaryImageRow, width, minComponentWidth, maxSkipDistance, extractedComponentSegments);
+  const Result result = Extract1dComponents(binaryImageRow, width, minComponentWidth, maxSkipDistance, extractedComponentSegments);
 
   ASSERT_TRUE(result == RESULT_OK);
 
