@@ -65,7 +65,7 @@ namespace Anki
       // const s32 stride = FixedLengthList<Type>::ComputeRequiredStride(maximumSize, useBoundaryFillPatterns);
       const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(1, maximumSize, useBoundaryFillPatterns); // The required memory, plus a bit more
 
-      FixedLengthList mat(maximumSize, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+      FixedLengthList<Type> mat(maximumSize, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
 
       return mat;
     } // FixedLengthList AllocateFixedLengthListFromHeap_Type(s32 maximumSize, bool useBoundaryFillPatterns)

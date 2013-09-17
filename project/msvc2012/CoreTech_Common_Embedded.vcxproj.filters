@@ -36,9 +36,6 @@
     <ClCompile Include="..\..\src\embedded\fixedLengthList.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\include\anki\embeddedCommon\opencvLight.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\embedded\opencvLight.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -75,6 +72,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\anki\embeddedCommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\anki\embeddedCommon\opencvLight.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

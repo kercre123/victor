@@ -141,7 +141,7 @@ namespace Anki
     // This is separate from the normal constructor, as Array objects are not supposed to manage memory
     template<typename Type> Array<Type> AllocateArrayFromHeap(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns=false)
     {
-      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_Type::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
 
       Array<Type> mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
 
@@ -478,7 +478,7 @@ namespace Anki
     template<> Result Array<u8>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<f32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<f64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
-    Result Array<Point<s16>>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    Result Array<Point<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
 
     template<> s32 Array<f32>::Set(const char * const values);
 

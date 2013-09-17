@@ -59,10 +59,10 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result Array<Point<s16>>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    Result Array<Point<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
       DASConditionalWarnAndReturnValue(this->IsValid(),
-        RESULT_FAIL, "Array<Point<s16>>::Print", "Array<Point<s16>> is not valid");
+        RESULT_FAIL, "Array<Point<s16> >::Print", "Array<Point<s16> > is not valid");
 
       printf("%s:\n", variableName);
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
@@ -76,7 +76,7 @@ namespace Anki
       printf("\n");
 
       return RESULT_OK;
-    } // void Array<Point<s16>>::Print() const
+    } // void Array<Point<s16> >::Print() const
 
     template<> s32 Array<f32>::Set(const char * const values)
     {

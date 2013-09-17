@@ -10,8 +10,32 @@ namespace Anki
 
 #define TEXT_BUFFER_SIZE 1024
 
-    mxClassID ConvertToMatlabType(const char *typeName, size_t byteDepth)
+    mxClassID ConvertToMatlabType(const char * const typeName, const size_t byteDepth)
     {
+      //mexPrintf("typename %s\n", typeName);
+#if defined(__APPLE_CC__) // Apple Xcode
+      if(typeName[0] == 'h') {
+        return mxUINT8_CLASS;
+      } else if(typeName[0] == 'a') {
+        return mxINT8_CLASS;
+      } else if(typeName[0] == 't') {
+        return mxUINT16_CLASS;
+      } else if(typeName[0] == 's') {
+        return mxINT16_CLASS;
+      } else if(typeName[0] == 'j') {
+        return mxUINT32_CLASS;
+      } else if(typeName[0] == 'i') {
+        return mxINT32_CLASS;
+      } else if(typeName[0] == 'y') {
+        return mxUINT64_CLASS;
+      } else if(typeName[0] == 'x') {
+        return mxINT64_CLASS;
+      } else if(typeName[0] == 'f') {
+        return mxSINGLE_CLASS;
+      } else if(typeName[0] == 'd') {
+        return mxDOUBLE_CLASS;
+      }
+#else // #if defined(__APPLE_CC__) // Apple Xcode
       if(typeName[0] == 'u') { //unsigned
         if(byteDepth == 1) {
           return mxUINT8_CLASS;
@@ -37,40 +61,65 @@ namespace Anki
           return mxINT64_CLASS;
         }
       }
+#endif // #if defined(__APPLE_CC__) // Apple Xcode ... #else
 
       return mxUNKNOWN_CLASS;
-    }
+    } // mxClassID convertToMatlabType(const char * const typeName, const size_t byteDepth)
 
-    const char* ConvertToMatlabTypeString(const char *typeName, size_t byteDepth)
+    std::string ConvertToMatlabTypeString(const char *typeName, size_t byteDepth)
     {
+#if defined(__APPLE_CC__) // Apple Xcode
+      if(typeName[0] == 'h') {
+        return std::string("uint8");
+      } else if(typeName[0] == 'a') {
+        return std::string("int8");
+      } else if(typeName[0] == 't') {
+        return std::string("uint16");
+      } else if(typeName[0] == 's') {
+        return std::string("int16");
+      } else if(typeName[0] == 'j') {
+        return std::string("uint32");
+      } else if(typeName[0] == 'i') {
+        return std::string("int32");
+      } else if(typeName[0] == 'y') {
+        return std::string("uint64");
+      } else if(typeName[0] == 'x') {
+        return std::string("int64");
+      } else if(typeName[0] == 'f') {
+        return std::string("single");
+      } else if(typeName[0] == 'd') {
+        return std::string("double");
+      }
+#else // #if defined(__APPLE_CC__) // Apple Xcode
       if(typeName[0] == 'u') { //unsigned
         if(byteDepth == 1) {
-          return "uint8";
+          return std::string("uint8");
         } else if(byteDepth == 2) {
-          return "uint16";
+          return std::string("uint16");
         }else if(byteDepth == 4) {
-          return "uint32";
+          return std::string("uint32");
         }else if(byteDepth == 8) {
-          return "uint64";
+          return std::string("uint64");
         }
       } else if(typeName[0] == 'f' && byteDepth == 4) { //float
-        return "single";
+        return std::string("single");
       } else if(typeName[0] == 'd' && byteDepth == 8) { //double
-        return "double";
+        return std::string("double");
       } else { // signed
         if(byteDepth == 1) {
-          return "int8";
+          return std::string("int8");
         } else if(byteDepth == 2) {
-          return "int16";
+          return std::string("int16");
         }else if(byteDepth == 4) {
-          return "int32";
+          return std::string("int32");
         }else if(byteDepth == 8) {
-          return "int64";
+          return std::string("int64");
         }
       }
+#endif // #if defined(__APPLE_CC__) // Apple Xcode ... #else
 
-      return "unknown";
-    }
+      return std::string("unknown");
+    } // std::string convertToMatlabTypeString(const char *typeName, size_t byteDepth)
 
     Matlab::Matlab(bool clearWorkspace)
     {
