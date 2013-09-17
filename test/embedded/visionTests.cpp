@@ -196,12 +196,13 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  const char * binaryImageData =
-    "0 1 0 0 1 1 1 1 1 1 1 1 0 0 0 0 0 0 "
-    "0 0 0 1 1 1 0 0 0 0 1 1 0 1 1 1 0 0 "
-    "0 0 0 0 0 1 1 0 0 1 1 1 0 1 1 0 0 0 "
-    "0 0 0 0 0 0 1 1 1 1 0 0 1 1 1 0 1 1 "
-    "0 0 0 0 0 0 0 1 1 0 0 1 1 0 1 1 1 0 ";
+#define ApproximateConnectedComponents2d_binaryImageDataLength (18*5)
+  const u8 binaryImageData[ApproximateConnectedComponents2d_binaryImageDataLength] = {
+    0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0,
+    0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1,
+    0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0};
 
   const u16 numComponents_groundTruth = 13;
 
@@ -220,7 +221,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 
   Array<u8> binaryImage(height, width, ms);
   ASSERT_TRUE(binaryImage.IsValid());
-  ASSERT_TRUE(binaryImage.Set(binaryImageData) == width*height);
+  ASSERT_TRUE(binaryImage.Set(binaryImageData, ApproximateConnectedComponents2d_binaryImageDataLength) == width*height);
 
   FixedLengthList<ConnectedComponentSegment> extractedComponents(maxComponentSegments, ms);
   ASSERT_TRUE(extractedComponents.IsValid());
@@ -369,23 +370,25 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
   const s32 width = 16;
   const s32 height = 16;
   const s32 numPyramidLevels = 3;
-  const char * imageData =
-    "0	0	0	107	255	255	255	255	0	0	0	0	0	0	160	89 "
-    "0	255	0	251	255	0	0	255	0	255	255	255	255	0	197	38 "
-    "0	0	0	77	255	0	0	255	0	255	255	255	255	0	238	149 "
-    "18	34	27	179	255	255	255	255	0	255	255	255	255	0	248	67 "
-    "226	220	173	170	40	210	108	255	0	255	255	255	255	0	49	11 "
-    "25	100	51	137	218	251	24	255	0	0	0	0	0	0	35	193 "
-    "255	255	255	255	255	255	255	255	255	255	49	162	65	133	178	62 "
-    "255	0	0	0	0	0	0	0	0	255	188	241	156	253	24	113 "
-    "255	0	0	0	0	0	0	0	0	255	62	53	148	56	134	175 "
-    "255	0	0	0	0	0	0	0	0	255	234	181	138	27	135	92 "
-    "255	0	0	0	0	0	0	0	0	255	69	60	222	28	220	188 "
-    "255	0	0	0	0	0	0	0	0	255	195	30	68	16	124	101 "
-    "255	0	0	0	0	0	0	0	0	255	48	155	81	103	100	174 "
-    "255	0	0	0	0	0	0	0	0	255	73	115	30	114	171	180 "
-    "255	0	0	0	0	0	0	0	0	255	23	117	240	93	189	113 "
-    "255	255	255	255	255	255	255	255	255	255	147	169	165	195	133	5";
+
+#define ComputeCharacteristicScale_imageDataLength (16*16)
+  const u8 imageData[ComputeCharacteristicScale_imageDataLength] = {
+    0, 0, 0, 107, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 160, 89,
+    0, 255, 0, 251, 255, 0, 0, 255, 0, 255, 255, 255, 255, 0, 197, 38,
+    0, 0, 0, 77, 255, 0, 0, 255, 0, 255, 255, 255, 255, 0, 238, 149,
+    18, 34, 27, 179, 255, 255, 255, 255, 0, 255, 255, 255, 255, 0, 248, 67,
+    226, 220, 173, 170, 40, 210, 108, 255, 0, 255, 255, 255, 255, 0, 49, 11,
+    25, 100, 51, 137, 218, 251, 24, 255, 0, 0, 0, 0, 0, 0, 35, 193,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 49, 162, 65, 133, 178, 62,
+    255, 0, 0, 0, 0, 0, 0, 0, 0, 255, 188, 241, 156, 253, 24, 113,
+    255, 0, 0, 0, 0, 0, 0, 0, 0, 255, 62, 53, 148, 56, 134, 175,
+    255, 0, 0, 0, 0, 0, 0, 0, 0, 255, 234, 181, 138, 27, 135, 92,
+    255, 0, 0, 0, 0, 0, 0, 0, 0, 255, 69, 60, 222, 28, 220, 188,
+    255, 0, 0, 0, 0, 0, 0, 0, 0, 255, 195, 30, 68, 16, 124, 101,
+    255, 0, 0, 0, 0, 0, 0, 0, 0, 255, 48, 155, 81, 103, 100, 174,
+    255, 0, 0, 0, 0, 0, 0, 0, 0, 255, 73, 115, 30, 114, 171, 180,
+    255, 0, 0, 0, 0, 0, 0, 0, 0, 255, 23, 117, 240, 93, 189, 113,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 147, 169, 165, 195, 133, 5};
 
   const u32 correctResults[16][16] = {
     {983040, 2097152, 4390912, 8585216, 12124160, 12976128, 12386304, 10158080, 6488064, 4587520, 4849664, 4849664, 4259840, 4784128, 6225920, 6422528},
@@ -414,7 +417,7 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
 
   Array<u8> image(height, width, ms);
   ASSERT_TRUE(image.IsValid());
-  ASSERT_TRUE(image.Set(imageData) == width*height);
+  ASSERT_TRUE(image.Set(imageData, ComputeCharacteristicScale_imageDataLength) == width*height);
 
   Array<u32> scaleImage(height, width, ms);
   ASSERT_TRUE(scaleImage.IsValid());
@@ -477,23 +480,25 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
 {
   const s32 width = 16;
   const s32 height = 16;
-  const char * imageData =
-    " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 "
-    " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 "
-    " 1 1 0 0 0 0 0 0 0 0 0 1 1 1 1 1 "
-    " 1 1 0 1 1 1 0 1 1 1 0 1 1 1 1 1 "
-    " 1 1 0 1 1 1 0 1 1 1 0 1 1 1 1 1 "
-    " 1 1 0 1 1 0 0 0 1 1 0 1 1 1 1 1 "
-    " 1 1 0 1 1 0 0 0 1 1 0 1 1 1 1 1 "
-    " 1 1 0 1 1 0 0 0 1 1 0 1 1 1 1 1 "
-    " 1 1 0 1 1 1 1 1 1 1 0 1 1 1 1 1 "
-    " 1 1 0 1 1 1 1 1 1 1 0 1 1 1 1 1 "
-    " 1 1 1 0 0 0 0 0 0 0 1 1 1 1 1 1 "
-    " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 "
-    " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 "
-    " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 "
-    " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 "
-    " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 ";
+
+#define TraceBoundary_imageDataLength (16*16)
+  const u8 imageData[TraceBoundary_imageDataLength] = {
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
+    1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1,
+    1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1,
+    1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1,
+    1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1,
+    1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1,
+    1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1,
+    1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1,
+    1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
   const s32 numPoints = 9;
   const Point<s16> groundTruth[9] = {Point<s16>(8,6), Point<s16>(8,5), Point<s16>(7,4), Point<s16>(7,3), Point<s16>(8,3), Point<s16>(9,3), Point<s16>(9,4), Point<s16>(9,5), Point<s16>(9,6)};
@@ -513,7 +518,7 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
   ASSERT_TRUE(binaryImage.IsValid());
   ASSERT_TRUE(boundary.IsValid());
 
-  binaryImage.Set(imageData);
+  binaryImage.Set(imageData, TraceBoundary_imageDataLength);
 
   ASSERT_TRUE(TraceBoundary(binaryImage, startPoint, initialDirection, boundary) == RESULT_OK);
 
