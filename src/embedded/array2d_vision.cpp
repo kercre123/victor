@@ -270,5 +270,249 @@ namespace Anki
     } // Array_ConnectedComponentSegment AllocateArrayFromHeap_ConnectedComponentSegment(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
 
 
+    s32 Array_FiducialMarker::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      assert(numCols > 0);
+      const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
+      return static_cast<s32>(RoundUp<size_t>(sizeof(FiducialMarker)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
+    } // s32 Array_FiducialMarker::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
+
+    s32 Array_FiducialMarker::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      assert(numCols > 0 && numRows > 0);
+      return numRows * Array_FiducialMarker::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
+    } // s32 Array_FiducialMarker::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+
+    Array_FiducialMarker::Array_FiducialMarker()
+    {
+      InvalidateArray();
+    } // Array_FiducialMarker::Array_FiducialMarker()
+
+    // Constructor for a Array_FiducialMarker, pointing to user-allocated data. If the pointer to *data is not
+    // aligned to MEMORY_ALIGNMENT, this Array_FiducialMarker will start at the next aligned location.
+    // Unfortunately, this is more restrictive than most matrix libraries, and as an example,
+    // it may make it hard to convert from OpenCV to Array_FiducialMarker, though the reverse is trivial.
+    Array_FiducialMarker::Array_FiducialMarker(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
+      : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
+    {
+      assert(numCols > 0 && numRows > 0 && dataLength > 0);
+
+      Initialize(numRows,
+        numCols,
+        data,
+        dataLength,
+        useBoundaryFillPatterns);
+    } // Array_FiducialMarker::Array_FiducialMarker(s32 numRows, s32 numCols, void * data, s32 dataLength, bool useBoundaryFillPatterns)
+
+    Array_FiducialMarker::Array_FiducialMarker(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+      : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
+    {
+      assert(numCols > 0 && numRows > 0);
+
+      const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? static_cast<s32>(MEMORY_ALIGNMENT) : 0);
+      const s32 numBytesRequested = numRows * this->stride + extraBoundaryPatternBytes;
+      s32 numBytesAllocated = 0;
+
+      void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
+
+      Initialize(numRows,
+        numCols,
+        reinterpret_cast<FiducialMarker*>(allocatedBuffer),
+        numBytesAllocated,
+        useBoundaryFillPatterns);
+    } // Array_FiducialMarker::Array_FiducialMarker(s32 numRows, s32 numCols, MemoryStack &memory, bool useBoundaryFillPatterns)
+
+    // If this array or array2 are different sizes or uninitialized, then return false.
+    bool Array_FiducialMarker::IsEqualSize(const Array_FiducialMarker &array2) const
+    {
+      if(!this->IsValid())
+        return false;
+
+      if(!array2.IsValid())
+        return false;
+
+      if(this->get_size(0) != array2.get_size(0) || this->get_size(1) != array2.get_size(1))
+        return false;
+
+      return true;
+    } // bool Array_FiducialMarker::IsEqualSize(const Array_FiducialMarker &array2) const
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+    // Returns a templated cv::Mat_ that shares the same buffer with this Array_FiducialMarker. No data is copied.
+    cv::Mat_<FiducialMarker>& Array_FiducialMarker::get_CvMat_()
+    {
+      assert(this->IsValid());
+      return cvMatMirror;
+    } // cv::Mat_<FiducialMarker>& Array_FiducialMarker::get_CvMat_()
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+    // Print out the contents of this Array_FiducialMarker
+    Result Array_FiducialMarker::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    {
+      DASConditionalWarnAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array_FiducialMarker::Print", "Array_FiducialMarker is not valid");
+
+      printf("%s:\n", variableName);
+      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
+        const FiducialMarker * const rowPointer = Pointer(y, 0);
+        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
+          rowPointer[x].Print();
+          printf(" ");
+        }
+        printf("\n");
+      }
+      printf("\n");
+
+      return RESULT_OK;
+    } // void Array_FiducialMarker::Print() const
+
+    // If the Array_FiducialMarker was constructed with the useBoundaryFillPatterns=true, then
+    // return if any memory was written out of bounds (via fill patterns at the
+    // beginning and end).  If the Array_FiducialMarker was not constructed with the
+    // useBoundaryFillPatterns=true, this method always returns true
+    bool Array_FiducialMarker::IsValid() const
+    {
+      if(this->rawDataPointer == NULL || this->data == NULL) {
+        return false;
+      }
+
+      if(size[0] < 1 || size[1] < 1) {
+        return false;
+      }
+
+      if(useBoundaryFillPatterns) {
+        const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1],false);
+
+        for(s32 y=0; y<size[0]; y++) {
+          if((reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[0]) != FILL_PATTERN_START ||
+            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[1]) != FILL_PATTERN_START ||
+            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[0]) != FILL_PATTERN_END ||
+            (reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[1]) != FILL_PATTERN_END) {
+              return false;
+          }
+        }
+
+        return true;
+      } else { // if(useBoundaryFillPatterns) {
+        return true;
+      } // if(useBoundaryFillPatterns) { ... else
+    } // bool Array_FiducialMarker::IsValid() const
+
+    // Set every element in the Array_FiducialMarker to this value
+    // Returns the number of values set
+    s32 Array_FiducialMarker::Set(const FiducialMarker value)
+    {
+      assert(this->IsValid());
+
+      for(s32 y=0; y<size[0]; y++) {
+        FiducialMarker * restrict rowPointer = Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          rowPointer[x] = value;
+        }
+      }
+
+      return size[0]*size[1];
+    } // s32 Array_FiducialMarker::Set(const FiducialMarker value)
+
+    // Similar to Matlab size(matrix, dimension), and dimension is in {0,1}
+    s32 Array_FiducialMarker::get_size(s32 dimension) const
+    {
+      assert(dimension >= 0 && this->rawDataPointer != NULL && this->data != NULL);
+
+      if(dimension > 1 || dimension < 0)
+        return 0;
+
+      return size[dimension];
+    } // s32 Array_FiducialMarker::get_size(s32 dimension) const
+
+    s32 Array_FiducialMarker::get_stride() const
+    {
+      return stride;
+    } // s32 Array_FiducialMarker::get_stride() const
+
+    void* Array_FiducialMarker::get_rawDataPointer()
+    {
+      return rawDataPointer;
+    } // void* Array_FiducialMarker::get_rawDataPointer()
+
+    const void* Array_FiducialMarker::get_rawDataPointer() const
+    {
+      return rawDataPointer;
+    } // const void* Array_FiducialMarker::get_rawDataPointer() const
+
+    void Array_FiducialMarker::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
+    {
+      assert(numCols > 0 && numRows > 0 && dataLength > 0);
+
+      this->useBoundaryFillPatterns = useBoundaryFillPatterns;
+
+      if(!rawData) {
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+        DASError("Anki.Array2d.initialize", "input data buffer is NULL");
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+        InvalidateArray();
+        return;
+      }
+
+      this->rawDataPointer = rawData;
+
+      const size_t extraBoundaryPatternBytes = useBoundaryFillPatterns ? static_cast<size_t>(HEADER_LENGTH) : 0;
+      const s32 extraAlignmentBytes = static_cast<s32>(RoundUp<size_t>(reinterpret_cast<size_t>(rawData)+extraBoundaryPatternBytes, MEMORY_ALIGNMENT) - extraBoundaryPatternBytes - reinterpret_cast<size_t>(rawData));
+      const s32 requiredBytes = ComputeRequiredStride(numCols,useBoundaryFillPatterns)*numRows + extraAlignmentBytes;
+
+      if(requiredBytes > dataLength) {
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+        DASError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
+#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+        InvalidateArray();
+        return;
+      }
+
+      this->size[0] = numRows;
+      this->size[1] = numCols;
+
+      if(useBoundaryFillPatterns) {
+        const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1], false);
+        this->data = reinterpret_cast<FiducialMarker*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes + HEADER_LENGTH );
+        for(s32 y=0; y<size[0]; y++) {
+          // Add the fill patterns just before the data on each line
+          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[0] = FILL_PATTERN_START;
+          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[1] = FILL_PATTERN_START;
+
+          // And also just after the data (including normal byte-alignment padding)
+          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[0] = FILL_PATTERN_END;
+          reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride + strideWithoutFillPatterns)[1] = FILL_PATTERN_END;
+        }
+      } else {
+        this->data = reinterpret_cast<FiducialMarker*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes );
+      }
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      cvMatMirror = cv::Mat_<FiducialMarker>(size[0], size[1], data, stride);
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+    } // Array_FiducialMarker::Initialize()
+
+    // Set all the buffers and sizes to zero, to signal an invalid array
+    void Array_FiducialMarker::InvalidateArray()
+    {
+      this->size[0] = 0;
+      this->size[1] = 0;
+      this->stride = 0;
+      this->data = NULL;
+      this->rawDataPointer = NULL;
+    } // void Array_FiducialMarker::InvalidateArray()
+
+    // Factory method to create an Array_FiducialMarker from the heap. The data of the returned Array_FiducialMarker must be freed by the user.
+    // This is separate from the normal constructor, as Array_FiducialMarker objects are not supposed to manage memory
+    Array_FiducialMarker AllocateArrayFromHeap_FiducialMarker(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    {
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_FiducialMarker::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
+
+      Array_FiducialMarker mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+
+      return mat;
+    } // Array_FiducialMarker AllocateArrayFromHeap_FiducialMarker(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+
+
   } // namespace Embedded
 } // namespace Anki

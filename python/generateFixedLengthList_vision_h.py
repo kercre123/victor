@@ -38,7 +38,7 @@ def __GenerateBottomOfFile():
 def GenerateAndWriteFile(filename = '../include/anki/embeddedVision/fixedLengthList_vision.h'):
     topString = __GenerateTopOfFile()
 
-    methodsDeclarations = generateFixedLengthList_h.__GenerateDeclarations(['ConnectedComponentSegment'], False)
+    methodsDeclarations = generateFixedLengthList_h.__GenerateDeclarations(['ConnectedComponentSegment', 'FiducialMarker'], False)
 
     bottomString = __GenerateBottomOfFile()
 

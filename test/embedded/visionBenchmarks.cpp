@@ -121,7 +121,7 @@ int BenchmarkDownsampleByFactor()
 
 int BenchmarkComputeCharacteristicScale()
 {
-  const s32 numLevels = 6;
+  const s32 numPyramidLevels = 6;
 
   Anki::Embedded::MemoryStack ms(buffer, numBytes);
 
@@ -140,7 +140,7 @@ int BenchmarkComputeCharacteristicScale()
   DASConditionalErrorAndReturnValue(scaleImage.IsValid(), -2, "scaleImage.IsValid()", "");
 #endif
 
-  Anki::Embedded::Result result = ComputeCharacteristicScaleImage(image, numLevels, scaleImage, ms);
+  Anki::Embedded::Result result = ComputeCharacteristicScaleImage(image, numPyramidLevels, scaleImage, ms);
 
 #ifdef CHECK_FOR_ERRORS
   DASConditionalErrorAndReturnValue(result == Anki::Embedded::RESULT_OK, -4, "result == Anki::Embedded::RESULT_OK", "");

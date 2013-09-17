@@ -31,7 +31,7 @@ def __GenerateBottomOfFile():
 def GenerateAndWriteFile(filename = '../src/embedded/array2d_vision.cpp'):
     topString = __GenerateTopOfFile()
 
-    methodsDefinitions = generateArray_cpp.__GenerateDefinitions(['ConnectedComponentSegment'], False)
+    methodsDefinitions = generateArray_cpp.__GenerateDefinitions(['ConnectedComponentSegment', 'FiducialMarker'], False)
 
     bottomString = __GenerateBottomOfFile()
 

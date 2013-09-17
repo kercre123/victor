@@ -235,5 +235,57 @@ namespace Anki
 
       return RESULT_OK;
     } // Result SortConnectedComponentSegments(FixedLengthList_ConnectedComponentSegment &components)
+
+    // The list of components may have unused ids. This function compresses the set of ids, so that
+    // max(ids) == numberOfUniqueValues(ids). For example, the list of ids {0,4,5,7} would be
+    // changed to {0,1,2,3}.
+    //
+    // For a components parameter that has a maximum id of N, this function requires
+    // 3n + 3 bytes of scratch.
+    //
+    // TODO: If scratch usage is a bigger issue than computation time, this could be done with a bitmask
+    Result CompressConnectedComponentSegmentIds(FixedLengthList_ConnectedComponentSegment &components, MemoryStack scratch)
+    {
+      s32 numUsedIds = 0;
+
+      // Compute the maximum id
+      u16 maximumId = 0;
+      const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
+      for(s32 i=0; i<components.get_size(); i++) {
+        maximumId = MAX(maximumId, components_constRowPointer[i].id);
+      }
+
+      // Compute the number of unique components
+      u8 *usedIds = reinterpret_cast<u8*>(scratch.Allocate(maximumId+1));
+      u16 *idLookupTable = reinterpret_cast<u16*>(scratch.Allocate( sizeof(u16)*(maximumId+1) ));
+
+      memset(usedIds, 0, maximumId+1);
+
+      for(s32 i=0; i<components.get_size(); i++) {
+        const u16 id = components_constRowPointer[i].id;
+        usedIds[id] = 1;
+      }
+
+      for(s32 i=0; i<=maximumId; i++) {
+        numUsedIds += usedIds[i];
+      }
+
+      // Create a mapping table from original id to compressed id
+      idLookupTable[0] = 0;
+      u16 currentCompressedId = 1;
+      for(s32 i=1; i<=maximumId; i++) {
+        if(usedIds[i] != 0) {
+          idLookupTable[i] = currentCompressedId++;
+        }
+      }
+
+      ConnectedComponentSegment * restrict components_rowPointer = components.Pointer(0);
+      // Convert the id numbers to the compressed id numbers
+      for(s32 i=0; i<components.get_size(); i++) {
+        components_rowPointer[i].id = idLookupTable[components_rowPointer[i].id];
+      }
+
+      return RESULT_OK;
+    } // Result CompressConnectedComponentSegmentIds(FixedLengthList_ConnectedComponentSegment &components, MemoryStack scratch)
   } // namespace Embedded
 } // namespace Anki

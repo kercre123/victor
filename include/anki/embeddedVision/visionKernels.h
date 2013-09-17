@@ -4,6 +4,8 @@
 #include "anki/embeddedVision/config.h"
 #include "anki/embeddedCommon.h"
 
+#include "anki/embeddedVision/visionKernels_connectedComponents.h"
+
 namespace Anki
 {
   namespace Embedded
@@ -22,39 +24,25 @@ namespace Anki
 
     const s32 MAX_BOUNDARY_LENGTH = 2000;
 
+    //Result DetectFiducialMarkers(const Array_u8 &image, FixedLengthList_FiducialMarker &markers, MemoryStack scratch);
+
     Result BinomialFilter(const Array_u8 &image, Array_u8 &imageFiltered, MemoryStack scratch);
 
-    Result DownsampleByFactor(const Array_u8 &image, s32 downsampleFactor, Array_u8 &imageDownsampled);
+    Result DownsampleByFactor(const Array_u8 &image, const s32 downsampleFactor, Array_u8 &imageDownsampled);
 
-    Result ComputeCharacteristicScaleImage(const Array_u8 &image, s32 numLevels, Array_u32 &scaleImage, MemoryStack scratch);
+    Result ComputeCharacteristicScaleImage(const Array_u8 &image, const s32 numPyramidLevels, Array_u32 &scaleImage, MemoryStack scratch);
+
+    Result ThresholdScaleImage(const Array_u8 &originalImage, const Array_u32 &scaleImage, Array_u8 &binaryImage);
 
     Result TraceBoundary(const Array_u8 &binaryImage, const Point_s16 &startPoint, BoundaryDirection initialDirection, FixedLengthList_Point_s16 &boundary);
 
-    template<typename T> inline T Interpolate2d(T pixel00, T pixel01, T pixel10, T pixel11, T alphaY, T alphaYinverse, T alphaX, T alphaXinverse)
+    template<typename T> inline T Interpolate2d(const T pixel00, const T pixel01, const T pixel10, const T pixel11, const T alphaY, const T alphaYinverse, const T alphaX, const T alphaXinverse)
     {
       const T interpolatedTop = alphaXinverse*pixel00 + alphaX*pixel01;
       const T interpolatedBottom = alphaXinverse*pixel10 + alphaX*pixel11;
       const T interpolatedPixel = alphaYinverse*interpolatedTop + alphaY*interpolatedBottom;
 
       return interpolatedPixel;
-    }
-
-    Result Extract2dComponents(const Array_u8 &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList_ConnectedComponentSegment &extractedComponents, MemoryStack scratch);
-    Result Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList_ConnectedComponentSegment &extractedComponents);
-
-    // Sort the components by id, y, then xStart
-    // TODO: determine how fast this method is, then suggest usage
-    Result SortConnectedComponentSegments(FixedLengthList_ConnectedComponentSegment &components);
-
-    // Returns a positive s64 if a > b, a negative s64 is a < b, or zero if they are identical
-    // TODO: Doublecheck that this is correct for corner cases
-    inline s64 CompareConnectedComponentSegments(const ConnectedComponentSegment &a, const ConnectedComponentSegment &b)
-    {
-      const s64 idDifference = static_cast<s64>(u16_MAX) * static_cast<s64>(u16_MAX) * (static_cast<s64>(a.id) - static_cast<s64>(b.id));
-      const s64 yDifference = static_cast<s64>(u16_MAX) * (static_cast<s64>(a.y) - static_cast<s64>(b.y));
-      const s64 xStartDifference = (static_cast<s64>(a.xStart) - static_cast<s64>(b.xStart));
-
-      return idDifference + yDifference + xStartDifference;
     }
   } // namespace Embedded
 } // namespace Anki

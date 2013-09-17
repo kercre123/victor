@@ -31,7 +31,7 @@ def __GenerateBottomOfFile():
 def GenerateAndWriteFile(filename = '../src/embedded/fixedLengthList_vision.cpp'):
     topString = __GenerateTopOfFile()
 
-    methodsDefinitions = generateFixedLengthList_cpp.__GenerateDefinitions(['ConnectedComponentSegment'], False)
+    methodsDefinitions = generateFixedLengthList_cpp.__GenerateDefinitions(['ConnectedComponentSegment', 'FiducialMarker'], False)
 
     bottomString = __GenerateBottomOfFile()
 

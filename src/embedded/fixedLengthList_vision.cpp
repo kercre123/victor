@@ -122,5 +122,101 @@ namespace Anki
     } // Result FixedLengthList_ConnectedComponentSegment::Print(const char * const variableName, const s32 minIndex, const s32 maxIndex) const
 
 
+    FixedLengthList_FiducialMarker::FixedLengthList_FiducialMarker()
+      : Array_FiducialMarker(), capacityUsed(0)
+    {
+    } // FixedLengthList_FiducialMarker::FixedLengthList_FiducialMarker()
+
+    FixedLengthList_FiducialMarker::FixedLengthList_FiducialMarker(s32 maximumSize, void * data, s32 dataLength, bool useBoundaryFillPatterns)
+      : Array_FiducialMarker(1, maximumSize, data, dataLength, useBoundaryFillPatterns), capacityUsed(0)
+    {
+    } // FixedLengthList_FiducialMarker::FixedLengthList_FiducialMarker(s32 maximumSize, void * data, s32 dataLength, bool useBoundaryFillPatterns)
+
+    FixedLengthList_FiducialMarker::FixedLengthList_FiducialMarker(s32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns)
+      : Array_FiducialMarker(1, maximumSize, memory, useBoundaryFillPatterns), capacityUsed(0)
+    {
+    } // FixedLengthList_FiducialMarker::FixedLengthList_FiducialMarker(s32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns)
+
+    bool FixedLengthList_FiducialMarker::IsValid() const
+    {
+      if(capacityUsed > this->get_maximumSize()) {
+        return false;
+      }
+
+      return Array_FiducialMarker::IsValid();
+    } // bool FixedLengthList_FiducialMarker::IsValid() const
+
+    Result FixedLengthList_FiducialMarker::PushBack(const FiducialMarker &value)
+    {
+      if(capacityUsed >= this->get_maximumSize()) {
+        return RESULT_FAIL;
+      }
+
+      *this->Pointer(capacityUsed) = value;
+      capacityUsed++;
+
+      return RESULT_OK;
+    } // Result FixedLengthList_FiducialMarker::PushBack(const FiducialMarker &value)
+
+    FiducialMarker FixedLengthList_FiducialMarker::PopBack()
+    {
+      if(capacityUsed == 0) {
+        return *this->Pointer(0);
+      }
+
+      const FiducialMarker value = *this->Pointer(capacityUsed-1);
+      capacityUsed--;
+
+      return value;
+    } // FiducialMarker FixedLengthList_FiducialMarker::PopBack()
+
+    void FixedLengthList_FiducialMarker::Clear()
+    {
+      this->capacityUsed = 0;
+    } // void FixedLengthList_FiducialMarker::Clear()
+
+    // Does this ever need to be declared explicitly?
+    /*FixedLengthList_FiducialMarker& FixedLengthList_FiducialMarker::operator= (const FixedLengthList_FiducialMarker & rightHandSide)
+    {
+      Array_FiducialMarker::operator=(static_cast<Array_FiducialMarker>(rightHandSide));
+      this->capacityUsed = rightHandSide.capacityUsed;
+
+      return *this;
+    }*/ // FixedLengthList_FiducialMarker& FixedLengthList_FiducialMarker::operator= (const FixedLengthList_FiducialMarker & rightHandSide)
+
+    s32 FixedLengthList_FiducialMarker::get_maximumSize() const
+    {
+      return Array_FiducialMarker::get_size(1);
+    } // s32 FixedLengthList_FiducialMarker::get_maximumSize() const
+
+    s32 FixedLengthList_FiducialMarker::get_size() const
+    {
+      return capacityUsed;
+    } // s32 FixedLengthList_FiducialMarker::get_size() const
+
+    // Attempt to set the size to newSize. Returns the value that was actually set.
+    s32 FixedLengthList_FiducialMarker::set_size(s32 newSize)
+    {
+      this->capacityUsed = MIN(this->get_maximumSize(), MAX(0,newSize));
+      return this->capacityUsed;
+    } // s32 FixedLengthList_FiducialMarker::set_size(s32 newSize)
+
+    FixedLengthList_FiducialMarker AllocateFixedLengthListFromHeap_FiducialMarker(s32 maximumSize, bool useBoundaryFillPatterns)
+    {
+      // const s32 stride = FixedLengthList_FiducialMarker::ComputeRequiredStride(maximumSize, useBoundaryFillPatterns);
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array_FiducialMarker::ComputeMinimumRequiredMemory(1, maximumSize, useBoundaryFillPatterns); // The required memory, plus a bit more
+
+      FixedLengthList_FiducialMarker mat(maximumSize, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+
+      return mat;
+    } // FixedLengthList_FiducialMarker AllocateFixedLengthListFromHeap_FiducialMarker(s32 maximumSize, bool useBoundaryFillPatterns)
+
+    // Print out the contents of this FixedLengthList_FiducialMarker
+    Result FixedLengthList_FiducialMarker::Print(const char * const variableName, const s32 minIndex, const s32 maxIndex) const
+    {
+      return Array_FiducialMarker::Print(variableName, 0, 0, MAX(0,minIndex), MIN(maxIndex, this->get_size()-1));
+    } // Result FixedLengthList_FiducialMarker::Print(const char * const variableName, const s32 minIndex, const s32 maxIndex) const
+
+
   } // namespace Embedded
 } // namespace Anki

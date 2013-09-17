@@ -45,12 +45,95 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Vision, CompressComponentIds)
+{
+  const s32 numComponents = 10;
+  const s32 numBytes = MIN(MAX_BYTES, 1000);
+
+  MemoryStack ms(&buffer[0], numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  FixedLengthList_ConnectedComponentSegment components(numComponents, ms);
+  components.set_size(numComponents);
+
+  const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 0, 0, 5);  // 3
+  const ConnectedComponentSegment component1 = ConnectedComponentSegment(0, 0, 0, 10); // 4
+  const ConnectedComponentSegment component2 = ConnectedComponentSegment(0, 0, 0, 0);  // 0
+  const ConnectedComponentSegment component3 = ConnectedComponentSegment(0, 0, 0, 101);// 6
+  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 0, 0, 3);  // 1
+  const ConnectedComponentSegment component5 = ConnectedComponentSegment(0, 0, 0, 4);  // 2
+  const ConnectedComponentSegment component6 = ConnectedComponentSegment(0, 0, 0, 11); // 5
+  const ConnectedComponentSegment component7 = ConnectedComponentSegment(0, 0, 0, 3);  // 1
+  const ConnectedComponentSegment component8 = ConnectedComponentSegment(0, 0, 0, 3);  // 1
+  const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 0, 0, 5);  // 3
+
+  *components.Pointer(0) = component0;
+  *components.Pointer(1) = component1;
+  *components.Pointer(2) = component2;
+  *components.Pointer(3) = component3;
+  *components.Pointer(4) = component4;
+  *components.Pointer(5) = component5;
+  *components.Pointer(6) = component6;
+  *components.Pointer(7) = component7;
+  *components.Pointer(8) = component8;
+  *components.Pointer(9) = component9;
+
+  const Result result = CompressConnectedComponentSegmentIds(components, ms);
+  ASSERT_TRUE(result == RESULT_OK);
+
+  ASSERT_TRUE(components.Pointer(0)->id == 3);
+  ASSERT_TRUE(components.Pointer(1)->id == 4);
+  ASSERT_TRUE(components.Pointer(2)->id == 0);
+  ASSERT_TRUE(components.Pointer(3)->id == 6);
+  ASSERT_TRUE(components.Pointer(4)->id == 1);
+  ASSERT_TRUE(components.Pointer(5)->id == 2);
+  ASSERT_TRUE(components.Pointer(6)->id == 5);
+  ASSERT_TRUE(components.Pointer(7)->id == 1);
+  ASSERT_TRUE(components.Pointer(8)->id == 1);
+  ASSERT_TRUE(components.Pointer(9)->id == 3);
+
+  GTEST_RETURN_HERE;
+}
+
+// Not really a test, but computes the size of a list of ComponentSegments, to ensure that c++ isn't adding junk
+GTEST_TEST(CoreTech_Vision, ComponentsSize)
+{
+  const s32 numComponents = 500;
+  const s32 numBytes = MIN(MAX_BYTES, 10000);
+
+  MemoryStack ms(&buffer[0], numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  const s32 usedBytes0 = ms.get_usedBytes();
+  printf("Original size: %d\n", usedBytes0);
+
+  FixedLengthList_ConnectedComponentSegment segmentList(numComponents, ms);
+
+  const s32 usedBytes1 = ms.get_usedBytes();
+  const double actualSizePlusOverhead = double(usedBytes1 - usedBytes0) / double(numComponents);
+
+#ifdef PRINTF_SIZE_RESULTS
+  printf("Final size: %d\n"
+    "Difference: %d\n"
+    "Expected size of a components: %d\n"
+    "Actual size (includes overhead): %f\n",
+    usedBytes1,
+    usedBytes1 - usedBytes0,
+    sizeof(ConnectedComponentSegment),
+    actualSizePlusOverhead);
+#endif // #ifdef PRINTF_SIZE_RESULTS
+
+  const double difference = actualSizePlusOverhead - double(sizeof(ConnectedComponentSegment));
+  ASSERT_TRUE(difference > -0.0001 && difference < 1.0);
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Vision, SortComponents)
 {
   const s32 numComponents = 10;
   const s32 numBytes = MIN(MAX_BYTES, 1000);
 
-  // Allocate memory from the heap, for the memory allocator
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
@@ -282,7 +365,7 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
 {
   const s32 width = 16;
   const s32 height = 16;
-  const s32 numLevels = 3;
+  const s32 numPyramidLevels = 3;
   const char * imageData =
     "0	0	0	107	255	255	255	255	0	0	0	0	0	0	160	89 "
     "0	255	0	251	255	0	0	255	0	255	255	255	255	0	197	38 "
@@ -333,7 +416,7 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
   Array_u32 scaleImage(height, width, ms);
   ASSERT_TRUE(scaleImage.IsValid());
 
-  ASSERT_TRUE(ComputeCharacteristicScaleImage(image, numLevels, scaleImage, ms) == RESULT_OK);
+  ASSERT_TRUE(ComputeCharacteristicScaleImage(image, numPyramidLevels, scaleImage, ms) == RESULT_OK);
 
   // TODO: manually compute results, and check
   //scaleImage.Print();
@@ -353,11 +436,11 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 {
   const s32 width = 640;
   const s32 height = 480;
-  const s32 numLevels = 6;
+  const s32 numPyramidLevels = 6;
 
   /*const s32 width = 320;
   const s32 height = 240;
-  const s32 numLevels = 5;*/
+  const s32 numPyramidLevels = 5;*/
 
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = 10000000;
@@ -377,7 +460,7 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
   Array_u32 scaleImage(height, width, ms);
   ASSERT_TRUE(scaleImage.get_rawDataPointer() != NULL);
 
-  ASSERT_TRUE(ComputeCharacteristicScaleImage(image, numLevels, scaleImage, ms) == RESULT_OK);
+  ASSERT_TRUE(ComputeCharacteristicScaleImage(image, numPyramidLevels, scaleImage, ms) == RESULT_OK);
 
   matlab.PutArray_u32(scaleImage, "scaleImage6_c");
 

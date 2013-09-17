@@ -33,6 +33,8 @@
     <ClCompile Include="..\..\src\embedded\approximateConnectedComponents.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\embedded\detectFiducialMarkers.cpp" />
+    <ClCompile Include="..\..\src\embedded\thresholdScaleImage.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\anki\embeddedVision\array2d_vision.h">
@@ -53,5 +55,6 @@
     <ClInclude Include="..\..\include\anki\embeddedVision\visionKernels.h">
       <Filter>Includes</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\anki\embeddedVision\visionKernels_connectedComponents.h" />
   </ItemGroup>
 </Project>

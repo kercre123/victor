@@ -155,6 +155,122 @@ namespace Anki
     Array_ConnectedComponentSegment AllocateArrayFromHeap_ConnectedComponentSegment(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns=false);
 
 
+    class Array_FiducialMarker
+    {
+    public:
+      static s32 ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns);
+
+      static s32 ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns);
+
+      Array_FiducialMarker();
+
+      // Constructor for a Array_FiducialMarker, pointing to user-allocated data. If the pointer to *data is not
+      // aligned to MEMORY_ALIGNMENT, this Array_FiducialMarker will start at the next aligned location.
+      // Unfortunately, this is more restrictive than most matrix libraries, and as an example,
+      // it may make it hard to convert from OpenCV to Array_FiducialMarker, though the reverse is trivial.
+      Array_FiducialMarker(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const bool useBoundaryFillPatterns=false);
+
+      // Constructor for a Array_FiducialMarker, pointing to user-allocated MemoryStack
+      Array_FiducialMarker(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
+
+      // Pointer to the data, at a given (y,x) location
+      const inline FiducialMarker* Pointer(const s32 index0, const s32 index1) const
+      {
+        assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+          this->rawDataPointer != NULL && this->data != NULL);
+
+        return reinterpret_cast<const FiducialMarker*>( reinterpret_cast<const char*>(this->data) +
+          index1*sizeof(FiducialMarker) + index0*stride );
+      }
+
+      // Pointer to the data, at a given (y,x) location
+      inline FiducialMarker* Pointer(const s32 index0, const s32 index1)
+      {
+        assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
+          this->rawDataPointer != NULL && this->data != NULL);
+
+        return reinterpret_cast<FiducialMarker*>( reinterpret_cast<char*>(this->data) +
+          index1*sizeof(FiducialMarker) + index0*stride );
+      }
+
+      // Pointer to the data, at a given (y,x) location
+      const inline FiducialMarker* Pointer(const Point_s16 &point) const
+      {
+        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+      }
+
+      // Pointer to the data, at a given (y,x) location
+      inline FiducialMarker* Pointer(const Point_s16 &point)
+      {
+        return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+      }
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      // Returns a templated cv::Mat_ that shares the same buffer with this Array_FiducialMarker. No data is copied.
+      cv::Mat_<FiducialMarker>& get_CvMat_();
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      // If this array or array2 are different sizes or uninitialized, then return false.
+      bool IsEqualSize(const Array_FiducialMarker &array2) const;
+
+      // Print out the contents of this Array_FiducialMarker
+      Result Print(const char * const variableName = "Array_FiducialMarker", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
+
+      // If the Array_FiducialMarker was constructed with the useBoundaryFillPatterns=true, then
+      // return if any memory was written out of bounds (via fill patterns at the
+      // beginning and end).  If the Array_FiducialMarker was not constructed with the
+      // useBoundaryFillPatterns=true, this method always returns true
+      bool IsValid() const;
+
+      // Set every element in the Array_FiducialMarker to this value
+      // Returns the number of values set
+      s32 Set(const FiducialMarker value);
+
+      s32 get_size(s32 dimension) const;
+
+      s32 get_stride() const;
+
+      void* get_rawDataPointer();
+
+      const void* get_rawDataPointer() const;
+
+    protected:
+      // Bit-inverse of MemoryStack patterns. The pattern will be put twice at
+      // the beginning and end of each line.
+      static const u32 FILL_PATTERN_START = 0X5432EF76;
+      static const u32 FILL_PATTERN_END = 0X7610FE76;
+
+      static const s32 HEADER_LENGTH = 8;
+      static const s32 FOOTER_LENGTH = 8;
+
+      s32 size[2];
+      s32 stride;
+      bool useBoundaryFillPatterns;
+
+      FiducialMarker * data;
+
+      // To enforce alignment, rawDataPointer may be slightly before FiducialMarker * data.
+      // If the inputted data buffer was from malloc, this is the pointer that
+      // should be used to free.
+      void * rawDataPointer;
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      cv::Mat_<FiducialMarker> cvMatMirror;
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      void Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
+
+      void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
+
+    private:
+      //Array_FiducialMarker & operator= (const Array_FiducialMarker & rightHandSide); // In the future, assignment may not be allowed
+    }; // class Array_FiducialMarker
+
+    // Factory method to create an Array_FiducialMarker from the heap. The data of the returned Array_FiducialMarker must be freed by the user.
+    // This is separate from the normal constructor, as Array_FiducialMarker objects are not supposed to manage memory
+    Array_FiducialMarker AllocateArrayFromHeap_FiducialMarker(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns=false);
+
+
     } // namespace Embedded
 } //namespace Anki
 
