@@ -35,13 +35,13 @@ namespace Anki
     class FiducialMarker
     {
     public:
-      Point_s32 upperLeft, upperRight, lowerLeft, lowerRight; // SQ 15.16
+      Point<s32> upperLeft, upperRight, lowerLeft, lowerRight; // SQ 15.16
       s16 blockType, faceType;
 
       FiducialMarker();
 
       // All points are SQ 15.16
-      FiducialMarker(const Point_s32 upperLeft, const Point_s32 upperRight, const Point_s32 lowerLeft, const Point_s32 lowerRight, const s16 blockType, const s16 faceType);
+      FiducialMarker(const Point<s32> upperLeft, const Point<s32> upperRight, const Point<s32> lowerLeft, const Point<s32> lowerRight, const s16 blockType, const s16 faceType);
 
       void Print() const;
     }; // class FiducialMarker

@@ -6,7 +6,7 @@ namespace Anki
   {
     // Extract 2d connected components from binaryImage
     // All extracted components are stored in a single list "extractedComponents", which is sorted by id, y, then xStart
-    Result Extract2dComponents(const Array_u8 &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList_ConnectedComponentSegment &extractedComponents, MemoryStack scratch)
+    Result Extract2dComponents(const Array<u8> &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment> &extractedComponents, MemoryStack scratch)
     {
       const s32 MAX_1D_COMPONENTS = binaryImage.get_size(1) / (minComponentWidth+1);
       const u16 MAX_2D_COMPONENTS = static_cast<u16>(extractedComponents.get_maximumSize());
@@ -19,9 +19,9 @@ namespace Anki
 
       extractedComponents.Clear();
 
-      FixedLengthList_ConnectedComponentSegment currentComponents1d(MAX_1D_COMPONENTS, scratch);
-      FixedLengthList_ConnectedComponentSegment previousComponents1d(MAX_1D_COMPONENTS, scratch);
-      FixedLengthList_ConnectedComponentSegment newPreviousComponents1d(MAX_1D_COMPONENTS, scratch);
+      FixedLengthList<ConnectedComponentSegment> currentComponents1d(MAX_1D_COMPONENTS, scratch);
+      FixedLengthList<ConnectedComponentSegment> previousComponents1d(MAX_1D_COMPONENTS, scratch);
+      FixedLengthList<ConnectedComponentSegment> newPreviousComponents1d(MAX_1D_COMPONENTS, scratch);
 
       u16 *equivalentComponents = reinterpret_cast<u16*>(scratch.Allocate(MAX_2D_COMPONENTS*sizeof(u16)));
       for(u16 i=0; i<MAX_2D_COMPONENTS; i++) {
@@ -161,7 +161,7 @@ namespace Anki
       return result;
     }
 
-    Result Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList_ConnectedComponentSegment &extractedComponents)
+    Result Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment> &extractedComponents)
     {
       bool onComponent;
       s16 componentStart;
@@ -209,11 +209,11 @@ namespace Anki
       }
 
       return RESULT_OK;
-    } // Result Extract1dComponents(const u8 * restrict binaryImageRow, const s32 binaryImageWidth, const s32 minComponentWidth, FixedLengthList_Point_s16 &extractedComponents)
+    } // Result Extract1dComponents(const u8 * restrict binaryImageRow, const s32 binaryImageWidth, const s32 minComponentWidth, FixedLengthList<Point<s16>> &extractedComponents)
 
     // Sort the components by id, y, then xStart
     // TODO: determine how fast this method is, then suggest usage
-    Result SortConnectedComponentSegments(FixedLengthList_ConnectedComponentSegment &components)
+    Result SortConnectedComponentSegments(FixedLengthList<ConnectedComponentSegment> &components)
     {
       // Performs insersion sort
       // TODO: do bucket sort by id first, then run this
@@ -234,10 +234,10 @@ namespace Anki
       } // for(s32 i=0; i<components.size(); i++)
 
       return RESULT_OK;
-    } // Result SortConnectedComponentSegments(FixedLengthList_ConnectedComponentSegment &components)
+    } // Result SortConnectedComponentSegments(FixedLengthList<ConnectedComponentSegment> &components)
 
     // Iterate through components, and return the maximum id
-    u16 FindMaximumId(FixedLengthList_ConnectedComponentSegment &components)
+    u16 FindMaximumId(FixedLengthList<ConnectedComponentSegment> &components)
     {
       u16 maximumId = 0;
       const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
@@ -256,7 +256,7 @@ namespace Anki
     // 3n + 3 bytes of scratch.
     //
     // TODO: If scratch usage is a bigger issue than computation time, this could be done with a bitmask
-    u16 CompressConnectedComponentSegmentIds(FixedLengthList_ConnectedComponentSegment &components, MemoryStack scratch)
+    u16 CompressConnectedComponentSegmentIds(FixedLengthList<ConnectedComponentSegment> &components, MemoryStack scratch)
     {
       s32 numUsedIds = 0;
 
@@ -295,14 +295,14 @@ namespace Anki
       }
 
       return currentCompressedId - 1;
-    } // Result CompressConnectedComponentSegmentIds(FixedLengthList_ConnectedComponentSegment &components, MemoryStack scratch)
+    } // Result CompressConnectedComponentSegmentIds(FixedLengthList<ConnectedComponentSegment> &components, MemoryStack scratch)
 
     // Goes through the list components, and computes the number of pixels for each.
     // For any componentId with less than minimumNumPixels pixels, all ConnectedComponentSegment with that id will have their ids set to zero
     //
     // For a components parameter that has a maximum id of N, this function requires
     // 4n + 4 bytes of scratch.
-    Result MarkSmallComponentsAsInvalid(FixedLengthList_ConnectedComponentSegment &components, const s32 minimumNumPixels, MemoryStack scratch)
+    Result MarkSmallComponentsAsInvalid(FixedLengthList<ConnectedComponentSegment> &components, const s32 minimumNumPixels, MemoryStack scratch)
     {
       const u16 maximumId = FindMaximumId(components);
 

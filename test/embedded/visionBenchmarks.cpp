@@ -3,6 +3,8 @@
 #include "anki/embeddedVision.h"
 #include "visionBenchmarks.h"
 
+using namespace Anki::Embedded;
+
 #if(defined(_MSC_VER) || defined(__APPLE__))
 #include <string.h>
 #else
@@ -21,7 +23,7 @@ static void memset(void * dst, int value, size_t size)
 #endif
 
 #if defined(ANKICORETECH_USE_MATLAB)
-Anki::Embedded::Matlab matlab(false);
+Matlab matlab(false);
 #endif
 
 #define CHECK_FOR_ERRORS
@@ -65,24 +67,24 @@ static const s32 numBytes = MIN(MAX_BYTES, 5000000);
 
 int BenchmarkBinomialFilter()
 {
-  Anki::Embedded::MemoryStack ms(buffer, numBytes);
+  MemoryStack ms(buffer, numBytes);
 
 #ifdef CHECK_FOR_ERRORS
   DASConditionalErrorAndReturnValue(ms.IsValid(), -1, "ms.IsValid()", "");
 #endif
 
-  Anki::Embedded::Array_u8 image(height, width, ms, false);
-  Anki::Embedded::Array_u8 imageFiltered(height, width, ms);
+  Array<u8> image(height, width, ms, false);
+  Array<u8> imageFiltered(height, width, ms);
 
 #ifdef CHECK_FOR_ERRORS
   DASConditionalErrorAndReturnValue(image.IsValid(), -2, "image.IsValid()", "");
   DASConditionalErrorAndReturnValue(imageFiltered.IsValid(), -3, "imageFiltered.IsValid()", "");
 #endif
 
-  Anki::Embedded::Result result = Anki::Embedded::BinomialFilter(image, imageFiltered, ms);
+  Result result = BinomialFilter(image, imageFiltered, ms);
 
 #ifdef CHECK_FOR_ERRORS
-  DASConditionalErrorAndReturnValue(result == Anki::Embedded::RESULT_OK, -4, "result == Anki::Embedded::RESULT_OK", "");
+  DASConditionalErrorAndReturnValue(result == RESULT_OK, -4, "result == RESULT_OK", "");
 #endif
 
   return 0;
@@ -92,14 +94,14 @@ int BenchmarkDownsampleByFactor()
 {
   const s32 downsampleFactor = 2;
 
-  Anki::Embedded::MemoryStack ms(buffer, numBytes);
+  MemoryStack ms(buffer, numBytes);
 
 #ifdef CHECK_FOR_ERRORS
   DASConditionalErrorAndReturnValue(ms.IsValid(), -1, "ms.IsValid()", "");
 #endif
 
-  Anki::Embedded::Array_u8 image(height, width, ms);
-  Anki::Embedded::Array_u8 imageDownsampled(height/downsampleFactor, width/downsampleFactor, ms);
+  Array<u8> image(height, width, ms);
+  Array<u8> imageDownsampled(height/downsampleFactor, width/downsampleFactor, ms);
 
 #ifdef CHECK_FOR_ERRORS
   DASConditionalErrorAndReturnValue(image.IsValid(), -2, "image.IsValid()", "");
@@ -110,10 +112,10 @@ int BenchmarkDownsampleByFactor()
     *image.Pointer(2,x) = static_cast<u8>(x);
   }
 
-  Anki::Embedded::Result result = Anki::Embedded::DownsampleByFactor(image, downsampleFactor, imageDownsampled);
+  Result result = DownsampleByFactor(image, downsampleFactor, imageDownsampled);
 
 #ifdef CHECK_FOR_ERRORS
-  DASConditionalErrorAndReturnValue(result == Anki::Embedded::RESULT_OK, -4, "result == Anki::Embedded::RESULT_OK", "");
+  DASConditionalErrorAndReturnValue(result == RESULT_OK, -4, "result == RESULT_OK", "");
 #endif
 
   return 0;
@@ -123,27 +125,27 @@ int BenchmarkComputeCharacteristicScale()
 {
   const s32 numPyramidLevels = 6;
 
-  Anki::Embedded::MemoryStack ms(buffer, numBytes);
+  MemoryStack ms(buffer, numBytes);
 
 #ifdef CHECK_FOR_ERRORS
   DASConditionalErrorAndReturnValue(ms.IsValid(), -1, "ms.IsValid()", "");
 #endif
 
-  Anki::Embedded::Array_u8 image(height, width, ms);
+  Array<u8> image(height, width, ms);
 
 #ifdef CHECK_FOR_ERRORS
   DASConditionalErrorAndReturnValue(image.IsValid(), -2, "image.IsValid()", "");
 #endif
 
-  Anki::Embedded::Array_u32 scaleImage(height, width, ms);
+  Array<u32> scaleImage(height, width, ms);
 #ifdef CHECK_FOR_ERRORS
   DASConditionalErrorAndReturnValue(scaleImage.IsValid(), -2, "scaleImage.IsValid()", "");
 #endif
 
-  Anki::Embedded::Result result = ComputeCharacteristicScaleImage(image, numPyramidLevels, scaleImage, ms);
+  Result result = ComputeCharacteristicScaleImage(image, numPyramidLevels, scaleImage, ms);
 
 #ifdef CHECK_FOR_ERRORS
-  DASConditionalErrorAndReturnValue(result == Anki::Embedded::RESULT_OK, -4, "result == Anki::Embedded::RESULT_OK", "");
+  DASConditionalErrorAndReturnValue(result == RESULT_OK, -4, "result == RESULT_OK", "");
 #endif
 
   return 0;
@@ -151,16 +153,16 @@ int BenchmarkComputeCharacteristicScale()
 
 int BenchmarkTraceBoundary()
 {
-  Anki::Embedded::MemoryStack ms(buffer, numBytes);
+  MemoryStack ms(buffer, numBytes);
 
 #ifdef CHECK_FOR_ERRORS
   DASConditionalErrorAndReturnValue(ms.IsValid(), -1, "ms.IsValid()", "");
 #endif
 
-  Anki::Embedded::Array_u8 binaryImage(height, width, ms);
-  const Anki::Embedded::Point_s16 startPoint(3,3);
-  const Anki::Embedded::BoundaryDirection initialDirection = Anki::Embedded::BOUNDARY_N;
-  Anki::Embedded::FixedLengthList_Point_s16 boundary(Anki::Embedded::MAX_BOUNDARY_LENGTH, ms);
+  Array<u8> binaryImage(height, width, ms);
+  const Point<s16> startPoint(3,3);
+  const BoundaryDirection initialDirection = BOUNDARY_N;
+  FixedLengthList<Point<s16>> boundary(MAX_BOUNDARY_LENGTH, ms);
 
 #ifdef CHECK_FOR_ERRORS
   DASConditionalErrorAndReturnValue(binaryImage.IsValid(), -2, "binaryImage.IsValid()", "");
@@ -199,15 +201,15 @@ int BenchmarkTraceBoundary()
   }
 
 #if defined(ANKI_DEBUG_HIGH) && defined(ANKICORETECH_USE_MATLAB)
-  Anki::Embedded::Matlab matlab;
+  Matlab matlab;
 
-  matlab.PutArray_u8(binaryImage, "binaryImage");
+  matlab.PutArray<u8>(binaryImage, "binaryImage");
 #endif // #if defined(ANKI_DEBUG_HIGH) && defined(ANKICORETECH_USE_MATLAB)
 
-  Anki::Embedded::Result result = Anki::Embedded::TraceBoundary(binaryImage, startPoint, initialDirection, boundary);
+  Result result = TraceBoundary(binaryImage, startPoint, initialDirection, boundary);
 
 #ifdef CHECK_FOR_ERRORS
-  DASConditionalErrorAndReturnValue(result == Anki::Embedded::RESULT_OK, -4, "result == Anki::Embedded::RESULT_OK", "");
+  DASConditionalErrorAndReturnValue(result == RESULT_OK, -4, "result == RESULT_OK", "");
 #endif
 
   return 0;

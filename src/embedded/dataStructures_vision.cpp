@@ -36,10 +36,10 @@ namespace Anki
     {
     } // FiducialMarker::FiducialMarker()
 
-    FiducialMarker::FiducialMarker(const Point_s32 upperLeft, const Point_s32 upperRight, const Point_s32 lowerLeft, const Point_s32 lowerRight, const s16 blockType, const s16 faceType)
+    FiducialMarker::FiducialMarker(const Point<s32> upperLeft, const Point<s32> upperRight, const Point<s32> lowerLeft, const Point<s32> lowerRight, const s16 blockType, const s16 faceType)
       : upperLeft(upperLeft), upperRight(upperRight), lowerLeft(lowerLeft), lowerRight(lowerRight), blockType(blockType), faceType(faceType)
     {
-    } // FiducialMarker::FiducialMarker(const Point_s32 upperLeft, const Point_s32 upperRight, const Point_s32 lowerLeft, const Point_s32 lowerRight, const s16 blockType, const s16 faceType)
+    } // FiducialMarker::FiducialMarker(const Point<s32> upperLeft, const Point<s32> upperRight, const Point<s32> lowerLeft, const Point<s32> lowerRight, const s16 blockType, const s16 faceType)
 
     void FiducialMarker::Print() const
     {

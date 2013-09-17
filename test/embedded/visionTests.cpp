@@ -53,7 +53,7 @@ GTEST_TEST(CoreTech_Vision, CompressComponentIds)
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  FixedLengthList_ConnectedComponentSegment components(numComponents, ms);
+  FixedLengthList<ConnectedComponentSegment> components(numComponents, ms);
   components.set_size(numComponents);
 
   const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 0, 0, 5);  // 3
@@ -105,9 +105,12 @@ GTEST_TEST(CoreTech_Vision, ComponentsSize)
   ASSERT_TRUE(ms.IsValid());
 
   const s32 usedBytes0 = ms.get_usedBytes();
-  printf("Original size: %d\n", usedBytes0);
 
-  FixedLengthList_ConnectedComponentSegment segmentList(numComponents, ms);
+#ifdef PRINTF_SIZE_RESULTS
+  printf("Original size: %d\n", usedBytes0);
+#endif
+
+  FixedLengthList<ConnectedComponentSegment> segmentList(numComponents, ms);
 
   const s32 usedBytes1 = ms.get_usedBytes();
   const double actualSizePlusOverhead = double(usedBytes1 - usedBytes0) / double(numComponents);
@@ -137,7 +140,7 @@ GTEST_TEST(CoreTech_Vision, SortComponents)
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  FixedLengthList_ConnectedComponentSegment components(numComponents, ms);
+  FixedLengthList<ConnectedComponentSegment> components(numComponents, ms);
   components.set_size(numComponents);
 
   const ConnectedComponentSegment component0 = ConnectedComponentSegment(50, 100, 50, MAX_uint16_T); // 7
@@ -215,11 +218,11 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
   const u16 id_groundTruth[]     = {1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2};
 #endif // #ifdef UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d ... #else
 
-  Array_u8 binaryImage(height, width, ms);
+  Array<u8> binaryImage(height, width, ms);
   ASSERT_TRUE(binaryImage.IsValid());
   ASSERT_TRUE(binaryImage.Set(binaryImageData) == width*height);
 
-  FixedLengthList_ConnectedComponentSegment extractedComponents(maxComponentSegments, ms);
+  FixedLengthList<ConnectedComponentSegment> extractedComponents(maxComponentSegments, ms);
   ASSERT_TRUE(extractedComponents.IsValid());
 
   const Result result = Extract2dComponents(binaryImage, minComponentWidth, maxSkipDistance, extractedComponents, ms);
@@ -253,7 +256,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
   u8 * binaryImageRow = reinterpret_cast<u8*>(ms.Allocate(width));
   memset(binaryImageRow, 0, width);
 
-  FixedLengthList_ConnectedComponentSegment extractedComponentSegments(maxComponents, ms);
+  FixedLengthList<ConnectedComponentSegment> extractedComponentSegments(maxComponents, ms);
 
   for(s32 i=10; i<=15; i++) binaryImageRow[i] = 1;
   for(s32 i=25; i<=35; i++) binaryImageRow[i] = 1;
@@ -288,10 +291,10 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
 
   ASSERT_TRUE(ms.IsValid());
 
-  Array_u8 image(height, width, ms, false);
+  Array<u8> image(height, width, ms, false);
   image.Set(static_cast<u8>(0));
 
-  Array_u8 imageFiltered(height, width, ms);
+  Array<u8> imageFiltered(height, width, ms);
 
   ASSERT_TRUE(image.get_rawDataPointer()!= NULL);
   ASSERT_TRUE(imageFiltered.get_rawDataPointer()!= NULL);
@@ -335,8 +338,8 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
 
   ASSERT_TRUE(ms.IsValid());
 
-  Array_u8 image(height, width, ms);
-  Array_u8 imageDownsampled(height/downsampleFactor, width/downsampleFactor, ms);
+  Array<u8> image(height, width, ms);
+  Array<u8> imageDownsampled(height/downsampleFactor, width/downsampleFactor, ms);
 
   ASSERT_TRUE(image.get_rawDataPointer()!= NULL);
   ASSERT_TRUE(imageDownsampled.get_rawDataPointer()!= NULL);
@@ -409,11 +412,11 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
 
   ASSERT_TRUE(ms.IsValid());
 
-  Array_u8 image(height, width, ms);
+  Array<u8> image(height, width, ms);
   ASSERT_TRUE(image.IsValid());
   ASSERT_TRUE(image.Set(imageData) == width*height);
 
-  Array_u32 scaleImage(height, width, ms);
+  Array<u32> scaleImage(height, width, ms);
   ASSERT_TRUE(scaleImage.IsValid());
 
   ASSERT_TRUE(ComputeCharacteristicScaleImage(image, numPyramidLevels, scaleImage, ms) == RESULT_OK);
@@ -454,15 +457,15 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 
   matlab.EvalStringEcho("image = rgb2gray(imread('Z:/Documents/testSequence/blockWorldTest_front00000.png'));");
   //matlab.EvalStringEcho("image = imresize(rgb2gray(imread('Z:/Documents/testSequence/blockWorldTest_front00000.png')), [240,320]);");
-  Array_u8 image = matlab.GetArray_u8("image");
+  Array<u8> image = matlab.GetArray<u8>("image");
   ASSERT_TRUE(image.get_rawDataPointer() != NULL);
 
-  Array_u32 scaleImage(height, width, ms);
+  Array<u32> scaleImage(height, width, ms);
   ASSERT_TRUE(scaleImage.get_rawDataPointer() != NULL);
 
   ASSERT_TRUE(ComputeCharacteristicScaleImage(image, numPyramidLevels, scaleImage, ms) == RESULT_OK);
 
-  matlab.PutArray_u32(scaleImage, "scaleImage6_c");
+  matlab.PutArray<u32>(scaleImage, "scaleImage6_c");
 
   free(buffer); buffer = NULL;
 
@@ -493,7 +496,7 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
     " 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 ";
 
   const s32 numPoints = 9;
-  const Point_s16 groundTruth[9] = {Point_s16(8,6), Point_s16(8,5), Point_s16(7,4), Point_s16(7,3), Point_s16(8,3), Point_s16(9,3), Point_s16(9,4), Point_s16(9,5), Point_s16(9,6)};
+  const Point<s16> groundTruth[9] = {Point<s16>(8,6), Point<s16>(8,5), Point<s16>(7,4), Point<s16>(7,3), Point<s16>(8,3), Point<s16>(9,3), Point<s16>(9,4), Point<s16>(9,5), Point<s16>(9,6)};
 
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = MIN(MAX_BYTES, 10000);
@@ -502,10 +505,10 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
 
   ASSERT_TRUE(ms.IsValid());
 
-  Array_u8 binaryImage(height, width, ms);
-  const Point_s16 startPoint(8,6);
+  Array<u8> binaryImage(height, width, ms);
+  const Point<s16> startPoint(8,6);
   const BoundaryDirection initialDirection = BOUNDARY_N;
-  FixedLengthList_Point_s16 boundary(MAX_BOUNDARY_LENGTH, ms);
+  FixedLengthList<Point<s16>> boundary(MAX_BOUNDARY_LENGTH, ms);
 
   ASSERT_TRUE(binaryImage.IsValid());
   ASSERT_TRUE(boundary.IsValid());

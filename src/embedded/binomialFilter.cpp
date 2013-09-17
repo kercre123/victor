@@ -10,8 +10,8 @@ namespace Anki
     //% imageFiltered is UQ8.0
     //% Handles edges by replicating the border pixel
     //function imageFiltered = binomialFilter(image)
-    //Result BinomialFilter(const Array_u8 &image, Array_u8 &imageFiltered, MemoryStack scratch)
-    Result BinomialFilter(const Array_u8 &image, Array_u8 &imageFiltered, MemoryStack scratch)
+    //Result BinomialFilter(const Array<u8> &image, Array<u8> &imageFiltered, MemoryStack scratch)
+    Result BinomialFilter(const Array<u8> &image, Array<u8> &imageFiltered, MemoryStack scratch)
     {
       const u32 kernel[BINOMIAL_KERNEL_SIZE] = {1, 4, 6, 4, 1};
       const s32 kernelShift = 4;
@@ -45,7 +45,7 @@ namespace Anki
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
 
       //imageFilteredTmp = zeros(size(image), 'uint32');
-      Array_u32 imageFilteredTmp(height, width, scratch);
+      Array<u32> imageFilteredTmp(height, width, scratch);
 
       //% 1. Horizontally filter
       for(s32 y=0; y<height; y++) {

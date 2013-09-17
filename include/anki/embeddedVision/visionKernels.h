@@ -24,17 +24,17 @@ namespace Anki
 
     const s32 MAX_BOUNDARY_LENGTH = 2000;
 
-    //Result DetectFiducialMarkers(const Array_u8 &image, FixedLengthList_FiducialMarker &markers, MemoryStack scratch);
+    //Result DetectFiducialMarkers(const Array<u8> &image, FixedLengthList<FiducialMarker> &markers, MemoryStack scratch);
 
-    Result BinomialFilter(const Array_u8 &image, Array_u8 &imageFiltered, MemoryStack scratch);
+    Result BinomialFilter(const Array<u8> &image, Array<u8> &imageFiltered, MemoryStack scratch);
 
-    Result DownsampleByFactor(const Array_u8 &image, const s32 downsampleFactor, Array_u8 &imageDownsampled);
+    Result DownsampleByFactor(const Array<u8> &image, const s32 downsampleFactor, Array<u8> &imageDownsampled);
 
-    Result ComputeCharacteristicScaleImage(const Array_u8 &image, const s32 numPyramidLevels, Array_u32 &scaleImage, MemoryStack scratch);
+    Result ComputeCharacteristicScaleImage(const Array<u8> &image, const s32 numPyramidLevels, Array<u32> &scaleImage, MemoryStack scratch);
 
-    Result ThresholdScaleImage(const Array_u8 &originalImage, const Array_u32 &scaleImage, Array_u8 &binaryImage);
+    Result ThresholdScaleImage(const Array<u8> &originalImage, const Array<u32> &scaleImage, Array<u8> &binaryImage);
 
-    Result TraceBoundary(const Array_u8 &binaryImage, const Point_s16 &startPoint, BoundaryDirection initialDirection, FixedLengthList_Point_s16 &boundary);
+    Result TraceBoundary(const Array<u8> &binaryImage, const Point<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point<s16>> &boundary);
 
     template<typename T> inline T Interpolate2d(const T pixel00, const T pixel01, const T pixel10, const T pixel11, const T alphaY, const T alphaYinverse, const T alphaX, const T alphaXinverse)
     {

@@ -7,7 +7,7 @@ namespace Anki
 #define MAX_PYRAMID_LEVELS 8
 #define MAX_ALPHAS 128
     // //function scaleImage = computeCharacteristicScaleImage_loopsAndFixedPoint(image, numPyramidLevels, computeDogAtFullSize, filterWithMex)
-    Result ComputeCharacteristicScaleImage(const Array_u8 &image, const s32 numPyramidLevels, Array_u32 &scaleImage, MemoryStack scratch)
+    Result ComputeCharacteristicScaleImage(const Array<u8> &image, const s32 numPyramidLevels, Array<u32> &scaleImage, MemoryStack scratch)
     {
       //double times[20];
 
@@ -36,14 +36,14 @@ namespace Anki
 
       //scaleImage = uint32(image)*(2^8); % UQ16.16
       //dogMax = zeros(fullSizeHeight,fullSizeWidth,'uint32'); % UQ16.16
-      Array_u32 dogMax(fullSizeHeight, fullSizeWidth, scratch); // UQ16.16
+      Array<u32> dogMax(fullSizeHeight, fullSizeWidth, scratch); // UQ16.16
       dogMax.Set(static_cast<u32>(0));
 
       //imagePyramid = cell(1, numPyramidLevels+1);
-      Array_u8 imagePyramid[MAX_PYRAMID_LEVELS+1];
-      imagePyramid[0] = Array_u8(fullSizeHeight, fullSizeWidth, scratch, false);
+      Array<u8> imagePyramid[MAX_PYRAMID_LEVELS+1];
+      imagePyramid[0] = Array<u8>(fullSizeHeight, fullSizeWidth, scratch, false);
       for(s32 i=1; i<=numPyramidLevels; i++) {
-        imagePyramid[i] = Array_u8(fullSizeHeight >> i, fullSizeWidth >> i, scratch, false);
+        imagePyramid[i] = Array<u8>(fullSizeHeight >> i, fullSizeWidth >> i, scratch, false);
       }
 
       //scaleFactors = int32(2.^[0:(numPyramidLevels)]); %#ok<NBRAK>
@@ -62,7 +62,7 @@ namespace Anki
 #endif // #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_LOW
 
       /*{
-      Anki::Embedded::Matlab matlab(false);
+      Matlab matlab(false);
 
       matlab.PutArray2d(image, "image");
       matlab.PutArray2d(imagePyramid[0], "imagePyramid");
@@ -78,7 +78,7 @@ namespace Anki
         PUSH_MEMORY_STACK(scratch); // Push the current state of the scratch buffer onto the system stack
 
         //    curPyramidLevel = imagePyramid{pyramidLevel-1}; %UQ8.0
-        const Array_u8 curPyramidLevel = imagePyramid[pyramidLevel-1]; // UQ8.0
+        const Array<u8> curPyramidLevel = imagePyramid[pyramidLevel-1]; // UQ8.0
         const s32 curLevelHeight = curPyramidLevel.get_size(0);
         const s32 curLevelWidth = curPyramidLevel.get_size(1);
 
@@ -87,7 +87,7 @@ namespace Anki
         //    else
         //        curPyramidLevelBlurred = binomialFilter_loopsAndFixedPoint(curPyramidLevel); %UQ8.0
         //    end
-        Array_u8 curPyramidLevelBlurred(curPyramidLevel.get_size(0), curPyramidLevel.get_size(1), scratch);
+        Array<u8> curPyramidLevelBlurred(curPyramidLevel.get_size(0), curPyramidLevel.get_size(1), scratch);
 
         const Result binomialFilterResult = BinomialFilter(curPyramidLevel, curPyramidLevelBlurred, scratch);
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_LOW
@@ -97,7 +97,7 @@ namespace Anki
 
         //    largeDoG = zeros([fullSizeHeight,fullSizeWidth],'uint32'); % UQ16.16
 #if ANKI_DEBUG_LEVEL > ANKI_DEBUG_OFF
-        Array_u32 largeDog(fullSizeHeight, fullSizeWidth, scratch);
+        Array<u32> largeDog(fullSizeHeight, fullSizeWidth, scratch);
         largeDog.Set(u32(0));
 #endif
 
@@ -134,7 +134,7 @@ namespace Anki
           }
 
           //{
-          //  Anki::Embedded::Matlab matlab(false);
+          //  Matlab matlab(false);
 
           //  matlab.PutArray2d(curPyramidLevel, "curPyramidLevel_c");
           //  matlab.PutArray2d(curPyramidLevelBlurred, "curPyramidLevelBlurred_c");
@@ -236,7 +236,7 @@ namespace Anki
           } // for(s32 smallY = 0; smallY < curLevelHeight; smallY++)
 
           /*{
-          Anki::Embedded::Matlab matlab(false);
+          Matlab matlab(false);
 
           matlab.PutArray2d(curPyramidLevel, "curPyramidLevel_c");
           matlab.PutArray2d(curPyramidLevelBlurred, "curPyramidLevelBlurred_c");
@@ -316,7 +316,7 @@ namespace Anki
           } // for(s32 smallY = 0; smallY < curLevelHeight; smallY++)
           /*
           {
-          Anki::Embedded::Matlab matlab(false);
+          Matlab matlab(false);
 
           matlab.PutArray2d(curPyramidLevel, "curPyramidLevel_c");
           matlab.PutArray2d(curPyramidLevelBlurred, "curPyramidLevelBlurred_c");
@@ -339,8 +339,8 @@ namespace Anki
 
       //printf("t20-t0 = %f\n", times[19]-times[0]);
 
-      return Anki::Embedded::RESULT_OK;
-    } // Result ComputeCharacteristicScaleImage(const Array_u8 &image, s32 numPyramidLevels, Array_u32 &scaleImage, MemoryStack scratch)
+      return RESULT_OK;
+    } // Result ComputeCharacteristicScaleImage(const Array<u8> &image, s32 numPyramidLevels, Array<u32> &scaleImage, MemoryStack scratch)
 
     //end % FUNCTION computeCharacteristicScaleImage()
     //

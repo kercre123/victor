@@ -7,25 +7,27 @@
 
 #include <stdio.h>
 
+using namespace Anki::Embedded;
+
 void RUN_ALL_BENCHMARKS()
 {
   double times[20];
 
-  times[0] = Anki::Embedded::GetTime();
+  times[0] = GetTime();
   for(s32 i=0; i<48; i++) {
     BenchmarkBinomialFilter();
   }
-  times[1] = Anki::Embedded::GetTime();
+  times[1] = GetTime();
   for(s32 i=0; i<48; i++) {
     BenchmarkDownsampleByFactor();
   }
-  times[2] = Anki::Embedded::GetTime();
+  times[2] = GetTime();
   for(s32 i=0; i<48; i++) {
     BenchmarkComputeCharacteristicScale();
   }
-  times[3] = Anki::Embedded::GetTime();
+  times[3] = GetTime();
   BenchmarkTraceBoundary();
-  times[4] = Anki::Embedded::GetTime();
+  times[4] = GetTime();
 
   printf(
     "BenchmarkBinomialFilter: %f ms\n"

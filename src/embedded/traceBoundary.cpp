@@ -8,24 +8,24 @@ namespace Anki
 #define NUM_DIRECTIONS 8
 
     //c++11 style
-    //static Point_s16 offsets[NUM_DIRECTIONS] = {Point_s16(0,-1), Point_s16(1,-1), Point_s16(1,0), Point_s16(1,1), Point_s16(0,1), Point_s16(-1,1), Point_s16(-1,0), Point_s16(-1,-1)};
+    //static Point<s16> offsets[NUM_DIRECTIONS] = {Point<s16>(0,-1), Point<s16>(1,-1), Point<s16>(1,0), Point<s16>(1,1), Point<s16>(0,1), Point<s16>(-1,1), Point<s16>(-1,0), Point<s16>(-1,-1)};
 
-    static Point_s16 offsets[NUM_DIRECTIONS];
+    static Point<s16> offsets[NUM_DIRECTIONS];
 
     static void InitializeGlobaloOffsets()
     {
-      offsets[0] = Point_s16(0,-1);
-      offsets[1] = Point_s16(1,-1);
-      offsets[2] = Point_s16(1,0);
-      offsets[3] = Point_s16(1,1);
-      offsets[4] = Point_s16(0,1);
-      offsets[5] = Point_s16(-1,1);
-      offsets[6] = Point_s16(-1,0);
-      offsets[7] = Point_s16(-1,-1);
+      offsets[0] = Point<s16>(0,-1);
+      offsets[1] = Point<s16>(1,-1);
+      offsets[2] = Point<s16>(1,0);
+      offsets[3] = Point<s16>(1,1);
+      offsets[4] = Point<s16>(0,1);
+      offsets[5] = Point<s16>(-1,1);
+      offsets[6] = Point<s16>(-1,0);
+      offsets[7] = Point<s16>(-1,-1);
     }
 
     //function newDirection = findNewDirection(image, curPoint, curDirection, value)
-    static BoundaryDirection FindNewDirection(const Array_u8 &binaryImage, const Point_s16 &curPoint, const BoundaryDirection curDirection, const u8 value)
+    static BoundaryDirection FindNewDirection(const Array<u8> &binaryImage, const Point<s16> &curPoint, const BoundaryDirection curDirection, const u8 value)
     {
       BoundaryDirection newDirection = BOUNDARY_UNKNOWN;
 
@@ -62,7 +62,7 @@ namespace Anki
       return BOUNDARY_UNKNOWN;
     }
 
-    Result TraceBoundary(const Array_u8 &binaryImage, const Point_s16 &startPoint, BoundaryDirection initialDirection, FixedLengthList_Point_s16 &boundary)
+    Result TraceBoundary(const Array<u8> &binaryImage, const Point<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point<s16>> &boundary)
     {
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
       DASConditionalErrorAndReturnValue(binaryImage.IsValid(),
@@ -100,7 +100,7 @@ namespace Anki
       BoundaryDirection curDirection = initialDirection;
 
       //curPoint = [startPoint(1), startPoint(2)];
-      Point_s16 curPoint(startPoint);
+      Point<s16> curPoint(startPoint);
 
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
       DASConditionalErrorAndReturnValue(*(binaryImage.Pointer(curPoint)) != 0,
@@ -130,7 +130,7 @@ namespace Anki
 
         //newPoint = [curPoint(1)+dy(oneDirection+1), curPoint(2)+dx(oneDirection+1)];
         //const Point2<u16> newPoint(curPoint.x+dxs[oneDirection], curPoint.y+dys[oneDirection]);
-        const Point_s16 newPoint(curPoint + offsets[oneDirection]);
+        const Point<s16> newPoint(curPoint + offsets[oneDirection]);
 
         // printf("%d) %d %d\n", i, newPoint.y+1, newPoint.x+1);
 
