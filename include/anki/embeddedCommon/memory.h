@@ -47,7 +47,7 @@ namespace Anki
 
       // Returns the number of bytes that can still be allocated.
       // The max allocation is less than or equal to "get_totalBytes() - get_usedBytes() - 12".
-      s32 LargestPossibleAllocation();
+      s32 ComputeLargestPossibleAllocation();
 
       s32 get_totalBytes();
       s32 get_usedBytes();

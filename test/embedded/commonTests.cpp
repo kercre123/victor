@@ -336,21 +336,21 @@ GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
   ASSERT_TRUE(bufferShift < static_cast<size_t>(MEMORY_ALIGNMENT));
 
   MemoryStack ms(alignedBuffer, numBytes);
-  const s32 largestPossibleAllocation1 = ms.LargestPossibleAllocation();
+  const s32 largestPossibleAllocation1 = ms.ComputeLargestPossibleAllocation();
   ASSERT_TRUE(largestPossibleAllocation1 == 80);
 
   const void * const allocatedBuffer1 = ms.Allocate(1);
-  const s32 largestPossibleAllocation2 = ms.LargestPossibleAllocation();
+  const s32 largestPossibleAllocation2 = ms.ComputeLargestPossibleAllocation();
   ASSERT_TRUE(allocatedBuffer1 != NULL);
   ASSERT_TRUE(largestPossibleAllocation2 == 48);
 
   const void * const allocatedBuffer2 = ms.Allocate(49);
-  const s32 largestPossibleAllocation3 = ms.LargestPossibleAllocation();
+  const s32 largestPossibleAllocation3 = ms.ComputeLargestPossibleAllocation();
   ASSERT_TRUE(allocatedBuffer2 == NULL);
   ASSERT_TRUE(largestPossibleAllocation3 == 48);
 
   const void * const allocatedBuffer3 = ms.Allocate(48);
-  const s32 largestPossibleAllocation4 = ms.LargestPossibleAllocation();
+  const s32 largestPossibleAllocation4 = ms.ComputeLargestPossibleAllocation();
   ASSERT_TRUE(allocatedBuffer3 != NULL);
   ASSERT_TRUE(largestPossibleAllocation4 == 0);
 
