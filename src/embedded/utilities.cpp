@@ -84,7 +84,7 @@ namespace Anki
 
     //// Perform the matrix multiplication "matOut = mat1 * mat2"
     //// Note that this is the naive O(n^3) implementation
-    //Result MultiplyMatrices(const Array_f64 &mat1, const Array_f64 &mat2, Array_f64 &matOut)
+    //Result MultiplyMatrices(const Array<f64> &mat1, const Array<f64> &mat2, Array<f64> &matOut)
     //{
     //  DASConditionalErrorAndReturnValue(mat1.get_size(1) == mat2.get_size(0),
     //    RESULT_FAIL, "MultiplyMatrices", "Input matrices are incompatible sizes");

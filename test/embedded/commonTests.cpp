@@ -41,10 +41,10 @@ GTEST_TEST(CoreTech_Common, MatrixMultiply)
     "1158 1230 1302 "
     "4843 5161 5489 ";
 
-  Array_f64 mat1(2, 5, ms);
-  Array_f64 mat2(5, 3, ms);
-  Array_f64 matOut(2, 3, ms);
-  Array_f64 matOut_groundTruth(2, 3, ms);
+  Array<f64> mat1(2, 5, ms);
+  Array<f64> mat2(5, 3, ms);
+  Array<f64> matOut(2, 3, ms);
+  Array<f64> matOut_groundTruth(2, 3, ms);
 
   ASSERT_TRUE(mat1.IsValid());
   ASSERT_TRUE(mat2.IsValid());
@@ -55,7 +55,7 @@ GTEST_TEST(CoreTech_Common, MatrixMultiply)
   mat2.Set(mat2Data);
   matOut_groundTruth.Set(matOutGroundTruthData);
 
-  const Result result = MultiplyMatrices<Array_f64, f64>(mat1, mat2, matOut);
+  const Result result = MultiplyMatrices<Array<f64>, f64>(mat1, mat2, matOut);
 
   ASSERT_TRUE(result == RESULT_OK);
 
@@ -71,13 +71,13 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
   MemoryStack ms(buffer, numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  Array_f64 homography_groundTruth(3, 3, ms);
-  Array_f64 homography(3, 3, ms);
-  Array_f64 originalPoints(3, 4, ms);
-  Array_f64 transformedPoints(3, 4, ms);
+  Array<f64> homography_groundTruth(3, 3, ms);
+  Array<f64> homography(3, 3, ms);
+  Array<f64> originalPoints(3, 4, ms);
+  Array<f64> transformedPoints(3, 4, ms);
 
-  FixedLengthList_Point_f64 originalPointsList(4, ms);
-  FixedLengthList_Point_f64 transformedPointsList(4, ms);
+  FixedLengthList<Point<f64>> originalPointsList(4, ms);
+  FixedLengthList<Point<f64>> transformedPointsList(4, ms);
 
   ASSERT_TRUE(homography_groundTruth.IsValid());
   ASSERT_TRUE(homography.IsValid());
@@ -98,7 +98,7 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
   homography_groundTruth.Set(homographyGroundTruthData);
   originalPoints.Set(originalPointsData);
 
-  MultiplyMatrices<Array_f64, f64>(homography_groundTruth, originalPoints, transformedPoints);
+  MultiplyMatrices<Array<f64>, f64>(homography_groundTruth, originalPoints, transformedPoints);
 
   for(s32 i=0; i<originalPoints.get_size(1); i++) {
     const f64 x0 = (*originalPoints.Pointer(0,i)) / (*originalPoints.Pointer(2,i));
@@ -107,8 +107,8 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
     const f64 x1 = (*transformedPoints.Pointer(0,i)) / (*transformedPoints.Pointer(2,i));
     const f64 y1 = (*transformedPoints.Pointer(1,i)) / (*transformedPoints.Pointer(2,i));
 
-    originalPointsList.PushBack(Point_f64(x0, y0));
-    transformedPointsList.PushBack(Point_f64(x1, y1));
+    originalPointsList.PushBack(Point<f64>(x0, y0));
+    transformedPointsList.PushBack(Point<f64>(x1, y1));
   }
 
   //originalPoints.Print("originalPoints");
@@ -158,13 +158,13 @@ GTEST_TEST(CoreTech_Common, SVD)
 
   const s32 m = 2, n = 8;
 
-  Array_f32 a(m, n, ms);
-  Array_f32 w(1, n, ms);
-  Array_f32 uT(m, m, ms);
-  Array_f32 vT(n, n, ms);
-  Array_f32 w_groundTruth(1, n, ms);
-  Array_f32 uT_groundTruth(m, m, ms);
-  Array_f32 vT_groundTruth(n, n, ms);
+  Array<f32> a(m, n, ms);
+  Array<f32> w(1, n, ms);
+  Array<f32> uT(m, m, ms);
+  Array<f32> vT(n, n, ms);
+  Array<f32> w_groundTruth(1, n, ms);
+  Array<f32> uT_groundTruth(m, m, ms);
+  Array<f32> vT_groundTruth(n, n, ms);
 
   ASSERT_TRUE(a.IsValid());
   ASSERT_TRUE(w.IsValid());
@@ -381,7 +381,7 @@ GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
 GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
 {
   matlab.EvalStringEcho("simpleArray = int16([1,2,3,4,5;6,7,8,9,10]);");
-  Array_s16 simpleArray = matlab.GetArray_s16("simpleArray");
+  Array<s16> simpleArray = matlab.GetArray<s16>("simpleArray");
   printf("simple matrix:\n");
   simpleArray.Print();
 
@@ -443,7 +443,7 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   MemoryStack ms(buffer, numBytes);
 
   // Create a matrix, and manually set a few values
-  Array_s16 simpleArray(10, 6, ms);
+  Array<s16> simpleArray(10, 6, ms);
   ASSERT_TRUE(simpleArray.get_rawDataPointer() != NULL);
   *simpleArray.Pointer(0,0) = 1;
   *simpleArray.Pointer(0,1) = 2;
@@ -460,7 +460,7 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 
 #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
   // Check that the Matlab transfer works (you need to check the Matlab window to verify that this works)
-  matlab.PutArray_s16(simpleArray, "simpleArray");
+  matlab.PutArray<s16>(simpleArray, "simpleArray");
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
@@ -520,7 +520,7 @@ GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 
   MemoryStack ms(buffer, numBytes);
 
-  Array_u8 simpleArray(3, 3, ms);
+  Array<u8> simpleArray(3, 3, ms);
 
   const char * imgData =
     " 1 1 1 "
@@ -547,7 +547,7 @@ GTEST_TEST(CoreTech_Common, ArrayAlignment1)
   // Check all offsets
   for(s32 offset=0; offset<8; offset++) {
     void * const alignedBufferAndOffset = reinterpret_cast<char*>(alignedBuffer) + offset;
-    Array_s16 simpleArray(10, 6, alignedBufferAndOffset, numBytes-offset-8);
+    Array<s16> simpleArray(10, 6, alignedBufferAndOffset, numBytes-offset-8);
 
     const size_t trueLocation = reinterpret_cast<size_t>(simpleArray.Pointer(0,0));
     const size_t expectedLocation = RoundUp(reinterpret_cast<size_t>(alignedBufferAndOffset), MEMORY_ALIGNMENT);;
@@ -572,7 +572,7 @@ GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
   for(s32 offset=0; offset<8; offset++) {
     void * const alignedBufferAndOffset = reinterpret_cast<char*>(alignedBuffer) + offset;
     MemoryStack simpleMemoryStack(alignedBufferAndOffset, numBytes-offset-8);
-    Array_s16 simpleArray(10, 6, simpleMemoryStack);
+    Array<s16> simpleArray(10, 6, simpleMemoryStack);
 
     const size_t matrixStart = reinterpret_cast<size_t>(simpleArray.Pointer(0,0));
     ASSERT_TRUE(matrixStart == RoundUp(matrixStart, MEMORY_ALIGNMENT));
@@ -595,7 +595,7 @@ GTEST_TEST(CoreTech_Common, ArrayFillPattern)
   MemoryStack ms(alignedBuffer, numBytes-MEMORY_ALIGNMENT);
 
   // Create a matrix, and manually set a few values
-  Array_s16 simpleArray(height, width, ms, true);
+  Array<s16> simpleArray(height, width, ms, true);
   ASSERT_TRUE(simpleArray.get_rawDataPointer() != NULL);
 
   ASSERT_TRUE(simpleArray.IsValid());
