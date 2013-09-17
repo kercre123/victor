@@ -25,7 +25,7 @@ namespace Anki
 
     // Converts from typeid names to Matlab types
     mxClassID ConvertToMatlabType(const char *typeName, size_t byteDepth);
-    const char * ConvertToMatlabTypeString(const char *typeName, size_t byteDepth);
+    std::string ConvertToMatlabTypeString(const char *typeName, size_t byteDepth);
 
     class Matlab {
     public:

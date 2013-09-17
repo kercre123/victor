@@ -11,7 +11,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\include\anki\embeddedCommon\opencvLight.h" />
     <ClCompile Include="..\..\src\embedded\array2d.cpp" />
     <ClCompile Include="..\..\src\embedded\dasLight.cpp" />
     <ClCompile Include="..\..\src\embedded\fixedLengthList.cpp" />
@@ -31,6 +30,7 @@
     <ClInclude Include="..\..\include\anki\embeddedCommon\gtestLight.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\matlabInterface.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\memory.h" />
+    <ClInclude Include="..\..\include\anki\embeddedCommon\opencvLight.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\point.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\utilities.h" />
   </ItemGroup>

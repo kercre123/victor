@@ -69,7 +69,9 @@ namespace Anki
       : x(pt.x), y(pt.y)
     {
     }
+#endif
 
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     template<typename Type> cv::Point_<Type> Point<Type>::get_CvPoint_()
     {
       return cv::Point_<Type>(x,y);
@@ -78,7 +80,7 @@ namespace Anki
 
     template<typename Type> void Point<Type>::Print() const
     {
-      printf("(%u,%u)", this->x, this->y);
+      printf("(%d,%d) ", this->x, this->y);
     }
 
     template<typename Type> bool Point<Type>::operator== (const Point<Type> &point2) const
@@ -104,6 +106,10 @@ namespace Anki
       this->x *= value;
       this->y *= value;
     }
+
+#pragma mark --- Point Specializations ---
+    template<> void Point<f32>::Print() const;
+    template<> void Point<f64>::Print() const;
   } // namespace Embedded
 } // namespace Anki
 

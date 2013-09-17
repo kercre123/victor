@@ -15,15 +15,17 @@ using namespace Anki::Embedded;
 // originalPoints = originalPoints(1:2,:)'; transformedPoints = transformedPoints';
 // homography = mexEstimateHomography(originalPoints, transformedPoints);
 
-void Print_FixedLengthList_Point_f64(FixedLengthList_Point_f64 &arr, const char * const variableName)
+/*
+void Print_FixedLengthList_Point<f64>(FixedLengthList_Point<f64> &arr, const char * const variableName)
 {
-  printf("%s:\n", variableName);
-  const Point_f64 * const rowPointer = arr.Pointer(0);
-  for(s32 y=0; y<arr.get_size(); y++) {
-    printf("(%f,%f) ", rowPointer[y].x, rowPointer[y].y);
-  }
-  printf("\n");
+printf("%s:\n", variableName);
+const Point<f64> * const rowPointer = arr.Pointer(0);
+for(s32 y=0; y<arr.get_size(); y++) {
+printf("(%f,%f) ", rowPointer[y].x, rowPointer[y].y);
 }
+printf("\n");
+}
+*/
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
@@ -31,17 +33,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     "mexEstimateHomography",
     "Call this function as following: homography = mexEstimateHomography(originalPoints, transformedPoints); originalPoints and transformedPoints should be double-precision and Nx2");
 
-  Array_f64 originalPointsArray = mxArrayToArray_f64(prhs[0]);
-  Array_f64 transformedPointsArray = mxArrayToArray_f64(prhs[1]);
+  Array<f64> originalPointsArray = mxArrayToArray<f64>(prhs[0]);
+  Array<f64> transformedPointsArray = mxArrayToArray<f64>(prhs[1]);
 
   ConditionalErrorAndReturn(originalPointsArray.get_size(1) == 2 && transformedPointsArray.get_size(1) == 2 && originalPointsArray.get_size(0) == transformedPointsArray.get_size(0),
     "mexEstimateHomography",
     "originalPoints and transformedPoints should be double-precision and Nx2");
 
-  Array_f64 homography = AllocateArrayFromHeap_f64(3, 3);
+  Array<f64> homography = AllocateArrayFromHeap<f64>(3, 3);
 
-  FixedLengthList_Point_f64 originalPointsList = AllocateFixedLengthListFromHeap_Point_f64(originalPointsArray.get_size(0));
-  FixedLengthList_Point_f64 transformedPointsList = AllocateFixedLengthListFromHeap_Point_f64(originalPointsArray.get_size(0));
+  FixedLengthList<Point<f64> > originalPointsList = AllocateFixedLengthListFromHeap<Point<f64> >(originalPointsArray.get_size(0));
+  FixedLengthList<Point<f64> > transformedPointsList = AllocateFixedLengthListFromHeap<Point<f64> >(originalPointsArray.get_size(0));
 
   const s32 numBytes = 10000000;
   MemoryStack scratch(calloc(numBytes,1), numBytes);
@@ -53,12 +55,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     const f64 x1 = *transformedPointsArray.Pointer(i,0);
     const f64 y1 = *transformedPointsArray.Pointer(i,1);
 
-    originalPointsList.PushBack(Point_f64(x0, y0));
-    transformedPointsList.PushBack(Point_f64(x1, y1));
+    originalPointsList.PushBack(Point<f64>(x0, y0));
+    transformedPointsList.PushBack(Point<f64>(x1, y1));
   }
 
-  // Print_FixedLengthList_Point_f64(originalPointsList, "originalPointsList");
-  // Print_FixedLengthList_Point_f64(transformedPointsList, "transformedPointsList");
+  // Print_FixedLengthList_Point<f64>(originalPointsList, "originalPointsList");
+  // Print_FixedLengthList_Point<f64>(transformedPointsList, "transformedPointsList");
 
   const Result result = EstimateHomography(originalPointsList, transformedPointsList, homography, scratch);
 
@@ -66,7 +68,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     "mexEstimateHomography",
     "EstimateHomography failed");
 
-  plhs[0] = arrayToMxArray_f64(homography);
+  plhs[0] = arrayToMxArray<f64>(homography);
 
   free(originalPointsArray.get_rawDataPointer());
   free(transformedPointsArray.get_rawDataPointer());
