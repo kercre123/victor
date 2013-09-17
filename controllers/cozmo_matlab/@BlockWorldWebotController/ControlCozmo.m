@@ -62,14 +62,12 @@ switch (key)
         
     case this.CKEY_HEAD_UP % s-key: move head up
         
-        this.pitch_angle = this.pitch_angle + 0.01;
-        wb_motor_set_position(this.head_pitch, this.pitch_angle);
-        
+        this.SetHeadAngle(this.pitch_angle + 0.01);
+                
     case this.CKEY_HEAD_DOWN % x-key: move head down
         
-        this.pitch_angle = this.pitch_angle - 0.01;
-        wb_motor_set_position(this.head_pitch, this.pitch_angle);
-        
+        this.SetHeadAngle(this.pitch_angle - 0.01);
+                
     case this.CKEY_LIFT_UP % a-key: move lift up
         
         this.lift_angle = this.lift_angle + 0.02;
@@ -98,7 +96,6 @@ switch (key)
     case this.CKEY_UNLOCK % spacebar-key: unlock
         
         if this.locked == true
-            
             this.locked = false;
             this.unlockhysteresis = this.HIST;
             wb_connector_unlock(this.con_lift);
@@ -109,11 +106,23 @@ switch (key)
         
         finished = true;
         
+    case this.CKEY_DOCK
+        
+        if strcmp(this.GetOperationMode, 'DOCK')
+            this.SetOperationMode('');
+        else
+            this.SetOperationMode('DOCK');
+        end
+        
     otherwise
         if DEBUG
             fprintf('Key pressed: %s (%d)\n', key);
         end
-        this.SetAngularWheelVelocity(0, 0);
+        
+        if ~strcmp(this.GetOperationMode(), 'DOCK')
+            % Only move while direction key is being pressed
+            this.SetAngularWheelVelocity(0, 0);
+        end
         
 end % SWITCH(key)
 

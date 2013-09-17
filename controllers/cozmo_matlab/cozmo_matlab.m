@@ -15,8 +15,7 @@
 % path)
 run(fullfile('..', '..', '..', 'products-cozmo', 'matlab', 'initCozmoPath')); 
 
-
-useMatlabDisplay = false;
+useMatlabDisplay = true;
 doProfile = false;
 headAngleSigma = .1; % Noise in head pitch angle measurement, in degrees
 embeddedConversions = EmbeddedConversionsManager();
@@ -46,8 +45,14 @@ blockWorld = BlockWorld('CameraType', 'webot', ...
     'HasMat', true, 'ZDirection', 'down', ...
     'GroundTruthPoseFcn', @(name)GetNodePose(blockWorldController,name), ...
     'UpdateObservedBlockPoseFcn', @(blockID,pose,trans)UpdateClosestBlockObservation(blockWorldController,blockID,pose,trans), ...
-    'GetHeadPitchFcn', @()GetHeadAngle(blockWorldController, headAngleSigma));
+    'GetHeadPitchFcn', @()GetHeadAngle(blockWorldController, headAngleSigma), ...
+    'SetHeadPitchFcn', @(angle)SetHeadAngle(blockWorldController, angle), ...
+    'SetLiftPositionFcn', @(pos)SetLiftPosition(blockWorldController, pos), ...
+    'IsBlockLockedFcn', @()blockWorldController.locked, ...
+    'DriveFcn', @(left,right)SetAngularWheelVelocity(blockWorldController, left, right));
 
+blockWorldController.setOperationModeFcn = @(mode)setOperationMode(blockWorld, 1, mode);
+blockWorldController.getOperationModeFcn = @()getOperationMode(blockWorld, 1);
 
 % main loop:
 % perform simulation steps of TIME_STEP milliseconds
@@ -60,8 +65,8 @@ while wb_robot_step(blockWorldController.TIME_STEP) ~= -1
     blockWorld.update();
     
     if useMatlabDisplay
-        blockWorld.draw('drawWorld', false, 'drawReprojection', false, ...
-            'drawOverheadMap', true);
+        blockWorld.draw('drawWorld', true, 'drawReprojection', false, ...
+            'drawOverheadMap', false);
                 
         if done
             if doProfile

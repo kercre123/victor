@@ -3,7 +3,7 @@ PROTO Block2x1 [
   field SFString name "Block000"
   field SFVec3f translation 0 0.03 0
   field SFRotation rotation 0 1 0 0
-  field SFFloat density 2000
+  field SFFloat density 500
   field SFColor blockColor 1 0 0
 
   field MFString facemarker1 "textures/code1x1.png"

@@ -24,6 +24,7 @@ classdef BlockWorldWebotController < handle
         DRIVE_VELOCITY_SLOW = 5.0;
         TURN_VELOCITY_SLOW  = 1.0;
         HIST                = 50;
+        LIFT_DOWN           = -0.5;
         LIFT_CENTER         = -0.275;
         LIFT_UP             = 0.635;
         LIFT_UPUP           = 0.7;
@@ -36,6 +37,7 @@ classdef BlockWorldWebotController < handle
         CKEY_HEAD_UP    = 83;
         CKEY_HEAD_DOWN  = 88;
         CKEY_UNLOCK     = 32;
+        CKEY_DOCK       = double('D');
         
     end % Constant Properties
     
@@ -57,6 +59,9 @@ classdef BlockWorldWebotController < handle
         pitch_angle = 0;
         lift_angle  = BlockWorldWebotController.LIFT_CENTER;
         locked      = false;
+        
+        getOperationModeFcn = [];
+        setOperationModeFcn = [];
         
         % World Nodes
         rootNode;
@@ -176,6 +181,15 @@ classdef BlockWorldWebotController < handle
             
         end % CONSTRUCTOR BlockWorldWebotController()
         
+        function success = takeStep(this)
+            success = wb_robot_step(this.TIME_STEP) ~= -1;            
+        end
+        
+        function SetHeadAngle(this, angle)
+            this.pitch_angle = angle;
+            wb_motor_set_position(this.head_pitch, this.pitch_angle);
+        end
+        
         function angle = GetHeadAngle(this, sigmaDegrees)
             
             angle = wb_motor_get_position(this.head_pitch);
@@ -190,6 +204,23 @@ classdef BlockWorldWebotController < handle
         function SetLiftAngle(this, angle)
             wb_motor_set_position(this.lift,   angle);
             wb_motor_set_position(this.lift2, -angle);
+        end
+        
+        function SetLiftPosition(this, position)
+            
+            switch(position)
+                case 'DOWN'
+                    this.SetLiftAngle(this.LIFT_DOWN);
+                case 'DOCK'
+                    this.SetLiftAngle(this.LIFT_CENTER);
+                case 'UP'
+                    this.SetLiftAngle(this.LIFT_UP);
+                case {'UP_PLUS', 'UPUP'}
+                    this.SetLiftAngle(this.LIFT_UPUP);
+                otherwise
+                    error('Unrecognized lift position "%s".', position);
+            end
+            
         end
 
         function SetAngularWheelVelocity(this, left, right)
@@ -222,6 +253,21 @@ classdef BlockWorldWebotController < handle
                 'cc', [width height]/2, 'kc', zeros(5,1), 'alpha_c', 0);
         end
         
+        function mode = GetOperationMode(this)
+            if ~isempty(this.getOperationModeFcn)
+                mode = this.getOperationModeFcn();
+            else
+                warning('No getOperationModeFcn() provided.');
+            end
+        end
+        
+        function SetOperationMode(this, mode)    
+            if ~isempty(this.setOperationModeFcn)
+                this.setOperationModeFcn(mode);
+            else
+                warning('No setOperationModeFcn() provided.');
+            end
+        end
         
     end        
     
