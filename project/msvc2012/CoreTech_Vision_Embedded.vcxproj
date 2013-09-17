@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\embedded\approximateConnectedComponents.cpp" />
+    <ClCompile Include="..\..\src\embedded\connectedComponents.cpp" />
     <ClCompile Include="..\..\src\embedded\array2d_vision.cpp" />
     <ClCompile Include="..\..\src\embedded\binomialFilter.cpp" />
     <ClCompile Include="..\..\src\embedded\computeCharacteristicScale.cpp" />

@@ -30,11 +30,11 @@
     <ClCompile Include="..\..\src\embedded\computeCharacteristicScale.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\embedded\approximateConnectedComponents.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\embedded\detectFiducialMarkers.cpp" />
     <ClCompile Include="..\..\src\embedded\thresholdScaleImage.cpp" />
+    <ClCompile Include="..\..\src\embedded\connectedComponents.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\anki\embeddedVision\array2d_vision.h">
