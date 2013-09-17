@@ -119,7 +119,7 @@ namespace Anki
       return true;
     }
 
-    s32 MemoryStack::LargestPossibleAllocation()
+    s32 MemoryStack::ComputeLargestPossibleAllocation()
     {
       const size_t bufferNextFree = reinterpret_cast<size_t>(buffer) + usedBytes;
       const size_t bufferNextFreePlusHeaderAndAlignment = RoundUp<size_t>(bufferNextFree+HEADER_LENGTH, MEMORY_ALIGNMENT);
