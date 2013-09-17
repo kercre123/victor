@@ -78,15 +78,16 @@ Supervisor {
                     endPoint Solid {
                       translation 0 0 -0.035
                       children [
-                        DEF CAM_LIFT Camera {
-                          translation 0 0 -0.001
-                          name "cam_lift"
-                          width 320
-                          height 240
-                          near 0.001
-                          windowPosition 0.45339 0.0923077
-                          pixelSize 0.5
-                        }
+                      
+                        #DEF CAM_LIFT Camera {
+                        #  translation 0 0 -0.001
+                        #  name "cam_lift"
+                        #  width 320
+                        #  height 240
+                        #  near 0.001
+                        #  windowPosition 0.45339 0.0923077
+                        #  pixelSize 0.5
+                        #}
                         Connector {
                           translation 0 0 -0.0025
                           rotation 0 1 0 3.14159
