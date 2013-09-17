@@ -236,24 +236,33 @@ namespace Anki
       return RESULT_OK;
     } // Result SortConnectedComponentSegments(FixedLengthList_ConnectedComponentSegment &components)
 
-    // The list of components may have unused ids. This function compresses the set of ids, so that
-    // max(ids) == numberOfUniqueValues(ids). For example, the list of ids {0,4,5,7} would be
-    // changed to {0,1,2,3}.
-    //
-    // For a components parameter that has a maximum id of N, this function requires
-    // 3n + 3 bytes of scratch.
-    //
-    // TODO: If scratch usage is a bigger issue than computation time, this could be done with a bitmask
-    Result CompressConnectedComponentSegmentIds(FixedLengthList_ConnectedComponentSegment &components, MemoryStack scratch)
+    // Iterate through components, and return the maximum id
+    u16 FindMaximumId(FixedLengthList_ConnectedComponentSegment &components)
     {
-      s32 numUsedIds = 0;
-
-      // Compute the maximum id
       u16 maximumId = 0;
       const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
       for(s32 i=0; i<components.get_size(); i++) {
         maximumId = MAX(maximumId, components_constRowPointer[i].id);
       }
+
+      return maximumId;
+    }
+
+    // The list of components may have unused ids. This function compresses the set of ids, so that
+    // max(ids) == numberOfUniqueValues(ids). The function then returns the maximum id. For example, the list of ids {0,4,5,7} would be
+    // changed to {0,1,2,3}, and it would return 3.
+    //
+    // For a components parameter that has a maximum id of N, this function requires
+    // 3n + 3 bytes of scratch.
+    //
+    // TODO: If scratch usage is a bigger issue than computation time, this could be done with a bitmask
+    u16 CompressConnectedComponentSegmentIds(FixedLengthList_ConnectedComponentSegment &components, MemoryStack scratch)
+    {
+      s32 numUsedIds = 0;
+
+      const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
+
+      const u16 maximumId = FindMaximumId(components);
 
       // Compute the number of unique components
       u8 *usedIds = reinterpret_cast<u8*>(scratch.Allocate(maximumId+1));
@@ -285,7 +294,42 @@ namespace Anki
         components_rowPointer[i].id = idLookupTable[components_rowPointer[i].id];
       }
 
-      return RESULT_OK;
+      return currentCompressedId - 1;
     } // Result CompressConnectedComponentSegmentIds(FixedLengthList_ConnectedComponentSegment &components, MemoryStack scratch)
+
+    // Goes through the list components, and computes the number of pixels for each.
+    // For any componentId with less than minimumNumPixels pixels, all ConnectedComponentSegment with that id will have their ids set to zero
+    //
+    // For a components parameter that has a maximum id of N, this function requires
+    // 4n + 4 bytes of scratch.
+    Result MarkSmallComponentsAsInvalid(FixedLengthList_ConnectedComponentSegment &components, const s32 minimumNumPixels, MemoryStack scratch)
+    {
+      const u16 maximumId = FindMaximumId(components);
+
+      const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
+
+      // Compute the number of unique components
+      s32 *componentSizes = reinterpret_cast<s32*>(scratch.Allocate( sizeof(u32)*(maximumId+1) ));
+      memset(componentSizes, 0, sizeof(u32)*(maximumId+1));
+
+      for(s32 i=0; i<components.get_size(); i++) {
+        const u16 id = components_constRowPointer[i].id;
+        const s16 length = components_constRowPointer[i].xEnd - components_constRowPointer[i].xStart + 1;
+
+        componentSizes[id] += length;
+      }
+
+      // TODO: would it be faster to compare against zero?
+      ConnectedComponentSegment * restrict components_rowPointer = components.Pointer(0);
+      for(s32 i=0; i<components.get_size(); i++) {
+        const u16 id = components_rowPointer[i].id;
+
+        if(componentSizes[id] < minimumNumPixels) {
+          components_rowPointer[i].id = 0;
+        }
+      }
+
+      return RESULT_OK;
+    }
   } // namespace Embedded
 } // namespace Anki

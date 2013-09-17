@@ -78,8 +78,8 @@ GTEST_TEST(CoreTech_Vision, CompressComponentIds)
   *components.Pointer(8) = component8;
   *components.Pointer(9) = component9;
 
-  const Result result = CompressConnectedComponentSegmentIds(components, ms);
-  ASSERT_TRUE(result == RESULT_OK);
+  const u16 result = CompressConnectedComponentSegmentIds(components, ms);
+  ASSERT_TRUE(result == 6);
 
   ASSERT_TRUE(components.Pointer(0)->id == 3);
   ASSERT_TRUE(components.Pointer(1)->id == 4);
@@ -403,7 +403,7 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
     {15073280, 13107200, 11796480, 11468800, 11468800, 11468800, 11468800, 11796480, 12517376, 12255232, 10813440, 10158080, 10551296, 10158080, 7929856, 5046272}};
 
   // Allocate memory from the heap, for the memory allocator
-  const s32 numBytes = MIN(MAX_BYTES, 5000);
+  const s32 numBytes = MIN(MAX_BYTES, 10000);
 
   MemoryStack ms(&buffer[0], numBytes);
 

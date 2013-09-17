@@ -40,7 +40,7 @@ namespace Anki
       const s32 requiredScratch = image.get_size(0) * RoundUp<s32>(image.get_size(1)*sizeof(u32), MEMORY_ALIGNMENT);
 
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-      DASConditionalErrorAndReturnValue(scratch.LargestPossibleAllocation() >= requiredScratch,
+      DASConditionalErrorAndReturnValue(scratch.ComputeLargestPossibleAllocation() >= requiredScratch,
         RESULT_FAIL, "BinomialFilter", "Insufficient scratch memory");
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
 

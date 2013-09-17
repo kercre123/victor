@@ -23,7 +23,10 @@ namespace Anki
     // 3n + 1 bytes of scratch.
     //
     // TODO: If scratch usage is a bigger issue than computation time, this could be done with a bitmask
-    Result CompressConnectedComponentSegmentIds(FixedLengthList_ConnectedComponentSegment &components, MemoryStack scratch);
+    u16 CompressConnectedComponentSegmentIds(FixedLengthList_ConnectedComponentSegment &components, MemoryStack scratch);
+
+    // Iterate through components, and return the maximum id
+    u16 FindMaximumId(FixedLengthList_ConnectedComponentSegment &components);
 
     // Returns a positive s64 if a > b, a negative s64 is a < b, or zero if they are identical
     // TODO: Doublecheck that this is correct for corner cases
