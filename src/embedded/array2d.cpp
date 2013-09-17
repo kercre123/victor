@@ -1,5 +1,9 @@
 #include "anki/embeddedCommon.h"
 #include <math.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+using namespace std;
 
 namespace Anki
 {
@@ -59,7 +63,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result Array<Point<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    template<> Result Array<Point<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
       DASConditionalWarnAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Point<s16> >::Print", "Array<Point<s16> > is not valid");
@@ -78,6 +82,7 @@ namespace Anki
       return RESULT_OK;
     } // void Array<Point<s16> >::Print() const
 
+#ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
     template<> s32 Array<f32>::Set(const char * const values)
     {
       assert(this->IsValid());
@@ -103,7 +108,9 @@ namespace Anki
 
       return numValuesSet;
     } // s32 Array_f32::Set(const char * const values)
+#endif // #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
 
+#ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
     template<> s32 Array<f64>::Set(const char * const values)
     {
       assert(this->IsValid());
@@ -129,5 +136,6 @@ namespace Anki
 
       return numValuesSet;
     }
+#endif // #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
   } // namespace Embedded
 } // namespace Anki

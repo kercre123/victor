@@ -9,8 +9,8 @@ namespace Anki
   {
     /*! Compute the homography such that "transformedPoints = homography * originalPoints" */
     Result EstimateHomography(
-      const FixedLengthList<Point<f64>> &originalPoints,    //!<
-      const FixedLengthList<Point<f64>> &transformedPoints, //!<
+      const FixedLengthList<Point<f64> > &originalPoints,    //!<
+      const FixedLengthList<Point<f64> > &transformedPoints, //!<
       Array<f64> &homography, //!<
       MemoryStack &scratch //!<
       );

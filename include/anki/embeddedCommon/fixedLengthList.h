@@ -60,6 +60,7 @@ namespace Anki
 
 #pragma mark --- FixedLengthList Implementations ---
 
+#ifndef USING_MOVIDIUS_COMPILER
     template<typename Type> FixedLengthList<Type> AllocateFixedLengthListFromHeap(s32 maximumSize, bool useBoundaryFillPatterns=false)
     {
       // const s32 stride = FixedLengthList<Type>::ComputeRequiredStride(maximumSize, useBoundaryFillPatterns);
@@ -69,6 +70,7 @@ namespace Anki
 
       return mat;
     } // FixedLengthList AllocateFixedLengthListFromHeap_Type(s32 maximumSize, bool useBoundaryFillPatterns)
+#endif // #ifndef USING_MOVIDIUS_COMPILER
 
     template<typename Type> inline Type* FixedLengthList<Type>::Pointer(s32 index)
     {
