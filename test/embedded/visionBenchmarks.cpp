@@ -162,7 +162,7 @@ int BenchmarkTraceBoundary()
   Array<u8> binaryImage(height, width, ms);
   const Point<s16> startPoint(3,3);
   const BoundaryDirection initialDirection = BOUNDARY_N;
-  FixedLengthList<Point<s16>> boundary(MAX_BOUNDARY_LENGTH, ms);
+  FixedLengthList<Point<s16> > boundary(MAX_BOUNDARY_LENGTH, ms);
 
 #ifdef CHECK_FOR_ERRORS
   DASConditionalErrorAndReturnValue(binaryImage.IsValid(), -2, "binaryImage.IsValid()", "");

@@ -209,7 +209,7 @@ namespace Anki
       }
 
       return RESULT_OK;
-    } // Result Extract1dComponents(const u8 * restrict binaryImageRow, const s32 binaryImageWidth, const s32 minComponentWidth, FixedLengthList<Point<s16>> &extractedComponents)
+    } // Result Extract1dComponents(const u8 * restrict binaryImageRow, const s32 binaryImageWidth, const s32 minComponentWidth, FixedLengthList<Point<s16> > &extractedComponents)
 
     // Sort the components by id, y, then xStart
     // TODO: determine how fast this method is, then suggest usage

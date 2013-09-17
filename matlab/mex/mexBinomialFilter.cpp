@@ -14,12 +14,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   ConditionalErrorAndReturn(nrhs == 1 && nlhs == 1, "mexBinomialFilter", "Call this function as following: imgFiltered = mexBinomialFilter(img);");
 
-  Array_u8 img = mxArrayToArray_u8(prhs[0]);
+  Array<u8> img = mxArrayToArray<u8>(prhs[0]);
 
-  ConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Array_u8 img");
+  ConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Array<u8> img");
 
-  Array_u8 imgFiltered = AllocateArrayFromHeap_u8(img.get_size(0), img.get_size(1));
-  ConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Array_u8 imgFiltered");
+  Array<u8> imgFiltered = AllocateArrayFromHeap<u8>(img.get_size(0), img.get_size(1));
+  ConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Array<u8> imgFiltered");
 
   const u32 numBytes = img.get_size(0) * img.get_stride() + 1000;
   MemoryStack scratch(calloc(numBytes,1), numBytes);
@@ -28,7 +28,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     printf("Error: mexBinomialFilter\n");
   }
 
-  plhs[0] = arrayToMxArray_u8(imgFiltered);
+  plhs[0] = arrayToMxArray<u8>(imgFiltered);
 
   free(img.get_rawDataPointer());
   free(imgFiltered.get_rawDataPointer());

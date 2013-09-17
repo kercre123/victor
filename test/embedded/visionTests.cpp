@@ -508,7 +508,7 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
   Array<u8> binaryImage(height, width, ms);
   const Point<s16> startPoint(8,6);
   const BoundaryDirection initialDirection = BOUNDARY_N;
-  FixedLengthList<Point<s16>> boundary(MAX_BOUNDARY_LENGTH, ms);
+  FixedLengthList<Point<s16> > boundary(MAX_BOUNDARY_LENGTH, ms);
 
   ASSERT_TRUE(binaryImage.IsValid());
   ASSERT_TRUE(boundary.IsValid());

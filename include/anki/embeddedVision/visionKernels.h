@@ -34,7 +34,7 @@ namespace Anki
 
     Result ThresholdScaleImage(const Array<u8> &originalImage, const Array<u32> &scaleImage, Array<u8> &binaryImage);
 
-    Result TraceBoundary(const Array<u8> &binaryImage, const Point<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point<s16>> &boundary);
+    Result TraceBoundary(const Array<u8> &binaryImage, const Point<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point<s16> > &boundary);
 
     template<typename T> inline T Interpolate2d(const T pixel00, const T pixel01, const T pixel10, const T pixel11, const T alphaY, const T alphaYinverse, const T alphaX, const T alphaXinverse)
     {

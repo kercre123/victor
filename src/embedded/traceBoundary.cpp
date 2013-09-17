@@ -62,7 +62,7 @@ namespace Anki
       return BOUNDARY_UNKNOWN;
     }
 
-    Result TraceBoundary(const Array<u8> &binaryImage, const Point<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point<s16>> &boundary)
+    Result TraceBoundary(const Array<u8> &binaryImage, const Point<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point<s16> > &boundary)
     {
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
       DASConditionalErrorAndReturnValue(binaryImage.IsValid(),
