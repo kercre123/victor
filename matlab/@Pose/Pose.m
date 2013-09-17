@@ -21,7 +21,6 @@ classdef Pose < handle
     
     properties(GetAccess = 'protected', SetAccess = 'protected')
         parent_;
-        treeDepth;
     end
     
     properties(GetAccess = 'public', SetAccess = 'protected', ...
@@ -29,6 +28,7 @@ classdef Pose < handle
         
         angle;
         axis;
+        treeDepth;
         
     end
     
@@ -45,8 +45,7 @@ classdef Pose < handle
             
             this.name = '';
             this.parent = [];
-            this.treeDepth = 0;
-            
+                        
             switch(nargin)
                 case 0
                     this.updateRotation(zeros(3,1));
@@ -149,11 +148,20 @@ classdef Pose < handle
         function set.parent(this, P)
             if Pose.isRootPose(P)
                 P = [];
-                this.treeDepth = 0;
+                %this.treeDepth = 0;
             else
-                this.treeDepth = P.treeDepth + 1;
+                %this.treeDepth = P.treeDepth + 1;
             end
             this.parent_ = P;
+        end
+        
+        function depth = get.treeDepth(this)
+            depth = 1;
+            nextParent = this.parent;
+            while ~isempty(nextParent)
+                nextParent = nextParent.parent;
+                depth = depth + 1;
+            end
         end
         
         function p = get.parent(this)
