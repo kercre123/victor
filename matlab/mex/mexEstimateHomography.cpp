@@ -1,7 +1,6 @@
-#include "mexWrappers.h"
-#include "mexEmbeddedWrappers.h"
-
 #include "anki/embeddedCommon.h"
+
+#include "mex.h"
 
 #define VERBOSITY 0
 
