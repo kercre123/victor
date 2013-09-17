@@ -26,20 +26,24 @@ GTEST_TEST(CoreTech_Common, MatrixMultiply)
   MemoryStack ms(buffer, numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  const char * mat1Data =
-    "1 2 3 5 7 "
-    "11 13 17 19 23 ";
+#define MatrixMultiply_mat1DataLength 10
+#define MatrixMultiply_mat2DataLength 15
+#define MatrixMultiply_matOutGroundTruthDataLength 6
 
-  const char * mat2Data =
-    "29 31 37 "
-    "41 43 47 "
-    "53 59 61 "
-    "67 71 73 "
-    "79 83 89 ";
+  const f64 mat1Data[MatrixMultiply_mat1DataLength] = {
+    1, 2, 3, 5, 7,
+    11, 13, 17, 19, 23};
 
-  const char * matOutGroundTruthData =
-    "1158 1230 1302 "
-    "4843 5161 5489 ";
+  const f64 mat2Data[MatrixMultiply_mat2DataLength] = {
+    29, 31, 37,
+    41, 43, 47,
+    53, 59, 61,
+    67, 71, 73,
+    79, 83, 89};
+
+  const f64 matOutGroundTruthData[MatrixMultiply_matOutGroundTruthDataLength] = {
+    1158, 1230, 1302,
+    4843, 5161, 5489};
 
   Array<f64> mat1(2, 5, ms);
   Array<f64> mat2(5, 3, ms);
@@ -51,9 +55,9 @@ GTEST_TEST(CoreTech_Common, MatrixMultiply)
   ASSERT_TRUE(matOut.IsValid());
   ASSERT_TRUE(matOut_groundTruth.IsValid());
 
-  mat1.Set(mat1Data);
-  mat2.Set(mat2Data);
-  matOut_groundTruth.Set(matOutGroundTruthData);
+  mat1.Set(mat1Data, MatrixMultiply_mat1DataLength);
+  mat2.Set(mat2Data, MatrixMultiply_mat2DataLength);
+  matOut_groundTruth.Set(matOutGroundTruthData, MatrixMultiply_matOutGroundTruthDataLength);
 
   const Result result = MultiplyMatrices<Array<f64>, f64>(mat1, mat2, matOut);
 
@@ -85,18 +89,21 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
   ASSERT_TRUE(originalPointsList.IsValid());
   ASSERT_TRUE(transformedPointsList.IsValid());
 
-  const char * homographyGroundTruthData =
-    "5.5   -0.3 5.5 "
-    "0.5   0.5  3.3 "
-    "0.001 0.0  1.0 ";
+#define ComputeHomography_homographyGroundTruthDataLength 9
+#define ComputeHomography_originalPointsDataLength 12
 
-  const char * originalPointsData =
-    "0 1 1 0 "
-    "0 0 1 1 "
-    "1 1 1 1 ";
+  const f64 homographyGroundTruthData[ComputeHomography_homographyGroundTruthDataLength] = {
+    5.5, -0.3, 5.5,
+    0.5, 0.5, 3.3,
+    0.001, 0.0, 1.0};
 
-  homography_groundTruth.Set(homographyGroundTruthData);
-  originalPoints.Set(originalPointsData);
+  const f64 originalPointsData[ComputeHomography_originalPointsDataLength] = {
+    0, 1, 1, 0,
+    0, 0, 1, 1,
+    1, 1, 1, 1};
+
+  homography_groundTruth.Set(homographyGroundTruthData, ComputeHomography_homographyGroundTruthDataLength);
+  originalPoints.Set(originalPointsData, ComputeHomography_originalPointsDataLength);
 
   MultiplyMatrices<Array<f64>, f64>(homography_groundTruth, originalPoints, transformedPoints);
 
@@ -135,26 +142,31 @@ GTEST_TEST(CoreTech_Common, SVD)
   MemoryStack ms(buffer, numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  const char * aData =
-    "1 2 3 5 7 11 13 17 "
-    "19 23 29 31 37 41 43 47 ";
+#define SVD_aDataLength 16
+#define SVD_uTGroundTruthDataLength 4
+#define SVD_wGroundTruthDataLength 8
+#define SVD_vTGroundTruthDataLength 64
 
-  const char *uTGroundTruthData =
-    "-0.237504316543999	-0.971386483137875 "
-    "0.971386483137874	-0.237504316543999 ";
+  const f32 aData[SVD_aDataLength] = {
+    1, 2, 3, 5, 7, 11, 13, 17,
+    19, 23, 29, 31, 37, 41, 43, 47};
 
-  const char *wGroundTruthData =
-    "101.885662808124  9.29040979446927  0  0  0  0  0  0 ";
+  const f32 uTGroundTruthData[SVD_uTGroundTruthDataLength] = {
+    -0.237504316543999f,  -0.971386483137875f,
+    0.971386483137874f,  -0.237504316543999f};
 
-  const char *vTGroundTruthData =
-    "-0.183478685625953	-0.223946108965585	-0.283481700610061	-0.307212042374800	-0.369078720749224	-0.416539404278702	-0.440269746043441	-0.487730429572919 "
-    "0.381166774075590	0.378866636898153	0.427695421221120	0.269708382365037	0.213979186509760	-0.101994891202405	-0.259981930058488	-0.575956007770654 "
-    "-0.227185052857744	-0.469620636740071	0.828412170627898	-0.133259849703043	-0.130174916014859	-0.0535189566767408	-0.0151909770076815	0.0614649823304370 "
-    "-0.262651399482480	-0.301123351378262	-0.120288604832971	0.894501576357598	-0.112627300393190	-0.0830469380120526	-0.0682567568214837	-0.0386763944403458 "
-    "-0.324884751171929	-0.243759383675343	-0.107225790475501	-0.104644995857761	0.880843955313500	-0.113994455451022	-0.111413660833282	-0.106252071597804 "
-    "-0.395817444421400	0.0932351870482750	-0.00462734139723796	-0.0491221437364792	-0.0840608134431630	0.826949581878355	-0.217545220460887	-0.306534825139369 "
-    "-0.431283791046136	0.261732472410084	0.0466718831418935	-0.0213607176758380	-0.0665131978214941	-0.202578399456957	0.729388999725311	-0.406676201910152 "
-    "-0.502216484295607	0.598727043133703	0.149270332220156	0.0341621344454443	-0.0314179665781565	-0.261634362127581	-0.376742559902293	0.393041044548282 ";
+  const f32 wGroundTruthData[SVD_wGroundTruthDataLength] = {
+    101.885662808124f, 9.29040979446927f, 0, 0, 0, 0, 0, 0};
+
+  const f32 vTGroundTruthData[SVD_vTGroundTruthDataLength] = {
+    -0.183478685625953f, -0.223946108965585f, -0.283481700610061f, -0.307212042374800f, -0.369078720749224f, -0.416539404278702f, -0.440269746043441f, -0.487730429572919f,
+    0.381166774075590f, 0.378866636898153f, 0.427695421221120f, 0.269708382365037f, 0.213979186509760f, -0.101994891202405f, -0.259981930058488f, -0.575956007770654f,
+    -0.227185052857744f, -0.469620636740071f, 0.828412170627898f, -0.133259849703043f, -0.130174916014859f, -0.0535189566767408f, -0.0151909770076815f, 0.0614649823304370f,
+    -0.262651399482480f, -0.301123351378262f, -0.120288604832971f, 0.894501576357598f, -0.112627300393190f, -0.0830469380120526f, -0.0682567568214837f, -0.0386763944403458f,
+    -0.324884751171929f, -0.243759383675343f, -0.107225790475501f, -0.104644995857761f, 0.880843955313500f, -0.113994455451022f, -0.111413660833282f, -0.106252071597804f,
+    -0.395817444421400f, 0.0932351870482750f, -0.00462734139723796f, -0.0491221437364792f, -0.0840608134431630f, 0.826949581878355f, -0.217545220460887f, -0.306534825139369f,
+    -0.431283791046136f, 0.261732472410084f, 0.0466718831418935f, -0.0213607176758380f, -0.0665131978214941f, -0.202578399456957f, 0.729388999725311f, -0.406676201910152f,
+    -0.502216484295607f, 0.598727043133703f, 0.149270332220156f, 0.0341621344454443f, -0.0314179665781565f, -0.261634362127581f, -0.376742559902293f, 0.393041044548282f};
 
   const s32 m = 2, n = 8;
 
@@ -177,10 +189,10 @@ GTEST_TEST(CoreTech_Common, SVD)
   void * scratch = ms.Allocate(sizeof(float)*(2*n+m));
   ASSERT_TRUE(scratch != NULL);
 
-  a.Set(aData);
-  w_groundTruth.Set(wGroundTruthData);
-  uT_groundTruth.Set(uTGroundTruthData);
-  vT_groundTruth.Set(vTGroundTruthData);
+  a.Set(aData, SVD_aDataLength);
+  w_groundTruth.Set(wGroundTruthData, SVD_uTGroundTruthDataLength);
+  uT_groundTruth.Set(uTGroundTruthData, SVD_wGroundTruthDataLength);
+  vT_groundTruth.Set(vTGroundTruthData, SVD_vTGroundTruthDataLength);
 
   const Result result = svd_f32(a, w, uT, vT, scratch);
 
@@ -400,6 +412,8 @@ GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
 }
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
+#include <iostream>
+
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 {
@@ -417,7 +431,7 @@ GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
   src.at<double>(50, 0) = 5;
   src.at<double>(50, 1) = 6;
   src.at<double>(50, 2) = 7;
-
+  
   cv::GaussianBlur(src, dst, ksize, sigma, sigma, cv::BORDER_REFLECT_101);
 
   std::cout << src.at<double>(50, 0) << " "
@@ -522,12 +536,13 @@ GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 
   Array<u8> simpleArray(3, 3, ms);
 
-  const char * imgData =
-    " 1 1 1 "
-    " 1 1 1 "
-    " 1 1 1 ";
+#define ArraySpecifiedClass_imgDataLength 9
+  const u8 imgData[ArraySpecifiedClass_imgDataLength] = {
+    1, 1, 1,
+    1, 1, 1,
+    1, 1, 1};
 
-  simpleArray.Set(imgData);
+  simpleArray.Set(imgData, ArraySpecifiedClass_imgDataLength);
 
   ASSERT_TRUE((*simpleArray.Pointer(0,0)) == 1); // If the templating fails, this will equal 49
 

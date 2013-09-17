@@ -11,10 +11,13 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 #include "opencv2/opencv.hpp"
 #endif
+
+// #define ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
 
 namespace Anki
 {
@@ -89,10 +92,17 @@ namespace Anki
       // Returns the number of values set
       s32 Set(const Type value);
 
+      // Copy values to this Array.
+      // If the input array does not contain enough elements, the remainder of this Array will be filled with zeros.
+      // Returns the number of values set (not counting extra zeros)
+      s32 Set(const Type * const values, const s32 numValues);
+
       // Parse a space-seperated string, and copy values to this Array.
       // If the string does not contain enough elements, the remainder of the Array will be filled with zeros.
       // Returns the number of values set (not counting extra zeros)
+#ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
       s32 Set(const char * const values);
+#endif
 
       // Similar to Matlabs size(matrix, dimension), and dimension is in {0,1}
       s32 get_size(s32 dimension) const;
@@ -139,6 +149,7 @@ namespace Anki
 
     // Factory method to create an Array from the heap. The data of the returned Array must be freed by the user.
     // This is separate from the normal constructor, as Array objects are not supposed to manage memory
+#ifndef USING_MOVIDIUS_COMPILER
     template<typename Type> Array<Type> AllocateArrayFromHeap(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns=false)
     {
       const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
@@ -147,6 +158,7 @@ namespace Anki
 
       return mat;
     }
+#endif // #ifndef USING_MOVIDIUS_COMPILER
 
     template<typename Type> s32 Array<Type>::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
     {
@@ -166,7 +178,7 @@ namespace Anki
       InvalidateArray();
     }
 
-    template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const bool useBoundaryFillPatterns=false)
+    template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const bool useBoundaryFillPatterns)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
     {
       assert(numCols > 0 && numRows > 0 && dataLength > 0);
@@ -178,7 +190,7 @@ namespace Anki
         useBoundaryFillPatterns);
     }
 
-    template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false)
+    template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
     {
       assert(numCols > 0 && numRows > 0);
@@ -243,7 +255,7 @@ namespace Anki
     }
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
-    template<typename Type> bool Array<Type>::IsElementwiseEqual(const Array &array2, const Type threshold = static_cast<Type>(0.0001)) const
+    template<typename Type> bool Array<Type>::IsElementwiseEqual(const Array &array2, const Type threshold) const
     {
       if(!this->IsEqualSize(array2))
         return false;
@@ -265,7 +277,7 @@ namespace Anki
       return true;
     }
 
-    template<typename Type> bool Array<Type>::IsElementwiseEqual_PercentThreshold(const Array &array2, const double percentThreshold = 0.01, const double absoluteThreshold = 0.0001) const
+    template<typename Type> bool Array<Type>::IsElementwiseEqual_PercentThreshold(const Array &array2, const double percentThreshold, const double absoluteThreshold) const
     {
       if(!this->IsEqualSize(array2))
         return false;
@@ -278,7 +290,7 @@ namespace Anki
           const double value2 = static_cast<double>(array2_rowPointer[x]);
           const double percentThresholdValue = percentThreshold * MAX(value1,value2);
 
-          if(abs(value1 - value2) > percentThresholdValue && fabs(value1 - value2) > absoluteThreshold)
+          if(fabs(value1 - value2) > percentThresholdValue && fabs(value1 - value2) > absoluteThreshold)
             return false;
         }
       }
@@ -300,7 +312,7 @@ namespace Anki
       return true;
     }
 
-    template<typename Type> Result Array<Type>::Print(const char * const variableName = "Array", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const
+    template<typename Type> Result Array<Type>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
       DASConditionalWarnAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
@@ -360,6 +372,29 @@ namespace Anki
       return size[0]*size[1];
     }
 
+    template<typename Type> s32 Array<Type>::Set(const Type * const values, const s32 numValues)
+    {
+      assert(this->IsValid());
+
+      s32 numValuesSet = 0;
+
+      for(s32 y=0; y<size[0]; y++) {
+        Type * restrict rowPointer = Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          if(numValuesSet < numValues)
+          {
+            const Type value = values[numValuesSet++];
+            rowPointer[x] = value;
+          } else {
+            rowPointer[x] = 0;
+          }
+        }
+      }
+
+      return numValuesSet;
+    }
+
+#ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
     template<typename Type> s32 Array<Type>::Set(const char * const values)
     {
       assert(this->IsValid());
@@ -385,6 +420,7 @@ namespace Anki
 
       return numValuesSet;
     }
+#endif // #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
 
     template<typename Type> s32 Array<Type>::get_size(s32 dimension) const
     {
@@ -478,11 +514,12 @@ namespace Anki
     template<> Result Array<u8>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<f32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<f64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
-    Result Array<Point<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<Point<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
 
+#ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
     template<> s32 Array<f32>::Set(const char * const values);
-
     template<> s32 Array<f64>::Set(const char * const values);
+#endif // #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
   } // namespace Embedded
 } //namespace Anki
 
