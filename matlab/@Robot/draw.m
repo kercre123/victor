@@ -164,6 +164,13 @@ else
     updateHelper(this.handles.eyePupil(1), pupil1);
     updateHelper(this.handles.eyePupil(2), pupil2);
 end
+
+if strcmp(this.operationMode, 'DOCK') && ~isempty(this.virtualBlock)
+    draw(this.virtualBlock, 'LineStyle', '--', 'FaceAlpha', 0.25, ...
+        'AxesHandle', AxesHandle);
+else
+    % TODO: hide the virtual block
+end
       
 %axis(AxesHandle, 'equal')
 

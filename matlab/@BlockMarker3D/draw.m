@@ -32,6 +32,8 @@ X = P([1 3 4 2], 1);
 Y = P([1 3 4 2], 2);
 Z = P([1 3 4 2], 3);
 
+dots = getPosition(this, 'World', 'DockingDots');
+
 initHandles = isempty(this.handles) || ...
     ~ishandle(this.handles(1)) || ...
     get(this.handles(1), 'Parent') ~= h_axes;
@@ -41,6 +43,8 @@ if initHandles
     wasHeld = ishold(h_axes);
     hold(h_axes, 'on');
     this.handles(2) = plot3(X(1), Y(1), Z(1), 'k.', 'MarkerSize', 24, 'Parent', h_axes);
+    this.handles(3) = plot3(dots(:,1), dots(:,2), dots(:,3), 'r.', 'Parent', h_axes);
+    
     if labelFaceType
         this.handles(3) = text(mean(X), mean(Y), mean(Z), ...
             sprintf('Face %d', this.faceType), 'Horizontal', 'center'); %#ok<UNRCH>
@@ -51,6 +55,7 @@ if initHandles
 else
     set(this.handles(1), 'XData', X, 'YData', Y, 'ZData', Z);
     set(this.handles(2), 'XData', X(1), 'YData', Y(1), 'ZData', Z(1));
+    set(this.handles(3), 'XData', dots(:,1), 'YData', dots(:,2), 'ZData', dots(:,3));
     if labelFaceType
         set(this.handles(3), 'XData', mean(X), 'YData', mean(Y), 'ZData', mean(Z)); %#ok<UNRCH>
     end

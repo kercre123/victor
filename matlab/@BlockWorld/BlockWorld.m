@@ -25,6 +25,10 @@ classdef BlockWorld < handle
         updateObsBlockPoseFcn;
         updateObsRobotPoseFcn;
         getHeadPitchFcn;
+        setHeadPitchFcn;
+        setLiftPositionFcn;
+        driveRobotFcn;
+        isBlockLockedFcn;
         
     end % PROPERTIES (get-public, set-protected)
     
@@ -55,7 +59,11 @@ classdef BlockWorld < handle
             UpdateObservedRobotPoseFcn = [];
             UpdateObservedBlockPoseFcn = [];
             GetHeadPitchFcn = [];
-                        
+            SetHeadPitchFcn = [];
+            SetLiftPositionFcn = [];
+            DriveFcn = [];
+            IsBlockLockedFcn = [];
+            
             parseVarargin(varargin{:});
             
             assert(islogical(HasMat), 'HasMat should be logical.');
@@ -76,6 +84,10 @@ classdef BlockWorld < handle
             this.updateObsBlockPoseFcn = UpdateObservedBlockPoseFcn;
             this.updateObsRobotPoseFcn = UpdateObservedRobotPoseFcn;
             this.getHeadPitchFcn       = GetHeadPitchFcn;
+            this.setHeadPitchFcn       = SetHeadPitchFcn;
+            this.setLiftPositionFcn    = SetLiftPositionFcn;
+            this.driveRobotFcn         = DriveFcn;
+            this.isBlockLockedFcn      = IsBlockLockedFcn;
             
             this.blockTypeToIndex = containers.Map('KeyType', 'double', ...
                 'ValueType', 'double');
@@ -138,7 +150,11 @@ classdef BlockWorld < handle
                     'CameraType', CameraType, ...
                     'CameraCalibration', CameraCalibration{i}, ...
                     'CameraDevice', CameraDevice{i}, ...
-                    'GetHeadPitchFcn', this.getHeadPitchFcn, ...
+                    'GetHeadPitchFcn', this.getHeadPitchFcn, ... % TODO: make this per robot?
+                    'SetHeadPitchFcn', this.setHeadPitchFcn, ... % TODO: make this per robot?
+                    'DriveFcn', this.driveRobotFcn, ... % TODO: make this per robot?
+                    'SetLiftPositionFcn', this.setLiftPositionFcn, ... % TODO: make this per robot?
+                    'IsBlockLockedFcn', this.isBlockLockedFcn, ... % TODO: make this per robot?
                     'MatCameraCalibration', MatCameraCalibration{i}, ...
                     'MatCameraDevice', MatCameraDevice{i});
             end
@@ -197,6 +213,31 @@ classdef BlockWorld < handle
             if ~isempty(this.updateObsRobotPoseFcn)
                 this.updateObsRobotPoseFcn(robotName, pose, 0.6);
             end
+        end
+        
+        function isDocking = getDockingState(this, whichRobot)
+            assert(whichRobot > 0 || whichRobot <= length(this.robots), ...
+                'Which robot out of range for getDockingState.');
+            
+            isDocking = strcmp(this.robots{whichRobot}.operationMode, 'DOCK');
+        end
+        
+        function mode = getOperationMode(this, whichRobot)
+            assert(whichRobot > 0 || whichRobot <= length(this.robots), ...
+                'Which robot out of range for getDockingMode.');
+            
+            mode = this.robots{whichRobot}.operationMode;
+        end
+        
+        function setOperationMode(this, whichRobot, mode)
+            assert(whichRobot > 0 || whichRobot <= length(this.robots), ...
+                'Which robot out of range for setDockingMode.');
+            
+            this.robots{whichRobot}.operationMode = mode;
+            
+            fprintf('Set operation mode of robot %d, "%s", to %s.\n', ...
+                whichRobot, this.robots{whichRobot}.name, ...
+                this.robots{whichRobot}.operationMode);
         end
         
     end % METHODS (public)

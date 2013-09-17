@@ -24,7 +24,10 @@ classdef Observation
             this.robot = parentRobot;
             world = this.robot.world;
             this.pose = Pose();
-                        
+                 
+            this.robot.visibleBlocks = {};
+            this.robot.visibleFaces = {};
+
             this.markers = simpleDetector(this.image, ...
                 'embeddedConversions', world.embeddedConversions);
             

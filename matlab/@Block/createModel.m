@@ -163,7 +163,7 @@ switch(whichFace)
 end
 
 Rmat = rodrigues(R);
-origin = origin(:) + originAdjustment(:) + Rmat*BlockMarker3D.Width/2*[1 0 -1]';
+origin = origin(:) + originAdjustment(:) + Rmat*BlockMarker3D.ReferenceWidth/2*[1 0 -1]';
 
 index = this.faceTypeToIndex.Count + 1;
 this.faceTypeToIndex(faceType) = index;

@@ -27,9 +27,14 @@ classdef Robot < handle
         R_headCam;
         T_headCam;
         
-        camPoseCov;
-        getHeadPitchFcn; % query current head pitch angle
+        % for auto-docking
+        dockingBlock = [];
+        dockingFace  = [];
+        virtualBlock = []; 
+        virtualFace  = [];
         
+        camPoseCov;
+                        
         % For drawing:
         appearance = struct( ...
             'BodyColor', [.7 .7 0], ...
@@ -56,6 +61,7 @@ classdef Robot < handle
         
         pose;
         origin;
+        operationMode;
         
     end
     
@@ -68,11 +74,23 @@ classdef Robot < handle
     properties(GetAccess = 'public', SetAccess = 'public')
         
         observationWindow = {};
+                
+        visibleBlocks;
+        visibleFaces;
         
     end % PROPERTIES (get-public, set-protected)
     
     properties(GetAccess = 'protected', SetAccess = 'protected')
         pose_;
+        operationMode_ = '';
+        
+        getHeadPitchFcn; % query current head pitch angle
+        setHeadPitchFcn;
+        
+        driveFcn; 
+        setLiftPositionFcn;
+        isBlockLockedFcn;
+        
     end
     
     methods(Access = 'public')
@@ -86,6 +104,10 @@ classdef Robot < handle
             MatCameraDevice = [];
             MatCameraCalibration = [];
             GetHeadPitchFcn = [];
+            SetHeadPitchFcn = [];
+            SetLiftPositionFcn = [];
+            DriveFcn = [];
+            IsBlockLockedFcn = [];
             
             appearanceArgs = parseVarargin(varargin);
             
@@ -128,10 +150,42 @@ classdef Robot < handle
                 this.getHeadPitchFcn = @()0;
             else
                 assert(isa(GetHeadPitchFcn, 'function_handle'), ...
-                    'GetHeadCameraPoseFcn should be a function handle.');
+                    'GetHeadPitchFcn should be a function handle.');
                 this.getHeadPitchFcn = GetHeadPitchFcn;
             end
             
+            if isempty(SetHeadPitchFcn)
+                this.setHeadPitchFcn = @(angle)0;
+            else
+                assert(isa(SetHeadPitchFcn, 'function_handle'), ...
+                    'SetHeadPitchFcn should be a function handle.');
+                this.setHeadPitchFcn = SetHeadPitchFcn;
+            end
+            
+            if isempty(SetLiftPositionFcn)
+                this.setLiftPositionFcn = @(pos)0;
+            else
+                assert(isa(SetLiftPositionFcn, 'function_handle'), ...
+                    'SetLiftPositionFcn should be a function handle.');
+                this.setLiftPositionFcn = SetLiftPositionFcn;
+            end
+            
+            if isempty(DriveFcn)
+                this.driveFcn = @(left,right) 0;
+            else
+                assert(isa(DriveFcn, 'function_handle'), ...
+                    'DriveFcn should be a function handle.');
+                this.driveFcn = DriveFcn;
+            end
+            
+            if isempty(IsBlockLockedFcn)
+                this.isBlockLockedFcn = @()false;
+            else
+                assert(isa(IsBlockLockedFcn, 'function_handle'), ...
+                    'IsBlockLockedFcn should be a function handle.');
+                this.isBlockLockedFcn = IsBlockLockedFcn;
+            end
+                
             this.camera = Camera('device', CameraDevice, ...
                 'deviceType', CameraType, ...
                 'calibration', CameraCalibration, ...
@@ -150,6 +204,19 @@ classdef Robot < handle
             end
         end
         
+        function drive(this, leftWheelVelocity, rightWheelVelocity)
+            this.driveFcn(leftWheelVelocity, rightWheelVelocity);
+        end
+        
+        function setLiftPosition(this, position)
+            this.setLiftPositionFcn(position);
+        end
+               
+        function tiltHead(this, angleInc)
+            this.setHeadPitchFcn(this.getHeadPitchFcn() + angleInc);
+            this.updateHeadPose();
+        end        
+        
         function updateHeadPose(this)
             % TODO: return error too and adjust covariance
            
@@ -163,7 +230,10 @@ classdef Robot < handle
                 Rpitch*this.T_headCam);
         end
 
-
+        function locked = isBlockLocked(this)
+            locked = this.isBlockLockedFcn();
+        end
+        
     end % METHODS (public)
     
     methods
@@ -187,6 +257,22 @@ classdef Robot < handle
             this.pose_.update(P.Rmat, P.T, P.sigma);
         end
         
+        function set.operationMode(this, mode)
+            % If we are turning off docking mode, reset stuff
+            if strcmp(this.operationMode_, 'DOCK') && ...
+                    ~strcmp(mode, 'DOCK')
+                
+                this.dockingBlock = [];
+                this.dockingFace  = [];
+                this.virtualBlock = [];
+                this.virtualFace  = [];
+            end
+            this.operationMode_ = mode;
+        end
+        
+        function mode = get.operationMode(this)
+            mode = this.operationMode_;
+        end
     end
     
 end % CLASSDEF Robot

@@ -120,6 +120,9 @@ for i_blockObs = 1:numBlocks
         fprintf('Adding a new block with type %d.\n', blockType);
         this.blocks{blockType}{end+1} = B_new{i_blockObs}; 
         
+        robot.visibleBlocks{end+1} = this.blocks{blockType}{end};
+        robot.visibleFaces{end+1}  = markers2D{1}.faceType;
+        
         this.updateObsBlockPose(blockType, B_new{i_blockObs}.pose);
     else
         if length(i_match) > 1
@@ -130,6 +133,9 @@ for i_blockObs = 1:numBlocks
         
         % Merge this new observation into pose of existing block of this type
         B_match = this.blocks{blockType}{i_match};
+                
+        robot.visibleBlocks{end+1} = this.blocks{blockType}{i_match};
+        robot.visibleFaces{end+1}  = markers2D{1}.faceType;
         
         switch(mergeMethod)
             case 'mean'

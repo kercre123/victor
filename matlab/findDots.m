@@ -43,11 +43,15 @@ dotCenters = localMaxima(sortIndex(1:4));
 
 [ycen,xcen] = ind2sub(size(img), dotCenters);
 
-theta = cart2pol(xcen,ycen);
+theta = cart2pol(xcen-mean(xcen),ycen-mean(ycen));
 [~,sortIndex] = sort(theta);
 
 xcen = xcen(sortIndex);
 ycen = ycen(sortIndex);
+
+% Return as upper left, lower left, upper right, lower rihgt:
+xcen = xcen([1 4 2 3]);
+ycen = ycen([1 4 2 3]);
 
 if nargout == 0
     hold off, imagesc(img), axis image, hold on

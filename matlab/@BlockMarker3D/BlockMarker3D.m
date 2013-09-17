@@ -3,24 +3,25 @@ classdef BlockMarker3D < handle
     properties(GetAccess = 'public', Constant = true)
         % Width of the inside or outside of the square fiducial in mm.  
         % Sets scale for the whole world!
-        Width = BlockMarker3D.setWidth(BlockMarker2D.UseOutsideOfSquare);
+        TotalWidth          = 38; % in mm
+        FiducialSquareWidth = 4; % in mm
+        FiducialSpacing     = 3; % spacing around fiducial square in mm
         
+        SquareWidthOutside = BlockMarker3D.TotalWidth - 2*BlockMarker3D.FiducialSpacing;
+        SquareWidthInside = BlockMarker3D.SquareWidthOutside - 2*BlockMarker3D.FiducialSquareWidth;
+        
+        ReferenceWidth = ...
+            double( BlockMarker2D.UseOutsideOfSquare) * BlockMarker3D.SquareWidthOutside + ...
+            double(~BlockMarker2D.UseOutsideOfSquare) * BlockMarker3D.SquareWidthInside;
+        
+        CodeSquareWidth = (BlockMarker3D.TotalWidth - ...
+            4*BlockMarker3D.FiducialSpacing - ...
+            2*BlockMarker3D.FiducialSquareWidth) / ...
+            size(BlockMarker2D.Layout, 1);
+                
+        DockingDotSpacing = BlockMarker3D.CodeSquareWidth/2;
+        DockingDotWidth = BlockMarker3D.DockingDotSpacing/2;
     end
-    
-    methods(Access = 'protected', Static = true)
-        
-        function width = setWidth(useOutsideOfSquare)
-        % NOTE: These are measured from Webots world
-        
-        if useOutsideOfSquare
-            width = 31.9; 
-        else
-            width = 24.2;
-        end
-        
-        end % FUNCTION setWidth()
-    
-    end    
     
     properties(GetAccess = 'public', SetAccess = 'public')
         
@@ -29,6 +30,8 @@ classdef BlockMarker3D < handle
         faceType;
                        
         model;
+        dockingTarget;
+        dockingTargetBoundingBox;
         
         ID;
         
@@ -63,26 +66,48 @@ classdef BlockMarker3D < handle
             this.block = parentBlock;
             this.faceType  = faceType_;
   
+            % A square with corners (+/- 1, +/- 1):
+            canonicalSquare = [-1 0 1; -1 0 -1; 1 0 1; 1 0 -1];
+            
             %this.model = this.Width*[0 0 0; 0 0 -1; 1 0 0; 1 0 -1];
-            this.model = this.Width/2*[-1 0 1; -1 0 -1; 1 0 1; 1 0 -1];
+            this.model = this.ReferenceWidth/2*canonicalSquare;
             %this.model = poseInit.applyTo(this.model);
             this.pose = poseInit;
             
+            this.dockingTarget = this.DockingDotSpacing/2*canonicalSquare;
+            this.dockingTargetBoundingBox = ...
+                this.CodeSquareWidth/2*canonicalSquare;
         end
         
-        function varargout = getPosition(this, poseIn)
+        function varargout = getPosition(this, poseIn, whichPart)
             % Gets position of the model points (w.r.t. given pose).
             varargout = cell(1,nargout);
+            
+            if nargin < 3
+                whichPart = 'marker';
+            end
+            
             if nargin < 2
                 P = this.pose;
             else
                 P = this.pose.getWithRespectTo(poseIn);
             end
             
-            [varargout{:}] = P.applyTo(this.model);
+            switch(lower(whichPart))
+                case 'marker'
+                    modelPts = this.model;
+                case 'dockingdots'
+                    modelPts = this.dockingTarget;
+                case 'dockingdotsboundingbox'
+                    modelPts = this.dockingTargetBoundingBox;
+                otherwise
+                    error('Unrecognized BlockMarker3D part to get position of.');
+            end
+            
+            [varargout{:}] = P.applyTo(modelPts);
             
         end
-         
+                
     end % METHODS (public)
    
     methods
