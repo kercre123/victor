@@ -1,5 +1,4 @@
-#include "mexWrappers.h"
-#include "mexEmbeddedWrappers.h"
+#include "mex.h"
 
 #include "anki/embeddedCommon.h"
 #include "anki/embeddedVision.h"
