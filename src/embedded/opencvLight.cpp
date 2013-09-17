@@ -241,10 +241,10 @@ namespace Anki
 
     /*! Performs an Singular Value Decomposition on the mXn, float32 input array. [u^t,w,v^t] = SVD(a); */
     Result svd_f32(
-      Array_f32 &a, //!< Input array mXn
-      Array_f32 &w, //!< W array 1Xm
-      Array_f32 &uT, //!< U-transpose array mXm
-      Array_f32 &vT, //!< V-transpose array nXn
+      Array<f32> &a, //!< Input array mXn
+      Array<f32> &w, //!< W array 1Xm
+      Array<f32> &uT, //!< U-transpose array mXm
+      Array<f32> &vT, //!< V-transpose array nXn
       void * scratch //!< A scratch buffer, with at least "sizeof(float)*(n*2 + m)" bytes
       )
     {
@@ -293,10 +293,10 @@ namespace Anki
 
     /*! Performs an Singular Value Decomposition on the mXn, float64 input array. [u^t,w,v^t] = SVD(a); */
     Result svd_f64(
-      Array_f64 &a,  //!< Input array mXn
-      Array_f64 &w,  //!< W array 1xm
-      Array_f64 &uT, //!< U-transpose array mXm
-      Array_f64 &vT, //!< V-transpose array nXn
+      Array<f64> &a,  //!< Input array mXn
+      Array<f64> &w,  //!< W array 1xm
+      Array<f64> &uT, //!< U-transpose array mXm
+      Array<f64> &vT, //!< V-transpose array nXn
       void * scratch //!< A scratch buffer, with at least "sizeof(f64)*(n*2 + m)" bytes
       )
     {
@@ -326,7 +326,7 @@ namespace Anki
 
       DASConditionalErrorAndReturnValue(vT.get_size(0) == n && vT.get_size(1) == n,
         RESULT_FAIL, "svd_f64", "vT is not nXn");
-
+      
       icvLightSVD_64f(
         a.Pointer(0,0),
         a.get_stride() / sizeof(f64),
@@ -1150,23 +1150,23 @@ namespace Anki
 
     /*! Compute the homography such that "transformedPoints = homography * originalPoints" */
     Result EstimateHomography(
-      const FixedLengthList_Point_f64 &originalPoints,    //!<
-      const FixedLengthList_Point_f64 &transformedPoints, //!<
-      Array_f64 &homography, //!<
+      const FixedLengthList<Point<f64>> &originalPoints,    //!<
+      const FixedLengthList<Point<f64>> &transformedPoints, //!<
+      Array<f64> &homography, //!<
       MemoryStack &scratch //!<
       )
     {
       const s32 count = originalPoints.get_size();
-      const Point_f64 * const M = originalPoints.Pointer(0);
-      const Point_f64 * const m = transformedPoints.Pointer(0);
+      const Point<f64> * M = originalPoints.Pointer(0);
+      const Point<f64> * m = transformedPoints.Pointer(0);
 
-      Array_f64 _LtL = Array_f64(9, 9, scratch);
-      Array_f64 _W = Array_f64(1, 9, scratch); // Swapper
-      Array_f64 _V = Array_f64(9, 9, scratch);
-      Array_f64 _homography0 = Array_f64(3, 3, scratch);
-      Array_f64 _homographyTemp = Array_f64(3, 3, scratch);
+      Array<f64> _LtL = Array<f64>(9, 9, scratch);
+      Array<f64> _W = Array<f64>(1, 9, scratch); // Swapper
+      Array<f64> _V = Array<f64>(9, 9, scratch);
+      Array<f64> _homography0 = Array<f64>(3, 3, scratch);
+      Array<f64> _homographyTemp = Array<f64>(3, 3, scratch);
 
-      Point_f64 cM(0,0), cm(0,0), sM(0,0), sm(0,0);
+      Point<f64> cM(0,0), cm(0,0), sM(0,0), sm(0,0);
 
       for(s32 i = 0; i < count; i++) {
         cm.x += m[i].x; cm.y += m[i].y;
@@ -1189,8 +1189,8 @@ namespace Anki
       sm.x = count/sm.x; sm.y = count/sm.y;
       sM.x = count/sM.x; sM.y = count/sM.y;
 
-      Array_f64 _invHomographyNorm = Array_f64(3, 3, scratch);
-      Array_f64 _homographyNorm2 = Array_f64(3, 3, scratch);
+      Array<f64> _invHomographyNorm = Array<f64>(3, 3, scratch);
+      Array<f64> _homographyNorm2 = Array<f64>(3, 3, scratch);
 
       *_invHomographyNorm.Pointer(0,0) = 1./sm.x;  *_invHomographyNorm.Pointer(0,1) = 0;       *_invHomographyNorm.Pointer(0,2) = cm.x;
       *_invHomographyNorm.Pointer(1,0) = 0;        *_invHomographyNorm.Pointer(1,1) = 1./sm.y; *_invHomographyNorm.Pointer(1,2) = cm.y;
@@ -1222,7 +1222,7 @@ namespace Anki
         const MemoryStack scratch_tmp = scratch;
         MemoryStack scratch(scratch_tmp);
 
-        Array_f64 uT(_LtL.get_size(0), _LtL.get_size(0), scratch);
+        Array<f64> uT(_LtL.get_size(0), _LtL.get_size(0), scratch);
         void * svdScratchBuffer = scratch.Allocate(sizeof(f64)*(_LtL.get_size(1)*2 + _LtL.get_size(0)));
 
         result = svd_f64(_LtL, _W, uT, _V, svdScratchBuffer);
@@ -1241,8 +1241,8 @@ namespace Anki
         }
       }
 
-      MultiplyMatrices<Array_f64,f64>(_invHomographyNorm, _homography0, _homographyTemp);
-      MultiplyMatrices<Array_f64,f64>(_homographyTemp, _homographyNorm2, homography);
+      MultiplyMatrices<Array<f64>,f64>(_invHomographyNorm, _homography0, _homographyTemp);
+      MultiplyMatrices<Array<f64>,f64>(_homographyTemp, _homographyNorm2, homography);
 
       {
         const f64 inverseHomogeneousScale = 1.0 / (*homography.Pointer(2,2));
