@@ -12,6 +12,7 @@ cornerMethod = 'laplacianPeaks'; % 'laplacianPeaks', 'harrisScore', or 'radiusPe
 decodeDownsampleFactor = 1; % use lower resolution image for decoding
 DEBUG_DISPLAY = nargout==0;
 embeddedConversions = EmbeddedConversionsManager; % 1-cp2tform, 2-opencv_cp2tform
+showTiming = false;
 
 parseVarargin(varargin{:});
 
@@ -25,9 +26,9 @@ img = mean(im2double(img),3);
 
 %% Binary Region Detection
 
-binaryImg = simpleDetector_step1_computeCharacteristicScale(maxSmoothingFraction, nrows, ncols, downsampleFactor, img, thresholdFraction, usePyramid, embeddedConversions, DEBUG_DISPLAY);
+binaryImg = simpleDetector_step1_computeCharacteristicScale(maxSmoothingFraction, nrows, ncols, downsampleFactor, img, thresholdFraction, usePyramid, embeddedConversions, showTiming, DEBUG_DISPLAY);
 
-t_binaryRegions = tic;
+if showTiming, t_binaryRegions = tic; end
 
 [numRegions, area, indexList, bb, centroid, components2d] = simpleDetector_step2_computeRegions(binaryImg, usePerimeterCheck, embeddedConversions, DEBUG_DISPLAY);
 
@@ -39,13 +40,17 @@ end
 
 [numRegions, indexList, centroid, components2d] = simpleDetector_step3_simpleRejectionTests(nrows, ncols, numRegions, area, indexList, bb, centroid, usePerimeterCheck, components2d, embeddedConversions, DEBUG_DISPLAY);
 
-fprintf('Binary region detection took %.2f seconds.\n', toc(t_binaryRegions));
+if showTiming
+    fprintf('Binary region detection took %.2f seconds.\n', toc(t_binaryRegions));
+end
 
-t_squareDetect = tic;
+if showTiming, t_squareDetect = tic; end
 
 [quads, quadTforms] = simpleDetector_step4_computeQuads(nrows, ncols, numRegions, indexList, centroid, minQuadArea, cornerMethod, computeTransformFromBoundary, quadRefinementMethod, components2d, embeddedConversions, DEBUG_DISPLAY);
 
-fprintf('Square detection took %.3f seconds.\n', toc(t_squareDetect));
+if showTiming
+    fprintf('Square detection took %.3f seconds.\n', toc(t_squareDetect));
+end
 
 % Optionally do the decoding a lower resolution (which necessitates
 % adjusting the quad positions and their transforms to match that new
@@ -81,7 +86,7 @@ else
 end
 
 % Decode to find BlockMarker2D objects
-[markers, validQuads] = simpleDetector_step5_decodeMarkers(img_decode, quads_decode, quadTforms, minQuadArea, embeddedConversions, DEBUG_DISPLAY);
+[markers, validQuads] = simpleDetector_step5_decodeMarkers(img_decode, quads_decode, quadTforms, minQuadArea, embeddedConversions, showTiming, DEBUG_DISPLAY);
 
 % % Undo the downsampling so that the markers are relative to original
 % % resolution, if necessary.
