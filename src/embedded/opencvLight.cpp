@@ -252,28 +252,28 @@ namespace Anki
       const s32 m = a.get_size(0); // m
       const s32 n = a.get_size(1); // n
 
-      DASConditionalErrorAndReturnValue(a.IsValid(),
+      AnkiConditionalErrorAndReturnValue(a.IsValid(),
         RESULT_FAIL, "svd_f32", "a is not valid");
 
-      DASConditionalErrorAndReturnValue(w.IsValid(),
+      AnkiConditionalErrorAndReturnValue(w.IsValid(),
         RESULT_FAIL, "svd_f32", "w is not valid");
 
-      DASConditionalErrorAndReturnValue(uT.IsValid(),
+      AnkiConditionalErrorAndReturnValue(uT.IsValid(),
         RESULT_FAIL, "svd_f32", "uT is not valid");
 
-      DASConditionalErrorAndReturnValue(vT.IsValid(),
+      AnkiConditionalErrorAndReturnValue(vT.IsValid(),
         RESULT_FAIL, "svd_f32", "vT is not valid");
 
-      DASConditionalErrorAndReturnValue(scratch,
+      AnkiConditionalErrorAndReturnValue(scratch,
         RESULT_FAIL, "svd_f32", "scratch is null");
 
-      DASConditionalErrorAndReturnValue(w.get_size(0) == 1 && w.get_size(1) == n,
+      AnkiConditionalErrorAndReturnValue(w.get_size(0) == 1 && w.get_size(1) == n,
         RESULT_FAIL, "svd_f32", "w is not mXn");
 
-      DASConditionalErrorAndReturnValue(uT.get_size(0) == m && uT.get_size(1) == m,
+      AnkiConditionalErrorAndReturnValue(uT.get_size(0) == m && uT.get_size(1) == m,
         RESULT_FAIL, "svd_f32", "uT is not mXm");
 
-      DASConditionalErrorAndReturnValue(vT.get_size(0) == n && vT.get_size(1) == n,
+      AnkiConditionalErrorAndReturnValue(vT.get_size(0) == n && vT.get_size(1) == n,
         RESULT_FAIL, "svd_f32", "vT is not nXn");
 
       icvLightSVD_32f(
@@ -288,6 +288,11 @@ namespace Anki
         vT.Pointer(0,0),
         vT.get_stride() / sizeof(f32),
         reinterpret_cast<f32*>(scratch));
+
+      AnkiConditionalWarnAndReturnValue(a.IsValid(), RESULT_FAIL, "svd_f32", "a is not valid");
+      AnkiConditionalWarnAndReturnValue(w.IsValid(), RESULT_FAIL, "svd_f32", "w is not valid");
+      AnkiConditionalWarnAndReturnValue(uT.IsValid(), RESULT_FAIL, "svd_f32", "uT is not valid");
+      AnkiConditionalWarnAndReturnValue(vT.IsValid(), RESULT_FAIL, "svd_f32", "vT is not valid");
 
       return RESULT_OK;
     }
@@ -304,28 +309,28 @@ namespace Anki
       const s32 m = a.get_size(0); // m
       const s32 n = a.get_size(1); // n
 
-      DASConditionalErrorAndReturnValue(a.IsValid(),
+      AnkiConditionalErrorAndReturnValue(a.IsValid(),
         RESULT_FAIL, "svd_f64", "a is not valid");
 
-      DASConditionalErrorAndReturnValue(w.IsValid(),
+      AnkiConditionalErrorAndReturnValue(w.IsValid(),
         RESULT_FAIL, "svd_f64", "w is not valid");
 
-      DASConditionalErrorAndReturnValue(uT.IsValid(),
+      AnkiConditionalErrorAndReturnValue(uT.IsValid(),
         RESULT_FAIL, "svd_f64", "uT is not valid");
 
-      DASConditionalErrorAndReturnValue(vT.IsValid(),
+      AnkiConditionalErrorAndReturnValue(vT.IsValid(),
         RESULT_FAIL, "svd_f64", "vT is not valid");
 
-      DASConditionalErrorAndReturnValue(scratch,
+      AnkiConditionalErrorAndReturnValue(scratch,
         RESULT_FAIL, "svd_f64", "scratch is null");
 
-      DASConditionalErrorAndReturnValue(w.get_size(0) == 1 && w.get_size(1) == m,
-        RESULT_FAIL, "svd_f64", "w is not 1Xm");
+      AnkiConditionalErrorAndReturnValue(w.get_size(0) == 1 && w.get_size(1) == n,
+        RESULT_FAIL, "svd_f64", "w is not mXn");
 
-      DASConditionalErrorAndReturnValue(uT.get_size(0) == m && uT.get_size(1) == m,
+      AnkiConditionalErrorAndReturnValue(uT.get_size(0) == m && uT.get_size(1) == m,
         RESULT_FAIL, "svd_f64", "uT is not mXm");
 
-      DASConditionalErrorAndReturnValue(vT.get_size(0) == n && vT.get_size(1) == n,
+      AnkiConditionalErrorAndReturnValue(vT.get_size(0) == n && vT.get_size(1) == n,
         RESULT_FAIL, "svd_f64", "vT is not nXn");
 
       icvLightSVD_64f(
@@ -1249,7 +1254,7 @@ namespace Anki
         result = svd_f64(_LtL, _W, uT, _V, svdScratchBuffer);
       }
 
-      DASConditionalErrorAndReturnValue(result == RESULT_OK,
+      AnkiConditionalErrorAndReturnValue(result == RESULT_OK,
         RESULT_FAIL, "EstimateHomography", "svd_f64 failed");
 
       {

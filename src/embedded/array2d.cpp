@@ -9,9 +9,9 @@ namespace Anki
 {
   namespace Embedded
   {
-    template<> Result Array<u8>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    template<> IN_DDR Result Array<u8>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      DASConditionalWarnAndReturnValue(this->IsValid(),
+      AnkiConditionalWarnAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
 
       printf("%s:\n", variableName);
@@ -27,9 +27,9 @@ namespace Anki
       return RESULT_OK;
     }
 
-    template<> Result Array<f32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    template<> IN_DDR Result Array<f32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      DASConditionalWarnAndReturnValue(this->IsValid(),
+      AnkiConditionalWarnAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
 
       printf("%s:\n", variableName);
@@ -45,9 +45,9 @@ namespace Anki
       return RESULT_OK;
     }
 
-    template<> Result Array<f64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    template<> IN_DDR Result Array<f64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      DASConditionalWarnAndReturnValue(this->IsValid(),
+      AnkiConditionalWarnAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
 
       printf("%s:\n", variableName);
@@ -63,9 +63,9 @@ namespace Anki
       return RESULT_OK;
     }
 
-    template<> Result Array<Point<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    template<> IN_DDR Result Array<Point<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      DASConditionalWarnAndReturnValue(this->IsValid(),
+      AnkiConditionalWarnAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Point<s16> >::Print", "Array<Point<s16> > is not valid");
 
       printf("%s:\n", variableName);
@@ -83,7 +83,7 @@ namespace Anki
     } // void Array<Point<s16> >::Print() const
 
 #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
-    template<> s32 Array<f32>::Set(const char * const values)
+    template<> IN_DDR s32 Array<f32>::Set(const char * const values)
     {
       assert(this->IsValid());
 
@@ -111,7 +111,7 @@ namespace Anki
 #endif // #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
 
 #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
-    template<> s32 Array<f64>::Set(const char * const values)
+    template<> IN_DDR s32 Array<f64>::Set(const char * const values)
     {
       assert(this->IsValid());
 

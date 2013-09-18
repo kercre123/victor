@@ -56,23 +56,20 @@ namespace Anki
       mxArray* GetArray(const std::string name);
 
 #if defined(ANKI_USE_OPENCV)
-      s32 GetIplImage(IplImage *im, const std::string name);
-      s32 PutIplImage(const IplImage *im, const std::string name, bool flipRedBlue);
+      Result GetIplImage(IplImage *im, const std::string name);
+      Result PutIplImage(const IplImage *im, const std::string name, bool flipRedBlue);
 
-      s32 GetCvMat(const CvMat *matrix, const std::string name); //*mat must be initialized before passing to this function
+      Result GetCvMat(const CvMat *matrix, const std::string name); //*mat must be initialized before passing to this function
       CvMat* GetCvMat(const std::string name);                   //like GetCvMat, but also creates the CvMat*
-      s32 PutCvMat(const CvMat *matrix, const std::string name); //*mat must be initialized before passing to this function
+      Result PutCvMat(const CvMat *matrix, const std::string name); //*mat must be initialized before passing to this function
 #endif //#if defined(ANKI_USE_OPENCV)
 
       //Character strings need to be converted slightly to appear correctly in Matlab
-      s32 PutString(const char * characters, s32 nValues, const std::string name);
+      Result PutString(const char * characters, s32 nValues, const std::string name);
 
-      template<typename Type> s32 PutArray(const Array<Type> &matrix, const std::string name)
+      template<typename Type> Result PutArray(const Array<Type> &matrix, const std::string name)
       {
-        if(!ep) {
-          DASError("Anki.PutArray", "Matlab engine is not started/connected");
-          return -1;
-        }
+        AnkiConditionalErrorAndReturnValue(ep, RESULT_FAIL, "Anki.PutArray<Type>", "Matlab engine is not started/connected");
 
         const std::string tmpName = name + std::string("_AnkiTMP");
         const std::string matlabTypeName = Anki::Embedded::ConvertToMatlabTypeString(typeid(Type).name(), sizeof(Type));
@@ -86,34 +83,25 @@ namespace Anki
 
         EvalString("clear %s;", tmpName.data());
 
-        return 0;
+        return RESULT_OK;
       }
 
       template<typename Type> Array<Type> GetArray(const std::string name)
       {
-        if(!ep) {
-          DASError("Anki.GetArray<Type>", "Matlab engine is not started/connected");
-          return Array<Type>(0, 0, NULL, 0, false);
-        }
+        AnkiConditionalErrorAndReturnValue(ep, Array<Type>(0, 0, NULL, 0, false), "Anki.GetArray<Type>", "Matlab engine is not started/connected");
 
         const std::string tmpName = name + std::string("_AnkiTMP");
 
         EvalString("%s=%s';", tmpName.data(), name.data());
         mxArray *arrayTmp = GetArray(tmpName.data());
 
-        if(!arrayTmp) {
-          DASError("Anki.GetArray<Type>", "%s could not be got from Matlab", tmpName.data());
-          return Array<Type>(0, 0, NULL, 0, false);
-        }
+        AnkiConditionalErrorAndReturnValue(arrayTmp, Array<Type>(0, 0, NULL, 0, false), "Anki.GetArray<Type>", "%s could not be got from Matlab", tmpName.data());
 
         const mxClassID ankiVisionClassId = Anki::Embedded::ConvertToMatlabType(typeid(Type).name(), sizeof(Type));
 
         const mxClassID matlabClassId = mxGetClassID(arrayTmp);
 
-        if(matlabClassId != ankiVisionClassId) {
-          DASError("Anki.GetArray<Type>", "matlabClassId != ankiVisionClassId");
-          return Array<Type>(0, 0, NULL, 0, false);
-        }
+        AnkiConditionalErrorAndReturnValue(matlabClassId == ankiVisionClassId, Array<Type>(0, 0, NULL, 0, false), "Anki.GetArray<Type>", "matlabClassId != ankiVisionClassId");
 
         const size_t numCols = mxGetM(arrayTmp);
         const size_t numRows = mxGetN(arrayTmp);
@@ -137,12 +125,9 @@ namespace Anki
         return ankiArray;
       }
 
-      template<typename T> s32 Put(const T * values, s32 nValues, const std::string name)
+      template<typename T> Result Put(const T * values, s32 nValues, const std::string name)
       {
-        if(!ep) {
-          DASError("Anki.Put", "Matlab engine is not started/connected");
-          return -1;
-        }
+        AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.Put", "Matlab engine is not started/connected");
 
         const mwSize dims[1] = {static_cast<mwSize>(nValues)};
         const mxClassID matlabType = Anki::Embedded::ConvertToMatlabType(typeid(T).name(), sizeof(T));
@@ -154,15 +139,12 @@ namespace Anki
         engPutVariable(ep, name.data(), arrayTmp);
         mxDestroyArray(arrayTmp);
 
-        return 0;
+        return RESULT_OK;
       }
 
       template<typename T> T* Get(const std::string name)
       {
-        if(!ep) {
-          DASError("Anki.Get", "Matlab engine is not started/connected");
-          return NULL;
-        }
+        AnkiConditionalErrorAndReturnValue(this->ep, NULL, "Anki.Get", "Matlab engine is not started/connected");
 
         T *valTmp = 0, *val = 0;
 
@@ -177,7 +159,7 @@ namespace Anki
           }
           mxDestroyArray(arrayTmp);
         } else {
-          DASError("Anki.Get", "No variable named %s exists on the workspace.\n", name.data());
+          AnkiError("Anki.Get", "No variable named %s exists on the workspace.\n", name.data());
           return NULL;
         }
 

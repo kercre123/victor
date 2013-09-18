@@ -137,10 +137,7 @@ namespace Anki
 
     std::string Matlab::EvalString(const char * const format, ...)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return "";
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, "", "Anki.", "Matlab engine is not started/connected");
 
       va_list args;
       char *buffer;
@@ -166,10 +163,7 @@ namespace Anki
 
     std::string Matlab::EvalStringEcho(const char * const format, ...)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return "";
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, "", "Anki.", "Matlab engine is not started/connected");
 
       va_list args;
       char *buffer;
@@ -199,10 +193,7 @@ namespace Anki
 
     std::string Matlab::EvalStringExplicit(const char * buffer)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return "";
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, "", "Anki.", "Matlab engine is not started/connected");
 
       engEvalString(this->ep, buffer);
 
@@ -213,10 +204,7 @@ namespace Anki
 
     std::string Matlab::EvalStringExplicitEcho(const char * buffer)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return "";
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, "", "Anki.", "Matlab engine is not started/connected");
 
       engEvalString(this->ep, buffer);
 
@@ -228,10 +216,7 @@ namespace Anki
 
     mxArray* Matlab::GetArray(const std::string name)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return NULL;
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, NULL, "Anki.", "Matlab engine is not started/connected");
 
       mxArray *arr = engGetVariable(this->ep, name.data());
       return arr;
@@ -239,10 +224,7 @@ namespace Anki
 
     MatlabVariableType Matlab::GetType(const std::string name)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return TYPE_UNKNOWN;
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, TYPE_UNKNOWN, "Anki.", "Matlab engine is not started/connected");
 
       char typeName[TEXT_BUFFER_SIZE];
       snprintf(typeName, TEXT_BUFFER_SIZE, "%s_types", name.data());
@@ -270,17 +252,11 @@ namespace Anki
     }
 
 #if defined(ANKI_USE_OPENCV)
-    s32 Matlab::GetCvMat(const CvMat *matrix, std::string name)
+    Result Matlab::GetCvMat(const CvMat *matrix, std::string name)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return -1;
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.", "Matlab engine is not started/connected");
 
-      if(matrix == 0)  {
-        printf("Error: CvMat is not initialized for %s\n", name.data());
-        return -1;
-      }
+      AnkiConditionalErrorAndReturnValue(matrix != NULL, RESULT_FAIL, "Error: CvMat is not initialized for %s\n", name.data());
 
       char tmpName[TEXT_BUFFER_SIZE];
       snprintf(tmpName, TEXT_BUFFER_SIZE, "%s_AnkiTMP", name.data());
@@ -408,17 +384,11 @@ namespace Anki
       return matrix;
     }
 
-    s32 Matlab::PutCvMat(const CvMat *matrix, std::string name)
+    Result Matlab::PutCvMat(const CvMat *matrix, std::string name)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return -1;
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.", "Matlab engine is not started/connected");
 
-      if(matrix == 0) {
-        printf("Error: CvMat is not initialized for %s\n", name.data());
-        return -1;
-      }
+      AnkiConditionalErrorAndReturnValue(matrix != NULL, RESULT_FAIL, "Error: CvMat is not initialized for %s\n", name.data());
 
       char tmpName[TEXT_BUFFER_SIZE];
       snprintf(tmpName, TEXT_BUFFER_SIZE, "%s_AnkiTMP", name.data());
@@ -473,31 +443,21 @@ namespace Anki
     }
 #endif // #if defined(ANKI_USE_OPENCV)
 
-    s32 Matlab::PutString(const char * characters, s32 nValues, const std::string name)
+    Result Matlab::PutString(const char * characters, s32 nValues, const std::string name)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return -1;
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.", "Matlab engine is not started/connected");
 
-      s32 returnVal = Put<s8>((s8*)characters, nValues, name);
+      Result returnVal = Put<s8>((s8*)characters, nValues, name);
       EvalString("%s=char(%s');", name.data(), name.data());
 
       return returnVal;
     }
 
 #if defined(ANKI_USE_OPENCV)
-    s32 Matlab::GetIplImage(IplImage *im, const std::string name)
+    Result Matlab::GetIplImage(IplImage *im, const std::string name)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return -1;
-      }
-
-      if(!im) {
-        printf("Error: im is not initialized for %s.\n", name.data());
-        return -1;
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.", "Matlab engine is not started/connected");
+      AnkiConditionalErrorAndReturnValue(!im, RESULT_FAIL, "Anki.", "Error: im is not initialized for %s.\n", name.data());
 
       char nameTmp[TEXT_BUFFER_SIZE];
       snprintf(nameTmp, TEXT_BUFFER_SIZE, "%s_AnkiTMP", name.data());
@@ -615,17 +575,11 @@ namespace Anki
       return 0;
     }
 
-    s32 Matlab::PutIplImage(const IplImage *im, const std::string name, bool flipRedBlue)
+    Result Matlab::PutIplImage(const IplImage *im, const std::string name, bool flipRedBlue)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return -1;
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.", "Matlab engine is not started/connected");
 
-      if(!im) {
-        printf("Error: image is not initialized for %s\n", name.data());
-        return -1;
-      }
+      AnkiConditionalErrorAndReturnValue(im, RESULT_FAIL, "Anki.", "Error: image is not initialized for %s\n", name.data());
 
       s32 width = im->width, height = im->height, nChannels = im->nChannels;
 
@@ -673,10 +627,7 @@ namespace Anki
 
     s32 Matlab::SetVisible(bool isVisible)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return -1;
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, -1, "Anki.", "Matlab engine is not started/connected");
 
       s32 returnVal = engSetVisible(this->ep, isVisible);
 
@@ -685,10 +636,7 @@ namespace Anki
 
     bool Matlab::DoesVariableExist(const std::string name)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return false;
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, "", "Anki.", "Matlab engine is not started/connected");
 
       EvalString("ans=exist('%s', 'var');", name.data());
 
