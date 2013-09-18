@@ -6,7 +6,7 @@ namespace Anki
   {
     template<> Result Array<ConnectedComponentSegment >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      DASConditionalWarnAndReturnValue(this->IsValid(),
+      AnkiConditionalWarnAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Point<s16> >::Print", "Array<Point<s16> > is not valid");
 
       printf("%s:\n", variableName);
@@ -25,7 +25,7 @@ namespace Anki
 
     template<> Result Array<FiducialMarker >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      DASConditionalWarnAndReturnValue(this->IsValid(),
+      AnkiConditionalWarnAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Point<s16> >::Print", "Array<Point<s16> > is not valid");
 
       printf("%s:\n", variableName);

@@ -533,14 +533,14 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
 }
 
 #if !defined(ANKICORETECHEMBEDDED_USE_GTEST)
-void RUN_ALL_TESTS()
+IN_DDR void RUN_ALL_TESTS()
 {
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
-  CALL_GTEST_TEST(CoreTech_Vision, SortComponents)
-    CALL_GTEST_TEST(CoreTech_Vision, CompressComponentIds);
+  CALL_GTEST_TEST(CoreTech_Vision, SortComponents);
+  CALL_GTEST_TEST(CoreTech_Vision, CompressComponentIds);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d);
   CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);

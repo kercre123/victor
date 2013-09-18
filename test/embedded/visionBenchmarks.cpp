@@ -70,21 +70,21 @@ int BenchmarkBinomialFilter()
   MemoryStack ms(buffer, numBytes);
 
 #ifdef CHECK_FOR_ERRORS
-  DASConditionalErrorAndReturnValue(ms.IsValid(), -1, "ms.IsValid()", "");
+  AnkiConditionalErrorAndReturnValue(ms.IsValid(), -1, "ms.IsValid()", "");
 #endif
 
   Array<u8> image(height, width, ms, false);
   Array<u8> imageFiltered(height, width, ms);
 
 #ifdef CHECK_FOR_ERRORS
-  DASConditionalErrorAndReturnValue(image.IsValid(), -2, "image.IsValid()", "");
-  DASConditionalErrorAndReturnValue(imageFiltered.IsValid(), -3, "imageFiltered.IsValid()", "");
+  AnkiConditionalErrorAndReturnValue(image.IsValid(), -2, "image.IsValid()", "");
+  AnkiConditionalErrorAndReturnValue(imageFiltered.IsValid(), -3, "imageFiltered.IsValid()", "");
 #endif
 
   Result result = BinomialFilter(image, imageFiltered, ms);
 
 #ifdef CHECK_FOR_ERRORS
-  DASConditionalErrorAndReturnValue(result == RESULT_OK, -4, "result == RESULT_OK", "");
+  AnkiConditionalErrorAndReturnValue(result == RESULT_OK, -4, "result == RESULT_OK", "");
 #endif
 
   return 0;
@@ -97,15 +97,15 @@ int BenchmarkDownsampleByFactor()
   MemoryStack ms(buffer, numBytes);
 
 #ifdef CHECK_FOR_ERRORS
-  DASConditionalErrorAndReturnValue(ms.IsValid(), -1, "ms.IsValid()", "");
+  AnkiConditionalErrorAndReturnValue(ms.IsValid(), -1, "ms.IsValid()", "");
 #endif
 
   Array<u8> image(height, width, ms);
   Array<u8> imageDownsampled(height/downsampleFactor, width/downsampleFactor, ms);
 
 #ifdef CHECK_FOR_ERRORS
-  DASConditionalErrorAndReturnValue(image.IsValid(), -2, "image.IsValid()", "");
-  DASConditionalErrorAndReturnValue(imageDownsampled.IsValid(), -3, "imageDownsampled.IsValid()", "");
+  AnkiConditionalErrorAndReturnValue(image.IsValid(), -2, "image.IsValid()", "");
+  AnkiConditionalErrorAndReturnValue(imageDownsampled.IsValid(), -3, "imageDownsampled.IsValid()", "");
 #endif
 
   for(s32 x=0; x<width; x++) {
@@ -115,7 +115,7 @@ int BenchmarkDownsampleByFactor()
   Result result = DownsampleByFactor(image, downsampleFactor, imageDownsampled);
 
 #ifdef CHECK_FOR_ERRORS
-  DASConditionalErrorAndReturnValue(result == RESULT_OK, -4, "result == RESULT_OK", "");
+  AnkiConditionalErrorAndReturnValue(result == RESULT_OK, -4, "result == RESULT_OK", "");
 #endif
 
   return 0;
@@ -128,24 +128,24 @@ int BenchmarkComputeCharacteristicScale()
   MemoryStack ms(buffer, numBytes);
 
 #ifdef CHECK_FOR_ERRORS
-  DASConditionalErrorAndReturnValue(ms.IsValid(), -1, "ms.IsValid()", "");
+  AnkiConditionalErrorAndReturnValue(ms.IsValid(), -1, "ms.IsValid()", "");
 #endif
 
   Array<u8> image(height, width, ms);
 
 #ifdef CHECK_FOR_ERRORS
-  DASConditionalErrorAndReturnValue(image.IsValid(), -2, "image.IsValid()", "");
+  AnkiConditionalErrorAndReturnValue(image.IsValid(), -2, "image.IsValid()", "");
 #endif
 
   Array<u32> scaleImage(height, width, ms);
 #ifdef CHECK_FOR_ERRORS
-  DASConditionalErrorAndReturnValue(scaleImage.IsValid(), -2, "scaleImage.IsValid()", "");
+  AnkiConditionalErrorAndReturnValue(scaleImage.IsValid(), -2, "scaleImage.IsValid()", "");
 #endif
 
   Result result = ComputeCharacteristicScaleImage(image, numPyramidLevels, scaleImage, ms);
 
 #ifdef CHECK_FOR_ERRORS
-  DASConditionalErrorAndReturnValue(result == RESULT_OK, -4, "result == RESULT_OK", "");
+  AnkiConditionalErrorAndReturnValue(result == RESULT_OK, -4, "result == RESULT_OK", "");
 #endif
 
   return 0;
@@ -156,7 +156,7 @@ int BenchmarkTraceBoundary()
   MemoryStack ms(buffer, numBytes);
 
 #ifdef CHECK_FOR_ERRORS
-  DASConditionalErrorAndReturnValue(ms.IsValid(), -1, "ms.IsValid()", "");
+  AnkiConditionalErrorAndReturnValue(ms.IsValid(), -1, "ms.IsValid()", "");
 #endif
 
   Array<u8> binaryImage(height, width, ms);
@@ -165,8 +165,8 @@ int BenchmarkTraceBoundary()
   FixedLengthList<Point<s16> > boundary(MAX_BOUNDARY_LENGTH, ms);
 
 #ifdef CHECK_FOR_ERRORS
-  DASConditionalErrorAndReturnValue(binaryImage.IsValid(), -2, "binaryImage.IsValid()", "");
-  DASConditionalErrorAndReturnValue(boundary.IsValid(), -3, "boundary.IsValid()", "");
+  AnkiConditionalErrorAndReturnValue(binaryImage.IsValid(), -2, "binaryImage.IsValid()", "");
+  AnkiConditionalErrorAndReturnValue(boundary.IsValid(), -3, "boundary.IsValid()", "");
 #endif
 
   // This is a thin, wide, hollow rectangle in the middle of the image
@@ -209,7 +209,7 @@ int BenchmarkTraceBoundary()
   Result result = TraceBoundary(binaryImage, startPoint, initialDirection, boundary);
 
 #ifdef CHECK_FOR_ERRORS
-  DASConditionalErrorAndReturnValue(result == RESULT_OK, -4, "result == RESULT_OK", "");
+  AnkiConditionalErrorAndReturnValue(result == RESULT_OK, -4, "result == RESULT_OK", "");
 #endif
 
   return 0;

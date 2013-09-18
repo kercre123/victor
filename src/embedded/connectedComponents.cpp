@@ -69,10 +69,10 @@ namespace Anki
 
                   //extractedComponents(numStored1dComponents+1, :) = [firstMatchedPreviousId, y, currentComponents1d(iCurrent, 1:2)]; % [firstMatchedPreviousId, y, xStart, xEnd]
                   //newPreviousComponents1d(iCurrent, :) = [currentComponents1d(iCurrent, 1:2), firstMatchedPreviousId];
-                  if(extractedComponents.PushBack(newComponent) != RESULT_OK) {
-                    // TODO: sort the components before returning
-                    DASWarnAndReturnValue(RESULT_FAIL, "extract2dComponents", "Extracted maximum number of 2d components");
-                  }
+                  const Result result = extractedComponents.PushBack(newComponent);
+
+                  // TODO: sort the components before returning
+                  AnkiConditionalWarnAndReturnValue(result != RESULT_OK, RESULT_FAIL, "extract2dComponents", "Extracted maximum number of 2d components");
 
                   newPreviousComponents1d_rowPointer[iCurrent] = newComponent;
                 } else { // if(!foundMatch)
@@ -102,10 +102,10 @@ namespace Anki
             //extractedComponents(numStored1dComponents+1, :) = [firstMatchedPreviousId, y, currentComponents1d(iCurrent, 1:2)]; % [firstMatchedPreviousId, y, xStart, xEnd]
             newPreviousComponents1d_rowPointer[iCurrent] = newComponent;
 
-            if(extractedComponents.PushBack(newComponent) != RESULT_OK) {
-              // TODO: sort the components before returning
-              DASWarnAndReturnValue(RESULT_FAIL, "extract2dComponents", "Extracted maximum number of 2d components");
-            }
+            const Result result = extractedComponents.PushBack(newComponent);
+
+            // TODO: sort the components before returning
+            AnkiConditionalWarnAndReturnValue(result != RESULT_OK, RESULT_FAIL, "extract2dComponents", "Extracted maximum number of 2d components");
           } // if(!foundMatch)
         } // for(s32 iCurrent=0; iCurrent<currentComponents1d.get_size(); iCurrent++)
 
@@ -137,9 +137,9 @@ namespace Anki
 
         if(numChanges == 0) {
           break;
-        } else if(numChanges == MAX_RECURSION_LEVEL) {
-          DASErrorAndReturnValue(RESULT_FAIL, "extract2dComponents", "Issue with equivalentComponents minimum search");
         }
+
+        AnkiConditionalErrorAndReturnValue(numChanges == MAX_RECURSION_LEVEL, RESULT_FAIL, "extract2dComponents", "Issue with equivalentComponents minimum search");
       } // for(s32 iEquivalent=0; iEquivalent<MAX_EQUIVALENT_ITERATIONS; iEquivalent++)
 
       //% disp(extractedComponents(1:numStored1dComponents, :));

@@ -65,21 +65,21 @@ namespace Anki
     IN_DDR Result TraceBoundary(const Array<u8> &binaryImage, const Point<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point<s16> > &boundary)
     {
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-      DASConditionalErrorAndReturnValue(binaryImage.IsValid(),
+      AnkiConditionalErrorAndReturnValue(binaryImage.IsValid(),
         RESULT_FAIL, "TraceBoundary", "binaryImage is not valid");
 
-      DASConditionalErrorAndReturnValue(boundary.IsValid(),
+      AnkiConditionalErrorAndReturnValue(boundary.IsValid(),
         RESULT_FAIL, "TraceBoundary", "boundary is not valid");
 
       // Is the start point inside the inner pixel of the image?
-      DASConditionalErrorAndReturnValue(
+      AnkiConditionalErrorAndReturnValue(
         startPoint.x > 0 &&
         startPoint.y > 0 &&
         static_cast<s32>(startPoint.x) < (binaryImage.get_size(1)-1) &&
         static_cast<s32>(startPoint.y) < (binaryImage.get_size(0)-1),
         RESULT_FAIL, "TraceBoundary", "startPoint is out of bounds");
 
-      DASConditionalErrorAndReturnValue(boundary.get_maximumSize() == MAX_BOUNDARY_LENGTH,
+      AnkiConditionalErrorAndReturnValue(boundary.get_maximumSize() == MAX_BOUNDARY_LENGTH,
         RESULT_FAIL, "TraceBoundary", "boundary must be have a maximum size of MAX_BOUNDARY_LENGTH");
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
 
@@ -103,7 +103,7 @@ namespace Anki
       Point<s16> curPoint(startPoint);
 
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-      DASConditionalErrorAndReturnValue(*(binaryImage.Pointer(curPoint)) != 0,
+      AnkiConditionalErrorAndReturnValue(*(binaryImage.Pointer(curPoint)) != 0,
         RESULT_FAIL, "TraceBoundary", "startPoint must be on a non-zero pixel of binaryImage");
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
 

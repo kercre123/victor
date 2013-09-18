@@ -17,20 +17,20 @@ namespace Anki
       const s32 kernelShift = 4;
 
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-      DASConditionalErrorAndReturnValue(image.IsValid(),
+      AnkiConditionalErrorAndReturnValue(image.IsValid(),
         RESULT_FAIL, "BinomialFilter", "image is not valid");
 
-      DASConditionalErrorAndReturnValue(imageFiltered.IsValid(),
+      AnkiConditionalErrorAndReturnValue(imageFiltered.IsValid(),
         RESULT_FAIL, "BinomialFilter", "imageFiltered is not valid");
 
       assert(16 == (kernel[0] + kernel[1] + kernel[2] + kernel[3] + kernel[4]));
       assert(16 == (1 << kernelShift));
 
       // TODO: implement
-      /*DASConditionalErrorAndReturnValue(AreMatricesEqual_SizeAndType<u8>(image, imageFiltered),
+      /*AnkiConditionalErrorAndReturnValue(AreMatricesEqual_SizeAndType<u8>(image, imageFiltered),
       RESULT_FAIL, "BinomialFilter", "size(image) != size(imageFiltered) (%dx%d != %dx%d)", image.get_size(0), image.get_size(1), image.get_size(0), image.get_size(1));
 
-      DASConditionalErrorAndReturnValue(image.get_rawDataPointer() != imageFiltered.get_rawDataPointer(),
+      AnkiConditionalErrorAndReturnValue(image.get_rawDataPointer() != imageFiltered.get_rawDataPointer(),
       RESULT_FAIL, "BinomialFilter", "image and imageFiltered must be different");*/
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
 
@@ -40,7 +40,7 @@ namespace Anki
       const s32 requiredScratch = image.get_size(0) * RoundUp<s32>(image.get_size(1)*sizeof(u32), MEMORY_ALIGNMENT);
 
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-      DASConditionalErrorAndReturnValue(scratch.ComputeLargestPossibleAllocation() >= requiredScratch,
+      AnkiConditionalErrorAndReturnValue(scratch.ComputeLargestPossibleAllocation() >= requiredScratch,
         RESULT_FAIL, "BinomialFilter", "Insufficient scratch memory");
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
 
