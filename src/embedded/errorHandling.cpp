@@ -1,11 +1,4 @@
-//
-//  Anki.cpp
-//  BaseStation
-//
-//  Created by damjan stulic on 1/2/13.
-//  Ankilight.cpp is based off Anki.cpp
-//  Copyright (c) 2013 Anki. All rights reserved.
-//
+//  errorHandling.cpp is based off DAS.cpp
 
 #include "anki/embeddedCommon.h"
 

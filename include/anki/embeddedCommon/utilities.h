@@ -2,7 +2,7 @@
 #define _ANKICORETECHEMBEDDED_COMMON_UTILITIES_H_
 
 #include "anki/embeddedCommon/config.h"
-#include "anki/embeddedCommon/DASlight.h"
+#include "anki/embeddedCommon/errorHandling.h"
 
 #ifndef MAX
 #define MAX( a, b ) ( ((a) > (b)) ? (a) : (b) )
