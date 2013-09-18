@@ -269,6 +269,14 @@ classdef BlockWorldWebotController < handle
             end
         end
         
+        function ReleaseBlock(this)
+            if this.locked == true
+                this.locked = false;
+                this.unlockhysteresis = this.HIST;
+                wb_connector_unlock(this.con_lift);
+                fprintf('UNLOCKED!\n');
+            end
+        end
     end        
     
 end % CLASSDEF BlockWorldWebotController
