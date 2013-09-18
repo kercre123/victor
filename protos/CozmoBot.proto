@@ -5,6 +5,12 @@ PROTO CozmoBot [
   field SFFloat fieldOfViewDown 2.1
   field SFFloat fieldOfViewHead 1.04
   field SFBool useSphericalHeadCamera FALSE 
+  
+  ##field SFVec3f spotLightTranslation 0 .03 -.03
+  #field SFRotation spotLightRotation 1 0 0 0
+  #field SFFloat spotLightBeamWidth 0.5
+  #field SFFloat spotLightCutOffAngle 0.8
+  #field SFVec3f spotLightDirection 0 0 -1
 ]
 {
 Supervisor {
@@ -290,12 +296,13 @@ Supervisor {
             rotation 1 0 0 0
             children [
               Transform {
-                rotation 1 0 0 -0.7
+                translation 0 0 0 # IS spotLightTranslation #0 .03 -.03
+                rotation 1 0 0 0 # IS spotLightRotation #1 0 0 0
                 children [
                   SpotLight {
-                    beamWidth 0.25
-                    cutOffAngle 0.8
-                    direction 0 1 -1
+                    beamWidth 1 # IS spotLightBeamWidth #0.5
+                    cutOffAngle 1.2 # IS spotLightCutOffAngle #0.8
+                    direction 0 0 -1 # IS spotLightDirection #0 0 -1
                     intensity 0.8
                   }
                 ]
