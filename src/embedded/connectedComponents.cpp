@@ -72,7 +72,7 @@ namespace Anki
                   const Result result = extractedComponents.PushBack(newComponent);
 
                   // TODO: sort the components before returning
-                  AnkiConditionalWarnAndReturnValue(result != RESULT_OK, RESULT_FAIL, "extract2dComponents", "Extracted maximum number of 2d components");
+                  AnkiConditionalWarnAndReturnValue(result == RESULT_OK, RESULT_FAIL, "extract2dComponents", "Extracted maximum number of 2d components");
 
                   newPreviousComponents1d_rowPointer[iCurrent] = newComponent;
                 } else { // if(!foundMatch)
@@ -105,7 +105,7 @@ namespace Anki
             const Result result = extractedComponents.PushBack(newComponent);
 
             // TODO: sort the components before returning
-            AnkiConditionalWarnAndReturnValue(result != RESULT_OK, RESULT_FAIL, "extract2dComponents", "Extracted maximum number of 2d components");
+            AnkiConditionalWarnAndReturnValue(result == RESULT_OK, RESULT_FAIL, "extract2dComponents", "Extracted maximum number of 2d components");
           } // if(!foundMatch)
         } // for(s32 iCurrent=0; iCurrent<currentComponents1d.get_size(); iCurrent++)
 
