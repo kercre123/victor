@@ -4,7 +4,14 @@ DEBUG_DISPLAY = true;
 convergenceThreshold = 0.1; % in velocity
 % TODO: get this from current lift position:
 liftDockHeight = this.appearance.BodyHeight/2;
-liftDockDistance = this.appearance.BodyLength/2 + 15;
+
+% If we're carrying a block, we need to end up closer to the lower block to
+% lay this one on top of it, because the lifter swings back as it goes up.
+if this.isBlockLocked
+    liftDockDistance = this.appearance.BodyLength/2 + 10;
+else
+    liftDockDistance = this.appearance.BodyLength/2 + 15;
+end
 
 docked = false;
 
@@ -18,7 +25,7 @@ assert(~isempty(this.virtualBlock), ...
 desiredFacePose = Pose([0 0 0], [0 liftDockDistance liftDockHeight+this.appearance.BodyHeight/2]);
 this.virtualBlock.pose = desiredFacePose * this.virtualFace.pose.inv;
 this.virtualBlock.pose.parent = this.pose;
-dots3D_goal = this.virtualFace.getPosition(this.camera.pose, 'DockingDots');
+dots3D_goal = this.virtualFace.getPosition(this.camera.pose, 'DockingTarget');
 [u_goal, v_goal] = this.camera.projectPoints(dots3D_goal);
 
 if any(v_goal > 0.9*this.camera.nrows)
@@ -34,22 +41,11 @@ assert(all(u_goal >= 1 & v_goal >= 1 & ...
 face3D = this.dockingFace.getPosition(this.camera.pose);
 [u_face, v_face] = this.camera.projectPoints(face3D);
 if any(u_face < 1 | u_face > this.camera.ncols | v_face < 1 | v_face > this.camera.nrows)
-    % Close up tracking of docking dots and updating block pose estimate:
+    % We can't see the whole marker anymore, so start using the close-up
+    % docking target:
     
-    dockingBox3D = this.dockingFace.getPosition(this.camera.pose, 'DockingDotsBoundingBox');
-    [u_box, v_box] = this.camera.projectPoints(dockingBox3D);
-    mask = roipoly(this.camera.image, u_box([1 2 4 3]), v_box([1 2 4 3]));
-    
-    % Simulate blur from defocus
-    % TODO: remove this!
-    img = separable_filter(this.camera.image, gaussian_kernel(sqrt(sum(mask(:)))/8));
-    try
-        [u,v] = findDots(img, mask);
-    catch E
-        warning('findDots() failed: %s', E.message);
-        docked = false;
-        return;
-    end
+    % NOTE: the extra three returns here are only for debug display below!
+    [u,v, u_box,v_box,img] = this.dockingFace.findDockingTarget(this.camera);
     
 %     % Figure out where the dots are in 3D space, in camera's coordinate frame:
 %     dotsPose = this.camera.computeExtrinsics([u v], this.dockingFace.dockingTarget);
@@ -62,18 +58,18 @@ if any(u_face < 1 | u_face > this.camera.ncols | v_face < 1 | v_face > this.came
 %     this.world.updateObsBlockPose(this.dockingBlock.blockType, this.dockingBlock.pose);
     
 else
-    % We are still far enough away to be updating the block's pose using
-    % the full marker
+    % We are still far enough away to be using the full marker to determine
+    % where the docking target is
         
     % Find the block's docking dots 3D locations, w.r.t. our head camera:
-    dots3D = this.dockingFace.getPosition(this.camera.pose, 'DockingDots');
+    dots3D = this.dockingFace.getPosition(this.camera.pose, 'DockingTarget');
     
     % Project them into the image:
     [u,v] = this.camera.projectPoints(dots3D);
     
     if DEBUG_DISPLAY
         img = this.camera.image;
-        u_box = []; v_box = [];
+        u_box = nan; v_box = nan;
     end
 end
 
@@ -85,8 +81,6 @@ end
 
 [leftVelocity, rightVelocity] = DockingController([u(:) v(:)], [u_goal(:) v_goal(:)]);
 
-fprintf('Left/right velocities = %.2f/%.2f\n', leftVelocity, rightVelocity);
-
 this.drive(leftVelocity, rightVelocity);
 
 docked =  abs(leftVelocity) < convergenceThreshold && ...
@@ -94,29 +88,33 @@ docked =  abs(leftVelocity) < convergenceThreshold && ...
 
 if DEBUG_DISPLAY
     h_fig = namedFigure('Docking');
-    h_axes = findobj(h_fig, 'Type', 'axes');
-    if isempty(h_axes)
-        h_axes = axes('Parent', h_fig);
-        imagesc(img, 'Parent', h_axes, 'Tag', 'DockingImage');
-        hold(h_axes, 'on')
-        plot(u_goal, v_goal, 'bo', 'Parent', h_axes, 'Tag', 'DockingGoal');
-        plot(u, v, 'rx', 'Parent', h_axes, 'Tag', 'DockingCurrent');
-        plot(u_box, v_box, 'r--', 'Parent', h_axes, 'Tag', 'DockingBoundingBox');
+    if docked
+        close(h_fig);
     else
-        set(findobj(h_axes, 'Tag', 'DockingImage'), ...
-            'CData', img);
-        set(findobj(h_axes, 'Tag', 'DockingGoal'), ...
-            'XData', u_goal, 'YData', v_goal);
-        set(findobj(h_axes, 'Tag', 'DockingCurrent'), ...
-            'XData', u, 'YData', v);
-        if ~isempty(u_box)
-            set(findobj(h_axes, 'Tag', 'DockingBoundingBox'), ...
-                'XData', u_box([1 2 4 3 1]), 'YData', v_box([1 2 4 3 1]));
+        h_axes = findobj(h_fig, 'Type', 'axes');
+        if isempty(h_axes)
+            h_axes = axes('Parent', h_fig);
+            imagesc(img, 'Parent', h_axes, 'Tag', 'DockingImage');
+            colormap(h_fig, gray)
+            hold(h_axes, 'on')
+            plot(u_goal, v_goal, 'bo', 'Parent', h_axes, 'Tag', 'DockingGoal');
+            plot(u, v, 'rx', 'Parent', h_axes, 'Tag', 'DockingCurrent');
+            plot(u_box, v_box, 'r--', 'Parent', h_axes, 'Tag', 'DockingBoundingBox');
+        else
+            set(findobj(h_axes, 'Tag', 'DockingImage'), ...
+                'CData', img);
+            set(findobj(h_axes, 'Tag', 'DockingGoal'), ...
+                'XData', u_goal, 'YData', v_goal);
+            set(findobj(h_axes, 'Tag', 'DockingCurrent'), ...
+                'XData', u, 'YData', v);
+            if ~isnan(u_box)
+                set(findobj(h_axes, 'Tag', 'DockingBoundingBox'), ...
+                    'XData', u_box([1 2 4 3 1]), 'YData', v_box([1 2 4 3 1]));
+            end
         end
+        title(h_axes, sprintf('Left/right velocities = %.2f/%.2f\n', ...
+            leftVelocity, rightVelocity));
     end
-    title(h_axes, sprintf('Left/right velocities = %.2f/%.2f\n', ...
-        leftVelocity, rightVelocity));
-    
 end
     
 end % FUNCTION dockWithBlock()
@@ -135,6 +133,8 @@ K_turn  = 0.01;
 K_dist  = 0.02;
 % K_scale = 0.2;
 
+% Note this is simply using the centroid of the target, irrespective of
+% whether it is a single dot or multiple dots!
 obsMean  = mean(obsTarget,1);
 goalMean = mean(goalTarget,1);
 

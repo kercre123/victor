@@ -62,6 +62,7 @@ classdef Robot < handle
         pose;
         origin;
         operationMode;
+        liftPosition;
         
     end
     
@@ -83,6 +84,7 @@ classdef Robot < handle
     properties(GetAccess = 'protected', SetAccess = 'protected')
         pose_;
         operationMode_ = '';
+        liftPosition_ = '';
         
         getHeadPitchFcn; % query current head pitch angle
         setHeadPitchFcn;
@@ -90,6 +92,7 @@ classdef Robot < handle
         driveFcn; 
         setLiftPositionFcn;
         isBlockLockedFcn;
+        releaseBlockFcn;
         
     end
     
@@ -108,6 +111,7 @@ classdef Robot < handle
             SetLiftPositionFcn = [];
             DriveFcn = [];
             IsBlockLockedFcn = [];
+            ReleaseBlockFcn = [];
             
             appearanceArgs = parseVarargin(varargin);
             
@@ -186,6 +190,14 @@ classdef Robot < handle
                 this.isBlockLockedFcn = IsBlockLockedFcn;
             end
                 
+            if isempty(ReleaseBlockFcn)
+                this.releaseBlockFcn = @()0;
+            else
+                assert(isa(ReleaseBlockFcn, 'function_handle'), ...
+                    'ReleaseBlockFcn should be a function handle.');
+                this.releaseBlockFcn = ReleaseBlockFcn;
+            end
+            
             this.camera = Camera('device', CameraDevice, ...
                 'deviceType', CameraType, ...
                 'calibration', CameraCalibration, ...
@@ -208,10 +220,6 @@ classdef Robot < handle
             this.driveFcn(leftWheelVelocity, rightWheelVelocity);
         end
         
-        function setLiftPosition(this, position)
-            this.setLiftPositionFcn(position);
-        end
-               
         function tiltHead(this, angleInc)
             this.setHeadPitchFcn(this.getHeadPitchFcn() + angleInc);
             this.updateHeadPose();
@@ -232,6 +240,10 @@ classdef Robot < handle
 
         function locked = isBlockLocked(this)
             locked = this.isBlockLockedFcn();
+        end
+        
+        function releaseBlock(this)
+            this.releaseBlockFcn();
         end
         
     end % METHODS (public)
@@ -272,6 +284,15 @@ classdef Robot < handle
         
         function mode = get.operationMode(this)
             mode = this.operationMode_;
+        end
+        
+        function set.liftPosition(this, position)
+            this.liftPosition_ = position;
+            this.setLiftPositionFcn(position);
+        end
+               
+        function position = get.liftPosition(this)
+            position = this.liftPosition_;
         end
     end
     

@@ -52,14 +52,31 @@ switch(this.operationMode)
                 % if we're not carrying a block (in which case the lift
                 % should be up)
                 if this.isBlockLocked
-                    this.setLiftPosition('UP');
+                    this.liftPosition = 'UPUP';
                 else
-                    this.setLiftPosition('DOWN');
+                    this.liftPosition = 'DOWN';
                 end
             end
         else
             
-            inPosition = this.dockWithBlockStep();
+            try
+                inPosition = this.dockWithBlockStep();
+            catch E
+                if any(strcmp(E.identifier, ...
+                        {'FindDockingTarget:TooFewLocalMaxima', ...
+                        'FindDockingTarget:BadSpacing'}))
+                    
+                    warning('FindDockingTarget() failed: %s', E.message);
+                    
+                    % Lost the marker, back up until we can see a full marker so we
+                    % can try again
+                    this.operationMode = 'BACK_UP_TO_SEE_MARKER';
+                    
+                    return;
+                else
+                    rethrow(E)
+                end
+            end
             
             if inPosition
                 % Finished positioning the robot for docking!
@@ -68,25 +85,59 @@ switch(this.operationMode)
                 this.drive(0,0);
                 
                 % Put the lift angle in the docking position
-                this.setLiftPosition('DOCK');
-                                
-                % Reset the virtual/docking block stuff to turn off docking mode
-                this.operationMode = 'WAIT_FOR_LOCK';
-               
+                switch(this.liftPosition)
+                    case 'DOWN'
+                        this.liftPosition = 'DOCK';
+                        this.operationMode = 'WAIT_FOR_LOCK';
+                        
+                    case 'UP'
+                        % Lift already up, ready for docking with high
+                        % block
+                        assert(~this.isBlockLocked, ...
+                            'Not expecting to be carrying a block right now.');
+                        this.operationMode = 'WAIT_FOR_LOCK';
+                        
+                    case {'UPUP', 'UP_PLUS'}
+                        if this.isBlockLocked
+                            % Carrying block up high, next we wanna put
+                            % this block down
+                            this.liftPosition = 'UP';
+                            this.operationMode = 'WAIT_FOR_UNLOCK';
+                            this.releaseBlock();
+                        end
+                        
+                    otherwise
+                        error('Not sure where to put lift!');
+                end
+                               
             end
             
         end
         
     case 'WAIT_FOR_LOCK'
-        % Wait for signal that we've attached to the block, then lift it up
+        % Wait for signal that we've attached to the block, then lift it
         if this.isBlockLocked
             this.operationMode = 'LIFT';
         end
         
+    case 'WAIT_FOR_UNLOCK'
+        if ~this.isBlockLocked
+            % Once we've dropped the block, back up to admire our handywork
+           this.operationMode = 'BACK_UP_TO_SEE_MARKER'; 
+        end
+            
     case 'LIFT'
-               
-        this.setLiftPosition('UP');
+        
+        this.liftPosition = 'UP_PLUS';
         this.operationMode = '';
+        
+    case 'BACK_UP_TO_SEE_MARKER'
+        % Back up until we can see a full marker again
+        if isempty(this.visibleBlocks)
+            this.drive(-5, -5);
+        else
+            this.operationMode = '';
+        end
         
         
 end % SWITCH(operationMode)

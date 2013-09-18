@@ -32,7 +32,7 @@ X = P([1 3 4 2], 1);
 Y = P([1 3 4 2], 2);
 Z = P([1 3 4 2], 3);
 
-dots = getPosition(this, 'World', 'DockingDots');
+dots = getPosition(this, 'World', 'DockingTarget');
 
 initHandles = isempty(this.handles) || ...
     ~ishandle(this.handles(1)) || ...

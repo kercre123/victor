@@ -29,6 +29,7 @@ classdef BlockWorld < handle
         setLiftPositionFcn;
         driveRobotFcn;
         isBlockLockedFcn;
+        releaseBlockFcn;
         
     end % PROPERTIES (get-public, set-protected)
     
@@ -63,6 +64,7 @@ classdef BlockWorld < handle
             SetLiftPositionFcn = [];
             DriveFcn = [];
             IsBlockLockedFcn = [];
+            ReleaseBlockFcn = [];
             
             parseVarargin(varargin{:});
             
@@ -88,6 +90,7 @@ classdef BlockWorld < handle
             this.setLiftPositionFcn    = SetLiftPositionFcn;
             this.driveRobotFcn         = DriveFcn;
             this.isBlockLockedFcn      = IsBlockLockedFcn;
+            this.releaseBlockFcn       = ReleaseBlockFcn;
             
             this.blockTypeToIndex = containers.Map('KeyType', 'double', ...
                 'ValueType', 'double');
@@ -155,6 +158,7 @@ classdef BlockWorld < handle
                     'DriveFcn', this.driveRobotFcn, ... % TODO: make this per robot?
                     'SetLiftPositionFcn', this.setLiftPositionFcn, ... % TODO: make this per robot?
                     'IsBlockLockedFcn', this.isBlockLockedFcn, ... % TODO: make this per robot?
+                    'ReleaseBlockFcn', this.releaseBlockFcn, ... % TODO: make this per robot?
                     'MatCameraCalibration', MatCameraCalibration{i}, ...
                     'MatCameraDevice', MatCameraDevice{i});
             end

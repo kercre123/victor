@@ -19,8 +19,36 @@ classdef BlockMarker3D < handle
             2*BlockMarker3D.FiducialSquareWidth) / ...
             size(BlockMarker2D.Layout, 1);
                 
-        DockingDotSpacing = BlockMarker3D.CodeSquareWidth/2;
-        DockingDotWidth = BlockMarker3D.DockingDotSpacing/2;
+        DockingTarget = 'FourDots'; % 'SingleDot' or 'FourDots'
+        
+        DockingDotSpacing = BlockMarker3D.setDockingDotSpacing(BlockMarker3D.DockingTarget);
+        DockingDotWidth   = BlockMarker3D.setDockingDotWidth(BlockMarker3D.DockingTarget);
+    end
+    
+    methods(Access = 'protected', Static = true)
+        function spacing = setDockingDotSpacing(targetType)
+            switch(targetType)
+                case 'FourDots'
+                    spacing = BlockMarker3D.CodeSquareWidth/2;
+                case 'SingleDot'
+                    spacing = 0;
+                otherwise
+                    error('Unrecognized docking target type "%s".', ...
+                        targetType);
+            end
+        end
+        
+        function width = setDockingDotWidth(targetType)
+            switch(targetType)
+                case 'FourDots'
+                    width = BlockMarker3D.DockingDotSpacing/2;
+                case 'SingleDot'
+                    width = BlockMarker3D.CodeSquareWidth/2;
+                otherwise
+                    error('Unrecognized docking target type "%s".', ...
+                        targetType);
+            end
+        end        
     end
     
     properties(GetAccess = 'public', SetAccess = 'public')
@@ -74,7 +102,16 @@ classdef BlockMarker3D < handle
             %this.model = poseInit.applyTo(this.model);
             this.pose = poseInit;
             
-            this.dockingTarget = this.DockingDotSpacing/2*canonicalSquare;
+            switch(BlockMarker3D.DockingTarget)
+                case 'FourDots'
+                    this.dockingTarget = this.DockingDotSpacing/2*canonicalSquare;
+                case 'SingleDot'
+                    this.dockingTarget = [0 0 0];
+                otherwise
+                    error('Unrecognized docking target type "%s".', ...
+                        BlockMarker3D.DockingTarget);
+            end
+                        
             this.dockingTargetBoundingBox = ...
                 this.CodeSquareWidth/2*canonicalSquare;
         end
@@ -96,9 +133,9 @@ classdef BlockMarker3D < handle
             switch(lower(whichPart))
                 case 'marker'
                     modelPts = this.model;
-                case 'dockingdots'
+                case 'dockingtarget'
                     modelPts = this.dockingTarget;
-                case 'dockingdotsboundingbox'
+                case 'dockingtargetboundingbox'
                     modelPts = this.dockingTargetBoundingBox;
                 otherwise
                     error('Unrecognized BlockMarker3D part to get position of.');
