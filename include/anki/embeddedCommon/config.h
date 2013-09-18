@@ -5,9 +5,9 @@
 #define ANKICORETECHEMBEDDED_VERSION_MINOR 1
 #define ANKICORETECHEMBEDDED_VERSION_REVISION 0
 
-#define ANKICORETECHEMBEDDED_USE_MATLAB
-#define ANKICORETECHEMBEDDED_USE_OPENCV
-#define ANKICORETECHEMBEDDED_USE_GTEST
+//#define ANKICORETECHEMBEDDED_USE_MATLAB
+//#define ANKICORETECHEMBEDDED_USE_OPENCV
+//#define ANKICORETECHEMBEDDED_USE_GTEST
 
 #if !defined(__APPLE_CC__) && defined(__GNUC__) && __GNUC__==4 && __GNUC_MINOR__==2 && __GNUC_PATCHLEVEL__==1 //hack to detect the movidius compiler
 #warning Using GNUC 4.2.1
@@ -42,16 +42,16 @@
 #define vsnprintf vsprintf_s
 #endif
 
-#ifndef IN_CACHED_DDR
-#define IN_CACHED_DDR
+#ifndef IN_DDR
+#define IN_DDR
 #endif
 
 #endif // #if defined(_MSC_VER)
 
 #if defined(__APPLE_CC__) // Apple Xcode
 
-#ifndef IN_CACHED_DDR
-#define IN_CACHED_DDR
+#ifndef IN_DDR
+#define IN_DDR
 #endif
 
 #ifndef restrict
@@ -73,8 +73,9 @@
 #define restrict __restrict
 #endif
 
-#ifndef IN_CACHED_DDR
-#define IN_CACHED_DDR __attribute__((section(".ddr_direct.text")))
+#ifndef IN_DDR
+#define IN_DDR __attribute__((section(".ddr_direct.text")))
+//#define IN_DDR __attribute__((section(".ddr.text")))
 #endif
 
 #endif // #if defined(USING_MOVIDIUS_COMPILER)
@@ -156,6 +157,6 @@ namespace Anki
 #define ANKI_DEBUG_LOW  1000
 #define ANKI_DEBUG_HIGH 2000
 
-#define ANKI_DEBUG_LEVEL ANKI_DEBUG_HIGH
+#define ANKI_DEBUG_LEVEL ANKI_DEBUG_OFF
 
 #endif // _ANKICORETECHEMBEDDED_COMMON_CONFIG_H_

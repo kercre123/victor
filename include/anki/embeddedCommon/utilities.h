@@ -28,7 +28,7 @@
 #define NULL (0)
 #endif
 
-#define SWAP(type, a, b) { type t; t = a; a = b; b = t; }
+#define SWAP(type, a, b) { type t = a; a = b; b = t; }
 
 // ct_assert is a compile time assertion, useful for checking sizeof() and other compile time knowledge
 #define ASSERT_CONCAT_(a, b) a##b
@@ -116,6 +116,17 @@ namespace Anki
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     int ConvertToOpenCvType(const char *typeName, size_t byteDepth); // Converts from typeid names to openCV types
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+#if defined(USING_MOVIDIUS_GCC_COMPILER)
+    void memset(void * dst, int value, size_t size);
+#endif
+
+    template<typename Type> void Swap(Type &a, Type &b)
+    {
+      const Type tmp = a;
+      a = b;
+      b = tmp;
+    } // template<typename Type> Swap(Type a, Type b)
 
 #ifndef ALIGNVARIABLE
 #if defined(_MSC_VER)

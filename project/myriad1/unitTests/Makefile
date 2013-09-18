@@ -2,7 +2,7 @@
 # Default application name is the same as the folder it is in.
 # This can be overridden here if something different is required
 #APPNAME ?= $(notdir $(shell pwd))
-APPNAME=coretech-vision-unit-tests
+APPNAME=coretech-common-unit-tests
 
 MDK_DIRECTORY?=../../../../movidius-tools/mdk_13.08.0_general/mdk
 

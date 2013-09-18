@@ -38,17 +38,18 @@ namespace Anki
     f32 Round(f32 number)
     {
       if(number > 0)
-        return floor(number + 0.5f);
+        return floorf(number + 0.5f);
       else
-        return floor(number - 0.5f);
+        return floorf(number - 0.5f);
     }
 
     f64 Round(f64 number)
     {
+      // This casting wierdness is because the myriad doesn't have a double-precision floor function.
       if(number > 0)
-        return floor(number + 0.5);
+        return static_cast<f64>(floorf(static_cast<f32>(number) + 0.5f));
       else
-        return floor(number - 0.5);
+        return static_cast<f64>(floorf(static_cast<f32>(number) - 0.5f));
     }
 
     bool IsPowerOfTwo(u32 x)
@@ -137,5 +138,16 @@ namespace Anki
       return -1;
     }
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+#if defined(USING_MOVIDIUS_GCC_COMPILER)
+    void memset(void * dst, int value, size_t size)
+    {
+      size_t i;
+      for(i=0; i<size; i++)
+      {
+        ((char*)dst)[i] = value;
+      }
+    }
+#endif // #if defined(USING_MOVIDIUS_GCC_COMPILER)
   } // namespace Embedded
 } // namespace Anki

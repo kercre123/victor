@@ -13,6 +13,10 @@
 #include <stdlib.h>
 #include <math.h>
 
+#if !defined(USING_MOVIDIUS_GCC_COMPILER)
+#include <string.h>
+#endif
+
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 #include "opencv2/opencv.hpp"
 #endif
@@ -38,9 +42,11 @@ namespace Anki
       // aligned to MEMORY_ALIGNMENT, this Array will start at the next aligned location.
       // Unfortunately, this is more restrictive than most matrix libraries, and as an example,
       // it may make it hard to convert from OpenCV to Array, though the reverse is trivial.
+      // All memory in the array is zeroed out once it is allocated
       Array(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const bool useBoundaryFillPatterns=false);
 
       // Constructor for a Array, pointing to user-allocated MemoryStack
+      // All memory in the array is zeroed out once it is allocated
       Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
@@ -88,6 +94,9 @@ namespace Anki
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
 
+      // Set every element in the Array to zero, including the stride padding
+      void SetZero();
+
       // Set every element in the Array to this value
       // Returns the number of values set
       s32 Set(const Type value);
@@ -107,7 +116,13 @@ namespace Anki
       // Similar to Matlabs size(matrix, dimension), and dimension is in {0,1}
       s32 get_size(s32 dimension) const;
 
+      // Get the stride, which is the number of bytes between an element at (n,m) and one at (n+1,m)
       s32 get_stride() const;
+
+      // Get the stride, without the optional fill pattern. This is the number of bytes on a
+      // horizontal line that can safely be read and written to. If this array was created without
+      // fill patterns, it returns the same value as get_stride().
+      s32 get_strideWithoutFillPatterns() const;
 
       void* get_rawDataPointer();
 
@@ -358,6 +373,18 @@ namespace Anki
       } // if(useBoundaryFillPatterns) { ... else
     }
 
+    // Set every element in the Array to zero, including the stride padding, but not including the optional fill patterns (if they exist)
+    template<typename Type> void Array<Type>::SetZero()
+    {
+      assert(this->IsValid());
+
+      const s32 strideWithoutFillPatterns = this->get_strideWithoutFillPatterns();
+      for(s32 y=0; y<size[0]; y++) {
+        char * restrict rowPointer = reinterpret_cast<char*>(Pointer(y, 0));
+        memset(rowPointer, 0, strideWithoutFillPatterns);
+      }
+    }
+
     template<typename Type> s32 Array<Type>::Set(const Type value)
     {
       assert(this->IsValid());
@@ -437,6 +464,12 @@ namespace Anki
       return stride;
     }
 
+    template<typename Type> s32 Array<Type>::get_strideWithoutFillPatterns() const
+    {
+      const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1],false);
+      return strideWithoutFillPatterns;
+    }
+
     template<typename Type> void* Array<Type>::get_rawDataPointer()
     {
       return rawDataPointer;
@@ -493,6 +526,10 @@ namespace Anki
       } else {
         this->data = reinterpret_cast<Type*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes );
       }
+
+      // Zero out the entire buffer
+      // TODO: if this is slow, make this optional (or just remove it)
+      this->SetZero();
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       cvMatMirror = cv::Mat_<Type>(size[0], size[1], data, stride);
