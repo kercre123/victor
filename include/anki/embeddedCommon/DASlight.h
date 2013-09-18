@@ -1,14 +1,7 @@
-//
-//  DASlight.h
-//  TestLogging
-//
-//  DAS.h Created by Mark Pauley on 8/13/12.
-//  DASlight.h is based off DAS.h
-//  Copyright (c) 2012 Mark Pauley. All rights reserved.
-//
+//  errorHandling.h is based off Das.h
 
-#ifndef __DAS_LIGHT_H__
-#define __DAS_LIGHT_H__
+#ifndef __Anki_LIGHT_H__
+#define __Anki_LIGHT_H__
 
 #include "anki/embeddedCommon/config.h"
 
@@ -18,112 +11,136 @@
 #endif
 #endif
 
-typedef enum DASLogLevel {
-  DASLogLevel_Debug, // Sent to server in development by default
-  DASLogLevel_Info,  // Sent to server in development by default
-  DASLogLevel_Event, // Sent to server in production by default
-  DASLogLevel_Warn,  // Sent to server in production by default
-  DASLogLevel_Error,  // Sent to server in production by default
-  DASLogLevel_NumLevels
-} DASLogLevel;
+#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_ESSENTIAL
 
-// Plain old, vanilla logging. eventValue is a printf-style format specifier.  Defaults to INFO level.
-// DASEvent("ClassName.eventName", "Value1 = %d, Value2 = %d", value1, value2); or something like that
+#define AnkiWarn(expression, eventName, eventValue_format, ...)
 
-#define DASDebug(eventName, eventValue_format, ...) _DAS_Logf(DASLogLevel_Debug, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+#define AnkiConditionalWarn(expression, eventName, eventValue_format, ...)
 
-#define DASInfo(eventName, eventValue_format, ...)  _DAS_Logf(DASLogLevel_Info, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+#define AnkiConditionalWarnAndReturn(expression, eventName, eventValue_format, ...)
 
-#define DASEvent(eventName, eventValue_format, ...) _DAS_Logf(DASLogLevel_Event, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+#define AnkiConditionalWarnAndReturnValue(expression, returnValue, eventName, eventValue_format, ...)
 
-#define DASEventAndReturn(eventName, eventValue_format, ...)\
-{ _DAS_Logf(DASLogLevel_Event, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);\
-  return; }
+#define AnkiError(eventName, eventValue_format, ...)
 
-#define DASEventAndReturnValue(returnValue, eventName, eventValue_format, ...) \
-{ _DAS_Logf(DASLogLevel_Event, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);\
-  return returnValue; }
+#define AnkiConditionalError(expression, eventName, eventValue_format, ...)
 
-#define DASConditionalEvent(expression, eventName, eventValue_format, ...) \
+#define AnkiConditionalErrorAndReturn(expression, eventName, eventValue_format, ...)
+
+#define AnkiConditionalErrorAndReturnValue(expression, returnValue, eventName, eventValue_format, ...)
+
+#define AnkiConditionalEssentialAndReturn(expression, eventName, eventValue_format, ...) \
   if(!(expression)) {\
-  _DAS_Logf(DASLogLevel_Event, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
-  }
-
-#define DASConditionalEventAndReturn(expression, eventName, eventValue_format, ...) \
-  if(!(expression)) { \
-  _DAS_Logf(DASLogLevel_Event, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
   return;\
   }
 
-#define DASConditionalEventAndReturnValue(expression, returnValue, eventName, eventValue_format, ...)\
+#define AnkiConditionalEssentialAndReturnValue(expression, returnValue, eventName, eventValue_format, ...) \
   if(!(expression)) { \
-  _DAS_Logf(DASLogLevel_Event, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);\
   return returnValue;\
   }
 
-#define DASWarn(eventName, eventValue_format, ...)  _DAS_Logf(DASLogLevel_Warn, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+#elif ANKI_DEBUG_LEVEL == ANKI_DEBUG_ESSENTIAL_AND_ERROR
 
-#define DASWarnAndReturn(eventName, eventValue_format, ...) \
-{ _DAS_Logf(DASLogLevel_Warn, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);\
-  return; }
+#define AnkiWarn(expression, eventName, eventValue_format, ...)
 
-#define DASWarnAndReturnValue(returnValue, eventName, eventValue_format, ...) \
-{ _DAS_Logf(DASLogLevel_Warn, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
-  return returnValue; }
+#define AnkiConditionalWarn(expression, eventName, eventValue_format, ...)
 
-#define DASConditionalWarn(expression, eventName, eventValue_format, ...) \
-  if(!(expression)) { _DAS_Logf(DASLogLevel_Warn, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); }
+#define AnkiConditionalWarnAndReturn(expression, eventName, eventValue_format, ...)
 
-#define DASConditionalWarnAndReturn(expression, eventName, eventValue_format, ...) \
+#define AnkiConditionalWarnAndReturnValue(expression, returnValue, eventName, eventValue_format, ...)
+
+#define AnkiError(eventName, eventValue_format, ...) _Anki_Logf(eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+
+#define AnkiConditionalError(expression, eventName, eventValue_format, ...) \
   if(!(expression)) {\
-  _DAS_Logf(DASLogLevel_Warn, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
-  return;\
+  _Anki_Logf(eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
   }
 
-#define DASConditionalWarnAndReturnValue(expression, returnValue, eventName, eventValue_format, ...)\
-  if(!(expression)) { \
-  _DAS_Logf(DASLogLevel_Warn, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
-  return returnValue;\
-  }
-
-#define DASError(eventName, eventValue_format, ...) _DAS_Logf(DASLogLevel_Error, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
-
-#define DASErrorAndReturn(eventName, eventValue_format, ...) \
-{\
-  _DAS_Logf(DASLogLevel_Error, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);\
-  return;\
-  }
-
-#define DASErrorAndReturnValue(returnValue, eventName, eventValue_format, ...) \
-{\
-  _DAS_Logf(DASLogLevel_Error, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);\
-  return returnValue;\
-  }
-
-#define DASConditionalError(expression, eventName, eventValue_format, ...) \
-  if(!(expression)) { _DAS_Logf(DASLogLevel_Error, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); }
-
-#define DASConditionalErrorAndReturn(expression, eventName, eventValue_format, ...) \
+#define AnkiConditionalErrorAndReturn(expression, eventName, eventValue_format, ...) \
   if(!(expression)) {\
-  _DAS_Logf(DASLogLevel_Error, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
+  _Anki_Logf(eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
   return;\
   }
 
-#define DASConditionalErrorAndReturnValue(expression, returnValue, eventName, eventValue_format, ...) \
+#define AnkiConditionalErrorAndReturnValue(expression, returnValue, eventName, eventValue_format, ...) \
   if(!(expression)) { \
-  _DAS_Logf(DASLogLevel_Error, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
+  _Anki_Logf(eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
   return returnValue;\
   }
+
+#define AnkiConditionalEssentialAndReturn(expression, eventName, eventValue_format, ...) \
+  if(!(expression)) {\
+  _Anki_Logf(eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
+  return;\
+  }
+
+#define AnkiConditionalEssentialAndReturnValue(expression, returnValue, eventName, eventValue_format, ...) \
+  if(!(expression)) { \
+  _Anki_Logf(eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
+  return returnValue;\
+  }
+
+#elif ANKI_DEBUG_LEVEL == ANKI_DEBUG_ESSENTIAL_AND_ERROR_AND_WARN || ANKI_DEBUG_LEVEL == ANKI_DEBUG_ALL
+
+#define AnkiWarn(eventName, eventValue_format, ...) \
+  if(!(expression)) { _Anki_Logf(eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); }
+
+#define AnkiConditionalWarn(expression, eventName, eventValue_format, ...) \
+  if(!(expression)) { _Anki_Logf(eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); }
+
+#define AnkiConditionalWarnAndReturn(expression, eventName, eventValue_format, ...) \
+  if(!(expression)) {\
+  _Anki_Logf(eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
+  return;\
+  }
+
+#define AnkiConditionalWarnAndReturnValue(expression, returnValue, eventName, eventValue_format, ...)\
+  if(!(expression)) { \
+  _Anki_Logf(eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
+  return returnValue;\
+  }
+
+#define AnkiError(eventName, eventValue_format, ...) _Anki_Logf(eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+
+#define AnkiConditionalError(expression, eventName, eventValue_format, ...) \
+  if(!(expression)) { \
+  _Anki_Logf(eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
+  }
+
+#define AnkiConditionalErrorAndReturn(expression, eventName, eventValue_format, ...) \
+  if(!(expression)) {\
+  _Anki_Logf(eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
+  return;\
+  }
+
+#define AnkiConditionalErrorAndReturnValue(expression, returnValue, eventName, eventValue_format, ...) \
+  if(!(expression)) { \
+  _Anki_Logf(eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
+  return returnValue;\
+  }
+
+#define AnkiConditionalEssentialAndReturn(expression, eventName, eventValue_format, ...) \
+  if(!(expression)) {\
+  _Anki_Logf(eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
+  return;\
+  }
+
+#define AnkiConditionalEssentialAndReturnValue(expression, returnValue, eventName, eventValue_format, ...) \
+  if(!(expression)) { \
+  _Anki_Logf(eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
+  return returnValue;\
+  }
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-  void _DAS_Logf(DASLogLevel level, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...);
-  void _DAS_Log (DASLogLevel level, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...);
+  void _Anki_Logf(const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...);
+  void _Anki_Log (const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif /* defined(__DAS_LIGHT_H__) */
+#endif /* defined(__Anki_LIGHT_H__) */

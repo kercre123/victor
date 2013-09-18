@@ -1,9 +1,9 @@
 //
-//  DAS.cpp
+//  Anki.cpp
 //  BaseStation
 //
 //  Created by damjan stulic on 1/2/13.
-//  DASlight.cpp is based off DAS.cpp
+//  Ankilight.cpp is based off Anki.cpp
 //  Copyright (c) 2013 Anki. All rights reserved.
 //
 
@@ -17,20 +17,20 @@
 extern "C" {
 #endif
 
-#define DAS_STRING_LENGTH 256
-  static char renderedLogString[DAS_STRING_LENGTH];
+#define Anki_STRING_LENGTH 256
+  static char renderedLogString[Anki_STRING_LENGTH];
 
 #ifdef USING_MOVIDIUS_GCC_COMPILER
-  void _DAS_Logf(DASLogLevel level, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
+  IN_DDR void _Anki_Logf(const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
-    printf("LOG[%d] - %s - ", level, eventName);
+    printf("LOG - %s - ", eventName);
     printf(eventValue);
     printf("\n");
   }
 
-  void _DAS_Log(DASLogLevel level, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
+  IN_DDR void _Anki_Log(const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
-    printf("LOG[%d] - %s - ", level, eventName);
+    printf("LOG - %s - ", eventName);
     printf(eventValue);
     printf("\n");
   }
@@ -38,21 +38,21 @@ extern "C" {
 
 #pragma warning(push)
 #pragma warning(disable: 4100) // Unreference formal parameter
-  void _DAS_Logf(DASLogLevel level, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
+  IN_DDR void _Anki_Logf(const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
     va_list argList;
     va_start(argList, line);
-    vsnprintf(renderedLogString, DAS_STRING_LENGTH, eventValue, argList);
+    vsnprintf(renderedLogString, Anki_STRING_LENGTH, eventValue, argList);
     va_end(argList);
-    _DAS_Log(level, eventName, renderedLogString, file, funct, line, NULL);
+    _Anki_Log(eventName, renderedLogString, file, funct, line, NULL);
     //fflush(stdout);
   }
 
-  void _DAS_Log(DASLogLevel level, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
+  IN_DDR void _Anki_Log(const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
     va_list argList;
     va_start(argList, line);
-    printf("LOG[%d] - %s - ", level, eventName);
+    printf("LOG - %s - ", eventName);
     vprintf(eventValue, argList);
     printf("\n");
     va_end(argList);

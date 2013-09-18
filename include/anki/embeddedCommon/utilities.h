@@ -68,7 +68,7 @@ namespace Anki
     // Functionally the same as OpenCV completeSymm()
     template<typename T> Result MakeArraySymmetric(T &arr, bool lowerToUpper = false)
     {
-      DASConditionalErrorAndReturnValue(arr.get_size(0) == arr.get_size(1),
+      AnkiConditionalErrorAndReturnValue(arr.get_size(0) == arr.get_size(1),
         RESULT_FAIL, "copyHalfArray", "Input array must be square");
 
       for(s32 y = 0; y < arr.get_size(0); y++)
@@ -88,13 +88,13 @@ namespace Anki
     // Note that this is the naive O(n^3) implementation
     template<typename Array_T, typename T> Result MultiplyMatrices(const Array_T &mat1, const Array_T &mat2, Array_T &matOut)
     {
-      DASConditionalErrorAndReturnValue(mat1.get_size(1) == mat2.get_size(0),
+      AnkiConditionalErrorAndReturnValue(mat1.get_size(1) == mat2.get_size(0),
         RESULT_FAIL, "MultiplyMatrices", "Input matrices are incompatible sizes");
 
-      DASConditionalErrorAndReturnValue(matOut.get_size(0) == mat1.get_size(0),
+      AnkiConditionalErrorAndReturnValue(matOut.get_size(0) == mat1.get_size(0),
         RESULT_FAIL, "MultiplyMatrices", "Input and Output matrices are incompatible sizes");
 
-      DASConditionalErrorAndReturnValue(matOut.get_size(1) == mat2.get_size(1),
+      AnkiConditionalErrorAndReturnValue(matOut.get_size(1) == mat2.get_size(1),
         RESULT_FAIL, "MultiplyMatrices", "Input and Output matrices are incompatible sizes");
 
       for(s32 y1=0; y1<mat1.get_size(0); y1++) {

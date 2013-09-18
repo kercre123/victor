@@ -329,7 +329,7 @@ namespace Anki
 
     template<typename Type> Result Array<Type>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      DASConditionalWarnAndReturnValue(this->IsValid(),
+      AnkiConditionalWarnAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
 
       printf("%s:\n", variableName);
@@ -487,9 +487,7 @@ namespace Anki
       this->useBoundaryFillPatterns = useBoundaryFillPatterns;
 
       if(!rawData) {
-#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        DASError("Anki.Array2d.initialize", "input data buffer is NULL");
-#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+        AnkiError("Anki.Array2d.initialize", "input data buffer is NULL");
         InvalidateArray();
         return;
       }
@@ -501,9 +499,7 @@ namespace Anki
       const s32 requiredBytes = ComputeRequiredStride(numCols,useBoundaryFillPatterns)*numRows + extraAlignmentBytes;
 
       if(requiredBytes > dataLength) {
-#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-        DASError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
-#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+        AnkiError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
         InvalidateArray();
         return;
       }

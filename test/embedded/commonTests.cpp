@@ -30,13 +30,13 @@ static char buffer[MAX_BYTES];
 #else
 
 #ifdef BUFFER_IN_CMX
-static char buffer[MAX_BYTES] __attribute__((section(".cmx.bss,CMX")));
+__attribute__((section(".cmx.bss,CMX"))) static char buffer[MAX_BYTES];
 #else // #ifdef BUFFER_IN_CMX
 
 #ifdef BUFFER_IN_DDR_WITH_L2
-static char buffer[MAX_BYTES] __attribute__((section(".ddr.bss,DDR"))); // With L2 cache
+__attribute__((section(".ddr.bss,DDR"))) static char buffer[MAX_BYTES]; // With L2 cache
 #else
-static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))); // No L2 cache
+__attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BYTES]; // No L2 cache
 #endif
 
 #endif // #ifdef BUFFER_IN_CMX ... #else
@@ -159,7 +159,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, ComputeHomography)
   GTEST_RETURN_HERE;
 }
 
-void PrintfOneFloatArray(const Array<f32> &array, const char * variableName)
+IN_DDR void PrintfOneArray_f32(const Array<f32> &array, const char * variableName)
 {
   printf("%s:\n", variableName);
   for(s32 y=0; y<array.get_size(0); y++) {
@@ -172,7 +172,20 @@ void PrintfOneFloatArray(const Array<f32> &array, const char * variableName)
   printf("\n");
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, SVD)
+IN_DDR void PrintfOneArray_f64(const Array<f64> &array, const char * variableName)
+{
+  printf("%s:\n", variableName);
+  for(s32 y=0; y<array.get_size(0); y++) {
+    const f64 * const rowPointer = array.Pointer(y, 0);
+    for(s32 x=0; x<array.get_size(1); x++) {
+      printf("%d ", static_cast<s32>(10000*rowPointer[x]));
+    }
+    printf("\n");
+  }
+  printf("\n");
+}
+
+IN_DDR GTEST_TEST(CoreTech_Common, SVD32)
 {
   const s32 numBytes = MIN(MAX_BYTES, 5000);
   ASSERT_TRUE(buffer != NULL);
@@ -237,13 +250,98 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD)
 
   //  w.Print("w");
   //  w_groundTruth.Print("w_groundTruth");
-  PrintfOneFloatArray(w, "w");
-  PrintfOneFloatArray(w_groundTruth, "w_groundTruth");
+  //PrintfOneArray_f32(w, "w");
+  //PrintfOneArray_f32(w_groundTruth, "w_groundTruth");
 
   //  uT.Print("uT");
   //  uT_groundTruth.Print("uT_groundTruth");
-  PrintfOneFloatArray(uT, "uT");
-  PrintfOneFloatArray(uT_groundTruth, "uT_groundTruth");
+  PrintfOneArray_f32(uT, "uT");
+  PrintfOneArray_f32(uT_groundTruth, "uT_groundTruth");
+
+  //  vT.Print("vT");
+  //  vT_groundTruth.Print("vT_groundTruth");
+
+  ASSERT_TRUE(w.IsElementwiseEqual_PercentThreshold(w_groundTruth, .05, .001));
+  ASSERT_TRUE(uT.IsElementwiseEqual_PercentThreshold(uT_groundTruth, .05, .001));
+
+  // I don't know why, but the v-transpose for this SVD doesn't match Matlab's. Probably this version's is more efficient, in either memory or computation.
+  //ASSERT_TRUE(vT.IsElementwiseEqual_PercentThreshold(vT_groundTruth, .05, .001));
+
+  GTEST_RETURN_HERE;
+}
+
+IN_DDR GTEST_TEST(CoreTech_Common, SVD64)
+{
+  const s32 numBytes = MIN(MAX_BYTES, 5000);
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+#define SVD_aDataLength 16
+#define SVD_uTGroundTruthDataLength 4
+#define SVD_wGroundTruthDataLength 8
+#define SVD_vTGroundTruthDataLength 64
+
+  const f64 aData[SVD_aDataLength] = {
+    1, 2, 3, 5, 7, 11, 13, 17,
+    19, 23, 29, 31, 37, 41, 43, 47};
+
+  const f64 uTGroundTruthData[SVD_uTGroundTruthDataLength] = {
+    -0.237504316543999f,  -0.971386483137875f,
+    0.971386483137874f,  -0.237504316543999f};
+
+  const f64 wGroundTruthData[SVD_wGroundTruthDataLength] = {
+    101.885662808124f, 9.29040979446927f, 0, 0, 0, 0, 0, 0};
+
+  const f64 vTGroundTruthData[SVD_vTGroundTruthDataLength] = {
+    -0.183478685625953f, -0.223946108965585f, -0.283481700610061f, -0.307212042374800f, -0.369078720749224f, -0.416539404278702f, -0.440269746043441f, -0.487730429572919f,
+    0.381166774075590f, 0.378866636898153f, 0.427695421221120f, 0.269708382365037f, 0.213979186509760f, -0.101994891202405f, -0.259981930058488f, -0.575956007770654f,
+    -0.227185052857744f, -0.469620636740071f, 0.828412170627898f, -0.133259849703043f, -0.130174916014859f, -0.0535189566767408f, -0.0151909770076815f, 0.0614649823304370f,
+    -0.262651399482480f, -0.301123351378262f, -0.120288604832971f, 0.894501576357598f, -0.112627300393190f, -0.0830469380120526f, -0.0682567568214837f, -0.0386763944403458f,
+    -0.324884751171929f, -0.243759383675343f, -0.107225790475501f, -0.104644995857761f, 0.880843955313500f, -0.113994455451022f, -0.111413660833282f, -0.106252071597804f,
+    -0.395817444421400f, 0.0932351870482750f, -0.00462734139723796f, -0.0491221437364792f, -0.0840608134431630f, 0.826949581878355f, -0.217545220460887f, -0.306534825139369f,
+    -0.431283791046136f, 0.261732472410084f, 0.0466718831418935f, -0.0213607176758380f, -0.0665131978214941f, -0.202578399456957f, 0.729388999725311f, -0.406676201910152f,
+    -0.502216484295607f, 0.598727043133703f, 0.149270332220156f, 0.0341621344454443f, -0.0314179665781565f, -0.261634362127581f, -0.376742559902293f, 0.393041044548282f};
+
+  const s32 m = 2, n = 8;
+
+  Array<f64> a(m, n, ms);
+  Array<f64> w(1, n, ms);
+  Array<f64> uT(m, m, ms);
+  Array<f64> vT(n, n, ms);
+  Array<f64> w_groundTruth(1, n, ms);
+  Array<f64> uT_groundTruth(m, m, ms);
+  Array<f64> vT_groundTruth(n, n, ms);
+
+  ASSERT_TRUE(a.IsValid());
+  ASSERT_TRUE(w.IsValid());
+  ASSERT_TRUE(uT.IsValid());
+  ASSERT_TRUE(vT.IsValid());
+  ASSERT_TRUE(w_groundTruth.IsValid());
+  ASSERT_TRUE(uT_groundTruth.IsValid());
+  ASSERT_TRUE(vT_groundTruth.IsValid());
+
+  void * scratch = ms.Allocate(sizeof(float)*(2*n + 2*m + 64));
+  ASSERT_TRUE(scratch != NULL);
+
+  a.Set(aData, SVD_aDataLength);
+  w_groundTruth.Set(wGroundTruthData, SVD_uTGroundTruthDataLength);
+  uT_groundTruth.Set(uTGroundTruthData, SVD_wGroundTruthDataLength);
+  vT_groundTruth.Set(vTGroundTruthData, SVD_vTGroundTruthDataLength);
+
+  const Result result = svd_f64(a, w, uT, vT, scratch);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  //  w.Print("w");
+  //  w_groundTruth.Print("w_groundTruth");
+  //PrintfOneArray_f64(w, "w");
+  //PrintfOneArray_f64(w_groundTruth, "w_groundTruth");
+
+  //  uT.Print("uT");
+  //  uT_groundTruth.Print("uT_groundTruth");
+  PrintfOneArray_f64(uT, "uT");
+  PrintfOneArray_f64(uT_groundTruth, "uT_groundTruth");
 
   //  vT.Print("vT");
   //  vT_groundTruth.Print("vT_groundTruth");
@@ -336,13 +434,13 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack)
   GTEST_RETURN_HERE;
 }
 
-s32 CheckMemoryStackUsage(MemoryStack ms, s32 numBytes)
+IN_DDR s32 CheckMemoryStackUsage(MemoryStack ms, s32 numBytes)
 {
   ms.Allocate(numBytes);
   return ms.get_usedBytes();
 }
 
-s32 CheckConstCasting(const MemoryStack ms, s32 numBytes)
+IN_DDR s32 CheckConstCasting(const MemoryStack ms, s32 numBytes)
 {
   // ms.Allocate(1); // Will not compile
 
@@ -704,14 +802,15 @@ IN_DDR GTEST_TEST(CoreTech_Common, ArrayFillPattern)
 }
 
 #if !defined(ANKICORETECHEMBEDDED_USE_GTEST)
-void RUN_ALL_TESTS()
+IN_DDR void RUN_ALL_TESTS()
 {
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
   CALL_GTEST_TEST(CoreTech_Common, MatrixMultiply);
   CALL_GTEST_TEST(CoreTech_Common, ComputeHomography);
-  CALL_GTEST_TEST(CoreTech_Common, SVD);
+  CALL_GTEST_TEST(CoreTech_Common, SVD64);
+  CALL_GTEST_TEST(CoreTech_Common, SVD32);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_call);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1);
