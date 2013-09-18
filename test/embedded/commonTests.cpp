@@ -16,10 +16,34 @@ Matlab matlab(false);
 #include "gtest/gtest.h"
 #endif
 
-#define MAX_BYTES 5000
-char buffer[MAX_BYTES];
+//#define BUFFER_IN_DDR_WITH_L2
+#define BUFFER_IN_CMX
 
-GTEST_TEST(CoreTech_Common, MatrixMultiply)
+#if defined(BUFFER_IN_DDR_WITH_L2) && defined(BUFFER_IN_CMX)
+You cannot use both CMX and L2 Cache;
+#endif
+
+#define MAX_BYTES 5000
+
+#ifdef _MSC_VER
+static char buffer[MAX_BYTES];
+#else
+
+#ifdef BUFFER_IN_CMX
+static char buffer[MAX_BYTES] __attribute__((section(".cmx.bss,CMX")));
+#else // #ifdef BUFFER_IN_CMX
+
+#ifdef BUFFER_IN_DDR_WITH_L2
+static char buffer[MAX_BYTES] __attribute__((section(".ddr.bss,DDR"))); // With L2 cache
+#else
+static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))); // No L2 cache
+#endif
+
+#endif // #ifdef BUFFER_IN_CMX ... #else
+
+#endif // #ifdef USING_MOVIDIUS_COMPILER
+
+IN_DDR GTEST_TEST(CoreTech_Common, MatrixMultiply)
 {
   const s32 numBytes = MIN(MAX_BYTES, 5000);
   ASSERT_TRUE(buffer != NULL);
@@ -68,7 +92,7 @@ GTEST_TEST(CoreTech_Common, MatrixMultiply)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, ComputeHomography)
+IN_DDR GTEST_TEST(CoreTech_Common, ComputeHomography)
 {
   const s32 numBytes = MIN(MAX_BYTES, 5000);
   ASSERT_TRUE(buffer != NULL);
@@ -80,8 +104,8 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
   Array<f64> originalPoints(3, 4, ms);
   Array<f64> transformedPoints(3, 4, ms);
 
-  FixedLengthList<Point<f64>> originalPointsList(4, ms);
-  FixedLengthList<Point<f64>> transformedPointsList(4, ms);
+  FixedLengthList<Point<f64> > originalPointsList(4, ms);
+  FixedLengthList<Point<f64> > transformedPointsList(4, ms);
 
   ASSERT_TRUE(homography_groundTruth.IsValid());
   ASSERT_TRUE(homography.IsValid());
@@ -135,7 +159,20 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, SVD)
+void PrintfOneFloatArray(const Array<f32> &array, const char * variableName)
+{
+  printf("%s:\n", variableName);
+  for(s32 y=0; y<array.get_size(0); y++) {
+    const f32 * const rowPointer = array.Pointer(y, 0);
+    for(s32 x=0; x<array.get_size(1); x++) {
+      printf("%d ", static_cast<s32>(10000*rowPointer[x]));
+    }
+    printf("\n");
+  }
+  printf("\n");
+}
+
+IN_DDR GTEST_TEST(CoreTech_Common, SVD)
 {
   const s32 numBytes = MIN(MAX_BYTES, 5000);
   ASSERT_TRUE(buffer != NULL);
@@ -186,7 +223,7 @@ GTEST_TEST(CoreTech_Common, SVD)
   ASSERT_TRUE(uT_groundTruth.IsValid());
   ASSERT_TRUE(vT_groundTruth.IsValid());
 
-  void * scratch = ms.Allocate(sizeof(float)*(2*n+m));
+  void * scratch = ms.Allocate(sizeof(float)*(2*n + 2*m + 64));
   ASSERT_TRUE(scratch != NULL);
 
   a.Set(aData, SVD_aDataLength);
@@ -198,14 +235,18 @@ GTEST_TEST(CoreTech_Common, SVD)
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  //w.Print("w");
-  //w_groundTruth.Print("w_groundTruth");
+  //  w.Print("w");
+  //  w_groundTruth.Print("w_groundTruth");
+  PrintfOneFloatArray(w, "w");
+  PrintfOneFloatArray(w_groundTruth, "w_groundTruth");
 
-  //uT.Print("uT");
-  //uT_groundTruth.Print("uT_groundTruth");
+  //  uT.Print("uT");
+  //  uT_groundTruth.Print("uT_groundTruth");
+  PrintfOneFloatArray(uT, "uT");
+  PrintfOneFloatArray(uT_groundTruth, "uT_groundTruth");
 
-  //vT.Print("vT");
-  //vT_groundTruth.Print("vT_groundTruth");
+  //  vT.Print("vT");
+  //  vT_groundTruth.Print("vT_groundTruth");
 
   ASSERT_TRUE(w.IsElementwiseEqual_PercentThreshold(w_groundTruth, .05, .001));
   ASSERT_TRUE(uT.IsElementwiseEqual_PercentThreshold(uT_groundTruth, .05, .001));
@@ -216,7 +257,7 @@ GTEST_TEST(CoreTech_Common, SVD)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, MemoryStack)
+IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack)
 {
   ASSERT_TRUE(MEMORY_ALIGNMENT == 16);
 
@@ -308,7 +349,7 @@ s32 CheckConstCasting(const MemoryStack ms, s32 numBytes)
   return CheckMemoryStackUsage(ms, numBytes);
 }
 
-GTEST_TEST(CoreTech_Common, MemoryStack_call)
+IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack_call)
 {
   const s32 numBytes = MIN(MAX_BYTES, 100);
   //void * buffer = calloc(numBytes, 1);
@@ -334,7 +375,7 @@ GTEST_TEST(CoreTech_Common, MemoryStack_call)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
+IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
 {
   ASSERT_TRUE(MEMORY_ALIGNMENT == 16);
 
@@ -372,7 +413,7 @@ GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
 }
 
 #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
-GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
+IN_DDR GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
 {
   matlab.EvalStringEcho("simpleVector = double([1.1,2.1,3.1,4.1,5.1]);");
   double *simpleVector = matlab.Get<double>("simpleVector");
@@ -390,7 +431,7 @@ GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
 #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
-GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
+IN_DDR GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
 {
   matlab.EvalStringEcho("simpleArray = int16([1,2,3,4,5;6,7,8,9,10]);");
   Array<s16> simpleArray = matlab.GetArray<s16>("simpleArray");
@@ -412,10 +453,8 @@ GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
 }
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
-#include <iostream>
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
+IN_DDR GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 {
   cv::Mat src, dst;
 
@@ -431,7 +470,7 @@ GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
   src.at<double>(50, 0) = 5;
   src.at<double>(50, 1) = 6;
   src.at<double>(50, 2) = 7;
-  
+
   cv::GaussianBlur(src, dst, ksize, sigma, sigma, cv::BORDER_REFLECT_101);
 
   std::cout << src.at<double>(50, 0) << " "
@@ -448,7 +487,7 @@ GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 }
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
-GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
+IN_DDR GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 {
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = MIN(MAX_BYTES, 1000);
@@ -526,7 +565,7 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
+IN_DDR GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 {
   const s32 numBytes = MIN(MAX_BYTES, 1000);
   //void *buffer = calloc(numBytes, 1);
@@ -551,7 +590,7 @@ GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, ArrayAlignment1)
+IN_DDR GTEST_TEST(CoreTech_Common, ArrayAlignment1)
 {
   const s32 numBytes = MIN(MAX_BYTES, 1000);
   //void *buffer = calloc(numBytes, 1);
@@ -575,7 +614,7 @@ GTEST_TEST(CoreTech_Common, ArrayAlignment1)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
+IN_DDR GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
 {
   const s32 numBytes = MIN(MAX_BYTES, 1000);
   //void *buffer = calloc(numBytes, 1);
@@ -598,7 +637,7 @@ GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, ArrayFillPattern)
+IN_DDR GTEST_TEST(CoreTech_Common, ArrayFillPattern)
 {
   const s32 width = 6, height = 10;
   const s32 numBytes = MIN(MAX_BYTES, 1000);
@@ -670,6 +709,9 @@ void RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, MatrixMultiply);
+  CALL_GTEST_TEST(CoreTech_Common, ComputeHomography);
+  CALL_GTEST_TEST(CoreTech_Common, SVD);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_call);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1);
@@ -678,7 +720,6 @@ void RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Common, ArrayAlignment1);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStackAlignment);
   CALL_GTEST_TEST(CoreTech_Common, ArrayFillPattern);
-  CALL_GTEST_TEST(CoreTech_Common, SVD);
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 } // void RUN_ALL_TESTS()

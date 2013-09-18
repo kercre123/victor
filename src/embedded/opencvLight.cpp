@@ -51,8 +51,9 @@
 #include <malloc.h>
 #endif
 
+// Movidius compiler is missing alloca()
 /* ! DO NOT make it an inline function */
-#define cvStackAlloc(size) cvAlignPtr( alloca((size) + CV_MALLOC_ALIGN), CV_MALLOC_ALIGN )
+//#define cvStackAlloc(size) cvAlignPtr( alloca((size) + CV_MALLOC_ALIGN), CV_MALLOC_ALIGN )
 
 #define CV_SWAP(a,b,t) ((t) = (a), (a) = (b), (b) = (t))
 
@@ -99,7 +100,7 @@ namespace Anki
       return (void*)( ((size_t)ptr + align - 1) & ~(size_t)(align-1) );
     }
 
-    static void icvMatrAXPY3_32f( int m, int n, const float* x, int l, float* y, double h )
+    IN_DDR static void icvMatrAXPY3_32f( int m, int n, const float* x, int l, float* y, double h )
     {
       int i, j;
 
@@ -134,7 +135,7 @@ namespace Anki
 
     /* y[1:m,-1] = h*y[1:m,0:n]*x[0:1,0:n]'*x[-1]  (this is used for U&V reconstruction)
     y[1:m,0:n] += h*y[1:m,0:n]*x[0:1,0:n]'*x[0:1,0:n] */
-    static void icvMatrAXPY3_64f( int m, int n, const double* x, int l, double* y, double h )
+    IN_DDR static void icvMatrAXPY3_64f( int m, int n, const double* x, int l, double* y, double h )
     {
       int i, j;
 
@@ -169,7 +170,7 @@ namespace Anki
     }
 
     /* accurate hypotenuse calculation */
-    static double pythag( double a, double b )
+    IN_DDR static double pythag( double a, double b )
     {
       a = fabs( a );
       b = fabs( b );
@@ -187,7 +188,7 @@ namespace Anki
       return a;
     }
 
-    static void icvMatrAXPY_32f( int m, int n, const float* x, int dx,
+    IN_DDR static void icvMatrAXPY_32f( int m, int n, const float* x, int dx,
       const float* a, float* y, int dy )
     {
       int i, j;
@@ -214,7 +215,7 @@ namespace Anki
     }
 
     /* y[0:m,0:n] += diag(a[0:1,0:m]) * x[0:m,0:n] */
-    static  void icvMatrAXPY_64f( int m, int n, const double* x, int dx,
+    IN_DDR static void icvMatrAXPY_64f( int m, int n, const double* x, int dx,
       const double* a, double* y, int dy )
     {
       int i, j;
@@ -240,12 +241,12 @@ namespace Anki
     }
 
     /*! Performs an Singular Value Decomposition on the mXn, float32 input array. [u^t,w,v^t] = SVD(a); */
-    Result svd_f32(
+    IN_DDR Result svd_f32(
       Array<f32> &a, //!< Input array mXn
       Array<f32> &w, //!< W array 1Xm
       Array<f32> &uT, //!< U-transpose array mXm
       Array<f32> &vT, //!< V-transpose array nXn
-      void * scratch //!< A scratch buffer, with at least "sizeof(float)*(n*2 + m)" bytes
+      void * scratch //!< A scratch buffer, with at least "sizeof(float)*(n*2 + m*2 + 64)" bytes
       )
     {
       const s32 m = a.get_size(0); // m
@@ -292,12 +293,12 @@ namespace Anki
     }
 
     /*! Performs an Singular Value Decomposition on the mXn, float64 input array. [u^t,w,v^t] = SVD(a); */
-    Result svd_f64(
+    IN_DDR Result svd_f64(
       Array<f64> &a,  //!< Input array mXn
       Array<f64> &w,  //!< W array 1xm
       Array<f64> &uT, //!< U-transpose array mXm
       Array<f64> &vT, //!< V-transpose array nXn
-      void * scratch //!< A scratch buffer, with at least "sizeof(f64)*(n*2 + m)" bytes
+      void * scratch //!< A scratch buffer, with at least "sizeof(f64)*(n*2 + m*2 + 64)" bytes
       )
     {
       const s32 m = a.get_size(0); // m
@@ -326,7 +327,7 @@ namespace Anki
 
       DASConditionalErrorAndReturnValue(vT.get_size(0) == n && vT.get_size(1) == n,
         RESULT_FAIL, "svd_f64", "vT is not nXn");
-      
+
       icvLightSVD_64f(
         a.Pointer(0,0),
         a.get_stride() / sizeof(f64),
@@ -343,8 +344,12 @@ namespace Anki
       return RESULT_OK;
     }
 
-    /*! Performs an Singular Value Decomposition on the mXn, float32 input array. [w,u^t,v^t] = SVD(a); */
-    void icvLightSVD_32f(
+    /*!
+    Performs an Singular Value Decomposition on the mXn, float32 input array. [w,u^t,v^t] = SVD(a);
+    WARNING: I think that if any of the input arrays have stride padding,
+    the stride padding must be set to zero before calling.
+    */
+    IN_DDR void icvLightSVD_32f(
       f32* a,   //!< Pointer to the upper-left of the input array. Warning: this array will be modified.
       s32 lda,  //!< A_stride_in_bytes / sizeof(float)
       s32 m,    //!< Number of rows of A
@@ -355,7 +360,7 @@ namespace Anki
       s32 nu,   //!< Number of columns of U
       f32* vT,  //!< Pointer to the upper-left of the V-transpose array
       s32 ldvT, //!< V_stride_in_bytes / sizeof(float)
-      f32* buffer //!< A scratch buffer, with at least "sizeof(float)*(n*2 + m)" bytes
+      f32* buffer //!< A scratch buffer, with at least "sizeof(double)*(2n + 2m + 64)" bytes
       )
     {
       float* e;
@@ -370,7 +375,13 @@ namespace Anki
       int nm, m1, n1;
       int nv = n;
       int iters = 0;
-      float* hv0 = (float*)cvStackAlloc( (m+2)*sizeof(hv0[0])) + 1;
+
+      // Movidius compiler is missing alloca()
+      //float* hv0 = (float*)cvStackAlloc( (m+2)*sizeof(hv0[0])) + 1;
+
+      float* hv0 = (float*) cvAlignPtr( buffer, CV_MALLOC_ALIGN ) + 1;
+      buffer = hv0;
+      buffer += (m+2)*sizeof(hv0[0]) + 32;
 
       e = buffer;
 
@@ -746,8 +757,12 @@ namespace Anki
       }
     }
 
-    /*! Performs an Singular Value Decomposition on the mXn, float64 input array. [w,u^t,v^t] = SVD(a); */
-    void icvLightSVD_64f(
+    /*!
+    Performs an Singular Value Decomposition on the mXn, float32 input array. [w,u^t,v^t] = SVD(a);
+    WARNING: I think that if any of the input arrays have stride padding,
+    the stride padding must be set to zero before calling.
+    */
+    IN_DDR void icvLightSVD_64f(
       f64* a,   //!< Pointer to the upper-left of the input array. Warning: this array will be modified.
       s32 lda,  //!< A_stride_in_bytes / sizeof(float)
       s32 m,    //!< Number of rows of A
@@ -758,7 +773,7 @@ namespace Anki
       s32 nu,   //!< Number of columns of U
       f64* vT,  //!< Pointer to the upper-left of the V-transpose array
       s32 ldvT, //!< V_stride_in_bytes / sizeof(float)
-      f64* buffer //!< A scratch buffer, with at least "sizeof(float)*(n*2 + m)" bytes
+      f64* buffer //!< A scratch buffer, with at least "sizeof(double)*(2n + 2m + 64)" bytes
       )
     {
       double* e;
@@ -773,7 +788,13 @@ namespace Anki
       int nm, m1, n1;
       int nv = n;
       int iters = 0;
-      double* hv0 = (double*)cvStackAlloc( (m+2)*sizeof(hv0[0])) + 1;
+
+      // Movidius compiler is missing alloca()
+      // double* hv0 = (double*)cvStackAlloc( (m+2)*sizeof(hv0[0])) + 1;
+
+      double* hv0 = (double*) cvAlignPtr( buffer, CV_MALLOC_ALIGN ) + 1;
+      buffer = hv0;
+      buffer += (m+2)*sizeof(hv0[0]) + 32;
 
       e = buffer;
       w1 = w;
@@ -1149,9 +1170,9 @@ namespace Anki
     }
 
     /*! Compute the homography such that "transformedPoints = homography * originalPoints" */
-    Result EstimateHomography(
-      const FixedLengthList<Point<f64>> &originalPoints,    //!<
-      const FixedLengthList<Point<f64>> &transformedPoints, //!<
+    IN_DDR Result EstimateHomography(
+      const FixedLengthList<Point<f64> > &originalPoints,    //!<
+      const FixedLengthList<Point<f64> > &transformedPoints, //!<
       Array<f64> &homography, //!<
       MemoryStack &scratch //!<
       )
@@ -1223,7 +1244,7 @@ namespace Anki
         MemoryStack scratch(scratch_tmp);
 
         Array<f64> uT(_LtL.get_size(0), _LtL.get_size(0), scratch);
-        void * svdScratchBuffer = scratch.Allocate(sizeof(f64)*(_LtL.get_size(1)*2 + _LtL.get_size(0)));
+        void * svdScratchBuffer = scratch.Allocate(sizeof(f64)*(_LtL.get_size(1)*2 + _LtL.get_size(0)*2 + 64));
 
         result = svd_f64(_LtL, _W, uT, _V, svdScratchBuffer);
       }

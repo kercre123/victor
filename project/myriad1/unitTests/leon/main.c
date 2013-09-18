@@ -41,6 +41,11 @@ int main(void)
 
     initClocksAndMemory();
 
+    *(volatile u32*)MXI_CMX_CTRL_BASE_ADR |= (1 << 24);
+
+    DrvL2CacheSetupPartition(PART128KB);
+    DrvL2CacheAllocateSetPartitions();
+    SET_REG_WORD(L2C_MXITID_ADR, 0x0);
     sparc_leon3_disable_cache();
 
     printf("Starting unit tests\n");

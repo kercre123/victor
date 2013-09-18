@@ -6,7 +6,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    MemoryStack::MemoryStack(void *buffer, s32 bufferLength)
+    IN_DDR MemoryStack::MemoryStack(void *buffer, s32 bufferLength)
       : buffer(buffer), totalBytes(bufferLength), usedBytes(0)
     {
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
@@ -16,7 +16,7 @@ namespace Anki
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
     }
 
-    MemoryStack::MemoryStack(const MemoryStack& ms)
+    IN_DDR MemoryStack::MemoryStack(const MemoryStack& ms)
       : buffer(ms.buffer), totalBytes(ms.totalBytes), usedBytes(ms.usedBytes)
     {
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
@@ -27,7 +27,7 @@ namespace Anki
 #endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
     }
 
-    void* MemoryStack::Allocate(s32 numBytesRequested, s32 *numBytesAllocated)
+    IN_DDR void* MemoryStack::Allocate(s32 numBytesRequested, s32 *numBytesAllocated)
     {
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
       DASConditionalWarnAndReturnValue(numBytesRequested > 0, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested > 0");
@@ -61,10 +61,13 @@ namespace Anki
         *numBytesAllocated = numBytesRequestedRounded;
       }
 
+      // TODO: if this is slow, make this optional (or just remove it)
+      memset(segmentMemory, 0, numBytesRequestedRounded);
+
       return segmentMemory;
     }
 
-    bool MemoryStack::IsValid()
+    IN_DDR bool MemoryStack::IsValid()
     {
       const size_t LOOP_MAX = 1000000;
       const char * const bufferCharStar = reinterpret_cast<const char*>(buffer);
@@ -119,7 +122,7 @@ namespace Anki
       return true;
     }
 
-    s32 MemoryStack::ComputeLargestPossibleAllocation()
+    IN_DDR s32 MemoryStack::ComputeLargestPossibleAllocation()
     {
       const size_t bufferNextFree = reinterpret_cast<size_t>(buffer) + usedBytes;
       const size_t bufferNextFreePlusHeaderAndAlignment = RoundUp<size_t>(bufferNextFree+HEADER_LENGTH, MEMORY_ALIGNMENT);

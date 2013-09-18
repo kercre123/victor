@@ -37,9 +37,12 @@ namespace Anki
       // Allocate numBytes worth of memory, with the start byte-aligned to MEMORY_ALIGNMENT
       //
       // numBytesAllocated is an optional parameter. To satisfy stride requirements, Allocate() may
-      // allocate more than numBytesRequested. numBytesAllocated is the amount of memory available to
-      // the user from the returned void* pointer, and doesn't include overhead like the fill
+      // allocate more than numBytesRequested. numBytesAllocated is the amount of memory available
+      // to the user from the returned void* pointer, and doesn't include overhead like the fill
       // patterns.
+      //
+
+      /// All memory in the array is zeroed out once it is allocated, making Allocate more like calloc() than malloc()
       void* Allocate(s32 numBytesRequested, s32 *numBytesAllocated=NULL);
 
       // Check if any Allocate() memory was written out of bounds (via fill patterns at the beginning and end)
