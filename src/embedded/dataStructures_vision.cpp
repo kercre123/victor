@@ -16,7 +16,8 @@ namespace Anki
 
     void ConnectedComponentSegment::Print() const
     {
-      printf("[%d: (%d->%d, %d)] ", static_cast<s32>(id), static_cast<s32>(xStart), static_cast<s32>(xEnd), static_cast<s32>(y));
+      //printf("[%d: (%d->%d, %d)] ", static_cast<s32>(this->id), static_cast<s32>(this->xStart), static_cast<s32>(this->xEnd), static_cast<s32>(this->y));
+      printf("[%u: (%d->%d, %d)] ", this->id, this->xStart, this->xEnd, this->y);
     } // void ConnectedComponentSegment::Print() const
 
     bool ConnectedComponentSegment::operator== (const ConnectedComponentSegment &component2) const

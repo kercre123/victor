@@ -19,7 +19,7 @@ Matlab matlab(false);
 #endif
 
 //#define BUFFER_IN_DDR_WITH_L2
-//#define BUFFER_IN_CMX
+#define BUFFER_IN_CMX
 
 #if defined(BUFFER_IN_DDR_WITH_L2) && defined(BUFFER_IN_CMX)
 You cannot use both CMX and L2 Cache;
@@ -45,7 +45,7 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
-GTEST_TEST(CoreTech_Vision, CompressComponentIds)
+IN_DDR GTEST_TEST(CoreTech_Vision, CompressComponentIds)
 {
   const s32 numComponents = 10;
   const s32 numBytes = MIN(MAX_BYTES, 1000);
@@ -96,7 +96,7 @@ GTEST_TEST(CoreTech_Vision, CompressComponentIds)
 }
 
 // Not really a test, but computes the size of a list of ComponentSegments, to ensure that c++ isn't adding junk
-GTEST_TEST(CoreTech_Vision, ComponentsSize)
+IN_DDR GTEST_TEST(CoreTech_Vision, ComponentsSize)
 {
   const s32 numComponents = 500;
   const s32 numBytes = MIN(MAX_BYTES, 10000);
@@ -132,7 +132,7 @@ GTEST_TEST(CoreTech_Vision, ComponentsSize)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Vision, SortComponents)
+IN_DDR GTEST_TEST(CoreTech_Vision, SortComponents)
 {
   const s32 numComponents = 10;
   const s32 numBytes = MIN(MAX_BYTES, 1000);
@@ -143,15 +143,15 @@ GTEST_TEST(CoreTech_Vision, SortComponents)
   FixedLengthList<ConnectedComponentSegment> components(numComponents, ms);
   components.set_size(numComponents);
 
-  const ConnectedComponentSegment component0 = ConnectedComponentSegment(50, 100, 50, MAX_uint16_T); // 7
-  const ConnectedComponentSegment component1 = ConnectedComponentSegment(MAX_int16_T, MAX_int16_T, MAX_int16_T, 0); // 4
-  const ConnectedComponentSegment component2 = ConnectedComponentSegment(MAX_int16_T, MAX_int16_T, 0, 0); // 2
-  const ConnectedComponentSegment component3 = ConnectedComponentSegment(MAX_int16_T, MAX_int16_T, MAX_int16_T, MAX_uint16_T); // 9
-  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, MAX_int16_T, 0, 0); // 0
-  const ConnectedComponentSegment component5 = ConnectedComponentSegment(0, MAX_int16_T, MAX_int16_T, 0); // 3
-  const ConnectedComponentSegment component6 = ConnectedComponentSegment(0, MAX_int16_T, MAX_int16_T, MAX_uint16_T); // 8
-  const ConnectedComponentSegment component7 = ConnectedComponentSegment(MAX_int16_T, MAX_int16_T, 0, MAX_uint16_T); // 6
-  const ConnectedComponentSegment component8 = ConnectedComponentSegment(0, MAX_int16_T, 0, 0); // 1
+  const ConnectedComponentSegment component0 = ConnectedComponentSegment(50, 100, 50, u16_MAX); // 7
+  const ConnectedComponentSegment component1 = ConnectedComponentSegment(s16_MAX, s16_MAX, s16_MAX, 0); // 4
+  const ConnectedComponentSegment component2 = ConnectedComponentSegment(s16_MAX, s16_MAX, 0, 0); // 2
+  const ConnectedComponentSegment component3 = ConnectedComponentSegment(s16_MAX, s16_MAX, s16_MAX, u16_MAX); // 9
+  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, s16_MAX, 0, 0); // 0
+  const ConnectedComponentSegment component5 = ConnectedComponentSegment(0, s16_MAX, s16_MAX, 0); // 3
+  const ConnectedComponentSegment component6 = ConnectedComponentSegment(0, s16_MAX, s16_MAX, u16_MAX); // 8
+  const ConnectedComponentSegment component7 = ConnectedComponentSegment(s16_MAX, s16_MAX, 0, u16_MAX); // 6
+  const ConnectedComponentSegment component8 = ConnectedComponentSegment(0, s16_MAX, 0, 0); // 1
   const ConnectedComponentSegment component9 = ConnectedComponentSegment(42, 42, 42, 42); // 5
 
   *components.Pointer(0) = component0;
@@ -182,7 +182,7 @@ GTEST_TEST(CoreTech_Vision, SortComponents)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
+IN_DDR GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 {
   const s32 width = 18;
   const s32 height = 5;
@@ -231,6 +231,8 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 
   ASSERT_TRUE(extractedComponents.get_size() == 13);
 
+  // extractedComponents.Print();
+
   for(u16 i=0; i<numComponents_groundTruth; i++) {
     ASSERT_TRUE(extractedComponents.Pointer(i)->xStart == xStart_groundTruth[i]);
     ASSERT_TRUE(extractedComponents.Pointer(i)->xEnd == xEnd_groundTruth[i]);
@@ -241,7 +243,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
+IN_DDR GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
 {
   const s32 width = 50;
   const s32 numBytes = MIN(MAX_BYTES, 5000);
@@ -280,8 +282,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
   GTEST_RETURN_HERE;
 }
 
-//IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, BinomialFilter)
-GTEST_TEST(CoreTech_Vision, BinomialFilter)
+IN_DDR GTEST_TEST(CoreTech_Vision, BinomialFilter)
 {
   const s32 width = 10;
   const s32 height = 5;
@@ -326,7 +327,7 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
   GTEST_RETURN_HERE;
 }
 
-IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
+IN_DDR GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
 {
   const s32 width = 10;
   const s32 height = 4;
@@ -365,7 +366,7 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
   GTEST_RETURN_HERE;
 }
 
-IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
+IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
 {
   const s32 width = 16;
   const s32 height = 16;
@@ -438,7 +439,7 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
 }
 
 #if defined(ANKICORETECHEMBEDDED_USE_MATLAB) && defined(RUN_MATLAB_IMAGE_TEST)
-IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
+IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 {
   const s32 width = 640;
   const s32 height = 480;
@@ -476,7 +477,7 @@ IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 }
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
-IN_CACHED_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
+IN_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
 {
   const s32 width = 16;
   const s32 height = 16;
@@ -538,6 +539,8 @@ void RUN_ALL_TESTS()
   s32 numFailedTests = 0;
 
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
+  CALL_GTEST_TEST(CoreTech_Vision, SortComponents)
+    CALL_GTEST_TEST(CoreTech_Vision, CompressComponentIds);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d);
   CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);

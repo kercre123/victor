@@ -11,7 +11,7 @@ namespace Anki
     //% Handles edges by replicating the border pixel
     //function imageFiltered = binomialFilter(image)
     //Result BinomialFilter(const Array<u8> &image, Array<u8> &imageFiltered, MemoryStack scratch)
-    Result BinomialFilter(const Array<u8> &image, Array<u8> &imageFiltered, MemoryStack scratch)
+    IN_DDR Result BinomialFilter(const Array<u8> &image, Array<u8> &imageFiltered, MemoryStack scratch)
     {
       const u32 kernel[BINOMIAL_KERNEL_SIZE] = {1, 4, 6, 4, 1};
       const s32 kernelShift = 4;

@@ -6,7 +6,7 @@ namespace Anki
   {
     // Extract 2d connected components from binaryImage
     // All extracted components are stored in a single list "extractedComponents", which is sorted by id, y, then xStart
-    Result Extract2dComponents(const Array<u8> &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment> &extractedComponents, MemoryStack scratch)
+    IN_DDR Result Extract2dComponents(const Array<u8> &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment> &extractedComponents, MemoryStack scratch)
     {
       const s32 MAX_1D_COMPONENTS = binaryImage.get_size(1) / (minComponentWidth+1);
       const u16 MAX_2D_COMPONENTS = static_cast<u16>(extractedComponents.get_maximumSize());
@@ -39,13 +39,16 @@ namespace Anki
         Extract1dComponents(binaryImage_rowPointer, static_cast<s16>(width), minComponentWidth, maxSkipDistance, currentComponents1d);
         //currentComponents1d.Print();
 
+        //currentComponents1d.Print();
+        //printf("Some: %d %d %d\n", currentComponents1d.Pointer(0)->xStart, currentComponents1d.Pointer(0)->xEnd, currentComponents1d.Pointer(0)->y);
+
         // newPreviousComponents1d = zeros(num1dComponents_current, 3);
         newPreviousComponents1d.set_size(currentComponents1d.get_size());
 
         // for iCurrent = 1:num1dComponents_current
         for(s32 iCurrent=0; iCurrent<currentComponents1d.get_size(); iCurrent++) {
           bool foundMatch = false;
-          u16 firstMatchedPreviousId = MAX_uint16_T;
+          u16 firstMatchedPreviousId = u16_MAX;
 
           for(s32 iPrevious=0; iPrevious<previousComponents1d.get_size(); iPrevious++) {
             //% The current component matches the previous one if
@@ -107,7 +110,8 @@ namespace Anki
         } // for(s32 iCurrent=0; iCurrent<currentComponents1d.get_size(); iCurrent++)
 
         // Update previousComponents1d to be newPreviousComponents1d
-        std::swap(previousComponents1d, newPreviousComponents1d);
+        Swap(previousComponents1d, newPreviousComponents1d);
+        //SWAP(FixedLengthList<ConnectedComponentSegment>, previousComponents1d, newPreviousComponents1d);
       } // for(s32 y=0; y<height; y++)
 
       //% After all the initial 2d labels have been created, go through
@@ -155,13 +159,12 @@ namespace Anki
 
       //% Sort all 1D components by id, y, then x
       const Result result = SortConnectedComponentSegments(extractedComponents);
-
-      // TODO: convert the pieces into regular components?
-
       return result;
+
+      //      return RESULT_OK;
     }
 
-    Result Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment> &extractedComponents)
+    IN_DDR Result Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment> &extractedComponents)
     {
       bool onComponent;
       s16 componentStart;
@@ -185,6 +188,7 @@ namespace Anki
             if(numSkipped > maxSkipDistance) {
               const s16 componentWidth = x - componentStart;
               if(componentWidth >= minComponentWidth) {
+                //                printf("one: %d %d\n", componentStart, x-numSkipped);
                 extractedComponents.PushBack(ConnectedComponentSegment(componentStart, x-numSkipped));
               }
               onComponent = false;
@@ -204,6 +208,7 @@ namespace Anki
       if(onComponent) {
         const s16 componentWidth = binaryImageWidth - componentStart;
         if(componentWidth >= minComponentWidth) {
+          //          printf("two: %d %d\n", componentStart, binaryImageWidth-numSkipped-1);
           extractedComponents.PushBack(ConnectedComponentSegment(componentStart, binaryImageWidth-numSkipped-1));
         }
       }
@@ -213,7 +218,7 @@ namespace Anki
 
     // Sort the components by id, y, then xStart
     // TODO: determine how fast this method is, then suggest usage
-    Result SortConnectedComponentSegments(FixedLengthList<ConnectedComponentSegment> &components)
+    IN_DDR Result SortConnectedComponentSegments(FixedLengthList<ConnectedComponentSegment> &components)
     {
       // Performs insersion sort
       // TODO: do bucket sort by id first, then run this
@@ -256,7 +261,7 @@ namespace Anki
     // 3n + 3 bytes of scratch.
     //
     // TODO: If scratch usage is a bigger issue than computation time, this could be done with a bitmask
-    u16 CompressConnectedComponentSegmentIds(FixedLengthList<ConnectedComponentSegment> &components, MemoryStack scratch)
+    IN_DDR u16 CompressConnectedComponentSegmentIds(FixedLengthList<ConnectedComponentSegment> &components, MemoryStack scratch)
     {
       s32 numUsedIds = 0;
 
@@ -302,7 +307,7 @@ namespace Anki
     //
     // For a components parameter that has a maximum id of N, this function requires
     // 4n + 4 bytes of scratch.
-    Result MarkSmallComponentsAsInvalid(FixedLengthList<ConnectedComponentSegment> &components, const s32 minimumNumPixels, MemoryStack scratch)
+    IN_DDR Result MarkSmallComponentsAsInvalid(FixedLengthList<ConnectedComponentSegment> &components, const s32 minimumNumPixels, MemoryStack scratch)
     {
       const u16 maximumId = FindMaximumId(components);
 

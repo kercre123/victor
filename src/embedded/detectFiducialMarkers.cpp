@@ -4,7 +4,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    Result DetectFiducialMarkers(const Array<u8> &image,
+    IN_DDR Result DetectFiducialMarkers(const Array<u8> &image,
       FixedLengthList<FiducialMarker> &markers,
       s32 numPyramidLevels,
       MemoryStack scratch1,
@@ -12,7 +12,7 @@ namespace Anki
     {
       // TODO: This whole function seems pretty confusing, but I can't think of a less confusing way to efficiently reuse the big blocks of memory
 
-      const s32 maxConnectedComponentSegments = MAX_uint16_T;
+      const s32 maxConnectedComponentSegments = u16_MAX;
       const s16 minComponentWidth = 3;
       const s16 maxSkipDistance = 1;
       const s32 maxCandidateMarkes = 1000;

@@ -25,7 +25,7 @@ namespace Anki
     }
 
     //function newDirection = findNewDirection(image, curPoint, curDirection, value)
-    static BoundaryDirection FindNewDirection(const Array<u8> &binaryImage, const Point<s16> &curPoint, const BoundaryDirection curDirection, const u8 value)
+    IN_DDR static BoundaryDirection FindNewDirection(const Array<u8> &binaryImage, const Point<s16> &curPoint, const BoundaryDirection curDirection, const u8 value)
     {
       BoundaryDirection newDirection = BOUNDARY_UNKNOWN;
 
@@ -62,7 +62,7 @@ namespace Anki
       return BOUNDARY_UNKNOWN;
     }
 
-    Result TraceBoundary(const Array<u8> &binaryImage, const Point<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point<s16> > &boundary)
+    IN_DDR Result TraceBoundary(const Array<u8> &binaryImage, const Point<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point<s16> > &boundary)
     {
 #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
       DASConditionalErrorAndReturnValue(binaryImage.IsValid(),

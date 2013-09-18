@@ -7,7 +7,7 @@ namespace Anki
 #define MAX_PYRAMID_LEVELS 8
 #define MAX_ALPHAS 128
     // //function scaleImage = computeCharacteristicScaleImage_loopsAndFixedPoint(image, numPyramidLevels, computeDogAtFullSize, filterWithMex)
-    Result ComputeCharacteristicScaleImage(const Array<u8> &image, const s32 numPyramidLevels, Array<u32> &scaleImage, MemoryStack scratch)
+    IN_DDR Result ComputeCharacteristicScaleImage(const Array<u8> &image, const s32 numPyramidLevels, Array<u32> &scaleImage, MemoryStack scratch)
     {
       //double times[20];
 
