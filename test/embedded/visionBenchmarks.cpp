@@ -200,11 +200,11 @@ int BenchmarkTraceBoundary()
     }
   }
 
-#if defined(ANKI_DEBUG_HIGH) && defined(ANKICORETECH_USE_MATLAB)
+#if defined(ANKI_DEBUG_ALL) && defined(ANKICORETECH_USE_MATLAB)
   Matlab matlab;
 
   matlab.PutArray<u8>(binaryImage, "binaryImage");
-#endif // #if defined(ANKI_DEBUG_HIGH) && defined(ANKICORETECH_USE_MATLAB)
+#endif // #if defined(ANKI_DEBUG_ALL) && defined(ANKICORETECH_USE_MATLAB)
 
   Result result = TraceBoundary(binaryImage, startPoint, initialDirection, boundary);
 
