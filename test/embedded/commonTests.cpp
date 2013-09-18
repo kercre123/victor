@@ -165,7 +165,9 @@ IN_DDR void PrintfOneArray_f32(const Array<f32> &array, const char * variableNam
   for(s32 y=0; y<array.get_size(0); y++) {
     const f32 * const rowPointer = array.Pointer(y, 0);
     for(s32 x=0; x<array.get_size(1); x++) {
-      printf("%d ", static_cast<s32>(10000*rowPointer[x]));
+      const f32 value = rowPointer[x];
+      const f32 mulitipliedValue = 10000.0f * value;
+      printf("%d ", static_cast<s32>(mulitipliedValue));
     }
     printf("\n");
   }
@@ -178,7 +180,7 @@ IN_DDR void PrintfOneArray_f64(const Array<f64> &array, const char * variableNam
   for(s32 y=0; y<array.get_size(0); y++) {
     const f64 * const rowPointer = array.Pointer(y, 0);
     for(s32 x=0; x<array.get_size(1); x++) {
-      printf("%d ", static_cast<s32>(10000*rowPointer[x]));
+      printf("%d ", static_cast<s32>((10000.0*rowPointer[x])));
     }
     printf("\n");
   }
@@ -378,7 +380,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack)
   ASSERT_TRUE(buffer2 != NULL);
   ASSERT_TRUE(buffer3 != NULL);
 
-#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+#if ANKI_DEBUG_LEVEL > ANKI_DEBUG_ESSENTIAL_AND_ERROR
   ASSERT_TRUE(buffer4 == NULL);
   ASSERT_TRUE(buffer5 == NULL);
   ASSERT_TRUE(buffer6 == NULL);
@@ -427,7 +429,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack)
     ASSERT_TRUE(ms.IsValid() == expectedResults[i]);
     (reinterpret_cast<char*>(alignedBuffer)[i])--;
   }
-#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+#endif // #if ANKI_DEBUG_LEVEL > ANKI_DEBUG_ESSENTIAL_AND_ERROR
 
   //free(buffer); buffer = NULL;
 
@@ -809,8 +811,8 @@ IN_DDR void RUN_ALL_TESTS()
 
   CALL_GTEST_TEST(CoreTech_Common, MatrixMultiply);
   CALL_GTEST_TEST(CoreTech_Common, ComputeHomography);
-  CALL_GTEST_TEST(CoreTech_Common, SVD64);
   CALL_GTEST_TEST(CoreTech_Common, SVD32);
+  CALL_GTEST_TEST(CoreTech_Common, SVD64);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_call);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1);

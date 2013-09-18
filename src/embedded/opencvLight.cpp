@@ -289,10 +289,17 @@ namespace Anki
         vT.get_stride() / sizeof(f32),
         reinterpret_cast<f32*>(scratch));
 
-      AnkiConditionalWarnAndReturnValue(a.IsValid(), RESULT_FAIL, "svd_f32", "a is not valid");
-      AnkiConditionalWarnAndReturnValue(w.IsValid(), RESULT_FAIL, "svd_f32", "w is not valid");
-      AnkiConditionalWarnAndReturnValue(uT.IsValid(), RESULT_FAIL, "svd_f32", "uT is not valid");
-      AnkiConditionalWarnAndReturnValue(vT.IsValid(), RESULT_FAIL, "svd_f32", "vT is not valid");
+      AnkiConditionalErrorAndReturnValue(a.IsValid(),
+        RESULT_FAIL, "svd_f32", "After call: a is not valid");
+
+      AnkiConditionalErrorAndReturnValue(w.IsValid(),
+        RESULT_FAIL, "svd_f32", "After call: w is not valid");
+
+      AnkiConditionalErrorAndReturnValue(uT.IsValid(),
+        RESULT_FAIL, "svd_f32", "After call: uT is not valid");
+
+      AnkiConditionalErrorAndReturnValue(vT.IsValid(),
+        RESULT_FAIL, "svd_f32", "After call: vT is not valid");
 
       return RESULT_OK;
     }
@@ -345,6 +352,18 @@ namespace Anki
         vT.Pointer(0,0),
         vT.get_stride() / sizeof(f64),
         reinterpret_cast<f64*>(scratch));
+
+      AnkiConditionalErrorAndReturnValue(a.IsValid(),
+        RESULT_FAIL, "svd_f64", "After call: a is not valid");
+
+      AnkiConditionalErrorAndReturnValue(w.IsValid(),
+        RESULT_FAIL, "svd_f64", "After call: w is not valid");
+
+      AnkiConditionalErrorAndReturnValue(uT.IsValid(),
+        RESULT_FAIL, "svd_f64", "After call: uT is not valid");
+
+      AnkiConditionalErrorAndReturnValue(vT.IsValid(),
+        RESULT_FAIL, "svd_f64", "After call: vT is not valid");
 
       return RESULT_OK;
     }
@@ -798,6 +817,7 @@ namespace Anki
       // double* hv0 = (double*)cvStackAlloc( (m+2)*sizeof(hv0[0])) + 1;
 
       double* hv0 = (double*) cvAlignPtr( buffer, CV_MALLOC_ALIGN ) + 1;
+      //memset(hv0, 0, (m+2)*sizeof(hv0[0]) + 32);
       buffer = hv0;
       buffer += (m+2)*sizeof(hv0[0]) + 32;
 
@@ -1252,6 +1272,9 @@ namespace Anki
         void * svdScratchBuffer = scratch.Allocate(sizeof(f64)*(_LtL.get_size(1)*2 + _LtL.get_size(0)*2 + 64));
 
         result = svd_f64(_LtL, _W, uT, _V, svdScratchBuffer);
+
+        AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
+          RESULT_FAIL, "EstimateHomography", "After call: scratch is not valid");
       }
 
       AnkiConditionalErrorAndReturnValue(result == RESULT_OK,
