@@ -1,6 +1,10 @@
 #include "keyboardController.h"
 #include "hal/sim_motors.h"
 #include "hal/motors.h"
+#include "cozmoConfig.h"
+
+#include <stdio.h>
+#include <string.h>
 
 #include <webots/robot.h>
 #include <webots/connector.h>
@@ -17,6 +21,31 @@
 #define CKEY_UNLOCK     32 
 
 
+static BOOL keyboardCtrlEnabled_ = FALSE;
+
+void EnableKeyboardController(void) 
+{
+  //Update Keyboard every 0.1 seconds
+  wb_robot_keyboard_enable(TIME_STEP); 
+  keyboardCtrlEnabled_ = TRUE;
+
+  printf("Drive: arrows\n");
+  printf("Lift up/down: a/z\n");
+  printf("Head up/down: s/x\n");
+  printf("Undock: space\n");
+}
+
+void DisableKeyboardController(void)
+{
+  //Disable the keyboard
+  wb_robot_keyboard_disable();
+  keyboardCtrlEnabled_ = FALSE;
+}
+
+BOOL IsKeyboardControllerEnabled()
+{
+  return keyboardCtrlEnabled_;
+}
 
 //Check the keyboard keys and issue robot commands
 void RunKeyboardController()

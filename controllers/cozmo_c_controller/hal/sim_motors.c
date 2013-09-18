@@ -1,5 +1,6 @@
 #include "hal/motors.h"
 #include "hal/sim_motors.h"
+#include "keyboardController.h"
 
 #include <webots/robot.h>
 #include <webots/motor.h>
@@ -62,6 +63,10 @@ void InitMotors()
 //from: [0..MOTOR_PWM_MAXVAL] and HAS to be within those boundaries
 void SetMotorOLSpeed(s16 speedl, s16 speedr)
 {
+  if (IsKeyboardControllerEnabled()){
+    return;
+  }
+
   // Convert PWM to rad/s
   // TODO: Do this properly.  For now assume MOTOR_PWM_MAXVAL achieves 1m/s lateral speed.
   

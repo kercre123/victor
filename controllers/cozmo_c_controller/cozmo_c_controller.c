@@ -13,9 +13,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <webots/robot.h>
-#include <webots/motor.h>
 #include <webots/camera.h>
-#include <webots/connector.h>
 
 #include <string.h>
 //#include "engine.h"
@@ -146,11 +144,6 @@ int main(int argc, char **argv)
   wb_robot_init();
   InitCozmo();
   
-  printf("Drive: arrows\n");
-  printf("Lift up/down: a/z\n");
-  printf("Head up/down: s/x\n");
-  printf("Undock: space\n");
-  
   
   
   
@@ -160,16 +153,9 @@ int main(int argc, char **argv)
   // Initialize HAL
   InitMotors();
   
+    
+  EnableKeyboardController();
   
-  /*
-   * You should declare here WbDeviceTag variables for storing
-   * robot devices like this:
-   *  WbDeviceTag my_sensor = wb_robot_get_device("my_sensor");
-   *  WbDeviceTag my_actuator = wb_robot_get_device("my_actuator");
-   */
-  
-  //Update Keyboard every 0.1 seconds
-  wb_robot_keyboard_enable(TIME_STEP); 
   
   /* main loop
    * Perform simulation steps of TIME_STEP milliseconds
@@ -197,9 +183,7 @@ int main(int argc, char **argv)
   };
   
   /* Enter your cleanup code here */
-  
-  //Disable the keyboard
-  wb_robot_keyboard_disable();
+  DisableKeyboardController();
   wb_camera_disable(cam_head);
   wb_camera_disable(cam_lift);
   wb_camera_disable(cam_down);

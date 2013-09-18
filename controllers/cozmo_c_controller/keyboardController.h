@@ -1,6 +1,11 @@
 #ifndef KEYBOARD_CONTROLLER_H
 #define KEYBOARD_CONTROLLER_H
 
+#include "cozmoTypes.h"
+
+void EnableKeyboardController(void);
+void DisableKeyboardController(void);
+BOOL IsKeyboardControllerEnabled(void);
 void RunKeyboardController(void);
 
 

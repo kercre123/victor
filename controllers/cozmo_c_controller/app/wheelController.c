@@ -16,21 +16,22 @@ s16 GetDesiredSpeed()
 
 void ManageWheelSpeedController(s16 fidx)
 {
-  
+  s16 lpwm = 0, rpwm = 0;
+
   // Get desired speed
   s16 speed = GetDesiredSpeed();
   
-  // Incorporate steer to determine left and right wheel PWMs
-  // ...
+  if (speed > 0) {
+    
+    // THIS IS FOR SIM ONLY
+    lpwm = speed * MOTOR_PWM_MAXVAL / 66.1;
+    rpwm = speed * MOTOR_PWM_MAXVAL / 66.1;
+    
 
-  
-  
-  // THIS IS FOR SIM ONLY
-  lpwm = speed * MOTOR_PWM_MAXVAL / 66.1;
-  rpwm = speed * MOTOR_PWM_MAXVAL / 66.1;
-  
-
-  
+    // Incorporate steer to determine left and right wheel PWMs
+    lpwm += fidx * 10;
+    rpwm -= fidx * 10;
+  }
   
   
   SetMotorOLSpeed(lpwm,rpwm);
