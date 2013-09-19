@@ -102,7 +102,7 @@ classdef Camera < handle
             %
             
             device = [];
-            timeStep = 64; % in ms, for webot cameras
+            timeStep = 30; % in ms, for webot cameras
             deviceType = 'usb'; %#ok<PROP>
             resolution = [640 480];
             calibration = struct('fc', [1000 1000], ...
