@@ -94,6 +94,12 @@ namespace Anki
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
 
+      // Return the minimum element in this matrix
+      Type Min() const;
+
+      // Return the maximum element in this matrix
+      Type Max() const;
+
       // Set every element in the Array to zero, including the stride padding
       void SetZero();
 
@@ -541,6 +547,34 @@ namespace Anki
       this->data = NULL;
       this->rawDataPointer = NULL;
     } // void Array<Type>::InvalidateArray()
+
+    template<typename Type> Type Array<Type>::Min() const
+    {
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        0, "Array<Type>::Min", "Array<Type> is not valid");
+
+      Type minValue = *this->Pointer(0, 0);
+      for(s32 y=0; y<size[0]; y++) {
+        const Type * const this_rowPointer = this->Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          minValue = MIN(minValue, this_rowPointer[x]);
+        }
+      }
+    }
+
+    template<typename Type> Type Array<Type>::Max() const
+    {
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        0, "Array<Type>::Min", "Array<Type> is not valid");
+
+      Type maxValue = *this->Pointer(0, 0);
+      for(s32 y=0; y<size[0]; y++) {
+        const Type * const this_rowPointer = this->Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          maxValue = MAX(minValue, this_rowPointer[x]);
+        }
+      }
+    }
 
 #pragma mark --- Array Specializations ---
 
