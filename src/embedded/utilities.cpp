@@ -1,4 +1,5 @@
-#include "anki/embeddedCommon.h"
+#include "anki/embeddedCommon/utilities.h"
+#include "anki/embeddedCommon/errorHandling.h"
 
 #if defined(_MSC_VER)
 #include <windows.h >

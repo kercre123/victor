@@ -67,105 +67,124 @@ namespace Anki
       //Character strings need to be converted slightly to appear correctly in Matlab
       Result PutString(const char * characters, s32 nValues, const std::string name);
 
-      template<typename Type> Result PutArray(const Array<Type> &matrix, const std::string name)
-      {
-        AnkiConditionalErrorAndReturnValue(ep, RESULT_FAIL, "Anki.PutArray<Type>", "Matlab engine is not started/connected");
+      template<typename Type> Result PutArray(const Array<Type> &matrix, const std::string name);
 
-        const std::string tmpName = name + std::string("_AnkiTMP");
-        const std::string matlabTypeName = Anki::Embedded::ConvertToMatlabTypeString(typeid(Type).name(), sizeof(Type));
+      template<typename Type> Array<Type> GetArray(const std::string name);
 
-        EvalStringEcho("%s=zeros([%d,%d],'%s');", name.data(), matrix.get_size(0), matrix.get_size(1), matlabTypeName.data());
+      template<typename T> Result Put(const T * values, s32 nValues, const std::string name);
 
-        for(s32 y=0; y<matrix.get_size(0); y++) {
-          Put<Type>(matrix.Pointer(y,0), matrix.get_size(1), tmpName);
-          EvalStringEcho("%s(%d,:)=%s;", name.data(), y+1, tmpName.data());
-        }
-
-        EvalString("clear %s;", tmpName.data());
-
-        return RESULT_OK;
-      }
-
-      template<typename Type> Array<Type> GetArray(const std::string name)
-      {
-        AnkiConditionalErrorAndReturnValue(ep, Array<Type>(0, 0, NULL, 0, false), "Anki.GetArray<Type>", "Matlab engine is not started/connected");
-
-        const std::string tmpName = name + std::string("_AnkiTMP");
-
-        EvalString("%s=%s';", tmpName.data(), name.data());
-        mxArray *arrayTmp = GetArray(tmpName.data());
-
-        AnkiConditionalErrorAndReturnValue(arrayTmp, Array<Type>(0, 0, NULL, 0, false), "Anki.GetArray<Type>", "%s could not be got from Matlab", tmpName.data());
-
-        const mxClassID ankiVisionClassId = Anki::Embedded::ConvertToMatlabType(typeid(Type).name(), sizeof(Type));
-
-        const mxClassID matlabClassId = mxGetClassID(arrayTmp);
-
-        AnkiConditionalErrorAndReturnValue(matlabClassId == ankiVisionClassId, Array<Type>(0, 0, NULL, 0, false), "Anki.GetArray<Type>", "matlabClassId != ankiVisionClassId");
-
-        const size_t numCols = mxGetM(arrayTmp);
-        const size_t numRows = mxGetN(arrayTmp);
-        const s32 stride = Array<Type>::ComputeRequiredStride(static_cast<s32>(numCols),false);
-
-        Array<Type> ankiArray(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<Type*>(calloc(stride*numCols,1)), stride*static_cast<s32>(numCols), false);
-
-        Type *matlabArrayTmp = reinterpret_cast<Type*>(mxGetPr(arrayTmp));
-        s32 matlabIndex = 0;
-        for(s32 y=0; y<ankiArray.get_size(0); y++) {
-          Type * rowPointer = ankiArray.Pointer(y, 0);
-          for(s32 x=0; x<ankiArray.get_size(1); x++) {
-            rowPointer[x] = matlabArrayTmp[matlabIndex++];
-          }
-        }
-
-        mxDestroyArray(arrayTmp);
-
-        EvalString("clear %s;", tmpName.data());
-
-        return ankiArray;
-      }
-
-      template<typename T> Result Put(const T * values, s32 nValues, const std::string name)
-      {
-        AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.Put", "Matlab engine is not started/connected");
-
-        const mwSize dims[1] = {static_cast<mwSize>(nValues)};
-        const mxClassID matlabType = Anki::Embedded::ConvertToMatlabType(typeid(T).name(), sizeof(T));
-        mxArray *arrayTmp = mxCreateNumericArray(1, &dims[0], matlabType, mxREAL);
-        T *matlabBufferTmp = (T*) mxGetPr(arrayTmp);
-        for(s32 i = 0; i<nValues; i++) {
-          matlabBufferTmp[i] = values[i];
-        }
-        engPutVariable(ep, name.data(), arrayTmp);
-        mxDestroyArray(arrayTmp);
-
-        return RESULT_OK;
-      }
-
-      template<typename T> T* Get(const std::string name)
-      {
-        AnkiConditionalErrorAndReturnValue(this->ep, NULL, "Anki.Get", "Matlab engine is not started/connected");
-
-        T *valTmp = 0, *val = 0;
-
-        mxArray *arrayTmp = GetArray(name);
-
-        if(arrayTmp) {
-          const mwSize size = mxGetNumberOfElements(arrayTmp);
-          valTmp = reinterpret_cast<T*>(mxGetPr(arrayTmp));
-          val = reinterpret_cast<T*>(calloc(size, sizeof(T)));
-          for(s32 i = 0; i<(s32)size; i++) {
-            val[i] = valTmp[i];
-          }
-          mxDestroyArray(arrayTmp);
-        } else {
-          AnkiError("Anki.Get", "No variable named %s exists on the workspace.\n", name.data());
-          return NULL;
-        }
-
-        return val;
-      }
+      template<typename T> T* Get(const std::string name);
     }; // class Matlab
+
+    // Convert a Matlab mxArray to an Anki::Array, without allocating memory
+    template<typename Type> void mxArrayToArray(const mxArray * const array, Array<Type> &mat);
+
+    // Convert a Matlab mxArray to an Anki::Array. Allocate and return the Anki::Array
+    template<typename Type> Array<Type> mxArrayToArray(const mxArray * const matlabArray);
+
+    // Convert an Anki::Array to a Matlab mxArray. Allocate and return the mxArray
+    template<typename Type> mxArray* arrayToMxArray(const Array<Type> &array);
+
+#pragma mark --- Implementations ---
+
+    template<typename Type> Result Matlab::PutArray(const Array<Type> &matrix, const std::string name)
+    {
+      AnkiConditionalErrorAndReturnValue(ep, RESULT_FAIL, "Anki.PutArray<Type>", "Matlab engine is not started/connected");
+
+      const std::string tmpName = name + std::string("_AnkiTMP");
+      const std::string matlabTypeName = Anki::Embedded::ConvertToMatlabTypeString(typeid(Type).name(), sizeof(Type));
+
+      EvalStringEcho("%s=zeros([%d,%d],'%s');", name.data(), matrix.get_size(0), matrix.get_size(1), matlabTypeName.data());
+
+      for(s32 y=0; y<matrix.get_size(0); y++) {
+        Put<Type>(matrix.Pointer(y,0), matrix.get_size(1), tmpName);
+        EvalStringEcho("%s(%d,:)=%s;", name.data(), y+1, tmpName.data());
+      }
+
+      EvalString("clear %s;", tmpName.data());
+
+      return RESULT_OK;
+    } // template<typename Type> Result Matlab::PutArray(const Array<Type> &matrix, const std::string name)
+
+    template<typename Type> Array<Type> Matlab::GetArray(const std::string name)
+    {
+      AnkiConditionalErrorAndReturnValue(ep, Array<Type>(0, 0, NULL, 0, false), "Anki.GetArray<Type>", "Matlab engine is not started/connected");
+
+      const std::string tmpName = name + std::string("_AnkiTMP");
+
+      EvalString("%s=%s';", tmpName.data(), name.data());
+      mxArray *arrayTmp = GetArray(tmpName.data());
+
+      AnkiConditionalErrorAndReturnValue(arrayTmp, Array<Type>(0, 0, NULL, 0, false), "Anki.GetArray<Type>", "%s could not be got from Matlab", tmpName.data());
+
+      const mxClassID ankiVisionClassId = Anki::Embedded::ConvertToMatlabType(typeid(Type).name(), sizeof(Type));
+
+      const mxClassID matlabClassId = mxGetClassID(arrayTmp);
+
+      AnkiConditionalErrorAndReturnValue(matlabClassId == ankiVisionClassId, Array<Type>(0, 0, NULL, 0, false), "Anki.GetArray<Type>", "matlabClassId != ankiVisionClassId");
+
+      const size_t numCols = mxGetM(arrayTmp);
+      const size_t numRows = mxGetN(arrayTmp);
+      const s32 stride = Array<Type>::ComputeRequiredStride(static_cast<s32>(numCols),false);
+
+      Array<Type> ankiArray(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<Type*>(calloc(stride*numCols,1)), stride*static_cast<s32>(numCols), false);
+
+      Type *matlabArrayTmp = reinterpret_cast<Type*>(mxGetPr(arrayTmp));
+      s32 matlabIndex = 0;
+      for(s32 y=0; y<ankiArray.get_size(0); y++) {
+        Type * rowPointer = ankiArray.Pointer(y, 0);
+        for(s32 x=0; x<ankiArray.get_size(1); x++) {
+          rowPointer[x] = matlabArrayTmp[matlabIndex++];
+        }
+      }
+
+      mxDestroyArray(arrayTmp);
+
+      EvalString("clear %s;", tmpName.data());
+
+      return ankiArray;
+    } // template<typename Type> Array<Type> Matlab::GetArray(const std::string name)
+
+    template<typename T> Result Matlab::Put(const T * values, s32 nValues, const std::string name)
+    {
+      AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.Put", "Matlab engine is not started/connected");
+
+      const mwSize dims[1] = {static_cast<mwSize>(nValues)};
+      const mxClassID matlabType = Anki::Embedded::ConvertToMatlabType(typeid(T).name(), sizeof(T));
+      mxArray *arrayTmp = mxCreateNumericArray(1, &dims[0], matlabType, mxREAL);
+      T *matlabBufferTmp = (T*) mxGetPr(arrayTmp);
+      for(s32 i = 0; i<nValues; i++) {
+        matlabBufferTmp[i] = values[i];
+      }
+      engPutVariable(ep, name.data(), arrayTmp);
+      mxDestroyArray(arrayTmp);
+
+      return RESULT_OK;
+    } // template<typename T> Result Matlab::Put(const T * values, s32 nValues, const std::string name)
+
+    template<typename T> T* Matlab::Get(const std::string name)
+    {
+      AnkiConditionalErrorAndReturnValue(this->ep, NULL, "Anki.Get", "Matlab engine is not started/connected");
+
+      T *valTmp = 0, *val = 0;
+
+      mxArray *arrayTmp = GetArray(name);
+
+      if(arrayTmp) {
+        const mwSize size = mxGetNumberOfElements(arrayTmp);
+        valTmp = reinterpret_cast<T*>(mxGetPr(arrayTmp));
+        val = reinterpret_cast<T*>(calloc(size, sizeof(T)));
+        for(s32 i = 0; i<(s32)size; i++) {
+          val[i] = valTmp[i];
+        }
+        mxDestroyArray(arrayTmp);
+      } else {
+        AnkiError("Anki.Get", "No variable named %s exists on the workspace.\n", name.data());
+        return NULL;
+      }
+
+      return val;
+    } // template<typename T> T* Matlab::Get(const std::string name)
 
     template<typename Type> void mxArrayToArray(const mxArray * const array, Array<Type> &mat)
     {
@@ -197,7 +216,7 @@ namespace Anki
           array_rowPointer[x] = matlabMatrix_rowPointer[x];
         }
       }
-    }
+    } // template<typename Type> void mxArrayToArray(const mxArray * const array, Array<Type> &mat)
 
     template<typename Type> Array<Type> mxArrayToArray(const mxArray * const matlabArray)
     {
@@ -230,7 +249,7 @@ namespace Anki
       }
 
       return array;
-    }
+    } // template<typename Type> Array<Type> mxArrayToArray(const mxArray * const matlabArray)
 
     template<typename Type> mxArray* arrayToMxArray(const Array<Type> &array)
     {
@@ -249,7 +268,7 @@ namespace Anki
       }
 
       return outputArray;
-    }
+    } // template<typename Type> mxArray* arrayToMxArray(const Array<Type> &array)
   } // namespace Embedded
 } // namespace Anki
 

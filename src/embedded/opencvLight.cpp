@@ -39,7 +39,8 @@
 //
 //M*/
 
-#include "anki/embeddedCommon.h"
+#include "anki/embeddedCommon/opencvLight.h"
+#include "anki/embeddedCommon/errorHandling.h"
 
 #include <string.h>
 #include <math.h>
