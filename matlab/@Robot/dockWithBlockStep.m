@@ -46,16 +46,15 @@ if any(u_face < 1 | u_face > this.camera.ncols | v_face < 1 | v_face > this.came
     
     % NOTE: the extra three returns here are only for debug display below!
     [u,v, u_box,v_box,img] = this.dockingFace.findDockingTarget(this.camera);
+        
+    % Figure out where the dots are in 3D space, in camera's coordinate frame:
+    dots3D = this.dockingFace.getPosition(this.dockingBlock.pose, 'DockingTarget');
+    dotsPose = this.camera.computeExtrinsics([u(:) v(:)], dots3D);
     
-%     % Figure out where the dots are in 3D space, in camera's coordinate frame:
-%     dotsPose = this.camera.computeExtrinsics([u v], this.dockingFace.dockingTarget);
-%     
-%     % Get the dots' pose in World coordinates using the pose tree:
-%     dotsPose = dotsPose.getWithRespectTo('World');
-%     
-%     % We measured the _dots_ pose.  We are updating the _block_ pose:
-%     this.dockingBlock.pose = dotsPose * this.dockingFace.pose.inv;
-%     this.world.updateObsBlockPose(this.dockingBlock.blockType, this.dockingBlock.pose);
+    % Get the dots' pose in World coordinates using the pose tree:
+    this.dockingBlock.pose = dotsPose.getWithRespectTo('World');
+
+    this.world.updateObsBlockPose(this.dockingBlock.blockType, this.dockingBlock.pose);
     
 else
     % We are still far enough away to be using the full marker to determine
@@ -63,6 +62,7 @@ else
         
     % Find the block's docking dots 3D locations, w.r.t. our head camera:
     dots3D = this.dockingFace.getPosition(this.camera.pose, 'DockingTarget');
+    dotsPose = this.dockingFace.pose.getWithRespectTo(this.camera.pose);
     
     % Project them into the image:
     [u,v] = this.camera.projectPoints(dots3D);
@@ -79,7 +79,12 @@ if ~all(u >= 1 & u <= this.camera.ncols & ...
     error('Requested face of requested Block is not in view!');
 end
 
-[leftVelocity, rightVelocity] = DockingController([u(:) v(:)], [u_goal(:) v_goal(:)]);
+% Get the angle between the horizontal (in-plane) rotation of the block's
+% face we are docking with and the robot's heading (in camera coordinates)
+% TODO: verify this is correct
+headingError = acos(dotsPose.Rmat(3,2));
+
+[leftVelocity, rightVelocity] = DockingController([u(:) v(:)], [u_goal(:) v_goal(:)], headingError);
 
 this.drive(leftVelocity, rightVelocity);
 
@@ -120,7 +125,7 @@ end
 end % FUNCTION dockWithBlock()
 
 
-function [leftMotorVelocity, rightMotorVelocity] = DockingController(obsTarget, goalTarget)
+function [leftMotorVelocity, rightMotorVelocity] = DockingController(obsTarget, goalTarget, headingError)
 
 % High-level:
 % - If the observed target is to the right of the goal location for that
@@ -128,6 +133,8 @@ function [leftMotorVelocity, rightMotorVelocity] = DockingController(obsTarget, 
 %   forwards and the left motor to rotate backwards.
 % - If the observed target is above the goal location for that target, we
 %   need to back up, so we need to rotate both motors backwards.
+
+% TODO: incorporate heading error?
 
 K_turn  = 0.01;
 K_dist  = 0.02;
