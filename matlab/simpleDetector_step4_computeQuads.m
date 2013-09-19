@@ -284,6 +284,9 @@ for i_region = 1:numRegions
                                         tform = fminsearch(@(x)refineHelper(x,mag,canonicalBoundary), tformInit.tdata.T, options);
                                         tform = maketform('projective', tform);
                                         
+                                    case 'none'
+                                        tform = tformInit;
+                                        
                                     otherwise
                                         error('Unrecognized quadRefinementMethod "%s"', quadRefinementMethod);
                                 end

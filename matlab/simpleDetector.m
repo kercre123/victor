@@ -7,7 +7,7 @@ usePerimeterCheck = false;
 thresholdFraction = 1; % fraction of local mean to use as threshld
 minQuadArea = 100; % about 10 pixels per side
 computeTransformFromBoundary = true;
-quadRefinementMethod = 'ICP'; % 'ICP' or 'fminsearch'
+quadRefinementMethod = 'none'; % 'ICP' or 'fminsearch' or 'none'
 cornerMethod = 'laplacianPeaks'; % 'laplacianPeaks', 'harrisScore', or 'radiusPeaks'
 decodeDownsampleFactor = 1; % use lower resolution image for decoding
 DEBUG_DISPLAY = nargout==0;
