@@ -12,7 +12,6 @@ cla(AxesHandle(1))
 
 world = this.robot.world;
 camera = this.robot.camera;
-invRobotPose = inv(this.pose);
 
 [nrows,ncols] = size(this.image);
 
@@ -79,6 +78,13 @@ for i_block = 1:length(world.blocks{i_blockType})
                     'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'w', ...
                     'LineWidth', 2, ...
                     'Parent', AxesHandle(1));
+                
+                % Plot docking dots:
+                dots = marker.getPosition(camera.pose, 'DockingTarget');
+                [u,v] = camera.projectPoints(dots);
+                w = .01*ones(size(u));
+                plot3(u, v, w, 'k.', 'MarkerSize', 10, 'Parent', AxesHandle(1));
+                
             end
         end
     

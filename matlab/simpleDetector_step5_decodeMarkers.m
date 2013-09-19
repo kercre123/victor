@@ -1,4 +1,4 @@
-function [markers, validQuads] = simpleDetector_step5_decodeMarkers(img, quads, quadTforms, minQuadArea, embeddedConversions, DEBUG_DISPLAY)
+function [markers, validQuads] = simpleDetector_step5_decodeMarkers(img, quads, quadTforms, minQuadArea, embeddedConversions, showTiming, DEBUG_DISPLAY)
 
 markers = {};
 validQuads = false(size(quads));
@@ -8,7 +8,7 @@ validQuads = false(size(quads));
 % imshow(label2rgb(regionImg, 'jet', 'k', 'shuffle'))
 
 if ~isempty(quads)
-    t_quads = tic;
+    if showTiming, t_quads = tic; end
     
     numQuads = length(quads);
     
@@ -101,7 +101,9 @@ if ~isempty(quads)
         title(h_quadAxes(2), sprintf('%d Markers Detected', numMarkers));
     end
     
-    fprintf('Quad extraction/decoding took %.2f seconds.\n', toc(t_quads));
+    if showTiming
+        fprintf('Marker decoding took %.2f seconds.\n', toc(t_quads));
+    end
     
 end % IF any quads found
 

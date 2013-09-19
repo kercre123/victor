@@ -1,0 +1,121 @@
+function [xcen,ycen, u_box,v_box,img] = findDockingTarget(this, img, varargin)
+% Find a BlockMarker3D's docking target in an image.
+
+assert(strcmp(BlockMarker3D.DockingTarget, 'FourDots'), ...
+    'findDockingTarget() is currently only written to support a "FourDots" target.');
+
+mask = [];
+squareWidth = [];
+spacingTolerance = 0.2; % can be this fraction away from expected, i.e. +/- 10%
+simulateDefocusBlur = true;
+
+parseVarargin(varargin{:});
+
+if isa(img, 'Camera')
+    camera = img;
+    img = im2double(camera.image);
+else
+    camera = [];
+    img = im2double(img);
+end
+
+[nrows,ncols,nbands] = size(img);
+if nbands>1
+    img = mean(img,3);
+end
+
+if isempty(mask)
+    % If we don't have a mask to tell us where to look...
+    if ~isempty(camera)
+        % ... but we have a camera, project our Docking Target's bounding
+        % box into the image to create the mask.
+        dockingBox3D = this.getPosition(camera.pose, 'DockingTargetBoundingBox');
+        [u_box, v_box] = camera.projectPoints(dockingBox3D);
+        mask = roipoly(img, u_box([1 2 4 3]), v_box([1 2 4 3]));
+        squareWidth = sqrt((u_box(1)-u_box(2))^2 + (v_box(1)-v_box(2))^2);
+    else
+        % ... get the user to draw one for us.
+        mask = roipoly(img);
+    end
+end
+
+if isempty(squareWidth)
+    squareWidth = sqrt(sum(mask(:)));
+end
+
+if simulateDefocusBlur
+    % Simulate blur from defocus
+    img = separable_filter(img, gaussian_kernel(squareWidth/12));
+end
+
+
+
+dotRadiusFraction = (BlockMarker3D.DockingDotWidth/2) / BlockMarker3D.CodeSquareWidth;
+dotRadius = squareWidth * dotRadiusFraction;
+sigma = dotRadius/3; 
+hsize = ceil(6*sigma + 1);
+LoG = fspecial('log', hsize, sigma);
+
+imgFilter = imfilter(img, LoG);
+
+step = 1; %max(1, round((squareWidth * dotRadiusMultiplier)/12))
+localMaxima = find(mask &  ...
+    imgFilter > image_right(imgFilter,step) & ...
+    imgFilter > image_left(imgFilter,step) & ...
+    imgFilter > image_down(imgFilter,step) & ...
+    imgFilter > image_up(imgFilter,step));
+[localMaxima_y, localMaxima_x] = ind2sub([nrows ncols], localMaxima);
+
+xcen = zeros(1,4);
+ycen = zeros(1,4);
+for i = 1:4
+    % Find the largest local maximum response, then zero out the area around it
+    % (so we don't find another maximum in the same dot) and repeat.
+    [~,index] = max(imgFilter(localMaxima));
+    if isempty(index)
+        error('FindDockingTarget:TooFewLocalMaxima', ...
+            'No local maxima left in searching for docking target!');
+    end
+    [ycen(i),xcen(i)] = ind2sub([nrows ncols], localMaxima(index));
+    
+    toRemove = (localMaxima_x-xcen(i)).^2 + (localMaxima_y-ycen(i)).^2 <= dotRadius^2;
+    localMaxima(toRemove) = [];
+    localMaxima_x(toRemove) = [];
+    localMaxima_y(toRemove) = [];
+end
+
+theta = cart2pol(xcen-mean(xcen),ycen-mean(ycen));
+[~,sortIndex] = sort(theta);
+
+xcen = xcen(sortIndex);
+ycen = ycen(sortIndex);
+
+% Return as upper left, lower left, upper right, lower right:
+xcen = xcen([1 4 2 3]);
+ycen = ycen([1 4 2 3]);
+
+% Make sure the distances between dots are "reasonable":
+dotSpacingFraction = BlockMarker3D.DockingDotSpacing / BlockMarker3D.CodeSquareWidth;
+dotSpacing = dotSpacingFraction * squareWidth;
+leftLength   = sqrt( (xcen(2)-xcen(1))^2 + (ycen(2)-ycen(1))^2 );
+topLength    = sqrt( (xcen(3)-xcen(1))^2 + (ycen(3)-ycen(1))^2 );
+rightLength  = sqrt( (xcen(3)-xcen(4))^2 + (ycen(3)-ycen(4))^2 );
+bottomLength = sqrt( (xcen(2)-xcen(4))^2 + (ycen(2)-ycen(4))^2 );
+if ~all(abs([leftLength topLength rightLength bottomLength]-dotSpacing)/dotSpacing < spacingTolerance)
+    
+    desktop
+    keyboard
+    
+    error('FindDockingTarget:BadSpacing', ...
+        'Detected dots not within spacing tolerances.');
+end
+
+if nargout == 0
+    hold off, imagesc(img), axis image, hold on
+    plot(xcen, ycen, 'r.', 'MarkerSize', 12);
+    plot(xcen([1 2 4 3 1]), ycen([1 2 4 3 1]), 'r');
+    
+    clear xcen ycen
+end
+
+end % FUNCTION findDots()

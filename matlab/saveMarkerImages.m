@@ -22,9 +22,7 @@ function saveMarkerImages(varargin)
 blocks = 5:5:25;
 faces  = 1:6;
 savePath = '~/Documents/Anki/Data/BlockWorldMarkers/';
-markerParams = {'targetSize', 3.84, ...
-            'fiducialType', 'square', 'fiducialSize', .4, ...
-            'borderSpacing', .3, 'centerTargetType', 'circle'};
+markerParams = {};
         
 parseVarargin(varargin{:});
 

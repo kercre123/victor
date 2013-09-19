@@ -54,18 +54,19 @@ classdef BlockMarker2D < Marker2D
         faceType;   
     end
      
-    % Static methods required by abstract base class:
+    
     methods(Static = true)
         
+        % Static methods required by abstract base class:
         checksum = computeChecksum(binaryBlock, binaryFace);
-        
         binaryCode = encodeIDs(blockType, faceType);
         
+        % Specific to this subclass
         function padding = setCodePadding(useOutsideOfSquare)
             if useOutsideOfSquare
-                padding = 8/BlockMarker3D.Width;
+                padding = (BlockMarker3D.FiducialSpacing+BlockMarker3D.FiducialSquareWidth)/BlockMarker3D.SquareWidthOutside;
             else
-                padding = 3/BlockMarker3D.Width;
+                padding = BlockMarker3D.FiducialSpacing/BlockMarker3D.SquareWidthInside;
             end
         end
         

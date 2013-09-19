@@ -1,13 +1,19 @@
 function markerImg = generateMarkerImage(blockType, faceType, varargin)
 
 h_axes = [];
-fiducialType = 'none'; % cornerDots, dockingDots, square or none
-centerTargetType = 'circle'; % circle or checker
-targetSize = 3.84; % in cm
-imgSize = 255; 
-fiducialSize = .5; % radius of dots or width of square
-borderSpacing = .25; % in cm
-useBarsBetweenDots = false; % only valid when centerTargetType=='cornerDots'
+fiducialType      = 'square'; % cornerDots, dockingDots, square or none
+centerTargetType  = 'dots'; % circle, checker, square, or dots
+
+% Get Default sizes from BlockMarker3D constants:
+targetSize        = BlockMarker3D.TotalWidth/10; %3.84; % in cm
+borderSpacing     = BlockMarker3D.FiducialSpacing/10; % .25
+fiducialSize      = BlockMarker3D.FiducialSquareWidth/10; %.5; % radius of dots or width of square
+codeSquareWidth   = BlockMarker3D.CodeSquareWidth/10;
+dockingDotWidth   = BlockMarker3D.DockingDotWidth/10;
+dockingDotSpacing = BlockMarker3D.DockingDotSpacing/10;
+
+useBarsBetweenDots = false; % only valid when fiducialType=='cornerDots'
+imgSize = 256; 
 
 parseVarargin(varargin{:});
 
@@ -55,7 +61,7 @@ switch(fiducialType)
         lim = [0 targetSize];
         
         if useBarsBetweenDots 
-            barStart = borderSpacing + 3*fiducialSize;
+            barStart = borderSpacing + 3*fiducialSize; %#ok<UNRCH>
             barLength = targetSize - 2*barStart;
             barWidth  = fiducialSize;
             h_bar(1) = rectangle('Parent', h_axes, 'Pos', ...
@@ -74,13 +80,12 @@ switch(fiducialType)
         set(h_fiducial, 'Curvature', [1 1], 'FaceColor', 'k');
         
     case 'square'
-        h_fiducial(1) = rectangle('Pos', [borderSpacing*[1 1] (targetSize-2*borderSpacing)*[1 1]], ...
+        rectangle('Pos', [borderSpacing*[1 1] (targetSize-2*borderSpacing)*[1 1]], ...
             'FaceColor', 'k', 'EdgeColor', 'none', 'Parent', h_axes);
         
-        h_fiducial(2) = rectangle('Pos', [(borderSpacing+fiducialSize)*[1 1] (targetSize-2*(fiducialSize+borderSpacing))*[1 1]], ...
+        rectangle('Pos', [(borderSpacing+fiducialSize)*[1 1] ...
+            (targetSize-2*(fiducialSize+borderSpacing))*[1 1]], ...
             'FaceColor', 'w', 'EdgeColor', 'none', 'Parent', h_axes);
-        
-        %set(h_fiducial, 'EdgeColor', 'k', 'LineWidth', fiducialSize);
         
         lim = [0 targetSize];
         
@@ -109,7 +114,6 @@ end
 % code(mid,[1 end]) = 1;
 % code(availableSlots) = dec2bin(value, numBits) == '1';
 
-pixelWidth = (targetSize - 2*cornerSize)/n;
 %imPos = [cornerSize+pixelWidth/2 targetSize-cornerSize-pixelWidth/2];
 %h_code = imagesc(imPos, imPos, ~code, 'Parent', h_axes);
 
@@ -118,8 +122,8 @@ pixelWidth = (targetSize - 2*cornerSize)/n;
 for i = 1:n
     for j = 1:n
         if code(i,j)
-           rectangle('Pos',  [cornerSize+(j-1)*pixelWidth ...
-               cornerSize+(i-1)*pixelWidth pixelWidth pixelWidth], ...
+           rectangle('Pos',  [cornerSize+(j-1)*codeSquareWidth ...
+               cornerSize+(i-1)*codeSquareWidth codeSquareWidth codeSquareWidth], ...
                'EdgeColor', 'none', 'FaceColor', 'k');
         end
     end
@@ -131,7 +135,7 @@ set(h_axes, 'XLim', lim, 'YLim', lim);
 % Center target:
 switch(centerTargetType)
     case 'checker'
-        w = .8*pixelWidth/3;
+        w = .8*codeSquareWidth/3;
         h_cen(1) = rectangle('Pos', [targetSize/2-1.5*w targetSize/2-1.5*w w w], 'Parent', h_axes);
         h_cen(2) = rectangle('Pos', [targetSize/2-1.5*w targetSize/2+0.5*w w w], 'Parent', h_axes);
         h_cen(3) = rectangle('Pos', [targetSize/2-0.5*w targetSize/2-0.5*w w w], 'Parent', h_axes);
@@ -143,22 +147,22 @@ switch(centerTargetType)
         set(h_cen, 'FaceColor', 'k', 'EdgeColor', 'none');
     case 'circle'
         h_cen = rectangle('Curvature', [1 1], ...
-            'Pos', [(targetSize/2-pixelWidth/3)*[1 1] 2/3*pixelWidth*[1 1]], ...
+            'Pos', [(targetSize/2-codeSquareWidth/3)*[1 1] 2/3*codeSquareWidth*[1 1]], ...
             'Parent', h_axes);
         
         set(h_cen, 'FaceColor', 'k', 'EdgeColor', 'none');
         
     case 'square'
-        w1 = 1*pixelWidth;
-        h_cen(1) = rectangle('Pos', [(targetSize/2-w1/2)*[1 1] w1 w1], ...
+        w1 = 1*codeSquareWidth;
+        rectangle('Pos', [(targetSize/2-w1/2)*[1 1] w1 w1], ...
             'Parent', h_axes, 'EdgeColor', 'none', 'FaceColor', 'k');
-        w2 = .6*pixelWidth;
-        h_cen(2) = rectangle('Pos', [(targetSize/2-w2/2)*[1 1] w2 w2], ...
+        w2 = .6*codeSquareWidth;
+        rectangle('Pos', [(targetSize/2-w2/2)*[1 1] w2 w2], ...
             'Parent', h_axes, 'EdgeColor', 'none', 'FaceColor', 'w');
         
     case 'dots'
-        spacing = .5*pixelWidth;
-        radius  = .125*pixelWidth;
+        spacing = dockingDotSpacing;%.5*pixelWidth;
+        radius  = dockingDotWidth/2; %.125*pixelWidth;
         
         h_dot(1) = rectangle('Curvature', [1 1], 'Parent', h_axes, ...
             'Pos', [(targetSize/2-radius)+spacing/2*[-1 -1] 2*radius*[1 1]]);
@@ -175,25 +179,24 @@ switch(centerTargetType)
         error('Unrecognized centerTargetType "%s"', centerTargetType);
 end
 
-
-
-
-
-if false
-    h_orient(1) = rectangle('Pos', [fiducialSize/2-pixelWidth/2 fiducialSize/2-n/2*pixelWidth pixelWidth n*pixelWidth], 'Parent', h_axes);
-    h_orient(2) = rectangle('Pos', [fiducialSize/2-n/2*pixelWidth fiducialSize/2-pixelWidth/2  n*pixelWidth pixelWidth], 'Parent', h_axes);
-    
-    set(h_orient, 'EdgeColor', 'r');
-    
-end
-
 if nargout>0
     h_fig = get(h_axes, 'Parent');
+    set(h_fig, 'Units', 'pixels');
+    pos = get(h_fig, 'Pos');
+    set(h_fig, 'Pos', [pos(1:2) imgSize imgSize]);
+    set(h_axes, 'Units', 'norm', 'Pos', [0 0 1 1]);
     axis(h_axes, 'off');
     %set(h_fiducial, 'Visible', 'off');
     set(h_fig, 'Color', 'w');
-    truesize(h_fig, [imgSize imgSize])
-    markerImg = getframe;
+    %truesize(h_fig, [imgSize imgSize])
+    markerImg = getframe(h_axes);
     markerImg = markerImg.cdata;
+    if ~(size(markerImg, 1)==imgSize && size(markerImg,2)==imgSize)
+        warning('Image size is [%d x %d] instead of [%d x %d].', ...
+            size(imgSize,1), size(imgSize,2), imgSize, imgSize)
+    end
     %set(h_fiducial, 'Visible', 'on');
 end
+
+end % FUNCTION generateMarkerImage()
+

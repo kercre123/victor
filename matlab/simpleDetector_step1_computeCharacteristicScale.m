@@ -1,6 +1,6 @@
 function binaryImg = simpleDetector_step1_computeCharacteristicScale( ...
     maxSmoothingFraction, nrows, ncols, downsampleFactor, img, ...
-    thresholdFraction, usePyramid, embeddedConversions, DEBUG_DISPLAY)
+    thresholdFraction, usePyramid, embeddedConversions, showTiming, DEBUG_DISPLAY)
 
 % % Simpler method (one window size for whole image)
 % averageImg = separable_filter(img, gaussian_kernel(avgSigma));
@@ -12,7 +12,7 @@ if usePyramid
     assert(downsampleFactor == 2, ...
         'Using image pyramid for characteristic scale requires downsampleFactor=2.');
 
-    tic
+    if showTiming, t = tic; end
     if strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_original')
         averageImg = computeCharacteristicScaleImage(img, numScales);
     elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_loops')
@@ -24,7 +24,11 @@ if usePyramid
     elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'c_fixedPoint')
         averageImg = double(mexComputeCharacteristicScale(im2uint8(img), numScales)) / (255 * 2^16);        
     end
-    disp(sprintf('computeCharacteristicScaleImage took %f', toc));
+    
+    if showTiming
+        fprintf('computeCharacteristicScaleImage took %f.\n', toc(t));
+    end
+    
 else % Use a stack of smoothed images, not a pyramid
     numSigma = 2.5;
     prevSigma = 0.5/numSigma;
