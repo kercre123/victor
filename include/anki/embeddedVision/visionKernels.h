@@ -31,6 +31,7 @@ namespace Anki
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
       const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
+      FixedLengthList<ConnectedComponentSegment> &extractedComponents,
       MemoryStack scratch1,
       MemoryStack scratch2);
 

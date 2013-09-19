@@ -26,7 +26,12 @@ namespace Anki
     u16 CompressConnectedComponentSegmentIds(FixedLengthList<ConnectedComponentSegment> &components, MemoryStack scratch);
 
     // Iterate through components, and return the maximum id
-    u16 FindMaximumId(FixedLengthList<ConnectedComponentSegment> &components);
+    u16 FindMaximumId(const FixedLengthList<ConnectedComponentSegment> &components);
+
+    // Iterate through components, and compute the number of pixels for each
+    // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes
+    // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+    Result ComputeComponentSizes(const FixedLengthList<ConnectedComponentSegment> &components, s32 * restrict componentSizes, const u16 maximumId);
 
     // Goes through the list components, and computes the number of pixels for each.
     // For any componentId with less than minimumNumPixels pixels, all ConnectedComponentSegment with that id will have their ids set to zero

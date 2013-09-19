@@ -11,13 +11,11 @@ namespace Anki
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
       const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
+      FixedLengthList<ConnectedComponentSegment> &extractedComponents,
       MemoryStack scratch1,
       MemoryStack scratch2)
     {
       // TODO: This whole function seems pretty confusing, but I can't think of a less confusing way to efficiently reuse the big blocks of memory
-
-      const s32 maxConnectedComponentSegments = u16_MAX;
-      ;
 
       // 1. Compute the Scale image
       // 2. Binarize the Scale image
@@ -46,7 +44,7 @@ namespace Anki
           } // PUSH_MEMORY_STACK(scratch1);
 
           // 3. Compute connected components from the binary image (use local scratch2, store in outer scratch1)
-          FixedLengthList<ConnectedComponentSegment> extractedComponents(maxConnectedComponentSegments, scratch1);
+          //FixedLengthList<ConnectedComponentSegment> extractedComponents(maxConnectedComponentSegments, scratch1);
           {
             PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
 

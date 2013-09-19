@@ -14,7 +14,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   ConditionalErrorAndReturn(nrhs == 2 && nlhs == 1, "mexComputeCharacteristicScale", "Call this function as following: scaleImage = mexComputeCharacteristicScale(img, numPyramidLevels);");
   
   Array<u8> img = mxArrayToArray<u8>(prhs[0]);
-  const u32 numPyramidLevels = static_cast<u32>(mxGetScalar(prhs[1]));
+  const s32 numPyramidLevels = static_cast<s32>(mxGetScalar(prhs[1]));
 
   ConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexComputeCharacteristicScale", "Could not allocate Array img");
   ConditionalErrorAndReturn(numPyramidLevels < 8, "mexComputeCharacteristicScale", "numPyramidLevels must be less than 8");

@@ -242,7 +242,7 @@ namespace Anki
     } // Result SortConnectedComponentSegments(FixedLengthList<ConnectedComponentSegment> &components)
 
     // Iterate through components, and return the maximum id
-    u16 FindMaximumId(FixedLengthList<ConnectedComponentSegment> &components)
+    u16 FindMaximumId(const FixedLengthList<ConnectedComponentSegment> &components)
     {
       u16 maximumId = 0;
       const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
@@ -251,6 +251,28 @@ namespace Anki
       }
 
       return maximumId;
+    }
+
+    // Iterate through components, and compute the number of pixels for each
+    // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes
+    // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+    Result ComputeComponentSizes(const FixedLengthList<ConnectedComponentSegment> &components, s32 * restrict componentSizes, const u16 maximumId)
+    {
+      AnkiConditionalErrorAndReturnValue(componentSizes, RESULT_FAIL, "ComputeComponentSizes", "componentSizes is NULL");
+      AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "components is not valid");
+
+      memset(componentSizes, 0, sizeof(componentSizes[0])*(maximumId+1));
+
+      const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
+
+      for(s32 i=0; i<components.get_size(); i++) {
+        const u16 id = components_constRowPointer[i].id;
+        const s16 length = components_constRowPointer[i].xEnd - components_constRowPointer[i].xStart + 1;
+
+        componentSizes[id] += length;
+      }
+
+      return RESULT_OK;
     }
 
     // The list of components may have unused ids. This function compresses the set of ids, so that
