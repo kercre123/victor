@@ -4,9 +4,79 @@ namespace Anki
 {
   namespace Embedded
   {
+    // Replaces the matlab code for the first three steps of SimpleDetector
+    IN_DDR Result SimpleDetector_Steps123(
+      const Array<u8> &image,
+      const s32 scaleImage_numPyramidLevels,
+      const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
+      const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
+      const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
+      MemoryStack scratch1,
+      MemoryStack scratch2)
+    {
+      // TODO: This whole function seems pretty confusing, but I can't think of a less confusing way to efficiently reuse the big blocks of memory
+
+      const s32 maxConnectedComponentSegments = u16_MAX;
+      ;
+
+      // 1. Compute the Scale image
+      // 2. Binarize the Scale image
+      // 3. Compute connected components from the binary image
+      {
+        PUSH_MEMORY_STACK(scratch1); // Push the current state of the scratch buffer onto the system stack
+
+        {
+          PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
+          Array<u8> binaryImage(image.get_size(0), image.get_size(1), scratch2);
+
+          // 1. Compute the Scale image (use local scratch1)
+          // 2. Binarize the Scale image (store in outer scratch2)
+          {
+            PUSH_MEMORY_STACK(scratch1); // Push the current state of the scratch buffer onto the system stack
+
+            Array<u32> scaleImage(image.get_size(0), image.get_size(1), scratch1);
+
+            if(ComputeCharacteristicScaleImage(image, scaleImage_numPyramidLevels, scaleImage, scratch2) != RESULT_OK) {
+              return RESULT_FAIL;
+            }
+
+            if(ThresholdScaleImage(image, scaleImage, binaryImage) != RESULT_OK) {
+              return RESULT_FAIL;
+            }
+          } // PUSH_MEMORY_STACK(scratch1);
+
+          // 3. Compute connected components from the binary image (use local scratch2, store in outer scratch1)
+          FixedLengthList<ConnectedComponentSegment> extractedComponents(maxConnectedComponentSegments, scratch1);
+          {
+            PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
+
+            if(Extract2dComponents(binaryImage, component1d_minComponentWidth, component1d_maxSkipDistance, extractedComponents, scratch2) != RESULT_OK) {
+              return RESULT_FAIL;
+            }
+
+            CompressConnectedComponentSegmentIds(extractedComponents, scratch2);
+
+            if(MarkSmallOrLargeComponentsAsInvalid(extractedComponents, component_minimumNumPixels, component_maximumNumPixels, scratch2) != RESULT_OK) {
+              return RESULT_FAIL;
+            }
+
+            CompressConnectedComponentSegmentIds(extractedComponents, scratch2);
+
+            if(MarkSolidOrSparseComponentsAsInvalid(extractedComponents, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, scratch2) != RESULT_OK) {
+              return RESULT_FAIL;
+            }
+
+            CompressConnectedComponentSegmentIds(extractedComponents, scratch2);
+          } // PUSH_MEMORY_STACK(scratch2);
+        } // PUSH_MEMORY_STACK(scratch2);
+      } // PUSH_MEMORY_STACK(scratch1);
+
+      return RESULT_OK;
+    } // SimpleDetector_Steps123()
+
     IN_DDR Result DetectFiducialMarkers(const Array<u8> &image,
       FixedLengthList<FiducialMarker> &markers,
-      s32 numPyramidLevels,
+      const s32 numPyramidLevels,
       MemoryStack scratch1,
       MemoryStack scratch2)
     {
@@ -15,10 +85,18 @@ namespace Anki
       const s32 maxConnectedComponentSegments = u16_MAX;
       const s16 minComponentWidth = 3;
       const s16 maxSkipDistance = 1;
-      const s32 maxCandidateMarkes = 1000;
+      const s32 maxCandidateMarkers = 1000;
+
+      const f32 minSideLength = Round(0.03f*MAX(480,640));
+      const f32 maxSideLength = Round(0.9f*MIN(480,640));
+
+      const s32 minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
+      const s32 maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
+      const s32 sparseMultiplyThreshold = 1000;
+      const s32 solidMultiplyThreshold = 2;
 
       // Stored in the outermost scratch2
-      FixedLengthList<FiducialMarker> candidateMarkers(maxCandidateMarkes, scratch2);
+      FixedLengthList<FiducialMarker> candidateMarkers(maxCandidateMarkers, scratch2);
 
       // 1. Compute the Scale image
       // 2. Binarize the Scale image
@@ -55,6 +133,20 @@ namespace Anki
             if(Extract2dComponents(binaryImage, minComponentWidth, maxSkipDistance, extractedComponents, scratch2) != RESULT_OK) {
               return RESULT_FAIL;
             }
+
+            CompressConnectedComponentSegmentIds(extractedComponents, scratch2);
+
+            if(MarkSmallOrLargeComponentsAsInvalid(extractedComponents, minimumNumPixels, maximumNumPixels, scratch2) != RESULT_OK) {
+              return RESULT_FAIL;
+            }
+
+            CompressConnectedComponentSegmentIds(extractedComponents, scratch2);
+
+            if(MarkSolidOrSparseComponentsAsInvalid(extractedComponents, sparseMultiplyThreshold, solidMultiplyThreshold, scratch2) != RESULT_OK) {
+              return RESULT_FAIL;
+            }
+
+            CompressConnectedComponentSegmentIds(extractedComponents, scratch2);
           } // PUSH_MEMORY_STACK(scratch2);
 
           // 4. Compute candidate quadrilaterals from the connected components
@@ -70,6 +162,6 @@ namespace Anki
       // TODO: do decoding
 
       return RESULT_OK;
-    }
+    } //  DetectFiducialMarkers()
   } // namespace Embedded
 } // namespace Anki

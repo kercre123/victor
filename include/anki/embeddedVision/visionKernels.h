@@ -24,6 +24,16 @@ namespace Anki
 
     const s32 MAX_BOUNDARY_LENGTH = 2000;
 
+    // Replaces the matlab code for the first three steps of SimpleDetector
+    Result SimpleDetector_Steps123(
+      const Array<u8> &image,
+      const s32 scaleImage_numPyramidLevels,
+      const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
+      const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
+      const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
+      MemoryStack scratch1,
+      MemoryStack scratch2);
+
     //Result DetectFiducialMarkers(const Array<u8> &image, FixedLengthList<FiducialMarker> &markers, MemoryStack scratch);
 
     Result BinomialFilter(const Array<u8> &image, Array<u8> &imageFiltered, MemoryStack scratch);
