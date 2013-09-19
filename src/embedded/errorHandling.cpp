@@ -14,16 +14,16 @@ extern "C" {
   static char renderedLogString[Anki_STRING_LENGTH];
 
 #ifdef USING_MOVIDIUS_GCC_COMPILER
-  IN_DDR void _Anki_Logf(const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
+  IN_DDR void _Anki_Logf(int logLevel, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
-    printf("LOG - %s - ", eventName);
+    printf("LOG[%d] - %s - ", logLevel, eventName);
     printf(eventValue);
     printf("\n");
   }
 
-  IN_DDR void _Anki_Log(const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
+  IN_DDR void _Anki_Log(int logLevel, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
-    printf("LOG - %s - ", eventName);
+    printf("LOG[%d] - %s - ", logLevel, eventName);
     printf(eventValue);
     printf("\n");
   }
@@ -31,21 +31,21 @@ extern "C" {
 
 #pragma warning(push)
 #pragma warning(disable: 4100) // Unreference formal parameter
-  IN_DDR void _Anki_Logf(const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
+  IN_DDR void _Anki_Logf(int logLevel, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
     va_list argList;
     va_start(argList, line);
     vsnprintf(renderedLogString, Anki_STRING_LENGTH, eventValue, argList);
     va_end(argList);
-    _Anki_Log(eventName, renderedLogString, file, funct, line, NULL);
+    _Anki_Log(logLevel, eventName, renderedLogString, file, funct, line, NULL);
     //fflush(stdout);
   }
 
-  IN_DDR void _Anki_Log(const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
+  IN_DDR void _Anki_Log(int logLevel, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
     va_list argList;
     va_start(argList, line);
-    printf("LOG - %s - ", eventName);
+    printf("LOG[%d] - %s - ", logLevel, eventName);
     vprintf(eventValue, argList);
     printf("\n");
     va_end(argList);
