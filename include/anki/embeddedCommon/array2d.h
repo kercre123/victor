@@ -8,7 +8,6 @@
 #include "anki/embeddedCommon/dataStructures.h"
 #include "anki/embeddedCommon/point.h"
 
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -67,7 +66,7 @@ namespace Anki
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-      void Show(const char * const windowName, const bool waitForKeypress) const;
+      void Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues=false) const;
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
       // Check every element of this array against the input array. If the arrays are different
@@ -183,14 +182,18 @@ namespace Anki
 
     template<typename Type> s32 Array<Type>::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
     {
-      assert(numCols > 0);
+      AnkiConditionalErrorAndReturnValue(numCols > 0,
+        0, "Array<Type>::ComputeRequiredStride", "Invalid size");
+
       const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
       return static_cast<s32>(RoundUp<size_t>(sizeof(Type)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
     }
 
     template<typename Type> s32 Array<Type>::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
     {
-      assert(numCols > 0 && numRows > 0);
+      AnkiConditionalErrorAndReturnValue(numCols > 0 && numRows > 0,
+        0, "Array<Type>::ComputeMinimumRequiredMemory", "Invalid size");
+
       return numRows * Array<Type>::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
     }
 
@@ -202,7 +205,8 @@ namespace Anki
     template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const bool useBoundaryFillPatterns)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
     {
-      assert(numCols > 0 && numRows > 0 && dataLength > 0);
+      AnkiConditionalError(numCols > 0 && numRows > 0 && dataLength > 0,
+        "Array<Type>::Array", "Invalid size");
 
       Initialize(numRows,
         numCols,
@@ -214,7 +218,8 @@ namespace Anki
     template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns)
       : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
     {
-      assert(numCols > 0 && numRows > 0);
+      AnkiConditionalError(numCols > 0 && numRows > 0,
+        "Array<Type>::Array", "Invalid size");
 
       const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? static_cast<s32>(MEMORY_ALIGNMENT) : 0);
       const s32 numBytesRequested = numRows * this->stride + extraBoundaryPatternBytes;
@@ -231,8 +236,11 @@ namespace Anki
 
     template<typename Type> const Type* Array<Type>::Pointer(const s32 index0, const s32 index1) const
     {
-      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-        this->rawDataPointer != NULL && this->data != NULL);
+      AnkiConditionalWarnAndReturnValue(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1],
+        0, "Array<Type>::Pointer", "Invalid size");
+
+      AnkiConditionalWarnAndReturnValue(this->IsValid(),
+        0, "Array<Type>::Pointer", "Array<Type> is not valid");
 
       return reinterpret_cast<const Type*>( reinterpret_cast<const char*>(this->data) +
         index1*sizeof(Type) + index0*stride );
@@ -240,8 +248,11 @@ namespace Anki
 
     template<typename Type> Type* Array<Type>::Pointer(const s32 index0, const s32 index1)
     {
-      assert(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1] &&
-        this->rawDataPointer != NULL && this->data != NULL);
+      AnkiConditionalWarnAndReturnValue(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1],
+        0, "Array<Type>::Pointer", "Invalid size");
+
+      AnkiConditionalWarnAndReturnValue(this->IsValid(),
+        0, "Array<Type>::Pointer", "Array<Type> is not valid");
 
       return reinterpret_cast<Type*>( reinterpret_cast<char*>(this->data) +
         index1*sizeof(Type) + index0*stride );
@@ -260,15 +271,17 @@ namespace Anki
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     template<typename Type> cv::Mat_<Type>& Array<Type>::get_CvMat_()
     {
-      assert(this->IsValid());
+      AnkiConditionalError(this->IsValid(), "Array<Type>::get_CvMat_", "Array<Type> is not valid");
+
       return cvMatMirror;
     }
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-    template<typename Type> void  Array<Type>::Show(const char * const windowName, const bool waitForKeypress) const
+    template<typename Type> void  Array<Type>::Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues) const
     {
-      assert(this->IsValid());
+      AnkiConditionalError(this->IsValid(), "Array<Type>::Show", "Array<Type> is not valid");
+
       cv::imshow(windowName, cvMatMirror);
       if(waitForKeypress) {
         cv::waitKey();
@@ -382,7 +395,7 @@ namespace Anki
     // Set every element in the Array to zero, including the stride padding, but not including the optional fill patterns (if they exist)
     template<typename Type> void Array<Type>::SetZero()
     {
-      assert(this->IsValid());
+      AnkiConditionalError(this->IsValid(), "Array<Type>::SetZero", "Array<Type> is not valid");
 
       const s32 strideWithoutFillPatterns = this->get_strideWithoutFillPatterns();
       for(s32 y=0; y<size[0]; y++) {
@@ -393,7 +406,7 @@ namespace Anki
 
     template<typename Type> s32 Array<Type>::Set(const Type value)
     {
-      assert(this->IsValid());
+      AnkiConditionalError(this->IsValid(), "Array<Type>::Set", "Array<Type> is not valid");
 
       for(s32 y=0; y<size[0]; y++) {
         Type * restrict rowPointer = Pointer(y, 0);
@@ -407,7 +420,8 @@ namespace Anki
 
     template<typename Type> s32 Array<Type>::Set(const Type * const values, const s32 numValues)
     {
-      assert(this->IsValid());
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        0, "Array<Type>::Set", "Array<Type> is not valid");
 
       s32 numValuesSet = 0;
 
@@ -430,7 +444,8 @@ namespace Anki
 #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
     template<typename Type> s32 Array<Type>::Set(const char * const values)
     {
-      assert(this->IsValid());
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        0, "Array<Type>::Set", "Array<Type> is not valid");
 
       s32 numValuesSet = 0;
 
@@ -457,7 +472,11 @@ namespace Anki
 
     template<typename Type> s32 Array<Type>::get_size(s32 dimension) const
     {
-      assert(dimension >= 0 && this->rawDataPointer != NULL && this->data != NULL);
+      AnkiConditionalErrorAndReturnValue(dimension >= 0,
+        0, "Array<Type>::get_size", "Negative dimension");
+
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        0, "Array<Type>::get_size", "Array<Type> is not valid");
 
       if(dimension > 1 || dimension < 0)
         return 0;
@@ -488,7 +507,8 @@ namespace Anki
 
     template<typename Type> void Array<Type>::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
     {
-      assert(numCols > 0 && numRows > 0 && dataLength > 0);
+      AnkiConditionalErrorAndReturn(numCols > 0 && numRows > 0 && dataLength > 0,
+        "Array<Type>::Initialize", "Negative dimension");
 
       this->useBoundaryFillPatterns = useBoundaryFillPatterns;
 

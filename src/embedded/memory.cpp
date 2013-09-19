@@ -2,8 +2,6 @@
 #include "anki/embeddedCommon/errorHandling.h"
 #include "anki/embeddedCommon/utilities.h"
 
-#include <assert.h>
-
 #if !defined(USING_MOVIDIUS_GCC_COMPILER)
 #include <string.h>
 #endif
@@ -55,7 +53,8 @@ namespace Anki
 
       usedBytes += requestedBytes;
 
-      assert(static_cast<s32>(reinterpret_cast<size_t>(segmentFooter) - reinterpret_cast<size_t>(segmentMemory)) == numBytesRequestedRounded);
+      AnkiConditionalWarnAndReturnValue(static_cast<s32>(reinterpret_cast<size_t>(segmentFooter) - reinterpret_cast<size_t>(segmentMemory)) == numBytesRequestedRounded,
+        NULL, "Anki.MemoryStack.Allocate", "Ran out of scratch space");
 
       if(numBytesAllocated) {
         *numBytesAllocated = numBytesRequestedRounded;
