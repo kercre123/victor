@@ -80,7 +80,7 @@ for i_block = 1:length(world.blocks{i_blockType})
                     'Parent', AxesHandle(1));
                 
                 % Plot docking dots:
-                dots = getDockingDotsPosition(marker, camera.pose);
+                dots = marker.getPosition(camera.pose, 'DockingTarget');
                 [u,v] = camera.projectPoints(dots);
                 w = .01*ones(size(u));
                 plot3(u, v, w, 'k.', 'MarkerSize', 10, 'Parent', AxesHandle(1));
