@@ -35,10 +35,59 @@
 #define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
 #define ct_assert(e) enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }
 
+#ifndef ALIGNVARIABLE
+#if defined(_MSC_VER)
+#define ALIGNVARIABLE __declspec(align(16))
+#elif defined(__APPLE_CC__)
+#define ALIGNVARIABLE __attribute__ ((aligned (16)))
+#elif defined(__GNUC__)
+#define ALIGNVARIABLE __attribute__ ((aligned (16)))
+#endif
+#endif // #ifndef ALIGNVARIABLE
+
 namespace Anki
 {
   namespace Embedded
   {
+    template<typename T> inline T RoundUp(T number, T multiple);
+
+    template<typename T> inline T RoundDown(T number, T multiple);
+
+    f32 Round(f32 number);
+    f64 Round(f64 number);
+
+    bool IsPowerOfTwo(u32 x);
+
+    u32 Log2(u32 x);
+    u64 Log2(u64 x);
+
+    // Get the current system time. Only really works with MSVC and generic linux
+    double GetTime();
+
+    // For a square array, either:
+    // 1. When lowerToUpper==true,  copies the lower (left)  triangle to the upper (right) triangle
+    // 2. When lowerToUpper==false, copies the upper (right) triangle to the lower (left)  triangle
+    // Functionally the same as OpenCV completeSymm()
+    template<typename T> Result MakeArraySymmetric(T &arr, bool lowerToUpper = false);
+
+    // Perform the matrix multiplication "matOut = mat1 * mat2"
+    // Note that this is the naive O(n^3) implementation
+    template<typename Array_T, typename T> Result MultiplyMatrices(const Array_T &mat1, const Array_T &mat2, Array_T &matOut);
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+    // Converts from typeid names to openCV types
+    int ConvertToOpenCvType(const char *typeName, size_t byteDepth);
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+#if defined(USING_MOVIDIUS_GCC_COMPILER)
+    void memset(void * dst, int value, size_t size);
+#endif
+
+    // Swap a with b
+    template<typename Type> void Swap(Type &a, Type &b);
+
+#pragma mark --- Implementations ---
+
     template<typename T> inline T RoundUp(T number, T multiple)
     {
       return multiple*( (number-1)/multiple + 1 );
@@ -52,21 +101,7 @@ namespace Anki
       return multiple * (number/multiple);
     }
 
-    f32 Round(f32 number);
-    f64 Round(f64 number);
-
-    bool IsPowerOfTwo(u32 x);
-
-    u32 Log2(u32 x);
-    u64 Log2(u64 x);
-
-    double GetTime();
-
-    // For a square array, either:
-    // 1. When lowerToUpper==true,  copies the lower (left)  triangle to the upper (right) triangle
-    // 2. When lowerToUpper==false, copies the upper (right) triangle to the lower (left)  triangle
-    // Functionally the same as OpenCV completeSymm()
-    template<typename T> Result MakeArraySymmetric(T &arr, bool lowerToUpper = false)
+    template<typename T> Result MakeArraySymmetric(T &arr, bool lowerToUpper)
     {
       AnkiConditionalErrorAndReturnValue(arr.get_size(0) == arr.get_size(1),
         RESULT_FAIL, "copyHalfArray", "Input array must be square");
@@ -84,8 +119,6 @@ namespace Anki
       return RESULT_OK;
     }
 
-    // Perform the matrix multiplication "matOut = mat1 * mat2"
-    // Note that this is the naive O(n^3) implementation
     template<typename Array_T, typename T> Result MultiplyMatrices(const Array_T &mat1, const Array_T &mat2, Array_T &matOut)
     {
       AnkiConditionalErrorAndReturnValue(mat1.get_size(1) == mat2.get_size(0),
@@ -113,30 +146,12 @@ namespace Anki
       return RESULT_OK;
     }
 
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-    int ConvertToOpenCvType(const char *typeName, size_t byteDepth); // Converts from typeid names to openCV types
-#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-
-#if defined(USING_MOVIDIUS_GCC_COMPILER)
-    void memset(void * dst, int value, size_t size);
-#endif
-
     template<typename Type> void Swap(Type &a, Type &b)
     {
       const Type tmp = a;
       a = b;
       b = tmp;
     } // template<typename Type> Swap(Type a, Type b)
-
-#ifndef ALIGNVARIABLE
-#if defined(_MSC_VER)
-#define ALIGNVARIABLE __declspec(align(16))
-#elif defined(__APPLE_CC__)
-#define ALIGNVARIABLE __attribute__ ((aligned (16)))
-#elif defined(__GNUC__)
-#define ALIGNVARIABLE __attribute__ ((aligned (16)))
-#endif
-#endif // #ifndef ALIGNVARIABLE
   } // namespace Embedded
 } // namespace Anki
 

@@ -1,6 +1,6 @@
 //  errorHandling.cpp is based off DAS.cpp
 
-#include "anki/embeddedCommon.h"
+#include "anki/embeddedCommon/errorHandling.h"
 
 #include <stdarg.h>
 #include <stdio.h>

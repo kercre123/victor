@@ -1,4 +1,5 @@
-#include "anki/embeddedCommon.h"
+#include "anki/embeddedCommon/point.h"
+#include "anki/embeddedCommon/errorHandling.h"
 
 namespace Anki
 {

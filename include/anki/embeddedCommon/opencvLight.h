@@ -1,7 +1,8 @@
 #ifndef _ANKICORETECHEMBEDDED_COMMON_OPENCVLIGHT_H_
 #define _ANKICORETECHEMBEDDED_COMMON_OPENCVLIGHT_H_
 
-#include "anki/embeddedCommon.h"
+#include "anki/embeddedCommon/array2d.h"
+#include "anki/embeddedCommon/fixedLengthList.h"
 
 namespace Anki
 {
