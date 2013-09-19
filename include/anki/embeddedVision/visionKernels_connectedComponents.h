@@ -33,7 +33,7 @@ namespace Anki
     //
     // For a components parameter that has a maximum id of N, this function requires
     // 4n + 4 bytes of scratch.
-    Result MarkSmallComponentsAsInvalid(FixedLengthList<ConnectedComponentSegment> &components, const s32 minimumNumPixels, MemoryStack scratch);
+    Result MarkSmallOrLargeComponentsAsInvalid(FixedLengthList<ConnectedComponentSegment> &components, const s32 minimumNumPixels, const s32 maximumNumPixels, MemoryStack scratch);
 
     // Returns a positive s64 if a > b, a negative s64 is a < b, or zero if they are identical
     // TODO: Doublecheck that this is correct for corner cases

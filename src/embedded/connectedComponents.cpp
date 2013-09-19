@@ -307,7 +307,7 @@ namespace Anki
     //
     // For a components parameter that has a maximum id of N, this function requires
     // 4n + 4 bytes of scratch.
-    IN_DDR Result MarkSmallComponentsAsInvalid(FixedLengthList<ConnectedComponentSegment> &components, const s32 minimumNumPixels, MemoryStack scratch)
+    IN_DDR Result MarkSmallOrLargeComponentsAsInvalid(FixedLengthList<ConnectedComponentSegment> &components, const s32 minimumNumPixels, const s32 maximumNumPixels, MemoryStack scratch)
     {
       const u16 maximumId = FindMaximumId(components);
 
@@ -329,7 +329,7 @@ namespace Anki
       for(s32 i=0; i<components.get_size(); i++) {
         const u16 id = components_rowPointer[i].id;
 
-        if(componentSizes[id] < minimumNumPixels) {
+        if(componentSizes[id] < minimumNumPixels || componentSizes[id] > maximumNumPixels) {
           components_rowPointer[i].id = 0;
         }
       }

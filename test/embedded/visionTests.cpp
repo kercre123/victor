@@ -45,11 +45,12 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
-IN_DDR GTEST_TEST(CoreTech_Vision, MarkSmallComponentsAsInvalid)
+IN_DDR GTEST_TEST(CoreTech_Vision, MarkSmallOrLargeComponentsAsInvalid)
 {
   const s32 numComponents = 10;
   const s32 numBytes = MIN(MAX_BYTES, 1000);
   const s32 minimumNumPixels = 6;
+  const s32 maximumNumPixels = 1000;
 
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
@@ -59,7 +60,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, MarkSmallComponentsAsInvalid)
 
   const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1);
   const ConnectedComponentSegment component1 = ConnectedComponentSegment(12, 12, 1, 1);
-  const ConnectedComponentSegment component2 = ConnectedComponentSegment(16, 1000, 2, 1);
+  const ConnectedComponentSegment component2 = ConnectedComponentSegment(16, 1004, 2, 1);
   const ConnectedComponentSegment component3 = ConnectedComponentSegment(0, 4, 3, 2);
   const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 2, 4, 3);
   const ConnectedComponentSegment component5 = ConnectedComponentSegment(4, 6, 5, 3);
@@ -80,36 +81,36 @@ IN_DDR GTEST_TEST(CoreTech_Vision, MarkSmallComponentsAsInvalid)
   *components.Pointer(9) = component9;
 
   {
-    const Result result = MarkSmallComponentsAsInvalid(components, minimumNumPixels, ms);
+    const Result result = MarkSmallOrLargeComponentsAsInvalid(components, minimumNumPixels, maximumNumPixels, ms);
     ASSERT_TRUE(result == RESULT_OK);
   }
 
-  ASSERT_TRUE(components.Pointer(0)->id == 1);
-  ASSERT_TRUE(components.Pointer(1)->id == 1);
-  ASSERT_TRUE(components.Pointer(2)->id == 1);
+  ASSERT_TRUE(components.Pointer(0)->id == 0);
+  ASSERT_TRUE(components.Pointer(1)->id == 0);
+  ASSERT_TRUE(components.Pointer(2)->id == 0);
   ASSERT_TRUE(components.Pointer(3)->id == 0);
   ASSERT_TRUE(components.Pointer(4)->id == 3);
   ASSERT_TRUE(components.Pointer(5)->id == 3);
   ASSERT_TRUE(components.Pointer(6)->id == 3);
   ASSERT_TRUE(components.Pointer(7)->id == 4);
   ASSERT_TRUE(components.Pointer(8)->id == 4);
-  ASSERT_TRUE(components.Pointer(9)->id == 5);
+  ASSERT_TRUE(components.Pointer(9)->id == 0);
 
   {
     const u16 result = CompressConnectedComponentSegmentIds(components, ms);
-    ASSERT_TRUE(result == 4);
+    ASSERT_TRUE(result == 2);
   }
 
-  ASSERT_TRUE(components.Pointer(0)->id == 1);
-  ASSERT_TRUE(components.Pointer(1)->id == 1);
-  ASSERT_TRUE(components.Pointer(2)->id == 1);
+  ASSERT_TRUE(components.Pointer(0)->id == 0);
+  ASSERT_TRUE(components.Pointer(1)->id == 0);
+  ASSERT_TRUE(components.Pointer(2)->id == 0);
   ASSERT_TRUE(components.Pointer(3)->id == 0);
-  ASSERT_TRUE(components.Pointer(4)->id == 2);
-  ASSERT_TRUE(components.Pointer(5)->id == 2);
-  ASSERT_TRUE(components.Pointer(6)->id == 2);
-  ASSERT_TRUE(components.Pointer(7)->id == 3);
-  ASSERT_TRUE(components.Pointer(8)->id == 3);
-  ASSERT_TRUE(components.Pointer(9)->id == 4);
+  ASSERT_TRUE(components.Pointer(4)->id == 1);
+  ASSERT_TRUE(components.Pointer(5)->id == 1);
+  ASSERT_TRUE(components.Pointer(6)->id == 1);
+  ASSERT_TRUE(components.Pointer(7)->id == 2);
+  ASSERT_TRUE(components.Pointer(8)->id == 2);
+  ASSERT_TRUE(components.Pointer(9)->id == 0);
 
   GTEST_RETURN_HERE;
 }
@@ -607,7 +608,7 @@ IN_DDR void RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
-  CALL_GTEST_TEST(CoreTech_Vision, MarkSmallComponentsAsInvalid);
+  CALL_GTEST_TEST(CoreTech_Vision, MarkSmallOrLargeComponentsAsInvalid);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
   CALL_GTEST_TEST(CoreTech_Vision, SortComponents);
   CALL_GTEST_TEST(CoreTech_Vision, CompressComponentIds);
