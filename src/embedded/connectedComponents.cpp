@@ -357,7 +357,7 @@ namespace Anki
     // A resonable value is between 2 and 5.
     //
     // For a components parameter that has a maximum id of N, this function requires
-    // 6N + 6 bytes of scratch.
+    // 8N + 8 bytes of scratch.
     IN_DDR Result MarkSolidOrSparseComponentsAsInvalid(FixedLengthList<ConnectedComponentSegment> &components, const s32 sparseMultiplyThreshold, const s32 solidMultiplyThreshold, MemoryStack scratch)
     {
       const u16 maximumId = FindMaximumId(components);
@@ -399,7 +399,7 @@ namespace Anki
         maxY[id] = MAX(maxY[id], y);
       }
 
-      for(u16 i=0; i<maximumId; i++) {
+      for(u16 i=0; i<=maximumId; i++) {
         // The parameter sparseMultiplyThreshold is set so that a component is invalid if
         // "sparseMultiplyThreshold*numPixels < boundingWidth*boundingHeight".
         // A resonable value is between 5 and 100.

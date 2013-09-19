@@ -35,6 +35,23 @@ namespace Anki
     // 4n + 4 bytes of scratch.
     Result MarkSmallOrLargeComponentsAsInvalid(FixedLengthList<ConnectedComponentSegment> &components, const s32 minimumNumPixels, const s32 maximumNumPixels, MemoryStack scratch);
 
+    // Goes through the list components, and computes the "solidness", which is the ratio of
+    // "numPixels / (boundingWidth*boundingHeight)". For any componentId with that is too solid or
+    // sparse (opposite of solid), all ConnectedComponentSegment with that id will have their ids
+    // set to zero
+    //
+    // The parameter sparseMultiplyThreshold is set so that a component is invalid if
+    // "sparseMultiplyThreshold*numPixels < boundingWidth*boundingHeight".
+    // A resonable value is between 5 and 100.
+    //
+    // The parameter solidMultiplyThreshold is set so that a component is invalid if
+    // "solidMultiplyThreshold*numPixels > boundingWidth*boundingHeight".
+    // A resonable value is between 2 and 5.
+    //
+    // For a components parameter that has a maximum id of N, this function requires
+    // 8N + 8 bytes of scratch.
+    Result MarkSolidOrSparseComponentsAsInvalid(FixedLengthList<ConnectedComponentSegment> &components, const s32 sparseMultiplyThreshold, const s32 solidMultiplyThreshold, MemoryStack scratch);
+
     // Returns a positive s64 if a > b, a negative s64 is a < b, or zero if they are identical
     // TODO: Doublecheck that this is correct for corner cases
     inline s64 CompareConnectedComponentSegments(const ConnectedComponentSegment &a, const ConnectedComponentSegment &b)

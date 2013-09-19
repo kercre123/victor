@@ -45,6 +45,60 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+IN_DDR GTEST_TEST(CoreTech_Vision, MarkSolidOrSparseComponentsAsInvalid)
+{
+  const s32 numComponents = 10;
+  const s32 numBytes = MIN(MAX_BYTES, 1000);
+  const s32 sparseMultiplyThreshold = 10;
+  const s32 solidMultiplyThreshold = 2;
+
+  MemoryStack ms(&buffer[0], numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  FixedLengthList<ConnectedComponentSegment> components(numComponents, ms);
+  components.set_size(numComponents);
+
+  const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1); // Ok
+  const ConnectedComponentSegment component1 = ConnectedComponentSegment(0, 10, 3, 1);
+  const ConnectedComponentSegment component2 = ConnectedComponentSegment(0, 10, 5, 2); // Too solid
+  const ConnectedComponentSegment component3 = ConnectedComponentSegment(0, 10, 6, 2);
+  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 10, 8, 2);
+  const ConnectedComponentSegment component5 = ConnectedComponentSegment(0, 10, 10, 3); // Too sparse
+  const ConnectedComponentSegment component6 = ConnectedComponentSegment(0, 10, 100, 3);
+  const ConnectedComponentSegment component7 = ConnectedComponentSegment(0, 0, 105, 4); // Ok
+  const ConnectedComponentSegment component8 = ConnectedComponentSegment(0, 0, 108, 4);
+  const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 10, 110, 5); // Too solid
+
+  *components.Pointer(0) = component0;
+  *components.Pointer(1) = component1;
+  *components.Pointer(2) = component2;
+  *components.Pointer(3) = component3;
+  *components.Pointer(4) = component4;
+  *components.Pointer(5) = component5;
+  *components.Pointer(6) = component6;
+  *components.Pointer(7) = component7;
+  *components.Pointer(8) = component8;
+  *components.Pointer(9) = component9;
+
+  {
+    const Result result = MarkSolidOrSparseComponentsAsInvalid(components, sparseMultiplyThreshold, solidMultiplyThreshold, ms);
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  ASSERT_TRUE(components.Pointer(0)->id == 1);
+  ASSERT_TRUE(components.Pointer(1)->id == 1);
+  ASSERT_TRUE(components.Pointer(2)->id == 0);
+  ASSERT_TRUE(components.Pointer(3)->id == 0);
+  ASSERT_TRUE(components.Pointer(4)->id == 0);
+  ASSERT_TRUE(components.Pointer(5)->id == 0);
+  ASSERT_TRUE(components.Pointer(6)->id == 0);
+  ASSERT_TRUE(components.Pointer(7)->id == 4);
+  ASSERT_TRUE(components.Pointer(8)->id == 4);
+  ASSERT_TRUE(components.Pointer(9)->id == 0);
+
+  GTEST_RETURN_HERE;
+}
+
 IN_DDR GTEST_TEST(CoreTech_Vision, MarkSmallOrLargeComponentsAsInvalid)
 {
   const s32 numComponents = 10;
