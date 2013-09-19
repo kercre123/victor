@@ -47,6 +47,10 @@ namespace Anki
 
     Result TraceBoundary(const Array<u8> &binaryImage, const Point<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point<s16> > &boundary);
 
+    template<typename T> inline T Interpolate2d(const T pixel00, const T pixel01, const T pixel10, const T pixel11, const T alphaY, const T alphaYinverse, const T alphaX, const T alphaXinverse);
+
+#pragma mark --- Implementations ---
+
     template<typename T> inline T Interpolate2d(const T pixel00, const T pixel01, const T pixel10, const T pixel11, const T alphaY, const T alphaYinverse, const T alphaX, const T alphaXinverse)
     {
       const T interpolatedTop = alphaXinverse*pixel00 + alphaX*pixel01;

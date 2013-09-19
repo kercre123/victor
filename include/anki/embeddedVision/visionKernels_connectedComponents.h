@@ -3,6 +3,7 @@
 
 #include "anki/embeddedVision/config.h"
 #include "anki/embeddedCommon.h"
+#include "anki/embeddedVision/dataStructures_vision.h"
 
 namespace Anki
 {
@@ -59,6 +60,10 @@ namespace Anki
 
     // Returns a positive s64 if a > b, a negative s64 is a < b, or zero if they are identical
     // TODO: Doublecheck that this is correct for corner cases
+    inline s64 CompareConnectedComponentSegments(const ConnectedComponentSegment &a, const ConnectedComponentSegment &b);
+
+#pragma mark --- Implementations ---
+
     inline s64 CompareConnectedComponentSegments(const ConnectedComponentSegment &a, const ConnectedComponentSegment &b)
     {
       const s64 idDifference = static_cast<s64>(u16_MAX) * static_cast<s64>(u16_MAX) * (static_cast<s64>(a.id) - static_cast<s64>(b.id));
