@@ -70,6 +70,7 @@ classdef Robot < handle
             Dependent = true)
         
         currentObservation;
+        stateVector;
     end
     
     properties(GetAccess = 'public', SetAccess = 'public')
@@ -83,6 +84,8 @@ classdef Robot < handle
     
     properties(GetAccess = 'protected', SetAccess = 'protected')
         pose_;
+        posePrev_;
+        
         operationMode_ = '';
         liftPosition_ = '';
         
@@ -266,6 +269,11 @@ classdef Robot < handle
         
         function set.pose(this, P)
             assert(isa(P, 'Pose'), 'Must provide a Pose object.');
+            
+            % Store previous pose for use in computing angular and
+            % positional velocity for controllers:
+            % TODO: do I need to copy in the parent/name info?
+            this.posePrev_ = Pose(this.pose_.Rvec, this.pose_.T, this.pose_.sigma);
             this.pose_.update(P.Rmat, P.T, P.sigma);
         end
         
@@ -293,6 +301,43 @@ classdef Robot < handle
                
         function position = get.liftPosition(this)
             position = this.liftPosition_;
+        end
+        
+        function vec = get.stateVector(this)
+            assert(Pose.isRootPose(this.pose_.parent), ...
+                'Robot''s pose should be w.r.t. World coordinates to compute state vector.');
+            %
+            % State is currently defined as:
+            %  v = [xPosition yPosition headingAngle xVelocity yVelocity angularVelocity]'
+            %
+            % Note timestep (i.e. for xVelocity = dx/dt) is exactly 1.  
+            % TODO: incorporate timestamps for poses so we can compute dt?
+            %
+            dt = 1;
+            
+            % Assuming we are on a simple XY plane and all rotation is around
+            % the Z axis
+            assert(abs(dot(this.pose_.axis, [0 0 1])) > 0.99, ...
+                'Expecting Robot to be on a plane with all rotation around the Z axis.');
+            
+            if isempty(this.posePrev_)
+                % We haven't taken a step yet to measure our velocity
+                velocityVec = [0 0 0]';
+            else
+                angularVelocity = this.pose_.angle - this.posePrev_.angle;
+                if this.pose_.angle > this.posePrev_.angle
+                    if angularVelocity > pi
+                        angularVelocity = 2*pi - angularVelocity;
+                    end
+                elseif angularVelocity < pi
+                    angularVelocity = 2*pi + angularVelocity;
+                end
+                
+                velocityVec = [this.pose_.T(1:2)-this.posePrev_.T(1:2); ...
+                    angularVelocity];
+            end
+            
+            vec = [this.pose_.T(1:2); this.pose_.angle; velocityVec/dt];
         end
     end
     
