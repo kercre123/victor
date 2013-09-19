@@ -80,6 +80,10 @@ for i_region = 1:numRegions
     
     if strcmp(embeddedConversions.traceBoundaryType, 'matlab_original')
         try
+            assert(~BlockMarker2D.UseOutsideOfSquare, ...
+                ['You need to set constant property ' ...
+                'BlockMarker2D.UseOutsideOfSquare = false to use this method.']);
+
             boundary = bwtraceboundary(regionMap == i_region, ...
                 [rowStart colStart], 'N');
         catch E
