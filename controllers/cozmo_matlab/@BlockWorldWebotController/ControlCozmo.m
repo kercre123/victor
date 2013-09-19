@@ -36,6 +36,8 @@ switch (key)
         this.SetAngularWheelVelocity( ...
             this.DRIVE_VELOCITY_SLOW, this.DRIVE_VELOCITY_SLOW);
         
+        this.DisplayMessage('Robot', 'Manual Drive (UP)');
+        
     case WB_ROBOT_KEYBOARD_DOWN
         if DEBUG
             fprintf('Key Pressed: DOWN\n');
@@ -43,6 +45,8 @@ switch (key)
         
         this.SetAngularWheelVelocity( ...
             -this.DRIVE_VELOCITY_SLOW, -this.DRIVE_VELOCITY_SLOW);
+        
+        this.DisplayMessage('Robot', 'Manual Drive (DOWN)');
         
     case WB_ROBOT_KEYBOARD_LEFT
         if DEBUG
@@ -52,6 +56,8 @@ switch (key)
         this.SetAngularWheelVelocity( ...
             -this.TURN_VELOCITY_SLOW, this.TURN_VELOCITY_SLOW);
         
+        this.DisplayMessage('Robot', 'Manual Drive (LEFT)');
+        
     case WB_ROBOT_KEYBOARD_RIGHT
         if DEBUG
             fprintf('Key Pressed: RIGHT\n');
@@ -59,6 +65,8 @@ switch (key)
         
         this.SetAngularWheelVelocity( ...
             this.TURN_VELOCITY_SLOW, -this.TURN_VELOCITY_SLOW);
+        
+        this.DisplayMessage('Robot', 'Manual Drive (RIGHT)');
         
     case this.CKEY_HEAD_UP % s-key: move head up
         

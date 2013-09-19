@@ -39,6 +39,8 @@ classdef BlockWorldWebotController < handle
         CKEY_UNLOCK     = 32;
         CKEY_DOCK       = double('D');
         
+        DisplayMessageHeight = 0.08;
+        
     end % Constant Properties
     
     properties
@@ -278,10 +280,17 @@ classdef BlockWorldWebotController < handle
             end
         end
         
-        function DisplayMessage(~, type, message)
+        function DisplayMessage(this, type, message)
+            h = this.DisplayMessageHeight;
+            
             switch(lower(type))
                 case 'observation'
-                    wb_supervisor_set_label(0, message, 0, 1-.1, .1, [0.8 0 0], 0);
+                    wb_supervisor_set_label(0, message, 0, ...
+                        1-h, h, [0.8 0 0], 0);
+                    
+                case 'robot'
+                    wb_supervisor_set_label(1, message, 0, ...
+                        1-2*h, h, [0 0 0.8], 0);
                     
                 otherwise
                     warning('Unknown message type "%s". Ignoring!');
