@@ -11,7 +11,7 @@ namespace Anki
   {
     template<> IN_DDR Result Array<u8>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      AnkiConditionalWarnAndReturnValue(this->IsValid(),
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
 
       printf("%s:\n", variableName);
@@ -29,7 +29,7 @@ namespace Anki
 
     template<> IN_DDR Result Array<f32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      AnkiConditionalWarnAndReturnValue(this->IsValid(),
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
 
       printf("%s:\n", variableName);
@@ -47,7 +47,7 @@ namespace Anki
 
     template<> IN_DDR Result Array<f64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      AnkiConditionalWarnAndReturnValue(this->IsValid(),
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
 
       printf("%s:\n", variableName);
@@ -65,7 +65,7 @@ namespace Anki
 
     template<> IN_DDR Result Array<Point<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      AnkiConditionalWarnAndReturnValue(this->IsValid(),
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Point<s16> >::Print", "Array<Point<s16> > is not valid");
 
       printf("%s:\n", variableName);

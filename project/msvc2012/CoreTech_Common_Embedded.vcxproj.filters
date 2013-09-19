@@ -39,6 +39,9 @@
     <ClCompile Include="..\..\src\embedded\errorHandling.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\Documents\Anki\coretech-common\src\embedded\draw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\anki\embeddedCommon\array2d.h">
@@ -75,6 +78,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\anki\embeddedCommon\errorHandling.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Z:\Documents\Anki\coretech-common\include\anki\embeddedCommon\draw.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
