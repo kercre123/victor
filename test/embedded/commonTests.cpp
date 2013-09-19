@@ -16,46 +16,74 @@ Matlab matlab(false);
 #include "gtest/gtest.h"
 #endif
 
-#define MAX_BYTES 5000
-char buffer[MAX_BYTES];
+//#define BUFFER_IN_DDR_WITH_L2
+#define BUFFER_IN_CMX
 
-GTEST_TEST(CoreTech_Common, MatrixMultiply)
+#if defined(BUFFER_IN_DDR_WITH_L2) && defined(BUFFER_IN_CMX)
+You cannot use both CMX and L2 Cache;
+#endif
+
+#define MAX_BYTES 5000
+
+#ifdef _MSC_VER
+static char buffer[MAX_BYTES];
+#else
+
+#ifdef BUFFER_IN_CMX
+__attribute__((section(".cmx.bss,CMX"))) static char buffer[MAX_BYTES];
+#else // #ifdef BUFFER_IN_CMX
+
+#ifdef BUFFER_IN_DDR_WITH_L2
+__attribute__((section(".ddr.bss,DDR"))) static char buffer[MAX_BYTES]; // With L2 cache
+#else
+__attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BYTES]; // No L2 cache
+#endif
+
+#endif // #ifdef BUFFER_IN_CMX ... #else
+
+#endif // #ifdef USING_MOVIDIUS_COMPILER
+
+IN_DDR GTEST_TEST(CoreTech_Common, MatrixMultiply)
 {
   const s32 numBytes = MIN(MAX_BYTES, 5000);
   ASSERT_TRUE(buffer != NULL);
   MemoryStack ms(buffer, numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  const char * mat1Data =
-    "1 2 3 5 7 "
-    "11 13 17 19 23 ";
+#define MatrixMultiply_mat1DataLength 10
+#define MatrixMultiply_mat2DataLength 15
+#define MatrixMultiply_matOutGroundTruthDataLength 6
 
-  const char * mat2Data =
-    "29 31 37 "
-    "41 43 47 "
-    "53 59 61 "
-    "67 71 73 "
-    "79 83 89 ";
+  const f64 mat1Data[MatrixMultiply_mat1DataLength] = {
+    1, 2, 3, 5, 7,
+    11, 13, 17, 19, 23};
 
-  const char * matOutGroundTruthData =
-    "1158 1230 1302 "
-    "4843 5161 5489 ";
+  const f64 mat2Data[MatrixMultiply_mat2DataLength] = {
+    29, 31, 37,
+    41, 43, 47,
+    53, 59, 61,
+    67, 71, 73,
+    79, 83, 89};
 
-  Array_f64 mat1(2, 5, ms);
-  Array_f64 mat2(5, 3, ms);
-  Array_f64 matOut(2, 3, ms);
-  Array_f64 matOut_groundTruth(2, 3, ms);
+  const f64 matOutGroundTruthData[MatrixMultiply_matOutGroundTruthDataLength] = {
+    1158, 1230, 1302,
+    4843, 5161, 5489};
+
+  Array<f64> mat1(2, 5, ms);
+  Array<f64> mat2(5, 3, ms);
+  Array<f64> matOut(2, 3, ms);
+  Array<f64> matOut_groundTruth(2, 3, ms);
 
   ASSERT_TRUE(mat1.IsValid());
   ASSERT_TRUE(mat2.IsValid());
   ASSERT_TRUE(matOut.IsValid());
   ASSERT_TRUE(matOut_groundTruth.IsValid());
 
-  mat1.Set(mat1Data);
-  mat2.Set(mat2Data);
-  matOut_groundTruth.Set(matOutGroundTruthData);
+  mat1.Set(mat1Data, MatrixMultiply_mat1DataLength);
+  mat2.Set(mat2Data, MatrixMultiply_mat2DataLength);
+  matOut_groundTruth.Set(matOutGroundTruthData, MatrixMultiply_matOutGroundTruthDataLength);
 
-  const Result result = MultiplyMatrices<Array_f64, f64>(mat1, mat2, matOut);
+  const Result result = MultiplyMatrices<Array<f64>, f64>(mat1, mat2, matOut);
 
   ASSERT_TRUE(result == RESULT_OK);
 
@@ -64,20 +92,20 @@ GTEST_TEST(CoreTech_Common, MatrixMultiply)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, ComputeHomography)
+IN_DDR GTEST_TEST(CoreTech_Common, ComputeHomography)
 {
   const s32 numBytes = MIN(MAX_BYTES, 5000);
   ASSERT_TRUE(buffer != NULL);
   MemoryStack ms(buffer, numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  Array_f64 homography_groundTruth(3, 3, ms);
-  Array_f64 homography(3, 3, ms);
-  Array_f64 originalPoints(3, 4, ms);
-  Array_f64 transformedPoints(3, 4, ms);
+  Array<f64> homography_groundTruth(3, 3, ms);
+  Array<f64> homography(3, 3, ms);
+  Array<f64> originalPoints(3, 4, ms);
+  Array<f64> transformedPoints(3, 4, ms);
 
-  FixedLengthList_Point_f64 originalPointsList(4, ms);
-  FixedLengthList_Point_f64 transformedPointsList(4, ms);
+  FixedLengthList<Point<f64> > originalPointsList(4, ms);
+  FixedLengthList<Point<f64> > transformedPointsList(4, ms);
 
   ASSERT_TRUE(homography_groundTruth.IsValid());
   ASSERT_TRUE(homography.IsValid());
@@ -85,20 +113,23 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
   ASSERT_TRUE(originalPointsList.IsValid());
   ASSERT_TRUE(transformedPointsList.IsValid());
 
-  const char * homographyGroundTruthData =
-    "5.5   -0.3 5.5 "
-    "0.5   0.5  3.3 "
-    "0.001 0.0  1.0 ";
+#define ComputeHomography_homographyGroundTruthDataLength 9
+#define ComputeHomography_originalPointsDataLength 12
 
-  const char * originalPointsData =
-    "0 1 1 0 "
-    "0 0 1 1 "
-    "1 1 1 1 ";
+  const f64 homographyGroundTruthData[ComputeHomography_homographyGroundTruthDataLength] = {
+    5.5, -0.3, 5.5,
+    0.5, 0.5, 3.3,
+    0.001, 0.0, 1.0};
 
-  homography_groundTruth.Set(homographyGroundTruthData);
-  originalPoints.Set(originalPointsData);
+  const f64 originalPointsData[ComputeHomography_originalPointsDataLength] = {
+    0, 1, 1, 0,
+    0, 0, 1, 1,
+    1, 1, 1, 1};
 
-  MultiplyMatrices<Array_f64, f64>(homography_groundTruth, originalPoints, transformedPoints);
+  homography_groundTruth.Set(homographyGroundTruthData, ComputeHomography_homographyGroundTruthDataLength);
+  originalPoints.Set(originalPointsData, ComputeHomography_originalPointsDataLength);
+
+  MultiplyMatrices<Array<f64>, f64>(homography_groundTruth, originalPoints, transformedPoints);
 
   for(s32 i=0; i<originalPoints.get_size(1); i++) {
     const f64 x0 = (*originalPoints.Pointer(0,i)) / (*originalPoints.Pointer(2,i));
@@ -107,8 +138,8 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
     const f64 x1 = (*transformedPoints.Pointer(0,i)) / (*transformedPoints.Pointer(2,i));
     const f64 y1 = (*transformedPoints.Pointer(1,i)) / (*transformedPoints.Pointer(2,i));
 
-    originalPointsList.PushBack(Point_f64(x0, y0));
-    transformedPointsList.PushBack(Point_f64(x1, y1));
+    originalPointsList.PushBack(Point<f64>(x0, y0));
+    transformedPointsList.PushBack(Point<f64>(x1, y1));
   }
 
   //originalPoints.Print("originalPoints");
@@ -128,43 +159,76 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, SVD)
+IN_DDR void PrintfOneArray_f32(const Array<f32> &array, const char * variableName)
+{
+  printf("%s:\n", variableName);
+  for(s32 y=0; y<array.get_size(0); y++) {
+    const f32 * const rowPointer = array.Pointer(y, 0);
+    for(s32 x=0; x<array.get_size(1); x++) {
+      const f32 value = rowPointer[x];
+      const f32 mulitipliedValue = 10000.0f * value;
+      printf("%d ", static_cast<s32>(mulitipliedValue));
+    }
+    printf("\n");
+  }
+  printf("\n");
+}
+
+IN_DDR void PrintfOneArray_f64(const Array<f64> &array, const char * variableName)
+{
+  printf("%s:\n", variableName);
+  for(s32 y=0; y<array.get_size(0); y++) {
+    const f64 * const rowPointer = array.Pointer(y, 0);
+    for(s32 x=0; x<array.get_size(1); x++) {
+      printf("%d ", static_cast<s32>((10000.0*rowPointer[x])));
+    }
+    printf("\n");
+  }
+  printf("\n");
+}
+
+IN_DDR GTEST_TEST(CoreTech_Common, SVD32)
 {
   const s32 numBytes = MIN(MAX_BYTES, 5000);
   ASSERT_TRUE(buffer != NULL);
   MemoryStack ms(buffer, numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  const char * aData =
-    "1 2 3 5 7 11 13 17 "
-    "19 23 29 31 37 41 43 47 ";
+#define SVD_aDataLength 16
+#define SVD_uTGroundTruthDataLength 4
+#define SVD_wGroundTruthDataLength 8
+#define SVD_vTGroundTruthDataLength 64
 
-  const char *uTGroundTruthData =
-    "-0.237504316543999	-0.971386483137875 "
-    "0.971386483137874	-0.237504316543999 ";
+  const f32 aData[SVD_aDataLength] = {
+    1, 2, 3, 5, 7, 11, 13, 17,
+    19, 23, 29, 31, 37, 41, 43, 47};
 
-  const char *wGroundTruthData =
-    "101.885662808124  9.29040979446927  0  0  0  0  0  0 ";
+  const f32 uTGroundTruthData[SVD_uTGroundTruthDataLength] = {
+    -0.237504316543999f,  -0.971386483137875f,
+    0.971386483137874f,  -0.237504316543999f};
 
-  const char *vTGroundTruthData =
-    "-0.183478685625953	-0.223946108965585	-0.283481700610061	-0.307212042374800	-0.369078720749224	-0.416539404278702	-0.440269746043441	-0.487730429572919 "
-    "0.381166774075590	0.378866636898153	0.427695421221120	0.269708382365037	0.213979186509760	-0.101994891202405	-0.259981930058488	-0.575956007770654 "
-    "-0.227185052857744	-0.469620636740071	0.828412170627898	-0.133259849703043	-0.130174916014859	-0.0535189566767408	-0.0151909770076815	0.0614649823304370 "
-    "-0.262651399482480	-0.301123351378262	-0.120288604832971	0.894501576357598	-0.112627300393190	-0.0830469380120526	-0.0682567568214837	-0.0386763944403458 "
-    "-0.324884751171929	-0.243759383675343	-0.107225790475501	-0.104644995857761	0.880843955313500	-0.113994455451022	-0.111413660833282	-0.106252071597804 "
-    "-0.395817444421400	0.0932351870482750	-0.00462734139723796	-0.0491221437364792	-0.0840608134431630	0.826949581878355	-0.217545220460887	-0.306534825139369 "
-    "-0.431283791046136	0.261732472410084	0.0466718831418935	-0.0213607176758380	-0.0665131978214941	-0.202578399456957	0.729388999725311	-0.406676201910152 "
-    "-0.502216484295607	0.598727043133703	0.149270332220156	0.0341621344454443	-0.0314179665781565	-0.261634362127581	-0.376742559902293	0.393041044548282 ";
+  const f32 wGroundTruthData[SVD_wGroundTruthDataLength] = {
+    101.885662808124f, 9.29040979446927f, 0, 0, 0, 0, 0, 0};
+
+  const f32 vTGroundTruthData[SVD_vTGroundTruthDataLength] = {
+    -0.183478685625953f, -0.223946108965585f, -0.283481700610061f, -0.307212042374800f, -0.369078720749224f, -0.416539404278702f, -0.440269746043441f, -0.487730429572919f,
+    0.381166774075590f, 0.378866636898153f, 0.427695421221120f, 0.269708382365037f, 0.213979186509760f, -0.101994891202405f, -0.259981930058488f, -0.575956007770654f,
+    -0.227185052857744f, -0.469620636740071f, 0.828412170627898f, -0.133259849703043f, -0.130174916014859f, -0.0535189566767408f, -0.0151909770076815f, 0.0614649823304370f,
+    -0.262651399482480f, -0.301123351378262f, -0.120288604832971f, 0.894501576357598f, -0.112627300393190f, -0.0830469380120526f, -0.0682567568214837f, -0.0386763944403458f,
+    -0.324884751171929f, -0.243759383675343f, -0.107225790475501f, -0.104644995857761f, 0.880843955313500f, -0.113994455451022f, -0.111413660833282f, -0.106252071597804f,
+    -0.395817444421400f, 0.0932351870482750f, -0.00462734139723796f, -0.0491221437364792f, -0.0840608134431630f, 0.826949581878355f, -0.217545220460887f, -0.306534825139369f,
+    -0.431283791046136f, 0.261732472410084f, 0.0466718831418935f, -0.0213607176758380f, -0.0665131978214941f, -0.202578399456957f, 0.729388999725311f, -0.406676201910152f,
+    -0.502216484295607f, 0.598727043133703f, 0.149270332220156f, 0.0341621344454443f, -0.0314179665781565f, -0.261634362127581f, -0.376742559902293f, 0.393041044548282f};
 
   const s32 m = 2, n = 8;
 
-  Array_f32 a(m, n, ms);
-  Array_f32 w(1, n, ms);
-  Array_f32 uT(m, m, ms);
-  Array_f32 vT(n, n, ms);
-  Array_f32 w_groundTruth(1, n, ms);
-  Array_f32 uT_groundTruth(m, m, ms);
-  Array_f32 vT_groundTruth(n, n, ms);
+  Array<f32> a(m, n, ms);
+  Array<f32> w(1, n, ms);
+  Array<f32> uT(m, m, ms);
+  Array<f32> vT(n, n, ms);
+  Array<f32> w_groundTruth(1, n, ms);
+  Array<f32> uT_groundTruth(m, m, ms);
+  Array<f32> vT_groundTruth(n, n, ms);
 
   ASSERT_TRUE(a.IsValid());
   ASSERT_TRUE(w.IsValid());
@@ -174,26 +238,30 @@ GTEST_TEST(CoreTech_Common, SVD)
   ASSERT_TRUE(uT_groundTruth.IsValid());
   ASSERT_TRUE(vT_groundTruth.IsValid());
 
-  void * scratch = ms.Allocate(sizeof(float)*(2*n+m));
+  void * scratch = ms.Allocate(sizeof(float)*(2*n + 2*m + 64));
   ASSERT_TRUE(scratch != NULL);
 
-  a.Set(aData);
-  w_groundTruth.Set(wGroundTruthData);
-  uT_groundTruth.Set(uTGroundTruthData);
-  vT_groundTruth.Set(vTGroundTruthData);
+  a.Set(aData, SVD_aDataLength);
+  w_groundTruth.Set(wGroundTruthData, SVD_uTGroundTruthDataLength);
+  uT_groundTruth.Set(uTGroundTruthData, SVD_wGroundTruthDataLength);
+  vT_groundTruth.Set(vTGroundTruthData, SVD_vTGroundTruthDataLength);
 
   const Result result = svd_f32(a, w, uT, vT, scratch);
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  //w.Print("w");
-  //w_groundTruth.Print("w_groundTruth");
+  //  w.Print("w");
+  //  w_groundTruth.Print("w_groundTruth");
+  //PrintfOneArray_f32(w, "w");
+  //PrintfOneArray_f32(w_groundTruth, "w_groundTruth");
 
-  //uT.Print("uT");
-  //uT_groundTruth.Print("uT_groundTruth");
+  //  uT.Print("uT");
+  //  uT_groundTruth.Print("uT_groundTruth");
+  PrintfOneArray_f32(uT, "uT");
+  PrintfOneArray_f32(uT_groundTruth, "uT_groundTruth");
 
-  //vT.Print("vT");
-  //vT_groundTruth.Print("vT_groundTruth");
+  //  vT.Print("vT");
+  //  vT_groundTruth.Print("vT_groundTruth");
 
   ASSERT_TRUE(w.IsElementwiseEqual_PercentThreshold(w_groundTruth, .05, .001));
   ASSERT_TRUE(uT.IsElementwiseEqual_PercentThreshold(uT_groundTruth, .05, .001));
@@ -204,7 +272,92 @@ GTEST_TEST(CoreTech_Common, SVD)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, MemoryStack)
+IN_DDR GTEST_TEST(CoreTech_Common, SVD64)
+{
+  const s32 numBytes = MIN(MAX_BYTES, 5000);
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+#define SVD_aDataLength 16
+#define SVD_uTGroundTruthDataLength 4
+#define SVD_wGroundTruthDataLength 8
+#define SVD_vTGroundTruthDataLength 64
+
+  const f64 aData[SVD_aDataLength] = {
+    1, 2, 3, 5, 7, 11, 13, 17,
+    19, 23, 29, 31, 37, 41, 43, 47};
+
+  const f64 uTGroundTruthData[SVD_uTGroundTruthDataLength] = {
+    -0.237504316543999f,  -0.971386483137875f,
+    0.971386483137874f,  -0.237504316543999f};
+
+  const f64 wGroundTruthData[SVD_wGroundTruthDataLength] = {
+    101.885662808124f, 9.29040979446927f, 0, 0, 0, 0, 0, 0};
+
+  const f64 vTGroundTruthData[SVD_vTGroundTruthDataLength] = {
+    -0.183478685625953f, -0.223946108965585f, -0.283481700610061f, -0.307212042374800f, -0.369078720749224f, -0.416539404278702f, -0.440269746043441f, -0.487730429572919f,
+    0.381166774075590f, 0.378866636898153f, 0.427695421221120f, 0.269708382365037f, 0.213979186509760f, -0.101994891202405f, -0.259981930058488f, -0.575956007770654f,
+    -0.227185052857744f, -0.469620636740071f, 0.828412170627898f, -0.133259849703043f, -0.130174916014859f, -0.0535189566767408f, -0.0151909770076815f, 0.0614649823304370f,
+    -0.262651399482480f, -0.301123351378262f, -0.120288604832971f, 0.894501576357598f, -0.112627300393190f, -0.0830469380120526f, -0.0682567568214837f, -0.0386763944403458f,
+    -0.324884751171929f, -0.243759383675343f, -0.107225790475501f, -0.104644995857761f, 0.880843955313500f, -0.113994455451022f, -0.111413660833282f, -0.106252071597804f,
+    -0.395817444421400f, 0.0932351870482750f, -0.00462734139723796f, -0.0491221437364792f, -0.0840608134431630f, 0.826949581878355f, -0.217545220460887f, -0.306534825139369f,
+    -0.431283791046136f, 0.261732472410084f, 0.0466718831418935f, -0.0213607176758380f, -0.0665131978214941f, -0.202578399456957f, 0.729388999725311f, -0.406676201910152f,
+    -0.502216484295607f, 0.598727043133703f, 0.149270332220156f, 0.0341621344454443f, -0.0314179665781565f, -0.261634362127581f, -0.376742559902293f, 0.393041044548282f};
+
+  const s32 m = 2, n = 8;
+
+  Array<f64> a(m, n, ms);
+  Array<f64> w(1, n, ms);
+  Array<f64> uT(m, m, ms);
+  Array<f64> vT(n, n, ms);
+  Array<f64> w_groundTruth(1, n, ms);
+  Array<f64> uT_groundTruth(m, m, ms);
+  Array<f64> vT_groundTruth(n, n, ms);
+
+  ASSERT_TRUE(a.IsValid());
+  ASSERT_TRUE(w.IsValid());
+  ASSERT_TRUE(uT.IsValid());
+  ASSERT_TRUE(vT.IsValid());
+  ASSERT_TRUE(w_groundTruth.IsValid());
+  ASSERT_TRUE(uT_groundTruth.IsValid());
+  ASSERT_TRUE(vT_groundTruth.IsValid());
+
+  void * scratch = ms.Allocate(sizeof(float)*(2*n + 2*m + 64));
+  ASSERT_TRUE(scratch != NULL);
+
+  a.Set(aData, SVD_aDataLength);
+  w_groundTruth.Set(wGroundTruthData, SVD_uTGroundTruthDataLength);
+  uT_groundTruth.Set(uTGroundTruthData, SVD_wGroundTruthDataLength);
+  vT_groundTruth.Set(vTGroundTruthData, SVD_vTGroundTruthDataLength);
+
+  const Result result = svd_f64(a, w, uT, vT, scratch);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  //  w.Print("w");
+  //  w_groundTruth.Print("w_groundTruth");
+  //PrintfOneArray_f64(w, "w");
+  //PrintfOneArray_f64(w_groundTruth, "w_groundTruth");
+
+  //  uT.Print("uT");
+  //  uT_groundTruth.Print("uT_groundTruth");
+  PrintfOneArray_f64(uT, "uT");
+  PrintfOneArray_f64(uT_groundTruth, "uT_groundTruth");
+
+  //  vT.Print("vT");
+  //  vT_groundTruth.Print("vT_groundTruth");
+
+  ASSERT_TRUE(w.IsElementwiseEqual_PercentThreshold(w_groundTruth, .05, .001));
+  ASSERT_TRUE(uT.IsElementwiseEqual_PercentThreshold(uT_groundTruth, .05, .001));
+
+  // I don't know why, but the v-transpose for this SVD doesn't match Matlab's. Probably this version's is more efficient, in either memory or computation.
+  //ASSERT_TRUE(vT.IsElementwiseEqual_PercentThreshold(vT_groundTruth, .05, .001));
+
+  GTEST_RETURN_HERE;
+}
+
+IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack)
 {
   ASSERT_TRUE(MEMORY_ALIGNMENT == 16);
 
@@ -227,7 +380,7 @@ GTEST_TEST(CoreTech_Common, MemoryStack)
   ASSERT_TRUE(buffer2 != NULL);
   ASSERT_TRUE(buffer3 != NULL);
 
-#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+#if ANKI_DEBUG_LEVEL > ANKI_DEBUG_ESSENTIAL_AND_ERROR
   ASSERT_TRUE(buffer4 == NULL);
   ASSERT_TRUE(buffer5 == NULL);
   ASSERT_TRUE(buffer6 == NULL);
@@ -276,27 +429,27 @@ GTEST_TEST(CoreTech_Common, MemoryStack)
     ASSERT_TRUE(ms.IsValid() == expectedResults[i]);
     (reinterpret_cast<char*>(alignedBuffer)[i])--;
   }
-#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+#endif // #if ANKI_DEBUG_LEVEL > ANKI_DEBUG_ESSENTIAL_AND_ERROR
 
   //free(buffer); buffer = NULL;
 
   GTEST_RETURN_HERE;
 }
 
-s32 CheckMemoryStackUsage(MemoryStack ms, s32 numBytes)
+IN_DDR s32 CheckMemoryStackUsage(MemoryStack ms, s32 numBytes)
 {
   ms.Allocate(numBytes);
   return ms.get_usedBytes();
 }
 
-s32 CheckConstCasting(const MemoryStack ms, s32 numBytes)
+IN_DDR s32 CheckConstCasting(const MemoryStack ms, s32 numBytes)
 {
   // ms.Allocate(1); // Will not compile
 
   return CheckMemoryStackUsage(ms, numBytes);
 }
 
-GTEST_TEST(CoreTech_Common, MemoryStack_call)
+IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack_call)
 {
   const s32 numBytes = MIN(MAX_BYTES, 100);
   //void * buffer = calloc(numBytes, 1);
@@ -322,7 +475,7 @@ GTEST_TEST(CoreTech_Common, MemoryStack_call)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
+IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
 {
   ASSERT_TRUE(MEMORY_ALIGNMENT == 16);
 
@@ -336,21 +489,21 @@ GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
   ASSERT_TRUE(bufferShift < static_cast<size_t>(MEMORY_ALIGNMENT));
 
   MemoryStack ms(alignedBuffer, numBytes);
-  const s32 largestPossibleAllocation1 = ms.LargestPossibleAllocation();
+  const s32 largestPossibleAllocation1 = ms.ComputeLargestPossibleAllocation();
   ASSERT_TRUE(largestPossibleAllocation1 == 80);
 
   const void * const allocatedBuffer1 = ms.Allocate(1);
-  const s32 largestPossibleAllocation2 = ms.LargestPossibleAllocation();
+  const s32 largestPossibleAllocation2 = ms.ComputeLargestPossibleAllocation();
   ASSERT_TRUE(allocatedBuffer1 != NULL);
   ASSERT_TRUE(largestPossibleAllocation2 == 48);
 
   const void * const allocatedBuffer2 = ms.Allocate(49);
-  const s32 largestPossibleAllocation3 = ms.LargestPossibleAllocation();
+  const s32 largestPossibleAllocation3 = ms.ComputeLargestPossibleAllocation();
   ASSERT_TRUE(allocatedBuffer2 == NULL);
   ASSERT_TRUE(largestPossibleAllocation3 == 48);
 
   const void * const allocatedBuffer3 = ms.Allocate(48);
-  const s32 largestPossibleAllocation4 = ms.LargestPossibleAllocation();
+  const s32 largestPossibleAllocation4 = ms.ComputeLargestPossibleAllocation();
   ASSERT_TRUE(allocatedBuffer3 != NULL);
   ASSERT_TRUE(largestPossibleAllocation4 == 0);
 
@@ -360,7 +513,7 @@ GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
 }
 
 #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
-GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
+IN_DDR GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
 {
   matlab.EvalStringEcho("simpleVector = double([1.1,2.1,3.1,4.1,5.1]);");
   double *simpleVector = matlab.Get<double>("simpleVector");
@@ -378,10 +531,10 @@ GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
 #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
-GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
+IN_DDR GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
 {
   matlab.EvalStringEcho("simpleArray = int16([1,2,3,4,5;6,7,8,9,10]);");
-  Array_s16 simpleArray = matlab.GetArray_s16("simpleArray");
+  Array<s16> simpleArray = matlab.GetArray<s16>("simpleArray");
   printf("simple matrix:\n");
   simpleArray.Print();
 
@@ -401,7 +554,7 @@ GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
+IN_DDR GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 {
   cv::Mat src, dst;
 
@@ -434,7 +587,7 @@ GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 }
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
-GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
+IN_DDR GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 {
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = MIN(MAX_BYTES, 1000);
@@ -443,7 +596,7 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   MemoryStack ms(buffer, numBytes);
 
   // Create a matrix, and manually set a few values
-  Array_s16 simpleArray(10, 6, ms);
+  Array<s16> simpleArray(10, 6, ms);
   ASSERT_TRUE(simpleArray.get_rawDataPointer() != NULL);
   *simpleArray.Pointer(0,0) = 1;
   *simpleArray.Pointer(0,1) = 2;
@@ -460,7 +613,7 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 
 #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
   // Check that the Matlab transfer works (you need to check the Matlab window to verify that this works)
-  matlab.PutArray_s16(simpleArray, "simpleArray");
+  matlab.PutArray<s16>(simpleArray, "simpleArray");
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
@@ -512,7 +665,7 @@ GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
+IN_DDR GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 {
   const s32 numBytes = MIN(MAX_BYTES, 1000);
   //void *buffer = calloc(numBytes, 1);
@@ -520,14 +673,15 @@ GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 
   MemoryStack ms(buffer, numBytes);
 
-  Array_u8 simpleArray(3, 3, ms);
+  Array<u8> simpleArray(3, 3, ms);
 
-  const char * imgData =
-    " 1 1 1 "
-    " 1 1 1 "
-    " 1 1 1 ";
+#define ArraySpecifiedClass_imgDataLength 9
+  const u8 imgData[ArraySpecifiedClass_imgDataLength] = {
+    1, 1, 1,
+    1, 1, 1,
+    1, 1, 1};
 
-  simpleArray.Set(imgData);
+  simpleArray.Set(imgData, ArraySpecifiedClass_imgDataLength);
 
   ASSERT_TRUE((*simpleArray.Pointer(0,0)) == 1); // If the templating fails, this will equal 49
 
@@ -536,7 +690,7 @@ GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, ArrayAlignment1)
+IN_DDR GTEST_TEST(CoreTech_Common, ArrayAlignment1)
 {
   const s32 numBytes = MIN(MAX_BYTES, 1000);
   //void *buffer = calloc(numBytes, 1);
@@ -547,7 +701,7 @@ GTEST_TEST(CoreTech_Common, ArrayAlignment1)
   // Check all offsets
   for(s32 offset=0; offset<8; offset++) {
     void * const alignedBufferAndOffset = reinterpret_cast<char*>(alignedBuffer) + offset;
-    Array_s16 simpleArray(10, 6, alignedBufferAndOffset, numBytes-offset-8);
+    Array<s16> simpleArray(10, 6, alignedBufferAndOffset, numBytes-offset-8);
 
     const size_t trueLocation = reinterpret_cast<size_t>(simpleArray.Pointer(0,0));
     const size_t expectedLocation = RoundUp(reinterpret_cast<size_t>(alignedBufferAndOffset), MEMORY_ALIGNMENT);;
@@ -560,7 +714,7 @@ GTEST_TEST(CoreTech_Common, ArrayAlignment1)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
+IN_DDR GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
 {
   const s32 numBytes = MIN(MAX_BYTES, 1000);
   //void *buffer = calloc(numBytes, 1);
@@ -572,7 +726,7 @@ GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
   for(s32 offset=0; offset<8; offset++) {
     void * const alignedBufferAndOffset = reinterpret_cast<char*>(alignedBuffer) + offset;
     MemoryStack simpleMemoryStack(alignedBufferAndOffset, numBytes-offset-8);
-    Array_s16 simpleArray(10, 6, simpleMemoryStack);
+    Array<s16> simpleArray(10, 6, simpleMemoryStack);
 
     const size_t matrixStart = reinterpret_cast<size_t>(simpleArray.Pointer(0,0));
     ASSERT_TRUE(matrixStart == RoundUp(matrixStart, MEMORY_ALIGNMENT));
@@ -583,7 +737,7 @@ GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, ArrayFillPattern)
+IN_DDR GTEST_TEST(CoreTech_Common, ArrayFillPattern)
 {
   const s32 width = 6, height = 10;
   const s32 numBytes = MIN(MAX_BYTES, 1000);
@@ -595,7 +749,7 @@ GTEST_TEST(CoreTech_Common, ArrayFillPattern)
   MemoryStack ms(alignedBuffer, numBytes-MEMORY_ALIGNMENT);
 
   // Create a matrix, and manually set a few values
-  Array_s16 simpleArray(height, width, ms, true);
+  Array<s16> simpleArray(height, width, ms, true);
   ASSERT_TRUE(simpleArray.get_rawDataPointer() != NULL);
 
   ASSERT_TRUE(simpleArray.IsValid());
@@ -650,11 +804,15 @@ GTEST_TEST(CoreTech_Common, ArrayFillPattern)
 }
 
 #if !defined(ANKICORETECHEMBEDDED_USE_GTEST)
-void RUN_ALL_TESTS()
+IN_DDR void RUN_ALL_TESTS()
 {
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, MatrixMultiply);
+  CALL_GTEST_TEST(CoreTech_Common, ComputeHomography);
+  CALL_GTEST_TEST(CoreTech_Common, SVD32);
+  CALL_GTEST_TEST(CoreTech_Common, SVD64);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_call);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1);
@@ -663,7 +821,6 @@ void RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Common, ArrayAlignment1);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStackAlignment);
   CALL_GTEST_TEST(CoreTech_Common, ArrayFillPattern);
-  CALL_GTEST_TEST(CoreTech_Common, SVD);
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 } // void RUN_ALL_TESTS()

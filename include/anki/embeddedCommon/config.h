@@ -42,16 +42,16 @@
 #define vsnprintf vsprintf_s
 #endif
 
-#ifndef IN_CACHED_DDR
-#define IN_CACHED_DDR
+#ifndef IN_DDR
+#define IN_DDR
 #endif
 
 #endif // #if defined(_MSC_VER)
 
 #if defined(__APPLE_CC__) // Apple Xcode
 
-#ifndef IN_CACHED_DDR
-#define IN_CACHED_DDR
+#ifndef IN_DDR
+#define IN_DDR
 #endif
 
 #ifndef restrict
@@ -73,11 +73,18 @@
 #define restrict __restrict
 #endif
 
-#ifndef IN_CACHED_DDR
-#define IN_CACHED_DDR __attribute__((section(".ddr_direct.text")))
+#ifndef IN_DDR
+#define IN_DDR __attribute__((section(".ddr_direct.text")))
+//#define IN_DDR __attribute__((section(".ddr.text")))
 #endif
 
 #endif // #if defined(USING_MOVIDIUS_COMPILER)
+
+#include <stdio.h>
+
+/*#ifdef MATLAB_MEX_FILE
+#define printf mexPrintf
+#endif*/
 
 #include <stddef.h>
 
@@ -116,23 +123,23 @@ typedef double   f64;
 #endif // #ifdef USING_MOVIDIUS_GCC_COMPILER
 
 // Maximum and minimum values
-#define u8_MAX  ((u8)0xFF)
-#define u16_MAX ((u16)0xFFFF)
-#define u32_MAX ((u32)0xFFFFFFFF)
+const u8 u8_MAX =  static_cast<u8>(0xFF);
+const u16 u16_MAX = static_cast<u16>(0xFFFF);
+const u32 u32_MAX = static_cast<u32>(0xFFFFFFFF);
 
-#define s8_MAX  ((s8)0x7F)
-#define s16_MAX ((s16)0x7FFF)
-#define s32_MAX ((s32)0x7FFFFFFF)
+const s8 s8_MAX = static_cast<s8>(0x7F);
+const s16 s16_MAX = static_cast<s16>(0x7FFF);
+const s32 s32_MAX = static_cast<s32>(0x7FFFFFFF);
 
-#define s8_MIN  ((s8)0x80)
-#define s16_MIN ((s16)0x8000)
-#define s32_MIN ((s32)0x80000000)
+const s8 s8_MIN = static_cast<s8>(-1 - 0x7F);
+const s16 s16_MIN = static_cast<s16>(-1 - 0x7FFF);
+const s32 s32_MIN = static_cast<s32>(-1 - 0x7FFFFFFF);
 
 namespace Anki
 {
   namespace Embedded
   {
-    const size_t MEMORY_ALIGNMENT = 16; // To support 128-bit SIMD loads and stores
+#define MEMORY_ALIGNMENT static_cast<size_t>(16) // To support 128-bit SIMD loads and stores
 
     // Return values:
     typedef enum Result_ {
@@ -146,10 +153,11 @@ namespace Anki
   }
 }
 
-#define ANKI_DEBUG_OFF  0
-#define ANKI_DEBUG_LOW  1000
-#define ANKI_DEBUG_HIGH 2000
+#define ANKI_DEBUG_ESSENTIAL 0
+#define ANKI_DEBUG_ESSENTIAL_AND_ERROR 1000
+#define ANKI_DEBUG_ESSENTIAL_AND_ERROR_AND_WARN 2000
+#define ANKI_DEBUG_ALL 3000
 
-#define ANKI_DEBUG_LEVEL ANKI_DEBUG_OFF
+#define ANKI_DEBUG_LEVEL ANKI_DEBUG_ALL
 
 #endif // _ANKICORETECHEMBEDDED_COMMON_CONFIG_H_

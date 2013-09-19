@@ -10,8 +10,32 @@ namespace Anki
 
 #define TEXT_BUFFER_SIZE 1024
 
-    mxClassID ConvertToMatlabType(const char *typeName, size_t byteDepth)
+    mxClassID ConvertToMatlabType(const char * const typeName, const size_t byteDepth)
     {
+      //mexPrintf("typename %s\n", typeName);
+#if defined(__APPLE_CC__) // Apple Xcode
+      if(typeName[0] == 'h') {
+        return mxUINT8_CLASS;
+      } else if(typeName[0] == 'a') {
+        return mxINT8_CLASS;
+      } else if(typeName[0] == 't') {
+        return mxUINT16_CLASS;
+      } else if(typeName[0] == 's') {
+        return mxINT16_CLASS;
+      } else if(typeName[0] == 'j') {
+        return mxUINT32_CLASS;
+      } else if(typeName[0] == 'i') {
+        return mxINT32_CLASS;
+      } else if(typeName[0] == 'y') {
+        return mxUINT64_CLASS;
+      } else if(typeName[0] == 'x') {
+        return mxINT64_CLASS;
+      } else if(typeName[0] == 'f') {
+        return mxSINGLE_CLASS;
+      } else if(typeName[0] == 'd') {
+        return mxDOUBLE_CLASS;
+      }
+#else // #if defined(__APPLE_CC__) // Apple Xcode
       if(typeName[0] == 'u') { //unsigned
         if(byteDepth == 1) {
           return mxUINT8_CLASS;
@@ -37,40 +61,65 @@ namespace Anki
           return mxINT64_CLASS;
         }
       }
+#endif // #if defined(__APPLE_CC__) // Apple Xcode ... #else
 
       return mxUNKNOWN_CLASS;
-    }
+    } // mxClassID convertToMatlabType(const char * const typeName, const size_t byteDepth)
 
-    const char* ConvertToMatlabTypeString(const char *typeName, size_t byteDepth)
+    std::string ConvertToMatlabTypeString(const char *typeName, size_t byteDepth)
     {
+#if defined(__APPLE_CC__) // Apple Xcode
+      if(typeName[0] == 'h') {
+        return std::string("uint8");
+      } else if(typeName[0] == 'a') {
+        return std::string("int8");
+      } else if(typeName[0] == 't') {
+        return std::string("uint16");
+      } else if(typeName[0] == 's') {
+        return std::string("int16");
+      } else if(typeName[0] == 'j') {
+        return std::string("uint32");
+      } else if(typeName[0] == 'i') {
+        return std::string("int32");
+      } else if(typeName[0] == 'y') {
+        return std::string("uint64");
+      } else if(typeName[0] == 'x') {
+        return std::string("int64");
+      } else if(typeName[0] == 'f') {
+        return std::string("single");
+      } else if(typeName[0] == 'd') {
+        return std::string("double");
+      }
+#else // #if defined(__APPLE_CC__) // Apple Xcode
       if(typeName[0] == 'u') { //unsigned
         if(byteDepth == 1) {
-          return "uint8";
+          return std::string("uint8");
         } else if(byteDepth == 2) {
-          return "uint16";
+          return std::string("uint16");
         }else if(byteDepth == 4) {
-          return "uint32";
+          return std::string("uint32");
         }else if(byteDepth == 8) {
-          return "uint64";
+          return std::string("uint64");
         }
       } else if(typeName[0] == 'f' && byteDepth == 4) { //float
-        return "single";
+        return std::string("single");
       } else if(typeName[0] == 'd' && byteDepth == 8) { //double
-        return "double";
+        return std::string("double");
       } else { // signed
         if(byteDepth == 1) {
-          return "int8";
+          return std::string("int8");
         } else if(byteDepth == 2) {
-          return "int16";
+          return std::string("int16");
         }else if(byteDepth == 4) {
-          return "int32";
+          return std::string("int32");
         }else if(byteDepth == 8) {
-          return "int64";
+          return std::string("int64");
         }
       }
+#endif // #if defined(__APPLE_CC__) // Apple Xcode ... #else
 
-      return "unknown";
-    }
+      return std::string("unknown");
+    } // std::string convertToMatlabTypeString(const char *typeName, size_t byteDepth)
 
     Matlab::Matlab(bool clearWorkspace)
     {
@@ -88,10 +137,7 @@ namespace Anki
 
     std::string Matlab::EvalString(const char * const format, ...)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return "";
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, "", "Anki.", "Matlab engine is not started/connected");
 
       va_list args;
       char *buffer;
@@ -117,10 +163,7 @@ namespace Anki
 
     std::string Matlab::EvalStringEcho(const char * const format, ...)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return "";
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, "", "Anki.", "Matlab engine is not started/connected");
 
       va_list args;
       char *buffer;
@@ -150,10 +193,7 @@ namespace Anki
 
     std::string Matlab::EvalStringExplicit(const char * buffer)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return "";
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, "", "Anki.", "Matlab engine is not started/connected");
 
       engEvalString(this->ep, buffer);
 
@@ -164,10 +204,7 @@ namespace Anki
 
     std::string Matlab::EvalStringExplicitEcho(const char * buffer)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return "";
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, "", "Anki.", "Matlab engine is not started/connected");
 
       engEvalString(this->ep, buffer);
 
@@ -179,10 +216,7 @@ namespace Anki
 
     mxArray* Matlab::GetArray(const std::string name)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return NULL;
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, NULL, "Anki.", "Matlab engine is not started/connected");
 
       mxArray *arr = engGetVariable(this->ep, name.data());
       return arr;
@@ -190,10 +224,7 @@ namespace Anki
 
     MatlabVariableType Matlab::GetType(const std::string name)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return TYPE_UNKNOWN;
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, TYPE_UNKNOWN, "Anki.", "Matlab engine is not started/connected");
 
       char typeName[TEXT_BUFFER_SIZE];
       snprintf(typeName, TEXT_BUFFER_SIZE, "%s_types", name.data());
@@ -221,17 +252,11 @@ namespace Anki
     }
 
 #if defined(ANKI_USE_OPENCV)
-    s32 Matlab::GetCvMat(const CvMat *matrix, std::string name)
+    Result Matlab::GetCvMat(const CvMat *matrix, std::string name)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return -1;
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.", "Matlab engine is not started/connected");
 
-      if(matrix == 0)  {
-        printf("Error: CvMat is not initialized for %s\n", name.data());
-        return -1;
-      }
+      AnkiConditionalErrorAndReturnValue(matrix != NULL, RESULT_FAIL, "Error: CvMat is not initialized for %s\n", name.data());
 
       char tmpName[TEXT_BUFFER_SIZE];
       snprintf(tmpName, TEXT_BUFFER_SIZE, "%s_AnkiTMP", name.data());
@@ -359,17 +384,11 @@ namespace Anki
       return matrix;
     }
 
-    s32 Matlab::PutCvMat(const CvMat *matrix, std::string name)
+    Result Matlab::PutCvMat(const CvMat *matrix, std::string name)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return -1;
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.", "Matlab engine is not started/connected");
 
-      if(matrix == 0) {
-        printf("Error: CvMat is not initialized for %s\n", name.data());
-        return -1;
-      }
+      AnkiConditionalErrorAndReturnValue(matrix != NULL, RESULT_FAIL, "Error: CvMat is not initialized for %s\n", name.data());
 
       char tmpName[TEXT_BUFFER_SIZE];
       snprintf(tmpName, TEXT_BUFFER_SIZE, "%s_AnkiTMP", name.data());
@@ -424,31 +443,21 @@ namespace Anki
     }
 #endif // #if defined(ANKI_USE_OPENCV)
 
-    s32 Matlab::PutString(const char * characters, s32 nValues, const std::string name)
+    Result Matlab::PutString(const char * characters, s32 nValues, const std::string name)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return -1;
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.", "Matlab engine is not started/connected");
 
-      s32 returnVal = Put<s8>((s8*)characters, nValues, name);
+      Result returnVal = Put<s8>((s8*)characters, nValues, name);
       EvalString("%s=char(%s');", name.data(), name.data());
 
       return returnVal;
     }
 
 #if defined(ANKI_USE_OPENCV)
-    s32 Matlab::GetIplImage(IplImage *im, const std::string name)
+    Result Matlab::GetIplImage(IplImage *im, const std::string name)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return -1;
-      }
-
-      if(!im) {
-        printf("Error: im is not initialized for %s.\n", name.data());
-        return -1;
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.", "Matlab engine is not started/connected");
+      AnkiConditionalErrorAndReturnValue(!im, RESULT_FAIL, "Anki.", "Error: im is not initialized for %s.\n", name.data());
 
       char nameTmp[TEXT_BUFFER_SIZE];
       snprintf(nameTmp, TEXT_BUFFER_SIZE, "%s_AnkiTMP", name.data());
@@ -566,17 +575,11 @@ namespace Anki
       return 0;
     }
 
-    s32 Matlab::PutIplImage(const IplImage *im, const std::string name, bool flipRedBlue)
+    Result Matlab::PutIplImage(const IplImage *im, const std::string name, bool flipRedBlue)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return -1;
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.", "Matlab engine is not started/connected");
 
-      if(!im) {
-        printf("Error: image is not initialized for %s\n", name.data());
-        return -1;
-      }
+      AnkiConditionalErrorAndReturnValue(im, RESULT_FAIL, "Anki.", "Error: image is not initialized for %s\n", name.data());
 
       s32 width = im->width, height = im->height, nChannels = im->nChannels;
 
@@ -624,10 +627,7 @@ namespace Anki
 
     s32 Matlab::SetVisible(bool isVisible)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return -1;
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, -1, "Anki.", "Matlab engine is not started/connected");
 
       s32 returnVal = engSetVisible(this->ep, isVisible);
 
@@ -636,10 +636,7 @@ namespace Anki
 
     bool Matlab::DoesVariableExist(const std::string name)
     {
-      if(!this->ep) {
-        DASError("Anki.", "Matlab engine is not started/connected");
-        return false;
-      }
+      AnkiConditionalErrorAndReturnValue(this->ep, "", "Anki.", "Matlab engine is not started/connected");
 
       EvalString("ans=exist('%s', 'var');", name.data());
 
@@ -650,564 +647,6 @@ namespace Anki
         return false;
       else
         return true;
-    }
-
-    s32 Matlab::PutArray_u8(const Array_u8 &matrix, const std::string name)
-    {
-      if(!ep) {
-        DASError("Anki.PutArray", "Matlab engine is not started/connected");
-        return -1;
-      }
-
-      const std::string tmpName = name + std::string("_AnkiTMP");
-      const std::string matlabTypeName = Anki::Embedded::ConvertToMatlabTypeString(typeid(u8).name(), sizeof(u8));
-
-      EvalStringEcho("%s=zeros([%d,%d],'%s');", name.data(), matrix.get_size(0), matrix.get_size(1), matlabTypeName.data());
-
-      for(s32 y=0; y<matrix.get_size(0); y++) {
-        Put<u8>(matrix.Pointer(y,0), matrix.get_size(1), tmpName);
-        EvalStringEcho("%s(%d,:)=%s;", name.data(), y+1, tmpName.data());
-      }
-
-      EvalString("clear %s;", tmpName.data());
-
-      return 0;
-    }
-
-    s32 Matlab::PutArray_s8(const Array_s8 &matrix, const std::string name)
-    {
-      if(!ep) {
-        DASError("Anki.PutArray", "Matlab engine is not started/connected");
-        return -1;
-      }
-
-      const std::string tmpName = name + std::string("_AnkiTMP");
-      const std::string matlabTypeName = Anki::Embedded::ConvertToMatlabTypeString(typeid(s8).name(), sizeof(s8));
-
-      EvalStringEcho("%s=zeros([%d,%d],'%s');", name.data(), matrix.get_size(0), matrix.get_size(1), matlabTypeName.data());
-
-      for(s32 y=0; y<matrix.get_size(0); y++) {
-        Put<s8>(matrix.Pointer(y,0), matrix.get_size(1), tmpName);
-        EvalStringEcho("%s(%d,:)=%s;", name.data(), y+1, tmpName.data());
-      }
-
-      EvalString("clear %s;", tmpName.data());
-
-      return 0;
-    }
-
-    s32 Matlab::PutArray_u16(const Array_u16 &matrix, const std::string name)
-    {
-      if(!ep) {
-        DASError("Anki.PutArray", "Matlab engine is not started/connected");
-        return -1;
-      }
-
-      const std::string tmpName = name + std::string("_AnkiTMP");
-      const std::string matlabTypeName = Anki::Embedded::ConvertToMatlabTypeString(typeid(u16).name(), sizeof(u16));
-
-      EvalStringEcho("%s=zeros([%d,%d],'%s');", name.data(), matrix.get_size(0), matrix.get_size(1), matlabTypeName.data());
-
-      for(s32 y=0; y<matrix.get_size(0); y++) {
-        Put<u16>(matrix.Pointer(y,0), matrix.get_size(1), tmpName);
-        EvalStringEcho("%s(%d,:)=%s;", name.data(), y+1, tmpName.data());
-      }
-
-      EvalString("clear %s;", tmpName.data());
-
-      return 0;
-    }
-    s32 Matlab::PutArray_s16(const Array_s16 &matrix, const std::string name)
-    {
-      if(!ep) {
-        DASError("Anki.PutArray", "Matlab engine is not started/connected");
-        return -1;
-      }
-
-      const std::string tmpName = name + std::string("_AnkiTMP");
-      const std::string matlabTypeName = Anki::Embedded::ConvertToMatlabTypeString(typeid(s16).name(), sizeof(s16));
-
-      EvalStringEcho("%s=zeros([%d,%d],'%s');", name.data(), matrix.get_size(0), matrix.get_size(1), matlabTypeName.data());
-
-      for(s32 y=0; y<matrix.get_size(0); y++) {
-        Put<s16>(matrix.Pointer(y,0), matrix.get_size(1), tmpName);
-        EvalStringEcho("%s(%d,:)=%s;", name.data(), y+1, tmpName.data());
-      }
-
-      EvalString("clear %s;", tmpName.data());
-
-      return 0;
-    }
-
-    s32 Matlab::PutArray_u32(const Array_u32 &matrix, const std::string name)
-    {
-      if(!ep) {
-        DASError("Anki.PutArray", "Matlab engine is not started/connected");
-        return -1;
-      }
-
-      const std::string tmpName = name + std::string("_AnkiTMP");
-      const std::string matlabTypeName = Anki::Embedded::ConvertToMatlabTypeString(typeid(u32).name(), sizeof(u32));
-
-      EvalStringEcho("%s=zeros([%d,%d],'%s');", name.data(), matrix.get_size(0), matrix.get_size(1), matlabTypeName.data());
-
-      for(s32 y=0; y<matrix.get_size(0); y++) {
-        Put<u32>(matrix.Pointer(y,0), matrix.get_size(1), tmpName);
-        EvalStringEcho("%s(%d,:)=%s;", name.data(), y+1, tmpName.data());
-      }
-
-      EvalString("clear %s;", tmpName.data());
-
-      return 0;
-    }
-    s32 Matlab::PutArray_s32(const Array_s32 &matrix, const std::string name)
-    {
-      if(!ep) {
-        DASError("Anki.PutArray", "Matlab engine is not started/connected");
-        return -1;
-      }
-
-      const std::string tmpName = name + std::string("_AnkiTMP");
-      const std::string matlabTypeName = Anki::Embedded::ConvertToMatlabTypeString(typeid(s32).name(), sizeof(s32));
-
-      EvalStringEcho("%s=zeros([%d,%d],'%s');", name.data(), matrix.get_size(0), matrix.get_size(1), matlabTypeName.data());
-
-      for(s32 y=0; y<matrix.get_size(0); y++) {
-        Put<s32>(matrix.Pointer(y,0), matrix.get_size(1), tmpName);
-        EvalStringEcho("%s(%d,:)=%s;", name.data(), y+1, tmpName.data());
-      }
-
-      EvalString("clear %s;", tmpName.data());
-
-      return 0;
-    }
-
-    s32 Matlab::PutArray_f32(const Array_f32 &matrix, const std::string name)
-    {
-      if(!ep) {
-        DASError("Anki.PutArray", "Matlab engine is not started/connected");
-        return -1;
-      }
-
-      const std::string tmpName = name + std::string("_AnkiTMP");
-      const std::string matlabTypeName = Anki::Embedded::ConvertToMatlabTypeString(typeid(f32).name(), sizeof(f32));
-
-      EvalStringEcho("%s=zeros([%d,%d],'%s');", name.data(), matrix.get_size(0), matrix.get_size(1), matlabTypeName.data());
-
-      for(s32 y=0; y<matrix.get_size(0); y++) {
-        Put<f32>(matrix.Pointer(y,0), matrix.get_size(1), tmpName);
-        EvalStringEcho("%s(%d,:)=%s;", name.data(), y+1, tmpName.data());
-      }
-
-      EvalString("clear %s;", tmpName.data());
-
-      return 0;
-    }
-
-    s32 Matlab::PutArray_f64(const Array_f64 &matrix, const std::string name)
-    {
-      if(!ep) {
-        DASError("Anki.PutArray", "Matlab engine is not started/connected");
-        return -1;
-      }
-
-      const std::string tmpName = name + std::string("_AnkiTMP");
-      const std::string matlabTypeName = Anki::Embedded::ConvertToMatlabTypeString(typeid(f64).name(), sizeof(f64));
-
-      EvalStringEcho("%s=zeros([%d,%d],'%s');", name.data(), matrix.get_size(0), matrix.get_size(1), matlabTypeName.data());
-
-      for(s32 y=0; y<matrix.get_size(0); y++) {
-        Put<f64>(matrix.Pointer(y,0), matrix.get_size(1), tmpName);
-        EvalStringEcho("%s(%d,:)=%s;", name.data(), y+1, tmpName.data());
-      }
-
-      EvalString("clear %s;", tmpName.data());
-
-      return 0;
-    }
-
-    Array_u8 Matlab::GetArray_u8(const std::string name)
-    {
-      if(!ep) {
-        DASError("Anki.GetArray_u8", "Matlab engine is not started/connected");
-        return Array_u8(0, 0, NULL, 0, false);
-      }
-
-      const std::string tmpName = name + std::string("_AnkiTMP");
-
-      EvalString("%s=%s';", tmpName.data(), name.data());
-      mxArray *arrayTmp = GetArray(tmpName.data());
-
-      if(!arrayTmp) {
-        DASError("Anki.GetArray_u8", "%s could not be got from Matlab", tmpName.data());
-        return Array_u8(0, 0, NULL, 0, false);
-      }
-
-      const mxClassID ankiVisionClassId = Anki::Embedded::ConvertToMatlabType(typeid(u8).name(), sizeof(u8));
-
-      const mxClassID matlabClassId = mxGetClassID(arrayTmp);
-
-      if(matlabClassId != ankiVisionClassId) {
-        DASError("Anki.GetArray_u8", "matlabClassId != ankiVisionClassId");
-        return Array_u8(0, 0, NULL, 0, false);
-      }
-
-      const size_t numCols = mxGetM(arrayTmp);
-      const size_t numRows = mxGetN(arrayTmp);
-      const s32 stride = Array_u8::ComputeRequiredStride(static_cast<s32>(numCols),false);
-
-      Array_u8 ankiArray_u8(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<u8*>(calloc(stride*numCols,1)), stride*static_cast<s32>(numCols), false);
-
-      u8 *matlabArrayTmp = reinterpret_cast<u8*>(mxGetPr(arrayTmp));
-      s32 matlabIndex = 0;
-      for(s32 y=0; y<ankiArray_u8.get_size(0); y++) {
-        u8 * rowPointer = ankiArray_u8.Pointer(y, 0);
-        for(s32 x=0; x<ankiArray_u8.get_size(1); x++) {
-          rowPointer[x] = matlabArrayTmp[matlabIndex++];
-        }
-      }
-
-      mxDestroyArray(arrayTmp);
-
-      EvalString("clear %s;", tmpName.data());
-
-      return ankiArray_u8;
-    }
-
-    Array_s8 Matlab::GetArray_s8(const std::string name)
-    {
-      if(!ep) {
-        DASError("Anki.GetArray_s8", "Matlab engine is not started/connected");
-        return Array_s8(0, 0, NULL, 0, false);
-      }
-
-      const std::string tmpName = name + std::string("_AnkiTMP");
-
-      EvalString("%s=%s';", tmpName.data(), name.data());
-      mxArray *arrayTmp = GetArray(tmpName.data());
-
-      if(!arrayTmp) {
-        DASError("Anki.GetArray_s8", "%s could not be got from Matlab", tmpName.data());
-        return Array_s8(0, 0, NULL, 0, false);
-      }
-
-      const mxClassID ankiVisionClassId = Anki::Embedded::ConvertToMatlabType(typeid(s8).name(), sizeof(s8));
-
-      const mxClassID matlabClassId = mxGetClassID(arrayTmp);
-
-      if(matlabClassId != ankiVisionClassId) {
-        DASError("Anki.GetArray_s8", "matlabClassId != ankiVisionClassId");
-        return Array_s8(0, 0, NULL, 0, false);
-      }
-
-      const size_t numCols = mxGetM(arrayTmp);
-      const size_t numRows = mxGetN(arrayTmp);
-      const s32 stride = Array_s8::ComputeRequiredStride(static_cast<s32>(numCols),false);
-
-      Array_s8 ankiArray_s8(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<s8*>(calloc(stride*numCols,1)), stride*static_cast<s32>(numCols), false);
-
-      s8 *matlabArrayTmp = reinterpret_cast<s8*>(mxGetPr(arrayTmp));
-      s32 matlabIndex = 0;
-      for(s32 y=0; y<ankiArray_s8.get_size(0); y++) {
-        s8 * rowPointer = ankiArray_s8.Pointer(y, 0);
-        for(s32 x=0; x<ankiArray_s8.get_size(1); x++) {
-          rowPointer[x] = matlabArrayTmp[matlabIndex++];
-        }
-      }
-
-      mxDestroyArray(arrayTmp);
-
-      EvalString("clear %s;", tmpName.data());
-
-      return ankiArray_s8;
-    }
-
-    Array_u16 Matlab::GetArray_u16(const std::string name)
-    {
-      if(!ep) {
-        DASError("Anki.GetArray_u16", "Matlab engine is not started/connected");
-        return Array_u16(0, 0, NULL, 0, false);
-      }
-
-      const std::string tmpName = name + std::string("_AnkiTMP");
-
-      EvalString("%s=%s';", tmpName.data(), name.data());
-      mxArray *arrayTmp = GetArray(tmpName.data());
-
-      if(!arrayTmp) {
-        DASError("Anki.GetArray_u16", "%s could not be got from Matlab", tmpName.data());
-        return Array_u16(0, 0, NULL, 0, false);
-      }
-
-      const mxClassID ankiVisionClassId = Anki::Embedded::ConvertToMatlabType(typeid(u16).name(), sizeof(u16));
-
-      const mxClassID matlabClassId = mxGetClassID(arrayTmp);
-
-      if(matlabClassId != ankiVisionClassId) {
-        DASError("Anki.GetArray_u16", "matlabClassId != ankiVisionClassId");
-        return Array_u16(0, 0, NULL, 0, false);
-      }
-
-      const size_t numCols = mxGetM(arrayTmp);
-      const size_t numRows = mxGetN(arrayTmp);
-      const s32 stride = Array_u16::ComputeRequiredStride(static_cast<s32>(numCols),false);
-
-      Array_u16 ankiArray_u16(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<u16*>(calloc(stride*numCols,1)), stride*static_cast<s32>(numCols), false);
-
-      u16 *matlabArrayTmp = reinterpret_cast<u16*>(mxGetPr(arrayTmp));
-      s32 matlabIndex = 0;
-      for(s32 y=0; y<ankiArray_u16.get_size(0); y++) {
-        u16 * rowPointer = ankiArray_u16.Pointer(y, 0);
-        for(s32 x=0; x<ankiArray_u16.get_size(1); x++) {
-          rowPointer[x] = matlabArrayTmp[matlabIndex++];
-        }
-      }
-
-      mxDestroyArray(arrayTmp);
-
-      EvalString("clear %s;", tmpName.data());
-
-      return ankiArray_u16;
-    }
-
-    Array_s16 Matlab::GetArray_s16(const std::string name)
-    {
-      if(!ep) {
-        DASError("Anki.GetArray_s16", "Matlab engine is not started/connected");
-        return Array_s16(0, 0, NULL, 0, false);
-      }
-
-      const std::string tmpName = name + std::string("_AnkiTMP");
-
-      EvalString("%s=%s';", tmpName.data(), name.data());
-      mxArray *arrayTmp = GetArray(tmpName.data());
-
-      if(!arrayTmp) {
-        DASError("Anki.GetArray_s16", "%s could not be got from Matlab", tmpName.data());
-        return Array_s16(0, 0, NULL, 0, false);
-      }
-
-      const mxClassID ankiVisionClassId = Anki::Embedded::ConvertToMatlabType(typeid(s16).name(), sizeof(s16));
-
-      const mxClassID matlabClassId = mxGetClassID(arrayTmp);
-
-      if(matlabClassId != ankiVisionClassId) {
-        DASError("Anki.GetArray_s16", "matlabClassId != ankiVisionClassId");
-        return Array_s16(0, 0, NULL, 0, false);
-      }
-
-      const size_t numCols = mxGetM(arrayTmp);
-      const size_t numRows = mxGetN(arrayTmp);
-      const s32 stride = Array_s16::ComputeRequiredStride(static_cast<s32>(numCols),false);
-
-      Array_s16 ankiArray_s16(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<s16*>(calloc(stride*numCols,1)), stride*static_cast<s32>(numCols), false);
-
-      s16 *matlabArrayTmp = reinterpret_cast<s16*>(mxGetPr(arrayTmp));
-      s32 matlabIndex = 0;
-      for(s32 y=0; y<ankiArray_s16.get_size(0); y++) {
-        s16 * rowPointer = ankiArray_s16.Pointer(y, 0);
-        for(s32 x=0; x<ankiArray_s16.get_size(1); x++) {
-          rowPointer[x] = matlabArrayTmp[matlabIndex++];
-        }
-      }
-
-      mxDestroyArray(arrayTmp);
-
-      EvalString("clear %s;", tmpName.data());
-
-      return ankiArray_s16;
-    }
-
-    Array_u32 Matlab::GetArray_u32(const std::string name)
-    {
-      if(!ep) {
-        DASError("Anki.GetArray_u32", "Matlab engine is not started/connected");
-        return Array_u32(0, 0, NULL, 0, false);
-      }
-
-      const std::string tmpName = name + std::string("_AnkiTMP");
-
-      EvalString("%s=%s';", tmpName.data(), name.data());
-      mxArray *arrayTmp = GetArray(tmpName.data());
-
-      if(!arrayTmp) {
-        DASError("Anki.GetArray_u32", "%s could not be got from Matlab", tmpName.data());
-        return Array_u32(0, 0, NULL, 0, false);
-      }
-
-      const mxClassID ankiVisionClassId = Anki::Embedded::ConvertToMatlabType(typeid(u32).name(), sizeof(u32));
-
-      const mxClassID matlabClassId = mxGetClassID(arrayTmp);
-
-      if(matlabClassId != ankiVisionClassId) {
-        DASError("Anki.GetArray_u32", "matlabClassId != ankiVisionClassId");
-        return Array_u32(0, 0, NULL, 0, false);
-      }
-
-      const size_t numCols = mxGetM(arrayTmp);
-      const size_t numRows = mxGetN(arrayTmp);
-      const s32 stride = Array_u32::ComputeRequiredStride(static_cast<s32>(numCols),false);
-
-      Array_u32 ankiArray_u32(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<u32*>(calloc(stride*numCols,1)), stride*static_cast<s32>(numCols), false);
-
-      u32 *matlabArrayTmp = reinterpret_cast<u32*>(mxGetPr(arrayTmp));
-      s32 matlabIndex = 0;
-      for(s32 y=0; y<ankiArray_u32.get_size(0); y++) {
-        u32 * rowPointer = ankiArray_u32.Pointer(y, 0);
-        for(s32 x=0; x<ankiArray_u32.get_size(1); x++) {
-          rowPointer[x] = matlabArrayTmp[matlabIndex++];
-        }
-      }
-
-      mxDestroyArray(arrayTmp);
-
-      EvalString("clear %s;", tmpName.data());
-
-      return ankiArray_u32;
-    }
-
-    Array_s32 Matlab::GetArray_s32(const std::string name)
-    {
-      if(!ep) {
-        DASError("Anki.GetArray_s32", "Matlab engine is not started/connected");
-        return Array_s32(0, 0, NULL, 0, false);
-      }
-
-      const std::string tmpName = name + std::string("_AnkiTMP");
-
-      EvalString("%s=%s';", tmpName.data(), name.data());
-      mxArray *arrayTmp = GetArray(tmpName.data());
-
-      if(!arrayTmp) {
-        DASError("Anki.GetArray_s32", "%s could not be got from Matlab", tmpName.data());
-        return Array_s32(0, 0, NULL, 0, false);
-      }
-
-      const mxClassID ankiVisionClassId = Anki::Embedded::ConvertToMatlabType(typeid(s32).name(), sizeof(s32));
-
-      const mxClassID matlabClassId = mxGetClassID(arrayTmp);
-
-      if(matlabClassId != ankiVisionClassId) {
-        DASError("Anki.GetArray_s32", "matlabClassId != ankiVisionClassId");
-        return Array_s32(0, 0, NULL, 0, false);
-      }
-
-      const size_t numCols = mxGetM(arrayTmp);
-      const size_t numRows = mxGetN(arrayTmp);
-      const s32 stride = Array_s32::ComputeRequiredStride(static_cast<s32>(numCols),false);
-
-      Array_s32 ankiArray_s32(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<s32*>(calloc(stride*numCols,1)), stride*static_cast<s32>(numCols), false);
-
-      s32 *matlabArrayTmp = reinterpret_cast<s32*>(mxGetPr(arrayTmp));
-      s32 matlabIndex = 0;
-      for(s32 y=0; y<ankiArray_s32.get_size(0); y++) {
-        s32 * rowPointer = ankiArray_s32.Pointer(y, 0);
-        for(s32 x=0; x<ankiArray_s32.get_size(1); x++) {
-          rowPointer[x] = matlabArrayTmp[matlabIndex++];
-        }
-      }
-
-      mxDestroyArray(arrayTmp);
-
-      EvalString("clear %s;", tmpName.data());
-
-      return ankiArray_s32;
-    }
-
-    Array_f32 Matlab::GetArray_f32(const std::string name)
-    {
-      if(!ep) {
-        DASError("Anki.GetArray_f32", "Matlab engine is not started/connected");
-        return Array_f32(0, 0, NULL, 0, false);
-      }
-
-      const std::string tmpName = name + std::string("_AnkiTMP");
-
-      EvalString("%s=%s';", tmpName.data(), name.data());
-      mxArray *arrayTmp = GetArray(tmpName.data());
-
-      if(!arrayTmp) {
-        DASError("Anki.GetArray_f32", "%s could not be got from Matlab", tmpName.data());
-        return Array_f32(0, 0, NULL, 0, false);
-      }
-
-      const mxClassID ankiVisionClassId = Anki::Embedded::ConvertToMatlabType(typeid(f32).name(), sizeof(f32));
-
-      const mxClassID matlabClassId = mxGetClassID(arrayTmp);
-
-      if(matlabClassId != ankiVisionClassId) {
-        DASError("Anki.GetArray_f32", "matlabClassId != ankiVisionClassId");
-        return Array_f32(0, 0, NULL, 0, false);
-      }
-
-      const size_t numCols = mxGetM(arrayTmp);
-      const size_t numRows = mxGetN(arrayTmp);
-      const s32 stride = Array_f32::ComputeRequiredStride(static_cast<s32>(numCols),false);
-
-      Array_f32 ankiArray_f32(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<f32*>(calloc(stride*numCols,1)), stride*static_cast<s32>(numCols), false);
-
-      f32 *matlabArrayTmp = reinterpret_cast<f32*>(mxGetPr(arrayTmp));
-      s32 matlabIndex = 0;
-      for(s32 y=0; y<ankiArray_f32.get_size(0); y++) {
-        f32 * rowPointer = ankiArray_f32.Pointer(y, 0);
-        for(s32 x=0; x<ankiArray_f32.get_size(1); x++) {
-          rowPointer[x] = matlabArrayTmp[matlabIndex++];
-        }
-      }
-
-      mxDestroyArray(arrayTmp);
-
-      EvalString("clear %s;", tmpName.data());
-
-      return ankiArray_f32;
-    }
-
-    Array_f64 Matlab::GetArray_f64(const std::string name)
-    {
-      if(!ep) {
-        DASError("Anki.GetArray_f64", "Matlab engine is not started/connected");
-        return Array_f64(0, 0, NULL, 0, false);
-      }
-
-      const std::string tmpName = name + std::string("_AnkiTMP");
-
-      EvalString("%s=%s';", tmpName.data(), name.data());
-      mxArray *arrayTmp = GetArray(tmpName.data());
-
-      if(!arrayTmp) {
-        DASError("Anki.GetArray_f64", "%s could not be got from Matlab", tmpName.data());
-        return Array_f64(0, 0, NULL, 0, false);
-      }
-
-      const mxClassID ankiVisionClassId = Anki::Embedded::ConvertToMatlabType(typeid(f64).name(), sizeof(f64));
-
-      const mxClassID matlabClassId = mxGetClassID(arrayTmp);
-
-      if(matlabClassId != ankiVisionClassId) {
-        DASError("Anki.GetArray_f64", "matlabClassId != ankiVisionClassId");
-        return Array_f64(0, 0, NULL, 0, false);
-      }
-
-      const size_t numCols = mxGetM(arrayTmp);
-      const size_t numRows = mxGetN(arrayTmp);
-      const s32 stride = Array_f64::ComputeRequiredStride(static_cast<s32>(numCols),false);
-
-      Array_f64 ankiArray_f64(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<f64*>(calloc(stride*numCols,1)), stride*static_cast<s32>(numCols), false);
-
-      f64 *matlabArrayTmp = reinterpret_cast<f64*>(mxGetPr(arrayTmp));
-      s32 matlabIndex = 0;
-      for(s32 y=0; y<ankiArray_f64.get_size(0); y++) {
-        f64 * rowPointer = ankiArray_f64.Pointer(y, 0);
-        for(s32 x=0; x<ankiArray_f64.get_size(1); x++) {
-          rowPointer[x] = matlabArrayTmp[matlabIndex++];
-        }
-      }
-
-      mxDestroyArray(arrayTmp);
-
-      EvalString("clear %s;", tmpName.data());
-
-      return ankiArray_f64;
     }
 
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)

@@ -7,6 +7,10 @@ namespace Anki
 {
   namespace Embedded
   {
+#define PUSH_MEMORY_STACK(memoryStack) \
+  MemoryStack memoryStack ## _pushedTmp(memoryStack);\
+  memoryStack = memoryStack ## _pushedTmp;
+
     // A MemoryStack keeps track of an external memory buffer, by using the system stack. It is not
     // thread safe. Data that is allocated with Allocate() will be MEMORY_ALIGNMENT bytes-aligned.
     // Allocate() data has fill patterns at the beginning and end, to ensure that buffers did not
@@ -33,9 +37,12 @@ namespace Anki
       // Allocate numBytes worth of memory, with the start byte-aligned to MEMORY_ALIGNMENT
       //
       // numBytesAllocated is an optional parameter. To satisfy stride requirements, Allocate() may
-      // allocate more than numBytesRequested. numBytesAllocated is the amount of memory available to
-      // the user from the returned void* pointer, and doesn't include overhead like the fill
+      // allocate more than numBytesRequested. numBytesAllocated is the amount of memory available
+      // to the user from the returned void* pointer, and doesn't include overhead like the fill
       // patterns.
+      //
+
+      /// All memory in the array is zeroed out once it is allocated, making Allocate more like calloc() than malloc()
       void* Allocate(s32 numBytesRequested, s32 *numBytesAllocated=NULL);
 
       // Check if any Allocate() memory was written out of bounds (via fill patterns at the beginning and end)
@@ -43,7 +50,7 @@ namespace Anki
 
       // Returns the number of bytes that can still be allocated.
       // The max allocation is less than or equal to "get_totalBytes() - get_usedBytes() - 12".
-      s32 LargestPossibleAllocation();
+      s32 ComputeLargestPossibleAllocation();
 
       s32 get_totalBytes();
       s32 get_usedBytes();
