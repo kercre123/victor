@@ -11,32 +11,22 @@ using namespace Anki::Embedded;
 
 #define ConditionalErrorAndReturn(expression, eventName, eventValue) if(!(expression)) { printf("%s - %s\n", (eventName), (eventValue)); return;}
 
-BoundaryDirection stringToBoundaryDirection(const std::string direction)
-{
-  if(_strcmpi(direction.data(), "n") == 0) {
-    return BOUNDARY_N;
-  } else if(_strcmpi(direction.data(), "ne") == 0) {
-    return BOUNDARY_NE;
-  } else if(_strcmpi(direction.data(), "e") == 0) {
-    return BOUNDARY_E;
-  } else if(_strcmpi(direction.data(), "se") == 0) {
-    return BOUNDARY_SE;
-  } else if(_strcmpi(direction.data(), "s") == 0) {
-    return BOUNDARY_S;
-  } else if(_strcmpi(direction.data(), "sw") == 0) {
-    return BOUNDARY_SW;
-  } else if(_strcmpi(direction.data(), "w") == 0) {
-    return BOUNDARY_W;
-  } else if(_strcmpi(direction.data(), "nw") == 0) {
-    return BOUNDARY_NW;
-  }
-
-  return BOUNDARY_UNKNOWN;
-}
-
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-  ConditionalErrorAndReturn(nrhs == 3 && nlhs == 1, "mexTraceBoundary", "Call this function as following: boundary = mexTraceBoundary(uint8(binaryImg), double(startPoint), char(initialDirection));");
+  // components2d = simpleDetector_step3_simpleRejectionTests(nrows, ncols, numRegions, area, indexList, bb, centroid, usePerimeterCheck, components2d, embeddedConversions, DEBUG_DISPLAY)
+    
+//     IN_DDR Result SimpleDetector_Steps123(
+//       const Array<u8> &image,
+//       const s32 scaleImage_numPyramidLevels,
+//       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
+//       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
+//       const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
+//       MemoryStack scratch1,
+//       MemoryStack scratch2)
+    
+
+    
+  ConditionalErrorAndReturn(nrhs == 8 && nlhs == 1, "mexSimpleDetectorSteps123", "Call this function as following: components2d = mexSimpleDetectorSteps123(uint8(image), scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold);");
 
   Array<u8> binaryImg = mxArrayToArray<u8>(prhs[0]);
   Array<f64> startPointMatrix = mxArrayToArray<f64>(prhs[1]);

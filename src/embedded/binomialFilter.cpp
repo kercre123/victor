@@ -10,42 +10,37 @@ namespace Anki
     //% imageFiltered is UQ8.0
     //% Handles edges by replicating the border pixel
     //function imageFiltered = binomialFilter(image)
-    //Result BinomialFilter(const Array_u8 &image, Array_u8 &imageFiltered, MemoryStack scratch)
-    Result BinomialFilter(const Array_u8 &image, Array_u8 &imageFiltered, MemoryStack scratch)
+    //Result BinomialFilter(const Array<u8> &image, Array<u8> &imageFiltered, MemoryStack scratch)
+    IN_DDR Result BinomialFilter(const Array<u8> &image, Array<u8> &imageFiltered, MemoryStack scratch)
     {
       const u32 kernel[BINOMIAL_KERNEL_SIZE] = {1, 4, 6, 4, 1};
       const s32 kernelShift = 4;
 
-#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-      DASConditionalErrorAndReturnValue(image.IsValid(),
+      AnkiConditionalErrorAndReturnValue(image.IsValid(),
         RESULT_FAIL, "BinomialFilter", "image is not valid");
 
-      DASConditionalErrorAndReturnValue(imageFiltered.IsValid(),
+      AnkiConditionalErrorAndReturnValue(imageFiltered.IsValid(),
         RESULT_FAIL, "BinomialFilter", "imageFiltered is not valid");
 
       assert(16 == (kernel[0] + kernel[1] + kernel[2] + kernel[3] + kernel[4]));
       assert(16 == (1 << kernelShift));
 
-      // TODO: implement
-      /*DASConditionalErrorAndReturnValue(AreMatricesEqual_SizeAndType<u8>(image, imageFiltered),
-      RESULT_FAIL, "BinomialFilter", "size(image) != size(imageFiltered) (%dx%d != %dx%d)", image.get_size(0), image.get_size(1), image.get_size(0), image.get_size(1));
+      AnkiConditionalErrorAndReturnValue(image.get_size(0) == imageFiltered.get_size(0) && image.get_size(1) == imageFiltered.get_size(1),
+        RESULT_FAIL, "BinomialFilter", "size(image) != size(imageFiltered) (%dx%d != %dx%d)", image.get_size(0), image.get_size(1), image.get_size(0), image.get_size(1));
 
-      DASConditionalErrorAndReturnValue(image.get_rawDataPointer() != imageFiltered.get_rawDataPointer(),
-      RESULT_FAIL, "BinomialFilter", "image and imageFiltered must be different");*/
-#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+      AnkiConditionalErrorAndReturnValue(image.get_rawDataPointer() != imageFiltered.get_rawDataPointer(),
+        RESULT_FAIL, "BinomialFilter", "image and imageFiltered must be different");
 
       const s32 height = image.get_size(0);
       const s32 width = image.get_size(1);
 
       const s32 requiredScratch = image.get_size(0) * RoundUp<s32>(image.get_size(1)*sizeof(u32), MEMORY_ALIGNMENT);
 
-#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-      DASConditionalErrorAndReturnValue(scratch.LargestPossibleAllocation() >= requiredScratch,
+      AnkiConditionalErrorAndReturnValue(scratch.ComputeLargestPossibleAllocation() >= requiredScratch,
         RESULT_FAIL, "BinomialFilter", "Insufficient scratch memory");
-#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
 
       //imageFilteredTmp = zeros(size(image), 'uint32');
-      Array_u32 imageFilteredTmp(height, width, scratch);
+      Array<u32> imageFilteredTmp(height, width, scratch);
 
       //% 1. Horizontally filter
       for(s32 y=0; y<height; y++) {

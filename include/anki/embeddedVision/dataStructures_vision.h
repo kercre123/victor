@@ -10,34 +10,41 @@
 #define _ANKICORETECHEMBEDDED_VISION_DATASTRUCTURES_VISION_H_
 
 #include "anki/embeddedVision/config.h"
+#include "anki/embeddedCommon.h"
 
 namespace Anki
 {
   namespace Embedded
   {
-    class Component1d
+    // A 1d, run-length encoded piece of a 2d component
+    class ConnectedComponentSegment
     {
     public:
-      Component1d();
+      s16 xStart, xEnd, y;
+      u16 id;
 
-      Component1d(const s16 xStart, const s16 xEnd);
+      ConnectedComponentSegment();
+
+      ConnectedComponentSegment(const s16 xStart, const s16 xEnd, const s16 y = -1, const u16 id = 0);
 
       void Print() const;
 
-      s16 xStart, xEnd;
-    }; // class Component1d
+      bool operator== (const ConnectedComponentSegment &component2) const;
+    }; // class ConnectedComponentSegment
 
-    class Component2d
+    class FiducialMarker
     {
     public:
-      Component2d();
+      Point<s32> upperLeft, upperRight, lowerLeft, lowerRight; // SQ 15.16
+      s16 blockType, faceType;
 
-      Component2d(const s16 xStart, const s16 xEnd, const s16 y, const u16 id);
+      FiducialMarker();
+
+      // All points are SQ 15.16
+      FiducialMarker(const Point<s32> upperLeft, const Point<s32> upperRight, const Point<s32> lowerLeft, const Point<s32> lowerRight, const s16 blockType, const s16 faceType);
 
       void Print() const;
-
-      s16 xStart, xEnd, y, id;
-    }; // class Component2d
+    }; // class FiducialMarker
   } // namespace Embedded
 } // namespace Anki
 

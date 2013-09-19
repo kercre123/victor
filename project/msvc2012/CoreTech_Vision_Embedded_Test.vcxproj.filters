@@ -15,8 +15,5 @@
     <ClCompile Include="..\..\test\embedded\visionTests.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\test\embedded\movidius_visionBenchmarks.c">
-      <Filter>Source</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

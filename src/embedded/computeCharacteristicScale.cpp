@@ -6,29 +6,24 @@ namespace Anki
   {
 #define MAX_PYRAMID_LEVELS 8
 #define MAX_ALPHAS 128
-    // //function scaleImage = computeCharacteristicScaleImage_loopsAndFixedPoint(image, numLevels, computeDogAtFullSize, filterWithMex)
-    Result ComputeCharacteristicScaleImage(const Array_u8 &image, s32 numLevels, Array_u32 &scaleImage, MemoryStack scratch)
+    // //function scaleImage = computeCharacteristicScaleImage_loopsAndFixedPoint(image, numPyramidLevels, computeDogAtFullSize, filterWithMex)
+    IN_DDR Result ComputeCharacteristicScaleImage(const Array<u8> &image, const s32 numPyramidLevels, Array<u32> &scaleImage, MemoryStack scratch)
     {
       //double times[20];
 
       //times[0] = GetTime();
-#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-      DASConditionalErrorAndReturnValue(image.IsValid(),
+
+      AnkiConditionalErrorAndReturnValue(image.IsValid(),
         RESULT_FAIL, "ComputeCharacteristicScaleImage", "image is not valid");
 
-      DASConditionalErrorAndReturnValue(scaleImage.IsValid(),
+      AnkiConditionalErrorAndReturnValue(scaleImage.IsValid(),
         RESULT_FAIL, "ComputeCharacteristicScaleImage", "scaleImage is not valid");
 
-      DASConditionalErrorAndReturnValue(numLevels <= MAX_PYRAMID_LEVELS,
-        RESULT_FAIL, "ComputeCharacteristicScaleImage", "numLevels must be less than %d", MAX_PYRAMID_LEVELS+1);
+      AnkiConditionalErrorAndReturnValue(numPyramidLevels <= MAX_PYRAMID_LEVELS,
+        RESULT_FAIL, "ComputeCharacteristicScaleImage", "numPyramidLevels must be less than %d", MAX_PYRAMID_LEVELS+1);
 
-      // TODO: implement
-      /*DASConditionalErrorAndReturnValue(AreMatricesEqual_Size(image, scaleImage),
-      RESULT_FAIL, "ComputeCharacteristicScaleImage", "image and scaleImage must be the same size");*/
-
-      //DASConditionalErrorAndReturnValue(scaleImage.get_numFractionalBits() == 16,
-      //RESULT_FAIL, "ComputeCharacteristicScaleImage", "scaleImage must be UQ16.16");
-#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
+      AnkiConditionalErrorAndReturnValue(image.get_size(0) == scaleImage.get_size(0) && image.get_size(1) == scaleImage.get_size(1),
+        RESULT_FAIL, "ComputeCharacteristicScaleImage", "image and scaleImage must be the same size");
 
       // TODO: add check for the required amount of scratch?
 
@@ -37,33 +32,32 @@ namespace Anki
 
       //scaleImage = uint32(image)*(2^8); % UQ16.16
       //dogMax = zeros(fullSizeHeight,fullSizeWidth,'uint32'); % UQ16.16
-      Array_u32 dogMax(fullSizeHeight, fullSizeWidth, scratch); // UQ16.16
+      Array<u32> dogMax(fullSizeHeight, fullSizeWidth, scratch); // UQ16.16
       dogMax.Set(static_cast<u32>(0));
 
-      //imagePyramid = cell(1, numLevels+1);
-      Array_u8 imagePyramid[MAX_PYRAMID_LEVELS+1];
-      imagePyramid[0] = Array_u8(fullSizeHeight, fullSizeWidth, scratch, false);
-      for(s32 i=1; i<=numLevels; i++) {
-        imagePyramid[i] = Array_u8(fullSizeHeight >> i, fullSizeWidth >> i, scratch, false);
+      //imagePyramid = cell(1, numPyramidLevels+1);
+      Array<u8> imagePyramid[MAX_PYRAMID_LEVELS+1];
+      imagePyramid[0] = Array<u8>(fullSizeHeight, fullSizeWidth, scratch, false);
+      for(s32 i=1; i<=numPyramidLevels; i++) {
+        imagePyramid[i] = Array<u8>(fullSizeHeight >> i, fullSizeWidth >> i, scratch, false);
       }
 
-      //scaleFactors = int32(2.^[0:(numLevels)]); %#ok<NBRAK>
+      //scaleFactors = int32(2.^[0:(numPyramidLevels)]); %#ok<NBRAK>
       s32 scaleFactors[MAX_PYRAMID_LEVELS+1];
       scaleFactors[0] = 1;
       scaleFactors[1] = 2;
-      for(s32 i=2; i<=numLevels; i++) {
+      for(s32 i=2; i<=numPyramidLevels; i++) {
         scaleFactors[i] = 2 << (i-1);
       }
 
       //imagePyramid{1} = mexBinomialFilter(image);
       const Result binomialFilterResult = BinomialFilter(image, imagePyramid[0], scratch);
-#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_LOW
-      DASConditionalErrorAndReturnValue(binomialFilterResult == RESULT_OK,
+
+      AnkiConditionalErrorAndReturnValue(binomialFilterResult == RESULT_OK,
         RESULT_FAIL, "ComputeCharacteristicScaleImage", "BinomialFilter failed");
-#endif // #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_LOW
 
       /*{
-      Anki::Embedded::Matlab matlab(false);
+      Matlab matlab(false);
 
       matlab.PutArray2d(image, "image");
       matlab.PutArray2d(imagePyramid[0], "imagePyramid");
@@ -74,14 +68,12 @@ namespace Anki
       imagePyramid[0].Show("imagePyramid[0]", true);
       */
 
-      //for pyramidLevel = 2:numLevels+1
-      for(s32 pyramidLevel=1; pyramidLevel<=numLevels; pyramidLevel++) {
-        // Push the current state of the scratch buffer onto the system stack
-        const MemoryStack scratch_tmp = scratch;
-        MemoryStack scratch(scratch_tmp);
+      //for pyramidLevel = 2:numPyramidLevels+1
+      for(s32 pyramidLevel=1; pyramidLevel<=numPyramidLevels; pyramidLevel++) {
+        PUSH_MEMORY_STACK(scratch); // Push the current state of the scratch buffer onto the system stack
 
         //    curPyramidLevel = imagePyramid{pyramidLevel-1}; %UQ8.0
-        const Array_u8 curPyramidLevel = imagePyramid[pyramidLevel-1]; // UQ8.0
+        const Array<u8> curPyramidLevel = imagePyramid[pyramidLevel-1]; // UQ8.0
         const s32 curLevelHeight = curPyramidLevel.get_size(0);
         const s32 curLevelWidth = curPyramidLevel.get_size(1);
 
@@ -90,17 +82,16 @@ namespace Anki
         //    else
         //        curPyramidLevelBlurred = binomialFilter_loopsAndFixedPoint(curPyramidLevel); %UQ8.0
         //    end
-        Array_u8 curPyramidLevelBlurred(curPyramidLevel.get_size(0), curPyramidLevel.get_size(1), scratch);
+        Array<u8> curPyramidLevelBlurred(curPyramidLevel.get_size(0), curPyramidLevel.get_size(1), scratch);
 
         const Result binomialFilterResult = BinomialFilter(curPyramidLevel, curPyramidLevelBlurred, scratch);
-#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_LOW
-        DASConditionalErrorAndReturnValue(binomialFilterResult == RESULT_OK,
+
+        AnkiConditionalErrorAndReturnValue(binomialFilterResult == RESULT_OK,
           RESULT_FAIL, "ComputeCharacteristicScaleImage", "In-loop BinomialFilter failed");
-#endif // #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_LOW
 
         //    largeDoG = zeros([fullSizeHeight,fullSizeWidth],'uint32'); % UQ16.16
-#if ANKI_DEBUG_LEVEL > ANKI_DEBUG_OFF
-        Array_u32 largeDog(fullSizeHeight, fullSizeWidth, scratch);
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
+        Array<u32> largeDog(fullSizeHeight, fullSizeWidth, scratch);
         largeDog.Set(u32(0));
 #endif
 
@@ -116,7 +107,7 @@ namespace Anki
             u32 * restrict dogMax_rowPointer = dogMax.Pointer(y, 0);
             u32 * restrict scaleImage_rowPointer = scaleImage.Pointer(y, 0);
 
-#if ANKI_DEBUG_LEVEL > ANKI_DEBUG_OFF
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
             u32 * restrict largeDog_rowPointer = largeDog.Pointer(y, 0);
 #endif
 
@@ -125,7 +116,7 @@ namespace Anki
               const u32 dog = static_cast<u32>(abs(static_cast<s16>(curPyramidLevelBlurred_rowPointer[x]) - static_cast<s16>(curPyramidLevel_rowPointer[x]))) << 16; // abs(UQ8.0 - UQ8.0) -> UQ16.16;
 
               // largeDoG(y,x) = DoG;
-#if ANKI_DEBUG_LEVEL > ANKI_DEBUG_OFF
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
               largeDog_rowPointer[x] = dog;
 #endif
 
@@ -137,7 +128,7 @@ namespace Anki
           }
 
           //{
-          //  Anki::Embedded::Matlab matlab(false);
+          //  Matlab matlab(false);
 
           //  matlab.PutArray2d(curPyramidLevel, "curPyramidLevel_c");
           //  matlab.PutArray2d(curPyramidLevelBlurred, "curPyramidLevelBlurred_c");
@@ -177,7 +168,7 @@ namespace Anki
               u32 * restrict dogMax_rowPointer = dogMax.Pointer(largeY, 0);
               u32 * restrict scaleImage_rowPointer = scaleImage.Pointer(largeY, 0);
 
-#if ANKI_DEBUG_LEVEL > ANKI_DEBUG_OFF
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
               u32 * restrict largeDog_rowPointer = largeDog.Pointer(largeY, 0);
 #endif
 
@@ -219,7 +210,7 @@ namespace Anki
                   //printf("(%d,%d) %d %d %d %d %d %d\n", largeY, largeX, dog_00, dog_01, dog_10, dog_11, Interpolate2d(dog_00, dog_01, dog_10, dog_11, alphaY, alphaYinverse, alphaX, alphaXinverse), dog);
 
                   //    largeDoG(largeY,largeX) = DoG;
-#if ANKI_DEBUG_LEVEL > ANKI_DEBUG_OFF
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
                   largeDog_rowPointer[largeX] = dog;
 #endif
 
@@ -239,7 +230,7 @@ namespace Anki
           } // for(s32 smallY = 0; smallY < curLevelHeight; smallY++)
 
           /*{
-          Anki::Embedded::Matlab matlab(false);
+          Matlab matlab(false);
 
           matlab.PutArray2d(curPyramidLevel, "curPyramidLevel_c");
           matlab.PutArray2d(curPyramidLevelBlurred, "curPyramidLevelBlurred_c");
@@ -273,7 +264,7 @@ namespace Anki
               u32 * restrict dogMax_rowPointer = dogMax.Pointer(largeY, 0);
               u32 * restrict scaleImage_rowPointer = scaleImage.Pointer(largeY, 0);
 
-#if ANKI_DEBUG_LEVEL > ANKI_DEBUG_OFF
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
               u32 * restrict largeDog_rowPointer = largeDog.Pointer(largeY, 0);
 #endif
 
@@ -298,7 +289,7 @@ namespace Anki
 
                   const u32 dog = static_cast<u32>(Interpolate2d(dog_00, dog_01, dog_10, dog_11, alphaY, alphaYinverse, alphaX, alphaXinverse) >> (maxAlphaSquaredShift - 16)); // SQ?.? -> UQ16.16
 
-#if ANKI_DEBUG_LEVEL > ANKI_DEBUG_OFF
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
                   largeDog_rowPointer[largeX] = dog;
 #endif
 
@@ -319,7 +310,7 @@ namespace Anki
           } // for(s32 smallY = 0; smallY < curLevelHeight; smallY++)
           /*
           {
-          Anki::Embedded::Matlab matlab(false);
+          Matlab matlab(false);
 
           matlab.PutArray2d(curPyramidLevel, "curPyramidLevel_c");
           matlab.PutArray2d(curPyramidLevelBlurred, "curPyramidLevelBlurred_c");
@@ -333,17 +324,15 @@ namespace Anki
         //    imagePyramid{pyramidLevel} = uint8(downsampleByFactor(curPyramidLevelBlurred, 2));
 
         const Result downsampleByFactorResult = DownsampleByFactor(curPyramidLevelBlurred, 2, imagePyramid[pyramidLevel]);
-#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_LOW
-        DASConditionalErrorAndReturnValue(downsampleByFactorResult == RESULT_OK,
+        AnkiConditionalErrorAndReturnValue(downsampleByFactorResult == RESULT_OK,
           RESULT_FAIL, "ComputeCharacteristicScaleImage", "In-loop DownsampleByFactor failed");
-#endif // #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_LOW
-      } // for(s32 pyramidLevel=1; pyramidLevel<=numLevels; pyramidLevel++) {
+      } // for(s32 pyramidLevel=1; pyramidLevel<=numPyramidLevels; pyramidLevel++) {
       //times[19] = GetTime();
 
       //printf("t20-t0 = %f\n", times[19]-times[0]);
 
-      return Anki::Embedded::RESULT_OK;
-    } // Result ComputeCharacteristicScaleImage(const Array_u8 &image, s32 numLevels, Array_u32 &scaleImage, MemoryStack scratch)
+      return RESULT_OK;
+    } // Result ComputeCharacteristicScaleImage(const Array<u8> &image, s32 numPyramidLevels, Array<u32> &scaleImage, MemoryStack scratch)
 
     //end % FUNCTION computeCharacteristicScaleImage()
     //

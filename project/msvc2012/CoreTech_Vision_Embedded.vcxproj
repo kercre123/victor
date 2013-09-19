@@ -11,13 +11,15 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\embedded\approximateConnectedComponents.cpp" />
+    <ClCompile Include="..\..\src\embedded\connectedComponents.cpp" />
     <ClCompile Include="..\..\src\embedded\array2d_vision.cpp" />
     <ClCompile Include="..\..\src\embedded\binomialFilter.cpp" />
     <ClCompile Include="..\..\src\embedded\computeCharacteristicScale.cpp" />
     <ClCompile Include="..\..\src\embedded\dataStructures_vision.cpp" />
+    <ClCompile Include="..\..\src\embedded\detectFiducialMarkers.cpp" />
     <ClCompile Include="..\..\src\embedded\downsampleByFactor.cpp" />
     <ClCompile Include="..\..\src\embedded\fixedLengthList_vision.cpp" />
+    <ClCompile Include="..\..\src\embedded\thresholdScaleImage.cpp" />
     <ClCompile Include="..\..\src\embedded\traceBoundary.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -27,6 +29,7 @@
     <ClInclude Include="..\..\include\anki\embeddedVision\dataStructures_vision.h" />
     <ClInclude Include="..\..\include\anki\embeddedVision\fixedLengthList_vision.h" />
     <ClInclude Include="..\..\include\anki\embeddedVision\visionKernels.h" />
+    <ClInclude Include="..\..\include\anki\embeddedVision\visionKernels_connectedComponents.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{ED4EB204-E2BD-4C5A-A677-FC8C241C7887}</ProjectGuid>

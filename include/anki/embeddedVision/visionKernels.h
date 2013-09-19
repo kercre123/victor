@@ -4,6 +4,8 @@
 #include "anki/embeddedVision/config.h"
 #include "anki/embeddedCommon.h"
 
+#include "anki/embeddedVision/visionKernels_connectedComponents.h"
+
 namespace Anki
 {
   namespace Embedded
@@ -22,15 +24,29 @@ namespace Anki
 
     const s32 MAX_BOUNDARY_LENGTH = 2000;
 
-    Result BinomialFilter(const Array_u8 &image, Array_u8 &imageFiltered, MemoryStack scratch);
+    // Replaces the matlab code for the first three steps of SimpleDetector
+    Result SimpleDetector_Steps123(
+      const Array<u8> &image,
+      const s32 scaleImage_numPyramidLevels,
+      const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
+      const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
+      const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
+      MemoryStack scratch1,
+      MemoryStack scratch2);
 
-    Result DownsampleByFactor(const Array_u8 &image, s32 downsampleFactor, Array_u8 &imageDownsampled);
+    //Result DetectFiducialMarkers(const Array<u8> &image, FixedLengthList<FiducialMarker> &markers, MemoryStack scratch);
 
-    Result ComputeCharacteristicScaleImage(const Array_u8 &image, s32 numLevels, Array_u32 &scaleImage, MemoryStack scratch);
+    Result BinomialFilter(const Array<u8> &image, Array<u8> &imageFiltered, MemoryStack scratch);
 
-    Result TraceBoundary(const Array_u8 &binaryImage, const Point_s16 &startPoint, BoundaryDirection initialDirection, FixedLengthList_Point_s16 &boundary);
+    Result DownsampleByFactor(const Array<u8> &image, const s32 downsampleFactor, Array<u8> &imageDownsampled);
 
-    template<typename T> inline T Interpolate2d(T pixel00, T pixel01, T pixel10, T pixel11, T alphaY, T alphaYinverse, T alphaX, T alphaXinverse)
+    Result ComputeCharacteristicScaleImage(const Array<u8> &image, const s32 numPyramidLevels, Array<u32> &scaleImage, MemoryStack scratch);
+
+    Result ThresholdScaleImage(const Array<u8> &originalImage, const Array<u32> &scaleImage, Array<u8> &binaryImage);
+
+    Result TraceBoundary(const Array<u8> &binaryImage, const Point<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point<s16> > &boundary);
+
+    template<typename T> inline T Interpolate2d(const T pixel00, const T pixel01, const T pixel10, const T pixel11, const T alphaY, const T alphaYinverse, const T alphaX, const T alphaXinverse)
     {
       const T interpolatedTop = alphaXinverse*pixel00 + alphaX*pixel01;
       const T interpolatedBottom = alphaXinverse*pixel10 + alphaX*pixel11;
@@ -38,8 +54,6 @@ namespace Anki
 
       return interpolatedPixel;
     }
-
-    Result extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, FixedLengthList_Component1d &extractedComponents);
   } // namespace Embedded
 } // namespace Anki
 

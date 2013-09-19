@@ -4,24 +4,22 @@ namespace Anki
 {
   namespace Embedded
   {
-    Result DownsampleByFactor(const Array_u8 &image, s32 downsampleFactor, Array_u8 &imageDownsampled)
+    IN_DDR Result DownsampleByFactor(const Array<u8> &image, const s32 downsampleFactor, Array<u8> &imageDownsampled)
     {
-#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
-      DASConditionalErrorAndReturnValue(image.IsValid(),
+      AnkiConditionalErrorAndReturnValue(image.IsValid(),
         RESULT_FAIL, "DownsampleByFactor", "image is not valid");
 
-      DASConditionalErrorAndReturnValue(imageDownsampled.IsValid(),
+      AnkiConditionalErrorAndReturnValue(imageDownsampled.IsValid(),
         RESULT_FAIL, "DownsampleByFactor", "imageDownsampled is not valid");
 
-      DASConditionalErrorAndReturnValue(downsampleFactor == 2,
+      AnkiConditionalErrorAndReturnValue(downsampleFactor == 2,
         RESULT_FAIL, "DownsampleByFactor", "Currently, only downsampleFactor==2 is supported");
 
-      DASConditionalErrorAndReturnValue(IsPowerOfTwo(downsampleFactor),
+      AnkiConditionalErrorAndReturnValue(IsPowerOfTwo(downsampleFactor),
         RESULT_FAIL, "DownsampleByFactor", "downsampleFactor must be a power of 2");
 
-      DASConditionalErrorAndReturnValue(imageDownsampled.get_size(0) == (image.get_size(0) / downsampleFactor) && imageDownsampled.get_size(1) == (image.get_size(1) / downsampleFactor),
+      AnkiConditionalErrorAndReturnValue(imageDownsampled.get_size(0) == (image.get_size(0) / downsampleFactor) && imageDownsampled.get_size(1) == (image.get_size(1) / downsampleFactor),
         RESULT_FAIL, "DownsampleByFactor", "size(imageDownsampled) is not equal to size(image) >> downsampleFactor");
-#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
 
       const s32 maxY = downsampleFactor * imageDownsampled.get_size(0);
       const s32 maxX = downsampleFactor * imageDownsampled.get_size(1);
