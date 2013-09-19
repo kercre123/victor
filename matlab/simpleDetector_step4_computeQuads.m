@@ -152,9 +152,12 @@ for i_region = 1:numRegions
     end
     
     % Find local maxima -- these should correspond to the corners
-    % of the square
-    localMaxima = find(r_smooth > r_smooth([end 1:end-1]) & ...
-        r_smooth > r_smooth([2:end 1]));
+    % of the square.
+    % NOTE: one of the comparisons is >= whiel the other is >, in order to
+    % combat rare cases where we have two responses next to each other that
+    % are exactly equal.
+    localMaxima = find(r_smooth >= r_smooth([end 1:end-1]) & r_smooth > r_smooth([2:end 1]));
+        
     if length(localMaxima)>=4
         [~,whichMaxima] = sort(r_smooth(localMaxima), 'descend');
         whichMaxima = sort(whichMaxima(1:4), 'ascend');
