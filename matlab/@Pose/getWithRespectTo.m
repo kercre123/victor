@@ -1,6 +1,9 @@
 function P_wrt_other = getWithRespectTo(this, other)
 % Find this Pose with respect to a different parent.
 
+% if ~isa(other, 'Pose') && isobject(other) && isprop(other, 'pose')
+%     other = other.pose;
+% end
 
 from = this;
 P_from = Pose(from.Rmat, from.T);
@@ -9,6 +12,9 @@ if Pose.isRootPose(other)
     to = Pose();
     P_to = to;
 else
+    assert(isa(other, 'Pose'), ...
+        'Expecting another Pose object to get new pose with respect to.');
+
     to   = other;
     P_to = Pose(to.Rmat, to.T);
 end
