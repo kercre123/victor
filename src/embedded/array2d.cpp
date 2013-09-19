@@ -87,7 +87,8 @@ namespace Anki
 #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
     template<> IN_DDR s32 Array<f32>::Set(const char * const values)
     {
-      assert(this->IsValid());
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array<f32>::Set", "Array<f32> is not valid");
 
       s32 numValuesSet = 0;
 
@@ -115,7 +116,8 @@ namespace Anki
 #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
     template<> IN_DDR s32 Array<f64>::Set(const char * const values)
     {
-      assert(this->IsValid());
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array<f64>::Set", "Array<f64> is not valid");
 
       s32 numValuesSet = 0;
 
