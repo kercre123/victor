@@ -208,6 +208,13 @@ elseif (m==n && m==3 && (norm(in' * in - eye3) < bigeps) ...
                     out = theta * (sqrt((diag(R)+1)/2).*[1;2*(R(1,2:3)>=0)'-1]);
                 end
                 
+                % ANS: handling numerical issues leading to tiny complex
+                % components in the output rotation vector.
+                if ~isreal(out)
+                    warning('Ignoring complex part of the computed rotation vector.');
+                    out = real(out);
+                end
+                    
             end;
 
             if nargout > 1,
