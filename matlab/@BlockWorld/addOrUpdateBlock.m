@@ -60,14 +60,14 @@ if numMarkers2D > 1
             
             % all markers whose corresponding pose is close enough should
             % be clustered with this one
-            whichBlock(unused(d < B_init.mindim)) = numBlocks;            
+            whichBlock(unused(d < B_init.mindim/2)) = numBlocks;            
         end
     end
     
     assert(all(whichBlock > 0), 'All markers should have been assigned a block.');
     
-    fprintf('Grouping %d observed 2D markers of type %d into %d blocks.\n', ...
-        numMarkers2D, B_init.blockType, numBlocks);
+    %fprintf('Grouping %d observed 2D markers of type %d into %d blocks.\n', ...
+    %    numMarkers2D, B_init.blockType, numBlocks);
     
     % For each new block, re-estimate the pose based on all markers that 
     % were assigned to it
@@ -106,8 +106,8 @@ for i_blockObs = 1:numBlocks
         B_existing = this.blocks{blockType}{i_blockExist};
         
         % TODO: Better overlap check that utilizes uncertainty in the poses
-        % For now, just check if we're within a block width of each other
-        minDist = min(B_new{i_blockObs}.mindim, B_existing.mindim);
+        % For now, just check if we're within half a block width of each other
+        minDist = min(B_new{i_blockObs}.mindim, B_existing.mindim)/2;
         if compare(B_existing.pose, B_new{i_blockObs}.pose) < minDist
             i_match = [i_match i_blockExist]; %#ok<AGROW>
         end

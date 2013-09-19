@@ -24,27 +24,46 @@ end
 
 this.observationWindow{1} = Observation(this);
 
+this.world.displayMessage('Robot', sprintf('Mode: %s', this.operationMode));
+
 switch(this.operationMode)
     
+        
     case 'DOCK'
-        
-        fprintf('Executing auto-docking control...\n');
-        
+               
         if isempty(this.dockingBlock)
             if isempty(this.visibleBlocks)
                 warning('No blocks seen, cannot initiate auto-dock.');
+            elseif isempty(this.world.selectedBlock)
+                warning('No block selected, cannot initate auto-dock.');
             else
-                if length(this.visibleBlocks) > 1
-                    warning('Attempting to dock, but more than one block visible - using first.');
-                end
-                
                 % Stop moving if we were
                 this.drive(0,0);
                 
-                % Until we are done docking, keep using the same block/face:
-                % TODO: smarter way of choosing which block/face to dock with
-                this.dockingBlock = this.visibleBlocks{1};
-                this.dockingFace  = this.dockingBlock.getFaceMarker(this.visibleFaces{1});
+                % Until we are done docking, keep using the same
+                % block/face, i.e. the one marked as "selected" at the time
+                % we got issued the DOCK command.
+                this.dockingBlock = this.world.selectedBlock;
+                
+                % Choose the face closest to our current position as the
+                % one we will dock with:
+                minDist = inf;
+                selected = 0;
+                for i_face = 1:this.dockingBlock.numMarkers
+                    
+                    faceWRTcamera = this.dockingBlock.markers{i_face}.pose.getWithRespectTo(this.camera.pose);
+                    
+                    % In camera coordinates, Z is the distance from us
+                    dist = faceWRTcamera.T(3);
+                                        
+                    if dist < minDist
+                        selected = i_face;
+                        minDist = dist;
+                    end
+                end
+                assert(selected > 0, 'No closest face selected!');
+                this.dockingFace = this.dockingBlock.markers{selected};
+                
                 this.virtualBlock = Block(this.dockingBlock.blockType, 0);
                 this.virtualFace  = this.virtualBlock.getFaceMarker(this.dockingFace.faceType);
                 
@@ -118,6 +137,7 @@ switch(this.operationMode)
         % Wait for signal that we've attached to the block, then lift it
         if this.isBlockLocked
             this.operationMode = 'LIFT';
+            this.world.selectedBlock = [];
         end
         
     case 'WAIT_FOR_UNLOCK'

@@ -54,7 +54,8 @@ if any(u_face < 1 | u_face > this.camera.ncols | v_face < 1 | v_face > this.came
     % Get the dots' pose in World coordinates using the pose tree:
     this.dockingBlock.pose = dotsPose.getWithRespectTo('World');
 
-    this.world.updateObsBlockPose(this.dockingBlock.blockType, this.dockingBlock.pose);
+    this.world.updateObsBlockPose(this.dockingBlock.blockType, ...
+        this.dockingBlock.pose, this.world.SelectedBlockColor);
     
 else
     % We are still far enough away to be using the full marker to determine
