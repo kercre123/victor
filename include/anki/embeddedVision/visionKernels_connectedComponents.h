@@ -28,6 +28,13 @@ namespace Anki
     // Iterate through components, and return the maximum id
     u16 FindMaximumId(FixedLengthList<ConnectedComponentSegment> &components);
 
+    // Goes through the list components, and computes the number of pixels for each.
+    // For any componentId with less than minimumNumPixels pixels, all ConnectedComponentSegment with that id will have their ids set to zero
+    //
+    // For a components parameter that has a maximum id of N, this function requires
+    // 4n + 4 bytes of scratch.
+    Result MarkSmallComponentsAsInvalid(FixedLengthList<ConnectedComponentSegment> &components, const s32 minimumNumPixels, MemoryStack scratch);
+
     // Returns a positive s64 if a > b, a negative s64 is a < b, or zero if they are identical
     // TODO: Doublecheck that this is correct for corner cases
     inline s64 CompareConnectedComponentSegments(const ConnectedComponentSegment &a, const ConnectedComponentSegment &b)
