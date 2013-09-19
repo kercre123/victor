@@ -123,23 +123,23 @@ typedef double   f64;
 #endif // #ifdef USING_MOVIDIUS_GCC_COMPILER
 
 // Maximum and minimum values
-#define u8_MAX  ((u8)0xFF)
-#define u16_MAX ((u16)0xFFFF)
-#define u32_MAX ((u32)0xFFFFFFFF)
+const u8 u8_MAX =  static_cast<u8>(0xFF);
+const u16 u16_MAX = static_cast<u16>(0xFFFF);
+const u32 u32_MAX = static_cast<u32>(0xFFFFFFFF);
 
-#define s8_MAX  ((s8)0x7F)
-#define s16_MAX ((s16)0x7FFF)
-#define s32_MAX ((s32)0x7FFFFFFF)
+const s8 s8_MAX = static_cast<s8>(0x7F);
+const s16 s16_MAX = static_cast<s16>(0x7FFF);
+const s32 s32_MAX = static_cast<s32>(0x7FFFFFFF);
 
-#define s8_MIN  ((s8)0x80)
-#define s16_MIN ((s16)0x8000)
-#define s32_MIN ((s32)0x80000000)
+const s8 s8_MIN = static_cast<s8>(-1 - 0x7F);
+const s16 s16_MIN = static_cast<s16>(-1 - 0x7FFF);
+const s32 s32_MIN = static_cast<s32>(-1 - 0x7FFFFFFF);
 
 namespace Anki
 {
   namespace Embedded
   {
-    const size_t MEMORY_ALIGNMENT = 16; // To support 128-bit SIMD loads and stores
+#define MEMORY_ALIGNMENT static_cast<size_t>(16) // To support 128-bit SIMD loads and stores
 
     // Return values:
     typedef enum Result_ {

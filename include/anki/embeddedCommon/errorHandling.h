@@ -80,7 +80,7 @@
   return returnValue;\
   }
 
-#elif ANKI_DEBUG_LEVEL == ANKI_DEBUG_ESSENTIAL_AND_ERROR_AND_WARN || ANKI_DEBUG_LEVEL == ANKI_DEBUG_ALL
+#elif (ANKI_DEBUG_LEVEL == ANKI_DEBUG_ESSENTIAL_AND_ERROR_AND_WARN) || (ANKI_DEBUG_LEVEL == ANKI_DEBUG_ALL)
 
 #define AnkiWarn(eventName, eventValue_format, ...) \
   if(!(expression)) { _Anki_Logf(eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); }
