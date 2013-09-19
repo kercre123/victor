@@ -273,7 +273,10 @@ namespace Anki
       u8 *usedIds = reinterpret_cast<u8*>(scratch.Allocate(maximumId+1));
       u16 *idLookupTable = reinterpret_cast<u16*>(scratch.Allocate( sizeof(u16)*(maximumId+1) ));
 
-      memset(usedIds, 0, maximumId+1);
+      AnkiConditionalErrorAndReturnValue(usedIds, 0, "CompressConnectedComponentSegmentIds", "Couldn't allocate usedIds");
+      AnkiConditionalErrorAndReturnValue(idLookupTable, 0, "CompressConnectedComponentSegmentIds", "Couldn't allocate idLookupTable");
+
+      memset(usedIds, 0, sizeof(usedIds[0])*(maximumId+1));
 
       for(s32 i=0; i<components.get_size(); i++) {
         const u16 id = components_constRowPointer[i].id;
@@ -313,9 +316,11 @@ namespace Anki
 
       const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
 
-      // Compute the number of unique components
-      s32 *componentSizes = reinterpret_cast<s32*>(scratch.Allocate( sizeof(u32)*(maximumId+1) ));
-      memset(componentSizes, 0, sizeof(u32)*(maximumId+1));
+      s32 *componentSizes = reinterpret_cast<s32*>(scratch.Allocate( sizeof(s32)*(maximumId+1) ));
+
+      AnkiConditionalErrorAndReturnValue(componentSizes, RESULT_FAIL, "MarkSmallOrLargeComponentsAsInvalid", "Couldn't allocate componentSizes");
+
+      memset(componentSizes, 0, sizeof(componentSizes[0])*(maximumId+1));
 
       for(s32 i=0; i<components.get_size(); i++) {
         const u16 id = components_constRowPointer[i].id;
@@ -324,12 +329,100 @@ namespace Anki
         componentSizes[id] += length;
       }
 
-      // TODO: would it be faster to compare against zero?
+      // TODO: mark the components as invalid, instead of doing all the checks every time
+
       ConnectedComponentSegment * restrict components_rowPointer = components.Pointer(0);
       for(s32 i=0; i<components.get_size(); i++) {
         const u16 id = components_rowPointer[i].id;
 
         if(componentSizes[id] < minimumNumPixels || componentSizes[id] > maximumNumPixels) {
+          components_rowPointer[i].id = 0;
+        }
+      }
+
+      return RESULT_OK;
+    }
+
+    // Goes through the list components, and computes the "solidness", which is the ratio of
+    // "numPixels / (boundingWidth*boundingHeight)". For any componentId with that is too solid or
+    // sparse (opposite of solid), all ConnectedComponentSegment with that id will have their ids
+    // set to zero
+    //
+    // The parameter sparseMultiplyThreshold is set so that a component is invalid if
+    // "sparseMultiplyThreshold*numPixels < boundingWidth*boundingHeight".
+    // A resonable value is between 5 and 100.
+    //
+    // The parameter solidMultiplyThreshold is set so that a component is invalid if
+    // "solidMultiplyThreshold*numPixels > boundingWidth*boundingHeight".
+    // A resonable value is between 2 and 5.
+    //
+    // For a components parameter that has a maximum id of N, this function requires
+    // 6N + 6 bytes of scratch.
+    IN_DDR Result MarkSolidOrSparseComponentsAsInvalid(FixedLengthList<ConnectedComponentSegment> &components, const s32 sparseMultiplyThreshold, const s32 solidMultiplyThreshold, MemoryStack scratch)
+    {
+      const u16 maximumId = FindMaximumId(components);
+
+      const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
+
+      s16 *minX = reinterpret_cast<s16*>(scratch.Allocate( sizeof(s16)*(maximumId+1) ));
+      s16 *maxX = reinterpret_cast<s16*>(scratch.Allocate( sizeof(s16)*(maximumId+1) ));
+      s16 *minY = reinterpret_cast<s16*>(scratch.Allocate( sizeof(s16)*(maximumId+1) ));
+      s16 *maxY = reinterpret_cast<s16*>(scratch.Allocate( sizeof(s16)*(maximumId+1) ));
+      s32 *componentSizes = reinterpret_cast<s32*>(scratch.Allocate( sizeof(s32)*(maximumId+1) ));
+
+      AnkiConditionalErrorAndReturnValue(minX && maxX && minY && maxY && componentSizes,
+        RESULT_FAIL, "MarkSolidOrSparseComponentsAsInvalid", "Couldn't allocate minX, maxX, minY, maxY, or componentSizes");
+
+      memset(componentSizes, 0, sizeof(componentSizes[0])*(maximumId+1));
+
+      for(u16 i=0; i<=maximumId; i++) {
+        minX[i] = s16_MAX;
+        maxX[i] = s16_MIN;
+        minY[i] = s16_MAX;
+        maxY[i] = s16_MIN;
+      }
+
+      for(s32 i=0; i<components.get_size(); i++) {
+        const u16 id = components_constRowPointer[i].id;
+        const s16 y = components_constRowPointer[i].y;
+        const s16 xStart = components_constRowPointer[i].xStart;
+        const s16 xEnd = components_constRowPointer[i].xEnd;
+
+        const s16 length = components_constRowPointer[i].xEnd - components_constRowPointer[i].xStart + 1;
+
+        componentSizes[id] += length;
+
+        minX[id] = MIN(minX[id], xStart);
+        maxX[id] = MAX(maxX[id], xEnd);
+
+        minY[id] = MIN(minY[id], y);
+        maxY[id] = MAX(maxY[id], y);
+      }
+
+      for(u16 i=0; i<maximumId; i++) {
+        // The parameter sparseMultiplyThreshold is set so that a component is invalid if
+        // "sparseMultiplyThreshold*numPixels < boundingWidth*boundingHeight".
+        // A resonable value is between 5 and 100.
+        //
+        // The parameter solidMultiplyThreshold is set so that a component is invalid if
+        // "solidMultiplyThreshold*numPixels > boundingWidth*boundingHeight".
+        // A resonable value is between 2 and 5.
+
+        const s32 boundingArea = (maxX[i]-minX[i]+1)*(maxY[i]-minY[i]+1);
+
+        const s32 sparseMultiply = sparseMultiplyThreshold*componentSizes[i];
+        const s32 solidMultiply = solidMultiplyThreshold*componentSizes[i];
+
+        if(sparseMultiply < boundingArea || solidMultiply > boundingArea) {
+          minX[i] = s16_MIN; // Set to invalid
+        }
+      }
+
+      ConnectedComponentSegment * restrict components_rowPointer = components.Pointer(0);
+      for(s32 i=0; i<components.get_size(); i++) {
+        const u16 id = components_rowPointer[i].id;
+
+        if(minX[id] < 0) {
           components_rowPointer[i].id = 0;
         }
       }

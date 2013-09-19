@@ -6,7 +6,6 @@ namespace Anki
   {
     IN_DDR Result DownsampleByFactor(const Array<u8> &image, const s32 downsampleFactor, Array<u8> &imageDownsampled)
     {
-#if ANKI_DEBUG_LEVEL > ANKI_DEBUG_ESSENTIAL_AND_ERROR
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
         RESULT_FAIL, "DownsampleByFactor", "image is not valid");
 
@@ -21,7 +20,6 @@ namespace Anki
 
       AnkiConditionalErrorAndReturnValue(imageDownsampled.get_size(0) == (image.get_size(0) / downsampleFactor) && imageDownsampled.get_size(1) == (image.get_size(1) / downsampleFactor),
         RESULT_FAIL, "DownsampleByFactor", "size(imageDownsampled) is not equal to size(image) >> downsampleFactor");
-#endif // #if ANKI_DEBUG_LEVEL > ANKI_DEBUG_ESSENTIAL_AND_ERROR
 
       const s32 maxY = downsampleFactor * imageDownsampled.get_size(0);
       const s32 maxX = downsampleFactor * imageDownsampled.get_size(1);

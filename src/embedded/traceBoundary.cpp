@@ -64,7 +64,6 @@ namespace Anki
 
     IN_DDR Result TraceBoundary(const Array<u8> &binaryImage, const Point<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point<s16> > &boundary)
     {
-#if ANKI_DEBUG_LEVEL > ANKI_DEBUG_ESSENTIAL_AND_ERROR
       AnkiConditionalErrorAndReturnValue(binaryImage.IsValid(),
         RESULT_FAIL, "TraceBoundary", "binaryImage is not valid");
 
@@ -81,7 +80,6 @@ namespace Anki
 
       AnkiConditionalErrorAndReturnValue(boundary.get_maximumSize() == MAX_BOUNDARY_LENGTH,
         RESULT_FAIL, "TraceBoundary", "boundary must be have a maximum size of MAX_BOUNDARY_LENGTH");
-#endif // #if ANKI_DEBUG_LEVEL > ANKI_DEBUG_ESSENTIAL_AND_ERROR
 
       InitializeGlobaloOffsets();
 
@@ -102,10 +100,8 @@ namespace Anki
       //curPoint = [startPoint(1), startPoint(2)];
       Point<s16> curPoint(startPoint);
 
-#if ANKI_DEBUG_LEVEL > ANKI_DEBUG_ESSENTIAL_AND_ERROR
       AnkiConditionalErrorAndReturnValue(*(binaryImage.Pointer(curPoint)) != 0,
         RESULT_FAIL, "TraceBoundary", "startPoint must be on a non-zero pixel of binaryImage");
-#endif // #if ANKI_DEBUG_LEVEL > ANKI_DEBUG_ESSENTIAL_AND_ERROR
 
       // printf("0) %d %d\n", curPoint.y+1, curPoint.x+1);
 
