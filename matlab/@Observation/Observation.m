@@ -41,7 +41,7 @@ classdef Observation
             numSeenMarkers = this.numMarkers;
             used = false(1,numSeenMarkers);
             blockTypes = cellfun(@(marker)marker.blockType, this.markers);
-            
+                        
             if world.hasMat
                 % If there's a mat in the world, use that to update the
                 % robot's pose.  Then update any existing blocks and add
@@ -227,6 +227,64 @@ classdef Observation
                 end % IF first observation or not
                 
             end % IF world has a Mat for localization
+            
+            
+            %% Update Block Observations
+            % Loop over each block we saw and update the observations (e.g. in Webots).
+            % Set the one closest to our center of view to be the "selected" block for
+            % this robot, with a different color.
+            % TODO: when there are multiple robots, we will need a "selected" color for each...
+            if ~isempty(this.robot.visibleBlocks)
+                
+                % If the previously-selected block is not one of the currently 
+                % visible blocks, make sure its color gets updated:
+                if ~isempty(world.selectedBlock) && ...
+                        ~any(cellfun(@(block)isequal(block, world.selectedBlock), ...
+                        this.robot.visibleBlocks))
+                    
+                    fprintf('Unselecting selected block that is no longer visible.\n');
+                    
+                    world.updateObsBlockPose(world.selectedBlock.blockType, ...
+                        world.selectedBlock.pose, world.UnselectedBlockColor);
+                end
+                
+                % Find the visible block closest to center of our field of view:
+                minDist = inf;
+                selected = 0;
+                for i_vis = 1:length(this.robot.visibleBlocks)
+                    blockWRTcamera = this.robot.visibleBlocks{i_vis}.pose.getWithRespectTo(this.robot.camera.pose);
+                    [u,v] = this.robot.camera.projectPoints(blockWRTcamera.T');
+                    dist = (u-this.robot.camera.ncols/2)^2 + (v-this.robot.camera.nrows/2)^2;
+                    if dist < minDist
+                        selected = i_vis;
+                        minDist = dist;
+                    end
+                end
+                
+                assert(selected > 0, ...
+                    'No block found closest to image center for selection.');
+                            
+                % Make that block the selected block:
+                world.selectedBlock = this.robot.visibleBlocks{selected};
+                
+                % Update the visible blocks' observed locations, making the
+                % selected one have a different color:
+                for i_vis = 1:length(this.robot.visibleBlocks)
+                    if i_vis == selected
+                        color = world.SelectedBlockColor; 
+                    else
+                        color = world.UnselectedBlockColor; 
+                    end
+                    
+                    world.updateObsBlockPose(this.robot.visibleBlocks{i_vis}.blockType, ...
+                        this.robot.visibleBlocks{i_vis}.pose, color);
+                end
+                
+            end % IF any visible blocks
+            
+            world.displayMessage('observation', ...
+                sprintf('Visible: %d Markers, %d Blocks', ...
+                numSeenMarkers, length(this.robot.visibleBlocks)))
             
         end % CONSTRUCTOR Observation()
         

@@ -3,6 +3,9 @@ classdef BlockWorld < handle
     properties(GetAccess = 'public', Constant = true)
         MaxBlockTypes = 256;  % 8 bits
         MaxFaces      = 16;   % 4 bits
+        
+        SelectedBlockColor = [0 1 1];
+        UnselectedBlockColor = [1 1 0];
     end
     
     properties(GetAccess = 'public', SetAccess = 'protected')
@@ -10,7 +13,7 @@ classdef BlockWorld < handle
         blocks = {};
         blockTypeToIndex;
         groundTruthBlocks = {};
-        
+                        
         allMarkers3D = {};
         robots = {}; 
         groundTruthRobots = {};
@@ -30,9 +33,10 @@ classdef BlockWorld < handle
         driveRobotFcn;
         isBlockLockedFcn;
         releaseBlockFcn;
-        
+        displayMessageFcn;
+                
     end % PROPERTIES (get-public, set-protected)
-    
+        
     properties(GetAccess = 'public', SetAccess = 'protected', ...
             Dependent = true)
         
@@ -42,6 +46,18 @@ classdef BlockWorld < handle
         
     end % DEPENDENT PROPERTIES (get-public, set-protected)
     
+    properties(GetAccess = 'protected', SetAccess = 'protected')
+        
+        selectedBlock_ = [];
+        
+    end % PROPERTIES (get/set protected)
+    
+    properties(GetAccess = 'public', SetAccess = 'public', ...
+            Dependent = true)
+        
+        selectedBlock;
+        
+    end % DEPENDENT PROPERTIES (get/set public)
     
     methods(Access = 'public')
         
@@ -65,6 +81,7 @@ classdef BlockWorld < handle
             DriveFcn = [];
             IsBlockLockedFcn = [];
             ReleaseBlockFcn = [];
+            DisplayMessageFcn = @(type,message)fprintf('%s: %s\n', type, message);
             
             parseVarargin(varargin{:});
             
@@ -91,6 +108,7 @@ classdef BlockWorld < handle
             this.driveRobotFcn         = DriveFcn;
             this.isBlockLockedFcn      = IsBlockLockedFcn;
             this.releaseBlockFcn       = ReleaseBlockFcn;
+            this.displayMessageFcn     = DisplayMessageFcn;
             
             this.blockTypeToIndex = containers.Map('KeyType', 'double', ...
                 'ValueType', 'double');
@@ -207,9 +225,9 @@ classdef BlockWorld < handle
             end
         end
         
-        function updateObsBlockPose(this, blockID, pose)
+        function updateObsBlockPose(this, blockID, pose, color)
            if ~isempty(this.updateObsBlockPoseFcn)
-               this.updateObsBlockPoseFcn(blockID, pose, 0.0);
+               this.updateObsBlockPoseFcn(blockID, pose, color, 0.0);
            end
         end
         
@@ -244,6 +262,12 @@ classdef BlockWorld < handle
                 this.robots{whichRobot}.operationMode);
         end
         
+        function displayMessage(this, type, message)
+            if ~isempty(this.displayMessageFcn)
+                this.displayMessageFcn(type, message);
+            end
+        end
+        
     end % METHODS (public)
     
     methods(Static = true, Access = 'public')
@@ -264,6 +288,16 @@ classdef BlockWorld < handle
         
         function N = get.numRobots(this)
             N = length(this.robots);
+        end
+        
+        function block = get.selectedBlock(this)
+            block = this.selectedBlock_;
+        end
+        
+        function set.selectedBlock(this, block)
+            assert(isempty(block) || isa(block, 'Block'), ...
+                'Expecting a Block object for setting selectedBlock.');
+            this.selectedBlock_ = block;
         end
         
     end % METHODS (dependent)

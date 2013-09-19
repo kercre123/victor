@@ -123,7 +123,7 @@ for i_blockObs = 1:numBlocks
         robot.visibleBlocks{end+1} = this.blocks{blockType}{end};
         robot.visibleFaces{end+1}  = markers2D{1}.faceType;
         
-        this.updateObsBlockPose(blockType, B_new{i_blockObs}.pose);
+        %this.updateObsBlockPose(blockType, B_new{i_blockObs}.pose);
     else
         if length(i_match) > 1
             warning(['More than one overlapping block found! ' ...
@@ -148,7 +148,7 @@ for i_blockObs = 1:numBlocks
                 error('Unrecognized block merging method "%s".', mergeMethod);
         end % SWITCH(mergeMethod)
         
-        this.updateObsBlockPose(blockType, B_match.pose);
+        %this.updateObsBlockPose(blockType, B_match.pose);
     end
     
 end % FOR each observed Block
