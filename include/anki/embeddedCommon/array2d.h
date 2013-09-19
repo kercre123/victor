@@ -329,7 +329,7 @@ namespace Anki
 
     template<typename Type> Result Array<Type>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      AnkiConditionalWarnAndReturnValue(this->IsValid(),
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
 
       printf("%s:\n", variableName);

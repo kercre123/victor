@@ -13,5 +13,6 @@
 #include "anki/embeddedCommon/gtestLight.h"
 #include "anki/embeddedCommon/fixedLengthList.h"
 #include "anki/embeddedCommon/opencvLight.h"
+#include "anki/embeddedCommon/draw.h"
 
 #endif // _ANKICORETECHEMBEDDEDEMBEDDED_EMBEDDED_COMMON_H_
