@@ -277,6 +277,16 @@ classdef BlockWorldWebotController < handle
                 fprintf('UNLOCKED!\n');
             end
         end
+        
+        function DisplayMessage(~, type, message)
+            switch(lower(type))
+                case 'observation'
+                    wb_supervisor_set_label(0, message, 0, 1-.1, .1, [0.8 0 0], 0);
+                    
+                otherwise
+                    warning('Unknown message type "%s". Ignoring!');
+            end
+        end
     end        
     
 end % CLASSDEF BlockWorldWebotController

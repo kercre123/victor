@@ -1,4 +1,4 @@
-function UpdateClosestBlockObservation(this, blockID, obsPose, transparency)
+function UpdateClosestBlockObservation(this, blockID, obsPose, color, transparency)
 
 if ~isKey(this.blockNodes, blockID)
     warning('There is no Block %d in this world, cannot update its observed pose.', blockID);
@@ -55,5 +55,12 @@ wb_supervisor_field_set_sf_vec3f(translationField, ...
 
 wb_supervisor_field_set_sf_float(transparencyField, transparency);
 
+if ~isempty(color)
+    colorField = wb_supervisor_node_get_field(closestBlockNode, 'obsColor');
+    assert(~colorField.isNull, ...
+        'Could not find "obsColor" field for block %d.', blockID);
+    
+    wb_supervisor_field_set_sf_color(colorField, color);
+end
 
 end % FUNCTION UpdateClosestBlockObservation()
