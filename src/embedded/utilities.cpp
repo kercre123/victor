@@ -18,7 +18,7 @@ namespace Anki
   namespace Embedded
   {
 #if !defined(USING_MOVIDIUS_COMPILER)
-    double GetTime()
+    IN_DDR double GetTime()
     {
 #if defined(_MSC_VER)
       LARGE_INTEGER frequency, counter;
@@ -38,20 +38,21 @@ namespace Anki
     f32 Round(f32 number)
     {
       if(number > 0)
-        return floor(number + 0.5f);
+        return floorf(number + 0.5f);
       else
-        return floor(number - 0.5f);
+        return floorf(number - 0.5f);
     }
 
     f64 Round(f64 number)
     {
+      // This casting wierdness is because the myriad doesn't have a double-precision floor function.
       if(number > 0)
-        return floor(number + 0.5);
+        return static_cast<f64>(floorf(static_cast<f32>(number) + 0.5f));
       else
-        return floor(number - 0.5);
+        return static_cast<f64>(floorf(static_cast<f32>(number) - 0.5f));
     }
 
-    bool IsPowerOfTwo(u32 x)
+    IN_DDR bool IsPowerOfTwo(u32 x)
     {
       // While x is even and greater than 1, keep dividing by two
       while (((x & 1) == 0) && x > 1)
@@ -60,7 +61,7 @@ namespace Anki
       return static_cast<bool>(x == 1);
     }
 
-    u32 Log2(u32 x)
+    IN_DDR u32 Log2(u32 x)
     {
       u32 powerCount = 0;
       // While x is even and greater than 1, keep dividing by two
@@ -71,7 +72,7 @@ namespace Anki
       return powerCount;
     }
 
-    u64 Log2(u64 x)
+    IN_DDR u64 Log2(u64 x)
     {
       u64 powerCount = 0;
       // While x is even and greater than 1, keep dividing by two
@@ -84,15 +85,15 @@ namespace Anki
 
     //// Perform the matrix multiplication "matOut = mat1 * mat2"
     //// Note that this is the naive O(n^3) implementation
-    //Result MultiplyMatrices(const Array_f64 &mat1, const Array_f64 &mat2, Array_f64 &matOut)
+    //Result MultiplyMatrices(const Array<f64> &mat1, const Array<f64> &mat2, Array<f64> &matOut)
     //{
-    //  DASConditionalErrorAndReturnValue(mat1.get_size(1) == mat2.get_size(0),
+    //  AnkiConditionalErrorAndReturnValue(mat1.get_size(1) == mat2.get_size(0),
     //    RESULT_FAIL, "MultiplyMatrices", "Input matrices are incompatible sizes");
 
-    //  DASConditionalErrorAndReturnValue(matOut.get_size(0) == mat1.get_size(0),
+    //  AnkiConditionalErrorAndReturnValue(matOut.get_size(0) == mat1.get_size(0),
     //    RESULT_FAIL, "MultiplyMatrices", "Input and Output matrices are incompatible sizes");
 
-    //  DASConditionalErrorAndReturnValue(matOut.get_size(1) == mat2.get_size(1),
+    //  AnkiConditionalErrorAndReturnValue(matOut.get_size(1) == mat2.get_size(1),
     //    RESULT_FAIL, "MultiplyMatrices", "Input and Output matrices are incompatible sizes");
 
     //  for(s32 y1=0; y1<mat1.get_size(0); y1++) {
@@ -112,7 +113,7 @@ namespace Anki
     //}
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-    int ConvertToOpenCvType(const char *typeName, size_t byteDepth)
+    IN_DDR int ConvertToOpenCvType(const char *typeName, size_t byteDepth)
     {
       if(typeName[0] == 'u') { //unsigned
         if(byteDepth == 1) {
@@ -137,5 +138,16 @@ namespace Anki
       return -1;
     }
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+#if defined(USING_MOVIDIUS_GCC_COMPILER)
+    IN_DDR void memset(void * dst, int value, size_t size)
+    {
+      size_t i;
+      for(i=0; i<size; i++)
+      {
+        ((char*)dst)[i] = value;
+      }
+    }
+#endif // #if defined(USING_MOVIDIUS_GCC_COMPILER)
   } // namespace Embedded
 } // namespace Anki

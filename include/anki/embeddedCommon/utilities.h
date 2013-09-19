@@ -2,7 +2,7 @@
 #define _ANKICORETECHEMBEDDED_COMMON_UTILITIES_H_
 
 #include "anki/embeddedCommon/config.h"
-#include "anki/embeddedCommon/DASlight.h"
+#include "anki/embeddedCommon/errorHandling.h"
 
 #ifndef MAX
 #define MAX( a, b ) ( ((a) > (b)) ? (a) : (b) )
@@ -28,7 +28,7 @@
 #define NULL (0)
 #endif
 
-#define SWAP(type, a, b) { type t; t = a; a = b; b = t; }
+#define SWAP(type, a, b) { type t = a; a = b; b = t; }
 
 // ct_assert is a compile time assertion, useful for checking sizeof() and other compile time knowledge
 #define ASSERT_CONCAT_(a, b) a##b
@@ -68,7 +68,7 @@ namespace Anki
     // Functionally the same as OpenCV completeSymm()
     template<typename T> Result MakeArraySymmetric(T &arr, bool lowerToUpper = false)
     {
-      DASConditionalErrorAndReturnValue(arr.get_size(0) == arr.get_size(1),
+      AnkiConditionalErrorAndReturnValue(arr.get_size(0) == arr.get_size(1),
         RESULT_FAIL, "copyHalfArray", "Input array must be square");
 
       for(s32 y = 0; y < arr.get_size(0); y++)
@@ -88,13 +88,13 @@ namespace Anki
     // Note that this is the naive O(n^3) implementation
     template<typename Array_T, typename T> Result MultiplyMatrices(const Array_T &mat1, const Array_T &mat2, Array_T &matOut)
     {
-      DASConditionalErrorAndReturnValue(mat1.get_size(1) == mat2.get_size(0),
+      AnkiConditionalErrorAndReturnValue(mat1.get_size(1) == mat2.get_size(0),
         RESULT_FAIL, "MultiplyMatrices", "Input matrices are incompatible sizes");
 
-      DASConditionalErrorAndReturnValue(matOut.get_size(0) == mat1.get_size(0),
+      AnkiConditionalErrorAndReturnValue(matOut.get_size(0) == mat1.get_size(0),
         RESULT_FAIL, "MultiplyMatrices", "Input and Output matrices are incompatible sizes");
 
-      DASConditionalErrorAndReturnValue(matOut.get_size(1) == mat2.get_size(1),
+      AnkiConditionalErrorAndReturnValue(matOut.get_size(1) == mat2.get_size(1),
         RESULT_FAIL, "MultiplyMatrices", "Input and Output matrices are incompatible sizes");
 
       for(s32 y1=0; y1<mat1.get_size(0); y1++) {
@@ -116,6 +116,17 @@ namespace Anki
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     int ConvertToOpenCvType(const char *typeName, size_t byteDepth); // Converts from typeid names to openCV types
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+#if defined(USING_MOVIDIUS_GCC_COMPILER)
+    void memset(void * dst, int value, size_t size);
+#endif
+
+    template<typename Type> void Swap(Type &a, Type &b)
+    {
+      const Type tmp = a;
+      a = b;
+      b = tmp;
+    } // template<typename Type> Swap(Type a, Type b)
 
 #ifndef ALIGNVARIABLE
 #if defined(_MSC_VER)

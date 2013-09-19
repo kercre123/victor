@@ -9,27 +9,27 @@ namespace Anki
   {
     /*! Compute the homography such that "transformedPoints = homography * originalPoints" */
     Result EstimateHomography(
-      const FixedLengthList_Point_f64 &originalPoints,    //!<
-      const FixedLengthList_Point_f64 &transformedPoints, //!<
-      Array_f64 &homography, //!<
+      const FixedLengthList<Point<f64> > &originalPoints,    //!<
+      const FixedLengthList<Point<f64> > &transformedPoints, //!<
+      Array<f64> &homography, //!<
       MemoryStack &scratch //!<
       );
 
     /*! Performs an Singular Value Decomposition on the mXn, float32 input array. [u^t,w,v^t] = SVD(a); */
     Result svd_f32(
-      Array_f32 &a,  //!< Input array mXn
-      Array_f32 &w,  //!< W array 1Xm
-      Array_f32 &uT, //!< U-transpose array mXm
-      Array_f32 &vT, //!< V-transpose array nXn
+      Array<f32> &a,  //!< Input array mXn
+      Array<f32> &w,  //!< W array 1Xm
+      Array<f32> &uT, //!< U-transpose array mXm
+      Array<f32> &vT, //!< V-transpose array nXn
       void * scratch //!< A scratch buffer, with at least "sizeof(float)*(n*2 + m)" bytes
       );
 
     /*! Performs an Singular Value Decomposition on the mXn, float64 input array. [u^t,w,v^t] = SVD(a); */
     Result svd_f64(
-      Array_f64 &a,  //!< Input array mXn
-      Array_f64 &w,  //!< W array 1xm
-      Array_f64 &uT, //!< U-transpose array mXm
-      Array_f64 &vT, //!< V-transpose array nXn
+      Array<f64> &a,  //!< Input array mXn
+      Array<f64> &w,  //!< W array 1xm
+      Array<f64> &uT, //!< U-transpose array mXm
+      Array<f64> &vT, //!< V-transpose array nXn
       void * scratch //!< A scratch buffer, with at least "sizeof(f64)*(n*2 + m)" bytes
       );
 

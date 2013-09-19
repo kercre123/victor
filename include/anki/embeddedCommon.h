@@ -6,7 +6,7 @@
 #include "anki/embeddedCommon/array2d.h"
 #include "anki/embeddedCommon/memory.h"
 #include "anki/embeddedCommon/utilities.h"
-#include "anki/embeddedCommon/DASlight.h"
+#include "anki/embeddedCommon/errorHandling.h"
 #include "anki/embeddedCommon/dataStructures.h"
 #include "anki/embeddedCommon/matlabInterface.h"
 #include "anki/embeddedCommon/point.h"

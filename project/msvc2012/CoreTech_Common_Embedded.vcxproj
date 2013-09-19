@@ -11,9 +11,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\include\anki\embeddedCommon\opencvLight.h" />
     <ClCompile Include="..\..\src\embedded\array2d.cpp" />
-    <ClCompile Include="..\..\src\embedded\dasLight.cpp" />
+    <ClCompile Include="..\..\src\embedded\errorHandling.cpp" />
     <ClCompile Include="..\..\src\embedded\fixedLengthList.cpp" />
     <ClCompile Include="..\..\src\embedded\matlabInterface.cpp" />
     <ClCompile Include="..\..\src\embedded\memory.cpp" />
@@ -25,12 +24,13 @@
     <ClInclude Include="..\..\include\anki\embeddedCommon.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\array2d.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\config.h" />
-    <ClInclude Include="..\..\include\anki\embeddedCommon\DASlight.h" />
+    <ClInclude Include="..\..\include\anki\embeddedCommon\errorHandling.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\dataStructures.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\fixedLengthList.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\gtestLight.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\matlabInterface.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\memory.h" />
+    <ClInclude Include="..\..\include\anki\embeddedCommon\opencvLight.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\point.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\utilities.h" />
   </ItemGroup>

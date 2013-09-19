@@ -8,13 +8,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoreTech_Common_Embedded_Te
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoreTech_Common_Embedded", "CoreTech_Common_Embedded.vcxproj", "{B6A2200C-1515-4879-B00A-21481799F0DA}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoreTech_Common_Test", "CoreTech_Common_Test.vcxproj", "{ABDD74E9-489A-44BB-B048-D8C86C084DF1}"
-	ProjectSection(ProjectDependencies) = postProject
-		{7A878DC1-8040-41C3-AA48-EB433B1C2C9B} = {7A878DC1-8040-41C3-AA48-EB433B1C2C9B}
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoreTech_Common", "CoreTech_Common.vcxproj", "{7A878DC1-8040-41C3-AA48-EB433B1C2C9B}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -29,14 +22,6 @@ Global
 		{B6A2200C-1515-4879-B00A-21481799F0DA}.Debug|Win32.Build.0 = Debug|Win32
 		{B6A2200C-1515-4879-B00A-21481799F0DA}.Release|Win32.ActiveCfg = Release|Win32
 		{B6A2200C-1515-4879-B00A-21481799F0DA}.Release|Win32.Build.0 = Release|Win32
-		{ABDD74E9-489A-44BB-B048-D8C86C084DF1}.Debug|Win32.ActiveCfg = Debug|Win32
-		{ABDD74E9-489A-44BB-B048-D8C86C084DF1}.Debug|Win32.Build.0 = Debug|Win32
-		{ABDD74E9-489A-44BB-B048-D8C86C084DF1}.Release|Win32.ActiveCfg = Release|Win32
-		{ABDD74E9-489A-44BB-B048-D8C86C084DF1}.Release|Win32.Build.0 = Release|Win32
-		{7A878DC1-8040-41C3-AA48-EB433B1C2C9B}.Debug|Win32.ActiveCfg = Debug|Win32
-		{7A878DC1-8040-41C3-AA48-EB433B1C2C9B}.Debug|Win32.Build.0 = Debug|Win32
-		{7A878DC1-8040-41C3-AA48-EB433B1C2C9B}.Release|Win32.ActiveCfg = Release|Win32
-		{7A878DC1-8040-41C3-AA48-EB433B1C2C9B}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -24,7 +24,11 @@ if ismac
     OSbits = 64;
 elseif ispc
     IDE_name = 'msvc2012';
-    openCvVersionString = '246';
+    if useDebugMode
+        openCvVersionString = '246d';
+    else
+        openCvVersionString = '246';
+    end
     OSbits = 32;
 else
     error('Currently only supporting builds on Mac or PC.');
@@ -39,6 +43,10 @@ flags = {};
 if useDebugMode
     configName = 'Debug';
     flags{end+1} = '-g';
+    
+    if ispc
+        flags{end+1} = '-D_DEBUG';
+    end
 else
     configName = 'Release';
 end
@@ -56,6 +64,7 @@ openCvIncludeDirs = [openCvRoot, getdirnames(fullfile(openCvRoot, 'modules'), '*
 %'features2d', 'legacy', 'ml', 'nonfree', 'objdetect', 'ocl', 
 % 'stitching', 'superres', 'videostab', 'flann', 'photo' 
 openCvLibs = {'calib3d', 'contrib', 'core', 'highgui', 'imgproc'};
+matlabLibs = {'mx', 'eng'};
 
 moduleDir  = fullfile(rootDir, ['coretech-' moduleName]);
 
@@ -72,6 +81,7 @@ openCvLibs        = prefixSuffixHelper('-lopencv_', openCvLibs, openCvVersionStr
 ankiIncludeDirs   = prefixSuffixHelper('-I', ankiIncludeDirs, '');
 ankiLibDirs       = prefixSuffixHelper('-L', ankiLibDirs, '');
 ankiLibs          = prefixSuffixHelper('-l', ankiLibs, sprintf('_%d%s', OSbits, configName));
+matlabLibs        = prefixSuffixHelper('-l', matlabLibs, '');
 
 outputDir = fullfile(moduleDir, 'build', 'mex');
 if ~isdir(outputDir)
@@ -85,8 +95,7 @@ for i_file = 1:numFiles
        
         mex(flags{:}, '-compatibleArrayDims',  sourceFilename{i_file},...
             fullfile(mexWrapperDir, 'mexWrappers.cpp'), ...
-            fullfile(mexWrapperDir, 'mexEmbeddedWrappers.cpp'), ...
-            ankiIncludeDirs{:}, openCvIncludeDirs{:}, ankiLibDirs{:}, ankiLibs{:}, ...
+            ankiIncludeDirs{:}, openCvIncludeDirs{:}, ankiLibDirs{:}, ankiLibs{:}, matlabLibs{:}, ...
             ['-I', mexWrapperDir], ['-L', openCvLibDir], openCvLibs{:}, ...
             '-outdir', outputDir);
     catch E
