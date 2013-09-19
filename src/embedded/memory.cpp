@@ -67,17 +67,15 @@ namespace Anki
       const char * const bufferCharStar = reinterpret_cast<const char*>(buffer);
       const size_t bufferSizeT = reinterpret_cast<size_t>(buffer);
 
-      AnkiConditionalWarnAndReturnValue(buffer != NULL, false, "Anki.MemoryStack.IsValid", "buffer is not allocated");
+      AnkiConditionalErrorAndReturnValue(buffer != NULL, false, "Anki.MemoryStack.IsValid", "buffer is not allocated");
 
-#if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
       AnkiConditionalWarnAndReturnValue(usedBytes <= totalBytes, false, "Anki.MemoryStack.IsValid", "usedBytes is greater than totalBytes");
       AnkiConditionalWarnAndReturnValue(usedBytes >= 0 && totalBytes >= 0, false, "Anki.MemoryStack.IsValid", "usedBytes or totalBytes is less than zero");
-#endif // #if ANKI_DEBUG_LEVEL == ANKI_DEBUG_HIGH
 
       if(usedBytes == 0)
         return true;
 
-#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_LOW
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ESSENTIAL_AND_ERROR_AND_WARN
 
       s32 index = static_cast<s32>( RoundUp<size_t>(bufferSizeT+HEADER_LENGTH, MEMORY_ALIGNMENT) - HEADER_LENGTH - bufferSizeT );
 
@@ -112,7 +110,7 @@ namespace Anki
         AnkiError("Anki.MemoryStack.IsValid", "Loop exited at an incorrect position, probably due to corruption");
         return false;
       }
-#endif // #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_LOW
+#endif // #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ESSENTIAL_AND_ERROR_AND_WARN
       return true;
     }
 
