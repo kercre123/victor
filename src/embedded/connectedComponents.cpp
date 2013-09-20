@@ -391,13 +391,15 @@ namespace Anki
     // sparse (opposite of solid), all ConnectedComponentSegment with that id will have their ids
     // set to zero
     //
-    // The parameter sparseMultiplyThreshold is set so that a component is invalid if
+    // The SQ26.5 parameter sparseMultiplyThreshold is set so that a component is invalid if
     // "sparseMultiplyThreshold*numPixels < boundingWidth*boundingHeight".
-    // A resonable value is between 5 and 100.
+    // A resonable value is between 5<<5 = 160 and 100<<5 = 3200.
     //
-    // The parameter solidMultiplyThreshold is set so that a component is invalid if
+    // The SQ26.5 parameter solidMultiplyThreshold is set so that a component is invalid if
     // "solidMultiplyThreshold*numPixels > boundingWidth*boundingHeight".
-    // A resonable value is between 2 and 5.
+    // A resonable value is between 1.5*pow(2,5) = 48 and 5<<5 = 160.
+    //
+    // Note: This can overflow if the number of pixels is greater than 2^26 (a bit more Ultra-HD resolution)
     //
     // For a components parameter that has a maximum id of N, this function requires
     // 8N + 8 bytes of scratch.
@@ -407,6 +409,8 @@ namespace Anki
 
       const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
 
+      // Storage for the bounding boxes.
+      // A bounding box is (minX, minY) -> (maxX, maxY)
       s16 *minX = reinterpret_cast<s16*>(scratch.Allocate( sizeof(s16)*(maximumId+1) ));
       s16 *maxX = reinterpret_cast<s16*>(scratch.Allocate( sizeof(s16)*(maximumId+1) ));
       s16 *minY = reinterpret_cast<s16*>(scratch.Allocate( sizeof(s16)*(maximumId+1) ));
@@ -425,6 +429,8 @@ namespace Anki
         maxY[i] = s16_MIN;
       }
 
+      // Compute the bounding box of each component ID
+      // A bounding box is (minX, minY) -> (maxX, maxY)
       for(s32 i=0; i<components.get_size(); i++) {
         const u16 id = components_constRowPointer[i].id;
         const s16 y = components_constRowPointer[i].y;
@@ -443,18 +449,18 @@ namespace Anki
       }
 
       for(u16 i=0; i<=maximumId; i++) {
-        // The parameter sparseMultiplyThreshold is set so that a component is invalid if
+        // The SQ26.5 parameter sparseMultiplyThreshold is set so that a component is invalid if
         // "sparseMultiplyThreshold*numPixels < boundingWidth*boundingHeight".
-        // A resonable value is between 5 and 100.
+        // A resonable value is between 5<<5 = 160 and 100<<5 = 3200.
         //
-        // The parameter solidMultiplyThreshold is set so that a component is invalid if
+        // The SQ26.5 parameter solidMultiplyThreshold is set so that a component is invalid if
         // "solidMultiplyThreshold*numPixels > boundingWidth*boundingHeight".
-        // A resonable value is between 2 and 5.
+        // A resonable value is between 1.5*pow(2,5) = 48 and 5<<5 = 160.
 
-        const s32 boundingArea = (maxX[i]-minX[i]+1)*(maxY[i]-minY[i]+1);
+        const s32 boundingArea = ((maxX[i]-minX[i]+1)*(maxY[i]-minY[i]+1)) << 5; // SQ26.5
 
-        const s32 sparseMultiply = sparseMultiplyThreshold*componentSizes[i];
-        const s32 solidMultiply = solidMultiplyThreshold*componentSizes[i];
+        const s32 sparseMultiply = sparseMultiplyThreshold*componentSizes[i]; // (SQ26.5 * SQ31.0) -> SQ26.5
+        const s32 solidMultiply = solidMultiplyThreshold*componentSizes[i]; // (SQ26.5 * SQ31.0) -> SQ26.5
 
         if(sparseMultiply < boundingArea || solidMultiply > boundingArea) {
           minX[i] = s16_MIN; // Set to invalid

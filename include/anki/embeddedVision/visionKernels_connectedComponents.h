@@ -51,13 +51,15 @@ namespace Anki
     // sparse (opposite of solid), all ConnectedComponentSegment with that id will have their ids
     // set to zero
     //
-    // The parameter sparseMultiplyThreshold is set so that a component is invalid if
+    // The SQ26.5 parameter sparseMultiplyThreshold is set so that a component is invalid if
     // "sparseMultiplyThreshold*numPixels < boundingWidth*boundingHeight".
-    // A resonable value is between 5 and 100.
+    // A resonable value is between 5<<5 = 160 and 100<<5 = 3200.
     //
-    // The parameter solidMultiplyThreshold is set so that a component is invalid if
+    // The SQ26.5 parameter solidMultiplyThreshold is set so that a component is invalid if
     // "solidMultiplyThreshold*numPixels > boundingWidth*boundingHeight".
-    // A resonable value is between 2 and 5.
+    // A resonable value is between 1.5*pow(2,5) = 48 and 5<<5 = 160.
+    //
+    // Note: This can overflow if the number of pixels is greater than 2^26 (a bit more Ultra-HD resolution)
     //
     // For a components parameter that has a maximum id of N, this function requires
     // 8N + 8 bytes of scratch.

@@ -60,8 +60,8 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
 
   const s32 component_minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
   const s32 component_maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
-  const s32 component_sparseMultiplyThreshold = 1000;
-  const s32 component_solidMultiplyThreshold = 2;
+  const s32 component_sparseMultiplyThreshold = 1000 << 5;
+  const s32 component_solidMultiplyThreshold = 2 << 5;
 
   const u32 numBytes0 = 10000000;
   MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
@@ -116,8 +116,8 @@ IN_DDR GTEST_TEST(CoreTech_Vision, MarkSolidOrSparseComponentsAsInvalid)
 {
   const s32 numComponents = 10;
   const s32 numBytes = MIN(MAX_BYTES, 1000);
-  const s32 sparseMultiplyThreshold = 10;
-  const s32 solidMultiplyThreshold = 2;
+  const s32 sparseMultiplyThreshold = 10 << 5;
+  const s32 solidMultiplyThreshold = 2 << 5;
 
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());

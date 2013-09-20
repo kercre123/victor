@@ -20,8 +20,8 @@ using namespace Anki::Embedded;
 // maxSideLength = round(0.9*min(size(image,1),size(image,2)));
 // component_minimumNumPixels = round(minSideLength*minSideLength - (0.8*minSideLength)*(0.8*minSideLength));
 // component_maximumNumPixels = round(maxSideLength*maxSideLength - (0.8*maxSideLength)*(0.8*maxSideLength));
-// component_sparseMultiplyThreshold = 1000;
-// component_solidMultiplyThreshold = 2;
+// component_sparseMultiplyThreshold = 1000.0;
+// component_solidMultiplyThreshold = 2.0;
 // components2d = mexSimpleDetectorSteps123(image, scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold);
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
@@ -45,8 +45,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const s16 component1d_maxSkipDistance = static_cast<s16>(mxGetScalar(prhs[3]));
   const s32 component_minimumNumPixels = static_cast<s32>(mxGetScalar(prhs[4]));
   const s32 component_maximumNumPixels = static_cast<s32>(mxGetScalar(prhs[5]));
-  const s32 component_sparseMultiplyThreshold = static_cast<s32>(mxGetScalar(prhs[6]));
-  const s32 component_solidMultiplyThreshold = static_cast<s32>(mxGetScalar(prhs[7]));
+  const s32 component_sparseMultiplyThreshold = static_cast<s32>(Round(pow(2,5)*mxGetScalar(prhs[6]))); // Convert from double to SQ26.5
+  const s32 component_solidMultiplyThreshold = static_cast<s32>(Round(pow(2,5)*mxGetScalar(prhs[7]))); // Convert from double to SQ26.5
 
   //printf("%f %f %s\n", *startPoint.Pointer(0,0), *startPoint.Pointer(0,1), initialDirection.data());
   ConditionalErrorAndReturn(image.IsValid(), "mexSimpleDetectorSteps123", "Could not allocate Matrix binaryImg");
