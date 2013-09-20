@@ -1,5 +1,8 @@
 function [numRegions, indexList, centroid, components2d] = simpleDetector_step3_simpleRejectionTests(nrows, ncols, numRegions, area, indexList, bb, centroid, usePerimeterCheck, components2d, embeddedConversions, DEBUG_DISPLAY)
 
+solidThreshold = 0.5;
+sparseThreshold = .001;
+
 if DEBUG_DISPLAY
     namedFigure('InitialFiltering')
     subplot(2,2,1)
@@ -38,8 +41,9 @@ if DEBUG_DISPLAY
 end
 
 bbArea = prod(bb(:,3:4),2);
-tooSolid = area./ bbArea > .5;
-updateStats(tooSolid);
+tooSolid = area ./ bbArea > solidThreshold;
+tooSparse = area ./ bbArea < sparseThreshold;
+updateStats(tooSolid | tooSparse);
 
 if DEBUG_DISPLAY
     subplot(2,2,3)
