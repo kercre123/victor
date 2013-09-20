@@ -334,16 +334,16 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SortComponents)
   FixedLengthList<ConnectedComponentSegment> components(numComponents, ms);
   components.set_size(numComponents);
 
-  const ConnectedComponentSegment component0 = ConnectedComponentSegment(50, 100, 50, u16_MAX); // 7
-  const ConnectedComponentSegment component1 = ConnectedComponentSegment(s16_MAX, s16_MAX, s16_MAX, 0); // 4
-  const ConnectedComponentSegment component2 = ConnectedComponentSegment(s16_MAX, s16_MAX, 0, 0); // 2
-  const ConnectedComponentSegment component3 = ConnectedComponentSegment(s16_MAX, s16_MAX, s16_MAX, u16_MAX); // 9
-  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, s16_MAX, 0, 0); // 0
-  const ConnectedComponentSegment component5 = ConnectedComponentSegment(0, s16_MAX, s16_MAX, 0); // 3
-  const ConnectedComponentSegment component6 = ConnectedComponentSegment(0, s16_MAX, s16_MAX, u16_MAX); // 8
-  const ConnectedComponentSegment component7 = ConnectedComponentSegment(s16_MAX, s16_MAX, 0, u16_MAX); // 6
-  const ConnectedComponentSegment component8 = ConnectedComponentSegment(0, s16_MAX, 0, 0); // 1
-  const ConnectedComponentSegment component9 = ConnectedComponentSegment(42, 42, 42, 42); // 5
+  const ConnectedComponentSegment component0 = ConnectedComponentSegment(50, 100, 50, u16_MAX); // 2
+  const ConnectedComponentSegment component1 = ConnectedComponentSegment(s16_MAX, s16_MAX, s16_MAX, 0); // 9
+  const ConnectedComponentSegment component2 = ConnectedComponentSegment(s16_MAX, s16_MAX, 0, 0); // 7
+  const ConnectedComponentSegment component3 = ConnectedComponentSegment(s16_MAX, s16_MAX, s16_MAX, u16_MAX); // 4
+  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, s16_MAX, 0, 0); // 5
+  const ConnectedComponentSegment component5 = ConnectedComponentSegment(0, s16_MAX, s16_MAX, 0); // 8
+  const ConnectedComponentSegment component6 = ConnectedComponentSegment(0, s16_MAX, s16_MAX, u16_MAX); // 3
+  const ConnectedComponentSegment component7 = ConnectedComponentSegment(s16_MAX, s16_MAX, 0, u16_MAX); // 1
+  const ConnectedComponentSegment component8 = ConnectedComponentSegment(0, s16_MAX, 0, 0); // 6
+  const ConnectedComponentSegment component9 = ConnectedComponentSegment(42, 42, 42, 42); // 0
 
   *components.Pointer(0) = component0;
   *components.Pointer(1) = component1;
@@ -359,16 +359,16 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SortComponents)
   const Result result = SortConnectedComponentSegments(components);
   ASSERT_TRUE(result == RESULT_OK);
 
-  ASSERT_TRUE(*components.Pointer(0) == component4);
-  ASSERT_TRUE(*components.Pointer(1) == component8);
-  ASSERT_TRUE(*components.Pointer(2) == component2);
-  ASSERT_TRUE(*components.Pointer(3) == component5);
-  ASSERT_TRUE(*components.Pointer(4) == component1);
-  ASSERT_TRUE(*components.Pointer(5) == component9);
-  ASSERT_TRUE(*components.Pointer(6) == component7);
-  ASSERT_TRUE(*components.Pointer(7) == component0);
-  ASSERT_TRUE(*components.Pointer(8) == component6);
-  ASSERT_TRUE(*components.Pointer(9) == component3);
+  ASSERT_TRUE(*components.Pointer(0) == component9);
+  ASSERT_TRUE(*components.Pointer(1) == component7);
+  ASSERT_TRUE(*components.Pointer(2) == component0);
+  ASSERT_TRUE(*components.Pointer(3) == component6);
+  ASSERT_TRUE(*components.Pointer(4) == component3);
+  ASSERT_TRUE(*components.Pointer(5) == component4);
+  ASSERT_TRUE(*components.Pointer(6) == component8);
+  ASSERT_TRUE(*components.Pointer(7) == component2);
+  ASSERT_TRUE(*components.Pointer(8) == component5);
+  ASSERT_TRUE(*components.Pointer(9) == component1);
 
   GTEST_RETURN_HERE;
 } // IN_DDR GTEST_TEST(CoreTech_Vision, SortComponents)

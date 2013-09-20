@@ -216,7 +216,7 @@ namespace Anki
       return RESULT_OK;
     } // Result Extract1dComponents(const u8 * restrict binaryImageRow, const s32 binaryImageWidth, const s32 minComponentWidth, FixedLengthList<Point<s16> > &extractedComponents)
 
-    // Sort the components by id, y, then xStart
+    // Sort the components by id (the ids are sorted in increasing value, but with zero at the end {1...MAX_VALUE,0}), then y, then xStart
     // TODO: determine how fast this method is, then suggest usage
     IN_DDR Result SortConnectedComponentSegments(FixedLengthList<ConnectedComponentSegment> &components)
     {
