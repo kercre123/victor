@@ -80,12 +80,6 @@
 
 #endif // #if defined(USING_MOVIDIUS_COMPILER)
 
-#include <stdio.h>
-
-/*#ifdef MATLAB_MEX_FILE
-#define printf mexPrintf
-#endif*/
-
 #include <stddef.h>
 
 #ifdef USING_MOVIDIUS_GCC_COMPILER
