@@ -165,6 +165,27 @@ namespace Anki
       //Array & operator= (const Array & rightHandSide); // In the future, assignment may not be allowed
     }; // class Array
 
+#pragma mark --- FixedPointArray Class Definition ---
+
+    template<typename Type> class FixedPointArray : public Array<Type>
+    {
+    public:
+      FixedPointArray();
+
+      // Constructor for a Array, pointing to user-allocated data. If the pointer to *data is not
+      // aligned to MEMORY_ALIGNMENT, this Array will start at the next aligned location.
+      // Unfortunately, this is more restrictive than most matrix libraries, and as an example,
+      // it may make it hard to convert from OpenCV to Array, though the reverse is trivial.
+      // All memory in the array is zeroed out once it is allocated
+      FixedPointArray(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const s32 numFractionalBits, const bool useBoundaryFillPatterns=false);
+
+      // Constructor for a Array, pointing to user-allocated MemoryStack
+      // All memory in the array is zeroed out once it is allocated
+      FixedPointArray(const s32 numRows, const s32 numCols, const s32 numFractionalBits, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
+
+      s32 get_numFractionalBits() const;
+    };
+
 #pragma mark --- Array Implementations ---
 
     // Factory method to create an Array from the heap. The data of the returned Array must be freed by the user.
@@ -282,7 +303,22 @@ namespace Anki
     {
       AnkiConditionalError(this->IsValid(), "Array<Type>::Show", "Array<Type> is not valid");
 
-      cv::imshow(windowName, cvMatMirror);
+      if(scaleValues) {
+        cv::Mat_<f64> scaledArray(this->get_size(0), this->get_size(1));
+        scaledArray = cvMatMirror;
+
+        const f64 minValue = this->Min();
+        const f64 maxValue = this->Max();
+        const f64 range = maxValue - minValue;
+
+        scaledArray -= minValue;
+        scaledArray /= range;
+
+        cv::imshow(windowName, scaledArray);
+      } else {
+        cv::imshow(windowName, cvMatMirror);
+      }
+
       if(waitForKeypress) {
         cv::waitKey();
       }
@@ -580,6 +616,8 @@ namespace Anki
           minValue = MIN(minValue, this_rowPointer[x]);
         }
       }
+
+      return minValue;
     }
 
     template<typename Type> Type Array<Type>::Max() const
@@ -591,9 +629,35 @@ namespace Anki
       for(s32 y=0; y<size[0]; y++) {
         const Type * const this_rowPointer = this->Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
-          maxValue = MAX(minValue, this_rowPointer[x]);
+          maxValue = MAX(maxValue, this_rowPointer[x]);
         }
       }
+
+      return maxValue;
+    }
+
+#pragma mark --- FixedPointArray Implementations ---
+
+    template<typename Type> FixedPointArray<Type>::FixedPointArray()
+      : Array<Type>(), numFractionalBits(-1)
+    {
+    }
+
+    template<typename Type> FixedPointArray<Type>::FixedPointArray(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const s32 numFractionalBits, const bool useBoundaryFillPatterns)
+      : Array<Type>(numRows, numCols, data, dataLength, useBoundaryFillPatterns), numFractionalBits(numFractionalBits)
+    {
+      AnkiConditionalError(numFractionalBits >= 0 && numFractionalBits <= (sizeof(T)*8),  "FixedPointArray<Type>", "numFractionalBits number is invalid");
+    }
+
+    template<typename Type> FixedPointArray<Type>::FixedPointArray(s32 numRows, s32 numCols, s32 numFractionalBits, MemoryStack &memory, bool useBoundaryFillPatterns)
+      : Array<Type>(numRows, numCols, memory, useBoundaryFillPatterns), numFractionalBits(numFractionalBits)
+    {
+      AnkiConditionalError(numFractionalBits >= 0 && numFractionalBits <= (sizeof(T)*8),  "FixedPointArray<Type>", "numFractionalBits number is invalid");
+    }
+
+    template<typename Type> s32 FixedPointArray<Type>::get_numFractionalBits() const
+    {
+      return numFractionalBits;
     }
 
 #pragma mark --- Array Specializations ---
