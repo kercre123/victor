@@ -89,6 +89,7 @@ namespace Anki
                   //equivalentComponents[firstMatchedPreviousId] = MIN(equivalentComponents[firstMatchedPreviousId], minId);
                   //equivalentComponents[previousId] = MIN(equivalentComponents[previousId], minId);
 
+                  equivalentComponents[equivalentComponents[firstMatchedPreviousId]] = minId;
                   equivalentComponents[firstMatchedPreviousId] = minId;
                   equivalentComponents[previousId] = minId;
                   newPreviousComponents1d_rowPointer[iCurrent].id = minId;
