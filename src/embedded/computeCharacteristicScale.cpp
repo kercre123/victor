@@ -7,7 +7,7 @@ namespace Anki
 #define MAX_PYRAMID_LEVELS 8
 #define MAX_ALPHAS 128
     // //function scaleImage = computeCharacteristicScaleImage_loopsAndFixedPoint(image, numPyramidLevels, computeDogAtFullSize, filterWithMex)
-    IN_DDR Result ComputeCharacteristicScaleImage(const Array<u8> &image, const s32 numPyramidLevels, Array<u32> &scaleImage, MemoryStack scratch)
+    IN_DDR Result ComputeCharacteristicScaleImage(const Array<u8> &image, const s32 numPyramidLevels, FixedPointArray<u32> &scaleImage, MemoryStack scratch)
     {
       //double times[20];
 
@@ -24,6 +24,9 @@ namespace Anki
 
       AnkiConditionalErrorAndReturnValue(image.get_size(0) == scaleImage.get_size(0) && image.get_size(1) == scaleImage.get_size(1),
         RESULT_FAIL, "ComputeCharacteristicScaleImage", "image and scaleImage must be the same size");
+
+      AnkiConditionalErrorAndReturnValue(scaleImage.get_numFractionalBits() == 16,
+        RESULT_FAIL, "ComputeCharacteristicScaleImage", "scaleImage must be UQ16.16");
 
       // TODO: add check for the required amount of scratch?
 

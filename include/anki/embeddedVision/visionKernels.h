@@ -41,9 +41,9 @@ namespace Anki
 
     Result DownsampleByFactor(const Array<u8> &image, const s32 downsampleFactor, Array<u8> &imageDownsampled);
 
-    Result ComputeCharacteristicScaleImage(const Array<u8> &image, const s32 numPyramidLevels, Array<u32> &scaleImage, MemoryStack scratch);
+    Result ComputeCharacteristicScaleImage(const Array<u8> &image, const s32 numPyramidLevels, FixedPointArray<u32> &scaleImage, MemoryStack scratch);
 
-    Result ThresholdScaleImage(const Array<u8> &originalImage, const Array<u32> &scaleImage, Array<u8> &binaryImage);
+    Result ThresholdScaleImage(const Array<u8> &originalImage, const FixedPointArray<u32> &scaleImage, Array<u8> &binaryImage);
 
     Result TraceBoundary(const Array<u8> &binaryImage, const Point<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point<s16> > &boundary);
 

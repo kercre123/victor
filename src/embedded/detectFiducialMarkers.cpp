@@ -32,7 +32,7 @@ namespace Anki
           {
             PUSH_MEMORY_STACK(scratch1); // Push the current state of the scratch buffer onto the system stack
 
-            Array<u32> scaleImage(image.get_size(0), image.get_size(1), scratch1);
+            FixedPointArray<u32> scaleImage(image.get_size(0), image.get_size(1), 16, scratch1);
 
             if(ComputeCharacteristicScaleImage(image, scaleImage_numPyramidLevels, scaleImage, scratch2) != RESULT_OK) {
               return RESULT_FAIL;
@@ -41,6 +41,9 @@ namespace Anki
             if(ThresholdScaleImage(image, scaleImage, binaryImage) != RESULT_OK) {
               return RESULT_FAIL;
             }
+
+            image.Show("image", false, false);
+            binaryImage.Show("binaryImage", true, true);
           } // PUSH_MEMORY_STACK(scratch1);
 
           // 3. Compute connected components from the binary image (use local scratch2, store in outer scratch1)
@@ -112,7 +115,7 @@ namespace Anki
           {
             PUSH_MEMORY_STACK(scratch1); // Push the current state of the scratch buffer onto the system stack
 
-            Array<u32> scaleImage(image.get_size(0), image.get_size(1), scratch1);
+            FixedPointArray<u32> scaleImage(image.get_size(0), image.get_size(1), 16, scratch1);
 
             if(ComputeCharacteristicScaleImage(image, numPyramidLevels, scaleImage, scratch2) != RESULT_OK) {
               return RESULT_FAIL;
