@@ -52,11 +52,11 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
 
   const s32 scaleImage_numPyramidLevels = 6;
 
-  const s16 component1d_minComponentWidth = 3;
-  const s16 component1d_maxSkipDistance = 1;
+  const s16 component1d_minComponentWidth = 0;
+  const s16 component1d_maxSkipDistance = 0;
 
-  const f32 minSideLength = Round(0.03f*MAX(480,640));
-  const f32 maxSideLength = Round(0.9f*MIN(480,640));
+  const f32 minSideLength = 0.03f*MAX(height,width);
+  const f32 maxSideLength = 0.9f*MIN(height,width);
 
   const s32 component_minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
   const s32 component_maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));

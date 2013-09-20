@@ -14,8 +14,8 @@ using namespace Anki::Embedded;
 
 // image = drawExampleSquaresImage();
 // scaleImage_numPyramidLevels = 6;
-// component1d_minComponentWidth = 3;
-// component1d_maxSkipDistance = 1;
+// component1d_minComponentWidth = 0;
+// component1d_maxSkipDistance = 0;
 // minSideLength = round(0.03*max(size(image,1),size(image,2)));
 // maxSideLength = round(0.9*min(size(image,1),size(image,2)));
 // component_minimumNumPixels = round(minSideLength*minSideLength - (0.8*minSideLength)*(0.8*minSideLength));
