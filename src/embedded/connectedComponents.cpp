@@ -83,10 +83,14 @@ namespace Anki
                   // TODO: Think if this can be changed to make the final equivalence matching faster
 
                   const u16 previousId = previousComponents1d_rowPointer[iPrevious].id;
-                  const u16 minId = MIN(firstMatchedPreviousId, previousId);
+                  //const u16 minId = MIN(firstMatchedPreviousId, previousId);
+                  const u16 minId = MIN(MIN(MIN(firstMatchedPreviousId, previousId), equivalentComponents[previousId]), equivalentComponents[firstMatchedPreviousId]);
 
-                  equivalentComponents[firstMatchedPreviousId] = MIN(equivalentComponents[firstMatchedPreviousId], minId);
-                  equivalentComponents[previousId] = MIN(equivalentComponents[previousId], minId);
+                  //equivalentComponents[firstMatchedPreviousId] = MIN(equivalentComponents[firstMatchedPreviousId], minId);
+                  //equivalentComponents[previousId] = MIN(equivalentComponents[previousId], minId);
+
+                  equivalentComponents[firstMatchedPreviousId] = minId;
+                  equivalentComponents[previousId] = minId;
                   newPreviousComponents1d_rowPointer[iCurrent].id = minId;
                 } // if(!foundMatch) ... else
             } // if(previousComponents1d_rowPointer[iPrevious].xStart
@@ -131,7 +135,8 @@ namespace Anki
               minNeighbor = equivalentComponents[minNeighbor]; // "Recurse" to the next lower component in the list
             }
             numChanges++;
-            equivalentComponents[minNeighbor] = minNeighbor;
+            //equivalentComponents[minNeighbor] = minNeighbor;
+            equivalentComponents[iComponent] = minNeighbor;
           } // if(equivalentComponents[minNeighbor] != minNeighbor)
         } //  for(s32 iComponent=0; iComponent<extractedComponents.get_size(); iComponent++)
 

@@ -1,4 +1,5 @@
 #include "anki/embeddedVision/visionKernels.h"
+#include "anki/embeddedVision/draw_vision.h"
 
 namespace Anki
 {
@@ -55,19 +56,61 @@ namespace Anki
               return RESULT_FAIL;
             }
 
+            //{
+            //  PUSH_MEMORY_STACK(scratch1);
+            //  Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
+            //  DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+            //  drawnComponents.Show("drawnComponents0", false);
+            //}
+
             CompressConnectedComponentSegmentIds(extractedComponents, scratch2);
+
+            //{
+            //  PUSH_MEMORY_STACK(scratch1);
+            //  Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
+            //  DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+            //  drawnComponents.Show("drawnComponents1", false);
+            //}
 
             if(MarkSmallOrLargeComponentsAsInvalid(extractedComponents, component_minimumNumPixels, component_maximumNumPixels, scratch2) != RESULT_OK) {
               return RESULT_FAIL;
             }
 
+            //{
+            //  PUSH_MEMORY_STACK(scratch1);
+            //  Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
+            //  DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+            //  drawnComponents.Show("drawnComponents2", false);
+            //}
+
             CompressConnectedComponentSegmentIds(extractedComponents, scratch2);
+
+            //{
+            //  PUSH_MEMORY_STACK(scratch1);
+            //  Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
+            //  DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+            //  drawnComponents.Show("drawnComponents3", false);
+            //}
 
             if(MarkSolidOrSparseComponentsAsInvalid(extractedComponents, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, scratch2) != RESULT_OK) {
               return RESULT_FAIL;
             }
 
+            //{
+            //  PUSH_MEMORY_STACK(scratch1);
+            //  Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
+            //  DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+            //  drawnComponents.Show("drawnComponents4", false);
+            //}
+
             CompressConnectedComponentSegmentIds(extractedComponents, scratch2);
+
+            //{
+            //  PUSH_MEMORY_STACK(scratch1);
+            //  Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
+            //  DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+            //  drawnComponents.Show("drawnComponents4", true);
+            //}
           } // PUSH_MEMORY_STACK(scratch2);
         } // PUSH_MEMORY_STACK(scratch2);
       } // PUSH_MEMORY_STACK(scratch1);
