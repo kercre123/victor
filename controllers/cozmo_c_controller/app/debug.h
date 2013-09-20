@@ -1,0 +1,9 @@
+#ifndef DEBUG_H_
+#define DEBUG_H_
+
+#define DEBUG_WHEEL_CONTROLLER 0
+#define DEBUG_STEERING_CONTROLLER 0
+#define DEBUG_SPEED_CONTROLLER 0
+
+
+#endif

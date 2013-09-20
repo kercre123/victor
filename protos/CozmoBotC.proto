@@ -154,7 +154,7 @@ Supervisor {
           }
         }
         DEF CAM_DOWN Camera {
-          translation 0 -0.005 0.015
+          translation 0 -0.005 -0.009
           rotation 1 0 0 -1.5708
           name "cam_down"
           fieldOfView IS fieldOfViewDown
@@ -198,7 +198,7 @@ Supervisor {
                   }
                 }
                 geometry Cylinder {
-                  height 0.02
+                  height 0.01
                   radius 0.015
                   subdivision 36
                 }

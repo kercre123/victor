@@ -50,6 +50,10 @@ BOOL IsKeyboardControllerEnabled()
 //Check the keyboard keys and issue robot commands
 void RunKeyboardController()
 {
+  if (!keyboardCtrlEnabled_) {
+    return;
+  }
+
   int key = wb_robot_keyboard_get_key();
   
   static float pitch_angle = 0;

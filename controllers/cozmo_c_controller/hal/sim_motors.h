@@ -26,6 +26,8 @@ float GetLiftAngle(void);
 //Set an angular wheel velocity in rad/sec
 void SetAngularWheelVelocity(float left, float right);
 
+void GetMotorAngles(float *left_angle, float *right_angle);
+
 void SetHeadAngle(float pitch_angle);
 float GetHeadAngle(void);
 

@@ -78,4 +78,54 @@ typedef u8 BOOL;
 #endif
 
 
+
+
+
+
+///// Misc. vars that may or may not belong here
+
+#define INVALID_IDEAL_FOLLOW_LINE_IDX s16_MAX
+
+
+
+//// This is from general.h, should go in coretech_common
+
+//////////////////////////////////////////////////////////////////////////////
+// COMPARISON MACROS
+//////////////////////////////////////////////////////////////////////////////
+
+
+// Tolerance for which two floating point numbers are considered equal (to deal
+// with imprecision in floating point representation).
+const double FLOATING_POINT_COMPARISON_TOLERANCE = 1e-5;
+
+// TRUE if x is near y by the amount epsilon, else FALSE
+#define FLT_NEAR(x,y) ((x) == (y) || (((x) > (y)-(FLOATING_POINT_COMPARISON_TOLERANCE)) && ((x) < (y)+(FLOATING_POINT_COMPARISON_TOLERANCE)))) 
+#define NEAR(x,y,epsilon) ((x) == (y) || (((x) > (y)-(epsilon)) && ((x) < (y)+(epsilon)))) 
+
+// TRUE if x is within FLOATING_POINT_COMPARISON_TOLERANCE of 0.0
+#define NEAR_ZERO(x) (NEAR(x, 0.0, FLOATING_POINT_COMPARISON_TOLERANCE))
+
+// TRUE if greater than the negative of the tolerance
+#define FLT_GTR_ZERO(x) ((x) >= -FLOATING_POINT_COMPARISON_TOLERANCE)
+
+// TRUE if x >= y - tolerance
+#define FLT_GE(x,y) ((x) >= (y) || (((x) >= (y)-(FLOATING_POINT_COMPARISON_TOLERANCE))))
+
+// TRUE if x - tolerance <= y
+#define FLT_LE(x,y) ((x) >= (y) || (((x)-(FLOATING_POINT_COMPARISON_TOLERANCE) <= (y))))
+  
+// TRUE if val is within the range [minVal, maxVal], else FALSE
+#define IN_RANGE(val,minVal,maxVal) ((val) >= (minVal) && (val) <= (maxVal))
+
+// Square of a number
+#define SQUARE(x) ((x) * (x))
+
+// Convert between millimeters and meters
+#define M_TO_MM(x) ( ((double)(x)) * 1000.0 )
+#define MM_TO_M(x) ( ((double)(x)) / 1000.0 )
+
+
+
+
 #endif // COZMO_TYPES_H

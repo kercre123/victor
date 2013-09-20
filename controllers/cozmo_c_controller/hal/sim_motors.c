@@ -10,6 +10,9 @@
 
 #include "cozmoConfig.h"
 
+// TODO:
+// Separate files for each motor class: wheels, gripper, head.
+//
 
 
 //Reference to the steering wheels
@@ -42,6 +45,10 @@ void InitMotors()
   wb_motor_set_position(wheels[0], INFINITY);
   wb_motor_set_position(wheels[1], INFINITY);
   
+  // Enable position measurements on wheel motors
+  wb_motor_enable_position(wheels[0], TIME_STEP);
+  wb_motor_enable_position(wheels[1], TIME_STEP);
+
   //Set the head pitch to 0
   wb_motor_set_position(head_pitch, 0);
   wb_motor_set_position(lift, LIFT_CENTER);
@@ -58,6 +65,10 @@ void InitMotors()
   wb_connector_enable_presence(con_lift, TIME_STEP);
   
 }
+
+
+
+
 
 //Sets an open loop speed to the two motors. The open loop speed value ranges
 //from: [0..MOTOR_PWM_MAXVAL] and HAS to be within those boundaries
@@ -146,3 +157,11 @@ float GetHeadAngle()
 {
   return wb_motor_get_position(head_pitch);
 }
+
+
+void GetMotorAngles(float *left_angle, float *right_angle)
+{
+  *left_angle = (float)wb_motor_get_position(wheels[0]);
+  *right_angle = (float)wb_motor_get_position(wheels[1]);
+}
+

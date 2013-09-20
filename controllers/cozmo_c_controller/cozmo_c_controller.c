@@ -23,11 +23,14 @@
 #include "hal/motors.h"
 #include "keyboardController.h"
 #include "cozmoConfig.h"
+#include "hal/sim_timers.h"
 
 /*
  * You may want to add macros here.
  */
 
+// If enabled, robot is controlled manually through keyboard.
+//#define ENABLE_KEYBOARD_CONTROL
 
 
 
@@ -154,7 +157,9 @@ int main(int argc, char **argv)
   InitMotors();
   
     
+#ifdef ENABLE_KEYBOARD_CONTROL
   EnableKeyboardController();
+#endif
   
   
   /* main loop
@@ -179,7 +184,10 @@ int main(int argc, char **argv)
      RunKeyboardController();
      
      CozmoMainExecution();
+    
      
+     // Simulator management stuff
+     ManageTimers(TIME_STEP); 
   };
   
   /* Enter your cleanup code here */
