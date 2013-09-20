@@ -184,6 +184,9 @@ namespace Anki
       FixedPointArray(const s32 numRows, const s32 numCols, const s32 numFractionalBits, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       s32 get_numFractionalBits() const;
+
+    protected:
+      s32 numFractionalBits;
     };
 
 #pragma mark --- Array Implementations ---
@@ -646,13 +649,13 @@ namespace Anki
     template<typename Type> FixedPointArray<Type>::FixedPointArray(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const s32 numFractionalBits, const bool useBoundaryFillPatterns)
       : Array<Type>(numRows, numCols, data, dataLength, useBoundaryFillPatterns), numFractionalBits(numFractionalBits)
     {
-      AnkiConditionalError(numFractionalBits >= 0 && numFractionalBits <= (sizeof(T)*8),  "FixedPointArray<Type>", "numFractionalBits number is invalid");
+      AnkiConditionalError(numFractionalBits >= 0 && numFractionalBits <= (sizeof(Type)*8),  "FixedPointArray<Type>", "numFractionalBits number is invalid");
     }
 
     template<typename Type> FixedPointArray<Type>::FixedPointArray(s32 numRows, s32 numCols, s32 numFractionalBits, MemoryStack &memory, bool useBoundaryFillPatterns)
       : Array<Type>(numRows, numCols, memory, useBoundaryFillPatterns), numFractionalBits(numFractionalBits)
     {
-      AnkiConditionalError(numFractionalBits >= 0 && numFractionalBits <= (sizeof(T)*8),  "FixedPointArray<Type>", "numFractionalBits number is invalid");
+      AnkiConditionalError(numFractionalBits >= 0 && numFractionalBits <= (sizeof(Type)*8),  "FixedPointArray<Type>", "numFractionalBits number is invalid");
     }
 
     template<typename Type> s32 FixedPointArray<Type>::get_numFractionalBits() const
