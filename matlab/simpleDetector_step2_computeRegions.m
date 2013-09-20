@@ -15,6 +15,7 @@ if usePerimeterCheck
 else
     if strcmp(embeddedConversions.connectedComponentsType, 'matlab_original')
         [regionMap, numRegions] = bwlabel(binaryImg');
+        regionMap = regionMap';
     elseif strcmp(embeddedConversions.connectedComponentsType, 'matlab_approximate')
 %         minimumComponentWidth = 4;
         minimumComponentWidth = 0;

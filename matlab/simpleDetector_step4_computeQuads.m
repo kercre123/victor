@@ -41,6 +41,10 @@ for i_region = 1:numRegions
         ycen = centroid(i_region,2);
         x = round(0.5*(x-xcen)+xcen);
         y = round(0.5*(y-ycen)+ycen);
+        x = max(x, 1);
+        x = min(x, ncols);
+        y = max(y, 1);
+        y = min(y, nrows);
         interiorIdx = sub2ind([nrows ncols], y, x);
         if any(regionMap(interiorIdx) == i_region)
 
