@@ -53,6 +53,10 @@ for iSubComponent = 1:size(component, 1)
     edge_right(y) = max(edge_right(y), xEnd);
 end
 
+if ~isempty(find(isinf(edge_top), 1)) || ~isempty(find(isinf(edge_bottom), 1)) || ~isempty(find(isinf(edge_left), 1)) || ~isempty(find(isinf(edge_right), 1))
+    keyboard
+end
+
 boundary = zeros(0, 2);
 
 % 2. Go through the right edge, from top to bottom. Add each to the

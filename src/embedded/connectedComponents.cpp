@@ -139,7 +139,7 @@ namespace Anki
           break;
         }
 
-        AnkiConditionalErrorAndReturnValue(numChanges == MAX_RECURSION_LEVEL, RESULT_FAIL, "extract2dComponents", "Issue with equivalentComponents minimum search");
+        AnkiConditionalErrorAndReturnValue(numChanges < MAX_RECURSION_LEVEL, RESULT_FAIL, "extract2dComponents", "Issue with equivalentComponents minimum search");
       } // for(s32 iEquivalent=0; iEquivalent<MAX_EQUIVALENT_ITERATIONS; iEquivalent++)
 
       //% disp(extractedComponents(1:numStored1dComponents, :));
