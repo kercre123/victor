@@ -33,29 +33,31 @@ for i_region = 1:numRegions
     
     regionMap(indexList{i_region}) = i_region;
     
-    % Check to see if interior of this region is roughly empty: 
-    x = xgrid(indexList{i_region});
-    y = ygrid(indexList{i_region});
-    xcen = centroid(i_region,1);
-    ycen = centroid(i_region,2);
-    x = round(0.5*(x-xcen)+xcen);
-    y = round(0.5*(y-ycen)+ycen);
-    interiorIdx = sub2ind([nrows ncols], y, x);
-    if any(regionMap(interiorIdx) == i_region)
-        
-        if DEBUG_DISPLAY
-            namedFigure('InitialFiltering')
-            binaryImg(indexList{i_region}) = 0;
-            subplot 224
-            imshow(binaryImg)
-            title('After Interior Check')
-            
-            namedFigure('SimpleDetector')
-            subplot(h_initialAxes)
-            overlay_image(binaryImg, 'r', 0, .3);
+    if strcmp(embeddedConversions.emptyCenterDetection, 'matlab_original')
+        % Check to see if interior of this region is roughly empty: 
+        x = xgrid(indexList{i_region});
+        y = ygrid(indexList{i_region});
+        xcen = centroid(i_region,1);
+        ycen = centroid(i_region,2);
+        x = round(0.5*(x-xcen)+xcen);
+        y = round(0.5*(y-ycen)+ycen);
+        interiorIdx = sub2ind([nrows ncols], y, x);
+        if any(regionMap(interiorIdx) == i_region)
+
+            if DEBUG_DISPLAY
+                namedFigure('InitialFiltering')
+                binaryImg(indexList{i_region}) = 0;
+                subplot 224
+                imshow(binaryImg)
+                title('After Interior Check')
+
+                namedFigure('SimpleDetector')
+                subplot(h_initialAxes)
+                overlay_image(binaryImg, 'r', 0, .3);
+            end
+
+           continue; 
         end
-        
-       continue; 
     end
     
     % % External boundary

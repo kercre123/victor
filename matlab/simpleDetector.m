@@ -24,21 +24,64 @@ img = mean(im2double(img),3);
 
 [nrows,ncols] = size(img);
 
-%% Binary Region Detection
+if strcmp(embeddedConversions.step123Type, 'matlab_original')
+    binaryImg = simpleDetector_step1_computeCharacteristicScale(maxSmoothingFraction, nrows, ncols, downsampleFactor, img, thresholdFraction, usePyramid, embeddedConversions, showTiming, DEBUG_DISPLAY);
 
-binaryImg = simpleDetector_step1_computeCharacteristicScale(maxSmoothingFraction, nrows, ncols, downsampleFactor, img, thresholdFraction, usePyramid, embeddedConversions, showTiming, DEBUG_DISPLAY);
+    if showTiming, t_binaryRegions = tic; end
 
-if showTiming, t_binaryRegions = tic; end
+    [numRegions, area, indexList, bb, centroid, components2d] = simpleDetector_step2_computeRegions(binaryImg, usePerimeterCheck, embeddedConversions, DEBUG_DISPLAY);
 
-[numRegions, area, indexList, bb, centroid, components2d] = simpleDetector_step2_computeRegions(binaryImg, usePerimeterCheck, embeddedConversions, DEBUG_DISPLAY);
+    if numRegions == 0
+        % Didn't even find any regions in the binary image, nothing to
+        % do!
+        return;
+    end
 
-if numRegions == 0
-    % Didn't even find any regions in the binary image, nothing to
-    % do!
-    return;
+    [numRegions, indexList, centroid, components2d] = simpleDetector_step3_simpleRejectionTests(nrows, ncols, numRegions, area, indexList, bb, centroid, usePerimeterCheck, components2d, embeddedConversions, DEBUG_DISPLAY);
+elseif strcmp(embeddedConversions.step123Type, 'c_singleStep')
+    scaleImage_numPyramidLevels = round(log(maxSmoothingFraction*max(nrows,ncols)) / log(downsampleFactor));
+    component1d_minComponentWidth = 0;
+    component1d_maxSkipDistance = 0;
+    minSideLength = (0.03*max(size(img,1),size(img,2)));
+    maxSideLength = (0.9*min(size(img,1),size(img,2)));
+    component_minimumNumPixels = round(minSideLength*minSideLength - (0.8*minSideLength)*(0.8*minSideLength));
+    component_maximumNumPixels = round(maxSideLength*maxSideLength - (0.8*maxSideLength)*(0.8*maxSideLength));
+    component_sparseMultiplyThreshold = 1000;
+    component_solidMultiplyThreshold = 2;
+    
+%     keyboard
+    tic
+    components2d = mexSimpleDetectorSteps123(im2uint8(img), scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold);
+    toc
+    
+    for i = 1:length(components2d)
+        components2d{i} = components2d{i} + 1; % Convert from c to matlab indexing
+    end
+    
+    numRegions = length(components2d);
+    
+    % Add in the matlab intermediate results
+    indexList = cell(1, length(components2d));
+    centroid = zeros(length(components2d), 2);
+    for iComponent = 1:length(components2d)
+        area = sum(components2d{iComponent}(:,3) - components2d{iComponent}(:,2) + 1);
+        indexList{iComponent} = zeros(area, 1);
+        
+        ci = 1;
+        for iSegment = 1:size(components2d{iComponent}, 1)
+            y = components2d{iComponent}(iSegment,1);
+            xs = components2d{iComponent}(iSegment,2):components2d{iComponent}(iSegment,3);
+            indexList{iComponent}(ci:(ci+length(xs)-1)) = sub2ind(size(img), repmat(y, [1,length(xs)]), xs);
+            ci = ci + length(xs);            
+        end
+        
+        indexList{iComponent} = sort(indexList{iComponent});
+        
+        [ys, xs] = ind2sub(size(img), indexList{iComponent});
+        
+        centroid(iComponent, :) = [mean(xs), mean(ys)];
+    end
 end
-
-[numRegions, indexList, centroid, components2d] = simpleDetector_step3_simpleRejectionTests(nrows, ncols, numRegions, area, indexList, bb, centroid, usePerimeterCheck, components2d, embeddedConversions, DEBUG_DISPLAY);
 
 if showTiming
     fprintf('Binary region detection took %.2f seconds.\n', toc(t_binaryRegions));
