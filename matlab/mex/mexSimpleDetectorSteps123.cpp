@@ -4,6 +4,7 @@
 #include "anki/embeddedVision.h"
 
 #include <string.h>
+#include <vector>
 
 #define VERBOSITY 0
 
@@ -11,6 +12,17 @@ using namespace Anki::Embedded;
 
 #define ConditionalErrorAndReturn(expression, eventName, eventValue) if(!(expression)) { printf("%s - %s\n", (eventName), (eventValue)); return;}
 
+// image = drawExampleSquaresImage();
+// scaleImage_numPyramidLevels = 6;
+// component1d_minComponentWidth = 3;
+// component1d_maxSkipDistance = 1;
+// minSideLength = round(0.03*max(size(image,1),size(image,2)));
+// maxSideLength = round(0.9*min(size(image,1),size(image,2)));
+// component_minimumNumPixels = round(minSideLength*minSideLength - (0.8*minSideLength)*(0.8*minSideLength));
+// component_maximumNumPixels = round(maxSideLength*maxSideLength - (0.8*maxSideLength)*(0.8*maxSideLength));
+// component_sparseMultiplyThreshold = 1000;
+// component_solidMultiplyThreshold = 2;
+// components2d = mexSimpleDetectorSteps123(image, scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold);
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   // components2d = simpleDetector_step3_simpleRejectionTests(nrows, ncols, numRegions, area, indexList, bb, centroid, usePerimeterCheck, components2d, embeddedConversions, DEBUG_DISPLAY)
@@ -70,36 +82,47 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   const u16 numComponents = FindMaximumId(extractedComponents);
 
-  s32 * const componentSizes = scratch0.Allocate(sizeof(s32)*(numComponents+1));
+  s32 * const numComponentSegments = reinterpret_cast<s32*>(scratch0.Allocate(sizeof(s32)*(numComponents+1)));
 
   {
-    const Result result = ComputeComponentSizes(components, componentSizes, numComponents);
+    const Result result = ComputeNumComponentSegments(extractedComponents, numComponentSegments, numComponents);
 
     ConditionalErrorAndReturn(result == RESULT_OK, "mexSimpleDetectorSteps123", "ComputeComponentSizes Failed");
   }
 
-  Array<f64> *components2d = scratch0.Allocate(numComponents*sizeof(Array<f64>));
+  std::vector<Array<f64> > components2d;
+  components2d.resize(numComponents);
+  //* = new Array<f64>[]; //reinterpret_cast<Array<f64>*>(scratch0.Allocate(numComponents*sizeof(Array<f64>)));
+
+  s32 *components2d_currentSegment = reinterpret_cast<s32*>(scratch0.Allocate(numComponents*sizeof(s32)));
+  memset(components2d_currentSegment, 0, sizeof(components2d_currentSegment[0]) * numComponents);
 
   for(s32 i=0; i<numComponents; i++) {
-    components2d[i] = Array<f64>(componentSizes[i+1], 4, scratch0);
+    components2d[i] = Array<f64>(numComponentSegments[i+1], 3, scratch0);
   }
 
   const ConnectedComponentSegment * restrict extractedComponents_constRowPointer = extractedComponents.Pointer(0);
   for(s32 i=0; i<extractedComponents.get_size(); i++) {
     const u16 id = extractedComponents_constRowPointer[i].id;
-    f64 * restrict components2di_rowPointer = components2d[id-1].Pointer(iSegment,0);
 
-    components2di_rowPointer[0] = extractedComponents_constRowPointer[i].xStart;
-    components2di_rowPointer[1] = extractedComponents_constRowPointer[i].xEnd;
-    components2di_rowPointer[2] = extractedComponents_constRowPointer[i].y;
+    if(id == 0)
+      continue;
+
+    f64 * restrict components2di_rowPointer = components2d[id-1].Pointer(components2d_currentSegment[id-1],0);
+
+    components2di_rowPointer[0] = extractedComponents_constRowPointer[i].y;
+    components2di_rowPointer[1] = extractedComponents_constRowPointer[i].xStart;
+    components2di_rowPointer[2] = extractedComponents_constRowPointer[i].xEnd;
+
+    components2d_currentSegment[id-1]++;
   }
 
   const mwSize components2dMatlab_ndim = 2;
-  const mwSize components2dMatlab_dims[] = {numComponents, 1};
+  const mwSize components2dMatlab_dims[] = {1, numComponents};
   mxArray *components2dMatlab = mxCreateCellArray(components2dMatlab_ndim, components2dMatlab_dims);
 
   for(s32 i=0; i<numComponents; i++) {
-    components2dMatlab[i] = arrayToMxArray<f64>(components2d[i]);
+    mxSetCell(components2dMatlab, i, arrayToMxArray<f64>(components2d[i]));
   }
 
   plhs[0] = components2dMatlab;
@@ -107,4 +130,5 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   free(scratch0.get_buffer());
   free(scratch1.get_buffer());
   free(scratch2.get_buffer());
+  //delete(components2d);
 }

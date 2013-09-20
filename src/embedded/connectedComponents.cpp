@@ -275,6 +275,27 @@ namespace Anki
       return RESULT_OK;
     }
 
+    // Iterate through components, and compute the number of componentSegments that have each id
+    // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes
+    // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+    Result ComputeNumComponentSegments(const FixedLengthList<ConnectedComponentSegment> &components, s32 * restrict numComponentSegments, const u16 maximumId)
+    {
+      AnkiConditionalErrorAndReturnValue(numComponentSegments, RESULT_FAIL, "ComputeComponentSizes", "numComponentSegments is NULL");
+      AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "components is not valid");
+
+      memset(numComponentSegments, 0, sizeof(numComponentSegments[0])*(maximumId+1));
+
+      const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
+
+      for(s32 i=0; i<components.get_size(); i++) {
+        const u16 id = components_constRowPointer[i].id;
+
+        numComponentSegments[id]++;
+      }
+
+      return RESULT_OK;
+    }
+
     // The list of components may have unused ids. This function compresses the set of ids, so that
     // max(ids) == numberOfUniqueValues(ids). The function then returns the maximum id. For example, the list of ids {0,4,5,7} would be
     // changed to {0,1,2,3}, and it would return 3.

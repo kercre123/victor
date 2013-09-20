@@ -42,8 +42,8 @@ namespace Anki
               return RESULT_FAIL;
             }
 
-            image.Show("image", false, false);
-            binaryImage.Show("binaryImage", true, true);
+            // image.Show("image", false, false);
+            // binaryImage.Show("binaryImage", true, true);
           } // PUSH_MEMORY_STACK(scratch1);
 
           // 3. Compute connected components from the binary image (use local scratch2, store in outer scratch1)

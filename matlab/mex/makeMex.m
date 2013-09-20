@@ -1,4 +1,5 @@
 
+compileAnkiMex('vision', 'mexSimpleDetectorSteps123.cpp', 'compileVerbose', true, 'useDebugMode', false);
 compileAnkiMex('vision', 'mexRegionProps.cpp', 'compileVerbose', true, 'useDebugMode', false);
 compileAnkiMex('vision', 'mexClosestIndex.cpp', 'compileVerbose', true, 'useDebugMode', false);
 compileAnkiMex('vision', 'mexHist.cpp', 'compileVerbose', true, 'useDebugMode', false);

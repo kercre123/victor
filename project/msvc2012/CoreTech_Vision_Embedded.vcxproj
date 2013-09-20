@@ -18,6 +18,7 @@
     <ClCompile Include="..\..\src\embedded\dataStructures_vision.cpp" />
     <ClCompile Include="..\..\src\embedded\detectFiducialMarkers.cpp" />
     <ClCompile Include="..\..\src\embedded\downsampleByFactor.cpp" />
+    <ClCompile Include="..\..\src\embedded\draw_vision.cpp" />
     <ClCompile Include="..\..\src\embedded\fixedLengthList_vision.cpp" />
     <ClCompile Include="..\..\src\embedded\thresholdScaleImage.cpp" />
     <ClCompile Include="..\..\src\embedded\traceBoundary.cpp" />
@@ -27,6 +28,7 @@
     <ClInclude Include="..\..\include\anki\embeddedVision\array2d_vision.h" />
     <ClInclude Include="..\..\include\anki\embeddedVision\config.h" />
     <ClInclude Include="..\..\include\anki\embeddedVision\dataStructures_vision.h" />
+    <ClInclude Include="..\..\include\anki\embeddedVision\draw_vision.h" />
     <ClInclude Include="..\..\include\anki\embeddedVision\fixedLengthList_vision.h" />
     <ClInclude Include="..\..\include\anki\embeddedVision\visionKernels.h" />
     <ClInclude Include="..\..\include\anki\embeddedVision\visionKernels_connectedComponents.h" />

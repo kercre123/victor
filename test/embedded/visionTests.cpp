@@ -47,7 +47,22 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
 {
-  /*
+  const s32 width = 640;
+  const s32 height = 480;
+
+  const s32 scaleImage_numPyramidLevels = 6;
+
+  const s16 component1d_minComponentWidth = 3;
+  const s16 component1d_maxSkipDistance = 1;
+
+  const f32 minSideLength = Round(0.03f*MAX(480,640));
+  const f32 maxSideLength = Round(0.9f*MIN(480,640));
+
+  const s32 component_minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
+  const s32 component_maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
+  const s32 component_sparseMultiplyThreshold = 1000;
+  const s32 component_solidMultiplyThreshold = 2;
+
   const u32 numBytes0 = 10000000;
   MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
   ASSERT_TRUE(scratch0.IsValid());
@@ -63,22 +78,37 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
   const s32 maxConnectedComponentSegments = u16_MAX;
   FixedLengthList<ConnectedComponentSegment> extractedComponents(maxConnectedComponentSegments, scratch0);
 
+  Array<u8> image(height, width, scratch0);
+
+  {
+    Result result = DrawExampleSquaresImage(image);
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
   const Result result = SimpleDetector_Steps123(
-  image,
-  scaleImage_numPyramidLevels,
-  component1d_minComponentWidth, component1d_maxSkipDistance,
-  component_minimumNumPixels, component_maximumNumPixels,
-  component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
-  extractedComponents,
-  scratch1,
-  scratch2);
+    image,
+    scaleImage_numPyramidLevels,
+    component1d_minComponentWidth, component1d_maxSkipDistance,
+    component_minimumNumPixels, component_maximumNumPixels,
+    component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
+    extractedComponents,
+    scratch1,
+    scratch2);
 
   ASSERT_TRUE(result == RESULT_OK);
+
+  Array<u8> drawnComponents(height, width, scratch0);
+  DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+
+  matlab.PutArray(drawnComponents, "drawnComponents");
+  //drawnComponents.Show("drawnComponents", true, false);
+
+  //extractedComponents.Print();
 
   free(scratch0.get_buffer());
   free(scratch1.get_buffer());
   free(scratch2.get_buffer());
-  */
+
   GTEST_RETURN_HERE;
 } // IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
 
@@ -581,7 +611,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
   ASSERT_TRUE(image.IsValid());
   ASSERT_TRUE(image.Set(imageData, ComputeCharacteristicScale_imageDataLength) == width*height);
 
-  Array<u32> scaleImage(height, width, ms);
+  FixedPointArray<u32> scaleImage(height, width, 16, ms);
   ASSERT_TRUE(scaleImage.IsValid());
 
   ASSERT_TRUE(ComputeCharacteristicScaleImage(image, numPyramidLevels, scaleImage, ms) == RESULT_OK);

@@ -30,9 +30,16 @@
     <ClCompile Include="..\..\src\embedded\computeCharacteristicScale.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\embedded\detectFiducialMarkers.cpp" />
-    <ClCompile Include="..\..\src\embedded\thresholdScaleImage.cpp" />
     <ClCompile Include="..\..\src\embedded\connectedComponents.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\embedded\draw_vision.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\embedded\detectFiducialMarkers.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\embedded\thresholdScaleImage.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
@@ -55,6 +62,11 @@
     <ClInclude Include="..\..\include\anki\embeddedVision\visionKernels.h">
       <Filter>Includes</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\anki\embeddedVision\visionKernels_connectedComponents.h" />
+    <ClInclude Include="..\..\include\anki\embeddedVision\draw_vision.h">
+      <Filter>Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\anki\embeddedVision\visionKernels_connectedComponents.h">
+      <Filter>Includes</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
