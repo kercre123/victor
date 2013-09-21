@@ -19,6 +19,7 @@
     <ClCompile Include="..\..\src\embedded\opencvLight.cpp" />
     <ClCompile Include="..\..\src\embedded\point.cpp" />
     <ClCompile Include="..\..\src\embedded\utilities.cpp" />
+    <ClCompile Include="Z:\Documents\Anki\coretech-common\src\embedded\benchmarking.c" />
     <ClCompile Include="Z:\Documents\Anki\coretech-common\src\embedded\draw.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -34,6 +35,7 @@
     <ClInclude Include="..\..\include\anki\embeddedCommon\opencvLight.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\point.h" />
     <ClInclude Include="..\..\include\anki\embeddedCommon\utilities.h" />
+    <ClInclude Include="Z:\Documents\Anki\coretech-common\include\anki\embeddedCommon\benchmarking.h" />
     <ClInclude Include="Z:\Documents\Anki\coretech-common\include\anki\embeddedCommon\draw.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

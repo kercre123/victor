@@ -43,6 +43,43 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+// This test requires a stopwatch, and takes about a minute to do manually
+#define TEST_BENCHMARKING
+#ifdef TEST_BENCHMARKING
+IN_DDR GTEST_TEST(CoreTech_Common, BENCHMARKING)
+{
+  InitBenchmarking();
+
+  BeginBenchmark("testOuter");
+
+  const double startTime0 = GetTime();
+  while((GetTime() - startTime0) < 1.0) {}
+
+  BeginBenchmark("testInner");
+  const double startTime1 = GetTime();
+  while((GetTime() - startTime1) < 1.0) {}
+  EndBenchmark("testInner");
+
+  BeginBenchmark("testInner");
+  const double startTime2 = GetTime();
+  while((GetTime() - startTime2) < 2.0) {}
+  EndBenchmark("testInner");
+
+  BeginBenchmark("testInner");
+  const double startTime3 = GetTime();
+  while((GetTime() - startTime3) < 3.0) {}
+  EndBenchmark("testInner");
+
+  EndBenchmark("testOuter");
+
+  PrintBenchmarkResults();
+
+  printf("Done with benchmarking test\n");
+
+  GTEST_RETURN_HERE;
+}
+#endif //#ifdef TEST_BENCHMARKING
+
 IN_DDR GTEST_TEST(CoreTech_Common, MatrixMultiply)
 {
   const s32 numBytes = MIN(MAX_BYTES, 5000);
