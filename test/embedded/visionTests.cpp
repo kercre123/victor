@@ -45,6 +45,68 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+#include "blockImage50.h"
+
+// The test is if it can run without crashing
+IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
+{
+  const s32 scaleImage_numPyramidLevels = 6;
+
+  const s16 component1d_minComponentWidth = 0;
+  const s16 component1d_maxSkipDistance = 0;
+
+  const f32 minSideLength = 0.03f*MAX(blockImage50_HEIGHT,blockImage50_WIDTH);
+  const f32 maxSideLength = 0.9f*MIN(blockImage50_HEIGHT,blockImage50_WIDTH);
+
+  const s32 component_minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
+  const s32 component_maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
+  const s32 component_sparseMultiplyThreshold = 1000 << 5;
+  const s32 component_solidMultiplyThreshold = 2 << 5;
+
+  const u32 numBytes0 = 10000000;
+  MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
+  ASSERT_TRUE(scratch0.IsValid());
+
+  const u32 numBytes1 = 10000000;
+  MemoryStack scratch1(calloc(numBytes1,1), numBytes0);
+  ASSERT_TRUE(scratch1.IsValid());
+
+  const u32 numBytes2 = 10000000;
+  MemoryStack scratch2(calloc(numBytes2,1), numBytes2);
+  ASSERT_TRUE(scratch2.IsValid());
+
+  const s32 maxConnectedComponentSegments = u16_MAX;
+  FixedLengthList<ConnectedComponentSegment> extractedComponents(maxConnectedComponentSegments, scratch0);
+
+  Array<u8> image(blockImage50_HEIGHT, blockImage50_WIDTH, scratch0);
+  image.Set(&blockImage50[0], blockImage50_HEIGHT*blockImage50_WIDTH);
+
+  const Result result = SimpleDetector_Steps123(
+    image,
+    scaleImage_numPyramidLevels,
+    component1d_minComponentWidth, component1d_maxSkipDistance,
+    component_minimumNumPixels, component_maximumNumPixels,
+    component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
+    extractedComponents,
+    scratch1,
+    scratch2);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  Array<u8> drawnComponents(blockImage50_HEIGHT, blockImage50_WIDTH, scratch0);
+  DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+
+  matlab.PutArray(drawnComponents, "drawnComponents");
+  //drawnComponents.Show("drawnComponents", true, false);
+
+  free(scratch0.get_buffer());
+  free(scratch1.get_buffer());
+  free(scratch2.get_buffer());
+
+  GTEST_RETURN_HERE;
+}
+
+// The test is if it can run without crashing
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
 {
   const s32 width = 640;
@@ -102,8 +164,6 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
 
   matlab.PutArray(drawnComponents, "drawnComponents");
   //drawnComponents.Show("drawnComponents", true, false);
-
-  //extractedComponents.Print();
 
   free(scratch0.get_buffer());
   free(scratch1.get_buffer());
