@@ -14,5 +14,6 @@
 #include "anki/embeddedCommon/fixedLengthList.h"
 #include "anki/embeddedCommon/opencvLight.h"
 #include "anki/embeddedCommon/draw.h"
+#include "anki/embeddedCommon/benchmarking.h"
 
 #endif // _ANKICORETECHEMBEDDEDEMBEDDED_EMBEDDED_COMMON_H_
