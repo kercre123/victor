@@ -789,6 +789,8 @@ IN_DDR void RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage);
+  CALL_GTEST_TEST(CoreTech_Vision, MarkSolidOrSparseComponentsAsInvalid);
   CALL_GTEST_TEST(CoreTech_Vision, MarkSmallOrLargeComponentsAsInvalid);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
   CALL_GTEST_TEST(CoreTech_Vision, SortComponents);
