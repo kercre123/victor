@@ -19,7 +19,7 @@
 // Same usage as the Gtest macro
 #define ASSERT_TRUE(condition)\
   if(!(condition)) { \
-  _Anki_Logf(\
+  _Anki_Logf(ANKI_LOG_LEVEL_ESSENTIAL,\
   "\n------------------------------------------------------------------------\nUnitTestAssert(" #condition ") is false\nUnit Test Assert Failure\n------------------------------------------------------------------------",\
   "", __FILE__, __PRETTY_FUNCTION__, __LINE__); \
   return -1;\
@@ -27,6 +27,10 @@
 
 // Same usage as the Gtest macro
 #define ASSERT_FALSE(condition) ASSERT_TRUE(!(condition))
+
+// Same usage as the Gtest macro
+#define ASSERT_EQ(term1, term2)\
+  ASSERT_TRUE((term1) == (term2))
 
 // Call a GTEST_TEST, and increment the variable numPassedTests if the test passed, and  the variable numFailedTests if the test failed.
 #define CALL_GTEST_TEST(test_case_name, test_name)\
