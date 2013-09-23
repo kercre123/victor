@@ -14,9 +14,11 @@ if usePerimeterCheck
     centroid = vertcat(stats.Centroid);
 else
     if strcmp(embeddedConversions.connectedComponentsType, 'matlab_original')
-        [regionMap, numRegions] = bwlabel(binaryImg);
+        [regionMap, numRegions] = bwlabel(binaryImg');
+        regionMap = regionMap';
     elseif strcmp(embeddedConversions.connectedComponentsType, 'matlab_approximate')
-        minimumComponentWidth = 4;
+%         minimumComponentWidth = 4;
+        minimumComponentWidth = 0;
         components2d = approximateConnectedComponents(binaryImg, minimumComponentWidth);
         numRegions = length(components2d);
         regionMap = zeros(size(binaryImg));
@@ -32,7 +34,7 @@ else
 %         keyboard
     end
     
-    [area, indexList, bb, centroid] = mexRegionprops( ...
+    [area, indexList, bb, centroid] = mexRegionProps( ...
         uint32(regionMap), numRegions);
     area = double(area);
 end
