@@ -49,18 +49,27 @@ classdef Observation
                 
                 % Update robot's pose:
                 % TODO: return uncertainty in matLocalization
-                % TODO: can i dynamically compute pixPerMM from matCamera FOV and Pose?
                 pixPerMM = 18.0;
                 if strcmp(this.robot.matCamera.deviceType, 'webot')
-                    pixPerMM = 20.9;
+                    % Compute the resolution according to the camera's pose
+                    % and FOV.  
+                    % TODO: this need not be recomputed at every step!
+                    %pixPerMM = 22.0;
+                    matCamHeightInPix = (this.robot.matCamera.nrows/2) / ...
+                        tan(this.robot.matCamera.FOV_vertical/2);
+                    
+                    pixPerMM = matCamHeightInPix / ...
+                        (this.robot.appearance.WheelRadius + ...
+                        this.robot.matCamera.pose.T(3));
                 end
                 [xMat, yMat, orient] = matLocalization(this.matImage, ...
                     'pixPerMM', pixPerMM, 'camera', this.robot.matCamera, ...
                     'matSize', world.matSize, 'zDirection', world.zDirection, ...
                     'embeddedConversions', this.robot.embeddedConversions);
-                
+                             
                 % Set the pose based on the result of the matLocalization
-                this.pose = Pose(orient*[0 0 -1], [xMat yMat 0]);
+                this.pose = Pose(orient*[0 0 -1], ...
+                    [xMat yMat this.robot.appearance.WheelRadius]);
                 this.pose.name = 'ObservationPose';
                 
                 % Also update the parent robot's pose to match (*before* 
