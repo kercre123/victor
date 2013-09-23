@@ -1,4 +1,4 @@
-#include "anki/embeddedVision/visionKernels.h"
+#include "anki/embeddedVision/miscVisionKernels.h"
 #include "anki/embeddedVision/draw_vision.h"
 
 namespace Anki
@@ -12,7 +12,7 @@ namespace Anki
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
       const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
-      FixedLengthList<ConnectedComponentSegment> &extractedComponents,
+      ConnectedComponents &extractedComponents,
       MemoryStack scratch1,
       MemoryStack scratch2)
     {
@@ -52,7 +52,7 @@ namespace Anki
           {
             PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
 
-            if(Extract2dComponents(binaryImage, component1d_minComponentWidth, component1d_maxSkipDistance, extractedComponents, scratch2) != RESULT_OK) {
+            if(extractedComponents.Extract2dComponents(binaryImage, component1d_minComponentWidth, component1d_maxSkipDistance, scratch2) != RESULT_OK) {
               return RESULT_FAIL;
             }
 
@@ -63,7 +63,7 @@ namespace Anki
             //  drawnComponents.Show("drawnComponents0", false);
             //}
 
-            CompressConnectedComponentSegmentIds(extractedComponents, scratch2);
+            extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
             //{
             //  PUSH_MEMORY_STACK(scratch1);
@@ -72,7 +72,7 @@ namespace Anki
             //  drawnComponents.Show("drawnComponents1", false);
             //}
 
-            if(MarkSmallOrLargeComponentsAsInvalid(extractedComponents, component_minimumNumPixels, component_maximumNumPixels, scratch2) != RESULT_OK) {
+            if(extractedComponents.MarkSmallOrLargeComponentsAsInvalid(component_minimumNumPixels, component_maximumNumPixels, scratch2) != RESULT_OK) {
               return RESULT_FAIL;
             }
 
@@ -83,7 +83,7 @@ namespace Anki
             //  drawnComponents.Show("drawnComponents2", false);
             //}
 
-            CompressConnectedComponentSegmentIds(extractedComponents, scratch2);
+            extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
             //{
             //  PUSH_MEMORY_STACK(scratch1);
@@ -92,7 +92,7 @@ namespace Anki
             //  drawnComponents.Show("drawnComponents3", false);
             //}
 
-            if(MarkSolidOrSparseComponentsAsInvalid(extractedComponents, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, scratch2) != RESULT_OK) {
+            if(extractedComponents.MarkSolidOrSparseComponentsAsInvalid(component_sparseMultiplyThreshold, component_solidMultiplyThreshold, scratch2) != RESULT_OK) {
               return RESULT_FAIL;
             }
 
@@ -103,7 +103,7 @@ namespace Anki
             //  drawnComponents.Show("drawnComponents4", false);
             //}
 
-            CompressConnectedComponentSegmentIds(extractedComponents, scratch2);
+            extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
             //{
             //  PUSH_MEMORY_STACK(scratch1);
@@ -170,27 +170,27 @@ namespace Anki
           } // PUSH_MEMORY_STACK(scratch1);
 
           // 3. Compute connected components from the binary image (use local scratch2, store in outer scratch1)
-          FixedLengthList<ConnectedComponentSegment> extractedComponents(maxConnectedComponentSegments, scratch1);
+          ConnectedComponents extractedComponents(maxConnectedComponentSegments, scratch1);
           {
             PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
 
-            if(Extract2dComponents(binaryImage, minComponentWidth, maxSkipDistance, extractedComponents, scratch2) != RESULT_OK) {
+            if(extractedComponents.Extract2dComponents(binaryImage, minComponentWidth, maxSkipDistance, scratch2) != RESULT_OK) {
               return RESULT_FAIL;
             }
 
-            CompressConnectedComponentSegmentIds(extractedComponents, scratch2);
+            extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
-            if(MarkSmallOrLargeComponentsAsInvalid(extractedComponents, minimumNumPixels, maximumNumPixels, scratch2) != RESULT_OK) {
+            if(extractedComponents.MarkSmallOrLargeComponentsAsInvalid(minimumNumPixels, maximumNumPixels, scratch2) != RESULT_OK) {
               return RESULT_FAIL;
             }
 
-            CompressConnectedComponentSegmentIds(extractedComponents, scratch2);
+            extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
-            if(MarkSolidOrSparseComponentsAsInvalid(extractedComponents, sparseMultiplyThreshold, solidMultiplyThreshold, scratch2) != RESULT_OK) {
+            if(extractedComponents.MarkSolidOrSparseComponentsAsInvalid(sparseMultiplyThreshold, solidMultiplyThreshold, scratch2) != RESULT_OK) {
               return RESULT_FAIL;
             }
 
-            CompressConnectedComponentSegmentIds(extractedComponents, scratch2);
+            extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
           } // PUSH_MEMORY_STACK(scratch2);
 
           // 4. Compute candidate quadrilaterals from the connected components

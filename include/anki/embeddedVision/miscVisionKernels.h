@@ -3,6 +3,7 @@
 
 #include "anki/embeddedVision/config.h"
 #include "anki/embeddedCommon.h"
+#include "anki/embeddedVision/connectedComponents.h"
 
 namespace Anki
 {
@@ -29,7 +30,7 @@ namespace Anki
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
       const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
-      FixedLengthList<ConnectedComponentSegment> &extractedComponents,
+      ConnectedComponents &extractedComponents,
       MemoryStack scratch1,
       MemoryStack scratch2);
 

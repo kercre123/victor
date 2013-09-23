@@ -59,13 +59,13 @@
     <ClInclude Include="..\..\include\anki\embeddedVision\fixedLengthList_vision.h">
       <Filter>Includes</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\anki\embeddedVision\visionKernels.h">
-      <Filter>Includes</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\anki\embeddedVision\draw_vision.h">
       <Filter>Includes</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\anki\embeddedVision\visionKernels_connectedComponents.h">
+    <ClInclude Include="..\..\include\anki\embeddedVision\connectedComponents.h">
+      <Filter>Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\anki\embeddedVision\miscVisionKernels.h">
       <Filter>Includes</Filter>
     </ClInclude>
   </ItemGroup>

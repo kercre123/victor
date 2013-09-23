@@ -9,70 +9,103 @@ namespace Anki
 {
   namespace Embedded
   {
-    Result Extract2dComponents(const Array<u8> &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment> &extractedComponents, MemoryStack scratch);
-    Result Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment> &extractedComponents);
+    class ConnectedComponents
+    {
+    public:
+      // Returns a positive s64 if a > b, a negative s64 is a < b, or zero if they are identical
+      // The ordering of components is first by id (the ids are sorted in increasing value, but with zero at the end {1...MAX_VALUE,0}), then y, then xStart
+      // TODO: Doublecheck that this is correct for corner cases
+      static inline s64 CompareConnectedComponentSegments(const ConnectedComponentSegment &a, const ConnectedComponentSegment &b);
 
-    // Sort the components by id (the ids are sorted in increasing value, but with zero at the end {1...MAX_VALUE,0}), then y, then xStart
-    // TODO: determine how fast this method is, then suggest usage
-    Result SortConnectedComponentSegments(FixedLengthList<ConnectedComponentSegment> &components);
+      // TODO: when this class is converted to accept single scanlines as input, this will be significantly refactored
+      static Result Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment> &extractedComponents);
 
-    // The list of components may have unused ids. This function compresses the set of ids, so that
-    // max(ids) == numberOfUniqueValues(ids). For example, the list of ids {0,4,5,7} would be
-    // changed to {0,1,2,3}.
-    //
-    // For a components parameter that has a maximum id of N, this function requires
-    // 3n + 1 bytes of scratch.
-    //
-    // TODO: If scratch usage is a bigger issue than computation time, this could be done with a bitmask
-    u16 CompressConnectedComponentSegmentIds(FixedLengthList<ConnectedComponentSegment> &components, MemoryStack scratch);
+      // Constructor for a ConnectedComponents, pointing to user-allocated MemoryStack
+      ConnectedComponents(const s32 maxComponentSegments, MemoryStack &memory);
 
-    // Iterate through components, and return the maximum id
-    u16 FindMaximumId(const FixedLengthList<ConnectedComponentSegment> &components);
+      // TODO: when this class is converted to accept single scanlines as input, this will be significantly refactored
+      Result Extract2dComponents(const Array<u8> &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance, MemoryStack scratch);
 
-    // Iterate through components, and compute the number of pixels for each
-    // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes
-    // Note: this is probably inefficient, compared with interlacing the loops in a kernel
-    Result ComputeComponentSizes(const FixedLengthList<ConnectedComponentSegment> &components, s32 * restrict componentSizes, const u16 maximumId);
+      // Sort the components by id (the ids are sorted in increasing value, but with zero at the end {1...MAX_VALUE,0}), then y, then xStart
+      // TODO: determine how fast this method is, then suggest usage (probably pretty slow)
+      // TODO: Bucket sort
+      Result SortConnectedComponentSegments();
 
-    // Iterate through components, and compute the number of componentSegments that have each id
-    // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes
-    // Note: this is probably inefficient, compared with interlacing the loops in a kernel
-    Result ComputeNumComponentSegments(const FixedLengthList<ConnectedComponentSegment> &components, s32 * restrict numComponentSegments, const u16 maximumId);
+      // The list of components may have unused ids. This function compresses the set of ids, so that
+      // max(ids) == numberOfUniqueValues(ids). For example, the list of ids {0,4,5,7} would be
+      // changed to {0,1,2,3}.
+      //
+      // For a components parameter that has a maximum id of N, this function requires
+      // 3n + 1 bytes of scratch.
+      //
+      // TODO: If scratch usage is a bigger issue than computation time, this could be done with a bitmask
+      Result CompressConnectedComponentSegmentIds(MemoryStack scratch);
 
-    // Goes through the list components, and computes the number of pixels for each.
-    // For any componentId with less than minimumNumPixels pixels, all ConnectedComponentSegment with that id will have their ids set to zero
-    //
-    // For a components parameter that has a maximum id of N, this function requires
-    // 4n + 4 bytes of scratch.
-    Result MarkSmallOrLargeComponentsAsInvalid(FixedLengthList<ConnectedComponentSegment> &components, const s32 minimumNumPixels, const s32 maximumNumPixels, MemoryStack scratch);
+      // Iterate through components, and compute the number of pixels for each
+      // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes
+      // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+      Result ComputeComponentSizes(s32 * restrict componentSizes);
 
-    // Goes through the list components, and computes the "solidness", which is the ratio of
-    // "numPixels / (boundingWidth*boundingHeight)". For any componentId with that is too solid or
-    // sparse (opposite of solid), all ConnectedComponentSegment with that id will have their ids
-    // set to zero
-    //
-    // The SQ26.5 parameter sparseMultiplyThreshold is set so that a component is invalid if
-    // "sparseMultiplyThreshold*numPixels < boundingWidth*boundingHeight".
-    // A resonable value is between 5<<5 = 160 and 100<<5 = 3200.
-    //
-    // The SQ26.5 parameter solidMultiplyThreshold is set so that a component is invalid if
-    // "solidMultiplyThreshold*numPixels > boundingWidth*boundingHeight".
-    // A resonable value is between 1.5*pow(2,5) = 48 and 5<<5 = 160.
-    //
-    // Note: This can overflow if the number of pixels is greater than 2^26 (a bit more Ultra-HD resolution)
-    //
-    // For a components parameter that has a maximum id of N, this function requires
-    // 8N + 8 bytes of scratch.
-    Result MarkSolidOrSparseComponentsAsInvalid(FixedLengthList<ConnectedComponentSegment> &components, const s32 sparseMultiplyThreshold, const s32 solidMultiplyThreshold, MemoryStack scratch);
+      // Iterate through components, and compute the number of componentSegments that have each id
+      // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes
+      // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+      Result ComputeNumComponentSegmentsForEachId(s32 * restrict numComponentSegments);
 
-    // Returns a positive s64 if a > b, a negative s64 is a < b, or zero if they are identical
-    // The ordering of components is first by id (the ids are sorted in increasing value, but with zero at the end {1...MAX_VALUE,0}), then y, then xStart
-    // TODO: Doublecheck that this is correct for corner cases
-    inline s64 CompareConnectedComponentSegments(const ConnectedComponentSegment &a, const ConnectedComponentSegment &b);
+      // Goes through the list components, and computes the number of pixels for each.
+      // For any componentId with less than minimumNumPixels pixels, all ConnectedComponentSegment with that id will have their ids set to zero
+      //
+      // For a components parameter that has a maximum id of N, this function requires
+      // 4n + 4 bytes of scratch.
+      Result MarkSmallOrLargeComponentsAsInvalid(const s32 minimumNumPixels, const s32 maximumNumPixels, MemoryStack scratch);
+
+      // Goes through the list components, and computes the "solidness", which is the ratio of
+      // "numPixels / (boundingWidth*boundingHeight)". For any componentId with that is too solid or
+      // sparse (opposite of solid), all ConnectedComponentSegment with that id will have their ids
+      // set to zero
+      //
+      // The SQ26.5 parameter sparseMultiplyThreshold is set so that a component is invalid if
+      // "sparseMultiplyThreshold*numPixels < boundingWidth*boundingHeight".
+      // A resonable value is between 5<<5 = 160 and 100<<5 = 3200.
+      //
+      // The SQ26.5 parameter solidMultiplyThreshold is set so that a component is invalid if
+      // "solidMultiplyThreshold*numPixels > boundingWidth*boundingHeight".
+      // A resonable value is between 1.5*pow(2,5) = 48 and 5<<5 = 160.
+      //
+      // Note: This can overflow if the number of pixels is greater than 2^26 (a bit more Ultra-HD resolution)
+      //
+      // For a components parameter that has a maximum id of N, this function requires
+      // 8N + 8 bytes of scratch.
+      Result MarkSolidOrSparseComponentsAsInvalid(const s32 sparseMultiplyThreshold, const s32 solidMultiplyThreshold, MemoryStack scratch);
+
+      Result PushBack(const ConnectedComponentSegment &value);
+
+      // Note that this is a const-only accessor function. The ConnectedComponets class keeps a lot
+      // of tabs on sorting and maximumId and such, so no one else should be directly modifying the
+      // buffers.
+      const ConnectedComponentSegment* Pointer(const s32 index) const;
+
+      bool IsValid() const;
+
+      u16 get_maximumId() const;
+
+      s32 get_size() const;
+
+    protected:
+      FixedLengthList<ConnectedComponentSegment> components;
+
+      bool isSortedInId;
+      bool isSortedInY;
+      bool isSortedInX;
+
+      u16 maximumId;
+
+      // Iterate through components, and update the maximum id
+      Result FindMaximumId();
+    }; // class ConnectedComponents
 
 #pragma mark --- Implementations ---
 
-    inline s64 CompareConnectedComponentSegments(const ConnectedComponentSegment &a, const ConnectedComponentSegment &b)
+    inline s64 ConnectedComponents::CompareConnectedComponentSegments(const ConnectedComponentSegment &a, const ConnectedComponentSegment &b)
     {
       // Wraps zero around to MAX_u16
       u16 idA = a.id;

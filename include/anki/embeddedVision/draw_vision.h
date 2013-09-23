@@ -4,7 +4,7 @@
 #include "anki/embeddedCommon/config.h"
 #include "anki/embeddedCommon/array2d.h"
 #include "anki/embeddedVision/dataStructures_vision.h"
-#include "anki/embeddedVision/visionKernels_connectedComponents.h"
+#include "anki/embeddedVision/connectedComponents.h"
 
 namespace Anki
 {
@@ -12,11 +12,11 @@ namespace Anki
   {
     // Draw the components on the image
     // If minValue == maxValue == 0, no scaling will be performed
-    template<typename Type> Result DrawComponents(Array<Type> &image, FixedLengthList<ConnectedComponentSegment> &components, Type minValue, Type maxValue);
+    template<typename Type> Result DrawComponents(Array<Type> &image, ConnectedComponents &components, Type minValue, Type maxValue);
 
 #pragma mark --- Implementations ---
 
-    template<typename Type> Result DrawComponents(Array<Type> &image, FixedLengthList<ConnectedComponentSegment> &components, Type minValue, Type maxValue)
+    template<typename Type> Result DrawComponents(Array<Type> &image, ConnectedComponents &components, Type minValue, Type maxValue)
     {
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
         RESULT_FAIL, "DrawComponents", "image is not valid");
@@ -24,14 +24,14 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(components.IsValid(),
         RESULT_FAIL, "DrawComponents", "components is not valid");
 
-      const f64 numComponents = FindMaximumId(components);
+      const f64 numComponents = components.get_maximumId();
       const f64 minValueD = static_cast<f64>(minValue);
       const f64 maxValueD = static_cast<f64>(maxValue);
       const f64 step = (maxValueD - minValueD) / (numComponents-1);
 
       const bool doScaling = (minValue == maxValue) ? false : true;
 
-      ConnectedComponentSegment * restrict components_rowPointer = components.Pointer(0);
+      const ConnectedComponentSegment * restrict components_rowPointer = components.Pointer(0);
       for(s32 i=0; i<components.get_size(); i++) {
         const u16 id = components_rowPointer[i].id;
 
