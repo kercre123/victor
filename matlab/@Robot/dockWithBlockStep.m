@@ -3,14 +3,53 @@ function docked = dockWithBlockStep(this)
 DEBUG_DISPLAY = true;
 convergenceThreshold = 0.1; % in velocity
 % TODO: get this from current lift position:
-liftDockHeight = this.appearance.BodyHeight/2;
 
-% If we're carrying a block, we need to end up closer to the lower block to
-% lay this one on top of it, because the lifter swings back as it goes up.
-if this.isBlockLocked
-    liftDockDistance = this.appearance.BodyLength/2 + 10;
+angleDiff = abs(this.liftAngle - this.getLiftAngleFcn());
+if angleDiff > pi
+    angleDiff = 2*pi - angleDiff;
+end
+assert(angleDiff < 2*pi/180, 'Actual lift angle is not set to specified lift angle.');
+
+if this.isBlockLocked 
+    % If we are carrying a block, our desired final location for the lifter
+    % is one block height above the docking block's face.
+    % TODO: figure out the height adjustment based on block type and dimensions!
+    
+    % Pose for where we want the block we're carrying to end up when we
+    % place it: one block height above the block we are docking with.
+    placedBlockFacePose = Pose([0 0 0], [0 0 this.dockingBlock.mindim]);
+    placedBlockFacePose.parent = this.dockingFace.pose;
+    
+    % Figure out the lift angle needed to put the lift end effector in
+    % position to leave the block at that pose:
+    face_wrt_liftBase = placedBlockFacePose.getWithRespectTo(this.liftBasePose);
+    desiredLiftAngle = asin(face_wrt_liftBase.T(3)/this.T_lift(2));
+    temp = rodrigues(desiredLiftAngle * [1 0 0]) * this.T_lift;
+    
+    % Create the corresponding lifter Pose, w.r.t. the robot's lift base:
+    desiredLiftPose = Pose([0 0 0], temp);
+    desiredLiftPose.parent = this.liftBasePose;
+    
+    % Figure out the pose for the virtual block position we want to see the
+    % docking block in once we are in position to place the carried block
+    % on top of it: i.e., one block height below the desired lift pose.
+    desiredDockingFacePose = Pose([0 0 0], [0 0 -this.dockingBlock.mindim]);
+    desiredDockingFacePose.parent = desiredLiftPose;
+    
+    % Now get that that pose w.r.t. the robot's position:
+    desiredDockingFacePose = desiredDockingFacePose.getWithRespectTo(this.pose);
+    
 else
-    liftDockDistance = this.appearance.BodyLength/2 + 15;
+    % If not, we figure out the lifter angle we need to simply dock directly 
+    % with this block's face.
+    face_wrt_liftBase = this.dockingFace.pose.getWithRespectTo(this.liftBasePose);
+    desiredLiftAngle = asin(face_wrt_liftBase.T(3)/this.T_lift(2));
+    temp = rodrigues(desiredLiftAngle * [1 0 0]) * this.T_lift;
+    
+    desiredLiftPose = Pose([0 0 0], temp);
+    desiredLiftPose.parent = this.liftBasePose;
+    desiredDockingFacePose = desiredLiftPose.getWithRespectTo(this.pose);
+   
 end
 
 docked = false;
@@ -22,21 +61,28 @@ docked = false;
 assert(~isempty(this.virtualBlock), ...
     'Virtual (docking) block should be set by now.');
 
-desiredFacePose = Pose([0 0 0], [0 liftDockDistance liftDockHeight+this.appearance.BodyHeight/2]);
-this.virtualBlock.pose = desiredFacePose * this.virtualFace.pose.inv;
-this.virtualBlock.pose.parent = this.pose;
+%desiredFacePose = Pose([0 0 0], [0 liftDockDistance liftDockHeight+this.appearance.BodyHeight/2]);
+this.virtualBlock.pose = this.virtualFace.pose.inv;
+this.virtualBlock.pose.parent = desiredDockingFacePose;
 dots3D_goal = this.virtualFace.getPosition(this.camera.pose, 'DockingTarget');
 [u_goal, v_goal] = this.camera.projectPoints(dots3D_goal);
 
 if any(v_goal > 0.9*this.camera.nrows)
     fprintf('Virtual docking dots too low for current head pose.  Tilting head down...\n');
-    this.tiltHead(-.01);
+    this.tiltHead(-.02);
     return;
 end
 
-assert(all(u_goal >= 1 & v_goal >= 1 & ...
-    u_goal <= this.camera.ncols & v_goal <= this.camera.nrows), ...
-    'Projected virtual docking dots should be in the field of view!');
+% assert(all(u_goal >= 1 & v_goal >= 1 & ...
+%     u_goal <= this.camera.ncols & v_goal <= this.camera.nrows), ...
+%     'Projected virtual docking dots should be in the field of view!');
+if ~all(u_goal >= 1 & v_goal >= 1 & ...
+        u_goal <= this.camera.ncols & v_goal <= this.camera.nrows)
+    
+    desktop
+    keyboard
+    error('Projected virtual docking dots should be in the field of view!');
+end
 
 face3D = this.dockingFace.getPosition(this.camera.pose);
 [u_face, v_face] = this.camera.projectPoints(face3D);
@@ -51,11 +97,11 @@ if any(u_face < 1 | u_face > this.camera.ncols | v_face < 1 | v_face > this.came
     dots3D = this.dockingFace.getPosition(this.dockingBlock.pose, 'DockingTarget');
     dotsPose = this.camera.computeExtrinsics([u(:) v(:)], dots3D);
     
-    % Get the dots' pose in World coordinates using the pose tree:
-    this.dockingBlock.pose = dotsPose.getWithRespectTo('World');
-
-    this.world.updateObsBlockPose(this.dockingBlock.blockType, ...
-        this.dockingBlock.pose, this.world.SelectedBlockColor);
+%     % Get the dots' pose in World coordinates using the pose tree:
+%     this.dockingBlock.pose = dotsPose.getWithRespectTo('World');
+% 
+%     this.world.updateObsBlockPose(this.dockingBlock.blockType, ...
+%         this.dockingBlock.pose, this.world.SelectedBlockColor);
     
 else
     % We are still far enough away to be using the full marker to determine

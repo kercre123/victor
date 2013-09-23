@@ -29,6 +29,8 @@ classdef BlockWorld < handle
         updateObsRobotPoseFcn;
         getHeadPitchFcn;
         setHeadPitchFcn;
+        getLiftAngleFcn;
+        setLiftAngleFcn;
         setLiftPositionFcn;
         driveRobotFcn;
         isBlockLockedFcn;
@@ -77,6 +79,8 @@ classdef BlockWorld < handle
             UpdateObservedBlockPoseFcn = [];
             GetHeadPitchFcn = [];
             SetHeadPitchFcn = [];
+            GetLiftAngleFcn = [];
+            SetLiftAngleFcn = [];
             SetLiftPositionFcn = [];
             DriveFcn = [];
             IsBlockLockedFcn = [];
@@ -104,6 +108,8 @@ classdef BlockWorld < handle
             this.updateObsRobotPoseFcn = UpdateObservedRobotPoseFcn;
             this.getHeadPitchFcn       = GetHeadPitchFcn;
             this.setHeadPitchFcn       = SetHeadPitchFcn;
+            this.getLiftAngleFcn       = GetLiftAngleFcn;
+            this.setLiftAngleFcn       = SetLiftAngleFcn;
             this.setLiftPositionFcn    = SetLiftPositionFcn;
             this.driveRobotFcn         = DriveFcn;
             this.isBlockLockedFcn      = IsBlockLockedFcn;
@@ -173,6 +179,8 @@ classdef BlockWorld < handle
                     'CameraDevice', CameraDevice{i}, ...
                     'GetHeadPitchFcn', this.getHeadPitchFcn, ... % TODO: make this per robot?
                     'SetHeadPitchFcn', this.setHeadPitchFcn, ... % TODO: make this per robot?
+                    'GetLiftAngleFcn', this.getLiftAngleFcn, ... % TODO: make this per robot?
+                    'SetLiftAngleFcn', this.setLiftAngleFcn, ... % TODO: make this per robot?
                     'DriveFcn', this.driveRobotFcn, ... % TODO: make this per robot?
                     'SetLiftPositionFcn', this.setLiftPositionFcn, ... % TODO: make this per robot?
                     'IsBlockLockedFcn', this.isBlockLockedFcn, ... % TODO: make this per robot?

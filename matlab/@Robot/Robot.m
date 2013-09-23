@@ -73,8 +73,7 @@ classdef Robot < handle
         pose;
         origin;
         operationMode;
-        liftPosition;
-        
+                        
     end
     
     properties(GetAccess = 'public', SetAccess = 'protected', ...
@@ -130,6 +129,8 @@ classdef Robot < handle
             MatCameraCalibration = [];
             GetHeadPitchFcn = [];
             SetHeadPitchFcn = [];
+            GetLiftAngleFcn = [];
+            SetLiftAngleFcn = [];
             SetLiftPositionFcn = [];
             DriveFcn = [];
             IsBlockLockedFcn = [];
@@ -226,13 +227,18 @@ classdef Robot < handle
                 
                 % From robot to camera frame:
                 Rrc = [1 0 0; 0 -1 0; 0 0 -1]; % This seems wrong, shouldn't it be negating y and z?
-                Trc = [0; 0; 3]; % Based on Webot down-camera position
+                Trc = [0; 0; -3]; % Based on Webot down-camera position
+                matCamPose = inv(Pose(Rrc, Trc, this.camPoseCov));
+                matCamPose.parent = this.pose;
                 this.matCamera = Camera('device', MatCameraDevice, ...
                     'deviceType', CameraType, ...
                     'calibration', MatCameraCalibration, ...
-                    'pose', inv(Pose(Rrc, Trc, this.camPoseCov)));
+                    'pose', matCamPose);
             end
-        end
+            
+            this.liftAngle = this.getLiftAngleFcn();
+            
+        end % CONSTRUCTOR Robot()
         
         function drive(this, leftWheelVelocity, rightWheelVelocity)
             this.driveFcn(leftWheelVelocity, rightWheelVelocity);
@@ -254,6 +260,22 @@ classdef Robot < handle
             % Rotate around the head's anchor point:
             this.camera.pose.update(Rpitch*this.R_headCam, ...
                 Rpitch*this.T_headCam);
+        end
+        
+        function adjustLift(this, angleInc)
+            this.setLiftAngleFcn(this.getLiftAngleFcn() + angleInc);
+            this.updateLiftPose();
+        end
+        
+        function updateLiftPose(this)
+            angle = this.getLiftAngleFcn();
+            
+            Rangle = rodrigues(angle*[1 0 0]);
+            
+            % Because of the two-bar assembly, the end effector of the lift
+            % always faces the same way, even as the whole thing lifts, so
+            % the Rotation need not be adjusted here:
+            this.liftPose.update(this.R_lift, Rangle*this.T_lift);
         end
 
         function locked = isBlockLocked(this)
@@ -293,29 +315,11 @@ classdef Robot < handle
         end
         
         function set.operationMode(this, mode)
-            % If we are turning off docking mode, reset stuff
-            if strcmp(this.operationMode_, 'DOCK') && ...
-                    ~strcmp(mode, 'DOCK')
-                
-                this.dockingBlock = [];
-                this.dockingFace  = [];
-                this.virtualBlock = [];
-                this.virtualFace  = [];
-            end
             this.operationMode_ = mode;
         end
         
         function mode = get.operationMode(this)
             mode = this.operationMode_;
-        end
-        
-        function set.liftPosition(this, position)
-            this.liftPosition_ = position;
-            this.setLiftPositionFcn(position);
-        end
-               
-        function position = get.liftPosition(this)
-            position = this.liftPosition_;
         end
         
         function vec = get.stateVector(this)

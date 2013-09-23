@@ -1,7 +1,9 @@
 function update(this, img, matImage)
 
-% Get head camera's current position:
+% Get head camera and lift's current positions:
+% TODO: do i need to do this every update? or can it be triggered?
 this.updateHeadPose();
+this.updateLiftPose(); 
 
 if nargin < 2 || isempty(img)
     this.camera.grabFrame();
@@ -28,6 +30,13 @@ this.world.displayMessage('Robot', sprintf('Mode: %s', this.operationMode));
 
 switch(this.operationMode)
     
+    case 'DRIVE_TO_POSITION'
+                
+        pathComplete = this.followPath();
+        if pathComplete
+            drive(0,0);
+            this.operationMode = '';
+        end
         
     case 'DOCK'
                
@@ -70,10 +79,16 @@ switch(this.operationMode)
                 % Lower the lift to get it out of the way of the camera,
                 % if we're not carrying a block (in which case the lift
                 % should be up)
-                if this.isBlockLocked
-                    this.liftPosition = 'UPUP';
-                else
-                    this.liftPosition = 'DOWN';
+                if this.isBlockLocked && this.liftAngle < this.LiftAngle_High
+                    this.operationMode = 'MOVE_LIFT';
+                    this.liftAngle = this.LiftAngle_High;
+                    this.nextOperationMode = 'DOCK';
+                                        
+                elseif ~this.isBlockLocked && this.liftAngle > this.LiftAngle_Low
+                    this.operationMode = 'MOVE_LIFT';
+                    this.liftAngle = this.LiftAngle_Low;
+                    this.nextOperationMode = 'DOCK';
+                    
                 end
             end
         else
@@ -103,54 +118,88 @@ switch(this.operationMode)
                 % Stop moving
                 this.drive(0,0);
                 
-                % Put the lift angle in the docking position
-                switch(this.liftPosition)
-                    case 'DOWN'
-                        this.liftPosition = 'DOCK';
-                        this.operationMode = 'WAIT_FOR_LOCK';
-                        
-                    case 'UP'
-                        % Lift already up, ready for docking with high
+                if this.isBlockLocked
+                    assert(this.liftAngle > this.LiftAngle_Place, ...
+                        'Expecting to be carrying block up high.');
+                    
+                    this.liftAngle = this.LiftAngle_High;
+                    this.operationMode = 'MOVE_LIFT';
+                    this.nextOperationMode = 'PLACE_BLOCK';
+                else
+                    if this.dockingBlock.pose.T(3) > this.dockingBlock.mindim
+                        % We are attempting to dock with a high ("placed")
                         % block
-                        assert(~this.isBlockLocked, ...
-                            'Not expecting to be carrying a block right now.');
-                        this.operationMode = 'WAIT_FOR_LOCK';
-                        
-                    case {'UPUP', 'UP_PLUS'}
-                        if this.isBlockLocked
-                            % Carrying block up high, next we wanna put
-                            % this block down
-                            this.liftPosition = 'UP';
-                            this.operationMode = 'WAIT_FOR_UNLOCK';
-                            this.releaseBlock();
-                        end
-                        
-                    otherwise
-                        error('Not sure where to put lift!');
+                        this.liftAngle = this.LiftAngle_Place;
+                    else
+                        % We are attempting to dock with a low block
+                        this.liftAngle = this.LiftAngle_Dock;
+                    end
+                    
+                    this.operationMode = 'MOVE_LIFT';
+                    this.nextOperationMode = 'WAIT_FOR_LOCK';
                 end
-                               
+                                               
             end
             
         end
         
+    case 'MOVE_LIFT'
+        liftInPosition = this.liftControlStep();
+        if liftInPosition
+            this.operationMode = this.nextOperationMode;
+        end
+        
+    case 'UPDATE_BLOCK_POSE'
+        
+        this.world.updateObsBlockPose(this.dockingBlock.blockType, ...
+            this.dockingBlock.pose, this.world.UnselectedBlockColor);
+        
+        % Reset for next dock maneuver:
+        this.dockingBlock = [];
+        this.dockingFace  = [];
+        this.virtualBlock = [];
+        this.virtualFace  = [];
+        
+        this.operationMode = '';
+        
+    case 'PLACE_BLOCK'
+        this.liftAngle = this.LiftAngle_Place;
+        this.operationMode = 'MOVE_LIFT';
+        this.nextOperationMode = 'WAIT_FOR_UNLOCK';
+        
     case 'WAIT_FOR_LOCK'
-        % Wait for signal that we've attached to the block, then lift it
+        % Wait for signal that we've attached to the block, then set its
+        % pose relative to the lifter, and lift it.
         if this.isBlockLocked
-            this.operationMode = 'LIFT';
+            %desktop
+            %keyboard
+            
+            this.dockingBlock.pose = this.dockingBlock.pose.getWithRespectTo(this.liftPose);
+            this.dockingBlock.pose.parent = this.liftPose;
+            
+            % Raise up the block to carry it, and update it's position once
+            % that is done.
+            this.liftAngle = this.LiftAngle_High;
+            this.operationMode = 'MOVE_LIFT';
+            this.nextOperationMode = 'UPDATE_BLOCK_POSE';
             this.world.selectedBlock = [];
         end
         
     case 'WAIT_FOR_UNLOCK'
+        this.releaseBlock();
+        
         if ~this.isBlockLocked
+            
+            % Reset for next dock maneuver:
+            this.dockingBlock = [];
+            this.dockingFace  = [];
+            this.virtualBlock = [];
+            this.virtualFace  = [];
+                
             % Once we've dropped the block, back up to admire our handywork
-           this.operationMode = 'BACK_UP_TO_SEE_MARKER'; 
+            this.operationMode = 'BACK_UP_TO_SEE_MARKER';
         end
             
-    case 'LIFT'
-        
-        this.liftPosition = 'UP_PLUS';
-        this.operationMode = '';
-        
     case 'BACK_UP_TO_SEE_MARKER'
         % Back up until we can see a full marker again
         if isempty(this.visibleBlocks)
