@@ -38,111 +38,127 @@ switch(this.operationMode)
             this.operationMode = '';
         end
         
-    case 'DOCK'
-               
-        if isempty(this.dockingBlock)
-            if isempty(this.visibleBlocks)
-                warning('No blocks seen, cannot initiate auto-dock.');
-            elseif isempty(this.world.selectedBlock)
-                warning('No block selected, cannot initate auto-dock.');
-            else
-                % Stop moving if we were
-                this.drive(0,0);
-                
-                % Until we are done docking, keep using the same
-                % block/face, i.e. the one marked as "selected" at the time
-                % we got issued the DOCK command.
-                this.dockingBlock = this.world.selectedBlock;
-                
-                % Choose the face closest to our current position as the
-                % one we will dock with:
-                minDist = inf;
-                selected = 0;
-                for i_face = 1:this.dockingBlock.numMarkers
-                    
-                    faceWRTcamera = this.dockingBlock.markers{i_face}.pose.getWithRespectTo(this.camera.pose);
-                    
-                    % In camera coordinates, Z is the distance from us
-                    dist = faceWRTcamera.T(3);
-                                        
-                    if dist < minDist
-                        selected = i_face;
-                        minDist = dist;
-                    end
-                end
-                assert(selected > 0, 'No closest face selected!');
-                this.dockingFace = this.dockingBlock.markers{selected};
-                
-                this.virtualBlock = Block(this.dockingBlock.blockType, 0);
-                this.virtualFace  = this.virtualBlock.getFaceMarker(this.dockingFace.faceType);
-                
-                % Lower the lift to get it out of the way of the camera,
-                % if we're not carrying a block (in which case the lift
-                % should be up)
-                if this.isBlockLocked && this.liftAngle < this.LiftAngle_High
-                    this.operationMode = 'MOVE_LIFT';
-                    this.liftAngle = this.LiftAngle_High;
-                    this.nextOperationMode = 'DOCK';
-                                        
-                elseif ~this.isBlockLocked && this.liftAngle > this.LiftAngle_Low
-                    this.operationMode = 'MOVE_LIFT';
-                    this.liftAngle = this.LiftAngle_Low;
-                    this.nextOperationMode = 'DOCK';
-                    
-                end
-            end
-        else
-            
-            try
-                inPosition = this.dockWithBlockStep();
-            catch E
-                if any(strcmp(E.identifier, ...
-                        {'FindDockingTarget:TooFewLocalMaxima', ...
-                        'FindDockingTarget:BadSpacing'}))
-                    
-                    warning('FindDockingTarget() failed: %s', E.message);
-                    
-                    % Lost the marker, back up until we can see a full marker so we
-                    % can try again
-                    this.operationMode = 'BACK_UP_TO_SEE_MARKER';
-                    
-                    return;
-                else
-                    rethrow(E)
-                end
-            end
-            
-            if inPosition
-                % Finished positioning the robot for docking!
-                
-                % Stop moving
-                this.drive(0,0);
-                
-                if this.isBlockLocked
-                    assert(this.liftAngle > this.LiftAngle_Place, ...
-                        'Expecting to be carrying block up high.');
-                    
-                    this.liftAngle = this.LiftAngle_High;
-                    this.operationMode = 'MOVE_LIFT';
-                    this.nextOperationMode = 'PLACE_BLOCK';
-                else
-                    if this.dockingBlock.pose.T(3) > this.dockingBlock.mindim
-                        % We are attempting to dock with a high ("placed")
-                        % block
-                        this.liftAngle = this.LiftAngle_Place;
-                    else
-                        % We are attempting to dock with a low block
-                        this.liftAngle = this.LiftAngle_Dock;
-                    end
-                    
-                    this.operationMode = 'MOVE_LIFT';
-                    this.nextOperationMode = 'WAIT_FOR_LOCK';
-                end
-                                               
-            end
-            
-        end
+    case 'INITIATE_DOCK'
         
+        if isempty(this.visibleBlocks)
+            warning('No blocks seen, cannot initiate auto-dock.');
+            this.operationMode = '';
+            
+        elseif isempty(this.world.selectedBlock)
+            warning('No block selected, cannot initate auto-dock.');
+            this.operationMode = '';
+            
+        else
+
+            % Stop moving if we were
+            this.drive(0,0);
+            
+            % Until we are done docking, keep using the same
+            % block/face, i.e. the one marked as "selected" at the time
+            % we got issued the DOCK command.
+            this.dockingBlock = this.world.selectedBlock;
+            
+            % Choose the face closest to our current position as the
+            % one we will dock with:
+            minDist = inf;
+            selected = 0;
+            for i_face = 1:this.dockingBlock.numMarkers
+                
+                faceWRTcamera = this.dockingBlock.markers{i_face}.pose.getWithRespectTo(this.camera.pose);
+                
+                % In camera coordinates, Z is the distance from us
+                dist = faceWRTcamera.T(3);
+                
+                if dist < minDist
+                    selected = i_face;
+                    minDist = dist;
+                end
+            end
+            assert(selected > 0, 'No closest face selected!');
+            this.dockingFace = this.dockingBlock.markers{selected};
+            
+            this.virtualBlock = Block(this.dockingBlock.blockType, 0);
+            this.virtualFace  = this.virtualBlock.getFaceMarker(this.dockingFace.faceType);
+            
+            % Now that we've assigned the virtual docking block, we
+            % need to figure out where we want to see it
+            this.computeVirtualBlockPose();
+            
+            % Lower the lift to get it out of the way of the camera,
+            % if we're not carrying a block (in which case the lift
+            % should be up)
+            if this.isBlockLocked && this.liftAngle < this.LiftAngle_High
+                this.operationMode = 'MOVE_LIFT';
+                this.liftAngle = this.LiftAngle_High;
+                this.nextOperationMode = 'DOCK';
+                
+            elseif ~this.isBlockLocked && this.liftAngle > this.LiftAngle_Low
+                this.operationMode = 'MOVE_LIFT';
+                this.liftAngle = this.LiftAngle_Low;
+                this.nextOperationMode = 'DOCK';
+            else
+                this.operationMode = 'DOCK';
+            end
+            
+        end % IF any blocks visible
+            
+    case 'DOCK'
+        
+        assert(~isempty(this.dockingBlock) && ~isempty(this.dockingFace) && ...
+            ~isempty(this.virtualBlock) && ~isempty(this.virtualFace), ...
+            'Docking and Virtual block/face should be set by now.');
+        
+        try
+            inPosition = this.dockWithBlockStep();
+        catch E
+            if any(strcmp(E.identifier, ...
+                    {'FindDockingTarget:TooFewLocalMaxima', ...
+                    'FindDockingTarget:BadSpacing'}))
+                
+                warning('FindDockingTarget() failed: %s', E.message);
+                
+                % Lost the marker, back up until we can see a full marker so we
+                % can try again
+                this.operationMode = 'BACK_UP_TO_SEE_MARKER';
+                
+                return;
+            else
+                rethrow(E)
+            end
+            
+        end % TRY/CATCH dockWithBlockStep()
+        
+        if inPosition
+            % Finished positioning the robot for docking!
+            
+            % Stop moving
+            this.drive(0,0);
+            
+            % Move lift up or down, depending on whether we are docking
+            % with a high/low block or placing a block we are carrying.
+            if this.isBlockLocked
+                assert(this.liftAngle > this.LiftAngle_Place, ...
+                    'Expecting to be carrying block up high.');
+                
+                this.liftAngle = this.LiftAngle_High;
+                this.operationMode = 'MOVE_LIFT';
+                this.nextOperationMode = 'PLACE_BLOCK';
+            else
+                if this.dockingBlock.pose.T(3) > this.dockingBlock.mindim
+                    % We are attempting to dock with a high ("placed")
+                    % block
+                    this.liftAngle = this.LiftAngle_Place;
+                else
+                    % We are attempting to dock with a low block
+                    this.liftAngle = this.LiftAngle_Dock;
+                end
+                
+                this.operationMode = 'MOVE_LIFT';
+                this.nextOperationMode = 'WAIT_FOR_LOCK';
+            end
+            
+        end % IF in docking position
+
     case 'MOVE_LIFT'
         liftInPosition = this.liftControlStep();
         if liftInPosition

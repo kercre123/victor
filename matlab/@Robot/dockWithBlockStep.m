@@ -1,173 +1,135 @@
 function docked = dockWithBlockStep(this)
 
 DEBUG_DISPLAY = true;
+K_headTilt = 0.0005;
 convergenceThreshold = 0.1; % in velocity
 % TODO: get this from current lift position:
 
-angleDiff = abs(this.liftAngle - this.getLiftAngleFcn());
-if angleDiff > pi
-    angleDiff = 2*pi - angleDiff;
-end
-assert(angleDiff < 2*pi/180, 'Actual lift angle is not set to specified lift angle.');
-
-if this.isBlockLocked 
-    % If we are carrying a block, our desired final location for the lifter
-    % is one block height above the docking block's face.
-    % TODO: figure out the height adjustment based on block type and dimensions!
-    
-    % Pose for where we want the block we're carrying to end up when we
-    % place it: one block height above the block we are docking with.
-    placedBlockFacePose = Pose([0 0 0], [0 0 this.dockingBlock.mindim]);
-    placedBlockFacePose.parent = this.dockingFace.pose;
-    
-    % Figure out the lift angle needed to put the lift end effector in
-    % position to leave the block at that pose:
-    face_wrt_liftBase = placedBlockFacePose.getWithRespectTo(this.liftBasePose);
-    desiredLiftAngle = asin(face_wrt_liftBase.T(3)/this.T_lift(2));
-    temp = rodrigues(desiredLiftAngle * [1 0 0]) * this.T_lift;
-    
-    % Create the corresponding lifter Pose, w.r.t. the robot's lift base:
-    desiredLiftPose = Pose([0 0 0], temp);
-    desiredLiftPose.parent = this.liftBasePose;
-    
-    % Figure out the pose for the virtual block position we want to see the
-    % docking block in once we are in position to place the carried block
-    % on top of it: i.e., one block height below the desired lift pose.
-    desiredDockingFacePose = Pose([0 0 0], [0 0 -this.dockingBlock.mindim]);
-    desiredDockingFacePose.parent = desiredLiftPose;
-    
-    % Now get that that pose w.r.t. the robot's position:
-    desiredDockingFacePose = desiredDockingFacePose.getWithRespectTo(this.pose);
-    
-else
-    % If not, we figure out the lifter angle we need to simply dock directly 
-    % with this block's face.
-    face_wrt_liftBase = this.dockingFace.pose.getWithRespectTo(this.liftBasePose);
-    desiredLiftAngle = asin(face_wrt_liftBase.T(3)/this.T_lift(2));
-    temp = rodrigues(desiredLiftAngle * [1 0 0]) * this.T_lift;
-    
-    desiredLiftPose = Pose([0 0 0], temp);
-    desiredLiftPose.parent = this.liftBasePose;
-    desiredDockingFacePose = desiredLiftPose.getWithRespectTo(this.pose);
-   
-end
-
 docked = false;
 
-% Figure out where we _want_ to see the block in order to dock with it,
-% according to our head pose and the block's docking anchor.
-% TODO: update this to use the docking anchor of the correct face, not the
-% marker
-assert(~isempty(this.virtualBlock), ...
-    'Virtual (docking) block should be set by now.');
-
-%desiredFacePose = Pose([0 0 0], [0 liftDockDistance liftDockHeight+this.appearance.BodyHeight/2]);
-this.virtualBlock.pose = this.virtualFace.pose.inv;
-this.virtualBlock.pose.parent = desiredDockingFacePose;
+% Project the virtual block's docking target into the camera image
 dots3D_goal = this.virtualFace.getPosition(this.camera.pose, 'DockingTarget');
 [u_goal, v_goal] = this.camera.projectPoints(dots3D_goal);
 
+% If it's above/below the camera, tilt the head up/down until we can see it
 if any(v_goal > 0.9*this.camera.nrows)
     fprintf('Virtual docking dots too low for current head pose.  Tilting head down...\n');
-    this.tiltHead(-.02);
-    return;
-end
-
-% assert(all(u_goal >= 1 & v_goal >= 1 & ...
-%     u_goal <= this.camera.ncols & v_goal <= this.camera.nrows), ...
-%     'Projected virtual docking dots should be in the field of view!');
-if ~all(u_goal >= 1 & v_goal >= 1 & ...
-        u_goal <= this.camera.ncols & v_goal <= this.camera.nrows)
     
-    desktop
-    keyboard
-    error('Projected virtual docking dots should be in the field of view!');
-end
-
-face3D = this.dockingFace.getPosition(this.camera.pose);
-[u_face, v_face] = this.camera.projectPoints(face3D);
-if any(u_face < 1 | u_face > this.camera.ncols | v_face < 1 | v_face > this.camera.nrows)
-    % We can't see the whole marker anymore, so start using the close-up
-    % docking target:
+    % Simple proportional control:
+    e = max(v_goal) - 0.9*this.camera.nrows;
+    this.tiltHead(-K_headTilt*e);
     
-    % NOTE: the extra three returns here are only for debug display below!
-    [u,v, u_box,v_box,img] = this.dockingFace.findDockingTarget(this.camera);
-        
-    % Figure out where the dots are in 3D space, in camera's coordinate frame:
-    dots3D = this.dockingFace.getPosition(this.dockingBlock.pose, 'DockingTarget');
-    dotsPose = this.camera.computeExtrinsics([u(:) v(:)], dots3D);
+elseif any(v_goal < 0.1*this.camera.nrows)
+    fprintf('Virtual docking dots too high for current head pose.  Tilting head up...\n');
     
-%     % Get the dots' pose in World coordinates using the pose tree:
-%     this.dockingBlock.pose = dotsPose.getWithRespectTo('World');
-% 
-%     this.world.updateObsBlockPose(this.dockingBlock.blockType, ...
-%         this.dockingBlock.pose, this.world.SelectedBlockColor);
+    % Simple proportional control:
+    e = 0.1*this.camera.nrows - min(v_goal);
+    this.tiltHead(K_headTilt*e);
     
 else
-    % We are still far enough away to be using the full marker to determine
-    % where the docking target is
-        
-    % Find the block's docking dots 3D locations, w.r.t. our head camera:
-    dots3D = this.dockingFace.getPosition(this.camera.pose, 'DockingTarget');
-    dotsPose = this.dockingFace.pose.getWithRespectTo(this.camera.pose);
     
-    % Project them into the image:
-    [u,v] = this.camera.projectPoints(dots3D);
+    % assert(all(u_goal >= 1 & v_goal >= 1 & ...
+    %     u_goal <= this.camera.ncols & v_goal <= this.camera.nrows), ...
+    %     'Projected virtual docking dots should be in the field of view!');
+    if ~all(u_goal >= 1 & v_goal >= 1 & ...
+            u_goal <= this.camera.ncols & v_goal <= this.camera.nrows)
+        
+        desktop
+        keyboard
+        error('Projected virtual docking dots should be in the field of view!');
+    end
+    
+    face3D = this.dockingFace.getPosition(this.camera.pose);
+    [u_face, v_face] = this.camera.projectPoints(face3D);
+    if any(u_face < 1 | u_face > this.camera.ncols | v_face < 1 | v_face > this.camera.nrows)
+        % We can't see the whole marker anymore, so start using the close-up
+        % docking target:
+        
+        % NOTE: the extra three returns here are only for debug display below!
+        [u,v, u_box,v_box,img] = this.dockingFace.findDockingTarget(this.camera);
+        
+        % Figure out where the dots are in 3D space, in camera's coordinate frame:
+        dots3D = this.dockingFace.getPosition(this.dockingBlock.pose, 'DockingTarget');
+        dotsPose = this.camera.computeExtrinsics([u(:) v(:)], dots3D);
+        
+        %     % Get the dots' pose in World coordinates using the pose tree:
+        %     this.dockingBlock.pose = dotsPose.getWithRespectTo('World');
+        %
+        %     this.world.updateObsBlockPose(this.dockingBlock.blockType, ...
+        %         this.dockingBlock.pose, this.world.SelectedBlockColor);
+        
+    else
+        % We are still far enough away to be using the full marker to determine
+        % where the docking target is
+        
+        % Find the block's docking dots 3D locations, w.r.t. our head camera:
+        dots3D = this.dockingFace.getPosition(this.camera.pose, 'DockingTarget');
+        dotsPose = this.dockingFace.pose.getWithRespectTo(this.camera.pose);
+        
+        % Project them into the image:
+        [u,v] = this.camera.projectPoints(dots3D);
+        
+        if DEBUG_DISPLAY
+            img = this.camera.image;
+            u_box = nan; v_box = nan;
+        end
+    end
+    
+    % Make sure they are (all) within view!
+    if ~all(u >= 1 & u <= this.camera.ncols & ...
+            v >= 1 & v <= this.camera.nrows)
+        error('Requested face of requested Block is not in view!');
+    end
+    
+    % Get the angle between the horizontal (in-plane) rotation of the block's
+    % face we are docking with and the robot's heading (in camera coordinates)
+    % TODO: verify this is correct
+    headingError = acos(dotsPose.Rmat(3,2));
+    
+    % Compute a control signal based on the observed position of the
+    % block's docking target vs. the virtual (desired) position of that
+    % target...
+    [leftVelocity, rightVelocity] = DockingController([u(:) v(:)], [u_goal(:) v_goal(:)], headingError);
+    
+    % ...and use that control signal to move the robot.
+    this.drive(leftVelocity, rightVelocity);
+    
+    % Are we there yet?
+    docked =  abs(leftVelocity) < convergenceThreshold && ...
+        abs(rightVelocity) < convergenceThreshold;
     
     if DEBUG_DISPLAY
-        img = this.camera.image;
-        u_box = nan; v_box = nan;
-    end
-end
-
-% Make sure they are (all) within view!
-if ~all(u >= 1 & u <= this.camera.ncols & ...
-        v >= 1 & v <= this.camera.nrows)
-    error('Requested face of requested Block is not in view!');
-end
-
-% Get the angle between the horizontal (in-plane) rotation of the block's
-% face we are docking with and the robot's heading (in camera coordinates)
-% TODO: verify this is correct
-headingError = acos(dotsPose.Rmat(3,2));
-
-[leftVelocity, rightVelocity] = DockingController([u(:) v(:)], [u_goal(:) v_goal(:)], headingError);
-
-this.drive(leftVelocity, rightVelocity);
-
-docked =  abs(leftVelocity) < convergenceThreshold && ...
-    abs(rightVelocity) < convergenceThreshold;
-
-if DEBUG_DISPLAY
-    h_fig = namedFigure('Docking');
-    if docked
-        close(h_fig);
-    else
-        h_axes = findobj(h_fig, 'Type', 'axes');
-        if isempty(h_axes)
-            h_axes = axes('Parent', h_fig);
-            imagesc(img, 'Parent', h_axes, 'Tag', 'DockingImage');
-            colormap(h_fig, gray)
-            hold(h_axes, 'on')
-            plot(u_goal, v_goal, 'bo', 'Parent', h_axes, 'Tag', 'DockingGoal');
-            plot(u, v, 'rx', 'Parent', h_axes, 'Tag', 'DockingCurrent');
-            plot(u_box, v_box, 'r--', 'Parent', h_axes, 'Tag', 'DockingBoundingBox');
+        h_fig = namedFigure('Docking');
+        if docked
+            close(h_fig);
         else
-            set(findobj(h_axes, 'Tag', 'DockingImage'), ...
-                'CData', img);
-            set(findobj(h_axes, 'Tag', 'DockingGoal'), ...
-                'XData', u_goal, 'YData', v_goal);
-            set(findobj(h_axes, 'Tag', 'DockingCurrent'), ...
-                'XData', u, 'YData', v);
-            if ~isnan(u_box)
-                set(findobj(h_axes, 'Tag', 'DockingBoundingBox'), ...
-                    'XData', u_box([1 2 4 3 1]), 'YData', v_box([1 2 4 3 1]));
+            h_axes = findobj(h_fig, 'Type', 'axes');
+            if isempty(h_axes)
+                h_axes = axes('Parent', h_fig);
+                imagesc(img, 'Parent', h_axes, 'Tag', 'DockingImage');
+                colormap(h_fig, gray)
+                hold(h_axes, 'on')
+                plot(u_goal, v_goal, 'bo', 'Parent', h_axes, 'Tag', 'DockingGoal');
+                plot(u, v, 'rx', 'Parent', h_axes, 'Tag', 'DockingCurrent');
+                plot(u_box, v_box, 'r--', 'Parent', h_axes, 'Tag', 'DockingBoundingBox');
+            else
+                set(findobj(h_axes, 'Tag', 'DockingImage'), ...
+                    'CData', img);
+                set(findobj(h_axes, 'Tag', 'DockingGoal'), ...
+                    'XData', u_goal, 'YData', v_goal);
+                set(findobj(h_axes, 'Tag', 'DockingCurrent'), ...
+                    'XData', u, 'YData', v);
+                if ~isnan(u_box)
+                    set(findobj(h_axes, 'Tag', 'DockingBoundingBox'), ...
+                        'XData', u_box([1 2 4 3 1]), 'YData', v_box([1 2 4 3 1]));
+                end
             end
+            title(h_axes, sprintf('Left/right velocities = %.2f/%.2f\n', ...
+                leftVelocity, rightVelocity));
         end
-        title(h_axes, sprintf('Left/right velocities = %.2f/%.2f\n', ...
-            leftVelocity, rightVelocity));
-    end
-end
+    end % IF DEBUG_DISPLAY
+    
+end % IF virtual docking dots are in view
     
 end % FUNCTION dockWithBlock()
 
@@ -212,4 +174,4 @@ end
 leftMotorVelocity  = turnVelocityLeft  + distanceVelocity;
 rightMotorVelocity = turnVelocityRight + distanceVelocity;
 
-end
+end % FUNCTION DockingController()
