@@ -1,4 +1,4 @@
-﻿#include "anki/embeddedVision/visionKernels.h"
+﻿#include "anki/embeddedVision/miscVisionKernels.h"
 
 namespace Anki
 {
