@@ -5,8 +5,8 @@ assert(strcmp(BlockMarker3D.DockingTarget, 'FourDots'), ...
     'findDockingTarget() is currently only written to support a "FourDots" target.');
 
 mask = [];
-squareWidth = [];
-spacingTolerance = 0.2; % can be this fraction away from expected, i.e. +/- 10%
+squareDiagonal = [];
+spacingTolerance = 0.25; % can be this fraction away from expected, i.e. +/- 10%
 simulateDefocusBlur = true;
 
 parseVarargin(varargin{:});
@@ -32,26 +32,26 @@ if isempty(mask)
         dockingBox3D = this.getPosition(camera.pose, 'DockingTargetBoundingBox');
         [u_box, v_box] = camera.projectPoints(dockingBox3D);
         mask = roipoly(img, u_box([1 2 4 3]), v_box([1 2 4 3]));
-        squareWidth = sqrt((u_box(1)-u_box(2))^2 + (v_box(1)-v_box(2))^2);
+        squareDiagonal = sqrt((u_box(1)-u_box(4))^2 + (v_box(1)-v_box(4))^2);
     else
         % ... get the user to draw one for us.
         mask = roipoly(img);
     end
 end
 
-if isempty(squareWidth)
-    squareWidth = sqrt(sum(mask(:)));
+if isempty(squareDiagonal)
+    squareDiagonal = sqrt(2)*sqrt(sum(mask(:)));
 end
 
 if simulateDefocusBlur
     % Simulate blur from defocus
-    img = separable_filter(img, gaussian_kernel(squareWidth/12));
+    img = separable_filter(img, gaussian_kernel(squareDiagonal/16));
 end
 
 
 
-dotRadiusFraction = (BlockMarker3D.DockingDotWidth/2) / BlockMarker3D.CodeSquareWidth;
-dotRadius = squareWidth * dotRadiusFraction;
+dotRadiusFraction = (BlockMarker3D.DockingDotWidth/2) / (sqrt(2)*BlockMarker3D.CodeSquareWidth);
+dotRadius = squareDiagonal * dotRadiusFraction;
 sigma = dotRadius/3; 
 hsize = ceil(6*sigma + 1);
 LoG = fspecial('log', hsize, sigma);
@@ -66,6 +66,11 @@ localMaxima = find(mask &  ...
     imgFilter > image_up(imgFilter,step));
 [localMaxima_y, localMaxima_x] = ind2sub([nrows ncols], localMaxima);
 
+% hold off
+% imagesc(img), axis image
+% hold on
+% plot(localMaxima_x, localMaxima_y, 'b.', 'MarkerSize', 12);
+
 xcen = zeros(1,4);
 ycen = zeros(1,4);
 for i = 1:4
@@ -78,10 +83,16 @@ for i = 1:4
     end
     [ycen(i),xcen(i)] = ind2sub([nrows ncols], localMaxima(index));
     
-    toRemove = (localMaxima_x-xcen(i)).^2 + (localMaxima_y-ycen(i)).^2 <= dotRadius^2;
+    toRemove = (localMaxima_x-xcen(i)).^2 + (localMaxima_y-ycen(i)).^2 <= (1.5*dotRadius)^2;
+    
+    % plot(xcen(i), ycen(i), 'go');
+    % plot(localMaxima_x(toRemove), localMaxima_y(toRemove), 'rx');
+    
     localMaxima(toRemove) = [];
     localMaxima_x(toRemove) = [];
     localMaxima_y(toRemove) = [];
+    
+    % pause
 end
 
 theta = cart2pol(xcen-mean(xcen),ycen-mean(ycen));
@@ -95,13 +106,24 @@ xcen = xcen([1 4 2 3]);
 ycen = ycen([1 4 2 3]);
 
 % Make sure the distances between dots are "reasonable":
-dotSpacingFraction = BlockMarker3D.DockingDotSpacing / BlockMarker3D.CodeSquareWidth;
-dotSpacing = dotSpacingFraction * squareWidth;
-leftLength   = sqrt( (xcen(2)-xcen(1))^2 + (ycen(2)-ycen(1))^2 );
-topLength    = sqrt( (xcen(3)-xcen(1))^2 + (ycen(3)-ycen(1))^2 );
-rightLength  = sqrt( (xcen(3)-xcen(4))^2 + (ycen(3)-ycen(4))^2 );
-bottomLength = sqrt( (xcen(2)-xcen(4))^2 + (ycen(2)-ycen(4))^2 );
-if ~all(abs([leftLength topLength rightLength bottomLength]-dotSpacing)/dotSpacing < spacingTolerance)
+
+expectedSpacingFrac = BlockMarker3D.DockingDotSpacing/BlockMarker3D.CodeSquareWidth;
+
+leftLengthFrac = sqrt( (xcen(2)-xcen(1))^2 + (ycen(2)-ycen(1))^2 ) / ...
+    sqrt( (u_box(2)-u_box(1))^2 + (v_box(2)-v_box(1))^2);
+
+topLengthFrac = sqrt( (xcen(3)-xcen(1))^2 + (ycen(3)-ycen(1))^2 ) / ...
+    sqrt( (u_box(3)-u_box(1))^2 + (v_box(3)-v_box(1))^2);
+
+rightLengthFrac = sqrt( (xcen(3)-xcen(4))^2 + (ycen(3)-ycen(4))^2 ) / ...
+    sqrt( (u_box(3)-u_box(4))^2 + (v_box(3)-v_box(4))^2);
+
+bottomLengthFrac = sqrt( (xcen(2)-xcen(4))^2 + (ycen(2)-ycen(4))^2 ) / ...
+    sqrt( (u_box(2)-u_box(4))^2 + (v_box(2)-v_box(4))^2);
+
+if ~all(abs(expectedSpacingFrac - ...
+        [leftLengthFrac topLengthFrac rightLengthFrac bottomLengthFrac]) / ...
+        expectedSpacingFrac < spacingTolerance)
     
     desktop
     keyboard
