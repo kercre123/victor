@@ -40,10 +40,10 @@ namespace Anki
       //FixedLengthList& operator= (const FixedLengthList & rightHandSide);
 
       // Pointer to the data, at a given location
-      inline Type* Pointer(s32 index);
+      inline Type* Pointer(const s32 index);
 
       // Pointer to the data, at a given location
-      inline const Type* Pointer(s32 index) const;
+      inline const Type* Pointer(const s32 index) const;
 
       // Print out the contents of this FixedLengthList
       Result Print(const char * const variableName = "FixedLengthList", const s32 minIndex = 0, const s32 maxIndex = 0x7FFFFFE) const;
@@ -73,13 +73,13 @@ namespace Anki
     } // FixedLengthList AllocateFixedLengthListFromHeap_Type(s32 maximumSize, bool useBoundaryFillPatterns)
 #endif // #ifndef USING_MOVIDIUS_COMPILER
 
-    template<typename Type> inline Type* FixedLengthList<Type>::Pointer(s32 index)
+    template<typename Type> inline Type* FixedLengthList<Type>::Pointer(const s32 index)
     {
       return Array<Type>::Pointer(0, index);
     }
 
     // Pointer to the data, at a given location
-    template<typename Type> inline const Type* FixedLengthList<Type>::Pointer(s32 index) const
+    template<typename Type> inline const Type* FixedLengthList<Type>::Pointer(const s32 index) const
     {
       return Array<Type>::Pointer(0, index);
     }

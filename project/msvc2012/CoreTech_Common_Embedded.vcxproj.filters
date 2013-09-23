@@ -24,9 +24,6 @@
     <ClCompile Include="..\..\src\embedded\memory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\embedded\point.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\embedded\utilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -45,6 +42,9 @@
     <ClCompile Include="Z:\Documents\Anki\coretech-common\src\embedded\benchmarking.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\embedded\geometry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\anki\embeddedCommon\array2d.h">
@@ -60,9 +60,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\anki\embeddedCommon\memory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\anki\embeddedCommon\point.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\anki\embeddedCommon\utilities.h">
@@ -87,6 +84,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Z:\Documents\Anki\coretech-common\include\anki\embeddedCommon\benchmarking.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\anki\embeddedCommon\geometry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

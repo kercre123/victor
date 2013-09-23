@@ -6,7 +6,7 @@
 #include "anki/embeddedCommon/memory.h"
 #include "anki/embeddedCommon/errorHandling.h"
 #include "anki/embeddedCommon/dataStructures.h"
-#include "anki/embeddedCommon/point.h"
+#include "anki/embeddedCommon/geometry.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -199,6 +199,15 @@ namespace Anki
       const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
 
       Array<Type> mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+
+      return mat;
+    }
+
+    template<typename Type> FixedPointArray<Type> AllocateFixedPointArrayFromHeap(const s32 numRows, const s32 numCols, const s32 numFractionalBits, const bool useBoundaryFillPatterns=false)
+    {
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
+
+      FixedPointArray<Type> mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, numFractionalBits, useBoundaryFillPatterns);
 
       return mat;
     }
@@ -669,6 +678,7 @@ namespace Anki
     template<> Result Array<f32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<f64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<Point<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<Rectangle<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
 
 #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
     template<> s32 Array<f32>::Set(const char * const values);
