@@ -147,10 +147,10 @@ namespace Anki
   }
 }
 
-#define ANKI_DEBUG_ESSENTIAL 0
-#define ANKI_DEBUG_ESSENTIAL_AND_ERROR 10
-#define ANKI_DEBUG_ESSENTIAL_AND_ERROR_AND_WARN 20
-#define ANKI_DEBUG_ALL 30
+#define ANKI_DEBUG_MINIMAL 0 // Only check and output issue with explicit unit tests
+#define ANKI_DEBUG_ERRORS 10 // Check and output AnkiErrors and explicit unit tests
+#define ANKI_DEBUG_ERRORS_AND_WARNS 20 // Check and output AnkiErrors, AnkiWarns, and explicit unit tests
+#define ANKI_DEBUG_ALL 30 // Check and output AnkiErrors, AnkiWarns, and explicit unit tests, plus run any additional extensive tests
 
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ALL
 

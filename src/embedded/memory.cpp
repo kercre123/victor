@@ -13,24 +13,24 @@ namespace Anki
     IN_DDR MemoryStack::MemoryStack(void *buffer, s32 bufferLength)
       : buffer(buffer), totalBytes(bufferLength), usedBytes(0)
     {
-      AnkiConditionalEssentialAndReturn(buffer, "Anki.MemoryStack.MemoryStack", "Buffer must be allocated");
-      AnkiConditionalEssentialAndReturn(bufferLength <= 0x3FFFFFFF, "Anki.MemoryStack.MemoryStack", "Maximum size of a MemoryStack is 2^30 - 1");
+      AnkiConditionalError(buffer, "Anki.MemoryStack.MemoryStack", "Buffer must be allocated");
+      AnkiConditionalError(bufferLength <= 0x3FFFFFFF, "Anki.MemoryStack.MemoryStack", "Maximum size of a MemoryStack is 2^30 - 1");
       AnkiConditionalError(MEMORY_ALIGNMENT == 16, "Anki.MemoryStack.MemoryStack", "Currently, only MEMORY_ALIGNMENT == 16 is supported");
     }
 
     IN_DDR MemoryStack::MemoryStack(const MemoryStack& ms)
       : buffer(ms.buffer), totalBytes(ms.totalBytes), usedBytes(ms.usedBytes)
     {
-      AnkiConditionalEssentialAndReturn(ms.buffer, "Anki.MemoryStack.MemoryStack", "Buffer must be allocated");
-      AnkiConditionalEssentialAndReturn(ms.totalBytes <= 0x3FFFFFFF, "Anki.MemoryStack.MemoryStack", "Maximum size of a MemoryStack is 2^30 - 1");
+      AnkiConditionalError(ms.buffer, "Anki.MemoryStack.MemoryStack", "Buffer must be allocated");
+      AnkiConditionalError(ms.totalBytes <= 0x3FFFFFFF, "Anki.MemoryStack.MemoryStack", "Maximum size of a MemoryStack is 2^30 - 1");
       AnkiConditionalError(MEMORY_ALIGNMENT == 16, "Anki.MemoryStack.MemoryStack", "Currently, only MEMORY_ALIGNMENT == 16 is supported");
       AnkiConditionalError(ms.totalBytes >= ms.usedBytes, "Anki.MemoryStack.MemoryStack", "Buffer is using more bytes than it has. Try running IsValid() to test for memory corruption.");
     }
 
     IN_DDR void* MemoryStack::Allocate(s32 numBytesRequested, s32 *numBytesAllocated)
     {
-      AnkiConditionalEssentialAndReturnValue(numBytesRequested > 0, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested > 0");
-      AnkiConditionalEssentialAndReturnValue(numBytesRequested <= 0x3FFFFFFF, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested <= 0x3FFFFFFF");
+      AnkiConditionalErrorAndReturnValue(numBytesRequested > 0, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested > 0");
+      AnkiConditionalErrorAndReturnValue(numBytesRequested <= 0x3FFFFFFF, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested <= 0x3FFFFFFF");
 
       char * const bufferNextFree = static_cast<char*>(buffer) + usedBytes;
 
@@ -44,7 +44,7 @@ namespace Anki
 
       const s32 requestedBytes = static_cast<s32>( reinterpret_cast<size_t>(segmentFooter) + FOOTER_LENGTH - reinterpret_cast<size_t>(bufferNextFree) );
 
-      AnkiConditionalEssentialAndReturnValue((usedBytes+requestedBytes) <= totalBytes, NULL, "Anki.MemoryStack.Allocate", "Ran out of scratch space");
+      AnkiConditionalErrorAndReturnValue((usedBytes+requestedBytes) <= totalBytes, NULL, "Anki.MemoryStack.Allocate", "Ran out of scratch space");
 
       // Next, add the header for this block
       segmentHeader[0] = numBytesRequestedRounded;
@@ -80,7 +80,7 @@ namespace Anki
       if(usedBytes == 0)
         return true;
 
-#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ESSENTIAL_AND_ERROR_AND_WARN
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS
 
       s32 index = static_cast<s32>( RoundUp<size_t>(bufferSizeT+HEADER_LENGTH, MEMORY_ALIGNMENT) - HEADER_LENGTH - bufferSizeT );
 
@@ -115,7 +115,7 @@ namespace Anki
         AnkiError("Anki.MemoryStack.IsValid", "Loop exited at an incorrect position, probably due to corruption");
         return false;
       }
-#endif // #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ESSENTIAL_AND_ERROR_AND_WARN
+#endif // #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS
       return true;
     }
 

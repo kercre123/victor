@@ -43,8 +43,8 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
-// This test requires a stopwatch, and takes about a minute to do manually
-#define TEST_BENCHMARKING
+// This test requires a stopwatch, and takes about ten seconds to do manually
+//#define TEST_BENCHMARKING
 #ifdef TEST_BENCHMARKING
 IN_DDR GTEST_TEST(CoreTech_Common, BENCHMARKING)
 {
@@ -408,16 +408,17 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack)
   void * const buffer1 = ms.Allocate(5);
   void * const buffer2 = ms.Allocate(16);
   void * const buffer3 = ms.Allocate(17);
-  void * const buffer4 = ms.Allocate(0);
-  void * const buffer5 = ms.Allocate(100);
-  void * const buffer6 = ms.Allocate(0x3FFFFFFF);
-  void * const buffer7 = ms.Allocate(u32_MAX);
 
   ASSERT_TRUE(buffer1 != NULL);
   ASSERT_TRUE(buffer2 != NULL);
   ASSERT_TRUE(buffer3 != NULL);
 
-#if ANKI_DEBUG_LEVEL > ANKI_DEBUG_ESSENTIAL_AND_ERROR
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS
+  void * const buffer4 = ms.Allocate(0);
+  void * const buffer5 = ms.Allocate(100);
+  void * const buffer6 = ms.Allocate(0x3FFFFFFF);
+  void * const buffer7 = ms.Allocate(u32_MAX);
+
   ASSERT_TRUE(buffer4 == NULL);
   ASSERT_TRUE(buffer5 == NULL);
   ASSERT_TRUE(buffer6 == NULL);
@@ -434,6 +435,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack)
 
   ASSERT_TRUE(ms.IsValid());
 
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS
 #define NUM_EXPECTED_RESULTS 116
   const bool expectedResults[NUM_EXPECTED_RESULTS] = {
     // Allocation 1
@@ -466,9 +468,8 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack)
     ASSERT_TRUE(ms.IsValid() == expectedResults[i]);
     (reinterpret_cast<char*>(alignedBuffer)[i])--;
   }
-#endif // #if ANKI_DEBUG_LEVEL > ANKI_DEBUG_ESSENTIAL_AND_ERROR
-
-  //free(buffer); buffer = NULL;
+#endif // #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS
+#endif // #if ANKI_DEBUG_LEVEL > ANKI_DEBUG_ERRORS
 
   GTEST_RETURN_HERE;
 }
@@ -517,7 +518,6 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
   ASSERT_TRUE(MEMORY_ALIGNMENT == 16);
 
   const s32 numBytes = MIN(MAX_BYTES, 104); // 12*9 = 104
-  //void * buffer = calloc(numBytes+MEMORY_ALIGNMENT, 1);
   ASSERT_TRUE(buffer != NULL);
 
   void * alignedBuffer = reinterpret_cast<void*>(RoundUp<size_t>(reinterpret_cast<size_t>(buffer), MEMORY_ALIGNMENT));
@@ -534,6 +534,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
   ASSERT_TRUE(allocatedBuffer1 != NULL);
   ASSERT_TRUE(largestPossibleAllocation2 == 48);
 
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS
   const void * const allocatedBuffer2 = ms.Allocate(49);
   const s32 largestPossibleAllocation3 = ms.ComputeLargestPossibleAllocation();
   ASSERT_TRUE(allocatedBuffer2 == NULL);
@@ -543,8 +544,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
   const s32 largestPossibleAllocation4 = ms.ComputeLargestPossibleAllocation();
   ASSERT_TRUE(allocatedBuffer3 != NULL);
   ASSERT_TRUE(largestPossibleAllocation4 == 0);
-
-  ///free(buffer); buffer = NULL;
+#endif // #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS
 
   GTEST_RETURN_HERE;
 }

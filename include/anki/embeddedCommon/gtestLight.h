@@ -19,7 +19,7 @@
 // Same usage as the Gtest macro
 #define ASSERT_TRUE(condition)\
   if(!(condition)) { \
-  _Anki_Logf(ANKI_LOG_LEVEL_ESSENTIAL,\
+  _Anki_Logf(ANKI_LOG_LEVEL_ERROR,\
   "\n------------------------------------------------------------------------\nUnitTestAssert(" #condition ") is false\nUnit Test Assert Failure\n------------------------------------------------------------------------",\
   "", __FILE__, __PRETTY_FUNCTION__, __LINE__); \
   return -1;\
