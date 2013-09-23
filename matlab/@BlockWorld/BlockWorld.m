@@ -205,10 +205,8 @@ classdef BlockWorld < handle
                 P = this.groundTruthPoseFcn(robotName);
                 
                 if strcmp(this.robots{1}.camera.deviceType, 'webot')
-                    % The Webot robot is defined rotated 180 degrees (?),
-                    % and the Z origin is in the middle of the robot
-                    % instead of being on the ground as in BlockWorld
-                    P = Pose([-1 0 0; 0 -1 0; 0 0 1]*P.Rmat, P.T - [0;0;15]);
+                    % The Webot robot is defined rotated 180 degrees (?)
+                    P = Pose([-1 0 0; 0 -1 0; 0 0 1]*P.Rmat, P.T);
                 end
             end
         end
@@ -227,12 +225,18 @@ classdef BlockWorld < handle
         
         function updateObsBlockPose(this, blockID, pose, color)
            if ~isempty(this.updateObsBlockPoseFcn)
+               if ~Pose.isRootPose(pose)
+                   pose = pose.getWithRespectTo('World');
+               end
                this.updateObsBlockPoseFcn(blockID, pose, color, 0.0);
            end
         end
         
         function updateObsRobotPose(this, robotName, pose)
             if ~isempty(this.updateObsRobotPoseFcn)
+                if ~Pose.isRootPose(pose)
+                    pose = pose.getWithRespectTo('World');
+                end
                 this.updateObsRobotPoseFcn(robotName, pose, 0.6);
             end
         end

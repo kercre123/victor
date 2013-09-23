@@ -13,16 +13,20 @@ end
 
 app = this.appearance;
 
-% Canonical block coordinates
-% Note that Z coords are negative because they go backward from marker on
-% the face.
+%
+% Note everything is drawn relative to the robot origin which is its XY
+% center and WheelRadius off the ground.
+% 
+
+% A canonical unit cube, with origin at center:
 cubeX = [0 1 1 0; 0 1 1 0; 0 0 0 0; 1 1 1 1; 0 1 1 0; 0 1 1 0]' - .5;
 cubeY = [0 0 1 1; 0 0 1 1; 0 0 1 1; 0 0 1 1; 1 1 1 1; 0 0 0 0]' - .5;
 cubeZ = [0 0 0 0; 1 1 1 1; 0 1 1 0; 0 1 1 0; 0 0 1 1; 0 0 1 1]' - .5;
 
+bodyZcenter = .5*app.BodyHeight - .5*app.WheelRadius;
 bodyX = app.BodyWidth * cubeX;
 bodyY = app.BodyLength * cubeY;
-bodyZ = app.BodyHeight * cubeZ +.5*app.WheelRadius+.5*app.BodyHeight;
+bodyZ = app.BodyHeight * cubeZ + bodyZcenter;
  
 % this.position = [200 300 0];
 % this.orientation = [0 0 pi/30];
@@ -69,7 +73,26 @@ else
         'YData', [yHistory(max(1,end-app.PathHistoryLength):end); this.origin(2)], ...
         'ZData', [zHistory(max(1,end-app.PathHistoryLength):end); this.origin(3)]);
 end
-    
+
+
+liftX = app.LiftWidth  * cubeX;
+liftY = app.LiftLength * cubeY;
+liftZ = app.LiftHeight * cubeZ;
+
+currentLiftPose = this.liftPose.getWithRespectTo(this.pose);
+lift = rotateAndTranslate(liftX, liftY, liftZ, ...
+    currentLiftPose.Rmat, currentLiftPose.T);
+lift = rotateAndTranslate(lift{:}, R, t);
+if initHandles
+    this.handles.lift = patch(lift{:}, app.BodyColor, ...
+        'FaceColor', app.BodyColor, 'EdgeColor', 0.5*app.BodyColor, ...
+        'FaceAlpha', Alpha, 'EdgeAlpha', Alpha, ...
+        'Parent', AxesHandle);    
+else
+    updateHelper(this.handles.lift, lift);
+end
+
+
 % Canonical cylinder:
 [cylX, cylY, cylZ] = cylinder([1 1], 50);
 cylZ = cylZ - .5;
@@ -82,7 +105,6 @@ wheelX_L = wheelX + .5*app.BodyWidth + .5*app.WheelWidth;
 wheelY_F = wheelY + .5*app.BodyLength - app.WheelRadius;
 wheelX_R = wheelX - .5*app.BodyWidth - .5*app.WheelWidth;
 wheelY_B = wheelY - .5*app.BodyLength + app.WheelRadius;
-wheelZ   = wheelZ + app.WheelRadius;
 
 tire{1} = rotateAndTranslate(wheelX_L, wheelY_F, wheelZ, R, t);
 tire{2} = rotateAndTranslate(wheelX_R, wheelY_F, wheelZ, R, t);
@@ -107,8 +129,8 @@ end
 eyeX = app.EyeRadius * cylX ;
 eyeX_L = eyeX - app.EyeRadius;
 eyeX_R = eyeX + app.EyeRadius;
-eyeY = app.EyeLength * cylZ + app.BodyLength/2 - app.EyeLength/3;
-eyeZ = app.EyeRadius * cylY + app.EyeRadius + app.BodyHeight + .5*app.WheelRadius;
+eyeY = app.EyeLength * cylZ - app.EyeLength/2 + this.T_headCam(2) + this.neckPose.T(2);
+eyeZ = app.EyeRadius * cylY + bodyZcenter + this.T_headCam(3) + this.neckPose.T(3);
 
 eyeL = rotateAndTranslate(eyeX_L, eyeY, eyeZ, R, t);
 eyeR = rotateAndTranslate(eyeX_R, eyeY, eyeZ, R, t);
@@ -152,7 +174,7 @@ end
 pupilX_L = .5*app.EyeRadius * cylX - app.EyeRadius ;
 pupilX_R = .5*app.EyeRadius * cylX + app.EyeRadius ;
 pupilY = eyeY - .09*app.EyeLength;
-pupilZ = .5*app.EyeRadius * cylY + app.EyeRadius + app.BodyHeight + .5*app.WheelRadius;
+pupilZ = .5*app.EyeRadius * cylY + app.EyeRadius + app.BodyHeight/2 + bodyZcenter;
 
 pupil1 = rotateAndTranslate(pupilX_L(2,:), pupilY(2,:), pupilZ(2,:), R, t);
 pupil2 = rotateAndTranslate(pupilX_R(2,:), pupilY(2,:), pupilZ(2,:), R, t);

@@ -2,6 +2,7 @@ classdef Robot < handle
     
     properties(GetAccess = 'public', Constant = true)
         ObservationWindowLength = 3;
+        LiftAngle_Low   = -.3;
     end
     
     properties(GetAccess = 'public', SetAccess = 'protected')
@@ -21,11 +22,18 @@ classdef Robot < handle
         % The neck is a fixed link on which the head (with camera) pivots.
         neckPose; 
         
+        % The liftBase is a fixed link on which the lift pivotes.
+        liftBasePose;
+        liftPose;
+        
         % Keep track of untilted camera pose, since we will adjust from the
         % untilted position to the current head pitch at each time step
         % (and not incrementally from the current position)
+        % (And same for lift)
         R_headCam;
         T_headCam;
+        R_lift;
+        T_lift;
         
         % for auto-docking
         dockingBlock = [];
@@ -38,14 +46,17 @@ classdef Robot < handle
         % For drawing:
         appearance = struct( ...
             'BodyColor', [.7 .7 0], ...
-            'BodyHeight', 30, ...
-            'BodyWidth', 60, ...
-            'BodyLength', 75, ...
-            'WheelWidth', 15, ...
-            'WheelRadius', 15, ...
+            'BodyHeight', 35, ...
+            'BodyWidth', 40, ...
+            'BodyLength', 90, ...
+            'LiftWidth', 30, ...
+            'LiftLength', 5, ...
+            'LiftHeight', 10, ...
+            'WheelWidth', 20, ...
+            'WheelRadius', 20, ...
             'WheelColor', 0.25*ones(1,3), ...
-            'EyeLength', [], ...
-            'EyeRadius', [], ...
+            'EyeLength', 40, ...
+            'EyeRadius', 15, ...
             'EyeLengthFraction', .65, ... % fraction of BodyLength
             'EyeRadiusFraction', .47, ... % fraction of BodyWidth/2
             'EyeColor', [.5 0 0], ...
@@ -87,10 +98,18 @@ classdef Robot < handle
         posePrev_;
         
         operationMode_ = '';
-        liftPosition_ = '';
+        nextOperationMode = '';
+        liftAngle;
+        
+        LiftAngle_Place;
+        LiftAngle_Dock;
+        LiftAngle_High;
         
         getHeadPitchFcn; % query current head pitch angle
         setHeadPitchFcn;
+        
+        getLiftAngleFcn;
+        setLiftAngleFcn;
         
         driveFcn; 
         setLiftPositionFcn;
@@ -125,10 +144,15 @@ classdef Robot < handle
             
             this.appearance = parseVarargin(this.appearance, appearanceArgs{:});
             
-            this.appearance.EyeLength = this.appearance.EyeLengthFraction * ...
-                this.appearance.BodyLength;
-            this.appearance.EyeRadius = this.appearance.EyeRadiusFraction * ...
-                this.appearance.BodyWidth/2;
+            if isempty(this.appearance.EyeLength)
+                this.appearance.EyeLength = this.appearance.EyeLengthFraction * ...
+                    this.appearance.BodyLength;
+            end
+            
+            if isempty(this.appearance.EyeRadius)
+                this.appearance.EyeRadius = this.appearance.EyeRadiusFraction * ...
+                    this.appearance.BodyWidth/2;
+            end
             
             this.pose_ = Pose();
             this.pose_.name = 'fromRobot_toWorld';
@@ -136,7 +160,7 @@ classdef Robot < handle
             % From camera to robot pose:
             % Rotation -90 degrees around x axis:
             this.R_headCam = [1 0 0; 0 0 1; 0 -1 0];
-            this.T_headCam = [0; 30; 23];
+            this.T_headCam = [0; 25; 15]; % relative to neck 
             
             % Add uncertainty for Camera pose(s) w.r.t. robot?
             %   1 degree uncertainty in rotation
@@ -145,7 +169,28 @@ classdef Robot < handle
             Tcov = (.1)^2*eye(3);
             this.camPoseCov = blkdiag(Rcov,Tcov);
             
-            this.neckPose = Pose([0 0 0], [0; 0; 20]);
+            % TODO: get the liftBasePose from Webots programmatically
+            this.liftBasePose = Pose([0 0 0], [0 -35 27]); % to match webots
+            this.liftBasePose.parent = this.pose;
+            this.liftBasePose.name = 'fromBase_toRobot';
+            
+            % TODO: get the liftPose from Webots programmatically
+            this.R_lift = eye(3);
+            this.T_lift = [0; 92.5; 0]; % 72.5 = 45 + 45 + 2.5
+            
+            this.liftPose = Pose(this.R_lift, this.T_lift); % TODO add uncertainty
+            this.liftPose.parent = this.liftBasePose;
+            this.liftPose.name = 'fromLift_toLiftBase';
+            
+            % TODO: these should probably be computed dynamically based on
+            % the Block size(s) we are docking with and/or placing on!
+            liftBaseZ = this.liftBasePose.T(3) + this.appearance.WheelRadius;
+            this.LiftAngle_Place = asin((90.5-liftBaseZ)/this.T_lift(2));
+            this.LiftAngle_Dock  = asin((30-liftBaseZ)/this.T_lift(2));
+            this.LiftAngle_High  = asin((100.5-liftBaseZ)/this.T_lift(2));
+             
+            % TODO: get the neckPose from Webots programmatically
+            this.neckPose = Pose([0 0 0], [0; 9.5; 25]);
             this.neckPose.parent = this.pose;
             this.neckPose.name = 'fromNeck_toRobot';
             
@@ -153,53 +198,23 @@ classdef Robot < handle
             headPose.parent = this.neckPose;
             headPose.name = 'fromHeadCam_toNeck';
             
-            if isempty(GetHeadPitchFcn)    
-                this.getHeadPitchFcn = @()0;
-            else
-                assert(isa(GetHeadPitchFcn, 'function_handle'), ...
-                    'GetHeadPitchFcn should be a function handle.');
-                this.getHeadPitchFcn = GetHeadPitchFcn;
+            function setFcnHelper(Fcn, name, default)
+                if isempty(Fcn)
+                    Fcn = default;
+                end
+                assert(isa(Fcn, 'function_handle'), ...
+                    [name ' should be function handle.']);
+                this.(name) = Fcn;
             end
             
-            if isempty(SetHeadPitchFcn)
-                this.setHeadPitchFcn = @(angle)0;
-            else
-                assert(isa(SetHeadPitchFcn, 'function_handle'), ...
-                    'SetHeadPitchFcn should be a function handle.');
-                this.setHeadPitchFcn = SetHeadPitchFcn;
-            end
-            
-            if isempty(SetLiftPositionFcn)
-                this.setLiftPositionFcn = @(pos)0;
-            else
-                assert(isa(SetLiftPositionFcn, 'function_handle'), ...
-                    'SetLiftPositionFcn should be a function handle.');
-                this.setLiftPositionFcn = SetLiftPositionFcn;
-            end
-            
-            if isempty(DriveFcn)
-                this.driveFcn = @(left,right) 0;
-            else
-                assert(isa(DriveFcn, 'function_handle'), ...
-                    'DriveFcn should be a function handle.');
-                this.driveFcn = DriveFcn;
-            end
-            
-            if isempty(IsBlockLockedFcn)
-                this.isBlockLockedFcn = @()false;
-            else
-                assert(isa(IsBlockLockedFcn, 'function_handle'), ...
-                    'IsBlockLockedFcn should be a function handle.');
-                this.isBlockLockedFcn = IsBlockLockedFcn;
-            end
-                
-            if isempty(ReleaseBlockFcn)
-                this.releaseBlockFcn = @()0;
-            else
-                assert(isa(ReleaseBlockFcn, 'function_handle'), ...
-                    'ReleaseBlockFcn should be a function handle.');
-                this.releaseBlockFcn = ReleaseBlockFcn;
-            end
+            setFcnHelper(GetHeadPitchFcn,    'getHeadPitchFcn',    @()0 );
+            setFcnHelper(SetHeadPitchFcn,    'setHeadPitchFcn',    @(angle)0 );
+            setFcnHelper(GetLiftAngleFcn,    'getLiftAngleFcn',    @()0 );
+            setFcnHelper(SetLiftAngleFcn,    'setLiftAngleFcn',    @(angle)0 );
+            setFcnHelper(SetLiftPositionFcn, 'setLiftPositionFcn', @(pos)0 );
+            setFcnHelper(DriveFcn,           'driveFcn',           @(left,right)0);
+            setFcnHelper(IsBlockLockedFcn,   'isBlockLockedFcn',   @()false);
+            setFcnHelper(ReleaseBlockFcn,    'releaseBlockFcn',    @()0);
             
             this.camera = Camera('device', CameraDevice, ...
                 'deviceType', CameraType, ...
