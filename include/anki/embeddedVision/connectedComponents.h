@@ -35,26 +35,39 @@ namespace Anki
       // max(ids) == numberOfUniqueValues(ids). For example, the list of ids {0,4,5,7} would be
       // changed to {0,1,2,3}.
       //
-      // For a components parameter that has a maximum id of N, this function requires
+      // For a ConnectedComponent that has a maximum id of N, this function requires
       // 3n + 1 bytes of scratch.
       //
       // TODO: If scratch usage is a bigger issue than computation time, this could be done with a bitmask
       Result CompressConnectedComponentSegmentIds(MemoryStack scratch);
 
-      // Iterate through components, and compute the number of pixels for each
+      // Iterate through components, and compute the number of pixels for each component
       // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes
       // Note: this is probably inefficient, compared with interlacing the loops in a kernel
-      Result ComputeComponentSizes(s32 * restrict componentSizes);
+      Result ComputeComponentSizes(FixedLengthList<s32> &componentSizes);
+
+      // Iterate through components, and compute the centroid of each component componentCentroids
+      // must be at least sizeof(Point<s16>)*(maximumdId+1) bytes
+      // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+      //
+      // For a ConnectedComponent that has a maximum id of N, this function requires
+      // 4n + 4 bytes of scratch.
+      Result ComputeComponentCentroids(FixedLengthList<Point<s16>> &componentCentroids, MemoryStack scratch);
+
+      // Iterate through components, and compute bounding box for each component
+      // componentBoundingBoxes must be at least sizeof(Rectangle<s16>)*(maximumdId+1) bytes
+      // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+      Result ComputeComponentBoundingBoxes(FixedLengthList<Rectangle<s16>> &componentBoundingBoxes);
 
       // Iterate through components, and compute the number of componentSegments that have each id
       // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes
       // Note: this is probably inefficient, compared with interlacing the loops in a kernel
-      Result ComputeNumComponentSegmentsForEachId(s32 * restrict numComponentSegments);
+      Result ComputeNumComponentSegmentsForEachId(FixedLengthList<s32> &numComponentSegments);
 
       // Goes through the list components, and computes the number of pixels for each.
       // For any componentId with less than minimumNumPixels pixels, all ConnectedComponentSegment with that id will have their ids set to zero
       //
-      // For a components parameter that has a maximum id of N, this function requires
+      // For a ConnectedComponent that has a maximum id of N, this function requires
       // 4n + 4 bytes of scratch.
       Result MarkSmallOrLargeComponentsAsInvalid(const s32 minimumNumPixels, const s32 maximumNumPixels, MemoryStack scratch);
 
@@ -64,18 +77,32 @@ namespace Anki
       // set to zero
       //
       // The SQ26.5 parameter sparseMultiplyThreshold is set so that a component is invalid if
-      // "sparseMultiplyThreshold*numPixels < boundingWidth*boundingHeight".
-      // A resonable value is between 5<<5 = 160 and 100<<5 = 3200.
+      // "sparseMultiplyThreshold*numPixels < boundingWidth*boundingHeight". A resonable value is
+      // between 5<<5 = 160 and 100<<5 = 3200.
       //
       // The SQ26.5 parameter solidMultiplyThreshold is set so that a component is invalid if
-      // "solidMultiplyThreshold*numPixels > boundingWidth*boundingHeight".
-      // A resonable value is between 1.5*pow(2,5) = 48 and 5<<5 = 160.
+      // "solidMultiplyThreshold*numPixels > boundingWidth*boundingHeight". A resonable value is
+      // between 1.5*pow(2,5) = 48 and 5<<5 = 160.
       //
-      // Note: This can overflow if the number of pixels is greater than 2^26 (a bit more Ultra-HD resolution)
+      // Note: This can overflow if the number of pixels is greater than 2^26 (a bit more Ultra-HD
+      //       resolution)
       //
-      // For a components parameter that has a maximum id of N, this function requires
-      // 8N + 8 bytes of scratch.
+      // For a ConnectedComponent that has a maximum id of N, this function requires 8N + 8 bytes
+      // of scratch.
       Result MarkSolidOrSparseComponentsAsInvalid(const s32 sparseMultiplyThreshold, const s32 solidMultiplyThreshold, MemoryStack scratch);
+
+      // If a component doesn't have a hollow center, it's not a fiducial. Based on a component's
+      // centroid, and its maximum extent, this method makes sure no componentSegment is inside of
+      // an inner rectangle. For example, take a component centered at (50,50), that is 20 pixels
+      // wide and high. If percentHorizontal=0.5 and percentVertical=0.25, then no componentSegment
+      // should intersect the rectangle between (40,45) and (60,55).
+      //
+      // percentHorizontal and percentVertical are SQ1.30,
+      // and should range from (0.0, 1.0), non-inclusive
+      //
+      // For a ConnectedComponent that has a maximum id of N, this function requires 8N + 8 bytes
+      // of scratch.
+      Result MarkFilledCenterComponentsAsInvalid(const s32 percentHorizontal, const s32 percentVertical, MemoryStack scratch);
 
       Result PushBack(const ConnectedComponentSegment &value);
 

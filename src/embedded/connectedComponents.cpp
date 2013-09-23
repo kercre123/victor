@@ -279,20 +279,116 @@ namespace Anki
     // Iterate through components, and compute the number of pixels for each
     // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes
     // Note: this is probably inefficient, compared with interlacing the loops in a kernel
-    Result ConnectedComponents::ComputeComponentSizes(s32 * restrict componentSizes)
+    Result ConnectedComponents::ComputeComponentSizes(FixedLengthList<s32> &componentSizes)
     {
-      AnkiConditionalErrorAndReturnValue(componentSizes, RESULT_FAIL, "ComputeComponentSizes", "componentSizes is NULL");
+      AnkiConditionalErrorAndReturnValue(componentSizes.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "componentSizes is not valid");
       AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "components is not valid");
 
-      memset(componentSizes, 0, sizeof(componentSizes[0])*(maximumId+1));
+      componentSizes.SetZero();
+      componentSizes.set_size(maximumId+1);
 
       const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
+      s32 * restrict componentSizes_rowPointer = componentSizes.Pointer(0);
 
       for(s32 i=0; i<components.get_size(); i++) {
         const u16 id = components_constRowPointer[i].id;
         const s16 length = components_constRowPointer[i].xEnd - components_constRowPointer[i].xStart + 1;
 
-        componentSizes[id] += length;
+        componentSizes_rowPointer[id] += length;
+      }
+
+      return RESULT_OK;
+    }
+
+    // Iterate through components, and compute the centroid of each component componentCentroids
+    // must be at least sizeof(Point<s16>)*(maximumdId+1) bytes
+    // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+    // Iterate through components, and compute the centroid of each component componentCentroids
+    // must be at least sizeof(Point<s16>)*(maximumdId+1) bytes
+    // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+    //
+    // For a ConnectedComponent that has a maximum id of N, this function requires
+    // 12n + 12 bytes of scratch.
+    IN_DDR Result ConnectedComponents::ComputeComponentCentroids(FixedLengthList<Point<s16>> &componentCentroids, MemoryStack scratch)
+    {
+      AnkiConditionalErrorAndReturnValue(componentCentroids.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "componentCentroids is not valid");
+      AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "components is not valid");
+
+      componentCentroids.SetZero();
+      componentCentroids.set_size(maximumId+1);
+
+      FixedLengthList<Point<s32>> componentCentroidAccumulators(maximumId+1, scratch);
+      componentCentroidAccumulators.set_size(maximumId+1);
+      componentCentroidAccumulators.SetZero();
+
+      FixedLengthList<s32> componentSizes(maximumId+1, scratch);
+
+      if(ComputeComponentSizes(componentSizes) != RESULT_OK)
+        return RESULT_FAIL;
+
+      const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
+
+      {
+        Point<s32> * restrict componentCentroidAccumulators_rowPointer = componentCentroidAccumulators.Pointer(0);
+
+        for(s32 i=0; i<components.get_size(); i++) {
+          const u16 id = components_constRowPointer[i].id;
+
+          const s16 y = components_constRowPointer[i].y;
+
+          for(s32 x=components_constRowPointer[i].xStart; x<=components_constRowPointer[i].xEnd; x++) {
+            componentCentroidAccumulators_rowPointer[id].x += x;
+            componentCentroidAccumulators_rowPointer[id].y += y;
+          }
+        }
+      }
+
+      {
+        const Point<s32> * restrict componentCentroidAccumulators_constRowPointer = componentCentroidAccumulators.Pointer(0);
+        const s32 * restrict componentSizes_constRowPointer = componentSizes.Pointer(0);
+        Point<s16> * restrict componentCentroids_rowPointer = componentCentroids.Pointer(0);
+
+        for(s32 i=0; i<=maximumId; i++) {
+          if(componentSizes_constRowPointer[i] > 0) {
+            componentCentroids_rowPointer[i].x = static_cast<s16>(componentCentroidAccumulators_constRowPointer[i].x / componentSizes_constRowPointer[i]);
+            componentCentroids_rowPointer[i].y = static_cast<s16>(componentCentroidAccumulators_constRowPointer[i].y / componentSizes_constRowPointer[i]);
+          }
+        }
+      }
+
+      return RESULT_OK;
+    }
+
+    // Iterate through components, and compute bounding box for each component
+    // componentBoundingBoxes must be at least sizeof(Rectangle<s16>)*(maximumdId+1) bytes
+    // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+    IN_DDR Result ConnectedComponents::ComputeComponentBoundingBoxes(FixedLengthList<Rectangle<s16>> &componentBoundingBoxes)
+    {
+      AnkiConditionalErrorAndReturnValue(componentBoundingBoxes.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "componentBoundingBoxes is not valid");
+      AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "components is not valid");
+
+      componentBoundingBoxes.set_size(maximumId+1);
+
+      const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
+      Rectangle<s16> * restrict componentBoundingBoxes_rowPointer = componentBoundingBoxes.Pointer(0);
+
+      for(s32 i=0; i<componentBoundingBoxes.get_size(); i++) {
+        componentBoundingBoxes_rowPointer[i].left = s16_MAX;
+        componentBoundingBoxes_rowPointer[i].right = -s16_MAX;
+        componentBoundingBoxes_rowPointer[i].top = s16_MAX;
+        componentBoundingBoxes_rowPointer[i].bottom = -s16_MAX;
+      }
+
+      for(s32 i=0; i<components.get_size(); i++) {
+        const u16 id = components_constRowPointer[i].id;
+        const s16 xStart = components_constRowPointer[i].xStart;
+        const s16 xEnd = components_constRowPointer[i].xEnd;
+        const s16 y = components_constRowPointer[i].y;
+
+        componentBoundingBoxes_rowPointer[id].left = MIN(componentBoundingBoxes_rowPointer[id].left, xStart);
+        componentBoundingBoxes_rowPointer[id].right = MAX(componentBoundingBoxes_rowPointer[id].right, xEnd);
+        componentBoundingBoxes_rowPointer[id].top = MIN(componentBoundingBoxes_rowPointer[id].top, y);
+        componentBoundingBoxes_rowPointer[id].bottom = MAX(componentBoundingBoxes_rowPointer[id].bottom, y);
       }
 
       return RESULT_OK;
@@ -301,19 +397,21 @@ namespace Anki
     // Iterate through components, and compute the number of componentSegments that have each id
     // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes
     // Note: this is probably inefficient, compared with interlacing the loops in a kernel
-    IN_DDR Result ConnectedComponents::ComputeNumComponentSegmentsForEachId(s32 * restrict numComponentSegments)
+    IN_DDR Result ConnectedComponents::ComputeNumComponentSegmentsForEachId(FixedLengthList<s32> &numComponentSegments)
     {
-      AnkiConditionalErrorAndReturnValue(numComponentSegments, RESULT_FAIL, "ComputeComponentSizes", "numComponentSegments is NULL");
+      AnkiConditionalErrorAndReturnValue(numComponentSegments.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "numComponentSegments is not valid");
       AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "components is not valid");
 
-      memset(numComponentSegments, 0, sizeof(numComponentSegments[0])*(maximumId+1));
+      numComponentSegments.SetZero();
+      numComponentSegments.set_size(maximumId+1);
 
       const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
+      s32 * restrict numComponentSegments_rowPointer = numComponentSegments.Pointer(0);
 
       for(s32 i=0; i<components.get_size(); i++) {
         const u16 id = components_constRowPointer[i].id;
 
-        numComponentSegments[id]++;
+        numComponentSegments_rowPointer[id]++;
       }
 
       return RESULT_OK;
@@ -323,7 +421,7 @@ namespace Anki
     // max(ids) == numberOfUniqueValues(ids). The function then returns the maximum id. For example, the list of ids {0,4,5,7} would be
     // changed to {0,1,2,3}, and it would return 3.
     //
-    // For a components parameter that has a maximum id of N, this function requires
+    // For a ConnectedComponent that has a maximum id of N, this function requires
     // 3n + 3 bytes of scratch.
     //
     // TODO: If scratch usage is a bigger issue than computation time, this could be done with a bitmask
@@ -376,7 +474,7 @@ namespace Anki
     // Goes through the list components, and computes the number of pixels for each.
     // For any componentId with less than minimumNumPixels pixels, all ConnectedComponentSegment with that id will have their ids set to zero
     //
-    // For a components parameter that has a maximum id of N, this function requires
+    // For a ConnectedComponent that has a maximum id of N, this function requires
     // 4n + 4 bytes of scratch.
     IN_DDR Result ConnectedComponents::MarkSmallOrLargeComponentsAsInvalid(const s32 minimumNumPixels, const s32 maximumNumPixels, MemoryStack scratch)
     {
@@ -428,7 +526,7 @@ namespace Anki
     //
     // Note: This can overflow if the number of pixels is greater than 2^26 (a bit more Ultra-HD resolution)
     //
-    // For a components parameter that has a maximum id of N, this function requires
+    // For a ConnectedComponent that has a maximum id of N, this function requires
     // 8N + 8 bytes of scratch.
     IN_DDR Result ConnectedComponents::MarkSolidOrSparseComponentsAsInvalid(const s32 sparseMultiplyThreshold, const s32 solidMultiplyThreshold, MemoryStack scratch)
     {
@@ -508,7 +606,24 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result ConnectedComponents::PushBack(const ConnectedComponentSegment &value)
+    // If a component doesn't have a hollow center, it's not a fiducial. Based on a component's
+    // centroid, and its maximum extent, this method makes sure no componentSegment is inside of
+    // an inner rectangle. For example, take a component centered at (50,50), that is 20 pixels
+    // wide and high. If percentHorizontal=0.5 and percentVertical=0.25, then no componentSegment
+    // should intersect the rectangle between (40,45) and (60,55).
+    //
+    // percentHorizontal and percentVertical are SQ1.30,
+    // and should range from (0.0, 1.0), non-inclusive
+    //
+    // For a ConnectedComponent that has a maximum id of N, this function requires 8N + 8 bytes
+    // of scratch.
+    IN_DDR Result ConnectedComponents::MarkFilledCenterComponentsAsInvalid(const s32 percentHorizontal, const s32 percentVertical, MemoryStack scratch)
+    {
+      //TODO: implement
+      return RESULT_OK;
+    }
+
+    IN_DDR Result ConnectedComponents::PushBack(const ConnectedComponentSegment &value)
     {
       const Result result = components.PushBack(value);
 

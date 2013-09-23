@@ -47,6 +47,100 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 #include "blockImage50.h"
 
+IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
+{
+  const s32 numComponents = 10;
+  const s32 numBytes = MIN(MAX_BYTES, 1000);
+
+  MemoryStack ms(&buffer[0], numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  ConnectedComponents components(numComponents, ms);
+
+  const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1);
+  const ConnectedComponentSegment component1 = ConnectedComponentSegment(12, 12, 1, 1);
+  const ConnectedComponentSegment component2 = ConnectedComponentSegment(16, 1004, 2, 1);
+  const ConnectedComponentSegment component3 = ConnectedComponentSegment(0, 4, 3, 2);
+  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 2, 4, 3);
+  const ConnectedComponentSegment component5 = ConnectedComponentSegment(4, 6, 5, 3);
+  const ConnectedComponentSegment component6 = ConnectedComponentSegment(8, 10, 6, 3);
+  const ConnectedComponentSegment component7 = ConnectedComponentSegment(0, 4, 7, 4);
+  const ConnectedComponentSegment component8 = ConnectedComponentSegment(6, 6, 8, 4);
+  const ConnectedComponentSegment component9 = ConnectedComponentSegment(5, 1000, 9, 5);
+
+  components.PushBack(component0);
+  components.PushBack(component1);
+  components.PushBack(component2);
+  components.PushBack(component3);
+  components.PushBack(component4);
+  components.PushBack(component5);
+  components.PushBack(component6);
+  components.PushBack(component7);
+  components.PushBack(component8);
+  components.PushBack(component9);
+
+  FixedLengthList<Anki::Embedded::Rectangle<s16>> componentBoundingBoxes(numComponents, ms);
+  {
+    const Result result = components.ComputeComponentBoundingBoxes(componentBoundingBoxes);
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  ASSERT_TRUE(*componentBoundingBoxes.Pointer(1) == Anki::Embedded::Rectangle<s16>(0,1004,0,2));
+  ASSERT_TRUE(*componentBoundingBoxes.Pointer(2) == Anki::Embedded::Rectangle<s16>(0,4,3,3));
+  ASSERT_TRUE(*componentBoundingBoxes.Pointer(3) == Anki::Embedded::Rectangle<s16>(0,10,4,6));
+  ASSERT_TRUE(*componentBoundingBoxes.Pointer(4) == Anki::Embedded::Rectangle<s16>(0,6,7,8));
+  ASSERT_TRUE(*componentBoundingBoxes.Pointer(5) == Anki::Embedded::Rectangle<s16>(5,1000,9,9));
+
+  GTEST_RETURN_HERE;
+} // IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
+
+IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
+{
+  const s32 numComponents = 10;
+  const s32 numBytes = MIN(MAX_BYTES, 1000);
+
+  MemoryStack ms(&buffer[0], numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  ConnectedComponents components(numComponents, ms);
+
+  const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1);
+  const ConnectedComponentSegment component1 = ConnectedComponentSegment(12, 12, 1, 1);
+  const ConnectedComponentSegment component2 = ConnectedComponentSegment(16, 1004, 2, 1);
+  const ConnectedComponentSegment component3 = ConnectedComponentSegment(0, 4, 3, 2);
+  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 2, 4, 3);
+  const ConnectedComponentSegment component5 = ConnectedComponentSegment(4, 6, 5, 3);
+  const ConnectedComponentSegment component6 = ConnectedComponentSegment(8, 10, 6, 3);
+  const ConnectedComponentSegment component7 = ConnectedComponentSegment(0, 4, 7, 4);
+  const ConnectedComponentSegment component8 = ConnectedComponentSegment(6, 6, 8, 4);
+  const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 1000, 9, 5);
+
+  components.PushBack(component0);
+  components.PushBack(component1);
+  components.PushBack(component2);
+  components.PushBack(component3);
+  components.PushBack(component4);
+  components.PushBack(component5);
+  components.PushBack(component6);
+  components.PushBack(component7);
+  components.PushBack(component8);
+  components.PushBack(component9);
+
+  FixedLengthList<Point<s16>> componentCentroids(numComponents, ms);
+  {
+    const Result result = components.ComputeComponentCentroids(componentCentroids, ms);
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  ASSERT_TRUE(*componentCentroids.Pointer(1) == Point<s16>(503,1));
+  ASSERT_TRUE(*componentCentroids.Pointer(2) == Point<s16>(2,3));
+  ASSERT_TRUE(*componentCentroids.Pointer(3) == Point<s16>(5,5));
+  ASSERT_TRUE(*componentCentroids.Pointer(4) == Point<s16>(2,7));
+  ASSERT_TRUE(*componentCentroids.Pointer(5) == Point<s16>(500,9));
+
+  GTEST_RETURN_HERE;
+} // IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
+
 // The test is if it can run without crashing
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
 {
@@ -182,8 +276,6 @@ IN_DDR GTEST_TEST(CoreTech_Vision, MarkSolidOrSparseComponentsAsInvalid)
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  //FixedLengthList<ConnectedComponentSegment> components(numComponents, ms);
-  //components.set_size(numComponents);
   ConnectedComponents components(numComponents, ms);
 
   const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1); // Ok
@@ -237,8 +329,6 @@ IN_DDR GTEST_TEST(CoreTech_Vision, MarkSmallOrLargeComponentsAsInvalid)
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  //FixedLengthList<ConnectedComponentSegment> components(numComponents, ms);
-  //components.set_size(numComponents);
   ConnectedComponents components(numComponents, ms);
 
   const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1);
@@ -309,8 +399,6 @@ IN_DDR GTEST_TEST(CoreTech_Vision, CompressComponentIds)
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  //FixedLengthList<ConnectedComponentSegment> components(numComponents, ms);
-  //components.set_size(numComponents);
   ConnectedComponents components(numComponents, ms);
 
   const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 0, 0, 5);  // 3
@@ -402,8 +490,6 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SortComponents)
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  //FixedLengthList<ConnectedComponentSegment> components(numComponents, ms);
-  //components.set_size(numComponents);
   ConnectedComponents components(numComponents, ms);
 
   const ConnectedComponentSegment component0 = ConnectedComponentSegment(50, 100, 50, u16_MAX); // 2
