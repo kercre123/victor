@@ -54,6 +54,7 @@ classdef Camera < handle
             Dependent = true)
         
         calibrationMatrix;
+        FOV_vertical, FOV_horizontal;
         
     end
     
@@ -227,6 +228,15 @@ classdef Camera < handle
             end
             
             this.image_ = I;
+        end
+        
+        function fov = get.FOV_vertical(this)
+            fov = 2*atan2(this.nrows, 2*this.focalLength(2));
+        end
+        
+        function fov = get.FOV_horizontal(this)
+            aspect = this.ncols / this.nrows;
+            fov = aspect * this.FOV_vertical;
         end
                 
     end % METHODS (Dependent get/set)
