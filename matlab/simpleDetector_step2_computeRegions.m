@@ -34,7 +34,7 @@ else
 %         keyboard
     end
     
-    [area, indexList, bb, centroid] = mexRegionProps( ...
+    [area, indexList, bb, centroid] = mexRegionprops( ...
         uint32(regionMap), numRegions);
     area = double(area);
 end
