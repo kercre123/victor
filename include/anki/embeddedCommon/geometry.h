@@ -47,6 +47,35 @@ namespace Anki
       Type x, y;
     }; // class Point<Type>
 
+#pragma mark --- Rectangle Class Definition ---
+
+    template<typename Type> class Rectangle
+    {
+    public:
+      Rectangle();
+
+      Rectangle(const Type left, const Type right, const Type top, const Type bottom);
+
+      Rectangle(const Rectangle<Type>& rect);
+
+      void Print() const;
+
+      bool operator== (const Rectangle<Type> &point2) const;
+
+      Rectangle<Type> operator+ (const Rectangle<Type> &rect2) const;
+
+      Rectangle<Type> operator- (const Rectangle<Type> &rect2) const;
+
+      Type get_width() const;
+
+      Type get_height() const;
+
+      Type left;
+      Type right;
+      Type top;
+      Type bottom;
+    }; // class Point<Type>
+
 #pragma mark --- Point Implementations ---
 
     template<typename Type> Point<Type>::Point()
@@ -110,6 +139,60 @@ namespace Anki
 #pragma mark --- Point Specializations ---
     template<> void Point<f32>::Print() const;
     template<> void Point<f64>::Print() const;
+
+#pragma mark --- Rectangle Implementations ---
+
+    template<typename Type> Rectangle<Type>::Rectangle()
+      : left(static_cast<Type>(0)), right(static_cast<Type>(0)), top(static_cast<Type>(0)), bottom(static_cast<Type>(0))
+    {
+    }
+
+    template<typename Type> Rectangle<Type>::Rectangle(const Type left, const Type right, const Type top, const Type bottom)
+      : left(left), right(right), top(top), bottom(bottom)
+    {
+    }
+
+    template<typename Type> Rectangle<Type>::Rectangle(const Rectangle<Type>& rect)
+      : left(rect.left), right(rect.right), top(rect.top), bottom(rect.bottom)
+    {
+    }
+
+    template<typename Type> void Rectangle<Type>::Print() const
+    {
+      printf("(%d,%d)->(%d,%d) ", this->left, this->top, this->right, this->bottom);
+    }
+
+    template<typename Type> bool Rectangle<Type>::operator== (const Rectangle<Type> &rectangle2) const
+    {
+      if(this->left == rectangle2.left && this->top == rectangle2.top && this->right == rectangle2.right && this->bottom == rectangle2.bottom)
+        return true;
+
+      return false;
+    }
+
+    template<typename Type> Rectangle<Type> Rectangle<Type>::operator+ (const Rectangle<Type> &rectangle2) const
+    {
+      return Rectangle<Type>(this->top+rectangle2.top, this->bottom+rectangle2.bottom, this->left+rectangle2.left, this->right+rectangle2.right);
+    }
+
+    template<typename Type> Rectangle<Type> Rectangle<Type>::operator- (const Rectangle<Type> &rectangle2) const
+    {
+      return Rectangle<Type>(this->top-rectangle2.top, this->bottom-rectangle2.bottom, this->left-rectangle2.left, this->right-rectangle2.right);
+    }
+
+    template<typename Type> Type Rectangle<Type>::get_width() const
+    {
+      return right - left;
+    }
+
+    template<typename Type> Type Rectangle<Type>::get_height() const
+    {
+      return bottom - top;
+    }
+
+#pragma mark --- Rectangle Specializations ---
+    template<> void Rectangle<f32>::Print() const;
+    template<> void Rectangle<f64>::Print() const;
   } // namespace Embedded
 } // namespace Anki
 

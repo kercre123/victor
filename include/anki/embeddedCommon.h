@@ -9,7 +9,7 @@
 #include "anki/embeddedCommon/errorHandling.h"
 #include "anki/embeddedCommon/dataStructures.h"
 #include "anki/embeddedCommon/matlabInterface.h"
-#include "anki/embeddedCommon/point.h"
+#include "anki/embeddedCommon/geometry.h"
 #include "anki/embeddedCommon/gtestLight.h"
 #include "anki/embeddedCommon/fixedLengthList.h"
 #include "anki/embeddedCommon/opencvLight.h"
