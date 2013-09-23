@@ -104,7 +104,7 @@ classdef BlockWorldWebotController < handle
             % NOTE: Cameras will be enabled by the instantiation of the
             % BlockWorld Camera objects.
             this.cam_head = wb_robot_get_device(this.CAMERA_HEAD);
-            this.cam_lift = wb_robot_get_device(this.CAMERA_LIFT);
+            %this.cam_lift = wb_robot_get_device(this.CAMERA_LIFT);
             this.cam_down = wb_robot_get_device(this.CAMERA_DOWN);
                         
             % get a handler to the connector and the motor.

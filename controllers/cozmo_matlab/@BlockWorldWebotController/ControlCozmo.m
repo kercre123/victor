@@ -116,10 +116,10 @@ switch (key)
         
     case this.CKEY_DOCK
         
-        if strcmp(this.GetOperationMode, 'DOCK')
+        if any(strcmp(this.GetOperationMode, {'INITIATE_DOCK', 'DOCK'}))
             this.SetOperationMode('');
         else
-            this.SetOperationMode('DOCK');
+            this.SetOperationMode('INITIATE_DOCK');
         end
         
     otherwise
@@ -127,7 +127,7 @@ switch (key)
             fprintf('Key pressed: %s (%d)\n', key);
         end
         
-        if ~strcmp(this.GetOperationMode(), 'DOCK')
+        if ~any(strcmp(this.GetOperationMode(), {'DOCK', 'INITIATE_DOCK'}))
             % Only move while direction key is being pressed
             this.SetAngularWheelVelocity(0, 0);
         end
