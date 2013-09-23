@@ -117,11 +117,7 @@ namespace Anki
 
       AnkiConditionalErrorAndReturnValue(arrayTmp, Array<Type>(0, 0, NULL, 0, false), "Anki.GetArray<Type>", "%s could not be got from Matlab", tmpName.data());
 
-      const mxClassID ankiVisionClassId = Anki::Embedded::ConvertToMatlabType(typeid(Type).name(), sizeof(Type));
-
-      const mxClassID matlabClassId = mxGetClassID(arrayTmp);
-
-      AnkiConditionalErrorAndReturnValue(matlabClassId == ankiVisionClassId, Array<Type>(0, 0, NULL, 0, false), "Anki.GetArray<Type>", "matlabClassId != ankiVisionClassId");
+      AnkiConditionalErrorAndReturnValue(mxGetClassID(arrayTmp) == ConvertToMatlabType(typeid(Type).name(), sizeof(Type)), Array<Type>(0, 0, NULL, 0, false), "Anki.GetArray<Type>", "matlabClassId != ankiVisionClassId");
 
       const size_t numCols = mxGetM(arrayTmp);
       const size_t numRows = mxGetN(arrayTmp);
