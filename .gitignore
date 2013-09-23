@@ -48,3 +48,4 @@ project/xcode4/CoreTech-Vision/CoreTech_Vision.xcodeproj/project.xcworkspace/xcu
 project/myriad1/unitTests/output
 project/myriad1/benchmarks/output
 build
+*.psess

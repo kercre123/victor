@@ -4,8 +4,6 @@
 #include "anki/embeddedVision/config.h"
 #include "anki/embeddedCommon.h"
 
-#include "anki/embeddedVision/visionKernels_connectedComponents.h"
-
 namespace Anki
 {
   namespace Embedded
