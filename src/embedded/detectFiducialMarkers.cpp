@@ -72,7 +72,7 @@ namespace Anki
             //  drawnComponents.Show("drawnComponents1", false);
             //}
 
-            if(extractedComponents.MarkSmallOrLargeComponentsAsInvalid(component_minimumNumPixels, component_maximumNumPixels, scratch2) != RESULT_OK) {
+            if(extractedComponents.InvalidateSmallOrLargeComponents(component_minimumNumPixels, component_maximumNumPixels, scratch2) != RESULT_OK) {
               return RESULT_FAIL;
             }
 
@@ -92,7 +92,7 @@ namespace Anki
             //  drawnComponents.Show("drawnComponents3", false);
             //}
 
-            if(extractedComponents.MarkSolidOrSparseComponentsAsInvalid(component_sparseMultiplyThreshold, component_solidMultiplyThreshold, scratch2) != RESULT_OK) {
+            if(extractedComponents.InvalidateSolidOrSparseComponents(component_sparseMultiplyThreshold, component_solidMultiplyThreshold, scratch2) != RESULT_OK) {
               return RESULT_FAIL;
             }
 
@@ -180,13 +180,13 @@ namespace Anki
 
             extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
-            if(extractedComponents.MarkSmallOrLargeComponentsAsInvalid(minimumNumPixels, maximumNumPixels, scratch2) != RESULT_OK) {
+            if(extractedComponents.InvalidateSmallOrLargeComponents(minimumNumPixels, maximumNumPixels, scratch2) != RESULT_OK) {
               return RESULT_FAIL;
             }
 
             extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
-            if(extractedComponents.MarkSolidOrSparseComponentsAsInvalid(sparseMultiplyThreshold, solidMultiplyThreshold, scratch2) != RESULT_OK) {
+            if(extractedComponents.InvalidateSolidOrSparseComponents(sparseMultiplyThreshold, solidMultiplyThreshold, scratch2) != RESULT_OK) {
               return RESULT_FAIL;
             }
 

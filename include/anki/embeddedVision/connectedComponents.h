@@ -69,7 +69,7 @@ namespace Anki
       //
       // For a ConnectedComponent that has a maximum id of N, this function requires
       // 4n + 4 bytes of scratch.
-      Result MarkSmallOrLargeComponentsAsInvalid(const s32 minimumNumPixels, const s32 maximumNumPixels, MemoryStack scratch);
+      Result InvalidateSmallOrLargeComponents(const s32 minimumNumPixels, const s32 maximumNumPixels, MemoryStack scratch);
 
       // Goes through the list components, and computes the "solidness", which is the ratio of
       // "numPixels / (boundingWidth*boundingHeight)". For any componentId with that is too solid or
@@ -89,7 +89,7 @@ namespace Anki
       //
       // For a ConnectedComponent that has a maximum id of N, this function requires 8N + 8 bytes
       // of scratch.
-      Result MarkSolidOrSparseComponentsAsInvalid(const s32 sparseMultiplyThreshold, const s32 solidMultiplyThreshold, MemoryStack scratch);
+      Result InvalidateSolidOrSparseComponents(const s32 sparseMultiplyThreshold, const s32 solidMultiplyThreshold, MemoryStack scratch);
 
       // If a component doesn't have a hollow center, it's not a fiducial. Based on a component's
       // centroid, and its maximum extent, this method makes sure no componentSegment is inside of
@@ -97,12 +97,12 @@ namespace Anki
       // wide and high. If percentHorizontal=0.5 and percentVertical=0.25, then no componentSegment
       // should intersect the rectangle between (40,45) and (60,55).
       //
-      // percentHorizontal and percentVertical are SQ1.30,
+      // percentHorizontal and percentVertical are SQ23.8,
       // and should range from (0.0, 1.0), non-inclusive
       //
-      // For a ConnectedComponent that has a maximum id of N, this function requires 8N + 8 bytes
+      // For a ConnectedComponent that has a maximum id of N, this function requires 10N + 10 bytes
       // of scratch.
-      Result MarkFilledCenterComponentsAsInvalid(const s32 percentHorizontal, const s32 percentVertical, MemoryStack scratch);
+      Result InvalidateFilledCenterComponents(const s32 percentHorizontal, const s32 percentVertical, MemoryStack scratch);
 
       Result PushBack(const ConnectedComponentSegment &value);
 

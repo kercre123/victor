@@ -92,7 +92,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
   ASSERT_TRUE(*componentBoundingBoxes.Pointer(5) == Anki::Embedded::Rectangle<s16>(5,1000,9,9));
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
+} // IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
 
 IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
 {
@@ -157,6 +157,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
   const s32 component_sparseMultiplyThreshold = 1000 << 5;
   const s32 component_solidMultiplyThreshold = 2 << 5;
 
+  const s32 component_percentHorizontal = 1 << 7; // 0.5, in SQ 23.8
+  const s32 component_percentVertical = 1 << 7; // 0.5, in SQ 23.8
+
   const u32 numBytes0 = 10000000;
   MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
   ASSERT_TRUE(scratch0.IsValid());
@@ -190,8 +193,14 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
   Array<u8> drawnComponents(blockImage50_HEIGHT, blockImage50_WIDTH, scratch0);
   DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
 
-  matlab.PutArray(drawnComponents, "drawnComponents");
-  //drawnComponents.Show("drawnComponents", true, false);
+  matlab.PutArray(drawnComponents, "drawnComponents0");
+  drawnComponents.Show("drawnComponents0", false, false);
+
+  extractedComponents.InvalidateFilledCenterComponents(component_percentHorizontal, component_percentVertical, scratch1);
+  drawnComponents.SetZero();
+  DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+  matlab.PutArray(drawnComponents, "drawnComponents1");
+  drawnComponents.Show("drawnComponents1", true, false);
 
   free(scratch0.get_buffer());
   free(scratch1.get_buffer());
@@ -266,7 +275,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
   GTEST_RETURN_HERE;
 } // IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, MarkSolidOrSparseComponentsAsInvalid)
+IN_DDR GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
 {
   const s32 numComponents = 10;
   const s32 numBytes = MIN(MAX_BYTES, 1000);
@@ -301,7 +310,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, MarkSolidOrSparseComponentsAsInvalid)
   components.PushBack(component9);
 
   {
-    const Result result = components.MarkSolidOrSparseComponentsAsInvalid(sparseMultiplyThreshold, solidMultiplyThreshold, ms);
+    const Result result = components.InvalidateSolidOrSparseComponents(sparseMultiplyThreshold, solidMultiplyThreshold, ms);
     ASSERT_TRUE(result == RESULT_OK);
   }
 
@@ -317,9 +326,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, MarkSolidOrSparseComponentsAsInvalid)
   ASSERT_TRUE(components.Pointer(9)->id == 0);
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, MarkSolidOrSparseComponentsAsInvalid)
+} // IN_DDR GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, MarkSmallOrLargeComponentsAsInvalid)
+IN_DDR GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
 {
   const s32 numComponents = 10;
   const s32 numBytes = MIN(MAX_BYTES, 1000);
@@ -354,7 +363,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, MarkSmallOrLargeComponentsAsInvalid)
   components.PushBack(component9);
 
   {
-    const Result result = components.MarkSmallOrLargeComponentsAsInvalid(minimumNumPixels, maximumNumPixels, ms);
+    const Result result = components.InvalidateSmallOrLargeComponents(minimumNumPixels, maximumNumPixels, ms);
     ASSERT_TRUE(result == RESULT_OK);
   }
 
@@ -389,7 +398,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, MarkSmallOrLargeComponentsAsInvalid)
   ASSERT_TRUE(components.Pointer(9)->id == 0);
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, MarkSmallOrLargeComponentsAsInvalid)
+} // IN_DDR GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
 
 IN_DDR GTEST_TEST(CoreTech_Vision, CompressComponentIds)
 {
@@ -889,8 +898,8 @@ IN_DDR void RUN_ALL_TESTS()
   s32 numFailedTests = 0;
 
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage);
-  CALL_GTEST_TEST(CoreTech_Vision, MarkSolidOrSparseComponentsAsInvalid);
-  CALL_GTEST_TEST(CoreTech_Vision, MarkSmallOrLargeComponentsAsInvalid);
+  CALL_GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents);
+  CALL_GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
   CALL_GTEST_TEST(CoreTech_Vision, SortComponents);
   CALL_GTEST_TEST(CoreTech_Vision, CompressComponentIds);

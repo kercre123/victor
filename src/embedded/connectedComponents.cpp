@@ -476,13 +476,13 @@ namespace Anki
     //
     // For a ConnectedComponent that has a maximum id of N, this function requires
     // 4n + 4 bytes of scratch.
-    IN_DDR Result ConnectedComponents::MarkSmallOrLargeComponentsAsInvalid(const s32 minimumNumPixels, const s32 maximumNumPixels, MemoryStack scratch)
+    IN_DDR Result ConnectedComponents::InvalidateSmallOrLargeComponents(const s32 minimumNumPixels, const s32 maximumNumPixels, MemoryStack scratch)
     {
       const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
 
       s32 *componentSizes = reinterpret_cast<s32*>(scratch.Allocate( sizeof(s32)*(maximumId+1) ));
 
-      AnkiConditionalErrorAndReturnValue(componentSizes, RESULT_FAIL, "MarkSmallOrLargeComponentsAsInvalid", "Couldn't allocate componentSizes");
+      AnkiConditionalErrorAndReturnValue(componentSizes, RESULT_FAIL, "InvalidateSmallOrLargeComponents", "Couldn't allocate componentSizes");
 
       memset(componentSizes, 0, sizeof(componentSizes[0])*(maximumId+1));
 
@@ -528,7 +528,7 @@ namespace Anki
     //
     // For a ConnectedComponent that has a maximum id of N, this function requires
     // 8N + 8 bytes of scratch.
-    IN_DDR Result ConnectedComponents::MarkSolidOrSparseComponentsAsInvalid(const s32 sparseMultiplyThreshold, const s32 solidMultiplyThreshold, MemoryStack scratch)
+    IN_DDR Result ConnectedComponents::InvalidateSolidOrSparseComponents(const s32 sparseMultiplyThreshold, const s32 solidMultiplyThreshold, MemoryStack scratch)
     {
       const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
 
@@ -541,7 +541,7 @@ namespace Anki
       s32 *componentSizes = reinterpret_cast<s32*>(scratch.Allocate( sizeof(s32)*(maximumId+1) ));
 
       AnkiConditionalErrorAndReturnValue(minX && maxX && minY && maxY && componentSizes,
-        RESULT_FAIL, "MarkSolidOrSparseComponentsAsInvalid", "Couldn't allocate minX, maxX, minY, maxY, or componentSizes");
+        RESULT_FAIL, "InvalidateSolidOrSparseComponents", "Couldn't allocate minX, maxX, minY, maxY, or componentSizes");
 
       memset(componentSizes, 0, sizeof(componentSizes[0])*(maximumId+1));
 
@@ -612,14 +612,94 @@ namespace Anki
     // wide and high. If percentHorizontal=0.5 and percentVertical=0.25, then no componentSegment
     // should intersect the rectangle between (40,45) and (60,55).
     //
-    // percentHorizontal and percentVertical are SQ1.30,
+    // percentHorizontal and percentVertical are SQ23.8,
     // and should range from (0.0, 1.0), non-inclusive
     //
-    // For a ConnectedComponent that has a maximum id of N, this function requires 8N + 8 bytes
+    // For a ConnectedComponent that has a maximum id of N, this function requires 10N + 10 bytes
     // of scratch.
-    IN_DDR Result ConnectedComponents::MarkFilledCenterComponentsAsInvalid(const s32 percentHorizontal, const s32 percentVertical, MemoryStack scratch)
+    IN_DDR Result ConnectedComponents::InvalidateFilledCenterComponents(const s32 percentHorizontal, const s32 percentVertical, MemoryStack scratch)
     {
-      //TODO: implement
+      const s32 numFractionalBitsForPercents = 8;
+
+      FixedLengthList<Rectangle<s16>> componentBoundingBoxes(maximumId+1, scratch);
+
+      if(ComputeComponentBoundingBoxes(componentBoundingBoxes) != RESULT_OK)
+        return RESULT_FAIL;
+
+      // Reduce the size of the bounding box, based on percentHorizontal and percentVertical.
+      // This reduced-size box is the area that must be clear
+      {
+        Rectangle<s16> * restrict componentBoundingBoxes_rowPointer = componentBoundingBoxes.Pointer(0);
+        for(s32 i=0; i<=maximumId; i++) {
+          const s16 left = componentBoundingBoxes_rowPointer[i].left;
+          const s16 right = componentBoundingBoxes_rowPointer[i].right;
+          const s16 top = componentBoundingBoxes_rowPointer[i].top;
+          const s16 bottom = componentBoundingBoxes_rowPointer[i].bottom;
+
+          const s16 width = componentBoundingBoxes_rowPointer[i].get_width();
+          const s16 height = componentBoundingBoxes_rowPointer[i].get_height();
+
+          const Point<s16> centroid((right-left)/2, (bottom-top)/2);
+
+          const s16 scaledHalfWidth = static_cast<s16>((width * percentHorizontal) >> (numFractionalBitsForPercents+1)); // (SQ16.0 * SQ23.8) -> SQ 31.0, and divided by two
+          const s16 scaledHalfHeight = static_cast<s16>((height * percentVertical) >> (numFractionalBitsForPercents+1)); // (SQ16.0 * SQ23.8) -> SQ 31.0, and divided by two
+
+          componentBoundingBoxes_rowPointer[i].left += scaledHalfWidth;
+          componentBoundingBoxes_rowPointer[i].right -= scaledHalfWidth;
+          componentBoundingBoxes_rowPointer[i].top += scaledHalfHeight;
+          componentBoundingBoxes_rowPointer[i].bottom -= scaledHalfHeight;
+        }
+      }
+
+      FixedLengthList<bool> validComponents(maximumId+1, scratch);
+      validComponents.Set(true);
+
+      // If any ComponentSegment is within the shrunk bounding box, that componentId is invalid
+      {
+        const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
+        const Rectangle<s16> * restrict componentBoundingBoxes_constRowPointer = componentBoundingBoxes.Pointer(0);
+
+        bool * restrict validComponents_rowPointer = validComponents.Pointer(0);
+
+        for(s32 i=0; i<components.get_size(); i++) {
+          const u16 id = components_constRowPointer[i].id;
+
+          if(id > 0) {
+            const s16 y = components_constRowPointer[i].y;
+            const s16 xStart = components_constRowPointer[i].xStart;
+            const s16 xEnd = components_constRowPointer[i].xEnd;
+
+            const s16 left = componentBoundingBoxes_constRowPointer[id].left;
+            const s16 right = componentBoundingBoxes_constRowPointer[id].right;
+            const s16 top = componentBoundingBoxes_constRowPointer[id].top;
+            const s16 bottom = componentBoundingBoxes_constRowPointer[id].bottom;
+
+            if(y > top && y < bottom && xEnd > left && xStart < right) {
+              validComponents_rowPointer[id] = false;
+            }
+          } // if(id > 0)
+        }
+      }
+
+      // Set all invalid ComponentSegments to zero
+      {
+        ConnectedComponentSegment * restrict components_rowPointer = components.Pointer(0);
+
+        const bool * restrict validComponents_rowPointer = validComponents.Pointer(0);
+
+        for(s32 i=0; i<components.get_size(); i++) {
+          const u16 id = components_rowPointer[i].id;
+
+          if(!validComponents_rowPointer[id]) {
+            components_rowPointer[i].id = 0;
+          }
+        }
+      }
+
+      FindMaximumId();
+
+      this->isSortedInId = false;
+
       return RESULT_OK;
     }
 
