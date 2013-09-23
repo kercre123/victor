@@ -99,6 +99,7 @@ classdef BlockWorldWebotController < handle
             wb_motor_enable_position(this.head_pitch, this.TIME_STEP);
             wb_motor_set_position(this.lift, this.LIFT_CENTER);
             wb_motor_set_position(this.lift2, -this.LIFT_CENTER);
+            wb_motor_enable_position(this.lift, this.TIME_STEP);
             
             % NOTE: Cameras will be enabled by the instantiation of the
             % BlockWorld Camera objects.
@@ -203,6 +204,16 @@ classdef BlockWorldWebotController < handle
             
         end
         
+        function angle = GetLiftAngle(this, sigmaDegrees)
+            
+            angle = wb_motor_get_position(this.lift);
+            
+            if nargin > 1 && sigmaDegrees > 0
+                % Add noise to the angular measurement:
+                angle = angle + sigmaDegrees*pi/180*randn(1);
+            end
+        end
+        
         function SetLiftAngle(this, angle)
             wb_motor_set_position(this.lift,   angle);
             wb_motor_set_position(this.lift2, -angle);
@@ -252,7 +263,8 @@ classdef BlockWorldWebotController < handle
             %fy = fx / aspect;
             
             calib = struct('fc', [fy fy], ...
-                'cc', [width height]/2, 'kc', zeros(5,1), 'alpha_c', 0);
+                'cc', [width height]/2, 'kc', zeros(5,1), 'alpha_c', 0, ...
+                'fov', fov_ver);
         end
         
         function mode = GetOperationMode(this)

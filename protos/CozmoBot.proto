@@ -1,10 +1,12 @@
 PROTO CozmoBot [
-  field SFVec3f translation 0 0.03 0
+  field SFVec3f translation 0 0.02 0
   field SFRotation rotation 0 1 0 0
   field SFString name "Cozmo"
-  field SFFloat fieldOfViewDown 2.1
-  field SFFloat fieldOfViewHead 1.04
-  field SFBool useSphericalHeadCamera FALSE 
+  field SFFloat fieldOfViewDown 1.57
+  field SFFloat fieldOfViewHead 1.57
+  field SFBool useSphericalHeadCamera FALSE
+  field SFFloat headAngle 0 
+  field SFFloat liftAngle 0
   
   ##field SFVec3f spotLightTranslation 0 .03 -.03
   #field SFRotation spotLightRotation 1 0 0 0
@@ -56,7 +58,7 @@ Supervisor {
     }
           
     Solid {
-      translation 0 0.034 0.02
+      translation 0 0.027 0.035
       children [
         DEF LBase Shape {
           geometry Box {
@@ -67,22 +69,23 @@ Supervisor {
           children [
             HingeJoint {
               jointParameters HingeJointParameters {
+                position IS liftAngle
               }
               device RotationalMotor {
                 name "lift_motor"
               }
               endPoint Solid {
-                translation 0 0 -0.035
+                translation 0 0 -0.045
                 children [
                   HingeJoint {
                     jointParameters HingeJointParameters {
-                      anchor 0 0 -0.035
+                      anchor 0 0 -0.045
                     }
                     device RotationalMotor {
                       name "lift_motor2"
                     }
                     endPoint Solid {
-                      translation 0 0 -0.035
+                      translation 0 0 -0.045
                       children [
                       
                         #DEF CAM_LIFT Camera {
@@ -99,8 +102,8 @@ Supervisor {
                           rotation 0 1 0 3.14159
                           model "magnetic"
                           type "active"
-                          distanceTolerance 0.006
-                          snap FALSE
+                          distanceTolerance 0.003
+                          snap TRUE
                         }
                         DEF LIFTFRONT Shape {
                           geometry Box {
@@ -116,9 +119,27 @@ Supervisor {
                   }
                   DEF LBottom Shape {
                     geometry Box {
-                      size 0.001 0.005 0.07
+                      size 0.001 0.005 0.09
                     }
                   }
+                  #Solid {
+                    #translation -0.036 0 0
+                    #children [
+                      #DEF LIFTBAR Shape {
+                        #geometry Box {
+                          #size 0.001 0.005 0.09
+                        #}
+                      #}
+                    #]
+                    #boundingObject USE LIFTBAR
+                  #}
+                  #Solid {
+                    #translation 0.036 0 0
+                    #children [
+                      #USE LIFTBAR
+                    #]
+                    #boundingObject USE LIFTBAR
+                  #}
                 ]
                 boundingObject USE LBottom
                 physics Physics {
@@ -137,31 +158,36 @@ Supervisor {
         density 50000
       }
     }
-    DEF BODY Shape {
-      appearance Appearance {
-        material DEF MAT_WHITE Material {
-          diffuseColor 1 1 1
-        }
-      }
-      geometry Box {
-        size 0.014 0.014 0.048
-      }
-    }
     Solid {
-      translation 0 0.002 -0.015
+      translation 0 .002 0
       children [
-        DEF BODYA Shape {
+        DEF BODY Shape {
           appearance Appearance {
             material DEF MAT_WHITE Material {
               diffuseColor 1 1 1
             }
           }
           geometry Box {
-            size 0.014 0.018 0.02
+            size 0.04 0.030 0.080
           }
         }
+      ]
+    }
+    Solid {
+      translation 0 0.002 0
+      children [
+        #DEF BODYA Shape {
+          #appearance Appearance {
+            #material DEF MAT_WHITE Material {
+              #diffuseColor 1 1 1
+            #}
+          #}
+          #geometry Box {
+            #size 0.04 0.035 0.02
+          #}
+        #}
         DEF CAM_DOWN Camera {
-          translation 0 -0.005 0.015
+          translation 0 -0.005 0
           rotation 1 0 0 -1.5708
           name "cam_down"
           fieldOfView IS fieldOfViewDown
@@ -172,17 +198,17 @@ Supervisor {
           colorNoise 0.01
         }
       ]
-      boundingObject USE BODYA
+      boundingObject USE BODY
       physics Physics {
         density 5000
       }
     }
     DEF WHEEL_REAR_RIGHT HingeJoint {
       jointParameters HingeJointParameters {
-        anchor 0.02 0 0.024
+        anchor 0.03 0 0.025
       }
       endPoint Solid {
-        translation 0.02 3.92458e-06 0.024
+        translation 0.03 0 0.025
         rotation 1 0 0 0
         children [
           DEF WHEEL_BOX Shape {
@@ -192,7 +218,7 @@ Supervisor {
               }
             }
             geometry Box {
-              size 0.0204 0.002 0.01
+              size 0.02 0.002 0.01
             }
           }
           DEF WHEEL Transform {
@@ -206,7 +232,7 @@ Supervisor {
                 }
                 geometry Cylinder {
                   height 0.02
-                  radius 0.015
+                  radius 0.02
                   subdivision 36
                 }
               }
@@ -222,11 +248,11 @@ Supervisor {
     DEF WHEEL_REAR_LEFT HingeJoint {
       jointParameters HingeJointParameters {
         position -1.15762e-11
-        anchor -0.02 0 0.024
+        anchor -0.03 0 0.025
       }
       endPoint Solid {
-        translation -0.02 3.92342e-06 0.024
-        rotation 0.0797287 -2.06116e-06 0.996817 -1.15774e-11
+        translation -0.03 0 0.025
+        rotation 0 0 1 0
         children [
           USE WHEEL_BOX
           USE WHEEL
@@ -239,13 +265,13 @@ Supervisor {
     }
     DEF WHEEL_FRONT_RIGHT HingeJoint {
       jointParameters HingeJointParameters {
-        anchor 0.02 0 -0.024
+        anchor 0.03 0 -0.025
       }
       device RotationalMotor {
         name "wheel_fr"
       }
       endPoint Solid {
-        translation 0.02 3.92458e-06 -0.024
+        translation 0.03 0 -0.025
         rotation 1 0 0 0
         children [
           USE WHEEL_BOX
@@ -260,14 +286,14 @@ Supervisor {
     DEF WHEEL_FRONT_LEFT HingeJoint {
       jointParameters HingeJointParameters {
         position -1.15794e-11
-        anchor -0.02 0 -0.024
+        anchor -0.03 0 -0.025
       }
       device RotationalMotor {
         name "wheel_fl"
       }
       endPoint Solid {
-        translation -0.02 3.92342e-06 -0.024
-        rotation 0.0794063 -2.05874e-06 0.996842 -1.15799e-11
+        translation -0.03 0 -0.025
+        rotation 0 0 1 0
         children [
           USE WHEEL_BOX
           USE WHEEL
@@ -283,7 +309,10 @@ Supervisor {
     }
     DEF HEAD HingeJoint {
       jointParameters HingeJointParameters {
-        anchor 0 0.02 0
+        anchor   0 0.025 -0.0095
+        maxStop  0.6109 # 35 degrees up
+        minStop -0.4363 # 25 degrees down
+        position IS headAngle	
       }
       device RotationalMotor {
         name "motor_head_pitch"
@@ -292,7 +321,7 @@ Supervisor {
         rotation 1 0 0 0
         children [
           DEF CAM_HEAD Camera {
-            translation 0 0.028 -0.03
+            translation 0 0.040 -0.0345
             rotation 1 0 0 0
             children [
               Transform {
@@ -318,7 +347,7 @@ Supervisor {
             colorNoise 0.01
           }
           DEF EYE_LEFT Transform {
-            translation -0.013 0.034 -0.01
+            translation -0.017 0.045 -0.01
             rotation 1 0 0 -1.5708
             children [
               DEF EYE_SHAPE Shape {
@@ -329,14 +358,14 @@ Supervisor {
                 }
                 geometry Cylinder {
                   height 0.04
-                  radius 0.012
+                  radius 0.015
                   subdivision 24
                 }
               }
             ]
           }
           DEF EYE_RIGHT Transform {
-            translation 0.013 0.034 -0.01
+            translation 0.017 0.045 -0.01
             rotation 1 0 0 -1.5708
             children [
               USE EYE_SHAPE

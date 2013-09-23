@@ -162,7 +162,7 @@ DEF WALL_4 Solid {
 DEF Cozmo CozmoBot {
   #translation 0 0.015 0.45
   #rotation 0 1 0 0.7071
-  translation 0 0.03 0
+  translation 0 0.021 .2
   rotation 0 1 0 3.1415  
 }
 #Block1x1 {
