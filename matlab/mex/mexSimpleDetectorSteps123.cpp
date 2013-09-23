@@ -64,7 +64,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   ConditionalErrorAndReturn(scratch2.IsValid(), "mexSimpleDetectorSteps123", "Scratch2 could not be allocated");
 
   const s32 maxConnectedComponentSegments = u16_MAX;
-  FixedLengthList<ConnectedComponentSegment> extractedComponents(maxConnectedComponentSegments, scratch0);
+  ConnectedComponents extractedComponents(maxConnectedComponentSegments, scratch0);
 
   {
     const Result result = SimpleDetector_Steps123(
@@ -80,12 +80,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     ConditionalErrorAndReturn(result == RESULT_OK, "mexSimpleDetectorSteps123", "SimpleDetector_Steps123 Failed");
   }
 
-  const u16 numComponents = FindMaximumId(extractedComponents);
+  const u16 numComponents = extractedComponents.get_maximumId();
 
   s32 * const numComponentSegments = reinterpret_cast<s32*>(scratch0.Allocate(sizeof(s32)*(numComponents+1)));
 
   {
-    const Result result = ComputeNumComponentSegments(extractedComponents, numComponentSegments, numComponents);
+    const Result result = extractedComponents.ComputeNumComponentSegmentsForEachId(numComponentSegments);
 
     ConditionalErrorAndReturn(result == RESULT_OK, "mexSimpleDetectorSteps123", "ComputeComponentSizes Failed");
   }
