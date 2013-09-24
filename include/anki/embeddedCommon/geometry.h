@@ -205,17 +205,23 @@ namespace Anki
 
     template<typename Type> Type Rectangle<Type>::get_width() const
     {
-      return right - left;
+      return right - left + 1;
     }
 
     template<typename Type> Type Rectangle<Type>::get_height() const
     {
-      return bottom - top;
+      return bottom - top + 1;
     }
 
 #pragma mark --- Rectangle Specializations ---
     template<> void Rectangle<f32>::Print() const;
     template<> void Rectangle<f64>::Print() const;
+
+    template<> f32 Rectangle<f32>::get_width() const;
+    template<> f64 Rectangle<f64>::get_width() const;
+
+    template<> f32 Rectangle<f32>::get_height() const;
+    template<> f64 Rectangle<f64>::get_height() const;
 
 #pragma mark --- Quadrilateral Implementations ---
 
