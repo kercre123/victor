@@ -47,6 +47,55 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 #include "blockImage50.h"
 
+IN_DDR GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
+{
+  const s32 numComponents = 17;
+  const s32 boundaryLength = 65;
+  const s32 startComponentIndex = 0;
+  const s32 numBytes = MIN(MAX_BYTES, 5000);
+
+  MemoryStack ms(&buffer[0], numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  ConnectedComponents components(numComponents, ms);
+
+  const s16 yValues[] = {200, 200, 201, 201, 202, 203, 204, 205, 206, 207, 207, 208, 208, 209, 209, 210, 210};
+  const s16 xStartValues[] = {102, 104, 102, 108, 102, 100, 100, 104, 100, 100, 103, 100, 103, 100, 103, 100, 103};
+  const s16 xEndValues[] = { 102, 105, 105, 109, 109, 105, 105, 109, 105, 101, 104, 101, 104, 101, 104, 101, 104};
+
+  for(s32 i=0; i<numComponents; i++) {
+    components.PushBack(ConnectedComponentSegment(xStartValues[i],xEndValues[i],yValues[i],1));
+  }
+
+  //#define DRAW_TraceNextExteriorBoundary
+#ifdef DRAW_TraceNextExteriorBoundary
+  {
+    const u32 numBytes0 = 10000000;
+    MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
+    ASSERT_TRUE(scratch0.IsValid());
+    Array<u8> drawnComponents(480, 640, scratch0);
+    DrawComponents<u8>(drawnComponents, components, 64, 255);
+
+    matlab.PutArray(drawnComponents, "drawnComponents");
+    drawnComponents.Show("drawnComponents", true, false);
+
+    free(scratch0.get_buffer());
+  }
+#endif // DRAW_TraceNextExteriorBoundary
+
+  FixedLengthList<Point<s16>> extractedBoundary(boundaryLength, ms);
+
+  {
+    s32 endComponentIndex = -1;
+    const Result result = TraceNextExteriorBoundary(components, startComponentIndex, extractedBoundary, endComponentIndex, ms);
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  extractedBoundary.Print();
+
+  GTEST_RETURN_HERE;
+} // IN_DDR GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
+
 IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
 {
   const s32 numComponents = 10;
@@ -836,13 +885,13 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 } // IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
+IN_DDR GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
 {
   const s32 width = 16;
   const s32 height = 16;
 
-#define TraceBoundary_imageDataLength (16*16)
-  const u8 imageData[TraceBoundary_imageDataLength] = {
+#define TraceInteriorBoundary_imageDataLength (16*16)
+  const u8 imageData[TraceInteriorBoundary_imageDataLength] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
@@ -878,9 +927,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
   ASSERT_TRUE(binaryImage.IsValid());
   ASSERT_TRUE(boundary.IsValid());
 
-  binaryImage.Set(imageData, TraceBoundary_imageDataLength);
+  binaryImage.Set(imageData, TraceInteriorBoundary_imageDataLength);
 
-  ASSERT_TRUE(TraceBoundary(binaryImage, startPoint, initialDirection, boundary) == RESULT_OK);
+  ASSERT_TRUE(TraceInteriorBoundary(binaryImage, startPoint, initialDirection, boundary) == RESULT_OK);
 
   ASSERT_TRUE(boundary.get_size() == numPoints);
   for(s32 iPoint=0; iPoint<numPoints; iPoint++) {
@@ -889,7 +938,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
   }
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
+} // IN_DDR GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
 
 #if !defined(ANKICORETECHEMBEDDED_USE_GTEST)
 IN_DDR void RUN_ALL_TESTS()
@@ -907,7 +956,7 @@ IN_DDR void RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);
-  CALL_GTEST_TEST(CoreTech_Vision, TraceBoundary);
+  CALL_GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary);
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 } // void RUN_ALL_TESTS()

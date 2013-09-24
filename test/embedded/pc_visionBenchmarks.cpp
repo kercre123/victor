@@ -26,14 +26,14 @@ void RUN_ALL_BENCHMARKS()
     BenchmarkComputeCharacteristicScale();
   }
   times[3] = GetTime();
-  BenchmarkTraceBoundary();
+  BenchmarkTraceInteriorBoundary();
   times[4] = GetTime();
 
   printf(
     "BenchmarkBinomialFilter: %f ms\n"
     "BenchmarkDownsampleByFactor: %f ms\n"
     "BenchmarkComputeCharacteristicScale: %f ms\n"
-    "BenchmarkTraceBoundary: %f ms\n",
+    "BenchmarkTraceInteriorBoundary: %f ms\n",
     1000.0*(times[1]-times[0]),
     1000.0*(times[2]-times[1]),
     1000.0*(times[3]-times[2]),

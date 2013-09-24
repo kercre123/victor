@@ -42,6 +42,9 @@
     <ClCompile Include="..\..\src\embedded\thresholdScaleImage.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\Documents\Anki\coretech-vision\src\embedded\computeQuadrilaterals.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\anki\embeddedVision\array2d_vision.h">
