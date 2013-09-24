@@ -60,6 +60,11 @@ namespace Anki
     // Requires sizeof(s16)*(2*componentWidth + 2*componentHeight) bytes of scratch
     Result TraceNextExteriorBoundary(const ConnectedComponents &components, const s32 startComponentIndex, FixedLengthList<Point<s16>> &extractedBoundary, s32 &endComponentIndex, MemoryStack scratch);
 
+    FixedPointArray<s32> Get1dGaussianKernel(const s32 sigma, const s32 numSigmaFractionalBits, const s32 numStandardDeviations, MemoryStack &scratch);
+
+    // Note: uses a 32-bit accumulator, so be careful of overflows
+    Result Correlate1d(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out);
+
     template<typename T> inline T Interpolate2d(const T pixel00, const T pixel01, const T pixel10, const T pixel11, const T alphaY, const T alphaYinverse, const T alphaX, const T alphaXinverse);
 
 #pragma mark --- Implementations ---
