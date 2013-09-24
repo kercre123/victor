@@ -36,7 +36,7 @@ namespace Anki
     }
 #endif // #if !defined(USING_MOVIDIUS_COMPILER)
 
-    f32 Round(f32 number)
+    f32 Round(const f32 number)
     {
       if(number > 0)
         return floorf(number + 0.5f);
@@ -44,7 +44,7 @@ namespace Anki
         return floorf(number - 0.5f);
     }
 
-    f64 Round(f64 number)
+    f64 Round(const f64 number)
     {
       // This casting wierdness is because the myriad doesn't have a double-precision floor function.
       if(number > 0)
@@ -60,6 +60,14 @@ namespace Anki
         x >>= 1;
 
       return static_cast<bool>(x == 1);
+    }
+
+    bool IsOdd(const s32 x)
+    {
+      if(x | 1)
+        return true;
+      else
+        return false;
     }
 
     IN_DDR u32 Log2(u32 x)

@@ -53,13 +53,15 @@ namespace Anki
 
     template<typename T> inline T RoundDown(T number, T multiple);
 
-    f32 Round(f32 number);
-    f64 Round(f64 number);
+    f32 Round(const f32 number);
+    f64 Round(const f64 number);
 
     bool IsPowerOfTwo(u32 x);
 
     u32 Log2(u32 x);
     u64 Log2(u64 x);
+
+    bool IsOdd(const s32 x);
 
     // Get the current system time. Only really works with MSVC and generic linux
     double GetTime();
