@@ -27,7 +27,7 @@ namespace Anki
       const f64 numComponents = components.get_maximumId();
       const f64 minValueD = static_cast<f64>(minValue);
       const f64 maxValueD = static_cast<f64>(maxValue);
-      const f64 step = (maxValueD - minValueD) / (numComponents-1);
+      const f64 step = (numComponents==1) ? 0.0 : ((maxValueD - minValueD) / (numComponents-1));
 
       const bool doScaling = (minValue == maxValue) ? false : true;
 
