@@ -22,8 +22,11 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(imageFiltered.IsValid(),
         RESULT_FAIL, "BinomialFilter", "imageFiltered is not valid");
 
-      assert(16 == (kernel[0] + kernel[1] + kernel[2] + kernel[3] + kernel[4]));
-      assert(16 == (1 << kernelShift));
+      AnkiConditionalWarnAndReturnValue(16 == (kernel[0] + kernel[1] + kernel[2] + kernel[3] + kernel[4]),
+        RESULT_FAIL, "BinomialFilter", "Kernel count is wrong");
+
+      AnkiConditionalWarnAndReturnValue(16 == (1 << kernelShift),
+        RESULT_FAIL, "BinomialFilter", "Kernel count is wrong");
 
       AnkiConditionalErrorAndReturnValue(image.get_size(0) == imageFiltered.get_size(0) && image.get_size(1) == imageFiltered.get_size(1),
         RESULT_FAIL, "BinomialFilter", "size(image) != size(imageFiltered) (%dx%d != %dx%d)", image.get_size(0), image.get_size(1), image.get_size(0), image.get_size(1));

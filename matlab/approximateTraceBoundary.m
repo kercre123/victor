@@ -53,6 +53,17 @@ for iSubComponent = 1:size(component, 1)
     edge_right(y) = max(edge_right(y), xEnd);
 end
 
+if ~isempty(find(isinf(edge_top), 1)) || ~isempty(find(isinf(edge_bottom), 1)) || ~isempty(find(isinf(edge_left), 1)) || ~isempty(find(isinf(edge_right), 1))
+    disp('This should only happen if the component is buggy, but it should probably be either detector or corrected for');
+    keyboard
+end
+
+% Correct for buggy components
+edge_left(isinf(edge_left)) = 1;
+edge_right(isinf(edge_right)) = 1;
+edge_top(isinf(edge_top)) = 1;
+edge_bottom(isinf(edge_bottom)) = 1;
+
 boundary = zeros(0, 2);
 
 % 2. Go through the right edge, from top to bottom. Add each to the

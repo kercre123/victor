@@ -45,18 +45,247 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
-IN_DDR GTEST_TEST(CoreTech_Vision, MarkSolidOrSparseComponentsAsInvalid)
+#include "blockImage50.h"
+
+IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
 {
   const s32 numComponents = 10;
   const s32 numBytes = MIN(MAX_BYTES, 1000);
-  const s32 sparseMultiplyThreshold = 10;
-  const s32 solidMultiplyThreshold = 2;
 
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  FixedLengthList<ConnectedComponentSegment> components(numComponents, ms);
-  components.set_size(numComponents);
+  ConnectedComponents components(numComponents, ms);
+
+  const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1);
+  const ConnectedComponentSegment component1 = ConnectedComponentSegment(12, 12, 1, 1);
+  const ConnectedComponentSegment component2 = ConnectedComponentSegment(16, 1004, 2, 1);
+  const ConnectedComponentSegment component3 = ConnectedComponentSegment(0, 4, 3, 2);
+  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 2, 4, 3);
+  const ConnectedComponentSegment component5 = ConnectedComponentSegment(4, 6, 5, 3);
+  const ConnectedComponentSegment component6 = ConnectedComponentSegment(8, 10, 6, 3);
+  const ConnectedComponentSegment component7 = ConnectedComponentSegment(0, 4, 7, 4);
+  const ConnectedComponentSegment component8 = ConnectedComponentSegment(6, 6, 8, 4);
+  const ConnectedComponentSegment component9 = ConnectedComponentSegment(5, 1000, 9, 5);
+
+  components.PushBack(component0);
+  components.PushBack(component1);
+  components.PushBack(component2);
+  components.PushBack(component3);
+  components.PushBack(component4);
+  components.PushBack(component5);
+  components.PushBack(component6);
+  components.PushBack(component7);
+  components.PushBack(component8);
+  components.PushBack(component9);
+
+  FixedLengthList<Anki::Embedded::Rectangle<s16>> componentBoundingBoxes(numComponents, ms);
+  {
+    const Result result = components.ComputeComponentBoundingBoxes(componentBoundingBoxes);
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  ASSERT_TRUE(*componentBoundingBoxes.Pointer(1) == Anki::Embedded::Rectangle<s16>(0,1004,0,2));
+  ASSERT_TRUE(*componentBoundingBoxes.Pointer(2) == Anki::Embedded::Rectangle<s16>(0,4,3,3));
+  ASSERT_TRUE(*componentBoundingBoxes.Pointer(3) == Anki::Embedded::Rectangle<s16>(0,10,4,6));
+  ASSERT_TRUE(*componentBoundingBoxes.Pointer(4) == Anki::Embedded::Rectangle<s16>(0,6,7,8));
+  ASSERT_TRUE(*componentBoundingBoxes.Pointer(5) == Anki::Embedded::Rectangle<s16>(5,1000,9,9));
+
+  GTEST_RETURN_HERE;
+} // IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
+
+IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
+{
+  const s32 numComponents = 10;
+  const s32 numBytes = MIN(MAX_BYTES, 1000);
+
+  MemoryStack ms(&buffer[0], numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  ConnectedComponents components(numComponents, ms);
+
+  const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1);
+  const ConnectedComponentSegment component1 = ConnectedComponentSegment(12, 12, 1, 1);
+  const ConnectedComponentSegment component2 = ConnectedComponentSegment(16, 1004, 2, 1);
+  const ConnectedComponentSegment component3 = ConnectedComponentSegment(0, 4, 3, 2);
+  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, 2, 4, 3);
+  const ConnectedComponentSegment component5 = ConnectedComponentSegment(4, 6, 5, 3);
+  const ConnectedComponentSegment component6 = ConnectedComponentSegment(8, 10, 6, 3);
+  const ConnectedComponentSegment component7 = ConnectedComponentSegment(0, 4, 7, 4);
+  const ConnectedComponentSegment component8 = ConnectedComponentSegment(6, 6, 8, 4);
+  const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 1000, 9, 5);
+
+  components.PushBack(component0);
+  components.PushBack(component1);
+  components.PushBack(component2);
+  components.PushBack(component3);
+  components.PushBack(component4);
+  components.PushBack(component5);
+  components.PushBack(component6);
+  components.PushBack(component7);
+  components.PushBack(component8);
+  components.PushBack(component9);
+
+  FixedLengthList<Point<s16>> componentCentroids(numComponents, ms);
+  {
+    const Result result = components.ComputeComponentCentroids(componentCentroids, ms);
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  ASSERT_TRUE(*componentCentroids.Pointer(1) == Point<s16>(503,1));
+  ASSERT_TRUE(*componentCentroids.Pointer(2) == Point<s16>(2,3));
+  ASSERT_TRUE(*componentCentroids.Pointer(3) == Point<s16>(5,5));
+  ASSERT_TRUE(*componentCentroids.Pointer(4) == Point<s16>(2,7));
+  ASSERT_TRUE(*componentCentroids.Pointer(5) == Point<s16>(500,9));
+
+  GTEST_RETURN_HERE;
+} // IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
+
+// The test is if it can run without crashing
+IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
+{
+  const s32 scaleImage_numPyramidLevels = 6;
+
+  const s16 component1d_minComponentWidth = 0;
+  const s16 component1d_maxSkipDistance = 0;
+
+  const f32 minSideLength = 0.03f*MAX(blockImage50_HEIGHT,blockImage50_WIDTH);
+  const f32 maxSideLength = 0.9f*MIN(blockImage50_HEIGHT,blockImage50_WIDTH);
+
+  const s32 component_minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
+  const s32 component_maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
+  const s32 component_sparseMultiplyThreshold = 1000 << 5;
+  const s32 component_solidMultiplyThreshold = 2 << 5;
+
+  const s32 component_percentHorizontal = 1 << 7; // 0.5, in SQ 23.8
+  const s32 component_percentVertical = 1 << 7; // 0.5, in SQ 23.8
+
+  const u32 numBytes0 = 10000000;
+  MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
+  ASSERT_TRUE(scratch0.IsValid());
+
+  const u32 numBytes1 = 10000000;
+  MemoryStack scratch1(calloc(numBytes1,1), numBytes0);
+  ASSERT_TRUE(scratch1.IsValid());
+
+  const u32 numBytes2 = 10000000;
+  MemoryStack scratch2(calloc(numBytes2,1), numBytes2);
+  ASSERT_TRUE(scratch2.IsValid());
+
+  const s32 maxConnectedComponentSegments = u16_MAX;
+  ConnectedComponents extractedComponents(maxConnectedComponentSegments, scratch0);
+
+  Array<u8> image(blockImage50_HEIGHT, blockImage50_WIDTH, scratch0);
+  image.Set(&blockImage50[0], blockImage50_HEIGHT*blockImage50_WIDTH);
+
+  const Result result = SimpleDetector_Steps123(
+    image,
+    scaleImage_numPyramidLevels,
+    component1d_minComponentWidth, component1d_maxSkipDistance,
+    component_minimumNumPixels, component_maximumNumPixels,
+    component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
+    extractedComponents,
+    scratch1,
+    scratch2);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  Array<u8> drawnComponents(blockImage50_HEIGHT, blockImage50_WIDTH, scratch0);
+  DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+
+  matlab.PutArray(drawnComponents, "drawnComponents0");
+  drawnComponents.Show("drawnComponents0", false, false);
+
+  extractedComponents.InvalidateFilledCenterComponents(component_percentHorizontal, component_percentVertical, scratch1);
+  drawnComponents.SetZero();
+  DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+  matlab.PutArray(drawnComponents, "drawnComponents1");
+  drawnComponents.Show("drawnComponents1", true, false);
+
+  free(scratch0.get_buffer());
+  free(scratch1.get_buffer());
+  free(scratch2.get_buffer());
+
+  GTEST_RETURN_HERE;
+}
+
+// The test is if it can run without crashing
+IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
+{
+  const s32 width = 640;
+  const s32 height = 480;
+
+  const s32 scaleImage_numPyramidLevels = 6;
+
+  const s16 component1d_minComponentWidth = 0;
+  const s16 component1d_maxSkipDistance = 0;
+
+  const f32 minSideLength = 0.03f*MAX(height,width);
+  const f32 maxSideLength = 0.9f*MIN(height,width);
+
+  const s32 component_minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
+  const s32 component_maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
+  const s32 component_sparseMultiplyThreshold = 1000 << 5;
+  const s32 component_solidMultiplyThreshold = 2 << 5;
+
+  const u32 numBytes0 = 10000000;
+  MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
+  ASSERT_TRUE(scratch0.IsValid());
+
+  const u32 numBytes1 = 10000000;
+  MemoryStack scratch1(calloc(numBytes1,1), numBytes0);
+  ASSERT_TRUE(scratch1.IsValid());
+
+  const u32 numBytes2 = 10000000;
+  MemoryStack scratch2(calloc(numBytes2,1), numBytes2);
+  ASSERT_TRUE(scratch2.IsValid());
+
+  const s32 maxConnectedComponentSegments = u16_MAX;
+  ConnectedComponents extractedComponents(maxConnectedComponentSegments, scratch0);
+
+  Array<u8> image(height, width, scratch0);
+
+  {
+    Result result = DrawExampleSquaresImage(image);
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  const Result result = SimpleDetector_Steps123(
+    image,
+    scaleImage_numPyramidLevels,
+    component1d_minComponentWidth, component1d_maxSkipDistance,
+    component_minimumNumPixels, component_maximumNumPixels,
+    component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
+    extractedComponents,
+    scratch1,
+    scratch2);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  Array<u8> drawnComponents(height, width, scratch0);
+  DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+
+  matlab.PutArray(drawnComponents, "drawnComponents");
+  //drawnComponents.Show("drawnComponents", true, false);
+
+  free(scratch0.get_buffer());
+  free(scratch1.get_buffer());
+  free(scratch2.get_buffer());
+
+  GTEST_RETURN_HERE;
+} // IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
+
+IN_DDR GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
+{
+  const s32 numComponents = 10;
+  const s32 numBytes = MIN(MAX_BYTES, 1000);
+  const s32 sparseMultiplyThreshold = 10 << 5;
+  const s32 solidMultiplyThreshold = 2 << 5;
+
+  MemoryStack ms(&buffer[0], numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  ConnectedComponents components(numComponents, ms);
 
   const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1); // Ok
   const ConnectedComponentSegment component1 = ConnectedComponentSegment(0, 10, 3, 1);
@@ -69,19 +298,19 @@ IN_DDR GTEST_TEST(CoreTech_Vision, MarkSolidOrSparseComponentsAsInvalid)
   const ConnectedComponentSegment component8 = ConnectedComponentSegment(0, 0, 108, 4);
   const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 10, 110, 5); // Too solid
 
-  *components.Pointer(0) = component0;
-  *components.Pointer(1) = component1;
-  *components.Pointer(2) = component2;
-  *components.Pointer(3) = component3;
-  *components.Pointer(4) = component4;
-  *components.Pointer(5) = component5;
-  *components.Pointer(6) = component6;
-  *components.Pointer(7) = component7;
-  *components.Pointer(8) = component8;
-  *components.Pointer(9) = component9;
+  components.PushBack(component0);
+  components.PushBack(component1);
+  components.PushBack(component2);
+  components.PushBack(component3);
+  components.PushBack(component4);
+  components.PushBack(component5);
+  components.PushBack(component6);
+  components.PushBack(component7);
+  components.PushBack(component8);
+  components.PushBack(component9);
 
   {
-    const Result result = MarkSolidOrSparseComponentsAsInvalid(components, sparseMultiplyThreshold, solidMultiplyThreshold, ms);
+    const Result result = components.InvalidateSolidOrSparseComponents(sparseMultiplyThreshold, solidMultiplyThreshold, ms);
     ASSERT_TRUE(result == RESULT_OK);
   }
 
@@ -97,9 +326,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, MarkSolidOrSparseComponentsAsInvalid)
   ASSERT_TRUE(components.Pointer(9)->id == 0);
 
   GTEST_RETURN_HERE;
-}
+} // IN_DDR GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, MarkSmallOrLargeComponentsAsInvalid)
+IN_DDR GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
 {
   const s32 numComponents = 10;
   const s32 numBytes = MIN(MAX_BYTES, 1000);
@@ -109,8 +338,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, MarkSmallOrLargeComponentsAsInvalid)
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  FixedLengthList<ConnectedComponentSegment> components(numComponents, ms);
-  components.set_size(numComponents);
+  ConnectedComponents components(numComponents, ms);
 
   const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 10, 0, 1);
   const ConnectedComponentSegment component1 = ConnectedComponentSegment(12, 12, 1, 1);
@@ -123,19 +351,19 @@ IN_DDR GTEST_TEST(CoreTech_Vision, MarkSmallOrLargeComponentsAsInvalid)
   const ConnectedComponentSegment component8 = ConnectedComponentSegment(6, 6, 8, 4);
   const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 1000, 9, 5);
 
-  *components.Pointer(0) = component0;
-  *components.Pointer(1) = component1;
-  *components.Pointer(2) = component2;
-  *components.Pointer(3) = component3;
-  *components.Pointer(4) = component4;
-  *components.Pointer(5) = component5;
-  *components.Pointer(6) = component6;
-  *components.Pointer(7) = component7;
-  *components.Pointer(8) = component8;
-  *components.Pointer(9) = component9;
+  components.PushBack(component0);
+  components.PushBack(component1);
+  components.PushBack(component2);
+  components.PushBack(component3);
+  components.PushBack(component4);
+  components.PushBack(component5);
+  components.PushBack(component6);
+  components.PushBack(component7);
+  components.PushBack(component8);
+  components.PushBack(component9);
 
   {
-    const Result result = MarkSmallOrLargeComponentsAsInvalid(components, minimumNumPixels, maximumNumPixels, ms);
+    const Result result = components.InvalidateSmallOrLargeComponents(minimumNumPixels, maximumNumPixels, ms);
     ASSERT_TRUE(result == RESULT_OK);
   }
 
@@ -151,8 +379,11 @@ IN_DDR GTEST_TEST(CoreTech_Vision, MarkSmallOrLargeComponentsAsInvalid)
   ASSERT_TRUE(components.Pointer(9)->id == 0);
 
   {
-    const u16 result = CompressConnectedComponentSegmentIds(components, ms);
-    ASSERT_TRUE(result == 2);
+    const Result result = components.CompressConnectedComponentSegmentIds(ms);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    const u16 maximumId = components.get_maximumId();
+    ASSERT_TRUE(maximumId == 2);
   }
 
   ASSERT_TRUE(components.Pointer(0)->id == 0);
@@ -167,7 +398,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, MarkSmallOrLargeComponentsAsInvalid)
   ASSERT_TRUE(components.Pointer(9)->id == 0);
 
   GTEST_RETURN_HERE;
-}
+} // IN_DDR GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
 
 IN_DDR GTEST_TEST(CoreTech_Vision, CompressComponentIds)
 {
@@ -177,8 +408,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, CompressComponentIds)
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  FixedLengthList<ConnectedComponentSegment> components(numComponents, ms);
-  components.set_size(numComponents);
+  ConnectedComponents components(numComponents, ms);
 
   const ConnectedComponentSegment component0 = ConnectedComponentSegment(0, 0, 0, 5);  // 3
   const ConnectedComponentSegment component1 = ConnectedComponentSegment(0, 0, 0, 10); // 4
@@ -191,19 +421,24 @@ IN_DDR GTEST_TEST(CoreTech_Vision, CompressComponentIds)
   const ConnectedComponentSegment component8 = ConnectedComponentSegment(0, 0, 0, 3);  // 1
   const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 0, 0, 5);  // 3
 
-  *components.Pointer(0) = component0;
-  *components.Pointer(1) = component1;
-  *components.Pointer(2) = component2;
-  *components.Pointer(3) = component3;
-  *components.Pointer(4) = component4;
-  *components.Pointer(5) = component5;
-  *components.Pointer(6) = component6;
-  *components.Pointer(7) = component7;
-  *components.Pointer(8) = component8;
-  *components.Pointer(9) = component9;
+  components.PushBack(component0);
+  components.PushBack(component1);
+  components.PushBack(component2);
+  components.PushBack(component3);
+  components.PushBack(component4);
+  components.PushBack(component5);
+  components.PushBack(component6);
+  components.PushBack(component7);
+  components.PushBack(component8);
+  components.PushBack(component9);
 
-  const u16 result = CompressConnectedComponentSegmentIds(components, ms);
-  ASSERT_TRUE(result == 6);
+  {
+    const Result result = components.CompressConnectedComponentSegmentIds(ms);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    const u16 maximumId = components.get_maximumId();
+    ASSERT_TRUE(maximumId == 6);
+  }
 
   ASSERT_TRUE(components.Pointer(0)->id == 3);
   ASSERT_TRUE(components.Pointer(1)->id == 4);
@@ -217,7 +452,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, CompressComponentIds)
   ASSERT_TRUE(components.Pointer(9)->id == 3);
 
   GTEST_RETURN_HERE;
-}
+} // IN_DDR GTEST_TEST(CoreTech_Vision, CompressComponentIds)
 
 // Not really a test, but computes the size of a list of ComponentSegments, to ensure that c++ isn't adding junk
 IN_DDR GTEST_TEST(CoreTech_Vision, ComponentsSize)
@@ -254,7 +489,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComponentsSize)
   ASSERT_TRUE(difference > -0.0001 && difference < 1.0);
 
   GTEST_RETURN_HERE;
-}
+} // IN_DDR GTEST_TEST(CoreTech_Vision, ComponentsSize)
 
 IN_DDR GTEST_TEST(CoreTech_Vision, SortComponents)
 {
@@ -264,47 +499,46 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SortComponents)
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  FixedLengthList<ConnectedComponentSegment> components(numComponents, ms);
-  components.set_size(numComponents);
+  ConnectedComponents components(numComponents, ms);
 
-  const ConnectedComponentSegment component0 = ConnectedComponentSegment(50, 100, 50, u16_MAX); // 7
-  const ConnectedComponentSegment component1 = ConnectedComponentSegment(s16_MAX, s16_MAX, s16_MAX, 0); // 4
-  const ConnectedComponentSegment component2 = ConnectedComponentSegment(s16_MAX, s16_MAX, 0, 0); // 2
-  const ConnectedComponentSegment component3 = ConnectedComponentSegment(s16_MAX, s16_MAX, s16_MAX, u16_MAX); // 9
-  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, s16_MAX, 0, 0); // 0
-  const ConnectedComponentSegment component5 = ConnectedComponentSegment(0, s16_MAX, s16_MAX, 0); // 3
-  const ConnectedComponentSegment component6 = ConnectedComponentSegment(0, s16_MAX, s16_MAX, u16_MAX); // 8
-  const ConnectedComponentSegment component7 = ConnectedComponentSegment(s16_MAX, s16_MAX, 0, u16_MAX); // 6
-  const ConnectedComponentSegment component8 = ConnectedComponentSegment(0, s16_MAX, 0, 0); // 1
-  const ConnectedComponentSegment component9 = ConnectedComponentSegment(42, 42, 42, 42); // 5
+  const ConnectedComponentSegment component0 = ConnectedComponentSegment(50, 100, 50, u16_MAX); // 2
+  const ConnectedComponentSegment component1 = ConnectedComponentSegment(s16_MAX, s16_MAX, s16_MAX, 0); // 9
+  const ConnectedComponentSegment component2 = ConnectedComponentSegment(s16_MAX, s16_MAX, 0, 0); // 7
+  const ConnectedComponentSegment component3 = ConnectedComponentSegment(s16_MAX, s16_MAX, s16_MAX, u16_MAX); // 4
+  const ConnectedComponentSegment component4 = ConnectedComponentSegment(0, s16_MAX, 0, 0); // 5
+  const ConnectedComponentSegment component5 = ConnectedComponentSegment(0, s16_MAX, s16_MAX, 0); // 8
+  const ConnectedComponentSegment component6 = ConnectedComponentSegment(0, s16_MAX, s16_MAX, u16_MAX); // 3
+  const ConnectedComponentSegment component7 = ConnectedComponentSegment(s16_MAX, s16_MAX, 0, u16_MAX); // 1
+  const ConnectedComponentSegment component8 = ConnectedComponentSegment(0, s16_MAX, 0, 0); // 6
+  const ConnectedComponentSegment component9 = ConnectedComponentSegment(42, 42, 42, 42); // 0
 
-  *components.Pointer(0) = component0;
-  *components.Pointer(1) = component1;
-  *components.Pointer(2) = component2;
-  *components.Pointer(3) = component3;
-  *components.Pointer(4) = component4;
-  *components.Pointer(5) = component5;
-  *components.Pointer(6) = component6;
-  *components.Pointer(7) = component7;
-  *components.Pointer(8) = component8;
-  *components.Pointer(9) = component9;
+  components.PushBack(component0);
+  components.PushBack(component1);
+  components.PushBack(component2);
+  components.PushBack(component3);
+  components.PushBack(component4);
+  components.PushBack(component5);
+  components.PushBack(component6);
+  components.PushBack(component7);
+  components.PushBack(component8);
+  components.PushBack(component9);
 
-  const Result result = SortConnectedComponentSegments(components);
+  const Result result = components.SortConnectedComponentSegments();
   ASSERT_TRUE(result == RESULT_OK);
 
-  ASSERT_TRUE(*components.Pointer(0) == component4);
-  ASSERT_TRUE(*components.Pointer(1) == component8);
-  ASSERT_TRUE(*components.Pointer(2) == component2);
-  ASSERT_TRUE(*components.Pointer(3) == component5);
-  ASSERT_TRUE(*components.Pointer(4) == component1);
-  ASSERT_TRUE(*components.Pointer(5) == component9);
-  ASSERT_TRUE(*components.Pointer(6) == component7);
-  ASSERT_TRUE(*components.Pointer(7) == component0);
-  ASSERT_TRUE(*components.Pointer(8) == component6);
-  ASSERT_TRUE(*components.Pointer(9) == component3);
+  ASSERT_TRUE(*components.Pointer(0) == component9);
+  ASSERT_TRUE(*components.Pointer(1) == component7);
+  ASSERT_TRUE(*components.Pointer(2) == component0);
+  ASSERT_TRUE(*components.Pointer(3) == component6);
+  ASSERT_TRUE(*components.Pointer(4) == component3);
+  ASSERT_TRUE(*components.Pointer(5) == component4);
+  ASSERT_TRUE(*components.Pointer(6) == component8);
+  ASSERT_TRUE(*components.Pointer(7) == component2);
+  ASSERT_TRUE(*components.Pointer(8) == component5);
+  ASSERT_TRUE(*components.Pointer(9) == component1);
 
   GTEST_RETURN_HERE;
-}
+} // IN_DDR GTEST_TEST(CoreTech_Vision, SortComponents)
 
 IN_DDR GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 {
@@ -347,25 +581,26 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
   ASSERT_TRUE(binaryImage.IsValid());
   ASSERT_TRUE(binaryImage.Set(binaryImageData, ApproximateConnectedComponents2d_binaryImageDataLength) == width*height);
 
-  FixedLengthList<ConnectedComponentSegment> extractedComponents(maxComponentSegments, ms);
-  ASSERT_TRUE(extractedComponents.IsValid());
+  //FixedLengthList<ConnectedComponentSegment> extractedComponents(maxComponentSegments, ms);
+  ConnectedComponents components(maxComponentSegments, ms);
+  ASSERT_TRUE(components.IsValid());
 
-  const Result result = Extract2dComponents(binaryImage, minComponentWidth, maxSkipDistance, extractedComponents, ms);
+  const Result result = components.Extract2dComponents(binaryImage, minComponentWidth, maxSkipDistance, ms);
   ASSERT_TRUE(result == RESULT_OK);
 
-  ASSERT_TRUE(extractedComponents.get_size() == 13);
+  ASSERT_TRUE(components.get_size() == 13);
 
   // extractedComponents.Print();
 
   for(u16 i=0; i<numComponents_groundTruth; i++) {
-    ASSERT_TRUE(extractedComponents.Pointer(i)->xStart == xStart_groundTruth[i]);
-    ASSERT_TRUE(extractedComponents.Pointer(i)->xEnd == xEnd_groundTruth[i]);
-    ASSERT_TRUE(extractedComponents.Pointer(i)->y == y_groundTruth[i]);
-    ASSERT_TRUE(extractedComponents.Pointer(i)->id == id_groundTruth[i]);
+    ASSERT_TRUE(components.Pointer(i)->xStart == xStart_groundTruth[i]);
+    ASSERT_TRUE(components.Pointer(i)->xEnd == xEnd_groundTruth[i]);
+    ASSERT_TRUE(components.Pointer(i)->y == y_groundTruth[i]);
+    ASSERT_TRUE(components.Pointer(i)->id == id_groundTruth[i]);
   }
 
   GTEST_RETURN_HERE;
-}
+} // IN_DDR GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 
 IN_DDR GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
 {
@@ -391,7 +626,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
   for(s32 i=43; i<=45; i++) binaryImageRow[i] = 1;
   for(s32 i=47; i<=49; i++) binaryImageRow[i] = 1;
 
-  const Result result = Extract1dComponents(binaryImageRow, width, minComponentWidth, maxSkipDistance, extractedComponentSegments);
+  const Result result = ConnectedComponents::Extract1dComponents(binaryImageRow, width, minComponentWidth, maxSkipDistance, extractedComponentSegments);
 
   ASSERT_TRUE(result == RESULT_OK);
 
@@ -404,7 +639,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
   ASSERT_TRUE(extractedComponentSegments.Pointer(2)->xStart == 43 && extractedComponentSegments.Pointer(2)->xEnd == 49);
 
   GTEST_RETURN_HERE;
-}
+} // IN_DDR GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
 
 IN_DDR GTEST_TEST(CoreTech_Vision, BinomialFilter)
 {
@@ -449,7 +684,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, BinomialFilter)
   }
 
   GTEST_RETURN_HERE;
-}
+} // IN_DDR GTEST_TEST(CoreTech_Vision, BinomialFilter)
 
 IN_DDR GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
 {
@@ -488,7 +723,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
   }
 
   GTEST_RETURN_HERE;
-}
+} // IN_DDR GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
 
 IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
 {
@@ -544,7 +779,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
   ASSERT_TRUE(image.IsValid());
   ASSERT_TRUE(image.Set(imageData, ComputeCharacteristicScale_imageDataLength) == width*height);
 
-  Array<u32> scaleImage(height, width, ms);
+  FixedPointArray<u32> scaleImage(height, width, 16, ms);
   ASSERT_TRUE(scaleImage.IsValid());
 
   ASSERT_TRUE(ComputeCharacteristicScaleImage(image, numPyramidLevels, scaleImage, ms) == RESULT_OK);
@@ -560,7 +795,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
   }
 
   GTEST_RETURN_HERE;
-}
+} // IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
 
 #if defined(ANKICORETECHEMBEDDED_USE_MATLAB) && defined(RUN_MATLAB_IMAGE_TEST)
 IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
@@ -598,7 +833,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
   free(buffer); buffer = NULL;
 
   GTEST_RETURN_HERE;
-}
+} // IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
 IN_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
@@ -654,7 +889,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
   }
 
   GTEST_RETURN_HERE;
-}
+} // IN_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
 
 #if !defined(ANKICORETECHEMBEDDED_USE_GTEST)
 IN_DDR void RUN_ALL_TESTS()
@@ -662,7 +897,9 @@ IN_DDR void RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
-  CALL_GTEST_TEST(CoreTech_Vision, MarkSmallOrLargeComponentsAsInvalid);
+  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage);
+  CALL_GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents);
+  CALL_GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
   CALL_GTEST_TEST(CoreTech_Vision, SortComponents);
   CALL_GTEST_TEST(CoreTech_Vision, CompressComponentIds);

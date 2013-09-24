@@ -1,4 +1,6 @@
-#include "anki/embeddedVision/fixedLengthList_vision.h"
+#include "anki/embeddedVision/draw_vision.h"
+
+using namespace std;
 
 namespace Anki
 {

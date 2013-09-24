@@ -137,7 +137,7 @@ int BenchmarkComputeCharacteristicScale()
   AnkiConditionalErrorAndReturnValue(image.IsValid(), -2, "image.IsValid()", "");
 #endif
 
-  Array<u32> scaleImage(height, width, ms);
+  FixedPointArray<u32> scaleImage(height, width, 16, ms);
 #ifdef CHECK_FOR_ERRORS
   AnkiConditionalErrorAndReturnValue(scaleImage.IsValid(), -2, "scaleImage.IsValid()", "");
 #endif

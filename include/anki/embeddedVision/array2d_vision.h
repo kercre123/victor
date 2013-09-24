@@ -5,7 +5,6 @@
 #include "anki/embeddedCommon.h"
 #include "anki/embeddedVision/dataStructures_vision.h"
 
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 

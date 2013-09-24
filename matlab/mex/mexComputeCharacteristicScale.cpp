@@ -14,13 +14,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   ConditionalErrorAndReturn(nrhs == 2 && nlhs == 1, "mexComputeCharacteristicScale", "Call this function as following: scaleImage = mexComputeCharacteristicScale(img, numPyramidLevels);");
   
   Array<u8> img = mxArrayToArray<u8>(prhs[0]);
-  const u32 numPyramidLevels = static_cast<u32>(mxGetScalar(prhs[1]));
+  const s32 numPyramidLevels = static_cast<s32>(mxGetScalar(prhs[1]));
 
   ConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexComputeCharacteristicScale", "Could not allocate Array img");
   ConditionalErrorAndReturn(numPyramidLevels < 8, "mexComputeCharacteristicScale", "numPyramidLevels must be less than 8");
 
-  Array<u32> scaleImage = AllocateArrayFromHeap<u32>(img.get_size(0), img.get_size(1));
-  ConditionalErrorAndReturn(scaleImage.get_rawDataPointer() != 0, "mexComputeCharacteristicScale", "Could not allocate Array scaleImage");
+  FixedPointArray<u32> scaleImage = AllocateFixedPointArrayFromHeap<u32>(img.get_size(0), img.get_size(1), 16);
+  ConditionalErrorAndReturn(scaleImage.get_rawDataPointer() != 0, "mexComputeCharacteristicScale", "Could not allocate FixedPointArray scaleImage");
 
   const u32 numBytes = 40 * img.get_size(0) * img.get_stride() + 1000;
   MemoryStack scratch(calloc(numBytes,1), numBytes);
