@@ -117,6 +117,10 @@ namespace Anki
 
       s32 get_size() const;
 
+      bool get_isSortedInId() const;
+      bool get_isSortedInY() const;
+      bool get_isSortedInX() const;
+
     protected:
       FixedLengthList<ConnectedComponentSegment> components;
 
