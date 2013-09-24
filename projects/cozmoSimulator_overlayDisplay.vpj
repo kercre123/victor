@@ -10,7 +10,7 @@
     Type="gnuc"
     DebugCallbackName="gdb"
     Version="1"
-    OutputFile="%bdcozmoSimulator"
+    OutputFile="%bdcozmoSimulator_overlayDisplay"
     CompilerConfigName="Latest Version">
     <Menu>
       <Target
@@ -113,31 +113,13 @@
     </Libs>
     <Includes>
       <Include Dir="/Applications/Webots/include/controller/cpp/"/>
-      <Include Dir="../controllers/cozmo_c_controller/"/>
+      <Include Dir="../controllers/overlay_display_supervisor"/>
       <Include Dir="/Applications/Webots/include/controller/c/"/>
       <Include Dir="../../coretech-common/include/"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/calib3d/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/contrib/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/core/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/features2d/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/flann/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/highgui/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/imgproc/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/legacy/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/ml/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/nonfree/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/objdetect/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/ocl/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/photo/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/stitching/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/superres/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/video/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/videostab/include"/>
       <Include Dir="/Applications/MATLAB_R2012b.app/extern/include"/>
     </Includes>
     <PostBuildCommands>
-      <Exec CmdLine="cp Debug/cozmoSimulator ../controllers/cozmo_c_controller/cozmo_c_controller"/>
+      <Exec CmdLine="cp Debug/cozmoSimulator_overlayDisplay ../controllers/overlay_display_supervisor/overlay_display_supervisor"/>
     </PostBuildCommands>
   </Config>
   <Config
@@ -145,7 +127,7 @@
     Type="gnuc"
     DebugCallbackName="gdb"
     Version="1"
-    OutputFile="%bdcozmoSimulator"
+    OutputFile="%bdcozmoSimulator_overlayDisplay"
     CompilerConfigName="Latest Version">
     <Menu>
       <Target
@@ -248,72 +230,24 @@
     </Libs>
     <Includes>
       <Include Dir="/Applications/Webots/include/controller/cpp/"/>
-      <Include Dir="../controllers/cozmo_c_controller/"/>
+      <Include Dir="../controllers/overlay_display_supervisor"/>
       <Include Dir="/Applications/Webots/include/controller/c/"/>
       <Include Dir="../../coretech-common/include/"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/calib3d/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/contrib/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/core/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/features2d/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/flann/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/highgui/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/imgproc/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/legacy/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/ml/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/nonfree/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/objdetect/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/ocl/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/photo/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/stitching/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/superres/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/video/include"/>
-      <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/videostab/include"/>
       <Include Dir="/Applications/MATLAB_R2012b.app/extern/include"/>
     </Includes>
     <PostBuildCommands>
-      <Exec CmdLine="cp Debug/cozmoSimulator ../controllers/cozmo_c_controller/cozmo_c_controller"/>
+      <Exec CmdLine="cp Debug/cozmoSimulator_overlayDisplay ../controllers/overlay_display_supervisor/overlay_display_supervisor"/>
     </PostBuildCommands>
   </Config>
   <Files>
     <Folder
       Name="Source Files"
       Filters="*.c;*.C;*.cc;*.cpp;*.cp;*.cxx;*.c++;*.prg;*.pas;*.dpr;*.asm;*.s;*.bas;*.java;*.cs;*.sc;*.e;*.cob;*.html;*.rc;*.tcl;*.py;*.pl;*.d;*.m;*.mm">
-      <F N="../controllers/cozmo_c_controller/cozmo_c_controller.cpp"/>
-      <F N="../controllers/cozmo_c_controller/cozmoBot.cpp"/>
-      <F N="../controllers/cozmo_c_controller/app/keyboardController.c"/>
-      <F N="../controllers/cozmo_c_controller/app/mainExecution.c"/>
-      <F N="../controllers/cozmo_c_controller/app/pathFollower.cpp"/>
-      <F N="../controllers/cozmo_c_controller/hal/sim_encoders.c"/>
-      <F N="../controllers/cozmo_c_controller/app/sim_localization.cpp"/>
-      <F N="../controllers/cozmo_c_controller/hal/sim_motors.c"/>
-      <F N="../controllers/cozmo_c_controller/hal/sim_timers.c"/>
-      <F N="../controllers/cozmo_c_controller/app/steeringController.c"/>
-      <F N="../controllers/cozmo_c_controller/app/vehicleMath.c"/>
-      <F N="../controllers/cozmo_c_controller/app/vehicleSpeedController.c"/>
-      <F N="../controllers/cozmo_c_controller/app/wheelController.c"/>
+      <F N="../controllers/overlay_display_supervisor/overlay_display_supervisor.c"/>
     </Folder>
     <Folder
       Name="Header Files"
       Filters="*.h;*.H;*.hh;*.hpp;*.hxx;*.inc;*.sh;*.cpy;*.if">
-      <F N="../controllers/cozmo_c_controller/app/assert.h"/>
-      <F N="../controllers/cozmo_c_controller/cozmoBot.h"/>
-      <F N="../controllers/cozmo_c_controller/cozmoConfig.h"/>
-      <F N="../controllers/cozmo_c_controller/cozmoTypes.h"/>
-      <F N="../controllers/cozmo_c_controller/app/debug.h"/>
-      <F N="../controllers/cozmo_c_controller/hal/encoders.h"/>
-      <F N="../controllers/cozmo_c_controller/keyboardController.h"/>
-      <F N="../controllers/cozmo_c_controller/app/localization.h"/>
-      <F N="../controllers/cozmo_c_controller/app/mainExecution.h"/>
-      <F N="../controllers/cozmo_c_controller/hal/motors.h"/>
-      <F N="../controllers/cozmo_c_controller/app/pathFollower.h"/>
-      <F N="../controllers/cozmo_c_controller/hal/sim_timers.h"/>
-      <F N="../controllers/cozmo_c_controller/app/steeringController.h"/>
-      <F N="../controllers/cozmo_c_controller/hal/timers.h"/>
-      <F N="../controllers/cozmo_c_controller/app/trace.h"/>
-      <F N="../controllers/cozmo_c_controller/app/vehicleMath.h"/>
-      <F N="../controllers/cozmo_c_controller/app/vehicleSpeedController.h"/>
-      <F N="../controllers/cozmo_c_controller/app/wheelController.h"/>
     </Folder>
     <Folder
       Name="Resource Files"

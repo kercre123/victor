@@ -16,8 +16,6 @@
 #include "app/vehicleMath.h"
 #include "cozmoTypes.h"
 
-#define PI_DIV2 1.5707963265
-
 // For larger input values to atan, use approximations
 // at fixed steps. (Essentially extends the LUT with courser 
 // resolution at higher input values.)

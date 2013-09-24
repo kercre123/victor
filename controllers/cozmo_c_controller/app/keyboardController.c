@@ -1,14 +1,13 @@
 #include "keyboardController.h"
-#include "hal/sim_motors.h"
-#include "hal/motors.h"
 #include "cozmoConfig.h"
 
 #include <stdio.h>
 #include <string.h>
 
-#include <webots/robot.h>
-#include <webots/connector.h>
+#include "cozmoBot.h"
+extern CozmoBot gCozmoBot;
 
+using namespace webots;
 
 
 //Why do some of those not match ASCII codes?
@@ -26,7 +25,7 @@ static BOOL keyboardCtrlEnabled_ = FALSE;
 void EnableKeyboardController(void) 
 {
   //Update Keyboard every 0.1 seconds
-  wb_robot_keyboard_enable(TIME_STEP); 
+  gCozmoBot.keyboardEnable(TIME_STEP); 
   keyboardCtrlEnabled_ = TRUE;
 
   printf("Drive: arrows\n");
@@ -38,7 +37,7 @@ void EnableKeyboardController(void)
 void DisableKeyboardController(void)
 {
   //Disable the keyboard
-  wb_robot_keyboard_disable();
+  gCozmoBot.keyboardDisable();
   keyboardCtrlEnabled_ = FALSE;
 }
 
@@ -54,93 +53,82 @@ void RunKeyboardController()
     return;
   }
 
-  int key = wb_robot_keyboard_get_key();
-  
-  static float pitch_angle = 0;
-  static float lift_angle = LIFT_CENTER;
-
+  int key = gCozmoBot.keyboardGetKey();
   
   switch (key)
   {
-    case WB_ROBOT_KEYBOARD_UP:
+    case Robot::KEYBOARD_UP:
     {  
-      SetAngularWheelVelocity(DRIVE_VELOCITY_SLOW, DRIVE_VELOCITY_SLOW);
+      gCozmoBot.SetWheelAngularVelocity(DRIVE_VELOCITY_SLOW, DRIVE_VELOCITY_SLOW);
       break;
     }
     
-    case WB_ROBOT_KEYBOARD_DOWN:
+    case Robot::KEYBOARD_DOWN:
     {
-      SetAngularWheelVelocity(-DRIVE_VELOCITY_SLOW, -DRIVE_VELOCITY_SLOW);
+      gCozmoBot.SetWheelAngularVelocity(-DRIVE_VELOCITY_SLOW, -DRIVE_VELOCITY_SLOW);
       break;
     }
     
-    case WB_ROBOT_KEYBOARD_LEFT:
+    case Robot::KEYBOARD_LEFT:
     {
-      SetAngularWheelVelocity(-TURN_VELOCITY_SLOW, TURN_VELOCITY_SLOW);
+      gCozmoBot.SetWheelAngularVelocity(-TURN_VELOCITY_SLOW, TURN_VELOCITY_SLOW);
       break;
     }
     
-    case WB_ROBOT_KEYBOARD_RIGHT:
+    case Robot::KEYBOARD_RIGHT:
     {
-      SetAngularWheelVelocity(TURN_VELOCITY_SLOW, -TURN_VELOCITY_SLOW);
+      gCozmoBot.SetWheelAngularVelocity(TURN_VELOCITY_SLOW, -TURN_VELOCITY_SLOW);
       break;
     }
     
     case CKEY_HEAD_UP: //s-key: move head up
     {
-      pitch_angle += 0.01f;
-      SetHeadAngle(pitch_angle);
+      gCozmoBot.SetHeadPitch(gCozmoBot.GetHeadPitch() + 0.01f);
       break;
     }
     
     case CKEY_HEAD_DOWN: //x-key: move head down
     {
-      pitch_angle -= 0.01f;
-      SetHeadAngle(pitch_angle);
+      gCozmoBot.SetHeadPitch(gCozmoBot.GetHeadPitch() - 0.01f);
       break;
     }
     case CKEY_LIFT_UP: //a-key: move lift up
     {
-      lift_angle += 0.02f;
-      SetLiftAngle(lift_angle);
+      gCozmoBot.SetLiftPitch(gCozmoBot.GetLiftPitch() + 0.02f);
       break;
     }
     
     case CKEY_LIFT_DOWN: //z-key: move lift down
     {
-      lift_angle -= 0.02f;
-      SetLiftAngle(lift_angle);
+      gCozmoBot.SetLiftPitch(gCozmoBot.GetLiftPitch() - 0.02f);
       break;
     }
     case '1': //set lift to pickup position
     {
-      lift_angle = LIFT_CENTER;
-      SetLiftAngle(lift_angle);
+      gCozmoBot.SetLiftPitch(LIFT_CENTER);
       break;
     }
     case '2': //set lift to block +1 position
     {
-      lift_angle = LIFT_UP;
-      SetLiftAngle(lift_angle);
+      gCozmoBot.SetLiftPitch(LIFT_UP);
       break;
     }
     case '3': //set lift to highest position
     {
-      lift_angle = LIFT_UPUP;
-      SetLiftAngle(lift_angle);
+      gCozmoBot.SetLiftPitch(LIFT_UPUP);
       break;
     }
     
     case CKEY_UNLOCK: //spacebar-key: unlock
     {
-      DisengageGripper();
+      gCozmoBot.DisengageGripper();
       break;
     }
     
     
     default:
     {
-      SetAngularWheelVelocity(0, 0);
+      gCozmoBot.SetWheelAngularVelocity(0, 0);
     }
     
   }

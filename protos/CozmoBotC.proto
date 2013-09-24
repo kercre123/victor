@@ -230,6 +230,14 @@ Supervisor {
         }
       }
     }
+    DEF GPS_SENSOR GPS {
+      name "gps"
+      translation 0 0 -0.024
+    }    
+    DEF COMPASS_SENSOR Compass {
+      name "compass"
+
+    }
     DEF WHEEL_FRONT_RIGHT HingeJoint {
       jointParameters HingeJointParameters {
         anchor 0.02 0 -0.024
@@ -237,7 +245,8 @@ Supervisor {
       device RotationalMotor {
         name "wheel_fr"
       }
-      endPoint Solid {
+      endPoint Gyro {
+        name "wheel_gyro_fr"
         translation 0.02 3.92458e-06 -0.024
         rotation 1 0 0 0
         children [
@@ -258,7 +267,8 @@ Supervisor {
       device RotationalMotor {
         name "wheel_fl"
       }
-      endPoint Solid {
+      endPoint Gyro {
+        name "wheel_gyro_fl"
         translation -0.02 3.92342e-06 -0.024
         rotation 0.0794063 -2.05874e-06 0.996842 -1.15799e-11
         children [

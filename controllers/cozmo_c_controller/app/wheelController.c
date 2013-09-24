@@ -11,6 +11,7 @@
 #include "hal/motors.h"
 #include "app/trace.h"
 #include "app/vehicleSpeedController.h"
+#include "app/debug.h"
 #include <stdio.h>
 
 // Cap error_sum so that integral component of outl does not exceed say some percent of MOTOR_PWM_MAXVAL.
@@ -83,6 +84,7 @@ void RunWheelSpeedController(s16 *motorvalueoutL, s16 *motorvalueoutR)
 
 #if(DEBUG_WHEEL_CONTROLLER)    
     printf(" WHEEL speeds: %f (L), %f (R)   (Curr: %d, %d)\n", wspeedl, wspeedr, GetLeftWheelSpeed(), GetRightWheelSpeed() );
+    printf(" WHEEL desired speeds: %d (L), %d (R)\n", desiredWheelSpeedL, desiredWheelSpeedR);
 #endif
 
     //Get the desired speed in mm/sec
@@ -103,6 +105,10 @@ void RunWheelSpeedController(s16 *motorvalueoutL, s16 *motorvalueoutR)
     // NDM: Convert to int only AFTER clamping, to avoid int overflow 
     float outl = MM_PER_SEC_TO_MOTOR_VAL( (float)(wKp * errorl) + (error_suml_ * wKi) ); 
     float outr = MM_PER_SEC_TO_MOTOR_VAL( (float)(wKp * errorr) + (error_sumr_ * wKi) ); 
+
+#if(DEBUG_WHEEL_CONTROLLER)
+    printf(" WHEEL error: %f (L), %f (R)   error_sum: %f (L), %f (R)\n", errorl, errorr, error_suml_, error_sumr_);
+#endif
 
     /*
     // If commanded speed is 0 and current speed is pretty slow, suppress motor drive and don't let error accumulate.

@@ -12,8 +12,8 @@
 #include "cozmoTypes.h"
 
 //The default gains for the wheel speed controller
-#define DEFAULT_WHEEL_KP 1.0f
-#define DEFAULT_WHEEL_KI 0.05f
+#define DEFAULT_WHEEL_KP 0.1f //1.0f
+#define DEFAULT_WHEEL_KI 0.005f //0.05f
 #define DEFAULT_WHEEL_KD 0.0f
 
 #define WHEEL_SPEED_COMMAND_STOPPED_MM_S  2.0

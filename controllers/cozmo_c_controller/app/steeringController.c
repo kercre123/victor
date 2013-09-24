@@ -13,6 +13,7 @@
 //#include "hal/encoders.h"
 #include "app/vehicleMath.h"
 #include "app/trace.h"
+#include "app/debug.h"
 #include "cozmoConfig.h"
 
 #include <stdio.h>
@@ -40,7 +41,7 @@ void SetSteeringControllerGains(float k1, float k2) {
 
 
 //This manages at a high level what the steering controller needs to do (steer, use open loop, etc.)
-void ManageSteeringController(s16 fidx) {
+void ManageSteeringController(s16 fidx, float headingError_rad) {
    
   // Get desired vehicle speed
   s16 desiredVehicleSpeed = GetControllerCommandedVehicleSpeed();
@@ -49,7 +50,7 @@ void ManageSteeringController(s16 fidx) {
   //If we found a valid followline, let's run the controller
   if (fidx != INVALID_IDEAL_FOLLOW_LINE_IDX) {
         // Run controller and pass in current speed
-        RunLineFollowControllerNL( fidx );
+        RunLineFollowControllerNL( fidx, headingError_rad );
 
   } else {
         // No steering intention -- pass through speed to each wheel to drive straight while in normal mode
@@ -81,7 +82,7 @@ void ManageSteeringController(s16 fidx) {
  * @param wleft     
  * @param wright    
  */
-void RunLineFollowControllerNL(s16 location_pix) {
+void RunLineFollowControllerNL(s16 location_pix, float headingError_rad) {
 
   //We only steer in certain cases, for example if the car is supposed to move
   static BOOL steering_active = FALSE;

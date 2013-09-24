@@ -1,0 +1,272 @@
+#include "cozmoBot.h"
+#include "cozmoConfig.h"
+#include "app/vehicleMath.h"
+#include "keyboardController.h"
+#include "app/mainExecution.h"
+#include "hal/sim_timers.h"
+#include "app/vehicleSpeedController.h"
+#include "app/pathFollower.h"
+#include "hal/timers.h"
+#include <cmath>
+#include <cstdio>
+
+//Names of the wheels used for steering
+#define WHEEL_FL "wheel_fl"
+#define WHEEL_FR "wheel_fr"
+#define GYRO_FL "wheel_gyro_fl"
+#define GYRO_FR "wheel_gyro_fr"
+#define PITCH "motor_head_pitch"
+#define LIFT "lift_motor"
+#define LIFT2 "lift_motor2"
+#define CONNECTOR "connector"
+
+#define DOWN_CAMERA "cam_down"
+#define HEAD_CAMERA "cam_head"
+#define LIFT_CAMERA "cam_lift"
+
+// Global Cozmo robot instance
+CozmoBot gCozmoBot;
+
+using namespace std;
+using namespace PathFollower;
+
+CozmoBot::CozmoBot() : Supervisor() 
+{
+  leftWheelMotor_ = getMotor(WHEEL_FL);
+  rightWheelMotor_ = getMotor(WHEEL_FR);
+
+  headMotor_ = getMotor(PITCH);
+  liftMotor_ = getMotor(LIFT);
+  liftMotor2_ = getMotor(LIFT2);
+
+  con_ = getConnector(CONNECTOR);
+  con_->enablePresence(TIME_STEP);
+  gripperEngaged_ = false;
+  unlockhysteresis_ = HIST;
+
+  downCam_ = getCamera(DOWN_CAMERA);
+  headCam_ = getCamera(HEAD_CAMERA);
+  liftCam_ = getCamera(LIFT_CAMERA);
+  downCam_->enable(TIME_STEP);
+  headCam_->enable(TIME_STEP);
+  liftCam_->enable(TIME_STEP);
+
+  leftWheelGyro_ = getGyro(GYRO_FL);
+  rightWheelGyro_ = getGyro(GYRO_FR);
+}
+
+
+void CozmoBot::Init() 
+{
+  //Set the motors to velocity mode
+  leftWheelMotor_->setPosition(INFINITY);
+  rightWheelMotor_->setPosition(INFINITY);
+  
+  // Enable position measurements on wheel motors
+  leftWheelMotor_->enablePosition(TIME_STEP);
+  rightWheelMotor_->enablePosition(TIME_STEP);
+
+  // Set speed to 0
+  leftWheelMotor_->setVelocity(0);
+  rightWheelMotor_->setVelocity(0);
+
+
+  //Set the head pitch to 0
+  headMotor_->setPosition(0);
+  liftMotor_->setPosition(LIFT_CENTER);
+  liftMotor2_->setPosition(-LIFT_CENTER);
+
+  gps_ = getGPS("gps");
+  compass_ = getCompass("compass");
+  gps_->enable(TIME_STEP);
+  compass_->enable(TIME_STEP);
+
+  leftWheelGyro_->enable(TIME_STEP);
+  rightWheelGyro_->enable(TIME_STEP);
+}
+
+
+void CozmoBot::GetGlobalPose(float &x, float &y, float& rad)
+{
+
+  const double* position = gps_->getValues();
+  const double* northVector = compass_->getValues();
+
+  x = position[0];
+  y = -position[2];
+
+  rad = atan2(northVector[0], -northVector[2]);
+
+  snprintf(locStr, MAX_TEXT_DISPLAY_LENGTH, "Pose: x=%f y=%f angle=%f\n", x, y, rad);
+}
+
+
+
+void CozmoBot::SetLeftWheelAngularVelocity(float rad_per_sec)
+{
+  leftWheelMotor_->setVelocity(-rad_per_sec);
+}
+
+void CozmoBot::SetRightWheelAngularVelocity(float rad_per_sec)
+{
+  rightWheelMotor_->setVelocity(-rad_per_sec);
+}
+
+void CozmoBot::SetWheelAngularVelocity(float left_rad_per_sec, float right_rad_per_sec)
+{
+  leftWheelMotor_->setVelocity(-left_rad_per_sec);
+  rightWheelMotor_->setVelocity(-right_rad_per_sec);
+}
+
+float CozmoBot::GetLeftWheelPosition()
+{
+  return leftWheelMotor_->getPosition();
+}
+
+float CozmoBot::GetRightWheelPosition()
+{
+  return rightWheelMotor_->getPosition();
+}
+
+void CozmoBot::GetWheelPositions(float &left_rad, float &right_rad)
+{
+  left_rad = leftWheelMotor_->getPosition();
+  right_rad = rightWheelMotor_->getPosition();
+}
+
+float CozmoBot::GetLeftWheelSpeed()
+{
+  const double* axesSpeeds_rad_per_s = leftWheelGyro_->getValues();  
+  float mm_per_s = -axesSpeeds_rad_per_s[0] * WHEEL_RAD_TO_MM;
+  //printf("LEFT: %f rad/s, %f mm/s\n", -axesSpeeds_rad_per_s[0], mm_per_s);
+  return mm_per_s;
+}
+
+float CozmoBot::GetRightWheelSpeed()
+{
+  const double* axesSpeeds_rad_per_s = rightWheelGyro_->getValues();  
+  float mm_per_s = -axesSpeeds_rad_per_s[0] * WHEEL_RAD_TO_MM;
+  //printf("RIGHT: %f rad/s, %f mm/s\n", -axesSpeeds_rad_per_s[0], mm_per_s);
+  return mm_per_s;
+}
+
+
+
+void CozmoBot::SetHeadPitch(float pitch_rad)
+{
+  headMotor_->setPosition(pitch_rad);
+}
+
+float CozmoBot::GetHeadPitch() const
+{
+  return headMotor_->getPosition();
+}
+
+void CozmoBot::SetLiftPitch(float pitch_rad)
+{
+  liftMotor_->setPosition(pitch_rad);
+  liftMotor2_->setPosition(-pitch_rad);
+}
+
+float CozmoBot::GetLiftPitch() const
+{
+  return liftMotor_->getPosition();
+}
+
+
+void CozmoBot::EngageGripper()
+{
+
+}
+
+void CozmoBot::DisengageGripper()
+{
+  if (gripperEngaged_)
+  {
+    gripperEngaged_ = false;
+    unlockhysteresis_ = HIST;
+    con_->unlock();
+    //printf("UNLOCKED!\n");
+  }
+}
+
+bool CozmoBot::IsGripperEngaged() {
+  return gripperEngaged_;
+}
+
+
+void CozmoBot::ManageGripper()
+{
+  //Should we lock to a block which is close to the connector?
+  if (!gripperEngaged_ && con_->getPresence() == 1)
+  {
+    if (unlockhysteresis_ == 0)
+    {
+      con_->lock();
+      gripperEngaged_ = true;
+      //printf("LOCKED!\n");
+    }else{
+      unlockhysteresis_--;
+    }
+  }
+}
+
+
+
+void CozmoBot::SetOverlayText(OverlayTextID ot_id, const char* txt)
+{
+  const float overlayTextSize = 0.07;
+  const u32 overlayTextColor = 0x00ff00;
+  setLabel(ot_id, txt, 0, 0.7 + (float)ot_id * overlayTextSize/3, overlayTextSize, overlayTextColor, 0);
+}
+
+
+void CozmoBot::run() 
+{
+  while (step(TIME_STEP) != -1) {
+
+
+    RunKeyboardController();
+
+
+    // TESTING
+    static u32 startDriveTime_us = 1000000;
+    static BOOL driving = FALSE;
+    if (!IsKeyboardControllerEnabled() && !driving && getMicroCounter() > startDriveTime_us) {
+      SetUserCommandedAcceleration( MAX(ONE_OVER_CONTROL_DT + 1, 500) );  // This can't be smaller than 1/CONTROL_DT!  
+      SetUserCommandedDesiredVehicleSpeed(160);
+      printf("Speed commanded: %d mm/s\n", GetUserCommandedDesiredVehicleSpeed() );
+
+
+      // Create a path and follow it
+      AppendPathSegment_Line(0, 0.0, 0.0, 0.3, -0.3);
+      float arc1_radius = sqrt(0.005);  // Radius of sqrt(0.05^2 + 0.05^2)
+      AppendPathSegment_Arc(0, 0.35, -0.25, arc1_radius, -0.75*PI, 0); 
+      AppendPathSegment_Line(0, 0.35 + arc1_radius, -0.25, 0.35 + arc1_radius, 0.2);
+      float arc2_radius = sqrt(0.02); // Radius of sqrt(0.1^2 + 0.1^2)
+      AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, PI_DIV2);
+      StartPathTraversal();
+
+      driving = TRUE;
+    }
+
+
+    printf("speedDes: %d, speedCur: %d, speedCtrl: %d, speedMeas: %d\n", 
+           GetUserCommandedDesiredVehicleSpeed(), 
+           GetUserCommandedCurrentVehicleSpeed(),
+           GetControllerCommandedVehicleSpeed(),
+           GetCurrentMeasuredVehicleSpeed());
+
+    CozmoMainExecution();
+    
+     
+    // Simulator management stuff
+    ManageTimers(TIME_STEP); 
+
+
+    // Check if connector attaches to anything
+    ManageGripper();
+
+    SetOverlayText(OT_CURR_POSE, locStr);
+  }
+}

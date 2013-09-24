@@ -48,7 +48,10 @@ int main() {
   wb_display_draw_text(ground_display,"x",width-10,height/2-10);
   wb_display_set_color(ground_display,BLUE);
   wb_display_draw_line(ground_display,width/2,0,width/2,height-1);
-  wb_display_draw_text(ground_display,"z",width/2-10,height-10);
+  //wb_display_draw_text(ground_display,"z",width/2-10,height-10); // Actual z-axis
+  wb_display_draw_text(ground_display,"y",width/2-10,0); // In Cozmo world, -ve z-axis is +ve y-axis. 
+                                                                 // Can fix this later if we care, but all this stuff is encapsulated in CozmoBot
+                                                                 // so it's not a big deal doing all the transforms there.
 
   // init image ref used to save into the image file
   WbImageRef to_store = NULL;

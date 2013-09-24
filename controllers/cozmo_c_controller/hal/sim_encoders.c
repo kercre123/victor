@@ -2,8 +2,9 @@
 #include "cozmoTypes.h" 
 #include "hal/encoders.h"
 #include "hal/timers.h"
-#include "hal/sim_motors.h"
 
+#include "cozmoBot.h"
+extern CozmoBot gCozmoBot;
 
 //Defines the initial coefficient for the filter
 #define DEFAULT_FILTER_COEF 0.9f
@@ -43,15 +44,17 @@ float filterSpeedR = 0;
 // Runs one step of the wheel encoder filter;
 void EncoderSpeedFilterIteration(void)
 {
+  /*
   // Get rad/s
   float leftRad, rightRad, dLeftRad, dRightRad;
   static float prevLeftRad = 0, prevRightRad = 0;
   u32 dtime = 0;
   static u32 prev_us_time = 0;
 
-  GetMotorAngles(&leftRad, &rightRad);
+  gCozmoBot.GetWheelPositions(leftRad, rightRad);
   dLeftRad = prevLeftRad - leftRad;
   dRightRad = prevRightRad - rightRad;
+
 
   prevLeftRad = leftRad;
   prevRightRad = rightRad;
@@ -62,9 +65,10 @@ void EncoderSpeedFilterIteration(void)
 
   leftWheelSpeed_mmps = dLeftMM / CONTROL_DT;
   rightWheelSpeed_mmps = dRightMM / CONTROL_DT;
+*/
 
-
-
+  leftWheelSpeed_mmps = gCozmoBot.GetLeftWheelSpeed();
+  rightWheelSpeed_mmps = gCozmoBot.GetRightWheelSpeed();
 
     filterSpeedL = GetLeftWheelSpeed() * (1.0f - filter_coef)   +   (filterSpeedL * filter_coef);
     filterSpeedR = GetRightWheelSpeed() * (1.0f - filter_coef)   +   (filterSpeedR * filter_coef);
@@ -80,6 +84,4 @@ s32 GetRightWheelSpeedFiltered(void)
     return filterSpeedR;
 }
 
-
-///////// SIM ONLY /////////
 

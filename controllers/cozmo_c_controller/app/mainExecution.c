@@ -2,42 +2,59 @@
 #include "app/wheelController.h"
 #include "app/steeringController.h"
 #include "app/vehicleSpeedController.h"
+#include "app/pathFollower.h"
+#include "app/localization.h"
 #include "hal/timers.h"
 #include "hal/encoders.h"
 #include "cozmoConfig.h"
 #include "cozmoTypes.h"
+#include "debug.h"
 #include <stdio.h>
  
+ 
+using namespace Localization;
+using namespace PathFollower;
+
+#if(DEBUG_MAIN_EXECUTION)
+#include "cozmoBot.h"
+extern CozmoBot gCozmoBot;
+
+#define MAX_PATH_ERROR_TEXT_LENGTH 256
+static char pathErrorStr[MAX_PATH_ERROR_TEXT_LENGTH+1];
+#endif
+
      
 void CozmoMainExecution(void) 
 {  
-  s16 fidx = 0;
-  
+  static s16 fidx = 0;
+  static float pathDistErr = 0;
+  static float radErr = 0;
 
+
+  UpdateLocalization();
 
   // Figure out what fidx should be according to pathFollower
-  // ...
-
-
-  // TESTING
-  static u32 startDriveTime_us = 1000000;
-  static BOOL driving = FALSE;
-  if (!driving && getMicroCounter() > startDriveTime_us) {
-    SetUserCommandedAcceleration(ONE_OVER_CONTROL_DT + 1);  // This can't be smaller than 1/CONTROL_DT!  
-    SetUserCommandedDesiredVehicleSpeed(30);
-    //printf("Speed: %d mm/s\n", GetUserCommandedDesiredVehicleSpeed() );
-    driving = TRUE;
+  if (IsTraversingPath()) {
+    BOOL gotError = GetPathError(pathDistErr, radErr);
+    if (gotError) {
+      fidx = pathDistErr*1000; // Convert to mm
+      printf("fidx: %d\n\n", fidx);
+#if(DEBUG_MAIN_EXECUTION)
+      snprintf(pathErrorStr, MAX_PATH_ERROR_TEXT_LENGTH, "PathError: %f m, %f rad  => fidx: %d", pathDistErr, radErr, fidx);
+      gCozmoBot.SetOverlayText(OT_PATH_ERROR, pathErrorStr);
+#endif
+    } else {
+      SetUserCommandedDesiredVehicleSpeed(0);
+    }
   }
-  fidx = 2;
 
-  //printf("\n");
-  
+
   // Speed controller
   ManageVehicleSpeedController();
 
 
   // Steering controller
-  ManageSteeringController(fidx);
+  ManageSteeringController(fidx, radErr);
 
   
   s16 wspeedlPWM = 0; s16 wspeedrPWM = 0;

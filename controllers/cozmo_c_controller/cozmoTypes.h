@@ -1,9 +1,14 @@
 #ifndef COZMO_TYPES_H
 #define COZMO_TYPES_H
 
+
+#include "anki/embeddedCommon.h"
+//#include "anki/common.h"  //Shouldn't need to include non-embedded coretech here!
+#include "anki/math/radians.h"
+
 // Some of this should be moved to a shared file to be used by basestation as well
 
-
+/*
 // We specify types according to their sign and bits. We should use these in
 // our code instead of the normal 'int','short', etc. because different
 // compilers on different architectures treat these differently.
@@ -15,6 +20,7 @@ typedef unsigned long       u32;
 typedef signed long         s32;
 typedef unsigned long long  u64;
 typedef signed long long    s64;
+*/
 
 // Maximum values
 #define u8_MAX ((u8)0xFF)
@@ -87,6 +93,44 @@ typedef u8 BOOL;
 #define INVALID_IDEAL_FOLLOW_LINE_IDX s16_MAX
 
 
+/// This should be in CoreTech-Common
+namespace Anki{
+namespace Embedded {
+  
+  typedef Point<float> Point2f;
+
+  class Pose2d
+  {
+  public:
+    // Constructors:
+    Pose2d() : coord(0,0), angle(0) {}
+    Pose2d(const float x, const float y, const Radians angle) ;
+    Pose2d(const Pose2d &other) {
+      *this = other;
+    }
+    
+    // Accessors:
+    float   get_x()     const {return coord.x;}
+    float   get_y()     const {return coord.y;}
+    Point2f get_xy()    const {return coord;}
+    Radians get_angle() const {return angle;}
+
+    float& x() {return coord.x;}
+    float& y() {return coord.y;}
+    
+    void operator=(const Pose2d &other) {
+      this->coord = other.coord;
+      this->angle = other.angle;
+    }
+
+
+    Point2f coord;
+    Radians angle;
+    
+  }; // class Pose2d
+
+}
+}
 
 //// This is from general.h, should go in coretech_common
 

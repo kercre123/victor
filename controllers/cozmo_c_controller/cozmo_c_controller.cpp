@@ -12,18 +12,18 @@
  */
 #include <stdio.h>
 #include <ctype.h>
-#include <webots/robot.h>
-#include <webots/camera.h>
-
+#include "cozmoBot.h"
 #include <string.h>
-//#include "engine.h"
-
-#include "app/mainExecution.h"
-
+#include "engine.h"
 #include "hal/motors.h"
+#include "app/localization.h"
+#include "app/pathFollower.h"
 #include "keyboardController.h"
 #include "cozmoConfig.h"
-#include "hal/sim_timers.h"
+
+using namespace Localization;
+using namespace PathFollower;
+
 
 /*
  * You may want to add macros here.
@@ -34,30 +34,10 @@
 
 
 
-//Camera on the head
-WbDeviceTag cam_head;
-WbDeviceTag cam_lift;
-WbDeviceTag cam_down;
+extern CozmoBot gCozmoBot;
 
 
 
-void InitCozmo(void)
-{
-
-  //Enable the cameras
-  cam_head = wb_robot_get_device("cam_head");
-  wb_camera_enable(cam_head, TIME_STEP);
-  cam_lift = wb_robot_get_device("cam_lift");
-  wb_camera_enable(cam_lift, TIME_STEP);
-  cam_down = wb_robot_get_device("cam_down");
-  wb_camera_enable(cam_down, TIME_STEP);
-
-  
-}
-
-
-
-/*
 #define  BUFSIZE 256
 int MatlabTest(void)
 {
@@ -133,7 +113,7 @@ int MatlabTest(void)
   
   return 0;
 }
-*/
+
 
 
 /*
@@ -143,61 +123,37 @@ int MatlabTest(void)
  */
 int main(int argc, char **argv)
 {
-  /* necessary to initialize webots stuff */
-  wb_robot_init();
-  InitCozmo();
-  
-  
-  
-  
-  //MatlabTest();
-  
-  
-  // Initialize HAL
+  gCozmoBot.Init();
+
   InitMotors();
-  
-    
+  InitPathFollower();
+  InitLocalization();
+  // TODO: Init more things?
+
 #ifdef ENABLE_KEYBOARD_CONTROL
   EnableKeyboardController();
 #endif
+
+  //MatlabTest();
+
+  gCozmoBot.run();
+  return 0;
   
   
-  /* main loop
-   * Perform simulation steps of TIME_STEP milliseconds
-   * and leave the loop when the simulation is over
-   */
-  while (wb_robot_step(TIME_STEP) != -1) {
+  
+  
+  
     
-    /* 
-     * Read the sensors :
-     * Enter here functions to read sensor data, like:
-     *  double val = wb_distance_sensor_get_value(my_sensor);
-     */
-    
-    /* Process sensor data here */
-    
-    /*
-     * Enter here functions to send actuator commands, like:
-     * wb_differential_wheels_set_speed(100.0,100.0);
-     */
-     
-     RunKeyboardController();
-     
-     CozmoMainExecution();
-    
-     
-     // Simulator management stuff
-     ManageTimers(TIME_STEP); 
-  };
+ 
   
   /* Enter your cleanup code here */
-  DisableKeyboardController();
-  wb_camera_disable(cam_head);
-  wb_camera_disable(cam_lift);
-  wb_camera_disable(cam_down);
+  //DisableKeyboardController();
+  //wb_camera_disable(cam_head);
+  //wb_camera_disable(cam_lift);
+  //wb_camera_disable(cam_down);
   
   /* This is necessary to cleanup webots resources */
-  wb_robot_cleanup();
+  //wb_robot_cleanup();
   
   return 0;
 }
