@@ -140,9 +140,8 @@ switch(this.operationMode)
                 assert(this.liftAngle > this.LiftAngle_Place, ...
                     'Expecting to be carrying block up high.');
                 
-                this.liftAngle = this.LiftAngle_High;
-                this.operationMode = 'MOVE_LIFT';
-                this.nextOperationMode = 'PLACE_BLOCK';
+                this.operationMode = 'PLACE_BLOCK';
+                
             else
                 if this.dockingBlock.pose.T(3) > this.dockingBlock.mindim
                     % We are attempting to dock with a high ("placed")

@@ -8,6 +8,8 @@ mask = [];
 squareDiagonal = [];
 spacingTolerance = 0.25; % can be this fraction away from expected, i.e. +/- 10%
 simulateDefocusBlur = true;
+boxPadding = 1.5;
+findBoundingBox = false;
 
 parseVarargin(varargin{:});
 
@@ -24,6 +26,11 @@ if nbands>1
     img = mean(img,3);
 end
 
+if simulateDefocusBlur
+    % Simulate blur from defocus
+    img = separable_filter(img, gaussian_kernel(squareDiagonal/16));
+end
+
 if isempty(mask)
     % If we don't have a mask to tell us where to look...
     if ~isempty(camera)
@@ -31,7 +38,18 @@ if isempty(mask)
         % box into the image to create the mask.
         dockingBox3D = this.getPosition(camera.pose, 'DockingTargetBoundingBox');
         [u_box, v_box] = camera.projectPoints(dockingBox3D);
-        mask = roipoly(img, u_box([1 2 4 3]), v_box([1 2 4 3]));
+        
+        % Pad the target a bit:
+        u_cen = mean(u_box);
+        v_cen = mean(v_box);
+        u_boxPad = boxPadding*(u_box-u_cen) + u_cen;
+        v_boxPad = boxPadding*(v_box-v_cen) + v_cen;
+        
+        if findBoundingBox
+            [u_box, v_box] = this.findDockingTargetBoundingBox(img, u_box, v_box);
+        end
+
+        mask = roipoly(img, u_boxPad([1 2 4 3]), v_boxPad([1 2 4 3]));
         squareDiagonal = sqrt((u_box(1)-u_box(4))^2 + (v_box(1)-v_box(4))^2);
     else
         % ... get the user to draw one for us.
@@ -43,19 +61,18 @@ if isempty(squareDiagonal)
     squareDiagonal = sqrt(2)*sqrt(sum(mask(:)));
 end
 
-if simulateDefocusBlur
-    % Simulate blur from defocus
-    img = separable_filter(img, gaussian_kernel(squareDiagonal/16));
-end
-
-
-
 dotRadiusFraction = (BlockMarker3D.DockingDotWidth/2) / (sqrt(2)*BlockMarker3D.CodeSquareWidth);
 dotRadius = squareDiagonal * dotRadiusFraction;
-sigma = dotRadius/3; 
+sigma = dotRadius; 
+% dotKernel = gaussian_kernel(sigma);
+% dotKernel = dotKernel(:)*dotKernel;
+% dotKernel = 1 - dotKernel/max(dotKernel(:));
+% dotKernel = image_downright(dotKernel) - dotKernel;
+
 hsize = ceil(6*sigma + 1);
 LoG = fspecial('log', hsize, sigma);
 
+%imgFilter = imfilter(image_downright(img) - img, dotKernel);
 imgFilter = imfilter(img, LoG);
 
 step = 1; %max(1, round((squareWidth * dotRadiusMultiplier)/12))
