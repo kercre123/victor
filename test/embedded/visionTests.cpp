@@ -63,6 +63,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   const s16 xStartValues[] = {102, 104, 102, 108, 102, 100, 100, 104, 100, 100, 103, 100, 103, 100, 103, 100, 103};
   const s16 xEndValues[] = { 102, 105, 105, 109, 109, 105, 105, 109, 105, 101, 104, 101, 104, 101, 104, 101, 104};
 
+  const s16 componentsX_groundTruth[] = {105, 105, 106, 107, 108, 109, 109, 108, 107, 106, 105, 105, 105, 105, 106, 107, 108, 109, 108, 107, 106, 105, 105, 104, 104, 104, 104, 104, 103, 103, 103, 103, 103, 102, 101, 101, 101, 101, 101, 100, 100, 100, 100, 100, 101, 102, 103, 104, 104, 104, 103, 102, 101, 100, 100, 101, 102, 102, 102, 102, 102, 103, 104, 104, 105};
+  const s16 componentsY_groundTruth[] = {200, 201, 201, 201, 201, 201, 202, 202, 202, 202, 202, 203, 204, 205, 205, 205, 205, 205, 205, 205, 205, 205, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 206, 206, 205, 204, 204, 204, 204, 204, 203, 203, 203, 202, 201, 200, 201, 201, 201, 200, 200};
+
   for(s32 i=0; i<numComponents; i++) {
     components.PushBack(ConnectedComponentSegment(xStartValues[i],xEndValues[i],yValues[i],1));
   }
@@ -91,7 +94,11 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
     ASSERT_TRUE(result == RESULT_OK);
   }
 
-  extractedBoundary.Print();
+  //extractedBoundary.Print();
+
+  for(s32 i=0; i<boundaryLength; i++) {
+    ASSERT_TRUE(*extractedBoundary.Pointer(i) == Point<s16>(componentsX_groundTruth[i], componentsY_groundTruth[i]));
+  }
 
   GTEST_RETURN_HERE;
 } // IN_DDR GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)

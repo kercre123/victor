@@ -277,8 +277,8 @@ namespace Anki
 
           //edge_left(y) = min(edge_left(y), xStart);
           //edge_right(y) = max(edge_right(y), xEnd);
-          edge_left[x] = MIN(edge_left[x], currentSegment.xStart);
-          edge_right[x] = MAX(edge_right[x], currentSegment.xEnd);
+          edge_left[currentSegment.y] = MIN(edge_left[currentSegment.y], currentSegment.xStart);
+          edge_right[currentSegment.y] = MAX(edge_right[currentSegment.y], currentSegment.xEnd);
         } // for(s32 x=currentSegment.xStart; x<=currentSegment.xEnd; x++)
       } // for(s32 iSegment=startComponentIndex; iSegment<=endComponentIndex; iSegment++)
 
@@ -287,6 +287,23 @@ namespace Anki
       //    disp('This should only happen if the component is buggy, but it should probably be either detector or corrected for');
       //    keyboard
       //end
+
+      //#define PRINT_OUT_EDGE_LIMITS
+#ifdef PRINT_OUT_EDGE_LIMITS
+      printf("  ");
+      for(s32 i=0; i<width;i++){
+        printf("%d ", edge_top[i]);
+      }
+      printf("\n");
+
+      for(s32 i=0; i<height;i++){
+        printf("%d                    %d\n", edge_left[i], edge_right[i]);
+      }
+
+      for(s32 i=0; i<width;i++){
+        printf("%d ", edge_bottom[i]);
+      }
+#endif // #ifdef PRINT_OUT_EDGE_LIMITS
 
       //boundary = zeros(0, 2);
 
