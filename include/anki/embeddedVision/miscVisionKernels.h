@@ -65,6 +65,11 @@ namespace Anki
     // Note: uses a 32-bit accumulator, so be careful of overflows
     Result Correlate1d(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out);
 
+    // Note: uses a 32-bit accumulator, so be careful of overflows
+    Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &image, const FixedPointArray<s32> &filter, FixedPointArray<s32> &out);
+
+    Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16>> &boundary, MemoryStack scratch);
+
     template<typename T> inline T Interpolate2d(const T pixel00, const T pixel01, const T pixel10, const T pixel11, const T alphaY, const T alphaYinverse, const T alphaX, const T alphaXinverse);
 
 #pragma mark --- Implementations ---

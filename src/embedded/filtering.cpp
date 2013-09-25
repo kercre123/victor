@@ -6,6 +6,29 @@ namespace Anki
 {
   namespace Embedded
   {
+    typedef enum
+    {
+      BITSHIFT_NONE,
+      BITSHIFT_LEFT,
+      BITSHIFT_RIGHT
+    } BitShiftDirection;
+
+    static void GetBitShiftDirectionAndMagnitude(
+      const s32 in1_numFractionalBits, const s32 in2_numFractionalBit, const s32 out_numFractionalBit,
+      s32 &shiftMagnitude, BitShiftDirection &shiftDirection)
+    {
+      if((in1_numFractionalBits+in2_numFractionalBit) > out_numFractionalBit) {
+        shiftDirection = BITSHIFT_RIGHT;
+        shiftMagnitude = in1_numFractionalBits + in2_numFractionalBit - out_numFractionalBit;
+      } else if((in1_numFractionalBits+in2_numFractionalBit) < out_numFractionalBit) {
+        shiftDirection = BITSHIFT_LEFT;
+        shiftMagnitude = out_numFractionalBit - in1_numFractionalBits - in2_numFractionalBit;
+      } else {
+        shiftDirection = BITSHIFT_NONE;
+        shiftMagnitude = 0;
+      }
+    } // static void GetBitShiftDirectionAndMagnitude()
+
     FixedPointArray<s32> Get1dGaussianKernel(const s32 sigma, const s32 numSigmaFractionalBits, const s32 numStandardDeviations, MemoryStack &scratch)
     {
       // halfwidth = ceil(num_std*sigma);
@@ -63,19 +86,11 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(in1.get_size(0)==1 && in2.get_size(0)==1 && out.get_size(0)==1,
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "Arrays must be 1d and horizontal");
 
-      // TODO: allow different numbers of fractional bits
-      /*AnkiConditionalErrorAndReturnValue(in1.get_numFractionalBits()==in2.get_numFractionalBits() && in1.get_numFractionalBits()==out.get_numFractionalBits(),
-      RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "All arrays must have the same number of fractional bits");*/
-
-      // TODO: allow this
-      /*AnkiConditionalErrorAndReturnValue((in1.get_numFractionalBits()+in2.get_numFractionalBits()) > out.get_numFractionalBits(),
-      RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "Out has too many fractional bits");*/
-
       AnkiConditionalErrorAndReturnValue(out.get_size(1) == outputLength,
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "Out must be the size of in1 + in2 - 1");
 
       AnkiConditionalErrorAndReturnValue(in1.get_rawDataPointer() != in2.get_rawDataPointer() && in1.get_rawDataPointer() != out.get_rawDataPointer(),
-        RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "in1, in2, and out must have be in different memory locations");
+        RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "in1, in2, and out must be in different memory locations");
 
       const s32 * restrict u_rowPointer;
       const s32 * restrict v_rowPointer;
@@ -98,33 +113,16 @@ namespace Anki
       }
 
       const s32 midStartIndex = vLength - 1;
-      const s32 midEndIndex = midStartIndex + uLength - vLength ;
+      const s32 midEndIndex = midStartIndex + uLength - vLength;
 
-      typedef enum
-      {
-        BITSHIFT_NONE,
-        BITSHIFT_LEFT,
-        BITSHIFT_RIGHT
-      } BitShiftDirection;
-
-      s32 bitShift;
-      BitShiftDirection direction;
-      if((in1.get_numFractionalBits()+in2.get_numFractionalBits()) > out.get_numFractionalBits()) {
-        direction = BITSHIFT_RIGHT;
-        bitShift = in1.get_numFractionalBits() + in2.get_numFractionalBits() - out.get_numFractionalBits();
-      } else if((in1.get_numFractionalBits()+in2.get_numFractionalBits()) < out.get_numFractionalBits()) {
-        direction = BITSHIFT_LEFT;
-        bitShift = out.get_numFractionalBits() - in1.get_numFractionalBits() - in2.get_numFractionalBits();
-      } else {
-        direction = BITSHIFT_NONE;
-      }
+      s32 shiftMagnitude;
+      BitShiftDirection shiftDirection;
+      GetBitShiftDirectionAndMagnitude(in1.get_numFractionalBits(), in2.get_numFractionalBits(), out.get_numFractionalBits(), shiftMagnitude, shiftDirection);
 
       s32 iOut = 0;
 
       // Filter the left part
-      //printf("left: ");
       for(s32 x=0; x<midStartIndex; x++) {
-        //printf("%d ", x);
         s32 sum = 0;
         for(s32 xx=0; xx<=x; xx++) {
           const s32 toAdd = (u_rowPointer[xx] * v_rowPointer[vLength-x+xx-1]);
@@ -132,19 +130,17 @@ namespace Anki
         }
 
         // TODO: if this is too slow and the compiler doesn't figure it out, pull these ifs out
-        if(direction == BITSHIFT_RIGHT) {
-          out_rowPointer[iOut++] = sum >> bitShift;
-        } else if(direction == BITSHIFT_LEFT) {
-          out_rowPointer[iOut++] = sum << bitShift;
+        if(shiftDirection == BITSHIFT_RIGHT) {
+          out_rowPointer[iOut++] = sum >> shiftMagnitude;
+        } else if(shiftDirection == BITSHIFT_LEFT) {
+          out_rowPointer[iOut++] = sum << shiftMagnitude;
         } else {
           out_rowPointer[iOut++] = sum;
         }
       }
 
       // Filter the middle part
-      //printf("mid: ");
       for(s32 x=midStartIndex; x<=midEndIndex; x++) {
-        //printf("%d ", x);
         s32 sum = 0;
         for(s32 xx=0; xx<vLength; xx++) {
           const s32 toAdd = (u_rowPointer[x+xx-midStartIndex] * v_rowPointer[xx]);
@@ -152,19 +148,17 @@ namespace Anki
         }
 
         // TODO: if this is too slow and the compiler doesn't figure it out, pull these ifs out
-        if(direction == BITSHIFT_RIGHT) {
-          out_rowPointer[iOut++] = sum >> bitShift;
-        } else if(direction == BITSHIFT_LEFT) {
-          out_rowPointer[iOut++] = sum << bitShift;
+        if(shiftDirection == BITSHIFT_RIGHT) {
+          out_rowPointer[iOut++] = sum >> shiftMagnitude;
+        } else if(shiftDirection == BITSHIFT_LEFT) {
+          out_rowPointer[iOut++] = sum << shiftMagnitude;
         } else {
           out_rowPointer[iOut++] = sum;
         }
       }
 
       // Filter the right part
-      //printf("right: ");
       for(s32 x=midEndIndex+1; x<outputLength; x++) {
-        //printf("%d ", x);
         const s32 vEnd = outputLength - x;
         s32 sum = 0;
         for(s32 xx=0; xx<vEnd; xx++) {
@@ -173,18 +167,77 @@ namespace Anki
         }
 
         // TODO: if this is too slow and the compiler doesn't figure it out, pull these ifs out
-        if(direction == BITSHIFT_RIGHT) {
-          out_rowPointer[iOut++] = sum >> bitShift;
-        } else if(direction == BITSHIFT_LEFT) {
-          out_rowPointer[iOut++] = sum << bitShift;
+        if(shiftDirection == BITSHIFT_RIGHT) {
+          out_rowPointer[iOut++] = sum >> shiftMagnitude;
+        } else if(shiftDirection == BITSHIFT_LEFT) {
+          out_rowPointer[iOut++] = sum << shiftMagnitude;
         } else {
           out_rowPointer[iOut++] = sum;
         }
       }
-      //printf("\n\n");
 
       return RESULT_OK;
-    }
+    } // Result Correlate1d(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out)
+
+    // Note: uses a 32-bit accumulator, so be careful of overflows
+    Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &image, const FixedPointArray<s32> &filter, FixedPointArray<s32> &out)
+    {
+      AnkiConditionalErrorAndReturnValue(image.IsValid(),
+        RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "image is not valid");
+
+      AnkiConditionalErrorAndReturnValue(filter.IsValid(),
+        RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "filter is not valid");
+
+      AnkiConditionalErrorAndReturnValue(out.IsValid(),
+        RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "out is not valid");
+
+      AnkiConditionalErrorAndReturnValue(image.get_size(0)==1 && filter.get_size(0)==1 && out.get_size(0)==1,
+        RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "Arrays must be 1d and horizontal");
+
+      AnkiConditionalErrorAndReturnValue(image.get_size(1) > filter.get_size(1),
+        RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "The image must be larger than the filter");
+
+      AnkiConditionalErrorAndReturnValue(image.get_rawDataPointer() != filter.get_rawDataPointer() && image.get_rawDataPointer() != out.get_rawDataPointer(),
+        RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "in1, in2, and out must be in different memory locations");
+
+      const s32 * restrict image_rowPointer = image.Pointer(0,0);
+      const s32 * restrict filter_rowPointer = filter.Pointer(0,0);
+      s32 * restrict out_rowPointer = out.Pointer(0,0);
+
+      s32 shiftMagnitude;
+      BitShiftDirection shiftDirection;
+      GetBitShiftDirectionAndMagnitude(image.get_numFractionalBits(), filter.get_numFractionalBits(), out.get_numFractionalBits(), shiftMagnitude, shiftDirection);
+
+      const s32 filterHalfWidth = filter.get_size(1) >> 2;
+
+      // Filter the middle part
+      for(s32 x=0; x<image.get_size(1); x++) {
+        s32 sum = 0;
+        for(s32 xFilter=0; xFilter<filter.get_size(1); xFilter++) {
+          // TODO: if this is too slow, pull out of the loop
+          s32 xImage = (x - filterHalfWidth + xFilter - 1);
+          if(xImage < 0) {
+            xImage += image.get_size(1);
+          } else if(xImage >= image.get_size(1)) {
+            xImage -= image.get_size(1);
+          }
+
+          const s32 toAdd = image_rowPointer[xImage] * filter_rowPointer[xFilter];
+          sum += toAdd;
+        }
+
+        // TODO: if this is too slow and the compiler doesn't figure it out, pull these ifs out
+        if(shiftDirection == BITSHIFT_RIGHT) {
+          out_rowPointer[x] = sum >> shiftMagnitude;
+        } else if(shiftDirection == BITSHIFT_LEFT) {
+          out_rowPointer[x] = sum << shiftMagnitude;
+        } else {
+          out_rowPointer[x] = sum;
+        }
+      }
+
+      return RESULT_OK;
+    } // Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out)
 
     Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16>> &boundary, MemoryStack scratch)
     {
@@ -210,15 +263,19 @@ namespace Anki
 
       //dg2 = conv(stencil, gaussian_kernel(sigma));
       FixedPointArray<s32> gaussian = Get1dGaussianKernel(sigma, numSigmaFractionalBits, numStandardDeviations, scratch); // SQ23.8
-      FixedPointArray<s32> differenceOfGaussian(1, gaussian.get_size(1), numSigmaFractionalBits, scratch); // SQ23.8
+      FixedPointArray<s32> differenceOfGaussian(1, gaussian.get_size(1)+stencil.get_size(1)-1, numSigmaFractionalBits, scratch); // SQ23.8
 
       if(Correlate1d(stencil, gaussian, differenceOfGaussian) != RESULT_OK)
         return RESULT_FAIL;
+
+      stencil.Print();
+      gaussian.Print();
+      differenceOfGaussian.Print();
 
       //r_smooth = imfilter(boundary, dg2(:), 'circular');
       //r_smooth = sum(r_smooth.^2, 2);
 
       return RESULT_OK;
-    }
+    } // Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16>> &boundary, MemoryStack scratch)
   } // namespace Embedded
 } // namespace Anki
