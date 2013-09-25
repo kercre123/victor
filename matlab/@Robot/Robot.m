@@ -177,7 +177,7 @@ classdef Robot < handle
             
             % TODO: get the liftPose from Webots programmatically
             this.R_lift = eye(3);
-            this.T_lift = [0; 92.5; 0]; % 72.5 = 45 + 45 + 2.5
+            this.T_lift = [0; 97.5; 0]; % 97.5 = 45 + 50 + 2.5
             
             this.liftPose = Pose(this.R_lift, this.T_lift); % TODO add uncertainty
             this.liftPose.parent = this.liftBasePose;
