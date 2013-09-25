@@ -46,7 +46,7 @@ namespace Anki
 
     Result TraceInteriorBoundary(const Array<u8> &binaryImage, const Point<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point<s16> > &boundary);
 
-    Result ComputeQuadrilateralsFromConnectedComponents(const ConnectedComponents &components, Quadrilateral<s32> &extractedQuads, MemoryStack scratch);
+    Result ComputeQuadrilateralsFromConnectedComponents(const ConnectedComponents &components, const s32 minQuadArea, const s32 quadSymmetryThreshold, FixedLengthList<Quadrilateral<s16> > &extractedQuads, MemoryStack scratch);
 
     // Starting a components.Pointer(startComponentIndex), trace the exterior boundary for the
     // component starting at startComponentIndex. extractedBoundary must be at at least

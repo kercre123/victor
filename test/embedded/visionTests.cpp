@@ -25,7 +25,7 @@ Matlab matlab(false);
 You cannot use both CMX and L2 Cache;
 #endif
 
-#define MAX_BYTES 10000
+#define MAX_BYTES 70000
 
 #ifdef _MSC_VER
 static char buffer[MAX_BYTES];
@@ -46,6 +46,57 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
 #include "blockImage50.h"
+
+IN_DDR GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
+{
+  const s32 numComponents = 60;
+  const s32 minQuadArea = 100;
+  const s32 quadSymmetryThreshold = 384;
+
+  const s32 numBytes = MIN(MAX_BYTES, 70000);
+  MemoryStack ms(&buffer[0], numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  const Quadrilateral<s16> quads_groundTruth[] = {
+    Quadrilateral<s16>(Point<s16>(24,14), Point<s16>(10,14), Point<s16>(10,0), Point<s16>(24,0)),
+    Quadrilateral<s16>(Point<s16>(129,79), Point<s16>(100,79), Point<s16>(100,50), Point<s16>(129,50))};
+
+  ConnectedComponents components(numComponents, ms);
+
+  // Small square
+  for(s16 y=0; y<15; y++) {
+    components.PushBack(ConnectedComponentSegment(10,24,y,1));
+  }
+
+  // Big square
+  for(s16 y=0; y<30; y++) {
+    components.PushBack(ConnectedComponentSegment(100,129,y+50,2));
+  }
+
+  // Skewed quad
+  components.PushBack(ConnectedComponentSegment(100,300,100,3));
+  for(s16 y=0; y<10; y++) {
+    components.PushBack(ConnectedComponentSegment(100,110,y+100,3));
+  }
+
+  // Tiny square
+  for(s16 y=0; y<5; y++) {
+    components.PushBack(ConnectedComponentSegment(10,14,y,4));
+  }
+
+  FixedLengthList<Quadrilateral<s16> > extractedQuads(2, ms);
+
+  const Result result =  ComputeQuadrilateralsFromConnectedComponents(components, minQuadArea, quadSymmetryThreshold, extractedQuads, ms);
+  ASSERT_TRUE(result == RESULT_OK);
+
+  //extractedQuads.Print("extractedQuads");
+
+  for(s32 i=0; i<extractedQuads.get_size(); i++) {
+    ASSERT_TRUE(extractedQuads[i] == quads_groundTruth[i]);
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
 
 IN_DDR GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 {
@@ -233,7 +284,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   const s32 numComponents = 17;
   const s32 boundaryLength = 65;
   const s32 startComponentIndex = 0;
-  const s32 numBytes = MIN(MAX_BYTES, 5000);
+  const s32 numBytes = MIN(MAX_BYTES, 10000);
 
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
