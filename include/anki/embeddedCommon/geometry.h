@@ -22,6 +22,9 @@ namespace Anki
     template<typename Type> class Point
     {
     public:
+      Type x;
+      Type y;
+
       Point();
 
       Point(const Type x, const Type y);
@@ -44,7 +47,7 @@ namespace Anki
 
       void operator*= (const Type value);
 
-      Type x, y;
+      inline Point<Type>& operator= (const Point<Type> &point2);
     }; // class Point<Type>
 
 #pragma mark --- Rectangle Class Definition ---
@@ -52,6 +55,11 @@ namespace Anki
     template<typename Type> class Rectangle
     {
     public:
+      Type left;
+      Type right;
+      Type top;
+      Type bottom;
+
       Rectangle();
 
       Rectangle(const Type left, const Type right, const Type top, const Type bottom);
@@ -60,21 +68,45 @@ namespace Anki
 
       void Print() const;
 
-      bool operator== (const Rectangle<Type> &point2) const;
+      bool operator== (const Rectangle<Type> &rect2) const;
 
       Rectangle<Type> operator+ (const Rectangle<Type> &rect2) const;
 
       Rectangle<Type> operator- (const Rectangle<Type> &rect2) const;
 
+      inline Rectangle<Type>& operator= (const Rectangle<Type> &rect2);
+
       Type get_width() const;
 
       Type get_height() const;
+    }; // class Rectangle<Type>
 
-      Type left;
-      Type right;
-      Type top;
-      Type bottom;
-    }; // class Point<Type>
+#pragma mark --- Quadrilateral Class Definition ---
+
+    template<typename Type> class Quadrilateral
+    {
+    public:
+      Point<Type> points[4];
+
+      Quadrilateral();
+
+      Quadrilateral(const Point<Type> &point1, const Point<Type> &point2, const Point<Type> &point3, const Point<Type> &point4);
+
+      Quadrilateral(const Quadrilateral<Type>& quad);
+
+      void Print() const;
+
+      bool operator== (const Quadrilateral<Type> &quad2) const;
+
+      Quadrilateral<Type> operator+ (const Quadrilateral<Type> &quad2) const;
+
+      Quadrilateral<Type> operator- (const Quadrilateral<Type> &quad2) const;
+
+      inline Quadrilateral<Type>& operator= (const Quadrilateral<Type> &quad2);
+
+      inline const Point<Type>& operator[] (const s32 index) const;
+      inline Point<Type>& operator[] (const s32 index);
+    }; // class Quadrilateral<Type>
 
 #pragma mark --- Point Implementations ---
 
@@ -130,10 +162,18 @@ namespace Anki
       return Point<Type>(this->x-point2.x, this->y-point2.y);
     }
 
-    template<typename Type> void Point<Type>::operator*=(const Type value)
+    template<typename Type> void Point<Type>::operator*= (const Type value)
     {
       this->x *= value;
       this->y *= value;
+    }
+
+    template<typename Type> inline Point<Type>& Point<Type>::operator= (const Point<Type> &point2)
+    {
+      this->x = point2.x;
+      this->y = point2.y;
+
+      return *this;
     }
 
 #pragma mark --- Point Specializations ---
@@ -180,19 +220,123 @@ namespace Anki
       return Rectangle<Type>(this->top-rectangle2.top, this->bottom-rectangle2.bottom, this->left-rectangle2.left, this->right-rectangle2.right);
     }
 
+    template<typename Type> inline Rectangle<Type>& Rectangle<Type>::operator= (const Rectangle<Type> &rect2)
+    {
+      this->left = rect2.left;
+      this->right = rect2.right;
+      this->top = rect2.top;
+      this->bottom = rect2.bottom;
+
+      return *this;
+    }
+
     template<typename Type> Type Rectangle<Type>::get_width() const
     {
-      return right - left;
+      return right - left + 1;
     }
 
     template<typename Type> Type Rectangle<Type>::get_height() const
     {
-      return bottom - top;
+      return bottom - top + 1;
     }
 
 #pragma mark --- Rectangle Specializations ---
     template<> void Rectangle<f32>::Print() const;
     template<> void Rectangle<f64>::Print() const;
+
+    template<> f32 Rectangle<f32>::get_width() const;
+    template<> f64 Rectangle<f64>::get_width() const;
+
+    template<> f32 Rectangle<f32>::get_height() const;
+    template<> f64 Rectangle<f64>::get_height() const;
+
+#pragma mark --- Quadrilateral Implementations ---
+
+    template<typename Type> Quadrilateral<Type>::Quadrilateral()
+    {
+      for(s32 i=0; i<4; i++) {
+        points[i] = Point<Type>();
+      }
+    }
+
+    template<typename Type> Quadrilateral<Type>::Quadrilateral(const Point<Type> &point1, const Point<Type> &point2, const Point<Type> &point3, const Point<Type> &point4)
+    {
+      points[0] = point1;
+      points[1] = point2;
+      points[2] = point3;
+      points[3] = point4;
+    }
+
+    template<typename Type> Quadrilateral<Type>::Quadrilateral(const Quadrilateral<Type>& rect)
+    {
+      for(s32 i=0; i<4; i++) {
+        this->points[i] = rect.points[i];
+      }
+    }
+
+    template<typename Type> void Quadrilateral<Type>::Print() const
+    {
+      printf("{(%d,%d), (%d,%d), (%d,%d), (%d,%d)} ",
+        this->points[0].x, this->points[0].y,
+        this->points[1].x, this->points[1].y,
+        this->points[2].x, this->points[2].y,
+        this->points[3].x, this->points[3].y);
+    }
+
+    template<typename Type> bool Quadrilateral<Type>::operator== (const Quadrilateral<Type> &quadrilateral2) const
+    {
+      for(s32 i=0; i<4; i++) {
+        if(!(this->points[i] == quadrilateral2.points[i]))
+          return false;
+      }
+
+      return true;
+    }
+
+    template<typename Type> Quadrilateral<Type> Quadrilateral<Type>::operator+ (const Quadrilateral<Type> &quadrilateral2) const
+    {
+      Quadrilateral<Type> newQuad();
+
+      for(s32 i=0; i<4; i++) {
+        newQuad.points[i] = this->points[i] + quadrilateral2.points[i];
+      }
+
+      return newQuad;
+    }
+
+    template<typename Type> Quadrilateral<Type> Quadrilateral<Type>::operator- (const Quadrilateral<Type> &quadrilateral2) const
+    {
+      Quadrilateral<Type> newQuad();
+
+      for(s32 i=0; i<4; i++) {
+        newQuad.points[i] = this->points[i] - quadrilateral2.points[i];
+      }
+
+      return newQuad;
+    }
+
+    template<typename Type> inline Quadrilateral<Type>& Quadrilateral<Type>::operator= (const Quadrilateral<Type> &quad2)
+    {
+      for(s32 i=0; i<4; i++) {
+        this->points[i] = quad2.points[i];
+      }
+
+      return *this;
+    }
+
+    template<typename Type> inline const Point<Type>& Quadrilateral<Type>::operator[] (const s32 index) const
+    {
+      return points[index];
+    }
+
+    template<typename Type> inline Point<Type>& Quadrilateral<Type>::operator[] (const s32 index)
+    {
+      return points[index];
+    }
+
+#pragma mark --- Quadrilateral Specializations ---
+    template<> void Quadrilateral<f32>::Print() const;
+    template<> void Quadrilateral<f64>::Print() const;
   } // namespace Embedded
 } // namespace Anki
 
