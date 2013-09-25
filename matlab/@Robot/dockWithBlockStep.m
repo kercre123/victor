@@ -146,7 +146,9 @@ function [leftMotorVelocity, rightMotorVelocity] = DockingController(obsTarget, 
 % TODO: incorporate heading error?
 
 K_turn  = 0.01;
-K_dist  = 0.02;
+K_dist  = 0.015;
+maxSpeed = 7;
+
 % K_scale = 0.2;
 
 % Note this is simply using the centroid of the target, irrespective of
@@ -171,7 +173,7 @@ else
     distanceVelocity = 0;
 end
 
-leftMotorVelocity  = turnVelocityLeft  + distanceVelocity;
-rightMotorVelocity = turnVelocityRight + distanceVelocity;
+leftMotorVelocity  = max(-maxSpeed, min(maxSpeed, turnVelocityLeft  + distanceVelocity));
+rightMotorVelocity = max(-maxSpeed, min(maxSpeed, turnVelocityRight + distanceVelocity));
 
 end % FUNCTION DockingController()
