@@ -63,6 +63,11 @@ namespace Anki
 
     bool IsOdd(const s32 x);
 
+    // [a b]
+    // [c d]
+    // return a*d - b*c;
+    s32 Determinant2x2(const s32 a, const s32 b, const s32 c, const s32 d);
+
     // Get the current system time. Only really works with MSVC and generic linux
     double GetTime();
 
