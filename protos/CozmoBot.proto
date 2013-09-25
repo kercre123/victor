@@ -85,7 +85,7 @@ Supervisor {
                       name "lift_motor2"
                     }
                     endPoint Solid {
-                      translation 0 0 -0.045
+                      translation 0 0 -0.05
                       children [
                       
                         #DEF CAM_LIFT Camera {
@@ -119,7 +119,7 @@ Supervisor {
                   }
                   DEF LBottom Shape {
                     geometry Box {
-                      size 0.001 0.005 0.09
+                      size 0.001 0.005 0.095
                     }
                   }
                   #Solid {
