@@ -310,12 +310,12 @@ namespace Anki
 
     template<typename Type> inline const Type * Array<Type>::operator[](const s32 index0) const
     {
-      return Pointer(static_cast<s32>(point.y), 0);
+      return Pointer(index0, 0);
     }
 
     template<typename Type> inline Type * Array<Type>::operator[](const s32 index0)
     {
-      return Pointer(static_cast<s32>(point.y), 0);
+      return Pointer(index0, 0);
     }
 
     template<typename Type> const Type* Array<Type>::Pointer(const Point<s16> &point) const
