@@ -86,22 +86,22 @@ namespace Anki
 
     template<typename Type> inline Type* FixedLengthList<Type>::Pointer(const s32 index)
     {
-      return this->data + index;;
+      return this->data + index;
     }
 
     template<typename Type> inline const Type* FixedLengthList<Type>::Pointer(const s32 index) const
     {
-      return this->data + index;;
+      return this->data + index;
     }
 
     template<typename Type> inline const Type& FixedLengthList<Type>::operator[](const s32 index) const
     {
-      return this->data + index;;
+      return *(this->data + index);
     }
 
     template<typename Type> inline Type& FixedLengthList<Type>::operator[](const s32 index)
     {
-      return this->data + index;;
+      return *(this->data + index);
     }
 
     template<typename Type> FixedLengthList<Type>::FixedLengthList()
