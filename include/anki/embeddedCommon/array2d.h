@@ -51,9 +51,9 @@ namespace Anki
       // Pointer to the data, at a given (y,x) location
       //
       // NOTE:
-      // Using this in a inner loop is very innefficient. Instead, use something like: "Type *
-      // restrict array_rowPointer = Array[5];", outside the inner loop, then index array_rowPointer
-      // in the inner loop.
+      // Using this in a inner loop is very innefficient. Instead, declare a pointer outside the
+      // inner loop, like: "Type * restrict array_rowPointer = Array.Pointer(5);", then index
+      // array_rowPointer in the inner loop.
       inline const Type* Pointer(const s32 index0, const s32 index1) const;
       inline Type* Pointer(const s32 index0, const s32 index1);
 
@@ -62,18 +62,18 @@ namespace Anki
       // "array.Pointer(5)[0] = 6;"
       //
       // NOTE:
-      // Using this in a inner loop is very innefficient. Instead, use something like: "Type *
-      // restrict array_rowPointer = Array[5];", outside the inner loop, then index array_rowPointer
-      // in the inner loop.
+      // Using this in a inner loop is very innefficient. Instead, declare a pointer outside the
+      // inner loop, like: "Type * restrict array_rowPointer = Array[5];", then index
+      // array_rowPointer in the inner loop.
       inline const Type * operator[](const s32 index0) const;
       inline Type * operator[](const s32 index0);
 
       // Pointer to the data, at a given (y,x) location
       //
       // NOTE:
-      // Using this in a inner loop is very innefficient. Instead, use something like: "Type *
-      // restrict array_rowPointer = Array[5];", outside the inner loop, then index array_rowPointer
-      // in the inner loop.
+      // Using this in a inner loop is very innefficient. Instead, declare a pointer outside the
+      // inner loop, like: "Type * restrict array_rowPointer = Array.Pointer(Point<s16>(5,0));",
+      // then index array_rowPointer in the inner loop.
       inline const Type* Pointer(const Point<s16> &point) const;
       inline Type* Pointer(const Point<s16> &point);
 
