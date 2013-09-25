@@ -113,7 +113,8 @@ switch(this.operationMode)
         catch E
             if any(strcmp(E.identifier, ...
                     {'FindDockingTarget:TooFewLocalMaxima', ...
-                    'FindDockingTarget:BadSpacing'}))
+                    'FindDockingTarget:BadSpacing', ...
+                    'FindDockingTarget:DuplicateMaximaSelected'}))
                 
                 warning('FindDockingTarget() failed: %s', E.message);
                 

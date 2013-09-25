@@ -8,7 +8,7 @@ mask = [];
 squareDiagonal = [];
 spacingTolerance = 0.25; % can be this fraction away from expected, i.e. +/- 10%
 simulateDefocusBlur = true;
-boxPadding = 1.5;
+boxPadding = 1.25;
 findBoundingBox = false;
 
 parseVarargin(varargin{:});
@@ -21,15 +21,14 @@ else
     img = im2double(img);
 end
 
-[nrows,ncols,nbands] = size(img);
-if nbands>1
+%[nrows,ncols,nbands] = size(img);
+%if nbands>1
+if size(img,3)>1
     img = mean(img,3);
 end
 
-if simulateDefocusBlur
-    % Simulate blur from defocus
-    img = separable_filter(img, gaussian_kernel(squareDiagonal/16));
-end
+u_box = [];
+v_box = [];
 
 if isempty(mask)
     % If we don't have a mask to tell us where to look...
@@ -46,6 +45,9 @@ if isempty(mask)
         v_boxPad = boxPadding*(v_box-v_cen) + v_cen;
         
         if findBoundingBox
+            % NOTE: this will currently get the UNBLURRED image, even if
+            % defocus blur simulation is turned on, since that is dependent
+            % on the image diagonal...
             [u_box, v_box] = this.findDockingTargetBoundingBox(img, u_box, v_box);
         end
 
@@ -61,69 +63,129 @@ if isempty(squareDiagonal)
     squareDiagonal = sqrt(2)*sqrt(sum(mask(:)));
 end
 
+if isempty(u_box) 
+    [vMask, uMask] = find(mask);
+    uMin = min(uMask);
+    vMin = min(vMask);
+    uMax = max(uMask);
+    vMax = max(vMask);
+    
+    u_box = [uMin uMin uMax uMax];
+    v_box = [vMin vMax vMin vMax];
+end
+   
+
+if simulateDefocusBlur
+    % Simulate blur from defocus
+    img = separable_filter(img, gaussian_kernel(squareDiagonal/16));
+end
+
+% Create a filter for finding dots of the expected size (this is just a 2D
+% Laplacian-of-Gaussian filter)
 dotRadiusFraction = (BlockMarker3D.DockingDotWidth/2) / (sqrt(2)*BlockMarker3D.CodeSquareWidth);
 dotRadius = squareDiagonal * dotRadiusFraction;
 sigma = dotRadius; 
-% dotKernel = gaussian_kernel(sigma);
-% dotKernel = dotKernel(:)*dotKernel;
-% dotKernel = 1 - dotKernel/max(dotKernel(:));
-% dotKernel = image_downright(dotKernel) - dotKernel;
-
 hsize = ceil(6*sigma + 1);
 LoG = fspecial('log', hsize, sigma);
 
-%imgFilter = imfilter(image_downright(img) - img, dotKernel);
-imgFilter = imfilter(img, LoG);
+% Extract and filter just the image inside the docking target's bounding
+% box.  We'll use a padded crop in order to avoid boundary effects.
+padding = ceil((hsize+1)/2);
+squareWidth = ceil(u_box(3)-u_box(1));
+squareHeight = ceil(v_box(2)-v_box(1));
+cropRectanglePad = [floor([u_box(1) v_box(1)]-padding) ...
+    squareWidth+2*padding squareHeight+2*padding];
+imgCrop = imcrop(img, cropRectanglePad);
 
+% NOTE: this Laplacian-of-Gaussian filtering step can and should be
+% approximated by a difference of two Gaussian filtering steps, since the
+% individual Gaussian filtering steps can be done with 1D separable
+% filters for speed.
+imgFilter = imfilter(imgCrop, LoG);
+
+% Get rid of the padding and normalize to be b/w 0 and 1:
+cropRectangle = [padding padding squareWidth squareHeight];
+imgFilter = imcrop(imgFilter, cropRectangle);
+imgFilter = imgFilter - min(imgFilter(:));
+imgFilter = imgFilter/max(imgFilter(:));
+
+
+% Get local maxima of the filter result, which should correspond to
+% potential dot centers
 step = 1; %max(1, round((squareWidth * dotRadiusMultiplier)/12))
-localMaxima = find(mask &  ...
+localMaxima = find( ... maskCrop &  ...
     imgFilter > image_right(imgFilter,step) & ...
     imgFilter > image_left(imgFilter,step) & ...
     imgFilter > image_down(imgFilter,step) & ...
     imgFilter > image_up(imgFilter,step));
-[localMaxima_y, localMaxima_x] = ind2sub([nrows ncols], localMaxima);
 
-% hold off
-% imagesc(img), axis image
-% hold on
-% plot(localMaxima_x, localMaxima_y, 'b.', 'MarkerSize', 12);
-
-xcen = zeros(1,4);
-ycen = zeros(1,4);
-for i = 1:4
-    % Find the largest local maximum response, then zero out the area around it
-    % (so we don't find another maximum in the same dot) and repeat.
-    [~,index] = max(imgFilter(localMaxima));
-    if isempty(index)
-        error('FindDockingTarget:TooFewLocalMaxima', ...
-            'No local maxima left in searching for docking target!');
-    end
-    [ycen(i),xcen(i)] = ind2sub([nrows ncols], localMaxima(index));
-    
-    toRemove = (localMaxima_x-xcen(i)).^2 + (localMaxima_y-ycen(i)).^2 <= (1.5*dotRadius)^2;
-    
-    % plot(xcen(i), ycen(i), 'go');
-    % plot(localMaxima_x(toRemove), localMaxima_y(toRemove), 'rx');
-    
-    localMaxima(toRemove) = [];
-    localMaxima_x(toRemove) = [];
-    localMaxima_y(toRemove) = [];
-    
-    % pause
+if length(localMaxima)<4
+    error('FindDockingTarget:TooFewLocalMaxima', ...
+        'We need to find at least 4 local maxima for potential dot locations.');
 end
 
-theta = cart2pol(xcen-mean(xcen),ycen-mean(ycen));
-[~,sortIndex] = sort(theta);
+[localMaxima_y, localMaxima_x] = ind2sub(size(imgFilter), localMaxima);
 
-xcen = xcen(sortIndex);
-ycen = ycen(sortIndex);
 
-% Return as upper left, lower left, upper right, lower right:
-xcen = xcen([1 4 2 3]);
-ycen = ycen([1 4 2 3]);
+% We still don't know _which_ 4 potential dot centers belong together and
+% make up the docking pattern.  To find the best configuration, we 
+% effectively filter with this sparse mask:
+%    [+1 ..0.. -1 ..0.. +1] 
+%    [        ..0..       ]
+%    [-1 ..0.. -1 ..0.. -1]
+%    [        ..0..       ]
+%    [+1 ..0.. -1 ..0.. +1]
+% where the spacing between those non-zero filter components corresponds to
+% the expected horizontal/vertical spacing between dots.
+
+squareWidth  = u_box(3)-u_box(1); 
+squareHeight = v_box(2)-v_box(1);
+dotSpacingFrac = BlockMarker3D.DockingDotSpacing/BlockMarker3D.CodeSquareWidth;
+dotSpacingHor  = dotSpacingFrac * squareWidth; 
+dotSpacingVert = dotSpacingFrac * squareHeight;
+stepH = round(dotSpacingHor/2);
+stepV = round(dotSpacingVert/2);
+
+imgFilter2 = -imgFilter + ...
+    -image_left(imgFilter, stepH) - image_right(imgFilter, stepH) + ...
+    -image_up(imgFilter, stepV) - image_down(imgFilter, stepV) + ...
+    image_upleft(imgFilter, stepV, stepH) + image_downleft(imgFilter, stepV, stepH) + ...
+    image_upright(imgFilter, stepV, stepH) + image_downright(imgFilter, stepV, stepH);
+
+% The peak response of this filter will be the center of the target. We
+% will then find the four local maxima from the original filter that are
+% closest to the expected dot locations, given that center:
+[~,targetCenterIndex] = max(imgFilter2(:)); % This max() still kinda worries me in terms of robustness...
+[targetCenter_y, targetCenter_x] = ind2sub(size(imgFilter), targetCenterIndex);
+distUL = (localMaxima_x - (targetCenter_x-dotSpacingHor/2)).^2 + ...
+    (localMaxima_y - (targetCenter_y-dotSpacingVert/2)).^2;
+distUR = (localMaxima_x - (targetCenter_x+dotSpacingHor/2)).^2 + ...
+    (localMaxima_y - (targetCenter_y-dotSpacingVert/2)).^2;
+distLL = (localMaxima_x - (targetCenter_x-dotSpacingHor/2)).^2 + ...
+    (localMaxima_y - (targetCenter_y+dotSpacingVert/2)).^2;
+distLR = (localMaxima_x - (targetCenter_x+dotSpacingHor/2)).^2 + ...
+    (localMaxima_y - (targetCenter_y+dotSpacingVert/2)).^2;
+
+[~, indexUL] = min(distUL);
+[~, indexUR] = min(distUR);
+[~, indexLL] = min(distLL);
+[~, indexLR] = min(distLR);
+
+if length(unique([indexUL indexUR indexLL indexLR]))~=4
+    desktop
+    keyboard
+    error('FindDockingTarget:DuplicateMaximaSelected', ...
+        'The same point should not be chosen for multiple dots.');
+end
+
+% Select the closest local maxima and put them back in origina, uncropped
+% coordinates:
+xcen = localMaxima_x([indexUL indexLL indexUR indexLR]) + padding + cropRectanglePad(1) - 2;
+ycen = localMaxima_y([indexUL indexLL indexUR indexLR]) + padding + cropRectanglePad(2) - 2;
 
 % Make sure the distances between dots are "reasonable":
-
+% (Is this still useful, given the way I am finding/assigning dots now?  Or
+% is it sorta guaranteed by the algorithm?)
 expectedSpacingFrac = BlockMarker3D.DockingDotSpacing/BlockMarker3D.CodeSquareWidth;
 
 leftLengthFrac = sqrt( (xcen(2)-xcen(1))^2 + (ycen(2)-ycen(1))^2 ) / ...
@@ -157,4 +219,25 @@ if nargout == 0
     clear xcen ycen
 end
 
-end % FUNCTION findDots()
+end % FUNCTION findDockingTarget()
+
+
+
+% Experimenting with filtering with template image:
+% 
+% imgFilterIntegral = cumsum(cumsum(imgFilter,2),1);
+% 
+% squareWidth = u_box(3)-u_box(1); 
+% squareHeight = v_box(2)-v_box(1);
+% [xgrid,ygrid] = meshgrid(-squareWidth/2:squareWidth/2, -squareHeight/2:squareHeight/2);
+% 
+% dotSpacingFrac = BlockMarker3D.DockingDotSpacing/BlockMarker3D.CodeSquareWidth;
+% dotSpacingHor = dotSpacingFrac * squareWidth; 
+% dotSpacingVert = dotSpacingFrac * squareHeight;
+% 
+% bumpUL = exp(-.5*( (xgrid+dotSpacingHor/2).^2 + (ygrid+dotSpacingVert/2).^2)/(sigma^2));
+% bumpUR = exp(-.5*( (xgrid-dotSpacingHor/2).^2 + (ygrid+dotSpacingVert/2).^2)/(sigma^2));
+% bumpLL = exp(-.5*( (xgrid+dotSpacingHor/2).^2 + (ygrid-dotSpacingVert/2).^2)/(sigma^2));
+% bumpLR = exp(-.5*( (xgrid-dotSpacingHor/2).^2 + (ygrid-dotSpacingVert/2).^2)/(sigma^2));
+% template = 1 - max(cat(3, bumpUL, bumpUR, bumpLL, bumpLR), [], 3);
+% template = image_downright(template) - template;
