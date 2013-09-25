@@ -86,6 +86,7 @@ classdef Robot < handle
         
         currentObservation;
         stateVector;
+        headingAngle;
     end
     
     properties(GetAccess = 'public', SetAccess = 'public')
@@ -317,6 +318,38 @@ classdef Robot < handle
             % TODO: do I need to copy in the parent/name info?
             this.posePrev_ = Pose(this.pose_.Rvec, this.pose_.T, this.pose_.sigma);
             this.pose_.update(P.Rmat, P.T, P.sigma);
+        end
+                
+        function angle = get.headingAngle(this)
+            assert(Pose.isRootPose(this.pose.parent), ...
+                'Expecting the Robot''s pose to be w.r.t. the World.');
+            
+            angle = this.pose.angle;
+            
+            if abs(angle) > 0
+                if ~all(abs(this.pose.axis(1:2))<eps)
+                    desktop
+                    keyboard
+                    error(['Expecting Robot pose to be in X/Y plane, so all ' ...
+                        'rotation must be around the Z axis.']);
+                end
+            
+                % Make sure rotation is about the positive Z axis so that we
+                % can appropriately compare angles as they wrap from -pi to
+                % +pi.
+                angle = angle*dot(this.pose.axis, [0 0 1]);
+            end
+            
+            % this.pose's angle is the angle of the Robot's x axis, which
+            % sticks out the side.  We are interested in the y axis, which
+            % points ahead:
+            angle = angle + pi/2;
+            %             if angle > pi
+            %                 angle = angle - 2*pi;
+            %             end
+%             
+%             assert(abs(angle) <= pi, ...
+%                 'Expecting headingANgle to be on the interval [-pi,+pi].');
         end
         
         function set.operationMode(this, mode)

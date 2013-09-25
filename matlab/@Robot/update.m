@@ -134,7 +134,7 @@ switch(this.operationMode)
         headingThreshold = 1; % degrees
         
         [leftMotorVelocity, rightMotorVelocity, headingError] = computeTurnVelocity(...
-            this, this.orientPreDock, this.pose.angle+pi/2, K_turn);
+            this, this.orientPreDock, this.headingAngle, K_turn);
         
         if abs(headingError) < headingThreshold*pi/180
             this.operationMode = 'DOCK';
