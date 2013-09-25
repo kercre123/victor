@@ -104,20 +104,28 @@ switch(this.operationMode)
         
     case 'PRE-DOCK'
         
-        % Project the docking position of the face of the block we are
-        % docking with onto the ground:
-        preDockPose = this.dockingFace.preDockPose.getWithRespectTo('World');
-        this.xPreDock = preDockPose.T(1);
-        this.yPreDock = preDockPose.T(2);
-        
-        blockPose = this.dockingBlock.pose.getWithRespectTo('World');
-        this.orientPreDock = atan2(blockPose.T(2) - preDockPose.T(2), ...
-            blockPose.T(1) - preDockPose.T(1));
+        %         % Pre-compute the pre-dock position/orientation using current
+        %         % estimate of block's pose.
+        %
+        %         % Project the docking position of the face of the block we are
+        %         % docking with onto the ground:
+        %         preDockPose = this.dockingFace.preDockPose.getWithRespectTo('World');
+        %         this.xPreDock = preDockPose.T(1);
+        %         this.yPreDock = preDockPose.T(2);
+        %
+        %         blockPose = this.dockingBlock.pose.getWithRespectTo('World');
+        %         this.orientPreDock = atan2(blockPose.T(2) - preDockPose.T(2), ...
+        %             blockPose.T(1) - preDockPose.T(1));
         
         this.operationMode = 'PRE-DOCK_POSITION';
             
     case 'PRE-DOCK_POSITION'
         % Move to the pre-dock _position_ first.
+        
+        % Update the position based on most current block pose estimate:
+        preDockPose = this.dockingFace.preDockPose.getWithRespectTo('World');
+        this.xPreDock = preDockPose.T(1);
+        this.yPreDock = preDockPose.T(2);
         
         distanceThreshold = 3; % mm
                
@@ -129,6 +137,15 @@ switch(this.operationMode)
         end
         
     case 'PRE-DOCK_ORIENTATION'
+        % Face the block once we are in pre-dock position.
+        
+        % Update the orientation 
+        preDockPose = this.dockingFace.preDockPose.getWithRespectTo('World');
+                
+        blockPose = this.dockingBlock.pose.getWithRespectTo('World');
+        this.orientPreDock = atan2(blockPose.T(2) - preDockPose.T(2), ...
+            blockPose.T(1) - preDockPose.T(1));
+        
         % Once we are in position, re-orient ourselves to face the block.
         K_turn = 2;
         headingThreshold = 1; % degrees

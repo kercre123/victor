@@ -2,7 +2,7 @@ function inPosition = goToPosition(this, xGoal, yGoal, distanceThreshold)
 
 % TODO: make these properties of the robot?
 K_turn  = 2;
-K_dist  = 0.035;
+K_dist  = 0.05;
 maxSpeed = 8;
 headingThreshold = 5;
 
@@ -34,9 +34,6 @@ fprintf('Heading error: %.2f degrees (Goal = %.2f, Current = %.2f), Distance Err
 
 leftMotorVelocity  = max(-maxSpeed, min(maxSpeed, turnVelocityLeft  + distanceVelocity));
 rightMotorVelocity = max(-maxSpeed, min(maxSpeed, turnVelocityRight + distanceVelocity));
-
-%fprintf('Heading error: %.2f degrees (Goal = %.2f, Current = %.2f), Distance Error: %.2f\n', ...
-%    headingError * 180/pi, goalHeading*180/pi, currentOrient*180/pi, distance);
 
 inPosition = distance < distanceThreshold;
 
