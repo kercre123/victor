@@ -23,6 +23,8 @@ classdef BlockMarker3D < handle
         
         DockingDotSpacing = BlockMarker3D.setDockingDotSpacing(BlockMarker3D.DockingTarget);
         DockingDotWidth   = BlockMarker3D.setDockingDotWidth(BlockMarker3D.DockingTarget);
+        
+        DockingDistance = 100;
     end
     
     methods(Access = 'protected', Static = true)
@@ -60,6 +62,8 @@ classdef BlockMarker3D < handle
         model;
         dockingTarget;
         dockingTargetBoundingBox;
+        
+        preDockPose;
         
         ID;
         
@@ -101,6 +105,9 @@ classdef BlockMarker3D < handle
             this.model = this.ReferenceWidth/2*canonicalSquare;
             %this.model = poseInit.applyTo(this.model);
             this.pose = poseInit;
+            
+            this.preDockPose = Pose([0 0 0], [0 -this.DockingDistance 0]);
+            this.preDockPose.parent = this.pose;
             
             switch(BlockMarker3D.DockingTarget)
                 case 'FourDots'

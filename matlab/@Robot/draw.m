@@ -101,10 +101,10 @@ wheelX = app.WheelWidth * cylZ;
 wheelY = app.WheelRadius * cylX;
 wheelZ = app.WheelRadius * cylY;
 
-wheelX_L = wheelX + .5*app.BodyWidth + .5*app.WheelWidth;
-wheelY_F = wheelY + .5*app.BodyLength - app.WheelRadius;
-wheelX_R = wheelX - .5*app.BodyWidth - .5*app.WheelWidth;
-wheelY_B = wheelY - .5*app.BodyLength + app.WheelRadius;
+wheelX_L = wheelX + app.AxlePosition;
+wheelY_F = wheelY + app.AxlePosition;
+wheelX_R = wheelX - app.AxlePosition;
+wheelY_B = wheelY - app.AxlePosition;
 
 tire{1} = rotateAndTranslate(wheelX_L, wheelY_F, wheelZ, R, t);
 tire{2} = rotateAndTranslate(wheelX_R, wheelY_F, wheelZ, R, t);

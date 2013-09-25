@@ -90,17 +90,57 @@ switch(this.operationMode)
             if this.isBlockLocked && this.liftAngle < this.LiftAngle_High
                 this.operationMode = 'MOVE_LIFT';
                 this.liftAngle = this.LiftAngle_High;
-                this.nextOperationMode = 'DOCK';
+                this.nextOperationMode = 'PRE-DOCK';
                 
             elseif ~this.isBlockLocked && this.liftAngle > this.LiftAngle_Low
                 this.operationMode = 'MOVE_LIFT';
                 this.liftAngle = this.LiftAngle_Low;
-                this.nextOperationMode = 'DOCK';
+                this.nextOperationMode = 'PRE-DOCK';
             else
-                this.operationMode = 'DOCK';
+                this.operationMode = 'PRE-DOCK';
             end
             
         end % IF any blocks visible
+        
+    case 'PRE-DOCK'
+        
+        % Project the docking position of the face of the block we are
+        % docking with onto the ground:
+        preDockPose = this.dockingFace.preDockPose.getWithRespectTo('World');
+        this.xPreDock = preDockPose.T(1);
+        this.yPreDock = preDockPose.T(2);
+        
+        blockPose = this.dockingBlock.pose.getWithRespectTo('World');
+        this.orientPreDock = atan2(blockPose.T(2) - preDockPose.T(2), ...
+            blockPose.T(1) - preDockPose.T(1));
+        
+        this.operationMode = 'PRE-DOCK_POSITION';
+            
+    case 'PRE-DOCK_POSITION'
+        % Move to the pre-dock _position_ first.
+        
+        distanceThreshold = 3; % mm
+               
+        inPosition = this.goToPosition(this.xPreDock, this.yPreDock, ...
+            distanceThreshold);
+        
+        if inPosition
+            this.operationMode = 'PRE-DOCK_ORIENTATION';            
+        end
+        
+    case 'PRE-DOCK_ORIENTATION'
+        % Once we are in position, re-orient ourselves to face the block.
+        K_turn = 2;
+        headingThreshold = 1; % degrees
+        
+        [leftMotorVelocity, rightMotorVelocity, headingError] = computeTurnVelocity(...
+            this, this.orientPreDock, this.pose.angle+pi/2, K_turn);
+        
+        if abs(headingError) < headingThreshold*pi/180
+            this.operationMode = 'DOCK';
+        else
+            this.drive(leftMotorVelocity, rightMotorVelocity);
+        end
             
     case 'DOCK'
         

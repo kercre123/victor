@@ -162,7 +162,7 @@ turnVelocityRight = -turnVelocityLeft;
 
 % HACK: Only update distance if our heading is decent. I.e., turn towards
 % the target and _then_ start driving to it.
-if horizontalError < 10 
+if abs(horizontalError) < 10 
     %obsScale  = sqrt(sum( (obsTarget(1,:)-obsTarget(3,:)).^2 ));
     %goalScale = sqrt(sum( (goalTarget(1,:)-goalTarget(3,:)).^2 ));
     %scaleError = goalScale - obsScale;
