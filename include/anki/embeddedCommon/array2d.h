@@ -49,15 +49,32 @@ namespace Anki
       Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
 
       // Pointer to the data, at a given (y,x) location
-      const inline Type* Pointer(const s32 index0, const s32 index1) const;
-
-      // Pointer to the data, at a given (y,x) location
+      //
+      // NOTE:
+      // Using this in a inner loop is very innefficient. Instead, declare a pointer outside the
+      // inner loop, like: "Type * restrict array_rowPointer = Array.Pointer(5);", then index
+      // array_rowPointer in the inner loop.
+      inline const Type* Pointer(const s32 index0, const s32 index1) const;
       inline Type* Pointer(const s32 index0, const s32 index1);
 
-      // Pointer to the data, at a given (y,x) location
-      const inline Type* Pointer(const Point<s16> &point) const;
+      // Use this operator for normal C-style 2d matrix indexing. For example, "array[5][0] = 6;"
+      // will set the element in the fifth row and first column to 6. This is the same as
+      // "array.Pointer(5)[0] = 6;"
+      //
+      // NOTE:
+      // Using this in a inner loop is very innefficient. Instead, declare a pointer outside the
+      // inner loop, like: "Type * restrict array_rowPointer = Array[5];", then index
+      // array_rowPointer in the inner loop.
+      inline const Type * operator[](const s32 index0) const;
+      inline Type * operator[](const s32 index0);
 
       // Pointer to the data, at a given (y,x) location
+      //
+      // NOTE:
+      // Using this in a inner loop is very innefficient. Instead, declare a pointer outside the
+      // inner loop, like: "Type * restrict array_rowPointer = Array.Pointer(Point<s16>(5,0));",
+      // then index array_rowPointer in the inner loop.
+      inline const Type* Pointer(const Point<s16> &point) const;
       inline Type* Pointer(const Point<s16> &point);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
@@ -289,6 +306,16 @@ namespace Anki
 
       return reinterpret_cast<Type*>( reinterpret_cast<char*>(this->data) +
         index1*sizeof(Type) + index0*stride );
+    }
+
+    template<typename Type> inline const Type * Array<Type>::operator[](const s32 index0) const
+    {
+      return Pointer(index0, 0);
+    }
+
+    template<typename Type> inline Type * Array<Type>::operator[](const s32 index0)
+    {
+      return Pointer(index0, 0);
     }
 
     template<typename Type> const Type* Array<Type>::Pointer(const Point<s16> &point) const
@@ -679,6 +706,7 @@ namespace Anki
     template<> Result Array<f64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<Point<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<Rectangle<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<Quadrilateral<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
 
 #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
     template<> s32 Array<f32>::Set(const char * const values);

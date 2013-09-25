@@ -24,5 +24,43 @@ namespace Anki
     {
       printf("(%f,%f)->(%f,%f) ", this->left, this->top, this->right, this->bottom);
     }
+
+    template<> IN_DDR f32 Rectangle<f32>::get_width() const
+    {
+      return right - left;
+    }
+
+    template<> IN_DDR f64 Rectangle<f64>::get_width() const
+    {
+      return right - left;
+    }
+
+    template<> IN_DDR f32 Rectangle<f32>::get_height() const
+    {
+      return bottom - top;
+    }
+
+    template<> IN_DDR f64 Rectangle<f64>::get_height() const
+    {
+      return bottom - top;
+    }
+
+    template<> IN_DDR void Quadrilateral<f32>::Print() const
+    {
+      printf("{(%f,%f), (%f,%f), (%f,%f), (%f,%f)} ",
+        this->points[0].x, this->points[0].y,
+        this->points[1].x, this->points[1].y,
+        this->points[2].x, this->points[2].y,
+        this->points[3].x, this->points[3].y);
+    }
+
+    template<> IN_DDR void Quadrilateral<f64>::Print() const
+    {
+      printf("{(%f,%f), (%f,%f), (%f,%f), (%f,%f)} ",
+        this->points[0].x, this->points[0].y,
+        this->points[1].x, this->points[1].y,
+        this->points[2].x, this->points[2].y,
+        this->points[3].x, this->points[3].y);
+    }
   } // namespace Embedded
 } // namespace Anki
