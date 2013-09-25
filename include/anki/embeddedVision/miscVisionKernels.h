@@ -44,7 +44,36 @@ namespace Anki
 
     Result ThresholdScaleImage(const Array<u8> &originalImage, const FixedPointArray<u32> &scaleImage, Array<u8> &binaryImage);
 
-    Result TraceBoundary(const Array<u8> &binaryImage, const Point<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point<s16> > &boundary);
+    Result TraceInteriorBoundary(const Array<u8> &binaryImage, const Point<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point<s16> > &boundary);
+
+    Result ComputeQuadrilateralsFromConnectedComponents(const ConnectedComponents &components, const s32 minQuadArea, const s32 quadSymmetryThreshold, FixedLengthList<Quadrilateral<s16> > &extractedQuads, MemoryStack scratch);
+
+    // Starting a components.Pointer(startComponentIndex), trace the exterior boundary for the
+    // component starting at startComponentIndex. extractedBoundary must be at at least
+    // "3*componentWidth + 3*componentHeight" (If you don't know the size of the component, you can
+    // just make it "3*imageWidth + 3*imageHeight" ). It's possible that a component could be
+    // arbitrarily large, so if you have the space, use as much as you have.
+    //
+    // endComponentIndex is the last index of the component starting at startComponentIndex. The
+    // next component is therefore startComponentIndex+1 .
+    //
+    // Requires sizeof(s16)*(2*componentWidth + 2*componentHeight) bytes of scratch
+    Result TraceNextExteriorBoundary(const ConnectedComponents &components, const s32 startComponentIndex, FixedLengthList<Point<s16>> &extractedBoundary, s32 &endComponentIndex, MemoryStack scratch);
+
+    FixedPointArray<s32> Get1dGaussianKernel(const s32 sigma, const s32 numSigmaFractionalBits, const s32 numStandardDeviations, MemoryStack &scratch);
+
+    // Note: uses a 32-bit accumulator, so be careful of overflows
+    Result Correlate1d(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out);
+
+    // Note: uses a 32-bit accumulator, so be careful of overflows
+    Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &image, const FixedPointArray<s32> &filter, FixedPointArray<s32> &out);
+
+    // Extract the best Laplacian peaks from boundary, up to peaks.get_size() The top
+    // peaks.get_size() peaks are returned in the order of their original index, which preserves
+    // their original clockwise or counter-clockwise ordering.
+    //
+    // Requires ??? bytes of scratch
+    Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16>> &boundary, FixedLengthList<Point<s16>> &peaks, MemoryStack scratch);
 
     template<typename T> inline T Interpolate2d(const T pixel00, const T pixel01, const T pixel10, const T pixel11, const T alphaY, const T alphaYinverse, const T alphaX, const T alphaXinverse);
 

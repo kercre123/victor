@@ -27,20 +27,19 @@ namespace Anki
       const f64 numComponents = components.get_maximumId();
       const f64 minValueD = static_cast<f64>(minValue);
       const f64 maxValueD = static_cast<f64>(maxValue);
-      const f64 step = (maxValueD - minValueD) / (numComponents-1);
+      const f64 step = (numComponents==1) ? 0.0 : ((maxValueD - minValueD) / (numComponents-1));
 
       const bool doScaling = (minValue == maxValue) ? false : true;
 
-      const ConnectedComponentSegment * restrict components_rowPointer = components.Pointer(0);
       for(s32 i=0; i<components.get_size(); i++) {
-        const u16 id = components_rowPointer[i].id;
+        const u16 id = components[i].id;
 
         if(id == 0)
           continue;
 
-        const s16 y = components_rowPointer[i].y;
-        const s16 xStart = components_rowPointer[i].xStart;
-        const s16 xEnd = components_rowPointer[i].xEnd;
+        const s16 y = components[i].y;
+        const s16 xStart = components[i].xStart;
+        const s16 xEnd = components[i].xEnd;
 
         Type lineColor;
 

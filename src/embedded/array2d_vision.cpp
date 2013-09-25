@@ -4,7 +4,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    template<> Result Array<ConnectedComponentSegment >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    template<> Result Array<ConnectedComponentSegment>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Point<s16> >::Print", "Array<Point<s16> > is not valid");
@@ -23,7 +23,7 @@ namespace Anki
       return RESULT_OK;
     } // template<> Result Array<ConnectedComponentSegment >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
 
-    template<> Result Array<FiducialMarker >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    template<> Result Array<FiducialMarker>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Point<s16> >::Print", "Array<Point<s16> > is not valid");

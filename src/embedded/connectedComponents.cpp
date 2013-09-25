@@ -374,9 +374,9 @@ namespace Anki
 
       for(s32 i=0; i<componentBoundingBoxes.get_size(); i++) {
         componentBoundingBoxes_rowPointer[i].left = s16_MAX;
-        componentBoundingBoxes_rowPointer[i].right = -s16_MAX;
+        componentBoundingBoxes_rowPointer[i].right = s16_MIN;
         componentBoundingBoxes_rowPointer[i].top = s16_MAX;
-        componentBoundingBoxes_rowPointer[i].bottom = -s16_MAX;
+        componentBoundingBoxes_rowPointer[i].bottom = s16_MIN;
       }
 
       for(s32 i=0; i<components.get_size(); i++) {
@@ -723,11 +723,6 @@ namespace Anki
       return components.IsValid();
     }
 
-    const ConnectedComponentSegment* ConnectedComponents::Pointer(const s32 index) const
-    {
-      return components.Pointer(index);
-    }
-
     u16 ConnectedComponents::get_maximumId() const
     {
       return maximumId;
@@ -736,6 +731,21 @@ namespace Anki
     s32 ConnectedComponents::get_size() const
     {
       return components.get_size();
+    }
+
+    bool ConnectedComponents::get_isSortedInId() const
+    {
+      return isSortedInId;
+    }
+
+    bool ConnectedComponents::get_isSortedInY() const
+    {
+      return isSortedInY;
+    }
+
+    bool ConnectedComponents::get_isSortedInX() const
+    {
+      return isSortedInX;
     }
   } // namespace Embedded
 } // namespace Anki

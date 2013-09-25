@@ -109,13 +109,18 @@ namespace Anki
       // Note that this is a const-only accessor function. The ConnectedComponets class keeps a lot
       // of tabs on sorting and maximumId and such, so no one else should be directly modifying the
       // buffers.
-      const ConnectedComponentSegment* Pointer(const s32 index) const;
+      inline const ConnectedComponentSegment* Pointer(const s32 index) const;
+      inline const ConnectedComponentSegment& operator[](const s32 index) const;
 
       bool IsValid() const;
 
       u16 get_maximumId() const;
 
       s32 get_size() const;
+
+      bool get_isSortedInId() const;
+      bool get_isSortedInY() const;
+      bool get_isSortedInX() const;
 
     protected:
       FixedLengthList<ConnectedComponentSegment> components;
@@ -146,6 +151,16 @@ namespace Anki
       const s64 xStartDifference = (static_cast<s64>(a.xStart) - static_cast<s64>(b.xStart));
 
       return idDifference + yDifference + xStartDifference;
+    }
+
+    inline const ConnectedComponentSegment* ConnectedComponents::Pointer(const s32 index) const
+    {
+      return components.Pointer(index);
+    }
+
+    inline const ConnectedComponentSegment& ConnectedComponents::operator[](const s32 index) const
+    {
+      return *components.Pointer(index);
     }
   } // namespace Embedded
 } // namespace Anki

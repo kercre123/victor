@@ -16,8 +16,8 @@ namespace Anki
 {
   namespace Embedded
   {
-    template<> Result Array<ConnectedComponentSegment >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
-    template<> Result Array<FiducialMarker >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<ConnectedComponentSegment>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<FiducialMarker>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
   } // namespace Embedded
 } //namespace Anki
 

@@ -151,7 +151,7 @@ int BenchmarkComputeCharacteristicScale()
   return 0;
 }
 
-int BenchmarkTraceBoundary()
+int BenchmarkTraceInteriorBoundary()
 {
   MemoryStack ms(buffer, numBytes);
 
@@ -206,7 +206,7 @@ int BenchmarkTraceBoundary()
   matlab.PutArray<u8>(binaryImage, "binaryImage");
 #endif // #if defined(ANKI_DEBUG_ALL) && defined(ANKICORETECH_USE_MATLAB)
 
-  Result result = TraceBoundary(binaryImage, startPoint, initialDirection, boundary);
+  Result result = TraceInteriorBoundary(binaryImage, startPoint, initialDirection, boundary);
 
 #ifdef CHECK_FOR_ERRORS
   AnkiConditionalErrorAndReturnValue(result == RESULT_OK, -4, "result == RESULT_OK", "");

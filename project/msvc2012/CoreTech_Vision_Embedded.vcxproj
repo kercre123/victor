@@ -19,9 +19,11 @@
     <ClCompile Include="..\..\src\embedded\detectFiducialMarkers.cpp" />
     <ClCompile Include="..\..\src\embedded\downsampleByFactor.cpp" />
     <ClCompile Include="..\..\src\embedded\draw_vision.cpp" />
+    <ClCompile Include="..\..\src\embedded\filtering.cpp" />
     <ClCompile Include="..\..\src\embedded\fixedLengthList_vision.cpp" />
     <ClCompile Include="..\..\src\embedded\thresholdScaleImage.cpp" />
     <ClCompile Include="..\..\src\embedded\traceBoundary.cpp" />
+    <ClCompile Include="Z:\Documents\Anki\coretech-vision\src\embedded\computeQuadrilaterals.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\anki\embeddedVision.h" />

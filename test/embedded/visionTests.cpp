@@ -25,7 +25,7 @@ Matlab matlab(false);
 You cannot use both CMX and L2 Cache;
 #endif
 
-#define MAX_BYTES 10000
+#define MAX_BYTES 70000
 
 #ifdef _MSC_VER
 static char buffer[MAX_BYTES];
@@ -46,6 +46,294 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
 #include "blockImage50.h"
+
+IN_DDR GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
+{
+  const s32 numComponents = 60;
+  const s32 minQuadArea = 100;
+  const s32 quadSymmetryThreshold = 384;
+
+  const s32 numBytes = MIN(MAX_BYTES, 70000);
+  MemoryStack ms(&buffer[0], numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  const Quadrilateral<s16> quads_groundTruth[] = {
+    Quadrilateral<s16>(Point<s16>(24,14), Point<s16>(10,14), Point<s16>(10,0), Point<s16>(24,0)),
+    Quadrilateral<s16>(Point<s16>(129,79), Point<s16>(100,79), Point<s16>(100,50), Point<s16>(129,50))};
+
+  ConnectedComponents components(numComponents, ms);
+
+  // Small square
+  for(s16 y=0; y<15; y++) {
+    components.PushBack(ConnectedComponentSegment(10,24,y,1));
+  }
+
+  // Big square
+  for(s16 y=0; y<30; y++) {
+    components.PushBack(ConnectedComponentSegment(100,129,y+50,2));
+  }
+
+  // Skewed quad
+  components.PushBack(ConnectedComponentSegment(100,300,100,3));
+  for(s16 y=0; y<10; y++) {
+    components.PushBack(ConnectedComponentSegment(100,110,y+100,3));
+  }
+
+  // Tiny square
+  for(s16 y=0; y<5; y++) {
+    components.PushBack(ConnectedComponentSegment(10,14,y,4));
+  }
+
+  FixedLengthList<Quadrilateral<s16> > extractedQuads(2, ms);
+
+  const Result result =  ComputeQuadrilateralsFromConnectedComponents(components, minQuadArea, quadSymmetryThreshold, extractedQuads, ms);
+  ASSERT_TRUE(result == RESULT_OK);
+
+  //extractedQuads.Print("extractedQuads");
+
+  for(s32 i=0; i<extractedQuads.get_size(); i++) {
+    ASSERT_TRUE(extractedQuads[i] == quads_groundTruth[i]);
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
+
+IN_DDR GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
+{
+  const s32 numBytes = MIN(MAX_BYTES, 5000);
+  MemoryStack ms(&buffer[0], numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  FixedPointArray<s32> image(1,15,2,ms);
+  FixedPointArray<s32> filter(1,5,2,ms);
+  FixedPointArray<s32> out(1,15,4,ms);
+
+  for(s32 i=0; i<image.get_size(1); i++) {
+    *image.Pointer(0,i) = 1 + i;
+  }
+
+  for(s32 i=0; i<filter.get_size(1); i++) {
+    *filter.Pointer(0,i) = 2*(1 + i);
+  }
+
+  const s32 out_groundTruth[] = {140, 110, 110, 140, 170, 200, 230, 260, 290, 320, 350, 380, 410, 290, 200};
+
+  const Result result = Correlate1dCircularAndSameSizeOutput(image, filter, out);
+  ASSERT_TRUE(result == RESULT_OK);
+
+  out.Print();
+
+  for(s32 i=0; i<out.get_size(1); i++) {
+    ASSERT_TRUE(*out.Pointer(0,i) == out_groundTruth[i]);
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
+
+IN_DDR GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
+{
+  const s32 boundaryLength = 65;
+  const s32 numBytes = MIN(MAX_BYTES, 5000);
+
+  MemoryStack ms(&buffer[0], numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  FixedLengthList<Point<s16>> boundary(boundaryLength, ms);
+
+  const s16 componentsX_groundTruth[] = {105, 105, 106, 107, 108, 109, 109, 108, 107, 106, 105, 105, 105, 105, 106, 107, 108, 109, 108, 107, 106, 105, 105, 104, 104, 104, 104, 104, 103, 103, 103, 103, 103, 102, 101, 101, 101, 101, 101, 100, 100, 100, 100, 100, 101, 102, 103, 104, 104, 104, 103, 102, 101, 100, 100, 101, 102, 102, 102, 102, 102, 103, 104, 104, 105};
+  const s16 componentsY_groundTruth[] = {200, 201, 201, 201, 201, 201, 202, 202, 202, 202, 202, 203, 204, 205, 205, 205, 205, 205, 205, 205, 205, 205, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 206, 206, 205, 204, 204, 204, 204, 204, 203, 203, 203, 202, 201, 200, 201, 201, 201, 200, 200};
+
+  for(s32 i=0; i<boundaryLength; i++) {
+    boundary.PushBack(Point<s16>(componentsX_groundTruth[i], componentsY_groundTruth[i]));
+  }
+
+  FixedLengthList<Point<s16>> peaks(4, ms);
+
+  const Result result = ExtractLaplacianPeaks(boundary, peaks, ms);
+  ASSERT_TRUE(result == RESULT_OK);
+
+  //peaks.Print();
+
+  ASSERT_TRUE(*peaks.Pointer(0) == Point<s16>(109,201));
+  ASSERT_TRUE(*peaks.Pointer(1) == Point<s16>(109,205));
+  ASSERT_TRUE(*peaks.Pointer(2) == Point<s16>(104,210));
+  ASSERT_TRUE(*peaks.Pointer(3) == Point<s16>(100,210));
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
+
+IN_DDR GTEST_TEST(CoreTech_Vision, Correlate1d)
+{
+  const s32 numBytes = MIN(MAX_BYTES, 5000);
+  MemoryStack ms(&buffer[0], numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    FixedPointArray<s32> in1(1,1,2,ms);
+    FixedPointArray<s32> in2(1,4,2,ms);
+    FixedPointArray<s32> out(1,4,4,ms);
+
+    for(s32 i=0; i<in1.get_size(1); i++) {
+      *in1.Pointer(0,i) = 1 + i;
+    }
+
+    for(s32 i=0; i<in2.get_size(1); i++) {
+      *in2.Pointer(0,i) = 2*(1 + i);
+    }
+
+    const s32 out_groundTruth[] = {2, 4, 6, 8};
+
+    const Result result = Correlate1d(in1, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    //out.Print();
+
+    for(s32 i=0; i<out.get_size(1); i++) {
+      ASSERT_TRUE(*out.Pointer(0,i) == out_groundTruth[i]);
+    }
+  }
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    FixedPointArray<s32> in1(1,3,5,ms);
+    FixedPointArray<s32> in2(1,6,1,ms);
+    FixedPointArray<s32> out(1,8,3,ms);
+
+    for(s32 i=0; i<in1.get_size(1); i++) {
+      *in1.Pointer(0,i) = 1 + i;
+    }
+
+    for(s32 i=0; i<in2.get_size(1); i++) {
+      *in2.Pointer(0,i) = 2*(1 + i);
+    }
+
+    const s32 out_groundTruth[] = {0, 2, 3, 5, 6, 8, 4, 1};
+
+    const Result result = Correlate1d(in1, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    //out.Print();
+
+    for(s32 i=0; i<out.get_size(1); i++) {
+      ASSERT_TRUE(*out.Pointer(0,i) == out_groundTruth[i]);
+    }
+  }
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    FixedPointArray<s32> in1(1,4,2,ms);
+    FixedPointArray<s32> in2(1,4,2,ms);
+    FixedPointArray<s32> out(1,7,3,ms);
+
+    for(s32 i=0; i<in1.get_size(1); i++) {
+      *in1.Pointer(0,i) = 1 + i;
+    }
+
+    for(s32 i=0; i<in2.get_size(1); i++) {
+      *in2.Pointer(0,i) = 2*(1 + i);
+    }
+
+    const s32 out_groundTruth[] = {4, 11, 20, 30, 20, 11, 4};
+
+    const Result result = Correlate1d(in1, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    //out.Print();
+
+    for(s32 i=0; i<out.get_size(1); i++) {
+      ASSERT_TRUE(*out.Pointer(0,i) == out_groundTruth[i]);
+    }
+  }
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    FixedPointArray<s32> in1(1,4,1,ms);
+    FixedPointArray<s32> in2(1,5,5,ms);
+    FixedPointArray<s32> out(1,8,8,ms);
+
+    for(s32 i=0; i<in1.get_size(1); i++) {
+      *in1.Pointer(0,i) = 1 + i;
+    }
+
+    for(s32 i=0; i<in2.get_size(1); i++) {
+      *in2.Pointer(0,i) = 2*(1 + i);
+    }
+
+    const s32 out_groundTruth[] = {32, 88, 160, 240, 320, 208, 112, 40};
+
+    const Result result = Correlate1d(in1, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    //out.Print();
+
+    for(s32 i=0; i<out.get_size(1); i++) {
+      ASSERT_TRUE(*out.Pointer(0,i) == out_groundTruth[i]);
+    }
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, Correlate1d)
+
+IN_DDR GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
+{
+  const s32 numComponents = 17;
+  const s32 boundaryLength = 65;
+  const s32 startComponentIndex = 0;
+  const s32 numBytes = MIN(MAX_BYTES, 10000);
+
+  MemoryStack ms(&buffer[0], numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  ConnectedComponents components(numComponents, ms);
+
+  const s16 yValues[] = {200, 200, 201, 201, 202, 203, 204, 205, 206, 207, 207, 208, 208, 209, 209, 210, 210};
+  const s16 xStartValues[] = {102, 104, 102, 108, 102, 100, 100, 104, 100, 100, 103, 100, 103, 100, 103, 100, 103};
+  const s16 xEndValues[] = { 102, 105, 105, 109, 109, 105, 105, 109, 105, 101, 104, 101, 104, 101, 104, 101, 104};
+
+  const s16 componentsX_groundTruth[] = {105, 105, 106, 107, 108, 109, 109, 108, 107, 106, 105, 105, 105, 105, 106, 107, 108, 109, 108, 107, 106, 105, 105, 104, 104, 104, 104, 104, 103, 103, 103, 103, 103, 102, 101, 101, 101, 101, 101, 100, 100, 100, 100, 100, 101, 102, 103, 104, 104, 104, 103, 102, 101, 100, 100, 101, 102, 102, 102, 102, 102, 103, 104, 104, 105};
+  const s16 componentsY_groundTruth[] = {200, 201, 201, 201, 201, 201, 202, 202, 202, 202, 202, 203, 204, 205, 205, 205, 205, 205, 205, 205, 205, 205, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 206, 206, 205, 204, 204, 204, 204, 204, 203, 203, 203, 202, 201, 200, 201, 201, 201, 200, 200};
+
+  for(s32 i=0; i<numComponents; i++) {
+    components.PushBack(ConnectedComponentSegment(xStartValues[i],xEndValues[i],yValues[i],1));
+  }
+
+  //#define DRAW_TraceNextExteriorBoundary
+#ifdef DRAW_TraceNextExteriorBoundary
+  {
+    const u32 numBytes0 = 10000000;
+    MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
+    ASSERT_TRUE(scratch0.IsValid());
+    Array<u8> drawnComponents(480, 640, scratch0);
+    DrawComponents<u8>(drawnComponents, components, 64, 255);
+
+    matlab.PutArray(drawnComponents, "drawnComponents");
+    drawnComponents.Show("drawnComponents", true, false);
+
+    free(scratch0.get_buffer());
+  }
+#endif // DRAW_TraceNextExteriorBoundary
+
+  FixedLengthList<Point<s16>> extractedBoundary(boundaryLength, ms);
+
+  {
+    s32 endComponentIndex = -1;
+    const Result result = TraceNextExteriorBoundary(components, startComponentIndex, extractedBoundary, endComponentIndex, ms);
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  //extractedBoundary.Print();
+
+  for(s32 i=0; i<boundaryLength; i++) {
+    ASSERT_TRUE(*extractedBoundary.Pointer(i) == Point<s16>(componentsX_groundTruth[i], componentsY_groundTruth[i]));
+  }
+
+  GTEST_RETURN_HERE;
+} // IN_DDR GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
 
 IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
 {
@@ -836,13 +1124,13 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 } // IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
+IN_DDR GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
 {
   const s32 width = 16;
   const s32 height = 16;
 
-#define TraceBoundary_imageDataLength (16*16)
-  const u8 imageData[TraceBoundary_imageDataLength] = {
+#define TraceInteriorBoundary_imageDataLength (16*16)
+  const u8 imageData[TraceInteriorBoundary_imageDataLength] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
@@ -878,9 +1166,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
   ASSERT_TRUE(binaryImage.IsValid());
   ASSERT_TRUE(boundary.IsValid());
 
-  binaryImage.Set(imageData, TraceBoundary_imageDataLength);
+  binaryImage.Set(imageData, TraceInteriorBoundary_imageDataLength);
 
-  ASSERT_TRUE(TraceBoundary(binaryImage, startPoint, initialDirection, boundary) == RESULT_OK);
+  ASSERT_TRUE(TraceInteriorBoundary(binaryImage, startPoint, initialDirection, boundary) == RESULT_OK);
 
   ASSERT_TRUE(boundary.get_size() == numPoints);
   for(s32 iPoint=0; iPoint<numPoints; iPoint++) {
@@ -889,7 +1177,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
   }
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, TraceBoundary)
+} // IN_DDR GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
 
 #if !defined(ANKICORETECHEMBEDDED_USE_GTEST)
 IN_DDR void RUN_ALL_TESTS()
@@ -897,6 +1185,7 @@ IN_DDR void RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary);
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage);
   CALL_GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents);
   CALL_GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents);
@@ -907,7 +1196,7 @@ IN_DDR void RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);
-  CALL_GTEST_TEST(CoreTech_Vision, TraceBoundary);
+  CALL_GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary);
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 } // void RUN_ALL_TESTS()

@@ -56,14 +56,14 @@ void RUN_ALL_BENCHMARKS()
 
   swcShaveProfStartGathering(0, &perfStr[3]);
   for(i=0; i<48; i++) {
-    BenchmarkTraceBoundary();
+    BenchmarkTraceInteriorBoundary();
   }
   swcShaveProfStopGathering(0, &perfStr[3]);
 
   PrintTime(&perfStr[0], "BenchmarkBinomialFilter");
   PrintTime(&perfStr[1], "BenchmarkDownsampleByFactor");
   PrintTime(&perfStr[2], "BenchmarkComputeCharacteristicScale");
-  PrintTime(&perfStr[3], "BenchmarkTraceBoundary");
+  PrintTime(&perfStr[3], "BenchmarkTraceInteriorBoundary");
 } // void RUN_ALL_BENCHMARKS()
 
 #endif // #ifndef _MSC_VER
