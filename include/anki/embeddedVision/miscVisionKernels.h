@@ -68,7 +68,12 @@ namespace Anki
     // Note: uses a 32-bit accumulator, so be careful of overflows
     Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &image, const FixedPointArray<s32> &filter, FixedPointArray<s32> &out);
 
-    Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16>> &boundary, MemoryStack scratch);
+    // Extract the best Laplacian peaks from boundary, up to peaks.get_size() The top
+    // peaks.get_size() peaks are returned in the order of their original index, which preserves
+    // their original clockwise or counter-clockwise ordering.
+    //
+    // Requires ??? bytes of scratch
+    Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16>> &boundary, FixedLengthList<Point<s16>> &peaks, MemoryStack scratch);
 
     template<typename T> inline T Interpolate2d(const T pixel00, const T pixel01, const T pixel10, const T pixel11, const T alphaY, const T alphaYinverse, const T alphaX, const T alphaXinverse);
 
