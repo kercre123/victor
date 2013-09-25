@@ -194,9 +194,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(startComponentIndex >= 0 && startComponentIndex < components.get_size(),
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "startComponentIndex is not in range");
 
-      const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
-
-      const u16 componentId = components_constRowPointer[startComponentIndex].id;
+      const u16 componentId = components[startComponentIndex].id;
 
       extractedBoundary.Clear();
 
@@ -209,15 +207,15 @@ namespace Anki
       Rectangle<s16> boundingBox(s16_MAX, s16_MIN, s16_MAX, s16_MIN);
       endComponentIndex = components.get_size() - 1;
       for(s32 i=startComponentIndex; i<components.get_size(); i++) {
-        if(components_constRowPointer[i].id != componentId)
+        if(components[i].id != componentId)
         {
           endComponentIndex = i-1;
           break;
         }
 
-        const s16 xStart = components_constRowPointer[i].xStart;
-        const s16 xEnd = components_constRowPointer[i].xEnd;
-        const s16 y = components_constRowPointer[i].y;
+        const s16 xStart = components[i].xStart;
+        const s16 xEnd = components[i].xEnd;
+        const s16 y = components[i].y;
 
         boundingBox.left = MIN(boundingBox.left, xStart);
         boundingBox.right = MAX(boundingBox.right, xEnd);
@@ -263,7 +261,7 @@ namespace Anki
         //xStart = component(iSubComponent, 2);
         //xEnd = component(iSubComponent, 3);
         //y = component(iSubComponent, 1);
-        ConnectedComponentSegment currentSegment = components_constRowPointer[iSegment];
+        ConnectedComponentSegment currentSegment = components[iSegment];
         currentSegment.xEnd -= boundingBox.left;
         currentSegment.xStart -= boundingBox.left;
         currentSegment.y -= boundingBox.top;
