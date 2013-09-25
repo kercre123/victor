@@ -47,37 +47,37 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 #include "blockImage50.h"
 
-//IN_DDR GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
-//{
-//  const s32 numBytes = MIN(MAX_BYTES, 5000);
-//  MemoryStack ms(&buffer[0], numBytes);
-//  ASSERT_TRUE(ms.IsValid());
-//
-//  FixedPointArray<s32> image(1,15,2,ms);
-//  FixedPointArray<s32> filter(1,5,2,ms);
-//  FixedPointArray<s32> out(1,15,4,ms);
-//
-//  for(s32 i=0; i<image.get_size(1); i++) {
-//    *image.Pointer(0,i) = 1 + i;
-//  }
-//
-//  for(s32 i=0; i<filter.get_size(1); i++) {
-//    *filter.Pointer(0,i) = 2*(1 + i);
-//  }
-//
-//  const s32 out_groundTruth[] = {140, 110, 110, 140, 170, 200, 230, 260, 290, 320, 350, 380, 410, 290, 200};
-//
-//  const Result result = Correlate1dCircularAndSameSizeOutput(image, filter, out);
-//  ASSERT_TRUE(result == RESULT_OK);
-//
-//  out.Print();
-//
-//  for(s32 i=0; i<out.get_size(1); i++) {
-//    ASSERT_TRUE(*out.Pointer(0,i) == out_groundTruth[i]);
-//  }
-//
-//  GTEST_RETURN_HERE;
-//} // GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
+IN_DDR GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
+{
+  const s32 numBytes = MIN(MAX_BYTES, 5000);
+  MemoryStack ms(&buffer[0], numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  FixedPointArray<s32> image(1,15,2,ms);
+  FixedPointArray<s32> filter(1,5,2,ms);
+  FixedPointArray<s32> out(1,15,4,ms);
+
+  for(s32 i=0; i<image.get_size(1); i++) {
+    *image.Pointer(0,i) = 1 + i;
+  }
+
+  for(s32 i=0; i<filter.get_size(1); i++) {
+    *filter.Pointer(0,i) = 2*(1 + i);
+  }
+
+  const s32 out_groundTruth[] = {140, 110, 110, 140, 170, 200, 230, 260, 290, 320, 350, 380, 410, 290, 200};
+
+  const Result result = Correlate1dCircularAndSameSizeOutput(image, filter, out);
+  ASSERT_TRUE(result == RESULT_OK);
+
+  out.Print();
+
+  for(s32 i=0; i<out.get_size(1); i++) {
+    ASSERT_TRUE(*out.Pointer(0,i) == out_groundTruth[i]);
+  }
+
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 
 IN_DDR GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
 {
@@ -101,7 +101,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
   const Result result = ExtractLaplacianPeaks(boundary, peaks, ms);
   ASSERT_TRUE(result == RESULT_OK);
 
-  peaks.Print();
+  //peaks.Print();
 
   ASSERT_TRUE(*peaks.Pointer(0) == Point<s16>(109,201));
   ASSERT_TRUE(*peaks.Pointer(1) == Point<s16>(109,205));
