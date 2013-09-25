@@ -70,6 +70,11 @@ namespace Anki
         return false;
     }
 
+    s32 Determinant2x2(const s32 a, const s32 b, const s32 c, const s32 d)
+    {
+      return a*d - b*c;
+    }
+
     IN_DDR u32 Log2(u32 x)
     {
       u32 powerCount = 0;

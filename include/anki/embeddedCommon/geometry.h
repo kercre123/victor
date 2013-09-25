@@ -46,6 +46,8 @@ namespace Anki
       Point<Type> operator- (const Point<Type> &point2) const;
 
       void operator*= (const Type value);
+
+      inline Point<Type>& operator= (const Point<Type> &point2);
     }; // class Point<Type>
 
 #pragma mark --- Rectangle Class Definition ---
@@ -72,6 +74,8 @@ namespace Anki
 
       Rectangle<Type> operator- (const Rectangle<Type> &rect2) const;
 
+      inline Rectangle<Type>& operator= (const Rectangle<Type> &rect2);
+
       Type get_width() const;
 
       Type get_height() const;
@@ -97,6 +101,11 @@ namespace Anki
       Quadrilateral<Type> operator+ (const Quadrilateral<Type> &quad2) const;
 
       Quadrilateral<Type> operator- (const Quadrilateral<Type> &quad2) const;
+
+      inline Quadrilateral<Type>& operator= (const Quadrilateral<Type> &quad2);
+
+      inline const Point<Type>& operator[] (const s32 index) const;
+      inline Point<Type>& operator[] (const s32 index);
     }; // class Quadrilateral<Type>
 
 #pragma mark --- Point Implementations ---
@@ -153,10 +162,18 @@ namespace Anki
       return Point<Type>(this->x-point2.x, this->y-point2.y);
     }
 
-    template<typename Type> void Point<Type>::operator*=(const Type value)
+    template<typename Type> void Point<Type>::operator*= (const Type value)
     {
       this->x *= value;
       this->y *= value;
+    }
+
+    template<typename Type> inline Point<Type>& Point<Type>::operator= (const Point<Type> &point2)
+    {
+      this->x = point2.x;
+      this->y = point2.y;
+
+      return *this;
     }
 
 #pragma mark --- Point Specializations ---
@@ -201,6 +218,16 @@ namespace Anki
     template<typename Type> Rectangle<Type> Rectangle<Type>::operator- (const Rectangle<Type> &rectangle2) const
     {
       return Rectangle<Type>(this->top-rectangle2.top, this->bottom-rectangle2.bottom, this->left-rectangle2.left, this->right-rectangle2.right);
+    }
+
+    template<typename Type> inline Rectangle<Type>& Rectangle<Type>::operator= (const Rectangle<Type> &rect2)
+    {
+      this->left = rect2.left;
+      this->right = rect2.right;
+      this->top = rect2.top;
+      this->bottom = rect2.bottom;
+
+      return *this;
     }
 
     template<typename Type> Type Rectangle<Type>::get_width() const
@@ -286,6 +313,25 @@ namespace Anki
       }
 
       return newQuad;
+    }
+
+    template<typename Type> inline Quadrilateral<Type>& Quadrilateral<Type>::operator= (const Quadrilateral<Type> &quad2)
+    {
+      for(s32 i=0; i<4; i++) {
+        this->points[i] = quad2.points[i];
+      }
+
+      return *this;
+    }
+
+    template<typename Type> inline const Point<Type>& Quadrilateral<Type>::operator[] (const s32 index) const
+    {
+      return points[index];
+    }
+
+    template<typename Type> inline Point<Type>& Quadrilateral<Type>::operator[] (const s32 index)
+    {
+      return points[index];
     }
 
 #pragma mark --- Quadrilateral Specializations ---
