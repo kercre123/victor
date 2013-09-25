@@ -70,11 +70,11 @@ switch (key)
         
     case this.CKEY_HEAD_UP % s-key: move head up
         
-        this.SetHeadAngle(this.pitch_angle + 0.01);
+        this.SetHeadAngle(this.pitch_angle + 0.02);
                 
     case this.CKEY_HEAD_DOWN % x-key: move head down
         
-        this.SetHeadAngle(this.pitch_angle - 0.01);
+        this.SetHeadAngle(this.pitch_angle - 0.02);
                 
     case this.CKEY_LIFT_UP % a-key: move lift up
         
