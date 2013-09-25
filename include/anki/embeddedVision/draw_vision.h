@@ -31,16 +31,15 @@ namespace Anki
 
       const bool doScaling = (minValue == maxValue) ? false : true;
 
-      const ConnectedComponentSegment * restrict components_rowPointer = components.Pointer(0);
       for(s32 i=0; i<components.get_size(); i++) {
-        const u16 id = components_rowPointer[i].id;
+        const u16 id = components[i].id;
 
         if(id == 0)
           continue;
 
-        const s16 y = components_rowPointer[i].y;
-        const s16 xStart = components_rowPointer[i].xStart;
-        const s16 xEnd = components_rowPointer[i].xEnd;
+        const s16 y = components[i].y;
+        const s16 xStart = components[i].xStart;
+        const s16 xEnd = components[i].xEnd;
 
         Type lineColor;
 

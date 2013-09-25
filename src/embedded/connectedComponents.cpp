@@ -723,11 +723,6 @@ namespace Anki
       return components.IsValid();
     }
 
-    const ConnectedComponentSegment* ConnectedComponents::Pointer(const s32 index) const
-    {
-      return components.Pointer(index);
-    }
-
     u16 ConnectedComponents::get_maximumId() const
     {
       return maximumId;
