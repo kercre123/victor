@@ -41,9 +41,20 @@ namespace Anki
 
       // Pointer to the data, at a given location
       inline Type* Pointer(const s32 index);
-
-      // Pointer to the data, at a given location
       inline const Type* Pointer(const s32 index) const;
+
+      // Use this operator for normal C-style vector indexing. For example, "list[5] = 6;" will set
+      // the element in the fifth row and first column to 6. This is the same as "*list.Pointer(5) =
+      // 6;"
+      //
+      // NOTE:
+      // Using this in a inner loop may be less efficient than using an explicit pointer with a
+      // restrict keyword (Though the runtime cost isn't nearly as large as the [] operator for the
+      // Array class). For speeding up performance-critical inner loops, use something like: "Type *
+      // restrict list_rowPointer = list.Pointer(0);" outside the inner loop, then index
+      // list_rowPointer in the inner loop.
+      inline const Type& operator[](const s32 index) const;
+      inline Type& operator[](const s32 index);
 
       // Print out the contents of this FixedLengthList
       Result Print(const char * const variableName = "FixedLengthList", const s32 minIndex = 0, const s32 maxIndex = 0x7FFFFFE) const;
@@ -75,13 +86,22 @@ namespace Anki
 
     template<typename Type> inline Type* FixedLengthList<Type>::Pointer(const s32 index)
     {
-      return Array<Type>::Pointer(0, index);
+      return this->data + index;;
     }
 
-    // Pointer to the data, at a given location
     template<typename Type> inline const Type* FixedLengthList<Type>::Pointer(const s32 index) const
     {
-      return Array<Type>::Pointer(0, index);
+      return this->data + index;;
+    }
+
+    template<typename Type> inline const Type& FixedLengthList<Type>::operator[](const s32 index) const
+    {
+      return this->data + index;;
+    }
+
+    template<typename Type> inline Type& FixedLengthList<Type>::operator[](const s32 index)
+    {
+      return this->data + index;;
     }
 
     template<typename Type> FixedLengthList<Type>::FixedLengthList()
