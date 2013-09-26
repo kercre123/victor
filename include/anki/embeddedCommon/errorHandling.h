@@ -29,7 +29,7 @@ namespace Anki
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS
 
 #define AnkiWarn(eventName, eventValue_format, ...) \
-  if(!(expression)) { _Anki_Logf(ANKI_LOG_LEVEL_WARN, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); }
+{ _Anki_Logf(ANKI_LOG_LEVEL_WARN, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); }
 
 #define AnkiConditionalWarn(expression, eventName, eventValue_format, ...) \
   if(!(expression)) { _Anki_Logf(ANKI_LOG_LEVEL_WARN, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); }
