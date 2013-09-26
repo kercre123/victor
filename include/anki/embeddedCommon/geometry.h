@@ -86,11 +86,11 @@ namespace Anki
     template<typename Type> class Quadrilateral
     {
     public:
-      Point<Type> points[4];
+      Point<Type> corners[4];
 
       Quadrilateral();
 
-      Quadrilateral(const Point<Type> &point1, const Point<Type> &point2, const Point<Type> &point3, const Point<Type> &point4);
+      Quadrilateral(const Point<Type> &corner1, const Point<Type> &corner2, const Point<Type> &corner3, const Point<Type> &corner4);
 
       Quadrilateral(const Quadrilateral<Type>& quad);
 
@@ -255,61 +255,61 @@ namespace Anki
     template<typename Type> Quadrilateral<Type>::Quadrilateral()
     {
       for(s32 i=0; i<4; i++) {
-        points[i] = Point<Type>();
+        corners[i] = Point<Type>();
       }
     }
 
-    template<typename Type> Quadrilateral<Type>::Quadrilateral(const Point<Type> &point1, const Point<Type> &point2, const Point<Type> &point3, const Point<Type> &point4)
+    template<typename Type> Quadrilateral<Type>::Quadrilateral(const Point<Type> &corner1, const Point<Type> &corner2, const Point<Type> &corner3, const Point<Type> &corner4)
     {
-      points[0] = point1;
-      points[1] = point2;
-      points[2] = point3;
-      points[3] = point4;
+      corners[0] = corner1;
+      corners[1] = corner2;
+      corners[2] = corner3;
+      corners[3] = corner4;
     }
 
-    template<typename Type> Quadrilateral<Type>::Quadrilateral(const Quadrilateral<Type>& rect)
+    template<typename Type> Quadrilateral<Type>::Quadrilateral(const Quadrilateral<Type>& quad2)
     {
       for(s32 i=0; i<4; i++) {
-        this->points[i] = rect.points[i];
+        this->corners[i] = quad2.corners[i];
       }
     }
 
     template<typename Type> void Quadrilateral<Type>::Print() const
     {
       printf("{(%d,%d), (%d,%d), (%d,%d), (%d,%d)} ",
-        this->points[0].x, this->points[0].y,
-        this->points[1].x, this->points[1].y,
-        this->points[2].x, this->points[2].y,
-        this->points[3].x, this->points[3].y);
+        this->corners[0].x, this->corners[0].y,
+        this->corners[1].x, this->corners[1].y,
+        this->corners[2].x, this->corners[2].y,
+        this->corners[3].x, this->corners[3].y);
     }
 
-    template<typename Type> bool Quadrilateral<Type>::operator== (const Quadrilateral<Type> &quadrilateral2) const
+    template<typename Type> bool Quadrilateral<Type>::operator== (const Quadrilateral<Type> &quad2) const
     {
       for(s32 i=0; i<4; i++) {
-        if(!(this->points[i] == quadrilateral2.points[i]))
+        if(!(this->corners[i] == quad2.corners[i]))
           return false;
       }
 
       return true;
     }
 
-    template<typename Type> Quadrilateral<Type> Quadrilateral<Type>::operator+ (const Quadrilateral<Type> &quadrilateral2) const
+    template<typename Type> Quadrilateral<Type> Quadrilateral<Type>::operator+ (const Quadrilateral<Type> &quad2) const
     {
       Quadrilateral<Type> newQuad();
 
       for(s32 i=0; i<4; i++) {
-        newQuad.points[i] = this->points[i] + quadrilateral2.points[i];
+        newQuad.corners[i] = this->corners[i] + quad2.corners[i];
       }
 
       return newQuad;
     }
 
-    template<typename Type> Quadrilateral<Type> Quadrilateral<Type>::operator- (const Quadrilateral<Type> &quadrilateral2) const
+    template<typename Type> Quadrilateral<Type> Quadrilateral<Type>::operator- (const Quadrilateral<Type> &quad2) const
     {
       Quadrilateral<Type> newQuad();
 
       for(s32 i=0; i<4; i++) {
-        newQuad.points[i] = this->points[i] - quadrilateral2.points[i];
+        newQuad.corners[i] = this->corners[i] - quad2.corners[i];
       }
 
       return newQuad;
@@ -318,7 +318,7 @@ namespace Anki
     template<typename Type> inline Quadrilateral<Type>& Quadrilateral<Type>::operator= (const Quadrilateral<Type> &quad2)
     {
       for(s32 i=0; i<4; i++) {
-        this->points[i] = quad2.points[i];
+        this->corners[i] = quad2.corners[i];
       }
 
       return *this;
@@ -326,12 +326,12 @@ namespace Anki
 
     template<typename Type> inline const Point<Type>& Quadrilateral<Type>::operator[] (const s32 index) const
     {
-      return points[index];
+      return corners[index];
     }
 
     template<typename Type> inline Point<Type>& Quadrilateral<Type>::operator[] (const s32 index)
     {
-      return points[index];
+      return corners[index];
     }
 
 #pragma mark --- Quadrilateral Specializations ---
