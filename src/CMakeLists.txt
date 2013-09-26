@@ -2,16 +2,72 @@
 
 
 # Common Library
-file(GLOB CORETECH_COMMON_FILES "*.cpp")
+#file(GLOB CORETECH_COMMON_FILES "*.cpp")
 
-add_library(CoreTech_Common ${CORETECH_COMMON_FILES})
+set(CORETECH_COMMON_SOURCE_FILES
+	array2d.cpp
+	general.cpp
+	matrix.cpp
+	memory.cpp
+	point.cpp
+	pose.cpp
+	radians.cpp
+	rotation.cpp
+)
+
+set(CORETECH_COMMON_HEADER_FILES
+	../include/anki/ankiMath.h
+	../include/anki/common.h
+	../include/anki/exceptions.h
+	../include/anki/general.h
+	../include/anki/math/matrix.h
+	../include/anki/math/point.h
+	../include/anki/math/pose.h
+	../include/anki/math/radians.h
+	../include/anki/math/rotation.h
+)
+
+add_library(CoreTech_Common 
+	${CORETECH_COMMON_SOURCE_FILES}
+	${CORETECH_COMMON_HEADER_FILES}
+)
 
 
 # Common Embedded Library
-file(GLOB CORETECH_COMMON_EMBEDDED_FILES "embedded/*.cpp")
+#file(GLOB CORETECH_COMMON_EMBEDDED_FILES "embedded/*.cpp")
+set(CORETECH_COMMON_EMBEDDED_SOURCE_FILES
+	embedded/array2d.cpp
+	embedded/benchmarking.c
+	embedded/draw.cpp
+	embedded/errorHandling.cpp
+	embedded/fixedLengthList.cpp
+	embedded/geometry.cpp
+	embedded/matlabInterface.cpp
+	embedded/memory.cpp
+	embedded/opencvLight.cpp
+	embedded/utilities.cpp
+)
+
+set(CORETECH_COMMON_EMBEDDED_HEADER_FILES
+	../include/anki/embeddedCommon.h
+	../include/anki/embeddedCommon/array2d.h
+	../include/anki/embeddedCommon/benchmarking.h
+	../include/anki/embeddedCommon/config.h
+	../include/anki/embeddedCommon/dataStructures.h
+	../include/anki/embeddedCommon/draw.h
+	../include/anki/embeddedCommon/errorHandling.h
+	../include/anki/embeddedCommon/fixedLengthList.h
+	../include/anki/embeddedCommon/geometry.h
+	../include/anki/embeddedCommon/gtestLight.h
+	../include/anki/embeddedCommon/matlabInterface.h
+	../include/anki/embeddedCommon/memory.h
+	../include/anki/embeddedCommon/opencvLight.h
+	../include/anki/embeddedCommon/utilities.h
+)
 
 add_library(CoreTech_Common_Embedded 
-	${CORETECH_COMMON_FILES}
-	${CORETECH_COMMON_EMBEDDED_FILES})
+	${CORETECH_COMMON_EMBEDDED_SOURCE_FILES}
+	${CORETECH_COMMON_EMBEDDED_HEADER_FILES}
+)
 
 

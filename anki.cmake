@@ -21,7 +21,7 @@ cmake_policy(SET CMP0015 NEW)
 set(OPENCV_DIR opencv-2.4.6.1)
 set(GTEST_DIR gtest-1.7.0)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
 
 # Set up Matlab directories and mex extension:
 include(FindMatlab) # This Find script doesn't seem to work on Mac!
@@ -97,7 +97,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib/${BUILD_TYPE_DIR})
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin/${BUILD_TYPE_DIR})
 
 link_directories(
-	${PROJECT_SOURCE_DIR}/build/lib/${BUILD_TYPE_DIR}
+	${LIBRARY_OUTPUT_PATH}
 	${PROJECT_SOURCE_DIR}/../coretech-common/build/lib/${BUILD_TYPE_DIR} 
 	${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${OPENCV_DIR}/lib/${CMAKE_CFG_INTDIR}
 	${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${GTEST_DIR}
@@ -137,11 +137,10 @@ macro(build_mex MEX_FILE)
 	add_library(${OUTPUT_NAME} SHARED 
 		${MEX_FILE} 
 		${PROJECT_SOURCE_DIR}/../coretech-common/matlab/mex/mexWrappers.cpp
-		${PROJECT_SOURCE_DIR}/../coretech-common/src/embedded/matlabInterface.cpp
 		${PROJECT_SOURCE_DIR}/../coretech-common/matlab/mex/mexFunction.def
 	)
 
-	target_link_libraries(${OUTPUT_NAME} mex mx mat opencv_core CoreTech_Common CoreTech_Common_Embedded)
+	target_link_libraries(${OUTPUT_NAME} mex mx mat eng opencv_core CoreTech_Common CoreTech_Common_Embedded)
 
 	if(DEFINED MEX_LINK_LIBRARIES)
 		foreach(LIB ${MEX_LINK_LIBRARIES})
