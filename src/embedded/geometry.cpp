@@ -48,19 +48,19 @@ namespace Anki
     template<> IN_DDR void Quadrilateral<f32>::Print() const
     {
       printf("{(%f,%f), (%f,%f), (%f,%f), (%f,%f)} ",
-        this->points[0].x, this->points[0].y,
-        this->points[1].x, this->points[1].y,
-        this->points[2].x, this->points[2].y,
-        this->points[3].x, this->points[3].y);
+        this->corners[0].x, this->corners[0].y,
+        this->corners[1].x, this->corners[1].y,
+        this->corners[2].x, this->corners[2].y,
+        this->corners[3].x, this->corners[3].y);
     }
 
     template<> IN_DDR void Quadrilateral<f64>::Print() const
     {
       printf("{(%f,%f), (%f,%f), (%f,%f), (%f,%f)} ",
-        this->points[0].x, this->points[0].y,
-        this->points[1].x, this->points[1].y,
-        this->points[2].x, this->points[2].y,
-        this->points[3].x, this->points[3].y);
+        this->corners[0].x, this->corners[0].y,
+        this->corners[1].x, this->corners[1].y,
+        this->corners[2].x, this->corners[2].y,
+        this->corners[3].x, this->corners[3].y);
     }
   } // namespace Embedded
 } // namespace Anki

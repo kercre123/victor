@@ -59,6 +59,8 @@ namespace Anki
       // Print out the contents of this FixedLengthList
       Result Print(const char * const variableName = "FixedLengthList", const s32 minIndex = 0, const s32 maxIndex = 0x7FFFFFE) const;
 
+      //FixedLengthList& operator= (const FixedLengthList & rightHandSide);
+
       s32 get_maximumSize() const;
 
       s32 get_size() const;
@@ -165,6 +167,15 @@ namespace Anki
 
     return *this;
     }*/ // FixedLengthList& FixedLengthList<Type>::operator= (const FixedLengthList & rightHandSide)
+
+    //template<typename Type> FixedLengthList<Type>& FixedLengthList<Type>::operator= (const FixedLengthList<Type> & rightHandSide)
+    //{
+    //  Array<Type>::operator= (rightHandSide);
+
+    //  this->capacityUsed = rightHandSide.capacityUsed;
+
+    //  return *this;
+    //}
 
     template<typename Type> s32 FixedLengthList<Type>::get_maximumSize() const
     {
