@@ -23,6 +23,7 @@ set(GTEST_DIR gtest-1.7.0)
 
 # Set the correct C++ language standard (including for Xcode):
 if(WIN32)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_VARIADIC_MAX=10 /D_CRT_SECURE_NO_WARNINGS")
 else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++")
 	set(CMAKE_XCODE_ATTRIBUTE_GCC_VERSION "com.apple.compilers.llvm.clang.1_0")
@@ -133,14 +134,24 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib/${BUILD_TYPE_DIR})
 # Store our executables such as tests in, e.g., coretech-vision/build/bin/Debug
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin/${BUILD_TYPE_DIR})
 
-link_directories(
-	${LIBRARY_OUTPUT_PATH}
-	${PROJECT_SOURCE_DIR}/../coretech-common/build/lib/${BUILD_TYPE_DIR} 
-	${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${OPENCV_DIR}/lib/${CMAKE_CFG_INTDIR}
-	${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${GTEST_DIR}
-	${MATLAB_MEX_LIBRARY} ${MATLAB_MX_LIBRARY} ${MATLAB_ENG_LIBRARY}
-)
-
+if(WIN32)
+	link_directories(
+		${LIBRARY_OUTPUT_PATH}
+		${PROJECT_SOURCE_DIR}/../coretech-common/build/lib/${BUILD_TYPE_DIR} 
+		${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${OPENCV_DIR}/lib/Debug
+		${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${GTEST_DIR}
+		${MATLAB_MEX_LIBRARY} ${MATLAB_MX_LIBRARY} ${MATLAB_ENG_LIBRARY}
+	)
+else()
+	link_directories(
+		${LIBRARY_OUTPUT_PATH}
+		${PROJECT_SOURCE_DIR}/../coretech-common/build/lib/${BUILD_TYPE_DIR} 
+		${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${OPENCV_DIR}/lib/${CMAKE_CFG_INTDIR}
+		${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${GTEST_DIR}
+		${MATLAB_MEX_LIBRARY} ${MATLAB_MX_LIBRARY} ${MATLAB_ENG_LIBRARY}
+	)
+endif(WIN32)
+	
 endmacro(ankiProject)
 
 

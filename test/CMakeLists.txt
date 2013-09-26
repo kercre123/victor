@@ -6,8 +6,13 @@ add_executable(coreTechCommonTests coreTechCommonTests.cpp)
 target_link_libraries(coreTechCommonTests CoreTech_Common_Embedded gtest)
 
 add_executable(run_commonTests embedded/run_commonTests.cpp embedded/commonTests.cpp)
-target_link_libraries(run_commonTests CoreTech_Common_Embedded 
-	gtest opencv_core eng mx opencv_highgui opencv_imgproc)
 
+if(WIN32)
+	target_link_libraries(run_commonTests CoreTech_Common_Embedded 
+		gtest opencv_core246d libeng libmx opencv_highgui246d opencv_imgproc246d)
+else()
+	target_link_libraries(run_commonTests CoreTech_Common_Embedded 
+		gtest opencv_core eng mx opencv_highgui opencv_imgproc)
+endif(WIN32)
 
 
