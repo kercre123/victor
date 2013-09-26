@@ -82,9 +82,7 @@ namespace Anki
       cv::Mat_<Type>& get_CvMat_();
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       void Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues=false) const;
-#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
       // Check every element of this array against the input array. If the arrays are different
       // sizes, uninitialized, or if any element is more different than the threshold, then
@@ -135,6 +133,8 @@ namespace Anki
       s32 Set(const char * const values);
 #endif
 
+      Array& operator= (const Array & rightHandSide);
+
       // Similar to Matlabs size(matrix, dimension), and dimension is in {0,1}
       s32 get_size(s32 dimension) const;
 
@@ -171,6 +171,7 @@ namespace Anki
       void * rawDataPointer;
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      //s32 cvMatMirror_sizeBuffer[2];
       cv::Mat_<Type> cvMatMirror;
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
@@ -179,7 +180,6 @@ namespace Anki
       void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
 
     private:
-      //Array & operator= (const Array & rightHandSide); // In the future, assignment may not be allowed
     }; // class Array
 
 #pragma mark --- FixedPointArray Class Definition ---
@@ -337,9 +337,10 @@ namespace Anki
     }
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     template<typename Type> void  Array<Type>::Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues) const
     {
+      // If opencv is not used, just do nothing
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
       AnkiConditionalError(this->IsValid(), "Array<Type>::Show", "Array<Type> is not valid");
 
       if(scaleValues) {
@@ -361,8 +362,8 @@ namespace Anki
       if(waitForKeypress) {
         cv::waitKey();
       }
-    }
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+    }
 
     template<typename Type> bool Array<Type>::IsElementwiseEqual(const Array &array2, const Type threshold) const
     {
@@ -544,6 +545,27 @@ namespace Anki
       return numValuesSet;
     }
 #endif // #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
+
+    template<typename Type> Array<Type>& Array<Type>::operator= (const Array<Type> & rightHandSide)
+    {
+      this->size[0] = rightHandSide.size[0];
+      this->size[1] = rightHandSide.size[1];
+
+      this->stride = rightHandSide.stride;
+      this->useBoundaryFillPatterns = rightHandSide.useBoundaryFillPatterns;
+      this->data = rightHandSide.data;
+      this->rawDataPointer = rightHandSide.rawDataPointer;
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      // These two should be set, because if the Array constructor was not called, these will not be initialized
+      this->cvMatMirror.step.p = this->cvMatMirror.step.buf;
+      this->cvMatMirror.size = &this->cvMatMirror.rows;
+
+      this->cvMatMirror = cv::Mat_<Type>(rightHandSide.size[0], rightHandSide.size[1], rightHandSide.data, rightHandSide.stride);
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      return *this;
+    }
 
     template<typename Type> s32 Array<Type>::get_size(s32 dimension) const
     {
