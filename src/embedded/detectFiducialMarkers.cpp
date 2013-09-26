@@ -167,6 +167,8 @@ namespace Anki
             return RESULT_FAIL;
 
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
+
+          // TODO: invalidate filled center components
         } // PUSH_MEMORY_STACK(scratch2);
       } // PUSH_MEMORY_STACK(scratch2);
 
