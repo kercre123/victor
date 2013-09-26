@@ -53,8 +53,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   Point<s16> startPoint(static_cast<s16>(*startPointMatrix.Pointer(0,1)-1), static_cast<s16>(*startPointMatrix.Pointer(0,0)-1));
   const BoundaryDirection initialDirection = stringToBoundaryDirection(initialDirectionString);
 
-  if(TraceBoundary(binaryImg, startPoint, initialDirection, boundary) != RESULT_OK) {
-    printf("Error: mexTraceBoundary\n");
+  if(TraceInteriorBoundary(binaryImg, startPoint, initialDirection, boundary) != RESULT_OK) {
+    printf("Error: mexTraceInteriorBoundary\n");
   }
 
   Array<f64> boundaryMatrix = AllocateArrayFromHeap<f64>(boundary.get_size(), 2);

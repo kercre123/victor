@@ -45,7 +45,7 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
-#include "blockImage50.h"
+#include "../../blockImages/blockImage50.h"
 
 IN_DDR GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
 {
@@ -312,7 +312,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
     DrawComponents<u8>(drawnComponents, components, 64, 255);
 
     matlab.PutArray(drawnComponents, "drawnComponents");
-    drawnComponents.Show("drawnComponents", true, false);
+    //drawnComponents.Show("drawnComponents", true, false);
 
     free(scratch0.get_buffer());
   }
@@ -482,13 +482,13 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
   DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
 
   matlab.PutArray(drawnComponents, "drawnComponents0");
-  drawnComponents.Show("drawnComponents0", false, false);
+  //drawnComponents.Show("drawnComponents0", false, false);
 
   extractedComponents.InvalidateFilledCenterComponents(component_percentHorizontal, component_percentVertical, scratch1);
   drawnComponents.SetZero();
   DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
   matlab.PutArray(drawnComponents, "drawnComponents1");
-  drawnComponents.Show("drawnComponents1", true, false);
+  //drawnComponents.Show("drawnComponents1", true, false);
 
   free(scratch0.get_buffer());
   free(scratch1.get_buffer());

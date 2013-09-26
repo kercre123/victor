@@ -158,7 +158,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             double width = capture[device]->get(CV_CAP_PROP_FRAME_WIDTH);
             double height = capture[device]->get(CV_CAP_PROP_FRAME_HEIGHT);
             
-            mwSize dims[3] = {height, width, 3};
+            mwSize dims[3] = {static_cast<mwSize>(height), static_cast<mwSize>(width), 3};
             plhs[0] = mxCreateNumericArray(3, dims, mxDOUBLE_CLASS, mxREAL);
         }
         else {

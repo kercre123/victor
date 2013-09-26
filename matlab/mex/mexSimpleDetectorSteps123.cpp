@@ -82,8 +82,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   const u16 numComponents = extractedComponents.get_maximumId();
 
-  s32 * const numComponentSegments = reinterpret_cast<s32*>(scratch0.Allocate(sizeof(s32)*(numComponents+1)));
-
+  FixedLengthList<s32> numComponentSegments(numComponents+1, scratch0);
   {
     const Result result = extractedComponents.ComputeNumComponentSegmentsForEachId(numComponentSegments);
 
