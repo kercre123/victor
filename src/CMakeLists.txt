@@ -12,9 +12,24 @@ target_link_libraries(CoreTech_Vision)
 # Vision Embedded Library
 #message("CORETECH_VISION_LIBNAME_EMBEDDED has been set to ${CORETECH_VISION_LIBNAME_EMBEDDED}")
 
-file(GLOB CORETECH_VISION_EMBEDDED_FILES "embedded/*.cpp")
+# file(GLOB CORETECH_VISION_EMBEDDED_FILES "embedded/*.cpp")
+set(CORETECH_VISION_EMBEDDED_FILES
+	embedded/array2d_vision.cpp
+	embedded/binomialFilter.cpp
+	embedded/computeCharacteristicScale.cpp
+	embedded/computeQuadrilaterals.cpp
+	embedded/connectedComponents.cpp
+	embedded/dataStructures_vision.cpp
+	embedded/detectFiducialMarkers.cpp
+	embedded/downsampleByFactor.cpp
+	embedded/draw_vision.cpp
+	embedded/filtering.cpp
+	embedded/fixedLengthList_vision.cpp
+	embedded/thresholdScaleImage.cpp
+	embedded/traceBoundary.cpp
+	embedded/transformations.cpp
+)
 
 add_library(CoreTech_Vision_Embedded
-	${CORETECH_VISION_FILES}
 	${CORETECH_VISION_EMBEDDED_FILES})
 
