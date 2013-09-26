@@ -14,6 +14,7 @@
 #include "opencv2/opencv.hpp"
 #endif
 
+#include "mex.h"
 #include "engine.h"
 #include "matrix.h"
 

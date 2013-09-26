@@ -137,7 +137,7 @@ macro(build_mex MEX_FILE)
 	add_library(${OUTPUT_NAME} SHARED 
 		${MEX_FILE} 
 		${PROJECT_SOURCE_DIR}/../coretech-common/matlab/mex/mexWrappers.cpp
-		${PROJECT_SOURCE_DIR}/../coretech-common/matlab/mex/mexEmbeddedWrappers.cpp
+		${PROJECT_SOURCE_DIR}/../coretech-common/src/embedded/matlabInterface.cpp
 		${PROJECT_SOURCE_DIR}/../coretech-common/matlab/mex/mexFunction.def
 	)
 

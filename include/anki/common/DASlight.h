@@ -10,6 +10,6 @@
 #ifndef __DAS_LIGHT_H__
 #define __DAS_LIGHT_H__
 
-#include "anki/embeddedCommon/DASlight.h"
+#include "anki/common/DASlight.h"
 
 #endif /* defined(__DAS_LIGHT_H__) */
