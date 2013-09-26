@@ -7,8 +7,6 @@
 #include "cozmoBot.h"
 extern CozmoBot gCozmoBot;
 
-using namespace webots;
-
 
 //Why do some of those not match ASCII codes?
 //Numbers, spacebar etc. work, letters are different, why?

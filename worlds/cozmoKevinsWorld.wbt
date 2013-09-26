@@ -91,6 +91,58 @@ DirectionalLight {
   direction 1 -2 1
   castShadows TRUE
 }
+
+
+DEF COORD_AXES Transform {
+  translation -0.6 0.06 0.6
+  rotation 1 0 0 -1.57
+
+  children [
+		Shape {
+			appearance Appearance {
+				material Material {
+					diffuseColor 0.9 0 0
+				}
+			}
+			geometry IndexedLineSet {
+
+				coord Coordinate {
+					point [
+						# Frame
+						0 0 0
+						0 0.1 0
+						0.1 0 0
+			 
+						# X
+						0.12 -0.02 0
+						0.16 0.02 0   
+						0.12 0.02 0
+						0.16 -0.02 0
+
+						# Y
+						0 0.12 0
+						0 0.14 0
+						-0.02 0.16 0
+						0.02 0.16 0 
+			 
+					]
+				}
+				coordIndex [ 
+					# Frame
+					1 0 2 -1 
+
+					# X
+					3 4 -1 5 6 -1
+			 
+					# Y
+					7 8 9 -1 8 10 -1
+					
+				]
+			}
+		}
+	]
+}
+
 DEF FLOOR Solid {
   rotation 0 1 0 3.1415
   children [

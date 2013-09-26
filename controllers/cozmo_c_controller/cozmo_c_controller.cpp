@@ -21,9 +21,6 @@
 #include "keyboardController.h"
 #include "cozmoConfig.h"
 
-using namespace Localization;
-using namespace PathFollower;
-
 
 /*
  * You may want to add macros here.
@@ -126,8 +123,8 @@ int main(int argc, char **argv)
   gCozmoBot.Init();
 
   InitMotors();
-  InitPathFollower();
-  InitLocalization();
+  PathFollower::InitPathFollower();
+  Localization::InitLocalization();
   // TODO: Init more things?
 
 #ifdef ENABLE_KEYBOARD_CONTROL

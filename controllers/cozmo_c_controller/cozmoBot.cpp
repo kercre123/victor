@@ -29,8 +29,6 @@
 // Global Cozmo robot instance
 CozmoBot gCozmoBot;
 
-using namespace std;
-using namespace PathFollower;
 
 CozmoBot::CozmoBot() : Supervisor() 
 {
@@ -254,13 +252,13 @@ void CozmoBot::run()
 
 
       // Create a path and follow it
-      AppendPathSegment_Line(0, 0.0, 0.0, 0.3, -0.3);
+      PathFollower::AppendPathSegment_Line(0, 0.0, 0.0, 0.3, -0.3);
       float arc1_radius = sqrt(0.005);  // Radius of sqrt(0.05^2 + 0.05^2)
-      AppendPathSegment_Arc(0, 0.35, -0.25, arc1_radius, -0.75*PI, 0); 
-      AppendPathSegment_Line(0, 0.35 + arc1_radius, -0.25, 0.35 + arc1_radius, 0.2);
+      PathFollower::AppendPathSegment_Arc(0, 0.35, -0.25, arc1_radius, -0.75*PI, 0); 
+      PathFollower::AppendPathSegment_Line(0, 0.35 + arc1_radius, -0.25, 0.35 + arc1_radius, 0.2);
       float arc2_radius = sqrt(0.02); // Radius of sqrt(0.1^2 + 0.1^2)
-      AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, PI_DIV2);
-      StartPathTraversal();
+      PathFollower::AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, PI_DIV2);
+      PathFollower::StartPathTraversal();
 
       driving = TRUE;
     }

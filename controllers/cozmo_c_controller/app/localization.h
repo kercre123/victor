@@ -3,16 +3,13 @@
 
 #include "cozmoTypes.h"
 
-using namespace Anki;
-using namespace Anki::Embedded;
-
 
 namespace Localization
 {
 
 
   void InitLocalization();
-  Pose2d GetCurrMatPose();
+  Anki::Embedded::Pose2d GetCurrMatPose();
   void UpdateLocalization();
 
 

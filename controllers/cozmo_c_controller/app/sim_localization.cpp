@@ -5,22 +5,18 @@
 #include "cozmoBot.h"
 extern CozmoBot gCozmoBot;
 
-using namespace Anki;
-using namespace Anki::Embedded;
-
-
 namespace Localization
 {
   namespace {
     // private members
-    Pose2d currMatPose;
+    Anki::Embedded::Pose2d currMatPose;
   }
 
   void InitLocalization() {
 
   }
 
-  Pose2d GetCurrMatPose()
+  Anki::Embedded::Pose2d GetCurrMatPose()
   {
     return currMatPose;
   }

@@ -20,11 +20,10 @@
 #include <vector>
 
 // Types for paths
-using namespace std;
-typedef vector<float> PathVertex_t;
-typedef vector<PathVertex_t> Path_t;
-typedef map<int, Path_t > PathMap_t;
-typedef map<int, PathMap_t> RobotPathMap_t;
+typedef std::vector<float> PathVertex_t;
+typedef std::vector<PathVertex_t> Path_t;
+typedef std::map<int, Path_t > PathMap_t;
+typedef std::map<int, PathMap_t> RobotPathMap_t;
 
 // Map of all paths indexed by robotID and pathID
 static RobotPathMap_t robotPathMap;

@@ -4,8 +4,6 @@
 #include "app/vehicleMath.h"
 #include <stdio.h>
 
-using namespace Anki::Embedded;
-using namespace Localization;
 
 #define ENABLE_PATH_VIZ 1
 
@@ -29,18 +27,20 @@ namespace {
     PathSegmentType type;
 
     // Line
-    Point2f startPt;
-    Point2f endPt;
+    Anki::Embedded::Point2f startPt;
+    Anki::Embedded::Point2f endPt;
     float m;  // slope of line
     float b;  // y-intersect of line
     float dy_sign; // 1 if endPt.y - startPt.y >= 0
-    Radians theta; // angle of line
+    Anki::Radians theta; // angle of line
+    // TODO: Speed profile (by distance along line)
+
 
     // Arc
-    Point2f centerPt;
+    Anki::Embedded::Point2f centerPt;
     float radius;
-    Radians startRad;
-    Radians endRad;
+    Anki::Radians startRad;
+    Anki::Radians endRad;
     BOOL movingCCW;
 
   } PathSegment;
@@ -177,7 +177,7 @@ BOOL ProcessPathSegmentLine(float &shortestDistanceToPath_m, float &radDiff)
   // Find shortest path to current segment.
   // Shortest path is along a line with inverse negative slope (i.e. -1/m).
   // Point of intersection is solution to mx + b == (-1/m)*x + b_inv where b_inv = y-(-1/m)*x
-  Pose2d currPose = GetCurrMatPose();
+  Anki::Embedded::Pose2d currPose = Localization::GetCurrMatPose();
 
   float x = currPose.get_x();
   float y = currPose.get_y();
@@ -262,7 +262,7 @@ BOOL ProcessPathSegmentArc(float &shortestDistanceToPath_m, float &radDiff)
          currPathSegment_, currSeg->centerPt.x, currSeg->centerPt.y, currSeg->startRad.ToFloat(), currSeg->endRad.ToFloat(), currSeg->radius);
 #endif
 
-  Pose2d currPose = GetCurrMatPose();
+  Anki::Embedded::Pose2d currPose = Localization::GetCurrMatPose();
 
   float x = currPose.get_x();
   float y = currPose.get_y();
@@ -274,8 +274,8 @@ BOOL ProcessPathSegmentArc(float &shortestDistanceToPath_m, float &radDiff)
   float x_center = currSeg->centerPt.x;
   float y_center = currSeg->centerPt.y;
   float r = currSeg->radius;
-  Radians startRad = currSeg->startRad;
-  Radians endRad = currSeg->endRad;
+  Anki::Radians startRad = currSeg->startRad;
+  Anki::Radians endRad = currSeg->endRad;
 
   // Line formed by circle center and robot pose
   float dy = y - y_center;
@@ -325,8 +325,8 @@ BOOL ProcessPathSegmentArc(float &shortestDistanceToPath_m, float &radDiff)
 
 
   // Find heading error
-  Radians theta_line = atan2(dy,dx); // angle of line from circle center to robot
-  Radians theta_tangent = theta_line + Radians((currSeg->movingCCW ? 1 : -1 ) * PI_DIV2);
+  Anki::Radians theta_line = atan2(dy,dx); // angle of line from circle center to robot
+  Anki::Radians theta_tangent = theta_line + Anki::Radians((currSeg->movingCCW ? 1 : -1 ) * PI_DIV2);
   
   radDiff = (theta_tangent - currPose.get_angle()).ToFloat();
 

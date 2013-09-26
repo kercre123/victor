@@ -11,9 +11,6 @@
 #include "debug.h"
 #include <stdio.h>
  
- 
-using namespace Localization;
-using namespace PathFollower;
 
 #if(DEBUG_MAIN_EXECUTION)
 #include "cozmoBot.h"
@@ -31,11 +28,11 @@ void CozmoMainExecution(void)
   static float radErr = 0;
 
 
-  UpdateLocalization();
+  Localization::UpdateLocalization();
 
   // Figure out what fidx should be according to pathFollower
-  if (IsTraversingPath()) {
-    BOOL gotError = GetPathError(pathDistErr, radErr);
+  if (PathFollower::IsTraversingPath()) {
+    BOOL gotError = PathFollower::GetPathError(pathDistErr, radErr);
     if (gotError) {
       fidx = pathDistErr*1000; // Convert to mm
       printf("fidx: %d\n\n", fidx);
