@@ -138,7 +138,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  FixedLengthList<Point<s16>> boundary(boundaryLength, ms);
+  FixedLengthList<Point<s16> > boundary(boundaryLength, ms);
 
   const s16 componentsX_groundTruth[] = {105, 105, 106, 107, 108, 109, 109, 108, 107, 106, 105, 105, 105, 105, 106, 107, 108, 109, 108, 107, 106, 105, 105, 104, 104, 104, 104, 104, 103, 103, 103, 103, 103, 102, 101, 101, 101, 101, 101, 100, 100, 100, 100, 100, 101, 102, 103, 104, 104, 104, 103, 102, 101, 100, 100, 101, 102, 102, 102, 102, 102, 103, 104, 104, 105};
   const s16 componentsY_groundTruth[] = {200, 201, 201, 201, 201, 201, 202, 202, 202, 202, 202, 203, 204, 205, 205, 205, 205, 205, 205, 205, 205, 205, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 206, 206, 205, 204, 204, 204, 204, 204, 203, 203, 203, 202, 201, 200, 201, 201, 201, 200, 200};
@@ -147,7 +147,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
     boundary.PushBack(Point<s16>(componentsX_groundTruth[i], componentsY_groundTruth[i]));
   }
 
-  FixedLengthList<Point<s16>> peaks(4, ms);
+  FixedLengthList<Point<s16> > peaks(4, ms);
 
   const Result result = ExtractLaplacianPeaks(boundary, peaks, ms);
   ASSERT_TRUE(result == RESULT_OK);
@@ -318,7 +318,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   }
 #endif // DRAW_TraceNextExteriorBoundary
 
-  FixedLengthList<Point<s16>> extractedBoundary(boundaryLength, ms);
+  FixedLengthList<Point<s16> > extractedBoundary(boundaryLength, ms);
 
   {
     s32 endComponentIndex = -1;
@@ -367,7 +367,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
   components.PushBack(component8);
   components.PushBack(component9);
 
-  FixedLengthList<Anki::Embedded::Rectangle<s16>> componentBoundingBoxes(numComponents, ms);
+  FixedLengthList<Anki::Embedded::Rectangle<s16> > componentBoundingBoxes(numComponents, ms);
   {
     const Result result = components.ComputeComponentBoundingBoxes(componentBoundingBoxes);
     ASSERT_TRUE(result == RESULT_OK);
@@ -414,7 +414,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
   components.PushBack(component8);
   components.PushBack(component9);
 
-  FixedLengthList<Point<s16>> componentCentroids(numComponents, ms);
+  FixedLengthList<Point<s16> > componentCentroids(numComponents, ms);
   {
     const Result result = components.ComputeComponentCentroids(componentCentroids, ms);
     ASSERT_TRUE(result == RESULT_OK);

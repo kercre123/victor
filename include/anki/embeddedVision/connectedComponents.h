@@ -20,6 +20,8 @@ namespace Anki
       // TODO: when this class is converted to accept single scanlines as input, this will be significantly refactored
       static Result Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment> &extractedComponents);
 
+      ConnectedComponents();
+
       // Constructor for a ConnectedComponents, pointing to user-allocated MemoryStack
       ConnectedComponents(const s32 maxComponentSegments, MemoryStack &memory);
 
@@ -52,12 +54,12 @@ namespace Anki
       //
       // For a ConnectedComponent that has a maximum id of N, this function requires
       // 4n + 4 bytes of scratch.
-      Result ComputeComponentCentroids(FixedLengthList<Point<s16>> &componentCentroids, MemoryStack scratch);
+      Result ComputeComponentCentroids(FixedLengthList<Point<s16> > &componentCentroids, MemoryStack scratch);
 
       // Iterate through components, and compute bounding box for each component
       // componentBoundingBoxes must be at least sizeof(Rectangle<s16>)*(maximumdId+1) bytes
       // Note: this is probably inefficient, compared with interlacing the loops in a kernel
-      Result ComputeComponentBoundingBoxes(FixedLengthList<Rectangle<s16>> &componentBoundingBoxes);
+      Result ComputeComponentBoundingBoxes(FixedLengthList<Rectangle<s16> > &componentBoundingBoxes);
 
       // Iterate through components, and compute the number of componentSegments that have each id
       // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes

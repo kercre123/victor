@@ -177,7 +177,7 @@ namespace Anki
     // next component is therefore startComponentIndex+1 .
     //
     // Requires sizeof(s16)*(2*componentWidth + 2*componentHeight) bytes of scratch
-    IN_DDR Result TraceNextExteriorBoundary(const ConnectedComponents &components, const s32 startComponentIndex, FixedLengthList<Point<s16>> &extractedBoundary, s32 &endComponentIndex, MemoryStack scratch)
+    IN_DDR Result TraceNextExteriorBoundary(const ConnectedComponents &components, const s32 startComponentIndex, FixedLengthList<Point<s16> > &extractedBoundary, s32 &endComponentIndex, MemoryStack scratch)
     {
       AnkiConditionalErrorAndReturnValue(components.IsValid(),
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "components is not valid");

@@ -33,18 +33,25 @@ namespace Anki
     }
 
     FiducialMarker::FiducialMarker()
-      : upperLeft(-1,-1), upperRight(-1,-1), lowerLeft(-1,-1), lowerRight(-1,-1), blockType(-1), faceType(-1)
     {
     } // FiducialMarker::FiducialMarker()
 
-    FiducialMarker::FiducialMarker(const Point<s32> upperLeft, const Point<s32> upperRight, const Point<s32> lowerLeft, const Point<s32> lowerRight, const s16 blockType, const s16 faceType)
-      : upperLeft(upperLeft), upperRight(upperRight), lowerLeft(lowerLeft), lowerRight(lowerRight), blockType(blockType), faceType(faceType)
-    {
-    } // FiducialMarker::FiducialMarker(const Point<s32> upperLeft, const Point<s32> upperRight, const Point<s32> lowerLeft, const Point<s32> lowerRight, const s16 blockType, const s16 faceType)
-
     void FiducialMarker::Print() const
     {
-      printf("[%d,%d: (%f,%f) (%f,%f) (%f,%f) (%f,%f)] ", blockType, faceType, upperLeft.x, upperLeft.y, upperRight.x, upperRight.y, lowerLeft.x, lowerLeft.y, lowerRight.x, lowerRight.y);
+      printf("[%d,%d: (%d,%d) (%d,%d) (%d,%d) (%d,%d)] ", blockType, faceType, corners[0].x, corners[0].y, corners[1].x, corners[1].y, corners[2].x, corners[2].y, corners[3].x, corners[3].y);
+    }
+
+    FiducialMarker& FiducialMarker::operator= (const FiducialMarker &marker2)
+    {
+      this->blockType = marker2.blockType;
+      this->faceType = marker2.faceType;
+      this->homography = marker2.homography;
+
+      for(s32 i=0; i<4; i++) {
+        this->corners[i] = marker2.corners[i];
+      }
+
+      return *this;
     }
   } // namespace Embedded
 } // namespace Anki
