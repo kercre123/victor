@@ -149,7 +149,7 @@ public:
   void makeNegative();
 };
 
-} // namespace BaseStation
+} // namespace Anki
 
-#endif // BASESTATION_UTILS_RADIANS_H_
+#endif // _ANKICORETECH_COMMON_RADIANS_H_
 

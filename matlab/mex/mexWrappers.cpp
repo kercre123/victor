@@ -3,7 +3,7 @@
 // Specialization for double input:
 template <>
 mxArray * image2mxArray<double>(const double *img,
-                                const int nrows, const int ncols, const int nbands)
+                                const mwSize nrows, const mwSize ncols, const mwSize nbands)
 {
   const mwSize outputDims[3] = {ncols, nrows, nbands};
   mxArray *outputArray = mxCreateNumericArray(3, outputDims,
@@ -66,11 +66,11 @@ unsigned int mxArray2simpleArray<double>(const mxArray *array, double* &outputAr
 #if USE_OPENCV
 mxArray* cvMat2mxArray(const cv::Mat &mat)
 {
-  int  type   = mat.type();
-  int nbands = mat.channels(); //CV_MAT_CN(type);
+  //int  type   = mat.type();
+  mwSize nbands = mat.channels(); //CV_MAT_CN(type);
   int depth  = mat.depth(); //CV_MAT_DEPTH(type);
 
-  int nrows = mat.rows, ncols = mat.cols;
+  mwSize nrows = mat.rows, ncols = mat.cols;
 
   const mwSize outputDims[3] = {nrows,ncols,nbands};
   mxArray *outputArray;
@@ -122,6 +122,7 @@ mxArray* cvMat2mxArray(const cv::Mat &mat)
     {
       //std::cout << "NOT supported depth!!" << depth << ", type: " << type << std::endl;
       //return NULL
+      outputArray = NULL;
       mexErrMsgTxt("Unsupported cv::Mat depth for conversion to mxArray!");
     }
   }
