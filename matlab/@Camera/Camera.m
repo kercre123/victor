@@ -10,6 +10,9 @@ classdef Camera < handle
         % the distorted coordinates dynamically, 1 to get full size tables,
         % 2 to get halfsize tables, etc.)  Must be integer.
         DistortionLUTres = 20;
+        
+        % For creating blurry simulated images
+        WebotBlurKernel = fspecial('gaussian', 5, 3);
     end
     
     properties(GetAccess = 'public', SetAccess = 'public')
@@ -54,6 +57,7 @@ classdef Camera < handle
             Dependent = true)
         
         calibrationMatrix;
+        FOV_vertical, FOV_horizontal;
         
     end
     
@@ -173,6 +177,12 @@ classdef Camera < handle
                     this.image = this.image(:,:,[3 2 1]); % BGR to RGB
                 case 'webot'
                     this.image = wb_camera_get_image(this.deviceID);
+                    
+                    if ~isempty(Camera.WebotBlurKernel)
+                        this.image = imfilter(this.image, ...
+                            Camera.WebotBlurKernel, 'replicate');
+                    end
+                    
                 otherwise
                     error('Unrecognized deviceType "%s".', this.deviceType);
                     
@@ -227,6 +237,15 @@ classdef Camera < handle
             end
             
             this.image_ = I;
+        end
+        
+        function fov = get.FOV_vertical(this)
+            fov = 2*atan2(this.nrows, 2*this.focalLength(2));
+        end
+        
+        function fov = get.FOV_horizontal(this)
+            aspect = this.ncols / this.nrows;
+            fov = aspect * this.FOV_vertical;
         end
                 
     end % METHODS (Dependent get/set)
