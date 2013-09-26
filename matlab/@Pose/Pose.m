@@ -95,6 +95,7 @@ classdef Pose < handle
             if isvector(Rin)
                 assert(length(Rin)==3, ...
                     'Rotation vector should have 3 elements.');
+                                
                 [this.Rmat, this.dRmat_dRvec] = rodrigues(Rin);
                 this.Rvec = rodrigues(this.Rmat);
                 
@@ -133,7 +134,13 @@ classdef Pose < handle
     
     methods
         function theta = get.angle(this)
+            % Return angles on the interval (-pi,+pi]
             theta = norm(this.Rvec);
+            if theta > pi
+                theta = theta - 2*pi;
+            end
+            assert(theta > -pi && theta <= pi, ...
+                'Angle should be on interval (-pi,+pi].');
         end
         
         function v = get.axis(this)
