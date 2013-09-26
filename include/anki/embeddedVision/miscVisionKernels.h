@@ -34,6 +34,17 @@ namespace Anki
       MemoryStack scratch1,
       MemoryStack scratch2);
 
+    Result SimpleDetector_Steps1234(
+      const Array<u8> &image,
+      FixedLengthList<FiducialMarker> &markers,
+      const s32 scaleImage_numPyramidLevels,
+      const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
+      const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
+      const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
+      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold,
+      MemoryStack scratch1,
+      MemoryStack scratch2);
+
     //Result DetectFiducialMarkers(const Array<u8> &image, FixedLengthList<FiducialMarker> &markers, MemoryStack scratch);
 
     Result BinomialFilter(const Array<u8> &image, Array<u8> &imageFiltered, MemoryStack scratch);
@@ -58,7 +69,7 @@ namespace Anki
     // next component is therefore startComponentIndex+1 .
     //
     // Requires sizeof(s16)*(2*componentWidth + 2*componentHeight) bytes of scratch
-    Result TraceNextExteriorBoundary(const ConnectedComponents &components, const s32 startComponentIndex, FixedLengthList<Point<s16>> &extractedBoundary, s32 &endComponentIndex, MemoryStack scratch);
+    Result TraceNextExteriorBoundary(const ConnectedComponents &components, const s32 startComponentIndex, FixedLengthList<Point<s16> > &extractedBoundary, s32 &endComponentIndex, MemoryStack scratch);
 
     FixedPointArray<s32> Get1dGaussianKernel(const s32 sigma, const s32 numSigmaFractionalBits, const s32 numStandardDeviations, MemoryStack &scratch);
 
@@ -73,7 +84,9 @@ namespace Anki
     // their original clockwise or counter-clockwise ordering.
     //
     // Requires ??? bytes of scratch
-    Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16>> &boundary, FixedLengthList<Point<s16>> &peaks, MemoryStack scratch);
+    Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16> > &boundary, FixedLengthList<Point<s16> > &peaks, MemoryStack scratch);
+
+    Result ComputeHomographyFromQuad(const Quadrilateral<s16> &quad, Array<f64> &homography, MemoryStack scratch);
 
     template<typename T> inline T Interpolate2d(const T pixel00, const T pixel01, const T pixel10, const T pixel11, const T alphaY, const T alphaYinverse, const T alphaX, const T alphaXinverse);
 

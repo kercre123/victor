@@ -56,6 +56,11 @@ namespace Anki
       return RESULT_OK;
     } // Result Extract1dComponents(const u8 * restrict binaryImageRow, const s32 binaryImageWidth, const s32 minComponentWidth, FixedLengthList<Point<s16> > &components)
 
+    ConnectedComponents::ConnectedComponents()
+      : isSortedInId(true), isSortedInY(true), isSortedInX(true), maximumId(0)
+    {
+    }
+
     // Constructor for a ConnectedComponents, pointing to user-allocated MemoryStack
     ConnectedComponents::ConnectedComponents(const s32 maxComponentSegments, MemoryStack &memory)
       : isSortedInId(true), isSortedInY(true), isSortedInX(true), maximumId(0)
@@ -309,7 +314,7 @@ namespace Anki
     //
     // For a ConnectedComponent that has a maximum id of N, this function requires
     // 12n + 12 bytes of scratch.
-    IN_DDR Result ConnectedComponents::ComputeComponentCentroids(FixedLengthList<Point<s16>> &componentCentroids, MemoryStack scratch)
+    IN_DDR Result ConnectedComponents::ComputeComponentCentroids(FixedLengthList<Point<s16> > &componentCentroids, MemoryStack scratch)
     {
       AnkiConditionalErrorAndReturnValue(componentCentroids.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "componentCentroids is not valid");
       AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "components is not valid");
@@ -317,7 +322,7 @@ namespace Anki
       componentCentroids.SetZero();
       componentCentroids.set_size(maximumId+1);
 
-      FixedLengthList<Point<s32>> componentCentroidAccumulators(maximumId+1, scratch);
+      FixedLengthList<Point<s32> > componentCentroidAccumulators(maximumId+1, scratch);
       componentCentroidAccumulators.set_size(maximumId+1);
       componentCentroidAccumulators.SetZero();
 
@@ -362,7 +367,7 @@ namespace Anki
     // Iterate through components, and compute bounding box for each component
     // componentBoundingBoxes must be at least sizeof(Rectangle<s16>)*(maximumdId+1) bytes
     // Note: this is probably inefficient, compared with interlacing the loops in a kernel
-    IN_DDR Result ConnectedComponents::ComputeComponentBoundingBoxes(FixedLengthList<Rectangle<s16>> &componentBoundingBoxes)
+    IN_DDR Result ConnectedComponents::ComputeComponentBoundingBoxes(FixedLengthList<Rectangle<s16> > &componentBoundingBoxes)
     {
       AnkiConditionalErrorAndReturnValue(componentBoundingBoxes.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "componentBoundingBoxes is not valid");
       AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "components is not valid");
@@ -621,7 +626,7 @@ namespace Anki
     {
       const s32 numFractionalBitsForPercents = 8;
 
-      FixedLengthList<Rectangle<s16>> componentBoundingBoxes(maximumId+1, scratch);
+      FixedLengthList<Rectangle<s16> > componentBoundingBoxes(maximumId+1, scratch);
 
       if(ComputeComponentBoundingBoxes(componentBoundingBoxes) != RESULT_OK)
         return RESULT_FAIL;

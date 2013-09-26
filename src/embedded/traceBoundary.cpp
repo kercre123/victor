@@ -177,7 +177,7 @@ namespace Anki
     // next component is therefore startComponentIndex+1 .
     //
     // Requires sizeof(s16)*(2*componentWidth + 2*componentHeight) bytes of scratch
-    IN_DDR Result TraceNextExteriorBoundary(const ConnectedComponents &components, const s32 startComponentIndex, FixedLengthList<Point<s16>> &extractedBoundary, s32 &endComponentIndex, MemoryStack scratch)
+    IN_DDR Result TraceNextExteriorBoundary(const ConnectedComponents &components, const s32 startComponentIndex, FixedLengthList<Point<s16> > &extractedBoundary, s32 &endComponentIndex, MemoryStack scratch)
     {
       AnkiConditionalErrorAndReturnValue(components.IsValid(),
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "components is not valid");
@@ -188,13 +188,16 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "scratch is not valid");
 
-      AnkiConditionalErrorAndReturnValue(!components.get_isSortedInId(),
+      AnkiConditionalErrorAndReturnValue(components.get_isSortedInId(),
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "components must be sorted in id");
 
       AnkiConditionalErrorAndReturnValue(startComponentIndex >= 0 && startComponentIndex < components.get_size(),
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "startComponentIndex is not in range");
 
       const u16 componentId = components[startComponentIndex].id;
+
+      AnkiConditionalErrorAndReturnValue(componentId > 0,
+        RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "componentId is not valid.");
 
       extractedBoundary.Clear();
 
@@ -221,6 +224,11 @@ namespace Anki
         boundingBox.right = MAX(boundingBox.right, xEnd);
         boundingBox.top = MIN(boundingBox.top, y);
         boundingBox.bottom = MAX(boundingBox.bottom, y);
+      }
+
+      if(boundingBox.left == s16_MAX || boundingBox.right == s16_MIN || boundingBox.top == s16_MAX || boundingBox.bottom == s16_MIN) {
+        AnkiWarn("ComputeQuadrilateralsFromConnectedComponents", "Something was corrupted with the input component");
+        return RESULT_FAIL;
       }
 
       //height = coordinate_bottom - coordinate_top + 1;

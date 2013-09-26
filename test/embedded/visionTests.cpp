@@ -47,6 +47,83 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 #include "../../blockImages/blockImage50.h"
 
+// The test is if it can run without crashing
+IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
+{
+  const s32 scaleImage_numPyramidLevels = 6;
+
+  const s16 component1d_minComponentWidth = 0;
+  const s16 component1d_maxSkipDistance = 0;
+
+  const f32 minSideLength = 0.03f*MAX(blockImage50_HEIGHT,blockImage50_WIDTH);
+  const f32 maxSideLength = 0.9f*MIN(blockImage50_HEIGHT,blockImage50_WIDTH);
+
+  const s32 component_minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
+  const s32 component_maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
+  const s32 component_sparseMultiplyThreshold = 1000 << 5;
+  const s32 component_solidMultiplyThreshold = 2 << 5;
+
+  const s32 component_percentHorizontal = 1 << 7; // 0.5, in SQ 23.8
+  const s32 component_percentVertical = 1 << 7; // 0.5, in SQ 23.8
+
+  const s32 maxExtractedQuads = 1000;
+  const s32 quads_minQuadArea = 100;
+  const s32 quads_quadSymmetryThreshold = 384;
+
+  const s32 maxMarkers = 100;
+
+  const u32 numBytes0 = 10000000;
+  MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
+  ASSERT_TRUE(scratch0.IsValid());
+
+  const u32 numBytes1 = 10000000;
+  MemoryStack scratch1(calloc(numBytes1,1), numBytes0);
+  ASSERT_TRUE(scratch1.IsValid());
+
+  const u32 numBytes2 = 10000000;
+  MemoryStack scratch2(calloc(numBytes2,1), numBytes2);
+  ASSERT_TRUE(scratch2.IsValid());
+
+  const s32 maxConnectedComponentSegments = u16_MAX;
+  ConnectedComponents extractedComponents(maxConnectedComponentSegments, scratch0);
+
+  Array<u8> image(blockImage50_HEIGHT, blockImage50_WIDTH, scratch0);
+  image.Set(&blockImage50[0], blockImage50_HEIGHT*blockImage50_WIDTH);
+
+  FixedLengthList<FiducialMarker> markers(maxMarkers, scratch0);
+
+  markers.set_size(maxMarkers);
+
+  for(s32 i=0; i<maxMarkers; i++) {
+    Array<f64> newArray(3, 3, scratch0);
+    markers.Pointer(i)->homography = newArray;
+    //printf("%d\n", markers.Pointer(i)->homography.get_size(0));
+  } // for(s32 i=0; i<maximumSize; i++)
+
+  //markers.Pointer(0)->homography.Show("markers", true, false);
+
+  {
+    const Result result = SimpleDetector_Steps1234(
+      image,
+      markers,
+      scaleImage_numPyramidLevels,
+      component1d_minComponentWidth, component1d_maxSkipDistance,
+      component_minimumNumPixels, component_maximumNumPixels,
+      component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
+      quads_minQuadArea, quads_quadSymmetryThreshold,
+      scratch1,
+      scratch2);
+
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  free(scratch0.get_buffer());
+  free(scratch1.get_buffer());
+  free(scratch2.get_buffer());
+
+  GTEST_RETURN_HERE;
+}
+
 IN_DDR GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
 {
   const s32 numComponents = 60;
@@ -56,6 +133,8 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
   const s32 numBytes = MIN(MAX_BYTES, 70000);
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
+
+  FixedLengthList<FiducialMarker> markers(50, ms);
 
   const Quadrilateral<s16> quads_groundTruth[] = {
     Quadrilateral<s16>(Point<s16>(24,14), Point<s16>(10,14), Point<s16>(10,0), Point<s16>(24,0)),
@@ -85,6 +164,8 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
   }
 
   FixedLengthList<Quadrilateral<s16> > extractedQuads(2, ms);
+
+  components.SortConnectedComponentSegments();
 
   const Result result =  ComputeQuadrilateralsFromConnectedComponents(components, minQuadArea, quadSymmetryThreshold, extractedQuads, ms);
   ASSERT_TRUE(result == RESULT_OK);
@@ -138,7 +219,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  FixedLengthList<Point<s16>> boundary(boundaryLength, ms);
+  FixedLengthList<Point<s16> > boundary(boundaryLength, ms);
 
   const s16 componentsX_groundTruth[] = {105, 105, 106, 107, 108, 109, 109, 108, 107, 106, 105, 105, 105, 105, 106, 107, 108, 109, 108, 107, 106, 105, 105, 104, 104, 104, 104, 104, 103, 103, 103, 103, 103, 102, 101, 101, 101, 101, 101, 100, 100, 100, 100, 100, 101, 102, 103, 104, 104, 104, 103, 102, 101, 100, 100, 101, 102, 102, 102, 102, 102, 103, 104, 104, 105};
   const s16 componentsY_groundTruth[] = {200, 201, 201, 201, 201, 201, 202, 202, 202, 202, 202, 203, 204, 205, 205, 205, 205, 205, 205, 205, 205, 205, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 206, 206, 205, 204, 204, 204, 204, 204, 203, 203, 203, 202, 201, 200, 201, 201, 201, 200, 200};
@@ -147,7 +228,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
     boundary.PushBack(Point<s16>(componentsX_groundTruth[i], componentsY_groundTruth[i]));
   }
 
-  FixedLengthList<Point<s16>> peaks(4, ms);
+  FixedLengthList<Point<s16> > peaks(4, ms);
 
   const Result result = ExtractLaplacianPeaks(boundary, peaks, ms);
   ASSERT_TRUE(result == RESULT_OK);
@@ -302,6 +383,8 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
     components.PushBack(ConnectedComponentSegment(xStartValues[i],xEndValues[i],yValues[i],1));
   }
 
+  components.SortConnectedComponentSegments();
+
   //#define DRAW_TraceNextExteriorBoundary
 #ifdef DRAW_TraceNextExteriorBoundary
   {
@@ -318,7 +401,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   }
 #endif // DRAW_TraceNextExteriorBoundary
 
-  FixedLengthList<Point<s16>> extractedBoundary(boundaryLength, ms);
+  FixedLengthList<Point<s16> > extractedBoundary(boundaryLength, ms);
 
   {
     s32 endComponentIndex = -1;
@@ -367,7 +450,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
   components.PushBack(component8);
   components.PushBack(component9);
 
-  FixedLengthList<Anki::Embedded::Rectangle<s16>> componentBoundingBoxes(numComponents, ms);
+  FixedLengthList<Anki::Embedded::Rectangle<s16> > componentBoundingBoxes(numComponents, ms);
   {
     const Result result = components.ComputeComponentBoundingBoxes(componentBoundingBoxes);
     ASSERT_TRUE(result == RESULT_OK);
@@ -414,7 +497,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
   components.PushBack(component8);
   components.PushBack(component9);
 
-  FixedLengthList<Point<s16>> componentCentroids(numComponents, ms);
+  FixedLengthList<Point<s16> > componentCentroids(numComponents, ms);
   {
     const Result result = components.ComputeComponentCentroids(componentCentroids, ms);
     ASSERT_TRUE(result == RESULT_OK);

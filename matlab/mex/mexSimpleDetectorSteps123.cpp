@@ -25,8 +25,6 @@ using namespace Anki::Embedded;
 // components2d = mexSimpleDetectorSteps123(image, scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold);
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-  // components2d = simpleDetector_step3_simpleRejectionTests(nrows, ncols, numRegions, area, indexList, bb, centroid, usePerimeterCheck, components2d, embeddedConversions, DEBUG_DISPLAY)
-
   //     IN_DDR Result SimpleDetector_Steps123(
   //       const Array<u8> &image,
   //       const s32 scaleImage_numPyramidLevels,
@@ -49,7 +47,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const s32 component_solidMultiplyThreshold = static_cast<s32>(Round(pow(2,5)*mxGetScalar(prhs[7]))); // Convert from double to SQ26.5
 
   //printf("%f %f %s\n", *startPoint.Pointer(0,0), *startPoint.Pointer(0,1), initialDirection.data());
-  ConditionalErrorAndReturn(image.IsValid(), "mexSimpleDetectorSteps123", "Could not allocate Matrix binaryImg");
+  ConditionalErrorAndReturn(image.IsValid(), "mexSimpleDetectorSteps123", "Could not allocate image");
 
   const u32 numBytes0 = 10000000;
   MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
@@ -91,7 +89,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   std::vector<Array<f64> > components2d;
   components2d.resize(numComponents);
-  //* = new Array<f64>[]; //reinterpret_cast<Array<f64>*>(scratch0.Allocate(numComponents*sizeof(Array<f64>)));
 
   s32 *components2d_currentSegment = reinterpret_cast<s32*>(scratch0.Allocate(numComponents*sizeof(s32)));
   memset(components2d_currentSegment, 0, sizeof(components2d_currentSegment[0]) * numComponents);

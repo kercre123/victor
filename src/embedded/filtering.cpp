@@ -244,7 +244,7 @@ namespace Anki
       return RESULT_OK;
     } // Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &in1, const FixedPointArray<s32> &in2, FixedPointArray<s32> &out)
 
-    Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16>> &boundary, FixedLengthList<Point<s16>> &peaks, MemoryStack scratch)
+    Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16> > &boundary, FixedLengthList<Point<s16> > &peaks, MemoryStack scratch)
     {
       AnkiConditionalErrorAndReturnValue(boundary.IsValid(),
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "boundary is not valid");
@@ -420,6 +420,6 @@ namespace Anki
       //peaks.Print();
 
       return RESULT_OK;
-    } // Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16>> &boundary, MemoryStack scratch)
+    } // Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16> > &boundary, MemoryStack scratch)
   } // namespace Embedded
 } // namespace Anki

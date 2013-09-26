@@ -24,6 +24,7 @@
     <ClCompile Include="..\..\src\embedded\thresholdScaleImage.cpp" />
     <ClCompile Include="..\..\src\embedded\traceBoundary.cpp" />
     <ClCompile Include="Z:\Documents\Anki\coretech-vision\src\embedded\computeQuadrilaterals.cpp" />
+    <ClCompile Include="Z:\Documents\Anki\coretech-vision\src\embedded\transformations.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\anki\embeddedVision.h" />
