@@ -138,7 +138,8 @@ for i_region = 1:numRegions
             sigma = boundaryLength/64;
             spacing = max(3, round(boundaryLength/16)); % spacing about 1/4 of side-length
             stencil = [1 zeros(1, spacing-2) -2 zeros(1, spacing-2) 1];
-            dg2 = conv(stencil, gaussian_kernel(sigma));
+            g = gaussian_kernel(sigma);
+            dg2 = conv(stencil, g);
             r_smooth = imfilter(boundary, dg2(:), 'circular');
             r_smooth = sum(r_smooth.^2, 2);
             
@@ -159,7 +160,7 @@ for i_region = 1:numRegions
     
     % Find local maxima -- these should correspond to the corners
     % of the square.
-    % NOTE: one of the comparisons is >= whiel the other is >, in order to
+    % NOTE: one of the comparisons is >= while the other is >, in order to
     % combat rare cases where we have two responses next to each other that
     % are exactly equal.
     localMaxima = find(r_smooth >= r_smooth([end 1:end-1]) & r_smooth > r_smooth([2:end 1]));
@@ -168,6 +169,8 @@ for i_region = 1:numRegions
         [~,whichMaxima] = sort(r_smooth(localMaxima), 'descend');
         whichMaxima = sort(whichMaxima(1:4), 'ascend');
         
+        % Reorder the indexes to be in the order
+        % [corner1, theCornerOppositeCorner1, corner2, corner3]
         index = localMaxima(whichMaxima([1 4 2 3]));
         
         % plot(boundary(index,2), boundary(index,1), 'y+')
@@ -178,7 +181,7 @@ for i_region = 1:numRegions
             plot(corners(:,1), corners(:,2), 'gx', 'Parent', h_initialAxes);
         end
         
-        % Verfiy corners are in a clockwise direction, so we don't get an
+        % Verify corners are in a clockwise direction, so we don't get an
         % accidental projective mirroring when we do the tranformation below to
         % extract the image.  Can look whether the z direction of cross product
         % of the two vectors forming the quadrilateral is positive or negative.
@@ -215,6 +218,8 @@ for i_region = 1:numRegions
             if sign(detA) == sign(detB) && sign(detC) == sign(detD)
                 detA = abs(detA);
                 detB = abs(detB);
+                
+                % Is the quad symmetry below the threshold?
                 if max(detA,detB) / min(detA,detB) < 1.5
                     
                     tform = []; %#ok<NASGU>
