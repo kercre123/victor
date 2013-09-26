@@ -5,7 +5,7 @@
 #include "anki/exceptions.h"
 #include "anki/common/utilities.h"
 #include "anki/common/memory.h"
-#include "anki/embeddedCommon/DASlight.h"
+#include "anki/common/DASlight.h"
 #include "anki/common/dataStructures.h"
 
 #include <iostream>
