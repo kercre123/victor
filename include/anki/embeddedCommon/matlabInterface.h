@@ -14,7 +14,7 @@
 #include "opencv2/opencv.hpp"
 #endif
 
-#include "mex.h"
+//#include "mex.h"
 #include "engine.h"
 #include "matrix.h"
 
@@ -194,14 +194,14 @@ namespace Anki
       const mwSize numMatlabElements = mxGetNumberOfElements(array);
 
       if(numMatlabElements != npixels) {
-        mexPrintf("mxArrayToArray<Type>(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
+        AnkiError("mxArrayToArray", "mxArrayToArray<Type>(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
         return;
       }
 
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = ConvertToMatlabType(typeid(Type).name(), sizeof(Type));
       if(matlabClassId != templateClassId) {
-        mexPrintf("mxArrayToArray<Type>(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        AnkiError("mxArrayToArray", "mxArrayToArray<Type>(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return;
       }
 
@@ -219,19 +219,19 @@ namespace Anki
     {
       const Type * const matlabMatrixStartPointer = reinterpret_cast<const Type *>( mxGetData(matlabArray) );
 
-      const mwSize numMatlabElements = mxGetNumberOfElements(matlabArray);
+      //const mwSize numMatlabElements = mxGetNumberOfElements(matlabArray);
       const mwSize numDimensions = mxGetNumberOfDimensions(matlabArray);
       const mwSize *dimensions = mxGetDimensions(matlabArray);
 
       if(numDimensions != 2) {
-        mexPrintf("mxArrayToArray<Type> - Matlab array must be 2D\n");
+        AnkiError("mxArrayToArray", "mxArrayToArray<Type> - Matlab array must be 2D\n");
         return Array<Type>();
       }
 
       const mxClassID matlabClassId = mxGetClassID(matlabArray);
       const mxClassID templateClassId = ConvertToMatlabType(typeid(Type).name(), sizeof(Type));
       if(matlabClassId != templateClassId) {
-        mexPrintf("mxArrayToArray<Type> - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+        AnkiError("mxArrayToArray", "mxArrayToArray<Type> - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return Array<Type>();
       }
 
@@ -252,7 +252,9 @@ namespace Anki
     {
       const mxClassID classId = ConvertToMatlabType(typeid(Type).name(), sizeof(Type));
 
-      const mwSize outputDims[2] = {array.get_size(0), array.get_size(1)};
+      const mwSize outputDims[2] = {static_cast<mwSize>(array.get_size(0)),
+        static_cast<mwSize>(array.get_size(1))};
+      
       mxArray *outputArray = mxCreateNumericArray(2, outputDims, classId, mxREAL);
       Type * const matlabMatrixStartPointer = (Type *) mxGetData(outputArray);
 

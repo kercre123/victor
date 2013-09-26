@@ -58,6 +58,10 @@
 #define restrict
 #endif
 
+#ifndef _strcmpi
+#define _strcmpi strcasecmp
+#endif
+
 #endif // #if defined(__APPLE_CC__)
 
 #if defined(USING_MOVIDIUS_COMPILER)

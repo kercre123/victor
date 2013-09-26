@@ -21,13 +21,24 @@ cmake_policy(SET CMP0015 NEW)
 set(OPENCV_DIR opencv-2.4.6.1)
 set(GTEST_DIR gtest-1.7.0)
 
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
+# Set the correct C++ language standard (including for Xcode):
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++")
+set(CMAKE_XCODE_ATTRIBUTE_GCC_VERSION "com.apple.compilers.llvm.clang.1_0")
+set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++11")
+set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
 
 # Set up Matlab directories and mex extension:
 include(FindMatlab) # This Find script doesn't seem to work on Mac!
 if(NOT MATLAB_FOUND)
 	message(STATUS "FindMatlab failed. Hard coding Matlab paths and mex settings.")
-	set(MATLAB_ROOT /Applications/MATLAB_R2013a.app)
+	if(NOT DEFINED MATLAB_ROOT_DIR)
+		# Use default matlab root path
+		set(MATLAB_ROOT /Applications/MATLAB_R2013a.app)
+	else()
+		set(MATLAB_ROOT ${MATLAB_ROOT_DIR})
+		message(STATUS "Using given MATLAB_ROOT ${MATLAB_ROOT}.")
+	endif(NOT DEFINED MATLAB_ROOT_DIR)
+
 	set(MATLAB_INCLUDE_DIR ${MATLAB_ROOT}/extern/include)
 	set(MATLAB_LIBRARIES mx eng mex)
 	set(MATLAB_MEX_LIBRARY ${MATLAB_ROOT}/bin/maci64)
@@ -35,7 +46,9 @@ if(NOT MATLAB_FOUND)
 	set(MATLAB_ENG_LIBRARY ${MATLAB_ROOT}/bin/maci64)
 endif(NOT MATLAB_FOUND)
 	
-set(MEX_COMPILER ${MATLAB_ROOT_DIR}/bin/mex)
+# set(MEX_COMPILER ${MATLAB_ROOT_DIR}/bin/mex)
+
+set(CMAKE_XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "${MATLAB_ENG_LIBRARY}")
 
 # Set the mex extension using Matlab's "mexext" script:
 # (Does this exist on Windows machines?)
