@@ -135,6 +135,8 @@ namespace Anki
       s32 Set(const char * const values);
 #endif
 
+      Array& operator= (const Array & rightHandSide);
+
       // Similar to Matlabs size(matrix, dimension), and dimension is in {0,1}
       s32 get_size(s32 dimension) const;
 
@@ -179,7 +181,6 @@ namespace Anki
       void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
 
     private:
-      //Array & operator= (const Array & rightHandSide); // In the future, assignment may not be allowed
     }; // class Array
 
 #pragma mark --- FixedPointArray Class Definition ---
@@ -544,6 +545,23 @@ namespace Anki
       return numValuesSet;
     }
 #endif // #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
+
+    template<typename Type> Array<Type>& Array<Type>::operator= (const Array & rightHandSide)
+    {
+      this->size[0] = rightHandSide.size[0];
+      this->size[1] = rightHandSide.size[1];
+
+      this->stride = rightHandSide.stride;
+      this->useBoundaryFillPatterns = rightHandSide.useBoundaryFillPatterns;
+      this->data = rightHandSide.data;
+      this->rawDataPointer = rightHandSide.rawDataPointer;
+
+#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+      this->cvMatMirror = cv::Mat_<Type>(size[0], size[1], data, stride);
+#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+
+      return *this;
+    }
 
     template<typename Type> s32 Array<Type>::get_size(s32 dimension) const
     {
