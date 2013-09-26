@@ -135,6 +135,7 @@
       <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/video/include"/>
       <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/videostab/include"/>
       <Include Dir="/Applications/MATLAB_R2012b.app/extern/include"/>
+      <Include Dir="../plugins/physics/cozmo_physics/"/>
     </Includes>
     <PostBuildCommands>
       <Exec CmdLine="cp Debug/cozmoSimulator ../controllers/cozmo_c_controller/cozmo_c_controller"/>
@@ -270,6 +271,7 @@
       <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/video/include"/>
       <Include Dir="../../coretech-external/opencv-2.4.6.1/modules/videostab/include"/>
       <Include Dir="/Applications/MATLAB_R2012b.app/extern/include"/>
+      <Include Dir="../plugins/physics/cozmo_physics/"/>
     </Includes>
     <PostBuildCommands>
       <Exec CmdLine="cp Debug/cozmoSimulator ../controllers/cozmo_c_controller/cozmo_c_controller"/>

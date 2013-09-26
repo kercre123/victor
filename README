@@ -65,3 +65,13 @@ Once you have verified these are orphaned shared memory segments, you can remove
   ipcrm  -m <shared memory ID>   (The shared memory ID is under the ID column of the ipcs output)
 
 
+You should also remove any semaphores with
+
+  ipcrm -s <semaphore ID>
+
+
+If the shared memory segments are still lingering around and their KEY reads 0, the parent process needs to be killed. Run the command
+
+  kill -9 <LPID>
+
+where LPID is the LPID of the shared memory segment. It's probably identical for all the segments.

@@ -26,6 +26,9 @@ class CozmoBot : public Supervisor
 {
 
 private:
+  int robotID_;
+
+  // Motors
   Motor* leftWheelMotor_;
   Motor* rightWheelMotor_;
 
@@ -33,21 +36,28 @@ private:
   Motor* liftMotor_;
   Motor* liftMotor2_;
 
+  // Gripper
   Connector* con_;
   bool gripperEngaged_; 
   int unlockhysteresis_;
   void ManageGripper();
 
+  // Cameras
   Camera* downCam_;
   Camera* headCam_;
   Camera* liftCam_;
 
+  // For pose information
   GPS* gps_;
   Compass* compass_;
   char locStr[MAX_TEXT_DISPLAY_LENGTH];
 
+  // For measuring wheel speed
   Gyro *leftWheelGyro_;
   Gyro *rightWheelGyro_;
+
+  // For communications with the cozmo_physics plugin used for drawing paths with OpenGL
+  Emitter *physicsComms_; 
 
 public:
   CozmoBot();
@@ -86,6 +96,14 @@ public:
 
   // Text overlay
   void SetOverlayText(OverlayTextID ot_id, const char* txt);
+
+
+  // Path drawing functions
+  void ErasePath(int path_id);
+  void AppendPathSegmentLine(int path_id, float x_start_m, float y_start_m, float x_end_m, float y_end_m);
+  void AppendPathSegmentArc(int path_id, float x_center_m, float y_center_m, float radius_m, float startRad, float endRad);
+  void ShowPath(int path_id, bool show);
+  void SetPathHeightOffset(float m);
 };
 
 

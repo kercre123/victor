@@ -44,29 +44,7 @@ float filterSpeedR = 0;
 // Runs one step of the wheel encoder filter;
 void EncoderSpeedFilterIteration(void)
 {
-  /*
-  // Get rad/s
-  float leftRad, rightRad, dLeftRad, dRightRad;
-  static float prevLeftRad = 0, prevRightRad = 0;
-  u32 dtime = 0;
-  static u32 prev_us_time = 0;
-
-  gCozmoBot.GetWheelPositions(leftRad, rightRad);
-  dLeftRad = prevLeftRad - leftRad;
-  dRightRad = prevRightRad - rightRad;
-
-
-  prevLeftRad = leftRad;
-  prevRightRad = rightRad;
-
-  // Convert to mm/s
-  float dLeftMM = dLeftRad * WHEEL_RAD_TO_MM;
-  float dRightMM = dRightRad * WHEEL_RAD_TO_MM;
-
-  leftWheelSpeed_mmps = dLeftMM / CONTROL_DT;
-  rightWheelSpeed_mmps = dRightMM / CONTROL_DT;
-*/
-
+  // Get true (gyro measured) speeds from robot model
   leftWheelSpeed_mmps = gCozmoBot.GetLeftWheelSpeed();
   rightWheelSpeed_mmps = gCozmoBot.GetRightWheelSpeed();
 

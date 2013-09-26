@@ -7,6 +7,13 @@
 using namespace Anki::Embedded;
 using namespace Localization;
 
+#define ENABLE_PATH_VIZ 1
+
+#if(ENABLE_PATH_VIZ)
+#include "cozmoBot.h"
+extern CozmoBot gCozmoBot;
+#endif
+
 
 namespace PathFollower
 {
@@ -42,6 +49,8 @@ namespace {
   PathSegment Path[MAX_NUM_PATH_SEGMENTS];
   s16 numPathSegments_ = 0;
   s16 currPathSegment_ = -1;
+
+  BOOL visualizePath_ = TRUE;
 }
 
 
@@ -55,6 +64,14 @@ void InitPathFollower(void)
 void ClearPath(void)
 {
   numPathSegments_ = 0;
+#if(ENABLE_PATH_VIZ)
+  gCozmoBot.ErasePath(0);
+#endif
+}
+
+void EnablePathVisualization(BOOL on)
+{
+  visualizePath_ = on;
 }
 
 
@@ -72,12 +89,17 @@ BOOL AppendPathSegment_Line(u32 matID, float x_start_m, float y_start_m, float x
   Path[numPathSegments_].endPt.x = x_end_m;
   Path[numPathSegments_].endPt.y = y_end_m;
 
+  // Pre-processed for convenience
   Path[numPathSegments_].m = (y_end_m - y_start_m) / (x_end_m - x_start_m);
   Path[numPathSegments_].b = Path[numPathSegments_].m * y_start_m + x_start_m; 
   Path[numPathSegments_].dy_sign = ((y_end_m - y_start_m) >= 0) ? 1.0 : -1.0;
   Path[numPathSegments_].theta = atan2(y_end_m - y_start_m, x_end_m - x_start_m);
 
   numPathSegments_++;
+
+#if(ENABLE_PATH_VIZ)
+  gCozmoBot.AppendPathSegmentLine(0, x_start_m, y_start_m, x_end_m, y_end_m);
+#endif
 
   return TRUE;
 }
@@ -96,23 +118,46 @@ BOOL AppendPathSegment_Arc(u32 matID, float x_center_m, float y_center_m, float 
           (FLT_NEAR(startRad,0) || FLT_NEAR(endRad,0)) 
         );
 
-
   Path[numPathSegments_].type = PST_ARC;
   Path[numPathSegments_].centerPt.x = x_center_m;
   Path[numPathSegments_].centerPt.y = y_center_m;
   Path[numPathSegments_].radius = radius_m;
   Path[numPathSegments_].startRad = startRad;
   Path[numPathSegments_].endRad = endRad;
+
+  // Pre-processed for convenience
   Path[numPathSegments_].movingCCW = endRad > startRad;
 
   numPathSegments_++;
+
+#if(ENABLE_PATH_VIZ)
+  gCozmoBot.AppendPathSegmentArc(0, x_center_m, y_center_m, radius_m, startRad, endRad);
+#endif
+
+  return TRUE;
+}
+
+
+
+
+int GetNumPathSegments(void)
+{
+  return numPathSegments_;
 }
 
 
 BOOL StartPathTraversal()
 {
+  // Set first path segment
   if (numPathSegments_ > 0) {
     currPathSegment_ = 0;
+  }
+
+  // Visualize path
+  if (visualizePath_) {
+#if(ENABLE_PATH_VIZ)
+    gCozmoBot.ShowPath(0, true);
+#endif
   }
 
   return TRUE;
@@ -332,6 +377,9 @@ BOOL GetPathError(float &shortestDistanceToPath_m, float &radDiff)
       currPathSegment_ = -1;
 #if(DEBUG_PATH_FOLLOWER)
       printf("PATH COMPLETE\n");
+#endif
+#if(ENABLE_PATH_VIZ)
+      gCozmoBot.ErasePath(0);
 #endif
       return FALSE;
     }

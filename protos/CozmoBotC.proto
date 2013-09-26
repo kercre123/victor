@@ -47,6 +47,10 @@ Supervisor {
         }
         coordIndex []
       }
+    }     
+
+    Emitter { 
+      name "cozmo_physics_comms"
     }
           
     Solid {
@@ -244,6 +248,7 @@ Supervisor {
       }
       device RotationalMotor {
         name "wheel_fr"
+	maxVelocity 30
       }
       endPoint Gyro {
         name "wheel_gyro_fr"
@@ -266,6 +271,7 @@ Supervisor {
       }
       device RotationalMotor {
         name "wheel_fl"
+	maxVelocity 30
       }
       endPoint Gyro {
         name "wheel_gyro_fl"

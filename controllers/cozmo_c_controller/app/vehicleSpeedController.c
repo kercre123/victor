@@ -36,6 +36,7 @@
 #include "app/wheelController.h"
 #include "app/trace.h"
 #include "cozmoConfig.h"
+#include "app/debug.h"
 
 // The target desired speed the user commanded to the car [mm/sec].
 // This is our eventual goal for the vehicle speed, given enough time for acceleration
@@ -222,7 +223,7 @@ void RunVehicleSpeedController(s16 desVehicleSpeed)
 #endif
 
 #if(DEBUG_SPEED_CONTROLLER)
-    printf(" controllerSpeed: %d, errorSum: %d\n", controllerCommandedVehicleSpeed, errorsum);
+    printf(" controllerSpeed: %d, currError: %d, errorSum: %d\n", controllerCommandedVehicleSpeed, currerror, errorsum);
 #endif
 
     Traces16(TRACE_VAR_VSC_DESIRED_SPEED, desVehicleSpeed, TRACE_MASK_MOTOR_CONTROLLER);

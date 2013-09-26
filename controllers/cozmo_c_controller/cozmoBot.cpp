@@ -7,6 +7,7 @@
 #include "app/vehicleSpeedController.h"
 #include "app/pathFollower.h"
 #include "hal/timers.h"
+#include "cozmo_physics.h"
 #include <cmath>
 #include <cstdio>
 
@@ -19,6 +20,7 @@
 #define LIFT "lift_motor"
 #define LIFT2 "lift_motor2"
 #define CONNECTOR "connector"
+#define PLUGIN_COMMS "cozmo_physics_comms"
 
 #define DOWN_CAMERA "cam_down"
 #define HEAD_CAMERA "cam_head"
@@ -32,6 +34,8 @@ using namespace PathFollower;
 
 CozmoBot::CozmoBot() : Supervisor() 
 {
+  robotID_ = -1;
+
   leftWheelMotor_ = getMotor(WHEEL_FL);
   rightWheelMotor_ = getMotor(WHEEL_FR);
 
@@ -53,11 +57,17 @@ CozmoBot::CozmoBot() : Supervisor()
 
   leftWheelGyro_ = getGyro(GYRO_FL);
   rightWheelGyro_ = getGyro(GYRO_FR);
+
+  physicsComms_ = getEmitter(PLUGIN_COMMS);
 }
 
 
 void CozmoBot::Init() 
 {
+  // Set ID
+  // TODO: This should depend on the instance name... or something
+  robotID_ = 0;
+
   //Set the motors to velocity mode
   leftWheelMotor_->setPosition(INFINITY);
   rightWheelMotor_->setPosition(INFINITY);
@@ -76,13 +86,18 @@ void CozmoBot::Init()
   liftMotor_->setPosition(LIFT_CENTER);
   liftMotor2_->setPosition(-LIFT_CENTER);
 
+  // Get localization sensors
   gps_ = getGPS("gps");
   compass_ = getCompass("compass");
   gps_->enable(TIME_STEP);
   compass_->enable(TIME_STEP);
 
+  // Get wheel speed sensors
   leftWheelGyro_->enable(TIME_STEP);
   rightWheelGyro_->enable(TIME_STEP);
+
+  // Initialize path drawing settings
+  SetPathHeightOffset(0.05);
 }
 
 
@@ -269,4 +284,63 @@ void CozmoBot::run()
 
     SetOverlayText(OT_CURR_POSE, locStr);
   }
+}
+
+
+
+//////// Path drawing functions /////////
+void CozmoBot::ErasePath(int path_id)
+{
+  float msg[ERASE_PATH_MSG_SIZE];
+  msg[0] = PLUGIN_MSG_ERASE_PATH;
+  msg[PLUGIN_MSG_ROBOT_ID] = robotID_;
+  msg[PLUGIN_MSG_PATH_ID] = path_id;
+  physicsComms_->send(msg, sizeof(msg));
+}
+
+void CozmoBot::AppendPathSegmentLine(int path_id, float x_start_m, float y_start_m, float x_end_m, float y_end_m)
+{
+  float msg[LINE_MSG_SIZE];
+  msg[0] = PLUGIN_MSG_APPEND_LINE;
+  msg[PLUGIN_MSG_ROBOT_ID] = robotID_;
+  msg[PLUGIN_MSG_PATH_ID] = path_id;
+  msg[LINE_START_X] = x_start_m;
+  msg[LINE_START_Y] = y_start_m;
+  msg[LINE_END_X] = x_end_m;
+  msg[LINE_END_Y] = y_end_m;
+
+  physicsComms_->send(msg, sizeof(msg));
+}
+
+void CozmoBot::AppendPathSegmentArc(int path_id, float x_center_m, float y_center_m, float radius_m, float startRad, float endRad)
+{
+  float msg[ARC_MSG_SIZE];
+  msg[0] = PLUGIN_MSG_APPEND_ARC;
+  msg[PLUGIN_MSG_ROBOT_ID] = robotID_;
+  msg[PLUGIN_MSG_PATH_ID] = path_id;
+  msg[ARC_CENTER_X] = x_center_m;
+  msg[ARC_CENTER_Y] = y_center_m;
+  msg[ARC_RADIUS] = radius_m;
+  msg[ARC_START_RAD] = startRad;
+  msg[ARC_END_RAD] = endRad;
+
+  physicsComms_->send(msg, sizeof(msg));
+}
+
+void CozmoBot::ShowPath(int path_id, bool show){
+  float msg[SHOW_PATH_MSG_SIZE];
+  msg[0] = PLUGIN_MSG_SHOW_PATH;
+  msg[PLUGIN_MSG_ROBOT_ID] = robotID_;
+  msg[PLUGIN_MSG_PATH_ID] = path_id;
+  msg[SHOW_PATH] = show ? 1 : 0;
+  physicsComms_->send(msg, sizeof(msg));
+}
+
+void CozmoBot::SetPathHeightOffset(float m){
+  float msg[SET_HEIGHT_OFFSET_MSG_SIZE];
+  msg[0] = PLUGIN_MSG_SET_HEIGHT_OFFSET;
+  msg[PLUGIN_MSG_ROBOT_ID] = robotID_;
+  //msg[PLUGIN_MSG_PATH_ID] = path_id;
+  msg[HEIGHT_OFFSET] = m;
+  physicsComms_->send(msg, sizeof(msg));
 }

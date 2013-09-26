@@ -7,6 +7,7 @@ WorldInfo {
     "Date: 02 Aug 2013"
     ""
   ]
+  physics "cozmo_physics"
   basicTimeStep 16
   contactProperties [
     DEF FLOOR_FRONTWHEEL ContactProperties {
@@ -187,7 +188,9 @@ Supervisor {
   # Make this a proto?
   children [
     DEF DISPLAY_PLANE Display {
-      translation 0 0.1 0
+      # Hide display plane far away
+      translation 1000 0.1 0
+
       children [
         DEF SHAPE Shape {
           appearance Appearance {
