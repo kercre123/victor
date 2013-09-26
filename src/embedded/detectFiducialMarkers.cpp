@@ -169,8 +169,19 @@ namespace Anki
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
           // TODO: invalidate filled center components
+
+          extractedComponents.SortConnectedComponentSegments();
         } // PUSH_MEMORY_STACK(scratch2);
       } // PUSH_MEMORY_STACK(scratch2);
+
+      //{
+      //  Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
+      //  DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+
+      //  Matlab matlab(false);
+      //  matlab.PutArray(drawnComponents, "drawnComponents0");
+      //  //drawnComponents.Show("drawnComponents0", true, false);
+      //}
 
       // 4. Compute candidate quadrilaterals from the connected components
       FixedLengthList<Quadrilateral<s16> > extractedQuads(maxExtractedQuads, scratch2);
@@ -190,6 +201,12 @@ namespace Anki
 
         if(ComputeHomographyFromQuad(extractedQuads[iQuad], currentMarker.homography, scratch2) != RESULT_OK)
           return RESULT_FAIL;
+
+        markers[iQuad].blockType = -1;
+        markers[iQuad].faceType = -1;
+        for(s32 i=0; i<4; i++) {
+          markers[iQuad].corners[i] = extractedQuads[iQuad].corners[i];
+        }
       } // for(iQuad=0; iQuad<; iQuad++)
 
       // 5. Decode fiducial markers from the candidate quadrilaterals

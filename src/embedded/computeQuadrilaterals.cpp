@@ -88,7 +88,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(components.IsValid(),
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "components is not valid");
 
-      AnkiConditionalErrorAndReturnValue(!components.get_isSortedInId(),
+      AnkiConditionalErrorAndReturnValue(components.get_isSortedInId(),
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "components must be sorted in id");
 
       FixedLengthList<Point<s16> > extractedBoundary(MAX_BOUNDARY_LENTH, scratch);
