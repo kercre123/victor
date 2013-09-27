@@ -23,7 +23,7 @@ if ismac
     openCvVersionString = '';
     OSbits = 64;
 elseif ispc
-    IDE_name = 'msvc2012';
+    IDE_name = 'Visual Studio 11';
     if useDebugMode
         openCvVersionString = '246d';
     else
@@ -33,10 +33,6 @@ elseif ispc
 else
     error('Currently only supporting builds on Mac or PC.');
 end
-
-ankiIncludeDirs = {fullfile(rootDir, 'coretech-common', 'include')};
-ankiLibDirs = {fullfile(rootDir, 'coretech-common', 'build', IDE_name, 'lib')};
-ankiLibs = {'CoreTech_Common', 'CoreTech_Common_Embedded'};
   
 flags = {};
 
@@ -48,8 +44,16 @@ if useDebugMode
         flags{end+1} = '-D_DEBUG';
     end
 else
-    configName = 'Release';
+    configName = 'RelWithDebInfo';
 end
+
+ankiIncludeDirs = {fullfile(rootDir, 'coretech-common', 'include')};
+if ispc()
+    ankiLibDirs = {fullfile(rootDir, 'coretech-common', 'build/lib', configName)};
+else
+    ankiLibDirs = {fullfile(rootDir, 'coretech-common', 'build', IDE_name, 'lib')};
+end
+ankiLibs = {'CoreTech_Common', 'CoreTech_Common_Embedded'};
 
 if compileVerbose
     flags{end+1} = '-v';
@@ -70,7 +74,13 @@ moduleDir  = fullfile(rootDir, ['coretech-' moduleName]);
 
 if ~strcmp(moduleName, 'common')
     ankiIncludeDirs{end+1} = fullfile(moduleDir, 'include');
-    ankiLibDirs{end+1} = fullfile(moduleDir, 'build', IDE_name, 'lib');
+    
+    if ispc()
+        ankiLibDirs{end+1} = fullfile(moduleDir, 'build/lib', configName);
+    else
+        ankiLibDirs{end+1} = fullfile(moduleDir, 'build', IDE_name, 'lib');
+    end
+    
     moduleLibName = moduleNameHelper(['coretech-' moduleName]);
     ankiLibs = [ankiLibs {moduleLibName, [moduleLibName '_Embedded']}];
 end
@@ -80,7 +90,11 @@ openCvIncludeDirs = prefixSuffixHelper('-I', openCvIncludeDirs, [filesep 'includ
 openCvLibs        = prefixSuffixHelper('-lopencv_', openCvLibs, openCvVersionString);
 ankiIncludeDirs   = prefixSuffixHelper('-I', ankiIncludeDirs, '');
 ankiLibDirs       = prefixSuffixHelper('-L', ankiLibDirs, '');
-ankiLibs          = prefixSuffixHelper('-l', ankiLibs, sprintf('_%d%s', OSbits, configName));
+if ispc()
+    ankiLibs          = prefixSuffixHelper('-l', ankiLibs, '');    
+else
+    ankiLibs          = prefixSuffixHelper('-l', ankiLibs, sprintf('_%d%s', OSbits, configName));    
+end
 matlabLibs        = prefixSuffixHelper('-l', matlabLibs, '');
 
 outputDir = fullfile(moduleDir, 'build', 'mex');
@@ -93,7 +107,7 @@ for i_file = 1:numFiles
     try
         fprintf('Building %d of %d "%s"...\n', i_file, numFiles, sourceFilename{i_file});
        
-        mex(flags{:}, '-compatibleArrayDims',  sourceFilename{i_file},...
+            mex(flags{:}, '-compatibleArrayDims',  sourceFilename{i_file},...
             fullfile(mexWrapperDir, 'mexWrappers.cpp'), ...
             ankiIncludeDirs{:}, openCvIncludeDirs{:}, ankiLibDirs{:}, ankiLibs{:}, matlabLibs{:}, ...
             ['-I', mexWrapperDir], ['-L', openCvLibDir], openCvLibs{:}, ...
