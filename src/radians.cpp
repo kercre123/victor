@@ -18,7 +18,7 @@
  *
  **/
 
-#include "anki/general.h"
+#include "anki/common/general.h"
 #include "anki/math/radians.h"
 
 namespace Anki {
@@ -319,5 +319,5 @@ void Radians_noRescale::makeNegative()
 }
 
 
-} // namespace BaseStation
+} // namespace Anki
 
