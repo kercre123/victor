@@ -251,7 +251,7 @@ void assignInMatlab(mxArray *var, const char *name, const char *workspace)
     var = mxCreateDoubleMatrix(0, 0, mxREAL);
   }
 
-  mxArray *ws;
+  mxArray *ws=NULL;
   if(workspace==NULL) {
     ws = mxCreateString("base");
   }
@@ -273,7 +273,7 @@ void assignInMatlab(mxArray *var, const char *name, const char *workspace)
 
 mxArray *getFromMatlab(const char *name, const char *workspace)
 {
-  mxArray *ws;
+  mxArray *ws=NULL;
   if(workspace==NULL) {
     ws = mxCreateString("base");
   }

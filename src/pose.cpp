@@ -101,8 +101,8 @@ namespace Anki {
   */
   
   Pose3d::Pose3d(const RotationMatrix3d &Rmat_in, const Vec3f &T_in, const Pose3d *parentPose)
-  : rotationMatrix(Rmat_in),
-    rotationVector(rotationMatrix),
+  : rotationVector(Rmat_in),
+    rotationMatrix(Rmat_in),
     translation(T_in),
     parent(parentPose)
   {
