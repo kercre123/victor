@@ -1,3 +1,5 @@
+#include "anki/embeddedVision/fiducialMarkers.h"
+
 #include "anki/embeddedVision/fixedLengthList_vision.h"
 #include "anki/embeddedVision/miscVisionKernels.h"
 #include "anki/embeddedVision/draw_vision.h"
@@ -169,14 +171,14 @@ namespace Anki
 
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
-          //{
-          //  Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
-          //  DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+          {
+            Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
+            DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
 
-          //  Matlab matlab(false);
-          //  matlab.PutArray(drawnComponents, "drawnComponents0");
-          //  //drawnComponents.Show("drawnComponents0", true, false);
-          //}
+            Matlab matlab(false);
+            matlab.PutArray(drawnComponents, "drawnComponents0");
+            //drawnComponents.Show("drawnComponents0", true, false);
+          }
 
           // TODO: invalidate filled center components
           if(extractedComponents.InvalidateFilledCenterComponents(component_percentHorizontal, component_percentVertical, scratch2) != RESULT_OK)
@@ -188,14 +190,14 @@ namespace Anki
         } // PUSH_MEMORY_STACK(scratch2);
       } // PUSH_MEMORY_STACK(scratch2);
 
-      //{
-      //  Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
-      //  DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+      {
+        Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
+        DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
 
-      //  Matlab matlab(false);
-      //  matlab.PutArray(drawnComponents, "drawnComponents1");
-      //  //drawnComponents.Show("drawnComponents0", true, false);
-      //}
+        Matlab matlab(false);
+        matlab.PutArray(drawnComponents, "drawnComponents1");
+        //drawnComponents.Show("drawnComponents0", true, false);
+      }
 
       // 4. Compute candidate quadrilaterals from the connected components
       FixedLengthList<Quadrilateral<s16> > extractedQuads(maxExtractedQuads, scratch2);
