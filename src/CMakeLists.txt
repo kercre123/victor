@@ -3,9 +3,25 @@
 # Vision Library
 #message("CORETECH_VISION_LIBNAME has been set to ${CORETECH_VISION_LIBNAME}")
 
-file(GLOB CORETECH_VISION_FILES "*.cpp")
+#file(GLOB CORETECH_VISION_FILES "*.cpp")
+set(CORETECH_VISION_SOURCE_FILES
+  camera.cpp
+  image.cpp
+  marker2d.cpp
+)
 
-add_library(CoreTech_Vision ${CORETECH_VISION_FILES})
+set(CORETECH_VISION_HEADER_FILES
+  ../include/anki/vision.h
+  ../include/anki/vision/camera.h
+  ../include/anki/vision/config.h
+  ../include/anki/vision/image.h
+  ../include/anki/vision/marker2d.h
+)
+
+add_library(CoreTech_Vision 
+  ${CORETECH_VISION_SOURCE_FILES} 
+  ${CORETECH_VISION_HEADER_FIELS})
+
 target_link_libraries(CoreTech_Vision)
 
 
