@@ -46,6 +46,17 @@ set(CORETECH_VISION_EMBEDDED_FILES
 	embedded/transformations.cpp
 )
 
+set(CORETECH_VISION_EMBEDDED_HEADER_FILES
+	../include/anki/embeddedVision.h
+	../include/anki/embeddedVision/array2d_vision.h
+	../include/anki/embeddedVision/config.h
+	../include/anki/embeddedVision/connectedComponents.h
+	../include/anki/embeddedVision/dataStructures_vision.h
+	../include/anki/embeddedVision/draw_vision.h
+	../include/anki/embeddedVision/fixedLengthList_vision.h
+	../include/anki/embeddedVision/miscVisionKernels.h
+)
+
 add_library(CoreTech_Vision_Embedded
-	${CORETECH_VISION_EMBEDDED_FILES})
+	${CORETECH_VISION_EMBEDDED_FILES} ${CORETECH_VISION_EMBEDDED_HEADER_FILES})
 
