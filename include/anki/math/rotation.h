@@ -35,21 +35,34 @@ namespace Anki {
     RotationVector3d(const Vec3f &rvec);
     RotationVector3d(const RotationMatrix3d &rmat);
        
-    inline Radians      get_angle() const;
-    inline const Vec3f& get_axis()  const;
+    Radians  get_angle() const;
+    Vec3f    get_axis()  const;
+    
+#if defined(ANKICORETECH_USE_OPENCV)
+    using Vec3f::get_CvPoint_;
+    using Vec3f::x;
+    using Vec3f::y;
+    using Vec3f::z;
+#endif
     
   protected:
-    Radians angle;
-    Vec3f axis;
+    //Radians angle;
+    //Vec3f axis;
     
   }; // class RotationVector3d
   
   // Inline accessors:
-  Radians RotationVector3d::get_angle(void) const
-  { return this->angle; }
+  inline Radians RotationVector3d::get_angle(void) const
+  {
+    return this->length();
+  }
   
-  const Vec3f& RotationVector3d::get_axis(void) const
-  { return this->axis; }
+  Vec3f RotationVector3d::get_axis(void) const
+  {
+    Vec3f axis(*this);
+    axis.makeUnitLength();
+    return axis;
+  }
   
   
   class RotationMatrix3d : public Matrix_3x3f
@@ -59,10 +72,10 @@ namespace Anki {
     RotationMatrix3d(const RotationVector3d &rotationVector);
     RotationMatrix3d(const Matrix<float> &matrix3x3);
   
-    Point3f operator*(const Point3f &p) const;
+    //Point3f operator*(const Point3f &p) const;
     
-    inline Radians      get_angle() const;
-    inline const Vec3f& get_axis() const;
+    Radians   get_angle() const;
+    Vec3f     get_axis()  const;
     
   protected:
     RotationVector3d rotationVector;
@@ -70,14 +83,16 @@ namespace Anki {
   }; // class RotationMatrix3d
 
   // Inline accessors:
-  Radians RotationMatrix3d::get_angle(void) const
-  { return this->rotationVector.get_angle(); }
+  inline Radians RotationMatrix3d::get_angle(void) const
+  {
+    return this->rotationVector.get_angle();
+  }
   
-  const Vec3f& RotationMatrix3d::get_axis(void) const
-  { return this->rotationVector.get_axis(); }
-
-  
-  
+  inline Vec3f RotationMatrix3d::get_axis(void) const
+  {
+    return this->rotationVector.get_axis();
+  }
+ 
   // Rodrigues' formula for converting between angle+axis representation and 3x3
   // matrix representation.
   void Rodrigues(const RotationVector3d &Rvec_in,
