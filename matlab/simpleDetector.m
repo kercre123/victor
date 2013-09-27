@@ -10,6 +10,7 @@ computeTransformFromBoundary = true;
 quadRefinementMethod = 'none'; % 'ICP' or 'fminsearch' or 'none'
 cornerMethod = 'laplacianPeaks'; % 'laplacianPeaks', 'harrisScore', or 'radiusPeaks'
 decodeDownsampleFactor = 1; % use lower resolution image for decoding
+minDistanceFromImageEdge = 2; % if a quad has an corner that is too close to the edge, reject it
 DEBUG_DISPLAY = nargout==0;
 embeddedConversions = EmbeddedConversionsManager; % 1-cp2tform, 2-opencv_cp2tform
 showTiming = false;
@@ -34,13 +35,17 @@ if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1234')
     component_maximumNumPixels = round(maxSideLength*maxSideLength - (0.8*maxSideLength)*(0.8*maxSideLength));
     component_sparseMultiplyThreshold = 1000;
     component_solidMultiplyThreshold = 2;
+    component_percentHorizontal = 0.5;
+    component_percentVertical = 0.5;
     quads_minQuadArea = minQuadArea;
     quads_quadSymmetryThreshold = 1.5;
+    quads_minDistanceFromImageEdge = 2;
     
-    [quads, quadTforms] = mexSimpleDetectorSteps1234(im2uint8(img), scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, quads_minQuadArea, quads_quadSymmetryThreshold);
+    [quads, quadTforms] = mexSimpleDetectorSteps1234(im2uint8(img), scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge);
     
     for i = 1:length(quadTforms)
-        quadTforms{i} = maketform('projective', inv(quadTforms{i}')); 
+%         quadTforms{i} = maketform('projective', inv(quadTforms{i}')); 
+        quadTforms{i} = maketform('projective', quadTforms{i}'); 
     end
 
 else % if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1234')
@@ -70,9 +75,9 @@ else % if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1
         component_solidMultiplyThreshold = 2;
 
     %     keyboard
-        tic
+%         tic
         components2d = mexSimpleDetectorSteps123(im2uint8(img), scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold);
-        toc
+%         toc
 
         for i = 1:length(components2d)
             components2d{i} = components2d{i} + 1; % Convert from c to matlab indexing
@@ -109,7 +114,7 @@ else % if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1
 
     if showTiming, t_squareDetect = tic; end
 
-    [quads, quadTforms] = simpleDetector_step4_computeQuads(nrows, ncols, numRegions, indexList, centroid, minQuadArea, cornerMethod, computeTransformFromBoundary, quadRefinementMethod, components2d, embeddedConversions, DEBUG_DISPLAY);
+    [quads, quadTforms] = simpleDetector_step4_computeQuads(nrows, ncols, numRegions, indexList, centroid, minQuadArea, cornerMethod, computeTransformFromBoundary, quadRefinementMethod, components2d, minDistanceFromImageEdge, embeddedConversions, DEBUG_DISPLAY);
 end % if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1234') ... else
     
 
@@ -118,7 +123,8 @@ if showTiming
 end
 
 if length(quadTforms) > 0
-    quadTforms{1}.tdata.T' 
+    disp(sprintf('Found %d quads', length(quadTforms)));
+    disp(quadTforms{1}.tdata.T')
 end
 
 % Optionally do the decoding a lower resolution (which necessitates

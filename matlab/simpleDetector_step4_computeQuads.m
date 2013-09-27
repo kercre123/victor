@@ -1,4 +1,4 @@
-function [quads, quadTforms] = simpleDetector_step4_computeQuads(nrows, ncols, numRegions, indexList, centroid, minQuadArea, cornerMethod, computeTransformFromBoundary, quadRefinementMethod, components2d, embeddedConversions, DEBUG_DISPLAY)
+function [quads, quadTforms] = simpleDetector_step4_computeQuads(nrows, ncols, numRegions, indexList, centroid, minQuadArea, cornerMethod, computeTransformFromBoundary, quadRefinementMethod, components2d, minDistanceFromImageEdge, embeddedConversions, DEBUG_DISPLAY)
 
 if DEBUG_DISPLAY
     % Show what's left
@@ -68,20 +68,22 @@ for i_region = 1:numRegions
     % [rowStart,colStart] = ind2sub([nrows ncols], ...
     %    stats(i_region).PixelIdxList(1));
     
-    % Internal boundary
-    % Find starting pixel by walking from centroid outward until we hit a
-    % pixel in this region:
-    rowStart = round(centroid(i_region,2));
-    colStart = round(centroid(i_region,1));
-    if regionMap(rowStart,colStart) == i_region
-        continue;
-    end
-    while colStart > 1 && regionMap(rowStart,colStart) ~= i_region
-        colStart = colStart - 1;
-    end
-    
-    if colStart == 1 && regionMap(rowStart,colStart) ~= i_region
-        continue
+    if strcmp(embeddedConversions.traceBoundaryType, 'matlab_original') || strcmp(embeddedConversions.traceBoundaryType, 'matlab_loops')
+        % Internal boundary
+        % Find starting pixel by walking from centroid outward until we hit a
+        % pixel in this region:
+        rowStart = round(centroid(i_region,2));
+        colStart = round(centroid(i_region,1));
+        if regionMap(rowStart,colStart) == i_region
+            continue;
+        end
+        while colStart > 1 && regionMap(rowStart,colStart) ~= i_region
+            colStart = colStart - 1;
+        end
+
+        if colStart == 1 && regionMap(rowStart,colStart) ~= i_region
+            continue
+        end
     end
     
     if strcmp(embeddedConversions.traceBoundaryType, 'matlab_original')
@@ -352,8 +354,9 @@ for i_region = 1:numRegions
 %                             keyboard
                             
                             area = abs((x(2)-x(1))*(y(3)-y(1)) - (x(3)-x(1))*(y(2)-y(1)));
-                            if all(x >= 1 & x <= ncols & y >= 1 & y<= nrows) && ...
-                                    area >= minQuadArea
+                            if all(round(x) >= (1+minDistanceFromImageEdge) & round(x) <= (ncols-minDistanceFromImageEdge) &...
+                                   round(y) >= (1+minDistanceFromImageEdge) & round(y) <= (nrows-minDistanceFromImageEdge)) && ...
+                                  area >= minQuadArea
 
                                 corners = [x y];
 
