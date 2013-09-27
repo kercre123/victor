@@ -312,8 +312,8 @@ for i_region = 1:numRegions
                                                 
                         
                         if ~isempty(tform)
-                            if strcmp(quadRefinementMethod, 'ICP') &&...
-                                    (strcmp(embeddedConversions.homographyEstimationType, 'opencv_cp2tform') || strcmp(embeddedConversions.homographyEstimationType, 'c_float64'))
+                            %if strcmp(quadRefinementMethod, 'ICP') && (strcmp(embeddedConversions.homographyEstimationType, 'opencv_cp2tform') || strcmp(embeddedConversions.homographyEstimationType, 'c_float64'))
+                            if (strcmp(embeddedConversions.homographyEstimationType, 'opencv_cp2tform') || strcmp(embeddedConversions.homographyEstimationType, 'c_float64'))
                                 
 %                                 [x,y] = tforminv(tform, [0 0 1 1]', [0 1 0 1]');
                                 tformInv = inv(tform);

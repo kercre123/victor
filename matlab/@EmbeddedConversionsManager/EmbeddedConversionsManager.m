@@ -6,7 +6,7 @@ classdef EmbeddedConversionsManager < handle
         computeCharacteristicScaleImageType;
         traceBoundaryType;
         connectedComponentsType;
-        step123Type;
+        completeCImplementationType;
         emptyCenterDetection;
     end % PROPERTIES (get-public, set-protected)
 
@@ -25,8 +25,8 @@ classdef EmbeddedConversionsManager < handle
             connectedComponentsType = 'matlab_original';
             connectedComponentsType_acceptable = {'matlab_original', 'matlab_approximate'};
             
-            step123Type = 'matlab_original';
-            step123Type_acceptable = {'matlab_original', 'c_singleStep'};
+            completeCImplementationType = 'matlab_original';
+            completeCImplementationType_acceptable = {'matlab_original', 'c_singleStep123', 'c_singleStep1234'};
             
             emptyCenterDetection = 'matlab_original';
             emptyCenterDetection_acceptable = {'matlab_original', 'off'};
@@ -45,8 +45,8 @@ classdef EmbeddedConversionsManager < handle
             isAcceptable(connectedComponentsType_acceptable, connectedComponentsType);
             this.connectedComponentsType = connectedComponentsType; %#ok<*PROP>
             
-            isAcceptable(step123Type_acceptable, step123Type);
-            this.step123Type = step123Type; %#ok<*PROP>
+            isAcceptable(completeCImplementationType_acceptable, completeCImplementationType);
+            this.completeCImplementationType = completeCImplementationType; %#ok<*PROP>
             
             isAcceptable(emptyCenterDetection_acceptable, emptyCenterDetection);
             this.emptyCenterDetection = emptyCenterDetection; %#ok<*PROP>
