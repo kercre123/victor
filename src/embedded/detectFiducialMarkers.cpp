@@ -116,7 +116,8 @@ namespace Anki
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
       const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
-      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold,
+      const s32 component_percentHorizontal, const s32 component_percentVertical,
+      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       MemoryStack scratch1,
       MemoryStack scratch2)
     {
@@ -168,7 +169,20 @@ namespace Anki
 
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
+          //{
+          //  Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
+          //  DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+
+          //  Matlab matlab(false);
+          //  matlab.PutArray(drawnComponents, "drawnComponents0");
+          //  //drawnComponents.Show("drawnComponents0", true, false);
+          //}
+
           // TODO: invalidate filled center components
+          if(extractedComponents.InvalidateFilledCenterComponents(component_percentHorizontal, component_percentVertical, scratch2) != RESULT_OK)
+            return RESULT_FAIL;
+
+          extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
           extractedComponents.SortConnectedComponentSegments();
         } // PUSH_MEMORY_STACK(scratch2);
@@ -179,7 +193,7 @@ namespace Anki
       //  DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
 
       //  Matlab matlab(false);
-      //  matlab.PutArray(drawnComponents, "drawnComponents0");
+      //  matlab.PutArray(drawnComponents, "drawnComponents1");
       //  //drawnComponents.Show("drawnComponents0", true, false);
       //}
 
@@ -188,7 +202,7 @@ namespace Anki
       {
         PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
 
-        if(ComputeQuadrilateralsFromConnectedComponents(extractedComponents, quads_minQuadArea, quads_quadSymmetryThreshold, extractedQuads, scratch2) != RESULT_OK)
+        if(ComputeQuadrilateralsFromConnectedComponents(extractedComponents, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, image.get_size(0), image.get_size(1), extractedQuads, scratch2) != RESULT_OK)
           return RESULT_FAIL;
       } // PUSH_MEMORY_STACK(scratch2);
 

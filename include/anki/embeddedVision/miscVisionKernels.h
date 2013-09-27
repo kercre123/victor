@@ -41,7 +41,8 @@ namespace Anki
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
       const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
-      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold,
+      const s32 component_percentHorizontal, const s32 component_percentVertical,
+      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       MemoryStack scratch1,
       MemoryStack scratch2);
 
@@ -57,7 +58,7 @@ namespace Anki
 
     Result TraceInteriorBoundary(const Array<u8> &binaryImage, const Point<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point<s16> > &boundary);
 
-    Result ComputeQuadrilateralsFromConnectedComponents(const ConnectedComponents &components, const s32 minQuadArea, const s32 quadSymmetryThreshold, FixedLengthList<Quadrilateral<s16> > &extractedQuads, MemoryStack scratch);
+    Result ComputeQuadrilateralsFromConnectedComponents(const ConnectedComponents &components, const s32 minQuadArea, const s32 quadSymmetryThreshold, const s32 minDistanceFromImageEdge, const s32 imageHeight, const s32 imageWidth, FixedLengthList<Quadrilateral<s16> > &extractedQuads, MemoryStack scratch);
 
     // Starting a components.Pointer(startComponentIndex), trace the exterior boundary for the
     // component starting at startComponentIndex. extractedBoundary must be at at least
@@ -86,6 +87,7 @@ namespace Anki
     // Requires ??? bytes of scratch
     Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16> > &boundary, FixedLengthList<Point<s16> > &peaks, MemoryStack scratch);
 
+    // Compute the homography from the input quad. The input quad point should be ordered in the non-rotated, corner-opposite format
     Result ComputeHomographyFromQuad(const Quadrilateral<s16> &quad, Array<f64> &homography, MemoryStack scratch);
 
     template<typename T> inline T Interpolate2d(const T pixel00, const T pixel01, const T pixel10, const T pixel11, const T alphaY, const T alphaYinverse, const T alphaX, const T alphaXinverse);

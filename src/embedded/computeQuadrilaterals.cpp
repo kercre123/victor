@@ -4,15 +4,17 @@ namespace Anki
 {
   namespace Embedded
   {
+    // This function checks if the input quad is valid
+    // If the input is valid, the output quad has the corner-opposite order of the points, and in the non-rotated and corner-opposite format, and adds +1, so it matches the Matlab
     // Assumes that the quad pointer are in either clockwise or counter-clockwise order
     // quadSymmetryThreshold is SQ23.8 . A reasonable value is (1.5*pow(2,8)) = 384
     // A reasonable value for minQuadArea is 100
-    static bool IsQuadrilateralValid(const Quadrilateral<s16> &quad, const s32 minQuadArea, const s32 quadSymmetryThreshold)
+    static bool IsQuadrilateralValidAndUpdateOrdering(const Quadrilateral<s16> &quad, const s32 minQuadArea, const s32 quadSymmetryThreshold, const s32 minDistanceFromImageEdge, const s32 imageHeight, const s32 imageWidth, Quadrilateral<s16> &quadSwapped)
     {
       const s32 numFractionalBits = 8;
 
       // Swap the corners, as in the Matlab script
-      Quadrilateral<s16> quadSwapped(quad[0], quad[3], quad[1], quad[2]);
+      quadSwapped = Quadrilateral<s16>(quad[0], quad[3], quad[1], quad[2]);
 
       // Verify corners are in a clockwise direction, so we don't get an accidental projective
       // mirroring when we do the tranformation below to extract the image. Can look whether the z
@@ -29,7 +31,7 @@ namespace Anki
 
       if(detA > 0) {
         // corners([2 3],:) = corners([3 2],:);
-        const Quadrilateral<s16>  quadSwappedTmp = Quadrilateral<s16>(quadSwapped[0], quadSwapped[2], quadSwapped[1], quadSwapped[3]);
+        const Quadrilateral<s16> quadSwappedTmp = Quadrilateral<s16>(quadSwapped[0], quadSwapped[2], quadSwapped[1], quadSwapped[3]);
         quadSwapped = quadSwappedTmp;
         detA = -detA;
       }
@@ -70,6 +72,20 @@ namespace Anki
       if(ratio1Value >= ratio2Value)
         return false;
 
+      // Check if any of the corners are close to the edge of the image
+      for(s32 i=0; i<4; i++) {
+        if(quadSwapped[i].x < minDistanceFromImageEdge || quadSwapped[i].y < minDistanceFromImageEdge ||
+          quadSwapped[i].x >= (imageWidth - minDistanceFromImageEdge - 1) || quadSwapped[i].y >= (imageHeight - minDistanceFromImageEdge - 1) ) {
+            return false;
+        }
+      }
+
+      // Add +1, so it matches the Matlab version
+      for(s32 i=0; i<4; i++) {
+        quadSwapped[i].x++;
+        quadSwapped[i].y++;
+      }
+
       return true;
     }
 
@@ -81,7 +97,7 @@ namespace Anki
     // A reasonable value for minQuadArea is 100
     //
     // Required ??? bytes of scratch
-    Result ComputeQuadrilateralsFromConnectedComponents(const ConnectedComponents &components, const s32 minQuadArea, const s32 quadSymmetryThreshold, FixedLengthList<Quadrilateral<s16> > &extractedQuads, MemoryStack scratch)
+    Result ComputeQuadrilateralsFromConnectedComponents(const ConnectedComponents &components, const s32 minQuadArea, const s32 quadSymmetryThreshold, const s32 minDistanceFromImageEdge, const s32 imageHeight, const s32 imageWidth, FixedLengthList<Quadrilateral<s16> > &extractedQuads, MemoryStack scratch)
     {
       const s32 MAX_BOUNDARY_LENTH = 10000; // Probably significantly longer than would ever be needed
 
@@ -116,10 +132,12 @@ namespace Anki
           continue;
 
         Quadrilateral<s16> quad(peaks[0], peaks[1], peaks[2], peaks[3]);
+        Quadrilateral<s16> quadSwapped;
 
         // 3. If the quadraleteral is reasonable, add the quad to the list of extractedQuads
-        if(IsQuadrilateralValid(quad, minQuadArea, quadSymmetryThreshold)) {
-          extractedQuads.PushBack(quad);
+        // IsQuadrilateralValidAndUpdateOrdering also changes the order of the points, into the non-rotated and corner-opposite format
+        if(IsQuadrilateralValidAndUpdateOrdering(quad, minQuadArea, quadSymmetryThreshold, minDistanceFromImageEdge, imageHeight, imageWidth, quadSwapped)) {
+          extractedQuads.PushBack(quadSwapped);
         }
       }
 

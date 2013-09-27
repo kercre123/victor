@@ -69,6 +69,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
   const s32 maxExtractedQuads = 1000;
   const s32 quads_minQuadArea = 100;
   const s32 quads_quadSymmetryThreshold = 384;
+  const s32 quads_minDistanceFromImageEdge = 2;
 
   const s32 maxMarkers = 100;
 
@@ -110,7 +111,8 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
       component1d_minComponentWidth, component1d_maxSkipDistance,
       component_minimumNumPixels, component_maximumNumPixels,
       component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
-      quads_minQuadArea, quads_quadSymmetryThreshold,
+      component_percentHorizontal, component_percentVertical,
+      quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
       scratch1,
       scratch2);
 
@@ -129,6 +131,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
   const s32 numComponents = 60;
   const s32 minQuadArea = 100;
   const s32 quadSymmetryThreshold = 384;
+  const s32 imageHeight = 480;
+  const s32 imageWidth = 640;
+  const s32 minDistanceFromImageEdge = 2;
 
   const s32 numBytes = MIN(MAX_BYTES, 70000);
   MemoryStack ms(&buffer[0], numBytes);
@@ -167,7 +172,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
 
   components.SortConnectedComponentSegments();
 
-  const Result result =  ComputeQuadrilateralsFromConnectedComponents(components, minQuadArea, quadSymmetryThreshold, extractedQuads, ms);
+  const Result result =  ComputeQuadrilateralsFromConnectedComponents(components, minQuadArea, quadSymmetryThreshold, minDistanceFromImageEdge, imageHeight, imageWidth, extractedQuads, ms);
   ASSERT_TRUE(result == RESULT_OK);
 
   //extractedQuads.Print("extractedQuads");
