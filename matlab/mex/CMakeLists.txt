@@ -3,8 +3,12 @@
 set(OPENCV_LIBS opencv_core opencv_highgui opencv_imgproc opencv_calib3d)
 fix_opencv_lib_names(OPENCV_LIBS)
 
-set(MEX_LINK_LIBRARIES CoreTech_Common CoreTech_Common_Embedded CoreTech_Vision
- CoreTech_Vision_Embedded ${OPENCV_LIBS})
+if(WIN32)
+	set(MEX_LINK_LIBRARIES CoreTech_Common_Embedded CoreTech_Vision_Embedded ${OPENCV_LIBS})
+else()
+	set(MEX_LINK_LIBRARIES CoreTech_Common CoreTech_Common_Embedded CoreTech_Vision CoreTech_Vision_Embedded ${OPENCV_LIBS})
+endif(WIN32)
+
  
 set(MEX_FILES
 	mexBinomialFilter.cpp
