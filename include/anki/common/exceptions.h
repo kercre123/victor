@@ -5,6 +5,7 @@
 #include <string>
 #include <stdio.h>
 #include <sstream>
+#include <cassert>
 
 #define CORETECH_ASSERT(x) assert(x);
 #define CORETECH_THROW(msg) throw CoreTechException(msg, __FILE__, __LINE__);
