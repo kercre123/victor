@@ -21,6 +21,11 @@ cmake_policy(SET CMP0015 NEW)
 set(OPENCV_DIR opencv-2.4.6.1)
 set(GTEST_DIR gtest-1.7.0)
 
+# I would love to figure out how to get find_package(OpenCV) to work,
+# but so far, no luck.
+#set(OpenCV_DIR "../coretech-external/build/Xcode/opencv-2.4.6.1")
+#find_package(OpenCV REQUIRED)
+
 # Set the correct C++ language standard (including for Xcode):
 if(WIN32)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_VARIADIC_MAX=10 /D_CRT_SECURE_NO_WARNINGS")
@@ -46,9 +51,12 @@ if(NOT MATLAB_FOUND)
 
 		set(MATLAB_INCLUDE_DIR ${MATLAB_ROOT}/extern/include)
 		set(MATLAB_LIBRARIES mx eng mex)
-		set(MATLAB_MEX_LIBRARY ${MATLAB_ROOT}/extern/lib/win32/microsoft)
-		set(MATLAB_MX_LIBRARY  ${MATLAB_ROOT}/extern/lib/win32/microsoft)
-		set(MATLAB_ENG_LIBRARY ${MATLAB_ROOT}/extern/lib/win32/microsoft)
+		set(MATLAB_MEX_LIBRARY_PATH ${MATLAB_ROOT}/extern/lib/win32/microsoft)
+		set(MATLAB_MX_LIBRARY_PATH  ${MATLAB_ROOT}/extern/lib/win32/microsoft)
+		set(MATLAB_ENG_LIBRARY_PATH ${MATLAB_ROOT}/extern/lib/win32/microsoft)
+		set(MATLAB_ENG_LIBRARY libeng)
+		set(MATLAB_MX_LIBRARY libmx)
+		set(MATLAB_MEX_LIBRARY libmex)
 		set(CMD_COMMAND cmd /c)
 	else()
 		if(NOT DEFINED MATLAB_ROOT_DIR)
@@ -61,22 +69,23 @@ if(NOT MATLAB_FOUND)
 
 		set(MATLAB_INCLUDE_DIR ${MATLAB_ROOT}/extern/include)
 		set(MATLAB_LIBRARIES mx eng mex)
-		set(MATLAB_MEX_LIBRARY ${MATLAB_ROOT}/bin/maci64)
-		set(MATLAB_MX_LIBRARY  ${MATLAB_ROOT}/bin/maci64)
-		set(MATLAB_ENG_LIBRARY ${MATLAB_ROOT}/bin/maci64)
-		set(CMD_COMMAND )
+		set(MATLAB_MEX_LIBRARY_PATH ${MATLAB_ROOT}/bin/maci64)
+		set(MATLAB_MX_LIBRARY_PATH  ${MATLAB_ROOT}/bin/maci64)
+		set(MATLAB_ENG_LIBRARY_PATH ${MATLAB_ROOT}/bin/maci64)
+		set(MATLAB_ENG_LIBRARY eng)
+		set(MATLAB_MX_LIBRARY mx)
+		set(MATLAB_MEX_LIBRARY mex)
+		set(CMD_COMMAND)
 	endif(WIN32)
 endif(NOT MATLAB_FOUND)
 	
 # set(MEX_COMPILER ${MATLAB_ROOT_DIR}/bin/mex)
 
-set(CMAKE_XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "${MATLAB_ENG_LIBRARY}")
+set(CMAKE_XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "${MATLAB_ENG_LIBRARY_PATH}")
 
 # Set the mex extension using Matlab's "mexext" script:
 # (Does this exist on Windows machines?)
 set(MATLAB_BIN_DIR "${MATLAB_ROOT}/bin/")
-# message("${MATLAB_BIN_DIR}")
-# execute_process(COMMAND ${CMD_COMMAND} mexext WORKING_DIRECTORY "${MATLAB_BIN_DIR}" OUTPUT_VARIABLE MATLAB_MEXEXT)
 execute_process(COMMAND ${CMD_COMMAND} "${MATLAB_BIN_DIR}/mexext" OUTPUT_VARIABLE MATLAB_MEXEXT)
 string(STRIP ${MATLAB_MEXEXT} MATLAB_MEXEXT)
 
@@ -128,32 +137,46 @@ else()
 	set(BUILD_TYPE_DIR ./)	
 endif()
 
-# Store our libraries in, e.g., coretech-vision/build/lib/Debug
-set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib/${BUILD_TYPE_DIR})
+# Store our libraries in, e.g., coretech-vision/build/Xcode/lib/Debug
+set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/${CMAKE_GENERATOR}/lib/${BUILD_TYPE_DIR})
 
-# Store our executables such as tests in, e.g., coretech-vision/build/bin/Debug
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin/${BUILD_TYPE_DIR})
+# Store our executables such as tests in, e.g., coretech-vision/build/Xcode/bin/Debug
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/${CMAKE_GENERATOR}/bin/${BUILD_TYPE_DIR})
 
+link_directories(
+	${LIBRARY_OUTPUT_PATH}
+	${PROJECT_SOURCE_DIR}/../coretech-common/build/${CMAKE_GENERATOR}/lib/${BUILD_TYPE_DIR} 
+	${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/lib/${BUILD_TYPE_DIR} 
+	${MATLAB_MEX_LIBRARY_PATH} 
+	${MATLAB_MX_LIBRARY_PATH} 
+	${MATLAB_ENG_LIBRARY_PATH}
+)
+
+# Of course, OpenCV is special... 
 if(WIN32)
-	link_directories(
-		${LIBRARY_OUTPUT_PATH}
-		${PROJECT_SOURCE_DIR}/../coretech-common/build/lib/${BUILD_TYPE_DIR} 
-		${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${OPENCV_DIR}/lib/Debug
-		${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${GTEST_DIR}
-		${MATLAB_MEX_LIBRARY} ${MATLAB_MX_LIBRARY} ${MATLAB_ENG_LIBRARY}
-	)
+	link_directories(${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${OPENCV_DIR}/lib/Debug)
 else()
-	link_directories(
-		${LIBRARY_OUTPUT_PATH}
-		${PROJECT_SOURCE_DIR}/../coretech-common/build/lib/${BUILD_TYPE_DIR} 
-		${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${OPENCV_DIR}/lib/${CMAKE_CFG_INTDIR}
-		${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${GTEST_DIR}
-		${MATLAB_MEX_LIBRARY} ${MATLAB_MX_LIBRARY} ${MATLAB_ENG_LIBRARY}
-	)
+	link_directories(${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${OPENCV_DIR}/lib/${CMAKE_CFG_INTDIR})
 endif(WIN32)
 	
+
 endmacro(ankiProject)
 
+#
+# A helper macro (read: hack) for appending "246d" to the opencv library names.
+# Assumes you have put the required opencv libs in 
+# 
+function(fix_opencv_lib_names NAMES)
+
+if(WIN32)
+	foreach(NAME IN LISTS ${NAMES})
+		list(APPEND ${NAMES}_TMP ${NAME}246d)
+	endforeach()
+
+	set(${NAMES} "${${NAMES}_TMP}" PARENT_SCOPE)
+endif(WIN32)
+
+endfunction(fix_opencv_lib_names)
 
 #
 # A helper macro for building mex files and linking them against our
@@ -188,8 +211,15 @@ macro(build_mex MEX_FILE)
 		${PROJECT_SOURCE_DIR}/../coretech-common/matlab/mex/mexFunction.def
 	)
 
-	target_link_libraries(${OUTPUT_NAME} mex mx mat eng opencv_core CoreTech_Common CoreTech_Common_Embedded)
+	set(OPENCV_LIBS opencv_core)
+	#message(STATUS "OPENCV_LIBS initially: ${OPENCV_LIBS}")
+	fix_opencv_lib_names(OPENCV_LIBS)
+	#message(STATUS "OPENCV_LIBS after adjustment: ${OPENCV_LIBS}")
 
+	target_link_libraries(${OUTPUT_NAME} 
+		${MATLAB_MEX_LIBRARY} ${MATLAB_MX_LIBRARY} ${MATLAB_ENG_LIBRARY}
+		${OPENCV_LIBS} CoreTech_Common CoreTech_Common_Embedded z)
+	
 	if(DEFINED MEX_LINK_LIBRARIES)
 		foreach(LIB ${MEX_LINK_LIBRARIES})
 			  target_link_libraries(${OUTPUT_NAME} ${LIB})		
