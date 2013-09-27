@@ -1,8 +1,37 @@
+/**
+ * File: matrix.h
+ *
+ * Author: Andrew Stein (andrew)
+ * Created: 9/10/2013
+ *
+ * Information on last revision to this file:
+ *    $LastChangedDate$
+ *    $LastChangedBy$
+ *    $LastChangedRevision$
+ *
+ * Description: Implements a few classes for storing matrices.  All are 
+ *              on storage type.
+ *
+ *              - "Matrix" is a general container for a matrix whose size is
+ *                unknown at compile time.  It inherits from Array2d and adds 
+ *                math operations.
+ *          
+ *              - "SmallMatrix" is a container for a fixed-size matrix whose
+ *                dimensions are known at compile time.
+ * 
+ *              - "SmallSquareMatrix" is a sub-class of SmallMatrix for storing
+ *                fixed-size square matrices.  It adds square-matrix specific 
+ *                math operations.
+ *
+ * Copyright: Anki, Inc. 2013
+ *
+ **/
+
 #ifndef _ANKICORETECH_MATRIX_H_
 #define _ANKICORETECH_MATRIX_H_
 
 #if defined(ANKICORETECH_USE_OPENCV)
-#include "opencv2/opencv.hpp"
+#include "opencv2/core/core.hpp"
 #endif
 
 #include <ostream>
@@ -63,6 +92,8 @@ namespace Anki {
     SmallMatrix();
     SmallMatrix(const T* vals); // *assumes* vals is NROWS*NCOLS long
     
+    SmallMatrix(const SmallMatrix<T,NROWS,NCOLS> &M);
+    
     // Matrix element access:
     T&       operator() (unsigned int i, unsigned int j);
     const T& operator() (unsigned int i, unsigned int j) const;
@@ -71,13 +102,12 @@ namespace Anki {
     // Matrix[MxN] * Matrix[NxK] = Matrix[MxK]
     template<unsigned int KCOLS>
     SmallMatrix<T,NROWS,KCOLS> operator* (const SmallMatrix<T,NCOLS,KCOLS> &other) const;
-        
-    // Matrix inversion:
-    void Invert(void);
-    SmallMatrix<T,NROWS,NCOLS> getInverse(void) const;
     
     // Matrix transpose:
     SmallMatrix<T,NCOLS,NROWS> getTranspose(void) const;
+    
+    // TODO: Add explicit pseudo-inverse? (inv(A'A)*A')
+    // SmallMatrix<T,NCOLS,NROWS> getPsuedoInverse(void) const;
     
     unsigned int numRows() const;
     unsigned int numCols() const;
@@ -86,16 +116,81 @@ namespace Anki {
     SmallMatrix(const cv::Matx<T,NROWS,NCOLS> &cvMatrix);
     cv::Matx<T,NROWS,NCOLS>& get_CvMatx_();
     const cv::Matx<T,NROWS,NCOLS>& get_CvMatx_() const;
+    
+    using cv::Matx<T,NROWS,NCOLS>::operator=;
 #endif
 
   }; // class SmallMatrix
+  
+  
+  // An extension of the SmallMatrix class for square matrices
+  template<typename T, unsigned int DIM>
+  class SmallSquareMatrix : public SmallMatrix<T,DIM,DIM>
+  {
+  public:
     
-  // Typedef some common small matrix sizes, like 3x3
-  typedef SmallMatrix<float,2,2> Matrix_2x2f;
-  typedef SmallMatrix<float,3,3> Matrix_3x3f;
-  typedef SmallMatrix<float,3,4> Matrix_3x4f;
+    SmallSquareMatrix();
+    SmallSquareMatrix(const SmallMatrix<T,DIM,DIM> &M);
+        
+    // Matrix multiplication in place...
+    // ... this = this * other;
+    void operator*=(const SmallSquareMatrix<T,DIM> &other);
+    // ... this = other * this;
+    void preMultiplyBy(const SmallSquareMatrix<T,DIM> &other);
+    
+    friend Point<T,DIM> operator*(const SmallSquareMatrix<T,DIM> &M,
+                                  const Point<T,DIM> &p);
+    
+    // Matrix inversion:
+    void Invert(void); // in place
+    SmallSquareMatrix<T,DIM> getInverse(void) const;
+    
+  }; // class SmallSquareMatrix
   
     
+  // Typedef some common small matrix sizes, like 3x3
+  typedef SmallSquareMatrix<float,2> Matrix_2x2f;
+  typedef SmallSquareMatrix<float,3> Matrix_3x3f;
+  typedef SmallMatrix<float,3,4> Matrix_3x4f;
+  
+  // Common 2D matrix-point multiplication:
+  template<typename T>
+  Point2<T> operator*(const SmallSquareMatrix<T,2> &M,
+                      const Point2<T> &p)
+  {
+    Point2<T> result(M(0,0)*p.x() + M(0,1)*p.y(),
+                     M(1,0)*p.x() + M(1,1)*p.y());
+    
+    return result;
+  }
+  
+  // Common 3D matrix-point multiplication:
+  template<typename T>
+  Point3<T> operator*(const SmallSquareMatrix<T,3> &M,
+                      const Point3<T> &p)
+  {
+    Point3<T> result(M(0,0)*p.x() + M(0,1)*p.y() + M(0,2)*p.z(),
+                     M(1,0)*p.x() + M(1,1)*p.y() + M(1,2)*p.z(),
+                     M(2,0)*p.x() + M(2,1)*p.y() + M(2,2)*p.z());
+    
+    return result;
+  }
+  
+  // Generic ND matrix-point multiplication
+  template<typename T, unsigned int DIM>
+  Point<T,DIM> operator*(const SmallSquareMatrix<T,DIM> &M,
+                         const Point<T,DIM> &p)
+  {
+    Point<T,DIM> result;
+    for(unsigned int i=0; i<DIM; ++i) {
+      result[i] = M(i,0) * p[0];
+      for(unsigned int j=1; j<DIM; ++j) {
+        result[i] += M(i,j)*p[j];
+      }
+    }
+    
+    return result;
+  }
   
 #pragma mark --- Matrix Implementations ---
   
@@ -225,6 +320,9 @@ namespace Anki {
   }
   
   
+#pragma mark --- SmallMatrix Implementations ---
+  
+  
   template<typename T, unsigned int NROWS, unsigned int NCOLS>
   SmallMatrix<T,NROWS,NCOLS>::SmallMatrix()
 #if defined(ANKICORETECH_USE_OPENCV)
@@ -298,36 +396,6 @@ namespace Anki {
 #endif
   }
   
-  // Matrix inversion:
-  template<typename T, unsigned int NROWS, unsigned int NCOLS>
-  void SmallMatrix<T,NROWS,NCOLS>::Invert(void)
-  {
-    CORETECH_THROW_IF(NROWS != NCOLS);
-    
-#if defined(ANKICORETECH_USE_OPENCV)
-    (*this) = this->inv();
-#else
-    assert(false);
-    // TODO: Define our own opencv-free inverse?
-#endif
-    
-  }
-  
-  template<typename T, unsigned int NROWS, unsigned int NCOLS>
-  SmallMatrix<T,NROWS,NCOLS> SmallMatrix<T,NROWS,NCOLS>::getInverse(void) const
-  {
-    CORETECH_THROW_IF(NROWS != NCOLS);
-    
-#if defined(ANKICORETECH_USE_OPENCV)
-    SmallMatrix<T,NROWS,NCOLS> res(this->inv());
-    return res;
-#else
-    assert(false);
-    // TODO: Define our own opencv-free inverse?
-#endif
-    
-  }
-  
   
   
   // Matrix transpose:
@@ -354,7 +422,7 @@ namespace Anki {
   {
     return NCOLS;
   }
-
+  
 #if defined(ANKICORETECH_USE_OPENCV)
   template<typename T, unsigned int NROWS, unsigned int NCOLS>
   cv::Matx<T,NROWS,NCOLS>& SmallMatrix<T,NROWS,NCOLS>::get_CvMatx_()
@@ -368,7 +436,7 @@ namespace Anki {
     return (*this);
   }
   
-#endif  
+#endif
   
   template<typename T, unsigned int NROWS, unsigned int NCOLS>
   ostream& operator<<(ostream& out, const SmallMatrix<T, NROWS, NCOLS>& m)
@@ -381,6 +449,57 @@ namespace Anki {
     }
     return out;
   }
+  
+  
+#pragma mark --- SmallSquareMatrix Implementations
+  
+  template<typename T, unsigned int DIM>
+  void SmallSquareMatrix<T,DIM>::operator*=(const SmallSquareMatrix<T,DIM> &other)
+  {
+#if defined(ANKICORETECH_USE_OPENCV)
+    (*this) *= other;
+#else
+    assert(false);
+    // TODO: Define our own opencv-free in-place multiplication?
+#endif
+    
+  }
+
+  template<typename T, unsigned int DIM>
+  void SmallSquareMatrix<T,DIM>::preMultiplyBy(const SmallSquareMatrix<T,DIM> &other)
+  {
+    // TODO: Come up with our own in-place, super-awesome pre-multiplcation
+    // method (since opencv doesn't give us one, and this causes a copy)
+    (*this) = other * (*this);    
+  }
+  
+  // Matrix inversion:
+  template<typename T, unsigned int DIM>
+  void SmallSquareMatrix<T,DIM>::Invert(void)
+  {
+#if defined(ANKICORETECH_USE_OPENCV)
+    (*this) = this->inv();
+#else
+    assert(false);
+    // TODO: Define our own opencv-free inverse?
+#endif
+    
+  }
+  
+  template<typename T, unsigned int DIM>
+  SmallSquareMatrix<T,DIM> SmallSquareMatrix<T,DIM>::getInverse(void) const
+  {    
+#if defined(ANKICORETECH_USE_OPENCV)
+    SmallSquareMatrix<T,DIM> res(this->inv());
+    return res;
+#else
+    assert(false);
+    // TODO: Define our own opencv-free inverse?
+#endif
+    
+  }
+  
+  
   
 
 } // namespace Anki

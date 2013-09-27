@@ -2,7 +2,7 @@
 #define _ANKICORETECH_COMMON_ARRAY2D_H_
 
 #include "anki/common/config.h"
-#include "anki/exceptions.h"
+#include "anki/common/exceptions.h"
 #include "anki/common/utilities.h"
 #include "anki/common/memory.h"
 #include "anki/common/DASlight.h"

@@ -6,66 +6,78 @@ function P_wrt_other = getWithRespectTo(this, other)
 % end
 
 from = this;
-P_from = Pose(from.Rmat, from.T);
 
-if Pose.isRootPose(other)    
-    to = Pose();
-    P_to = to;
+if Pose.isRootPose(other)  
+    
+    P_wrt_other = Pose(from.Rmat, from.T);
+    
+    while ~Pose.isRootPose(from.parent)
+        if isempty(from.parent)
+            error('The two poses must be part of the same tree.');
+        end
+        
+        P_wrt_other = from.parent * P_wrt_other;
+        from = from.parent;
+    end
+    
 else
     assert(isa(other, 'Pose'), ...
         'Expecting another Pose object to get new pose with respect to.');
-
+    
+    P_from = Pose(from.Rmat, from.T);
+    
     to   = other;
     P_to = Pose(to.Rmat, to.T);
-end
-
-% First make sure we are pointing at two nodes of the same tree depth,
-% which is the only way they could possibly share the same parent.
-% Until that's true, walk the deeper node up until it is at the same depth
-% as the shallower node, keeping track of the total transformation along
-% the way.
-% (Only one of the following two loops should run, depending on which node
-% is deeper in the tree)
-while from.treeDepth > to.treeDepth
-    if isempty(from.parent)
-        error('The two poses must be part of the same tree.');
+    
+    % First make sure we are pointing at two nodes of the same tree depth,
+    % which is the only way they could possibly share the same parent.
+    % Until that's true, walk the deeper node up until it is at the same depth
+    % as the shallower node, keeping track of the total transformation along
+    % the way.
+    % (Only one of the following two loops should run, depending on which node
+    % is deeper in the tree)
+    while from.treeDepth > to.treeDepth
+        if isempty(from.parent)
+            error('The two poses must be part of the same tree.');
+        end
+        
+        P_from = from.parent * P_from;
+        from = from.parent;
     end
     
-    P_from = from.parent * P_from;
-    from = from.parent;
-end
-
-while to.treeDepth > from.treeDepth
-    if isempty(to.parent)
-        error('The two poses must be part of the same tree.');
+    while to.treeDepth > from.treeDepth
+        if isempty(to.parent)
+            error('The two poses must be part of the same tree.');
+        end
+        
+        P_to = to.parent * P_to;
+        to = to.parent;
     end
     
-    P_to = to.parent * P_to;
-    to = to.parent;
-end
-
-assert(to.treeDepth == from.treeDepth, ...
-    'Expecting matching treeDepths at this point.');
-
-% Now that we are pointing to the nodes of the same depth, keep moving up
-% until those nodes have the same parent, totalling up the transformations
-% along the way
-while to.parent ~= from.parent
-    if isempty(from.parent) || isempty(to.parent)
-        error('The two poses must be part of the same tree.');
+    assert(to.treeDepth == from.treeDepth, ...
+        'Expecting matching treeDepths at this point.');
+    
+    % Now that we are pointing to the nodes of the same depth, keep moving up
+    % until those nodes have the same parent, totalling up the transformations
+    % along the way
+    while to.parent ~= from.parent
+        if isempty(from.parent) || isempty(to.parent)
+            error('The two poses must be part of the same tree.');
+        end
+        
+        P_from = from.parent * P_from;
+        P_to = to.parent * P_to;
+        
+        to = to.parent;
+        from = from.parent;
     end
     
-    P_from = from.parent * P_from;
-    P_to = to.parent * P_to;
+    % Now compute the total transformation from this pose, up the "from" path
+    % in the tree, to the common ancestor, and back down the "to" side to the
+    % final other pose.
+    P_wrt_other = P_to.inv * P_from;
     
-    to = to.parent;
-    from = from.parent;
-end
-
-% Now compute the total transformation from this pose, up the "from" path
-% in the tree, to the common ancestor, and back down the "to" side to the 
-% final other pose.
-P_wrt_other = P_to.inv * P_from; 
+end % IF/ELSE other pose is RootPose
 
 % The Pose we are about to return is w.r.t. the "other" pose provided (that
 % was the whole point of the exercise!), so set its parent accordingly:

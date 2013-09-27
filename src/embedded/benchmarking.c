@@ -1,6 +1,7 @@
 #include "anki/embeddedCommon/benchmarking.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #ifndef MAX
 #define MAX( a, b ) ( ((a) > (b)) ? (a) : (b) )
@@ -82,7 +83,8 @@ void PrintBenchmarkResults()
 
       {
         const unsigned long long rawElapsedTime = benchmarkEvents[i].time - benchmarkEvents[lastBeginIndex[index]].time;
-
+#pragma unused (rawElapsedTime) // may or may not get used depending on #ifs below
+        
 #if defined(_MSC_VER)
         const double elapsedTime = (double)rawElapsedTime / freqencyDouble;
 #elif defined(__APPLE_CC__)

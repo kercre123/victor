@@ -24,18 +24,19 @@ namespace Anki {
 
   
   RotationVector3d::RotationVector3d(void)
-  : angle(0.f), axis(0.f, 0.f, 1.f)
+  : Vec3f(0.f, 0.f, 0.f)
   {
     
   }
   
   RotationVector3d::RotationVector3d(const Vec3f &rvec)
-  : angle(rvec.length()), axis(rvec)
+  : Vec3f(rvec)
   {
-    this->axis *= 1.f/this->angle.ToFloat();
+
   }
   
   RotationVector3d::RotationVector3d(const RotationMatrix3d &Rmat)
+  : Vec3f(0.f, 0.f, 0.f)
   {
     Rodrigues(Rmat, *this);
   }
@@ -62,6 +63,7 @@ namespace Anki {
     Rodrigues(this->rotationVector, *this);
   }
   
+  /* Isn't this inherited from the base class now?
   Point3f RotationMatrix3d::operator*(const Point3f &p) const
   {
 #if defined(ANKICORETECH_USE_OPENCV)
@@ -76,12 +78,13 @@ namespace Anki {
     return rotatedPoint;
     
   } // RotationMatrix3d::operator*(Point3f)
+  */
   
   void Rodrigues(const RotationVector3d &Rvec_in,
                  RotationMatrix3d &Rmat_out)
   {
 #if defined(ANKICORETECH_USE_OPENCV)
-    cv::Vec3f cvRvec(Rvec_in.get_CvPoint3_());
+    cv::Vec3f cvRvec(Rvec_in.get_CvPoint_());
     cv::Rodrigues(cvRvec, Rmat_out.get_CvMatx_());    
 #else
     
@@ -99,9 +102,9 @@ namespace Anki {
 #if defined(ANKICORETECH_USE_OPENCV)
     cv::Vec3f cvRvec;
     cv::Rodrigues(Rmat_in.get_CvMatx_(), cvRvec);
-    Rvec_out.x = cvRvec[0];
-    Rvec_out.y = cvRvec[1];
-    Rvec_out.z = cvRvec[2];
+    Rvec_out.x() = cvRvec[0];
+    Rvec_out.y() = cvRvec[1];
+    Rvec_out.z() = cvRvec[2];
 #else
     assert(false);
     

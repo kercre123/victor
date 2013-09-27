@@ -1,10 +1,29 @@
-//
-//  rotation.h
-//  CoreTech_Math
-//
-//  Created by Andrew Stein on 8/23/13.
-//  Copyright (c) 2013 Anki, Inc. All rights reserved.
-//
+/**
+ * File: rotation.h
+ *
+ * Author: Andrew Stein (andrew)
+ * Created: 8/23/2013
+ *
+ * Information on last revision to this file:
+ *    $LastChangedDate$
+ *    $LastChangedBy$
+ *    $LastChangedRevision$
+ *
+ * Description: Implements objects for storing rotation operations, in two and
+ *              three dimensions.
+ *
+ *              RotationMatrix2d and RotationMatrix3d are subclasses of
+ *              SmallSquareMatrix for storing 2x2 and 3x3 rotation matrices, 
+ *              respectively.
+ *
+ *              RotationVector3d stores an angle+axis rotation vector.
+ *
+ *              Rodrigues functions are provided to convert between 
+ *              RotationMatrix3d and RotationVector3d containers.
+ *
+ * Copyright: Anki, Inc. 2013
+ *
+ **/
 
 #ifndef __CoreTech_Math__rotation__
 #define __CoreTech_Math__rotation__
@@ -27,6 +46,7 @@ namespace Anki {
   // Forward declaratin:
   class RotationMatrix3d;
   
+  
   class RotationVector3d : public Vec3f
   {
   public:
@@ -35,21 +55,17 @@ namespace Anki {
     RotationVector3d(const Vec3f &rvec);
     RotationVector3d(const RotationMatrix3d &rmat);
        
-    inline Radians      get_angle() const;
-    inline const Vec3f& get_axis()  const;
+    Radians  get_angle() const;
+    Vec3f    get_axis()  const;
     
-  protected:
-    Radians angle;
-    Vec3f axis;
+#if defined(ANKICORETECH_USE_OPENCV)
+    using Vec3f::get_CvPoint_;
+    using Vec3f::x;
+    using Vec3f::y;
+    using Vec3f::z;
+#endif
     
   }; // class RotationVector3d
-  
-  // Inline accessors:
-  Radians RotationVector3d::get_angle(void) const
-  { return this->angle; }
-  
-  const Vec3f& RotationVector3d::get_axis(void) const
-  { return this->axis; }
   
   
   class RotationMatrix3d : public Matrix_3x3f
@@ -59,25 +75,15 @@ namespace Anki {
     RotationMatrix3d(const RotationVector3d &rotationVector);
     RotationMatrix3d(const Matrix<float> &matrix3x3);
   
-    Point3f operator*(const Point3f &p) const;
-    
-    inline Radians      get_angle() const;
-    inline const Vec3f& get_axis() const;
+    Radians  get_angle() const;
+    Vec3f    get_axis()  const;
     
   protected:
     RotationVector3d rotationVector;
     
   }; // class RotationMatrix3d
 
-  // Inline accessors:
-  Radians RotationMatrix3d::get_angle(void) const
-  { return this->rotationVector.get_angle(); }
-  
-  const Vec3f& RotationMatrix3d::get_axis(void) const
-  { return this->rotationVector.get_axis(); }
-
-  
-  
+ 
   // Rodrigues' formula for converting between angle+axis representation and 3x3
   // matrix representation.
   void Rodrigues(const RotationVector3d &Rvec_in,
@@ -86,6 +92,30 @@ namespace Anki {
   void Rodrigues(const RotationMatrix3d &Rmat_in,
                        RotationVector3d &Rvec_out);
 
+  
+#pragma mark --- Inline Implementations ---
+  
+  inline Radians RotationMatrix3d::get_angle(void) const
+  {
+    return this->rotationVector.get_angle();
+  }
+  
+  inline Vec3f RotationMatrix3d::get_axis(void) const
+  {
+    return this->rotationVector.get_axis();
+  }
+  
+  inline Radians RotationVector3d::get_angle(void) const
+  {
+    return this->length();
+  }
+  
+  inline Vec3f RotationVector3d::get_axis(void) const
+  {
+    Vec3f axis(*this);
+    axis.makeUnitLength();
+    return axis;
+  }
 
 } // namespace Anki
 

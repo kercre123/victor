@@ -1,146 +1,313 @@
+/**
+ * File: point.h
+ *
+ * Author: Andrew Stein (andrew)
+ * Created: 9/10/2013
+ *
+ * Information on last revision to this file:
+ *    $LastChangedDate$
+ *    $LastChangedBy$
+ *    $LastChangedRevision$
+ *
+ * Description: Implements a general N-dimensional Point class and two 
+ *              subclasses for commonly-used 2D and 3D points.  The latter have
+ *              special accessors for x, y, and z components as well. All offer
+ *              math capabilities and are templated to store any type.
+ *
+ *              NOTE: These classes may also be useful to store 2-, 3- or 
+ *                    N-dimensional vectors as well. Thus there are also 
+ *                    typedefs for Vec3f and Vec2f.
+ *
+ * Copyright: Anki, Inc. 2013
+ *
+ **/
+
 #ifndef _ANKICORETECH_COMMON_POINT_H_
 #define _ANKICORETECH_COMMON_POINT_H_
 
 #include <cmath>
 
-#include "anki/common/config.h"
+#include "anki/common/exceptions.h"
 
 #if defined(ANKICORETECH_USE_OPENCV)
-namespace cv
-{
-  template<typename _Tp> class Point_;
-  template<typename _Tp> class Point3_;
-}
+#include "opencv2/core/core.hpp"
 #endif
 
 namespace Anki {
-  // 2D Point Class:
-  template<typename T> class Point2
+  
+  // Generic N-dimensional Point class
+  template<typename T, size_t N>
+  class Point
   {
   public:
-    Point2( void ) : x(T(0)), y(T(0))
-    {
-    }
-
-    Point2(T x, T y) : x(x), y(y)
-    {
-    }
-
-    Point2(const Point2& pt) : x(pt.x), y(pt.y)
-    {
-    }
-
+    // Constructors
+    Point( void );
+    Point(const Point<T,N>& pt);
+    
+    // Accessors:
+    T  operator[](const size_t i) const;
+    T& operator[](const size_t i);
+    
+    // Arithmetic Operators
+    Point<T,N>& operator+= (const T value);
+    Point<T,N>& operator-= (const T value);
+    Point<T,N>& operator*= (const T value);
+    Point<T,N>& operator+= (const Point<T,N> &other);
+    Point<T,N>& operator-= (const Point<T,N> &other);
+    
+    // Math methods:
+    T length(void) const;
+    Point<T,N>& makeUnitLength(void);
+    
+    // Friendly operators
+    friend bool       operator== (const Point<T,N> &point1, const Point<T,N> &point2);
+    friend Point<T,N> operator+  (const Point<T,N> &point1, const Point<T,N> &point2);
+    friend Point<T,N> operator-  (const Point<T,N> &point1, const Point<T,N> &point2);
+    
+  protected:
+    // Members:
+    T data[N];
+    
+  }; // class Point
+  
+  
+  // Special 2D Point class with elements x and y
+  template<typename T>
+  class Point2 : public Point<T,2>
+  {
+  public:
+    // Constructors:
+    Point2();
+    Point2(const T x, const T y);
 #if defined(ANKICORETECH_USE_OPENCV)
-    Point2(const cv::Point_<T>& pt) : x(pt.x), y(pt.y)
-    {
-    }
-
-    friend bool operator== (const Point2 &point1, const Point2 &point2)
-    {
-      if(point1.x == point2.x && point1.y == point2.y)
-        return true;
-
-      return false;
-    }
-
-    friend Point2 operator+ (const Point2 &point1, const Point2 &point2)
-    {
-      return Point2(point1.x+point2.x, point1.y+point2.y);
-    }
-
-    friend Point2 operator- (const Point2 &point1, const Point2 &point2)
-    {
-      return Point2(point1.x-point2.x, point1.y-point2.y);
-    }
-
-    // Returns a templated cv::Mat_ that shares the same buffer with this Anki::Array2dUnmanaged. No data is copied.
-    cv::Point_<T>& get_CvPoint_()
-    {
-      return cv::Point_<T>(x,y);
-    }
-#endif // #if defined(ANKICORETECH_USE_OPENCV)
-
-    void operator*=(const T value)
-    {
-      this->x *= value;
-      this->y *= value;
-    }
-
-    T length(void) const
-    {
-      return std::sqrt( this->x*this->x + this->y*this->y);
-    }
-
-    T x, y;
-  }; // class Point2<T>
-
+    Point2(const cv::Point_<T>& pt);
+    cv::Point_<T>& get_CvPoint_() const;
+#endif
+    
+    // Accessors:
+    T& x();
+    T& y();
+    T  x() const;
+    T  y() const;
+    
+  }; // class Point2
+  
   typedef Point2<float> Point2f;
-
-  // 3D Point Class:
-  template<typename T> class Point3
+  typedef Point2f Vec2f;
+  
+  
+  // Special 3D Point class with elements x, y, and z
+  template<typename T>
+  class Point3 : public Point<T,3>
   {
   public:
-    Point3( void ) : x(T(0)), y(T(0)), z(T(0))
-    {
-    }
-
-    Point3(T x, T y, T z) : x(x), y(y), z(z)
-    {
-    }
-
-    Point3(const Point3& pt) : x(pt.x), y(pt.y), z(pt.z)
-    {
-    }
-
+    // Constructors:
+    Point3();
+    Point3(const T x, const T y, const T z);
 #if defined(ANKICORETECH_USE_OPENCV)
-    Point3(const cv::Point3_<T>& pt) : x(pt.x), y(pt.y), z(pt.z)
-    {
-    }
-
-    // Returns a templated cv::Point3_
-    cv::Point3_<T> get_CvPoint3_(void) const
-    {
-      return cv::Point3_<T>(x,y,z);
-    }
-#endif // #if defined(ANKICORETECH_USE_OPENCV)
-
-    friend bool operator== (const Point3 &point1, const Point3 &point2)
-    {
-      if(point1.x == point2.x && point1.y == point2.y && point1.z == point2.z)
-        return true;
-
-      return false;
-    }
-
-    friend Point3 operator+ (const Point3 &point1, const Point3 &point2)
-    {
-      return Point3(point1.x+point2.x, point1.y+point2.y, point1.z+point2.z);
-    }
-
-    friend Point3 operator- (const Point3 &point1, const Point3 &point2)
-    {
-      return Point3(point1.x-point2.x, point1.y-point2.y, point1.z+point2.z);
-    }
-
-    void operator*=(const T value)
-    {
-      this->x *= value;
-      this->y *= value;
-      this->z *= value;
-    }
-
-    T length(void) const
-    {
-      return std::sqrt( this->x*this->x + this->y*this->y + this->z*this->z);
-    }
-
-    T x, y, z;
-  }; // class Point3<T>
-
+    Point3(const cv::Point3_<T>& pt);
+    cv::Point3_<T>& get_CvPoint_() const;
+#endif
+    
+    // Accessors:
+    T& x();
+    T& y();
+    T& z();
+    T  x() const;
+    T  y() const;
+    T  z() const;
+    
+  }; // class Point3
+  
   typedef Point3<float> Point3f;
-
-  // TODO: Do we really need a separate Vec3 class or is it the same as Point3?
-  typedef Point3<float> Vec3f;
+  typedef Point3f Vec3f;
+  
+#pragma mark --- Point Implementations ---
+  
+  template<typename T, size_t N>
+  Point<T,N>::Point( void )
+  {
+    for(size_t i=0; i<N; ++i) {
+      this->data[i] = T(0);
+    }
+  }
+  
+  template<typename T, size_t N>
+  Point<T,N>::Point(const Point<T,N>& pt)
+  {
+    for(size_t i=0; i<N; ++i) {
+      this->data[i] = pt.data[i];
+    }
+  }
+  
+  template<typename T, size_t N>
+  T Point<T,N>::operator[](const size_t i) const
+  {
+    CORETECH_ASSERT(i<N);
+    return this->data[i];
+  }
+  
+  template<typename T, size_t N>
+  T& Point<T,N>::operator[](const size_t i)
+  {
+    CORETECH_ASSERT(i<N);
+    return this->data[i];
+  }
+  
+  template<typename T, size_t N>
+  Point<T,N>& Point<T,N>::operator*= (const T value)
+  {
+    for(size_t i=0; i<N; ++i) {
+      this->data[i] *= value;
+    }
+    return *this;
+  }
+  
+  template<typename T, size_t N>
+  Point<T,N>& Point<T,N>::operator+= (const T value)
+  {
+    for(size_t i=0; i<N; ++i) {
+      this->data[i] += value;
+    }
+    return *this;
+  }
+  
+  template<typename T, size_t N>
+  Point<T,N>& Point<T,N>::operator-= (const T value)
+  {
+    for(size_t i=0; i<N; ++i) {
+      this->data[i] -= value;
+    }
+    return *this;
+  }
+  
+  template<typename T, size_t N>
+  Point<T,N>& Point<T,N>::operator+= (const Point<T,N> &other)
+  {
+    for(size_t i=0; i<N; ++i) {
+      this->data[i] += other.data[i];
+    }
+    return *this;
+  }
+  
+  template<typename T, size_t N>
+  Point<T,N>& Point<T,N>::operator-= (const Point<T,N> &other)
+  {
+    for(size_t i=0; i<N; ++i) {
+      this->data[i] -= other.data[i];
+    }
+    return *this;
+  }
+  
+  template<typename T, size_t N>
+  bool operator== (const Point<T,N> &point1, const Point<T,N> &point2)
+  {
+    CORETECH_ASSERT(N>0);
+    
+    // Return true if all elements of data are equal, false otherwise.
+    bool retVal = point1.data[0] == point2.data[0];
+    size_t i = 1;
+    while(retVal && i<N) {
+      retVal = point1.data[i] == point2.data[i];
+    }
+    
+    return retVal;
+  }
+  
+  template<typename T, size_t N>
+  Point<T,N> operator+ (const Point<T,N> &point1, const Point<T,N> &point2)
+  {
+    Point<T,N> newPoint(point1);
+    newPoint += point2;
+    return newPoint;
+  }
+  
+  template<typename T, size_t N>
+  Point<T,N> operator- (const Point<T,N> &point1, const Point<T,N> &point2)
+  {
+    Point<T,N> newPoint(point1);
+    newPoint -= point2;
+    return newPoint;
+  }
+  
+  template<typename T, size_t N>
+  T Point<T,N>::length(void) const
+  {
+    CORETECH_ASSERT(N>0);
+    T retVal = this->data[0]*this->data[0];
+    for(size_t i=1; i<N; ++i) {
+      retVal += this->data[i]*this->data[i];
+    }
+    
+    return std::sqrt(retVal);
+  }
+  
+  template<typename T, size_t N>
+  Point<T,N>& Point<T,N>::makeUnitLength(void)
+  {
+    (*this) *= T(1)/this->length();
+    return *this;
+  }
+  
+  
+  // Point2's x,y accessors:
+  template<typename T>
+  inline T& Point2<T>::x(void) {
+    return this->data[0];
+  }
+  
+  template<typename T>
+  inline T& Point2<T>::y(void) {
+    return this->data[1];
+  }
+  
+  template<typename T>
+  inline T Point2<T>::x(void) const
+  {
+    return this->data[0];
+  }
+  
+  template<typename T>
+  inline T Point2<T>::y(void) const
+  {
+    return this->data[1];
+  }
+  
+  // Point3's x,y,z accessors:
+  
+  template<typename T>
+  inline T& Point3<T>::x(void) {
+    return this->data[0];
+  }
+  
+  template<typename T>
+  inline T& Point3<T>::y(void) {
+    return this->data[1];
+  }
+  
+  template<typename T>
+  inline T& Point3<T>::z(void) {
+    return this->data[2];
+  }
+  
+  template<typename T>
+  inline T Point3<T>::x(void) const
+  {
+    return this->data[0];
+  }
+  
+  template<typename T>
+  inline T Point3<T>::y(void) const
+  {
+    return this->data[1];
+  }
+  
+  template<typename T>
+  inline T Point3<T>::z(void) const
+  {
+    return this->data[2];
+  }
+  
 } // namespace Anki
 
 #endif // _ANKICORETECH_COMMON_POINT_H_
