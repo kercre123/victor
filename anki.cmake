@@ -50,6 +50,7 @@ if(NOT MATLAB_FOUND)
 		set(MATLAB_MX_LIBRARY  ${MATLAB_ROOT}/extern/lib/win32/microsoft)
 		set(MATLAB_ENG_LIBRARY ${MATLAB_ROOT}/extern/lib/win32/microsoft)
 		set(CMD_COMMAND cmd /c)
+		set(MEX_EXTRA_LIBRARIES libmex libmx libmat libeng opencv_core246d CoreTech_Common_Embedded)
 	else()
 		if(NOT DEFINED MATLAB_ROOT_DIR)
 			# Use default matlab root path
@@ -65,6 +66,7 @@ if(NOT MATLAB_FOUND)
 		set(MATLAB_MX_LIBRARY  ${MATLAB_ROOT}/bin/maci64)
 		set(MATLAB_ENG_LIBRARY ${MATLAB_ROOT}/bin/maci64)
 		set(CMD_COMMAND )
+		set(MEX_EXTRA_LIBRARIES mex mx mat eng opencv_core CoreTech_Common CoreTech_Common_Embedded)
 	endif(WIN32)
 endif(NOT MATLAB_FOUND)
 	
@@ -188,8 +190,8 @@ macro(build_mex MEX_FILE)
 		${PROJECT_SOURCE_DIR}/../coretech-common/matlab/mex/mexFunction.def
 	)
 
-	target_link_libraries(${OUTPUT_NAME} mex mx mat eng opencv_core CoreTech_Common CoreTech_Common_Embedded)
-
+	target_link_libraries(${OUTPUT_NAME} ${MEX_EXTRA_LIBRARIES})
+	
 	if(DEFINED MEX_LINK_LIBRARIES)
 		foreach(LIB ${MEX_LINK_LIBRARIES})
 			  target_link_libraries(${OUTPUT_NAME} ${LIB})		
