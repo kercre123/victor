@@ -122,10 +122,10 @@ if showTiming
     fprintf('Square detection took %.3f seconds.\n', toc(t_squareDetect));
 end
 
-if length(quadTforms) > 0
-    disp(sprintf('Found %d quads', length(quadTforms)));
-    disp(quadTforms{1}.tdata.T')
-end
+% if length(quadTforms) > 0
+%     disp(sprintf('Found %d quads', length(quadTforms)));
+%     disp(quadTforms{1}.tdata.T')
+% end
 
 % Optionally do the decoding a lower resolution (which necessitates
 % adjusting the quad positions and their transforms to match that new
