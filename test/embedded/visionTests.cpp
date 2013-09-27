@@ -91,14 +91,15 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
   Array<u8> image(blockImage50_HEIGHT, blockImage50_WIDTH, scratch0);
   image.Set(&blockImage50[0], blockImage50_HEIGHT*blockImage50_WIDTH);
 
-  FixedLengthList<FiducialMarker> markers(maxMarkers, scratch0);
+  FixedLengthList<BlockMarker> markers(maxMarkers, scratch0);
+  FixedLengthList<Array<f64>> homographies(maxMarkers, scratch0);
 
   markers.set_size(maxMarkers);
+  homographies.set_size(maxMarkers);
 
   for(s32 i=0; i<maxMarkers; i++) {
     Array<f64> newArray(3, 3, scratch0);
-    markers.Pointer(i)->homography = newArray;
-    //printf("%d\n", markers.Pointer(i)->homography.get_size(0));
+    homographies[i] = newArray;
   } // for(s32 i=0; i<maximumSize; i++)
 
   //markers.Pointer(0)->homography.Show("markers", true, false);
@@ -107,6 +108,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
     const Result result = SimpleDetector_Steps1234(
       image,
       markers,
+      homographies,
       scaleImage_numPyramidLevels,
       component1d_minComponentWidth, component1d_maxSkipDistance,
       component_minimumNumPixels, component_maximumNumPixels,
@@ -139,17 +141,17 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  FixedLengthList<FiducialMarker> markers(50, ms);
+  FixedLengthList<BlockMarker> markers(50, ms);
 
   const Quadrilateral<s16> quads_groundTruth[] = {
-    Quadrilateral<s16>(Point<s16>(24,14), Point<s16>(10,14), Point<s16>(10,0), Point<s16>(24,0)),
-    Quadrilateral<s16>(Point<s16>(129,79), Point<s16>(100,79), Point<s16>(100,50), Point<s16>(129,50))};
+    Quadrilateral<s16>(Point<s16>(25,19), Point<s16>(25,5), Point<s16>(11,19), Point<s16>(11,5)) ,
+    Quadrilateral<s16>(Point<s16>(130,80), Point<s16>(130,51), Point<s16>(101,80), Point<s16>(101,51)) };
 
   ConnectedComponents components(numComponents, ms);
 
   // Small square
   for(s16 y=0; y<15; y++) {
-    components.PushBack(ConnectedComponentSegment(10,24,y,1));
+    components.PushBack(ConnectedComponentSegment(10,24,y+4,1));
   }
 
   // Big square
@@ -175,7 +177,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
   const Result result =  ComputeQuadrilateralsFromConnectedComponents(components, minQuadArea, quadSymmetryThreshold, minDistanceFromImageEdge, imageHeight, imageWidth, extractedQuads, ms);
   ASSERT_TRUE(result == RESULT_OK);
 
-  //extractedQuads.Print("extractedQuads");
+  extractedQuads.Print("extractedQuads");
 
   for(s32 i=0; i<extractedQuads.get_size(); i++) {
     ASSERT_TRUE(extractedQuads[i] == quads_groundTruth[i]);

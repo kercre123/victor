@@ -30,7 +30,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   // Result SimpleDetector_Steps1234(
   // const Array<u8> &image,
-  // FixedLengthList<FiducialMarker> &markers,
+  // FixedLengthList<BlockMarker> &markers,
   // const s32 scaleImage_numPyramidLevels,
   // const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
   // const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
@@ -71,19 +71,22 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   ConditionalErrorAndReturn(scratch2.IsValid(), "mexSimpleDetectorSteps1234", "Scratch2 could not be allocated");
 
   const s32 maxMarkers = 100;
-  FixedLengthList<FiducialMarker> markers(maxMarkers, scratch0);
+  FixedLengthList<BlockMarker> markers(maxMarkers, scratch0);
+  FixedLengthList<Array<f64>> homographies(maxMarkers, scratch0);
 
   markers.set_size(maxMarkers);
+  homographies.set_size(maxMarkers);
 
   for(s32 i=0; i<maxMarkers; i++) {
     Array<f64> newArray(3, 3, scratch0);
-    markers.Pointer(i)->homography = newArray;
+    homographies[i] = newArray;
   }
 
   {
     const Result result = SimpleDetector_Steps1234(
       image,
       markers,
+      homographies,
       scaleImage_numPyramidLevels,
       component1d_minComponentWidth, component1d_maxSkipDistance,
       component_minimumNumPixels, component_maximumNumPixels,
@@ -117,7 +120,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   for(s32 i=0; i<numMarkers; i++) {
     mxSetCell(quadsMatlab, i, arrayToMxArray<f64>(quads[i]));
-    mxSetCell(quadTformsMatlab, i, arrayToMxArray<f64>(markers[i].homography));
+    mxSetCell(quadTformsMatlab, i, arrayToMxArray<f64>(homographies[i]));
   }
 
   //[quads, quadTforms]

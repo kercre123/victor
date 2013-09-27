@@ -2,8 +2,11 @@
 #define _ANKICORETECHEMBEDDED_VISION_VISIONKERNELS_H_
 
 #include "anki/embeddedVision/config.h"
+
 #include "anki/embeddedCommon.h"
+
 #include "anki/embeddedVision/connectedComponents.h"
+#include "anki/embeddedVision/fiducialMarkers.h"
 
 namespace Anki
 {
@@ -36,7 +39,8 @@ namespace Anki
 
     Result SimpleDetector_Steps1234(
       const Array<u8> &image,
-      FixedLengthList<FiducialMarker> &markers,
+      FixedLengthList<BlockMarker> &markers,
+      FixedLengthList<Array<f64> > &homographies,
       const s32 scaleImage_numPyramidLevels,
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
@@ -46,7 +50,7 @@ namespace Anki
       MemoryStack scratch1,
       MemoryStack scratch2);
 
-    //Result DetectFiducialMarkers(const Array<u8> &image, FixedLengthList<FiducialMarker> &markers, MemoryStack scratch);
+    //Result DetectFiducialMarkers(const Array<u8> &image, FixedLengthList<BlockMarker> &markers, MemoryStack scratch);
 
     Result BinomialFilter(const Array<u8> &image, Array<u8> &imageFiltered, MemoryStack scratch);
 

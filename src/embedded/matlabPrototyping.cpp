@@ -1,4 +1,8 @@
+#include "anki/embeddedVision/fiducialMarkers.h"
+
 #include "anki/embeddedVision/fixedLengthList_vision.h"
+#include "anki/embeddedVision/miscVisionKernels.h"
+#include "anki/embeddedVision/draw_vision.h"
 
 namespace Anki
 {
@@ -109,7 +113,8 @@ namespace Anki
 
     IN_DDR Result SimpleDetector_Steps1234(
       const Array<u8> &image,
-      FixedLengthList<FiducialMarker> &markers,
+      FixedLengthList<BlockMarker> &markers,
+      FixedLengthList<Array<f64> > &homographies,
       const s32 scaleImage_numPyramidLevels,
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
@@ -126,7 +131,7 @@ namespace Anki
       const s32 maxExtractedQuads = 100;
 
       // Stored in the outermost scratch2
-      FixedLengthList<FiducialMarker> candidateMarkers(maxCandidateMarkers, scratch2);
+      FixedLengthList<BlockMarker> candidateMarkers(maxCandidateMarkers, scratch2);
 
       ConnectedComponents extractedComponents; // This isn't allocated until after the scaleImage
       {
@@ -209,9 +214,10 @@ namespace Anki
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
         PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
 
-        FiducialMarker &currentMarker = markers[iQuad];
+        BlockMarker &currentMarker = markers[iQuad];
+        Array<f64> &currentHomography = homographies[iQuad];
 
-        if(ComputeHomographyFromQuad(extractedQuads[iQuad], currentMarker.homography, scratch2) != RESULT_OK)
+        if(ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, scratch2) != RESULT_OK)
           return RESULT_FAIL;
 
         markers[iQuad].blockType = -1;
