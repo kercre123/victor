@@ -76,8 +76,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   //    s16 blockType, faceType;
   for(s32 i=0; i<maxMarkers; i++) {
     Array<f64> newArray(3, 3, scratch0);
-    //markers.Pointer(i)->homography = newArray;
-    printf("%d\n", markers.Pointer(i)->homography.get_size(0));
+    markers.Pointer(i)->homography = newArray;
+    //printf("%d\n", markers.Pointer(i)->homography.get_size(0));
   } // for(s32 i=0; i<maximumSize; i++)
 
   {
