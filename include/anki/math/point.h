@@ -1,10 +1,33 @@
+/**
+ * File: point.h
+ *
+ * Author: Andrew Stein (andrew)
+ * Created: 9/10/2013
+ *
+ * Information on last revision to this file:
+ *    $LastChangedDate$
+ *    $LastChangedBy$
+ *    $LastChangedRevision$
+ *
+ * Description: Implements a general N-dimensional Point class and two 
+ *              subclasses for commonly-used 2D and 3D points.  The latter have
+ *              special accessors for x, y, and z components as well. All offer
+ *              math capabilities and are templated to store any type.
+ *
+ *              NOTE: These classes may also be useful to store 2-, 3- or 
+ *                    N-dimensional vectors as well. Thus there are also 
+ *                    typedefs for Vec3f and Vec2f.
+ *
+ * Copyright: Anki, Inc. 2013
+ *
+ **/
+
 #ifndef _ANKICORETECH_COMMON_POINT_H_
 #define _ANKICORETECH_COMMON_POINT_H_
 
 #include <cmath>
 
-#include "anki/common/config.h"
-#include "anki/math/matrix.h"
+#include "anki/common/exceptions.h"
 
 #if defined(ANKICORETECH_USE_OPENCV)
 #include "opencv2/core/core.hpp"
@@ -54,6 +77,7 @@ namespace Anki {
   {
   public:
     // Constructors:
+    Point2();
     Point2(const T x, const T y);
 #if defined(ANKICORETECH_USE_OPENCV)
     Point2(const cv::Point_<T>& pt);
@@ -69,6 +93,7 @@ namespace Anki {
   }; // class Point2
   
   typedef Point2<float> Point2f;
+  typedef Point2f Vec2f;
   
   
   // Special 3D Point class with elements x, y, and z
@@ -77,6 +102,7 @@ namespace Anki {
   {
   public:
     // Constructors:
+    Point3();
     Point3(const T x, const T y, const T z);
 #if defined(ANKICORETECH_USE_OPENCV)
     Point3(const cv::Point3_<T>& pt);
@@ -94,7 +120,7 @@ namespace Anki {
   }; // class Point3
   
   typedef Point3<float> Point3f;
-  
+  typedef Point3f Vec3f;
   
 #pragma mark --- Point Implementations ---
   
@@ -189,7 +215,7 @@ namespace Anki {
   }
   
   template<typename T, size_t N>
-  Point<T,N> Point<T,N>::operator+ (const Point<T,N> &point1, const Point<T,N> &point2)
+  Point<T,N> operator+ (const Point<T,N> &point1, const Point<T,N> &point2)
   {
     Point<T,N> newPoint(point1);
     newPoint += point2;
@@ -197,7 +223,7 @@ namespace Anki {
   }
   
   template<typename T, size_t N>
-  Point<T,N> Point<T,N>::operator- (const Point<T,N> &point1, const Point<T,N> &point2)
+  Point<T,N> operator- (const Point<T,N> &point1, const Point<T,N> &point2)
   {
     Point<T,N> newPoint(point1);
     newPoint -= point2;
