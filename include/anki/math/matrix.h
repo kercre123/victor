@@ -1,3 +1,32 @@
+/**
+ * File: matrix.h
+ *
+ * Author: Andrew Stein (andrew)
+ * Created: 9/10/2013
+ *
+ * Information on last revision to this file:
+ *    $LastChangedDate$
+ *    $LastChangedBy$
+ *    $LastChangedRevision$
+ *
+ * Description: Implements a few classes for storing matrices.  All are 
+ *              on storage type.
+ *
+ *              - "Matrix" is a general container for a matrix whose size is
+ *                unknown at compile time.  It inherits from Array2d and adds 
+ *                math operations.
+ *          
+ *              - "SmallMatrix" is a container for a fixed-size matrix whose
+ *                dimensions are known at compile time.
+ * 
+ *              - "SmallSquareMatrix" is a sub-class of SmallMatrix for storing
+ *                fixed-size square matrices.  It adds square-matrix specific 
+ *                math operations.
+ *
+ * Copyright: Anki, Inc. 2013
+ *
+ **/
+
 #ifndef _ANKICORETECH_MATRIX_H_
 #define _ANKICORETECH_MATRIX_H_
 
