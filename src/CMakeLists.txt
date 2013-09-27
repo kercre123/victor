@@ -16,10 +16,9 @@ set(CORETECH_COMMON_SOURCE_FILES
 )
 
 set(CORETECH_COMMON_HEADER_FILES
-	../include/anki/ankiMath.h
 	../include/anki/common.h
-	../include/anki/exceptions.h
-	../include/anki/general.h
+	../include/anki/common/exceptions.h
+	../include/anki/common/general.h
 	../include/anki/math/matrix.h
 	../include/anki/math/point.h
 	../include/anki/math/pose.h
