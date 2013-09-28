@@ -1,8 +1,5 @@
 # coretech-vision/test/CMakeLists.txt
 
-set(OPENCV_LIBS opencv_core opencv_imgproc opencv_highgui)
-fix_opencv_lib_names(OPENCV_LIBS)
-
 add_executable(run_visionTests 
 	embedded/run_visionTests.cpp 
 	embedded/visionTests.cpp)
@@ -22,4 +19,5 @@ target_link_libraries(pc_visionBenchmarks
 	gtest
 	${OPENCV_LIBS}
 	${MATLAB_ENG_LIBRARY} ${MATLAB_MX_LIBRARY} z)
+
 
