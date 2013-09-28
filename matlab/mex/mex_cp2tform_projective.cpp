@@ -1,6 +1,7 @@
 // function [homography] = mex_cp2tform_projective(input_points, base_points)
 
-#include "opencv2/opencv.hpp"
+#include "opencv2/core/core.hpp"
+#include "opencv2/calib3d/calib3d.hpp"
 #include "mexWrappers.h"
 
 #define VERBOSITY 0
