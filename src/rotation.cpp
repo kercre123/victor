@@ -8,6 +8,10 @@
 
 #include "anki/math/rotation.h"
 
+#if defined(ANKICORETECH_USE_OPENCV)
+#include "opencv2/calib3d/calib3d.hpp"
+#endif
+
 namespace Anki {
   
   

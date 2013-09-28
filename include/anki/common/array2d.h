@@ -12,7 +12,7 @@
 #include <assert.h>
 
 #if defined(ANKICORETECH_USE_OPENCV)
-#include "opencv2/opencv.hpp"
+#include "opencv2/core/core.hpp"
 #endif
 
 namespace Anki
