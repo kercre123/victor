@@ -25,7 +25,7 @@ namespace Anki
       transformedPoints.PushBack(Point<f64>(quad[2].x, quad[2].y));
       transformedPoints.PushBack(Point<f64>(quad[3].x, quad[3].y));
 
-      if(EstimateHomography(originalPoints, transformedPoints, homography, scratch) != RESULT_OK)
+      if(EstimateHomography(transformedPoints, originalPoints, homography, scratch) != RESULT_OK)
         return RESULT_FAIL;
 
       return RESULT_OK;

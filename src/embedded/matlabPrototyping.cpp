@@ -1,3 +1,5 @@
+#include "anki/embeddedVision/fiducialMarkers.h"
+
 #include "anki/embeddedVision/fixedLengthList_vision.h"
 #include "anki/embeddedVision/miscVisionKernels.h"
 #include "anki/embeddedVision/draw_vision.h"
@@ -111,12 +113,14 @@ namespace Anki
 
     IN_DDR Result SimpleDetector_Steps1234(
       const Array<u8> &image,
-      FixedLengthList<FiducialMarker> &markers,
+      FixedLengthList<BlockMarker> &markers,
+      FixedLengthList<Array<f64> > &homographies,
       const s32 scaleImage_numPyramidLevels,
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
       const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
-      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold,
+      const s32 component_percentHorizontal, const s32 component_percentVertical,
+      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       MemoryStack scratch1,
       MemoryStack scratch2)
     {
@@ -127,7 +131,7 @@ namespace Anki
       const s32 maxExtractedQuads = 100;
 
       // Stored in the outermost scratch2
-      FixedLengthList<FiducialMarker> candidateMarkers(maxCandidateMarkers, scratch2);
+      FixedLengthList<BlockMarker> candidateMarkers(maxCandidateMarkers, scratch2);
 
       ConnectedComponents extractedComponents; // This isn't allocated until after the scaleImage
       {
@@ -168,27 +172,40 @@ namespace Anki
 
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
+          {
+            Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
+            DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+
+            Matlab matlab(false);
+            matlab.PutArray(drawnComponents, "drawnComponents0");
+            //drawnComponents.Show("drawnComponents0", true, false);
+          }
+
           // TODO: invalidate filled center components
+          if(extractedComponents.InvalidateFilledCenterComponents(component_percentHorizontal, component_percentVertical, scratch2) != RESULT_OK)
+            return RESULT_FAIL;
+
+          extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
           extractedComponents.SortConnectedComponentSegments();
         } // PUSH_MEMORY_STACK(scratch2);
       } // PUSH_MEMORY_STACK(scratch2);
 
-      //{
-      //  Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
-      //  DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+      {
+        Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
+        DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
 
-      //  Matlab matlab(false);
-      //  matlab.PutArray(drawnComponents, "drawnComponents0");
-      //  //drawnComponents.Show("drawnComponents0", true, false);
-      //}
+        Matlab matlab(false);
+        matlab.PutArray(drawnComponents, "drawnComponents1");
+        //drawnComponents.Show("drawnComponents0", true, false);
+      }
 
       // 4. Compute candidate quadrilaterals from the connected components
       FixedLengthList<Quadrilateral<s16> > extractedQuads(maxExtractedQuads, scratch2);
       {
         PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
 
-        if(ComputeQuadrilateralsFromConnectedComponents(extractedComponents, quads_minQuadArea, quads_quadSymmetryThreshold, extractedQuads, scratch2) != RESULT_OK)
+        if(ComputeQuadrilateralsFromConnectedComponents(extractedComponents, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, image.get_size(0), image.get_size(1), extractedQuads, scratch2) != RESULT_OK)
           return RESULT_FAIL;
       } // PUSH_MEMORY_STACK(scratch2);
 
@@ -197,9 +214,10 @@ namespace Anki
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
         PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
 
-        FiducialMarker &currentMarker = markers[iQuad];
+        BlockMarker &currentMarker = markers[iQuad];
+        Array<f64> &currentHomography = homographies[iQuad];
 
-        if(ComputeHomographyFromQuad(extractedQuads[iQuad], currentMarker.homography, scratch2) != RESULT_OK)
+        if(ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, scratch2) != RESULT_OK)
           return RESULT_FAIL;
 
         markers[iQuad].blockType = -1;
@@ -214,98 +232,5 @@ namespace Anki
 
       return RESULT_OK;
     } //  SimpleDetector_Steps1234()
-
-    //IN_DDR Result DetectFiducialMarkers(const Array<u8> &image,
-    //  FixedLengthList<FiducialMarker> &markers,
-    //  const s32 numPyramidLevels,
-    //  MemoryStack scratch1,
-    //  MemoryStack scratch2)
-    //{
-    //  // TODO: figure out a simpler way to write code that reuses big blocks of memory
-
-    //  const s32 maxConnectedComponentSegments = u16_MAX;
-    //  const s16 minComponentWidth = 3;
-    //  const s16 maxSkipDistance = 1;
-    //  const s32 maxCandidateMarkers = 1000;
-
-    //  const f32 minSideLength = Round(0.03f*MAX(480,640));
-    //  const f32 maxSideLength = Round(0.9f*MIN(480,640));
-
-    //  const s32 minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
-    //  const s32 maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
-    //  const s32 sparseMultiplyThreshold = 1000;
-    //  const s32 solidMultiplyThreshold = 2;
-
-    //  const s32 maxExtractedQuads = 100;
-    //  const s32 minQuadArea = 100;
-    //  const s32 quadSymmetryThreshold = 384;
-
-    //  // Stored in the outermost scratch2
-    //  FixedLengthList<FiducialMarker> candidateMarkers(maxCandidateMarkers, scratch2);
-
-    //  ConnectedComponents extractedComponents; // This isn't allocated until after the scaleImage
-    //  {
-    //    PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
-    //    Array<u8> binaryImage(image.get_size(0), image.get_size(1), scratch2);
-
-    //    // 1. Compute the Scale image (use local scratch1)
-    //    // 2. Binarize the Scale image (store in outer scratch2)
-    //    {
-    //      PUSH_MEMORY_STACK(scratch1); // Push the current state of the scratch buffer onto the system stack
-
-    //      FixedPointArray<u32> scaleImage(image.get_size(0), image.get_size(1), 16, scratch1);
-
-    //      if(ComputeCharacteristicScaleImage(image, numPyramidLevels, scaleImage, scratch2) != RESULT_OK)
-    //        return RESULT_FAIL;
-
-    //      if(ThresholdScaleImage(image, scaleImage, binaryImage) != RESULT_OK)
-    //        return RESULT_FAIL;
-    //    } // PUSH_MEMORY_STACK(scratch1);
-
-    //    // 3. Compute connected components from the binary image (use local scratch2, store in outer scratch1)
-    //    extractedComponents = ConnectedComponents(maxConnectedComponentSegments, scratch1);
-    //    {
-    //      PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
-
-    //      if(extractedComponents.Extract2dComponents(binaryImage, minComponentWidth, maxSkipDistance, scratch2) != RESULT_OK)
-    //        return RESULT_FAIL;
-
-    //      extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
-
-    //      if(extractedComponents.InvalidateSmallOrLargeComponents(minimumNumPixels, maximumNumPixels, scratch2) != RESULT_OK)
-    //        return RESULT_FAIL;
-
-    //      extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
-
-    //      if(extractedComponents.InvalidateSolidOrSparseComponents(sparseMultiplyThreshold, solidMultiplyThreshold, scratch2) != RESULT_OK)
-    //        return RESULT_FAIL;
-
-    //      extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
-    //    } // PUSH_MEMORY_STACK(scratch2);
-    //  } // PUSH_MEMORY_STACK(scratch2);
-
-    //  // 4. Compute candidate quadrilaterals from the connected components
-    //  FixedLengthList<Quadrilateral<s16> > extractedQuads(maxExtractedQuads, scratch2);
-    //  {
-    //    PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
-
-    //    // TODO: compute candiate quads
-    //    if(ComputeQuadrilateralsFromConnectedComponents(extractedComponents, minQuadArea, quadSymmetryThreshold, extractedQuads, scratch2) != RESULT_OK)
-    //      return RESULT_FAIL;
-    //  } // PUSH_MEMORY_STACK(scratch2);
-
-    //  FixedLengthList<Array<f64> > homographies(extractedQuads.get_size(), scratch2);
-    //  {
-    //    PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
-
-    //    if(ComputeHomographyFromQuad(extractedQuads, homographies, scratch2) != RESULT_OK)
-    //      return RESULT_FAIL;
-    //  } // PUSH_MEMORY_STACK(scratch2);
-
-    //  // 5. Decode fiducial markers from the candidate quadrilaterals
-    //  // TODO: do decoding
-
-    //  return RESULT_OK;
-    //} //  DetectFiducialMarkers()
   } // namespace Embedded
 } // namespace Anki

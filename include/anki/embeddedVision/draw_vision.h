@@ -3,7 +3,7 @@
 
 #include "anki/embeddedCommon/config.h"
 #include "anki/embeddedCommon/array2d.h"
-#include "anki/embeddedVision/dataStructures_vision.h"
+#include "anki/embeddedVision/connectedComponents.h"
 #include "anki/embeddedVision/connectedComponents.h"
 
 namespace Anki

@@ -4,6 +4,34 @@ namespace Anki
 {
   namespace Embedded
   {
+    ConnectedComponentSegment::ConnectedComponentSegment()
+      : xStart(-1), xEnd(-1), y(-1), id(0)
+    {
+    } // ConnectedComponentSegment::ConnectedComponentSegment()
+
+    ConnectedComponentSegment::ConnectedComponentSegment(const s16 xStart, const s16 xEnd, const s16 y, const u16 id)
+      : xStart(xStart), xEnd(xEnd), y(y), id(id)
+    {
+    } // ConnectedComponentSegment::ConnectedComponentSegment(const s16 xStart, const s16 xEnd, const s16 y, const u16 id)
+
+    void ConnectedComponentSegment::Print() const
+    {
+      //printf("[%d: (%d->%d, %d)] ", static_cast<s32>(this->id), static_cast<s32>(this->xStart), static_cast<s32>(this->xEnd), static_cast<s32>(this->y));
+      printf("[%u: (%d->%d, %d)] ", this->id, this->xStart, this->xEnd, this->y);
+    } // void ConnectedComponentSegment::Print() const
+
+    bool ConnectedComponentSegment::operator== (const ConnectedComponentSegment &component2) const
+    {
+      if((this->xStart == component2.xStart) &&
+        (this->xEnd == component2.xEnd) &&
+        (this->y == component2.y) &&
+        (this->id == component2.id)) {
+          return true;
+      }
+
+      return false;
+    }
+
     IN_DDR Result ConnectedComponents::Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment> &components)
     {
       bool onComponent;

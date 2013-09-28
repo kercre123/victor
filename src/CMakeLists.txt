@@ -36,16 +36,30 @@ set(CORETECH_VISION_EMBEDDED_FILES
 	embedded/computeQuadrilaterals.cpp
 	embedded/connectedComponents.cpp
 	embedded/dataStructures_vision.cpp
-	embedded/detectFiducialMarkers.cpp
+	embedded/fiducialMarkers.cpp
 	embedded/downsampleByFactor.cpp
 	embedded/draw_vision.cpp
 	embedded/filtering.cpp
 	embedded/fixedLengthList_vision.cpp
+	embedded/matlabPrototyping.cpp
 	embedded/thresholdScaleImage.cpp
 	embedded/traceBoundary.cpp
 	embedded/transformations.cpp
 )
 
+set(CORETECH_VISION_EMBEDDED_HEADER_FILES
+	../include/anki/embeddedVision.h
+	../include/anki/embeddedVision/array2d_vision.h
+	../include/anki/embeddedVision/config.h
+	../include/anki/embeddedVision/connectedComponents.h
+	../include/anki/embeddedVision/dataStructures_vision.h
+	../include/anki/embeddedVision/draw_vision.h
+	embedded/fiducialMarkerDefinitionType0.h
+	../include/anki/embeddedVision/fiducialMarkers.h
+	../include/anki/embeddedVision/fixedLengthList_vision.h	
+	../include/anki/embeddedVision/miscVisionKernels.h
+)
+
 add_library(CoreTech_Vision_Embedded
-	${CORETECH_VISION_EMBEDDED_FILES})
+	${CORETECH_VISION_EMBEDDED_FILES} ${CORETECH_VISION_EMBEDDED_HEADER_FILES})
 

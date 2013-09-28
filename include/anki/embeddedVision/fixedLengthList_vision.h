@@ -3,7 +3,6 @@
 
 #include "anki/embeddedVision/config.h"
 #include "anki/embeddedCommon.h"
-#include "anki/embeddedVision/dataStructures_vision.h"
 
 namespace Anki
 {

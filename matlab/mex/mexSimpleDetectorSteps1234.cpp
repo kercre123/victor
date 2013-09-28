@@ -24,12 +24,13 @@ using namespace Anki::Embedded;
 // component_solidMultiplyThreshold = 2.0;
 // quads_minQuadArea = 100;
 // quads_quadSymmetryThreshold = 1.5;
+// quads_minDistanceFromImageEdge = 2;
 // [quads, quadTforms] = mexSimpleDetectorSteps1234(image, scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, quads_minQuadArea, quads_quadSymmetryThreshold);
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   // Result SimpleDetector_Steps1234(
   // const Array<u8> &image,
-  // FixedLengthList<FiducialMarker> &markers,
+  // FixedLengthList<BlockMarker> &markers,
   // const s32 scaleImage_numPyramidLevels,
   // const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
   // const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
@@ -38,7 +39,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   // MemoryStack scratch1,
   // MemoryStack scratch2)
 
-  ConditionalErrorAndReturn(nrhs == 10 && nlhs == 2, "mexSimpleDetectorSteps1234", "Call this function as following: [quads, quadTforms] = mexSimpleDetectorSteps1234(uint8(image), scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, quads_minQuadArea, quads_quadSymmetryThreshold);");
+  ConditionalErrorAndReturn(nrhs == 13 && nlhs == 2, "mexSimpleDetectorSteps1234", "Call this function as following: [quads, quadTforms] = mexSimpleDetectorSteps1234(uint8(image), scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge);");
 
   Array<u8> image = mxArrayToArray<u8>(prhs[0]);
   const s32 scaleImage_numPyramidLevels = static_cast<s32>(mxGetScalar(prhs[1]));
@@ -48,8 +49,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const s32 component_maximumNumPixels = static_cast<s32>(mxGetScalar(prhs[5]));
   const s32 component_sparseMultiplyThreshold = static_cast<s32>(Round(pow(2,5)*mxGetScalar(prhs[6]))); // Convert from double to SQ26.5
   const s32 component_solidMultiplyThreshold = static_cast<s32>(Round(pow(2,5)*mxGetScalar(prhs[7]))); // Convert from double to SQ26.5
-  const s32 quads_minQuadArea = static_cast<s32>(mxGetScalar(prhs[8]));
-  const s32 quads_quadSymmetryThreshold = static_cast<s32>(Round(pow(2,8)*mxGetScalar(prhs[9]))); // Convert from double to SQ23.8
+  const s32 component_percentHorizontal = static_cast<s32>(Round(pow(2,8)*mxGetScalar(prhs[8]))); // Convert from double to SQ23.8
+  const s32 component_percentVertical = static_cast<s32>(Round(pow(2,8)*mxGetScalar(prhs[9]))); // Convert from double to SQ23.8
+  const s32 quads_minQuadArea = static_cast<s32>(mxGetScalar(prhs[10]));
+  const s32 quads_quadSymmetryThreshold = static_cast<s32>(Round(pow(2,8)*mxGetScalar(prhs[11]))); // Convert from double to SQ23.8
+  const s32 quads_minDistanceFromImageEdge = static_cast<s32>(mxGetScalar(prhs[12]));
 
   //printf("%f %f %s\n", *startPoint.Pointer(0,0), *startPoint.Pointer(0,1), initialDirection.data());
   ConditionalErrorAndReturn(image.IsValid(), "mexSimpleDetectorSteps1234", "Could not allocate image");
@@ -67,28 +71,28 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   ConditionalErrorAndReturn(scratch2.IsValid(), "mexSimpleDetectorSteps1234", "Scratch2 could not be allocated");
 
   const s32 maxMarkers = 100;
-  FixedLengthList<FiducialMarker> markers(maxMarkers, scratch0);
+  FixedLengthList<BlockMarker> markers(maxMarkers, scratch0);
+  FixedLengthList<Array<f64>> homographies(maxMarkers, scratch0);
 
   markers.set_size(maxMarkers);
+  homographies.set_size(maxMarkers);
 
-  //Point<s16> corners[4]; // SQ 15.0 (Though may be changed later)
-  //    Array<f64> homography;
-  //    s16 blockType, faceType;
   for(s32 i=0; i<maxMarkers; i++) {
     Array<f64> newArray(3, 3, scratch0);
-    //markers.Pointer(i)->homography = newArray;
-    printf("%d\n", markers.Pointer(i)->homography.get_size(0));
-  } // for(s32 i=0; i<maximumSize; i++)
+    homographies[i] = newArray;
+  }
 
   {
     const Result result = SimpleDetector_Steps1234(
       image,
       markers,
+      homographies,
       scaleImage_numPyramidLevels,
       component1d_minComponentWidth, component1d_maxSkipDistance,
       component_minimumNumPixels, component_maximumNumPixels,
       component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
-      quads_minQuadArea, quads_quadSymmetryThreshold,
+      component_percentHorizontal, component_percentVertical,
+      quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
       scratch1,
       scratch2);
 
@@ -116,7 +120,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   for(s32 i=0; i<numMarkers; i++) {
     mxSetCell(quadsMatlab, i, arrayToMxArray<f64>(quads[i]));
-    mxSetCell(quadTformsMatlab, i, arrayToMxArray<f64>(markers[i].homography));
+    mxSetCell(quadTformsMatlab, i, arrayToMxArray<f64>(homographies[i]));
   }
 
   //[quads, quadTforms]

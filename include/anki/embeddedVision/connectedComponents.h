@@ -3,12 +3,27 @@
 
 #include "anki/embeddedVision/config.h"
 #include "anki/embeddedCommon.h"
-#include "anki/embeddedVision/dataStructures_vision.h"
 
 namespace Anki
 {
   namespace Embedded
   {
+    // A 1d, run-length encoded piece of a 2d component
+    class ConnectedComponentSegment
+    {
+    public:
+      s16 xStart, xEnd, y;
+      u16 id;
+
+      ConnectedComponentSegment();
+
+      ConnectedComponentSegment(const s16 xStart, const s16 xEnd, const s16 y = -1, const u16 id = 0);
+
+      void Print() const;
+
+      bool operator== (const ConnectedComponentSegment &component2) const;
+    }; // class ConnectedComponentSegment
+
     class ConnectedComponents
     {
     public:
