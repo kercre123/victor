@@ -85,8 +85,8 @@ namespace Anki {
     // "Apply" Pose to a 2D point (i.e. transform that point by this Pose)
     Point2f operator*(const Point2f &point) const;
     
-    Pose2d getInverse(void); const // return new Pose
-    void Invert(void); // in place
+    Pose2d  getInverse(void) const; // return new Pose
+    Pose2d& Invert(void); // in place
     
     // Get this pose with respect to another pose.  Other pose
     // must be an ancestor of this pose, otherwise an error
@@ -108,12 +108,14 @@ namespace Anki {
     // "Parent" for defining linkages or sequences of poses, so we can get
     // a pose "with respect to" a parent or to root (world) pose.
     const Pose2d *parent;
-    //unsigned int treeDepth; // helps find common ancestor with other poses
     unsigned int getTreeDepth(void) const;
     
-    friend Pose2d getWithRespectToHelper(const Pose2d *from,
-                                         const Pose2d *to);
+    template<class POSE>
+    friend POSE getWithRespectToHelper(const POSE *from, const POSE *to);
 
+    template<class POSE>
+    friend unsigned int getTreeDepthHelper(const POSE *P);
+    
   }; // class Pose2d
   
   
@@ -148,12 +150,13 @@ namespace Anki {
     Pose3d(const RotationMatrix3d &Rmat, const Vec3f &T,
            const Pose3d *parentPose = Pose3d::World);
     
-    void update(const RotationMatrix3d &Rmat, const Vec3f &T);
-    void update(const RotationVector3d &Rvec, const Vec3f &T);
-
     // TODO: Copy constructor?
     Pose3d(const Pose3d &otherPose);
     Pose3d(const Pose3d *otherPose);
+    
+    // TODO: Update methods:
+    void update(const RotationMatrix3d &Rmat, const Vec3f &T);
+    void update(const RotationVector3d &Rvec, const Vec3f &T);
     
     // Composition with another Pose
     void   operator*=(const Pose3d &other); // in place
@@ -163,8 +166,8 @@ namespace Anki {
     // "Apply" Pose to a 3D point (i.e. transform that point by this Pose)
     Point3f operator*(const Point3f &point) const;
     
-    Pose3d getInverse(void) const;
-    void   Invert(void); // in place?
+    Pose3d  getInverse(void) const;
+    Pose3d& Invert(void); // in place?
     
     // Get this pose with respect to another pose.  Other pose
     // must be an ancestor of this pose, otherwise an error
@@ -187,11 +190,13 @@ namespace Anki {
     // "Parent" for defining linkages or sequences of poses, so we can get
     // a pose "with respect to" a parent or to root (world) pose.
     const Pose3d *parent;
-    //unsigned int treeDepth; // helps find common ancestor with other poses
     unsigned int getTreeDepth(void) const;
     
-    friend Pose3d getWithRespectToHelper(const Pose3d *from,
-                                         const Pose3d *to);
+    template<class POSE>
+    friend POSE getWithRespectToHelper(const POSE *from, const POSE *to);
+    
+    template<class POSE>
+    friend unsigned int getTreeDepthHelper(const POSE *P);
     
   }; // class Pose3d
   

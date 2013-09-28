@@ -91,7 +91,6 @@ namespace Anki {
     // Constructors:
     SmallMatrix();
     SmallMatrix(const T* vals); // *assumes* vals is NROWS*NCOLS long
-    
     SmallMatrix(const SmallMatrix<T,NROWS,NCOLS> &M);
     
     // Matrix element access:
@@ -347,6 +346,18 @@ namespace Anki {
     // TODO: Define our own opencv-free constructor?
 #endif
   }
+  
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  SmallMatrix<T,NROWS,NCOLS>::SmallMatrix(const SmallMatrix<T,NROWS,NCOLS> &M)
+#if defined(ANKICORETECH_USE_OPENCV)
+  : cv::Matx<T,NROWS,NCOLS>(M)
+#endif
+  {
+#if !defined(ANKICORETECH_USE_OPENCV)
+    assert(false);
+    // TODO: Define our own opencv-free copy constructor?
+#endif
+  }
 
   
   template<typename T, unsigned int NROWS, unsigned int NCOLS>
@@ -452,6 +463,20 @@ namespace Anki {
   
   
 #pragma mark --- SmallSquareMatrix Implementations
+  
+  template<typename T, unsigned int DIM>
+  SmallSquareMatrix<T,DIM>::SmallSquareMatrix(void)
+  : SmallMatrix<T,DIM,DIM>()
+  {
+    
+  }
+
+  template<typename T, unsigned int DIM>
+  SmallSquareMatrix<T,DIM>::SmallSquareMatrix(const SmallMatrix<T,DIM,DIM> &M)
+  : SmallMatrix<T,DIM,DIM>(M)
+  {
+    
+  }
   
   template<typename T, unsigned int DIM>
   void SmallSquareMatrix<T,DIM>::operator*=(const SmallSquareMatrix<T,DIM> &other)
