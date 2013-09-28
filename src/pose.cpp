@@ -72,6 +72,24 @@ namespace Anki {
     this->translation += other.translation;
   }
   
+  Pose2d Pose2d::getInverse(void) const
+  {
+    Pose2d returnPose(*this);
+    returnPose.Invert();
+    return returnPose;
+  }
+  
+  Pose2d& Pose2d::Invert(void)
+  {
+    this->angle *= -1.f;
+    RotationMatrix2d R(this->angle);
+
+    this->translation *= -1.f;
+    this->translation = R * this->translation;
+    
+    return *this;
+  }
+  
 #pragma mark --- Pose3d Implementations ---
   
   Pose3d* Pose3d::World = NULL;
@@ -109,6 +127,17 @@ namespace Anki {
 
   } // Constructor: Pose3d(Rmat, T)
   
+  Pose3d::Pose3d(const Pose3d &otherPose)
+  : Pose3d(otherPose.rotationMatrix, otherPose.translation, otherPose.parent)
+  {
+    
+  }
+  
+  Pose3d::Pose3d(const Pose3d *otherPose)
+  : Pose3d(*otherPose)
+  {
+    
+  }
   
 #pragma mark --- Operator Overloads ---
   // Composition: this = this*other
@@ -150,34 +179,45 @@ namespace Anki {
 #pragma mark --- Member Methods ---
   Pose3d Pose3d::getInverse(void) const
   {
-    // TODO: Return inverse(this)
     Pose3d returnPose(*this);
     returnPose.Invert();
     return returnPose;
   }
   
-  void Pose3d::Invert(void)
+  Pose3d& Pose3d::Invert(void)
   {
     this->rotationMatrix.getTranspose();
     this->translation *= -1.f;
     this->translation = this->rotationMatrix * this->translation;
+    
+    return *this;
   }
-  
+
   // Count number of steps to root ("World") node, by walking up
   // the chain of parents.
-  unsigned int Pose3d::getTreeDepth(void) const
+  template<class POSE>
+  unsigned int getTreeDepthHelper(const POSE *P)
   {
     unsigned int treeDepth = 1;
     
-    const Pose3d* current = this;
-    while(current->parent != Pose3d::World)
+    const POSE* current = P;
+    while(current->parent != POSE::World)
     {
       ++treeDepth;
       current = current->parent;
     }
     
     return treeDepth;
-    
+  }
+  
+  unsigned int Pose2d::getTreeDepth(void) const
+  {
+    return getTreeDepthHelper<Pose2d>(this);
+  } // getTreeDepth()
+
+  unsigned int Pose3d::getTreeDepth(void) const
+  {
+    return getTreeDepthHelper<Pose3d>(this);
   } // getTreeDepth()
   
   template<class POSE>
@@ -267,18 +307,20 @@ namespace Anki {
   
   Pose2d Pose2d::getWithRespectTo(const Anki::Pose2d *otherPose) const
   {
-    return getWithRespectToHelper(this, otherPose);
+    return getWithRespectToHelper<Pose2d>(this, otherPose);
   }
   
   Pose3d Pose3d::getWithRespectTo(const Anki::Pose3d *otherPose) const
   {
-    return getWithRespectToHelper(this, otherPose);
+    return getWithRespectToHelper<Pose3d>(this, otherPose);
   }
   
   void testPoseInstantiation(void)
   {
-    Pose2d p2(30.f, 10.f, -5.f);
+    Pose2d p2(30.f, 10.f, -5.f), q2(M_PI/3.f, 15.f, 5.f);
     Pose3d p3;
+    
+    Pose2d p_wrt_q( p2.getWithRespectTo(&q2) );
   }
   
 } // namespace Anki

@@ -81,7 +81,7 @@ namespace Anki {
     Point2(const T x, const T y);
 #if defined(ANKICORETECH_USE_OPENCV)
     Point2(const cv::Point_<T>& pt);
-    cv::Point_<T>& get_CvPoint_() const;
+    cv::Point_<T> get_CvPoint_() const;
 #endif
     
     // Accessors:
@@ -106,7 +106,7 @@ namespace Anki {
     Point3(const T x, const T y, const T z);
 #if defined(ANKICORETECH_USE_OPENCV)
     Point3(const cv::Point3_<T>& pt);
-    cv::Point3_<T>& get_CvPoint_() const;
+    cv::Point3_<T> get_CvPoint_() const;
 #endif
     
     // Accessors:
@@ -248,7 +248,68 @@ namespace Anki {
     (*this) *= T(1)/this->length();
     return *this;
   }
+
   
+  // Point2's constructors
+  template<typename T>
+  Point2<T>::Point2(void)
+  : Point<T,2>()
+  {
+    
+  }
+  
+  template<typename T>
+  Point2<T>::Point2(const T x, const T y)
+  {
+    this->x() = x;
+    this->y() = y;
+  }
+  
+#if defined(ANKICORETECH_USE_OPENCV)
+  template<typename T>
+  Point2<T>::Point2(const cv::Point_<T>& pt)
+  : Point2(pt.x, pt.y)
+  {
+    
+  }
+  
+  template<typename T>
+  cv::Point_<T> Point2<T>::get_CvPoint_() const
+  {
+    return cv::Point_<T>(this->x(), this->y());
+  }
+#endif
+  
+  // Point3's constructors
+  template<typename T>
+  Point3<T>::Point3(void)
+  : Point<T,3>()
+  {
+    
+  }
+  
+  template<typename T>
+  Point3<T>::Point3(const T x, const T y, const T z)
+  {
+    this->x() = x;
+    this->y() = y;
+    this->z() = z;
+  }
+  
+#if defined(ANKICORETECH_USE_OPENCV)
+  template<typename T>
+  Point3<T>::Point3(const cv::Point3_<T>& pt)
+  : Point3(pt.x, pt.y, pt.z)
+  {
+    
+  }
+  
+  template<typename T>
+  cv::Point3_<T> Point3<T>::get_CvPoint_() const
+  {
+    return cv::Point3_<T>(this->x(), this->y(), this->z());
+  }
+#endif
   
   // Point2's x,y accessors:
   template<typename T>
