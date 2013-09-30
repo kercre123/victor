@@ -54,7 +54,9 @@ namespace Anki
       FiducialMarkerParserBit(const FiducialMarkerParserBit& bit2);
 
       // All data from probeLocations is copied into this instance's local memory
-      FiducialMarkerParserBit(const s16 * const probesX, const s16 * const probesY, const s16 * const probesWeights, const s32 numProbes, const FiducialMarkerParserBitType type);
+      FiducialMarkerParserBit(const s16 * const probesX, const s16 * const probesY, const s16 * const probeWeights, const s32 numProbes, const FiducialMarkerParserBitType type, const s32 numFractionalBits);
+
+      Result ExtractMeanValue(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, s16 &meanValue);
 
       FiducialMarkerParserBit& operator= (const FiducialMarkerParserBit& bit2);
 
@@ -64,10 +66,13 @@ namespace Anki
 
       FiducialMarkerParserBitType get_type() const;
 
+      s32 get_numFractionalBits() const;
+
     protected:
       FixedLengthList<Point<s16>> probeLocations; //< A list of length MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS
       FixedLengthList<s16> probeWeights;
       FiducialMarkerParserBitType type;
+      s32 numFractionalBits;
 
       // The static data buffer for this object's probeLocations and probeWeights. Modifying this will change the values in probeLocations and probeWeights.
       //Point<s16> probeLocationsBuffer[MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS];
@@ -87,7 +92,7 @@ namespace Anki
 
       FiducialMarkerParser(const FiducialMarkerParser& marker2);
 
-      BlockMarker ParseImage(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography);
+      Result ExtractBlockMarker(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, BlockMarker &marker);
 
       FiducialMarkerParser& operator= (const FiducialMarkerParser& marker2);
 

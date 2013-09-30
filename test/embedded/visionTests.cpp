@@ -46,17 +46,56 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
 #include "../../blockImages/blockImage50.h"
+#include "../../src/embedded/fiducialMarkerDefinitionType0.h"
+
+// Create a test pattern image, full of a grid of squares for probes
+static Result DrawExampleProbesImage(Array<u8> &image, Quadrilateral<s16> &quad, Array<f64> &homography)
+{
+  for(s32 bit=0; bit<NUM_BITS_TYPE_0; bit++) {
+    for(s32 probe=0; probe<NUM_PROBES_PER_BIT_TYPE_0; probe++) {
+      const s32 x = Round(static_cast<f64>(100 *probesX_type0[bit][probe]) / pow(2.0, NUM_FRACTIONAL_BITS_TYPE_0));
+      const s32 y = Round(static_cast<f64>(100 *probesY_type0[bit][probe]) / pow(2.0, NUM_FRACTIONAL_BITS_TYPE_0));
+      image[y][x] = 10 * (bit+1);
+    }
+  }
+
+  quad[0] = Point<s16>(0,0);
+  quad[1] = Point<s16>(0,100);
+  quad[2] = Point<s16>(100,0);
+  quad[3] = Point<s16>(100,100);
+
+  homography[0][0] = 100; homography[0][1] = 0;   homography[0][2] = 0;
+  homography[1][0] = 0;   homography[1][1] = 100; homography[1][2] = 0;
+  homography[2][0] = 0;   homography[2][1] = 0;   homography[2][2] = 1;
+
+  return RESULT_OK;
+}
 
 // The test is if it can run without crashing
 IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
 {
+  const s32 width = 120;
+  const s32 height = 130;
+
   const u32 numBytes0 = 10000000;
   MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
   ASSERT_TRUE(scratch0.IsValid());
 
   FiducialMarkerParser parser = FiducialMarkerParser();
 
-  parser.ParseImage(Array<u8>(5,5,scratch0), Quadrilateral<s16>(), Array<f64>(3,3,scratch0));
+  Array<u8> image(height,width,scratch0);
+  Quadrilateral<s16> quad = Quadrilateral<s16>();
+  Array<f64> homography(3,3,scratch0);
+
+  DrawExampleProbesImage(image, quad, homography);
+  //image.Show("image", true);
+
+  BlockMarker marker;
+
+  {
+    const Result result = parser.ExtractBlockMarker(image, quad, homography, marker);
+    ASSERT_TRUE(result == RESULT_OK);
+  }
 
   free(scratch0.get_buffer());
 
