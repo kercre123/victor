@@ -1,9 +1,14 @@
 # coretech-vision/matlab/mex/CMakeLists.txt
 
-
-set(MEX_LINK_LIBRARIES 
-	CoreTech_Common CoreTech_Common_Embedded 
-	CoreTech_Vision CoreTech_Vision_Embedded)
+if(WIN32)
+	set(MEX_LINK_LIBRARIES 
+		CoreTech_Common_Embedded 
+		CoreTech_Vision_Embedded)
+else()
+	set(MEX_LINK_LIBRARIES 
+		CoreTech_Common CoreTech_Common_Embedded 
+		CoreTech_Vision CoreTech_Vision_Embedded)
+endif(WIN32)
  
 set(MEX_FILES
 	mexBinomialFilter.cpp
