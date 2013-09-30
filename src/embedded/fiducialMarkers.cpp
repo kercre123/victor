@@ -19,30 +19,30 @@ namespace Anki
       printf("[%d,%d: (%d,%d) (%d,%d) (%d,%d) (%d,%d)] ", blockType, faceType, corners[0].x, corners[0].y, corners[1].x, corners[1].y, corners[2].x, corners[2].y, corners[3].x, corners[3].y);
     }
 
-    FiducialMarkerParserCell::FiducialMarkerParserCell()
+    FiducialMarkerParserBit::FiducialMarkerParserBit()
     {
       PrepareBuffers();
     }
 
     // All data from other is copied into this instance's local memory
-    FiducialMarkerParserCell::FiducialMarkerParserCell(const FiducialMarkerParserCell& cell2)
+    FiducialMarkerParserBit::FiducialMarkerParserBit(const FiducialMarkerParserBit& bit2)
     {
       PrepareBuffers();
 
-      assert(cell2.probeLocations.get_size() == cell2.probeWeights.get_size());
+      assert(bit2.probeLocations.get_size() == bit2.probeWeights.get_size());
 
-      this->probeLocations.set_size(cell2.probeLocations.get_size());
-      this->probeWeights.set_size(cell2.probeWeights.get_size());
-      this->type = cell2.type;
+      this->probeLocations.set_size(bit2.probeLocations.get_size());
+      this->probeWeights.set_size(bit2.probeWeights.get_size());
+      this->type = bit2.type;
 
-      for(s32 i=0; i<cell2.probeLocations.get_size(); i++) {
-        this->probeLocations[i] = cell2.probeLocations[i];
-        this->probeLocations[i] = cell2.probeLocations[i];
+      for(s32 i=0; i<bit2.probeLocations.get_size(); i++) {
+        this->probeLocations[i] = bit2.probeLocations[i];
+        this->probeLocations[i] = bit2.probeLocations[i];
       }
     }
 
     // All data from probeLocations is copied into this instance's local memory
-    FiducialMarkerParserCell::FiducialMarkerParserCell(const FixedLengthList<Point<s16>> &probeLocations, const FixedLengthList<s16> &probeWeights, const FiducialMarkerParserCellType type)
+    FiducialMarkerParserBit::FiducialMarkerParserBit(const FixedLengthList<Point<s16>> &probeLocations, const FixedLengthList<s16> &probeWeights, const FiducialMarkerParserBitType type)
     {
       PrepareBuffers();
 
@@ -58,45 +58,45 @@ namespace Anki
       }
     }
 
-    FiducialMarkerParserCell& FiducialMarkerParserCell::operator= (const FiducialMarkerParserCell& cell2)
+    FiducialMarkerParserBit& FiducialMarkerParserBit::operator= (const FiducialMarkerParserBit& bit2)
     {
       PrepareBuffers();
 
-      assert(cell2.probeLocations.get_size() == cell2.probeWeights.get_size());
+      assert(bit2.probeLocations.get_size() == bit2.probeWeights.get_size());
 
-      this->probeLocations.set_size(cell2.probeLocations.get_size());
-      this->probeWeights.set_size(cell2.probeWeights.get_size());
-      this->type = cell2.type;
+      this->probeLocations.set_size(bit2.probeLocations.get_size());
+      this->probeWeights.set_size(bit2.probeWeights.get_size());
+      this->type = bit2.type;
 
-      for(s32 i=0; i<cell2.probeLocations.get_size(); i++) {
-        this->probeLocations[i] = cell2.probeLocations[i];
-        this->probeLocations[i] = cell2.probeLocations[i];
+      for(s32 i=0; i<bit2.probeLocations.get_size(); i++) {
+        this->probeLocations[i] = bit2.probeLocations[i];
+        this->probeLocations[i] = bit2.probeLocations[i];
       }
 
       return *this;
     }
 
-    const FixedLengthList<Point<s16>>& FiducialMarkerParserCell::get_probeLocations() const
+    const FixedLengthList<Point<s16>>& FiducialMarkerParserBit::get_probeLocations() const
     {
       return this->probeLocations;
     }
 
-    const FixedLengthList<s16>& FiducialMarkerParserCell::get_probeWeights() const
+    const FixedLengthList<s16>& FiducialMarkerParserBit::get_probeWeights() const
     {
       return this->probeWeights;
     }
 
-    FiducialMarkerParserCellType FiducialMarkerParserCell::get_type() const
+    FiducialMarkerParserBitType FiducialMarkerParserBit::get_type() const
     {
       return this->type;
     }
 
-    void FiducialMarkerParserCell::PrepareBuffers()
+    void FiducialMarkerParserBit::PrepareBuffers()
     {
-      this->type = FIDUCIAL_CELL_UNINITIALIZED;
+      this->type = FIDUCIAL_BIT_UNINITIALIZED;
 
-      this->probeLocations = FixedLengthList<Point<s16> >(MAX_FIDUCIAL_MARKER_CELL_PROBE_LOCATIONS, &probeLocationsBuffer[0], sizeof(probeLocationsBuffer[0])*MAX_FIDUCIAL_MARKER_CELL_PROBE_LOCATIONS);
-      this->probeWeights = FixedLengthList<s16>(MAX_FIDUCIAL_MARKER_CELL_PROBE_LOCATIONS, &probeWeightsBuffer[0], sizeof(probeWeightsBuffer[0])*MAX_FIDUCIAL_MARKER_CELL_PROBE_LOCATIONS);
+      this->probeLocations = FixedLengthList<Point<s16> >(MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS, &probeLocationsBuffer[0], sizeof(probeLocationsBuffer[0])*MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS);
+      this->probeWeights = FixedLengthList<s16>(MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS, &probeWeightsBuffer[0], sizeof(probeWeightsBuffer[0])*MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS);
     }
 
     // Initialize with the default grid type, converted from Matlab
@@ -117,7 +117,7 @@ namespace Anki
 
     void FiducialMarkerParser::PrepareBuffers()
     {
-      this->cells = FixedLengthList<FiducialMarkerParserCell>(MAX_FIDUCIAL_MARKER_CELL_PROBE_LOCATIONS, &cellsBuffer[0], sizeof(cellsBuffer[0])*MAX_FIDUCIAL_MARKER_CELLS);
+      this->bits = FixedLengthList<FiducialMarkerParserBit>(MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS, &bitsBuffer[0], sizeof(bitsBuffer[0])*MAX_FIDUCIAL_MARKER_BITS);
     }
 
     Result FiducialMarkerParser::InitializeAsDefaultParser()

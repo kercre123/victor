@@ -8,8 +8,8 @@
 
 #include "anki/embeddedVision/connectedComponents.h"
 
-#define MAX_FIDUCIAL_MARKER_CELLS 25
-#define MAX_FIDUCIAL_MARKER_CELL_PROBE_LOCATIONS 49
+#define MAX_FIDUCIAL_MARKER_BITS 25
+#define MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS 49
 
 namespace Anki
 {
@@ -17,12 +17,16 @@ namespace Anki
   {
     typedef enum
     {
-      FIDUCIAL_CELL_UNINITIALIZED = 0,
-      FIDUCIAL_CELL_NONE = 1,
-      FIDUCIAL_CELL_BLOCK = 2,
-      FIDUCIAL_CELL_FACE = 3,
-      FIDUCIAL_CELL_ORIENTATION = 4
-    } FiducialMarkerParserCellType;
+      FIDUCIAL_BIT_UNINITIALIZED = 0,
+      FIDUCIAL_BIT_NONE = 1,
+      FIDUCIAL_BIT_BLOCK = 2,
+      FIDUCIAL_BIT_FACE = 3,
+      FIDUCIAL_BIT_ORIENTATION_LEFT = 4,
+      FIDUCIAL_BIT_ORIENTATION_RIGHT = 5,
+      FIDUCIAL_BIT_ORIENTATION_UP = 6,
+      FIDUCIAL_BIT_ORIENTATION_DOWN = 7,
+      FIDUCIAL_BIT_CHECKSUM = 8
+    } FiducialMarkerParserBitType;
 
     // A BlockMarker is a location Quadrilateral, with a given blockType and faceType.
     // The blockType and faceType can be computed by a FiducialMarkerParser
@@ -37,36 +41,36 @@ namespace Anki
       void Print() const;
     }; // class BlockMarker
 
-    class FiducialMarkerParserCell
+    class FiducialMarkerParserBit
     {
     public:
-      FiducialMarkerParserCell();
+      FiducialMarkerParserBit();
 
       // All data from other is copied into this instance's local memory
-      FiducialMarkerParserCell(const FiducialMarkerParserCell& cell2);
+      FiducialMarkerParserBit(const FiducialMarkerParserBit& bit2);
 
       // All data from probeLocations is copied into this instance's local memory
-      FiducialMarkerParserCell(const FixedLengthList<Point<s16>> &probeLocations, const FixedLengthList<s16> &probeWeights, const FiducialMarkerParserCellType type);
+      FiducialMarkerParserBit(const FixedLengthList<Point<s16>> &probeLocations, const FixedLengthList<s16> &probeWeights, const FiducialMarkerParserBitType type);
 
-      FiducialMarkerParserCell& operator= (const FiducialMarkerParserCell& cell2);
+      FiducialMarkerParserBit& operator= (const FiducialMarkerParserBit& bit2);
 
       const FixedLengthList<Point<s16> >& get_probeLocations() const;
 
       const FixedLengthList<s16>& get_probeWeights() const;
 
-      FiducialMarkerParserCellType get_type() const;
+      FiducialMarkerParserBitType get_type() const;
 
     protected:
-      FixedLengthList<Point<s16>> probeLocations; //< A list of length MAX_FIDUCIAL_MARKER_CELL_PROBE_LOCATIONS
+      FixedLengthList<Point<s16>> probeLocations; //< A list of length MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS
       FixedLengthList<s16> probeWeights;
-      FiducialMarkerParserCellType type;
+      FiducialMarkerParserBitType type;
 
       // The static data buffer for this object's probeLocations and probeWeights. Modifying this will change the values in probeLocations and probeWeights.
-      Point<s16> probeLocationsBuffer[MAX_FIDUCIAL_MARKER_CELL_PROBE_LOCATIONS];
-      Point<s16> probeWeightsBuffer[MAX_FIDUCIAL_MARKER_CELL_PROBE_LOCATIONS];
+      Point<s16> probeLocationsBuffer[MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS];
+      Point<s16> probeWeightsBuffer[MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS];
 
       void PrepareBuffers();
-    }; // class FiducialMarkerParserCell
+    }; // class FiducialMarkerParserBit
 
     class FiducialMarkerParser
     {
@@ -78,9 +82,9 @@ namespace Anki
       BlockMarker ParseImage(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography);
 
     protected:
-      FixedLengthList<FiducialMarkerParserCell> cells;
+      FixedLengthList<FiducialMarkerParserBit> bits;
 
-      FiducialMarkerParserCell cellsBuffer[MAX_FIDUCIAL_MARKER_CELLS];
+      FiducialMarkerParserBit bitsBuffer[MAX_FIDUCIAL_MARKER_BITS];
 
       void PrepareBuffers();
 
