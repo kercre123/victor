@@ -48,6 +48,22 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 #include "../../blockImages/blockImage50.h"
 
 // The test is if it can run without crashing
+IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
+{
+  const u32 numBytes0 = 10000000;
+  MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
+  ASSERT_TRUE(scratch0.IsValid());
+
+  FiducialMarkerParser parser = FiducialMarkerParser();
+
+  parser.ParseImage(Array<u8>(5,5,scratch0), Quadrilateral<s16>(), Array<f64>(3,3,scratch0));
+
+  free(scratch0.get_buffer());
+
+  GTEST_RETURN_HERE;
+}
+
+// The test is if it can run without crashing
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
 {
   const s32 scaleImage_numPyramidLevels = 6;

@@ -6,6 +6,8 @@
 
 #include "fiducialMarkerDefinitionType0.h"
 
+#define INITIALIZE_WITH_DEFINITION_TYPE 0
+
 namespace Anki
 {
   namespace Embedded
@@ -37,26 +39,26 @@ namespace Anki
 
       for(s32 i=0; i<bit2.probeLocations.get_size(); i++) {
         this->probeLocations[i] = bit2.probeLocations[i];
-        this->probeLocations[i] = bit2.probeLocations[i];
+        this->probeWeights[i] = bit2.probeWeights[i];
       }
-    }
+    } // FiducialMarkerParserBit::FiducialMarkerParserBit(const FiducialMarkerParserBit& bit2)
 
-    // All data from probeLocations is copied into this instance's local memory
-    FiducialMarkerParserBit::FiducialMarkerParserBit(const FixedLengthList<Point<s16>> &probeLocations, const FixedLengthList<s16> &probeWeights, const FiducialMarkerParserBitType type)
+    FiducialMarkerParserBit::FiducialMarkerParserBit(const s16 * const probesX, const s16 * const probesY, const s16 * const probesWeights, const s32 numProbes, const FiducialMarkerParserBitType type)
     {
       PrepareBuffers();
 
-      assert(probeLocations.get_size() == probeWeights.get_size());
+      assert(numProbes <= MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS);
 
-      this->probeLocations.set_size(probeLocations.get_size());
-      this->probeWeights.set_size(probeWeights.get_size());
+      this->probeLocations.set_size(numProbes);
+      this->probeWeights.set_size(numProbes);
       this->type = type;
 
       for(s32 i=0; i<probeLocations.get_size(); i++) {
-        this->probeLocations[i] = probeLocations[i];
-        this->probeLocations[i] = probeLocations[i];
+        this->probeLocations[i].x = probesX[i];
+        this->probeLocations[i].y = probesY[i];
+        this->probeWeights[i] = probeWeights[i];
       }
-    }
+    } // FiducialMarkerParserBit(const s16 * const probesX, const s16 * const probesY, const s16 * const probesWeights, const s32 numProbes)
 
     FiducialMarkerParserBit& FiducialMarkerParserBit::operator= (const FiducialMarkerParserBit& bit2)
     {
@@ -74,7 +76,7 @@ namespace Anki
       }
 
       return *this;
-    }
+    } // FiducialMarkerParserBit& FiducialMarkerParserBit::operator= (const FiducialMarkerParserBit& bit2)
 
     const FixedLengthList<Point<s16>>& FiducialMarkerParserBit::get_probeLocations() const
     {
@@ -95,8 +97,8 @@ namespace Anki
     {
       this->type = FIDUCIAL_BIT_UNINITIALIZED;
 
-      this->probeLocations = FixedLengthList<Point<s16> >(MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS, &probeLocationsBuffer[0], sizeof(probeLocationsBuffer[0])*MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS);
-      this->probeWeights = FixedLengthList<s16>(MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS, &probeWeightsBuffer[0], sizeof(probeWeightsBuffer[0])*MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS);
+      this->probeLocations = FixedLengthList<Point<s16> >(MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS, &probeLocationsBuffer[0], NUM_BYTES_probeLocationsBuffer);
+      this->probeWeights = FixedLengthList<s16>(MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS, &probeWeightsBuffer[0], NUM_BYTES_probeWeightsBuffer);
     }
 
     // Initialize with the default grid type, converted from Matlab
@@ -104,6 +106,15 @@ namespace Anki
     {
       PrepareBuffers();
       InitializeAsDefaultParser();
+    }
+
+    FiducialMarkerParser::FiducialMarkerParser(const FiducialMarkerParser& marker2)
+    {
+      PrepareBuffers();
+
+      memcpy(this->bitsBuffer, marker2.bitsBuffer, NUM_BYTES_bitsBuffer);
+
+      this->bits.set_size(marker2.bits.get_size());
     }
 
     BlockMarker FiducialMarkerParser::ParseImage(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography)
@@ -115,13 +126,35 @@ namespace Anki
       return marker;
     }
 
+    FiducialMarkerParser& FiducialMarkerParser::operator= (const FiducialMarkerParser& marker2)
+    {
+      PrepareBuffers();
+
+      memcpy(this->bitsBuffer, marker2.bitsBuffer, NUM_BYTES_bitsBuffer);
+
+      this->bits.set_size(marker2.bits.get_size());
+
+      return *this;
+    }
+
     void FiducialMarkerParser::PrepareBuffers()
     {
-      this->bits = FixedLengthList<FiducialMarkerParserBit>(MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS, &bitsBuffer[0], sizeof(bitsBuffer[0])*MAX_FIDUCIAL_MARKER_BITS);
+      this->bits = FixedLengthList<FiducialMarkerParserBit>(MAX_FIDUCIAL_MARKER_BITS, &bitsBuffer[0], NUM_BYTES_bitsBuffer);
+      this->bits.IsValid();
     }
 
     Result FiducialMarkerParser::InitializeAsDefaultParser()
     {
+      if(INITIALIZE_WITH_DEFINITION_TYPE == 0) {
+        assert(NUM_BITS_TYPE_0 <= MAX_FIDUCIAL_MARKER_BITS);
+        assert(NUM_PROBES_PER_BIT_TYPE_0 <= MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS);
+
+        this->bits.Clear();
+
+        for(s32 i=0; i<NUM_BITS_TYPE_0; i++) {
+          this->bits.PushBack(FiducialMarkerParserBit(probesX_type0[i], probesY_type0[i], probeWeights_type0[i], NUM_PROBES_PER_BIT_TYPE_0, bitTypes_type0[i]));
+        }
+      } // if(INITIALIZE_WITH_DEFINITION_TYPE == 0)
       return RESULT_OK;
     }
   } // namespace Embedded

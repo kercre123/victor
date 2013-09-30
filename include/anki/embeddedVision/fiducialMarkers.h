@@ -9,7 +9,11 @@
 #include "anki/embeddedVision/connectedComponents.h"
 
 #define MAX_FIDUCIAL_MARKER_BITS 25
-#define MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS 49
+#define MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS 81
+
+#define NUM_BYTES_probeLocationsBuffer (sizeof(Point<s16>)*MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS + MEMORY_ALIGNMENT + 32)
+#define NUM_BYTES_probeWeightsBuffer (sizeof(s16)*MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS  + MEMORY_ALIGNMENT + 32)
+#define NUM_BYTES_bitsBuffer (sizeof(FiducialMarkerParserBit)*MAX_FIDUCIAL_MARKER_BITS + MEMORY_ALIGNMENT + 32)
 
 namespace Anki
 {
@@ -50,7 +54,7 @@ namespace Anki
       FiducialMarkerParserBit(const FiducialMarkerParserBit& bit2);
 
       // All data from probeLocations is copied into this instance's local memory
-      FiducialMarkerParserBit(const FixedLengthList<Point<s16>> &probeLocations, const FixedLengthList<s16> &probeWeights, const FiducialMarkerParserBitType type);
+      FiducialMarkerParserBit(const s16 * const probesX, const s16 * const probesY, const s16 * const probesWeights, const s32 numProbes, const FiducialMarkerParserBitType type);
 
       FiducialMarkerParserBit& operator= (const FiducialMarkerParserBit& bit2);
 
@@ -66,8 +70,10 @@ namespace Anki
       FiducialMarkerParserBitType type;
 
       // The static data buffer for this object's probeLocations and probeWeights. Modifying this will change the values in probeLocations and probeWeights.
-      Point<s16> probeLocationsBuffer[MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS];
-      Point<s16> probeWeightsBuffer[MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS];
+      //Point<s16> probeLocationsBuffer[MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS];
+      //s16 probeWeightsBuffer[MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS];
+      char probeLocationsBuffer[NUM_BYTES_probeLocationsBuffer];
+      char probeWeightsBuffer[NUM_BYTES_probeWeightsBuffer];
 
       void PrepareBuffers();
     }; // class FiducialMarkerParserBit
@@ -79,21 +85,21 @@ namespace Anki
       // Initialize with the default grid type, converted from Matlab
       FiducialMarkerParser();
 
+      FiducialMarkerParser(const FiducialMarkerParser& marker2);
+
       BlockMarker ParseImage(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography);
+
+      FiducialMarkerParser& operator= (const FiducialMarkerParser& marker2);
 
     protected:
       FixedLengthList<FiducialMarkerParserBit> bits;
 
-      FiducialMarkerParserBit bitsBuffer[MAX_FIDUCIAL_MARKER_BITS];
+      //FiducialMarkerParserBit bitsBuffer[MAX_FIDUCIAL_MARKER_BITS];
+      char bitsBuffer[NUM_BYTES_bitsBuffer];
 
       void PrepareBuffers();
 
       Result InitializeAsDefaultParser();
-
-    private:
-      // There's currently only one type of fiducial marker, so don't do these things
-      FiducialMarkerParser(const FiducialMarkerParser& marker2);
-      FiducialMarkerParser& operator= (const FiducialMarkerParser& marker2);
     }; // class FiducialMarkerParser
   } // namespace Embedded
 } // namespace Anki
