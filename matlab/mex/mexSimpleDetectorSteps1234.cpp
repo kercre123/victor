@@ -114,7 +114,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   }
 
   const mwSize markersMatlab_ndim = 2;
-  const mwSize markersMatlab_dims[] = {1, numMarkers};
+  const mwSize markersMatlab_dims[] = {1, static_cast<mwSize>(numMarkers)};
   mxArray *quadsMatlab = mxCreateCellArray(markersMatlab_ndim, markersMatlab_dims);
   mxArray *quadTformsMatlab = mxCreateCellArray(markersMatlab_ndim, markersMatlab_dims);
 

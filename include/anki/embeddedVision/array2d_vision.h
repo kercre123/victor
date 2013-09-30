@@ -9,9 +9,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-#include "opencv2/opencv.hpp"
-#endif
 
 namespace Anki
 {

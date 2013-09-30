@@ -7,7 +7,7 @@ using namespace Anki::Embedded;
 // #define RUN_MATLAB_IMAGE_TEST
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-#include "opencv2/opencv.hpp"
+#include "opencv2/core/core.hpp"
 #endif
 
 #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
