@@ -44,8 +44,7 @@ if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1234')
     [quads, quadTforms] = mexSimpleDetectorSteps1234(im2uint8(img), scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge);
     
     for i = 1:length(quadTforms)
-%         quadTforms{i} = maketform('projective', inv(quadTforms{i}')); 
-        quadTforms{i} = maketform('projective', quadTforms{i}'); 
+        quadTforms{i} = maketform('projective', inv(quadTforms{i}')); 
     end
 
 else % if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1234')
