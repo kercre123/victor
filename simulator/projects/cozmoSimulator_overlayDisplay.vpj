@@ -103,7 +103,7 @@
       <Lib File="-L/Applications/Webots/lib/"/>
       <Lib File="-lController"/>
       <Lib File="-lCppController"/>
-      <Lib File="-L../../coretech-common/build/xcode4/lib/"/>
+      <Lib File="-L../../../coretech-common/build/xcode4/lib/"/>
       <Lib File="-lCoreTech_Common_Embedded_64Debug"/>
       <Lib File="-lCoreTech_Common_64Debug"/>
       <Lib File="-L/Applications/MATLAB_R2012b.app/bin/maci64/"/>
@@ -220,7 +220,7 @@
       <Lib File="-L/Applications/Webots/lib/"/>
       <Lib File="-lController"/>
       <Lib File="-lCppController"/>
-      <Lib File="-L../../coretech-common/build/xcode4/lib/"/>
+      <Lib File="-L../../../coretech-common/build/xcode4/lib/"/>
       <Lib File="-lCoreTech_Common_Embedded_64Debug"/>
       <Lib File="-lCoreTech_Common_64Debug"/>
       <Lib File="-L/Applications/MATLAB_R2012b.app/bin/maci64/"/>
