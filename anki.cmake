@@ -18,7 +18,7 @@ cmake_policy(SET CMP0015 NEW)
 
 # Set the correct C++ language standard (including for Xcode):
 if(WIN32)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_VARIADIC_MAX=10 /D_CRT_SECURE_NO_WARNINGS")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_VARIADIC_MAX=10 /D_CRT_SECURE_NO_WARNINGS /D_DLL")
 else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++")
 	set(CMAKE_XCODE_ATTRIBUTE_GCC_VERSION "com.apple.compilers.llvm.clang.1_0")
@@ -70,6 +70,8 @@ if(NOT MATLAB_FOUND)
 		set(MATLAB_ENG_LIBRARY libeng)
 		set(MATLAB_MX_LIBRARY libmx)
 		set(MATLAB_MEX_LIBRARY libmex)
+		set(ANKI_LIBRARIES CoreTech_Common_Embedded)
+		set(ZLIB_LIBRARY )
 		set(CMD_COMMAND cmd /c)
 	else()
 		if(NOT DEFINED MATLAB_ROOT_DIR)
@@ -88,6 +90,9 @@ if(NOT MATLAB_FOUND)
 		set(MATLAB_ENG_LIBRARY eng)
 		set(MATLAB_MX_LIBRARY mx)
 		set(MATLAB_MEX_LIBRARY mex)
+		set(ANKI_LIBRARIES CoreTech_Common CoreTech_Common_Embedded)
+		set(CMD_COMMAND)		
+		set(ZLIB_LIBRARY z)
 		set(CMD_COMMAND)
 	endif(WIN32)
 endif(NOT MATLAB_FOUND)
@@ -268,8 +273,7 @@ macro(build_mex MEX_FILE)
 
 	target_link_libraries(${OUTPUT_NAME} 
 		${MATLAB_MEX_LIBRARY} ${MATLAB_MX_LIBRARY} ${MATLAB_ENG_LIBRARY}
-		${OPENCV_LIBS} CoreTech_Common CoreTech_Common_Embedded z)
-	
+		${OPENCV_LIBS} ${ANKI_LIBRARIES} ${ZLIB_LIBRARY})	
 
 	#message(STATUS "For MEX file ${OUTPUT_NAME}, linking against ${MEX_LINK_LIBRARIES}")
 

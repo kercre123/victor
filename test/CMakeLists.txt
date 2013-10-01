@@ -16,6 +16,7 @@ add_executable(run_pcEmbeddedCommonTests
 
 target_link_libraries(run_pcEmbeddedCommonTests 
 	CoreTech_Common_Embedded 
-	gtest ${OPENCV_LIBS} ${MATLAB_ENG_LIBRARY} ${MATLAB_MX_LIBRARY} z)
+	gtest ${OPENCV_LIBS} ${MATLAB_ENG_LIBRARY} ${MATLAB_MX_LIBRARY} ${ZLIB_LIBRARY})
+
 
 
