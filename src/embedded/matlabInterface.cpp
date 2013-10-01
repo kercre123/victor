@@ -650,6 +650,24 @@ namespace Anki
         return true;
     }
 
+    template<> Result Matlab::Put<Point<s16> >(const Point<s16> * values, s32 nValues, const std::string name)
+    {
+      AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.Put", "Matlab engine is not started/connected");
+
+      const mwSize dims[2] = {2, static_cast<mwSize>(nValues)};
+      const mxClassID matlabType = Anki::Embedded::ConvertToMatlabType(typeid(s16).name(), sizeof(s16));
+      mxArray *arrayTmp = mxCreateNumericArray(2, &dims[0], matlabType, mxREAL);
+      s16 *matlabBufferTmp = (s16*) mxGetPr(arrayTmp);
+      for(s32 i = 0, ci=0; i<nValues; i++) {
+        matlabBufferTmp[ci++] = values[i].x;
+        matlabBufferTmp[ci++] = values[i].y;
+      }
+      engPutVariable(ep, name.data(), arrayTmp);
+      mxDestroyArray(arrayTmp);
+
+      return RESULT_OK;
+    }
+
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
   } // namespace Embedded
 } // namespace Anki

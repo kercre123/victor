@@ -268,6 +268,8 @@ namespace Anki
 
       return outputArray;
     } // template<typename Type> mxArray* arrayToMxArray(const Array<Type> &array)
+
+    template<> Result Matlab::Put<Point<s16> >(const Point<s16> * values, s32 nValues, const std::string name);
   } // namespace Embedded
 } // namespace Anki
 
