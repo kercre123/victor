@@ -26,6 +26,10 @@ img = mean(im2double(img),3);
 [nrows,ncols] = size(img);
 
 if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1234')
+    assert(BlockMarker2D.UseOutsideOfSquare, ...
+                ['You need to set constant property ' ...
+                'BlockMarker2D.UseOutsideOfSquare = false to use this method.']);
+            
     scaleImage_numPyramidLevels = round(log(maxSmoothingFraction*max(nrows,ncols)) / log(downsampleFactor));
     component1d_minComponentWidth = 0;
     component1d_maxSkipDistance = 0;
