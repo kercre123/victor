@@ -1,0 +1,341 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5C268B2117CD632900AF3C6C /* array2d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C268B1B17CD632900AF3C6C /* array2d.cpp */; };
+		5C268B2217CD632900AF3C6C /* dasLight.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C268B1C17CD632900AF3C6C /* dasLight.cpp */; };
+		5C268B2317CD632900AF3C6C /* matlabInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C268B1D17CD632900AF3C6C /* matlabInterface.cpp */; };
+		5C268B2417CD632900AF3C6C /* memory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C268B1E17CD632900AF3C6C /* memory.cpp */; };
+		5C268B2517CD632900AF3C6C /* point.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C268B1F17CD632900AF3C6C /* point.cpp */; };
+		5C268B2617CD632900AF3C6C /* utilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C268B2017CD632900AF3C6C /* utilities.cpp */; };
+		5C268B2817CD633200AF3C6C /* embeddedCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C268B2717CD633200AF3C6C /* embeddedCommon.h */; };
+		5C268B3117CD633B00AF3C6C /* array2d.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C268B2917CD633B00AF3C6C /* array2d.h */; };
+		5C268B3217CD633B00AF3C6C /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C268B2A17CD633B00AF3C6C /* config.h */; };
+		5C268B3317CD633B00AF3C6C /* DASlight.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C268B2B17CD633B00AF3C6C /* DASlight.h */; };
+		5C268B3417CD633B00AF3C6C /* dataStructures.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C268B2C17CD633B00AF3C6C /* dataStructures.h */; };
+		5C268B3517CD633B00AF3C6C /* matlabInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C268B2D17CD633B00AF3C6C /* matlabInterface.h */; };
+		5C268B3617CD633B00AF3C6C /* memory.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C268B2E17CD633B00AF3C6C /* memory.h */; };
+		5C268B3717CD633B00AF3C6C /* point.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C268B2F17CD633B00AF3C6C /* point.h */; };
+		5C268B3817CD633B00AF3C6C /* utilities.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C268B3017CD633B00AF3C6C /* utilities.h */; };
+		5CAE413317DEB7AF003C3FF9 /* fixedLengthList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5CAE413217DEB7AF003C3FF9 /* fixedLengthList.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		493C9C5F17CFB90A00DBBF6B /* matrix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = matrix.cpp; path = ../../../src/matrix.cpp; sourceTree = "<group>"; };
+		493C9C6017CFB90A00DBBF6B /* matrix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = matrix.h; path = ../../../include/anki/math/matrix.h; sourceTree = "<group>"; };
+		493C9C6117CFB90A00DBBF6B /* pose.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = pose.cpp; path = ../../../src/pose.cpp; sourceTree = "<group>"; };
+		493C9C6217CFB90A00DBBF6B /* pose.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pose.h; path = ../../../include/anki/math/pose.h; sourceTree = "<group>"; };
+		493C9C6317CFB90A00DBBF6B /* rotation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = rotation.cpp; path = ../../../src/rotation.cpp; sourceTree = "<group>"; };
+		493C9C6417CFB90A00DBBF6B /* rotation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = rotation.h; path = ../../../include/anki/math/rotation.h; sourceTree = "<group>"; };
+		5C268AFF17CD62DF00AF3C6C /* libCoreTech_Common_Embedded.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; name = libCoreTech_Common_Embedded.a; path = libCoreTech_Common_Embedded_64Debug.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		5C268B1B17CD632900AF3C6C /* array2d.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = array2d.cpp; path = ../../../src/embedded/array2d.cpp; sourceTree = "<group>"; };
+		5C268B1C17CD632900AF3C6C /* dasLight.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dasLight.cpp; path = ../../../src/embedded/dasLight.cpp; sourceTree = "<group>"; };
+		5C268B1D17CD632900AF3C6C /* matlabInterface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = matlabInterface.cpp; path = ../../../src/embedded/matlabInterface.cpp; sourceTree = "<group>"; };
+		5C268B1E17CD632900AF3C6C /* memory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = memory.cpp; path = ../../../src/embedded/memory.cpp; sourceTree = "<group>"; };
+		5C268B1F17CD632900AF3C6C /* point.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = point.cpp; path = ../../../src/embedded/point.cpp; sourceTree = "<group>"; };
+		5C268B2017CD632900AF3C6C /* utilities.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = utilities.cpp; path = ../../../src/embedded/utilities.cpp; sourceTree = "<group>"; };
+		5C268B2717CD633200AF3C6C /* embeddedCommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = embeddedCommon.h; path = ../../../include/anki/embeddedCommon.h; sourceTree = "<group>"; };
+		5C268B2917CD633B00AF3C6C /* array2d.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = array2d.h; path = ../../../include/anki/embeddedCommon/array2d.h; sourceTree = "<group>"; };
+		5C268B2A17CD633B00AF3C6C /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = ../../../include/anki/embeddedCommon/config.h; sourceTree = "<group>"; };
+		5C268B2B17CD633B00AF3C6C /* DASlight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DASlight.h; path = ../../../include/anki/embeddedCommon/DASlight.h; sourceTree = "<group>"; };
+		5C268B2C17CD633B00AF3C6C /* dataStructures.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dataStructures.h; path = ../../../include/anki/embeddedCommon/dataStructures.h; sourceTree = "<group>"; };
+		5C268B2D17CD633B00AF3C6C /* matlabInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = matlabInterface.h; path = ../../../include/anki/embeddedCommon/matlabInterface.h; sourceTree = "<group>"; };
+		5C268B2E17CD633B00AF3C6C /* memory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = memory.h; path = ../../../include/anki/embeddedCommon/memory.h; sourceTree = "<group>"; };
+		5C268B2F17CD633B00AF3C6C /* point.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = point.h; path = ../../../include/anki/embeddedCommon/point.h; sourceTree = "<group>"; };
+		5C268B3017CD633B00AF3C6C /* utilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = utilities.h; path = ../../../include/anki/embeddedCommon/utilities.h; sourceTree = "<group>"; };
+		5CAE413217DEB7AF003C3FF9 /* fixedLengthList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fixedLengthList.cpp; path = ../../../src/embedded/fixedLengthList.cpp; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5C268AFC17CD62DF00AF3C6C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		493C9C6517CFB90A00DBBF6B /* Math */ = {
+			isa = PBXGroup;
+			children = (
+				493C9C5F17CFB90A00DBBF6B /* matrix.cpp */,
+				493C9C6017CFB90A00DBBF6B /* matrix.h */,
+				493C9C6117CFB90A00DBBF6B /* pose.cpp */,
+				493C9C6217CFB90A00DBBF6B /* pose.h */,
+				493C9C6317CFB90A00DBBF6B /* rotation.cpp */,
+				493C9C6417CFB90A00DBBF6B /* rotation.h */,
+			);
+			name = Math;
+			path = ../CoreTech_Common;
+			sourceTree = "<group>";
+		};
+		5C268AF617CD62DF00AF3C6C = {
+			isa = PBXGroup;
+			children = (
+				5CAE413217DEB7AF003C3FF9 /* fixedLengthList.cpp */,
+				5C268B2917CD633B00AF3C6C /* array2d.h */,
+				5C268B2A17CD633B00AF3C6C /* config.h */,
+				5C268B2B17CD633B00AF3C6C /* DASlight.h */,
+				5C268B2C17CD633B00AF3C6C /* dataStructures.h */,
+				5C268B2D17CD633B00AF3C6C /* matlabInterface.h */,
+				5C268B2E17CD633B00AF3C6C /* memory.h */,
+				5C268B2F17CD633B00AF3C6C /* point.h */,
+				5C268B3017CD633B00AF3C6C /* utilities.h */,
+				5C268B2717CD633200AF3C6C /* embeddedCommon.h */,
+				5C268B1B17CD632900AF3C6C /* array2d.cpp */,
+				5C268B1C17CD632900AF3C6C /* dasLight.cpp */,
+				5C268B1D17CD632900AF3C6C /* matlabInterface.cpp */,
+				5C268B1E17CD632900AF3C6C /* memory.cpp */,
+				5C268B1F17CD632900AF3C6C /* point.cpp */,
+				5C268B2017CD632900AF3C6C /* utilities.cpp */,
+				493C9C6517CFB90A00DBBF6B /* Math */,
+				5C268B0017CD62DF00AF3C6C /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5C268B0017CD62DF00AF3C6C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5C268AFF17CD62DF00AF3C6C /* libCoreTech_Common_Embedded.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		5C268AFD17CD62DF00AF3C6C /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5C268B2817CD633200AF3C6C /* embeddedCommon.h in Headers */,
+				5C268B3117CD633B00AF3C6C /* array2d.h in Headers */,
+				5C268B3217CD633B00AF3C6C /* config.h in Headers */,
+				5C268B3317CD633B00AF3C6C /* DASlight.h in Headers */,
+				5C268B3417CD633B00AF3C6C /* dataStructures.h in Headers */,
+				5C268B3517CD633B00AF3C6C /* matlabInterface.h in Headers */,
+				5C268B3617CD633B00AF3C6C /* memory.h in Headers */,
+				5C268B3717CD633B00AF3C6C /* point.h in Headers */,
+				5C268B3817CD633B00AF3C6C /* utilities.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		5C268AFE17CD62DF00AF3C6C /* CoreTech_Common_Embedded */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5C268B0317CD62DF00AF3C6C /* Build configuration list for PBXNativeTarget "CoreTech_Common_Embedded" */;
+			buildPhases = (
+				5C268AFB17CD62DF00AF3C6C /* Sources */,
+				5C268AFC17CD62DF00AF3C6C /* Frameworks */,
+				5C268AFD17CD62DF00AF3C6C /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CoreTech_Common_Embedded;
+			productName = CoreTech_Common_Embedded;
+			productReference = 5C268AFF17CD62DF00AF3C6C /* libCoreTech_Common_Embedded.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5C268AF717CD62DF00AF3C6C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0460;
+				ORGANIZATIONNAME = "Peter Barnum";
+			};
+			buildConfigurationList = 5C268AFA17CD62DF00AF3C6C /* Build configuration list for PBXProject "CoreTech_Common_Embedded" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 5C268AF617CD62DF00AF3C6C;
+			productRefGroup = 5C268B0017CD62DF00AF3C6C /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5C268AFE17CD62DF00AF3C6C /* CoreTech_Common_Embedded */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5C268AFB17CD62DF00AF3C6C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5C268B2117CD632900AF3C6C /* array2d.cpp in Sources */,
+				5C268B2217CD632900AF3C6C /* dasLight.cpp in Sources */,
+				5C268B2317CD632900AF3C6C /* matlabInterface.cpp in Sources */,
+				5C268B2417CD632900AF3C6C /* memory.cpp in Sources */,
+				5C268B2517CD632900AF3C6C /* point.cpp in Sources */,
+				5C268B2617CD632900AF3C6C /* utilities.cpp in Sources */,
+				5CAE413317DEB7AF003C3FF9 /* fixedLengthList.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		5C268B0117CD62DF00AF3C6C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
+			};
+			name = Debug;
+		};
+		5C268B0217CD62DF00AF3C6C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				SDKROOT = macosx;
+				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
+			};
+			name = Release;
+		};
+		5C268B0417CD62DF00AF3C6C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(EFFECTIVE_PLATFORM_NAME)/lib";
+				EXECUTABLE_PREFIX = lib;
+				HEADER_SEARCH_PATHS = (
+					../../../include,
+					"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/extern/include",
+					"../../../../coretech-external/opencv-2.4.6.1/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/contrib/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/core/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/features2d/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/flann/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/highgui/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/imgproc/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/legacy/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/ml/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/nonfree/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/objdetect/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/ocl/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/photo/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/stitching/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/superres/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/video/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)_64$(CONFIGURATION)";
+				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
+			};
+			name = Debug;
+		};
+		5C268B0517CD62DF00AF3C6C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(EFFECTIVE_PLATFORM_NAME)/lib";
+				EXECUTABLE_PREFIX = lib;
+				HEADER_SEARCH_PATHS = (
+					../../../include,
+					"$(SYSTEM_APPS_DIR)/MATLAB_R2013a.app/extern/include",
+					"../../../../coretech-external/opencv-2.4.6.1/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/contrib/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/core/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/features2d/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/flann/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/highgui/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/imgproc/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/legacy/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/ml/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/nonfree/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/objdetect/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/ocl/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/photo/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/stitching/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/superres/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/video/include",
+					"../../../../coretech-external/opencv-2.4.6.1/modules/videostab/include",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)_64$(CONFIGURATION)";
+				SYMROOT = "$(SRCROOT)/../../../build/xcode4/";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5C268AFA17CD62DF00AF3C6C /* Build configuration list for PBXProject "CoreTech_Common_Embedded" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5C268B0117CD62DF00AF3C6C /* Debug */,
+				5C268B0217CD62DF00AF3C6C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5C268B0317CD62DF00AF3C6C /* Build configuration list for PBXNativeTarget "CoreTech_Common_Embedded" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5C268B0417CD62DF00AF3C6C /* Debug */,
+				5C268B0517CD62DF00AF3C6C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5C268AF717CD62DF00AF3C6C /* Project object */;
+}
