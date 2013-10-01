@@ -18,7 +18,6 @@ int main()
   ::testing::InitGoogleTest(&argc, argv);
 #endif
 
-  RUN_ALL_TESTS();
+  return RUN_ALL_TESTS();
 
-  return 0;
 }
