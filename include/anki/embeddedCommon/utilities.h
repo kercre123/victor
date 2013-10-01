@@ -49,6 +49,8 @@ namespace Anki
 {
   namespace Embedded
   {
+    template<typename Type> class FixedLengthList;
+
     template<typename Type> inline Type RoundUp(Type number, Type multiple);
 
     template<typename Type> inline Type RoundDown(Type number, Type multiple);
@@ -81,6 +83,11 @@ namespace Anki
     // Note that this is the naive O(n^3) implementation
     template<typename Array_Type, typename Type> Result MultiplyMatrices(const Array_Type &mat1, const Array_Type &mat2, Array_Type &matOut);
 
+    // Swap a with b
+    template<typename Type> void Swap(Type &a, Type &b);
+
+    template<typename Type> u32 BinaryStringToUnsignedNumber(const FixedLengthList<Type> &bits, bool firstBitIsLow = false);
+
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     // Converts from typeid names to openCV types
     int ConvertToOpenCvType(const char *typeName, size_t byteDepth);
@@ -89,9 +96,6 @@ namespace Anki
 #if defined(USING_MOVIDIUS_GCC_COMPILER)
     void memset(void * dst, int value, size_t size);
 #endif
-
-    // Swap a with b
-    template<typename Type> void Swap(Type &a, Type &b);
 
 #pragma mark --- Implementations ---
 
@@ -159,6 +163,29 @@ namespace Anki
       a = b;
       b = tmp;
     } // template<typename Type> Swap(Type a, Type b)
+
+    template<typename Type> u32 BinaryStringToUnsignedNumber(const FixedLengthList<Type> &bits, bool firstBitIsLow)
+    {
+      u32 number = 0;
+
+      for(s32 bit=0; bit<bits.get_size(); bit++) {
+        if(firstBitIsLow) {
+          if(bit == 0) {
+            number += bits[bit];
+          } else {
+            number += bits[bit] << bit;
+          }
+        } else {
+          if(bit == (bits.get_size()-1)) {
+            number += bits[bit];
+          } else {
+            number += bits[bit] << (bits.get_size() - bit - 1);
+          }
+        }
+      }
+
+      return number;
+    }
   } // namespace Embedded
 } // namespace Anki
 
