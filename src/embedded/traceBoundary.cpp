@@ -108,7 +108,7 @@ namespace Anki
       boundary.PushBack(startPoint);
 
       //while true
-      for(s32 i=1; i<MAX_BOUNDARY_LENGTH; i++) {
+      for(s32 iBoundary=1; iBoundary<MAX_BOUNDARY_LENGTH; iBoundary++) {
         //% Search counter-clockwise until we find a 0
         const BoundaryDirection zeroDirection = FindNewDirection(binaryImage, curPoint, curDirection, 0);
 
@@ -163,7 +163,7 @@ namespace Anki
         }
 
         curPoint = newPoint;
-      } // for(s32 i=0; i<MAX_BOUNDARY_LENGTH; i++) {
+      } // for(s32 iBoundary=1; iBoundary<MAX_BOUNDARY_LENGTH; iBoundary++)
       return RESULT_OK;
     }
 

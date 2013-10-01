@@ -227,8 +227,8 @@ namespace Anki
 
         markers[iQuad].blockType = -1;
         markers[iQuad].faceType = -1;
-        for(s32 i=0; i<4; i++) {
-          markers[iQuad].corners[i] = extractedQuads[iQuad].corners[i];
+        for(s32 iCorner=0; iCorner<4; iCorner++) {
+          markers[iQuad].corners[iCorner] = extractedQuads[iQuad].corners[iCorner];
         }
       } // for(iQuad=0; iQuad<; iQuad++)
 
