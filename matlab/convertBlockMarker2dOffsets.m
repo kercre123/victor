@@ -38,24 +38,24 @@ bitTypes(marker.UpBit) = 6;
 bitTypes(marker.DownBit) = 7;
 bitTypes(marker.CheckBits) = 8;
 
-outputString = [outputString, sprintf('const Anki::Embedded::FiducialMarkerParserBitType bitTypes_type%d[NUM_BITS_TYPE_%d] = {\n', fiducialMarkerType, fiducialMarkerType)];
+outputString = [outputString, sprintf('const Anki::Embedded::FiducialMarkerParserBit::Type bitTypes_type%d[NUM_BITS_TYPE_%d] = {\n', fiducialMarkerType, fiducialMarkerType)];
 for i = 1:length(bitTypes)
     if bitTypes(i) == 1
-        outputString = [outputString, '    Anki::Embedded::FIDUCIAL_BIT_NONE,\n'];
+        outputString = [outputString, '    Anki::Embedded::FiducialMarkerParserBit::FIDUCIAL_BIT_NONE,\n'];
     elseif bitTypes(i) == 2
-        outputString = [outputString, '    Anki::Embedded::FIDUCIAL_BIT_BLOCK,\n'];
+        outputString = [outputString, '    Anki::Embedded::FiducialMarkerParserBit::FIDUCIAL_BIT_BLOCK,\n'];
     elseif bitTypes(i) == 3
-        outputString = [outputString, '    Anki::Embedded::FIDUCIAL_BIT_FACE,\n'];
+        outputString = [outputString, '    Anki::Embedded::FiducialMarkerParserBit::FIDUCIAL_BIT_FACE,\n'];
     elseif bitTypes(i) == 4
-        outputString = [outputString, '    Anki::Embedded::FIDUCIAL_BIT_ORIENTATION_LEFT,\n'];
+        outputString = [outputString, '    Anki::Embedded::FiducialMarkerParserBit::FIDUCIAL_BIT_ORIENTATION_LEFT,\n'];
     elseif bitTypes(i) == 5
-        outputString = [outputString, '    Anki::Embedded::FIDUCIAL_BIT_ORIENTATION_RIGHT,\n'];
+        outputString = [outputString, '    Anki::Embedded::FiducialMarkerParserBit::FIDUCIAL_BIT_ORIENTATION_RIGHT,\n'];
     elseif bitTypes(i) == 6
-        outputString = [outputString, '    Anki::Embedded::FIDUCIAL_BIT_ORIENTATION_UP,\n'];
+        outputString = [outputString, '    Anki::Embedded::FiducialMarkerParserBit::FIDUCIAL_BIT_ORIENTATION_UP,\n'];
     elseif bitTypes(i) == 7
-        outputString = [outputString, '    Anki::Embedded::FIDUCIAL_BIT_ORIENTATION_DOWN,\n'];
+        outputString = [outputString, '    Anki::Embedded::FiducialMarkerParserBit::FIDUCIAL_BIT_ORIENTATION_DOWN,\n'];
     elseif bitTypes(i) == 8
-        outputString = [outputString, '    Anki::Embedded::FIDUCIAL_BIT_CHECKSUM,\n'];
+        outputString = [outputString, '    Anki::Embedded::FiducialMarkerParserBit::FIDUCIAL_BIT_CHECKSUM,\n'];
     end
 end
 outputString = [outputString, '};\n\n'];
