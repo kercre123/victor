@@ -11,7 +11,7 @@ if DEBUG_DISPLAY
 end
 
 minSideLength = .03*max(nrows,ncols);
-maxSideLength = .9*min(nrows,ncols);
+maxSideLength = .97*min(nrows,ncols);
 
 minArea = minSideLength^2 - (.8*minSideLength)^2;
 maxArea = maxSideLength^2 - (.8*maxSideLength)^2;

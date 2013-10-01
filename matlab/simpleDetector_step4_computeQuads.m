@@ -95,8 +95,17 @@ for i_region = 1:numRegions
             boundary = bwtraceboundary(regionMap == i_region, ...
                 [rowStart colStart], 'N');
         catch E
-            warning(E.message);
-            continue
+            try
+                % For a bit of robustness, try starting the trace walking
+                % in the opposite direction.  If that still fails, return
+                % the warning.
+                boundary = bwtraceboundary(regionMap == i_region, ...
+                    [rowStart colStart], 'S');
+                
+            catch E
+                warning(E.message);
+                continue
+            end
         end
     elseif strcmp(embeddedConversions.traceBoundaryType, 'matlab_loops')
         binaryImg = uint8(regionMap == i_region);
