@@ -97,6 +97,10 @@ namespace Anki
 
       const f64 fixedPointDivider = 1.0 / pow(2,this->numFractionalBits);
 
+      Matlab matlab(false);
+      //matlab.EvalStringEcho("warpedPoints = zeros(2, %d);", probeLocations.get_size());
+      matlab.EvalStringEcho("if ~exist('warpedPoints', 'var') warpedPoints = zeros(2, 0); end;");
+
       for(s32 probe=0; probe<probeLocations.get_size(); probe++) {
         const f64 x = static_cast<f64>(this->probeLocations[probe].x) * fixedPointDivider;
         const f64 y = static_cast<f64>(this->probeLocations[probe].y) * fixedPointDivider;
@@ -105,8 +109,13 @@ namespace Anki
         // 1. Map each probe to its warped locations
         const f64 homogenousDivisor = 1.0 / (h20*x + h21*y + h22);
 
-        const s16 warpedX = static_cast<s16>(Round( (h00 * x + h10 *y + h20) * homogenousDivisor ));
-        const s16 warpedY = static_cast<s16>(Round( (h01 * x + h11 *y + h21) * homogenousDivisor ));
+        const f64 warpedXf = (h00 * x + h10 *y + h20) * homogenousDivisor;
+        const f64 warpedYf = (h01 * x + h11 *y + h21) * homogenousDivisor;
+
+        const s16 warpedX = static_cast<s16>(Round(warpedXf));
+        const s16 warpedY = static_cast<s16>(Round(warpedYf));
+
+        matlab.EvalStringEcho("warpedPoints(:,end+1) = [%f, %f];", warpedXf, warpedYf);
 
         // 2. Sample the image
 
@@ -186,6 +195,27 @@ namespace Anki
           return RESULT_FAIL;
       }
 
+      {
+        Matlab matlab(false);
+        matlab.PutArray(image, "image");
+      }
+
+      //#define SEND_PROBE_LOCATIONS
+#ifdef SEND_PROBE_LOCATIONS
+      {
+        Matlab matlab(false);
+
+        matlab.EvalStringEcho("probeLocations = zeros(2,0);");
+        for(s32 i=0; i<bits.get_size(); i++) {
+          FixedLengthList<Point<s16> > probeLocations = this->bits[i].get_probeLocations();
+          matlab.Put(probeLocations.Pointer(0), probeLocations.get_size(), "probeLocationsTmp");
+          matlab.EvalStringEcho("probeLocations(:, (end+1):(end+size(probeLocationsTmp,2))) = probeLocationsTmp;");
+        }
+
+        matlab.EvalStringEcho("probeLocations = double(probeLocations) / (2^%d)", this->bits[0].get_numFractionalBits());
+      }
+#endif // #ifdef SEND_PROBE_LOCATIONS
+
       FixedLengthList<u8> binarizedBits(MAX_FIDUCIAL_MARKER_BITS, scratch);
       BlockMarker::Orientation orientation;
 
@@ -256,7 +286,7 @@ namespace Anki
 
       binarizedBits.Clear();
 
-      //meanValues.Print("meanValues");
+      meanValues.Print("meanValues");
 
       const s16 upBitValue = meanValues[upBitIndex];
       const s16 downBitValue = meanValues[downBitIndex];

@@ -46,7 +46,7 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
 #include "../../blockImages/blockImage50.h"
-#include "../../blockImages/fiducial4_2.h"
+#include "../../blockImages/fiducial4_2ContrastReduced.h"
 #include "../../src/embedded/fiducialMarkerDefinitionType0.h"
 
 // Create a test pattern image, full of a grid of squares for probes
@@ -89,13 +89,20 @@ IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
   Quadrilateral<s16> quad = Quadrilateral<s16>();
   Array<f64> homography(3,3,scratch0);
 
-  quad[0] = Point<s16>(21,21);
-  quad[1] = Point<s16>(21,235);
-  quad[2] = Point<s16>(235,21);
-  quad[3] = Point<s16>(235,235);
+  //quad[0] = Point<s16>(21,21);
+  //quad[1] = Point<s16>(21,235);
+  //quad[2] = Point<s16>(235,21);
+  //quad[3] = Point<s16>(235,235);
+  quad[0] = Point<s16>(47,47);
+  quad[1] = Point<s16>(47,209);
+  quad[2] = Point<s16>(209,47);
+  quad[3] = Point<s16>(209,209);
 
-  homography[0][0] = 214; homography[0][1] = 0;   homography[0][2] = 21;
+  /*homography[0][0] = 214; homography[0][1] = 0;   homography[0][2] = 21;
   homography[1][0] = 0;   homography[1][1] = 214; homography[1][2] = 21;
+  homography[2][0] = 0;   homography[2][1] = 0;   homography[2][2] = 1;*/
+  homography[0][0] = 162; homography[0][1] = 0;   homography[0][2] = 47;
+  homography[1][0] = 0;   homography[1][1] = 162; homography[1][2] = 47;
   homography[2][0] = 0;   homography[2][1] = 0;   homography[2][2] = 1;
 
   //DrawExampleProbesImage(image, quad, homography);
