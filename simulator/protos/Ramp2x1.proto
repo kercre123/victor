@@ -1,0 +1,167 @@
+#A 2x1 ramp prototype
+PROTO Ramp2x1 [
+  field SFVec3f translation 0 0.03 0
+  field SFRotation rotation 0 1 0 0
+]
+{
+Robot {
+  translation IS translation
+  rotation IS rotation
+  children [
+    DEF Center Solid {
+      translation 0 -0.005 0.025
+      children [
+        Shape {
+          appearance Appearance {
+            texture ImageTexture {
+              url [
+                "textures/coderampa.png"
+              ]
+            }
+          }
+          geometry DEF RAMP_BOX1 Box {
+            size 0.0603 0.03 0.03
+          }
+        }
+      ]
+      boundingObject USE RAMP_BOX1
+      physics Physics {
+        centerOfMass [
+          0 0 0
+        ]
+      }
+    }
+    DEF RAMP_BACK Solid {
+      translation 0 0.001 0.0015
+      children [
+        Shape {
+          appearance Appearance {
+            material DEF MAT_RAMP Material {
+              diffuseColor 0 0.494026 1
+            }
+          }
+          geometry DEF B01 Box {
+            size 0.06 0.0595 0.003
+          }
+        }
+      ]
+      contactMaterial "cmat_ramp"
+      boundingObject USE B01
+      physics Physics {
+      }
+    }
+    DEF RAMP_BOTTOM Solid {
+      translation 0 -0.028 0.06
+      children [
+        Shape {
+          appearance Appearance {
+            material DEF MAT_RAMP Material {
+              diffuseColor 0 0.494026 1
+            }
+          }
+          geometry DEF B01 Box {
+            size 0.06 0.003 0.12
+          }
+        }
+      ]
+      contactMaterial "cmat_ramp"
+      boundingObject USE B01
+      physics Physics {
+        density 5000
+      }
+    }
+    DEF RAMP_TOP Solid {
+      translation 0 0.0016 0.06
+      rotation 1 0 0 -1.12
+      children [
+        Shape {
+          appearance Appearance {
+            material USE MAT_RAMP
+          }
+          geometry DEF B01 Box {
+            size 0.06 0.132 0.003
+          }
+        }
+      ]
+      contactMaterial "cmat_ramp"
+      boundingObject USE B01
+      physics Physics {
+      }
+    }
+    DEF RAMP_SIDEL Solid {
+      translation -0.0301 -0.028 0.001
+      children [
+        Shape {
+          appearance Appearance {
+            material USE MAT_RAMP
+          }
+          geometry IndexedFaceSet {
+            coord Coordinate {
+              point [
+                0 0 0
+                0 0 0.12
+                0 0.06 0
+              ]
+            }
+            coordIndex [
+              0, 1, 2
+            ]
+          }
+        }
+      ]
+      physics Physics {
+      }
+    }
+    DEF RAMP_SIDER Solid {
+      translation 0.0301 -0.028 0.0025
+      children [
+        Shape {
+          appearance Appearance {
+            material USE MAT_RAMP
+          }
+          geometry IndexedFaceSet {
+            coord Coordinate {
+              point [
+                0 0 0
+                0 0 0.12
+                0 0.06 0
+              ]
+            }
+            ccw FALSE
+            coordIndex [
+              0, 1, 2
+            ]
+          }
+        }
+      ]
+      physics Physics {
+      }
+    }
+    Connector {
+      translation -0.0305 0.001 0.025
+      rotation 0 1 0 -1.5708
+      model "magnetic"
+      type "passive"
+      autoLock TRUE
+      distanceTolerance 0.002
+      snap FALSE
+    }
+    Connector {
+      translation 0.0305 0.001 0.025
+      rotation 0 1 0 1.5708
+      model "magnetic"
+      type "passive"
+      autoLock TRUE
+      distanceTolerance 0.002
+      snap FALSE
+    }
+  ]
+  name "solid"
+  physics Physics {
+    centerOfMass [
+      0 0 0
+    ]
+  }
+}
+
+}

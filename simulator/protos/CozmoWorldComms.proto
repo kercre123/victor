@@ -1,0 +1,23 @@
+PROTO CozmoWorldComms [
+  field SFString name "CozmoWorldComms"
+]
+{
+Supervisor {
+  
+  children [
+    # For receiving messages from all robots
+    Receiver {
+      name "radio_rx"
+      type "radio"
+    }
+
+    # For sending messages to all robots
+    Emitter {
+      name "radio_tx"
+      type "radio"
+    }
+  ]
+  name IS name
+  controller "world_comms_controller"
+} # Supervisor definition
+} # PROTO definition
