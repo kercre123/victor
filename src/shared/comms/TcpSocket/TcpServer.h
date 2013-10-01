@@ -7,10 +7,10 @@
 
 class TcpServer {
 public:
-  TcpServer(int port);
+  TcpServer();
   ~TcpServer();
 
-  bool StartListening();
+  bool StartListening(const char* port);
   void StopListening();
 
   bool Accept();
@@ -26,7 +26,6 @@ private:
 
   int socketfd; // Listening socket descripter
   int client_sd; // Client socket descripter
-  char port_[8];
 };
 
 #endif

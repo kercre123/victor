@@ -3,15 +3,15 @@
 
 using namespace std;
 
-#define LISTEN_PORT 5556
+#define LISTEN_PORT "5556"
 
 // Echo server example
 int main (int argc, char *argv[])
 {
   char buf[2048];
 
-  TcpServer server(LISTEN_PORT);
-  server.StartListening();
+  TcpServer server;
+  server.StartListening(LISTEN_PORT);
   
   
   while (1) {

@@ -1,6 +1,10 @@
 #include <iostream>
 #include "TcpClient.h"
 
+#define DEFAULT_HOST "127.0.0.1"
+#define DEFAULT_PORT "5556"
+
+
 using namespace std;
 
 int main (int argc, char *argv[])
@@ -19,22 +23,29 @@ int main (int argc, char *argv[])
   client.Disconnect();
   */
 
+
   // Client to echo server example
   TcpClient client;
-  client.Connect("192.168.4.255", "5556");
+  client.Connect(DEFAULT_HOST, DEFAULT_PORT);
 
   char sendBuf[1024];
   char recvBuf[1024];
 
   while( !(sendBuf[0] == 'q' && sendBuf[1] == 'u' && sendBuf[2] == 'i' && sendBuf[3] == 't') ) {
-    std::cout << "Type message to send to server:\n";
+    std::cout << "Type message to send to server (type 'quit' to exit):\n";
     std::cin.getline(sendBuf, sizeof(sendBuf));
     
-    client.Send(sendBuf, strlen(sendBuf)+1);  // +1 to include terminating null
+    int bytes_sent = client.Send(sendBuf, strlen(sendBuf)+1);  // +1 to include terminating null
+    if (bytes_sent < 0) {
+      break;
+    }
 
     usleep(10000);
 
-    client.Recv(recvBuf, sizeof(recvBuf));
+    int bytes_received = client.Recv(recvBuf, sizeof(recvBuf));
+    if (bytes_received < 0) {
+      break;
+    }
   }
 
   return(0);

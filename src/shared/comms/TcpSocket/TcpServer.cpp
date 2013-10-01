@@ -7,9 +7,8 @@
 #include <assert.h>
 #include <errno.h>
 
-TcpServer::TcpServer(int port)
+TcpServer::TcpServer()
 {
-  snprintf(port_, sizeof(port_), "%d", port);
   socketfd = -1;
   client_sd = -1;
 }
@@ -32,8 +31,14 @@ void set_nonblock(int socket) {
     fcntl(socket, F_SETFL, flags | O_NONBLOCK);
 }
 
-bool TcpServer::StartListening()
+bool TcpServer::StartListening(const char* port)
 {
+    if (socketfd >= 0) {
+#if(DEBUG_TCP_SERVER)
+      std::cout << "WARNING (TcpServer): Already listening\n";
+#endif
+      return false;
+    }
 
     int status;
     struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
@@ -50,13 +55,13 @@ bool TcpServer::StartListening()
     host_info.ai_flags = AI_PASSIVE;     // IP Wildcard
 
     // Now fill up the linked list of host_info structs with google's address information.
-    status = getaddrinfo(NULL, port_, &host_info, &host_info_list);
+    status = getaddrinfo(NULL, port, &host_info, &host_info_list);
     // getaddrinfo returns 0 on succes, or some other value when an error occured.
     // (translated into human readable text by the gai_gai_strerror function).
     if (status != 0)  std::cout << "getaddrinfo error" << gai_strerror(status) ;
 
 #if(DEBUG_TCP_SERVER)
-    std::cout << "TcpServer: Creating a socket on port " << port_  << "\n";
+    std::cout << "TcpServer: Creating a socket on port " << port  << "\n";
 #endif
     socketfd = socket(host_info_list->ai_family, host_info_list->ai_socktype,
                       host_info_list->ai_protocol);
@@ -84,6 +89,7 @@ bool TcpServer::StartListening()
     status =  listen(socketfd, 5);
     if (status == -1)  std::cout << "listen error\n";
 
+    return true;
 }
 
 void TcpServer::StopListening() 
@@ -106,7 +112,13 @@ void TcpServer::StopListening()
 
 bool TcpServer::Accept()
 {
-    
+  if (socketfd < 0) {
+#if(DEBUG_TCP_SERVER)
+    std::cout << "WARNING (TcpServer): Listening socket not yet open\n";
+#endif
+    return false;
+  }
+
   struct sockaddr_storage their_addr;
   socklen_t addr_size = sizeof(their_addr);
   client_sd = accept(socketfd, (struct sockaddr *)&their_addr, &addr_size);
@@ -136,6 +148,14 @@ int TcpServer::Send(const char* data, int size)
 {
   if (size <= 0) return 0;
 
+  if (!HasClient()) {
+#if(DEBUG_TCP_SERVER)
+    std::cout << "TcpServer: Send() failed because no client connected\n";
+#endif
+    return -1;
+  }
+
+
 #if(DEBUG_TCP_SERVER)
   std::cout << "TcpServer: sending   " << data << "\n";
 #endif
@@ -144,6 +164,13 @@ int TcpServer::Send(const char* data, int size)
 
 int TcpServer::Recv(char* data, int maxSize)
 {
+  if (!HasClient()) {
+#if(DEBUG_TCP_SERVER)
+    std::cout << "TcpServer: Recv() failed because no client connected\n";
+#endif
+    return -1;
+  }
+
 
 #if(DEBUG_TCP_SERVER)
   //std::cout << "TcpServer: Waiting to receive data...\n";
@@ -153,17 +180,8 @@ int TcpServer::Recv(char* data, int maxSize)
   // If no data arrives, the program will just wait here until some data arrives.
 
 
-  if (errno != EWOULDBLOCK)
-    {
-#if(DEBUG_TCP_SERVER)
-      std::cout << "receive error!\n";
-#endif
-      DisconnectClient();
-    }
-  else if (bytes_received > 0) {
- 
-  /*
-  if (bytes_received == -1) {
+  
+  if (bytes_received <= 0) {
     if (errno != EWOULDBLOCK)
     {
 #if(DEBUG_TCP_SERVER)
@@ -172,7 +190,6 @@ int TcpServer::Recv(char* data, int maxSize)
       DisconnectClient();
     }
   } else {
-    */
 #if(DEBUG_TCP_SERVER)
     std::cout << "TcpServer: " << bytes_received << " bytes received : " << data << "\n";
 #endif
