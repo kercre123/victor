@@ -46,7 +46,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
     
     
-    for(int i=0; i<(nrows*ncols); ++i)
+    for(mwSize i=0; i<(nrows*ncols); ++i)
     {
         if(regionMap[i] > 0) 
         {
@@ -63,11 +63,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
     
     int i=0;
-    for(int c=0; c<ncols; ++c)
+    for(mwSize c=0; c<ncols; ++c)
     {
         const int x = c+1; // +1 for Matlab indexing
         
-        for(int r=0; r<nrows; ++r, ++i)
+        for(mwSize r=0; r<nrows; ++r, ++i)
         {
             const int y = r+1; // +1 for Matlab indexing
             int region = regionMap[i];

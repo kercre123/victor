@@ -19,26 +19,23 @@ namespace Anki
 {
   namespace Embedded
   {
-    typedef enum
-    {
-      FIDUCIAL_BIT_UNINITIALIZED = 0,
-      FIDUCIAL_BIT_NONE = 1,
-      FIDUCIAL_BIT_BLOCK = 2,
-      FIDUCIAL_BIT_FACE = 3,
-      FIDUCIAL_BIT_ORIENTATION_LEFT = 4,
-      FIDUCIAL_BIT_ORIENTATION_RIGHT = 5,
-      FIDUCIAL_BIT_ORIENTATION_UP = 6,
-      FIDUCIAL_BIT_ORIENTATION_DOWN = 7,
-      FIDUCIAL_BIT_CHECKSUM = 8
-    } FiducialMarkerParserBitType;
-
     // A BlockMarker is a location Quadrilateral, with a given blockType and faceType.
     // The blockType and faceType can be computed by a FiducialMarkerParser
     class BlockMarker
     {
     public:
+      typedef enum
+      {
+        ORIENTATION_UNKNOWN = 0,
+        ORIENTATION_UP = 1,
+        ORIENTATION_DOWN = 2,
+        ORIENTATION_LEFT = 3,
+        ORIENTATION_RIGHT = 4,
+      } Orientation;
+
       Quadrilateral<s16> corners; // SQ 15.0 (Though may be changed later)
       s16 blockType, faceType;
+      Orientation orientation;
 
       BlockMarker();
 
@@ -48,13 +45,26 @@ namespace Anki
     class FiducialMarkerParserBit
     {
     public:
+      typedef enum
+      {
+        FIDUCIAL_BIT_UNINITIALIZED = 0,
+        FIDUCIAL_BIT_NONE = 1,
+        FIDUCIAL_BIT_BLOCK = 2,
+        FIDUCIAL_BIT_FACE = 3,
+        FIDUCIAL_BIT_ORIENTATION_LEFT = 4,
+        FIDUCIAL_BIT_ORIENTATION_RIGHT = 5,
+        FIDUCIAL_BIT_ORIENTATION_UP = 6,
+        FIDUCIAL_BIT_ORIENTATION_DOWN = 7,
+        FIDUCIAL_BIT_CHECKSUM = 8
+      } Type;
+
       FiducialMarkerParserBit();
 
       // All data from other is copied into this instance's local memory
       FiducialMarkerParserBit(const FiducialMarkerParserBit& bit2);
 
       // All data from probeLocations is copied into this instance's local memory
-      FiducialMarkerParserBit(const s16 * const probesX, const s16 * const probesY, const s16 * const probeWeights, const s32 numProbes, const FiducialMarkerParserBitType type, const s32 numFractionalBits);
+      FiducialMarkerParserBit(const s16 * const probesX, const s16 * const probesY, const s16 * const probeWeights, const s32 numProbes, const FiducialMarkerParserBit::Type type, const s32 numFractionalBits);
 
       Result ExtractMeanValue(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, s16 &meanValue);
 
@@ -64,14 +74,14 @@ namespace Anki
 
       const FixedLengthList<s16>& get_probeWeights() const;
 
-      FiducialMarkerParserBitType get_type() const;
+      FiducialMarkerParserBit::Type get_type() const;
 
       s32 get_numFractionalBits() const;
 
     protected:
       FixedLengthList<Point<s16>> probeLocations; //< A list of length MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS
       FixedLengthList<s16> probeWeights;
-      FiducialMarkerParserBitType type;
+      FiducialMarkerParserBit::Type type;
       s32 numFractionalBits;
 
       // The static data buffer for this object's probeLocations and probeWeights. Modifying this will change the values in probeLocations and probeWeights.
@@ -92,19 +102,35 @@ namespace Anki
 
       FiducialMarkerParser(const FiducialMarkerParser& marker2);
 
-      Result ExtractBlockMarker(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, BlockMarker &marker);
+      Result ExtractBlockMarker(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, const f32 minContrastRatio, BlockMarker &marker, MemoryStack scratch);
 
       FiducialMarkerParser& operator= (const FiducialMarkerParser& marker2);
 
     protected:
       FixedLengthList<FiducialMarkerParserBit> bits;
 
+      // The indexes of the four orientation bits
+      s32 upBitIndex;
+      s32 downBitIndex;
+      s32 leftBitIndex;
+      s32 rightBitIndex;
+
       //FiducialMarkerParserBit bitsBuffer[MAX_FIDUCIAL_MARKER_BITS];
       char bitsBuffer[NUM_BYTES_bitsBuffer];
+
+      static bool IsChecksumValid(const FixedLengthList<u8> &checksumBits, const FixedLengthList<u8> &blockBits, const FixedLengthList<u8> &faceBits);
 
       void PrepareBuffers();
 
       Result InitializeAsDefaultParser();
+
+      Result DetermineOrientationAndBinarize(const FixedLengthList<s16> &meanValues, const f32 minContrastRatio, BlockMarker::Orientation &orientation, FixedLengthList<u8> &binarizedBits);
+
+      Result DecodeId(const FixedLengthList<u8> &binarizedBits, s16 &blockType, s16 &faceType, MemoryStack scratch);
+
+      // Starting at startIndex, search through this->bits to find the first instance of the given type
+      // Returns -1 if the type wasn't found
+      s32 FindFirstBitOfType(const FiducialMarkerParserBit::Type type, const s32 startIndex);
     }; // class FiducialMarkerParser
   } // namespace Embedded
 } // namespace Anki
