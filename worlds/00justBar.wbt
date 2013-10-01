@@ -1,0 +1,191 @@
+#VRML_SIM V6.0 utf8
+WorldInfo {
+  info [
+    "Cozmo test world. All rights reserved. Copyright (c) Anki, Inc."
+    "Author: Hanns Tappeiner <hanns@anki.com>"
+    "Date: DD MMM YYYY"
+    ""
+  ]
+  basicTimeStep 16
+  contactProperties [
+    ContactProperties {
+      material2 "highfriction"
+      coulombFriction 50
+    }
+    ContactProperties {
+      material1 "highfriction"
+      material2 "highfriction"
+      coulombFriction 50
+    }
+    ContactProperties {
+      material2 "nofriction"
+      coulombFriction 0.001
+    }
+  ]
+}
+Viewpoint {
+  orientation -0.241296 -0.901716 -0.358727 1.33382
+  position -0.213383 0.160566 0.312064
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 1 -2 1
+  castShadows TRUE
+}
+DEF FLOOR Solid {
+  translation -0.5 0 -0.5
+  children [
+    Shape {
+      geometry ElevationGrid {
+        color Color {
+          color [
+            0.43653 0.598901 0.288273
+            1 1 0
+          ]
+        }
+        colorPerVertex FALSE
+        xDimension 11
+        xSpacing 0.1
+        zDimension 11
+        zSpacing 0.1
+      }
+    }
+  ]
+  boundingObject Transform {
+    translation 0.5 0 0.5
+    children [
+      Plane {
+      }
+    ]
+  }
+}
+DEF Cozmo Robot {
+  translation 0 0.018 0.2
+  rotation 9.30088e-10 -1.52937e-07 -1 7.48661e-07
+  children [
+    Solid {
+      translation 0 0.02 0.02
+      children [
+        DEF LBase Shape {
+          geometry Box {
+            size 0.01 0.01 0.01
+          }
+        }
+        Transform {
+          children [
+            HingeJoint {
+              jointParameters HingeJointParameters {
+              }
+              endPoint Solid {
+                translation 0 0 0.03
+                children [
+                  DEF LBottom Shape {
+                    geometry Box {
+                      size 0.001 0.005 0.06
+                    }
+                  }
+                ]
+                boundingObject USE LBottom
+                physics Physics {
+                  density 1
+                  centerOfMass [
+                    0 0 0
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+      boundingObject USE LBase
+      physics Physics {
+        density 1
+      }
+    }
+    Solid {
+      translation 0 0.04 0.02
+      children [
+        DEF LBase Shape {
+          geometry Box {
+            size 0.01 0.01 0.01
+          }
+        }
+        Transform {
+          children [
+            HingeJoint {
+              jointParameters HingeJointParameters {
+                anchor 0 0.01 0
+              }
+              endPoint Solid {
+                translation 0 0.01 0.03
+                rotation 1 0 0 0
+                children [
+                  DEF LTop Shape {
+                    geometry Box {
+                      size 0.001 0.005 0.06
+                    }
+                  }
+                  HingeJoint {
+                    jointParameters HingeJointParameters {
+                      anchor 0 0 0.03
+                    }
+                    endPoint Solid {
+                      translation 0 -0.01 0.03
+                      children [
+                        DEF LFront Shape {
+                          geometry Box {
+                            size -0.004 0 0
+                          }
+                        }
+                      ]
+                      boundingObject USE LFront
+                      physics Physics {
+                        density 1
+                        centerOfMass [
+                          0 0 0
+                        ]
+                      }
+                    }
+                  }
+                ]
+                boundingObject USE LTop
+                physics Physics {
+                  density 1
+                  centerOfMass [
+                    0 0 0
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+      boundingObject USE LBase
+      physics Physics {
+        density 1
+      }
+    }
+    DEF BODY Shape {
+      appearance Appearance {
+        material DEF MAT_WHITE Material {
+          diffuseColor 1 1 1
+        }
+      }
+      geometry Box {
+        size 0.014 0.014 0.048
+      }
+    }
+  ]
+  name "TestRobot"
+  boundingObject USE BODY
+  physics Physics {
+    density -1
+    mass 1
+  }
+  controller "cozmo_basicdrive01"
+}

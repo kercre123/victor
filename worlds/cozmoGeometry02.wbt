@@ -1,0 +1,323 @@
+#VRML_SIM V6.0 utf8
+WorldInfo {
+  info [
+    "Description"
+    "Author: first name last name <e-mail>"
+    "Date: DD MMM YYYY"
+  ]
+  basicTimeStep 16
+}
+Viewpoint {
+  orientation 0.00913156 -0.974698 -0.22334 1.83638
+  position -0.179673 0.0733525 -0.0407956
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 1 -2 1
+  castShadows TRUE
+}
+DEF FLOOR Solid {
+  translation -0.5 0 -0.5
+  children [
+    Shape {
+      geometry ElevationGrid {
+        color Color {
+          color [
+            0.803922 0.498039 0.298039
+            1 1 0
+          ]
+        }
+        colorPerVertex FALSE
+        xDimension 11
+        xSpacing 0.1
+        zDimension 11
+        zSpacing 0.1
+      }
+    }
+  ]
+  boundingObject Transform {
+    translation 0.5 0 0.5
+    children [
+      Plane {
+      }
+    ]
+  }
+}
+DEF WALL_1 Solid {
+  translation 0.5 0.05 0
+  children [
+    DEF WALL_SHAPE Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.12549 0.368627 0.729412
+        }
+      }
+      geometry Box {
+        size 0.02 0.1 0.98
+      }
+    }
+  ]
+  boundingObject USE WALL_SHAPE
+}
+DEF WALL_2 Solid {
+  translation -0.5 0.05 0
+  children [
+    USE WALL_SHAPE
+  ]
+  boundingObject USE WALL_SHAPE
+}
+DEF WALL_3 Solid {
+  translation 0 0.05 -0.5
+  rotation 0 1 0 1.5708
+  children [
+    USE WALL_SHAPE
+  ]
+  boundingObject USE WALL_SHAPE
+}
+DEF WALL_4 Solid {
+  translation 0 0.05 0.5
+  rotation 0 1 0 1.5708
+  children [
+    USE WALL_SHAPE
+  ]
+  boundingObject USE WALL_SHAPE
+}
+Robot {
+  translation 0 0.016 0
+  rotation -3.04669e-10 -8.4021e-08 -1 7.37072e-07
+  children [
+    DEF BODY Shape {
+      appearance Appearance {
+        material DEF MAT_WHITE Material {
+          diffuseColor 1 1 1
+        }
+      }
+      geometry Box {
+        size 0.014 0.014 0.048
+      }
+    }
+    DEF WHEEL1 HingeJoint {
+      jointParameters HingeJointParameters {
+        position -5.79981e-12
+        anchor 0.02 0 0.024
+      }
+      device RotationalMotor {
+        name "wheel1"
+      }
+      endPoint Solid {
+        translation 0.02 1.96229e-06 0.024
+        rotation 0.0799381 -2.05052e-06 0.9968 -5.80019e-12
+        children [
+          DEF WHEEL Transform {
+            rotation 0 0 1 1.5708
+            children [
+              Shape {
+                appearance Appearance {
+                  material Material {
+                    diffuseColor 0.254032 0.254032 0.254032
+                  }
+                }
+                geometry Cylinder {
+                  height 0.02
+                  radius 0.015
+                  subdivision 24
+                }
+              }
+            ]
+          }
+        ]
+        boundingObject USE WHEEL
+        physics Physics {
+        }
+      }
+    }
+    DEF WHEEL2 HingeJoint {
+      jointParameters HingeJointParameters {
+        position -5.80069e-12
+        anchor -0.02 0 0.024
+      }
+      device RotationalMotor {
+        name "wheel2"
+      }
+      endPoint Solid {
+        translation -0.02 1.96171e-06 0.024
+        rotation 0.0797558 -2.05017e-06 0.996814 -5.80111e-12
+        children [
+          USE WHEEL
+        ]
+        boundingObject USE WHEEL
+        physics Physics {
+        }
+      }
+    }
+    DEF WHEEL3 HingeJoint {
+      jointParameters HingeJointParameters {
+        position 5.79789e-12
+        anchor 0.02 0 -0.024
+      }
+      device RotationalMotor {
+        name "wheel3"
+      }
+      endPoint Solid {
+        translation 0.02 1.96229e-06 -0.024
+        rotation 0.0802844 2.05137e-06 -0.996772 5.79789e-12
+        children [
+          USE WHEEL
+        ]
+        boundingObject USE WHEEL
+        physics Physics {
+        }
+      }
+    }
+    DEF WHEEL4 HingeJoint {
+      jointParameters HingeJointParameters {
+        position -5.80691e-12
+        anchor -0.02 0 -0.024
+      }
+      device RotationalMotor {
+        name "wheel4"
+      }
+      endPoint Solid {
+        translation -0.02 1.96171e-06 -0.024
+        rotation 0.0797161 -2.04807e-06 0.996818 -5.80708e-12
+        children [
+          USE WHEEL
+        ]
+        boundingObject USE WHEEL
+        physics Physics {
+        }
+      }
+    }
+    DEF HEAD HingeJoint {
+      jointParameters HingeJointParameters {
+        anchor 0 0.02 0
+      }
+      device RotationalMotor {
+        name "motor_head_pitch"
+      }
+      endPoint Solid {
+        rotation 1 0 0 0
+        children [
+          DEF EYE_LEFT Transform {
+            translation -0.013 0.034 -0.01
+            rotation 1 0 0 -1.5708
+            children [
+              DEF EYE_SHAPE Shape {
+                appearance Appearance {
+                  material Material {
+                    diffuseColor 0.165316 0.165316 0.165316
+                  }
+                }
+                geometry Cylinder {
+                  height 0.04
+                  radius 0.012
+                }
+              }
+            ]
+          }
+          DEF EYE_RIGHT Transform {
+            translation 0.013 0.034 -0.01
+            rotation 1 0 0 -1.5708
+            children [
+              USE EYE_SHAPE
+            ]
+          }
+        ]
+      }
+    }
+    DEF BAR_LOW Transform {
+      translation -0.028 0.02 0.02
+      children [
+        HingeJoint {
+          jointParameters HingeJointParameters {
+          }
+          device RotationalMotor {
+            name "liftmotor"
+          }
+          endPoint Solid {
+            translation 0 0 -0.026
+            rotation 1 0 0 0
+            children [
+              Transform {
+                translation 0 -0.005 -0.03
+                rotation 1 0 0 -0.7
+                children [
+                  Shape {
+                    geometry Box {
+                      size 0.001 0.003 0.02
+                    }
+                  }
+                ]
+              }
+              HingeJoint {
+                jointParameters HingeJointParameters {
+                  anchor 0 -0.01 -0.036
+                }
+                endPoint DEF FRONTBARSOLID Solid {
+                  translation 0 -0.005 -0.036
+                  children [
+                    HingeJoint {
+                      jointParameters HingeJointParameters {
+                        anchor 0 0.007 0
+                      }
+                    }
+                    Shape {
+                      geometry Box {
+                        size 0.001 0.014 0.003
+                      }
+                    }
+                  ]
+                  name "FRONT_BAR"
+                }
+              }
+              Shape {
+                geometry Box {
+                  size 0.001 0.004 0.052
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+  boundingObject USE BODY
+  physics Physics {
+    density -1
+    mass 1
+  }
+  controller "cozmo_controller01"
+}
+DEF Block1x1 Solid {
+  translation 1.77507e-09 0.0299152 -0.08
+  rotation 0.964699 2.44406e-06 -0.263356 -4.70969e-10
+  children [
+    DEF Block1x1Shape Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 1 0 0
+        }
+      }
+      geometry Box {
+        size 0.06 0.06 0.06
+      }
+    }
+  ]
+  boundingObject USE Block1x1Shape
+  physics DEF Block1x1Physics Physics {
+  }
+}
+Solid {
+  translation -8.51515e-10 0.0898729 -0.2
+  rotation -0.964662 0.00876538 0.263346 7.05978e-10
+  children [
+    USE Block1x1Shape
+  ]
+  boundingObject USE Block1x1Shape
+  physics USE Block1x1Physics
+}
