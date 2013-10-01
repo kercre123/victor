@@ -16,7 +16,7 @@ namespace Anki
     // Example:
     // Array<u8> testSquaresImage = AllocateArrayFromHeap<u8>(480,640);
     // DrawExampleSquaresImage(testSquaresImage);
-    // toast.Show("testSquaresImage", true);
+    // testSquaresImage.Show("testSquaresImage", true);
     template<typename Type> Result DrawExampleSquaresImage(Array<Type> &image);
 
 #pragma mark --- Implementations ---
