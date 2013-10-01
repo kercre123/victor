@@ -31,12 +31,12 @@
 //#include <math.h>
 //#include "hal/portable.h"
 #include "app/assert.h"
-#include "hal/encoders.h"
+#include "app/debug.h"
 #include "app/vehicleSpeedController.h"
 #include "app/wheelController.h"
 #include "app/trace.h"
+#include "hal/hal.h"
 #include "cozmoConfig.h"
-#include "app/debug.h"
 
 // The target desired speed the user commanded to the car [mm/sec].
 // This is our eventual goal for the vehicle speed, given enough time for acceleration

@@ -1,7 +1,6 @@
 #include "cozmoConfig.h"
 #include "cozmoTypes.h" 
-#include "hal/encoders.h"
-#include "hal/timers.h"
+#include "hal/hal.h"
 
 #include "cozmoBot.h"
 extern CozmoBot gCozmoBot;

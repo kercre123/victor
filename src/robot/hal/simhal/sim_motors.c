@@ -1,11 +1,8 @@
-#include "hal/motors.h"
+#include "hal/hal.h"
 #include "keyboardController.h"
 #include "cozmoBot.h"
-
-#include <stdio.h>
-
 #include "cozmoConfig.h"
-
+#include <stdio.h>
 
 extern CozmoBot gCozmoBot;
 

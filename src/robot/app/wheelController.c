@@ -5,13 +5,12 @@
  * 
  **/ 
 //#include <math.h>
-#include "app/wheelController.h"
+#include "app/debug.h"
 #include "app/steeringController.h"
-#include "hal/encoders.h"
-#include "hal/motors.h"
 #include "app/trace.h"
 #include "app/vehicleSpeedController.h"
-#include "app/debug.h"
+#include "app/wheelController.h"
+#include "hal/hal.h"
 #include <stdio.h>
 
 // Cap error_sum so that integral component of outl does not exceed say some percent of MOTOR_PWM_MAXVAL.

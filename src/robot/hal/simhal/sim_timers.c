@@ -1,6 +1,7 @@
-#include "hal/timers.h"
-#include "hal/simhal/sim_timers.h"
+#include "hal/hal.h"
+#include "CozmoBot.h"
 
+extern CozmoBot gCozmoBot;
 
 static u32 us_time = 0;
 
@@ -14,15 +15,7 @@ void InitTimers(void)
 
 // Get the number of microseconds since boot
 u32 getMicroCounter(void)
-{
-  return us_time;
+{ 
+  return gCozmoBot.getTime() * 1000000;
 }
 
-
-
-////// SIM ONLY //////////
-
-void ManageTimers(u32 ms_step)
-{
-  us_time = us_time + ms_step * 1000;
-}

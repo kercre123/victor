@@ -1,14 +1,13 @@
 #include "cozmoBot.h"
 #include "cozmoConfig.h"
 #include "app/vehicleMath.h"
-#include "keyboardController.h"
 #include "app/mainExecution.h"
-#include "hal/simhal/sim_timers.h"
 #include "app/vehicleSpeedController.h"
 #include "app/pathFollower.h"
-#include "hal/timers.h"
+#include "hal/hal.h"
 #include "comms/cozmoMsgProtocol.h"
 #include "utilMessaging.h"
+#include "keyboardController.h"
 #include "cozmo_physics.h"
 #include <cmath>
 #include <cstdio>
@@ -306,9 +305,7 @@ void CozmoBot::run()
     // Check if connector attaches to anything
     ManageGripper();
 
-    // Simulator management stuff
-    ManageTimers(TIME_STEP); 
-
+    // Print overlay text in main 3D view
     SetOverlayText(OT_CURR_POSE, locStr);
   }
 }
