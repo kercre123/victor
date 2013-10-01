@@ -1,5 +1,0 @@
-SECTIONS {
-  /*Warning! Only use this symbol if the default case of each shave running in their own 128 Kb slice is used!*/
-  __NEXT_FREE_CMX_SLICE = 0xA0000000;
-  . = __NEXT_FREE_CMX_SLICE;
-}
