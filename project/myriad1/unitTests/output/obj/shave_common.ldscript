@@ -1,0 +1,35 @@
+SECTIONS {
+  . = 0x1C010000;
+  .sve.s0.__STACK__sect ALIGN(1) : {KEEP(*(.sve.s0.__STACK__sect))}
+  . = 0x1D000000;
+  .sve.s0.__MAIN__sect ALIGN(16) : {KEEP(*(.sve.s0.__MAIN__sect))}
+  . = 0x1C000000;
+  .sve.s0.__static_data__Peaffbb69_b7603ac6T_ ALIGN(16) : {KEEP(*(.sve.s0.__static_data__Peaffbb69_b7603ac6T_))}
+  . = 0x1D000030;
+  .sve.s0.puts ALIGN(16) : {KEEP(*(.sve.s0.puts))}
+  . = 0x1D000090;
+  .sve.s0.printf ALIGN(16) : {KEEP(*(.sve.s0.printf))}
+  . = 0x1D0000E0;
+  .sve.s0.print ALIGN(16) : {KEEP(*(.sve.s0.print))}
+  . = 0x1C000030;
+  .sve.s0.__static_data__Pa8bf0496_86ddc185T_ ALIGN(16) : {KEEP(*(.sve.s0.__static_data__Pa8bf0496_86ddc185T_))}
+  . = 0x1D000920;
+  .sve.s0.printi ALIGN(16) : {KEEP(*(.sve.s0.printi))}
+  . = 0x1D000BA0;
+  .sve.s0.printchar ALIGN(16) : {KEEP(*(.sve.s0.printchar))}
+  . = 0x1D000C30;
+  .sve.s0.prints ALIGN(16) : {KEEP(*(.sve.s0.prints))}
+  . = 0x1D000EF0;
+  .sve.s0.isValid ALIGN(16) : {KEEP(*(.sve.s0.isValid))}
+  . = 0x1C0000E0;
+  .sve.s0.print_data ALIGN(16) : {KEEP(*(.sve.s0.print_data))}
+  . = 0x1D000F40;
+  .sve.s0.dbl2stri ALIGN(16) : {KEEP(*(.sve.s0.dbl2stri))}
+  . = 0x1D001390;
+  .sve.s0.memset ALIGN(16) : {KEEP(*(.sve.s0.memset))}
+  . = 0x1D001420;
+  .sve.s0.strlen ALIGN(16) : {KEEP(*(.sve.s0.strlen))}
+  /*Warning! Only use this symbol if the default case of each shave running in their own 128 Kb slice is used!*/
+  __NEXT_FREE_CMX_SLICE = 0xA0020000;
+  . = __NEXT_FREE_CMX_SLICE;
+}

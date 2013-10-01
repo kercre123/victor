@@ -1,0 +1,65 @@
+Movidius Object Dumper
+Generated from file <./output/obj/shave_common.mof>
+=========================================================
+Data Size: 32 Bits
+Data Encoding: 2's complement, little endian
+Object type: Executable file
+Target: Myriad
+Version: Static image (.mof)
+Program header table file offset:     0x00000000
+Section header table file offset:     0x0000007C
+Flags:                                0x00000000
+Header size (bytes):                  0x00000034
+Program header size (bytes):          0x00000034
+Program header count:                 0x00000000
+Section header size (bytes):          0x0000002C
+Section header count:                 0x00000002
+Section header string table index:    0x00000000
+=========================================================
+Sections headers
+=========================================================
+Section Name:                         <Unavailable>
+Section Core:                         <UNASSIGNED>
+Section Type:                         Unused
+Section Flags:                        None
+Section virtual addr at execution:    0x00000000
+Section file offset:                  0x00000000
+Section size:                         0x00000000
+Section link:                         0x00000000
+Section info:                         None
+Section alignment:                    0
+Section entry size:                   0x00000000
+---------------------------------------------------------
+Section Name:                         <.entryPoints>
+Section Core:                         <UNASSIGNED>
+Section Type:                         Entry points section
+Section Flags:                        None
+Section virtual addr at execution:    0x00000000
+Section file offset:                  0x00000034
+Section size:                         0x00000048
+Section link:                         0x00000000
+Section info:                         None
+Section alignment:                    8
+Section entry size:                   0x00000008
+---------------------------------------------------------
+Sections data
+=========================================================
+Section Name:                         <Unavailable>
+Section Core:                         <UNASSIGNED>
+---------------------------------------------------------
+=========================================================
+Section Name:                         <.entryPoints>
+---------------------------------------------------------
+  Core  |  Address
+========|===========
+ SHAVE0 | 0x00000000
+ SHAVE1 | 0x00000000
+ SHAVE2 | 0x00000000
+ SHAVE3 | 0x00000000
+ SHAVE4 | 0x00000000
+ SHAVE5 | 0x00000000
+ SHAVE6 | 0x00000000
+ SHAVE7 | 0x00000000
+  LEON  | 0x00000000
+
+=========================================================

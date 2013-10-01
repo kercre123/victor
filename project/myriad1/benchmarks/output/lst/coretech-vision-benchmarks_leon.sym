@@ -1,0 +1,499 @@
+00000001 g       *ABS*	00000000 __cache_on
+00000001 g       *ABS*	00000000 __fpu_on
+00000001 g       *ABS*	00000000 __mp_sabre
+00000400 g       *ABS*	00000000 __MIN_INIT_STACK_SIZE
+00000e00 g       *ABS*	00000000 __MIN_STACK_SIZE
+00002eb0 g       *ABS*	00000000 __INIT_STACK_SIZE
+00002eb0 g       *ABS*	00000000 __STACK_SIZE
+08000000 g       *ABS*	00000000 __SEBI
+08000000  w      *ABS*	00000000 SEBI
+10000000 g       *ABS*	00000000 __CMX_PHYS_MXI
+10000000 g       *ABS*	00000000 __WinRegShave0_winD
+10000000  w      *ABS*	00000000 CMX_PHYS_MXI
+10008000 g       *ABS*	00000000 __WinRegShave0_winC
+10020000 g       *ABS*	00000000 __WinRegShave1_winD
+10028000 g       *ABS*	00000000 __WinRegShave1_winC
+10040000 g       *ABS*	00000000 __WinRegShave2_winD
+10048000 g       *ABS*	00000000 __WinRegShave2_winC
+10060000 g       *ABS*	00000000 __WinRegShave3_winD
+10068000 g       *ABS*	00000000 __WinRegShave3_winC
+10080000 g       *ABS*	00000000 __WinRegShave4_winD
+10088000 g       *ABS*	00000000 __WinRegShave4_winC
+100a0000 g       *ABS*	00000000 __WinRegShave5_winD
+100a8000 g       *ABS*	00000000 __WinRegShave5_winC
+100c0000 g       *ABS*	00000000 __WinRegShave6_winD
+100c8000 g       *ABS*	00000000 __WinRegShave6_winC
+100e0000 g       *ABS*	00000000 __WinRegShave7_winD
+100e8000 g       *ABS*	00000000 __WinRegShave7_winC
+14000000 g       *ABS*	00000000 __CMX_PAGED_MXI
+14000000  w      *ABS*	00000000 CMX_PAGED_MXI
+18000000 g       *ABS*	00000000 __CMX_BCAST_MXI
+18000000  w      *ABS*	00000000 CMX_BCAST_MXI
+20000000 g       *ABS*	00000000 __MEBI
+20000000  w      *ABS*	00000000 MEBI
+30000000 g       *ABS*	00000000 __CIF1
+30000000  w      *ABS*	00000000 CIF1
+38000000 g       *ABS*	00000000 __CIF2
+38000000  w      *ABS*	00000000 CIF2
+40000000 g       *ABS*	00000000 __L2CACHE
+40000000 g       *ABS*	00000000 __WinRegShave0_winF
+40000000 g       *ABS*	00000000 __WinRegShave1_winF
+40000000 g       *ABS*	00000000 __WinRegShave2_winF
+40000000 g       *ABS*	00000000 __WinRegShave3_winF
+40000000 g       *ABS*	00000000 __WinRegShave4_winF
+40000000 g       *ABS*	00000000 __WinRegShave5_winF
+40000000 g       *ABS*	00000000 __WinRegShave6_winF
+40000000 g       *ABS*	00000000 __WinRegShave7_winF
+40000000 g       .ddr.bss	00000000 __ddr_bss_start
+40000000 l    d  .ddr.bss	00000000 .ddr.bss
+40000000 l     O .ddr.bss	000186a0 _ZL6buffer
+40000000  w      *ABS*	00000000 L2CACHE
+400186a0 g       *ABS*	00000000 __END_OF_L2_ACCESS_SECTIONS
+400186a0 g       .ddr.bss	00000000 __ddr_bss_end
+48000000 g       *ABS*	00000000 __DDR
+48000000  w      *ABS*	00000000 DDR
+480186a0 g       .debug_aranges	00000000 __ddr_direct_bss_end
+480186a0 g       .debug_aranges	00000000 __ddr_direct_bss_start
+50000000 g       *ABS*	00000000 __LCD1
+50000000  w      *ABS*	00000000 LCD1
+58000000 g       *ABS*	00000000 __LCD2
+58000000  w      *ABS*	00000000 LCD2
+80000000 g       *ABS*	00000000 __UART
+80000000  w      *ABS*	00000000 UART
+80010000 g       *ABS*	00000000 __ICB
+80010000  w      *ABS*	00000000 ICB
+80020000 g       *ABS*	00000000 __TIM
+80020000  w      *ABS*	00000000 TIM
+80030000 g       *ABS*	00000000 __CPR
+80030000  w      *ABS*	00000000 CPR
+80040000 g       *ABS*	00000000 __GPIO
+80040000  w      *ABS*	00000000 GPIO
+80050000 g       *ABS*	00000000 __SPI1
+80050000  w      *ABS*	00000000 SPI1
+80060000 g       *ABS*	00000000 __SPI2
+80060000  w      *ABS*	00000000 SPI2
+80070000 g       *ABS*	00000000 __SPI3
+80070000  w      *ABS*	00000000 SPI3
+80080000 g       *ABS*	00000000 __AHBUART
+80080000  w      *ABS*	00000000 AHBUART
+80090000 g       *ABS*	00000000 __DDRC_CTL
+80090000  w      *ABS*	00000000 DDRC_CTL
+800a0000 g       *ABS*	00000000 __I2C1
+800a0000  w      *ABS*	00000000 I2C1
+800b0000 g       *ABS*	00000000 __I2C2
+800b0000  w      *ABS*	00000000 I2C2
+800c0000 g       *ABS*	00000000 __I2S1
+800c0000  w      *ABS*	00000000 I2S1
+800d0000 g       *ABS*	00000000 __I2S2
+800d0000  w      *ABS*	00000000 I2S2
+800e0000 g       *ABS*	00000000 __I2S3
+800e0000  w      *ABS*	00000000 I2S3
+800f0000 g       *ABS*	00000000 __L2CACHE_CTL
+800f0000 g     O .l2.mode	00000004 __l2_config
+800f0000 l    d  .l2.mode	00000000 .l2.mode
+800f0000  w      *ABS*	00000000 L2CACHE_CTL
+80100000 g       *ABS*	00000000 __KEYPAD
+80100000  w      *ABS*	00000000 KEYPAD
+80110000 g       *ABS*	00000000 __TSC
+80110000  w      *ABS*	00000000 TSC
+80120000 g       *ABS*	00000000 __AXIMON
+80120000  w      *ABS*	00000000 AXIMON
+80140000 g       *ABS*	00000000 __SHAVE0
+80140000  w      *ABS*	00000000 SHAVE0
+80140010 g     O .winregs.S0	00000010 __wins_shave0
+80140010 l    d  .winregs.S0	00000000 .winregs.S0
+80150000 g       *ABS*	00000000 __SHAVE1
+80150000  w      *ABS*	00000000 SHAVE1
+80150010 g     O .winregs.S1	00000010 __wins_shave1
+80150010 l    d  .winregs.S1	00000000 .winregs.S1
+80160000 g       *ABS*	00000000 __SHAVE2
+80160000  w      *ABS*	00000000 SHAVE2
+80160010 g     O .winregs.S2	00000010 __wins_shave2
+80160010 l    d  .winregs.S2	00000000 .winregs.S2
+80170000 g       *ABS*	00000000 __SHAVE3
+80170000  w      *ABS*	00000000 SHAVE3
+80170010 g     O .winregs.S3	00000010 __wins_shave3
+80170010 l    d  .winregs.S3	00000000 .winregs.S3
+80180000 g       *ABS*	00000000 __SHAVE4
+80180000  w      *ABS*	00000000 SHAVE4
+80180010 g     O .winregs.S4	00000010 __wins_shave4
+80180010 l    d  .winregs.S4	00000000 .winregs.S4
+80190000 g       *ABS*	00000000 __SHAVE5
+80190000  w      *ABS*	00000000 SHAVE5
+80190010 g     O .winregs.S5	00000010 __wins_shave5
+80190010 l    d  .winregs.S5	00000000 .winregs.S5
+801a0000 g       *ABS*	00000000 __SHAVE6
+801a0000  w      *ABS*	00000000 SHAVE6
+801a0010 g     O .winregs.S6	00000010 __wins_shave6
+801a0010 l    d  .winregs.S6	00000000 .winregs.S6
+801b0000 g       *ABS*	00000000 __SHAVE7
+801b0000  w      *ABS*	00000000 SHAVE7
+801b0010 g     O .winregs.S7	00000010 __wins_shave7
+801b0010 l    d  .winregs.S7	00000000 .winregs.S7
+801d0000 g       *ABS*	00000000 __GPS
+801d0000  w      *ABS*	00000000 GPS
+90000000 g       *ABS*	00000000 __LROM
+90000000 g       *ABS*	00000000 powerup
+90000000  w      *ABS*	00000000 LROM
+9000004c g       *ABS*	00000000 __bootcfg_build_date
+90000050 g       *ABS*	00000000 __bootcfg_build_time
+90000054 g       *ABS*	00000000 __bootcfg_build_no
+90000058 g       *ABS*	00000000 __bootcfg_backdoor_en
+90000110 g       *ABS*	00000000 __boot_execute
+90000218 g       *ABS*	00000000 __boot_panic
+90000228 g       *ABS*	00000000 __boot_init
+90000270 g       *ABS*	00000000 __boot_main
+90000984 g       *ABS*	00000000 __boot_setup_debug_boot
+900009f0 g       *ABS*	00000000 __boot_setup_UART_boot_device
+90000ab8 g       *ABS*	00000000 __boot_setup_IIC_boot_device
+90000bbc g       *ABS*	00000000 __boot_setup_SPI_boot_device
+90000d40 g       *ABS*	00000000 __boot_bringup_SHB
+90000d48 g       *ABS*	00000000 __boot_setup_NAND_boot_device
+90000fdc g       *ABS*	00000000 __boot_bringup_MXI
+90001080 g       *ABS*	00000000 __boot_setup_SEBI_boot_device
+90001330 g       *ABS*	00000000 __boot_setup_MEBI_boot_device
+900014a0 g       *ABS*	00000000 __boot_setup_USB_boot_device
+90001708 g       *ABS*	00000000 __boot_setup_SDIO_boot_device_phase1
+9000180c g       *ABS*	00000000 __boot_setup_SDIO_boot_device_phase2
+9000189c g       *ABS*	00000000 __boot_bringup_SXI
+900018d4 g       *ABS*	00000000 __boot_bringup_DXI
+900018dc g       *ABS*	00000000 __bootload_mvbin
+90002144 g       *ABS*	00000000 __CPR_attempt_PLL_config
+90002204 g       *ABS*	00000000 __CPR_complete_otp_read
+9000221c g       *ABS*	00000000 __CPR_extract_otp_data
+900023dc g       *ABS*	00000000 __CPR_extract_retention_data
+900024d0 g       *ABS*	00000000 __CPR_prepare_otp_read
+90002500 g       *ABS*	00000000 __GPIO_cfg_commit
+90002598 g       *ABS*	00000000 __GPIO_cfg_init_current
+90002630 g       *ABS*	00000000 __GPIO_cfg_init_default
+9000266c g       *ABS*	00000000 __GPIO_cfg_map
+90002814 g       *ABS*	00000000 __USB_dTDSetup
+900028b8 g       *ABS*	00000000 __USB_device_send
+900029d0 g       *ABS*	00000000 __USB_device_receive
+90002cbc g       *ABS*	00000000 __USB_SetQueueHeadWithEndPointInfo
+90002eb0 g       *ABS*	00000000 __USB_host_send
+90002fa0 g       *ABS*	00000000 __USB_host_receive
+9000308c g       *ABS*	00000000 __AES_leon_setup
+900032cc g       *ABS*	00000000 __AES_leon_decrypt
+90003614 g       *ABS*	00000000 __AES_leon_done
+9000363c g       *ABS*	00000000 __AES_svu_setup
+90003670 g       *ABS*	00000000 __AES_svu_decrypt
+90003890 g       *ABS*	00000000 __AES_svu_done
+90003910 g     F *ABS*	000001c8 __memcpy_fast
+90003ac0 g     F *ABS*	000000e4 __memset_fast
+90004adc g       *ABS*	00000000 __bootdrv_NULL_putchar
+90004ae4 g       *ABS*	00000000 __bootdrv_SPIM_getchar
+90004bd0 g       *ABS*	00000000 __bootdrv_SPIM_setup
+90004c44 g       *ABS*	00000000 __bootdrv_IICM8_getchar
+90004ce4 g       *ABS*	00000000 __bootdrv_IICM_getchar
+90004df4 g       *ABS*	00000000 __bootdrv_IICM_setup
+90004f30 g       *ABS*	00000000 __bootdrv_MEBI_getchar
+90004f58 g       *ABS*	00000000 __bootdrv_MEBI_setup
+90005090 g       *ABS*	00000000 __bootdrv_USBH_getchar
+900050d0 g       *ABS*	00000000 __bootdrv_USBH_setup
+90005650 g       *ABS*	00000000 __bootdrv_NAND_getchar
+90005708 g       *ABS*	00000000 __bootdrv_NAND_setup
+900058bc g       *ABS*	00000000 __bootdrv_NAND_skip_page
+900058c8 g       *ABS*	00000000 __bootdrv_SPIS_getchar
+900058f8 g       *ABS*	00000000 __bootdrv_SPIS_putchar
+90005924 g       *ABS*	00000000 __bootdrv_SPIS_setup
+90005968 g       *ABS*	00000000 __bootdrv_IICS_getchar
+90005990 g       *ABS*	00000000 __bootdrv_IICS_putchar
+900059cc g       *ABS*	00000000 __bootdrv_IICS_setup
+90005a0c g       *ABS*	00000000 __bootdrv_SEBI_getchar
+90005a4c g       *ABS*	00000000 __bootdrv_SEBI_putchar
+90005ab0 g       *ABS*	00000000 __bootdrv_SEBI_setup
+90005bf4 g       *ABS*	00000000 __bootdrv_USBD_getchar
+90005c34 g       *ABS*	00000000 __bootdrv_USBD_setup
+9000613c g       *ABS*	00000000 __bootdrv_USBD_setup_descriptors
+90006340 g       *ABS*	00000000 __bootdrv_UART_getchar
+90006370 g       *ABS*	00000000 __bootdrv_UART_putchar
+90006398 g       *ABS*	00000000 __bootdrv_UART_setup
+90006474 g       *ABS*	00000000 __bootdrv_SDIO_getchar
+90006508 g       *ABS*	00000000 __bootdrv_SDIO_setup_phase1
+900065e4 g       *ABS*	00000000 __bootdrv_SDIO_setup_phase2
+9000662c g       *ABS*	00000000 __bootdrv_SDIO_setup_tuples
+900068a8 g       *ABS*	00000000 __bootdrv_DDR_getchar
+900068b4 g       *ABS*	00000000 __bootdrv_DDR_setup
+90007220 g       *ABS*	00000000 __const_0d
+90007328 g       *ABS*	00000000 __aes_sbox_invert
+90007428 g       *ABS*	00000000 __aes_sbox
+90007700 g       *ABS*	00000000 __sdio_tpl_CIS0VERS_MV
+900077b0 g       *ABS*	00000000 __backdoor_ifcfg_modes
+90007880 g       *ABS*	00000000 __backdoor_ifsel_modes
+90007890 g       *ABS*	00000000 __boot_SDIO_pwr_detect_pin
+90008000 g       *ABS*	00000000 __VCS
+90008000  w      *ABS*	00000000 VCS
+900083b4 g       *ABS*	00000000 _xprintf
+9000885c g       *ABS*	00000000 strchr
+90008868 g       *ABS*	00000000 memchr
+900088a0 g       *ABS*	00000000 strcmp
+900088a4 g       *ABS*	00000000 strncmp
+900088ac g       *ABS*	00000000 memcmp
+900088e4 g       *ABS*	00000000 memmove
+90008904 g       *ABS*	00000000 memcpy
+90008928 g       *ABS*	00000000 memset
+9000893c g       *ABS*	00000000 strcat
+90008940 g       *ABS*	00000000 strncat
+90008988 g       *ABS*	00000000 strcpy
+9000898c g       *ABS*	00000000 strncpy
+900089d0 g       *ABS*	00000000 strlen
+900089d8 g       *ABS*	00000000 strcspn
+90008a14 g       *ABS*	00000000 strrchr
+90008a40 g       *ABS*	00000000 strspn
+90008a7c g       *ABS*	00000000 strstr
+90008d50 g       *ABS*	00000000 modf
+90008e34 g       *ABS*	00000000 DDR_Initialize
+90008ef4 g       *ABS*	00000000 DDR_ShutDown
+90008f64 g       *ABS*	00000000 DDR_EnterStandAloneMode
+90008fa4 g       *ABS*	00000000 DDR_ExitStandAloneMode
+90008fe0 g       *ABS*	00000000 SetLowPowerModeTimeout
+900090f8 g       *ABS*	00000000 GPIO_PAD_set_all_value
+900092ac g     F *ABS*	000001ec GpioPadSetFast
+90009488 g     F *ABS*	000001ec GpioPadSetFastMask
+90009674 g     F *ABS*	00000090 GpioPadGet
+900096fc g     F *ABS*	00000030 GpioPadSetArrayVal
+90009734 g     F *ABS*	00000034 GpioPadSetArrayArray
+90009990 g     F *ABS*	00000074 DrvLcdTiming
+90009a98 g     F *ABS*	0000001c DrvLcdCtrl
+90009ad0 g     F *ABS*	00000024 DrvLcdLayer0
+90009b20 g     F *ABS*	00000034 DrvLcdDmaLayer0
+90009b98 g     F *ABS*	00000024 DrvLcdLayer1
+90009be8 g     F *ABS*	00000034 DrvLcdDmaLayer1
+90009c58 g     F *ABS*	00000024 DrvLcdLayer2
+90009ca8 g     F *ABS*	00000034 DrvLcdDmaLayer2
+90009d18 g     F *ABS*	00000024 DrvLcdLayer3
+90009d68 g     F *ABS*	00000034 DrvLcdDmaLayer3
+90009dd8 g     F *ABS*	00000034 DrvLcdPwm0
+90009e28 g     F *ABS*	00000034 DrvLcdPwm1
+90009e78 g     F *ABS*	00000034 DrvLcdPwm2
+90009ec8 g     F *ABS*	0000003c DrvLcdVl1Scale
+90009f0c g     F *ABS*	0000003c DrvLcdVl2Scale
+90009f50 g     F *ABS*	0000003c DrvLcdGl1Scale
+90009f94 g     F *ABS*	0000003c DrvLcdGl2Scale
+90009fd8 g     F *ABS*	00000070 DrvLcdCsc
+9000a0a8 g     F *ABS*	00000074 DrvLcdLut
+9000a124 g     F *ABS*	00000044 DrvLcdCbPlanar
+9000a1a8 g     F *ABS*	00000044 DrvLcdCrPlanar
+9000a22c g     F *ABS*	00000018 DrvLcdTransparency
+9000a254 g     F *ABS*	00000018 DrvLcdLayerPos
+9000a27c g       *ABS*	00000000 PowerDownLeon
+9000a2c0 g       *ABS*	00000000 Shutdown_Island
+9000a4c0 g       *ABS*	00000000 leon_bit_op
+9000a544 g       *ABS*	00000000 PowerUp_Device
+9000a688 g       *ABS*	00000000 Set_Wakeup_GPIO
+9000a6ec g       *ABS*	00000000 Set_Wakeup_Source
+9000a71c g       *ABS*	00000000 Sleep_All_Clocks_Off
+9000a750 g       *ABS*	00000000 Shut_Down_Core
+9000a7cc g       *ABS*	00000000 DRV_CPR_PLL_change
+9000aeb8 g       *ABS*	00000000 __libm_constants
+9000afe8 g       *ABS*	00000000 __SHAVE_AAC_table_4
+9000b408 g       *ABS*	00000000 __SHAVE_AAC_table_3
+9000b600 g       *ABS*	00000000 __SHAVE_AAC_table_1
+9000b790 g       *ABS*	00000000 __SHAVE_dataCoefCAVLCh264
+9000cab0 g       *ABS*	00000000 __SHAVE_MPEG2_Table
+9000db68 g       *ABS*	00000000 __SHAVE_ResizeCoef
+9000df04 g       *ABS*	00000000 H264_decode_SPS
+9000e15c g       *ABS*	00000000 H264_decode_PPS
+9000e47c g       *ABS*	00000000 H264_decode_SH
+90100000 g       *ABS*	00000000 __LRAM
+90100000 g     F .sys.traps	000001d4 traphandler
+90100000 l    d  .sys.traps	00000000 .sys.traps
+90100000  w      *ABS*	00000000 LRAM
+90100020 l     F .sys.traps	00000000 __T_window_overflow
+90100084 l     F .sys.traps	00000000 __T_window_underflow
+901000e4 l     F .sys.traps	00000000 __T_IRQ
+90100128 l       .sys.traps	00000000 __T_IRQ_have_handler
+90100138 l       .sys.traps	00000000 __T_IRQ_crt_window_invalid
+90100144 l       .sys.traps	00000000 __T_IRQ_crt_window_valid
+90100150 l       .sys.traps	00000000 __T_IRQ_call_handler
+9010016c l       .sys.traps	00000000 __T_IRQ_done
+901001a0 l       .sys.traps	00000000 __T_IRQ_prev_window_invalid
+901001b4 l       .sys.traps	00000000 __T_IRQ_no_handler
+901001c4 l       .sys.traps	00000000 __T_app_stop
+901001d4 g     F .sys.text	000000a8 start
+901001d4 l    d  .sys.text	00000000 .sys.text
+9010027c g     F .sys.text	0000003c exit
+901002b8 g     F .text	00000088 DrvCprAuxClocksEnable
+901002b8 l    d  .text	00000000 .text
+90100340 g     F .text	0000003c DrvCprAuxClockArrayConfig
+9010037c l     F .text	000000a4 calculateSystemClockKhz
+90100420 g     F .text	000000fc DrvCprGetClockFreqKhz
+9010051c l     F .text	00000064 notifySystemClockChange
+90100580 g     F .text	00000048 DrvCprPllBypass
+901005c8 g     F .text	00000090 DrvCprSysDeviceAction
+90100658 g     F .text	00000064 DrvCprInit
+901006bc l     F .text	0000023c T.21
+901008f8 l     F .text	0000018c setupSystemClk
+90100a84 g     F .text	0000011c DrvCprSetupClocks
+90100ba0 g     F .text	0000024c DrvDdrNotifyClockChange
+90100dec l     F .text	00000124 basicDdrInit
+90100f10 g     F .text	0000014c DrvDdrInitialise
+9010105c g     F .text	00000034 DrvIcbEnableIrq
+90101090 g     F .text	00000034 DrvIcbDisableIrq
+901010c4 g     F .text	00000020 DrvIcbSetIrqHandler
+901010e4 g     F .text	0000002c DrvIcbIrqClear
+90101110 g     F .text	000000a8 DrvIcbConfigureIrq
+901011b8 g     F .text	00000044 DrvIcbSetupIrq
+901011fc g     F .text	00000068 PartitionUtil
+90101264 g     F .text	00000014 DrvL2CachePartitionInvalidate
+90101278 g     F .text	00000024 DrvL2CacheSetupPartition
+9010129c g     F .text	000000a4 DrvL2CacheAllocateSetPartitions
+90101340 g     F .text	00000050 DrvRegWaitForBitsSetAll
+90101390 g     F .text	0000004c DrvRegWaitForBitsSetAny
+901013dc g     F .text	00000104 DrvSvuEnablePerformanceCounter
+901014e0 g     F .text	00000024 DrvSvuGetPerformanceCounter0
+90101504 g     F .text	00000024 DrvSvuGetPerformanceCounter1
+90101528 l     F .text	0000004c setupTickCounterIrq
+90101574 l     F .text	0000005c update64BitTicksCounter
+901015d0 g     F .text	0000006c DrvTimerGetSysTicks64
+9010163c g     F .text	00000068 SleepMicro
+901016a4 g     F .text	00000024 DrvTimerElapsedTicks
+901016c8 g     F .text	00000018 DrvTimerStart
+901016e0 g     F .text	00000044 DrvTimerTimeout
+90101724 g     F .text	00000048 DrvTimerTimeoutInitUs
+9010176c g     F .text	00000084 DrvTimerInit
+901017f0 g     F .text	0000001c DrvApbUartVcsPutChar
+9010180c g     F .text	00000064 DrvApbUartPutChar
+90101870 g     F .text	00000054 swcLongLongToDouble
+901018c4 g     F .text	00000024 swcShaveProfInit
+901018e8 g     F .text	0000008c swcShaveProfStopGathering
+90101974 g     F .text	000000b0 swcShaveProfStartGathering
+90101a24 g     F .text	00000024 swcLeonSetPIL
+90101a48 g     F .text	00000018 swcLeonDisableTraps
+90101a60 g     F .text	00000018 swcLeonEnableTraps
+90101a78 g     F .text	0000007c initClocksAndMemory
+90101af4 g     F .text	000000dc main
+90101bd0 g     F .text	00000018 _ZN4Anki8Embedded8Array_u8C1Ev
+90101be8 g     F .text	0000001c _ZNK4Anki8Embedded8Array_u88get_sizeEi
+90101c04 g     F .text	00000008 _ZNK4Anki8Embedded8Array_u810get_strideEv
+90101c0c g     F .text	0000007c _ZN4Anki8Embedded9Array_u323SetEj
+90101c88 g     F .text	0000001c _ZNK4Anki8Embedded15Array_Point_s168get_sizeEi
+90101ca4 g     F .text	000000d8 _ZNK4Anki8Embedded8Array_u87IsValidEv
+90101d7c g     F .text	00000164 _ZN4Anki8Embedded8Array_u810initializeEiiPvib
+90101ee0 g     F .text	000000a8 _ZN4Anki8Embedded8Array_u8C1EiiRNS0_11MemoryStackEb
+90101f88 g     F .text	000000dc _ZNK4Anki8Embedded15Array_Point_s167IsValidEv
+90102064 g     F .text	000000dc _ZNK4Anki8Embedded9Array_u327IsValidEv
+90102140 g     F .text	0000016c _ZN4Anki8Embedded15Array_Point_s1610initializeEiiPvib
+901022ac g     F .text	000000b0 _ZN4Anki8Embedded15Array_Point_s16C2EiiRNS0_11MemoryStackEb
+9010235c g     F .text	0000016c _ZN4Anki8Embedded9Array_u3210initializeEiiPvib
+901024c8 g     F .text	000000b0 _ZN4Anki8Embedded9Array_u32C1EiiRNS0_11MemoryStackEb
+90102578 g     F .text	00000520 _ZN4Anki8Embedded14BinomialFilterERKNS0_8Array_u8ERS1_NS0_11MemoryStackE
+90102a98 g     F .text	00000adc _ZN4Anki8Embedded31ComputeCharacteristicScaleImageERKNS0_8Array_u8EiRNS0_9Array_u32ENS0_11MemoryStackE
+90103574 g     F .text	000000c4 _DAS_Logf
+90103638 g     F .text	000000d0 _ZN4Anki8Embedded18DownsampleByFactorERKNS0_8Array_u8EiRS1_
+90103708 g     F .text	00000008 _ZN4Anki8Embedded25FixedLengthList_Point_s165ClearEv
+90103710 g     F .text	00000028 _ZN4Anki8Embedded25FixedLengthList_Point_s16C1EiRNS0_11MemoryStackEb
+90103738 g     F .text	00000034 _ZNK4Anki8Embedded25FixedLengthList_Point_s167IsValidEv
+9010376c g     F .text	00000058 _ZN4Anki8Embedded25FixedLengthList_Point_s168PushBackERKNS0_9Point_s16E
+901037c4 g     F .text	00000010 _ZN4Anki8Embedded11MemoryStackC1EPvi
+901037d4 g     F .text	0000001c _ZN4Anki8Embedded11MemoryStackC1ERKS1_
+901037f0 g     F .text	0000004c _ZN4Anki8Embedded11MemoryStack7IsValidEv
+9010383c g     F .text	000000bc _ZN4Anki8Embedded11MemoryStack8AllocateEiPi
+901038f8 g     F .text	000000e0 PrintTime
+901039d8 g     F .text	00000124 RUN_ALL_BENCHMARKS
+90103afc g     F .text	0000000c _ZN4Anki8Embedded9Point_s16C1Ess
+90103b08 g     F .text	00000014 _ZN4Anki8Embedded9Point_s16C1ERKS1_
+90103b1c g     F .text	00000038 _ZNK4Anki8Embedded9Point_s16eqERKS1_
+90103b54 g     F .text	00000030 _ZNK4Anki8Embedded9Point_s16plERKS1_
+90103b84 g     F .text	00000494 _ZN4Anki8Embedded13TraceBoundaryERKNS0_8Array_u8ERKNS0_9Point_s16ENS0_17BoundaryDirectionERNS0_25FixedLengthList_Point_s16E
+90104018 g     F .text	00000028 _ZN4Anki8Embedded4Log2Ej
+90104040 g     F .text	00000050 _ZN4Anki8Embedded4Log2Ey
+90104090 g     F .text	00000438 BenchmarkTraceBoundary
+901044c8 g     F .text	00000198 BenchmarkComputeCharacteristicScale
+90104660 g     F .text	000001ac BenchmarkDownsampleByFactor
+9010480c g     F .text	00000194 BenchmarkBinomialFilter
+901049a0 g     O .sys.rodata	00000004 __fsr_default
+901049a0 l    d  .sys.rodata	00000000 .sys.rodata
+901049a8 l    d  .rodata	00000000 .rodata
+90104a80 l     O .rodata	00000015 auxClkDividerLookupWOffset
+90104ca0 l     O .rodata	0000002c _ZZN4Anki8Embedded11MemoryStack7IsValidEvE19__PRETTY_FUNCTION__
+90104cd0 l     O .rodata	00000037 _ZZN4Anki8Embedded11MemoryStack8AllocateEiPiE19__PRETTY_FUNCTION__
+90104ea8 l     O .rodata	0000001d _ZZ22BenchmarkTraceBoundaryE19__PRETTY_FUNCTION__
+90104ec8 l     O .rodata	0000002a _ZZ35BenchmarkComputeCharacteristicScaleE19__PRETTY_FUNCTION__
+90104ef8 l     O .rodata	00000022 _ZZ27BenchmarkDownsampleByFactorE19__PRETTY_FUNCTION__
+90104f20 l     O .rodata	0000001e _ZZ23BenchmarkBinomialFilterE19__PRETTY_FUNCTION__
+90104f40 l    d  .data	00000000 .data
+90104f40 l     O .data	00000024 partitions_configuration
+90104f64 g     O .data	00000020 SVU_CTRL_ADDR
+90104f84 g     O .data	00000018 auxClkCfg180_180
+90104fa0 g     O .data	00000020 appClockConfig180_180
+90104fc0 g       .bss	00000000 __bss_start
+90104fc0 l    d  .bss	00000000 .bss
+90104fc0 l     O .bss	0000001c cprState
+90104fdc g     O .bss	00000004 pGlobalSysclockKhz
+90104fe0 l     O .bss	0000008c timCfg
+9010506c l     O .bss	00000020 _ZN4Anki8EmbeddedL7offsetsE
+90105090 g       *ABS*	00000000 __EMPTY_RAM
+90105090 g       .bss	00000000 __bss_end
+90105090 g       .bss	00000000 __init_text_end
+90107608 g       *ABS*	00000000 _gDeviceAddress
+9010760c g       *ABS*	00000000 _gEP0MaximumPacketLength
+90107610 g       *ABS*	00000000 _gBulkOutEndpointNum
+90107614 g       *ABS*	00000000 _gBulkOutMaximumPacketLength
+90107618 g       *ABS*	00000000 _gBulkInEndpointNum
+9010761c g       *ABS*	00000000 _gBulkINMaximumPacketLength
+90107620 g       *ABS*	00000000 p_uh_queuehead_async1
+90107624 g       *ABS*	00000000 p_uh_queuehead_async2
+90107628 g       *ABS*	00000000 p_uh_queuetransactiondescriptor_async1
+9010762c g       *ABS*	00000000 p_uh_queuetransactiondescriptor_async2
+90107630 g       *ABS*	00000000 p_uh_queuetransactiondescriptor_tail
+90107634 g       *ABS*	00000000 p_control_packet
+90107638 g       *ABS*	00000000 port_EndpointInformation
+90107664 g       *ABS*	00000000 g_current_address
+90107668 g       *ABS*	00000000 p_data_packet
+9010766c g       *ABS*	00000000 p_bulkdata_out
+90107670 g       *ABS*	00000000 p_bulkdata_in
+90107790 g       *ABS*	00000000 __sdio_recv_buffer
+90107d30 g       *ABS*	00000000 __BOOT_bootkey
+90107d9c g       *ABS*	00000000 __boot_aes_decrypt_fn
+90107db0 g       *ABS*	00000000 __boot_device_getchar_fn
+90107db4 g       *ABS*	00000000 __boot_device_putchar_fn
+90107db8 g       *ABS*	00000000 __boot_device_skip_page_fn
+90107dbc g       *ABS*	00000000 __boot_iic_miniboot
+90107dc0 g       *ABS*	00000000 __boot_pad_override_and_mask
+90107dc4 g       *ABS*	00000000 __boot_pad_override_or_mask
+90107dc8 g       *ABS*	00000000 __aes_leon_state
+90107dd8 g       *ABS*	00000000 __aes_leon_round_key
+90107f40 g     O .sys.bss	000000bc __irq_table
+90107f40 g       .sys.bss	00000000 __sys_bss_start
+90107f40 l    d  .sys.bss	00000000 .sys.bss
+90107f98 g       *ABS*	00000000 drv_syscfg_sysclk
+90107fc0 g       *ABS*	00000000 __nalu_ref_idc
+90107fc4 g       *ABS*	00000000 __nalu_type
+90107fc8 g       *ABS*	00000000 __nalu_pos
+90107fcc g       *ABS*	00000000 __nalu_ptr
+90107fd0 g       *ABS*	00000000 __nalu_bpos
+90107fd4 g       *ABS*	00000000 __nalu_len
+90107fd8 g       *ABS*	00000000 __pps_ScalingList4x4
+90107fdc g       *ABS*	00000000 __pps_ScalingList8x8
+90107fe0 g       *ABS*	00000000 __pps_UseDefaultScalingMatrix4x4Flag
+90107fe4 g       *ABS*	00000000 __pps_UseDefaultScalingMatrix8x8Flag
+90108000 g       *ABS*	00000000 __RAM_TOP
+90108000 g       .sys.bss	00000000 __sys_bss_end
+a0000000 g       *ABS*	00000000 __CMX_PHYS
+a0000000 g       *ABS*	00000000 __NEXT_FREE_CMX_SLICE
+a0000000 g       .debug_aranges	00000000 __cmx_bss_end
+a0000000 g       .debug_aranges	00000000 __cmx_bss_start
+a0000000  w      *ABS*	00000000 CMX_PHYS
+a4000000 g       *ABS*	00000000 __CMX_PAGED
+a4000000  w      *ABS*	00000000 CMX_PAGED
+a8000000 g       *ABS*	00000000 __CMX_BCAST
+a8000000  w      *ABS*	00000000 CMX_BCAST
+ae000000 g       *ABS*	00000000 __CMX_CTL
+ae000000  w      *ABS*	00000000 CMX_CTL
+ae000020 g     O .cmx.ctrl	00000004 __cmx_config
+ae000020 l    d  .cmx.ctrl	00000000 .cmx.ctrl
+c0000000 g       *ABS*	00000000 __DSU
+c0000000  w      *ABS*	00000000 DSU
+c1400000 g       *ABS*	00000000 __MPEGTS
+c1400000  w      *ABS*	00000000 MPEGTS
+d0000000 g       *ABS*	00000000 __SDIO
+d0000000  w      *ABS*	00000000 SDIO
+d0100000 g       *ABS*	00000000 __SDH1
+d0100000  w      *ABS*	00000000 SDH1
+d0200000  w      *ABS*	00000000 SDH2
+d0300000 g       *ABS*	00000000 __USB
+d0300000  w      *ABS*	00000000 USB
+d0400000 g       *ABS*	00000000 __NFC
+d0400000  w      *ABS*	00000000 NFC

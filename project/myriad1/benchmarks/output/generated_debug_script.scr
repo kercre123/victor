@@ -1,0 +1,14 @@
+breset
+
+;Need to start all shaves
+start a
+
+;load application mof
+load ./output/coretech-vision-benchmarks.mof
+
+;Target the Leon
+target l
+;Run the Leon and wait
+runw
+  
+exit
