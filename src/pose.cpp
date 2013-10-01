@@ -315,12 +315,6 @@ namespace Anki {
     return getWithRespectToHelper<Pose3d>(this, otherPose);
   }
   
-  void testPoseInstantiation(void)
-  {
-    Pose2d p2(30.f, 10.f, -5.f), q2(M_PI/3.f, 15.f, 5.f);
-    Pose3d p3;
-    
-    Pose2d p_wrt_q( p2.getWithRespectTo(&q2) );
-  }
+
   
 } // namespace Anki

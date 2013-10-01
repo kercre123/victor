@@ -33,6 +33,13 @@ namespace Anki {
     
   }
   
+  RotationVector3d::RotationVector3d(const Radians angle, const Vec3f &axis)
+  : Vec3f(axis)
+  {
+    this->makeUnitLength();
+    *this *= angle.ToFloat();
+  }
+  
   RotationVector3d::RotationVector3d(const Vec3f &rvec)
   : Vec3f(rvec)
   {
@@ -63,6 +70,12 @@ namespace Anki {
   
   RotationMatrix3d::RotationMatrix3d(const RotationVector3d &rotVec_in)
   : rotationVector(rotVec_in)
+  {
+    Rodrigues(this->rotationVector, *this);
+  }
+  
+  RotationMatrix3d::RotationMatrix3d(const Radians angle, const Vec3f &axis)
+  : rotationVector(angle, axis)
   {
     Rodrigues(this->rotationVector, *this);
   }

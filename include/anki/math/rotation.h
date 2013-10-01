@@ -51,7 +51,7 @@ namespace Anki {
   {
   public:
     RotationVector3d(); // no rotation around z axis
-    RotationVector3d(const Radians angle, const float axis);
+    RotationVector3d(const Radians angle, const Vec3f &axis);
     RotationVector3d(const Vec3f &rvec);
     RotationVector3d(const RotationMatrix3d &rmat);
        
@@ -74,6 +74,7 @@ namespace Anki {
     RotationMatrix3d(); // 3x3 identity matrix (no rotation)
     RotationMatrix3d(const RotationVector3d &rotationVector);
     RotationMatrix3d(const Matrix<float> &matrix3x3);
+    RotationMatrix3d(const Radians angle, const Vec3f &axis);
   
     Radians  get_angle() const;
     Vec3f    get_axis()  const;

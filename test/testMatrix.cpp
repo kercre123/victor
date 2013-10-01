@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "anki/general.h"
+#include "anki/common/general.h"
 #include "anki/math/matrix.h"
 #include <iostream>
 
@@ -10,12 +10,11 @@
 
 #define ASSERT_NEAR_EQ(a,b) ASSERT_NEAR(a,b,FLOATING_POINT_COMPARISON_TOLERANCE)
 
-
-
 using namespace std;
 using namespace Anki;
 
-TEST(TestMatrix, MatrixConstructorsAndAccessors)
+
+GTEST_TEST(TestMatrix, MatrixConstructorsAndAccessors)
 {
   
   /////////////// Square matrix /////////////////////
@@ -109,12 +108,31 @@ TEST(TestMatrix, MatrixConstructorsAndAccessors)
 #endif
   
   /////////////// Empty matrix ///////////////
-  ASSERT_ANY_THROW(Matrix<float> C(0,3,0));
-  ASSERT_ANY_THROW(Matrix<float> C(1,0,0));
+  ASSERT_ANY_THROW(Matrix<float> C(0,3,(float*)NULL));
+  ASSERT_ANY_THROW(Matrix<float> C(1,0,(float*)NULL));
 }
 
+GTEST_TEST(TestMatrix, MatrixAssignFromStdVector)
+{
+  std::vector<float> vec(6);
+  for(int i=0; i<6; ++i) {
+    vec[i] = float(i+1);
+  }
+  
+  Matrix<float> M(2,3,vec);
+  
+#ifdef DEBUG_TEST_MATRIX
+  cout << "Matrix M built from std::vector: \n" << M << "\n";
+#endif
+  
+  for(int i=0,k=0; i<M.numRows(); ++i) {
+    for(int j=0; j<M.numCols(); ++j, ++k) {
+      ASSERT_EQ(M(i,j), vec[k]);
+    }
+  }
+}
 
-TEST(TestMatrix, SmallMatrixConstructorsAndAccessors)
+GTEST_TEST(TestMatrix, SmallMatrixConstructorsAndAccessors)
 {
   ///////// SmallMatrix //////////
   Matrix_2x2f M;
@@ -172,7 +190,7 @@ TEST(TestMatrix, SmallMatrixConstructorsAndAccessors)
 }
 
 // Normal matrix multiplication
-TEST(TestMatrix, MatrixMultiplication1)
+GTEST_TEST(TestMatrix, MatrixMultiplication1)
 {
   Matrix<float> A(3,3,0.f), B(3,3,0.f);
   A(0,0) = 1.f;
@@ -203,7 +221,7 @@ TEST(TestMatrix, MatrixMultiplication1)
 
 // Multiplying 3x3 matrix by a 4x3 one.
 // Should throw exception!
-TEST(TestMatrix, MatrixMultiplication2)
+GTEST_TEST(TestMatrix, MatrixMultiplication2)
 {
   Matrix<float> A(3,3,0.f), B(4,3,0.f);
   Matrix<float> C;
@@ -218,9 +236,60 @@ TEST(TestMatrix, MatrixMultiplication2)
 #endif
 }
 
+// Multiply 5x3 matrix A by 3x4 matrix B to get 5x4 matrix C
+GTEST_TEST(TestMatrix, MatrixMatrixMultiplication)
+{
+  double A_data[15] = {
+    0.814723686393179,   0.097540404999410,   0.157613081677548,
+    0.905791937075619,   0.278498218867048,   0.970592781760616,
+    0.126986816293506,   0.546881519204984,   0.957166948242946,
+    0.913375856139019,   0.957506835434298,   0.485375648722841,
+    0.632359246225410,   0.964888535199277,   0.800280468888800};
+  
+  double B_data[15] = {
+    0.141886338627215,   0.792207329559554,   0.035711678574190,   0.678735154857773,
+    0.421761282626275,   0.959492426392903,   0.849129305868777,   0.757740130578333,
+    0.915735525189067,   0.655740699156587,   0.933993247757551,   0.743132468124916};
+  
+  double C_data[20] = {
+    0.301068825302290,   0.842372668166146,   0.259129120851649,   0.744019285067097,
+    1.134785558258487,   1.621249132682141,   1.175355454270838,   1.547101116864088,
+    1.125182923445183,   1.252981886286981,   1.362895503797235,   1.211886326850504,
+    0.977910591651454,   1.960584171941806,   1.299002878061871,   1.706180061474638,
+    1.229521019817462,   1.951539345802075,   1.589354296533507,   1.755053615605484};
+  
+  Matrix<double> A(5,3,A_data);
+  Matrix<double> B(3,4,B_data);
+  Matrix<double> C_expected(5,4,C_data);
+  
+  // Instantiate with result of A*B
+  Matrix<double> C1(A*B);
+  EXPECT_TRUE( nearlyEqual(C1, C_expected) );
+  
+  // Assign result of A*B
+  Matrix<double> C2 = A * B;
+  EXPECT_TRUE( nearlyEqual(C2, C_expected) );
+  
+  // Multiply in place
+  Matrix<double> C3(A); C3 *= B;
+  EXPECT_TRUE( nearlyEqual(C3, C_expected) );
+
+#ifdef DEBUG_TEST_MATRIX
+  cout << "Matrix A: \n" << A << "\n";
+  cout << "Matrix B: \n" << B << "\n";
+  cout << "Matrix C_true == A*B: \n" << C_expected << "\n";
+
+  cout << "Matrix C1 = A*B: \n" << C1 << "\n";
+  cout << "Matrix C2(A*B): \n" << C2 << "\n";
+  cout << "Matrix C3 = A; C3 *= B: \n" << C3 << "\n";
+#endif
+  
+} // MatrixMatrixMultiplication Test
 
 
-TEST(TestMatrix, SmallMatrixMultiplication)
+
+
+GTEST_TEST(TestMatrix, SmallMatrixMultiplication)
 {
   Matrix_3x3f A;
   Matrix_3x4f B;
@@ -258,7 +327,7 @@ TEST(TestMatrix, SmallMatrixMultiplication)
 }
 
 
-TEST(TestMatrix, MatrixInverse)
+GTEST_TEST(TestMatrix, MatrixInverse)
 {
   // Matrix
   Matrix<float> A(3,3,0.f);
@@ -306,7 +375,7 @@ TEST(TestMatrix, MatrixInverse)
 }
 
 
-TEST(TestMatrix, SmallMatrixInverse)
+GTEST_TEST(TestMatrix, SmallMatrixInverse)
 {
   float initValsA[] = {50, 0, 10,
                        0, 100, 0,
@@ -361,7 +430,7 @@ TEST(TestMatrix, SmallMatrixInverse)
 }
 
 
-TEST(TestMatrix, MatrixTranspose)
+GTEST_TEST(TestMatrix, MatrixTranspose)
 {
   Matrix<float> A(3,3,0.f);
   A(0,0) = 1.f;    A(0,1) = 2.f;     A(0,2) = 3.f;
@@ -428,8 +497,9 @@ TEST(TestMatrix, MatrixTranspose)
 
 
 
-TEST(TestMatrix, SmallMatrixTranspose)
+GTEST_TEST(TestMatrix, SmallMatrixTranspose)
 {
+  // Tranpose square matrix (note this actually tests SmallSquareMatrix)
   float initValsA[] = {1, 2, 3,
                        4, 5, 6,
                        7, 8, 9};
@@ -472,3 +542,33 @@ TEST(TestMatrix, SmallMatrixTranspose)
   ASSERT_NEAR_EQ(B_t(3,0), 4.f); ASSERT_NEAR_EQ(B_t(3,1), 8.f); ASSERT_NEAR_EQ(B_t(3,2), 12.f);
 
 }
+
+GTEST_TEST(TestMatrix, SmallSquareMatrixMultiplicationByPoint)
+{
+  float initValsM[] = {1, 2, 3,
+                       4, 5, 6,
+                       7, 8, 9};
+  
+  SmallSquareMatrix<float,3> M(initValsM);
+  Point3f p(10,11,12);
+  
+  Point3f q_true(68, 167, 266);
+  
+  Point3f q1(M*p);
+  
+  ASSERT_EQ(q_true, q1);
+  
+  Point3f q2 = M*p;
+  
+  ASSERT_EQ(q_true, q2);
+  
+#ifdef DEBUG_TEST_MATRIX
+  cout << "SmallSquareMatrix M: \n" << M << "\n";
+  cout << "Point p: " << p << "\n";
+  cout << "Point q_true: " << q_true << "\n";
+  cout << "Point q1: " << q1 << "\n";
+  cout << "Point q2: " << q2 << "\n";
+#endif
+  
+} // TestMatrix:SmallSquareMatrixMultiplicationByPoint()
+
