@@ -146,7 +146,7 @@ namespace Anki
 #endif //#ifdef CHECK_FOR_OUT_OF_BOUNDS
 
         //% If the new point is the same as the last point (in other words, if the search is stuck on a point), we're done
-        if(newPoint == *boundary.Pointer(i-1)) {
+        if(newPoint == *boundary.Pointer(iBoundary-1)) {
           return RESULT_OK;
         }
 
@@ -157,7 +157,7 @@ namespace Anki
           return RESULT_OK;
         }
 
-        if(i > 1 &&
+        if(iBoundary > 1 &&
           (abs(newPoint.x - boundary.Pointer(0)->x) + abs(newPoint.y - boundary.Pointer(0)->y)) <= 1) {
             return RESULT_OK;
         }
