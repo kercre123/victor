@@ -7,9 +7,12 @@
 #include "app/vehicleSpeedController.h"
 #include "app/pathFollower.h"
 #include "hal/timers.h"
+#include "cozmoMsgProtocol.h"
+#include "util/utilMessaging.h"
 #include "cozmo_physics.h"
 #include <cmath>
 #include <cstdio>
+#include <string>
 
 //Names of the wheels used for steering
 #define WHEEL_FL "wheel_fl"
@@ -21,6 +24,8 @@
 #define LIFT2 "lift_motor2"
 #define CONNECTOR "connector"
 #define PLUGIN_COMMS "cozmo_physics_comms"
+#define RX "radio_rx"
+#define TX "radio_tx"
 
 #define DOWN_CAMERA "cam_down"
 #define HEAD_CAMERA "cam_head"
@@ -56,6 +61,10 @@ CozmoBot::CozmoBot() : Supervisor()
   leftWheelGyro_ = getGyro(GYRO_FL);
   rightWheelGyro_ = getGyro(GYRO_FR);
 
+  tx_ = getEmitter(TX);
+  rx_ = getReceiver(RX);
+
+  // Plugin comms uses channel 0
   physicsComms_ = getEmitter(PLUGIN_COMMS);
 }
 
@@ -63,8 +72,20 @@ CozmoBot::CozmoBot() : Supervisor()
 void CozmoBot::Init() 
 {
   // Set ID
-  // TODO: This should depend on the instance name... or something
-  robotID_ = 0;
+  // Expected format of name is <SomeName>_<robotID>
+  std::string name = getName();
+  size_t lastDelimPos = name.rfind('_');
+  if (lastDelimPos != std::string::npos) {
+    robotID_ = atoi( name.substr(lastDelimPos+1).c_str() );
+    if (robotID_ < 1) {
+      printf("***ERROR: Invalid robot name (%s). ID must be greater than 0\n", name.c_str());
+      return;
+    }
+    printf("Initializing robot ID: %d\n", robotID_);
+  } else {
+    printf("***ERROR: Cozmo robot name %s is invalid.  Must end with '_<ID number>'\n.", name.c_str());
+    return;
+  }
 
   //Set the motors to velocity mode
   leftWheelMotor_->setPosition(INFINITY);
@@ -93,6 +114,12 @@ void CozmoBot::Init()
   // Get wheel speed sensors
   leftWheelGyro_->enable(TIME_STEP);
   rightWheelGyro_->enable(TIME_STEP);
+
+  // Setup comms
+  rx_->enable(TIME_STEP);
+  rx_->setChannel(robotID_);
+  tx_->setChannel(BASESTATION_SIM_COMM_CHANNEL);
+  recvBufSize_ = 0;
 
   // Initialize path drawing settings
   SetPathHeightOffset(0.05);
@@ -272,18 +299,76 @@ void CozmoBot::run()
 
     CozmoMainExecution();
     
-     
-    // Simulator management stuff
-    ManageTimers(TIME_STEP); 
 
+    // Buffer any incoming data from basestation
+    ManageRecvBuffer();
 
     // Check if connector attaches to anything
     ManageGripper();
+
+    // Simulator management stuff
+    ManageTimers(TIME_STEP); 
 
     SetOverlayText(OT_CURR_POSE, locStr);
   }
 }
 
+
+
+/////////// Comms /////////////
+void CozmoBot::ManageRecvBuffer()
+{
+  // Check for incoming data.
+  // Add it to receive buffer.
+  // Check for special "radio-level" messages (i.e. pings, connection requests) 
+  // and respond accordingly.
+
+  int dataSize;
+  const void* data;
+
+  // Read receiver for as long as it is not empty.
+  while (rx_->getQueueLength() > 0) {
+
+    // Get head packet
+    data = rx_->getData();
+    dataSize = rx_->getDataSize();
+    
+    // Copy data to receive buffer
+    memcpy(&recvBuf_[recvBufSize_], data, dataSize);
+    recvBufSize_ += dataSize;
+
+    // Delete processed packet from queue
+    rx_->nextPacket();
+  }
+}
+
+void CozmoBot::Send(void* data, int size)
+{
+  tx_->send(data, size);
+}
+
+int CozmoBot::Recv(void* data)
+{
+  // Is there any data in the receive buffer?
+  if (recvBufSize_ > 0) {
+    // Is there a complete message in the receive buffer?
+    // The first byte should contain the size of the first message
+    int firstMsgSize = recvBuf_[0];
+    if (recvBufSize_ >= firstMsgSize) {
+
+      // Copy to passed in buffer
+      memcpy(data, recvBuf_, firstMsgSize);
+
+      // Shift data down
+      recvBufSize_ -= firstMsgSize;
+      memmove(recvBuf_, &(recvBuf_[firstMsgSize]), recvBufSize_);
+
+      return firstMsgSize;
+    }
+  }
+
+  return NULL;
+}
 
 
 //////// Path drawing functions /////////

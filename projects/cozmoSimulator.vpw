@@ -2,6 +2,7 @@
 <Workspace Version="10.0" VendorName="SlickEdit">
 	<Projects>
 		<Project File="cozmo_physics.vpj"/>
+		<Project File="cozmo_world_comms.vpj"/>
 		<Project File="cozmoSimulator.vpj"/>
 		<Project File="cozmoSimulator_overlayDisplay.vpj"/>
 	</Projects>

@@ -291,6 +291,7 @@
       <F N="../controllers/cozmo_c_controller/hal/sim_motors.c"/>
       <F N="../controllers/cozmo_c_controller/hal/sim_timers.c"/>
       <F N="../controllers/cozmo_c_controller/app/steeringController.c"/>
+      <F N="../controllers/cozmo_c_controller/util/utilMessaging.c"/>
       <F N="../controllers/cozmo_c_controller/app/vehicleMath.c"/>
       <F N="../controllers/cozmo_c_controller/app/vehicleSpeedController.c"/>
       <F N="../controllers/cozmo_c_controller/app/wheelController.c"/>
@@ -301,6 +302,7 @@
       <F N="../controllers/cozmo_c_controller/app/assert.h"/>
       <F N="../controllers/cozmo_c_controller/cozmoBot.h"/>
       <F N="../controllers/cozmo_c_controller/cozmoConfig.h"/>
+      <F N="../controllers/cozmo_c_controller/cozmoMsgProtocol.h"/>
       <F N="../controllers/cozmo_c_controller/cozmoTypes.h"/>
       <F N="../controllers/cozmo_c_controller/app/debug.h"/>
       <F N="../controllers/cozmo_c_controller/hal/encoders.h"/>
@@ -313,6 +315,7 @@
       <F N="../controllers/cozmo_c_controller/app/steeringController.h"/>
       <F N="../controllers/cozmo_c_controller/hal/timers.h"/>
       <F N="../controllers/cozmo_c_controller/app/trace.h"/>
+      <F N="../controllers/cozmo_c_controller/util/utilMessaging.h"/>
       <F N="../controllers/cozmo_c_controller/app/vehicleMath.h"/>
       <F N="../controllers/cozmo_c_controller/app/vehicleSpeedController.h"/>
       <F N="../controllers/cozmo_c_controller/app/wheelController.h"/>

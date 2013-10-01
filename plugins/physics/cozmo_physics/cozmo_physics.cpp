@@ -172,7 +172,9 @@ void webots_physics_step() {
         break;
 
       default:
-        dWebotsConsolePrintf("***ERROR: UNKNOWN MSG RECVD BY PLUGIN %d\n", msgSize);
+        // It's possible for this to receive messages that were sent to CHANNEL_BROADCAST
+        // so just ignore them.
+        //dWebotsConsolePrintf("***ERROR: UNKNOWN MSG RECVD BY PLUGIN %d\n", msgSize);
         return;
         break;
       }

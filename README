@@ -10,6 +10,10 @@ Dependencies
 
 Most of the vision processing, at least in the beginning, will be done with Matlab. To run simulations that process camera images you will need Matlab. 
 
+You will also need to set DYLD_LIBRARY_PATH to include the path to your Matlab libs. Add to your .bash_profile or .bashrc
+
+export matlabroot="/Applications/MATLAB_R2012b.app"
+export DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}:${matlabroot}/bin/maci64:${matlabroot}/sys/os/maci64
 
 
 

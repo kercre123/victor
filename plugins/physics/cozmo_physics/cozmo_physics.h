@@ -22,7 +22,10 @@
 // 
 // If you add a new message type, remember to create the corresponding params enum below.
 enum MsgType {
-  PLUGIN_MSG_ERASE_PATH
+  // Start high so that it doesn't collide with cozmoMsgProtocol.
+  // This plugin listens on channel 0 so it might receive unintended messages by emitters
+  // talking on CHANNEL_BROADCAST.
+  PLUGIN_MSG_ERASE_PATH = 1000   
   ,PLUGIN_MSG_APPEND_LINE
   ,PLUGIN_MSG_APPEND_ARC
   ,PLUGIN_MSG_SHOW_PATH

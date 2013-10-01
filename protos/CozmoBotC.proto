@@ -49,8 +49,20 @@ Supervisor {
       }
     }     
 
+    # Comms for sending paths for drawing to the physics plugin
     Emitter { 
       name "cozmo_physics_comms"
+    }
+
+    # For simulated radio communications with basestation
+    # World must be running the CozmoSimWorldComms controller.
+    Emitter {
+      name "radio_tx"
+      type "radio"
+    }
+    Receiver {
+      name "radio_rx"
+      type "radio"
     }
           
     Solid {

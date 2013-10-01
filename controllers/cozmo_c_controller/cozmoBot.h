@@ -12,6 +12,8 @@
 
 #define MAX_TEXT_DISPLAY_LENGTH 1024
 
+#define RECV_BUFFER_SIZE 1024
+
 using namespace webots;
 
 
@@ -56,6 +58,14 @@ private:
   Gyro *leftWheelGyro_;
   Gyro *rightWheelGyro_;
 
+  // For communications with basestation
+  Emitter *tx_;
+  Receiver *rx_;
+  bool isConnected_;
+  unsigned char recvBuf_[RECV_BUFFER_SIZE];
+  int recvBufSize_;
+  void ManageRecvBuffer();
+
   // For communications with the cozmo_physics plugin used for drawing paths with OpenGL
   Emitter *physicsComms_; 
 
@@ -97,6 +107,11 @@ public:
   // Text overlay
   void SetOverlayText(OverlayTextID ot_id, const char* txt);
 
+
+  // Comms
+  void Send(void* data, int size);
+  int Recv(void* data);
+  bool IsConnected();
 
   // Path drawing functions
   void ErasePath(int path_id);

@@ -232,7 +232,12 @@ Block2x1 {
   ]
 }
 DEF Cozmo CozmoBotC {
+  name "CozmoBot_1"
   rotation 0 1 0 3.14159
+}
+
+DEF WorldComms CozmoWorldComms {
+
 }
 
 Supervisor {
