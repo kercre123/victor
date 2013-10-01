@@ -226,15 +226,14 @@ namespace Anki
 #endif // #ifdef SEND_PROBE_LOCATIONS
 
       FixedLengthList<u8> binarizedBits(MAX_FIDUCIAL_MARKER_BITS, scratch);
-      BlockMarker::Orientation orientation;
 
       // [this, binaryString] = orientAndThreshold(this, this.means);
-      if(FiducialMarkerParser::DetermineOrientationAndBinarize(meanValues, minContrastRatio, orientation, binarizedBits) != RESULT_OK)
+      if(FiducialMarkerParser::DetermineOrientationAndBinarize(meanValues, minContrastRatio, marker.orientation, binarizedBits) != RESULT_OK)
         return RESULT_FAIL;
 
       // TODO: finish parsing
 
-      if(orientation == BlockMarker::ORIENTATION_UNKNOWN)
+      if(marker.orientation == BlockMarker::ORIENTATION_UNKNOWN)
         return RESULT_OK; // It couldn't be parsed, but this is not a code failure
 
       // this = decodeIDs(this, binaryString);
@@ -294,8 +293,6 @@ namespace Anki
         RESULT_FAIL, "FiducialMarkerParser::DetermineOrientation", "binarizedBits is not valid");
 
       binarizedBits.Clear();
-
-      meanValues.Print("meanValues");
 
       const s16 upBitValue = meanValues[upBitIndex];
       const s16 downBitValue = meanValues[downBitIndex];
@@ -357,11 +354,8 @@ namespace Anki
 
     Result FiducialMarkerParser::DecodeId(const FixedLengthList<u8> &binarizedBits, s16 &blockType, s16 &faceType, MemoryStack scratch)
     {
-      s32 blockCount = 0;
-      s32 faceCount = 0;
-
-      blockType = 0;
-      faceType = 0;
+      blockType = -1;
+      faceType = -1;
 
       FixedLengthList<u8> checksumBits(8, scratch);
       FixedLengthList<u8> blockBits(8, scratch);
@@ -370,37 +364,17 @@ namespace Anki
       // Convert the bit string in binarizedBits to numbers blockType and
       for(s32 bit=0; bit<binarizedBits.get_size(); bit++) {
         if(bits[bit].get_type() == FiducialMarkerParserBit::FIDUCIAL_BIT_BLOCK) {
-          if(blockCount == 7) {
-            blockType += binarizedBits[bit];
-          } else {
-            blockType += binarizedBits[bit] << (8-blockCount);
-          }
-
           blockBits.PushBack(binarizedBits[bit]);
-
-          blockCount++;
         } else if(bits[bit].get_type() == FiducialMarkerParserBit::FIDUCIAL_BIT_FACE) {
-          if(blockCount == 3) {
-            faceType += binarizedBits[bit];
-          } else {
-            faceType += binarizedBits[bit] << (4-faceCount);
-          }
-
           faceBits.PushBack(binarizedBits[bit]);
-
-          faceCount++;
         } else if(bits[bit].get_type() == FiducialMarkerParserBit::FIDUCIAL_BIT_CHECKSUM) {
           checksumBits.PushBack(binarizedBits[bit]);
         }
       }
 
-      blockBits.Print("blockBits");
-      faceBits.Print("faceBits");
-      checksumBits.Print("checksumBits");
-
       // Ids should start at 1
-      blockType++;
-      faceType++;
+      blockType = 1 + BinaryStringToUnsignedNumber(blockBits, false);
+      faceType = 1 + BinaryStringToUnsignedNumber(faceBits, false);
 
       if(!IsChecksumValid(checksumBits, blockBits, faceBits)) {
         blockType = -1;
@@ -424,9 +398,9 @@ namespace Anki
         const s32 i_block2 = ((i_block1) % numBlockBits) + 1;
         const s32 i_face = ((i_check-1) % numFaceBits) + 1;
 
-        const s32 expectedChecksumBit = faceBits[i_face] ^ (blockBits[i_block1] ^ blockBits[i_block2]);
+        const s32 expectedChecksumBit = faceBits[i_face-1] ^ (blockBits[i_block1-1] ^ blockBits[i_block2-1]);
 
-        if(checksumBits[i_check] != expectedChecksumBit)
+        if(checksumBits[i_check-1] != expectedChecksumBit)
           return false;
 
         i_block1 = (i_block1 % numBlockBits) + 1;

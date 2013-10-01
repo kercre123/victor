@@ -93,23 +93,12 @@ IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
   quad[1] = Point<s16>(21,235);
   quad[2] = Point<s16>(235,21);
   quad[3] = Point<s16>(235,235);
-  /*quad[0] = Point<s16>(47,47);
-  quad[1] = Point<s16>(47,209);
-  quad[2] = Point<s16>(209,47);
-  quad[3] = Point<s16>(209,209);*/
 
   homography[0][0] = 214; homography[0][1] = 0;   homography[0][2] = 21;
   homography[1][0] = 0;   homography[1][1] = 214; homography[1][2] = 21;
   homography[2][0] = 0;   homography[2][1] = 0;   homography[2][2] = 1;
-  /*homography[0][0] = 162; homography[0][1] = 0;   homography[0][2] = 47;
-  homography[1][0] = 0;   homography[1][1] = 162; homography[1][2] = 47;
-  homography[2][0] = 0;   homography[2][1] = 0;   homography[2][2] = 1;*/
-
-  //DrawExampleProbesImage(image, quad, homography);
 
   image.Set(fiducial4_2, fiducial4_2_WIDTH*fiducial4_2_HEIGHT);
-
-  //image.Show("image", true);
 
   BlockMarker marker;
 
@@ -117,6 +106,10 @@ IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
     const Result result = parser.ExtractBlockMarker(image, quad, homography, minContrastRatio, marker, scratch0);
     ASSERT_TRUE(result == RESULT_OK);
   }
+
+  ASSERT_TRUE(marker.blockType == 105);
+  ASSERT_TRUE(marker.faceType == 6);
+  ASSERT_TRUE(marker.orientation == BlockMarker::ORIENTATION_UP);
 
   free(scratch0.get_buffer());
 
@@ -253,7 +246,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
   const Result result =  ComputeQuadrilateralsFromConnectedComponents(components, minQuadArea, quadSymmetryThreshold, minDistanceFromImageEdge, imageHeight, imageWidth, extractedQuads, ms);
   ASSERT_TRUE(result == RESULT_OK);
 
-  extractedQuads.Print("extractedQuads");
+  // extractedQuads.Print("extractedQuads");
 
   for(s32 i=0; i<extractedQuads.get_size(); i++) {
     ASSERT_TRUE(extractedQuads[i] == quads_groundTruth[i]);
@@ -284,8 +277,6 @@ IN_DDR GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 
   const Result result = Correlate1dCircularAndSameSizeOutput(image, filter, out);
   ASSERT_TRUE(result == RESULT_OK);
-
-  out.Print();
 
   for(s32 i=0; i<out.get_size(1); i++) {
     ASSERT_TRUE(*out.Pointer(0,i) == out_groundTruth[i]);
