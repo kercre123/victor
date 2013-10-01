@@ -46,6 +46,7 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
 #include "../../blockImages/blockImage50.h"
+#include "../../blockImages/fiducial4_2.h"
 #include "../../src/embedded/fiducialMarkerDefinitionType0.h"
 
 // Create a test pattern image, full of a grid of squares for probes
@@ -53,8 +54,8 @@ static Result DrawExampleProbesImage(Array<u8> &image, Quadrilateral<s16> &quad,
 {
   for(s32 bit=0; bit<NUM_BITS_TYPE_0; bit++) {
     for(s32 probe=0; probe<NUM_PROBES_PER_BIT_TYPE_0; probe++) {
-      const s32 x = Round(static_cast<f64>(100 *probesX_type0[bit][probe]) / pow(2.0, NUM_FRACTIONAL_BITS_TYPE_0));
-      const s32 y = Round(static_cast<f64>(100 *probesY_type0[bit][probe]) / pow(2.0, NUM_FRACTIONAL_BITS_TYPE_0));
+      const s32 x = static_cast<s32>(Round(static_cast<f64>(100 *probesX_type0[bit][probe]) / pow(2.0, NUM_FRACTIONAL_BITS_TYPE_0)));
+      const s32 y = static_cast<s32>(Round(static_cast<f64>(100 *probesY_type0[bit][probe]) / pow(2.0, NUM_FRACTIONAL_BITS_TYPE_0)));
       image[y][x] = 10 * (bit+1);
     }
   }
@@ -74,8 +75,9 @@ static Result DrawExampleProbesImage(Array<u8> &image, Quadrilateral<s16> &quad,
 // The test is if it can run without crashing
 IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
 {
-  const s32 width = 120;
-  const s32 height = 130;
+  const s32 width = fiducial4_2_WIDTH;
+  const s32 height = fiducial4_2_HEIGHT;
+  const f32 minContrastRatio = 1.25f;
 
   const u32 numBytes0 = 10000000;
   MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
@@ -87,13 +89,25 @@ IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
   Quadrilateral<s16> quad = Quadrilateral<s16>();
   Array<f64> homography(3,3,scratch0);
 
-  DrawExampleProbesImage(image, quad, homography);
+  quad[0] = Point<s16>(21,21);
+  quad[1] = Point<s16>(21,235);
+  quad[2] = Point<s16>(235,21);
+  quad[3] = Point<s16>(235,235);
+
+  homography[0][0] = 214; homography[0][1] = 0;   homography[0][2] = 21;
+  homography[1][0] = 0;   homography[1][1] = 214; homography[1][2] = 21;
+  homography[2][0] = 0;   homography[2][1] = 0;   homography[2][2] = 1;
+
+  //DrawExampleProbesImage(image, quad, homography);
+
+  image.Set(fiducial4_2, fiducial4_2_WIDTH*fiducial4_2_HEIGHT);
+
   //image.Show("image", true);
 
   BlockMarker marker;
 
   {
-    const Result result = parser.ExtractBlockMarker(image, quad, homography, marker);
+    const Result result = parser.ExtractBlockMarker(image, quad, homography, minContrastRatio, marker, scratch0);
     ASSERT_TRUE(result == RESULT_OK);
   }
 

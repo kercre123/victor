@@ -44,7 +44,7 @@ namespace Anki
       }
     } // FiducialMarkerParserBit::FiducialMarkerParserBit(const FiducialMarkerParserBit& bit2)
 
-    FiducialMarkerParserBit::FiducialMarkerParserBit(const s16 * const probesX, const s16 * const probesY, const s16 * const probeWeights, const s32 numProbes, const FiducialMarkerParserBitType type, const s32 numFractionalBits)
+    FiducialMarkerParserBit::FiducialMarkerParserBit(const s16 * const probesX, const s16 * const probesY, const s16 * const probeWeights, const s32 numProbes, const FiducialMarkerParserBit::Type type, const s32 numFractionalBits)
     {
       PrepareBuffers();
 
@@ -133,7 +133,7 @@ namespace Anki
       return this->probeWeights;
     }
 
-    FiducialMarkerParserBitType FiducialMarkerParserBit::get_type() const
+    FiducialMarkerParserBit::Type FiducialMarkerParserBit::get_type() const
     {
       return this->type;
     }
@@ -167,33 +167,40 @@ namespace Anki
       this->bits.set_size(marker2.bits.get_size());
     }
 
-    Result FiducialMarkerParser::ExtractBlockMarker(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, BlockMarker &marker)
+    // quad must have corners in the following order:
+    //  1. Upper left
+    //  2. Lower left
+    //  3. Upper right
+    //  4. Lower right
+    Result FiducialMarkerParser::ExtractBlockMarker(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, const f32 minContrastRatio, BlockMarker &marker, MemoryStack scratch)
     {
-      s16 meanValues[MAX_FIDUCIAL_MARKER_BITS];
+      FixedLengthList<s16> meanValues(MAX_FIDUCIAL_MARKER_BITS, scratch);
+
+      marker.blockType = -1;
+      marker.faceType = -1;
+
+      meanValues.set_size(bits.get_size());
 
       for(s32 bit=0; bit<bits.get_size(); bit++) {
         if(bits[bit].ExtractMeanValue(image, quad, homography, meanValues[bit]) != RESULT_OK)
           return RESULT_FAIL;
       }
 
+      FixedLengthList<u8> binarizedBits(MAX_FIDUCIAL_MARKER_BITS, scratch);
+      BlockMarker::Orientation orientation;
+
+      // [this, binaryString] = orientAndThreshold(this, this.means);
+      if(FiducialMarkerParser::DetermineOrientationAndBinarize(meanValues, minContrastRatio, orientation, binarizedBits) != RESULT_OK)
+        return RESULT_FAIL;
+
       // TODO: finish parsing
-      //function this = Marker2D(img, corners_, tform)
-      //      % Note that corners are provided in the following order:
-      //      %   1. Upper left
-      //      %   2. Lower left
-      //      %   3. Upper right
-      //      %   4. Lower right
-      //
-      //      this.corners = corners_;
-      //      this.ids = zeros(1, this.numIDs);
-      //
-      //      this.means = probeMeans(this, img, tform);
-      //      [this, binaryString] = orientAndThreshold(this, this.means);
-      //      if this.isValid
-      //          this = decodeIDs(this, binaryString);
-      //      end
-      //
-      //  end % CONSTRUCTOR Marker2D()
+
+      if(orientation == BlockMarker::ORIENTATION_UNKNOWN)
+        return RESULT_OK; // It couldn't be parsed, but this is not a code failure
+
+      // this = decodeIDs(this, binaryString);
+      if(DecodeId(binarizedBits, marker.blockType, marker.faceType, scratch) != RESULT_OK)
+        return RESULT_FAIL;
 
       return RESULT_OK;
     }
@@ -227,7 +234,172 @@ namespace Anki
           this->bits.PushBack(FiducialMarkerParserBit(probesX_type0[i], probesY_type0[i], probeWeights_type0[i], NUM_PROBES_PER_BIT_TYPE_0, bitTypes_type0[i], NUM_FRACTIONAL_BITS_TYPE_0));
         }
       } // if(INITIALIZE_WITH_DEFINITION_TYPE == 0)
+
+      upBitIndex = FindFirstBitOfType(FiducialMarkerParserBit::FIDUCIAL_BIT_ORIENTATION_UP, 0);
+      downBitIndex = FindFirstBitOfType(FiducialMarkerParserBit::FIDUCIAL_BIT_ORIENTATION_DOWN, 0);
+      leftBitIndex = FindFirstBitOfType(FiducialMarkerParserBit::FIDUCIAL_BIT_ORIENTATION_LEFT, 0);
+      rightBitIndex = FindFirstBitOfType(FiducialMarkerParserBit::FIDUCIAL_BIT_ORIENTATION_RIGHT, 0);
+
+      // This should only fail if there was an issue with the FiducialMarkerParser creation
+      assert(upBitIndex >= 0 && downBitIndex >= 0 && leftBitIndex >= 0 && rightBitIndex >= 0);
+
       return RESULT_OK;
+    }
+
+    Result FiducialMarkerParser::DetermineOrientationAndBinarize(const FixedLengthList<s16> &meanValues, const f32 minContrastRatio, BlockMarker::Orientation &orientation, FixedLengthList<u8> &binarizedBits)
+    {
+      AnkiConditionalErrorAndReturnValue(meanValues.IsValid(),
+        RESULT_FAIL, "FiducialMarkerParser::DetermineOrientation", "meanValues is not valid");
+
+      AnkiConditionalErrorAndReturnValue(binarizedBits.IsValid(),
+        RESULT_FAIL, "FiducialMarkerParser::DetermineOrientation", "binarizedBits is not valid");
+
+      binarizedBits.Clear();
+
+      //meanValues.Print("meanValues");
+
+      const s16 upBitValue = meanValues[upBitIndex];
+      const s16 downBitValue = meanValues[downBitIndex];
+      const s16 leftBitValue = meanValues[leftBitIndex];
+      const s16 rightBitValue = meanValues[rightBitIndex];
+
+      const s16 maxValue = MAX(upBitValue, MAX(downBitValue, MAX(leftBitValue, rightBitValue)));
+      const s16 brightValue = maxValue;
+      s16 darkValue;
+
+      // Note: this won't find ties, but that should be rare
+      if(upBitValue == maxValue) {
+        orientation = BlockMarker::ORIENTATION_UP;
+        darkValue = (downBitValue + leftBitValue + rightBitValue) / 3;
+      } else if(downBitValue == maxValue) {
+        orientation = BlockMarker::ORIENTATION_DOWN;
+        darkValue = (upBitValue + leftBitValue + rightBitValue) / 3;
+      } else if(leftBitValue == maxValue) {
+        orientation = BlockMarker::ORIENTATION_LEFT;
+        darkValue = (upBitValue + downBitValue + rightBitValue) / 3;
+      } else {
+        orientation = BlockMarker::ORIENTATION_RIGHT;
+        darkValue = (upBitValue + downBitValue + leftBitValue) / 3;
+      }
+
+      if(static_cast<f32>(brightValue) < minContrastRatio * static_cast<f32>(darkValue)) {
+        orientation = BlockMarker::ORIENTATION_UNKNOWN;
+        return RESULT_OK; // Low contrast is not really a failure, as it may be due to an invalid detection
+      }
+
+      const u8 threshold = static_cast<u8>( (brightValue + darkValue) / 2 );
+
+      binarizedBits.set_size(bits.get_size());
+
+      for(s32 i=0; i<bits.get_size(); i++) {
+        if(meanValues[i] < threshold)
+          binarizedBits[i] = 1;
+        else
+          binarizedBits[i] = 0;
+      }
+
+      return RESULT_OK;
+    }
+
+    // Starting at startIndex, search through this->bits to find the first instance of the given type
+    // Returns -1 if the type wasn't found
+    s32 FiducialMarkerParser::FindFirstBitOfType(const FiducialMarkerParserBit::Type type, const s32 startIndex)
+    {
+      AnkiConditionalErrorAndReturnValue(startIndex >= 0,
+        -1, "FiducialMarkerParser::FindFirstBitOfType", "startIndex < 0");
+
+      for(s32 i=startIndex;i<bits.get_size(); i++) {
+        if(bits[i].get_type() == type)
+          return i;
+      } // for(s32 i=startIndex;i<bits.get_size(); i++)
+
+      return -1;
+    }
+
+    Result FiducialMarkerParser::DecodeId(const FixedLengthList<u8> &binarizedBits, s16 &blockType, s16 &faceType, MemoryStack scratch)
+    {
+      s32 checksumCount = 0;
+      s32 blockCount = 0;
+      s32 faceCount = 0;
+
+      s16 checksum = 0;
+      blockType = 0;
+      faceType = 0;
+
+      FixedLengthList<u8> checksumBits(8, scratch);
+      FixedLengthList<u8> blockBits(8, scratch);
+      FixedLengthList<u8> faceBits(8, scratch);
+
+      // Convert the bit string in binarizedBits to numbers blockType and
+      for(s32 bit=0; bit<binarizedBits.get_size(); bit++) {
+        if(bits[bit].get_type() == FiducialMarkerParserBit::FIDUCIAL_BIT_BLOCK) {
+          if(blockCount == 0) {
+            blockType += binarizedBits[bit];
+          } else {
+            blockType += binarizedBits[bit] << blockCount;
+          }
+
+          blockBits.PushBack(binarizedBits[bit]);
+
+          blockCount++;
+        } else if(bits[bit].get_type() == FiducialMarkerParserBit::FIDUCIAL_BIT_FACE) {
+          if(blockCount == 0) {
+            faceType += binarizedBits[bit];
+          } else {
+            faceType += binarizedBits[bit] << faceCount;
+          }
+
+          faceBits.PushBack(binarizedBits[bit]);
+
+          faceCount++;
+        } else if(bits[bit].get_type() == FiducialMarkerParserBit::FIDUCIAL_BIT_CHECKSUM) {
+          if(blockCount == 0) {
+            checksum += binarizedBits[bit];
+          } else {
+            checksum += binarizedBits[bit] << checksumCount;
+          }
+
+          checksumBits.PushBack(binarizedBits[bit]);
+
+          checksumCount++;
+        }
+      }
+
+      // Ids should start at 1
+      blockType++;
+      faceType++;
+
+      if(!IsChecksumValid(checksumBits, blockBits, faceBits)) {
+        blockType = -1;
+        faceType = -1;
+      }
+
+      return RESULT_OK;
+    }
+
+    bool FiducialMarkerParser::IsChecksumValid(const FixedLengthList<u8> &checksumBits, const FixedLengthList<u8> &blockBits, const FixedLengthList<u8> &faceBits)
+    {
+      const s32 numBlockBits = blockBits.get_size();
+      const s32 numFaceBits  = faceBits.get_size();
+
+      s32 i_block1 = 1;
+
+      //for i_check = 1:numCheckBits
+      for(s32 i_check=1; i_check<=checksumBits.get_size(); i_check++) {
+        //i_block2 = mod(i_block1, numBlockBits) + 1;
+        //i_face = mod(i_check-1, numFaceBits) + 1;
+        const s32 i_block2 = ((i_block1) % numBlockBits) + 1;
+        const s32 i_face = ((i_check-1) % numFaceBits) + 1;
+
+        const s32 expectedChecksumBit = faceBits[i_face] ^ (blockBits[i_block1] ^ blockBits[i_block2]);
+
+        if(checksumBits[i_check] != expectedChecksumBit)
+          return false;
+
+        i_block1 = (i_block1 % numBlockBits) + 1;
+      }
+
+      return true;
     }
   } // namespace Embedded
 } // namespace Anki
