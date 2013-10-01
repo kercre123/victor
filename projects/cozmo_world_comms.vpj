@@ -106,7 +106,8 @@
     <Includes>
       <Include Dir="../controllers/world_comms_controller"/>
       <Include Dir="/Applications/Webots/include/controller/cpp"/>
-      <Include Dir="../controllers/cozmo_c_controller/"/>
+      <Include Dir="../../src/shared/"/>
+      <Include Dir="../../src/robot/"/>
     </Includes>
     <PostBuildCommands>
       <Exec CmdLine="cp Debug/cozmo_world_comms ../controllers/world_comms_controller/world_comms_controller"/>
@@ -213,7 +214,8 @@
     <Includes>
       <Include Dir="../controllers/world_comms_controller"/>
       <Include Dir="/Applications/Webots/include/controller/cpp"/>
-      <Include Dir="../controllers/cozmo_c_controller/"/>
+      <Include Dir="../../src/shared/"/>
+      <Include Dir="../../src/robot/"/>
     </Includes>
     <PostBuildCommands>
       <Exec CmdLine="cp Debug/cozmo_world_comms ../controllers/world_comms_controller/world_comms_controller"/>
