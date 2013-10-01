@@ -1,5 +1,5 @@
 #include "hal/timers.h"
-#include "hal/sim_timers.h"
+#include "hal/simhal/sim_timers.h"
 
 
 static u32 us_time = 0;

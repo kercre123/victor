@@ -3,12 +3,12 @@
 #include "app/vehicleMath.h"
 #include "keyboardController.h"
 #include "app/mainExecution.h"
-#include "hal/sim_timers.h"
+#include "hal/simhal/sim_timers.h"
 #include "app/vehicleSpeedController.h"
 #include "app/pathFollower.h"
 #include "hal/timers.h"
-#include "cozmoMsgProtocol.h"
-#include "util/utilMessaging.h"
+#include "comms/cozmoMsgProtocol.h"
+#include "utilMessaging.h"
 #include "cozmo_physics.h"
 #include <cmath>
 #include <cstdio>

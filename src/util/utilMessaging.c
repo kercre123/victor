@@ -20,7 +20,7 @@
 #include <stdarg.h>
 //#include <arpa/inet.h>
 #include <string.h>
-#include "util/utilMessaging.h"
+#include "utilMessaging.h"
 
 void* WriteU64(void *dest, unsigned long long src) {
   memcpy((char *) dest, (char*)&src, sizeof(src));
