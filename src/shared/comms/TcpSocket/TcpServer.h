@@ -3,7 +3,7 @@
 #ifndef TCP_SERVER_H
 #define TCP_SERVER_H
 
-#define DEBUG_TCP_SERVER 1
+#define DEBUG_TCP_SERVER 0
 
 class TcpServer {
 public:

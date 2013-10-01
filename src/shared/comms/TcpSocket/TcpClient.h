@@ -2,7 +2,7 @@
 #define TCP_CLIENT_H
 
 // To turn on cout debugging
-#define DEBUG_TCP_CLIENT 1
+#define DEBUG_TCP_CLIENT 0
 
 class TcpClient {
 public:

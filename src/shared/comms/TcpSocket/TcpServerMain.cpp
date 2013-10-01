@@ -12,7 +12,7 @@ int main (int argc, char *argv[])
 
   TcpServer server;
   server.StartListening(LISTEN_PORT);
-  
+  std::cout << "Waiting for client...\n";
   
   while (1) {
 
@@ -21,15 +21,18 @@ int main (int argc, char *argv[])
         usleep(10000);
         continue;
       }
+      std::cout << "Client connected\n";
     }
 
     usleep(10000);
     int bytes_received = server.Recv(buf, sizeof(buf));
     if (bytes_received > 0) {
-      server.Send(buf, bytes_received);
+      std::cout << "Echoing " << buf << "\n";
+      int bytes_sent = server.Send(buf, bytes_received);
     }
   }
 
+  std::cout << "Shutting down\n";
   server.DisconnectClient();
   server.StopListening();
  
