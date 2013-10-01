@@ -97,9 +97,12 @@ namespace Anki
 
       const f64 fixedPointDivider = 1.0 / pow(2,this->numFractionalBits);
 
+      //#define SEND_WARPED_LOCATIONS
+#ifdef SEND_WARPED_LOCATIONS
       Matlab matlab(false);
       //matlab.EvalStringEcho("warpedPoints = zeros(2, %d);", probeLocations.get_size());
       matlab.EvalStringEcho("if ~exist('warpedPoints', 'var') warpedPoints = zeros(2, 0); end;");
+#endif
 
       for(s32 probe=0; probe<probeLocations.get_size(); probe++) {
         const f64 x = static_cast<f64>(this->probeLocations[probe].x) * fixedPointDivider;
@@ -109,13 +112,15 @@ namespace Anki
         // 1. Map each probe to its warped locations
         const f64 homogenousDivisor = 1.0 / (h20*x + h21*y + h22);
 
-        const f64 warpedXf = (h00 * x + h10 *y + h20) * homogenousDivisor;
-        const f64 warpedYf = (h01 * x + h11 *y + h21) * homogenousDivisor;
+        const f64 warpedXf = (h00 * x + h01 *y + h02) * homogenousDivisor;
+        const f64 warpedYf = (h10 * x + h11 *y + h12) * homogenousDivisor;
 
         const s16 warpedX = static_cast<s16>(Round(warpedXf));
         const s16 warpedY = static_cast<s16>(Round(warpedYf));
 
+#ifdef SEND_WARPED_LOCATIONS
         matlab.EvalStringEcho("warpedPoints(:,end+1) = [%f, %f];", warpedXf, warpedYf);
+#endif
 
         // 2. Sample the image
 
@@ -190,17 +195,21 @@ namespace Anki
 
       meanValues.set_size(bits.get_size());
 
+      //#define SEND_PROBE_LOCATIONS
+
+#ifdef SEND_PROBE_LOCATIONS
+      {
+        Matlab matlab(false);
+        matlab.EvalStringEcho("clear");
+        matlab.PutArray(image, "image");
+      }
+#endif
+
       for(s32 bit=0; bit<bits.get_size(); bit++) {
         if(bits[bit].ExtractMeanValue(image, quad, homography, meanValues[bit]) != RESULT_OK)
           return RESULT_FAIL;
       }
 
-      {
-        Matlab matlab(false);
-        matlab.PutArray(image, "image");
-      }
-
-      //#define SEND_PROBE_LOCATIONS
 #ifdef SEND_PROBE_LOCATIONS
       {
         Matlab matlab(false);
@@ -348,52 +357,46 @@ namespace Anki
 
     Result FiducialMarkerParser::DecodeId(const FixedLengthList<u8> &binarizedBits, s16 &blockType, s16 &faceType, MemoryStack scratch)
     {
-      s32 checksumCount = 0;
       s32 blockCount = 0;
       s32 faceCount = 0;
 
-      s16 checksum = 0;
       blockType = 0;
       faceType = 0;
 
       FixedLengthList<u8> checksumBits(8, scratch);
       FixedLengthList<u8> blockBits(8, scratch);
-      FixedLengthList<u8> faceBits(8, scratch);
+      FixedLengthList<u8> faceBits(4, scratch);
 
       // Convert the bit string in binarizedBits to numbers blockType and
       for(s32 bit=0; bit<binarizedBits.get_size(); bit++) {
         if(bits[bit].get_type() == FiducialMarkerParserBit::FIDUCIAL_BIT_BLOCK) {
-          if(blockCount == 0) {
+          if(blockCount == 7) {
             blockType += binarizedBits[bit];
           } else {
-            blockType += binarizedBits[bit] << blockCount;
+            blockType += binarizedBits[bit] << (8-blockCount);
           }
 
           blockBits.PushBack(binarizedBits[bit]);
 
           blockCount++;
         } else if(bits[bit].get_type() == FiducialMarkerParserBit::FIDUCIAL_BIT_FACE) {
-          if(blockCount == 0) {
+          if(blockCount == 3) {
             faceType += binarizedBits[bit];
           } else {
-            faceType += binarizedBits[bit] << faceCount;
+            faceType += binarizedBits[bit] << (4-faceCount);
           }
 
           faceBits.PushBack(binarizedBits[bit]);
 
           faceCount++;
         } else if(bits[bit].get_type() == FiducialMarkerParserBit::FIDUCIAL_BIT_CHECKSUM) {
-          if(blockCount == 0) {
-            checksum += binarizedBits[bit];
-          } else {
-            checksum += binarizedBits[bit] << checksumCount;
-          }
-
           checksumBits.PushBack(binarizedBits[bit]);
-
-          checksumCount++;
         }
       }
+
+      blockBits.Print("blockBits");
+      faceBits.Print("faceBits");
+      checksumBits.Print("checksumBits");
 
       // Ids should start at 1
       blockType++;
