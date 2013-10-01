@@ -40,8 +40,6 @@
 
 #include "anki/math/point.h"
 
-using namespace std;
-
 namespace Anki {
   
 #pragma mark --- Matrix Class Definiton ---
@@ -54,6 +52,10 @@ namespace Anki {
     Matrix(); 
     Matrix(s32 nrows, s32 ncols);
     Matrix(s32 nrows, s32 ncols, const T& initVal);
+    Matrix(s32 nrows, s32 ncols, T *data); // Assumes data is nrows*ncols!
+    Matrix(s32 nrows, s32 ncols, std::vector<T> &data);
+
+    using Array2d<T>::operator=;
     
 #if defined(ANKICORETECH_USE_OPENCV)
     // Construct from an OpenCv cv::Mat_<T>.
@@ -66,6 +68,7 @@ namespace Anki {
     
     // Matrix multiplication:
     Matrix<T> operator*(const Matrix<T> &other) const;
+    Matrix<T>& operator*=(const Matrix<T> &other);
     
     // Matrix inversion:
     // TODO: provide way to specify method
@@ -112,15 +115,36 @@ namespace Anki {
     unsigned int numCols() const;
     
 #if defined(ANKICORETECH_USE_OPENCV)
+  public:
     SmallMatrix(const cv::Matx<T,NROWS,NCOLS> &cvMatrix);
     cv::Matx<T,NROWS,NCOLS>& get_CvMatx_();
     const cv::Matx<T,NROWS,NCOLS>& get_CvMatx_() const;
     
     using cv::Matx<T,NROWS,NCOLS>::operator=;
 #endif
+    
+  protected:
+    
+    T* getDataPtr(void);
+    const T* getDataPtr(void) const;
+    
+    // Do we want to provide non-square matrix inversion?
+    // I'm putting this here so the SmallSquareMatrix subclass can get
+    // access to cv::Matx::inv() though.
+    void Invert(void); // in place
+    SmallMatrix<T,NROWS,NCOLS> getInverse(void) const;
 
   }; // class SmallMatrix
   
+  // Comparisons for equalit and near-equality:
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  bool operator==(const SmallMatrix<T,NROWS,NCOLS> &M1,
+                  const SmallMatrix<T,NROWS,NCOLS> &M2);
+  
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  bool nearlyEqual(const SmallMatrix<T,NROWS,NCOLS> &M1,
+                   const SmallMatrix<T,NROWS,NCOLS> &M2,
+                   const T eps = std::numeric_limits<T>::epsilon());
   
   // An extension of the SmallMatrix class for square matrices
   template<typename T, unsigned int DIM>
@@ -130,7 +154,9 @@ namespace Anki {
     
     SmallSquareMatrix();
     SmallSquareMatrix(const SmallMatrix<T,DIM,DIM> &M);
-        
+    
+    using SmallMatrix<T,DIM,DIM>::operator();
+    
     // Matrix multiplication in place...
     // ... this = this * other;
     void operator*=(const SmallSquareMatrix<T,DIM> &other);
@@ -139,6 +165,10 @@ namespace Anki {
     
     friend Point<T,DIM> operator*(const SmallSquareMatrix<T,DIM> &M,
                                   const Point<T,DIM> &p);
+    
+    // Transpose: (Note that we can transpose square matrices in place)
+    using SmallMatrix<T,DIM,DIM>::getTranspose;
+    SmallSquareMatrix<T,DIM>& Transpose(void);
     
     // Matrix inversion:
     void Invert(void); // in place
@@ -215,6 +245,20 @@ namespace Anki {
     CORETECH_THROW_IF(nrows == 0 || ncols == 0);
   }
   
+  template<typename T>
+  Matrix<T>::Matrix(s32 nrows, s32 ncols, T *data)
+  : Array2d<T>(nrows, ncols, data)
+  {
+    CORETECH_THROW_IF(nrows == 0 || ncols == 0 || data==NULL);
+  }
+  
+  template<typename T>
+  Matrix<T>::Matrix(s32 nrows, s32 ncols, std::vector<T> &data)
+  : Array2d<T>(nrows, ncols, data)
+  {
+    CORETECH_THROW_IF(nrows == 0 || ncols == 0);
+  }
+  
   
 #if defined(ANKICORETECH_USE_OPENCV)
   template<typename T>
@@ -244,6 +288,26 @@ namespace Anki {
     return result;
     
   } // Matrix<T>::operator*()
+  
+  template<typename T>
+  Matrix<T>& Matrix<T>::operator*=(const Matrix<T> &other)
+  {
+    // Make sure the matrices have compatible sizes for multiplication
+    CORETECH_THROW_IF(this->numCols() != other.numRows());
+    
+    
+#if defined(ANKICORETECH_USE_OPENCV)
+    // For now (?), rely on OpenCV for matrix multiplication:
+    *this = this->get_CvMat_() * other.get_CvMat_();
+#else
+    assert(false);
+    // TODO: Implement our own matrix multiplication.
+#endif
+    
+    return *this;
+    
+  } // Matrix<T>::operator*=()
+  
   
   template<typename T>
   void Matrix<T>::Invert(void)
@@ -307,7 +371,7 @@ namespace Anki {
   
   
   template<typename T>
-  ostream& operator<<(ostream& out, const Matrix<T>& m)
+  std::ostream& operator<<(std::ostream& out, const Matrix<T>& m)
   {
     for (int i=0; i<m.numRows(); ++i) {
       for (int j=0; j<m.numCols(); ++j) {
@@ -372,8 +436,6 @@ namespace Anki {
 #endif
   }
 
-  
-  
   // Matrix element access:
   template<typename T, unsigned int NROWS, unsigned int NCOLS>
   T&  SmallMatrix<T,NROWS,NCOLS>::operator() (unsigned int i, unsigned int j)
@@ -434,6 +496,39 @@ namespace Anki {
     return NCOLS;
   }
   
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  bool operator==(const SmallMatrix<T,NROWS,NCOLS> &M1,
+                  const SmallMatrix<T,NROWS,NCOLS> &M2)
+  {
+    for(unsigned int i=0; i<NROWS; ++i) {
+      for(unsigned int j=0; j<NCOLS; ++j) {
+        if(M1(i,j) != M2(i,j)) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  } // operator==(SmallMatrix,SmallMatrix)
+  
+  
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  bool nearlyEqual(const SmallMatrix<T,NROWS,NCOLS> &M1,
+                   const SmallMatrix<T,NROWS,NCOLS> &M2,
+                   const T eps)
+  {
+    for(unsigned int i=0; i<NROWS; ++i) {
+      for(unsigned int j=0; j<NCOLS; ++j) {
+        if(not NEAR(M1(i,j), M2(i,j), eps)) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  } // nearlyEqual(SmallMatrix,SmallMatrix)
+  
+  
 #if defined(ANKICORETECH_USE_OPENCV)
   template<typename T, unsigned int NROWS, unsigned int NCOLS>
   cv::Matx<T,NROWS,NCOLS>& SmallMatrix<T,NROWS,NCOLS>::get_CvMatx_()
@@ -450,7 +545,7 @@ namespace Anki {
 #endif
   
   template<typename T, unsigned int NROWS, unsigned int NCOLS>
-  ostream& operator<<(ostream& out, const SmallMatrix<T, NROWS, NCOLS>& m)
+  std::ostream& operator<<(std::ostream& out, const SmallMatrix<T, NROWS, NCOLS>& m)
   {
     for (int i=0; i<NROWS; ++i) {
       for (int j=0; j<NCOLS; ++j) {
@@ -460,6 +555,33 @@ namespace Anki {
     }
     return out;
   }
+  
+  // Matrix inversion:
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  void SmallMatrix<T,NROWS,NCOLS>::Invert(void)
+  {
+#if defined(ANKICORETECH_USE_OPENCV)
+    (*this) = this->inv();
+#else
+    assert(false);
+    // TODO: Define our own opencv-free inverse?
+#endif
+    
+  }
+  
+  template<typename T, unsigned int NROWS, unsigned int NCOLS>
+  SmallMatrix<T,NROWS,NCOLS> SmallMatrix<T,NROWS,NCOLS>::getInverse(void) const
+  {
+#if defined(ANKICORETECH_USE_OPENCV)
+    SmallMatrix<T,NROWS,NCOLS> res(this->inv());
+    return res;
+#else
+    assert(false);
+    // TODO: Define our own opencv-free inverse?
+#endif
+    
+  }
+  
   
   
 #pragma mark --- SmallSquareMatrix Implementations
@@ -498,30 +620,29 @@ namespace Anki {
     (*this) = other * (*this);    
   }
   
+  template<typename T, unsigned int DIM>
+  SmallSquareMatrix<T,DIM>&  SmallSquareMatrix<T,DIM>::Transpose(void)
+  {
+    for(unsigned int i=0; i<DIM; ++i) {
+      for(unsigned int j=(i+1); j<DIM; ++j) {
+        std::swap((*this)(i,j), (*this)(j,i));
+      }
+    }
+    
+    return *this;
+  } // SmallSquareMatrix::Tranpose()
+   
   // Matrix inversion:
   template<typename T, unsigned int DIM>
   void SmallSquareMatrix<T,DIM>::Invert(void)
   {
-#if defined(ANKICORETECH_USE_OPENCV)
-    (*this) = this->inv();
-#else
-    assert(false);
-    // TODO: Define our own opencv-free inverse?
-#endif
-    
+    this->SmallMatrix<T,DIM,DIM>::Invert();
   }
   
   template<typename T, unsigned int DIM>
   SmallSquareMatrix<T,DIM> SmallSquareMatrix<T,DIM>::getInverse(void) const
-  {    
-#if defined(ANKICORETECH_USE_OPENCV)
-    SmallSquareMatrix<T,DIM> res(this->inv());
-    return res;
-#else
-    assert(false);
-    // TODO: Define our own opencv-free inverse?
-#endif
-    
+  {
+    return this->SmallMatrix<T,DIM,DIM>::getInverse();
   }
   
   

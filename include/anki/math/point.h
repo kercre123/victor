@@ -60,15 +60,30 @@ namespace Anki {
     Point<T,N>& makeUnitLength(void);
     
     // Friendly operators
-    friend bool       operator== (const Point<T,N> &point1, const Point<T,N> &point2);
-    friend Point<T,N> operator+  (const Point<T,N> &point1, const Point<T,N> &point2);
-    friend Point<T,N> operator-  (const Point<T,N> &point1, const Point<T,N> &point2);
+    
     
   protected:
     // Members:
     T data[N];
     
   }; // class Point
+  
+  // Display / Logging:
+  template<typename T, size_t N>
+  std::ostream& operator<<(std::ostream& out, const Point<T,N>& p);
+  
+  template<typename T, size_t N>
+  bool       operator== (const Point<T,N> &point1, const Point<T,N> &point2);
+  
+  template<typename T, size_t N>
+  bool       nearlyEqual (const Point<T,N> &point1, const Point<T,N> &point2,
+                          const T eps = T(10)*std::numeric_limits<T>::epsilon());
+  
+  template<typename T, size_t N>
+  Point<T,N> operator+  (const Point<T,N> &point1, const Point<T,N> &point2);
+  
+  template<typename T, size_t N>
+  Point<T,N> operator-  (const Point<T,N> &point1, const Point<T,N> &point2);
   
   
   // Special 2D Point class with elements x and y
@@ -205,10 +220,28 @@ namespace Anki {
     CORETECH_ASSERT(N>0);
     
     // Return true if all elements of data are equal, false otherwise.
-    bool retVal = point1.data[0] == point2.data[0];
+    bool retVal = point1[0] == point2[0];
     size_t i = 1;
     while(retVal && i<N) {
-      retVal = point1.data[i] == point2.data[i];
+      retVal = point1[i] == point2[i];
+      ++i;
+    }
+    
+    return retVal;
+  }
+  
+  template<typename T, size_t N>
+  bool       nearlyEqual (const Point<T,N> &point1, const Point<T,N> &point2,
+                          const T eps)
+  {
+    CORETECH_ASSERT(N>0);
+    
+    // Return true if all elements of data are equal, false otherwise.
+    bool retVal = NEAR(point1[0], point2[0], eps);
+    size_t i = 1;
+    while(retVal && i<N) {
+      retVal = NEAR(point1[i], point2[i], eps);
+      ++i;
     }
     
     return retVal;
@@ -247,6 +280,15 @@ namespace Anki {
   {
     (*this) *= T(1)/this->length();
     return *this;
+  }
+  
+  template<typename T, size_t N>
+  std::ostream& operator<<(std::ostream& out, const Point<T,N>& p)
+  {
+    for (int i=0; i<N; ++i) {
+      out << p[i] << " ";
+    }
+    return out;
   }
 
   

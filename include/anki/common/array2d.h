@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <assert.h>
+#include <limits.h>
 
 #if defined(ANKICORETECH_USE_OPENCV)
 #include "opencv2/core/core.hpp"
@@ -45,6 +46,7 @@ namespace Anki
     Array2d(s32 nrows, s32 ncols); // alloc/de-alloc handled for you
     Array2d(s32 nrows, s32 ncols, T *data); // you handle memory yourself
     Array2d(s32 nrows, s32 ncols, const T &data); // you handle memory yourself
+    Array2d(s32 nrows, s32 ncols, std::vector<T> &data);
     Array2d(const Embedded::Array2d<T> &other); // *copies* data from unmanaged array
 
     // Reference counting assignment (does not copy):
@@ -90,43 +92,16 @@ namespace Anki
     T* getDataPointer();
   }; // class Array2d(Managed)
 
-  /* OLD: inherit from unmanged version
-  // A version of Array2d that offers internal memory allocation/deallocation,
-  // but retains the embedded-platform-friendly memory alignment of the parent
-  // class:
+  // Return true iff two arrays are EXACTLY equal:
   template<typename T>
-  class Array2d : public Embedded::Array2d<T>
-  {
-  public:
-  Array2d();
-  Array2d(s32 nrows, s32 ncols, bool useBoundaryFillPatterns = false);
-
-  Array2d<T> operator=(const Array2d<T> &other) const;
-
-  protected:
-
-  using Embedded::Array2d<T>::initialize;
-
-  // Remove non-const access to raw data pointer inherited from parent class
-  void* get_rawDataPointer();
-
-  // Currently using OpenCv to manage the data. It will allocate the data
-  // according to the type, and most importantly for us, it gives us nice
-  // smart pointers that handle the deallocation when nobody is still using
-  // the data, allowing us to get "free" assignment without lots of unneeded
-  // copying.
-  cv::Mat_<T> dataManager;
-  int refCount;
-  }; // class Array2d(Managed)
-
-  // An alternate name to explicitly differentiate Managed vs. Unmanaged
-  // Unfortunately can't use typedef simply (?):
-  //    typedef Array2d Array2dManaged;
-  // But this #define seems like a *horrible* idea:
-  // TODO: Better solution to get an "alias" for Array2dManaged
-  #define Array2dManaged Array2d
-  */
-
+  bool operator==(const Array2d<T> &array1, const Array2d<T> &array2);
+  
+  // Return true iff two arrays are NEARLY equal, up to some epsilon:
+  template<typename T>
+  bool nearlyEqual(const Array2d<T> &array1, const Array2d<T> &array2,
+                   const T eps = T(10)*std::numeric_limits<T>::epsilon());
+  
+  
 #pragma mark --- Array2d(Managed) Implementation ---
   template<typename T>
   Array2d<T>::Array2d(void)
@@ -148,6 +123,14 @@ namespace Anki
   Array2d<T>::Array2d(s32 numRows, s32 numCols, T *data)
 #if defined(ANKICORETECH_USE_OPENCV)
     : cv::Mat_<T>(numRows, numCols, data)
+#endif
+  {
+  } // Constructor: Array2d(rows, cols, *data)
+  
+  template<typename T>
+  Array2d<T>::Array2d(s32 numRows, s32 numCols, std::vector<T> &data)
+#if defined(ANKICORETECH_USE_OPENCV)
+  : cv::Mat_<T>(numRows, numCols, &(data[0]))
 #endif
   {
   } // Constructor: Array2d(rows, cols, *data)
@@ -187,13 +170,21 @@ namespace Anki
   template<typename T>
   const T* Array2d<T>::getDataPointer(void) const
   {
-    return static_cast<T*>(this->data);
+#if defined(ANKICORETECH_USE_OPENCV)
+    return this->template ptr<T>(0);
+#else
+    return this->data;
+#endif
   }
 
   template<typename T>
   T* Array2d<T>::getDataPointer(void)
   {
-    return static_cast<T*>(this->data);
+#if defined(ANKICORETECH_USE_OPENCV)
+    return this->template ptr<T>(0);
+#else
+    return this->data;
+#endif
   }
 
   template<typename T>
@@ -273,6 +264,49 @@ namespace Anki
     // Thin wrapper to OpenCV's empty() check:
     return this->empty();
   }
+  
+  template<typename T>
+  bool operator==(const Array2d<T> &array1, const Array2d<T> &array2)
+  {
+    bool equal = (array1.numRows() == array2.numRows() &&
+                  array1.numCols() == array2.numCols());
+    
+    const T* data1 = array1.getDataPointer();
+    const T* data2 = array2.getDataPointer();
+    
+    s32 i=0;
+    while(equal && i < array1.numElements())
+    {
+      equal = data1[i] == data2[i];
+      ++i;
+    }
+    
+    return equal;
+    
+  } // operator==
+  
+  
+  template<typename T>
+  bool nearlyEqual(const Array2d<T> &array1, const Array2d<T> &array2,
+                   const T eps)
+  {
+    bool equal = (array1.numRows() == array2.numRows() &&
+                  array1.numCols() == array2.numCols());
+    
+    const T* data1 = array1.getDataPointer();
+    const T* data2 = array2.getDataPointer();
+    
+    s32 i=0;
+    while(equal && i < array1.numElements())
+    {
+      equal = NEAR(data1[i], data2[i], eps);
+      ++i;
+    }
+    
+    return equal;
+    
+  } // nearlyEqual()
+  
 
   template<typename T>
   void Array2d<T>::applyScalarFunction(T (*fcn)(T))
