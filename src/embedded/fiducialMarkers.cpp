@@ -81,7 +81,7 @@ namespace Anki
       return *this;
     } // FiducialMarkerParserBit& FiducialMarkerParserBit::operator= (const FiducialMarkerParserBit& bit2)
 
-    Result FiducialMarkerParserBit::ExtractMeanValue(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, s16 &meanValue)
+    Result FiducialMarkerParserBit::ExtractMeanValue(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, s16 &meanValue) const
     {
       s32 accumulator = 0;
 
@@ -186,7 +186,7 @@ namespace Anki
     //  2. Lower left
     //  3. Upper right
     //  4. Lower right
-    Result FiducialMarkerParser::ExtractBlockMarker(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, const f32 minContrastRatio, BlockMarker &marker, MemoryStack scratch)
+    Result FiducialMarkerParser::ExtractBlockMarker(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, const f32 minContrastRatio, BlockMarker &marker, MemoryStack scratch) const
     {
       FixedLengthList<s16> meanValues(MAX_FIDUCIAL_MARKER_BITS, scratch);
 
@@ -240,6 +240,8 @@ namespace Anki
       if(DecodeId(binarizedBits, marker.blockType, marker.faceType, scratch) != RESULT_OK)
         return RESULT_FAIL;
 
+      marker.corners = quad;
+
       return RESULT_OK;
     }
 
@@ -284,7 +286,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result FiducialMarkerParser::DetermineOrientationAndBinarize(const FixedLengthList<s16> &meanValues, const f32 minContrastRatio, BlockMarker::Orientation &orientation, FixedLengthList<u8> &binarizedBits)
+    Result FiducialMarkerParser::DetermineOrientationAndBinarize(const FixedLengthList<s16> &meanValues, const f32 minContrastRatio, BlockMarker::Orientation &orientation, FixedLengthList<u8> &binarizedBits) const
     {
       AnkiConditionalErrorAndReturnValue(meanValues.IsValid(),
         RESULT_FAIL, "FiducialMarkerParser::DetermineOrientation", "meanValues is not valid");
@@ -339,7 +341,7 @@ namespace Anki
 
     // Starting at startIndex, search through this->bits to find the first instance of the given type
     // Returns -1 if the type wasn't found
-    s32 FiducialMarkerParser::FindFirstBitOfType(const FiducialMarkerParserBit::Type type, const s32 startIndex)
+    s32 FiducialMarkerParser::FindFirstBitOfType(const FiducialMarkerParserBit::Type type, const s32 startIndex) const
     {
       AnkiConditionalErrorAndReturnValue(startIndex >= 0,
         -1, "FiducialMarkerParser::FindFirstBitOfType", "startIndex < 0");
@@ -352,7 +354,7 @@ namespace Anki
       return -1;
     }
 
-    Result FiducialMarkerParser::DecodeId(const FixedLengthList<u8> &binarizedBits, s16 &blockType, s16 &faceType, MemoryStack scratch)
+    Result FiducialMarkerParser::DecodeId(const FixedLengthList<u8> &binarizedBits, s16 &blockType, s16 &faceType, MemoryStack scratch) const
     {
       blockType = -1;
       faceType = -1;

@@ -111,6 +111,10 @@ IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
   ASSERT_TRUE(marker.faceType == 6);
   ASSERT_TRUE(marker.orientation == BlockMarker::ORIENTATION_UP);
 
+  for(s32 i=0; i<4; i++) {
+    ASSERT_TRUE(marker.corners[i] == quad[i]);
+  }
+
   free(scratch0.get_buffer());
 
   GTEST_RETURN_HERE;

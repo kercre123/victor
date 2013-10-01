@@ -66,7 +66,7 @@ namespace Anki
       // All data from probeLocations is copied into this instance's local memory
       FiducialMarkerParserBit(const s16 * const probesX, const s16 * const probesY, const s16 * const probeWeights, const s32 numProbes, const FiducialMarkerParserBit::Type type, const s32 numFractionalBits);
 
-      Result ExtractMeanValue(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, s16 &meanValue);
+      Result ExtractMeanValue(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, s16 &meanValue) const;
 
       FiducialMarkerParserBit& operator= (const FiducialMarkerParserBit& bit2);
 
@@ -102,7 +102,7 @@ namespace Anki
 
       FiducialMarkerParser(const FiducialMarkerParser& marker2);
 
-      Result ExtractBlockMarker(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, const f32 minContrastRatio, BlockMarker &marker, MemoryStack scratch);
+      Result ExtractBlockMarker(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, const f32 minContrastRatio, BlockMarker &marker, MemoryStack scratch) const;
 
       FiducialMarkerParser& operator= (const FiducialMarkerParser& marker2);
 
@@ -124,13 +124,13 @@ namespace Anki
 
       Result InitializeAsDefaultParser();
 
-      Result DetermineOrientationAndBinarize(const FixedLengthList<s16> &meanValues, const f32 minContrastRatio, BlockMarker::Orientation &orientation, FixedLengthList<u8> &binarizedBits);
+      Result DetermineOrientationAndBinarize(const FixedLengthList<s16> &meanValues, const f32 minContrastRatio, BlockMarker::Orientation &orientation, FixedLengthList<u8> &binarizedBits) const;
 
-      Result DecodeId(const FixedLengthList<u8> &binarizedBits, s16 &blockType, s16 &faceType, MemoryStack scratch);
+      Result DecodeId(const FixedLengthList<u8> &binarizedBits, s16 &blockType, s16 &faceType, MemoryStack scratch) const;
 
       // Starting at startIndex, search through this->bits to find the first instance of the given type
       // Returns -1 if the type wasn't found
-      s32 FindFirstBitOfType(const FiducialMarkerParserBit::Type type, const s32 startIndex);
+      s32 FindFirstBitOfType(const FiducialMarkerParserBit::Type type, const s32 startIndex) const;
     }; // class FiducialMarkerParser
   } // namespace Embedded
 } // namespace Anki
