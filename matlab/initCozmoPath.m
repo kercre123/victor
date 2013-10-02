@@ -2,6 +2,7 @@ function initCozmoPath
 
 cozmoDir = fileparts(which(mfilename)); % includes 'matlab'
 addpath(genpath(cozmoDir));
+addpath(fullfile(cozmoDir, '..', 'build', 'mex'));
 
 rootDir = fileparts(fileparts(cozmoDir));
 
