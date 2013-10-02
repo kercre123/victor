@@ -3,6 +3,9 @@
 #include "anki/embeddedVision.h"
 #include "visionBenchmarks.h"
 
+#include "../../blockImages/fiducial105_6ContrastReduced.h"
+#include "../../blockImages/blockImage50.h"
+
 using namespace Anki::Embedded;
 
 #if(defined(_MSC_VER) || defined(__APPLE__))
@@ -64,6 +67,104 @@ static const s32 width = 640;
 //static const s32 height = 480;
 static const s32 height = 10;
 static const s32 numBytes = MIN(MAX_BYTES, 5000000);
+
+int BenchmarkSimpleDetector_Steps12345_realImage(int numIterations)
+{
+  const s32 scaleImage_numPyramidLevels = 5;
+
+  const s16 component1d_minComponentWidth = 0;
+  const s16 component1d_maxSkipDistance = 0;
+
+  const f32 minSideLength = 0.03f*MAX(fiducial105_6_HEIGHT,fiducial105_6_WIDTH);
+  const f32 maxSideLength = 0.97f*MIN(fiducial105_6_HEIGHT,fiducial105_6_WIDTH);
+
+  const s32 component_minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
+  const s32 component_maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
+  const s32 component_sparseMultiplyThreshold = 1000 << 5;
+  const s32 component_solidMultiplyThreshold = 2 << 5;
+
+  const s32 component_percentHorizontal = 1 << 7; // 0.5, in SQ 23.8
+  const s32 component_percentVertical = 1 << 7; // 0.5, in SQ 23.8
+
+  const s32 maxExtractedQuads = 1000;
+  const s32 quads_minQuadArea = 100;
+  const s32 quads_quadSymmetryThreshold = 384;
+  const s32 quads_minDistanceFromImageEdge = 2;
+
+  const f32 decode_minContrastRatio = 1.25;
+
+  const s32 maxMarkers = 100;
+
+  const u32 numBytes0 = 10000000;
+  MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
+  //ASSERT_TRUE(scratch0.IsValid());
+
+  const u32 numBytes1 = 10000000;
+  MemoryStack scratch1(calloc(numBytes1,1), numBytes0);
+  //ASSERT_TRUE(scratch1.IsValid());
+
+  const u32 numBytes2 = 10000000;
+  MemoryStack scratch2(calloc(numBytes2,1), numBytes2);
+  //ASSERT_TRUE(scratch2.IsValid());
+
+  const s32 maxConnectedComponentSegments = u16_MAX;
+  ConnectedComponents extractedComponents(maxConnectedComponentSegments, scratch0);
+
+  Array<u8> image(blockImage50_HEIGHT, blockImage50_WIDTH, scratch0);
+  image.Set(&blockImage50[0], blockImage50_HEIGHT*blockImage50_WIDTH);
+
+  FixedLengthList<BlockMarker> markers(maxMarkers, scratch0);
+  FixedLengthList<Array<f64>> homographies(maxMarkers, scratch0);
+
+  markers.set_size(maxMarkers);
+  homographies.set_size(maxMarkers);
+
+  for(s32 i=0; i<maxMarkers; i++) {
+    Array<f64> newArray(3, 3, scratch0);
+    homographies[i] = newArray;
+  } // for(s32 i=0; i<maximumSize; i++)
+
+  f64 totalTime = 0;
+  for(s32 i=0; i<numIterations; i++) {
+    PUSH_MEMORY_STACK(scratch1);
+    PUSH_MEMORY_STACK(scratch2);
+
+    const f64 time0 = GetTime();
+    SimpleDetector_Steps12345(
+      image,
+      markers,
+      homographies,
+      scaleImage_numPyramidLevels,
+      component1d_minComponentWidth, component1d_maxSkipDistance,
+      component_minimumNumPixels, component_maximumNumPixels,
+      component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
+      component_percentHorizontal, component_percentVertical,
+      quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
+      decode_minContrastRatio,
+      scratch1,
+      scratch2);
+    const f64 time1 = GetTime();
+    totalTime += time1 - time0;
+    image[0][0]++;
+  }
+  printf("totalTime: %f\n", totalTime);
+
+  //ASSERT_TRUE(markers.get_size() == 1);
+
+  //ASSERT_TRUE(markers[0].blockType == 105);
+  //ASSERT_TRUE(markers[0].faceType == 6);
+  //ASSERT_TRUE(markers[0].orientation == BlockMarker::ORIENTATION_LEFT);
+  //ASSERT_TRUE(markers[0].corners[0] == Point<s16>(21,21));
+  //ASSERT_TRUE(markers[0].corners[1] == Point<s16>(21,235));
+  //ASSERT_TRUE(markers[0].corners[2] == Point<s16>(235,21));
+  //ASSERT_TRUE(markers[0].corners[3] == Point<s16>(235,235));
+
+  free(scratch0.get_buffer());
+  free(scratch1.get_buffer());
+  free(scratch2.get_buffer());
+
+  return 0;
+} // int BenchmarkSimpleDetector_Steps12345_realImage()
 
 int BenchmarkBinomialFilter()
 {

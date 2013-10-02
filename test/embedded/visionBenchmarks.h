@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+  int BenchmarkSimpleDetector_Steps12345_realImage(int numIterations);
   int BenchmarkBinomialFilter();
   int BenchmarkDownsampleByFactor();
   int BenchmarkComputeCharacteristicScale();

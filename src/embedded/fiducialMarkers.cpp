@@ -1,3 +1,6 @@
+#include <assert.h>
+#include <math.h>
+
 #include "anki/embeddedVision/fiducialMarkers.h"
 
 #include "anki/embeddedVision/fixedLengthList_vision.h"
@@ -96,7 +99,7 @@ namespace Anki
       const f64 h12 = homography[1][2];
       const f64 h22 = homography[2][2];
 
-      const f64 fixedPointDivider = 1.0 / pow(2,this->numFractionalBits);
+      const f64 fixedPointDivider = 1.0 / pow(2.0, this->numFractionalBits);
 
       //#define SEND_WARPED_LOCATIONS
 #ifdef SEND_WARPED_LOCATIONS
