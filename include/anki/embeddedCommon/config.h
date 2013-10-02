@@ -87,7 +87,20 @@
 #include <stddef.h>
 
 #ifdef USING_MOVIDIUS_GCC_COMPILER
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mv_types.h"
+#include "DrvUart.h"
+#include <stdio.h>
+#include <stdlib.h>
+
+#ifdef __cplusplus
+}
+#endif
+
 
 /*
 // We specify types according to their sign and bits. We should use these in

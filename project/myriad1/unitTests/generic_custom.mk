@@ -38,9 +38,8 @@ endif
 $(DirAppOutput)/$(APPNAME).map : $(DirAppOutput)/$(APPNAME).elf
 
 $(DirAppOutput)/$(APPNAME).elf : $(LEON_OBJECTS_REQUIRED) $(LEON_DRIVER_OBJECTS_REQUIRED) $(ALL_SHAVE_APPS) $(AllLibs) $(LinkerScript)
-	@echo "Linking file $(notdir $@)"
+	@echo "Linking elf file $(notdir $@):     $(LD) $(LDOPT) -o $@ $(LEON_DRIVER_OBJECTS_REQUIRED) $(LEON_OBJECTS_REQUIRED) $(AllLibs) $(ALL_SHAVE_APPS) $(DefaultSparcGccLibs) > $(DirAppOutput)/$(APPNAME).map"
 	@mkdir -p $(dir $@)
-	@echo $(LD) $(LDOPT) -o $@ $(LEON_DRIVER_OBJECTS_REQUIRED) $(LEON_OBJECTS_REQUIRED) $(AllLibs) $(ALL_SHAVE_APPS) $(DefaultSparcGccLibs) > $(DirAppOutput)/$(APPNAME).map
 	$(ECHO) $(LD) $(LDOPT) -o $@ $(LEON_DRIVER_OBJECTS_REQUIRED) $(LEON_OBJECTS_REQUIRED) $(AllLibs) $(ALL_SHAVE_APPS) $(DefaultSparcGccLibs) > $(DirAppOutput)/$(APPNAME).map
 
 %.o : %.c $(LEON_HEADERS) Makefile
