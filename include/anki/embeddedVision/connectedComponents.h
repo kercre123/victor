@@ -44,9 +44,12 @@ namespace Anki
       Result Extract2dComponents(const Array<u8> &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance, MemoryStack scratch);
 
       // Sort the components by id (the ids are sorted in increasing value, but with zero at the end {1...MAX_VALUE,0}), then y, then xStart
-      // TODO: determine how fast this method is, then suggest usage (probably pretty slow)
-      // TODO: Bucket sort
+      // WARNING: This method is really slow if called first. If you have the memory available, call SortConnectedComponentSegmentsById() first.
       Result SortConnectedComponentSegments();
+
+      // Sort the components by id
+      // Requires numValidComponentSegments*sizeof(ConnectedComponentSegment) bytes of scratch
+      Result SortConnectedComponentSegmentsById(MemoryStack scratch);
 
       // The list of components may have unused ids. This function compresses the set of ids, so that
       // max(ids) == numberOfUniqueValues(ids). For example, the list of ids {0,4,5,7} would be

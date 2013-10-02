@@ -297,6 +297,69 @@ namespace Anki
       return RESULT_OK;
     } // Result SortConnectedComponentSegments(FixedLengthList<ConnectedComponentSegment> &components)
 
+    // Sort the components by id
+    // Requires numValidComponentSegments*sizeof(ConnectedComponentSegment) bytes of scratch
+    Result ConnectedComponents::SortConnectedComponentSegmentsById(MemoryStack scratch)
+    {
+      // Performs bucket sort
+      FixedLengthList<u16> idCounts(this->maximumId + 1, scratch);
+
+      idCounts.SetZero();
+
+      const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
+      u16 * restrict idCounts_rowPointer = idCounts.Pointer(0);
+
+      // Count the number of ComponenentSegments that have each id
+      s32 numValidComponentSegments = 0;
+      for(s32 i=0; i<this->components.get_size(); i++) {
+        const u16 id = components_constRowPointer[i].id;
+
+        if(id != 0) {
+          idCounts_rowPointer[id]++;
+          numValidComponentSegments++;
+        }
+      } // for(s32 i=0; i<this->components.get_size(); i++)
+
+      // Note: this could use a lot of space numValidComponentSegments*sizeof(ConnectedComponentSegment) = numValidComponentSegments*8
+      FixedLengthList<ConnectedComponentSegment> componentsTmp(numValidComponentSegments, scratch);
+
+      // Could fail if we don't have enough scratch space
+      if(!componentsTmp.IsValid())
+        return RESULT_FAIL;
+
+      // Convert the absolute count to a cumulative count (ignoring id == zero)
+      u16 totalCount = 0;
+      for(s32 id=1; id<=this->maximumId; id++) {
+        const u16 lastCount = idCounts_rowPointer[id];
+
+        idCounts_rowPointer[id] = totalCount;
+
+        totalCount += lastCount;
+      }
+
+      // Go through the list, and copy each ComponentSegment into the correct "bucket"
+      ConnectedComponentSegment * restrict componentsTmp_rowPointer = componentsTmp.Pointer(0);
+      for(s32 oldIndex=0; oldIndex<this->components.get_size(); oldIndex++) {
+        const u16 id = components_constRowPointer[oldIndex].id;
+
+        if(id != 0) {
+          const u16 newIndex = idCounts_rowPointer[id];
+          componentsTmp_rowPointer[newIndex] = components_constRowPointer[oldIndex];
+
+          idCounts_rowPointer[id]++;
+        }
+      } // for(s32 i=0; i<this->components.get_size(); i++)
+
+      // Copy the sorted segments back to the original
+      memcpy(this->components.Pointer(0), componentsTmp.Pointer(0), totalCount*sizeof(ConnectedComponentSegment));
+
+      this->components.set_size(totalCount);
+
+      this->isSortedInId = true;
+
+      return RESULT_OK;
+    }
+
     // Iterate through components, and return the maximum id
     Result ConnectedComponents::FindMaximumId()
     {

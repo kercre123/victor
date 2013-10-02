@@ -254,29 +254,6 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
   GTEST_RETURN_HERE;
 }
 
-// Create a test pattern image, full of a grid of squares for probes
-static Result DrawExampleProbesImage(Array<u8> &image, Quadrilateral<s16> &quad, Array<f64> &homography)
-{
-  for(s32 bit=0; bit<NUM_BITS_TYPE_0; bit++) {
-    for(s32 probe=0; probe<NUM_PROBES_PER_BIT_TYPE_0; probe++) {
-      const s32 x = static_cast<s32>(Round(static_cast<f64>(100 *probesX_type0[bit][probe]) / pow(2.0, NUM_FRACTIONAL_BITS_TYPE_0)));
-      const s32 y = static_cast<s32>(Round(static_cast<f64>(100 *probesY_type0[bit][probe]) / pow(2.0, NUM_FRACTIONAL_BITS_TYPE_0)));
-      image[y][x] = 10 * (bit+1);
-    }
-  }
-
-  quad[0] = Point<s16>(0,0);
-  quad[1] = Point<s16>(0,100);
-  quad[2] = Point<s16>(100,0);
-  quad[3] = Point<s16>(100,100);
-
-  homography[0][0] = 100; homography[0][1] = 0;   homography[0][2] = 0;
-  homography[1][0] = 0;   homography[1][1] = 100; homography[1][2] = 0;
-  homography[2][0] = 0;   homography[2][1] = 0;   homography[2][2] = 1;
-
-  return RESULT_OK;
-}
-
 // The test is if it can run without crashing
 IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
 {
@@ -848,13 +825,13 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
   Array<u8> drawnComponents(blockImage50_HEIGHT, blockImage50_WIDTH, scratch0);
   DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
 
-  matlab.PutArray(drawnComponents, "drawnComponents0");
+  //matlab.PutArray(drawnComponents, "drawnComponents0");
   //drawnComponents.Show("drawnComponents0", false, false);
 
   extractedComponents.InvalidateFilledCenterComponents(component_percentHorizontal, component_percentVertical, scratch1);
   drawnComponents.SetZero();
   DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
-  matlab.PutArray(drawnComponents, "drawnComponents1");
+  //matlab.PutArray(drawnComponents, "drawnComponents1");
   //drawnComponents.Show("drawnComponents1", true, false);
 
   free(scratch0.get_buffer());
@@ -920,7 +897,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
   Array<u8> drawnComponents(height, width, scratch0);
   DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
 
-  matlab.PutArray(drawnComponents, "drawnComponents");
+  //matlab.PutArray(drawnComponents, "drawnComponents");
   //drawnComponents.Show("drawnComponents", true, false);
 
   free(scratch0.get_buffer());
@@ -1191,6 +1168,56 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SortComponents)
   ASSERT_TRUE(*components.Pointer(7) == component2);
   ASSERT_TRUE(*components.Pointer(8) == component5);
   ASSERT_TRUE(*components.Pointer(9) == component1);
+
+  GTEST_RETURN_HERE;
+} // IN_DDR GTEST_TEST(CoreTech_Vision, SortComponents)
+
+IN_DDR GTEST_TEST(CoreTech_Vision, SortComponentsById)
+{
+  const s32 numComponents = 10;
+  const s32 numBytes = MIN(MAX_BYTES, 1000);
+
+  MemoryStack ms(&buffer[0], numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  ConnectedComponents components(numComponents, ms);
+
+  const ConnectedComponentSegment component0 = ConnectedComponentSegment(1, 1, 1, 3); // 6
+  const ConnectedComponentSegment component1 = ConnectedComponentSegment(2, 2, 2, 1); // 0
+  const ConnectedComponentSegment component2 = ConnectedComponentSegment(3, 3, 3, 1); // 1
+  const ConnectedComponentSegment component3 = ConnectedComponentSegment(4, 4, 4, 0); // X
+  const ConnectedComponentSegment component4 = ConnectedComponentSegment(5, 5, 5, 1); // 2
+  const ConnectedComponentSegment component5 = ConnectedComponentSegment(6, 6, 6, 1); // 3
+  const ConnectedComponentSegment component6 = ConnectedComponentSegment(7, 7, 7, 1); // 4
+  const ConnectedComponentSegment component7 = ConnectedComponentSegment(8, 8, 8, 4); // 7
+  const ConnectedComponentSegment component8 = ConnectedComponentSegment(9, 9, 9, 5); // 8
+  const ConnectedComponentSegment component9 = ConnectedComponentSegment(0, 0, 0, 1); // 5
+
+  components.PushBack(component0);
+  components.PushBack(component1);
+  components.PushBack(component2);
+  components.PushBack(component3);
+  components.PushBack(component4);
+  components.PushBack(component5);
+  components.PushBack(component6);
+  components.PushBack(component7);
+  components.PushBack(component8);
+  components.PushBack(component9);
+
+  const Result result = components.SortConnectedComponentSegmentsById(ms);
+  ASSERT_TRUE(result == RESULT_OK);
+
+  ASSERT_TRUE(components.get_size() == 9);
+
+  ASSERT_TRUE(*components.Pointer(0) == component1);
+  ASSERT_TRUE(*components.Pointer(1) == component2);
+  ASSERT_TRUE(*components.Pointer(2) == component4);
+  ASSERT_TRUE(*components.Pointer(3) == component5);
+  ASSERT_TRUE(*components.Pointer(4) == component6);
+  ASSERT_TRUE(*components.Pointer(5) == component9);
+  ASSERT_TRUE(*components.Pointer(6) == component0);
+  ASSERT_TRUE(*components.Pointer(7) == component7);
+  ASSERT_TRUE(*components.Pointer(8) == component8);
 
   GTEST_RETURN_HERE;
 } // IN_DDR GTEST_TEST(CoreTech_Vision, SortComponents)
@@ -1570,6 +1597,7 @@ IN_DDR void RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Vision, CompressComponentIds);
   CALL_GTEST_TEST(CoreTech_Vision, ComponentsSize);
   CALL_GTEST_TEST(CoreTech_Vision, SortComponents);
+  CALL_GTEST_TEST(CoreTech_Vision, SortComponentsById);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d);
   CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
