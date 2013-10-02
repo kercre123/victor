@@ -65,8 +65,8 @@ void PrintBenchmarkResults()
 
   for(i=0; i<NUM_BENCHMARK_EVENTS; i++) {
     totalTimes[i] = 0.0;
-    minTimes[i] = (double)(0x7FFFFFFFFFFFFFFFL);
-    maxTimes[i] = (double)(-0x7FFFFFFFFFFFFFFFL);
+    minTimes[i] = (double)(0x7FFFFFFFFFFFFFFFLL);
+    maxTimes[i] = (double)(-0x7FFFFFFFFFFFFFFFLL);
     numEvents[i] = 0;
     lastBeginIndex[i] = -1;
   }
@@ -84,7 +84,7 @@ void PrintBenchmarkResults()
       {
         const unsigned long long rawElapsedTime = benchmarkEvents[i].time - benchmarkEvents[lastBeginIndex[index]].time;
 #pragma unused (rawElapsedTime) // may or may not get used depending on #ifs below
-        
+
 #if defined(_MSC_VER)
         const double elapsedTime = (double)rawElapsedTime / freqencyDouble;
 #elif defined(__APPLE_CC__)
