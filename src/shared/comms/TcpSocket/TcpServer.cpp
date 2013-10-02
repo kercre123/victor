@@ -65,7 +65,10 @@ bool TcpServer::StartListening(const char* port)
 #endif
     socketfd = socket(host_info_list->ai_family, host_info_list->ai_socktype,
                       host_info_list->ai_protocol);
-    if (socketfd == -1)  std::cout << "socket error " ;
+    if (socketfd == -1) {
+      std::cout << "socket error\n" ;
+      return false;
+    }
 
 #if(DEBUG_TCP_SERVER)
     std::cout << "TcpServer: Binding socket...\n";
@@ -81,13 +84,19 @@ bool TcpServer::StartListening(const char* port)
 
     
     status = bind(socketfd, host_info_list->ai_addr, host_info_list->ai_addrlen);
-    if (status == -1)  std::cout << "bind error\n";
+    if (status == -1) {
+      std::cout << "bind error\n";
+      return false;
+    }
 
 #if(DEBUG_TCP_SERVER)
     std::cout << "TcpServer: Listening for connections...\n";
 #endif
     status =  listen(socketfd, 5);
-    if (status == -1)  std::cout << "listen error\n";
+    if (status == -1) {
+      std::cout << "listen error\n";
+      return false;
+    }
 
     return true;
 }

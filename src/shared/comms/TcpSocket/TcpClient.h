@@ -9,7 +9,7 @@ public:
   TcpClient();
   ~TcpClient();
 
-  bool Connect(const char *host, const char* port);
+  bool Connect(const char *host_address, const char* port);
   bool Disconnect();
   int Send(const char* data, int size);
   int Recv(char* data, int maxSize);

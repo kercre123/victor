@@ -49,21 +49,30 @@ bool TcpClient::Connect(const char *host_address, const char* port)
   host_info.ai_socktype = SOCK_STREAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
 
   status = getaddrinfo(host_address, port, &host_info, &host_info_list);  
-  if (status != 0)  std::cout << "getaddrinfo error" << gai_strerror(status) ;
+  if (status != 0) {
+    std::cout << "getaddrinfo error" << gai_strerror(status) ;
+    return false;
+  }
 
 #if(DEBUG_TCP_CLIENT)
   std::cout << "TcpClient: Creating a socket on port " << port << "\n";
 #endif
   socketfd = socket(host_info_list->ai_family, host_info_list->ai_socktype,
                     host_info_list->ai_protocol);
-  if (socketfd == -1)  std::cout << "socket error " ;
+  if (socketfd == -1) {
+    std::cout << "socket error\n" ;
+    return false;
+  }
 
 
 #if(DEBUG_TCP_CLIENT)
   std::cout << "TcpClient: Connecting to " << host_address << "\n";
 #endif
   status = connect(socketfd, host_info_list->ai_addr, host_info_list->ai_addrlen);
-  if (status == -1)  std::cout << "connect error" ;
+  if (status == -1) {
+    std::cout << "connect error\n" ;
+    return false;
+  }
 
   set_nonblock(socketfd);
 
