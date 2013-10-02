@@ -16,6 +16,7 @@
 % testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false, 'embeddedConversions', EmbeddedConversionsManager('homographyEstimationType', 'c_float64', 'computeCharacteristicScaleImageType', 'c_fixedPoint', 'traceBoundaryType', 'matlab_approximate', 'connectedComponentsType', 'matlab_approximate'));
 % testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false, 'embeddedConversions', EmbeddedConversionsManager('homographyEstimationType', 'c_float64', 'traceBoundaryType', 'matlab_approximate', 'completeCImplementationType', 'c_singleStep123'));
 % testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false, 'embeddedConversions', EmbeddedConversionsManager('homographyEstimationType', 'c_float64', 'traceBoundaryType', 'matlab_approximate', 'completeCImplementationType', 'c_singleStep1234'));
+% testBlockWorld('calibration', calibration, 'matCalibration', matCalibration, 'frames', frames, 'matFrames', matFrames, 'drawResults', true, 'doPause', false, 'embeddedConversions', EmbeddedConversionsManager('homographyEstimationType', 'c_float64', 'traceBoundaryType', 'matlab_approximate', 'completeCImplementationType', 'c_singleStep12345'));
 % <Possibly close, clear, and set UseOutsideOfSquares back to false>
 
 
