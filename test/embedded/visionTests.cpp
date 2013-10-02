@@ -1439,13 +1439,24 @@ IN_DDR void RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage);
+  CALL_GTEST_TEST(CoreTech_Vision, FiducialMarker);
+  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage);
+  CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
+  CALL_GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput);
+  CALL_GTEST_TEST(CoreTech_Vision, LaplacianPeaks);
+  CALL_GTEST_TEST(CoreTech_Vision, Correlate1d);
   CALL_GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary);
+  CALL_GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes);
+  CALL_GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids);
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage);
+  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123);
   CALL_GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents);
   CALL_GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents);
-  CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
-  CALL_GTEST_TEST(CoreTech_Vision, SortComponents);
   CALL_GTEST_TEST(CoreTech_Vision, CompressComponentIds);
+  CALL_GTEST_TEST(CoreTech_Vision, ComponentsSize);
+  CALL_GTEST_TEST(CoreTech_Vision, SortComponents);
+  CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d);
   CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
