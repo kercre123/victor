@@ -29,8 +29,9 @@ LeonCPPSrcFiles += leon/cppInterface.cpp
 LeonHeaderFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/include/)
 
 LeonCPPSrcFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/embedded/*.cpp)
+LeonCSrcFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/embedded/*.c)
 
-LeonCPPSrcFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/test/embedded/commonTests.cpp)
+LeonCPPSrcFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/test/embedded/embeddedCommonTests.cpp)
 
 # Limit to only needed drivers
 #SysCSrcFiles     = drv_ddr.c drv_uart.c drv_vcs.c drv_print.c drv_timer.c drv_l2cache.c drv_sys_cfg.c drv_cpr.c svu_utils.c

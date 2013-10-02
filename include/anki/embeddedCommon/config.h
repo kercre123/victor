@@ -5,9 +5,9 @@
 #define ANKICORETECHEMBEDDED_VERSION_MINOR 1
 #define ANKICORETECHEMBEDDED_VERSION_REVISION 0
 
-#define ANKICORETECHEMBEDDED_USE_MATLAB
-#define ANKICORETECHEMBEDDED_USE_OPENCV
-#define ANKICORETECHEMBEDDED_USE_GTEST
+//#define ANKICORETECHEMBEDDED_USE_MATLAB
+//#define ANKICORETECHEMBEDDED_USE_OPENCV
+//#define ANKICORETECHEMBEDDED_USE_GTEST
 
 #if !defined(__APPLE_CC__) && defined(__GNUC__) && __GNUC__==4 && __GNUC_MINOR__==2 && __GNUC_PATCHLEVEL__==1 //hack to detect the movidius compiler
 #warning Using GNUC 4.2.1
@@ -160,11 +160,11 @@ namespace Anki
 #define ANKI_DEBUG_ERRORS_AND_WARNS 20 // Check and output AnkiErrors, AnkiWarns, and explicit unit tests
 #define ANKI_DEBUG_ALL 30 // Check and output AnkiErrors, AnkiWarns, and explicit unit tests, plus run any additional extensive tests
 
-#define ANKI_DEBUG_LEVEL ANKI_DEBUG_MINIMAL
+#define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS
 
 #define ANKI_OUTPUT_DEBUG_NONE 0
 #define ANKI_OUTPUT_DEBUG_PRINTF 10
 
-#define ANKI_OUTPUT_DEBUG_LEVEL ANKI_OUTPUT_DEBUG_NONE
+#define ANKI_OUTPUT_DEBUG_LEVEL ANKI_OUTPUT_DEBUG_PRINTF
 
 #endif // _ANKICORETECHEMBEDDED_COMMON_CONFIG_H_
