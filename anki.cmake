@@ -45,6 +45,7 @@ set(OPENCV_LIBS
 	opencv_imgproc
 	opencv_highgui
 	opencv_calib3d
+	opencv_objdetect
 )
 
 fix_opencv_lib_names(OPENCV_LIBS)
