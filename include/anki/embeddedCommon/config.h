@@ -133,6 +133,10 @@ const s8 s8_MIN = static_cast<s8>(-1 - 0x7F);
 const s16 s16_MIN = static_cast<s16>(-1 - 0x7FFF);
 const s32 s32_MIN = static_cast<s32>(-1 - 0x7FFFFFFF);
 
+#ifndef PI
+#define PI 3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679
+#endif
+
 namespace Anki
 {
   namespace Embedded
