@@ -34,7 +34,7 @@ namespace Anki
           return RESULT_FAIL;
         }
 
-        if(ThresholdScaleImage(image, scaleImage, binaryImage) != RESULT_OK) {
+        if(BinarizeScaleImage(image, scaleImage, binaryImage) != RESULT_OK) {
           return RESULT_FAIL;
         }
 
@@ -149,7 +149,7 @@ namespace Anki
           if(ComputeCharacteristicScaleImage(image, scaleImage_numPyramidLevels, scaleImage, scratch2) != RESULT_OK)
             return RESULT_FAIL;
 
-          if(ThresholdScaleImage(image, scaleImage, binaryImage) != RESULT_OK)
+          if(BinarizeScaleImage(image, scaleImage, binaryImage) != RESULT_OK)
             return RESULT_FAIL;
         } // PUSH_MEMORY_STACK(scratch1);
 
@@ -288,7 +288,7 @@ namespace Anki
           if(ComputeCharacteristicScaleImage(image, scaleImage_numPyramidLevels, scaleImage, scratch2) != RESULT_OK)
             return RESULT_FAIL;
 
-          if(ThresholdScaleImage(image, scaleImage, binaryImage) != RESULT_OK)
+          if(BinarizeScaleImage(image, scaleImage, binaryImage) != RESULT_OK)
             return RESULT_FAIL;
         } // PUSH_MEMORY_STACK(scratch1);
 

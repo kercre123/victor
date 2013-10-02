@@ -15,7 +15,7 @@ void RUN_ALL_BENCHMARKS()
 
   times[0] = GetTime();*/
 
-  BenchmarkSimpleDetector_Steps12345_realImage(50);
+  BenchmarkSimpleDetector_Steps12345_realImage(300);
 
   /*//times[1] = GetTime();
   for(s32 i=0; i<48; i++) {

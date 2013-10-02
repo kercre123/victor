@@ -7,7 +7,7 @@ namespace Anki
   namespace Embedded
   {
     // binaryImg = img < averageImg;
-    IN_DDR Result ThresholdScaleImage(const Array<u8> &originalImage, const FixedPointArray<u32> &scaleImage, Array<u8> &binaryImage)
+    IN_DDR Result BinarizeScaleImage(const Array<u8> &originalImage, const FixedPointArray<u32> &scaleImage, Array<u8> &binaryImage)
     {
       for(s32 y=0; y<scaleImage.get_size(0); y++) {
         const u32 * restrict scaleImage_rowPointer = scaleImage.Pointer(y, 0);
