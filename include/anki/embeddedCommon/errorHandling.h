@@ -96,7 +96,7 @@ namespace Anki
 
 #elif ANKI_DEBUG_LEVEL >= ANKI_DEBUG_MINIMAL
 
-#define AnkiWarn(expression, eventName, eventValue_format, ...)
+#define AnkiWarn(eventName, eventValue_format, ...)
 
 #define AnkiConditionalWarn(expression, eventName, eventValue_format, ...)
 

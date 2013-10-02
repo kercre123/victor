@@ -565,6 +565,8 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
   ASSERT_EQ(5.1, simpleVector[4]);
 
   free(simpleVector); simpleVector = NULL;
+
+  GTEST_RETURN_HERE;
 }
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
@@ -588,6 +590,8 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
   ASSERT_EQ(10, *simpleArray.Pointer(1,4));
 
   free(simpleArray.get_rawDataPointer());
+
+  GTEST_RETURN_HERE;
 }
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
