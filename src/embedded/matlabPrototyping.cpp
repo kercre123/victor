@@ -201,7 +201,7 @@ namespace Anki
 
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
-          extractedComponents.SortConnectedComponentSegments();
+          extractedComponents.SortConnectedComponentSegmentsById(scratch1);
         } // PUSH_MEMORY_STACK(scratch2);
       } // PUSH_MEMORY_STACK(scratch2);
 
@@ -340,7 +340,7 @@ namespace Anki
 
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
-          extractedComponents.SortConnectedComponentSegments();
+          extractedComponents.SortConnectedComponentSegmentsById(scratch1);
         } // PUSH_MEMORY_STACK(scratch2);
       } // PUSH_MEMORY_STACK(scratch2);
 

@@ -47,7 +47,8 @@ namespace Anki
       // WARNING: This method is really slow if called first. If you have the memory available, call SortConnectedComponentSegmentsById() first.
       Result SortConnectedComponentSegments();
 
-      // Sort the components by id
+      // Sort the components by id. This will retain the original ordering as well, so if the
+      // components are already sorted in y, the output of this method will be sorted in id and y.
       // Requires numValidComponentSegments*sizeof(ConnectedComponentSegment) bytes of scratch
       Result SortConnectedComponentSegmentsById(MemoryStack scratch);
 
@@ -133,6 +134,8 @@ namespace Anki
       inline const ConnectedComponentSegment& operator[](const s32 index) const;
 
       bool IsValid() const;
+
+      Result Print() const;
 
       u16 get_maximumId() const;
 

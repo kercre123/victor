@@ -1,4 +1,5 @@
 #include "anki/embeddedVision/connectedComponents.h"
+#include "anki/embeddedVision/fixedLengthList_vision.h"
 
 namespace Anki
 {
@@ -263,9 +264,13 @@ namespace Anki
 
       FindMaximumId();
 
+      // TODO: put this back if it is needed
       //% Sort all 1D components by id, y, then x
-      const Result result = SortConnectedComponentSegments();
-      return result;
+      // const Result result = SortConnectedComponentSegmentsById();
+      // const Result result = SortConnectedComponentSegments();
+      // return result;
+
+      return RESULT_OK;
     }
 
     // Sort the components by id (the ids are sorted in increasing value, but with zero at the end {1...MAX_VALUE,0}), then y, then xStart
@@ -297,7 +302,8 @@ namespace Anki
       return RESULT_OK;
     } // Result SortConnectedComponentSegments(FixedLengthList<ConnectedComponentSegment> &components)
 
-    // Sort the components by id
+    // Sort the components by id. This will retain the original ordering as well, so if the
+    // components are already sorted in y, the output of this method will be sorted in id and y.
     // Requires numValidComponentSegments*sizeof(ConnectedComponentSegment) bytes of scratch
     Result ConnectedComponents::SortConnectedComponentSegmentsById(MemoryStack scratch)
     {
@@ -817,6 +823,11 @@ namespace Anki
     {
       // TODO: should we do any other checks here?
       return components.IsValid();
+    }
+
+    Result ConnectedComponents::Print() const
+    {
+      return this->components.Print();
     }
 
     u16 ConnectedComponents::get_maximumId() const
