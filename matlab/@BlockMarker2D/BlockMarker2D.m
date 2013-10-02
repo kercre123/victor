@@ -75,11 +75,11 @@ classdef BlockMarker2D < Marker2D
     methods(Access = 'public')
        
         function this = BlockMarker2D(img, corners, tform, varargin)
-                      
-            this@Marker2D(img, corners, tform, varargin{:});
             
+            this@Marker2D(img, corners, tform, varargin{:});    
+                        
         end
-         
+                 
     end % METHODS (public)
     
     methods

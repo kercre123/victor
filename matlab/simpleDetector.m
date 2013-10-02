@@ -46,18 +46,14 @@ if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep12345')'
     quads_minDistanceFromImageEdge = 2;
     decode_minContrastRatio = 1.25;
     
-    [quads, blockTypes, faceTypes] = mexSimpleDetectorSteps12345(im2uint8(img), scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio);
+    [quads, blockTypes, faceTypes, orientations] = mexSimpleDetectorSteps12345(im2uint8(img), scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio);
     
     markers = cell(0,0);
     for i = 1:length(quads)
         homography = mexEstimateHomography(quads{i}, [0 0; 0 1; 1 0; 1 1]);
-        markers{i} = BlockMarker2D(zeros(size(img)), quads{i}, maketform('projective', homography));
-%         markers{i}.assignValues([blockTypes(i), faceTypes(i)], blockTypes(i), faceTypes(i))           
-        markers{i}.ids = [blockTypes(i), faceTypes(i)];
-        markers{i}.blockType = blockTypes(i);
-        markers{i}.faceType = faceTypes(i);
-        markers{i}.isValid = 1;
-        keyboard
+        markers{i} = BlockMarker2D(zeros(size(img)), quads{i}, maketform('projective', homography), 'ExplictInput', 'ids', [blockTypes(i), faceTypes(i)], 'upAngle', orientations(i));
+        
+%         keyboard
     end
         
 else % if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep12345')'
