@@ -277,10 +277,10 @@ namespace Anki
 
       ConnectedComponentSegment * restrict components_rowPointer = components.Pointer(0);
 
-      for(s32 i=1; i<components.get_size(); i++) {
-        const ConnectedComponentSegment segmentToInsert = components_rowPointer[i];
+      for(s32 iComponent=1; iComponent<components.get_size(); iComponent++) {
+        const ConnectedComponentSegment segmentToInsert = components_rowPointer[iComponent];
 
-        s32 holePosition = i;
+        s32 holePosition = iComponent;
 
         while(holePosition > 0 && CompareConnectedComponentSegments(segmentToInsert, components_rowPointer[holePosition-1]) < 0) {
           components_rowPointer[holePosition] = components_rowPointer[holePosition-1];
@@ -364,12 +364,12 @@ namespace Anki
       {
         Point<s32> * restrict componentCentroidAccumulators_rowPointer = componentCentroidAccumulators.Pointer(0);
 
-        for(s32 i=0; i<components.get_size(); i++) {
-          const u16 id = components_constRowPointer[i].id;
+        for(s32 iComponent=0; iComponent<components.get_size(); iComponent++) {
+          const u16 id = components_constRowPointer[iComponent].id;
 
-          const s16 y = components_constRowPointer[i].y;
+          const s16 y = components_constRowPointer[iComponent].y;
 
-          for(s32 x=components_constRowPointer[i].xStart; x<=components_constRowPointer[i].xEnd; x++) {
+          for(s32 x=components_constRowPointer[iComponent].xStart; x<=components_constRowPointer[iComponent].xEnd; x++) {
             componentCentroidAccumulators_rowPointer[id].x += x;
             componentCentroidAccumulators_rowPointer[id].y += y;
           }
@@ -412,11 +412,11 @@ namespace Anki
         componentBoundingBoxes_rowPointer[i].bottom = s16_MIN;
       }
 
-      for(s32 i=0; i<components.get_size(); i++) {
-        const u16 id = components_constRowPointer[i].id;
-        const s16 xStart = components_constRowPointer[i].xStart;
-        const s16 xEnd = components_constRowPointer[i].xEnd;
-        const s16 y = components_constRowPointer[i].y;
+      for(s32 iComponent=0; iComponent<components.get_size(); iComponent++) {
+        const u16 id = components_constRowPointer[iComponent].id;
+        const s16 xStart = components_constRowPointer[iComponent].xStart;
+        const s16 xEnd = components_constRowPointer[iComponent].xEnd;
+        const s16 y = components_constRowPointer[iComponent].y;
 
         componentBoundingBoxes_rowPointer[id].left = MIN(componentBoundingBoxes_rowPointer[id].left, xStart);
         componentBoundingBoxes_rowPointer[id].right = MAX(componentBoundingBoxes_rowPointer[id].right, xEnd);
@@ -441,8 +441,8 @@ namespace Anki
       const ConnectedComponentSegment * restrict components_constRowPointer = components.Pointer(0);
       s32 * restrict numComponentSegments_rowPointer = numComponentSegments.Pointer(0);
 
-      for(s32 i=0; i<components.get_size(); i++) {
-        const u16 id = components_constRowPointer[i].id;
+      for(s32 iComponent=0; iComponent<components.get_size(); iComponent++) {
+        const u16 id = components_constRowPointer[iComponent].id;
 
         numComponentSegments_rowPointer[id]++;
       }
@@ -587,13 +587,13 @@ namespace Anki
 
       // Compute the bounding box of each component ID
       // A bounding box is (minX, minY) -> (maxX, maxY)
-      for(s32 i=0; i<components.get_size(); i++) {
-        const u16 id = components_constRowPointer[i].id;
-        const s16 y = components_constRowPointer[i].y;
-        const s16 xStart = components_constRowPointer[i].xStart;
-        const s16 xEnd = components_constRowPointer[i].xEnd;
+      for(s32 iComponent=0; iComponent<components.get_size(); iComponent++) {
+        const u16 id = components_constRowPointer[iComponent].id;
+        const s16 y = components_constRowPointer[iComponent].y;
+        const s16 xStart = components_constRowPointer[iComponent].xStart;
+        const s16 xEnd = components_constRowPointer[iComponent].xEnd;
 
-        const s16 length = components_constRowPointer[i].xEnd - components_constRowPointer[i].xStart + 1;
+        const s16 length = components_constRowPointer[iComponent].xEnd - components_constRowPointer[iComponent].xStart + 1;
 
         componentSizes[id] += length;
 
@@ -604,7 +604,7 @@ namespace Anki
         maxY[id] = MAX(maxY[id], y);
       }
 
-      for(u16 i=0; i<=maximumId; i++) {
+      for(u16 id=0; id<=maximumId; id++) {
         // The SQ26.5 parameter sparseMultiplyThreshold is set so that a component is invalid if
         // "sparseMultiplyThreshold*numPixels < boundingWidth*boundingHeight".
         // A resonable value is between 5<<5 = 160 and 100<<5 = 3200.
@@ -613,13 +613,13 @@ namespace Anki
         // "solidMultiplyThreshold*numPixels > boundingWidth*boundingHeight".
         // A resonable value is between 1.5*pow(2,5) = 48 and 5<<5 = 160.
 
-        const s32 boundingArea = ((maxX[i]-minX[i]+1)*(maxY[i]-minY[i]+1)) << 5; // SQ26.5
+        const s32 boundingArea = ((maxX[id]-minX[id]+1)*(maxY[id]-minY[id]+1)) << 5; // SQ26.5
 
-        const s32 sparseMultiply = sparseMultiplyThreshold*componentSizes[i]; // (SQ26.5 * SQ31.0) -> SQ26.5
-        const s32 solidMultiply = solidMultiplyThreshold*componentSizes[i]; // (SQ26.5 * SQ31.0) -> SQ26.5
+        const s32 sparseMultiply = sparseMultiplyThreshold*componentSizes[id]; // (SQ26.5 * SQ31.0) -> SQ26.5
+        const s32 solidMultiply = solidMultiplyThreshold*componentSizes[id]; // (SQ26.5 * SQ31.0) -> SQ26.5
 
         if(sparseMultiply < boundingArea || solidMultiply > boundingArea) {
-          minX[i] = s16_MIN; // Set to invalid
+          minX[id] = s16_MIN; // Set to invalid
         }
       }
 
@@ -663,24 +663,24 @@ namespace Anki
       // This reduced-size box is the area that must be clear
       {
         Rectangle<s16> * restrict componentBoundingBoxes_rowPointer = componentBoundingBoxes.Pointer(0);
-        for(s32 i=0; i<=maximumId; i++) {
-          const s16 left = componentBoundingBoxes_rowPointer[i].left;
-          const s16 right = componentBoundingBoxes_rowPointer[i].right;
-          const s16 top = componentBoundingBoxes_rowPointer[i].top;
-          const s16 bottom = componentBoundingBoxes_rowPointer[i].bottom;
+        for(s32 iComponent=0; iComponent<=maximumId; iComponent++) {
+          const s16 left = componentBoundingBoxes_rowPointer[iComponent].left;
+          const s16 right = componentBoundingBoxes_rowPointer[iComponent].right;
+          const s16 top = componentBoundingBoxes_rowPointer[iComponent].top;
+          const s16 bottom = componentBoundingBoxes_rowPointer[iComponent].bottom;
 
-          const s16 width = componentBoundingBoxes_rowPointer[i].get_width();
-          const s16 height = componentBoundingBoxes_rowPointer[i].get_height();
+          const s16 width = componentBoundingBoxes_rowPointer[iComponent].get_width();
+          const s16 height = componentBoundingBoxes_rowPointer[iComponent].get_height();
 
           const Point<s16> centroid((right-left)/2, (bottom-top)/2);
 
           const s16 scaledHalfWidth = static_cast<s16>((width * percentHorizontal) >> (numFractionalBitsForPercents+1)); // (SQ16.0 * SQ23.8) -> SQ 31.0, and divided by two
           const s16 scaledHalfHeight = static_cast<s16>((height * percentVertical) >> (numFractionalBitsForPercents+1)); // (SQ16.0 * SQ23.8) -> SQ 31.0, and divided by two
 
-          componentBoundingBoxes_rowPointer[i].left += scaledHalfWidth;
-          componentBoundingBoxes_rowPointer[i].right -= scaledHalfWidth;
-          componentBoundingBoxes_rowPointer[i].top += scaledHalfHeight;
-          componentBoundingBoxes_rowPointer[i].bottom -= scaledHalfHeight;
+          componentBoundingBoxes_rowPointer[iComponent].left += scaledHalfWidth;
+          componentBoundingBoxes_rowPointer[iComponent].right -= scaledHalfWidth;
+          componentBoundingBoxes_rowPointer[iComponent].top += scaledHalfHeight;
+          componentBoundingBoxes_rowPointer[iComponent].bottom -= scaledHalfHeight;
         }
       }
 
@@ -694,13 +694,13 @@ namespace Anki
 
         bool * restrict validComponents_rowPointer = validComponents.Pointer(0);
 
-        for(s32 i=0; i<components.get_size(); i++) {
-          const u16 id = components_constRowPointer[i].id;
+        for(s32 iComponent=0; iComponent<components.get_size(); iComponent++) {
+          const u16 id = components_constRowPointer[iComponent].id;
 
           if(id > 0) {
-            const s16 y = components_constRowPointer[i].y;
-            const s16 xStart = components_constRowPointer[i].xStart;
-            const s16 xEnd = components_constRowPointer[i].xEnd;
+            const s16 y = components_constRowPointer[iComponent].y;
+            const s16 xStart = components_constRowPointer[iComponent].xStart;
+            const s16 xEnd = components_constRowPointer[iComponent].xEnd;
 
             const s16 left = componentBoundingBoxes_constRowPointer[id].left;
             const s16 right = componentBoundingBoxes_constRowPointer[id].right;

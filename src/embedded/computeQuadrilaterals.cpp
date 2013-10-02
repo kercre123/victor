@@ -114,7 +114,7 @@ namespace Anki
 
       // Go throught the list of components, and for each id, extract a quadrilateral. If the
       // quadrilateral looks reasonable, add it to the list extractedQuads.
-      for(s32 i=0; i<components.get_maximumId(); i++) {
+      for(s32 iComponent=0; iComponent<components.get_maximumId(); iComponent++) {
         s32 endComponentIndex = -1;
 
         // For each component (the list must be sorted):

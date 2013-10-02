@@ -130,9 +130,10 @@ namespace Anki
       const s32 maxCandidateMarkers = 1000;
       const s32 maxExtractedQuads = 100;
 
+      //#define SEND_DRAWN_COMPONENTS
+
       // Stored in the outermost scratch2
       FixedLengthList<BlockMarker> candidateMarkers(maxCandidateMarkers, scratch2);
-
       ConnectedComponents extractedComponents; // This isn't allocated until after the scaleImage
       {
         PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
@@ -172,6 +173,7 @@ namespace Anki
 
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
+#ifdef SEND_DRAWN_COMPONENTS
           {
             Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
             DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
@@ -180,6 +182,7 @@ namespace Anki
             matlab.PutArray(drawnComponents, "drawnComponents0");
             //drawnComponents.Show("drawnComponents0", true, false);
           }
+#endif
 
           // TODO: invalidate filled center components
           if(extractedComponents.InvalidateFilledCenterComponents(component_percentHorizontal, component_percentVertical, scratch2) != RESULT_OK)
@@ -191,6 +194,7 @@ namespace Anki
         } // PUSH_MEMORY_STACK(scratch2);
       } // PUSH_MEMORY_STACK(scratch2);
 
+#ifdef SEND_DRAWN_COMPONENTS
       {
         Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
         DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
@@ -199,6 +203,7 @@ namespace Anki
         matlab.PutArray(drawnComponents, "drawnComponents1");
         //drawnComponents.Show("drawnComponents0", true, false);
       }
+#endif
 
       // 4. Compute candidate quadrilaterals from the connected components
       FixedLengthList<Quadrilateral<s16> > extractedQuads(maxExtractedQuads, scratch2);
@@ -222,8 +227,8 @@ namespace Anki
 
         markers[iQuad].blockType = -1;
         markers[iQuad].faceType = -1;
-        for(s32 i=0; i<4; i++) {
-          markers[iQuad].corners[i] = extractedQuads[iQuad].corners[i];
+        for(s32 iCorner=0; iCorner<4; iCorner++) {
+          markers[iQuad].corners[iCorner] = extractedQuads[iQuad].corners[iCorner];
         }
       } // for(iQuad=0; iQuad<; iQuad++)
 

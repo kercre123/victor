@@ -97,6 +97,13 @@ namespace Anki
 
       const f64 fixedPointDivider = 1.0 / pow(2,this->numFractionalBits);
 
+      //#define SEND_WARPED_LOCATIONS
+#ifdef SEND_WARPED_LOCATIONS
+      Matlab matlab(false);
+      //matlab.EvalStringEcho("warpedPoints = zeros(2, %d);", probeLocations.get_size());
+      matlab.EvalStringEcho("if ~exist('warpedPoints', 'var') warpedPoints = zeros(2, 0); end;");
+#endif
+
       for(s32 probe=0; probe<probeLocations.get_size(); probe++) {
         const f64 x = static_cast<f64>(this->probeLocations[probe].x) * fixedPointDivider;
         const f64 y = static_cast<f64>(this->probeLocations[probe].y) * fixedPointDivider;
@@ -105,8 +112,15 @@ namespace Anki
         // 1. Map each probe to its warped locations
         const f64 homogenousDivisor = 1.0 / (h20*x + h21*y + h22);
 
-        const s16 warpedX = static_cast<s16>(Round( (h00 * x + h10 *y + h20) * homogenousDivisor ));
-        const s16 warpedY = static_cast<s16>(Round( (h01 * x + h11 *y + h21) * homogenousDivisor ));
+        const f64 warpedXf = (h00 * x + h01 *y + h02) * homogenousDivisor;
+        const f64 warpedYf = (h10 * x + h11 *y + h12) * homogenousDivisor;
+
+        const s16 warpedX = static_cast<s16>(Round(warpedXf));
+        const s16 warpedY = static_cast<s16>(Round(warpedYf));
+
+#ifdef SEND_WARPED_LOCATIONS
+        matlab.EvalStringEcho("warpedPoints(:,end+1) = [%f, %f];", warpedXf, warpedYf);
+#endif
 
         // 2. Sample the image
 
@@ -181,21 +195,45 @@ namespace Anki
 
       meanValues.set_size(bits.get_size());
 
+      //#define SEND_PROBE_LOCATIONS
+
+#ifdef SEND_PROBE_LOCATIONS
+      {
+        Matlab matlab(false);
+        matlab.EvalStringEcho("clear");
+        matlab.PutArray(image, "image");
+      }
+#endif
+
       for(s32 bit=0; bit<bits.get_size(); bit++) {
         if(bits[bit].ExtractMeanValue(image, quad, homography, meanValues[bit]) != RESULT_OK)
           return RESULT_FAIL;
       }
 
+#ifdef SEND_PROBE_LOCATIONS
+      {
+        Matlab matlab(false);
+
+        matlab.EvalStringEcho("probeLocations = zeros(2,0);");
+        for(s32 i=0; i<bits.get_size(); i++) {
+          FixedLengthList<Point<s16> > probeLocations = this->bits[i].get_probeLocations();
+          matlab.Put(probeLocations.Pointer(0), probeLocations.get_size(), "probeLocationsTmp");
+          matlab.EvalStringEcho("probeLocations(:, (end+1):(end+size(probeLocationsTmp,2))) = probeLocationsTmp;");
+        }
+
+        matlab.EvalStringEcho("probeLocations = double(probeLocations) / (2^%d)", this->bits[0].get_numFractionalBits());
+      }
+#endif // #ifdef SEND_PROBE_LOCATIONS
+
       FixedLengthList<u8> binarizedBits(MAX_FIDUCIAL_MARKER_BITS, scratch);
-      BlockMarker::Orientation orientation;
 
       // [this, binaryString] = orientAndThreshold(this, this.means);
-      if(FiducialMarkerParser::DetermineOrientationAndBinarize(meanValues, minContrastRatio, orientation, binarizedBits) != RESULT_OK)
+      if(FiducialMarkerParser::DetermineOrientationAndBinarize(meanValues, minContrastRatio, marker.orientation, binarizedBits) != RESULT_OK)
         return RESULT_FAIL;
 
       // TODO: finish parsing
 
-      if(orientation == BlockMarker::ORIENTATION_UNKNOWN)
+      if(marker.orientation == BlockMarker::ORIENTATION_UNKNOWN)
         return RESULT_OK; // It couldn't be parsed, but this is not a code failure
 
       // this = decodeIDs(this, binaryString);
@@ -255,8 +293,6 @@ namespace Anki
         RESULT_FAIL, "FiducialMarkerParser::DetermineOrientation", "binarizedBits is not valid");
 
       binarizedBits.Clear();
-
-      //meanValues.Print("meanValues");
 
       const s16 upBitValue = meanValues[upBitIndex];
       const s16 downBitValue = meanValues[downBitIndex];
@@ -318,56 +354,27 @@ namespace Anki
 
     Result FiducialMarkerParser::DecodeId(const FixedLengthList<u8> &binarizedBits, s16 &blockType, s16 &faceType, MemoryStack scratch)
     {
-      s32 checksumCount = 0;
-      s32 blockCount = 0;
-      s32 faceCount = 0;
-
-      s16 checksum = 0;
-      blockType = 0;
-      faceType = 0;
+      blockType = -1;
+      faceType = -1;
 
       FixedLengthList<u8> checksumBits(8, scratch);
       FixedLengthList<u8> blockBits(8, scratch);
-      FixedLengthList<u8> faceBits(8, scratch);
+      FixedLengthList<u8> faceBits(4, scratch);
 
       // Convert the bit string in binarizedBits to numbers blockType and
       for(s32 bit=0; bit<binarizedBits.get_size(); bit++) {
         if(bits[bit].get_type() == FiducialMarkerParserBit::FIDUCIAL_BIT_BLOCK) {
-          if(blockCount == 0) {
-            blockType += binarizedBits[bit];
-          } else {
-            blockType += binarizedBits[bit] << blockCount;
-          }
-
           blockBits.PushBack(binarizedBits[bit]);
-
-          blockCount++;
         } else if(bits[bit].get_type() == FiducialMarkerParserBit::FIDUCIAL_BIT_FACE) {
-          if(blockCount == 0) {
-            faceType += binarizedBits[bit];
-          } else {
-            faceType += binarizedBits[bit] << faceCount;
-          }
-
           faceBits.PushBack(binarizedBits[bit]);
-
-          faceCount++;
         } else if(bits[bit].get_type() == FiducialMarkerParserBit::FIDUCIAL_BIT_CHECKSUM) {
-          if(blockCount == 0) {
-            checksum += binarizedBits[bit];
-          } else {
-            checksum += binarizedBits[bit] << checksumCount;
-          }
-
           checksumBits.PushBack(binarizedBits[bit]);
-
-          checksumCount++;
         }
       }
 
       // Ids should start at 1
-      blockType++;
-      faceType++;
+      blockType = 1 + BinaryStringToUnsignedNumber(blockBits, false);
+      faceType = 1 + BinaryStringToUnsignedNumber(faceBits, false);
 
       if(!IsChecksumValid(checksumBits, blockBits, faceBits)) {
         blockType = -1;
@@ -391,9 +398,9 @@ namespace Anki
         const s32 i_block2 = ((i_block1) % numBlockBits) + 1;
         const s32 i_face = ((i_check-1) % numFaceBits) + 1;
 
-        const s32 expectedChecksumBit = faceBits[i_face] ^ (blockBits[i_block1] ^ blockBits[i_block2]);
+        const s32 expectedChecksumBit = faceBits[i_face-1] ^ (blockBits[i_block1-1] ^ blockBits[i_block2-1]);
 
-        if(checksumBits[i_check] != expectedChecksumBit)
+        if(checksumBits[i_check-1] != expectedChecksumBit)
           return false;
 
         i_block1 = (i_block1 % numBlockBits) + 1;

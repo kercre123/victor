@@ -46,7 +46,7 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
 #include "../../blockImages/blockImage50.h"
-#include "../../blockImages/fiducial4_2.h"
+#include "../../blockImages/fiducial105_6ContrastReduced.h"
 #include "../../src/embedded/fiducialMarkerDefinitionType0.h"
 
 // Create a test pattern image, full of a grid of squares for probes
@@ -98,11 +98,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
   homography[1][0] = 0;   homography[1][1] = 214; homography[1][2] = 21;
   homography[2][0] = 0;   homography[2][1] = 0;   homography[2][2] = 1;
 
-  //DrawExampleProbesImage(image, quad, homography);
-
   image.Set(fiducial4_2, fiducial4_2_WIDTH*fiducial4_2_HEIGHT);
-
-  //image.Show("image", true);
 
   BlockMarker marker;
 
@@ -110,6 +106,10 @@ IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
     const Result result = parser.ExtractBlockMarker(image, quad, homography, minContrastRatio, marker, scratch0);
     ASSERT_TRUE(result == RESULT_OK);
   }
+
+  ASSERT_TRUE(marker.blockType == 105);
+  ASSERT_TRUE(marker.faceType == 6);
+  ASSERT_TRUE(marker.orientation == BlockMarker::ORIENTATION_UP);
 
   free(scratch0.get_buffer());
 
@@ -246,7 +246,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
   const Result result =  ComputeQuadrilateralsFromConnectedComponents(components, minQuadArea, quadSymmetryThreshold, minDistanceFromImageEdge, imageHeight, imageWidth, extractedQuads, ms);
   ASSERT_TRUE(result == RESULT_OK);
 
-  extractedQuads.Print("extractedQuads");
+  // extractedQuads.Print("extractedQuads");
 
   for(s32 i=0; i<extractedQuads.get_size(); i++) {
     ASSERT_TRUE(extractedQuads[i] == quads_groundTruth[i]);
@@ -277,8 +277,6 @@ IN_DDR GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 
   const Result result = Correlate1dCircularAndSameSizeOutput(image, filter, out);
   ASSERT_TRUE(result == RESULT_OK);
-
-  out.Print();
 
   for(s32 i=0; i<out.get_size(1); i++) {
     ASSERT_TRUE(*out.Pointer(0,i) == out_groundTruth[i]);
