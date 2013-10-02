@@ -55,19 +55,19 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const s32 quads_minDistanceFromImageEdge = static_cast<s32>(mxGetScalar(prhs[12]));
   const f32 decode_minContrastRatio = static_cast<f32>(mxGetScalar(prhs[13]));
 
-  ConditionalErrorAndReturn(image.IsValid(), "mexSimpleDetectorSteps1234", "Could not allocate image");
+  ConditionalErrorAndReturn(image.IsValid(), "mexSimpleDetectorSteps12345", "Could not allocate image");
 
   const u32 numBytes0 = 10000000;
   MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
-  ConditionalErrorAndReturn(scratch0.IsValid(), "mexSimpleDetectorSteps1234", "Scratch0 could not be allocated");
+  ConditionalErrorAndReturn(scratch0.IsValid(), "mexSimpleDetectorSteps12345", "Scratch0 could not be allocated");
 
   const u32 numBytes1 = 10000000;
   MemoryStack scratch1(calloc(numBytes1,1), numBytes0);
-  ConditionalErrorAndReturn(scratch1.IsValid(), "mexSimpleDetectorSteps1234", "Scratch1 could not be allocated");
+  ConditionalErrorAndReturn(scratch1.IsValid(), "mexSimpleDetectorSteps12345", "Scratch1 could not be allocated");
 
   const u32 numBytes2 = 10000000;
   MemoryStack scratch2(calloc(numBytes2,1), numBytes2);
-  ConditionalErrorAndReturn(scratch2.IsValid(), "mexSimpleDetectorSteps1234", "Scratch2 could not be allocated");
+  ConditionalErrorAndReturn(scratch2.IsValid(), "mexSimpleDetectorSteps12345", "Scratch2 could not be allocated");
 
   const s32 maxMarkers = 100;
   FixedLengthList<BlockMarker> markers(maxMarkers, scratch0);

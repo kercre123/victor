@@ -130,7 +130,7 @@ namespace Anki
       const s32 maxCandidateMarkers = 1000;
       const s32 maxExtractedQuads = 100;
 
-#define SEND_DRAWN_COMPONENTS
+      //#define SEND_DRAWN_COMPONENTS
 
       // Stored in the outermost scratch2
       FixedLengthList<BlockMarker> candidateMarkers(maxCandidateMarkers, scratch2);
