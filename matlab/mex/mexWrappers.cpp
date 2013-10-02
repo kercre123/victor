@@ -1,5 +1,11 @@
 #include "mexWrappers.h"
 
+#if defined(_MSC_VER)
+#ifndef snprintf
+#define snprintf sprintf_s
+#endif
+#endif
+
 // Specialization for double input:
 template <>
 mxArray * image2mxArray<double>(const double *img,
@@ -230,10 +236,10 @@ void safeCallMATLAB(int nlhs, mxArray *plhs[], int nrhs,
     char buf[1024];
     if(mexCallMATLABWithTrap(1, plhs, 1, &mxErr, "getMExceptionMessage") != NULL)
     {
-      sprintf(buf, "<<Could not get message from MException object!>>");
+      snprintf(buf, 1024, "<<Could not get message from MException object!>>");
     } else if(mxGetString(plhs[0], buf, 1024)==1)
     {
-      sprintf(buf, "<<Could not create string from exception message!>>");
+      snprintf(buf, 1024, "<<Could not create string from exception message!>>");
     }
 
     msg += buf;

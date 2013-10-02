@@ -49,9 +49,11 @@ namespace Anki
 {
   namespace Embedded
   {
-    template<typename T> inline T RoundUp(T number, T multiple);
+    template<typename Type> class FixedLengthList;
 
-    template<typename T> inline T RoundDown(T number, T multiple);
+    template<typename Type> inline Type RoundUp(Type number, Type multiple);
+
+    template<typename Type> inline Type RoundDown(Type number, Type multiple);
 
     f32 Round(const f32 number);
     f64 Round(const f64 number);
@@ -75,11 +77,16 @@ namespace Anki
     // 1. When lowerToUpper==true,  copies the lower (left)  triangle to the upper (right) triangle
     // 2. When lowerToUpper==false, copies the upper (right) triangle to the lower (left)  triangle
     // Functionally the same as OpenCV completeSymm()
-    template<typename T> Result MakeArraySymmetric(T &arr, bool lowerToUpper = false);
+    template<typename Type> Result MakeArraySymmetric(Type &arr, bool lowerToUpper = false);
 
     // Perform the matrix multiplication "matOut = mat1 * mat2"
     // Note that this is the naive O(n^3) implementation
-    template<typename Array_T, typename T> Result MultiplyMatrices(const Array_T &mat1, const Array_T &mat2, Array_T &matOut);
+    template<typename Array_Type, typename Type> Result MultiplyMatrices(const Array_Type &mat1, const Array_Type &mat2, Array_Type &matOut);
+
+    // Swap a with b
+    template<typename Type> void Swap(Type &a, Type &b);
+
+    template<typename Type> u32 BinaryStringToUnsignedNumber(const FixedLengthList<Type> &bits, bool firstBitIsLow = false);
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     // Converts from typeid names to openCV types
@@ -90,12 +97,9 @@ namespace Anki
     void memset(void * dst, int value, size_t size);
 #endif
 
-    // Swap a with b
-    template<typename Type> void Swap(Type &a, Type &b);
-
 #pragma mark --- Implementations ---
 
-    template<typename T> inline T RoundUp(T number, T multiple)
+    template<typename Type> inline Type RoundUp(Type number, Type multiple)
     {
       return multiple*( (number-1)/multiple + 1 );
 
@@ -103,12 +107,12 @@ namespace Anki
       // return (number + (multiple-1)) & ~(multiple-1);
     }
 
-    template<typename T> inline T RoundDown(T number, T multiple)
+    template<typename Type> inline Type RoundDown(Type number, Type multiple)
     {
       return multiple * (number/multiple);
     }
 
-    template<typename T> Result MakeArraySymmetric(T &arr, bool lowerToUpper)
+    template<typename Type> Result MakeArraySymmetric(Type &arr, bool lowerToUpper)
     {
       AnkiConditionalErrorAndReturnValue(arr.get_size(0) == arr.get_size(1),
         RESULT_FAIL, "copyHalfArray", "Input array must be square");
@@ -126,7 +130,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    template<typename Array_T, typename T> Result MultiplyMatrices(const Array_T &mat1, const Array_T &mat2, Array_T &matOut)
+    template<typename Array_Type, typename Type> Result MultiplyMatrices(const Array_Type &mat1, const Array_Type &mat2, Array_Type &matOut)
     {
       AnkiConditionalErrorAndReturnValue(mat1.get_size(1) == mat2.get_size(0),
         RESULT_FAIL, "MultiplyMatrices", "Input matrices are incompatible sizes");
@@ -138,8 +142,8 @@ namespace Anki
         RESULT_FAIL, "MultiplyMatrices", "Input and Output matrices are incompatible sizes");
 
       for(s32 y1=0; y1<mat1.get_size(0); y1++) {
-        const T * restrict mat1_rowPointer = mat1.Pointer(y1, 0);
-        T * restrict matOut_rowPointer = matOut.Pointer(y1, 0);
+        const Type * restrict mat1_rowPointer = mat1.Pointer(y1, 0);
+        Type * restrict matOut_rowPointer = matOut.Pointer(y1, 0);
 
         for(s32 x2=0; x2<mat2.get_size(1); x2++) {
           matOut_rowPointer[x2] = 0;
@@ -159,6 +163,29 @@ namespace Anki
       a = b;
       b = tmp;
     } // template<typename Type> Swap(Type a, Type b)
+
+    template<typename Type> u32 BinaryStringToUnsignedNumber(const FixedLengthList<Type> &bits, bool firstBitIsLow)
+    {
+      u32 number = 0;
+
+      for(s32 bit=0; bit<bits.get_size(); bit++) {
+        if(firstBitIsLow) {
+          if(bit == 0) {
+            number += bits[bit];
+          } else {
+            number += bits[bit] << bit;
+          }
+        } else {
+          if(bit == (bits.get_size()-1)) {
+            number += bits[bit];
+          } else {
+            number += bits[bit] << (bits.get_size() - bit - 1);
+          }
+        }
+      }
+
+      return number;
+    }
   } // namespace Embedded
 } // namespace Anki
 
