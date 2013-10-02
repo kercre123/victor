@@ -1,6 +1,8 @@
 #include "anki/embeddedCommon/geometry.h"
 #include "anki/embeddedCommon/errorHandling.h"
 
+#include <stdio.h>
+
 namespace Anki
 {
   namespace Embedded

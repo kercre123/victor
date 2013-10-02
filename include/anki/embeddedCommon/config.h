@@ -160,6 +160,11 @@ namespace Anki
 #define ANKI_DEBUG_ERRORS_AND_WARNS 20 // Check and output AnkiErrors, AnkiWarns, and explicit unit tests
 #define ANKI_DEBUG_ALL 30 // Check and output AnkiErrors, AnkiWarns, and explicit unit tests, plus run any additional extensive tests
 
-#define ANKI_DEBUG_LEVEL ANKI_DEBUG_ALL
+#define ANKI_DEBUG_LEVEL ANKI_DEBUG_MINIMAL
+
+#define ANKI_OUTPUT_DEBUG_NONE 0
+#define ANKI_OUTPUT_DEBUG_PRINTF 10
+
+#define ANKI_OUTPUT_DEBUG_LEVEL ANKI_OUTPUT_DEBUG_NONE
 
 #endif // _ANKICORETECHEMBEDDED_COMMON_CONFIG_H_
