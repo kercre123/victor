@@ -1215,19 +1215,19 @@ namespace Anki
 
       Point<f64> cM(0,0), cm(0,0), sM(0,0), sm(0,0);
 
-      for(s32 i = 0; i < count; i++) {
-        cm.x += m[i].x; cm.y += m[i].y;
-        cM.x += M[i].x; cM.y += M[i].y;
+      for(s32 iPoint = 0; iPoint < count; iPoint++) {
+        cm.x += m[iPoint].x; cm.y += m[iPoint].y;
+        cM.x += M[iPoint].x; cM.y += M[iPoint].y;
       }
 
       cm.x /= count; cm.y /= count;
       cM.x /= count; cM.y /= count;
 
-      for(s32 i = 0; i < count; i++) {
-        sm.x += fabs(m[i].x - cm.x);
-        sm.y += fabs(m[i].y - cm.y);
-        sM.x += fabs(M[i].x - cM.x);
-        sM.y += fabs(M[i].y - cM.y);
+      for(s32 iPoint = 0; iPoint < count; iPoint++) {
+        sm.x += fabs(m[iPoint].x - cm.x);
+        sm.y += fabs(m[iPoint].y - cm.y);
+        sM.x += fabs(M[iPoint].x - cM.x);
+        sM.y += fabs(M[iPoint].y - cM.y);
       }
 
       if( fabs(sm.x) < DBL_EPSILON || fabs(sm.y) < DBL_EPSILON || fabs(sM.x) < DBL_EPSILON || fabs(sM.y) < DBL_EPSILON )
@@ -1249,9 +1249,9 @@ namespace Anki
 
       _LtL.Set(0.0);
 
-      for(s32 i = 0; i < count; i++) {
-        double x = (m[i].x - cm.x)*sm.x, y = (m[i].y - cm.y)*sm.y;
-        double X = (M[i].x - cM.x)*sM.x, Y = (M[i].y - cM.y)*sM.y;
+      for(s32 iPoint = 0; iPoint < count; iPoint++) {
+        double x = (m[iPoint].x - cm.x)*sm.x, y = (m[iPoint].y - cm.y)*sm.y;
+        double X = (M[iPoint].x - cM.x)*sM.x, Y = (M[iPoint].y - cM.y)*sM.y;
         double Lx[] = { X, Y, 1, 0, 0, 0, -x*X, -x*Y, -x };
         double Ly[] = { 0, 0, 0, X, Y, 1, -y*X, -y*Y, -y };
 
