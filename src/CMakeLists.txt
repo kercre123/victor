@@ -20,7 +20,7 @@ set(CORETECH_VISION_HEADER_FILES
 
 add_library(CoreTech_Vision 
   ${CORETECH_VISION_SOURCE_FILES} 
-  ${CORETECH_VISION_HEADER_FIELS})
+  ${CORETECH_VISION_HEADER_FILES})
 
 target_link_libraries(CoreTech_Vision)
 
