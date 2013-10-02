@@ -6,12 +6,12 @@
 function [image, quad, homography] = createExampleProbeImage(blockType, faceType)
 
 image = zeros(130,120);
-corners = [0,0; 
+corners = [0,0;
            0,200;
            200,0;
            200,200];
 tform = maketform('projective', eye(3));
-       
+
 marker = BlockMarker2D(image, corners, tform);
 
 if blockType < 0
@@ -21,7 +21,9 @@ if blockType < 0
 
     quad = [0,0; 0,100; 100,0; 100,100];
 else
+    figure(1);
     image = generateMarkerImage(blockType, faceType);
+    close 1
     image = double(rgb2gray(image));
     
     [y,x] = find(image < 128);
@@ -39,34 +41,53 @@ end
 
 tformInit = cp2tform(quad, [0 0; 0 1; 1 0; 1 1], 'projective');
 
-homography = tformInit.tdata.T';
+homography = tformInit.tdata.Tinv';
 
-topLeft = [68,68];
-blockWidth = 24;
+[xImg, yImg] = tforminv(tformInit, marker.Xprobes, marker.Yprobes);
 
-ci = 0;
-cy = 0;
-extraX = 0;
-extraY = 0;
-for y = topLeft(1):blockWidth:180
-    if cy == 4
-        extraY = 1;
-    end
-    
-    cx = 0;
-    for x = topLeft(2):blockWidth:180
-        meanVal = mean(mean(image(y:(y+23), x:(x+23))));
-        if meanVal < 128
-            image(y:(y+23), x:(x+23)) = image(extraY+(y:(y+23)), x:(x+23)) + ci*2;
-        else
-            image(y:(y+23), x:(x+23)) = image(extraY+(y:(y+23)), x:(x+23)) - ci*2;
+probes = [marker.Xprobes(:), marker.Yprobes(:), ones(size(marker.Xprobes(:)))]';
+probesP = homography * probes;
+probesP = probesP ./ repmat(probesP(3,:), [3,1]);
+probesP = probesP(1:2, :);
+
+hold off;
+imshow(image);
+hold on;
+% scatter(probesP(1,:), probesP(2,:))
+scatter(xImg(:), yImg(:))
+hold off 
+
+reduceContrast = false;
+
+% Misses some edges
+if reduceContrast
+    topLeft = [68,68];
+    blockWidth = 24;
+
+    ci = 0;
+    cy = 0;
+    extraX = 0;
+    extraY = 0;
+    for y = topLeft(1):blockWidth:180
+        if cy == 4
+            extraY = 1;
         end
-        
-        cx = cx + 1;
-        ci = ci + 1;
+
+        cx = 0;
+        for x = topLeft(2):blockWidth:180
+            meanVal = mean(mean(image(y:(y+23), x:(x+23))));
+            if meanVal < 128
+                image(y:(y+23), x:(x+23)) = image(extraY+(y:(y+23)), x:(x+23)) + ci*2;
+            else
+                image(y:(y+23), x:(x+23)) = image(extraY+(y:(y+23)), x:(x+23)) - ci*2;
+            end
+
+            cx = cx + 1;
+            ci = ci + 1;
+        end
+        cy = cy + 1;
     end
-    cy = cy + 1;
-end
+end % reduceContrast
 
 % Check that the example is correctly formed
 if blockType < 0
@@ -79,7 +100,6 @@ if blockType < 0
     end
 end
 
-close 1
 
+keyboard
 
-% keyboard
