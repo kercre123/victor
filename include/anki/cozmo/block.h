@@ -13,11 +13,21 @@
 
 #include "anki/vision/marker2d.h"
 
+#define BLOCKMARKER3D_USE_OUTSIDE_SQUARE true
+
 namespace Anki {
   namespace Cozmo {
     
-    class BlockMarker2d : public Marker2d
+    class BlockMarker2d : public Marker2d<5>
     {
+    public:
+
+      
+    protected:
+      std::vector<Point2f> squareCorners;
+      Pose2d pose;
+      
+      using Marker2d<5>::Layout;
       
     }; // class BlockMarker2d
     
@@ -27,13 +37,23 @@ namespace Anki {
     public:
       typedef unsigned char Type;
       
-      // TODO: Get/store marker Width in some other way.
-      // This should probably be some kind of parameter read in
-      // from a config or determined on a per-marker or per-block basis
-      // in case we want to have blocks of different sizes later.
-      static const float Width;
+      // Dimensions (all in millimeters):
+      static const float TotalWidth;
+      static const float FiducialSquareWidth;
+      static const float FiducialSpacing;     // spacing around fiducial square
+      static const float SquareWidthOutside;
+      static const float SquareWidthInside;
+      static const float ReferenceWidth;
+      static const float CodeSquareWidth;     // single "bit" square
+      static const float DockingDotSpacing;   // b/w center docking dots
+      static const float DockingDotWidth;     // diaemter of center docking dots
       
+      // Constructors:
       BlockMarker3d(const Pose3d &poseWRTparentBlock);
+      
+      // Accessors:
+      const Pose3d& get_pose(void) const;
+      void set_pose(const Pose3d &newPose);
       
     protected:
       std::vector<Point3f> squareCorners;
@@ -51,6 +71,10 @@ namespace Anki {
       ~Block();
       
       static unsigned int get_numBlocks();
+      
+      // Accessors:
+      const Pose3d& get_pose(void) const;
+      void set_pose(const Pose3d &newPose);
       
     protected:
       // A counter for how many blocks are instantiated

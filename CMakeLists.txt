@@ -11,4 +11,4 @@ link_directories(${PROJECT_SOURCE_DIR}/../coretech-vision/build/${CMAKE_GENERATO
 
 add_subdirectory(src) 
 add_subdirectory(test)
-#add_subdirectory(matlab/mex)
+add_subdirectory(matlab/mex)
