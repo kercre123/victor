@@ -87,6 +87,9 @@
 #include <stddef.h>
 
 #ifdef USING_MOVIDIUS_GCC_COMPILER
+#include "mv_types.h"
+
+/*
 // We specify types according to their sign and bits. We should use these in
 // our code instead of the normal 'int','short', etc. because different
 // compilers on different architectures treat these differently.
@@ -100,11 +103,15 @@
 #define u64 unsigned long long
 #define s64 long long
 #endif
+*/
 
 #define f32 float
 #define f64 double
+
 #else // #ifdef USING_MOVIDIUS_GCC_COMPILER
+
 #include <stdint.h>
+
 // We specify types according to their sign and bits. We should use these in
 // our code instead of the normal 'int','short', etc. because different
 // compilers on different architectures treat these differently.
@@ -118,6 +125,7 @@ typedef uint64_t u64;
 typedef int64_t  s64;
 typedef float    f32;
 typedef double   f64;
+
 #endif // #ifdef USING_MOVIDIUS_GCC_COMPILER
 
 // Maximum and minimum values
