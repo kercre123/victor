@@ -50,6 +50,20 @@ namespace Anki
       MemoryStack scratch1,
       MemoryStack scratch2);
 
+    Result SimpleDetector_Steps12345(
+      const Array<u8> &image,
+      FixedLengthList<BlockMarker> &markers,
+      FixedLengthList<Array<f64> > &homographies,
+      const s32 scaleImage_numPyramidLevels,
+      const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
+      const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
+      const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
+      const s32 component_percentHorizontal, const s32 component_percentVertical,
+      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
+      const f32 decode_minContrastRatio,
+      MemoryStack scratch1,
+      MemoryStack scratch2);
+
     //Result DetectFiducialMarkers(const Array<u8> &image, FixedLengthList<BlockMarker> &markers, MemoryStack scratch);
 
     Result BinomialFilter(const Array<u8> &image, Array<u8> &imageFiltered, MemoryStack scratch);

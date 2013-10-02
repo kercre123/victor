@@ -130,7 +130,7 @@ namespace Anki
       const s32 maxCandidateMarkers = 1000;
       const s32 maxExtractedQuads = 100;
 
-      //#define SEND_DRAWN_COMPONENTS
+#define SEND_DRAWN_COMPONENTS
 
       // Stored in the outermost scratch2
       FixedLengthList<BlockMarker> candidateMarkers(maxCandidateMarkers, scratch2);
@@ -161,6 +161,17 @@ namespace Anki
           if(extractedComponents.Extract2dComponents(binaryImage, component1d_minComponentWidth, component1d_maxSkipDistance, scratch2) != RESULT_OK)
             return RESULT_FAIL;
 
+#ifdef SEND_DRAWN_COMPONENTS
+          {
+            Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
+            DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+
+            Matlab matlab(false);
+            matlab.PutArray(drawnComponents, "drawnComponents0");
+            //drawnComponents.Show("drawnComponents0", true, false);
+          }
+#endif
+
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
           if(extractedComponents.InvalidateSmallOrLargeComponents(component_minimumNumPixels, component_maximumNumPixels, scratch2) != RESULT_OK)
@@ -179,7 +190,7 @@ namespace Anki
             DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
 
             Matlab matlab(false);
-            matlab.PutArray(drawnComponents, "drawnComponents0");
+            matlab.PutArray(drawnComponents, "drawnComponents1");
             //drawnComponents.Show("drawnComponents0", true, false);
           }
 #endif
@@ -200,7 +211,7 @@ namespace Anki
         DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
 
         Matlab matlab(false);
-        matlab.PutArray(drawnComponents, "drawnComponents1");
+        matlab.PutArray(drawnComponents, "drawnComponents2");
         //drawnComponents.Show("drawnComponents0", true, false);
       }
 #endif
@@ -237,5 +248,146 @@ namespace Anki
 
       return RESULT_OK;
     } //  SimpleDetector_Steps1234()
+
+    IN_DDR Result SimpleDetector_Steps12345(
+      const Array<u8> &image,
+      FixedLengthList<BlockMarker> &markers,
+      FixedLengthList<Array<f64> > &homographies,
+      const s32 scaleImage_numPyramidLevels,
+      const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
+      const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
+      const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
+      const s32 component_percentHorizontal, const s32 component_percentVertical,
+      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
+      const f32 decode_minContrastRatio,
+      MemoryStack scratch1,
+      MemoryStack scratch2)
+    {
+      // TODO: figure out a simpler way to write code that reuses big blocks of memory
+
+      const s32 maxConnectedComponentSegments = u16_MAX;
+      const s32 maxCandidateMarkers = 1000;
+      const s32 maxExtractedQuads = 100;
+
+#define SEND_DRAWN_COMPONENTS
+
+      // Stored in the outermost scratch2
+      FixedLengthList<BlockMarker> candidateMarkers(maxCandidateMarkers, scratch2);
+      ConnectedComponents extractedComponents; // This isn't allocated until after the scaleImage
+      {
+        PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
+        Array<u8> binaryImage(image.get_size(0), image.get_size(1), scratch2);
+
+        // 1. Compute the Scale image (use local scratch1)
+        // 2. Binarize the Scale image (store in outer scratch2)
+        {
+          PUSH_MEMORY_STACK(scratch1); // Push the current state of the scratch buffer onto the system stack
+
+          FixedPointArray<u32> scaleImage(image.get_size(0), image.get_size(1), 16, scratch1);
+
+          if(ComputeCharacteristicScaleImage(image, scaleImage_numPyramidLevels, scaleImage, scratch2) != RESULT_OK)
+            return RESULT_FAIL;
+
+          if(ThresholdScaleImage(image, scaleImage, binaryImage) != RESULT_OK)
+            return RESULT_FAIL;
+        } // PUSH_MEMORY_STACK(scratch1);
+
+        // 3. Compute connected components from the binary image (use local scratch2, store in outer scratch1)
+        extractedComponents = ConnectedComponents(maxConnectedComponentSegments, scratch1);
+        {
+          PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
+
+          if(extractedComponents.Extract2dComponents(binaryImage, component1d_minComponentWidth, component1d_maxSkipDistance, scratch2) != RESULT_OK)
+            return RESULT_FAIL;
+
+#ifdef SEND_DRAWN_COMPONENTS
+          {
+            Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
+            DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+
+            Matlab matlab(false);
+            matlab.PutArray(drawnComponents, "drawnComponents0");
+            //drawnComponents.Show("drawnComponents0", true, false);
+          }
+#endif
+
+          extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
+
+          if(extractedComponents.InvalidateSmallOrLargeComponents(component_minimumNumPixels, component_maximumNumPixels, scratch2) != RESULT_OK)
+            return RESULT_FAIL;
+
+          extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
+
+          if(extractedComponents.InvalidateSolidOrSparseComponents(component_sparseMultiplyThreshold, component_solidMultiplyThreshold, scratch2) != RESULT_OK)
+            return RESULT_FAIL;
+
+          extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
+
+#ifdef SEND_DRAWN_COMPONENTS
+          {
+            Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
+            DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+
+            Matlab matlab(false);
+            matlab.PutArray(drawnComponents, "drawnComponents1");
+            //drawnComponents.Show("drawnComponents0", true, false);
+          }
+#endif
+
+          // TODO: invalidate filled center components
+          if(extractedComponents.InvalidateFilledCenterComponents(component_percentHorizontal, component_percentVertical, scratch2) != RESULT_OK)
+            return RESULT_FAIL;
+
+          extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
+
+          extractedComponents.SortConnectedComponentSegments();
+        } // PUSH_MEMORY_STACK(scratch2);
+      } // PUSH_MEMORY_STACK(scratch2);
+
+#ifdef SEND_DRAWN_COMPONENTS
+      {
+        Array<u8> drawnComponents(image.get_size(0), image.get_size(1), scratch1);
+        DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
+
+        Matlab matlab(false);
+        matlab.PutArray(drawnComponents, "drawnComponents2");
+        //drawnComponents.Show("drawnComponents0", true, false);
+      }
+#endif
+
+      // 4. Compute candidate quadrilaterals from the connected components
+      FixedLengthList<Quadrilateral<s16> > extractedQuads(maxExtractedQuads, scratch2);
+      {
+        PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
+
+        if(ComputeQuadrilateralsFromConnectedComponents(extractedComponents, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, image.get_size(0), image.get_size(1), extractedQuads, scratch2) != RESULT_OK)
+          return RESULT_FAIL;
+      } // PUSH_MEMORY_STACK(scratch2);
+
+      // 4b. Compute a homography for each extracted quadrilateral
+      markers.set_size(extractedQuads.get_size());
+      for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
+        PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
+
+        Array<f64> &currentHomography = homographies[iQuad];
+
+        if(ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, scratch2) != RESULT_OK)
+          return RESULT_FAIL;
+      } // for(iQuad=0; iQuad<; iQuad++)
+
+      // 5. Decode fiducial markers from the candidate quadrilaterals
+      const FiducialMarkerParser parser = FiducialMarkerParser();
+
+      for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
+        const Array<f64> &currentHomography = homographies[iQuad];
+        const Quadrilateral<s16> &currentQuad = extractedQuads[iQuad];
+        BlockMarker &currentMarker = markers[iQuad];
+
+        if(parser.ExtractBlockMarker(image, currentQuad, currentHomography, decode_minContrastRatio, currentMarker, scratch2) != RESULT_OK)
+          return RESULT_FAIL;
+      }
+
+      return RESULT_OK;
+    } //  SimpleDetector_Steps12345()
   } // namespace Embedded
 } // namespace Anki

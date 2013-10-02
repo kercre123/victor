@@ -124,7 +124,7 @@ namespace Anki
 
       Result InitializeAsDefaultParser();
 
-      Result DetermineOrientationAndBinarize(const FixedLengthList<s16> &meanValues, const f32 minContrastRatio, BlockMarker::Orientation &orientation, FixedLengthList<u8> &binarizedBits) const;
+      Result DetermineOrientationAndBinarizeAndReorderCorners(const FixedLengthList<s16> &meanValues, const f32 minContrastRatio, BlockMarker &marker, FixedLengthList<u8> &binarizedBits, MemoryStack scratch) const;
 
       Result DecodeId(const FixedLengthList<u8> &binarizedBits, s16 &blockType, s16 &faceType, MemoryStack scratch) const;
 

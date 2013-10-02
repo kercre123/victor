@@ -46,7 +46,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const s32 component_sparseMultiplyThreshold = static_cast<s32>(Round(pow(2,5)*mxGetScalar(prhs[6]))); // Convert from double to SQ26.5
   const s32 component_solidMultiplyThreshold = static_cast<s32>(Round(pow(2,5)*mxGetScalar(prhs[7]))); // Convert from double to SQ26.5
 
-  //printf("%f %f %s\n", *startPoint.Pointer(0,0), *startPoint.Pointer(0,1), initialDirection.data());
   ConditionalErrorAndReturn(image.IsValid(), "mexSimpleDetectorSteps123", "Could not allocate image");
 
   const u32 numBytes0 = 10000000;
@@ -126,5 +125,4 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   free(scratch0.get_buffer());
   free(scratch1.get_buffer());
   free(scratch2.get_buffer());
-  //delete(components2d);
 }

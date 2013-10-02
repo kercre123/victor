@@ -329,7 +329,7 @@ namespace Anki
       } // PUSH_MEMORY_STACK(scratch);
 
       //r_smooth = sum(r_smooth.^2, 2);
-      FixedPointArray<s32> boundaryFilteredAndCombined(1, boundary.get_size(), numSigmaFractionalBits, scratch); // SQ23.8
+      FixedPointArray<s32> boundaryFilteredAndCombined(1, boundary.get_size(), 2*numSigmaFractionalBits, scratch); // SQ15.16
       s32 * restrict boundaryFilteredAndCombined_rowPointer = boundaryFilteredAndCombined.Pointer(0,0);
 
       const s32 * restrict boundaryXFiltered_constRowPointer = boundaryXFiltered.Pointer(0,0);
@@ -353,24 +353,29 @@ namespace Anki
       // combat rare cases where we have two responses next to each other that are exactly equal.
       // localMaxima = find(r_smooth >= r_smooth([end 1:end-1]) & r_smooth > r_smooth([2:end 1]));
 
-      if(boundaryFilteredAndCombined_constRowPointer[0] >= boundaryFilteredAndCombined_constRowPointer[1] &&
-        boundaryFilteredAndCombined_constRowPointer[0] > boundaryFilteredAndCombined_constRowPointer[boundary.get_size()-1]) {
+      if(boundaryFilteredAndCombined_constRowPointer[0] > boundaryFilteredAndCombined_constRowPointer[1] &&
+        boundaryFilteredAndCombined_constRowPointer[0] >= boundaryFilteredAndCombined_constRowPointer[boundary.get_size()-1]) {
           localMaxima.PushBack(0);
       }
 
       for(s32 i=1; i<(boundary.get_size()-1); i++) {
-        if(boundaryFilteredAndCombined_constRowPointer[i] >= boundaryFilteredAndCombined_constRowPointer[i+1] &&
-          boundaryFilteredAndCombined_constRowPointer[i] > boundaryFilteredAndCombined_constRowPointer[i-1]) {
+        if(boundaryFilteredAndCombined_constRowPointer[i] > boundaryFilteredAndCombined_constRowPointer[i+1] &&
+          boundaryFilteredAndCombined_constRowPointer[i] >= boundaryFilteredAndCombined_constRowPointer[i-1]) {
             localMaxima.PushBack(i);
         }
       }
 
-      if(boundaryFilteredAndCombined_constRowPointer[boundary.get_size()-1] >= boundaryFilteredAndCombined_constRowPointer[0] &&
-        boundaryFilteredAndCombined_constRowPointer[boundary.get_size()-1] > boundaryFilteredAndCombined_constRowPointer[boundary.get_size()-2]) {
+      if(boundaryFilteredAndCombined_constRowPointer[boundary.get_size()-1] > boundaryFilteredAndCombined_constRowPointer[0] &&
+        boundaryFilteredAndCombined_constRowPointer[boundary.get_size()-1] >= boundaryFilteredAndCombined_constRowPointer[boundary.get_size()-2]) {
           localMaxima.PushBack(boundary.get_size()-1);
       }
 
       //boundaryFilteredAndCombined.Print("boundaryFilteredAndCombined");
+      //for(s32 i=0; i<boundaryFilteredAndCombined.get_size(1); i++) {
+      //  printf("%d\n", boundaryFilteredAndCombined[0][i]);
+      //}
+
+      //localMaxima.Print("localMaxima");
 
       const Point<s16> * restrict boundary_constRowPointer = boundary.Pointer(0);
 
@@ -402,7 +407,7 @@ namespace Anki
       for(s32 iMax=0; iMax<4; iMax++) {
         s32 curMinIndex = -1;
         for(s32 i=0; i<4; i++) {
-          if(!whichUsed[i] && maximaIndexes[i] > 0) {
+          if(!whichUsed[i] && maximaIndexes[i] >= 0) {
             if(curMinIndex == -1 || maximaIndexes[curMinIndex] > maximaIndexes[i]) {
               curMinIndex = i;
             }

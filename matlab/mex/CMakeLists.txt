@@ -20,6 +20,7 @@ set(MEX_FILES
 	mexRegionprops.cpp
 	mexSimpleDetectorSteps123.cpp
 	mexSimpleDetectorSteps1234.cpp
+	mexSimpleDetectorSteps12345.cpp
 	mexTraceBoundary.cpp
 	mex_cp2tform_projective.cpp
 )
