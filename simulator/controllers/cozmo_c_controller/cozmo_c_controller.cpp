@@ -12,10 +12,10 @@
  */
 #include <stdio.h>
 #include <ctype.h>
-#include "cozmoBot.h"
 #include <string.h>
+#include "cozmoBot.h"
 #include "engine.h"
-#include "hal/motors.h"
+#include "hal/hal.h"
 #include "app/localization.h"
 #include "app/pathFollower.h"
 #include "keyboardController.h"

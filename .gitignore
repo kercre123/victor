@@ -1,7 +1,13 @@
 # Misc
 *.bak
 *~
+*.d
+*.cache
 matlab.mat
+
+# Webots
+*.wbproj
+
 # Mac OS
 *.DS_Store
 # Xcode
@@ -16,6 +22,7 @@ matlab.mat
 *.mode2v3
 *.perspectivev3
 *.moved-aside
+
 # MSVC
 *.res
 *.user

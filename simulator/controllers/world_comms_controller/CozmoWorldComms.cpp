@@ -21,7 +21,7 @@
  */
 
 #include "CozmoWorldComms.h"
-#include "cozmoMsgProtocol.h"
+#include "comms/cozmoMsgProtocol.h"
 #include "cozmoConfig.h"
 
 #include <iostream>
