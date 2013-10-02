@@ -4,58 +4,63 @@
 #APPNAME ?= $(notdir $(shell pwd))
 APPNAME=coretech-common-unit-tests
 
-MDK_DIRECTORY?=../../../../movidius-tools/mdk_13.08.0_general/mdk
+# ------------------------------[ Build overrides ]--------------------------------#
+# overrides that need to be set before including generic.mk
+
+MDK_DIRECTORY?=../../../../movidius-tools/mdk
 
 CORETECH_COMMON_DIRECTORY?=../../../../coretech-common
 
 MVCC_OPT_LEVEL ?= -O1
+LEON_C_OPTIMIZATION_LEVEL ?= -Os
 LEON_CPP_OPTIMIZATION_LEVEL ?= -O3
-
-# ------------------------------[ Build overrides ]--------------------------------#
-# overrides that need to be set before including generic.mk
-#ShaveSymObject   = $(DirAppObjDir)/$(APPNAME).sym.o
-#LinkerScript    =  $(DirLDScript)/$(APPNAME).ldscript
-
-# Set Shave common mof name (non-mbin flow)
-#ShaveCommonName = shaves
 
 SH0_Obj += output/obj/shaveMain.mobj
 
-ShaveCSrcFiles += shave/shaveMain.c 
+# ShaveCSrcFiles += shave/shaveMain.c 
 
-LeonCSrcFiles += leon/main.c
-LeonCPPSrcFiles += leon/cppInterface.cpp
+LEON_C_SOURCES += leon/main.c
+LEON_CPP_SOURCES += leon/cppInterface.cpp
 
-LeonHeaderFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/include/)
+LEON_HEADERS += $(wildcard $(CORETECH_COMMON_DIRECTORY)/include/)
 
-LeonCPPSrcFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/embedded/*.cpp)
-LeonCSrcFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/embedded/*.c)
+LEON_CPP_SOURCES += $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/embedded/*.cpp)
+LEON_C_SOURCES += $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/embedded/*.c)
 
-LeonCPPSrcFiles += $(wildcard $(CORETECH_COMMON_DIRECTORY)/test/embedded/embeddedCommonTests.cpp)
+LEON_CPP_SOURCES += $(wildcard $(CORETECH_COMMON_DIRECTORY)/test/embedded/embeddedCommonTests.cpp)
 
-# Limit to only needed drivers
-#SysCSrcFiles     = drv_ddr.c drv_uart.c drv_vcs.c drv_print.c drv_timer.c drv_l2cache.c drv_sys_cfg.c drv_cpr.c svu_utils.c
-#SysASrcFiles     = crt0.S traps.S sysbss.S
+# ------------------------------[ Components used ]--------------------------------#
+ComponentList = Board
 
-#TEST_TYPE     := AUTO
-#ComponentList := UnitTest
+#-------------------------------[ Local shave applications sources ]--------------------#
+#No local shave applications for this example
 
-ComponentList :=
+#Include apps-to-shaves mapping configuration file
+include ./config/config_shaves.mk
 
-# ------------------------------[ Tools ]------------------------------------------#
-# Hardcode tool version here if needed, otherwise defaults to Latest
+# ------------------------------[ Tools overrides ]--------------------------------#
+# Hardcode tool version here if needed, otherwise defaults to latest stable release
 #MV_TOOLS_VERSION =00.50.23.0
 
+# Verbose or not, uncomment for more verbosity
+#ECHO=
+
 # Set MV_COMMON_BASE relative to mdk directory location (but allow user to override in environment)
-MV_COMMON_BASE   =$(MDK_DIRECTORY)/common
+MV_COMMON_BASE ?= $(MDK_DIRECTORY)/common
 
 # Include the generic Makefile
+# include $(MV_COMMON_BASE)/generic.mk
 include generic_custom.mk
+
+#-------------------------------[ Local shave applications build rules ]------------------#
+#No local applications build rules for this example
 
 
 # -------------------------------- [ Build Options ] ------------------------------ #
-# App related build options
+# App related build options 
 
 # Extra app related options
-CCOPT			+= -DDEBUG
-CCOPT           +=
+#CCOPT			+= -DDEBUG
+CCOPT           += 
+
+
