@@ -35,10 +35,10 @@ using namespace Anki::Embedded;
 // quads_quadSymmetryThreshold = 1.5;
 // quads_minDistanceFromImageEdge = 2;
 // decode_minContrastRatio = 1.25;
-// [quads, blockTypes, faceTypes] = mexSimpleDetectorSteps12345(image, scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio);
+// [quads, blockTypes, faceTypes, orientations] = mexSimpleDetectorSteps12345(image, scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio);
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-  ConditionalErrorAndReturn(nrhs == 14 && nlhs == 3, "mexSimpleDetectorSteps12345", "Call this function as following: [quads, blockTypes, faceTypes] = mexSimpleDetectorSteps1234(uint8(image), scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio);");
+  ConditionalErrorAndReturn(nrhs == 14 && nlhs == 4, "mexSimpleDetectorSteps12345", "Call this function as following: [quads, blockTypes, faceTypes, orientations] = mexSimpleDetectorSteps1234(uint8(image), scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio);");
 
   Array<u8> image = mxArrayToArray<u8>(prhs[0]);
   const s32 scaleImage_numPyramidLevels = static_cast<s32>(mxGetScalar(prhs[1]));
@@ -106,6 +106,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   Array<f64> blockTypes(1, numMarkers, scratch0);
   Array<f64> faceTypes(1, numMarkers, scratch0);
+  Array<f64> orientations(1, numMarkers, scratch0);
 
   for(s32 i=0; i<numMarkers; i++) {
     quads[i] = Array<f64>(4, 2, scratch0);
@@ -117,6 +118,18 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     blockTypes[0][i] = markers[i].blockType;
     faceTypes[0][i] = markers[i].faceType;
+
+    if(markers[i].orientation == BlockMarker::ORIENTATION_UP) {
+      orientations[0][i] = 0.0;
+    } else if(markers[i].orientation == BlockMarker::ORIENTATION_DOWN) {
+      orientations[0][i] = PI;
+    } else if(markers[i].orientation == BlockMarker::ORIENTATION_LEFT) {
+      orientations[0][i] = PI / 2.0;
+    } else if(markers[i].orientation == BlockMarker::ORIENTATION_RIGHT) {
+      orientations[0][i] = 3.0 * PI / 2.0;
+    } else {
+      orientations[0][i] = -100000.0; // Invalid
+    }
   }
 
   const mwSize markersMatlab_ndim = 2;
@@ -129,10 +142,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   mxArray *blockTypesMatlab = arrayToMxArray<f64>(blockTypes);
   mxArray *faceTypesMatlab = arrayToMxArray<f64>(faceTypes);
+  mxArray *orientationsMatlab = arrayToMxArray<f64>(orientations);
 
   plhs[0] = quadsMatlab;
   plhs[1] = blockTypesMatlab;
   plhs[2] = faceTypesMatlab;
+  plhs[3] = orientationsMatlab;
 
   free(scratch0.get_buffer());
   free(scratch1.get_buffer());

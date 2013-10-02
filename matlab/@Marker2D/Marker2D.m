@@ -139,20 +139,34 @@ classdef Marker2D
     %% Public Methods
     methods(Access = 'public')
         
-        function this = Marker2D(img, corners_, tform)
+        function this = Marker2D(img, corners_, tform, varargin)
+            
             % Note that corners are provided in the following order:
             %   1. Upper left
             %   2. Lower left
             %   3. Upper right
             %   4. Lower right
-            
             this.corners = corners_;
-            this.ids = zeros(1, this.numIDs);
             
-            this.means = probeMeans(this, img, tform);
-            [this, binaryString] = orientAndThreshold(this, this.means);
-            if this.isValid
-                this = decodeIDs(this, binaryString);
+            if ~isempty(varargin) && strcmpi(varargin{1}, 'ExplictInput')
+                ids = [];
+                upAngle = -Inf;
+                
+                parseVarargin(varargin{2:end});
+                
+                this.ids = ids;
+                this.upAngle = upAngle;
+                
+                this.isValid = 1;
+                            
+            else
+                this.ids = zeros(1, this.numIDs);
+
+                this.means = probeMeans(this, img, tform);
+                [this, binaryString] = orientAndThreshold(this, this.means);
+                if this.isValid
+                    this = decodeIDs(this, binaryString);
+                end
             end
             
         end % CONSTRUCTOR Marker2D()
