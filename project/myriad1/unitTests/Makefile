@@ -13,7 +13,7 @@ CORETECH_COMMON_DIRECTORY?=../../../../coretech-common
 
 MVCC_OPT_LEVEL ?= -O1
 LEON_C_OPTIMIZATION_LEVEL ?= -Os
-LEON_CPP_OPTIMIZATION_LEVEL ?= -O3
+LEON_CPP_OPTIMIZATION_LEVEL ?= -O2
 
 SH0_Obj += output/obj/shaveMain.mobj
 
