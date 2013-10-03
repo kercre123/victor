@@ -25,6 +25,9 @@ LEON_C_SOURCES += leon/app_config.c
 LEON_CPP_SOURCES += leon/cppInterface.cpp
 
 LEON_HEADERS += $(wildcard $(CORETECH_COMMON_DIRECTORY)/include/)
+LEON_HEADERS += $(wildcard $(CORETECH_COMMON_DIRECTORY)/include/anki/*.h)
+LEON_HEADERS += $(wildcard $(CORETECH_COMMON_DIRECTORY)/include/anki/*.h)
+LEON_HEADERS += $(wildcard $(CORETECH_COMMON_DIRECTORY)/include/anki/embeddedCommon/*.h)
 
 LEON_CPP_SOURCES += $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/embedded/*.cpp)
 LEON_C_SOURCES += $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/embedded/*.c)

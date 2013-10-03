@@ -25,49 +25,17 @@
 
 #define NUM_BENCHMARK_EVENTS 0xFFFF
 
-//#if defined(_MSC_VER)
-//#ifndef inline
-//#define inline __forceinline
-//#endif
-//
-//#elif defined(USING_MOVIDIUS_GCC_COMPILER)
-//
-//#ifndef inline
-//#define inline __attribute__((always_inline))
-//#endif
-//
-//#endif
+#if defined(_MSC_VER)
+#ifndef inline
+#define inline __forceinline
+#endif
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-  typedef enum
-  {
-    BENCHMARK_EVENT_BEGIN,
-    BENCHMARK_EVENT_END
-  } BenchmarkEventType;
-
-  typedef struct {
-    const char * name; // Warning: name must be in globally available memory
-    unsigned long long time;
-    BenchmarkEventType type;
-  } BenchmarkEvent;
-
-  extern BenchmarkEvent benchmarkEvents[];
-  extern int currentBenchmarkEvent;
-
-  void InitBenchmarking();
-
-  // Warning: name must be in globally available memory
-  // Warning: nesting BeginBenchmark() and EndBenchmark() events won't work
-  void BeginBenchmark(const char *name);
-  void EndBenchmark(const char *name);
-  void AddBenchmarkEvent(const char *name, unsigned long long time, BenchmarkEventType type);
-
-  void PrintBenchmarkResults();
-
-#pragma mark --- Implementations ---
+  void explicitPrintf(const char *format, ...);
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,6 @@
 #include "anki/embeddedCommon/array2d.h"
 #include "anki/embeddedCommon/errorHandling.h"
+#include "anki/embeddedCommon/utilities.h"
 
 #include <math.h>
 #include <stdlib.h>

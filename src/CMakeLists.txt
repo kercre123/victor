@@ -38,6 +38,7 @@ add_library(CoreTech_Common
 set(CORETECH_COMMON_EMBEDDED_SOURCE_FILES
 	embedded/array2d.cpp
 	embedded/benchmarking.c
+	embedded/cUtilities.c
 	embedded/draw.cpp
 	embedded/errorHandling.cpp
 	embedded/fixedLengthList.cpp
@@ -63,6 +64,7 @@ set(CORETECH_COMMON_EMBEDDED_HEADER_FILES
 	../include/anki/embeddedCommon/memory.h
 	../include/anki/embeddedCommon/opencvLight.h
 	../include/anki/embeddedCommon/utilities.h
+	../include/anki/embeddedCommon/cUtilities.h
 )
 
 add_library(CoreTech_Common_Embedded 

@@ -1,5 +1,5 @@
 SECTIONS {
-  . = 0x48010000;
+  . = 0x40010000;
 
   .ddr.rodata : {
     *(.ddr.rodata*)
