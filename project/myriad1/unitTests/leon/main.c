@@ -49,7 +49,8 @@ void realMain()
     DrvL2CacheSetupPartition(PART128KB);
     DrvL2CacheAllocateSetPartitions();
     SET_REG_WORD(L2C_MXITID_ADR, 0x0);
-    sparc_leon3_disable_cache();
+
+//    sparc_leon3_disable_cache();
 
     printf("Starting unit tests\n");
 
@@ -59,7 +60,7 @@ void realMain()
 
     swcShaveProfStartGathering(0, &perfStr);
 
-//    runTests();
+    runTests();
 
     swcShaveProfStopGathering(0, &perfStr);
 
@@ -73,9 +74,9 @@ int __attribute__((section(".sys.text.start"))) main(void)
 {
     initClocksAndMemory();
 
-    DrvTimerInit();
+//    DrvTimerInit();
 
-    SleepMs(10000);
+//    SleepMs(10000);
 
 //    const u64 startTime = DrvTimerGetSysTicks64();
 
