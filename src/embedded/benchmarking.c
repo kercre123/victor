@@ -23,6 +23,54 @@ static double maxTimes[NUM_BENCHMARK_EVENTS];
 static unsigned int numEvents[NUM_BENCHMARK_EVENTS];
 static int lastBeginIndex[NUM_BENCHMARK_EVENTS];
 
+void InitBenchmarking()
+{
+  currentBenchmarkEvent = 0;
+}
+
+unsigned long long GetBenchmarkTime()
+{
+#if defined(_MSC_VER)
+  LARGE_INTEGER counter;
+  QueryPerformanceCounter(&counter);
+
+  return counter.QuadPart;
+#elif defined(__APPLE_CC__)
+  return 0; // TODO: implement
+#elif defined(USING_MOVIDIUS_GCC_COMPILER)
+  return 0; // TODO: implement
+#elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
+  return 0; // TODO: implement
+#else
+  timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return ts.tv_sec * 1000000000 + ts.tv_nsec;
+#endif
+}
+
+void AddBenchmarkEvent(const char *name, unsigned long long time, BenchmarkEventType type)
+{
+  benchmarkEvents[currentBenchmarkEvent].name = name;
+  benchmarkEvents[currentBenchmarkEvent].time = time;
+  benchmarkEvents[currentBenchmarkEvent].type = type;
+
+  currentBenchmarkEvent++;
+
+  // If we run out of space, just keep overwriting the last event
+  if(currentBenchmarkEvent >= NUM_BENCHMARK_EVENTS)
+    currentBenchmarkEvent = NUM_BENCHMARK_EVENTS-1;
+}
+
+void BeginBenchmark(const char *name)
+{
+  AddBenchmarkEvent(name, GetBenchmarkTime(), BENCHMARK_EVENT_BEGIN);
+} // void startBenchmark(const char *name)
+
+void EndBenchmark(const char *name)
+{
+  AddBenchmarkEvent(name, GetBenchmarkTime(), BENCHMARK_EVENT_END);
+} // void endBenchmark(const char *name)
+
 int GetNameIndex(const char * const name, unsigned int * index)
 {
   int i;

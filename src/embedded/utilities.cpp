@@ -4,6 +4,7 @@
 #if defined(_MSC_VER)
 #include <windows.h >
 #elif defined(USING_MOVIDIUS_COMPILER)
+
 #else
 #include <sys/time.h>
 #endif
@@ -163,5 +164,95 @@ namespace Anki
       }
     }
 #endif // #if defined(USING_MOVIDIUS_GCC_COMPILER)
+
+    //#ifdef USING_MOVIDIUS_GCC_COMPILER
+    //    void explicitPrintf(const char *format, ...)
+    //    {
+    //#define MAX_PRINTF_DIGITS 50
+    //      int digits[MAX_PRINTF_DIGITS];
+    //      int curChar = 0;
+    //      int percentSignFound = 0;
+    //
+    //      int numArguments = 0;
+    //      int previousChar = ' ';
+    //
+    //      const char * const formatStart = format;
+    //      while(format != 0x00)
+    //      {
+    //        if(*format == '%') {
+    //          numArguments++;
+    //        }
+    //
+    //        format++;
+    //      }
+    //      format = formatStart;
+    //
+    //      va_list arguments;
+    //      va_start(arguments, numArguments);
+    //
+    //      while(format != 0x00) {
+    //        if(curChar >= 3) {
+    //          curChar = 0;
+    //          DrvApbUartPutChar(*format);
+    //          DrvApbUartPutChar(charBuffer[2]);
+    //          DrvApbUartPutChar(charBuffer[1]);
+    //          DrvApbUartPutChar(charBuffer[0]);
+    //          format++;
+    //        } else { // if(curChar >= 3)
+    //          if(percentSignFound) {
+    //            int i;
+    //            for(i=0; i<MAX_PRINTF_DIGITS; i++) {
+    //              digits[i] = 0;
+    //            }
+    //
+    //            int value = va_arg(arguments, int);
+    //            if(value < 0) {
+    //              DrvApbUartPutChar('-');
+    //              value = -value;
+    //            }
+    //
+    //            if(value == 0) {
+    //              DrvApbUartPutChar('0');
+    //              DrvApbUartPutChar(' ');
+    //              format++;
+    //              continue;
+    //            }
+    //
+    //            i=0;
+    //            while(value > 0) {
+    //              const int curDigit = value - (10*(value/10));
+    //
+    //              digits[i++] = curDigit;
+    //
+    //              value /= 10;
+    //            }
+    //
+    //            i--;
+    //            for( ; i>=0; i--) {
+    //              DrvApbUartPutChar(digits[i] + 48);
+    //            }
+    //
+    //            DrvApbUartPutChar(' ');
+    //            format++;
+    //
+    //            percentSignFound = 0;
+    //          } else { // if(percentSignFound)
+    //            if(*format == '%') {
+    //              while(curChar <= 3) {
+    //                charBuffer[curChar++] = ' ';
+    //              }
+    //              percentSignFound = 1;
+    //              previousChar = *(format - 1);
+    //              format++;
+    //            } else {
+    //              charBuffer[curChar++] = *format;
+    //              format++;
+    //            }
+    //          } // if(percentSignFound) ... else
+    //        } // if(curChar >= 3) ... else
+    //      } // while(format != 0x00)
+    //      va_end(arguments);
+    //    } // void explicitPrintf(const char *format, ...)
+    //#endif // #ifdef USING_MOVIDIUS_GCC_COMPILER
   } // namespace Embedded
 } // namespace Anki

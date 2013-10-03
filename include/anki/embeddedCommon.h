@@ -15,5 +15,6 @@
 #include "anki/embeddedCommon/opencvLight.h"
 #include "anki/embeddedCommon/draw.h"
 #include "anki/embeddedCommon/benchmarking.h"
+#include "anki/embeddedCommon/cUtilities.h"
 
 #endif // _ANKICORETECHEMBEDDEDEMBEDDED_EMBEDDED_COMMON_H_

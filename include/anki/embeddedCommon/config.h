@@ -97,10 +97,12 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 
+#undef printf
+#define printf explicitPrintf
+
 #ifdef __cplusplus
 }
 #endif
-
 
 /*
 // We specify types according to their sign and bits. We should use these in

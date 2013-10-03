@@ -725,6 +725,10 @@ IN_DDR GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 
   simpleArray.Set(imgData, ArraySpecifiedClass_imgDataLength);
 
+  printf("*simpleArray.Pointer(0,0) = %d\n", *simpleArray.Pointer(0,0));
+
+  simpleArray.Print("simpleArray");
+
   ASSERT_TRUE((*simpleArray.Pointer(0,0)) == 1); // If the templating fails, this will equal 49
 
   //free(buffer); buffer = NULL;
