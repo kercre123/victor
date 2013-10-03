@@ -199,30 +199,36 @@ IN_DDR GTEST_TEST(CoreTech_Common, ComputeHomography)
 
 IN_DDR void PrintfOneArray_f32(const Array<f32> &array, const char * variableName)
 {
-  printf("%s:\n", variableName);
+  printf("%s:\n   ", variableName);
   for(s32 y=0; y<array.get_size(0); y++) {
     const f32 * const rowPointer = array.Pointer(y, 0);
-    for(s32 x=0; x<array.get_size(1); x++) {
-      const f32 value = rowPointer[x];
-      const f32 mulitipliedValue = 10000.0f * value;
-      printf("%d ", static_cast<s32>(mulitipliedValue));
+    for(s32 x=0; x<array.get_size(1); x+=2) {
+      const f32 value1 = rowPointer[x];
+      const f32 value2 = rowPointer[x+1];
+      const f32 mulitipliedValue1 = 10000.0f * value1;
+      const f32 mulitipliedValue2 = 10000.0f * value2;
+      printf("%d %d   ", static_cast<s32>(mulitipliedValue1), static_cast<s32>(mulitipliedValue2));
     }
-    printf("\n");
+    printf("\n   ");
   }
-  printf("\n");
+  printf("\n   ");
 }
 
 IN_DDR void PrintfOneArray_f64(const Array<f64> &array, const char * variableName)
 {
-  printf("%s:\n", variableName);
+  printf("%s:\n   ", variableName);
   for(s32 y=0; y<array.get_size(0); y++) {
     const f64 * const rowPointer = array.Pointer(y, 0);
-    for(s32 x=0; x<array.get_size(1); x++) {
-      printf("%d ", static_cast<s32>((10000.0*rowPointer[x])));
+    for(s32 x=0; x<array.get_size(1); x+=2) {
+      const f64 value1 = rowPointer[x];
+      const f64 value2 = rowPointer[x+1];
+      const f64 mulitipliedValue1 = 10000.0f * value1;
+      const f64 mulitipliedValue2 = 10000.0f * value2;
+      printf("%d %d   ", static_cast<s32>(mulitipliedValue1), static_cast<s32>(mulitipliedValue2));
     }
-    printf("\n");
+    printf("\n   ");
   }
-  printf("\n");
+  printf("\n   ");
 }
 
 IN_DDR GTEST_TEST(CoreTech_Common, SVD32)
@@ -240,6 +246,8 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD32)
   const f32 aData[SVD_aDataLength] = {
     1, 2, 3, 5, 7, 11, 13, 17,
     19, 23, 29, 31, 37, 41, 43, 47};
+  /*0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0};*/
 
   const f32 uTGroundTruthData[SVD_uTGroundTruthDataLength] = {
     -0.237504316543999f,  -0.971386483137875f,
@@ -855,10 +863,10 @@ IN_DDR void RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
-  CALL_GTEST_TEST(CoreTech_Common, MatrixMultiply);
-  CALL_GTEST_TEST(CoreTech_Common, ComputeHomography);
   CALL_GTEST_TEST(CoreTech_Common, SVD32);
   CALL_GTEST_TEST(CoreTech_Common, SVD64);
+  CALL_GTEST_TEST(CoreTech_Common, MatrixMultiply);
+  CALL_GTEST_TEST(CoreTech_Common, ComputeHomography);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_call);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1);
