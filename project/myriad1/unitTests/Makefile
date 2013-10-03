@@ -22,14 +22,14 @@ SH0_Obj += output/obj/shaveMain.mobj
 LEON_C_SOURCES += leon/main.c
 LEON_C_SOURCES += leon/app_config.c
 
-#LEON_CPP_SOURCES += leon/cppInterface.cpp
+LEON_CPP_SOURCES += leon/cppInterface.cpp
 
 LEON_HEADERS += $(wildcard $(CORETECH_COMMON_DIRECTORY)/include/)
 
-#LEON_CPP_SOURCES += $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/embedded/*.cpp)
-#LEON_C_SOURCES += $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/embedded/*.c)
+LEON_CPP_SOURCES += $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/embedded/*.cpp)
+LEON_C_SOURCES += $(wildcard $(CORETECH_COMMON_DIRECTORY)/src/embedded/*.c)
 
-#LEON_CPP_SOURCES += $(wildcard $(CORETECH_COMMON_DIRECTORY)/test/embedded/embeddedCommonTests.cpp)
+LEON_CPP_SOURCES += $(wildcard $(CORETECH_COMMON_DIRECTORY)/test/embedded/embeddedCommonTests.cpp)
 
 # ------------------------------[ Components used ]--------------------------------#
 ComponentList = Board

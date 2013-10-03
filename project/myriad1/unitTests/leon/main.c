@@ -21,7 +21,11 @@
 
 #include "cppInterface.h"
 
-/*
+#ifndef IN_DDR
+#define IN_DDR __attribute__((section(".ddr_direct.text")))
+//#define IN_DDR __attribute__((section(".ddr.text")))
+#endif
+
 performanceStruct perfStr;
 
 // Copied from leon3.h
@@ -33,31 +37,13 @@ __inline__ void sparc_leon3_disable_cache(void) {
                     "sta %%l2, [%%g0] 2\n\t"  \
                     :  : : "l1", "l2");	
 };
-*/
 
 void realMain()
 {
-  printf("Start\n");
-  printf("Start\n");
-  printf("Start\n");
-  printf("Start\n");
-  printf("Start\n");
-}
-
-int __attribute__((section(".sys.text.start"))) main(void)
-{
-/*
     u32          i;
     u32          *fl;
     u32          test_pass = 1;
-*/
 
-    initClocksAndMemory();
-
-    //printf("Start\n");
-    realMain();
-
-/*
     *(volatile u32*)MXI_CMX_CTRL_BASE_ADR |= (1 << 24);
 
     DrvL2CacheSetupPartition(PART128KB);
@@ -73,7 +59,7 @@ int __attribute__((section(".sys.text.start"))) main(void)
 
     swcShaveProfStartGathering(0, &perfStr);
 
-    runTests();
+//    runTests();
 
     swcShaveProfStopGathering(0, &perfStr);
 
@@ -81,6 +67,22 @@ int __attribute__((section(".sys.text.start"))) main(void)
     printf("\nLeon executed %d cycles in %06d micro seconds ([%d ms])\n",(u32)(perfStr.perfCounterTimer), (u32)(DrvTimerTicksToMs(perfStr.perfCounterTimer)*1000), (u32)(DrvTimerTicksToMs(perfStr.perfCounterTimer)));
 
     printf("Finished unit tests\n");
-*/
+}
+
+int __attribute__((section(".sys.text.start"))) main(void)
+{
+    initClocksAndMemory();
+
+    DrvTimerInit();
+
+    SleepMs(10000);
+
+//    const u64 startTime = DrvTimerGetSysTicks64();
+
+//    while((DrvTimerGetSysTicks64() - startTime) < 180000000*10000) {}
+
+    //printf("Start\n");
+    realMain();
+
     return 0;
 }

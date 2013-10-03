@@ -21,8 +21,6 @@ SECTIONS {
 	*(.text.notifySystemClockChange)
 	*(.text.setupSystemClk)
 	*(.text.setupTickCounterIrq)
-	*(.text.SleepMs)
-	*(.text.SleepMicro)
   }
   
   .exec : {
