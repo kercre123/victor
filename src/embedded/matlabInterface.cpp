@@ -1,7 +1,13 @@
 #include "anki/embeddedCommon/matlabInterface.h"
 #include "anki/embeddedCommon/errorHandling.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdarg.h>
+#ifdef __cplusplus
+}
+#endif
 
 namespace Anki
 {
