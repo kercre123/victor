@@ -85,6 +85,48 @@ IN_DDR GTEST_TEST(CoreTech_Common, BENCHMARKING)
 }
 #endif //#ifdef TEST_BENCHMARKING
 
+IN_DDR GTEST_TEST(CoreTech_Common, ApproximateExp)
+{
+  // To compute the ground truth, in Matlab, type:
+  // x = logspace(-5, 5, 11); yPos = exp(x); yNeg = exp(-x);
+
+  // 0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10
+  // 1.00001000005000, 1.00010000500017, 1.00100050016671, 1.01005016708417, 1.10517091807565, 2.71828182845905, 22026.4657948067
+  // 0.999990000050000	0.999900004999833	0.999000499833375	0.990049833749168	0.904837418035960	0.367879441171442	.0000453999297624849
+
+  const f64 valP0 = approximateExp(0.00001);
+  const f64 valP1 = approximateExp(0.0001);
+  const f64 valP2 = approximateExp(0.001);
+  const f64 valP3 = approximateExp(0.01);
+  const f64 valP4 = approximateExp(0.1);
+  const f64 valP5 = approximateExp(0.0);
+  const f64 valP6 = approximateExp(1.0);
+  
+  const f64 valN0 = approximateExp(-0.00001);
+  const f64 valN1 = approximateExp(-0.0001);
+  const f64 valN2 = approximateExp(-0.001);
+  const f64 valN3 = approximateExp(-0.01);
+  const f64 valN4 = approximateExp(-0.1);
+  const f64 valN5 = approximateExp(-1.0);
+  
+  ASSERT_TRUE(ABS(valP0 - 1.00001000005000) < .0001);
+  ASSERT_TRUE(ABS(valP1 - 1.00010000500017) < .0001);
+  ASSERT_TRUE(ABS(valP2 - 1.00100050016671) < .0001);
+  ASSERT_TRUE(ABS(valP3 - 1.01005016708417) < .0001);
+  ASSERT_TRUE(ABS(valP4 - 1.10517091807565) < .0001);
+  ASSERT_TRUE(ABS(valP5 - 1.0) < .0001);
+  ASSERT_TRUE(ABS(valP6 - 2.71828182845905) < .0001);
+  
+  ASSERT_TRUE(ABS(valN0 - 0.999990000050000) < .0001);
+  ASSERT_TRUE(ABS(valN1 - 0.999900004999833) < .0001);
+  ASSERT_TRUE(ABS(valN2 - 0.999000499833375) < .0001);
+  ASSERT_TRUE(ABS(valN3 - 0.990049833749168) < .0001);
+  ASSERT_TRUE(ABS(valN4 - 0.904837418035960) < .0001);
+  ASSERT_TRUE(ABS(valN5 - 0.367879441171442) < .0001);
+  
+  GTEST_RETURN_HERE;
+}
+
 IN_DDR GTEST_TEST(CoreTech_Common, MatrixMultiply)
 {
   const s32 numBytes = MIN(MAX_BYTES, 5000);
@@ -818,6 +860,7 @@ IN_DDR void RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, ApproximateExp);
   CALL_GTEST_TEST(CoreTech_Common, SVD32);
   CALL_GTEST_TEST(CoreTech_Common, SVD64);
   CALL_GTEST_TEST(CoreTech_Common, MatrixMultiply);

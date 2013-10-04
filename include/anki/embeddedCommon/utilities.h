@@ -34,6 +34,8 @@ namespace Anki
     // Get the current system time. Only really works with MSVC and generic linux
     double GetTime();
 
+    template<typename Type> Type approximateExp(const Type exponent, const s32 numTerms = 10);
+
     // For a square array, either:
     // 1. When lowerToUpper==true,  copies the lower (left)  triangle to the upper (right) triangle
     // 2. When lowerToUpper==false, copies the upper (right) triangle to the lower (left)  triangle
@@ -71,6 +73,30 @@ namespace Anki
     template<typename Type> inline Type RoundDown(Type number, Type multiple)
     {
       return multiple * (number/multiple);
+    }
+
+    template<typename Type> Type approximateExp(const Type exponent, const s32 numTerms)
+    {
+      assert(numTerms > 2);
+
+      const Type exponentAbs = ABS(exponent);
+
+      Type sum = static_cast<Type>(1) + exponentAbs;
+
+      Type numerator = static_cast<Type>(exponentAbs);
+      Type denominator = static_cast<Type>(1);
+      for(s32 i=2; i<=numTerms; i++) {
+        numerator *= exponentAbs;
+        denominator *= i;
+
+        sum += numerator / denominator;
+      }
+
+      if(exponent < 0) {
+        sum = static_cast<Type>(1) / sum;
+      }
+
+      return sum;
     }
 
     template<typename Type> Result MakeArraySymmetric(Type &arr, bool lowerToUpper)
