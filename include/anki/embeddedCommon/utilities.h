@@ -3,47 +3,7 @@
 
 #include "anki/embeddedCommon/config.h"
 #include "anki/embeddedCommon/errorHandling.h"
-
-#ifndef MAX
-#define MAX( a, b ) ( ((a) > (b)) ? (a) : (b) )
-#endif
-
-#ifndef MIN
-#define MIN( a, b ) ( ((a) < (b)) ? (a) : (b) )
-#endif
-
-#ifndef CLIP
-#define CLIP(n, min, max) ( MIN(MAX(min, n), max ) )
-#endif
-
-#ifndef ABS
-#define ABS(a) ((a) < 0 ? -(a) : (a))
-#endif
-
-#ifndef SIGN
-#define SIGN(a) ((a) >= 0)
-#endif
-
-#ifndef NULL
-#define NULL (0)
-#endif
-
-#define SWAP(type, a, b) { type t = a; a = b; b = t; }
-
-// ct_assert is a compile time assertion, useful for checking sizeof() and other compile time knowledge
-#define ASSERT_CONCAT_(a, b) a##b
-#define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
-#define ct_assert(e) enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }
-
-#ifndef ALIGNVARIABLE
-#if defined(_MSC_VER)
-#define ALIGNVARIABLE __declspec(align(16))
-#elif defined(__APPLE_CC__)
-#define ALIGNVARIABLE __attribute__ ((aligned (16)))
-#elif defined(__GNUC__)
-#define ALIGNVARIABLE __attribute__ ((aligned (16)))
-#endif
-#endif // #ifndef ALIGNVARIABLE
+#include "anki/embeddedCommon/utilities_c.h"
 
 namespace Anki
 {
@@ -97,10 +57,6 @@ namespace Anki
     // Converts from typeid names to openCV types
     int ConvertToOpenCvType(const char *typeName, size_t byteDepth);
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-
-#if defined(USING_MOVIDIUS_GCC_COMPILER)
-    void memset(void * dst, int value, size_t size);
-#endif
 
 #pragma mark --- Implementations ---
 

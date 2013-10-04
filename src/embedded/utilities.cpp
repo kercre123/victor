@@ -127,11 +127,13 @@ namespace Anki
           printf(PrintfOneArray_FORMAT_STRING_2, static_cast<s32>(mulitipliedValue1), static_cast<s32>(mulitipliedValue2));
         }
 
-        for(s32 x=array.get_size(1)-2; x<array.get_size(1); x++) {
-          const f32 value1 = rowPointer[x];
-          const f32 mulitipliedValue1 = 10000.0f * value1;
+        if(!IsOdd(array.get_size(1))) {
+          for(s32 x=array.get_size(1)-1; x<array.get_size(1); x++) {
+            const f32 value1 = rowPointer[x];
+            const f32 mulitipliedValue1 = 10000.0f * value1;
 
-          printf(PrintfOneArray_FORMAT_STRING_1, static_cast<s32>(mulitipliedValue1));
+            printf(PrintfOneArray_FORMAT_STRING_1, static_cast<s32>(mulitipliedValue1));
+          }
         }
         printf("\n" PrintfOneArray_EXTRA_SPACES);
       }
@@ -155,11 +157,13 @@ namespace Anki
           printf(PrintfOneArray_FORMAT_STRING_2, static_cast<s32>(mulitipliedValue1), static_cast<s32>(mulitipliedValue2));
         }
 
-        for(s32 x=array.get_size(1)-2; x<array.get_size(1); x++) {
-          const f64 value1 = rowPointer[x];
-          const f64 mulitipliedValue1 = 10000.0 * value1;
+        if(!IsOdd(array.get_size(1))) {
+          for(s32 x=array.get_size(1)-1; x<array.get_size(1); x++) {
+            const f64 value1 = rowPointer[x];
+            const f64 mulitipliedValue1 = 10000.0 * value1;
 
-          printf(PrintfOneArray_FORMAT_STRING_1, static_cast<s32>(mulitipliedValue1));
+            printf(PrintfOneArray_FORMAT_STRING_1, static_cast<s32>(mulitipliedValue1));
+          }
         }
         printf("\n" PrintfOneArray_EXTRA_SPACES);
       }
@@ -192,16 +196,5 @@ namespace Anki
       return -1;
     }
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-
-#if defined(USING_MOVIDIUS_GCC_COMPILER)
-    IN_DDR void memset(void * dst, int value, size_t size)
-    {
-      size_t i;
-      for(i=0; i<size; i++)
-      {
-        ((char*)dst)[i] = value;
-      }
-    }
-#endif // #if defined(USING_MOVIDIUS_GCC_COMPILER)
   } // namespace Embedded
 } // namespace Anki
