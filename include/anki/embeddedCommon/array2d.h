@@ -7,7 +7,7 @@
 #include "anki/embeddedCommon/errorHandling.h"
 #include "anki/embeddedCommon/dataStructures.h"
 #include "anki/embeddedCommon/geometry.h"
-#include "anki/embeddedCommon/cUtilities.h"
+#include "anki/embeddedCommon/utilities_c.h"
 
 #include <stdio.h>
 #include <stdlib.h>
