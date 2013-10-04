@@ -1,7 +1,7 @@
 //  errorHandling.cpp is based off DAS.cpp
 
 #include "anki/embeddedCommon/errorHandling.h"
-#include "anki/embeddedCommon/cUtilities.h"
+#include "anki/embeddedCommon/utilities_c.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -11,28 +11,28 @@
 extern "C" {
 #endif
 
-#define Anki_STRING_LENGTH 256
-  static char renderedLogString[Anki_STRING_LENGTH];
-
 #ifdef USING_MOVIDIUS_GCC_COMPILER
   IN_DDR void _Anki_Logf(int logLevel, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
 #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
-    printf("LOG[%d] - %s - ", logLevel, eventName);
-    printf(eventValue);
-    printf("\n");
+    explicitPrintf(0, "LOG[%d] - %s - ", logLevel, eventName);
+    explicitPrintf(0, eventValue);
+    explicitPrintf(0, "\n");
 #endif // #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
   }
 
   IN_DDR void _Anki_Log(int logLevel, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
 #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
-    printf("LOG[%d] - %s - ", logLevel, eventName);
-    printf(eventValue);
-    printf("\n");
+    explicitPrintf(0, "LOG[%d] - %s - ", logLevel, eventName);
+    explicitPrintf(0, eventValue);
+    explicitPrintf(0, "\n");
 #endif // #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
   }
 #else // #ifdef USING_MOVIDIUS_GCC_COMPILER
+
+#define Anki_STRING_LENGTH 1024
+  static char renderedLogString[Anki_STRING_LENGTH];
 
 #pragma warning(push)
 #pragma warning(disable: 4100) // Unreference formal parameter

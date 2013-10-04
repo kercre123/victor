@@ -1,5 +1,6 @@
 #include "anki/embeddedCommon/utilities.h"
 #include "anki/embeddedCommon/errorHandling.h"
+#include "anki/embeddedCommon/array2d.h"
 
 #if defined(_MSC_VER)
 #include <windows.h >
@@ -13,6 +14,17 @@
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 #include "opencv2/core/core.hpp"
+#endif
+
+// If using movidius, add some extra spaces, due to the byte-reordering
+#if defined(USING_MOVIDIUS_COMPILER)
+#define PrintfOneArray_FORMAT_STRING_2 "%d %d   "
+#define PrintfOneArray_FORMAT_STRING_1 "%d %d "
+#define PrintfOneArray_EXTRA_SPACES "   "
+#else
+#define PrintfOneArray_FORMAT_STRING_2 "%d   "
+#define PrintfOneArray_FORMAT_STRING_1 "%d "
+#define PrintfOneArray_EXTRA_SPACES ""
 #endif
 
 namespace Anki
@@ -98,34 +110,61 @@ namespace Anki
       return powerCount;
     }
 
-    //// Perform the matrix multiplication "matOut = mat1 * mat2"
-    //// Note that this is the naive O(n^3) implementation
-    //Result MultiplyMatrices(const Array<f64> &mat1, const Array<f64> &mat2, Array<f64> &matOut)
-    //{
-    //  AnkiConditionalErrorAndReturnValue(mat1.get_size(1) == mat2.get_size(0),
-    //    RESULT_FAIL, "MultiplyMatrices", "Input matrices are incompatible sizes");
+    IN_DDR void PrintfOneArray_f32(const Array<f32> &array, const char * variableName)
+    {
+      printf(variableName);
+      printf(":\n" PrintfOneArray_EXTRA_SPACES);
+      for(s32 y=0; y<array.get_size(0); y++) {
+        const f32 * const rowPointer = array.Pointer(y, 0);
 
-    //  AnkiConditionalErrorAndReturnValue(matOut.get_size(0) == mat1.get_size(0),
-    //    RESULT_FAIL, "MultiplyMatrices", "Input and Output matrices are incompatible sizes");
+        // This goes every two, because the output on movidius looks more reasonable
+        for(s32 x=0; x<array.get_size(1)-1; x+=2) {
+          const f32 value1 = rowPointer[x];
+          const f32 value2 = rowPointer[x+1];
+          const f32 mulitipliedValue1 = 10000.0f * value1;
+          const f32 mulitipliedValue2 = 10000.0f * value2;
 
-    //  AnkiConditionalErrorAndReturnValue(matOut.get_size(1) == mat2.get_size(1),
-    //    RESULT_FAIL, "MultiplyMatrices", "Input and Output matrices are incompatible sizes");
+          printf(PrintfOneArray_FORMAT_STRING_2, static_cast<s32>(mulitipliedValue1), static_cast<s32>(mulitipliedValue2));
+        }
 
-    //  for(s32 y1=0; y1<mat1.get_size(0); y1++) {
-    //    const f64 * restrict mat1_rowPointer = mat1.Pointer(y1, 0);
-    //    f64 * restrict matOut_rowPointer = matOut.Pointer(y1, 0);
+        for(s32 x=array.get_size(1)-2; x<array.get_size(1); x++) {
+          const f32 value1 = rowPointer[x];
+          const f32 mulitipliedValue1 = 10000.0f * value1;
 
-    //    for(s32 x1=0; x1<mat1.get_size(1); x1++) {
-    //      matOut_rowPointer[x1] = 0;
+          printf(PrintfOneArray_FORMAT_STRING_1, static_cast<s32>(mulitipliedValue1));
+        }
+        printf("\n" PrintfOneArray_EXTRA_SPACES);
+      }
+      printf("\n" PrintfOneArray_EXTRA_SPACES);
+    }
 
-    //      for(s32 y2=0; y2<mat1.get_size(0); y2++) {
-    //        matOut_rowPointer[x1] += mat1_rowPointer[y2] * (*mat2.Pointer(y2, x1));
-    //      }
-    //    }
-    //  }
+    IN_DDR void PrintfOneArray_f64(const Array<f64> &array, const char * variableName)
+    {
+      printf(variableName);
+      printf(":\n" PrintfOneArray_EXTRA_SPACES);
+      for(s32 y=0; y<array.get_size(0); y++) {
+        const f64 * const rowPointer = array.Pointer(y, 0);
 
-    //  return RESULT_OK;
-    //}
+        // This goes every two, because the output on movidius looks more reasonable
+        for(s32 x=0; x<array.get_size(1)-1; x+=2) {
+          const f64 value1 = rowPointer[x];
+          const f64 value2 = rowPointer[x+1];
+          const f64 mulitipliedValue1 = 10000.0 * value1;
+          const f64 mulitipliedValue2 = 10000.0 * value2;
+
+          printf(PrintfOneArray_FORMAT_STRING_2, static_cast<s32>(mulitipliedValue1), static_cast<s32>(mulitipliedValue2));
+        }
+
+        for(s32 x=array.get_size(1)-2; x<array.get_size(1); x++) {
+          const f64 value1 = rowPointer[x];
+          const f64 mulitipliedValue1 = 10000.0 * value1;
+
+          printf(PrintfOneArray_FORMAT_STRING_1, static_cast<s32>(mulitipliedValue1));
+        }
+        printf("\n" PrintfOneArray_EXTRA_SPACES);
+      }
+      printf("\n" PrintfOneArray_EXTRA_SPACES);
+    }
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     IN_DDR int ConvertToOpenCvType(const char *typeName, size_t byteDepth)
@@ -164,95 +203,5 @@ namespace Anki
       }
     }
 #endif // #if defined(USING_MOVIDIUS_GCC_COMPILER)
-
-    //#ifdef USING_MOVIDIUS_GCC_COMPILER
-    //    void explicitPrintf(const char *format, ...)
-    //    {
-    //#define MAX_PRINTF_DIGITS 50
-    //      int digits[MAX_PRINTF_DIGITS];
-    //      int curChar = 0;
-    //      int percentSignFound = 0;
-    //
-    //      int numArguments = 0;
-    //      int previousChar = ' ';
-    //
-    //      const char * const formatStart = format;
-    //      while(format != 0x00)
-    //      {
-    //        if(*format == '%') {
-    //          numArguments++;
-    //        }
-    //
-    //        format++;
-    //      }
-    //      format = formatStart;
-    //
-    //      va_list arguments;
-    //      va_start(arguments, numArguments);
-    //
-    //      while(format != 0x00) {
-    //        if(curChar >= 3) {
-    //          curChar = 0;
-    //          DrvApbUartPutChar(*format);
-    //          DrvApbUartPutChar(charBuffer[2]);
-    //          DrvApbUartPutChar(charBuffer[1]);
-    //          DrvApbUartPutChar(charBuffer[0]);
-    //          format++;
-    //        } else { // if(curChar >= 3)
-    //          if(percentSignFound) {
-    //            int i;
-    //            for(i=0; i<MAX_PRINTF_DIGITS; i++) {
-    //              digits[i] = 0;
-    //            }
-    //
-    //            int value = va_arg(arguments, int);
-    //            if(value < 0) {
-    //              DrvApbUartPutChar('-');
-    //              value = -value;
-    //            }
-    //
-    //            if(value == 0) {
-    //              DrvApbUartPutChar('0');
-    //              DrvApbUartPutChar(' ');
-    //              format++;
-    //              continue;
-    //            }
-    //
-    //            i=0;
-    //            while(value > 0) {
-    //              const int curDigit = value - (10*(value/10));
-    //
-    //              digits[i++] = curDigit;
-    //
-    //              value /= 10;
-    //            }
-    //
-    //            i--;
-    //            for( ; i>=0; i--) {
-    //              DrvApbUartPutChar(digits[i] + 48);
-    //            }
-    //
-    //            DrvApbUartPutChar(' ');
-    //            format++;
-    //
-    //            percentSignFound = 0;
-    //          } else { // if(percentSignFound)
-    //            if(*format == '%') {
-    //              while(curChar <= 3) {
-    //                charBuffer[curChar++] = ' ';
-    //              }
-    //              percentSignFound = 1;
-    //              previousChar = *(format - 1);
-    //              format++;
-    //            } else {
-    //              charBuffer[curChar++] = *format;
-    //              format++;
-    //            }
-    //          } // if(percentSignFound) ... else
-    //        } // if(curChar >= 3) ... else
-    //      } // while(format != 0x00)
-    //      va_end(arguments);
-    //    } // void explicitPrintf(const char *format, ...)
-    //#endif // #ifdef USING_MOVIDIUS_GCC_COMPILER
   } // namespace Embedded
 } // namespace Anki
