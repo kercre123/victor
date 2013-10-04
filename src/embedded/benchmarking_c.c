@@ -1,4 +1,5 @@
 #include "anki/embeddedCommon/benchmarking_c.h"
+#include "anki/embeddedCommon/utilities_c.h"
 
 #include <stdio.h>
 #include <string.h>
