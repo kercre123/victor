@@ -1,4 +1,4 @@
-#include "visionBenchmarks.h"
+#include "embeddedVisionBenchmarks.h"
 
 #ifndef _MSC_VER
 #include "swcTestUtils.h"

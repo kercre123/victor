@@ -1,6 +1,6 @@
 #ifdef _MSC_VER
 
-#include "visionBenchmarks.h"
+#include "embeddedVisionBenchmarks.h"
 
 //#define USING_MOVIDIUS_COMPILER
 #include "anki/embeddedVision.h"

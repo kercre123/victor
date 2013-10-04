@@ -1,7 +1,7 @@
 //#define USING_MOVIDIUS_COMPILER
 
 #include "anki/embeddedVision.h"
-#include "visionBenchmarks.h"
+#include "embeddedVisionBenchmarks.h"
 
 #include "../../blockImages/fiducial105_6ContrastReduced.h"
 #include "../../blockImages/blockImage50.h"
