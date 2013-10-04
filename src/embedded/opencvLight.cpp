@@ -45,11 +45,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <string.h>
-#include <math.h>
-#include <float.h>
-#include <assert.h>
-#include <stdlib.h>
 
 #ifdef _MSC_VER
 #include <malloc.h>

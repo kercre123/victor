@@ -3,16 +3,6 @@
 #include "anki/embeddedCommon/utilities.h"
 #include "anki/embeddedCommon/utilities_c.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include <math.h>
-#include <stdlib.h>
-#include <stdio.h>
-#ifdef __cplusplus
-}
-#endif
-
 using namespace std;
 
 namespace Anki

@@ -3,15 +3,6 @@
 
 #include "anki/embeddedCommon/config.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include <string.h>
-#include <math.h>
-#ifdef __cplusplus
-}
-#endif
-
 #ifndef MAX
 #define MAX( a, b ) ( ((a) > (b)) ? (a) : (b) )
 #endif

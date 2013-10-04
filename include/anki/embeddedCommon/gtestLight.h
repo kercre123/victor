@@ -11,7 +11,7 @@
 #else
 
 // To prevent a warning (or error) about a function not returning a value, include this macro at the end of any GTEST_TEST
-#define GTEST_RETURN_HERE {printf("Test completed\n"); return 0; }
+#define GTEST_RETURN_HERE {printf(""); return 0; }
 
 // Same usage as the Gtest macro
 #define GTEST_TEST(test_case_name, test_name) s32 test_case_name ## test_name()
@@ -36,7 +36,7 @@
 #define CALL_GTEST_TEST(test_case_name, test_name)\
   if(test_case_name ## test_name() == 0) {\
   printf("\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nPASSED:" #test_case_name # test_name "\n" "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n");\
-numPassedTests++;\
+  numPassedTests++;\
   } else {\
   printf("\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nFAILED:" #test_case_name # test_name "\n" "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n"); numFailedTests++; };
 

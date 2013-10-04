@@ -9,20 +9,6 @@
 #include "anki/embeddedCommon/geometry.h"
 #include "anki/embeddedCommon/utilities_c.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#ifdef __cplusplus
-}
-#endif
-
-#if !defined(USING_MOVIDIUS_GCC_COMPILER)
-#include <string.h>
-#endif
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"

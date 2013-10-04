@@ -103,7 +103,11 @@ extern "C" {
 #include "DrvUart.h"
 #include <stdio.h>
 #include <math.h>
-  //#include <stdlib.h>
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
+#include <float.h>
+#include <stdarg.h>
 
 #undef printf
 #define printf(...) explicitPrintf(1, __VA_ARGS__)
@@ -120,6 +124,12 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdio.h>
+#include <math.h>
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
+#include <float.h>
+#include <stdarg.h>
 
 #undef printf
 #define printf(...) explicitPrintf(0, __VA_ARGS__)
