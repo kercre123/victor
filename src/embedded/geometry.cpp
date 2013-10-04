@@ -2,14 +2,6 @@
 #include "anki/embeddedCommon/errorHandling.h"
 #include "anki/embeddedCommon/utilities_c.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include <stdio.h>
-#ifdef __cplusplus
-}
-#endif
-
 namespace Anki
 {
   namespace Embedded

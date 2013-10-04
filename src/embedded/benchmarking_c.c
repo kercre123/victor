@@ -1,17 +1,6 @@
 #include "anki/embeddedCommon/benchmarking_c.h"
 #include "anki/embeddedCommon/utilities_c.h"
 
-#include <stdio.h>
-#include <string.h>
-
-#ifndef MAX
-#define MAX( a, b ) ( ((a) > (b)) ? (a) : (b) )
-#endif
-
-#ifndef MIN
-#define MIN( a, b ) ( ((a) < (b)) ? (a) : (b) )
-#endif
-
 BenchmarkEvent benchmarkEvents[NUM_BENCHMARK_EVENTS];
 int currentBenchmarkEvent;
 

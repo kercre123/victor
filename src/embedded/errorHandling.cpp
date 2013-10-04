@@ -3,15 +3,6 @@
 #include "anki/embeddedCommon/errorHandling.h"
 #include "anki/embeddedCommon/utilities_c.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include <stdarg.h>
-#include <stdio.h>
-#ifdef __cplusplus
-}
-#endif
-
 #ifndef UNIT_TEST
 #ifdef __cplusplus
 extern "C" {

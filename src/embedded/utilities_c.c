@@ -1,10 +1,5 @@
 #include "anki/embeddedCommon/utilities_c.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdarg.h>
-
 #define MAX_PRINTF_DIGITS 50
 #define PRINTF_BUFFER_SIZE 1024
 int printfBuffer[PRINTF_BUFFER_SIZE];
