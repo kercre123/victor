@@ -102,6 +102,7 @@ extern "C" {
 #include "mv_types.h"
 #include "DrvUart.h"
 #include <stdio.h>
+#include <math.h>
   //#include <stdlib.h>
 
 #undef printf
@@ -118,6 +119,10 @@ extern "C" {
 #else // If not using the movidius gcc compiler for Leon
 
 #include <stdint.h>
+#include <stdio.h>
+
+#undef printf
+#define printf(...) explicitPrintf(0, __VA_ARGS__)
 
 // We specify types according to their sign and bits. We should use these in
 // our code instead of the normal 'int','short', etc. because different

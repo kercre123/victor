@@ -277,7 +277,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD32)
   //PrintfOneArray_f32(w, "w   ");
   //PrintfOneArray_f32(w_groundTruth, "w_groundTruth");
 
-  PrintfOneArray_f32(uT, "uT  ");
+  PrintfOneArray_f32(uT, "uT");
   PrintfOneArray_f32(uT_groundTruth, "uT_groundTruth");
 
   ASSERT_TRUE(w.IsElementwiseEqual_PercentThreshold(w_groundTruth, .05, .001));
@@ -363,7 +363,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD64)
 
   //  uT.Print("uT");
   //  uT_groundTruth.Print("uT_groundTruth");
-  PrintfOneArray_f64(uT, "uT  ");
+  PrintfOneArray_f64(uT, "uT");
   PrintfOneArray_f64(uT_groundTruth, "uT_groundTruth");
 
   //  vT.Print("vT");
@@ -818,8 +818,8 @@ IN_DDR void RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
-  CALL_GTEST_TEST(CoreTech_Common, SVD64);
   CALL_GTEST_TEST(CoreTech_Common, SVD32);
+  CALL_GTEST_TEST(CoreTech_Common, SVD64);
   CALL_GTEST_TEST(CoreTech_Common, MatrixMultiply);
   CALL_GTEST_TEST(CoreTech_Common, ComputeHomography);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack);

@@ -10,22 +10,12 @@
 #include <sys/time.h>
 #endif
 
-#include <math.h>
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 #include "opencv2/core/core.hpp"
 #endif
 
-// If using movidius, add some extra spaces, due to the byte-reordering
-#if defined(USING_MOVIDIUS_COMPILER)
-#define PrintfOneArray_FORMAT_STRING_2 "%d %d   "
-#define PrintfOneArray_FORMAT_STRING_1 "%d %d "
-#define PrintfOneArray_EXTRA_SPACES "   "
-#else
-#define PrintfOneArray_FORMAT_STRING_2 "%d   "
+#define PrintfOneArray_FORMAT_STRING_2 "%d %d "
 #define PrintfOneArray_FORMAT_STRING_1 "%d "
-#define PrintfOneArray_EXTRA_SPACES ""
-#endif
 
 namespace Anki
 {
@@ -113,7 +103,7 @@ namespace Anki
     IN_DDR void PrintfOneArray_f32(const Array<f32> &array, const char * variableName)
     {
       printf(variableName);
-      printf(":\n" PrintfOneArray_EXTRA_SPACES);
+      printf(":\n");
       for(s32 y=0; y<array.get_size(0); y++) {
         const f32 * const rowPointer = array.Pointer(y, 0);
 
@@ -121,29 +111,29 @@ namespace Anki
         for(s32 x=0; x<array.get_size(1)-1; x+=2) {
           const f32 value1 = rowPointer[x];
           const f32 value2 = rowPointer[x+1];
-          const f32 mulitipliedValue1 = 10000.0f * value1;
-          const f32 mulitipliedValue2 = 10000.0f * value2;
+          const s32 mulitipliedValue1 = static_cast<s32>(Round(10000.0f * value1));
+          const s32 mulitipliedValue2 = static_cast<s32>(Round(10000.0f * value2));
 
-          printf(PrintfOneArray_FORMAT_STRING_2, static_cast<s32>(mulitipliedValue1), static_cast<s32>(mulitipliedValue2));
+          printf(PrintfOneArray_FORMAT_STRING_2, mulitipliedValue1, mulitipliedValue2);
         }
 
         if(!IsOdd(array.get_size(1))) {
           for(s32 x=array.get_size(1)-1; x<array.get_size(1); x++) {
             const f32 value1 = rowPointer[x];
-            const f32 mulitipliedValue1 = 10000.0f * value1;
+            const s32 mulitipliedValue1 = static_cast<s32>(Round(10000.0f * value1));
 
             printf(PrintfOneArray_FORMAT_STRING_1, static_cast<s32>(mulitipliedValue1));
           }
         }
-        printf("\n" PrintfOneArray_EXTRA_SPACES);
+        printf("\n");
       }
-      printf("\n" PrintfOneArray_EXTRA_SPACES);
+      printf("\n");
     }
 
     IN_DDR void PrintfOneArray_f64(const Array<f64> &array, const char * variableName)
     {
       printf(variableName);
-      printf(":\n" PrintfOneArray_EXTRA_SPACES);
+      printf(":\n");
       for(s32 y=0; y<array.get_size(0); y++) {
         const f64 * const rowPointer = array.Pointer(y, 0);
 
@@ -151,23 +141,23 @@ namespace Anki
         for(s32 x=0; x<array.get_size(1)-1; x+=2) {
           const f64 value1 = rowPointer[x];
           const f64 value2 = rowPointer[x+1];
-          const f64 mulitipliedValue1 = 10000.0 * value1;
-          const f64 mulitipliedValue2 = 10000.0 * value2;
+          const s32 mulitipliedValue1 = static_cast<s32>(Round(10000.0 * value1));
+          const s32 mulitipliedValue2 = static_cast<s32>(Round(10000.0 * value2));
 
-          printf(PrintfOneArray_FORMAT_STRING_2, static_cast<s32>(mulitipliedValue1), static_cast<s32>(mulitipliedValue2));
+          printf(PrintfOneArray_FORMAT_STRING_2, mulitipliedValue1, mulitipliedValue2);
         }
 
         if(!IsOdd(array.get_size(1))) {
           for(s32 x=array.get_size(1)-1; x<array.get_size(1); x++) {
             const f64 value1 = rowPointer[x];
-            const f64 mulitipliedValue1 = 10000.0 * value1;
+            const s32 mulitipliedValue1 = static_cast<s32>(Round(10000.0 * value1));
 
-            printf(PrintfOneArray_FORMAT_STRING_1, static_cast<s32>(mulitipliedValue1));
+            printf(PrintfOneArray_FORMAT_STRING_1, mulitipliedValue1);
           }
         }
-        printf("\n" PrintfOneArray_EXTRA_SPACES);
+        printf("\n");
       }
-      printf("\n" PrintfOneArray_EXTRA_SPACES);
+      printf("\n");
     }
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)

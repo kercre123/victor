@@ -5,10 +5,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-//#ifdef USING_MOVIDIUS_COMPILER
-//#define putchar DrvApbUartPutChar
-//#endif
-
 #define MAX_PRINTF_DIGITS 50
 #define PRINTF_BUFFER_SIZE 1024
 int printfBuffer[PRINTF_BUFFER_SIZE];
@@ -16,15 +12,9 @@ void explicitPrintf(int reverseWords, const char *format, ...)
 {
   const char * const formatStart = format;
   int digits[MAX_PRINTF_DIGITS];
-  //  int numArguments;
   int numCharacters;
   int i;
   va_list arguments;
-
-  //#ifdef USING_MOVIDIUS_GCC_COMPILER
-  //  // TODO: figure out how to make this work without reversing
-  //  reverseWords = 1;
-  //#endif
 
   // Count the number of characters
   numCharacters = 0;
@@ -33,63 +23,45 @@ void explicitPrintf(int reverseWords, const char *format, ...)
     numCharacters++;
     format++;
   }
-  if(reverseWords) {
-    numCharacters = 4 * ((numCharacters+3) / 4);
-  }
-
-  numCharacters = MIN(numCharacters, MAX_PRINTF_DIGITS-5);
-
   format = formatStart;
 
-  //// Count the number of arguments
-  //numArguments = 0;
-  //while(*format != 0x00)
-  //{
-  //  if(*format == '%') {
-  //    numArguments++;
-  //  }
+  if(reverseWords)
+    numCharacters += 3;
 
-  //  format++;
-  //}
-  //format = formatStart;
+  numCharacters = MIN(numCharacters, PRINTF_BUFFER_SIZE-5);
 
   // Reverse the string
-
   if(reverseWords) {
-    for(i=0; i<(numCharacters+3); i+=4) {
+    for(i=0; i<numCharacters; i+=4) {
       printfBuffer[i] = format[i+3];
-      printfBuffer[i+1] = format[i+2];
-      printfBuffer[i+2] = format[i+1];
-      printfBuffer[i+3] = format[i];
+      if(format[i+3] == 0x00) {
+        printfBuffer[i+1] = 0x00;
+      } else {
+        printfBuffer[i+1] = format[i+2];
+        if(format[i+2] == 0x00) {
+          printfBuffer[i+2] = 0x00;
+        } else {
+          printfBuffer[i+2] = format[i+1];
+          if(format[i+1] == 0x00) {
+            printfBuffer[i+3] = 0x00;
+          } else {
+            printfBuffer[i+3] = format[i];
+          }
+        }
+      }
     }
-
-    printfBuffer[i] = 0x00;
   } else {
-    /*putchar('V');
-    putchar('V');
-    putchar('V');
-    putchar('V');
-    return;*/
-
-    /*for(i=0; i<numCharacters; i++) {
-    printfBuffer[i] = format[i];
-    }*/
-    //printfBuffer[i] = 0x00;
-
     for(i=0; i<numCharacters; i++) {
       printfBuffer[i] = format[i];
     }
-    printfBuffer[i] = 0x00;
   }
-
-  //va_start(arguments, numArguments);
 
   va_start(arguments, format);
 
-  for(i=0; i<(numCharacters+3); i++) {
+  for(i=0; i<numCharacters; i++) {
     if(printfBuffer[i] == '%') {
-      int j;
-      int value;
+      int j = -1;
+      int value = -1;
       const char percentChar = printfBuffer[i+1];
       i++;
 
@@ -114,15 +86,26 @@ void explicitPrintf(int reverseWords, const char *format, ...)
         j=0;
         while(value > 0) {
           const int curDigit = value - (10*(value/10));
+          //const int curDigit = value % 10;
+
+          // This was happening with the movidius compiler, when I tried a direct static_cast<s32>(f32). This will output "BUG"
+          if(curDigit < 0){
+            digits[j++] = 23;
+            digits[j++] = 37;
+            digits[j++] = 18;
+            break;
+          }
 
           digits[j++] = curDigit;
 
+          //value = value - curDigit;
           value /= 10;
         }
 
         j--;
         for( ; j>=0; j--) {
           putchar(digits[j] + 48);
+          //putchar('w');
         }
 
         putchar(' ');
