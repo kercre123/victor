@@ -96,20 +96,27 @@ if(NOT MATLAB_FOUND)
 		set(ZLIB_LIBRARY z)
 		set(CMD_COMMAND)
 	endif(WIN32)
-endif(NOT MATLAB_FOUND)
 	
-# set(MEX_COMPILER ${MATLAB_ROOT_DIR}/bin/mex)
+	if(IS_DIRECTORY MATLAB_ROOT_DIR)
+		set(MATLAB_FOUND 1)
+	endif(IS_DIRECTORY MATLAB_ROOT_DIR)
+	
+endif(NOT MATLAB_FOUND)
 
-set(CMAKE_XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "${MATLAB_ENG_LIBRARY_PATH}")
+if(MATLAB_FOUND)
+	# set(MEX_COMPILER ${MATLAB_ROOT_DIR}/bin/mex)
 
-# Set the mex extension using Matlab's "mexext" script:
-# (Does this exist on Windows machines?)
-set(MATLAB_BIN_DIR "${MATLAB_ROOT}/bin/")
-execute_process(COMMAND ${CMD_COMMAND} "${MATLAB_BIN_DIR}/mexext" OUTPUT_VARIABLE MATLAB_MEXEXT)
-string(STRIP ${MATLAB_MEXEXT} MATLAB_MEXEXT)
+	set(CMAKE_XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "${MATLAB_ENG_LIBRARY_PATH}")
 
-message(STATUS "Using Matlab in ${MATLAB_ROOT} with mex extension ${MATLAB_MEXEXT}.")
+	# Set the mex extension using Matlab's "mexext" script:
+	# (Does this exist on Windows machines?)
+	set(MATLAB_BIN_DIR "${MATLAB_ROOT}/bin/")
+	execute_process(COMMAND ${CMD_COMMAND} "${MATLAB_BIN_DIR}/mexext" OUTPUT_VARIABLE MATLAB_MEXEXT)
+	string(STRIP ${MATLAB_MEXEXT} MATLAB_MEXEXT)
 
+	message(STATUS "Using Matlab in ${MATLAB_ROOT} with mex extension ${MATLAB_MEXEXT}.")
+endif(MATLAB_FOUND)
+	
 project(${PROJECT_NAME})
 
 # Stuff after this requires project() to have been called (I think)
