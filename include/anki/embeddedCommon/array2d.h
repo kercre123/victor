@@ -16,6 +16,7 @@
 #if !defined(USING_MOVIDIUS_GCC_COMPILER)
 #include <string.h>
 #endif
+#include <string.h>
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 #include "opencv2/core/core.hpp"

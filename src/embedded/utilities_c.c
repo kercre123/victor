@@ -1,38 +1,30 @@
-#include "anki/embeddedCommon/benchmarking_c.h"
+#include "anki/embeddedCommon/utilities_c.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
-#ifndef MAX
-#define MAX( a, b ) ( ((a) > (b)) ? (a) : (b) )
-#endif
-
-#ifndef MIN
-#define MIN( a, b ) ( ((a) < (b)) ? (a) : (b) )
-#endif
-
-#ifdef USING_MOVIDIUS_COMPILER
-#define putchar DrvApbUartPutChar
-#endif
+//#ifdef USING_MOVIDIUS_COMPILER
+//#define putchar DrvApbUartPutChar
+//#endif
 
 #define MAX_PRINTF_DIGITS 50
 #define PRINTF_BUFFER_SIZE 1024
-IN_DDR int printfBuffer[PRINTF_BUFFER_SIZE];
+int printfBuffer[PRINTF_BUFFER_SIZE];
 void explicitPrintf(int reverseWords, const char *format, ...)
 {
   const char * const formatStart = format;
   int digits[MAX_PRINTF_DIGITS];
-  int numArguments;
+  //  int numArguments;
   int numCharacters;
   int i;
   va_list arguments;
 
-#ifdef USING_MOVIDIUS_GCC_COMPILER
-  // TODO: figure out how to make this work without reversing
-  reverseWords = 1;
-#endif
+  //#ifdef USING_MOVIDIUS_GCC_COMPILER
+  //  // TODO: figure out how to make this work without reversing
+  //  reverseWords = 1;
+  //#endif
 
   // Count the number of characters
   numCharacters = 0;
@@ -49,28 +41,29 @@ void explicitPrintf(int reverseWords, const char *format, ...)
 
   format = formatStart;
 
-  // Count the number of arguments
-  numArguments = 0;
-  while(*format != 0x00)
-  {
-    if(*format == '%') {
-      numArguments++;
-    }
+  //// Count the number of arguments
+  //numArguments = 0;
+  //while(*format != 0x00)
+  //{
+  //  if(*format == '%') {
+  //    numArguments++;
+  //  }
 
-    format++;
-  }
-  format = formatStart;
+  //  format++;
+  //}
+  //format = formatStart;
 
   // Reverse the string
 
   if(reverseWords) {
-    for(i=0; i<numCharacters; i+=4) {
+    for(i=0; i<(numCharacters+3); i+=4) {
       printfBuffer[i] = format[i+3];
       printfBuffer[i+1] = format[i+2];
       printfBuffer[i+2] = format[i+1];
       printfBuffer[i+3] = format[i];
     }
-    printfBuffer[i-3] = 0x00;
+
+    printfBuffer[i] = 0x00;
   } else {
     /*putchar('V');
     putchar('V');
@@ -89,9 +82,11 @@ void explicitPrintf(int reverseWords, const char *format, ...)
     printfBuffer[i] = 0x00;
   }
 
-  va_start(arguments, numArguments);
+  //va_start(arguments, numArguments);
 
-  for(i=0; i<numCharacters; i++) {
+  va_start(arguments, format);
+
+  for(i=0; i<(numCharacters+3); i++) {
     if(printfBuffer[i] == '%') {
       int j;
       int value;
@@ -138,14 +133,77 @@ void explicitPrintf(int reverseWords, const char *format, ...)
           value++;
         }
       } else {
-        if(printfBuffer[i] != 0x00)
-          putchar(printfBuffer[i]);
+        if(printfBuffer[i] == 0x00)
+          break;
+
+        putchar(printfBuffer[i]);
       }
     } else {
-      if(printfBuffer[i] != 0x00)
-        putchar(printfBuffer[i]);
+      if(printfBuffer[i] == 0x00)
+        break;
+
+      putchar(printfBuffer[i]);
     }
   } // for(i=0; i<numCharacters; i++)
 
   va_end(arguments);
 }
+
+#if defined(USING_MOVIDIUS_GCC_COMPILER)
+IN_DDR void* explicitMemset(void * dst, int value, size_t size)
+{
+  size_t i;
+  for(i=0; i<size; i++)
+  {
+    ((char*)dst)[i] = value;
+  }
+
+  return dst;
+}
+#endif // #if defined(USING_MOVIDIUS_GCC_COMPILER)
+
+#if defined(USING_MOVIDIUS_GCC_COMPILER)
+IN_DDR f32 powF32S32(const f32 x, const s32 y)
+{
+  s32 i;
+  f32 xAbs;
+  f32 result = 1.0f;
+
+  if(y == 0)
+    return result;
+
+  xAbs = ABS(x);
+
+  for(i=1; i<=y; i++) {
+    result *= x;
+  }
+
+  if(x < 0.0f)
+    result = 1.0f / result;
+
+  return result;
+}
+#endif // #if defined(USING_MOVIDIUS_GCC_COMPILER)
+
+#if defined(USING_MOVIDIUS_GCC_COMPILER)
+IN_DDR f64 powF64S32(const f64 x, const s32 y)
+{
+  s32 i;
+  f64 xAbs;
+  f64 result = 1.0;
+
+  if(y == 0)
+    return result;
+
+  xAbs = ABS(x);
+
+  for(i=1; i<=y; i++) {
+    result *= x;
+  }
+
+  if(x < 0.0)
+    result = 1.0 / result;
+
+  return result;
+}
+#endif // #if defined(USING_MOVIDIUS_GCC_COMPILER)

@@ -15,18 +15,22 @@ extern "C" {
   IN_DDR void _Anki_Logf(int logLevel, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
 #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
-    explicitPrintf(0, "LOG[%d] - %s - ", logLevel, eventName);
-    explicitPrintf(0, eventValue);
-    explicitPrintf(0, "\n");
+    explicitPrintf(1, "LOG[%d] - ", logLevel);
+    explicitPrintf(1, eventName);
+    explicitPrintf(1, " - ");
+    explicitPrintf(1, eventValue);
+    explicitPrintf(1, "\n");
 #endif // #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
   }
 
   IN_DDR void _Anki_Log(int logLevel, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
 #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
-    explicitPrintf(0, "LOG[%d] - %s - ", logLevel, eventName);
-    explicitPrintf(0, eventValue);
-    explicitPrintf(0, "\n");
+    explicitPrintf(1, "LOG[%d] - ", logLevel);
+    explicitPrintf(1, eventName);
+    explicitPrintf(1, " - ");
+    explicitPrintf(1, eventValue);
+    explicitPrintf(1, "\n");
 #endif // #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
   }
 #else // #ifdef USING_MOVIDIUS_GCC_COMPILER

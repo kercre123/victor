@@ -26,7 +26,9 @@ Everything in this file should be compatible with plain C, as well as C++
 #define USING_MOVIDIUS_COMPILER
 #endif
 
-#include <stddef.h>
+#ifndef NULL
+#define NULL (0)
+#endif
 
 // Various defines that make different compilers work on the same code
 #if defined(_MSC_VER) // We're using the MSVC compiler
@@ -100,7 +102,7 @@ extern "C" {
 #include "mv_types.h"
 #include "DrvUart.h"
 #include <stdio.h>
-#include <stdlib.h>
+  //#include <stdlib.h>
 
 #undef printf
 #define printf(...) explicitPrintf(1, __VA_ARGS__)

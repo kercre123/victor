@@ -5,6 +5,7 @@
 #if !defined(USING_MOVIDIUS_GCC_COMPILER)
 #include <string.h>
 #endif
+#include <string.h>
 
 namespace Anki
 {
