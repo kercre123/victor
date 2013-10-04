@@ -79,7 +79,7 @@ namespace Anki
       s32 get_numFractionalBits() const;
 
     protected:
-      FixedLengthList<Point<s16>> probeLocations; //< A list of length MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS
+      FixedLengthList<Point<s16> > probeLocations; //< A list of length MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS
       FixedLengthList<s16> probeWeights;
       FiducialMarkerParserBit::Type type;
       s32 numFractionalBits;

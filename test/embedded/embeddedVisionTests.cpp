@@ -49,8 +49,10 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 #include "../../blockImages/fiducial105_6ContrastReduced.h"
 #include "../../src/embedded/fiducialMarkerDefinitionType0.h"
 
+
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
 {
+#if 0
   const s32 scaleImage_numPyramidLevels = 6;
 
   const s16 component1d_minComponentWidth = 0;
@@ -137,8 +139,10 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
   free(scratch1.get_buffer());
   free(scratch2.get_buffer());
 
+#endif // #if 0
   GTEST_RETURN_HERE;
 }
+
 
 // Create a test pattern image, full of a grid of squares for probes
 static Result DrawExampleProbesImage(Array<u8> &image, Quadrilateral<s16> &quad, Array<f64> &homography)
@@ -165,6 +169,7 @@ static Result DrawExampleProbesImage(Array<u8> &image, Quadrilateral<s16> &quad,
 
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
 {
+#if 0
   const s32 scaleImage_numPyramidLevels = 6;
 
   const s16 component1d_minComponentWidth = 0;
@@ -251,12 +256,15 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
   free(scratch1.get_buffer());
   free(scratch2.get_buffer());
 
+#endif // #if 0
+
   GTEST_RETURN_HERE;
 }
 
 // The test is if it can run without crashing
 IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
 {
+#if 0
   const s32 width = fiducial105_6_WIDTH;
   const s32 height = fiducial105_6_HEIGHT;
   const f32 minContrastRatio = 1.25f;
@@ -299,12 +307,15 @@ IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
 
   free(scratch0.get_buffer());
 
+#endif // #if 0
+
   GTEST_RETURN_HERE;
 }
 
 // The test is if it can run without crashing
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
 {
+#if 0
   const s32 scaleImage_numPyramidLevels = 6;
 
   const s16 component1d_minComponentWidth = 0;
@@ -379,6 +390,8 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
   free(scratch0.get_buffer());
   free(scratch1.get_buffer());
   free(scratch2.get_buffer());
+
+#endif // #if 0
 
   GTEST_RETURN_HERE;
 }
@@ -773,9 +786,11 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
   GTEST_RETURN_HERE;
 } // IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
 
+
 // The test is if it can run without crashing
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
 {
+#if 0
   const s32 scaleImage_numPyramidLevels = 6;
 
   const s16 component1d_minComponentWidth = 0;
@@ -838,12 +853,16 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
   free(scratch1.get_buffer());
   free(scratch2.get_buffer());
 
+#endif // #if 0
+
   GTEST_RETURN_HERE;
 }
+
 
 // The test is if it can run without crashing
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
 {
+#if 0
   const s32 width = 640;
   const s32 height = 480;
 
@@ -903,6 +922,8 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
   free(scratch0.get_buffer());
   free(scratch1.get_buffer());
   free(scratch2.get_buffer());
+
+#endif // #if 0
 
   GTEST_RETURN_HERE;
 } // IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)

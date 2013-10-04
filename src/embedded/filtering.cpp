@@ -49,7 +49,7 @@ namespace Anki
         s32 i = 0;
         f32 sum = 0;
         for(f32 x=-halfwidthF32; i<(2*halfwidth+1); x++, i++) {
-          const f32 g = exp(-(x*x) / twoTimesSigmaSquared);
+          const f32 g = expf(-(x*x) / twoTimesSigmaSquared);
           gaussianKernelF32_rowPointer[i] = g;
           sum += g;
         }

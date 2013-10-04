@@ -1,7 +1,5 @@
 #include "anki/embeddedVision/miscVisionKernels.h"
 
-#include <string.h>
-
 namespace Anki
 {
   namespace Embedded

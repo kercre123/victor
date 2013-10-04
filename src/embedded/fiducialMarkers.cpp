@@ -1,6 +1,3 @@
-#include <assert.h>
-#include <math.h>
-
 #include "anki/embeddedVision/fiducialMarkers.h"
 
 #include "anki/embeddedVision/fixedLengthList_vision.h"
@@ -141,7 +138,7 @@ namespace Anki
       return RESULT_OK;
     } // Result FiducialMarkerParserBit::ExtractMeanValue(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, s16 &meanValue)
 
-    const FixedLengthList<Point<s16>>& FiducialMarkerParserBit::get_probeLocations() const
+    const FixedLengthList<Point<s16> >& FiducialMarkerParserBit::get_probeLocations() const
     {
       return this->probeLocations;
     }

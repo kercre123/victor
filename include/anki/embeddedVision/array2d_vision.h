@@ -6,10 +6,6 @@
 #include "anki/embeddedVision/connectedComponents.h"
 #include "anki/embeddedVision/fiducialMarkers.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-
-
 namespace Anki
 {
   namespace Embedded
