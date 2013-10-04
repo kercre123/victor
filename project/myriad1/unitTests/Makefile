@@ -11,6 +11,8 @@ MDK_DIRECTORY?=../../../../movidius-tools/mdk
 
 CORETECH_COMMON_DIRECTORY?=../../../../coretech-common
 
+MYRIAD_BUILDFILE_DIRECTORY?=../
+
 MVCC_OPT_LEVEL ?= -O1
 LEON_C_OPTIMIZATION_LEVEL ?= -Os
 LEON_CPP_OPTIMIZATION_LEVEL ?= -O2
@@ -55,7 +57,7 @@ MV_COMMON_BASE ?= $(MDK_DIRECTORY)/common
 
 # Include the generic Makefile
 # include $(MV_COMMON_BASE)/generic.mk
-include generic_custom.mk
+include $(MYRIAD_BUILDFILE_DIRECTORY)/generic_custom.mk
 
 #-------------------------------[ Local shave applications build rules ]------------------#
 #No local applications build rules for this example

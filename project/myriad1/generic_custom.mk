@@ -10,10 +10,10 @@
 ###################################################################
 #       Using settings makefiles for wider system settings        #
 ###################################################################
-include generalsettings_custom.mk
-include toolssettings_custom.mk
-include includessettings_custom.mk
-include commonsources_custom.mk
+include $(MYRIAD_BUILDFILE_DIRECTORY)/generalsettings_custom.mk
+include $(MYRIAD_BUILDFILE_DIRECTORY)/toolssettings_custom.mk
+include $(MYRIAD_BUILDFILE_DIRECTORY)/includessettings_custom.mk
+include $(MYRIAD_BUILDFILE_DIRECTORY)/commonsources_custom.mk
 ###################################################################
 #       And finally listing all of the build rules                #
 ###################################################################
