@@ -707,7 +707,7 @@ namespace Anki
     template<typename Type> FixedPointArray<Type>::FixedPointArray(s32 numRows, s32 numCols, s32 numFractionalBits, MemoryStack &memory, bool useBoundaryFillPatterns)
       : Array<Type>(numRows, numCols, memory, useBoundaryFillPatterns), numFractionalBits(numFractionalBits)
     {
-      AnkiConditionalError(numFractionalBits >= 0 && numFractionalBits <= (sizeof(Type)*8),  "FixedPointArray<Type>", "numFractionalBits number is invalid");
+      AnkiConditionalError(numFractionalBits >= 0 && numFractionalBits <= static_cast<s32>(sizeof(Type)*8),  "FixedPointArray<Type>", "numFractionalBits number is invalid");
     }
 
     template<typename Type> s32 FixedPointArray<Type>::get_numFractionalBits() const
