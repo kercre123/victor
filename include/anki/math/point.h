@@ -36,57 +36,113 @@
 namespace Anki {
   
   // Generic N-dimensional Point class
-  template<typename T, size_t N>
-  class Point
+  template<size_t N, typename T>
+  class Point //: public std::array<T,N>
   {
+    static_assert(N>0, "Cannot create an empty Point.");
+    
   public:
+    
     // Constructors
     Point( void );
-    Point(const Point<T,N>& pt);
+    Point(const Point<N,T>& pt);
+    
+    //Point(const T x, const T y); // Only valid if N==2
+    //Point(const T x, const T y, const T z); // Only valid if N==3
+  
+    // Point(T x1, T x2, ..., T xN);
+    // This is ugly variadic template syntax to get this constructor to
+    // work for all N and generate a compile-time error if you try to do
+    // something like: Point<2,int> p(1, 2, 3);
+    //
+    // See here for more:
+    //  http://stackoverflow.com/questions/8158261/templates-how-to-control-number-of-constructor-args-using-template-variable
+    template <typename... Tail>
+    Point(typename std::enable_if<sizeof...(Tail)+1 == N, T>::type head, Tail... tail)
+    : data{ head, T(tail)... } {}
+    
+    // Assignment operator:
+    Point<N,T>& operator=(const Point<N,T> &other);
     
     // Accessors:
-    T  operator[](const size_t i) const;
-    T& operator[](const size_t i);
+    T& operator[] (const size_t i);
+    const T& operator[] (const size_t i) const;
+    
+    // Special mnemonic accessors for the first, second,
+    // and third elements, available when N is large enough.
+    
+    T& x();
+    T& y();
+    T& z();
+    const T& x() const;
+    const T& y() const;
+    const T& z() const;
+    
+#if defined(ANKICORETECH_USE_OPENCV)
+    Point(const cv::Point_<T>& pt);
+    Point(const cv::Point3_<T>& pt);
+    cv::Point_<T> get_CvPoint_() const;
+    cv::Point3_<T> get_CvPoint3_() const;
+#endif
     
     // Arithmetic Operators
-    Point<T,N>& operator+= (const T value);
-    Point<T,N>& operator-= (const T value);
-    Point<T,N>& operator*= (const T value);
-    Point<T,N>& operator+= (const Point<T,N> &other);
-    Point<T,N>& operator-= (const Point<T,N> &other);
+    Point<N,T>& operator+= (const T value);
+    Point<N,T>& operator-= (const T value);
+    Point<N,T>& operator*= (const T value);
+    Point<N,T>& operator+= (const Point<N,T> &other);
+    Point<N,T>& operator-= (const Point<N,T> &other);
     
     // Math methods:
     T length(void) const;
-    Point<T,N>& makeUnitLength(void);
-    
-    // Friendly operators
-    
+    Point<N,T>& makeUnitLength(void);
     
   protected:
-    // Members:
     T data[N];
     
   }; // class Point
   
+  // Create some convenience aliases/typedefs for 2D and 3D points:
+  template <typename T>
+  using Point2 = Point<2, T>;
+  
+  template <typename T>
+  using Point3 = Point<3, T>;
+  
+  typedef Point2<float> Point2f;
+  typedef Point3<float> Point3f;
+  
+  // TODO: Do need a separate Vec class?
+  typedef Point3f Vec3f;
+  
   // Display / Logging:
-  template<typename T, size_t N>
-  std::ostream& operator<<(std::ostream& out, const Point<T,N>& p);
+  template<size_t N, typename T>
+  std::ostream& operator<<(std::ostream& out, const Point<N,T>& p);
   
-  template<typename T, size_t N>
-  bool       operator== (const Point<T,N> &point1, const Point<T,N> &point2);
+  // Binary mathematical operations:
+  template<size_t N, typename T>
+  bool operator== (const Point<N,T> &point1, const Point<N,T> &point2);
   
-  template<typename T, size_t N>
-  bool       nearlyEqual (const Point<T,N> &point1, const Point<T,N> &point2,
-                          const T eps = T(10)*std::numeric_limits<T>::epsilon());
+  template<size_t N, typename T>
+  bool nearlyEqual(const Point<N,T> &point1, const Point<N,T> &point2,
+                   const T eps = T(10)*std::numeric_limits<T>::epsilon());
   
-  template<typename T, size_t N>
-  Point<T,N> operator+  (const Point<T,N> &point1, const Point<T,N> &point2);
+  template<size_t N, typename T>
+  Point<N,T> operator+ (const Point<N,T> &point1, const Point<N,T> &point2);
   
-  template<typename T, size_t N>
-  Point<T,N> operator-  (const Point<T,N> &point1, const Point<T,N> &point2);
+  template<size_t N, typename T>
+  Point<N,T> operator- (const Point<N,T> &point1, const Point<N,T> &point2);
   
+  template<size_t N, typename T>
+  T dot(const Point<N,T> &point1, const Point<N,T> &point2);
   
-  // Special 2D Point class with elements x and y
+#if 0
+  {
+    
+  //
+  // Class Point2<T>
+  //
+  //   Special 2D Point class with elements x and y.
+  //
   template<typename T>
   class Point2 : public Point<T,2>
   {
@@ -94,6 +150,7 @@ namespace Anki {
     // Constructors:
     Point2();
     Point2(const T x, const T y);
+    Point2(const Point<T,2> &pt);
 #if defined(ANKICORETECH_USE_OPENCV)
     Point2(const cv::Point_<T>& pt);
     cv::Point_<T> get_CvPoint_() const;
@@ -107,11 +164,16 @@ namespace Anki {
     
   }; // class Point2
   
+
   typedef Point2<float> Point2f;
   typedef Point2f Vec2f;
   
   
-  // Special 3D Point class with elements x, y, and z
+  //
+  // Class Point3<T>
+  //
+  //   Special 3D Point class with elements x, y, and z.
+  //
   template<typename T>
   class Point3 : public Point<T,3>
   {
@@ -119,8 +181,10 @@ namespace Anki {
     // Constructors:
     Point3();
     Point3(const T x, const T y, const T z);
+    Point3(const Point<T,3> &pt);
+    
 #if defined(ANKICORETECH_USE_OPENCV)
-    Point3(const cv::Point3_<T>& pt);
+    //Point3(const cv::Point3_<T>& pt);
     cv::Point3_<T> get_CvPoint_() const;
 #endif
     
@@ -137,40 +201,92 @@ namespace Anki {
   typedef Point3<float> Point3f;
   typedef Point3f Vec3f;
   
+  }
+#endif
+  
+  template<typename T>
+  Point3<T> cross(const Point3<T> &point1, const Point3<T> &point2);
+  
+  
 #pragma mark --- Point Implementations ---
   
-  template<typename T, size_t N>
-  Point<T,N>::Point( void )
+  template<size_t N, typename T>
+  Point<N,T>::Point( void )
   {
     for(size_t i=0; i<N; ++i) {
       this->data[i] = T(0);
     }
   }
   
-  template<typename T, size_t N>
-  Point<T,N>::Point(const Point<T,N>& pt)
+  template<size_t N, typename T>
+  Point<N,T>::Point(const Point<N,T>& pt)
   {
     for(size_t i=0; i<N; ++i) {
       this->data[i] = pt.data[i];
     }
   }
   
-  template<typename T, size_t N>
-  T Point<T,N>::operator[](const size_t i) const
+  /*
+  template<size_t N, typename T>
+  Point<N,T>::Point(const T x, const T y)
   {
-    CORETECH_ASSERT(i<N);
-    return this->data[i];
+    static_assert(N==2, "N must be 2 to use this constructor.");
+    
+    this->data[0] = x;
+    this->data[1] = y;
   }
   
-  template<typename T, size_t N>
-  T& Point<T,N>::operator[](const size_t i)
+  template<size_t N, typename T>
+  Point<N,T>::Point(const T x, const T y, const T z)
   {
-    CORETECH_ASSERT(i<N);
-    return this->data[i];
+    static_assert(N==3, "N must be 3 to use this constructor.");
+    
+    this->data[0] = x;
+    this->data[1] = y;
+    this->data[2] = z;
+  }
+   */
+  
+#if defined(ANKICORETECH_USE_OPENCV)
+  template<size_t N, typename T>
+  Point<N,T>::Point(const cv::Point_<T>& pt)
+  : Point(pt.x, pt.y)
+  {
   }
   
-  template<typename T, size_t N>
-  Point<T,N>& Point<T,N>::operator*= (const T value)
+  template<size_t N, typename T>
+  Point<N,T>::Point(const cv::Point3_<T>& pt)
+  : Point(pt.x, pt.y, pt.z)
+  {
+    
+  }
+  
+  template<size_t N, typename T>
+  cv::Point_<T> Point<N,T>::get_CvPoint_() const
+  {
+    static_assert(N==2, "N must be 2 to convert to cv::Point_<T>.");
+    return cv::Point_<T>(this->x(), this->y());
+  }
+  
+  template<size_t N, typename T>
+  cv::Point3_<T> Point<N,T>::get_CvPoint3_() const
+  {
+    static_assert(N==3, "N must be 3 to convert to cv::Point3_<T>.");
+    return cv::Point3_<T>(this->x(), this->y(), this->z());
+  }
+#endif
+  
+  template<size_t N, typename T>
+  Point<N,T>& Point<N,T>::operator=(const Point<N,T> &other)
+  {
+    for(size_t i=0; i<N; ++i) {
+      this->data[i] = other.data[i];
+    }
+    return *this;
+  }
+  
+  template<size_t N, typename T>
+  Point<N,T>& Point<N,T>::operator*= (const T value)
   {
     for(size_t i=0; i<N; ++i) {
       this->data[i] *= value;
@@ -178,8 +294,8 @@ namespace Anki {
     return *this;
   }
   
-  template<typename T, size_t N>
-  Point<T,N>& Point<T,N>::operator+= (const T value)
+  template<size_t N, typename T>
+  Point<N,T>& Point<N,T>::operator+= (const T value)
   {
     for(size_t i=0; i<N; ++i) {
       this->data[i] += value;
@@ -187,8 +303,8 @@ namespace Anki {
     return *this;
   }
   
-  template<typename T, size_t N>
-  Point<T,N>& Point<T,N>::operator-= (const T value)
+  template<size_t N, typename T>
+  Point<N,T>& Point<N,T>::operator-= (const T value)
   {
     for(size_t i=0; i<N; ++i) {
       this->data[i] -= value;
@@ -196,26 +312,76 @@ namespace Anki {
     return *this;
   }
   
-  template<typename T, size_t N>
-  Point<T,N>& Point<T,N>::operator+= (const Point<T,N> &other)
+  template<size_t N, typename T>
+  Point<N,T>& Point<N,T>::operator+= (const Point<N,T> &other)
   {
     for(size_t i=0; i<N; ++i) {
-      this->data[i] += other.data[i];
+      this->data[i] += other[i];
     }
     return *this;
   }
   
-  template<typename T, size_t N>
-  Point<T,N>& Point<T,N>::operator-= (const Point<T,N> &other)
+  template<size_t N, typename T>
+  Point<N,T>& Point<N,T>::operator-= (const Point<N,T> &other)
   {
     for(size_t i=0; i<N; ++i) {
-      this->data[i] -= other.data[i];
+      this->data[i] -= other[i];
     }
     return *this;
   }
   
-  template<typename T, size_t N>
-  bool operator== (const Point<T,N> &point1, const Point<T,N> &point2)
+  template<size_t N, typename T>
+  inline T& Point<N,T>::operator[] (const size_t i)
+  {
+    CORETECH_ASSERT(i<N);
+    return this->data[i];
+  }
+  
+  template<size_t N, typename T>
+  inline const T& Point<N,T>::operator[] (const size_t i) const
+  {
+    CORETECH_ASSERT(i<N);
+    return this->data[i];
+  }
+  
+  template<size_t N, typename T>
+  inline T& Point<N,T>::x() {
+    static_assert(N>0, "Point x() accessor only available when N>0.");
+    return this->data[0];
+  }
+  
+  template<size_t N, typename T>
+  inline T& Point<N,T>::y() {
+    static_assert(N>1, "Point y() accessor only available when N>1.");
+    return this->data[1];
+  }
+  
+  template<size_t N, typename T>
+  inline T& Point<N,T>::z() {
+    static_assert(N>2, "Point z() accessor only available when N>2.");
+    return this->data[2];
+  }
+  
+  template<size_t N, typename T>
+  inline const T& Point<N,T>::x() const {
+    static_assert(N>0, "Point x() accessor only available when N>0.");
+    return this->data[0];
+  }
+  
+  template<size_t N, typename T>
+  inline const T& Point<N,T>::y() const {
+    static_assert(N>1, "Point y() accessor only available when N>1.");
+    return this->data[1];
+  }
+  
+  template<size_t N, typename T>
+  inline const T& Point<N,T>::z() const {
+    static_assert(N>2, "Point z() accessor only available when N>2.");
+    return this->data[2];
+  }
+  
+  template<size_t N, typename T>
+  bool operator== (const Point<N,T> &point1, const Point<N,T> &point2)
   {
     CORETECH_ASSERT(N>0);
     
@@ -230,8 +396,8 @@ namespace Anki {
     return retVal;
   }
   
-  template<typename T, size_t N>
-  bool       nearlyEqual (const Point<T,N> &point1, const Point<T,N> &point2,
+  template<size_t N, typename T>
+  bool       nearlyEqual (const Point<N,T> &point1, const Point<N,T> &point2,
                           const T eps)
   {
     CORETECH_ASSERT(N>0);
@@ -247,43 +413,55 @@ namespace Anki {
     return retVal;
   }
   
-  template<typename T, size_t N>
-  Point<T,N> operator+ (const Point<T,N> &point1, const Point<T,N> &point2)
+  template<size_t N, typename T>
+  Point<N,T> operator+ (const Point<N,T> &point1, const Point<N,T> &point2)
   {
-    Point<T,N> newPoint(point1);
+    Point<N,T> newPoint(point1);
     newPoint += point2;
     return newPoint;
   }
   
-  template<typename T, size_t N>
-  Point<T,N> operator- (const Point<T,N> &point1, const Point<T,N> &point2)
+  template<size_t N, typename T>
+  Point<N,T> operator- (const Point<N,T> &point1, const Point<N,T> &point2)
   {
-    Point<T,N> newPoint(point1);
+    Point<N,T> newPoint(point1);
     newPoint -= point2;
     return newPoint;
   }
   
-  template<typename T, size_t N>
-  T Point<T,N>::length(void) const
+  template<size_t N, typename T>
+  T dot(const Point<N,T> &point1, const Point<N,T> &point2)
   {
     CORETECH_ASSERT(N>0);
-    T retVal = this->data[0]*this->data[0];
+    
+    float dotProduct = point1[0]*point2[0];
     for(size_t i=1; i<N; ++i) {
-      retVal += this->data[i]*this->data[i];
+      dotProduct += point1[i]*point2[i];
+    }
+    return dotProduct;
+  }
+  
+  template<size_t N, typename T>
+  T Point<N,T>::length(void) const
+  {
+    CORETECH_ASSERT(N>0);
+    T retVal = (*this)[0]*(*this)[0];
+    for(size_t i=1; i<N; ++i) {
+      retVal += (*this)[i]*(*this)[i];
     }
     
     return std::sqrt(retVal);
   }
   
-  template<typename T, size_t N>
-  Point<T,N>& Point<T,N>::makeUnitLength(void)
+  template<size_t N, typename T>
+  Point<N,T>& Point<N,T>::makeUnitLength(void)
   {
     (*this) *= T(1)/this->length();
     return *this;
   }
   
-  template<typename T, size_t N>
-  std::ostream& operator<<(std::ostream& out, const Point<T,N>& p)
+  template<size_t N, typename T>
+  std::ostream& operator<<(std::ostream& out, const Point<N,T>& p)
   {
     for (int i=0; i<N; ++i) {
       out << p[i] << " ";
@@ -291,6 +469,8 @@ namespace Anki {
     return out;
   }
 
+#if 0
+#pragma mark --- Point2 Implemenations ---
   
   // Point2's constructors
   template<typename T>
@@ -305,6 +485,13 @@ namespace Anki {
   {
     this->x() = x;
     this->y() = y;
+  }
+  
+  template<typename T>
+  Point2<T>::Point2(const Point<T,2> &pt)
+  : Point2<T>(pt[0], pt[1])
+  {
+    
   }
   
 #if defined(ANKICORETECH_USE_OPENCV)
@@ -322,6 +509,31 @@ namespace Anki {
   }
 #endif
   
+  // Point2's x,y accessors:
+  template<typename T>
+  inline T& Point2<T>::x(void) {
+    return (*this)[0];
+  }
+  
+  template<typename T>
+  inline T& Point2<T>::y(void) {
+    return (*this)[1];
+  }
+  
+  template<typename T>
+  inline T Point2<T>::x(void) const
+  {
+    return (*this)[0];
+  }
+  
+  template<typename T>
+  inline T Point2<T>::y(void) const
+  {
+    return (*this)[1];
+  }
+  
+#pragma mark --- Point3 Implemenations ---
+  
   // Point3's constructors
   template<typename T>
   Point3<T>::Point3(void)
@@ -338,13 +550,23 @@ namespace Anki {
     this->z() = z;
   }
   
+  template<typename T>
+  Point3<T>::Point3(const Point<T,3> &pt)
+  : Point3<T>(pt[0], pt[1], pt[2])
+  {
+    
+  }
+  
+  
 #if defined(ANKICORETECH_USE_OPENCV)
+  /*
   template<typename T>
   Point3<T>::Point3(const cv::Point3_<T>& pt)
   : Point3(pt.x, pt.y, pt.z)
   {
     
   }
+   */
   
   template<typename T>
   cv::Point3_<T> Point3<T>::get_CvPoint_() const
@@ -353,63 +575,51 @@ namespace Anki {
   }
 #endif
   
-  // Point2's x,y accessors:
-  template<typename T>
-  inline T& Point2<T>::x(void) {
-    return this->data[0];
-  }
   
-  template<typename T>
-  inline T& Point2<T>::y(void) {
-    return this->data[1];
-  }
-  
-  template<typename T>
-  inline T Point2<T>::x(void) const
-  {
-    return this->data[0];
-  }
-  
-  template<typename T>
-  inline T Point2<T>::y(void) const
-  {
-    return this->data[1];
-  }
-  
-  // Point3's x,y,z accessors:
+  // Point3 Accessors:
   
   template<typename T>
   inline T& Point3<T>::x(void) {
-    return this->data[0];
+    return (*this)[0];
   }
   
   template<typename T>
   inline T& Point3<T>::y(void) {
-    return this->data[1];
+    return (*this)[1];
   }
   
   template<typename T>
   inline T& Point3<T>::z(void) {
-    return this->data[2];
+    return (*this)[2];
   }
   
   template<typename T>
   inline T Point3<T>::x(void) const
   {
-    return this->data[0];
+    return (*this)[0];
   }
   
   template<typename T>
   inline T Point3<T>::y(void) const
   {
-    return this->data[1];
+    return (*this)[1];
   }
   
   template<typename T>
   inline T Point3<T>::z(void) const
   {
-    return this->data[2];
+    return (*this)[2];
   }
+#endif
+
+  template<typename T>
+  Point3<T> cross(const Point3<T> &point1, const Point3<T> &point2)
+  {
+    return Point3<T>(point1.y()*point2.z() - point2.y()*point1.z(),
+                     point2.x()*point1.z() - point1.x()*point2.z(),
+                     point1.x()*point2.y() - point2.x()*point1.y());
+  }
+  
   
 } // namespace Anki
 

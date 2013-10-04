@@ -68,14 +68,19 @@ namespace Anki {
      */
     
     // Accessors:
-    inline float   get_x()        const;
-    inline float   get_y()        const;
-    inline Radians get_angle()    const;
+    float   get_x()     const;
+    float   get_y()     const;
+    Radians get_angle() const;
     
-    Vec3f get_normal(void) const;
-    void  set_normal(const Vec3f &normal_new);
+    void  set_planeOrigin(const Point3f &origin);
+    void  set_planeNormal(const Vec3f   &normal);
+    
+    const Point3f& get_planeOrigin() const;
+    const Vec3f&   get_planeNormal() const;
     
     RotationMatrix2d get_rotationMatrix() const;
+    
+    void set_parent(const Pose2d* otherPose);
     
     // Composition with another Pose2d:
     void   operator*=(const Pose2d &other); // in place
@@ -99,7 +104,8 @@ namespace Anki {
     Radians angle;
     
     // Stores the orientation of this 2D plane in 3D space
-    Vec3f normal;
+    Point3f planeOrigin;
+    Vec3f   planeNormal;
     
     /* TODO: Add and use 3DOF covariance
     Matrix<float> covariance;
@@ -150,21 +156,37 @@ namespace Anki {
     Pose3d(const RotationMatrix3d &Rmat, const Vec3f &T,
            const Pose3d *parentPose = Pose3d::World);
     
+    // Construct from an angle, axis, and translation vector
+    Pose3d(const Radians angle, const Vec3f axis,
+           const Vec3f translation,
+           const Pose3d *parentPose = Pose3d::World);
+    
+    // Construct a Pose3d from a Pose2d (using the plane information)
+    Pose3d(const Pose2d &pose2d);
+    
     // TODO: Copy constructor?
     Pose3d(const Pose3d &otherPose);
     Pose3d(const Pose3d *otherPose);
+
+    // Accessors:
+    const RotationMatrix3d& get_rotationMatrix() const;
+    const RotationVector3d& get_rotaitonVector() const;
+    const Vec3f&            get_translation()    const;
     
-    // TODO: Update methods:
-    void update(const RotationMatrix3d &Rmat, const Vec3f &T);
-    void update(const RotationVector3d &Rvec, const Vec3f &T);
+    void set_rotation(const RotationMatrix3d &Rmat);
+    void set_rotation(const RotationVector3d &Rvec);
+    void set_rotation(const Radians angle, const Vec3f &axis);
+    void set_translation(const Vec3f &T);
     
     // Composition with another Pose
     void   operator*=(const Pose3d &other); // in place
     Pose3d operator*(const Pose3d &other) const;
     void preComposeWith(const Pose3d &other);
     
-    // "Apply" Pose to a 3D point (i.e. transform that point by this Pose)
+    // "Apply" Pose to 3D point(s) (i.e. transform that point by this Pose)
     Point3f operator*(const Point3f &point) const;
+    void    applyTo(const std::vector<Point3f> &pointsIn,
+                    std::vector<Point3f>       &pointsOut) const;
     
     Pose3d  getInverse(void) const;
     Pose3d& Invert(void); // in place?
@@ -199,6 +221,71 @@ namespace Anki {
     friend unsigned int getTreeDepthHelper(const POSE *P);
     
   }; // class Pose3d
+  
+  //
+  // Inline accessors:
+  //
+  
+  // Pose2d
+  
+  inline float Pose2d::get_x(void) const
+  { return this->translation.x(); }
+  
+  inline float Pose2d::get_y(void) const
+  { return this->translation.y(); }
+  
+  inline Radians Pose2d::get_angle(void) const
+  { return this->angle; }
+  
+  inline RotationMatrix2d Pose2d::get_rotationMatrix(void) const
+  { return RotationMatrix2d(this->angle); }
+  
+  inline void Pose2d::set_planeNormal(const Vec3f &normal)
+  {
+    this->planeNormal = normal;
+    this->planeNormal.makeUnitLength();
+  }
+  
+  inline const Vec3f& Pose2d::get_planeNormal() const
+  { return this->planeNormal; }
+  
+  inline void Pose2d::set_parent(const Anki::Pose2d *otherPose)
+  { this->parent = otherPose; }
+  
+  
+  // Pose3d
+  
+  inline const RotationMatrix3d& Pose3d::get_rotationMatrix() const
+  { return this->rotationMatrix; }
+  
+  inline const RotationVector3d& Pose3d::get_rotaitonVector() const
+  { return this->rotationVector; }
+  
+  inline const Vec3f& Pose3d::get_translation() const
+  { return this->translation; }
+  
+  inline void Pose3d::set_rotation(const RotationMatrix3d &Rmat)
+  {
+    this->rotationMatrix = Rmat;
+    this->rotationVector = RotationVector3d(Rmat);
+  }
+  
+  inline void Pose3d::set_rotation(const RotationVector3d &Rvec)
+  {
+    this->rotationVector = Rvec;
+    this->rotationMatrix = RotationMatrix3d(Rvec);
+  }
+  
+  inline void Pose3d::set_rotation(const Radians angle, const Vec3f &axis)
+  {
+    this->rotationVector = RotationVector3d(angle, axis);
+    this->rotationMatrix = RotationMatrix3d(this->rotationVector);
+  }
+  
+  inline void Pose3d::set_translation(const Vec3f &T)
+  {
+    this->translation = T;
+  }
   
   
 } // namespace Anki

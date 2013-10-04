@@ -526,7 +526,7 @@ GTEST_TEST(TestMatrix, SmallMatrixTranspose)
                        9, 10, 11, 12};
   Matrix_3x4f B(initValsB);
   
-  SmallMatrix<float,4,3> B_t = B.getTranspose();
+  SmallMatrix<4,3,float> B_t = B.getTranspose();
   
 #ifdef DEBUG_TEST_MATRIX
   cout << "SmallMatrix B: \n" << B << "\n";
@@ -549,7 +549,7 @@ GTEST_TEST(TestMatrix, SmallSquareMatrixMultiplicationByPoint)
                        4, 5, 6,
                        7, 8, 9};
   
-  SmallSquareMatrix<float,3> M(initValsM);
+  SmallSquareMatrix<3,float> M(initValsM);
   Point3f p(10,11,12);
   
   Point3f q_true(68, 167, 266);
@@ -571,4 +571,5 @@ GTEST_TEST(TestMatrix, SmallSquareMatrixMultiplicationByPoint)
 #endif
   
 } // TestMatrix:SmallSquareMatrixMultiplicationByPoint()
+
 

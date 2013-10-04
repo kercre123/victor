@@ -23,8 +23,6 @@ namespace Anki
     template<typename T> class Array2d;
   }
 
-  template<typename T> class Point2;
-
 #pragma mark --- Array2d(Managed) Class Definition ---
 
   //

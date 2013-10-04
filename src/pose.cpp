@@ -11,41 +11,19 @@ namespace Anki {
   Pose2d* Pose2d::World = NULL;
   
   Pose2d::Pose2d(const Radians &theta, const Point2f &t)
-  : translation(t), angle(theta)
+  : translation(t), angle(theta), planeNormal(0.f,0.f,1.f),
+    parent(Pose2d::World)
   {
     
   }
   
   Pose2d::Pose2d(const Radians &theta, const float x, const float y)
-  : translation(x,y), angle(theta)
+  : translation(x,y), angle(theta), planeNormal(0.f,0.f,1.f),
+    parent(Pose2d::World)
   {
     
   }
-  
-  float Pose2d::get_x(void) const
-  {
-    return this->translation.x();
-  }
-  
-  float Pose2d::get_y(void) const
-  {
-    return this->translation.y();
-  }
-  
-  Radians Pose2d::get_angle(void) const
-  {
-    return this->angle;
-  }
-  
-  RotationMatrix2d Pose2d::get_rotationMatrix(void) const
-  {
-
-    RotationMatrix2d rotMat(this->angle);
     
-    return rotMat;
-    
-  } // Pose2d::get_rotationMatrix()
-  
   void Pose2d::operator*=(const Pose2d &other)
   {
     this->angle += other.angle;
@@ -127,6 +105,16 @@ namespace Anki {
 
   } // Constructor: Pose3d(Rmat, T)
   
+  Pose3d::Pose3d(const Radians angle, const Vec3f axis,
+                 const Vec3f T, const Pose3d *parentPose)
+  : rotationVector(angle, axis),
+    rotationMatrix(rotationVector),
+    translation(T),
+    parent(parentPose)
+  {
+    
+  } // Constructor: Pose3d(angle, axis, T)
+  
   Pose3d::Pose3d(const Pose3d &otherPose)
   : Pose3d(otherPose.rotationMatrix, otherPose.translation, otherPose.parent)
   {
@@ -138,6 +126,36 @@ namespace Anki {
   {
     
   }
+  
+  Pose3d::Pose3d(const Pose2d &pose2d)
+  : Pose3d(pose2d.get_angle(), {{0.f, 0.f, 0.f}},
+           {{pose2d.get_x(), pose2d.get_y(), 0.f}})
+  {
+    // At this point, we have initialized a 3D pose corresponding
+    // just to the 2D pose (i.e. w.r.t. the (0,0,0) origin and
+    // with rotation around the Z axis).
+    //
+    // Next compute the 3D pose of the plane in which the 2D Pose
+    // is embedded.  Then compose the two poses to get the final
+    // 3D pose.
+    
+    const Vec3f Zaxis(0.f, 0.f, 1.f);
+    
+    const float dotProduct = dot(pose2d.get_planeNormal(), Zaxis);
+    
+    CORETECH_ASSERT(std::abs(dotProduct) <= 1.f);
+    
+    // We will rotate the pose2d's plane normal into the Z axis.
+    // The dot product gives us the angle needed to do that, and
+    // the cross product gives us the axis around which we will
+    // rotate.
+    Radians angle3d = std::acos(dotProduct);
+    Vec3f   axis3d  = cross(Zaxis, pose2d.get_planeNormal());
+    
+    Pose3d planePose(angle3d, axis3d, pose2d.get_planeOrigin());
+    this->preComposeWith(planePose);
+    
+  } // Constructor: Pose3d(Pose2d)
   
 #pragma mark --- Operator Overloads ---
   // Composition: this = this*other
@@ -175,6 +193,42 @@ namespace Anki {
     this->translation += other.translation;
   }
   
+  Point3f Pose3d::operator*(const Point3f &pointIn) const
+  {
+    Point3f pointOut( this->rotationMatrix * pointIn );
+    pointOut += this->translation;
+    
+    return pointOut;
+  }
+  
+  void Pose3d::applyTo(const std::vector<Point3f> &pointsIn,
+                       std::vector<Point3f>       &pointsOut) const
+  {
+    const size_t numPoints = pointsIn.size();
+    
+    if(pointsOut.size() == numPoints)
+    {
+      // The output vector already has the right number of points
+      // in it.  No need to construct a new vector full of (0,0,0)
+      // points with resize; just replace what's there.
+      for(size_t i=0; i<numPoints; ++i)
+      {
+        pointsOut[i] = (*this) * pointsIn[i];
+      }
+      
+    } else {
+      // Clear the output vector, and use push_back to add newly-
+      // constructed points. Again, this avoids first creating a
+      // bunch of (0,0,0) points via resize and then immediately
+      // overwriting them.
+      pointsOut.clear();
+
+      for(const Point3f& x : pointsIn)
+      {
+        pointsOut.push_back( (*this) * x );
+      }
+    }
+  } // applyTo()
   
 #pragma mark --- Member Methods ---
   Pose3d Pose3d::getInverse(void) const

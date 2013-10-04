@@ -4,6 +4,7 @@
 add_executable(run_coreTechCommonTests 
 	run_coreTechCommonTests.cpp 
 	testMatrix.cpp
+	testPoint.cpp
 	testRotation.cpp)
 	
 target_link_libraries(run_coreTechCommonTests 

@@ -11,6 +11,7 @@ set(CORETECH_COMMON_SOURCE_FILES
 	memory.cpp
 	point.cpp
 	pose.cpp
+	quad.cpp
 	radians.cpp
 	rotation.cpp
 )
@@ -23,6 +24,7 @@ set(CORETECH_COMMON_HEADER_FILES
 	../include/anki/math/matrix.h
 	../include/anki/math/point.h
 	../include/anki/math/pose.h
+	../include/anki/math/quad.h
 	../include/anki/math/radians.h
 	../include/anki/math/rotation.h
 )
