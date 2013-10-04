@@ -2,10 +2,15 @@
 #include "anki/embeddedCommon/errorHandling.h"
 #include "anki/embeddedCommon/utilities.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #if !defined(USING_MOVIDIUS_GCC_COMPILER)
 #include <string.h>
 #endif
-#include <string.h>
+#ifdef __cplusplus
+}
+#endif
 
 namespace Anki
 {

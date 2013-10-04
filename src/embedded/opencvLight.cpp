@@ -42,6 +42,9 @@
 #include "anki/embeddedCommon/opencvLight.h"
 #include "anki/embeddedCommon/errorHandling.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <string.h>
 #include <math.h>
 #include <float.h>
@@ -50,6 +53,10 @@
 
 #ifdef _MSC_VER
 #include <malloc.h>
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 // Movidius compiler is missing alloca()
@@ -69,12 +76,12 @@
   float* _x = (x);                     \
   float* _y = (y);                     \
   for( _i = 0; _i < n; _i++ )          \
-    {                                  \
-    double t0 = _x[_i];                \
-    double t1 = _y[_i];                \
-    _x[_i] = (float)(t0*c + t1*s);     \
-    _y[_i] = (float)(-t0*s + t1*c);    \
-    }                                  \
+{                                  \
+  double t0 = _x[_i];                \
+  double t1 = _y[_i];                \
+  _x[_i] = (float)(t0*c + t1*s);     \
+  _y[_i] = (float)(-t0*s + t1*c);    \
+}                                  \
 }
 
 #define icvGivens_64f( n, x, y, c, s ) \
@@ -83,12 +90,12 @@
   double* _x = (x);                    \
   double* _y = (y);                    \
   for( _i = 0; _i < n; _i++ )          \
-    {                                  \
-    double t0 = _x[_i];                \
-    double t1 = _y[_i];                \
-    _x[_i] = t0*c + t1*s;              \
-    _y[_i] = -t0*s + t1*c;             \
-    }                                  \
+{                                  \
+  double t0 = _x[_i];                \
+  double t1 = _y[_i];                \
+  _x[_i] = t0*c + t1*s;              \
+  _y[_i] = -t0*s + t1*c;             \
+}                                  \
 }
 
 namespace Anki

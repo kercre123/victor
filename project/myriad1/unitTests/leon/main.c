@@ -23,6 +23,8 @@
 
 #include "cppInterface.h"
 
+#include "anki/embeddedCommon/utilities_c.h"
+
 #ifndef IN_DDR
 #define IN_DDR __attribute__((section(".ddr_direct.text")))
 //#define IN_DDR __attribute__((section(".ddr.text")))
@@ -40,208 +42,6 @@ __inline__ void sparc_leon3_disable_cache(void) {
     :  : : "l1", "l2");
 };
 
-//#define PRINTF_BUFFER_SIZE 1024
-//IN_DDR int printfBuffer[PRINTF_BUFFER_SIZE];
-//void explicitPrintf(const char *format, ...)
-//{
-//#define MAX_PRINTF_DIGITS 50
-//  int digits[MAX_PRINTF_DIGITS];
-//
-//  // Count the number of characters
-//  int numCharacters = 0;
-//  const char * const formatStart = format;
-//  while(*format != 0x00)
-//  {
-//    numCharacters++;
-//    format++;
-//  }
-//  //numCharacters = 4 * ((numCharacters+3) / 4);
-//
-//  format = formatStart;
-//
-//  // Count the number of arguments
-//  int numArguments = 0;
-//  while(*format != 0x00)
-//  {
-//    if(*format == '%') {
-//      numArguments++;
-//    }
-//
-//    format++;
-//  }
-//  format = formatStart;
-//
-//  // Reverse the string
-//  int i;
-//  for(i=0; i<numCharacters; i+=4) {
-//    printfBuffer[i] = format[i+3];
-//    printfBuffer[i+1] = format[i+2];
-//    printfBuffer[i+2] = format[i+1];
-//    printfBuffer[i+3] = format[i];
-//  }
-//  printfBuffer[i-3] = 0x00;
-//
-//  /*
-//  for(i=0; i<numCharacters; i++) {
-//  DrvApbUartPutChar(printfBuffer[i]);
-//  }
-//
-//  printf("a  \n");
-//  printf(&printfBuffer[0]);
-//  printf("b  \n");
-//  */
-//  va_list arguments;
-//  va_start(arguments, numArguments);
-//
-//  for(i=0; i<numCharacters; i++) {
-//    if(printfBuffer[i] == '%') {
-//      int j;
-//      const char percentChar = printfBuffer[i+1];
-//      i++;
-//
-//      if(percentChar == 'd') {
-//        for(j=0; j<MAX_PRINTF_DIGITS; j++) {
-//          digits[j] = 0;
-//        }
-//
-//        int value = va_arg(arguments, int);
-//        if(value < 0) {
-//          DrvApbUartPutChar('-');
-//          value = -value;
-//        }
-//
-//        if(value == 0) {
-//          DrvApbUartPutChar('0');
-//          DrvApbUartPutChar(' ');
-//          format++;
-//          continue;
-//        }
-//
-//        j=0;
-//        while(value > 0) {
-//          const int curDigit = value - (10*(value/10));
-//
-//          digits[j++] = curDigit;
-//
-//          value /= 10;
-//        }
-//
-//        j--;
-//        for( ; j>=0; j--) {
-//          DrvApbUartPutChar(digits[j] + 48);
-//        }
-//
-//        DrvApbUartPutChar(' ');
-//      } else if(percentChar == 's') {
-//        char* value = va_arg(arguments, char*);
-//        while(*value != 0x00) {
-//          DrvApbUartPutChar(*value);
-//          value++;
-//        }
-//      } else {
-//        DrvApbUartPutChar(printfBuffer[i]);
-//      }
-//    } else {
-//      DrvApbUartPutChar(printfBuffer[i]);
-//    }
-//  } // for(i=0; i<numCharacters; i++)
-//
-//  va_end(arguments);
-//
-//  /*va_list args;
-//  va_start(args, numArguments);
-//  printf(printfBuffer, args);
-//  va_end(args);*/
-//}
-
-//void explicitPrintf(const char *format, ...)
-//{
-//#define MAX_PRINTF_DIGITS 50
-//  int digits[MAX_PRINTF_DIGITS];
-//  int curChar = 0;
-//  int percentSignFound = 0;
-//
-//  int numArguments = 0;
-//  int previousChar = ' ';
-//
-//  const char * const formatStart = format;
-//  while(format != 0x00)
-//  {
-//    if(*format == '%') {
-//      numArguments++;
-//    }
-//
-//    format++;
-//  }
-//  format = formatStart;
-//
-//  va_list arguments;
-//  va_start(arguments, numArguments);
-//
-//  while(format != 0x00) {
-//    if(curChar >= 3) {
-//      curChar = 0;
-//      DrvApbUartPutChar(*format);
-//      DrvApbUartPutChar(charBuffer[2]);
-//      DrvApbUartPutChar(charBuffer[1]);
-//      DrvApbUartPutChar(charBuffer[0]);
-//      format++;
-//    } else { // if(curChar >= 3)
-//      if(percentSignFound) {
-//        int i;
-//        for(i=0; i<MAX_PRINTF_DIGITS; i++) {
-//          digits[i] = 0;
-//        }
-//
-//        int value = va_arg(arguments, int);
-//        if(value < 0) {
-//          DrvApbUartPutChar('-');
-//          value = -value;
-//        }
-//
-//        if(value == 0) {
-//          DrvApbUartPutChar('0');
-//          DrvApbUartPutChar(' ');
-//          format++;
-//          continue;
-//        }
-//
-//        i=0;
-//        while(value > 0) {
-//          const int curDigit = value - (10*(value/10));
-//
-//          digits[i++] = curDigit;
-//
-//          value /= 10;
-//        }
-//
-//        i--;
-//        for( ; i>=0; i--) {
-//          DrvApbUartPutChar(digits[i] + 48);
-//        }
-//
-//        DrvApbUartPutChar(' ');
-//        format++;
-//
-//        percentSignFound = 0;
-//      } else { // if(percentSignFound)
-//        if(*format == '%') {
-//          while(curChar <= 3) {
-//            charBuffer[curChar++] = ' ';
-//          }
-//          percentSignFound = 1;
-//          previousChar = *(format - 1);
-//          format++;
-//        } else {
-//          charBuffer[curChar++] = *format;
-//          format++;
-//        }
-//      } // if(percentSignFound) ... else
-//    } // if(curChar >= 3) ... else
-//  } // while(format != 0x00)
-//  va_end(arguments);
-//} // void explicitPrintf(const char *format, ...)
-
 void realMain()
 {
   u32          i;
@@ -256,10 +56,7 @@ void realMain()
 
   sparc_leon3_disable_cache();
 
-  //explicitPrintf("Hello dog %d  \n", 1234);
-  //explicitPrintf("Hello dog %s %d     \n", "piggle", 1234);
-
-  //printf("Starting unit tests\n");
+//  explicitPrintf(1, "Starting unit tests\n");
 
   swcShaveProfInit(&perfStr);
 
@@ -274,9 +71,9 @@ void realMain()
   swcShaveProfStopGathering(0, &perfStr);
 
   //    The below printf is modified from swcShaveProfPrint(0, &perfStr);
-  //printf("\nLeon executed %d cycles in %06d micro seconds ([%d ms])\n",(u32)(perfStr.perfCounterTimer), (u32)(DrvTimerTicksToMs(perfStr.perfCounterTimer)*1000), (u32)(DrvTimerTicksToMs(perfStr.perfCounterTimer)));
+//  explicitPrintf(1, "\nLeon executed %d cycles in %d micro seconds ([%d ms])\n",(s32)(perfStr.perfCounterTimer), (s32)(DrvTimerTicksToMs(perfStr.perfCounterTimer)*1000), (s32)(DrvTimerTicksToMs(perfStr.perfCounterTimer)));
 
-  //printf("Finished unit tests\n");
+//  explicitPrintf(1, "Finished unit tests\n");
 }
 
 int __attribute__((section(".sys.text.start"))) main(void)

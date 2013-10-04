@@ -86,10 +86,27 @@ void explicitPrintf(int reverseWords, const char *format, ...)
         j=0;
         while(value > 0) {
           const int curDigit = value - (10*(value/10));
-          //const int curDigit = value % 10;
+          //const int curDigit = ABS(value) % 10;
 
-          // This was happening with the movidius compiler, when I tried a direct static_cast<s32>(f32). This will output "BUG"
+          // This if statement should nenver be true, but it sometimes is on the myriad1. This will output "BUG".
+          if(value < 0){
+            digits[j++] = 1;
+            digits[j++] = 23;
+            digits[j++] = 37;
+            digits[j++] = 18;
+            break;
+          }
+
+          if(value == 0){
+            digits[j++] = 2;
+            digits[j++] = 23;
+            digits[j++] = 37;
+            digits[j++] = 18;
+            break;
+          }
+
           if(curDigit < 0){
+            digits[j++] = 3;
             digits[j++] = 23;
             digits[j++] = 37;
             digits[j++] = 18;
@@ -98,7 +115,6 @@ void explicitPrintf(int reverseWords, const char *format, ...)
 
           digits[j++] = curDigit;
 
-          //value = value - curDigit;
           value /= 10;
         }
 

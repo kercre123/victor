@@ -3,7 +3,7 @@
 #include "anki/embeddedCommon/array2d.h"
 
 #if defined(_MSC_VER)
-#include <windows.h >
+#include <windows.h>
 #elif defined(USING_MOVIDIUS_COMPILER)
 
 #else
