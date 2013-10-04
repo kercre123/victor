@@ -30,8 +30,9 @@ SH_COMPONENTS_HEADERS_PATHS += $(patsubst %,$(MV_COMMON_BASE)/components/%/*,$(C
 ###################################################################
 
 LEON_C_SOURCES ?=$(wildcard $(DirAppRoot)/*leon*/*.c) \
-                 $(wildcard $(DirAppRoot)/*leon*/*/*.c)\
-                 $(wildcard $(MV_LEON_LIBC_BASE)/src/*.c)
+                 $(wildcard $(DirAppRoot)/*leon*/*/*.c)
+
+LEON_C_SOURCES += $(wildcard $(MV_LEON_LIBC_BASE)/src/*.c)
 
 LEON_CPP_SOURCES ?=
 
