@@ -1,0 +1,12 @@
+#include "anki/math/quad.h"
+
+namespace Anki {
+  
+  void test(void)
+  {
+    Quad2f q;
+    
+    q[Quad2f::TopLeft] = Point2f(.1f, .3f);
+  }
+  
+} // namespace Anki

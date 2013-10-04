@@ -101,7 +101,7 @@ namespace Anki {
                  RotationMatrix3d &Rmat_out)
   {
 #if defined(ANKICORETECH_USE_OPENCV)
-    cv::Vec3f cvRvec(Rvec_in.get_CvPoint_());
+    cv::Vec3f cvRvec(Rvec_in.get_CvPoint3_());
     cv::Rodrigues(cvRvec, Rmat_out.get_CvMatx_());    
 #else
     
