@@ -732,6 +732,19 @@ namespace Anki
     template<> Result Array<Rectangle<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<Quadrilateral<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
 
+    //#ifdef USING_MOVIDIUS_GCC_COMPILER
+    //    template<> s32 Array<u8>::Set(const u8 * const values, const s32 numValues);
+    //    template<> s32 Array<s8>::Set(const s8 * const values, const s32 numValues);
+    //    template<> s32 Array<u16>::Set(const u16 * const values, const s32 numValues);
+    //    template<> s32 Array<s16>::Set(const s16 * const values, const s32 numValues);
+    //    template<> s32 Array<u32>::Set(const u32 * const values, const s32 numValues);
+    //    template<> s32 Array<s32>::Set(const s32 * const values, const s32 numValues);
+    //    template<> s32 Array<u64>::Set(const u64 * const values, const s32 numValues);
+    //    template<> s32 Array<s64>::Set(const s64 * const values, const s32 numValues);
+    //    template<> s32 Array<f32>::Set(const f32 * const values, const s32 numValues);
+    //    template<> s32 Array<f64>::Set(const f64 * const values, const s32 numValues);
+    //#endif
+
 #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
     template<> s32 Array<f32>::Set(const char * const values);
     template<> s32 Array<f64>::Set(const char * const values);
