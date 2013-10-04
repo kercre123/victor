@@ -265,6 +265,8 @@ void realMain()
 
   perfStr.countShCodeRun = 2;
 
+  swcLeonFlushCaches();
+
   swcShaveProfStartGathering(0, &perfStr);
 
   runTests();

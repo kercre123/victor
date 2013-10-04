@@ -4,12 +4,13 @@ SECTIONS {
   .ddr.rodata : {
     *(.ddr.rodata*)
     *(.rodata._ZZ*) 
-    *(.rodata.str1.8)
+    *(.rodata.str1.8) 
+/*    *(*.rodata.*) */
   }
 
   .ddr.text : {
     *(.ddr.text*)
-    *(.text._ZN4A*)
+    *(.text._ZN*) 
 /*    *(.text.*)*/
   }
 }

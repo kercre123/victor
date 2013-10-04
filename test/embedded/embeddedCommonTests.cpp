@@ -17,6 +17,10 @@ Matlab matlab(false);
 #include "gtest/gtest.h"
 #endif
 
+#ifdef USING_MOVIDIUS_GCC_COMPILER
+#include "swcLeonUtils.h"
+#endif
+
 //#define BUFFER_IN_DDR_WITH_L2
 //#define BUFFER_IN_CMX
 
@@ -199,7 +203,8 @@ IN_DDR GTEST_TEST(CoreTech_Common, ComputeHomography)
 
 IN_DDR void PrintfOneArray_f32(const Array<f32> &array, const char * variableName)
 {
-  printf("%s:\n   ", variableName);
+  printf(variableName);
+  printf(":\n   ");
   for(s32 y=0; y<array.get_size(0); y++) {
     const f32 * const rowPointer = array.Pointer(y, 0);
     for(s32 x=0; x<array.get_size(1); x+=2) {
@@ -216,7 +221,8 @@ IN_DDR void PrintfOneArray_f32(const Array<f32> &array, const char * variableNam
 
 IN_DDR void PrintfOneArray_f64(const Array<f64> &array, const char * variableName)
 {
-  printf("%s:\n   ", variableName);
+  printf(variableName);
+  printf(":\n   ");
   for(s32 y=0; y<array.get_size(0); y++) {
     const f64 * const rowPointer = array.Pointer(y, 0);
     for(s32 x=0; x<array.get_size(1); x+=2) {
@@ -243,20 +249,18 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD32)
 #define SVD_wGroundTruthDataLength 8
 #define SVD_vTGroundTruthDataLength 64
 
-  const f32 aData[SVD_aDataLength] = {
-    1, 2, 3, 5, 7, 11, 13, 17,
-    19, 23, 29, 31, 37, 41, 43, 47};
-  /*0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0};*/
-
-  const f32 uTGroundTruthData[SVD_uTGroundTruthDataLength] = {
+  f32 uTGroundTruthData[SVD_uTGroundTruthDataLength] = {
     -0.237504316543999f,  -0.971386483137875f,
     0.971386483137874f,  -0.237504316543999f};
 
-  const f32 wGroundTruthData[SVD_wGroundTruthDataLength] = {
+  //const f32 zzxaData[SVD_aDataLength] = {
+  //  1, 2, 3, 5, 7, 11, 13, 17,
+  //  19, 23, 29, 31, 37, 41, 43, 47};
+
+  f32 wGroundTruthData[SVD_wGroundTruthDataLength] = {
     101.885662808124f, 9.29040979446927f, 0, 0, 0, 0, 0, 0};
 
-  const f32 vTGroundTruthData[SVD_vTGroundTruthDataLength] = {
+  f32 vTGroundTruthData[SVD_vTGroundTruthDataLength] = {
     -0.183478685625953f, -0.223946108965585f, -0.283481700610061f, -0.307212042374800f, -0.369078720749224f, -0.416539404278702f, -0.440269746043441f, -0.487730429572919f,
     0.381166774075590f, 0.378866636898153f, 0.427695421221120f, 0.269708382365037f, 0.213979186509760f, -0.101994891202405f, -0.259981930058488f, -0.575956007770654f,
     -0.227185052857744f, -0.469620636740071f, 0.828412170627898f, -0.133259849703043f, -0.130174916014859f, -0.0535189566767408f, -0.0151909770076815f, 0.0614649823304370f,
@@ -267,6 +271,10 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD32)
     -0.502216484295607f, 0.598727043133703f, 0.149270332220156f, 0.0341621344454443f, -0.0314179665781565f, -0.261634362127581f, -0.376742559902293f, 0.393041044548282f};
 
   const s32 m = 2, n = 8;
+
+#ifdef USING_MOVIDIUS_GCC_COMPILER
+  swcLeonFlushCaches();
+#endif
 
   Array<f32> a(m, n, ms);
   Array<f32> w(1, n, ms);
@@ -284,29 +292,38 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD32)
   ASSERT_TRUE(uT_groundTruth.IsValid());
   ASSERT_TRUE(vT_groundTruth.IsValid());
 
-  void * scratch = ms.Allocate(sizeof(float)*(2*n + 2*m + 64));
+  //void * scratch = ms.Allocate(sizeof(float)*(2*n + 2*m + 64));
+  void * scratch = ms.Allocate(sizeof(float)*(2*n + 2*m + + 64 + 500));
   ASSERT_TRUE(scratch != NULL);
 
-  a.Set(aData, SVD_aDataLength);
-  w_groundTruth.Set(wGroundTruthData, SVD_uTGroundTruthDataLength);
-  uT_groundTruth.Set(uTGroundTruthData, SVD_wGroundTruthDataLength);
-  vT_groundTruth.Set(vTGroundTruthData, SVD_vTGroundTruthDataLength);
+  w_groundTruth.Set(&wGroundTruthData[0], SVD_uTGroundTruthDataLength);
+
+  uT_groundTruth.Set(&uTGroundTruthData[0], SVD_wGroundTruthDataLength);
+  vT_groundTruth.Set(&vTGroundTruthData[0], SVD_vTGroundTruthDataLength);
+
+  //a.Set(&zzxaData[0], SVD_aDataLength);
+
+  a[0][0] = 1.0f; a[0][1] = 2.0f; a[0][2] = 3.0f; a[0][3] = 5.0f; a[0][4] = 7.0f; a[0][5] = 11.0f; a[0][6] = 13.0f; a[0][7] = 17.0f;
+  a[1][0] = 19.0f; a[1][1] = 23.0f; a[1][2] = 29.0f; a[1][3] = 31.0f; a[1][4] = 37.0f; a[1][5] = 41.0f; a[1][6] = 43.0f; a[1][7] = 47.0f;
 
   const Result result = svd_f32(a, w, uT, vT, scratch);
 
   ASSERT_TRUE(result == RESULT_OK);
 
+  //PrintfOneArray_f32(a, "a       ");
+
   //  w.Print("w");
   //  w_groundTruth.Print("w_groundTruth");
-  //PrintfOneArray_f32(w, "w");
+  //PrintfOneArray_f32(w, "w       ");
   //PrintfOneArray_f32(w_groundTruth, "w_groundTruth");
 
   //  uT.Print("uT");
   //  uT_groundTruth.Print("uT_groundTruth");
-  PrintfOneArray_f32(uT, "uT");
+  PrintfOneArray_f32(uT, "uT      ");
   PrintfOneArray_f32(uT_groundTruth, "uT_groundTruth");
 
   //  vT.Print("vT");
+  //PrintfOneArray_f32(vT, "vT      ");
   //  vT_groundTruth.Print("vT_groundTruth");
 
   ASSERT_TRUE(w.IsElementwiseEqual_PercentThreshold(w_groundTruth, .05, .001));
@@ -330,9 +347,9 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD64)
 #define SVD_wGroundTruthDataLength 8
 #define SVD_vTGroundTruthDataLength 64
 
-  const f64 aData[SVD_aDataLength] = {
-    1, 2, 3, 5, 7, 11, 13, 17,
-    19, 23, 29, 31, 37, 41, 43, 47};
+  //const f64 aData[SVD_aDataLength] = {
+  //  1, 2, 3, 5, 7, 11, 13, 17,
+  //  19, 23, 29, 31, 37, 41, 43, 47};
 
   const f64 uTGroundTruthData[SVD_uTGroundTruthDataLength] = {
     -0.237504316543999f,  -0.971386483137875f,
@@ -372,7 +389,10 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD64)
   void * scratch = ms.Allocate(sizeof(float)*(2*n + 2*m + 64));
   ASSERT_TRUE(scratch != NULL);
 
-  a.Set(aData, SVD_aDataLength);
+  a[0][0] = 1.0f; a[0][1] = 2.0f; a[0][2] = 3.0f; a[0][3] = 5.0f; a[0][4] = 7.0f; a[0][5] = 11.0f; a[0][6] = 13.0f; a[0][7] = 17.0f;
+  a[1][0] = 19.0f; a[1][1] = 23.0f; a[1][2] = 29.0f; a[1][3] = 31.0f; a[1][4] = 37.0f; a[1][5] = 41.0f; a[1][6] = 43.0f; a[1][7] = 47.0f;
+
+  //a.Set(aData, SVD_aDataLength);
   w_groundTruth.Set(wGroundTruthData, SVD_uTGroundTruthDataLength);
   uT_groundTruth.Set(uTGroundTruthData, SVD_wGroundTruthDataLength);
   vT_groundTruth.Set(vTGroundTruthData, SVD_vTGroundTruthDataLength);
@@ -388,7 +408,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD64)
 
   //  uT.Print("uT");
   //  uT_groundTruth.Print("uT_groundTruth");
-  PrintfOneArray_f64(uT, "uT");
+  PrintfOneArray_f64(uT, "uT  ");
   PrintfOneArray_f64(uT_groundTruth, "uT_groundTruth");
 
   //  vT.Print("vT");
