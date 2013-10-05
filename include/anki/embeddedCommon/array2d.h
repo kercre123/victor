@@ -118,7 +118,8 @@ namespace Anki
       // Copy values to this Array.
       // If the input array does not contain enough elements, the remainder of this Array will be filled with zeros.
       // Returns the number of values set (not counting extra zeros)
-      s32 Set(const Type * const values, const s32 numValues);
+      // Note: The myriad has many issues with static initialization of arrays, so this should not used with caution
+      //s32 Set(const Type * const values, const s32 numValues);
 
       // Parse a space-seperated string, and copy values to this Array.
       // If the string does not contain enough elements, the remainder of the Array will be filled with zeros.
@@ -474,19 +475,20 @@ namespace Anki
       }
     }
 
-    template<typename Type> s32 Array<Type>::Set(const Type value)
-    {
-      AnkiConditionalError(this->IsValid(), "Array<Type>::Set", "Array<Type> is not valid");
+    // Note: The myriad has many issues with static initialization of arrays, so this should not used with caution
+    //template<typename Type> s32 Array<Type>::Set(const Type value)
+    //{
+    //  AnkiConditionalError(this->IsValid(), "Array<Type>::Set", "Array<Type> is not valid");
 
-      for(s32 y=0; y<size[0]; y++) {
-        Type * restrict rowPointer = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
-          rowPointer[x] = value;
-        }
-      }
+    //  for(s32 y=0; y<size[0]; y++) {
+    //    Type * restrict rowPointer = Pointer(y, 0);
+    //    for(s32 x=0; x<size[1]; x++) {
+    //      rowPointer[x] = value;
+    //    }
+    //  }
 
-      return size[0]*size[1];
-    }
+    //  return size[0]*size[1];
+    //}
 
     template<typename Type> s32 Array<Type>::Set(const Type * const values, const s32 numValues)
     {
