@@ -5,7 +5,7 @@ SECTIONS {
     *(.ddr.rodata*)
     *(.rodata._ZZ*) 
     *(.rodata.str1.8) 
-/*    *(*.rodata.*) */
+    *(*.rodata.*) 
   }
 
   .ddr.text : {

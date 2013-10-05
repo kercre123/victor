@@ -19,7 +19,7 @@ Matlab matlab(false);
 #endif
 
 //#define BUFFER_IN_DDR_WITH_L2
-#define BUFFER_IN_CMX
+//#define BUFFER_IN_CMX
 
 #if defined(BUFFER_IN_DDR_WITH_L2) && defined(BUFFER_IN_CMX)
 You cannot use both CMX and L2 Cache;
@@ -489,18 +489,22 @@ IN_DDR GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 
 IN_DDR GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
 {
-  const s32 boundaryLength = 65;
+#define LaplacianPeaks_BOUNDARY_LENGTH 65
   const s32 numBytes = MIN(MAX_BYTES, 5000);
 
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-  FixedLengthList<Point<s16> > boundary(boundaryLength, ms);
+  FixedLengthList<Point<s16> > boundary(LaplacianPeaks_BOUNDARY_LENGTH, ms);
 
-  const s16 componentsX_groundTruth[] = {105, 105, 106, 107, 108, 109, 109, 108, 107, 106, 105, 105, 105, 105, 106, 107, 108, 109, 108, 107, 106, 105, 105, 104, 104, 104, 104, 104, 103, 103, 103, 103, 103, 102, 101, 101, 101, 101, 101, 100, 100, 100, 100, 100, 101, 102, 103, 104, 104, 104, 103, 102, 101, 100, 100, 101, 102, 102, 102, 102, 102, 103, 104, 104, 105};
-  const s16 componentsY_groundTruth[] = {200, 201, 201, 201, 201, 201, 202, 202, 202, 202, 202, 203, 204, 205, 205, 205, 205, 205, 205, 205, 205, 205, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 206, 206, 205, 204, 204, 204, 204, 204, 203, 203, 203, 202, 201, 200, 201, 201, 201, 200, 200};
+  s16 componentsX_groundTruth[LaplacianPeaks_BOUNDARY_LENGTH];
+  s16 componentsY_groundTruth[LaplacianPeaks_BOUNDARY_LENGTH];
 
-  for(s32 i=0; i<boundaryLength; i++) {
+  componentsX_groundTruth[0] = 105; componentsX_groundTruth[1] = 105; componentsX_groundTruth[2] = 106; componentsX_groundTruth[3] = 107; componentsX_groundTruth[4] = 108; componentsX_groundTruth[5] = 109; componentsX_groundTruth[6] = 109; componentsX_groundTruth[7] = 108; componentsX_groundTruth[8] = 107; componentsX_groundTruth[9] = 106; componentsX_groundTruth[10] = 105; componentsX_groundTruth[11] = 105; componentsX_groundTruth[12] = 105; componentsX_groundTruth[13] = 105; componentsX_groundTruth[14] = 106; componentsX_groundTruth[15] = 107; componentsX_groundTruth[16] = 108; componentsX_groundTruth[17] = 109; componentsX_groundTruth[18] = 108; componentsX_groundTruth[19] = 107; componentsX_groundTruth[20] = 106; componentsX_groundTruth[21] = 105; componentsX_groundTruth[22] = 105; componentsX_groundTruth[23] = 104; componentsX_groundTruth[24] = 104; componentsX_groundTruth[25] = 104; componentsX_groundTruth[26] = 104; componentsX_groundTruth[27] = 104; componentsX_groundTruth[28] = 103; componentsX_groundTruth[29] = 103; componentsX_groundTruth[30] = 103; componentsX_groundTruth[31] = 103; componentsX_groundTruth[32] = 103; componentsX_groundTruth[33] = 102; componentsX_groundTruth[34] = 101; componentsX_groundTruth[35] = 101; componentsX_groundTruth[36] = 101; componentsX_groundTruth[37] = 101; componentsX_groundTruth[38] = 101; componentsX_groundTruth[39] = 100; componentsX_groundTruth[40] = 100; componentsX_groundTruth[41] = 100; componentsX_groundTruth[42] = 100; componentsX_groundTruth[43] = 100; componentsX_groundTruth[44] = 101; componentsX_groundTruth[45] = 102; componentsX_groundTruth[46] = 103; componentsX_groundTruth[47] = 104; componentsX_groundTruth[48] = 104; componentsX_groundTruth[49] = 104; componentsX_groundTruth[50] = 103; componentsX_groundTruth[51] = 102; componentsX_groundTruth[52] = 101; componentsX_groundTruth[53] = 100; componentsX_groundTruth[54] = 100; componentsX_groundTruth[55] = 101; componentsX_groundTruth[56] = 102; componentsX_groundTruth[57] = 102; componentsX_groundTruth[58] = 102; componentsX_groundTruth[59] = 102; componentsX_groundTruth[60] = 102; componentsX_groundTruth[61] = 103; componentsX_groundTruth[62] = 104; componentsX_groundTruth[63] = 104; componentsX_groundTruth[64] = 105;
+
+  componentsY_groundTruth[0] = 200; componentsY_groundTruth[1] = 201; componentsY_groundTruth[2] = 201; componentsY_groundTruth[3] = 201; componentsY_groundTruth[4] = 201; componentsY_groundTruth[5] = 201; componentsY_groundTruth[6] = 202; componentsY_groundTruth[7] = 202; componentsY_groundTruth[8] = 202; componentsY_groundTruth[9] = 202; componentsY_groundTruth[10] = 202; componentsY_groundTruth[11] = 203; componentsY_groundTruth[12] = 204; componentsY_groundTruth[13] = 205; componentsY_groundTruth[14] = 205; componentsY_groundTruth[15] = 205; componentsY_groundTruth[16] = 205; componentsY_groundTruth[17] = 205; componentsY_groundTruth[18] = 205; componentsY_groundTruth[19] = 205; componentsY_groundTruth[20] = 205; componentsY_groundTruth[21] = 205; componentsY_groundTruth[22] = 206; componentsY_groundTruth[23] = 206; componentsY_groundTruth[24] = 207; componentsY_groundTruth[25] = 208; componentsY_groundTruth[26] = 209; componentsY_groundTruth[27] = 210; componentsY_groundTruth[28] = 210; componentsY_groundTruth[29] = 209; componentsY_groundTruth[30] = 208; componentsY_groundTruth[31] = 207; componentsY_groundTruth[32] = 206; componentsY_groundTruth[33] = 206; componentsY_groundTruth[34] = 206; componentsY_groundTruth[35] = 207; componentsY_groundTruth[36] = 208; componentsY_groundTruth[37] = 209; componentsY_groundTruth[38] = 210; componentsY_groundTruth[39] = 210; componentsY_groundTruth[40] = 209; componentsY_groundTruth[41] = 208; componentsY_groundTruth[42] = 207; componentsY_groundTruth[43] = 206; componentsY_groundTruth[44] = 206; componentsY_groundTruth[45] = 206; componentsY_groundTruth[46] = 206; componentsY_groundTruth[47] = 206; componentsY_groundTruth[48] = 205; componentsY_groundTruth[49] = 204; componentsY_groundTruth[50] = 204; componentsY_groundTruth[51] = 204; componentsY_groundTruth[52] = 204; componentsY_groundTruth[53] = 204; componentsY_groundTruth[54] = 203; componentsY_groundTruth[55] = 203; componentsY_groundTruth[56] = 203; componentsY_groundTruth[57] = 202; componentsY_groundTruth[58] = 201; componentsY_groundTruth[59] = 200; componentsY_groundTruth[60] = 201; componentsY_groundTruth[61] = 201; componentsY_groundTruth[62] = 201; componentsY_groundTruth[63] = 200; componentsY_groundTruth[64] = 200;
+
+  for(s32 i=0; i<LaplacianPeaks_BOUNDARY_LENGTH; i++) {
     boundary.PushBack(Point<s16>(componentsX_groundTruth[i], componentsY_groundTruth[i]));
   }
 
@@ -509,7 +513,8 @@ IN_DDR GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
   const Result result = ExtractLaplacianPeaks(boundary, peaks, ms);
   ASSERT_TRUE(result == RESULT_OK);
 
-  //peaks.Print();
+  //boundary.Print("boundary");
+  peaks.Print("peaks");
 
   ASSERT_TRUE(*peaks.Pointer(0) == Point<s16>(109,201));
   ASSERT_TRUE(*peaks.Pointer(1) == Point<s16>(109,205));
@@ -1610,31 +1615,31 @@ IN_DDR void RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
-  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage);
-  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage);
-  CALL_GTEST_TEST(CoreTech_Vision, FiducialMarker);
-  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage);
-  CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
-  CALL_GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput);
+  //CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage);
+  //CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage);
+  //CALL_GTEST_TEST(CoreTech_Vision, FiducialMarker);
+  //CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage);
+  //CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
+  //CALL_GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput);
   CALL_GTEST_TEST(CoreTech_Vision, LaplacianPeaks);
-  CALL_GTEST_TEST(CoreTech_Vision, Correlate1d);
-  CALL_GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary);
-  CALL_GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes);
-  CALL_GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids);
-  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage);
-  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123);
-  CALL_GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents);
-  CALL_GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents);
-  CALL_GTEST_TEST(CoreTech_Vision, CompressComponentIds);
-  CALL_GTEST_TEST(CoreTech_Vision, ComponentsSize);
-  CALL_GTEST_TEST(CoreTech_Vision, SortComponents);
-  CALL_GTEST_TEST(CoreTech_Vision, SortComponentsById);
-  CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
-  CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d);
-  CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
-  CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
-  CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);
-  CALL_GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary);
+  //CALL_GTEST_TEST(CoreTech_Vision, Correlate1d);
+  //CALL_GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary);
+  //CALL_GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes);
+  //CALL_GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids);
+  //CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage);
+  //CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123);
+  //CALL_GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents);
+  //CALL_GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents);
+  //CALL_GTEST_TEST(CoreTech_Vision, CompressComponentIds);
+  //CALL_GTEST_TEST(CoreTech_Vision, ComponentsSize);
+  //CALL_GTEST_TEST(CoreTech_Vision, SortComponents);
+  //CALL_GTEST_TEST(CoreTech_Vision, SortComponentsById);
+  //CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
+  //CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d);
+  //CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
+  //CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
+  //CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);
+  //CALL_GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary);
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 } // void RUN_ALL_TESTS()
