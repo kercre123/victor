@@ -45,10 +45,11 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+#if 0
 #include "../../blockImages/blockImage50.h"
 #include "../../blockImages/fiducial105_6ContrastReduced.h"
 #include "../../src/embedded/fiducialMarkerDefinitionType0.h"
-
+#endif
 
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
 {
@@ -143,7 +144,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
   GTEST_RETURN_HERE;
 }
 
-
+#if 0
 // Create a test pattern image, full of a grid of squares for probes
 static Result DrawExampleProbesImage(Array<u8> &image, Quadrilateral<s16> &quad, Array<f64> &homography)
 {
@@ -166,6 +167,7 @@ static Result DrawExampleProbesImage(Array<u8> &image, Quadrilateral<s16> &quad,
 
   return RESULT_OK;
 }
+#endif // #if 0
 
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
 {
@@ -786,7 +788,6 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
   GTEST_RETURN_HERE;
 } // IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
 
-
 // The test is if it can run without crashing
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
 {
@@ -857,7 +858,6 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
 
   GTEST_RETURN_HERE;
 }
-
 
 // The test is if it can run without crashing
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
