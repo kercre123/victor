@@ -103,7 +103,6 @@
     </List>
     <Libs PreObjects="0">
       <Lib File="-L/Applications/Webots/lib/"/>
-      <Lib File="-lController"/>
       <Lib File="-lCppController"/>
       <Lib File="-L../../../coretech-common/build/xcode4/lib/"/>
       <Lib File="-lCoreTech_Common_Embedded_64Debug"/>
@@ -116,7 +115,6 @@
     <Includes>
       <Include Dir="/Applications/Webots/include/controller/cpp/"/>
       <Include Dir="../controllers/cozmo_c_controller/"/>
-      <Include Dir="/Applications/Webots/include/controller/c/"/>
       <Include Dir="../../../coretech-common/include/"/>
       <Include Dir="../../../coretech-external/opencv-2.4.6.1/include"/>
       <Include Dir="../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include"/>
@@ -249,7 +247,6 @@
     </List>
     <Libs PreObjects="0">
       <Lib File="-L/Applications/Webots/lib/"/>
-      <Lib File="-lController"/>
       <Lib File="-lCppController"/>
       <Lib File="-L../../../coretech-common/build/xcode4/lib/"/>
       <Lib File="-lCoreTech_Common_Embedded_64Debug"/>
@@ -262,7 +259,6 @@
     <Includes>
       <Include Dir="/Applications/Webots/include/controller/cpp/"/>
       <Include Dir="../controllers/cozmo_c_controller/"/>
-      <Include Dir="/Applications/Webots/include/controller/c/"/>
       <Include Dir="../../../coretech-common/include/"/>
       <Include Dir="../../../coretech-external/opencv-2.4.6.1/include"/>
       <Include Dir="../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include"/>
@@ -303,18 +299,18 @@
       Filters="*.c;*.C;*.cc;*.cpp;*.cp;*.cxx;*.c++;*.prg;*.pas;*.dpr;*.asm;*.s;*.bas;*.java;*.cs;*.sc;*.e;*.cob;*.html;*.rc;*.tcl;*.py;*.pl;*.d;*.m;*.mm">
       <F N="../controllers/cozmo_c_controller/cozmo_c_controller.cpp"/>
       <F N="../controllers/cozmo_c_controller/cozmoBot.cpp"/>
-      <F N="../controllers/cozmo_c_controller/keyboardController.c"/>
-      <F N="../../src/robot/app/mainExecution.c"/>
+      <F N="../controllers/cozmo_c_controller/keyboardController.cpp"/>
+      <F N="../../src/robot/app/mainExecution.cpp"/>
       <F N="../../src/robot/app/pathFollower.cpp"/>
-      <F N="../../src/robot/hal/simhal/sim_encoders.c"/>
+      <F N="../../src/robot/hal/simhal/sim_encoders.cpp"/>
       <F N="../../src/robot/app/simapp/sim_localization.cpp"/>
-      <F N="../../src/robot/hal/simhal/sim_motors.c"/>
-      <F N="../../src/robot/hal/simhal/sim_timers.c"/>
-      <F N="../../src/robot/app/steeringController.c"/>
+      <F N="../../src/robot/hal/simhal/sim_motors.cpp"/>
+      <F N="../../src/robot/hal/simhal/sim_timers.cpp"/>
+      <F N="../../src/robot/app/steeringController.cpp"/>
       <F N="../../src/util/utilMessaging.c"/>
-      <F N="../../src/robot/app/vehicleMath.c"/>
-      <F N="../../src/robot/app/vehicleSpeedController.c"/>
-      <F N="../../src/robot/app/wheelController.c"/>
+      <F N="../../src/robot/app/vehicleMath.cpp"/>
+      <F N="../../src/robot/app/vehicleSpeedController.cpp"/>
+      <F N="../../src/robot/app/wheelController.cpp"/>
     </Folder>
     <Folder
       Name="Header Files"
