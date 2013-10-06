@@ -33,12 +33,26 @@
 // at the time they are expected in the physical world.
 #define BASESTATION_MODEL_LATENCY_SEC (2*MSG_RECEIVE_LATENCY_SEC)
 
-// Channel number used by CozmoWorldComm to indicate a message
-// bound for the basestation.
+
+////////// Simulator comms //////////
+
+// Channel number used by CozmoWorldComm Webots receiver
+// for robot messages bound for the basestation.
 #define BASESTATION_SIM_COMM_CHANNEL 100
 
 // Port on which CozmoWorldComms is listening for a connection from basestation.
 #define COZMO_WORLD_LISTEN_PORT "5555"
+
+// First two bytes of message which prefixes normal messages
+#define COZMO_WORLD_MSG_HEADER_BYTE_1 (0xbe)
+#define COZMO_WORLD_MSG_HEADER_BYTE_2 (0xef)
+
+// Size of CozmoWorldMessage header.
+// Includes COZMO_WORLD_MSG_HEADER_BYTE_1 and COZMO_WORLD_MSG_HEADER_BYTE_2 and 1 byte for robotID.
+#define COZMO_WORLD_MSG_HEADER_SIZE 3
+
+////////// End Simulator comms //////////
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
