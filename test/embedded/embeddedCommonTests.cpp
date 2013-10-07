@@ -101,14 +101,14 @@ IN_DDR GTEST_TEST(CoreTech_Common, ApproximateExp)
   const f64 valP4 = approximateExp(0.1);
   const f64 valP5 = approximateExp(0.0);
   const f64 valP6 = approximateExp(1.0);
-  
+
   const f64 valN0 = approximateExp(-0.00001);
   const f64 valN1 = approximateExp(-0.0001);
   const f64 valN2 = approximateExp(-0.001);
   const f64 valN3 = approximateExp(-0.01);
   const f64 valN4 = approximateExp(-0.1);
   const f64 valN5 = approximateExp(-1.0);
-  
+
   ASSERT_TRUE(ABS(valP0 - 1.00001000005000) < .0001);
   ASSERT_TRUE(ABS(valP1 - 1.00010000500017) < .0001);
   ASSERT_TRUE(ABS(valP2 - 1.00100050016671) < .0001);
@@ -116,14 +116,14 @@ IN_DDR GTEST_TEST(CoreTech_Common, ApproximateExp)
   ASSERT_TRUE(ABS(valP4 - 1.10517091807565) < .0001);
   ASSERT_TRUE(ABS(valP5 - 1.0) < .0001);
   ASSERT_TRUE(ABS(valP6 - 2.71828182845905) < .0001);
-  
+
   ASSERT_TRUE(ABS(valN0 - 0.999990000050000) < .0001);
   ASSERT_TRUE(ABS(valN1 - 0.999900004999833) < .0001);
   ASSERT_TRUE(ABS(valN2 - 0.999000499833375) < .0001);
   ASSERT_TRUE(ABS(valN3 - 0.990049833749168) < .0001);
   ASSERT_TRUE(ABS(valN4 - 0.904837418035960) < .0001);
   ASSERT_TRUE(ABS(valN5 - 0.367879441171442) < .0001);
-  
+
   GTEST_RETURN_HERE;
 }
 
@@ -255,19 +255,19 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD32)
 #define SVD32_wGroundTruthDataLength 8
 #define SVD32_vTGroundTruthDataLength 64
 
-  f32 uTGroundTruthData[SVD32_uTGroundTruthDataLength] = {
+  const f32 uTGroundTruthData[SVD32_uTGroundTruthDataLength] = {
     -0.237504316543999f,  -0.971386483137875f,
     0.971386483137874f,  -0.237504316543999f};
 
-  // This is not initializing correctly on Leon. Why?
-  //const f32 aData[SVD32_aDataLength] = {
-  //  1, 2, 3, 5, 7, 11, 13, 17,
-  //  19, 23, 29, 31, 37, 41, 43, 47};
+  // This is not always initializing correctly on Leon. Why?
+  const f32 aData[SVD32_aDataLength] = {
+    1, 2, 3, 5, 7, 11, 13, 17,
+    19, 23, 29, 31, 37, 41, 43, 47};
 
-  f32 wGroundTruthData[SVD32_wGroundTruthDataLength] = {
+  const f32 wGroundTruthData[SVD32_wGroundTruthDataLength] = {
     101.885662808124f, 9.29040979446927f, 0, 0, 0, 0, 0, 0};
 
-  f32 vTGroundTruthData[SVD32_vTGroundTruthDataLength] = {
+  const f32 vTGroundTruthData[SVD32_vTGroundTruthDataLength] = {
     -0.183478685625953f, -0.223946108965585f, -0.283481700610061f, -0.307212042374800f, -0.369078720749224f, -0.416539404278702f, -0.440269746043441f, -0.487730429572919f,
     0.381166774075590f, 0.378866636898153f, 0.427695421221120f, 0.269708382365037f, 0.213979186509760f, -0.101994891202405f, -0.259981930058488f, -0.575956007770654f,
     -0.227185052857744f, -0.469620636740071f, 0.828412170627898f, -0.133259849703043f, -0.130174916014859f, -0.0535189566767408f, -0.0151909770076815f, 0.0614649823304370f,
@@ -302,13 +302,20 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD32)
   void * scratch = ms.Allocate(sizeof(float)*(2*n + 2*m + 64));
   ASSERT_TRUE(scratch != NULL);
 
+  //swcLeonFlushDcache();
+  //swcLeonDisableCaches();
+  /*swcLeonFlushCaches();
+  while(swcLeonIsCacheFlushPending()) { printf("a");}*/
+
+  a.Set(&aData[0], SVD32_aDataLength);
+
   w_groundTruth.Set(&wGroundTruthData[0], SVD32_uTGroundTruthDataLength);
 
   uT_groundTruth.Set(&uTGroundTruthData[0], SVD32_wGroundTruthDataLength);
   vT_groundTruth.Set(&vTGroundTruthData[0], SVD32_vTGroundTruthDataLength);
 
-  a[0][0] = 1.0f; a[0][1] = 2.0f; a[0][2] = 3.0f; a[0][3] = 5.0f; a[0][4] = 7.0f; a[0][5] = 11.0f; a[0][6] = 13.0f; a[0][7] = 17.0f;
-  a[1][0] = 19.0f; a[1][1] = 23.0f; a[1][2] = 29.0f; a[1][3] = 31.0f; a[1][4] = 37.0f; a[1][5] = 41.0f; a[1][6] = 43.0f; a[1][7] = 47.0f;
+  /*a[0][0] = 1.0f; a[0][1] = 2.0f; a[0][2] = 3.0f; a[0][3] = 5.0f; a[0][4] = 7.0f; a[0][5] = 11.0f; a[0][6] = 13.0f; a[0][7] = 17.0f;
+  a[1][0] = 19.0f; a[1][1] = 23.0f; a[1][2] = 29.0f; a[1][3] = 31.0f; a[1][4] = 37.0f; a[1][5] = 41.0f; a[1][6] = 43.0f; a[1][7] = 47.0f;*/
 
   const Result result = svd_f32(a, w, uT, vT, scratch);
 
@@ -635,17 +642,21 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 
   cv::GaussianBlur(src, dst, ksize, sigma, sigma, cv::BORDER_REFLECT_101);
 
-  std::cout << src.at<double>(50, 0) << " "
-    << src.at<double>(50, 1) << "\n"
-    << *( ((double*)src.data) + 50*6) << " "
-    << *( ((double*)src.data) + 50*6 + 1) << "\n"
-    << dst.at<double>(50, 0) << " "
-    << dst.at<double>(50, 1) << "\n";
+  printf("%f %f\n%f %f\n%f %f\n",
+    src.at<double>(50, 0), src.at<double>(50, 1), *( ((double*)src.data) + 50*6), *( ((double*)src.data) + 50*6 + 1), dst.at<double>(50, 0), dst.at<double>(50, 1));
+  /*std::cout << src.at<double>(50, 0) << " "
+  << src.at<double>(50, 1) << "\n"
+  << *( ((double*)src.data) + 50*6) << " "
+  << *( ((double*)src.data) + 50*6 + 1) << "\n"
+  << dst.at<double>(50, 0) << " "
+  << dst.at<double>(50, 1) << "\n";*/
 
   ASSERT_EQ(5, src.at<double>(50, 0));
   ASSERT_EQ(6, src.at<double>(50, 1));
   ASSERT_TRUE(abs(1.49208 - dst.at<double>(50, 0)) < .00001);
   ASSERT_TRUE(abs(1.39378 - dst.at<double>(50, 1)) < .00001);
+
+  GTEST_RETURN_HERE;
 }
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
@@ -681,41 +692,49 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   // Check that the templated OpenCV matrix works
   {
     cv::Mat_<s16> &simpleArray_cvMat = simpleArray.get_CvMat_();
-    std::cout << "simpleArray(2,0) = " << *simpleArray.Pointer(2,0) << "\nsimpleArray_cvMat(2,0) = " << simpleArray_cvMat(2,0) << "\n";
+    printf("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
+    printf("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat(2,0));
+
     ASSERT_EQ(7, *simpleArray.Pointer(2,0));
     ASSERT_EQ(7, simpleArray_cvMat(2,0));
 
-    std::cout << "Setting OpenCV matrix\n";
+    printf("Setting OpenCV matrix\n");
     simpleArray_cvMat(2,0) = 100;
-    std::cout << "simpleArray(2,0) = " << *simpleArray.Pointer(2,0) << "\nsimpleArray_cvMat(2,0) = " << simpleArray_cvMat(2,0) << "\n";
+    printf("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
+
+    printf("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat(2,0));
     ASSERT_EQ(100, *simpleArray.Pointer(2,0));
     ASSERT_EQ(100, simpleArray_cvMat(2,0));
 
-    std::cout << "Setting CoreTech_Common matrix\n";
+    printf("Setting CoreTech_Common matrix\n");
     *simpleArray.Pointer(2,0) = 42;
-    std::cout << "simpleArray(2,0) = " << *simpleArray.Pointer(2,0) << "\nsimpleArray_cvMat(2,0) = " << simpleArray_cvMat(2,0) << "\n";
+    printf("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
+    printf("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat(2,0));
     ASSERT_EQ(42, *simpleArray.Pointer(2,0));
     ASSERT_EQ(42, simpleArray_cvMat(2,0));
   }
 
-  std::cout << "\n\n";
+  printf("\n\n");
 
   // Check that the non-templated OpenCV matrix works
   {
     cv::Mat &simpleArray_cvMat = simpleArray.get_CvMat_();
-    std::cout << "simpleArray(2,0) = " << *simpleArray.Pointer(2,0) << "\nsimpleArray_cvMat(2,0) = " << simpleArray_cvMat.at<s16>(2,0) << "\n";
+    printf("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
+    printf("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat.at<s16>(2,0));
     ASSERT_EQ(42, *simpleArray.Pointer(2,0));
     ASSERT_EQ(42, simpleArray_cvMat.at<s16>(2,0));
 
-    std::cout << "Setting OpenCV matrix\n";
+    printf("Setting OpenCV matrix\n");
     simpleArray_cvMat.at<s16>(2,0) = 300;
-    std::cout << "simpleArray(2,0) = " << *simpleArray.Pointer(2,0) << "\nsimpleArray_cvMat(2,0) = " << simpleArray_cvMat.at<s16>(2,0) << "\n";
+    printf("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
+    printf("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat.at<s16>(2,0));
     ASSERT_EQ(300, *simpleArray.Pointer(2,0));
     ASSERT_EQ(300, simpleArray_cvMat.at<s16>(2,0));
 
-    std::cout << "Setting CoreTech_Common matrix\n";
+    printf("Setting CoreTech_Common matrix\n");
     *simpleArray.Pointer(2,0) = 90;
-    std::cout << "simpleArray(2,0) = " << *simpleArray.Pointer(2,0) << "\nsimpleArray_cvMat(2,0) = " << simpleArray_cvMat.at<s16>(2,0) << "\n";
+    printf("simpleArray(2,0) = %d\n", *simpleArray.Pointer(2,0));
+    printf("simpleArray_cvMat(2,0) = %d\n", simpleArray_cvMat.at<s16>(2,0));
     ASSERT_EQ(90, *simpleArray.Pointer(2,0));
     ASSERT_EQ(90, simpleArray_cvMat.at<s16>(2,0));
   }
