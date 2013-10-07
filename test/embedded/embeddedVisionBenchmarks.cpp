@@ -63,10 +63,27 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+#define BIG_BUFFER_SIZE 5000000
+
+#if defined(USING_MOVIDIUS_COMPILER)
+__attribute__((section(".ddr_direct.rodata")))
+#endif
+  char bigBuffer0[BIG_BUFFER_SIZE];
+
+#if defined(USING_MOVIDIUS_COMPILER)
+__attribute__((section(".ddr_direct.rodata")))
+#endif
+  char bigBuffer1[BIG_BUFFER_SIZE];
+
+#if defined(USING_MOVIDIUS_COMPILER)
+__attribute__((section(".ddr_direct.rodata")))
+#endif
+  char bigBuffer2[BIG_BUFFER_SIZE];
+
 static const s32 width = 640;
 //static const s32 height = 480;
 static const s32 height = 10;
-static const s32 numBytes = MIN(MAX_BYTES, 5000000);
+//static const s32 numBytes = MIN(MAX_BYTES, 5000000);
 
 int BenchmarkSimpleDetector_Steps12345_realImage(int numIterations)
 {
@@ -95,17 +112,9 @@ int BenchmarkSimpleDetector_Steps12345_realImage(int numIterations)
 
   const s32 maxMarkers = 100;
 
-  const u32 numBytes0 = 10000000;
-  MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
-  //ASSERT_TRUE(scratch0.IsValid());
-
-  const u32 numBytes1 = 10000000;
-  MemoryStack scratch1(calloc(numBytes1,1), numBytes0);
-  //ASSERT_TRUE(scratch1.IsValid());
-
-  const u32 numBytes2 = 10000000;
-  MemoryStack scratch2(calloc(numBytes2,1), numBytes2);
-  //ASSERT_TRUE(scratch2.IsValid());
+  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE);
 
   const s32 maxConnectedComponentSegments = u16_MAX;
   ConnectedComponents extractedComponents(maxConnectedComponentSegments, scratch0);
@@ -159,16 +168,12 @@ int BenchmarkSimpleDetector_Steps12345_realImage(int numIterations)
   //ASSERT_TRUE(markers[0].corners[2] == Point<s16>(235,21));
   //ASSERT_TRUE(markers[0].corners[3] == Point<s16>(235,235));
 
-  free(scratch0.get_buffer());
-  free(scratch1.get_buffer());
-  free(scratch2.get_buffer());
-
   return 0;
 } // int BenchmarkSimpleDetector_Steps12345_realImage()
 
 int BenchmarkBinomialFilter()
 {
-  MemoryStack ms(buffer, numBytes);
+  MemoryStack ms(buffer, MAX_BYTES);
 
 #ifdef CHECK_FOR_ERRORS
   AnkiConditionalErrorAndReturnValue(ms.IsValid(), -1, "ms.IsValid()", "");
@@ -195,7 +200,7 @@ int BenchmarkDownsampleByFactor()
 {
   const s32 downsampleFactor = 2;
 
-  MemoryStack ms(buffer, numBytes);
+  MemoryStack ms(buffer, MAX_BYTES);
 
 #ifdef CHECK_FOR_ERRORS
   AnkiConditionalErrorAndReturnValue(ms.IsValid(), -1, "ms.IsValid()", "");
@@ -226,7 +231,7 @@ int BenchmarkComputeCharacteristicScale()
 {
   const s32 numPyramidLevels = 6;
 
-  MemoryStack ms(buffer, numBytes);
+  MemoryStack ms(buffer, MAX_BYTES);
 
 #ifdef CHECK_FOR_ERRORS
   AnkiConditionalErrorAndReturnValue(ms.IsValid(), -1, "ms.IsValid()", "");
@@ -254,7 +259,7 @@ int BenchmarkComputeCharacteristicScale()
 
 int BenchmarkTraceInteriorBoundary()
 {
-  MemoryStack ms(buffer, numBytes);
+  MemoryStack ms(buffer, MAX_BYTES);
 
 #ifdef CHECK_FOR_ERRORS
   AnkiConditionalErrorAndReturnValue(ms.IsValid(), -1, "ms.IsValid()", "");

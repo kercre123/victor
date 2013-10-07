@@ -47,16 +47,29 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 //#define RUN_BIG_MEMORY_TESTS
 
-#ifdef RUN_BIG_MEMORY_TESTS
 #include "../../blockImages/blockImage50.h"
 #include "../../blockImages/fiducial105_6ContrastReduced.h"
 #include "../../src/embedded/fiducialMarkerDefinitionType0.h"
+
+#define BIG_BUFFER_SIZE 5000000
+
+#if defined(USING_MOVIDIUS_COMPILER)
+__attribute__((section(".ddr_direct.rodata")))
 #endif
+  char bigBuffer0[BIG_BUFFER_SIZE];
+
+#if defined(USING_MOVIDIUS_COMPILER)
+__attribute__((section(".ddr_direct.rodata")))
+#endif
+  char bigBuffer1[BIG_BUFFER_SIZE];
+
+#if defined(USING_MOVIDIUS_COMPILER)
+__attribute__((section(".ddr_direct.rodata")))
+#endif
+  char bigBuffer2[BIG_BUFFER_SIZE];
 
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
 {
-  ASSERT_TRUE(false);
-#ifdef RUN_BIG_MEMORY_TESTS
   const s32 scaleImage_numPyramidLevels = 6;
 
   const s16 component1d_minComponentWidth = 0;
@@ -82,26 +95,26 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
 
   const s32 maxMarkers = 100;
 
-  const u32 numBytes0 = 10000000;
-  MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
+  const u32 numBytes0 = BIG_BUFFER_SIZE;
+  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
   ASSERT_TRUE(scratch0.IsValid());
 
-  const u32 numBytes1 = 10000000;
-  MemoryStack scratch1(calloc(numBytes1,1), numBytes0);
+  const u32 numBytes1 = BIG_BUFFER_SIZE;
+  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE);
   ASSERT_TRUE(scratch1.IsValid());
 
-  const u32 numBytes2 = 10000000;
-  MemoryStack scratch2(calloc(numBytes2,1), numBytes2);
+  const u32 numBytes2 = BIG_BUFFER_SIZE;
+  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE);
   ASSERT_TRUE(scratch2.IsValid());
 
   const s32 maxConnectedComponentSegments = u16_MAX;
   ConnectedComponents extractedComponents(maxConnectedComponentSegments, scratch0);
 
-  Array<u8> image(fiducial105_6_HEIGHT, fiducial105_6_WIDTH, scratch0);
-  image.Set(fiducial105_6, fiducial105_6_WIDTH*fiducial105_6_HEIGHT);
+  Array<u8> image(blockImage50_HEIGHT, blockImage50_WIDTH, scratch0);
+  image.Set(blockImage50, blockImage50_WIDTH*blockImage50_HEIGHT);
 
   FixedLengthList<BlockMarker> markers(maxMarkers, scratch0);
-  FixedLengthList<Array<f64>> homographies(maxMarkers, scratch0);
+  FixedLengthList<Array<f64> > homographies(maxMarkers, scratch0);
 
   markers.set_size(maxMarkers);
   homographies.set_size(maxMarkers);
@@ -139,11 +152,6 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
   ASSERT_TRUE(markers[0].corners[2] == Point<s16>(235,21));
   ASSERT_TRUE(markers[0].corners[3] == Point<s16>(235,235));
 
-  free(scratch0.get_buffer());
-  free(scratch1.get_buffer());
-  free(scratch2.get_buffer());
-
-#endif // #ifdef RUN_BIG_MEMORY_TESTS
   GTEST_RETURN_HERE;
 }
 
@@ -1639,12 +1647,13 @@ IN_DDR void RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage);
+
 #ifdef RUN_BIG_MEMORY_TESTS
   CALL_GTEST_TEST(CoreTech_Vision, FiducialMarker);
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123);
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage);
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage);
-  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage);
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage);
 #endif
 
