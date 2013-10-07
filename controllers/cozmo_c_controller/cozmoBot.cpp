@@ -13,6 +13,12 @@
 #include <cstdio>
 #include <string>
 
+
+///////// TESTING //////////
+#define EXECUTE_TEST_PATH 1
+
+///////// END TESTING //////
+
 //Names of the wheels used for steering
 #define WHEEL_FL "wheel_fl"
 #define WHEEL_FR "wheel_fr"
@@ -267,7 +273,7 @@ void CozmoBot::run()
 
     RunKeyboardController();
 
-
+#if(EXECUTE_TEST_PATH)
     // TESTING
     static u32 startDriveTime_us = 1000000;
     static BOOL driving = FALSE;
@@ -288,6 +294,7 @@ void CozmoBot::run()
 
       driving = TRUE;
     }
+#endif //EXECUTE_TEST_PATH
 
 
     printf("speedDes: %d, speedCur: %d, speedCtrl: %d, speedMeas: %d\n", 
