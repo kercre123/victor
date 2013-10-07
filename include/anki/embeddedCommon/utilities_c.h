@@ -45,6 +45,7 @@ extern "C" {
 #endif
 
   void explicitPrintf(int reverseWords, const char *format, ...);
+  void explicitPrintfWithExplicitBuffer(int reverseWords, int * buffer, const char *format, ...);
 
 #if defined(USING_MOVIDIUS_GCC_COMPILER)
 
