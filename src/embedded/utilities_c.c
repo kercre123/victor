@@ -129,14 +129,14 @@ void explicitPrintf(int reverseWords, const char *format, ...)
 
         putchar(' ');
       }
-      //else if(percentChar == 's') {
-      //  const char * stringArgument = va_arg(arguments, char*);
-      //  while(*stringArgument != 0x00) {
-      //    putchar(*stringArgument);
-      //    stringArgument++;
-      //  }
-      //  //explicitPrintfWithExplicitprintfBuffer(reverseWords, &printfprintfBuffer2[0], stringArgument);
-      //}
+      else if(percentChar == 's') {
+        const char * stringArgument = va_arg(arguments, char*);
+        while(*stringArgument != 0x00) {
+          putchar(*stringArgument);
+          stringArgument++;
+        }
+        //explicitPrintfWithExplicitprintfBuffer(reverseWords, &printfprintfBuffer2[0], stringArgument);
+      }
       else {
         if(printfBuffer[i] == 0x00)
           break;
