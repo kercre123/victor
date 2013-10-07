@@ -4,6 +4,8 @@
 #include "anki/embeddedVision/miscVisionKernels.h"
 #include "anki/embeddedVision/draw_vision.h"
 
+//#define SEND_DRAWN_COMPONENTS
+
 namespace Anki
 {
   namespace Embedded
@@ -129,8 +131,6 @@ namespace Anki
       const s32 maxConnectedComponentSegments = u16_MAX;
       const s32 maxCandidateMarkers = 1000;
       const s32 maxExtractedQuads = 100;
-
-      //#define SEND_DRAWN_COMPONENTS
 
       // Stored in the outermost scratch2
       FixedLengthList<BlockMarker> candidateMarkers(maxCandidateMarkers, scratch2);
@@ -268,8 +268,6 @@ namespace Anki
       const s32 maxConnectedComponentSegments = u16_MAX;
       const s32 maxCandidateMarkers = 1000;
       const s32 maxExtractedQuads = 100;
-
-      //#define SEND_DRAWN_COMPONENTS
 
       // Stored in the outermost scratch2
       FixedLengthList<BlockMarker> candidateMarkers(maxCandidateMarkers, scratch2);

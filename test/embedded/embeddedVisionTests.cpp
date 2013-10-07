@@ -144,13 +144,13 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
 
   ASSERT_TRUE(markers.get_size() == 1);
 
-  ASSERT_TRUE(markers[0].blockType == 105);
-  ASSERT_TRUE(markers[0].faceType == 6);
+  ASSERT_TRUE(markers[0].blockType == 15);
+  ASSERT_TRUE(markers[0].faceType == 5);
   ASSERT_TRUE(markers[0].orientation == BlockMarker::ORIENTATION_LEFT);
-  ASSERT_TRUE(markers[0].corners[0] == Point<s16>(21,21));
-  ASSERT_TRUE(markers[0].corners[1] == Point<s16>(21,235));
-  ASSERT_TRUE(markers[0].corners[2] == Point<s16>(235,21));
-  ASSERT_TRUE(markers[0].corners[3] == Point<s16>(235,235));
+  ASSERT_TRUE(markers[0].corners[0] == Point<s16>(207,261));
+  ASSERT_TRUE(markers[0].corners[1] == Point<s16>(204,335));
+  ASSERT_TRUE(markers[0].corners[2] == Point<s16>(284,264));
+  ASSERT_TRUE(markers[0].corners[3] == Point<s16>(279,339));
 
   GTEST_RETURN_HERE;
 }

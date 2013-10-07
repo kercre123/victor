@@ -6,6 +6,8 @@
 
 #include "fiducialMarkerDefinitionType0.h"
 
+#include <assert.h>
+
 #define INITIALIZE_WITH_DEFINITION_TYPE 0
 #define NUM_BITS 25 // TODO: make general
 
