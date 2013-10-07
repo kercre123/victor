@@ -45,7 +45,7 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
-//#define RUN_BIG_MEMORY_TESTS
+#define RUN_BIG_MEMORY_TESTS
 
 #include "../../blockImages/blockImage50.h"
 #include "../../blockImages/fiducial105_6ContrastReduced.h"
@@ -182,8 +182,9 @@ static Result DrawExampleProbesImage(Array<u8> &image, Quadrilateral<s16> &quad,
 
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
 {
+#ifndef RUN_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
-#ifdef RUN_BIG_MEMORY_TESTS
+#else
   const s32 scaleImage_numPyramidLevels = 6;
 
   const s16 component1d_minComponentWidth = 0;
@@ -209,16 +210,16 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
 
   const s32 maxMarkers = 100;
 
-  const u32 numBytes0 = 10000000;
-  MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
+  const u32 numBytes0 = BIG_BUFFER_SIZE;
+  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
   ASSERT_TRUE(scratch0.IsValid());
 
-  const u32 numBytes1 = 10000000;
-  MemoryStack scratch1(calloc(numBytes1,1), numBytes0);
+  const u32 numBytes1 = BIG_BUFFER_SIZE;
+  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE);
   ASSERT_TRUE(scratch1.IsValid());
 
-  const u32 numBytes2 = 10000000;
-  MemoryStack scratch2(calloc(numBytes2,1), numBytes2);
+  const u32 numBytes2 = BIG_BUFFER_SIZE;
+  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE);
   ASSERT_TRUE(scratch2.IsValid());
 
   const s32 maxConnectedComponentSegments = u16_MAX;
@@ -266,10 +267,6 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
   ASSERT_TRUE(markers[0].corners[2] == Point<s16>(235,21));
   ASSERT_TRUE(markers[0].corners[3] == Point<s16>(235,235));
 
-  free(scratch0.get_buffer());
-  free(scratch1.get_buffer());
-  free(scratch2.get_buffer());
-
 #endif // #ifdef RUN_BIG_MEMORY_TESTS
 
   GTEST_RETURN_HERE;
@@ -278,14 +275,15 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
 // The test is if it can run without crashing
 IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
 {
+#ifndef RUN_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
-#ifdef RUN_BIG_MEMORY_TESTS
+#else
   const s32 width = fiducial105_6_WIDTH;
   const s32 height = fiducial105_6_HEIGHT;
   const f32 minContrastRatio = 1.25f;
 
-  const u32 numBytes0 = 10000000;
-  MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
+  const u32 numBytes0 = BIG_BUFFER_SIZE;
+  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
   ASSERT_TRUE(scratch0.IsValid());
 
   FiducialMarkerParser parser = FiducialMarkerParser();
@@ -320,8 +318,6 @@ IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
     ASSERT_TRUE(marker.corners[i] == quad[i]);
   }
 
-  free(scratch0.get_buffer());
-
 #endif // #ifdef RUN_BIG_MEMORY_TESTS
 
   GTEST_RETURN_HERE;
@@ -330,8 +326,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
 // The test is if it can run without crashing
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
 {
+#ifndef RUN_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
-#ifdef RUN_BIG_MEMORY_TESTS
+#else
   const s32 scaleImage_numPyramidLevels = 6;
 
   const s16 component1d_minComponentWidth = 0;
@@ -355,16 +352,16 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
 
   const s32 maxMarkers = 100;
 
-  const u32 numBytes0 = 10000000;
-  MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
+  const u32 numBytes0 = BIG_BUFFER_SIZE;
+  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
   ASSERT_TRUE(scratch0.IsValid());
 
-  const u32 numBytes1 = 10000000;
-  MemoryStack scratch1(calloc(numBytes1,1), numBytes0);
+  const u32 numBytes1 = BIG_BUFFER_SIZE;
+  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE);
   ASSERT_TRUE(scratch1.IsValid());
 
-  const u32 numBytes2 = 10000000;
-  MemoryStack scratch2(calloc(numBytes2,1), numBytes2);
+  const u32 numBytes2 = BIG_BUFFER_SIZE;
+  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE);
   ASSERT_TRUE(scratch2.IsValid());
 
   const s32 maxConnectedComponentSegments = u16_MAX;
@@ -402,10 +399,6 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
 
     ASSERT_TRUE(result == RESULT_OK);
   }
-
-  free(scratch0.get_buffer());
-  free(scratch1.get_buffer());
-  free(scratch2.get_buffer());
 
 #endif // #ifdef RUN_BIG_MEMORY_TESTS
 
@@ -689,16 +682,15 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   //#define DRAW_TraceNextExteriorBoundary
 #ifdef DRAW_TraceNextExteriorBoundary
   {
-    const u32 numBytes0 = 10000000;
-    MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
+    const u32 numBytes0 = BIG_BUFFER_SIZE;
+    MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
     ASSERT_TRUE(scratch0.IsValid());
+
     Array<u8> drawnComponents(480, 640, scratch0);
     DrawComponents<u8>(drawnComponents, components, 64, 255);
 
     matlab.PutArray(drawnComponents, "drawnComponents");
     //drawnComponents.Show("drawnComponents", true, false);
-
-    free(scratch0.get_buffer());
   }
 #endif // DRAW_TraceNextExteriorBoundary
 
@@ -816,8 +808,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
 // The test is if it can run without crashing
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
 {
+#ifndef RUN_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
-#ifdef RUN_BIG_MEMORY_TESTS
+#else
   const s32 scaleImage_numPyramidLevels = 6;
 
   const s16 component1d_minComponentWidth = 0;
@@ -834,16 +827,16 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
   const s32 component_percentHorizontal = 1 << 7; // 0.5, in SQ 23.8
   const s32 component_percentVertical = 1 << 7; // 0.5, in SQ 23.8
 
-  const u32 numBytes0 = 10000000;
-  MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
+  const u32 numBytes0 = BIG_BUFFER_SIZE;
+  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
   ASSERT_TRUE(scratch0.IsValid());
 
-  const u32 numBytes1 = 10000000;
-  MemoryStack scratch1(calloc(numBytes1,1), numBytes0);
+  const u32 numBytes1 = BIG_BUFFER_SIZE;
+  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE);
   ASSERT_TRUE(scratch1.IsValid());
 
-  const u32 numBytes2 = 10000000;
-  MemoryStack scratch2(calloc(numBytes2,1), numBytes2);
+  const u32 numBytes2 = BIG_BUFFER_SIZE;
+  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE);
   ASSERT_TRUE(scratch2.IsValid());
 
   const s32 maxConnectedComponentSegments = u16_MAX;
@@ -876,10 +869,6 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
   //matlab.PutArray(drawnComponents, "drawnComponents1");
   //drawnComponents.Show("drawnComponents1", true, false);
 
-  free(scratch0.get_buffer());
-  free(scratch1.get_buffer());
-  free(scratch2.get_buffer());
-
 #endif // #ifdef RUN_BIG_MEMORY_TESTS
 
   GTEST_RETURN_HERE;
@@ -888,8 +877,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
 // The test is if it can run without crashing
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
 {
+#ifndef RUN_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
-#ifdef RUN_BIG_MEMORY_TESTS
+#else
   const s32 width = 640;
   const s32 height = 480;
 
@@ -906,16 +896,16 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
   const s32 component_sparseMultiplyThreshold = 1000 << 5;
   const s32 component_solidMultiplyThreshold = 2 << 5;
 
-  const u32 numBytes0 = 10000000;
-  MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
+  const u32 numBytes0 = BIG_BUFFER_SIZE;
+  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
   ASSERT_TRUE(scratch0.IsValid());
 
-  const u32 numBytes1 = 10000000;
-  MemoryStack scratch1(calloc(numBytes1,1), numBytes0);
+  const u32 numBytes1 = BIG_BUFFER_SIZE;
+  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE);
   ASSERT_TRUE(scratch1.IsValid());
 
-  const u32 numBytes2 = 10000000;
-  MemoryStack scratch2(calloc(numBytes2,1), numBytes2);
+  const u32 numBytes2 = BIG_BUFFER_SIZE;
+  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE);
   ASSERT_TRUE(scratch2.IsValid());
 
   const s32 maxConnectedComponentSegments = u16_MAX;
@@ -945,10 +935,6 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
 
   //matlab.PutArray(drawnComponents, "drawnComponents");
   //drawnComponents.Show("drawnComponents", true, false);
-
-  free(scratch0.get_buffer());
-  free(scratch1.get_buffer());
-  free(scratch2.get_buffer());
 
 #endif // #ifdef RUN_BIG_MEMORY_TESTS
 
@@ -1548,13 +1534,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
   const s32 height = 240;
   const s32 numPyramidLevels = 5;*/
 
-  // Allocate memory from the heap, for the memory allocator
-  const s32 numBytes = 10000000;
-  void *buffer = calloc(numBytes, 1);
-  //ASSERT_TRUE(buffer != NULL);
-  MemoryStack ms(buffer, numBytes);
-
-  ASSERT_TRUE(ms.IsValid());
+  const u32 numBytes0 = BIG_BUFFER_SIZE;
+  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
+  ASSERT_TRUE(scratch0.IsValid());
 
   Matlab matlab(false);
 
@@ -1563,14 +1545,12 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
   Array<u8> image = matlab.GetArray<u8>("image");
   ASSERT_TRUE(image.get_rawDataPointer() != NULL);
 
-  Array<u32> scaleImage(height, width, ms);
+  Array<u32> scaleImage(height, width, scratch0);
   ASSERT_TRUE(scaleImage.get_rawDataPointer() != NULL);
 
-  ASSERT_TRUE(ComputeCharacteristicScaleImage(image, numPyramidLevels, scaleImage, ms) == RESULT_OK);
+  ASSERT_TRUE(ComputeCharacteristicScaleImage(image, numPyramidLevels, scaleImage, scratch0) == RESULT_OK);
 
   matlab.PutArray<u32>(scaleImage, "scaleImage6_c");
-
-  free(buffer); buffer = NULL;
 
   GTEST_RETURN_HERE;
 } // IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
