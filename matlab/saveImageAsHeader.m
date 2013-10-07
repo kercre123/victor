@@ -10,9 +10,12 @@ fileId = fopen(filename, 'w');
 curDate = date();
 
 maxSlash = max([strfind(filename, '\'), strfind(filename, '/')]);
+if isempty(maxSlash)
+    maxSlash = 0;
+end
+
 maxDot = max(strfind(filename, '.'));
 defineFilename = filename((maxSlash+1):(maxDot-1));
-
 
 if ~exist('imageName', 'var')
     imageName = defineFilename;
