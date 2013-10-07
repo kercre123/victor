@@ -3,8 +3,13 @@
 #define MAX_PRINTF_DIGITS 50
 #define PRINTF_BUFFER_SIZE 1024
 int printfBuffer[PRINTF_BUFFER_SIZE];
+// int printfBuffer2[PRINTF_BUFFER_SIZE]; // For a single level of recusion
 void explicitPrintf(int reverseWords, const char *format, ...)
 {
+  /*va_list arguments;
+  va_start(arguments, format);
+  explicitPrintfWithExplicitBuffer(reverseWords, &printfBuffer[0], format, arguments);
+  va_end(arguments);*/
   const char * const formatStart = format;
   int digits[MAX_PRINTF_DIGITS];
   int numCharacters;
@@ -85,6 +90,7 @@ void explicitPrintf(int reverseWords, const char *format, ...)
 
           // This if statement should nenver be true, but it sometimes is on the myriad1. This will output "BUG".
           if(value < 0){
+            // BUG1
             digits[j++] = 1;
             digits[j++] = 23;
             digits[j++] = 37;
@@ -93,6 +99,7 @@ void explicitPrintf(int reverseWords, const char *format, ...)
           }
 
           if(value == 0){
+            // BUG2
             digits[j++] = 2;
             digits[j++] = 23;
             digits[j++] = 37;
@@ -101,6 +108,7 @@ void explicitPrintf(int reverseWords, const char *format, ...)
           }
 
           if(curDigit < 0){
+            // BUG3
             digits[j++] = 3;
             digits[j++] = 23;
             digits[j++] = 37;
@@ -120,16 +128,20 @@ void explicitPrintf(int reverseWords, const char *format, ...)
         }
 
         putchar(' ');
-      } else if(percentChar == 's') {
-        char* value = va_arg(arguments, char*);
-        while(*value != 0x00) {
-          putchar(*value);
-          value++;
+      }
+      else if(percentChar == 's') {
+        const char * stringArgument = va_arg(arguments, char*);
+        while(*stringArgument != 0x00) {
+          putchar(*stringArgument);
+          stringArgument++;
         }
-      } else {
+        //explicitPrintfWithExplicitprintfBuffer(reverseWords, &printfprintfBuffer2[0], stringArgument);
+      }
+      else {
         if(printfBuffer[i] == 0x00)
           break;
 
+        putchar('%');
         putchar(printfBuffer[i]);
       }
     } else {
@@ -137,6 +149,153 @@ void explicitPrintf(int reverseWords, const char *format, ...)
         break;
 
       putchar(printfBuffer[i]);
+    }
+  } // for(i=0; i<numCharacters; i++)
+
+  va_end(arguments);
+}
+
+void explicitPrintfWithExplicitBuffer(int reverseWords, int * buffer, const char *format, ...)
+{
+  const char * const formatStart = format;
+  int digits[MAX_PRINTF_DIGITS];
+  int numCharacters;
+  int i;
+  va_list arguments;
+
+  // Count the number of characters
+  numCharacters = 0;
+  while(*format != 0x00)
+  {
+    numCharacters++;
+    format++;
+  }
+  format = formatStart;
+
+  if(reverseWords)
+    numCharacters += 3;
+
+  numCharacters = MIN(numCharacters, PRINTF_BUFFER_SIZE-5);
+
+  // Reverse the string
+  if(reverseWords) {
+    for(i=0; i<numCharacters; i+=4) {
+      buffer[i] = format[i+3];
+      if(format[i+3] == 0x00) {
+        buffer[i+1] = 0x00;
+      } else {
+        buffer[i+1] = format[i+2];
+        if(format[i+2] == 0x00) {
+          buffer[i+2] = 0x00;
+        } else {
+          buffer[i+2] = format[i+1];
+          if(format[i+1] == 0x00) {
+            buffer[i+3] = 0x00;
+          } else {
+            buffer[i+3] = format[i];
+          }
+        }
+      }
+    }
+  } else {
+    for(i=0; i<numCharacters; i++) {
+      buffer[i] = format[i];
+    }
+  }
+
+  va_start(arguments, format);
+
+  for(i=0; i<numCharacters; i++) {
+    if(buffer[i] == '%') {
+      int j = -1;
+      int value = -1;
+      const char percentChar = buffer[i+1];
+      i++;
+
+      if(percentChar == 'd') {
+        for(j=0; j<MAX_PRINTF_DIGITS; j++) {
+          digits[j] = 0;
+        }
+
+        value = va_arg(arguments, int);
+        if(value < 0) {
+          putchar('-');
+          value = -value;
+        }
+
+        if(value == 0) {
+          putchar('0');
+          putchar(' ');
+          format++;
+          continue;
+        }
+
+        j=0;
+        while(value > 0) {
+          const int curDigit = value - (10*(value/10));
+          //const int curDigit = ABS(value) % 10;
+
+          // This if statement should nenver be true, but it sometimes is on the myriad1. This will output "BUG".
+          if(value < 0){
+            // BUG1
+            digits[j++] = 1;
+            digits[j++] = 23;
+            digits[j++] = 37;
+            digits[j++] = 18;
+            break;
+          }
+
+          if(value == 0){
+            // BUG2
+            digits[j++] = 2;
+            digits[j++] = 23;
+            digits[j++] = 37;
+            digits[j++] = 18;
+            break;
+          }
+
+          if(curDigit < 0){
+            // BUG3
+            digits[j++] = 3;
+            digits[j++] = 23;
+            digits[j++] = 37;
+            digits[j++] = 18;
+            break;
+          }
+
+          digits[j++] = curDigit;
+
+          value /= 10;
+        }
+
+        j--;
+        for( ; j>=0; j--) {
+          putchar(digits[j] + 48);
+          //putchar('w');
+        }
+
+        putchar(' ');
+      }
+      //else if(percentChar == 's') {
+      //  const char * stringArgument = va_arg(arguments, char*);
+      //  while(*stringArgument != 0x00) {
+      //    putchar(*stringArgument);
+      //    stringArgument++;
+      //  }
+      //  //explicitPrintfWithExplicitBuffer(reverseWords, &printfBuffer2[0], stringArgument);
+      //}
+      else {
+        if(buffer[i] == 0x00)
+          break;
+
+        putchar('%');
+        putchar(buffer[i]);
+      }
+    } else {
+      if(buffer[i] == 0x00)
+        break;
+
+      putchar(buffer[i]);
     }
   } // for(i=0; i<numCharacters; i++)
 

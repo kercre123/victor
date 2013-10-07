@@ -5,12 +5,17 @@ SECTIONS {
     *(.ddr.rodata*)
     *(.rodata._ZZ*) 
     *(.rodata.str1.8) 
-/*    *(*.rodata.*) */
+    *(*.rodata.*) 
+  }
+
+  .ddr.bss : {
+    *(.bss.printfBuffer*)
   }
 
   .ddr.text : {
     *(.ddr.text*)
     *(.text._ZN*) 
+    *(.text.explicitPrintf)
 /*    *(.text.*)*/
   }
 }

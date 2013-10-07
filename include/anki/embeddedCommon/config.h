@@ -10,8 +10,8 @@ Everything in this file should be compatible with plain C, as well as C++
 #define ANKICORETECHEMBEDDED_VERSION_MINOR 1
 #define ANKICORETECHEMBEDDED_VERSION_REVISION 0
 
-//#define ANKICORETECHEMBEDDED_USE_MATLAB
-//#define ANKICORETECHEMBEDDED_USE_OPENCV
+#define ANKICORETECHEMBEDDED_USE_MATLAB
+#define ANKICORETECHEMBEDDED_USE_OPENCV
 //#define ANKICORETECHEMBEDDED_USE_GTEST
 
 #if !defined(__APPLE_CC__) && defined(__GNUC__) && __GNUC__==4 && __GNUC_MINOR__==2 && __GNUC_PATCHLEVEL__==1 //hack to detect the movidius compiler
@@ -101,6 +101,9 @@ extern "C" {
 
 #include "mv_types.h"
 #include "DrvUart.h"
+#include "swcTestUtils.h"
+#include "swcLeonUtils.h"
+#include "DrvL2Cache.h"
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
