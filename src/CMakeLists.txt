@@ -2,7 +2,6 @@
 
 
 # Common Library
-#file(GLOB CORETECH_COMMON_FILES "*.cpp")
 
 set(CORETECH_COMMON_SOURCE_FILES
 	array2d.cpp
@@ -28,15 +27,15 @@ set(CORETECH_COMMON_HEADER_FILES
 	../include/anki/math/radians.h
 	../include/anki/math/rotation.h
 )
-add_library(CoreTech_Common 
 
+add_library(CoreTech_Common 
 	${CORETECH_COMMON_SOURCE_FILES}
 	${CORETECH_COMMON_HEADER_FILES}
 )
 
 
 # Common Embedded Library
-#file(GLOB CORETECH_COMMON_EMBEDDED_FILES "embedded/*.cpp")
+
 set(CORETECH_COMMON_EMBEDDED_SOURCE_FILES
 	embedded/array2d.cpp
 	embedded/benchmarking_c.c

@@ -3,8 +3,5 @@
 
 #include "anki/embeddedCommon/config.h"
 
-#define ANKICORETECH_USE_MATLAB
-#define ANKICORETECH_USE_OPENCV
-#define ANKICORETECH_USE_GTEST
 
 #endif // _ANKICORETECH_COMMON_CONFIG_H_

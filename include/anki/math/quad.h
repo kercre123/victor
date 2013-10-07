@@ -7,7 +7,7 @@
 #include "anki/common/exceptions.h"
 #include "anki/math/point.h"
 
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
 #include "opencv2/core/core.hpp"
 #endif
 

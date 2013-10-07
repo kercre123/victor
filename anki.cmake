@@ -26,8 +26,10 @@ foreach(PKG ${PKG_OPTIONS})
 	if(DEFINED ${PKG})
 	    # message(STATUS "${PKG} was user-defined.")
 		set(ANKICORETECH_${PKG} ${${PKG}})
+		add_definitions(-DANKICORETECH_${PKG}=${${PKG}})
 	else()
 		set(ANKICORETECH_${PKG} 1)
+		add_definitions(-DANKICORETECH_${PKG}=1)
 	endif(DEFINED ${PKG})
 	# message(STATUS "Setting ${PKG} = ${ANKICORETECH_${PKG}}")
 endforeach()
@@ -112,10 +114,10 @@ if(NOT MATLAB_FOUND)
 		set(ZLIB_LIBRARY z)
 		set(CMD_COMMAND)
 	endif(WIN32)
-	
-	if(IS_DIRECTORY ${MATLAB_ROOT})
-		set(MATLAB_FOUND 1)
-	endif(IS_DIRECTORY ${MATLAB_ROOT})	
+
+if(IS_DIRECTORY ${MATLAB_ROOT})
+	set(MATLAB_FOUND 1)
+endif(IS_DIRECTORY ${MATLAB_ROOT})	
 endif(NOT MATLAB_FOUND)
 
 if(MATLAB_FOUND)
@@ -131,6 +133,7 @@ if(MATLAB_FOUND)
 
 	message(STATUS "Using Matlab in ${MATLAB_ROOT} with mex extension ${MATLAB_MEXEXT}.")
 endif(MATLAB_FOUND)
+	
 	
 project(${PROJECT_NAME})
 
@@ -235,7 +238,8 @@ endfunction(fix_opencv_lib_names)
 #
 macro(build_mex MEX_FILE)
 
-	#message(STATUS "Adding mex file ${MEX_FILE}, linked against ${MEX_LINK_LIBRARIES}")
+if( MATLAB_FOUND AND (ANKICORETECH_USE_MATLAB OR ANKICORETECHEMBEDDED_USE_MATLAB) )
+	message(STATUS "Adding mex file ${MEX_FILE}, linked against ${MEX_LINK_LIBRARIES}")
 
 	set(CC ${MEX_COMPILER})
 	set(CXX ${MEX_COMPILER})
@@ -306,5 +310,7 @@ macro(build_mex MEX_FILE)
 		PREFIX ""
 		SUFFIX ".${MATLAB_MEXEXT}"
 	)
+
+endif()	
 
 endmacro(build_mex)

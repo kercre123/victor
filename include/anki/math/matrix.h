@@ -30,7 +30,7 @@
 #ifndef _ANKICORETECH_MATRIX_H_
 #define _ANKICORETECH_MATRIX_H_
 
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
 #include "opencv2/core/core.hpp"
 #endif
 
@@ -57,7 +57,7 @@ namespace Anki {
 
     using Array2d<T>::operator=;
     
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
     // Construct from an OpenCv cv::Mat_<T>.
     // NOTE: this *copies* all the data, to ensure the result
     //       is memory-aligned the way want.
@@ -86,7 +86,7 @@ namespace Anki {
   // A class for small matrices, whose size is known at compile time
   template<size_t NROWS, size_t NCOLS, typename T>
   class SmallMatrix
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
   : private cv::Matx<T,NROWS,NCOLS> // private inheritance from cv::Matx
 #endif
   {
@@ -114,7 +114,7 @@ namespace Anki {
     unsigned int numRows() const;
     unsigned int numCols() const;
     
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
   public:
     SmallMatrix(const cv::Matx<T,NROWS,NCOLS> &cvMatrix);
     cv::Matx<T,NROWS,NCOLS>& get_CvMatx_();
@@ -257,7 +257,7 @@ namespace Anki {
   }
   
   
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
   template<typename T>
   Matrix<T>::Matrix(const cv::Mat_<T> &cvMatrix)
   : Array2d<T>(cvMatrix)
@@ -274,7 +274,7 @@ namespace Anki {
     CORETECH_THROW_IF(this->numCols() != other.numRows());
     
     
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
     // For now (?), rely on OpenCV for matrix multiplication:
     Matrix<T> result( this->get_CvMat_() * other.get_CvMat_() );
 #else
@@ -293,7 +293,7 @@ namespace Anki {
     CORETECH_THROW_IF(this->numCols() != other.numRows());
     
     
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
     // For now (?), rely on OpenCV for matrix multiplication:
     *this = this->get_CvMat_() * other.get_CvMat_();
 #else
@@ -311,7 +311,7 @@ namespace Anki {
   {
     CORETECH_THROW_IF(this->numRows() != this->numCols());
     
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
     // For now (?), rely on OpenCV for matrix inversion:
     *this = (Matrix<T>)this->get_CvMat_().inv();
 #else
@@ -325,7 +325,7 @@ namespace Anki {
   {
     CORETECH_THROW_IF(this->numRows() != this->numCols());
     
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
     // For now (?), rely on OpenCV for matrix inversion:
     Matrix<T> result(this->get_CvMat_().inv());
 #else
@@ -342,7 +342,7 @@ namespace Anki {
   Matrix<T> Matrix<T>::getTranpose(void) const
   {
     
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
     Matrix<T> result;
     cv::transpose(this->get_CvMat_(), result.get_CvMat_());
 #else
@@ -358,7 +358,7 @@ namespace Anki {
   template<typename T>
   void Matrix<T>::Transpose(void)
   {
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
     cv::transpose(this->get_CvMat_(), this->get_CvMat_());
 #else
     assert(false);
@@ -385,7 +385,7 @@ namespace Anki {
   
   template<size_t NROWS, size_t NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>::SmallMatrix()
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
   : cv::Matx<T,NROWS,NCOLS>()
 #endif
   {
@@ -398,7 +398,7 @@ namespace Anki {
   
   template<size_t NROWS, size_t NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(const T* vals)
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
   : cv::Matx<T,NROWS,NCOLS>(vals)
 #endif
   {
@@ -410,7 +410,7 @@ namespace Anki {
   
   template<size_t NROWS, size_t NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(const SmallMatrix<NROWS,NCOLS,T> &M)
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
   : cv::Matx<T,NROWS,NCOLS>(M)
 #endif
   {
@@ -423,7 +423,7 @@ namespace Anki {
   
   template<size_t NROWS, size_t NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(const cv::Matx<T,NROWS,NCOLS> &cvMatrix)
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
   : cv::Matx<T,NROWS,NCOLS>(cvMatrix)
 #endif
   {
@@ -456,7 +456,7 @@ namespace Anki {
   template<size_t KCOLS>
   SmallMatrix<NROWS,KCOLS,T> SmallMatrix<NROWS,NCOLS,T>::operator* (const SmallMatrix<NCOLS,KCOLS,T> &other) const
   {
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
     SmallMatrix<NROWS,KCOLS,T> res;
     res = this->get_CvMatx_() * other.get_CvMatx_();
     return res;
@@ -472,7 +472,7 @@ namespace Anki {
   template<size_t NROWS, size_t NCOLS, typename T>
   SmallMatrix<NCOLS,NROWS,T> SmallMatrix<NROWS,NCOLS,T>::getTranspose(void) const
   {
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
     return this->t();
 #else
     assert(false);
@@ -526,7 +526,7 @@ namespace Anki {
   } // nearlyEqual(SmallMatrix,SmallMatrix)
   
   
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
   template<size_t NROWS, size_t NCOLS, typename T>
   cv::Matx<T,NROWS,NCOLS>& SmallMatrix<NROWS,NCOLS,T>::get_CvMatx_()
   {
@@ -557,7 +557,7 @@ namespace Anki {
   template<size_t NROWS, size_t NCOLS, typename T>
   void SmallMatrix<NROWS,NCOLS,T>::Invert(void)
   {
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
     (*this) = this->inv();
 #else
     assert(false);
@@ -569,7 +569,7 @@ namespace Anki {
   template<size_t NROWS, size_t NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T> SmallMatrix<NROWS,NCOLS,T>::getInverse(void) const
   {
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
     SmallMatrix<NROWS,NCOLS,T> res(this->inv());
     return res;
 #else
@@ -600,7 +600,7 @@ namespace Anki {
   template<size_t DIM, typename T>
   void SmallSquareMatrix<DIM,T>::operator*=(const SmallSquareMatrix<DIM,T> &other)
   {
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
     (*this) *= other;
 #else
     assert(false);

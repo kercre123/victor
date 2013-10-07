@@ -4,16 +4,16 @@
 
 using namespace Anki::Embedded;
 
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #endif
 
-#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
+#if ANKICORETECH_EMBEDDED_USE_MATLAB
 Matlab matlab(false);
 #endif
 
-#if defined(ANKICORETECHEMBEDDED_USE_GTEST)
+#if ANKICORETECH_EMBEDDED_USE_GTEST
 #include "gtest/gtest.h"
 #endif
 
@@ -577,7 +577,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
   GTEST_RETURN_HERE;
 }
 
-#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
+#if ANKICORETECH_EMBEDDED_USE_MATLAB
 IN_DDR GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
 {
   matlab.EvalStringEcho("simpleVector = double([1.1,2.1,3.1,4.1,5.1]);");
@@ -595,9 +595,9 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
 
   GTEST_RETURN_HERE;
 }
-#endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
+#endif //#if ANKICORETECH_EMBEDDED_USE_MATLAB
 
-#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
+#if ANKICORETECH_EMBEDDED_USE_MATLAB
 IN_DDR GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
 {
   matlab.EvalStringEcho("simpleArray = int16([1,2,3,4,5;6,7,8,9,10]);");
@@ -620,9 +620,9 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
 
   GTEST_RETURN_HERE;
 }
-#endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
+#endif //#if ANKICORETECH_EMBEDDED_USE_MATLAB
 
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
 IN_DDR GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 {
   cv::Mat src, dst;
@@ -658,7 +658,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 
   GTEST_RETURN_HERE;
 }
-#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
 IN_DDR GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 {
@@ -683,12 +683,12 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   *simpleArray.Pointer(2,4) = 11;
   *simpleArray.Pointer(2,5) = 12;
 
-#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
+#if ANKICORETECH_EMBEDDED_USE_MATLAB
   // Check that the Matlab transfer works (you need to check the Matlab window to verify that this works)
   matlab.PutArray<s16>(simpleArray, "simpleArray");
-#endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
+#endif //#if ANKICORETECH_EMBEDDED_USE_MATLAB
 
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
   // Check that the templated OpenCV matrix works
   {
     cv::Mat_<s16> &simpleArray_cvMat = simpleArray.get_CvMat_();
@@ -738,7 +738,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
     ASSERT_EQ(90, *simpleArray.Pointer(2,0));
     ASSERT_EQ(90, simpleArray_cvMat.at<s16>(2,0));
   }
-#endif //#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#endif //#if ANKICORETECH_EMBEDDED_USE_OPENCV
 
   GTEST_RETURN_HERE;
 }
@@ -873,7 +873,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, ArrayFillPattern)
   GTEST_RETURN_HERE;
 }
 
-#if !defined(ANKICORETECHEMBEDDED_USE_GTEST)
+#if !defined(ANKICORETECH_EMBEDDED_USE_GTEST)
 IN_DDR void RUN_ALL_TESTS()
 {
   s32 numPassedTests = 0;
@@ -895,4 +895,4 @@ IN_DDR void RUN_ALL_TESTS()
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 } // void RUN_ALL_TESTS()
-#endif // #if !defined(ANKICORETECHEMBEDDED_USE_GTEST)
+#endif // #if !defined(ANKICORETECH_EMBEDDED_USE_GTEST)

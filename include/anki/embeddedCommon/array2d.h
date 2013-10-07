@@ -9,7 +9,7 @@
 #include "anki/embeddedCommon/geometry.h"
 #include "anki/embeddedCommon/utilities_c.h"
 
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #endif
@@ -73,10 +73,10 @@ namespace Anki
       inline const Type* Pointer(const Point<s16> &point) const;
       inline Type* Pointer(const Point<s16> &point);
 
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
       // Returns a templated cv::Mat_ that shares the same buffer with this Array. No data is copied.
       cv::Mat_<Type>& get_CvMat_();
-#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
       void Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues=false) const;
 
@@ -169,10 +169,10 @@ namespace Anki
       // should be used to free.
       void * rawDataPointer;
 
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
       //s32 cvMatMirror_sizeBuffer[2];
       cv::Mat_<Type> cvMatMirror;
-#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
       void Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
 
@@ -327,19 +327,19 @@ namespace Anki
       return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
     }
 
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
     template<typename Type> cv::Mat_<Type>& Array<Type>::get_CvMat_()
     {
       AnkiConditionalError(this->IsValid(), "Array<Type>::get_CvMat_", "Array<Type> is not valid");
 
       return cvMatMirror;
     }
-#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
     template<typename Type> void  Array<Type>::Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues) const
     {
       // If opencv is not used, just do nothing
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
       AnkiConditionalError(this->IsValid(), "Array<Type>::Show", "Array<Type> is not valid");
 
       if(scaleValues) {
@@ -361,7 +361,7 @@ namespace Anki
       if(waitForKeypress) {
         cv::waitKey();
       }
-#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
     }
 
     template<typename Type> bool Array<Type>::IsElementwiseEqual(const Array &array2, const Type threshold) const
@@ -559,13 +559,13 @@ namespace Anki
       this->data = rightHandSide.data;
       this->rawDataPointer = rightHandSide.rawDataPointer;
 
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
       // These two should be set, because if the Array constructor was not called, these will not be initialized
       this->cvMatMirror.step.p = this->cvMatMirror.step.buf;
       this->cvMatMirror.size = &this->cvMatMirror.rows;
 
       this->cvMatMirror = cv::Mat_<Type>(rightHandSide.size[0], rightHandSide.size[1], rightHandSide.data, rightHandSide.stride);
-#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
       return *this;
     }
@@ -653,9 +653,9 @@ namespace Anki
       // TODO: if this is slow, make this optional (or just remove it)
       this->SetZero();
 
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
       cvMatMirror = cv::Mat_<Type>(size[0], size[1], data, stride);
-#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
     } // Array<Type>::Initialize()
 
     // Set all the buffers and sizes to zero, to signal an invalid array

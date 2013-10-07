@@ -10,7 +10,7 @@
 #include <sys/time.h>
 #endif
 
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include "opencv2/core/core.hpp"
 #endif
 
@@ -160,7 +160,7 @@ namespace Anki
       printf("\n");
     }
 
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
     IN_DDR int ConvertToOpenCvType(const char *typeName, size_t byteDepth)
     {
       if(typeName[0] == 'u') { //unsigned
@@ -185,6 +185,6 @@ namespace Anki
 
       return -1;
     }
-#endif //#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#endif //#if ANKICORETECH_EMBEDDED_USE_OPENCV
   } // namespace Embedded
 } // namespace Anki

@@ -58,7 +58,7 @@ namespace Anki {
     Radians  get_angle() const;
     Vec3f    get_axis()  const;
     
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
     using Vec3f::get_CvPoint_;
     using Vec3f::x;
     using Vec3f::y;

@@ -5,7 +5,7 @@ namespace Anki
 {
   namespace Embedded
   {
-#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
+#if ANKICORETECH_EMBEDDED_USE_MATLAB
 
 #define TEXT_BUFFER_SIZE 1024
 
@@ -666,6 +666,6 @@ namespace Anki
       return RESULT_OK;
     }
 
-#endif // #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
+#endif // #if ANKICORETECH_EMBEDDED_USE_MATLAB
   } // namespace Embedded
 } // namespace Anki
