@@ -83,12 +83,12 @@ void CozmoBot::Init()
   if (lastDelimPos != std::string::npos) {
     robotID_ = atoi( name.substr(lastDelimPos+1).c_str() );
     if (robotID_ < 1) {
-      printf("***ERROR: Invalid robot name (%s). ID must be greater than 0\n", name.c_str());
+      fprintf(stdout, "***ERROR: Invalid robot name (%s). ID must be greater than 0\n", name.c_str());
       return;
     }
-    printf("Initializing robot ID: %d\n", robotID_);
+    fprintf(stdout, "Initializing robot ID: %d\n", robotID_);
   } else {
-    printf("***ERROR: Cozmo robot name %s is invalid.  Must end with '_<ID number>'\n.", name.c_str());
+    fprintf(stdout, "***ERROR: Cozmo robot name %s is invalid.  Must end with '_<ID number>'\n.", name.c_str());
     return;
   }
 
@@ -280,7 +280,7 @@ void CozmoBot::run()
     if (!IsKeyboardControllerEnabled() && !driving && getMicroCounter() > startDriveTime_us) {
       SetUserCommandedAcceleration( MAX(ONE_OVER_CONTROL_DT + 1, 500) );  // This can't be smaller than 1/CONTROL_DT!  
       SetUserCommandedDesiredVehicleSpeed(160);
-      printf("Speed commanded: %d mm/s\n", GetUserCommandedDesiredVehicleSpeed() );
+      fprintf(stdout, "Speed commanded: %d mm/s\n", GetUserCommandedDesiredVehicleSpeed() );
 
 
       // Create a path and follow it
@@ -297,7 +297,7 @@ void CozmoBot::run()
 #endif //EXECUTE_TEST_PATH
 
 
-    printf("speedDes: %d, speedCur: %d, speedCtrl: %d, speedMeas: %d\n", 
+    fprintf(stdout, "speedDes: %d, speedCur: %d, speedCtrl: %d, speedMeas: %d\n", 
            GetUserCommandedDesiredVehicleSpeed(), 
            GetUserCommandedCurrentVehicleSpeed(),
            GetControllerCommandedVehicleSpeed(),
