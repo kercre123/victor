@@ -12,6 +12,8 @@
 #define MIN( a, b ) ( ((a) < (b)) ? (a) : (b) )
 #endif
 
+
+// TODO: this is also defined in general.h.  Use that one?
 #ifndef CLIP
 #define CLIP(n, min, max) ( MIN(MAX(min, n), max ) )
 #endif

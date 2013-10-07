@@ -9,7 +9,6 @@
 using namespace std;
 using namespace Anki;
 
-
 GTEST_TEST(TestPoint, PointInitialization)
 {
   Point3f a3(1.f, 2.f, 3.f);
@@ -35,6 +34,7 @@ GTEST_TEST(TestPoint, PointInitialization)
   for(int i=0; i<5; ++i) {
     EXPECT_EQ(p5[i], float(i+1));
   }
+  
 }
 
 GTEST_TEST(TestPoint, DotProductAndLength)

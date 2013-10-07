@@ -72,12 +72,15 @@ namespace Anki {
     float   get_y()     const;
     Radians get_angle() const;
     
+    const Point2f& get_translation() const;
+    const Point3f& get_planeOrigin() const;
+    const Vec3f&   get_planeNormal() const;
+
     void  set_planeOrigin(const Point3f &origin);
     void  set_planeNormal(const Vec3f   &normal);
     
-    const Point3f& get_planeOrigin() const;
-    const Vec3f&   get_planeNormal() const;
-    
+    // Note that this Rotation Matrix is not a member but is computed
+    // on-the-fly from the Pose's angle.
     RotationMatrix2d get_rotationMatrix() const;
     
     void set_parent(const Pose2d* otherPose);
@@ -239,6 +242,9 @@ namespace Anki {
   
   inline RotationMatrix2d Pose2d::get_rotationMatrix(void) const
   { return RotationMatrix2d(this->angle); }
+  
+  inline const Point2f& Pose2d::get_translation(void) const
+  { return this->translation; }
   
   inline void Pose2d::set_planeNormal(const Vec3f &normal)
   {
