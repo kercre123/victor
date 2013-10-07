@@ -21,8 +21,9 @@ if ~exist('imageName', 'var')
     imageName = defineFilename;
 end
 
-width = size(image,2);
-height = size(image,1);
+% Swapped, because the input array is flipped
+width = size(image,1);
+height = size(image,2);
 
 % These extended versions are for the myriad, which has weird issues
 extendedWidth = 16*ceil(width/16) + 16;
