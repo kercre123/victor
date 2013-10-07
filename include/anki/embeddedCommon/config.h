@@ -102,6 +102,7 @@ extern "C" {
 #include "mv_types.h"
 #include "DrvUart.h"
 #include "swcTestUtils.h"
+#include "swcLeonUtils.h"
 #include "DrvL2Cache.h"
 #include <stdio.h>
 #include <math.h>

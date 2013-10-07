@@ -14,7 +14,8 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
 
-      printf("%s:\n", variableName);
+      printf(variableName);
+      printf(":\n");
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const u8 * const rowPointer = Pointer(y, 0);
         for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
@@ -32,7 +33,8 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
 
-      printf("%s:\n", variableName);
+      printf(variableName);
+      printf(":\n");
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const f32 * const rowPointer = Pointer(y, 0);
         for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
@@ -50,7 +52,8 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
 
-      printf("%s:\n", variableName);
+      printf(variableName);
+      printf(":\n");
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const f64 * const rowPointer = Pointer(y, 0);
         for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
@@ -68,7 +71,8 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Point<s16> >::Print", "Array<Point<s16> > is not valid");
 
-      printf("%s:\n", variableName);
+      printf(variableName);
+      printf(":\n");
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const Point<s16> * const rowPointer = Pointer(y, 0);
         for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
@@ -87,7 +91,8 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Rectangle<s16> >::Print", "Array<Rectangle<s16> > is not valid");
 
-      printf("%s:\n", variableName);
+      printf(variableName);
+      printf(":\n");
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const Rectangle<s16> * const rowPointer = Pointer(y, 0);
         for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
@@ -106,7 +111,8 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Quadrilateral<s16> >::Print", "Array<Quadrilateral<s16> > is not valid");
 
-      printf("%s:\n", variableName);
+      printf(variableName);
+      printf(":\n");
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const Quadrilateral<s16> * const rowPointer = Pointer(y, 0);
         for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {

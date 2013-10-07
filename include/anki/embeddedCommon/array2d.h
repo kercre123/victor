@@ -426,7 +426,8 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
 
-      printf("%s:\n", variableName);
+      printf(variableName);
+      printf(":\n");
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const Type * const rowPointer = Pointer(y, 0);
         for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
