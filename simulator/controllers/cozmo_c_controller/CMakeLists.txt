@@ -48,7 +48,7 @@ include_directories( ${CMAKE_CURRENT_SOURCE_DIR}
 # Link paths
 set(WEBOTS_LIB_DIR /Applications/Webots/lib)
 set(MATLAB_LIB_DIR ${MATLAB_APP_ROOT}/bin/maci64)
-set(CORETECH_COMMON_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../../coretech-common/build/xcode4/lib)
+set(CORETECH_COMMON_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../../coretech-common/build/Xcode/lib/Debug)
 link_directories( ${WEBOTS_LIB_DIR} 
 		  ${MATLAB_LIB_DIR}
 		  ${CORETECH_COMMON_LIB_DIR}
@@ -107,8 +107,8 @@ add_executable(cozmo_c_controller ${SOURCE_FILES} ${HEADER_FILES})
 
 target_link_libraries(cozmo_c_controller 
 		      CppController
-		      CoreTech_Common_Embedded_64Debug 
-		      CoreTech_Common_64Debug
+		      CoreTech_Common_Embedded
+		      CoreTech_Common
 		      mx 
 		      eng
 )

@@ -223,7 +223,7 @@ void RunVehicleSpeedController(s16 desVehicleSpeed)
 #endif
 
 #if(DEBUG_SPEED_CONTROLLER)
-    printf(" controllerSpeed: %d, currError: %d, errorSum: %d\n", controllerCommandedVehicleSpeed, currerror, errorsum);
+    fprintf(stdout, " controllerSpeed: %d, currError: %d, errorSum: %d\n", controllerCommandedVehicleSpeed, currerror, errorsum);
 #endif
 
     Traces16(TRACE_VAR_VSC_DESIRED_SPEED, desVehicleSpeed, TRACE_MASK_MOTOR_CONTROLLER);

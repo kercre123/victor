@@ -82,8 +82,8 @@ void RunWheelSpeedController(s16 *motorvalueoutL, s16 *motorvalueoutR)
     float wspeedr = (float)GetRightWheelSpeedFiltered(); 
 
 #if(DEBUG_WHEEL_CONTROLLER)    
-    printf(" WHEEL speeds: %f (L), %f (R)   (Curr: %d, %d)\n", wspeedl, wspeedr, GetLeftWheelSpeed(), GetRightWheelSpeed() );
-    printf(" WHEEL desired speeds: %d (L), %d (R)\n", desiredWheelSpeedL, desiredWheelSpeedR);
+    fprintf(stdout, " WHEEL speeds: %f (L), %f (R)   (Curr: %d, %d)\n", wspeedl, wspeedr, GetLeftWheelSpeed(), GetRightWheelSpeed() );
+    fprintf(stdout, " WHEEL desired speeds: %d (L), %d (R)\n", desiredWheelSpeedL, desiredWheelSpeedR);
 #endif
 
     //Get the desired speed in mm/sec
@@ -106,7 +106,7 @@ void RunWheelSpeedController(s16 *motorvalueoutL, s16 *motorvalueoutR)
     float outr = MM_PER_SEC_TO_MOTOR_VAL( (float)(wKp * errorr) + (error_sumr_ * wKi) ); 
 
 #if(DEBUG_WHEEL_CONTROLLER)
-    printf(" WHEEL error: %f (L), %f (R)   error_sum: %f (L), %f (R)\n", errorl, errorr, error_suml_, error_sumr_);
+    fprintf(stdout, " WHEEL error: %f (L), %f (R)   error_sum: %f (L), %f (R)\n", errorl, errorr, error_suml_, error_sumr_);
 #endif
 
     /*
@@ -176,7 +176,7 @@ void RunWheelSpeedController(s16 *motorvalueoutL, s16 *motorvalueoutR)
   }
 
 #if(DEBUG_WHEEL_CONTROLLER)
-  printf(" WHEEL pwm: %d (L), %d (R)\n", *motorvalueoutL, *motorvalueoutR);
+  fprintf(stdout, " WHEEL pwm: %d (L), %d (R)\n", *motorvalueoutL, *motorvalueoutR);
 #endif
 
   //Command the computed speed (as PWM values) to the motors

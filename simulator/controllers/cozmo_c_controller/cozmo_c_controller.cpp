@@ -65,10 +65,10 @@ int MatlabTest(void)
 	engEvalString(ep, "ylabel('Position (meters)');");
   
 	
-	printf("Hit return to continue\n\n");
+	fprintf(stdout, "Hit return to continue\n\n");
 	fgetc(stdin);
 	
-  printf("Done for Part I.\n");
+  fprintf(stdout, "Done for Part I.\n");
 	mxDestroyArray(T);
 	engEvalString(ep, "close;");
   
@@ -79,11 +79,11 @@ int MatlabTest(void)
 	while (result == NULL) {
     char str[BUFSIZE+1];
   
-    printf("Enter a MATLAB command to evaluate.  This command should\n");
-    printf("create a variable X.  This program will then determine\n");
-    printf("what kind of variable you created.\n");
-    printf("For example: X = 1:5\n");
-    printf(">> ");
+    fprintf(stdout, "Enter a MATLAB command to evaluate.  This command should\n");
+    fprintf(stdout, "create a variable X.  This program will then determine\n");
+    fprintf(stdout, "what kind of variable you created.\n");
+    fprintf(stdout, "For example: X = 1:5\n");
+    fprintf(stdout, ">> ");
     
     fgets(str, BUFSIZE, stdin);
 	  
@@ -91,19 +91,19 @@ int MatlabTest(void)
     engEvalString(ep, str);
     
     
-    printf("%s", buffer);
+    fprintf(stdout, "%s", buffer);
     
     
-    printf("\nRetrieving X...\n");
+    fprintf(stdout, "\nRetrieving X...\n");
     if ((result = engGetVariable(ep,"X")) == NULL)
-      printf("Oops! You didn't create a variable X.\n\n");
+      fprintf(stdout, "Oops! You didn't create a variable X.\n\n");
     else {
-      printf("X is class %s\t\n", mxGetClassName(result));
+      fprintf(stdout, "X is class %s\t\n", mxGetClassName(result));
     }
 	}
   
 
-	printf("Done!\n");
+	fprintf(stdout, "Done!\n");
 	mxDestroyArray(result);
 	engClose(ep);
   
