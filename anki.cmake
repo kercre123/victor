@@ -16,6 +16,22 @@ macro(ankiProject PROJECT_NAME)
 # Suppress warning message about relative vs. absolute paths:
 cmake_policy(SET CMP0015 NEW)
 
+# If user provided flags from the command line for using Matlab/OpenCV/Gtest,
+# use those.  Otherwise, set them all to on by default.
+set(PKG_OPTIONS 
+	USE_MATLAB USE_GTEST USE_OPENCV 
+	EMBEDDED_USE_MATLAB EMBEDDED_USE_GTEST EMBEDDED_USE_OPENCV
+)
+foreach(PKG ${PKG_OPTIONS})
+	if(DEFINED ${PKG})
+	    # message(STATUS "${PKG} was user-defined.")
+		set(ANKICORETECH_${PKG} ${${PKG}})
+	else()
+		set(ANKICORETECH_${PKG} 1)
+	endif(DEFINED ${PKG})
+	# message(STATUS "Setting ${PKG} = ${ANKICORETECH_${PKG}}")
+endforeach()
+
 # Set the correct C++ language standard (including for Xcode):
 if(WIN32)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_VARIADIC_MAX=10 /D_CRT_SECURE_NO_WARNINGS /D_DLL")
@@ -286,6 +302,8 @@ macro(build_mex MEX_FILE)
 	#message(STATUS "For MEX file ${OUTPUT_NAME}, linking against ${MEX_LINK_LIBRARIES}")
 
 	set_target_properties(${OUTPUT_NAME} PROPERTIES
+		# Provide a #define so we can know when we're building a mex file
+		COMPILE_DEFINITIONS "ANKI_MEX_BUILD"
 		PREFIX ""
 		SUFFIX ".${MATLAB_MEXEXT}"
 	)
