@@ -1277,7 +1277,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
   ASSERT_TRUE(ms.IsValid());
 
 #define ApproximateConnectedComponents2d_binaryImageDataLength (18*5)
-  const u8 binaryImageData[ApproximateConnectedComponents2d_binaryImageDataLength] = {
+  const u8 binaryImageData[128] = {
     0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0,
     0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0,
@@ -1289,21 +1289,21 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
   //#define UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d
 #define SORTED_BY_ID_GROUND_TRUTH_ApproximateConnectedComponents2d
 #ifdef UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d
-  const s16 xStart_groundTruth[] = {4,  3, 10, 13, 5, 9,  13, 6, 12, 16, 7, 11, 14};
-  const s16 xEnd_groundTruth[]   = {11, 5, 11, 15, 6, 11, 14, 9, 14, 17, 8, 12, 16};
-  const s16 y_groundTruth[]      = {0,  1, 1,  1,  2, 2,  2,  3, 3,  3,  4, 4,  4};
-  const u16 id_groundTruth[]     = {1,  1, 1,  2,  1, 1,  2,  1, 2,  2,  1, 2,  2};
+  const s16 xStart_groundTruth[128] = {4,  3, 10, 13, 5, 9,  13, 6, 12, 16, 7, 11, 14};
+  const s16 xEnd_groundTruth[128]   = {11, 5, 11, 15, 6, 11, 14, 9, 14, 17, 8, 12, 16};
+  const s16 y_groundTruth[128]      = {0,  1, 1,  1,  2, 2,  2,  3, 3,  3,  4, 4,  4};
+  const u16 id_groundTruth[128]     = {1,  1, 1,  2,  1, 1,  2,  1, 2,  2,  1, 2,  2};
 #else // #ifdef UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d
 #ifdef SORTED_BY_ID_GROUND_TRUTH_ApproximateConnectedComponents2d
-  const s16 xStart_groundTruth[] = {4,  3, 10, 5, 9,  6, 7, 13, 13, 12, 16, 11, 14};
-  const s16 xEnd_groundTruth[]   = {11, 5, 11, 6, 11, 9, 8, 15, 14, 14, 17, 12, 16};
-  const s16 y_groundTruth[]      = {0,  1, 1,  2, 2,  3, 4, 1,  2,  3,  3,  4,  4};
-  const u16 id_groundTruth[]     = {1,  1, 1,  1, 1,  1, 1, 2,  2,  2,  2,  2,  2};
+  const s16 xStart_groundTruth[128] = {4,  3, 10, 5, 9,  6, 7, 13, 13, 12, 16, 11, 14};
+  const s16 xEnd_groundTruth[128]   = {11, 5, 11, 6, 11, 9, 8, 15, 14, 14, 17, 12, 16};
+  const s16 y_groundTruth[128]      = {0,  1, 1,  2, 2,  3, 4, 1,  2,  3,  3,  4,  4};
+  const u16 id_groundTruth[128]     = {1,  1, 1,  1, 1,  1, 1, 2,  2,  2,  2,  2,  2};
 #else // Sorted by id, y, and xStart
-  const s16 xStart_groundTruth[] = {4,  3, 10, 5, 9,  6, 7, 13, 13, 12, 16, 11, 14};
-  const s16 xEnd_groundTruth[]   = {11, 5, 11, 6, 11, 9, 8, 15, 14, 14, 17, 12, 16};
-  const s16 y_groundTruth[]      = {0,  1, 1,  2, 2,  3, 4, 1,  2,  3,  3,  4,  4};
-  const u16 id_groundTruth[]     = {1,  1, 1,  1, 1,  1, 1, 2,  2,  2,  2,  2,  2};
+  const s16 xStart_groundTruth[128] = {4,  3, 10, 5, 9,  6, 7, 13, 13, 12, 16, 11, 14};
+  const s16 xEnd_groundTruth[128]   = {11, 5, 11, 6, 11, 9, 8, 15, 14, 14, 17, 12, 16};
+  const s16 y_groundTruth[128]      = {0,  1, 1,  2, 2,  3, 4, 1,  2,  3,  3,  4,  4};
+  const u16 id_groundTruth[128]     = {1,  1, 1,  1, 1,  1, 1, 2,  2,  2,  2,  2,  2};
 #endif // #ifdef SORTED_BY_ID_GROUND_TRUTH_ApproximateConnectedComponents2d
 #endif // #ifdef UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d ... #else
 
@@ -1385,7 +1385,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, BinomialFilter)
   ASSERT_TRUE(ms.IsValid());
 
   Array<u8> image(height, width, ms, false);
-  image.Set(static_cast<u8>(0));
+  image.SetZero();
 
   Array<u8> imageFiltered(height, width, ms);
 
@@ -1406,7 +1406,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, BinomialFilter)
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  const u8 correctResults[5][10] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 1, 1, 1, 2, 2, 2, 3}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+  const u8 correctResults[16][16] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 1, 1, 1, 2, 2, 2, 3}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
   for(s32 y=0; y<height; y++) {
     for(s32 x=0; x<width; x++) {
@@ -1574,7 +1574,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
   const s32 height = 16;
 
 #define TraceInteriorBoundary_imageDataLength (16*16)
-  const u8 imageData[TraceInteriorBoundary_imageDataLength] = {
+  const u8 imageData[TraceInteriorBoundary_imageDataLength + 16] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
@@ -1593,7 +1593,17 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
   const s32 numPoints = 9;
-  const Point<s16> groundTruth[9] = {Point<s16>(8,6), Point<s16>(8,5), Point<s16>(7,4), Point<s16>(7,3), Point<s16>(8,3), Point<s16>(9,3), Point<s16>(9,4), Point<s16>(9,5), Point<s16>(9,6)};
+  Point<s16> groundTruth[16];
+
+  groundTruth[0] = Point<s16>(8,6);
+  groundTruth[1] = Point<s16>(8,5);
+  groundTruth[2] = Point<s16>(7,4);
+  groundTruth[3] = Point<s16>(7,3);
+  groundTruth[4] = Point<s16>(8,3);
+  groundTruth[5] = Point<s16>(9,3);
+  groundTruth[6] = Point<s16>(9,4);
+  groundTruth[7] = Point<s16>(9,5);
+  groundTruth[8] = Point<s16>(9,6);
 
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = MIN(MAX_BYTES, 10000);
