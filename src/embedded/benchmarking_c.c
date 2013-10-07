@@ -1,15 +1,5 @@
-#include "anki/embeddedCommon/benchmarking.h"
-
-#include <stdio.h>
-#include <string.h>
-
-#ifndef MAX
-#define MAX( a, b ) ( ((a) > (b)) ? (a) : (b) )
-#endif
-
-#ifndef MIN
-#define MIN( a, b ) ( ((a) < (b)) ? (a) : (b) )
-#endif
+#include "anki/embeddedCommon/benchmarking_c.h"
+#include "anki/embeddedCommon/utilities_c.h"
 
 BenchmarkEvent benchmarkEvents[NUM_BENCHMARK_EVENTS];
 int currentBenchmarkEvent;
@@ -22,6 +12,54 @@ static double minTimes[NUM_BENCHMARK_EVENTS];
 static double maxTimes[NUM_BENCHMARK_EVENTS];
 static unsigned int numEvents[NUM_BENCHMARK_EVENTS];
 static int lastBeginIndex[NUM_BENCHMARK_EVENTS];
+
+void InitBenchmarking()
+{
+  currentBenchmarkEvent = 0;
+}
+
+unsigned long long GetBenchmarkTime()
+{
+#if defined(_MSC_VER)
+  LARGE_INTEGER counter;
+  QueryPerformanceCounter(&counter);
+
+  return counter.QuadPart;
+#elif defined(__APPLE_CC__)
+  return 0; // TODO: implement
+#elif defined(USING_MOVIDIUS_GCC_COMPILER)
+  return 0; // TODO: implement
+#elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
+  return 0; // TODO: implement
+#else
+  timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return ts.tv_sec * 1000000000 + ts.tv_nsec;
+#endif
+}
+
+void AddBenchmarkEvent(const char *name, unsigned long long time, BenchmarkEventType type)
+{
+  benchmarkEvents[currentBenchmarkEvent].name = name;
+  benchmarkEvents[currentBenchmarkEvent].time = time;
+  benchmarkEvents[currentBenchmarkEvent].type = type;
+
+  currentBenchmarkEvent++;
+
+  // If we run out of space, just keep overwriting the last event
+  if(currentBenchmarkEvent >= NUM_BENCHMARK_EVENTS)
+    currentBenchmarkEvent = NUM_BENCHMARK_EVENTS-1;
+}
+
+void BeginBenchmark(const char *name)
+{
+  AddBenchmarkEvent(name, GetBenchmarkTime(), BENCHMARK_EVENT_BEGIN);
+} // void startBenchmark(const char *name)
+
+void EndBenchmark(const char *name)
+{
+  AddBenchmarkEvent(name, GetBenchmarkTime(), BENCHMARK_EVENT_END);
+} // void endBenchmark(const char *name)
 
 int GetNameIndex(const char * const name, unsigned int * index)
 {
@@ -65,8 +103,8 @@ void PrintBenchmarkResults()
 
   for(i=0; i<NUM_BENCHMARK_EVENTS; i++) {
     totalTimes[i] = 0.0;
-    minTimes[i] = (double)(0x7FFFFFFFFFFFFFFFL);
-    maxTimes[i] = (double)(-0x7FFFFFFFFFFFFFFFL);
+    minTimes[i] = (double)(0x7FFFFFFFFFFFFFFFLL);
+    maxTimes[i] = (double)(-0x7FFFFFFFFFFFFFFFLL);
     numEvents[i] = 0;
     lastBeginIndex[i] = -1;
   }
@@ -84,7 +122,7 @@ void PrintBenchmarkResults()
       {
         const unsigned long long rawElapsedTime = benchmarkEvents[i].time - benchmarkEvents[lastBeginIndex[index]].time;
 #pragma unused (rawElapsedTime) // may or may not get used depending on #ifs below
-        
+
 #if defined(_MSC_VER)
         const double elapsedTime = (double)rawElapsedTime / freqencyDouble;
 #elif defined(__APPLE_CC__)

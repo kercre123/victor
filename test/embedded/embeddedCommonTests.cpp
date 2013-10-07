@@ -17,8 +17,12 @@ Matlab matlab(false);
 #include "gtest/gtest.h"
 #endif
 
+#ifdef USING_MOVIDIUS_GCC_COMPILER
+#include "swcLeonUtils.h"
+#endif
+
 //#define BUFFER_IN_DDR_WITH_L2
-#define BUFFER_IN_CMX
+//#define BUFFER_IN_CMX
 
 #if defined(BUFFER_IN_DDR_WITH_L2) && defined(BUFFER_IN_CMX)
 You cannot use both CMX and L2 Cache;
@@ -80,6 +84,48 @@ IN_DDR GTEST_TEST(CoreTech_Common, BENCHMARKING)
   GTEST_RETURN_HERE;
 }
 #endif //#ifdef TEST_BENCHMARKING
+
+IN_DDR GTEST_TEST(CoreTech_Common, ApproximateExp)
+{
+  // To compute the ground truth, in Matlab, type:
+  // x = logspace(-5, 5, 11); yPos = exp(x); yNeg = exp(-x);
+
+  // 0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10
+  // 1.00001000005000, 1.00010000500017, 1.00100050016671, 1.01005016708417, 1.10517091807565, 2.71828182845905, 22026.4657948067
+  // 0.999990000050000	0.999900004999833	0.999000499833375	0.990049833749168	0.904837418035960	0.367879441171442	.0000453999297624849
+
+  const f64 valP0 = approximateExp(0.00001);
+  const f64 valP1 = approximateExp(0.0001);
+  const f64 valP2 = approximateExp(0.001);
+  const f64 valP3 = approximateExp(0.01);
+  const f64 valP4 = approximateExp(0.1);
+  const f64 valP5 = approximateExp(0.0);
+  const f64 valP6 = approximateExp(1.0);
+  
+  const f64 valN0 = approximateExp(-0.00001);
+  const f64 valN1 = approximateExp(-0.0001);
+  const f64 valN2 = approximateExp(-0.001);
+  const f64 valN3 = approximateExp(-0.01);
+  const f64 valN4 = approximateExp(-0.1);
+  const f64 valN5 = approximateExp(-1.0);
+  
+  ASSERT_TRUE(ABS(valP0 - 1.00001000005000) < .0001);
+  ASSERT_TRUE(ABS(valP1 - 1.00010000500017) < .0001);
+  ASSERT_TRUE(ABS(valP2 - 1.00100050016671) < .0001);
+  ASSERT_TRUE(ABS(valP3 - 1.01005016708417) < .0001);
+  ASSERT_TRUE(ABS(valP4 - 1.10517091807565) < .0001);
+  ASSERT_TRUE(ABS(valP5 - 1.0) < .0001);
+  ASSERT_TRUE(ABS(valP6 - 2.71828182845905) < .0001);
+  
+  ASSERT_TRUE(ABS(valN0 - 0.999990000050000) < .0001);
+  ASSERT_TRUE(ABS(valN1 - 0.999900004999833) < .0001);
+  ASSERT_TRUE(ABS(valN2 - 0.999000499833375) < .0001);
+  ASSERT_TRUE(ABS(valN3 - 0.990049833749168) < .0001);
+  ASSERT_TRUE(ABS(valN4 - 0.904837418035960) < .0001);
+  ASSERT_TRUE(ABS(valN5 - 0.367879441171442) < .0001);
+  
+  GTEST_RETURN_HERE;
+}
 
 IN_DDR GTEST_TEST(CoreTech_Common, MatrixMultiply)
 {
@@ -197,34 +243,6 @@ IN_DDR GTEST_TEST(CoreTech_Common, ComputeHomography)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR void PrintfOneArray_f32(const Array<f32> &array, const char * variableName)
-{
-  printf("%s:\n", variableName);
-  for(s32 y=0; y<array.get_size(0); y++) {
-    const f32 * const rowPointer = array.Pointer(y, 0);
-    for(s32 x=0; x<array.get_size(1); x++) {
-      const f32 value = rowPointer[x];
-      const f32 mulitipliedValue = 10000.0f * value;
-      printf("%d ", static_cast<s32>(mulitipliedValue));
-    }
-    printf("\n");
-  }
-  printf("\n");
-}
-
-IN_DDR void PrintfOneArray_f64(const Array<f64> &array, const char * variableName)
-{
-  printf("%s:\n", variableName);
-  for(s32 y=0; y<array.get_size(0); y++) {
-    const f64 * const rowPointer = array.Pointer(y, 0);
-    for(s32 x=0; x<array.get_size(1); x++) {
-      printf("%d ", static_cast<s32>((10000.0*rowPointer[x])));
-    }
-    printf("\n");
-  }
-  printf("\n");
-}
-
 IN_DDR GTEST_TEST(CoreTech_Common, SVD32)
 {
   const s32 numBytes = MIN(MAX_BYTES, 5000);
@@ -232,23 +250,24 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD32)
   MemoryStack ms(buffer, numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-#define SVD_aDataLength 16
-#define SVD_uTGroundTruthDataLength 4
-#define SVD_wGroundTruthDataLength 8
-#define SVD_vTGroundTruthDataLength 64
+#define SVD32_aDataLength 16
+#define SVD32_uTGroundTruthDataLength 4
+#define SVD32_wGroundTruthDataLength 8
+#define SVD32_vTGroundTruthDataLength 64
 
-  const f32 aData[SVD_aDataLength] = {
-    1, 2, 3, 5, 7, 11, 13, 17,
-    19, 23, 29, 31, 37, 41, 43, 47};
-
-  const f32 uTGroundTruthData[SVD_uTGroundTruthDataLength] = {
+  f32 uTGroundTruthData[SVD32_uTGroundTruthDataLength] = {
     -0.237504316543999f,  -0.971386483137875f,
     0.971386483137874f,  -0.237504316543999f};
 
-  const f32 wGroundTruthData[SVD_wGroundTruthDataLength] = {
+  // This is not initializing correctly on Leon. Why?
+  //const f32 aData[SVD32_aDataLength] = {
+  //  1, 2, 3, 5, 7, 11, 13, 17,
+  //  19, 23, 29, 31, 37, 41, 43, 47};
+
+  f32 wGroundTruthData[SVD32_wGroundTruthDataLength] = {
     101.885662808124f, 9.29040979446927f, 0, 0, 0, 0, 0, 0};
 
-  const f32 vTGroundTruthData[SVD_vTGroundTruthDataLength] = {
+  f32 vTGroundTruthData[SVD32_vTGroundTruthDataLength] = {
     -0.183478685625953f, -0.223946108965585f, -0.283481700610061f, -0.307212042374800f, -0.369078720749224f, -0.416539404278702f, -0.440269746043441f, -0.487730429572919f,
     0.381166774075590f, 0.378866636898153f, 0.427695421221120f, 0.269708382365037f, 0.213979186509760f, -0.101994891202405f, -0.259981930058488f, -0.575956007770654f,
     -0.227185052857744f, -0.469620636740071f, 0.828412170627898f, -0.133259849703043f, -0.130174916014859f, -0.0535189566767408f, -0.0151909770076815f, 0.0614649823304370f,
@@ -259,6 +278,10 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD32)
     -0.502216484295607f, 0.598727043133703f, 0.149270332220156f, 0.0341621344454443f, -0.0314179665781565f, -0.261634362127581f, -0.376742559902293f, 0.393041044548282f};
 
   const s32 m = 2, n = 8;
+
+#ifdef USING_MOVIDIUS_GCC_COMPILER
+  swcLeonFlushCaches();
+#endif
 
   Array<f32> a(m, n, ms);
   Array<f32> w(1, n, ms);
@@ -279,32 +302,30 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD32)
   void * scratch = ms.Allocate(sizeof(float)*(2*n + 2*m + 64));
   ASSERT_TRUE(scratch != NULL);
 
-  a.Set(aData, SVD_aDataLength);
-  w_groundTruth.Set(wGroundTruthData, SVD_uTGroundTruthDataLength);
-  uT_groundTruth.Set(uTGroundTruthData, SVD_wGroundTruthDataLength);
-  vT_groundTruth.Set(vTGroundTruthData, SVD_vTGroundTruthDataLength);
+  w_groundTruth.Set(&wGroundTruthData[0], SVD32_uTGroundTruthDataLength);
+
+  uT_groundTruth.Set(&uTGroundTruthData[0], SVD32_wGroundTruthDataLength);
+  vT_groundTruth.Set(&vTGroundTruthData[0], SVD32_vTGroundTruthDataLength);
+
+  a[0][0] = 1.0f; a[0][1] = 2.0f; a[0][2] = 3.0f; a[0][3] = 5.0f; a[0][4] = 7.0f; a[0][5] = 11.0f; a[0][6] = 13.0f; a[0][7] = 17.0f;
+  a[1][0] = 19.0f; a[1][1] = 23.0f; a[1][2] = 29.0f; a[1][3] = 31.0f; a[1][4] = 37.0f; a[1][5] = 41.0f; a[1][6] = 43.0f; a[1][7] = 47.0f;
 
   const Result result = svd_f32(a, w, uT, vT, scratch);
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  //  w.Print("w");
-  //  w_groundTruth.Print("w_groundTruth");
-  //PrintfOneArray_f32(w, "w");
+  //PrintfOneArray_f32(a, "a");
+
+  //PrintfOneArray_f32(w, "w   ");
   //PrintfOneArray_f32(w_groundTruth, "w_groundTruth");
 
-  //  uT.Print("uT");
-  //  uT_groundTruth.Print("uT_groundTruth");
   PrintfOneArray_f32(uT, "uT");
   PrintfOneArray_f32(uT_groundTruth, "uT_groundTruth");
-
-  //  vT.Print("vT");
-  //  vT_groundTruth.Print("vT_groundTruth");
 
   ASSERT_TRUE(w.IsElementwiseEqual_PercentThreshold(w_groundTruth, .05, .001));
   ASSERT_TRUE(uT.IsElementwiseEqual_PercentThreshold(uT_groundTruth, .05, .001));
 
-  // I don't know why, but the v-transpose for this SVD doesn't match Matlab's. Probably this version's is more efficient, in either memory or computation.
+  // I don't know why, but the v-transpose for this SVD doesn't match Matlab's. Probably this version is more efficient, in either memory or computation.
   //ASSERT_TRUE(vT.IsElementwiseEqual_PercentThreshold(vT_groundTruth, .05, .001));
 
   GTEST_RETURN_HERE;
@@ -317,23 +338,24 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD64)
   MemoryStack ms(buffer, numBytes);
   ASSERT_TRUE(ms.IsValid());
 
-#define SVD_aDataLength 16
-#define SVD_uTGroundTruthDataLength 4
-#define SVD_wGroundTruthDataLength 8
-#define SVD_vTGroundTruthDataLength 64
+#define SVD64_aDataLength 16
+#define SVD64_uTGroundTruthDataLength 4
+#define SVD64_wGroundTruthDataLength 8
+#define SVD64_vTGroundTruthDataLength 64
 
-  const f64 aData[SVD_aDataLength] = {
-    1, 2, 3, 5, 7, 11, 13, 17,
-    19, 23, 29, 31, 37, 41, 43, 47};
+  // This is not initializing correctly on Leon. Why?
+  //const f64 aData[SVD64_aDataLength] = {
+  //  1, 2, 3, 5, 7, 11, 13, 17,
+  //  19, 23, 29, 31, 37, 41, 43, 47};
 
-  const f64 uTGroundTruthData[SVD_uTGroundTruthDataLength] = {
+  const f64 uTGroundTruthData[SVD64_uTGroundTruthDataLength] = {
     -0.237504316543999f,  -0.971386483137875f,
     0.971386483137874f,  -0.237504316543999f};
 
-  const f64 wGroundTruthData[SVD_wGroundTruthDataLength] = {
+  const f64 wGroundTruthData[SVD64_wGroundTruthDataLength] = {
     101.885662808124f, 9.29040979446927f, 0, 0, 0, 0, 0, 0};
 
-  const f64 vTGroundTruthData[SVD_vTGroundTruthDataLength] = {
+  const f64 vTGroundTruthData[SVD64_vTGroundTruthDataLength] = {
     -0.183478685625953f, -0.223946108965585f, -0.283481700610061f, -0.307212042374800f, -0.369078720749224f, -0.416539404278702f, -0.440269746043441f, -0.487730429572919f,
     0.381166774075590f, 0.378866636898153f, 0.427695421221120f, 0.269708382365037f, 0.213979186509760f, -0.101994891202405f, -0.259981930058488f, -0.575956007770654f,
     -0.227185052857744f, -0.469620636740071f, 0.828412170627898f, -0.133259849703043f, -0.130174916014859f, -0.0535189566767408f, -0.0151909770076815f, 0.0614649823304370f,
@@ -364,10 +386,13 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD64)
   void * scratch = ms.Allocate(sizeof(float)*(2*n + 2*m + 64));
   ASSERT_TRUE(scratch != NULL);
 
-  a.Set(aData, SVD_aDataLength);
-  w_groundTruth.Set(wGroundTruthData, SVD_uTGroundTruthDataLength);
-  uT_groundTruth.Set(uTGroundTruthData, SVD_wGroundTruthDataLength);
-  vT_groundTruth.Set(vTGroundTruthData, SVD_vTGroundTruthDataLength);
+  a[0][0] = 1.0f; a[0][1] = 2.0f; a[0][2] = 3.0f; a[0][3] = 5.0f; a[0][4] = 7.0f; a[0][5] = 11.0f; a[0][6] = 13.0f; a[0][7] = 17.0f;
+  a[1][0] = 19.0f; a[1][1] = 23.0f; a[1][2] = 29.0f; a[1][3] = 31.0f; a[1][4] = 37.0f; a[1][5] = 41.0f; a[1][6] = 43.0f; a[1][7] = 47.0f;
+
+  //a.Set(aData, SVD64_aDataLength);
+  w_groundTruth.Set(wGroundTruthData, SVD64_uTGroundTruthDataLength);
+  uT_groundTruth.Set(uTGroundTruthData, SVD64_wGroundTruthDataLength);
+  vT_groundTruth.Set(vTGroundTruthData, SVD64_vTGroundTruthDataLength);
 
   const Result result = svd_f64(a, w, uT, vT, scratch);
 
@@ -400,7 +425,6 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack)
   ASSERT_TRUE(MEMORY_ALIGNMENT == 16);
 
   const s32 numBytes = MIN(MAX_BYTES, 200);
-  //void * buffer = calloc(numBytes+MEMORY_ALIGNMENT, 1);
   void * alignedBuffer = reinterpret_cast<void*>(RoundUp(reinterpret_cast<size_t>(buffer), MEMORY_ALIGNMENT));
   ASSERT_TRUE(buffer != NULL);
   MemoryStack ms(alignedBuffer, numBytes);
@@ -465,7 +489,6 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack)
   for(s32 i=0; i<NUM_EXPECTED_RESULTS; i++) {
     ASSERT_TRUE(ms.IsValid());
     (reinterpret_cast<char*>(alignedBuffer)[i])++;
-    //std::cout << i << " " << ms.IsValid() << " " << expectedResults[i] << "\n";
     ASSERT_TRUE(ms.IsValid() == expectedResults[i]);
     (reinterpret_cast<char*>(alignedBuffer)[i])--;
   }
@@ -491,7 +514,6 @@ IN_DDR s32 CheckConstCasting(const MemoryStack ms, s32 numBytes)
 IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack_call)
 {
   const s32 numBytes = MIN(MAX_BYTES, 100);
-  //void * buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
   MemoryStack ms(buffer, numBytes);
 
@@ -508,8 +530,6 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack_call)
   const s32 inFunctionUsedBytes2 = CheckConstCasting(ms, 32);
   ASSERT_TRUE(inFunctionUsedBytes2 == (originalUsedBytes+48));
   ASSERT_TRUE(ms.get_usedBytes() == originalUsedBytes);
-
-  //  free(buffer); buffer = NULL;
 
   GTEST_RETURN_HERE;
 }
@@ -565,6 +585,8 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
   ASSERT_EQ(5.1, simpleVector[4]);
 
   free(simpleVector); simpleVector = NULL;
+
+  GTEST_RETURN_HERE;
 }
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
@@ -588,6 +610,8 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
   ASSERT_EQ(10, *simpleArray.Pointer(1,4));
 
   free(simpleArray.get_rawDataPointer());
+
+  GTEST_RETURN_HERE;
 }
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
 
@@ -629,7 +653,6 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 {
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = MIN(MAX_BYTES, 1000);
-  //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
   MemoryStack ms(buffer, numBytes);
 
@@ -698,15 +721,12 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   }
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 
-  //free(buffer); buffer = NULL;
-
   GTEST_RETURN_HERE;
 }
 
 IN_DDR GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 {
   const s32 numBytes = MIN(MAX_BYTES, 1000);
-  //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
 
   MemoryStack ms(buffer, numBytes);
@@ -721,9 +741,11 @@ IN_DDR GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 
   simpleArray.Set(imgData, ArraySpecifiedClass_imgDataLength);
 
-  ASSERT_TRUE((*simpleArray.Pointer(0,0)) == 1); // If the templating fails, this will equal 49
+  printf("*simpleArray.Pointer(0,0) = %d\n", *simpleArray.Pointer(0,0));
 
-  //free(buffer); buffer = NULL;
+  simpleArray.Print("simpleArray");
+
+  ASSERT_TRUE((*simpleArray.Pointer(0,0)) == 1); // If the templating fails, this will equal 49
 
   GTEST_RETURN_HERE;
 }
@@ -731,7 +753,6 @@ IN_DDR GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 IN_DDR GTEST_TEST(CoreTech_Common, ArrayAlignment1)
 {
   const s32 numBytes = MIN(MAX_BYTES, 1000);
-  //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
 
   void *alignedBuffer = reinterpret_cast<void*>( RoundUp(reinterpret_cast<size_t>(buffer), MEMORY_ALIGNMENT) );
@@ -747,15 +768,12 @@ IN_DDR GTEST_TEST(CoreTech_Common, ArrayAlignment1)
     ASSERT_TRUE(trueLocation ==  expectedLocation);
   }
 
-  //free(buffer); buffer = NULL;
-
   GTEST_RETURN_HERE;
 }
 
 IN_DDR GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
 {
   const s32 numBytes = MIN(MAX_BYTES, 1000);
-  //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
 
   void *alignedBuffer = reinterpret_cast<void*>( RoundUp(reinterpret_cast<size_t>(buffer), MEMORY_ALIGNMENT) );
@@ -770,8 +788,6 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
     ASSERT_TRUE(matrixStart == RoundUp(matrixStart, MEMORY_ALIGNMENT));
   }
 
-  //free(buffer); buffer = NULL;
-
   GTEST_RETURN_HERE;
 }
 
@@ -779,7 +795,6 @@ IN_DDR GTEST_TEST(CoreTech_Common, ArrayFillPattern)
 {
   const s32 width = 6, height = 10;
   const s32 numBytes = MIN(MAX_BYTES, 1000);
-  //void *buffer = calloc(numBytes, 1);
   ASSERT_TRUE(buffer != NULL);
 
   void *alignedBuffer = reinterpret_cast<void*>( RoundUp(reinterpret_cast<size_t>(buffer), MEMORY_ALIGNMENT) );
@@ -836,8 +851,6 @@ IN_DDR GTEST_TEST(CoreTech_Common, ArrayFillPattern)
     }
   }
 
-  //free(buffer); buffer = NULL;
-
   GTEST_RETURN_HERE;
 }
 
@@ -847,10 +860,11 @@ IN_DDR void RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
-  CALL_GTEST_TEST(CoreTech_Common, MatrixMultiply);
-  CALL_GTEST_TEST(CoreTech_Common, ComputeHomography);
+  CALL_GTEST_TEST(CoreTech_Common, ApproximateExp);
   CALL_GTEST_TEST(CoreTech_Common, SVD32);
   CALL_GTEST_TEST(CoreTech_Common, SVD64);
+  CALL_GTEST_TEST(CoreTech_Common, MatrixMultiply);
+  CALL_GTEST_TEST(CoreTech_Common, ComputeHomography);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_call);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1);
