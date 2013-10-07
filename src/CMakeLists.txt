@@ -28,8 +28,8 @@ set(CORETECH_COMMON_HEADER_FILES
 	../include/anki/math/radians.h
 	../include/anki/math/rotation.h
 )
-
 add_library(CoreTech_Common 
+
 	${CORETECH_COMMON_SOURCE_FILES}
 	${CORETECH_COMMON_HEADER_FILES}
 )
@@ -39,7 +39,8 @@ add_library(CoreTech_Common
 #file(GLOB CORETECH_COMMON_EMBEDDED_FILES "embedded/*.cpp")
 set(CORETECH_COMMON_EMBEDDED_SOURCE_FILES
 	embedded/array2d.cpp
-	embedded/benchmarking.c
+	embedded/benchmarking_c.c
+	embedded/utilities_c.c
 	embedded/draw.cpp
 	embedded/errorHandling.cpp
 	embedded/fixedLengthList.cpp
@@ -53,7 +54,7 @@ set(CORETECH_COMMON_EMBEDDED_SOURCE_FILES
 set(CORETECH_COMMON_EMBEDDED_HEADER_FILES
 	../include/anki/embeddedCommon.h
 	../include/anki/embeddedCommon/array2d.h
-	../include/anki/embeddedCommon/benchmarking.h
+	../include/anki/embeddedCommon/benchmarking_c.h
 	../include/anki/embeddedCommon/config.h
 	../include/anki/embeddedCommon/dataStructures.h
 	../include/anki/embeddedCommon/draw.h
@@ -65,6 +66,7 @@ set(CORETECH_COMMON_EMBEDDED_HEADER_FILES
 	../include/anki/embeddedCommon/memory.h
 	../include/anki/embeddedCommon/opencvLight.h
 	../include/anki/embeddedCommon/utilities.h
+	../include/anki/embeddedCommon/utilities_c.h
 )
 
 add_library(CoreTech_Common_Embedded 

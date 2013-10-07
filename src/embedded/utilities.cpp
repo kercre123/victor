@@ -1,18 +1,21 @@
 #include "anki/embeddedCommon/utilities.h"
 #include "anki/embeddedCommon/errorHandling.h"
+#include "anki/embeddedCommon/array2d.h"
 
 #if defined(_MSC_VER)
-#include <windows.h >
+#include <windows.h>
 #elif defined(USING_MOVIDIUS_COMPILER)
+
 #else
 #include <sys/time.h>
 #endif
 
-#include <math.h>
-
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 #include "opencv2/core/core.hpp"
 #endif
+
+#define PrintfOneArray_FORMAT_STRING_2 "%d %d "
+#define PrintfOneArray_FORMAT_STRING_1 "%d "
 
 namespace Anki
 {
@@ -97,34 +100,65 @@ namespace Anki
       return powerCount;
     }
 
-    //// Perform the matrix multiplication "matOut = mat1 * mat2"
-    //// Note that this is the naive O(n^3) implementation
-    //Result MultiplyMatrices(const Array<f64> &mat1, const Array<f64> &mat2, Array<f64> &matOut)
-    //{
-    //  AnkiConditionalErrorAndReturnValue(mat1.get_size(1) == mat2.get_size(0),
-    //    RESULT_FAIL, "MultiplyMatrices", "Input matrices are incompatible sizes");
+    IN_DDR void PrintfOneArray_f32(const Array<f32> &array, const char * variableName)
+    {
+      printf(variableName);
+      printf(":\n");
+      for(s32 y=0; y<array.get_size(0); y++) {
+        const f32 * const rowPointer = array.Pointer(y, 0);
 
-    //  AnkiConditionalErrorAndReturnValue(matOut.get_size(0) == mat1.get_size(0),
-    //    RESULT_FAIL, "MultiplyMatrices", "Input and Output matrices are incompatible sizes");
+        // This goes every two, because the output on movidius looks more reasonable
+        for(s32 x=0; x<array.get_size(1)-1; x+=2) {
+          const f32 value1 = rowPointer[x];
+          const f32 value2 = rowPointer[x+1];
+          const s32 mulitipliedValue1 = static_cast<s32>(Round(10000.0f * value1));
+          const s32 mulitipliedValue2 = static_cast<s32>(Round(10000.0f * value2));
 
-    //  AnkiConditionalErrorAndReturnValue(matOut.get_size(1) == mat2.get_size(1),
-    //    RESULT_FAIL, "MultiplyMatrices", "Input and Output matrices are incompatible sizes");
+          printf(PrintfOneArray_FORMAT_STRING_2, mulitipliedValue1, mulitipliedValue2);
+        }
 
-    //  for(s32 y1=0; y1<mat1.get_size(0); y1++) {
-    //    const f64 * restrict mat1_rowPointer = mat1.Pointer(y1, 0);
-    //    f64 * restrict matOut_rowPointer = matOut.Pointer(y1, 0);
+        if(!IsOdd(array.get_size(1))) {
+          for(s32 x=array.get_size(1)-1; x<array.get_size(1); x++) {
+            const f32 value1 = rowPointer[x];
+            const s32 mulitipliedValue1 = static_cast<s32>(Round(10000.0f * value1));
 
-    //    for(s32 x1=0; x1<mat1.get_size(1); x1++) {
-    //      matOut_rowPointer[x1] = 0;
+            printf(PrintfOneArray_FORMAT_STRING_1, static_cast<s32>(mulitipliedValue1));
+          }
+        }
+        printf("\n");
+      }
+      printf("\n");
+    }
 
-    //      for(s32 y2=0; y2<mat1.get_size(0); y2++) {
-    //        matOut_rowPointer[x1] += mat1_rowPointer[y2] * (*mat2.Pointer(y2, x1));
-    //      }
-    //    }
-    //  }
+    IN_DDR void PrintfOneArray_f64(const Array<f64> &array, const char * variableName)
+    {
+      printf(variableName);
+      printf(":\n");
+      for(s32 y=0; y<array.get_size(0); y++) {
+        const f64 * const rowPointer = array.Pointer(y, 0);
 
-    //  return RESULT_OK;
-    //}
+        // This goes every two, because the output on movidius looks more reasonable
+        for(s32 x=0; x<array.get_size(1)-1; x+=2) {
+          const f64 value1 = rowPointer[x];
+          const f64 value2 = rowPointer[x+1];
+          const s32 mulitipliedValue1 = static_cast<s32>(Round(10000.0 * value1));
+          const s32 mulitipliedValue2 = static_cast<s32>(Round(10000.0 * value2));
+
+          printf(PrintfOneArray_FORMAT_STRING_2, mulitipliedValue1, mulitipliedValue2);
+        }
+
+        if(!IsOdd(array.get_size(1))) {
+          for(s32 x=array.get_size(1)-1; x<array.get_size(1); x++) {
+            const f64 value1 = rowPointer[x];
+            const s32 mulitipliedValue1 = static_cast<s32>(Round(10000.0 * value1));
+
+            printf(PrintfOneArray_FORMAT_STRING_1, mulitipliedValue1);
+          }
+        }
+        printf("\n");
+      }
+      printf("\n");
+    }
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     IN_DDR int ConvertToOpenCvType(const char *typeName, size_t byteDepth)
@@ -152,16 +186,5 @@ namespace Anki
       return -1;
     }
 #endif //#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-
-#if defined(USING_MOVIDIUS_GCC_COMPILER)
-    IN_DDR void memset(void * dst, int value, size_t size)
-    {
-      size_t i;
-      for(i=0; i<size; i++)
-      {
-        ((char*)dst)[i] = value;
-      }
-    }
-#endif // #if defined(USING_MOVIDIUS_GCC_COMPILER)
   } // namespace Embedded
 } // namespace Anki

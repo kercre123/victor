@@ -1,8 +1,6 @@
 #include "anki/embeddedCommon/matlabInterface.h"
 #include "anki/embeddedCommon/errorHandling.h"
 
-#include <stdarg.h>
-
 namespace Anki
 {
   namespace Embedded

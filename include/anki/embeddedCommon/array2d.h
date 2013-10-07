@@ -7,14 +7,7 @@
 #include "anki/embeddedCommon/errorHandling.h"
 #include "anki/embeddedCommon/dataStructures.h"
 #include "anki/embeddedCommon/geometry.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-
-#if !defined(USING_MOVIDIUS_GCC_COMPILER)
-#include <string.h>
-#endif
+#include "anki/embeddedCommon/utilities_c.h"
 
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
 #include "opencv2/core/core.hpp"
@@ -714,7 +707,7 @@ namespace Anki
     template<typename Type> FixedPointArray<Type>::FixedPointArray(s32 numRows, s32 numCols, s32 numFractionalBits, MemoryStack &memory, bool useBoundaryFillPatterns)
       : Array<Type>(numRows, numCols, memory, useBoundaryFillPatterns), numFractionalBits(numFractionalBits)
     {
-      AnkiConditionalError(numFractionalBits >= 0 && numFractionalBits <= (sizeof(Type)*8),  "FixedPointArray<Type>", "numFractionalBits number is invalid");
+      AnkiConditionalError(numFractionalBits >= 0 && numFractionalBits <= static_cast<s32>(sizeof(Type)*8),  "FixedPointArray<Type>", "numFractionalBits number is invalid");
     }
 
     template<typename Type> s32 FixedPointArray<Type>::get_numFractionalBits() const
@@ -730,6 +723,19 @@ namespace Anki
     template<> Result Array<Point<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<Rectangle<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<Quadrilateral<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+
+    //#ifdef USING_MOVIDIUS_GCC_COMPILER
+    //    template<> s32 Array<u8>::Set(const u8 * const values, const s32 numValues);
+    //    template<> s32 Array<s8>::Set(const s8 * const values, const s32 numValues);
+    //    template<> s32 Array<u16>::Set(const u16 * const values, const s32 numValues);
+    //    template<> s32 Array<s16>::Set(const s16 * const values, const s32 numValues);
+    //    template<> s32 Array<u32>::Set(const u32 * const values, const s32 numValues);
+    //    template<> s32 Array<s32>::Set(const s32 * const values, const s32 numValues);
+    //    template<> s32 Array<u64>::Set(const u64 * const values, const s32 numValues);
+    //    template<> s32 Array<s64>::Set(const s64 * const values, const s32 numValues);
+    //    template<> s32 Array<f32>::Set(const f32 * const values, const s32 numValues);
+    //    template<> s32 Array<f64>::Set(const f64 * const values, const s32 numValues);
+    //#endif
 
 #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
     template<> s32 Array<f32>::Set(const char * const values);

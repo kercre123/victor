@@ -3,54 +3,13 @@
 
 #include "anki/embeddedCommon/config.h"
 #include "anki/embeddedCommon/errorHandling.h"
-
-#ifndef MAX
-#define MAX( a, b ) ( ((a) > (b)) ? (a) : (b) )
-#endif
-
-#ifndef MIN
-#define MIN( a, b ) ( ((a) < (b)) ? (a) : (b) )
-#endif
-
-
-// TODO: this is also defined in general.h.  Use that one?
-#ifndef CLIP
-#define CLIP(n, min, max) ( MIN(MAX(min, n), max ) )
-#endif
-
-#ifndef ABS
-#define ABS(a) ((a) < 0 ? -(a) : (a))
-#endif
-
-#ifndef SIGN
-#define SIGN(a) ((a) >= 0)
-#endif
-
-#ifndef NULL
-#define NULL (0)
-#endif
-
-#define SWAP(type, a, b) { type t = a; a = b; b = t; }
-
-// ct_assert is a compile time assertion, useful for checking sizeof() and other compile time knowledge
-#define ASSERT_CONCAT_(a, b) a##b
-#define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
-#define ct_assert(e) enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }
-
-#ifndef ALIGNVARIABLE
-#if defined(_MSC_VER)
-#define ALIGNVARIABLE __declspec(align(16))
-#elif defined(__APPLE_CC__)
-#define ALIGNVARIABLE __attribute__ ((aligned (16)))
-#elif defined(__GNUC__)
-#define ALIGNVARIABLE __attribute__ ((aligned (16)))
-#endif
-#endif // #ifndef ALIGNVARIABLE
+#include "anki/embeddedCommon/utilities_c.h"
 
 namespace Anki
 {
   namespace Embedded
   {
+    template<typename Type> class Array;
     template<typename Type> class FixedLengthList;
 
     template<typename Type> inline Type RoundUp(Type number, Type multiple);
@@ -75,6 +34,8 @@ namespace Anki
     // Get the current system time. Only really works with MSVC and generic linux
     double GetTime();
 
+    template<typename Type> Type approximateExp(const Type exponent, const s32 numTerms = 10);
+
     // For a square array, either:
     // 1. When lowerToUpper==true,  copies the lower (left)  triangle to the upper (right) triangle
     // 2. When lowerToUpper==false, copies the upper (right) triangle to the lower (left)  triangle
@@ -90,14 +51,14 @@ namespace Anki
 
     template<typename Type> u32 BinaryStringToUnsignedNumber(const FixedLengthList<Type> &bits, bool firstBitIsLow = false);
 
+    // Movidius doesn't have floating point printf (no %f option), so do it with %d
+    void PrintfOneArray_f32(const Array<f32> &array, const char * variableName);
+    void PrintfOneArray_f64(const Array<f64> &array, const char * variableName);
+
 #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
     // Converts from typeid names to openCV types
     int ConvertToOpenCvType(const char *typeName, size_t byteDepth);
 #endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
-
-#if defined(USING_MOVIDIUS_GCC_COMPILER)
-    void memset(void * dst, int value, size_t size);
-#endif
 
 #pragma mark --- Implementations ---
 
@@ -112,6 +73,30 @@ namespace Anki
     template<typename Type> inline Type RoundDown(Type number, Type multiple)
     {
       return multiple * (number/multiple);
+    }
+
+    template<typename Type> Type approximateExp(const Type exponent, const s32 numTerms)
+    {
+      assert(numTerms > 2);
+
+      const Type exponentAbs = ABS(exponent);
+
+      Type sum = static_cast<Type>(1) + exponentAbs;
+
+      Type numerator = static_cast<Type>(exponentAbs);
+      Type denominator = static_cast<Type>(1);
+      for(s32 i=2; i<=numTerms; i++) {
+        numerator *= exponentAbs;
+        denominator *= i;
+
+        sum += numerator / denominator;
+      }
+
+      if(exponent < 0) {
+        sum = static_cast<Type>(1) / sum;
+      }
+
+      return sum;
     }
 
     template<typename Type> Result MakeArraySymmetric(Type &arr, bool lowerToUpper)

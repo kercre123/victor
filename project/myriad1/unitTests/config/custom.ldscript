@@ -1,0 +1,18 @@
+SECTIONS {
+  . = 0x40010000;
+
+  .ddr.rodata : {
+    *(.ddr.rodata*)
+    *(.rodata._ZZ*) 
+    *(.rodata.str1.8) 
+/*    *(*.rodata.*) */
+  }
+
+  .ddr.text : {
+    *(.ddr.text*)
+    *(.text._ZN*) 
+/*    *(.text.*)*/
+  }
+}
+
+INCLUDE myriad1_default_memory_map_elf.ldscript
