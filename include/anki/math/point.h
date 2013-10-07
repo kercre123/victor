@@ -29,7 +29,7 @@
 
 #include "anki/common/exceptions.h"
 
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
 #include "opencv2/core/core.hpp"
 #endif
 
@@ -78,7 +78,7 @@ namespace Anki {
     const T& y() const;
     const T& z() const;
     
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
     Point(const cv::Point_<T>& pt);
     Point(const cv::Point3_<T>& pt);
     cv::Point_<T> get_CvPoint_() const;
@@ -157,7 +157,7 @@ namespace Anki {
     }
   }
   
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
   template<size_t N, typename T>
   Point<N,T>::Point(const cv::Point_<T>& pt)
   : Point(pt.x, pt.y)

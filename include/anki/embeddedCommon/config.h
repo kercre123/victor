@@ -10,10 +10,6 @@ Everything in this file should be compatible with plain C, as well as C++
 #define ANKICORETECHEMBEDDED_VERSION_MINOR 1
 #define ANKICORETECHEMBEDDED_VERSION_REVISION 0
 
-#define ANKICORETECHEMBEDDED_USE_MATLAB
-#define ANKICORETECHEMBEDDED_USE_OPENCV
-//#define ANKICORETECHEMBEDDED_USE_GTEST
-
 #if !defined(__APPLE_CC__) && defined(__GNUC__) && __GNUC__==4 && __GNUC_MINOR__==2 && __GNUC_PATCHLEVEL__==1 //hack to detect the movidius compiler
 #warning Using GNUC 4.2.1
 #define USING_MOVIDIUS_SHAVE_COMPILER
@@ -75,9 +71,9 @@ Everything in this file should be compatible with plain C, as well as C++
 
 #if defined(USING_MOVIDIUS_COMPILER) // If using any movidius compiler
 #warning USING MOVIDIUS COMPILER!!
-#undef ANKICORETECHEMBEDDED_USE_MATLAB
-#undef ANKICORETECHEMBEDDED_USE_OPENCV
-#undef ANKICORETECHEMBEDDED_USE_GTEST
+#undef ANKICORETECH_EMBEDDED_USE_MATLAB
+#undef ANKICORETECH_EMBEDDED_USE_OPENCV
+#undef ANKICORETECH_EMBEDDED_USE_GTEST
 
 // Make it easy to detect usages of iostream
 #define iostream IOSTREAM_DOESNT_WORK
@@ -114,6 +110,7 @@ extern "C" {
 
 #undef printf
 #define printf(...) explicitPrintf(1, __VA_ARGS__)
+  
 #define xprintf(...) (_xprintf(SYSTEM_PUTCHAR_FUNCTION , 0, __VA_ARGS__ ) )
 
 #ifdef __cplusplus
@@ -134,8 +131,12 @@ extern "C" {
 #include <float.h>
 #include <stdarg.h>
 
+// If we're not building mex (which will replace printf w/ mexPrintf),
+// then we want to swap printf for explicitPrintf
+#ifndef ANKI_MEX_BUILD
 #undef printf
 #define printf(...) explicitPrintf(0, __VA_ARGS__)
+#endif
 
 // We specify types according to their sign and bits. We should use these in
 // our code instead of the normal 'int','short', etc. because different

@@ -1,4 +1,5 @@
 #include "anki/embeddedCommon.h"
+#include "anki/embeddedCommon/matlabInterface.h"
 
 #include "mex.h"
 

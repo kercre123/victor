@@ -55,10 +55,10 @@ namespace Anki
     void PrintfOneArray_f32(const Array<f32> &array, const char * variableName);
     void PrintfOneArray_f64(const Array<f64> &array, const char * variableName);
 
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
     // Converts from typeid names to openCV types
     int ConvertToOpenCvType(const char *typeName, size_t byteDepth);
-#endif // #if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
 #pragma mark --- Implementations ---
 

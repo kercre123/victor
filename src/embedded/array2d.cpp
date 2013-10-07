@@ -3,7 +3,7 @@
 #include "anki/embeddedCommon/utilities.h"
 #include "anki/embeddedCommon/utilities_c.h"
 
-using namespace std;
+//using namespace std;
 
 namespace Anki
 {

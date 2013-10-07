@@ -1,20 +1,20 @@
 //#define USING_MOVIDIUS_COMPILER
 #include "anki/embeddedCommon.h"
 
-#if defined(ANKICORETECHEMBEDDED_USE_GTEST)
+#if ANKICORETECH_EMBEDDED_USE_GTEST
 #include "gtest/gtest.h"
 #endif
 
 using namespace Anki::Embedded;
 
-#if defined(ANKICORETECHEMBEDDED_USE_GTEST)
+#if ANKICORETECH_EMBEDDED_USE_GTEST
 int main(int argc, char ** argv)
 #else
 void RUN_ALL_TESTS();
 int main()
 #endif
 {
-#if defined(ANKICORETECHEMBEDDED_USE_GTEST)
+#if ANKICORETECH_EMBEDDED_USE_GTEST
   ::testing::InitGoogleTest(&argc, argv);
 #endif
 

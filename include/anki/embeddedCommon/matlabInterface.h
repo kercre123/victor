@@ -4,13 +4,13 @@
 #include "anki/embeddedCommon/config.h"
 #include "anki/embeddedCommon/array2d.h"
 
-#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
+#if ANKICORETECH_EMBEDDED_USE_MATLAB
 
 #include <string>
 #include <list>
 #include <vector>
 
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include "opencv2/core/core.hpp"
 #endif
 

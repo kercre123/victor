@@ -16,8 +16,7 @@
  **/
 
 #include "anki/common/general.h"
-#include <stdarg.h>
-#include <string.h>
+#include <dirent.h>
 
 namespace Anki {
 
@@ -176,7 +175,7 @@ int ReadLine(FILE* stream, const char * format, ...) {
 // files: Vector to store file names in
 // 
 // Returns true on success, false on failure
-bool GetFilesInDir(string dir, vector<string> &files, char *containsStr)
+  bool GetFilesInDir(std::string dir, std::vector<std::string> &files, char *containsStr)
 {
   DIR *dp;
   struct dirent *dirp;
@@ -188,7 +187,7 @@ bool GetFilesInDir(string dir, vector<string> &files, char *containsStr)
   while ((dirp = readdir(dp)) != NULL) {
     // If a substring specified, check to make sure that it occurs somewhere inside of the directory
     if(containsStr == NULL || strstr(dirp->d_name, containsStr) != NULL) {
-      files.push_back(string(dirp->d_name));
+      files.push_back(std::string(dirp->d_name));
     }
   }
   closedir(dp);

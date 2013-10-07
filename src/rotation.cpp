@@ -8,7 +8,7 @@
 
 #include "anki/math/rotation.h"
 
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
 #include "opencv2/calib3d/calib3d.hpp"
 #endif
 
@@ -83,7 +83,7 @@ namespace Anki {
   /* Isn't this inherited from the base class now?
   Point3f RotationMatrix3d::operator*(const Point3f &p) const
   {
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
     // TODO: pretty sure there's a better way to do this:
     cv::Matx<float,3,1> vec(p.x, p.y, p.z);
     cv::Matx<float,3,1> out(this->get_CvMatx_() * vec);
@@ -100,7 +100,7 @@ namespace Anki {
   void Rodrigues(const RotationVector3d &Rvec_in,
                  RotationMatrix3d &Rmat_out)
   {
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
     cv::Vec3f cvRvec(Rvec_in.get_CvPoint3_());
     cv::Rodrigues(cvRvec, Rmat_out.get_CvMatx_());    
 #else
@@ -116,7 +116,7 @@ namespace Anki {
                  RotationVector3d &Rvec_out)
   {
    
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
     cv::Vec3f cvRvec;
     cv::Rodrigues(Rmat_in.get_CvMatx_(), cvRvec);
     Rvec_out.x() = cvRvec[0];
