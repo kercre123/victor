@@ -16,6 +16,8 @@
 
 // #define ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
 
+#define ANKI_ARRAY_USE_ARRAY_SET
+
 namespace Anki
 {
   namespace Embedded
@@ -119,7 +121,9 @@ namespace Anki
       // If the input array does not contain enough elements, the remainder of this Array will be filled with zeros.
       // Returns the number of values set (not counting extra zeros)
       // Note: The myriad has many issues with static initialization of arrays, so this should not used with caution
-      //s32 Set(const Type * const values, const s32 numValues);
+#ifdef ANKI_ARRAY_USE_ARRAY_SET
+      s32 Set(const Type * const values, const s32 numValues);
+#endif
 
       // Parse a space-seperated string, and copy values to this Array.
       // If the string does not contain enough elements, the remainder of the Array will be filled with zeros.
@@ -475,20 +479,22 @@ namespace Anki
       }
     }
 
+#ifdef ANKI_ARRAY_USE_ARRAY_SET
     // Note: The myriad has many issues with static initialization of arrays, so this should not used with caution
-    //template<typename Type> s32 Array<Type>::Set(const Type value)
-    //{
-    //  AnkiConditionalError(this->IsValid(), "Array<Type>::Set", "Array<Type> is not valid");
+    template<typename Type> s32 Array<Type>::Set(const Type value)
+    {
+      AnkiConditionalError(this->IsValid(), "Array<Type>::Set", "Array<Type> is not valid");
 
-    //  for(s32 y=0; y<size[0]; y++) {
-    //    Type * restrict rowPointer = Pointer(y, 0);
-    //    for(s32 x=0; x<size[1]; x++) {
-    //      rowPointer[x] = value;
-    //    }
-    //  }
+      for(s32 y=0; y<size[0]; y++) {
+        Type * restrict rowPointer = Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          rowPointer[x] = value;
+        }
+      }
 
-    //  return size[0]*size[1];
-    //}
+      return size[0]*size[1];
+    }
+#endif // ANKI_ARRAY_USE_ARRAY_SET
 
     template<typename Type> s32 Array<Type>::Set(const Type * const values, const s32 numValues)
     {
