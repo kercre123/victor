@@ -42,7 +42,8 @@
         CaptureOutputWith="ProcessBuffer"
         Deletable="0"
         SaveOption="SaveWorkspaceFiles"
-        RunFromDir="%rw">
+        RunFromDir="%rw"
+        DependsRef="Debug">
         <Exec CmdLine='"%(VSLICKBIN1)vsbuild" "%w" "%r" -t build'/>
       </Target>
       <Target
@@ -52,7 +53,8 @@
         CaptureOutputWith="ProcessBuffer"
         Deletable="0"
         SaveOption="SaveWorkspaceFiles"
-        RunFromDir="%rw">
+        RunFromDir="%rw"
+        DependsRef="Debug">
         <Exec CmdLine='"%(VSLICKBIN1)vsbuild" "%w" "%r" -t rebuild'/>
       </Target>
       <Target
@@ -101,7 +103,6 @@
     </List>
     <Libs PreObjects="0">
       <Lib File="-L/Applications/Webots/lib/"/>
-      <Lib File="-lController"/>
       <Lib File="-lCppController"/>
       <Lib File="-L../../../coretech-common/build/xcode4/lib/"/>
       <Lib File="-lCoreTech_Common_Embedded_64Debug"/>
@@ -114,7 +115,6 @@
     <Includes>
       <Include Dir="/Applications/Webots/include/controller/cpp/"/>
       <Include Dir="../controllers/cozmo_c_controller/"/>
-      <Include Dir="/Applications/Webots/include/controller/c/"/>
       <Include Dir="../../../coretech-common/include/"/>
       <Include Dir="../../../coretech-external/opencv-2.4.6.1/include"/>
       <Include Dir="../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include"/>
@@ -130,10 +130,24 @@
       <Include Dir="../../../coretech-external/opencv-2.4.6.1/modules/video/include"/>
       <Include Dir="/Applications/MATLAB_R2012b.app/extern/include"/>
       <Include Dir="../plugins/physics/cozmo_physics/"/>
+      <Include Dir="../../src/robot/"/>
+      <Include Dir="../../src/shared/"/>
+      <Include Dir="../../src/util/"/>
     </Includes>
     <PostBuildCommands>
       <Exec CmdLine="cp Debug/cozmoSimulator ../controllers/cozmo_c_controller/cozmo_c_controller"/>
     </PostBuildCommands>
+    <Dependencies Name="Debug">
+      <Dependency
+        Project="cozmo_physics.vpj"
+        Config="Debug"/>
+      <Dependency
+        Project="cozmo_world_comms.vpj"
+        Config="Debug"/>
+      <Dependency
+        Project="cozmoSimulator_overlayDisplay.vpj"
+        Config="Debug"/>
+    </Dependencies>
   </Config>
   <Config
     Name="Release"
@@ -172,7 +186,8 @@
         CaptureOutputWith="ProcessBuffer"
         Deletable="0"
         SaveOption="SaveWorkspaceFiles"
-        RunFromDir="%rw">
+        RunFromDir="%rw"
+        DependsRef="Release">
         <Exec CmdLine='"%(VSLICKBIN1)vsbuild" "%w" "%r" -t build'/>
       </Target>
       <Target
@@ -182,7 +197,8 @@
         CaptureOutputWith="ProcessBuffer"
         Deletable="0"
         SaveOption="SaveWorkspaceFiles"
-        RunFromDir="%rw">
+        RunFromDir="%rw"
+        DependsRef="Release">
         <Exec CmdLine='"%(VSLICKBIN1)vsbuild" "%w" "%r" -t rebuild'/>
       </Target>
       <Target
@@ -231,7 +247,6 @@
     </List>
     <Libs PreObjects="0">
       <Lib File="-L/Applications/Webots/lib/"/>
-      <Lib File="-lController"/>
       <Lib File="-lCppController"/>
       <Lib File="-L../../../coretech-common/build/xcode4/lib/"/>
       <Lib File="-lCoreTech_Common_Embedded_64Debug"/>
@@ -244,7 +259,6 @@
     <Includes>
       <Include Dir="/Applications/Webots/include/controller/cpp/"/>
       <Include Dir="../controllers/cozmo_c_controller/"/>
-      <Include Dir="/Applications/Webots/include/controller/c/"/>
       <Include Dir="../../../coretech-common/include/"/>
       <Include Dir="../../../coretech-external/opencv-2.4.6.1/include"/>
       <Include Dir="../../../coretech-external/opencv-2.4.6.1/modules/calib3d/include"/>
@@ -260,10 +274,24 @@
       <Include Dir="../../../coretech-external/opencv-2.4.6.1/modules/video/include"/>
       <Include Dir="/Applications/MATLAB_R2012b.app/extern/include"/>
       <Include Dir="../plugins/physics/cozmo_physics/"/>
+      <Include Dir="../../src/robot/"/>
+      <Include Dir="../../src/shared/"/>
+      <Include Dir="../../src/util/"/>
     </Includes>
     <PostBuildCommands>
       <Exec CmdLine="cp Debug/cozmoSimulator ../controllers/cozmo_c_controller/cozmo_c_controller"/>
     </PostBuildCommands>
+    <Dependencies Name="Release">
+      <Dependency
+        Project="cozmo_physics.vpj"
+        Config="Debug"/>
+      <Dependency
+        Project="cozmo_world_comms.vpj"
+        Config="Debug"/>
+      <Dependency
+        Project="cozmoSimulator_overlayDisplay.vpj"
+        Config="Debug"/>
+    </Dependencies>
   </Config>
   <Files>
     <Folder
@@ -271,42 +299,39 @@
       Filters="*.c;*.C;*.cc;*.cpp;*.cp;*.cxx;*.c++;*.prg;*.pas;*.dpr;*.asm;*.s;*.bas;*.java;*.cs;*.sc;*.e;*.cob;*.html;*.rc;*.tcl;*.py;*.pl;*.d;*.m;*.mm">
       <F N="../controllers/cozmo_c_controller/cozmo_c_controller.cpp"/>
       <F N="../controllers/cozmo_c_controller/cozmoBot.cpp"/>
-      <F N="../controllers/cozmo_c_controller/app/keyboardController.c"/>
-      <F N="../controllers/cozmo_c_controller/app/mainExecution.c"/>
-      <F N="../controllers/cozmo_c_controller/app/pathFollower.cpp"/>
-      <F N="../controllers/cozmo_c_controller/hal/sim_encoders.c"/>
-      <F N="../controllers/cozmo_c_controller/app/sim_localization.cpp"/>
-      <F N="../controllers/cozmo_c_controller/hal/sim_motors.c"/>
-      <F N="../controllers/cozmo_c_controller/hal/sim_timers.c"/>
-      <F N="../controllers/cozmo_c_controller/app/steeringController.c"/>
-      <F N="../controllers/cozmo_c_controller/util/utilMessaging.c"/>
-      <F N="../controllers/cozmo_c_controller/app/vehicleMath.c"/>
-      <F N="../controllers/cozmo_c_controller/app/vehicleSpeedController.c"/>
-      <F N="../controllers/cozmo_c_controller/app/wheelController.c"/>
+      <F N="../controllers/cozmo_c_controller/keyboardController.cpp"/>
+      <F N="../../src/robot/app/mainExecution.cpp"/>
+      <F N="../../src/robot/app/pathFollower.cpp"/>
+      <F N="../../src/robot/hal/simhal/sim_encoders.cpp"/>
+      <F N="../../src/robot/app/simapp/sim_localization.cpp"/>
+      <F N="../../src/robot/hal/simhal/sim_motors.cpp"/>
+      <F N="../../src/robot/hal/simhal/sim_timers.cpp"/>
+      <F N="../../src/robot/app/steeringController.cpp"/>
+      <F N="../../src/util/utilMessaging.c"/>
+      <F N="../../src/robot/app/vehicleMath.cpp"/>
+      <F N="../../src/robot/app/vehicleSpeedController.cpp"/>
+      <F N="../../src/robot/app/wheelController.cpp"/>
     </Folder>
     <Folder
       Name="Header Files"
       Filters="*.h;*.H;*.hh;*.hpp;*.hxx;*.inc;*.sh;*.cpy;*.if">
-      <F N="../controllers/cozmo_c_controller/app/assert.h"/>
+      <F N="../../src/robot/app/assert.h"/>
       <F N="../controllers/cozmo_c_controller/cozmoBot.h"/>
-      <F N="../controllers/cozmo_c_controller/cozmoConfig.h"/>
-      <F N="../controllers/cozmo_c_controller/cozmoMsgProtocol.h"/>
-      <F N="../controllers/cozmo_c_controller/cozmoTypes.h"/>
-      <F N="../controllers/cozmo_c_controller/app/debug.h"/>
-      <F N="../controllers/cozmo_c_controller/hal/encoders.h"/>
+      <F N="../../src/robot/cozmoConfig.h"/>
+      <F N="../../src/shared/comms/cozmoMsgProtocol.h"/>
+      <F N="../../src/robot/cozmoTypes.h"/>
+      <F N="../../src/robot/app/debug.h"/>
+      <F N="../../src/robot/hal/hal.h"/>
       <F N="../controllers/cozmo_c_controller/keyboardController.h"/>
-      <F N="../controllers/cozmo_c_controller/app/localization.h"/>
-      <F N="../controllers/cozmo_c_controller/app/mainExecution.h"/>
-      <F N="../controllers/cozmo_c_controller/hal/motors.h"/>
-      <F N="../controllers/cozmo_c_controller/app/pathFollower.h"/>
-      <F N="../controllers/cozmo_c_controller/hal/sim_timers.h"/>
-      <F N="../controllers/cozmo_c_controller/app/steeringController.h"/>
-      <F N="../controllers/cozmo_c_controller/hal/timers.h"/>
-      <F N="../controllers/cozmo_c_controller/app/trace.h"/>
-      <F N="../controllers/cozmo_c_controller/util/utilMessaging.h"/>
-      <F N="../controllers/cozmo_c_controller/app/vehicleMath.h"/>
-      <F N="../controllers/cozmo_c_controller/app/vehicleSpeedController.h"/>
-      <F N="../controllers/cozmo_c_controller/app/wheelController.h"/>
+      <F N="../../src/robot/app/localization.h"/>
+      <F N="../../src/robot/app/mainExecution.h"/>
+      <F N="../../src/robot/app/pathFollower.h"/>
+      <F N="../../src/robot/app/steeringController.h"/>
+      <F N="../../src/robot/app/trace.h"/>
+      <F N="../../src/util/utilMessaging.h"/>
+      <F N="../../src/robot/app/vehicleMath.h"/>
+      <F N="../../src/robot/app/vehicleSpeedController.h"/>
+      <F N="../../src/robot/app/wheelController.h"/>
     </Folder>
     <Folder
       Name="Resource Files"

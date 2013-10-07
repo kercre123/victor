@@ -1,18 +1,23 @@
 #include "cozmoBot.h"
 #include "cozmoConfig.h"
 #include "app/vehicleMath.h"
-#include "keyboardController.h"
 #include "app/mainExecution.h"
-#include "hal/sim_timers.h"
 #include "app/vehicleSpeedController.h"
 #include "app/pathFollower.h"
-#include "hal/timers.h"
-#include "cozmoMsgProtocol.h"
-#include "util/utilMessaging.h"
+#include "hal/hal.h"
+#include "comms/cozmoMsgProtocol.h"
+#include "utilMessaging.h"
+#include "keyboardController.h"
 #include "cozmo_physics.h"
 #include <cmath>
 #include <cstdio>
 #include <string>
+
+
+///////// TESTING //////////
+#define EXECUTE_TEST_PATH 1
+
+///////// END TESTING //////
 
 //Names of the wheels used for steering
 #define WHEEL_FL "wheel_fl"
@@ -268,7 +273,7 @@ void CozmoBot::run()
 
     RunKeyboardController();
 
-
+#if(EXECUTE_TEST_PATH)
     // TESTING
     static u32 startDriveTime_us = 1000000;
     static BOOL driving = FALSE;
@@ -289,6 +294,7 @@ void CozmoBot::run()
 
       driving = TRUE;
     }
+#endif //EXECUTE_TEST_PATH
 
 
     printf("speedDes: %d, speedCur: %d, speedCtrl: %d, speedMeas: %d\n", 
@@ -306,9 +312,7 @@ void CozmoBot::run()
     // Check if connector attaches to anything
     ManageGripper();
 
-    // Simulator management stuff
-    ManageTimers(TIME_STEP); 
-
+    // Print overlay text in main 3D view
     SetOverlayText(OT_CURR_POSE, locStr);
   }
 }

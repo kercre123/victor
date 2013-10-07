@@ -106,7 +106,8 @@
     <Includes>
       <Include Dir="../controllers/world_comms_controller"/>
       <Include Dir="/Applications/Webots/include/controller/cpp"/>
-      <Include Dir="../controllers/cozmo_c_controller/"/>
+      <Include Dir="../../src/shared/"/>
+      <Include Dir="../../src/robot/"/>
     </Includes>
     <PostBuildCommands>
       <Exec CmdLine="cp Debug/cozmo_world_comms ../controllers/world_comms_controller/world_comms_controller"/>
@@ -213,7 +214,8 @@
     <Includes>
       <Include Dir="../controllers/world_comms_controller"/>
       <Include Dir="/Applications/Webots/include/controller/cpp"/>
-      <Include Dir="../controllers/cozmo_c_controller/"/>
+      <Include Dir="../../src/shared/"/>
+      <Include Dir="../../src/robot/"/>
     </Includes>
     <PostBuildCommands>
       <Exec CmdLine="cp Debug/cozmo_world_comms ../controllers/world_comms_controller/world_comms_controller"/>
@@ -224,12 +226,14 @@
       Name="Source Files"
       Filters="*.c;*.C;*.cc;*.cpp;*.cp;*.cxx;*.c++;*.prg;*.pas;*.dpr;*.asm;*.s;*.bas;*.java;*.cs;*.sc;*.e;*.cob;*.html;*.rc;*.tcl;*.py;*.pl;*.d;*.m;*.mm">
       <F N="../controllers/world_comms_controller/CozmoWorldComms.cpp"/>
+      <F N="../../src/shared/comms/TcpSocket/TcpServer.cpp"/>
       <F N="../controllers/world_comms_controller/world_comms_controller.cpp"/>
     </Folder>
     <Folder
       Name="Header Files"
       Filters="*.h;*.H;*.hh;*.hpp;*.hxx;*.inc;*.sh;*.cpy;*.if">
       <F N="../controllers/world_comms_controller/CozmoWorldComms.h"/>
+      <F N="../../src/shared/comms/TcpSocket/TcpServer.h"/>
     </Folder>
     <Folder
       Name="Resource Files"

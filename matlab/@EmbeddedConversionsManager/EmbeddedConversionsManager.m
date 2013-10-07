@@ -26,7 +26,7 @@ classdef EmbeddedConversionsManager < handle
             connectedComponentsType_acceptable = {'matlab_original', 'matlab_approximate'};
             
             completeCImplementationType = 'matlab_original';
-            completeCImplementationType_acceptable = {'matlab_original', 'c_singleStep123', 'c_singleStep1234'};
+            completeCImplementationType_acceptable = {'matlab_original', 'c_singleStep123', 'c_singleStep1234', 'c_singleStep12345'};
             
             emptyCenterDetection = 'matlab_original';
             emptyCenterDetection_acceptable = {'matlab_original', 'off'};

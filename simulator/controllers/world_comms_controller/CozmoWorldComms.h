@@ -3,7 +3,14 @@
 
 #include <webots/Supervisor.hpp>
 
+#define BASESTATION_RECV_BUFFER_SIZE 2048
+
+#define DEBUG_COZMO_WORLD_COMMS 1
+
 using namespace webots;
+
+// Forward declarations
+class TcpServer;
 
 class CozmoWorldComms : public Supervisor
 {
@@ -13,17 +20,8 @@ private:
   Emitter *tx_; 
   Receiver *rx_;
 
-
-  // Basestation socket descriptor
-  int socketfd ; // The socket descripter
-  int bs_sd; 
-  struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
-
-  int SetupListenSocket();
-  void DisconnectClient();
-  int WaitForBasestationConnection();
-  int RecvFromBasestation(char* data);
-  void SendToBasestation(char* data, int size);
+  TcpServer *server_;
+  char recvBuf[BASESTATION_RECV_BUFFER_SIZE];
 
 public:
   CozmoWorldComms();
