@@ -37,7 +37,9 @@ namespace Anki
       BlockWorld();
       ~BlockWorld();
       
-      void addRobot(void);
+      void addRobot(Robot *robot);
+      
+      void update(void);
       
     protected:
       
@@ -51,6 +53,10 @@ namespace Anki
       // Store all the robots in the world:
       typedef std::vector<Robot*> RobotList_type;
       RobotList_type robots;
+      
+      void updateRobotPose(Robot *robot);
+      
+      bool zAxisPointsUp; // false for Webots
       
     }; // class BlockWorld
     

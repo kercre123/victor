@@ -4,6 +4,7 @@ set(SOURCE_FILES
 	block.cpp
 	blockWorld.cpp
 	cozmo.cpp
+	mat.cpp
 	robot.cpp
 )
 
@@ -11,6 +12,7 @@ set(HEADER_FILES
 	../include/anki/cozmo.h
 	../include/anki/cozmo/block.h
 	../include/anki/cozmo/blockWorld.h
+	../include/anki/cozmo/mat.h
 	../include/anki/cozmo/robot.h
 )
 
