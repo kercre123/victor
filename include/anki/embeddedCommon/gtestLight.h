@@ -3,7 +3,7 @@
 
 #include "anki/embeddedCommon/config.h"
 
-#ifdef ANKICORETECH_EMBEDDED_USE_GTEST
+#if ANKICORETECH_EMBEDDED_USE_GTEST
 
 // To prevent a warning (or error) about a function not returning a value, include this macro at the end of any GTEST_TEST. Also, this lets you set a breakpoint at the end.
 #define GTEST_RETURN_HERE {printf("");}
