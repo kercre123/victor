@@ -64,7 +64,7 @@ namespace Anki
       // Each MemoryStack created by the MemoryStack(void *buffer, s32 bufferLength) constructor has
       // a unique id. This is used for debugging to keep track of things like its maximum memory
       // usage.
-      u32 get_id() const;
+      s32 get_id() const;
 
       // Probably these should not be used?
       // void Clear(); // Reset usedBytes to zero
@@ -80,7 +80,7 @@ namespace Anki
       s32 totalBytes;
       s32 usedBytes;
 
-      u32 id;
+      s32 id;
 
     private:
       const void* Allocate(s32 numBytes) const; // Not allowed
