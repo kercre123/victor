@@ -260,7 +260,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD32)
     0.971386483137874f,  -0.237504316543999f};
 
   // This is not always initializing correctly on Leon. Why?
-  const f32 aData[SVD32_aDataLength] = {
+  const f32 aData[17] = {
     1, 2, 3, 5, 7, 11, 13, 17,
     19, 23, 29, 31, 37, 41, 43, 47};
 
