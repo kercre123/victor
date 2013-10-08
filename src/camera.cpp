@@ -23,21 +23,14 @@ namespace Anki {
   } // Constructor: Camera(calibration, pose)
   
   
-  Matrix<float> CameraCalibration::get_calibrationMatrix(void) const
+  Matrix_3x3f CameraCalibration::get_calibrationMatrix(void) const
   {
-    Matrix<float> K(3,3);
+    float K_data[9] = {
+      this->focalLength_x, this->focalLength_x*this->skew, this->center_x,
+      0.f,                 this->focalLength_y,            this->center_y,
+      0.f,                 0.f,                            1.f};
     
-    K(0,0) = this->focalLength_x;
-    K(0,1) = this->focalLength_x * this->skew;
-    K(0,2) = this->center_x;
-    
-    K(1,0) = 0.f;
-    K(1,1) = this->focalLength_y;
-    K(1,2) = this->center_y;
-    
-    K(2,0) = 0.f;
-    K(2,1) = 0.f;
-    K(2,2) = 1.f;
+    Matrix_3x3f K(K_data);
     
     return K;
   } // get_calibrationMatrix()
