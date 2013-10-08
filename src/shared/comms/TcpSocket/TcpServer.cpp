@@ -1,4 +1,5 @@
 #include "TcpServer.h"
+#include <unistd.h>
 #include <iostream>
 #include <cstring>      // Needed for memset
 #include <sys/socket.h> // Needed for the socket functions

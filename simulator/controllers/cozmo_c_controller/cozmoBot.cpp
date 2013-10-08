@@ -289,7 +289,7 @@ void CozmoBot::run()
       PathFollower::AppendPathSegment_Arc(0, 0.35, -0.25, arc1_radius, -0.75*PI, 0); 
       PathFollower::AppendPathSegment_Line(0, 0.35 + arc1_radius, -0.25, 0.35 + arc1_radius, 0.2);
       float arc2_radius = sqrt(0.02); // Radius of sqrt(0.1^2 + 0.1^2)
-      PathFollower::AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, PI_DIV2);
+      PathFollower::AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, PIDIV2);
       PathFollower::StartPathTraversal();
 
       driving = TRUE;

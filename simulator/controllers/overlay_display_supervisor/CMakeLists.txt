@@ -6,14 +6,10 @@ cmake_minimum_required(VERSION 2.8)
 project(overlay_display_supervisor)
 
 # Include paths
-set(WEBOTS_CPP_INCLUDE_DIR /Applications/Webots/include/controller/c)
-include_directories(${WEBOTS_CPP_INCLUDE_DIR})
-
+include_directories(${WEBOTS_C_INCLUDE_DIR})
 
 # Link paths
-set(WEBOTS_LIB_DIR /Applications/Webots/lib)
 link_directories( ${WEBOTS_LIB_DIR} )
-
 
 # Source files
 set(SOURCE_FILES
@@ -29,6 +25,7 @@ target_link_libraries(overlay_display_supervisor Controller)
 # no matter where the target is	 actually built.
 add_custom_command(
 	TARGET overlay_display_supervisor
-        POST_BUILD
-	COMMAND cp overlay_display_supervisor ${CMAKE_CURRENT_SOURCE_DIR}/
+    POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:overlay_display_supervisor> ${CMAKE_CURRENT_SOURCE_DIR}/
+	COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:overlay_display_supervisor>
 )

@@ -54,3 +54,7 @@ build/xcode*
 project/xcode4/Cozmo/Cozmo.xcodeproj/xcuserdata
 project/xcode4/Cozmo/Cozmo.xcodeproj/project.xcworkspace/xcuserdata
 build
+simulator/controllers/overlay_display_supervisor/overlay_display_supervisor
+simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
+simulator/controllers/cozmo_c_controller/cozmo_c_controller
+world_comms_controller

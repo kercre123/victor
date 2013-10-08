@@ -13,6 +13,8 @@
  * Use  
  *  
  **/
+
+#include "anki/common/constantsAndMacros.h"
 #include "app/vehicleMath.h"
 #include "cozmoTypes.h"
 
@@ -114,7 +116,7 @@ float atan_fast(float x)
   // Check if input is in discrete step approximation range
   float absx = ABS(x);
   if (absx >= 120) {
-    return isNegative ? -PI_DIV2 : PI_DIV2;
+    return isNegative ? -PIDIV2 : PIDIV2;
   }
   if (absx >= 60) {
     return isNegative ? -ATAN120 : ATAN120;
@@ -144,7 +146,7 @@ float atan_fast(float x)
   // Check if input exceeds LUT range
   float lut_result;
   if (x_lut_post_idx >= ATAN_LUT_SIZE) {
-    lut_result = PI_DIV2;
+    lut_result = PIDIV2;
   } else {
     u8 atan_pre_res = atan_lut[x_lut_pre_idx];
     u8 atan_post_res = atan_lut[x_lut_post_idx];
@@ -179,7 +181,7 @@ float asin_fast(float x)
   // Check if input exceeds LUT range
   float lut_result;
   if (x_lut_post_idx >= ASIN_LUT_SIZE) {
-    lut_result = PI_DIV2;
+    lut_result = PIDIV2;
   } else {
     u8 asin_pre_res = asin_lut[x_lut_pre_idx];
     u8 asin_post_res = asin_lut[x_lut_post_idx];

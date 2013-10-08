@@ -14,11 +14,9 @@ project(cozmo_physics)
 add_definitions(-DdDOUBLE -DMACOS)
 
 # Include paths
-set(COZMO_SRC_DIR ../../../src)
-set(WEBOTS_CPP_INCLUDE_DIRS /Applications/Webots/include/ /Applications/Webots/include/ode/ )
-include_directories( ${WEBOTS_CPP_INCLUDE_DIRS} )
+include_directories( ${WEBOTS_APP_DIR}/include/ ${WEBOTS_APP_DIR}/include/ode/ )
 
-set(PHYSICS_O /Applications/Webots/resources/projects/default/plugins/physics/physics.o)
+set(PHYSICS_O ${WEBOTS_APP_DIR}/resources/projects/default/plugins/physics/physics.o)
 
 set_source_files_properties(
     ${PHYSICS_O} PROPERTIES
@@ -29,7 +27,6 @@ set_source_files_properties(
 
 
 # Link paths
-set(WEBOTS_LIB_DIR /Applications/Webots/lib/)
 link_directories( ${WEBOTS_LIB_DIR} )
 
 # Source files
@@ -54,6 +51,7 @@ set_target_properties(
 # no matter where the target is	 actually built.
 add_custom_command(
 	TARGET cozmo_physics
-        POST_BUILD
-	COMMAND cp libcozmo_physics.dylib ${CMAKE_CURRENT_SOURCE_DIR}/
+    POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:cozmo_physics> ${CMAKE_CURRENT_SOURCE_DIR}/
+	COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:cozmo_physics>
 )

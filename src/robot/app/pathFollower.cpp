@@ -326,7 +326,7 @@ BOOL ProcessPathSegmentArc(float &shortestDistanceToPath_m, float &radDiff)
 
   // Find heading error
   Anki::Radians theta_line = atan2(dy,dx); // angle of line from circle center to robot
-  Anki::Radians theta_tangent = theta_line + Anki::Radians((currSeg->movingCCW ? 1 : -1 ) * PI_DIV2);
+  Anki::Radians theta_tangent = theta_line + Anki::Radians((currSeg->movingCCW ? 1 : -1 ) * PIDIV2);
   
   radDiff = (theta_tangent - currPose.get_angle()).ToFloat();
 
