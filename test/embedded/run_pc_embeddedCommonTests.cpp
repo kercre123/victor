@@ -10,7 +10,7 @@ using namespace Anki::Embedded;
 #if ANKICORETECH_EMBEDDED_USE_GTEST
 int main(int argc, char ** argv)
 #else
-void RUN_ALL_TESTS();
+int RUN_ALL_TESTS();
 int main()
 #endif
 {
