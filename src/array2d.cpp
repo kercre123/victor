@@ -1,4 +1,4 @@
-#include "anki/common.h"
+#include "anki/common/array2d.h"
 
 #include <iostream>
 

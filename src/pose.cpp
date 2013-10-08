@@ -1,4 +1,3 @@
-#include "anki/common/datastructures.h"
 
 #include "anki/math/pose.h"
 #include "anki/math/matrix.h"

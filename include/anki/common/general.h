@@ -23,18 +23,21 @@
 //////////////////////////////////////////////////////////////////////////////
 // INCLUDES
 //////////////////////////////////////////////////////////////////////////////
-#include <math.h>
-#include <stdio.h>
-#include <iostream>
-#include <sys/types.h>
-#include <dirent.h>
-#include <errno.h>
-#include <vector>
 #include <string>
-#include <iostream>
-#include <limits.h>
-#include <float.h>
-#include <assert.h>
+#include <vector>
+
+//#include <math.h>
+//#include <stdio.h>
+//#include <iostream>
+//#include <sys/types.h>
+//#include <errno.h>
+//#include <iostream>
+//#include <limits.h>
+//#include <float.h>
+//#include <assert.h>
+
+#include "anki/common/constantsAndMacros.h"
+
 //#ifndef FAKE_DAS
 //#include <DAS/DAS.h>
 //#else
@@ -47,8 +50,10 @@
 
 //#define BASESTATION_EXPORT __attribute__((visibility("default")))
 
-// Using std namespace for easier coding
-using namespace std;
+// Let's not pollute our namespaces unnecessarily.
+// Use this only where needed, if at all.
+//// Using std namespace for easier coding
+//using namespace std;
 
 
 namespace Anki {
@@ -72,91 +77,10 @@ typedef enum {
   PR_MODE_RECORD // write playback information to file
 } PLAYBACK_AND_RECORDING_MODE;
 
-//////////////////////////////////////////////////////////////////////////////
-// MISCELLANEOUS CONSTANTS
-//////////////////////////////////////////////////////////////////////////////
-#ifndef TRUE
-#define TRUE                  1
-#endif
-#ifndef FALSE
-#define FALSE                 0
-#endif
 
-// used to create hashes for reproducibility.
-#define HASHING_VALUE 19
-
-#define ADD_HASH(v, n) AddHash((v), (n), (#n))
-
-//////////////////////////////////////////////////////////////////////////////
-// MATH CONSTANTS
-//////////////////////////////////////////////////////////////////////////////
-#ifndef PI
-#define PI                    3.14159265358979323846   /* pi */
-#endif
-#ifndef PIDIV2
-#define PIDIV2                1.5707963                /* pi/2 */
-#endif
-
-//////////////////////////////////////////////////////////////////////////////
-// CONVERSION MACROS
-//////////////////////////////////////////////////////////////////////////////
-#define DEG_TO_RAD(deg)	  (((double)deg)*0.017453292519943295474)
-#define RAD_TO_DEG(rad)   (((double)rad)*57.295779513082322865)
-
-#define NANOS_TO_SEC(nanos) ((nanos) / 1000000000.0f)
-#define SEC_TO_NANOS(sec) ((sec) * 1000000000.0f)
-
-//////////////////////////////////////////////////////////////////////////////
-// COMPARISON MACROS
-//////////////////////////////////////////////////////////////////////////////
-
-
-// Tolerance for which two floating point numbers are considered equal (to deal
-// with imprecision in floating point representation).
-const double FLOATING_POINT_COMPARISON_TOLERANCE = 1e-5;
-
-// TRUE if x is near y by the amount epsilon, else FALSE
-#define FLT_NEAR(x,y) ((x) == (y) || (((x) > (y)-(FLOATING_POINT_COMPARISON_TOLERANCE)) && ((x) < (y)+(FLOATING_POINT_COMPARISON_TOLERANCE)))) 
-#define NEAR(x,y,epsilon) ((x) == (y) || (((x) > (y)-(epsilon)) && ((x) < (y)+(epsilon)))) 
-
-// TRUE if x is within FLOATING_POINT_COMPARISON_TOLERANCE of 0.0
-#define NEAR_ZERO(x) (NEAR(x, 0.0, FLOATING_POINT_COMPARISON_TOLERANCE))
-
-// TRUE if greater than the negative of the tolerance
-#define FLT_GTR_ZERO(x) ((x) >= -FLOATING_POINT_COMPARISON_TOLERANCE)
-
-// TRUE if x >= y - tolerance
-#define FLT_GE(x,y) ((x) >= (y) || (((x) >= (y)-(FLOATING_POINT_COMPARISON_TOLERANCE))))
-
-// TRUE if x - tolerance <= y
-#define FLT_LE(x,y) ((x) >= (y) || (((x)-(FLOATING_POINT_COMPARISON_TOLERANCE) <= (y))))
-  
-// TRUE if val is within the range [minVal, maxVal], else FALSE
-#define IN_RANGE(val,minVal,maxVal) ((val) >= (minVal) && (val) <= (maxVal))
-
-// Returns the closest value within [lo, hi] to val
-#define CLIP(val,lo,hi) (MIN(MAX((val),(lo)),(hi)))
-
-// Max, min of two numbers and absolute value
-#ifndef MAX
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
-#endif
-#ifndef MIN
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
-#endif
-#ifndef ABS
-#define ABS(a)    (((a) >= 0) ? (a) : -(a))
-#endif
-
-// Square of a number
-#define SQUARE(x) ((x) * (x))
-
-// Convert between millimeters and meters
-#define M_TO_MM(x) ( ((double)(x)) * 1000.0 )
-#define MM_TO_M(x) ( ((double)(x)) / 1000.0 )
 
 ///////////////////////////////////////////////////////////////////
-// OTHER MACROS
+// MACROS
 //////////////////////////////////////////////////////////////////
 
 // macro hacking stuff
@@ -169,8 +93,11 @@ const double FLOATING_POINT_COMPARISON_TOLERANCE = 1e-5;
 
 // global error flag so we can check if PRINT_ERROR was called for unit testing
 extern bool _errG;
+ 
 
-  
+///////////////////////////////////////////////////////////////////
+// DAS MACROS
+//////////////////////////////////////////////////////////////////
 
 #ifdef USE_REAL_DAS
   
@@ -201,12 +128,18 @@ extern bool _errG;
 #define PRINT_NAMED_INFO(name, format, ...)
 #define PRINT_NAMED_DEBUG(name, format, ...)
   
-#endif
+#endif // USE_REAL_DAS
 
+  
 //////////////////////////////////////////////////////////////////
-// FUNCTIONS
+// HASHING HELPERS
 //////////////////////////////////////////////////////////////////
 
+// used to create hashes for reproducibility.
+#define HASHING_VALUE 19
+  
+#define ADD_HASH(v, n) AddHash((v), (n), (#n))
+  
 // Functions for hashing. updates value by hashing in the given newValue
 void AddHash(unsigned int& value, const unsigned int newValue, const char* str = "");
 void AddHash(unsigned int& value, const int newValue, const char* str = "");
@@ -218,11 +151,27 @@ void AddHash(unsigned int& value, const unsigned char newValue, const char* str 
 void AddHash(unsigned int& value, const float newValue, const char* str = "");
 void AddHash(unsigned int& value, const double newValue, const char* str = "");
 
+  
+//////////////////////////////////////////////////////////////////
+// FILE HELPERS
+//////////////////////////////////////////////////////////////////
+  
 // Reads formatted line from file (like fscanf), but automatically skips blank
 // lines and lines starting with the comment character '#'. Comments can also be
 // placed on the same line after non-comment text.
 int ReadLine(FILE* stream, const char * format, ...);
 
+// Gets a list of all files in a directory
+//
+// dir: Directory to get list for
+// files: where to store files
+bool GetFilesInDir(std::string dir, std::vector<std::string> &files, char *containsStr = NULL);
+  
+  
+//////////////////////////////////////////////////////////////////
+// COMPARISON HELPERS
+//////////////////////////////////////////////////////////////////
+  
 // Compare functions for pairs based on first or second element only
 template < class X , class Y >
 bool CompareFirst (const std::pair<X,Y>& a, const std::pair<X,Y>& b) {
@@ -234,16 +183,11 @@ bool CompareSecond (const std::pair<X,Y>& a, const std::pair<X,Y>& b) {
   return a.second < b.second;
 }
 
-// Gets a list of all files in a directory
-// 
-// dir: Directory to get list for
-// files: where to store files
-bool GetFilesInDir(string dir, vector<string> &files, char *containsStr = NULL);
 
 // Makes a beep (for debugging?)
 void SystemBeep();
 
-} // namespace BaseStation
+} // namespace Anki
 
 #endif // BASESTATION_GENERAL_GENERAL_H_
 

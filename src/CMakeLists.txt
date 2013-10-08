@@ -7,7 +7,6 @@ set(CORETECH_COMMON_SOURCE_FILES
 	array2d.cpp
 	general.cpp
 	matrix.cpp
-	memory.cpp
 	point.cpp
 	pose.cpp
 	quad.cpp
@@ -16,10 +15,10 @@ set(CORETECH_COMMON_SOURCE_FILES
 )
 
 set(CORETECH_COMMON_HEADER_FILES
-	../include/anki/common.h
 	../include/anki/common/array2d.h
 	../include/anki/common/exceptions.h
 	../include/anki/common/general.h
+	../include/anki/common/types.h
 	../include/anki/math/matrix.h
 	../include/anki/math/point.h
 	../include/anki/math/pose.h
