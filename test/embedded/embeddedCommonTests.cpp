@@ -894,5 +894,8 @@ IN_DDR void RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Common, ArrayFillPattern);
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
+
+  if(numFailedTests > 0)
+    return numFailedTests;
 } // void RUN_ALL_TESTS()
 #endif // #if !defined(ANKICORETECH_EMBEDDED_USE_GTEST)
