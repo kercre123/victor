@@ -16,6 +16,7 @@ set(CORETECH_COMMON_SOURCE_FILES
 
 set(CORETECH_COMMON_HEADER_FILES
 	../include/anki/common/array2d.h
+	../include/anki/common/constantsAndMacros.h
 	../include/anki/common/exceptions.h
 	../include/anki/common/general.h
 	../include/anki/common/types.h
@@ -50,6 +51,8 @@ set(CORETECH_COMMON_EMBEDDED_SOURCE_FILES
 )
 
 set(CORETECH_COMMON_EMBEDDED_HEADER_FILES
+	../include/anki/common/constantsAndMacros.h
+	../include/anki/common/types.h
 	../include/anki/embeddedCommon.h
 	../include/anki/embeddedCommon/array2d.h
 	../include/anki/embeddedCommon/benchmarking_c.h
