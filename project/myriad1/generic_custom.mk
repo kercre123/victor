@@ -42,17 +42,17 @@ $(DirAppOutput)/$(APPNAME).elf : $(LEON_OBJECTS_REQUIRED) $(LEON_DRIVER_OBJECTS_
 	@mkdir -p $(dir $@)
 	$(ECHO) $(LD) $(LDOPT) -o $@ $(LEON_DRIVER_OBJECTS_REQUIRED) $(LEON_OBJECTS_REQUIRED) $(AllLibs) $(ALL_SHAVE_APPS) $(DefaultSparcGccLibs) > $(DirAppOutput)/$(APPNAME).map
 
-%.o : %.c $(LEON_HEADERS) Makefile
+%.o : %.c $(LEON_C_HEADERS) Makefile
 	@echo Leon compiling C $(notdir $@)
 	@echo $(CC) -c $(CCOPT) $< -o $@
 	$(ECHO) $(CC) -c $(CCOPT) $< -o $@
 
-%.o : %.cpp $(LEON_HEADERS) Makefile
+%.o : %.cpp $(LEON_C_HEADERS) $(LEON_CPP_HEADERS) Makefile
 	@echo Leon compiling C++ $(notdir $@)
 	@echo $(CC) -c $(CPPOPT) $< -o $@
 	$(ECHO) $(CC) -c $(CPPOPT) $< -o $@
 
-%.o : %.S $(LEON_HEADERS) Makefile
+%.o : %.S $(LEON_C_HEADERS) Makefile
 	@echo Leon assembling Assembly $(notdir $@)
 	@echo $(CC) -c $(CCOPT) -DASM $< -o $@
 	$(ECHO) $(CC) -c $(CCOPT) -DASM $< -o $@
