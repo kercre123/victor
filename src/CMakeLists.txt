@@ -44,6 +44,7 @@ set(CORETECH_COMMON_EMBEDDED_SOURCE_FILES
 	embedded/errorHandling.cpp
 	embedded/fixedLengthList.cpp
 	embedded/geometry.cpp
+	embedded/matlabConverters.cpp
 	embedded/matlabInterface.cpp
 	embedded/memory.cpp
 	embedded/opencvLight.cpp
@@ -63,6 +64,7 @@ set(CORETECH_COMMON_EMBEDDED_HEADER_FILES
 	../include/anki/embeddedCommon/fixedLengthList.h
 	../include/anki/embeddedCommon/geometry.h
 	../include/anki/embeddedCommon/gtestLight.h
+	../include/anki/embeddedCommon/matlabConverters.h
 	../include/anki/embeddedCommon/matlabInterface.h
 	../include/anki/embeddedCommon/memory.h
 	../include/anki/embeddedCommon/opencvLight.h

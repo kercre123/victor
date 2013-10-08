@@ -9,9 +9,10 @@
 // Specialization for double input:
 template <>
 mxArray * image2mxArray<double>(const double *img,
-                                const mwSize nrows, const mwSize ncols, const mwSize nbands)
+                                const int nrows, const int ncols, const int nbands)
 {
-  const mwSize outputDims[3] = {ncols, nrows, nbands};
+  const mwSize outputDims[3] = {static_cast<mwSize>(ncols),
+    static_cast<mwSize>(nrows), static_cast<mwSize>(nbands)};
   mxArray *outputArray = mxCreateNumericArray(3, outputDims,
     mxDOUBLE_CLASS, mxREAL);
 
