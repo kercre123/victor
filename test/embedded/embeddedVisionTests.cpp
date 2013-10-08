@@ -45,17 +45,12 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
-//#define RUN_MAIN_BIG_MEMORY_TESTS
-//#define RUN_ALL_BIG_MEMORY_TESTS
+#define RUN_MAIN_BIG_MEMORY_TESTS
+#define RUN_ALL_BIG_MEMORY_TESTS
 
-//#ifdef RUN_MAIN_BIG_MEMORY_TESTS
 #include "../../blockImages/blockImage50.h"
-//#endif
-
-#ifdef RUN_ALL_BIG_MEMORY_TESTS
 #include "../../blockImages/fiducial105_6ContrastReduced.h"
 #include "../../src/embedded/fiducialMarkerDefinitionType0.h"
-#endif
 
 #define BIG_BUFFER_SIZE 5000000
 
@@ -79,8 +74,8 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
 #else
   const s32 scaleImage_numPyramidLevels = 6;
 
-  const s16 component1d_minComponentWidth = 0;
-  const s16 component1d_maxSkipDistance = 0;
+  const s32 component1d_minComponentWidth = 0;
+  const s32 component1d_maxSkipDistance = 0;
 
   const f32 minSideLength = 0.03f*MAX(blockImage50_HEIGHT,blockImage50_WIDTH);
   const f32 maxSideLength = 0.97f*MIN(blockImage50_HEIGHT,blockImage50_WIDTH);
@@ -201,8 +196,8 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
 #else
   const s32 scaleImage_numPyramidLevels = 6;
 
-  const s16 component1d_minComponentWidth = 0;
-  const s16 component1d_maxSkipDistance = 0;
+  const s32 component1d_minComponentWidth = 0;
+  const s32 component1d_maxSkipDistance = 0;
 
   const f32 minSideLength = 0.03f*MAX(fiducial105_6_HEIGHT,fiducial105_6_WIDTH);
   const f32 maxSideLength = 0.97f*MIN(fiducial105_6_HEIGHT,fiducial105_6_WIDTH);
@@ -345,8 +340,8 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
 #else
   const s32 scaleImage_numPyramidLevels = 6;
 
-  const s16 component1d_minComponentWidth = 0;
-  const s16 component1d_maxSkipDistance = 0;
+  const s32 component1d_minComponentWidth = 0;
+  const s32 component1d_maxSkipDistance = 0;
 
   const f32 minSideLength = 0.03f*MAX(blockImage50_HEIGHT,blockImage50_WIDTH);
   const f32 maxSideLength = 0.97f*MIN(blockImage50_HEIGHT,blockImage50_WIDTH);
@@ -442,23 +437,23 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
   ConnectedComponents components(numComponents, ms);
 
   // Small square
-  for(s16 y=0; y<15; y++) {
+  for(s32 y=0; y<15; y++) {
     components.PushBack(ConnectedComponentSegment(10,24,y+4,1));
   }
 
   // Big square
-  for(s16 y=0; y<30; y++) {
+  for(s32 y=0; y<30; y++) {
     components.PushBack(ConnectedComponentSegment(100,129,y+50,2));
   }
 
   // Skewed quad
   components.PushBack(ConnectedComponentSegment(100,300,100,3));
-  for(s16 y=0; y<10; y++) {
+  for(s32 y=0; y<10; y++) {
     components.PushBack(ConnectedComponentSegment(100,110,y+100,3));
   }
 
   // Tiny square
-  for(s16 y=0; y<5; y++) {
+  for(s32 y=0; y<5; y++) {
     components.PushBack(ConnectedComponentSegment(10,14,y,4));
   }
 
@@ -518,8 +513,8 @@ IN_DDR GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
 
   FixedLengthList<Point<s16> > boundary(LaplacianPeaks_BOUNDARY_LENGTH, ms);
 
-  const s16 componentsX_groundTruth[66] = {105, 105, 106, 107, 108, 109, 109, 108, 107, 106, 105, 105, 105, 105, 106, 107, 108, 109, 108, 107, 106, 105, 105, 104, 104, 104, 104, 104, 103, 103, 103, 103, 103, 102, 101, 101, 101, 101, 101, 100, 100, 100, 100, 100, 101, 102, 103, 104, 104, 104, 103, 102, 101, 100, 100, 101, 102, 102, 102, 102, 102, 103, 104, 104, 105};
-  const s16 componentsY_groundTruth[66] = {200, 201, 201, 201, 201, 201, 202, 202, 202, 202, 202, 203, 204, 205, 205, 205, 205, 205, 205, 205, 205, 205, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 206, 206, 205, 204, 204, 204, 204, 204, 203, 203, 203, 202, 201, 200, 201, 201, 201, 200, 200};
+  const s32 componentsX_groundTruth[66] = {105, 105, 106, 107, 108, 109, 109, 108, 107, 106, 105, 105, 105, 105, 106, 107, 108, 109, 108, 107, 106, 105, 105, 104, 104, 104, 104, 104, 103, 103, 103, 103, 103, 102, 101, 101, 101, 101, 101, 100, 100, 100, 100, 100, 101, 102, 103, 104, 104, 104, 103, 102, 101, 100, 100, 101, 102, 102, 102, 102, 102, 103, 104, 104, 105};
+  const s32 componentsY_groundTruth[66] = {200, 201, 201, 201, 201, 201, 202, 202, 202, 202, 202, 203, 204, 205, 205, 205, 205, 205, 205, 205, 205, 205, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 206, 206, 205, 204, 204, 204, 204, 204, 203, 203, 203, 202, 201, 200, 201, 201, 201, 200, 200};
 
   //swcLeonDisableCaches();
   //swcLeonFlushDcache();
@@ -680,12 +675,12 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
 
   ConnectedComponents components(numComponents, ms);
 
-  const s16 yValues[128] = {200, 200, 201, 201, 202, 203, 204, 205, 206, 207, 207, 208, 208, 209, 209, 210, 210};
-  const s16 xStartValues[128] = {102, 104, 102, 108, 102, 100, 100, 104, 100, 100, 103, 100, 103, 100, 103, 100, 103};
-  const s16 xEndValues[128] = { 102, 105, 105, 109, 109, 105, 105, 109, 105, 101, 104, 101, 104, 101, 104, 101, 104};
+  const s32 yValues[128] = {200, 200, 201, 201, 202, 203, 204, 205, 206, 207, 207, 208, 208, 209, 209, 210, 210};
+  const s32 xStartValues[128] = {102, 104, 102, 108, 102, 100, 100, 104, 100, 100, 103, 100, 103, 100, 103, 100, 103};
+  const s32 xEndValues[128] = { 102, 105, 105, 109, 109, 105, 105, 109, 105, 101, 104, 101, 104, 101, 104, 101, 104};
 
-  const s16 componentsX_groundTruth[128] = {105, 105, 106, 107, 108, 109, 109, 108, 107, 106, 105, 105, 105, 105, 106, 107, 108, 109, 108, 107, 106, 105, 105, 104, 104, 104, 104, 104, 103, 103, 103, 103, 103, 102, 101, 101, 101, 101, 101, 100, 100, 100, 100, 100, 101, 102, 103, 104, 104, 104, 103, 102, 101, 100, 100, 101, 102, 102, 102, 102, 102, 103, 104, 104, 105};
-  const s16 componentsY_groundTruth[128] = {200, 201, 201, 201, 201, 201, 202, 202, 202, 202, 202, 203, 204, 205, 205, 205, 205, 205, 205, 205, 205, 205, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 206, 206, 205, 204, 204, 204, 204, 204, 203, 203, 203, 202, 201, 200, 201, 201, 201, 200, 200};
+  const s32 componentsX_groundTruth[128] = {105, 105, 106, 107, 108, 109, 109, 108, 107, 106, 105, 105, 105, 105, 106, 107, 108, 109, 108, 107, 106, 105, 105, 104, 104, 104, 104, 104, 103, 103, 103, 103, 103, 102, 101, 101, 101, 101, 101, 100, 100, 100, 100, 100, 101, 102, 103, 104, 104, 104, 103, 102, 101, 100, 100, 101, 102, 102, 102, 102, 102, 103, 104, 104, 105};
+  const s32 componentsY_groundTruth[128] = {200, 201, 201, 201, 201, 201, 202, 202, 202, 202, 202, 203, 204, 205, 205, 205, 205, 205, 205, 205, 205, 205, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 206, 206, 205, 204, 204, 204, 204, 204, 203, 203, 203, 202, 201, 200, 201, 201, 201, 200, 200};
 
   for(s32 i=0; i<numComponents; i++) {
     components.PushBack(ConnectedComponentSegment(xStartValues[i],xEndValues[i],yValues[i],1));
@@ -827,8 +822,8 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
 #else
   const s32 scaleImage_numPyramidLevels = 6;
 
-  const s16 component1d_minComponentWidth = 0;
-  const s16 component1d_maxSkipDistance = 0;
+  const s32 component1d_minComponentWidth = 0;
+  const s32 component1d_maxSkipDistance = 0;
 
   const f32 minSideLength = 0.03f*MAX(blockImage50_HEIGHT,blockImage50_WIDTH);
   const f32 maxSideLength = 0.97f*MIN(blockImage50_HEIGHT,blockImage50_WIDTH);
@@ -899,8 +894,8 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
 
   const s32 scaleImage_numPyramidLevels = 6;
 
-  const s16 component1d_minComponentWidth = 0;
-  const s16 component1d_maxSkipDistance = 0;
+  const s32 component1d_minComponentWidth = 0;
+  const s32 component1d_maxSkipDistance = 0;
 
   const f32 minSideLength = 0.03f*MAX(height,width);
   const f32 maxSideLength = 0.97f*MIN(height,width);
@@ -1062,7 +1057,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
     const Result result = components.CompressConnectedComponentSegmentIds(ms);
     ASSERT_TRUE(result == RESULT_OK);
 
-    const u16 maximumId = components.get_maximumId();
+    const s32 maximumId = components.get_maximumId();
     ASSERT_TRUE(maximumId == 2);
   }
 
@@ -1116,7 +1111,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, CompressComponentIds)
     const Result result = components.CompressConnectedComponentSegmentIds(ms);
     ASSERT_TRUE(result == RESULT_OK);
 
-    const u16 maximumId = components.get_maximumId();
+    const s32 maximumId = components.get_maximumId();
     ASSERT_TRUE(maximumId == 6);
   }
 
@@ -1276,42 +1271,42 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
   const s32 height = 5;
   const s32 numBytes = MIN(MAX_BYTES, 10000);
 
-  const s16 minComponentWidth = 2;
-  const s16 maxSkipDistance = 0;
-  const u16 maxComponentSegments = 100;
+  const s32 minComponentWidth = 2;
+  const s32 maxSkipDistance = 0;
+  const s32 maxComponentSegments = 100;
 
   // Allocate memory from the heap, for the memory allocator
   MemoryStack ms(&buffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
 #define ApproximateConnectedComponents2d_binaryImageDataLength (18*5)
-  const u8 binaryImageData[128] = {
+  const s32 binaryImageData[128] = {
     0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0,
     0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1,
     0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0};
 
-  const u16 numComponents_groundTruth = 13;
+  const s32 numComponents_groundTruth = 13;
 
   //#define UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d
 #define SORTED_BY_ID_GROUND_TRUTH_ApproximateConnectedComponents2d
 #ifdef UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d
-  const s16 xStart_groundTruth[128] = {4,  3, 10, 13, 5, 9,  13, 6, 12, 16, 7, 11, 14};
-  const s16 xEnd_groundTruth[128]   = {11, 5, 11, 15, 6, 11, 14, 9, 14, 17, 8, 12, 16};
-  const s16 y_groundTruth[128]      = {0,  1, 1,  1,  2, 2,  2,  3, 3,  3,  4, 4,  4};
-  const u16 id_groundTruth[128]     = {1,  1, 1,  2,  1, 1,  2,  1, 2,  2,  1, 2,  2};
+  const s32 xStart_groundTruth[128] = {4,  3, 10, 13, 5, 9,  13, 6, 12, 16, 7, 11, 14};
+  const s32 xEnd_groundTruth[128]   = {11, 5, 11, 15, 6, 11, 14, 9, 14, 17, 8, 12, 16};
+  const s32 y_groundTruth[128]      = {0,  1, 1,  1,  2, 2,  2,  3, 3,  3,  4, 4,  4};
+  const s32 id_groundTruth[128]     = {1,  1, 1,  2,  1, 1,  2,  1, 2,  2,  1, 2,  2};
 #else // #ifdef UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d
 #ifdef SORTED_BY_ID_GROUND_TRUTH_ApproximateConnectedComponents2d
-  const s16 xStart_groundTruth[128] = {4,  3, 10, 5, 9,  6, 7, 13, 13, 12, 16, 11, 14};
-  const s16 xEnd_groundTruth[128]   = {11, 5, 11, 6, 11, 9, 8, 15, 14, 14, 17, 12, 16};
-  const s16 y_groundTruth[128]      = {0,  1, 1,  2, 2,  3, 4, 1,  2,  3,  3,  4,  4};
-  const u16 id_groundTruth[128]     = {1,  1, 1,  1, 1,  1, 1, 2,  2,  2,  2,  2,  2};
+  const s32 xStart_groundTruth[128] = {4,  3, 10, 5, 9,  6, 7, 13, 13, 12, 16, 11, 14};
+  const s32 xEnd_groundTruth[128]   = {11, 5, 11, 6, 11, 9, 8, 15, 14, 14, 17, 12, 16};
+  const s32 y_groundTruth[128]      = {0,  1, 1,  2, 2,  3, 4, 1,  2,  3,  3,  4,  4};
+  const s32 id_groundTruth[128]     = {1,  1, 1,  1, 1,  1, 1, 2,  2,  2,  2,  2,  2};
 #else // Sorted by id, y, and xStart
-  const s16 xStart_groundTruth[128] = {4,  3, 10, 5, 9,  6, 7, 13, 13, 12, 16, 11, 14};
-  const s16 xEnd_groundTruth[128]   = {11, 5, 11, 6, 11, 9, 8, 15, 14, 14, 17, 12, 16};
-  const s16 y_groundTruth[128]      = {0,  1, 1,  2, 2,  3, 4, 1,  2,  3,  3,  4,  4};
-  const u16 id_groundTruth[128]     = {1,  1, 1,  1, 1,  1, 1, 2,  2,  2,  2,  2,  2};
+  const s32 xStart_groundTruth[128] = {4,  3, 10, 5, 9,  6, 7, 13, 13, 12, 16, 11, 14};
+  const s32 xEnd_groundTruth[128]   = {11, 5, 11, 6, 11, 9, 8, 15, 14, 14, 17, 12, 16};
+  const s32 y_groundTruth[128]      = {0,  1, 1,  2, 2,  3, 4, 1,  2,  3,  3,  4,  4};
+  const s32 id_groundTruth[128]     = {1,  1, 1,  1, 1,  1, 1, 2,  2,  2,  2,  2,  2};
 #endif // #ifdef SORTED_BY_ID_GROUND_TRUTH_ApproximateConnectedComponents2d
 #endif // #ifdef UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d ... #else
 
@@ -1332,7 +1327,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 
   // components.Print();
 
-  for(u16 i=0; i<numComponents_groundTruth; i++) {
+  for(s32 i=0; i<numComponents_groundTruth; i++) {
     ASSERT_TRUE(components.Pointer(i)->xStart == xStart_groundTruth[i]);
     ASSERT_TRUE(components.Pointer(i)->xEnd == xEnd_groundTruth[i]);
     ASSERT_TRUE(components.Pointer(i)->y == y_groundTruth[i]);
@@ -1347,9 +1342,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
   const s32 width = 50;
   const s32 numBytes = MIN(MAX_BYTES, 5000);
 
-  const s16 minComponentWidth = 3;
+  const s32 minComponentWidth = 3;
   const s32 maxComponents = 10;
-  const s16 maxSkipDistance = 1;
+  const s32 maxSkipDistance = 1;
 
   // Allocate memory from the heap, for the memory allocator
   MemoryStack ms(&buffer[0], numBytes);
@@ -1414,7 +1409,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, BinomialFilter)
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  const u8 correctResults[16][16] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 1, 1, 1, 2, 2, 2, 3}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+  const s32 correctResults[16][16] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 1, 1, 1, 2, 2, 2, 3}, {0, 0, 0, 0, 1, 1, 1, 1, 1, 2}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
   for(s32 y=0; y<height; y++) {
     for(s32 x=0; x<width; x++) {
@@ -1453,7 +1448,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  const u8 correctResults[2][5] = {{0, 0, 0, 0, 0}, {0, 1, 2, 3, 4}};
+  const s32 correctResults[2][5] = {{0, 0, 0, 0, 0}, {0, 1, 2, 3, 4}};
 
   for(s32 y=0; y<imageDownsampled.get_size(0); y++) {
     for(s32 x=0; x<imageDownsampled.get_size(1); x++) {
@@ -1472,7 +1467,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
   const s32 numPyramidLevels = 3;
 
 #define ComputeCharacteristicScale_imageDataLength (16*16)
-  const u8 imageData[ComputeCharacteristicScale_imageDataLength] = {
+  const s32 imageData[ComputeCharacteristicScale_imageDataLength + 16] = {
     0, 0, 0, 107, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 160, 89,
     0, 255, 0, 251, 255, 0, 0, 255, 0, 255, 255, 255, 255, 0, 197, 38,
     0, 0, 0, 77, 255, 0, 0, 255, 0, 255, 255, 255, 255, 0, 238, 149,
@@ -1490,7 +1485,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
     255, 0, 0, 0, 0, 0, 0, 0, 0, 255, 23, 117, 240, 93, 189, 113,
     255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 147, 169, 165, 195, 133, 5};
 
-  const u32 correctResults[16][16] = {
+  const u32 correctResults[16 + 16][16 + 16] = {
     {983040, 2097152, 4390912, 8585216, 12124160, 12976128, 12386304, 10158080, 6488064, 4587520, 4849664, 4849664, 4259840, 4784128, 6225920, 6422528},
     {1638400, 4063232, 6029312, 8847360, 9580544, 10285056, 9109504, 9519104, 8896512, 8667136, 10747904, 10747904, 7880704, 7344128, 6959104, 7012352},
     {2293760, 4947968, 6814720, 7451648, 8088576, 8725504, 9028608, 8997888, 8967168, 10043392, 14680064, 14680064, 11599872, 8269824, 7995392, 7471104},
@@ -1576,7 +1571,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
   const s32 height = 16;
 
 #define TraceInteriorBoundary_imageDataLength (16*16)
-  const u8 imageData[TraceInteriorBoundary_imageDataLength+ 16] = {
+  const s32 imageData[TraceInteriorBoundary_imageDataLength+ 16] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
@@ -1651,6 +1646,7 @@ IN_DDR int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage);
 #endif
 
+  CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);
   CALL_GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary);
   CALL_GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
@@ -1669,7 +1665,6 @@ IN_DDR int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Vision, SortComponentsById);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
-  CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 

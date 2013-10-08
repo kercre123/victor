@@ -316,28 +316,28 @@ namespace Anki
         marker.orientation = BlockMarker::ORIENTATION_UP;
         darkValue = (downBitValue + leftBitValue + rightBitValue) / 3;
 
-        const u8 readingOrder[NUM_BITS] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24};
+        const s32 readingOrder[NUM_BITS] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24};
         bitReadingOrder.Set(readingOrder, NUM_BITS);
       } else if(downBitValue == maxValue) {
         marker.orientation = BlockMarker::ORIENTATION_DOWN;
         marker.corners = Quadrilateral<s16>(marker.corners[3], marker.corners[2], marker.corners[1], marker.corners[0]);
         darkValue = (upBitValue + leftBitValue + rightBitValue) / 3;
 
-        const u8 readingOrder[NUM_BITS] = {24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+        const s32 readingOrder[NUM_BITS] = {24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
         bitReadingOrder.Set(readingOrder, NUM_BITS);
       } else if(leftBitValue == maxValue) {
         marker.orientation = BlockMarker::ORIENTATION_LEFT;
         marker.corners = Quadrilateral<s16>(marker.corners[1], marker.corners[3], marker.corners[0], marker.corners[2]);
         darkValue = (upBitValue + downBitValue + rightBitValue) / 3;
 
-        const u8 readingOrder[NUM_BITS] = {4, 9, 14, 19, 24, 3, 8, 13, 18, 23, 2, 7, 12, 17, 22, 1, 6, 11, 16, 21, 0, 5, 10, 15, 20};
+        const s32 readingOrder[NUM_BITS] = {4, 9, 14, 19, 24, 3, 8, 13, 18, 23, 2, 7, 12, 17, 22, 1, 6, 11, 16, 21, 0, 5, 10, 15, 20};
         bitReadingOrder.Set(readingOrder, NUM_BITS);
       } else {
         marker.orientation = BlockMarker::ORIENTATION_RIGHT;
         marker.corners = Quadrilateral<s16>(marker.corners[2], marker.corners[0], marker.corners[3], marker.corners[1]);
         darkValue = (upBitValue + downBitValue + leftBitValue) / 3;
 
-        const u8 readingOrder[NUM_BITS] = {20, 15, 10, 5, 0, 21, 16, 11, 6, 1, 22, 17, 12, 7, 2, 23, 18, 13, 8, 3, 24, 19, 14, 9, 4};
+        const s32 readingOrder[NUM_BITS] = {20, 15, 10, 5, 0, 21, 16, 11, 6, 1, 22, 17, 12, 7, 2, 23, 18, 13, 8, 3, 24, 19, 14, 9, 4};
         bitReadingOrder.Set(readingOrder, NUM_BITS);
       }
 
