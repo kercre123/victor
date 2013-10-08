@@ -45,31 +45,38 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
-#define RUN_BIG_MEMORY_TESTS
+//#define RUN_MAIN_BIG_MEMORY_TESTS
+//#define RUN_ALL_BIG_MEMORY_TESTS
 
+//#ifdef RUN_MAIN_BIG_MEMORY_TESTS
 #include "../../blockImages/blockImage50.h"
+//#endif
+
+#ifdef RUN_ALL_BIG_MEMORY_TESTS
 #include "../../blockImages/fiducial105_6ContrastReduced.h"
 #include "../../src/embedded/fiducialMarkerDefinitionType0.h"
+#endif
 
 #define BIG_BUFFER_SIZE 5000000
 
 #if defined(USING_MOVIDIUS_COMPILER)
-__attribute__((section(".ddr_direct.rodata")))
+__attribute__((section(".ddr_direct.manualAllocations"))) char bigBuffer0Start;
+#else
+char bigBuffer0[BIG_BUFFER_SIZE];
+char bigBuffer1[BIG_BUFFER_SIZE];
+char bigBuffer2[BIG_BUFFER_SIZE];
 #endif
-  char bigBuffer0[BIG_BUFFER_SIZE];
-
-#if defined(USING_MOVIDIUS_COMPILER)
-__attribute__((section(".ddr_direct.rodata")))
-#endif
-  char bigBuffer1[BIG_BUFFER_SIZE];
-
-#if defined(USING_MOVIDIUS_COMPILER)
-__attribute__((section(".ddr_direct.rodata")))
-#endif
-  char bigBuffer2[BIG_BUFFER_SIZE];
 
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
 {
+  s32 combined = 0;
+  for(s32 i=0; i<640*480; i++)
+    combined += blockImage50[i];
+
+  printf("%d %d %d %d\n", blockImage50[0], blockImage50[640*240], blockImage50[640*480 - 1], combined);
+#ifndef RUN_MAIN_BIG_MEMORY_TESTS
+  ASSERT_TRUE(false);
+#else
   const s32 scaleImage_numPyramidLevels = 6;
 
   const s16 component1d_minComponentWidth = 0;
@@ -96,15 +103,20 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
   const s32 maxMarkers = 100;
 
   const u32 numBytes0 = BIG_BUFFER_SIZE;
-  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
-  ASSERT_TRUE(scratch0.IsValid());
-
   const u32 numBytes1 = BIG_BUFFER_SIZE;
-  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE);
-  ASSERT_TRUE(scratch1.IsValid());
-
   const u32 numBytes2 = BIG_BUFFER_SIZE;
+#if defined(USING_MOVIDIUS_COMPILER)
+  MemoryStack scratch0(&bigBuffer0Start, BIG_BUFFER_SIZE);
+  MemoryStack scratch1(&bigBuffer0Start + BIG_BUFFER_SIZE, BIG_BUFFER_SIZE);
+  MemoryStack scratch2(&bigBuffer0Start + 2*BIG_BUFFER_SIZE, BIG_BUFFER_SIZE);
+#else
+  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE);
   MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE);
+#endif
+
+  ASSERT_TRUE(scratch0.IsValid());
+  ASSERT_TRUE(scratch1.IsValid());
   ASSERT_TRUE(scratch2.IsValid());
 
   const s32 maxConnectedComponentSegments = u16_MAX;
@@ -152,10 +164,12 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
   ASSERT_TRUE(markers[0].corners[2] == Point<s16>(284,264));
   ASSERT_TRUE(markers[0].corners[3] == Point<s16>(279,339));
 
+#endif // RUN_MAIN_BIG_MEMORY_TESTS
+
   GTEST_RETURN_HERE;
 }
 
-#ifdef RUN_BIG_MEMORY_TESTS
+#ifdef RUN_ALL_BIG_MEMORY_TESTS
 // Create a test pattern image, full of a grid of squares for probes
 static Result DrawExampleProbesImage(Array<u8> &image, Quadrilateral<s16> &quad, Array<f64> &homography)
 {
@@ -178,11 +192,11 @@ static Result DrawExampleProbesImage(Array<u8> &image, Quadrilateral<s16> &quad,
 
   return RESULT_OK;
 }
-#endif // #ifdef RUN_BIG_MEMORY_TESTS
+#endif // #ifdef RUN_ALL_BIG_MEMORY_TESTS
 
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
 {
-#ifndef RUN_BIG_MEMORY_TESTS
+#ifndef RUN_ALL_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
 #else
   const s32 scaleImage_numPyramidLevels = 6;
@@ -229,7 +243,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
   image.Set(fiducial105_6, fiducial105_6_WIDTH*fiducial105_6_HEIGHT);
 
   FixedLengthList<BlockMarker> markers(maxMarkers, scratch0);
-  FixedLengthList<Array<f64>> homographies(maxMarkers, scratch0);
+  FixedLengthList<Array<f64> > homographies(maxMarkers, scratch0);
 
   markers.set_size(maxMarkers);
   homographies.set_size(maxMarkers);
@@ -267,7 +281,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
   ASSERT_TRUE(markers[0].corners[2] == Point<s16>(235,21));
   ASSERT_TRUE(markers[0].corners[3] == Point<s16>(235,235));
 
-#endif // #ifdef RUN_BIG_MEMORY_TESTS
+#endif // #ifdef RUN_ALL_BIG_MEMORY_TESTS
 
   GTEST_RETURN_HERE;
 }
@@ -275,7 +289,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
 // The test is if it can run without crashing
 IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
 {
-#ifndef RUN_BIG_MEMORY_TESTS
+#ifndef RUN_ALL_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
 #else
   const s32 width = fiducial105_6_WIDTH;
@@ -318,7 +332,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
     ASSERT_TRUE(marker.corners[i] == quad[i]);
   }
 
-#endif // #ifdef RUN_BIG_MEMORY_TESTS
+#endif // #ifdef RUN_ALL_BIG_MEMORY_TESTS
 
   GTEST_RETURN_HERE;
 }
@@ -326,7 +340,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
 // The test is if it can run without crashing
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
 {
-#ifndef RUN_BIG_MEMORY_TESTS
+#ifndef RUN_ALL_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
 #else
   const s32 scaleImage_numPyramidLevels = 6;
@@ -371,7 +385,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
   image.Set(&blockImage50[0], blockImage50_HEIGHT*blockImage50_WIDTH);
 
   FixedLengthList<BlockMarker> markers(maxMarkers, scratch0);
-  FixedLengthList<Array<f64>> homographies(maxMarkers, scratch0);
+  FixedLengthList<Array<f64> > homographies(maxMarkers, scratch0);
 
   markers.set_size(maxMarkers);
   homographies.set_size(maxMarkers);
@@ -400,7 +414,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
     ASSERT_TRUE(result == RESULT_OK);
   }
 
-#endif // #ifdef RUN_BIG_MEMORY_TESTS
+#endif // #ifdef RUN_ALL_BIG_MEMORY_TESTS
 
   GTEST_RETURN_HERE;
 }
@@ -808,7 +822,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
 // The test is if it can run without crashing
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
 {
-#ifndef RUN_BIG_MEMORY_TESTS
+#ifndef RUN_ALL_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
 #else
   const s32 scaleImage_numPyramidLevels = 6;
@@ -869,7 +883,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
   //matlab.PutArray(drawnComponents, "drawnComponents1");
   //drawnComponents.Show("drawnComponents1", true, false);
 
-#endif // #ifdef RUN_BIG_MEMORY_TESTS
+#endif // #ifdef RUN_ALL_BIG_MEMORY_TESTS
 
   GTEST_RETURN_HERE;
 }
@@ -877,7 +891,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
 // The test is if it can run without crashing
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
 {
-#ifndef RUN_BIG_MEMORY_TESTS
+#ifndef RUN_ALL_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
 #else
   const s32 width = 640;
@@ -936,7 +950,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
   //matlab.PutArray(drawnComponents, "drawnComponents");
   //drawnComponents.Show("drawnComponents", true, false);
 
-#endif // #ifdef RUN_BIG_MEMORY_TESTS
+#endif // #ifdef RUN_ALL_BIG_MEMORY_TESTS
 
   GTEST_RETURN_HERE;
 } // IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
@@ -1629,7 +1643,7 @@ IN_DDR int RUN_ALL_TESTS()
 
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage);
 
-#ifdef RUN_BIG_MEMORY_TESTS
+#ifdef RUN_ALL_BIG_MEMORY_TESTS
   CALL_GTEST_TEST(CoreTech_Vision, FiducialMarker);
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123);
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage);
