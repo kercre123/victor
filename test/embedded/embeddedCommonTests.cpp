@@ -874,7 +874,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, ArrayFillPattern)
 }
 
 #if !defined(ANKICORETECH_EMBEDDED_USE_GTEST)
-IN_DDR void RUN_ALL_TESTS()
+IN_DDR int RUN_ALL_TESTS()
 {
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
@@ -897,5 +897,5 @@ IN_DDR void RUN_ALL_TESTS()
 
   if(numFailedTests > 0)
     return numFailedTests;
-} // void RUN_ALL_TESTS()
+} // int RUN_ALL_TESTS()
 #endif // #if !defined(ANKICORETECH_EMBEDDED_USE_GTEST)
