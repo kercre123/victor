@@ -9,13 +9,18 @@ namespace Anki
     IN_DDR MemoryStack::MemoryStack(void *buffer, s32 bufferLength)
       : buffer(buffer), totalBytes(bufferLength), usedBytes(0)
     {
+      static u32 maxId = 0;
+
+      this->id = maxId;
+      maxId++;
+
       AnkiConditionalError(buffer, "Anki.MemoryStack.MemoryStack", "Buffer must be allocated");
       AnkiConditionalError(bufferLength <= 0x3FFFFFFF, "Anki.MemoryStack.MemoryStack", "Maximum size of a MemoryStack is 2^30 - 1");
       AnkiConditionalError(MEMORY_ALIGNMENT == 16, "Anki.MemoryStack.MemoryStack", "Currently, only MEMORY_ALIGNMENT == 16 is supported");
     }
 
     IN_DDR MemoryStack::MemoryStack(const MemoryStack& ms)
-      : buffer(ms.buffer), totalBytes(ms.totalBytes), usedBytes(ms.usedBytes)
+      : buffer(ms.buffer), totalBytes(ms.totalBytes), usedBytes(ms.usedBytes), id(ms.id)
     {
       AnkiConditionalError(ms.buffer, "Anki.MemoryStack.MemoryStack", "Buffer must be allocated");
       AnkiConditionalError(ms.totalBytes <= 0x3FFFFFFF, "Anki.MemoryStack.MemoryStack", "Maximum size of a MemoryStack is 2^30 - 1");
@@ -62,7 +67,7 @@ namespace Anki
       return segmentMemory;
     }
 
-    IN_DDR bool MemoryStack::IsValid()
+    IN_DDR bool MemoryStack::IsValid() const
     {
       const size_t LOOP_MAX = 1000000;
       const char * const bufferCharStar = reinterpret_cast<const char*>(buffer);
@@ -115,7 +120,7 @@ namespace Anki
       return true;
     }
 
-    IN_DDR s32 MemoryStack::ComputeLargestPossibleAllocation()
+    IN_DDR s32 MemoryStack::ComputeLargestPossibleAllocation() const
     {
       const size_t bufferNextFree = reinterpret_cast<size_t>(buffer) + usedBytes;
       const size_t bufferNextFreePlusHeaderAndAlignment = RoundUp<size_t>(bufferNextFree+HEADER_LENGTH, MEMORY_ALIGNMENT);
@@ -131,12 +136,19 @@ namespace Anki
       return maxFreeSpace;
     }
 
-    IN_DDR s32 MemoryStack::get_totalBytes()
+    IN_DDR Result MemoryStack::Print() const
+    {
+      const s32 maxAllocationBytes = ComputeLargestPossibleAllocation();
+      printf("(id:%u totalBytes:%d usedBytes:%d maxAllocationBytes:%d) ", id, totalBytes, usedBytes, maxAllocationBytes);
+      return RESULT_OK;
+    }
+
+    IN_DDR s32 MemoryStack::get_totalBytes() const
     {
       return totalBytes;
     }
 
-    IN_DDR s32 MemoryStack::get_usedBytes()
+    IN_DDR s32 MemoryStack::get_usedBytes() const
     {
       return usedBytes;
     }
@@ -149,6 +161,11 @@ namespace Anki
     IN_DDR const void* MemoryStack::get_buffer() const
     {
       return buffer;
+    }
+
+    IN_DDR u32 MemoryStack::get_id() const
+    {
+      return id;
     }
 
     // Not sure if these should be supported. But I'm leaving them here for the time being.
