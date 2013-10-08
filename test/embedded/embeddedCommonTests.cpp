@@ -100,13 +100,13 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStackId)
   MemoryStack ms4(buffer+50*3, 50);
   MemoryStack ms5(buffer+50*4, 50);
 
-  const u32 id1 = ms1.get_id();
-  const u32 id2 = ms2.get_id() - id1;
-  const u32 id2b = ms2b.get_id() - id1;
-  const u32 id2c = ms2c.get_id() - id1;
-  const u32 id3 = ms3.get_id() - id1;
-  const u32 id4 = ms4.get_id() - id1;
-  const u32 id5 = ms5.get_id() - id1;
+  const s32 id1 = ms1.get_id();
+  const s32 id2 = ms2.get_id() - id1;
+  const s32 id2b = ms2b.get_id() - id1;
+  const s32 id2c = ms2c.get_id() - id1;
+  const s32 id3 = ms3.get_id() - id1;
+  const s32 id4 = ms4.get_id() - id1;
+  const s32 id5 = ms5.get_id() - id1;
 
   ASSERT_TRUE(id2 == 1);
   ASSERT_TRUE(id2b == 1);

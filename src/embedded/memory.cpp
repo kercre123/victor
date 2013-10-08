@@ -9,7 +9,7 @@ namespace Anki
     IN_DDR MemoryStack::MemoryStack(void *buffer, s32 bufferLength)
       : buffer(buffer), totalBytes(bufferLength), usedBytes(0)
     {
-      static u32 maxId = 0;
+      static s32 maxId = 0;
 
       this->id = maxId;
       maxId++;
@@ -139,7 +139,7 @@ namespace Anki
     IN_DDR Result MemoryStack::Print() const
     {
       const s32 maxAllocationBytes = ComputeLargestPossibleAllocation();
-      printf("(id:%u totalBytes:%d usedBytes:%d maxAllocationBytes:%d) ", id, totalBytes, usedBytes, maxAllocationBytes);
+      printf("(id:%d totalBytes:%d usedBytes:%d maxAllocationBytes:%d) ", id, totalBytes, usedBytes, maxAllocationBytes);
       return RESULT_OK;
     }
 
@@ -163,7 +163,7 @@ namespace Anki
       return buffer;
     }
 
-    IN_DDR u32 MemoryStack::get_id() const
+    IN_DDR s32 MemoryStack::get_id() const
     {
       return id;
     }
