@@ -44,3 +44,4 @@ matlab.mat
 build/msvc*
 build/xcode*
 build
+gtest-1.7.0/xcode
