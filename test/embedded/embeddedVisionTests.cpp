@@ -1662,5 +1662,5 @@ IN_DDR int RUN_ALL_TESTS()
 
   if(numFailedTests > 0)
     return numFailedTests;
-} // void RUN_ALL_TESTS()
+} // int RUN_ALL_TESTS()
 #endif // #if !ANKICORETECH_EMBEDDED_USE_GTEST
