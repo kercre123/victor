@@ -68,8 +68,8 @@ PROJECTCLEAN += $(SHAVE_APP_LIBS)
 LEON_COMPONENT_HEADERS  = $(wildcard $(patsubst %,%/*.h,$(LEON_COMPONENT_PATHS)))
 LEON_COMPONENT_HEADERS += $(wildcard $(patsubst %,%/*.h,$(LEON_COMPONENT_HEADERS_PATHS)))
 
-LEON_HEADERS ?=
-LEON_HEADERS += $(wildcard $(MV_DRIVERS_BASE)/$(MV_SOC_PLATFORM)/brdDrivers/include/*.h \
+LEON_C_HEADERS ?=
+LEON_C_HEADERS += $(wildcard $(MV_DRIVERS_BASE)/$(MV_SOC_PLATFORM)/brdDrivers/include/*.h \
                             $(MV_DRIVERS_BASE)/$(MV_SOC_PLATFORM)/icDrivers/include/*.h \
                             $(MV_DRIVERS_BASE)/$(MV_SOC_PLATFORM)/socDrivers/include/*.h \
                             $(MV_DRIVERS_BASE)/$(MV_SOC_PLATFORM)/socDrivers/include/sysClkCfg/*.h \
@@ -78,8 +78,8 @@ LEON_HEADERS += $(wildcard $(MV_DRIVERS_BASE)/$(MV_SOC_PLATFORM)/brdDrivers/incl
                             $(MV_LEON_LIBC_BASE)/include)
 
 #and add the ones from our project by default
-LEON_HEADERS += $(wildcard $(DirAppRoot)/*leon*/*.h)
-LEON_HEADERS += $(LEON_COMPONENT_HEADERS)  
+LEON_C_HEADERS += $(wildcard $(DirAppRoot)/*leon*/*.h)
+LEON_C_HEADERS += $(LEON_COMPONENT_HEADERS)  
 
 ###################################################################
 #       Building up list of Shave low level driver incl files     #
