@@ -25,18 +25,19 @@ namespace Anki {
                       const std::vector<float> &distCoeffs);
     
     // Accessors:
-    inline float get_focalLength_x() const;
-    inline float get_focalLength_y() const;
-    inline float get_center_x() const;
-    inline float get_center_y() const;
-    inline float get_skew() const;
-    inline const std::vector<float>& get_distortionCoeffs() const;
+    float   get_focalLength_x() const;
+    float   get_focalLength_y() const;
+    float   get_center_x() const;
+    float   get_center_y() const;
+    Point2f get_center_pt() const;
+    float   get_skew() const;
+    const   std::vector<float>& get_distortionCoeffs() const;
     
     // Returns the 3x3 camera calibration matrix:
     // [fx   skew*fx   center_x;
     //   0      fy     center_y;
     //   0       0         1    ]
-    Matrix<float> get_calibrationMatrix() const;
+    Matrix_3x3f get_calibrationMatrix() const;
     
   protected:
     
@@ -49,22 +50,25 @@ namespace Anki {
   
   
   // Inline accessor definitions:
-  float CameraCalibration::get_focalLength_x() const
+  inline float CameraCalibration::get_focalLength_x() const
   { return this->focalLength_x; }
   
-  float CameraCalibration::get_focalLength_y() const
+  inline float CameraCalibration::get_focalLength_y() const
   { return this->focalLength_y; }
   
-  float CameraCalibration::get_center_x() const
+  inline float CameraCalibration::get_center_x() const
   { return this->center_x; }
   
-  float CameraCalibration::get_center_y() const
+  inline float CameraCalibration::get_center_y() const
   { return this->center_y; }
   
-  float CameraCalibration::get_skew() const
+  inline Point2f CameraCalibration::get_center_pt() const
+  { return Point2f(this->center_x, this->center_y); }
+  
+  inline float CameraCalibration::get_skew() const
   { return this->skew; }
   
-  const std::vector<float>& CameraCalibration::get_distortionCoeffs() const
+  inline const std::vector<float>& CameraCalibration::get_distortionCoeffs() const
   { return this->distortionCoeffs; }
   
   
@@ -86,8 +90,9 @@ namespace Anki {
     
     // Compute the 3D (6DoF) pose of a set of object points, given their
     // corresponding observed positions in the image:
-    Pose3d computeObjectPose(const std::vector<Point2<float> > &imgPoints,
-                             const std::vector<Point3<float> > &objPoints) const;
+    Pose3d computeObjectPose(const std::vector<Point2f> &imgPoints,
+                             const std::vector<Point3f> &objPoints) const;
+    
     
     // Compute the projected image locations of a set of 3D points:
     void project3dPoints(const std::vector<Point3f> &objPoints,
