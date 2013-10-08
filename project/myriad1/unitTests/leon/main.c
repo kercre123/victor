@@ -21,6 +21,8 @@
 
 #include "cppInterface.h"
 
+extern void start();
+
 performanceStruct perfStr;
 
 // Copied from leon3.h
@@ -33,12 +35,26 @@ __inline__ void sparc_leon3_disable_cache(void) {
                     :  : : "l1", "l2");	
 };
 
+/*
+void boardInitialize()
+{ 
+    *(volatile u32*)MXI_CMX_CTRL_BASE_ADR |= (1 << 24);
+
+    DrvL2CacheSetupPartition(PART128KB);
+    DrvL2CacheAllocateSetPartitions();
+    SET_REG_WORD(L2C_MXITID_ADR, 0x0);
+
+    sparc_leon3_disable_cache();
+
+    start();
+}*/
+
 int main(void)
 {
     u32          i;
     u32          *fl;
     u32          test_pass = 1;
-
+  
     initClocksAndMemory();
 
     *(volatile u32*)MXI_CMX_CTRL_BASE_ADR |= (1 << 24);
@@ -47,7 +63,7 @@ int main(void)
     DrvL2CacheAllocateSetPartitions();
     SET_REG_WORD(L2C_MXITID_ADR, 0x0);
 
-    sparc_leon3_disable_cache();
+    // sparc_leon3_disable_cache(); // Handled by the makefile
 
     printf("Starting unit tests\n");
 

@@ -7,6 +7,16 @@ SECTIONS {
 
   . = 0x48010000;
 
+  .ddr.text : {
+    *(.ddr.text*)
+    *(.text._ZN*) 
+    *(.text.explicitPrintf)
+  }
+
+  .ddr_direct.text : {
+    *(.ddr_direct.text*)
+  }
+
   .ddr.rodata : {
     *(.ddr.rodata*)
     *(.rodata._ZZ*) 
@@ -21,31 +31,6 @@ SECTIONS {
   .ddr.bss : {
     *(.bss.printfBuffer*)
   }
-
-  .ddr.text : {
-    *(.ddr.text*)
-    *(.text._ZN*) 
-    *(.text.explicitPrintf)
-/*    *(.text.*)*/
-  }
-
-  .ddr_direct.text : {
-    *(.ddr_direct.text*)
-  }
-
-  . = 0x48200000;
-  
-  .ddr_direct.manualAllocations : {
-    *(.ddr_direct.manualAllocations*)
-  }
-
-/*
- . = 0xA0000000;
-
-  .imageData : {
-    *(.imageData*)
-  }
-*/
 }
 
 INCLUDE myriad1_default_memory_map_elf.ldscript

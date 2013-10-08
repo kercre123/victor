@@ -73,7 +73,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
   for(s32 i=0; i<640*480; i++)
     combined += blockImage50[i];
 
-  printf("%d %d %d %d\n", blockImage50[0], blockImage50[640*240], blockImage50[640*480 - 1], combined);
+  printf("steps12345: %d %d %d %d\n", blockImage50[0], blockImage50[640*240], blockImage50[640*480 - 1], combined);
 #ifndef RUN_MAIN_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
 #else
@@ -680,12 +680,12 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
 
   ConnectedComponents components(numComponents, ms);
 
-  const s16 yValues[] = {200, 200, 201, 201, 202, 203, 204, 205, 206, 207, 207, 208, 208, 209, 209, 210, 210};
-  const s16 xStartValues[] = {102, 104, 102, 108, 102, 100, 100, 104, 100, 100, 103, 100, 103, 100, 103, 100, 103};
-  const s16 xEndValues[] = { 102, 105, 105, 109, 109, 105, 105, 109, 105, 101, 104, 101, 104, 101, 104, 101, 104};
+  const s16 yValues[128] = {200, 200, 201, 201, 202, 203, 204, 205, 206, 207, 207, 208, 208, 209, 209, 210, 210};
+  const s16 xStartValues[128] = {102, 104, 102, 108, 102, 100, 100, 104, 100, 100, 103, 100, 103, 100, 103, 100, 103};
+  const s16 xEndValues[128] = { 102, 105, 105, 109, 109, 105, 105, 109, 105, 101, 104, 101, 104, 101, 104, 101, 104};
 
-  const s16 componentsX_groundTruth[] = {105, 105, 106, 107, 108, 109, 109, 108, 107, 106, 105, 105, 105, 105, 106, 107, 108, 109, 108, 107, 106, 105, 105, 104, 104, 104, 104, 104, 103, 103, 103, 103, 103, 102, 101, 101, 101, 101, 101, 100, 100, 100, 100, 100, 101, 102, 103, 104, 104, 104, 103, 102, 101, 100, 100, 101, 102, 102, 102, 102, 102, 103, 104, 104, 105};
-  const s16 componentsY_groundTruth[] = {200, 201, 201, 201, 201, 201, 202, 202, 202, 202, 202, 203, 204, 205, 205, 205, 205, 205, 205, 205, 205, 205, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 206, 206, 205, 204, 204, 204, 204, 204, 203, 203, 203, 202, 201, 200, 201, 201, 201, 200, 200};
+  const s16 componentsX_groundTruth[128] = {105, 105, 106, 107, 108, 109, 109, 108, 107, 106, 105, 105, 105, 105, 106, 107, 108, 109, 108, 107, 106, 105, 105, 104, 104, 104, 104, 104, 103, 103, 103, 103, 103, 102, 101, 101, 101, 101, 101, 100, 100, 100, 100, 100, 101, 102, 103, 104, 104, 104, 103, 102, 101, 100, 100, 101, 102, 102, 102, 102, 102, 103, 104, 104, 105};
+  const s16 componentsY_groundTruth[128] = {200, 201, 201, 201, 201, 201, 202, 202, 202, 202, 202, 203, 204, 205, 205, 205, 205, 205, 205, 205, 205, 205, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 207, 208, 209, 210, 210, 209, 208, 207, 206, 206, 206, 206, 206, 205, 204, 204, 204, 204, 204, 203, 203, 203, 202, 201, 200, 201, 201, 201, 200, 200};
 
   for(s32 i=0; i<numComponents; i++) {
     components.PushBack(ConnectedComponentSegment(xStartValues[i],xEndValues[i],yValues[i],1));
@@ -1576,7 +1576,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
   const s32 height = 16;
 
 #define TraceInteriorBoundary_imageDataLength (16*16)
-  const u8 imageData[TraceInteriorBoundary_imageDataLength + 16] = {
+  const u8 imageData[TraceInteriorBoundary_imageDataLength+ 16] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
@@ -1651,15 +1651,14 @@ IN_DDR int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage);
 #endif
 
+  CALL_GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary);
+  CALL_GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
   CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
-  CALL_GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary);
-
   CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
   CALL_GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput);
   CALL_GTEST_TEST(CoreTech_Vision, LaplacianPeaks);
   CALL_GTEST_TEST(CoreTech_Vision, Correlate1d);
-  CALL_GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids);
   CALL_GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents);
