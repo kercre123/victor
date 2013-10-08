@@ -85,6 +85,39 @@ IN_DDR GTEST_TEST(CoreTech_Common, BENCHMARKING)
 }
 #endif //#ifdef TEST_BENCHMARKING
 
+IN_DDR GTEST_TEST(CoreTech_Common, MemoryStackId)
+{
+  const s32 numBytes = MIN(MAX_BYTES, 5000);
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, numBytes);
+  ASSERT_TRUE(ms.IsValid());
+
+  MemoryStack ms1(buffer, 50);
+  MemoryStack ms2(buffer+50, 50);
+  MemoryStack ms2b(ms2);
+  MemoryStack ms2c(ms2b);
+  MemoryStack ms3(buffer+50*2, 50);
+  MemoryStack ms4(buffer+50*3, 50);
+  MemoryStack ms5(buffer+50*4, 50);
+
+  const u32 id1 = ms1.get_id();
+  const u32 id2 = ms2.get_id() - id1;
+  const u32 id2b = ms2b.get_id() - id1;
+  const u32 id2c = ms2c.get_id() - id1;
+  const u32 id3 = ms3.get_id() - id1;
+  const u32 id4 = ms4.get_id() - id1;
+  const u32 id5 = ms5.get_id() - id1;
+
+  ASSERT_TRUE(id2 == 1);
+  ASSERT_TRUE(id2b == 1);
+  ASSERT_TRUE(id2c == 1);
+  ASSERT_TRUE(id3 == 2);
+  ASSERT_TRUE(id4 == 3);
+  ASSERT_TRUE(id5 == 4);
+
+  GTEST_RETURN_HERE;
+}
+
 IN_DDR GTEST_TEST(CoreTech_Common, ApproximateExp)
 {
   // To compute the ground truth, in Matlab, type:

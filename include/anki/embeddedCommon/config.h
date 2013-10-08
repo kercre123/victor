@@ -111,6 +111,7 @@ extern "C" {
 #undef printf
 #define printf(...) explicitPrintf(1, __VA_ARGS__)
 
+  //#define printf(...) (_xprintf(SYSTEM_PUTCHAR_FUNCTION , 0, __VA_ARGS__ ) )
 #define xprintf(...) (_xprintf(SYSTEM_PUTCHAR_FUNCTION , 0, __VA_ARGS__ ) )
 
 #ifdef __cplusplus
