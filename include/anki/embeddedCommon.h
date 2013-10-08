@@ -1,7 +1,7 @@
 #ifndef _ANKICORETECHEMBEDDEDEMBEDDED_EMBEDDED_COMMON_H_
 #define _ANKICORETECHEMBEDDEDEMBEDDED_EMBEDDED_COMMON_H_
 
-#include "anki/embeddedCommon/config.h"
+#include "anki/embeddedCommon/config.h" 
 
 #include "anki/embeddedCommon/array2d.h"
 #include "anki/embeddedCommon/memory.h"

@@ -138,64 +138,11 @@ extern "C" {
 #define printf(...) explicitPrintf(0, __VA_ARGS__)
 #endif
 
-// We specify types according to their sign and bits. We should use these in
-// our code instead of the normal 'int','short', etc. because different
-// compilers on different architectures treat these differently.
-typedef uint8_t  u8;
-typedef int8_t   s8;
-typedef uint16_t u16;
-typedef int16_t  s16;
-typedef uint32_t u32;
-typedef int32_t  s32;
-typedef uint64_t u64;
-typedef int64_t  s64;
-typedef float    f32;
-typedef double   f64;
+#include "anki/common/types.h"
 
 #endif // #ifdef USING_MOVIDIUS_GCC_COMPILER
 
-// Maximum and minimum values
-#ifndef u8_MAX
-#define u8_MAX ( (u8)(0xFF))
-#endif
-#ifndef u16_MAX
-#define u16_MAX ( (u16)(0xFFFF) )
-#endif
-#ifndef u32_MAX
-#define u32_MAX ( (u32)(0xFFFFFFFF) )
-#endif
-#ifndef u64_MAX
-#define u64_MAX ( (u64)(0xFFFFFFFFFFFFFFFFLL) )
-#endif
-
-#ifndef s8_MIN
-#define s8_MIN ( (s8)(-1 - 0x7F) )
-#endif
-#ifndef s8_MAX
-#define s8_MAX ( (s8)(0x7F) )
-#endif
-#ifndef s16_MIN
-#define s16_MIN ( (s16)(-1 - 0x7FFF) )
-#endif
-#ifndef s16_MAX
-#define s16_MAX ( (s16)(0x7FFF) )
-#endif
-#ifndef s32_MIN
-#define s32_MIN ( (s32)(-1 - 0x7FFFFFFF) )
-#endif
-#ifndef s32_MAX
-#define s32_MAX ( (s32)(0x7FFFFFFF) )
-#endif
-#ifndef s64_MIN
-#define s64_MIN ( (s64)(-1 - 0X7FFFFFFFFFFFFFFFLL) )
-#endif
-#ifndef s64_MAX
-#define s64_MAX ( (s64)(0x7FFFFFFFFFFFFFFFLL) )
-#endif
-
-#ifndef PI
-#define PI 3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679 // 100 digits of pi
-#endif
+#include "anki/common/constantsAndMacros.h"
 
 // If we're using c++, Result is in a namespace. In c, it's not.
 #ifdef __cplusplus

@@ -28,8 +28,6 @@
 #ifndef __CoreTech_Math__rotation__
 #define __CoreTech_Math__rotation__
 
-#include "anki/common/datastructures.h"
-
 #include "anki/math/radians.h"
 #include "anki/math/matrix.h"
 #include "anki/math/point.h"
