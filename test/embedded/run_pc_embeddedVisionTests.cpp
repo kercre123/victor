@@ -16,7 +16,7 @@ int main()
   ::testing::InitGoogleTest(&argc, argv);
 #endif
 
-  RUN_ALL_TESTS();
+  const int result = RUN_ALL_TESTS();
 
-  return 0;
+  return result;
 }
