@@ -3,7 +3,7 @@
 
 #include "anki/embeddedCommon/config.h"
 
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
 #include "opencv2/opencv.hpp"
 #endif
 

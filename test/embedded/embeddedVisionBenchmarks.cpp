@@ -21,11 +21,11 @@ static void memset(void * dst, int value, size_t size)
 }
 #endif
 
-#if defined(ANKICORETECH_USE_OPENCV)
+#if ANKICORETECH_USE_OPENCV
 #include "opencv2/opencv.hpp"
 #endif
 
-#if defined(ANKICORETECH_USE_MATLAB)
+#if ANKICORETECH_USE_MATLAB
 Matlab matlab(false);
 #endif
 
@@ -306,11 +306,11 @@ int BenchmarkTraceInteriorBoundary()
     }
   }
 
-#if defined(ANKI_DEBUG_ALL) && defined(ANKICORETECH_USE_MATLAB)
+#if defined(ANKI_DEBUG_ALL) && ANKICORETECH_EMBEDDED_USE_MATLAB
   Matlab matlab;
 
   matlab.PutArray<u8>(binaryImage, "binaryImage");
-#endif // #if defined(ANKI_DEBUG_ALL) && defined(ANKICORETECH_USE_MATLAB)
+#endif // #if defined(ANKI_DEBUG_ALL) && ANKICORETECH_EMBEDDED_USE_MATLAB
 
   Result result = TraceInteriorBoundary(binaryImage, startPoint, initialDirection, boundary);
 

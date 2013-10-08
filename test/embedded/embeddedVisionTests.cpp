@@ -6,15 +6,15 @@ using namespace Anki::Embedded;
 
 // #define RUN_MATLAB_IMAGE_TEST
 
-#if defined(ANKICORETECHEMBEDDED_USE_OPENCV)
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include "opencv2/core/core.hpp"
 #endif
 
-#if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
+#if ANKICORETECH_EMBEDDED_USE_MATLAB
 Matlab matlab(false);
 #endif
 
-#if defined(ANKICORETECHEMBEDDED_USE_GTEST)
+#if ANKICORETECH_EMBEDDED_USE_GTEST
 #include "gtest/gtest.h"
 #endif
 
@@ -1523,7 +1523,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
   GTEST_RETURN_HERE;
 } // IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
 
-#if defined(ANKICORETECHEMBEDDED_USE_MATLAB) && defined(RUN_MATLAB_IMAGE_TEST)
+#if ANKICORETECH_EMBEDDED_USE_MATLAB && defined(RUN_MATLAB_IMAGE_TEST)
 IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 {
   const s32 width = 640;
@@ -1554,7 +1554,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 
   GTEST_RETURN_HERE;
 } // IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
-#endif // #if defined(ANKICORETECHEMBEDDED_USE_MATLAB)
+#endif // #if ANKICORETECH_EMBEDDED_USE_MATLAB
 
 IN_DDR GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
 {
@@ -1621,7 +1621,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
   GTEST_RETURN_HERE;
 } // IN_DDR GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
 
-#if !defined(ANKICORETECHEMBEDDED_USE_GTEST)
+#if !ANKICORETECH_EMBEDDED_USE_GTEST
 IN_DDR void RUN_ALL_TESTS()
 {
   s32 numPassedTests = 0;
@@ -1660,4 +1660,4 @@ IN_DDR void RUN_ALL_TESTS()
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 } // void RUN_ALL_TESTS()
-#endif // #if !defined(ANKICORETECHEMBEDDED_USE_GTEST)
+#endif // #if !ANKICORETECH_EMBEDDED_USE_GTEST
