@@ -3,7 +3,14 @@
 #ifndef TCP_SERVER_H
 #define TCP_SERVER_H
 
-#define DEBUG_TCP_SERVER 0
+//
+// Create a debug messaging macro to avoid a zillion #if/#endif directives.
+// Uncomment the first one to disable debug messages.  Uncomment the second
+// one to enable them.  Newline (std::endl) automatically appended.
+//  Example usage: DEBUG_TCP_SERVER("Number of clients " << N);
+//
+//#define DEBUG_TCP_SERVER(__expr__)
+#define DEBUG_TCP_SERVER(__expr__) (std::cout << __expr__ << std::endl)
 
 class TcpServer {
 public:

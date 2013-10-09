@@ -35,9 +35,9 @@ void set_nonblock(int socket) {
 bool TcpServer::StartListening(const char* port)
 {
     if (socketfd >= 0) {
-#if(DEBUG_TCP_SERVER)
-      std::cout << "WARNING (TcpServer): Already listening\n";
-#endif
+
+      DEBUG_TCP_SERVER("WARNING (TcpServer): Already listening");
+
       return false;
     }
 
@@ -61,9 +61,8 @@ bool TcpServer::StartListening(const char* port)
     // (translated into human readable text by the gai_gai_strerror function).
     if (status != 0)  std::cout << "getaddrinfo error" << gai_strerror(status) ;
 
-#if(DEBUG_TCP_SERVER)
-    std::cout << "TcpServer: Creating a socket on port " << port  << "\n";
-#endif
+    DEBUG_TCP_SERVER("TcpServer: Creating a socket on port " << port);
+
     socketfd = socket(host_info_list->ai_family, host_info_list->ai_socktype,
                       host_info_list->ai_protocol);
     if (socketfd == -1) {
@@ -71,9 +70,8 @@ bool TcpServer::StartListening(const char* port)
       return false;
     }
 
-#if(DEBUG_TCP_SERVER)
-    std::cout << "TcpServer: Binding socket...\n";
-#endif
+    DEBUG_TCP_SERVER("TcpServer: Binding socket...");
+
     // we use to make the setsockopt() function to make sure the port is not in use
     // by a previous execution of our code. (see man page for more information)
     int yes = 1;
@@ -90,9 +88,8 @@ bool TcpServer::StartListening(const char* port)
       return false;
     }
 
-#if(DEBUG_TCP_SERVER)
-    std::cout << "TcpServer: Listening for connections...\n";
-#endif
+    DEBUG_TCP_SERVER("TcpServer: Listening for connections...");
+
     status =  listen(socketfd, 5);
     if (status == -1) {
       std::cout << "listen error\n";
@@ -105,27 +102,23 @@ bool TcpServer::StartListening(const char* port)
 void TcpServer::StopListening() 
 {
   if (socketfd >= 0) {
-#if(DEBUG_TCP_SERVER)
-    std::cout << "TcpServer: Stopping server listening on socket " << socketfd << "\n";
-#endif
+    DEBUG_TCP_SERVER("TcpServer: Stopping server listening on socket " << socketfd);
+    
     freeaddrinfo(host_info_list);
     close(socketfd);
     socketfd = -1;
     return;
   }
 
-#if(DEBUG_TCP_SERVER)
-    std::cout << "TcpServer: Server already stopped\n";
-#endif
+  DEBUG_TCP_SERVER("TcpServer: Server already stopped");
+
 }
 
 
 bool TcpServer::Accept()
 {
   if (socketfd < 0) {
-#if(DEBUG_TCP_SERVER)
-    std::cout << "WARNING (TcpServer): Listening socket not yet open\n";
-#endif
+    DEBUG_TCP_SERVER("WARNING (TcpServer): Listening socket not yet open");
     return false;
   }
 
@@ -136,18 +129,14 @@ bool TcpServer::Accept()
   {
     if (errno != EWOULDBLOCK)
     {
-#if(DEBUG_TCP_SERVER)
-       std::cout << "accept error\n";
-#endif
+       DEBUG_TCP_SERVER("accept error");
        StopListening();
     }
     return false;
   }
   else
   {
-#if(DEBUG_TCP_SERVER)
-    std::cout << "TcpServer: Connection accepted. Using new socketfd : "  <<  client_sd << "\n";
-#endif
+    DEBUG_TCP_SERVER("TcpServer: Connection accepted. Using new socketfd : "  <<  client_sd);
     return true;
   }
 
@@ -159,32 +148,24 @@ int TcpServer::Send(const char* data, int size)
   if (size <= 0) return 0;
 
   if (!HasClient()) {
-#if(DEBUG_TCP_SERVER)
-    std::cout << "TcpServer: Send() failed because no client connected\n";
-#endif
+    DEBUG_TCP_SERVER("TcpServer: Send() failed because no client connected");
     return -1;
   }
 
+  DEBUG_TCP_SERVER("TcpServer: sending   " << data);
 
-#if(DEBUG_TCP_SERVER)
-  std::cout << "TcpServer: sending   " << data << "\n";
-#endif
   return send(client_sd, data, size, 0);
 }
 
 int TcpServer::Recv(char* data, int maxSize)
 {
   if (!HasClient()) {
-#if(DEBUG_TCP_SERVER)
-    std::cout << "TcpServer: Recv() failed because no client connected\n";
-#endif
+    DEBUG_TCP_SERVER("TcpServer: Recv() failed because no client connected");
     return -1;
   }
 
+  //DEBUG_TCP_SERVER("TcpServer: Waiting to receive data...");
 
-#if(DEBUG_TCP_SERVER)
-  //std::cout << "TcpServer: Waiting to receive data...\n";
-#endif
   ssize_t bytes_received;
   bytes_received = recv(client_sd, data, maxSize, 0);
   // If no data arrives, the program will just wait here until some data arrives.
@@ -194,15 +175,11 @@ int TcpServer::Recv(char* data, int maxSize)
   if (bytes_received <= 0) {
     if (errno != EWOULDBLOCK)
     {
-#if(DEBUG_TCP_SERVER)
-      std::cout << "receive error!\n";
-#endif
+      DEBUG_TCP_SERVER("receive error!");
       DisconnectClient();
     }
   } else {
-#if(DEBUG_TCP_SERVER)
-    std::cout << "TcpServer: " << bytes_received << " bytes received : " << data << "\n";
-#endif
+    DEBUG_TCP_SERVER("TcpServer: " << bytes_received << " bytes received : " << data);
   }
 
   return bytes_received;
@@ -212,17 +189,13 @@ int TcpServer::Recv(char* data, int maxSize)
 void TcpServer::DisconnectClient() 
 {
     if (client_sd >= 0) {
-#if(DEBUG_TCP_SERVER)
-      std::cout << "TcpServer: Disconnecting client at socket " << client_sd << "\n";
-#endif
+      DEBUG_TCP_SERVER("TcpServer: Disconnecting client at socket " << client_sd);
       close(client_sd);
       client_sd = -1;
       return;
     }
 
-#if(DEBUG_TCP_SERVER)
-    std::cout << "TcpServer: No client connected\n";
-#endif
+    DEBUG_TCP_SERVER("TcpServer: No client connected");
 }
 
 
