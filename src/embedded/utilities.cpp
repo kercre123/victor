@@ -117,7 +117,7 @@ namespace Anki
           printf(PrintfOneArray_FORMAT_STRING_2, mulitipliedValue1, mulitipliedValue2);
         }
 
-        if(!IsOdd(array.get_size(1))) {
+        if(IsOdd(array.get_size(1))) {
           for(s32 x=array.get_size(1)-1; x<array.get_size(1); x++) {
             const f32 value1 = rowPointer[x];
             const s32 mulitipliedValue1 = static_cast<s32>(Round(10000.0f * value1));
@@ -147,7 +147,7 @@ namespace Anki
           printf(PrintfOneArray_FORMAT_STRING_2, mulitipliedValue1, mulitipliedValue2);
         }
 
-        if(!IsOdd(array.get_size(1))) {
+        if(IsOdd(array.get_size(1))) {
           for(s32 x=array.get_size(1)-1; x<array.get_size(1); x++) {
             const f64 value1 = rowPointer[x];
             const s32 mulitipliedValue1 = static_cast<s32>(Round(10000.0 * value1));
