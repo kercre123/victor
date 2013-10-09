@@ -131,8 +131,6 @@ endif
 CCOPT            += -Werror-implicit-function-declaration
 CCOPT    		 += $(LEON_C_OPTIMIZATION_LEVEL) -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 $(WARN)
 CCOPT                    += -DDISABLE_LEON_ICACHE -DDISABLE_LEON_DCACHE -DDISABLE_LEON_CACHE
-#CCOPT                    += -DDISABLE_LEON_DCACHE
-
 
 CPPOPT    		 += -fno-inline-functions-called-once
 ifeq (,$(findstring 3.4.4,$(GCCVERSION)))
@@ -143,7 +141,6 @@ CPPOPT    		 += $(LEON_CPP_OPTIMIZATION_LEVEL) -mcpu=v8 -ffunction-sections -fno
 ODOPT    		 += -xdsrw
 SDOPT    		 += -t
 LDOPT    		 += -O9 -t --gc-sections -M -warn-common -L $(DirSparcDefaultLibs) -L $(DirAppRoot) -L $(DirAppRoot)/scripts -L $(DirLDScript) -L $(DirLDScrCommon)
-#LDOPT                    += -e boardInitialize
 
 #Options for dynamic loading linking
 LDDYNOPT =-L . -L ./scripts -L ../../../common/scripts/ld --nmagic -s
