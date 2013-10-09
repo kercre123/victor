@@ -160,6 +160,19 @@ namespace Anki
       printf("\n");
     }
 
+    IN_DDR s32 Sum(const Array<u8> &image)
+    {
+      s32 sum = 0;
+      for(s32 y=0; y<image.get_size(0); y++) {
+        const u8 * const rowPointer = image.Pointer(y, 0);
+        for(s32 x=0; x<image.get_size(1); x++) {
+          sum += rowPointer[x];
+        }
+      }
+
+      return sum;
+    }
+
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
     IN_DDR int ConvertToOpenCvType(const char *typeName, size_t byteDepth)
     {

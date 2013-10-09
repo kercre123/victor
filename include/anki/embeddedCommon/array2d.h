@@ -104,10 +104,10 @@ namespace Anki
       // useBoundaryFillPatterns=true, this method always returns true
       bool IsValid() const;
 
-      // Return the minimum element in this matrix
+      // Return the minimum element in this Array
       Type Min() const;
 
-      // Return the maximum element in this matrix
+      // Return the maximum element in this Array
       Type Max() const;
 
       // Set every element in the Array to zero, including the stride padding

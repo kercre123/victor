@@ -55,6 +55,9 @@ namespace Anki
     void PrintfOneArray_f32(const Array<f32> &array, const char * variableName);
     void PrintfOneArray_f64(const Array<f64> &array, const char * variableName);
 
+    // Return the sum of every element in the Array
+    s32 Sum(const Array<u8> &image);
+
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
     // Converts from typeid names to openCV types
     int ConvertToOpenCvType(const char *typeName, size_t byteDepth);
