@@ -24,11 +24,13 @@
 #ifndef _ANKICORETECHEMBEDDED_MATLAB_CONVERTERS_H_
 #define _ANKICORETECHEMBEDDED_MATLAB_CONVERTERS_H_
 
+#include "anki/embeddedCommon/config.h"
+
+#if ANKICORETECH_EMBEDDED_USE_MATLAB
+
 #include <typeinfo>
 
 #include "anki/embeddedCommon/array2d.h"
-
-#if ANKICORETECH_EMBEDDED_USE_MATLAB
 
 #include "engine.h"
 
