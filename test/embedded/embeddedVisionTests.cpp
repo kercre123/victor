@@ -46,7 +46,7 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
 #define RUN_MAIN_BIG_MEMORY_TESTS
-#define RUN_ALL_BIG_MEMORY_TESTS
+//#define RUN_ALL_BIG_MEMORY_TESTS
 
 #include "../../blockImages/blockImage50.h"
 #include "../../blockImages/fiducial105_6ContrastReduced.h"
