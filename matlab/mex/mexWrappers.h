@@ -226,12 +226,14 @@ mexErrMsgTxt("Input array must have 1 or 3 bands.");
 
 template <class T>
 mxArray * image2mxArray(const T *img,
-                        const mwSize nrows, const mwSize ncols, const mwSize nbands)
+                        const int nrows, const int ncols, const int nbands)
 {
   // Seems to be faster to copy the data in single precision and
   // transposed and to do the permute and double cast at the end.
 
-  const mwSize outputDims[3] = {ncols, nrows, nbands};
+  const mwSize outputDims[3] = {static_cast<mwSize>(ncols),
+    static_cast<mwSize>(nrows), static_cast<mwSize>(nbands)};
+  
   mxArray *outputArray = mxCreateNumericArray(3, outputDims,
     mxSINGLE_CLASS, mxREAL);
 
