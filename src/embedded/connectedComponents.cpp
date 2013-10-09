@@ -123,8 +123,8 @@ namespace Anki
       FixedLengthList<ConnectedComponentSegment> newPreviousComponents1d(MAX_1D_COMPONENTS, scratch);
 
       u16 *equivalentComponents = reinterpret_cast<u16*>(scratch.Allocate(MAX_2D_COMPONENTS*sizeof(u16)));
-      for(u16 i=0; i<MAX_2D_COMPONENTS; i++) {
-        equivalentComponents[i] = i;
+      for(s32 i=0; i<MAX_2D_COMPONENTS; i++) {
+        equivalentComponents[i] = static_cast<s16>(i);
       }
 
       //for y = 1:size(binaryImg, 1)
@@ -647,7 +647,7 @@ namespace Anki
 
       memset(componentSizes, 0, sizeof(componentSizes[0])*(maximumId+1));
 
-      for(u16 i=0; i<=maximumId; i++) {
+      for(s32 i=0; i<=maximumId; i++) {
         minX[i] = s16_MAX;
         maxX[i] = s16_MIN;
         minY[i] = s16_MAX;
@@ -673,7 +673,7 @@ namespace Anki
         maxY[id] = MAX(maxY[id], y);
       }
 
-      for(u16 id=0; id<=maximumId; id++) {
+      for(s32 id=0; id<=maximumId; id++) {
         // The SQ26.5 parameter sparseMultiplyThreshold is set so that a component is invalid if
         // "sparseMultiplyThreshold*numPixels < boundingWidth*boundingHeight".
         // A resonable value is between 5<<5 = 160 and 100<<5 = 3200.

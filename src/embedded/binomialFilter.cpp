@@ -13,7 +13,8 @@ namespace Anki
     //Result BinomialFilter(const Array<u8> &image, Array<u8> &imageFiltered, MemoryStack scratch)
     IN_DDR Result BinomialFilter(const Array<u8> &image, Array<u8> &imageFiltered, MemoryStack scratch)
     {
-      const u32 kernel[BINOMIAL_KERNEL_SIZE] = {1, 4, 6, 4, 1};
+      u32 kernel[BINOMIAL_KERNEL_SIZE];
+      kernel[0] = 1; kernel[1] = 4; kernel[2] = 6; kernel[3] = 4; kernel[4] = 1;
       const s32 kernelShift = 4;
 
       AnkiConditionalErrorAndReturnValue(image.IsValid(),

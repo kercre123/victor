@@ -385,8 +385,13 @@ namespace Anki
       // TODO: make efficient
       // TODO: make work for numbers of peaks other than 4
       s32 * restrict localMaxima_rowPointer = localMaxima.Pointer(0);
-      s32 maximaValues[4] = {s32_MIN,s32_MIN,s32_MIN,s32_MIN};
-      s32 maximaIndexes[4] ={-1,-1,-1,-1};
+      s32 maximaValues[4];
+      s32 maximaIndexes[4];
+      for(s32 i=0; i<4; i++) {
+        maximaValues[i] = s32_MIN;
+        maximaIndexes[i] = -1;
+      }
+
       for(s32 iMax=0; iMax<4; iMax++) {
         for(s32 i=0; i<localMaxima.get_size(); i++) {
           const s32 localMaximaIndex = localMaxima_rowPointer[i];
@@ -403,7 +408,11 @@ namespace Anki
       // still in clockwise or counterclockwise order
       peaks.Clear();
 
-      bool whichUsed[4] = {false,false,false,false};
+      bool whichUsed[4];
+      for(s32 i=0; i<4; i++) {
+        whichUsed[i] = false;
+      }
+
       for(s32 iMax=0; iMax<4; iMax++) {
         s32 curMinIndex = -1;
         for(s32 i=0; i<4; i++) {

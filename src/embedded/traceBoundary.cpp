@@ -446,7 +446,7 @@ namespace Anki
       //boundary(:,2) = boundary(:,2) + coordinate_top - 1;
       {
         Point<s16> * restrict extractedBoundary_rowPointer = extractedBoundary.Pointer(0);
-        for(s16 i=0; i<extractedBoundary.get_size(); i++) {
+        for(s32 i=0; i<extractedBoundary.get_size(); i++) {
           extractedBoundary_rowPointer[i].x += boundingBox.left;
           extractedBoundary_rowPointer[i].y += boundingBox.top;
         }
