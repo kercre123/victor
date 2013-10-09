@@ -1,17 +1,23 @@
 #include "anki/embeddedCommon/benchmarking_c.h"
 #include "anki/embeddedCommon/utilities_c.h"
 
-BenchmarkEvent benchmarkEvents[NUM_BENCHMARK_EVENTS];
+#ifdef USING_MOVIDIUS_GCC_COMPILER
+#define VARIABLE_IN_DDR __attribute__((section(".ddr_direct.bss,DDR_DIRECT")))
+#else
+#define VARIABLE_IN_DDR
+#endif
+
+VARIABLE_IN_DDR BenchmarkEvent benchmarkEvents[NUM_BENCHMARK_EVENTS];
 int currentBenchmarkEvent;
 
-static const char * eventNames[NUM_BENCHMARK_EVENTS];
+VARIABLE_IN_DDR static const char * eventNames[NUM_BENCHMARK_EVENTS];
 static volatile int numEventNames;
 
-static double totalTimes[NUM_BENCHMARK_EVENTS];
-static double minTimes[NUM_BENCHMARK_EVENTS];
-static double maxTimes[NUM_BENCHMARK_EVENTS];
-static unsigned int numEvents[NUM_BENCHMARK_EVENTS];
-static int lastBeginIndex[NUM_BENCHMARK_EVENTS];
+VARIABLE_IN_DDR static double totalTimes[NUM_BENCHMARK_EVENTS];
+VARIABLE_IN_DDR static double minTimes[NUM_BENCHMARK_EVENTS];
+VARIABLE_IN_DDR static double maxTimes[NUM_BENCHMARK_EVENTS];
+VARIABLE_IN_DDR static unsigned int numEvents[NUM_BENCHMARK_EVENTS];
+VARIABLE_IN_DDR static int lastBeginIndex[NUM_BENCHMARK_EVENTS];
 
 void InitBenchmarking()
 {
