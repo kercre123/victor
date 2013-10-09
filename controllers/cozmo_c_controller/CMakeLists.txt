@@ -11,7 +11,11 @@ set(COZMO_SRC_DIR ../../../src)
 set(COZMO_ROBOT_SRC_DIR ${COZMO_SRC_DIR}/robot)
 set(COZMO_PHYSICS_PLUGIN_DIR ../../plugins/physics/cozmo_physics)
 
-include_directories( ${CMAKE_CURRENT_SOURCE_DIR}
+set(COZMO_INCLUDE_DIR ../../../include)
+set(COZMO_ROBOT_INCLUDE_DIR ${COZMO_INCLUDE_DIR}/anki/cozmo/robot)
+
+include_directories( 
+	${COZMO_ROBOT_INC_DIR}
 	${COZMO_ROBOT_SRC_DIR}
 	${COZMO_SRC_DIR}/shared
 	${COZMO_SRC_DIR}/util
@@ -28,15 +32,15 @@ link_directories( ${WEBOTS_LIB_DIR} )
 # Source files
 set(SOURCE_FILES
 	cozmo_c_controller.cpp
-	cozmoBot.cpp
 	keyboardController.cpp
 
-	${COZMO_ROBOT_SRC_DIR}/app/mainExecution.cpp
-	${COZMO_ROBOT_SRC_DIR}/app/pathFollower.cpp
-	${COZMO_ROBOT_SRC_DIR}/app/steeringController.cpp
-	${COZMO_ROBOT_SRC_DIR}/app/vehicleSpeedController.cpp
-	${COZMO_ROBOT_SRC_DIR}/app/wheelController.cpp
-	${COZMO_ROBOT_SRC_DIR}/app/vehicleMath.cpp
+	${COZMO_ROBOT_SRC_DIR}/cozmoBot.cpp
+	${COZMO_ROBOT_SRC_DIR}/mainExecution.cpp
+	${COZMO_ROBOT_SRC_DIR}/pathFollower.cpp
+	${COZMO_ROBOT_SRC_DIR}/steeringController.cpp
+	${COZMO_ROBOT_SRC_DIR}/vehicleSpeedController.cpp
+	${COZMO_ROBOT_SRC_DIR}/wheelController.cpp
+	${COZMO_ROBOT_SRC_DIR}/vehicleMath.cpp
 	${COZMO_SRC_DIR}/util/utilMessaging.c
 
 	${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_encoders.cpp
@@ -46,25 +50,27 @@ set(SOURCE_FILES
 )
 
 set(HEADER_FILES
-	cozmoBot.h
+		
 	keyboardController.h
-	${COZMO_ROBOT_SRC_DIR}/cozmoConfig.h
-	${COZMO_ROBOT_SRC_DIR}/cozmoTypes.h
 
-	${COZMO_ROBOT_SRC_DIR}/app/assert.h
-	${COZMO_ROBOT_SRC_DIR}/app/debug.h
-	${COZMO_ROBOT_SRC_DIR}/hal/hal.h
-	${COZMO_ROBOT_SRC_DIR}/app/mainExecution.h
-	${COZMO_ROBOT_SRC_DIR}/app/pathFollower.h
-	${COZMO_ROBOT_SRC_DIR}/app/steeringController.h
-	${COZMO_ROBOT_SRC_DIR}/app/vehicleSpeedController.h
-	${COZMO_ROBOT_SRC_DIR}/app/wheelController.h
-	${COZMO_ROBOT_SRC_DIR}/app/vehicleMath.h
-	${COZMO_ROBOT_SRC_DIR}/app/localization.h
+	${COZMO_ROBOT_INCLUDE_DIR}/assert.h
+	${COZMO_ROBOT_INCLUDE_DIR}/cozmoBot.h
+	${COZMO_ROBOT_INCLUDE_DIR}/cozmoConfig.h
+	${COZMO_ROBOT_INCLUDE_DIR}/cozmoTypes.h
+	${COZMO_ROBOT_INCLUDE_DIR}/debug.h
+	${COZMO_ROBOT_INCLUDE_DIR}/hal.h
+	${COZMO_ROBOT_INCLUDE_DIR}/localization.h
+	${COZMO_ROBOT_INCLUDE_DIR}/mainExecution.h
+	${COZMO_ROBOT_INCLUDE_DIR}/pathFollower.h
+	${COZMO_ROBOT_INCLUDE_DIR}/steeringController.h
+	${COZMO_ROBOT_INCLUDE_DIR}/trace.h
+	${COZMO_ROBOT_INCLUDE_DIR}/vehicleMath.h
+	${COZMO_ROBOT_INCLUDE_DIR}/vehicleSpeedController.h
+	${COZMO_ROBOT_INCLUDE_DIR}/wheelController.h
+
 	${COZMO_SRC_DIR}/util/utilMessaging.h
-	${COZMO_ROBOT_SRC_DIR}/app/trace.h
 
-	${COZMO_SRC_DIR}/shared/comms/cozmoMsgProtocol.h
+	${COZMO_INCLUDE_DIR}/anki/cozmo/cozmoMsgProtocol.h
 
 )
 

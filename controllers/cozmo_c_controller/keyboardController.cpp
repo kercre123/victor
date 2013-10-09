@@ -1,10 +1,12 @@
+
+#include "anki/cozmo/robot/cozmoBot.h"
+#include "anki/cozmo/robot/cozmoConfig.h"
+
 #include "keyboardController.h"
-#include "cozmoConfig.h"
 
 #include <stdio.h>
 #include <string.h>
 
-#include "cozmoBot.h"
 extern CozmoBot gCozmoBot;
 
 
