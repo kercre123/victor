@@ -1,4 +1,5 @@
 ﻿#include "anki/embeddedVision/miscVisionKernels.h"
+#include "anki/embeddedCommon/utilities.h"
 
 namespace Anki
 {
@@ -156,7 +157,7 @@ namespace Anki
 
           // maxAlpha = int32((2^8)*scaleFactors(pyramidLevel-1)); % SQ31.0 -> SQ23.8
           const s32 maxAlpha = scaleFactors[pyramidLevel-1] << 8; // SQ31.0 -> SQ23.8
-          const s32 maxAlphaSquaredShift = static_cast<s32>(Log2(static_cast<u32>(maxAlpha*maxAlpha)));
+          const s32 maxAlphaSquaredShift = static_cast<s32>(Log2u32(static_cast<u32>(maxAlpha*maxAlpha)));
 
           //        largeY = largeYIndexRange(1);
           s32 largeY = largeIndexMin;
@@ -253,7 +254,7 @@ namespace Anki
           }
 
           const s64 maxAlpha = scaleFactors[pyramidLevel-1] << 8; // SQ31.0 -> SQ55.8
-          const s64 maxAlphaSquaredShift = static_cast<s64>(Log2(static_cast<u64>(maxAlpha*maxAlpha)));
+          const s64 maxAlphaSquaredShift = static_cast<s64>(Log2u64(static_cast<u64>(maxAlpha*maxAlpha)));
 
           s32 largeY = largeIndexMin;
           for(s32 smallY = 0; smallY < (curLevelHeight-1); smallY++) { //        for smallY = 1:(size(curPyramidLevel,1)-1)
