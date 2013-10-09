@@ -1254,8 +1254,12 @@ namespace Anki
       for(s32 iPoint = 0; iPoint < count; iPoint++) {
         double x = (m[iPoint].x - cm.x)*sm.x, y = (m[iPoint].y - cm.y)*sm.y;
         double X = (M[iPoint].x - cM.x)*sM.x, Y = (M[iPoint].y - cM.y)*sM.y;
-        double Lx[] = { X, Y, 1, 0, 0, 0, -x*X, -x*Y, -x };
-        double Ly[] = { 0, 0, 0, X, Y, 1, -y*X, -y*Y, -y };
+
+        double Lx[9];
+        Lx[0] = X; Lx[1] = Y; Lx[2] = 1; Lx[3] = 0; Lx[4] = 0; Lx[5] = 0; Lx[6] = -x*X; Lx[7] = -x*Y; Lx[8] = -x;
+
+        double Ly[9];
+        Ly[0] = 0; Ly[1] = 0; Ly[2] = 0; Ly[3] = X; Ly[4] = Y; Ly[5] = 1; Ly[6] = -y*X; Ly[7] = -y*Y; Ly[8] = -y;
 
         for(s32 j = 0; j < 9; j++){
           for(s32 k = j; k < 9; k++) {
