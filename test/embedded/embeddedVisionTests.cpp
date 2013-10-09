@@ -196,6 +196,8 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
     ASSERT_TRUE(result == RESULT_OK);
   }
 
+  //markers.Print("markers");
+
   ASSERT_TRUE(markers.get_size() == 1);
 
   ASSERT_TRUE(markers[0].blockType == 15);

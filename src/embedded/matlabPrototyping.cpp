@@ -314,17 +314,29 @@ namespace Anki
           }
 #endif
 
+          printf("MaxId(0) = %d\n", static_cast<s32>(extractedComponents.get_maximumId()));
+
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
+
+          printf("MaxId(1) = %d\n", static_cast<s32>(extractedComponents.get_maximumId()));
 
           if(extractedComponents.InvalidateSmallOrLargeComponents(component_minimumNumPixels, component_maximumNumPixels, scratch2) != RESULT_OK)
             return RESULT_FAIL;
 
+          printf("MaxId(2) = %d\n", static_cast<s32>(extractedComponents.get_maximumId()));
+
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
+
+          printf("MaxId(3) = %d\n", static_cast<s32>(extractedComponents.get_maximumId()));
 
           if(extractedComponents.InvalidateSolidOrSparseComponents(component_sparseMultiplyThreshold, component_solidMultiplyThreshold, scratch2) != RESULT_OK)
             return RESULT_FAIL;
 
+          printf("MaxId(4) = %d\n", static_cast<s32>(extractedComponents.get_maximumId()));
+
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
+
+          printf("MaxId(5) = %d\n", static_cast<s32>(extractedComponents.get_maximumId()));
 
 #ifdef SEND_DRAWN_COMPONENTS
           {
@@ -341,7 +353,11 @@ namespace Anki
           if(extractedComponents.InvalidateFilledCenterComponents(component_percentHorizontal, component_percentVertical, scratch2) != RESULT_OK)
             return RESULT_FAIL;
 
+          printf("MaxId(6) = %d\n", static_cast<s32>(extractedComponents.get_maximumId()));
+
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
+
+          printf("MaxId(7) = %d\n", static_cast<s32>(extractedComponents.get_maximumId()));
 
           extractedComponents.SortConnectedComponentSegmentsById(scratch1);
         } // PUSH_MEMORY_STACK(scratch2);
@@ -367,6 +383,8 @@ namespace Anki
           return RESULT_FAIL;
       } // PUSH_MEMORY_STACK(scratch2);
 
+      extractedQuads.Print("extractedQuads");
+
       // 4b. Compute a homography for each extracted quadrilateral
       markers.set_size(extractedQuads.get_size());
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
@@ -376,6 +394,9 @@ namespace Anki
 
         if(ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, scratch2) != RESULT_OK)
           return RESULT_FAIL;
+
+        PrintfOneArray_f64(currentHomography, "currentHomography");
+        //currentHomography.Print("currentHomography");
       } // for(iQuad=0; iQuad<; iQuad++)
 
       // 5. Decode fiducial markers from the candidate quadrilaterals

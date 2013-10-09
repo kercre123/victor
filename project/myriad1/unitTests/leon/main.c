@@ -65,7 +65,7 @@ int main(void)
 
     // sparc_leon3_disable_cache(); // Handled by the makefile
 
-    printf("Starting unit tests\n");
+    printf("Starting unit tests \n   ");
 
     swcShaveProfInit(&perfStr);
  
@@ -80,7 +80,7 @@ int main(void)
 //    The below printf is modified from swcShaveProfPrint(0, &perfStr);
     printf("\nLeon executed %d cycles in %06d micro seconds ([%d ms])\n",(u32)(perfStr.perfCounterTimer), (u32)(DrvTimerTicksToMs(perfStr.perfCounterTimer)*1000), (u32)(DrvTimerTicksToMs(perfStr.perfCounterTimer)));
 
-    printf("Finished unit tests\n");
+    printf("Finished unit tests \n   ");
 
     return 0;
 }

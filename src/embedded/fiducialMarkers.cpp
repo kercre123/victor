@@ -310,35 +310,50 @@ namespace Anki
       assert(meanValues.get_size() == NUM_BITS);
 
       FixedLengthList<u8> bitReadingOrder(meanValues.get_size(), scratch);
+      bitReadingOrder.set_size(meanValues.get_size());
 
       // Note: this won't find ties, but that should be rare
       if(upBitValue == maxValue) {
         marker.orientation = BlockMarker::ORIENTATION_UP;
         darkValue = (downBitValue + leftBitValue + rightBitValue) / 3;
 
-        const s32 readingOrder[NUM_BITS] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24};
-        bitReadingOrder.Set(readingOrder, NUM_BITS);
+        bitReadingOrder[0] = 0; bitReadingOrder[1] = 1; bitReadingOrder[2] = 2; bitReadingOrder[3] = 3; bitReadingOrder[4] = 4; bitReadingOrder[5] = 5; bitReadingOrder[6] = 6; bitReadingOrder[7] = 7; bitReadingOrder[8] = 8; bitReadingOrder[9] = 9; bitReadingOrder[10] = 10; bitReadingOrder[11] = 11; bitReadingOrder[12] = 12; bitReadingOrder[13] = 13; bitReadingOrder[14] = 14; bitReadingOrder[15] = 15; bitReadingOrder[16] = 16; bitReadingOrder[17] = 17; bitReadingOrder[18] = 18; bitReadingOrder[19] = 19; bitReadingOrder[20] = 20; bitReadingOrder[21] = 21; bitReadingOrder[22] = 22; bitReadingOrder[23] = 23; bitReadingOrder[24] = 24;
       } else if(downBitValue == maxValue) {
         marker.orientation = BlockMarker::ORIENTATION_DOWN;
         marker.corners = Quadrilateral<s16>(marker.corners[3], marker.corners[2], marker.corners[1], marker.corners[0]);
         darkValue = (upBitValue + leftBitValue + rightBitValue) / 3;
 
-        const s32 readingOrder[NUM_BITS] = {24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
-        bitReadingOrder.Set(readingOrder, NUM_BITS);
+        bitReadingOrder[0] = 24; bitReadingOrder[1] = 23; bitReadingOrder[2] = 22; bitReadingOrder[3] = 21; bitReadingOrder[4] = 20; bitReadingOrder[5] = 19; bitReadingOrder[6] = 18; bitReadingOrder[7] = 17; bitReadingOrder[8] = 16; bitReadingOrder[9] = 15; bitReadingOrder[10] = 14; bitReadingOrder[11] = 13; bitReadingOrder[12] = 12; bitReadingOrder[13] = 11; bitReadingOrder[14] = 10; bitReadingOrder[15] = 9; bitReadingOrder[16] = 8; bitReadingOrder[17] = 7; bitReadingOrder[18] = 6; bitReadingOrder[19] = 5; bitReadingOrder[20] = 4; bitReadingOrder[21] = 3; bitReadingOrder[22] = 2; bitReadingOrder[23] = 1; bitReadingOrder[24] = 0;
+
+        //printf("readingOrder:\n");
+        //for(s32 i=0; i<NUM_BITS; i++) {
+        //  printf("(%d) ", bitReadingOrder[i]);
+        //}
+        //printf("\n");
       } else if(leftBitValue == maxValue) {
         marker.orientation = BlockMarker::ORIENTATION_LEFT;
         marker.corners = Quadrilateral<s16>(marker.corners[1], marker.corners[3], marker.corners[0], marker.corners[2]);
         darkValue = (upBitValue + downBitValue + rightBitValue) / 3;
 
-        const s32 readingOrder[NUM_BITS] = {4, 9, 14, 19, 24, 3, 8, 13, 18, 23, 2, 7, 12, 17, 22, 1, 6, 11, 16, 21, 0, 5, 10, 15, 20};
-        bitReadingOrder.Set(readingOrder, NUM_BITS);
+        bitReadingOrder[0] = 4; bitReadingOrder[1] = 9; bitReadingOrder[2] = 14; bitReadingOrder[3] = 19; bitReadingOrder[4] = 24; bitReadingOrder[5] = 3; bitReadingOrder[6] = 8; bitReadingOrder[7] = 13; bitReadingOrder[8] = 18; bitReadingOrder[9] = 23; bitReadingOrder[10] = 2; bitReadingOrder[11] = 7; bitReadingOrder[12] = 12; bitReadingOrder[13] = 17; bitReadingOrder[14] = 22; bitReadingOrder[15] = 1; bitReadingOrder[16] = 6; bitReadingOrder[17] = 11; bitReadingOrder[18] = 16; bitReadingOrder[19] = 21; bitReadingOrder[20] = 0; bitReadingOrder[21] = 5; bitReadingOrder[22] = 10; bitReadingOrder[23] = 15; bitReadingOrder[24] = 20;
+
+        //printf("readingOrder:\n");
+        //for(s32 i=0; i<NUM_BITS; i++) {
+        //  printf("(%d) ", bitReadingOrder[i]);
+        //}
+        //printf("\n");
       } else {
         marker.orientation = BlockMarker::ORIENTATION_RIGHT;
         marker.corners = Quadrilateral<s16>(marker.corners[2], marker.corners[0], marker.corners[3], marker.corners[1]);
         darkValue = (upBitValue + downBitValue + leftBitValue) / 3;
 
-        const s32 readingOrder[NUM_BITS] = {20, 15, 10, 5, 0, 21, 16, 11, 6, 1, 22, 17, 12, 7, 2, 23, 18, 13, 8, 3, 24, 19, 14, 9, 4};
-        bitReadingOrder.Set(readingOrder, NUM_BITS);
+        bitReadingOrder[0] = 20; bitReadingOrder[1] = 15; bitReadingOrder[2] = 10; bitReadingOrder[3] = 5; bitReadingOrder[4] = 0; bitReadingOrder[5] = 21; bitReadingOrder[6] = 16; bitReadingOrder[7] = 11; bitReadingOrder[8] = 6; bitReadingOrder[9] = 1; bitReadingOrder[10] = 22; bitReadingOrder[11] = 17; bitReadingOrder[12] = 12; bitReadingOrder[13] = 7; bitReadingOrder[14] = 2; bitReadingOrder[15] = 23; bitReadingOrder[16] = 18; bitReadingOrder[17] = 13; bitReadingOrder[18] = 8; bitReadingOrder[19] = 3; bitReadingOrder[20] = 24; bitReadingOrder[21] = 19; bitReadingOrder[22] = 14; bitReadingOrder[23] = 9; bitReadingOrder[24] = 4;
+
+        //printf("readingOrder:\n");
+        //for(s32 i=0; i<NUM_BITS; i++) {
+        //  printf("(%d) ", bitReadingOrder[i]);
+        //}
+        //printf("\n");
       }
 
       if(static_cast<f32>(brightValue) < minContrastRatio * static_cast<f32>(darkValue)) {
