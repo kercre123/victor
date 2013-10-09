@@ -69,7 +69,7 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 #define BIG_BUFFER_SIZE1 4000000
 #define BIG_BUFFER_SIZE2 4000000
 
-#define USE_STATIC_BUFFERS
+//#define USE_STATIC_BUFFERS
 
 #ifdef USE_STATIC_BUFFERS
 #if defined(USING_MOVIDIUS_COMPILER)
@@ -91,6 +91,16 @@ char *bigBuffer2 = NULL;
 IN_DDR void InitializeBuffers()
 {
 #ifndef USE_STATIC_BUFFERS
+#if defined(USING_MOVIDIUS_COMPILER)
+  if(!bigBuffer0)
+    bigBuffer0 = (char*)0x48100000;
+
+  if(!bigBuffer1)
+    bigBuffer1 = (char*)0x48100000 + BIG_BUFFER_SIZE0 + 128;
+
+  if(!bigBuffer2)
+    bigBuffer2 = (char*)0x48100000 + BIG_BUFFER_SIZE0 + BIG_BUFFER_SIZE1 + 256;
+#else // #if defined(USING_MOVIDIUS_COMPILER)
   if(!bigBuffer0)
     bigBuffer0 = (char*)malloc(BIG_BUFFER_SIZE0);
 
@@ -99,7 +109,8 @@ IN_DDR void InitializeBuffers()
 
   if(!bigBuffer2)
     bigBuffer2 = (char*)malloc(BIG_BUFFER_SIZE2);
-#endif
+#endif // #if defined(USING_MOVIDIUS_COMPILER) ... else ...
+#endif // #ifndef USE_STATIC_BUFFERS
 }
 
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
@@ -114,6 +125,8 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
 #else
 
   InitializeBuffers();
+
+  printf("%d %d %d %d\n", blockImage50[0], blockImage50[1000], blockImage50[640*240], blockImage50[640*480-1]);
 
   const s32 scaleImage_numPyramidLevels = 6;
 
