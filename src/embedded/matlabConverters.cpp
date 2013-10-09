@@ -1,5 +1,7 @@
 #include "anki/embeddedCommon/matlabConverters.h"
 
+#if ANKICORETECH_EMBEDDED_USE_MATLAB
+
 namespace Anki {
   namespace Embedded {
     // Template specializations for returning the right Matlab class
@@ -21,3 +23,5 @@ namespace Anki {
     template<> mxClassID getMatlabClassID<u64>(void) { return mxUINT64_CLASS; }
   } // namespace Embedded
 } // namespace Anki
+
+#endif // #if ANKICORETECH_EMBEDDED_USE_MATLAB
