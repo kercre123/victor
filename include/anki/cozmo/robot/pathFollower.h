@@ -1,7 +1,7 @@
 #ifndef PATH_FOLLOWER_H_
 #define PATH_FOLLOWER_H_
 
-#include "cozmoTypes.h"
+#include "anki/cozmo/robot/cozmoTypes.h"
 
 
 namespace PathFollower

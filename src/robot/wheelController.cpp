@@ -5,12 +5,13 @@
  * 
  **/ 
 //#include <math.h>
-#include "app/debug.h"
-#include "app/steeringController.h"
-#include "app/trace.h"
-#include "app/vehicleSpeedController.h"
-#include "app/wheelController.h"
-#include "hal/hal.h"
+#include "anki/cozmo/robot/debug.h"
+#include "anki/cozmo/robot/steeringController.h"
+#include "anki/cozmo/robot/trace.h"
+#include "anki/cozmo/robot/vehicleSpeedController.h"
+#include "anki/cozmo/robot/wheelController.h"
+#include "anki/cozmo/robot/hal.h"
+
 #include <stdio.h>
 
 // Cap error_sum so that integral component of outl does not exceed say some percent of MOTOR_PWM_MAXVAL.

@@ -1,18 +1,21 @@
-#include "app/mainExecution.h"
-#include "app/wheelController.h"
-#include "app/steeringController.h"
-#include "app/vehicleSpeedController.h"
-#include "app/pathFollower.h"
-#include "app/localization.h"
-#include "hal/hal.h"
-#include "cozmoConfig.h"
-#include "cozmoTypes.h"
-#include "debug.h"
+
+#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/robot/cozmoTypes.h"
+
+#include "anki/cozmo/robot/mainExecution.h"
+#include "anki/cozmo/robot/wheelController.h"
+#include "anki/cozmo/robot/steeringController.h"
+#include "anki/cozmo/robot/vehicleSpeedController.h"
+#include "anki/cozmo/robot/pathFollower.h"
+#include "anki/cozmo/robot/localization.h"
+#include "anki/cozmo/robot/hal.h"
+
+#include "anki/cozmo/robot/debug.h"
 #include <stdio.h>
  
 
 #if(DEBUG_MAIN_EXECUTION)
-#include "cozmoBot.h"
+#include "anki/cozmo/robot/cozmoBot.h"
 extern CozmoBot gCozmoBot;
 
 #define MAX_PATH_ERROR_TEXT_LENGTH 256

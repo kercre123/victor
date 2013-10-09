@@ -1,14 +1,14 @@
-#include "app/pathFollower.h"
-#include "app/localization.h"
-#include "app/debug.h"
-#include "app/vehicleMath.h"
-#include <stdio.h>
+#include "anki/cozmo/robot/pathFollower.h"
+#include "anki/cozmo/robot/localization.h"
+#include "anki/cozmo/robot/debug.h"
+#include "anki/cozmo/robot/vehicleMath.h"
 
+#include <stdio.h>
 
 #define ENABLE_PATH_VIZ 1
 
 #if(ENABLE_PATH_VIZ)
-#include "cozmoBot.h"
+#include "anki/cozmo/robot/cozmoBot.h"
 extern CozmoBot gCozmoBot;
 #endif
 

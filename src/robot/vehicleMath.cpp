@@ -15,8 +15,9 @@
  **/
 
 #include "anki/common/constantsAndMacros.h"
-#include "app/vehicleMath.h"
-#include "cozmoTypes.h"
+#include "anki/cozmo/robot/cozmoTypes.h"
+#include "anki/cozmo/robot/vehicleMath.h"
+
 
 // For larger input values to atan, use approximations
 // at fixed steps. (Essentially extends the LUT with courser 

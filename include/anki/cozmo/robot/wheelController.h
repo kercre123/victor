@@ -9,7 +9,7 @@
 #ifndef WHEEL_CONTROLLER_H_
 #define WHEEL_CONTROLLER_H_
 
-#include "cozmoTypes.h"
+#include "anki/cozmo/robot/cozmoTypes.h"
 
 //The default gains for the wheel speed controller
 #define DEFAULT_WHEEL_KP 0.1f //1.0f

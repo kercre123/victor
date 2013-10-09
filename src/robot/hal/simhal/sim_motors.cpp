@@ -1,7 +1,8 @@
-#include "hal/hal.h"
-#include "keyboardController.h"
-#include "cozmoBot.h"
-#include "cozmoConfig.h"
+#include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/cozmoBot.h"
+#include "anki/cozmo/robot/cozmoConfig.h"
+
+
 #include <stdio.h>
 
 extern CozmoBot gCozmoBot;

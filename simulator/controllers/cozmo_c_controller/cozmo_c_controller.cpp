@@ -13,14 +13,16 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#include "cozmoBot.h"
-#include "engine.h"
-#include "hal/hal.h"
-#include "app/localization.h"
-#include "app/pathFollower.h"
-#include "keyboardController.h"
-#include "cozmoConfig.h"
 
+#include "anki/cozmo/robot/cozmoBot.h"
+#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/localization.h"
+#include "anki/cozmo/robot/pathFollower.h"
+
+#include "engine.h"
+
+#include "keyboardController.h"
 
 /*
  * You may want to add macros here.

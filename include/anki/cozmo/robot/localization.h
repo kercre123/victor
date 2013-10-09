@@ -1,7 +1,7 @@
 #ifndef LOCALIZATION_H
 #define LOCALIZATION_H
 
-#include "cozmoTypes.h"
+#include "anki/cozmo/robot/cozmoTypes.h"
 
 
 namespace Localization

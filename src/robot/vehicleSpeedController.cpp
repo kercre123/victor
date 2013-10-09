@@ -30,13 +30,13 @@
 
 //#include <math.h>
 //#include "hal/portable.h"
-#include "app/assert.h"
-#include "app/debug.h"
-#include "app/vehicleSpeedController.h"
-#include "app/wheelController.h"
-#include "app/trace.h"
-#include "hal/hal.h"
-#include "cozmoConfig.h"
+#include "anki/cozmo/robot/assert.h"
+#include "anki/cozmo/robot/debug.h"
+#include "anki/cozmo/robot/vehicleSpeedController.h"
+#include "anki/cozmo/robot/wheelController.h"
+#include "anki/cozmo/robot/trace.h"
+#include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/cozmoConfig.h"
 
 // The target desired speed the user commanded to the car [mm/sec].
 // This is our eventual goal for the vehicle speed, given enough time for acceleration

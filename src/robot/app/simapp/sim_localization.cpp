@@ -1,8 +1,8 @@
-#include "app/localization.h"
+#include "anki/cozmo/robot/cozmoBot.h"
+#include "anki/cozmo/robot/localization.h"
 
 #include "anki/embeddedCommon.h"
 
-#include "cozmoBot.h"
 extern CozmoBot gCozmoBot;
 
 namespace Localization

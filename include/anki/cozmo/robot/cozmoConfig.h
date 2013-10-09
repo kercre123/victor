@@ -3,7 +3,7 @@
 
 #include "anki/common/constantsAndMacros.h"
 
-#include "app/vehicleMath.h"
+#include "anki/cozmo/robot/vehicleMath.h"
 
 // Cozmo control loop is 100Hz
 #define TIME_STEP 10 //ms

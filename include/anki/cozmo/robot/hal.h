@@ -1,7 +1,7 @@
 #ifndef __HAL_H
 #define __HAL_H
 
-#include "cozmoTypes.h"
+#include "anki/cozmo/robot/cozmoTypes.h"
 
 
 /////////////////////////////////////

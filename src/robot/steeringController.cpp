@@ -6,15 +6,17 @@
  **/
 
 #include <math.h>
-#include "app/vehicleSpeedController.h"
-#include "app/steeringController.h"
-#include "app/wheelController.h"
+
+#include "anki/cozmo/robot/cozmoConfig.h"
+
+#include "anki/cozmo/robot/vehicleSpeedController.h"
+#include "anki/cozmo/robot/steeringController.h"
+#include "anki/cozmo/robot/wheelController.h"
 //#include "hal/portable.h"
 //#include "hal/encoders.h"
-#include "app/vehicleMath.h"
-#include "app/trace.h"
-#include "app/debug.h"
-#include "cozmoConfig.h"
+#include "anki/cozmo/robot/vehicleMath.h"
+#include "anki/cozmo/robot/trace.h"
+#include "anki/cozmo/robot/debug.h"
 
 #include <stdio.h>
 

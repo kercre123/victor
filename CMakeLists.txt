@@ -9,7 +9,7 @@ ankiProject(Cozmo)
 include_directories(${PROJECT_SOURCE_DIR}/../coretech-vision/include)
 link_directories(${PROJECT_SOURCE_DIR}/../coretech-vision/build/${CMAKE_GENERATOR}/lib/${BUILD_TYPE_DIR})
 
-add_subdirectory(src) 
+add_subdirectory(src/basestation) 
 add_subdirectory(test)
 add_subdirectory(matlab/mex)
 add_subdirectory(simulator)

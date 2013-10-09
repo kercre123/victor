@@ -1,5 +1,5 @@
-#include "hal/hal.h"
-#include "CozmoBot.h"
+#include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/CozmoBot.h"
 
 extern CozmoBot gCozmoBot;
 

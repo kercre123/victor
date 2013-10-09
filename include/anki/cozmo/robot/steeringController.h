@@ -10,7 +10,7 @@
 #ifndef STEERING_CONTROLLER_H_
 #define STEERING_CONTROLLER_H_
 
-#include "cozmoTypes.h"
+#include "anki/cozmo/robot/cozmoTypes.h"
 
 
 #define MIN_STEERING_K2 2.0f

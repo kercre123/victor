@@ -1,7 +1,7 @@
 #ifndef KEYBOARD_CONTROLLER_H
 #define KEYBOARD_CONTROLLER_H
 
-#include "cozmoTypes.h"
+#include "anki/cozmo/robot/cozmoTypes.h"
 
 void EnableKeyboardController(void);
 void DisableKeyboardController(void);

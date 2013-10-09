@@ -6,7 +6,7 @@
 #ifndef VEHICLEARM_SPEED_CONTROLLER_H_
 #define VEHICLEARM_SPEED_CONTROLLER_H_
 
-#include "cozmoTypes.h"
+#include "anki/cozmo/robot/cozmoTypes.h"
 
 // Controller params
 #define VEHICLE_SPEED_CONTROLLER_KP 2

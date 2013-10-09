@@ -1,8 +1,8 @@
-#include "cozmoConfig.h"
-#include "cozmoTypes.h" 
-#include "hal/hal.h"
+#include "anki/cozmo/robot/cozmoBot.h"
+#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/robot/cozmoTypes.h"
+#include "anki/cozmo/robot/hal.h"
 
-#include "cozmoBot.h"
 extern CozmoBot gCozmoBot;
 
 //Defines the initial coefficient for the filter
