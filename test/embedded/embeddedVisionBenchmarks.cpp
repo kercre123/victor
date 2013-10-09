@@ -3,36 +3,34 @@
 #include "anki/embeddedVision.h"
 #include "embeddedVisionBenchmarks.h"
 
-#include "../../blockImages/fiducial105_6ContrastReduced.h"
-#include "../../blockImages/blockImage50.h"
-
 using namespace Anki::Embedded;
-
-#if(defined(_MSC_VER) || defined(__APPLE__))
-#include <string.h>
-#else
-static void memset(void * dst, int value, size_t size)
-{
-  size_t i;
-  for(i=0; i<size; i++)
-  {
-    ((char*)dst)[i] = value;
-  }
-}
-#endif
-
-#if ANKICORETECH_USE_OPENCV
-#include "opencv2/opencv.hpp"
-#endif
-
-#if ANKICORETECH_USE_MATLAB
-Matlab matlab(false);
-#endif
 
 #define CHECK_FOR_ERRORS
 
-// If both are commented, it is buffer in DDR without L2
-// NOTE: Cannot use both CMX and L2 Cache
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <stdlib.h>
+#ifdef __cplusplus
+}
+#endif
+
+using namespace Anki::Embedded;
+
+// #define RUN_MATLAB_IMAGE_TEST
+
+#if ANKICORETECH_EMBEDDED_USE_OPENCV
+#include "opencv2/core/core.hpp"
+#endif
+
+#if ANKICORETECH_EMBEDDED_USE_MATLAB
+Matlab matlab(false);
+#endif
+
+#if ANKICORETECH_EMBEDDED_USE_GTEST
+#include "gtest/gtest.h"
+#endif
+
 //#define BUFFER_IN_DDR_WITH_L2
 //#define BUFFER_IN_CMX
 
@@ -40,8 +38,7 @@ Matlab matlab(false);
 You cannot use both CMX and L2 Cache;
 #endif
 
-//#define MAX_BYTES 5000000
-#define MAX_BYTES 100000
+#define MAX_BYTES 70000
 
 #ifdef _MSC_VER
 static char buffer[MAX_BYTES];
@@ -59,41 +56,84 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 #endif // #ifdef BUFFER_IN_CMX ... #else
 
-//static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss"))); // No L2 cache
-
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
-#define BIG_BUFFER_SIZE 5000000
+#define RUN_MAIN_BIG_MEMORY_BENCHMARKS
+//#define RUN_ALL_BIG_MEMORY_BENCHMARKS
 
-#if defined(USING_MOVIDIUS_COMPILER)
-__attribute__((section(".ddr_direct.rodata")))
+#ifdef RUN_MAIN_BIG_MEMORY_BENCHMARKS
+#include "../../blockImages/blockImage50.h"
 #endif
-  char bigBuffer0[BIG_BUFFER_SIZE];
 
-#if defined(USING_MOVIDIUS_COMPILER)
-__attribute__((section(".ddr_direct.rodata")))
+#ifdef RUN_ALL_BIG_MEMORY_BENCHMARKS
+#include "../../blockImages/fiducial105_6ContrastReduced.h"
+#include "../../src/embedded/fiducialMarkerDefinitionType0.h"
 #endif
-  char bigBuffer1[BIG_BUFFER_SIZE];
 
+#define BIG_BUFFER_SIZE0 4000000
+#define BIG_BUFFER_SIZE1 4000000
+#define BIG_BUFFER_SIZE2 4000000
+
+//#define USE_STATIC_BUFFERS
+
+#ifdef USE_STATIC_BUFFERS
 #if defined(USING_MOVIDIUS_COMPILER)
-__attribute__((section(".ddr_direct.rodata")))
+//__attribute__((section(".ddr_direct.manualAllocations"))) char bigBuffer0Start;
+__attribute__((section(".ddr.rodata"))) char bigBuffer0[BIG_BUFFER_SIZE0];
+__attribute__((section(".ddr.rodata"))) char bigBuffer1[BIG_BUFFER_SIZE1];
+__attribute__((section(".ddr.rodata"))) char bigBuffer2[BIG_BUFFER_SIZE2];
+#else
+char bigBuffer0[BIG_BUFFER_SIZE0];
+char bigBuffer1[BIG_BUFFER_SIZE1];
+char bigBuffer2[BIG_BUFFER_SIZE2];
 #endif
-  char bigBuffer2[BIG_BUFFER_SIZE];
+#else // #ifdef USE_STATIC_BUFFERS
+char *bigBuffer0 = NULL;
+char *bigBuffer1 = NULL;
+char *bigBuffer2 = NULL;
+#endif // #ifdef USE_STATIC_BUFFERS ... else ...
 
 static const s32 width = 640;
 //static const s32 height = 480;
 static const s32 height = 10;
 //static const s32 numBytes = MIN(MAX_BYTES, 5000000);
 
+IN_DDR void InitializeBuffers()
+{
+#ifndef USE_STATIC_BUFFERS
+#if defined(USING_MOVIDIUS_COMPILER)
+  if(!bigBuffer0)
+    bigBuffer0 = (char*)0x48100000;
+
+  if(!bigBuffer1)
+    bigBuffer1 = (char*)0x48100000 + BIG_BUFFER_SIZE0 + 128;
+
+  if(!bigBuffer2)
+    bigBuffer2 = (char*)0x48100000 + BIG_BUFFER_SIZE0 + BIG_BUFFER_SIZE1 + 256;
+#else // #if defined(USING_MOVIDIUS_COMPILER)
+  if(!bigBuffer0)
+    bigBuffer0 = (char*)malloc(BIG_BUFFER_SIZE0);
+
+  if(!bigBuffer1)
+    bigBuffer1 = (char*)malloc(BIG_BUFFER_SIZE1);
+
+  if(!bigBuffer2)
+    bigBuffer2 = (char*)malloc(BIG_BUFFER_SIZE2);
+#endif // #if defined(USING_MOVIDIUS_COMPILER) ... else ...
+#endif // #ifndef USE_STATIC_BUFFERS
+}
+
 int BenchmarkSimpleDetector_Steps12345_realImage(int numIterations)
 {
+  InitializeBuffers();
+
   const s32 scaleImage_numPyramidLevels = 5;
 
   const s16 component1d_minComponentWidth = 0;
   const s16 component1d_maxSkipDistance = 0;
 
-  const f32 minSideLength = 0.03f*MAX(fiducial105_6_HEIGHT,fiducial105_6_WIDTH);
-  const f32 maxSideLength = 0.97f*MIN(fiducial105_6_HEIGHT,fiducial105_6_WIDTH);
+  const f32 minSideLength = 0.03f*MAX(blockImage50_HEIGHT,blockImage50_WIDTH);
+  const f32 maxSideLength = 0.97f*MIN(blockImage50_HEIGHT,blockImage50_WIDTH);
 
   const s32 component_minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
   const s32 component_maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
@@ -112,9 +152,9 @@ int BenchmarkSimpleDetector_Steps12345_realImage(int numIterations)
 
   const s32 maxMarkers = 100;
 
-  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
-  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE);
-  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE0);
+  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE1);
+  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE2);
 
   const s32 maxConnectedComponentSegments = u16_MAX;
   ConnectedComponents extractedComponents(maxConnectedComponentSegments, scratch0);
@@ -132,6 +172,8 @@ int BenchmarkSimpleDetector_Steps12345_realImage(int numIterations)
     Array<f64> newArray(3, 3, scratch0);
     homographies[i] = newArray;
   } // for(s32 i=0; i<maximumSize; i++)
+
+  InitBenchmarking();
 
   f64 totalTime = 0;
   for(s32 i=0; i<numIterations; i++) {
@@ -156,7 +198,10 @@ int BenchmarkSimpleDetector_Steps12345_realImage(int numIterations)
     totalTime += time1 - time0;
     image[0][0]++;
   }
+
   printf("totalTime: %f\n", totalTime);
+
+  PrintBenchmarkResults();
 
   //ASSERT_TRUE(markers.get_size() == 1);
 
