@@ -87,6 +87,8 @@ IN_DDR GTEST_TEST(CoreTech_Common, BENCHMARKING)
 
 IN_DDR GTEST_TEST(CoreTech_Common, MemoryStackId)
 {
+  //printf("%f %f %f %f %f\n", 43423442334324.010203, 15.500, 15.0, 0.05, 0.12004333);
+
   const s32 numBytes = MIN(MAX_BYTES, 5000);
   ASSERT_TRUE(buffer != NULL);
   MemoryStack ms(buffer, numBytes);

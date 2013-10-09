@@ -44,8 +44,31 @@
 extern "C" {
 #endif
 
+  f32 Roundf(const f32 number);
+  f64 Round(const f64 number);
+
+  // Returns 1 if it is a power of two, zero otherwise
+  s32 IsPowerOfTwo(u32 x);
+
+  u32 Log2u32(u32 x);
+  u64 Log2u64(u64 x);
+
+  // Returns 1 if it is odd, zero otherwise
+  s32 IsOdd(const s32 x);
+
+  // [a b]
+  // [c d]
+  // return a*d - b*c;
+  s32 Determinant2x2(const s32 a, const s32 b, const s32 c, const s32 d);
+
+  // Get the current system time. Currently only implemented for MSVC and generic linux
+  double GetTime();
+
   void explicitPrintf(int reverseWords, const char *format, ...);
-  void explicitPrintfWithExplicitBuffer(int reverseWords, int * buffer, const char *format, ...);
+  // void explicitPrintfWithExplicitBuffer(int reverseWords, int * buffer, const char *format, ...);
+
+  void PrintInt(s64 value); // Print a single number
+  void PrintFloat(f64 value); // Print a single float
 
 #if defined(USING_MOVIDIUS_GCC_COMPILER)
 

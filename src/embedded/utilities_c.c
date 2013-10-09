@@ -1,5 +1,13 @@
 #include "anki/embeddedCommon/utilities_c.h"
 
+#if defined(_MSC_VER)
+#include <windows.h>
+#elif defined(USING_MOVIDIUS_COMPILER)
+
+#else
+#include <sys/time.h>
+#endif
+
 #define MAX_PRINTF_DIGITS 50
 #define PRINTF_BUFFER_SIZE 1024
 int printfBuffer[PRINTF_BUFFER_SIZE];
@@ -11,7 +19,6 @@ void explicitPrintf(int reverseWords, const char *format, ...)
   explicitPrintfWithExplicitBuffer(reverseWords, &printfBuffer[0], format, arguments);
   va_end(arguments);*/
   const char * const formatStart = format;
-  int digits[MAX_PRINTF_DIGITS];
   int numCharacters;
   int i;
   va_list arguments;
@@ -60,75 +67,20 @@ void explicitPrintf(int reverseWords, const char *format, ...)
 
   for(i=0; i<numCharacters; i++) {
     if(printfBuffer[i] == '%') {
-      int j = -1;
-      int value = -1;
       const char percentChar = printfBuffer[i+1];
       i++;
 
       if(percentChar == 'd') {
-        for(j=0; j<MAX_PRINTF_DIGITS; j++) {
-          digits[j] = 0;
-        }
-
-        value = va_arg(arguments, int);
-        if(value < 0) {
-          putchar('-');
-          value = -value;
-        }
-
-        if(value == 0) {
-          putchar('0');
-          putchar(' ');
-          format++;
-          continue;
-        }
-
-        j=0;
-        while(value > 0) {
-          const int curDigit = value - (10*(value/10));
-          //const int curDigit = ABS(value) % 10;
-
-          // This if statement should nenver be true, but it sometimes is on the myriad1. This will output "BUG".
-          if(value < 0){
-            // BUG1
-            digits[j++] = 1;
-            digits[j++] = 23;
-            digits[j++] = 37;
-            digits[j++] = 18;
-            break;
-          }
-
-          if(value == 0){
-            // BUG2
-            digits[j++] = 2;
-            digits[j++] = 23;
-            digits[j++] = 37;
-            digits[j++] = 18;
-            break;
-          }
-
-          if(curDigit < 0){
-            // BUG3
-            digits[j++] = 3;
-            digits[j++] = 23;
-            digits[j++] = 37;
-            digits[j++] = 18;
-            break;
-          }
-
-          digits[j++] = curDigit;
-
-          value /= 10;
-        }
-
-        j--;
-        for( ; j>=0; j--) {
-          putchar(digits[j] + 48);
-          //putchar('w');
-        }
-
-        putchar(' ');
-      }
+        const s32 value = va_arg(arguments, int);
+        PrintInt(value);
+        format++;
+      }  // else if(percentChar == 'd')
+      else if(percentChar == 'f') {
+        // TODO: should this be double, even though it's processed as float?
+        const f32 value = (f32) va_arg(arguments, double);
+        PrintFloat(value);
+        format++;
+      } // else if(percentChar == 'f')
       else if(percentChar == 's') {
         const char * stringArgument = va_arg(arguments, char*);
         while(*stringArgument != 0x00) {
@@ -155,151 +107,236 @@ void explicitPrintf(int reverseWords, const char *format, ...)
   va_end(arguments);
 }
 
-void explicitPrintfWithExplicitBuffer(int reverseWords, int * buffer, const char *format, ...)
+void PrintFloat(f64 value)
 {
-  const char * const formatStart = format;
+  const s32 maxDecimalDigits = 6;
+  const f64 decimalPart = value - (s64)floorf(value);
+
+  s32 digitIndex = -1;
+  s32 numDecimalDigitsUsed = 0;
+
+  if(value < 0.0) {
+    putchar('-');
+    value = -value;
+  }
+
+  // Print the part before the decimal digit
+
+  if(value > 10000000000.0) {
+    const f64 topPart = (f64)value / 10000000000.0;
+    PrintInt((s64)floorf(topPart));
+    putchar('.');
+    putchar('.');
+    putchar('.');
+    return;
+  }
+
+  PrintInt((s64)floorf(value));
+
+  // The remainder of this function prints the part after the decimal digit
+  value = decimalPart;
+
+  putchar('.');
+
+  if(value < (1.0f / powf(10.0f, maxDecimalDigits-1))) {
+    putchar('0');
+
+    return;
+  }
+
+  // This loop prints out the part after the decimal point
+  digitIndex = 0;
+  while(value > 0.0f && numDecimalDigitsUsed < maxDecimalDigits) {
+    s32 curDigit;
+
+    numDecimalDigitsUsed++;
+
+    value *= 10.0f;
+
+    if(value < 1.0f) {
+      putchar('0');
+      continue;
+    }
+
+    curDigit = (s32)(Roundf((f32)(value - (10.0*floorf((f32)(value/10.0))))));
+    //const int curDigit = ABS(value) % 10;
+
+    // This if statement should nenver be true, but it sometimes is on the myriad1. This will output "BUG".
+    if(value < 0.0f){
+      putchar('B');
+      putchar('U');
+      putchar('G');
+      putchar('4');
+      return;
+    }
+
+    if(ABS(value) < 0.00000000001f){
+      putchar('B');
+      putchar('U');
+      putchar('G');
+      putchar('5');
+      return;
+    }
+
+    if(curDigit < 0){
+      putchar('B');
+      putchar('U');
+      putchar('G');
+      putchar('6');
+      return;
+    }
+
+    putchar(curDigit + 48);
+
+    value = value - (f32)curDigit;
+  }
+
+  return;
+} // void printFloat(f32 value)
+
+void PrintInt(s64 value)
+{
   int digits[MAX_PRINTF_DIGITS];
-  int numCharacters;
-  int i;
-  va_list arguments;
 
-  // Count the number of characters
-  numCharacters = 0;
-  while(*format != 0x00)
-  {
-    numCharacters++;
-    format++;
-  }
-  format = formatStart;
+  s32 digitIndex = -1;
 
-  if(reverseWords)
-    numCharacters += 3;
-
-  numCharacters = MIN(numCharacters, PRINTF_BUFFER_SIZE-5);
-
-  // Reverse the string
-  if(reverseWords) {
-    for(i=0; i<numCharacters; i+=4) {
-      buffer[i] = format[i+3];
-      if(format[i+3] == 0x00) {
-        buffer[i+1] = 0x00;
-      } else {
-        buffer[i+1] = format[i+2];
-        if(format[i+2] == 0x00) {
-          buffer[i+2] = 0x00;
-        } else {
-          buffer[i+2] = format[i+1];
-          if(format[i+1] == 0x00) {
-            buffer[i+3] = 0x00;
-          } else {
-            buffer[i+3] = format[i];
-          }
-        }
-      }
-    }
-  } else {
-    for(i=0; i<numCharacters; i++) {
-      buffer[i] = format[i];
-    }
+  for(digitIndex=0; digitIndex<MAX_PRINTF_DIGITS; digitIndex++) {
+    digits[digitIndex] = 0;
   }
 
-  va_start(arguments, format);
+  if(value < 0) {
+    putchar('-');
+    value = -value;
+  }
 
-  for(i=0; i<numCharacters; i++) {
-    if(buffer[i] == '%') {
-      int j = -1;
-      int value = -1;
-      const char percentChar = buffer[i+1];
-      i++;
+  if(value == 0) {
+    putchar('0');
+    return;
+  }
 
-      if(percentChar == 'd') {
-        for(j=0; j<MAX_PRINTF_DIGITS; j++) {
-          digits[j] = 0;
-        }
+  digitIndex=0;
+  while(value > 0) {
+    const s32 curDigit = (s32)(value - (10*(value/10)));
+    //const int curDigit = ABS(value) % 10;
 
-        value = va_arg(arguments, int);
-        if(value < 0) {
-          putchar('-');
-          value = -value;
-        }
-
-        if(value == 0) {
-          putchar('0');
-          putchar(' ');
-          format++;
-          continue;
-        }
-
-        j=0;
-        while(value > 0) {
-          const int curDigit = value - (10*(value/10));
-          //const int curDigit = ABS(value) % 10;
-
-          // This if statement should nenver be true, but it sometimes is on the myriad1. This will output "BUG".
-          if(value < 0){
-            // BUG1
-            digits[j++] = 1;
-            digits[j++] = 23;
-            digits[j++] = 37;
-            digits[j++] = 18;
-            break;
-          }
-
-          if(value == 0){
-            // BUG2
-            digits[j++] = 2;
-            digits[j++] = 23;
-            digits[j++] = 37;
-            digits[j++] = 18;
-            break;
-          }
-
-          if(curDigit < 0){
-            // BUG3
-            digits[j++] = 3;
-            digits[j++] = 23;
-            digits[j++] = 37;
-            digits[j++] = 18;
-            break;
-          }
-
-          digits[j++] = curDigit;
-
-          value /= 10;
-        }
-
-        j--;
-        for( ; j>=0; j--) {
-          putchar(digits[j] + 48);
-          //putchar('w');
-        }
-
-        putchar(' ');
-      }
-      //else if(percentChar == 's') {
-      //  const char * stringArgument = va_arg(arguments, char*);
-      //  while(*stringArgument != 0x00) {
-      //    putchar(*stringArgument);
-      //    stringArgument++;
-      //  }
-      //  //explicitPrintfWithExplicitBuffer(reverseWords, &printfBuffer2[0], stringArgument);
-      //}
-      else {
-        if(buffer[i] == 0x00)
-          break;
-
-        putchar('%');
-        putchar(buffer[i]);
-      }
-    } else {
-      if(buffer[i] == 0x00)
-        break;
-
-      putchar(buffer[i]);
+    // This if statement should nenver be true, but it sometimes is on the myriad1. This will output "BUG".
+    if(value < 0){
+      // BUG1
+      digits[digitIndex++] = 1;
+      digits[digitIndex++] = 23;
+      digits[digitIndex++] = 37;
+      digits[digitIndex++] = 18;
+      break;
     }
-  } // for(i=0; i<numCharacters; i++)
 
-  va_end(arguments);
+    if(value == 0){
+      // BUG2
+      digits[digitIndex++] = 2;
+      digits[digitIndex++] = 23;
+      digits[digitIndex++] = 37;
+      digits[digitIndex++] = 18;
+      break;
+    }
+
+    if(curDigit < 0){
+      // BUG3
+      digits[digitIndex++] = 3;
+      digits[digitIndex++] = 23;
+      digits[digitIndex++] = 37;
+      digits[digitIndex++] = 18;
+      break;
+    }
+
+    digits[digitIndex++] = curDigit;
+
+    value /= 10;
+  }
+
+  digitIndex--;
+  for( ; digitIndex>=0; digitIndex--) {
+    putchar(digits[digitIndex] + 48);
+  }
+
+  return;
+} // void printInt(s32 value)
+
+#if !defined(USING_MOVIDIUS_COMPILER)
+IN_DDR double GetTime()
+{
+#if defined(_MSC_VER)
+  LARGE_INTEGER frequency, counter;
+  QueryPerformanceCounter(&counter);
+  QueryPerformanceFrequency(&frequency);
+  return (double)(counter.QuadPart)/(double)(frequency.QuadPart);
+#elif defined(__APPLE_CC__)
+  return 0.0;
+#else
+  timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return (double)(ts.tv_sec) + (double)(ts.tv_nsec)/1000000000.0;
+#endif
+}
+#endif // #if !defined(USING_MOVIDIUS_COMPILER)
+
+f32 Roundf(const f32 number)
+{
+  if(number > 0)
+    return floorf(number + 0.5f);
+  else
+    return floorf(number - 0.5f);
+}
+
+f64 Round(const f64 number)
+{
+  // This casting wierdness is because the myriad doesn't have a double-precision floor function.
+  if(number > 0)
+    return (f64)(floorf((f32)(number) + 0.5f));
+  else
+    return (f64)(floorf((f32)(number) - 0.5f));
+}
+
+IN_DDR s32 IsPowerOfTwo(u32 x)
+{
+  // While x is even and greater than 1, keep dividing by two
+  while (((x & 1) == 0) && x > 1)
+    x >>= 1;
+
+  return (x == 1);
+}
+
+s32 IsOdd(const s32 x)
+{
+  if(x | 1)
+    return 1;
+  else
+    return 0;
+}
+
+s32 Determinant2x2(const s32 a, const s32 b, const s32 c, const s32 d)
+{
+  return a*d - b*c;
+}
+
+IN_DDR u32 Log2u32(u32 x)
+{
+  u32 powerCount = 0;
+  // While x is even and greater than 1, keep dividing by two
+  while (x >>= 1) {
+    powerCount++;
+  }
+
+  return powerCount;
+}
+
+IN_DDR u64 Log2u64(u64 x)
+{
+  u64 powerCount = 0;
+  // While x is even and greater than 1, keep dividing by two
+  while (x >>= 1) {
+    powerCount++;
+  }
+
+  return powerCount;
 }
 
 #if defined(USING_MOVIDIUS_GCC_COMPILER)
