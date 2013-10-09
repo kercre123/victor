@@ -54,9 +54,9 @@ void realMain()
   DrvL2CacheAllocateSetPartitions();
   SET_REG_WORD(L2C_MXITID_ADR, 0x0);
 
-  sparc_leon3_disable_cache();
+//  sparc_leon3_disable_cache();
 
-//  explicitPrintf(1, "Starting unit tests\n");
+  printf("Starting unit tests \n   ");
 
   swcShaveProfInit(&perfStr);
 
@@ -73,7 +73,7 @@ void realMain()
   //    The below printf is modified from swcShaveProfPrint(0, &perfStr);
 //  explicitPrintf(1, "\nLeon executed %d cycles in %d micro seconds ([%d ms])\n",(s32)(perfStr.perfCounterTimer), (s32)(DrvTimerTicksToMs(perfStr.perfCounterTimer)*1000), (s32)(DrvTimerTicksToMs(perfStr.perfCounterTimer)));
 
-//  explicitPrintf(1, "Finished unit tests\n");
+  printf("Finished unit tests \n   ");
 }
 
 int __attribute__((section(".sys.text.start"))) main(void)

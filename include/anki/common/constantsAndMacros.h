@@ -1,32 +1,31 @@
 /**
- * File: constantsAndMacros.h
- *
- * Author:  Andrew Stein (andrew)
- * Created: 10/7/2013
- * 
- * Information on last revision to this file:
- *    $LastChangedDate$
- *    $LastChangedBy$
- *    $LastChangedRevision$
- * 
- * Description:   This should only contain very basic constants and macros
- *                that are used *everywhere*.  It should not pull in lots of 
- *                extra #includes or pollute namespaces with "using" directives.
- *                Note that it is also used by embedded code (not just 
- *                basestation), so it should only use / define things that are
- *                safe for that build environment.  So no basestation-specific 
- *                code or types (and no throwing exceptions).
- * 
- *                Please limit additions to this file and try to keep it 
- *                organized.  Add new definitions in an existing / appropriate 
- *                or add a new, descriptive section when needed (not "misc").
- *                This should not become a dumping ground for every random 
- *                little utility macro.
- *
- * Copyright: Anki, Inc. 2013
- *
- **/
-
+* File: constantsAndMacros.h
+*
+* Author:  Andrew Stein (andrew)
+* Created: 10/7/2013
+*
+* Information on last revision to this file:
+*    $LastChangedDate$
+*    $LastChangedBy$
+*    $LastChangedRevision$
+*
+* Description:   This should only contain very basic constants and macros
+*                that are used *everywhere*.  It should not pull in lots of
+*                extra #includes or pollute namespaces with "using" directives.
+*                Note that it is also used by embedded code (not just
+*                basestation), so it should only use / define things that are
+*                safe for that build environment.  So no basestation-specific
+*                code or types (and no throwing exceptions).
+*
+*                Please limit additions to this file and try to keep it
+*                organized.  Add new definitions in an existing / appropriate
+*                or add a new, descriptive section when needed (not "misc").
+*                This should not become a dumping ground for every random
+*                little utility macro.
+*
+* Copyright: Anki, Inc. 2013
+*
+**/
 
 #ifndef CORETECH_COMMON_CONSTANTS_AND_MACROS_H_
 #define CORETECH_COMMON_CONSTANTS_AND_MACROS_H_
@@ -44,13 +43,20 @@
 #define FALSE                 0
 #endif
 
-
 //////////////////////////////////////////////////////////////////////////////
 // MATH CONSTANTS
 //////////////////////////////////////////////////////////////////////////////
 
 /* Why not use M_PI and M_PI_2 that are provided by the math.h include above? */
- 
+
+#ifndef M_PI
+#define M_PI       3.14159265358979323846
+#endif
+
+#ifndef M_PI_2
+#define M_PI_2     1.57079632679489661923
+#endif
+
 #ifndef PI
 //#define PI                    3.14159265358979323846   /* pi */
 #define PI M_PI
@@ -59,7 +65,6 @@
 //#define PIDIV2                1.5707963                /* pi/2 */
 #define PIDIV2 M_PI_2
 #endif
-  
 
 //////////////////////////////////////////////////////////////////////////////
 // MAX / MIN VALUES
@@ -112,7 +117,6 @@
 #ifndef s64_MAX
 #define s64_MAX ( (s64)(0x7FFFFFFFFFFFFFFFLL) )
 #endif
-  
 
 //////////////////////////////////////////////////////////////////////////////
 // UNIT CONVERSION MACROS
@@ -137,8 +141,8 @@
 #define FLOATING_POINT_COMPARISON_TOLERANCE 1e-5
 
 // TRUE if x is near y by the amount epsilon, else FALSE
-#define FLT_NEAR(x,y) ((x) == (y) || (((x) > (y)-(FLOATING_POINT_COMPARISON_TOLERANCE)) && ((x) < (y)+(FLOATING_POINT_COMPARISON_TOLERANCE)))) 
-#define NEAR(x,y,epsilon) ((x) == (y) || (((x) > (y)-(epsilon)) && ((x) < (y)+(epsilon)))) 
+#define FLT_NEAR(x,y) ((x) == (y) || (((x) > (y)-(FLOATING_POINT_COMPARISON_TOLERANCE)) && ((x) < (y)+(FLOATING_POINT_COMPARISON_TOLERANCE))))
+#define NEAR(x,y,epsilon) ((x) == (y) || (((x) > (y)-(epsilon)) && ((x) < (y)+(epsilon))))
 
 // TRUE if x is within FLOATING_POINT_COMPARISON_TOLERANCE of 0.0
 #define NEAR_ZERO(x) (NEAR(x, 0.0, FLOATING_POINT_COMPARISON_TOLERANCE))
@@ -151,10 +155,9 @@
 
 // TRUE if x - tolerance <= y
 #define FLT_LE(x,y) ((x) >= (y) || (((x)-(FLOATING_POINT_COMPARISON_TOLERANCE) <= (y))))
-  
+
 // TRUE if val is within the range [minVal, maxVal], else FALSE
 #define IN_RANGE(val,minVal,maxVal) ((val) >= (minVal) && (val) <= (maxVal))
-
 
 ///////////////////////////////////////////////////////////////////
 // MATH MACROS
@@ -178,4 +181,3 @@
 #define SQUARE(x) ((x) * (x))
 
 #endif // CORETECH_COMMON_CONSTANTS_AND_MACROS_H_
-

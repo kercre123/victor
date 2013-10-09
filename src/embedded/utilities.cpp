@@ -117,7 +117,7 @@ namespace Anki
           printf(PrintfOneArray_FORMAT_STRING_2, mulitipliedValue1, mulitipliedValue2);
         }
 
-        if(!IsOdd(array.get_size(1))) {
+        if(IsOdd(array.get_size(1))) {
           for(s32 x=array.get_size(1)-1; x<array.get_size(1); x++) {
             const f32 value1 = rowPointer[x];
             const s32 mulitipliedValue1 = static_cast<s32>(Round(10000.0f * value1));
@@ -147,7 +147,7 @@ namespace Anki
           printf(PrintfOneArray_FORMAT_STRING_2, mulitipliedValue1, mulitipliedValue2);
         }
 
-        if(!IsOdd(array.get_size(1))) {
+        if(IsOdd(array.get_size(1))) {
           for(s32 x=array.get_size(1)-1; x<array.get_size(1); x++) {
             const f64 value1 = rowPointer[x];
             const s32 mulitipliedValue1 = static_cast<s32>(Round(10000.0 * value1));
@@ -158,6 +158,19 @@ namespace Anki
         printf("\n");
       }
       printf("\n");
+    }
+
+    IN_DDR s32 Sum(const Array<u8> &image)
+    {
+      s32 sum = 0;
+      for(s32 y=0; y<image.get_size(0); y++) {
+        const u8 * const rowPointer = image.Pointer(y, 0);
+        for(s32 x=0; x<image.get_size(1); x++) {
+          sum += rowPointer[x];
+        }
+      }
+
+      return sum;
     }
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV

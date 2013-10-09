@@ -41,22 +41,29 @@ namespace Anki
       // to the user from the returned void* pointer, and doesn't include overhead like the fill
       // patterns.
       //
-
-      /// All memory in the array is zeroed out once it is allocated, making Allocate more like calloc() than malloc()
+      // All memory in the array is zeroed out once it is allocated, making Allocate more like calloc() than malloc()
       void* Allocate(s32 numBytesRequested, s32 *numBytesAllocated=NULL);
 
       // Check if any Allocate() memory was written out of bounds (via fill patterns at the beginning and end)
-      bool IsValid();
+      bool IsValid() const;
 
       // Returns the number of bytes that can still be allocated.
       // The max allocation is less than or equal to "get_totalBytes() - get_usedBytes() - 12".
-      s32 ComputeLargestPossibleAllocation();
+      s32 ComputeLargestPossibleAllocation() const;
 
-      s32 get_totalBytes();
-      s32 get_usedBytes();
+      // Print out this MemoryStack's id and memory usage
+      Result Print() const;
+
+      s32 get_totalBytes() const;
+      s32 get_usedBytes() const;
 
       void* get_buffer();
       const void* get_buffer() const;
+
+      // Each MemoryStack created by the MemoryStack(void *buffer, s32 bufferLength) constructor has
+      // a unique id. This is used for debugging to keep track of things like its maximum memory
+      // usage.
+      s32 get_id() const;
 
       // Probably these should not be used?
       // void Clear(); // Reset usedBytes to zero
@@ -72,6 +79,9 @@ namespace Anki
       s32 totalBytes;
       s32 usedBytes;
 
+      s32 id;
+
+    private:
       const void* Allocate(s32 numBytes) const; // Not allowed
       //MemoryStack & operator= (const MemoryStack & rightHandSide); // Not allowed
     };
