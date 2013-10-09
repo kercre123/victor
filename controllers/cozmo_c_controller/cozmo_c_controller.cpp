@@ -27,8 +27,7 @@
  */
 
 // If enabled, robot is controlled manually through keyboard.
-//#define ENABLE_KEYBOARD_CONTROL
-
+#define ENABLE_KEYBOARD_CONTROL
 
 
 extern CozmoBot gCozmoBot;
@@ -109,9 +108,14 @@ int MatlabTest(void)
   
   
   return 0;
-}
+  
+} // MatlabTest()
 
 
+void MatlabImageTest(void)
+{
+  
+} // MatlabImageTest()
 
 /*
  * This is the main program.

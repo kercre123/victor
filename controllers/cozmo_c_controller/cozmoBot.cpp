@@ -13,9 +13,14 @@
 #include <cstdio>
 #include <string>
 
+#include <webots/Display.hpp>
+
+#if ANKICORETECH_EMBEDDED_USE_MATLAB && USING_MATLAB_VISION
+#include "anki/embeddedCommon/matlabConverters.h"
+#endif
 
 ///////// TESTING //////////
-#define EXECUTE_TEST_PATH 1
+#define EXECUTE_TEST_PATH 0
 
 ///////// END TESTING //////
 
@@ -40,7 +45,7 @@
 CozmoBot gCozmoBot;
 
 
-CozmoBot::CozmoBot() : Supervisor() 
+CozmoBot::CozmoBot() : Supervisor()
 {
   robotID_ = -1;
 
@@ -71,8 +76,42 @@ CozmoBot::CozmoBot() : Supervisor()
 
   // Plugin comms uses channel 0
   physicsComms_ = getEmitter(PLUGIN_COMMS);
-}
+    
+#if USING_MATLAB_VISION
+  matlabEngine_ = NULL;
+  if (!(matlabEngine_ = engOpen(""))) {
+		fprintf(stderr, "\nCan't start MATLAB engine!\n");
+    // TODO: how do we indicate construction failure on the robot?
+	}
+  
+  engEvalString(matlabEngine_, "run('../../../matlab/initCozmoPath.m');");
+  
+  // TODO: Pass camera calibration data back to Matlab
+  
+  char cmd[256];
+  snprintf(cmd, 255, "h_imgFig = figure; "
+           "subplot(121); "
+           "h_headImg = imshow(zeros(%d,%d)); "
+           "title('Head Camera'); "
+           "subplot(122); "
+           "h_matImg = imshow(zeros(%d,%d)); "
+           "title('Mat Camera');",
+           headCam_->getHeight(), headCam_->getWidth(),
+           downCam_->getHeight(), downCam_->getWidth());
+  
+  engEvalString(matlabEngine_, cmd);
+  
+#endif
+} // Constructor: CozmoBot()
 
+CozmoBot::~CozmoBot()
+{
+#if USING_MATLAB_VISION
+  if(matlabEngine_ != NULL) {
+  	engClose(matlabEngine_);
+  }
+#endif
+} // Destructor
 
 void CozmoBot::Init() 
 {
@@ -256,6 +295,144 @@ void CozmoBot::ManageGripper()
   }
 }
 
+int CozmoBot::processHeadImage()
+{
+  int retVal = -1;
+  
+  const u8 *image = this->headCam_->getImage();
+  const int nrows = this->headCam_->getHeight();
+  const int ncols = this->headCam_->getWidth();
+  
+#if defined(USE_MATLAB_FOR_HEAD_CAMERA)
+  mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(image, nrows, ncols, 4);
+  
+  if(mxImg != NULL) {
+    // Send the image to matlab
+    engPutVariable(matlabEngine_, "headCamImage", mxImg);
+    
+    // Convert from GBRA format to RGB:
+    engEvalString(matlabEngine_, "headCamImage = headCamImage(:,:,[3 2 1]);");
+    
+    // Display (optional)
+    engEvalString(matlabEngine_, "set(h_headImg, 'CData', headCamImage);");
+    
+    // Detect BlockMarkers
+    engEvalString(matlabEngine_, "blockMarkers = simpleDetector(headCamImage); "
+                  "numMarkers = length(blockMarkers);");
+    
+    int numMarkers = static_cast<int>(mxGetScalar(engGetVariable(matlabEngine_, "numMarkers")));
+    
+    fprintf(stdout, "Found %d block markers.\n", numMarkers);
+    
+    // Can't get the blockMarkers directly because they are Matlab objects
+    // which are not happy with engGetVariable.
+    //mxArray *mxBlockMarkers = engGetVariable(matlabEngine_, "blockMarkers");
+    for(int i_marker=0; i_marker<numMarkers; ++i_marker) {
+      
+      // Get the pieces of each block marker we need individually
+      char cmd[256];
+      snprintf(cmd, 255,
+               "currentMarker = blockMarkers{%d}; "
+               "blockType = currentMarker.blockType; "
+               "faceType  = currentMarker.faceType; "
+               "corners   = currentMarker.corners;", i_marker+1);
+      
+      engEvalString(matlabEngine_, cmd);
+      
+      
+      // Create a message from those pieces
+      
+      CozmoMsg_ObservedBlockMarker msg;
+      
+      mxArray *mxBlockType = engGetVariable(matlabEngine_, "blockType");
+      msg.blockType = static_cast<u32>(mxGetScalar(mxBlockType));
+      
+      mxArray *mxFaceType = engGetVariable(matlabEngine_, "faceType");
+      msg.faceType = static_cast<u32>(mxGetScalar(mxFaceType));
+      
+      mxArray *mxCorners = engGetVariable(matlabEngine_, "corners");
+      
+      mxAssert(mxGetM(mxCorners)==4 && mxGetN(mxCorners)==2,
+               "BlockMarker's corners should be 4x2 in size.");
+      
+      double *corners_x = mxGetPr(mxCorners);
+      double *corners_y = corners_x + 4;
+      
+      msg.x_imgUpperLeft  = static_cast<f32>(corners_x[0]);
+      msg.y_imgUpperLeft  = static_cast<f32>(corners_y[0]);
+      
+      msg.x_imgLowerLeft  = static_cast<f32>(corners_x[1]);
+      msg.y_imgLowerLeft  = static_cast<f32>(corners_y[1]);
+      
+      msg.x_imgUpperRight = static_cast<f32>(corners_x[2]);
+      msg.y_imgUpperRight = static_cast<f32>(corners_y[2]);
+      
+      msg.x_imgLowerRight = static_cast<f32>(corners_x[3]);
+      msg.y_imgLowerRight = static_cast<f32>(corners_y[3]);
+      
+      fprintf(stdout, "Sending ObsevedBlockMarker message: Block %d, Face %d "
+              "at [(%.1f,%.1f) (%.1f,%.1f) (%.1f,%.1f) (%.1f,%.1f)]\n",
+              msg.blockType, msg.faceType,
+              msg.x_imgUpperLeft,  msg.y_imgUpperLeft,
+              msg.x_imgLowerLeft,  msg.y_imgLowerLeft,
+              msg.x_imgUpperRight, msg.y_imgUpperRight,
+              msg.x_imgLowerRight, msg.y_imgLowerRight);
+      
+      this->Send(&msg, sizeof(CozmoMsg_ObservedBlockMarker));
+      
+    } // FOR each block Marker
+    
+  } // IF any blockMarkers found
+  
+  retVal = 0;
+  
+#else  // NOT defined(USE_MATLAB_FOR_HEAD_CAMERA)
+
+  // TODO: Hook this up to Pete's vision code
+  fprintf(stderr, "CozmoBot::processHeadImage(): embedded vision "
+          "processing not hooked up yet.\n");
+  retVal = -1;
+  
+#endif // defined(USE_MATLAB_FOR_HEAD_CAMERA)
+  
+  return retVal;
+  
+} // processHeadImage()
+
+
+int CozmoBot::processMatImage()
+{
+  int retVal = -1;
+  
+  const u8 *image = this->downCam_->getImage();
+  const int nrows = this->headCam_->getHeight();
+  const int ncols = this->headCam_->getWidth();
+  
+#if defined(USE_MATLAB_FOR_MAT_CAMERA)
+  mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(image, nrows, ncols, 4);
+
+  if(mxImg != NULL) {
+    engPutVariable(matlabEngine_, "matCamImage", mxImg);
+    engEvalString(matlabEngine_, "matCamImage = matCamImage(:,:,[3 2 1]);");
+    engEvalString(matlabEngine_, "set(h_matImg, 'CData', matCamImage);");
+    
+    retVal = 0;
+  } else {
+    fprintf(stderr, "CozmoBot::processHeadImage(): could not convert image to mxArray.");
+  }
+
+#else  // NOT defined(USE_MATLAB_FOR_MAT_CAMERA)
+  
+  // TODO: Hook this up to Pete's vision code
+  fprintf(stderr, "CozmoBot::processMatImage(): embedded vision "
+          "processing not hooked up yet.\n");
+  retVal = -1;
+  
+#endif // defined(USE_MATLAB_FOR_MAT_CAMERA)
+  
+  return retVal;
+  
+} // processMatImage()
 
 
 void CozmoBot::SetOverlayText(OverlayTextID ot_id, const char* txt)
@@ -265,57 +442,71 @@ void CozmoBot::SetOverlayText(OverlayTextID ot_id, const char* txt)
   setLabel(ot_id, txt, 0, 0.7 + (float)ot_id * overlayTextSize/3, overlayTextSize, overlayTextColor, 0);
 }
 
-
-void CozmoBot::run() 
+int CozmoBot::step(int ms)
 {
-  while (step(TIME_STEP) != -1) {
-
-
-    RunKeyboardController();
-
+  int retVal = webots::Supervisor::step(ms);
+  
+  RunKeyboardController();
+  
+  // Do vision processing:
+  this->processHeadImage();
+  this->processMatImage();
+  
 #if(EXECUTE_TEST_PATH)
-    // TESTING
-    static u32 startDriveTime_us = 1000000;
-    static BOOL driving = FALSE;
-    if (!IsKeyboardControllerEnabled() && !driving && getMicroCounter() > startDriveTime_us) {
-      SetUserCommandedAcceleration( MAX(ONE_OVER_CONTROL_DT + 1, 500) );  // This can't be smaller than 1/CONTROL_DT!  
-      SetUserCommandedDesiredVehicleSpeed(160);
-      fprintf(stdout, "Speed commanded: %d mm/s\n", GetUserCommandedDesiredVehicleSpeed() );
-
-
-      // Create a path and follow it
-      PathFollower::AppendPathSegment_Line(0, 0.0, 0.0, 0.3, -0.3);
-      float arc1_radius = sqrt(0.005);  // Radius of sqrt(0.05^2 + 0.05^2)
-      PathFollower::AppendPathSegment_Arc(0, 0.35, -0.25, arc1_radius, -0.75*PI, 0); 
-      PathFollower::AppendPathSegment_Line(0, 0.35 + arc1_radius, -0.25, 0.35 + arc1_radius, 0.2);
-      float arc2_radius = sqrt(0.02); // Radius of sqrt(0.1^2 + 0.1^2)
-      PathFollower::AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, PIDIV2);
-      PathFollower::StartPathTraversal();
-
-      driving = TRUE;
-    }
-#endif //EXECUTE_TEST_PATH
-
-
-    fprintf(stdout, "speedDes: %d, speedCur: %d, speedCtrl: %d, speedMeas: %d\n", 
-           GetUserCommandedDesiredVehicleSpeed(), 
-           GetUserCommandedCurrentVehicleSpeed(),
-           GetControllerCommandedVehicleSpeed(),
-           GetCurrentMeasuredVehicleSpeed());
-
-    CozmoMainExecution();
+  // TESTING
+  static u32 startDriveTime_us = 1000000;
+  static BOOL driving = FALSE;
+  if (!IsKeyboardControllerEnabled() && !driving && getMicroCounter() > startDriveTime_us) {
+    SetUserCommandedAcceleration( MAX(ONE_OVER_CONTROL_DT + 1, 500) );  // This can't be smaller than 1/CONTROL_DT!
+    SetUserCommandedDesiredVehicleSpeed(160);
+    fprintf(stdout, "Speed commanded: %d mm/s\n", GetUserCommandedDesiredVehicleSpeed() );
     
-
-    // Buffer any incoming data from basestation
-    ManageRecvBuffer();
-
-    // Check if connector attaches to anything
-    ManageGripper();
-
-    // Print overlay text in main 3D view
-    SetOverlayText(OT_CURR_POSE, locStr);
+    
+    // Create a path and follow it
+    PathFollower::AppendPathSegment_Line(0, 0.0, 0.0, 0.3, -0.3);
+    float arc1_radius = sqrt(0.005);  // Radius of sqrt(0.05^2 + 0.05^2)
+    PathFollower::AppendPathSegment_Arc(0, 0.35, -0.25, arc1_radius, -0.75*PI, 0);
+    PathFollower::AppendPathSegment_Line(0, 0.35 + arc1_radius, -0.25, 0.35 + arc1_radius, 0.2);
+    float arc2_radius = sqrt(0.02); // Radius of sqrt(0.1^2 + 0.1^2)
+    PathFollower::AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, PIDIV2);
+    PathFollower::StartPathTraversal();
+    
+    driving = TRUE;
   }
-}
+#endif //EXECUTE_TEST_PATH
+  
+  
+  fprintf(stdout, "speedDes: %d, speedCur: %d, speedCtrl: %d, speedMeas: %d\n",
+          GetUserCommandedDesiredVehicleSpeed(),
+          GetUserCommandedCurrentVehicleSpeed(),
+          GetControllerCommandedVehicleSpeed(),
+          GetCurrentMeasuredVehicleSpeed());
+  
+  CozmoMainExecution();
+  
+  
+  // Buffer any incoming data from basestation
+  ManageRecvBuffer();
+  
+  // Check if connector attaches to anything
+  ManageGripper();
+  
+  // Print overlay text in main 3D view
+  SetOverlayText(OT_CURR_POSE, locStr);
+  
+  return retVal;
+  
+} // step()
+
+
+void CozmoBot::run()
+{
+  
+  while (this->step(TIME_STEP) != -1) {
+  
+  } // while(step)
+  
+} // run()
 
 
 

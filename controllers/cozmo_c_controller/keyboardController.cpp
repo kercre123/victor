@@ -55,25 +55,25 @@ void RunKeyboardController()
   
   switch (key)
   {
-    case Robot::KEYBOARD_UP:
+    case webots::Robot::KEYBOARD_UP:
     {  
       gCozmoBot.SetWheelAngularVelocity(DRIVE_VELOCITY_SLOW, DRIVE_VELOCITY_SLOW);
       break;
     }
     
-    case Robot::KEYBOARD_DOWN:
+    case webots::Robot::KEYBOARD_DOWN:
     {
       gCozmoBot.SetWheelAngularVelocity(-DRIVE_VELOCITY_SLOW, -DRIVE_VELOCITY_SLOW);
       break;
     }
     
-    case Robot::KEYBOARD_LEFT:
+    case webots::Robot::KEYBOARD_LEFT:
     {
       gCozmoBot.SetWheelAngularVelocity(-TURN_VELOCITY_SLOW, TURN_VELOCITY_SLOW);
       break;
     }
     
-    case Robot::KEYBOARD_RIGHT:
+    case webots::Robot::KEYBOARD_RIGHT:
     {
       gCozmoBot.SetWheelAngularVelocity(TURN_VELOCITY_SLOW, -TURN_VELOCITY_SLOW);
       break;
