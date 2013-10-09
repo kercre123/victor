@@ -2,6 +2,14 @@
 
 #include "anki/embeddedVision.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <stdlib.h>
+#ifdef __cplusplus
+}
+#endif
+
 using namespace Anki::Embedded;
 
 // #define RUN_MATLAB_IMAGE_TEST
@@ -48,30 +56,63 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 #define RUN_MAIN_BIG_MEMORY_TESTS
 //#define RUN_ALL_BIG_MEMORY_TESTS
 
+#ifdef RUN_MAIN_BIG_MEMORY_TESTS
 #include "../../blockImages/blockImage50.h"
+#endif
+
+#ifdef RUN_ALL_BIG_MEMORY_TESTS
 #include "../../blockImages/fiducial105_6ContrastReduced.h"
 #include "../../src/embedded/fiducialMarkerDefinitionType0.h"
+#endif
 
-#define BIG_BUFFER_SIZE 5000000
+#define BIG_BUFFER_SIZE 4000000
 
+#define USE_STATIC_BUFFERS
+
+#ifdef USE_STATIC_BUFFERS
 #if defined(USING_MOVIDIUS_COMPILER)
-__attribute__((section(".ddr_direct.manualAllocations"))) char bigBuffer0Start;
+//__attribute__((section(".ddr_direct.manualAllocations"))) char bigBuffer0Start;
+__attribute__((section(".ddr.rodata"))) char bigBuffer0[BIG_BUFFER_SIZE];
+__attribute__((section(".ddr.rodata"))) char bigBuffer1[BIG_BUFFER_SIZE];
+__attribute__((section(".ddr.rodata"))) char bigBuffer2[BIG_BUFFER_SIZE];
 #else
 char bigBuffer0[BIG_BUFFER_SIZE];
 char bigBuffer1[BIG_BUFFER_SIZE];
 char bigBuffer2[BIG_BUFFER_SIZE];
 #endif
+#else // #ifdef USE_STATIC_BUFFERS
+char *bigBuffer0 = NULL;
+char *bigBuffer1 = NULL;
+char *bigBuffer2 = NULL;
+#endif // #ifdef USE_STATIC_BUFFERS ... else ...
+
+IN_DDR void InitializeBuffers()
+{
+#ifndef USE_STATIC_BUFFERS
+  if(!bigBuffer0)
+    bigBuffer0 = (char*)malloc(BIG_BUFFER_SIZE);
+
+  if(!bigBuffer1)
+    bigBuffer1 = (char*)malloc(BIG_BUFFER_SIZE);
+
+  if(!bigBuffer2)
+    bigBuffer2 = (char*)malloc(BIG_BUFFER_SIZE);
+#endif
+}
 
 IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
 {
-  s32 combined = 0;
-  for(s32 i=0; i<640*480; i++)
-    combined += blockImage50[i];
+  //s32 combined = 0;
+  //for(s32 i=0; i<640*480; i++)
+  //  combined += blockImage50[i];
 
-  printf("steps12345: %d %d %d %d\n", blockImage50[0], blockImage50[640*240], blockImage50[640*480 - 1], combined);
+  //printf("steps12345: %d %d %d %d\n", blockImage50[0], blockImage50[640*240], blockImage50[640*480 - 1], combined);
 #ifndef RUN_MAIN_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
 #else
+
+  InitializeBuffers();
+
   const s32 scaleImage_numPyramidLevels = 6;
 
   const s32 component1d_minComponentWidth = 0;
@@ -97,18 +138,18 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
 
   const s32 maxMarkers = 100;
 
-  const u32 numBytes0 = BIG_BUFFER_SIZE;
-  const u32 numBytes1 = BIG_BUFFER_SIZE;
-  const u32 numBytes2 = BIG_BUFFER_SIZE;
-#if defined(USING_MOVIDIUS_COMPILER)
-  MemoryStack scratch0(&bigBuffer0Start, BIG_BUFFER_SIZE);
-  MemoryStack scratch1(&bigBuffer0Start + BIG_BUFFER_SIZE, BIG_BUFFER_SIZE);
-  MemoryStack scratch2(&bigBuffer0Start + 2*BIG_BUFFER_SIZE, BIG_BUFFER_SIZE);
-#else
+  //const u32 numBytes0 = BIG_BUFFER_SIZE;
+  //const u32 numBytes1 = BIG_BUFFER_SIZE;
+  //const u32 numBytes2 = BIG_BUFFER_SIZE;
+  //#if defined(USING_MOVIDIUS_COMPILER)
+  //  MemoryStack scratch0(&bigBuffer0Start, BIG_BUFFER_SIZE);
+  //  MemoryStack scratch1(&bigBuffer0Start + BIG_BUFFER_SIZE, BIG_BUFFER_SIZE);
+  //  MemoryStack scratch2(&bigBuffer0Start + 2*BIG_BUFFER_SIZE, BIG_BUFFER_SIZE);
+  //#else
   MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
   MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE);
   MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE);
-#endif
+  //#endif
 
   ASSERT_TRUE(scratch0.IsValid());
   ASSERT_TRUE(scratch1.IsValid());
@@ -118,7 +159,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
   ConnectedComponents extractedComponents(maxConnectedComponentSegments, scratch0);
 
   Array<u8> image(blockImage50_HEIGHT, blockImage50_WIDTH, scratch0);
-  image.Set(blockImage50, blockImage50_WIDTH*blockImage50_HEIGHT);
+  image.Set_unsafe(blockImage50, blockImage50_WIDTH*blockImage50_HEIGHT);
 
   FixedLengthList<BlockMarker> markers(maxMarkers, scratch0);
   FixedLengthList<Array<f64> > homographies(maxMarkers, scratch0);
@@ -194,6 +235,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
 #ifndef RUN_ALL_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
 #else
+
+  InitializeBuffers();
+
   const s32 scaleImage_numPyramidLevels = 6;
 
   const s32 component1d_minComponentWidth = 0;
@@ -287,6 +331,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
 #ifndef RUN_ALL_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
 #else
+
+  InitializeBuffers();
+
   const s32 width = fiducial105_6_WIDTH;
   const s32 height = fiducial105_6_HEIGHT;
   const f32 minContrastRatio = 1.25f;
@@ -338,6 +385,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
 #ifndef RUN_ALL_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
 #else
+
+  InitializeBuffers();
+
   const s32 scaleImage_numPyramidLevels = 6;
 
   const s32 component1d_minComponentWidth = 0;
@@ -691,6 +741,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   //#define DRAW_TraceNextExteriorBoundary
 #ifdef DRAW_TraceNextExteriorBoundary
   {
+    InitializeBuffers();
     const u32 numBytes0 = BIG_BUFFER_SIZE;
     MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
     ASSERT_TRUE(scratch0.IsValid());
@@ -820,6 +871,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
 #ifndef RUN_ALL_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
 #else
+
+  InitializeBuffers();
+
   const s32 scaleImage_numPyramidLevels = 6;
 
   const s32 component1d_minComponentWidth = 0;
@@ -889,6 +943,8 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
 #ifndef RUN_ALL_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
 #else
+  InitializeBuffers();
+
   const s32 width = 640;
   const s32 height = 480;
 
@@ -1535,6 +1591,8 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
 #if ANKICORETECH_EMBEDDED_USE_MATLAB && defined(RUN_MATLAB_IMAGE_TEST)
 IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 {
+  InitializeBuffers();
+
   const s32 width = 640;
   const s32 height = 480;
   const s32 numPyramidLevels = 6;
