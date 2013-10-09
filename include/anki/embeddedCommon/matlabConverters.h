@@ -1,26 +1,25 @@
 /**
- * File: matlabConverters.h
- *
- * Author: Andrew Stein (andrew)
- * Created: 10/9/2013
- *
- * Information on last revision to this file:
- *    $LastChangedDate$
- *    $LastChangedBy$
- *    $LastChangedRevision$
- *
- * Description:
- *
- *   This files defines several conversion routines for translating
- *   basic types back and forth from Matlab's mxArray type. It should
- *   not call any Matlab routines (e.g. via an engine or mex), nor should
- *   it rely on STL (i.e. std::<foo>), so that it can be used extremely
- *   portably.
- *
- * Copyright: Anki, Inc. 2013
- *
- **/
-
+* File: matlabConverters.h
+*
+* Author: Andrew Stein (andrew)
+* Created: 10/9/2013
+*
+* Information on last revision to this file:
+*    $LastChangedDate$
+*    $LastChangedBy$
+*    $LastChangedRevision$
+*
+* Description:
+*
+*   This files defines several conversion routines for translating
+*   basic types back and forth from Matlab's mxArray type. It should
+*   not call any Matlab routines (e.g. via an engine or mex), nor should
+*   it rely on STL (i.e. std::<foo>), so that it can be used extremely
+*   portably.
+*
+* Copyright: Anki, Inc. 2013
+*
+**/
 
 #ifndef _ANKICORETECHEMBEDDED_MATLAB_CONVERTERS_H_
 #define _ANKICORETECHEMBEDDED_MATLAB_CONVERTERS_H_
@@ -34,184 +33,176 @@
 #include "engine.h"
 
 namespace Anki {
-  
   namespace Embedded {
-    
 #pragma mark --- Matlab Converter Definitions ---
-    
+
     // Convert a Matlab mxArray to an Anki::Array, without allocating memory
     template<typename Type> void mxArrayToArray(const mxArray * const array, Array<Type> &mat);
-    
+
     // Convert a Matlab mxArray to an Anki::Array. Allocate and return the Anki::Array
     template<typename Type> Array<Type> mxArrayToArray(const mxArray * const matlabArray);
-    
+
     // Convert an Anki::Array to a Matlab mxArray. Allocate and return the mxArray
     template<typename Type> mxArray* arrayToMxArray(const Array<Type> &array);
-    
+
     // Convert a raw image data pointer with size to a mxAarray.  Allocate and return the mxArray
     template<typename Type> mxArray* imageArrayToMxArray(const Type *data, const s32 nrows, const s32 ncols, const s32 nbands);
-    
+
     // Convert a primitive type to a C++ to a Matlab class ID
     // (If we have not defined a specialization for a particular type below,
     //  then mxUNKNOWN_CLASS gets returned by this parent template.)
     template<typename Type> mxClassID getMatlabClassID(void) { return mxUNKNOWN_CLASS; }
-    
+
     // Forward declare the defined specializations for known types:
     template<> mxClassID getMatlabClassID<f32>(void);
     template<> mxClassID getMatlabClassID<f64>(void);
-    
+
     template<> mxClassID getMatlabClassID<s16>(void);
     template<> mxClassID getMatlabClassID<u16>(void);
-    
+
     template<> mxClassID getMatlabClassID<s8>(void);
     template<> mxClassID getMatlabClassID<u8>(void);
-    
+
     template<> mxClassID getMatlabClassID<s32>(void);
     template<> mxClassID getMatlabClassID<u32>(void);
-    
-    
+
+    template<> mxClassID getMatlabClassID<s64>(void);
+    template<> mxClassID getMatlabClassID<u64>(void);
+
 #pragma mark --- Matlab Converter Implementations ---
-    
+
     template<typename Type> void mxArrayToArray(const mxArray * const array, Array<Type> &mat)
     {
       const int npixels = mat.get_size(0)*mat.get_size(1);
       const int nrows = mat.get_size(0);
       const int ncols = mat.get_size(1);
-      
+
       const Type * const matlabMatrixStartPointer = reinterpret_cast<const Type *>( mxGetData(array) );
-      
+
       const mwSize numMatlabElements = mxGetNumberOfElements(array);
-      
+
       if(numMatlabElements != npixels) {
         AnkiError("mxArrayToArray", "mxArrayToArray<Type>(array,mat) - Matlab array has a different number of elements than the Anki::Embedded::Array (%d != %d)\n", numMatlabElements, npixels);
         return;
       }
-      
+
       const mxClassID matlabClassId = mxGetClassID(array);
       const mxClassID templateClassId = getMatlabClassID<Type>();
-      
+
       if(matlabClassId != templateClassId) {
         AnkiError("mxArrayToArray", "mxArrayToArray<Type>(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return;
       }
-      
+
       for(s32 y=0; y<nrows; ++y) {
         Type * const array_rowPointer = mat.Pointer(y, 0);
         const Type * const matlabMatrix_rowPointer = matlabMatrixStartPointer + y*ncols;
-        
+
         for(s32 x=0; x<ncols; ++x) {
           array_rowPointer[x] = matlabMatrix_rowPointer[x];
         }
       }
     } // template<typename Type> void mxArrayToArray(const mxArray * const array, Array<Type> &mat)
-    
+
     template<typename Type> Array<Type> mxArrayToArray(const mxArray * const matlabArray)
     {
       const Type * const matlabMatrixStartPointer = reinterpret_cast<const Type *>( mxGetData(matlabArray) );
-      
+
       //const mwSize numMatlabElements = mxGetNumberOfElements(matlabArray);
       const mwSize numDimensions = mxGetNumberOfDimensions(matlabArray);
       const mwSize *dimensions = mxGetDimensions(matlabArray);
-      
+
       if(numDimensions != 2) {
         AnkiError("mxArrayToArray", "mxArrayToArray<Type> - Matlab array must be 2D\n");
         return Array<Type>();
       }
-      
+
       const mxClassID matlabClassId = mxGetClassID(matlabArray);
       const mxClassID templateClassId = getMatlabClassID<Type>();
       if(matlabClassId != templateClassId) {
         AnkiError("mxArrayToArray", "mxArrayToArray<Type> - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
         return Array<Type>();
       }
-      
+
       Array<Type> array = AllocateArrayFromHeap<Type>(dimensions[0], dimensions[1]);
-      
+
       for(mwSize y=0; y<dimensions[0]; ++y) {
         Type * const array_rowPointer = array.Pointer(static_cast<s32>(y), 0);
-        
+
         for(mwSize x=0; x<dimensions[1]; ++x) {
           array_rowPointer[x] = *(matlabMatrixStartPointer + x*dimensions[0] + y);
         }
       }
-      
+
       return array;
     } // template<typename Type> Array<Type> mxArrayToArray(const mxArray * const matlabArray)
-    
+
     template<typename Type> mxArray* arrayToMxArray(const Array<Type> &array)
     {
       const mxClassID classId = getMatlabClassID<Type>();
-      
+
       const mwSize outputDims[2] = {static_cast<mwSize>(array.get_size(0)),
         static_cast<mwSize>(array.get_size(1))};
-      
+
       mxArray *outputArray = mxCreateNumericArray(2, outputDims, classId, mxREAL);
       Type * const matlabMatrixStartPointer = (Type *) mxGetData(outputArray);
-      
+
       for(mwSize y=0; y<outputDims[0]; ++y) {
         const Type * const array_rowPointer = array.Pointer(static_cast<s32>(y), 0);
-        
+
         for(mwSize x=0; x<outputDims[1]; ++x) {
           *(matlabMatrixStartPointer + x*outputDims[0] + y) = array_rowPointer[x];
         }
       }
-      
+
       return outputArray;
     } // template<typename Type> mxArray* arrayToMxArray(const Array<Type> &array)
-    
-    
+
     template<typename Type>
     mxArray * imageArrayToMxArray(const Type *img, const int nrows, const int ncols, const int nbands)
     {
       // Seems to be faster to copy the data in single precision and
       // transposed and to do the permute and double cast at the end.
-      
+
       const mwSize outputDims[3] = {static_cast<mwSize>(nrows),
         static_cast<mwSize>(ncols), static_cast<mwSize>(nbands)};
-      
+
       mxArray *outputArray = mxCreateNumericArray(3, outputDims,
-                                                  getMatlabClassID<Type>(), mxREAL);
-      
+        getMatlabClassID<Type>(), mxREAL);
+
       if(outputArray == NULL) {
         // TODO: do something else about this or rely on caller to catch?
         return outputArray;
       }
-      
+
       const int npixels = nrows*ncols;
-      
+
       // Get a pointer for start of current row in each band:
       Type **outputRow = new Type*[nbands];
       outputRow[0] = (Type *) mxGetData(outputArray);
       for(mwSize band=1; band < nbands; band++) {
         outputRow[band] = outputRow[band-1] + npixels;
       }
-      
+
       // Switch from row-major to col-major
       for(mwSize i=0; i<outputDims[0]; ++i) {
-        
         for(mwSize j=0; j<outputDims[1]; ++j) {
-          
           for(mwSize band=0; band<outputDims[2]; ++band) {
-            
             *(outputRow[band] + j*nrows) = *img;
             img++; // Move ahead to next band at this pixel
-            
           } // FOR each band
-          
         } // FOR each column
-        
+
         // Move all band pointers down one row
         for(mwSize band=0; band<outputDims[2]; ++band) {
           outputRow[band]++;
         }
-        
       } // FOR each row
-      
+
       delete[] outputRow;
-      
+
       return outputArray;
     }
-    
   } // namespace Embedded
 } // namespace Anki
 

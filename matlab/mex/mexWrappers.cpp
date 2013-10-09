@@ -26,11 +26,11 @@ mxArray * image2mxArray<double>(const double *img,
 #endif
 
   OutputData_[0] = mxGetPr(outputArray);
-  for(mwSize band=1; band < nbands; band++)
+  for(mwSize band=1; band < static_cast<mwSize>(nbands); band++)
     OutputData_[band] = OutputData_[band-1] + npixels;
 
-  for(mwSize i=0, i_out=0; i<npixels*nbands; i+=nbands, i_out++) {
-    for(mwSize band=0; band<nbands; band++) {
+  for(mwSize i=0, i_out=0; i<static_cast<mwSize>(npixels*nbands); i+=nbands, i_out++) {
+    for(mwSize band=0; band<static_cast<mwSize>(nbands); band++) {
       OutputData_[band][i_out] = img[i+band];
     }
   }
