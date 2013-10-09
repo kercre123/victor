@@ -122,7 +122,7 @@ namespace Anki
       // Returns the number of values set (not counting extra zeros)
       // Note: The myriad has many issues with static initialization of arrays, so this should not used with caution
 #ifdef ANKI_ARRAY_USE_ARRAY_SET
-      //s32 Set(const Type * const values, const s32 numValues);
+      s32 Set_unsafe(const Type * const values, const s32 numValues);
       s32 Set(const s32 * const values, const s32 numValues);
       s32 Set(const f64 * const values, const s32 numValues);
 #endif
@@ -496,6 +496,31 @@ namespace Anki
 
       return size[0]*size[1];
     }
+
+#ifdef ANKI_ARRAY_USE_ARRAY_SET
+    template<typename Type> s32 Array<Type>::Set_unsafe(const Type * const values, const s32 numValues)
+    {
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        0, "Array<Type>::Set", "Array<Type> is not valid");
+
+      s32 numValuesSet = 0;
+
+      for(s32 y=0; y<size[0]; y++) {
+        Type * restrict rowPointer = Pointer(y, 0);
+        for(s32 x=0; x<size[1]; x++) {
+          if(numValuesSet < numValues)
+          {
+            const Type value = static_cast<Type>(values[numValuesSet++]);
+            rowPointer[x] = value;
+          } else {
+            rowPointer[x] = 0;
+          }
+        }
+      }
+
+      return numValuesSet;
+    }
+#endif // ANKI_ARRAY_USE_ARRAY_SET
 
 #ifdef ANKI_ARRAY_USE_ARRAY_SET
     template<typename Type> s32 Array<Type>::Set(const s32 * const values, const s32 numValues)
