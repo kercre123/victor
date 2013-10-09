@@ -2,14 +2,6 @@
 #include "anki/embeddedCommon/errorHandling.h"
 #include "anki/embeddedCommon/array2d.h"
 
-#if defined(_MSC_VER)
-#include <windows.h>
-#elif defined(USING_MOVIDIUS_COMPILER)
-
-#else
-#include <sys/time.h>
-#endif
-
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include "opencv2/core/core.hpp"
 #endif
@@ -21,85 +13,6 @@ namespace Anki
 {
   namespace Embedded
   {
-#if !defined(USING_MOVIDIUS_COMPILER)
-    IN_DDR double GetTime()
-    {
-#if defined(_MSC_VER)
-      LARGE_INTEGER frequency, counter;
-      QueryPerformanceCounter(&counter);
-      QueryPerformanceFrequency(&frequency);
-      return double(counter.QuadPart)/double(frequency.QuadPart);
-#elif defined(__APPLE_CC__)
-      return 0.0;
-#else
-      timespec ts;
-      clock_gettime(CLOCK_MONOTONIC, &ts);
-      return double(ts.tv_sec) + double(ts.tv_nsec)/1000000000.0;
-#endif
-    }
-#endif // #if !defined(USING_MOVIDIUS_COMPILER)
-
-    f32 Round(const f32 number)
-    {
-      if(number > 0)
-        return floorf(number + 0.5f);
-      else
-        return floorf(number - 0.5f);
-    }
-
-    f64 Round(const f64 number)
-    {
-      // This casting wierdness is because the myriad doesn't have a double-precision floor function.
-      if(number > 0)
-        return static_cast<f64>(floorf(static_cast<f32>(number) + 0.5f));
-      else
-        return static_cast<f64>(floorf(static_cast<f32>(number) - 0.5f));
-    }
-
-    IN_DDR bool IsPowerOfTwo(u32 x)
-    {
-      // While x is even and greater than 1, keep dividing by two
-      while (((x & 1) == 0) && x > 1)
-        x >>= 1;
-
-      return static_cast<bool>(x == 1);
-    }
-
-    bool IsOdd(const s32 x)
-    {
-      if(x | 1)
-        return true;
-      else
-        return false;
-    }
-
-    s32 Determinant2x2(const s32 a, const s32 b, const s32 c, const s32 d)
-    {
-      return a*d - b*c;
-    }
-
-    IN_DDR u32 Log2(u32 x)
-    {
-      u32 powerCount = 0;
-      // While x is even and greater than 1, keep dividing by two
-      while (x >>= 1) {
-        powerCount++;
-      }
-
-      return powerCount;
-    }
-
-    IN_DDR u64 Log2(u64 x)
-    {
-      u64 powerCount = 0;
-      // While x is even and greater than 1, keep dividing by two
-      while (x >>= 1) {
-        powerCount++;
-      }
-
-      return powerCount;
-    }
-
     IN_DDR void PrintfOneArray_f32(const Array<f32> &array, const char * variableName)
     {
       printf(variableName);
