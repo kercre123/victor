@@ -14,6 +14,8 @@
 
 #ifndef COZMO_MSG_PROTOCOL_H
 #define COZMO_MSG_PROTOCOL_H
+
+#include "anki/common/types.h"
     
 // Base message size (just size byte)
 #define SIZE_MSG_BASE_SIZE 1
@@ -172,6 +174,21 @@ typedef enum {
   // the road.  Puts it into a delocalization mode until it's relocalized again
   // (signified by a road piece index update from basestation).
   MSG_V2B_CORE_VEHICLE_DELOCALIZED,
+  
+  // ** Vision system commands
+  
+  // Robot saw a BlockMarker with its head camera
+  //   Message will contain the block and face types, as well as the
+  //   four corners of the square fiducial (as observed under perspective
+  //   distortion)
+  MSG_V2B_CORE_BLOCK_MARKER_OBSERVED,
+  
+  // Robot saw a MatMarker with its downward-facing camera
+  //   Message will contain the identified mat square (X,Y), the image
+  //   coordinates of the marker's center and the angle at which it was seen
+  //   in the image.
+  MSG_V2B_CORE_MAT_MARKER_OBSERVED,
+  
 
 
   // ** Playback system related commands
@@ -328,36 +345,36 @@ typedef enum {
 ///////////////////////////////////////////////////////////////////////////////
 // MSG_B2V_BTLE_CHANGE_CONNECTION_PARAMS
 typedef struct {
-  unsigned char size;             // 9
-  unsigned char msgID;            // MSG_B2V_BTLE_CHANGE_CONNECTION_PARAMS
-  unsigned short minConnInterval; // Min number of 1.25ms intervals to use
-  unsigned short maxConnInterval; // Max number of 1.25ms intervals to use
-  unsigned short slaveLatency;    // Desired slave latency, usually 0
-  unsigned short timeoutMult;     // usually 0xFC, iphone timeout in ms / 10
+  u8 size;             // 9
+  u8 msgID;            // MSG_B2V_BTLE_CHANGE_CONNECTION_PARAMS
+  u16 minConnInterval; // Min number of 1.25ms intervals to use
+  u16 maxConnInterval; // Max number of 1.25ms intervals to use
+  u16 slaveLatency;    // Desired slave latency, usually 0
+  u16 timeoutMult;     // usually 0xFC, iphone timeout in ms / 10
 } CarMsg_ChangeConnectionParams;
 #define SIZE_MSG_B2V_BTLE_CHANGE_CONNECTION_PARAMS 10
 
 // MSG_B2V_BTLE_CONNECTION_PARAMS_REQUEST
 typedef struct {
-  unsigned char size;             // 1
-  unsigned char msgID;            // MSG_B2V_BTLE_CONNECTION_PARAMS_REQUEST
+  u8 size;             // 1
+  u8 msgID;            // MSG_B2V_BTLE_CONNECTION_PARAMS_REQUEST
 } CarMsg_ConnectionParamsRequest;
 #define SIZE_MSG_B2V_BTLE_CONNECTION_PARAMS_REQUEST 2
 
 // MSG_V2B_BTLE_CONNECTION_PARAMS_RESPONSE
 typedef struct {
-  unsigned char size;             // 7
-  unsigned char msgID;            // MSG_V2B_BTLE_CONNECTION_PARAMS_RESPONSE
-  unsigned short connInterval;    // Min number of 1.25ms intervals to use
-  unsigned short slaveLatency;    // Desired slave latency, usually 0
-  unsigned short timeoutMult;     // usually 0xFC, iphone timeout in ms / 10
+  u8 size;             // 7
+  u8 msgID;            // MSG_V2B_BTLE_CONNECTION_PARAMS_RESPONSE
+  u16 connInterval;    // Min number of 1.25ms intervals to use
+  u16 slaveLatency;    // Desired slave latency, usually 0
+  u16 timeoutMult;     // usually 0xFC, iphone timeout in ms / 10
 } CarMsg_ConnectionParamsResponse;
 #define SIZE_MSG_V2B_BTLE_CONNECTION_PARAMS_RESPONSE 8
 
 // MSG_B2V_BTLE_DISCONNECT
 typedef struct {
-  unsigned char size;             // 1
-  unsigned char msgID;            // MSG_B2V_BTLE_DISCONNECT
+  u8 size;             // 1
+  u8 msgID;            // MSG_B2V_BTLE_DISCONNECT
 } CarMsg_Disconnect;
 #define SIZE_MSG_B2V_BTLE_DISCONNECT 2
 
@@ -391,11 +408,14 @@ typedef struct {
 
 // MSG_B2V_CORE_SET_MOTION
 typedef struct {
-  unsigned char size;
-  unsigned char msgID;
-  short speed_mmPerSec;        // Commanded speed in mm/sec
-  short accel_mmPerSec2;       // Commanded max absolute value of acceleration/decceleration in mm/sec^2
-  short curvatureRadius_mm;    // +ve: curves left, -ve: curves right, u16_MAX: point turn left, 16_MIN: point turn right, 0: straight
+  u8  size;
+  u8  msgID;
+  s16 speed_mmPerSec;      // Commanded speed in mm/sec
+  s16 accel_mmPerSec2;     // Commanded max absolute value of...
+                           // ...acceleration/decceleration in mm/sec^2
+  s16 curvatureRadius_mm;  // +ve: curves left, -ve: curves right, ...
+                           // ...u16_MAX: point turn left, 16_MIN: point ...
+                           // ...turn right, 0: straight
 } CozmoMsg_SetMotion;
 #define SIZE_MSG_B2V_CORE_SET_MOTION 8
   
@@ -403,29 +423,29 @@ typedef struct {
 
 // MSG_B2V_CORE_CLEAR_PATH
 typedef struct {
-  unsigned char size;
-  unsigned char msgID;
-  unsigned short pathID;
+  u8  size;
+  u8  msgID;
+  u16 pathID;
 } CozmoMsg_ClearPath;
 #define SIZE_MSG_B2V_CORE_CLEAR_PATH 4
 
 
 #define COMMON_PATH_SEGMENT_PARAMS \
-  unsigned char size; \
-  unsigned char msgID; \
-  unsigned short pathID; \
-  unsigned char segmentID; \
-  short desiredSpeed_mmPerSec; \
-  short terminalSpeed_mmPerSec; 
+  u8  size; \
+  u8  msgID; \
+  u16 pathID; \
+  u8  segmentID; \
+  s16 desiredSpeed_mmPerSec; \
+  s16 terminalSpeed_mmPerSec; 
 
 // MSG_B2V_CORE_SET_PATH_SEGMENT_LINE
 typedef struct {
   COMMON_PATH_SEGMENT_PARAMS
 
-  float x_start_m;
-  float y_start_m;
-  float x_end_m;
-  float y_end_m;
+  f32 x_start_m;
+  f32 y_start_m;
+  f32 x_end_m;
+  f32 y_end_m;
 } CozmoMsg_SetPathSegmentLine;
 #define SIZE_MSG_B2V_CORE_SET_PATH_SEGMENT_LINE 25
 
@@ -433,13 +453,31 @@ typedef struct {
 typedef struct {
   COMMON_PATH_SEGMENT_PARAMS
 
-  float x_center_m;
-  float y_center_m;
-  float radius_m;
-  float startRad;
-  float endRad;  
+  f32 x_center_m;
+  f32 y_center_m;
+  f32 radius_m;
+  f32 startRad;
+  f32 endRad;  
 } CozmoMsg_SetPathSegmentArc;
 #define SIZE_MSG_B2V_CORE_SET_PATH_SEGMENT_ARC 29
+
+// MSG_V2B_CORE_BLOCK_MARKER_OBSERVED
+typedef struct {
+  u32 blockType;
+  u32 faceType;
+  f32 x_imgUpperLeft,  y_imgUpperLeft;
+  f32 x_imgLowerLeft,  y_imgLowerLeft;
+  f32 x_imgUpperRight, y_imgUpperRight;
+  f32 x_imgLowerRight, y_imgLowerRight;
+} CozmoMsg_ObservedBlockMarker;
+
+// MSG_V2B_CORE_MAT_MARKER_OBSERVED
+typedef struct {
+  u32 x_MatSquare;
+  u32 y_MatSquare;
+  f32 x_imgCenter,  y_imgCenter;
+  f32 angle;
+} CozmoMsg_ObservedMatMarker;
 
 
 #endif  // #ifndef COZMO_MSG_PROTOCOL
