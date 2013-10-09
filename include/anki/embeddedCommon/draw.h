@@ -51,17 +51,17 @@ namespace Anki
       point2.x = static_cast<s16>(CLIP(point2.x, 0, image.get_size(1)-1));
       point2.y = static_cast<s16>(CLIP(point2.y, 0, image.get_size(0)-1));
 
-      for(s16 y=point1.y; y<=point2.y; y++) {
+      for(s32 y=point1.y; y<=point2.y; y++) {
         Type * restrict image_rowPointer = image.Pointer(y, 0);
-        for(s16 x=point1.x; x<=point2.x; x++) {
+        for(s32 x=point1.x; x<=point2.x; x++) {
           image_rowPointer[x] = lineColor;
         }
       }
 
       if(lineWidth > 0) {
-        for(s16 y=point1inner.y; y<=point2inner.y; y++) {
+        for(s32 y=point1inner.y; y<=point2inner.y; y++) {
           Type * restrict image_rowPointer = image.Pointer(y, 0);
-          for(s16 x=point1inner.x; x<=point2inner.x; x++) {
+          for(s32 x=point1inner.x; x<=point2inner.x; x++) {
             image_rowPointer[x] = backgroundColor;
           }
         }
@@ -72,94 +72,117 @@ namespace Anki
 
     template<typename Type> Result DrawExampleSquaresImage(Array<Type> &image)
     {
-      const s16 boxWidth = 60;
+      const s32 boxWidth = 60;
       const Type lineColor = 0;
       const Type backgroundColor = 128;
 
       image.Set(128);
 
-      s16 upperLeft[] = {19,19};
-      for(s16 i=1; i<=5; i++) {
-        //    image = drawBox(image, upperLeft + [0, boxWidth*2*(i-1)], upperLeft + boxWidth + [0, boxWidth*2*(i-1)], i, lineColor, backgroundColor);
-        DrawRectangle<Type>(image, Point<s16>(upperLeft[1]+boxWidth*2*(i-1), upperLeft[0]), Point<s16>(upperLeft[1]+boxWidth+boxWidth*2*(i-1), upperLeft[0]+boxWidth), i, lineColor, backgroundColor);
+      s32 upperLeft[2];
+      upperLeft[0] = 19;
+      upperLeft[1] = 19;
+      for(s32 i=1; i<=5; i++) {
+        const Point<s16> point1 = Point<s16>(static_cast<s16>(upperLeft[1]+boxWidth*2*(i-1)), static_cast<s16>(upperLeft[0]));
+        const Point<s16> point2 = Point<s16>(static_cast<s16>(upperLeft[1]+boxWidth+boxWidth*2*(i-1)), static_cast<s16>(upperLeft[0]+boxWidth));
+        //    image = drawBox(image, upperLeft + [0, boxWidth*2*(i-1)], upperLeft + boxWidth + [0, boxWidth*2*(i-1)], i, lineColdor, backgroundColor);
+        DrawRectangle<Type>(image, point1, point2, i, lineColor, backgroundColor);
       }
 
       //upperLeft = upperLeft + [2*boxWidth,0];
       upperLeft[0] += 2*boxWidth;
-      for(s16 i=1; i<=5; i++) {
+      for(s32 i=1; i<=5; i++) {
+        const Point<s16> point1 = Point<s16>(static_cast<s16>(upperLeft[1]+boxWidth*2*(i-1)), static_cast<s16>(upperLeft[0]));
+        const Point<s16> point2 = Point<s16>(static_cast<s16>(upperLeft[1]+boxWidth+boxWidth*2*(i-1)), static_cast<s16>(upperLeft[0]+boxWidth));
         //    image = drawBox(image, upperLeft + [0, boxWidth*2*(i-1)], upperLeft + boxWidth + [0, boxWidth*2*(i-1)], i+5, lineColor, backgroundColor);
-        DrawRectangle<Type>(image, Point<s16>(upperLeft[1]+boxWidth*2*(i-1), upperLeft[0]), Point<s16>(upperLeft[1]+boxWidth+boxWidth*2*(i-1), upperLeft[0]+boxWidth), i+5, lineColor, backgroundColor);
+        DrawRectangle<Type>(image, point1, point2,  i+5, lineColor, backgroundColor);
       }
 
       //upperLeft = upperLeft + [2*boxWidth,0];
       upperLeft[0] += 2*boxWidth;
-      for(s16 i=1; i<=5; i++) {
+      for(s32 i=1; i<=5; i++) {
+        const Point<s16> point1 = Point<s16>(static_cast<s16>(upperLeft[1]+boxWidth*2*(i-1)), static_cast<s16>(upperLeft[0]));
+        const Point<s16> point2 = Point<s16>(static_cast<s16>(upperLeft[1]+boxWidth+boxWidth*2*(i-1)), static_cast<s16>(upperLeft[0]+boxWidth));
         //    image = drawBox(image, upperLeft + [0, boxWidth*2*(i-1)], upperLeft + boxWidth + [0, boxWidth*2*(i-1)], i+10, lineColor, backgroundColor);
-        DrawRectangle<Type>(image, Point<s16>(upperLeft[1]+boxWidth*2*(i-1), upperLeft[0]), Point<s16>(upperLeft[1]+boxWidth+boxWidth*2*(i-1), upperLeft[0]+boxWidth), i+10, lineColor, backgroundColor);
+        DrawRectangle<Type>(image, point1, point2,  i+10, lineColor, backgroundColor);
       }
 
       //upperLeft = upperLeft + [2*boxWidth,0];
       upperLeft[0] += 2*boxWidth;
       //speckWidths = 1:22;
-      const s16 maxSpeckWidth = 22;
-      for(s16 i=1; i<=maxSpeckWidth; i++) {
+      const s32 maxSpeckWidth = 22;
+      for(s32 i=1; i<=maxSpeckWidth; i++) {
         //    image = drawBox(image, upperLeft + [0, 2*sum(speckWidths(1:i))], upperLeft + [0, i + 2*sum(speckWidths(1:i))], -1, lineColor, backgroundColor);
 
-        s16 sumVal = 0;
-        for(s16 iSum=1; iSum<=i; iSum++) {
+        s32 sumVal = 0;
+        for(s32 iSum=1; iSum<=i; iSum++) {
           sumVal += iSum;
         }
 
-        DrawRectangle<Type>(image, Point<s16>(upperLeft[1]+2*sumVal, upperLeft[0]), Point<s16>(upperLeft[1]+i+2*sumVal, upperLeft[0]), -1, lineColor, backgroundColor);
+        const Point<s16> point1 = Point<s16>(static_cast<s16>(upperLeft[1]+2*sumVal), static_cast<s16>(upperLeft[0]));
+        const Point<s16> point2 = Point<s16>(static_cast<s16>(upperLeft[1]+i+2*sumVal), static_cast<s16>(upperLeft[0]));
+
+        DrawRectangle<Type>(image, point1, point2,  -1, lineColor, backgroundColor);
       }
 
       //upperLeft = upperLeft + [10,0];
       upperLeft[0] += 10;
-      for(s16 i=1; i<=maxSpeckWidth; i++) {
+      for(s32 i=1; i<=maxSpeckWidth; i++) {
         //    image = drawBox(image, upperLeft + [0, 2*sum(speckWidths(1:i))], upperLeft + [1, i + 2*sum(speckWidths(1:i))], -1, lineColor, backgroundColor);
 
-        s16 sumVal = 0;
-        for(s16 iSum=1; iSum<=i; iSum++) {
+        s32 sumVal = 0;
+        for(s32 iSum=1; iSum<=i; iSum++) {
           sumVal += iSum;
         }
 
-        DrawRectangle<Type>(image, Point<s16>(upperLeft[1]+2*sumVal, upperLeft[0]), Point<s16>(upperLeft[1]+i+2*sumVal, upperLeft[0]+1), -1, lineColor, backgroundColor);
+        const Point<s16> point1 = Point<s16>(static_cast<s16>(upperLeft[1]+2*sumVal), static_cast<s16>(upperLeft[0]));
+        const Point<s16> point2 = Point<s16>(static_cast<s16>(upperLeft[1]+i+2*sumVal), static_cast<s16>(upperLeft[0]+1));
+
+        DrawRectangle<Type>(image, point1, point2,  -1, lineColor, backgroundColor);
       }
 
       //upperLeft = upperLeft + [10,0];
       upperLeft[0] += 10;
-      for(s16 i=1; i<=maxSpeckWidth; i++) {
+      for(s32 i=1; i<=maxSpeckWidth; i++) {
         //    image = drawBox(image, upperLeft + [0, 2*sum(speckWidths(1:i))], upperLeft + [2, i + 2*sum(speckWidths(1:i))], -1, lineColor, backgroundColor);
-        s16 sumVal = 0;
-        for(s16 iSum=1; iSum<=i; iSum++) {
+        s32 sumVal = 0;
+        for(s32 iSum=1; iSum<=i; iSum++) {
           sumVal += iSum;
         }
 
-        DrawRectangle<Type>(image, Point<s16>(upperLeft[1]+2*sumVal, upperLeft[0]), Point<s16>(upperLeft[1]+i+2*sumVal, upperLeft[0]+2), -1, lineColor, backgroundColor);
+        const Point<s16> point1 = Point<s16>(static_cast<s16>(upperLeft[1]+2*sumVal), static_cast<s16>(upperLeft[0]));
+        const Point<s16> point2 = Point<s16>(static_cast<s16>(upperLeft[1]+i+2*sumVal), static_cast<s16>(upperLeft[0]+2));
+
+        DrawRectangle<Type>(image, point1, point2,  -1, lineColor, backgroundColor);
       }
 
       //upperLeft = upperLeft + [10,0];
       upperLeft[0] += 10;
-      for(s16 i=1; i<=maxSpeckWidth; i++) {
+      for(s32 i=1; i<=maxSpeckWidth; i++) {
         //    image = drawBox(image, upperLeft + [0, 2*sum(speckWidths(1:i))], upperLeft + [4, i + 2*sum(speckWidths(1:i))], -1, lineColor, backgroundColor);
-        s16 sumVal = 0;
-        for(s16 iSum=1; iSum<=i; iSum++) {
+        s32 sumVal = 0;
+        for(s32 iSum=1; iSum<=i; iSum++) {
           sumVal += iSum;
         }
 
-        DrawRectangle<Type>(image, Point<s16>(upperLeft[1]+2*sumVal, upperLeft[0]), Point<s16>(upperLeft[1]+i+2*sumVal, upperLeft[0]+4), -1, lineColor, backgroundColor);
+        const Point<s16> point1 = Point<s16>(static_cast<s16>(upperLeft[1]+2*sumVal), static_cast<s16>(upperLeft[0]));
+        const Point<s16> point2 = Point<s16>(static_cast<s16>(upperLeft[1]+i+2*sumVal), static_cast<s16>(upperLeft[0]+4));
+
+        DrawRectangle<Type>(image, point1, point2,  -1, lineColor, backgroundColor);
       }
 
       //upperLeft = upperLeft + [13,0];
       upperLeft[0] += 13;
-      for(s16 i=1; i<=maxSpeckWidth; i++) {
+      for(s32 i=1; i<=maxSpeckWidth; i++) {
         //    image = drawBox(image, upperLeft + [0, 2*sum(speckWidths(1:i))], upperLeft + [8, i + 2*sum(speckWidths(1:i))], -1, lineColor, backgroundColor);
-        s16 sumVal = 0;
-        for(s16 iSum=1; iSum<=i; iSum++) {
+        s32 sumVal = 0;
+        for(s32 iSum=1; iSum<=i; iSum++) {
           sumVal += iSum;
         }
 
-        DrawRectangle<Type>(image, Point<s16>(upperLeft[1]+2*sumVal, upperLeft[0]), Point<s16>(upperLeft[1]+i+2*sumVal, upperLeft[0]+8), -1, lineColor, backgroundColor);
+        const Point<s16> point1 = Point<s16>(static_cast<s16>(upperLeft[1]+2*sumVal), static_cast<s16>(upperLeft[0]));
+        const Point<s16> point2 = Point<s16>(static_cast<s16>(upperLeft[1]+i+2*sumVal), static_cast<s16>(upperLeft[0]+8));
+
+        DrawRectangle<Type>(image, point1, point2,  -1, lineColor, backgroundColor);
       }
 
       return RESULT_OK;
