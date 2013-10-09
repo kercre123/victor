@@ -120,7 +120,7 @@ int BenchmarkSimpleDetector_Steps12345_realImage(int numIterations)
   ConnectedComponents extractedComponents(maxConnectedComponentSegments, scratch0);
 
   Array<u8> image(blockImage50_HEIGHT, blockImage50_WIDTH, scratch0);
-  image.Set(&blockImage50[0], blockImage50_HEIGHT*blockImage50_WIDTH);
+  image.Set_unsafe(&blockImage50[0], blockImage50_HEIGHT*blockImage50_WIDTH);
 
   FixedLengthList<BlockMarker> markers(maxMarkers, scratch0);
   FixedLengthList<Array<f64>> homographies(maxMarkers, scratch0);

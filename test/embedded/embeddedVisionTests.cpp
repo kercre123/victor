@@ -65,20 +65,22 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 #include "../../src/embedded/fiducialMarkerDefinitionType0.h"
 #endif
 
-#define BIG_BUFFER_SIZE 4000000
+#define BIG_BUFFER_SIZE0 4000000
+#define BIG_BUFFER_SIZE1 4000000
+#define BIG_BUFFER_SIZE2 4000000
 
 #define USE_STATIC_BUFFERS
 
 #ifdef USE_STATIC_BUFFERS
 #if defined(USING_MOVIDIUS_COMPILER)
 //__attribute__((section(".ddr_direct.manualAllocations"))) char bigBuffer0Start;
-__attribute__((section(".ddr.rodata"))) char bigBuffer0[BIG_BUFFER_SIZE];
-__attribute__((section(".ddr.rodata"))) char bigBuffer1[BIG_BUFFER_SIZE];
-__attribute__((section(".ddr.rodata"))) char bigBuffer2[BIG_BUFFER_SIZE];
+__attribute__((section(".ddr.rodata"))) char bigBuffer0[BIG_BUFFER_SIZE0];
+__attribute__((section(".ddr.rodata"))) char bigBuffer1[BIG_BUFFER_SIZE1];
+__attribute__((section(".ddr.rodata"))) char bigBuffer2[BIG_BUFFER_SIZE2];
 #else
-char bigBuffer0[BIG_BUFFER_SIZE];
-char bigBuffer1[BIG_BUFFER_SIZE];
-char bigBuffer2[BIG_BUFFER_SIZE];
+char bigBuffer0[BIG_BUFFER_SIZE0];
+char bigBuffer1[BIG_BUFFER_SIZE1];
+char bigBuffer2[BIG_BUFFER_SIZE2];
 #endif
 #else // #ifdef USE_STATIC_BUFFERS
 char *bigBuffer0 = NULL;
@@ -90,13 +92,13 @@ IN_DDR void InitializeBuffers()
 {
 #ifndef USE_STATIC_BUFFERS
   if(!bigBuffer0)
-    bigBuffer0 = (char*)malloc(BIG_BUFFER_SIZE);
+    bigBuffer0 = (char*)malloc(BIG_BUFFER_SIZE0);
 
   if(!bigBuffer1)
-    bigBuffer1 = (char*)malloc(BIG_BUFFER_SIZE);
+    bigBuffer1 = (char*)malloc(BIG_BUFFER_SIZE1);
 
   if(!bigBuffer2)
-    bigBuffer2 = (char*)malloc(BIG_BUFFER_SIZE);
+    bigBuffer2 = (char*)malloc(BIG_BUFFER_SIZE2);
 #endif
 }
 
@@ -138,18 +140,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
 
   const s32 maxMarkers = 100;
 
-  //const u32 numBytes0 = BIG_BUFFER_SIZE;
-  //const u32 numBytes1 = BIG_BUFFER_SIZE;
-  //const u32 numBytes2 = BIG_BUFFER_SIZE;
-  //#if defined(USING_MOVIDIUS_COMPILER)
-  //  MemoryStack scratch0(&bigBuffer0Start, BIG_BUFFER_SIZE);
-  //  MemoryStack scratch1(&bigBuffer0Start + BIG_BUFFER_SIZE, BIG_BUFFER_SIZE);
-  //  MemoryStack scratch2(&bigBuffer0Start + 2*BIG_BUFFER_SIZE, BIG_BUFFER_SIZE);
-  //#else
-  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
-  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE);
-  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE);
-  //#endif
+  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE0);
+  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE1);
+  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE2);
 
   ASSERT_TRUE(scratch0.IsValid());
   ASSERT_TRUE(scratch1.IsValid());
@@ -263,16 +256,13 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
 
   const s32 maxMarkers = 100;
 
-  const u32 numBytes0 = BIG_BUFFER_SIZE;
-  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE0);
   ASSERT_TRUE(scratch0.IsValid());
 
-  const u32 numBytes1 = BIG_BUFFER_SIZE;
-  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE1);
   ASSERT_TRUE(scratch1.IsValid());
 
-  const u32 numBytes2 = BIG_BUFFER_SIZE;
-  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE2);
   ASSERT_TRUE(scratch2.IsValid());
 
   const s32 maxConnectedComponentSegments = u16_MAX;
@@ -338,8 +328,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
   const s32 height = fiducial105_6_HEIGHT;
   const f32 minContrastRatio = 1.25f;
 
-  const u32 numBytes0 = BIG_BUFFER_SIZE;
-  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE0);
   ASSERT_TRUE(scratch0.IsValid());
 
   FiducialMarkerParser parser = FiducialMarkerParser();
@@ -411,16 +400,13 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
 
   const s32 maxMarkers = 100;
 
-  const u32 numBytes0 = BIG_BUFFER_SIZE;
-  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE0);
   ASSERT_TRUE(scratch0.IsValid());
 
-  const u32 numBytes1 = BIG_BUFFER_SIZE;
-  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE1);
   ASSERT_TRUE(scratch1.IsValid());
 
-  const u32 numBytes2 = BIG_BUFFER_SIZE;
-  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE2);
   ASSERT_TRUE(scratch2.IsValid());
 
   const s32 maxConnectedComponentSegments = u16_MAX;
@@ -742,8 +728,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
 #ifdef DRAW_TraceNextExteriorBoundary
   {
     InitializeBuffers();
-    const u32 numBytes0 = BIG_BUFFER_SIZE;
-    MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
+    MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE0);
     ASSERT_TRUE(scratch0.IsValid());
 
     Array<u8> drawnComponents(480, 640, scratch0);
@@ -890,16 +875,13 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
   const s32 component_percentHorizontal = 1 << 7; // 0.5, in SQ 23.8
   const s32 component_percentVertical = 1 << 7; // 0.5, in SQ 23.8
 
-  const u32 numBytes0 = BIG_BUFFER_SIZE;
-  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE0);
   ASSERT_TRUE(scratch0.IsValid());
 
-  const u32 numBytes1 = BIG_BUFFER_SIZE;
-  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE1);
   ASSERT_TRUE(scratch1.IsValid());
 
-  const u32 numBytes2 = BIG_BUFFER_SIZE;
-  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE2);
   ASSERT_TRUE(scratch2.IsValid());
 
   const s32 maxConnectedComponentSegments = u16_MAX;
@@ -961,16 +943,13 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
   const s32 component_sparseMultiplyThreshold = 1000 << 5;
   const s32 component_solidMultiplyThreshold = 2 << 5;
 
-  const u32 numBytes0 = BIG_BUFFER_SIZE;
-  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE0);
   ASSERT_TRUE(scratch0.IsValid());
 
-  const u32 numBytes1 = BIG_BUFFER_SIZE;
-  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE1);
   ASSERT_TRUE(scratch1.IsValid());
 
-  const u32 numBytes2 = BIG_BUFFER_SIZE;
-  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE2);
   ASSERT_TRUE(scratch2.IsValid());
 
   const s32 maxConnectedComponentSegments = u16_MAX;
@@ -1601,8 +1580,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
   const s32 height = 240;
   const s32 numPyramidLevels = 5;*/
 
-  const u32 numBytes0 = BIG_BUFFER_SIZE;
-  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE0);
   ASSERT_TRUE(scratch0.IsValid());
 
   Matlab matlab(false);
