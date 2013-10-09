@@ -1,7 +1,11 @@
 
 % function saveImageAsHeader(image, filename, imageName)
 
-function saveImageAsHeader(image, filename, imageName)
+function saveImageAsHeader(image, filename, imageName, outputTypename)
+
+if ~exist('outputTypename', 'var')
+    outputTypename = 'u8';
+end
 
 image = im2uint8(image)';
 
@@ -43,7 +47,7 @@ fprintf(fileId,...
     '#if defined(USING_MOVIDIUS_COMPILER)\n',...
     '__attribute__((section(".imageData")))\n',...
     '#endif\n',...
-    'const s32 ', imageName, sprintf('[%d] = {\n',extendedHeight*extendedWidth)]);
+    sprintf('const %s ', outputTypename), imageName, sprintf('[%d] = {\n',extendedHeight*extendedWidth)]);
 
 for y = 1:size(image,2)
     fprintf(fileId, '%d, ', image(:,y));
