@@ -55,6 +55,8 @@ LEON_C_SOURCES += $(wildcard $(CORETECH_VISION_DIRECTORY)/src/embedded/*.c)
 
 LEON_CPP_SOURCES += $(wildcard $(CORETECH_VISION_DIRECTORY)/test/embedded/embeddedVisionTests.cpp)
 
+DEBUG = yes
+
 # ------------------------------[ Components used ]--------------------------------#
 ComponentList = Board
 

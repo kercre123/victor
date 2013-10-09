@@ -290,6 +290,11 @@ namespace Anki
             return RESULT_FAIL;
         } // PUSH_MEMORY_STACK(scratch1);
 
+        // Print a checksum of the binary image
+        const s32 binarySum = Sum(binaryImage);
+        printf("Sum(binaryImage) = %d\n", binarySum);
+        //binaryImage.Print("binaryImage");
+
         // 3. Compute connected components from the binary image (use local scratch2, store in outer scratch1)
         extractedComponents = ConnectedComponents(maxConnectedComponentSegments, scratch1);
         {
