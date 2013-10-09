@@ -67,7 +67,7 @@ extern "C" {
   void explicitPrintf(int reverseWords, const char *format, ...);
   // void explicitPrintfWithExplicitBuffer(int reverseWords, int * buffer, const char *format, ...);
 
-  void PrintInt(s64 value); // Print a single number
+  void PrintInt(s32 value); // Print a single number
   void PrintFloat(f64 value); // Print a single float
 
 #if defined(USING_MOVIDIUS_GCC_COMPILER)

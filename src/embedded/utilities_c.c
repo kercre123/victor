@@ -3,7 +3,7 @@
 #if defined(_MSC_VER)
 #include <windows.h>
 #elif defined(USING_MOVIDIUS_COMPILER)
-
+#include "DrvTimer.h"
 #else
 #include <sys/time.h>
 #endif
@@ -76,8 +76,8 @@ void explicitPrintf(int reverseWords, const char *format, ...)
         format++;
       }  // else if(percentChar == 'd')
       else if(percentChar == 'f') {
-        // TODO: should this be double, even though it's processed as float?
-        const f32 value = (f32) va_arg(arguments, double);
+        // TODO: should this be double?
+        const f64 value = va_arg(arguments, double);
         PrintFloat(value);
         format++;
       } // else if(percentChar == 'f')
@@ -110,7 +110,7 @@ void explicitPrintf(int reverseWords, const char *format, ...)
 void PrintFloat(f64 value)
 {
   const s32 maxDecimalDigits = 6;
-  const f64 decimalPart = value - (s64)floorf(value);
+  const f64 decimalPart = value - (f64)floorf(value);
 
   s32 digitIndex = -1;
   s32 numDecimalDigitsUsed = 0;
@@ -124,14 +124,14 @@ void PrintFloat(f64 value)
 
   if(value > 10000000000.0) {
     const f64 topPart = (f64)value / 10000000000.0;
-    PrintInt((s64)floorf(topPart));
+    PrintInt(floorf(topPart));
     putchar('.');
     putchar('.');
     putchar('.');
     return;
   }
 
-  PrintInt((s64)floorf(value));
+  PrintInt(floorf(value));
 
   // The remainder of this function prints the part after the decimal digit
   value = decimalPart;
@@ -194,7 +194,7 @@ void PrintFloat(f64 value)
   return;
 } // void printFloat(f32 value)
 
-void PrintInt(s64 value)
+void PrintInt(s32 value)
 {
   int digits[MAX_PRINTF_DIGITS];
 
@@ -216,10 +216,10 @@ void PrintInt(s64 value)
 
   digitIndex=0;
   while(value > 0) {
-    const s32 curDigit = (s32)(value - (10*(value/10)));
+    const s32 curDigit = (value - (10*(value/10)));
     //const int curDigit = ABS(value) % 10;
 
-    // This if statement should nenver be true, but it sometimes is on the myriad1. This will output "BUG".
+    // This if statement should never be true, but it sometimes is on the myriad1. This will output "BUG".
     if(value < 0){
       // BUG1
       digits[digitIndex++] = 1;
@@ -260,23 +260,25 @@ void PrintInt(s64 value)
   return;
 } // void printInt(s32 value)
 
-#if !defined(USING_MOVIDIUS_COMPILER)
 IN_DDR double GetTime()
 {
 #if defined(_MSC_VER)
   LARGE_INTEGER frequency, counter;
   QueryPerformanceCounter(&counter);
   QueryPerformanceFrequency(&frequency);
-  return (double)(counter.QuadPart)/(double)(frequency.QuadPart);
+  const f64 timeInSeconds = (double)(counter.QuadPart)/(double)(frequency.QuadPart);
+#elif defined(USING_MOVIDIUS_COMPILER)
+  const f64 timeInSeconds = DrvTimerTicksToMs(DrvTimerGetSysTicks64());
 #elif defined(__APPLE_CC__)
-  return 0.0;
-#else
+  const f64 timeInSeconds = 0.0; // TODO: implement
+#else // Generic Unix
   timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
-  return (double)(ts.tv_sec) + (double)(ts.tv_nsec)/1000000000.0;
+  const f64 timeInSeconds = (double)(ts.tv_sec) + (double)(ts.tv_nsec)/1000000000.0;
 #endif
+
+  return timeInSeconds;
 }
-#endif // #if !defined(USING_MOVIDIUS_COMPILER)
 
 f32 Roundf(const f32 number)
 {

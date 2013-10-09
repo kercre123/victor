@@ -30,7 +30,7 @@ You cannot use both CMX and L2 Cache;
 
 #define MAX_BYTES 5000
 
-#ifdef _MSC_VER
+#ifdef _MSC_VER 
 static char buffer[MAX_BYTES];
 #else
 
@@ -49,9 +49,9 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
 // This test requires a stopwatch, and takes about ten seconds to do manually
-//#define TEST_BENCHMARKING
+#define TEST_BENCHMARKING
 #ifdef TEST_BENCHMARKING
-IN_DDR GTEST_TEST(CoreTech_Common, BENCHMARKING)
+IN_DDR GTEST_TEST(CoreTech_Common, Benchmarking)
 {
   InitBenchmarking();
 
@@ -913,6 +913,10 @@ IN_DDR int RUN_ALL_TESTS()
 {
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
+
+#ifdef TEST_BENCHMARKING
+  CALL_GTEST_TEST(CoreTech_Common, Benchmarking);
+#endif
 
   CALL_GTEST_TEST(CoreTech_Common, ApproximateExp);
   CALL_GTEST_TEST(CoreTech_Common, SVD32);
