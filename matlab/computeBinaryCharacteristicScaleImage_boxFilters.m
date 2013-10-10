@@ -20,7 +20,27 @@ if nargout > 1 || nargout == 0
     whichScale = ones(nrows,ncols);
 end
 
-integralIm = integralimage(image);
+maxFilterHalfWidth = 2 ^ (numLevels+1);
+
+imageWithBorders = zeros([nrows+2*maxFilterHalfWidth+1, ncols+2*maxFilterHalfWidth+1]);
+
+validYIndexes = (maxFilterHalfWidth+1):(maxFilterHalfWidth+nrows);
+validXIndexes = (maxFilterHalfWidth+1):(maxFilterHalfWidth+ncols);
+
+% Replicate the last pixel on the borders
+imageWithBorders(1:maxFilterHalfWidth, validXIndexes) = repmat(image(1,:), [maxFilterHalfWidth,1]);
+imageWithBorders((maxFilterHalfWidth+nrows+1):end, validXIndexes) = repmat(image(end,:), [maxFilterHalfWidth+1,1]);
+imageWithBorders(validYIndexes, 1:maxFilterHalfWidth) = repmat(image(:,1), [1,maxFilterHalfWidth]);
+imageWithBorders(validYIndexes, (maxFilterHalfWidth+ncols+1):end) = repmat(image(:,end), [1,maxFilterHalfWidth+1]);
+
+% Replicate the corners from the corner pixel
+imageWithBorders(1:maxFilterHalfWidth, 1:maxFilterHalfWidth) = image(1,1);
+imageWithBorders((maxFilterHalfWidth+nrows+1):end, 1:maxFilterHalfWidth) = image(end,1);
+imageWithBorders(1:maxFilterHalfWidth, (maxFilterHalfWidth+ncols+1):end) = image(1,1);
+imageWithBorders((maxFilterHalfWidth+nrows+1):end, (maxFilterHalfWidth+nrows+1):end) = image(end,end);
+
+imageWithBorders(validYIndexes, validXIndexes) = image;
+integralImageWithBorders = integralimage(imageWithBorders);
 
 for pyramidLevel = 1:numLevels
     halfWidthLarge = 2 ^ pyramidLevel;
@@ -32,10 +52,12 @@ for pyramidLevel = 1:numLevels
     filterL = [-halfWidthLarge, -halfWidthLarge, halfWidthLarge, halfWidthLarge, 1/filterAreaLarge];
     filterS = [-halfWidthSmall, -halfWidthSmall, halfWidthSmall, halfWidthSmall, 1/filterAreaSmall];
     
-    filteredLarge = integralfilter(integralIm, filterL);
-    filteredSmall = integralfilter(integralIm, filterS);
+    filteredLarge = integralfilter(integralImageWithBorders, filterL);
+    filteredSmall = integralfilter(integralImageWithBorders, filterS);
+        
+    filteredSmall = filteredSmall(validYIndexes,validXIndexes);
     
-    dog = abs(filteredSmall - filteredLarge);
+    dog = abs(filteredSmall - filteredLarge(validYIndexes,validXIndexes));
        
     larger = dog > dog_max;
     if any(larger(:))
