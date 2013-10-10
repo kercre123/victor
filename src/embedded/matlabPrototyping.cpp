@@ -264,7 +264,7 @@ namespace Anki
       MemoryStack scratch1,
       MemoryStack scratch2)
     {
-//      BeginBenchmark("SimpleDetector_Steps12345");
+      BeginBenchmark("SimpleDetector_Steps12345");
 
       const s32 maxConnectedComponentSegments = u16_MAX;
       const s32 maxCandidateMarkers = 1000;
@@ -277,47 +277,23 @@ namespace Anki
         PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
         Array<u8> binaryImage(image.get_size(0), image.get_size(1), scratch2);
 
-        printf("1...%d\n", &scratch1);
-        scratch1.Print();
-
         // 1. Compute the Scale image (use local scratch1)
         // 2. Binarize the Scale image (store in outer scratch2)
         {
           PUSH_MEMORY_STACK(scratch1); // Push the current state of the scratch buffer onto the system stack
 
-          printf("2a... %d %d\n", &image, image.Pointer(0,0));
-          printf("2aa... %d\n", &scratch1);
-          //printf("2a... %d %d %d\n", image.get_size(0), image.get_size(1), scratch1);
-
-          scratch1.Print();
-
-          printf("image size (%d,%d)\n", image.get_size(0), image.get_size(1));
-
           FixedPointArray<u32> scaleImage(image.get_size(0), image.get_size(1), 16, scratch1);
 
-          printf("2b1...\n");
-          printf("2b2...\n");
-          printf("2b3...\n");
-          printf("2b4...\n");
-          printf("2b5...\n");
-          printf("2b6...\n");
-          printf("2b7...\n");
-          printf("2b8...\n");
-
-//          BeginBenchmark("ComputeCharacteristicScaleImage");
+          BeginBenchmark("ComputeCharacteristicScaleImage");
           if(ComputeCharacteristicScaleImage(image, scaleImage_numPyramidLevels, scaleImage, scratch2) != RESULT_OK)
             return RESULT_FAIL;
-//          // EndBenchmark("ComputeCharacteristicScaleImage");
-
-          printf("3...\n");
+          EndBenchmark("ComputeCharacteristicScaleImage");
 
           BeginBenchmark("BinarizeScaleImage");
           if(BinarizeScaleImage(image, scaleImage, binaryImage) != RESULT_OK)
             return RESULT_FAIL;
-          // EndBenchmark("BinarizeScaleImage");
+          EndBenchmark("BinarizeScaleImage");
         } // PUSH_MEMORY_STACK(scratch1);
-
-        printf("4...\n");
 
         // Print a checksum of the binary image
 #ifdef PRINTF_INTERMEDIATES
