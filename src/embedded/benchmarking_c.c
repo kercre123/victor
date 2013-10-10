@@ -34,7 +34,7 @@ unsigned long long GetBenchmarkTime()
 #elif defined(__APPLE_CC__)
   return 0; // TODO: implement
 #elif defined(USING_MOVIDIUS_GCC_COMPILER)
-  return 0; // TODO: implement
+  return DrvTimerGetSysTicks64();
 #elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
   return 0; // TODO: implement
 #else
@@ -134,7 +134,7 @@ void PrintBenchmarkResults()
 #elif defined(__APPLE_CC__)
         const double elapsedTime = 0.0;
 #elif defined(USING_MOVIDIUS_GCC_COMPILER)
-        const double elapsedTime = 0.0;
+        const double elapsedTime = (1.0 / 1000.0) * DrvTimerTicksToMs(rawElapsedTime);
 #elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
         const double elapsedTime = 0.0;
 #else
@@ -142,7 +142,7 @@ void PrintBenchmarkResults()
 #endif
 
         minTimes[index] = MIN(minTimes[index], elapsedTime);
-        maxTimes[index] = MAX(maxTimes[index], elapsedTime);;
+        maxTimes[index] = MAX(maxTimes[index], elapsedTime);
 
         totalTimes[index] += elapsedTime;
 
@@ -154,12 +154,9 @@ void PrintBenchmarkResults()
   } // for(i=0; i<currentBenchmarkEvent; i++)
 
   for(i=0; i<numEventNames; i++) {
-#if defined(USING_MOVIDIUS_GCC_COMPILER)
-    printf("Event %s: MeanTime:%dms MinTime:%dms MaxTime:%dms NumEvents:%d TotalTime:%dms\n",
-      eventNames[i], 1000*(int)(totalTimes[i]/(double)numEvents[i]), 1000*(int)(minTimes[i]), 1000*(int)(maxTimes[i]), numEvents[i], 1000*(int)(totalTimes[i]));
-#else
-    printf("Event %s: MeanTime:%fs MinTime:%fs MaxTime:%fs NumEvents:%d TotalTime:%fs\n",
-      eventNames[i], totalTimes[i]/(double)numEvents[i], minTimes[i], maxTimes[i], numEvents[i], totalTimes[i]);
-#endif
+    printf("Event ");
+    printf(eventNames[i]);
+    printf(": Mean:%fs Min:%fs Max:%fs Total:%fs NumEvents:%d\n",
+      totalTimes[i]/(double)numEvents[i], minTimes[i], maxTimes[i], totalTimes[i], numEvents[i]);
   } // for(i=0; i<numEventNames; i++)
 } // void PrintBenchmarkResults()
