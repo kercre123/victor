@@ -126,7 +126,11 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
 
   InitializeBuffers();
 
-  printf("%d %d %d %d\n", blockImage50[0], blockImage50[1000], blockImage50[640*240], blockImage50[640*480-1]);
+  // Check that the image loaded correctly
+  ASSERT_TRUE(blockImage50[0] == 155);
+  ASSERT_TRUE(blockImage50[1000] == 147);
+  ASSERT_TRUE(blockImage50[640*240] == 155);
+  ASSERT_TRUE(blockImage50[640*480-1] == 133);
 
   const s32 scaleImage_numPyramidLevels = 6;
 
@@ -178,7 +182,10 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
     homographies[i] = newArray;
   } // for(s32 i=0; i<maximumSize; i++)
 
+  InitBenchmarking();
+
   {
+    const f64 time0 = GetTime();
     const Result result = SimpleDetector_Steps12345(
       image,
       markers,
@@ -192,6 +199,11 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
       decode_minContrastRatio,
       scratch1,
       scratch2);
+    const f64 time1 = GetTime();
+
+    printf("totalTime: %f\n", time1-time0);
+
+    PrintBenchmarkResults();
 
     ASSERT_TRUE(result == RESULT_OK);
   }
