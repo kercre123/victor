@@ -27,7 +27,7 @@ Matlab matlab(false);
 #endif
 
 //#define BUFFER_IN_DDR_WITH_L2
-//#define BUFFER_IN_CMX
+#define BUFFER_IN_CMX
 
 #if defined(BUFFER_IN_DDR_WITH_L2) && defined(BUFFER_IN_CMX)
 You cannot use both CMX and L2 Cache;
@@ -71,17 +71,16 @@ static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT
 
 //#define USE_STATIC_BUFFERS
 
-#ifdef USE_STATIC_BUFFERS
 #if defined(USING_MOVIDIUS_COMPILER)
-//__attribute__((section(".ddr_direct.manualAllocations"))) char bigBuffer0Start;
-__attribute__((section(".ddr.rodata"))) char bigBuffer0[BIG_BUFFER_SIZE0];
-__attribute__((section(".ddr.rodata"))) char bigBuffer1[BIG_BUFFER_SIZE1];
-__attribute__((section(".ddr.rodata"))) char bigBuffer2[BIG_BUFFER_SIZE2];
+#define BIG_BUFFER_LOCATION __attribute__((section(".bigBuffers")))
 #else
-char bigBuffer0[BIG_BUFFER_SIZE0];
-char bigBuffer1[BIG_BUFFER_SIZE1];
-char bigBuffer2[BIG_BUFFER_SIZE2];
+#define BIG_BUFFER_LOCATION
 #endif
+
+#ifdef USE_STATIC_BUFFERS
+BIG_BUFFER_LOCATION char bigBuffer0[BIG_BUFFER_SIZE0];
+BIG_BUFFER_LOCATION char bigBuffer1[BIG_BUFFER_SIZE1];
+BIG_BUFFER_LOCATION char bigBuffer2[BIG_BUFFER_SIZE2];
 #else // #ifdef USE_STATIC_BUFFERS
 char *bigBuffer0 = NULL;
 char *bigBuffer1 = NULL;
