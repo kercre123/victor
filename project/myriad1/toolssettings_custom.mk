@@ -130,7 +130,7 @@ CCOPT    		 += -fno-inline-small-functions
 endif
 CCOPT            += -Werror-implicit-function-declaration
 CCOPT    		 += $(LEON_C_OPTIMIZATION_LEVEL) -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 $(WARN)
-CCOPT                    += -DDISABLE_LEON_ICACHE -DDISABLE_LEON_DCACHE -DDISABLE_LEON_CACHE
+#CCOPT                    += -DDISABLE_LEON_ICACHE -DDISABLE_LEON_DCACHE -DDISABLE_LEON_CACHE
 
 CPPOPT    		 += -fno-inline-functions-called-once
 ifeq (,$(findstring 3.4.4,$(GCCVERSION)))

@@ -22,7 +22,7 @@ Matlab matlab(false);
 #endif
 
 //#define BUFFER_IN_DDR_WITH_L2
-//#define BUFFER_IN_CMX
+#define BUFFER_IN_CMX
 
 #if defined(BUFFER_IN_DDR_WITH_L2) && defined(BUFFER_IN_CMX)
 You cannot use both CMX and L2 Cache;
@@ -30,7 +30,7 @@ You cannot use both CMX and L2 Cache;
 
 #define MAX_BYTES 5000
 
-#ifdef _MSC_VER 
+#ifdef _MSC_VER
 static char buffer[MAX_BYTES];
 #else
 
