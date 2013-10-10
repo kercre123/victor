@@ -268,7 +268,7 @@ IN_DDR double GetTime()
   QueryPerformanceFrequency(&frequency);
   const f64 timeInSeconds = (double)(counter.QuadPart)/(double)(frequency.QuadPart);
 #elif defined(USING_MOVIDIUS_COMPILER)
-  const f64 timeInSeconds = DrvTimerTicksToMs(DrvTimerGetSysTicks64());
+  const f64 timeInSeconds = (1.0 / 1000.0) * DrvTimerTicksToMs(DrvTimerGetSysTicks64());
 #elif defined(__APPLE_CC__)
   const f64 timeInSeconds = 0.0; // TODO: implement
 #else // Generic Unix
@@ -308,10 +308,17 @@ IN_DDR s32 IsPowerOfTwo(u32 x)
 
 s32 IsOdd(const s32 x)
 {
+#if defined(USING_MOVIDIUS_GCC_COMPILER)
+  if(((x>>1)<<1) == x)
+    return 0;
+  else
+    return 1;
+#else
   if(x | 1)
     return 1;
   else
     return 0;
+#endif
 }
 
 s32 Determinant2x2(const s32 a, const s32 b, const s32 c, const s32 d)
