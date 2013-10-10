@@ -5,8 +5,6 @@ SECTIONS {
     *(.imageData*)
   }
 
-/*  . = 0x48010000;*/
-
   .ddr.text : {
     *(.ddr.text*)
     *(.text._ZN*) 
@@ -30,6 +28,12 @@ SECTIONS {
 
   .ddr.bss : {
     *(.bss.printfBuffer*)
+  }
+
+  . = 0x48000000;
+
+  .bigBuffers : {
+    *(.bigBuffers*)
   }
 }
 
