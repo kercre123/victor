@@ -182,7 +182,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
     homographies[i] = newArray;
   } // for(s32 i=0; i<maximumSize; i++)
 
-  InitBenchmarking();
+  //InitBenchmarking();
 
   {
     const f64 time0 = GetTime();
@@ -203,7 +203,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
 
     printf("totalTime: %f\n", time1-time0);
 
-    PrintBenchmarkResults();
+    //PrintBenchmarkResults();
 
     ASSERT_TRUE(result == RESULT_OK);
   }

@@ -5,7 +5,7 @@
 #include "anki/embeddedVision/draw_vision.h"
 
 //#define SEND_DRAWN_COMPONENTS
-//#define PRINTF_INTERMEDIATES
+#define PRINTF_INTERMEDIATES
 
 namespace Anki
 {
@@ -264,7 +264,7 @@ namespace Anki
       MemoryStack scratch1,
       MemoryStack scratch2)
     {
-      BeginBenchmark("SimpleDetector_Steps12345");
+      // BeginBenchmark("SimpleDetector_Steps12345");
 
       const s32 maxConnectedComponentSegments = u16_MAX;
       const s32 maxCandidateMarkers = 1000;
@@ -284,15 +284,15 @@ namespace Anki
 
           FixedPointArray<u32> scaleImage(image.get_size(0), image.get_size(1), 16, scratch1);
 
-          BeginBenchmark("ComputeCharacteristicScaleImage");
+          // BeginBenchmark("ComputeCharacteristicScaleImage");
           if(ComputeCharacteristicScaleImage(image, scaleImage_numPyramidLevels, scaleImage, scratch2) != RESULT_OK)
             return RESULT_FAIL;
-          EndBenchmark("ComputeCharacteristicScaleImage");
+          // EndBenchmark("ComputeCharacteristicScaleImage");
 
-          BeginBenchmark("BinarizeScaleImage");
+          // BeginBenchmark("BinarizeScaleImage");
           if(BinarizeScaleImage(image, scaleImage, binaryImage) != RESULT_OK)
             return RESULT_FAIL;
-          EndBenchmark("BinarizeScaleImage");
+          // EndBenchmark("BinarizeScaleImage");
         } // PUSH_MEMORY_STACK(scratch1);
 
         // Print a checksum of the binary image
@@ -307,10 +307,10 @@ namespace Anki
         {
           PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
 
-          BeginBenchmark("Extract2dComponents");
+          // BeginBenchmark("Extract2dComponents");
           if(extractedComponents.Extract2dComponents(binaryImage, component1d_minComponentWidth, component1d_maxSkipDistance, scratch2) != RESULT_OK)
             return RESULT_FAIL;
-          EndBenchmark("Extract2dComponents");
+          // EndBenchmark("Extract2dComponents");
 
 #ifdef SEND_DRAWN_COMPONENTS
           {
@@ -327,43 +327,43 @@ namespace Anki
           printf("MaxId(0) = %d\n", static_cast<s32>(extractedComponents.get_maximumId()));
 #endif
 
-          BeginBenchmark("CompressConnectedComponentSegmentIds1");
+          // BeginBenchmark("CompressConnectedComponentSegmentIds1");
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
-          EndBenchmark("CompressConnectedComponentSegmentIds1");
+          // EndBenchmark("CompressConnectedComponentSegmentIds1");
 
 #ifdef PRINTF_INTERMEDIATES
           printf("MaxId(1) = %d\n", static_cast<s32>(extractedComponents.get_maximumId()));
 #endif
 
-          BeginBenchmark("InvalidateSmallOrLargeComponents");
+          // BeginBenchmark("InvalidateSmallOrLargeComponents");
           if(extractedComponents.InvalidateSmallOrLargeComponents(component_minimumNumPixels, component_maximumNumPixels, scratch2) != RESULT_OK)
             return RESULT_FAIL;
-          EndBenchmark("InvalidateSmallOrLargeComponents");
+          // EndBenchmark("InvalidateSmallOrLargeComponents");
 
 #ifdef PRINTF_INTERMEDIATES
           printf("MaxId(2) = %d\n", static_cast<s32>(extractedComponents.get_maximumId()));
 #endif
 
-          BeginBenchmark("CompressConnectedComponentSegmentIds2");
+          // BeginBenchmark("CompressConnectedComponentSegmentIds2");
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
-          EndBenchmark("CompressConnectedComponentSegmentIds2");
+          // EndBenchmark("CompressConnectedComponentSegmentIds2");
 
 #ifdef PRINTF_INTERMEDIATES
           printf("MaxId(3) = %d\n", static_cast<s32>(extractedComponents.get_maximumId()));
 #endif
 
-          BeginBenchmark("InvalidateSolidOrSparseComponents");
+          // BeginBenchmark("InvalidateSolidOrSparseComponents");
           if(extractedComponents.InvalidateSolidOrSparseComponents(component_sparseMultiplyThreshold, component_solidMultiplyThreshold, scratch2) != RESULT_OK)
             return RESULT_FAIL;
-          EndBenchmark("InvalidateSolidOrSparseComponents");
+          // EndBenchmark("InvalidateSolidOrSparseComponents");
 
 #ifdef PRINTF_INTERMEDIATES
           printf("MaxId(4) = %d\n", static_cast<s32>(extractedComponents.get_maximumId()));
 #endif
 
-          BeginBenchmark("CompressConnectedComponentSegmentIds3");
+          // BeginBenchmark("CompressConnectedComponentSegmentIds3");
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
-          EndBenchmark("CompressConnectedComponentSegmentIds3");
+          // EndBenchmark("CompressConnectedComponentSegmentIds3");
 
 #ifdef PRINTF_INTERMEDIATES
           printf("MaxId(5) = %d\n", static_cast<s32>(extractedComponents.get_maximumId()));
@@ -380,26 +380,26 @@ namespace Anki
           }
 #endif
 
-          BeginBenchmark("InvalidateFilledCenterComponents");
+          // BeginBenchmark("InvalidateFilledCenterComponents");
           if(extractedComponents.InvalidateFilledCenterComponents(component_percentHorizontal, component_percentVertical, scratch2) != RESULT_OK)
             return RESULT_FAIL;
-          EndBenchmark("InvalidateFilledCenterComponents");
+          // EndBenchmark("InvalidateFilledCenterComponents");
 
 #ifdef PRINTF_INTERMEDIATES
           printf("MaxId(6) = %d\n", static_cast<s32>(extractedComponents.get_maximumId()));
 #endif
 
-          BeginBenchmark("CompressConnectedComponentSegmentIds4");
+          // BeginBenchmark("CompressConnectedComponentSegmentIds4");
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
-          EndBenchmark("CompressConnectedComponentSegmentIds4");
+          // EndBenchmark("CompressConnectedComponentSegmentIds4");
 
 #ifdef PRINTF_INTERMEDIATES
           printf("MaxId(7) = %d\n", static_cast<s32>(extractedComponents.get_maximumId()));
 #endif
 
-          BeginBenchmark("SortConnectedComponentSegmentsById");
+          // BeginBenchmark("SortConnectedComponentSegmentsById");
           extractedComponents.SortConnectedComponentSegmentsById(scratch1);
-          EndBenchmark("SortConnectedComponentSegmentsById");
+          // EndBenchmark("SortConnectedComponentSegmentsById");
         } // PUSH_MEMORY_STACK(scratch2);
       } // PUSH_MEMORY_STACK(scratch2);
 
@@ -415,7 +415,7 @@ namespace Anki
 #endif
 
       // 4. Compute candidate quadrilaterals from the connected components
-      BeginBenchmark("ComputeQuadrilateralsFromConnectedComponents");
+      // BeginBenchmark("ComputeQuadrilateralsFromConnectedComponents");
       FixedLengthList<Quadrilateral<s16> > extractedQuads(maxExtractedQuads, scratch2);
       {
         PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
@@ -423,14 +423,14 @@ namespace Anki
         if(ComputeQuadrilateralsFromConnectedComponents(extractedComponents, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, image.get_size(0), image.get_size(1), extractedQuads, scratch2) != RESULT_OK)
           return RESULT_FAIL;
       } // PUSH_MEMORY_STACK(scratch2);
-      EndBenchmark("ComputeQuadrilateralsFromConnectedComponents");
+      // EndBenchmark("ComputeQuadrilateralsFromConnectedComponents");
 
 #ifdef PRINTF_INTERMEDIATES
       extractedQuads.Print("extractedQuads");
 #endif
 
       // 4b. Compute a homography for each extracted quadrilateral
-      BeginBenchmark("ComputeHomographyFromQuad");
+      // BeginBenchmark("ComputeHomographyFromQuad");
       markers.set_size(extractedQuads.get_size());
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
         PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
@@ -445,12 +445,12 @@ namespace Anki
 #endif
         //currentHomography.Print("currentHomography");
       } // for(iQuad=0; iQuad<; iQuad++)
-      EndBenchmark("ComputeHomographyFromQuad");
+      // EndBenchmark("ComputeHomographyFromQuad");
 
       // 5. Decode fiducial markers from the candidate quadrilaterals
       const FiducialMarkerParser parser = FiducialMarkerParser();
 
-      BeginBenchmark("ExtractBlockMarker");
+      // BeginBenchmark("ExtractBlockMarker");
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
         const Array<f64> &currentHomography = homographies[iQuad];
         const Quadrilateral<s16> &currentQuad = extractedQuads[iQuad];
@@ -459,9 +459,9 @@ namespace Anki
         if(parser.ExtractBlockMarker(image, currentQuad, currentHomography, decode_minContrastRatio, currentMarker, scratch2) != RESULT_OK)
           return RESULT_FAIL;
       }
-      EndBenchmark("ExtractBlockMarker");
+      // EndBenchmark("ExtractBlockMarker");
 
-      EndBenchmark("SimpleDetector_Steps12345");
+      // EndBenchmark("SimpleDetector_Steps12345");
 
       return RESULT_OK;
     } //  SimpleDetector_Steps12345()
