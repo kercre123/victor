@@ -64,8 +64,8 @@ extern "C" {
   // Get the current system time. Currently only implemented for MSVC and generic linux
   double GetTime();
 
-  void explicitPrintf(int reverseWords, const char *format, ...);
-  // void explicitPrintfWithExplicitBuffer(int reverseWords, int * buffer, const char *format, ...);
+  void explicitPrintf(int reverseEachFourCharacters, const char *format, ...);
+  // void explicitPrintfWithExplicitBuffer(int reverseEachFourCharacters, int * buffer, const char *format, ...);
 
   void PrintInt(s32 value); // Print a single number
   void PrintFloat(f64 value); // Print a single float

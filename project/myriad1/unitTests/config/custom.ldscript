@@ -5,7 +5,7 @@ SECTIONS {
     *(.imageData*)
   }
 
-  . = 0x48010000;
+/*  . = 0x48010000;*/
 
   .ddr.text : {
     *(.ddr.text*)

@@ -108,8 +108,10 @@ extern "C" {
 #include <float.h>
 #include <stdarg.h>
 
+#define EXPLICIT_PRINTF_FLIP_CHARACTERS 0
+
 #undef printf
-#define printf(...) explicitPrintf(1, __VA_ARGS__)
+#define printf(...) explicitPrintf(EXPLICIT_PRINTF_FLIP_CHARACTERS, __VA_ARGS__)
 
   //#define printf(...) (_xprintf(SYSTEM_PUTCHAR_FUNCTION , 0, __VA_ARGS__ ) )
 #define xprintf(...) (_xprintf(SYSTEM_PUTCHAR_FUNCTION , 0, __VA_ARGS__ ) )
@@ -135,8 +137,9 @@ extern "C" {
 // If we're not building mex (which will replace printf w/ mexPrintf),
 // then we want to swap printf for explicitPrintf
 #ifndef ANKI_MEX_BUILD
+#define EXPLICIT_PRINTF_FLIP_CHARACTERS 0
 #undef printf
-#define printf(...) explicitPrintf(0, __VA_ARGS__)
+#define printf(...) explicitPrintf(EXPLICIT_PRINTF_FLIP_CHARACTERS, __VA_ARGS__)
 #endif
 
 #include "anki/common/types.h"

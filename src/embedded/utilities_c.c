@@ -12,11 +12,11 @@
 #define PRINTF_BUFFER_SIZE 1024
 int printfBuffer[PRINTF_BUFFER_SIZE];
 // int printfBuffer2[PRINTF_BUFFER_SIZE]; // For a single level of recusion
-void explicitPrintf(int reverseWords, const char *format, ...)
+void explicitPrintf(int reverseEachFourCharacters, const char *format, ...)
 {
   /*va_list arguments;
   va_start(arguments, format);
-  explicitPrintfWithExplicitBuffer(reverseWords, &printfBuffer[0], format, arguments);
+  explicitPrintfWithExplicitBuffer(reverseEachFourCharacters, &printfBuffer[0], format, arguments);
   va_end(arguments);*/
   const char * const formatStart = format;
   int numCharacters;
@@ -32,13 +32,13 @@ void explicitPrintf(int reverseWords, const char *format, ...)
   }
   format = formatStart;
 
-  if(reverseWords)
+  if(reverseEachFourCharacters)
     numCharacters += 3;
 
   numCharacters = MIN(numCharacters, PRINTF_BUFFER_SIZE-5);
 
   // Reverse the string
-  if(reverseWords) {
+  if(reverseEachFourCharacters) {
     for(i=0; i<numCharacters; i+=4) {
       printfBuffer[i] = format[i+3];
       if(format[i+3] == 0x00) {
@@ -87,7 +87,7 @@ void explicitPrintf(int reverseWords, const char *format, ...)
           putchar(*stringArgument);
           stringArgument++;
         }
-        //explicitPrintfWithExplicitprintfBuffer(reverseWords, &printfprintfBuffer2[0], stringArgument);
+        //explicitPrintfWithExplicitprintfBuffer(reverseEachFourCharacters, &printfprintfBuffer2[0], stringArgument);
       }
       else {
         if(printfBuffer[i] == 0x00)
