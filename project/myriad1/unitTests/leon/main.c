@@ -56,7 +56,7 @@ void realMain()
 
 //  sparc_leon3_disable_cache();
 
-  printf("Starting unit tests \n   ");
+  printf("Starting unit tests \n");
 
   swcShaveProfInit(&perfStr);
 
@@ -73,22 +73,13 @@ void realMain()
   //    The below printf is modified from swcShaveProfPrint(0, &perfStr);
 //  explicitPrintf(1, "\nLeon executed %d cycles in %d micro seconds ([%d ms])\n",(s32)(perfStr.perfCounterTimer), (s32)(DrvTimerTicksToMs(perfStr.perfCounterTimer)*1000), (s32)(DrvTimerTicksToMs(perfStr.perfCounterTimer)));
 
-  printf("Finished unit tests \n   ");
+  printf("Finished unit tests \n");
 }
 
 int __attribute__((section(".sys.text.start"))) main(void)
 {
   initClocksAndMemory();
 
-  //    DrvTimerInit();
-
-  //    SleepMs(10000);
-
-  //    const u64 startTime = DrvTimerGetSysTicks64();
-
-  //    while((DrvTimerGetSysTicks64() - startTime) < 180000000*10000) {}
-
-  //printf("Start\n");
   realMain();
 
   return 0;
