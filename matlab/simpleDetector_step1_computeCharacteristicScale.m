@@ -13,6 +13,10 @@ if usePyramid
         'Using image pyramid for characteristic scale requires downsampleFactor=2.');
 
     if showTiming, t = tic; end
+    
+    % Note: the default thresholdFraction is different for
+    % matlab_boxFilters than the other options
+    
     if strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_original')
         averageImg = computeCharacteristicScaleImage(img, numScales);
     elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_loops')
@@ -23,6 +27,10 @@ if usePyramid
         averageImg = double(computeCharacteristicScaleImage_loopsAndFixedPoint(img, numScales, false, true)) / (255 * 2^16);
     elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'c_fixedPoint')
         averageImg = double(mexComputeCharacteristicScale(im2uint8(img), numScales)) / (255 * 2^16);        
+    elseif strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_boxFilters')
+        binaryImg = computeBinaryCharacteristicScaleImage_boxFilters(img, numScales, thresholdFraction);
+        figure(3); imshow(binaryImg);
+        return;
     end
     
     if showTiming

@@ -1,10 +1,9 @@
 function markers = simpleDetector(img, varargin)
 
-maxSmoothingFraction = 0.1; % fraction of max dim
+
 downsampleFactor = 2;
 usePyramid = true;
 usePerimeterCheck = false;
-thresholdFraction = 1; % fraction of local mean to use as threshld
 minQuadArea = 100; % about 10 pixels per side
 computeTransformFromBoundary = true;
 quadRefinementMethod = 'none'; % 'ICP' or 'fminsearch' or 'none'
@@ -14,8 +13,17 @@ minDistanceFromImageEdge = 2; % if a quad has an corner that is too close to the
 DEBUG_DISPLAY = nargout==0;
 embeddedConversions = EmbeddedConversionsManager; % 1-cp2tform, 2-opencv_cp2tform
 showTiming = false;
-
+thresholdFraction = 1; % fraction of local mean to use as threshold
+maxSmoothingFraction = 0.1; % fraction of max dim
+ 
 parseVarargin(varargin{:});
+
+% Use different defaults for 'matlab_boxFilters'
+if strcmp(embeddedConversions.computeCharacteristicScaleImageType, 'matlab_boxFilters')
+    thresholdFraction = 0.75; % fraction of local mean to use as threshold
+    maxSmoothingFraction = 0.025; % fraction of max dim
+    parseVarargin(varargin{:});
+end
 
 if ischar(img)
     img = imread(img);
@@ -25,7 +33,7 @@ img = mean(im2double(img),3);
 
 [nrows,ncols] = size(img);
 
-if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep12345')'
+if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep12345')
     assert(BlockMarker2D.UseOutsideOfSquare, ...
                     ['You need to set constant property ' ...
                     'BlockMarker2D.UseOutsideOfSquare = false to use this method.']);
@@ -56,7 +64,7 @@ if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep12345')'
 %         keyboard
     end
         
-else % if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep12345')'
+else % if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep12345')
     if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1234')
         assert(BlockMarker2D.UseOutsideOfSquare, ...
                     ['You need to set constant property ' ...
