@@ -124,14 +124,14 @@ void PrintFloat(f64 value)
 
   if(value > 10000000000.0) {
     const f64 topPart = (f64)value / 10000000000.0;
-    PrintInt(floorf(topPart));
+    PrintInt((s32)floorf(topPart));
     putchar('.');
     putchar('.');
     putchar('.');
     return;
   }
 
-  PrintInt(floorf(value));
+  PrintInt((s32)floorf(value));
 
   // The remainder of this function prints the part after the decimal digit
   value = decimalPart;
@@ -263,10 +263,11 @@ void PrintInt(s32 value)
 IN_DDR double GetTime()
 {
 #if defined(_MSC_VER)
+  f64 timeInSeconds;
   LARGE_INTEGER frequency, counter;
   QueryPerformanceCounter(&counter);
   QueryPerformanceFrequency(&frequency);
-  const f64 timeInSeconds = (double)(counter.QuadPart)/(double)(frequency.QuadPart);
+  timeInSeconds = (double)(counter.QuadPart)/(double)(frequency.QuadPart);
 #elif defined(USING_MOVIDIUS_COMPILER)
   const f64 timeInSeconds = (1.0 / 1000.0) * DrvTimerTicksToMs(DrvTimerGetSysTicks64());
 #elif defined(__APPLE_CC__)
