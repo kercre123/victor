@@ -3,16 +3,6 @@
 
 #include "anki/embeddedCommon/config.h"
 
-#if defined(_MSC_VER)
-#include <windows.h>
-#elif defined(USING_MOVIDIUS_GCC_COMPILER)
-// TODO: implement
-#elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
-// TODO: implement
-#else
-#include <sys/time.h>
-#endif
-
 #define NUM_BENCHMARK_EVENTS 0xFFFF
 
 #ifdef __cplusplus
