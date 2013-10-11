@@ -35,4 +35,8 @@ typedef int64_t  s64;
 typedef float    f32;
 typedef double   f64;
 
+namespace Anki {
+  typedef s32 ReturnCode;
+}
+
 #endif /* ANKICORETECH_COMMON_TYPES_H_ */
