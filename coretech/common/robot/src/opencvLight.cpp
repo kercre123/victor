@@ -39,8 +39,8 @@
 //
 //M*/
 
-#include "anki/embeddedCommon/opencvLight.h"
-#include "anki/embeddedCommon/errorHandling.h"
+#include "anki/common/robot/opencvLight.h"
+#include "anki/common/robot/errorHandling.h"
 
 #ifdef __cplusplus
 extern "C" {

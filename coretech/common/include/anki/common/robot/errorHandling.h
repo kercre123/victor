@@ -3,7 +3,7 @@
 #ifndef __Anki_LIGHT_H__
 #define __Anki_LIGHT_H__
 
-#include "anki/embeddedCommon/config.h"
+#include "anki/common/robot/config.h"
 
 #ifdef _MSC_VER
 #ifndef __PRETTY_FUNCTION__

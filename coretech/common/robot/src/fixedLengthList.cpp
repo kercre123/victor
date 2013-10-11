@@ -1,5 +1,5 @@
-#include "anki/embeddedCommon/fixedLengthList.h"
-#include "anki/embeddedCommon/errorHandling.h"
+#include "anki/common/robot/fixedLengthList.h"
+#include "anki/common/robot/errorHandling.h"
 
 namespace Anki
 {

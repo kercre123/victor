@@ -1,5 +1,5 @@
-#include "anki/embeddedCommon/benchmarking_c.h"
-#include "anki/embeddedCommon/utilities_c.h"
+#include "anki/common/robot/benchmarking_c.h"
+#include "anki/common/robot/utilities_c.h"
 
 #if defined(_MSC_VER)
 #include <windows.h>

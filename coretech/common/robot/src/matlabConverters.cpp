@@ -1,4 +1,4 @@
-#include "anki/embeddedCommon/matlabConverters.h"
+#include "anki/common/robot/matlabConverters.h"
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB
 

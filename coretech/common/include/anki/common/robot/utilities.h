@@ -1,9 +1,9 @@
 #ifndef _ANKICORETECHEMBEDDED_COMMON_UTILITIES_H_
 #define _ANKICORETECHEMBEDDED_COMMON_UTILITIES_H_
 
-#include "anki/embeddedCommon/config.h"
-#include "anki/embeddedCommon/errorHandling.h"
-#include "anki/embeddedCommon/utilities_c.h"
+#include "anki/common/robot/config.h"
+#include "anki/common/robot/errorHandling.h"
+#include "anki/common/robot/utilities_c.h"
 
 namespace Anki
 {
