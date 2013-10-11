@@ -1,0 +1,46 @@
+# Misc
+*.bak
+*~
+matlab.mat
+# Mac OS
+*.DS_Store
+# Xcode
+*.mexmaci64
+*.o
+*.obj
+*.so
+*.la
+*.a
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.moved-aside
+# MSVC
+*.res
+*.user
+*.suo
+*.sdf
+*.opensdf
+*.ncb
+*.exe
+*.dll
+*.lib
+*.aps
+*.layout
+*.log
+*.tlog
+*.pdb
+*.lastbuildstate
+*.idb
+*.ilk
+*.pyc
+*.mexw32
+*.mexw64
+*.mexmac
+*.mexmaci64
+*.ipch
+*.asv
+build
+*.psess
+project/myriad1/unitTests/output
