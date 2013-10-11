@@ -1,36 +1,37 @@
 /**
- * File: vehicleSpeedController.c 
- * Author: Hanns Tappeiner (hanns@anki.com) 
- * Date: 07/11/2012 
- *  
- * The vehicle needs to keep a forward speed as close as 
- * possible to the speed commanded by the user (user means BTLE 
- * Master, e.g. iPhone). There are multiple ways to 
- * measure/control that speed: 
- *  
+ * File: vehicleSpeedController.c
+ * Author: Hanns Tappeiner (hanns@anki.com)
+ * Date: 07/11/2012
+ *
+ * The vehicle needs to keep a forward speed as close as
+ * possible to the speed commanded by the user (user means BTLE
+ * Master, e.g. iPhone). There are multiple ways to
+ * measure/control that speed:
+ *
  * 1) The vehicle speed is measured/controlled by
- * measuring/controlling the two wheel speeds (encoders). 
- * Assuming no slip, this should be very accurate and we 
- * can do it many times per second. We get new measurments 
- * every ~4.3mm (in version v4.1 of the car) of forward travel. 
- * Also, this should work well during lane changes. With slip, 
- * we loose precision, but it is probably the best way of 
- * estimating forward speed at the micro level. 
- *  
- * 2) The vehicle speed is measured/controlled by 
- * measuring/controlling the forward progress looking at track 
- * codes. This is not precise at high speeds and also does not 
+ * measuring/controlling the two wheel speeds (encoders).
+ * Assuming no slip, this should be very accurate and we
+ * can do it many times per second. We get new measurments
+ * every ~4.3mm (in version v4.1 of the car) of forward travel.
+ * Also, this should work well during lane changes. With slip,
+ * we loose precision, but it is probably the best way of
+ * estimating forward speed at the micro level.
+ *
+ * 2) The vehicle speed is measured/controlled by
+ * measuring/controlling the forward progress looking at track
+ * codes. This is not precise at high speeds and also does not
  * really work during lane changes.
- *  
- * For now, we will exclusively rely on the encoders to control 
- * forward speed. At some point we MIGHT incorporate the 
- * global forward speed measured via the road codes as well, but 
- * only if it turns out that we need it. 
+ *
+ * For now, we will exclusively rely on the encoders to control
+ * forward speed. At some point we MIGHT incorporate the
+ * global forward speed measured via the road codes as well, but
+ * only if it turns out that we need it.
  **/
 
 //#include <math.h>
 //#include "hal/portable.h"
 #include "anki/cozmo/robot/assert.h"
+#include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/debug.h"
 #include "anki/cozmo/robot/vehicleSpeedController.h"
 #include "anki/cozmo/robot/wheelController.h"
@@ -38,211 +39,227 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 
-// The target desired speed the user commanded to the car [mm/sec].
-// This is our eventual goal for the vehicle speed, given enough time for acceleration
-static s16 userCommandedDesiredVehicleSpeed = 0;
-
-// The current speed according to the target speed and acceleration set by the user. [mm/sec]
-// This is our speed goal for the current iteration. This is what the PID controller will use
-static s16 userCommandedCurrentVehicleSpeed = 0;
-
-// The absolute value (max value) acceleration/deceleration the user commanded to the car [mm/sec^2]
-static s16 userCommandedAcceleration = 0;
-
-// The controller needs to regulate the speed of the car "around" the user commanded speed [mm/sec]
-static s16 controllerCommandedVehicleSpeed = 0;
-
-
-
-static s32 errorsum = 0;
-
-// Forward declaration
-void RunVehicleSpeedController(s16 desVehicleSpeed);
-
-// Getters and Setters
-void SetUserCommandedCurrentVehicleSpeed(s16 ucspeed)
-{
-  userCommandedCurrentVehicleSpeed = ucspeed;
-}
-
-s16 GetUserCommandedCurrentVehicleSpeed(void)
-{
-  return userCommandedCurrentVehicleSpeed;
-}
-
-void SetUserCommandedDesiredVehicleSpeed(s16 ucspeed)
-{
-  userCommandedDesiredVehicleSpeed = ucspeed;
-  
-  // If the current measured speed and the current user commanded speed 
-  // are on the same side of the user desired speed and the measured speed
-  // is closer to the user desired speed than the current user commanded speed, then set the 
-  // current user commanded speed to be the current measured speed.
-  // It makes no sense to try to slow down before speeding up!
-  s16 desiredAndCurrentSpeedDiff = userCommandedDesiredVehicleSpeed - userCommandedCurrentVehicleSpeed;
-  s16 desiredAndMeasuredSpeedDiff = userCommandedDesiredVehicleSpeed - GetCurrentMeasuredVehicleSpeed();
-  if ( SIGN(desiredAndCurrentSpeedDiff) == SIGN(desiredAndMeasuredSpeedDiff) 
-       && ABS(desiredAndCurrentSpeedDiff) > ABS(desiredAndMeasuredSpeedDiff) ) {
-    userCommandedCurrentVehicleSpeed = GetCurrentMeasuredVehicleSpeed();
-  }
-
-  // Similarly, if the current measured speed and the current user commanded speed
-  // are on opposite sides of the user desired speed, set the user commanded speed
-  // to be the desired speed.
-  if ( SIGN(desiredAndCurrentSpeedDiff) != SIGN(desiredAndMeasuredSpeedDiff) ) {
-    userCommandedCurrentVehicleSpeed = userCommandedDesiredVehicleSpeed;
-  }
-}
-
-s16 GetUserCommandedDesiredVehicleSpeed(void)
-{
-  return userCommandedDesiredVehicleSpeed;
-}
-
-void SetBothDesiredAndCurrentUserSpeed(s16 ucspeed)
-{
-  userCommandedDesiredVehicleSpeed = ucspeed;
-  userCommandedCurrentVehicleSpeed = ucspeed;
-}
-
-void SetUserCommandedAcceleration(s16 ucAccel)
-{
-  if (ucAccel < 0) {
-    ucAccel = -ucAccel;
-  }
-
-  assert((float)(ucAccel) >= ONE_OVER_CONTROL_DT);
-
-  userCommandedAcceleration = ucAccel;
-}
-
-s16 GetUserCommandedAcceleration(void)
-{
-  return userCommandedAcceleration;
-}
-
-
-void SetControllerCommandedVehicleSpeed(s16 ccspeed)
-{
-  controllerCommandedVehicleSpeed = ccspeed;
-}
-
-s16 GetControllerCommandedVehicleSpeed(void)
-{
-  return controllerCommandedVehicleSpeed;
-}
-
-//This tells us how fast the vehicle is driving right now in mm/sec
-s16 GetCurrentMeasuredVehicleSpeed(void)
-{
-    return (GetLeftWheelSpeedFiltered() + GetRightWheelSpeedFiltered()) / 2;
-}
-
-void RunAccelerationUpdate(void)
-{
-  if (userCommandedDesiredVehicleSpeed > userCommandedCurrentVehicleSpeed) {
-    // Go faster
-    userCommandedCurrentVehicleSpeed += userCommandedAcceleration * CONTROL_DT;
-    userCommandedCurrentVehicleSpeed = MIN(userCommandedDesiredVehicleSpeed, userCommandedCurrentVehicleSpeed);
-  } else if (userCommandedDesiredVehicleSpeed < userCommandedCurrentVehicleSpeed) {
-    // Go slower
-    userCommandedCurrentVehicleSpeed -= userCommandedAcceleration * CONTROL_DT;
-    userCommandedCurrentVehicleSpeed = MAX(userCommandedDesiredVehicleSpeed, userCommandedCurrentVehicleSpeed);
-  }
-}
-
-void ManageVehicleSpeedController(void)
-{
-  //For now, the only thing we do is to set the controller commanded vehicle speed to whatever the user commanded
-  //Later we will (potentially) change this to a PI contontroller trying to achieve the speed we want
-
-  RunAccelerationUpdate();
-  RunVehicleSpeedController(GetUserCommandedCurrentVehicleSpeed());
-  
-}
-
-
-BOOL IsVehicleStopped(void)
-{
-    //If the left and the right encoder are not moving (or moving REALLY slow), we are stopped        
-    if (ABS(GetLeftWheelSpeedFiltered()) < WHEEL_SPEED_CONSIDER_STOPPED_MM_S && ABS(GetRightWheelSpeedFiltered()) < WHEEL_SPEED_CONSIDER_STOPPED_MM_S ) {
-      return TRUE;
-    } else{
-      return FALSE;
+namespace Anki {
+  namespace VehicleSpeedController {
+    
+    
+#pragma mark --- "Member Variables" ---
+    
+    // The target desired speed the user commanded to the car [mm/sec].
+    // This is our eventual goal for the vehicle speed, given enough time for acceleration
+    static s16 userCommandedDesiredVehicleSpeed = 0;
+    
+    // The current speed according to the target speed and acceleration set by the user. [mm/sec]
+    // This is our speed goal for the current iteration. This is what the PID controller will use
+    static s16 userCommandedCurrentVehicleSpeed = 0;
+    
+    // The absolute value (max value) acceleration/deceleration the user commanded to the car [mm/sec^2]
+    static s16 userCommandedAcceleration = 0;
+    
+    // The controller needs to regulate the speed of the car "around" the user commanded speed [mm/sec]
+    static s16 controllerCommandedVehicleSpeed = 0;
+    
+    static s32 errorsum = 0;
+    
+    
+#pragma mark --- Method Implementations ---
+    
+    // Forward declaration
+    void RunVehicleSpeedController(s16 desVehicleSpeed);
+    
+    // Getters and Setters
+    void SetUserCommandedCurrentVehicleSpeed(s16 ucspeed)
+    {
+      userCommandedCurrentVehicleSpeed = ucspeed;
     }
     
-}
-
-// Integral speed controller.
-// Adjusts contollerCommandedVehicleSpeed according to given desiredVehicleSpeed.
-void RunVehicleSpeedController(s16 desVehicleSpeed)
-{
+    s16 GetUserCommandedCurrentVehicleSpeed(void)
+    {
+      return userCommandedCurrentVehicleSpeed;
+    }
+    
+    void SetUserCommandedDesiredVehicleSpeed(s16 ucspeed)
+    {
+      userCommandedDesiredVehicleSpeed = ucspeed;
+      
+      // If the current measured speed and the current user commanded speed
+      // are on the same side of the user desired speed and the measured speed
+      // is closer to the user desired speed than the current user commanded speed, then set the
+      // current user commanded speed to be the current measured speed.
+      // It makes no sense to try to slow down before speeding up!
+      s16 desiredAndCurrentSpeedDiff = userCommandedDesiredVehicleSpeed - userCommandedCurrentVehicleSpeed;
+      s16 desiredAndMeasuredSpeedDiff = userCommandedDesiredVehicleSpeed - GetCurrentMeasuredVehicleSpeed();
+      if ( SIGN(desiredAndCurrentSpeedDiff) == SIGN(desiredAndMeasuredSpeedDiff)
+          && ABS(desiredAndCurrentSpeedDiff) > ABS(desiredAndMeasuredSpeedDiff) ) {
+        userCommandedCurrentVehicleSpeed = GetCurrentMeasuredVehicleSpeed();
+      }
+      
+      // Similarly, if the current measured speed and the current user commanded speed
+      // are on opposite sides of the user desired speed, set the user commanded speed
+      // to be the desired speed.
+      if ( SIGN(desiredAndCurrentSpeedDiff) != SIGN(desiredAndMeasuredSpeedDiff) ) {
+        userCommandedCurrentVehicleSpeed = userCommandedDesiredVehicleSpeed;
+      }
+    }
+    
+    s16 GetUserCommandedDesiredVehicleSpeed(void)
+    {
+      return userCommandedDesiredVehicleSpeed;
+    }
+    
+    void SetBothDesiredAndCurrentUserSpeed(s16 ucspeed)
+    {
+      userCommandedDesiredVehicleSpeed = ucspeed;
+      userCommandedCurrentVehicleSpeed = ucspeed;
+    }
+    
+    void SetUserCommandedAcceleration(s16 ucAccel)
+    {
+      if (ucAccel < 0) {
+        ucAccel = -ucAccel;
+      }
+      
+      assert((float)(ucAccel) >= Anki::Cozmo::ONE_OVER_CONTROL_DT);
+      
+      userCommandedAcceleration = ucAccel;
+    }
+    
+    s16 GetUserCommandedAcceleration(void)
+    {
+      return userCommandedAcceleration;
+    }
+    
+    
+    void SetControllerCommandedVehicleSpeed(s16 ccspeed)
+    {
+      controllerCommandedVehicleSpeed = ccspeed;
+    }
+    
+    s16 GetControllerCommandedVehicleSpeed(void)
+    {
+      return controllerCommandedVehicleSpeed;
+    }
+    
+    //This tells us how fast the vehicle is driving right now in mm/sec
+    s16 GetCurrentMeasuredVehicleSpeed(void)
+    {
+      return (Cozmo::Robot::GetLeftWheelSpeedFiltered() +
+              Cozmo::Robot::GetRightWheelSpeedFiltered()) / 2;
+    }
+    
+    void RunAccelerationUpdate(void)
+    {
+      if (userCommandedDesiredVehicleSpeed > userCommandedCurrentVehicleSpeed) {
+        // Go faster
+        userCommandedCurrentVehicleSpeed += userCommandedAcceleration * Cozmo::CONTROL_DT;
+        userCommandedCurrentVehicleSpeed = MIN(userCommandedDesiredVehicleSpeed, userCommandedCurrentVehicleSpeed);
+      } else if (userCommandedDesiredVehicleSpeed < userCommandedCurrentVehicleSpeed) {
+        // Go slower
+        userCommandedCurrentVehicleSpeed -= userCommandedAcceleration * Cozmo::CONTROL_DT;
+        userCommandedCurrentVehicleSpeed = MAX(userCommandedDesiredVehicleSpeed, userCommandedCurrentVehicleSpeed);
+      }
+    }
+    
+    void ManageVehicleSpeedController(void)
+    {
+      //For now, the only thing we do is to set the controller commanded vehicle speed to whatever the user commanded
+      //Later we will (potentially) change this to a PI contontroller trying to achieve the speed we want
+      
+      RunAccelerationUpdate();
+      RunVehicleSpeedController(GetUserCommandedCurrentVehicleSpeed());
+      
+    }
+    
+    
+    bool IsVehicleStopped(void)
+    {
+      //If the left and the right encoder are not moving (or moving REALLY slow), we are stopped
+      if (ABS(Cozmo::Robot::GetLeftWheelSpeedFiltered()) <
+          WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S &&
+          ABS(Cozmo::Robot::GetRightWheelSpeedFiltered()) <
+          WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S ) {
+        return TRUE;
+      } else{
+        return FALSE;
+      }
+      
+    }
+    
+    // Integral speed controller.
+    // Adjusts contollerCommandedVehicleSpeed according to given desiredVehicleSpeed.
+    void RunVehicleSpeedController(s16 desVehicleSpeed)
+    {
 #if (1)
-    s32 currspeed = GetCurrentMeasuredVehicleSpeed();
-
-    // Get the current error
-    s32 currerror = desVehicleSpeed - currspeed;
-
-    // We run 500 times per second
-    // We get a new reading every 4.3mm
-    // Lets say we try to drive 1.5m/s, but only drive 1.4 (on average)
-    // Over 50 cycles (1/10 second), our sum will be (100mm * 50) = 5000 ||| 50 
-    // Over 500 cycles (in one second), our sum will be (100mm * 500) = 50000 ||| 500  (some of those number are too big for signed short!!!!)
-    controllerCommandedVehicleSpeed = desVehicleSpeed + (currerror * VEHICLE_SPEED_CONTROLLER_KP) + (errorsum * VEHICLE_SPEED_CONTROLLER_KI);
-
-
-    // Update and cap errorsum so that it doesn't get too huge.
-    errorsum += currerror;
-    errorsum = CLIP(errorsum, -VEHICLE_SPEED_CONTROLLER_MAX_ERRORSUM, VEHICLE_SPEED_CONTROLLER_MAX_ERRORSUM);
-   
-    //Anti zero-crossover
-    //Define a deadband above 0 where we command nothing to the wheels:
-    //1) If the current wheelspeed is smaller= than the deadband
-    //2) And the desired speed is smaller than the current speed
-    //ATTENTION: This should work in reverse dirving as well, BUT requires
-    //the encoders to return values
-    if (ABS(currspeed) <= WHEEL_DEAD_BAND_MM_S) {
-      if ((currspeed >= 0 && desVehicleSpeed <= currspeed) || (currspeed < 0 && desVehicleSpeed >= currspeed)) {
+      s32 currspeed = GetCurrentMeasuredVehicleSpeed();
+      
+      // Get the current error
+      s32 currerror = desVehicleSpeed - currspeed;
+      
+      // We run 500 times per second
+      // We get a new reading every 4.3mm
+      // Lets say we try to drive 1.5m/s, but only drive 1.4 (on average)
+      // Over 50 cycles (1/10 second), our sum will be (100mm * 50) = 5000 ||| 50
+      // Over 500 cycles (in one second), our sum will be (100mm * 500) = 50000 ||| 500  (some of those number are too big for signed short!!!!)
+      controllerCommandedVehicleSpeed = desVehicleSpeed + (currerror * VEHICLE_SPEED_CONTROLLER_KP) + (errorsum * VEHICLE_SPEED_CONTROLLER_KI);
+      
+      
+      // Update and cap errorsum so that it doesn't get too huge.
+      errorsum += currerror;
+      errorsum = CLIP(errorsum, -VEHICLE_SPEED_CONTROLLER_MAX_ERRORSUM, VEHICLE_SPEED_CONTROLLER_MAX_ERRORSUM);
+      
+      //Anti zero-crossover
+      //Define a deadband above 0 where we command nothing to the wheels:
+      //1) If the current wheelspeed is smaller= than the deadband
+      //2) And the desired speed is smaller than the current speed
+      //ATTENTION: This should work in reverse dirving as well, BUT requires
+      //the encoders to return values
+      if (ABS(currspeed) <= WheelController::WHEEL_DEAD_BAND_MM_S) {
+        if ((currspeed >= 0 && desVehicleSpeed <= currspeed) || (currspeed < 0 && desVehicleSpeed >= currspeed)) {
+          controllerCommandedVehicleSpeed = desVehicleSpeed;
+          errorsum = 0;
+          //ResetWheelControllerIntegralGainSums();
+        }
+      }
+      
+      // If considered stopped, force stop
+      if (ABS(desVehicleSpeed) <= WheelController::WHEEL_SPEED_COMMAND_STOPPED_MM_S) {
         controllerCommandedVehicleSpeed = desVehicleSpeed;
         errorsum = 0;
         //ResetWheelControllerIntegralGainSums();
       }
+      
+#else
+      // KEVIN 2012_12_18: Disabled integral vehicle controller per Gabe's recommendations.
+      // He says increasing Ki of wheel speed controller is sufficient.
+      controllerCommandedVehicleSpeed = desVehicleSpeed;
+#endif
+      
+#if(DEBUG_SPEED_CONTROLLER)
+      fprintf(stdout, " controllerSpeed: %d, currError: %d, errorSum: %d\n", controllerCommandedVehicleSpeed, currerror, errorsum);
+#endif
+      
+      Traces16(TRACE_VAR_VSC_DESIRED_SPEED, desVehicleSpeed, TRACE_MASK_MOTOR_CONTROLLER);
+      Traces32(TRACE_VAR_VSC_ERROR_SUM, errorsum, TRACE_MASK_MOTOR_CONTROLLER);
     }
     
-    // If considered stopped, force stop
-    if (ABS(desVehicleSpeed) <= WHEEL_SPEED_COMMAND_STOPPED_MM_S) {
-      controllerCommandedVehicleSpeed = desVehicleSpeed;
+    
+    void ResetVehicleSpeedControllerIntegralError() {
       errorsum = 0;
-      //ResetWheelControllerIntegralGainSums();
     }
+    
+    void TraceSpeedControllerVars(u8 traceLevel)
+    {
+      Traces32(TRACE_VAR_SPD_L, Cozmo::Robot::GetLeftWheelSpeed(), TRACE_MASK_MOTOR_CONTROLLER);
+      Traces32(TRACE_VAR_SPD_R, Cozmo::Robot::GetRightWheelSpeed(), TRACE_MASK_MOTOR_CONTROLLER);
+      Traces32(TRACE_VAR_SPD_L_FILT, Cozmo::Robot::GetLeftWheelSpeedFiltered(), TRACE_MASK_MOTOR_CONTROLLER);
+      Traces32(TRACE_VAR_SPD_R_FILT, Cozmo::Robot::GetRightWheelSpeedFiltered(), TRACE_MASK_MOTOR_CONTROLLER);
+      Traces16(TRACE_VAR_SPD_USER_DES, GetUserCommandedDesiredVehicleSpeed(), TRACE_MASK_MOTOR_CONTROLLER | TRACE_MASK_ALWAYS_ON);
+      Traces16(TRACE_VAR_SPD_USER_CUR, GetUserCommandedCurrentVehicleSpeed(), TRACE_MASK_MOTOR_CONTROLLER);
+      Traces16(TRACE_VAR_SPD_CTRL, GetControllerCommandedVehicleSpeed(), TRACE_MASK_MOTOR_CONTROLLER);
+      Traces16(TRACE_VAR_SPD_MEAS, GetCurrentMeasuredVehicleSpeed(), TRACE_MASK_MOTOR_CONTROLLER | TRACE_MASK_ALWAYS_ON);    
+    }
+    
+  } // namespace VehicleSpeedController
+} // namespace Anki
 
-#else
-    // KEVIN 2012_12_18: Disabled integral vehicle controller per Gabe's recommendations.
-    // He says increasing Ki of wheel speed controller is sufficient.
-    controllerCommandedVehicleSpeed = desVehicleSpeed;
-#endif
 
-#if(DEBUG_SPEED_CONTROLLER)
-    fprintf(stdout, " controllerSpeed: %d, currError: %d, errorSum: %d\n", controllerCommandedVehicleSpeed, currerror, errorsum);
-#endif
-
-    Traces16(TRACE_VAR_VSC_DESIRED_SPEED, desVehicleSpeed, TRACE_MASK_MOTOR_CONTROLLER);
-    Traces32(TRACE_VAR_VSC_ERROR_SUM, errorsum, TRACE_MASK_MOTOR_CONTROLLER);
-}
-
-
-void ResetVehicleSpeedControllerIntegralError() {
-  errorsum = 0;
-}
-
-void TraceSpeedControllerVars(u8 traceLevel)
-{
-    Traces32(TRACE_VAR_SPD_L, GetLeftWheelSpeed(), TRACE_MASK_MOTOR_CONTROLLER);
-    Traces32(TRACE_VAR_SPD_R, GetRightWheelSpeed(), TRACE_MASK_MOTOR_CONTROLLER);
-    Traces32(TRACE_VAR_SPD_L_FILT, GetLeftWheelSpeedFiltered(), TRACE_MASK_MOTOR_CONTROLLER);
-    Traces32(TRACE_VAR_SPD_R_FILT, GetRightWheelSpeedFiltered(), TRACE_MASK_MOTOR_CONTROLLER);
-    Traces16(TRACE_VAR_SPD_USER_DES, GetUserCommandedDesiredVehicleSpeed(), TRACE_MASK_MOTOR_CONTROLLER | TRACE_MASK_ALWAYS_ON);
-    Traces16(TRACE_VAR_SPD_USER_CUR, GetUserCommandedCurrentVehicleSpeed(), TRACE_MASK_MOTOR_CONTROLLER);
-    Traces16(TRACE_VAR_SPD_CTRL, GetControllerCommandedVehicleSpeed(), TRACE_MASK_MOTOR_CONTROLLER);
-    Traces16(TRACE_VAR_SPD_MEAS, GetCurrentMeasuredVehicleSpeed(), TRACE_MASK_MOTOR_CONTROLLER | TRACE_MASK_ALWAYS_ON);    
-}

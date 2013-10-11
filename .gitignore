@@ -58,3 +58,6 @@ simulator/controllers/overlay_display_supervisor/overlay_display_supervisor
 simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
 simulator/controllers/cozmo_c_controller/cozmo_c_controller
 world_comms_controller
+robot/simulator/controllers/overlay_display_supervisor/overlay_display_supervisor
+robot/simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
+robot/simulator/controllers/cozmo_c_controller/cozmo_c_controller

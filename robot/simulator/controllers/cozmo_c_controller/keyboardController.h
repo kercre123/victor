@@ -3,10 +3,21 @@
 
 #include "anki/cozmo/robot/cozmoTypes.h"
 
-void EnableKeyboardController(void);
-void DisableKeyboardController(void);
-BOOL IsKeyboardControllerEnabled(void);
-void RunKeyboardController(void);
+namespace Anki {
+  namespace Cozmo {
+    namespace KeyboardController {
+
+      void Init(webots::Robot &robot);
+      void Enable(void);
+      void Disabl(void);
+      bool IsEnabled(void);
+      void ProcessKeystroke(void);
+
+      
+    } // namespace KeyboardController
+  } // namespace Cozmo
+} // namespace Anki
+
 
 
 #endif //KEYBOARD_CONTROLLER_H

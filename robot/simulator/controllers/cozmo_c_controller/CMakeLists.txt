@@ -32,21 +32,24 @@ link_directories( ${WEBOTS_LIB_DIR} )
 # Source files
 set(SOURCE_FILES
 	cozmo_c_controller.cpp
-	keyboardController.cpp
+#	keyboardController.cpp
 
 	${COZMO_ROBOT_SRC_DIR}/cozmoBot.cpp
-	${COZMO_ROBOT_SRC_DIR}/mainExecution.cpp
+	${COZMO_ROBOT_SRC_DIR}/hardwareInterface_sim.cpp
+#	${COZMO_ROBOT_SRC_DIR}/mainExecution.cpp
 	${COZMO_ROBOT_SRC_DIR}/pathFollower.cpp
 	${COZMO_ROBOT_SRC_DIR}/steeringController.cpp
 	${COZMO_ROBOT_SRC_DIR}/vehicleSpeedController.cpp
 	${COZMO_ROBOT_SRC_DIR}/wheelController.cpp
 	${COZMO_ROBOT_SRC_DIR}/vehicleMath.cpp
+	${COZMO_ROBOT_SRC_DIR}/visionSystem.cpp
+	
 	${COZMO_SRC_DIR}/util/utilMessaging.c
 
-	${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_encoders.cpp
+#	${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_encoders.cpp
 	${COZMO_ROBOT_SRC_DIR}/app/simapp/sim_localization.cpp
-	${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_motors.cpp
-	${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_timers.cpp
+#	${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_motors.cpp
+#	${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_timers.cpp
 )
 
 set(HEADER_FILES
@@ -59,13 +62,15 @@ set(HEADER_FILES
 	${COZMO_ROBOT_INCLUDE_DIR}/cozmoTypes.h
 	${COZMO_ROBOT_INCLUDE_DIR}/debug.h
 	${COZMO_ROBOT_INCLUDE_DIR}/hal.h
+	${COZMO_ROBOT_INCLUDE_DIR}/hardwareInterface.h
 	${COZMO_ROBOT_INCLUDE_DIR}/localization.h
-	${COZMO_ROBOT_INCLUDE_DIR}/mainExecution.h
+#	${COZMO_ROBOT_INCLUDE_DIR}/mainExecution.h
 	${COZMO_ROBOT_INCLUDE_DIR}/pathFollower.h
 	${COZMO_ROBOT_INCLUDE_DIR}/steeringController.h
 	${COZMO_ROBOT_INCLUDE_DIR}/trace.h
 	${COZMO_ROBOT_INCLUDE_DIR}/vehicleMath.h
 	${COZMO_ROBOT_INCLUDE_DIR}/vehicleSpeedController.h
+	${COZMO_ROBOT_INCLUDE_DIR}/visionSystem.h
 	${COZMO_ROBOT_INCLUDE_DIR}/wheelController.h
 
 	${COZMO_SRC_DIR}/util/utilMessaging.h

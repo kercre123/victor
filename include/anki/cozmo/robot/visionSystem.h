@@ -1,0 +1,101 @@
+#ifndef ANKI_COZMO_ROBOT_VISIONSYSTEM_H
+#define ANKI_COZMO_ROBOT_VISIONSYSTEM_H
+
+/*
+ class VisionSystem
+ {
+ public:
+ */
+
+#include <cassert>
+
+#include "anki/common/types.h"
+
+#include "anki/cozmo/robot/hardwareInterface.h"
+#include "anki/cozmo/cozmoMsgProtocol.h"
+
+
+// If enabled, will use Matlab as the vision system for processing images
+#define USE_MATLAB_FOR_HEAD_CAMERA
+#define USE_MATLAB_FOR_MAT_CAMERA
+
+
+namespace Anki {
+  namespace Cozmo {
+    
+    namespace VisionSystem {
+      
+      const u8 MAX_BLOCK_MARKER_MESSAGES = 32;
+      const u8 MAX_MAT_MARKER_MESSAGES   = 1;
+      
+      template<typename MsgType, u8 NumMessages>
+      class Mailbox
+      {
+      public:
+        
+        void putMessage(const MsgType newMsg);
+        MsgType getMessage();
+        
+      protected:
+        MsgType messages[NumMessages];
+        u8 readIndex, writeIndex;
+        
+        void advanceIndex(u8 &index);
+      };
+      
+      typedef Mailbox<CozmoMsg_ObservedBlockMarker, MAX_BLOCK_MARKER_MESSAGES> BlockMarkerMailbox;
+      
+      typedef Mailbox<CozmoMsg_ObservedMatMarker, MAX_MAT_MARKER_MESSAGES> MatMarkerMailbox;
+      
+      
+      ReturnCode Init(HardwareInterface::FrameGrabber       headCamFrameGrabber,
+                      HardwareInterface::FrameGrabber       matCamFrameGrabber,
+                      const HardwareInterface::CameraInfo*  headCamInfo,
+                      const HardwareInterface::CameraInfo*  matCamInfo,
+                      BlockMarkerMailbox*                   blockMarkerMailbox,
+                      MatMarkerMailbox*                     matMarkerMailbox);
+      
+      void Destroy();
+      
+      u32 lookForBlocks();
+      ReturnCode visualServo();
+      ReturnCode localizeWithMat();
+      
+      bool IsInitialized();
+      
+    } // namespace VisionSystem
+    
+    
+    #pragma mark --- VisionSystem::Mailbox Template Implementations ---
+    
+    template<typename MsgType, u8 NumMessages>
+    void VisionSystem::Mailbox<MsgType,NumMessages>::putMessage(const MsgType newMsg)
+    {
+      messages[writeIndex] = newMsg;
+      advanceIndex(writeIndex);
+    }
+    
+    template<typename MsgType, u8 NumMessages>
+    MsgType VisionSystem::Mailbox<MsgType,NumMessages>::getMessage()
+    {
+      u8 toReturn = readIndex;
+      
+      advanceIndex(readIndex);
+      
+      return this->messages[toReturn];
+    }
+    
+    template<typename MsgType, u8 NumMessages>
+    void VisionSystem::Mailbox<MsgType,NumMessages>::advanceIndex(u8 &index)
+    {
+      ++index;
+      if(index == NumMessages) {
+        index = 0;
+      }
+    }
+    
+    
+  } // namespace Cozmo
+} // namespace Anki
+
+#endif // ANKI_COZMO_ROBOT_VISIONSYSTEM_H

@@ -5,11 +5,10 @@
 
 #include <stdio.h>
 
-#define ENABLE_PATH_VIZ 1
+#define ENABLE_PATH_VIZ 0
 
 #if(ENABLE_PATH_VIZ)
 #include "anki/cozmo/robot/cozmoBot.h"
-extern CozmoBot gCozmoBot;
 #endif
 
 

@@ -3,8 +3,6 @@
 #include "anki/cozmo/robot/cozmoTypes.h"
 #include "anki/cozmo/robot/hal.h"
 
-extern CozmoBot gCozmoBot;
-
 //Defines the initial coefficient for the filter
 #define DEFAULT_FILTER_COEF 0.9f
 
