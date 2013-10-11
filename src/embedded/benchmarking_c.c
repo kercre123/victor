@@ -1,6 +1,16 @@
 #include "anki/embeddedCommon/benchmarking_c.h"
 #include "anki/embeddedCommon/utilities_c.h"
 
+#if defined(_MSC_VER)
+#include <windows.h>
+#elif defined(USING_MOVIDIUS_GCC_COMPILER)
+// Included at the top-level config
+#elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
+// Included at the top-level config
+#else
+#include <sys/time.h>
+#endif
+
 #ifdef USING_MOVIDIUS_GCC_COMPILER
 #define VARIABLE_IN_DDR __attribute__((section(".ddr_direct.bss,DDR_DIRECT")))
 #else
