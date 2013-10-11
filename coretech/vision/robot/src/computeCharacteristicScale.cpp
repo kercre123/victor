@@ -1,5 +1,5 @@
-﻿#include "anki/embeddedVision/miscVisionKernels.h"
-#include "anki/embeddedCommon/utilities.h"
+﻿#include "anki/vision/robot/miscVisionKernels.h"
+#include "anki/vision/robot/utilities.h"
 
 namespace Anki
 {

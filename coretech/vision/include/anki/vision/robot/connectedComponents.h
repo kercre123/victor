@@ -1,8 +1,12 @@
 #ifndef _ANKICORETECHEMBEDDED_VISION_VISIONKERNELS_CONNECTEDCOMPONENTS_H_
 #define _ANKICORETECHEMBEDDED_VISION_VISIONKERNELS_CONNECTEDCOMPONENTS_H_
 
-#include "anki/embeddedVision/config.h"
-#include "anki/embeddedCommon.h"
+#include <array>
+
+#include "anki/common/types.h"
+#include "anki/common/robot/memory.h"
+
+#include "anki/common/robot/fixedLengthList.h"
 
 namespace Anki
 {

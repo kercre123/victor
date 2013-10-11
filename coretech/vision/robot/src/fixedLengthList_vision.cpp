@@ -1,5 +1,5 @@
-#include "anki/embeddedVision/fixedLengthList_vision.h"
-#include "anki/embeddedVision/array2d_vision.h"
+#include "anki/vision/robot/fixedLengthList_vision.h"
+#include "anki/vision/robot/array2d_vision.h"
 
 namespace Anki
 {

@@ -1,4 +1,4 @@
-#include "anki/embeddedVision/draw_vision.h"
+#include "anki/vision/robot/draw_vision.h"
 
 using namespace std;
 

@@ -9,7 +9,7 @@
 #ifndef __CoreTech_Vision__camera__
 #define __CoreTech_Vision__camera__
 
-#include "anki/math/pose.h"
+#include "anki/common/basestation/math/pose.h"
 
 namespace Anki {
   

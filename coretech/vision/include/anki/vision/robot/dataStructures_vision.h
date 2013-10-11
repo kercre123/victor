@@ -9,8 +9,6 @@
 #ifndef _ANKICORETECHEMBEDDED_VISION_DATASTRUCTURES_VISION_H_
 #define _ANKICORETECHEMBEDDED_VISION_DATASTRUCTURES_VISION_H_
 
-#include "anki/embeddedVision/config.h"
-#include "anki/embeddedCommon.h"
 
 namespace Anki
 {

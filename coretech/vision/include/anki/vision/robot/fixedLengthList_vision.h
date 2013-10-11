@@ -1,11 +1,9 @@
 #ifndef _ANKICORETECHEMBEDDED_VISION_FIXED_LENGTH_LIST_VISION_H_
 #define _ANKICORETECHEMBEDDED_VISION_FIXED_LENGTH_LIST_VISION_H_
 
-#include "anki/embeddedVision/config.h"
+#include "anki/vision/robot/connectedComponents.h"
 
-#include "anki/embeddedCommon.h"
-
-#include "anki/embeddedVision/connectedComponents.h"
+#include "anki/common/robot/fixedLengthList.h"
 
 namespace Anki
 {

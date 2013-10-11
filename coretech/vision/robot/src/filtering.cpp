@@ -1,4 +1,4 @@
-#include "anki/embeddedVision/miscVisionKernels.h"
+#include "anki/vision/robot/miscVisionKernels.h"
 
 using namespace std;
 
