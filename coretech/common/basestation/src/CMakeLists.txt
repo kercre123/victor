@@ -2,10 +2,16 @@
 
 
 file(GLOB SOURCE_FILES *.cpp math/*.cpp)
-file(GLOB HEADER_FILES *.h math/*.h)
+
+file(GLOB HEADER_FILES 
+	*.h 
+	math/*.h 
+	${CORETECH_COMMON_INCLUDE_DIR}/basestation/*.h
+)
 
 add_library(CoreTech_Common_Basestation
 	${SOURCE_FILES}
 	${HEADER_FILES}
+	${CORETECH_COMMON_INCLUDE_FILES}
 )
 
