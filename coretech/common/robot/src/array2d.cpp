@@ -1,7 +1,7 @@
-#include "anki/embeddedCommon/array2d.h"
-#include "anki/embeddedCommon/errorHandling.h"
-#include "anki/embeddedCommon/utilities.h"
-#include "anki/embeddedCommon/utilities_c.h"
+#include "anki/common/robot/array2d.h"
+#include "anki/common/robot/errorHandling.h"
+#include "anki/common/robot/utilities.h"
+#include "anki/common/robot/utilities_c.h"
 
 //using namespace std;
 

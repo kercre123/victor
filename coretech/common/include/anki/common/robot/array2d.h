@@ -1,13 +1,13 @@
 #ifndef _ANKICORETECHEMBEDDED_COMMON_ARRAY2D_H_
 #define _ANKICORETECHEMBEDDED_COMMON_ARRAY2D_H_
 
-#include "anki/embeddedCommon/config.h"
-#include "anki/embeddedCommon/utilities.h"
-#include "anki/embeddedCommon/memory.h"
-#include "anki/embeddedCommon/errorHandling.h"
-#include "anki/embeddedCommon/dataStructures.h"
-#include "anki/embeddedCommon/geometry.h"
-#include "anki/embeddedCommon/utilities_c.h"
+#include "anki/common/robot/config.h"
+#include "anki/common/robot/utilities.h"
+#include "anki/common/robot/memory.h"
+#include "anki/common/robot/errorHandling.h"
+#include "anki/common/robot/dataStructures.h"
+#include "anki/common/robot/geometry.h"
+#include "anki/common/robot/utilities_c.h"
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include "opencv2/core/core.hpp"

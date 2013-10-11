@@ -1,5 +1,5 @@
-#include "anki/embeddedCommon/matlabInterface.h"
-#include "anki/embeddedCommon/errorHandling.h"
+#include "anki/common/robot/matlabInterface.h"
+#include "anki/common/robot/errorHandling.h"
 
 namespace Anki
 {

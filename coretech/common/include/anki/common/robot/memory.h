@@ -1,7 +1,7 @@
 #ifndef _ANKICORETECHEMBEDDED_COMMON_MEMORY_H_
 #define _ANKICORETECHEMBEDDED_COMMON_MEMORY_H_
 
-#include "anki/embeddedCommon/config.h"
+#include "anki/common/robot/config.h"
 
 namespace Anki
 {

@@ -1,7 +1,7 @@
 #ifndef _ANKICORETECHEMBEDDED_COMMON_GTEST_LIGHT_H_
 #define _ANKICORETECHEMBEDDED_COMMON_GTEST_LIGHT_H_
 
-#include "anki/embeddedCommon/config.h"
+#include "anki/common/robot/config.h"
 
 #if ANKICORETECH_EMBEDDED_USE_GTEST
 

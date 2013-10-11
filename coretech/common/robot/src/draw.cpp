@@ -1,5 +1,5 @@
-#include "anki/embeddedCommon/draw.h"
-#include "anki/embeddedCommon/errorHandling.h"
+#include "anki/common/robot/draw.h"
+#include "anki/common/robot/errorHandling.h"
 
 namespace Anki
 {

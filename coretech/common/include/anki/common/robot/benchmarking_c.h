@@ -1,7 +1,7 @@
 #ifndef _ANKICORETECHEMBEDDED_COMMON_BENCHMARKING_H_
 #define _ANKICORETECHEMBEDDED_COMMON_BENCHMARKING_H_
 
-#include "anki/embeddedCommon/config.h"
+#include "anki/common/robot/config.h"
 
 #define NUM_BENCHMARK_EVENTS 0xFFFF
 

@@ -1,9 +1,9 @@
 #ifndef _ANKICORETECHEMBEDDED_COMMON_MATLAB_INTERFACE_H_
 #define _ANKICORETECHEMBEDDED_COMMON_MATLAB_INTERFACE_H_
 
-#include "anki/embeddedCommon/config.h"
-#include "anki/embeddedCommon/array2d.h"
-#include "anki/embeddedCommon/matlabConverters.h"
+#include "anki/common/robot/config.h"
+#include "anki/common/robot/array2d.h"
+#include "anki/common/robot/matlabConverters.h"
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB
 

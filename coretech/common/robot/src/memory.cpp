@@ -1,6 +1,6 @@
-#include "anki/embeddedCommon/memory.h"
-#include "anki/embeddedCommon/errorHandling.h"
-#include "anki/embeddedCommon/utilities.h"
+#include "anki/common/robot/memory.h"
+#include "anki/common/robot/errorHandling.h"
+#include "anki/common/robot/utilities.h"
 
 namespace Anki
 {

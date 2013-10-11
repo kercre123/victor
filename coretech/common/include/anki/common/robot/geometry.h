@@ -1,7 +1,7 @@
 #ifndef _ANKICORETECHEMBEDDED_COMMON_POINT_H_
 #define _ANKICORETECHEMBEDDED_COMMON_POINT_H_
 
-#include "anki/embeddedCommon/config.h"
+#include "anki/common/robot/config.h"
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include "opencv2/core/core.hpp"
