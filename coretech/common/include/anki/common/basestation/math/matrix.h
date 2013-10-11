@@ -36,9 +36,9 @@
 
 #include <ostream>
 #include <cstdio>
-#include "anki/common/array2d.h"
 
-#include "anki/math/point.h"
+#include "anki/common/basestation/array2d.h"
+#include "anki/common/basestation/math/point.h"
 
 namespace Anki {
   

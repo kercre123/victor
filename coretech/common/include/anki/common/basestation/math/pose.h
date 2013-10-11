@@ -31,11 +31,10 @@
 #ifndef _ANKICORETECH_MATH_POSE_H_
 #define _ANKICORETECH_MATH_POSE_H_
 
-#include "anki/math/matrix.h"
-#include "anki/math/rotation.h"
-#include "anki/math/radians.h"
-
-#include "anki/math/point.h"
+#include "matrix.h"
+#include "point.h"
+#include "rotation.h"
+#include "radians.h"
 
 namespace Anki {
 

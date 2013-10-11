@@ -6,7 +6,7 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
-#include "anki/math/rotation.h"
+#include "anki/common/basestation/math/rotation.h"
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/calib3d/calib3d.hpp"

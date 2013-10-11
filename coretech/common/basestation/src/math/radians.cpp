@@ -18,8 +18,9 @@
  *
  **/
 
-#include "anki/common/general.h"
-#include "anki/math/radians.h"
+#include "anki/common/basestation/general.h"
+
+#include "anki/common/basestation/math/radians.h"
 
 namespace Anki {
 

@@ -4,8 +4,8 @@
 #include <cmath>
 #include <vector>
 
-#include "anki/common/exceptions.h"
-#include "anki/math/point.h"
+#include "anki/common/basestation/exceptions.h"
+#include "anki/common/basestation/math/point.h"
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/core/core.hpp"

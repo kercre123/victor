@@ -1,8 +1,10 @@
 #ifndef _ANKICORETECH_COMMON_ARRAY2D_H_
 #define _ANKICORETECH_COMMON_ARRAY2D_H_
 
-#include "anki/common/exceptions.h"
 #include "anki/common/types.h"
+
+#include "exceptions.h"
+
 #include <iostream>
 #include <assert.h>
 #include <limits.h>
@@ -13,10 +15,12 @@
 
 namespace Anki
 {
+/*
   namespace Embedded
   {
     template<typename T> class Array2d;
   }
+*/
 
 #pragma mark --- Array2d(Managed) Class Definition ---
 
@@ -40,7 +44,7 @@ namespace Anki
     Array2d(s32 nrows, s32 ncols, T *data); // you handle memory yourself
     Array2d(s32 nrows, s32 ncols, const T &data); // you handle memory yourself
     Array2d(s32 nrows, s32 ncols, std::vector<T> &data);
-    Array2d(const Embedded::Array2d<T> &other); // *copies* data from unmanaged array
+//    Array2d(const Embedded::Array2d<T> &other); // *copies* data from unmanaged array
 
     // Reference counting assignment (does not copy):
     Array2d<T>& operator= (const Array2d<T> &other);
@@ -152,6 +156,7 @@ namespace Anki
   }
 #endif
 
+/*
   template<typename T>
   Array2d<T>::Array2d(const Embedded::Array2d<T> &other)
 #if ANKICORETECH_USE_OPENCV
@@ -159,6 +164,7 @@ namespace Anki
 #endif
   {
   } // Constructor: Array2d( Embedded::Array2d )
+*/
 
   template<typename T>
   const T* Array2d<T>::getDataPointer(void) const
@@ -378,6 +384,5 @@ namespace Anki
   */
 } //namespace Anki
 
-#include "anki/embeddedCommon/array2d.h"
 
 #endif // _ANKICORETECH_COMMON_ARRAY2D_H_

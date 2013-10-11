@@ -27,7 +27,7 @@
 
 #include <cmath>
 
-#include "anki/common/exceptions.h"
+#include "anki/common/basestation/exceptions.h"
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/core/core.hpp"

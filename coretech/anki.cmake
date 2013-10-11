@@ -151,15 +151,12 @@ endif()
 # External libraries
 # We assume that coretech-external lives alongside each project
 # for which we use this anki.cmake file.
-set(EXTERNAL_DIR ${PROJECT_SOURCE_DIR}/../coretech-external)
+set(EXTERNAL_DIR ${PROJECT_SOURCE_DIR}/external)
 set(OPENCV_MODULES_DIR ${EXTERNAL_DIR}/${OPENCV_DIR}/modules)
 include_directories(
-	${PROJECT_SOURCE_DIR}/include
-	${PROJECT_SOURCE_DIR}/../coretech-common/include 
 	${EXTERNAL_DIR}/${OPENCV_DIR}/include 
 	${EXTERNAL_DIR}/${GTEST_DIR}/include
 	${MATLAB_INCLUDE_DIR}
-	${PROJECT_SOURCE_DIR}/../coretech-common/matlab/mex
 )
 
 # Add the include directory for each OpenCV module:
@@ -191,7 +188,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/${CMAKE_GENERATOR}/bin/${
 
 link_directories(
 	${LIBRARY_OUTPUT_PATH}
-	${PROJECT_SOURCE_DIR}/../coretech-common/build/${CMAKE_GENERATOR}/lib/${BUILD_TYPE_DIR} 
+	${PROJECT_SOURCE_DIR}/common/build/${CMAKE_GENERATOR}/lib/${BUILD_TYPE_DIR} 
 	${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/lib/${BUILD_TYPE_DIR} 
 	${MATLAB_MEX_LIBRARY_PATH} 
 	${MATLAB_MX_LIBRARY_PATH} 
@@ -256,8 +253,8 @@ if( MATLAB_FOUND AND (ANKICORETECH_USE_MATLAB OR ANKICORETECHEMBEDDED_USE_MATLAB
 
 	add_library(${OUTPUT_NAME} SHARED 
 		${MEX_FILE} 
-		${PROJECT_SOURCE_DIR}/../coretech-common/matlab/mex/mexWrappers.cpp
-		${PROJECT_SOURCE_DIR}/../coretech-common/matlab/mex/mexFunction.def
+		${PROJECT_SOURCE_DIR}/common/matlab/mex/mexWrappers.cpp
+		${PROJECT_SOURCE_DIR}/common/matlab/mex/mexFunction.def
 	)
 	
 	# Put mex binaries in MEX_OUTPUT_PATH
