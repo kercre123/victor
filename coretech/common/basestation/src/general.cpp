@@ -15,7 +15,8 @@
  *
  **/
 
-#include "anki/common/general.h"
+#include "anki/common/basestation/general.h"
+
 #include <dirent.h>
 
 namespace Anki {

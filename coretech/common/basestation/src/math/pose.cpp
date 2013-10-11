@@ -1,6 +1,6 @@
 
-#include "anki/math/pose.h"
-#include "anki/math/matrix.h"
+#include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/math/matrix.h"
 
 #include <stdexcept>
 
