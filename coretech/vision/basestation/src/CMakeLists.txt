@@ -1,15 +1,19 @@
 # coretech/vision/basestation/src/CMakeLists.txt
 
-# Vision Library
-
+# Basestation Vision Library
 
 file(GLOB SOURCE_FILES "*.cpp")
 
-file(GLOB HEADER_FILES "*.h")
+file(GLOB HEADER_FILES 
+	"*.h"
+	"${CORETECH_VISION_INCLUDE_DIR}/basestation/*.h"
+)
+
 
 add_library(CoreTech_Vision_Basestation 
   ${SOURCE_FILES} 
   ${HEADER_FILES}
+  ${CORETECH_VISION_INCLUDE_FILES}  
 )
 
 #target_link_libraries(CoreTech_Vision)
