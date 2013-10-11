@@ -1,0 +1,56 @@
+#include "gtest/gtest.h"
+
+#include "anki/common/general.h"
+#include "anki/math/point.h"
+#include <iostream>
+
+#define ASSERT_NEAR_EQ(a,b) ASSERT_NEAR(a,b,FLOATING_POINT_COMPARISON_TOLERANCE)
+
+using namespace std;
+using namespace Anki;
+
+GTEST_TEST(TestPoint, PointInitialization)
+{
+  Point3f a3(1.f, 2.f, 3.f);
+  EXPECT_EQ(a3.x(), 1.f);
+  EXPECT_EQ(a3.y(), 2.f);
+  EXPECT_EQ(a3.z(), 3.f);
+  
+  Point3f b3;
+  EXPECT_EQ(b3.x(), 0.f);
+  EXPECT_EQ(b3.y(), 0.f);
+  EXPECT_EQ(b3.z(), 0.f);
+  
+  b3 = {4.f, 5.f, 6.f};
+  EXPECT_EQ(b3.x(), 4.f);
+  EXPECT_EQ(b3.y(), 5.f);
+  EXPECT_EQ(b3.z(), 6.f);
+  
+  a3 += 3.f;
+  EXPECT_TRUE(b3 == a3);
+  
+  Point<5,float> p5;
+  p5 = {1.f, 2.f, 3.f, 4.f, 5.f};
+  for(int i=0; i<5; ++i) {
+    EXPECT_EQ(p5[i], float(i+1));
+  }
+  
+}
+
+GTEST_TEST(TestPoint, DotProductAndLength)
+{
+  Point3f x(1.f, 2.f, 3.f);
+  Point3f y(4.f, 5.f, 6.f);
+  
+  const float eps = 10.f*std::numeric_limits<float>::epsilon();
+  
+  EXPECT_EQ(dot(x,y), 32.f);
+  EXPECT_TRUE(NEAR(std::sqrt(dot(x,x)), x.length(), eps));
+  
+  Point<5,float> a(1.f, 2.f, 3.f, 4.f, 5.f);
+  Point<5,float> b(2.f, 3.f, 4.f, 5.f, 6.f);
+  
+  EXPECT_EQ(dot(a,b), 70.f);
+  EXPECT_TRUE(NEAR(std::sqrt(dot(a,a)), a.length(), eps));
+  
+}
