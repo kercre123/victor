@@ -1,4 +1,5 @@
-﻿#include "anki/embeddedVision.h"
+﻿
+#include "anki/common/robot/config.h"
 
 namespace Anki
 {

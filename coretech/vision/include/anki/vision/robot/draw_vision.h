@@ -1,10 +1,8 @@
 #ifndef _ANKICORETECHEMBEDDED_VISION_DRAW_VISION_H_
 #define _ANKICORETECHEMBEDDED_VISION_DRAW_VISION_H_
 
-#include "anki/embeddedCommon/config.h"
-#include "anki/embeddedCommon/array2d.h"
-#include "anki/embeddedVision/connectedComponents.h"
-#include "anki/embeddedVision/connectedComponents.h"
+#include "anki/vision/robot/array2d.h"
+#include "anki/vision/robot/connectedComponents.h"
 
 namespace Anki
 {

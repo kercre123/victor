@@ -6,7 +6,7 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
-#include "anki/vision/camera.h"
+#include "anki/vision/basestation/camera.h"
 
 namespace Anki {
   

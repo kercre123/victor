@@ -1,4 +1,4 @@
-#include "mexWrappers.h"
+#include "anki/common/matlab/mexWrappers.h"
 
 #if defined(_MSC_VER)
 #ifndef snprintf

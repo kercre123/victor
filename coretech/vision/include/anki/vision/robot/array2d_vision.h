@@ -1,10 +1,8 @@
 #ifndef _ANKICORETECHEMBEDDED_VISION_ARRAY2D_VISION_H_
 #define _ANKICORETECHEMBEDDED_VISION_ARRAY2D_VISION_H_
 
-#include "anki/embeddedVision/config.h"
-#include "anki/embeddedCommon.h"
-#include "anki/embeddedVision/connectedComponents.h"
-#include "anki/embeddedVision/fiducialMarkers.h"
+#include "anki/vision/robot/connectedComponents.h"
+#include "anki/vision/robot/fiducialMarkers.h"
 
 namespace Anki
 {

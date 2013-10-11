@@ -1,5 +1,5 @@
-#include "anki/embeddedVision/connectedComponents.h"
-#include "anki/embeddedVision/fixedLengthList_vision.h"
+#include "anki/vision/robot/connectedComponents.h"
+#include "anki/vision/robot/fixedLengthList_vision.h"
 
 namespace Anki
 {

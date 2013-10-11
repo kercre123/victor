@@ -2,16 +2,16 @@
 
 if(WIN32)
 	set(MEX_LINK_LIBRARIES 
-		CoreTech_Common_Embedded 
-		CoreTech_Vision_Embedded)
+		CoreTech_Common_Robot 
+		CoreTech_Vision_Robot)
 else()
 	set(MEX_LINK_LIBRARIES 
-		CoreTech_Common CoreTech_Common_Embedded 
-		CoreTech_Vision CoreTech_Vision_Embedded)
+		CoreTech_Common_BaseStation CoreTech_Common_Robot 
+		CoreTech_Vision_BaseStation CoreTech_Vision_Robot)
 endif(WIN32)
  
 set(MEX_FILES
-	mexBinomialFilter.cpp
+#	mexBinomialFilter.cpp
 	mexClosestIndex.cpp
 	mexComputeCharacteristicScale.cpp
 	mexDownsampleByFactor.cpp

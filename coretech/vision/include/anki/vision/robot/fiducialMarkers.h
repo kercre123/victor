@@ -1,12 +1,10 @@
 #ifndef _ANKICORETECHEMBEDDED_VISION_FIDUCIAL_MARKER_H_
 #define _ANKICORETECHEMBEDDED_VISION_FIDUCIAL_MARKER_H_
 
-#include "anki/embeddedVision/config.h"
+#include "anki/common/robot/array2d.h"
+#include "anki/common/robot/geometry.h"
 
-#include "anki/embeddedCommon/array2d.h"
-#include "anki/embeddedCommon/geometry.h"
-
-#include "anki/embeddedVision/connectedComponents.h"
+#include "anki/vision/robot/connectedComponents.h"
 
 #define MAX_FIDUCIAL_MARKER_BITS 25
 #define MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS 81

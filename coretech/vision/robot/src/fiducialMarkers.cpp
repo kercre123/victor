@@ -1,8 +1,8 @@
-#include "anki/embeddedVision/fiducialMarkers.h"
+#include "anki/vision/robot/fiducialMarkers.h"
 
-#include "anki/embeddedVision/fixedLengthList_vision.h"
-#include "anki/embeddedVision/miscVisionKernels.h"
-#include "anki/embeddedVision/draw_vision.h"
+#include "anki/vision/robot/fixedLengthList_vision.h"
+#include "anki/vision/robot/miscVisionKernels.h"
+#include "anki/vision/robot/draw_vision.h"
 
 #include "fiducialMarkerDefinitionType0.h"
 

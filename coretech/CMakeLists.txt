@@ -13,5 +13,5 @@ include_directories(
 ankiProject(CoreTech)
 
 add_subdirectory(common)
-#add_subdirectory(vision)
+add_subdirectory(vision)
 #add_subdirectory(external)
