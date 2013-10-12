@@ -2,14 +2,28 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-include(../coretech-common/anki.cmake)
+include(coretech/anki.cmake)
 
 ankiProject(Cozmo)
 
-include_directories(${PROJECT_SOURCE_DIR}/../coretech-vision/include)
-link_directories(${PROJECT_SOURCE_DIR}/../coretech-vision/build/${CMAKE_GENERATOR}/lib/${BUILD_TYPE_DIR})
+set(COZMO_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
+file(GLOB COZMO_INCLUDE_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/*.h")
 
-add_subdirectory(src/basestation) 
-add_subdirectory(test)
+include_directories(
+	${COZMO_INCLUDE_DIR}
+	coretech/common/include
+	coretech/messaging/include
+	coretech/vision/include
+)
+
+add_subdirectory(basestation/src)
+
+#add_subdirectory(robot/supervisor/src)
+add_subdirectory(robot/simulator)
+#add_subdirectory(robot/hal)
+
+#add_subdirectory(test)
 add_subdirectory(matlab/mex)
-add_subdirectory(simulator)
+
+
+#add_subdirectory(coretech)

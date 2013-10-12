@@ -9,10 +9,10 @@
 #ifndef __Products_Cozmo__block__
 #define __Products_Cozmo__block__
 
-#include "anki/math/pose.h"
-#include "anki/math/quad.h"
+#include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/math/quad.h"
 
-#include "anki/vision/marker2d.h"
+#include "anki/vision/basestation/marker2d.h"
 
 #define BLOCKMARKER3D_USE_OUTSIDE_SQUARE true
 

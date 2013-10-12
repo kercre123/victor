@@ -11,8 +11,8 @@
 
 #include <queue>
 
-#include "anki/math/pose.h"
-#include "anki/vision/camera.h"
+#include "anki/common/basestation/math/pose.h"
+#include "anki/vision/basestation/camera.h"
 
 namespace Anki {
   namespace Cozmo {

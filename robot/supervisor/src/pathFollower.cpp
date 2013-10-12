@@ -3,6 +3,8 @@
 #include "anki/cozmo/robot/debug.h"
 #include "anki/cozmo/robot/vehicleMath.h"
 
+#include "anki/common/robot/utilities_c.h"
+
 #include <stdio.h>
 
 #define ENABLE_PATH_VIZ 0

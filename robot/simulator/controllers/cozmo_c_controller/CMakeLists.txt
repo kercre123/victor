@@ -2,17 +2,11 @@
 # 
 # Environment variable MATLAB_APP_ROOT needs to be defined!
 
-cmake_minimum_required(VERSION 2.8)
-
-project(cozmo_c_controller)
-
 # Include paths
-set(COZMO_SRC_DIR ../../../src)
-set(COZMO_ROBOT_SRC_DIR ${COZMO_SRC_DIR}/robot)
+set(COZMO_ROBOT_SRC_DIR ${PROJECT_SOURCE_DIR}/robot/supervisor/src)
 set(COZMO_PHYSICS_PLUGIN_DIR ../../plugins/physics/cozmo_physics)
 
-set(COZMO_INCLUDE_DIR ../../../include)
-set(COZMO_ROBOT_INCLUDE_DIR ${COZMO_INCLUDE_DIR}/anki/cozmo/robot)
+file(GLOB COZMO_ROBOT_HEADER_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/robot/*.h")
 
 include_directories( 
 	${COZMO_ROBOT_INC_DIR}
@@ -39,15 +33,15 @@ set(SOURCE_FILES
 #	${COZMO_ROBOT_SRC_DIR}/mainExecution.cpp
 	${COZMO_ROBOT_SRC_DIR}/pathFollower.cpp
 	${COZMO_ROBOT_SRC_DIR}/steeringController.cpp
+	${COZMO_ROBOT_SRC_DIR}/sim_localization.cpp
 	${COZMO_ROBOT_SRC_DIR}/vehicleSpeedController.cpp
 	${COZMO_ROBOT_SRC_DIR}/wheelController.cpp
 	${COZMO_ROBOT_SRC_DIR}/vehicleMath.cpp
 	${COZMO_ROBOT_SRC_DIR}/visionSystem.cpp
 	
-	${COZMO_SRC_DIR}/util/utilMessaging.c
+	${PROJECT_SOURCE_DIR}/coretech/messaging/robot/utilMessaging.c
 
 #	${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_encoders.cpp
-	${COZMO_ROBOT_SRC_DIR}/app/simapp/sim_localization.cpp
 #	${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_motors.cpp
 #	${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_timers.cpp
 )
@@ -55,28 +49,9 @@ set(SOURCE_FILES
 set(HEADER_FILES
 		
 	keyboardController.h
-
-	${COZMO_ROBOT_INCLUDE_DIR}/assert.h
-	${COZMO_ROBOT_INCLUDE_DIR}/cozmoBot.h
-	${COZMO_ROBOT_INCLUDE_DIR}/cozmoConfig.h
-	${COZMO_ROBOT_INCLUDE_DIR}/cozmoTypes.h
-	${COZMO_ROBOT_INCLUDE_DIR}/debug.h
-	${COZMO_ROBOT_INCLUDE_DIR}/hal.h
-	${COZMO_ROBOT_INCLUDE_DIR}/hardwareInterface.h
-	${COZMO_ROBOT_INCLUDE_DIR}/localization.h
-#	${COZMO_ROBOT_INCLUDE_DIR}/mainExecution.h
-	${COZMO_ROBOT_INCLUDE_DIR}/pathFollower.h
-	${COZMO_ROBOT_INCLUDE_DIR}/steeringController.h
-	${COZMO_ROBOT_INCLUDE_DIR}/trace.h
-	${COZMO_ROBOT_INCLUDE_DIR}/vehicleMath.h
-	${COZMO_ROBOT_INCLUDE_DIR}/vehicleSpeedController.h
-	${COZMO_ROBOT_INCLUDE_DIR}/visionSystem.h
-	${COZMO_ROBOT_INCLUDE_DIR}/wheelController.h
-
-	${COZMO_SRC_DIR}/util/utilMessaging.h
-
-	${COZMO_INCLUDE_DIR}/anki/cozmo/cozmoMsgProtocol.h
-
+	
+	${COZMO_ROBOT_HEADER_FILES}
+	${COZMO_INCLUDE_FILES}
 )
 
 add_executable(cozmo_c_controller ${SOURCE_FILES} ${HEADER_FILES})

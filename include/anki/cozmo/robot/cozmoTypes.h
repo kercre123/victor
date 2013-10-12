@@ -1,9 +1,11 @@
 #ifndef COZMO_TYPES_H
 #define COZMO_TYPES_H
 
-#include "anki/embeddedCommon.h"
-//#include "anki/common.h"  //Shouldn't need to include non-embedded coretech here!
-#include "anki/math/radians.h"
+// TODO: Probably shouldn't be including a "basestation" files here!
+#include "anki/common/basestation/math/radians.h"
+
+#include "anki/common/types.h"
+#include "anki/common/robot/geometry.h"
 
 // Some of this should be moved to a shared file to be used by basestation as well
 
