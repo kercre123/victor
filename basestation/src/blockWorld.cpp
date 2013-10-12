@@ -1,8 +1,8 @@
 
-#include "anki/cozmo/blockWorld.h"
-#include "anki/cozmo/block.h"
-#include "anki/cozmo/mat.h"
-#include "anki/cozmo/robot.h"
+#include "anki/cozmo/basestation/blockWorld.h"
+#include "block.h"
+#include "mat.h"
+#include "robot.h"
 
 namespace Anki
 {

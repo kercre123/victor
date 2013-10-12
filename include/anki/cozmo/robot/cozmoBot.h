@@ -2,7 +2,7 @@
 #define SIM_ROBOT_H
 
 #include "anki/common/types.h"
-#include "anki/cozmo/cozmoMsgProtocol.h"
+#include "anki/cozmo/MessageProtocol.h"
 
 #include <webots/Supervisor.hpp>
 

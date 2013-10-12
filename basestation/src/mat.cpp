@@ -1,4 +1,4 @@
-#include "anki/cozmo/mat.h"
+#include "mat.h"
 
 namespace Anki {
   namespace Cozmo {

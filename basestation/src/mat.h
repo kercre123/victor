@@ -1,8 +1,8 @@
 #ifndef __Products_Cozmo__MatMarker2d__
 #define __Products_Cozmo__MatMarker2d__
 
-#include "anki/math/pose.h"
-#include "anki/vision/marker2d.h"
+#include "anki/common/basestation/math/pose.h"
+#include "anki/vision/basestation/marker2d.h"
 
 namespace Anki {
   

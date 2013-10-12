@@ -12,7 +12,7 @@
 #include "anki/common/types.h"
 
 #include "anki/cozmo/robot/hardwareInterface.h"
-#include "anki/cozmo/cozmoMsgProtocol.h"
+#include "anki/cozmo/MessageProtocol.h"
 
 
 // If enabled, will use Matlab as the vision system for processing images

@@ -1,8 +1,3 @@
-cmake_minimum_required(VERSION 2.8)
-
-project(cozmo_simulator)
-
-set(COZMO_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../src)
 
 # TODO: Get this from an environment variable?
 set(WEBOTS_APP_DIR /Applications/Webots)

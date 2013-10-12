@@ -9,7 +9,7 @@
 #if USING_MATLAB_VISION
 // If using Matlab for any vision processing, enable the Matlab engine
 #include "engine.h"
-#include "anki/embeddedCommon/matlabInterface.h"
+#include "anki/common/robot/matlabInterface.h"
 #endif
 
 namespace Anki {

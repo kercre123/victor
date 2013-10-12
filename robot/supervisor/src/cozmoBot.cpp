@@ -7,9 +7,10 @@
 #include "anki/cozmo/robot/pathFollower.h"
 #include "anki/cozmo/robot/hal.h"
 
-#include "anki/cozmo/cozmoMsgProtocol.h"
+#include "anki/cozmo/MessageProtocol.h"
 
-#include "utilMessaging.h"
+#include "anki/messaging/robot/utilMessaging.h"
+
 //#include "keyboardController.h"
 #include "cozmo_physics.h"
 

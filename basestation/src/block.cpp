@@ -6,9 +6,10 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
-#include "anki/cozmo/block.h"
-#include "anki/cozmo/robot.h"
-#include "anki/vision/camera.h"
+#include "anki/vision/basestation/camera.h"
+
+#include "block.h"
+#include "robot.h"
 
 namespace Anki {
   namespace Cozmo {
