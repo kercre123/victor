@@ -20,7 +20,7 @@
 #include <stdarg.h>
 //#include <arpa/inet.h>
 #include <string.h>
-#include "utilMessaging.h"
+#include "anki/messaging/robot/utilMessaging.h"
 
 void* WriteU64(void *dest, unsigned long long src) {
   memcpy((char *) dest, (char*)&src, sizeof(src));
