@@ -13,6 +13,10 @@
 #
 macro(ankiProject PROJECT_NAME)
 
+if(NOT PROJECT_NAME MATCHES "CoreTech")
+	set(CORETECH_ROOT_DIR ${PROJECT_NAME}/coretech)
+endif(NOT PROJECT_NAME MATCHES "CoreTech")
+
 # Suppress warning message about relative vs. absolute paths:
 cmake_policy(SET CMP0015 NEW)
 
@@ -151,7 +155,7 @@ endif()
 # External libraries
 # We assume that coretech-external lives alongside each project
 # for which we use this anki.cmake file.
-set(EXTERNAL_DIR ${PROJECT_SOURCE_DIR}/external)
+set(EXTERNAL_DIR ${PROJECT_SOURCE_DIR}/../coretech-external)
 set(OPENCV_MODULES_DIR ${EXTERNAL_DIR}/${OPENCV_DIR}/modules)
 include_directories(
 	${EXTERNAL_DIR}/${OPENCV_DIR}/include 
@@ -188,7 +192,6 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/${CMAKE_GENERATOR}/bin/${
 
 link_directories(
 	${LIBRARY_OUTPUT_PATH}
-	${PROJECT_SOURCE_DIR}/common/build/${CMAKE_GENERATOR}/lib/${BUILD_TYPE_DIR} 
 	${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/lib/${BUILD_TYPE_DIR} 
 	${MATLAB_MEX_LIBRARY_PATH} 
 	${MATLAB_MX_LIBRARY_PATH} 
@@ -207,7 +210,6 @@ endmacro(ankiProject)
 
 #
 # A helper macro (read: hack) for appending "246d" to the opencv library names.
-# Assumes you have put the required opencv libs in 
 # 
 function(fix_opencv_lib_names NAMES)
 
