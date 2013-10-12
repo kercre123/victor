@@ -1,7 +1,8 @@
 #include "gtest/gtest.h"
 
-#include "anki/common/general.h"
-#include "anki/math/rotation.h"
+#include "anki/common/basestation/general.h"
+#include "anki/common/basestation/math/rotation.h"
+
 #include <iostream>
 
 // For test debug printing

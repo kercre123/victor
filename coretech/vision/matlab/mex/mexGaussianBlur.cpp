@@ -1,6 +1,6 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
-#include "mexWrappers.h"
+#include "anki/common/matlab/mexWrappers.h"
 
 #define VERBOSITY 0
 

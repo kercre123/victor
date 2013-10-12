@@ -1,4 +1,5 @@
 #include "anki/vision/robot/miscVisionKernels.h"
+#include "anki/common/robot/opencvLight.h"
 
 namespace Anki
 {

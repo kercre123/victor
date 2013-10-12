@@ -7,8 +7,8 @@ file(GLOB CORETECH_VISION_INCLUDE_FILES "${CORETECH_VISION_INCLUDE_DIR}/*.h")
 add_subdirectory(basestation/src)
 #add_subdirectory(basestation/test)
 
-#add_subdirectory(robot/src)
-#add_subdirectory(robot/test) 
+add_subdirectory(robot/src)
+add_subdirectory(robot/test) 
 
 add_subdirectory(matlab/mex)
 add_subdirectory(matlab/CameraCapture)

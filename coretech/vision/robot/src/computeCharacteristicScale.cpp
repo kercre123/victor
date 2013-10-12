@@ -1,5 +1,6 @@
-﻿#include "anki/vision/robot/miscVisionKernels.h"
-#include "anki/vision/robot/utilities.h"
+﻿#include "anki/common/robot/utilities.h"
+
+#include "anki/vision/robot/miscVisionKernels.h"
 
 namespace Anki
 {

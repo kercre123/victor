@@ -2,10 +2,6 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-include(../coretech-common/anki.cmake)
-
-ankiProject(CoreTech_External)
-
 add_subdirectory(gtest-1.7.0)
 
 # Force OpenCV to build dynamic/shared libs:
