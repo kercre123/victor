@@ -1,7 +1,8 @@
 #include "gtest/gtest.h"
 
-#include "anki/common/general.h"
-#include "anki/math/point.h"
+#include "anki/common/basestation/general.h"
+#include "anki/common/basestation/math/point.h"
+
 #include <iostream>
 
 #define ASSERT_NEAR_EQ(a,b) ASSERT_NEAR(a,b,FLOATING_POINT_COMPARISON_TOLERANCE)

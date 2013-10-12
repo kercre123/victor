@@ -1,5 +1,7 @@
-#include "anki/embeddedCommon.h"
-#include "anki/embeddedCommon/matlabInterface.h"
+
+#include "anki/common/robot/matlabInterface.h"
+#include "anki/common/robot/fixedLengthList.h"
+#include "anki/common/robot/opencvLight.h"
 
 #include "mex.h"
 

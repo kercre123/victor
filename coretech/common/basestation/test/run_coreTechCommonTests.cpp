@@ -1,4 +1,4 @@
-#include "anki/math/matrix.h"
+#include "anki/common/basestation/math/matrix.h"
 
 #include "gtest/gtest.h"
 
