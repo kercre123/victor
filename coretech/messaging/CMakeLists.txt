@@ -1,0 +1,11 @@
+# coretech/messaging/CMakeLists.txt
+
+set(CORETECH_MESSAGING_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/anki/messaging)
+
+file(GLOB CORETECH_MESSAGING_INCLUDE_FILES "${CORETECH_MESSAGING_INCLUDE_DIR}/*.h")
+
+add_subdirectory(basestation/src)
+#add_subdirectory(basestation/test)
+
+#add_subdirectory(robot/src)
+#add_subdirectory(robot/test) 
