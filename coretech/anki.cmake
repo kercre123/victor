@@ -14,7 +14,7 @@
 macro(ankiProject PROJECT_NAME)
 
 if(NOT PROJECT_NAME MATCHES "CoreTech")
-	set(CORETECH_ROOT_DIR ${PROJECT_NAME}/coretech)
+	set(CORETECH_ROOT_DIR ${PROJECT_SOURCE_DIR}/coretech)
 endif(NOT PROJECT_NAME MATCHES "CoreTech")
 
 # Suppress warning message about relative vs. absolute paths:
@@ -155,7 +155,10 @@ endif()
 # External libraries
 # We assume that coretech-external lives alongside each project
 # for which we use this anki.cmake file.
-set(EXTERNAL_DIR ${PROJECT_SOURCE_DIR}/../coretech-external)
+if(NOT DEFINED EXTERNAL_DIR)
+	set(EXTERNAL_DIR ${PROJECT_SOURCE_DIR}/../coretech-external)
+endif(NOT DEFINED EXTERNAL_DIR)
+
 set(OPENCV_MODULES_DIR ${EXTERNAL_DIR}/${OPENCV_DIR}/modules)
 include_directories(
 	${EXTERNAL_DIR}/${OPENCV_DIR}/include 
@@ -255,8 +258,8 @@ if( MATLAB_FOUND AND (ANKICORETECH_USE_MATLAB OR ANKICORETECHEMBEDDED_USE_MATLAB
 
 	add_library(${OUTPUT_NAME} SHARED 
 		${MEX_FILE} 
-		${PROJECT_SOURCE_DIR}/common/matlab/mex/mexWrappers.cpp
-		${PROJECT_SOURCE_DIR}/common/matlab/mex/mexFunction.def
+		${CORETECH_ROOT_DIR}/common/matlab/mex/mexWrappers.cpp
+		${CORETECH_ROOT_DIR}/common/matlab/mex/mexFunction.def
 	)
 	
 	# Put mex binaries in MEX_OUTPUT_PATH

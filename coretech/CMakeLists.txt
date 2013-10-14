@@ -2,17 +2,17 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-include(anki.cmake)
+#include(anki.cmake)
+#ankiProject(CoreTech)
 
 include_directories(
 	common/include
 	vision/include
-	external/include
+	messaging/include
 )
-	
-ankiProject(CoreTech)
 
 add_subdirectory(common)
 add_subdirectory(vision)
+add_subdirectory(messaging)
 
 #add_subdirectory(external)
