@@ -26,7 +26,7 @@ link_directories( ${WEBOTS_LIB_DIR} )
 # Source files
 set(SOURCE_FILES
 	cozmo_c_controller.cpp
-#	keyboardController.cpp
+	keyboardController.cpp
 
 	${COZMO_ROBOT_SRC_DIR}/cozmoBot.cpp
 	${COZMO_ROBOT_SRC_DIR}/hardwareInterface_sim.cpp

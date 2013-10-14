@@ -22,7 +22,7 @@ u32 getMicroCounter(void);
 /// MOTORS
 /////////////////////////////////////
 
-#define MOTOR_PWM_MAXVAL 2400
+//#define MOTOR_PWM_MAXVAL 2400
 
 void InitMotors(void);
 

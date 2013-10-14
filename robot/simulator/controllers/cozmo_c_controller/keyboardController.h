@@ -1,15 +1,15 @@
 #ifndef KEYBOARD_CONTROLLER_H
 #define KEYBOARD_CONTROLLER_H
 
-#include "anki/cozmo/robot/cozmoTypes.h"
+//#include "anki/cozmo/robot/cozmoTypes.h"
 
 namespace Anki {
   namespace Cozmo {
     namespace KeyboardController {
 
-      void Init(webots::Robot &robot);
+      void Init(webots::Robot* robot);
       void Enable(void);
-      void Disabl(void);
+      void Disable(void);
       bool IsEnabled(void);
       void ProcessKeystroke(void);
 
