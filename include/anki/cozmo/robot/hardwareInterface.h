@@ -42,7 +42,8 @@ namespace Anki {
       //
       // Parameters / Constants
       //
-      const u8 NUM_RADIAL_DISTORTION_COEFFS = 5;
+      const u8  NUM_RADIAL_DISTORTION_COEFFS = 5;
+      const f32 MOTOR_PWM_MAXVAL = 2400.f;
       
       //
       // Typedefs
@@ -115,7 +116,10 @@ namespace Anki {
       // Misc
       bool IsInitialized();
       void UpdateDisplay();
-      
+
+      // Get the number of microseconds since boot
+      u32 GetMicroCounter(void);
+
       // Take a step (needed for webots, possibly a no-op for real robot?)
       ReturnCode Step(void);
       

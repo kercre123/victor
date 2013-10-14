@@ -3,7 +3,7 @@
 
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
-#include "anki/cozmo/robot/hal.h"
+//#include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/mainExecution.h"
 #include "anki/cozmo/robot/pathFollower.h"
 #include "anki/cozmo/robot/vehicleMath.h"
@@ -25,7 +25,7 @@
 #endif
 
 ///////// TESTING //////////
-#define EXECUTE_TEST_PATH 0
+#define EXECUTE_TEST_PATH 1
 
 ///////// END TESTING //////
 
@@ -178,10 +178,11 @@ namespace Anki {
       // TESTING
       static u32 startDriveTime_us = 1000000;
       static BOOL driving = FALSE;
-      if (!IsKeyboardControllerEnabled() && !driving && getMicroCounter() > startDriveTime_us) {
-        SetUserCommandedAcceleration( MAX(ONE_OVER_CONTROL_DT + 1, 500) );  // This can't be smaller than 1/CONTROL_DT!
-        SetUserCommandedDesiredVehicleSpeed(160);
-        fprintf(stdout, "Speed commanded: %d mm/s\n", GetUserCommandedDesiredVehicleSpeed() );
+      if (!driving && HardwareInterface::GetMicroCounter() > startDriveTime_us) {
+        VehicleSpeedController::SetUserCommandedAcceleration( MAX(ONE_OVER_CONTROL_DT + 1, 500) );  // This can't be smaller than 1/CONTROL_DT!
+        VehicleSpeedController::SetUserCommandedDesiredVehicleSpeed(160);
+        fprintf(stdout, "Speed commanded: %d mm/s\n",
+                VehicleSpeedController::GetUserCommandedDesiredVehicleSpeed() );
         
         
         // Create a path and follow it
@@ -256,8 +257,8 @@ namespace Anki {
       
       // Radius ~= 15mm => circumference of ~95mm.
       // 1m/s == 10.5 rot/s == 66.1 rad/s
-      float left_rad_per_s  = speedl * 66.1f / MOTOR_PWM_MAXVAL;
-      float right_rad_per_s = speedr * 66.1f / MOTOR_PWM_MAXVAL;
+      f32 left_rad_per_s  = speedl * 66.1f / HardwareInterface::MOTOR_PWM_MAXVAL;
+      f32 right_rad_per_s = speedr * 66.1f / HardwareInterface::MOTOR_PWM_MAXVAL;
       
       HardwareInterface::SetWheelAngularVelocity(left_rad_per_s, right_rad_per_s);
       

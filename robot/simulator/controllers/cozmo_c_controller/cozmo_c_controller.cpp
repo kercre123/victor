@@ -19,6 +19,15 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/localization.h"
 
+#include "keyboardController.h"
+
+#include "anki/cozmo/robot/hardwareInterface.h"
+
+namespace Anki {
+  namespace Cozmo {
+    extern webots::Supervisor* gCozmoBot;
+  }
+}
 
 /*
  * You may want to add macros here.
@@ -31,18 +40,32 @@
  */
 int main(int argc, char **argv)
 {
-  if(Anki::Cozmo::Robot::Init() == EXIT_FAILURE) {
+  using namespace Anki::Cozmo;
+
+  if(Robot::Init() == EXIT_FAILURE) {
     fprintf(stdout, "Failed to initialize Cozmo::Robot!\n");
     return -1;
   }
 
+  KeyboardController::Init(gCozmoBot);
+  
+  KeyboardController::Enable();
+  
   // Localization::InitLocalization();
   // TODO: Init more things?
-
-  while(Anki::Cozmo::Robot::step_MainExecution() == EXIT_SUCCESS &&
-        Anki::Cozmo::Robot::step_LongExecution() == EXIT_SUCCESS)
+  
+  while(Robot::step_MainExecution() == EXIT_SUCCESS)
   {
-
+    if( (HardwareInterface::GetMicroCounter() % 100000) == 0 ) {
+      if( Robot::step_LongExecution() == EXIT_FAILURE ) {
+        fprintf(stdout, "step_LongExecution failed.\n");
+        break;
+      }
+    }
+      
+    if(KeyboardController::IsEnabled()) {
+      KeyboardController::ProcessKeystroke();
+    }      
   }
   
   /* Enter your cleanup code here */

@@ -248,7 +248,7 @@ namespace Anki {
           msg.x_imgLowerRight = static_cast<f32>(corners_x[3]);
           msg.y_imgLowerRight = static_cast<f32>(corners_y[3]);
           
-          fprintf(stdout, "Sending ObsevedBlockMarker message: Block %d, Face %d "
+          fprintf(stdout, "Sending ObservedBlockMarker message: Block %d, Face %d "
                   "at [(%.1f,%.1f) (%.1f,%.1f) (%.1f,%.1f) (%.1f,%.1f)]\n",
                   msg.blockType, msg.faceType,
                   msg.x_imgUpperLeft,  msg.y_imgUpperLeft,
