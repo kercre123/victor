@@ -20,7 +20,7 @@ namespace Localization
 
   void UpdateLocalization() {
     float angle;
-    gCozmoBot.GetGlobalPose(currMatPose.x(),currMatPose.y(),angle);
+    Robot::GetGlobalPose(currMatPose.x(),currMatPose.y(),angle);
     currMatPose.angle = angle;
   }
 

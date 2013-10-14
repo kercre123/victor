@@ -20,6 +20,8 @@
 
 #include <vector>
 
+#include "anki/messaging/basestation/messagingInterface.h"
+
 namespace Anki
 {
   namespace Cozmo
@@ -34,14 +36,19 @@ namespace Anki
       const unsigned int MaxBlockTypes = 255;
       
       // Constructors:
-      BlockWorld();
+      BlockWorld(MessagingInterface* msgInterface);
       ~BlockWorld();
       
       void addRobot(Robot *robot);
       
       void update(void);
       
+      void set_zAxisPointsUp(const bool isUp);
+      
     protected:
+      
+      // This can point to either a real or a simulated messaging interface
+      MessagingInterface* msgInterface;
       
       // Store all the blocks in the world, with a reserved slot for
       // each type of block, and then a list of pointers to each block
@@ -59,7 +66,9 @@ namespace Anki
       bool zAxisPointsUp; // false for Webots
       
     }; // class BlockWorld
-    
+
+    inline void BlockWorld::set_zAxisPointsUp(const bool isUp)
+    { this->zAxisPointsUp = isUp; }
     
   } // namespace Cozmo
 } // namespace Anki

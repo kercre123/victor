@@ -111,5 +111,13 @@ namespace Anki {
       
     } // getVisibleBlockMarkers3d()
     
+    void Robot::set_pose(const Pose3d &newPose)
+    {
+      // Update our current pose and let the physical robot know where it is:
+      this->pose = newPose;
+      
+      
+    } // set_pose()
+    
   } // namespace Cozmo
 } // namespace Anki

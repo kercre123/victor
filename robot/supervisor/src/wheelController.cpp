@@ -193,7 +193,7 @@ namespace Anki {
 #endif
       
       //Command the computed speed (as PWM values) to the motors
-      SetMotorOLSpeed(*motorvalueoutL, *motorvalueoutR);
+      Cozmo::Robot::SetOpenLoopMotorSpeed(*motorvalueoutL, *motorvalueoutR);
     }
     
     

@@ -32,12 +32,15 @@ namespace Anki {
       class Mailbox
       {
       public:
+        Mailbox();
         
+        bool hasMail(void) const;
         void putMessage(const MsgType newMsg);
         MsgType getMessage();
         
       protected:
         MsgType messages[NumMessages];
+        bool    beenRead[NumMessages];
         u8 readIndex, writeIndex;
         
         void advanceIndex(u8 &index);
@@ -57,7 +60,7 @@ namespace Anki {
       
       void Destroy();
       
-      u32 lookForBlocks();
+      ReturnCode lookForBlocks();
       ReturnCode visualServo();
       ReturnCode localizeWithMat();
       
@@ -69,9 +72,28 @@ namespace Anki {
     #pragma mark --- VisionSystem::Mailbox Template Implementations ---
     
     template<typename MsgType, u8 NumMessages>
+    VisionSystem::Mailbox<MsgType,NumMessages>::Mailbox()
+    {
+      for(u8 i=0; i<NumMessages; ++i) {
+        this->beenRead[i] = false;
+      }
+    }
+    
+    template<typename MsgType, u8 NumMessages>
+    bool VisionSystem::Mailbox<MsgType,NumMessages>::hasMail() const
+    {
+      if(not beenRead[readIndex]) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+    
+    template<typename MsgType, u8 NumMessages>
     void VisionSystem::Mailbox<MsgType,NumMessages>::putMessage(const MsgType newMsg)
     {
       messages[writeIndex] = newMsg;
+      beenRead[writeIndex] = false;
       advanceIndex(writeIndex);
     }
     
@@ -82,6 +104,7 @@ namespace Anki {
       
       advanceIndex(readIndex);
       
+      this->beenRead[toReturn] = true;
       return this->messages[toReturn];
     }
     

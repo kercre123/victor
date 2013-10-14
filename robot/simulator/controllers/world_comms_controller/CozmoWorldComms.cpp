@@ -25,9 +25,9 @@
  */
 
 #include "CozmoWorldComms.h"
-#include "comms/cozmoMsgProtocol.h"
-#include "comms/TcpSocket/TcpServer.h"
-#include "cozmoConfig.h"
+#include "anki/cozmo/MessageProtocol.h"
+#include "anki/messaging/TcpServer.h"
+#include "anki/cozmo/robot/cozmoConfig.h"
 #include <iostream>
 
 #define TX "radio_tx"
@@ -45,7 +45,7 @@ CozmoWorldComms::CozmoWorldComms() : Supervisor()
 
 void CozmoWorldComms::Init() 
 {
-  rx_->enable(TIME_STEP);
+  rx_->enable(Anki::Cozmo::TIME_STEP);
 
   // Listen on all channels
   rx_->setChannel(BASESTATION_SIM_COMM_CHANNEL);
@@ -60,7 +60,7 @@ void CozmoWorldComms::run()
 
   int msgSize;
   const void *msg;
-  while (step(TIME_STEP) != -1) {
+  while (step(Anki::Cozmo::TIME_STEP) != -1) {
 
     // Do we have a basestation connection?
     if (!server_->HasClient()) {

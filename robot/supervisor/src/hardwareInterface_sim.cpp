@@ -195,7 +195,7 @@ namespace Anki {
       this_.rx_ = this_.webotRobot_.getReceiver("radio_rx");
       
       // Plugin comms uses channel 0
-      this_.physicsComms_ = this_.webotRobot_.getEmitter("cozmo_plugin_comms");
+      this_.physicsComms_ = this_.webotRobot_.getEmitter("cozmo_physics_comms");
       
       // Set ID
       // Expected format of name is <SomeName>_<robotID>
@@ -428,10 +428,10 @@ namespace Anki {
     } // HardwareInterface::UpdateDisplay()
     
     
-    ReturnCode HardwareInterface::Step(s32 timeStep)
+    ReturnCode HardwareInterface::Step(void)
     {
 
-      if(this_.webotRobot_.step(timeStep) == -1) {
+      if(this_.webotRobot_.step(Cozmo::TIME_STEP) == -1) {
         return EXIT_FAILURE;
       } else {
         return EXIT_SUCCESS;
@@ -469,7 +469,7 @@ namespace Anki {
       }
     }
     
-    void HardwareInterface::SendMessage(void* data, int size)
+    void HardwareInterface::SendMessage(const void* data, int size)
     {
       this_.tx_->send(data, size);
     }

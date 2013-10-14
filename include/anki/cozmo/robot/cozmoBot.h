@@ -8,6 +8,9 @@
 
 
 namespace Anki {
+  
+  class Radians;
+  
   namespace Cozmo {
     
     namespace Robot {
@@ -44,6 +47,10 @@ namespace Anki {
       OperationMode GetOperationMode();
       void SetOperationMode(OperationMode newMode);
       
+      //Sets an open loop speed to the two motors. The open loop speed value ranges
+      //from: [0..MOTOR_PWM_MAXVAL] and HAS to be within those boundaries
+      void SetOpenLoopMotorSpeed(s16 leftSpeed, s16 rightSpeed);
+      
       // Fetch the latest encoder speed in mm per second (settable using UNITS_PER_TICK)
       s32 GetLeftWheelSpeed(void);
       s32 GetRightWheelSpeed(void);
@@ -52,7 +59,7 @@ namespace Anki {
       s32 GetLeftWheelSpeedFiltered(void);
       s32 GetRightWheelSpeedFiltered(void);
       
-      void GetCurrentMatPose(f32& x, f32& y, f32& angle);
+      void GetCurrentMatPose(f32& x, f32& y, Radians& angle);
       
     } // namespace Robot
     

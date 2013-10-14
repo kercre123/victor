@@ -9,8 +9,8 @@ namespace Anki
   namespace Cozmo
   {
     
-    BlockWorld::BlockWorld( void )
-    : blocks(MaxBlockTypes), zAxisPointsUp(true)
+    BlockWorld::BlockWorld( MessagingInterface* msgInterfaceIn )
+    : msgInterface(msgInterfaceIn), blocks(MaxBlockTypes), zAxisPointsUp(true)
     {
       
     }
