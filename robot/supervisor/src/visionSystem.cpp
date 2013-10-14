@@ -132,7 +132,7 @@ namespace Anki {
         return EXIT_FAILURE;
       }
       
-      engEvalString(this_.matlabEngine_, "run('../../../matlab/initCozmoPath.m');");
+      engEvalString(this_.matlabEngine_, "run('../../../../matlab/initCozmoPath.m');");
       
       // TODO: Pass camera calibration data back to Matlab
       
@@ -173,7 +173,7 @@ namespace Anki {
     }
     
     
-    u32 VisionSystem::lookForBlocks()
+    ReturnCode VisionSystem::lookForBlocks()
     {
       u32 numBlocks = 0;
       
@@ -269,11 +269,11 @@ namespace Anki {
       // TODO: Hook this up to Pete's vision code
       fprintf(stderr, "Robot::processHeadImage(): embedded vision "
               "processing not hooked up yet.\n");
-      numBlocks = -1;
+      return EXIT_FAILURE;
       
 #endif // defined(USE_MATLAB_FOR_HEAD_CAMERA)
       
-      return numBlocks;
+      return EXIT_SUCCESS;
       
     } // lookForBlocks()
     

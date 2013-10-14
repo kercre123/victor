@@ -108,7 +108,7 @@ namespace Anki {
       
       // Communications
       void ManageRecvBuffer();
-      void SendMessage(void* data, s32 size);
+      void SendMessage(const void* data, s32 size);
       s32  RecvMessage(void* data);
       bool IsConnected();
       
@@ -117,7 +117,7 @@ namespace Anki {
       void UpdateDisplay();
       
       // Take a step (needed for webots, possibly a no-op for real robot?)
-      ReturnCode Step(s32 timeStep);
+      ReturnCode Step(void);
       
     } // namespace HardwareInterface
   } // namespace Cozmo

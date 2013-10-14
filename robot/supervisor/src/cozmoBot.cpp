@@ -1,13 +1,13 @@
-#include "anki/cozmo/robot/cozmoBot.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
-
-#include "anki/cozmo/robot/vehicleMath.h"
-#include "anki/cozmo/robot/mainExecution.h"
-#include "anki/cozmo/robot/vehicleSpeedController.h"
-#include "anki/cozmo/robot/pathFollower.h"
-#include "anki/cozmo/robot/hal.h"
 
 #include "anki/cozmo/MessageProtocol.h"
+
+#include "anki/cozmo/robot/cozmoBot.h"
+#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/mainExecution.h"
+#include "anki/cozmo/robot/pathFollower.h"
+#include "anki/cozmo/robot/vehicleMath.h"
+#include "anki/cozmo/robot/vehicleSpeedController.h"
 
 #include "anki/messaging/robot/utilMessaging.h"
 
@@ -66,6 +66,10 @@ namespace Anki {
         VisionSystem::MatMarkerMailbox   matMarkerMailbox;
         
         OperationMode mode, nextMode;
+        
+        // Localization:
+        f32 currentMatX, currentMatY;
+        Radians currentMatHeading;
         
         // Encoder / Wheel Speed Filtering
         s32 leftWheelSpeed_mmps;
@@ -133,6 +137,11 @@ namespace Anki {
       this_.filterSpeedL = 0.f;
       this_.filterSpeedR = 0.f;
       
+      if(PathFollower::Init() == EXIT_FAILURE) {
+        fprintf(stdout, "PathFollower initialization failed.");
+        return EXIT_FAILURE;
+      }
+      
       return EXIT_SUCCESS;
       
     } // Robot::Init()
@@ -161,6 +170,9 @@ namespace Anki {
     
     ReturnCode Robot::step_MainExecution()
     {
+      // If the hardware interface needs to be advanced (as in the case of
+      // a Webots simulation), do that first.
+      HardwareInterface::Step();
       
 #if(EXECUTE_TEST_PATH)
       // TESTING
@@ -193,24 +205,64 @@ namespace Anki {
 
       HardwareInterface::UpdateDisplay();
       
-      return EXIT_SUCCESS;
+      // Check any messages from the vision system and pass them along to the
+      // basestation as a message
+      while( this_.matMarkerMailbox.hasMail() )
+      {
+        const CozmoMsg_ObservedMatMarker matMsg = this_.matMarkerMailbox.getMessage();
+        HardwareInterface::SendMessage(&matMsg, sizeof(CozmoMsg_ObservedMatMarker));
+      }
       
+      while( this_.blockMarkerMailbox.hasMail() )
+      {
+        const CozmoMsg_ObservedBlockMarker blockMsg = this_.blockMarkerMailbox.getMessage();
+        HardwareInterface::SendMessage(&blockMsg, sizeof(CozmoMsg_ObservedBlockMarker));
+      }
+      
+      return EXIT_SUCCESS;
+
     } // Robot::step_MainExecution()
     
     
     ReturnCode Robot::step_LongExecution()
     {
 
-      ReturnCode blockRetVal = VisionSystem::lookForBlocks();
-      if(blockRetVal == EXIT_SUCCESS) 
-      ReturnCode matRetVal = VisionSystem::localizeWithMat();
+      if(VisionSystem::lookForBlocks() == EXIT_FAILURE) {
+        fprintf(stdout, "VisionSystem::lookForBLocks() failed.\n");
+        return EXIT_FAILURE;
+      }
       
-      
+      if(VisionSystem::localizeWithMat() == EXIT_FAILURE) {
+        fprintf(stdout, "VisionSystem::localizeWithMat() failed.\n");
+        return EXIT_FAILURE;
+      }
 
-    }
+      
+      return EXIT_SUCCESS;
+      
+    } // Robot::step_MainExecution()
     
     
-          void GetCurrentMatPose(f32& x, f32& y, f32& angle);
+    void Robot::GetCurrentMatPose(f32& x, f32& y, Radians& angle)
+    {
+      
+    } // GetCurrentMatPose()
+    
+    
+    void Robot::SetOpenLoopMotorSpeed(s16 speedl, s16 speedr)
+    {
+      // Convert PWM to rad/s
+      // TODO: Do this properly.  For now assume MOTOR_PWM_MAXVAL achieves 1m/s lateral speed.
+      
+      // Radius ~= 15mm => circumference of ~95mm.
+      // 1m/s == 10.5 rot/s == 66.1 rad/s
+      float left_rad_per_s  = speedl * 66.1f / MOTOR_PWM_MAXVAL;
+      float right_rad_per_s = speedr * 66.1f / MOTOR_PWM_MAXVAL;
+      
+      HardwareInterface::SetWheelAngularVelocity(left_rad_per_s, right_rad_per_s);
+      
+    } // Robot::SetOpenLoopMotorSpeed()
+    
     
   } // namespace Cozmo
   

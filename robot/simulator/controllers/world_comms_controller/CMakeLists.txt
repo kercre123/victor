@@ -1,7 +1,9 @@
 # products-cozmo/robot/simulator/controllers/world_comms_controller/CMakeLists.txt
 
 # Include paths
-include_directories(${WEBOTS_CPP_INCLUDE_DIR})
+include_directories(${WEBOTS_CPP_INCLUDE_DIR}
+  ${PROJECT_SOURCE_DIR}/coretech/messaging/include
+)
 
 
 # Link paths
@@ -18,7 +20,7 @@ set(SOURCE_FILES
 
 set(HEADER_FILES
 	CozmoWorldComms.h
-	${PROJECT_SOURCE_DIR}/coretech/messaging/robot/TcpSocket/TcpServer.h
+	${PROJECT_SOURCE_DIR}/coretech/messaging/include/anki/messaging/TcpServer.h
 )
 
 add_executable(world_comms_controller ${SOURCE_FILES} ${HEADER_FILES})
@@ -26,12 +28,13 @@ add_executable(world_comms_controller ${SOURCE_FILES} ${HEADER_FILES})
 target_link_libraries(world_comms_controller CppController)
 
 set_target_properties(world_comms_controller PROPERTIES
+  COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
 	XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
 	XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
 )
 
-# Make sure a copy of the target exists	     in cozmo_c_controller/
-# no matter where the target is	 actually built.
+# Make sure a copy of the target exists	in cozmo_c_controller/
+# no matter where the target is actually built.
 add_custom_command(
 	TARGET world_comms_controller
     POST_BUILD

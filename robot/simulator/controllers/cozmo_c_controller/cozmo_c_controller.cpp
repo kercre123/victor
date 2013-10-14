@@ -18,11 +18,7 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/localization.h"
-#include "anki/cozmo/robot/pathFollower.h"
 
-#include "engine.h"
-
-#include "keyboardController.h"
 
 /*
  * You may want to add macros here.
@@ -40,14 +36,13 @@ int main(int argc, char **argv)
     return -1;
   }
 
-  PathFollower::InitPathFollower();
   // Localization::InitLocalization();
   // TODO: Init more things?
 
   while(Anki::Cozmo::Robot::step_MainExecution() == EXIT_SUCCESS &&
         Anki::Cozmo::Robot::step_LongExecution() == EXIT_SUCCESS)
   {
-    
+
   }
   
   /* Enter your cleanup code here */

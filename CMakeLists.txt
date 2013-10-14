@@ -25,5 +25,4 @@ add_subdirectory(robot/simulator)
 #add_subdirectory(test)
 add_subdirectory(matlab/mex)
 
-
-#add_subdirectory(coretech)
+add_subdirectory(coretech)

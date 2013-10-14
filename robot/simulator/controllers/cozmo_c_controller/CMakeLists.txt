@@ -33,7 +33,7 @@ set(SOURCE_FILES
 #	${COZMO_ROBOT_SRC_DIR}/mainExecution.cpp
 	${COZMO_ROBOT_SRC_DIR}/pathFollower.cpp
 	${COZMO_ROBOT_SRC_DIR}/steeringController.cpp
-	${COZMO_ROBOT_SRC_DIR}/sim_localization.cpp
+#	${COZMO_ROBOT_SRC_DIR}/sim_localization.cpp
 	${COZMO_ROBOT_SRC_DIR}/vehicleSpeedController.cpp
 	${COZMO_ROBOT_SRC_DIR}/wheelController.cpp
 	${COZMO_ROBOT_SRC_DIR}/vehicleMath.cpp
@@ -58,14 +58,15 @@ add_executable(cozmo_c_controller ${SOURCE_FILES} ${HEADER_FILES})
 
 target_link_libraries(cozmo_c_controller 
 	CppController
-	CoreTech_Common_Embedded
-	CoreTech_Common
+	CoreTech_Common_Robot
+	CoreTech_Common_Basestation # needed?
 	mx 
 	eng
 )
 
 set_target_properties(
 	cozmo_c_controller PROPERTIES
+  COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
 	LINK_FLAGS "-Wl,-rpath,${MATLAB_ROOT_DIR}/bin/maci64/"
 	XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
 	XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
