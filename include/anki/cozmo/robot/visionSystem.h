@@ -11,7 +11,7 @@
 
 #include "anki/common/types.h"
 
-#include "anki/cozmo/robot/hardwareInterface.h"
+#include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/MessageProtocol.h"
 
 
@@ -51,10 +51,10 @@ namespace Anki {
       typedef Mailbox<CozmoMsg_ObservedMatMarker, MAX_MAT_MARKER_MESSAGES> MatMarkerMailbox;
       
       
-      ReturnCode Init(HardwareInterface::FrameGrabber       headCamFrameGrabber,
-                      HardwareInterface::FrameGrabber       matCamFrameGrabber,
-                      const HardwareInterface::CameraInfo*  headCamInfo,
-                      const HardwareInterface::CameraInfo*  matCamInfo,
+      ReturnCode Init(HAL::FrameGrabber       headCamFrameGrabber,
+                      HAL::FrameGrabber       matCamFrameGrabber,
+                      const HAL::CameraInfo*  headCamInfo,
+                      const HAL::CameraInfo*  matCamInfo,
                       BlockMarkerMailbox*                   blockMarkerMailbox,
                       MatMarkerMailbox*                     matMarkerMailbox);
       

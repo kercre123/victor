@@ -46,7 +46,7 @@
 #define HEAD_CAMERA "cam_head"
 #define LIFT_CAMERA "cam_lift"
 
-#include "anki/cozmo/robot/hardwareInterface.h" // simulated or real!
+#include "anki/cozmo/robot/hal.h" // simulated or real!
 #include "anki/cozmo/robot/visionSystem.h"
 
 namespace Anki {
@@ -116,15 +116,15 @@ namespace Anki {
 
     ReturnCode Robot::Init(void)
     {
-      if(HardwareInterface::Init() == EXIT_FAILURE) {
+      if(HAL::Init() == EXIT_FAILURE) {
         fprintf(stdout, "Hardware Interface initialization failed!\n");
         return EXIT_FAILURE;
       }
       
-      if(VisionSystem::Init(HardwareInterface::GetHeadFrameGrabber(),
-                            HardwareInterface::GetMatFrameGrabber(),
-                            HardwareInterface::GetHeadCamInfo(),
-                            HardwareInterface::GetMatCamInfo(),
+      if(VisionSystem::Init(HAL::GetHeadFrameGrabber(),
+                            HAL::GetMatFrameGrabber(),
+                            HAL::GetHeadCamInfo(),
+                            HAL::GetMatCamInfo(),
                             &this_.blockMarkerMailbox,
                             &this_.matMarkerMailbox) == EXIT_FAILURE)
       {
@@ -149,7 +149,7 @@ namespace Anki {
     void Robot::Destroy()
     {
       VisionSystem::Destroy();
-      HardwareInterface::Destroy();
+      HAL::Destroy();
     }
     
     
@@ -157,8 +157,8 @@ namespace Anki {
     {
       
       // Get true (gyro measured) speeds from robot model
-      this_.leftWheelSpeed_mmps = HardwareInterface::GetLeftWheelSpeed();
-      this_.rightWheelSpeed_mmps = HardwareInterface::GetRightWheelSpeed();
+      this_.leftWheelSpeed_mmps = HAL::GetLeftWheelSpeed();
+      this_.rightWheelSpeed_mmps = HAL::GetRightWheelSpeed();
       
       this_.filterSpeedL = (GetLeftWheelSpeed() * (1.0f - ENCODER_FILTERING_COEFF) +
                             (this_.filterSpeedL * ENCODER_FILTERING_COEFF));
@@ -172,13 +172,13 @@ namespace Anki {
     {
       // If the hardware interface needs to be advanced (as in the case of
       // a Webots simulation), do that first.
-      HardwareInterface::Step();
+      HAL::Step();
       
 #if(EXECUTE_TEST_PATH)
       // TESTING
       static u32 startDriveTime_us = 1000000;
       static BOOL driving = FALSE;
-      if (!driving && HardwareInterface::GetMicroCounter() > startDriveTime_us) {
+      if (!driving && HAL::GetMicroCounter() > startDriveTime_us) {
         VehicleSpeedController::SetUserCommandedAcceleration( MAX(ONE_OVER_CONTROL_DT + 1, 500) );  // This can't be smaller than 1/CONTROL_DT!
         VehicleSpeedController::SetUserCommandedDesiredVehicleSpeed(160);
         fprintf(stdout, "Speed commanded: %d mm/s\n",
@@ -199,25 +199,25 @@ namespace Anki {
 #endif //EXECUTE_TEST_PATH
       
       // Buffer any incoming data from basestation
-      HardwareInterface::ManageRecvBuffer();
+      HAL::ManageRecvBuffer();
       
       // Check if connector attaches to anything
-      HardwareInterface::ManageGripper();
+      HAL::ManageGripper();
 
-      HardwareInterface::UpdateDisplay();
+      HAL::UpdateDisplay();
       
       // Check any messages from the vision system and pass them along to the
       // basestation as a message
       while( this_.matMarkerMailbox.hasMail() )
       {
         const CozmoMsg_ObservedMatMarker matMsg = this_.matMarkerMailbox.getMessage();
-        HardwareInterface::SendMessage(&matMsg, sizeof(CozmoMsg_ObservedMatMarker));
+        HAL::SendMessage(&matMsg, sizeof(CozmoMsg_ObservedMatMarker));
       }
       
       while( this_.blockMarkerMailbox.hasMail() )
       {
         const CozmoMsg_ObservedBlockMarker blockMsg = this_.blockMarkerMailbox.getMessage();
-        HardwareInterface::SendMessage(&blockMsg, sizeof(CozmoMsg_ObservedBlockMarker));
+        HAL::SendMessage(&blockMsg, sizeof(CozmoMsg_ObservedBlockMarker));
       }
       
       return EXIT_SUCCESS;
@@ -257,10 +257,10 @@ namespace Anki {
       
       // Radius ~= 15mm => circumference of ~95mm.
       // 1m/s == 10.5 rot/s == 66.1 rad/s
-      f32 left_rad_per_s  = speedl * 66.1f / HardwareInterface::MOTOR_PWM_MAXVAL;
-      f32 right_rad_per_s = speedr * 66.1f / HardwareInterface::MOTOR_PWM_MAXVAL;
+      f32 left_rad_per_s  = speedl * 66.1f / HAL::MOTOR_PWM_MAXVAL;
+      f32 right_rad_per_s = speedr * 66.1f / HAL::MOTOR_PWM_MAXVAL;
       
-      HardwareInterface::SetWheelAngularVelocity(left_rad_per_s, right_rad_per_s);
+      HAL::SetWheelAngularVelocity(left_rad_per_s, right_rad_per_s);
       
     } // Robot::SetOpenLoopMotorSpeed()
     

@@ -2,7 +2,7 @@
 #include <cmath>
 
 // Our Includes
-#include "anki/cozmo/robot/hardwareInterface.h"
+#include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "cozmo_physics.h"
 
@@ -63,8 +63,8 @@ namespace Anki {
       // Cameras / Vision Processing
       webots::Camera* matCam_;
       webots::Camera* headCam_;
-      HardwareInterface::CameraInfo headCamInfo_;
-      HardwareInterface::CameraInfo matCamInfo_;
+      HAL::CameraInfo headCamInfo_;
+      HAL::CameraInfo matCamInfo_;
       
       // For pose information
       webots::GPS* gps_;
@@ -114,7 +114,7 @@ namespace Anki {
     
     // Helper function to create a CameraInfo struct from Webots camera properties:
     void FillCameraInfo(const webots::Camera *camera,
-                        HardwareInterface::CameraInfo &info)
+                        HAL::CameraInfo &info)
     {
       
       u16 nrows  = static_cast<u16>(camera->getHeight());
@@ -137,13 +137,13 @@ namespace Anki {
       info.nrows         = nrows;
       info.ncols         = ncols;
       
-      for(u8 i=0; i<HardwareInterface::NUM_RADIAL_DISTORTION_COEFFS; ++i) {
+      for(u8 i=0; i<HAL::NUM_RADIAL_DISTORTION_COEFFS; ++i) {
         info.distortionCoeffs[i] = 0.f;
       }
       
     } // FillCameraInfo
     
-    ReturnCode HardwareInterface::Init()
+    ReturnCode HAL::Init()
     {
       leftWheelMotor_  = webotRobot_.getMotor("wheel_fl");
       rightWheelMotor_ = webotRobot_.getMotor("wheel_fr");
@@ -238,7 +238,7 @@ namespace Anki {
       
     } // Init()
     
-    void HardwareInterface::Destroy()
+    void HAL::Destroy()
     {
       // Turn off components: (strictly necessary?)
       matCam_->disable();
@@ -254,18 +254,18 @@ namespace Anki {
 
     } // Destroy()
     
-    bool HardwareInterface::IsInitialized(void)
+    bool HAL::IsInitialized(void)
     {
       return isInitialized;
     }
     
-    bool HardwareInterface::IsConnected(void)
+    bool HAL::IsConnected(void)
     {
       return isConnected_;
     }
     
     /*
-    void HardwareInterface::GetGlobalPose(float &x, float &y, float& rad)
+    void HAL::GetGlobalPose(float &x, float &y, float& rad)
     {
       
       const double* position = gps_->getValues();
@@ -283,39 +283,39 @@ namespace Anki {
     
     
     
-    void HardwareInterface::SetLeftWheelAngularVelocity(float rad_per_sec)
+    void HAL::SetLeftWheelAngularVelocity(float rad_per_sec)
     {
       leftWheelMotor_->setVelocity(-rad_per_sec);
     }
     
-    void HardwareInterface::SetRightWheelAngularVelocity(float rad_per_sec)
+    void HAL::SetRightWheelAngularVelocity(float rad_per_sec)
     {
       rightWheelMotor_->setVelocity(-rad_per_sec);
     }
     
-    void HardwareInterface::SetWheelAngularVelocity(float left_rad_per_sec, float right_rad_per_sec)
+    void HAL::SetWheelAngularVelocity(float left_rad_per_sec, float right_rad_per_sec)
     {
       leftWheelMotor_->setVelocity(-left_rad_per_sec);
       rightWheelMotor_->setVelocity(-right_rad_per_sec);
     }
     
-    float HardwareInterface::GetLeftWheelPosition()
+    float HAL::GetLeftWheelPosition()
     {
       return leftWheelMotor_->getPosition();
     }
     
-    float HardwareInterface::GetRightWheelPosition()
+    float HAL::GetRightWheelPosition()
     {
       return rightWheelMotor_->getPosition();
     }
     
-    void HardwareInterface::GetWheelPositions(float &left_rad, float &right_rad)
+    void HAL::GetWheelPositions(float &left_rad, float &right_rad)
     {
       left_rad = leftWheelMotor_->getPosition();
       right_rad = rightWheelMotor_->getPosition();
     }
     
-    float HardwareInterface::GetLeftWheelSpeed()
+    float HAL::GetLeftWheelSpeed()
     {
       const double* axesSpeeds_rad_per_s = leftWheelGyro_->getValues();
       float mm_per_s = -axesSpeeds_rad_per_s[0] * WHEEL_RAD_TO_MM;
@@ -323,7 +323,7 @@ namespace Anki {
       return mm_per_s;
     }
     
-    float HardwareInterface::GetRightWheelSpeed()
+    float HAL::GetRightWheelSpeed()
     {
       const double* axesSpeeds_rad_per_s = rightWheelGyro_->getValues();
       float mm_per_s = -axesSpeeds_rad_per_s[0] * WHEEL_RAD_TO_MM;
@@ -331,34 +331,34 @@ namespace Anki {
       return mm_per_s;
     }
     
-    void HardwareInterface::SetHeadPitch(float pitch_rad)
+    void HAL::SetHeadPitch(float pitch_rad)
     {
       headMotor_->setPosition(pitch_rad);
     }
     
-    float HardwareInterface::GetHeadPitch()
+    float HAL::GetHeadPitch()
     {
       return headMotor_->getPosition();
     }
     
-    void HardwareInterface::SetLiftPitch(float pitch_rad)
+    void HAL::SetLiftPitch(float pitch_rad)
     {
       liftMotor_->setPosition(pitch_rad);
       liftMotor2_->setPosition(-pitch_rad);
     }
     
-    float HardwareInterface::GetLiftPitch()
+    float HAL::GetLiftPitch()
     {
       return liftMotor_->getPosition();
     }
     
     
-    void HardwareInterface::EngageGripper()
+    void HAL::EngageGripper()
     {
       
     }
     
-    void HardwareInterface::DisengageGripper()
+    void HAL::DisengageGripper()
     {
       if (gripperEngaged_)
       {
@@ -369,12 +369,12 @@ namespace Anki {
       }
     }
     
-    bool HardwareInterface::IsGripperEngaged() {
+    bool HAL::IsGripperEngaged() {
       return gripperEngaged_;
     }
     
     
-    void HardwareInterface::ManageGripper()
+    void HAL::ManageGripper()
     {
       //Should we lock to a block which is close to the connector?
       if (!gripperEngaged_ && con_->getPresence() == 1)
@@ -397,7 +397,7 @@ namespace Anki {
                                  OVERLAY_TEXT_SIZE, OVERLAY_TEXT_COLOR, 0);
     }
     
-    void HardwareInterface::UpdateDisplay(void)
+    void HAL::UpdateDisplay(void)
     {
      /*
       fprintf(stdout, "speedDes: %d, speedCur: %d, speedCtrl: %d, speedMeas: %d\n",
@@ -410,10 +410,10 @@ namespace Anki {
       // Print overlay text in main 3D view
       SetOverlayText(OT_CURR_POSE, displayStr_);
       
-    } // HardwareInterface::UpdateDisplay()
+    } // HAL::UpdateDisplay()
     
     
-    ReturnCode HardwareInterface::Step(void)
+    ReturnCode HAL::Step(void)
     {
 
       if(webotRobot_.step(Cozmo::TIME_STEP) == -1) {
@@ -428,7 +428,7 @@ namespace Anki {
     
     
     /////////// Comms /////////////
-    void HardwareInterface::ManageRecvBuffer()
+    void HAL::ManageRecvBuffer()
     {
       // Check for incoming data.
       // Add it to receive buffer.
@@ -454,12 +454,12 @@ namespace Anki {
       }
     }
     
-    void HardwareInterface::SendMessage(const void* data, int size)
+    void HAL::SendMessage(const void* data, int size)
     {
       tx_->send(data, size);
     }
     
-    int HardwareInterface::RecvMessage(void* data)
+    int HAL::RecvMessage(void* data)
     {
       // Is there any data in the receive buffer?
       if (recvBufSize_ > 0) {
@@ -541,28 +541,28 @@ namespace Anki {
       physicsComms_->send(msg, sizeof(msg));
     }
     
-    const HardwareInterface::FrameGrabber HardwareInterface::GetHeadFrameGrabber(void)
+    const HAL::FrameGrabber HAL::GetHeadFrameGrabber(void)
     {
       return &getHeadImage;
     }
     
-    const HardwareInterface::FrameGrabber HardwareInterface::GetMatFrameGrabber(void)
+    const HAL::FrameGrabber HAL::GetMatFrameGrabber(void)
     {
       return &getMatImage;
     }
     
-    const HardwareInterface::CameraInfo* HardwareInterface::GetHeadCamInfo(void)
+    const HAL::CameraInfo* HAL::GetHeadCamInfo(void)
     {
       return &(headCamInfo_);
     }
     
-    const HardwareInterface::CameraInfo* HardwareInterface::GetMatCamInfo(void)
+    const HAL::CameraInfo* HAL::GetMatCamInfo(void)
     {
       return &(matCamInfo_);
     }
     
     // Get the number of microseconds since boot
-    u32 HardwareInterface::GetMicroCounter(void)
+    u32 HAL::GetMicroCounter(void)
     {
       return static_cast<u32>(webotRobot_.getTime() * 1000000.0);
     }

@@ -1,7 +1,7 @@
 
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
-#include "anki/cozmo/robot/hardwareInterface.h"
+#include "anki/cozmo/robot/hal.h"
 
 #include "keyboardController.h"
 
@@ -78,7 +78,7 @@ namespace Anki {
     //Check the keyboard keys and issue robot commands
     void KeyboardController::ProcessKeystroke()
     {
-      using namespace HardwareInterface;
+      using namespace HAL;
       
       //Why do some of those not match ASCII codes?
       //Numbers, spacebar etc. work, letters are different, why?

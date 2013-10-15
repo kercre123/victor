@@ -22,11 +22,11 @@ namespace Anki {
         
         bool isInitialized;
         
-        HardwareInterface::FrameGrabber headCamFrameGrabber;
-        HardwareInterface::FrameGrabber matCamFrameGrabber;
+        HAL::FrameGrabber headCamFrameGrabber;
+        HAL::FrameGrabber matCamFrameGrabber;
         
-        const HardwareInterface::CameraInfo* headCamInfo;
-        const HardwareInterface::CameraInfo* matCamInfo;
+        const HAL::CameraInfo* headCamInfo;
+        const HAL::CameraInfo* matCamInfo;
         
         BlockMarkerMailbox* blockMarkerMailbox;
         MatMarkerMailbox*   matMarkerMailbox;
@@ -79,10 +79,10 @@ namespace Anki {
 #pragma mark --- VisionSystem Method Implementations ---
     
     
-    ReturnCode VisionSystem::Init(HardwareInterface::FrameGrabber      headCamFrameGrabberIn,
-                                  HardwareInterface::FrameGrabber      matCamFrameGrabberIn,
-                                  const HardwareInterface::CameraInfo* headCamInfoIn,
-                                  const HardwareInterface::CameraInfo* matCamInfoIn,
+    ReturnCode VisionSystem::Init(HAL::FrameGrabber      headCamFrameGrabberIn,
+                                  HAL::FrameGrabber      matCamFrameGrabberIn,
+                                  const HAL::CameraInfo* headCamInfoIn,
+                                  const HAL::CameraInfo* matCamInfoIn,
                                   BlockMarkerMailbox*                  blockMarkerMailboxIn,
                                   MatMarkerMailbox*                    matMarkerMailboxIn)
     {

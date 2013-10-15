@@ -3,18 +3,20 @@
 # Environment variable MATLAB_APP_ROOT needs to be defined!
 
 # Include paths
-set(COZMO_ROBOT_SRC_DIR ${PROJECT_SOURCE_DIR}/robot/supervisor/src)
-set(COZMO_PHYSICS_PLUGIN_DIR ../../plugins/physics/cozmo_physics)
+set(SIMULATOR_DIR ${PROJECT_SOURCE_DIR}/robot/simulator)
+set(SIMULATOR_SRC_DIR ${SIMULATOR_DIR}/src)
+set(PHYSICS_PLUGIN_DIR ${SIMULATOR_DIR}/plugins/physics/cozmo_physics)
+
+set(ROBOT_SRC_DIR ${PROJECT_SOURCE_DIR}/robot/supervisor/src)
+
 
 file(GLOB COZMO_ROBOT_HEADER_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/robot/*.h")
 
 include_directories( 
-	${COZMO_ROBOT_INC_DIR}
-	${COZMO_ROBOT_SRC_DIR}
-	${COZMO_SRC_DIR}/shared
-	${COZMO_SRC_DIR}/util
-	${COZMO_PHYSICS_PLUGIN_DIR}
-    ${WEBOTS_CPP_INCLUDE_DIR}
+	${ROBOT_SRC_DIR}
+  ${SIMULATOR_SRC_DIR}
+	${PHYSICS_PLUGIN_DIR}
+  ${WEBOTS_CPP_INCLUDE_DIR}
 )
 
 # Link paths
@@ -26,19 +28,21 @@ link_directories( ${WEBOTS_LIB_DIR} )
 # Source files
 set(SOURCE_FILES
 	cozmo_c_controller.cpp
-	keyboardController.cpp
-
-	${COZMO_ROBOT_SRC_DIR}/cozmoBot.cpp
-	${COZMO_ROBOT_SRC_DIR}/hardwareInterface_sim.cpp
-#	${COZMO_ROBOT_SRC_DIR}/mainExecution.cpp
-	${COZMO_ROBOT_SRC_DIR}/pathFollower.cpp
-	${COZMO_ROBOT_SRC_DIR}/steeringController.cpp
-#	${COZMO_ROBOT_SRC_DIR}/sim_localization.cpp
-	${COZMO_ROBOT_SRC_DIR}/vehicleSpeedController.cpp
-	${COZMO_ROBOT_SRC_DIR}/wheelController.cpp
-	${COZMO_ROBOT_SRC_DIR}/vehicleMath.cpp
-	${COZMO_ROBOT_SRC_DIR}/visionSystem.cpp
 	
+  ${SIMULATOR_SRC_DIR}/keyboardController.cpp
+  ${SIMULATOR_SRC_DIR}/sim_hal.cpp
+	
+  ${ROBOT_SRC_DIR}/cozmoBot.cpp
+  ${ROBOT_SRC_DIR}/pathFollower.cpp
+	${ROBOT_SRC_DIR}/steeringController.cpp
+  ${ROBOT_SRC_DIR}/vehicleSpeedController.cpp
+	${ROBOT_SRC_DIR}/wheelController.cpp
+	${ROBOT_SRC_DIR}/vehicleMath.cpp
+	${ROBOT_SRC_DIR}/visionSystem.cpp
+
+#	${COZMO_ROBOT_SRC_DIR}/mainExecution.cpp
+#	${COZMO_ROBOT_SRC_DIR}/sim_localization.cpp
+
 	${PROJECT_SOURCE_DIR}/coretech/messaging/robot/utilMessaging.c
 
 #	${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_encoders.cpp
@@ -48,7 +52,7 @@ set(SOURCE_FILES
 
 set(HEADER_FILES
 		
-	keyboardController.h
+	${SIMULATOR_SRC_DIR}/keyboardController.h
 	
 	${COZMO_ROBOT_HEADER_FILES}
 	${COZMO_INCLUDE_FILES}
