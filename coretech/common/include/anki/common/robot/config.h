@@ -89,13 +89,14 @@ Everything in this file should be compatible with plain C, as well as C++
 
 #endif // #if defined(USING_MOVIDIUS_COMPILER)
 
+#include "anki/common/types.h"
+
 #ifdef USING_MOVIDIUS_GCC_COMPILER // If using the movidius gcc compiler for Leon
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "mv_types.h"
 #include "DrvUart.h"
 #include "swcTestUtils.h"
 #include "swcLeonUtils.h"
