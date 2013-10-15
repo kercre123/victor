@@ -10,7 +10,7 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/debug.h"
 //#include "anki/cozmo/robot/hal.h" // needed?
-#include "anki/cozmo/robot/hardwareInterface.h"
+#include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/steeringController.h"
 #include "anki/cozmo/robot/trace.h"
 #include "anki/cozmo/robot/vehicleSpeedController.h"
@@ -135,11 +135,11 @@ namespace Anki {
          */
         
         *motorvalueoutL = CLIP(outl,
-                               -Cozmo::HardwareInterface::MOTOR_PWM_MAXVAL,
-                               Cozmo::HardwareInterface::MOTOR_PWM_MAXVAL);
+                               -Cozmo::HAL::MOTOR_PWM_MAXVAL,
+                               Cozmo::HAL::MOTOR_PWM_MAXVAL);
         *motorvalueoutR = CLIP(outr,
-                               -Cozmo::HardwareInterface::MOTOR_PWM_MAXVAL,
-                               Cozmo::HardwareInterface::MOTOR_PWM_MAXVAL);
+                               -Cozmo::HAL::MOTOR_PWM_MAXVAL,
+                               Cozmo::HAL::MOTOR_PWM_MAXVAL);
         
         //Anti zero-crossover
         //Define a deadband above 0 where we command nothing to the wheels:
@@ -173,10 +173,10 @@ namespace Anki {
         
         //Sum the error (integrate it). But ONLY, if we are not commading max output already
         //This should prevent the integral term to become to huge
-        if (ABS(outl) < Cozmo::HardwareInterface::MOTOR_PWM_MAXVAL) {
+        if (ABS(outl) < Cozmo::HAL::MOTOR_PWM_MAXVAL) {
           error_suml_ = CLIP(error_suml_ + errorl, -MAX_WHEEL_CONTROLLER_ERROR_SUM,MAX_WHEEL_CONTROLLER_ERROR_SUM);
         }
-        if (ABS(outr) < Cozmo::HardwareInterface::MOTOR_PWM_MAXVAL) {
+        if (ABS(outr) < Cozmo::HAL::MOTOR_PWM_MAXVAL) {
           error_sumr_ = CLIP(error_sumr_ + errorr, -MAX_WHEEL_CONTROLLER_ERROR_SUM,MAX_WHEEL_CONTROLLER_ERROR_SUM);
         }
       } else {

@@ -21,7 +21,7 @@
 
 #include "keyboardController.h"
 
-#include "anki/cozmo/robot/hardwareInterface.h"
+#include "anki/cozmo/robot/hal.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
   
   while(Robot::step_MainExecution() == EXIT_SUCCESS)
   {
-    if( (HardwareInterface::GetMicroCounter() % 100000) == 0 ) {
+    if( (HAL::GetMicroCounter() % 100000) == 0 ) {
       if( Robot::step_LongExecution() == EXIT_FAILURE ) {
         fprintf(stdout, "step_LongExecution failed.\n");
         break;
