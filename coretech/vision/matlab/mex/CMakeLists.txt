@@ -1,8 +1,8 @@
 # coretech/vision/matlab/mex/CMakeLists.txt
 
 set(MEX_LINK_LIBRARIES 
-	CoreTech_Common_BaseStation
-	CoreTech_Vision_BaseStation
+	CoreTech_Common_Basestation
+	CoreTech_Vision_Basestation
 	${OPENCV_LIBS}
 )
 
