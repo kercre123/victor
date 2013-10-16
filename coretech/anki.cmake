@@ -30,10 +30,8 @@ foreach(PKG ${PKG_OPTIONS})
 	if(DEFINED ${PKG})
 	    # message(STATUS "${PKG} was user-defined.")
 		set(ANKICORETECH_${PKG} ${${PKG}})
-		add_definitions(-DANKICORETECH_${PKG}=${${PKG}})
 	else()
 		set(ANKICORETECH_${PKG} 1)
-		add_definitions(-DANKICORETECH_${PKG}=1)
 	endif(DEFINED ${PKG})
 	# message(STATUS "Setting ${PKG} = ${ANKICORETECH_${PKG}}")
 endforeach()
@@ -137,12 +135,23 @@ if(MATLAB_FOUND)
 	string(STRIP ${MATLAB_MEXEXT} MATLAB_MEXEXT)
 
 	message(STATUS "Using Matlab in ${MATLAB_ROOT} with mex extension ${MATLAB_MEXEXT}.")
+else ()
+     message(STATUS "Disabling USE_MATLAB")
+     set(ANKICORETECH_USE_MATLAB 0)
+     set(ANKICORETECH_EMBEDDED_USE_MATLAB 0)
 endif(MATLAB_FOUND)
+
+foreach(PKG ${PKG_OPTIONS})
+        add_definitions(-DANKICORETECH_${PKG}=${ANKICORETECH_${PKG}})
+        message(STATUS "adding definitions -DANKICORETECH_${PKG}=${ANKICORETECH_${PKG}}")
+endforeach()
 	
 	
 project(${PROJECT_NAME})
 
 # Stuff after this requires project() to have been called (I think)
+
+message(STATUS "stuff is ${CMAKE_BUILD_TYPE} other stuff is ${CMAKE_CONFIGURATION_TYPES}")
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to 'Debug' as none was specified.")
@@ -182,8 +191,10 @@ endforeach()
 if(CMAKE_GENERATOR MATCHES "Unix Makefiles")
 	message(STATUS "Appending ${CMAKE_BUILD_TYPE} to output directories since Unix Makefiles are being used.")
 	set(BUILD_TYPE_DIR ${CMAKE_BUILD_TYPE})
+        set(OPENCV_BUILD_SUBDIR "") 
 else()
 	set(BUILD_TYPE_DIR ./)	
+        set(OPENCV_BUILD_SUBDIR ${CMAKE_GENERATOR}) 
 endif()
 
 # Store our libraries in, e.g., coretech-vision/build/Xcode/lib/Debug
@@ -203,9 +214,9 @@ link_directories(
 
 # Of course, OpenCV is special... 
 if(WIN32)
-	link_directories(${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${OPENCV_DIR}/lib/Debug)
+	link_directories(${EXTERNAL_DIR}/build/${OPENCV_BUILD_SUBDIR}/${OPENCV_DIR}/lib/Debug)
 else()
-	link_directories(${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/${OPENCV_DIR}/lib)
+	link_directories(${EXTERNAL_DIR}/build/${OPENCV_BUILD_SUBDIR}/${OPENCV_DIR}/lib)
 endif(WIN32)
 	
 
