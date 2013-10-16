@@ -1,4 +1,4 @@
-# products-cozmo/robot/simulator/controllers/world_comms_controller/CMakeLists.txt
+# products-cozmo/robot/simulator/controllers/blockworld_controller/CMakeLists.txt
 
 # Include paths
   include_directories(
@@ -18,7 +18,7 @@ link_directories( ${WEBOTS_LIB_DIR} )
 # Source files
 set(SOURCE_FILES
 #	CozmoWorldComms.cpp
-	world_comms_controller.cpp
+	blockworld_controller.cpp
 #	${PROJECT_SOURCE_DIR}/coretech/messaging/robot/TcpSocket/TcpServer.cpp
 )
 
@@ -27,13 +27,13 @@ set(HEADER_FILES
 #	${PROJECT_SOURCE_DIR}/coretech/messaging/include/anki/messaging/TcpServer.h
 )
 
-add_executable(world_comms_controller 
+add_executable(blockworld_controller 
   ${SOURCE_FILES} 
   ${HEADER_FILES}
 )
 
-target_link_libraries(world_comms_controller 
-  CozmoBaseStation
+target_link_libraries(blockworld_controller 
+  Cozmo_Basestation
   CoreTech_Common_Basestation
   CoreTech_Vision_Basestation
  Controller # Webots C Controller
@@ -41,17 +41,17 @@ target_link_libraries(world_comms_controller
   ${OPENCV_LIBS}
 )
 
-set_target_properties(world_comms_controller PROPERTIES
-  COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
+#set_target_properties(blockworld_controller PROPERTIES
+#  COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
 #	XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
 #   XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
-)
+#)
 
 # Make sure a copy of the target exists	in cozmo_c_controller/
 # no matter where the target is actually built.
 add_custom_command(
-	TARGET world_comms_controller
+	TARGET blockworld_controller
     POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:world_comms_controller> ${CMAKE_CURRENT_SOURCE_DIR}/
-	COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:world_comms_controller>
+	COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:blockworld_controller> ${CMAKE_CURRENT_SOURCE_DIR}/
+	COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:blockworld_controller>
 )

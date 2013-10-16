@@ -1,5 +1,5 @@
-PROTO CozmoWorldComms [
-  field SFString name "CozmoWorldComms"
+PROTO BlockWorldComms [
+  field SFString name "BlockWorldComms"
 ]
 {
 Supervisor {
@@ -66,6 +66,6 @@ Supervisor {
     }
   ]
   name IS name
-  controller "world_comms_controller"
+  controller "blockworld_controller"
 } # Supervisor definition
 } # PROTO definition
