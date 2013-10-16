@@ -237,7 +237,7 @@ DEF Cozmo CozmoBotC {
   rotation 0 1 0 3.14159
 }
 
-DEF WorldComms CozmoWorldComms {
+DEF WorldComms BlockWorldComms {
 
 }
 
