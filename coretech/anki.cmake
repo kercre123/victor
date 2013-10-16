@@ -141,18 +141,17 @@ else ()
      set(ANKICORETECH_EMBEDDED_USE_MATLAB 0)
 endif(MATLAB_FOUND)
 
+# After this point nothing else should update the ANKICORETECH_USE_* settings.
+# We will now use them to add -D compile switches.
 foreach(PKG ${PKG_OPTIONS})
         add_definitions(-DANKICORETECH_${PKG}=${ANKICORETECH_${PKG}})
-        message(STATUS "adding definitions -DANKICORETECH_${PKG}=${ANKICORETECH_${PKG}}")
+        #message(STATUS "adding definitions -DANKICORETECH_${PKG}=${ANKICORETECH_${PKG}}")
 endforeach()
 	
 	
 project(${PROJECT_NAME})
 
 # Stuff after this requires project() to have been called (I think)
-
-message(STATUS "stuff is ${CMAKE_BUILD_TYPE} other stuff is ${CMAKE_CONFIGURATION_TYPES}")
-
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to 'Debug' as none was specified.")
   set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build." FORCE)
