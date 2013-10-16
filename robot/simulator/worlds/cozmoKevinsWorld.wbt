@@ -278,10 +278,3 @@ Supervisor {
 
   controller "overlay_display_supervisor"
 }
-
-Supervisor {
-
-  name "CozmoBasestation"
-  controller "blockworld_basestation_controller"
-
-}
