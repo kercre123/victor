@@ -31,15 +31,16 @@
 #ifndef _ANKICORETECH_MATH_POSE_H_
 #define _ANKICORETECH_MATH_POSE_H_
 
-#include "matrix.h"
-#include "point.h"
-#include "rotation.h"
-#include "radians.h"
+#include "anki/common/basestation/math/matrix.h"
+#include "anki/common/basestation/math/point.h"
+#include "anki/common/basestation/math/quad.h"
+#include "anki/common/basestation/math/rotation.h"
+#include "anki/common/basestation/math/radians.h"
 
 namespace Anki {
 
   // Forward declarations of types used below:
-  typedef Point3f Vec3f;
+//  typedef Point3f Vec3f;
   //template<typename T> class Matrix;
   
 
@@ -189,6 +190,8 @@ namespace Anki {
     Point3f operator*(const Point3f &point) const;
     void    applyTo(const std::vector<Point3f> &pointsIn,
                     std::vector<Point3f>       &pointsOut) const;
+    void    applyTo(const Quad3f &quadIn,
+                    Quad3f &quadOut) const;
     
     Pose3d  getInverse(void) const;
     Pose3d& Invert(void); // in place?
@@ -253,6 +256,9 @@ namespace Anki {
   
   inline const Vec3f& Pose2d::get_planeNormal() const
   { return this->planeNormal; }
+  
+  inline const Point3f& Pose2d::get_planeOrigin() const
+  { return this->planeOrigin; }
   
   inline void Pose2d::set_parent(const Anki::Pose2d *otherPose)
   { this->parent = otherPose; }
