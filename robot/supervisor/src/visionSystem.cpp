@@ -1,5 +1,6 @@
 #include "anki/cozmo/robot/visionSystem.h"
 
+#include "anki/cozmo/messageProtocol.h"
 
 #include <iostream>
 
@@ -213,7 +214,8 @@ namespace Anki {
                    "currentMarker = blockMarkers{%d}; "
                    "blockType = currentMarker.blockType; "
                    "faceType  = currentMarker.faceType; "
-                   "corners   = currentMarker.corners;", i_marker+1);
+                   "corners   = currentMarker.corners; "
+                   "upDir     = currentMarker.upDirection;", i_marker+1);
           
           engEvalString(this_.matlabEngine_, cmd);
           
@@ -221,6 +223,10 @@ namespace Anki {
           // Create a message from those pieces
           
           CozmoMsg_ObservedBlockMarker msg;
+          
+          // TODO: Can these be filled in automatically by a constructor??
+          msg.size  = sizeof(CozmoMsg_ObservedBlockMarker) - 1; // -1 for the size byte
+          msg.msgID = MSG_V2B_CORE_BLOCK_MARKER_OBSERVED;
           
           mxArray *mxBlockType = engGetVariable(this_.matlabEngine_, "blockType");
           msg.blockType = static_cast<u32>(mxGetScalar(mxBlockType));
@@ -248,13 +254,18 @@ namespace Anki {
           msg.x_imgLowerRight = static_cast<f32>(corners_x[3]);
           msg.y_imgLowerRight = static_cast<f32>(corners_y[3]);
           
+          mxArray *mxUpDir = engGetVariable(this_.matlabEngine_, "upDir");
+          msg.upDirection = static_cast<u8>(mxGetScalar(mxUpDir));
+          
           fprintf(stdout, "Sending ObservedBlockMarker message: Block %d, Face %d "
-                  "at [(%.1f,%.1f) (%.1f,%.1f) (%.1f,%.1f) (%.1f,%.1f)]\n",
+                  "at [(%.1f,%.1f) (%.1f,%.1f) (%.1f,%.1f) (%.1f,%.1f)] with "
+                  "upDirection=%d\n",
                   msg.blockType, msg.faceType,
                   msg.x_imgUpperLeft,  msg.y_imgUpperLeft,
                   msg.x_imgLowerLeft,  msg.y_imgLowerLeft,
                   msg.x_imgUpperRight, msg.y_imgUpperRight,
-                  msg.x_imgLowerRight, msg.y_imgLowerRight);
+                  msg.x_imgLowerRight, msg.y_imgLowerRight,
+                  msg.upDirection);
           
           this_.blockMarkerMailbox->putMessage(msg);
           
@@ -290,9 +301,23 @@ namespace Anki {
       mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(image, nrows, ncols, 4);
       
       if(mxImg != NULL) {
+        // Display Mat Image in Matlab
         engPutVariable(this_.matlabEngine_, "matCamImage", mxImg);
         engEvalString(this_.matlabEngine_, "matCamImage = matCamImage(:,:,[3 2 1]);");
         engEvalString(this_.matlabEngine_, "set(h_matImg, 'CData', matCamImage);");
+        
+        // Detect MatMarker
+        /*
+        [xMat, yMat, orient] = matLocalization(this.matImage, ...
+                                               'pixPerMM', pixPerMM, 'camera', this.robot.matCamera, ...
+                                               'matSize', world.matSize, 'zDirection', world.zDirection, ...
+                                               'embeddedConversions', this.robot.embeddedConversions);
+        
+        % Set the pose based on the result of the matLocalization
+        this.pose = Pose(orient*[0 0 -1], ...
+                         [xMat yMat this.robot.appearance.WheelRadius]);
+        this.pose.name = 'ObservationPose';
+        */
         
         retVal = EXIT_SUCCESS;
       } else {
