@@ -1,5 +1,4 @@
 //#define USING_MOVIDIUS_COMPILER
-#include "anki/embeddedCommon.h"
 
 #if ANKICORETECH_EMBEDDED_USE_GTEST
 #include "gtest/gtest.h"

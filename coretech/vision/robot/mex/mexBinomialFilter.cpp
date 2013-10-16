@@ -5,6 +5,8 @@
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/matlabInterface.h"
 
+#include "anki/vision/robot/miscVisionKernels.h"
+
 #define VERBOSITY 0
 
 using namespace Anki::Embedded;

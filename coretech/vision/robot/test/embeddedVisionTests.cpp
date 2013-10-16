@@ -1,6 +1,8 @@
 //#define USING_MOVIDIUS_COMPILER
 
-#include "anki/embeddedVision.h"
+#include "anki/common/robot/gtestLight.h"
+
+#include "anki/vision/robot/miscVisionKernels.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,6 +21,7 @@ using namespace Anki::Embedded;
 #endif
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB
+#include "anki/common/robot/matlabInterface.h"
 Matlab matlab(false);
 #endif
 
