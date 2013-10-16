@@ -7,6 +7,7 @@ file(GLOB HEADER_FILES
 	*.h 
 	math/*.h 
 	${CORETECH_COMMON_INCLUDE_DIR}/basestation/*.h
+  ${CORETECH_COMMON_INCLUDE_DIR}/basestation/math/*.h
 )
 
 add_library(CoreTech_Common_Basestation

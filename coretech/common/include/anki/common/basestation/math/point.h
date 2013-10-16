@@ -49,7 +49,8 @@ namespace Anki {
     
     //Point(const T x, const T y); // Only valid if N==2
     //Point(const T x, const T y, const T z); // Only valid if N==3
-  
+
+#if __cplusplus == 201103L
     // Point(T x1, T x2, ..., T xN);
     // This is ugly variadic template syntax to get this constructor to
     // work for all N and generate a compile-time error if you try to do
@@ -60,6 +61,10 @@ namespace Anki {
     template <typename... Tail>
     Point(typename std::enable_if<sizeof...(Tail)+1 == N, T>::type head, Tail... tail)
     : data{ head, T(tail)... } {}
+#else
+    Point(const T x, const T y); // Only valid if N==2
+    Point(const T x, const T y, const T z); // Only valid if N==3
+#endif
     
     // Assignment operator:
     Point<N,T>& operator=(const Point<N,T> &other);
@@ -156,6 +161,25 @@ namespace Anki {
       this->data[i] = pt.data[i];
     }
   }
+  
+#if __cplusplus < 201103L
+  template<size_t N, typename T>
+  Point<N,T>::Point(const T x, const T y)
+  {
+    static_assert(N==2, "This constructor only works for 2D points.");
+    this->data[0] = x;
+    this->data[1] = y;
+  }
+  
+  template<size_t N, typename T>
+  Point<N,T>::Point(const T x, const T y, const T z)
+  {
+    static_assert(N==3, "This constructor only works for 3D points.");
+    this->data[0] = x;
+    this->data[1] = y;
+    this->data[2] = z;
+  }
+#endif
   
 #if ANKICORETECH_USE_OPENCV
   template<size_t N, typename T>
