@@ -1,6 +1,8 @@
 
-#include "anki/common/robot/matlabInterface.h"
 #include "anki/common/robot/fixedLengthList.h"
+#include "anki/common/robot/errorHandling.h"
+#include "anki/common/robot/matlabInterface.h"
+#include "anki/common/robot/memory.h"
 #include "anki/common/robot/opencvLight.h"
 
 #include "mex.h"
