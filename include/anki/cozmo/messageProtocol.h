@@ -53,6 +53,8 @@
 // Includes COZMO_WORLD_MSG_HEADER_BYTE_1 and COZMO_WORLD_MSG_HEADER_BYTE_2 and 1 byte for robotID.
 #define COZMO_WORLD_MSG_HEADER_SIZE 3
 
+const u32 BASESTATION_RECV_BUFFER_SIZE = 2048;
+
 ////////// End Simulator comms //////////
 
 
@@ -461,24 +463,42 @@ typedef struct {
 } CozmoMsg_SetPathSegmentArc;
 #define SIZE_MSG_B2V_CORE_SET_PATH_SEGMENT_ARC 29
 
+typedef enum {
+  MARKER_TOP,
+  MARKER_LEFT,
+  MARKER_RIGHT,
+  MARKER_BOTTOM
+} MarkerUpDirection;
+
 // MSG_V2B_CORE_BLOCK_MARKER_OBSERVED
+// TODO: this has to be split into two packets for BTLE
 typedef struct {
-  u32 blockType;
-  u32 faceType;
+  u8 size;
+  u8 msgID;           // MSG_V2B_CORE_BLOCK_MARKER_OBSERVED
+  // TODO: u16 frameNum; // for putting together two halves of a BlockMarker packet
+  
+  u16 blockType;
+  u8  faceType;
+  u8  upDirection; // One of enum MarkerUpDirection above
+
+  // TODO: these need to be fixed-point, probably 16bits or less
   f32 x_imgUpperLeft,  y_imgUpperLeft;
   f32 x_imgLowerLeft,  y_imgLowerLeft;
   f32 x_imgUpperRight, y_imgUpperRight;
   f32 x_imgLowerRight, y_imgLowerRight;
 } CozmoMsg_ObservedBlockMarker;
+const u8 SIZE_MSG_V2B_CORE_BLOCK_MARKER_OBSERVED = sizeof(CozmoMsg_ObservedBlockMarker);
 
 // MSG_V2B_CORE_MAT_MARKER_OBSERVED
 typedef struct {
-  u32 x_MatSquare;
-  u32 y_MatSquare;
-  f32 x_imgCenter,  y_imgCenter;
-  f32 angle;
+  u8 size;                        // 19 bytes
+  u8 msgID;                       // MSG_V2B_CORE_MAT_MARKER_OBSERVED
+  u16 x_MatSquare,  y_MatSquare;  // Which Mat square we saw
+  f32 x_imgCenter,  y_imgCenter;  // Where in the image we saw it
+  f32 angle;                      // What angle in the image we saw it
+  u8  upDirection;                // One of enum MarkerUpDirection above
 } CozmoMsg_ObservedMatMarker;
-
+const u8 SIZE_MSG_V2B_CORE_MAT_MARKER_OBSERVED = sizeof(CozmoMsg_ObservedMatMarker);
 
 #endif  // #ifndef COZMO_MSG_PROTOCOL
 

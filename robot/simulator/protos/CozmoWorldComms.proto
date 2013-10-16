@@ -16,6 +16,54 @@ Supervisor {
       name "radio_tx"
       type "radio"
     }
+    
+    # For sending/receiving messages from Robot 1
+    Receiver {
+      name "radio_rx_1"
+      type "radio"
+      channel 1
+    }
+    Emitter {
+      name "radio_tx_1"
+      type "radio"
+      channel 1
+    }
+    
+    # For sending/receiving messages from Robot 2
+    Receiver {
+      name "radio_rx_2"
+      type "radio"
+      channel 2
+    }
+    Emitter {
+      name "radio_tx_2"
+      type "radio"
+      channel 2
+    }
+    
+    # For sending/receiving messages from Robot 3
+    Receiver {
+      name "radio_rx_3"
+      type "radio"
+      channel 3
+    }
+    Emitter {
+      name "radio_tx_3"
+      type "radio"
+      channel 3
+    }
+    
+    # For sending/receiving messages from Robot 4
+    Receiver {
+      name "radio_rx_4"
+      type "radio"
+      channel 4
+    }
+    Emitter {
+      name "radio_tx_4"
+      type "radio"
+      channel 4
+    }
   ]
   name IS name
   controller "world_comms_controller"

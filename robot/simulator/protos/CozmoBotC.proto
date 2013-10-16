@@ -2,6 +2,7 @@ PROTO CozmoBotC [
   field SFVec3f translation 0 0.03 0
   field SFRotation rotation 0 1 0 0
   field SFString name "Cozmo"
+  field SFInt32 commsChannel 1
   field SFFloat fieldOfViewDown 2.1
   field SFFloat fieldOfViewHead 1.04
   field SFBool useSphericalHeadCamera FALSE 
@@ -59,10 +60,12 @@ Supervisor {
     Emitter {
       name "radio_tx"
       type "radio"
+      channel IS commsChannel
     }
     Receiver {
       name "radio_rx"
       type "radio"
+      channel IS commsChannel
     }
           
     Solid {

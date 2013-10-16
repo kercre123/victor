@@ -233,6 +233,7 @@ Block2x1 {
 }
 DEF Cozmo CozmoBotC {
   name "CozmoBot_1"
+  commsChannel 1
   rotation 0 1 0 3.14159
 }
 
@@ -276,4 +277,11 @@ Supervisor {
   ]
 
   controller "overlay_display_supervisor"
+}
+
+Supervisor {
+
+  name "CozmoBasestation"
+  controller "blockworld_basestation_controller"
+
 }

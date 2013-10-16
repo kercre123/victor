@@ -1,16 +1,25 @@
 
+#include "anki/cozmo/messageProtocol.h"
 #include "anki/cozmo/basestation/blockWorld.h"
-#include "block.h"
-#include "mat.h"
-#include "robot.h"
+#include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/mat.h"
+#include "anki/cozmo/basestation/robot.h"
 
 namespace Anki
 {
   namespace Cozmo
   {
     
+    /*
     BlockWorld::BlockWorld( MessagingInterface* msgInterfaceIn )
     : msgInterface(msgInterfaceIn), blocks(MaxBlockTypes), zAxisPointsUp(true)
+    {
+      
+    }
+     */
+    
+    BlockWorld::BlockWorld( )
+    : blocks(MaxBlockTypes), zAxisPointsUp(true)
     {
       
     }
@@ -36,8 +45,10 @@ namespace Anki
       //       to Robots from the outside someone else is managing?
       
       // Delete all instantiated robots:
-      for( Robot* robot : this->robots )
+      for( Robot* robot : this->robots ) {
+      /*for(auto it = this->robots.begin(); it != this->robots.end(); ++it)
       {
+        Robot *robot = it->second;*/
         if(robot != NULL)
         {
           delete robot;
@@ -49,11 +60,86 @@ namespace Anki
     
     void BlockWorld::addRobot(Robot *robot)
     {
+      /*
+      const u8& ID = robot->get_ID();
+      
+      if(this->robots.count(ID) > 0) {
+        CORETECH_THROW("Robot with ID already in BlockWorld.");
+      }
+      
+      this->robots[ID] = robot;
+      */
       robots.push_back(robot);
     } // addRobot()
     
+    void BlockWorld::queueMessage(const u8 *msg)
+    {
+      this->messages.push(msg);
+    }
+    
     void BlockWorld::update(void)
     {
+      /*
+      // Go through messages in the queue and update blocks' and robots' poses
+      // accordingly
+      
+      std::vector<BlockMarker3d> blockMarkers;
+      
+      while( not this->messages.empty() )
+      {
+        const u8 *msg = messages.front();
+        messages.pop();
+        
+        const u8 msgSize = msg[0];
+        const CozmoMsg_Command msgType = static_cast<CozmoMsg_Command>(msg[1]);
+        
+        switch(msgType)
+        {
+          case MSG_V2B_CORE_BLOCK_MARKER_OBSERVED:
+          {
+            // Create a BlockMarker2d from the message:
+            const CozmoMsg_ObservedBlockMarker* blockMsg = reinterpret_cast<const CozmoMsg_ObservedBlockMarker*>(msg);
+            
+            Quad2f corners;
+            
+            corners[Quad2f::TopLeft].x() = blockMsg->x_imgUpperLeft;
+            corners[Quad2f::TopLeft].y() = blockMsg->y_imgUpperLeft;
+            
+            corners[Quad2f::BottomLeft].x() = blockMsg->x_imgLowerLeft;
+            corners[Quad2f::BottomLeft].y() = blockMsg->y_imgLowerLeft;
+
+            corners[Quad2f::TopRight].x() = blockMsg->x_imgUpperRight;
+            corners[Quad2f::TopRight].y() = blockMsg->y_imgUpperRight;
+
+            corners[Quad2f::BottomRight].x() = blockMsg->x_imgLowerRight;
+            corners[Quad2f::BottomRight].y() = blockMsg->y_imgLowerRight;
+            
+            BlockMarker2d blockMarker2d(blockMsg->blockType,
+                                        blockMsg->faceType,
+                                        corners);
+            
+            // Instantiate a BlockMarker3d in the list using the BlockMarker2d
+            // and the camera that saw it.
+            blockMarkers.emplace_back(blockMarker2d, this->robots[blockMsg->robotId]);
+            
+            break;
+          }
+            
+          case MSG_V2B_CORE_MAT_MARKER_OBSERVED:
+          {
+            break;
+          }
+            
+          default:
+          {
+            // TODO: send this message somewhere reasonable (log?)
+            fprintf(stdout, "Unknown message type. Skipping.\n");
+          }
+        } // switch(msgType)
+        
+      } // while there are still messages
+       */
+      
       // Get updated observations from each robot and update blocks' and robots'
       // poses accordingly
       std::vector<BlockMarker3d> blockMarkers;
@@ -124,8 +210,8 @@ namespace Anki
         matPoint.x() += matMarker->get_xSquare() * MatMarker2d::SquareWidth;
         matPoint.y() += matMarker->get_ySquare() * MatMarker2d::SquareWidth;
         matPoint -= MatMarker2d::SquareWidth * .5f;
-        matPoint.x() -= Mat::Size.x() * .5f;
-        matPoint.x() -= Mat::Size.y() * .5f;
+        matPoint.x() -= MatSection::Size.x() * .5f;
+        matPoint.x() -= MatSection::Size.y() * .5f;
         
         if(not this->zAxisPointsUp) {
           matPoint.x() *= -1.f;

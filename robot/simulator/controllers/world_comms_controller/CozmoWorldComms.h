@@ -4,8 +4,7 @@
 #include <webots/Supervisor.hpp>
 
 #include "anki/common/types.h"
-
-const u32 BASESTATION_RECV_BUFFER_SIZE = 2048;
+#include "anki/cozmo/messageProtocol.h"
 
 #define DEBUG_COZMO_WORLD_COMMS 1
 

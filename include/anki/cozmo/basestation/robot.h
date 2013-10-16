@@ -13,16 +13,16 @@
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/vision/basestation/camera.h"
+#include "anki/cozmo/basestation/block.h"
 
 namespace Anki {
   namespace Cozmo {
     
     // Forward declarations:
     class BlockWorld;
-    class Block;
-    class BlockMarker3d;
     class MatMarker2d;
     
+#if 0
     // TOOD: Is this cozmo-specific? Should it be in Coretech-Communications?
     class RobotMessage
     {
@@ -46,7 +46,21 @@ namespace Anki {
       
     }; // class RobotMessage
     
-  
+    
+    class BlockObservationMessage : public RobotMessage
+    {
+    public:
+      BlockObservationMessage(const CozmoMsg_ObservedBlockMarker *msg);
+      
+    private:
+      u16 blockType;
+      u8  faceType;
+      
+      Quad2f
+      
+    };
+#endif
+    
     class Robot
     {
     public:
@@ -57,7 +71,8 @@ namespace Anki {
         DOCK
       };
       
-      Robot(BlockWorld &theWorld);
+      Robot();
+      //Robot(BlockWorld &theWorld);
       
       void step();
       
@@ -66,6 +81,7 @@ namespace Anki {
       //  robots and update the world state)
       void getVisibleBlockMarkers3d(std::vector<BlockMarker3d> &markers) const;
       
+      const u8 &get_ID() const;
       const Pose3d& get_pose() const;
       const Camera& get_camDown() const;
       const Camera& get_camHead() const;
@@ -76,12 +92,16 @@ namespace Anki {
       
       void set_pose(const Pose3d &newPose);
       
+      void queueMessage(const u8 *msg, const u8 msgSize);
+      
     protected:
+      u8 ID;
+      
       Camera camDown, camHead;
       
       Pose3d pose;
       
-      BlockWorld &world;
+      //BlockWorld &world;
       
       OperationMode mode, nextMode;
       bool setOperationMode(OperationMode newMode);
@@ -95,12 +115,20 @@ namespace Anki {
       // TODO: compute this from down-camera calibration data
       float downCamPixPerMM;
       
-      void checkMessages(std::queue<RobotMessage> &messageQueue);
+      typedef std::vector<u8> MessageType;
+      typedef std::queue<MessageType> MessageQueue;
+      MessageQueue messages;
+      //void checkMessages(std::queue<RobotMessage> *messageQueue);
       
+      template<typename MSG_TYPE>
+      void processMessage(const MSG_TYPE *msg);
       
     }; // class Robot
 
     // Inline accessors:
+    inline const u8& Robot::get_ID(void) const
+    { return this->ID; }
+    
     inline const Pose3d& Robot::get_pose(void) const
     { return this->pose; }
     
