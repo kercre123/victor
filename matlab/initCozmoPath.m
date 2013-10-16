@@ -1,18 +1,23 @@
 function initCozmoPath
 
-cozmoDir = fileparts(which(mfilename)); % includes 'matlab'
-addpath(genpath(cozmoDir));
-addpath(fullfile(cozmoDir, '..', 'build', 'mex'));
+cozmoDir = fileparts(fileparts(which(mfilename))); % excludes 'matlab'
+addpath(genpath(fullfile(cozmoDir, 'matlab')));
+addpath(fullfile(cozmoDir, 'build', 'mex'));
 
-rootDir = fileparts(fileparts(cozmoDir));
-
-% Initialize each coretech library we need:
-% (Capitalize first letter!)
-coretechLibs = {'Common', 'Vision', 'External'};
+coretechLibs = dir(fullfile(cozmoDir, 'coretech'));
+coretechLibs(~[coretechLibs.isdir]) = []; % keep only directories
+coretechLibs(1:2) = []; % remove . and .. entries
+coretechLibs = {coretechLibs.name};
 
 for i = 1:length(coretechLibs)
-    run(fullfile(rootDir, sprintf('coretech-%s', lower(coretechLibs{i})), ...
-        'matlab', sprintf('init%sPath', coretechLibs{i})));
+    matlabDir = fullfile(cozmoDir, 'coretech', coretechLibs{i}, 'matlab');
+    if isdir(matlabDir)
+        addpath(genpath(matlabDir));
+    end
 end
+
+% For now, coretech-external is special and lives outside this repo, 
+% assumed to be in ../coretech-external
+run(fullfile(cozmoDir, '..', 'coretech-external', 'matlab', 'initExternalPath.m'));
 
 end % initCozmoPath()
