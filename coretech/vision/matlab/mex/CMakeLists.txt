@@ -6,7 +6,7 @@ set(MEX_LINK_LIBRARIES
 	${OPENCV_LIBS}
 )
 
-file(GLOB FILES "*.cpp")
+file(GLOB MEX_FILES "*.cpp")
 
 #source_group( Coretech-Vision\\\\Basestation\\\\Mex FILES ${MEX_FILES} )
 
