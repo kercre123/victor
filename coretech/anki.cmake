@@ -190,10 +190,8 @@ endforeach()
 if(CMAKE_GENERATOR MATCHES "Unix Makefiles")
 	message(STATUS "Appending ${CMAKE_BUILD_TYPE} to output directories since Unix Makefiles are being used.")
 	set(BUILD_TYPE_DIR ${CMAKE_BUILD_TYPE})
-        set(OPENCV_BUILD_SUBDIR "") 
 else()
 	set(BUILD_TYPE_DIR ./)	
-        set(OPENCV_BUILD_SUBDIR ${CMAKE_GENERATOR}) 
 endif()
 
 # Store our libraries in, e.g., coretech-vision/build/Xcode/lib/Debug
@@ -211,11 +209,12 @@ link_directories(
 	${MATLAB_ENG_LIBRARY_PATH}
 )
 
-# Of course, OpenCV is special... 
+# Of course, OpenCV is special... (it won't (?) obey the OUTPUT_PATHs specified 
+# above, so we'll add link directories for where it put its products)
 if(WIN32)
-	link_directories(${EXTERNAL_DIR}/build/${OPENCV_BUILD_SUBDIR}/${OPENCV_DIR}/lib/Debug)
+	link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/lib/Debug)
 else()
-	link_directories(${EXTERNAL_DIR}/build/${OPENCV_BUILD_SUBDIR}/${OPENCV_DIR}/lib)
+	link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/lib)
 endif(WIN32)
 	
 
