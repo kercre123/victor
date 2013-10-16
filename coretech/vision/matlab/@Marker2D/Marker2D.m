@@ -3,7 +3,6 @@ classdef Marker2D
     %% Constant Properties
     properties(GetAccess = 'public', Constant = true)
         MinContrastRatio = 1.25;  % bright/dark has to be at least this
-        
     end
     
     %% Abstract Constant Properties
@@ -102,6 +101,8 @@ classdef Marker2D
         threshold;
         means;
         
+        upDirection;
+        
         % angle needed to rotate given corners so that top side is "up" (in
         % image coordinate frame -- upper left is (0,0))
         upAngle; 
@@ -157,6 +158,8 @@ classdef Marker2D
                 this.ids = ids;
                 this.upAngle = upAngle;
                 
+                [~,this.upDirection] = min(abs(this.upAngle - [0 pi pi/2 3*pi/2]));
+                                
                 this.isValid = 1;
                             
             else
