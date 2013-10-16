@@ -1,8 +1,12 @@
 # products-cozmo/robot/simulator/controllers/world_comms_controller/CMakeLists.txt
 
 # Include paths
-include_directories(${WEBOTS_CPP_INCLUDE_DIR}
-  ${PROJECT_SOURCE_DIR}/coretech/messaging/include
+  include_directories(
+  ${WEBOTS_C_INCLUDE_DIR}
+#  ${WEBOTS_CPP_INCLUDE_DIR}
+#  ${PROJECT_SOURCE_DIR}/coretech/messaging/include
+  ${PROJECT_SOURCE_DIR}/include
+#  ${PROJECT_SOURCE_DIR}/coretech/
 )
 
 
@@ -13,24 +17,34 @@ link_directories( ${WEBOTS_LIB_DIR} )
 
 # Source files
 set(SOURCE_FILES
-	CozmoWorldComms.cpp
+#	CozmoWorldComms.cpp
 	world_comms_controller.cpp
-	${PROJECT_SOURCE_DIR}/coretech/messaging/robot/TcpSocket/TcpServer.cpp
+#	${PROJECT_SOURCE_DIR}/coretech/messaging/robot/TcpSocket/TcpServer.cpp
 )
 
 set(HEADER_FILES
 	CozmoWorldComms.h
-	${PROJECT_SOURCE_DIR}/coretech/messaging/include/anki/messaging/TcpServer.h
+#	${PROJECT_SOURCE_DIR}/coretech/messaging/include/anki/messaging/TcpServer.h
 )
 
-add_executable(world_comms_controller ${SOURCE_FILES} ${HEADER_FILES})
+add_executable(world_comms_controller 
+  ${SOURCE_FILES} 
+  ${HEADER_FILES}
+)
 
-target_link_libraries(world_comms_controller CppController)
+target_link_libraries(world_comms_controller 
+  CozmoBaseStation
+  CoreTech_Common_Basestation
+  CoreTech_Vision_Basestation
+ Controller # Webots C Controller
+#  CppController # Webots C++ Controller
+  ${OPENCV_LIBS}
+)
 
 set_target_properties(world_comms_controller PROPERTIES
   COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
-	XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
-	XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
+#	XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
+#   XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
 )
 
 # Make sure a copy of the target exists	in cozmo_c_controller/

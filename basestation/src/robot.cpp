@@ -7,13 +7,21 @@
 //
 
 #include "anki/cozmo/basestation/blockWorld.h"
-#include "block.h"
-#include "mat.h"
-#include "robot.h"
+#include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/mat.h"
+#include "anki/cozmo/basestation/robot.h"
+
+#include "anki/cozmo/messageProtocol.h"
+
 
 namespace Anki {
   namespace Cozmo {
     
+    Robot::Robot()
+    {
+      
+    } // Constructor: Robot
+    /*
     Robot::Robot( BlockWorld &theWorld )
     : world(theWorld)
     {
@@ -21,6 +29,15 @@ namespace Anki {
       this->downCamPixPerMM = 15.f;
       
     } // Constructor: Robot
+    */
+    
+    /*
+    template<>
+    void Robot::processMessage<BlockObservationMessage>(const BlockObservationMessage *msg)
+    {
+      
+    }
+     */
     
     
     void Robot::step(void)
@@ -34,25 +51,61 @@ namespace Anki {
       
       // Loop over all available messages from the robot and update any
       // markers we saw
-      std::queue<RobotMessage> messages;
       
-      // TODO: get messages from physical robot and populate queue
-      this->checkMessages(messages);
-      
-      while(not messages.empty())
+      while(not this->messages.empty())
       {
-        const RobotMessage &msg = messages.front();
+        MessageType& msg = messages.front();
         
-        switch(msg.get_type())
+        const u8 msgSize = msg[0];
+        const CozmoMsg_Command msgType = static_cast<CozmoMsg_Command>(msg[1]);
+        
+        switch(msgType)
         {
-          case RobotMessage::BlockMarkerObservation:
+          case MSG_V2B_CORE_BLOCK_MARKER_OBSERVED:
+          {
+            // TODO: store observations from the same frame together
+            
+            // Translate the raw message into a BlockMarker2d object:
+            const CozmoMsg_ObservedBlockMarker* blockMsg = reinterpret_cast<const CozmoMsg_ObservedBlockMarker*>(&(msg[0]));
+            
+            fprintf(stdout, "Received ObservedBlockMarker message: "
+                    "saw Block %d, Face %d at [(%.1f,%.1f), (%.1f,%.1f), "
+                    "(%.1f,%.1f), (%.1f,%.1f)] with upDirection=%d\n",
+                    blockMsg->blockType,       blockMsg->faceType,
+                    blockMsg->x_imgUpperLeft,  blockMsg->y_imgUpperLeft,
+                    blockMsg->x_imgLowerLeft,  blockMsg->y_imgLowerLeft,
+                    blockMsg->x_imgUpperRight, blockMsg->y_imgUpperRight,
+                    blockMsg->x_imgLowerRight, blockMsg->y_imgLowerRight,
+                    blockMsg->upDirection);
+            
+            Quad2f corners;
+            
+            corners[Quad2f::TopLeft].x()     = blockMsg->x_imgUpperLeft;
+            corners[Quad2f::TopLeft].y()     = blockMsg->y_imgUpperLeft;
+            
+            corners[Quad2f::BottomLeft].x()  = blockMsg->x_imgLowerLeft;
+            corners[Quad2f::BottomLeft].y()  = blockMsg->y_imgLowerLeft;
+            
+            corners[Quad2f::TopRight].x()    = blockMsg->x_imgUpperRight;
+            corners[Quad2f::TopRight].y()    = blockMsg->y_imgUpperRight;
+            
+            corners[Quad2f::BottomRight].x() = blockMsg->x_imgLowerRight;
+            corners[Quad2f::BottomRight].y() = blockMsg->y_imgLowerRight;
+            
+            MarkerUpDirection upDir = static_cast<MarkerUpDirection>(blockMsg->upDirection);
             
             // Construct a new BlockMarker2d at the end of the list
-            this->visibleBlockMarkers2d.emplace_back(msg);
+            this->visibleBlockMarkers2d.emplace_back(blockMsg->blockType,
+                                                     blockMsg->faceType,
+                                                     corners, upDir);
             
             break;
+          }
+          case MSG_V2B_CORE_MAT_MARKER_OBSERVED:
+          {
+            // Translate the raw message into a MatMarker2d object:
+            const CozmoMsg_ObservedMatMarker* matMsg = reinterpret_cast<const CozmoMsg_ObservedMatMarker*>(&(msg[0]));
             
-          case RobotMessage::MatMarkerObservation:
             if(this->matMarker2d != NULL) {
               // We have two messages indicating a MatMarker was observed,
               // just use the last one?
@@ -60,22 +113,32 @@ namespace Anki {
               
               // TODO: Issue a warning?
             }
-            this->matMarker2d = new MatMarker2d(msg);
             
+            Pose2d imgPose(matMsg->angle, matMsg->x_imgCenter, matMsg->y_imgCenter);
+            MarkerUpDirection upDir = static_cast<MarkerUpDirection>(matMsg->upDirection);
+            
+            this->matMarker2d = new MatMarker2d(matMsg->x_MatSquare,
+                                                matMsg->y_MatSquare,
+                                                imgPose, upDir);
             break;
-            
+          }
           default:
             CORETECH_THROW("Unrecognized RobotMessage type.");
             
         } // switch(msg type)
         
-        messages.pop();
+        this->messages.pop();
         
       } // while message queue not empty
       
     } // step()
 
-                
+    void Robot::queueMessage(const u8 *msg, const u8 msgSize)
+    {
+      // Copy the incoming message into our queue
+      this->messages.emplace(msg, msg+msgSize); // C++11: no copy
+    }
+          /*
     void Robot::checkMessages(std::queue<RobotMessage> &messageQueue)
     {
       // Translate available messages and push onto the given queue.
@@ -96,7 +159,7 @@ namespace Anki {
                            "42:57:150,200:34:TOP");
       
     } // checkMessages()
-                                          
+         */
     
     void Robot::getVisibleBlockMarkers3d(std::vector<BlockMarker3d> &markers3d) const
     {

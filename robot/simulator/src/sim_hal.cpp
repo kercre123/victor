@@ -4,6 +4,7 @@
 // Our Includes
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/messageProtocol.h"
 #include "cozmo_physics.h"
 
 // Webots Includes
@@ -25,7 +26,6 @@ namespace Anki {
       const u16 RECV_BUFFER_SIZE = 1024;
       const s32 UNLOCK_HYSTERESIS = 50;
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();
-      const u32 BASESTATION_SIM_COMM_CHANNEL = 100;
       
       // For Webots Display:
       const f32 OVERLAY_TEXT_SIZE = 0.07;
@@ -223,7 +223,7 @@ namespace Anki {
       // Setup comms
       rx_->enable(TIME_STEP);
       rx_->setChannel(robotID_);
-      tx_->setChannel(BASESTATION_SIM_COMM_CHANNEL);
+      tx_->setChannel(robotID_);
       recvBufSize_ = 0;
       
       // Initialize path drawing settings
@@ -456,7 +456,16 @@ namespace Anki {
     
     void HAL::SendMessage(const void* data, int size)
     {
-      tx_->send(data, size);
+      // Prefix data with message header (0xBEEF + robotID)
+      u8 msg[1024] = {COZMO_WORLD_MSG_HEADER_BYTE_1,
+        COZMO_WORLD_MSG_HEADER_BYTE_2, static_cast<u8>(robotID_)};
+      
+      if(size+3 > 1024) {
+        fprintf(stdout, "Data too large to send with prepended header!\n");
+      } else {
+        memcpy(msg+3, data, size);
+        tx_->send(msg, size+3);
+      }
     }
     
     int HAL::RecvMessage(void* data)
