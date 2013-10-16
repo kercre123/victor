@@ -38,6 +38,7 @@ switch(whichDir)
 end
             
 this.corners = this.corners(this.reorderCorners,:);
+this.upDirection = whichDir;
 
 binaryString = strrep(num2str(row(means) < this.threshold), ' ', '');
 
