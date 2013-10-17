@@ -26,40 +26,33 @@ namespace Anki {
   namespace SteeringController {
 
    
-    
-    typedef struct {
+    // Private namespace
+    namespace {
       //Steering gains: Heading tracking gain K1, Crosstrack approach rate K2
-      f32 K1;
-      f32 K2;
+      f32 K1_ = DEFAULT_STEERING_K1;
+      f32 K2_ = DEFAULT_STEERING_K2;
       
-      bool enableAlwaysOnSteering;
+      bool enableAlwaysOnSteering_ = false;
 
-      bool isInit;
+      bool isInit_ = false;
 
-    } Members;
-    
-    static Members this_ = {
-      .K1 = DEFAULT_STEERING_K1,
-      .K2 = DEFAULT_STEERING_K2,
-      .enableAlwaysOnSteering = false,
-      .isInit = false
-    };
+    } // Private namespace
     
     void EnableAlwaysOnSteering(bool on)
     {
-      this_.enableAlwaysOnSteering = on;
+      enableAlwaysOnSteering_ = on;
     }
     
     void ReInitSteeringController()
     {
-      this_.isInit = false;
+      isInit_ = false;
     }
     
     //sets the steering controller constants
     void SetSteeringControllerGains(float k1, float k2)
     {
-      this_.K1 = k1;
-      this_.K2 = k2;
+      K1_ = k1;
+      K2_ = k2;
     }
     
     //This manages at a high level what the steering controller needs to do (steer, use open loop, etc.)
@@ -116,9 +109,9 @@ namespace Anki {
       //static u8 isInit = 0; // (initialization flag, false on first function call only)
       
       // Initization
-      if (not this_.isInit) {
+      if (not isInit_) {
         xtrack_speed = 0.f; // because xtrack_error_last never had a chance to be set
-        this_.isInit = true;
+        isInit_ = true;
       } else {
         xtrack_speed = (xtrack_error - xtrack_error_last) / Cozmo::CONTROL_DT;
       }
@@ -147,7 +140,7 @@ namespace Anki {
       //if (enableAlwaysOnSteering && GetRadioSetupState() == RADIO_SETUP_CONNECTED) {
       // Desired behavior?  We probably only want the robot to actively steering when it's attempting to follow a path.
       // When it's not following a path, you should be able to push it around freely.
-      if (this_.enableAlwaysOnSteering) {
+      if (enableAlwaysOnSteering_) {
         WheelController::SetCoastMode(false);
         steering_active = TRUE;
       } else {
@@ -174,7 +167,7 @@ namespace Anki {
         //convert speed to meters per second
         float speedmps = currspeed * 0.001f;
         float attitude = asin_fast(xtrack_speed / speedmps);
-        curvature = -this_.K1 * (atan_fast(this_.K2 * xtrack_error / (speedmps + 0.2f)) + attitude);
+        curvature = -K1_ * (atan_fast(K2_ * xtrack_error / (speedmps + 0.2f)) + attitude);
         //We should allow this to go somewhat negative I think... but not too much
         
         Tracefloat(TRACE_VAR_ATTITUDE, attitude, TRACE_MASK_MOTOR_CONTROLLER);

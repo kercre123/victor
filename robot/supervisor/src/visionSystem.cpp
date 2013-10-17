@@ -6,7 +6,7 @@
 #include <iostream>
 
 #define USING_MATLAB_VISION (defined(USE_MATLAB_FOR_HEAD_CAMERA) || \
-                             defined(USE_MATLAB_FOR_MAT_CAMERA))
+defined(USE_MATLAB_FOR_MAT_CAMERA))
 
 #if USING_MATLAB_VISION
 // If using Matlab for any vision processing, enable the Matlab engine
@@ -17,64 +17,49 @@
 
 namespace Anki {
   namespace Cozmo {
-
-#pragma mark --- VisionSystem "Member Variables" ---
     
-    namespace VisionSystem {
-      typedef struct {
-        
-        bool isInitialized;
-        
-        HAL::FrameGrabber headCamFrameGrabber;
-        HAL::FrameGrabber matCamFrameGrabber;
-        
-        const HAL::CameraInfo* headCamInfo;
-        const HAL::CameraInfo* matCamInfo;
-        
-        BlockMarkerMailbox* blockMarkerMailbox;
-        MatMarkerMailbox*   matMarkerMailbox;
-        
-        f32 matCamPixPerMM;
-        
+#pragma mark --- VisionSystem "Private Member Variables" ---
+    
+    // Private "Members" of the VisionSystem:
+    namespace {
+      
+      bool isInitialized_ = false;
+      
+      HAL::FrameGrabber headCamFrameGrabber_ = NULL;
+      HAL::FrameGrabber matCamFrameGrabber_  = NULL;
+      
+      const HAL::CameraInfo* headCamInfo_ = NULL;
+      const HAL::CameraInfo* matCamInfo_  = NULL;
+      
+      VisionSystem::BlockMarkerMailbox* blockMarkerMailbox_ = NULL;
+      VisionSystem::MatMarkerMailbox*   matMarkerMailbox_   = NULL;
+      
+      f32 matCamPixPerMM_ = 1.f;
+      
 #if USING_MATLAB_VISION
-        Engine *matlabEngine_;
+      Engine *matlabEngine_;
 #endif
-        
-      } Members;
-      
-      // The actual static variable holding our members, initialized to
-      // the default values:
-      static Members this_ = {
-        .isInitialized = false,
-        .headCamFrameGrabber = NULL,
-        .matCamFrameGrabber  = NULL,
-        .headCamInfo = NULL,
-        .matCamInfo  = NULL,
-        .blockMarkerMailbox = NULL,
-        .matMarkerMailbox  = NULL
-      };
-      
       
       inline const u8* getHeadCamImage()
       {
-        assert(this_.headCamFrameGrabber != NULL);
-        assert(this_.isInitialized);
-        return this_.headCamFrameGrabber();
+        assert(headCamFrameGrabber_ != NULL);
+        assert(isInitialized_);
+        return headCamFrameGrabber_();
       }
       
       inline const u8* getMatCamImage()
       {
-        assert(this_.matCamFrameGrabber != NULL);
-        assert(this_.isInitialized);
-        return this_.matCamFrameGrabber();
+        assert(matCamFrameGrabber_ != NULL);
+        assert(isInitialized_);
+        return matCamFrameGrabber_();
       }
       
-    } // namespace VisionSystem
+    } // private namespace VisionSystem
     
     
 #pragma mark --- VisionSystem::Mailbox Implementations ---
     
-
+    
     template<>
     void VisionSystem::MatMarkerMailbox::advanceIndex(u8 &index)
     {
@@ -84,72 +69,72 @@ namespace Anki {
 #pragma mark --- VisionSystem Method Implementations ---
     
     
-    ReturnCode VisionSystem::Init(HAL::FrameGrabber      headCamFrameGrabberIn,
-                                  HAL::FrameGrabber      matCamFrameGrabberIn,
-                                  const HAL::CameraInfo* headCamInfoIn,
-                                  const HAL::CameraInfo* matCamInfoIn,
-                                  BlockMarkerMailbox*    blockMarkerMailboxIn,
-                                  MatMarkerMailbox*      matMarkerMailboxIn)
+    ReturnCode VisionSystem::Init(HAL::FrameGrabber      headCamFrameGrabber,
+                                  HAL::FrameGrabber      matCamFrameGrabber,
+                                  const HAL::CameraInfo* headCamInfo,
+                                  const HAL::CameraInfo* matCamInfo,
+                                  BlockMarkerMailbox*    blockMarkerMailbox,
+                                  MatMarkerMailbox*      matMarkerMailbox)
     {
-      this_.isInitialized = false;
+      isInitialized_ = false;
       
-      if(headCamFrameGrabberIn == NULL) {
+      if(headCamFrameGrabber == NULL) {
         fprintf(stdout, "VisionSystem::Init() - HeadCam FrameGrabber is NULL!\n");
         return EXIT_FAILURE;
       }
-      this_.headCamFrameGrabber = headCamFrameGrabberIn;
+      headCamFrameGrabber_ = headCamFrameGrabber;
       
-      if(matCamFrameGrabberIn == NULL) {
+      if(matCamFrameGrabber == NULL) {
         fprintf(stdout, "VisionSystem::Init() - MatCam FrameGrabber is NULL!\n");
         return EXIT_FAILURE;
       }
-      this_.matCamFrameGrabber  = matCamFrameGrabberIn;
+      matCamFrameGrabber_  = matCamFrameGrabber;
       
-      if(headCamInfoIn == NULL) {
+      if(headCamInfo == NULL) {
         fprintf(stdout, "VisionSystem::Init() - HeadCam Info pointer is NULL!\n");
         return EXIT_FAILURE;
       }
-      this_.headCamInfo = headCamInfoIn;
+      headCamInfo_ = headCamInfo;
       
-      if(matCamInfoIn == NULL) {
+      if(matCamInfo == NULL) {
         fprintf(stdout, "VisionSystem::Init() - MatCam Info pointer is NULL!\n");
         return EXIT_FAILURE;
       }
-      this_.matCamInfo  = matCamInfoIn;
+      matCamInfo_  = matCamInfo;
       
-      if(blockMarkerMailboxIn == NULL) {
+      if(blockMarkerMailbox == NULL) {
         fprintf(stdout, "VisionSystem::Init() - BlockMarkerMailbox pointer is NULL!\n");
         return EXIT_FAILURE;
       }
-      this_.blockMarkerMailbox = blockMarkerMailboxIn;
+      blockMarkerMailbox_ = blockMarkerMailbox;
       
-      if(matMarkerMailboxIn == NULL) {
+      if(matMarkerMailbox == NULL) {
         fprintf(stdout, "VisionSystem::Init() - MatMarkerMailbox pointer is NULL!\n");
         return EXIT_FAILURE;
       }
-      this_.matMarkerMailbox = matMarkerMailboxIn;
+      matMarkerMailbox_ = matMarkerMailbox;
       
       // Compute the resolution of the mat camera from its FOV and height
       // off the mat:
-      f32 matCamHeightInPix = ((static_cast<f32>(this_.matCamInfo->nrows)*.5f) /
-                               tanf(this_.matCamInfo->fov_ver * .5f));
-      this_.matCamPixPerMM = matCamHeightInPix / MAT_CAM_HEIGHT_FROM_GROUND_MM;
+      f32 matCamHeightInPix = ((static_cast<f32>(matCamInfo_->nrows)*.5f) /
+                               tanf(matCamInfo_->fov_ver * .5f));
+      matCamPixPerMM_ = matCamHeightInPix / MAT_CAM_HEIGHT_FROM_GROUND_MM;
       
       
 #if USING_MATLAB_VISION
       
-      this_.matlabEngine_ = NULL;
-      if (!(this_.matlabEngine_ = engOpen(""))) {
+      matlabEngine_ = NULL;
+      if (!(matlabEngine_ = engOpen(""))) {
         fprintf(stdout, "\nCan't start MATLAB engine!\n");
         return EXIT_FAILURE;
       }
       
       // Initialize Matlab
-      engEvalString(this_.matlabEngine_, "run('../../../../matlab/initCozmoPath.m');");
+      engEvalString(matlabEngine_, "run('../../../../matlab/initCozmoPath.m');");
       
       // Store computed pixPerMM in Matlab for use by MatLocalization()
-      engPutVariable(this_.matlabEngine_, "pixPerMM",
-                     mxCreateDoubleScalar(this_.matCamPixPerMM));
+      engPutVariable(matlabEngine_, "pixPerMM",
+                     mxCreateDoubleScalar(matCamPixPerMM_));
       
 #if DISPLAY_MATLAB_IMAGES
       char cmd[256];
@@ -160,31 +145,31 @@ namespace Anki {
                "subplot(122); "
                "h_matImg = imshow(zeros(%d,%d)); "
                "title(sprintf('Mat Camera (pixPerMM=%%.1f)', pixPerMM));",
-               this_.headCamInfo->nrows,
-               this_.headCamInfo->ncols,
-               this_.matCamInfo->nrows,
-               this_.matCamInfo->ncols);
+               headCamInfo->nrows,
+               headCamInfo->ncols,
+               matCamInfo->nrows,
+               matCamInfo->ncols);
       
-      engEvalString(this_.matlabEngine_, cmd);
+      engEvalString(matlabEngine_, cmd);
 #endif // DISPLAY_MATLAB_IMAGES
       
 #endif // USING_MATLAB_VISION
       
-      this_.isInitialized = true;
+      isInitialized_ = true;
       return EXIT_SUCCESS;
     }
     
     
     bool VisionSystem::IsInitialized()
     {
-      return this_.isInitialized;
+      return isInitialized_;
     }
     
     void VisionSystem::Destroy()
     {
 #if USING_MATLAB_VISION
-      if(this_.matlabEngine_ != NULL) {
-        engClose(this_.matlabEngine_);
+      if(matlabEngine_ != NULL) {
+        engClose(matlabEngine_);
       }
 #endif
     }
@@ -195,29 +180,29 @@ namespace Anki {
       u32 numBlocks = 0;
       
       const u8 *image = getHeadCamImage();
-      const s32 nrows = this_.headCamInfo->nrows;
-      const s32 ncols = this_.headCamInfo->ncols;
+      const s32 nrows = headCamInfo_->nrows;
+      const s32 ncols = headCamInfo_->ncols;
       
 #if defined(USE_MATLAB_FOR_HEAD_CAMERA)
       mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(image, nrows, ncols, 4);
       
       if(mxImg != NULL) {
         // Send the image to matlab
-        engPutVariable(this_.matlabEngine_, "headCamImage", mxImg);
+        engPutVariable(matlabEngine_, "headCamImage", mxImg);
         
         // Convert from GBRA format to RGB:
-        engEvalString(this_.matlabEngine_, "headCamImage = headCamImage(:,:,[3 2 1]);");
+        engEvalString(matlabEngine_, "headCamImage = headCamImage(:,:,[3 2 1]);");
         
 #if DISPLAY_MATLAB_IMAGES
         // Display (optional)
-        engEvalString(this_.matlabEngine_, "set(h_headImg, 'CData', headCamImage);");
+        engEvalString(matlabEngine_, "set(h_headImg, 'CData', headCamImage);");
 #endif
         
         // Detect BlockMarkers
-        engEvalString(this_.matlabEngine_, "blockMarkers = simpleDetector(headCamImage); "
+        engEvalString(matlabEngine_, "blockMarkers = simpleDetector(headCamImage); "
                       "numMarkers = length(blockMarkers);");
         
-        int numMarkers = static_cast<int>(mxGetScalar(engGetVariable(this_.matlabEngine_, "numMarkers")));
+        int numMarkers = static_cast<int>(mxGetScalar(engGetVariable(matlabEngine_, "numMarkers")));
         
         fprintf(stdout, "Found %d block markers.\n", numMarkers);
         
@@ -235,7 +220,7 @@ namespace Anki {
                    "corners   = currentMarker.corners; "
                    "upDir     = currentMarker.upDirection;", i_marker+1);
           
-          engEvalString(this_.matlabEngine_, cmd);
+          engEvalString(matlabEngine_, cmd);
           
           
           // Create a message from those pieces
@@ -246,13 +231,13 @@ namespace Anki {
           msg.size  = sizeof(CozmoMsg_ObservedBlockMarker) - 1; // -1 for the size byte
           msg.msgID = MSG_V2B_CORE_BLOCK_MARKER_OBSERVED;
           
-          mxArray *mxBlockType = engGetVariable(this_.matlabEngine_, "blockType");
+          mxArray *mxBlockType = engGetVariable(matlabEngine_, "blockType");
           msg.blockType = static_cast<u16>(mxGetScalar(mxBlockType));
           
-          mxArray *mxFaceType = engGetVariable(this_.matlabEngine_, "faceType");
+          mxArray *mxFaceType = engGetVariable(matlabEngine_, "faceType");
           msg.faceType = static_cast<u8>(mxGetScalar(mxFaceType));
           
-          mxArray *mxCorners = engGetVariable(this_.matlabEngine_, "corners");
+          mxArray *mxCorners = engGetVariable(matlabEngine_, "corners");
           
           mxAssert(mxGetM(mxCorners)==4 && mxGetN(mxCorners)==2,
                    "BlockMarker's corners should be 4x2 in size.");
@@ -272,7 +257,7 @@ namespace Anki {
           msg.x_imgLowerRight = static_cast<f32>(corners_x[3]);
           msg.y_imgLowerRight = static_cast<f32>(corners_y[3]);
           
-          mxArray *mxUpDir = engGetVariable(this_.matlabEngine_, "upDir");
+          mxArray *mxUpDir = engGetVariable(matlabEngine_, "upDir");
           msg.upDirection = static_cast<u8>(mxGetScalar(mxUpDir)) - 1; // Note the -1 for C vs. Matlab indexing
           
           fprintf(stdout, "Sending ObservedBlockMarker message: Block %d, Face %d "
@@ -285,7 +270,7 @@ namespace Anki {
                   msg.x_imgLowerRight, msg.y_imgLowerRight,
                   msg.upDirection);
           
-          this_.blockMarkerMailbox->putMessage(msg);
+          blockMarkerMailbox_->putMessage(msg);
           
           ++numBlocks;
           
@@ -312,34 +297,34 @@ namespace Anki {
       ReturnCode retVal = -1;
       
       const u8 *image = getMatCamImage();
-      const int nrows = this_.matCamInfo->nrows;
-      const int ncols = this_.matCamInfo->ncols;
+      const int nrows = matCamInfo_->nrows;
+      const int ncols = matCamInfo_->ncols;
       
 #if defined(USE_MATLAB_FOR_MAT_CAMERA)
       mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(image, nrows, ncols, 4);
       
       if(mxImg != NULL) {
         // Display Mat Image in Matlab
-        engPutVariable(this_.matlabEngine_, "matCamImage", mxImg);
-        engEvalString(this_.matlabEngine_, "matCamImage = matCamImage(:,:,[3 2 1]);");
+        engPutVariable(matlabEngine_, "matCamImage", mxImg);
+        engEvalString(matlabEngine_, "matCamImage = matCamImage(:,:,[3 2 1]);");
 #if DISPLAY_MATLAB_IMAGES
-        engEvalString(this_.matlabEngine_, "set(h_matImg, 'CData', matCamImage);");
+        engEvalString(matlabEngine_, "set(h_matImg, 'CData', matCamImage);");
 #endif
         
         // Detect MatMarker
         /*
-        [xMat, yMat, orient] = matLocalization(this.matImage, ...
-                                               'pixPerMM', pixPerMM, 'camera', this.robot.matCamera, ...
-                                               'matSize', world.matSize, 'zDirection', world.zDirection, ...
-                                               'embeddedConversions', this.robot.embeddedConversions);
+         [xMat, yMat, orient] = matLocalization(this.matImage, ...
+         'pixPerMM', pixPerMM, 'camera', this.robot.matCamera, ...
+         'matSize', world.matSize, 'zDirection', world.zDirection, ...
+         'embeddedConversions', this.robot.embeddedConversions);
+         
+         % Set the pose based on the result of the matLocalization
+         this.pose = Pose(orient*[0 0 -1], ...
+         [xMat yMat this.robot.appearance.WheelRadius]);
+         this.pose.name = 'ObservationPose';
+         */
         
-        % Set the pose based on the result of the matLocalization
-        this.pose = Pose(orient*[0 0 -1], ...
-                         [xMat yMat this.robot.appearance.WheelRadius]);
-        this.pose.name = 'ObservationPose';
-        */
-
-        engEvalString(this_.matlabEngine_,
+        engEvalString(matlabEngine_,
                       "[matMarker, matOrient] = matLocalization(matCamImage, "
                       "   'pixPerMM', pixPerMM, 'returnMarkerOnly', true); "
                       "isMatMarkerValid = matMarker.isValid; "
@@ -349,7 +334,7 @@ namespace Anki {
                       "xImgCen = centroid(1); yImgCen = centroid(2); "
                       "matUpDir = matMarker.upDirection;");
         
-        mxArray *mx_isValid = engGetVariable(this_.matlabEngine_, "isMatMarkerValid");
+        mxArray *mx_isValid = engGetVariable(matlabEngine_, "isMatMarkerValid");
         const bool matMarkerIsValid = mxIsLogicalScalarTrue(mx_isValid);
         
         if(matMarkerIsValid)
@@ -358,22 +343,22 @@ namespace Anki {
           msg.size = sizeof(CozmoMsg_ObservedMatMarker);
           msg.msgID = MSG_V2B_CORE_MAT_MARKER_OBSERVED;
           
-          mxArray *mx_xMatSquare = engGetVariable(this_.matlabEngine_, "xMatSquare");
-          mxArray *mx_yMatSquare = engGetVariable(this_.matlabEngine_, "yMatSquare");
+          mxArray *mx_xMatSquare = engGetVariable(matlabEngine_, "xMatSquare");
+          mxArray *mx_yMatSquare = engGetVariable(matlabEngine_, "yMatSquare");
           
           msg.x_MatSquare = static_cast<u16>(mxGetScalar(mx_xMatSquare));
           msg.y_MatSquare = static_cast<u16>(mxGetScalar(mx_yMatSquare));
           
-          mxArray *mx_xImgCen = engGetVariable(this_.matlabEngine_, "xImgCen");
-          mxArray *mx_yImgCen = engGetVariable(this_.matlabEngine_, "yImgCen");
+          mxArray *mx_xImgCen = engGetVariable(matlabEngine_, "xImgCen");
+          mxArray *mx_yImgCen = engGetVariable(matlabEngine_, "yImgCen");
           
           msg.x_imgCenter = static_cast<f32>(mxGetScalar(mx_xImgCen));
           msg.y_imgCenter = static_cast<f32>(mxGetScalar(mx_yImgCen));
           
-          mxArray *mx_upDir = engGetVariable(this_.matlabEngine_, "matUpDir");
+          mxArray *mx_upDir = engGetVariable(matlabEngine_, "matUpDir");
           msg.upDirection = static_cast<u8>(mxGetScalar(mx_upDir)) - 1; // Note the -1 for C vs. Matlab indexing
           
-          mxArray *mx_matAngle = engGetVariable(this_.matlabEngine_, "matOrient");
+          mxArray *mx_matAngle = engGetVariable(matlabEngine_, "matOrient");
           msg.angle = static_cast<f32>(mxGetScalar(mx_matAngle));
           
           fprintf(stdout, "Sending ObservedMatMarker message: Square (%d,%d) "
@@ -382,7 +367,7 @@ namespace Anki {
                   msg.x_imgCenter, msg.y_imgCenter,
                   msg.angle * (180.f/M_PI), msg.upDirection);
           
-          this_.matMarkerMailbox->putMessage(msg);
+          matMarkerMailbox_->putMessage(msg);
           
         } else {
           fprintf(stdout, "No valid MatMarker found!\n");
@@ -408,7 +393,7 @@ namespace Anki {
       
     } // localizeWithMat()
     
-
+    
     
   } // namespace Cozmo
 } // namespace Anki

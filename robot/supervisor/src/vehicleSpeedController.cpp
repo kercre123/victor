@@ -46,23 +46,24 @@ namespace Anki {
     
     
 #pragma mark --- "Member Variables" ---
-    
-    // The target desired speed the user commanded to the car [mm/sec].
-    // This is our eventual goal for the vehicle speed, given enough time for acceleration
-    static s16 userCommandedDesiredVehicleSpeed = 0;
-    
-    // The current speed according to the target speed and acceleration set by the user. [mm/sec]
-    // This is our speed goal for the current iteration. This is what the PID controller will use
-    static s16 userCommandedCurrentVehicleSpeed = 0;
-    
-    // The absolute value (max value) acceleration/deceleration the user commanded to the car [mm/sec^2]
-    static s16 userCommandedAcceleration = 0;
-    
-    // The controller needs to regulate the speed of the car "around" the user commanded speed [mm/sec]
-    static s16 controllerCommandedVehicleSpeed = 0;
-    
-    static s32 errorsum = 0;
-    
+    namespace {
+      // The target desired speed the user commanded to the car [mm/sec].
+      // This is our eventual goal for the vehicle speed, given enough time for acceleration
+      s16 userCommandedDesiredVehicleSpeed_ = 0;
+      
+      // The current speed according to the target speed and acceleration set by the user. [mm/sec]
+      // This is our speed goal for the current iteration. This is what the PID controller will use
+      s16 userCommandedCurrentVehicleSpeed_ = 0;
+      
+      // The absolute value (max value) acceleration/deceleration the user commanded to the car [mm/sec^2]
+      s16 userCommandedAcceleration_ = 0;
+      
+      // The controller needs to regulate the speed of the car "around" the user commanded speed [mm/sec]
+      s16 controllerCommandedVehicleSpeed_ = 0;
+      
+      s32 errorsum_ = 0;
+      
+    } // private namespace
     
 #pragma mark --- Method Implementations ---
     
@@ -72,47 +73,47 @@ namespace Anki {
     // Getters and Setters
     void SetUserCommandedCurrentVehicleSpeed(s16 ucspeed)
     {
-      userCommandedCurrentVehicleSpeed = ucspeed;
+      userCommandedCurrentVehicleSpeed_ = ucspeed;
     }
     
     s16 GetUserCommandedCurrentVehicleSpeed(void)
     {
-      return userCommandedCurrentVehicleSpeed;
+      return userCommandedCurrentVehicleSpeed_;
     }
     
     void SetUserCommandedDesiredVehicleSpeed(s16 ucspeed)
     {
-      userCommandedDesiredVehicleSpeed = ucspeed;
+      userCommandedDesiredVehicleSpeed_ = ucspeed;
       
       // If the current measured speed and the current user commanded speed
       // are on the same side of the user desired speed and the measured speed
       // is closer to the user desired speed than the current user commanded speed, then set the
       // current user commanded speed to be the current measured speed.
       // It makes no sense to try to slow down before speeding up!
-      s16 desiredAndCurrentSpeedDiff = userCommandedDesiredVehicleSpeed - userCommandedCurrentVehicleSpeed;
-      s16 desiredAndMeasuredSpeedDiff = userCommandedDesiredVehicleSpeed - GetCurrentMeasuredVehicleSpeed();
+      s16 desiredAndCurrentSpeedDiff = userCommandedDesiredVehicleSpeed_ - userCommandedCurrentVehicleSpeed_;
+      s16 desiredAndMeasuredSpeedDiff = userCommandedDesiredVehicleSpeed_ - GetCurrentMeasuredVehicleSpeed();
       if ( SIGN(desiredAndCurrentSpeedDiff) == SIGN(desiredAndMeasuredSpeedDiff)
           && ABS(desiredAndCurrentSpeedDiff) > ABS(desiredAndMeasuredSpeedDiff) ) {
-        userCommandedCurrentVehicleSpeed = GetCurrentMeasuredVehicleSpeed();
+        userCommandedCurrentVehicleSpeed_ = GetCurrentMeasuredVehicleSpeed();
       }
       
       // Similarly, if the current measured speed and the current user commanded speed
       // are on opposite sides of the user desired speed, set the user commanded speed
       // to be the desired speed.
       if ( SIGN(desiredAndCurrentSpeedDiff) != SIGN(desiredAndMeasuredSpeedDiff) ) {
-        userCommandedCurrentVehicleSpeed = userCommandedDesiredVehicleSpeed;
+        userCommandedCurrentVehicleSpeed_ = userCommandedDesiredVehicleSpeed_;
       }
     }
     
     s16 GetUserCommandedDesiredVehicleSpeed(void)
     {
-      return userCommandedDesiredVehicleSpeed;
+      return userCommandedDesiredVehicleSpeed_;
     }
     
     void SetBothDesiredAndCurrentUserSpeed(s16 ucspeed)
     {
-      userCommandedDesiredVehicleSpeed = ucspeed;
-      userCommandedCurrentVehicleSpeed = ucspeed;
+      userCommandedDesiredVehicleSpeed_ = ucspeed;
+      userCommandedCurrentVehicleSpeed_ = ucspeed;
     }
     
     void SetUserCommandedAcceleration(s16 ucAccel)
@@ -123,23 +124,23 @@ namespace Anki {
       
       assert((float)(ucAccel) >= Anki::Cozmo::ONE_OVER_CONTROL_DT);
       
-      userCommandedAcceleration = ucAccel;
+      userCommandedAcceleration_ = ucAccel;
     }
     
     s16 GetUserCommandedAcceleration(void)
     {
-      return userCommandedAcceleration;
+      return userCommandedAcceleration_;
     }
     
     
     void SetControllerCommandedVehicleSpeed(s16 ccspeed)
     {
-      controllerCommandedVehicleSpeed = ccspeed;
+      controllerCommandedVehicleSpeed_ = ccspeed;
     }
     
     s16 GetControllerCommandedVehicleSpeed(void)
     {
-      return controllerCommandedVehicleSpeed;
+      return controllerCommandedVehicleSpeed_;
     }
     
     //This tells us how fast the vehicle is driving right now in mm/sec
@@ -151,14 +152,14 @@ namespace Anki {
     
     void RunAccelerationUpdate(void)
     {
-      if (userCommandedDesiredVehicleSpeed > userCommandedCurrentVehicleSpeed) {
+      if (userCommandedDesiredVehicleSpeed_ > userCommandedCurrentVehicleSpeed_) {
         // Go faster
-        userCommandedCurrentVehicleSpeed += userCommandedAcceleration * Cozmo::CONTROL_DT;
-        userCommandedCurrentVehicleSpeed = MIN(userCommandedDesiredVehicleSpeed, userCommandedCurrentVehicleSpeed);
-      } else if (userCommandedDesiredVehicleSpeed < userCommandedCurrentVehicleSpeed) {
+        userCommandedCurrentVehicleSpeed_ += userCommandedAcceleration_ * Cozmo::CONTROL_DT;
+        userCommandedCurrentVehicleSpeed_ = MIN(userCommandedDesiredVehicleSpeed_, userCommandedCurrentVehicleSpeed_);
+      } else if (userCommandedDesiredVehicleSpeed_ < userCommandedCurrentVehicleSpeed_) {
         // Go slower
-        userCommandedCurrentVehicleSpeed -= userCommandedAcceleration * Cozmo::CONTROL_DT;
-        userCommandedCurrentVehicleSpeed = MAX(userCommandedDesiredVehicleSpeed, userCommandedCurrentVehicleSpeed);
+        userCommandedCurrentVehicleSpeed_ -= userCommandedAcceleration_ * Cozmo::CONTROL_DT;
+        userCommandedCurrentVehicleSpeed_ = MAX(userCommandedDesiredVehicleSpeed_, userCommandedCurrentVehicleSpeed_);
       }
     }
     
@@ -202,12 +203,12 @@ namespace Anki {
       // Lets say we try to drive 1.5m/s, but only drive 1.4 (on average)
       // Over 50 cycles (1/10 second), our sum will be (100mm * 50) = 5000 ||| 50
       // Over 500 cycles (in one second), our sum will be (100mm * 500) = 50000 ||| 500  (some of those number are too big for signed short!!!!)
-      controllerCommandedVehicleSpeed = desVehicleSpeed + (currerror * VEHICLE_SPEED_CONTROLLER_KP) + (errorsum * VEHICLE_SPEED_CONTROLLER_KI);
+      controllerCommandedVehicleSpeed_ = desVehicleSpeed + (currerror * VEHICLE_SPEED_CONTROLLER_KP) + (errorsum_ * VEHICLE_SPEED_CONTROLLER_KI);
       
       
       // Update and cap errorsum so that it doesn't get too huge.
-      errorsum += currerror;
-      errorsum = CLIP(errorsum, -VEHICLE_SPEED_CONTROLLER_MAX_ERRORSUM, VEHICLE_SPEED_CONTROLLER_MAX_ERRORSUM);
+      errorsum_ += currerror;
+      errorsum_ = CLIP(errorsum_, -VEHICLE_SPEED_CONTROLLER_MAX_ERRORSUM, VEHICLE_SPEED_CONTROLLER_MAX_ERRORSUM);
       
       //Anti zero-crossover
       //Define a deadband above 0 where we command nothing to the wheels:
@@ -217,16 +218,16 @@ namespace Anki {
       //the encoders to return values
       if (ABS(currspeed) <= WheelController::WHEEL_DEAD_BAND_MM_S) {
         if ((currspeed >= 0 && desVehicleSpeed <= currspeed) || (currspeed < 0 && desVehicleSpeed >= currspeed)) {
-          controllerCommandedVehicleSpeed = desVehicleSpeed;
-          errorsum = 0;
+          controllerCommandedVehicleSpeed_ = desVehicleSpeed;
+          errorsum_ = 0;
           //ResetWheelControllerIntegralGainSums();
         }
       }
       
       // If considered stopped, force stop
       if (ABS(desVehicleSpeed) <= WheelController::WHEEL_SPEED_COMMAND_STOPPED_MM_S) {
-        controllerCommandedVehicleSpeed = desVehicleSpeed;
-        errorsum = 0;
+        controllerCommandedVehicleSpeed_ = desVehicleSpeed;
+        errorsum_ = 0;
         //ResetWheelControllerIntegralGainSums();
       }
       
@@ -246,7 +247,7 @@ namespace Anki {
     
     
     void ResetVehicleSpeedControllerIntegralError() {
-      errorsum = 0;
+      errorsum_ = 0;
     }
     
     void TraceSpeedControllerVars(u8 traceLevel)
