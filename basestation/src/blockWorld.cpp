@@ -152,10 +152,10 @@ namespace Anki
         robot->step();
         
         // Tell each robot where it is, based on its current mat observation:
-        updateRobotPose(robot);
+        //updateRobotPose(robot);
                           
         // Each robot adds the 3d markers it saw to the list.
-        robot->getVisibleBlockMarkers3d(blockMarkers);
+        //robot->getVisibleBlockMarkers3d(blockMarkers);
         
       } // for each robot
       

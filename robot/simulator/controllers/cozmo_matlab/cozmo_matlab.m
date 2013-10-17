@@ -13,7 +13,7 @@
 % Set up paths for BlockWorld to work (do this before creating the
 % BlockWorldWebotController object, which may rely on things in the Cozmo
 % path)
-run(fullfile('..', '..', '..', 'matlab', 'initCozmoPath')); 
+run(fullfile('..', '..', '..', '..', 'matlab', 'initCozmoPath')); 
 
 useMatlabDisplay = false;
 doProfile = false;

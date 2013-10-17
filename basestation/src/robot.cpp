@@ -106,6 +106,13 @@ namespace Anki {
             // Translate the raw message into a MatMarker2d object:
             const CozmoMsg_ObservedMatMarker* matMsg = reinterpret_cast<const CozmoMsg_ObservedMatMarker*>(&(msg[0]));
             
+            fprintf(stdout, "Received ObservedMatMarker message: "
+                    "at mat square (%d,%d) seen at (%.1f,%.1f) "
+                    "with orientation %.1f and upDirection=%d\n",
+                    matMsg->x_MatSquare, matMsg->y_MatSquare,
+                    matMsg->x_imgCenter, matMsg->y_imgCenter,
+                    matMsg->angle * (180.f/M_PI), matMsg->upDirection);
+            
             if(this->matMarker2d != NULL) {
               // We have two messages indicating a MatMarker was observed,
               // just use the last one?
