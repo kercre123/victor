@@ -55,6 +55,11 @@ marker = matLocalization_step6_findMarker(imgRot, squareWidth, ...
     lineWidth, pixPerMM, xcenIndex, ycenIndex, embeddedConversions, DEBUG_DISPLAY);
 
 if returnMarkerOnly
+    if ~marker.isValid
+        desktop
+        keyboard
+    end
+    
     % Hack to allow us to get back just a Mat Marker to give to a simulated
     % robot to pass as a message up to a basestation, leaving the actual
     % localization to be done by the basestation.

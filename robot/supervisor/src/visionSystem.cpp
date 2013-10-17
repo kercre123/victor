@@ -12,6 +12,7 @@
 // If using Matlab for any vision processing, enable the Matlab engine
 #include "engine.h"
 #include "anki/common/robot/matlabInterface.h"
+#define DISPLAY_MATLAB_IMAGES 0
 #endif
 
 namespace Anki {
@@ -128,16 +129,8 @@ namespace Anki {
       }
       this_.matMarkerMailbox = matMarkerMailboxIn;
       
-      // Compute the resolution of the mat camera:
-      /*
-      matCamHeightInPix = (this.robot.matCamera.nrows/2) / ...
-           tan(this.robot.matCamera.FOV_vertical/2);
-      
-      pixPerMM = matCamHeightInPix / ...
-          (this.robot.appearance.WheelRadius + ...
-           this.robot.matCamera.pose.T(3));
-       */
-      
+      // Compute the resolution of the mat camera from its FOV and height
+      // off the mat:
       f32 matCamHeightInPix = ((static_cast<f32>(this_.matCamInfo->nrows)*.5f) /
                                tanf(this_.matCamInfo->fov_ver * .5f));
       this_.matCamPixPerMM = matCamHeightInPix / MAT_CAM_HEIGHT_FROM_GROUND_MM;
@@ -151,13 +144,14 @@ namespace Anki {
         return EXIT_FAILURE;
       }
       
+      // Initialize Matlab
       engEvalString(this_.matlabEngine_, "run('../../../../matlab/initCozmoPath.m');");
       
-      // TODO: Pass camera calibration data back to Matlab
-      
+      // Store computed pixPerMM in Matlab for use by MatLocalization()
       engPutVariable(this_.matlabEngine_, "pixPerMM",
                      mxCreateDoubleScalar(this_.matCamPixPerMM));
       
+#if DISPLAY_MATLAB_IMAGES
       char cmd[256];
       snprintf(cmd, 255, "h_imgFig = figure; "
                "subplot(121); "
@@ -172,6 +166,7 @@ namespace Anki {
                this_.matCamInfo->ncols);
       
       engEvalString(this_.matlabEngine_, cmd);
+#endif // DISPLAY_MATLAB_IMAGES
       
 #endif // USING_MATLAB_VISION
       
@@ -213,8 +208,10 @@ namespace Anki {
         // Convert from GBRA format to RGB:
         engEvalString(this_.matlabEngine_, "headCamImage = headCamImage(:,:,[3 2 1]);");
         
+#if DISPLAY_MATLAB_IMAGES
         // Display (optional)
         engEvalString(this_.matlabEngine_, "set(h_headImg, 'CData', headCamImage);");
+#endif
         
         // Detect BlockMarkers
         engEvalString(this_.matlabEngine_, "blockMarkers = simpleDetector(headCamImage); "
@@ -325,7 +322,9 @@ namespace Anki {
         // Display Mat Image in Matlab
         engPutVariable(this_.matlabEngine_, "matCamImage", mxImg);
         engEvalString(this_.matlabEngine_, "matCamImage = matCamImage(:,:,[3 2 1]);");
+#if DISPLAY_MATLAB_IMAGES
         engEvalString(this_.matlabEngine_, "set(h_matImg, 'CData', matCamImage);");
+#endif
         
         // Detect MatMarker
         /*
