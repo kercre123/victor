@@ -49,11 +49,13 @@ namespace Anki {
     void SetGains(float kp, float ki, float kd);
     
     //This manages at a high level what the wheel speed controller needs to do
-    void Manage(s16 *motorvalueoutL, s16 *motorvalueoutR);
+    void Manage();
     
     //Sets/Gets the desired speeds for the wheels (in mm/sec forward speed)
     void GetDesiredWheelSpeeds(s16 *leftws, s16 *rightws);
     void SetDesiredWheelSpeeds(s16 leftws, s16 rightws);
+    
+    void GetFilteredWheelSpeeds(f32 *left, f32 *right);
     
     //This function will command a wheel speed to the left and right wheel so that the vehicle follows a trajectory
     //This will only work if the steering controller does not overwrite the values.

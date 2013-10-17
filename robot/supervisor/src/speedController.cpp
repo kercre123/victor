@@ -1,5 +1,5 @@
 /**
- * File: vehicleSpeedController.c
+ * File: speedController.c
  * Author: Hanns Tappeiner (hanns@anki.com)
  * Date: 07/11/2012
  *
@@ -33,7 +33,7 @@
 #include "anki/cozmo/robot/assert.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/debug.h"
-#include "anki/cozmo/robot/vehicleSpeedController.h"
+#include "anki/cozmo/robot/speedController.h"
 #include "anki/cozmo/robot/wheelController.h"
 #include "anki/cozmo/robot/trace.h"
 #include "anki/cozmo/robot/hal.h"
@@ -42,7 +42,7 @@
 #include "anki/common/robot/utilities_c.h"
 
 namespace Anki {
-  namespace VehicleSpeedController {
+  namespace SpeedController {
     
     
 #pragma mark --- "Member Variables" ---
@@ -68,7 +68,7 @@ namespace Anki {
 #pragma mark --- Method Implementations ---
     
     // Forward declaration
-    void RunVehicleSpeedController(s16 desVehicleSpeed);
+    void Run(s16 desVehicleSpeed);
     
     // Getters and Setters
     void SetUserCommandedCurrentVehicleSpeed(s16 ucspeed)
@@ -146,8 +146,12 @@ namespace Anki {
     //This tells us how fast the vehicle is driving right now in mm/sec
     s16 GetCurrentMeasuredVehicleSpeed(void)
     {
-      return (Cozmo::Robot::GetLeftWheelSpeedFiltered() +
-              Cozmo::Robot::GetRightWheelSpeedFiltered()) / 2;
+      f32 filteredSpeedL, filteredSpeedR;
+      WheelController::GetFilteredWheelSpeeds(&filteredSpeedL,
+                                              &filteredSpeedR);
+      
+      // TODO: are we sure this should be returned as s16?
+      return static_cast<s16>(0.5f*(filteredSpeedL + filteredSpeedL));
     }
     
     void RunAccelerationUpdate(void)
@@ -163,13 +167,13 @@ namespace Anki {
       }
     }
     
-    void ManageVehicleSpeedController(void)
+    void Manage(void)
     {
       //For now, the only thing we do is to set the controller commanded vehicle speed to whatever the user commanded
       //Later we will (potentially) change this to a PI contontroller trying to achieve the speed we want
       
       RunAccelerationUpdate();
-      RunVehicleSpeedController(GetUserCommandedCurrentVehicleSpeed());
+      Run(GetUserCommandedCurrentVehicleSpeed());
       
     }
     
@@ -177,10 +181,11 @@ namespace Anki {
     bool IsVehicleStopped(void)
     {
       //If the left and the right encoder are not moving (or moving REALLY slow), we are stopped
-      if (ABS(Cozmo::Robot::GetLeftWheelSpeedFiltered()) <
-          WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S &&
-          ABS(Cozmo::Robot::GetRightWheelSpeedFiltered()) <
-          WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S ) {
+      f32 wheelSpeedL, wheelSpeedR;
+      WheelController::GetFilteredWheelSpeeds(&wheelSpeedL, &wheelSpeedR);
+      
+      if(ABS(wheelSpeedL) < WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S &&
+         ABS(wheelSpeedR) < WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S ) {
         return TRUE;
       } else{
         return FALSE;
@@ -190,7 +195,7 @@ namespace Anki {
     
     // Integral speed controller.
     // Adjusts contollerCommandedVehicleSpeed according to given desiredVehicleSpeed.
-    void RunVehicleSpeedController(s16 desVehicleSpeed)
+    void Run(s16 desVehicleSpeed)
     {
 #if (1)
       s32 currspeed = GetCurrentMeasuredVehicleSpeed();
@@ -203,12 +208,13 @@ namespace Anki {
       // Lets say we try to drive 1.5m/s, but only drive 1.4 (on average)
       // Over 50 cycles (1/10 second), our sum will be (100mm * 50) = 5000 ||| 50
       // Over 500 cycles (in one second), our sum will be (100mm * 500) = 50000 ||| 500  (some of those number are too big for signed short!!!!)
-      controllerCommandedVehicleSpeed_ = desVehicleSpeed + (currerror * VEHICLE_SPEED_CONTROLLER_KP) + (errorsum_ * VEHICLE_SPEED_CONTROLLER_KI);
+      controllerCommandedVehicleSpeed_ = (desVehicleSpeed + (currerror * KP) +
+                                          (errorsum_ * KI));
       
       
       // Update and cap errorsum so that it doesn't get too huge.
       errorsum_ += currerror;
-      errorsum_ = CLIP(errorsum_, -VEHICLE_SPEED_CONTROLLER_MAX_ERRORSUM, VEHICLE_SPEED_CONTROLLER_MAX_ERRORSUM);
+      errorsum_ = CLIP(errorsum_, -MAX_ERRORSUM, MAX_ERRORSUM);
       
       //Anti zero-crossover
       //Define a deadband above 0 where we command nothing to the wheels:
@@ -246,7 +252,7 @@ namespace Anki {
     }
     
     
-    void ResetVehicleSpeedControllerIntegralError() {
+    void ResetIntegralError() {
       errorsum_ = 0;
     }
     
@@ -262,7 +268,7 @@ namespace Anki {
       Traces16(TRACE_VAR_SPD_MEAS, GetCurrentMeasuredVehicleSpeed(), TRACE_MASK_MOTOR_CONTROLLER | TRACE_MASK_ALWAYS_ON);    
     }
     
-  } // namespace VehicleSpeedController
+  } // namespace SpeedController
 } // namespace Anki
 
 

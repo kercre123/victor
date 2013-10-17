@@ -9,7 +9,7 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 
-#include "anki/cozmo/robot/vehicleSpeedController.h"
+#include "anki/cozmo/robot/speedController.h"
 #include "anki/cozmo/robot/steeringController.h"
 #include "anki/cozmo/robot/wheelController.h"
 //#include "hal/portable.h"
@@ -43,24 +43,24 @@ namespace Anki {
       enableAlwaysOnSteering_ = on;
     }
     
-    void ReInitSteeringController()
+    void ReInit()
     {
       isInit_ = false;
     }
     
     //sets the steering controller constants
-    void SetSteeringControllerGains(float k1, float k2)
+    void SetGains(float k1, float k2)
     {
       K1_ = k1;
       K2_ = k2;
     }
     
     //This manages at a high level what the steering controller needs to do (steer, use open loop, etc.)
-    void ManageSteeringController(s16 fidx, float headingError_rad)
+    void Manage(s16 fidx, float headingError_rad)
     {
       
       // Get desired vehicle speed
-      s16 desiredVehicleSpeed = VehicleSpeedController::GetControllerCommandedVehicleSpeed();
+      s16 desiredVehicleSpeed = SpeedController::GetControllerCommandedVehicleSpeed();
       
       //If we found a valid followline, let's run the controller
       if (fidx != INVALID_IDEAL_FOLLOW_LINE_IDX) {
@@ -121,16 +121,16 @@ namespace Anki {
       float curvature = 0;
       
       //Get the current vehicle speed (based on encoder values etc.) in mm/sec
-      s16 currspeed = VehicleSpeedController::GetCurrentMeasuredVehicleSpeed();
+      s16 currspeed = SpeedController::GetCurrentMeasuredVehicleSpeed();
       //Get the desired vehicle speed (the one the user commanded to the car)
-      s16 desspeed = VehicleSpeedController::GetControllerCommandedVehicleSpeed();
+      s16 desspeed = SpeedController::GetControllerCommandedVehicleSpeed();
       
       
       ///////////////////////////////////////////////////////////////////////////////
       
       // Activate steering if: We are moving and the commanded speed is bigger than
       // zero (or bigger than 0+eps)
-      if(VehicleSpeedController::IsVehicleStopped() == FALSE && desspeed > SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
+      if(SpeedController::IsVehicleStopped() == FALSE && desspeed > SpeedController::SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
         steering_active = TRUE;
         
       }
@@ -145,7 +145,7 @@ namespace Anki {
         steering_active = TRUE;
       } else {
         //Deactivate steering if: We are not really moving and the commanded speed is zero (or smaller than 0+eps)
-        if (VehicleSpeedController::IsVehicleStopped() == TRUE && desspeed <= SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
+        if (SpeedController::IsVehicleStopped() == TRUE && desspeed <= SpeedController::SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
           steering_active = false;
           
           // Set wheel controller coast mode as we finish decelerating to 0
@@ -153,7 +153,7 @@ namespace Anki {
         }
         
         // If we're commanding any non-zero speed, don't coast
-        if(desspeed > SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
+        if(desspeed > SpeedController::SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
           WheelController::SetCoastMode(false);
         }
         
