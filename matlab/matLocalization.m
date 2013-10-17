@@ -9,6 +9,7 @@ lineWidth = 1.5;
 camera = [];
 matSize = [1000 1000];
 zDirection = 'up'; % 'up' or 'down': use 'down' for Webots
+returnMarkerOnly = false;
 DEBUG_DISPLAY = false;
 embeddedConversions = [];
 
@@ -49,10 +50,26 @@ imgOrig = img;
     imgRot, squareWidth, pixPerMM, lineWidth, embeddedConversions, DEBUG_DISPLAY);
 
 
-%% Square Identification
-[xMat, yMat, xvecRot, yvecRot, orient1] = matLocalization_step6_identifySquare( ...
-    imgRot, orient1, squareWidth, lineWidth, pixPerMM, imgCen, ...
-    xcenIndex, ycenIndex, matSize, zDirection, embeddedConversions, DEBUG_DISPLAY);
+%% Mat Marker Identification
+marker = matLocalization_step6_findMarker(imgRot, squareWidth, ...
+    lineWidth, pixPerMM, xcenIndex, ycenIndex, embeddedConversions, DEBUG_DISPLAY);
+
+if returnMarkerOnly
+    % Hack to allow us to get back just a Mat Marker to give to a simulated
+    % robot to pass as a message up to a basestation, leaving the actual
+    % localization to be done by the basestation.
+    assert(nargout==2, ...
+        'If requesting marker only, two outputs required (marker and orient).');
+    xMat = marker;
+    yMat = orient1;
+    return;
+end
+
+%% Mat Localization
+
+[xMat, yMat, xvecRot, yvecRot, orient1] = matLocalization_step7_localizeOnMat( ...
+    marker, orient1, squareWidth, pixPerMM, imgCen, xcenIndex, ycenIndex, ...
+    matSize, zDirection, embeddedConversions, DEBUG_DISPLAY);
 
 
 %% Debug output

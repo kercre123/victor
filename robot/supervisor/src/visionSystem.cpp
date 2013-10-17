@@ -1,4 +1,5 @@
 #include "anki/cozmo/robot/visionSystem.h"
+#include "anki/cozmo/robot/cozmoConfig.h"
 
 #include "anki/cozmo/messageProtocol.h"
 
@@ -31,6 +32,8 @@ namespace Anki {
         
         BlockMarkerMailbox* blockMarkerMailbox;
         MatMarkerMailbox*   matMarkerMailbox;
+        
+        f32 matCamPixPerMM;
         
 #if USING_MATLAB_VISION
         Engine *matlabEngine_;
@@ -84,8 +87,8 @@ namespace Anki {
                                   HAL::FrameGrabber      matCamFrameGrabberIn,
                                   const HAL::CameraInfo* headCamInfoIn,
                                   const HAL::CameraInfo* matCamInfoIn,
-                                  BlockMarkerMailbox*                  blockMarkerMailboxIn,
-                                  MatMarkerMailbox*                    matMarkerMailboxIn)
+                                  BlockMarkerMailbox*    blockMarkerMailboxIn,
+                                  MatMarkerMailbox*      matMarkerMailboxIn)
     {
       this_.isInitialized = false;
       
@@ -125,6 +128,21 @@ namespace Anki {
       }
       this_.matMarkerMailbox = matMarkerMailboxIn;
       
+      // Compute the resolution of the mat camera:
+      /*
+      matCamHeightInPix = (this.robot.matCamera.nrows/2) / ...
+           tan(this.robot.matCamera.FOV_vertical/2);
+      
+      pixPerMM = matCamHeightInPix / ...
+          (this.robot.appearance.WheelRadius + ...
+           this.robot.matCamera.pose.T(3));
+       */
+      
+      f32 matCamHeightInPix = ((static_cast<f32>(this_.matCamInfo->nrows)*.5f) /
+                               tanf(this_.matCamInfo->fov_ver * .5f));
+      this_.matCamPixPerMM = matCamHeightInPix / MAT_CAM_HEIGHT_FROM_GROUND_MM;
+      
+      
 #if USING_MATLAB_VISION
       
       this_.matlabEngine_ = NULL;
@@ -136,6 +154,9 @@ namespace Anki {
       engEvalString(this_.matlabEngine_, "run('../../../../matlab/initCozmoPath.m');");
       
       // TODO: Pass camera calibration data back to Matlab
+      
+      engPutVariable(this_.matlabEngine_, "pixPerMM",
+                     mxCreateDoubleScalar(this_.matCamPixPerMM));
       
       char cmd[256];
       snprintf(cmd, 255, "h_imgFig = figure; "
@@ -229,10 +250,10 @@ namespace Anki {
           msg.msgID = MSG_V2B_CORE_BLOCK_MARKER_OBSERVED;
           
           mxArray *mxBlockType = engGetVariable(this_.matlabEngine_, "blockType");
-          msg.blockType = static_cast<u32>(mxGetScalar(mxBlockType));
+          msg.blockType = static_cast<u16>(mxGetScalar(mxBlockType));
           
           mxArray *mxFaceType = engGetVariable(this_.matlabEngine_, "faceType");
-          msg.faceType = static_cast<u32>(mxGetScalar(mxFaceType));
+          msg.faceType = static_cast<u8>(mxGetScalar(mxFaceType));
           
           mxArray *mxCorners = engGetVariable(this_.matlabEngine_, "corners");
           
@@ -318,8 +339,54 @@ namespace Anki {
                          [xMat yMat this.robot.appearance.WheelRadius]);
         this.pose.name = 'ObservationPose';
         */
+
+        engEvalString(this_.matlabEngine_,
+                      "[matMarker, matOrient] = matLocalization(matCamImage, "
+                      "   'pixPerMM', pixPerMM, 'returnMarkerOnly', true); "
+                      "isMatMarkerValid = matMarker.isValid; "
+                      "xMatSquare = matMarker.X; "
+                      "yMatSquare = matMarker.Y; "
+                      "[xImgCen, yImgCen] = matMarker.centroid; "
+                      "matUpDir = matMarker.upDirection;");
+        
+        const bool matMarkerIsValid = mxIsLogicalScalarTrue(mx_isValid);
+        
+        if(matMarkerIsValid)
+        {
+          CozmoMsg_ObservedMatMarker msg;
+          msg.size = sizeof(CozmoMsg_ObservedMatMarker);
+          msg.msgID = MSG_V2B_CORE_MAT_MARKER_OBSERVED;
+          
+          mxArray *mx_xMatSquare = engGetVariable(this_.matlabEngine_, "xMatSquare");
+          mxArray *mx_yMatSquare = engGetVariable(this_.matlabEngine_, "yMatSquare");
+          
+          msg.x_MatSquare = static_cast<u16>(mxGetScalar(mx_xMatSquare));
+          msg.y_MatSquare = static_cast<u16>(mxGetScalar(mx_yMatSquare));
+          
+          mxArray mx_xImgCen = engGetVariable(this_.matlabEngine_, "xImgCen");
+          mxArray mx_yImgCen = engGetVariable(this_.matlabEngine_, "yImgCen");
+          
+          msg.x_imgCenter = static_cast<f32>(mxGetScalar(mx_xImgCen));
+          msg.y_imgCenter = static_cast<f32>(mxGetScalar(mx_yImgCen));
+          
+          mxArray mx_upDir = engGetVariable(this_.matlabEngine_, "matUpDir");
+          msg.upDirection = static_cast<u8>(mxGetScalar(mx_upDir));
+          
+          mxArray mx_matAngle = engGetVariable(this_.matlabEngine_, "matOrient");
+          msg.angle = static_cast<f32>(mxGetScalar(mx_matAngle));
+          
+          fprintf(stdout, "Sending ObservedMatMarker message: Square (%d,%d) "
+                  "at (%.1f,%.1f) with orientation %.1f degrees and upDirection=%d\n",
+                  msg.x_MatSquare, msg.y_MatSquare,
+                  msg.x_imgCenter, msg.y_imgCenter,
+                  msg.angle * (180.f/M_PI), msg.upDirection);
+          
+          this_.matMarkerMailbox->putMessage(msg);
+          
+        } // if marker is valid
         
         retVal = EXIT_SUCCESS;
+        
       } else {
         fprintf(stderr, "Robot::processHeadImage(): could not convert image to mxArray.");
       }
