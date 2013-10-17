@@ -235,6 +235,8 @@ DEF Cozmo CozmoBot {
   name "CozmoBot_1"
   commsChannel 1
   rotation 0 1 0 3.14159
+#  controller "cozmo_matlab"
+  controller "cozmo_c_controller"
 }
 
 DEF WorldComms BlockWorldComms {

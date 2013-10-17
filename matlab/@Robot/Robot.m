@@ -233,7 +233,7 @@ classdef Robot < handle
                 
                 % From robot to camera frame:
                 Rrc = [1 0 0; 0 -1 0; 0 0 -1]; % This seems wrong, shouldn't it be negating y and z?
-                Trc = [0; 0; -3]; % Based on Webot down-camera position
+                Trc = [0; 0; -5]; % Based on Webot down-camera position
                 matCamPose = inv(Pose(Rrc, Trc, this.camPoseCov));
                 matCamPose.parent = this.pose;
                 this.matCamera = Camera('device', MatCameraDevice, ...

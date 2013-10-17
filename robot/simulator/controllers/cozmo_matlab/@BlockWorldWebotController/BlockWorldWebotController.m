@@ -129,7 +129,8 @@ classdef BlockWorldWebotController < handle
                     objName = wb_supervisor_field_get_sf_string(nameField);
                     
                     if ~isempty(objName) 
-                        if strncmp(objName, 'Block', 5)
+                        if strncmp(objName, 'Block', 5) && ...
+                                ~strncmp(objName, 'BlockWorld', 10)
                             blockID = str2double(objName(6:8));
                             assert(blockID > 0 && ...
                                 blockID <= BlockWorld.MaxBlockTypes, ...

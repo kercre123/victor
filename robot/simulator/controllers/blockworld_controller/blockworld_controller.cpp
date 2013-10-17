@@ -42,7 +42,9 @@ int main(int argc, char **argv)
   //comms.Init();
   //comms.run();
   
+  // TODO: Wait for messages from the robot to add them to the world
   std::vector<Anki::Cozmo::Robot> robots(1);
+  blockWorld.addRobot(&(robots[0]));
 
   const int MAX_ROBOTS = 4;
   
@@ -116,7 +118,10 @@ int main(int argc, char **argv)
       
     } // for each receiver
     
-  } // while still stepping the commsController
+    // Update the world (force robots to process their messages)
+    blockWorld.update();
+    
+  } // while still stepping
 
   //delete msgInterface;
   
@@ -155,7 +160,7 @@ int processPacket(const unsigned char *data, const int dataSize,
           case MSG_V2B_CORE_MAT_MARKER_OBSERVED:
           {
             // Pass these right along to the robot object:
-            robots[i_robot].queueMessage(data+3, msgSize);
+            robots[i_robot].queueMessage(data+3, msgSize+1);
             break;
           }
           

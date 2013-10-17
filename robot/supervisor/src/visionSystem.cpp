@@ -165,7 +165,7 @@ namespace Anki {
                "title('Head Camera'); "
                "subplot(122); "
                "h_matImg = imshow(zeros(%d,%d)); "
-               "title('Mat Camera');",
+               "title(sprintf('Mat Camera (pixPerMM=%%.1f)', pixPerMM));",
                this_.headCamInfo->nrows,
                this_.headCamInfo->ncols,
                this_.matCamInfo->nrows,
@@ -276,7 +276,7 @@ namespace Anki {
           msg.y_imgLowerRight = static_cast<f32>(corners_y[3]);
           
           mxArray *mxUpDir = engGetVariable(this_.matlabEngine_, "upDir");
-          msg.upDirection = static_cast<u8>(mxGetScalar(mxUpDir));
+          msg.upDirection = static_cast<u8>(mxGetScalar(mxUpDir)) - 1; // Note the -1 for C vs. Matlab indexing
           
           fprintf(stdout, "Sending ObservedBlockMarker message: Block %d, Face %d "
                   "at [(%.1f,%.1f) (%.1f,%.1f) (%.1f,%.1f) (%.1f,%.1f)] with "
@@ -346,9 +346,11 @@ namespace Anki {
                       "isMatMarkerValid = matMarker.isValid; "
                       "xMatSquare = matMarker.X; "
                       "yMatSquare = matMarker.Y; "
-                      "[xImgCen, yImgCen] = matMarker.centroid; "
+                      "centroid = matMarker.centroid; "
+                      "xImgCen = centroid(1); yImgCen = centroid(2); "
                       "matUpDir = matMarker.upDirection;");
         
+        mxArray *mx_isValid = engGetVariable(this_.matlabEngine_, "isMatMarkerValid");
         const bool matMarkerIsValid = mxIsLogicalScalarTrue(mx_isValid);
         
         if(matMarkerIsValid)
@@ -363,16 +365,16 @@ namespace Anki {
           msg.x_MatSquare = static_cast<u16>(mxGetScalar(mx_xMatSquare));
           msg.y_MatSquare = static_cast<u16>(mxGetScalar(mx_yMatSquare));
           
-          mxArray mx_xImgCen = engGetVariable(this_.matlabEngine_, "xImgCen");
-          mxArray mx_yImgCen = engGetVariable(this_.matlabEngine_, "yImgCen");
+          mxArray *mx_xImgCen = engGetVariable(this_.matlabEngine_, "xImgCen");
+          mxArray *mx_yImgCen = engGetVariable(this_.matlabEngine_, "yImgCen");
           
           msg.x_imgCenter = static_cast<f32>(mxGetScalar(mx_xImgCen));
           msg.y_imgCenter = static_cast<f32>(mxGetScalar(mx_yImgCen));
           
-          mxArray mx_upDir = engGetVariable(this_.matlabEngine_, "matUpDir");
-          msg.upDirection = static_cast<u8>(mxGetScalar(mx_upDir));
+          mxArray *mx_upDir = engGetVariable(this_.matlabEngine_, "matUpDir");
+          msg.upDirection = static_cast<u8>(mxGetScalar(mx_upDir)) - 1; // Note the -1 for C vs. Matlab indexing
           
-          mxArray mx_matAngle = engGetVariable(this_.matlabEngine_, "matOrient");
+          mxArray *mx_matAngle = engGetVariable(this_.matlabEngine_, "matOrient");
           msg.angle = static_cast<f32>(mxGetScalar(mx_matAngle));
           
           fprintf(stdout, "Sending ObservedMatMarker message: Square (%d,%d) "
@@ -382,6 +384,9 @@ namespace Anki {
                   msg.angle * (180.f/M_PI), msg.upDirection);
           
           this_.matMarkerMailbox->putMessage(msg);
+          
+        } else {
+          fprintf(stdout, "No valid MatMarker found!\n");
           
         } // if marker is valid
         
