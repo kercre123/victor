@@ -601,7 +601,7 @@ namespace Anki {
   void SmallSquareMatrix<DIM,T>::operator*=(const SmallSquareMatrix<DIM,T> &other)
   {
 #if ANKICORETECH_USE_OPENCV
-    (*this) *= other;
+    (*this) = (*this) * other;
 #else
     assert(false);
     // TODO: Define our own opencv-free in-place multiplication?
