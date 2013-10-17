@@ -231,7 +231,7 @@ Block2x1 {
     "textures/Block075_Face06.png"
   ]
 }
-DEF Cozmo CozmoBotC {
+DEF Cozmo CozmoBot {
   name "CozmoBot_1"
   commsChannel 1
   rotation 0 1 0 3.14159

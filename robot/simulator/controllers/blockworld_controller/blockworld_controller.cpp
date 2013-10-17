@@ -45,7 +45,6 @@ int main(int argc, char **argv)
   std::vector<Anki::Cozmo::Robot> robots(1);
 
   const int MAX_ROBOTS = 4;
-  const int RECV_BUFFER_SIZE = 1024;
   
 #if USE_WEBOTS_CPP_INTERFACE
   webots::Supervisor commsController;
@@ -56,11 +55,6 @@ int main(int argc, char **argv)
   WbDeviceTag rx[MAX_ROBOTS];
   WbDeviceTag tx[MAX_ROBOTS];
 #endif
-  
-  unsigned char recvBuffer[MAX_ROBOTS][RECV_BUFFER_SIZE];
-  int recvBufferIndex[MAX_ROBOTS];
-  
-  std::queue<unsigned char> recvQueue[MAX_ROBOTS];
   
   char rxRadioName[12], txRadioName[12];
   
@@ -77,14 +71,12 @@ int main(int argc, char **argv)
     rx[i] = wb_robot_get_device(rxRadioName);
     wb_receiver_enable(rx[i], Anki::Cozmo::TIME_STEP);
 #endif
-    
-    recvBufferIndex[i] = 0;
   }
   
 #if USE_WEBOTS_CPP_INTERFACE
   while (commsController.step(Anki::Cozmo::TIME_STEP) != -1)
 #else
-    while(wb_robot_step(Anki::Cozmo::TIME_STEP) != -1)
+  while(wb_robot_step(Anki::Cozmo::TIME_STEP) != -1)
 #endif
   {
     // Receive messages:
