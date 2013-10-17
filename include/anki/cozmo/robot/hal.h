@@ -76,20 +76,20 @@ namespace Anki {
       void SetWheelAngularVelocity(f32 left_rad_per_sec,
                                    f32 right_rad_per_sec);
       
-      f32 GetLeftWheelPosition();
-      f32 GetRightWheelPosition();
-      void  GetWheelPositions(f32 &left_rad, f32 &right_rad);
+      f32  GetLeftWheelPosition();
+      f32  GetRightWheelPosition();
+      void GetWheelPositions(f32 &left_rad, f32 &right_rad);
       
       f32 GetLeftWheelSpeed();
       f32 GetRightWheelSpeed();
       
       // Head pitch
-      void  SetHeadPitch(f32 pitch_rad);
-      f32 GetHeadPitch();
+      void SetHeadPitch(f32 pitch_rad);
+      f32  GetHeadPitch();
       
       // Lift position
-      void  SetLiftPitch(f32 pitch_rad);
-      f32 GetLiftPitch();
+      void SetLiftPitch(f32 pitch_rad);
+      f32  GetLiftPitch();
       
       // Gripper control
       void ManageGripper(); // needed?

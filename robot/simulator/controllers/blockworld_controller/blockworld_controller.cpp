@@ -9,6 +9,10 @@
 #include <cstdio>
 #include <queue>
 
+// Set to zero to use the regular C interface, which we may need to avoid
+// difficulties linking against our libraries which C++11 standard libs, unlike
+// the webots CppController lib, which appears to be linked against an older
+// version of the standard libs.
 #define USE_WEBOTS_CPP_INTERFACE 0
 
 //#include "CozmoWorldComms.h"
@@ -124,6 +128,10 @@ int main(int argc, char **argv)
   } // while still stepping
 
   //delete msgInterface;
+  
+#if !USE_WEBOTS_CPP_INTERFACE
+  wb_robot_cleanup();
+#endif
   
   return 0;
 }

@@ -35,7 +35,7 @@ set(SOURCE_FILES
   ${ROBOT_SRC_DIR}/cozmoBot.cpp
   ${ROBOT_SRC_DIR}/pathFollower.cpp
 	${ROBOT_SRC_DIR}/steeringController.cpp
-  ${ROBOT_SRC_DIR}/vehicleSpeedController.cpp
+  ${ROBOT_SRC_DIR}/speedController.cpp
 	${ROBOT_SRC_DIR}/wheelController.cpp
 	${ROBOT_SRC_DIR}/vehicleMath.cpp
 	${ROBOT_SRC_DIR}/visionSystem.cpp

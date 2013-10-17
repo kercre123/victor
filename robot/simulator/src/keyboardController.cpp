@@ -2,6 +2,7 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/pathFollower.h"
 
 #include "keyboardController.h"
 
@@ -159,7 +160,11 @@ namespace Anki {
           }
           default:
           {
-            SetWheelAngularVelocity(0, 0);
+            if(not PathFollower::IsTraversingPath()) {
+              // Don't stop the motors if the PathFollower is
+              // commanding them!
+              SetWheelAngularVelocity(0, 0);
+            }
           }
             
         } // switch(key)

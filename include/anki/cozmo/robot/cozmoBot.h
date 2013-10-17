@@ -2,7 +2,7 @@
 #define SIM_ROBOT_H
 
 #include "anki/common/types.h"
-#include "anki/cozmo/MessageProtocol.h"
+#include "anki/cozmo/messageProtocol.h"
 
 #include <webots/Supervisor.hpp>
 
@@ -50,15 +50,7 @@ namespace Anki {
       //Sets an open loop speed to the two motors. The open loop speed value ranges
       //from: [0..MOTOR_PWM_MAXVAL] and HAS to be within those boundaries
       void SetOpenLoopMotorSpeed(s16 leftSpeed, s16 rightSpeed);
-      
-      // Fetch the latest encoder speed in mm per second (settable using UNITS_PER_TICK)
-      s32 GetLeftWheelSpeed(void);
-      s32 GetRightWheelSpeed(void);
-      
-      // Get the filtered values back
-      s32 GetLeftWheelSpeedFiltered(void);
-      s32 GetRightWheelSpeedFiltered(void);
-      
+           
       void GetCurrentMatPose(f32& x, f32& y, Radians& angle);
       
     } // namespace Robot
