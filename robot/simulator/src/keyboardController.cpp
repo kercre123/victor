@@ -11,34 +11,29 @@
 
 namespace Anki {
   namespace Cozmo {
-    namespace KeyboardController {
-      
-      //
-      // Parameters / Constants
-      //
-      
-      // For Webots:
+
+    // Private memers:
+    namespace {
+      // Constants for Webots:
       const f32 DRIVE_VELOCITY_SLOW = 5.0f;
       const f32 TURN_VELOCITY_SLOW = 1.0f;
       const f32 LIFT_CENTER = -0.275;
       const f32 LIFT_UP = 0.635;
       const f32 LIFT_UPUP = 0.7;
       
-    }
-    
-    namespace {
-      // Private memers:
-      webots::Robot* robot = NULL;
+      // Member variables
+      webots::Robot* robot_ = NULL;
 
-      bool isInitialized = false;
-      bool isEnabled = false;
-    }
+      bool isInitialized_ = false;
+      bool isEnabled_ = false;
+      
+    } // private namespace
     
     void KeyboardController::Init(webots::Robot* robotIn)
     {
       if(robotIn != NULL) {
-        robot = robotIn;
-        isInitialized = true;
+        robot_ = robotIn;
+        isInitialized_ = true;
       } else {
         fprintf(stdout, "Given robot pointer is NULL!\n");
       }
@@ -46,11 +41,11 @@ namespace Anki {
       
     void KeyboardController::Enable(void)
     {
-      if(isInitialized) {
+      if(isInitialized_) {
         //Update Keyboard every 0.1 seconds
-        robot->keyboardEnable(TIME_STEP);
+        robot_->keyboardEnable(TIME_STEP);
         
-        isEnabled = true;
+        isEnabled_ = true;
         
         printf("Drive: arrows\n");
         printf("Lift up/down: a/z\n");
@@ -65,13 +60,13 @@ namespace Anki {
     void KeyboardController::Disable(void)
     {
       //Disable the keyboard
-      robot->keyboardDisable();
-      isEnabled = false;
+      robot_->keyboardDisable();
+      isEnabled_ = false;
     }
 
     bool KeyboardController::IsEnabled()
     {
-      return isEnabled;
+      return isEnabled_;
     }
 
     
@@ -89,9 +84,9 @@ namespace Anki {
       const s32 CKEY_HEAD_DOWN  = 88;
       const s32 CKEY_UNLOCK     = 32;
       
-      if (isEnabled)
+      if (isEnabled_)
       {
-        int key = robot->keyboardGetKey();
+        int key = robot_->keyboardGetKey();
         
         switch (key)
         {

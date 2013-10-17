@@ -22,45 +22,49 @@
 namespace Anki {
   namespace WheelController {
     
-    // Cap error_sum so that integral component of outl does not exceed say some percent of MOTOR_PWM_MAXVAL.
-    // e.g. 25% of 2400 = 600.  600 / wKi = 24000.
-    // 24000 is also less than fix16 max value should we want to convert to fixed point.
-#define MAX_WHEEL_CONTROLLER_ERROR_SUM 24000
+    // private members
+    namespace {
+      
+      // Cap error_sum so that integral component of outl does not exceed say some percent of MOTOR_PWM_MAXVAL.
+      // e.g. 25% of 2400 = 600.  600 / wKi = 24000.
+      // 24000 is also less than fix16 max value should we want to convert to fixed point.
+      const f32 MAX_WHEEL_CONTROLLER_ERROR_SUM = 24000.f;
+      
+      // Gains for wheel controller
+      f32 wKp_ = DEFAULT_WHEEL_KP;
+      f32 wKi_ = DEFAULT_WHEEL_KI;
+      f32 wKd_ = DEFAULT_WHEEL_KD;
+      
+      //Returns/Sets the desired speed of the wheels (in mm/sec)
+      s16 desiredWheelSpeedL_ = 0;
+      s16 desiredWheelSpeedR_ = 0;
+      
+      // Whether we're in coast mode (not actively running wheel controllers)
+      bool coastMode_ = true;
+      
+      // One-shot coast-until-stop flag
+      bool coastUntilStop_ = false;
+      
+      // Integral gain sums for wheel controllers
+      float error_suml_ = 0;
+      float error_sumr_ = 0;
+      
+      // For detecting out-of-control spinning
+      u16 reverseDrivingCnt_ = 0;
+      u16 spinCnt_ = 0;
+      
+    } // private namespace
     
-    // Gains for wheel controller
-    float wKp = DEFAULT_WHEEL_KP;
-    float wKi = DEFAULT_WHEEL_KI;
-    float wKd = DEFAULT_WHEEL_KD;
-    
-    
-    //Returns/Sets the desired speed of the wheels (in mm/sec)
-    s16 desiredWheelSpeedL = 0;
-    s16 desiredWheelSpeedR = 0;
-    
-    
-    // Whether we're in coast mode (not actively running wheel controllers)
-    static bool coastMode_ = true;
-    
-    // One-shot coast-until-stop flag
-    static bool coastUntilStop_ = false;
-    void DoCoastUntilStop() {coastUntilStop_ = true;}
-    
-    // Integral gain sums for wheel controllers
-    static float error_suml_ = 0;
-    static float error_sumr_ = 0;
-    
-    // For detecting out-of-control spinning
-    static u16 reverseDrivingCnt = 0;
-    static u16 spinCnt = 0;
+    inline void DoCoastUntilStop() {coastUntilStop_ = true;}
     
     // Resets the integral gain sums
     void ResetIntegralGainSums(void);
     
     //sets the wheel PID controller constants
     void SetGains(float kp, float ki, float kd) {
-      wKp = kp;
-      wKi = ki;
-      wKd = kd;
+      wKp_ = kp;
+      wKi_ = ki;
+      wKd_ = kd;
     }
     
     //Run the wheel controller: Header. See below
@@ -96,12 +100,12 @@ namespace Anki {
                 Cozmo::Robot::GetLeftWheelSpeed(),
                 Cozmo::Robot::GetRightWheelSpeed() );
         fprintf(stdout, " WHEEL desired speeds: %d (L), %d (R)\n",
-                desiredWheelSpeedL, desiredWheelSpeedR);
+                desiredWheelSpeedL_, desiredWheelSpeedR_);
 #endif
         
         //Get the desired speed in mm/sec
-        float deswspeedl = desiredWheelSpeedL;
-        float deswspeedr = desiredWheelSpeedR;
+        float deswspeedl = desiredWheelSpeedL_;
+        float deswspeedr = desiredWheelSpeedR_;
         
         //Compute the error
         float errorl = (deswspeedl - wspeedl);
@@ -115,8 +119,8 @@ namespace Anki {
         Tracefloat(TRACE_VAR_ERROR_R, error_sumr_, TRACE_MASK_MOTOR_CONTROLLER);
         
         // NDM: Convert to int only AFTER clamping, to avoid int overflow
-        float outl = MM_PER_SEC_TO_MOTOR_VAL( (float)(wKp * errorl) + (error_suml_ * wKi) );
-        float outr = MM_PER_SEC_TO_MOTOR_VAL( (float)(wKp * errorr) + (error_sumr_ * wKi) );
+        float outl = MM_PER_SEC_TO_MOTOR_VAL( (float)(wKp_ * errorl) + (error_suml_ * wKi_) );
+        float outr = MM_PER_SEC_TO_MOTOR_VAL( (float)(wKp_ * errorr) + (error_sumr_ * wKi_) );
         
 #if(DEBUG_WHEEL_CONTROLLER)
         fprintf(stdout, " WHEEL error: %f (L), %f (R)   error_sum: %f (L), %f (R)\n", errorl, errorr, error_suml_, error_sumr_);
@@ -204,14 +208,14 @@ namespace Anki {
     
     //Get the wheel speeds in mm/sec
     void GetDesiredWheelSpeeds(s16 *leftws, s16 *rightws) {
-      *leftws  = desiredWheelSpeedL;
-      *rightws = desiredWheelSpeedR;
+      *leftws  = desiredWheelSpeedL_;
+      *rightws = desiredWheelSpeedR_;
     }
     
     //Set the wheel speeds in mm/sec
     void SetDesiredWheelSpeeds(s16 leftws, s16 rightws) {
-      desiredWheelSpeedL = leftws;
-      desiredWheelSpeedR = rightws;
+      desiredWheelSpeedL_ = leftws;
+      desiredWheelSpeedR_ = rightws;
     }
     
     //This function will command a wheel speed to the left and right wheel so that the vehicle follows a trajectory

@@ -53,61 +53,55 @@ namespace Anki {
   
   namespace Cozmo {
     
-    namespace Robot {
+    // "Private Member Variables"
+    namespace {
       
       // Parameters / Constants:
       const f32 ENCODER_FILTERING_COEFF = 0.9f;
-     
-      // "Member Variables"
-      typedef struct {
-        // Create Mailboxes for holding messages from the VisionSystem,
-        // to be relayed up to the Basestation.
-        VisionSystem::BlockMarkerMailbox blockMarkerMailbox;
-        VisionSystem::MatMarkerMailbox   matMarkerMailbox;
-        
-        OperationMode mode, nextMode;
-        
-        // Localization:
-        f32 currentMatX, currentMatY;
-        Radians currentMatHeading;
-        
-        // Encoder / Wheel Speed Filtering
-        s32 leftWheelSpeed_mmps;
-        s32 rightWheelSpeed_mmps;
-        float filterSpeedL;
-        float filterSpeedR;
-      } Members;
       
-      static Members this_;
-
+      // Create Mailboxes for holding messages from the VisionSystem,
+      // to be relayed up to the Basestation.
+      VisionSystem::BlockMarkerMailbox blockMarkerMailbox_;
+      VisionSystem::MatMarkerMailbox   matMarkerMailbox_;
+      
+      Robot::OperationMode mode_, nextMode_;
+      
+      // Localization:
+      f32 currentMatX_, currentMatY_;
+      Radians currentMatHeading_;
+      
+      // Encoder / Wheel Speed Filtering
+      s32 leftWheelSpeed_mmps_;
+      s32 rightWheelSpeed_mmps_;
+      float filterSpeedL_;
+      float filterSpeedR_;
       
       // Runs one step of the wheel encoder filter;
       void EncoderSpeedFilterIteration(void);
-
-    } // namespace Robot
-    
+      
+    } // Robot private namespace
     
     
     //
     // Accessors:
     //
     Robot::OperationMode Robot::GetOperationMode()
-    { return this_.mode; }
+    { return mode_; }
     
     void Robot::SetOperationMode(Robot::OperationMode newMode)
-    { this_.mode = newMode; }
+    { mode_ = newMode; }
     
     s32 Robot::GetLeftWheelSpeed(void)
-    { return this_.leftWheelSpeed_mmps; }
+    { return leftWheelSpeed_mmps_; }
     
     s32 Robot::GetRightWheelSpeed(void)
-    { return this_.rightWheelSpeed_mmps; }
+    { return rightWheelSpeed_mmps_; }
 
     s32 Robot::GetLeftWheelSpeedFiltered(void)
-    { return this_.filterSpeedL; }
+    { return filterSpeedL_; }
     
     s32 Robot::GetRightWheelSpeedFiltered(void)
-    { return this_.filterSpeedR; }
+    { return filterSpeedR_; }
 
     
     //
@@ -125,17 +119,17 @@ namespace Anki {
                             HAL::GetMatFrameGrabber(),
                             HAL::GetHeadCamInfo(),
                             HAL::GetMatCamInfo(),
-                            &this_.blockMarkerMailbox,
-                            &this_.matMarkerMailbox) == EXIT_FAILURE)
+                            &blockMarkerMailbox_,
+                            &matMarkerMailbox_) == EXIT_FAILURE)
       {
         fprintf(stdout, "Vision System initialization failed.");
         return EXIT_FAILURE;
       }
       
-      this_.leftWheelSpeed_mmps = 0;
-      this_.rightWheelSpeed_mmps = 0;
-      this_.filterSpeedL = 0.f;
-      this_.filterSpeedR = 0.f;
+      leftWheelSpeed_mmps_ = 0;
+      rightWheelSpeed_mmps_ = 0;
+      filterSpeedL_ = 0.f;
+      filterSpeedR_ = 0.f;
       
       if(PathFollower::Init() == EXIT_FAILURE) {
         fprintf(stdout, "PathFollower initialization failed.");
@@ -153,17 +147,17 @@ namespace Anki {
     }
     
     
-    void Robot::EncoderSpeedFilterIteration(void)
+    void EncoderSpeedFilterIteration(void)
     {
       
       // Get true (gyro measured) speeds from robot model
-      this_.leftWheelSpeed_mmps = HAL::GetLeftWheelSpeed();
-      this_.rightWheelSpeed_mmps = HAL::GetRightWheelSpeed();
+      leftWheelSpeed_mmps_ = HAL::GetLeftWheelSpeed();
+      rightWheelSpeed_mmps_ = HAL::GetRightWheelSpeed();
       
-      this_.filterSpeedL = (GetLeftWheelSpeed() * (1.0f - ENCODER_FILTERING_COEFF) +
-                            (this_.filterSpeedL * ENCODER_FILTERING_COEFF));
-      this_.filterSpeedR = (GetRightWheelSpeed() * (1.0f - ENCODER_FILTERING_COEFF) +
-                            (this_.filterSpeedR * ENCODER_FILTERING_COEFF));
+      filterSpeedL_ = (Robot::GetLeftWheelSpeed() * (1.0f - ENCODER_FILTERING_COEFF) +
+                            (filterSpeedL_ * ENCODER_FILTERING_COEFF));
+      filterSpeedR_ = (Robot::GetRightWheelSpeed() * (1.0f - ENCODER_FILTERING_COEFF) +
+                            (filterSpeedR_ * ENCODER_FILTERING_COEFF));
       
     } // Robot::EncoderSpeedFilterIteration()
   
@@ -208,15 +202,15 @@ namespace Anki {
       
       // Check any messages from the vision system and pass them along to the
       // basestation as a message
-      while( this_.matMarkerMailbox.hasMail() )
+      while( matMarkerMailbox_.hasMail() )
       {
-        const CozmoMsg_ObservedMatMarker matMsg = this_.matMarkerMailbox.getMessage();
+        const CozmoMsg_ObservedMatMarker matMsg = matMarkerMailbox_.getMessage();
         HAL::SendMessage(&matMsg, sizeof(CozmoMsg_ObservedMatMarker));
       }
       
-      while( this_.blockMarkerMailbox.hasMail() )
+      while( blockMarkerMailbox_.hasMail() )
       {
-        const CozmoMsg_ObservedBlockMarker blockMsg = this_.blockMarkerMailbox.getMessage();
+        const CozmoMsg_ObservedBlockMarker blockMsg = blockMarkerMailbox_.getMessage();
         HAL::SendMessage(&blockMsg, sizeof(CozmoMsg_ObservedBlockMarker));
       }
       
