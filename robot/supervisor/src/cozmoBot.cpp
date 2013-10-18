@@ -170,12 +170,12 @@ namespace Anki {
             
             const CozmoMsg_AbsLocalizationUpdate *msg = reinterpret_cast<const CozmoMsg_AbsLocalizationUpdate*>(msgBuffer);
             
-            currentMatX_       = msg->xPosition;
-            currentMatY_       = msg->yPosition;
+            currentMatX_       = msg->xPosition * .001f; // store in meters
+            currentMatY_       = msg->yPosition * .001f; //     "
             currentMatHeading_ = msg->headingAngle;
             
             fprintf(stdout, "Robot received localization update from "
-                    "basestation: (%.1f,%.1f) at %.1f degrees\n",
+                    "basestation: (%.3f,%.3f) at %.1f degrees\n",
                     currentMatX_, currentMatY_,
                     currentMatHeading_.getDegrees());
             

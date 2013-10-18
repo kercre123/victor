@@ -34,6 +34,8 @@ namespace Anki
       void EnablePathVisualization(bool on);
       
     } // namespace PathFollower
+    
+   
   } // namespace Cozmo
 } // namespace Anki
 

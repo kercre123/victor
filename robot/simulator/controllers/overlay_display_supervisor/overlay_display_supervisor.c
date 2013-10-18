@@ -10,6 +10,8 @@
 #include <webots/display.h>
 #include <stdlib.h>
 
+#include "sim_pathFollower.h"
+
 #define TIME_STEP  64
 
 #define GROUND_X   1.0

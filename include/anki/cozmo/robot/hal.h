@@ -119,6 +119,7 @@ namespace Anki {
 
       // Get the number of microseconds since boot
       u32 GetMicroCounter(void);
+      s32 GetRobotID(void);
 
       // Take a step (needed for webots, possibly a no-op for real robot?)
       ReturnCode Step(void);

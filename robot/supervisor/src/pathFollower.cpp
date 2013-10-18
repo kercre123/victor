@@ -11,10 +11,10 @@
 
 #include <stdio.h>
 
-#define ENABLE_PATH_VIZ 0
+#define ENABLE_PATH_VIZ 1
 
-#if(ENABLE_PATH_VIZ)
-#include "anki/cozmo/robot/cozmoBot.h"
+#if ENABLE_PATH_VIZ
+#include "sim_pathFollower.h"
 #endif
 
 namespace Anki
@@ -72,6 +72,13 @@ namespace Anki
       {
         ClearPath();
         
+#if ENABLE_PATH_VIZ
+        if(Viz::Init() == EXIT_FAILURE) {
+          fprintf(stdout, "PathFollower visualization init failed.\n");
+          return EXIT_FAILURE;
+        }
+#endif
+      
         return EXIT_SUCCESS;
       }
       
@@ -107,9 +114,10 @@ namespace Anki
       {
         numPathSegments_ = 0;
 #if(ENABLE_PATH_VIZ)
-        gCozmoBot.ErasePath(0);
+        Viz::ErasePath(0);
 #endif
-      }
+      } // Update()
+      
       
       void EnablePathVisualization(bool on)
       {
@@ -140,7 +148,7 @@ namespace Anki
         numPathSegments_++;
         
 #if(ENABLE_PATH_VIZ)
-        gCozmoBot.AppendPathSegmentLine(0, x_start_m, y_start_m, x_end_m, y_end_m);
+        Viz::AppendPathSegmentLine(0, x_start_m, y_start_m, x_end_m, y_end_m);
 #endif
         
         return TRUE;
@@ -173,7 +181,8 @@ namespace Anki
         numPathSegments_++;
         
 #if(ENABLE_PATH_VIZ)
-        gCozmoBot.AppendPathSegmentArc(0, x_center_m, y_center_m, radius_m, startRad, endRad);
+        Viz::AppendPathSegmentArc(0, x_center_m, y_center_m,
+                                  radius_m, startRad, endRad);
 #endif
         
         return TRUE;
@@ -198,7 +207,7 @@ namespace Anki
         // Visualize path
         if (visualizePath_) {
 #if(ENABLE_PATH_VIZ)
-          gCozmoBot.ShowPath(0, true);
+          Viz::ShowPath(0, true);
 #endif
         }
         
@@ -425,7 +434,7 @@ namespace Anki
             printf("PATH COMPLETE\n");
 #endif
 #if(ENABLE_PATH_VIZ)
-            gCozmoBot.ErasePath(0);
+            Viz::ErasePath(0);
 #endif
             return FALSE;
           }
