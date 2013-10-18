@@ -173,7 +173,7 @@ namespace Anki {
 
     // Accessors:
     const RotationMatrix3d& get_rotationMatrix() const;
-    const RotationVector3d& get_rotaitonVector() const;
+    const RotationVector3d& get_rotationVector() const;
     const Vec3f&            get_translation()    const;
     
     void set_rotation(const RotationMatrix3d &Rmat);
@@ -269,7 +269,7 @@ namespace Anki {
   inline const RotationMatrix3d& Pose3d::get_rotationMatrix() const
   { return this->rotationMatrix; }
   
-  inline const RotationVector3d& Pose3d::get_rotaitonVector() const
+  inline const RotationVector3d& Pose3d::get_rotationVector() const
   { return this->rotationVector; }
   
   inline const Vec3f& Pose3d::get_translation() const
