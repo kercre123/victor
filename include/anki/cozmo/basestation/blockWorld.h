@@ -38,6 +38,7 @@ namespace Anki
     {
     public:
       const unsigned int MaxBlockTypes = 255;
+      static bool ZAxisPointsUp; // normally true, false for Webots
       
       // Constructors:
       BlockWorld(); //MessagingInterface* msgInterface);
@@ -48,8 +49,6 @@ namespace Anki
       void queueMessage(const u8 *);
       
       void update(void);
-      
-      void set_zAxisPointsUp(const bool isUp);
       
     protected:
       
@@ -72,12 +71,7 @@ namespace Anki
       
       void updateRobotPose(Robot *robot);
       
-      bool zAxisPointsUp; // false for Webots
-      
     }; // class BlockWorld
-
-    inline void BlockWorld::set_zAxisPointsUp(const bool isUp)
-    { this->zAxisPointsUp = isUp; }
     
   } // namespace Cozmo
 } // namespace Anki

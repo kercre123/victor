@@ -162,6 +162,10 @@ typedef enum {
 
 
   // ** Localization related commands
+  
+  // Absolute localization upate from basestation to vehicle:
+  MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE,
+  
 /*
   // Absolute position update from vehicle: position / location ID 
   // TODO: Add direction 
@@ -471,7 +475,7 @@ typedef enum {
 } MarkerUpDirection;
 
 // MSG_V2B_CORE_BLOCK_MARKER_OBSERVED
-// TODO: this has to be split into two packets for BTLE
+// TODO: this has to be split into two packets for BTLE (size > 20 bytes)
 typedef struct {
   u8 size;
   u8 msgID;           // MSG_V2B_CORE_BLOCK_MARKER_OBSERVED
@@ -499,6 +503,16 @@ typedef struct {
   u8  upDirection;                // One of enum MarkerUpDirection above
 } CozmoMsg_ObservedMatMarker;
 const u8 SIZE_MSG_V2B_CORE_MAT_MARKER_OBSERVED = sizeof(CozmoMsg_ObservedMatMarker);
+
+// MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE
+typedef struct {
+  u8 size;
+  u8 msgID;                      // MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE
+  f32 xPosition, yPosition;
+  f32 headingAngle;
+} CozmoMsg_AbsLocalizationUpdate;
+const u8 SIZE_MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE = sizeof(CozmoMsg_AbsLocalizationUpdate);
+
 
 #endif  // #ifndef COZMO_MSG_PROTOCOL
 

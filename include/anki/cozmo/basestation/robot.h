@@ -22,45 +22,6 @@ namespace Anki {
     class BlockWorld;
     class MatMarker2d;
     
-#if 0
-    // TOOD: Is this cozmo-specific? Should it be in Coretech-Communications?
-    class RobotMessage
-    {
-    public:
-      enum MessageType {
-        BlockMarkerObservation = 1,
-        MatMarkerObservation   = 2
-      };
-      
-      RobotMessage(MessageType type, const char* buffer);
-      
-      MessageType get_type() const;
-      
-    protected:
-      MessageType type;
-      
-      void *data;
-      
-      // TODO: Have some kind of MessageTranslator member that inherits from
-      //       someething in coretech-communications?
-      
-    }; // class RobotMessage
-    
-    
-    class BlockObservationMessage : public RobotMessage
-    {
-    public:
-      BlockObservationMessage(const CozmoMsg_ObservedBlockMarker *msg);
-      
-    private:
-      u16 blockType;
-      u8  faceType;
-      
-      Quad2f
-      
-    };
-#endif
-    
     class Robot
     {
     public:
@@ -86,13 +47,15 @@ namespace Anki {
       const Camera& get_camDown() const;
       const Camera& get_camHead() const;
       OperationMode get_operationMode() const;
-      const MatMarker2d* get_matMarker2d() const;
+      //const MatMarker2d* get_matMarker2d() const;
       
-      float get_downCamPixPerMM() const;
+      //float get_downCamPixPerMM() const;
       
       void set_pose(const Pose3d &newPose);
       
-      void queueMessage(const u8 *msg, const u8 msgSize);
+      void queueIncomingMessage(const u8 *msg, const u8 msgSize);
+      bool hasOutgoingMessages() const;
+      void getOutgoingMessage(u8 *msgOut, u8 &msgSize);
       
     protected:
       u8 ID;
@@ -100,13 +63,14 @@ namespace Anki {
       Camera camDown, camHead;
       
       Pose3d pose;
+      void updatePose();
       
       //BlockWorld &world;
       
       OperationMode mode, nextMode;
       bool setOperationMode(OperationMode newMode);
       
-      const MatMarker2d            *matMarker2d;
+      const MatMarker2d            *matMarker;
       
       std::vector<BlockMarker2d>   visibleBlockMarkers2d;
       //std::vector<BlockMarker3d*>  visibleFaces;
@@ -115,14 +79,13 @@ namespace Anki {
       // TODO: compute this from down-camera calibration data
       float downCamPixPerMM;
       
+      // Message handling
       typedef std::vector<u8> MessageType;
       typedef std::queue<MessageType> MessageQueue;
-      MessageQueue messages;
-      //void checkMessages(std::queue<RobotMessage> *messageQueue);
-      
-      template<typename MSG_TYPE>
-      void processMessage(const MSG_TYPE *msg);
-      
+      MessageQueue messagesIn;
+      MessageQueue messagesOut;
+      void checkMessages();
+            
     }; // class Robot
 
     // Inline accessors:
@@ -141,11 +104,17 @@ namespace Anki {
     inline Robot::OperationMode Robot::get_operationMode() const
     { return this->mode; }
     
+    /*
     inline const MatMarker2d* Robot::get_matMarker2d() const
-    { return this->matMarker2d; }
+    { return this->matMarker; }
     
     inline float Robot::get_downCamPixPerMM() const
     { return this->downCamPixPerMM; }
+    */
+    
+    inline bool Robot::hasOutgoingMessages() const
+    { return not this->messagesOut.empty(); }
+    
     
   } // namespace Cozmo
 } // namespace Anki

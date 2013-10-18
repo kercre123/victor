@@ -11,6 +11,9 @@
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/robot.h"
 
+// TODO: This is shared between basestation and robot and should be moved up
+#include "anki/cozmo/robot/cozmoConfig.h"
+
 #include "anki/cozmo/messageProtocol.h"
 
 
@@ -39,24 +42,106 @@ namespace Anki {
     }
      */
     
-    
-    void Robot::step(void)
+    void Robot::updatePose()
     {
-      // Reset what we have available from the physical robot
-      if(this->matMarker2d != NULL) {
-        delete this->matMarker2d;
-        this->matMarker2d = NULL;
-      }
-      this->visibleBlockMarkers2d.clear();
-      
-      // Loop over all available messages from the robot and update any
-      // markers we saw
-      
-      while(not this->messages.empty())
-      {
-        MessageType& msg = messages.front();
+      // TODO: add motion simulation (for in between messages)
+
+      if(this->matMarker != NULL) {
+        // Convert the MatMarker's image coordinates to a World
+        // coordinates position
+        Point2f centerVec(matMarker->get_imagePose().get_translation());
         
-        const u8 msgSize = msg[0];
+        const CameraCalibration& camCalib = camDown.get_calibration();
+        
+        // TODO: get center point from camCalib
+        //const Point2f imageCenterPt(camCalib.get_center_pt());
+        const Point2f imageCenterPt(640.f/2.f, 480.f/2.f);
+        
+        if(BlockWorld::ZAxisPointsUp) {
+          // xvec = imgCen(1)-xcenIndex;
+          // yvec = imgCen(2)-ycenIndex;
+          
+          centerVec *= -1.f;
+          centerVec += imageCenterPt;
+          
+        } else {
+          // xvec = xcenIndex - imgCen(1);
+          // yvec = ycenIndex - imgCen(2);
+          
+          centerVec -= imageCenterPt;
+        }
+        
+        //xvecRot =  xvec*cos(-marker.upAngle) + yvec*sin(-marker.upAngle);
+        //yvecRot = -xvec*sin(-marker.upAngle) + yvec*cos(-marker.upAngle);
+        // xMat = xvecRot/pixPerMM + marker.X*squareWidth - squareWidth/2 -
+        //          matSize(1)/2;
+        // yMat = yvecRot/pixPerMM + marker.Y*squareWidth - squareWidth/2 -
+        //          matSize(2)/2;
+        RotationMatrix2d R(matMarker->get_upAngle());
+        Point2f matPoint(R*centerVec);
+        // TODO: get downCamPixPerMM from camCalib!
+        // matPoint *= 1.f / this->downCamPixPerMM;
+        matPoint *= 1.f/24.f;
+        matPoint.x() += matMarker->get_xSquare() * MatMarker2d::SquareWidth;
+        matPoint.y() += matMarker->get_ySquare() * MatMarker2d::SquareWidth;
+        matPoint -= MatMarker2d::SquareWidth * .5f;
+        matPoint.x() -= MatSection::Size.x() * .5f;
+        matPoint.x() -= MatSection::Size.y() * .5f;
+        
+        if(not BlockWorld::ZAxisPointsUp) {
+          matPoint.x() *= -1.f;
+        }
+        
+        // orient1 = orient1 + marker.upAngle;
+        Radians angle( matMarker->get_imagePose().get_angle()
+                      + matMarker->get_upAngle() );
+        
+        // TODO: embed 2D pose in 3D space using its plane
+        //this->pose = Pose3d( Pose2d(angle, matPoint) );
+        this->pose.set_rotation(angle, {{0.f, 0.f, 1.f}});
+        this->pose.set_translation({{matPoint.x(), matPoint.y(), WHEEL_DIAMETER_MM * .5f}});
+        
+        // Delete the matMarker once we're done with it
+        delete matMarker;
+        matMarker = NULL;
+        
+      } // if we have a matMarker2d
+      
+      // Send our (updated) pose to the physical robot:
+      CozmoMsg_AbsLocalizationUpdate msg;
+      msg.size = SIZE_MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE;
+      msg.msgID = MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE;
+      msg.xPosition = pose.get_translation().x();
+      msg.yPosition = pose.get_translation().y();
+      
+      // TODO: Just assuming axis is vertical here...
+      msg.headingAngle = pose.get_rotationVector().get_angle().ToFloat();
+      
+      const u8 *msgData = (const u8 *) &msg;
+      messagesOut.emplace(msgData, msgData+sizeof(msg));
+
+      fprintf(stdout, "Basestation sending updated pose to robot: "
+              "(%.1f, %.1f) at %.1f degrees\n",
+              msg.xPosition, msg.yPosition,
+              msg.headingAngle * (180.f/M_PI));
+      
+    } // updatePose()
+    
+    
+    void Robot::checkMessages()
+    {
+      
+      //
+      // Parse Messages
+      //
+      //   Loop over all available messages from the physical robot
+      //   and update any markers we saw
+      //
+      while(not this->messagesIn.empty())
+      {
+        MessageType& msg = messagesIn.front();
+        
+        //const u8 msgSize = msg[0];
         const CozmoMsg_Command msgType = static_cast<CozmoMsg_Command>(msg[1]);
         
         switch(msgType)
@@ -68,7 +153,8 @@ namespace Anki {
             // Translate the raw message into a BlockMarker2d object:
             const CozmoMsg_ObservedBlockMarker* blockMsg = reinterpret_cast<const CozmoMsg_ObservedBlockMarker*>(&(msg[0]));
             
-            fprintf(stdout, "Received ObservedBlockMarker message: "
+            fprintf(stdout,
+                    "Basestation Robot received ObservedBlockMarker message: "
                     "saw Block %d, Face %d at [(%.1f,%.1f), (%.1f,%.1f), "
                     "(%.1f,%.1f), (%.1f,%.1f)] with upDirection=%d\n",
                     blockMsg->blockType,       blockMsg->faceType,
@@ -106,17 +192,18 @@ namespace Anki {
             // Translate the raw message into a MatMarker2d object:
             const CozmoMsg_ObservedMatMarker* matMsg = reinterpret_cast<const CozmoMsg_ObservedMatMarker*>(&(msg[0]));
             
-            fprintf(stdout, "Received ObservedMatMarker message: "
+            fprintf(stdout,
+                    "Basestation robot received ObservedMatMarker message: "
                     "at mat square (%d,%d) seen at (%.1f,%.1f) "
                     "with orientation %.1f and upDirection=%d\n",
                     matMsg->x_MatSquare, matMsg->y_MatSquare,
                     matMsg->x_imgCenter, matMsg->y_imgCenter,
                     matMsg->angle * (180.f/M_PI), matMsg->upDirection);
             
-            if(this->matMarker2d != NULL) {
+            if(this->matMarker != NULL) {
               // We have two messages indicating a MatMarker was observed,
               // just use the last one?
-              delete this->matMarker2d;
+              delete this->matMarker;
               
               // TODO: Issue a warning?
             }
@@ -124,9 +211,10 @@ namespace Anki {
             Pose2d imgPose(matMsg->angle, matMsg->x_imgCenter, matMsg->y_imgCenter);
             MarkerUpDirection upDir = static_cast<MarkerUpDirection>(matMsg->upDirection);
             
-            this->matMarker2d = new MatMarker2d(matMsg->x_MatSquare,
-                                                matMsg->y_MatSquare,
-                                                imgPose, upDir);
+            this->matMarker = new MatMarker2d(matMsg->x_MatSquare,
+                                              matMsg->y_MatSquare,
+                                              imgPose, upDir);
+            
             break;
           }
           default:
@@ -134,17 +222,49 @@ namespace Anki {
             
         } // switch(msg type)
         
-        this->messages.pop();
+        this->messagesIn.pop();
         
       } // while message queue not empty
       
+    } // checkMessages()
+    
+    
+    void Robot::step(void)
+    {
+      // Reset what we have available from the physical robot
+      if(this->matMarker != NULL) {
+        delete this->matMarker;
+        this->matMarker = NULL;
+      }
+      this->visibleBlockMarkers2d.clear();
+      
+      checkMessages();
+      
+      updatePose();
+      
     } // step()
 
-    void Robot::queueMessage(const u8 *msg, const u8 msgSize)
+    void Robot::queueIncomingMessage(const u8 *msg, const u8 msgSize)
     {
       // Copy the incoming message into our queue
-      this->messages.emplace(msg, msg+msgSize); // C++11: no copy
+      this->messagesIn.emplace(msg, msg+msgSize); // C++11: no copy
     }
+    
+    void Robot::getOutgoingMessage(u8 *msgOut, u8 &msgSize)
+    {
+      MessageType& nextMessage = this->messagesOut.front();
+      if(msgSize < nextMessage.size()) {
+        CORETECH_THROW("Next outgoing message too large for given buffer.");
+        msgSize = 0;
+        return;
+      }
+        
+      std::copy(nextMessage.begin(), nextMessage.end(), msgOut);
+      msgSize = nextMessage.size();
+      
+      this->messagesOut.pop();
+    }
+    
           /*
     void Robot::checkMessages(std::queue<RobotMessage> &messageQueue)
     {
