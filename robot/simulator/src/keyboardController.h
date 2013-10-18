@@ -5,16 +5,27 @@
 
 namespace Anki {
   namespace Cozmo {
-    namespace KeyboardController {
-
-      void Init(webots::Robot* robot);
-      void Enable(void);
-      void Disable(void);
-      bool IsEnabled(void);
-      void ProcessKeystroke(void);
-
+    
+    // Being in the Simulator namespace gives us access to
+    // Simulator::CozmoBot, a pointer to the webots supervisor
+    // object.
+    namespace Sim {
       
-    } // namespace KeyboardController
+      extern webots::Supervisor* CozmoBot;
+      
+      namespace KeyboardController {
+        
+
+        void Enable(void);
+        void Disable(void);
+        bool IsEnabled(void);
+        void ProcessKeystroke(void);
+        
+        
+      } // namespace KeyboardController
+      
+    } // namespace Sim(ulator)
+    
   } // namespace Cozmo
 } // namespace Anki
 

@@ -3,7 +3,9 @@
 namespace Anki {
   namespace Cozmo {
     
-    const Point2f MatSection::Size = Point2f(800.f, 800.f);
+    // TODO: In webots, the mat is 1m x 1m, but should probably be updated
+    // 80cm x 80cm to match the expected spec...
+    const Point2f MatSection::Size = Point2f(1000.f, 1000.f);
     
     const float MatMarker2d::SquareWidth = 10.f; // mm
     

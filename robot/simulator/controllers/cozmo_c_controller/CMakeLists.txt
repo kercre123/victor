@@ -31,6 +31,7 @@ set(SOURCE_FILES
 	
   ${SIMULATOR_SRC_DIR}/keyboardController.cpp
   ${SIMULATOR_SRC_DIR}/sim_hal.cpp
+  ${SIMULATOR_SRC_DIR}/sim_pathFollower.cpp
 	
   ${ROBOT_SRC_DIR}/cozmoBot.cpp
   ${ROBOT_SRC_DIR}/pathFollower.cpp
@@ -53,6 +54,7 @@ set(SOURCE_FILES
 set(HEADER_FILES
 		
 	${SIMULATOR_SRC_DIR}/keyboardController.h
+  ${SIMULATOR_SRC_DIR}/sim_pathFollower.h
 	
 	${COZMO_ROBOT_HEADER_FILES}
 	${COZMO_INCLUDE_FILES}

@@ -15,10 +15,6 @@
 namespace Anki {
   namespace Cozmo {
     
-    // Global pointer to the Webots robot so that we do other things like
-    // keyboard control elsewhere.  Read: backdoor hack.  This feels dirty...
-    webots::Supervisor* gCozmoBot = NULL;
-    
     namespace { // "Private members"
 
       // Const paramters / settings
@@ -82,10 +78,6 @@ namespace Anki {
       unsigned char recvBuf_[RECV_BUFFER_SIZE];
       s32 recvBufSize_;
       
-      // For communications with the cozmo_physics plugin used for drawing
-      // paths with OpenGL
-      webots::Emitter *physicsComms_;
-      
       // Webots Display
       char displayStr_[MAX_TEXT_DISPLAY_LENGTH];
       
@@ -103,12 +95,13 @@ namespace Anki {
       
     } // "private" namespace
     
-    // Path drawing functions
-    void ErasePath(s32 path_id);
-    void AppendPathSegmentLine(s32 path_id, f32 x_start_m, f32 y_start_m, f32 x_end_m, f32 y_end_m);
-    void AppendPathSegmentArc(s32 path_id, f32 x_center_m, f32 y_center_m, f32 radius_m, f32 startRad, f32 endRad);
-    void ShowPath(s32 path_id, bool show);
-    void SetPathHeightOffset(f32 m);
+    namespace Sim {
+      // Create a pointer to the webots supervisor object within
+      // a Simulator namespace so that other Simulation-specific code
+      // can talk to it.  This avoids there being a global gCozmoBot
+      // running around, accessible in non-simulator code.
+      webots::Supervisor* CozmoBot = &webotRobot_;
+    }
     
 #pragma mark --- Simulated Hardware Method Implementations ---
     
@@ -170,8 +163,6 @@ namespace Anki {
       tx_ = webotRobot_.getEmitter("radio_tx");
       rx_ = webotRobot_.getReceiver("radio_rx");
       
-      // Plugin comms uses channel 0
-      physicsComms_ = webotRobot_.getEmitter("cozmo_physics_comms");
       
       // Set ID
       // Expected format of name is <SomeName>_<robotID>
@@ -225,13 +216,6 @@ namespace Anki {
       rx_->setChannel(robotID_);
       tx_->setChannel(robotID_);
       recvBufSize_ = 0;
-      
-      // Initialize path drawing settings
-      SetPathHeightOffset(0.05);
-      
-      // Global pointer to the Webots robot so that we do other things like
-      // keyboard control elsewhere.  Read: backdoor hack.  This feels dirty...
-      gCozmoBot = &webotRobot_;
       
       isInitialized = true;
       return EXIT_SUCCESS;
@@ -452,7 +436,7 @@ namespace Anki {
         // Delete processed packet from queue
         rx_->nextPacket();
       }
-    }
+    } // ManageRecvBuffer()
     
     void HAL::SendMessage(const void* data, int size)
     {
@@ -466,7 +450,7 @@ namespace Anki {
         memcpy(msg+3, data, size);
         tx_->send(msg, size+3);
       }
-    }
+    } // SendMessage()
     
     int HAL::RecvMessage(void* data)
     {
@@ -491,66 +475,7 @@ namespace Anki {
       }
       
       return NULL;
-    }
-    
-    
-    //////// Path drawing functions /////////
-    void ErasePath(int path_id)
-    {
-      float msg[ERASE_PATH_MSG_SIZE];
-      msg[0] = PLUGIN_MSG_ERASE_PATH;
-      msg[PLUGIN_MSG_ROBOT_ID] = robotID_;
-      msg[PLUGIN_MSG_PATH_ID] = path_id;
-      physicsComms_->send(msg, sizeof(msg));
-    }
-    
-    void AppendPathSegmentLine(int path_id, float x_start_m, float y_start_m, float x_end_m, float y_end_m)
-    {
-      float msg[LINE_MSG_SIZE];
-      msg[0] = PLUGIN_MSG_APPEND_LINE;
-      msg[PLUGIN_MSG_ROBOT_ID] = robotID_;
-      msg[PLUGIN_MSG_PATH_ID] = path_id;
-      msg[LINE_START_X] = x_start_m;
-      msg[LINE_START_Y] = y_start_m;
-      msg[LINE_END_X] = x_end_m;
-      msg[LINE_END_Y] = y_end_m;
-      
-      physicsComms_->send(msg, sizeof(msg));
-    }
-    
-    void AppendPathSegmentArc(int path_id, float x_center_m, float y_center_m, float radius_m, float startRad, float endRad)
-    {
-      float msg[ARC_MSG_SIZE];
-      msg[0] = PLUGIN_MSG_APPEND_ARC;
-      msg[PLUGIN_MSG_ROBOT_ID] = robotID_;
-      msg[PLUGIN_MSG_PATH_ID] = path_id;
-      msg[ARC_CENTER_X] = x_center_m;
-      msg[ARC_CENTER_Y] = y_center_m;
-      msg[ARC_RADIUS] = radius_m;
-      msg[ARC_START_RAD] = startRad;
-      msg[ARC_END_RAD] = endRad;
-      
-      physicsComms_->send(msg, sizeof(msg));
-    }
-    
-    void ShowPath(int path_id, bool show)
-    {
-      float msg[SHOW_PATH_MSG_SIZE];
-      msg[0] = PLUGIN_MSG_SHOW_PATH;
-      msg[PLUGIN_MSG_ROBOT_ID] = robotID_;
-      msg[PLUGIN_MSG_PATH_ID] = path_id;
-      msg[SHOW_PATH] = show ? 1 : 0;
-      physicsComms_->send(msg, sizeof(msg));
-    }
-    
-    void SetPathHeightOffset(float m){
-      float msg[SET_HEIGHT_OFFSET_MSG_SIZE];
-      msg[0] = PLUGIN_MSG_SET_HEIGHT_OFFSET;
-      msg[PLUGIN_MSG_ROBOT_ID] = robotID_;
-      //msg[PLUGIN_MSG_PATH_ID] = path_id;
-      msg[HEIGHT_OFFSET] = m;
-      physicsComms_->send(msg, sizeof(msg));
-    }
+    } // RecvMessage()
     
     const HAL::FrameGrabber HAL::GetHeadFrameGrabber(void)
     {
@@ -577,7 +502,11 @@ namespace Anki {
     {
       return static_cast<u32>(webotRobot_.getTime() * 1000000.0);
     }
-
     
+    s32 HAL::GetRobotID(void)
+    {
+      return robotID_;
+    }
+
   } // namespace Cozmo
 } // namespace Anki

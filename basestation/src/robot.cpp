@@ -86,7 +86,7 @@ namespace Anki {
         matPoint.y() += matMarker->get_ySquare() * MatMarker2d::SquareWidth;
         matPoint -= MatMarker2d::SquareWidth * .5f;
         matPoint.x() -= MatSection::Size.x() * .5f;
-        matPoint.x() -= MatSection::Size.y() * .5f;
+        matPoint.y() -= MatSection::Size.y() * .5f;
         
         if(not BlockWorld::ZAxisPointsUp) {
           matPoint.x() *= -1.f;
