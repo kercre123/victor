@@ -470,6 +470,8 @@ namespace Anki {
     
     int HAL::RecvMessage(void* data)
     {
+      // TODO: check for and remove 0xBEEF?
+      
       // Is there any data in the receive buffer?
       if (recvBufSize_ > 0) {
         // Is there a complete message in the receive buffer?

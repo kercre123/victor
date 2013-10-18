@@ -41,6 +41,8 @@ int main(int argc, char **argv)
 {
   //Anki::MessagingInterface* msgInterface = new Anki::MessagingInterface_TCP();
   
+  Anki::Cozmo::BlockWorld::ZAxisPointsUp = false; // b/c this is Webots
+  
   Anki::Cozmo::BlockWorld blockWorld;
   //CozmoWorldComms comms;
   //comms.Init();
@@ -62,6 +64,11 @@ int main(int argc, char **argv)
   WbDeviceTag tx[MAX_ROBOTS];
 #endif
   
+  
+  //
+  // Initialize World Transmitters/Receivers
+  // (one for each robot, up to MAX_ROBOTS)
+  //
   char rxRadioName[12], txRadioName[12];
   
   for(int i=0; i<MAX_ROBOTS; ++i) {
@@ -78,14 +85,19 @@ int main(int argc, char **argv)
     wb_receiver_enable(rx[i], Anki::Cozmo::TIME_STEP);
 #endif
   }
-  
+ 
+  //
+  // Main Execution loop: step the world forward forever
+  //
 #if USE_WEBOTS_CPP_INTERFACE
   while (commsController.step(Anki::Cozmo::TIME_STEP) != -1)
 #else
   while(wb_robot_step(Anki::Cozmo::TIME_STEP) != -1)
 #endif
   {
-    // Receive messages:
+    //
+    // Check for any incoming messages from each physical robot:
+    //
     for(int i=0; i<MAX_ROBOTS; ++i)
     {
       int dataSize;
@@ -121,6 +133,27 @@ int main(int argc, char **argv)
 #endif // USE_WEBOTS_CPP_INTERFACE
       
     } // for each receiver
+    
+    //
+    // Check for any outgoing messages from each basestation robot:
+    //
+    for(int i=0; i<robots.size(); ++i)
+    {
+      while(robots[i].hasOutgoingMessages())
+      {
+        // Buffer for the message data we're going to send:
+        // (getOutgoingMessage() will copy data into it)
+        unsigned char msgData[255];
+        u8 msgSize = 255;
+        
+        robots[i].getOutgoingMessage(msgData, msgSize);
+        if(msgSize > 0) {
+          wb_emitter_send(tx[i], msgData, msgSize);
+        }
+        
+      } // while robot i still has outgoing messages to send
+      
+    } // for each robot
     
     // Update the world (force robots to process their messages)
     blockWorld.update();
@@ -168,7 +201,7 @@ int processPacket(const unsigned char *data, const int dataSize,
           case MSG_V2B_CORE_MAT_MARKER_OBSERVED:
           {
             // Pass these right along to the robot object:
-            robots[i_robot].queueMessage(data+3, msgSize+1);
+            robots[i_robot].queueIncomingMessage(data+3, msgSize+1);
             break;
           }
           

@@ -18,8 +18,11 @@ namespace Anki
     }
      */
     
+    bool BlockWorld::ZAxisPointsUp = true;
+    
+    
     BlockWorld::BlockWorld( )
-    : blocks(MaxBlockTypes), zAxisPointsUp(true)
+    : blocks(MaxBlockTypes)
     {
       
     }
@@ -79,67 +82,6 @@ namespace Anki
     
     void BlockWorld::update(void)
     {
-      /*
-      // Go through messages in the queue and update blocks' and robots' poses
-      // accordingly
-      
-      std::vector<BlockMarker3d> blockMarkers;
-      
-      while( not this->messages.empty() )
-      {
-        const u8 *msg = messages.front();
-        messages.pop();
-        
-        const u8 msgSize = msg[0];
-        const CozmoMsg_Command msgType = static_cast<CozmoMsg_Command>(msg[1]);
-        
-        switch(msgType)
-        {
-          case MSG_V2B_CORE_BLOCK_MARKER_OBSERVED:
-          {
-            // Create a BlockMarker2d from the message:
-            const CozmoMsg_ObservedBlockMarker* blockMsg = reinterpret_cast<const CozmoMsg_ObservedBlockMarker*>(msg);
-            
-            Quad2f corners;
-            
-            corners[Quad2f::TopLeft].x() = blockMsg->x_imgUpperLeft;
-            corners[Quad2f::TopLeft].y() = blockMsg->y_imgUpperLeft;
-            
-            corners[Quad2f::BottomLeft].x() = blockMsg->x_imgLowerLeft;
-            corners[Quad2f::BottomLeft].y() = blockMsg->y_imgLowerLeft;
-
-            corners[Quad2f::TopRight].x() = blockMsg->x_imgUpperRight;
-            corners[Quad2f::TopRight].y() = blockMsg->y_imgUpperRight;
-
-            corners[Quad2f::BottomRight].x() = blockMsg->x_imgLowerRight;
-            corners[Quad2f::BottomRight].y() = blockMsg->y_imgLowerRight;
-            
-            BlockMarker2d blockMarker2d(blockMsg->blockType,
-                                        blockMsg->faceType,
-                                        corners);
-            
-            // Instantiate a BlockMarker3d in the list using the BlockMarker2d
-            // and the camera that saw it.
-            blockMarkers.emplace_back(blockMarker2d, this->robots[blockMsg->robotId]);
-            
-            break;
-          }
-            
-          case MSG_V2B_CORE_MAT_MARKER_OBSERVED:
-          {
-            break;
-          }
-            
-          default:
-          {
-            // TODO: send this message somewhere reasonable (log?)
-            fprintf(stdout, "Unknown message type. Skipping.\n");
-          }
-        } // switch(msgType)
-        
-      } // while there are still messages
-       */
-      
       // Get updated observations from each robot and update blocks' and robots'
       // poses accordingly
       std::vector<BlockMarker3d> blockMarkers;
@@ -148,12 +90,9 @@ namespace Anki
       {
         // Tell each robot to take a step, which will have it
         // check and parse any messages received from the physical
-        // robot.
+        // robot, and update its pose.
         robot->step();
         
-        // Tell each robot where it is, based on its current mat observation:
-        //updateRobotPose(robot);
-                          
         // Each robot adds the 3d markers it saw to the list.
         //robot->getVisibleBlockMarkers3d(blockMarkers);
         
@@ -162,11 +101,16 @@ namespace Anki
       // If any robots saw any markers, update/add the corresponding blocks:
       if(not blockMarkers.empty())
       {
+        // TODO: add and update blocks based on observed markers
+        
+        fprintf(stdout, "Saw %lu total BlockMarkers from all robots.\n",
+                blockMarkers.size());
         
       } // IF we saw any block markers
       
     } // update()
     
+    /*
     void BlockWorld::updateRobotPose(Robot *robot)
     {
       // TODO: Can the robot do this for itself?
@@ -228,7 +172,7 @@ namespace Anki
       } // if matMarker not NULL
       
     } // updateRobotPose()
-    
+    */
     
   } // namespace Cozmo
 } // namespace Anki

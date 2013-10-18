@@ -156,6 +156,37 @@ namespace Anki {
       // Buffer any incoming data from basestation
       HAL::ManageRecvBuffer();
       
+      // Process any messages from the basestation
+      u8 msgBuffer[255];
+      u8 msgSize;
+      while( (msgSize = HAL::RecvMessage(msgBuffer)) > 0 )
+      {
+        CozmoMsg_Command cmd = static_cast<CozmoMsg_Command>(msgBuffer[1]);
+        switch(cmd)
+        {
+          case MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE:
+          {
+            // TODO: Double-check that size matches expected size?
+            
+            const CozmoMsg_AbsLocalizationUpdate *msg = reinterpret_cast<const CozmoMsg_AbsLocalizationUpdate*>(msgBuffer);
+            
+            currentMatX_       = msg->xPosition;
+            currentMatY_       = msg->yPosition;
+            currentMatHeading_ = msg->headingAngle;
+            
+            fprintf(stdout, "Robot received localization update from "
+                    "basestation: (%.1f,%.1f) at %.1f degrees\n",
+                    currentMatX_, currentMatY_,
+                    currentMatHeading_.getDegrees());
+            
+            break;
+          }
+          default:
+            fprintf(stdout, "Unrecognized command in received message.\n");
+            
+        } // switch(cmd)
+      }
+      
       // Check for any messages from the vision system and pass them along to
       // the basestation
       while( matMarkerMailbox_.hasMail() )
@@ -250,7 +281,6 @@ namespace Anki {
       angle = currentMatHeading_;
     } // GetCurrentMatPose()
     
-    // TODO: Move this to HAL?
     void Robot::SetOpenLoopMotorSpeed(s16 speedl, s16 speedr)
     {
       // Convert PWM to rad/s
