@@ -20,19 +20,19 @@ end
 switch(whichDir)
     case 1 % 'up'
         this.reorderCorners = 1:4;
-        this.upAngle = 0;
+        this.upAngle =-pi/2;
     case 2 % 'down'
         means = rot90(rot90(means));
         this.reorderCorners = [4 3 2 1];
-        this.upAngle = pi;
+        this.upAngle = pi/2;
     case 3 % 'left'
         means = rot90(rot90(rot90(means)));
         this.reorderCorners = [2 4 1 3];
-        this.upAngle = pi/2;
+        this.upAngle = pi;
     case 4 % 'right'
         means = rot90(means);
         this.reorderCorners = [3 1 4 2];
-        this.upAngle = 3*pi/2;
+        this.upAngle = 0;
     otherwise
         error('Unrecognized whichDir "%d"', whichDir);
 end
