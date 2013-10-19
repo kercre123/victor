@@ -1,31 +1,34 @@
 
-#include "anki/cozmo/MessageProtocol.h"
+#include "anki/cozmo/messageProtocol.h"
 
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
-//#include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/robot/mainExecution.h"
+#include "anki/cozmo/robot/hal.h" // simulated or real!
 #include "anki/cozmo/robot/pathFollower.h"
 #include "anki/cozmo/robot/vehicleMath.h"
 #include "anki/cozmo/robot/speedController.h"
+#include "anki/cozmo/robot/steeringController.h"
+#include "anki/cozmo/robot/wheelController.h"
+#include "anki/cozmo/robot/visionSystem.h"
 
 #include "anki/messaging/robot/utilMessaging.h"
 
-//#include "keyboardController.h"
-#include "cozmo_physics.h"
+//#include "cozmo_physics.h"
 
 #include <cmath>
 #include <cstdio>
 #include <string>
 
-#include <webots/Display.hpp>
+// TODO: Put this in a #define?
+// Stuff only needed in simulation:
+#include "sim_overlayDisplay.h"
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB && USING_MATLAB_VISION
 #include "anki/embeddedCommon/matlabConverters.h"
 #endif
 
 ///////// TESTING //////////
-#define EXECUTE_TEST_PATH 1
+#define EXECUTE_TEST_PATH 0
 
 ///////// END TESTING //////
 
@@ -46,10 +49,7 @@
 #define HEAD_CAMERA "cam_head"
 #define LIFT_CAMERA "cam_lift"
 
-#include "anki/cozmo/robot/hal.h" // simulated or real!
-#include "anki/cozmo/robot/steeringController.h"
-#include "anki/cozmo/robot/wheelController.h"
-#include "anki/cozmo/robot/visionSystem.h"
+
 
 namespace Anki {
   
@@ -178,6 +178,14 @@ namespace Anki {
                     "basestation: (%.3f,%.3f) at %.1f degrees\n",
                     currentMatX_, currentMatY_,
                     currentMatHeading_.getDegrees());
+            {
+              using namespace Sim::OverlayDisplay;
+              SetText(CURR_POSE, "Pose: (x,y)=(%.4f,%.4f) at angle=%.1f\n",
+                      currentMatX_, currentMatY_,
+                      currentMatHeading_.getDegrees());
+            }
+            
+            
             
             break;
           }

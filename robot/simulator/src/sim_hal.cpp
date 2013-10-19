@@ -7,8 +7,9 @@
 #include "anki/cozmo/messageProtocol.h"
 #include "cozmo_physics.h"
 
+#include "sim_overlayDisplay.h"
+
 // Webots Includes
-#include <webots/Display.hpp>
 #include <webots/Supervisor.hpp>
 
 
@@ -23,19 +24,7 @@ namespace Anki {
       const s32 UNLOCK_HYSTERESIS = 50;
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();
       
-      // For Webots Display:
-      const f32 OVERLAY_TEXT_SIZE = 0.07;
-      const u32 OVERLAY_TEXT_COLOR = 0x00ff00;
-      const u16 MAX_TEXT_DISPLAY_LENGTH = 1024;
-      
 #pragma mark --- Simulated HardwareInterface "Member Variables" ---
-      
-      // Overlaid Text Display IDs:
-      typedef enum {
-        OT_CURR_POSE,
-        OT_TARGET_POSE,
-        OT_PATH_ERROR
-      } OverlayTextID;
       
       bool isInitialized = false;
         
@@ -77,9 +66,6 @@ namespace Anki {
       bool isConnected_;
       unsigned char recvBuf_[RECV_BUFFER_SIZE];
       s32 recvBufSize_;
-      
-      // Webots Display
-      char displayStr_[MAX_TEXT_DISPLAY_LENGTH];
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -374,15 +360,9 @@ namespace Anki {
       }
     }
     
-    void SetOverlayText(OverlayTextID ot_id, const char* txt)
-    {
-      webotRobot_.setLabel(ot_id, txt, 0,
-                                 0.7f + static_cast<f32>(ot_id) * (OVERLAY_TEXT_SIZE/3.f),
-                                 OVERLAY_TEXT_SIZE, OVERLAY_TEXT_COLOR, 0);
-    }
-    
     void HAL::UpdateDisplay(void)
     {
+      using namespace Sim::OverlayDisplay;
      /*
       fprintf(stdout, "speedDes: %d, speedCur: %d, speedCtrl: %d, speedMeas: %d\n",
               GetUserCommandedDesiredVehicleSpeed(),
@@ -390,10 +370,7 @@ namespace Anki {
               GetControllerCommandedVehicleSpeed(),
               GetCurrentMeasuredVehicleSpeed());
       */
-      
-      // Print overlay text in main 3D view
-      SetOverlayText(OT_CURR_POSE, displayStr_);
-      
+       
     } // HAL::UpdateDisplay()
     
     
