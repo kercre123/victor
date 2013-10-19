@@ -325,8 +325,9 @@ namespace Anki {
          */
         
         engEvalString(matlabEngine_,
-                      "[matMarker, matOrient] = matLocalization(matCamImage, "
+                      "matMarker = matLocalization(matCamImage, "
                       "   'pixPerMM', pixPerMM, 'returnMarkerOnly', true); "
+                      "matOrient = matMarker.upAngle; "
                       "isMatMarkerValid = matMarker.isValid; "
                       "xMatSquare = matMarker.X; "
                       "yMatSquare = matMarker.Y; "

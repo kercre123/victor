@@ -7,4 +7,6 @@ function [orient, mag] = matLocalization_step2_downsampleAndComputeGradientAngle
     img(1:orientationSample:end, 1:orientationSample:end), derivSigma);
 mag = sqrt(Ix.^2 + Iy.^2);
 orient = atan2(Iy, Ix);
+
+% TODO: Can we just use absolute values of Ix and/or Iy instead of this?
 orient(orient < 0) = pi + orient(orient < 0);

@@ -1,4 +1,4 @@
-function [xMat, yMat, xvecRot, yvecRot, orient1] = matLocalization_step7_localizeOnMat(marker, orient1, squareWidth, pixPerMM, imgCen, xcenIndex, ycenIndex, matSize, zDirection, embeddedConversions, DEBUG_DISPLAY)
+function [xMat, yMat, xvecRot, yvecRot, orient1] = matLocalization_step7_localizeOnMat(marker,  squareWidth, pixPerMM, imgCen, xcenIndex, ycenIndex, matSize, zDirection, embeddedConversions, DEBUG_DISPLAY)
 
 if marker.isValid
     % Get camera/image position on mat, in mm:
@@ -24,12 +24,11 @@ if marker.isValid
         xMat = -xMat;
     end
     yMat = yvecRot/pixPerMM + marker.Y*squareWidth - squareWidth/2 - matSize(2)/2;
-            
-    orient1 = orient1 + marker.upAngle;
-    
+    orient1 = marker.upAngle;
 else
     xMat = -1;
     yMat = -1;
     xvecRot = -1;
     yvecRot = -1;
+    orient1 = -1;
 end
