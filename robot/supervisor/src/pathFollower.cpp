@@ -17,6 +17,10 @@
 #include "sim_pathFollower.h"
 #endif
 
+#if(DEBUG_MAIN_EXECUTION)
+#include "sim_overlayDisplay.h"
+#endif
+
 namespace Anki
 {
   namespace Cozmo
@@ -90,9 +94,13 @@ namespace Anki
           if (gotError) {
             lineFollowIndex_ = pathDistError_*1000.f; // Convert to mm
             printf("fidx: %d\n\n", lineFollowIndex_);
-#if 0 && (DEBUG_MAIN_EXECUTION)
-            snprintf(pathErrorStr, MAX_PATH_ERROR_TEXT_LENGTH, "PathError: %f m, %f rad  => fidx: %d", pathDistErr, radErr, fidx);
-            gCozmoBot.SetOverlayText(OT_PATH_ERROR, pathErrorStr);
+#if(DEBUG_MAIN_EXECUTION)
+            {
+              using namespace Sim::OverlayDisplay;
+              SetText(PATH_ERROR, "PathError: %.4f m, %.1f deg  => fidx: %d",
+                      pathDistError_, pathRadError_ * (180.f/M_PI),
+                      lineFollowIndex_);
+            }
 #endif
           } else {
             SpeedController::SetUserCommandedDesiredVehicleSpeed(0);

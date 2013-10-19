@@ -1,0 +1,26 @@
+#ifndef ANKI_SIM_OVERLAY_DISPLAY_H
+#define ANKI_SIM_OVERLAY_DISPLAY_H
+
+#include "anki/common/types.h"
+
+namespace Anki {
+  namespace Cozmo {
+    namespace Sim {
+      namespace OverlayDisplay {
+        
+        // Overlaid Text Display IDs:
+        typedef enum {
+          CURR_POSE,
+          TARGET_POSE,
+          PATH_ERROR,
+          DEBUG_MSG
+        } TextID;
+        
+        void SetText(TextID id, const char *formatStr, ...);
+        
+      } //OverlayDisplay
+    } // namespace Sim
+  } // namespace Cozmo
+} // namespace Anki
+
+#endif // ANKI_SIM_OVERLAY_DISPLAY_H
