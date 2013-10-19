@@ -65,7 +65,7 @@ if returnMarkerOnly
         keyboard
     end
     
-    %subplot 121, 
+    %{
     hold off
     imshow(imgOrig); hold on
     draw(marker)
@@ -74,7 +74,7 @@ if returnMarkerOnly
         cen(2)+[0 pixPerMM*squareWidth/2*sin(marker.upAngle)], 'r', 'LineWidth', 3);
     
     title(sprintf('UpAngle=%.1f (orient1=%.1f)', marker.upAngle*180/pi, orient1*180/pi))
-   
+   %}
 
     assert(nargout==1, ...
         'If requesting marker only, exactly one output is required.');

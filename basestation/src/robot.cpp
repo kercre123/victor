@@ -88,9 +88,7 @@ namespace Anki {
         matPoint.x() -= MatSection::Size.x() * .5f;
         matPoint.y() -= MatSection::Size.y() * .5f;
         
-        if(not BlockWorld::ZAxisPointsUp) {
-          matPoint.x() *= -1.f;
-        }
+        
         
         //fprintf(stdout, "MatMarker image angle = %.1f, upAngle = %.1f\n",
         //        matMarker->get_imagePose().get_angle().getDegrees(),
@@ -100,6 +98,13 @@ namespace Anki {
         // the ground (mat camera's Z axis) and one that points up, out
         // of the ground (our world)
         Radians angle(-matMarker->get_imagePose().get_angle());
+        
+        if(not BlockWorld::ZAxisPointsUp) {
+          // TODO: is this correct??
+          //matPoint.x() *= -1.f;
+          matPoint.y() *= -1.f;
+          angle = -angle;
+        }
         
         // TODO: embed 2D pose in 3D space using its plane
         //this->pose = Pose3d( Pose2d(angle, matPoint) );
