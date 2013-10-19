@@ -17,19 +17,19 @@ namespace Anki {
       switch(upDirection)
       {
         case MARKER_TOP:
-          upAngle = 0.f;
+          upAngle = -M_PI_2;
           break;
           
         case MARKER_BOTTOM:
-          upAngle = M_PI;
-          break;
-          
-        case MARKER_LEFT:
           upAngle = M_PI_2;
           break;
           
+        case MARKER_LEFT:
+          upAngle = M_PI;
+          break;
+          
         case MARKER_RIGHT:
-          upAngle = 3.f*M_PI_2;
+          upAngle = 0.f;
           break;
           
         default:

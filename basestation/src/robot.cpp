@@ -92,9 +92,14 @@ namespace Anki {
           matPoint.x() *= -1.f;
         }
         
-        // orient1 = orient1 + marker.upAngle;
-        Radians angle( matMarker->get_imagePose().get_angle()
-                      + matMarker->get_upAngle() );
+        //fprintf(stdout, "MatMarker image angle = %.1f, upAngle = %.1f\n",
+        //        matMarker->get_imagePose().get_angle().getDegrees(),
+        //        matMarker->get_upAngle().getDegrees());
+        
+        // Using negative angle to switch between Z axis that goes into
+        // the ground (mat camera's Z axis) and one that points up, out
+        // of the ground (our world)
+        Radians angle(-matMarker->get_imagePose().get_angle());
         
         // TODO: embed 2D pose in 3D space using its plane
         //this->pose = Pose3d( Pose2d(angle, matPoint) );
@@ -114,8 +119,26 @@ namespace Anki {
       msg.xPosition = pose.get_translation().x();
       msg.yPosition = pose.get_translation().y();
       
-      // TODO: Just assuming axis is vertical here...
-      msg.headingAngle = pose.get_rotationVector().get_angle().ToFloat();
+      Radians headingAngle;
+      Vec3f   rotationAxis;
+      pose.get_rotationVector().get_angleAndAxis(headingAngle, rotationAxis);
+      
+      // Angle will always be positive in a rotationVector.  We have to
+      // take the axis into account here because we are using this as a
+      // 2D rotation angle around the *positive* Z axis. So if the rotation
+      // vector is rotating us around the *negative* Z axis, we need to use
+      // the -angle in our message to the robot.
+      if(headingAngle > 0.f) {
+        // TODO: Just assuming axis is in Z direction here...
+        CORETECH_ASSERT(NEAR_ZERO(rotationAxis.x()) &&
+                        NEAR_ZERO(rotationAxis.y()) &&
+                        NEAR(ABS(rotationAxis.z()), 1.f, 1e-6f));
+        if(rotationAxis.z() < 0) {
+          headingAngle = -headingAngle;
+        }
+      }
+
+      msg.headingAngle = headingAngle.ToFloat();
       
       const u8 *msgData = (const u8 *) &msg;
       messagesOut.emplace(msgData, msgData+sizeof(msg));

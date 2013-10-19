@@ -51,29 +51,41 @@ imgOrig = img;
 
 
 %% Mat Marker Identification
-marker = matLocalization_step6_findMarker(imgRot, squareWidth, ...
+marker = matLocalization_step6_findMarker(imgRot, orient1, squareWidth, ...
     lineWidth, pixPerMM, xcenIndex, ycenIndex, embeddedConversions, DEBUG_DISPLAY);
 
 if returnMarkerOnly
-    if ~marker.isValid
+      
+    % Hack to allow us to get back just a Mat Marker to give to a simulated
+    % robot to pass as a message up to a basestation, leaving the actual
+    % localization to be done by the basestation.
+    
+    if false && ~marker.isValid
         desktop
         keyboard
     end
     
-    % Hack to allow us to get back just a Mat Marker to give to a simulated
-    % robot to pass as a message up to a basestation, leaving the actual
-    % localization to be done by the basestation.
-    assert(nargout==2, ...
-        'If requesting marker only, two outputs required (marker and orient).');
+    %subplot 121, 
+    hold off
+    imshow(imgOrig); hold on
+    draw(marker)
+    cen = marker.centroid;
+    plot(cen(1)+[0 pixPerMM*squareWidth/2*cos(marker.upAngle)], ...
+        cen(2)+[0 pixPerMM*squareWidth/2*sin(marker.upAngle)], 'r', 'LineWidth', 3);
+    
+    title(sprintf('UpAngle=%.1f (orient1=%.1f)', marker.upAngle*180/pi, orient1*180/pi))
+   
+
+    assert(nargout==1, ...
+        'If requesting marker only, exactly one output is required.');
     xMat = marker;
-    yMat = orient1;
     return;
 end
 
 %% Mat Localization
 
 [xMat, yMat, xvecRot, yvecRot, orient1] = matLocalization_step7_localizeOnMat( ...
-    marker, orient1, squareWidth, pixPerMM, imgCen, xcenIndex, ycenIndex, ...
+    marker, squareWidth, pixPerMM, imgCen, xcenIndex, ycenIndex, ...
     matSize, zDirection, embeddedConversions, DEBUG_DISPLAY);
 
 

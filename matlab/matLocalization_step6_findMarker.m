@@ -1,4 +1,4 @@
-function marker = matLocalization_step6_findMarker(imgRot, squareWidth, lineWidth, pixPerMM, xcenIndex, ycenIndex, embeddedConversions, DEBUG_DISPLAY)
+function marker = matLocalization_step6_findMarker(imgRot, orient, squareWidth, lineWidth, pixPerMM, xcenIndex, ycenIndex, embeddedConversions, DEBUG_DISPLAY)
 
 insideSquareWidth = squareWidth - lineWidth;
  
@@ -29,3 +29,8 @@ corners = tformfwd(tform, corners);
 
 % Note we're using the rotated, undistorted image for identifying the code
 marker = MatMarker2D(imgRot, corners, maketform('affine', tform.tdata.Tinv));
+
+% Make the marker (and it's upAngle) in the coordinate frame of the
+% original, unrotated image:
+[nrows,ncols] = size(imgRot);
+marker = rotate(marker, -orient, [ncols nrows]/2);
