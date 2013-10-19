@@ -98,8 +98,15 @@ namespace Anki {
     Point<N,T>& operator-= (const Point<N,T> &other);
     
     // Math methods:
+    
+    // Return length of the vector from the origin to the point
     T length(void) const;
-    Point<N,T>& makeUnitLength(void);
+    
+    // Makes the point into a unit vector from the origin, while
+    // returning its original length. IMPORTANT: if the point was
+    // originally the origin, it cannot be made into a unit vector
+    // and will be left at the origin, and zero will be returned.
+    T makeUnitLength(void);
     
   protected:
     T data[N];
@@ -388,10 +395,13 @@ namespace Anki {
   }
   
   template<size_t N, typename T>
-  Point<N,T>& Point<N,T>::makeUnitLength(void)
+  T Point<N,T>::makeUnitLength(void)
   {
-    (*this) *= T(1)/this->length();
-    return *this;
+    const T length = this->length();
+    if(length > 0) {
+      (*this) *= T(1)/length;
+    }
+    return length;
   }
   
   template<size_t N, typename T>
