@@ -178,7 +178,16 @@ classdef Marker2D
             thisTformed = this;
             [x,y] = tformfwd(T, this.corners(:,1), this.corners(:,2));
             thisTformed.corners = [x(:) y(:)];
-        end     
+            warning('Applying transform to Marker2D does not update upAngle!');
+        end  
+        
+        function thisRotated = rotate(this, angle, center)
+            thisRotated = this;
+            R = [cos(angle) -sin(angle); sin(angle) cos(angle)];
+            center = center(ones(4,1),:);
+            thisRotated.corners = (R*(thisRotated.corners - center)')' + center;
+            thisRotated.upAngle = thisRotated.upAngle + angle;
+        end
         
         function updated = updateCorners(this, newCorners)
             assert(isequal(size(newCorners), size(this.corners)), ...
