@@ -2,13 +2,13 @@
 #define SIM_ROBOT_H
 
 #include "anki/common/types.h"
-#include "anki/cozmo/messageProtocol.h"
 
 #include <webots/Supervisor.hpp>
 
 
 namespace Anki {
   
+  // Forward declaration
   class Radians;
   
   namespace Cozmo {

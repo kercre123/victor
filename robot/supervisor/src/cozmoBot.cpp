@@ -19,41 +19,24 @@
 #include <cstdio>
 #include <string>
 
-// TODO: Put this in a #define?
-// Stuff only needed in simulation:
+///////// TESTING //////////
+#define EXECUTE_TEST_PATH 0
+#define USE_OVERLAY_DISPLAY 1
+
+
+#if(USE_OVERLAY_DISPLAY)
 #include "sim_overlayDisplay.h"
+#endif
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB && USING_MATLAB_VISION
 #include "anki/embeddedCommon/matlabConverters.h"
 #endif
 
-///////// TESTING //////////
-#define EXECUTE_TEST_PATH 0
-
 ///////// END TESTING //////
 
-//Names of the wheels used for steering
-#define WHEEL_FL "wheel_fl"
-#define WHEEL_FR "wheel_fr"
-#define GYRO_FL "wheel_gyro_fl"
-#define GYRO_FR "wheel_gyro_fr"
-#define PITCH "motor_head_pitch"
-#define LIFT "lift_motor"
-#define LIFT2 "lift_motor2"
-#define CONNECTOR "connector"
-#define PLUGIN_COMMS "cozmo_physics_comms"
-#define RX "radio_rx"
-#define TX "radio_tx"
-
-#define DOWN_CAMERA "cam_down"
-#define HEAD_CAMERA "cam_head"
-#define LIFT_CAMERA "cam_lift"
-
-
-
 namespace Anki {
-  
   namespace Cozmo {
+    namespace Robot {
     
     // "Private Member Variables"
     namespace {
@@ -78,17 +61,17 @@ namespace Anki {
     //
     // Accessors:
     //
-    Robot::OperationMode Robot::GetOperationMode()
+    OperationMode GetOperationMode()
     { return mode_; }
     
-    void Robot::SetOperationMode(Robot::OperationMode newMode)
+    void SetOperationMode(OperationMode newMode)
     { mode_ = newMode; }
         
     //
     // Methods:
     //
 
-    ReturnCode Robot::Init(void)
+    ReturnCode Init(void)
     {
       if(HAL::Init() == EXIT_FAILURE) {
         fprintf(stdout, "Hardware Interface initialization failed!\n");
@@ -133,17 +116,15 @@ namespace Anki {
       
     } // Robot::Init()
     
-    void Robot::Destroy()
+      
+    void Destroy()
     {
       VisionSystem::Destroy();
       HAL::Destroy();
     }
     
     
-    
-  
-    
-    ReturnCode Robot::step_MainExecution()
+    ReturnCode step_MainExecution()
     {
       // If the hardware interface needs to be advanced (as in the case of
       // a Webots simulation), do that first.
@@ -178,15 +159,14 @@ namespace Anki {
                     "basestation: (%.3f,%.3f) at %.1f degrees\n",
                     currentMatX_, currentMatY_,
                     currentMatHeading_.getDegrees());
+#if(USE_OVERLAY_DISPLAY)
             {
               using namespace Sim::OverlayDisplay;
               SetText(CURR_POSE, "Pose: (x,y)=(%.4f,%.4f) at angle=%.1f\n",
                       currentMatX_, currentMatY_,
                       currentMatHeading_.getDegrees());
             }
-            
-            
-            
+#endif
             break;
           }
           default:
@@ -263,7 +243,9 @@ namespace Anki {
     } // Robot::step_MainExecution()
     
     
-    ReturnCode Robot::step_LongExecution()
+    // For the "long executation" thread, i.e. the vision code, which
+    // will be slower
+    ReturnCode step_LongExecution()
     {
 
       if(VisionSystem::lookForBlocks() == EXIT_FAILURE) {
@@ -279,23 +261,23 @@ namespace Anki {
       
       return EXIT_SUCCESS;
       
-    } // Robot::step_MainExecution()
+    } // Robot::step_longExecution()
     
     
-    void Robot::GetCurrentMatPose(f32& x, f32& y, Radians& angle)
+    void GetCurrentMatPose(f32& x, f32& y, Radians& angle)
     {
       x = currentMatX_;
       y = currentMatY_;
       angle = currentMatHeading_;
     } // GetCurrentMatPose()
     
-    void Robot::SetOpenLoopMotorSpeed(s16 speedl, s16 speedr)
+    void SetOpenLoopMotorSpeed(s16 speedl, s16 speedr)
     {
       // Convert PWM to rad/s
       // TODO: Do this properly.  For now assume MOTOR_PWM_MAXVAL achieves 1m/s lateral speed.
       
-      // Radius ~= 15mm => circumference of ~95mm.
-      // 1m/s == 10.5 rot/s == 66.1 rad/s
+      // "FACTOR" is the converstion factor for computing radians/second
+      // from commanded speed: 2*pi * (1 meter / wheel_circumference)
       const float FACTOR = ((2.f*M_PI) *
                             (1000.f / (Cozmo::WHEEL_DIAMETER_MM*M_PI)));
       f32 left_rad_per_s  = speedl * FACTOR / HAL::MOTOR_PWM_MAXVAL;
@@ -305,7 +287,6 @@ namespace Anki {
       
     } // Robot::SetOpenLoopMotorSpeed()
     
-    
+    } // namespace Robot
   } // namespace Cozmo
-  
 } // namespace Anki
