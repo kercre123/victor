@@ -30,10 +30,26 @@ namespace Anki {
     center_x(0.f), center_y(0.f),
     skew(0.f)
   {
+    /*
     std::fill(this->distortionCoeffs.begin(),
               this->distortionCoeffs.end(),
               0.f);
+     */
   }
+  
+  CameraCalibration::CameraCalibration(const float fx,   const float fy,
+                                       const float cenx, const float ceny,
+                                       const float skew_in)
+  : focalLength_x(fx), focalLength_y(fy),
+    center_x(cenx), center_y(ceny), skew(skew_in)
+  {
+    /*
+    std::fill(this->distortionCoeffs.begin(),
+              this->distortionCoeffs.end(),
+              0.f);
+     */
+  }
+  
   
   Matrix_3x3f CameraCalibration::get_calibrationMatrix(void) const
   {

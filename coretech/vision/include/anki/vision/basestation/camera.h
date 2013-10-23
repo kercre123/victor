@@ -18,13 +18,19 @@ namespace Anki {
   class CameraCalibration
   {
   public:
+    /*
     static const int NumDistortionCoeffs = 5;
     typedef std::array<float,CameraCalibration::NumDistortionCoeffs> DistortionCoeffVector;
+    */
     
     // Constructors:
     CameraCalibration();
     
-    CameraCalibration(const float fx, const float fy,
+    CameraCalibration(const float fx,       const float fy,
+                      const float center_x, const float center_y,
+                      const float skew = 0.f);
+    
+    CameraCalibration(const float fx,       const float fy,
                       const float center_x, const float center_y,
                       const float skew,
                       const std::vector<float> &distCoeffs);
@@ -36,7 +42,7 @@ namespace Anki {
     float   get_center_y() const;
     Point2f get_center_pt() const;
     float   get_skew() const;
-    const   DistortionCoeffVector& get_distortionCoeffs() const;
+    //const   DistortionCoeffVector& get_distortionCoeffs() const;
     
     // Returns the 3x3 camera calibration matrix:
     // [fx   skew*fx   center_x;
@@ -49,7 +55,7 @@ namespace Anki {
     float focalLength_x, focalLength_y;
     float center_x, center_y; 
     float skew;
-    DistortionCoeffVector distortionCoeffs; // radial distortion coefficients
+    //DistortionCoeffVector distortionCoeffs; // radial distortion coefficients
     
   }; // class CameraCalibration
   
@@ -73,9 +79,10 @@ namespace Anki {
   inline float CameraCalibration::get_skew() const
   { return this->skew; }
   
+  /*
   inline const std::array<float,5>& CameraCalibration::get_distortionCoeffs() const
   { return this->distortionCoeffs; }
-  
+  */
   
   class Camera
   {
@@ -88,7 +95,9 @@ namespace Anki {
     // Accessors:
     inline const Pose3d&             get_pose()        const;
     inline const CameraCalibration&  get_calibration() const;
-        
+    
+    inline void set_calibration(const CameraCalibration &calib);
+    
     //
     // Methods:
     //
@@ -130,6 +139,8 @@ namespace Anki {
   const CameraCalibration& Camera::get_calibration(void) const
   { return this->calibration; }
   
+  void Camera::set_calibration(const Anki::CameraCalibration &calib)
+  { this->calibration = calib; }  
   
 } // namespace Anki
 
