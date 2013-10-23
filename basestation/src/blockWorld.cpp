@@ -47,21 +47,10 @@ namespace Anki
       // TODO: Should BlockWorld delete its Robots? Or were we given pointers
       //       to Robots from the outside someone else is managing?
       
-      // Delete all instantiated robots:
-      for( Robot* robot : this->robots ) {
-      /*for(auto it = this->robots.begin(); it != this->robots.end(); ++it)
-      {
-        Robot *robot = it->second;*/
-        if(robot != NULL)
-        {
-          delete robot;
-        }
-      }
-      
     } // BlockWorld Destructor
     
     
-    void BlockWorld::addRobot(Robot *robot)
+    void BlockWorld::addRobot(const u32 withID)
     {
       /*
       const u8& ID = robot->get_ID();
@@ -72,7 +61,10 @@ namespace Anki
       
       this->robots[ID] = robot;
       */
-      robots.push_back(robot);
+      //robots.push_back(robot);
+      robots.emplace_back();
+      robots.back().addToWorld(withID);
+      
     } // addRobot()
     
     void BlockWorld::queueMessage(const u8 *msg)
@@ -86,12 +78,12 @@ namespace Anki
       // poses accordingly
       std::vector<BlockMarker3d> blockMarkers;
       
-      for(Robot* robot : this->robots)
+      for(Robot& robot : this->robots)
       {
         // Tell each robot to take a step, which will have it
         // check and parse any messages received from the physical
         // robot, and update its pose.
-        robot->step();
+        robot.step();
         
         // Each robot adds the 3d markers it saw to the list.
         //robot->getVisibleBlockMarkers3d(blockMarkers);

@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "anki/common/types.h"
+#include "anki/common/basestation/exceptions.h"
 
 //#include "anki/messaging/basestation/messagingInterface.h"
 
@@ -38,13 +39,16 @@ namespace Anki
     {
     public:
       const unsigned int MaxBlockTypes = 255;
+      static const unsigned int MaxRobots = 4;
       static bool ZAxisPointsUp; // normally true, false for Webots
       
       // Constructors:
       BlockWorld(); //MessagingInterface* msgInterface);
       ~BlockWorld();
       
-      void addRobot(Robot *robot);
+      void   addRobot(const u32 withID);
+      Robot& getRobot(const u32 ID);
+      size_t getNumRobots() const;
       
       void queueMessage(const u8 *);
       
@@ -60,21 +64,31 @@ namespace Anki
       // Store all the blocks in the world, with a reserved slot for
       // each type of block, and then a list of pointers to each block
       // of that type we've actually seen.
+      // TODO: inner vector could actual blocks instead of pointers?
       //typedef std::map<Block::Type, std::vector<Block*> > BlockList;
       typedef std::vector< std::vector<Block*> > BlockList_type;
       BlockList_type blocks;
       
       // Store all the robots in the world:
+      // TODO: should RobotList be a fixed-length array with MaxRobots entries?
       //typedef std::map<u8, Robot*> RobotList_type;
-      typedef std::vector<Robot *> RobotList_type;
+      typedef std::vector<Robot> RobotList_type;
       RobotList_type robots;
-      
-      void updateRobotPose(Robot *robot);
-      
+            
     }; // class BlockWorld
+
+    inline size_t BlockWorld::getNumRobots() const
+    { return this->robots.size(); }
+    
+    inline Robot& BlockWorld::getRobot(const u32 ID)
+    {
+      CORETECH_ASSERT(ID < this->getNumRobots());
+      return this->robots[ID];
+    }
     
   } // namespace Cozmo
 } // namespace Anki
+
 
 
 #endif // __Products_Cozmo__blockWorld__

@@ -34,7 +34,7 @@
 #include "anki/cozmo/messageProtocol.h"
 
 int processPacket(const unsigned char *data, const int dataSize,
-                  std::vector<Anki::Cozmo::Robot> &robots, int i_robot);
+                  Anki::Cozmo::BlockWorld& blockWorld, int i_robot);
 
 
 int main(int argc, char **argv)
@@ -44,15 +44,8 @@ int main(int argc, char **argv)
   Anki::Cozmo::BlockWorld::ZAxisPointsUp = false; // b/c this is Webots
   
   Anki::Cozmo::BlockWorld blockWorld;
-  //CozmoWorldComms comms;
-  //comms.Init();
-  //comms.run();
   
-  // TODO: Wait for messages from the robot to add them to the world
-  std::vector<Anki::Cozmo::Robot> robots(1);
-  blockWorld.addRobot(&(robots[0]));
-
-  const int MAX_ROBOTS = 4;
+  const int MAX_ROBOTS = Anki::Cozmo::BlockWorld::MaxRobots;
   
 #if USE_WEBOTS_CPP_INTERFACE
   webots::Supervisor commsController;
@@ -112,7 +105,7 @@ int main(int argc, char **argv)
         data = (unsigned char *)rx[i]->getData();
         dataSize = rx[i]->getDataSize();
         
-        processPacket(data, dataSize, robots, i);
+        processPacket(data, dataSize, blockWorld, i);
         
         rx[i]->nextPacket();
         
@@ -124,7 +117,7 @@ int main(int argc, char **argv)
         data = (unsigned char *)wb_receiver_get_data(rx[i]);
         dataSize = wb_receiver_get_data_size(rx[i]);
         
-        processPacket(data, dataSize, robots, i);
+        processPacket(data, dataSize, blockWorld, i);
         
         wb_receiver_next_packet(rx[i]);
         
@@ -137,16 +130,18 @@ int main(int argc, char **argv)
     //
     // Check for any outgoing messages from each basestation robot:
     //
-    for(int i=0; i<robots.size(); ++i)
+    for(int i=0; i<blockWorld.getNumRobots(); ++i)
     {
-      while(robots[i].hasOutgoingMessages())
+      CORETECH_ASSERT(i < MAX_ROBOTS);
+      Anki::Cozmo::Robot& robot = blockWorld.getRobot(i);
+      while(robot.hasOutgoingMessages())
       {
         // Buffer for the message data we're going to send:
         // (getOutgoingMessage() will copy data into it)
         unsigned char msgData[255];
         u8 msgSize = 255;
         
-        robots[i].getOutgoingMessage(msgData, msgSize);
+        robot.getOutgoingMessage(msgData, msgSize);
         if(msgSize > 0) {
           wb_emitter_send(tx[i], msgData, msgSize);
         }
@@ -169,9 +164,9 @@ int main(int argc, char **argv)
   return 0;
 }
 
-
+// TODO: this should probably get moved out of this simulator-specific file
 int processPacket(const unsigned char *data, const int dataSize,
-                  std::vector<Anki::Cozmo::Robot> &robots, int i_robot)
+                  Anki::Cozmo::BlockWorld& blockWorld, int i_robot)
 {
   
   if(dataSize > 4) {
@@ -180,14 +175,18 @@ int processPacket(const unsigned char *data, const int dataSize,
        data[1] == COZMO_WORLD_MSG_HEADER_BYTE_2 &&
        data[2] == i_robot+1)
     {
-      fprintf(stdout, "Valid 0xBEEF message header from robot %d received.\n", i_robot+1);
+      //fprintf(stdout, "Valid 0xBEEF message header from robot %d received.\n", i_robot+1);
       
       // The next byte should be the first byte of the message struct that
       // was sent and will contain the size of the message.
       const u8 msgSize = data[3];
       
       if(dataSize < msgSize) {
-        fprintf(stdout, "Less data than expected in packet.\n");
+        fprintf(stdout, "Valid header, but less data than expected in packet.\n");
+        return EXIT_FAILURE;
+      }
+      else if(msgSize == 0) {
+        fprintf(stdout, "Valid header, but zero-sized message received. (?) Ignoring.\n");
         return EXIT_FAILURE;
       }
       else {
@@ -197,11 +196,26 @@ int processPacket(const unsigned char *data, const int dataSize,
         
         switch(cmd)
         {
+          case MSG_V2B_CORE_ROBOT_AVAILABLE:
+          {
+            const CozmoMsg_RobotAvailable* msgIn = reinterpret_cast<const CozmoMsg_RobotAvailable*>(data+3);
+            
+            // Create a new robot
+            blockWorld.addRobot(i_robot);
+            
+            break;
+          }
+            
           case MSG_V2B_CORE_BLOCK_MARKER_OBSERVED:
           case MSG_V2B_CORE_MAT_MARKER_OBSERVED:
+          case MSG_V2B_CORE_HEAD_CAMERA_CALIBRATION:
+          case MSG_V2B_CORE_MAT_CAMERA_CALIBRATION:
           {
-            // Pass these right along to the robot object:
-            robots[i_robot].queueIncomingMessage(data+3, msgSize+1);
+            fprintf(stdout, "Passing block/mat/calib message to robot.\n");
+            
+            // Pass these right along to the robot object to process:
+            blockWorld.getRobot(i_robot).queueIncomingMessage(data+3, msgSize+1);
+            
             break;
           }
           

@@ -42,7 +42,6 @@ namespace Anki {
     namespace {
       
       // Parameters / Constants:
-
       
       // Create Mailboxes for holding messages from the VisionSystem,
       // to be relayed up to the Basestation.
@@ -112,6 +111,15 @@ namespace Anki {
       }
        */
       
+      // Once initialization is done, broadcast a message that this robot
+      // is ready to go
+      fprintf(stdout, "Robot broadcasting availability message.\n");
+      CozmoMsg_RobotAvailable msg;
+      msg.size = sizeof(CozmoMsg_RobotAvailable);
+      msg.msgID = MSG_V2B_CORE_ROBOT_AVAILABLE;
+      msg.robotID = HAL::GetRobotID();
+      HAL::SendMessage(reinterpret_cast<u8 *>(&msg), msg.size);
+      
       return EXIT_SUCCESS;
       
     } // Robot::Init()
@@ -145,6 +153,57 @@ namespace Anki {
         CozmoMsg_Command cmd = static_cast<CozmoMsg_Command>(msgBuffer[1]);
         switch(cmd)
         {
+          case MSG_B2V_CORE_ROBOT_ADDED_TO_WORLD:
+          {
+            const CozmoMsg_RobotAdded* msg = reinterpret_cast<const CozmoMsg_RobotAdded*>(msgBuffer);
+            
+            if(msg->robotID != HAL::GetRobotID()) {
+              fprintf(stdout, "Robot received ADDED_TO_WORLD handshake with "
+                      " wrong robotID (%d instead of %d).\n",
+                      msg->robotID, HAL::GetRobotID());
+            }
+            
+            fprintf(stdout, "Robot received handshake from basestation, "
+                    "sending camera calibration.\n");
+            const HAL::CameraInfo *matCamInfo  = HAL::GetMatCamInfo();
+            const HAL::CameraInfo *headCamInfo = HAL::GetHeadCamInfo();
+            
+            CozmoMsg_CameraCalibration calibMsg;
+            calibMsg.size = sizeof(CozmoMsg_CameraCalibration);
+            
+            //
+            // Send mat camera calibration
+            //
+            calibMsg.msgID = MSG_V2B_CORE_MAT_CAMERA_CALIBRATION;
+            // TODO: do we send x or y focal length, or both?
+            calibMsg.focalLength_x = matCamInfo->focalLength_x;
+            calibMsg.focalLength_y = matCamInfo->focalLength_y;
+            calibMsg.fov           = matCamInfo->fov_ver;
+            calibMsg.nrows         = matCamInfo->nrows;
+            calibMsg.ncols         = matCamInfo->ncols;
+            calibMsg.center_x      = matCamInfo->center_x;
+            calibMsg.center_y      = matCamInfo->center_y;
+            
+            HAL::SendMessage(reinterpret_cast<const u8*>(&calibMsg),
+                             calibMsg.size);
+            //
+            // Send head camera calibration
+            //
+            calibMsg.msgID = MSG_V2B_CORE_HEAD_CAMERA_CALIBRATION;
+            // TODO: do we send x or y focal length, or both?
+            calibMsg.focalLength_x = headCamInfo->focalLength_x;
+            calibMsg.focalLength_y = headCamInfo->focalLength_y;
+            calibMsg.fov           = headCamInfo->fov_ver;
+            calibMsg.nrows         = headCamInfo->nrows;
+            calibMsg.ncols         = headCamInfo->ncols;
+            calibMsg.center_x      = headCamInfo->center_x;
+            calibMsg.center_y      = headCamInfo->center_y;
+            
+            HAL::SendMessage(reinterpret_cast<const u8*>(&calibMsg),
+                             calibMsg.size);
+            
+            break;
+          }
           case MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE:
           {
             // TODO: Double-check that size matches expected size?
