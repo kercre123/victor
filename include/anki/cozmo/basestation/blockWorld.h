@@ -18,9 +18,13 @@
 #ifndef __Products_Cozmo__blockWorld__
 #define __Products_Cozmo__blockWorld__
 
+#include <queue>
+#include <map>
 #include <vector>
 
-#include "anki/messaging/basestation/messagingInterface.h"
+#include "anki/common/types.h"
+
+//#include "anki/messaging/basestation/messagingInterface.h"
 
 namespace Anki
 {
@@ -34,21 +38,24 @@ namespace Anki
     {
     public:
       const unsigned int MaxBlockTypes = 255;
+      static bool ZAxisPointsUp; // normally true, false for Webots
       
       // Constructors:
-      BlockWorld(MessagingInterface* msgInterface);
+      BlockWorld(); //MessagingInterface* msgInterface);
       ~BlockWorld();
       
       void addRobot(Robot *robot);
       
-      void update(void);
+      void queueMessage(const u8 *);
       
-      void set_zAxisPointsUp(const bool isUp);
+      void update(void);
       
     protected:
       
+      std::queue<const u8 *> messages;
+      
       // This can point to either a real or a simulated messaging interface
-      MessagingInterface* msgInterface;
+      //MessagingInterface* msgInterface;
       
       // Store all the blocks in the world, with a reserved slot for
       // each type of block, and then a list of pointers to each block
@@ -58,17 +65,13 @@ namespace Anki
       BlockList_type blocks;
       
       // Store all the robots in the world:
-      typedef std::vector<Robot*> RobotList_type;
+      //typedef std::map<u8, Robot*> RobotList_type;
+      typedef std::vector<Robot *> RobotList_type;
       RobotList_type robots;
       
       void updateRobotPose(Robot *robot);
       
-      bool zAxisPointsUp; // false for Webots
-      
     }; // class BlockWorld
-
-    inline void BlockWorld::set_zAxisPointsUp(const bool isUp)
-    { this->zAxisPointsUp = isUp; }
     
   } // namespace Cozmo
 } // namespace Anki

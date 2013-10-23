@@ -1,120 +1,77 @@
 
-#include "anki/cozmo/MessageProtocol.h"
+#include "anki/cozmo/messageProtocol.h"
 
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
-//#include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/robot/mainExecution.h"
+#include "anki/cozmo/robot/hal.h" // simulated or real!
 #include "anki/cozmo/robot/pathFollower.h"
 #include "anki/cozmo/robot/vehicleMath.h"
-#include "anki/cozmo/robot/vehicleSpeedController.h"
+#include "anki/cozmo/robot/speedController.h"
+#include "anki/cozmo/robot/steeringController.h"
+#include "anki/cozmo/robot/wheelController.h"
+#include "anki/cozmo/robot/visionSystem.h"
 
 #include "anki/messaging/robot/utilMessaging.h"
 
-//#include "keyboardController.h"
-#include "cozmo_physics.h"
+//#include "cozmo_physics.h"
 
 #include <cmath>
 #include <cstdio>
 #include <string>
 
-#include <webots/Display.hpp>
+///////// TESTING //////////
+#define EXECUTE_TEST_PATH 0
+#define USE_OVERLAY_DISPLAY 1
+
+
+#if(USE_OVERLAY_DISPLAY)
+#include "sim_overlayDisplay.h"
+#endif
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB && USING_MATLAB_VISION
 #include "anki/embeddedCommon/matlabConverters.h"
 #endif
 
-///////// TESTING //////////
-#define EXECUTE_TEST_PATH 1
-
 ///////// END TESTING //////
 
-//Names of the wheels used for steering
-#define WHEEL_FL "wheel_fl"
-#define WHEEL_FR "wheel_fr"
-#define GYRO_FL "wheel_gyro_fl"
-#define GYRO_FR "wheel_gyro_fr"
-#define PITCH "motor_head_pitch"
-#define LIFT "lift_motor"
-#define LIFT2 "lift_motor2"
-#define CONNECTOR "connector"
-#define PLUGIN_COMMS "cozmo_physics_comms"
-#define RX "radio_rx"
-#define TX "radio_tx"
-
-#define DOWN_CAMERA "cam_down"
-#define HEAD_CAMERA "cam_head"
-#define LIFT_CAMERA "cam_lift"
-
-#include "anki/cozmo/robot/hal.h" // simulated or real!
-#include "anki/cozmo/robot/visionSystem.h"
-
 namespace Anki {
-  
   namespace Cozmo {
-    
     namespace Robot {
+    
+    // "Private Member Variables"
+    namespace {
       
       // Parameters / Constants:
-      const f32 ENCODER_FILTERING_COEFF = 0.9f;
-     
-      // "Member Variables"
-      typedef struct {
-        // Create Mailboxes for holding messages from the VisionSystem,
-        // to be relayed up to the Basestation.
-        VisionSystem::BlockMarkerMailbox blockMarkerMailbox;
-        VisionSystem::MatMarkerMailbox   matMarkerMailbox;
-        
-        OperationMode mode, nextMode;
-        
-        // Localization:
-        f32 currentMatX, currentMatY;
-        Radians currentMatHeading;
-        
-        // Encoder / Wheel Speed Filtering
-        s32 leftWheelSpeed_mmps;
-        s32 rightWheelSpeed_mmps;
-        float filterSpeedL;
-        float filterSpeedR;
-      } Members;
-      
-      static Members this_;
 
       
-      // Runs one step of the wheel encoder filter;
-      void EncoderSpeedFilterIteration(void);
-
-    } // namespace Robot
-    
+      // Create Mailboxes for holding messages from the VisionSystem,
+      // to be relayed up to the Basestation.
+      VisionSystem::BlockMarkerMailbox blockMarkerMailbox_;
+      VisionSystem::MatMarkerMailbox   matMarkerMailbox_;
+      
+      Robot::OperationMode mode_, nextMode_;
+      
+      // Localization:
+      f32 currentMatX_, currentMatY_;
+      Radians currentMatHeading_;
+      
+    } // Robot private namespace
     
     
     //
     // Accessors:
     //
-    Robot::OperationMode Robot::GetOperationMode()
-    { return this_.mode; }
+    OperationMode GetOperationMode()
+    { return mode_; }
     
-    void Robot::SetOperationMode(Robot::OperationMode newMode)
-    { this_.mode = newMode; }
-    
-    s32 Robot::GetLeftWheelSpeed(void)
-    { return this_.leftWheelSpeed_mmps; }
-    
-    s32 Robot::GetRightWheelSpeed(void)
-    { return this_.rightWheelSpeed_mmps; }
-
-    s32 Robot::GetLeftWheelSpeedFiltered(void)
-    { return this_.filterSpeedL; }
-    
-    s32 Robot::GetRightWheelSpeedFiltered(void)
-    { return this_.filterSpeedR; }
-
-    
+    void SetOperationMode(OperationMode newMode)
+    { mode_ = newMode; }
+        
     //
     // Methods:
     //
 
-    ReturnCode Robot::Init(void)
+    ReturnCode Init(void)
     {
       if(HAL::Init() == EXIT_FAILURE) {
         fprintf(stdout, "Hardware Interface initialization failed!\n");
@@ -125,65 +82,127 @@ namespace Anki {
                             HAL::GetMatFrameGrabber(),
                             HAL::GetHeadCamInfo(),
                             HAL::GetMatCamInfo(),
-                            &this_.blockMarkerMailbox,
-                            &this_.matMarkerMailbox) == EXIT_FAILURE)
+                            &blockMarkerMailbox_,
+                            &matMarkerMailbox_) == EXIT_FAILURE)
       {
         fprintf(stdout, "Vision System initialization failed.");
         return EXIT_FAILURE;
       }
       
-      this_.leftWheelSpeed_mmps = 0;
-      this_.rightWheelSpeed_mmps = 0;
-      this_.filterSpeedL = 0.f;
-      this_.filterSpeedR = 0.f;
-      
       if(PathFollower::Init() == EXIT_FAILURE) {
-        fprintf(stdout, "PathFollower initialization failed.");
+        fprintf(stdout, "PathFollower initialization failed.\n");
         return EXIT_FAILURE;
       }
+      
+      // Initialize subsystems if/when available:
+      /*
+      if(WheelController::Init() == EXIT_FAILURE) {
+        fprintf(stdout, "WheelController initialization failed.\n");
+        return EXIT_FAILURE;
+      }
+      
+      if(SpeedController::Init() == EXIT_FAILURE) {
+        fprintf(stdout, "SpeedController initialization failed.\n");
+        return EXIT_FAILURE;
+      }
+      
+      if(SteeringController::Init() == EXIT_FAILURE) {
+        fprintf(stdout, "SteeringController initialization failed.\n");
+        return EXIT_FAILURE;
+      }
+       */
       
       return EXIT_SUCCESS;
       
     } // Robot::Init()
     
-    void Robot::Destroy()
+      
+    void Destroy()
     {
       VisionSystem::Destroy();
       HAL::Destroy();
     }
     
     
-    void Robot::EncoderSpeedFilterIteration(void)
-    {
-      
-      // Get true (gyro measured) speeds from robot model
-      this_.leftWheelSpeed_mmps = HAL::GetLeftWheelSpeed();
-      this_.rightWheelSpeed_mmps = HAL::GetRightWheelSpeed();
-      
-      this_.filterSpeedL = (GetLeftWheelSpeed() * (1.0f - ENCODER_FILTERING_COEFF) +
-                            (this_.filterSpeedL * ENCODER_FILTERING_COEFF));
-      this_.filterSpeedR = (GetRightWheelSpeed() * (1.0f - ENCODER_FILTERING_COEFF) +
-                            (this_.filterSpeedR * ENCODER_FILTERING_COEFF));
-      
-    } // Robot::EncoderSpeedFilterIteration()
-  
-    
-    ReturnCode Robot::step_MainExecution()
+    ReturnCode step_MainExecution()
     {
       // If the hardware interface needs to be advanced (as in the case of
       // a Webots simulation), do that first.
       HAL::Step();
       
+      //////////////////////////////////////////////////////////////
+      // Communications
+      //////////////////////////////////////////////////////////////
+      
+      // Buffer any incoming data from basestation
+      HAL::ManageRecvBuffer();
+      
+      // Process any messages from the basestation
+      u8 msgBuffer[255];
+      u8 msgSize;
+      while( (msgSize = HAL::RecvMessage(msgBuffer)) > 0 )
+      {
+        CozmoMsg_Command cmd = static_cast<CozmoMsg_Command>(msgBuffer[1]);
+        switch(cmd)
+        {
+          case MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE:
+          {
+            // TODO: Double-check that size matches expected size?
+            
+            const CozmoMsg_AbsLocalizationUpdate *msg = reinterpret_cast<const CozmoMsg_AbsLocalizationUpdate*>(msgBuffer);
+            
+            currentMatX_       = msg->xPosition * .001f; // store in meters
+            currentMatY_       = msg->yPosition * .001f; //     "
+            currentMatHeading_ = msg->headingAngle;
+            
+            fprintf(stdout, "Robot received localization update from "
+                    "basestation: (%.3f,%.3f) at %.1f degrees\n",
+                    currentMatX_, currentMatY_,
+                    currentMatHeading_.getDegrees());
+#if(USE_OVERLAY_DISPLAY)
+            {
+              using namespace Sim::OverlayDisplay;
+              SetText(CURR_POSE, "Pose: (x,y)=(%.4f,%.4f) at angle=%.1f\n",
+                      currentMatX_, currentMatY_,
+                      currentMatHeading_.getDegrees());
+            }
+#endif
+            break;
+          }
+          default:
+            fprintf(stdout, "Unrecognized command in received message.\n");
+            
+        } // switch(cmd)
+      }
+      
+      // Check for any messages from the vision system and pass them along to
+      // the basestation
+      while( matMarkerMailbox_.hasMail() )
+      {
+        const CozmoMsg_ObservedMatMarker matMsg = matMarkerMailbox_.getMessage();
+        HAL::SendMessage(&matMsg, sizeof(CozmoMsg_ObservedMatMarker));
+      }
+      
+      while( blockMarkerMailbox_.hasMail() )
+      {
+        const CozmoMsg_ObservedBlockMarker blockMsg = blockMarkerMailbox_.getMessage();
+        HAL::SendMessage(&blockMsg, sizeof(CozmoMsg_ObservedBlockMarker));
+      }
+      
+      
+      //////////////////////////////////////////////////////////////
+      // Path Following
+      //////////////////////////////////////////////////////////////
+      
 #if(EXECUTE_TEST_PATH)
       // TESTING
-      static u32 startDriveTime_us = 1000000;
-      static BOOL driving = FALSE;
-      if (!driving && HAL::GetMicroCounter() > startDriveTime_us) {
-        VehicleSpeedController::SetUserCommandedAcceleration( MAX(ONE_OVER_CONTROL_DT + 1, 500) );  // This can't be smaller than 1/CONTROL_DT!
-        VehicleSpeedController::SetUserCommandedDesiredVehicleSpeed(160);
+      const u32 startDriveTime_us = 500000;
+      if (not PathFollower::IsTraversingPath() &&
+          HAL::GetMicroCounter() > startDriveTime_us) {
+        SpeedController::SetUserCommandedAcceleration( MAX(ONE_OVER_CONTROL_DT + 1, 500) );  // This can't be smaller than 1/CONTROL_DT!
+        SpeedController::SetUserCommandedDesiredVehicleSpeed(160);
         fprintf(stdout, "Speed commanded: %d mm/s\n",
-                VehicleSpeedController::GetUserCommandedDesiredVehicleSpeed() );
-        
+                SpeedController::GetUserCommandedDesiredVehicleSpeed() );
         
         // Create a path and follow it
         PathFollower::AppendPathSegment_Line(0, 0.0, 0.0, 0.3, -0.3);
@@ -193,39 +212,40 @@ namespace Anki {
         float arc2_radius = sqrt(0.02); // Radius of sqrt(0.1^2 + 0.1^2)
         PathFollower::AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, PIDIV2);
         PathFollower::StartPathTraversal();
-        
-        driving = TRUE;
       }
 #endif //EXECUTE_TEST_PATH
       
-      // Buffer any incoming data from basestation
-      HAL::ManageRecvBuffer();
+      //////////////////////////////////////////////////////////////
+      // Motion Control (Path following / Docking)
+      //////////////////////////////////////////////////////////////
+      if(PathFollower::IsTraversingPath())
+      {
+        PathFollower::Update();
+      }
+      
+      //////////////////////////////////////////////////////////////
+      // Gripper
+      //////////////////////////////////////////////////////////////
       
       // Check if connector attaches to anything
       HAL::ManageGripper();
 
+      
+      //////////////////////////////////////////////////////////////
+      // Feedback / Display
+      //////////////////////////////////////////////////////////////
+      
       HAL::UpdateDisplay();
       
-      // Check any messages from the vision system and pass them along to the
-      // basestation as a message
-      while( this_.matMarkerMailbox.hasMail() )
-      {
-        const CozmoMsg_ObservedMatMarker matMsg = this_.matMarkerMailbox.getMessage();
-        HAL::SendMessage(&matMsg, sizeof(CozmoMsg_ObservedMatMarker));
-      }
-      
-      while( this_.blockMarkerMailbox.hasMail() )
-      {
-        const CozmoMsg_ObservedBlockMarker blockMsg = this_.blockMarkerMailbox.getMessage();
-        HAL::SendMessage(&blockMsg, sizeof(CozmoMsg_ObservedBlockMarker));
-      }
       
       return EXIT_SUCCESS;
 
     } // Robot::step_MainExecution()
     
     
-    ReturnCode Robot::step_LongExecution()
+    // For the "long executation" thread, i.e. the vision code, which
+    // will be slower
+    ReturnCode step_LongExecution()
     {
 
       if(VisionSystem::lookForBlocks() == EXIT_FAILURE) {
@@ -241,30 +261,32 @@ namespace Anki {
       
       return EXIT_SUCCESS;
       
-    } // Robot::step_MainExecution()
+    } // Robot::step_longExecution()
     
     
-    void Robot::GetCurrentMatPose(f32& x, f32& y, Radians& angle)
+    void GetCurrentMatPose(f32& x, f32& y, Radians& angle)
     {
-      
+      x = currentMatX_;
+      y = currentMatY_;
+      angle = currentMatHeading_;
     } // GetCurrentMatPose()
     
-    
-    void Robot::SetOpenLoopMotorSpeed(s16 speedl, s16 speedr)
+    void SetOpenLoopMotorSpeed(s16 speedl, s16 speedr)
     {
       // Convert PWM to rad/s
       // TODO: Do this properly.  For now assume MOTOR_PWM_MAXVAL achieves 1m/s lateral speed.
       
-      // Radius ~= 15mm => circumference of ~95mm.
-      // 1m/s == 10.5 rot/s == 66.1 rad/s
-      f32 left_rad_per_s  = speedl * 66.1f / HAL::MOTOR_PWM_MAXVAL;
-      f32 right_rad_per_s = speedr * 66.1f / HAL::MOTOR_PWM_MAXVAL;
+      // "FACTOR" is the converstion factor for computing radians/second
+      // from commanded speed: 2*pi * (1 meter / wheel_circumference)
+      const float FACTOR = ((2.f*M_PI) *
+                            (1000.f / (Cozmo::WHEEL_DIAMETER_MM*M_PI)));
+      f32 left_rad_per_s  = speedl * FACTOR / HAL::MOTOR_PWM_MAXVAL;
+      f32 right_rad_per_s = speedr * FACTOR / HAL::MOTOR_PWM_MAXVAL;
       
       HAL::SetWheelAngularVelocity(left_rad_per_s, right_rad_per_s);
       
     } // Robot::SetOpenLoopMotorSpeed()
     
-    
+    } // namespace Robot
   } // namespace Cozmo
-  
 } // namespace Anki

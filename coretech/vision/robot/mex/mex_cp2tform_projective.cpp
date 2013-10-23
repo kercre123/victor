@@ -2,7 +2,7 @@
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/calib3d/calib3d.hpp"
-#include "mexWrappers.h"
+#include "anki/common/matlab/mexWrappers.h"
 
 #define VERBOSITY 0
 

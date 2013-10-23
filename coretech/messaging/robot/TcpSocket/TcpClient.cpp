@@ -1,4 +1,5 @@
-#include "TcpClient.h"
+#include "anki/messaging/TcpClient.h"
+
 #include <iostream>
 #include <cstring>      // Needed for memset
 #include <sys/socket.h> // Needed for the socket functions
@@ -6,6 +7,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <unistd.h>
 
 TcpClient::TcpClient()
 {

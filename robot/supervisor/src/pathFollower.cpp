@@ -2,16 +2,23 @@
 #include "anki/cozmo/robot/debug.h"
 #include "anki/cozmo/robot/pathFollower.h"
 #include "anki/cozmo/robot/localization.h"
+#include "anki/cozmo/robot/steeringController.h"
 #include "anki/cozmo/robot/vehicleMath.h"
+#include "anki/cozmo/robot/wheelController.h"
+#include "anki/cozmo/robot/speedController.h"
 
 #include "anki/common/robot/utilities_c.h"
 
 #include <stdio.h>
 
-#define ENABLE_PATH_VIZ 0
+#define ENABLE_PATH_VIZ 1
 
-#if(ENABLE_PATH_VIZ)
-#include "anki/cozmo/robot/cozmoBot.h"
+#if ENABLE_PATH_VIZ
+#include "sim_pathFollower.h"
+#endif
+
+#if(DEBUG_MAIN_EXECUTION)
+#include "sim_overlayDisplay.h"
 #endif
 
 namespace Anki
@@ -46,7 +53,7 @@ namespace Anki
           float radius;
           Anki::Radians startRad;
           Anki::Radians endRad;
-          BOOL movingCCW;
+          bool movingCCW;
           
         } PathSegment;
         
@@ -55,7 +62,12 @@ namespace Anki
         s16 numPathSegments_ = 0;
         s16 currPathSegment_ = -1;
         
-        BOOL visualizePath_ = TRUE;
+        s16 lineFollowIndex_ = 0;
+        f32 pathDistError_ = 0.f;
+        f32 pathRadError_ = 0.f;
+        
+        bool visualizePath_ = TRUE;
+        
         
       } // Private Members
       
@@ -64,8 +76,45 @@ namespace Anki
       {
         ClearPath();
         
+#if ENABLE_PATH_VIZ
+        if(Viz::Init() == EXIT_FAILURE) {
+          fprintf(stdout, "PathFollower visualization init failed.\n");
+          return EXIT_FAILURE;
+        }
+#endif
+      
         return EXIT_SUCCESS;
       }
+      
+      ReturnCode Update()
+      {
+        if (IsTraversingPath()) {
+          bool gotError = GetPathError(pathDistError_, pathRadError_);
+          
+          if (gotError) {
+            lineFollowIndex_ = pathDistError_*1000.f; // Convert to mm
+            printf("fidx: %d\n\n", lineFollowIndex_);
+#if(DEBUG_MAIN_EXECUTION)
+            {
+              using namespace Sim::OverlayDisplay;
+              SetText(PATH_ERROR, "PathError: %.4f m, %.1f deg  => fidx: %d",
+                      pathDistError_, pathRadError_ * (180.f/M_PI),
+                      lineFollowIndex_);
+            }
+#endif
+          } else {
+            SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
+          }
+        }
+        
+        // Manage the various motion controllers:
+        SpeedController::Manage();
+        SteeringController::Manage(lineFollowIndex_, pathRadError_);
+        WheelController::Manage();
+        
+        return EXIT_SUCCESS;
+        
+      } // Update()
       
       
       // Deletes current path
@@ -73,11 +122,12 @@ namespace Anki
       {
         numPathSegments_ = 0;
 #if(ENABLE_PATH_VIZ)
-        gCozmoBot.ErasePath(0);
+        Viz::ErasePath(0);
 #endif
-      }
+      } // Update()
       
-      void EnablePathVisualization(BOOL on)
+      
+      void EnablePathVisualization(bool on)
       {
         visualizePath_ = on;
       }
@@ -85,7 +135,7 @@ namespace Anki
       
       // Add path segment
       // tODO: Change units to meters
-      BOOL AppendPathSegment_Line(u32 matID, float x_start_m, float y_start_m, float x_end_m, float y_end_m)
+      bool AppendPathSegment_Line(u32 matID, float x_start_m, float y_start_m, float x_end_m, float y_end_m)
       {
         if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
           return FALSE;
@@ -106,14 +156,14 @@ namespace Anki
         numPathSegments_++;
         
 #if(ENABLE_PATH_VIZ)
-        gCozmoBot.AppendPathSegmentLine(0, x_start_m, y_start_m, x_end_m, y_end_m);
+        Viz::AppendPathSegmentLine(0, x_start_m, y_start_m, x_end_m, y_end_m);
 #endif
         
         return TRUE;
       }
       
       
-      BOOL AppendPathSegment_Arc(u32 matID, float x_center_m, float y_center_m, float radius_m, float startRad, float endRad)
+      bool AppendPathSegment_Arc(u32 matID, float x_center_m, float y_center_m, float radius_m, float startRad, float endRad)
       {
         if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
           return FALSE;
@@ -139,7 +189,8 @@ namespace Anki
         numPathSegments_++;
         
 #if(ENABLE_PATH_VIZ)
-        gCozmoBot.AppendPathSegmentArc(0, x_center_m, y_center_m, radius_m, startRad, endRad);
+        Viz::AppendPathSegmentArc(0, x_center_m, y_center_m,
+                                  radius_m, startRad, endRad);
 #endif
         
         return TRUE;
@@ -154,7 +205,7 @@ namespace Anki
       }
       
       
-      BOOL StartPathTraversal()
+      bool StartPathTraversal()
       {
         // Set first path segment
         if (numPathSegments_ > 0) {
@@ -164,7 +215,7 @@ namespace Anki
         // Visualize path
         if (visualizePath_) {
 #if(ENABLE_PATH_VIZ)
-          gCozmoBot.ShowPath(0, true);
+          Viz::ShowPath(0, true);
 #endif
         }
         
@@ -172,13 +223,13 @@ namespace Anki
       }
       
       
-      BOOL IsTraversingPath()
+      bool IsTraversingPath()
       {
         return currPathSegment_ >= 0;
       }
       
       
-      BOOL ProcessPathSegmentLine(float &shortestDistanceToPath_m, float &radDiff)
+      bool ProcessPathSegmentLine(float &shortestDistanceToPath_m, float &radDiff)
       {
         PathSegment* currSeg = &(Path[currPathSegment_]);
         
@@ -260,7 +311,7 @@ namespace Anki
       }
       
       
-      BOOL ProcessPathSegmentArc(float &shortestDistanceToPath_m, float &radDiff)
+      bool ProcessPathSegmentArc(float &shortestDistanceToPath_m, float &radDiff)
       {
         PathSegment* currSeg = &(Path[currPathSegment_]);
         
@@ -324,7 +375,7 @@ namespace Anki
         shortestDistanceToPath_m = sqrt((x - x_intersect) * (x - x_intersect) + (y - y_intersect) * (y - y_intersect));
         
         float arcSweep = (currSeg->endRad - currSeg->startRad).ToFloat();
-        BOOL robotInsideCircle = ABS(dx) < ABS(x_intersect - x_center);
+        bool robotInsideCircle = ABS(dx) < ABS(x_intersect - x_center);
         if ((robotInsideCircle && arcSweep < 0) || (!robotInsideCircle && arcSweep > 0)) {
           shortestDistanceToPath_m *= -1;
         }
@@ -356,14 +407,19 @@ namespace Anki
       }
       
       
-      BOOL GetPathError(float &shortestDistanceToPath_m, float &radDiff)
+      bool UpdatePathError(void)
+      {
+        
+      }
+      
+      bool GetPathError(float &shortestDistanceToPath_m, float &radDiff)
       {
         if (currPathSegment_ < 0) {
           return FALSE;
         }
         
-        static BOOL wasInRange = FALSE;
-        BOOL inRange;
+        static bool wasInRange = FALSE;
+        bool inRange;
         
         switch (Path[currPathSegment_].type) {
           case PST_LINE:
@@ -373,6 +429,7 @@ namespace Anki
             inRange = ProcessPathSegmentArc(shortestDistanceToPath_m, radDiff);
             break;
           default:
+            // TODO: Error?
             break;
         }
         
@@ -385,7 +442,7 @@ namespace Anki
             printf("PATH COMPLETE\n");
 #endif
 #if(ENABLE_PATH_VIZ)
-            gCozmoBot.ErasePath(0);
+            Viz::ErasePath(0);
 #endif
             return FALSE;
           }

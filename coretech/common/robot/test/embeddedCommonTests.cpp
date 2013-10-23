@@ -1,6 +1,11 @@
 //#define USING_MOVIDIUS_COMPILER
 
-#include "anki/embeddedCommon.h"
+#include "anki/common/robot/array2d.h"
+#include "anki/common/robot/benchmarking_c.h"
+#include "anki/common/robot/fixedLengthList.h"
+#include "anki/common/robot/memory.h"
+#include "anki/common/robot/opencvLight.h"
+#include "anki/common/robot/gtestLight.h"
 
 using namespace Anki::Embedded;
 
@@ -10,6 +15,7 @@ using namespace Anki::Embedded;
 #endif
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB
+#include "anki/common/robot/matlabInterface.h"
 Matlab matlab(false);
 #endif
 

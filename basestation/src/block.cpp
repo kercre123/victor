@@ -8,8 +8,8 @@
 
 #include "anki/vision/basestation/camera.h"
 
-#include "block.h"
-#include "robot.h"
+#include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/robot.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -22,10 +22,45 @@ namespace Anki {
     
     BlockMarker2d::BlockMarker2d(BlockType    blockTypeIn,
                                  FaceType     faceTypeIn,
-                                 const Quad2f &cornersIn)
-    : blockType(blockTypeIn), faceType(faceTypeIn), corners(cornersIn)
+                                 const Quad2f &cornersIn,
+                                 MarkerUpDirection upDirection)
+    : blockType(blockTypeIn), faceType(faceTypeIn)
     {
-      
+      // The assumption is the incoming corners are ordered by their position
+      // in the image.  We want to reorder them with respect to the marker's
+      // orientation.
+      switch(upDirection)
+      {
+        case MARKER_TOP:
+          // No reordering of the corners is necessary
+          this->corners = cornersIn;
+          break;
+          
+        case MARKER_BOTTOM:
+          this->corners[Quad2f::TopLeft]     = cornersIn[Quad2f::BottomRight];
+          this->corners[Quad2f::BottomRight] = cornersIn[Quad2f::TopLeft];
+          this->corners[Quad2f::TopRight]    = cornersIn[Quad2f::BottomLeft];
+          this->corners[Quad2f::BottomLeft]  = cornersIn[Quad2f::TopRight];
+          break;
+          
+        case MARKER_LEFT:
+          this->corners[Quad2f::TopLeft]     = cornersIn[Quad2f::BottomLeft];
+          this->corners[Quad2f::BottomLeft]  = cornersIn[Quad2f::BottomRight];
+          this->corners[Quad2f::TopRight]    = cornersIn[Quad2f::TopLeft];
+          this->corners[Quad2f::BottomRight] = cornersIn[Quad2f::TopRight];
+          break;
+          
+        case MARKER_RIGHT:
+          this->corners[Quad2f::TopLeft]     = cornersIn[Quad2f::TopRight];
+          this->corners[Quad2f::BottomLeft]  = cornersIn[Quad2f::TopLeft];
+          this->corners[Quad2f::TopRight]    = cornersIn[Quad2f::BottomRight];
+          this->corners[Quad2f::BottomRight] = cornersIn[Quad2f::BottomLeft];
+          break;
+          
+        default:
+          CORETECH_ASSERT(false); // Should never get here
+          
+      } // switch(upDirection)
     }
     
 #pragma mark --- BlockMarker3d Dimensions & Layout---
@@ -99,21 +134,21 @@ namespace Anki {
       
     } // Constructor: BlockMarker3d(blockType,FaceType,pose)
     
-    void BlockMarker3d::getSquareCorners(std::vector<Point3f> &squareCorners,
+    void BlockMarker3d::getSquareCorners(Quad3f &squareCorners,
                                          const Pose3d *wrtPose) const
     {
       Pose3d P = this->pose.getWithRespectTo(wrtPose);
       P.applyTo(BlockMarker3d::FiducialSquare, squareCorners);
     }
     
-    void BlockMarker3d::getDockingTarget(std::vector<Point3f> &dockingTarget,
+    void BlockMarker3d::getDockingTarget(Quad3f &dockingTarget,
                                          const Pose3d *wrtPose) const
     {
       Pose3d P = this->pose.getWithRespectTo(wrtPose);
       P.applyTo(BlockMarker3d::DockingTarget, dockingTarget);
     }
     
-    void BlockMarker3d::getDockingBoundingBox(std::vector<Point3f> &boundingBox,
+    void BlockMarker3d::getDockingBoundingBox(Quad3f &boundingBox,
                                               const Pose3d *wrtPose) const
     {
       Pose3d P = this->pose.getWithRespectTo(wrtPose);

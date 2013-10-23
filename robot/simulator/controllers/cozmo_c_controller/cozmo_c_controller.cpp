@@ -23,15 +23,6 @@
 
 #include "anki/cozmo/robot/hal.h"
 
-namespace Anki {
-  namespace Cozmo {
-    extern webots::Supervisor* gCozmoBot;
-  }
-}
-
-/*
- * You may want to add macros here.
- */
 
 /*
  * This is the main program.
@@ -46,13 +37,8 @@ int main(int argc, char **argv)
     fprintf(stdout, "Failed to initialize Cozmo::Robot!\n");
     return -1;
   }
-
-  KeyboardController::Init(gCozmoBot);
   
-  KeyboardController::Enable();
-  
-  // Localization::InitLocalization();
-  // TODO: Init more things?
+  Sim::KeyboardController::Enable();
   
   while(Robot::step_MainExecution() == EXIT_SUCCESS)
   {
@@ -63,8 +49,8 @@ int main(int argc, char **argv)
       }
     }
       
-    if(KeyboardController::IsEnabled()) {
-      KeyboardController::ProcessKeystroke();
+    if(Sim::KeyboardController::IsEnabled()) {
+      Sim::KeyboardController::ProcessKeystroke();
     }      
   }
   

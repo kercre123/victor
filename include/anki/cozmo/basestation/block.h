@@ -9,6 +9,8 @@
 #ifndef __Products_Cozmo__block__
 #define __Products_Cozmo__block__
 
+#include "anki/cozmo/messageProtocol.h"
+
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/quad.h"
 
@@ -26,8 +28,8 @@ namespace Anki {
     // Forward Declarations:
     class RobotMessage;
 
-    typedef int BlockType;
-    typedef int FaceType;
+    typedef u16 BlockType;
+    typedef u8  FaceType;
 
     //
     // BlockMarker2d Class
@@ -46,7 +48,7 @@ namespace Anki {
       BlockMarker2d();
       BlockMarker2d(const RobotMessage &msg);
       BlockMarker2d(BlockType blockType, FaceType faceType,
-                    const Quad2f &corners);
+                    const Quad2f &corners, MarkerUpDirection upDirection);
       
       //void encodeIDs(void);
       //void decodeIDs(const BitString& bitString);
@@ -103,13 +105,13 @@ namespace Anki {
       // Get the current 3D position of the marker's square corners,
       // docking target, or docking target bounding box, given its
       // current pose, and with respect to another pose.
-      void getSquareCorners(std::vector<Point3f> &squareCorners,
+      void getSquareCorners(Quad3f &squareCorners,
                             const Pose3d *wrtPose = Pose3d::World) const;
       
-      void getDockingTarget(std::vector<Point3f> &dockingTarget,
+      void getDockingTarget(Quad3f &dockingTarget,
                             const Pose3d *wrtPose = Pose3d::World) const;
       
-      void getDockingBoundingBox(std::vector<Point3f> &boundingBox,
+      void getDockingBoundingBox(Quad3f &boundingBox,
                                  const Pose3d *wrtPose = Pose3d::World) const;
       
     protected:

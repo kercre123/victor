@@ -8,7 +8,7 @@ add_executable(run_coreTechCommonTests
 	testRotation.cpp)
 	
 target_link_libraries(run_coreTechCommonTests 
-	CoreTech_Common_BaseStation ${OPENCV_LIBS} gtest)
+	CoreTech_Common_Basestation ${OPENCV_LIBS} gtest)
 
 
 

@@ -49,7 +49,8 @@ namespace Anki {
     
     //Point(const T x, const T y); // Only valid if N==2
     //Point(const T x, const T y, const T z); // Only valid if N==3
-  
+
+#if __cplusplus == 201103L
     // Point(T x1, T x2, ..., T xN);
     // This is ugly variadic template syntax to get this constructor to
     // work for all N and generate a compile-time error if you try to do
@@ -60,6 +61,10 @@ namespace Anki {
     template <typename... Tail>
     Point(typename std::enable_if<sizeof...(Tail)+1 == N, T>::type head, Tail... tail)
     : data{ head, T(tail)... } {}
+#else
+    Point(const T x, const T y); // Only valid if N==2
+    Point(const T x, const T y, const T z); // Only valid if N==3
+#endif
     
     // Assignment operator:
     Point<N,T>& operator=(const Point<N,T> &other);
@@ -93,8 +98,15 @@ namespace Anki {
     Point<N,T>& operator-= (const Point<N,T> &other);
     
     // Math methods:
+    
+    // Return length of the vector from the origin to the point
     T length(void) const;
-    Point<N,T>& makeUnitLength(void);
+    
+    // Makes the point into a unit vector from the origin, while
+    // returning its original length. IMPORTANT: if the point was
+    // originally the origin, it cannot be made into a unit vector
+    // and will be left at the origin, and zero will be returned.
+    T makeUnitLength(void);
     
   protected:
     T data[N];
@@ -156,6 +168,25 @@ namespace Anki {
       this->data[i] = pt.data[i];
     }
   }
+  
+#if __cplusplus < 201103L
+  template<size_t N, typename T>
+  Point<N,T>::Point(const T x, const T y)
+  {
+    static_assert(N==2, "This constructor only works for 2D points.");
+    this->data[0] = x;
+    this->data[1] = y;
+  }
+  
+  template<size_t N, typename T>
+  Point<N,T>::Point(const T x, const T y, const T z)
+  {
+    static_assert(N==3, "This constructor only works for 3D points.");
+    this->data[0] = x;
+    this->data[1] = y;
+    this->data[2] = z;
+  }
+#endif
   
 #if ANKICORETECH_USE_OPENCV
   template<size_t N, typename T>
@@ -364,10 +395,13 @@ namespace Anki {
   }
   
   template<size_t N, typename T>
-  Point<N,T>& Point<N,T>::makeUnitLength(void)
+  T Point<N,T>::makeUnitLength(void)
   {
-    (*this) *= T(1)/this->length();
-    return *this;
+    const T length = this->length();
+    if(length > 0) {
+      (*this) *= T(1)/length;
+    }
+    return length;
   }
   
   template<size_t N, typename T>
