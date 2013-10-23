@@ -4,7 +4,7 @@
 #include "anki/vision/robot/miscVisionKernels.h"
 #include "anki/vision/robot/draw_vision.h"
 
-#include "anki/vision/robot/fiducialMarkerDefinitionType0.h"
+#include "fiducialMarkerDefinitionType0.h"
 
 #include <assert.h>
 
