@@ -1,9 +1,11 @@
 #include "mex.h"
 
-#include "anki/embeddedCommon.h"
-#include "anki/embeddedVision.h"
-
 #include <string.h>
+
+#include "anki/common/robot/matlabInterface.h"
+#include "anki/common/robot/fixedLengthList.h"
+
+#include "anki/vision/robot/miscVisionKernels.h"
 
 #define VERBOSITY 0
 

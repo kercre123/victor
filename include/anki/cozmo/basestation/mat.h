@@ -1,20 +1,24 @@
-#ifndef __Products_Cozmo__MatMarker2d__
-#define __Products_Cozmo__MatMarker2d__
+#ifndef __Products_Cozmo__Mat__
+#define __Products_Cozmo__Mat__
+
+#include "anki/cozmo/messageProtocol.h"
 
 #include "anki/common/basestation/math/pose.h"
-#include "anki/vision/basestation/marker2d.h"
+//#include "anki/vision/basestation/marker2d.h"
 
 namespace Anki {
   
   namespace Cozmo {
 
-    class RobotMessage;
+    //class RobotMessage;
     
-    class Mat {
+    class MatSection
+    {
     public:
       static const Point2f Size;
       
     }; // class Mat
+    
     
     class MatMarker2d //: public Marker2d<5,2>
     {
@@ -26,7 +30,10 @@ namespace Anki {
       // For if/when we want to actually decode a string:
       //MatMarker2d(const BitString &str, const Quad2f &corners);
       
-      MatMarker2d(const RobotMessage &msg);
+      //MatMarker2d(const RobotMessage &msg);
+      MatMarker2d(const u16 xSquare, const u16 ySquare,
+                  const Pose2d& imgPose,
+                  const MarkerUpDirection upDirection);
       
       //void encodeIDs(void);
       //void decodeIDs(const BitString &bitString);
@@ -63,4 +70,4 @@ namespace Anki {
 
 } // namespace Anki
 
-#endif // __Products_Cozmo__MatMarker2d__
+#endif // __Products_Cozmo__Mat__

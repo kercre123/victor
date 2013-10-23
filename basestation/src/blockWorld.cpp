@@ -1,16 +1,28 @@
 
+#include "anki/cozmo/messageProtocol.h"
 #include "anki/cozmo/basestation/blockWorld.h"
-#include "block.h"
-#include "mat.h"
-#include "robot.h"
+#include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/mat.h"
+#include "anki/cozmo/basestation/robot.h"
 
 namespace Anki
 {
   namespace Cozmo
   {
     
+    /*
     BlockWorld::BlockWorld( MessagingInterface* msgInterfaceIn )
     : msgInterface(msgInterfaceIn), blocks(MaxBlockTypes), zAxisPointsUp(true)
+    {
+      
+    }
+     */
+    
+    bool BlockWorld::ZAxisPointsUp = true;
+    
+    
+    BlockWorld::BlockWorld( )
+    : blocks(MaxBlockTypes)
     {
       
     }
@@ -36,8 +48,10 @@ namespace Anki
       //       to Robots from the outside someone else is managing?
       
       // Delete all instantiated robots:
-      for( Robot* robot : this->robots )
+      for( Robot* robot : this->robots ) {
+      /*for(auto it = this->robots.begin(); it != this->robots.end(); ++it)
       {
+        Robot *robot = it->second;*/
         if(robot != NULL)
         {
           delete robot;
@@ -49,8 +63,22 @@ namespace Anki
     
     void BlockWorld::addRobot(Robot *robot)
     {
+      /*
+      const u8& ID = robot->get_ID();
+      
+      if(this->robots.count(ID) > 0) {
+        CORETECH_THROW("Robot with ID already in BlockWorld.");
+      }
+      
+      this->robots[ID] = robot;
+      */
       robots.push_back(robot);
     } // addRobot()
+    
+    void BlockWorld::queueMessage(const u8 *msg)
+    {
+      this->messages.push(msg);
+    }
     
     void BlockWorld::update(void)
     {
@@ -62,25 +90,27 @@ namespace Anki
       {
         // Tell each robot to take a step, which will have it
         // check and parse any messages received from the physical
-        // robot.
+        // robot, and update its pose.
         robot->step();
         
-        // Tell each robot where it is, based on its current mat observation:
-        updateRobotPose(robot);
-                          
         // Each robot adds the 3d markers it saw to the list.
-        robot->getVisibleBlockMarkers3d(blockMarkers);
+        //robot->getVisibleBlockMarkers3d(blockMarkers);
         
       } // for each robot
       
       // If any robots saw any markers, update/add the corresponding blocks:
       if(not blockMarkers.empty())
       {
+        // TODO: add and update blocks based on observed markers
+        
+        fprintf(stdout, "Saw %lu total BlockMarkers from all robots.\n",
+                blockMarkers.size());
         
       } // IF we saw any block markers
       
     } // update()
     
+    /*
     void BlockWorld::updateRobotPose(Robot *robot)
     {
       // TODO: Can the robot do this for itself?
@@ -124,8 +154,8 @@ namespace Anki
         matPoint.x() += matMarker->get_xSquare() * MatMarker2d::SquareWidth;
         matPoint.y() += matMarker->get_ySquare() * MatMarker2d::SquareWidth;
         matPoint -= MatMarker2d::SquareWidth * .5f;
-        matPoint.x() -= Mat::Size.x() * .5f;
-        matPoint.x() -= Mat::Size.y() * .5f;
+        matPoint.x() -= MatSection::Size.x() * .5f;
+        matPoint.x() -= MatSection::Size.y() * .5f;
         
         if(not this->zAxisPointsUp) {
           matPoint.x() *= -1.f;
@@ -142,7 +172,7 @@ namespace Anki
       } // if matMarker not NULL
       
     } // updateRobotPose()
-    
+    */
     
   } // namespace Cozmo
 } // namespace Anki

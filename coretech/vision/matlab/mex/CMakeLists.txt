@@ -1,12 +1,12 @@
 # coretech/vision/matlab/mex/CMakeLists.txt
 
 set(MEX_LINK_LIBRARIES 
-	CoreTech_Common_BaseStation
-	CoreTech_Vision_BaseStation
+	CoreTech_Common_Basestation
+	CoreTech_Vision_Basestation
 	${OPENCV_LIBS}
 )
 
-file(GLOB FILES "*.cpp")
+file(GLOB MEX_FILES "*.cpp")
 
 #source_group( Coretech-Vision\\\\Basestation\\\\Mex FILES ${MEX_FILES} )
 

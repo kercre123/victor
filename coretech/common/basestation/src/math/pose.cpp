@@ -200,6 +200,15 @@ namespace Anki {
     return pointOut;
   }
   
+  void Pose3d::applyTo(const Quad3f &quadIn,
+                       Quad3f &quadOut) const
+  {
+    quadOut[Quad3f::TopLeft]     = (*this) * quadIn[Quad3f::TopLeft];
+    quadOut[Quad3f::TopRight]    = (*this) * quadIn[Quad3f::TopRight];
+    quadOut[Quad3f::BottomLeft]  = (*this) * quadIn[Quad3f::BottomLeft];
+    quadOut[Quad3f::BottomRight] = (*this) * quadIn[Quad3f::BottomRight];
+  }
+  
   void Pose3d::applyTo(const std::vector<Point3f> &pointsIn,
                        std::vector<Point3f>       &pointsOut) const
   {
@@ -224,7 +233,7 @@ namespace Anki {
 
       for(const Point3f& x : pointsIn)
       {
-        pointsOut.push_back( (*this) * x );
+        pointsOut.emplace_back( (*this) * x );
       }
     }
   } // applyTo()

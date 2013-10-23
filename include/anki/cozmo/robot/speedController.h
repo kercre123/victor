@@ -1,25 +1,23 @@
 /**
- * File: vehicleSpeedController.h
+ * File: speedController.h
  *
  **/
 
 #ifndef VEHICLEARM_SPEED_CONTROLLER_H_
 #define VEHICLEARM_SPEED_CONTROLLER_H_
 
-#include "anki/cozmo/robot/cozmoTypes.h"
-
 namespace Anki {
-  namespace VehicleSpeedController {
+  // TODO: Rename to just "SpeedController"?
+  namespace SpeedController {
     
     
     // Controller params
-#define VEHICLE_SPEED_CONTROLLER_KP 2
-#define VEHICLE_SPEED_CONTROLLER_KI 0.01f
-#define VEHICLE_SPEED_CONTROLLER_MAX_ERRORSUM 20000
-    
+    const float KP = 2.f;
+    const float KI = 0.01f;
+    const float MAX_ERRORSUM = 20000.f;
     
     //If we drive slower than this, then we consider the car to be stopped
-#define SPEED_CONSIDER_VEHICLE_STOPPED_MM_S 2
+    const float SPEED_CONSIDER_VEHICLE_STOPPED_MM_S = 2.f;
     
     
     // Sets/Gets the speed the user wants the vehicle to drive at (eventually, after acceleration phase)
@@ -53,16 +51,16 @@ namespace Anki {
     void RunAccelerationUpdate(void);
     
     //Runs one iteration of the vheicle speed controller to compute the commanded vehicle speed
-    void ManageVehicleSpeedController(void);
+    void Manage(void);
     
     //Figures out whether the car is stopped or not
     bool IsVehicleStopped(void);
     
-    void ResetVehicleSpeedControllerIntegralError(void);
+    void ResetIntegralError(void);
     
     void TraceSpeedControllerVars(u8 traceLevel);
     
-  } // namespace VehicleSpeedController
+  } // namespace SpeedController
 } // namespace Anki
 
 #endif

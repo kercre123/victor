@@ -7,8 +7,10 @@ PROTO CozmoBot [
   field SFBool useSphericalHeadCamera FALSE
   field SFFloat headAngle 0 
   field SFFloat liftAngle 0
+  field SFInt32 commsChannel 1
+  field SFString controller "cozmo_c_controller"
   
-  ##field SFVec3f spotLightTranslation 0 .03 -.03
+  #field SFVec3f spotLightTranslation 0 .03 -.03
   #field SFRotation spotLightRotation 1 0 0 0
   #field SFFloat spotLightBeamWidth 0.5
   #field SFFloat spotLightCutOffAngle 0.8
@@ -55,6 +57,24 @@ Supervisor {
         }
         coordIndex []
       }
+    }     
+
+    # Comms for sending paths for drawing to the physics plugin
+    Emitter { 
+      name "cozmo_physics_comms"
+    }
+
+    # For simulated radio communications with basestation
+    # World must be running the CozmoSimWorldComms controller.
+    Emitter {
+      name "radio_tx"
+      type "radio"
+      channel IS commsChannel
+    }
+    Receiver {
+      name "radio_rx"
+      type "radio"
+      channel IS commsChannel
     }
           
     Solid {
@@ -263,14 +283,23 @@ Supervisor {
         }
       }
     }
+    DEF GPS_SENSOR GPS {
+      name "gps"
+      translation 0 0 -0.024
+    }    
+    DEF COMPASS_SENSOR Compass {
+      name "compass"
+    }
     DEF WHEEL_FRONT_RIGHT HingeJoint {
       jointParameters HingeJointParameters {
         anchor 0.03 0 -0.025
       }
       device RotationalMotor {
         name "wheel_fr"
+	maxVelocity 30
       }
-      endPoint Solid {
+      endPoint Gyro {
+        name "wheel_gyro_fr"
         translation 0.03 0 -0.025
         rotation 1 0 0 0
         children [
@@ -290,8 +319,10 @@ Supervisor {
       }
       device RotationalMotor {
         name "wheel_fl"
+	maxVelocity 30
       }
-      endPoint Solid {
+      endPoint Gyro {
+        name "wheel_gyro_fl"
         translation -0.03 0 -0.025
         rotation 0 0 1 0
         children [
@@ -376,21 +407,12 @@ Supervisor {
     }
   ]
   name IS name
-  boundingObject DEF BODYA Shape {
-    appearance Appearance {
-      material DEF MAT_WHITE Material {
-        diffuseColor 1 1 1
-      }
-    }
-    geometry Box {
-      size 0.014 0.018 0.02
-    }
-  }
+  
   physics Physics {
     density -1
     mass 1
   }
   locked TRUE
-  controller "cozmo_matlab"
+  controller IS controller
 } # Supervisor definition
 } # PROTO definition

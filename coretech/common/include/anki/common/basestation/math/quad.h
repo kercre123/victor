@@ -2,7 +2,7 @@
 #define _ANKICORETECH_COMMON_QUAD_H_
 
 #include <cmath>
-#include <vector>
+#include <array>
 
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/math/point.h"
@@ -14,7 +14,7 @@
 namespace Anki {
   
   template<size_t N, typename T>
-  class Quadrilateral : public std::vector<Point<N,T> >
+  class Quadrilateral : public std::array<Point<N,T>, 4>
   {
   public:
     
@@ -49,7 +49,7 @@ namespace Anki {
     
     //const std::vector<Point<N,T> >& get_corners() const;
     
-    using std::vector<Point<N,T> >::operator=;
+    using std::array<Point<N,T>, 4>::operator=;
     
   protected:
     
@@ -66,17 +66,15 @@ namespace Anki {
   
   template<size_t N, typename T>
   Quadrilateral<N,T>::Quadrilateral()
-  : std::vector<Point<N,T> >(4) //corners(4)
   {
     
   }
   
   template<size_t N, typename T>
   Quadrilateral<N,T>::Quadrilateral(const Point<N,T> &cornerTopLeft,
-                                      const Point<N,T> &cornerBottomLeft,
-                                      const Point<N,T> &cornerTopRight,
-                                      const Point<N,T> &cornerBottomRight)
-  : std::vector<Point<N,T> >(4) //corners(4)
+                                    const Point<N,T> &cornerBottomLeft,
+                                    const Point<N,T> &cornerTopRight,
+                                    const Point<N,T> &cornerBottomRight)
   {
     (*this)[TopLeft]     = cornerTopLeft;
     (*this)[TopRight]    = cornerTopRight;
@@ -84,7 +82,13 @@ namespace Anki {
     (*this)[BottomRight] = cornerBottomRight;
   }
   
-
+  template<size_t N, typename T>
+  Quadrilateral<N,T>::Quadrilateral(const Quadrilateral<N,T>& quad)
+  : std::array<Point<N,T>,4>(quad)
+  {
+  
+  }
+  
   template<size_t N, typename T>
   inline Quadrilateral<N,T> Quadrilateral<N,T>::operator+
   (const Quadrilateral<N,T> &quad2) const
@@ -126,7 +130,7 @@ namespace Anki {
   inline const Point<N,T>& Quadrilateral<N,T>::operator[] (const CornerName whichCorner) const
   {
     //return this->corners[whichCorner];
-    return std::vector<Point<N,T> >::operator[](static_cast<int>(whichCorner));
+    return std::array<Point<N,T>,4>::operator[](static_cast<int>(whichCorner));
   }
 
   
@@ -134,7 +138,7 @@ namespace Anki {
   inline Point<N,T>& Quadrilateral<N,T>::operator[] (const CornerName whichCorner)
   {
     //return this->corners[whichCorner];
-    return std::vector<Point<N,T> >::operator[](static_cast<int>(whichCorner));
+    return std::array<Point<N,T>,4>::operator[](static_cast<int>(whichCorner));
   }
   
   /*

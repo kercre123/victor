@@ -51,6 +51,7 @@ classdef MatMarker2D < Marker2D
             Dependent = true)
         X;
         Y;   
+        centroid;
     end
      
     % Static methods required by abstract base class:
@@ -77,6 +78,9 @@ classdef MatMarker2D < Marker2D
         end
         function y = get.Y(this)
             y = this.ids(2);
+        end
+        function cen = get.centroid(this)
+           cen = mean(this.corners,1); 
         end
     end
 

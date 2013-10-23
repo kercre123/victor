@@ -9,6 +9,8 @@
 #ifndef __CoreTech_Vision__camera__
 #define __CoreTech_Vision__camera__
 
+#include <array>
+
 #include "anki/common/basestation/math/pose.h"
 
 namespace Anki {
@@ -16,6 +18,9 @@ namespace Anki {
   class CameraCalibration
   {
   public:
+    static const int NumDistortionCoeffs = 5;
+    typedef std::array<float,CameraCalibration::NumDistortionCoeffs> DistortionCoeffVector;
+    
     // Constructors:
     CameraCalibration();
     
@@ -31,7 +36,7 @@ namespace Anki {
     float   get_center_y() const;
     Point2f get_center_pt() const;
     float   get_skew() const;
-    const   std::vector<float>& get_distortionCoeffs() const;
+    const   DistortionCoeffVector& get_distortionCoeffs() const;
     
     // Returns the 3x3 camera calibration matrix:
     // [fx   skew*fx   center_x;
@@ -44,7 +49,7 @@ namespace Anki {
     float focalLength_x, focalLength_y;
     float center_x, center_y; 
     float skew;
-    std::vector<float> distortionCoeffs; // radial distortion coefficients
+    DistortionCoeffVector distortionCoeffs; // radial distortion coefficients
     
   }; // class CameraCalibration
   
@@ -68,7 +73,7 @@ namespace Anki {
   inline float CameraCalibration::get_skew() const
   { return this->skew; }
   
-  inline const std::vector<float>& CameraCalibration::get_distortionCoeffs() const
+  inline const std::array<float,5>& CameraCalibration::get_distortionCoeffs() const
   { return this->distortionCoeffs; }
   
   
@@ -92,11 +97,18 @@ namespace Anki {
     // corresponding observed positions in the image:
     Pose3d computeObjectPose(const std::vector<Point2f> &imgPoints,
                              const std::vector<Point3f> &objPoints) const;
+  
+    Pose3d computeObjectPose(const Quad2f &imgPoints,
+                             const Quad3f &objPoints) const;
     
     
     // Compute the projected image locations of a set of 3D points:
     void project3dPoints(const std::vector<Point3f> &objPoints,
-                         std::vector<Point2f> &imgPoints) const;
+                         std::vector<Point2f>       &imgPoints) const;
+
+    void project3dPoints(const Quad3f &objPoints,
+                         Quad2f       &imgPoints) const;
+    
     
     // TODO: Method to remove radial distortion from an image
     // (This requires an image class)

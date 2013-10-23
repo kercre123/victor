@@ -28,14 +28,16 @@ link_directories( ${WEBOTS_LIB_DIR} )
 # Source files
 set(SOURCE_FILES
 	cozmo_c_controller.cpp
-	
+
   ${SIMULATOR_SRC_DIR}/keyboardController.cpp
   ${SIMULATOR_SRC_DIR}/sim_hal.cpp
+  ${SIMULATOR_SRC_DIR}/sim_pathFollower.cpp
+  ${SIMULATOR_SRC_DIR}/sim_overlayDisplay.cpp
 	
   ${ROBOT_SRC_DIR}/cozmoBot.cpp
   ${ROBOT_SRC_DIR}/pathFollower.cpp
-	${ROBOT_SRC_DIR}/steeringController.cpp
-  ${ROBOT_SRC_DIR}/vehicleSpeedController.cpp
+  ${ROBOT_SRC_DIR}/steeringController.cpp
+  ${ROBOT_SRC_DIR}/speedController.cpp
 	${ROBOT_SRC_DIR}/wheelController.cpp
 	${ROBOT_SRC_DIR}/vehicleMath.cpp
 	${ROBOT_SRC_DIR}/visionSystem.cpp
@@ -53,6 +55,8 @@ set(SOURCE_FILES
 set(HEADER_FILES
 		
 	${SIMULATOR_SRC_DIR}/keyboardController.h
+  ${SIMULATOR_SRC_DIR}/sim_pathFollower.h
+  ${SIMULATOR_SRC_DIR}/sim_overlayDisplay.h
 	
 	${COZMO_ROBOT_HEADER_FILES}
 	${COZMO_INCLUDE_FILES}

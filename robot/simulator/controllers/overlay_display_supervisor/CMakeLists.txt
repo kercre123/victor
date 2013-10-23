@@ -6,7 +6,10 @@ cmake_minimum_required(VERSION 2.8)
 project(overlay_display_supervisor)
 
 # Include paths
-include_directories(${WEBOTS_C_INCLUDE_DIR})
+include_directories(
+  ${WEBOTS_C_INCLUDE_DIR}
+  ${PROJECT_SOURCE_DIR}/robot/simulator/src
+)
 
 # Link paths
 link_directories( ${WEBOTS_LIB_DIR} )
@@ -15,7 +18,6 @@ link_directories( ${WEBOTS_LIB_DIR} )
 set(SOURCE_FILES
 	overlay_display_supervisor.c
 )
-
 
 add_executable(overlay_display_supervisor ${SOURCE_FILES} )
 

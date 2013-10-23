@@ -13,7 +13,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/steeringController.h"
 #include "anki/cozmo/robot/trace.h"
-#include "anki/cozmo/robot/vehicleSpeedController.h"
+#include "anki/cozmo/robot/speedController.h"
 #include "anki/cozmo/robot/wheelController.h"
 
 
@@ -22,62 +22,67 @@
 namespace Anki {
   namespace WheelController {
     
-    // Cap error_sum so that integral component of outl does not exceed say some percent of MOTOR_PWM_MAXVAL.
-    // e.g. 25% of 2400 = 600.  600 / wKi = 24000.
-    // 24000 is also less than fix16 max value should we want to convert to fixed point.
-#define MAX_WHEEL_CONTROLLER_ERROR_SUM 24000
+    // private members
+    namespace {
+      
+      // Cap error_sum so that integral component of outl does not exceed say some percent of MOTOR_PWM_MAXVAL.
+      // e.g. 25% of 2400 = 600.  600 / wKi = 24000.
+      // 24000 is also less than fix16 max value should we want to convert to fixed point.
+      const f32 MAX_ERROR_SUM = 24000.f;
+      const f32 ENCODER_FILTERING_COEFF = 0.9f;
+      
+      // Gains for wheel controller
+      f32 Kp_ = DEFAULT_WHEEL_KP;
+      f32 Ki_ = DEFAULT_WHEEL_KI;
+      f32 Kd_ = DEFAULT_WHEEL_KD;
+      
+      //Returns/Sets the desired speed of the wheels (in mm/sec)
+      s16 desiredWheelSpeedL_ = 0;
+      s16 desiredWheelSpeedR_ = 0;
+      
+      // PWM values:
+      s16 pwmL_ = 0;
+      s16 pwmR_ = 0;
+      
+      // Encoder / Wheel Speed Filtering
+      s32 measuredWheelSpeedL_ = 0;
+      s32 measuredWheelSpeedR_ = 0;
+      f32 filterWheelSpeedL_ = 0.f;
+      f32 filterWheelSpeedR_ = 0.f;
+      
+      // Whether we're in coast mode (not actively running wheel controllers)
+      bool coastMode_ = true;
+      
+      // One-shot coast-until-stop flag
+      bool coastUntilStop_ = false;
+      
+      // Integral gain sums for wheel controllers
+      float error_sumL_ = 0;
+      float error_sumR_ = 0;
+      
+      // For detecting out-of-control spinning
+      u16 reverseDrivingCnt_ = 0;
+      u16 spinCnt_ = 0;
+      
+    } // private namespace
     
-    // Gains for wheel controller
-    float wKp = DEFAULT_WHEEL_KP;
-    float wKi = DEFAULT_WHEEL_KI;
-    float wKd = DEFAULT_WHEEL_KD;
-    
-    
-    //Returns/Sets the desired speed of the wheels (in mm/sec)
-    s16 desiredWheelSpeedL = 0;
-    s16 desiredWheelSpeedR = 0;
-    
-    
-    // Whether we're in coast mode (not actively running wheel controllers)
-    static bool coastMode_ = true;
-    
-    // One-shot coast-until-stop flag
-    static bool coastUntilStop_ = false;
-    void DoCoastUntilStop() {coastUntilStop_ = true;}
-    
-    // Integral gain sums for wheel controllers
-    static float error_suml_ = 0;
-    static float error_sumr_ = 0;
-    
-    // For detecting out-of-control spinning
-    static u16 reverseDrivingCnt = 0;
-    static u16 spinCnt = 0;
+    inline void DoCoastUntilStop() {coastUntilStop_ = true;}
     
     // Resets the integral gain sums
     void ResetIntegralGainSums(void);
     
     //sets the wheel PID controller constants
     void SetGains(float kp, float ki, float kd) {
-      wKp = kp;
-      wKi = ki;
-      wKd = kd;
+      Kp_ = kp;
+      Ki_ = ki;
+      Kd_ = kd;
     }
-    
-    //Run the wheel controller: Header. See below
-    void Run(s16 *motorvalueoutL, s16 *motorvalueoutR);
     
     //Manage wheel controller:
     //If controller off,
     //Directly output the input but "converted" from mm/sec to motor units (!!: approx. only. See function description)
     // *motorvalueoutL =  desiredWheelSpeedL;
     // *motorvalueoutR =  desiredWheelSpeedR;
-    
-    //This manages at a high level what the wheel speed controller needs to do
-    void Manage(s16 *motorvalueoutL, s16 *motorvalueoutR)
-    {
-      //In many other case (as of now), we run the wheel controller normally
-      Run(motorvalueoutL, motorvalueoutR);
-    }
     
     
     //Run the wheel controller
@@ -86,40 +91,31 @@ namespace Anki {
     {
       if(!coastMode_ && !coastUntilStop_) {
         
-        //Get the current wheel speed (maybe filtered?), in mm/sec
-        float wspeedl = (float)Cozmo::Robot::GetLeftWheelSpeedFiltered();
-        float wspeedr = (float)Cozmo::Robot::GetRightWheelSpeedFiltered();
-        
 #if(DEBUG_WHEEL_CONTROLLER)
         fprintf(stdout, " WHEEL speeds: %f (L), %f (R)   (Curr: %d, %d)\n",
-                wspeedl, wspeedr,
-                Cozmo::Robot::GetLeftWheelSpeed(),
-                Cozmo::Robot::GetRightWheelSpeed() );
+                filterWheelSpeedL_, filterWheelSpeedR_,
+                measuredWheelSpeedL_, measuredWheelSpeedR_);
         fprintf(stdout, " WHEEL desired speeds: %d (L), %d (R)\n",
-                desiredWheelSpeedL, desiredWheelSpeedR);
+                desiredWheelSpeedL_, desiredWheelSpeedR_);
 #endif
         
-        //Get the desired speed in mm/sec
-        float deswspeedl = desiredWheelSpeedL;
-        float deswspeedr = desiredWheelSpeedR;
+        //Compute the error between dessired and actual (filtered)
+        float errorL = (desiredWheelSpeedL_ - filterWheelSpeedL_);
+        float errorR = (desiredWheelSpeedR_ - filterWheelSpeedR_);
         
-        //Compute the error
-        float errorl = (deswspeedl - wspeedl);
-        float errorr = (deswspeedr - wspeedr);
-        
-        Traces16(TRACE_VAR_DESIRED_SPD_L, desiredWheelSpeedL, TRACE_MASK_MOTOR_CONTROLLER);
-        Traces16(TRACE_VAR_DESIRED_SPD_R, desiredWheelSpeedR, TRACE_MASK_MOTOR_CONTROLLER);
-        Tracefloat(TRACE_VAR_WSPD_FILT_L, wspeedl, TRACE_MASK_MOTOR_CONTROLLER);
-        Tracefloat(TRACE_VAR_WSPD_FILT_R, wspeedr, TRACE_MASK_MOTOR_CONTROLLER);
-        Tracefloat(TRACE_VAR_ERROR_L, error_suml_, TRACE_MASK_MOTOR_CONTROLLER);
-        Tracefloat(TRACE_VAR_ERROR_R, error_sumr_, TRACE_MASK_MOTOR_CONTROLLER);
+        Traces16(TRACE_VAR_DESIRED_SPD_L, desiredWheelSpeedL_, TRACE_MASK_MOTOR_CONTROLLER);
+        Traces16(TRACE_VAR_DESIRED_SPD_R, desiredWheelSpeedR_, TRACE_MASK_MOTOR_CONTROLLER);
+        Tracefloat(TRACE_VAR_WSPD_FILT_L, filterSpeedL_, TRACE_MASK_MOTOR_CONTROLLER);
+        Tracefloat(TRACE_VAR_WSPD_FILT_R, filterSpeedR_, TRACE_MASK_MOTOR_CONTROLLER);
+        Tracefloat(TRACE_VAR_ERROR_L, error_sumL_, TRACE_MASK_MOTOR_CONTROLLER);
+        Tracefloat(TRACE_VAR_ERROR_R, error_sumR_, TRACE_MASK_MOTOR_CONTROLLER);
         
         // NDM: Convert to int only AFTER clamping, to avoid int overflow
-        float outl = MM_PER_SEC_TO_MOTOR_VAL( (float)(wKp * errorl) + (error_suml_ * wKi) );
-        float outr = MM_PER_SEC_TO_MOTOR_VAL( (float)(wKp * errorr) + (error_sumr_ * wKi) );
+        float outl = MM_PER_SEC_TO_MOTOR_VAL( (float)(Kp_ * errorL) + (error_sumL_ * Ki_) );
+        float outr = MM_PER_SEC_TO_MOTOR_VAL( (float)(Kp_ * errorR) + (error_sumR_ * Ki_) );
         
 #if(DEBUG_WHEEL_CONTROLLER)
-        fprintf(stdout, " WHEEL error: %f (L), %f (R)   error_sum: %f (L), %f (R)\n", errorl, errorr, error_suml_, error_sumr_);
+        fprintf(stdout, " WHEEL error: %f (L), %f (R)   error_sum: %f (L), %f (R)\n", errorL, errorR, error_sumL_, error_sumR_);
 #endif
         
         /*
@@ -130,7 +126,7 @@ namespace Anki {
          error_sumr_ = 0;
          outl = 0;
          outr = 0;
-         ResetVehicleSpeedControllerIntegralError();
+         ResetSpeedControllerIntegralError();
          }
          */
         
@@ -147,48 +143,54 @@ namespace Anki {
         //2) And the desired speed is smaller than the current speed
         //ATTENTION: This should work in reverse dirving as well, BUT requires
         //the encoders to return values
-        if (ABS(wspeedl) <= WHEEL_DEAD_BAND_MM_S) {
-          if ((wspeedl >= 0 && deswspeedl <= wspeedl) || (wspeedl < 0 && deswspeedl >= wspeedl)) {
+        if (ABS(filterWheelSpeedL_) <= WHEEL_DEAD_BAND_MM_S) {
+          if ((filterWheelSpeedL_ >= 0 &&
+               desiredWheelSpeedL_ <= filterWheelSpeedL_) ||
+              (filterWheelSpeedL_ < 0 &&
+               desiredWheelSpeedL_ >= filterWheelSpeedL_)) {
             *motorvalueoutL = 0;
-            error_suml_ = 0;
+            error_sumL_ = 0;
           }
         }
         // If considered stopped, force stop
-        if (ABS(deswspeedl) <= WHEEL_SPEED_COMMAND_STOPPED_MM_S) {
+        if (ABS(desiredWheelSpeedL_) <= WHEEL_SPEED_COMMAND_STOPPED_MM_S) {
           *motorvalueoutL = 0;
-          error_suml_ = 0;
+          error_sumL_ = 0;
         }
         
-        if (ABS(wspeedr) <= WHEEL_DEAD_BAND_MM_S) {
-          if ((wspeedr >= 0 && deswspeedr <= wspeedr) || (wspeedr < 0 && deswspeedr >= wspeedr)) {
+        if (ABS(filterWheelSpeedR_) <= WHEEL_DEAD_BAND_MM_S) {
+          if ((filterWheelSpeedR_ >= 0 &&
+               desiredWheelSpeedR_ <= filterWheelSpeedR_) ||
+              (desiredWheelSpeedR_ < 0 &&
+               desiredWheelSpeedR_ >= filterWheelSpeedR_)) {
             *motorvalueoutR = 0;
-            error_sumr_ = 0;
+            error_sumR_ = 0;
           }
         }
         // If considered stopped, force stop
-        if (ABS(deswspeedr) <= WHEEL_SPEED_COMMAND_STOPPED_MM_S) {
+        if (ABS(desiredWheelSpeedR_) <= WHEEL_SPEED_COMMAND_STOPPED_MM_S) {
           *motorvalueoutR = 0;
-          error_sumr_ = 0;
+          error_sumR_ = 0;
         }
         
         //Sum the error (integrate it). But ONLY, if we are not commading max output already
         //This should prevent the integral term to become to huge
         if (ABS(outl) < Cozmo::HAL::MOTOR_PWM_MAXVAL) {
-          error_suml_ = CLIP(error_suml_ + errorl, -MAX_WHEEL_CONTROLLER_ERROR_SUM,MAX_WHEEL_CONTROLLER_ERROR_SUM);
+          error_sumL_ = CLIP(error_sumL_ + errorL, -MAX_ERROR_SUM,MAX_ERROR_SUM);
         }
         if (ABS(outr) < Cozmo::HAL::MOTOR_PWM_MAXVAL) {
-          error_sumr_ = CLIP(error_sumr_ + errorr, -MAX_WHEEL_CONTROLLER_ERROR_SUM,MAX_WHEEL_CONTROLLER_ERROR_SUM);
+          error_sumR_ = CLIP(error_sumR_ + errorR, -MAX_ERROR_SUM,MAX_ERROR_SUM);
         }
       } else {
         // Coasting -- command 0 to motors
         *motorvalueoutL = 0;
         *motorvalueoutR = 0;
-        error_suml_ = 0;
-        error_sumr_ = 0;
+        error_sumL_ = 0;
+        error_sumR_ = 0;
         
         // Cancel coast until stop if we've stopped.
         if (coastUntilStop_ &&
-            VehicleSpeedController::GetCurrentMeasuredVehicleSpeed() == 0) {
+            SpeedController::GetCurrentMeasuredVehicleSpeed() == 0) {
           coastUntilStop_ = FALSE;
         }
       }
@@ -199,19 +201,53 @@ namespace Anki {
       
       //Command the computed speed (as PWM values) to the motors
       Cozmo::Robot::SetOpenLoopMotorSpeed(*motorvalueoutL, *motorvalueoutR);
+      
+    } // Run()
+    
+    
+    
+    // Runs one step of the wheel encoder filter;
+    void EncoderSpeedFilterIteration(void)
+    {
+      // Get true (gyro measured) speeds from robot model
+      measuredWheelSpeedL_ = Cozmo::HAL::GetLeftWheelSpeed();
+      measuredWheelSpeedR_ = Cozmo::HAL::GetRightWheelSpeed();
+      
+      filterWheelSpeedL_ = (Cozmo::HAL::GetLeftWheelSpeed() *
+                       (1.0f - ENCODER_FILTERING_COEFF) +
+                       (filterWheelSpeedL_ * ENCODER_FILTERING_COEFF));
+      filterWheelSpeedR_ = (Cozmo::HAL::GetLeftWheelSpeed() *
+                       (1.0f - ENCODER_FILTERING_COEFF) +
+                       (filterWheelSpeedR_ * ENCODER_FILTERING_COEFF));
+      
+    } // EncoderSpeedFilterIteration()
+    
+    
+    //This manages at a high level what the wheel speed controller needs to do
+    void Manage()
+    {
+      //In many other case (as of now), we run the wheel controller normally
+      Run(&pwmL_, &pwmR_);
+      
+      EncoderSpeedFilterIteration();
     }
     
+    void GetFilteredWheelSpeeds(f32 *left, f32 *right)
+    {
+      *left = filterWheelSpeedL_;
+      *right = filterWheelSpeedR_;
+    }
     
     //Get the wheel speeds in mm/sec
     void GetDesiredWheelSpeeds(s16 *leftws, s16 *rightws) {
-      *leftws  = desiredWheelSpeedL;
-      *rightws = desiredWheelSpeedR;
+      *leftws  = desiredWheelSpeedL_;
+      *rightws = desiredWheelSpeedR_;
     }
     
     //Set the wheel speeds in mm/sec
     void SetDesiredWheelSpeeds(s16 leftws, s16 rightws) {
-      desiredWheelSpeedL = leftws;
-      desiredWheelSpeedR = rightws;
+      desiredWheelSpeedL_ = leftws;
+      desiredWheelSpeedR_ = rightws;
     }
     
     //This function will command a wheel speed to the left and right wheel so that the vehicle follows a trajectory
@@ -247,8 +283,8 @@ namespace Anki {
     
     void ResetIntegralGainSums(void)
     {
-      error_suml_ = 0;
-      error_sumr_ = 0;
+      error_sumL_ = 0;
+      error_sumR_ = 0;
     }
     
   } // namespace WheelController
