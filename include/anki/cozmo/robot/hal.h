@@ -35,9 +35,24 @@
 
 #include "anki/common/types.h"
 
-namespace Anki {
-  namespace Cozmo {
-    namespace HAL {
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <stdio.h>
+#ifdef __cplusplus
+}
+#endif
+#ifdef MOVI_TOOLS
+#undef printf
+#define printf(...) _xprintf(Anki::Cozmo::HAL::UARTPutChar, 0, __VA_ARGS__)
+#endif  // MOVI_TOOLS
+
+namespace Anki
+{
+  namespace Cozmo
+  {
+    namespace HAL
+    {
 
       //
       // Parameters / Constants
@@ -122,9 +137,25 @@ namespace Anki {
 
       // Take a step (needed for webots, possibly a no-op for real robot?)
       ReturnCode Step(void);
-      
+ 
+      // UART
+      void UARTInit();
+      int UARTPutChar(int c);
+
+      // Cameras
+      void MatCameraInit();
+      u8* MatCameraGetFrame();
+
+      void FrontCameraInit();
+      u8* FrontCameraGetFrame();
+
+      // USB
+      void USBInit();
+      void USBUpdate();
+
     } // namespace HAL
   } // namespace Cozmo
 } // namespace Anki
 
 #endif // ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
+

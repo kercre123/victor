@@ -22,6 +22,7 @@ GCC_VERSION = '4.4.2'
 MV_TOOLS_VERSION = '00.50.37.0'
 
 LEON_SOURCE = []
+LEON_SOURCE += addSources('./hal')
 LEON_SOURCE += addSources('./vision')
 #LEON_SOURCE += addSources('./supervisor/src')
 LEON_SOURCE += addSources('../coretech/vision/robot/src')
@@ -41,59 +42,17 @@ DRIVERS = MV_COMMON_BASE + 'drivers/' + MV_SOC_PLATFORM + '/'
 SWCOMMON = MV_COMMON_BASE + 'swCommon/'
 SWCOMMON_PLATFORM = SWCOMMON + MV_SOC_PLATFORM + '/'
 BOARD = COMPONENTS + 'Board/leon_code/'
+LIBC = MV_COMMON_BASE + 'libc/leon/'
 CIF_GENERIC = COMPONENTS + 'CifGeneric/leon_code/'
-CIF_OV = COMPONENTS + 'CifOV5642/leon_code/'
 
-DRIVER_SOURCE = [
-DRIVERS + 'brdDrivers/brdMv0153/brdMv0153.c',
-
-BOARD + 'Board.c',
-
-SWCOMMON_PLATFORM + 'src/swcL2Cache.c',
-SWCOMMON_PLATFORM + 'src/swcLedControl.c',
-SWCOMMON_PLATFORM + 'src/swcMemoryTransfer.c',
-SWCOMMON_PLATFORM + 'src/swcShaveLoader.c',
-SWCOMMON_PLATFORM + 'src/swcSliceUtils.c',
-SWCOMMON_PLATFORM + 'src/swcTestUtils.c',
-
-SWCOMMON + 'src/swcCrc.c',
-SWCOMMON + 'src/swcLeonMath.c',
-SWCOMMON + 'src/swcLeonUtils.c',
-SWCOMMON + 'src/swcRandom.c',
-
-DRIVERS + 'icDrivers/icEeprom.c',
-DRIVERS + 'icDrivers/icMipiTC358746.c',
-DRIVERS + 'icDrivers/icPllCDCE913.c',
-DRIVERS + 'icDrivers/icRegulatorLT3906.c',
-
-DRIVERS + 'socDrivers/DrvCif.c',
-DRIVERS + 'socDrivers/DrvCpr.c',
-DRIVERS + 'socDrivers/DrvDdr.c',
-DRIVERS + 'socDrivers/DrvGpio.c',
-DRIVERS + 'socDrivers/DrvHsdio.c',
-DRIVERS + 'socDrivers/DrvI2c.c',
-DRIVERS + 'socDrivers/DrvI2cMaster.c',
-DRIVERS + 'socDrivers/DrvI2s.c',
-DRIVERS + 'socDrivers/DrvIcb.c',
-DRIVERS + 'socDrivers/DrvL2Cache.c',
-DRIVERS + 'socDrivers/DrvLcd.c',
-DRIVERS + 'socDrivers/DrvPwm.c',
-DRIVERS + 'socDrivers/DrvRegUtils.c',
-DRIVERS + 'socDrivers/DrvSpi.c',
-DRIVERS + 'socDrivers/DrvSvu.c',
-DRIVERS + 'socDrivers/DrvSvuDebug.c',
-DRIVERS + 'socDrivers/DrvTimer.c',
-DRIVERS + 'socDrivers/DrvUart.c',
-
-CIF_GENERIC + 'CIFGeneric.c',
-CIF_OV + 'CifOV5642.c',
-
-DRIVERS + 'system/asm/crt0.S',
-DRIVERS + 'system/asm/memmap.S',
-DRIVERS + 'system/asm/mp_rom.S',
-DRIVERS + 'system/asm/sysbss.S',
-DRIVERS + 'system/asm/traps.S'
-]
+LEON_SOURCE += addSources(BOARD);
+LEON_SOURCE += addSources(SWCOMMON_PLATFORM + 'src');
+LEON_SOURCE += addSources(SWCOMMON + 'src');
+LEON_SOURCE += addSources(DRIVERS + 'socDrivers');
+LEON_SOURCE += addSources(CIF_GENERIC);
+LEON_SOURCE += addSources(DRIVERS + 'system/asm');
+LEON_SOURCE += addSources(LIBC + 'src');
+LEON_SOURCE += addSources(LIBC + 'src/asm');
 
 CCOPT = (
 	'-I ../include '
@@ -108,19 +67,19 @@ CCOPT = (
 	'-I' + MV_COMMON_BASE + 'swCommon/include '
 	'-I' + MV_COMMON_BASE + 'swCommon/' + MV_SOC_PLATFORM + '/include '
 	'-I' + MV_COMMON_BASE + 'libc/leon/include '
+	'-I' + LIBC + 'include '
 	'-I' + CIF_GENERIC + ' '
-	'-I' + CIF_OV + ' '
 	'-Os -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 '
-	'-DMOVI_TOOLS'
+	'-DMOVI_TOOLS '
 )
 
 CXXOPT = (
-	'-std=c++0x'
+	'-std=c++0x '
 )
 
-LINKER_SCRIPT = 'scripts/ld/' + MV_SOC_PLATFORM + '_default_memory_map.ldscript'
+LINKER_SCRIPT = 'ld/' + MV_SOC_PLATFORM + '_default_memory_map.ldscript'
 LDOPT = (
-	'-O9 -t --gc-sections -M -warn-common -L scripts/ld -T ' + LINKER_SCRIPT
+	'-O9 -t --gc-sections -M -warn-common -L ld -T ' + LINKER_SCRIPT
 )
 
 OUTPUT = 'build/'
@@ -139,6 +98,7 @@ PLATFORM = MV_TOOLS_DIR + '/' + MV_TOOLS_VERSION + '/' + DETECTED_PLATFORM + '/'
 CC = PLATFORM + SPARC_DIR + 'bin/sparc-elf-gcc '
 CXX = PLATFORM + SPARC_DIR + 'bin/sparc-elf-g++ '
 LD = PLATFORM + SPARC_DIR + 'bin/sparc-elf-ld '
+MVCONV = PLATFORM + 'bin/moviConvert'
 
 srcToObj = { }
 
@@ -193,6 +153,9 @@ def areDependenciesCurrent(src, obj, obj_time):
 
 """Invoke the LEON/sparc compiler for src and generate dependencies"""
 def compileLEON(src):
+	if not src.endswith('.S') and not src.endswith('.c') and not src.endswith('.cpp') and not src.endswith('.cc'):
+		return
+	
 	obj = OUTPUT + split(src) + '.o'
 	srcToObj[src] = obj
 	dir = obj[0:obj.rfind('/')]
@@ -206,20 +169,19 @@ def compileLEON(src):
 			needsCompile = False
 	
 	if needsCompile:
-		if src.endswith('.S') or src.endswith('.c') or src.endswith('.cpp') or src.endswith('.cc'):
-			print 'Compiling:', src[(src.rfind('/') + 1):]
-			if src.endswith('.S'):
-				if os.system(CC + ' -c ' + CCOPT + ' -DASM ' + src + ' -o ' + obj) != 0:
-					sys.exit(1)
-				os.system(CC + ' ' + CCOPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src)
-			elif src.endswith('.c'):
-				if os.system(CC + ' -c ' + CCOPT + ' ' + src + ' -o ' + obj) != 0:
-					sys.exit(1)
-				os.system(CC + ' ' + CCOPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src)
-			elif src.endswith('.cpp') or src.endswith('.cc'):
-				if os.system(CXX + ' -c ' + CCOPT + ' ' + CXXOPT + ' ' + src + ' -o ' + obj) != 0:
-					sys.exit(1)
-				os.system(CXX + ' ' + CCOPT + ' ' + CXXOPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src)
+		print 'Compiling:', src[(src.rfind('/') + 1):]
+		if src.endswith('.S'):
+			if os.system(CC + ' -c ' + CCOPT + ' -DASM ' + src + ' -o ' + obj) != 0:
+				sys.exit(1)
+			os.system(CC + ' ' + CCOPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src)
+		elif src.endswith('.c'):
+			if os.system(CC + ' -c ' + CCOPT + ' ' + src + ' -o ' + obj) != 0:
+				sys.exit(1)
+			os.system(CC + ' ' + CCOPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src)
+		elif src.endswith('.cpp') or src.endswith('.cc'):
+			if os.system(CXX + ' -c ' + CCOPT + ' ' + CXXOPT + ' ' + src + ' -o ' + obj) != 0:
+				sys.exit(1)
+			os.system(CXX + ' ' + CCOPT + ' ' + CXXOPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src)
 
 if __name__ == '__main__':
 	for arg in sys.argv:
@@ -227,15 +189,20 @@ if __name__ == '__main__':
 			print 'Cleaning...'
 			os.system('rm -rf ' + OUTPUT + '*')
 			sys.exit(0)
-		
-	for src in (LEON_SOURCE + DRIVER_SOURCE):
+	
+	for src in (LEON_SOURCE):
 		compileLEON(src)
-
+	
 	objects = ''
 	for key in srcToObj.keys():
 		objects += ' ' + srcToObj[key]
-
+	
 	print 'Linking ' + TARGET + '.elf'
-	s = LD + ' ' + LDOPT + ' -o ' + OUTPUT + TARGET + '.elf ' + objects + ' > ' + OUTPUT + TARGET + '.map'
+	file = OUTPUT + TARGET + '.elf'
+	s = LD + ' ' + LDOPT + ' -o ' + file + ' ' + objects + ' > ' + OUTPUT + TARGET + '.map'
 	os.system(s)
+	
+	s = MVCONV + ' -elfInput ' + file + ' -mvcmd:' + OUTPUT + TARGET + '.mvcmd'
+	os.system(s)
+
 
