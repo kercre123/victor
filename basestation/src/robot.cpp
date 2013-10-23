@@ -21,9 +21,30 @@ namespace Anki {
   namespace Cozmo {
     
     Robot::Robot()
+    : addedToWorld(false),
+      camDownCalibSet(false), camHeadCalibSet(false),
+      matMarker(NULL)
     {
       
     } // Constructor: Robot
+    
+    void Robot::addToWorld(const u32 withID)
+    {
+      this->ID = withID;
+      
+      CozmoMsg_RobotAdded msg;
+      msg.size = sizeof(CozmoMsg_RobotAdded);
+      msg.msgID = MSG_B2V_CORE_ROBOT_ADDED_TO_WORLD;
+      msg.robotID = this->ID;
+      
+      const u8 *msgData = (const u8 *) &msg;
+      messagesOut.emplace(msgData, msgData+sizeof(msg));
+      
+      this->addedToWorld = true;
+      
+    } // addToWorld()
+
+    
     /*
     Robot::Robot( BlockWorld &theWorld )
     : world(theWorld)
@@ -44,6 +65,20 @@ namespace Anki {
     
     void Robot::updatePose()
     {
+      if(not this->addedToWorld) {
+        fprintf(stdout, "Robot::updatePose() called before robot was "
+                "added to a world!\n");
+        return;
+      }
+      
+      if(not this->camDownCalibSet) {
+        fprintf(stdout, "Robot::updatePose() called before mat camera "
+                "calibration was set.\n");
+        return;
+      }
+      
+      bool poseUpdated = false;
+      
       // TODO: add motion simulation (for in between messages)
 
       if(this->matMarker != NULL) {
@@ -53,9 +88,7 @@ namespace Anki {
         
         const CameraCalibration& camCalib = camDown.get_calibration();
         
-        // TODO: get center point from camCalib
-        //const Point2f imageCenterPt(camCalib.get_center_pt());
-        const Point2f imageCenterPt(640.f/2.f, 480.f/2.f);
+        const Point2f imageCenterPt(camCalib.get_center_pt());
         
         if(BlockWorld::ZAxisPointsUp) {
           // xvec = imgCen(1)-xcenIndex;
@@ -79,9 +112,10 @@ namespace Anki {
         //          matSize(2)/2;
         RotationMatrix2d R(matMarker->get_upAngle());
         Point2f matPoint(R*centerVec);
-        // TODO: get downCamPixPerMM from camCalib!
-        // matPoint *= 1.f / this->downCamPixPerMM;
-        matPoint *= 1.f/24.f;
+        
+        // This should have been computed by now
+        CORETECH_ASSERT(this->downCamPixPerMM > 0.f);
+        matPoint *= 1.f / this->downCamPixPerMM;
         matPoint.x() += matMarker->get_xSquare() * MatMarker2d::SquareWidth;
         matPoint.y() += matMarker->get_ySquare() * MatMarker2d::SquareWidth;
         matPoint -= MatMarker2d::SquareWidth * .5f;
@@ -115,43 +149,47 @@ namespace Anki {
         delete matMarker;
         matMarker = NULL;
         
+        poseUpdated = true;
       } // if we have a matMarker2d
       
-      // Send our (updated) pose to the physical robot:
-      CozmoMsg_AbsLocalizationUpdate msg;
-      msg.size = SIZE_MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE;
-      msg.msgID = MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE;
-      msg.xPosition = pose.get_translation().x();
-      msg.yPosition = pose.get_translation().y();
-      
-      Radians headingAngle;
-      Vec3f   rotationAxis;
-      pose.get_rotationVector().get_angleAndAxis(headingAngle, rotationAxis);
-      
-      // Angle will always be positive in a rotationVector.  We have to
-      // take the axis into account here because we are using this as a
-      // 2D rotation angle around the *positive* Z axis. So if the rotation
-      // vector is rotating us around the *negative* Z axis, we need to use
-      // the -angle in our message to the robot.
-      if(headingAngle > 0.f) {
-        // TODO: Just assuming axis is in Z direction here...
-        CORETECH_ASSERT(NEAR_ZERO(rotationAxis.x()) &&
-                        NEAR_ZERO(rotationAxis.y()) &&
-                        NEAR(ABS(rotationAxis.z()), 1.f, 1e-6f));
-        if(rotationAxis.z() < 0) {
-          headingAngle = -headingAngle;
+      if(poseUpdated)
+      {
+        // Send our updated pose to the physical robot:
+        CozmoMsg_AbsLocalizationUpdate msg;
+        msg.size = SIZE_MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE;
+        msg.msgID = MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE;
+        msg.xPosition = pose.get_translation().x();
+        msg.yPosition = pose.get_translation().y();
+        
+        Radians headingAngle;
+        Vec3f   rotationAxis;
+        pose.get_rotationVector().get_angleAndAxis(headingAngle, rotationAxis);
+        
+        // Angle will always be positive in a rotationVector.  We have to
+        // take the axis into account here because we are using this as a
+        // 2D rotation angle around the *positive* Z axis. So if the rotation
+        // vector is rotating us around the *negative* Z axis, we need to use
+        // the -angle in our message to the robot.
+        if(headingAngle > 0.f) {
+          // TODO: Just assuming axis is in Z direction here...
+          CORETECH_ASSERT(NEAR_ZERO(rotationAxis.x()) &&
+                          NEAR_ZERO(rotationAxis.y()) &&
+                          NEAR(ABS(rotationAxis.z()), 1.f, 1e-6f));
+          if(rotationAxis.z() < 0) {
+            headingAngle = -headingAngle;
+          }
         }
-      }
-
-      msg.headingAngle = headingAngle.ToFloat();
-      
-      const u8 *msgData = (const u8 *) &msg;
-      messagesOut.emplace(msgData, msgData+sizeof(msg));
-
-      fprintf(stdout, "Basestation sending updated pose to robot: "
-              "(%.1f, %.1f) at %.1f degrees\n",
-              msg.xPosition, msg.yPosition,
-              msg.headingAngle * (180.f/M_PI));
+        
+        msg.headingAngle = headingAngle.ToFloat();
+        
+        const u8 *msgData = (const u8 *) &msg;
+        messagesOut.emplace(msgData, msgData+sizeof(msg));
+        
+        fprintf(stdout, "Basestation sending updated pose to robot: "
+                "(%.1f, %.1f) at %.1f degrees\n",
+                msg.xPosition, msg.yPosition,
+                msg.headingAngle * (180.f/M_PI));
+      } // if pose was updated
       
     } // updatePose()
     
@@ -174,6 +212,49 @@ namespace Anki {
         
         switch(msgType)
         {
+          case MSG_V2B_CORE_HEAD_CAMERA_CALIBRATION:
+          case MSG_V2B_CORE_MAT_CAMERA_CALIBRATION:
+          {
+            const CozmoMsg_CameraCalibration *calibMsg = reinterpret_cast<const CozmoMsg_CameraCalibration*>(&(msg[0]));
+            
+            Anki::CameraCalibration calib(calibMsg->focalLength_x,
+                                          calibMsg->focalLength_y,
+                                          calibMsg->center_x,
+                                          calibMsg->center_y,
+                                          calibMsg->skew);
+            switch(msgType)
+            {
+              case MSG_V2B_CORE_HEAD_CAMERA_CALIBRATION:
+              {
+                fprintf(stdout,
+                        "Basestation robot received head camera calibration.\n");
+                this->camHead.set_calibration(calib);
+                this->camHeadCalibSet = true;
+                break;
+              }
+              case MSG_V2B_CORE_MAT_CAMERA_CALIBRATION:
+              {
+                fprintf(stdout,
+                        "Basestation robot received mat camera calibration.\n");
+                this->camDown.set_calibration(calib);
+                this->camDownCalibSet = true;
+                
+                // Compute the resolution of the mat camera from its FOV and height
+                // off the mat:
+                f32 matCamHeightInPix = ((static_cast<f32>(calibMsg->nrows)*.5f) /
+                                         tanf(calibMsg->fov * .5f));
+                this->downCamPixPerMM = matCamHeightInPix / MAT_CAM_HEIGHT_FROM_GROUND_MM;
+                fprintf(stdout, "Computed mat cam's pixPerMM = %.1f\n",
+                        this->downCamPixPerMM);
+                
+                break;
+              }
+              default:
+                CORETECH_THROW("Unexpectedly reached switch default.");
+            }
+            break;
+          } // camera calibration case
+            
           case MSG_V2B_CORE_BLOCK_MARKER_OBSERVED:
           {
             // TODO: store observations from the same frame together
@@ -318,12 +399,18 @@ namespace Anki {
     
     void Robot::getVisibleBlockMarkers3d(std::vector<BlockMarker3d> &markers3d) const
     {
+      if(not this->camHeadCalibSet) {
+        fprintf(stdout, "Robot::getVisibleBlockMarkers3d() called before "
+                "head camera calibration was set.\n");
+        return;
+      }
+      
       // Estimate the pose of each observed BlockMarkers
       for(const BlockMarker2d& marker2d : this->visibleBlockMarkers2d)
       {
         // Create a BlockMarker3d from this marker2d, estimating its
         // Pose from the robot's head camera:
-        markers3d.push_back( BlockMarker3d(marker2d, this->camHead) );
+        markers3d.emplace_back( BlockMarker3d(marker2d, this->camHead) );
         
       } // FOR each marker2d
       
@@ -333,7 +420,6 @@ namespace Anki {
     {
       // Update our current pose and let the physical robot know where it is:
       this->pose = newPose;
-      
       
     } // set_pose()
     

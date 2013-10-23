@@ -35,6 +35,8 @@ namespace Anki {
       Robot();
       //Robot(BlockWorld &theWorld);
       
+      void addToWorld(const u32 withID);
+      
       void step();
       
       // Add observed BlockMarker3d objects to the list:
@@ -56,11 +58,13 @@ namespace Anki {
       void queueIncomingMessage(const u8 *msg, const u8 msgSize);
       bool hasOutgoingMessages() const;
       void getOutgoingMessage(u8 *msgOut, u8 &msgSize);
-      
+            
     protected:
-      u8 ID;
+      u32  ID;
+      bool addedToWorld;
       
       Camera camDown, camHead;
+      bool camDownCalibSet, camHeadCalibSet;
       
       Pose3d pose;
       void updatePose();
@@ -77,7 +81,7 @@ namespace Anki {
       //std::vector<Block*>          visibleBlocks;
       
       // TODO: compute this from down-camera calibration data
-      float downCamPixPerMM;
+      float downCamPixPerMM = -1.f;
       
       // Message handling
       typedef std::vector<u8> MessageType;

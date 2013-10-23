@@ -147,7 +147,14 @@ typedef enum {
   // trackID) is complete
   MSG_V2B_CORE_INIT_COMPLETE,
 */
-
+  
+  // Used by robot to broadcast to the basestation that it is availale for
+  // connection
+  MSG_V2B_CORE_ROBOT_AVAILABLE,
+  
+  // Basestation acknowledges that it has added the robot to the world and is
+  // ready to receive calibration and other setup info from the robot.
+  MSG_B2V_CORE_ROBOT_ADDED_TO_WORLD,
 
 
   // ** Motion related commands **
@@ -194,6 +201,10 @@ typedef enum {
   //   coordinates of the marker's center and the angle at which it was seen
   //   in the image.
   MSG_V2B_CORE_MAT_MARKER_OBSERVED,
+  
+  // Robot camera calibration information
+  MSG_V2B_CORE_MAT_CAMERA_CALIBRATION,
+  MSG_V2B_CORE_HEAD_CAMERA_CALIBRATION,
   
 
 
@@ -507,11 +518,47 @@ const u8 SIZE_MSG_V2B_CORE_MAT_MARKER_OBSERVED = sizeof(CozmoMsg_ObservedMatMark
 // MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE
 typedef struct {
   u8 size;
-  u8 msgID;                      // MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE
+  u8 msgID;                       // MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE
   f32 xPosition, yPosition;
   f32 headingAngle;
 } CozmoMsg_AbsLocalizationUpdate;
 const u8 SIZE_MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE = sizeof(CozmoMsg_AbsLocalizationUpdate);
+
+// MSG_V2B_CORE_CAMERA_CALIBRATION
+
+// Common camera calibration message, used for both mat and head camera
+// calibration data.  Which camera is determined by the msgID, which can be
+// either MSG_V2B_CORE_HEAD_CAMERA_CALIBRATION or
+// MSG_V2B_CORE_MAT_CAMERA_CALIBRATION
+typedef struct {
+  u8 size;
+  u8 msgID;                       // MSG_V2B_CORE_HEAD_CAMERA_CALIBRATION or
+                                  // MSG_V2B_CORE_MAT_CAMERA_CALIBRATION
+  // TODO: Use fixed point for these f32s to save message size
+  //       (Probably 1-2 decimal places is *plenty* for each)
+  f32 focalLength_x, focalLength_y;
+  f32 fov; // do i need to send this one?  it can be computed from knowledge of camera's height off the ground...
+  f32 center_x, center_y;
+  f32 skew; // TODO: Assume zero skew?
+  u16 nrows, ncols;
+} CozmoMsg_CameraCalibration;
+
+
+// MSG_V2B_CORE_ROBOT_AVAILABLE
+typedef struct {
+  u8 size;
+  u8 msgID;
+  u32 robotID;
+  // Other stuff?
+} CozmoMsg_RobotAvailable;
+
+// MSG_B2V_CORE_ROBOT_ADDED_TO_WORLD
+typedef struct {
+  u8 size;
+  u8 msgID;
+  u32 robotID;
+  // Other stuff?
+} CozmoMsg_RobotAdded;
 
 
 #endif  // #ifndef COZMO_MSG_PROTOCOL
