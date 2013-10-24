@@ -16,7 +16,7 @@
 
 #include "anki/vision/basestation/marker2d.h"
 
-#define BLOCKMARKER3D_USE_OUTSIDE_SQUARE true
+#define BLOCKMARKER3D_USE_OUTSIDE_SQUARE false
 
 namespace Anki {
   
@@ -26,7 +26,7 @@ namespace Anki {
   namespace Cozmo {
     
     // Forward Declarations:
-    class RobotMessage;
+    class Robot;
 
     typedef u16 BlockType;
     typedef u8  FaceType;
@@ -45,24 +45,29 @@ namespace Anki {
       static const size_t NumCodeSquares;
       
       // Constructors:
-      BlockMarker2d();
-      BlockMarker2d(const RobotMessage &msg);
+      //BlockMarker2d();
       BlockMarker2d(BlockType blockType, FaceType faceType,
-                    const Quad2f &corners, MarkerUpDirection upDirection);
+                    const Quad2f& corners, MarkerUpDirection upDirection,
+                    const Robot& seenBy);
       
+      // Decoding happens on the physical robot, so don't need these (?)
       //void encodeIDs(void);
       //void decodeIDs(const BitString& bitString);
       
       // Accessors:
-      BlockType  get_blockType() const;
-      FaceType   get_faceType()  const;
-      const Quad2f& get_quad() const;
+      BlockType      get_blockType() const;
+      FaceType       get_faceType()  const;
+      const Quad2f&  get_quad() const;
+      const Robot&   get_seenBy() const;
       
     protected:
       BlockType blockType;
       FaceType  faceType;
       
       Quad2f corners;
+      
+      // Reference to the robot that saw this marker
+      const Robot& seenBy;
       
     }; // class BlockMarker2d
     
@@ -99,6 +104,9 @@ namespace Anki {
                     const Pose3d    &poseWRTparentBlock);
       
       // Accessors:
+      BlockType get_blockType() const;
+      FaceType  get_faceType() const;
+      
       const Pose3d& get_pose(void) const;
       void set_pose(const Pose3d &newPose);
       
@@ -145,13 +153,17 @@ namespace Anki {
       typedef Point3<unsigned char> Color;
       
       enum FaceName {
-        FRONT_FACE  = 1,
-        LEFT_FACE   = 2,
-        BACK_FACE   = 3,
-        RIGHT_FACE  = 4,
-        TOP_FACE    = 5,
-        BOTTOM_FACE = 6
+        FRONT_FACE  = 0,
+        LEFT_FACE   = 1,
+        BACK_FACE   = 2,
+        RIGHT_FACE  = 3,
+        TOP_FACE    = 4,
+        BOTTOM_FACE = 5,
+        NUM_FACES
       };
+      
+      // "Safe" conversion from FaceType to enum FaceName (at least in Debug mode)
+      static FaceName FaceType_to_FaceName(FaceType type);
       
       enum Corners {
         LEFT_FRONT_TOP =     0,
@@ -170,14 +182,18 @@ namespace Anki {
       static unsigned int get_numBlocks();
       
       // Accessors:
-      float get_width() const;
-      float get_height() const;
-      float get_depth() const;
+      BlockType get_type() const;
+      float     get_width() const;
+      float     get_height() const;
+      float     get_depth() const;
+      float     get_minDim() const;
       
       const Pose3d& get_pose(void) const;
       void set_pose(const Pose3d &newPose);
       
       size_t get_numMarkers() const;
+      
+      const BlockMarker3d& get_faceMarker(const FaceName faceType) const;
       
     protected:
       // A counter for how many blocks are instantiated
@@ -193,7 +209,7 @@ namespace Anki {
       
       std::vector<Point3f> blockCorners;
       
-      std::vector<BlockMarker3d*> markers;
+      std::vector<BlockMarker3d> markers;
       void addFace(const FaceName whichFace);
       
       Pose3d pose;
@@ -215,10 +231,24 @@ namespace Anki {
     inline const Quad2f& BlockMarker2d::get_quad() const
     { return this->corners; }
     
+    inline const Robot& BlockMarker2d::get_seenBy() const
+    { return this->seenBy; }
+    
+    //
+    // BlockMarker3d:
+    //
+    inline BlockType BlockMarker3d::get_blockType() const
+    { return this->blockType; }
+    
+    inline FaceType  BlockMarker3d::get_faceType() const
+    { return this->faceType; }
 
     //
     // Block:
     //
+    inline BlockType Block::get_type() const
+    { return this->type; }
+    
     inline float Block::get_width() const
     { return this->size.x(); }
     
@@ -227,6 +257,12 @@ namespace Anki {
     
     inline float Block::get_depth() const
     { return this->size.y(); }
+    
+    inline float Block::get_minDim() const
+    {
+      return std::min(this->get_width(),
+                      std::min(this->get_height(), this->get_depth()));
+    }
     
     inline const Pose3d& Block::get_pose(void) const
     { return this->pose; }
@@ -237,6 +273,14 @@ namespace Anki {
     inline size_t Block::get_numMarkers() const
     { return this->markers.size(); }
     
+    inline const BlockMarker3d& Block::get_faceMarker(const FaceName face) const
+    { return this->markers[face]; }
+    
+    inline Block::FaceName Block::FaceType_to_FaceName(FaceType type)
+    {
+      CORETECH_ASSERT(type > 0 && type < NUM_FACES+1);
+      return static_cast<FaceName>(type-1);
+    }
     
   } // namespace Cozmo
 } // namespace Anki

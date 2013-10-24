@@ -25,6 +25,8 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/exceptions.h"
 
+#include "anki/cozmo/basestation/block.h"
+
 //#include "anki/messaging/basestation/messagingInterface.h"
 
 namespace Anki
@@ -32,13 +34,12 @@ namespace Anki
   namespace Cozmo
   {
     // Forward declarations:
-    class Block;
     class Robot;
     
     class BlockWorld
     {
     public:
-      const unsigned int MaxBlockTypes = 255;
+      static const unsigned int MaxBlockTypes = 255;
       static const unsigned int MaxRobots = 4;
       static bool ZAxisPointsUp; // normally true, false for Webots
       
@@ -49,6 +50,8 @@ namespace Anki
       void   addRobot(const u32 withID);
       Robot& getRobot(const u32 ID);
       size_t getNumRobots() const;
+      
+      const std::vector<Block>& get_blocks(const BlockType ofType) const;
       
       void queueMessage(const u8 *);
       
@@ -66,7 +69,7 @@ namespace Anki
       // of that type we've actually seen.
       // TODO: inner vector could actual blocks instead of pointers?
       //typedef std::map<Block::Type, std::vector<Block*> > BlockList;
-      typedef std::vector< std::vector<Block*> > BlockList_type;
+      typedef std::vector< std::vector<Block> > BlockList_type;
       BlockList_type blocks;
       
       // Store all the robots in the world:
@@ -84,6 +87,12 @@ namespace Anki
     {
       CORETECH_ASSERT(ID < this->getNumRobots());
       return this->robots[ID];
+    }
+    
+    inline const std::vector<Block>& BlockWorld::get_blocks(const BlockType ofType) const
+    {
+      CORETECH_ASSERT(ofType >= 0 && ofType < this->blocks.size());
+      return this->blocks[ofType];
     }
     
   } // namespace Cozmo

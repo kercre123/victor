@@ -20,11 +20,12 @@ namespace Anki {
 #pragma mark --- BlockMarker2d Implementations ---
     const size_t BlockMarker2d::NumCodeSquares = 5;
     
-    BlockMarker2d::BlockMarker2d(BlockType    blockTypeIn,
-                                 FaceType     faceTypeIn,
-                                 const Quad2f &cornersIn,
-                                 MarkerUpDirection upDirection)
-    : blockType(blockTypeIn), faceType(faceTypeIn)
+    BlockMarker2d::BlockMarker2d(BlockType         blockTypeIn,
+                                 FaceType          faceTypeIn,
+                                 const Quad2f&     cornersIn,
+                                 MarkerUpDirection upDirection,
+                                 const Robot&      seenByIn)
+    : blockType(blockTypeIn), faceType(faceTypeIn), seenBy(seenByIn)
     {
       // The assumption is the incoming corners are ordered by their position
       // in the image.  We want to reorder them with respect to the marker's
@@ -61,7 +62,9 @@ namespace Anki {
           CORETECH_ASSERT(false); // Should never get here
           
       } // switch(upDirection)
-    }
+      
+    } // BlockMarker2d() Constructor
+    
     
 #pragma mark --- BlockMarker3d Dimensions & Layout---
     
@@ -202,7 +205,7 @@ namespace Anki {
           
         case 75:
           // Webot Simulated Purple 2x1 Block
-          return Point3f(128, 26, 191);
+          return Point3f(120.f, 60.f, 60.f);
           
         default:
           // TODO: Handle unrecognized blocks more gracefully
@@ -240,46 +243,48 @@ namespace Anki {
       this->blockCorners[RIGHT_BACK_BOTTOM]  = { halfWidth, halfDepth,-halfHeight};
       
       // Create a block marker on each face:
-      markers.resize(6, NULL);
+      // (By using emplace_back, I am required to do these in the enumerated
+      //  order of the face names.  Thus the assertions.)
+      markers.reserve(6);
       
       const Vec3f Xaxis(1.f, 0.f, 0.f), Zaxis(0.f, 0.f, 1.f);
       
       Pose3d facePose(0, Zaxis, {{0.f, -halfDepth, 0.f}}, &(this->pose));
-      markers[FRONT_FACE] = new BlockMarker3d(this->type, FRONT_FACE, facePose);
+      CORETECH_ASSERT(FRONT_FACE==0);
+      markers.emplace_back(this->type, FRONT_FACE+1, facePose);
+
+      facePose.set_rotation(-M_PI_2, Zaxis);
+      facePose.set_translation({{-halfWidth, 0.f, 0.f}});
+      CORETECH_ASSERT(LEFT_FACE==1);
+      markers.emplace_back(this->type, LEFT_FACE+1, facePose);
       
       facePose.set_rotation(M_PI, Zaxis);
       facePose.set_translation({{0.f, halfDepth, 0.f}});
-      markers[BACK_FACE] = new BlockMarker3d(this->type, BACK_FACE, facePose);
+      CORETECH_ASSERT(BACK_FACE==2);
+      markers.emplace_back(this->type, BACK_FACE+1, facePose);
    
-      facePose.set_rotation(-M_PI_2, Zaxis);
-      facePose.set_translation({{-halfWidth, 0.f, 0.f}});
-      markers[LEFT_FACE] = new BlockMarker3d(this->type, LEFT_FACE, facePose);
-      
       facePose.set_rotation(M_PI_2, Zaxis);
       facePose.set_translation({{halfWidth, 0.f, 0.f}});
-      markers[RIGHT_FACE] = new BlockMarker3d(this->type, RIGHT_FACE, facePose);
+      CORETECH_ASSERT(RIGHT_FACE==3);
+      markers.emplace_back(this->type, RIGHT_FACE+1, facePose);
       
       facePose.set_rotation(-M_PI_2, Xaxis);
       facePose.set_translation({{0.f, 0.f, halfHeight}});
-      markers[TOP_FACE] = new BlockMarker3d(this->type, TOP_FACE, facePose);
+      CORETECH_ASSERT(TOP_FACE==4);
+      markers.emplace_back(this->type, TOP_FACE+1, facePose);
       
       facePose.set_rotation(M_PI_2, Xaxis);
       facePose.set_translation({{0.f, 0.f, -halfHeight}});
-      markers[BOTTOM_FACE] = new BlockMarker3d(this->type, BOTTOM_FACE, facePose);
+      CORETECH_ASSERT(BOTTOM_FACE==5);
+      markers.emplace_back(this->type, BOTTOM_FACE+1, facePose);
       
+
     } // Constructor: Block(type)
     
      
     Block::~Block(void)
     {
       --Block::numBlocks;
-      
-      for(BlockMarker3d* marker : this->markers)
-      {
-        CORETECH_ASSERT(marker != NULL);
-        
-        delete marker;
-      }
     }
     
     unsigned int Block::get_numBlocks(void)
