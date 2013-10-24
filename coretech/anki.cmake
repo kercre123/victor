@@ -73,6 +73,22 @@ fix_opencv_lib_names(OPENCV_LIBS)
 
 # Set up Matlab directories and mex extension:
 include(FindMatlab) # This Find script doesn't seem to work on Mac!
+
+# Since FindMatlab doesn't seem to work on Mac, do a naive search for Matlab in /Applications
+# if MATLAB_ROOT_DIR is not already a defined variable.
+# There's probably a better way to do this, but it seems to work.
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  if(NOT DEFINED MATLAB_ROOT_DIR)
+    find_program(MEX_COMPILER mex)
+    string(FIND ${MEX_COMPILER} "/Applications/" APP_SUBSTRING_POS)
+    if(APP_SUBSTRING_POS MATCHES "0")
+      # Strip off the end so that we only get /Applications/MATLAB_Rxxxxx.app
+      string(REGEX REPLACE "/bin/mex" "" MATLAB_ROOT_DIR ${MEX_COMPILER})
+      message(STATUS "Found matlab root at " ${MATLAB_ROOT_DIR})
+    endif()
+  endif()
+endif()
+
 if(NOT MATLAB_FOUND)
 	message(STATUS "FindMatlab failed. Hard coding Matlab paths and mex settings.")
 	if(WIN32)
