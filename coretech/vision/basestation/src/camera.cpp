@@ -8,6 +8,10 @@
 
 #include <algorithm>
 
+#if ANKICORETECH_USE_OPENCV
+#include "opencv2/calib3d/calib3d.hpp"
+#endif
+
 #include "anki/vision/basestation/camera.h"
 
 namespace Anki {
@@ -69,16 +73,53 @@ namespace Anki {
   {
     // TODO: Implement!
     CORETECH_THROW("Unimplemented!")
+    
+#if ANKICORETECH_USE_OPENCV
+    
+#endif
+    
     return Pose3d();
   }
   
   Pose3d Camera::computeObjectPose(const Quad2f &imgPoints,
                            const Quad3f &objPoints) const
   {
-    // TODO: Implement!
+#if ANKICORETECH_USE_OPENCV
+    cv::Vec3d cvRvec, cvTranslation;
+    std::vector<cv::Point2f> cvImagePoints;
+    std::vector<cv::Point3f> cvObjPoints;
+    
+    cvImagePoints.emplace_back(imgPoints[Quad2f::TopLeft].get_CvPoint_());
+    cvImagePoints.emplace_back(imgPoints[Quad2f::TopRight].get_CvPoint_());
+    cvImagePoints.emplace_back(imgPoints[Quad2f::BottomLeft].get_CvPoint_());
+    cvImagePoints.emplace_back(imgPoints[Quad2f::BottomRight].get_CvPoint_());
+    
+    cvObjPoints.emplace_back(objPoints[Quad3f::TopLeft].get_CvPoint3_());
+    cvObjPoints.emplace_back(objPoints[Quad3f::TopRight].get_CvPoint3_());
+    cvObjPoints.emplace_back(objPoints[Quad3f::BottomLeft].get_CvPoint3_());
+    cvObjPoints.emplace_back(objPoints[Quad3f::BottomRight].get_CvPoint3_());
+    
+    Matrix_3x3f calibMatrix(this->calibration.get_calibrationMatrix());
+    
+    cv::Mat distortionCoeffs; // TODO: currently empty, use radial distoration?
+    cv::solvePnP(cvObjPoints, cvImagePoints,
+                 calibMatrix.get_CvMatx_(), distortionCoeffs,
+                 cvRvec, cvTranslation,
+                 false, CV_P3P);
+    
+    Vec3f rvec(cvRvec[0], cvRvec[1], cvRvec[2]);
+    Vec3f translation(cvTranslation[0], cvTranslation[1], cvTranslation[2]);
+
+    // Return Pose object w.r.t. the camera's pose
+    return Pose3d(rvec, translation, &(this->pose));
+    
+#else
+    // TODO: Implement our own non-opencv version?
     CORETECH_THROW("Unimplemented!")
     return Pose3d();
-  }
+#endif
+
+  } // computeObjectPose(from quads)
   
   
   // Compute the projected image locations of a set of 3D points:
