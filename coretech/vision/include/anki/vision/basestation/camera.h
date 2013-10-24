@@ -93,10 +93,11 @@ namespace Anki {
     Camera(const CameraCalibration &calib, const Pose3d &pose);
     
     // Accessors:
-    inline const Pose3d&             get_pose()        const;
-    inline const CameraCalibration&  get_calibration() const;
+    const Pose3d&             get_pose()        const;
+    const CameraCalibration&  get_calibration() const;
     
-    inline void set_calibration(const CameraCalibration &calib);
+    void set_pose(const Pose3d& newPose);
+    void set_calibration(const CameraCalibration& calib);
     
     //
     // Methods:
@@ -133,14 +134,17 @@ namespace Anki {
   }; // class Camera
   
   // Inline accessors:
-  const Pose3d& Camera::get_pose(void) const
+  inline const Pose3d& Camera::get_pose(void) const
   { return this->pose; }
   
-  const CameraCalibration& Camera::get_calibration(void) const
+  inline const CameraCalibration& Camera::get_calibration(void) const
   { return this->calibration; }
   
-  void Camera::set_calibration(const Anki::CameraCalibration &calib)
-  { this->calibration = calib; }  
+  inline void Camera::set_calibration(const Anki::CameraCalibration &calib)
+  { this->calibration = calib; }
+  
+  inline void Camera::set_pose(const Pose3d& newPose)
+  { this->pose = newPose; }
   
 } // namespace Anki
 
