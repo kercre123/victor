@@ -175,6 +175,8 @@ namespace Anki {
     const RotationMatrix3d& get_rotationMatrix() const;
     const RotationVector3d& get_rotationVector() const;
     const Vec3f&            get_translation()    const;
+    Vec3f                   get_rotationAxis()   const;
+    Radians                 get_rotationAngle()  const;
     
     void set_rotation(const RotationMatrix3d &Rmat);
     void set_rotation(const RotationVector3d &Rvec);
@@ -227,6 +229,10 @@ namespace Anki {
     
   }; // class Pose3d
   
+  // Compute distance between the two poses' translation vectors
+  // TODO: take rotation into account?
+  float computeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2);
+  
   //
   // Inline accessors:
   //
@@ -274,6 +280,12 @@ namespace Anki {
   
   inline const Vec3f& Pose3d::get_translation() const
   { return this->translation; }
+  
+  inline Vec3f Pose3d::get_rotationAxis() const
+  { return this->rotationVector.get_axis(); }
+  
+  inline Radians Pose3d::get_rotationAngle() const
+  { return this->rotationVector.get_angle(); }
   
   inline void Pose3d::set_rotation(const RotationMatrix3d &Rmat)
   {

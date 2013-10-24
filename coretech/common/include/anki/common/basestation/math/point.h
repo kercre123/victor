@@ -62,6 +62,7 @@ namespace Anki {
     Point(typename std::enable_if<sizeof...(Tail)+1 == N, T>::type head, Tail... tail)
     : data{ head, T(tail)... } {}
 #else
+#warning No variadic templates.
     Point(const T x, const T y); // Only valid if N==2
     Point(const T x, const T y, const T z); // Only valid if N==3
 #endif
