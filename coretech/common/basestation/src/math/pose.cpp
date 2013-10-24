@@ -377,6 +377,16 @@ namespace Anki {
     return getWithRespectToHelper<Pose3d>(this, otherPose);
   }
   
+#pragma mark --- Global Functions ---
+  
+  float computeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2)
+  {
+    // Compute distance between the two poses' translation vectors
+    // TODO: take rotation into account?
+    Vec3f distVec(pose1.get_translation());
+    distVec -= pose2.get_translation();
+    return distVec.length();
+  }
 
   
 } // namespace Anki
