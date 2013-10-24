@@ -3,16 +3,21 @@
 
 #include "anki/cozmo/robot/cozmoTypes.h"
 
+namespace Anki {
+  namespace Cozmo {
+    namespace Localization {
 
-namespace Localization
-{
+      void Init();
+      
+      //Embedded::Pose2d GetCurrMatPose();
+      
+      void GetCurrentMatPose(f32& x, f32& y, Radians& angle);
+      void SetCurrentMatPose(f32  x, f32  y, Radians  angle);
+      
+      void Update();
 
-
-  void InitLocalization();
-  Anki::Embedded::Pose2d GetCurrMatPose();
-  void UpdateLocalization();
-
-
-}
+    } // Localization
+  } // Cozmo
+} // Anki
 #endif
 
