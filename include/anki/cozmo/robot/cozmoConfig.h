@@ -22,6 +22,10 @@ namespace Anki {
 
     const f32 MAT_CAM_HEIGHT_FROM_GROUND_MM = (0.5f*WHEEL_DIAMETER_MM) - 3.f;
     
+    // TODO: make these 3-element f32 arrays. Currently, can't instantiate with those.
+#define NECK_JOINT_POSITION {{0.f, 9.5f, 25.f}} // relative to robot origin
+#define HEAD_CAM_POSITION   {{0.f, 25.f, 15.f}} // relative to neck joint
+    
   } // namespace Cozmo
 } // namespace Cozmo
 

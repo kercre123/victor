@@ -23,8 +23,11 @@ namespace Anki {
     Robot::Robot()
     : addedToWorld(false),
       camDownCalibSet(false), camHeadCalibSet(false),
+      neckPose(0.f, {{1.f, 0.f, 0.f}}, NECK_JOINT_POSITION, &pose),
       matMarker(NULL)
     {
+      camHead.set_pose(Pose3d(-M_PI_2, {{1.0f, 0.f, 0.f}},
+                              HEAD_CAM_POSITION, &neckPose));
       
     } // Constructor: Robot
     
@@ -130,18 +133,25 @@ namespace Anki {
         
         // Using negative angle to switch between Z axis that goes into
         // the ground (mat camera's Z axis) and one that points up, out
-        // of the ground (our world)
+        // of the ground (our world).
         Radians angle(-matMarker->get_imagePose().get_angle());
+        
+        // Subtract 90 degrees because the matMarker currently indicates the
+        // direction towards the front of the robot, but in our world
+        // coordinate system, that's in the y direction and we want 0 degrees
+        // not to represent the world y axis direction, but rather the world
+        // x axis direction.
+        angle -= M_PI_2;
         
         if(not BlockWorld::ZAxisPointsUp) {
           // TODO: is this correct??
-          //matPoint.x() *= -1.f;
-          matPoint.y() *= -1.f;
-          angle = -angle;
+          matPoint.x() *= -1.f;
+          //matPoint.y() *= -1.f;
+          //angle = -angle;
         }
         
         // TODO: embed 2D pose in 3D space using its plane
-        //this->pose = Pose3d( Pose2d(angle, matPoint) );
+        //this->pose = Pose3d( Pose2d(angle, matPoint) ); // bad! need to preserve original pose b/c other poses point to it!
         this->pose.set_rotation(angle, {{0.f, 0.f, 1.f}});
         this->pose.set_translation({{matPoint.x(), matPoint.y(), WHEEL_DIAMETER_MM * .5f}});
         
@@ -292,7 +302,7 @@ namespace Anki {
             // Construct a new BlockMarker2d at the end of the list
             this->visibleBlockMarkers2d.emplace_back(blockMsg->blockType,
                                                      blockMsg->faceType,
-                                                     corners, upDir);
+                                                     corners, upDir, *this);
             
             break;
           }
@@ -397,7 +407,9 @@ namespace Anki {
     } // checkMessages()
          */
     
-    void Robot::getVisibleBlockMarkers3d(std::vector<BlockMarker3d> &markers3d) const
+    
+    
+    void Robot::getVisibleBlockMarkers3d(std::multimap<BlockType, BlockMarker3d>& markers3d) const
     {
       if(not this->camHeadCalibSet) {
         fprintf(stdout, "Robot::getVisibleBlockMarkers3d() called before "
@@ -409,8 +421,10 @@ namespace Anki {
       for(const BlockMarker2d& marker2d : this->visibleBlockMarkers2d)
       {
         // Create a BlockMarker3d from this marker2d, estimating its
-        // Pose from the robot's head camera:
-        markers3d.emplace_back( BlockMarker3d(marker2d, this->camHead) );
+        // Pose from the robot's head camera, and place in the map according
+        // to its block type:
+        markers3d.emplace(marker2d.get_blockType(),
+                          BlockMarker3d(marker2d, this->camHead));
         
       } // FOR each marker2d
       

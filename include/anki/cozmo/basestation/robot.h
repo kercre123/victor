@@ -39,12 +39,15 @@ namespace Anki {
       
       void step();
       
-      // Add observed BlockMarker3d objects to the list:
+      const std::vector<BlockMarker2d>& getVisibleBlockMarkers2d() const;
+      
+      // Add observed BlockMarker3d objects to a multimap container, grouped
+      // by BlockType.
       // (It will be the world's job to take all of these from all
       //  robots and update the world state)
-      void getVisibleBlockMarkers3d(std::vector<BlockMarker3d> &markers) const;
+      void getVisibleBlockMarkers3d(std::multimap<BlockType, BlockMarker3d>& markers) const;
       
-      const u8 &get_ID() const;
+      const u8      get_ID() const;
       const Pose3d& get_pose() const;
       const Camera& get_camDown() const;
       const Camera& get_camHead() const;
@@ -65,6 +68,7 @@ namespace Anki {
       
       Camera camDown, camHead;
       bool camDownCalibSet, camHeadCalibSet;
+      const Pose3d neckPose; // joint around which head rotates
       
       Pose3d pose;
       void updatePose();
@@ -93,7 +97,7 @@ namespace Anki {
     }; // class Robot
 
     // Inline accessors:
-    inline const u8& Robot::get_ID(void) const
+    inline const u8 Robot::get_ID(void) const
     { return this->ID; }
     
     inline const Pose3d& Robot::get_pose(void) const
@@ -107,6 +111,9 @@ namespace Anki {
     
     inline Robot::OperationMode Robot::get_operationMode() const
     { return this->mode; }
+    
+    inline const std::vector<BlockMarker2d>& Robot::getVisibleBlockMarkers2d() const
+    { return this->visibleBlockMarkers2d; }
     
     /*
     inline const MatMarker2d* Robot::get_matMarker2d() const
