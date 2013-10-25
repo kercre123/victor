@@ -1,6 +1,8 @@
 ﻿#include "anki/common/robot/utilities.h"
+#include "anki/common/robot/benchmarking_c.h"
 
 #include "anki/vision/robot/miscVisionKernels.h"
+#include "anki/vision/robot/integralImage.h"
 
 namespace Anki
 {

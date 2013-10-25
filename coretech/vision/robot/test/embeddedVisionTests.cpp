@@ -1,8 +1,12 @@
 //#define USING_MOVIDIUS_COMPILER
 
 #include "anki/common/robot/gtestLight.h"
+#include "anki/common/robot/matlabInterface.h"
+#include "anki/common/robot/benchmarking_c.h"
 
 #include "anki/vision/robot/miscVisionKernels.h"
+#include "anki/vision/robot/integralImage.h"
+#include "anki/vision/robot/draw_vision.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,8 +59,8 @@ Matlab matlab(false);
 //
 //#endif // #ifdef USING_MOVIDIUS_COMPILER
 
-//#define RUN_MAIN_BIG_MEMORY_TESTS
-//#define RUN_ALL_BIG_MEMORY_TESTS
+#define RUN_MAIN_BIG_MEMORY_TESTS
+#define RUN_ALL_BIG_MEMORY_TESTS
 #define RUN_LOW_MEMORY_12345
 
 //#ifdef RUN_MAIN_BIG_MEMORY_TESTS
@@ -65,7 +69,7 @@ Matlab matlab(false);
 
 #ifdef RUN_ALL_BIG_MEMORY_TESTS
 #include "../../blockImages/fiducial105_6ContrastReduced.h"
-#include "../../src/embedded/fiducialMarkerDefinitionType0.h"
+#include "../src/fiducialMarkerDefinitionType0.h"
 #endif
 
 #define USE_STATIC_BUFFERS
@@ -92,7 +96,9 @@ Matlab matlab(false);
 #define BIG_BUFFER1_LOCATION __attribute__((section(".bigBuffers")))
 #define BIG_BUFFER2_LOCATION __attribute__((section(".bigBuffers")))
 #else
-#define BIG_BUFFER_LOCATION
+#define BIG_IMAGE_BUFFER_LOCATION
+#define BIG_BUFFER1_LOCATION
+#define BIG_BUFFER2_LOCATION
 #endif
 #endif
 

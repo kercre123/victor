@@ -1,4 +1,4 @@
-#include "anki/embeddedVision/integralImage.h"
+#include "anki/vision/robot/integralImage.h"
 
 #define SwapEndianU32(value) \
   ((((u32)((value) & 0x000000FF)) << 24) | \

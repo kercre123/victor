@@ -2,6 +2,7 @@
 #define _ANKICORETECHEMBEDDED_VISION_DRAW_VISION_H_
 
 #include "anki/common/robot/array2d.h"
+#include "anki/common/robot/draw.h"
 
 #include "anki/vision/robot/connectedComponents.h"
 

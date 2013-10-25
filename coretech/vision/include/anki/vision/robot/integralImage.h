@@ -1,11 +1,11 @@
 #ifndef _ANKICORETECHEMBEDDED_VISION_INTEGRAL_IMAGE_H_
 #define _ANKICORETECHEMBEDDED_VISION_INTEGRAL_IMAGE_H_
 
-#include "anki/embeddedVision/config.h"
+#include "anki/common/robot/config.h"
 
-#include "anki/embeddedCommon.h"
-
-#include "anki/embeddedVision/movidiusPrototyping.h"
+#include "anki/vision/robot/array2d_vision.h"
+#include "anki/vision/robot/movidiusPrototyping.h"
+#include "anki/vision/robot/cInterfaces_vision_c.h"
 
 namespace Anki
 {

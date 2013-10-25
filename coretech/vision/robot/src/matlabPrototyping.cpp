@@ -1,5 +1,7 @@
-#include "anki/vision/robot/fiducialMarkers.h"
+#include "anki/common/robot/config.h"
+#include "anki/common/robot/benchmarking_c.h"
 
+#include "anki/vision/robot/fiducialMarkers.h"
 #include "anki/vision/robot/fixedLengthList_vision.h"
 #include "anki/vision/robot/miscVisionKernels.h"
 #include "anki/vision/robot/draw_vision.h"

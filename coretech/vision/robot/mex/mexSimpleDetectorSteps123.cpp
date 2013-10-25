@@ -66,7 +66,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   ConditionalErrorAndReturn(scratch2.IsValid(), "mexSimpleDetectorSteps123", "Scratch2 could not be allocated");
 
   const s32 maxConnectedComponentSegments = u16_MAX;
-  ConnectedComponents extractedComponents(maxConnectedComponentSegments, imageWidth, scratch0);
+  ConnectedComponents extractedComponents(maxConnectedComponentSegments, image.get_size(1), scratch0);
 
   {
     const Result result = SimpleDetector_Steps123(

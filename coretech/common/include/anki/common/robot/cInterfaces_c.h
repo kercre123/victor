@@ -1,7 +1,7 @@
 #ifndef _ANKICORETECHEMBEDDED_COMMON_C_INTERFACES_H_
 #define _ANKICORETECHEMBEDDED_COMMON_C_INTERFACES_H_
 
-#include "anki/embeddedCommon/config.h"
+#include "anki/common/robot/config.h"
 
 #ifdef __cplusplus
 extern "C" {

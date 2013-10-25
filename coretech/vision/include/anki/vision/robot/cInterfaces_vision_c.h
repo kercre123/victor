@@ -1,8 +1,8 @@
 #ifndef _ANKICORETECHEMBEDDED_VISION_C_INTERFACES_H_
 #define _ANKICORETECHEMBEDDED_VISION_C_INTERFACES_H_
 
-#include "anki/embeddedCommon/config.h"
-#include "anki/embeddedCommon/cInterfaces_c.h"
+#include "anki/common/robot/config.h"
+#include "anki/common/robot/cInterfaces_c.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -5,8 +5,8 @@
 extern "C" {
 #endif
 
-#include "anki/embeddedVision/config.h"
-#include "anki/embeddedVision/cInterfaces_vision_c.h"
+#include "anki/common/robot/config.h"
+#include "anki/vision/robot/cInterfaces_vision_c.h"
 
   void ScrollingIntegralImage_u8_s32_FilterRow_innerLoop(const s32 * restrict integralImage_00, const s32 * restrict integralImage_01, const s32 * restrict integralImage_10, const s32 * restrict integralImage_11, const s32 minX, const s32 maxX, const s32 imageWidth, s32 * restrict output_rowPointer);
 

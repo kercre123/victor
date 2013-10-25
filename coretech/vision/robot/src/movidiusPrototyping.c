@@ -1,7 +1,8 @@
 #undef __cplusplus
-#include "anki/embeddedCommon/cInterfaces_c.h"
-#include "anki/embeddedVision/movidiusPrototyping.h"
-#include "anki/embeddedCommon/utilities_c.h"
+#include "anki/common/robot/cInterfaces_c.h"
+#include "anki/common/robot/utilities_c.h"
+
+#include "anki/vision/robot/movidiusPrototyping.h"
 
 #ifdef _MSC_VER
 #include <emmintrin.h>

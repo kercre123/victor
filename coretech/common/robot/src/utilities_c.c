@@ -272,11 +272,6 @@ void PrintHex(u32 value)
     digits[digitIndex] = 0;
   }
 
-  if(value < 0) {
-    putchar('-');
-    value = -value;
-  }
-
   if(value == 0) {
     putchar('0');
     return;
