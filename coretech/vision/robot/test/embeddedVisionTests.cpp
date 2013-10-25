@@ -1701,7 +1701,7 @@ IN_DDR int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
-  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage);
+/*  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage);
 
 #ifdef RUN_ALL_BIG_MEMORY_TESTS
   CALL_GTEST_TEST(CoreTech_Vision, FiducialMarker);
@@ -1711,9 +1711,9 @@ IN_DDR int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage);
 #endif
 
-  CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);
+  CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);*/
   CALL_GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary);
-  CALL_GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary);
+  /*CALL_GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
   CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
@@ -1729,7 +1729,7 @@ IN_DDR int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Vision, SortComponents);
   CALL_GTEST_TEST(CoreTech_Vision, SortComponentsById);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d);
-  CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
+  CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);*/
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 
