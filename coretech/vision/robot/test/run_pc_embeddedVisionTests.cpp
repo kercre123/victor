@@ -1,5 +1,6 @@
 //#define USING_MOVIDIUS_COMPILER
 
+#ifndef MOVI_TOOLS
 #if ANKICORETECH_EMBEDDED_USE_GTEST
 #include "gtest/gtest.h"
 #endif
@@ -19,3 +20,5 @@ int main()
 
   return result;
 }
+
+#endif
