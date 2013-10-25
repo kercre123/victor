@@ -105,7 +105,7 @@ namespace Anki {
     cv::solvePnP(cvObjPoints, cvImagePoints,
                  calibMatrix.get_CvMatx_(), distortionCoeffs,
                  cvRvec, cvTranslation,
-                 false, CV_P3P);
+                 false, CV_ITERATIVE);
     
     Vec3f rvec(cvRvec[0], cvRvec[1], cvRvec[2]);
     Vec3f translation(cvTranslation[0], cvTranslation[1], cvTranslation[2]);
