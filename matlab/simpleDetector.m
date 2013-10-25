@@ -15,7 +15,7 @@ embeddedConversions = EmbeddedConversionsManager; % 1-cp2tform, 2-opencv_cp2tfor
 showTiming = false;
 thresholdFraction = 1; % fraction of local mean to use as threshold
 maxSmoothingFraction = 0.1; % fraction of max dim
- 
+
 parseVarargin(varargin{:});
 
 % Use different defaults for 'matlab_boxFilters'
@@ -33,12 +33,21 @@ img = mean(im2double(img),3);
 
 [nrows,ncols] = size(img);
 
-if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep12345')
+if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep12345') || strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep12345_mediumMemory')
     assert(BlockMarker2D.UseOutsideOfSquare, ...
                     ['You need to set constant property ' ...
                     'BlockMarker2D.UseOutsideOfSquare = false to use this method.']);
 
-    scaleImage_numPyramidLevels = round(log(maxSmoothingFraction*max(nrows,ncols)) / log(downsampleFactor));
+    if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep12345')
+        scaleImage_useWhichAlgorithm = 0;
+        scaleImage_numPyramidLevels = round(log(maxSmoothingFraction*max(nrows,ncols)) / log(downsampleFactor));
+    elseif strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep12345_mediumMemory')
+        scaleImage_useWhichAlgorithm = 1;
+        scaleImage_numPyramidLevels = 4;
+    end
+
+    scaleImage_thresholdMultiplier = 0.75;
+
     component1d_minComponentWidth = 0;
     component1d_maxSkipDistance = 0;
     minSideLength = (0.03*max(size(img,1),size(img,2)));
@@ -47,30 +56,38 @@ if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep12345')
     component_maximumNumPixels = round(maxSideLength*maxSideLength - (0.8*maxSideLength)*(0.8*maxSideLength));
     component_sparseMultiplyThreshold = 1000;
     component_solidMultiplyThreshold = 2;
-    component_percentHorizontal = 0.5;
-    component_percentVertical = 0.5;
+    component_percentHorizontal = 3/4;
+    component_percentVertical = 3/4;
     quads_minQuadArea = minQuadArea;
     quads_quadSymmetryThreshold = 1.5;
     quads_minDistanceFromImageEdge = 2;
     decode_minContrastRatio = 1.25;
-    
-    [quads, blockTypes, faceTypes, orientations] = mexSimpleDetectorSteps12345(im2uint8(img), scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio);
-    
+
+    [quads, blockTypes, faceTypes, orientations] = mexSimpleDetectorSteps12345(im2uint8(img), scaleImage_useWhichAlgorithm, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio);
+
     markers = cell(0,0);
     for i = 1:length(quads)
         homography = mexEstimateHomography(quads{i}, [0 0; 0 1; 1 0; 1 1]);
         markers{i} = BlockMarker2D(zeros(size(img)), quads{i}, maketform('projective', homography), 'ExplictInput', 'ids', [blockTypes(i), faceTypes(i)], 'upAngle', orientations(i));
-        
+
 %         keyboard
     end
-        
+
 else % if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep12345')
-    if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1234')
+    if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1234') || strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1234_mediumMemory')
         assert(BlockMarker2D.UseOutsideOfSquare, ...
                     ['You need to set constant property ' ...
                     'BlockMarker2D.UseOutsideOfSquare = false to use this method.']);
 
-        scaleImage_numPyramidLevels = round(log(maxSmoothingFraction*max(nrows,ncols)) / log(downsampleFactor));
+        if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1234')
+            scaleImage_useWhichAlgorithm = 0;
+            scaleImage_numPyramidLevels = round(log(maxSmoothingFraction*max(nrows,ncols)) / log(downsampleFactor));
+        elseif strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1234_mediumMemory')
+            scaleImage_useWhichAlgorithm = 1;
+            scaleImage_numPyramidLevels = 4;
+        end
+
+        scaleImage_thresholdMultiplier = 0.75;
         component1d_minComponentWidth = 0;
         component1d_maxSkipDistance = 0;
         minSideLength = (0.03*max(size(img,1),size(img,2)));
@@ -79,16 +96,16 @@ else % if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1
         component_maximumNumPixels = round(maxSideLength*maxSideLength - (0.8*maxSideLength)*(0.8*maxSideLength));
         component_sparseMultiplyThreshold = 1000;
         component_solidMultiplyThreshold = 2;
-        component_percentHorizontal = 0.5;
-        component_percentVertical = 0.5;
+        component_percentHorizontal = 3/4;
+        component_percentVertical = 3/4;
         quads_minQuadArea = minQuadArea;
         quads_quadSymmetryThreshold = 1.5;
         quads_minDistanceFromImageEdge = 2;
 
-        [quads, quadTforms] = mexSimpleDetectorSteps1234(im2uint8(img), scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge);
+        [quads, quadTforms] = mexSimpleDetectorSteps1234(im2uint8(img), scaleImage_useWhichAlgorithm, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge);
 
         for i = 1:length(quadTforms)
-            quadTforms{i} = maketform('projective', inv(quadTforms{i}')); 
+            quadTforms{i} = maketform('projective', inv(quadTforms{i}'));
         end
 
     else % if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1234')
@@ -106,8 +123,16 @@ else % if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1
             end
 
             [numRegions, indexList, centroid, components2d] = simpleDetector_step3_simpleRejectionTests(nrows, ncols, numRegions, area, indexList, bb, centroid, usePerimeterCheck, components2d, embeddedConversions, DEBUG_DISPLAY);
-        elseif strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep123')
-            scaleImage_numPyramidLevels = round(log(maxSmoothingFraction*max(nrows,ncols)) / log(downsampleFactor));
+        elseif strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep123') || strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep123_mediumMemory')
+            if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep123')
+                scaleImage_useWhichAlgorithm = 0;
+                scaleImage_numPyramidLevels = round(log(maxSmoothingFraction*max(nrows,ncols)) / log(downsampleFactor));
+            elseif strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep123_mediumMemory')
+                scaleImage_useWhichAlgorithm = 1;
+                scaleImage_numPyramidLevels = 4;
+            end
+
+            scaleImage_thresholdMultiplier = 0.75;
             component1d_minComponentWidth = 0;
             component1d_maxSkipDistance = 0;
             minSideLength = (0.03*max(size(img,1),size(img,2)));
@@ -119,7 +144,7 @@ else % if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1
 
         %     keyboard
     %         tic
-            components2d = mexSimpleDetectorSteps123(im2uint8(img), scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold);
+            components2d = mexSimpleDetectorSteps123(im2uint8(img), scaleImage_useWhichAlgorithm, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold);
     %         toc
 
             for i = 1:length(components2d)
@@ -140,7 +165,7 @@ else % if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1
                     y = components2d{iComponent}(iSegment,1);
                     xs = components2d{iComponent}(iSegment,2):components2d{iComponent}(iSegment,3);
                     indexList{iComponent}(ci:(ci+length(xs)-1)) = sub2ind(size(img), repmat(y, [1,length(xs)]), xs);
-                    ci = ci + length(xs);            
+                    ci = ci + length(xs);
                 end
 
                 indexList{iComponent} = sort(indexList{iComponent});
