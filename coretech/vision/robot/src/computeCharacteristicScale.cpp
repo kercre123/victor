@@ -15,6 +15,12 @@ namespace Anki
 
       //times[0] = GetTime();
 
+      const s32 imageHeight = image.get_size(0);
+      const s32 fullSizeHeight = imageHeight;
+
+      const s32 imageWidth = image.get_size(1);
+      const s32 fullSizeWidth = imageWidth;
+
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
         RESULT_FAIL, "ComputeCharacteristicScaleImage", "image is not valid");
 
@@ -24,16 +30,13 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(numPyramidLevels <= MAX_PYRAMID_LEVELS,
         RESULT_FAIL, "ComputeCharacteristicScaleImage", "numPyramidLevels must be less than %d", MAX_PYRAMID_LEVELS+1);
 
-      AnkiConditionalErrorAndReturnValue(image.get_size(0) == scaleImage.get_size(0) && image.get_size(1) == scaleImage.get_size(1),
+      AnkiConditionalErrorAndReturnValue(imageHeight == scaleImage.get_size(0) && imageWidth == scaleImage.get_size(1),
         RESULT_FAIL, "ComputeCharacteristicScaleImage", "image and scaleImage must be the same size");
 
       AnkiConditionalErrorAndReturnValue(scaleImage.get_numFractionalBits() == 16,
         RESULT_FAIL, "ComputeCharacteristicScaleImage", "scaleImage must be UQ16.16");
 
       // TODO: add check for the required amount of scratch?
-
-      const s32 fullSizeHeight = image.get_size(0);
-      const s32 fullSizeWidth = image.get_size(1);
 
       //scaleImage = uint32(image)*(2^8); % UQ16.16
       //dogMax = zeros(fullSizeHeight,fullSizeWidth,'uint32'); % UQ16.16
@@ -87,7 +90,7 @@ namespace Anki
         //    else
         //        curPyramidLevelBlurred = binomialFilter_loopsAndFixedPoint(curPyramidLevel); %UQ8.0
         //    end
-        Array<u8> curPyramidLevelBlurred(curPyramidLevel.get_size(0), curPyramidLevel.get_size(1), scratch);
+        Array<u8> curPyramidLevelBlurred(curLevelHeight, curLevelWidth, scratch);
 
         const Result binomialFilterResult = BinomialFilter(curPyramidLevel, curPyramidLevelBlurred, scratch);
 
@@ -292,7 +295,7 @@ namespace Anki
                   const s64 alphaX = alphas[iAlphaX];
                   const s64 alphaXinverse = maxAlpha - alphaX;
 
-                  const u32 dog = 0; //static_cast<u32>(Interpolate2d(dog_00, dog_01, dog_10, dog_11, alphaY, alphaYinverse, alphaX, alphaXinverse) >> (maxAlphaSquaredShift - 16)); // SQ?.? -> UQ16.16
+                  const u32 dog = static_cast<u32>(Interpolate2d(dog_00, dog_01, dog_10, dog_11, alphaY, alphaYinverse, alphaX, alphaXinverse) >> (maxAlphaSquaredShift - 16)); // SQ?.? -> UQ16.16
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
                   largeDog_rowPointer[largeX] = dog;
@@ -339,15 +342,255 @@ namespace Anki
       return RESULT_OK;
     } // Result ComputeCharacteristicScaleImage(const Array<u8> &image, s32 numPyramidLevels, Array<u32> &scaleImage, MemoryStack scratch)
 
-    //end % FUNCTION computeCharacteristicScaleImage()
-    //
-    //% pixel* are UQ8.0
-    //% alpha* are UQ?.? depending on the level of the pyramid
-    //function interpolatedPixel = interpolate2d(pixel00, pixel01, pixel10, pixel11, alphaY, alphaYinverse, alphaX, alphaXinverse)
-    //    interpolatedTop = alphaXinverse*pixel00 + alphaX*pixel01;
-    //    interpolatedBottom = alphaXinverse*pixel10 + alphaX*pixel11;
-    //
-    //    interpolatedPixel = alphaYinverse*interpolatedTop + alphaY*interpolatedBottom;
-    //end
+    IN_DDR Result ComputeCharacteristicScaleImageAndBinarize(const Array<u8> &image, const s32 numPyramidLevels, Array<u8> &binaryImage, const s32 thresholdMultiplier, MemoryStack scratch)
+    {
+      const s32 thresholdMultiplier_numFractionalBits = 16;
+
+      // Integral image constants
+      const s32 numBorderPixels = 33; // 2^5 + 1 = 33
+      const s32 integralImageHeight = 96; // 96*(640+33*2)*4 = 271104, though with padding, it is 96*720*4 = 276480
+      const s32 numRowsToScroll = integralImageHeight - 2*numBorderPixels;
+
+      // To normalize a sum of 1 / ((2*n+1)^2), we approximate a division as a mulitiply and shift.
+      // These multiply coefficients were computed in matlab by typing:
+      // " for i=1:5 disp(sprintf('i:%d',i')); computeClosestMultiplicationShift((2*(2^i)+1)^2, 31, 8); disp(sprintf('\n')); end; "
+      const s32 normalizationMultiply[5] = {41, 101, 227, 241, 31}; // For halfWidths in [1,5]
+      const s32 normalizationBitShifts[5] = {10, 13, 16, 18, 17};
+
+      const s32 maxFilterHalfWidth = 1 << (numPyramidLevels+1);
+
+      const s32 imageHeight = image.get_size(0);
+      const s32 imageWidth = image.get_size(1);
+
+      C_Acceleration acceleration;
+      acceleration.type = C_ACCELERATION_NATURAL_CPP;
+      acceleration.version = 1;
+
+      AnkiConditionalErrorAndReturnValue(image.IsValid(),
+        RESULT_FAIL, "ComputeCharacteristicScaleImageAndBinarize", "image is not valid");
+
+      AnkiConditionalErrorAndReturnValue(binaryImage.IsValid(),
+        RESULT_FAIL, "ComputeCharacteristicScaleImageAndBinarize", "binaryImage is not valid");
+
+      AnkiConditionalErrorAndReturnValue(numPyramidLevels <= 4 && numPyramidLevels > 0,
+        RESULT_FAIL, "ComputeCharacteristicScaleImageAndBinarize", "numPyramidLevels must be less than %d", 4+1);
+
+      // TODO: support numPyramidLevels==5 ?
+      /*AnkiConditionalWarn(numPyramidLevels <= 4,
+      "ComputeCharacteristicScaleImageAndBinarize", "If numPyramidLevels is greater than 4, and mean value of any large rectangle is above 252, then this function will overflow.");*/
+
+      AnkiConditionalErrorAndReturnValue(imageHeight == binaryImage.get_size(0) && imageWidth == binaryImage.get_size(1),
+        RESULT_FAIL, "ComputeCharacteristicScaleImageAndBinarize", "image and binaryImage must be the same size");
+
+      // Initialize the first integralImageHeight rows of the integralImage
+      ScrollingIntegralImage_u8_s32 integralImage(integralImageHeight, imageWidth, numBorderPixels, scratch);
+      if(integralImage.ScrollDown(image, integralImageHeight, scratch) != RESULT_OK)
+        return RESULT_FAIL;
+
+      // Prepare the memory for the filtered rows for each level of the pyramid
+      Array<s32> filteredRows[5];
+      for(s32 i=0; i<=numPyramidLevels; i++) {
+        filteredRows[i] = Array<s32>(1, imageWidth, scratch, false);
+      }
+
+      s32 imageY = 0;
+
+      while(imageY < imageHeight) {
+        // For the given row of the image, compute the blurred version for each level of the pyramid
+        for(s32 pyramidLevel=0; pyramidLevel<=numPyramidLevels; pyramidLevel++) {
+          const s32 filterHalfWidth = 1 << (pyramidLevel+1); // filterHalfWidth = 2^pyramidLevel;
+          const Rectangle<s16> filter(-filterHalfWidth, filterHalfWidth, -filterHalfWidth, filterHalfWidth);
+
+          // Compute the sums using the integral image
+          integralImage.FilterRow(acceleration, filter, imageY, filteredRows[pyramidLevel]);
+
+          // Normalize the sums
+          s32 * restrict filteredRow_rowPointer = filteredRows[pyramidLevel][0];
+          const s32 multiply = normalizationMultiply[pyramidLevel];
+          const s32 shift = normalizationBitShifts[pyramidLevel];
+          for(s32 x=0; x<imageWidth; x++) {
+            filteredRow_rowPointer[x] = (filteredRow_rowPointer[x] * multiply) >> shift;
+          }
+        } // for(s32 pyramidLevel=0; pyramidLevel<=numLevels; pyramidLevel++)
+
+        const s32 * restrict filteredRows_rowPointers[5];
+        for(s32 pyramidLevel=0; pyramidLevel<=numPyramidLevels; pyramidLevel++) {
+          filteredRows_rowPointers[pyramidLevel] = filteredRows[pyramidLevel][0];
+        }
+
+        const u8 * restrict image_rowPointer = image[imageY];
+        u8 * restrict binaryImage_rowPointer = binaryImage[imageY];
+        for(s32 x=0; x<imageWidth; x++) {
+          s32 dogMax = s32_MIN;
+          s32 scaleValue = -1;
+          for(s32 pyramidLevel=0; pyramidLevel<numPyramidLevels; pyramidLevel++) {
+            const s32 dog = ABS(filteredRows_rowPointers[pyramidLevel+1][x] - filteredRows_rowPointers[pyramidLevel][x]);
+
+            if(dog > dogMax) {
+              dogMax = dog;
+              scaleValue = filteredRows_rowPointers[pyramidLevel+1][x];
+            } // if(dog > dogMax)
+          } // for(s32 pyramidLevel=0; pyramidLevel<numPyramidLevels; numPyramidLevels++)
+
+          const s32 thresholdValue = (scaleValue*thresholdMultiplier) >> thresholdMultiplier_numFractionalBits;
+          if(image_rowPointer[x] < thresholdValue) {
+            binaryImage_rowPointer[x] = 1;
+          } else {
+            binaryImage_rowPointer[x] = 0;
+          }
+        } // for(s32 x=0; x<imageWidth; x++)
+
+        imageY++;
+
+        //% If we've reached the bottom of this integral image, scroll it up
+        if(integralImage.get_maxRow(maxFilterHalfWidth) < imageY) {
+          if(integralImage.ScrollDown(image, numRowsToScroll, scratch) != RESULT_OK)
+            return RESULT_FAIL;
+        }
+      } // while(imageY < size(image,1)) {
+      return RESULT_OK;
+    } // ComputeCharacteristicScaleImageAndBinarize()
+
+    Result ComputeCharacteristicScaleImageAndBinarizeAndExtractComponents(
+      const Array<u8> &image,
+      const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
+      const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
+      ConnectedComponents &components,
+      MemoryStack scratch)
+    {
+      BeginBenchmark("ccsiabaec_init");
+      const s32 thresholdMultiplier_numFractionalBits = 16;
+
+      // Integral image constants
+      const s32 numBorderPixels = 33; // 2^5 + 1 = 33
+      const s32 integralImageHeight = 96; // 96*(640+33*2)*4 = 271104, though with padding, it is 96*720*4 = 276480
+      const s32 numRowsToScroll = integralImageHeight - 2*numBorderPixels;
+
+      // To normalize a sum of 1 / ((2*n+1)^2), we approximate a division as a mulitiply and shift.
+      // These multiply coefficients were computed in matlab by typing:
+      // " for i=1:5 disp(sprintf('i:%d',i')); computeClosestMultiplicationShift((2*(2^i)+1)^2, 31, 8); disp(sprintf('\n')); end; "
+      const s32 normalizationMultiply[5] = {41, 101, 227, 241, 31}; // For halfWidths in [1,5]
+      const s32 normalizationBitShifts[5] = {10, 13, 16, 18, 17};
+
+      const s32 maxFilterHalfWidth = 1 << (scaleImage_numPyramidLevels+1);
+
+      const s32 imageHeight = image.get_size(0);
+      const s32 imageWidth = image.get_size(1);
+
+      C_Acceleration acceleration;
+      acceleration.type = C_ACCELERATION_NATURAL_CPP;
+      acceleration.version = 1;
+
+      AnkiConditionalErrorAndReturnValue(image.IsValid(),
+        RESULT_FAIL, "ComputeCharacteristicScaleImageAndBinarize", "image is not valid");
+
+      AnkiConditionalErrorAndReturnValue(scaleImage_numPyramidLevels <= 4 && scaleImage_numPyramidLevels > 0,
+        RESULT_FAIL, "ComputeCharacteristicScaleImageAndBinarize", "scaleImage_numPyramidLevels must be less than %d", 4+1);
+
+      // Initialize the first integralImageHeight rows of the integralImage
+      ScrollingIntegralImage_u8_s32 integralImage(integralImageHeight, imageWidth, numBorderPixels, scratch);
+      if(integralImage.ScrollDown(image, integralImageHeight, scratch) != RESULT_OK)
+        return RESULT_FAIL;
+
+      // Prepare the memory for the filtered rows for each level of the pyramid
+      Array<s32> filteredRows[5];
+      for(s32 i=0; i<=scaleImage_numPyramidLevels; i++) {
+        filteredRows[i] = Array<s32>(1, imageWidth, scratch, false);
+      }
+
+      Array<u8> binaryImageRow(1, imageWidth, scratch);
+      u8 * restrict binaryImageRow_rowPointer = binaryImageRow[0];
+
+      if(components.Extract2dComponents_PerRow_Initialize() != RESULT_OK)
+        return RESULT_FAIL;
+
+      s32 imageY = 0;
+
+      EndBenchmark("ccsiabaec_init");
+
+      BeginBenchmark("ccsiabaec_mainLoop");
+      while(imageY < imageHeight) {
+        BeginBenchmark("ccsiabaec_filterRows");
+
+        // For the given row of the image, compute the blurred version for each level of the pyramid
+        for(s32 pyramidLevel=0; pyramidLevel<=scaleImage_numPyramidLevels; pyramidLevel++) {
+          const s32 filterHalfWidth = 1 << (pyramidLevel+1); // filterHalfWidth = 2^pyramidLevel;
+          const Rectangle<s16> filter(-filterHalfWidth, filterHalfWidth, -filterHalfWidth, filterHalfWidth);
+
+          // Compute the sums using the integral image
+          integralImage.FilterRow(acceleration, filter, imageY, filteredRows[pyramidLevel]);
+
+          // Normalize the sums
+          s32 * restrict filteredRow_rowPointer = filteredRows[pyramidLevel][0];
+          const s32 multiply = normalizationMultiply[pyramidLevel];
+          const s32 shift = normalizationBitShifts[pyramidLevel];
+          for(s32 x=0; x<imageWidth; x++) {
+            filteredRow_rowPointer[x] = (filteredRow_rowPointer[x] * multiply) >> shift;
+          }
+        } // for(s32 pyramidLevel=0; pyramidLevel<=numLevels; pyramidLevel++)
+
+        const s32 * restrict filteredRows_rowPointers[5];
+        for(s32 pyramidLevel=0; pyramidLevel<=scaleImage_numPyramidLevels; pyramidLevel++) {
+          filteredRows_rowPointers[pyramidLevel] = filteredRows[pyramidLevel][0];
+        }
+
+        EndBenchmark("ccsiabaec_filterRows");
+
+        BeginBenchmark("ccsiabaec_computeBinaryImage");
+
+        const u8 * restrict image_rowPointer = image[imageY];
+
+        for(s32 x=0; x<imageWidth; x++) {
+          s32 dogMax = s32_MIN;
+          s32 scaleValue = -1;
+          for(s32 pyramidLevel=0; pyramidLevel<scaleImage_numPyramidLevels; pyramidLevel++) {
+            const s32 dog = ABS(filteredRows_rowPointers[pyramidLevel+1][x] - filteredRows_rowPointers[pyramidLevel][x]);
+
+            if(dog > dogMax) {
+              dogMax = dog;
+              scaleValue = filteredRows_rowPointers[pyramidLevel+1][x];
+            } // if(dog > dogMax)
+          } // for(s32 pyramidLevel=0; pyramidLevel<scaleImage_numPyramidLevels; scaleImage_numPyramidLevels++)
+
+          const s32 thresholdValue = (scaleValue*scaleImage_thresholdMultiplier) >> thresholdMultiplier_numFractionalBits;
+          if(image_rowPointer[x] < thresholdValue) {
+            binaryImageRow_rowPointer[x] = 1;
+          } else {
+            binaryImageRow_rowPointer[x] = 0;
+          }
+        } // for(s32 x=0; x<imageWidth; x++)
+
+        EndBenchmark("ccsiabaec_computeBinaryImage");
+
+        BeginBenchmark("ccsiabaec_extractNextRowOfComponents");
+
+        // Extract the next line of connected components
+        if(components.Extract2dComponents_PerRow_NextRow(binaryImageRow_rowPointer, imageWidth, imageY, component1d_minComponentWidth, component1d_maxSkipDistance) != RESULT_OK)
+          return RESULT_FAIL;
+
+        EndBenchmark("ccsiabaec_extractNextRowOfComponents");
+
+        BeginBenchmark("ccsiabaec_scrollIntegralImage");
+
+        imageY++;
+
+        //% If we've reached the bottom of this integral image, scroll it up
+        if(integralImage.get_maxRow(maxFilterHalfWidth) < imageY) {
+          if(integralImage.ScrollDown(image, numRowsToScroll, scratch) != RESULT_OK)
+            return RESULT_FAIL;
+        }
+
+        EndBenchmark("ccsiabaec_scrollIntegralImage");
+      } // while(imageY < size(image,1))
+
+      EndBenchmark("ccsiabaec_mainLoop");
+
+      BeginBenchmark("ccsiabaec_finalize");
+      if(components.Extract2dComponents_PerRow_Finalize() != RESULT_OK)
+        return RESULT_FAIL;
+      EndBenchmark("ccsiabaec_finalize");
+
+      return RESULT_OK;
+    } // ComputeCharacteristicScaleImageAndBinarizeAndExtractComponents
   } // namespace Embedded
 } // namespace Anki

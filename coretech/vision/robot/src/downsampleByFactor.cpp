@@ -6,6 +6,9 @@ namespace Anki
   {
     IN_DDR Result DownsampleByFactor(const Array<u8> &image, const s32 downsampleFactor, Array<u8> &imageDownsampled)
     {
+      const s32 imageHeight = image.get_size(0);
+      const s32 imageWidth = image.get_size(1);
+
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
         RESULT_FAIL, "DownsampleByFactor", "image is not valid");
 
@@ -18,7 +21,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(IsPowerOfTwo(downsampleFactor),
         RESULT_FAIL, "DownsampleByFactor", "downsampleFactor must be a power of 2");
 
-      AnkiConditionalErrorAndReturnValue(imageDownsampled.get_size(0) == (image.get_size(0) / downsampleFactor) && imageDownsampled.get_size(1) == (image.get_size(1) / downsampleFactor),
+      AnkiConditionalErrorAndReturnValue(imageDownsampled.get_size(0) == (imageHeight / downsampleFactor) && imageDownsampled.get_size(1) == (imageWidth / downsampleFactor),
         RESULT_FAIL, "DownsampleByFactor", "size(imageDownsampled) is not equal to size(image) >> downsampleFactor");
 
       const s32 maxY = downsampleFactor * imageDownsampled.get_size(0);

@@ -30,7 +30,7 @@ namespace Anki
 
       const bool doScaling = (minValue == maxValue) ? false : true;
 
-      for(s32 iComponent=0; iComponent<components.get_size(); iComponent++) {
+      for(s32 iComponent=0; iComponent<numComponents; iComponent++) {
         const u16 id = components[iComponent].id;
 
         if(id == 0)

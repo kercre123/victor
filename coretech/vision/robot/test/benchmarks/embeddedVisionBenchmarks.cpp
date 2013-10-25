@@ -25,7 +25,6 @@ using namespace Anki::Embedded;
 #endif
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB
-#include "anki/common/robot/matlabInterface.h"
 Matlab matlab(false);
 #endif
 
@@ -95,9 +94,9 @@ char *bigBuffer1 = NULL;
 char *bigBuffer2 = NULL;
 #endif // #ifdef USE_STATIC_BUFFERS ... else ...
 
-static const s32 width = 640;
-//static const s32 height = 480;
-static const s32 height = 10;
+static const s32 imageWidth = 640;
+//static const s32 imageHeight = 480;
+static const s32 imageHeight = 10;
 //static const s32 numBytes = MIN(MAX_BYTES, 5000000);
 
 IN_DDR void InitializeBuffers()
@@ -129,7 +128,9 @@ int BenchmarkSimpleDetector_Steps12345_realImage(int numIterations)
 {
   InitializeBuffers();
 
-  const s32 scaleImage_numPyramidLevels = 5;
+  const CharacteristicScaleAlgorithm scaleImage_useWhichAlgorithm = CHARACTERISTIC_SCALE_MEDIUM_MEMORY; // CHARACTERISTIC_SCALE_ORIGINAL, CHARACTERISTIC_SCALE_MEDIUM_MEMORY
+  const s32 scaleImage_thresholdMultiplier = 49152; // .75 * (2^16) = 49152
+  const s32 scaleImage_numPyramidLevels = 4;
 
   const s16 component1d_minComponentWidth = 0;
   const s16 component1d_maxSkipDistance = 0;
@@ -159,7 +160,7 @@ int BenchmarkSimpleDetector_Steps12345_realImage(int numIterations)
   MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE2);
 
   const s32 maxConnectedComponentSegments = u16_MAX;
-  ConnectedComponents extractedComponents(maxConnectedComponentSegments, scratch0);
+  ConnectedComponents extractedComponents(maxConnectedComponentSegments, blockImage50_WIDTH, scratch0);
 
   Array<u8> image(blockImage50_HEIGHT, blockImage50_WIDTH, scratch0);
   image.Set_unsafe(&blockImage50[0], blockImage50_HEIGHT*blockImage50_WIDTH);
@@ -183,11 +184,13 @@ int BenchmarkSimpleDetector_Steps12345_realImage(int numIterations)
     PUSH_MEMORY_STACK(scratch2);
 
     const f64 time0 = GetTime();
+
     SimpleDetector_Steps12345(
       image,
       markers,
       homographies,
-      scaleImage_numPyramidLevels,
+      scaleImage_useWhichAlgorithm,
+      scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
       component1d_minComponentWidth, component1d_maxSkipDistance,
       component_minimumNumPixels, component_maximumNumPixels,
       component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
@@ -196,6 +199,7 @@ int BenchmarkSimpleDetector_Steps12345_realImage(int numIterations)
       decode_minContrastRatio,
       scratch1,
       scratch2);
+
     const f64 time1 = GetTime();
     totalTime += time1 - time0;
     image[0][0]++;
@@ -226,8 +230,8 @@ int BenchmarkBinomialFilter()
   AnkiConditionalErrorAndReturnValue(ms.IsValid(), -1, "ms.IsValid()", "");
 #endif
 
-  Array<u8> image(height, width, ms, false);
-  Array<u8> imageFiltered(height, width, ms);
+  Array<u8> image(imageHeight, imageWidth, ms, false);
+  Array<u8> imageFiltered(imageHeight, imageWidth, ms);
 
 #ifdef CHECK_FOR_ERRORS
   AnkiConditionalErrorAndReturnValue(image.IsValid(), -2, "image.IsValid()", "");
@@ -253,15 +257,15 @@ int BenchmarkDownsampleByFactor()
   AnkiConditionalErrorAndReturnValue(ms.IsValid(), -1, "ms.IsValid()", "");
 #endif
 
-  Array<u8> image(height, width, ms);
-  Array<u8> imageDownsampled(height/downsampleFactor, width/downsampleFactor, ms);
+  Array<u8> image(imageHeight, imageWidth, ms);
+  Array<u8> imageDownsampled(imageHeight/downsampleFactor, imageWidth/downsampleFactor, ms);
 
 #ifdef CHECK_FOR_ERRORS
   AnkiConditionalErrorAndReturnValue(image.IsValid(), -2, "image.IsValid()", "");
   AnkiConditionalErrorAndReturnValue(imageDownsampled.IsValid(), -3, "imageDownsampled.IsValid()", "");
 #endif
 
-  for(s32 x=0; x<width; x++) {
+  for(s32 x=0; x<imageWidth; x++) {
     *image.Pointer(2,x) = static_cast<u8>(x);
   }
 
@@ -284,13 +288,13 @@ int BenchmarkComputeCharacteristicScale()
   AnkiConditionalErrorAndReturnValue(ms.IsValid(), -1, "ms.IsValid()", "");
 #endif
 
-  Array<u8> image(height, width, ms);
+  Array<u8> image(imageHeight, imageWidth, ms);
 
 #ifdef CHECK_FOR_ERRORS
   AnkiConditionalErrorAndReturnValue(image.IsValid(), -2, "image.IsValid()", "");
 #endif
 
-  FixedPointArray<u32> scaleImage(height, width, 16, ms);
+  FixedPointArray<u32> scaleImage(imageHeight, imageWidth, 16, ms);
 #ifdef CHECK_FOR_ERRORS
   AnkiConditionalErrorAndReturnValue(scaleImage.IsValid(), -2, "scaleImage.IsValid()", "");
 #endif
@@ -312,7 +316,7 @@ int BenchmarkTraceInteriorBoundary()
   AnkiConditionalErrorAndReturnValue(ms.IsValid(), -1, "ms.IsValid()", "");
 #endif
 
-  Array<u8> binaryImage(height, width, ms);
+  Array<u8> binaryImage(imageHeight, imageWidth, ms);
   const Point<s16> startPoint(3,3);
   const BoundaryDirection initialDirection = BOUNDARY_N;
   FixedLengthList<Point<s16> > boundary(MAX_BOUNDARY_LENGTH, ms);
@@ -332,12 +336,12 @@ int BenchmarkTraceInteriorBoundary()
 
     // Top edge
     for(s32 y=2; y<=3; y++) {
-      memset(binaryImage.Pointer(y, 0) + 3, 1, width-6);
+      memset(binaryImage.Pointer(y, 0) + 3, 1, imageWidth-6);
     }
 
     //Bottom edge
     for(s32 y=6; y<=7; y++) {
-      memset(binaryImage.Pointer(y, 0) + 3, 1, width-6);
+      memset(binaryImage.Pointer(y, 0) + 3, 1, imageWidth-6);
     }
 
     //Sides
@@ -347,7 +351,7 @@ int BenchmarkTraceInteriorBoundary()
         rowPointer[x] = 1;
       }
 
-      for(s32 x=width-5; x<(width-3); x++) {
+      for(s32 x=imageWidth-5; x<(imageWidth-3); x++) {
         rowPointer[x] = 1;
       }
     }

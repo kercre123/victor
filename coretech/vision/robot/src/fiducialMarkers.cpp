@@ -41,7 +41,8 @@ namespace Anki
       this->type = bit2.type;
       this->numFractionalBits = bit2.numFractionalBits;
 
-      for(s32 i=0; i<bit2.probeLocations.get_size(); i++) {
+      const s32 numBit2ProbeLocations = bit2.probeLocations.get_size();
+      for(s32 i=0; i<numBit2ProbeLocations; i++) {
         this->probeLocations[i] = bit2.probeLocations[i];
         this->probeWeights[i] = bit2.probeWeights[i];
       }
@@ -58,7 +59,8 @@ namespace Anki
       this->type = type;
       this->numFractionalBits = numFractionalBits;
 
-      for(s32 i=0; i<probeLocations.get_size(); i++) {
+      const s32 numProbeLocations = probeLocations.get_size();
+      for(s32 i=0; i<numProbeLocations; i++) {
         this->probeLocations[i].x = probesX[i];
         this->probeLocations[i].y = probesY[i];
         this->probeWeights[i] = probeWeights[i];
@@ -76,7 +78,8 @@ namespace Anki
       this->type = bit2.type;
       this->numFractionalBits = bit2.numFractionalBits;
 
-      for(s32 i=0; i<bit2.probeLocations.get_size(); i++) {
+      const s32 numBit2ProbeLocations = bit2.probeLocations.get_size();
+      for(s32 i=0; i<numBit2ProbeLocations; i++) {
         this->probeLocations[i] = bit2.probeLocations[i];
         this->probeWeights[i] = bit2.probeWeights[i];
       }
@@ -87,6 +90,9 @@ namespace Anki
     Result FiducialMarkerParserBit::ExtractMeanValue(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, s16 &meanValue) const
     {
       s32 accumulator = 0;
+
+      const s32 imageHeight = image.get_size(0);
+      const s32 imageWidth = image.get_size(1);
 
       const f64 h00 = homography[0][0];
       const f64 h10 = homography[1][0];
@@ -107,7 +113,8 @@ namespace Anki
       matlab.EvalStringEcho("if ~exist('warpedPoints', 'var') warpedPoints = zeros(2, 0); end;");
 #endif
 
-      for(s32 probe=0; probe<probeLocations.get_size(); probe++) {
+      const s32 numProbeLocations = probeLocations.get_size();
+      for(s32 probe=0; probe<numProbeLocations; probe++) {
         const f64 x = static_cast<f64>(this->probeLocations[probe].x) * fixedPointDivider;
         const f64 y = static_cast<f64>(this->probeLocations[probe].y) * fixedPointDivider;
         const s16 weight = this->probeWeights[probe];
@@ -128,7 +135,7 @@ namespace Anki
         // 2. Sample the image
 
         // This should only fail if there's a bug in the quad extraction
-        assert(warpedY >= 0  && warpedX >= 0 && warpedY < image.get_size(0) && warpedX < image.get_size(1));
+        assert(warpedY >= 0  && warpedX >= 0 && warpedY < imageHeight && warpedX < imageWidth);
 
         const s16 imageValue = static_cast<s16>(image[warpedY][warpedX]);
 
@@ -193,11 +200,13 @@ namespace Anki
     {
       FixedLengthList<s16> meanValues(MAX_FIDUCIAL_MARKER_BITS, scratch);
 
+      const s32 numBits = bits.get_size();
+
       marker.blockType = -1;
       marker.faceType = -1;
       marker.corners = quad;
 
-      meanValues.set_size(bits.get_size());
+      meanValues.set_size(numBits);
 
       //#define SEND_PROBE_LOCATIONS
 
@@ -209,7 +218,7 @@ namespace Anki
       }
 #endif
 
-      for(s32 bit=0; bit<bits.get_size(); bit++) {
+      for(s32 bit=0; bit<numBits; bit++) {
         if(bits[bit].ExtractMeanValue(image, quad, homography, meanValues[bit]) != RESULT_OK)
           return RESULT_FAIL;
       }
@@ -219,7 +228,7 @@ namespace Anki
         Matlab matlab(false);
 
         matlab.EvalStringEcho("probeLocations = zeros(2,0);");
-        for(s32 i=0; i<bits.get_size(); i++) {
+        for(s32 i=0; i<numBits; i++) {
           FixedLengthList<Point<s16> > probeLocations = this->bits[i].get_probeLocations();
           matlab.Put(probeLocations.Pointer(0), probeLocations.get_size(), "probeLocationsTmp");
           matlab.EvalStringEcho("probeLocations(:, (end+1):(end+size(probeLocationsTmp,2))) = probeLocationsTmp;");
@@ -384,10 +393,11 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(startIndex >= 0,
         -1, "FiducialMarkerParser::FindFirstBitOfType", "startIndex < 0");
 
-      for(s32 i=startIndex;i<bits.get_size(); i++) {
+      const s32 numBits = bits.get_size();
+      for(s32 i=startIndex;i<numBits; i++) {
         if(bits[i].get_type() == type)
           return i;
-      } // for(s32 i=startIndex;i<bits.get_size(); i++)
+      } // for(s32 i=startIndex;i<numBits; i++)
 
       return -1;
     }
@@ -402,7 +412,8 @@ namespace Anki
       FixedLengthList<u8> faceBits(4, scratch);
 
       // Convert the bit string in binarizedBits to numbers blockType and
-      for(s32 bit=0; bit<binarizedBits.get_size(); bit++) {
+      const s32 numBinarizedBits = binarizedBits.get_size();
+      for(s32 bit=0; bit<numBinarizedBits; bit++) {
         if(bits[bit].get_type() == FiducialMarkerParserBit::FIDUCIAL_BIT_BLOCK) {
           blockBits.PushBack(binarizedBits[bit]);
         } else if(bits[bit].get_type() == FiducialMarkerParserBit::FIDUCIAL_BIT_FACE) {
@@ -439,7 +450,8 @@ namespace Anki
       s32 i_block1 = 1;
 
       //for i_check = 1:numCheckBits
-      for(s32 i_check=1; i_check<=checksumBits.get_size(); i_check++) {
+      const s32 numChecksumBits = checksumBits.get_size();
+      for(s32 i_check=1; i_check<=numChecksumBits; i_check++) {
         //i_block2 = mod(i_block1, numBlockBits) + 1;
         //i_face = mod(i_check-1, numFaceBits) + 1;
         const s32 i_block2 = ((i_block1) % numBlockBits) + 1;

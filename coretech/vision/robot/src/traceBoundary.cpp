@@ -179,6 +179,8 @@ namespace Anki
     // Requires sizeof(s16)*(2*componentWidth + 2*componentHeight) bytes of scratch
     IN_DDR Result TraceNextExteriorBoundary(const ConnectedComponents &components, const s32 startComponentIndex, FixedLengthList<Point<s16> > &extractedBoundary, s32 &endComponentIndex, MemoryStack scratch)
     {
+      const s32 numComponents = components.get_size();
+
       AnkiConditionalErrorAndReturnValue(components.IsValid(),
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "components is not valid");
 
@@ -191,7 +193,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(components.get_isSortedInId(),
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "components must be sorted in id");
 
-      AnkiConditionalErrorAndReturnValue(startComponentIndex >= 0 && startComponentIndex < components.get_size(),
+      AnkiConditionalErrorAndReturnValue(startComponentIndex >= 0 && startComponentIndex < numComponents,
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "startComponentIndex is not in range");
 
       const u16 componentId = components[startComponentIndex].id;
@@ -208,8 +210,8 @@ namespace Anki
       //coordinate_left = min(component(:,2), [], 1);
       //coordinate_right = max(component(:,3), [], 1);
       Rectangle<s16> boundingBox(s16_MAX, s16_MIN, s16_MAX, s16_MIN);
-      endComponentIndex = components.get_size() - 1;
-      for(s32 i=startComponentIndex; i<components.get_size(); i++) {
+      endComponentIndex = numComponents - 1;
+      for(s32 i=startComponentIndex; i<numComponents; i++) {
         if(components[i].id != componentId)
         {
           endComponentIndex = i-1;
@@ -231,32 +233,21 @@ namespace Anki
         return RESULT_FAIL;
       }
 
-      //height = coordinate_bottom - coordinate_top + 1;
-      //width = coordinate_right - coordinate_left + 1;
-      const s16 width = boundingBox.get_width();
-      const s16 height = boundingBox.get_height();
+      const s16 boxWidth = boundingBox.get_width();
+      const s16 boxHeight = boundingBox.get_height();
 
-      //edge_top = inf * ones(width, 1);
-      //edge_bottom = -inf * ones(width, 1);
-      //edge_left = inf * ones(height, 1);
-      //edge_right = -inf * ones(height, 1);
-      s16 * edge_left = reinterpret_cast<s16*>(scratch.Allocate(sizeof(s16)*height));
-      s16 * edge_right = reinterpret_cast<s16*>(scratch.Allocate(sizeof(s16)*height));
-      s16 * edge_top = reinterpret_cast<s16*>(scratch.Allocate(sizeof(s16)*width));
-      s16 * edge_bottom = reinterpret_cast<s16*>(scratch.Allocate(sizeof(s16)*width));
+      s16 * edge_left = reinterpret_cast<s16*>(scratch.Allocate(sizeof(s16)*boxHeight));
+      s16 * edge_right = reinterpret_cast<s16*>(scratch.Allocate(sizeof(s16)*boxHeight));
+      s16 * edge_top = reinterpret_cast<s16*>(scratch.Allocate(sizeof(s16)*boxWidth));
+      s16 * edge_bottom = reinterpret_cast<s16*>(scratch.Allocate(sizeof(s16)*boxWidth));
 
       // Set the right away, in case a buggy component is missing a row or column
-      //% Correct for buggy components
-      //edge_left(isinf(edge_left)) = 1;
-      //edge_right(isinf(edge_right)) = 1;
-      //edge_top(isinf(edge_top)) = 1;
-      //edge_bottom(isinf(edge_bottom)) = 1;
-      for(s32 i=0; i<height;i++){
+      for(s32 i=0; i<boxHeight;i++){
         edge_left[i] = s16_MAX;
         edge_right[i] = s16_MIN;
       }
 
-      for(s32 i=0; i<width;i++){
+      for(s32 i=0; i<boxWidth;i++){
         edge_top[i] = s16_MAX;
         edge_bottom[i] = s16_MIN;
       }
@@ -297,16 +288,16 @@ namespace Anki
       //#define PRINT_OUT_EDGE_LIMITS
 #ifdef PRINT_OUT_EDGE_LIMITS
       printf("  ");
-      for(s32 i=0; i<width;i++){
+      for(s32 i=0; i<boxWidth;i++){
         printf("%d ", edge_top[i]);
       }
       printf("\n");
 
-      for(s32 i=0; i<height;i++){
+      for(s32 i=0; i<boxHeight;i++){
         printf("%d                    %d\n", edge_left[i], edge_right[i]);
       }
 
-      for(s32 i=0; i<width;i++){
+      for(s32 i=0; i<boxWidth;i++){
         printf("%d ", edge_bottom[i]);
       }
 #endif // #ifdef PRINT_OUT_EDGE_LIMITS
@@ -321,7 +312,7 @@ namespace Anki
       extractedBoundary.PushBack(Point<s16>(edge_right[0], 0));
 
       //for y = 2:height
-      for(s16 y=1; y<height; y++) {
+      for(s16 y=1; y<boxHeight; y++) {
         //% Draw the horizontal line between the previous and current right edge
 
         //if edge_right(y) > edge_right(y-1)
@@ -347,13 +338,13 @@ namespace Anki
 
         //boundary(end+1, :) = [edge_right(y), y];
         extractedBoundary.PushBack(Point<s16>(edge_right[y],y));
-      } // for(s16 y=1; y<height; y++)
+      } // for(s16 y=1; y<boxHeight; y++)
 
       //% 3. Make a bridge from the bottomost right to the bottomost left. Make the
       //% bridge using the bottom edge pixels. Note that this this loop should by
       //% definition start at a pixel that is both a bottom and a right (I don't see a way this can't be true).
       //for x = edge_right(end):-1:(edge_left(end)+1)
-      for(s16 x=edge_right[height-1]; x>=(edge_left[height-1]+1); x--) {
+      for(s16 x=edge_right[boxHeight-1]; x>=(edge_left[boxHeight-1]+1); x--) {
         //if edge_bottom(x) > edge_bottom(x-1)
         if(edge_bottom[x] > edge_bottom[x-1]) {
           //    lineHeight = edge_bottom(x) - edge_bottom(x-1);
@@ -379,11 +370,11 @@ namespace Anki
 
         //boundary(end+1, :) = [x-1, edge_bottom(x-1)];
         extractedBoundary.PushBack(Point<s16>(x-1, edge_bottom[x-1]));
-      } // for(s16 x=edge_right[height-1]; x>=(edge_left[height-1]+1); x--)
+      } // for(s16 x=edge_right[boxHeight-1]; x>=(edge_left[boxHeight-1]+1); x--)
 
       //% 4. Go through the left edge, from bottom to top.
       //for y = (height-1):-1:1
-      for(s16 y=height-2; y>=0; y--) {
+      for(s16 y=boxHeight-2; y>=0; y--) {
         //% Draw the horizontal line between the previous and current left edge
         //if edge_left(y) > edge_left(y+1)
         if(edge_left[y] > edge_left[y+1]) {
@@ -409,7 +400,7 @@ namespace Anki
 
         //boundary(end+1, :) = [edge_left(y), y];
         extractedBoundary.PushBack(Point<s16>(edge_left[y],y));
-      } // for(s16 y=height-2; y>=0; y--)
+      } // for(s16 y=boxHeight-2; y>=0; y--)
 
       //% 5. Make a bridge from the topmost left pixel to the topmost right.
       //for x = (edge_left(1)+1):edge_right(1)
@@ -446,7 +437,8 @@ namespace Anki
       //boundary(:,2) = boundary(:,2) + coordinate_top - 1;
       {
         Point<s16> * restrict extractedBoundary_rowPointer = extractedBoundary.Pointer(0);
-        for(s32 i=0; i<extractedBoundary.get_size(); i++) {
+        const s32 lengthExtractedBoundary = extractedBoundary.get_size();
+        for(s32 i=0; i<lengthExtractedBoundary; i++) {
           extractedBoundary_rowPointer[i].x += boundingBox.left;
           extractedBoundary_rowPointer[i].y += boundingBox.top;
         }

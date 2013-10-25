@@ -31,24 +31,24 @@ namespace Anki
 
     FixedPointArray<s32> Get1dGaussianKernel(const s32 sigma, const s32 numSigmaFractionalBits, const s32 numStandardDeviations, MemoryStack &scratch)
     {
-      // halfwidth = ceil(num_std*sigma);
-      const s32 halfwidth = 1 + ((sigma*numStandardDeviations) >> numSigmaFractionalBits);
-      const f32 halfwidthF32 = static_cast<f32>(halfwidth);
+      // halfWidth = ceil(num_std*sigma);
+      const s32 halfWidth = 1 + ((sigma*numStandardDeviations) >> numSigmaFractionalBits);
+      const f32 halfWidthF32 = static_cast<f32>(halfWidth);
 
-      FixedPointArray<s32> gaussianKernel(1, 2*halfwidth + 1, numSigmaFractionalBits, scratch);
+      FixedPointArray<s32> gaussianKernel(1, 2*halfWidth + 1, numSigmaFractionalBits, scratch);
       s32 * restrict gaussianKernel_rowPointer = gaussianKernel.Pointer(0,0);
 
       {
         PUSH_MEMORY_STACK(scratch);
 
-        Array<f32> gaussianKernelF32(1, 2*halfwidth + 1, scratch);
+        Array<f32> gaussianKernelF32(1, 2*halfWidth + 1, scratch);
         f32 * restrict gaussianKernelF32_rowPointer = gaussianKernelF32.Pointer(0,0);
 
         const f32 twoTimesSigmaSquared = static_cast<f32>(2*sigma*sigma) / powf(2.0f, static_cast<f32>(numSigmaFractionalBits*2));
 
         s32 i = 0;
         f32 sum = 0;
-        for(f32 x=-halfwidthF32; i<(2*halfwidth+1); x++, i++) {
+        for(f32 x=-halfWidthF32; i<(2*halfWidth+1); x++, i++) {
           const f32 g = expf(-(x*x) / twoTimesSigmaSquared);
           gaussianKernelF32_rowPointer[i] = g;
           sum += g;
@@ -56,7 +56,7 @@ namespace Anki
 
         // Normalize to sum to one
         const f32 sumInverse = 1.0f / sum;
-        for(s32 i=0; i<(2*halfwidth+1); i++) {
+        for(s32 i=0; i<(2*halfWidth+1); i++) {
           const f32 gScaled = gaussianKernelF32_rowPointer[i] * sumInverse * powf(2.0f, static_cast<f32>(numSigmaFractionalBits));
           gaussianKernel_rowPointer[i] = static_cast<s32>(Round(gScaled));
         }
@@ -182,6 +182,12 @@ namespace Anki
     // Note: uses a 32-bit accumulator, so be careful of overflows
     Result Correlate1dCircularAndSameSizeOutput(const FixedPointArray<s32> &image, const FixedPointArray<s32> &filter, FixedPointArray<s32> &out)
     {
+      const s32 imageHeight = image.get_size(0);
+      const s32 imageWidth = image.get_size(1);
+
+      const s32 filterHeight = filter.get_size(0);
+      const s32 filterWidth = filter.get_size(1);
+
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "image is not valid");
 
@@ -191,10 +197,10 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(out.IsValid(),
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "out is not valid");
 
-      AnkiConditionalErrorAndReturnValue(image.get_size(0)==1 && filter.get_size(0)==1 && out.get_size(0)==1,
+      AnkiConditionalErrorAndReturnValue(imageHeight==1 && filterHeight==1 && out.get_size(0)==1,
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "Arrays must be 1d and horizontal");
 
-      AnkiConditionalErrorAndReturnValue(image.get_size(1) > filter.get_size(1),
+      AnkiConditionalErrorAndReturnValue(imageWidth > filterWidth,
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "The image must be larger than the filter");
 
       AnkiConditionalErrorAndReturnValue(image.get_rawDataPointer() != filter.get_rawDataPointer() && image.get_rawDataPointer() != out.get_rawDataPointer(),
@@ -208,23 +214,23 @@ namespace Anki
       BitShiftDirection shiftDirection;
       GetBitShiftDirectionAndMagnitude(image.get_numFractionalBits(), filter.get_numFractionalBits(), out.get_numFractionalBits(), shiftMagnitude, shiftDirection);
 
-      //const s32 filterWidth = filter.get_size(1);
-      const s32 filterHalfWidth = filter.get_size(1) >> 1;
+      //const s32 filterWidth = filterWidth;
+      const s32 filterHalfWidth = filterWidth >> 1;
 
       //image.Print("image");
       //filter.Print("filter");
 
       // Filter the middle part
-      for(s32 x=0; x<image.get_size(1); x++) {
+      for(s32 x=0; x<imageWidth; x++) {
         s32 sum = 0;
-        for(s32 xFilter=0; xFilter<filter.get_size(1); xFilter++) {
+        for(s32 xFilter=0; xFilter<filterWidth; xFilter++) {
           // TODO: if this is too slow, pull out of the loop
           s32 xImage = (x - filterHalfWidth + xFilter);
           //s32 xImage = (x - filterWidth + xFilter + 1);
           if(xImage < 0) {
-            xImage += image.get_size(1);
-          } else if(xImage >= image.get_size(1)) {
-            xImage -= image.get_size(1);
+            xImage += imageWidth;
+          } else if(xImage >= imageWidth) {
+            xImage -= imageWidth;
           }
 
           const s32 toAdd = image_rowPointer[xImage] * filter_rowPointer[xFilter];
@@ -299,7 +305,8 @@ namespace Anki
         const Point<s16> * restrict boundary_constRowPointer = boundary.Pointer(0);
         s32 * restrict boundaryX_rowPointer = boundaryX.Pointer(0,0);
 
-        for(s32 i=0; i<boundary.get_size(); i++) {
+        const s32 lengthBoundary = boundary.get_size();
+        for(s32 i=0; i<lengthBoundary; i++) {
           boundaryX_rowPointer[i] = boundary_constRowPointer[i].x;
         }
 
@@ -317,7 +324,8 @@ namespace Anki
         const Point<s16> * restrict boundary_constRowPointer = boundary.Pointer(0);
         s32 * restrict boundaryY_rowPointer = boundaryY.Pointer(0,0);
 
-        for(s32 i=0; i<boundary.get_size(); i++) {
+        const s32 lengthBoundary = boundary.get_size();
+        for(s32 i=0; i<lengthBoundary; i++) {
           boundaryY_rowPointer[i] = boundary_constRowPointer[i].y;
         }
 
@@ -335,7 +343,8 @@ namespace Anki
       const s32 * restrict boundaryXFiltered_constRowPointer = boundaryXFiltered.Pointer(0,0);
       const s32 * restrict boundaryYFiltered_constRowPointer = boundaryYFiltered.Pointer(0,0);
 
-      for(s32 i=0; i<boundary.get_size(); i++) {
+      const s32 lengthBoundary = boundary.get_size();
+      for(s32 i=0; i<lengthBoundary; i++) {
         //const s32 xSquared = (boundaryXFiltered_constRowPointer[i] * boundaryXFiltered_constRowPointer[i]) >> numSigmaFractionalBits; // SQ23.8
         //const s32 ySquared = (boundaryYFiltered_constRowPointer[i] * boundaryYFiltered_constRowPointer[i]) >> numSigmaFractionalBits; // SQ23.8
         const s32 xSquared = (boundaryXFiltered_constRowPointer[i] * boundaryXFiltered_constRowPointer[i]); // SQ31.0 (multiplied by 2^numSigmaFractionalBits)
@@ -358,7 +367,7 @@ namespace Anki
           localMaxima.PushBack(0);
       }
 
-      for(s32 i=1; i<(boundary.get_size()-1); i++) {
+      for(s32 i=1; i<(lengthBoundary-1); i++) {
         if(boundaryFilteredAndCombined_constRowPointer[i] > boundaryFilteredAndCombined_constRowPointer[i+1] &&
           boundaryFilteredAndCombined_constRowPointer[i] >= boundaryFilteredAndCombined_constRowPointer[i-1]) {
             localMaxima.PushBack(i);
@@ -392,8 +401,9 @@ namespace Anki
         maximaIndexes[i] = -1;
       }
 
+      const s32 numLocalMaxima = localMaxima.get_size();
       for(s32 iMax=0; iMax<4; iMax++) {
-        for(s32 i=0; i<localMaxima.get_size(); i++) {
+        for(s32 i=0; i<numLocalMaxima; i++) {
           const s32 localMaximaIndex = localMaxima_rowPointer[i];
           if(boundaryFilteredAndCombined_constRowPointer[localMaximaIndex] > maximaValues[iMax]) {
             maximaValues[iMax] = boundaryFilteredAndCombined_constRowPointer[localMaximaIndex];
