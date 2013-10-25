@@ -89,10 +89,11 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(arr.get_size(0) == arr.get_size(1),
         RESULT_FAIL, "copyHalfArray", "Input array must be square");
 
-      for(s32 y = 0; y < arr.get_size(0); y++)
+      const s32 arrHeight = arr.get_size(0);
+      for(s32 y = 0; y < arrHeight; y++)
       {
-        const s32 x0 = lowerToUpper ? (y+1)           : 0;
-        const s32 x1 = lowerToUpper ? arr.get_size(0) : y;
+        const s32 x0 = lowerToUpper ? (y+1)     : 0;
+        const s32 x1 = lowerToUpper ? arrHeight : y;
 
         for(s32 x = x0; x < x1; x++) {
           *arr.Pointer(y,x) = *arr.Pointer(x,y);
@@ -104,23 +105,29 @@ namespace Anki
 
     template<typename Array_Type, typename Type> Result MultiplyMatrices(const Array_Type &mat1, const Array_Type &mat2, Array_Type &matOut)
     {
-      AnkiConditionalErrorAndReturnValue(mat1.get_size(1) == mat2.get_size(0),
+      const s32 mat1Height = mat1.get_size(0);
+      const s32 mat1Width = mat1.get_size(1);
+
+      const s32 mat2Height = mat2.get_size(0);
+      const s32 mat2Width = mat2.get_size(1);
+
+      AnkiConditionalErrorAndReturnValue(mat1Width == mat2Height,
         RESULT_FAIL, "MultiplyMatrices", "Input matrices are incompatible sizes");
 
-      AnkiConditionalErrorAndReturnValue(matOut.get_size(0) == mat1.get_size(0),
+      AnkiConditionalErrorAndReturnValue(matOut.get_size(0) == mat1Height,
         RESULT_FAIL, "MultiplyMatrices", "Input and Output matrices are incompatible sizes");
 
-      AnkiConditionalErrorAndReturnValue(matOut.get_size(1) == mat2.get_size(1),
+      AnkiConditionalErrorAndReturnValue(matOut.get_size(1) == mat2Width,
         RESULT_FAIL, "MultiplyMatrices", "Input and Output matrices are incompatible sizes");
 
-      for(s32 y1=0; y1<mat1.get_size(0); y1++) {
+      for(s32 y1=0; y1<mat1Height; y1++) {
         const Type * restrict mat1_rowPointer = mat1.Pointer(y1, 0);
         Type * restrict matOut_rowPointer = matOut.Pointer(y1, 0);
 
-        for(s32 x2=0; x2<mat2.get_size(1); x2++) {
+        for(s32 x2=0; x2<mat2Width; x2++) {
           matOut_rowPointer[x2] = 0;
 
-          for(s32 y2=0; y2<mat2.get_size(0); y2++) {
+          for(s32 y2=0; y2<mat2Height; y2++) {
             matOut_rowPointer[x2] += mat1_rowPointer[y2] * (*mat2.Pointer(y2, x2));
           }
         }
@@ -140,7 +147,9 @@ namespace Anki
     {
       u32 number = 0;
 
-      for(s32 bit=0; bit<bits.get_size(); bit++) {
+      const s32 numBits = bits.get_size();
+
+      for(s32 bit=0; bit<numBits; bit++) {
         if(firstBitIsLow) {
           if(bit == 0) {
             number += bits[bit];
@@ -148,10 +157,10 @@ namespace Anki
             number += bits[bit] << bit;
           }
         } else {
-          if(bit == (bits.get_size()-1)) {
+          if(bit == (numBits-1)) {
             number += bits[bit];
           } else {
-            number += bits[bit] << (bits.get_size() - bit - 1);
+            number += bits[bit] << (numBits - bit - 1);
           }
         }
       }

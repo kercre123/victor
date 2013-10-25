@@ -23,6 +23,9 @@ namespace Anki
 
     template<typename Type> Result DrawRectangle(Array<Type> &image, Point<s16> point1, Point<s16> point2, const s32 lineWidth, const Type lineColor, const Type backgroundColor)
     {
+      const s32 imageHeight = image.get_size(0);
+      const s32 imageWidth = image.get_size(1);
+
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
         RESULT_FAIL, "DrawRectangle", "image is not valid");
 
@@ -39,17 +42,17 @@ namespace Anki
         point2inner.x = point2.x - static_cast<s16>(lineWidth);
         point2inner.y = point2.y - static_cast<s16>(lineWidth);
 
-        point1inner.x = static_cast<s16>(CLIP(point1inner.x, 0, image.get_size(1)-1));
-        point1inner.y = static_cast<s16>(CLIP(point1inner.y, 0, image.get_size(0)-1));
-        point2inner.x = static_cast<s16>(CLIP(point2inner.x, 0, image.get_size(1)-1));
-        point2inner.y = static_cast<s16>(CLIP(point2inner.y, 0, image.get_size(0)-1));
+        point1inner.x = static_cast<s16>(CLIP(point1inner.x, 0, imageWidth-1));
+        point1inner.y = static_cast<s16>(CLIP(point1inner.y, 0, imageHeight-1));
+        point2inner.x = static_cast<s16>(CLIP(point2inner.x, 0, imageWidth-1));
+        point2inner.y = static_cast<s16>(CLIP(point2inner.y, 0, imageHeight-1));
       }
 
       // Make the corners fit inside the image
-      point1.x = static_cast<s16>(CLIP(point1.x, 0, image.get_size(1)-1));
-      point1.y = static_cast<s16>(CLIP(point1.y, 0, image.get_size(0)-1));
-      point2.x = static_cast<s16>(CLIP(point2.x, 0, image.get_size(1)-1));
-      point2.y = static_cast<s16>(CLIP(point2.y, 0, image.get_size(0)-1));
+      point1.x = static_cast<s16>(CLIP(point1.x, 0, imageWidth-1));
+      point1.y = static_cast<s16>(CLIP(point1.y, 0, imageHeight-1));
+      point2.x = static_cast<s16>(CLIP(point2.x, 0, imageWidth-1));
+      point2.y = static_cast<s16>(CLIP(point2.y, 0, imageHeight-1));
 
       for(s32 y=point1.y; y<=point2.y; y++) {
         Type * restrict image_rowPointer = image.Pointer(y, 0);

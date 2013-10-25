@@ -71,17 +71,19 @@ void explicitPrintf(int reverseEachFourCharacters, const char *format, ...)
       i++;
 
       if(percentChar == 'd') {
-        const s32 value = va_arg(arguments, int);
+        const s32 value = va_arg(arguments, s32);
         PrintInt(value);
         format++;
-      }  // else if(percentChar == 'd')
-      else if(percentChar == 'f') {
+      } else if(percentChar == 'x') {
+        const u32 value = va_arg(arguments, u32);
+        PrintHex(value);
+        format++;
+      } else if(percentChar == 'f') {
         // TODO: should this be double?
-        const f64 value = va_arg(arguments, double);
+        const f64 value = va_arg(arguments, f64);
         PrintFloat(value);
         format++;
-      } // else if(percentChar == 'f')
-      else if(percentChar == 's') {
+      } else if(percentChar == 's') {
         const char * stringArgument = va_arg(arguments, char*);
         while(*stringArgument != 0x00) {
           putchar(*stringArgument);
@@ -255,6 +257,77 @@ void PrintInt(s32 value)
   digitIndex--;
   for( ; digitIndex>=0; digitIndex--) {
     putchar(digits[digitIndex] + 48);
+  }
+
+  return;
+} // void printInt(s32 value)
+
+void PrintHex(u32 value)
+{
+  int digits[MAX_PRINTF_DIGITS];
+
+  s32 digitIndex = -1;
+
+  for(digitIndex=0; digitIndex<MAX_PRINTF_DIGITS; digitIndex++) {
+    digits[digitIndex] = 0;
+  }
+
+  if(value < 0) {
+    putchar('-');
+    value = -value;
+  }
+
+  if(value == 0) {
+    putchar('0');
+    return;
+  }
+
+  digitIndex=0;
+  while(value > 0) {
+    const s32 curDigit = (value - (16*(value/16)));
+    //const int curDigit = ABS(value) % 10;
+
+    // This if statement should never be true, but it sometimes is on the myriad1. This will output "BUG".
+    if(value < 0){
+      // BUG1
+      digits[digitIndex++] = 1;
+      digits[digitIndex++] = 23;
+      digits[digitIndex++] = 37;
+      digits[digitIndex++] = 18;
+      break;
+    }
+
+    if(value == 0){
+      // BUG2
+      digits[digitIndex++] = 2;
+      digits[digitIndex++] = 23;
+      digits[digitIndex++] = 37;
+      digits[digitIndex++] = 18;
+      break;
+    }
+
+    if(curDigit < 0){
+      // BUG3
+      digits[digitIndex++] = 3;
+      digits[digitIndex++] = 23;
+      digits[digitIndex++] = 37;
+      digits[digitIndex++] = 18;
+      break;
+    }
+
+    digits[digitIndex++] = curDigit;
+
+    value /= 16;
+  }
+
+  digitIndex--;
+  for( ; digitIndex>=0; digitIndex--) {
+    const s32 curDigit = digits[digitIndex];
+    if(curDigit < 10) {
+      putchar(curDigit + 48);
+    } else {
+      putchar(curDigit + 55);
+    }
   }
 
   return;

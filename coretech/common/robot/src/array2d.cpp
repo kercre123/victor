@@ -443,5 +443,18 @@ namespace Anki
     //      return numValuesSet;
     //    }
     //#endif // #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
+
+    C_Array_s32 get_C_Array_s32(Array<s32> &array)
+    {
+      C_Array_s32 cVersion;
+
+      cVersion.size0 = array.get_size(0);
+      cVersion.size1 = array.get_size(1);
+      cVersion.stride = array.get_stride();
+      cVersion.useBoundaryFillPatterns = array.get_useBoundaryFillPatterns();
+      cVersion.data = array.Pointer(0,0);
+
+      return cVersion;
+    } // C_Array_s32 get_C_Array_s32(Array<s32> &array)
   } // namespace Embedded
 } // namespace Anki

@@ -8,6 +8,7 @@
 #include "anki/common/robot/dataStructures.h"
 #include "anki/common/robot/geometry.h"
 #include "anki/common/robot/utilities_c.h"
+#include "anki/common/robot/cInterfaces_c.h"
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include "opencv2/core/core.hpp"
@@ -151,6 +152,8 @@ namespace Anki
 
       const void* get_rawDataPointer() const;
 
+      bool get_useBoundaryFillPatterns() const;
+
     protected:
       // Bit-inverse of MemoryStack patterns. The pattern will be put twice at
       // the beginning and end of each line.
@@ -288,7 +291,7 @@ namespace Anki
     template<typename Type> const Type* Array<Type>::Pointer(const s32 index0, const s32 index1) const
     {
       AnkiConditionalWarnAndReturnValue(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1],
-        0, "Array<Type>::Pointer", "Invalid size");
+        0, "Array<Type>::Pointer", "Invalid location");
 
       AnkiConditionalWarnAndReturnValue(this->IsValid(),
         0, "Array<Type>::Pointer", "Array<Type> is not valid");
@@ -300,7 +303,7 @@ namespace Anki
     template<typename Type> Type* Array<Type>::Pointer(const s32 index0, const s32 index1)
     {
       AnkiConditionalWarnAndReturnValue(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1],
-        0, "Array<Type>::Pointer", "Invalid size");
+        0, "Array<Type>::Pointer", "Invalid location");
 
       AnkiConditionalWarnAndReturnValue(this->IsValid(),
         0, "Array<Type>::Pointer", "Array<Type> is not valid");
@@ -657,6 +660,11 @@ namespace Anki
       return rawDataPointer;
     }
 
+    template<typename Type> bool Array<Type>::get_useBoundaryFillPatterns() const
+    {
+      return useBoundaryFillPatterns;
+    }
+
     template<typename Type> void Array<Type>::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
     {
       AnkiConditionalErrorAndReturn(numCols > 0 && numRows > 0 && dataLength > 0,
@@ -802,7 +810,11 @@ namespace Anki
     template<> s32 Array<f32>::Set(const char * const values);
     template<> s32 Array<f64>::Set(const char * const values);
 #endif // #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
+
+#pragma mark --- C Conversions ---
+    C_Array_s32 get_C_Array_s32(Array<s32> &array);
   } // namespace Embedded
 } //namespace Anki
 
 #endif // _ANKICORETECHEMBEDDED_COMMON_ARRAY2D_H_
+
