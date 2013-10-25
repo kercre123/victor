@@ -122,15 +122,22 @@ namespace Anki
             const Block::FaceName whichFace = Block::FaceType_to_FaceName(marker2d.get_faceType());
             const BlockMarker3d& marker3d = B_init.get_faceMarker(whichFace);
             
+            // First update the head pose according to the blockMarker
+            // TODO: this should probably not actually rotate the head but instead
+            //       use the head angle from the correct timestamped state history?
+            //       (doing it this way prevents this method from being const since
+            //        it changes the robot for each marker)
+            Robot& robot = marker2d.get_seenBy();
+            robot.set_headAngle(marker2d.get_headAngle());
+            
             // Figure out where the marker we saw is in 3D space, in camera's
             // coordinate frame. (Since the marker's coordinates relative to
             // the block are used here, the computed pose will be the blockPose
             // we want -- still relative to the camera however.)
             Quad3f corners3d;
             marker3d.getSquareCorners(corners3d, &(B_init.get_pose())); // corners3d relative to (canonical) Block pose
-            const Camera& headCam = marker2d.get_seenBy().get_camHead();
-            Pose3d blockPose( headCam.computeObjectPose(marker2d.get_quad(),
-                                                        corners3d) );
+            Pose3d blockPose(robot.get_camHead().computeObjectPose(marker2d.get_quad(),
+                                                                   corners3d) );
             
             // Now get the block pose in World coordinates using the pose tree,
             // instead of being in camera-centric coordinates, and add it to the

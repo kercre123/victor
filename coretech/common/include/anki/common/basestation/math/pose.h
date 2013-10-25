@@ -188,6 +188,10 @@ namespace Anki {
     Pose3d operator*(const Pose3d &other) const;
     void preComposeWith(const Pose3d &other);
     
+    void rotateBy(const Radians& angle); // around existing axis
+    void rotateBy(const RotationVector3d& Rvec);
+    void rotateBy(const RotationMatrix3d& Rmat);
+    
     // "Apply" Pose to 3D point(s) (i.e. transform that point by this Pose)
     Point3f operator*(const Point3f &point) const;
     void    applyTo(const std::vector<Point3f> &pointsIn,
@@ -289,13 +293,17 @@ namespace Anki {
   
   inline void Pose3d::set_rotation(const RotationMatrix3d &Rmat)
   {
-    this->rotationMatrix = Rmat;
+    if(&(this->rotationMatrix) != &Rmat) {
+      this->rotationMatrix = Rmat;
+    }
     this->rotationVector = RotationVector3d(Rmat);
   }
   
   inline void Pose3d::set_rotation(const RotationVector3d &Rvec)
   {
-    this->rotationVector = Rvec;
+    if(&(this->rotationVector) != &Rvec) {
+      this->rotationVector = Rvec;
+    }
     this->rotationMatrix = RotationMatrix3d(Rvec);
   }
   

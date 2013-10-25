@@ -24,10 +24,10 @@ namespace Anki {
     : addedToWorld(false),
       camDownCalibSet(false), camHeadCalibSet(false),
       neckPose(0.f, {{1.f, 0.f, 0.f}}, NECK_JOINT_POSITION, &pose),
+      headCamPose(-M_PI_2, {{1.0f, 0.f, 0.f}}, HEAD_CAM_POSITION, &neckPose),
       matMarker(NULL)
     {
-      camHead.set_pose(Pose3d(-M_PI_2, {{1.0f, 0.f, 0.f}},
-                              HEAD_CAM_POSITION, &neckPose));
+      camHead.set_pose(this->headCamPose);
       
     } // Constructor: Robot
     
@@ -275,13 +275,14 @@ namespace Anki {
             fprintf(stdout,
                     "Basestation Robot received ObservedBlockMarker message: "
                     "saw Block %d, Face %d at [(%.1f,%.1f), (%.1f,%.1f), "
-                    "(%.1f,%.1f), (%.1f,%.1f)] with upDirection=%d\n",
+                    "(%.1f,%.1f), (%.1f,%.1f)] with upDirection=%d and "
+                    "headAngle=%.1fdeg\n",
                     blockMsg->blockType,       blockMsg->faceType,
                     blockMsg->x_imgUpperLeft,  blockMsg->y_imgUpperLeft,
                     blockMsg->x_imgLowerLeft,  blockMsg->y_imgLowerLeft,
                     blockMsg->x_imgUpperRight, blockMsg->y_imgUpperRight,
                     blockMsg->x_imgLowerRight, blockMsg->y_imgLowerRight,
-                    blockMsg->upDirection);
+                    blockMsg->upDirection,     blockMsg->headAngle*180.f/M_PI);
             
             Quad2f corners;
             
@@ -302,7 +303,9 @@ namespace Anki {
             // Construct a new BlockMarker2d at the end of the list
             this->visibleBlockMarkers2d.emplace_back(blockMsg->blockType,
                                                      blockMsg->faceType,
-                                                     corners, upDir, *this);
+                                                     corners, upDir,
+                                                     blockMsg->headAngle,
+                                                     *this);
             
             break;
           }
@@ -408,6 +411,7 @@ namespace Anki {
          */
     
     
+    /*
     
     void Robot::getVisibleBlockMarkers3d(std::multimap<BlockType, BlockMarker3d>& markers3d) const
     {
@@ -429,6 +433,7 @@ namespace Anki {
       } // FOR each marker2d
       
     } // getVisibleBlockMarkers3d()
+    */
     
     void Robot::set_pose(const Pose3d &newPose)
     {
@@ -436,6 +441,18 @@ namespace Anki {
       this->pose = newPose;
       
     } // set_pose()
+    
+    void Robot::set_headAngle(const Radians& angle)
+    {
+      // Start with canonical (untilted) headPose
+      Pose3d newHeadPose(this->headCamPose);
+      
+      // Rotate that by the given angle
+      newHeadPose.rotateBy(angle);
+      
+      // Update the head camera's pose
+      this->camHead.set_pose(newHeadPose);
+    }
     
   } // namespace Cozmo
 } // namespace Anki

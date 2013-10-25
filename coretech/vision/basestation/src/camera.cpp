@@ -126,13 +126,13 @@ namespace Anki {
   void Camera::project3dPoints(const std::vector<Point3f> &objPoints,
                        std::vector<Point2f>       &imgPoints) const
   {
-    
+    CORETECH_THROW("Unimplemented!")
   }
   
   void Camera::project3dPoints(const Quad3f &objPoints,
                        Quad2f       &imgPoints) const
   {
-    
+    CORETECH_THROW("Unimplemented!")
   }
 
   

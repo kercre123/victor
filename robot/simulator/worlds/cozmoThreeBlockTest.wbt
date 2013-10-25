@@ -158,11 +158,22 @@ DEF Cozmo CozmoBot {
   # In front of two green blocks:
   translation 0.286003 0.021 0.0510032
   rotation 0.000381577 1 -0.000141993 0.7071  
-  
+  name "CozmoBot_1"
+  commsChannel 1
+  controller "cozmo_c_controller"
   # In front of 2x1 purple block
   #translation -0.07 0.014 -0.21
   #rotation 0 1 0 1.262
 }
+
+BlockWorldComms {
+
+}
+
+OverlayDisplay {
+
+}
+
 Block1x1 {
   name "Block060_1"
   translation -0.183 0.0299152 -0.051

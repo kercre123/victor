@@ -267,15 +267,18 @@ namespace Anki {
           mxArray *mxUpDir = engGetVariable(matlabEngine_, "upDir");
           msg.upDirection = static_cast<u8>(mxGetScalar(mxUpDir)) - 1; // Note the -1 for C vs. Matlab indexing
           
+          // NOTE the negation here!
+          msg.headAngle = -HAL::GetHeadPitch();
+          
           fprintf(stdout, "Sending ObservedBlockMarker message: Block %d, Face %d "
                   "at [(%.1f,%.1f) (%.1f,%.1f) (%.1f,%.1f) (%.1f,%.1f)] with "
-                  "upDirection=%d\n",
+                  "upDirection=%d, headAngle=%.1fdeg\n",
                   msg.blockType, msg.faceType,
                   msg.x_imgUpperLeft,  msg.y_imgUpperLeft,
                   msg.x_imgLowerLeft,  msg.y_imgLowerLeft,
                   msg.x_imgUpperRight, msg.y_imgUpperRight,
                   msg.x_imgLowerRight, msg.y_imgLowerRight,
-                  msg.upDirection);
+                  msg.upDirection, msg.headAngle * 180.f/PI);
           
           blockMarkerMailbox_->putMessage(msg);
           
