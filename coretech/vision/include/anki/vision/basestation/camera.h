@@ -104,7 +104,9 @@ namespace Anki {
     //
     
     // Compute the 3D (6DoF) pose of a set of object points, given their
-    // corresponding observed positions in the image:
+    // corresponding observed positions in the image.  The returned Pose will
+    // be w.r.t. the camera's pose, unless the input camPose is non-NULL, in
+    // which case the returned Pose will be w.r.t. that pose.
     Pose3d computeObjectPose(const std::vector<Point2f> &imgPoints,
                              const std::vector<Point3f> &objPoints) const;
   
