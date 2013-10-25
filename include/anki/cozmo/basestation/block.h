@@ -16,8 +16,6 @@
 
 #include "anki/vision/basestation/marker2d.h"
 
-#define BLOCKMARKER3D_USE_OUTSIDE_SQUARE false
-
 namespace Anki {
   
   // Forward Declarations:
