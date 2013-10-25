@@ -16,6 +16,7 @@ extern "C" {
 #include <DrvDdr.h>
 #include <DrvTimer.h>
 #include <DrvL2Cache.h>
+#include <DrvPwm.h>
 #include <DrvUart.h>
 #include <isaac_registers.h>
 //#include <CifGenericApi.h>
