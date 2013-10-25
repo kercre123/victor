@@ -22,6 +22,10 @@
 #ifndef ANKICORETECH_COMMON_TYPES_H_
 #define ANKICORETECH_COMMON_TYPES_H_
 
+// Typedefs in mv_types.h conflict with stdint.h types (which doesn't even exist in the movidius toolchain).
+#ifdef MOVI_TOOLS
+#include "mv_types.h"
+#else
 #include <stdint.h>
 
 typedef uint8_t  u8;
@@ -32,6 +36,7 @@ typedef uint32_t u32;
 typedef int32_t  s32;
 typedef uint64_t u64;
 typedef int64_t  s64;
+#endif  // MOVI_TOOLS
 typedef float    f32;
 typedef double   f64;
 

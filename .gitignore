@@ -3,6 +3,7 @@
 *~
 *.d
 *.cache
+*.swp
 matlab.mat
 
 # Webots

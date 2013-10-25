@@ -1,0 +1,119 @@
+/*Generao purpose sections to be used by anyone who needs them*/
+
+SECTIONS {
+  /* defining DDR sections for use through L2 cache (I.E. NOT "_direct") */
+  . = 0x40000000;
+  .ddr.text : {  *(.ddr.text*)  }
+  .ddr.rodata : { *(.ddr.rodata*) }
+  .ddr.data : { KEEP(*(.ddr.data*)) }
+  .ddr.bss (NOLOAD) : {
+    __ddr_bss_start = ALIGN(8);
+     *(.ddr.bss*)
+    __ddr_bss_end = ALIGN(8);
+  }
+  __END_OF_L2_ACCESS_SECTIONS = ALIGN(4);
+
+  /* defining DDR sections for use bypassing L2 cache (I.E.: "_direct")*/
+  . = __END_OF_L2_ACCESS_SECTIONS + 0x08000000;
+  .ddr_direct.text : {  *(.ddr_direct.text*)  }
+  .ddr_direct.rodata : { *(.ddr_direct.rodata*) }
+  .ddr_direct.data : { KEEP(*(.ddr_direct.data*))  }
+  .ddr_direct.bss (NOLOAD) : {
+     __ddr_direct_bss_start = ALIGN(8); 
+      *(.ddr_direct.bss*)
+     __ddr_direct_bss_end = ALIGN(8);  
+   }
+
+  /*Tentative definitions for people not using the myriad1_shave_slices.ldscript*/  
+  __NEXT_FREE_CMX_SLICE = DEFINED( __NEXT_FREE_CMX_SLICE ) ? __NEXT_FREE_CMX_SLICE : ABSOLUTE(0x10000000);
+  
+  /*Go to Leon favorable addresses: 0xAXXXXXXX type addresses by adding 0x90000000 to*/
+  /*the current 0x1XXXXXXX type address*/
+  . = __NEXT_FREE_CMX_SLICE + 0x90000000;
+  .cmx.text : { *(.cmx.text*) }
+  .cmx.rodata : { *(.cmx.rodata*) }
+  .cmx.data : { KEEP(*(.cmx.data*)) }
+  .cmx.bss (NOLOAD) : { 
+    __cmx_bss_start = ALIGN(8);
+      *(.cmx.bss*) 
+    __cmx_bss_end = ALIGN(8);
+  }
+    
+  /* Define linker symbols with desired location for windows C,D,E,F on each shave */  
+  __WinRegShave0_winC = DEFINED( __WinRegShave0_winC ) ? __WinRegShave0_winC : ABSOLUTE(0x10008000);    /* Default absolute address  */
+  __WinRegShave0_winD = DEFINED( __WinRegShave0_winD ) ? __WinRegShave0_winD : ABSOLUTE(0x10000000);    /* Default absolute address  */
+  __WinRegShave0_winE = DEFINED( __WinRegShave0_winE ) ? __WinRegShave0_winE : ABSOLUTE(0x00000000);    /* not used                  */
+  __WinRegShave0_winF = DEFINED( __WinRegShave0_winF ) ? __WinRegShave0_winF : ABSOLUTE(0x40000000);    /* not used                  */
+
+  __WinRegShave1_winC = DEFINED( __WinRegShave1_winC ) ? __WinRegShave1_winC : ABSOLUTE(0x10028000);    /* Default absolute address  */
+  __WinRegShave1_winD = DEFINED( __WinRegShave1_winD ) ? __WinRegShave1_winD : ABSOLUTE(0x10020000);    /* Default absolute address  */
+  __WinRegShave1_winE = DEFINED( __WinRegShave1_winE ) ? __WinRegShave1_winE : ABSOLUTE(0x00000000);    /* not used                  */
+  __WinRegShave1_winF = DEFINED( __WinRegShave1_winF ) ? __WinRegShave1_winF : ABSOLUTE(0x40000000);    /* not used                  */
+  
+  __WinRegShave2_winC = DEFINED( __WinRegShave2_winC ) ? __WinRegShave2_winC : ABSOLUTE(0x10048000);    /* Default absolute address  */
+  __WinRegShave2_winD = DEFINED( __WinRegShave2_winD ) ? __WinRegShave2_winD : ABSOLUTE(0x10040000);    /* Default absolute address  */
+  __WinRegShave2_winE = DEFINED( __WinRegShave2_winE ) ? __WinRegShave2_winE : ABSOLUTE(0x00000000);    /* not used                  */
+  __WinRegShave2_winF = DEFINED( __WinRegShave2_winF ) ? __WinRegShave2_winF : ABSOLUTE(0x40000000);    /* not used                  */
+
+  __WinRegShave3_winC = DEFINED( __WinRegShave3_winC ) ? __WinRegShave3_winC : ABSOLUTE(0x10068000);    /* Default absolute address  */
+  __WinRegShave3_winD = DEFINED( __WinRegShave3_winD ) ? __WinRegShave3_winD : ABSOLUTE(0x10060000);    /* Default absolute address  */
+  __WinRegShave3_winE = DEFINED( __WinRegShave3_winE ) ? __WinRegShave3_winE : ABSOLUTE(0x00000000);    /* not used                  */
+  __WinRegShave3_winF = DEFINED( __WinRegShave3_winF ) ? __WinRegShave3_winF : ABSOLUTE(0x40000000);    /* not used                  */
+                                                 
+  __WinRegShave4_winC = DEFINED( __WinRegShave4_winC ) ? __WinRegShave4_winC : ABSOLUTE(0x10088000);    /* Default absolute address  */
+  __WinRegShave4_winD = DEFINED( __WinRegShave4_winD ) ? __WinRegShave4_winD : ABSOLUTE(0x10080000);    /* Default absolute address  */
+  __WinRegShave4_winE = DEFINED( __WinRegShave4_winE ) ? __WinRegShave4_winE : ABSOLUTE(0x00000000);    /* not used                  */
+  __WinRegShave4_winF = DEFINED( __WinRegShave4_winF ) ? __WinRegShave4_winF : ABSOLUTE(0x40000000);    /* not used                  */
+
+  __WinRegShave5_winC = DEFINED( __WinRegShave5_winC ) ? __WinRegShave5_winC : ABSOLUTE(0x100A8000);    /* Default absolute address  */
+  __WinRegShave5_winD = DEFINED( __WinRegShave5_winD ) ? __WinRegShave5_winD : ABSOLUTE(0x100A0000);    /* Default absolute address  */
+  __WinRegShave5_winE = DEFINED( __WinRegShave5_winE ) ? __WinRegShave5_winE : ABSOLUTE(0x00000000);    /* not used                  */
+  __WinRegShave5_winF = DEFINED( __WinRegShave5_winF ) ? __WinRegShave5_winF : ABSOLUTE(0x40000000);    /* not used                  */
+                                                 
+  __WinRegShave6_winC = DEFINED( __WinRegShave6_winC ) ? __WinRegShave6_winC : ABSOLUTE(0x100C8000);    /* Default absolute address  */
+  __WinRegShave6_winD = DEFINED( __WinRegShave6_winD ) ? __WinRegShave6_winD : ABSOLUTE(0x100C0000);    /* Default absolute address  */
+  __WinRegShave6_winE = DEFINED( __WinRegShave6_winE ) ? __WinRegShave6_winE : ABSOLUTE(0x00000000);    /* not used                  */
+  __WinRegShave6_winF = DEFINED( __WinRegShave6_winF ) ? __WinRegShave6_winF : ABSOLUTE(0x40000000);    /* not used                  */
+                                                 
+  __WinRegShave7_winC = DEFINED( __WinRegShave7_winC ) ? __WinRegShave7_winC : ABSOLUTE(0x100E8000);    /* Default absolute address  */
+  __WinRegShave7_winD = DEFINED( __WinRegShave7_winD ) ? __WinRegShave7_winD : ABSOLUTE(0x100E0000);    /* Default absolute address  */
+  __WinRegShave7_winE = DEFINED( __WinRegShave7_winE ) ? __WinRegShave7_winE : ABSOLUTE(0x00000000);    /* not used                  */
+  __WinRegShave7_winF = DEFINED( __WinRegShave7_winF ) ? __WinRegShave7_winF : ABSOLUTE(0x40000000);    /* not used                  */
+  
+  /* DWARF debug sections.
+     Symbols in the DWARF debugging sections are relative to the beginning
+     of the section so we begin them at 0.  */
+  /* DWARF 1 */
+  .debug          0 : { *(.debug) }
+  .line           0 : { *(.line) }
+  /* GNU DWARF 1 extensions */
+  .debug_srcinfo  0 : { *(.debug_srcinfo) }
+  .debug_sfnames  0 : { *(.debug_sfnames) }
+  /* DWARF 1.1 and DWARF 2 */
+  .debug_aranges  0 : { *(.debug_aranges) }
+  .debug_ranges   0 : { *(.debug_ranges) }
+  .debug_pubnames 0 : { *(.debug_pubnames) }
+  /* DWARF 2 */
+  .debug_info     0 : { *(.debug_info .gnu.linkonce.wi.*) }
+  .debug_abbrev   0 : { *(.debug_abbrev) }
+  .debug_line     0 : { *(.debug_line) }
+  .debug_frame    0 : { *(.debug_frame) }
+  .debug_str      0 : { *(.debug_str) }
+  .debug_loc      0 : { *(.debug_loc) }
+  .debug_macinfo  0 : { *(.debug_macinfo) }
+  /* SGI/MIPS DWARF 2 extensions */
+  .debug_weaknames 0 : { *(.debug_weaknames) }
+  .debug_funcnames 0 : { *(.debug_funcnames) }
+  .debug_typenames 0 : { *(.debug_typenames) }
+  .debug_varnames  0 : { *(.debug_varnames) }
+  /*Keep the moviAsm assembly debug information*/
+  /*Need to take it in as pattern because our moviAsm will prefix the section*/
+  .debug_asmline   0 : { *(*.debug_asmline*) }
+  /*Keep rel only as debug info*/
+  .rel   0 : { *(.rel*) }
+
+  /DISCARD/ : { *(.stab .stabstr .comment) }
+  . = 0;
+  .stuff : { *(*) }
+  ASSERT ( . == 0, ".stuff section caught data! This means your application has sections placed nowhere which may be fatal!" )
+}
