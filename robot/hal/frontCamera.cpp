@@ -25,8 +25,8 @@ namespace Anki
       static const unsigned short m_OV9653_VGA[][2] = {
         { 0x09, 0x10 },  // Set soft sleep mode
         { 0x0e, 0x00 },  // System clock options
-        { 0x09, 0x01 },  // Output drive, soft sleep mode
-        { 0x15, 0x00 },  // Slave mode, HREF vs HSYNC, signals negate
+        { 0x09, 0x01 },  // Output drive 2x
+        { 0x15, 0x00 },  // Signals not negated
         { 0x3f, 0xa6 },  // Edge enhancement treshhold and factor
         { 0x41, 0x02 },  // Color matrix coeff double option
         { 0x42, 0x08 },  // Single frame out, banding filter

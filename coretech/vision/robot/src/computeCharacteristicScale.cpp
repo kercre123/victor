@@ -292,7 +292,7 @@ namespace Anki
                   const s64 alphaX = alphas[iAlphaX];
                   const s64 alphaXinverse = maxAlpha - alphaX;
 
-                  const u32 dog = static_cast<u32>(Interpolate2d(dog_00, dog_01, dog_10, dog_11, alphaY, alphaYinverse, alphaX, alphaXinverse) >> (maxAlphaSquaredShift - 16)); // SQ?.? -> UQ16.16
+                  const u32 dog = 0; //static_cast<u32>(Interpolate2d(dog_00, dog_01, dog_10, dog_11, alphaY, alphaYinverse, alphaX, alphaXinverse) >> (maxAlphaSquaredShift - 16)); // SQ?.? -> UQ16.16
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
                   largeDog_rowPointer[largeX] = dog;
