@@ -1,8 +1,6 @@
 #ifndef _ANKICORETECHEMBEDDED_VISION_VISIONKERNELS_CONNECTEDCOMPONENTS_H_
 #define _ANKICORETECHEMBEDDED_VISION_VISIONKERNELS_CONNECTEDCOMPONENTS_H_
 
-#include <array>
-
 #include "anki/common/types.h"
 #include "anki/common/robot/memory.h"
 
