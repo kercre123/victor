@@ -20,12 +20,14 @@ namespace Anki {
 #pragma mark --- BlockMarker2d Implementations ---
     const size_t BlockMarker2d::NumCodeSquares = 5;
     
-    BlockMarker2d::BlockMarker2d(BlockType         blockTypeIn,
-                                 FaceType          faceTypeIn,
-                                 const Quad2f&     cornersIn,
-                                 MarkerUpDirection upDirection,
-                                 const Robot&      seenByIn)
-    : blockType(blockTypeIn), faceType(faceTypeIn), seenBy(seenByIn)
+    BlockMarker2d::BlockMarker2d(const BlockType         blockTypeIn,
+                                 const FaceType          faceTypeIn,
+                                 const Quad2f&           cornersIn,
+                                 const MarkerUpDirection upDirection,
+                                 const Radians&          headAngleIn,
+                                 Robot&                  seenByIn)
+    : blockType(blockTypeIn), faceType(faceTypeIn),
+      headAngle(headAngleIn), seenBy(seenByIn)
     {
       // The assumption is the incoming corners are ordered by their position
       // in the image.  We want to reorder them with respect to the marker's
