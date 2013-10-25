@@ -297,10 +297,11 @@ int main(int argc, char **argv)
           for(auto worldBlockIter = worldBlocks.begin();
               worldBlockIter != worldBlocks.end(); ++worldBlockIter)
           {
-            float d = Anki::computeDistanceBetween(blockPose, worldBlockIter->get_pose());
+            const float d = Anki::computeDistanceBetween(blockPose, worldBlockIter->get_pose());
           
-            if((minDist < 0.f || d < minDist)) // && d < 0.5f*worldBlockIter->get_minDim())
+            if((closest == NULL || d < minDist) ) // && d < worldBlockIter->get_minDim())
             {
+              minDist = d;
               closest = &(*worldBlockIter);
             }
           } // for each blockWorld block of this type
@@ -360,7 +361,6 @@ int main(int argc, char **argv)
             wb_supervisor_field_set_sf_vec3f(translationField, webotTranslation);
             
             wb_supervisor_field_set_sf_float(transparencyField, 0.);
-           
             
           } // if closest block found (not NULL)
           

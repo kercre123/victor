@@ -26,6 +26,8 @@ namespace Anki {
 #define NECK_JOINT_POSITION {{0.f, 9.5f, 25.f}} // relative to robot origin
 #define HEAD_CAM_POSITION   {{0.f, 25.f, 15.f}} // relative to neck joint
     
+#define BLOCKMARKER3D_USE_OUTSIDE_SQUARE false
+    
   } // namespace Cozmo
 } // namespace Cozmo
 

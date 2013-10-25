@@ -132,6 +132,13 @@ namespace Anki {
       // Initialize Matlab
       engEvalString(matlabEngine_, "run('../../../../matlab/initCozmoPath.m');");
       
+      engEvalString(matlabEngine_, "usingOutsideSquare = BlockMarker2D.UseOutsideOfSquare;");
+      mxArray *mxUseOutsideOfSquare = engGetVariable(matlabEngine_, "usingOutsideSquare");
+      if(mxIsLogicalScalarTrue(mxUseOutsideOfSquare) != BLOCKMARKER3D_USE_OUTSIDE_SQUARE) {
+        fprintf(stdout, "UseOutsideOfSquare settings between Matlab and C++ don't match!\n");
+        return EXIT_FAILURE;
+      }
+      
       // Store computed pixPerMM in Matlab for use by MatLocalization()
       engPutVariable(matlabEngine_, "pixPerMM",
                      mxCreateDoubleScalar(matCamPixPerMM_));

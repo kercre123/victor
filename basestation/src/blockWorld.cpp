@@ -85,24 +85,26 @@ namespace Anki
         fprintf(stdout, "Saw %lu total BlockMarker2d's from all robots.\n",
                 blockMarkers2d.size());
         
-        // First for loop iterates over each BlockType in the multimap, using
-        // upper_bound call.
+        // First for loop iterates over each unique BlockType in the multimap,
+        // using upper_bound call.
         for(auto blockTypeIter = blockMarkers2d.begin(), end = blockMarkers2d.end();
             blockTypeIter != end;
             blockTypeIter = blockMarkers2d.upper_bound(blockTypeIter->first) )
         {
-          // Instantiate the block (at canonical location).  This in turn will
-          // instantiate its faces' 3D markers.
+          // Instantiate a block of this type (at canonical location).  This in
+          // turn will instantiate its faces' 3D markers.
           Block B_init(blockTypeIter->first);
           
           const std::vector<Block>::size_type blockTypeIndex = static_cast<std::vector<Block>::size_type>(B_init.get_type());
           
-          // Get the range of iterators with the current BlockType
+          // Get the range of iterators into the multimap with the current BlockType
           std::pair <BlockMarker2dMultiMap::iterator, BlockMarker2dMultiMap::iterator> range;
           range = blockMarkers2d.equal_range(blockTypeIter->first);
           
           // We will store a computed block pose for each 2d marker, with a
-          // reference to that 2d marker.
+          // reference to that 2d marker.  (This is so we can recompute
+          // Block pose from clusters of 2d markers later, without having to
+          // reassociate them.)
           std::vector<std::pair<BlockMarker2d&, Pose3d> > blockPoses;
           
           // Second FOR loop iterates over each marker with this BlockType,
@@ -131,7 +133,8 @@ namespace Anki
                                                         corners3d) );
             
             // Now get the block pose in World coordinates using the pose tree,
-            // instead of being in camera-centric coordinates:
+            // instead of being in camera-centric coordinates, and add it to the
+            // list of computed poses for this block type
             blockPoses.emplace_back(marker2d, blockPose.getWithRespectTo(Pose3d::World));
             
           } // for each marker with current blockType
@@ -143,6 +146,7 @@ namespace Anki
             
             fprintf(stdout, "Saw %lu markers with type %d, need to implement "
                     "clustering.\n", blockPoses.size(), B_init.get_type());
+            
           } else {
             CORETECH_ASSERT(not blockPoses.empty());
             
@@ -151,7 +155,7 @@ namespace Anki
             blocksSeen.push_back(B_init);
           }
           
-          // Now go through all the blocks we saw, see if they overlap with a
+          // Now go through all the blocks we saw, check if they overlap with a
           // block we already know about, or if they are a new one
           // TODO: be smarter about merge decisions
           // TODO: need a way to decide when to delete a block we've seen!!
@@ -159,7 +163,7 @@ namespace Anki
             
             const float minDimSeen = blockSeen.get_minDim();
             
-            // Store references to any existing blocks that overlap with this one
+            // Store pointers to any existing blocks that overlap with this one
             std::vector<Block*> overlapping;
             
             for(auto & blockExist : this->blocks[blockTypeIndex])
