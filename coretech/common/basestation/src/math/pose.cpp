@@ -254,6 +254,29 @@ namespace Anki {
     
     return *this;
   }
+  
+  void Pose3d::rotateBy(const Radians& angleIn) {
+    // Keep same rotation axis, but add the incoming angle
+    RotationMatrix3d Rnew(angleIn, this->get_rotationAxis());
+    this->translation = Rnew * this->translation;
+    Rnew *= this->rotationMatrix;
+    this->set_rotation(Rnew);
+  }
+  
+  void Pose3d::rotateBy(const RotationVector3d& Rvec)
+  {
+    RotationMatrix3d Rnew(Rvec);
+    this->translation = Rnew * this->translation;
+    Rnew *= this->rotationMatrix;
+    this->set_rotation(Rnew);
+  }
+  
+  void Pose3d::rotateBy(const RotationMatrix3d& Rmat)
+  {
+    this->translation = Rmat * this->translation;
+    this->rotationMatrix.preMultiplyBy(Rmat);
+    this->set_rotation(this->rotationMatrix);
+  }
 
   // Count number of steps to root ("World") node, by walking up
   // the chain of parents.
