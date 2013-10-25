@@ -41,11 +41,13 @@ namespace Anki {
       
       const std::vector<BlockMarker2d>& getVisibleBlockMarkers2d() const;
       
+      /*
       // Add observed BlockMarker3d objects to a multimap container, grouped
       // by BlockType.
       // (It will be the world's job to take all of these from all
       //  robots and update the world state)
-      void getVisibleBlockMarkers3d(std::multimap<BlockType, BlockMarker3d>& markers) const;
+      void getVisibleBlockMarkers3d(std::multimap<BlockType, BlockMarker3d>& markers) ;
+      */
       
       const u8      get_ID() const;
       const Pose3d& get_pose() const;
@@ -57,6 +59,7 @@ namespace Anki {
       //float get_downCamPixPerMM() const;
       
       void set_pose(const Pose3d &newPose);
+      void set_headAngle(const Radians& angle);
       
       void queueIncomingMessage(const u8 *msg, const u8 msgSize);
       bool hasOutgoingMessages() const;
@@ -69,6 +72,7 @@ namespace Anki {
       Camera camDown, camHead;
       bool camDownCalibSet, camHeadCalibSet;
       const Pose3d neckPose; // joint around which head rotates
+      const Pose3d headCamPose; // in canonical (untilted) position w.r.t. neck joint
       
       Pose3d pose;
       void updatePose();

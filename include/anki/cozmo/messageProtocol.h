@@ -496,7 +496,9 @@ typedef struct {
   u8  faceType;
   u8  upDirection; // One of enum MarkerUpDirection above
 
-  // TODO: these need to be fixed-point, probably 16bits or less
+  f32 headAngle; // TODO: should this be it's own message, only when changed?
+  
+  // TODO: these need to be fixed-point, probably 16bits
   f32 x_imgUpperLeft,  y_imgUpperLeft;
   f32 x_imgLowerLeft,  y_imgLowerLeft;
   f32 x_imgUpperRight, y_imgUpperRight;
@@ -537,7 +539,7 @@ typedef struct {
   // TODO: Use fixed point for these f32s to save message size
   //       (Probably 1-2 decimal places is *plenty* for each)
   f32 focalLength_x, focalLength_y;
-  f32 fov; // do i need to send this one?  it can be computed from knowledge of camera's height off the ground...
+  f32 fov; // do i need to send this one?  it can be computed from focal length
   f32 center_x, center_y;
   f32 skew; // TODO: Assume zero skew?
   u16 nrows, ncols;
