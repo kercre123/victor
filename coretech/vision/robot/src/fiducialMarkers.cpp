@@ -137,7 +137,23 @@ namespace Anki
         // This should only fail if there's a bug in the quad extraction
         assert(warpedY >= 0  && warpedX >= 0 && warpedY < imageHeight && warpedX < imageWidth);
 
-        const s16 imageValue = static_cast<s16>(image[warpedY][warpedX]);
+        // This is the direct way to access a pixel. It doesn't work when there's an endian conflict
+        //const s16 imageValue = static_cast<s16>(*image.Pointer(warpedY, warpedX));
+
+        // This is the indirect way. It reads a whole 32-bit word, then extracts the correct byte
+        const u32 * restrict imageY_rowPointer = reinterpret_cast<const u32*>(image.Pointer(warpedY,0));
+        const s32 xWord = warpedX >> 2;
+
+        // TODO: Verify that the big endian version is working
+#ifdef BIG_ENDIAN_IMAGES
+        const s32 xByte = 3 - (warpedX - (xWord << 2));
+#else
+        const s32 xByte = warpedX - (xWord << 2);
+#endif
+
+        const u32 curPixelWord = imageY_rowPointer[xWord];
+        const u8 curPixel = (curPixelWord & (0xFF << (8*xByte))) >> (8*xByte);
+        const s16 imageValue = static_cast<s16>(curPixel);
 
         accumulator += weight * imageValue;
       }
