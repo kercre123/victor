@@ -10,8 +10,8 @@ Everything in this file should be compatible with plain C, as well as C++
 #define ANKICORETECHEMBEDDED_VERSION_MINOR 1
 #define ANKICORETECHEMBEDDED_VERSION_REVISION 0
 
-#if !defined(__APPLE_CC__) && defined(__GNUC__) && __GNUC__==4 && __GNUC_MINOR__==2 && __GNUC_PATCHLEVEL__==1 //hack to detect the movidius compiler
-#warning Using GNUC 4.2.1
+#if defined(__MOVICOMPILE__)
+#warning Using MoviCompile
 #define USING_MOVIDIUS_SHAVE_COMPILER
 #define USING_MOVIDIUS_COMPILER
 #endif
