@@ -2,7 +2,7 @@
 # Default application name is the same as the folder it is in.
 # This can be overridden here if something different is required
 #APPNAME ?= $(notdir $(shell pwd))
-APPNAME=shaveTests
+APPNAME=shaveTests2
 
 # ------------------------------[ Build overrides ]--------------------------------#
 # overrides that need to be set before including generic.mk
