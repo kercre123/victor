@@ -70,14 +70,6 @@ namespace Anki {
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
       //void GetGlobalPose(f32 &x, f32 &y, f32& rad);
-    
-      inline const u8* getHeadImage(void) {
-        return headCam_->getImage();
-      }
-      
-      inline const u8* getMatImage(void) {
-        return matCam_->getImage();
-      }
       
     } // "private" namespace
     
@@ -90,6 +82,14 @@ namespace Anki {
     }
     
 #pragma mark --- Simulated Hardware Method Implementations ---
+    
+    const u8* HAL::FrontCameraGetFrame(void) {
+      return headCam_->getImage();
+    }
+    
+    const u8* HAL::MatCameraGetFrame(void) {
+      return matCam_->getImage();
+    }
     
     // Helper function to create a CameraInfo struct from Webots camera properties:
     void FillCameraInfo(const webots::Camera *camera,
@@ -452,12 +452,12 @@ namespace Anki {
     
     const HAL::FrameGrabber HAL::GetHeadFrameGrabber(void)
     {
-      return &getHeadImage;
+      return &FrontCameraGetFrame;
     }
     
     const HAL::FrameGrabber HAL::GetMatFrameGrabber(void)
     {
-      return &getMatImage;
+      return &MatCameraGetFrame;
     }
     
     const HAL::CameraInfo* HAL::GetHeadCamInfo(void)
