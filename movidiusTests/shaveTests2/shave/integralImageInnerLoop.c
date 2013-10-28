@@ -89,6 +89,7 @@ void ScrollingIntegralImage_u8_s32_FilterRow_shaveInnerLoop(const int * restrict
   __asm(
   ".set x i10 \n"
     ".set numPixelsToProcess i14 \n"
+    ".set addressIncrement i0 \n"
     ".set integralImage_00 v0 \n"
     ".set integralImage_10 v1 \n"
     ".set integralImage_01 v2 \n"
@@ -98,22 +99,16 @@ void ScrollingIntegralImage_u8_s32_FilterRow_shaveInnerLoop(const int * restrict
     ".set integralImage_11a v6 \n"
     ".set integralImage_11b v7 \n"
     ".set output v8 \n"
-    "lsu0.ldil x 0 \n"
+    "lsu0.ldil x 0 || lsu1.ldil addressIncrement 16 \n" // for(x=0; x<numPixelsToProcess; x+=4)
     ".lalign \n"
     "_filteringLoop: \n"
-    "lsu0.ldxv integralImage_00 integralImage_00_address || lsu1.ldxv integralImage_10 integralImage_10_address\n"
+    "lsu0.ldxvi integralImage_00 integralImage_00_address addressIncrement || lsu1.ldxvi integralImage_10 integralImage_10_address addressIncrement\n"
     "nop 1 \n"
-    "lsu0.ldxv integralImage_01a integralImage_01a_address || lsu1.ldxv integralImage_01b integralImage_01b_address\n"
+    "lsu0.ldxvi integralImage_01a integralImage_01a_address addressIncrement || lsu1.ldxvi integralImage_01b integralImage_01b_address addressIncrement\n"
     "nop 1 \n"
-    "lsu0.ldxv integralImage_11a integralImage_11a_address || lsu1.ldxv integralImage_11b integralImage_11b_address\n"
+    "lsu0.ldxvi integralImage_11a integralImage_11a_address addressIncrement || lsu1.ldxvi integralImage_11b integralImage_11b_address addressIncrement\n"
     "nop 1 \n"
-    "iau.add integralImage_00_address integralImage_00_address 16 \n"
-    "iau.add integralImage_10_address integralImage_10_address 16 \n"
-    "iau.add integralImage_01a_address integralImage_01a_address 16 \n"
-    "iau.add integralImage_01b_address integralImage_01b_address 16 \n"
-    "iau.add integralImage_11a_address integralImage_11a_address 16 \n"
-    "iau.add integralImage_11b_address integralImage_11b_address 16 \n"
-    "nop 1 \n"
+    "nop 5 \n"
     "vau.alignvec integralImage_01 integralImage_01a integralImage_01b 4 \n"
     "vau.alignvec integralImage_11 integralImage_11a integralImage_11b 4 \n"
     "nop 1 \n"
@@ -123,7 +118,7 @@ void ScrollingIntegralImage_u8_s32_FilterRow_shaveInnerLoop(const int * restrict
     "nop 1 \n"
     "vau.sub.i32 output output integralImage_01 \n"
     "nop 1 \n"
-    "lsu0.stxv output output_address \n"
+    "lsu0.stxvi output output_address addressIncrement \n"
     "iau.add output_address output_address 16 \n"
     "iau.add x x 4 \n"
     "cmu.cmii.i32 x numPixelsToProcess \n"
@@ -131,7 +126,7 @@ void ScrollingIntegralImage_u8_s32_FilterRow_shaveInnerLoop(const int * restrict
     "nop 5 \n"
     : //Output registers
   ://Input registers
-  :"i10", "i20", "i21", "i22", "i23", "i24", "i25", "i26", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8" //Clobbered registers
+  :"i0", "i10", "i20", "i21", "i22", "i23", "i24", "i25", "i26", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8" //Clobbered registers
     );
   //}
 #endif // INNER_LOOP_VERSION

@@ -67,3 +67,4 @@ blockworld_controller
 *.mvlib
 *.shv*lib
 movidiusTests/shaveTests2/output
+*.asmgen
