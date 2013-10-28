@@ -157,6 +157,9 @@ namespace Anki
       // USB
       void USBInit();
       void USBUpdate();
+      
+      // Ground truth (no-op if not in simulation?)
+      void GetGroundTruthPose(f32 &x, f32 &y, f32& rad);
 
     } // namespace HAL
   } // namespace Cozmo

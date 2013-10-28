@@ -234,8 +234,8 @@ namespace Anki {
       return isConnected_;
     }
     
-    /*
-    void HAL::GetGlobalPose(float &x, float &y, float& rad)
+    
+    void HAL::GetGroundTruthPose(f32 &x, f32 &y, f32& rad)
     {
       
       const double* position = gps_->getValues();
@@ -246,11 +246,7 @@ namespace Anki {
       
       rad = std::atan2(northVector[0], -northVector[2]);
       
-      snprintf(displayStr_, MAX_TEXT_DISPLAY_LENGTH,
-               "Pose: x=%f y=%f angle=%f\n", x, y, rad);
-    }*/
-    
-    
+    } // GetGroundTruthPose()
     
     
     void HAL::SetLeftWheelAngularVelocity(float rad_per_sec)
