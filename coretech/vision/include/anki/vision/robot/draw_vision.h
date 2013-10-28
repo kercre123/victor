@@ -50,9 +50,9 @@ namespace Anki
           lineColor = static_cast<Type>(id);
         }
 
-        Type * restrict image_rowPointer = image.Pointer(y, 0);
+        Type * restrict pImage = image.Pointer(y, 0);
         for(s16 x=xStart; x<=xEnd; x++) {
-          image_rowPointer[x] = lineColor;
+          pImage[x] = lineColor;
         }
       }
 

@@ -141,7 +141,7 @@ namespace Anki
         //const s16 imageValue = static_cast<s16>(*image.Pointer(warpedY, warpedX));
 
         // This is the indirect way. It reads a whole 32-bit word, then extracts the correct byte
-        const u32 * restrict imageY_rowPointer = reinterpret_cast<const u32*>(image.Pointer(warpedY,0));
+        const u32 * restrict pImageY = reinterpret_cast<const u32*>(image.Pointer(warpedY,0));
         const s32 xWord = warpedX >> 2;
 
         // TODO: Verify that the big endian version is working
@@ -151,7 +151,7 @@ namespace Anki
         const s32 xByte = warpedX - (xWord << 2);
 #endif
 
-        const u32 curPixelWord = imageY_rowPointer[xWord];
+        const u32 curPixelWord = pImageY[xWord];
         const u8 curPixel = (curPixelWord & (0xFF << (8*xByte))) >> (8*xByte);
         const s16 imageValue = static_cast<s16>(curPixel);
 

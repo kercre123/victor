@@ -17,9 +17,9 @@ namespace Anki
       printf(variableName);
       printf(":\n");
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
-        const u8 * const rowPointer = Pointer(y, 0);
+        const u8 * const pThisData = this->Pointer(y, 0);
         for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
-          printf("%d ", static_cast<s32>(rowPointer[x]));
+          printf("%d ", static_cast<s32>(pThisData[x]));
         }
         printf("\n");
       }
@@ -36,9 +36,9 @@ namespace Anki
       printf(variableName);
       printf(":\n");
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
-        const f32 * const rowPointer = Pointer(y, 0);
+        const f32 * const pThisData = this->Pointer(y, 0);
         for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
-          printf("%f ", rowPointer[x]);
+          printf("%f ", pThisData[x]);
         }
         printf("\n");
       }
@@ -55,9 +55,9 @@ namespace Anki
       printf(variableName);
       printf(":\n");
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
-        const f64 * const rowPointer = Pointer(y, 0);
+        const f64 * const pThisData = this->Pointer(y, 0);
         for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
-          printf("%f ", rowPointer[x]);
+          printf("%f ", pThisData[x]);
         }
         printf("\n");
       }
@@ -74,9 +74,9 @@ namespace Anki
       printf(variableName);
       printf(":\n");
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
-        const Point<s16> * const rowPointer = Pointer(y, 0);
+        const Point<s16> * const pThisData = this->Pointer(y, 0);
         for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
-          rowPointer[x].Print();
+          pThisData[x].Print();
           printf(" ");
         }
         printf("\n");
@@ -94,9 +94,9 @@ namespace Anki
       printf(variableName);
       printf(":\n");
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
-        const Rectangle<s16> * const rowPointer = Pointer(y, 0);
+        const Rectangle<s16> * const pThisData = this->Pointer(y, 0);
         for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
-          rowPointer[x].Print();
+          pThisData[x].Print();
           printf(" ");
         }
         printf("\n");
@@ -114,9 +114,9 @@ namespace Anki
       printf(variableName);
       printf(":\n");
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
-        const Quadrilateral<s16> * const rowPointer = Pointer(y, 0);
+        const Quadrilateral<s16> * const pThisData = this->Pointer(y, 0);
         for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
-          rowPointer[x].Print();
+          pThisData[x].Print();
           printf(" ");
         }
         printf("\n");
@@ -134,16 +134,16 @@ namespace Anki
     //      s32 numValuesSet = 0;
     //
     //      for(s32 y=0; y<size[0]; y++) {
-    //        u8 * restrict rowPointer = Pointer(y, 0);
+    //        u8 * restrict pThisData = Pointer(y, 0);
     //        for(s32 x=0; x<size[1]; x++) {
     //          if(numValuesSet < numValues)
     //          {
     //            const u8 value = swcLeonReadNoCacheU8(values + numValuesSet);
     //            numValuesSet++;
     //
-    //            rowPointer[x] = value;
+    //            pThisData[x] = value;
     //          } else {
-    //            rowPointer[x] = 0;
+    //            pThisData[x] = 0;
     //          }
     //        }
     //      }
@@ -160,16 +160,16 @@ namespace Anki
     //      s32 numValuesSet = 0;
     //
     //      for(s32 y=0; y<size[0]; y++) {
-    //        s8 * restrict rowPointer = Pointer(y, 0);
+    //        s8 * restrict pThisData = Pointer(y, 0);
     //        for(s32 x=0; x<size[1]; x++) {
     //          if(numValuesSet < numValues)
     //          {
     //            const s8 value = swcLeonReadNoCacheI8(values + numValuesSet);
     //            numValuesSet++;
     //
-    //            rowPointer[x] = value;
+    //            pThisData[x] = value;
     //          } else {
-    //            rowPointer[x] = 0;
+    //            pThisData[x] = 0;
     //          }
     //        }
     //      }
@@ -186,16 +186,16 @@ namespace Anki
     //      s32 numValuesSet = 0;
     //
     //      for(s32 y=0; y<size[0]; y++) {
-    //        u16 * restrict rowPointer = Pointer(y, 0);
+    //        u16 * restrict pThisData = Pointer(y, 0);
     //        for(s32 x=0; x<size[1]; x++) {
     //          if(numValuesSet < numValues)
     //          {
     //            const u16 value = swcLeonReadNoCacheU16(values + numValuesSet);
     //            numValuesSet++;
     //
-    //            rowPointer[x] = value;
+    //            pThisData[x] = value;
     //          } else {
-    //            rowPointer[x] = 0;
+    //            pThisData[x] = 0;
     //          }
     //        }
     //      }
@@ -212,16 +212,16 @@ namespace Anki
     //      s32 numValuesSet = 0;
     //
     //      for(s32 y=0; y<size[0]; y++) {
-    //        s16 * restrict rowPointer = Pointer(y, 0);
+    //        s16 * restrict pThisData = Pointer(y, 0);
     //        for(s32 x=0; x<size[1]; x++) {
     //          if(numValuesSet < numValues)
     //          {
     //            const s16 value = swcLeonReadNoCacheI16(values + numValuesSet);
     //            numValuesSet++;
     //
-    //            rowPointer[x] = value;
+    //            pThisData[x] = value;
     //          } else {
-    //            rowPointer[x] = 0;
+    //            pThisData[x] = 0;
     //          }
     //        }
     //      }
@@ -238,16 +238,16 @@ namespace Anki
     //      s32 numValuesSet = 0;
     //
     //      for(s32 y=0; y<size[0]; y++) {
-    //        u32 * restrict rowPointer = Pointer(y, 0);
+    //        u32 * restrict pThisData = Pointer(y, 0);
     //        for(s32 x=0; x<size[1]; x++) {
     //          if(numValuesSet < numValues)
     //          {
     //            const u32 value = swcLeonReadNoCacheU32(values + numValuesSet);
     //            numValuesSet++;
     //
-    //            rowPointer[x] = value;
+    //            pThisData[x] = value;
     //          } else {
-    //            rowPointer[x] = 0;
+    //            pThisData[x] = 0;
     //          }
     //        }
     //      }
@@ -264,16 +264,16 @@ namespace Anki
     //      s32 numValuesSet = 0;
     //
     //      for(s32 y=0; y<size[0]; y++) {
-    //        s32 * restrict rowPointer = Pointer(y, 0);
+    //        s32 * restrict pThisData = Pointer(y, 0);
     //        for(s32 x=0; x<size[1]; x++) {
     //          if(numValuesSet < numValues)
     //          {
     //            const s32 value = swcLeonReadNoCacheI32(values + numValuesSet);
     //            numValuesSet++;
     //
-    //            rowPointer[x] = value;
+    //            pThisData[x] = value;
     //          } else {
-    //            rowPointer[x] = 0;
+    //            pThisData[x] = 0;
     //          }
     //        }
     //      }
@@ -290,16 +290,16 @@ namespace Anki
     //      s32 numValuesSet = 0;
     //
     //      for(s32 y=0; y<size[0]; y++) {
-    //        u64 * restrict rowPointer = Pointer(y, 0);
+    //        u64 * restrict pThisData = Pointer(y, 0);
     //        for(s32 x=0; x<size[1]; x++) {
     //          if(numValuesSet < numValues)
     //          {
     //            const u64 value = swcLeonReadNoCacheU64(values + numValuesSet);
     //            numValuesSet++;
     //
-    //            rowPointer[x] = value;
+    //            pThisData[x] = value;
     //          } else {
-    //            rowPointer[x] = 0;
+    //            pThisData[x] = 0;
     //          }
     //        }
     //      }
@@ -316,16 +316,16 @@ namespace Anki
     //      s32 numValuesSet = 0;
     //
     //      for(s32 y=0; y<size[0]; y++) {
-    //        s64 * restrict rowPointer = Pointer(y, 0);
+    //        s64 * restrict pThisData = Pointer(y, 0);
     //        for(s32 x=0; x<size[1]; x++) {
     //          if(numValuesSet < numValues)
     //          {
     //            const s64 value = swcLeonReadNoCacheI64(values + numValuesSet);
     //            numValuesSet++;
     //
-    //            rowPointer[x] = value;
+    //            pThisData[x] = value;
     //          } else {
-    //            rowPointer[x] = 0;
+    //            pThisData[x] = 0;
     //          }
     //        }
     //      }
@@ -342,16 +342,16 @@ namespace Anki
     //      s32 numValuesSet = 0;
     //
     //      for(s32 y=0; y<size[0]; y++) {
-    //        f32 * restrict rowPointer = Pointer(y, 0);
+    //        f32 * restrict pThisData = Pointer(y, 0);
     //        for(s32 x=0; x<size[1]; x++) {
     //          if(numValuesSet < numValues)
     //          {
     //            const f32 value = swcLeonReadNoCacheF32(values + numValuesSet);
     //            numValuesSet++;
     //
-    //            rowPointer[x] = value;
+    //            pThisData[x] = value;
     //          } else {
-    //            rowPointer[x] = 0;
+    //            pThisData[x] = 0;
     //          }
     //        }
     //      }
@@ -368,16 +368,16 @@ namespace Anki
     //      s32 numValuesSet = 0;
     //
     //      for(s32 y=0; y<size[0]; y++) {
-    //        f64 * restrict rowPointer = Pointer(y, 0);
+    //        f64 * restrict pThisData = Pointer(y, 0);
     //        for(s32 x=0; x<size[1]; x++) {
     //          if(numValuesSet < numValues)
     //          {
     //            const f64 value = swcLeonReadNoCacheF64(values + numValuesSet);
     //            numValuesSet++;
     //
-    //            rowPointer[x] = value;
+    //            pThisData[x] = value;
     //          } else {
-    //            rowPointer[x] = 0;
+    //            pThisData[x] = 0;
     //          }
     //        }
     //      }
@@ -398,14 +398,14 @@ namespace Anki
     //      char * endPointer = NULL;
     //
     //      for(s32 y=0; y<size[0]; y++) {
-    //        f32 * restrict rowPointer = Pointer(y, 0);
+    //        f32 * restrict pThisData = Pointer(y, 0);
     //        for(s32 x=0; x<size[1]; x++) {
     //          const f32 value = static_cast<f32>(strtod(startPointer, &endPointer));
     //          if(startPointer != endPointer) {
-    //            rowPointer[x] = value;
+    //            pThisData[x] = value;
     //            numValuesSet++;
     //          } else {
-    //            rowPointer[x] = 0;
+    //            pThisData[x] = 0;
     //          }
     //          startPointer = endPointer;
     //        }
@@ -427,14 +427,14 @@ namespace Anki
     //      char * endPointer = NULL;
     //
     //      for(s32 y=0; y<size[0]; y++) {
-    //        f64 * restrict rowPointer = Pointer(y, 0);
+    //        f64 * restrict pThisData = Pointer(y, 0);
     //        for(s32 x=0; x<size[1]; x++) {
     //          const f64 value = static_cast<f64>(strtod(startPointer, &endPointer));
     //          if(startPointer != endPointer) {
-    //            rowPointer[x] = value;
+    //            pThisData[x] = value;
     //            numValuesSet++;
     //          } else {
-    //            rowPointer[x] = 0;
+    //            pThisData[x] = 0;
     //          }
     //          startPointer = endPointer;
     //        }

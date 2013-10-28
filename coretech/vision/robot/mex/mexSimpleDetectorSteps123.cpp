@@ -102,18 +102,18 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     components2d[i] = Array<f64>(numComponentSegments[i+1], 3, scratch0);
   }
 
-  const ConnectedComponentSegment * restrict extractedComponents_constRowPointer = extractedComponents.Pointer(0);
+  const ConnectedComponentSegment * restrict pConstExtractedComponents = extractedComponents.Pointer(0);
   for(s32 i=0; i<extractedComponents.get_size(); i++) {
-    const u16 id = extractedComponents_constRowPointer[i].id;
+    const u16 id = pConstExtractedComponents[i].id;
 
     if(id == 0)
       continue;
 
-    f64 * restrict components2di_rowPointer = components2d[id-1].Pointer(components2d_currentSegment[id-1],0);
+    f64 * restrict pComponents2di = components2d[id-1].Pointer(components2d_currentSegment[id-1],0);
 
-    components2di_rowPointer[0] = extractedComponents_constRowPointer[i].y;
-    components2di_rowPointer[1] = extractedComponents_constRowPointer[i].xStart;
-    components2di_rowPointer[2] = extractedComponents_constRowPointer[i].xEnd;
+    pComponents2di[0] = pConstExtractedComponents[i].y;
+    pComponents2di[1] = pConstExtractedComponents[i].xStart;
+    pComponents2di[2] = pConstExtractedComponents[i].xEnd;
 
     components2d_currentSegment[id-1]++;
   }

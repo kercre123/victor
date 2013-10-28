@@ -28,14 +28,14 @@ namespace Anki
       const s32 maxX = downsampleFactor * imageDownsampled.get_size(1);
 
       for(s32 y=0, ySmall=0; y<maxY; y+=2, ySmall++) {
-        const u8 * restrict image_rowPointerY0 = image.Pointer(y, 0);
-        const u8 * restrict image_rowPointerY1 = image.Pointer(y+1, 0);
+        const u8 * restrict pImageY0 = image.Pointer(y, 0);
+        const u8 * restrict pImageY1 = image.Pointer(y+1, 0);
 
-        u8 * restrict imageDownsampled_rowPointer = imageDownsampled.Pointer(ySmall, 0);
+        u8 * restrict pImageDownsampled = imageDownsampled.Pointer(ySmall, 0);
 
         for(s32 x=0, xSmall=0; x<maxX; x+=2, xSmall++) {
-          const u32 imageSum = static_cast<u32>(image_rowPointerY0[x]) + static_cast<u32>(image_rowPointerY0[x+1]) + static_cast<u32>(image_rowPointerY1[x]) + static_cast<u32>(image_rowPointerY1[x+1]);
-          imageDownsampled_rowPointer[xSmall] = static_cast<u8>(imageSum >> 2);
+          const u32 imageSum = static_cast<u32>(pImageY0[x]) + static_cast<u32>(pImageY0[x+1]) + static_cast<u32>(pImageY1[x]) + static_cast<u32>(pImageY1[x+1]);
+          pImageDownsampled[xSmall] = static_cast<u8>(imageSum >> 2);
         }
       }
 

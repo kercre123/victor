@@ -11,17 +11,17 @@ namespace Anki
       const s32 scaleImageWidth = scaleImage.get_size(1);
 
       for(s32 y=0; y<scaleImageHeight; y++) {
-        const u32 * restrict scaleImage_rowPointer = scaleImage.Pointer(y, 0);
-        const u8 * restrict originalImage_rowPointer = originalImage.Pointer(y, 0);
-        u8 * restrict binaryImage_rowPointer = binaryImage.Pointer(y, 0);
+        const u32 * restrict pScaleImage = scaleImage.Pointer(y, 0);
+        const u8 * restrict pOriginalImage = originalImage.Pointer(y, 0);
+        u8 * restrict pBinaryImage = binaryImage.Pointer(y, 0);
 
-        memset(binaryImage_rowPointer, 0, binaryImage.get_strideWithoutFillPatterns());
+        memset(pBinaryImage, 0, binaryImage.get_strideWithoutFillPatterns());
 
         for(s32 x=0; x<scaleImageWidth; x++) {
-          const u8 originalValue = originalImage_rowPointer[x];
-          const u8 scaleValue = static_cast<u8>( scaleImage_rowPointer[x] >> scaleImage.get_numFractionalBits() );
+          const u8 originalValue = pOriginalImage[x];
+          const u8 scaleValue = static_cast<u8>( pScaleImage[x] >> scaleImage.get_numFractionalBits() );
           if(originalValue < scaleValue) {
-            binaryImage_rowPointer[x] = 1;
+            pBinaryImage[x] = 1;
           }
         } // for(s32 x=0; x<scaleImageWidth; x++)
       } // for(s32 y=0; y<scaleImageHeight; y++)

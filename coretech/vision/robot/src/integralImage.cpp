@@ -39,7 +39,7 @@ namespace Anki
         RESULT_FAIL, "ScrollingIntegralImage_u8_s32::ScrollDown", "numRowsToScroll is to high or low");
 
       Array<u8> paddedRow(1, this->get_size(1), scratch);
-      //const u8 * restrict paddedRow_rowPointer = paddedRow.Pointer(0, 0);
+      //const u8 * restrict pPaddedRow = paddedRow.Pointer(0, 0);
 
       s32 curIntegralImageY;
       s32 curImageY;
@@ -76,10 +76,10 @@ namespace Anki
         // Scroll this integral image up
         // integralImage(1:(end-numRowsToUpdate), :) = integralImage((1+numRowsToUpdate):end, :);
         for(s32 y=0; y<(this->get_size(0)-numRowsToScroll); y++) {
-          s32 * restrict integralImage_rowPointerYdst = this->Pointer(y, 0);
-          const s32 * restrict integralImage_rowPointerYsrc = this->Pointer(y+numRowsToScroll, 0);
+          s32 * restrict pIntegralImage_yDst = this->Pointer(y, 0);
+          const s32 * restrict pIntegralImage_ySrc = this->Pointer(y+numRowsToScroll, 0);
 
-          memcpy(integralImage_rowPointerYdst, integralImage_rowPointerYsrc, this->get_strideWithoutFillPatterns());
+          memcpy(pIntegralImage_yDst, pIntegralImage_ySrc, this->get_strideWithoutFillPatterns());
         }
         this->rowOffset += numRowsToScroll;
       } // if(numRowsToScroll == this->get_size(0)) ... else
@@ -169,25 +169,25 @@ namespace Anki
       const s32 * restrict integralImage_10 = this->Pointer(bottomOffset, 0) + leftOffset;
       const s32 * restrict integralImage_11 = this->Pointer(bottomOffset, 0) + rightOffset;
 
-      s32 * restrict output_rowPointer = output.Pointer(0,0);
+      s32 * restrict pOutput = output.Pointer(0,0);
 
       if(acceleration.type == C_ACCELERATION_NATURAL_CPP) {
         for(s32 x=0; x<minX; x++) {
-          output_rowPointer[x] = 0;
+          pOutput[x] = 0;
         }
 
         for(s32 x=minX; x<=maxX; x++) {
-          output_rowPointer[x] = integralImage_11[x] - integralImage_10[x] + integralImage_00[x] - integralImage_01[x];
+          pOutput[x] = integralImage_11[x] - integralImage_10[x] + integralImage_00[x] - integralImage_01[x];
         }
 
         for(s32 x=maxX+1; x<imageWidth; x++) {
-          output_rowPointer[x] = 0;
+          pOutput[x] = 0;
         }
       } else if(acceleration.type == C_ACCELERATION_NATURAL_C) {
-        ScrollingIntegralImage_u8_s32_FilterRow_innerLoop(integralImage_00, integralImage_01, integralImage_10, integralImage_11, minX, maxX, this->imageWidth, output_rowPointer);
+        ScrollingIntegralImage_u8_s32_FilterRow_innerLoop(integralImage_00, integralImage_01, integralImage_10, integralImage_11, minX, maxX, this->imageWidth, pOutput);
       } else if(acceleration.type == C_ACCELERATION_SHAVE_EMULATION_C) {
         assert(output.get_size(1) >= (this->imageWidth+4));
-        ScrollingIntegralImage_u8_s32_FilterRow_innerLoop_emulateShave(integralImage_00, integralImage_01, integralImage_10, integralImage_11, minX, maxX, this->imageWidth, output_rowPointer);
+        ScrollingIntegralImage_u8_s32_FilterRow_innerLoop_emulateShave(integralImage_00, integralImage_01, integralImage_10, integralImage_11, minX, maxX, this->imageWidth, pOutput);
       } else {
         assert(false);
       }
@@ -267,28 +267,28 @@ namespace Anki
       assert(whichRow >= 0);
       assert(whichRow < imageHeight);
 
-      const u8 * restrict image_rowPointer = image.Pointer(whichRow, 0);
-      u8 * restrict paddedRow_rowPointer = paddedRow.Pointer(0, 0);
+      const u8 * restrict pImage = image.Pointer(whichRow, 0);
+      u8 * restrict pPaddedRow = paddedRow.Pointer(0, 0);
 
-      const u8 firstPixel = image_rowPointer[0];
-      const u8 lastPixel = image_rowPointer[imageWidth-1];
+      const u8 firstPixel = pImage[0];
+      const u8 lastPixel = pImage[imageWidth-1];
 
       //paddedImageRow = zeros([1,size(image,2)+2*extraBorderWidth], 'int32');
       s32 xPad = 0;
 
       // paddedImageRow(1:extraBorderWidth) = image(y,1);
       for(s32 x=0; x<numBorderPixels; x++) {
-        paddedRow_rowPointer[xPad++] = firstPixel;
+        pPaddedRow[xPad++] = firstPixel;
       }
 
       //paddedImageRow((1+extraBorderWidth):(extraBorderWidth+size(image,2))) = image(y,:);
       for(s32 xImage = 0; xImage<imageWidth; xImage++) {
-        paddedRow_rowPointer[xPad++] = image_rowPointer[xImage];
+        pPaddedRow[xPad++] = pImage[xImage];
       }
 
       //paddedImageRow((1+extraBorderWidth+size(image,2)):end) = image(y,end);
       for(s32 x=0; x<numBorderPixels; x++) {
-        paddedRow_rowPointer[xPad++] = lastPixel;
+        pPaddedRow[xPad++] = lastPixel;
       }
 
       return RESULT_OK;
@@ -307,43 +307,43 @@ namespace Anki
       assert(whichRow >= 0);
       assert(whichRow < imageHeight);
 
-      const u32 * restrict image_u32rowPointer = reinterpret_cast<const u32*>(image.Pointer(whichRow, 0));
-      const u8 * restrict image_u8rowPointer = image.Pointer(whichRow, 0);
+      const u32 * restrict pImage_u32 = reinterpret_cast<const u32*>(image.Pointer(whichRow, 0));
+      const u8 * restrict pImage_u8 = image.Pointer(whichRow, 0);
 
-      //u32 * restrict paddedRow_u32rowPointer = reinterpret_cast<u32*>(paddedRow.Pointer(0, 0));
-      u8 * restrict paddedRow_u8rowPointer = paddedRow.Pointer(0, 0);
+      //u32 * restrict pPaddedRow_u32 = reinterpret_cast<u32*>(paddedRow.Pointer(0, 0));
+      u8 * restrict pPaddedRow_u8 = paddedRow.Pointer(0, 0);
 
 #ifdef BIG_ENDIAN_IMAGES
-      const u8 firstPixel = (image_u32rowPointer[0] & 0xFF000000) >> 24;
-      const u8 lastPixel = image_u32rowPointer[imageWidth4-1] & 0xFF;
+      const u8 firstPixel = (pImage_u32[0] & 0xFF000000) >> 24;
+      const u8 lastPixel = pImage_u32[imageWidth4-1] & 0xFF;
 #else
-      const u8 firstPixel = image_u8rowPointer[0];
-      const u8 lastPixel = image_u8rowPointer[imageWidth-1];
+      const u8 firstPixel = pImage_u8[0];
+      const u8 lastPixel = pImage_u8[imageWidth-1];
 #endif
 
       //paddedImageRow = zeros([1,size(image,2)+2*extraBorderWidth], 'int32');
       s32 xPad = 0;
 
       //for(s32 x=0; x<numBorderPixels; x++) {
-      //  paddedRow_rowPointer[xPad++] = firstPixel;
+      //  pPaddedRow[xPad++] = firstPixel;
       //}
 
-      memset(paddedRow_u8rowPointer, firstPixel, numBorderPixels);
+      memset(pPaddedRow_u8, firstPixel, numBorderPixels);
       xPad += numBorderPixels;
 
-      u32 * restrict paddedRow_u32rowPointerPxpad = reinterpret_cast<u32*>(paddedRow.Pointer(0, xPad));
+      u32 * restrict pPaddedRow_u32Pxpad = reinterpret_cast<u32*>(paddedRow.Pointer(0, xPad));
       for(s32 xImage = 0; xImage<imageWidth4; xImage++) {
 #ifdef BIG_ENDIAN_IMAGES
-        paddedRow_u32rowPointerPxpad[xImage] = SwapEndianU32(image_u32rowPointer[xImage]);
+        pPaddedRow_u32Pxpad[xImage] = SwapEndianU32(pImage_u32[xImage]);
 #else
-        paddedRow_u32rowPointerPxpad[xImage] = image_u32rowPointer[xImage];
+        pPaddedRow_u32Pxpad[xImage] = pImage_u32[xImage];
 #endif
       }
 
       //for(s32 x=0; x<numBorderPixels; x++) {
-      //  paddedRow_rowPointer[xPad++] = lastPixel;
+      //  pPaddedRow[xPad++] = lastPixel;
       //}
-      memset(paddedRow_u8rowPointer + numBorderPixels + imageWidth, lastPixel, numBorderPixels);
+      memset(pPaddedRow_u8 + numBorderPixels + imageWidth, lastPixel, numBorderPixels);
 
       return RESULT_OK;
     }

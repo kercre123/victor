@@ -121,14 +121,14 @@ namespace Anki
         RESULT_FAIL, "MultiplyMatrices", "Input and Output matrices are incompatible sizes");
 
       for(s32 y1=0; y1<mat1Height; y1++) {
-        const Type * restrict mat1_rowPointer = mat1.Pointer(y1, 0);
-        Type * restrict matOut_rowPointer = matOut.Pointer(y1, 0);
+        const Type * restrict pMat1 = mat1.Pointer(y1, 0);
+        Type * restrict pMatOut = matOut.Pointer(y1, 0);
 
         for(s32 x2=0; x2<mat2Width; x2++) {
-          matOut_rowPointer[x2] = 0;
+          pMatOut[x2] = 0;
 
           for(s32 y2=0; y2<mat2Height; y2++) {
-            matOut_rowPointer[x2] += mat1_rowPointer[y2] * (*mat2.Pointer(y2, x2));
+            pMatOut[x2] += pMat1[y2] * (*mat2.Pointer(y2, x2));
           }
         }
       }

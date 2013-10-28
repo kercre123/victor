@@ -111,29 +111,29 @@ namespace Anki
           //        for y = 1:fullSizeHeight
           //            for x = 1:fullSizeWidth
           for(s32 y=0; y<curLevelHeight; y++) {
-            const u8 * restrict curPyramidLevel_rowPointer = curPyramidLevel.Pointer(y, 0);
-            const u8 * restrict curPyramidLevelBlurred_rowPointer = curPyramidLevelBlurred.Pointer(y, 0);
+            const u8 * restrict pCurPyramidLevel = curPyramidLevel.Pointer(y, 0);
+            const u8 * restrict pCurPyramidLevelBlurred = curPyramidLevelBlurred.Pointer(y, 0);
 
-            u32 * restrict dogMax_rowPointer = dogMax.Pointer(y, 0);
-            u32 * restrict scaleImage_rowPointer = scaleImage.Pointer(y, 0);
+            u32 * restrict pDogMax = dogMax.Pointer(y, 0);
+            u32 * restrict pScaleImage = scaleImage.Pointer(y, 0);
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
-            u32 * restrict largeDog_rowPointer = largeDog.Pointer(y, 0);
+            u32 * restrict pLargeDog = largeDog.Pointer(y, 0);
 #endif
 
             for(s32 x=0; x<curLevelWidth; x++) {
               // DoG = uint32(abs(int32(curPyramidLevelBlurred(y,x)) - int32(curPyramidLevel(y,x)))) * (2^16); % abs(UQ8.0 - UQ8.0) -> UQ16.16;
-              const u32 dog = static_cast<u32>(abs(static_cast<s16>(curPyramidLevelBlurred_rowPointer[x]) - static_cast<s16>(curPyramidLevel_rowPointer[x]))) << 16; // abs(UQ8.0 - UQ8.0) -> UQ16.16;
+              const u32 dog = static_cast<u32>(abs(static_cast<s16>(pCurPyramidLevelBlurred[x]) - static_cast<s16>(pCurPyramidLevel[x]))) << 16; // abs(UQ8.0 - UQ8.0) -> UQ16.16;
 
               // largeDoG(y,x) = DoG;
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
-              largeDog_rowPointer[x] = dog;
+              pLargeDog[x] = dog;
 #endif
 
               // dogMax(y,x) = DoG;
               // scaleImage(y,x) = uint32(curPyramidLevel(y,x)) * (2^16); % UQ8.0 -> UQ16.16
-              dogMax_rowPointer[x] = dog;
-              scaleImage_rowPointer[x] = static_cast<u32>(curPyramidLevel_rowPointer[x]) << 16; // UQ8.0 -> UQ16.16
+              pDogMax[x] = dog;
+              pScaleImage[x] = static_cast<u32>(pCurPyramidLevel[x]) << 16; // UQ8.0 -> UQ16.16
             }
           }
 
@@ -168,18 +168,18 @@ namespace Anki
           //        largeY = largeYIndexRange(1);
           s32 largeY = largeIndexMin;
           for(s32 smallY = 0; smallY < (curLevelHeight-1); smallY++) { //        for smallY = 1:(size(curPyramidLevel,1)-1)
-            const u8 * restrict curPyramidLevel_rowPointerY0 = curPyramidLevel.Pointer(smallY,   0);
-            const u8 * restrict curPyramidLevel_rowPointerYp1 = curPyramidLevel.Pointer(smallY+1, 0);
+            const u8 * restrict pCurPyramidLevelY0 = curPyramidLevel.Pointer(smallY,   0);
+            const u8 * restrict pCurPyramidLevelYp1 = curPyramidLevel.Pointer(smallY+1, 0);
 
-            const u8 * restrict curPyramidLevelBlurred_rowPointerY0 = curPyramidLevelBlurred.Pointer(smallY,   0);
-            const u8 * restrict curPyramidLevelBlurred_rowPointerYp1 = curPyramidLevelBlurred.Pointer(smallY+1, 0);
+            const u8 * restrict pCurPyramidLevelBlurredY0 = curPyramidLevelBlurred.Pointer(smallY,   0);
+            const u8 * restrict pCurPyramidLevelBlurredYp1 = curPyramidLevelBlurred.Pointer(smallY+1, 0);
 
             for(s32 iAlphaY = 0; iAlphaY < numAlphas; iAlphaY++, largeY++) { //            for iAlphaY = 1:length(alphas)
-              u32 * restrict dogMax_rowPointer = dogMax.Pointer(largeY, 0);
-              u32 * restrict scaleImage_rowPointer = scaleImage.Pointer(largeY, 0);
+              u32 * restrict pDogMax = dogMax.Pointer(largeY, 0);
+              u32 * restrict pScaleImage = scaleImage.Pointer(largeY, 0);
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
-              u32 * restrict largeDog_rowPointer = largeDog.Pointer(largeY, 0);
+              u32 * restrict pLargeDog = largeDog.Pointer(largeY, 0);
 #endif
 
               //alphaY = alphas(iAlphaY);
@@ -194,19 +194,19 @@ namespace Anki
                 //curPyramidLevel_01 = int32(curPyramidLevel(smallY, smallX+1)); % SQ31.0
                 //curPyramidLevel_10 = int32(curPyramidLevel(smallY+1, smallX)); % SQ31.0
                 //curPyramidLevel_11 = int32(curPyramidLevel(smallY+1, smallX+1)); % SQ31.0
-                const s32 curPyramidLevel_00 = static_cast<s32>(curPyramidLevel_rowPointerY0[smallX]); // SQ31.0
-                const s32 curPyramidLevel_01 = static_cast<s32>(curPyramidLevel_rowPointerY0[smallX+1]); // SQ31.0
-                const s32 curPyramidLevel_10 = static_cast<s32>(curPyramidLevel_rowPointerYp1[smallX]); // SQ31.0
-                const s32 curPyramidLevel_11 = static_cast<s32>(curPyramidLevel_rowPointerYp1[smallX+1]); // SQ31.0
+                const s32 curPyramidLevel_00 = static_cast<s32>(pCurPyramidLevelY0[smallX]); // SQ31.0
+                const s32 curPyramidLevel_01 = static_cast<s32>(pCurPyramidLevelY0[smallX+1]); // SQ31.0
+                const s32 curPyramidLevel_10 = static_cast<s32>(pCurPyramidLevelYp1[smallX]); // SQ31.0
+                const s32 curPyramidLevel_11 = static_cast<s32>(pCurPyramidLevelYp1[smallX+1]); // SQ31.0
 
                 //DoG_00 = abs(int32(curPyramidLevel(smallY,   smallX))   - int32(curPyramidLevelBlurred(smallY,   smallX))); % SQ31.0
                 //DoG_01 = abs(int32(curPyramidLevel(smallY,   smallX+1)) - int32(curPyramidLevelBlurred(smallY,   smallX+1))); % SQ31.0
                 //DoG_10 = abs(int32(curPyramidLevel(smallY+1, smallX))   - int32(curPyramidLevelBlurred(smallY+1, smallX))); % SQ31.0
                 //DoG_11 = abs(int32(curPyramidLevel(smallY+1, smallX+1)) - int32(curPyramidLevelBlurred(smallY+1, smallX+1))); % SQ31.0
-                const s32 dog_00 = abs(static_cast<s32>(curPyramidLevel_rowPointerY0[smallX])    - static_cast<s32>(curPyramidLevelBlurred_rowPointerY0[smallX])); // SQ31.0
-                const s32 dog_01 = abs(static_cast<s32>(curPyramidLevel_rowPointerY0[smallX+1])  - static_cast<s32>(curPyramidLevelBlurred_rowPointerY0[smallX+1])); // SQ31.0
-                const s32 dog_10 = abs(static_cast<s32>(curPyramidLevel_rowPointerYp1[smallX])   - static_cast<s32>(curPyramidLevelBlurred_rowPointerYp1[smallX])); // SQ31.0
-                const s32 dog_11 = abs(static_cast<s32>(curPyramidLevel_rowPointerYp1[smallX+1]) - static_cast<s32>(curPyramidLevelBlurred_rowPointerYp1[smallX+1])); // SQ31.0
+                const s32 dog_00 = abs(static_cast<s32>(pCurPyramidLevelY0[smallX])    - static_cast<s32>(pCurPyramidLevelBlurredY0[smallX])); // SQ31.0
+                const s32 dog_01 = abs(static_cast<s32>(pCurPyramidLevelY0[smallX+1])  - static_cast<s32>(pCurPyramidLevelBlurredY0[smallX+1])); // SQ31.0
+                const s32 dog_10 = abs(static_cast<s32>(pCurPyramidLevelYp1[smallX])   - static_cast<s32>(pCurPyramidLevelBlurredYp1[smallX])); // SQ31.0
+                const s32 dog_11 = abs(static_cast<s32>(pCurPyramidLevelYp1[smallX+1]) - static_cast<s32>(pCurPyramidLevelBlurredYp1[smallX+1])); // SQ31.0
 
                 for(s32 iAlphaX = 0; iAlphaX < numAlphas; iAlphaX++, largeX++) { //                    for iAlphaX = 1:length(alphas)
                   //    alphaX = alphas(iAlphaX);
@@ -221,18 +221,18 @@ namespace Anki
 
                   //    largeDoG(largeY,largeX) = DoG;
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
-                  largeDog_rowPointer[largeX] = dog;
+                  pLargeDog[largeX] = dog;
 #endif
 
                   //    if DoG > dogMax(largeY,largeX)
-                  if(dog > dogMax_rowPointer[largeX]) {
+                  if(dog > pDogMax[largeX]) {
                     //        dogMax(largeY,largeX) = DoG;
                     //        curPyramidLevelInterpolated = uint32( interpolate2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse) / (maxAlpha^2/(2^16)) );  % SQ?.? -> UQ16.16
                     //        scaleImage(largeY,largeX) = curPyramidLevelInterpolated;
-                    dogMax_rowPointer[largeX] = dog;
+                    pDogMax[largeX] = dog;
                     const s32 interpolatedUnscaled = Interpolate2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse);
                     const u32 curPyramidLevelInterpolated = static_cast<u32>(interpolatedUnscaled >> (maxAlphaSquaredShift - 16)); // SQ?.? -> UQ16.16
-                    scaleImage_rowPointer[largeX] = curPyramidLevelInterpolated;
+                    pScaleImage[largeX] = curPyramidLevelInterpolated;
                   }
                 } // for(s32 iAlphaX = 0; iAlphaX < numAlphas; iAlphaX++)
               }// for(s32 smallX = 0; smallX < curLevelHeight; smallX++)
@@ -264,18 +264,18 @@ namespace Anki
 
           s32 largeY = largeIndexMin;
           for(s32 smallY = 0; smallY < (curLevelHeight-1); smallY++) { //        for smallY = 1:(size(curPyramidLevel,1)-1)
-            const u8 * restrict curPyramidLevel_rowPointerY0 = curPyramidLevel.Pointer(smallY,   0);
-            const u8 * restrict curPyramidLevel_rowPointerYp1 = curPyramidLevel.Pointer(smallY+1, 0);
+            const u8 * restrict pCurPyramidLevelY0 = curPyramidLevel.Pointer(smallY,   0);
+            const u8 * restrict pCurPyramidLevelYp1 = curPyramidLevel.Pointer(smallY+1, 0);
 
-            const u8 * restrict curPyramidLevelBlurred_rowPointerY0 = curPyramidLevelBlurred.Pointer(smallY,   0);
-            const u8 * restrict curPyramidLevelBlurred_rowPointerYp1 = curPyramidLevelBlurred.Pointer(smallY+1, 0);
+            const u8 * restrict pCurPyramidLevelBlurredY0 = curPyramidLevelBlurred.Pointer(smallY,   0);
+            const u8 * restrict pCurPyramidLevelBlurredYp1 = curPyramidLevelBlurred.Pointer(smallY+1, 0);
 
             for(s32 iAlphaY = 0; iAlphaY < numAlphas; iAlphaY++, largeY++) { //            for iAlphaY = 1:length(alphas)
-              u32 * restrict dogMax_rowPointer = dogMax.Pointer(largeY, 0);
-              u32 * restrict scaleImage_rowPointer = scaleImage.Pointer(largeY, 0);
+              u32 * restrict pDogMax = dogMax.Pointer(largeY, 0);
+              u32 * restrict pScaleImage = scaleImage.Pointer(largeY, 0);
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
-              u32 * restrict largeDog_rowPointer = largeDog.Pointer(largeY, 0);
+              u32 * restrict pLargeDog = largeDog.Pointer(largeY, 0);
 #endif
 
               const s64 alphaY = alphas[iAlphaY];
@@ -283,15 +283,15 @@ namespace Anki
 
               s32 largeX = largeIndexMin;
               for(s32 smallX = 0; smallX < (curLevelWidth-1); smallX++) { //                for smallX = 1:(size(curPyramidLevel,2)-1)
-                const s64 curPyramidLevel_00 = static_cast<s64>(curPyramidLevel_rowPointerY0[smallX]); // SQ63.0
-                const s64 curPyramidLevel_01 = static_cast<s64>(curPyramidLevel_rowPointerY0[smallX+1]); // SQ63.0
-                const s64 curPyramidLevel_10 = static_cast<s64>(curPyramidLevel_rowPointerYp1[smallX]); // SQ63.0
-                const s64 curPyramidLevel_11 = static_cast<s64>(curPyramidLevel_rowPointerYp1[smallX+1]); // SQ63.0
+                const s64 curPyramidLevel_00 = static_cast<s64>(pCurPyramidLevelY0[smallX]); // SQ63.0
+                const s64 curPyramidLevel_01 = static_cast<s64>(pCurPyramidLevelY0[smallX+1]); // SQ63.0
+                const s64 curPyramidLevel_10 = static_cast<s64>(pCurPyramidLevelYp1[smallX]); // SQ63.0
+                const s64 curPyramidLevel_11 = static_cast<s64>(pCurPyramidLevelYp1[smallX+1]); // SQ63.0
 
-                const s64 dog_00 = abs(static_cast<s64>(curPyramidLevel_rowPointerY0[smallX])    - static_cast<s64>(curPyramidLevelBlurred_rowPointerY0[smallX])); // SQ63.0
-                const s64 dog_01 = abs(static_cast<s64>(curPyramidLevel_rowPointerY0[smallX+1])  - static_cast<s64>(curPyramidLevelBlurred_rowPointerY0[smallX+1])); // SQ63.0
-                const s64 dog_10 = abs(static_cast<s64>(curPyramidLevel_rowPointerYp1[smallX])   - static_cast<s64>(curPyramidLevelBlurred_rowPointerYp1[smallX])); // SQ63.0
-                const s64 dog_11 = abs(static_cast<s64>(curPyramidLevel_rowPointerYp1[smallX+1]) - static_cast<s64>(curPyramidLevelBlurred_rowPointerYp1[smallX+1])); // SQ63.0
+                const s64 dog_00 = abs(static_cast<s64>(pCurPyramidLevelY0[smallX])    - static_cast<s64>(pCurPyramidLevelBlurredY0[smallX])); // SQ63.0
+                const s64 dog_01 = abs(static_cast<s64>(pCurPyramidLevelY0[smallX+1])  - static_cast<s64>(pCurPyramidLevelBlurredY0[smallX+1])); // SQ63.0
+                const s64 dog_10 = abs(static_cast<s64>(pCurPyramidLevelYp1[smallX])   - static_cast<s64>(pCurPyramidLevelBlurredYp1[smallX])); // SQ63.0
+                const s64 dog_11 = abs(static_cast<s64>(pCurPyramidLevelYp1[smallX+1]) - static_cast<s64>(pCurPyramidLevelBlurredYp1[smallX+1])); // SQ63.0
 
                 for(s32 iAlphaX = 0; iAlphaX < numAlphas; iAlphaX++, largeX++) { //                    for iAlphaX = 1:length(alphas)
                   const s64 alphaX = alphas[iAlphaX];
@@ -300,19 +300,19 @@ namespace Anki
                   const u32 dog = static_cast<u32>(Interpolate2d(dog_00, dog_01, dog_10, dog_11, alphaY, alphaYinverse, alphaX, alphaXinverse) >> (maxAlphaSquaredShift - 16)); // SQ?.? -> UQ16.16
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
-                  largeDog_rowPointer[largeX] = dog;
+                  pLargeDog[largeX] = dog;
 #endif
 
                   /* if(largeY==9 && largeX==9){
                   printf("\n");
                   }*/
-                  if(dog > dogMax_rowPointer[largeX]) {
-                    dogMax_rowPointer[largeX] = dog;
+                  if(dog > pDogMax[largeX]) {
+                    pDogMax[largeX] = dog;
                     const s64 interpolatedUnscaled = Interpolate2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse);
                     //const u32 curPyramidLevelInterpolated = static_cast<u32>(Interpolate2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse) >> (maxAlphaSquaredShift + 16)); // SQ?.? -> UQ16.16
                     const u32 curPyramidLevelInterpolated = static_cast<u32>(interpolatedUnscaled >> (maxAlphaSquaredShift - 16)); // SQ?.? -> UQ16.16
-                    scaleImage_rowPointer[largeX] = curPyramidLevelInterpolated;
-                    //scaleImage_rowPointer[largeX] = 10000;
+                    pScaleImage[largeX] = curPyramidLevelInterpolated;
+                    //pScaleImage[largeX] = 10000;
                   }
                 } // for(s32 iAlphaX = 0; iAlphaX < numAlphas; iAlphaX++)
               }// for(s32 smallX = 0; smallX < curLevelHeight; smallX++)
@@ -407,38 +407,38 @@ namespace Anki
           integralImage.FilterRow(acceleration, filter, imageY, filteredRows[pyramidLevel]);
 
           // Normalize the sums
-          s32 * restrict filteredRow_rowPointer = filteredRows[pyramidLevel][0];
+          s32 * restrict pFilteredRow = filteredRows[pyramidLevel][0];
           const s32 multiply = normalizationMultiply[pyramidLevel];
           const s32 shift = normalizationBitShifts[pyramidLevel];
           for(s32 x=0; x<imageWidth; x++) {
-            filteredRow_rowPointer[x] = (filteredRow_rowPointer[x] * multiply) >> shift;
+            pFilteredRow[x] = (pFilteredRow[x] * multiply) >> shift;
           }
         } // for(s32 pyramidLevel=0; pyramidLevel<=numLevels; pyramidLevel++)
 
-        const s32 * restrict filteredRows_rowPointers[5];
+        const s32 * restrict pFilteredRows[5];
         for(s32 pyramidLevel=0; pyramidLevel<=numPyramidLevels; pyramidLevel++) {
-          filteredRows_rowPointers[pyramidLevel] = filteredRows[pyramidLevel][0];
+          pFilteredRows[pyramidLevel] = filteredRows[pyramidLevel][0];
         }
 
-        const u8 * restrict image_rowPointer = image[imageY];
-        u8 * restrict binaryImage_rowPointer = binaryImage[imageY];
+        const u8 * restrict pImage = image[imageY];
+        u8 * restrict pBinaryImage = binaryImage[imageY];
         for(s32 x=0; x<imageWidth; x++) {
           s32 dogMax = s32_MIN;
           s32 scaleValue = -1;
           for(s32 pyramidLevel=0; pyramidLevel<numPyramidLevels; pyramidLevel++) {
-            const s32 dog = ABS(filteredRows_rowPointers[pyramidLevel+1][x] - filteredRows_rowPointers[pyramidLevel][x]);
+            const s32 dog = ABS(pFilteredRows[pyramidLevel+1][x] - pFilteredRows[pyramidLevel][x]);
 
             if(dog > dogMax) {
               dogMax = dog;
-              scaleValue = filteredRows_rowPointers[pyramidLevel+1][x];
+              scaleValue = pFilteredRows[pyramidLevel+1][x];
             } // if(dog > dogMax)
           } // for(s32 pyramidLevel=0; pyramidLevel<numPyramidLevels; numPyramidLevels++)
 
           const s32 thresholdValue = (scaleValue*thresholdMultiplier) >> thresholdMultiplier_numFractionalBits;
-          if(image_rowPointer[x] < thresholdValue) {
-            binaryImage_rowPointer[x] = 1;
+          if(pImage[x] < thresholdValue) {
+            pBinaryImage[x] = 1;
           } else {
-            binaryImage_rowPointer[x] = 0;
+            pBinaryImage[x] = 0;
           }
         } // for(s32 x=0; x<imageWidth; x++)
 
@@ -501,7 +501,7 @@ namespace Anki
       }
 
       Array<u8> binaryImageRow(1, imageWidth, scratch);
-      u8 * restrict binaryImageRow_rowPointer = binaryImageRow[0];
+      u8 * restrict pBinaryImageRow = binaryImageRow[0];
 
       if(components.Extract2dComponents_PerRow_Initialize() != RESULT_OK)
         return RESULT_FAIL;
@@ -523,42 +523,42 @@ namespace Anki
           integralImage.FilterRow(acceleration, filter, imageY, filteredRows[pyramidLevel]);
 
           // Normalize the sums
-          s32 * restrict filteredRow_rowPointer = filteredRows[pyramidLevel][0];
+          s32 * restrict pFilteredRow = filteredRows[pyramidLevel][0];
           const s32 multiply = normalizationMultiply[pyramidLevel];
           const s32 shift = normalizationBitShifts[pyramidLevel];
           for(s32 x=0; x<imageWidth; x++) {
-            filteredRow_rowPointer[x] = (filteredRow_rowPointer[x] * multiply) >> shift;
+            pFilteredRow[x] = (pFilteredRow[x] * multiply) >> shift;
           }
         } // for(s32 pyramidLevel=0; pyramidLevel<=numLevels; pyramidLevel++)
 
-        const s32 * restrict filteredRows_rowPointers[5];
+        const s32 * restrict pFilteredRows[5];
         for(s32 pyramidLevel=0; pyramidLevel<=scaleImage_numPyramidLevels; pyramidLevel++) {
-          filteredRows_rowPointers[pyramidLevel] = filteredRows[pyramidLevel][0];
+          pFilteredRows[pyramidLevel] = filteredRows[pyramidLevel][0];
         }
 
         EndBenchmark("ccsiabaec_filterRows");
 
         BeginBenchmark("ccsiabaec_computeBinaryImage");
 
-        const u8 * restrict image_rowPointer = image[imageY];
+        const u8 * restrict pImage = image[imageY];
 
         for(s32 x=0; x<imageWidth; x++) {
           s32 dogMax = s32_MIN;
           s32 scaleValue = -1;
           for(s32 pyramidLevel=0; pyramidLevel<scaleImage_numPyramidLevels; pyramidLevel++) {
-            const s32 dog = ABS(filteredRows_rowPointers[pyramidLevel+1][x] - filteredRows_rowPointers[pyramidLevel][x]);
+            const s32 dog = ABS(pFilteredRows[pyramidLevel+1][x] - pFilteredRows[pyramidLevel][x]);
 
             if(dog > dogMax) {
               dogMax = dog;
-              scaleValue = filteredRows_rowPointers[pyramidLevel+1][x];
+              scaleValue = pFilteredRows[pyramidLevel+1][x];
             } // if(dog > dogMax)
           } // for(s32 pyramidLevel=0; pyramidLevel<scaleImage_numPyramidLevels; scaleImage_numPyramidLevels++)
 
           const s32 thresholdValue = (scaleValue*scaleImage_thresholdMultiplier) >> thresholdMultiplier_numFractionalBits;
-          if(image_rowPointer[x] < thresholdValue) {
-            binaryImageRow_rowPointer[x] = 1;
+          if(pImage[x] < thresholdValue) {
+            pBinaryImageRow[x] = 1;
           } else {
-            binaryImageRow_rowPointer[x] = 0;
+            pBinaryImageRow[x] = 0;
           }
         } // for(s32 x=0; x<imageWidth; x++)
 
@@ -567,7 +567,7 @@ namespace Anki
         BeginBenchmark("ccsiabaec_extractNextRowOfComponents");
 
         // Extract the next line of connected components
-        if(components.Extract2dComponents_PerRow_NextRow(binaryImageRow_rowPointer, imageWidth, imageY, component1d_minComponentWidth, component1d_maxSkipDistance) != RESULT_OK)
+        if(components.Extract2dComponents_PerRow_NextRow(pBinaryImageRow, imageWidth, imageY, component1d_minComponentWidth, component1d_maxSkipDistance) != RESULT_OK)
           return RESULT_FAIL;
 
         EndBenchmark("ccsiabaec_extractNextRowOfComponents");

@@ -49,8 +49,8 @@ namespace Anki
       //
       // NOTE:
       // Using this in a inner loop is very innefficient. Instead, declare a pointer outside the
-      // inner loop, like: "Type * restrict array_rowPointer = Array.Pointer(5);", then index
-      // array_rowPointer in the inner loop.
+      // inner loop, like: "Type * restrict pArray = Array.Pointer(5);", then index
+      // pArray in the inner loop.
       inline const Type* Pointer(const s32 index0, const s32 index1) const;
       inline Type* Pointer(const s32 index0, const s32 index1);
 
@@ -60,8 +60,8 @@ namespace Anki
       //
       // NOTE:
       // Using this in a inner loop is very innefficient. Instead, declare a pointer outside the
-      // inner loop, like: "Type * restrict array_rowPointer = Array[5];", then index
-      // array_rowPointer in the inner loop.
+      // inner loop, like: "Type * restrict pArray = Array[5];", then index
+      // pArray in the inner loop.
       inline const Type * operator[](const s32 index0) const;
       inline Type * operator[](const s32 index0);
 
@@ -69,8 +69,8 @@ namespace Anki
       //
       // NOTE:
       // Using this in a inner loop is very innefficient. Instead, declare a pointer outside the
-      // inner loop, like: "Type * restrict array_rowPointer = Array.Pointer(Point<s16>(5,0));",
-      // then index array_rowPointer in the inner loop.
+      // inner loop, like: "Type * restrict pArray = Array.Pointer(Point<s16>(5,0));",
+      // then index pArray in the inner loop.
       inline const Type* Pointer(const Point<s16> &point) const;
       inline Type* Pointer(const Point<s16> &point);
 
@@ -375,14 +375,14 @@ namespace Anki
         return false;
 
       for(s32 y=0; y<size[0]; y++) {
-        const Type * const this_rowPointer = this->Pointer(y, 0);
-        const Type * const array2_rowPointer = array2.Pointer(y, 0);
+        const Type * const pThisData = this->Pointer(y, 0);
+        const Type * const pArray2 = array2.Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
-          if(this_rowPointer[x] > array2_rowPointer[x]) {
-            if((this_rowPointer[x] - array2_rowPointer[x]) > threshold)
+          if(pThisData[x] > pArray2[x]) {
+            if((pThisData[x] - pArray2[x]) > threshold)
               return false;
           } else {
-            if((array2_rowPointer[x] - this_rowPointer[x]) > threshold)
+            if((pArray2[x] - pThisData[x]) > threshold)
               return false;
           }
         }
@@ -397,11 +397,11 @@ namespace Anki
         return false;
 
       for(s32 y=0; y<size[0]; y++) {
-        const Type * const this_rowPointer = this->Pointer(y, 0);
-        const Type * const array2_rowPointer = array2.Pointer(y, 0);
+        const Type * const pThisData = this->Pointer(y, 0);
+        const Type * const pArray2 = array2.Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
-          const double value1 = static_cast<double>(this_rowPointer[x]);
-          const double value2 = static_cast<double>(array2_rowPointer[x]);
+          const double value1 = static_cast<double>(pThisData[x]);
+          const double value2 = static_cast<double>(pArray2[x]);
           const double percentThresholdValue = percentThreshold * MAX(value1,value2);
 
           if(fabs(value1 - value2) > percentThresholdValue && fabs(value1 - value2) > absoluteThreshold)
@@ -434,9 +434,9 @@ namespace Anki
       printf(variableName);
       printf(":\n");
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
-        const Type * const rowPointer = Pointer(y, 0);
+        const Type * const pThisData = this->Pointer(y, 0);
         for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
-          printf("%d ", rowPointer[x]);
+          printf("%d ", pThisData[x]);
         }
         printf("\n");
       }
@@ -480,8 +480,8 @@ namespace Anki
 
       const s32 strideWithoutFillPatterns = this->get_strideWithoutFillPatterns();
       for(s32 y=0; y<size[0]; y++) {
-        char * restrict rowPointer = reinterpret_cast<char*>(Pointer(y, 0));
-        memset(rowPointer, 0, strideWithoutFillPatterns);
+        char * restrict pThisData = reinterpret_cast<char*>(Pointer(y, 0));
+        memset(pThisData, 0, strideWithoutFillPatterns);
       }
     }
 
@@ -491,9 +491,9 @@ namespace Anki
       AnkiConditionalError(this->IsValid(), "Array<Type>::Set", "Array<Type> is not valid");
 
       for(s32 y=0; y<size[0]; y++) {
-        Type * restrict rowPointer = Pointer(y, 0);
+        Type * restrict pThisData = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
-          rowPointer[x] = value;
+          pThisData[x] = value;
         }
       }
 
@@ -509,14 +509,14 @@ namespace Anki
       s32 numValuesSet = 0;
 
       for(s32 y=0; y<size[0]; y++) {
-        Type * restrict rowPointer = Pointer(y, 0);
+        Type * restrict pThisData = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           if(numValuesSet < numValues)
           {
             const Type value = static_cast<Type>(values[numValuesSet++]);
-            rowPointer[x] = value;
+            pThisData[x] = value;
           } else {
-            rowPointer[x] = 0;
+            pThisData[x] = 0;
           }
         }
       }
@@ -534,14 +534,14 @@ namespace Anki
       s32 numValuesSet = 0;
 
       for(s32 y=0; y<size[0]; y++) {
-        Type * restrict rowPointer = Pointer(y, 0);
+        Type * restrict pThisData = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           if(numValuesSet < numValues)
           {
             const Type value = static_cast<Type>(values[numValuesSet++]);
-            rowPointer[x] = value;
+            pThisData[x] = value;
           } else {
-            rowPointer[x] = 0;
+            pThisData[x] = 0;
           }
         }
       }
@@ -559,14 +559,14 @@ namespace Anki
       s32 numValuesSet = 0;
 
       for(s32 y=0; y<size[0]; y++) {
-        Type * restrict rowPointer = Pointer(y, 0);
+        Type * restrict pThisData = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           if(numValuesSet < numValues)
           {
             const Type value = static_cast<Type>(values[numValuesSet++]);
-            rowPointer[x] = value;
+            pThisData[x] = value;
           } else {
-            rowPointer[x] = 0;
+            pThisData[x] = 0;
           }
         }
       }
@@ -587,14 +587,14 @@ namespace Anki
       char * endPointer = NULL;
 
       for(s32 y=0; y<size[0]; y++) {
-        Type * restrict rowPointer = Pointer(y, 0);
+        Type * restrict pThisData = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           const Type value = static_cast<Type>(strtol(startPointer, &endPointer, 10));
           if(startPointer != endPointer) {
-            rowPointer[x] = value;
+            pThisData[x] = value;
             numValuesSet++;
           } else {
-            rowPointer[x] = 0;
+            pThisData[x] = 0;
           }
           startPointer = endPointer;
         }
@@ -735,9 +735,9 @@ namespace Anki
 
       Type minValue = *this->Pointer(0, 0);
       for(s32 y=0; y<size[0]; y++) {
-        const Type * const this_rowPointer = this->Pointer(y, 0);
+        const Type * const pThisData = this->Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
-          minValue = MIN(minValue, this_rowPointer[x]);
+          minValue = MIN(minValue, pThisData[x]);
         }
       }
 
@@ -751,9 +751,9 @@ namespace Anki
 
       Type maxValue = *this->Pointer(0, 0);
       for(s32 y=0; y<size[0]; y++) {
-        const Type * const this_rowPointer = this->Pointer(y, 0);
+        const Type * const pThisData = this->Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
-          maxValue = MAX(maxValue, this_rowPointer[x]);
+          maxValue = MAX(maxValue, pThisData[x]);
         }
       }
 
@@ -817,4 +817,3 @@ namespace Anki
 } //namespace Anki
 
 #endif // _ANKICORETECHEMBEDDED_COMMON_ARRAY2D_H_
-

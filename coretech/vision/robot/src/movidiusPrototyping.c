@@ -231,9 +231,9 @@ s32 ScrollingIntegralImage_u8_s32_FilterRow(
   const s32 * restrict integralImage_10 = ARRAY_S32_POINTER(integralImage->data, integralImage->stride, bottomOffset, 0) + leftOffset;
   const s32 * restrict integralImage_11 = ARRAY_S32_POINTER(integralImage->data, integralImage->stride, bottomOffset, 0) + rightOffset;
 
-  s32 * restrict output_rowPointer = output->data;
+  s32 * restrict pOutput = output->data;
 
-  ScrollingIntegralImage_u8_s32_FilterRow_innerLoop(integralImage_00, integralImage_01, integralImage_10, integralImage_11, minX, maxX, integralImage->imageWidth, output_rowPointer);
+  ScrollingIntegralImage_u8_s32_FilterRow_innerLoop(integralImage_00, integralImage_01, integralImage_10, integralImage_11, minX, maxX, integralImage->imageWidth, pOutput);
 
   return RESULT_OK;
 }

@@ -36,13 +36,13 @@ namespace Anki
       const f32 halfWidthF32 = static_cast<f32>(halfWidth);
 
       FixedPointArray<s32> gaussianKernel(1, 2*halfWidth + 1, numSigmaFractionalBits, scratch);
-      s32 * restrict gaussianKernel_rowPointer = gaussianKernel.Pointer(0,0);
+      s32 * restrict pGaussianKernel = gaussianKernel.Pointer(0,0);
 
       {
         PUSH_MEMORY_STACK(scratch);
 
         Array<f32> gaussianKernelF32(1, 2*halfWidth + 1, scratch);
-        f32 * restrict gaussianKernelF32_rowPointer = gaussianKernelF32.Pointer(0,0);
+        f32 * restrict pGaussianKernelF32 = gaussianKernelF32.Pointer(0,0);
 
         const f32 twoTimesSigmaSquared = static_cast<f32>(2*sigma*sigma) / powf(2.0f, static_cast<f32>(numSigmaFractionalBits*2));
 
@@ -50,15 +50,15 @@ namespace Anki
         f32 sum = 0;
         for(f32 x=-halfWidthF32; i<(2*halfWidth+1); x++, i++) {
           const f32 g = expf(-(x*x) / twoTimesSigmaSquared);
-          gaussianKernelF32_rowPointer[i] = g;
+          pGaussianKernelF32[i] = g;
           sum += g;
         }
 
         // Normalize to sum to one
         const f32 sumInverse = 1.0f / sum;
         for(s32 i=0; i<(2*halfWidth+1); i++) {
-          const f32 gScaled = gaussianKernelF32_rowPointer[i] * sumInverse * powf(2.0f, static_cast<f32>(numSigmaFractionalBits));
-          gaussianKernel_rowPointer[i] = static_cast<s32>(Round(gScaled));
+          const f32 gScaled = pGaussianKernelF32[i] * sumInverse * powf(2.0f, static_cast<f32>(numSigmaFractionalBits));
+          pGaussianKernel[i] = static_cast<s32>(Round(gScaled));
         }
 
         // gaussianKernelF32.Print("gaussianKernelF32");
@@ -92,22 +92,22 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(in1.get_rawDataPointer() != in2.get_rawDataPointer() && in1.get_rawDataPointer() != out.get_rawDataPointer(),
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "in1, in2, and out must be in different memory locations");
 
-      const s32 * restrict u_rowPointer;
-      const s32 * restrict v_rowPointer;
-      s32 * restrict out_rowPointer = out.Pointer(0,0);
+      const s32 * restrict pU;
+      const s32 * restrict pV;
+      s32 * restrict pOut = out.Pointer(0,0);
 
       // To simplify things, u is the longer of the two,
       // and v is the shorter of the two
       s32 uLength;
       s32 vLength;
       if(in1.get_size(1) > in2.get_size(1)) {
-        u_rowPointer = in1.Pointer(0,0);
-        v_rowPointer = in2.Pointer(0,0);
+        pU = in1.Pointer(0,0);
+        pV = in2.Pointer(0,0);
         uLength = in1.get_size(1);
         vLength = in2.get_size(1);
       } else {
-        u_rowPointer = in2.Pointer(0,0);
-        v_rowPointer = in1.Pointer(0,0);
+        pU = in2.Pointer(0,0);
+        pV = in1.Pointer(0,0);
         uLength = in2.get_size(1);
         vLength = in1.get_size(1);
       }
@@ -125,17 +125,17 @@ namespace Anki
       for(s32 x=0; x<midStartIndex; x++) {
         s32 sum = 0;
         for(s32 xx=0; xx<=x; xx++) {
-          const s32 toAdd = (u_rowPointer[xx] * v_rowPointer[vLength-x+xx-1]);
+          const s32 toAdd = (pU[xx] * pV[vLength-x+xx-1]);
           sum += toAdd;
         }
 
         // TODO: if this is too slow and the compiler doesn't figure it out, pull these ifs out
         if(shiftDirection == BITSHIFT_RIGHT) {
-          out_rowPointer[iOut++] = sum >> shiftMagnitude;
+          pOut[iOut++] = sum >> shiftMagnitude;
         } else if(shiftDirection == BITSHIFT_LEFT) {
-          out_rowPointer[iOut++] = sum << shiftMagnitude;
+          pOut[iOut++] = sum << shiftMagnitude;
         } else {
-          out_rowPointer[iOut++] = sum;
+          pOut[iOut++] = sum;
         }
       }
 
@@ -143,17 +143,17 @@ namespace Anki
       for(s32 x=midStartIndex; x<=midEndIndex; x++) {
         s32 sum = 0;
         for(s32 xx=0; xx<vLength; xx++) {
-          const s32 toAdd = (u_rowPointer[x+xx-midStartIndex] * v_rowPointer[xx]);
+          const s32 toAdd = (pU[x+xx-midStartIndex] * pV[xx]);
           sum += toAdd;
         }
 
         // TODO: if this is too slow and the compiler doesn't figure it out, pull these ifs out
         if(shiftDirection == BITSHIFT_RIGHT) {
-          out_rowPointer[iOut++] = sum >> shiftMagnitude;
+          pOut[iOut++] = sum >> shiftMagnitude;
         } else if(shiftDirection == BITSHIFT_LEFT) {
-          out_rowPointer[iOut++] = sum << shiftMagnitude;
+          pOut[iOut++] = sum << shiftMagnitude;
         } else {
-          out_rowPointer[iOut++] = sum;
+          pOut[iOut++] = sum;
         }
       }
 
@@ -162,17 +162,17 @@ namespace Anki
         const s32 vEnd = outputLength - x;
         s32 sum = 0;
         for(s32 xx=0; xx<vEnd; xx++) {
-          const s32 toAdd = (u_rowPointer[x+xx-midStartIndex] * v_rowPointer[xx]);
+          const s32 toAdd = (pU[x+xx-midStartIndex] * pV[xx]);
           sum += toAdd;
         }
 
         // TODO: if this is too slow and the compiler doesn't figure it out, pull these ifs out
         if(shiftDirection == BITSHIFT_RIGHT) {
-          out_rowPointer[iOut++] = sum >> shiftMagnitude;
+          pOut[iOut++] = sum >> shiftMagnitude;
         } else if(shiftDirection == BITSHIFT_LEFT) {
-          out_rowPointer[iOut++] = sum << shiftMagnitude;
+          pOut[iOut++] = sum << shiftMagnitude;
         } else {
-          out_rowPointer[iOut++] = sum;
+          pOut[iOut++] = sum;
         }
       }
 
@@ -206,9 +206,9 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(image.get_rawDataPointer() != filter.get_rawDataPointer() && image.get_rawDataPointer() != out.get_rawDataPointer(),
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "in1, in2, and out must be in different memory locations");
 
-      const s32 * restrict image_rowPointer = image.Pointer(0,0);
-      const s32 * restrict filter_rowPointer = filter.Pointer(0,0);
-      s32 * restrict out_rowPointer = out.Pointer(0,0);
+      const s32 * restrict pImage = image.Pointer(0,0);
+      const s32 * restrict pFilter = filter.Pointer(0,0);
+      s32 * restrict pOut = out.Pointer(0,0);
 
       s32 shiftMagnitude;
       BitShiftDirection shiftDirection;
@@ -233,17 +233,17 @@ namespace Anki
             xImage -= imageWidth;
           }
 
-          const s32 toAdd = image_rowPointer[xImage] * filter_rowPointer[xFilter];
+          const s32 toAdd = pImage[xImage] * pFilter[xFilter];
           sum += toAdd;
         }
 
         // TODO: if this is too slow and the compiler doesn't figure it out, pull these ifs out
         if(shiftDirection == BITSHIFT_RIGHT) {
-          out_rowPointer[x] = sum >> shiftMagnitude;
+          pOut[x] = sum >> shiftMagnitude;
         } else if(shiftDirection == BITSHIFT_LEFT) {
-          out_rowPointer[x] = sum << shiftMagnitude;
+          pOut[x] = sum << shiftMagnitude;
         } else {
-          out_rowPointer[x] = sum;
+          pOut[x] = sum;
         }
       }
 
@@ -302,12 +302,12 @@ namespace Anki
         PUSH_MEMORY_STACK(scratch);
         FixedPointArray<s32> boundaryX(1, boundary.get_size(), 0, scratch); // SQ31.0
 
-        const Point<s16> * restrict boundary_constRowPointer = boundary.Pointer(0);
-        s32 * restrict boundaryX_rowPointer = boundaryX.Pointer(0,0);
+        const Point<s16> * restrict pConstBoundary = boundary.Pointer(0);
+        s32 * restrict pBoundaryX = boundaryX.Pointer(0,0);
 
         const s32 lengthBoundary = boundary.get_size();
         for(s32 i=0; i<lengthBoundary; i++) {
-          boundaryX_rowPointer[i] = boundary_constRowPointer[i].x;
+          pBoundaryX[i] = pConstBoundary[i].x;
         }
 
         if(Correlate1dCircularAndSameSizeOutput(boundaryX, differenceOfGaussian, boundaryXFiltered) != RESULT_OK)
@@ -321,12 +321,12 @@ namespace Anki
         PUSH_MEMORY_STACK(scratch);
         FixedPointArray<s32> boundaryY(1, boundary.get_size(), 0, scratch); // SQ31.0
 
-        const Point<s16> * restrict boundary_constRowPointer = boundary.Pointer(0);
-        s32 * restrict boundaryY_rowPointer = boundaryY.Pointer(0,0);
+        const Point<s16> * restrict pConstBoundary = boundary.Pointer(0);
+        s32 * restrict pBoundaryY = boundaryY.Pointer(0,0);
 
         const s32 lengthBoundary = boundary.get_size();
         for(s32 i=0; i<lengthBoundary; i++) {
-          boundaryY_rowPointer[i] = boundary_constRowPointer[i].y;
+          pBoundaryY[i] = pConstBoundary[i].y;
         }
 
         if(Correlate1dCircularAndSameSizeOutput(boundaryY, differenceOfGaussian, boundaryYFiltered) != RESULT_OK)
@@ -338,44 +338,44 @@ namespace Anki
 
       //r_smooth = sum(r_smooth.^2, 2);
       FixedPointArray<s32> boundaryFilteredAndCombined(1, boundary.get_size(), 2*numSigmaFractionalBits, scratch); // SQ15.16
-      s32 * restrict boundaryFilteredAndCombined_rowPointer = boundaryFilteredAndCombined.Pointer(0,0);
+      s32 * restrict pBoundaryFilteredAndCombined = boundaryFilteredAndCombined.Pointer(0,0);
 
-      const s32 * restrict boundaryXFiltered_constRowPointer = boundaryXFiltered.Pointer(0,0);
-      const s32 * restrict boundaryYFiltered_constRowPointer = boundaryYFiltered.Pointer(0,0);
+      const s32 * restrict pConstBoundaryXFiltered = boundaryXFiltered.Pointer(0,0);
+      const s32 * restrict pConstBoundaryYFiltered = boundaryYFiltered.Pointer(0,0);
 
       const s32 lengthBoundary = boundary.get_size();
       for(s32 i=0; i<lengthBoundary; i++) {
-        //const s32 xSquared = (boundaryXFiltered_constRowPointer[i] * boundaryXFiltered_constRowPointer[i]) >> numSigmaFractionalBits; // SQ23.8
-        //const s32 ySquared = (boundaryYFiltered_constRowPointer[i] * boundaryYFiltered_constRowPointer[i]) >> numSigmaFractionalBits; // SQ23.8
-        const s32 xSquared = (boundaryXFiltered_constRowPointer[i] * boundaryXFiltered_constRowPointer[i]); // SQ31.0 (multiplied by 2^numSigmaFractionalBits)
-        const s32 ySquared = (boundaryYFiltered_constRowPointer[i] * boundaryYFiltered_constRowPointer[i]); // SQ31.0 (multiplied by 2^numSigmaFractionalBits)
+        //const s32 xSquared = (pConstBoundaryXFiltered[i] * pConstBoundaryXFiltered[i]) >> numSigmaFractionalBits; // SQ23.8
+        //const s32 ySquared = (pConstBoundaryYFiltered[i] * pConstBoundaryYFiltered[i]) >> numSigmaFractionalBits; // SQ23.8
+        const s32 xSquared = (pConstBoundaryXFiltered[i] * pConstBoundaryXFiltered[i]); // SQ31.0 (multiplied by 2^numSigmaFractionalBits)
+        const s32 ySquared = (pConstBoundaryYFiltered[i] * pConstBoundaryYFiltered[i]); // SQ31.0 (multiplied by 2^numSigmaFractionalBits)
 
-        boundaryFilteredAndCombined_rowPointer[i] = xSquared + ySquared;
+        pBoundaryFilteredAndCombined[i] = xSquared + ySquared;
       }
 
       FixedLengthList<s32> localMaxima(maximumTemporaryPeaks, scratch);
 
-      const s32 * restrict boundaryFilteredAndCombined_constRowPointer = boundaryFilteredAndCombined.Pointer(0,0);
+      const s32 * restrict pConstBoundaryFilteredAndCombined = boundaryFilteredAndCombined.Pointer(0,0);
 
       // Find local maxima -- these should correspond to the corners of the square.
       // NOTE: one of the comparisons is >= while the other is >, in order to
       // combat rare cases where we have two responses next to each other that are exactly equal.
       // localMaxima = find(r_smooth >= r_smooth([end 1:end-1]) & r_smooth > r_smooth([2:end 1]));
 
-      if(boundaryFilteredAndCombined_constRowPointer[0] > boundaryFilteredAndCombined_constRowPointer[1] &&
-        boundaryFilteredAndCombined_constRowPointer[0] >= boundaryFilteredAndCombined_constRowPointer[boundary.get_size()-1]) {
+      if(pConstBoundaryFilteredAndCombined[0] > pConstBoundaryFilteredAndCombined[1] &&
+        pConstBoundaryFilteredAndCombined[0] >= pConstBoundaryFilteredAndCombined[boundary.get_size()-1]) {
           localMaxima.PushBack(0);
       }
 
       for(s32 i=1; i<(lengthBoundary-1); i++) {
-        if(boundaryFilteredAndCombined_constRowPointer[i] > boundaryFilteredAndCombined_constRowPointer[i+1] &&
-          boundaryFilteredAndCombined_constRowPointer[i] >= boundaryFilteredAndCombined_constRowPointer[i-1]) {
+        if(pConstBoundaryFilteredAndCombined[i] > pConstBoundaryFilteredAndCombined[i+1] &&
+          pConstBoundaryFilteredAndCombined[i] >= pConstBoundaryFilteredAndCombined[i-1]) {
             localMaxima.PushBack(i);
         }
       }
 
-      if(boundaryFilteredAndCombined_constRowPointer[boundary.get_size()-1] > boundaryFilteredAndCombined_constRowPointer[0] &&
-        boundaryFilteredAndCombined_constRowPointer[boundary.get_size()-1] >= boundaryFilteredAndCombined_constRowPointer[boundary.get_size()-2]) {
+      if(pConstBoundaryFilteredAndCombined[boundary.get_size()-1] > pConstBoundaryFilteredAndCombined[0] &&
+        pConstBoundaryFilteredAndCombined[boundary.get_size()-1] >= pConstBoundaryFilteredAndCombined[boundary.get_size()-2]) {
           localMaxima.PushBack(boundary.get_size()-1);
       }
 
@@ -386,14 +386,14 @@ namespace Anki
 
       //localMaxima.Print("localMaxima");
 
-      const Point<s16> * restrict boundary_constRowPointer = boundary.Pointer(0);
+      const Point<s16> * restrict pConstBoundary = boundary.Pointer(0);
 
       //localMaxima.Print("localMaxima");
 
       // Select the index of the top 4 local maxima
       // TODO: make efficient
       // TODO: make work for numbers of peaks other than 4
-      s32 * restrict localMaxima_rowPointer = localMaxima.Pointer(0);
+      s32 * restrict pLocalMaxima = localMaxima.Pointer(0);
       s32 maximaValues[4];
       s32 maximaIndexes[4];
       for(s32 i=0; i<4; i++) {
@@ -404,14 +404,14 @@ namespace Anki
       const s32 numLocalMaxima = localMaxima.get_size();
       for(s32 iMax=0; iMax<4; iMax++) {
         for(s32 i=0; i<numLocalMaxima; i++) {
-          const s32 localMaximaIndex = localMaxima_rowPointer[i];
-          if(boundaryFilteredAndCombined_constRowPointer[localMaximaIndex] > maximaValues[iMax]) {
-            maximaValues[iMax] = boundaryFilteredAndCombined_constRowPointer[localMaximaIndex];
+          const s32 localMaximaIndex = pLocalMaxima[i];
+          if(pConstBoundaryFilteredAndCombined[localMaximaIndex] > maximaValues[iMax]) {
+            maximaValues[iMax] = pConstBoundaryFilteredAndCombined[localMaximaIndex];
             maximaIndexes[iMax] = localMaximaIndex;
           }
         }
         //printf("Maxima %d/%d is #%d %d\n", iMax, 4, maximaIndexes[iMax], maximaValues[iMax]);
-        boundaryFilteredAndCombined_rowPointer[maximaIndexes[iMax]] = s32_MIN;
+        pBoundaryFilteredAndCombined[maximaIndexes[iMax]] = s32_MIN;
       }
 
       // Copy the maxima to the output peaks, ordered by their original index order, so they are
@@ -436,7 +436,7 @@ namespace Anki
         //if(maximaIndexes[iMax] >= 0) {
         if(curMinIndex >= 0) {
           whichUsed[curMinIndex] = true;
-          peaks.PushBack(boundary_constRowPointer[maximaIndexes[curMinIndex]]);
+          peaks.PushBack(pConstBoundary[maximaIndexes[curMinIndex]]);
         }
       }
 

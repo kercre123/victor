@@ -119,9 +119,9 @@ namespace Anki
       s32 ankiArrayWidth = ankiArray.get_size(1);
 
       for(s32 y=0; y<ankiArrayHeight; y++) {
-        Type * rowPointer = ankiArray.Pointer(y, 0);
+        Type * pThisData = ankiArray.Pointer(y, 0);
         for(s32 x=0; x<ankiArrayWidth; x++) {
-          rowPointer[x] = matlabArrayTmp[matlabIndex++];
+          pThisData[x] = matlabArrayTmp[matlabIndex++];
         }
       }
 

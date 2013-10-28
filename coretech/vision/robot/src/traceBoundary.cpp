@@ -436,11 +436,11 @@ namespace Anki
       //boundary(:,1) = boundary(:,1) + coordinate_left - 1;
       //boundary(:,2) = boundary(:,2) + coordinate_top - 1;
       {
-        Point<s16> * restrict extractedBoundary_rowPointer = extractedBoundary.Pointer(0);
+        Point<s16> * restrict pExtractedBoundary = extractedBoundary.Pointer(0);
         const s32 lengthExtractedBoundary = extractedBoundary.get_size();
         for(s32 i=0; i<lengthExtractedBoundary; i++) {
-          extractedBoundary_rowPointer[i].x += boundingBox.left;
-          extractedBoundary_rowPointer[i].y += boundingBox.top;
+          pExtractedBoundary[i].x += boundingBox.left;
+          pExtractedBoundary[i].y += boundingBox.top;
         }
       }
 

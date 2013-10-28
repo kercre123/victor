@@ -11,9 +11,9 @@ namespace Anki
 
       printf("%s:\n", variableName);
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
-        const ConnectedComponentSegment * const rowPointer = Pointer(y, 0);
+        const ConnectedComponentSegment * const pThisData = this->Pointer(y, 0);
         for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
-          rowPointer[x].Print();
+          pThisData[x].Print();
           printf(" ");
         }
         printf("\n");
@@ -30,9 +30,9 @@ namespace Anki
 
       printf("%s:\n", variableName);
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
-        const BlockMarker * const rowPointer = Pointer(y, 0);
+        const BlockMarker * const pThisData = this->Pointer(y, 0);
         for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
-          rowPointer[x].Print();
+          pThisData[x].Print();
           printf(" ");
         }
         printf("\n");
