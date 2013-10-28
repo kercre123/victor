@@ -79,6 +79,39 @@ void ScrollingIntegralImage_u8_s32_FilterRow_shaveInnerLoop(const int * restrict
     ://Input registers
     :"i20", "i21", "i22", "i23", "i24", "i25", "i26", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8" //Clobbered registers
       );
+
+    //__asm(
+    //".set integralImage_00 v0 \n"
+    //  ".set integralImage_10 v1 \n"
+    //  ".set integralImage_01 v2 \n"
+    //  ".set integralImage_01a v3 \n"
+    //  ".set integralImage_01b v4 \n"
+    //  ".set integralImage_11 v5 \n"
+    //  ".set integralImage_11a v6 \n"
+    //  ".set integralImage_11b v7 \n"
+    //  ".set output v8 \n"
+    //  "lsu0.ldxv integralImage_00 integralImage_00_address || lsu1.ldxv integralImage_10 integralImage_10_address\n"
+    //  "nop 1 \n"
+    //  "lsu0.ldxv integralImage_01a integralImage_01a_address || lsu1.ldxv integralImage_01b integralImage_01b_address\n"
+    //  "nop 1 \n"
+    //  "lsu0.ldxv integralImage_11a integralImage_11a_address || lsu1.ldxv integralImage_11b integralImage_11b_address\n"
+    //  "nop 1 \n"
+    //  "iau.add integralImage_00_address integralImage_00_address 16 \n"
+    //  "iau.add integralImage_10_address integralImage_10_address 16 \n"
+    //  "iau.add integralImage_01a_address integralImage_01a_address 16 \n"
+    //  "iau.add integralImage_01b_address integralImage_01b_address 16 \n"
+    //  "iau.add integralImage_11a_address integralImage_11a_address 16 \n"
+    //  "iau.add integralImage_11b_address integralImage_11b_address 16 \n"
+    //  "nop 1 \n"
+    //  "vau.alignvec integralImage_01 integralImage_01a integralImage_01b 4 \n"
+    //  "vau.alignvec integralImage_11 integralImage_11a integralImage_11b 4 \n"
+    //  "nop 1 \n"
+    //  "lsu0.stxv integralImage_11 output_address \n"
+    //  "iau.add output_address output_address 16 \n \n"
+    //  : //Output registers
+    //://Input registers
+    //:"i20", "i21", "i22", "i23", "i24", "i25", "i26", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8" //Clobbered registers
+    //  );
   }
 }
 
