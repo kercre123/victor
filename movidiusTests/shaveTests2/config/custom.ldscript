@@ -1,5 +1,4 @@
-SECTIONS {
-/*  . = 0xA0000000;*/
+/*SECTIONS {
   . = 0x48000000;
 
   .imageData : {
@@ -31,11 +30,9 @@ SECTIONS {
     *(.bss.printfBuffer*)
   }
 
-/*  . = 0x48000000;*/
-
   .bigBuffers : {
     *(.bigBuffers*)
   }
-}
+}*/
 
 INCLUDE myriad1_default_memory_map_elf.ldscript
