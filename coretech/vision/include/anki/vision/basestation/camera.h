@@ -132,6 +132,7 @@ namespace Anki {
     Pose3d             pose;
     
     // TODO: Include const reference or pointer to a parent Robot object?
+    void distortCoordinate(const Point2f& ptIn, Point2f& ptDistorted);
     
   }; // class Camera
   

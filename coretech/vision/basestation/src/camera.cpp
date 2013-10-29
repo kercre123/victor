@@ -89,15 +89,15 @@ namespace Anki {
     std::vector<cv::Point2f> cvImagePoints;
     std::vector<cv::Point3f> cvObjPoints;
     
-    cvImagePoints.emplace_back(imgPoints[Quad2f::TopLeft].get_CvPoint_());
-    cvImagePoints.emplace_back(imgPoints[Quad2f::TopRight].get_CvPoint_());
-    cvImagePoints.emplace_back(imgPoints[Quad2f::BottomLeft].get_CvPoint_());
-    cvImagePoints.emplace_back(imgPoints[Quad2f::BottomRight].get_CvPoint_());
+    cvImagePoints.emplace_back(imgPoints[Quad::TopLeft].get_CvPoint_());
+    cvImagePoints.emplace_back(imgPoints[Quad::TopRight].get_CvPoint_());
+    cvImagePoints.emplace_back(imgPoints[Quad::BottomLeft].get_CvPoint_());
+    cvImagePoints.emplace_back(imgPoints[Quad::BottomRight].get_CvPoint_());
     
-    cvObjPoints.emplace_back(objPoints[Quad3f::TopLeft].get_CvPoint3_());
-    cvObjPoints.emplace_back(objPoints[Quad3f::TopRight].get_CvPoint3_());
-    cvObjPoints.emplace_back(objPoints[Quad3f::BottomLeft].get_CvPoint3_());
-    cvObjPoints.emplace_back(objPoints[Quad3f::BottomRight].get_CvPoint3_());
+    cvObjPoints.emplace_back(objPoints[Quad::TopLeft].get_CvPoint3_());
+    cvObjPoints.emplace_back(objPoints[Quad::TopRight].get_CvPoint3_());
+    cvObjPoints.emplace_back(objPoints[Quad::BottomLeft].get_CvPoint3_());
+    cvObjPoints.emplace_back(objPoints[Quad::BottomRight].get_CvPoint3_());
     
     Matrix_3x3f calibMatrix(this->calibration.get_calibrationMatrix());
     
@@ -132,8 +132,37 @@ namespace Anki {
   void Camera::project3dPoints(const Quad3f &objPoints,
                        Quad2f       &imgPoints) const
   {
-    CORETECH_THROW("Unimplemented!")
-  }
+    const f32 fx = this->calibration.get_focalLength_x();
+    const f32 fy = this->calibration.get_focalLength_y();
+    const Point2f& center = this->calibration.get_center_pt();
+    
+    for(Quad::CornerName i_corner=Quad::FirstCorner;
+        i_corner < Quad::NumCorners; ++i_corner)
+    {
+      if(objPoints[i_corner].z() <= 0.f)
+      {
+        // Point not visible (not in front of camera)
+        imgPoints[i_corner].x() = -1.f;
+        imgPoints[i_corner].y() = -1.f;
+        
+      } else {
+        // Point visible, project it
+        imgPoints[i_corner].x() = (objPoints[i_corner].x() /
+                                   objPoints[i_corner].z());
+        imgPoints[i_corner].y() = (objPoints[i_corner].y() /
+                                   objPoints[i_corner].z());
+        
+        // TODO: Add radial distortion here
+        //distortCoordinate(imgPoints[i_corner], imgPoints[i_corner]);
+        
+        imgPoints[i_corner].x() *= fx;
+        imgPoints[i_corner].y() *= fy;
+        
+        imgPoints[i_corner] += center;
+      }
+    }
+
+  } // project3dPoints()
 
   
 } // namespace Anki
