@@ -68,3 +68,4 @@ blockworld_controller
 *.shv*lib
 movidiusTests/shaveTests2/output
 *.asmgen
+robot/evmMake/output
