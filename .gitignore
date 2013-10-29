@@ -69,3 +69,4 @@ blockworld_controller
 movidiusTests/shaveTests2/output
 *.asmgen
 robot/evmMake/output
+movidiusTests/dmaTests/output
