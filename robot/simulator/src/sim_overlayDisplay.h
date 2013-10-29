@@ -10,7 +10,8 @@ namespace Anki {
         
         // Overlaid Text Display IDs:
         typedef enum {
-          CURR_POSE,
+          CURR_EST_POSE,
+          CURR_TRUE_POSE,
           TARGET_POSE,
           PATH_ERROR,
           DEBUG_MSG

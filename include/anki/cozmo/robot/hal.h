@@ -114,8 +114,12 @@ namespace Anki
       
       // Cameras
       // TODO: Add functions for adjusting ROI of cameras?
-      const u8* GetHeadImage();
-      const u8* GetMatImage();
+      void MatCameraInit();
+      void FrontCameraInit();
+      
+      const u8* MatCameraGetFrame();
+      const u8* FrontCameraGetFrame(); 
+
       const FrameGrabber GetHeadFrameGrabber();
       const FrameGrabber GetMatFrameGrabber();
       
@@ -147,16 +151,12 @@ namespace Anki
       void UARTInit();
       int UARTPutChar(int c);
 
-      // Cameras
-      void MatCameraInit();
-      u8* MatCameraGetFrame();
-
-      void FrontCameraInit();
-      u8* FrontCameraGetFrame();
-
       // USB
       void USBInit();
       void USBUpdate();
+      
+      // Ground truth (no-op if not in simulation?)
+      void GetGroundTruthPose(f32 &x, f32 &y, f32& rad);
 
     } // namespace HAL
   } // namespace Cozmo

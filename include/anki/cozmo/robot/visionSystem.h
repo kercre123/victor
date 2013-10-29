@@ -55,8 +55,8 @@ namespace Anki {
                       HAL::FrameGrabber       matCamFrameGrabber,
                       const HAL::CameraInfo*  headCamInfo,
                       const HAL::CameraInfo*  matCamInfo,
-                      BlockMarkerMailbox*                   blockMarkerMailbox,
-                      MatMarkerMailbox*                     matMarkerMailbox);
+                      BlockMarkerMailbox*     blockMarkerMailbox,
+                      MatMarkerMailbox*       matMarkerMailbox);
       
       void Destroy();
       

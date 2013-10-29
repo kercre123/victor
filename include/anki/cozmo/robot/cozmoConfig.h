@@ -29,7 +29,7 @@ namespace Anki {
 #define BLOCKMARKER3D_USE_OUTSIDE_SQUARE false
     
   } // namespace Cozmo
-} // namespace Cozmo
+} // namespace Anki
 
 
 #endif // COZMO_CONFIG_H
