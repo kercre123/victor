@@ -59,8 +59,8 @@ Matlab matlab(false);
 //
 //#endif // #ifdef USING_MOVIDIUS_COMPILER
 
-#define RUN_MAIN_BIG_MEMORY_TESTS
-#define RUN_ALL_BIG_MEMORY_TESTS
+//#define RUN_MAIN_BIG_MEMORY_TESTS
+//#define RUN_ALL_BIG_MEMORY_TESTS
 #define RUN_LOW_MEMORY_12345
 
 //#ifdef RUN_MAIN_BIG_MEMORY_TESTS

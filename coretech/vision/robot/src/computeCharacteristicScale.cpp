@@ -4,6 +4,8 @@
 #include "anki/vision/robot/miscVisionKernels.h"
 #include "anki/vision/robot/integralImage.h"
 
+//#define HAVE_64_BIT_ARITHMETIC
+
 namespace Anki
 {
   namespace Embedded
@@ -250,6 +252,7 @@ namespace Anki
           printf("\n");
           }*/
         } else {         //    else % if pyramidLevel == 2 ... elseif pyramidLevel <= 5
+#if HAVE_64_BIT_ARITHMETIC // The movidius compiler is missing __ashrdi3, so this part won't compile
           const s32 largeIndexMin = scaleFactors[pyramidLevel-1] / 2; // SQ31.0
 
           const s32 numAlphas = scaleFactors[pyramidLevel-1];
@@ -329,6 +332,7 @@ namespace Anki
           matlab.PutArray2d(largeDog, "largeDog_c");
           printf("\n");
           }*/
+#endif //#if HAVE_64_BIT_ARITHMETIC // The movidius compiler is missing __ashrdi3, so this part won't compile
         }   //    end % if k == 2 ... else
 
         //    imagePyramid{pyramidLevel} = uint8(downsampleByFactor(curPyramidLevelBlurred, 2));
