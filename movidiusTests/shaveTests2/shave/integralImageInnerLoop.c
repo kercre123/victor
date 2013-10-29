@@ -111,7 +111,7 @@ void ScrollingIntegralImage_u8_s32_FilterRow_shaveInnerLoop(const int * restrict
     "\n"
 
     "; Set the loop limits \n"
-    "lsu0.ldil x 0 || lsu1.ldil addressIncrement 16 \n"
+    "lsu0.ldil x 4 || lsu1.ldil addressIncrement 16 \n"
 
     "; preload the first set of input pixels \n"
     "lsu0.ldxvi integralImage_01a_next integralImage_01a_address addressIncrement || lsu1.ldxvi integralImage_01b_next integralImage_01b_address addressIncrement\n"
@@ -135,7 +135,7 @@ void ScrollingIntegralImage_u8_s32_FilterRow_shaveInnerLoop(const int * restrict
     "cmu.cpvv integralImage_01 integralImage_01_next \n"
     "lsu0.ldxvi integralImage_00_next integralImage_00_address addressIncrement || lsu1.ldxvi integralImage_10_next integralImage_10_address addressIncrement || vau.sub.i32 output integralImage_00 integralImage_01\n"
     "peu.pc1c lt || bru.bra _filteringLoop  \n"
-    "vau.add.i32 output output outputTmp || cmu.cmii.i32 x numPixelsToProcess ; This is incrementing x for the next iteration\n"
+    "vau.add.i32 output output outputTmp || cmu.cmii.i32 x numPixelsToProcess ; This is checking x for the next iteration\n"
     "nop 1 \n"
     "lsu0.stxvi output output_address addressIncrement || vau.alignvec integralImage_01_next integralImage_01a_next integralImage_01b_next 4 \n"
     "vau.alignvec integralImage_11_next integralImage_11a_next integralImage_11b_next 4 \n"
