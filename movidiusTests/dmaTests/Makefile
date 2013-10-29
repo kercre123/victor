@@ -58,8 +58,8 @@ include $(MYRIAD_BUILDFILE_DIRECTORY)/generic_custom.mk
 #-------------------------------[ Local applications build rules ]------------------#
 #Describe the rule for building the shaveTestsApp application. Simple rule specifying 
 #which objects build up the said application. The application will be built into a library
-$(ShaveTestsApp).mvlib : $(SHAVE_shaveTests_OBJS)
-	$(ECHO) $(LD) -r $(SHAVE_shaveTests_OBJS) -o $@
+$(ShaveTestsApp).mvlib : $(SHAVE_shaveTests_OBJS) $(PROJECT_SHAVE_LIBS)
+	$(ECHO) $(LD) -r $(SHAVE_shaveTests_OBJS) $(PROJECT_SHAVE_LIBS) -o $@
 
 
 # -------------------------------- [ Build Options ] ------------------------------ #

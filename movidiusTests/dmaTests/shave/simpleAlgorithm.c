@@ -1,6 +1,6 @@
 #include "shaveShared.h"
 
-void simpleAdd(const u8 * restrict im1, const u8 * restrict im2, u8 * restrict out, int numElements)
+void simpleAdd(const s32 * restrict im1, const s32 * restrict im2, s32 * restrict out, int numElements)
 {
   s32 i;
 
