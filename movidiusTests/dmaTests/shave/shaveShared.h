@@ -1,12 +1,8 @@
 #ifndef _SHAVE_SHARED_H_
 #define _SHAVE_SHARED_H_
 
-#define IMAGE_HEIGHT 64
-#define IMAGE_WIDTH 64
+#include "mv_types.h"
 
-__attribute__ ((aligned (16))) extern volatile int outputLine[IMAGE_WIDTH];
-__attribute__ ((aligned (16))) extern const int integralImage[IMAGE_HEIGHT*IMAGE_WIDTH];
-
-void testIntegralImage();
+#define IMAGE_SIZE 5000
 
 #endif // _SHAVE_SHARED_H_

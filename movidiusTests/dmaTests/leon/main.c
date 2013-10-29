@@ -22,23 +22,35 @@
 // include here for convenience
 // for complex shave modules split to separate shave_export.h file or similar
 extern int shaveTests7_main;
+volatile extern int shaveTests7_whichAlgorithm;
+volatile extern int shaveTests7_numPixelsToProcess;
+
+//__attribute__((section(".imageData"))) __attribute__ ((aligned (16))) extern s32 shaveTests7_im1_ddr[IMAGE_SIZE];
+//__attribute__((section(".imageData"))) __attribute__ ((aligned (16))) extern s32 shaveTests7_im2_ddr[IMAGE_SIZE];
+//__attribute__((section(".imageData"))) __attribute__ ((aligned (16))) extern s32 shaveTests7_out_ddr[IMAGE_SIZE];
+
+__attribute__((section(".imageData"))) __attribute__ ((aligned (16))) s32 shaveTests7_im1_ddr[IMAGE_SIZE];
+__attribute__((section(".imageData"))) __attribute__ ((aligned (16))) s32 shaveTests7_im2_ddr[IMAGE_SIZE];
+__attribute__((section(".imageData"))) __attribute__ ((aligned (16))) s32 shaveTests7_out_ddr[IMAGE_SIZE];
+
+__attribute__ ((aligned (16))) extern s32 shaveTests7_im1[IMAGE_SIZE];
+__attribute__ ((aligned (16))) extern s32 shaveTests7_im2[IMAGE_SIZE];
+__attribute__ ((aligned (16))) extern s32 shaveTests7_out[IMAGE_SIZE];
 
 // Declare Shave halted interrupt handler
 void ShaveHaltedISR(u32 unused);
 
-const expectedFilterOutput[IMAGE_WIDTH] = {62, 70, 77, 86, 94, 103, 111, 119, 127, 136, 143, 152, 162, 170, 177, 186, 194, 203, 211, 219, 227, 236, 243, 252, 262, 270, 277, 286, 294, 303, 311, 319, 327, 336, 343, 352, 362, 370, 377, 386, 394, 403, 411, 419, 427, 436, 443, 452, 462, 470, 477, 486, 494, 503, 511, 519, 527, 536, 543, 0, 0, 0, 0, 0};
-
 // Global event variable
 volatile u32 g_shaveFinishedEvent = 0;
-
-extern volatile int shaveTests7_whichAlgorithm;
-extern volatile int shaveTests7_outputLine[IMAGE_WIDTH];
 
 // Leon Entry point
 int __attribute__((section(".sys.text.start"))) main(void)
 {
   s32 i;
   u32 running   = 1;
+  u64 times[20];
+
+  tyTimeStamp  g_ticks;
 
   initClocksAndMemory();
 
@@ -48,12 +60,29 @@ int __attribute__((section(".sys.text.start"))) main(void)
   //    SET_REG_WORD(L2C_MXITID_ADR, 0x0);
 
   shaveTests7_whichAlgorithm = 1;
+  shaveTests7_numPixelsToProcess = 5000;
+
+  if(shaveTests7_whichAlgorithm == 1) {
+    for(i=0; i<IMAGE_SIZE; i++) {
+      shaveTests7_im1_ddr[i] = i;
+      shaveTests7_im2_ddr[i] = 5;
+    }
+  } else if(shaveTests7_whichAlgorithm == 2) {
+    for(i=0; i<IMAGE_SIZE; i++) {
+      shaveTests7_im1[i] = i;
+      shaveTests7_im2[i] = 5;
+    }
+  }
 
   // Start the Shave but do not wait for stop
   printf("Start Shave at addr:0x%X \n", (unsigned int)&shaveTests7_main);
   swcResetShave(7);
   swcSetAbsoluteDefaultStack(7);
   swcStartShaveAsync(7,(u32)&shaveTests7_main, ShaveHaltedISR);
+
+  DrvTimerStart(&g_ticks);
+
+  //times[0] = DrvTimerGetSysTicks64();
 
   // Main loop that handles events
   while (running)
@@ -69,22 +98,12 @@ int __attribute__((section(".sys.text.start"))) main(void)
       u32 i;
       u32 test_pass = 1;
 
-      for(i=0; i<IMAGE_WIDTH; i++) {
-        printf("%d) correct:%d shave:%d\n", i, expectedFilterOutput[i], shaveTests7_outputLine[i]);
-      }
+      //times[1] = DrvTimerGetSysTicks64();
+      //printf("It took %llu ms\n", DrvTimerTicksToMs(times[1]-times[0])/10000);
 
-      for(i=0; i<IMAGE_WIDTH; i++) {
-        if(shaveTests7_outputLine[i] != expectedFilterOutput[i]) {
-          test_pass = 0;
-          printf("Fail at %d\n", i);
-          //break;
-        }
-      }
+      const u32 passed_cycles = DrvTimerElapsedTicks(&g_ticks);
 
-      if (test_pass)
-        printf("\n\nShaveHelloWorld Executed Successfully\n\n");
-      else
-        printf("ShaveHelloWorld failed\n");
+      printf("Operation took %d micro seconds\n", (u32)(DrvTimerTicksToMs(passed_cycles)*1000));
 
       // mark event as handled
       g_shaveFinishedEvent = 0;
