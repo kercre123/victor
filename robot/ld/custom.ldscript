@@ -1,5 +1,5 @@
 SECTIONS {
-  . = 0xA0000000;
+  . = 0xA0010000;
 
   .imageData : {
     *(.imageData*)
