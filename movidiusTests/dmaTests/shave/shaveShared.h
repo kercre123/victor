@@ -3,6 +3,6 @@
 
 #include "mv_types.h"
 
-#define IMAGE_SIZE 5000
+#define IMAGE_SIZE 5016
 
 #endif // _SHAVE_SHARED_H_

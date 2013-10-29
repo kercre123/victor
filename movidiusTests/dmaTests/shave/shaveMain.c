@@ -32,17 +32,17 @@ void simpleAdd(const s32 * restrict im1, const s32 * restrict im2, s32 * restric
 
 int main( void )
 {
-  if(whichAlgorithm == 1) {
+  if(whichAlgorithm == 1) { // Input and outputs in ddr
     simpleAdd(&im1_ddr[0], &im2_ddr[0], &out_ddr[0], numPixelsToProcess);
-  } else if(whichAlgorithm == 2) {
+  } else if(whichAlgorithm == 2) { // Inputs and outputs in cmx
     simpleAdd(&im1[0], &im2[0], &out[0], numPixelsToProcess);
-  } else if(whichAlgorithm == 3) {
+  } else if(whichAlgorithm == 3) { //Input in ddr, dma to cmx, then output in ddr
     scDmaSetup(DMA_TASK_0, &im1_ddr[0], &im1[0], numPixelsToProcess*sizeof(s32));
     scDmaSetup(DMA_TASK_1, &im2_ddr[0], &im2[0], numPixelsToProcess*sizeof(s32));
     scDmaStart(START_DMA01);
     scDmaWaitFinished();
     simpleAdd(&im1[0], &im2[0], &out_ddr[0], numPixelsToProcess);
-  } else if(whichAlgorithm == 4) {
+  } else if(whichAlgorithm == 4) { //Input in ddr, dma to cmx, then output in cmx, dma to ddr
     scDmaSetup(DMA_TASK_0, &im1_ddr[0], &im1[0], numPixelsToProcess*sizeof(s32));
     scDmaSetup(DMA_TASK_1, &im2_ddr[0], &im2[0], numPixelsToProcess*sizeof(s32));
     scDmaStart(START_DMA01);
@@ -51,6 +51,15 @@ int main( void )
     scDmaSetup(DMA_TASK_0, &out[0], &out_ddr[0], numPixelsToProcess*sizeof(s32));
     scDmaStart(START_DMA0);
     scDmaWaitFinished();
+  } else if(whichAlgorithm == 5) { //Input and output in cmx, plus dma call without a wait
+    scDmaSetup(DMA_TASK_0, &im1_ddr[0], &im1[0], numPixelsToProcess*sizeof(s32));
+    scDmaSetup(DMA_TASK_1, &im2_ddr[0], &im2[0], numPixelsToProcess*sizeof(s32));
+    scDmaStart(START_DMA01);
+    //scDmaWaitFinished();
+    simpleAdd(&im1[0], &im2[0], &out[0], numPixelsToProcess);
+    scDmaSetup(DMA_TASK_0, &out[0], &out_ddr[0], numPixelsToProcess*sizeof(s32));
+    scDmaStart(START_DMA0);
+    //scDmaWaitFinished();
   }
 
   return 0;
