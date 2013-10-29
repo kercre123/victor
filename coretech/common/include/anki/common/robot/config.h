@@ -10,8 +10,8 @@ Everything in this file should be compatible with plain C, as well as C++
 #define ANKICORETECHEMBEDDED_VERSION_MINOR 1
 #define ANKICORETECHEMBEDDED_VERSION_REVISION 0
 
-#if !defined(__APPLE_CC__) && defined(__GNUC__) && __GNUC__==4 && __GNUC_MINOR__==2 && __GNUC_PATCHLEVEL__==1 //hack to detect the movidius compiler
-#warning Using GNUC 4.2.1
+#if defined(__MOVICOMPILE__)
+#warning Using MoviCompile
 #define USING_MOVIDIUS_SHAVE_COMPILER
 #define USING_MOVIDIUS_COMPILER
 #endif
@@ -97,6 +97,7 @@ Everything in this file should be compatible with plain C, as well as C++
 extern "C" {
 #endif
 
+#include "mv_types.h"
 #include "DrvUart.h"
 #include "swcTestUtils.h"
 #include "swcLeonUtils.h"
@@ -109,6 +110,7 @@ extern "C" {
 #include <float.h>
 #include <stdarg.h>
 
+#define BIG_ENDIAN_IMAGES
 #define EXPLICIT_PRINTF_FLIP_CHARACTERS 0
 
 #undef printf
@@ -149,29 +151,13 @@ extern "C" {
 
 #include "anki/common/constantsAndMacros.h"
 
-// If we're using c++, Result is in a namespace. In c, it's not.
-#ifdef __cplusplus
-namespace Anki
-{
-  namespace Embedded
-  {
-#endif
-    // Return values:
-    typedef enum {
-      RESULT_OK = 0,
-      RESULT_FAIL = 1,
-      RESULT_FAIL_MEMORY = 10000,
-      RESULT_FAIL_OUT_OF_MEMORY = 10001,
-      RESULT_FAIL_IO = 20000,
-      RESULT_FAIL_INVALID_PARAMETERS = 30000
-    } Result;
-#ifdef __cplusplus
-  }
-}
-#endif
-
 #define MEMORY_ALIGNMENT ( (size_t)(16) ) // To support 128-bit SIMD loads and stores
 
+// To make processing faster, some kernels require image widths that are a multiple of ANKI_VISION_IMAGE_WIDTH_MULTIPLE
+#define ANKI_VISION_IMAGE_WIDTH_SHIFT 4
+#define ANKI_VISION_IMAGE_WIDTH_MULTIPLE (1<<ANKI_VISION_IMAGE_WIDTH_SHIFT)
+
+// Which errors will be checked and reported?
 #define ANKI_DEBUG_MINIMAL 0 // Only check and output issue with explicit unit tests
 #define ANKI_DEBUG_ERRORS 10 // Check and output AnkiErrors and explicit unit tests
 #define ANKI_DEBUG_ERRORS_AND_WARNS 20 // Check and output AnkiErrors, AnkiWarns, and explicit unit tests
@@ -179,6 +165,7 @@ namespace Anki
 
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS
 
+// How will errors be reported?
 #define ANKI_OUTPUT_DEBUG_NONE 0
 #define ANKI_OUTPUT_DEBUG_PRINTF 10
 

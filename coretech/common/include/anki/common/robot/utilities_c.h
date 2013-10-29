@@ -68,6 +68,7 @@ extern "C" {
   // void explicitPrintfWithExplicitBuffer(int reverseEachFourCharacters, int * buffer, const char *format, ...);
 
   void PrintInt(s32 value); // Print a single number
+  void PrintHex(u32 value); // Print a single unsigned int in hex format 0xabcd0123
   void PrintFloat(f64 value); // Print a single float
 
 #if defined(USING_MOVIDIUS_GCC_COMPILER)

@@ -14,7 +14,9 @@ using namespace Anki::Embedded;
 #define ConditionalErrorAndReturn(expression, eventName, eventValue) if(!(expression)) { printf("%s - %s\n", (eventName), (eventValue)); return;}
 
 // image = drawExampleSquaresImage();
-// scaleImage_numPyramidLevels = 6;
+// scaleImage_useWhichAlgorithm = 1;
+// scaleImage_numPyramidLevels = 4;
+// scaleImage_thresholdMultiplier = 0.75;
 // component1d_minComponentWidth = 0;
 // component1d_maxSkipDistance = 0;
 // minSideLength = round(0.03*max(size(image,1),size(image,2)));
@@ -28,7 +30,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   //     IN_DDR Result SimpleDetector_Steps123(
   //       const Array<u8> &image,
-  //       const s32 scaleImage_numPyramidLevels,
+  //       const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
   //       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
   //       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
   //       const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
@@ -36,16 +38,18 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   //       MemoryStack scratch1,
   //       MemoryStack scratch2)
 
-  ConditionalErrorAndReturn(nrhs == 8 && nlhs == 1, "mexSimpleDetectorSteps123", "Call this function as following: components2d = mexSimpleDetectorSteps123(uint8(image), scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold);");
+  ConditionalErrorAndReturn(nrhs == 10 && nlhs == 1, "mexSimpleDetectorSteps123", "Call this function as following: components2d = mexSimpleDetectorSteps123(uint8(image), scaleImage_useWhichAlgorithm, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold);");
 
   Array<u8> image = mxArrayToArray<u8>(prhs[0]);
-  const s32 scaleImage_numPyramidLevels = static_cast<s32>(mxGetScalar(prhs[1]));
-  const s16 component1d_minComponentWidth = static_cast<s16>(mxGetScalar(prhs[2]));
-  const s16 component1d_maxSkipDistance = static_cast<s16>(mxGetScalar(prhs[3]));
-  const s32 component_minimumNumPixels = static_cast<s32>(mxGetScalar(prhs[4]));
-  const s32 component_maximumNumPixels = static_cast<s32>(mxGetScalar(prhs[5]));
-  const s32 component_sparseMultiplyThreshold = static_cast<s32>(Round(pow(2,5)*mxGetScalar(prhs[6]))); // Convert from double to SQ26.5
-  const s32 component_solidMultiplyThreshold = static_cast<s32>(Round(pow(2,5)*mxGetScalar(prhs[7]))); // Convert from double to SQ26.5
+  const CharacteristicScaleAlgorithm scaleImage_useWhichAlgorithm = static_cast<CharacteristicScaleAlgorithm>(static_cast<s32>(mxGetScalar(prhs[1])));
+  const s32 scaleImage_numPyramidLevels = static_cast<s32>(mxGetScalar(prhs[2]));
+  const s32 scaleImage_thresholdMultiplier = static_cast<s32>(Round(pow(2,16)*mxGetScalar(prhs[3]))); // Convert from double to SQ15.16
+  const s16 component1d_minComponentWidth = static_cast<s16>(mxGetScalar(prhs[4]));
+  const s16 component1d_maxSkipDistance = static_cast<s16>(mxGetScalar(prhs[5]));
+  const s32 component_minimumNumPixels = static_cast<s32>(mxGetScalar(prhs[6]));
+  const s32 component_maximumNumPixels = static_cast<s32>(mxGetScalar(prhs[7]));
+  const s32 component_sparseMultiplyThreshold = static_cast<s32>(Round(pow(2,5)*mxGetScalar(prhs[8]))); // Convert from double to SQ26.5
+  const s32 component_solidMultiplyThreshold = static_cast<s32>(Round(pow(2,5)*mxGetScalar(prhs[9]))); // Convert from double to SQ26.5
 
   ConditionalErrorAndReturn(image.IsValid(), "mexSimpleDetectorSteps123", "Could not allocate image");
 
@@ -62,12 +66,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   ConditionalErrorAndReturn(scratch2.IsValid(), "mexSimpleDetectorSteps123", "Scratch2 could not be allocated");
 
   const s32 maxConnectedComponentSegments = u16_MAX;
-  ConnectedComponents extractedComponents(maxConnectedComponentSegments, scratch0);
+  ConnectedComponents extractedComponents(maxConnectedComponentSegments, image.get_size(1), scratch0);
 
   {
     const Result result = SimpleDetector_Steps123(
       image,
-      scaleImage_numPyramidLevels,
+      scaleImage_useWhichAlgorithm,
+      scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
       component1d_minComponentWidth, component1d_maxSkipDistance,
       component_minimumNumPixels, component_maximumNumPixels,
       component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
@@ -97,18 +102,18 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     components2d[i] = Array<f64>(numComponentSegments[i+1], 3, scratch0);
   }
 
-  const ConnectedComponentSegment * restrict extractedComponents_constRowPointer = extractedComponents.Pointer(0);
+  const ConnectedComponentSegment * restrict pConstExtractedComponents = extractedComponents.Pointer(0);
   for(s32 i=0; i<extractedComponents.get_size(); i++) {
-    const u16 id = extractedComponents_constRowPointer[i].id;
+    const u16 id = pConstExtractedComponents[i].id;
 
     if(id == 0)
       continue;
 
-    f64 * restrict components2di_rowPointer = components2d[id-1].Pointer(components2d_currentSegment[id-1],0);
+    f64 * restrict pComponents2di = components2d[id-1].Pointer(components2d_currentSegment[id-1],0);
 
-    components2di_rowPointer[0] = extractedComponents_constRowPointer[i].y;
-    components2di_rowPointer[1] = extractedComponents_constRowPointer[i].xStart;
-    components2di_rowPointer[2] = extractedComponents_constRowPointer[i].xEnd;
+    pComponents2di[0] = pConstExtractedComponents[i].y;
+    pComponents2di[1] = pConstExtractedComponents[i].xStart;
+    pComponents2di[2] = pConstExtractedComponents[i].xEnd;
 
     components2d_currentSegment[id-1]++;
   }

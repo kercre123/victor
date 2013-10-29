@@ -22,10 +22,10 @@ namespace Anki
     IN_DDR MemoryStack::MemoryStack(const MemoryStack& ms)
       : buffer(ms.buffer), totalBytes(ms.totalBytes), usedBytes(ms.usedBytes), id(ms.id)
     {
-      AnkiConditionalError(ms.buffer, "Anki.MemoryStack.MemoryStack", "Buffer must be allocated");
-      AnkiConditionalError(ms.totalBytes <= 0x3FFFFFFF, "Anki.MemoryStack.MemoryStack", "Maximum size of a MemoryStack is 2^30 - 1");
-      AnkiConditionalError(MEMORY_ALIGNMENT == 16, "Anki.MemoryStack.MemoryStack", "Currently, only MEMORY_ALIGNMENT == 16 is supported");
-      AnkiConditionalError(ms.totalBytes >= ms.usedBytes, "Anki.MemoryStack.MemoryStack", "Buffer is using more bytes than it has. Try running IsValid() to test for memory corruption.");
+      AnkiConditionalWarn(ms.buffer, "Anki.MemoryStack.MemoryStack", "Buffer must be allocated");
+      AnkiConditionalWarn(ms.totalBytes <= 0x3FFFFFFF, "Anki.MemoryStack.MemoryStack", "Maximum size of a MemoryStack is 2^30 - 1");
+      AnkiConditionalWarn(MEMORY_ALIGNMENT == 16, "Anki.MemoryStack.MemoryStack", "Currently, only MEMORY_ALIGNMENT == 16 is supported");
+      AnkiConditionalWarn(ms.totalBytes >= ms.usedBytes, "Anki.MemoryStack.MemoryStack", "Buffer is using more bytes than it has. Try running IsValid() to test for memory corruption.");
     }
 
     IN_DDR void* MemoryStack::Allocate(s32 numBytesRequested, s32 *numBytesAllocated)

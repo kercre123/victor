@@ -63,5 +63,17 @@ namespace Anki
         this->corners[2].x, this->corners[2].y,
         this->corners[3].x, this->corners[3].y);
     }
+
+    C_Rectangle_s16 get_C_Rectangle_s16(const Rectangle<s16> &rect)
+    {
+      C_Rectangle_s16 cVersion;
+
+      cVersion.left = rect.left;
+      cVersion.right = rect.right;
+      cVersion.top = rect.top;
+      cVersion.bottom = rect.bottom;
+
+      return cVersion;
+    } // C_Rectangle_s16 get_C_Rectangle_s16(Anki::Embedded::Rectangle<s16> &rect)
   } // namespace Embedded
 } // namespace Anki

@@ -69,21 +69,22 @@ namespace Anki
       template<typename Type> Type* Get(const std::string name);
     }; // class Matlab
 
-   
-
 #pragma mark --- Implementations ---
 
     template<typename Type> Result Matlab::PutArray(const Array<Type> &matrix, const std::string name)
     {
+      const s32 matrixHeight = matrix.get_size(0);
+      const s32 matrixWidth = matrix.get_size(1);
+
       AnkiConditionalErrorAndReturnValue(ep, RESULT_FAIL, "Anki.PutArray<Type>", "Matlab engine is not started/connected");
 
       const std::string tmpName = name + std::string("_AnkiTMP");
       const std::string matlabTypeName = Anki::Embedded::ConvertToMatlabTypeString(typeid(Type).name(), sizeof(Type));
 
-      EvalStringEcho("%s=zeros([%d,%d],'%s');", name.data(), matrix.get_size(0), matrix.get_size(1), matlabTypeName.data());
+      EvalStringEcho("%s=zeros([%d,%d],'%s');", name.data(), matrixHeight, matrixWidth, matlabTypeName.data());
 
-      for(s32 y=0; y<matrix.get_size(0); y++) {
-        Put<Type>(matrix.Pointer(y,0), matrix.get_size(1), tmpName);
+      for(s32 y=0; y<matrixHeight; y++) {
+        Put<Type>(matrix.Pointer(y,0), matrixWidth, tmpName);
         EvalStringEcho("%s(%d,:)=%s;", name.data(), y+1, tmpName.data());
       }
 
@@ -113,10 +114,14 @@ namespace Anki
 
       Type *matlabArrayTmp = reinterpret_cast<Type*>(mxGetPr(arrayTmp));
       s32 matlabIndex = 0;
-      for(s32 y=0; y<ankiArray.get_size(0); y++) {
-        Type * rowPointer = ankiArray.Pointer(y, 0);
-        for(s32 x=0; x<ankiArray.get_size(1); x++) {
-          rowPointer[x] = matlabArrayTmp[matlabIndex++];
+
+      s32 ankiArrayHeight = ankiArray.get_size(0);
+      s32 ankiArrayWidth = ankiArray.get_size(1);
+
+      for(s32 y=0; y<ankiArrayHeight; y++) {
+        Type * pThisData = ankiArray.Pointer(y, 0);
+        for(s32 x=0; x<ankiArrayWidth; x++) {
+          pThisData[x] = matlabArrayTmp[matlabIndex++];
         }
       }
 
@@ -167,9 +172,8 @@ namespace Anki
 
       return val;
     } // template<typename Type> T* Matlab::Get(const std::string name)
- 
+
     template<> Result Matlab::Put<Point<s16> >(const Point<s16> * values, s32 nValues, const std::string name);
-    
   } // namespace Embedded
 } // namespace Anki
 

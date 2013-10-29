@@ -21,13 +21,13 @@ classdef EmbeddedConversionsManager < handle
 
             traceBoundaryType = 'matlab_original';
             traceBoundaryType_acceptable = {'matlab_original', 'matlab_loops', 'c_fixedPoint', 'matlab_approximate'};
-            
+
             connectedComponentsType = 'matlab_original';
             connectedComponentsType_acceptable = {'matlab_original', 'matlab_approximate'};
-            
+
             completeCImplementationType = 'matlab_original';
-            completeCImplementationType_acceptable = {'matlab_original', 'c_singleStep123', 'c_singleStep1234', 'c_singleStep12345'};
-            
+            completeCImplementationType_acceptable = {'matlab_original', 'c_singleStep123', 'c_singleStep1234', 'c_singleStep12345', 'c_singleStep123_mediumMemory', 'c_singleStep1234_mediumMemory', 'c_singleStep12345_mediumMemory'};
+
             emptyCenterDetection = 'matlab_original';
             emptyCenterDetection_acceptable = {'matlab_original', 'off'};
 
@@ -41,13 +41,13 @@ classdef EmbeddedConversionsManager < handle
 
             isAcceptable(traceBoundaryType_acceptable, traceBoundaryType);
             this.traceBoundaryType = traceBoundaryType; %#ok<*PROP>
-            
+
             isAcceptable(connectedComponentsType_acceptable, connectedComponentsType);
             this.connectedComponentsType = connectedComponentsType; %#ok<*PROP>
-            
+
             isAcceptable(completeCImplementationType_acceptable, completeCImplementationType);
             this.completeCImplementationType = completeCImplementationType; %#ok<*PROP>
-            
+
             isAcceptable(emptyCenterDetection_acceptable, emptyCenterDetection);
             this.emptyCenterDetection = emptyCenterDetection; %#ok<*PROP>
         end

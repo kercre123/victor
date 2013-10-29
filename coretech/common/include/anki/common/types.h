@@ -9,8 +9,8 @@
  *    $LastChangedBy$
  *    $LastChangedRevision$
  *
- * Description: 
- * 
+ * Description:
+ *
  *   We specify types according to their sign and bits. We should use these in
  *   our code instead of the normal 'int','short', etc. because different
  *   compilers on different architectures treat these differently.
@@ -18,7 +18,7 @@
  * Copyright: Anki, Inc. 2013
  *
  **/
- 
+
 #ifndef ANKICORETECH_COMMON_TYPES_H_
 #define ANKICORETECH_COMMON_TYPES_H_
 
@@ -46,9 +46,30 @@ namespace Anki
 #endif
 
   typedef s32 ReturnCode;
-  
+
 #ifdef __cplusplus
 } // namespace Anki
+#endif
+
+// If we're using c++, Result is in a namespace. In c, it's not.
+#ifdef __cplusplus
+namespace Anki
+{
+  namespace Embedded
+  {
+#endif
+    // Return values:
+    typedef enum {
+      RESULT_OK = 0,
+      RESULT_FAIL = 0xFFFFFFFF,
+      RESULT_FAIL_MEMORY = 0x01000000,
+      RESULT_FAIL_OUT_OF_MEMORY = 0x01000001,
+      RESULT_FAIL_IO = 0x02000000,
+      RESULT_FAIL_INVALID_PARAMETERS = 0x03000000
+    } Result;
+#ifdef __cplusplus
+  }
+}
 #endif
 
 #endif /* ANKICORETECH_COMMON_TYPES_H_ */
