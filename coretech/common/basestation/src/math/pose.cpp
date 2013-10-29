@@ -203,10 +203,11 @@ namespace Anki {
   void Pose3d::applyTo(const Quad3f &quadIn,
                        Quad3f &quadOut) const
   {
-    quadOut[Quad3f::TopLeft]     = (*this) * quadIn[Quad3f::TopLeft];
-    quadOut[Quad3f::TopRight]    = (*this) * quadIn[Quad3f::TopRight];
-    quadOut[Quad3f::BottomLeft]  = (*this) * quadIn[Quad3f::BottomLeft];
-    quadOut[Quad3f::BottomRight] = (*this) * quadIn[Quad3f::BottomRight];
+    using namespace Quad;
+    quadOut[TopLeft]     = (*this) * quadIn[TopLeft];
+    quadOut[TopRight]    = (*this) * quadIn[TopRight];
+    quadOut[BottomLeft]  = (*this) * quadIn[BottomLeft];
+    quadOut[BottomRight] = (*this) * quadIn[BottomRight];
   }
   
   void Pose3d::applyTo(const std::vector<Point3f> &pointsIn,

@@ -12,18 +12,24 @@
 #endif
 
 namespace Anki {
+
+  namespace Quad {
+    
+    enum CornerName {
+      FirstCorner = 0,
+      TopLeft     = 0,
+      BottomLeft  = 1,
+      TopRight    = 2,
+      BottomRight = 3,
+      NumCorners  = 4
+    };
+    
+  } // namespace Quad
   
   template<size_t N, typename T>
   class Quadrilateral : public std::array<Point<N,T>, 4>
   {
   public:
-    
-    enum CornerName {
-      TopLeft     = 0,
-      BottomLeft  = 1,
-      TopRight    = 2,
-      BottomRight = 3
-    };
     
     Quadrilateral();
     
@@ -44,8 +50,8 @@ namespace Anki {
     Quadrilateral<N,T>& operator-=(const Quadrilateral<N,T> &quad2);
     
     // Force access by enumerated CornerNames:
-    const Point<N,T>& operator[] (const CornerName whichCorner) const;
-    Point<N,T>&       operator[] (const CornerName whichCorner);
+    const Point<N,T>& operator[] (const Quad::CornerName whichCorner) const;
+    Point<N,T>&       operator[] (const Quad::CornerName whichCorner);
     
     //const std::vector<Point<N,T> >& get_corners() const;
     
@@ -76,10 +82,10 @@ namespace Anki {
                                     const Point<N,T> &cornerTopRight,
                                     const Point<N,T> &cornerBottomRight)
   {
-    (*this)[TopLeft]     = cornerTopLeft;
-    (*this)[TopRight]    = cornerTopRight;
-    (*this)[BottomLeft]  = cornerBottomLeft;
-    (*this)[BottomRight] = cornerBottomRight;
+    (*this)[Quad::TopLeft]     = cornerTopLeft;
+    (*this)[Quad::TopRight]    = cornerTopRight;
+    (*this)[Quad::BottomLeft]  = cornerBottomLeft;
+    (*this)[Quad::BottomRight] = cornerBottomRight;
   }
   
   template<size_t N, typename T>
@@ -127,7 +133,7 @@ namespace Anki {
   
 
   template<size_t N, typename T>
-  inline const Point<N,T>& Quadrilateral<N,T>::operator[] (const CornerName whichCorner) const
+  inline const Point<N,T>& Quadrilateral<N,T>::operator[] (const Quad::CornerName whichCorner) const
   {
     //return this->corners[whichCorner];
     return std::array<Point<N,T>,4>::operator[](static_cast<int>(whichCorner));
@@ -135,7 +141,7 @@ namespace Anki {
 
   
   template<size_t N, typename T>
-  inline Point<N,T>& Quadrilateral<N,T>::operator[] (const CornerName whichCorner)
+  inline Point<N,T>& Quadrilateral<N,T>::operator[] (const Quad::CornerName whichCorner)
   {
     //return this->corners[whichCorner];
     return std::array<Point<N,T>,4>::operator[](static_cast<int>(whichCorner));
