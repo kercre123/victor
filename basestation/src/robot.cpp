@@ -286,17 +286,17 @@ namespace Anki {
             
             Quad2f corners;
             
-            corners[Quad2f::TopLeft].x()     = blockMsg->x_imgUpperLeft;
-            corners[Quad2f::TopLeft].y()     = blockMsg->y_imgUpperLeft;
+            corners[Quad::TopLeft].x()     = blockMsg->x_imgUpperLeft;
+            corners[Quad::TopLeft].y()     = blockMsg->y_imgUpperLeft;
             
-            corners[Quad2f::BottomLeft].x()  = blockMsg->x_imgLowerLeft;
-            corners[Quad2f::BottomLeft].y()  = blockMsg->y_imgLowerLeft;
+            corners[Quad::BottomLeft].x()  = blockMsg->x_imgLowerLeft;
+            corners[Quad::BottomLeft].y()  = blockMsg->y_imgLowerLeft;
             
-            corners[Quad2f::TopRight].x()    = blockMsg->x_imgUpperRight;
-            corners[Quad2f::TopRight].y()    = blockMsg->y_imgUpperRight;
+            corners[Quad::TopRight].x()    = blockMsg->x_imgUpperRight;
+            corners[Quad::TopRight].y()    = blockMsg->y_imgUpperRight;
             
-            corners[Quad2f::BottomRight].x() = blockMsg->x_imgLowerRight;
-            corners[Quad2f::BottomRight].y() = blockMsg->y_imgLowerRight;
+            corners[Quad::BottomRight].x() = blockMsg->x_imgLowerRight;
+            corners[Quad::BottomRight].y() = blockMsg->y_imgLowerRight;
             
             MarkerUpDirection upDir = static_cast<MarkerUpDirection>(blockMsg->upDirection);
             

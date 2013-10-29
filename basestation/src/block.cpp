@@ -34,30 +34,32 @@ namespace Anki {
       // orientation.
       switch(upDirection)
       {
+          using namespace Quad; // for corner names
+          
         case MARKER_TOP:
           // No reordering of the corners is necessary
           this->corners = cornersIn;
           break;
           
         case MARKER_BOTTOM:
-          this->corners[Quad2f::TopLeft]     = cornersIn[Quad2f::BottomRight];
-          this->corners[Quad2f::BottomRight] = cornersIn[Quad2f::TopLeft];
-          this->corners[Quad2f::TopRight]    = cornersIn[Quad2f::BottomLeft];
-          this->corners[Quad2f::BottomLeft]  = cornersIn[Quad2f::TopRight];
+          this->corners[TopLeft]     = cornersIn[BottomRight];
+          this->corners[BottomRight] = cornersIn[TopLeft];
+          this->corners[TopRight]    = cornersIn[BottomLeft];
+          this->corners[BottomLeft]  = cornersIn[TopRight];
           break;
           
         case MARKER_LEFT:
-          this->corners[Quad2f::TopLeft]     = cornersIn[Quad2f::BottomLeft];
-          this->corners[Quad2f::BottomLeft]  = cornersIn[Quad2f::BottomRight];
-          this->corners[Quad2f::TopRight]    = cornersIn[Quad2f::TopLeft];
-          this->corners[Quad2f::BottomRight] = cornersIn[Quad2f::TopRight];
+          this->corners[TopLeft]     = cornersIn[BottomLeft];
+          this->corners[BottomLeft]  = cornersIn[BottomRight];
+          this->corners[TopRight]    = cornersIn[TopLeft];
+          this->corners[BottomRight] = cornersIn[TopRight];
           break;
           
         case MARKER_RIGHT:
-          this->corners[Quad2f::TopLeft]     = cornersIn[Quad2f::TopRight];
-          this->corners[Quad2f::BottomLeft]  = cornersIn[Quad2f::TopLeft];
-          this->corners[Quad2f::TopRight]    = cornersIn[Quad2f::BottomRight];
-          this->corners[Quad2f::BottomRight] = cornersIn[Quad2f::BottomLeft];
+          this->corners[TopLeft]     = cornersIn[TopRight];
+          this->corners[BottomLeft]  = cornersIn[TopLeft];
+          this->corners[TopRight]    = cornersIn[BottomRight];
+          this->corners[BottomRight] = cornersIn[BottomLeft];
           break;
           
         default:
