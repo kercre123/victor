@@ -69,6 +69,7 @@ namespace Anki {
     
     // Assignment operator:
     Point<N,T>& operator=(const Point<N,T> &other);
+    Point<N,T>& operator=(const T &value);
     
     // Accessors:
     T& operator[] (const size_t i);
@@ -227,6 +228,15 @@ namespace Anki {
   {
     for(size_t i=0; i<N; ++i) {
       this->data[i] = other.data[i];
+    }
+    return *this;
+  }
+  
+  template<size_t N, typename T>
+  Point<N,T>& Point<N,T>::operator=(const T &value)
+  {
+    for(size_t i=0; i<N; ++i) {
+      this->data[i] = value;
     }
     return *this;
   }
