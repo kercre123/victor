@@ -7,9 +7,7 @@
 #define VEHICLEARM_SPEED_CONTROLLER_H_
 
 namespace Anki {
-  // TODO: Rename to just "SpeedController"?
   namespace SpeedController {
-    
     
     // Controller params
     const float KP = 2.f;

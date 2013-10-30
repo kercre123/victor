@@ -29,6 +29,8 @@
 
 //#include "anki/messaging/basestation/messagingInterface.h"
 
+#define TEST_DOCKING 1
+
 namespace Anki
 {
   namespace Cozmo

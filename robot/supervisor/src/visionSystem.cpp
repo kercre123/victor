@@ -1,7 +1,11 @@
 #include "anki/cozmo/robot/visionSystem.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/robot/cozmoBot.h"
 
 #include "anki/cozmo/messageProtocol.h"
+
+// TODO: We should have no basestation includes, move this to shared
+#include "anki/common/basestation/math/Radians.h"
 
 #include <iostream>
 
@@ -36,23 +40,16 @@ namespace Anki {
       
       f32 matCamPixPerMM_ = 1.f;
       
+      // Window within which to search for docking target, specified by
+      // upper left corner + width and height
+      s16 dockTargetWinX_ = -1;
+      s16 dockTargetWinY_ = -1;
+      s16 dockTargetWinW_ = -1;
+      s16 dockTargetWinH_ = -1;
+      
 #if USING_MATLAB_VISION
       Engine *matlabEngine_;
 #endif
-      
-      inline const u8* getHeadCamImage()
-      {
-        assert(headCamFrameGrabber_ != NULL);
-        assert(isInitialized_);
-        return headCamFrameGrabber_();
-      }
-      
-      inline const u8* getMatCamImage()
-      {
-        assert(matCamFrameGrabber_ != NULL);
-        assert(isInitialized_);
-        return matCamFrameGrabber_();
-      }
       
     } // private namespace VisionSystem
     
@@ -186,7 +183,7 @@ namespace Anki {
     {
       u32 numBlocks = 0;
       
-      const u8 *image = getHeadCamImage();
+      const u8 *image = HAL::FrontCameraGetFrame(); //getHeadCamImage();
       const s32 nrows = headCamInfo_->nrows;
       const s32 ncols = headCamInfo_->ncols;
       
@@ -267,8 +264,9 @@ namespace Anki {
           mxArray *mxUpDir = engGetVariable(matlabEngine_, "upDir");
           msg.upDirection = static_cast<u8>(mxGetScalar(mxUpDir)) - 1; // Note the -1 for C vs. Matlab indexing
           
-          // NOTE the negation here!
-          msg.headAngle = -HAL::GetHeadPitch();
+          msg.headAngle = HAL::GetHeadAngle();
+   //       // NOTE the negation here!
+   //       msg.headAngle = -HAL::GetHeadAngle();
           
           fprintf(stdout, "Sending ObservedBlockMarker message: Block %d, Face %d "
                   "at [(%.1f,%.1f) (%.1f,%.1f) (%.1f,%.1f) (%.1f,%.1f)] with "
@@ -306,7 +304,7 @@ namespace Anki {
     {
       ReturnCode retVal = -1;
       
-      const u8 *image = getMatCamImage();
+      const u8 *image = HAL::MatCameraGetFrame();// getMatCamImage();
       const int nrows = matCamInfo_->nrows;
       const int ncols = matCamInfo_->ncols;
       
@@ -404,6 +402,167 @@ namespace Anki {
       
     } // localizeWithMat()
     
+    ReturnCode VisionSystem::setDockingWindow(const s16 xLeft, const s16 yTop,
+                                              const s16 width, const s16 height)
+    {
+      ReturnCode retVal = EXIT_SUCCESS;
+      
+      if(xLeft >= 0 && yTop >= 0 &&
+         (xLeft + width)<headCamInfo_->ncols &&
+         (yTop + height)<headCamInfo_->nrows)
+      {
+        dockTargetWinX_ = xLeft;
+        dockTargetWinY_ = yTop;
+        dockTargetWinW_ = width;
+        dockTargetWinH_ = height;
+      } else {
+        retVal = EXIT_FAILURE;
+      }
+      
+      return retVal;
+      
+    } // setDockingWindow
+    
+    ReturnCode VisionSystem::findDockingTarget(DockingTarget& target)
+    {
+      ReturnCode retVal = EXIT_SUCCESS;
+      const u8 *image = HAL::FrontCameraGetFrame(); // getMatCamImage();
+      const u16 nrows = matCamInfo_->nrows;
+      const u16 ncols = matCamInfo_->ncols;
+      
+      if(dockTargetWinX_ < 0 || dockTargetWinY_ < 0 ||
+         dockTargetWinW_ < 0 || dockTargetWinH_ < 0)
+      {
+        fprintf(stdout, "No docking window set for call to findDockingTarget().\n");
+        retVal = EXIT_FAILURE;
+      }
+      else {
+#if defined(USE_MATLAB_FOR_HEAD_CAMERA)
+        mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(image, nrows, ncols, 4);
+        
+        if(mxImg != NULL) {
+          
+          engPutVariable(matlabEngine_, "headCamImage", mxImg);
+          engEvalString(matlabEngine_, "headCamImage = headCamImage(:,:,[3 2 1]);");
+          
+          mxArray *mxMask = mxCreateDoubleMatrix(1,4,mxREAL);
+          double *mxMaskData = mxGetPr(mxMask);
+          mxMaskData[0] = static_cast<double>(dockTargetWinX_+1);
+          mxMaskData[1] = static_cast<double>(dockTargetWinY_+1);
+          mxMaskData[2] = static_cast<double>(dockTargetWinW_);
+          mxMaskData[3] = static_cast<double>(dockTargetWinH_);
+          engPutVariable(matlabEngine_, "dockTargetMaskRect", mxMask);
+          
+          /*
+#if 1
+          mxArray* mxDotX = mxCreateDoubleMatrix(1,4,mxREAL);
+          mxArray* mxDotY = mxCreateDoubleMatrix(1,4,mxREAL);
+          double* mxDotXdata = mxGetPr(mxDotX);
+          double* mxDotYdata = mxGetPr(mxDotY);
+          for(int i=0; i<4; ++i) {
+            mxDotXdata[i] =
+          }
+          
+          engPutVariable(matlabEngine_, )
+          engEvalString(matlabEngine_,
+                        "hold off, imagesc(headCamImage), axis image, hold on, "
+                        "plot(uMask([1 2 4 3 1]), vMask([1 2 4 3 1]), 'r', 'LineWidth', 3); "
+                        "plot(dotX, dotY, 'go', 'LineWidth', 2);");
+#endif
+           */
+          
+          engEvalString(matlabEngine_,
+                        "uMask = dockTargetMaskRect(1)+dockTargetMaskRect(3)*[0 0 1 1]; "
+                        "vMask = dockTargetMaskRect(2)+dockTargetMaskRect(4)*[0 1 0 1]; "
+                        "hold off, imagesc(headCamImage), axis image, hold on, "
+                        "plot(uMask([1 2 4 3 1]), vMask([1 2 4 3 1]), 'r', 'LineWidth', 3); "
+                        "errMsg = ''; "
+                        "try, "
+                        "[xDock, yDock] = findFourDotTarget(headCamImage, "
+                        "   'uMask', uMask, 'vMask', vMask, "
+                        "   'squareDiagonal', sqrt(sum(dockTargetMaskRect(3:4).^2)), "
+                        "   'TrueSquareWidth', BlockMarker3D.CodeSquareWidth, "
+                        "   'TrueDotWidth', BlockMarker3D.DockingDotWidth, "
+                        "   'TrueDotSpacing', BlockMarker3D.DockingDotSpacing); "
+                        "catch E, "
+                        "  xDock = []; yDock = []; "
+                        "  errMsg = E.message; "
+                        "end");
+          mxArray *mx_xDock = engGetVariable(matlabEngine_, "xDock");
+          mxArray *mx_yDock = engGetVariable(matlabEngine_, "yDock");
+          mxArray *mx_errMsg = engGetVariable(matlabEngine_, "errMsg");
+          
+          if(not mxIsEmpty(mx_errMsg)) {
+            char errStr[1024];
+            mxGetString(mx_errMsg, errStr, 1023);
+            fprintf(stdout, "Error detected running findFourDotTarget: %s\n",
+                    errStr);
+            retVal = EXIT_FAILURE;
+          }
+          else if(mxGetNumberOfElements(mx_xDock) != 4 ||
+             mxGetNumberOfElements(mx_yDock) != 4)
+          {
+            fprintf(stdout, "xDock and yDock were not 4 elements long.\n");
+            retVal = EXIT_FAILURE;
+          }
+          else
+          {
+            double *mx_xDockData = mxGetPr(mx_xDock);
+            double *mx_yDockData = mxGetPr(mx_yDock);
+            
+            // Fill in the output target with what we got from Matlab
+            for(int i=0; i<4; ++i) {
+              target.dotX[i] = static_cast<f32>(mx_xDockData[i]);
+              target.dotY[i] = static_cast<f32>(mx_yDockData[i]);
+            }
+          } // if mx_xDock or mx_yDock is empty
+        
+          
+        } else {
+          
+          fprintf(stdout, "Robot::findDockingTarget() could not get headCamImage "
+                  "for processing in Matlab.\n");
+          retVal = EXIT_FAILURE;
+          
+        } // if mxImg != NULL
+        
+        
+#else  // NOT defined(USE_MATLAB_FOR_HEAD_CAMERA)
+        
+        // TODO: Hook this up to Pete's vision code
+        fprintf(stderr, "Robot::findDockingTarget(): embedded vision "
+                "processing not hooked up yet.\n");
+        
+        retVal = EXIT_FAILURE;
+        
+#endif // defined(USE_MATLAB_FOR_HEAD_CAMERA)
+        
+      } // if docking window set
+      
+      if(retVal == EXIT_SUCCESS) {
+        // Update the search window based on the target we found
+        f32 xcen = 0.25f*(target.dotX[0] + target.dotX[1] +
+                          target.dotX[2] + target.dotX[3]);
+        f32 ycen = 0.25f*(target.dotY[0] + target.dotY[1] +
+                          target.dotY[2] + target.dotY[3]);
+        
+        f32 width = 2.f*(target.dotX[3] - target.dotX[0]);
+        f32 height = 2.f*(target.dotY[3] - target.dotY[0]);
+        
+        if(width <= 0.f || height <= 0.f) {
+          fprintf(stdout, "Width/height of docking target <= 0\n");
+          retVal = EXIT_FAILURE;
+        } else {
+          dockTargetWinX_ = xcen - 0.5f*width;
+          dockTargetWinY_ = ycen - 0.5f*height;
+          dockTargetWinW_ = width;
+          dockTargetWinH_ = height;
+        }
+        
+      }
+      return retVal;
+      
+    } // findDockingTarget()
     
     
   } // namespace Cozmo

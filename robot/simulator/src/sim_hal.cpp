@@ -167,25 +167,29 @@ namespace Anki {
       }
       
       //Set the motors to velocity mode
+      headMotor_->setPosition(WEBOTS_INFINITY);
+      liftMotor_->setPosition(WEBOTS_INFINITY);
+      liftMotor2_->setPosition(WEBOTS_INFINITY);
       leftWheelMotor_->setPosition(WEBOTS_INFINITY);
       rightWheelMotor_->setPosition(WEBOTS_INFINITY);
       
-      // Enable position measurements on wheel motors
+      // Enable position measurements on head, lift, and wheel motors
       leftWheelMotor_->enablePosition(TIME_STEP);
       rightWheelMotor_->enablePosition(TIME_STEP);
-      
-      // Set speed to 0
-      leftWheelMotor_->setVelocity(0);
-      rightWheelMotor_->setVelocity(0);
-      
-      
-      // Enable head/lift motor position measurements:
       headMotor_->enablePosition(TIME_STEP);
       liftMotor_->enablePosition(TIME_STEP);
       liftMotor2_->enablePosition(TIME_STEP);
-      headMotor_->setPosition(0);
-      liftMotor_->setPosition(-0.275);
-      liftMotor2_->setPosition(0.275);
+      
+      // Set speeds to 0
+      leftWheelMotor_->setVelocity(0);
+      rightWheelMotor_->setVelocity(0);
+      headMotor_->setVelocity(0);
+      liftMotor_->setVelocity(0);
+      liftMotor2_->setVelocity(0);
+           
+      //headMotor_->setPosition(0);
+      //liftMotor_->setPosition(-0.275);
+      //liftMotor2_->setPosition(0.275);
       
       // Get localization sensors
       gps_ = webotRobot_.getGPS("gps");
@@ -296,32 +300,68 @@ namespace Anki {
       //printf("RIGHT: %f rad/s, %f mm/s\n", -axesSpeeds_rad_per_s[0], mm_per_s);
       return mm_per_s;
     }
-    
+  
+    /* Won't be able to do this on real robot, can only command power/speed
     void HAL::SetHeadPitch(float pitch_rad)
     {
       headMotor_->setPosition(pitch_rad);
     }
+     */
+    void HAL::SetHeadAngularVelocity(const f32 rad_per_sec)
+    {
+      // Only tilt if we are within limits
+      // (Webots MaxStop and MinStop don't seem to be working: perhaps
+      //  because the motors are in velocity control mode?)
+      const f32 currentHeadAngle = HAL::GetHeadAngle();
+      if(currentHeadAngle >= MIN_HEAD_ANGLE &&
+         currentHeadAngle <= MAX_HEAD_ANGLE)
+      {
+        headMotor_->setVelocity(rad_per_sec);
+      } else {
+        fprintf(stdout, "Head at angular limit, refusing to tilt.\n");
+        headMotor_->setVelocity(0.0);
+        // TODO: return a failure?
+      }
+    }
     
-    float HAL::GetHeadPitch()
+    float HAL::GetHeadAngle()
     {
       return headMotor_->getPosition();
     }
     
+    /* Won't be able to command angular position directly on real robot, can 
+     only set power/speed
     void HAL::SetLiftPitch(float pitch_rad)
     {
       liftMotor_->setPosition(pitch_rad);
       liftMotor2_->setPosition(-pitch_rad);
     }
+     */
+    void HAL::SetLiftAngularVelocity(const f32 rad_per_sec)
+    {
+      liftMotor_->setVelocity(rad_per_sec);
+      liftMotor2_->setVelocity(-rad_per_sec);
+    }
     
-    float HAL::GetLiftPitch()
+    float HAL::GetLiftAngle()
     {
       return liftMotor_->getPosition();
     }
-    
-    
+        
     void HAL::EngageGripper()
     {
-      
+      //Should we lock to a block which is close to the connector?
+      if (!gripperEngaged_ && con_->getPresence() == 1)
+      {
+        if (unlockhysteresis_ == 0)
+        {
+          con_->lock();
+          gripperEngaged_ = true;
+          //printf("LOCKED!\n");
+        }else{
+          unlockhysteresis_--;
+        }
+      }
     }
     
     void HAL::DisengageGripper()
@@ -337,23 +377,6 @@ namespace Anki {
     
     bool HAL::IsGripperEngaged() {
       return gripperEngaged_;
-    }
-    
-    
-    void HAL::ManageGripper()
-    {
-      //Should we lock to a block which is close to the connector?
-      if (!gripperEngaged_ && con_->getPresence() == 1)
-      {
-        if (unlockhysteresis_ == 0)
-        {
-          con_->lock();
-          gripperEngaged_ = true;
-          //printf("LOCKED!\n");
-        }else{
-          unlockhysteresis_--;
-        }
-      }
     }
     
     void HAL::UpdateDisplay(void)

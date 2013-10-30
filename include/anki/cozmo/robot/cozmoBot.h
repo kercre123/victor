@@ -36,11 +36,9 @@ namespace Anki {
       // State Machine Operation Modes
       //
       enum OperationMode {
-        INITIATE_PRE_DOCK,
-        PRE_DOCK,
+        INITIALIZING,
+        WAITING,
         DOCK,
-        LIFT_BLOCK,
-        PLACE_BLOCK,
         FOLLOW_PATH
       };
       

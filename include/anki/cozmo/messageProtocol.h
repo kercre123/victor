@@ -207,6 +207,8 @@ typedef enum {
   MSG_V2B_CORE_HEAD_CAMERA_CALIBRATION,
   
 
+  // Docking
+  MSG_B2V_CORE_INITIATE_DOCK,
 
   // ** Playback system related commands
 /*
@@ -561,6 +563,25 @@ typedef struct {
   u32 robotID;
   // Other stuff?
 } CozmoMsg_RobotAdded;
+
+// MSG_B2V_CORE_INITIATE_DOCK
+typedef struct {
+  u8 size;
+  u8 msgID;        // MSG_B2V_CORE_INITIATE_DOCK
+  
+  // Desired head angle so that dots will be in view
+  f32 headAngle;
+  
+  // Desired lift height so that we can dock with the block
+  f32 liftHeight;
+  
+  // Desired docking dot locations in the image
+  f32 dotX[4], dotY[4];
+  
+  // Initial window within which to search for the target
+  s16 winX, winY, winWidth, winHeight;
+  
+} CozmoMsg_InitiateDock;
 
 
 #endif  // #ifndef COZMO_MSG_PROTOCOL

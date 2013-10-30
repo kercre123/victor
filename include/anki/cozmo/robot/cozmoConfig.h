@@ -22,9 +22,20 @@ namespace Anki {
 
     const f32 MAT_CAM_HEIGHT_FROM_GROUND_MM = (0.5f*WHEEL_DIAMETER_MM) - 3.f;
     
+    // TODO: Currently set to Webots specs
+    const f32 LIFT_JOINT_HEIGHT = 27.f + (0.5f*WHEEL_DIAMETER_MM);
+    const f32 LIFT_LENGTH = 97.5f;
+    const f32 LIFT_HEIGHT_LOW = 5.f;
+    const f32 LIFT_HEIGHT_HIGHT = 95.f; 
+    
+    // TODO: convert to using these in degree form?
+    const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);
+    const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 30.f);
+    
     // TODO: make these 3-element f32 arrays. Currently, can't instantiate with those.
 #define NECK_JOINT_POSITION {{0.f, 9.5f, 25.f}} // relative to robot origin
 #define HEAD_CAM_POSITION   {{0.f, 25.f, 15.f}} // relative to neck joint
+#define LIFT_BASE_POSITION  {{0.f, -35.f, 27.f}} // relative to robot origin
     
 #define BLOCKMARKER3D_USE_OUTSIDE_SQUARE false
     

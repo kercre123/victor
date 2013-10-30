@@ -64,23 +64,30 @@ namespace Anki {
       void queueIncomingMessage(const u8 *msg, const u8 msgSize);
       bool hasOutgoingMessages() const;
       void getOutgoingMessage(u8 *msgOut, u8 &msgSize);
-            
+      
+      void dockWithBlock(const Block& block);
+      
     protected:
       u32  ID;
       bool addedToWorld;
+      
+      Pose3d pose;
+      void updatePose();
       
       Camera camDown, camHead;
       bool camDownCalibSet, camHeadCalibSet;
       const Pose3d neckPose; // joint around which head rotates
       const Pose3d headCamPose; // in canonical (untilted) position w.r.t. neck joint
+      const Pose3d liftBasePose; // around which the base rotates/lifts
+      Radians currentHeadAngle;
       
-      Pose3d pose;
-      void updatePose();
+
       
       //BlockWorld &world;
       
       OperationMode mode, nextMode;
       bool setOperationMode(OperationMode newMode);
+      bool isCarryingBlock;
       
       const MatMarker2d            *matMarker;
       

@@ -154,6 +154,7 @@ namespace Anki {
       typedef Point3<unsigned char> Color;
       
       enum FaceName {
+        FIRST_FACE  = 0,
         FRONT_FACE  = 0,
         LEFT_FACE   = 1,
         BACK_FACE   = 2,
@@ -246,6 +247,9 @@ namespace Anki {
     
     inline FaceType  BlockMarker3d::get_faceType() const
     { return this->faceType; }
+    
+    inline const Pose3d& BlockMarker3d::get_pose() const
+    { return this->pose; }
     
 
     //

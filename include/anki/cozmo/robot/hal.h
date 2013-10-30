@@ -99,15 +99,16 @@ namespace Anki
       f32 GetRightWheelSpeed();
       
       // Head pitch
-      void SetHeadPitch(f32 pitch_rad);
-      f32  GetHeadPitch();
+      //void SetHeadPitch(f32 pitch_rad);
+      void SetHeadAngularVelocity(const f32 rad_per_sec);
+      f32  GetHeadAngle();
       
       // Lift position
-      void SetLiftPitch(f32 pitch_rad);
-      f32  GetLiftPitch();
+      //void SetLiftPitch(f32 pitch_rad);
+      void SetLiftAngularVelocity(const f32 rad_per_sec);
+      f32  GetLiftAngle();
       
       // Gripper control
-      void ManageGripper(); // needed?
       void EngageGripper();
       void DisengageGripper();
       bool IsGripperEngaged();

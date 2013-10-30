@@ -197,6 +197,15 @@ namespace Anki
               
               this->blocks[blockTypeIndex].push_back(blockSeen);
               
+#if(TEST_DOCKING)
+              static bool dockingStarted = false;
+              if(not dockingStarted && this->getNumRobots() > 0) {
+                
+                this->robots[0].dockWithBlock(this->blocks[blockTypeIndex].back());
+                dockingStarted = true;
+              }
+#endif
+              
             } else {
               if(overlapping.size() > 1) {
                 fprintf(stdout, "More than one overlapping block found -- will use first.\n");
@@ -217,6 +226,8 @@ namespace Anki
           } // for each block seen
           
         } // for each blockType
+        
+
         
       } // if we saw any block markers
       
