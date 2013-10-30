@@ -79,7 +79,15 @@ namespace Anki
       //typedef std::map<u8, Robot*> RobotList_type;
       typedef std::vector<Robot> RobotList_type;
       RobotList_type robots;
-            
+      
+      typedef std::pair<BlockMarker2d&, Pose3d> MarkerPosePair;
+      void clusterBlockPoses(const std::vector<MarkerPosePair>& blockPoses,
+                             const f32 distThreshold,
+                             std::vector<std::vector<const MarkerPosePair*> >& markerClusters);
+      
+      typedef std::multimap<BlockType, BlockMarker2d> BlockMarker2dMultiMap;
+      void addAndUpdateBlocks(BlockMarker2dMultiMap& blockMarkers2d);
+      
     }; // class BlockWorld
 
     inline size_t BlockWorld::getNumRobots() const

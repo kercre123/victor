@@ -55,30 +55,124 @@ namespace Anki
       this->messages.push(msg);
     }
     
-    void BlockWorld::update(void)
+    
+    void updateSelectedBlock(Robot& robot, const Block* currentWorldBlock)
     {
-      // Get updated observations from each robot and update blocks' and robots'
-      // poses accordingly
-      typedef std::multimap<BlockType, BlockMarker2d> BlockMarker2dMultiMap;
-      BlockMarker2dMultiMap blockMarkers2d;
+      CORETECH_ASSERT(currentWorldBlock != NULL);
       
-      for(Robot& robot : this->robots)
+      const Camera& cam = robot.get_camHead();
+      
+      // Get the block's pose w.r.t. this robot's camera, so we can
+      // project it
+      Pose3d crntPose = currentWorldBlock->get_pose().getWithRespectTo(&(cam.get_pose()));
+      
+      Point2f imgPosCrnt;
+      cam.project3dPoint(crntPose.get_translation(), imgPosCrnt);
+      
+      if(imgPosCrnt.x() >= 0.f && imgPosCrnt.y() >= 0.f)
       {
-        // Tell each robot to take a step, which will have it
-        // check and parse any messages received from the physical
-        // robot, and update its pose.
-        robot.step();
+        const Point2f& imgCen = cam.get_calibration().get_center();
         
-        // Adds the 2d markers each robot saw to the multimap container,
-        // grouped by the block type of the marker
-        const std::vector<BlockMarker2d>& markers2d = robot.getVisibleBlockMarkers2d();
-        for(const BlockMarker2d& marker2d : markers2d)
-        {
-          blockMarkers2d.emplace(marker2d.get_blockType(), marker2d);
+        const Block* blockSel = robot.get_selectedBlock();
+        
+        if(blockSel == NULL) {
+          // If the robot does not have a selected block, use this one
+          robot.set_selectedBlock(currentWorldBlock);
         }
+        else if(blockSel != currentWorldBlock) { // selected not already this blockSeen
+          
+          // get the currently-selected block's origin projected into the
+          // robot's image
+          Pose3d selPose = blockSel->get_pose().getWithRespectTo(&(cam.get_pose()));
+          
+          Point2f imgPosSel;
+          cam.project3dPoint(selPose.get_translation(), imgPosSel);
+          
+          const f32 crntDist = computeDistanceBetween(imgPosCrnt, imgCen);
+          const f32 selDist  = computeDistanceBetween(imgPosSel,  imgCen);
+          
+          // if blockSeen's projected origin is closer to the image
+          // center than the currently-selected one, use this
+          // blockSeen as the new selection for this robot
+          if(crntDist < selDist) {
+            robot.set_selectedBlock(currentWorldBlock);
+          }
+          
+        } // if/else blockSel==NULL
         
-      } // for each robot
+      } // if this blockSeen is within this robot's image
       
+    } // updateSelectedBlock()
+
+    
+    void getCorrespondingCorners(const BlockMarker2d& marker2d,
+                                 const Block&         block,
+                                 Quad3f&              corners3d)
+    {
+      const Block::FaceName whichFace = Block::FaceType_to_FaceName(marker2d.get_faceType());
+      const BlockMarker3d& marker3d = block.get_faceMarker(whichFace);
+      
+      // First update the head pose according to the blockMarker
+      // TODO: this should probably not actually rotate the head but instead
+      //       use the head angle from the correct timestamped state history?
+      //       (doing it this way prevents this method from being const since
+      //        it changes the robot for each marker)
+      Robot& robot = marker2d.get_seenBy();
+      robot.set_headAngle(marker2d.get_headAngle());
+      
+      // Figure out where the marker we saw is in 3D space, in camera's
+      // coordinate frame. (Since the marker's coordinates relative to
+      // the block are used here, the computed pose will be the blockPose
+      // we want -- still relative to the camera however.)
+      marker3d.getSquareCorners(corners3d, &(block.get_pose())); // corners3d relative to (canonical) Block pose
+      
+    } // getCorrespondingCorners()
+    
+    void BlockWorld::clusterBlockPoses(const std::vector<MarkerPosePair>& blockPoses,
+                                       const f32 distThreshold,
+                                       std::vector<std::vector<const MarkerPosePair*> >& markerClusters)
+    {
+      std::vector<bool> assigned(blockPoses.size(), false);
+      
+      for(size_t i_pose=0; i_pose < blockPoses.size(); ++i_pose)
+      {
+        if(not assigned[i_pose])
+        {
+          // Start a new block with this marker and mark it as assigned
+          // to a block
+          markerClusters.emplace_back(); // adds new cluster
+          markerClusters.back().emplace_back(&(blockPoses[i_pose])); // add this marker to that cluster
+          assigned[i_pose] = true;
+          
+          // See how far unassigned marker's poses are from this one:
+          for(size_t i_other=0; i_other < blockPoses.size(); ++i_other)
+          {
+            if(not assigned[i_other])
+            {
+              f32 dist = computeDistanceBetween(blockPoses[i_pose].second,
+                                                blockPoses[i_other].second);
+              
+              // If close enough, add it to the current cluster
+              if(dist < distThreshold) {
+                markerClusters.back().emplace_back(&(blockPoses[i_other]));
+              }
+            } // if not assigned
+          } // for each other blockPose
+        } // if not assigned
+      } // for each blockPose
+      
+      // Sanity check:
+      for(bool each_assigned : assigned)
+      {
+        // All markers should have been assigned a block
+        CORETECH_ASSERT(each_assigned);
+      }
+      
+    } // clusterBlockPoses()
+    
+    
+    void BlockWorld::addAndUpdateBlocks(BlockMarker2dMultiMap& blockMarkers2d)
+    {
       // If any robots saw any markers, update/add the corresponding blocks:
       if(not blockMarkers2d.empty())
       {
@@ -105,7 +199,7 @@ namespace Anki
           // reference to that 2d marker.  (This is so we can recompute
           // Block pose from clusters of 2d markers later, without having to
           // reassociate them.)
-          std::vector<std::pair<BlockMarker2d&, Pose3d> > blockPoses;
+          std::vector<MarkerPosePair> blockPoses;
           
           // Second FOR loop iterates over each marker with this BlockType,
           // using the range we just got from equal_range.
@@ -117,27 +211,10 @@ namespace Anki
             // type as the Block we instantiated above.
             CORETECH_ASSERT(marker2d.get_blockType() == B_init.get_type());
             
-            // Get the face from the current block type that has this marker's
-            // face type.
-            const Block::FaceName whichFace = Block::FaceType_to_FaceName(marker2d.get_faceType());
-            const BlockMarker3d& marker3d = B_init.get_faceMarker(whichFace);
-            
-            // First update the head pose according to the blockMarker
-            // TODO: this should probably not actually rotate the head but instead
-            //       use the head angle from the correct timestamped state history?
-            //       (doing it this way prevents this method from being const since
-            //        it changes the robot for each marker)
-            Robot& robot = marker2d.get_seenBy();
-            robot.set_headAngle(marker2d.get_headAngle());
-            
-            // Figure out where the marker we saw is in 3D space, in camera's
-            // coordinate frame. (Since the marker's coordinates relative to
-            // the block are used here, the computed pose will be the blockPose
-            // we want -- still relative to the camera however.)
             Quad3f corners3d;
-            marker3d.getSquareCorners(corners3d, &(B_init.get_pose())); // corners3d relative to (canonical) Block pose
-            Pose3d blockPose(robot.get_camHead().computeObjectPose(marker2d.get_quad(),
-                                                                   corners3d) );
+            getCorrespondingCorners(marker2d, B_init, corners3d);
+            const Camera& cam = marker2d.get_seenBy().get_camHead();
+            Pose3d blockPose(cam.computeObjectPose(marker2d.get_quad(), corners3d));
             
             // Now get the block pose in World coordinates using the pose tree,
             // instead of being in camera-centric coordinates, and add it to the
@@ -149,10 +226,78 @@ namespace Anki
           std::vector<Block> blocksSeen;
           
           if(blockPoses.size() > 1) {
-            // TODO: cluster poses, recompute pose of each cluster, and a block to blocksSeenf for each
             
-            fprintf(stdout, "Saw %lu markers with type %d, need to implement "
-                    "clustering.\n", blockPoses.size(), B_init.get_type());
+            // Group markers which could be part of the same block (i.e. those
+            // whose poses are colocated, noting that the pose is relative to
+            // the center of the block)
+            std::vector<std::vector<const MarkerPosePair*> > markerClusters;
+            clusterBlockPoses(blockPoses, 0.5f*B_init.get_minDim(),
+                              markerClusters);
+            
+            fprintf(stdout, "Grouping %lu observed 2D markers of type %d into %lu blocks.\n",
+                    blockPoses.size(), B_init.get_type(), markerClusters.size());
+
+            
+            // For each new block, re-estimate the pose based on all markers that
+            // were assigned to it
+            for(auto & cluster : markerClusters)
+            {
+              CORETECH_ASSERT(not cluster.empty());
+              
+              if(cluster.size() == 1) {
+                // No need to re-estimate, just use the one marker we saw.
+                B_init.set_pose(cluster[0]->second);
+                blocksSeen.push_back(B_init);
+              }
+              else {
+                std::vector<Point2f> imgPoints;
+                std::vector<Point3f> objPoints;
+                imgPoints.reserve(4*cluster.size());
+                objPoints.reserve(4*cluster.size());
+                
+                // TODO: Implement ability to estimate block pose with markers seen by different robots
+                const Robot* robot = &(cluster[0]->first.get_seenBy());
+                
+                for(auto & clusterMember : cluster)
+                {
+                  const BlockMarker2d& marker2d = clusterMember->first;
+                  
+                  if(&(marker2d.get_seenBy()) == robot)
+                  {
+                    Quad3f corners3d;
+                    getCorrespondingCorners(marker2d, B_init, corners3d);
+                    
+                    for(Quad::CornerName i_face=Quad::FirstCorner;
+                        i_face < Quad::NumCorners; ++i_face)
+                    {
+                      imgPoints.push_back(marker2d.get_quad()[i_face]);
+                      objPoints.push_back(corners3d[i_face]);
+                    }
+                  }
+                  else {
+                    fprintf(stdout, "Ability to re-estimate single block's "
+                            "pose from markers seen by two different robots "
+                            "not yet implemented. Will just use markers from "
+                            "first robot in the cluster.\n");
+                  }
+                  
+                } // for each cluster member
+                
+                // Compute the block pose from all the corresponding 2d (image)
+                // and 3d (object) points
+                Pose3d blockPose(robot->get_camHead().computeObjectPose(imgPoints, objPoints));
+                
+                // Now get the block pose in World coordinates using the pose
+                // tree, instead of being in camera-centric coordinates, and
+                // assign that pose to the temporary Block of this type
+                B_init.set_pose(blockPose.getWithRespectTo(Pose3d::World));
+                
+                // Add this to the list of blocks seen
+                blocksSeen.push_back(B_init);
+                
+              } // if 1 or more members in this cluster
+              
+            } // for each cluster
             
           } else {
             CORETECH_ASSERT(not blockPoses.empty());
@@ -218,55 +363,15 @@ namespace Anki
               
             } // if/else overlapping existing blocks found
             
+            // Set the updated world block as the selected block for each robot for
+            // which it's centroid projects closest to the robot's center of
+            // field of view (and actually visible by that robot)
             if(currentWorldBlock != NULL)
             {
-              // Set the updated world block as the selected block for each robot for
-              // which it's centroid projects closest to the robot's center of
-              // field of view (and actually visible by that robot)
               for(Robot& robot : this->robots)
               {
-                const Camera& cam = robot.get_camHead();
-                
-                // Get the block's pose w.r.t. this robot's camera, so we can
-                // project it
-                Pose3d crntPose = currentWorldBlock->get_pose().getWithRespectTo(&(cam.get_pose()));
-                
-                Point2f imgPosCrnt;
-                cam.project3dPoint(crntPose.get_translation(), imgPosCrnt);
-                
-                if(imgPosCrnt.x() >= 0.f && imgPosCrnt.y() >= 0.f)
-                {
-                  const Point2f& imgCen = cam.get_calibration().get_center();
-                  
-                  const Block* blockSel = robot.get_selectedBlock();
-                  
-                  if(blockSel == NULL) {
-                    // If the robot does not have a selected block, use this one
-                    robot.set_selectedBlock(currentWorldBlock);
-                  }
-                  else if(blockSel != currentWorldBlock) { // selected not already this blockSeen
-                    
-                    // get the currently-selected block's origin projected into the
-                    // robot's image
-                    Pose3d selPose = blockSel->get_pose().getWithRespectTo(&(cam.get_pose()));
-                    
-                    Point2f imgPosSel;
-                    cam.project3dPoint(selPose.get_translation(), imgPosSel);
-                    
-                    const f32 crntDist = computeDistanceBetween(imgPosCrnt, imgCen);
-                    const f32 selDist  = computeDistanceBetween(imgPosSel,  imgCen);
-                    
-                    // if blockSeen's projected origin is closer to the image
-                    // center than the currently-selected one, use this
-                    // blockSeen as the new selection for this robot
-                    if(crntDist < selDist) {
-                      robot.set_selectedBlock(currentWorldBlock);
-                    }
-                  } // if/else blockSel==NULL
-                  
-                } // if this blockSeen is within this robot's image
+                //updateSelectedBlock(robot, currentWorldBlock);
               } // for each robot
-              
             } // if currentWorldBlock not NULL
             
           } // for each block seen
@@ -274,6 +379,34 @@ namespace Anki
         } // for each blockType
         
       } // if we saw any block markers
+      
+    } // addAndUpdateBlocks()
+    
+    
+    void BlockWorld::update(void)
+    {
+      // Get updated observations from each robot and update blocks' and robots'
+      // poses accordingly
+      BlockMarker2dMultiMap blockMarkers2d;
+      
+      for(Robot& robot : this->robots)
+      {
+        // Tell each robot to take a step, which will have it
+        // check and parse any messages received from the physical
+        // robot, and update its pose.
+        robot.step();
+        
+        // Adds the 2d markers each robot saw to the multimap container,
+        // grouped by the block type of the marker
+        const std::vector<BlockMarker2d>& markers2d = robot.getVisibleBlockMarkers2d();
+        for(const BlockMarker2d& marker2d : markers2d)
+        {
+          blockMarkers2d.emplace(marker2d.get_blockType(), marker2d);
+        }
+        
+      } // for each robot
+      
+      addAndUpdateBlocks(blockMarkers2d);
       
     } // update()
     
