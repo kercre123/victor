@@ -145,6 +145,8 @@ namespace Anki {
       snprintf(cmd, 255, "h_imgFig = figure; "
                "subplot(121); "
                "h_headImg = imshow(zeros(%d,%d)); "
+               "hold('on'); "
+               "h_dockTargetWin = plot(nan, nan, 'r'); "
                "title('Head Camera'); "
                "subplot(122); "
                "h_matImg = imshow(zeros(%d,%d)); "
@@ -453,29 +455,9 @@ namespace Anki {
           mxMaskData[3] = static_cast<double>(dockTargetWinH_);
           engPutVariable(matlabEngine_, "dockTargetMaskRect", mxMask);
           
-          /*
-#if 1
-          mxArray* mxDotX = mxCreateDoubleMatrix(1,4,mxREAL);
-          mxArray* mxDotY = mxCreateDoubleMatrix(1,4,mxREAL);
-          double* mxDotXdata = mxGetPr(mxDotX);
-          double* mxDotYdata = mxGetPr(mxDotY);
-          for(int i=0; i<4; ++i) {
-            mxDotXdata[i] =
-          }
-          
-          engPutVariable(matlabEngine_, )
-          engEvalString(matlabEngine_,
-                        "hold off, imagesc(headCamImage), axis image, hold on, "
-                        "plot(uMask([1 2 4 3 1]), vMask([1 2 4 3 1]), 'r', 'LineWidth', 3); "
-                        "plot(dotX, dotY, 'go', 'LineWidth', 2);");
-#endif
-           */
-          
           engEvalString(matlabEngine_,
                         "uMask = dockTargetMaskRect(1)+dockTargetMaskRect(3)*[0 0 1 1]; "
                         "vMask = dockTargetMaskRect(2)+dockTargetMaskRect(4)*[0 1 0 1]; "
-                        "hold off, imagesc(headCamImage), axis image, hold on, "
-                        "plot(uMask([1 2 4 3 1]), vMask([1 2 4 3 1]), 'r', 'LineWidth', 3); "
                         "errMsg = ''; "
                         "try, "
                         "[xDock, yDock] = findFourDotTarget(headCamImage, "
@@ -488,6 +470,14 @@ namespace Anki {
                         "  xDock = []; yDock = []; "
                         "  errMsg = E.message; "
                         "end");
+          
+#if DISPLAY_MATLAB_IMAGES
+          engEvalString(matlabEngine_,
+                        "set(h_headImg, 'CData', headCamImage); "
+                        "set(h_dockTargetWin, 'XData', uMask([1 2 4 3 1]), "
+                        "                     'YData', vMask([1 2 4 3 1]));");
+#endif
+          
           mxArray *mx_xDock = engGetVariable(matlabEngine_, "xDock");
           mxArray *mx_yDock = engGetVariable(matlabEngine_, "yDock");
           mxArray *mx_errMsg = engGetVariable(matlabEngine_, "errMsg");
