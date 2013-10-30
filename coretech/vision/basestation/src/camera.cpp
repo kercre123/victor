@@ -31,7 +31,7 @@ namespace Anki {
   
   CameraCalibration::CameraCalibration()
   : nrows(480), ncols(640), focalLength_x(1.f), focalLength_y(1.f),
-    center_x(0.f), center_y(0.f),
+    center(0.f,0.f),
     skew(0.f)
   {
     /*
@@ -47,7 +47,7 @@ namespace Anki {
                                        const f32 skew_in)
   : nrows(nrowsIn), ncols(ncolsIn),
     focalLength_x(fx), focalLength_y(fy),
-    center_x(cenx), center_y(ceny), skew(skew_in)
+    center(cenx, ceny), skew(skew_in)
   {
     /*
     std::fill(this->distortionCoeffs.begin(),
@@ -60,8 +60,8 @@ namespace Anki {
   Matrix_3x3f CameraCalibration::get_calibrationMatrix(void) const
   {
     f32 K_data[9] = {
-      this->focalLength_x, this->focalLength_x*this->skew, this->center_x,
-      0.f,                 this->focalLength_y,            this->center_y,
+      this->focalLength_x, this->focalLength_x*this->skew, this->center.x(),
+      0.f,                 this->focalLength_y,            this->center.y(),
       0.f,                 0.f,                            1.f};
     
     Matrix_3x3f K(K_data);
@@ -123,48 +123,52 @@ namespace Anki {
 
   } // computeObjectPose(from quads)
   
+  void  Camera::project3dPoint(const Point3f& objPoint,
+                               Point2f&       imgPoint) const
+  {
+    const f32 BEHIND_CAM = std::numeric_limits<f32>::quiet_NaN();
+    
+    if(objPoint.z() <= 0.f)
+    {
+      // Point not visible (not in front of camera)
+      imgPoint = BEHIND_CAM;
+      
+    } else {
+      // Point visible, project it
+      imgPoint.x() = (objPoint.x() / objPoint.z());
+      imgPoint.y() = (objPoint.y() / objPoint.z());
+      
+      // TODO: Add radial distortion here
+      //distortCoordinate(imgPoints[i_corner], imgPoints[i_corner]);
+      
+      imgPoint.x() *= this->calibration.get_focalLength_x();
+      imgPoint.y() *= this->calibration.get_focalLength_y();
+      
+      imgPoint += this->calibration.get_center();
+    }
+    
+  } // project3dPoint()
   
   // Compute the projected image locations of a set of 3D points:
   void Camera::project3dPoints(const std::vector<Point3f> &objPoints,
                        std::vector<Point2f>       &imgPoints) const
   {
-    CORETECH_THROW("Unimplemented!")
-  }
+    imgPoints.resize(objPoints.size());
+    for(size_t i = 0; i<objPoints.size(); ++i)
+    {
+      project3dPoint(objPoints[i], imgPoints[i]);
+    }
+  } // project3dPoints(std::vectors)
   
   void Camera::project3dPoints(const Quad3f &objPoints,
                        Quad2f       &imgPoints) const
   {
-    const f32 fx = this->calibration.get_focalLength_x();
-    const f32 fy = this->calibration.get_focalLength_y();
-    const Point2f& center = this->calibration.get_center_pt();
-    
     for(Quad::CornerName i_corner=Quad::FirstCorner;
         i_corner < Quad::NumCorners; ++i_corner)
     {
-      if(objPoints[i_corner].z() <= 0.f)
-      {
-        // Point not visible (not in front of camera)
-        imgPoints[i_corner].x() = -1.f;
-        imgPoints[i_corner].y() = -1.f;
-        
-      } else {
-        // Point visible, project it
-        imgPoints[i_corner].x() = (objPoints[i_corner].x() /
-                                   objPoints[i_corner].z());
-        imgPoints[i_corner].y() = (objPoints[i_corner].y() /
-                                   objPoints[i_corner].z());
-        
-        // TODO: Add radial distortion here
-        //distortCoordinate(imgPoints[i_corner], imgPoints[i_corner]);
-        
-        imgPoints[i_corner].x() *= fx;
-        imgPoints[i_corner].y() *= fy;
-        
-        imgPoints[i_corner] += center;
-      }
+      project3dPoint(objPoints[i_corner], imgPoints[i_corner]);
     }
-
-  } // project3dPoints()
+  } // project3dPoints(Quads)
 
   
 } // namespace Anki

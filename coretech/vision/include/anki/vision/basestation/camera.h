@@ -45,8 +45,8 @@ namespace Anki {
     f32     get_focalLength_y() const;
     f32     get_center_x()      const;
     f32     get_center_y()      const;
-    Point2f get_center_pt()     const;
     f32     get_skew()          const;
+    const Point2f& get_center() const;
     //const   DistortionCoeffVector& get_distortionCoeffs() const;
     
     // Returns the 3x3 camera calibration matrix:
@@ -59,7 +59,7 @@ namespace Anki {
     
     u16  nrows, ncols;
     f32  focalLength_x, focalLength_y;
-    f32  center_x, center_y; 
+    Point2f center;
     f32  skew;
     //DistortionCoeffVector distortionCoeffs; // radial distortion coefficients
     
@@ -80,13 +80,13 @@ namespace Anki {
   { return this->focalLength_y; }
   
   inline f32 CameraCalibration::get_center_x() const
-  { return this->center_x; }
+  { return this->center.x(); }
   
   inline f32 CameraCalibration::get_center_y() const
-  { return this->center_y; }
+  { return this->center.y(); }
   
-  inline Point2f CameraCalibration::get_center_pt() const
-  { return Point2f(this->center_x, this->center_y); }
+  inline const Point2f& CameraCalibration::get_center() const
+  { return this->center; }
   
   inline f32  CameraCalibration::get_skew() const
   { return this->skew; }
@@ -126,20 +126,31 @@ namespace Anki {
                              const Quad3f &objPoints) const;
     
     
-    // Compute the projected image locations of a set of 3D points:
+    // Compute the projected image locations of 3D point(s):
+    // (Resulting projected image points can be tested for being behind the
+    //  camera or visible using the functions below.)
+    void project3dPoint(const Point3f& objPoint, Point2f& imgPoint) const;
+    
     void project3dPoints(const std::vector<Point3f> &objPoints,
                          std::vector<Point2f>       &imgPoints) const;
 
     void project3dPoints(const Quad3f &objPoints,
                          Quad2f       &imgPoints) const;
     
+    // Returns true when the point (computed by one of the projection functions
+    // above) is behind the camera.  Otherwise it is false -- even if the point
+    // is outside image dimensions.
+    bool isBehind(const Point2f& projectedPoint) const;
+    
+    // Returns true when the point (computed by one of the projection functions
+    // above) is BOTH in front of the camera AND within image dimensions.
+    bool isVisible(const Point2f& projectedPoint) const;
     
     // TODO: Method to remove radial distortion from an image
     // (This requires an image class)
     
     
   protected:
-    
     CameraCalibration  calibration;
     Pose3d             pose;
     
@@ -161,6 +172,18 @@ namespace Anki {
   inline void Camera::set_pose(const Pose3d& newPose)
   { this->pose = newPose; }
   
+  inline bool Camera::isBehind(const Point2f &projectedPoint) const
+  {
+    return (std::isnan(projectedPoint.x()) || std::isnan(projectedPoint.y()));
+  }
+  
+  inline bool Camera::isVisible(const Point2f &projectedPoint) const
+  {
+    return (not isBehind(projectedPoint) &&
+            projectedPoint.x() >= 0.f && projectedPoint.y() >= 0.f &&
+            projectedPoint.x() < this->calibration.get_ncols() &&
+            projectedPoint.y() < this->calibration.get_nrows());
+  }
 } // namespace Anki
 
 #endif // __CoreTech_Vision__camera__
