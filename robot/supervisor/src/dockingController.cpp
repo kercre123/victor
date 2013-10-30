@@ -11,13 +11,17 @@ namespace Anki {
       
       namespace {
         
+        // Phases of docking: approach the block using visual servoing,
+        // set the lift for gripping, grip the block.
+        
         enum Mode {
           APPROACH,
-          LIFT,
+          SET_LIFT,
           GRIP,
           DONE
         };
         
+        // TODO: set error tolerances in mm and convert to pixels based on camera resolution?
         const f32 VERTICAL_TARGET_ERROR_TOLERANCE = 1.f;   // in pixels
         const f32 HORIZONTAL_TARGET_ERROR_TOLERANCE = 1.f; // in pixels
 
@@ -43,7 +47,9 @@ namespace Anki {
         HeadController::SetDesiredAngle(msg->headAngle);
         
         // Store the lift dock height the basestation computed, and drop
-        // the lift all the way down, out of the way of the vision system
+        // the lift all the way down, out of the way of the vision system.
+        // We will raise it once APPROACH mode is complete and we are in
+        // position.
         LiftController::SetDesiredHeight(LIFT_HEIGHT_LOW);
         liftDockHeight_ = msg->liftHeight;
         
@@ -61,6 +67,7 @@ namespace Anki {
         
       } // SetGoals()
      
+      // TODO: Use a real controller
       // Compute the wheel velocities from the difference between
       // the observed target and the goal target
       void ApproachBlock()
@@ -79,7 +86,7 @@ namespace Anki {
         
         const f32 K_turn  = 0.03;
         const f32 K_dist  = 0.05;
-        const f32 maxSpeed = 7;
+        const f32 maxSpeed = 8;
         
         // Note that we're only comparing the centroid of the targets!
         f32 obsMeanX  = 0.25f*(obsDockTarget_.dotX[0] + obsDockTarget_.dotX[1] +
@@ -113,7 +120,7 @@ namespace Anki {
         {
           // We have reached the block. Stop moving and set mode to
           // lift gripper to desired docking height
-          mode_ = LIFT;
+          mode_ = SET_LIFT;
           leftMotorVelocity = 0.f;
           rightMotorVelocity = 0.f;
         }
@@ -153,7 +160,7 @@ namespace Anki {
               // Find the docking target and put it in obsTarget_
               if(VisionSystem::findDockingTarget(obsDockTarget_) == EXIT_SUCCESS)
               {
-                // This will switch us to LIFT mode when it's done
+                // This will switch us to SET_LIFT mode when it's done
                 ApproachBlock();
                 
               } else {
@@ -166,11 +173,11 @@ namespace Anki {
               break;
             } // case APPROACH
             
-            case LIFT:
+            case SET_LIFT:
             {
               // This will switch us to GRIP mode once it's done
               LiftController::SetDesiredHeight(liftDockHeight_);
-            } // case LIFT
+            } // case SET_LIFT
               
             case GRIP:
             {

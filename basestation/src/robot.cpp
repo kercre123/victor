@@ -29,7 +29,8 @@ namespace Anki {
       liftBasePose(0.f, {{1.f, 0.f, 0.f}}, LIFT_BASE_POSITION, &pose),
       currentHeadAngle(0.f),
       isCarryingBlock(false),
-      matMarker(NULL)
+      matMarker(NULL),
+      selectedBlock(NULL)
     {
       this->set_headAngle(currentHeadAngle);
       
@@ -95,7 +96,7 @@ namespace Anki {
         
         const CameraCalibration& camCalib = camDown.get_calibration();
         
-        const Point2f imageCenterPt(camCalib.get_center_pt());
+        const Point2f& imageCenterPt = camCalib.get_center();
         
         if(BlockWorld::ZAxisPointsUp) {
           // xvec = imgCen(1)-xcenIndex;
@@ -474,8 +475,15 @@ namespace Anki {
     } // set_headAngle()
     
     
-    void Robot::dockWithBlock(const Block& block)
+    void Robot::dockWithSelectedBlock(void)
     {
+      if(this->selectedBlock == NULL)
+      {
+        fprintf(stdout, "No block selected -- nothing to dock with.\n");
+        // TODO: issue error / return failure code?
+        return;
+      }
+      
       // Compute the necessary head angle and docking target position for
       // this block
       
@@ -485,7 +493,7 @@ namespace Anki {
       
       for(Block::FaceName face=Block::FIRST_FACE; face < Block::NUM_FACES; ++face)
       {
-        const BlockMarker3d& currentFace = block.get_faceMarker(face);
+        const BlockMarker3d& currentFace = this->selectedBlock->get_faceMarker(face);
         Pose3d facePose = currentFace.get_pose().getWithRespectTo(this->pose.get_parent());
         f32 thisDistance = computeDistanceBetween(this->pose.get_translation(),
                                                   facePose.get_translation());
@@ -534,7 +542,17 @@ namespace Anki {
           virtualBlockFace.getDockingTarget(dots3D_goal, &(this->camHead.get_pose()));
           
           this->camHead.project3dPoints(dots3D_goal, dots2D_goal);
-
+          
+          if(this->camHead.isBehind(dots2D_goal[Quad::TopLeft]) ||
+             this->camHead.isBehind(dots2D_goal[Quad::TopRight]) ||
+             this->camHead.isBehind(dots2D_goal[Quad::BottomLeft]) ||
+             this->camHead.isBehind(dots2D_goal[Quad::BottomRight]))
+          {
+            fprintf(stdout, "Projected virtual docking dots should not be "
+                    "behind camera!\n");
+            CORETECH_ASSERT(false);
+          }
+          
           // Tilt head until we find an angle that puts the docking dots well
           // within the image
           // TODO: actually do the math and compute this angle directly?

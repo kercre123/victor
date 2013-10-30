@@ -282,9 +282,13 @@ namespace Anki {
       CORETECH_ASSERT(BOTTOM_FACE==5);
       markers.emplace_back(this->type, BOTTOM_FACE+1, facePose);
       
-
     } // Constructor: Block(type)
     
+    Block::Block(const Block& otherBlock)
+    : Block(otherBlock.type)
+    {
+      this->pose = otherBlock.pose;
+    }
      
     Block::~Block(void)
     {

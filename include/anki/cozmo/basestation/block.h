@@ -179,6 +179,7 @@ namespace Anki {
       };
       
       Block(const BlockType type);
+      Block(const Block& otherBlock);
       ~Block();
       
       static unsigned int get_numBlocks();

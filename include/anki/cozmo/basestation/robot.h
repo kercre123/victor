@@ -54,18 +54,21 @@ namespace Anki {
       const Camera& get_camDown() const;
       const Camera& get_camHead() const;
       OperationMode get_operationMode() const;
+      const Block*  get_selectedBlock() const;
+      
       //const MatMarker2d* get_matMarker2d() const;
       
       //float get_downCamPixPerMM() const;
       
       void set_pose(const Pose3d &newPose);
       void set_headAngle(const Radians& angle);
+      void set_selectedBlock(const Block* block);
       
       void queueIncomingMessage(const u8 *msg, const u8 msgSize);
       bool hasOutgoingMessages() const;
       void getOutgoingMessage(u8 *msgOut, u8 &msgSize);
       
-      void dockWithBlock(const Block& block);
+      void dockWithSelectedBlock(void);
       
     protected:
       u32  ID;
@@ -81,9 +84,6 @@ namespace Anki {
       const Pose3d liftBasePose; // around which the base rotates/lifts
       Radians currentHeadAngle;
       
-
-      
-      //BlockWorld &world;
       
       OperationMode mode, nextMode;
       bool setOperationMode(OperationMode newMode);
@@ -94,6 +94,8 @@ namespace Anki {
       std::vector<BlockMarker2d>   visibleBlockMarkers2d;
       //std::vector<BlockMarker3d*>  visibleFaces;
       //std::vector<Block*>          visibleBlocks;
+      
+      const Block* selectedBlock;
       
       // TODO: compute this from down-camera calibration data
       float downCamPixPerMM = -1.f;
@@ -137,6 +139,11 @@ namespace Anki {
     inline bool Robot::hasOutgoingMessages() const
     { return not this->messagesOut.empty(); }
     
+    inline void Robot::set_selectedBlock(const Anki::Cozmo::Block *block)
+    { this->selectedBlock = block; }
+    
+    inline const Anki::Cozmo::Block* Robot::get_selectedBlock() const
+    { return this->selectedBlock; }
     
   } // namespace Cozmo
 } // namespace Anki
