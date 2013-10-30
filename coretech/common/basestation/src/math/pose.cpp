@@ -9,6 +9,9 @@ namespace Anki {
 #pragma mark --- Pose2d Implementations ---
   Pose2d* Pose2d::World = NULL;
   
+  const Vec2f Pose2d::X_AXIS = {{1.f, 0.f}};
+  const Vec2f Pose2d::Y_AXIS = {{0.f, 1.f}};
+  
   Pose2d::Pose2d(const Radians &theta, const Point2f &t)
   : translation(t), angle(theta), planeNormal(0.f,0.f,1.f),
     parent(Pose2d::World)
@@ -70,6 +73,10 @@ namespace Anki {
 #pragma mark --- Pose3d Implementations ---
   
   Pose3d* Pose3d::World = NULL;
+  
+  const Vec3f Pose3d::X_AXIS = {{1.f, 0.f, 0.f}};
+  const Vec3f Pose3d::Y_AXIS = {{0.f, 1.f, 0.f}};
+  const Vec3f Pose3d::Z_AXIS = {{0.f, 0.f, 1.f}};
   
   Pose3d::Pose3d()
   : translation(0.f, 0.f, 0.f), parent(Pose3d::World)
@@ -249,7 +256,7 @@ namespace Anki {
   
   Pose3d& Pose3d::Invert(void)
   {
-    this->rotationMatrix.getTranspose();
+    this->rotationMatrix.Transpose();
     this->translation *= -1.f;
     this->translation = this->rotationMatrix * this->translation;
     

@@ -44,10 +44,24 @@ namespace Anki {
     
     bool operator== (const Quadrilateral<N,T> &quad2) const;
     
+    // Math operations
     Quadrilateral<N,T>  operator+ (const Quadrilateral<N,T> &quad2) const;
     Quadrilateral<N,T>  operator- (const Quadrilateral<N,T> &quad2) const;
     Quadrilateral<N,T>& operator+=(const Quadrilateral<N,T> &quad2);
     Quadrilateral<N,T>& operator-=(const Quadrilateral<N,T> &quad2);
+    
+    // Scale around center:
+    Quadrilateral<N,T>  operator* (const T scaleFactor) const;
+    Quadrilateral<N,T>& operator*=(const T scaleFactor);
+    
+    // Compute the centroid of the four points
+    Point<N,T> computeCentroid(void) const;
+    
+    // Get min/max coordinates (e.g. for bounding box)
+    T get_minX(void) const;
+    T get_minY(void) const;
+    T get_maxX(void) const;
+    T get_maxY(void) const;
     
     // Force access by enumerated CornerNames:
     const Point<N,T>& operator[] (const Quad::CornerName whichCorner) const;
@@ -131,7 +145,84 @@ namespace Anki {
     return *this;
   }
   
+  template<size_t N, typename T>
+  Quadrilateral<N,T>  Quadrilateral<N,T>::operator* (const T scaleFactor) const
+  {
+    Quadrilateral<N,T> scaledQuad(*this);
+    scaledQuad *= scaleFactor;
+    return scaledQuad;
+  }
+  
+  template<size_t N, typename T>
+  inline T Quadrilateral<N,T>::get_minX(void) const
+  {
+    using namespace Quad;
+    return MIN((*this)[TopLeft].x(),
+               MIN((*this)[TopRight].x(),
+                   MIN((*this)[BottomLeft].x(), (*this)[BottomRight].x())));
+  }
+  
+  template<size_t N, typename T>
+  inline T Quadrilateral<N,T>::get_minY(void) const
+  {
+    using namespace Quad;
+    return MIN((*this)[TopLeft].y(),
+               MIN((*this)[TopRight].y(),
+                   MIN((*this)[BottomLeft].y(), (*this)[BottomRight].y())));
+  }
+  
+  template<size_t N, typename T>
+  inline T Quadrilateral<N,T>::get_maxX(void) const
+  {
+    using namespace Quad;
+    return MAX((*this)[TopLeft].x(),
+               MAX((*this)[TopRight].x(),
+                   MAX((*this)[BottomLeft].x(), (*this)[BottomRight].x())));
+  }
+  
+  template<size_t N, typename T>
+  inline T Quadrilateral<N,T>::get_maxY(void) const
+  {
+    using namespace Quad;
+    return MAX((*this)[TopLeft].y(),
+               MAX((*this)[TopRight].y(),
+                   MAX((*this)[BottomLeft].y(), (*this)[BottomRight].y())));
+  }
+  
+  template<size_t N, typename T>
+  Point<N,T> Quadrilateral<N,T>::computeCentroid(void) const
+  {
+    using namespace Quad;
+    
+    Point<N,T> centroid((*this)[TopLeft]);
+    centroid += (*this)[TopRight];
+    centroid += (*this)[BottomLeft];
+    centroid += (*this)[BottomRight];
+    centroid *= 0.25f; // This might do weird things if T is not float/double
 
+    return centroid;
+  }
+  
+  template<size_t N, typename T>
+  Quadrilateral<N,T>& Quadrilateral<N,T>::operator*=(const T scaleFactor)
+  {
+    using namespace Quad;
+    
+    Point<N,T> centroid = this->computeCentroid();
+    
+    // Shift each point to be relative to the center point, scale it,
+    // and then put it back relative to that center
+    for(CornerName i_corner = FirstCorner;
+        i_corner < NumCorners; ++i_corner)
+    {
+      (*this)[i_corner] -= centroid;
+      (*this)[i_corner] *= scaleFactor;
+      (*this)[i_corner] += centroid;
+    }
+    
+    return *this;
+  } // operator*=
+  
   template<size_t N, typename T>
   inline const Point<N,T>& Quadrilateral<N,T>::operator[] (const Quad::CornerName whichCorner) const
   {

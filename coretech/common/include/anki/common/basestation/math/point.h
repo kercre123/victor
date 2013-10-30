@@ -125,6 +125,7 @@ namespace Anki {
   typedef Point3<float> Point3f;
   
   // TODO: Do need a separate Vec class?
+  typedef Point2f Vec2f;
   typedef Point3f Vec3f;
   
   // Display / Logging:
@@ -151,6 +152,9 @@ namespace Anki {
   template<typename T>
   Point3<T> cross(const Point3<T> &point1, const Point3<T> &point2);
   
+  // TODO: should output type always be float/double?
+  template<size_t N, typename T>
+  T computeDistanceBetween(const Point<N,T>& point1, const Point<N,T>& point2);
   
 #pragma mark --- Point Implementations ---
   
@@ -420,6 +424,14 @@ namespace Anki {
     return Point3<T>(point1.y()*point2.z() - point2.y()*point1.z(),
                      point2.x()*point1.z() - point1.x()*point2.z(),
                      point1.x()*point2.y() - point2.x()*point1.y());
+  }
+  
+  template<size_t N, typename T>
+  T computeDistanceBetween(const Point<N,T>& point1, const Point<N,T>& point2)
+  {
+    Point<N,T> temp(point1);
+    temp -= point2;
+    return temp.length();
   }
   
   
