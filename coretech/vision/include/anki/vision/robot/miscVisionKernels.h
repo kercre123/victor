@@ -8,7 +8,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    enum BoundaryDirection {
+    typedef enum {
       BOUNDARY_UNKNOWN = -1,
       BOUNDARY_N  = 0,
       BOUNDARY_NE = 1,
@@ -18,14 +18,21 @@ namespace Anki
       BOUNDARY_SW = 5,
       BOUNDARY_W  = 6,
       BOUNDARY_NW = 7
-    };
+    } BoundaryDirection;
 
     const s32 MAX_BOUNDARY_LENGTH = 2000;
+
+    typedef enum {
+      CHARACTERISTIC_SCALE_ORIGINAL = 0,
+      CHARACTERISTIC_SCALE_MEDIUM_MEMORY = 1,
+      CHARACTERISTIC_SCALE_LOW_MEMORY = 2
+    } CharacteristicScaleAlgorithm;
 
     // Replaces the matlab code for the first three steps of SimpleDetector
     Result SimpleDetector_Steps123(
       const Array<u8> &image,
-      const s32 scaleImage_numPyramidLevels,
+      const CharacteristicScaleAlgorithm scaleAlgorithm,
+      const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
       const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
@@ -37,7 +44,8 @@ namespace Anki
       const Array<u8> &image,
       FixedLengthList<BlockMarker> &markers,
       FixedLengthList<Array<f64> > &homographies,
-      const s32 scaleImage_numPyramidLevels,
+      const CharacteristicScaleAlgorithm scaleAlgorithm,
+      const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
       const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
@@ -50,7 +58,22 @@ namespace Anki
       const Array<u8> &image,
       FixedLengthList<BlockMarker> &markers,
       FixedLengthList<Array<f64> > &homographies,
-      const s32 scaleImage_numPyramidLevels,
+      const CharacteristicScaleAlgorithm scaleAlgorithm,
+      const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
+      const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
+      const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
+      const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
+      const s32 component_percentHorizontal, const s32 component_percentVertical,
+      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
+      const f32 decode_minContrastRatio,
+      MemoryStack scratch1,
+      MemoryStack scratch2);
+
+    Result SimpleDetector_Steps12345_lowMemory(
+      const Array<u8> &image,
+      FixedLengthList<BlockMarker> &markers,
+      FixedLengthList<Array<f64> > &homographies,
+      const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
       const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
@@ -66,7 +89,19 @@ namespace Anki
 
     Result DownsampleByFactor(const Array<u8> &image, const s32 downsampleFactor, Array<u8> &imageDownsampled);
 
+    // Compute the characteristic scale using the binomial filter and a LOT of scratch memory
     Result ComputeCharacteristicScaleImage(const Array<u8> &image, const s32 numPyramidLevels, FixedPointArray<u32> &scaleImage, MemoryStack scratch);
+
+    // Compute the characteristic scale using the box filter and a little scratch memory
+    // thresholdMultiplier is SQ15.16
+    Result ComputeCharacteristicScaleImageAndBinarize(const Array<u8> &image, const s32 numPyramidLevels, Array<u8> &binaryImage, const s32 thresholdMultiplier, MemoryStack scratch);
+
+    Result ComputeCharacteristicScaleImageAndBinarizeAndExtractComponents(
+      const Array<u8> &image,
+      const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
+      const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
+      ConnectedComponents &components,
+      MemoryStack scratch);
 
     Result BinarizeScaleImage(const Array<u8> &originalImage, const FixedPointArray<u32> &scaleImage, Array<u8> &binaryImage);
 

@@ -51,8 +51,8 @@ namespace Anki
       // Using this in a inner loop may be less efficient than using an explicit pointer with a
       // restrict keyword (Though the runtime cost isn't nearly as large as the [] operator for the
       // Array class). For speeding up performance-critical inner loops, use something like: "Type *
-      // restrict list_rowPointer = list.Pointer(0);" outside the inner loop, then index
-      // list_rowPointer in the inner loop.
+      // restrict pList = list.Pointer(0);" outside the inner loop, then index
+      // pList in the inner loop.
       inline const Type& operator[](const s32 index) const;
       inline Type& operator[](const s32 index);
 

@@ -1289,10 +1289,10 @@ namespace Anki
 
       {
         s32 ci = 0;
-        const f64 * const V_rowPointer = _V.Pointer(8,0);
+        const f64 * const pV = _V.Pointer(8,0);
         for(s32 y=0; y<3; y++) {
           for(s32 x=0; x<3; x++) {
-            (*_homography0.Pointer(y,x)) = V_rowPointer[ci++];
+            (*_homography0.Pointer(y,x)) = pV[ci++];
           }
         }
       }

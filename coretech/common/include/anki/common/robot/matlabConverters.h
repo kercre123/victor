@@ -97,11 +97,11 @@ namespace Anki {
       }
 
       for(s32 y=0; y<nrows; ++y) {
-        Type * const array_rowPointer = mat.Pointer(y, 0);
-        const Type * const matlabMatrix_rowPointer = matlabMatrixStartPointer + y*ncols;
+        Type * const pArray = mat.Pointer(y, 0);
+        const Type * const pMatlabMatrix = matlabMatrixStartPointer + y*ncols;
 
         for(s32 x=0; x<ncols; ++x) {
-          array_rowPointer[x] = matlabMatrix_rowPointer[x];
+          pArray[x] = pMatlabMatrix[x];
         }
       }
     } // template<typename Type> void mxArrayToArray(const mxArray * const array, Array<Type> &mat)
@@ -129,10 +129,10 @@ namespace Anki {
       Array<Type> array = AllocateArrayFromHeap<Type>(dimensions[0], dimensions[1]);
 
       for(mwSize y=0; y<dimensions[0]; ++y) {
-        Type * const array_rowPointer = array.Pointer(static_cast<s32>(y), 0);
+        Type * const pArray = array.Pointer(static_cast<s32>(y), 0);
 
         for(mwSize x=0; x<dimensions[1]; ++x) {
-          array_rowPointer[x] = *(matlabMatrixStartPointer + x*dimensions[0] + y);
+          pArray[x] = *(matlabMatrixStartPointer + x*dimensions[0] + y);
         }
       }
 
@@ -150,10 +150,10 @@ namespace Anki {
       Type * const matlabMatrixStartPointer = (Type *) mxGetData(outputArray);
 
       for(mwSize y=0; y<outputDims[0]; ++y) {
-        const Type * const array_rowPointer = array.Pointer(static_cast<s32>(y), 0);
+        const Type * const pArray = array.Pointer(static_cast<s32>(y), 0);
 
         for(mwSize x=0; x<outputDims[1]; ++x) {
-          *(matlabMatrixStartPointer + x*outputDims[0] + y) = array_rowPointer[x];
+          *(matlabMatrixStartPointer + x*outputDims[0] + y) = pArray[x];
         }
       }
 

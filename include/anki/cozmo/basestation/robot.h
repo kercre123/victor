@@ -41,48 +41,61 @@ namespace Anki {
       
       const std::vector<BlockMarker2d>& getVisibleBlockMarkers2d() const;
       
+      /*
       // Add observed BlockMarker3d objects to a multimap container, grouped
       // by BlockType.
       // (It will be the world's job to take all of these from all
       //  robots and update the world state)
-      void getVisibleBlockMarkers3d(std::multimap<BlockType, BlockMarker3d>& markers) const;
+      void getVisibleBlockMarkers3d(std::multimap<BlockType, BlockMarker3d>& markers) ;
+      */
       
       const u8      get_ID() const;
       const Pose3d& get_pose() const;
       const Camera& get_camDown() const;
       const Camera& get_camHead() const;
       OperationMode get_operationMode() const;
+      const Block*  get_selectedBlock() const;
+      
       //const MatMarker2d* get_matMarker2d() const;
       
       //float get_downCamPixPerMM() const;
       
       void set_pose(const Pose3d &newPose);
+      void set_headAngle(const Radians& angle);
+      void set_selectedBlock(const Block* block);
       
       void queueIncomingMessage(const u8 *msg, const u8 msgSize);
       bool hasOutgoingMessages() const;
       void getOutgoingMessage(u8 *msgOut, u8 &msgSize);
-            
+      
+      void dockWithSelectedBlock(void);
+      
     protected:
       u32  ID;
       bool addedToWorld;
       
-      Camera camDown, camHead;
-      bool camDownCalibSet, camHeadCalibSet;
-      const Pose3d neckPose; // joint around which head rotates
-      
       Pose3d pose;
       void updatePose();
       
-      //BlockWorld &world;
+      Camera camDown, camHead;
+      bool camDownCalibSet, camHeadCalibSet;
+      const Pose3d neckPose; // joint around which head rotates
+      const Pose3d headCamPose; // in canonical (untilted) position w.r.t. neck joint
+      const Pose3d liftBasePose; // around which the base rotates/lifts
+      Radians currentHeadAngle;
+      
       
       OperationMode mode, nextMode;
       bool setOperationMode(OperationMode newMode);
+      bool isCarryingBlock;
       
       const MatMarker2d            *matMarker;
       
       std::vector<BlockMarker2d>   visibleBlockMarkers2d;
       //std::vector<BlockMarker3d*>  visibleFaces;
       //std::vector<Block*>          visibleBlocks;
+      
+      const Block* selectedBlock;
       
       // TODO: compute this from down-camera calibration data
       float downCamPixPerMM = -1.f;
@@ -126,6 +139,11 @@ namespace Anki {
     inline bool Robot::hasOutgoingMessages() const
     { return not this->messagesOut.empty(); }
     
+    inline void Robot::set_selectedBlock(const Anki::Cozmo::Block *block)
+    { this->selectedBlock = block; }
+    
+    inline const Anki::Cozmo::Block* Robot::get_selectedBlock() const
+    { return this->selectedBlock; }
     
   } // namespace Cozmo
 } // namespace Anki

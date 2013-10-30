@@ -2,6 +2,7 @@
 #define _ANKICORETECHEMBEDDED_VISION_DRAW_VISION_H_
 
 #include "anki/common/robot/array2d.h"
+#include "anki/common/robot/draw.h"
 
 #include "anki/vision/robot/connectedComponents.h"
 
@@ -30,7 +31,7 @@ namespace Anki
 
       const bool doScaling = (minValue == maxValue) ? false : true;
 
-      for(s32 iComponent=0; iComponent<components.get_size(); iComponent++) {
+      for(s32 iComponent=0; iComponent<numComponents; iComponent++) {
         const u16 id = components[iComponent].id;
 
         if(id == 0)
@@ -49,9 +50,9 @@ namespace Anki
           lineColor = static_cast<Type>(id);
         }
 
-        Type * restrict image_rowPointer = image.Pointer(y, 0);
+        Type * restrict pImage = image.Pointer(y, 0);
         for(s16 x=xStart; x<=xEnd; x++) {
-          image_rowPointer[x] = lineColor;
+          pImage[x] = lineColor;
         }
       }
 

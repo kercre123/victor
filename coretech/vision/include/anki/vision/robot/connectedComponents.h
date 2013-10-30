@@ -40,10 +40,15 @@ namespace Anki
       ConnectedComponents();
 
       // Constructor for a ConnectedComponents, pointing to user-allocated MemoryStack
-      ConnectedComponents(const s32 maxComponentSegments, MemoryStack &memory);
+      ConnectedComponents(const s32 maxComponentSegments, const s32 maxImageWidth, MemoryStack &memory);
 
-      // TODO: when this class is converted to accept single scanlines as input, this will be significantly refactored
-      Result Extract2dComponents(const Array<u8> &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance, MemoryStack scratch);
+      // Extract 2d connected components from binaryImage All extracted components are stored in a
+      // single list of ComponentSegments
+      Result Extract2dComponents_FullImage(const Array<u8> &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance);
+
+      Result Extract2dComponents_PerRow_Initialize();
+      Result Extract2dComponents_PerRow_NextRow(const u8 * restrict binaryImageRow, const s32 imageWidth, const s16 whichRow, const s16 minComponentWidth, const s16 maxSkipDistance);
+      Result Extract2dComponents_PerRow_Finalize();
 
       // Sort the components by id (the ids are sorted in increasing value, but with zero at the end {1...MAX_VALUE,0}), then y, then xStart
       // WARNING: This method is really slow if called first. If you have the memory available, call SortConnectedComponentSegmentsById() first.
@@ -149,12 +154,18 @@ namespace Anki
 
     protected:
       FixedLengthList<ConnectedComponentSegment> components;
+      FixedLengthList<ConnectedComponentSegment> currentComponents1d;
+      FixedLengthList<ConnectedComponentSegment> previousComponents1d;
+      FixedLengthList<ConnectedComponentSegment> newPreviousComponents1d;
+      FixedLengthList<u16> equivalentComponents;
 
       bool isSortedInId;
       bool isSortedInY;
       bool isSortedInX;
 
       u16 maximumId;
+
+      s32 maxImageWidth;
 
       // Iterate through components, and update the maximum id
       Result FindMaximumId();

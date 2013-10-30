@@ -940,7 +940,6 @@ IN_DDR int RUN_ALL_TESTS()
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 
-  if(numFailedTests > 0)
-    return numFailedTests;
+  return numFailedTests;
 } // int RUN_ALL_TESTS()
 #endif // #if !defined(ANKICORETECH_EMBEDDED_USE_GTEST)

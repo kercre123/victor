@@ -22,12 +22,17 @@ namespace Anki {
     
     Robot::Robot()
     : addedToWorld(false),
+      pose(0.f, Pose3d::Z_AXIS, {{0.f, 0.f, WHEEL_RAD_TO_MM}}),
       camDownCalibSet(false), camHeadCalibSet(false),
       neckPose(0.f, {{1.f, 0.f, 0.f}}, NECK_JOINT_POSITION, &pose),
-      matMarker(NULL)
+      headCamPose(-M_PI_2, {{1.0f, 0.f, 0.f}}, HEAD_CAM_POSITION, &neckPose),
+      liftBasePose(0.f, {{1.f, 0.f, 0.f}}, LIFT_BASE_POSITION, &pose),
+      currentHeadAngle(0.f),
+      isCarryingBlock(false),
+      matMarker(NULL),
+      selectedBlock(NULL)
     {
-      camHead.set_pose(Pose3d(-M_PI_2, {{1.0f, 0.f, 0.f}},
-                              HEAD_CAM_POSITION, &neckPose));
+      this->set_headAngle(currentHeadAngle);
       
     } // Constructor: Robot
     
@@ -91,7 +96,7 @@ namespace Anki {
         
         const CameraCalibration& camCalib = camDown.get_calibration();
         
-        const Point2f imageCenterPt(camCalib.get_center_pt());
+        const Point2f& imageCenterPt = camCalib.get_center();
         
         if(BlockWorld::ZAxisPointsUp) {
           // xvec = imgCen(1)-xcenIndex;
@@ -152,8 +157,8 @@ namespace Anki {
         
         // TODO: embed 2D pose in 3D space using its plane
         //this->pose = Pose3d( Pose2d(angle, matPoint) ); // bad! need to preserve original pose b/c other poses point to it!
-        this->pose.set_rotation(angle, {{0.f, 0.f, 1.f}});
-        this->pose.set_translation({{matPoint.x(), matPoint.y(), WHEEL_DIAMETER_MM * .5f}});
+        this->pose.set_rotation(angle, Pose3d::Z_AXIS);
+        this->pose.set_translation({{matPoint.x(), matPoint.y(), WHEEL_RAD_TO_MM}});
         
         // Delete the matMarker once we're done with it
         delete matMarker;
@@ -227,7 +232,9 @@ namespace Anki {
           {
             const CozmoMsg_CameraCalibration *calibMsg = reinterpret_cast<const CozmoMsg_CameraCalibration*>(&(msg[0]));
             
-            Anki::CameraCalibration calib(calibMsg->focalLength_x,
+            Anki::CameraCalibration calib(calibMsg->nrows,
+                                          calibMsg->ncols,
+                                          calibMsg->focalLength_x,
                                           calibMsg->focalLength_y,
                                           calibMsg->center_x,
                                           calibMsg->center_y,
@@ -275,34 +282,37 @@ namespace Anki {
             fprintf(stdout,
                     "Basestation Robot received ObservedBlockMarker message: "
                     "saw Block %d, Face %d at [(%.1f,%.1f), (%.1f,%.1f), "
-                    "(%.1f,%.1f), (%.1f,%.1f)] with upDirection=%d\n",
+                    "(%.1f,%.1f), (%.1f,%.1f)] with upDirection=%d and "
+                    "headAngle=%.1fdeg\n",
                     blockMsg->blockType,       blockMsg->faceType,
                     blockMsg->x_imgUpperLeft,  blockMsg->y_imgUpperLeft,
                     blockMsg->x_imgLowerLeft,  blockMsg->y_imgLowerLeft,
                     blockMsg->x_imgUpperRight, blockMsg->y_imgUpperRight,
                     blockMsg->x_imgLowerRight, blockMsg->y_imgLowerRight,
-                    blockMsg->upDirection);
+                    blockMsg->upDirection,     blockMsg->headAngle*180.f/M_PI);
             
             Quad2f corners;
             
-            corners[Quad2f::TopLeft].x()     = blockMsg->x_imgUpperLeft;
-            corners[Quad2f::TopLeft].y()     = blockMsg->y_imgUpperLeft;
+            corners[Quad::TopLeft].x()     = blockMsg->x_imgUpperLeft;
+            corners[Quad::TopLeft].y()     = blockMsg->y_imgUpperLeft;
             
-            corners[Quad2f::BottomLeft].x()  = blockMsg->x_imgLowerLeft;
-            corners[Quad2f::BottomLeft].y()  = blockMsg->y_imgLowerLeft;
+            corners[Quad::BottomLeft].x()  = blockMsg->x_imgLowerLeft;
+            corners[Quad::BottomLeft].y()  = blockMsg->y_imgLowerLeft;
             
-            corners[Quad2f::TopRight].x()    = blockMsg->x_imgUpperRight;
-            corners[Quad2f::TopRight].y()    = blockMsg->y_imgUpperRight;
+            corners[Quad::TopRight].x()    = blockMsg->x_imgUpperRight;
+            corners[Quad::TopRight].y()    = blockMsg->y_imgUpperRight;
             
-            corners[Quad2f::BottomRight].x() = blockMsg->x_imgLowerRight;
-            corners[Quad2f::BottomRight].y() = blockMsg->y_imgLowerRight;
+            corners[Quad::BottomRight].x() = blockMsg->x_imgLowerRight;
+            corners[Quad::BottomRight].y() = blockMsg->y_imgLowerRight;
             
             MarkerUpDirection upDir = static_cast<MarkerUpDirection>(blockMsg->upDirection);
             
             // Construct a new BlockMarker2d at the end of the list
             this->visibleBlockMarkers2d.emplace_back(blockMsg->blockType,
                                                      blockMsg->faceType,
-                                                     corners, upDir, *this);
+                                                     corners, upDir,
+                                                     blockMsg->headAngle,
+                                                     *this);
             
             break;
           }
@@ -408,6 +418,7 @@ namespace Anki {
          */
     
     
+    /*
     
     void Robot::getVisibleBlockMarkers3d(std::multimap<BlockType, BlockMarker3d>& markers3d) const
     {
@@ -429,6 +440,7 @@ namespace Anki {
       } // FOR each marker2d
       
     } // getVisibleBlockMarkers3d()
+    */
     
     void Robot::set_pose(const Pose3d &newPose)
     {
@@ -436,6 +448,183 @@ namespace Anki {
       this->pose = newPose;
       
     } // set_pose()
+    
+    void Robot::set_headAngle(const Radians& angle)
+    {
+      if(angle < MIN_HEAD_ANGLE) {
+        fprintf(stdout, "Requested head angle too small. Clipping.\n");
+        currentHeadAngle = MIN_HEAD_ANGLE;
+      }
+      else if(angle > MAX_HEAD_ANGLE) {
+        fprintf(stdout, "Requested head angle too large. Clipping.\n");
+        currentHeadAngle = MAX_HEAD_ANGLE;
+      }
+      else {
+        currentHeadAngle = angle;
+      }
+      
+      // Start with canonical (untilted) headPose
+      Pose3d newHeadPose(this->headCamPose);
+      
+      // Rotate that by the given angle
+      newHeadPose.rotateBy(-currentHeadAngle);
+      
+      // Update the head camera's pose
+      this->camHead.set_pose(newHeadPose);
+      
+    } // set_headAngle()
+    
+    
+    void Robot::dockWithSelectedBlock(void)
+    {
+      if(this->selectedBlock == NULL)
+      {
+        fprintf(stdout, "No block selected -- nothing to dock with.\n");
+        // TODO: issue error / return failure code?
+        return;
+      }
+      
+      // Compute the necessary head angle and docking target position for
+      // this block
+      
+      // Get the face closest to us
+      const BlockMarker3d* closestFace = NULL;
+      f32 minDistance = 0.f;
+      
+      for(Block::FaceName face=Block::FIRST_FACE; face < Block::NUM_FACES; ++face)
+      {
+        const BlockMarker3d& currentFace = this->selectedBlock->get_faceMarker(face);
+        Pose3d facePose = currentFace.get_pose().getWithRespectTo(this->pose.get_parent());
+        f32 thisDistance = computeDistanceBetween(this->pose.get_translation(),
+                                                  facePose.get_translation());
+        if(closestFace==NULL || thisDistance < minDistance) {
+          closestFace = &currentFace;
+          minDistance = thisDistance;
+        }
+      }
+      
+      Quad2f dots2D_goal, searchWin2D;
+      f32 desiredLiftHeight = 0.f;
+      if(this->isCarryingBlock)
+      {
+        fprintf(stdout, "dockWithBlock() not yet implemented when carrying a block.\n");
+        CORETECH_ASSERT(false);
+        
+      } else {
+        // We are not carrying a block, so we figure out the lifter height we
+        // need and where the docking face should end up
+        // (This is assuming we are trying to align the origin (center?) of the
+        //  lifter mechanism with the origin (center) of the face.)
+        
+        // Desired lifter height in world coordinates
+        Pose3d face_wrt_world = closestFace->get_pose().getWithRespectTo(Pose3d::World);
+        desiredLiftHeight = face_wrt_world.get_translation().z();
+        
+        // Compute lift angle to achieve that height
+        Radians desiredLiftAngle = asinf((desiredLiftHeight - LIFT_JOINT_HEIGHT) / LIFT_LENGTH);
+        RotationMatrix3d R(desiredLiftAngle, Pose3d::X_AXIS);
+        Vec3f liftVec(0.f, LIFT_LENGTH, 0.f);
+        liftVec = R * liftVec;
+      
+        Pose3d desiredLiftPose(0.f, Pose3d::X_AXIS, liftVec, &(this->liftBasePose));
+
+        Pose3d desiredDockingFacePose = desiredLiftPose.getWithRespectTo(&(this->pose));
+      
+        BlockMarker3d virtualBlockFace(closestFace->get_blockType(),
+                                       closestFace->get_faceType(),
+                                       desiredDockingFacePose);
+        
+        bool withinImage = true;
+        do {
+          
+          // Project the virtual docking face's target into our image
+          Quad3f dots3D_goal;
+          virtualBlockFace.getDockingTarget(dots3D_goal, &(this->camHead.get_pose()));
+          
+          this->camHead.project3dPoints(dots3D_goal, dots2D_goal);
+          
+          if(this->camHead.isBehind(dots2D_goal[Quad::TopLeft]) ||
+             this->camHead.isBehind(dots2D_goal[Quad::TopRight]) ||
+             this->camHead.isBehind(dots2D_goal[Quad::BottomLeft]) ||
+             this->camHead.isBehind(dots2D_goal[Quad::BottomRight]))
+          {
+            fprintf(stdout, "Projected virtual docking dots should not be "
+                    "behind camera!\n");
+            CORETECH_ASSERT(false);
+          }
+          
+          // Tilt head until we find an angle that puts the docking dots well
+          // within the image
+          // TODO: actually do the math and compute this angle directly?
+          
+          // If it's above/below the camera, tilt the head up/down until we can see it
+          const f32 nrows = static_cast<float>(this->camHead.get_calibration().get_nrows());
+          if(dots2D_goal[Quad::BottomLeft].y()  > 0.9f*nrows ||
+             dots2D_goal[Quad::BottomRight].y() > 0.9f*nrows)
+          {
+            fprintf(stdout, "Virtual docking dots too low for current "
+                    "head pose.  Tilting head down...\n");
+            
+            this->set_headAngle(this->currentHeadAngle - 3.f*M_PI/180.f);
+            
+            withinImage = false;
+          }
+          else if(dots2D_goal[Quad::TopLeft].y()  < 0.1f*nrows ||
+                  dots2D_goal[Quad::TopRight].y() < 0.1f*nrows)
+          {
+            fprintf(stdout, "Virtual docking dots too high for current "
+                    "head pose.  Tilting head up...\n");
+            
+            this->set_headAngle(this->currentHeadAngle + 3.f*M_PI/180.f);
+            
+            withinImage = false;
+          } else {
+            withinImage = true;
+          }
+        } while(not withinImage);
+        
+        // At the final head angle, figure out where the closest face's
+        // docking target window will appear so we can tell the robot
+        // to start its search there
+        Quad3f searchWin3D;
+        closestFace->getDockingBoundingBox(searchWin3D,
+                                           &(this->camHead.get_pose()));
+        this->camHead.project3dPoints(searchWin3D, searchWin2D);
+        
+      } // if carrying a block
+      
+      // Create a dock initiation message
+      CozmoMsg_InitiateDock msg;
+      msg.size = sizeof(CozmoMsg_InitiateDock);
+      msg.msgID = MSG_B2V_CORE_INITIATE_DOCK;
+      msg.headAngle  = this->currentHeadAngle.ToFloat();
+      msg.liftHeight = desiredLiftHeight;
+      
+      for(Quad::CornerName i_corner=Quad::FirstCorner;
+          i_corner < Quad::NumCorners; ++i_corner)
+      {
+        msg.dotX[i_corner]     = dots2D_goal[i_corner].x();
+        msg.dotY[i_corner]     = dots2D_goal[i_corner].y();
+      }
+      
+      const s16 left  = static_cast<s16>(searchWin2D.get_minX());
+      const s16 right = static_cast<s16>(searchWin2D.get_maxX());
+      const s16 top   = static_cast<s16>(searchWin2D.get_minY());
+      const s16 btm   = static_cast<s16>(searchWin2D.get_maxY());
+      
+      CORETECH_ASSERT(left < right);
+      CORETECH_ASSERT(top < btm);
+      
+      msg.winX = left;
+      msg.winY = top;
+      msg.winWidth = right - left;
+      msg.winHeight = btm - top;
+      
+      // Queue the message for sending to the robot
+      const u8 *msgData = (const u8 *) &msg;
+      messagesOut.emplace(msgData, msgData+sizeof(msg));
+      
+    } // dockWithBlock()
     
   } // namespace Cozmo
 } // namespace Anki

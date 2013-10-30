@@ -27,7 +27,10 @@ extern "C" {
   void InitBenchmarking();
 
   // Warning: name must be in globally available memory
-  // Warning: nesting BeginBenchmark() and EndBenchmark() events won't work
+  //
+  // Warning: nesting BeginBenchmark() and EndBenchmark() events that have the same name won't work.
+  // This is okay: BeginBenchmark("a"); BeginBenchmark("b"); EndBenchmark("b"); EndBenchmark("a");
+  // This is not okay: BeginBenchmark("a"); BeginBenchmark("a"); EndBenchmark("a"); EndBenchmark("a");
   void BeginBenchmark(const char *name);
   void EndBenchmark(const char *name);
   void AddBenchmarkEvent(const char *name, unsigned long long time, BenchmarkEventType type);

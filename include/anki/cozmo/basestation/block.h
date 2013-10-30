@@ -44,9 +44,9 @@ namespace Anki {
       
       // Constructors:
       //BlockMarker2d();
-      BlockMarker2d(BlockType blockType, FaceType faceType,
-                    const Quad2f& corners, MarkerUpDirection upDirection,
-                    const Robot& seenBy);
+      BlockMarker2d(const BlockType blockType, const FaceType faceType,
+                    const Quad2f&   corners,   const MarkerUpDirection upDirection,
+                    const Radians&  headAngle, Robot& seenBy);
       
       // Decoding happens on the physical robot, so don't need these (?)
       //void encodeIDs(void);
@@ -55,8 +55,9 @@ namespace Anki {
       // Accessors:
       BlockType      get_blockType() const;
       FaceType       get_faceType()  const;
-      const Quad2f&  get_quad() const;
-      const Robot&   get_seenBy() const;
+      Radians        get_headAngle() const;
+      const Quad2f&  get_quad()      const;
+      Robot&         get_seenBy()    const;
       
     protected:
       BlockType blockType;
@@ -64,8 +65,10 @@ namespace Anki {
       
       Quad2f corners;
       
+      Radians headAngle;
+      
       // Reference to the robot that saw this marker
-      const Robot& seenBy;
+      Robot& seenBy;
       
     }; // class BlockMarker2d
     
@@ -103,7 +106,7 @@ namespace Anki {
       
       // Accessors:
       BlockType get_blockType() const;
-      FaceType  get_faceType() const;
+      FaceType  get_faceType()  const;
       
       const Pose3d& get_pose(void) const;
       void set_pose(const Pose3d &newPose);
@@ -151,6 +154,7 @@ namespace Anki {
       typedef Point3<unsigned char> Color;
       
       enum FaceName {
+        FIRST_FACE  = 0,
         FRONT_FACE  = 0,
         LEFT_FACE   = 1,
         BACK_FACE   = 2,
@@ -175,6 +179,7 @@ namespace Anki {
       };
       
       Block(const BlockType type);
+      Block(const Block& otherBlock);
       ~Block();
       
       static unsigned int get_numBlocks();
@@ -226,10 +231,13 @@ namespace Anki {
     inline FaceType BlockMarker2d::get_faceType() const
     { return this->faceType; }
     
+    inline Radians BlockMarker2d::get_headAngle() const
+    { return this->headAngle; }
+    
     inline const Quad2f& BlockMarker2d::get_quad() const
     { return this->corners; }
     
-    inline const Robot& BlockMarker2d::get_seenBy() const
+    inline Robot& BlockMarker2d::get_seenBy() const
     { return this->seenBy; }
     
     //
@@ -240,6 +248,10 @@ namespace Anki {
     
     inline FaceType  BlockMarker3d::get_faceType() const
     { return this->faceType; }
+    
+    inline const Pose3d& BlockMarker3d::get_pose() const
+    { return this->pose; }
+    
 
     //
     // Block:

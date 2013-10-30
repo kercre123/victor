@@ -46,6 +46,11 @@ namespace Anki {
         void advanceIndex(u8 &index);
       };
       
+      typedef struct {
+        f32 dotX[4];
+        f32 dotY[4];
+      } DockingTarget;
+      
       typedef Mailbox<CozmoMsg_ObservedBlockMarker, MAX_BLOCK_MARKER_MESSAGES> BlockMarkerMailbox;
       
       typedef Mailbox<CozmoMsg_ObservedMatMarker, MAX_MAT_MARKER_MESSAGES> MatMarkerMailbox;
@@ -55,14 +60,16 @@ namespace Anki {
                       HAL::FrameGrabber       matCamFrameGrabber,
                       const HAL::CameraInfo*  headCamInfo,
                       const HAL::CameraInfo*  matCamInfo,
-                      BlockMarkerMailbox*                   blockMarkerMailbox,
-                      MatMarkerMailbox*                     matMarkerMailbox);
+                      BlockMarkerMailbox*     blockMarkerMailbox,
+                      MatMarkerMailbox*       matMarkerMailbox);
       
       void Destroy();
       
       ReturnCode lookForBlocks();
-      ReturnCode visualServo();
+      ReturnCode findDockingTarget(DockingTarget& target);
       ReturnCode localizeWithMat();
+      ReturnCode setDockingWindow(const s16 xLeft, const s16 yTop,
+                                  const s16 width, const s16 height);
       
       bool IsInitialized();
       

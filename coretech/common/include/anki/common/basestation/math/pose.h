@@ -57,6 +57,7 @@ namespace Anki {
   {
   public:
     static Pose2d* World;
+    static const Vec2f X_AXIS, Y_AXIS;
     
     // Constructors:
     Pose2d(const Radians &angle, const Point2f &translation);
@@ -84,6 +85,7 @@ namespace Anki {
     RotationMatrix2d get_rotationMatrix() const;
     
     void set_parent(const Pose2d* otherPose);
+    const Pose2d* get_parent() const;
     
     // Composition with another Pose2d:
     void   operator*=(const Pose2d &other); // in place
@@ -142,6 +144,8 @@ namespace Anki {
   public:
     static Pose3d* World;
     
+    static const Vec3f X_AXIS, Y_AXIS, Z_AXIS;
+    
     // Default pose: no rotation, no translation, world as parent
     Pose3d();
     
@@ -183,10 +187,17 @@ namespace Anki {
     void set_rotation(const Radians angle, const Vec3f &axis);
     void set_translation(const Vec3f &T);
     
+    void set_parent(const Pose3d* parent);
+    const Pose3d* get_parent() const;
+    
     // Composition with another Pose
     void   operator*=(const Pose3d &other); // in place
     Pose3d operator*(const Pose3d &other) const;
     void preComposeWith(const Pose3d &other);
+    
+    void rotateBy(const Radians& angle); // around existing axis
+    void rotateBy(const RotationVector3d& Rvec);
+    void rotateBy(const RotationMatrix3d& Rmat);
     
     // "Apply" Pose to 3D point(s) (i.e. transform that point by this Pose)
     Point3f operator*(const Point3f &point) const;
@@ -269,6 +280,9 @@ namespace Anki {
   inline void Pose2d::set_parent(const Anki::Pose2d *otherPose)
   { this->parent = otherPose; }
   
+  inline const Pose2d* Pose2d::get_parent(void) const
+  { return this->parent; }
+  
   
   // Pose3d
   
@@ -289,13 +303,17 @@ namespace Anki {
   
   inline void Pose3d::set_rotation(const RotationMatrix3d &Rmat)
   {
-    this->rotationMatrix = Rmat;
+    if(&(this->rotationMatrix) != &Rmat) {
+      this->rotationMatrix = Rmat;
+    }
     this->rotationVector = RotationVector3d(Rmat);
   }
   
   inline void Pose3d::set_rotation(const RotationVector3d &Rvec)
   {
-    this->rotationVector = Rvec;
+    if(&(this->rotationVector) != &Rvec) {
+      this->rotationVector = Rvec;
+    }
     this->rotationMatrix = RotationMatrix3d(Rvec);
   }
   
@@ -309,6 +327,13 @@ namespace Anki {
   {
     this->translation = T;
   }
+  
+  inline void Pose3d::set_parent(const Pose3d* parent)
+  { this->parent = parent; }
+  
+  inline const Pose3d* Pose3d::get_parent() const
+  { return this->parent; }
+
   
   
 } // namespace Anki

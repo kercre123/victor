@@ -57,6 +57,8 @@ namespace Anki
       
       void update(void);
       
+      void commandRobotToDock(const size_t whichRobot);
+      
     protected:
       
       std::queue<const u8 *> messages;

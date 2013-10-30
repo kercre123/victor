@@ -36,113 +36,27 @@
 
 #include "anki/cozmo/messageProtocol.h"
 
-Anki::Pose3d getNodePose(WbNodeRef node)
-{
-  
-  if(node == NULL) {
-    fprintf(stdout, "Cannot GetNodePose for an empty name/node.");
-    CORETECH_ASSERT(false);
-  }
-  
-  WbFieldRef rotField = wb_supervisor_node_get_field(node, "rotation");
-  if(rotField == NULL) {
-    fprintf(stdout, "Could not find 'rotation' field for node.\n");
-    CORETECH_ASSERT(false);
-  }
-  const double *rotation = wb_supervisor_field_get_sf_rotation(rotField);
-  
-  WbFieldRef transField = wb_supervisor_node_get_field(node, "translation");
-  if(transField == NULL) {
-    fprintf(stdout, "Could not find 'translation' field for node.\n");
-    CORETECH_ASSERT(false);
-  }
-  const double *translation = wb_supervisor_field_get_sf_vec3f(transField);
-  
-  // Note the coordinate change here: Webot has y pointing up,
-  // while Matlab has z pointing up.  That swap induces a
-  // right-hand to left-hand coordinate change (I think).  Also,
-  // things in Matlab are defined in millimeters, while Webot is
-  // in meters.
-  Anki::Radians rotAngle(rotation[3]);
-  Anki::Vec3f rotAxis(-static_cast<float>(rotation[0]),
-                      static_cast<float>(rotation[2]),
-                      static_cast<float>(rotation[1]));
-  Anki::Vec3f transVec(-static_cast<float>(translation[0]),
-                       static_cast<float>(translation[2]),
-                       static_cast<float>(translation[1]));
-  transVec *= 1000.f;
-  
-  return Anki::Pose3d(rotAngle, rotAxis, transVec);
-  
-} // GetNodePose()
 
+//
+// Helper function definitions (implementations below)
+//
 
 // Populate lists of block/robot nodes for later use
 void initWorldNodes(std::map<std::string, WbNodeRef>&       nameToNodeLUT,
                     std::vector< std::vector<WbNodeRef> >&  blockNodes,
-                    std::vector<WbNodeRef>&                 robotNodes)
-{
-  blockNodes.resize(Anki::Cozmo::BlockWorld::MaxBlockTypes);
-  
-  WbNodeRef rootNode = wb_supervisor_node_get_root();
-  if(rootNode == NULL) {
-    fprintf(stdout, "Root node not found -- is the supervisor node initialized?\n");
-    CORETECH_ASSERT(false);
-  }
-  
-  WbFieldRef sceneNodes = wb_supervisor_node_get_field(rootNode, "children");
-  
-  int numSceneNodes = wb_supervisor_field_get_count(sceneNodes);
+                    std::vector<WbNodeRef>&                 robotNodes);
 
-  for(int i_node = 0; i_node < numSceneNodes; ++i_node)
-  {
-    WbNodeRef sceneObject = wb_supervisor_field_get_mf_node(sceneNodes, i_node);
-    WbFieldRef nameField = wb_supervisor_node_get_field(sceneObject, "name");
-    
-    if(nameField != NULL) {
-      const char *objName = wb_supervisor_field_get_sf_string(nameField);
+Anki::Pose3d getNodePose(WbNodeRef node);
 
-      if(objName != NULL) {
-        
-        if(!strncmp(objName, "Block", 5) && strncmp(objName, "BlockWorld", 10)) {
-          
-          const char blockNumStr[4] = {objName[5], objName[6], objName[7], '\0'};
-          int blockID = atoi(blockNumStr);
-          
-          CORETECH_ASSERT(blockID > 0 && blockID <= Anki::Cozmo::BlockWorld::MaxBlockTypes);
-
-          blockNodes[blockID].push_back(sceneObject);
-          
-          std::string objNameStr(objName);
-          if(nameToNodeLUT.count(objNameStr) > 0) {
-            fprintf(stdout, "Duplicate object named '%s' found in node tree!", objName);
-          } else {
-            nameToNodeLUT[objNameStr] = sceneObject;
-          }
-        }
-        else if(!strncmp(objName, "Cozmo", 5)) {
-          
-          robotNodes.push_back(sceneObject);
-          
-          std::string objNameStr(objName);
-          
-          if(nameToNodeLUT.count(objNameStr) > 0) {
-            fprintf(stdout, "Duplicate object named '%s' found in node tree!", objName);
-          } else {
-            nameToNodeLUT[objNameStr] = sceneObject;
-          }
-        }
-        
-      } // if objName not NULL
-    } // if nameField not NULL
-  } // for each scene node
-
-} // initWorldNodes()
-
+void ProcessKeystroke(Anki::Cozmo::BlockWorld& blockWorld);
 
 int processPacket(const unsigned char *data, const int dataSize,
                   Anki::Cozmo::BlockWorld& blockWorld, int i_robot);
 
+
+//
+// main()
+//
 
 int main(int argc, char **argv)
 {
@@ -160,6 +74,8 @@ int main(int argc, char **argv)
   webots::Emitter*  tx[MAX_ROBOTS];
 #else
   wb_robot_init();
+  wb_robot_keyboard_enable(Anki::Cozmo::TIME_STEP);
+  
   WbDeviceTag rx[MAX_ROBOTS];
   WbDeviceTag tx[MAX_ROBOTS];
 #endif
@@ -369,6 +285,7 @@ int main(int argc, char **argv)
       } // if there are any blocks nodes of this type
     } // for each block type
    
+    ProcessKeystroke(blockWorld);
     
   } // while still stepping
 
@@ -415,7 +332,7 @@ int processPacket(const unsigned char *data, const int dataSize,
         {
           case MSG_V2B_CORE_ROBOT_AVAILABLE:
           {
-            const CozmoMsg_RobotAvailable* msgIn = reinterpret_cast<const CozmoMsg_RobotAvailable*>(data+3);
+            //const CozmoMsg_RobotAvailable* msgIn = reinterpret_cast<const CozmoMsg_RobotAvailable*>(data+3);
             
             // Create a new robot
             blockWorld.addRobot(i_robot);
@@ -455,3 +372,165 @@ int processPacket(const unsigned char *data, const int dataSize,
   return EXIT_SUCCESS;
   
 } // processPacket()
+
+//Check the keyboard keys and issue robot commands
+void ProcessKeystroke(Anki::Cozmo::BlockWorld& blockWorld)
+{
+  static size_t selectedRobot = 0;
+  
+  //Why do some of those not match ASCII codes?
+  //Numbers, spacebar etc. work, letters are different, why?
+  //a, z, s, x, Space
+  const s32 CKEY_DOCK       = static_cast<s32>('D');
+  const s32 CKEY_SELECT_0   = static_cast<s32>('1');
+  const s32 CKEY_SELECT_1   = static_cast<s32>('2');
+  const s32 CKEY_SELECT_2   = static_cast<s32>('3');
+  const s32 CKEY_SELECT_3   = static_cast<s32>('4');
+  const s32 CKEY_SELECT_4   = static_cast<s32>('5');
+  
+  const s32 key = wb_robot_keyboard_get_key();
+  
+  switch (key)
+  {
+    case CKEY_DOCK:
+    {
+      fprintf(stdout, "Commanding selected robot to dock.\n");
+      blockWorld.commandRobotToDock(selectedRobot);
+      break;
+    }
+    case CKEY_SELECT_0:
+    {
+      fprintf(stdout, "Selecting robot 0.\n");
+      selectedRobot = 0;
+      break;
+    }
+    case CKEY_SELECT_1:
+    {
+      fprintf(stdout, "Selecting robot 1.\n");
+      selectedRobot = 1;
+      break;
+    }
+    case CKEY_SELECT_2:
+    {
+      fprintf(stdout, "Selecting robot 2.\n");
+      selectedRobot = 2;
+      break;
+    }
+    case CKEY_SELECT_3:
+    {
+      fprintf(stdout, "Selecting robot 3.\n");
+      selectedRobot = 3;
+      break;
+    }
+    case CKEY_SELECT_4:
+    {
+      fprintf(stdout, "Selecting robot 4.\n");
+      selectedRobot = 4;
+      break;
+    }
+      
+  } // switch(key)
+  
+} // ProcessKeyStroke()
+
+
+void initWorldNodes(std::map<std::string, WbNodeRef>&       nameToNodeLUT,
+                    std::vector< std::vector<WbNodeRef> >&  blockNodes,
+                    std::vector<WbNodeRef>&                 robotNodes)
+{
+  blockNodes.resize(Anki::Cozmo::BlockWorld::MaxBlockTypes);
+  
+  WbNodeRef rootNode = wb_supervisor_node_get_root();
+  if(rootNode == NULL) {
+    fprintf(stdout, "Root node not found -- is the supervisor node initialized?\n");
+    CORETECH_ASSERT(false);
+  }
+  
+  WbFieldRef sceneNodes = wb_supervisor_node_get_field(rootNode, "children");
+  
+  int numSceneNodes = wb_supervisor_field_get_count(sceneNodes);
+  
+  for(int i_node = 0; i_node < numSceneNodes; ++i_node)
+  {
+    WbNodeRef sceneObject = wb_supervisor_field_get_mf_node(sceneNodes, i_node);
+    WbFieldRef nameField = wb_supervisor_node_get_field(sceneObject, "name");
+    
+    if(nameField != NULL) {
+      const char *objName = wb_supervisor_field_get_sf_string(nameField);
+      
+      if(objName != NULL) {
+        
+        if(!strncmp(objName, "Block", 5) && strncmp(objName, "BlockWorld", 10)) {
+          
+          const char blockNumStr[4] = {objName[5], objName[6], objName[7], '\0'};
+          int blockID = atoi(blockNumStr);
+          
+          CORETECH_ASSERT(blockID > 0 && blockID <= Anki::Cozmo::BlockWorld::MaxBlockTypes);
+          
+          blockNodes[blockID].push_back(sceneObject);
+          
+          std::string objNameStr(objName);
+          if(nameToNodeLUT.count(objNameStr) > 0) {
+            fprintf(stdout, "Duplicate object named '%s' found in node tree!", objName);
+          } else {
+            nameToNodeLUT[objNameStr] = sceneObject;
+          }
+        }
+        else if(!strncmp(objName, "Cozmo", 5)) {
+          
+          robotNodes.push_back(sceneObject);
+          
+          std::string objNameStr(objName);
+          
+          if(nameToNodeLUT.count(objNameStr) > 0) {
+            fprintf(stdout, "Duplicate object named '%s' found in node tree!", objName);
+          } else {
+            nameToNodeLUT[objNameStr] = sceneObject;
+          }
+        }
+        
+      } // if objName not NULL
+    } // if nameField not NULL
+  } // for each scene node
+  
+} // initWorldNodes()
+
+Anki::Pose3d getNodePose(WbNodeRef node)
+{
+  
+  if(node == NULL) {
+    fprintf(stdout, "Cannot GetNodePose for an empty name/node.");
+    CORETECH_ASSERT(false);
+  }
+  
+  WbFieldRef rotField = wb_supervisor_node_get_field(node, "rotation");
+  if(rotField == NULL) {
+    fprintf(stdout, "Could not find 'rotation' field for node.\n");
+    CORETECH_ASSERT(false);
+  }
+  const double *rotation = wb_supervisor_field_get_sf_rotation(rotField);
+  
+  WbFieldRef transField = wb_supervisor_node_get_field(node, "translation");
+  if(transField == NULL) {
+    fprintf(stdout, "Could not find 'translation' field for node.\n");
+    CORETECH_ASSERT(false);
+  }
+  const double *translation = wb_supervisor_field_get_sf_vec3f(transField);
+  
+  // Note the coordinate change here: Webot has y pointing up,
+  // while Matlab has z pointing up.  That swap induces a
+  // right-hand to left-hand coordinate change (I think).  Also,
+  // things in Matlab are defined in millimeters, while Webot is
+  // in meters.
+  Anki::Radians rotAngle(rotation[3]);
+  Anki::Vec3f rotAxis(-static_cast<float>(rotation[0]),
+                      static_cast<float>(rotation[2]),
+                      static_cast<float>(rotation[1]));
+  Anki::Vec3f transVec(-static_cast<float>(translation[0]),
+                       static_cast<float>(translation[2]),
+                       static_cast<float>(translation[1]));
+  transVec *= 1000.f;
+  
+  return Anki::Pose3d(rotAngle, rotAxis, transVec);
+  
+} // GetNodePose()

@@ -122,15 +122,22 @@ namespace Anki
             const Block::FaceName whichFace = Block::FaceType_to_FaceName(marker2d.get_faceType());
             const BlockMarker3d& marker3d = B_init.get_faceMarker(whichFace);
             
+            // First update the head pose according to the blockMarker
+            // TODO: this should probably not actually rotate the head but instead
+            //       use the head angle from the correct timestamped state history?
+            //       (doing it this way prevents this method from being const since
+            //        it changes the robot for each marker)
+            Robot& robot = marker2d.get_seenBy();
+            robot.set_headAngle(marker2d.get_headAngle());
+            
             // Figure out where the marker we saw is in 3D space, in camera's
             // coordinate frame. (Since the marker's coordinates relative to
             // the block are used here, the computed pose will be the blockPose
             // we want -- still relative to the camera however.)
             Quad3f corners3d;
             marker3d.getSquareCorners(corners3d, &(B_init.get_pose())); // corners3d relative to (canonical) Block pose
-            const Camera& headCam = marker2d.get_seenBy().get_camHead();
-            Pose3d blockPose( headCam.computeObjectPose(marker2d.get_quad(),
-                                                        corners3d) );
+            Pose3d blockPose(robot.get_camHead().computeObjectPose(marker2d.get_quad(),
+                                                                   corners3d) );
             
             // Now get the block pose in World coordinates using the pose tree,
             // instead of being in camera-centric coordinates, and add it to the
@@ -178,6 +185,7 @@ namespace Anki
               
             } // for each existing block of this type
             
+            const Block* currentWorldBlock = NULL;
             if(overlapping.empty()) {
               // no existing blocks overlapped with the block we saw, so add it
               // as a new block
@@ -189,6 +197,7 @@ namespace Anki
                       blockSeen.get_pose().get_translation().z());
               
               this->blocks[blockTypeIndex].push_back(blockSeen);
+              currentWorldBlock = &(this->blocks[blockTypeIndex].back());
               
             } else {
               if(overlapping.size() > 1) {
@@ -205,7 +214,60 @@ namespace Anki
               // TODO: better way of merging existing/observed block pose
               overlapping[0]->set_pose( blockSeen.get_pose() );
               
+              currentWorldBlock = overlapping[0];
+              
             } // if/else overlapping existing blocks found
+            
+            if(currentWorldBlock != NULL)
+            {
+              // Set the updated world block as the selected block for each robot for
+              // which it's centroid projects closest to the robot's center of
+              // field of view (and actually visible by that robot)
+              for(Robot& robot : this->robots)
+              {
+                const Camera& cam = robot.get_camHead();
+                
+                // Get the block's pose w.r.t. this robot's camera, so we can
+                // project it
+                Pose3d crntPose = currentWorldBlock->get_pose().getWithRespectTo(&(cam.get_pose()));
+                
+                Point2f imgPosCrnt;
+                cam.project3dPoint(crntPose.get_translation(), imgPosCrnt);
+                
+                if(imgPosCrnt.x() >= 0.f && imgPosCrnt.y() >= 0.f)
+                {
+                  const Point2f& imgCen = cam.get_calibration().get_center();
+                  
+                  const Block* blockSel = robot.get_selectedBlock();
+                  
+                  if(blockSel == NULL) {
+                    // If the robot does not have a selected block, use this one
+                    robot.set_selectedBlock(currentWorldBlock);
+                  }
+                  else if(blockSel != currentWorldBlock) { // selected not already this blockSeen
+                    
+                    // get the currently-selected block's origin projected into the
+                    // robot's image
+                    Pose3d selPose = blockSel->get_pose().getWithRespectTo(&(cam.get_pose()));
+                    
+                    Point2f imgPosSel;
+                    cam.project3dPoint(selPose.get_translation(), imgPosSel);
+                    
+                    const f32 crntDist = computeDistanceBetween(imgPosCrnt, imgCen);
+                    const f32 selDist  = computeDistanceBetween(imgPosSel,  imgCen);
+                    
+                    // if blockSeen's projected origin is closer to the image
+                    // center than the currently-selected one, use this
+                    // blockSeen as the new selection for this robot
+                    if(crntDist < selDist) {
+                      robot.set_selectedBlock(currentWorldBlock);
+                    }
+                  } // if/else blockSel==NULL
+                  
+                } // if this blockSeen is within this robot's image
+              } // for each robot
+              
+            } // if currentWorldBlock not NULL
             
           } // for each block seen
           
@@ -214,6 +276,18 @@ namespace Anki
       } // if we saw any block markers
       
     } // update()
+    
+    void BlockWorld::commandRobotToDock(const size_t whichRobot) 
+    {
+      if(whichRobot < this->robots.size())
+      {
+        
+        this->robots[whichRobot].dockWithSelectedBlock();
+        
+      } else {
+        fprintf(stdout, "Invalid robot commanded to Dock.\n");
+      }
+    } // commandRobotToDock()
     
     /*
     void BlockWorld::updateRobotPose(Robot *robot)

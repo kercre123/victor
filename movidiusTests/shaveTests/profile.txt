@@ -1,0 +1,27 @@
+Scalars:
+SHAVE 7 PROFILING INFORMATION:
+SHAVE-7 cycle count = 19547
+SHAVE-7 executed instructions = 18041
+SHAVE-7 stall cycles = 1506
+
+Vectors:
+SHAVE-7 cycle count = 8562
+SHAVE-7 executed instructions = 8056
+SHAVE-7 stall cycles = 506
+
+Assembly v1:
+SHAVE-7 cycle count = 5339
+SHAVE-7 executed instructions = 4584
+SHAVE-7 stall cycles = 755
+
+Assembly v2:
+SHAVE 7 PROFILING INFORMATION:
+SHAVE-7 cycle count = 3587
+SHAVE-7 executed instructions = 2582
+SHAVE-7 stall cycles = 1005
+
+Assembly v3:
+SHAVE 7 PROFILING INFORMATION:
+SHAVE-7 cycle count = 3346
+SHAVE-7 executed instructions = 2839
+SHAVE-7 stall cycles = 507

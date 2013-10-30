@@ -64,3 +64,9 @@ robot/simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
 robot/simulator/controllers/cozmo_c_controller/cozmo_c_controller
 screenshot.png
 blockworld_controller
+*.mvlib
+*.shv*lib
+movidiusTests/shaveTests2/output
+*.asmgen
+robot/evmMake/output
+movidiusTests/dmaTests/output

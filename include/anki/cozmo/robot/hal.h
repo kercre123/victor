@@ -99,23 +99,28 @@ namespace Anki
       f32 GetRightWheelSpeed();
       
       // Head pitch
-      void SetHeadPitch(f32 pitch_rad);
-      f32  GetHeadPitch();
+      //void SetHeadPitch(f32 pitch_rad);
+      void SetHeadAngularVelocity(const f32 rad_per_sec);
+      f32  GetHeadAngle();
       
       // Lift position
-      void SetLiftPitch(f32 pitch_rad);
-      f32  GetLiftPitch();
+      //void SetLiftPitch(f32 pitch_rad);
+      void SetLiftAngularVelocity(const f32 rad_per_sec);
+      f32  GetLiftAngle();
       
       // Gripper control
-      void ManageGripper(); // needed?
       void EngageGripper();
       void DisengageGripper();
       bool IsGripperEngaged();
       
       // Cameras
       // TODO: Add functions for adjusting ROI of cameras?
-      const u8* GetHeadImage();
-      const u8* GetMatImage();
+      void MatCameraInit();
+      void FrontCameraInit();
+      
+      const u8* MatCameraGetFrame();
+      const u8* FrontCameraGetFrame(); 
+
       const FrameGrabber GetHeadFrameGrabber();
       const FrameGrabber GetMatFrameGrabber();
       
@@ -142,7 +147,10 @@ namespace Anki
       // Execution
       void MainExecution();
       void LongExecution();
- 
+
+      // Ground truth (no-op if not in simulation?)
+      void GetGroundTruthPose(f32 &x, f32 &y, f32& rad);
+
       // UART
       void UARTInit();
       int UARTPutChar(int c);
@@ -157,7 +165,7 @@ namespace Anki
       // USB
       void USBInit();
       void USBUpdate();
-
+      
       // Encoders
       void EncodersInit();
 

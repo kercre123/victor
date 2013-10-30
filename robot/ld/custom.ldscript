@@ -1,5 +1,5 @@
 SECTIONS {
-  . = 0xA0000000;
+  . = 0xA0010000;
 
   .imageData : {
     *(.imageData*)
@@ -29,11 +29,25 @@ SECTIONS {
   .ddr.bss : {
     *(.bss.printfBuffer*)
   }
+  
+  ASSERT( . < 0xA0100000 , "CMX content overflows 1MB" )
 
   . = 0x40000000;
 
   .bigBuffers : {
     *(.bigBuffers*)
+  }
+  
+  .ddr.bss : {
+    *(.bss.printfBuffer*)
+  }
+
+  .smallBuffers1 : {
+    *(.smallBuffers1*)
+  }
+
+  .smallBuffers2 : {
+    *(.smallBuffers2*)
   }
 }
 

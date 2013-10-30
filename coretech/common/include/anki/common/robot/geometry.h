@@ -2,6 +2,7 @@
 #define _ANKICORETECHEMBEDDED_COMMON_POINT_H_
 
 #include "anki/common/robot/config.h"
+#include "anki/common/robot/cInterfaces_c.h"
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include "opencv2/core/core.hpp"
@@ -331,6 +332,9 @@ namespace Anki
 #pragma mark --- Quadrilateral Specializations ---
     template<> void Quadrilateral<f32>::Print() const;
     template<> void Quadrilateral<f64>::Print() const;
+
+#pragma mark --- C Conversions ---
+    C_Rectangle_s16 get_C_Rectangle_s16(const Rectangle<s16> &rect);
   } // namespace Embedded
 } // namespace Anki
 

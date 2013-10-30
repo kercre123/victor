@@ -1,24 +1,22 @@
-% function binaryImage = computeBinaryCharacteristicScaleImage_boxFilters_lowMemory(image, numLevels, thresholdFraction)
+% function binaryImage = computeBinaryCharacteristicScaleImage_boxFilters_lowMemory(image, numPyramidLevels, thresholdFraction)
 
 %  binaryImage = computeBinaryCharacteristicScaleImage_boxFilters_lowMemory(im, 5, 0.75);
 
-function binaryImage = computeBinaryCharacteristicScaleImage_boxFilters_lowMemory(image, numLevels, thresholdFraction)
+function binaryImage = computeBinaryCharacteristicScaleImage_boxFilters_lowMemory(image, numPyramidLevels, thresholdFraction)
 
 if ~exist('thresholdFraction' ,'var')
     thresholdFraction = 0.75;
 end
 
-numIntegralImageRowsToScroll = 32;
+numIntegralImageRowsToScroll = 300;
 
 DEBUG_DISPLAY = false;
 % DEBUG_DISPLAY = true;
 
 assert(size(image,3)==1, 'Image should be scalar-valued.');
-% scaleImage = image;
-% dog_max = zeros(size(image,1), size(image,2), 'uint32');
 binaryImage = zeros(size(image));
 
-maxFilterHalfWidth = 2 ^ (numLevels+1);
+maxFilterHalfWidth = 2 ^ (numPyramidLevels+1);
 
 integralImageBorderWidth = maxFilterHalfWidth + 1;
 numIntegralImageRows = (2*maxFilterHalfWidth + 2) + numIntegralImageRowsToScroll;
@@ -29,80 +27,97 @@ scrollingIntegralImage = computeScrollingIntegralImage(image,...
     numIntegralImageRows,...
     integralImageBorderWidth);
 
-filterNormalizationConstants = zeros(numLevels+1, 1);
-for pyramidLevel = 1:(numLevels+1)
+filterNormalizationConstants = zeros(numPyramidLevels+1, 1);
+for pyramidLevel = 1:(numPyramidLevels+1)
     filterHalfWidth = 2^pyramidLevel;
     filterNormalizationConstants(pyramidLevel) = 1 / ((2*filterHalfWidth+1)^2);
 end
 
-blurredIms = cell(numLevels+1,1);   
-for pyramidLevel = 1:(numLevels+1)
-    blurredIms{pyramidLevel} = zeros(size(image), 'uint8');
+if DEBUG_DISPLAY
+    blurredIms = cell(numPyramidLevels+1,1);
+    dogMaxAll = -ones(size(image,1), size(image,2), 'uint32');
+    scaleImageAll = -ones(size(image,1), size(image,2), 'uint32');
+    for pyramidLevel = 1:(numPyramidLevels+1)
+        blurredIms{pyramidLevel} = zeros(size(image));
+    end
 end
 
-y = 1;
-while y <= size(image,1)
-    filteredLines = cell(numLevels+1, 1);
-    
-    % TODO: make work for the scrolling II
-    offsetY = y + maxFilterHalfWidth + 1;
-    
-    for pyramidLevel = 1:(numLevels+1)
+imageY = 1;
+integralImageY = imageY + maxFilterHalfWidth + 1;
+integralImageUpdateY = imageY + numIntegralImageRows - integralImageBorderWidth;
+while imageY <= size(image,1)
+    filteredLines = cell(numPyramidLevels+1, 1);
+
+    % For the given row of the image, compute the blurred version for each
+    % level of the pyramid
+    for pyramidLevel = 1:(numPyramidLevels+1)
         filterHalfWidth = 2^pyramidLevel;
-        
+
         filteredLines{pyramidLevel} = zeros(1, size(image,2));
-        for x = 1:size(image,2)
-            offsetX = x + maxFilterHalfWidth + 1;
-                        
-            boxSum = scrollingIntegralImage(offsetY+filterHalfWidth,   offsetX+filterHalfWidth) -...
-                     scrollingIntegralImage(offsetY+filterHalfWidth,   offsetX-filterHalfWidth-1) +...
-                     scrollingIntegralImage(offsetY-filterHalfWidth-1, offsetX-filterHalfWidth-1) -...
-                     scrollingIntegralImage(offsetY-filterHalfWidth-1, offsetX+filterHalfWidth);
-            
-            filteredLines{pyramidLevel}(x) = filterNormalizationConstants(pyramidLevel) * boxSum;
-        end % for x = 1:size(image,2)
-        blurredIms{pyramidLevel}(y,:) = filteredLines{pyramidLevel}(x);
-    end % for pyramidLevel = 1:numLevels    
-    
-    keyboard
-end % Included at the top-level config
 
-% for y = 1:numIntegralImageRowsToScroll:size(image,1)
-%     
-% end % for y = 1:numIntegralImageRowsToScroll:size(image,1)
+        x = 1:size(image,2);
+        offsetXs = x + maxFilterHalfWidth + 1;
 
-% for pyramidLevel = 1:numLevels
-%     halfWidthLarge = 2 ^ pyramidLevel;
-%     filterAreaLarge = (2*halfWidthLarge+1) ^ 2;
-%     
-%     halfWidthSmall = 2 ^ (pyramidLevel+1);    
-%     filterAreaSmall = (2*halfWidthSmall+1) ^ 2;
-%     
-%     filterL = [-halfWidthLarge, -halfWidthLarge, halfWidthLarge, halfWidthLarge, 1/filterAreaLarge];
-%     filterS = [-halfWidthSmall, -halfWidthSmall, halfWidthSmall, halfWidthSmall, 1/filterAreaSmall];
-%     
-%     filteredLarge = integralfilter(integralImageWithBorders, filterL);
-%     filteredSmall = integralfilter(integralImageWithBorders, filterS);
-%         
-%     filteredSmall = filteredSmall(validYIndexes,validXIndexes);
-%     
-%     dog = abs(filteredSmall - filteredLarge(validYIndexes,validXIndexes));
-%        
-%     larger = dog > dog_max;
-%     if any(larger(:))
-%         dog_max(larger) = dog(larger);
-%         scaleImage(larger) = filteredSmall(larger);
-%         if nargout > 1 || nargout == 0
-%             whichScale(larger) = pyramidLevel;
-%         end
+        boxSums = scrollingIntegralImage(integralImageY+filterHalfWidth,   offsetXs+filterHalfWidth) -...
+                  scrollingIntegralImage(integralImageY+filterHalfWidth,   offsetXs-filterHalfWidth-1) +...
+                  scrollingIntegralImage(integralImageY-filterHalfWidth-1, offsetXs-filterHalfWidth-1) -...
+                  scrollingIntegralImage(integralImageY-filterHalfWidth-1, offsetXs+filterHalfWidth);
+
+        filteredLines{pyramidLevel} = filterNormalizationConstants(pyramidLevel) * boxSums;
+
+        if DEBUG_DISPLAY
+            blurredIms{pyramidLevel}(imageY,:) = filteredLines{pyramidLevel};
+        end
+    end % for pyramidLevel = 1:numPyramidLevels
+
+    % 1. Compute all the Difference of Gaussians
+    % 2. Select the winner
+    % 3. Fill in the corresponding row for binaryImage
+    dogMaxValues = -ones(1, size(image,2));
+    scaleImage = -ones(1, size(image,2));
+    for pyramidLevel = 1:numPyramidLevels
+        dog = abs(filteredLines{pyramidLevel+1} - filteredLines{pyramidLevel});
+
+        larger = dog > dogMaxValues;
+        if any(larger(:))
+            dogMaxValues(larger) = dog(larger);
+            scaleImage(larger) = filteredLines{pyramidLevel+1}(larger);
+        end
+    end
+
+    if DEBUG_DISPLAY
+        dogMaxAll(imageY, :) = dogMaxValues;
+        scaleImageAll(imageY, :) = scaleImage;
+    end
+
+    binaryImage(imageY,:) = image(imageY,:) < thresholdFraction*scaleImage;
+
+    imageY = imageY + 1;
+    integralImageY = integralImageY + 1;
+
+    % If we've reached the bottom of this integral image, scroll it up
+    if (integralImageY+filterHalfWidth) > numIntegralImageRows
+        scrollingIntegralImage = computeScrollingIntegralImage(image,...
+            scrollingIntegralImage,...
+            integralImageUpdateY,...
+            numIntegralImageRowsToScroll,...
+            integralImageBorderWidth);
+
+        integralImageY = integralImageY - numIntegralImageRowsToScroll;
+        integralImageUpdateY = integralImageUpdateY + numIntegralImageRowsToScroll;
+    end
+end % while imageY <= size(image,1)
+
+if DEBUG_DISPLAY
+    figureHandle = figure(1); imshow(uint8(dogMaxAll));
+    set(figureHandle, 'Units', 'normalized', 'Position', [0, 0, 1, 1]);
+    figureHandle = figure(11); imshow(uint8(scaleImageAll));
+    set(figureHandle, 'Units', 'normalized', 'Position', [0, 0, 1, 1]);
+
+%     for pyramidLevel = 1:(numPyramidLevels+1)
+%         figureHandle = figure(100+pyramidLevel); imshow(uint8(blurredIms{pyramidLevel}));
+%         set(figureHandle, 'Units', 'normalized', 'Position', [0, 0, 1, 1])
 %     end
-% 
-%     if DEBUG_DISPLAY
-%         figureHandle = figure(100+pyramidLevel); subplot(2,4,1); imshow(filteredSmall); subplot(2,4,3); imshow(filteredLarge); subplot(2,4,5); imshow(dog*5); subplot(2,4,7); imshow(scaleImage);
-%         set(figureHandle, 'Units', 'normalized', 'Position', [0, 0, 1, 1]) 
-%     end
-% end
-% 
-% binaryImage = image < thresholdFraction*scaleImage;
+end
 
 end % FUNCTION computeCharacteristicScaleImage()
