@@ -30,7 +30,7 @@ namespace Anki {
   
   
   CameraCalibration::CameraCalibration()
-  : focalLength_x(1.f), focalLength_y(1.f),
+  : nrows(480), ncols(640), focalLength_x(1.f), focalLength_y(1.f),
     center_x(0.f), center_y(0.f),
     skew(0.f)
   {
@@ -41,10 +41,12 @@ namespace Anki {
      */
   }
   
-  CameraCalibration::CameraCalibration(const float fx,   const float fy,
-                                       const float cenx, const float ceny,
-                                       const float skew_in)
-  : focalLength_x(fx), focalLength_y(fy),
+  CameraCalibration::CameraCalibration(const u16 nrowsIn, const u16 ncolsIn,
+                                       const f32 fx,    const f32 fy,
+                                       const f32 cenx,  const f32 ceny,
+                                       const f32 skew_in)
+  : nrows(nrowsIn), ncols(ncolsIn),
+    focalLength_x(fx), focalLength_y(fy),
     center_x(cenx), center_y(ceny), skew(skew_in)
   {
     /*
@@ -57,7 +59,7 @@ namespace Anki {
   
   Matrix_3x3f CameraCalibration::get_calibrationMatrix(void) const
   {
-    float K_data[9] = {
+    f32 K_data[9] = {
       this->focalLength_x, this->focalLength_x*this->skew, this->center_x,
       0.f,                 this->focalLength_y,            this->center_y,
       0.f,                 0.f,                            1.f};
