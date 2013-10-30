@@ -149,14 +149,17 @@ namespace Anki
 
       // Cameras
       void MatCameraInit();
-      u8* MatCameraGetFrame();
+      const u8* MatCameraGetFrame();
 
       void FrontCameraInit();
-      u8* FrontCameraGetFrame();
+      const u8* FrontCameraGetFrame();
 
       // USB
       void USBInit();
       void USBUpdate();
+
+      // Encoders
+      void EncodersInit();
 
     } // namespace HAL
   } // namespace Cozmo

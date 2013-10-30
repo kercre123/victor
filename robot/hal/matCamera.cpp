@@ -383,7 +383,7 @@ namespace Anki
         CameraStart(&m_handle, RESET_PIN, true, m_camWriteProto);
       }
 
-      u8* MatCameraGetFrame()
+      const u8* MatCameraGetFrame()
       {
 //        if (m_isFrameReady)
         {
