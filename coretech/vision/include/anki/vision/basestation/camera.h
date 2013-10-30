@@ -157,6 +157,11 @@ namespace Anki {
     // TODO: Include const reference or pointer to a parent Robot object?
     void distortCoordinate(const Point2f& ptIn, Point2f& ptDistorted);
     
+#if ANKICORETECH_USE_OPENCV
+    Pose3d computeObjectPoseHelper(const std::vector<cv::Point2f>& cvImagePoints,
+                                   const std::vector<cv::Point3f>& cvObjPoints) const;
+#endif
+    
   }; // class Camera
   
   // Inline accessors:

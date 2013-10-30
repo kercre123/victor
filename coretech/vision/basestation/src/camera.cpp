@@ -69,25 +69,61 @@ namespace Anki {
     return K;
   } // get_calibrationMatrix()
   
+#if ANKICORETECH_USE_OPENCV
+  Pose3d Camera::computeObjectPoseHelper(const std::vector<cv::Point2f>& cvImagePoints,
+                                         const std::vector<cv::Point3f>& cvObjPoints) const
+  {
+    cv::Vec3d cvRvec, cvTranslation;
+    
+    Matrix_3x3f calibMatrix(this->calibration.get_calibrationMatrix());
+    
+    cv::Mat distortionCoeffs; // TODO: currently empty, use radial distoration?
+    cv::solvePnP(cvObjPoints, cvImagePoints,
+                 calibMatrix.get_CvMatx_(), distortionCoeffs,
+                 cvRvec, cvTranslation,
+                 false, CV_ITERATIVE);
+    
+    RotationVector3d rvec(Vec3f(cvRvec[0], cvRvec[1], cvRvec[2]));
+    Vec3f translation(cvTranslation[0], cvTranslation[1], cvTranslation[2]);
+    
+    // Return Pose object w.r.t. the camera's pose
+    return Pose3d(rvec, translation, &(this->pose));
+    
+  } // computeObjectPoseHelper()
+  
+#endif
+  
   
   Pose3d Camera::computeObjectPose(const std::vector<Point2f> &imgPoints,
                            const std::vector<Point3f> &objPoints) const
   {
-    // TODO: Implement!
-    CORETECH_THROW("Unimplemented!")
     
 #if ANKICORETECH_USE_OPENCV
+    std::vector<cv::Point2f> cvImagePoints;
+    std::vector<cv::Point3f> cvObjPoints;
     
+    for(const Point2f & imgPt : imgPoints) {
+      cvImagePoints.emplace_back(imgPt.get_CvPoint_());
+    }
+    
+    for(const Point3f & objPt : objPoints) {
+      cvObjPoints.emplace_back(objPt.get_CvPoint3_());
+    }
+    
+    return computeObjectPoseHelper(cvImagePoints, cvObjPoints);
+    
+#else
+    // TODO: Implement!
+    CORETECH_THROW("Unimplemented!")
+    return Pose3d();
 #endif
     
-    return Pose3d();
-  }
+  } // computeObjectPose(from std::vectors)
   
   Pose3d Camera::computeObjectPose(const Quad2f &imgPoints,
                            const Quad3f &objPoints) const
   {
 #if ANKICORETECH_USE_OPENCV
-    cv::Vec3d cvRvec, cvTranslation;
     std::vector<cv::Point2f> cvImagePoints;
     std::vector<cv::Point3f> cvObjPoints;
     
@@ -101,19 +137,7 @@ namespace Anki {
     cvObjPoints.emplace_back(objPoints[Quad::BottomLeft].get_CvPoint3_());
     cvObjPoints.emplace_back(objPoints[Quad::BottomRight].get_CvPoint3_());
     
-    Matrix_3x3f calibMatrix(this->calibration.get_calibrationMatrix());
-    
-    cv::Mat distortionCoeffs; // TODO: currently empty, use radial distoration?
-    cv::solvePnP(cvObjPoints, cvImagePoints,
-                 calibMatrix.get_CvMatx_(), distortionCoeffs,
-                 cvRvec, cvTranslation,
-                 false, CV_ITERATIVE);
-    
-    Vec3f rvec(cvRvec[0], cvRvec[1], cvRvec[2]);
-    Vec3f translation(cvTranslation[0], cvTranslation[1], cvTranslation[2]);
-
-    // Return Pose object w.r.t. the camera's pose
-    return Pose3d(rvec, translation, &(this->pose));
+    return computeObjectPoseHelper(cvImagePoints, cvObjPoints);
     
 #else
     // TODO: Implement our own non-opencv version?
