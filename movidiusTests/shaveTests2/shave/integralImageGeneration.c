@@ -161,7 +161,7 @@ void ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow_nthRow(const u8 * res
     ".set addressIncrement i0 \n"
     ".set horizontalSum i23 \n"
     "cmu.cpii paddedImage_currentRow_address %0 || iau.sub horizontalSum horizontalSum horizontalSum ; horizontalSum = 0 \n"
-    "cmu.cpii integralImage_previousRow_address %1 || iau.sub x x x\n"
+    "cmu.cpii integralImage_previousRow_address %1 || iau.sub x x x \n" //|| lsu0.ldil x 1 || lsu1.ldih x 0 \n"
     "cmu.cpii integralImage_currentRow_address %2 || lsu1.ldil addressIncrement 16 \n"
 
     ".set integralImageWidth4 %3 \n"
@@ -193,26 +193,22 @@ void ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow_nthRow(const u8 * res
     ".lalign \n"
     "_generationLoop: \n"
 
-    "lsu0.ldi32.u8.u32 paddedImage_currentRow0_next paddedImage_currentRow_address || cmu.cpii paddedImage_currentRow0 paddedImage_currentRow0_next \n"
+    "lsu0.ldi32.u8.u32 paddedImage_currentRow0_next paddedImage_currentRow_address || cmu.cpii paddedImage_currentRow0 paddedImage_currentRow0_next || iau.add x x 1\n"
     "lsu0.ldi32.u8.u32 paddedImage_currentRow1_next paddedImage_currentRow_address || cmu.cpii paddedImage_currentRow1 paddedImage_currentRow1_next \n"
     "lsu0.ldi32.u8.u32 paddedImage_currentRow2_next paddedImage_currentRow_address || cmu.cpii paddedImage_currentRow2 paddedImage_currentRow2_next \n"
     "lsu0.ldi32.u8.u32 paddedImage_currentRow3_next paddedImage_currentRow_address || cmu.cpii paddedImage_currentRow3 paddedImage_currentRow3_next \n"
-    "lsu0.ldxvi integralImage_previousRow_next integralImage_previousRow_address addressIncrement || cmu.cpvv integralImage_previousRow integralImage_previousRow_next \n"
-
-    "iau.add horizontalSum horizontalSum paddedImage_currentRow0 \n"
+    "lsu0.ldxvi integralImage_previousRow_next integralImage_previousRow_address addressIncrement || cmu.cpvv integralImage_previousRow integralImage_previousRow_next || iau.add horizontalSum horizontalSum paddedImage_currentRow0 \n "
     "iau.add horizontalSum horizontalSum paddedImage_currentRow1 || cmu.cpiv integralImage_currentRow.0 horizontalSum \n"
     "iau.add horizontalSum horizontalSum paddedImage_currentRow2 || cmu.cpiv integralImage_currentRow.1 horizontalSum \n"
     "iau.add horizontalSum horizontalSum paddedImage_currentRow3 || cmu.cpiv integralImage_currentRow.2 horizontalSum \n"
-    "cmu.cpiv integralImage_currentRow.3 horizontalSum \n"
-    "vau.add.i32 integralImage_currentRow integralImage_currentRow integralImage_previousRow \n"
-    "nop 1 \n"
-
-    "lsu0.stxvi integralImage_currentRow integralImage_currentRow_address addressIncrement \n"
-
-    "iau.add x x 1 \n"
-    "cmu.cmii.i32 x integralImageWidth4 \n"
+    "cmu.cmii.i32 x integralImageWidth4 ; This is checking x for the next iteration \n"
     "peu.pc1c lt || bru.bra _generationLoop \n"
-    "nop 5 \n"
+    "cmu.cpiv integralImage_currentRow.3 horizontalSum \n"
+    "vau.add.i32 integralImage_currentRow integralImage_currentRow integralImage_previousRow\n"
+    "nop 1 \n"
+    "lsu0.stxvi integralImage_currentRow integralImage_currentRow_address addressIncrement \n"
+    "nop 1 \n"
+    "nop 4 ; these nops are only executed at the end of the final iteration \n"
     : //Output registers
   :"r"(&paddedImage_currentRow[0]), "r"(&integralImage_previousRow[0]), "r"(&integralImage_currentRow[0]), "r"(integralImageWidth4)//Input registers
     :"i10", "i20", "i21", "i22", "i23", "i24", "i25", "i26", "v0", "v1" //Clobbered registers
