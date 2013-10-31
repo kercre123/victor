@@ -85,7 +85,7 @@ int __attribute__((section(".sys.text.start"))) main(void)
           }
         }
       } else if(shaveTests7_whichAlgorithm == 2) {
-        for(i=0; i<IMAGE_WIDTH; i++) {
+        for(i=0; i<IMAGE_WIDTH; i+=7) {
           printf("%d) correct:%d shave:%d\n", i, expectedIntegralImage[i], shaveTests7_integralImage[i+IMAGE_WIDTH]);
         }
 
