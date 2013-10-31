@@ -37,21 +37,122 @@
 #include "anki/cozmo/messageProtocol.h"
 
 
+class SimBlock
+{
+public:
+  SimBlock(WbNodeRef nodeIn, Anki::Cozmo::BlockType typeIn)
+  : node(nodeIn), type(typeIn), selected(false), bwBlock(NULL)
+  {
+    transparencyField = wb_supervisor_node_get_field(node, "obsTransparency");
+    if(transparencyField == NULL) {
+      fprintf(stdout, "Could not find 'obsTransparency' field for Webot block.");
+      CORETECH_ASSERT(false);
+    }
+    
+    rotField = wb_supervisor_node_get_field(node, "obsRotation");
+    if(rotField == NULL) {
+      fprintf(stdout,
+              "Could not find 'obsRotation' field for Webot block.");
+      CORETECH_ASSERT(false);
+    }
+    
+    translationField = wb_supervisor_node_get_field(node, "obsTranslation");
+    if(translationField == NULL) {
+      fprintf(stdout, "Could not find 'obsTranslation' field for Webot block.");
+      CORETECH_ASSERT(false);
+    }
+    
+    colorField = wb_supervisor_node_get_field(node, "obsColor");
+    if(colorField == NULL) {
+      fprintf(stdout, "Could not find 'obsColor' field for Webot block.");
+      CORETECH_ASSERT(false);
+    }
+    
+  }
+  
+  void updatePose(const Anki::Pose3d& blockPose)
+  {
+    // Update the closest block's observation node with the specified pose
+    
+    // The observation is a child of the block in Webots, so its pose is w.r.t.
+    // the block's pose.  But the incoming observed pose is w.r.t. the world.
+    // Adjust accordingly before updating the observed node's pose for display
+    // in Webots:
+    Anki::Pose3d obsPose( blockPose.getInverse() * bwBlock->get_pose() );
+    
+    Anki::Vec3f   rotAxis( obsPose.get_rotationAxis() );
+    Anki::Radians rotAngle(obsPose.get_rotationAngle());
+    
+    // Convert to Webots coordinate system:
+    const double webotRotation[4] = {
+      static_cast<double>(-rotAxis.x()),
+      static_cast<double>( rotAxis.z()),
+      static_cast<double>( rotAxis.y()),
+      rotAngle.ToDouble()
+    };
+    
+    wb_supervisor_field_set_sf_rotation(rotField, webotRotation);
+    
+    Anki::Vec3f translation(obsPose.get_translation());
+    translation *= 1.f/1000.f; // convert from mm to meters
+    const double webotTranslation[3] = {
+      static_cast<double>(-translation.x()),
+      static_cast<double>( translation.z()),
+      static_cast<double>( translation.y())
+    };
+    
+    wb_supervisor_field_set_sf_vec3f(translationField, webotTranslation);
+    
+  } // updatePose()
+  
+  void draw(void) const
+  {
+    if(bwBlock != NULL) {
+      wb_supervisor_field_set_sf_float(transparencyField, 0.);
+      
+      if(selected) {
+        const double selectedColor[3] = {1., 1., 1.};
+        wb_supervisor_field_set_sf_color(colorField, selectedColor);
+      } else {
+        const double UNselectedColor[3] = {1., 1., 0.};
+        wb_supervisor_field_set_sf_color(colorField, UNselectedColor);
+      }
+    } else {
+      // Don't display
+      wb_supervisor_field_set_sf_float(transparencyField, 1.);
+    }
+  }
+  
+  WbNodeRef node;
+  Anki::Cozmo::BlockType type;
+  bool      selected;
+  
+  const Anki::Cozmo::Block* bwBlock;
+  
+private:
+  WbFieldRef transparencyField;
+  WbFieldRef rotField;
+  WbFieldRef translationField;
+  WbFieldRef colorField;
+};
+
 //
 // Helper function definitions (implementations below)
 //
 
 // Populate lists of block/robot nodes for later use
-void initWorldNodes(std::map<std::string, WbNodeRef>&       nameToNodeLUT,
-                    std::vector< std::vector<WbNodeRef> >&  blockNodes,
-                    std::vector<WbNodeRef>&                 robotNodes);
+void initWorldNodes(std::map<std::string, WbNodeRef>&  nameToNodeLUT,
+                    std::vector<SimBlock>&             simBlocks,
+                    std::vector<WbNodeRef>&            robotNodes);
 
 Anki::Pose3d getNodePose(WbNodeRef node);
 
-void ProcessKeystroke(Anki::Cozmo::BlockWorld& blockWorld);
+void ProcessKeystroke(Anki::Cozmo::BlockWorld& blockWorld,
+                      std::vector<SimBlock>&   blockNodes);
 
 int processPacket(const unsigned char *data, const int dataSize,
                   Anki::Cozmo::BlockWorld& blockWorld, int i_robot);
+
 
 
 //
@@ -85,19 +186,14 @@ int main(int argc, char **argv)
   // Initialize the node lists for the world this controller lives in
   //  (this needs to happen after wb_robot_init!)
   //
-  std::map<std::string, WbNodeRef>       nameToNodeLUT;
-  std::vector< std::vector<WbNodeRef> >  blockNodes;
-  std::vector<WbNodeRef>                 robotNodes;
-  initWorldNodes(nameToNodeLUT, blockNodes, robotNodes);
+  std::map<std::string, WbNodeRef>  nameToNodeLUT;
+  std::vector<SimBlock>             simBlocks;
+  std::vector<WbNodeRef>            robotNodes;
+  initWorldNodes(nameToNodeLUT, simBlocks, robotNodes);
   
-  size_t numBlocks = 0;
-  for(auto blockList : blockNodes) {
-    numBlocks += blockList.size();
-  }
   fprintf(stdout, "Found %lu robots and %lu blocks in the world.\n",
-          numBlocks, robotNodes.size());
+          robotNodes.size(), simBlocks.size());
 
-  
   
   //
   // Initialize World Transmitters/Receivers
@@ -195,97 +291,43 @@ int main(int argc, char **argv)
     blockWorld.update();
     
     // Loop over all the blocks in the world and update the display in Webots
-    for(size_t ofType = 0; ofType < blockNodes.size(); ++ofType)
+    for(SimBlock& webotBlock : simBlocks)
     {
-      if(not blockNodes[ofType].empty()) {
+      Anki::Pose3d blockPose( getNodePose(webotBlock.node) );
+      
+      // Find closest block in blockWorld
+      float minDist = -1.f;
+      
+      webotBlock.bwBlock = NULL;
+      
+      const std::vector<Anki::Cozmo::Block>& worldBlocks = blockWorld.get_blocks(webotBlock.type);
+      for(auto worldBlockIter = worldBlocks.begin();
+          worldBlockIter != worldBlocks.end(); ++worldBlockIter)
+      {
+        const float d = Anki::computeDistanceBetween(blockPose, worldBlockIter->get_pose());
         
-        for(size_t i_block = 0; i_block < blockNodes[ofType].size(); ++i_block)
+        if((webotBlock.bwBlock == NULL || d < minDist) ) // && d < worldBlockIter->get_minDim())
         {
-          WbNodeRef webotBlock = blockNodes[ofType][i_block];
-          Anki::Pose3d blockPose( getNodePose(webotBlock) );
-          
-          // Find closest block in blockWorld
-          float minDist = -1.f;
-          //std::vector<Anki::Cozmo::Block>::const_iterator closest;
-          const Anki::Cozmo::Block* closest = NULL;
-        
-          const std::vector<Anki::Cozmo::Block>& worldBlocks = blockWorld.get_blocks(ofType);
-          for(auto worldBlockIter = worldBlocks.begin();
-              worldBlockIter != worldBlocks.end(); ++worldBlockIter)
-          {
-            const float d = Anki::computeDistanceBetween(blockPose, worldBlockIter->get_pose());
-          
-            if((closest == NULL || d < minDist) ) // && d < worldBlockIter->get_minDim())
-            {
-              minDist = d;
-              closest = &(*worldBlockIter);
-            }
-          } // for each blockWorld block of this type
-          
-          if(closest != NULL) {
-            
-            // Update the closest block's observation node with the specified pose
-            WbFieldRef rotField = wb_supervisor_node_get_field(webotBlock, "obsRotation");
-            if(rotField == NULL) {
-              fprintf(stdout,
-                      "Could not find 'obsRotation' field for block %zu of type %zu.",
-                      i_block, ofType);
-              
-              CORETECH_ASSERT(false);
-            }
-            
-            WbFieldRef translationField = wb_supervisor_node_get_field(webotBlock, "obsTranslation");
-            if(translationField == NULL) {
-                   fprintf(stdout, "Could not find 'obsTranslation' field for block %zu of type %zu.", i_block, ofType);
-              CORETECH_ASSERT(false);
-            }
-            
-            WbFieldRef transparencyField = wb_supervisor_node_get_field(webotBlock, "obsTransparency");
-            if(transparencyField == NULL) {
-                   fprintf(stdout, "Could not find 'obsTransparency' field for block %zu of type %zu.", i_block, ofType);
-              CORETECH_ASSERT(false);
-            }
-            
-
-            // The observation is a child of the block in Webots, so its pose is w.r.t.
-            // the block's pose.  But the incoming observed pose is w.r.t. the world.
-            // Adjust accordingly before updating the observed node's pose for display
-            // in Webots:
-            Anki::Pose3d obsPose( blockPose.getInverse() * closest->get_pose() );
-            
-            Anki::Vec3f   rotAxis( obsPose.get_rotationAxis() );
-            Anki::Radians rotAngle(obsPose.get_rotationAngle());
-            
-            // Convert to Webots coordinate system:
-            const double webotRotation[4] = {
-              static_cast<double>(-rotAxis.x()),
-              static_cast<double>( rotAxis.z()),
-              static_cast<double>( rotAxis.y()),
-              rotAngle.ToDouble()
-            };
-            
-            wb_supervisor_field_set_sf_rotation(rotField, webotRotation);
-            
-            Anki::Vec3f translation(obsPose.get_translation());
-            translation *= 1.f/1000.f; // convert from mm to meters
-            const double webotTranslation[3] = {
-              static_cast<double>(-translation.x()),
-              static_cast<double>( translation.z()),
-              static_cast<double>( translation.y())
-            };
-            
-            wb_supervisor_field_set_sf_vec3f(translationField, webotTranslation);
-            
-            wb_supervisor_field_set_sf_float(transparencyField, 0.);
-            
-          } // if closest block found (not NULL)
-          
-        } // for each webot block of this type
-        
-      } // if there are any blocks nodes of this type
-    } // for each block type
+          minDist = d;
+          webotBlock.bwBlock = &(*worldBlockIter);
+        }
+      } // for each blockWorld block of this type
+      
+      if(webotBlock.bwBlock == NULL) {
+        // No block in the world found to match this simulated block
+        // If this block was selected, unselect it.
+        webotBlock.selected = false;
+      }
+      else {
+        webotBlock.updatePose(blockPose);
+      }
+      
+      webotBlock.draw();
+      
+    } // for each webot block
+    
    
-    ProcessKeystroke(blockWorld);
+    ProcessKeystroke(blockWorld, simBlocks);
     
   } // while still stepping
 
@@ -374,10 +416,16 @@ int processPacket(const unsigned char *data, const int dataSize,
 } // processPacket()
 
 //Check the keyboard keys and issue robot commands
-void ProcessKeystroke(Anki::Cozmo::BlockWorld& blockWorld)
+void ProcessKeystroke(Anki::Cozmo::BlockWorld&  blockWorld,
+                      std::vector<SimBlock>&    simBlocks)
 {
   static size_t selectedRobot = 0;
-  
+  static std::vector<SimBlock>::iterator selectedBlock = simBlocks.begin();
+/*
+  while(selectedBlock->bwBlock==NULL && selectedBlock != simBlocks.end()) {
+    ++selectedBlock;
+  }
+  */
   //Why do some of those not match ASCII codes?
   //Numbers, spacebar etc. work, letters are different, why?
   //a, z, s, x, Space
@@ -388,14 +436,19 @@ void ProcessKeystroke(Anki::Cozmo::BlockWorld& blockWorld)
   const s32 CKEY_SELECT_3   = static_cast<s32>('4');
   const s32 CKEY_SELECT_4   = static_cast<s32>('5');
   
+  const s32 CKEY_SELECT_PREV_BLOCK = static_cast<s32>('[');
+  const s32 CKEY_SELECT_NEXT_BLOCK = static_cast<s32>(']');
+  
   const s32 key = wb_robot_keyboard_get_key();
   
   switch (key)
   {
     case CKEY_DOCK:
     {
-      fprintf(stdout, "Commanding selected robot to dock.\n");
-      blockWorld.commandRobotToDock(selectedRobot);
+      if(selectedBlock != simBlocks.end()) {
+        fprintf(stdout, "Commanding selected robot to dock.\n");
+        blockWorld.commandRobotToDock(selectedRobot, *(selectedBlock->bwBlock));
+      }
       break;
     }
     case CKEY_SELECT_0:
@@ -428,18 +481,56 @@ void ProcessKeystroke(Anki::Cozmo::BlockWorld& blockWorld)
       selectedRobot = 4;
       break;
     }
+    case CKEY_SELECT_NEXT_BLOCK:
+    {
+      // Unselect current block
+      selectedBlock->selected = false;
+      selectedBlock->draw();
+
+      // Move selector to next block with a correpsonding BlockWorld block
+      do {
+        ++selectedBlock;
+        if(selectedBlock == simBlocks.end()) {
+          selectedBlock = simBlocks.begin();
+        }
+      } while(selectedBlock->bwBlock == NULL);
+      
+      // Draw newly-selected block
+      selectedBlock->selected = true;
+      selectedBlock->draw();
+      break;
+    }
+    case CKEY_SELECT_PREV_BLOCK:
+    {
+      // Unselect current block
+      selectedBlock->selected = false;
+      selectedBlock->draw();
+      
+      // Move selector to next block with a correpsonding BlockWorld block
+      do {
+        if(selectedBlock == simBlocks.begin()) {
+          selectedBlock = simBlocks.end();
+        }
+        --selectedBlock;
+      } while(selectedBlock->bwBlock == NULL);
+      
+      // Draw newly-selected block
+      selectedBlock->selected = true;
+      selectedBlock->draw();
+      break;
+    }
+      
       
   } // switch(key)
   
 } // ProcessKeyStroke()
 
 
-void initWorldNodes(std::map<std::string, WbNodeRef>&       nameToNodeLUT,
-                    std::vector< std::vector<WbNodeRef> >&  blockNodes,
-                    std::vector<WbNodeRef>&                 robotNodes)
+void initWorldNodes(std::map<std::string, WbNodeRef>&  nameToNodeLUT,
+                    std::vector<SimBlock>&             simBlocks,
+                    std::vector<WbNodeRef>&            robotNodes)
 {
-  blockNodes.resize(Anki::Cozmo::BlockWorld::MaxBlockTypes);
-  
+   
   WbNodeRef rootNode = wb_supervisor_node_get_root();
   if(rootNode == NULL) {
     fprintf(stdout, "Root node not found -- is the supervisor node initialized?\n");
@@ -463,11 +554,11 @@ void initWorldNodes(std::map<std::string, WbNodeRef>&       nameToNodeLUT,
         if(!strncmp(objName, "Block", 5) && strncmp(objName, "BlockWorld", 10)) {
           
           const char blockNumStr[4] = {objName[5], objName[6], objName[7], '\0'};
-          int blockID = atoi(blockNumStr);
+          Anki::Cozmo::BlockType blockID = static_cast<Anki::Cozmo::BlockType>(atoi(blockNumStr));
           
           CORETECH_ASSERT(blockID > 0 && blockID <= Anki::Cozmo::BlockWorld::MaxBlockTypes);
           
-          blockNodes[blockID].push_back(sceneObject);
+          simBlocks.emplace_back(sceneObject, blockID);
           
           std::string objNameStr(objName);
           if(nameToNodeLUT.count(objNameStr) > 0) {

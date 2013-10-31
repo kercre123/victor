@@ -29,8 +29,7 @@ namespace Anki {
       liftBasePose(0.f, {{1.f, 0.f, 0.f}}, LIFT_BASE_POSITION, &pose),
       currentHeadAngle(0.f),
       isCarryingBlock(false),
-      matMarker(NULL),
-      selectedBlock(NULL)
+      matMarker(NULL)
     {
       this->set_headAngle(currentHeadAngle);
       
@@ -475,14 +474,8 @@ namespace Anki {
     } // set_headAngle()
     
     
-    void Robot::dockWithSelectedBlock(void)
+    void Robot::dockWithBlock(const Block& block)
     {
-      if(this->selectedBlock == NULL)
-      {
-        fprintf(stdout, "No block selected -- nothing to dock with.\n");
-        // TODO: issue error / return failure code?
-        return;
-      }
       
       // Compute the necessary head angle and docking target position for
       // this block
@@ -493,7 +486,7 @@ namespace Anki {
       
       for(Block::FaceName face=Block::FIRST_FACE; face < Block::NUM_FACES; ++face)
       {
-        const BlockMarker3d& currentFace = this->selectedBlock->get_faceMarker(face);
+        const BlockMarker3d& currentFace = block.get_faceMarker(face);
         Pose3d facePose = currentFace.get_pose().getWithRespectTo(this->pose.get_parent());
         f32 thisDistance = computeDistanceBetween(this->pose.get_translation(),
                                                   facePose.get_translation());

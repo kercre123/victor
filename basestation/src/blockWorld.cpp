@@ -54,57 +54,7 @@ namespace Anki
     {
       this->messages.push(msg);
     }
-    
-    
-    void updateSelectedBlock(Robot& robot, const Block* currentWorldBlock)
-    {
-      CORETECH_ASSERT(currentWorldBlock != NULL);
-      
-      const Camera& cam = robot.get_camHead();
-      
-      // Get the block's pose w.r.t. this robot's camera, so we can
-      // project it
-      Pose3d crntPose = currentWorldBlock->get_pose().getWithRespectTo(&(cam.get_pose()));
-      
-      Point2f imgPosCrnt;
-      cam.project3dPoint(crntPose.get_translation(), imgPosCrnt);
-      
-      if(imgPosCrnt.x() >= 0.f && imgPosCrnt.y() >= 0.f)
-      {
-        const Point2f& imgCen = cam.get_calibration().get_center();
         
-        const Block* blockSel = robot.get_selectedBlock();
-        
-        if(blockSel == NULL) {
-          // If the robot does not have a selected block, use this one
-          robot.set_selectedBlock(currentWorldBlock);
-        }
-        else if(blockSel != currentWorldBlock) { // selected not already this blockSeen
-          
-          // get the currently-selected block's origin projected into the
-          // robot's image
-          Pose3d selPose = blockSel->get_pose().getWithRespectTo(&(cam.get_pose()));
-          
-          Point2f imgPosSel;
-          cam.project3dPoint(selPose.get_translation(), imgPosSel);
-          
-          const f32 crntDist = computeDistanceBetween(imgPosCrnt, imgCen);
-          const f32 selDist  = computeDistanceBetween(imgPosSel,  imgCen);
-          
-          // if blockSeen's projected origin is closer to the image
-          // center than the currently-selected one, use this
-          // blockSeen as the new selection for this robot
-          if(crntDist < selDist) {
-            robot.set_selectedBlock(currentWorldBlock);
-          }
-          
-        } // if/else blockSel==NULL
-        
-      } // if this blockSeen is within this robot's image
-      
-    } // updateSelectedBlock()
-
-    
     void getCorrespondingCorners(const BlockMarker2d& marker2d,
                                  const Block&         block,
                                  Quad3f&              corners3d)
@@ -170,6 +120,129 @@ namespace Anki
       
     } // clusterBlockPoses()
     
+    void BlockWorld::computeIndividualBlockPoses(const BlockMarker2dMultiMap& blockMarkers2d,
+                                                 const Block&                 B_init,
+                                                 std::vector<MarkerPosePair>& blockPoses)
+    {
+      // Get the range of iterators into the multimap with the current BlockType
+      std::pair<BlockMarker2dMultiMap::const_iterator, BlockMarker2dMultiMap::const_iterator> range;
+      range = blockMarkers2d.equal_range(B_init.get_type());
+      
+      // Second FOR loop iterates over each marker with this BlockType,
+      // using the range we just got from equal_range.
+      for(auto markerIter=range.first; markerIter != range.second; ++markerIter)
+      {
+        const BlockMarker2d& marker2d = markerIter->second;
+        
+        // Inside this loop, all markers we consider should have the same
+        // type as the Block we instantiated above.
+        CORETECH_ASSERT(marker2d.get_blockType() == B_init.get_type());
+        
+        Quad3f corners3d;
+        getCorrespondingCorners(marker2d, B_init, corners3d);
+        const Camera& cam = marker2d.get_seenBy().get_camHead();
+        Pose3d blockPose(cam.computeObjectPose(marker2d.get_quad(), corners3d));
+        
+        // Now get the block pose in World coordinates using the pose tree,
+        // instead of being in camera-centric coordinates, and add it to the
+        // list of computed poses for this block type
+        blockPoses.emplace_back(marker2d, blockPose.getWithRespectTo(Pose3d::World));
+        
+      } // for each marker with current blockType
+    } // computeIndividualBlockPoses
+    
+    void BlockWorld::groupPosesIntoBlocks(const std::vector<MarkerPosePair>& blockPoses,
+                                          Block&                             B_init,
+                                          std::vector<Block>&                blocksSeen)
+    {
+      
+      if(blockPoses.size() > 1) {
+        
+        // Group markers which could be part of the same block (i.e. those
+        // whose poses are colocated, noting that the pose is relative to
+        // the center of the block)
+        std::vector<std::vector<const MarkerPosePair*> > markerClusters;
+        clusterBlockPoses(blockPoses, 0.5f*B_init.get_minDim(),
+                          markerClusters);
+        
+        fprintf(stdout, "Grouping %lu observed 2D markers of type %d into %lu blocks.\n",
+                blockPoses.size(), B_init.get_type(), markerClusters.size());
+        
+        
+        // For each new block, re-estimate the pose based on all markers that
+        // were assigned to it
+        for(auto & cluster : markerClusters)
+        {
+          CORETECH_ASSERT(not cluster.empty());
+          
+          if(cluster.size() == 1) {
+            fprintf(stdout, "Singleton cluster: using already-computed pose.\n");
+            
+            // No need to re-estimate, just use the one marker we saw.
+            B_init.set_pose(cluster[0]->second);
+            blocksSeen.push_back(B_init);
+          }
+          else {
+            fprintf(stdout, "Re-computing pose from all memers of cluster.\n");
+            
+            std::vector<Point2f> imgPoints;
+            std::vector<Point3f> objPoints;
+            imgPoints.reserve(4*cluster.size());
+            objPoints.reserve(4*cluster.size());
+            
+            // TODO: Implement ability to estimate block pose with markers seen by different robots
+            const Robot* robot = &(cluster[0]->first.get_seenBy());
+            
+            for(auto & clusterMember : cluster)
+            {
+              const BlockMarker2d& marker2d = clusterMember->first;
+              
+              if(&(marker2d.get_seenBy()) == robot)
+              {
+                Quad3f corners3d;
+                getCorrespondingCorners(marker2d, B_init, corners3d);
+                
+                for(Quad::CornerName i_face=Quad::FirstCorner;
+                    i_face < Quad::NumCorners; ++i_face)
+                {
+                  imgPoints.push_back(marker2d.get_quad()[i_face]);
+                  objPoints.push_back(corners3d[i_face]);
+                }
+              }
+              else {
+                fprintf(stdout, "Ability to re-estimate single block's "
+                        "pose from markers seen by two different robots "
+                        "not yet implemented. Will just use markers from "
+                        "first robot in the cluster.\n");
+              }
+              
+            } // for each cluster member
+            
+            // Compute the block pose from all the corresponding 2d (image)
+            // and 3d (object) points
+            Pose3d blockPose(robot->get_camHead().computeObjectPose(imgPoints, objPoints));
+            
+            // Now get the block pose in World coordinates using the pose
+            // tree, instead of being in camera-centric coordinates, and
+            // assign that pose to the temporary Block of this type
+            B_init.set_pose(blockPose.getWithRespectTo(Pose3d::World));
+            
+            // Add this to the list of blocks seen
+            blocksSeen.push_back(B_init);
+            
+          } // if 1 or more members in this cluster
+          
+        } // for each cluster
+        
+      } else {
+        CORETECH_ASSERT(not blockPoses.empty());
+        
+        // Just have one marker of this block type
+        B_init.set_pose(blockPoses[0].second);
+        blocksSeen.push_back(B_init);
+      }
+    } // groupBlockPoses()
+    
     
     void BlockWorld::addAndUpdateBlocks(BlockMarker2dMultiMap& blockMarkers2d)
     {
@@ -189,149 +262,43 @@ namespace Anki
           // turn will instantiate its faces' 3D markers.
           Block B_init(blockTypeIter->first);
           
-          const std::vector<Block>::size_type blockTypeIndex = static_cast<std::vector<Block>::size_type>(B_init.get_type());
-          
-          // Get the range of iterators into the multimap with the current BlockType
-          std::pair <BlockMarker2dMultiMap::iterator, BlockMarker2dMultiMap::iterator> range;
-          range = blockMarkers2d.equal_range(blockTypeIter->first);
-          
           // We will store a computed block pose for each 2d marker, with a
           // reference to that 2d marker.  (This is so we can recompute
           // Block pose from clusters of 2d markers later, without having to
           // reassociate them.)
           std::vector<MarkerPosePair> blockPoses;
+          computeIndividualBlockPoses(blockMarkers2d, B_init, blockPoses);
           
-          // Second FOR loop iterates over each marker with this BlockType,
-          // using the range we just got from equal_range.
-          for(auto markerIter=range.first; markerIter != range.second; ++markerIter)
-          {
-            BlockMarker2d& marker2d = markerIter->second;
-            
-            // Inside this loop, all markers we consider should have the same
-            // type as the Block we instantiated above.
-            CORETECH_ASSERT(marker2d.get_blockType() == B_init.get_type());
-            
-            Quad3f corners3d;
-            getCorrespondingCorners(marker2d, B_init, corners3d);
-            const Camera& cam = marker2d.get_seenBy().get_camHead();
-            Pose3d blockPose(cam.computeObjectPose(marker2d.get_quad(), corners3d));
-            
-            // Now get the block pose in World coordinates using the pose tree,
-            // instead of being in camera-centric coordinates, and add it to the
-            // list of computed poses for this block type
-            blockPoses.emplace_back(marker2d, blockPose.getWithRespectTo(Pose3d::World));
-            
-          } // for each marker with current blockType
-          
+          // Group individual block poses into blocks seen, clustering as needed
           std::vector<Block> blocksSeen;
-          
-          if(blockPoses.size() > 1) {
-            
-            // Group markers which could be part of the same block (i.e. those
-            // whose poses are colocated, noting that the pose is relative to
-            // the center of the block)
-            std::vector<std::vector<const MarkerPosePair*> > markerClusters;
-            clusterBlockPoses(blockPoses, 0.5f*B_init.get_minDim(),
-                              markerClusters);
-            
-            fprintf(stdout, "Grouping %lu observed 2D markers of type %d into %lu blocks.\n",
-                    blockPoses.size(), B_init.get_type(), markerClusters.size());
-
-            
-            // For each new block, re-estimate the pose based on all markers that
-            // were assigned to it
-            for(auto & cluster : markerClusters)
-            {
-              CORETECH_ASSERT(not cluster.empty());
-              
-              if(cluster.size() == 1) {
-                // No need to re-estimate, just use the one marker we saw.
-                B_init.set_pose(cluster[0]->second);
-                blocksSeen.push_back(B_init);
-              }
-              else {
-                std::vector<Point2f> imgPoints;
-                std::vector<Point3f> objPoints;
-                imgPoints.reserve(4*cluster.size());
-                objPoints.reserve(4*cluster.size());
-                
-                // TODO: Implement ability to estimate block pose with markers seen by different robots
-                const Robot* robot = &(cluster[0]->first.get_seenBy());
-                
-                for(auto & clusterMember : cluster)
-                {
-                  const BlockMarker2d& marker2d = clusterMember->first;
-                  
-                  if(&(marker2d.get_seenBy()) == robot)
-                  {
-                    Quad3f corners3d;
-                    getCorrespondingCorners(marker2d, B_init, corners3d);
-                    
-                    for(Quad::CornerName i_face=Quad::FirstCorner;
-                        i_face < Quad::NumCorners; ++i_face)
-                    {
-                      imgPoints.push_back(marker2d.get_quad()[i_face]);
-                      objPoints.push_back(corners3d[i_face]);
-                    }
-                  }
-                  else {
-                    fprintf(stdout, "Ability to re-estimate single block's "
-                            "pose from markers seen by two different robots "
-                            "not yet implemented. Will just use markers from "
-                            "first robot in the cluster.\n");
-                  }
-                  
-                } // for each cluster member
-                
-                // Compute the block pose from all the corresponding 2d (image)
-                // and 3d (object) points
-                Pose3d blockPose(robot->get_camHead().computeObjectPose(imgPoints, objPoints));
-                
-                // Now get the block pose in World coordinates using the pose
-                // tree, instead of being in camera-centric coordinates, and
-                // assign that pose to the temporary Block of this type
-                B_init.set_pose(blockPose.getWithRespectTo(Pose3d::World));
-                
-                // Add this to the list of blocks seen
-                blocksSeen.push_back(B_init);
-                
-              } // if 1 or more members in this cluster
-              
-            } // for each cluster
-            
-          } else {
-            CORETECH_ASSERT(not blockPoses.empty());
-            
-            // Just have one marker of this block type
-            B_init.set_pose(blockPoses[0].second);
-            blocksSeen.push_back(B_init);
-          }
+          groupPosesIntoBlocks(blockPoses, B_init, blocksSeen);
           
           // Now go through all the blocks we saw, check if they overlap with a
           // block we already know about, or if they are a new one
           // TODO: be smarter about merge decisions
           // TODO: need a way to decide when to delete a block we've seen!!
-          for(Block& blockSeen : blocksSeen) {
+          const std::vector<Block>::size_type blockTypeIndex = static_cast<std::vector<Block>::size_type>(B_init.get_type());
+          
+          for(const Block& blockSeen : blocksSeen) {
             
             const float minDimSeen = blockSeen.get_minDim();
             
             // Store pointers to any existing blocks that overlap with this one
-            std::vector<Block*> overlapping;
+            std::vector<Block*> overlappingBlocks;
             
-            for(auto & blockExist : this->blocks[blockTypeIndex])
+            for(Block & blockExist : this->blocks[blockTypeIndex])
             {
               // TODO: smarter block pose comparison
               const float minDist = 0.5f*std::min(minDimSeen, blockExist.get_minDim());
               if( computeDistanceBetween(blockSeen.get_pose(),
                                          blockExist.get_pose()) < minDist )
               {
-                overlapping.push_back(&blockExist);
+                overlappingBlocks.push_back(&blockExist);
               }
               
             } // for each existing block of this type
             
-            const Block* currentWorldBlock = NULL;
-            if(overlapping.empty()) {
+            if(overlappingBlocks.empty()) {
               // no existing blocks overlapped with the block we saw, so add it
               // as a new block
               
@@ -342,10 +309,9 @@ namespace Anki
                       blockSeen.get_pose().get_translation().z());
               
               this->blocks[blockTypeIndex].push_back(blockSeen);
-              currentWorldBlock = &(this->blocks[blockTypeIndex].back());
               
             } else {
-              if(overlapping.size() > 1) {
+              if(overlappingBlocks.size() > 1) {
                 fprintf(stdout, "More than one overlapping block found -- will use first.\n");
                 // TODO: do something smarter here?
               }
@@ -357,22 +323,9 @@ namespace Anki
                       blockSeen.get_pose().get_translation().z());
               
               // TODO: better way of merging existing/observed block pose
-              overlapping[0]->set_pose( blockSeen.get_pose() );
-              
-              currentWorldBlock = overlapping[0];
+              overlappingBlocks[0]->set_pose( blockSeen.get_pose() );
               
             } // if/else overlapping existing blocks found
-            
-            // Set the updated world block as the selected block for each robot for
-            // which it's centroid projects closest to the robot's center of
-            // field of view (and actually visible by that robot)
-            if(currentWorldBlock != NULL)
-            {
-              for(Robot& robot : this->robots)
-              {
-                //updateSelectedBlock(robot, currentWorldBlock);
-              } // for each robot
-            } // if currentWorldBlock not NULL
             
           } // for each block seen
           
@@ -410,12 +363,13 @@ namespace Anki
       
     } // update()
     
-    void BlockWorld::commandRobotToDock(const size_t whichRobot) 
+    void BlockWorld::commandRobotToDock(const size_t whichRobot,
+                                        const Block& whichBlock)
     {
       if(whichRobot < this->robots.size())
       {
-        
-        this->robots[whichRobot].dockWithSelectedBlock();
+
+        this->robots[whichRobot].dockWithBlock(whichBlock);
         
       } else {
         fprintf(stdout, "Invalid robot commanded to Dock.\n");

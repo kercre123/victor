@@ -57,7 +57,8 @@ namespace Anki
       
       void update(void);
       
-      void commandRobotToDock(const size_t whichRobot);
+      void commandRobotToDock(const size_t whichRobot,
+                              const Block& whichBlock);
       
     protected:
       
@@ -80,12 +81,18 @@ namespace Anki
       typedef std::vector<Robot> RobotList_type;
       RobotList_type robots;
       
-      typedef std::pair<BlockMarker2d&, Pose3d> MarkerPosePair;
+      typedef std::pair<const BlockMarker2d&, Pose3d> MarkerPosePair;
       void clusterBlockPoses(const std::vector<MarkerPosePair>& blockPoses,
                              const f32 distThreshold,
                              std::vector<std::vector<const MarkerPosePair*> >& markerClusters);
       
       typedef std::multimap<BlockType, BlockMarker2d> BlockMarker2dMultiMap;
+      void computeIndividualBlockPoses(const BlockMarker2dMultiMap& blockMarkers2d,
+                                       const Block&                 B_init,
+                                       std::vector<MarkerPosePair>& blockPoses);
+      void groupPosesIntoBlocks(const std::vector<MarkerPosePair>& blockPoses,
+                                Block&                             B_init,
+                                std::vector<Block>&                blocksSeen);
       void addAndUpdateBlocks(BlockMarker2dMultiMap& blockMarkers2d);
       
     }; // class BlockWorld
