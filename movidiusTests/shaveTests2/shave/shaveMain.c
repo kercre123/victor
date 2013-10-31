@@ -13,6 +13,8 @@
 
 volatile int whichAlgorithm;
 
+__attribute__ ((aligned (16))) volatile unsigned char paddedImageRow[IMAGE_WIDTH];
+
 __attribute__ ((aligned (16))) volatile int outputLine[IMAGE_WIDTH];
 
 // im = zeros([64,64], 'uint8');
@@ -20,7 +22,7 @@ __attribute__ ((aligned (16))) volatile int outputLine[IMAGE_WIDTH];
 //   im(y, :) = 1 + (y * (1:64)) / 12;
 // end
 // ii = integralimage(double(im));
-__attribute__ ((aligned (16))) const int integralImage[IMAGE_HEIGHT*IMAGE_WIDTH] = {
+__attribute__ ((aligned (16))) int integralImage[IMAGE_HEIGHT*IMAGE_WIDTH] = {
   1, 2, 3, 4, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 32, 35, 38, 41, 44, 47, 50, 53, 56, 59, 62, 65, 69, 73, 77, 81, 85, 89, 93, 97, 101, 105, 109, 113, 118, 123, 128, 133, 138, 143, 148, 153, 158, 163, 168, 173, 179, 185, 191, 197, 203, 209, 215, 221, 227, 233, 239,
   2, 4, 7, 10, 13, 17, 21, 25, 30, 35, 40, 45, 50, 55, 61, 67, 73, 80, 87, 94, 102, 110, 118, 126, 134, 142, 151, 160, 169, 179, 189, 199, 210, 221, 232, 243, 254, 265, 277, 289, 301, 314, 327, 340, 354, 368, 382, 396, 410, 424, 439, 454, 469, 485, 501, 517, 534, 551, 568, 585, 602, 619, 637, 655,
   3, 7, 12, 17, 22, 29, 36, 43, 51, 60, 69, 78, 87, 97, 108, 119, 130, 143, 156, 169, 183, 198, 213, 228, 243, 259, 276, 293, 310, 329, 348, 367, 387, 408, 429, 450, 471, 493, 516, 539, 562, 587, 612, 637, 663, 690, 717, 744, 771, 799, 828, 857, 886, 917, 948, 979, 1011, 1044, 1077, 1110, 1143, 1177, 1212, 1247,
@@ -89,7 +91,15 @@ __attribute__ ((aligned (16))) const int integralImage[IMAGE_HEIGHT*IMAGE_WIDTH]
 int main( void )
 {
   if(whichAlgorithm == 1) {
-    testIntegralImage();
+    testIntegralImageFiltering();
+  } else if(whichAlgorithm == 2) {
+    int x;
+    for(x=0; x<IMAGE_WIDTH; x++) {
+      paddedImageRow[x] = x+1;
+      integralImage[x+IMAGE_WIDTH] = 1;
+    }
+
+    testIntegralImageGeneration();
   }
 
   return 0;
