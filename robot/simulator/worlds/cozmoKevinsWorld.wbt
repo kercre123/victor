@@ -209,7 +209,7 @@ DEF WALL_4 Solid {
 }
 Block2x1 {
   name "Block075_1"
-  translation 4.89512e-10 0.0298305 0.35
+  translation 4.89512e-10 0.0298305 0.2
   rotation -0.0026561 0.999996 0.00129937 2.04586e-07
   blockColor 0.5 0.1 0.75
   facemarker1 [

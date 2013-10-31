@@ -4,7 +4,9 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/pathFollower.h"
 
+#include "headController.h"
 #include "keyboardController.h"
+#include "liftController.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -99,26 +101,27 @@ namespace Anki {
               
             case CKEY_HEAD_UP: //s-key: move head up
             {
-              SetHeadPitch(GetHeadPitch() + 0.01f);
+              SetHeadAngularVelocity(1.5f*TURN_VELOCITY_SLOW);
               break;
             }
               
             case CKEY_HEAD_DOWN: //x-key: move head down
             {
-              SetHeadPitch(GetHeadPitch() - 0.01f);
+              SetHeadAngularVelocity(-1.5f*TURN_VELOCITY_SLOW);
               break;
             }
             case CKEY_LIFT_UP: //a-key: move lift up
             {
-              SetLiftPitch(GetLiftPitch() + 0.02f);
+              SetLiftAngularVelocity(1.5f*TURN_VELOCITY_SLOW);
               break;
             }
               
             case CKEY_LIFT_DOWN: //z-key: move lift down
             {
-              SetLiftPitch(GetLiftPitch() - 0.02f);
+              SetLiftAngularVelocity(-1.5f*TURN_VELOCITY_SLOW);
               break;
             }
+              /*
             case '1': //set lift to pickup position
             {
               SetLiftPitch(LIFT_CENTER);
@@ -134,6 +137,7 @@ namespace Anki {
               SetLiftPitch(LIFT_UPUP);
               break;
             }
+               */
               
             case CKEY_UNLOCK: //spacebar-key: unlock
             {
@@ -142,10 +146,18 @@ namespace Anki {
             }
             default:
             {
-              if(not PathFollower::IsTraversingPath()) {
-                // Don't stop the motors if the PathFollower is
-                // commanding them!
-                SetWheelAngularVelocity(0, 0);
+              //if(not PathFollower::IsTraversingPath()) {
+              if(Robot::GetOperationMode() == Robot::WAITING) {
+                // Don't stop the motors if they are being controlled
+                // by other processes
+                SetWheelAngularVelocity(0.f, 0.f);
+                
+                if(LiftController::IsInPosition()) {
+                  SetLiftAngularVelocity(0.f);
+                }
+                if(HeadController::IsInPosition()) {
+                  SetHeadAngularVelocity(0.f);
+                }
               }
             }
               

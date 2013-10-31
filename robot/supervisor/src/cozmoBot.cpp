@@ -1,9 +1,13 @@
 
 #include "anki/cozmo/messageProtocol.h"
 
+// TODO: move more of these include files to "src"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
+#include "dockingController.h"
+#include "headController.h"
+#include "liftController.h"
 #include "anki/cozmo/robot/pathFollower.h"
 #include "anki/cozmo/robot/vehicleMath.h"
 #include "anki/cozmo/robot/speedController.h"
@@ -48,11 +52,12 @@ namespace Anki {
         VisionSystem::BlockMarkerMailbox blockMarkerMailbox_;
         VisionSystem::MatMarkerMailbox   matMarkerMailbox_;
         
-        Robot::OperationMode mode_, nextMode_;
+        Robot::OperationMode mode_ = INITIALIZING, nextMode_ = WAITING;
         
         // Localization:
-        f32 currentMatX_, currentMatY_;
-        Radians currentMatHeading_;
+        f32 currentMatX_=0.f, currentMatY_=0.f;
+        Radians currentMatHeading_(0.f);
+
         
       } // Robot private namespace
       
@@ -109,7 +114,21 @@ namespace Anki {
          fprintf(stdout, "SteeringController initialization failed.\n");
          return EXIT_FAILURE;
          }
+         
+         if(HeadController::Init() == EXIT_FAILURE) {
+         fprintf(stdout, "HeadController initialization failed.\n");
+         return EXIT_FAILURE;
+         }
+         
+         if(LiftController::Init() == EXIT_FAILURE) {
+         fprintf(stdout, "LiftController initialization failed.\n");
+         return EXIT_FAILURE;
+         }
+         
          */
+        
+        // Lower the lift
+        LiftController::SetDesiredHeight(LIFT_HEIGHT_LOW);
         
         // Once initialization is done, broadcast a message that this robot
         // is ready to go
@@ -119,6 +138,8 @@ namespace Anki {
         msg.msgID = MSG_V2B_CORE_ROBOT_AVAILABLE;
         msg.robotID = HAL::GetRobotID();
         HAL::SendMessage(reinterpret_cast<u8 *>(&msg), msg.size);
+        
+        mode_ = WAITING;
         
         return EXIT_SUCCESS;
         
@@ -222,6 +243,22 @@ namespace Anki {
               
               break;
             }
+            case MSG_B2V_CORE_INITIATE_DOCK:
+            {
+              const CozmoMsg_InitiateDock *msg = reinterpret_cast<const CozmoMsg_InitiateDock*>(msgBuffer);
+              
+              if(DockingController::SetGoals(msg) == EXIT_SUCCESS) {
+                
+                fprintf(stdout, "Robot received Initiate Dock message, now in DOCK mode.\n");
+                
+                mode_ = DOCK;
+              }
+              else {
+                fprintf(stdout, "Initiate Dock message received, failed to set docking goals.\n");
+              }
+              
+              break;
+            }
             default:
               fprintf(stdout, "Unrecognized command in received message.\n");
               
@@ -242,6 +279,12 @@ namespace Anki {
           HAL::SendMessage(&blockMsg, sizeof(CozmoMsg_ObservedBlockMarker));
         }
         
+        //////////////////////////////////////////////////////////////
+        // Head & Lift Position Updates
+        //////////////////////////////////////////////////////////////
+        
+        HeadController::Update();
+        LiftController::Update();
         
         //////////////////////////////////////////////////////////////
         // Path Following
@@ -269,19 +312,54 @@ namespace Anki {
 #endif //EXECUTE_TEST_PATH
         
         //////////////////////////////////////////////////////////////
-        // Motion Control (Path following / Docking)
+        // State Machine
         //////////////////////////////////////////////////////////////
-        if(PathFollower::IsTraversingPath())
+
+        switch(mode_)
         {
-          PathFollower::Update();
-        }
-        
-        //////////////////////////////////////////////////////////////
-        // Gripper
-        //////////////////////////////////////////////////////////////
-        
-        // Check if connector attaches to anything
-        HAL::ManageGripper();
+          case INITIALIZING:
+          {
+            fprintf(stdout, "Robot still initializing.\n");
+            break;
+          }
+            
+          case FOLLOW_PATH:
+          {
+            if(PathFollower::IsTraversingPath())
+            {
+              PathFollower::Update();
+            }
+            break;
+          }
+            
+          case DOCK:
+          {
+            DockingController::Update();
+            
+            if(DockingController::IsDone())
+            {
+              mode_ = WAITING;
+              
+              if(DockingController::DidSucceed())
+              {
+                // TODO: send a message to basestation that we are carrying a block?
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHT);
+              }
+              
+            } // if head and left are in position
+            
+            break;
+          }
+            
+          case WAITING:
+          {
+            // Idle.  Nothing to do yet...
+            break;
+          }
+          default:
+            fprintf(stdout, "Unrecognized CozmoBot mode.\n");
+            
+        } // switch(mode_)
         
         
         //////////////////////////////////////////////////////////////

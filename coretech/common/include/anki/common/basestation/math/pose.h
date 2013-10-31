@@ -57,6 +57,7 @@ namespace Anki {
   {
   public:
     static Pose2d* World;
+    static const Vec2f X_AXIS, Y_AXIS;
     
     // Constructors:
     Pose2d(const Radians &angle, const Point2f &translation);
@@ -84,6 +85,7 @@ namespace Anki {
     RotationMatrix2d get_rotationMatrix() const;
     
     void set_parent(const Pose2d* otherPose);
+    const Pose2d* get_parent() const;
     
     // Composition with another Pose2d:
     void   operator*=(const Pose2d &other); // in place
@@ -142,6 +144,8 @@ namespace Anki {
   public:
     static Pose3d* World;
     
+    static const Vec3f X_AXIS, Y_AXIS, Z_AXIS;
+    
     // Default pose: no rotation, no translation, world as parent
     Pose3d();
     
@@ -182,6 +186,9 @@ namespace Anki {
     void set_rotation(const RotationVector3d &Rvec);
     void set_rotation(const Radians angle, const Vec3f &axis);
     void set_translation(const Vec3f &T);
+    
+    void set_parent(const Pose3d* parent);
+    const Pose3d* get_parent() const;
     
     // Composition with another Pose
     void   operator*=(const Pose3d &other); // in place
@@ -273,6 +280,9 @@ namespace Anki {
   inline void Pose2d::set_parent(const Anki::Pose2d *otherPose)
   { this->parent = otherPose; }
   
+  inline const Pose2d* Pose2d::get_parent(void) const
+  { return this->parent; }
+  
   
   // Pose3d
   
@@ -317,6 +327,13 @@ namespace Anki {
   {
     this->translation = T;
   }
+  
+  inline void Pose3d::set_parent(const Pose3d* parent)
+  { this->parent = parent; }
+  
+  inline const Pose3d* Pose3d::get_parent() const
+  { return this->parent; }
+
   
   
 } // namespace Anki

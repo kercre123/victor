@@ -30,8 +30,8 @@ namespace Anki {
   
   
   CameraCalibration::CameraCalibration()
-  : focalLength_x(1.f), focalLength_y(1.f),
-    center_x(0.f), center_y(0.f),
+  : nrows(480), ncols(640), focalLength_x(1.f), focalLength_y(1.f),
+    center(0.f,0.f),
     skew(0.f)
   {
     /*
@@ -41,11 +41,13 @@ namespace Anki {
      */
   }
   
-  CameraCalibration::CameraCalibration(const float fx,   const float fy,
-                                       const float cenx, const float ceny,
-                                       const float skew_in)
-  : focalLength_x(fx), focalLength_y(fy),
-    center_x(cenx), center_y(ceny), skew(skew_in)
+  CameraCalibration::CameraCalibration(const u16 nrowsIn, const u16 ncolsIn,
+                                       const f32 fx,    const f32 fy,
+                                       const f32 cenx,  const f32 ceny,
+                                       const f32 skew_in)
+  : nrows(nrowsIn), ncols(ncolsIn),
+    focalLength_x(fx), focalLength_y(fy),
+    center(cenx, ceny), skew(skew_in)
   {
     /*
     std::fill(this->distortionCoeffs.begin(),
@@ -57,9 +59,9 @@ namespace Anki {
   
   Matrix_3x3f CameraCalibration::get_calibrationMatrix(void) const
   {
-    float K_data[9] = {
-      this->focalLength_x, this->focalLength_x*this->skew, this->center_x,
-      0.f,                 this->focalLength_y,            this->center_y,
+    f32 K_data[9] = {
+      this->focalLength_x, this->focalLength_x*this->skew, this->center.x(),
+      0.f,                 this->focalLength_y,            this->center.y(),
       0.f,                 0.f,                            1.f};
     
     Matrix_3x3f K(K_data);
@@ -89,15 +91,15 @@ namespace Anki {
     std::vector<cv::Point2f> cvImagePoints;
     std::vector<cv::Point3f> cvObjPoints;
     
-    cvImagePoints.emplace_back(imgPoints[Quad2f::TopLeft].get_CvPoint_());
-    cvImagePoints.emplace_back(imgPoints[Quad2f::TopRight].get_CvPoint_());
-    cvImagePoints.emplace_back(imgPoints[Quad2f::BottomLeft].get_CvPoint_());
-    cvImagePoints.emplace_back(imgPoints[Quad2f::BottomRight].get_CvPoint_());
+    cvImagePoints.emplace_back(imgPoints[Quad::TopLeft].get_CvPoint_());
+    cvImagePoints.emplace_back(imgPoints[Quad::TopRight].get_CvPoint_());
+    cvImagePoints.emplace_back(imgPoints[Quad::BottomLeft].get_CvPoint_());
+    cvImagePoints.emplace_back(imgPoints[Quad::BottomRight].get_CvPoint_());
     
-    cvObjPoints.emplace_back(objPoints[Quad3f::TopLeft].get_CvPoint3_());
-    cvObjPoints.emplace_back(objPoints[Quad3f::TopRight].get_CvPoint3_());
-    cvObjPoints.emplace_back(objPoints[Quad3f::BottomLeft].get_CvPoint3_());
-    cvObjPoints.emplace_back(objPoints[Quad3f::BottomRight].get_CvPoint3_());
+    cvObjPoints.emplace_back(objPoints[Quad::TopLeft].get_CvPoint3_());
+    cvObjPoints.emplace_back(objPoints[Quad::TopRight].get_CvPoint3_());
+    cvObjPoints.emplace_back(objPoints[Quad::BottomLeft].get_CvPoint3_());
+    cvObjPoints.emplace_back(objPoints[Quad::BottomRight].get_CvPoint3_());
     
     Matrix_3x3f calibMatrix(this->calibration.get_calibrationMatrix());
     
@@ -121,19 +123,52 @@ namespace Anki {
 
   } // computeObjectPose(from quads)
   
+  void  Camera::project3dPoint(const Point3f& objPoint,
+                               Point2f&       imgPoint) const
+  {
+    const f32 BEHIND_CAM = std::numeric_limits<f32>::quiet_NaN();
+    
+    if(objPoint.z() <= 0.f)
+    {
+      // Point not visible (not in front of camera)
+      imgPoint = BEHIND_CAM;
+      
+    } else {
+      // Point visible, project it
+      imgPoint.x() = (objPoint.x() / objPoint.z());
+      imgPoint.y() = (objPoint.y() / objPoint.z());
+      
+      // TODO: Add radial distortion here
+      //distortCoordinate(imgPoints[i_corner], imgPoints[i_corner]);
+      
+      imgPoint.x() *= this->calibration.get_focalLength_x();
+      imgPoint.y() *= this->calibration.get_focalLength_y();
+      
+      imgPoint += this->calibration.get_center();
+    }
+    
+  } // project3dPoint()
   
   // Compute the projected image locations of a set of 3D points:
   void Camera::project3dPoints(const std::vector<Point3f> &objPoints,
                        std::vector<Point2f>       &imgPoints) const
   {
-    CORETECH_THROW("Unimplemented!")
-  }
+    imgPoints.resize(objPoints.size());
+    for(size_t i = 0; i<objPoints.size(); ++i)
+    {
+      project3dPoint(objPoints[i], imgPoints[i]);
+    }
+  } // project3dPoints(std::vectors)
   
   void Camera::project3dPoints(const Quad3f &objPoints,
                        Quad2f       &imgPoints) const
   {
-    CORETECH_THROW("Unimplemented!")
-  }
+    for(Quad::CornerName i_corner=Quad::FirstCorner;
+        i_corner < Quad::NumCorners; ++i_corner)
+    {
+      project3dPoint(objPoints[i_corner], imgPoints[i_corner]);
+    }
+  } // project3dPoints(Quads)
 
   
 } // namespace Anki

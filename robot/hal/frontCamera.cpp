@@ -24,7 +24,7 @@ namespace Anki
 
       static const unsigned short m_OV9653_VGA[][2] = {
         { 0x09, 0x10 },  // Set soft sleep mode
-        { 0x0e, 0x00 },  // System clock options
+        { 0x0e, 0x80 },  // System clock options
         { 0x09, 0x01 },  // Output drive 2x
         { 0x15, 0x00 },  // Signals not negated
         { 0x3f, 0xa6 },  // Edge enhancement treshhold and factor
@@ -46,7 +46,6 @@ namespace Anki
 
         { 0x29, 0x2f },  // Analog BLC & regulator
         { 0x0f, 0x43 },  // HREF & ADBLC options
-        { 0x13, 0xe5 },  // AGC/AEC options
         { 0x3d, 0x90 },  // Gamma selection, colour matrix, UV delay
         { 0x69, 0x80 },  // Manual banding filter MSB
         { 0x5c, 0x96 },  // Reserved up to 0xa5
@@ -83,27 +82,28 @@ namespace Anki
         { 0x04, 0x00 },
         { 0x0c, 0x04 },
         { 0x0d, 0x80 },
-        { 0x11, 0x01 },
+        { 0x11, 0x80 },  // Enable double clock option for PLL
         { 0x12, 0x40 },  // VGA selection
 
-        { 0x17, 0x26 },  // HSTART == HREF start
-        { 0x18, 0xc6 },  // HSTOP == HREF stop
-        { 0x32, 0xed },  // HREF control
-        { 0x19, 0x01 },  // VSTRT
-        { 0x1a, 0x3d },  // VSTOP
+        { 0x17, 0x26 },  // HSTART == HREF start ~309
+        { 0x18, 0xc6 },  // HSTOP == HREF stop ~1589  ... 1280
+        { 0x32, 0xed },  // HREF control == {11,101,101}
+        { 0x19, 0x01 },  // VSTRT ~8
+        { 0x1a, 0x3d },  // VSTOP ~488
         { 0x03, 0x00 },  // VREF
-        { 0x2a, 0x10 },  // EXHCH == Dummy Pixel Insert MSB
-        { 0x2b, 0x40 },  // EXHCL == Dummy Pixel Insert LSB
+        { 0x2a, 0x00 },  // EXHCH == Dummy Pixel Insert MSB
+        { 0x2b, 0x00 },  // EXHCL == Dummy Pixel Insert LSB
         { 0x37, 0x91 },  // ADC
         { 0x38, 0x12 },  // ACOM
         { 0x39, 0x43 },  // OFON
+        { 0x13, 0x00 },  // AGC/AEC options
       };
 
       static CameraSpecification m_camSpecVGA = {
-        YUV422p,          // type
+        YUV422i,          // type
         FRAME_WIDTH * 2,  // width
         FRAME_HEIGHT,     // height
-        FRAME_WIDTH,      // stride
+        FRAME_WIDTH * 2,  // stride
         2,                // bytesPP
         24,               // referenceFrequency
         (0x60 >> 1),      // sensorI2CAddress
@@ -143,7 +143,28 @@ namespace Anki
           D_GPIO_PAD_LOCAL_PIN_OUT
         },
         
-        {
+/*         {
+          17, 17,   ACTION_UPDATE_ALL,  // TEMP
+          PIN_LEVEL_HIGH,
+          D_GPIO_MODE_7             |
+          D_GPIO_DIR_OUT            |
+          D_GPIO_DATA_INV_OFF       |
+          D_GPIO_WAKEUP_OFF         |
+          D_GPIO_IRQ_SRC_NONE,
+
+          D_GPIO_PAD_NO_PULL        |
+          D_GPIO_PAD_DRIVE_8mA      |
+          D_GPIO_PAD_VOLT_2V5       |
+          D_GPIO_PAD_SLEW_SLOW      |
+          D_GPIO_PAD_SCHMITT_OFF    |
+          D_GPIO_PAD_RECEIVER_ON    |
+          D_GPIO_PAD_BIAS_2V5       |
+          D_GPIO_PAD_LOCALCTRL_OFF  |
+          D_GPIO_PAD_LOCALDATA_LO   |
+          D_GPIO_PAD_LOCAL_PIN_OUT
+        }, */
+
+       {
           114, 114, ACTION_UPDATE_ALL,  // CAM1_MCLK
           PIN_LEVEL_LOW,
           D_GPIO_MODE_0             |
@@ -154,7 +175,7 @@ namespace Anki
 
           D_GPIO_PAD_NO_PULL        |
           D_GPIO_PAD_DRIVE_8mA      |
-          D_GPIO_PAD_VOLT_1V8       |
+          D_GPIO_PAD_VOLT_2V5       |
           D_GPIO_PAD_SLEW_SLOW      |
           D_GPIO_PAD_SCHMITT_OFF    |
           D_GPIO_PAD_RECEIVER_ON    |
@@ -175,7 +196,7 @@ namespace Anki
 
           D_GPIO_PAD_NO_PULL        |
           D_GPIO_PAD_DRIVE_2mA      |
-          D_GPIO_PAD_VOLT_1V8       |
+          D_GPIO_PAD_VOLT_2V5       |
           D_GPIO_PAD_SLEW_SLOW      |
           D_GPIO_PAD_SCHMITT_ON     |
           D_GPIO_PAD_RECEIVER_ON    |
@@ -196,7 +217,7 @@ namespace Anki
 
           D_GPIO_PAD_NO_PULL        |
           D_GPIO_PAD_DRIVE_2mA      |
-          D_GPIO_PAD_VOLT_1V8       |
+          D_GPIO_PAD_VOLT_2V5       |
           D_GPIO_PAD_SLEW_SLOW      |
           D_GPIO_PAD_SCHMITT_ON     |
           D_GPIO_PAD_RECEIVER_ON    |
@@ -217,7 +238,7 @@ namespace Anki
 
           D_GPIO_PAD_NO_PULL        |
           D_GPIO_PAD_DRIVE_2mA      |
-          D_GPIO_PAD_VOLT_1V8       |
+          D_GPIO_PAD_VOLT_2V5       |
           D_GPIO_PAD_SLEW_SLOW      |
           D_GPIO_PAD_SCHMITT_ON     |
           D_GPIO_PAD_RECEIVER_ON    |
@@ -238,7 +259,7 @@ namespace Anki
 
           D_GPIO_PAD_NO_PULL        |
           D_GPIO_PAD_DRIVE_2mA      |
-          D_GPIO_PAD_VOLT_1V8       |
+          D_GPIO_PAD_VOLT_2V5       |
           D_GPIO_PAD_SLEW_SLOW      |
           D_GPIO_PAD_SCHMITT_ON     |
           D_GPIO_PAD_RECEIVER_ON    |
@@ -259,7 +280,7 @@ namespace Anki
 
           D_GPIO_PAD_NO_PULL        |
           D_GPIO_PAD_DRIVE_2mA      |
-          D_GPIO_PAD_VOLT_1V8       |
+          D_GPIO_PAD_VOLT_2V5       |
           D_GPIO_PAD_SLEW_SLOW      |
           D_GPIO_PAD_SCHMITT_OFF    |
           D_GPIO_PAD_RECEIVER_ON    |
@@ -280,7 +301,7 @@ namespace Anki
 
           D_GPIO_PAD_NO_PULL        |
           D_GPIO_PAD_DRIVE_2mA      |
-          D_GPIO_PAD_VOLT_1V8       |
+          D_GPIO_PAD_VOLT_2V5       |
           D_GPIO_PAD_SLEW_SLOW      |
           D_GPIO_PAD_SCHMITT_OFF    |
           D_GPIO_PAD_RECEIVER_ON    |
@@ -305,10 +326,21 @@ namespace Anki
       static DDR_BUFFER u8 m_buffer[FRAME_SIZE];
       static DDR_BUFFER CameraSpecification m_cameraSpec;
 
+      DDR_BUFFER u8 m_frontBuffer[FRAME_SIZE];
+
       static volatile bool m_isFrameReady;
 
       static void FrameReady(FrameBuffer* fb)
       {
+        static int frame = 0;
+        frame++;
+        //if ((frame % 10) == 0)
+        {
+          //for (int i = 0; i < FRAME_SIZE; i += 4)
+          {
+            //*(u32*)&m_frontBuffer[i] = *(u32*)&m_buffer[i];
+          }
+        }
         m_isFrameReady = true;
       }
 
@@ -359,12 +391,12 @@ namespace Anki
         CameraStart(&m_handle, RESET_PIN, false, m_camWriteProto);
       }
 
-      u8* FrontCameraGetFrame()
+      const u8* FrontCameraGetFrame()
       {
-//        if (m_isFrameReady)
+        if (m_isFrameReady)
         {
           m_isFrameReady = false;
-          return m_cameraBuffer.p1; //m_buffer;
+          return m_cameraBuffer.p1;
         }
 
         return NULL;

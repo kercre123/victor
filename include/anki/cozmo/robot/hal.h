@@ -99,15 +99,16 @@ namespace Anki
       f32 GetRightWheelSpeed();
       
       // Head pitch
-      void SetHeadPitch(f32 pitch_rad);
-      f32  GetHeadPitch();
+      //void SetHeadPitch(f32 pitch_rad);
+      void SetHeadAngularVelocity(const f32 rad_per_sec);
+      f32  GetHeadAngle();
       
       // Lift position
-      void SetLiftPitch(f32 pitch_rad);
-      f32  GetLiftPitch();
+      //void SetLiftPitch(f32 pitch_rad);
+      void SetLiftAngularVelocity(const f32 rad_per_sec);
+      f32  GetLiftAngle();
       
       // Gripper control
-      void ManageGripper(); // needed?
       void EngageGripper();
       void DisengageGripper();
       bool IsGripperEngaged();
@@ -146,17 +147,27 @@ namespace Anki
       // Execution
       void MainExecution();
       void LongExecution();
- 
+
+      // Ground truth (no-op if not in simulation?)
+      void GetGroundTruthPose(f32 &x, f32 &y, f32& rad);
+
       // UART
       void UARTInit();
       int UARTPutChar(int c);
+
+      // Cameras
+      void MatCameraInit();
+      const u8* MatCameraGetFrame();
+
+      void FrontCameraInit();
+      const u8* FrontCameraGetFrame();
 
       // USB
       void USBInit();
       void USBUpdate();
       
-      // Ground truth (no-op if not in simulation?)
-      void GetGroundTruthPose(f32 &x, f32 &y, f32& rad);
+      // Encoders
+      void EncodersInit();
 
     } // namespace HAL
   } // namespace Cozmo

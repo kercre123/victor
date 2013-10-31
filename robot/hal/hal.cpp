@@ -62,6 +62,7 @@ int main()
   // Initialize DDR memory
   DrvDdrInitialise(DrvCprGetClockFreqKhz(AUX_CLK_DDR, NULL));
 
+  // Turn off all GPIO-related IRQs
   DrvGpioIrqResetAll();
 
   // Force big-endian memory swap
@@ -80,20 +81,55 @@ int main()
 
   //USBInit();
 
+  EncodersInit();
+
+//  SetWheelAngularVelocity(0.75f, 0.f);
+
+/*  DrvGpioMode(98, 7 | D_GPIO_DIR_IN);
+
+  GpioPadSet(98, GpioPadGet(98) | D_GPIO_PAD_PULL_DOWN);
+
+  SleepMs(100);
+
+  printf("pad == %d\n", DrvGpioGetPin(98));
+
+
+  GpioPadSet(98, (GpioPadGet(98) &~ D_GPIO_PAD_PULL_DOWN) |
+    D_GPIO_PAD_PULL_UP | D_GPIO_PAD_VOLT_2V5 | D_GPIO_PAD_BIAS_2V5);
+
+  SleepMs(100);
+
+  printf("pad == %d\n", DrvGpioGetPin(98)); */
+
   Init();
 
   while (true)
   {
+    //USBUpdate();
+
     MainExecution();
     LongExecution();
   }
 
-/*    SetWheelAngularVelocity(0.65f, 0.65f);
+/*      const u32 pinA = 80;
+      const u32 pinB = 83;
+      SleepMs(1000);
+      DrvGpioMode(pinA, 7 | D_GPIO_DIR_OUT);
+      DrvGpioMode(pinB, 7 | D_GPIO_DIR_OUT);
+      DrvGpioSetPinHi(pinA);
+      DrvGpioSetPinLo(pinB);
 
-    u8* image = 0;
+      SleepMs(1000);
+      DrvGpioSetPinLo(pinA);
+      DrvGpioSetPinHi(pinB); */
+
+
+//    printf("%d", DrvGpioGetPin(106));
+
+/*    u8* image = 0;
     do
     {
-      image = FrontCameraGetFrame();
+      image = (u8*)FrontCameraGetFrame();
     }
     while (!image);
 
@@ -107,7 +143,7 @@ int main()
     {
       for (int x = 0; x < 640; x += 8)
       {
-        UARTPutChar(image[x + y * 640]);
+        UARTPutChar(image[x * 2 + 0 + y * 1280]);
       }
     }
   }*/

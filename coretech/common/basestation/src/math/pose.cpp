@@ -9,6 +9,9 @@ namespace Anki {
 #pragma mark --- Pose2d Implementations ---
   Pose2d* Pose2d::World = NULL;
   
+  const Vec2f Pose2d::X_AXIS = {{1.f, 0.f}};
+  const Vec2f Pose2d::Y_AXIS = {{0.f, 1.f}};
+  
   Pose2d::Pose2d(const Radians &theta, const Point2f &t)
   : translation(t), angle(theta), planeNormal(0.f,0.f,1.f),
     parent(Pose2d::World)
@@ -70,6 +73,10 @@ namespace Anki {
 #pragma mark --- Pose3d Implementations ---
   
   Pose3d* Pose3d::World = NULL;
+  
+  const Vec3f Pose3d::X_AXIS = {{1.f, 0.f, 0.f}};
+  const Vec3f Pose3d::Y_AXIS = {{0.f, 1.f, 0.f}};
+  const Vec3f Pose3d::Z_AXIS = {{0.f, 0.f, 1.f}};
   
   Pose3d::Pose3d()
   : translation(0.f, 0.f, 0.f), parent(Pose3d::World)
@@ -203,10 +210,11 @@ namespace Anki {
   void Pose3d::applyTo(const Quad3f &quadIn,
                        Quad3f &quadOut) const
   {
-    quadOut[Quad3f::TopLeft]     = (*this) * quadIn[Quad3f::TopLeft];
-    quadOut[Quad3f::TopRight]    = (*this) * quadIn[Quad3f::TopRight];
-    quadOut[Quad3f::BottomLeft]  = (*this) * quadIn[Quad3f::BottomLeft];
-    quadOut[Quad3f::BottomRight] = (*this) * quadIn[Quad3f::BottomRight];
+    using namespace Quad;
+    quadOut[TopLeft]     = (*this) * quadIn[TopLeft];
+    quadOut[TopRight]    = (*this) * quadIn[TopRight];
+    quadOut[BottomLeft]  = (*this) * quadIn[BottomLeft];
+    quadOut[BottomRight] = (*this) * quadIn[BottomRight];
   }
   
   void Pose3d::applyTo(const std::vector<Point3f> &pointsIn,
@@ -248,7 +256,7 @@ namespace Anki {
   
   Pose3d& Pose3d::Invert(void)
   {
-    this->rotationMatrix.getTranspose();
+    this->rotationMatrix.Transpose();
     this->translation *= -1.f;
     this->translation = this->rotationMatrix * this->translation;
     

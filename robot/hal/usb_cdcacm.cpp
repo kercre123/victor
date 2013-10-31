@@ -41,7 +41,7 @@
 #define RT_RECIPIENT_ENDPOINT       2
 #define RT_RECIPIENT_OTHER          3
 
-#define MAX_PACKET_SIZE             0x20
+#define MAX_PACKET_SIZE             0x40
 
 namespace Anki
 {
@@ -49,10 +49,10 @@ namespace Anki
   {
     namespace HAL
     {
-      static volatile unsigned char  __attribute__((aligned(4)))   m_USBStatus[2] = { 0x01, 0x00 };  // Self-Powered, No Remote Wakeup
-      static volatile unsigned char __attribute__((aligned(4)))    m_interface = 0;
-      static volatile unsigned int __attribute__((aligned(4)))     m_deviceStatus = 0;
-      static volatile unsigned int __attribute__((aligned(4)))     m_deviceClock = 0;
+      static volatile unsigned char __attribute__((aligned(4))) m_USBStatus[2] = { 0x01, 0x00 };  // Self-Powered, No Remote Wakeup
+      static volatile unsigned char __attribute__((aligned(4))) m_interface = 0;
+      static volatile unsigned int __attribute__((aligned(4))) m_deviceStatus = 0;
+      static volatile unsigned int __attribute__((aligned(4))) m_deviceClock = 0;
       //  static volatile unsigned int __attribute__((aligned(64)))    m_dTD_IN[32];
       //  static volatile unsigned int __attribute__((aligned(64)))    m_dTD_OUT[32];
       //  static volatile unsigned int __attribute__((aligned(64)))    m_dTD_DIO[32];
@@ -269,16 +269,18 @@ namespace Anki
       static void EPStart(const endpoint_desc_t* ep)
       {
         unsigned int index, cap, type, ctrl;
-        bool isReceiveEndpoint = false;
+        bool isIN = false;
 
+        // Get the address for ENDPTCTRL[index]
         index = ep->bEndpointAddress & 0x0F;
-        ctrl = REG_ENDPTCTRL0 + (index << 2);  // Get the address for ENDPTCTRL[index]
-        index <<= 1;
+        ctrl = REG_ENDPTCTRL0 + (index << 2); 
 
-        // Note: even indices in dQH are for OUT endpoints and odd indices are for IN endpoints
+        // Note: even indices in dQH are for OUT endpoints and odd indices are
+        // for IN endpoints
+        index <<= 1;
         if (ep->bEndpointAddress & 0x80)
         {
-          isReceiveEndpoint = true;
+          isIN = true;
           index++;
         }
 
@@ -318,72 +320,26 @@ namespace Anki
         dTD[1] = 0;
 
         // Set the endpoint control
-        if (isReceiveEndpoint)
+        cap |= type << 2;
+        if (isIN)
         {
-          // TODO: Clear potentially old flags?
-          REG_WORD(ctrl) |= (type << 2) | (1 << 6) | (1 << 7);  // RX Endpoint Reset and Enable
+          // TX Endpoint Reset and Enable
+          REG_WORD(ctrl) |= (type << 18) | (1 << 22) | (1 << 23);
+          //REG_HALF(ctrl + 2) = (cap | 0x40);
+          //REG_HALF(ctrl + 2) = (cap | 0x80);
         } else {
-          REG_WORD(ctrl) |= (type << 18) | (1 << 22) | (1 << 23);  // TX Endpoint Reset and Enable
+          // RX Endpoint Reset and Enable
+          REG_WORD(ctrl) |= (type << 2) | (1 << 6) | (1 << 7);
+          //REG_HALF(ctrl) = (cap | 0x40);
+          //REG_HALF(ctrl) = (cap | 0x80);
+ 
         }
-      }
 
-      static void DisableEndpoints()
+        cap |= type << 2;
+     }
+
+      static void InitDeviceController()
       {
-        for (int i = 0; i < 16; i++)
-          REG_WORD(REG_ENDPTCTRL0 + (i << 2)) &= ~((1 << 7) | (1 << 23));  // ~(TXE | RXE)
-      }
-
-      static void Reset()
-      {
-        u32 value;
-        DisableEndpoints();
-        // Clear all pending interrupts
-        REG_WORD(REG_USBSTS) = 0xFFFFffff;
-        REG_WORD(REG_ENDPTNAK) = 0xFFFFffff;
-        REG_WORD(REG_ENDPTNAKEN) = 0xFFFFffff;
-        // Clear all setup token semaphores
-        value = REG_WORD(REG_ENDPTSETUPSTAT);
-        REG_WORD(REG_ENDPTSETUPSTAT) = value;
-        // Clear all the endpoint complete status bits
-        value = REG_WORD(REG_ENDPTCOMPLETE);
-        REG_WORD(REG_ENDPTCOMPLETE) = value;
-        // Cancel all primed status
-        while (REG_WORD(REG_ENDPTPRIME))
-          ;
-        REG_WORD(REG_ENDPTFLUSH) = 0xFFFFffff;
-        // Wait for flush to finish
-        while (REG_WORD(REG_ENDPTFLUSH))
-          ;
-        // Stop the controller
-        REG_WORD(REG_USBCMD) &= ~USB_USBCMD_RS;
-        // Reset the controller
-        REG_WORD(REG_USBCMD) = USB_USBCMD_RST;
-        // Wait for reset to complete
-        while (REG_WORD(REG_USBCMD) & USB_USBCMD_RST)
-          ;
-        // Reset the device address
-        REG_WORD(REG_DEVICE_ADDR) = 0;
-
-        REG_WORD(REG_USBMODE) = (USBMODE_DEVICE_MODE);
-
-        REG_WORD(REG_ENDPOINTLISTADDR) = (u32)&m_dQH;
-      }
-
-      void USBInit()
-      {
-        // USB calibration (from Movidius)
-        REG_WORD(CPR_USB_CTRL_ADR) = 0x00003004;
-        REG_WORD(CPR_USB_PHY_CTRL_ADR) = 0x01C18d07;
-
-        // Initialize the hardware
-        DrvCprSysDeviceAction(ENABLE_CLKS, DEV_USB);
-        DrvCprSysDeviceAction(RESET_DEVICES, DEV_USB);
-
-        Reset();
-        // Set OTG transceiver configuration
-        REG_WORD(REG_OTGSC) |=  (USB_OTGSC_OT | USB_OTGSC_VC);
-        // Transceiver enable
-        REG_WORD(REG_PORTSC1) = USB_PORTSCX_PE;
         // Clear run bit
         REG_WORD(REG_USBCMD) = 0;
         // Wait for bit to clear
@@ -397,16 +353,20 @@ namespace Anki
         // Set USB address to 0
         REG_WORD(REG_DEVICE_ADDR) = 0;
         // Set the maximum burst length (in 32-bit words)
-        //REG_WORD(REG_BURSTSIZE) = 0x1010;
-        //REG_WORD(REG_SBUSCFG) = 0;
+        REG_WORD(REG_BURSTSIZE) = 0x1010;
+        REG_WORD(REG_SBUSCFG) = 0;
         // Set the USB controller to DEVICE mode and disable "setup lockout mode"
-        REG_WORD(REG_USBMODE) = (USBMODE_DEVICE_MODE); // | USB_USBMODE_SLOM);
-        // Configure the endpoint-list address
-        REG_WORD(REG_ENDPOINTLISTADDR) = (u32)&m_dQH;
+        REG_WORD(REG_USBMODE) = (USBMODE_DEVICE_MODE | USB_USBMODE_SLOM);
+        
+        // Clear the setup status
+        REG_WORD(REG_USBSTS) = 0;
 
         // Setup control endpoints
         EPStart(&usb_control_out_endpoint);
         EPStart(&usb_control_in_endpoint);
+
+        // Configure the endpoint-list address
+        REG_WORD(REG_ENDPOINTLISTADDR) = (u32)&m_dQH;
 
         // Set the run bit
         REG_WORD(REG_USBCMD) = USB_USBCMD_RS;
@@ -415,6 +375,49 @@ namespace Anki
           ;
         // Clear SOF
         REG_WORD(REG_USBSTS) = USB_USBSTS_SRI;
+      }
+
+      static void Reset()
+      {
+        // Clear all setup token semaphores
+        REG_WORD(REG_ENDPTSETUPSTAT) = REG_WORD(REG_ENDPTSETUPSTAT);
+        // Clear all the endpoint complete status bits
+        REG_WORD(REG_ENDPTCOMPLETE) = REG_WORD(REG_ENDPTCOMPLETE);
+        // Cancel all primed status
+        while (REG_WORD(REG_ENDPTPRIME))
+          ;
+        REG_WORD(REG_ENDPTFLUSH) = 0xFFFFffff;
+
+        // TODO:
+        // Read the reset bit in the PORTSCx register and make sure it is still
+        // active. A USB reset will occur for a minimum of 3 ms and the DCD
+        // must reach this point in the reset cleanup before the end of a reset
+        // occurs, otherwise a hardware reset of the device controller is
+        // recommended (rare).
+
+        //printf("port: %08X\n", REG_WORD(REG_PORTSC1));
+
+        //InitDeviceController();
+
+        REG_WORD(REG_DEVICE_ADDR) = 0;
+      }
+
+      void USBInit()
+      {
+       // USB calibration (from Movidius)
+        REG_WORD(CPR_USB_CTRL_ADR) = 0x00003004;
+        REG_WORD(CPR_USB_PHY_CTRL_ADR) = 0x01C18d07;
+
+        // Initialize the hardware
+        DrvCprSysDeviceAction(ENABLE_CLKS, DEV_USB);
+        DrvCprSysDeviceAction(RESET_DEVICES, DEV_USB);
+
+        // Set OTG transceiver configuration
+        REG_WORD(REG_OTGSC) |=  (USB_OTGSC_OT | USB_OTGSC_VC);
+        // Transceiver enable
+        REG_WORD(REG_PORTSC1) = (USB_PORTSCX_PFSC | USB_PORTSCX_PE);
+
+        InitDeviceController();
 
         // XXX-MA: Not including the setup for interrupts...
         //REG_WORD(REG_USBINTR) |= USB_USBINTR_UE;
@@ -447,6 +450,8 @@ namespace Anki
         if (REG_WORD(REG_USBSTS) & USB_USBSTS_URI)
         {
           printf("RESET\n");
+          // Clear USB Reset Received
+          REG_WORD(REG_USBSTS) = USB_USBSTS_URI;
           Reset();
         }
         // Check for Port Change
@@ -455,6 +460,12 @@ namespace Anki
           printf("PORT CHANGE\n");
           // TODO: Anything else required here?
           REG_WORD(REG_USBSTS) = USB_USBSTS_PCI;
+        }
+        // Check for suspended state
+        if (REG_WORD(REG_USBSTS) & USB_USBSTS_SLI)
+        {
+          printf("SLI\n");
+          REG_WORD(REG_USBSTS) = USB_USBSTS_SLI;
         }
         // Check for SOF (Start Of Frame)
         if (REG_WORD(REG_USBSTS) & USB_USBSTS_SRI)
@@ -475,6 +486,7 @@ namespace Anki
         if (REG_WORD(REG_USBSTS) & USB_USBSTS_UI)
         {
           printf("USB-I\n");
+          REG_WORD(REG_USBSTS) = USB_USBSTS_UI;
           // Handle USB control messages
           HandleSetupMessage();
         }
@@ -504,7 +516,12 @@ namespace Anki
           s_usbsts = REG_WORD(REG_USBSTS);
           s_deviceStatus = m_deviceStatus;
           printf("%X, %X, %X, %X, %08X, %08X\n", s_setupStatus, s_usbmode, s_usbsts, s_deviceStatus, 
-              m_dQH[0][DQH_TOTAL_BYTES], m_dQH[1][DQH_TOTAL_BYTES]);
+              m_dQH[0][10], REG_WORD(REG_ENDPTCOMPLETE));
+        }
+
+        if (setupStatus)
+        {
+          printf("ENDPTSETUPSTAT: %08X\n", setupStatus);
         }
 
         for (i = 0; i < 16; i++)
