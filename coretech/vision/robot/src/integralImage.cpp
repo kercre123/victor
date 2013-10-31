@@ -356,25 +356,33 @@ namespace Anki
       return RESULT_OK;
     }
 
-    void ScrollingIntegralImage_u8_s32::ComputeIntegralImageRow(const u8* restrict paddedImage_currentRow, s32 * restrict integralImage_currentRow, const s32 imageWidth)
+    void ScrollingIntegralImage_u8_s32::ComputeIntegralImageRow(const u8* restrict paddedImage_currentRow, s32 * restrict integralImage_currentRow, const s32 integralImageWidth)
     {
-      //integralImage(1,1) = image(firstImageY,1);
-      integralImage_currentRow[0] = paddedImage_currentRow[0];
+      //integralImage_currentRow[0] = paddedImage_currentRow[0];
 
-      for(s32 x=1; x<imageWidth; x++) {
-        // integralImage(1,x) = paddedImageRow(1,x) + integralImage(1,x-1);
-        integralImage_currentRow[x] = paddedImage_currentRow[x] + integralImage_currentRow[x-1];
+      //for(s32 x=1; x<integralImageWidth; x++) {
+      //  integralImage_currentRow[x] = paddedImage_currentRow[x] + integralImage_currentRow[x-1];
+      //}
+
+      s32 horizontalSum = 0;
+      for(s32 x=0; x<integralImageWidth; x++) {
+        horizontalSum += paddedImage_currentRow[x];
+        integralImage_currentRow[x] = horizontalSum;
       }
     }
 
-    void ScrollingIntegralImage_u8_s32::ComputeIntegralImageRow(const u8* restrict paddedImage_currentRow, const s32 * restrict integralImage_previousRow, s32 * restrict integralImage_currentRow, const s32 imageWidth)
+    void ScrollingIntegralImage_u8_s32::ComputeIntegralImageRow(const u8* restrict paddedImage_currentRow, const s32 * restrict integralImage_previousRow, s32 * restrict integralImage_currentRow, const s32 integralImageWidth)
     {
-      //integralImage(curIntegralImageY,1) = paddedImageRow(1,1) + integralImage(curIntegralImageY-1,1);
-      integralImage_currentRow[0] = paddedImage_currentRow[0] + integralImage_previousRow[0];
+      //integralImage_currentRow[0] = paddedImage_currentRow[0] + integralImage_previousRow[0];
 
-      for(s32 x=1; x<imageWidth; x++) {
-        // integralImage(curIntegralImageY,x) = paddedImageRow(1,x) + integralImage(curIntegralImageY,x-1) + integralImage(curIntegralImageY-1,x) - integralImage(curIntegralImageY-1,x-1);
-        integralImage_currentRow[x] = paddedImage_currentRow[x] + integralImage_currentRow[x-1] + integralImage_previousRow[x] - integralImage_previousRow[x-1];
+      //for(s32 x=1; x<integralImageWidth; x++) {
+      //  integralImage_currentRow[x] = paddedImage_currentRow[x] + integralImage_currentRow[x-1] + integralImage_previousRow[x] - integralImage_previousRow[x-1];
+      //}
+
+      s32 horizontalSum = 0;
+      for(s32 x=0; x<integralImageWidth; x++) {
+        horizontalSum += paddedImage_currentRow[x];
+        integralImage_currentRow[x] = horizontalSum + integralImage_previousRow[x];
       }
     }
 

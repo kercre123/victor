@@ -84,10 +84,10 @@ namespace Anki
       s32 numBorderPixels;
 
       // Compute the first row of an integral image
-      static void ComputeIntegralImageRow(const u8* restrict paddedImage_currentRow, s32 * restrict integralImage_currentRow, const s32 imageWidth);
+      static void ComputeIntegralImageRow(const u8* restrict paddedImage_currentRow, s32 * restrict integralImage_currentRow, const s32 integralImageWidth);
 
       // Compute the nth row of an integral image
-      static void ComputeIntegralImageRow(const u8* restrict paddedImage_currentRow, const s32 * restrict integralImage_previousRow, s32 * restrict integralImage_currentRow, const s32 imageWidth);
+      static void ComputeIntegralImageRow(const u8* restrict paddedImage_currentRow, const s32 * restrict integralImage_previousRow, s32 * restrict integralImage_currentRow, const s32 integralImageWidth);
 
       Result PadImageRow_unsafe(const Array<u8> &image, const s32 whichRow, Array<u8> &paddedRow);
       Result PadImageRow(const Array<u8> &image, const s32 whichRow, Array<u8> &paddedRow);
