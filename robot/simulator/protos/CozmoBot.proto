@@ -78,7 +78,7 @@ Supervisor {
     }
           
     Solid {
-      translation 0 0.027 0.035
+      translation -0.035 0.027 0
       children [
         DEF LBase Shape {
           geometry Box {
@@ -90,22 +90,24 @@ Supervisor {
             HingeJoint {
               jointParameters HingeJointParameters {
                 position IS liftAngle
+                axis 0 0 1
               }
               device RotationalMotor {
                 name "lift_motor"
               }
               endPoint Solid {
-                translation 0 0 -0.045
+                translation 0.045 0 0
                 children [
                   HingeJoint {
                     jointParameters HingeJointParameters {
-                      anchor 0 0 -0.045
+                      anchor 0.045 0 0
+                      axis   0 0 1
                     }
                     device RotationalMotor {
                       name "lift_motor2"
                     }
                     endPoint Solid {
-                      translation 0 0 -0.05
+                      translation 0.05 0 0
                       children [
                       
                         #DEF CAM_LIFT Camera {
@@ -118,7 +120,7 @@ Supervisor {
                         #  pixelSize 0.5
                         #}
                         Connector {
-                          translation 0 0 -0.0025
+                          translation 0.0025 0 0
                           rotation 0 1 0 3.14159
                           model "magnetic"
                           type "active"
@@ -127,7 +129,7 @@ Supervisor {
                         }
                         DEF LIFTFRONT Shape {
                           geometry Box {
-                            size 0.03 0.01 0.005
+                            size 0.005 0.01 0.03
                           }
                         }
                       ]
@@ -139,7 +141,7 @@ Supervisor {
                   }
                   DEF LBottom Shape {
                     geometry Box {
-                      size 0.001 0.005 0.095
+                      size 0.095 0.005 0.001
                     }
                   }
                   #Solid {
@@ -188,7 +190,7 @@ Supervisor {
             }
           }
           geometry Box {
-            size 0.04 0.030 0.080
+            size 0.08 0.030 0.04
           }
         }
       ]
@@ -208,7 +210,8 @@ Supervisor {
         #}
         DEF CAM_DOWN Camera {
           translation 0 -0.005 0
-          rotation 1 0 0 -1.5708
+          #rotation 1 0 0 -1.5708
+          rotation -0.5774 -0.5774 -0.5774 2.0944
           name "cam_down"
           fieldOfView IS fieldOfViewDown
           width 640
@@ -225,11 +228,12 @@ Supervisor {
     }
     DEF WHEEL_REAR_RIGHT HingeJoint {
       jointParameters HingeJointParameters {
-        anchor 0.03 0 0.025
+        anchor -0.025 0 0.03
+        axis 0 0 1
       }
       endPoint Solid {
-        translation 0.03 0 0.025
-        rotation 1 0 0 0
+        translation -0.025 0 0.03
+        rotation 1 0 0 1.5708
         children [
           DEF WHEEL_BOX Shape {
             appearance Appearance {
@@ -238,11 +242,11 @@ Supervisor {
               }
             }
             geometry Box {
-              size 0.02 0.002 0.01
+              size 0.01 0.002 0.02
             }
           }
           DEF WHEEL Transform {
-            rotation 0 0 1 1.5708
+            rotation 1 0 0 0
             children [
               Shape {
                 appearance Appearance {
@@ -268,11 +272,12 @@ Supervisor {
     DEF WHEEL_REAR_LEFT HingeJoint {
       jointParameters HingeJointParameters {
         position -1.15762e-11
-        anchor -0.03 0 0.025
+        anchor -0.025 0 -0.03
+        axis 0 0 1
       }
       endPoint Solid {
-        translation -0.03 0 0.025
-        rotation 0 0 1 0
+        translation -0.025 0 -0.03
+        rotation 1 0 0 1.5708
         children [
           USE WHEEL_BOX
           USE WHEEL
@@ -285,14 +290,15 @@ Supervisor {
     }
     DEF GPS_SENSOR GPS {
       name "gps"
-      translation 0 0 -0.024
+      translation .025 0 0
     }    
     DEF COMPASS_SENSOR Compass {
       name "compass"
     }
     DEF WHEEL_FRONT_RIGHT HingeJoint {
       jointParameters HingeJointParameters {
-        anchor 0.03 0 -0.025
+        anchor 0.025 0 0.03
+        axis 0 0 1
       }
       device RotationalMotor {
         name "wheel_fr"
@@ -300,8 +306,8 @@ Supervisor {
       }
       endPoint Gyro {
         name "wheel_gyro_fr"
-        translation 0.03 0 -0.025
-        rotation 1 0 0 0
+        translation 0.025 0 0.03
+        rotation 1 0 0 1.5708
         children [
           USE WHEEL_BOX
           USE WHEEL
@@ -315,7 +321,8 @@ Supervisor {
     DEF WHEEL_FRONT_LEFT HingeJoint {
       jointParameters HingeJointParameters {
         position -1.15794e-11
-        anchor -0.03 0 -0.025
+        anchor 0.025 0 -0.03
+        axis 0 0 1
       }
       device RotationalMotor {
         name "wheel_fl"
@@ -323,8 +330,8 @@ Supervisor {
       }
       endPoint Gyro {
         name "wheel_gyro_fl"
-        translation -0.03 0 -0.025
-        rotation 0 0 1 0
+        translation 0.025 0 -0.03
+        rotation 1 0 0 1.5708
         children [
           USE WHEEL_BOX
           USE WHEEL
@@ -340,7 +347,8 @@ Supervisor {
     }
     DEF HEAD HingeJoint {
       jointParameters HingeJointParameters {
-        anchor   0 0.025 -0.0095
+        anchor   0.0095 0.025 0
+        axis     0 0 1
         maxStop  0.6109 # 35 degrees up
         minStop -0.4363 # 25 degrees down
         position IS headAngle	
@@ -349,11 +357,11 @@ Supervisor {
         name "motor_head_pitch"
       }
       endPoint Solid {
-        rotation 1 0 0 0
+        rotation 0 1 0 0
         children [
           DEF CAM_HEAD Camera {
-            translation 0 0.040 -0.0345
-            rotation 1 0 0 0
+            translation 0.0345 0.040 0
+            rotation 0 1 0 -1.5708
             children [
               Transform {
                 translation 0 0 0 # IS spotLightTranslation #0 .03 -.03
@@ -378,8 +386,8 @@ Supervisor {
             colorNoise 0.01
           }
           DEF EYE_LEFT Transform {
-            translation -0.017 0.045 -0.01
-            rotation 1 0 0 -1.5708
+            translation 0.01 0.045 -0.017
+            rotation 0 0 1 -1.5708
             children [
               DEF EYE_SHAPE Shape {
                 appearance Appearance {
@@ -396,8 +404,8 @@ Supervisor {
             ]
           }
           DEF EYE_RIGHT Transform {
-            translation 0.017 0.045 -0.01
-            rotation 1 0 0 -1.5708
+            translation 0.01 0.045 0.017
+            rotation 0 0 1 -1.5708
             children [
               USE EYE_SHAPE
             ]
