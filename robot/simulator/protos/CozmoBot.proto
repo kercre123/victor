@@ -22,43 +22,7 @@ Supervisor {
   rotation IS rotation
   
   children [
-    #Pen {
-    #  inkColor 1 0 0
-    #}
-    DEF CozmoPath Shape {
-      appearance Appearance {
-        material Material {
-          emissiveColor 1 0 0
-        }
-      }
-      geometry IndexedLineSet {
-        coord Coordinate {
-          point [
-            0 0 0
-            0 0 0
-            0 0 0
-            0 0 0
-            0 0 0
-          ]
-        }
-        coordIndex []
-      }
-    }
     
-    DEF CozmoPathObserved Shape {
-      appearance Appearance {
-        material Material {
-          emissiveColor 1 1 0
-        }
-      }
-      geometry IndexedLineSet {
-        coord Coordinate {
-          point []
-        }
-        coordIndex []
-      }
-    }     
-
     # Comms for sending paths for drawing to the physics plugin
     Emitter { 
       name "cozmo_physics_comms"
@@ -78,7 +42,7 @@ Supervisor {
     }
           
     Solid {
-      translation -0.035 0.027 0
+      translation -0.06 0.027 0
       children [
         DEF LBase Shape {
           geometry Box {
@@ -181,7 +145,7 @@ Supervisor {
       }
     }
     Solid {
-      translation 0 .002 0
+      translation -0.025 .002 0
       children [
         DEF BODY Shape {
           appearance Appearance {
@@ -196,7 +160,7 @@ Supervisor {
       ]
     }
     Solid {
-      translation 0 0.002 0
+      translation -0.025 0.002 0
       children [
         #DEF BODYA Shape {
           #appearance Appearance {
@@ -228,11 +192,11 @@ Supervisor {
     }
     DEF WHEEL_REAR_RIGHT HingeJoint {
       jointParameters HingeJointParameters {
-        anchor -0.025 0 0.03
+        anchor -0.05 0 0.03
         axis 0 0 1
       }
       endPoint Solid {
-        translation -0.025 0 0.03
+        translation -0.05 0 0.03
         rotation 1 0 0 1.5708
         children [
           DEF WHEEL_BOX Shape {
@@ -272,11 +236,11 @@ Supervisor {
     DEF WHEEL_REAR_LEFT HingeJoint {
       jointParameters HingeJointParameters {
         position -1.15762e-11
-        anchor -0.025 0 -0.03
+        anchor -0.05 0 -0.03
         axis 0 0 1
       }
       endPoint Solid {
-        translation -0.025 0 -0.03
+        translation -0.05 0 -0.03
         rotation 1 0 0 1.5708
         children [
           USE WHEEL_BOX
@@ -290,14 +254,14 @@ Supervisor {
     }
     DEF GPS_SENSOR GPS {
       name "gps"
-      translation .025 0 0
+      translation 0 0 0
     }    
     DEF COMPASS_SENSOR Compass {
       name "compass"
     }
     DEF WHEEL_FRONT_RIGHT HingeJoint {
       jointParameters HingeJointParameters {
-        anchor 0.025 0 0.03
+        anchor 0 0 0.03
         axis 0 0 1
       }
       device RotationalMotor {
@@ -306,7 +270,7 @@ Supervisor {
       }
       endPoint Gyro {
         name "wheel_gyro_fr"
-        translation 0.025 0 0.03
+        translation 0 0 0.03
         rotation 1 0 0 1.5708
         children [
           USE WHEEL_BOX
@@ -321,7 +285,7 @@ Supervisor {
     DEF WHEEL_FRONT_LEFT HingeJoint {
       jointParameters HingeJointParameters {
         position -1.15794e-11
-        anchor 0.025 0 -0.03
+        anchor 0 0 -0.03
         axis 0 0 1
       }
       device RotationalMotor {
@@ -330,7 +294,7 @@ Supervisor {
       }
       endPoint Gyro {
         name "wheel_gyro_fl"
-        translation 0.025 0 -0.03
+        translation 0 0 -0.03
         rotation 1 0 0 1.5708
         children [
           USE WHEEL_BOX
@@ -347,7 +311,7 @@ Supervisor {
     }
     DEF HEAD HingeJoint {
       jointParameters HingeJointParameters {
-        anchor   0.0095 0.025 0
+        anchor   -0.0155 0.025 0
         axis     0 0 1
         maxStop  0.6109 # 35 degrees up
         minStop -0.4363 # 25 degrees down
@@ -360,7 +324,7 @@ Supervisor {
         rotation 0 1 0 0
         children [
           DEF CAM_HEAD Camera {
-            translation 0.0345 0.040 0
+            translation 0.0095 0.040 0
             rotation 0 1 0 -1.5708
             children [
               Transform {
@@ -386,7 +350,7 @@ Supervisor {
             colorNoise 0.01
           }
           DEF EYE_LEFT Transform {
-            translation 0.01 0.045 -0.017
+            translation -0.015 0.045 -0.017
             rotation 0 0 1 -1.5708
             children [
               DEF EYE_SHAPE Shape {
@@ -404,7 +368,7 @@ Supervisor {
             ]
           }
           DEF EYE_RIGHT Transform {
-            translation 0.01 0.045 0.017
+            translation -0.015 0.045 0.017
             rotation 0 0 1 -1.5708
             children [
               USE EYE_SHAPE
