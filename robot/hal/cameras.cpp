@@ -215,7 +215,7 @@ void CameraConfigure(CameraHandle* handle, unsigned int cifBase,
                   (unsigned int) handle->currentFrame->p1,
                   (unsigned int) handle->currentFrame->p1,
                   handle->camSpec->width,
-                  1,
+                  handle->camSpec->height,
                   handle->camSpec->bytesPP,
                   D_CIF_DMA_AUTO_RESTART_PING_PONG | 
                     D_CIF_DMA_ENABLE | 
@@ -286,7 +286,7 @@ void CameraStart(CameraHandle* handle, int resetPin, bool isActiveLow,
   ConfigureI2CRegisters(handle, handle->camSpec, camWriteProto);
 
   //handle->currentFrame = handle->cbGetFrame();
-    
+
   DrvCifReset(currentCamera);
 
   // Disable ICB while setting new interrupt
