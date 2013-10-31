@@ -8,16 +8,22 @@ TrueDotWidth = [];
 TrueDotSpacing = [];
 uMask = [];
 vMask = [];
+doVerify = true;
 
 parseVarargin(varargin{:});
 
 assert(~isempty(uMask) && ~isempty(vMask), 'No uMask and vMask provided.');
 assert(~isempty(TrueSquareWidth) && ~isempty(TrueDotSpacing) && ...
     ~isempty(TrueDotWidth), 'True Dot/Square dimensions not provided.');
-assert(~isempty(squareDiagonal), 'No squareDiagonal specified.');
+%assert(~isempty(squareDiagonal), 'No squareDiagonal specified.');
 
+img = im2double(img);
 if size(img,3) > 1
-    img = mean(im2double(img), 3);
+    img = mean(img, 3);
+end
+
+if isempty(squareDiagonal)
+    squareDiagonal = sqrt( (uMask(1)-uMask(4))^2 + (vMask(1)-vMask(4))^2 );
 end
 
 %% 
@@ -115,7 +121,7 @@ distLR = (localMaxima_x - (targetCenter_x+dotSpacingHor/2)).^2 + ...
 [~, indexLL] = min(distLL);
 [~, indexLR] = min(distLR);
 
-if length(unique([indexUL indexUR indexLL indexLR]))~=4
+if doVerify && length(unique([indexUL indexUR indexLL indexLR]))~=4
     desktop
     keyboard
     error('FindDockingTarget:DuplicateMaximaSelected', ...
@@ -127,6 +133,7 @@ end
 xcen = localMaxima_x([indexUL indexLL indexUR indexLR]) + filterPadding + cropRectanglePad(1) - 2;
 ycen = localMaxima_y([indexUL indexLL indexUR indexLR]) + filterPadding + cropRectanglePad(2) - 2;
 
+if doVerify
 % Make sure the distances between dots are "reasonable":
 % (Is this still useful, given the way I am finding/assigning dots now?  Or
 % is it sorta guaranteed by the algorithm?)
@@ -153,6 +160,7 @@ if ~all(abs(expectedSpacingFrac - ...
     
     error('FindFourDotTarget:BadSpacing', ...
         'Detected dots not within spacing tolerances.');
+end
 end
 
 if nargout == 0
