@@ -340,7 +340,7 @@ namespace Anki
       }
 
       // Second, move the image data to the unaligned location
-      //memmove(paddedRow_u8rowPointer+xPad, paddedRow_u8rowPointer, imageWidth);
+      memmove(paddedRow_u8rowPointer+xPad, paddedRow_u8rowPointer, imageWidth);
 
       // Last, set the beginning and end pixels
       xPad = 0;
