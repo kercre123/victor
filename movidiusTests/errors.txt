@@ -1,0 +1,1407 @@
+anki@ubuntu:/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests$ movidebug
+Movidius Debugger (moviDebug) v00.50.37.0.
+moviDebug: INFO: Connection successful.
+moviDebug: INFO: Number of processors: 1.
+P0:AL>breset
+P0:AL>load output/coretech-vision-unit-tests.elf
+moviDebug: INFO: P#0000 : DDR = 64MB
+Loading section <.ddr.text> start = 0xA0040000 length = 100932 bytes.
+Loading section <.ddr_direct.text> start = 0xA0058A44 length = 145160 bytes.
+Loading section <.ddr.rodata> start = 0xA007C150 length = 93208 bytes.
+Loading section <.imageData> start = 0xA0092D68 length = 325376 bytes.
+Loading section <.bigBuffers> start = 0x40000000 length = 320000 bytes.
+Loading section <.smallBuffers1> start = 0x4004F200 length = 300000 bytes.
+Loading section <.smallBuffers2> start = 0x400985E0 length = 300000 bytes.
+Loading section <.sys.traps> start = 0x90100000 length = 468 bytes.
+Loading section <.sys.text> start = 0x901001D4 length = 264 bytes.
+Loading section <.text> start = 0x901002DC length = 12696 bytes.
+Loading section <.sys.rodata> start = 0x90103474 length = 4 bytes.
+Loading section <.data> start = 0x90103478 length = 416 bytes.
+Loading section <.winregs.S0> start = 0x80140010 length = 16 bytes.
+Loading section <.winregs.S1> start = 0x80150010 length = 16 bytes.
+Loading section <.winregs.S2> start = 0x80160010 length = 16 bytes.
+Loading section <.winregs.S3> start = 0x80170010 length = 16 bytes.
+Loading section <.winregs.S4> start = 0x80180010 length = 16 bytes.
+Loading section <.winregs.S5> start = 0x80190010 length = 16 bytes.
+Loading section <.winregs.S6> start = 0x801A0010 length = 16 bytes.
+Loading section <.winregs.S7> start = 0x801B0010 length = 16 bytes.
+moviDebug: INFO: Total bytes loaded = 1598652.
+P0:AL>b a0059210
+moviDebug: ERROR: Invalid command!  Correct format: [un]break {address|symbolName}.
+P0:AL>b 0xa0059210
+moviDebug: INFO: Inserted Leon SIB: Address = 0xA0059210.
+P0:AL>r
+UART: Starting unit tests 
+UART: 155 158 156 155 147 155 0
+UART: 0x9B 0x93 0x9B
+UART: 0x9B9E9C9B 0x93939395 0x9B9D9D9D
+UART: 0x9B 0x9C00 0x9E0000 0x9B000000
+UART: 155 156 158 155
+UART: allocated
+P0:AL>
+P0:AL>pc
+moviDebug: ERROR: Unknown command (pc).
+P0:AL>get pc
+L:[0xC0400010] = 0xA0059210
+P0:AL>get pc
+L:[0xC0400010] = 0xA0059210
+P0:AL>reg
+          INS        LOCALS       OUTS      GLOBALS
+0:    0xA0007D7C  0xA0007B14  0x00000000  0xB34F9D62
+1:    0x0004B000  0x90101844  0xA0081010  0x00000028
+2:    0xA0007C40  0x90101828  0x000001AE  0x0000000A
+3:    0x00000010  0x80030048  0x80020090  0x00F00002
+4:    0x00000008  0x80030048  0x90101828  0x00000001
+5:    0x00000001  0x90107F40  0x90101844  0x00000040
+6:    0xA0007BE0  0x00000000  0xA0007B60  0x00004040
+7:    0xA00447C0  0x00000000  0xA00591E0  0xF34010C7
+
+PSR = 0xF34010E0  WIM = 0x00000040  TBR = 0x90100050  Y = 0x00000000
+
+PC  = 0xA0059210
+NPC = 0xA0059214
+
+P0:AL>dasm 2
+[0xA0059210]: ld [%%fp + 0xFFFFFFFC], %%g2
+[0xA0059214]: ld [%%fp + 0xFFFFFFF0], %%g1
+P0:AL>breaknow
+P0:AL>Terminate Debug Session? (Y/N)
+CTRL+C pressed more than twice in a row. Exiting ...moviDebug: INFO: moviDebug closing...
+moviDebug: INFO: moviDebug closed.
+anki@ubuntu:/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests$ ^C
+anki@ubuntu:/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests$ ^C
+anki@ubuntu:/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests$ ^C
+anki@ubuntu:/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests$ MV_TOOLS_DIR set
+make trueall
+make[1]: Entering directory `/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests'
+Leon compiling C++ memory.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-common/src/embedded/memory.cpp -o ../../../../coretech-common/src/embedded/memory.o
+In file included from ../../../../coretech-common/include/anki/embeddedCommon/memory.h:4,
+                 from ../../../../coretech-common/src/embedded/memory.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+../../../../coretech-common/src/embedded/memory.cpp: In member function 'void* Anki::Embedded::MemoryStack::Allocate(s32, s32*)':
+../../../../coretech-common/src/embedded/memory.cpp:69: warning: comparison between signed and unsigned integer expressions
+Linking elf file coretech-vision-unit-tests.elf:     /home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-ld -O9 -t --gc-sections -M -warn-common -L /home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/lib/gcc/sparc-elf/4.4.2-LE -L . -L ./scripts -L ./config -L ../../../../movidius-tools/mdk/common/scripts/ld  -T ./config/custom.ldscript -o output/coretech-vision-unit-tests.elf ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0153/brdMv0153.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0155/brdMv0155.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0155/brdMv0155DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMV0160/brdMv0160DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0161/brdMv0161DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0162/brdMv0162.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0163/brdMv0163.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0163/brdMv0163DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0167/brdMv0167DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0171/brdMv0171.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0171/brdMv0171DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0172/brdMv0172DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0174/brdMv0174DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0177/brdMv0177DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/icEeprom.o ../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/icMipiTC358746.o ../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/icPllCDCE913.o ../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/icRegulatorLT3906.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvCif.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvCpr.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvDdr.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvGpio.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvHsdio.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvI2c.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvI2cMaster.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvI2s.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvIcb.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvL2Cache.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvLcd.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvPwm.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvRegUtils.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvSpi.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvSvu.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvSvuDebug.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvTimer.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvUart.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcL2Cache.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcLedControl.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcMemoryTransfer.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcShaveLoader.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcSliceUtils.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcTestUtils.o ../../../../movidius-tools/mdk/common/swCommon/src/swcCrc.o ../../../../movidius-tools/mdk/common/swCommon/src/swcLeonMath.o ../../../../movidius-tools/mdk/common/swCommon/src/swcLeonUtils.o ../../../../movidius-tools/mdk/common/swCommon/src/swcRandom.o ../../../../movidius-tools/mdk/common/drivers/myriad1/system/asm/crt0.o ../../../../movidius-tools/mdk/common/drivers/myriad1/system/asm/memmap.o ../../../../movidius-tools/mdk/common/drivers/myriad1/system/asm/mp_rom.o ../../../../movidius-tools/mdk/common/drivers/myriad1/system/asm/sysbss.o ../../../../movidius-tools/mdk/common/drivers/myriad1/system/asm/traps.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/asinf_acosf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/expf_exp2f_exp10f.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/frexpf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/ldexpf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/logf_log2f_log10f.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/misc.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/modff_ceilf_floorf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/sinf_cosf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/stdio.xprintf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.memchr_strchr.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.memcmp_strncmp_strcmp.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.memmove_memcpy.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.memset.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strcat_strncat.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strcpy_strncpy.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strcspn_strlen.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strrchr.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strspn.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strstr.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/tanf.o leon/main.o leon/app_config.o ../../../../coretech-common/src/embedded/benchmarking_c.o ../../../../coretech-common/src/embedded/utilities_c.o ../../../../coretech-vision/src/embedded/movidiusPrototyping.o ../../../../movidius-tools/mdk/common/libc/leon/src/math_consts.o ../../../../movidius-tools/mdk/common/libc/leon/src/memcpy_fast.o ../../../../movidius-tools/mdk/common/libc/leon/src/memset_fast.o ../../../../movidius-tools/mdk/common/libc/leon/src/puts.o ../../../../movidius-tools/mdk/common/libc/leon/src/strtol.o leon/cppInterface.o ../../../../coretech-common/src/embedded/array2d.o ../../../../coretech-common/src/embedded/draw.o ../../../../coretech-common/src/embedded/errorHandling.o ../../../../coretech-common/src/embedded/fixedLengthList.o ../../../../coretech-common/src/embedded/geometry.o ../../../../coretech-common/src/embedded/matlabConverters.o ../../../../coretech-common/src/embedded/matlabInterface.o ../../../../coretech-common/src/embedded/memory.o ../../../../coretech-common/src/embedded/opencvLight.o ../../../../coretech-common/src/embedded/utilities.o ../../../../coretech-vision/src/embedded/array2d_vision.o ../../../../coretech-vision/src/embedded/binomialFilter.o ../../../../coretech-vision/src/embedded/computeCharacteristicScale.o ../../../../coretech-vision/src/embedded/computeQuadrilaterals.o ../../../../coretech-vision/src/embedded/connectedComponents.o ../../../../coretech-vision/src/embedded/dataStructures_vision.o ../../../../coretech-vision/src/embedded/downsampleByFactor.o ../../../../coretech-vision/src/embedded/draw_vision.o ../../../../coretech-vision/src/embedded/fiducialMarkers.o ../../../../coretech-vision/src/embedded/filtering.o ../../../../coretech-vision/src/embedded/fixedLengthList_vision.o ../../../../coretech-vision/src/embedded/integralImage.o ../../../../coretech-vision/src/embedded/matlabPrototyping.o ../../../../coretech-vision/src/embedded/thresholdScaleImage.o ../../../../coretech-vision/src/embedded/traceBoundary.o ../../../../coretech-vision/src/embedded/transformations.o ../../../../coretech-vision/test/embedded/embeddedVisionTests.o  ../../../../movidius-tools/mdk/common/components/Board/leon_code/Board.o            > ./output/coretech-vision-unit-tests.map
+Generating mvcmd target output/coretech-vision-unit-tests.elf
+Movidius Object Converter (moviConvert) v00.50.37.0
+moviCobvert: INFO: execution completed successful.
+
+Generating elf listing file
+Generating listings file for the various shave listings
+make[1]: Leaving directory `/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests'
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/bin/moviDebug -b:./output/generated_debug_script.scr  -srvIP:127.0.0.1   
+Movidius Debugger (moviDebug) v00.50.37.0.
+moviDebug: INFO: Connection successful.
+moviDebug: INFO: Number of processors: 1.
+moviDebug: INFO: Executing batch file...
+Batch execute: <breset>
+Batch execute: <>
+Batch execute: <;Need to start all shaves>
+Batch execute: <start a>
+Batch execute: <>
+Batch execute: <;load application mof>
+Batch execute: <load ./output/coretech-vision-unit-tests.elf>
+moviDebug: INFO: P#0000 : DDR = 64MB
+Loading section <.ddr.text> start = 0xA0040000 length = 100932 bytes.
+Loading section <.ddr_direct.text> start = 0xA0058A44 length = 145252 bytes.
+Loading section <.ddr.rodata> start = 0xA007C1A8 length = 93240 bytes.
+Loading section <.imageData> start = 0xA0092DE0 length = 325376 bytes.
+Loading section <.bigBuffers> start = 0x40000000 length = 320000 bytes.
+Loading section <.smallBuffers1> start = 0x4004F200 length = 300000 bytes.
+Loading section <.smallBuffers2> start = 0x400985E0 length = 300000 bytes.
+Loading section <.sys.traps> start = 0x90100000 length = 468 bytes.
+Loading section <.sys.text> start = 0x901001D4 length = 264 bytes.
+Loading section <.text> start = 0x901002DC length = 12696 bytes.
+Loading section <.sys.rodata> start = 0x90103474 length = 4 bytes.
+Loading section <.data> start = 0x90103478 length = 416 bytes.
+Loading section <.winregs.S0> start = 0x80140010 length = 16 bytes.
+Loading section <.winregs.S1> start = 0x80150010 length = 16 bytes.
+Loading section <.winregs.S2> start = 0x80160010 length = 16 bytes.
+Loading section <.winregs.S3> start = 0x80170010 length = 16 bytes.
+Loading section <.winregs.S4> start = 0x80180010 length = 16 bytes.
+Loading section <.winregs.S5> start = 0x80190010 length = 16 bytes.
+Loading section <.winregs.S6> start = 0x801A0010 length = 16 bytes.
+Loading section <.winregs.S7> start = 0x801B0010 length = 16 bytes.
+moviDebug: INFO: Total bytes loaded = 1598776.
+Batch execute: <>
+Batch execute: <;Target the Leon>
+Batch execute: <target l>
+Batch execute: <;Run the Leon and wait>
+Batch execute: <runw>
+UART: Starting unit tests 
+UART: 155 158 156 155 147 155 0
+UART: 0x9B 0x93 0x9B
+UART: 0x9B9E9C9B 0x93939395 0x9B9D9D9D
+UART: 0x9B 0x9C00 0x9E0000 0x9B000000
+UART: 155 156 158 155
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - Array<Type>::Set - Array<Type> is not valid
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+P0:AL>breaknow
+Terminate Debug Session? (Y/N)
+UART: LOG[4] - Aore than twice in a row. Exiting ...
+P0:AL>moviDebug: INFO: moviDebug closing...
+moviDebug: INFO: moviDebug closed.
+
+anki@ubuntu:/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests$ ^C
+anki@ubuntu:/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests$ ^C
+anki@ubuntu:/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests$ MV_TOOLS_DIR set
+make trueall
+make[1]: Entering directory `/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests'
+Leon compiling C++ memory.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-common/src/embedded/memory.cpp -o ../../../../coretech-common/src/embedded/memory.o
+In file included from ../../../../coretech-common/include/anki/embeddedCommon/memory.h:4,
+                 from ../../../../coretech-common/src/embedded/memory.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+../../../../coretech-common/src/embedded/memory.cpp: In member function 'void* Anki::Embedded::MemoryStack::Allocate(s32, s32*)':
+../../../../coretech-common/src/embedded/memory.cpp:68: warning: comparison between signed and unsigned integer expressions
+Leon compiling C++ embeddedVisionTests.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-vision/test/embedded/embeddedVisionTests.cpp -o ../../../../coretech-vision/test/embedded/embeddedVisionTests.o
+In file included from ../../../../coretech-vision/include/anki/embeddedVision/config.h:4,
+                 from ../../../../coretech-vision/include/anki/embeddedVision.h:4,
+                 from ../../../../coretech-vision/test/embedded/embeddedVisionTests.cpp:3:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Linking elf file coretech-vision-unit-tests.elf:     /home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-ld -O9 -t --gc-sections -M -warn-common -L /home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/lib/gcc/sparc-elf/4.4.2-LE -L . -L ./scripts -L ./config -L ../../../../movidius-tools/mdk/common/scripts/ld  -T ./config/custom.ldscript -o output/coretech-vision-unit-tests.elf ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0153/brdMv0153.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0155/brdMv0155.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0155/brdMv0155DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMV0160/brdMv0160DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0161/brdMv0161DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0162/brdMv0162.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0163/brdMv0163.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0163/brdMv0163DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0167/brdMv0167DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0171/brdMv0171.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0171/brdMv0171DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0172/brdMv0172DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0174/brdMv0174DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0177/brdMv0177DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/icEeprom.o ../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/icMipiTC358746.o ../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/icPllCDCE913.o ../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/icRegulatorLT3906.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvCif.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvCpr.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvDdr.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvGpio.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvHsdio.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvI2c.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvI2cMaster.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvI2s.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvIcb.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvL2Cache.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvLcd.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvPwm.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvRegUtils.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvSpi.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvSvu.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvSvuDebug.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvTimer.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvUart.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcL2Cache.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcLedControl.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcMemoryTransfer.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcShaveLoader.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcSliceUtils.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcTestUtils.o ../../../../movidius-tools/mdk/common/swCommon/src/swcCrc.o ../../../../movidius-tools/mdk/common/swCommon/src/swcLeonMath.o ../../../../movidius-tools/mdk/common/swCommon/src/swcLeonUtils.o ../../../../movidius-tools/mdk/common/swCommon/src/swcRandom.o ../../../../movidius-tools/mdk/common/drivers/myriad1/system/asm/crt0.o ../../../../movidius-tools/mdk/common/drivers/myriad1/system/asm/memmap.o ../../../../movidius-tools/mdk/common/drivers/myriad1/system/asm/mp_rom.o ../../../../movidius-tools/mdk/common/drivers/myriad1/system/asm/sysbss.o ../../../../movidius-tools/mdk/common/drivers/myriad1/system/asm/traps.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/asinf_acosf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/expf_exp2f_exp10f.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/frexpf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/ldexpf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/logf_log2f_log10f.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/misc.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/modff_ceilf_floorf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/sinf_cosf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/stdio.xprintf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.memchr_strchr.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.memcmp_strncmp_strcmp.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.memmove_memcpy.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.memset.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strcat_strncat.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strcpy_strncpy.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strcspn_strlen.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strrchr.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strspn.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strstr.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/tanf.o leon/main.o leon/app_config.o ../../../../coretech-common/src/embedded/benchmarking_c.o ../../../../coretech-common/src/embedded/utilities_c.o ../../../../coretech-vision/src/embedded/movidiusPrototyping.o ../../../../movidius-tools/mdk/common/libc/leon/src/math_consts.o ../../../../movidius-tools/mdk/common/libc/leon/src/memcpy_fast.o ../../../../movidius-tools/mdk/common/libc/leon/src/memset_fast.o ../../../../movidius-tools/mdk/common/libc/leon/src/puts.o ../../../../movidius-tools/mdk/common/libc/leon/src/strtol.o leon/cppInterface.o ../../../../coretech-common/src/embedded/array2d.o ../../../../coretech-common/src/embedded/draw.o ../../../../coretech-common/src/embedded/errorHandling.o ../../../../coretech-common/src/embedded/fixedLengthList.o ../../../../coretech-common/src/embedded/geometry.o ../../../../coretech-common/src/embedded/matlabConverters.o ../../../../coretech-common/src/embedded/matlabInterface.o ../../../../coretech-common/src/embedded/memory.o ../../../../coretech-common/src/embedded/opencvLight.o ../../../../coretech-common/src/embedded/utilities.o ../../../../coretech-vision/src/embedded/array2d_vision.o ../../../../coretech-vision/src/embedded/binomialFilter.o ../../../../coretech-vision/src/embedded/computeCharacteristicScale.o ../../../../coretech-vision/src/embedded/computeQuadrilaterals.o ../../../../coretech-vision/src/embedded/connectedComponents.o ../../../../coretech-vision/src/embedded/dataStructures_vision.o ../../../../coretech-vision/src/embedded/downsampleByFactor.o ../../../../coretech-vision/src/embedded/draw_vision.o ../../../../coretech-vision/src/embedded/fiducialMarkers.o ../../../../coretech-vision/src/embedded/filtering.o ../../../../coretech-vision/src/embedded/fixedLengthList_vision.o ../../../../coretech-vision/src/embedded/integralImage.o ../../../../coretech-vision/src/embedded/matlabPrototyping.o ../../../../coretech-vision/src/embedded/thresholdScaleImage.o ../../../../coretech-vision/src/embedded/traceBoundary.o ../../../../coretech-vision/src/embedded/transformations.o ../../../../coretech-vision/test/embedded/embeddedVisionTests.o  ../../../../movidius-tools/mdk/common/components/Board/leon_code/Board.o            > ./output/coretech-vision-unit-tests.map
+Generating mvcmd target output/coretech-vision-unit-tests.elf
+Movidius Object Converter (moviConvert) v00.50.37.0
+moviCobvert: INFO: execution completed successful.
+
+Generating elf listing file
+Generating listings file for the various shave listings
+make[1]: Leaving directory `/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests'
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/bin/moviDebug -b:./output/generated_debug_script.scr  -srvIP:127.0.0.1   
+Movidius Debugger (moviDebug) v00.50.37.0.
+moviDebug: INFO: Connection successful.
+moviDebug: INFO: Number of processors: 1.
+moviDebug: INFO: Executing batch file...
+Batch execute: <breset>
+Batch execute: <>
+Batch execute: <;Need to start all shaves>
+Batch execute: <start a>
+Batch execute: <>
+Batch execute: <;load application mof>
+Batch execute: <load ./output/coretech-vision-unit-tests.elf>
+moviDebug: INFO: P#0000 : DDR = 64MB
+Loading section <.ddr.text> start = 0xA0040000 length = 100932 bytes.
+Loading section <.ddr_direct.text> start = 0xA0058A44 length = 145412 bytes.
+Loading section <.ddr.rodata> start = 0xA007C248 length = 93304 bytes.
+Loading section <.imageData> start = 0xA0092EC0 length = 325376 bytes.
+Loading section <.bigBuffers> start = 0x40000000 length = 320000 bytes.
+Loading section <.smallBuffers1> start = 0x4004F200 length = 300000 bytes.
+Loading section <.smallBuffers2> start = 0x400985E0 length = 300000 bytes.
+Loading section <.sys.traps> start = 0x90100000 length = 468 bytes.
+Loading section <.sys.text> start = 0x901001D4 length = 264 bytes.
+Loading section <.text> start = 0x901002DC length = 12696 bytes.
+Loading section <.sys.rodata> start = 0x90103474 length = 4 bytes.
+Loading section <.data> start = 0x90103478 length = 416 bytes.
+Loading section <.winregs.S0> start = 0x80140010 length = 16 bytes.
+Loading section <.winregs.S1> start = 0x80150010 length = 16 bytes.
+Loading section <.winregs.S2> start = 0x80160010 length = 16 bytes.
+Loading section <.winregs.S3> start = 0x80170010 length = 16 bytes.
+Loading section <.winregs.S4> start = 0x80180010 length = 16 bytes.
+Loading section <.winregs.S5> start = 0x80190010 length = 16 bytes.
+Loading section <.winregs.S6> start = 0x801A0010 length = 16 bytes.
+Loading section <.winregs.S7> start = 0x801B0010 length = 16 bytes.
+moviDebug: INFO: Total bytes loaded = 1599000.
+Batch execute: <>
+Batch execute: <;Target the Leon>
+Batch execute: <target l>
+Batch execute: <;Run the Leon and wait>
+Batch execute: <runw>
+UART: Starting unit tests 
+UART: 155 158 156 155 147 155 0
+UART: 0x9B 0x93 0x9B
+UART: 0x9B9E9C9B 0x93939395 0x9B9D9D9D
+UART: 0x9B 0x9C00 0x9E0000 0x9B000000
+UART: 155 156 158 155
+UART: a
+UART: b
+UART: c
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - Array<Type>::Set - Array<Type> is not valid
+UART: d
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: e
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: f
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+P0:AL>breaknow
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+P0:AL>Terminate Debug Session? (Y/N)
+UART: LOG[4] - Anked more than twice in a row. Exiting ...
+P0:AL>moviDebug: INFO: moviDebug closing...
+moviDebug: INFO: moviDebug closed.
+
+anki@ubuntu:/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests$ ^C
+anki@ubuntu:/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests$ MV_TOOLS_DIR set
+make trueall
+make[1]: Entering directory `/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests'
+Leon compiling C++ cppInterface.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board leon/cppInterface.cpp -o leon/cppInterface.o
+Leon compiling C++ array2d.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-common/src/embedded/array2d.cpp -o ../../../../coretech-common/src/embedded/array2d.o
+In file included from ../../../../coretech-common/include/anki/embeddedCommon/array2d.h:4,
+                 from ../../../../coretech-common/src/embedded/array2d.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ draw.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-common/src/embedded/draw.cpp -o ../../../../coretech-common/src/embedded/draw.o
+In file included from ../../../../coretech-common/include/anki/embeddedCommon/draw.h:4,
+                 from ../../../../coretech-common/src/embedded/draw.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ errorHandling.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-common/src/embedded/errorHandling.cpp -o ../../../../coretech-common/src/embedded/errorHandling.o
+In file included from ../../../../coretech-common/include/anki/embeddedCommon/errorHandling.h:6,
+                 from ../../../../coretech-common/src/embedded/errorHandling.cpp:3:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ fixedLengthList.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-common/src/embedded/fixedLengthList.cpp -o ../../../../coretech-common/src/embedded/fixedLengthList.o
+In file included from ../../../../coretech-common/include/anki/embeddedCommon/fixedLengthList.h:10,
+                 from ../../../../coretech-common/src/embedded/fixedLengthList.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ geometry.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-common/src/embedded/geometry.cpp -o ../../../../coretech-common/src/embedded/geometry.o
+In file included from ../../../../coretech-common/include/anki/embeddedCommon/geometry.h:4,
+                 from ../../../../coretech-common/src/embedded/geometry.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ matlabConverters.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-common/src/embedded/matlabConverters.cpp -o ../../../../coretech-common/src/embedded/matlabConverters.o
+In file included from ../../../../coretech-common/include/anki/embeddedCommon/matlabConverters.h:27,
+                 from ../../../../coretech-common/src/embedded/matlabConverters.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ matlabInterface.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-common/src/embedded/matlabInterface.cpp -o ../../../../coretech-common/src/embedded/matlabInterface.o
+In file included from ../../../../coretech-common/include/anki/embeddedCommon/matlabInterface.h:4,
+                 from ../../../../coretech-common/src/embedded/matlabInterface.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ memory.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-common/src/embedded/memory.cpp -o ../../../../coretech-common/src/embedded/memory.o
+In file included from ../../../../coretech-common/include/anki/embeddedCommon/memory.h:4,
+                 from ../../../../coretech-common/src/embedded/memory.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+../../../../coretech-common/src/embedded/memory.cpp: In member function 'void* Anki::Embedded::MemoryStack::Allocate(s32, s32*)':
+../../../../coretech-common/src/embedded/memory.cpp:68: warning: comparison between signed and unsigned integer expressions
+Leon compiling C++ opencvLight.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-common/src/embedded/opencvLight.cpp -o ../../../../coretech-common/src/embedded/opencvLight.o
+In file included from ../../../../coretech-common/include/anki/embeddedCommon/array2d.h:4,
+                 from ../../../../coretech-common/include/anki/embeddedCommon/opencvLight.h:4,
+                 from ../../../../coretech-common/src/embedded/opencvLight.cpp:42:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ utilities.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-common/src/embedded/utilities.cpp -o ../../../../coretech-common/src/embedded/utilities.o
+In file included from ../../../../coretech-common/include/anki/embeddedCommon/utilities.h:4,
+                 from ../../../../coretech-common/src/embedded/utilities.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ array2d_vision.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-vision/src/embedded/array2d_vision.cpp -o ../../../../coretech-vision/src/embedded/array2d_vision.o
+In file included from ../../../../coretech-vision/include/anki/embeddedVision/config.h:4,
+                 from ../../../../coretech-vision/include/anki/embeddedVision/array2d_vision.h:4,
+                 from ../../../../coretech-vision/src/embedded/array2d_vision.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ binomialFilter.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-vision/src/embedded/binomialFilter.cpp -o ../../../../coretech-vision/src/embedded/binomialFilter.o
+In file included from ../../../../coretech-vision/include/anki/embeddedVision/config.h:4,
+                 from ../../../../coretech-vision/include/anki/embeddedVision.h:4,
+                 from ../../../../coretech-vision/src/embedded/binomialFilter.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ computeCharacteristicScale.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-vision/src/embedded/computeCharacteristicScale.cpp -o ../../../../coretech-vision/src/embedded/computeCharacteristicScale.o
+In file included from ../../../../coretech-vision/include/anki/embeddedVision/config.h:4,
+                 from ../../../../coretech-vision/include/anki/embeddedVision/miscVisionKernels.h:4,
+                 from ../../../../coretech-vision/src/embedded/computeCharacteristicScale.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ computeQuadrilaterals.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-vision/src/embedded/computeQuadrilaterals.cpp -o ../../../../coretech-vision/src/embedded/computeQuadrilaterals.o
+In file included from ../../../../coretech-vision/include/anki/embeddedVision/config.h:4,
+                 from ../../../../coretech-vision/include/anki/embeddedVision/miscVisionKernels.h:4,
+                 from ../../../../coretech-vision/src/embedded/computeQuadrilaterals.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ connectedComponents.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-vision/src/embedded/connectedComponents.cpp -o ../../../../coretech-vision/src/embedded/connectedComponents.o
+In file included from ../../../../coretech-vision/include/anki/embeddedVision/config.h:4,
+                 from ../../../../coretech-vision/include/anki/embeddedVision/connectedComponents.h:4,
+                 from ../../../../coretech-vision/src/embedded/connectedComponents.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ dataStructures_vision.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-vision/src/embedded/dataStructures_vision.cpp -o ../../../../coretech-vision/src/embedded/dataStructures_vision.o
+In file included from ../../../../coretech-vision/include/anki/embeddedVision/config.h:4,
+                 from ../../../../coretech-vision/include/anki/embeddedVision/dataStructures_vision.h:12,
+                 from ../../../../coretech-vision/src/embedded/dataStructures_vision.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ downsampleByFactor.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-vision/src/embedded/downsampleByFactor.cpp -o ../../../../coretech-vision/src/embedded/downsampleByFactor.o
+In file included from ../../../../coretech-vision/include/anki/embeddedVision/config.h:4,
+                 from ../../../../coretech-vision/include/anki/embeddedVision/miscVisionKernels.h:4,
+                 from ../../../../coretech-vision/src/embedded/downsampleByFactor.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ draw_vision.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-vision/src/embedded/draw_vision.cpp -o ../../../../coretech-vision/src/embedded/draw_vision.o
+In file included from ../../../../coretech-vision/include/anki/embeddedVision/draw_vision.h:4,
+                 from ../../../../coretech-vision/src/embedded/draw_vision.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ fiducialMarkers.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-vision/src/embedded/fiducialMarkers.cpp -o ../../../../coretech-vision/src/embedded/fiducialMarkers.o
+In file included from ../../../../coretech-vision/include/anki/embeddedVision/config.h:4,
+                 from ../../../../coretech-vision/include/anki/embeddedVision/fiducialMarkers.h:4,
+                 from ../../../../coretech-vision/src/embedded/fiducialMarkers.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ filtering.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-vision/src/embedded/filtering.cpp -o ../../../../coretech-vision/src/embedded/filtering.o
+In file included from ../../../../coretech-vision/include/anki/embeddedVision/config.h:4,
+                 from ../../../../coretech-vision/include/anki/embeddedVision/miscVisionKernels.h:4,
+                 from ../../../../coretech-vision/src/embedded/filtering.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ fixedLengthList_vision.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-vision/src/embedded/fixedLengthList_vision.cpp -o ../../../../coretech-vision/src/embedded/fixedLengthList_vision.o
+In file included from ../../../../coretech-vision/include/anki/embeddedVision/config.h:4,
+                 from ../../../../coretech-vision/include/anki/embeddedVision/fixedLengthList_vision.h:4,
+                 from ../../../../coretech-vision/src/embedded/fixedLengthList_vision.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ integralImage.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-vision/src/embedded/integralImage.cpp -o ../../../../coretech-vision/src/embedded/integralImage.o
+In file included from ../../../../coretech-vision/include/anki/embeddedVision/config.h:4,
+                 from ../../../../coretech-vision/include/anki/embeddedVision/integralImage.h:4,
+                 from ../../../../coretech-vision/src/embedded/integralImage.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ matlabPrototyping.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-vision/src/embedded/matlabPrototyping.cpp -o ../../../../coretech-vision/src/embedded/matlabPrototyping.o
+In file included from ../../../../coretech-vision/include/anki/embeddedVision/config.h:4,
+                 from ../../../../coretech-vision/include/anki/embeddedVision/fiducialMarkers.h:4,
+                 from ../../../../coretech-vision/src/embedded/matlabPrototyping.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ thresholdScaleImage.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-vision/src/embedded/thresholdScaleImage.cpp -o ../../../../coretech-vision/src/embedded/thresholdScaleImage.o
+In file included from ../../../../coretech-vision/include/anki/embeddedVision/config.h:4,
+                 from ../../../../coretech-vision/include/anki/embeddedVision/miscVisionKernels.h:4,
+                 from ../../../../coretech-vision/src/embedded/thresholdScaleImage.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ traceBoundary.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-vision/src/embedded/traceBoundary.cpp -o ../../../../coretech-vision/src/embedded/traceBoundary.o
+In file included from ../../../../coretech-vision/include/anki/embeddedVision/config.h:4,
+                 from ../../../../coretech-vision/include/anki/embeddedVision/miscVisionKernels.h:4,
+                 from ../../../../coretech-vision/src/embedded/traceBoundary.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ transformations.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-vision/src/embedded/transformations.cpp -o ../../../../coretech-vision/src/embedded/transformations.o
+In file included from ../../../../coretech-vision/include/anki/embeddedVision/config.h:4,
+                 from ../../../../coretech-vision/include/anki/embeddedVision/miscVisionKernels.h:4,
+                 from ../../../../coretech-vision/src/embedded/transformations.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Leon compiling C++ embeddedVisionTests.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-vision/test/embedded/embeddedVisionTests.cpp -o ../../../../coretech-vision/test/embedded/embeddedVisionTests.o
+In file included from ../../../../coretech-vision/include/anki/embeddedVision/config.h:4,
+                 from ../../../../coretech-vision/include/anki/embeddedVision.h:4,
+                 from ../../../../coretech-vision/test/embedded/embeddedVisionTests.cpp:3:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+Linking elf file coretech-vision-unit-tests.elf:     /home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-ld -O9 -t --gc-sections -M -warn-common -L /home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/lib/gcc/sparc-elf/4.4.2-LE -L . -L ./scripts -L ./config -L ../../../../movidius-tools/mdk/common/scripts/ld  -T ./config/custom.ldscript -o output/coretech-vision-unit-tests.elf ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0153/brdMv0153.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0155/brdMv0155.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0155/brdMv0155DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMV0160/brdMv0160DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0161/brdMv0161DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0162/brdMv0162.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0163/brdMv0163.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0163/brdMv0163DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0167/brdMv0167DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0171/brdMv0171.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0171/brdMv0171DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0172/brdMv0172DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0174/brdMv0174DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0177/brdMv0177DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/icEeprom.o ../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/icMipiTC358746.o ../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/icPllCDCE913.o ../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/icRegulatorLT3906.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvCif.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvCpr.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvDdr.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvGpio.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvHsdio.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvI2c.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvI2cMaster.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvI2s.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvIcb.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvL2Cache.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvLcd.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvPwm.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvRegUtils.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvSpi.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvSvu.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvSvuDebug.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvTimer.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvUart.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcL2Cache.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcLedControl.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcMemoryTransfer.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcShaveLoader.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcSliceUtils.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcTestUtils.o ../../../../movidius-tools/mdk/common/swCommon/src/swcCrc.o ../../../../movidius-tools/mdk/common/swCommon/src/swcLeonMath.o ../../../../movidius-tools/mdk/common/swCommon/src/swcLeonUtils.o ../../../../movidius-tools/mdk/common/swCommon/src/swcRandom.o ../../../../movidius-tools/mdk/common/drivers/myriad1/system/asm/crt0.o ../../../../movidius-tools/mdk/common/drivers/myriad1/system/asm/memmap.o ../../../../movidius-tools/mdk/common/drivers/myriad1/system/asm/mp_rom.o ../../../../movidius-tools/mdk/common/drivers/myriad1/system/asm/sysbss.o ../../../../movidius-tools/mdk/common/drivers/myriad1/system/asm/traps.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/asinf_acosf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/expf_exp2f_exp10f.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/frexpf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/ldexpf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/logf_log2f_log10f.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/misc.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/modff_ceilf_floorf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/sinf_cosf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/stdio.xprintf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.memchr_strchr.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.memcmp_strncmp_strcmp.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.memmove_memcpy.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.memset.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strcat_strncat.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strcpy_strncpy.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strcspn_strlen.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strrchr.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strspn.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strstr.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/tanf.o leon/main.o leon/app_config.o ../../../../coretech-common/src/embedded/benchmarking_c.o ../../../../coretech-common/src/embedded/utilities_c.o ../../../../coretech-vision/src/embedded/movidiusPrototyping.o ../../../../movidius-tools/mdk/common/libc/leon/src/math_consts.o ../../../../movidius-tools/mdk/common/libc/leon/src/memcpy_fast.o ../../../../movidius-tools/mdk/common/libc/leon/src/memset_fast.o ../../../../movidius-tools/mdk/common/libc/leon/src/puts.o ../../../../movidius-tools/mdk/common/libc/leon/src/strtol.o leon/cppInterface.o ../../../../coretech-common/src/embedded/array2d.o ../../../../coretech-common/src/embedded/draw.o ../../../../coretech-common/src/embedded/errorHandling.o ../../../../coretech-common/src/embedded/fixedLengthList.o ../../../../coretech-common/src/embedded/geometry.o ../../../../coretech-common/src/embedded/matlabConverters.o ../../../../coretech-common/src/embedded/matlabInterface.o ../../../../coretech-common/src/embedded/memory.o ../../../../coretech-common/src/embedded/opencvLight.o ../../../../coretech-common/src/embedded/utilities.o ../../../../coretech-vision/src/embedded/array2d_vision.o ../../../../coretech-vision/src/embedded/binomialFilter.o ../../../../coretech-vision/src/embedded/computeCharacteristicScale.o ../../../../coretech-vision/src/embedded/computeQuadrilaterals.o ../../../../coretech-vision/src/embedded/connectedComponents.o ../../../../coretech-vision/src/embedded/dataStructures_vision.o ../../../../coretech-vision/src/embedded/downsampleByFactor.o ../../../../coretech-vision/src/embedded/draw_vision.o ../../../../coretech-vision/src/embedded/fiducialMarkers.o ../../../../coretech-vision/src/embedded/filtering.o ../../../../coretech-vision/src/embedded/fixedLengthList_vision.o ../../../../coretech-vision/src/embedded/integralImage.o ../../../../coretech-vision/src/embedded/matlabPrototyping.o ../../../../coretech-vision/src/embedded/thresholdScaleImage.o ../../../../coretech-vision/src/embedded/traceBoundary.o ../../../../coretech-vision/src/embedded/transformations.o ../../../../coretech-vision/test/embedded/embeddedVisionTests.o  ../../../../movidius-tools/mdk/common/components/Board/leon_code/Board.o            > ./output/coretech-vision-unit-tests.map
+Generating mvcmd target output/coretech-vision-unit-tests.elf
+Movidius Object Converter (moviConvert) v00.50.37.0
+moviCobvert: INFO: execution completed successful.
+
+Generating elf listing file
+Generating listings file for the various shave listings
+make[1]: Leaving directory `/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests'
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/bin/moviDebug -b:./output/generated_debug_script.scr  -srvIP:127.0.0.1   
+Movidius Debugger (moviDebug) v00.50.37.0.
+moviDebug: INFO: Connection successful.
+moviDebug: INFO: Number of processors: 1.
+moviDebug: INFO: Executing batch file...
+Batch execute: <breset>
+Batch execute: <>
+Batch execute: <;Need to start all shaves>
+Batch execute: <start a>
+Batch execute: <>
+Batch execute: <;load application mof>
+Batch execute: <load ./output/coretech-vision-unit-tests.elf>
+moviDebug: INFO: P#0000 : DDR = 64MB
+Loading section <.ddr.text> start = 0xA0040000 length = 101692 bytes.
+Loading section <.ddr_direct.text> start = 0xA0058D3C length = 145412 bytes.
+Loading section <.ddr.rodata> start = 0xA007C540 length = 93744 bytes.
+Loading section <.imageData> start = 0xA0093370 length = 325376 bytes.
+Loading section <.bigBuffers> start = 0x40000000 length = 320000 bytes.
+Loading section <.smallBuffers1> start = 0x4004F200 length = 300000 bytes.
+Loading section <.smallBuffers2> start = 0x400985E0 length = 300000 bytes.
+Loading section <.sys.traps> start = 0x90100000 length = 468 bytes.
+Loading section <.sys.text> start = 0x901001D4 length = 264 bytes.
+Loading section <.text> start = 0x901002DC length = 12696 bytes.
+Loading section <.sys.rodata> start = 0x90103474 length = 4 bytes.
+Loading section <.data> start = 0x90103478 length = 416 bytes.
+Loading section <.winregs.S0> start = 0x80140010 length = 16 bytes.
+Loading section <.winregs.S1> start = 0x80150010 length = 16 bytes.
+Loading section <.winregs.S2> start = 0x80160010 length = 16 bytes.
+Loading section <.winregs.S3> start = 0x80170010 length = 16 bytes.
+Loading section <.winregs.S4> start = 0x80180010 length = 16 bytes.
+Loading section <.winregs.S5> start = 0x80190010 length = 16 bytes.
+Loading section <.winregs.S6> start = 0x801A0010 length = 16 bytes.
+Loading section <.winregs.S7> start = 0x801B0010 length = 16 bytes.
+moviDebug: INFO: Total bytes loaded = 1600200.
+Batch execute: <>
+Batch execute: <;Target the Leon>
+Batch execute: <target l>
+Batch execute: <;Run the Leon and wait>
+Batch execute: <runw>
+UART: Starting unit tests 
+UART: 155 158 156 155 147 155 0
+UART: 0x9B 0x93 0x9B
+UART: 0x9B9E9C9B 0x93939395 0x9B9D9D9D
+UART: 0x9B 0x9C00 0x9E0000 0x9B000000
+UART: 155 156 158 155
+UART: a
+UART: b
+UART: c
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - Array<Type>::Set - Array<Type> is not valid
+UART: d
+UART: about to allocate
+P0:AL>breaknow
+Terminate Debug Session? (Y/N)
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack i..
+P0:AL>moviDebug: INFO: moviDebug closing...
+moviDebug: INFO: moviDebug closed.
+
+anki@ubuntu:/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests$ ^C
+anki@ubuntu:/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests$ MV_TOOLS_DIR set
+make trueall
+make[1]: Entering directory `/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests'
+Leon compiling C++ memory.o
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-gcc -c -fno-inline-functions-called-once -fno-inline-small-functions -O0 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 -Wextra -I../../../../movidius-tools/mdk/common/libc/leon/include -I../../../../movidius-tools/mdk/common/swCommon/include -I../../../../movidius-tools/mdk/common/swCommon/myriad1/include -I../../../../movidius-tools/mdk/common/shared/include -I../../../../movidius-tools/mdk/common/swCommon/shave_code/myriad1/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/include -I../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/include -I./leon -I../../../../coretech-common/include/ -I../../../../coretech-vision/include/ -I../../../../blockImages/ -I../../../../movidius-tools/mdk/common/components/Board ../../../../coretech-common/src/embedded/memory.cpp -o ../../../../coretech-common/src/embedded/memory.o
+In file included from ../../../../coretech-common/include/anki/embeddedCommon/memory.h:4,
+                 from ../../../../coretech-common/src/embedded/memory.cpp:1:
+../../../../coretech-common/include/anki/embeddedCommon/config.h:24:2: warning: #warning Using GNUC 4.4.2
+../../../../coretech-common/include/anki/embeddedCommon/config.h:77:2: warning: #warning USING MOVIDIUS COMPILER!!
+../../../../coretech-common/src/embedded/memory.cpp: In member function 'void* Anki::Embedded::MemoryStack::Allocate(s32, s32*)':
+../../../../coretech-common/src/embedded/memory.cpp:70: warning: comparison between signed and unsigned integer expressions
+Linking elf file coretech-vision-unit-tests.elf:     /home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/bin/sparc-elf-ld -O9 -t --gc-sections -M -warn-common -L /home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/sparc-elf-4.4.2-LE/lib/gcc/sparc-elf/4.4.2-LE -L . -L ./scripts -L ./config -L ../../../../movidius-tools/mdk/common/scripts/ld  -T ./config/custom.ldscript -o output/coretech-vision-unit-tests.elf ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0153/brdMv0153.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0155/brdMv0155.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0155/brdMv0155DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMV0160/brdMv0160DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0161/brdMv0161DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0162/brdMv0162.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0163/brdMv0163.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0163/brdMv0163DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0167/brdMv0167DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0171/brdMv0171.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0171/brdMv0171DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0172/brdMv0172DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0174/brdMv0174DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/brdDrivers/brdMv0177/brdMv0177DCard.o ../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/icEeprom.o ../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/icMipiTC358746.o ../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/icPllCDCE913.o ../../../../movidius-tools/mdk/common/drivers/myriad1/icDrivers/icRegulatorLT3906.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvCif.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvCpr.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvDdr.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvGpio.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvHsdio.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvI2c.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvI2cMaster.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvI2s.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvIcb.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvL2Cache.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvLcd.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvPwm.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvRegUtils.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvSpi.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvSvu.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvSvuDebug.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvTimer.o ../../../../movidius-tools/mdk/common/drivers/myriad1/socDrivers/DrvUart.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcL2Cache.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcLedControl.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcMemoryTransfer.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcShaveLoader.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcSliceUtils.o ../../../../movidius-tools/mdk/common/swCommon/myriad1/src/swcTestUtils.o ../../../../movidius-tools/mdk/common/swCommon/src/swcCrc.o ../../../../movidius-tools/mdk/common/swCommon/src/swcLeonMath.o ../../../../movidius-tools/mdk/common/swCommon/src/swcLeonUtils.o ../../../../movidius-tools/mdk/common/swCommon/src/swcRandom.o ../../../../movidius-tools/mdk/common/drivers/myriad1/system/asm/crt0.o ../../../../movidius-tools/mdk/common/drivers/myriad1/system/asm/memmap.o ../../../../movidius-tools/mdk/common/drivers/myriad1/system/asm/mp_rom.o ../../../../movidius-tools/mdk/common/drivers/myriad1/system/asm/sysbss.o ../../../../movidius-tools/mdk/common/drivers/myriad1/system/asm/traps.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/asinf_acosf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/expf_exp2f_exp10f.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/frexpf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/ldexpf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/logf_log2f_log10f.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/misc.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/modff_ceilf_floorf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/sinf_cosf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/stdio.xprintf.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.memchr_strchr.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.memcmp_strncmp_strcmp.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.memmove_memcpy.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.memset.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strcat_strncat.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strcpy_strncpy.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strcspn_strlen.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strrchr.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strspn.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/string.strstr.o ../../../../movidius-tools/mdk/common/libc/leon/src/asm/tanf.o leon/main.o leon/app_config.o ../../../../coretech-common/src/embedded/benchmarking_c.o ../../../../coretech-common/src/embedded/utilities_c.o ../../../../coretech-vision/src/embedded/movidiusPrototyping.o ../../../../movidius-tools/mdk/common/libc/leon/src/math_consts.o ../../../../movidius-tools/mdk/common/libc/leon/src/memcpy_fast.o ../../../../movidius-tools/mdk/common/libc/leon/src/memset_fast.o ../../../../movidius-tools/mdk/common/libc/leon/src/puts.o ../../../../movidius-tools/mdk/common/libc/leon/src/strtol.o leon/cppInterface.o ../../../../coretech-common/src/embedded/array2d.o ../../../../coretech-common/src/embedded/draw.o ../../../../coretech-common/src/embedded/errorHandling.o ../../../../coretech-common/src/embedded/fixedLengthList.o ../../../../coretech-common/src/embedded/geometry.o ../../../../coretech-common/src/embedded/matlabConverters.o ../../../../coretech-common/src/embedded/matlabInterface.o ../../../../coretech-common/src/embedded/memory.o ../../../../coretech-common/src/embedded/opencvLight.o ../../../../coretech-common/src/embedded/utilities.o ../../../../coretech-vision/src/embedded/array2d_vision.o ../../../../coretech-vision/src/embedded/binomialFilter.o ../../../../coretech-vision/src/embedded/computeCharacteristicScale.o ../../../../coretech-vision/src/embedded/computeQuadrilaterals.o ../../../../coretech-vision/src/embedded/connectedComponents.o ../../../../coretech-vision/src/embedded/dataStructures_vision.o ../../../../coretech-vision/src/embedded/downsampleByFactor.o ../../../../coretech-vision/src/embedded/draw_vision.o ../../../../coretech-vision/src/embedded/fiducialMarkers.o ../../../../coretech-vision/src/embedded/filtering.o ../../../../coretech-vision/src/embedded/fixedLengthList_vision.o ../../../../coretech-vision/src/embedded/integralImage.o ../../../../coretech-vision/src/embedded/matlabPrototyping.o ../../../../coretech-vision/src/embedded/thresholdScaleImage.o ../../../../coretech-vision/src/embedded/traceBoundary.o ../../../../coretech-vision/src/embedded/transformations.o ../../../../coretech-vision/test/embedded/embeddedVisionTests.o  ../../../../movidius-tools/mdk/common/components/Board/leon_code/Board.o            > ./output/coretech-vision-unit-tests.map
+Generating mvcmd target output/coretech-vision-unit-tests.elf
+Movidius Object Converter (moviConvert) v00.50.37.0
+moviCobvert: INFO: execution completed successful.
+
+Generating elf listing file
+Generating listings file for the various shave listings
+make[1]: Leaving directory `/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests'
+/home/anki/Anki/movidius-tools/tools/00.50.37.0/linux32/bin/moviDebug -b:./output/generated_debug_script.scr  -srvIP:127.0.0.1   
+Movidius Debugger (moviDebug) v00.50.37.0.
+moviDebug: INFO: Connection successful.
+moviDebug: INFO: Number of processors: 1.
+moviDebug: INFO: Executing batch file...
+Batch execute: <breset>
+Batch execute: <>
+Batch execute: <;Need to start all shaves>
+Batch execute: <start a>
+Batch execute: <>
+Batch execute: <;load application mof>
+Batch execute: <load ./output/coretech-vision-unit-tests.elf>
+moviDebug: INFO: P#0000 : DDR = 64MB
+Loading section <.ddr.text> start = 0xA0040000 length = 101692 bytes.
+Loading section <.ddr_direct.text> start = 0xA0058D3C length = 145432 bytes.
+Loading section <.ddr.rodata> start = 0xA007C558 length = 93760 bytes.
+Loading section <.imageData> start = 0xA0093398 length = 325376 bytes.
+Loading section <.bigBuffers> start = 0x40000000 length = 320000 bytes.
+Loading section <.smallBuffers1> start = 0x4004F200 length = 300000 bytes.
+Loading section <.smallBuffers2> start = 0x400985E0 length = 300000 bytes.
+Loading section <.sys.traps> start = 0x90100000 length = 468 bytes.
+Loading section <.sys.text> start = 0x901001D4 length = 264 bytes.
+Loading section <.text> start = 0x901002DC length = 12696 bytes.
+Loading section <.sys.rodata> start = 0x90103474 length = 4 bytes.
+Loading section <.data> start = 0x90103478 length = 416 bytes.
+Loading section <.winregs.S0> start = 0x80140010 length = 16 bytes.
+Loading section <.winregs.S1> start = 0x80150010 length = 16 bytes.
+Loading section <.winregs.S2> start = 0x80160010 length = 16 bytes.
+Loading section <.winregs.S3> start = 0x80170010 length = 16 bytes.
+Loading section <.winregs.S4> start = 0x80180010 length = 16 bytes.
+Loading section <.winregs.S5> start = 0x80190010 length = 16 bytes.
+Loading section <.winregs.S6> start = 0x801A0010 length = 16 bytes.
+Loading section <.winregs.S7> start = 0x801B0010 length = 16 bytes.
+moviDebug: INFO: Total bytes loaded = 1600236.
+Batch execute: <>
+Batch execute: <;Target the Leon>
+Batch execute: <target l>
+Batch execute: <;Run the Leon and wait>
+Batch execute: <runw>
+UART: Starting unit tests 
+UART: 155 158 156 155 147 155 0
+UART: 0x9B 0x93 0x9B
+UART: 0x9B9E9C9B 0x93939395 0x9B9D9D9D
+UART: 0x9B 0x9C00 0x9E0000 0x9B000000
+UART: 155 156 158 155
+UART: a
+UART: b
+UART: c
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - Array<Type>::Set - Array<Type> is not valid
+UART: d
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: e
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: f
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: g
+UART: h
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - Array<Type>::ComputeRequiredStride - Invalid size
+UART: LOG[4] - Array<Type>::Array - Invalid size
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - numBytesRequested > 0
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - Array<Type>::ComputeRequiredStride - Invalid size
+UART: LOG[4] - Array<Type>::Array - Invalid size
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - numBytesRequested > 0
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - Array<Type>::ComputeRequiredStride - Invalid size
+UART: LOG[4] - Array<Type>::Array - Invalid size
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - numBytesRequested > 0
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - ComputeCharacteristicScaleImageAndBinarize - image is not valid
+UART: 
+UART: totalTime: 44.22
+UART: Event SimpleDetector_Steps12345_lowMemory: Mean:2147483647.s Min:9223371
+UART: 52...s Max:-922337152...s Total:0.0s NumEvents:0
+UART: Event ComputeCharacteristicScaleImageAndBinarizeAndExtractComponents: Me
+UART: an:2147483647.s Min:922337152...s Max:-922337152...s Total:0.0s NumEvent
+UART: s:0
+UART: Event ccsiabaec_init: Mean:2147483647.s Min:922337152...s Max:-922337152
+UART: ...s Total:0.0s NumEvents:0
+UART: LOG[4] - 
+UART: ------------------------------------------------------------------------
+UART: 
+UART: UnitTestAssert(result == RESULT_OK) is false
+UART: Unit Test Assert Failure
+UART: ------------------------------------------------------------------------
+UART:  - 
+UART: 
+UART: 
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: FAILED:CoreTech_VisionSimpleDetector_Steps12345_realImage_lowMemory
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: 
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - 
+UART: ------------------------------------------------------------------------
+UART: 
+UART: UnitTestAssert(image.IsValid()) is false
+UART: Unit Test Assert Failure
+UART: ------------------------------------------------------------------------
+UART:  - 
+UART: 
+UART: 
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: FAILED:CoreTech_VisionScrollingIntegralImageFiltering_C_emulateShave
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: 
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - 
+UART: ------------------------------------------------------------------------
+UART: 
+UART: UnitTestAssert(image2.IsValid()) is false
+UART: Unit Test Assert Failure
+UART: ------------------------------------------------------------------------
+UART:  - 
+UART: 
+UART: 
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: FAILED:CoreTech_VisionScrollingIntegralImageFiltering_C
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: 
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - 
+UART: ------------------------------------------------------------------------
+UART: 
+UART: UnitTestAssert(image2.IsValid()) is false
+UART: Unit Test Assert Failure
+UART: ------------------------------------------------------------------------
+UART:  - 
+UART: 
+UART: 
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: FAILED:CoreTech_VisionScrollingIntegralImageFiltering
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: 
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - 
+UART: ------------------------------------------------------------------------
+UART: 
+UART: UnitTestAssert(image.IsValid()) is false
+UART: Unit Test Assert Failure
+UART: ------------------------------------------------------------------------
+UART:  - 
+UART: 
+UART: 
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: FAILED:CoreTech_VisionScrollingIntegralImage
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: 
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - 
+UART: ------------------------------------------------------------------------
+UART: 
+UART: UnitTestAssert(image.Set(imageData, ComputeCharacteristicScale_imageData
+UART: Length) == imageWidth*imageHeight) is false
+UART: Unit Test Assert Failure
+UART: ------------------------------------------------------------------------
+UART:  - 
+UART: 
+UART: 
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: FAILED:CoreTech_VisionComputeCharacteristicScale
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: 
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - 
+UART: ------------------------------------------------------------------------
+UART: 
+UART: UnitTestAssert(binaryImage.IsValid()) is false
+UART: Unit Test Assert Failure
+UART: ------------------------------------------------------------------------
+UART:  - 
+UART: 
+UART: 
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: FAILED:CoreTech_VisionTraceInteriorBoundary
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: 
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - ComputeQuadrilateralsFromConnectedComponents - components is no
+UART: t valid
+UART: LOG[4] - 
+UART: ------------------------------------------------------------------------
+UART: 
+UART: UnitTestAssert(result == RESULT_OK) is false
+UART: Unit Test Assert Failure
+UART: ------------------------------------------------------------------------
+UART:  - 
+UART: 
+UART: 
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: FAILED:CoreTech_VisionTraceNextExteriorBoundary
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: 
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - 
+UART: ------------------------------------------------------------------------
+UART: 
+UART: UnitTestAssert(binaryImage.IsValid()) is false
+UART: Unit Test Assert Failure
+UART: ------------------------------------------------------------------------
+UART:  - 
+UART: 
+UART: 
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: FAILED:CoreTech_VisionApproximateConnectedComponents2d
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: 
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - Array<Type>::SetZero - Array<Type> is not valid
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - BinomialFilter - image is not valid
+UART: LOG[4] - 
+UART: ------------------------------------------------------------------------
+UART: 
+UART: UnitTestAssert(result == RESULT_OK) is false
+UART: Unit Test Assert Failure
+UART: ------------------------------------------------------------------------
+UART:  - 
+UART: 
+UART: 
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: FAILED:CoreTech_VisionBinomialFilter
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: 
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: LOG[4] - Array<Type>::get_size - Array<Type> is not valid
+UART: LOG[4] - ComputeQuadrilateralsFromConnectedComponents - components is no
+UART: t valid
+UART: LOG[4] - 
+UART: ------------------------------------------------------------------------
+UART: 
+UART: UnitTestAssert(result == RESULT_OK) is false
+UART: Unit Test Assert Failure
+UART: ------------------------------------------------------------------------
+UART:  - 
+UART: 
+UART: 
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: FAILED:CoreTech_VisionComputeQuadrilateralsFromConnectedComponents
+UART: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+UART: 
+UART: 
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+UART: about to allocate
+UART: LOG[4] - Anki.MemoryStack.Allocate - MemoryStack is not valid
+UART: allocated
+UART: LOG[4] - Array<Type>::Initialize - Negative dimension
+P0:AL>Batch execute: <  >
+Batch execute: <exit>
+moviDebug: INFO: Debugger exited.
+anki@ubuntu:/mnt/hgfs/Anki/coretech-vision/project/myriad1/unitTests$ 

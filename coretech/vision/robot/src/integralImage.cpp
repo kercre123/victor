@@ -32,35 +32,38 @@ namespace Anki
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
 
+      const s32 integralImageHeight = this->get_size(0);
+      const s32 integralImageWidth = this->get_size(1);
+
       assert(imageWidth%ANKI_VISION_IMAGE_WIDTH_SHIFT == 0);
       assert(imageWidth == imageWidth);
 
-      AnkiConditionalErrorAndReturnValue(numRowsToScroll > 0 && numRowsToScroll <= this->get_size(0),
+      AnkiConditionalErrorAndReturnValue(numRowsToScroll > 0 && numRowsToScroll <= integralImageHeight,
         RESULT_FAIL, "ScrollingIntegralImage_u8_s32::ScrollDown", "numRowsToScroll is to high or low");
 
-      Array<u8> paddedRow(1, this->get_size(1), scratch);
-      //const u8 * restrict pPaddedRow = paddedRow.Pointer(0, 0);
+      Array<u8> paddedRow(1, integralImageWidth, scratch);
+      u8 * restrict pPaddedRow = paddedRow.Pointer(0, 0);
 
       s32 curIntegralImageY;
       s32 curImageY;
 
       // If we are asked to scroll all rows, we won't keep track of any of the previous data, so
       // we'll start by initializing the first rows
-      if(numRowsToScroll == this->get_size(0)) {
+      if(numRowsToScroll == integralImageHeight) {
         if(PadImageRow(image, 0, paddedRow) != RESULT_OK)
           return RESULT_FAIL;
 
         curIntegralImageY = 0;
 
         // Create the first line
-        ComputeIntegralImageRow(paddedRow.Pointer(0, 0), this->Pointer(0, 0), this->get_size(1));
+        ComputeIntegralImageRow(pPaddedRow, this->Pointer(0, 0), integralImageWidth);
         curIntegralImageY++;
 
         // Fill in the top padded rows
         if(numBorderPixels > 0) {
           //for curIntegralImageY = 2:(1+extraBorderWidth)
           for(s32 y=0; y<numBorderPixels; y++) {
-            ComputeIntegralImageRow(paddedRow.Pointer(0, 0), this->Pointer(curIntegralImageY-1, 0), this->Pointer(curIntegralImageY, 0), this->get_size(1));
+            ComputeIntegralImageRow(pPaddedRow, this->Pointer(curIntegralImageY-1, 0), this->Pointer(curIntegralImageY, 0), integralImageWidth);
             curIntegralImageY++;
           }
 
@@ -69,20 +72,20 @@ namespace Anki
 
         numRowsToScroll--;
         curImageY = 0;
-      } else { // if(numRowsToScroll == this->get_size(0))
+      } else { // if(numRowsToScroll == integralImageHeight)
         curImageY = this->maxRow;
-        curIntegralImageY = this->get_size(0) - numRowsToScroll;
+        curIntegralImageY = integralImageHeight - numRowsToScroll;
 
         // Scroll this integral image up
         // integralImage(1:(end-numRowsToUpdate), :) = integralImage((1+numRowsToUpdate):end, :);
-        for(s32 y=0; y<(this->get_size(0)-numRowsToScroll); y++) {
+        for(s32 y=0; y<(integralImageHeight-numRowsToScroll); y++) {
           s32 * restrict pIntegralImage_yDst = this->Pointer(y, 0);
           const s32 * restrict pIntegralImage_ySrc = this->Pointer(y+numRowsToScroll, 0);
 
           memcpy(pIntegralImage_yDst, pIntegralImage_ySrc, this->get_strideWithoutFillPatterns());
         }
         this->rowOffset += numRowsToScroll;
-      } // if(numRowsToScroll == this->get_size(0)) ... else
+      } // if(numRowsToScroll == integralImageHeight) ... else
 
       // Compute the non-padded integral image rows
       if(curImageY < imageHeight) {
@@ -96,11 +99,10 @@ namespace Anki
             break;
           }
 
-          //paddedImageRow = padImageRow(image, curImageY, numBorderPixels);
           if(PadImageRow(image, curImageY, paddedRow) != RESULT_OK)
             return RESULT_FAIL;
 
-          ComputeIntegralImageRow(paddedRow.Pointer(0, 0), this->Pointer(curIntegralImageY-1, 0), this->Pointer(curIntegralImageY, 0), this->get_size(1));
+          ComputeIntegralImageRow(pPaddedRow, this->Pointer(curIntegralImageY-1, 0), this->Pointer(curIntegralImageY, 0), integralImageWidth);
 
           numRowsToScroll--;
           curIntegralImageY++;
@@ -110,7 +112,7 @@ namespace Anki
       }
 
       this->maxRow = curImageY;
-      //this->minRow = MAX(0, this->maxRow-this->get_size(0)+1);
+      //this->minRow = MAX(0, this->maxRow-integralImageHeight+1);
 
       // If we're at the bottom of the image, compute the extra bottom padded rows
       if(numRowsToScroll > 0) {
@@ -124,7 +126,7 @@ namespace Anki
           // for x = 2:size(paddedImageRow, 2)
           //     integralImage(curIntegralImageY,x) = paddedImageRow(1,x) + integralImage(curIntegralImageY,x-1) + integralImage(curIntegralImageY-1,x) - integralImage(curIntegralImageY-1,x-1);
           // end
-          ComputeIntegralImageRow(paddedRow.Pointer(0, 0), this->Pointer(curIntegralImageY-1, 0), this->Pointer(curIntegralImageY, 0), this->get_size(1));
+          ComputeIntegralImageRow(pPaddedRow, this->Pointer(curIntegralImageY-1, 0), this->Pointer(curIntegralImageY, 0), integralImageWidth);
 
           curIntegralImageY++;
           numRowsToScroll--;
@@ -307,43 +309,49 @@ namespace Anki
       assert(whichRow >= 0);
       assert(whichRow < imageHeight);
 
-      const u32 * restrict pImage_u32 = reinterpret_cast<const u32*>(image.Pointer(whichRow, 0));
-      const u8 * restrict pImage_u8 = image.Pointer(whichRow, 0);
+      const u32 * restrict image_u32rowPointer = reinterpret_cast<const u32*>(image.Pointer(whichRow, 0));
+      const u8 * restrict image_u8rowPointer = image.Pointer(whichRow, 0);
 
-      //u32 * restrict pPaddedRow_u32 = reinterpret_cast<u32*>(paddedRow.Pointer(0, 0));
-      u8 * restrict pPaddedRow_u8 = paddedRow.Pointer(0, 0);
+      u8 * restrict paddedRow_u8rowPointer = paddedRow.Pointer(0, 0);
 
 #ifdef BIG_ENDIAN_IMAGES
-      const u8 firstPixel = (pImage_u32[0] & 0xFF000000) >> 24;
-      const u8 lastPixel = pImage_u32[imageWidth4-1] & 0xFF;
+      const u8 firstPixel = (image_u32rowPointer[0] & 0xFF000000) >> 24;
+      const u8 lastPixel = image_u32rowPointer[imageWidth4-1] & 0xFF;
 #else
-      const u8 firstPixel = pImage_u8[0];
-      const u8 lastPixel = pImage_u8[imageWidth-1];
+
+      const u8 firstPixel = image_u8rowPointer[0];
+      const u8 lastPixel = image_u8rowPointer[imageWidth-1];
 #endif
 
-      //paddedImageRow = zeros([1,size(image,2)+2*extraBorderWidth], 'int32');
       s32 xPad = 0;
 
-      //for(s32 x=0; x<numBorderPixels; x++) {
-      //  pPaddedRow[xPad++] = firstPixel;
-      //}
-
-      memset(pPaddedRow_u8, firstPixel, numBorderPixels);
       xPad += numBorderPixels;
 
-      u32 * restrict pPaddedRow_u32Pxpad = reinterpret_cast<u32*>(paddedRow.Pointer(0, xPad));
+      //u32 * restrict paddedRow_u32rowPointerPxpad = reinterpret_cast<u32*>(paddedRow.Pointer(0, xPad));
+
+      // First, load everything to the beginning of the buffer (SPARC doesn't have unaligned store)
+      u32 * restrict paddedRow_u32rowPointerPxpad = reinterpret_cast<u32*>(paddedRow_u8rowPointer);
       for(s32 xImage = 0; xImage<imageWidth4; xImage++) {
 #ifdef BIG_ENDIAN_IMAGES
-        pPaddedRow_u32Pxpad[xImage] = SwapEndianU32(pImage_u32[xImage]);
+        paddedRow_u32rowPointerPxpad[xImage] = SwapEndianU32(image_u32rowPointer[xImage]);
 #else
-        pPaddedRow_u32Pxpad[xImage] = pImage_u32[xImage];
+        paddedRow_u32rowPointerPxpad[xImage] = image_u32rowPointer[xImage];
 #endif
       }
 
-      //for(s32 x=0; x<numBorderPixels; x++) {
-      //  pPaddedRow[xPad++] = lastPixel;
-      //}
-      memset(pPaddedRow_u8 + numBorderPixels + imageWidth, lastPixel, numBorderPixels);
+      // Second, move the image data to the unaligned location
+      //memmove(paddedRow_u8rowPointer+xPad, paddedRow_u8rowPointer, imageWidth);
+
+      // Last, set the beginning and end pixels
+      xPad = 0;
+      for(s32 x=0; x<numBorderPixels; x++) {
+        paddedRow_u8rowPointer[xPad++] = firstPixel;
+      }
+
+      xPad += imageWidth;
+      for(s32 x=0; x<numBorderPixels; x++) {
+        paddedRow_u8rowPointer[xPad++] = lastPixel;
+      }
 
       return RESULT_OK;
     }
