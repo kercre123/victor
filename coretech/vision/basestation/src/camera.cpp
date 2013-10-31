@@ -94,8 +94,8 @@ namespace Anki {
 #endif
   
   
-  Pose3d Camera::computeObjectPose(const std::vector<Point2f> &imgPoints,
-                           const std::vector<Point3f> &objPoints) const
+  Pose3d Camera::computeObjectPose(const std::vector<Point2f>& imgPoints,
+                                   const std::vector<Point3f>& objPoints) const
   {
     
 #if ANKICORETECH_USE_OPENCV
@@ -120,8 +120,8 @@ namespace Anki {
     
   } // computeObjectPose(from std::vectors)
   
-  Pose3d Camera::computeObjectPose(const Quad2f &imgPoints,
-                           const Quad3f &objPoints) const
+  Pose3d Camera::computeObjectPose(const Quad2f& imgPoints,
+                                   const Quad3f& objPoints) const
   {
 #if ANKICORETECH_USE_OPENCV
     std::vector<cv::Point2f> cvImagePoints;
@@ -174,8 +174,8 @@ namespace Anki {
   } // project3dPoint()
   
   // Compute the projected image locations of a set of 3D points:
-  void Camera::project3dPoints(const std::vector<Point3f> &objPoints,
-                       std::vector<Point2f>       &imgPoints) const
+  void Camera::project3dPoints(const std::vector<Point3f>& objPoints,
+                               std::vector<Point2f>&       imgPoints) const
   {
     imgPoints.resize(objPoints.size());
     for(size_t i = 0; i<objPoints.size(); ++i)
@@ -184,8 +184,8 @@ namespace Anki {
     }
   } // project3dPoints(std::vectors)
   
-  void Camera::project3dPoints(const Quad3f &objPoints,
-                       Quad2f       &imgPoints) const
+  void Camera::project3dPoints(const Quad3f& objPoints,
+                               Quad2f&       imgPoints) const
   {
     for(Quad::CornerName i_corner=Quad::FirstCorner;
         i_corner < Quad::NumCorners; ++i_corner)
