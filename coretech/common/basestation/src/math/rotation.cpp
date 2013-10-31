@@ -28,26 +28,33 @@ namespace Anki {
 
   
   RotationVector3d::RotationVector3d(void)
-  : Vec3f(0.f, 0.f, 0.f)
+  : angle(0.f), axis(X_AXIS_3D)
   {
     
   }
   
-  RotationVector3d::RotationVector3d(const Radians angle, const Vec3f &axis)
-  : Vec3f(axis)
+  RotationVector3d::RotationVector3d(const Radians angleIn, const Vec3f &axisIn)
+  : angle(angleIn), axis(axisIn)
   {
-    this->makeUnitLength();
-    *this *= angle.ToFloat();
+    f32 axisLength = axis.makeUnitLength();
+    if(axisLength != 1.f) {
+      // TODO: Issue a warning that axis provided was not unit length?
+    }
   }
   
   RotationVector3d::RotationVector3d(const Vec3f &rvec)
-  : Vec3f(rvec)
+  : axis(rvec)
   {
-
+    this->angle = axis.makeUnitLength();
+    if(this->angle == Radians(0)) {
+      // If the specified vector was all zero, then the axis is ambiguous,
+      // so default to the X axis
+      axis = X_AXIS_3D;
+    }
   }
   
   RotationVector3d::RotationVector3d(const RotationMatrix3d &Rmat)
-  : Vec3f(0.f, 0.f, 0.f)
+  : RotationVector3d()
   {
     Rodrigues(Rmat, *this);
   }
@@ -101,7 +108,8 @@ namespace Anki {
                  RotationMatrix3d &Rmat_out)
   {
 #if ANKICORETECH_USE_OPENCV
-    cv::Vec3f cvRvec(Rvec_in.get_CvPoint3_());
+    cv::Vec3f cvRvec(Rvec_in.get_axis().get_CvPoint3_());
+    cvRvec *= Rvec_in.get_angle().ToFloat();
     cv::Rodrigues(cvRvec, Rmat_out.get_CvMatx_());    
 #else
     
@@ -119,9 +127,8 @@ namespace Anki {
 #if ANKICORETECH_USE_OPENCV
     cv::Vec3f cvRvec;
     cv::Rodrigues(Rmat_in.get_CvMatx_(), cvRvec);
-    Rvec_out.x() = cvRvec[0];
-    Rvec_out.y() = cvRvec[1];
-    Rvec_out.z() = cvRvec[2];
+    Anki::Vec3f tempVec(cvRvec);
+    Rvec_out = RotationVector3d(tempVec);
 #else
     assert(false);
     
