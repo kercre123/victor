@@ -17,8 +17,9 @@ namespace Anki
     namespace HAL
     {
       // Called from Robot::Init(), but not actually used here.
-      void Init()
+      ReturnCode Init()
       {
+        return 0;
       }
     }
   }
