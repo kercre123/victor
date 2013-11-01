@@ -13,15 +13,14 @@ extern "C" {
 #include <DrvI2cMasterDefines.h>
 #include <DrvI2cDefines.h>
 #include <DrvI2cMaster.h>
+#include <DrvIcb.h>
+#include <DrvIcbDefines.h>
 #include <DrvDdr.h>
 #include <DrvTimer.h>
 #include <DrvL2Cache.h>
 #include <DrvPwm.h>
 #include <DrvUart.h>
 #include <isaac_registers.h>
-//#include <CifGenericApi.h>
-//#include <CifGenericApiDefines.h>
-//#include <CifGenericPrivateDefines.h>
 
 #ifdef __cplusplus
 }
