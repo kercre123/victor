@@ -1,6 +1,6 @@
 #include "shaveShared.h"
 
-void testIntegralImage() {
+void testIntegralImageFiltering() {
   const int filterHalfWidth = 2;
 
   const int * restrict integralImage_00 = &integralImage[0];
@@ -14,4 +14,8 @@ void testIntegralImage() {
   int * restrict output = &outputLine[0];
 
   ScrollingIntegralImage_u8_s32_FilterRow_shaveInnerLoop(integralImage_00, integralImage_01, integralImage_10, integralImage_11, maxXSimd-minXSimd, output);
+}
+
+void testIntegralImageGeneration() {
+  ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow_nthRow(paddedImageRow, integralImage, integralImage+IMAGE_WIDTH, 61);
 }

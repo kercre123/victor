@@ -5,8 +5,11 @@
 #define IMAGE_WIDTH 64
 
 __attribute__ ((aligned (16))) extern volatile int outputLine[IMAGE_WIDTH];
-__attribute__ ((aligned (16))) extern const int integralImage[IMAGE_HEIGHT*IMAGE_WIDTH];
+__attribute__ ((aligned (16))) extern volatile unsigned char paddedImageRow[IMAGE_WIDTH];
+__attribute__ ((aligned (16))) extern int integralImage[IMAGE_HEIGHT*IMAGE_WIDTH];
 
-void testIntegralImage();
+void testIntegralImageFiltering();
+
+void testIntegralImageGeneration();
 
 #endif // _SHAVE_SHARED_H_
