@@ -3,8 +3,9 @@
 
 #include "anki/common/types.h"
 
+#ifdef SIMULATOR
 #include <webots/Supervisor.hpp>
-
+#endif
 
 namespace Anki {
   

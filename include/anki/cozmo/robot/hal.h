@@ -144,23 +144,12 @@ namespace Anki
       // Take a step (needed for webots, possibly a no-op for real robot?)
       ReturnCode Step(void);
 
-      // Execution
-      void MainExecution();
-      void LongExecution();
-
       // Ground truth (no-op if not in simulation?)
       void GetGroundTruthPose(f32 &x, f32 &y, f32& rad);
 
       // UART
       void UARTInit();
       int UARTPutChar(int c);
-
-      // Cameras
-      void MatCameraInit();
-      const u8* MatCameraGetFrame();
-
-      void FrontCameraInit();
-      const u8* FrontCameraGetFrame();
 
       // USB
       void USBInit();

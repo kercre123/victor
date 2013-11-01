@@ -35,10 +35,10 @@ static const CamHwRegs m_cams[2] = {
 
 static CameraHandle* m_handles[2] = {NULL, NULL};
 
-void CIFInterrupt(u32 source);
+static void CameraIRQ(u32 source);
 
-void ConfigureI2CRegisters(CameraHandle* handle, CameraSpecification* camSpec,
-    u8 camWriteProto[])
+static void ConfigureI2CRegisters(CameraHandle* handle,
+    CameraSpecification* camSpec, u8 camWriteProto[])
 {
   SleepTicks(400000);  // TODO: Fix magic number
 
@@ -55,7 +55,7 @@ void ConfigureI2CRegisters(CameraHandle* handle, CameraSpecification* camSpec,
   }
 }
 
-void CameraConfigure(CameraHandle* handle, unsigned int cifBase, 
+static void CameraConfigure(CameraHandle* handle, unsigned int cifBase, 
     CameraSpecification *camSpec,  unsigned int width, unsigned int height)
 {
   unsigned int outCfg;
@@ -66,7 +66,7 @@ void CameraConfigure(CameraHandle* handle, unsigned int cifBase,
 	
   switch (handle->camSpec->type)
   {
-  case YUV420p:
+    case YUV420p:
       outCfg = D_CIF_OUTF_FORMAT_420 | 
         D_CIF_OUTF_CHROMA_SUB_CO_SITE_CENTER | 
         D_CIF_OUTF_STORAGE_PLANAR | 
@@ -74,29 +74,33 @@ void CameraConfigure(CameraHandle* handle, unsigned int cifBase,
       outPrevCfg = 0;
       inputFormat = D_CIF_INFORM_FORMAT_YUV422 | 
         D_CIF_INFORM_DAT_SIZE_8;
-  break;
-  case YUV422p:
+      break;
+
+    case YUV422p:
       outCfg = D_CIF_OUTF_FORMAT_422 | 
         D_CIF_OUTF_CHROMA_SUB_CO_SITE_CENTER | 
         D_CIF_OUTF_STORAGE_PLANAR;
       outPrevCfg = 0;
       inputFormat = D_CIF_INFORM_FORMAT_YUV422 | 
         D_CIF_INFORM_DAT_SIZE_8;
-  break;
-  case YUV422i:
+      break;
+
+    case YUV422i:
       outCfg =  D_CIF_OUTF_FORMAT_422;
       outPrevCfg = 0;
       inputFormat = D_CIF_INFORM_FORMAT_YUV422 | 
         D_CIF_INFORM_DAT_SIZE_8;
-  break;
-  case RAW16:
+      break;
+
+    case RAW16:
       outCfg = D_CIF_OUTF_BAYER;
       outPrevCfg = D_CIF_PREV_OUTF_RGB_BY | 
         D_CIF_PREV_SEL_COL_MAP_LUT;
       inputFormat = D_CIF_INFORM_FORMAT_RGB_BAYER | 
         D_CIF_INFORM_DAT_SIZE_16;
       break;
-  default:
+
+    default:
       outCfg =  0;
       outPrevCfg = 0;
       inputFormat = D_CIF_INFORM_FORMAT_YUV422 | 
@@ -126,106 +130,93 @@ void CameraConfigure(CameraHandle* handle, unsigned int cifBase,
                   D_CIF_DMA_ENABLE | 
                   D_CIF_DMA_AXI_BURST_16,
                 0);
-        break;
+      break;
+
     case YUV420p:
-        DrvCifDma0CfgPP(cifBase,
-                (unsigned int) handle->currentFrame->p1,
-                (unsigned int) handle->currentFrame->p1,
-                handle->camSpec->width,
-                handle->camSpec->height,
-                handle->camSpec->bytesPP,
-                D_CIF_DMA_AUTO_RESTART_PING_PONG | 
-                  D_CIF_DMA_ENABLE | 
-                  D_CIF_DMA_AXI_BURST_8,
-                0);
+      DrvCifDma0CfgPP(cifBase,
+              (unsigned int) handle->currentFrame->p1,
+              (unsigned int) handle->currentFrame->p1,
+              handle->camSpec->width,
+              handle->camSpec->height,
+              handle->camSpec->bytesPP,
+              D_CIF_DMA_AUTO_RESTART_PING_PONG | 
+                D_CIF_DMA_ENABLE | 
+                D_CIF_DMA_AXI_BURST_8,
+              0);
 
-        DrvCifDma1CfgPP(cifBase,
-                (unsigned int) handle->currentFrame->p2,
-                (unsigned int) handle->currentFrame->p2,
-                handle->camSpec->width / 2,
-                handle->camSpec->height / 2,
-                handle->camSpec->bytesPP,
-                D_CIF_DMA_AUTO_RESTART_PING_PONG | 
-                  D_CIF_DMA_ENABLE | 
-                  D_CIF_DMA_AXI_BURST_8,
-                0);
+      DrvCifDma1CfgPP(cifBase,
+              (unsigned int) handle->currentFrame->p2,
+              (unsigned int) handle->currentFrame->p2,
+              handle->camSpec->width / 2,
+              handle->camSpec->height / 2,
+              handle->camSpec->bytesPP,
+              D_CIF_DMA_AUTO_RESTART_PING_PONG | 
+                D_CIF_DMA_ENABLE | 
+                D_CIF_DMA_AXI_BURST_8,
+              0);
 
-        DrvCifDma2CfgPP(cifBase,
-                (unsigned int) handle->currentFrame->p3,
-                (unsigned int) handle->currentFrame->p3,
-                handle->camSpec->width / 2,
-                handle->camSpec->height / 2,
-                handle->camSpec->bytesPP,
-                D_CIF_DMA_AUTO_RESTART_PING_PONG | 
-                  D_CIF_DMA_ENABLE | 
-                  D_CIF_DMA_AXI_BURST_8,
-                0);
-        break;
+      DrvCifDma2CfgPP(cifBase,
+              (unsigned int) handle->currentFrame->p3,
+              (unsigned int) handle->currentFrame->p3,
+              handle->camSpec->width / 2,
+              handle->camSpec->height / 2,
+              handle->camSpec->bytesPP,
+              D_CIF_DMA_AUTO_RESTART_PING_PONG | 
+                D_CIF_DMA_ENABLE | 
+                D_CIF_DMA_AXI_BURST_8,
+              0);
+      break;
+
     case YUV422p:
-        DrvCifDma0CfgPP(cifBase,
-                (unsigned int) handle->currentFrame->p1,
-                (unsigned int) handle->currentFrame->p1,
-                handle->camSpec->width,
-                handle->camSpec->height,
-                handle->camSpec->bytesPP,
-                D_CIF_DMA_AUTO_RESTART_PING_PONG | 
-                  D_CIF_DMA_ENABLE | 
-                  D_CIF_DMA_AXI_BURST_8,
-                0);
+      DrvCifDma0CfgPP(cifBase,
+              (unsigned int) handle->currentFrame->p1,
+              (unsigned int) handle->currentFrame->p1,
+              handle->camSpec->width,
+              handle->camSpec->height,
+              handle->camSpec->bytesPP,
+              D_CIF_DMA_AUTO_RESTART_PING_PONG | 
+                D_CIF_DMA_ENABLE | 
+                D_CIF_DMA_AXI_BURST_8,
+              0);
 
-        DrvCifDma1CfgPP(cifBase,
-                (unsigned int) handle->currentFrame->p2,
-                (unsigned int) handle->currentFrame->p2,
-                handle->camSpec->width / 2,
-                handle->camSpec->height,
-                handle->camSpec->bytesPP,
-                D_CIF_DMA_AUTO_RESTART_PING_PONG | 
-                  D_CIF_DMA_ENABLE | 
-                  D_CIF_DMA_AXI_BURST_8,
-                0);
+      DrvCifDma1CfgPP(cifBase,
+              (unsigned int) handle->currentFrame->p2,
+              (unsigned int) handle->currentFrame->p2,
+              handle->camSpec->width / 2,
+              handle->camSpec->height,
+              handle->camSpec->bytesPP,
+              D_CIF_DMA_AUTO_RESTART_PING_PONG | 
+                D_CIF_DMA_ENABLE | 
+                D_CIF_DMA_AXI_BURST_8,
+              0);
 
-        DrvCifDma2CfgPP(cifBase,
-                (unsigned int) handle->currentFrame->p3,
-                (unsigned int) handle->currentFrame->p3,
-                handle->camSpec->width / 2,
-                handle->camSpec->height,
-                handle->camSpec->bytesPP,
-                D_CIF_DMA_AUTO_RESTART_PING_PONG | 
-                  D_CIF_DMA_ENABLE | 
-                  D_CIF_DMA_AXI_BURST_8,
-                0);
-        break;
+      DrvCifDma2CfgPP(cifBase,
+              (unsigned int) handle->currentFrame->p3,
+              (unsigned int) handle->currentFrame->p3,
+              handle->camSpec->width / 2,
+              handle->camSpec->height,
+              handle->camSpec->bytesPP,
+              D_CIF_DMA_AUTO_RESTART_PING_PONG | 
+                D_CIF_DMA_ENABLE | 
+                D_CIF_DMA_AXI_BURST_8,
+              0);
+      break;
+
     case YUV422i:
-/*      if (handle->cbGetBlock == NULL)
-      {
-          DrvCifDma0CfgPP(cifBase,
-                  (unsigned int) handle->currentFrame->p1,
-                  (unsigned int) handle->currentFrame->p1,
-                  handle->camSpec->width,
-                  handle->camSpec->height,
-                  handle->camSpec->bytesPP,
-                  D_CIF_DMA_AUTO_RESTART_PING_PONG | 
-                    D_CIF_DMA_ENABLE | 
-                    D_CIF_DMA_AXI_BURST_16,
-                  0);
-      }
-      else */
-      {
-          DrvCifDma0CfgPP(cifBase,
-                  (unsigned int) handle->currentFrame->p1,
-                  (unsigned int) handle->currentFrame->p1,
-                  handle->camSpec->width,
-                  handle->camSpec->height,
-                  handle->camSpec->bytesPP,
-                  D_CIF_DMA_AUTO_RESTART_PING_PONG | 
-                    D_CIF_DMA_ENABLE | 
-                    D_CIF_DMA_AXI_BURST_16,
-                  0);
-      }
+      DrvCifDma0CfgPP(cifBase,
+              (unsigned int) handle->currentFrame->p1,
+              (unsigned int) handle->currentFrame->p1,
+              handle->camSpec->width,
+              handle->camSpec->height,
+              handle->camSpec->bytesPP,
+              D_CIF_DMA_AUTO_RESTART_PING_PONG | 
+                D_CIF_DMA_ENABLE | 
+                D_CIF_DMA_AXI_BURST_16,
+              0);
       break;
 
     default:
-        break;
+      break;
   }
 
 /*  if(handle->camSpec->cifTiming.generateSync == GENERATE_SYNCS)
@@ -298,7 +289,7 @@ void CameraStart(CameraHandle* handle, int resetPin, bool isActiveLow,
   swcLeonSetPIL(0);
 
   // Setup the interrupt and handler
-  DrvIcbSetIrqHandler(irq, CIFInterrupt);
+  DrvIcbSetIrqHandler(irq, CameraIRQ);
   DrvIcbConfigureIrq(irq, CIF_INTERRUPT_LEVEL, POS_EDGE_INT);
   DrvIcbEnableIrq(irq);
 
@@ -312,7 +303,7 @@ void CameraStart(CameraHandle* handle, int resetPin, bool isActiveLow,
       handle->camSpec->width, handle->camSpec->height);
 }
 
-void CIFInterrupt(u32 source)
+static void CameraIRQ(u32 source)
 {
   int index = source == IRQ_CIF_1 ? 0 : 1;
   const CamHwRegs* cam = &m_cams[index];
@@ -351,7 +342,7 @@ void CIFInterrupt(u32 source)
 
   // Clear all pending interrupts
   SET_REG_WORD(cam->CIFX_INT_CLEAR_ADR, 0xFFFFffff);
-  // Clear this interrupt
+  // Clear the interrupt
   DrvIcbIrqClear(cam->IRQ_CIF_X);
 
   handle->cbFrameReady(previousFrame);
