@@ -189,6 +189,16 @@ void ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow_nthRow(const u8 * res
     "lsu0.ldxvi integralImage_previousRow_next integralImage_previousRow_address addressIncrement \n"
     "nop 1 \n"
 
+    "; The main loop has two sets of registers in parallel. \n"
+    "; The loop starts by loading the data for the next iteration (five cycle latency). The register names for the next iteration have the suffix '_next' \n"
+    "; Before the next iteration is loaded, the old values are copied to the current registers \n"
+    "; The horizontal sum is performed with the integer unit, then loaded into the vector unit \n"
+    "; The vector unit adds the horizontal sum with the previous row of the integral image, then stores it in the current row of the integral image \n"
+    "; \n"
+    "; This loop is mainly limited by cmu usage. I did this loop largely using vau and cmu. The other way of doing it would be to use iau and sau. \n"
+    "; The absolute fastest way would be to do vau/cmu and iau/sau in parallel, but this would be quite messy. \n"
+    "; This loop only uses four vector registers, but given that it's cmu-limited, I don't expect to get much more out of unrolling. \n"
+
     "; for(x=0; x<integralImageWidth4; x++) \n"
     ".lalign \n"
     "_generationLoop: \n"
