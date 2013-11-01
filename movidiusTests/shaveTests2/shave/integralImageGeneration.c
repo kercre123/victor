@@ -208,6 +208,7 @@ void ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow_nthRow(const u8 * res
     "nop 1 \n"
     "lsu0.stxvi integralImage_currentRow integralImage_currentRow_address addressIncrement \n"
     "nop 1 \n"
+
     "nop 4 ; these nops are only executed at the end of the final iteration \n"
     : //Output registers
   :"r"(&paddedImage_currentRow[0]), "r"(&integralImage_previousRow[0]), "r"(&integralImage_currentRow[0]), "r"(integralImageWidth4)//Input registers
