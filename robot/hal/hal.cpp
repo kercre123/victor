@@ -116,18 +116,24 @@ static void SetupMainExecution()
   DrvTimerCallAfterMicro(2000, MainExecutionIRQ, 0, PRIORITY);
 }
 
-int main()
+void InitMemory()
 {
   // Initialize the Clock Power Reset module
   if (DrvCprInit(NULL, NULL))
-    return 1;
+  {
+    while (true)
+      ;
+  }
 
   // Initialize the CMX RAM layout
   SET_REG_WORD(LHB_CMX_RAMLAYOUT_CFG, CMX_CONFIG);
 
   // Initialize the clock configuration using the variables above
   if (DrvCprSetupClocks(&m_clockConfig))
-    return 1;
+  {
+    while (true)
+      ;
+  }
 
   SET_REG_WORD(L2C_MODE_ADR, L2CACHE_CONFIG);
 
@@ -149,53 +155,25 @@ int main()
   printf("\nUART Initialized\n");
 
   HAL::FrontCameraInit();
-  printf("\nCamera Initialized\n");
+  printf("\nFront Camera Initialized\n");
 
   //HAL::USBInit();
 
   HAL::EncodersInit();
+}
 
-//  HAL::SetWheelAngularVelocity(0.75f, 0.75f);
+int main()
+{
+  InitMemory();
 
-/*  DrvGpioMode(98, 7 | D_GPIO_DIR_IN);
-
-  GpioPadSet(98, GpioPadGet(98) | D_GPIO_PAD_PULL_DOWN);
-
-  SleepMs(100);
-
-  printf("pad == %d\n", DrvGpioGetPin(98));
-
-
-  GpioPadSet(98, (GpioPadGet(98) &~ D_GPIO_PAD_PULL_DOWN) |
-    D_GPIO_PAD_PULL_UP | D_GPIO_PAD_VOLT_2V5 | D_GPIO_PAD_BIAS_2V5);
-
-  SleepMs(100);
-
-  printf("pad == %d\n", DrvGpioGetPin(98)); */
-
-  //Robot::Init();
+  Robot::Init();
 
   SetupMainExecution();
 
   while (true)
   {
-//    Robot::step_LongExecution();
+    Robot::step_LongExecution();
   }
-
-/*      const u32 pinA = 80;
-      const u32 pinB = 83;
-      SleepMs(1000);
-      DrvGpioMode(pinA, 7 | D_GPIO_DIR_OUT);
-      DrvGpioMode(pinB, 7 | D_GPIO_DIR_OUT);
-      DrvGpioSetPinHi(pinA);
-      DrvGpioSetPinLo(pinB);
-
-      SleepMs(1000);
-      DrvGpioSetPinLo(pinA);
-      DrvGpioSetPinHi(pinB); */
-
-
-//    printf("%d", DrvGpioGetPin(106));
 
   return 0;
 }
