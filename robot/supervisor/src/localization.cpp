@@ -14,8 +14,8 @@ namespace Anki {
         
         
         // Localization:
-        f32 currentMatX_, currentMatY_;
-        Radians currentMatHeading_;
+        f32 currentMatX_=0.f, currentMatY_=0.f;
+        Radians currentMatHeading_(0.f);
       }
 
       void Init() {
@@ -36,6 +36,22 @@ namespace Anki {
         currentMatX_ = x;
         currentMatY_ = y;
         currentMatHeading_ = angle;
+        
+#if(USE_OVERLAY_DISPLAY)
+        {
+          using namespace Sim::OverlayDisplay;
+          SetText(CURR_EST_POSE, "Est. Pose: (x,y)=(%.4f, %.4f) at angle=%.1f",
+                  currentMatX_, currentMatY_,
+                  currentMatHeading_.getDegrees());
+          f32 xTrue, yTrue, angleTrue;
+          HAL::GetGroundTruthPose(xTrue, yTrue, angleTrue);
+          Radians angleRad(angleTrue);
+          
+          SetText(CURR_TRUE_POSE, "True Pose: (x,y)=(%.4f, %.4f) at angle=%.1f",
+                  xTrue, yTrue, angleRad.getDegrees());
+        }
+#endif
+
       }
       
       void GetCurrentMatPose(f32& x, f32& y, Radians& angle)

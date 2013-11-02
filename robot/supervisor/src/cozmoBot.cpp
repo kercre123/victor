@@ -8,6 +8,8 @@
 #include "dockingController.h"
 #include "headController.h"
 #include "liftController.h"
+#include "anki/cozmo/robot/commandHandler.h"
+#include "anki/cozmo/robot/localization.h"
 #include "anki/cozmo/robot/pathFollower.h"
 #include "anki/cozmo/robot/vehicleMath.h"
 #include "anki/cozmo/robot/speedController.h"
@@ -53,11 +55,6 @@ namespace Anki {
         VisionSystem::MatMarkerMailbox   matMarkerMailbox_;
         
         Robot::OperationMode mode_ = INITIALIZING, nextMode_ = WAITING;
-        
-        // Localization:
-        f32 currentMatX_=0.f, currentMatY_=0.f;
-        Radians currentMatHeading_(0.f);
-
         
       } // Robot private namespace
       
@@ -160,6 +157,12 @@ namespace Anki {
         HAL::Step();
         
         //////////////////////////////////////////////////////////////
+        // Localization
+        //////////////////////////////////////////////////////////////
+        Localization::Update();
+        
+        
+        //////////////////////////////////////////////////////////////
         // Communications
         //////////////////////////////////////////////////////////////
         
@@ -167,103 +170,7 @@ namespace Anki {
         HAL::ManageRecvBuffer();
         
         // Process any messages from the basestation
-        u8 msgBuffer[255];
-        u8 msgSize;
-        while( (msgSize = HAL::RecvMessage(msgBuffer)) > 0 )
-        {
-          CozmoMsg_Command cmd = static_cast<CozmoMsg_Command>(msgBuffer[1]);
-          switch(cmd)
-          {
-            case MSG_B2V_CORE_ROBOT_ADDED_TO_WORLD:
-            {
-              const CozmoMsg_RobotAdded* msg = reinterpret_cast<const CozmoMsg_RobotAdded*>(msgBuffer);
-              
-              if(msg->robotID != HAL::GetRobotID()) {
-                fprintf(stdout, "Robot received ADDED_TO_WORLD handshake with "
-                        " wrong robotID (%d instead of %d).\n",
-                        msg->robotID, HAL::GetRobotID());
-              }
-              
-              fprintf(stdout, "Robot received handshake from basestation, "
-                      "sending camera calibration.\n");
-              const HAL::CameraInfo *matCamInfo  = HAL::GetMatCamInfo();
-              const HAL::CameraInfo *headCamInfo = HAL::GetHeadCamInfo();
-              
-              CozmoMsg_CameraCalibration calibMsg;
-              calibMsg.size = sizeof(CozmoMsg_CameraCalibration);
-              
-              //
-              // Send mat camera calibration
-              //
-              calibMsg.msgID = MSG_V2B_CORE_MAT_CAMERA_CALIBRATION;
-              // TODO: do we send x or y focal length, or both?
-              calibMsg.focalLength_x = matCamInfo->focalLength_x;
-              calibMsg.focalLength_y = matCamInfo->focalLength_y;
-              calibMsg.fov           = matCamInfo->fov_ver;
-              calibMsg.nrows         = matCamInfo->nrows;
-              calibMsg.ncols         = matCamInfo->ncols;
-              calibMsg.center_x      = matCamInfo->center_x;
-              calibMsg.center_y      = matCamInfo->center_y;
-              
-              HAL::SendMessage(reinterpret_cast<const u8*>(&calibMsg),
-                               calibMsg.size);
-              //
-              // Send head camera calibration
-              //
-              calibMsg.msgID = MSG_V2B_CORE_HEAD_CAMERA_CALIBRATION;
-              // TODO: do we send x or y focal length, or both?
-              calibMsg.focalLength_x = headCamInfo->focalLength_x;
-              calibMsg.focalLength_y = headCamInfo->focalLength_y;
-              calibMsg.fov           = headCamInfo->fov_ver;
-              calibMsg.nrows         = headCamInfo->nrows;
-              calibMsg.ncols         = headCamInfo->ncols;
-              calibMsg.center_x      = headCamInfo->center_x;
-              calibMsg.center_y      = headCamInfo->center_y;
-              
-              HAL::SendMessage(reinterpret_cast<const u8*>(&calibMsg),
-                               calibMsg.size);
-              
-              break;
-            }
-            case MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE:
-            {
-              // TODO: Double-check that size matches expected size?
-              
-              const CozmoMsg_AbsLocalizationUpdate *msg = reinterpret_cast<const CozmoMsg_AbsLocalizationUpdate*>(msgBuffer);
-              
-              // Note the conversion to meters
-              SetCurrentMatPose(msg->xPosition * .001f,
-                                msg->yPosition * .001f,
-                                msg->headingAngle);
-              
-              fprintf(stdout, "Robot received localization update from "
-                      "basestation: (%.3f,%.3f) at %.1f degrees\n",
-                      currentMatX_, currentMatY_,
-                      currentMatHeading_.getDegrees());
-              
-              break;
-            }
-            case MSG_B2V_CORE_INITIATE_DOCK:
-            {
-              const CozmoMsg_InitiateDock *msg = reinterpret_cast<const CozmoMsg_InitiateDock*>(msgBuffer);
-              
-              if(DockingController::SetGoals(msg) == EXIT_SUCCESS) {
-                
-                fprintf(stdout, "Robot received Initiate Dock message, now in DOCK mode.\n");
-                
-                mode_ = DOCK;
-              }
-              else {
-                fprintf(stdout, "Initiate Dock message received, failed to set docking goals.\n");
-              }
-              
-              break;
-            }
-            default:
-              fprintf(stdout, "Unrecognized command in received message.\n");
-              
-          } // switch(cmd)
-        }
+        CommandHandler::ProcessIncomingMessages();
         
         // Check for any messages from the vision system and pass them along to
         // the basestation
@@ -394,35 +301,6 @@ namespace Anki {
         
       } // Robot::step_longExecution()
       
-      
-      void GetCurrentMatPose(f32& x, f32& y, Radians& angle)
-      {
-        x = currentMatX_;
-        y = currentMatY_;
-        angle = currentMatHeading_;
-      } // GetCurrentMatPose()
-      
-      void SetCurrentMatPose(f32  x, f32  y, Radians  angle)
-      {
-        currentMatX_ = x;
-        currentMatY_ = y;
-        currentMatHeading_ = angle;
-        
-#if(USE_OVERLAY_DISPLAY)
-        {
-          using namespace Sim::OverlayDisplay;
-          SetText(CURR_EST_POSE, "Est. Pose: (x,y)=(%.4f, %.4f) at angle=%.1f",
-                  currentMatX_, currentMatY_,
-                  currentMatHeading_.getDegrees());
-          f32 xTrue, yTrue, angleTrue;
-          HAL::GetGroundTruthPose(xTrue, yTrue, angleTrue);
-          Radians angleRad(angleTrue);
-          
-          SetText(CURR_TRUE_POSE, "True Pose: (x,y)=(%.4f, %.4f) at angle=%.1f",
-                  xTrue, yTrue, angleRad.getDegrees());
-        }
-#endif
-      }
       
       void SetOpenLoopMotorSpeed(s16 speedl, s16 speedr)
       {
