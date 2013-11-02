@@ -97,6 +97,7 @@ namespace Anki
         { 0x38, 0x12 },  // ACOM
         { 0x39, 0x43 },  // OFON
         { 0x13, 0x00 },  // AGC/AEC options
+        { 0x10, 0x20 },  // Set exposure to half of default (0x40)
       };
 
       static CameraSpecification m_camSpecVGA = {
@@ -105,7 +106,7 @@ namespace Anki
         FRAME_HEIGHT,     // height
         FRAME_WIDTH * 2,  // stride
         2,                // bytesPP
-        24,               // referenceFrequency
+        8,               // referenceFrequency
         (0x60 >> 1),      // sensorI2CAddress
         sizeof(m_OV9653_VGA) / (sizeof(short) * 2),  // registerCount
         m_OV9653_VGA      // regValues
@@ -334,11 +335,11 @@ namespace Anki
       {
         static int frame = 0;
         frame++;
-        //if ((frame % 10) == 0)
+        if ((frame % 10) == 0)
         {
-          //for (int i = 0; i < FRAME_SIZE; i += 4)
+          for (int i = 0; i < FRAME_SIZE; i += 4)
           {
-            //*(u32*)&m_frontBuffer[i] = *(u32*)&m_buffer[i];
+            *(u32*)&m_frontBuffer[i] = *(u32*)&m_buffer[i];
           }
         }
         m_isFrameReady = true;
@@ -393,13 +394,7 @@ namespace Anki
 
       const u8* FrontCameraGetFrame()
       {
-        if (m_isFrameReady)
-        {
-          m_isFrameReady = false;
-          return m_cameraBuffer.p1;
-        }
-
-        return NULL;
+        return m_frontBuffer;
       }
     }
   }
