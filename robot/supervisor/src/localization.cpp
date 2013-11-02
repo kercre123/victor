@@ -61,6 +61,11 @@ namespace Anki {
         angle = currentMatHeading_;
       }
   
+      Radians GetCurrentMatOrientation()
+      {
+        return currentMatHeading_;
+      }
+      
     }
   }
 }

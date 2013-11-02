@@ -200,8 +200,10 @@ namespace Anki {
 #if(EXECUTE_TEST_PATH)
         // TESTING
         const u32 startDriveTime_us = 500000;
+        static bool testPathStarted = false;
         if (not PathFollower::IsTraversingPath() &&
-            HAL::GetMicroCounter() > startDriveTime_us) {
+            HAL::GetMicroCounter() > startDriveTime_us &&
+            !testPathStarted) {
           SpeedController::SetUserCommandedAcceleration( MAX(ONE_OVER_CONTROL_DT + 1, 500) );  // This can't be smaller than 1/CONTROL_DT!
           SpeedController::SetUserCommandedDesiredVehicleSpeed(160);
           fprintf(stdout, "Speed commanded: %d mm/s\n",
@@ -215,6 +217,7 @@ namespace Anki {
           float arc2_radius = sqrt(0.02); // Radius of sqrt(0.1^2 + 0.1^2)
           PathFollower::AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, PIDIV2);
           PathFollower::StartPathTraversal();
+          testPathStarted = true;
         }
 #endif //EXECUTE_TEST_PATH
         
