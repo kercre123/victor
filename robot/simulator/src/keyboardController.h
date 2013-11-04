@@ -11,8 +11,6 @@ namespace Anki {
     // object.
     namespace Sim {
       
-      extern webots::Supervisor* CozmoBot;
-      
       namespace KeyboardController {
         
 

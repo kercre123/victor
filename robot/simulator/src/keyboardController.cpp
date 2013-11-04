@@ -11,10 +11,15 @@
 #include <stdio.h>
 #include <string.h>
 
+// Webots includes
+#include <webots/Supervisor.hpp>
+
 
 namespace Anki {
   namespace Cozmo {
     namespace Sim {
+
+      extern webots::Supervisor* CozmoBot;
       
       // Private memers:
       namespace {

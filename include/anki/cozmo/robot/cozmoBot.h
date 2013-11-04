@@ -3,14 +3,7 @@
 
 #include "anki/common/types.h"
 
-#ifdef SIMULATOR
-#include <webots/Supervisor.hpp>
-#endif
-
 namespace Anki {
-  
-  // Forward declaration
-  class Radians;
   
   namespace Cozmo {
     
@@ -46,8 +39,6 @@ namespace Anki {
       OperationMode GetOperationMode();
       void SetOperationMode(OperationMode newMode);
 
-      void GetCurrentMatPose(f32& x, f32& y, Radians& angle);
-      void SetCurrentMatPose(f32  x, f32  y, Radians  angle);
       
       // TODO: Move this to HAL?
       //Sets an open loop speed to the two motors. The open loop speed value ranges

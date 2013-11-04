@@ -238,7 +238,7 @@ namespace Anki
         // Point of intersection is solution to mx + b == (-1/m)*x + b_inv where b_inv = y-(-1/m)*x
         float x, y;
         Radians angle;
-        Robot::GetCurrentMatPose(x, y, angle);
+        Localization::GetCurrentMatPose(x, y, angle);
         
 #if(DEBUG_PATH_FOLLOWER)
         printf("currPathSeg: %d, LINE (%f, %f, %f, %f)\n", currPathSegment_, currSeg->startPt.x, currSeg->startPt.y, currSeg->endPt.x, currSeg->endPt.y);
@@ -322,7 +322,7 @@ namespace Anki
         
         float x, y;
         Radians angle;
-        Robot::GetCurrentMatPose(x, y, angle);
+        Localization::GetCurrentMatPose(x, y, angle);
         
         
         // Assuming arc is broken up so that it is a true function
@@ -406,12 +406,7 @@ namespace Anki
         return TRUE;
       }
       
-      
-      bool UpdatePathError(void)
-      {
-        
-      }
-      
+
       bool GetPathError(float &shortestDistanceToPath_m, float &radDiff)
       {
         if (currPathSegment_ < 0) {
