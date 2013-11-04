@@ -15,6 +15,8 @@
 % output = interpolate_translateScale(inputImage, [2.5,2.5], [0.5,0.5], [11,11])
 % output = interpolate_translateScale(inputImage, [2.5,2.5], [1.0,1.0], [11,11])
 % output = interpolate_translateScale(inputImage, [2.5,2.5], [2.0,2.0], [11,11])
+% output = interpolate_translateScale(inputImage, [2.75,2.75], [1.0,1.0], [11,11])
+% output = interpolate_translateScale(inputImage, [2.25,2.25], [1.0,1.0], [11,11])
 
 function output = interpolate_translateScale(inputImage, imageTranslation, imageScale, outputImageSize)
 
@@ -25,88 +27,144 @@ inputImageSize = size(inputImage);
 
 output = zeros(outputImageSize);
 
-% These coordinates are the outer border of the scaled and translated
-% inputImage.
-% inputTopLeft_inOutput = [(-imageScale(1)*(inputImageSize(1)/2)) + imageTranslation(1),...
-%                         (-imageScale(2)*(inputImageSize(2)/2)) + imageTranslation(2)];
-%                     
-% inputBottomRight_inOutput = [(imageScale(1)*(inputImageSize(1)/2)) + imageTranslation(1),...
-%                              (imageScale(2)*(inputImageSize(2)/2)) + imageTranslation(2)];
-
 % These coordinates are the minimum and maximum input coordinates that are
-% required to interpolate the output image. If the topLeft is negative or
+% possible to interpolate the output image. If the topLeft is negative or
 % the bottomRight is larger than outputImageSize, then the whole input
 % image won't be used.
-inputTopLeft_inOutput = [(-imageScale(1)*(inputImageSize(1)/2-0.5)) + imageTranslation(1),...
+minOutputCoordinates = [(-imageScale(1)*(inputImageSize(1)/2-0.5)) + imageTranslation(1),...
                         (-imageScale(2)*(inputImageSize(2)/2-0.5)) + imageTranslation(2)];
-                    
-inputBottomRight_inOutput = [(imageScale(1)*(inputImageSize(1)/2-0.5)) + imageTranslation(1),...
-                             (imageScale(2)*(inputImageSize(2)/2-0.5)) + imageTranslation(2)];
-                         
-% inputBottomRight_inOutput = floor(inputBottomRight_inOutput);
 
+maxOutputCoordinates = [(imageScale(1)*(inputImageSize(1)/2-0.5)) + imageTranslation(1),...
+                             (imageScale(2)*(inputImageSize(2)/2-0.5)) + imageTranslation(2)];
+
+% Check if the interpolated image is inside the boundaries of the
+% outputImage. Clip the coordinates if not.
+if minOutputCoordinates(1) < 0.5
+    minOutputCoordinates(1) = 0.5;
+end
+
+if minOutputCoordinates(2) < 0.5
+    minOutputCoordinates(2) = 0.5;
+end
+
+if maxOutputCoordinates(1) > (outputImageSize(1)-0.5)
+    maxOutputCoordinates(1) = outputImageSize(1)-0.5;
+end
+
+if maxOutputCoordinates(2) > (outputImageSize(2)-0.5)
+    maxOutputCoordinates(2) = outputImageSize(2)-0.5;
+end
+
+% We can't interpolate based on a partial pixel, so add another pixel of
+% padding, if needed
+remainderTopLeft = minOutputCoordinates - floor(minOutputCoordinates) - 0.5;
+minOutputCoordinates = minOutputCoordinates - remainderTopLeft + ceil(remainderTopLeft);
+
+remainderBottomRight = maxOutputCoordinates - floor(maxOutputCoordinates) - 0.5;
+maxOutputCoordinates = maxOutputCoordinates - remainderBottomRight - ceil(-remainderBottomRight);
+
+
+% Compute the looping limits
+
+% Map the output coordinates to the input coordinates
+curInputCoordinatesRaw = ((minOutputCoordinates - imageTranslation) ./ imageScale) + inputImageSize/2;
+
+% This is the shift in the input coordinates, for a one-pixel shift in the
+% output coordinates
 dy = 1 / imageScale(1);
 dx = 1 / imageScale(2);
 
-curInputY = 0;
-curInputX = 0;
+% We will loop on integer indices, so remove the extra 0.5 offset
+minOutputCoordinates = minOutputCoordinates - 0.5
+maxOutputCoordinates = maxOutputCoordinates - 0.5
 
-if inputTopLeft_inOutput(1) < 0
-    % If the start pixel is out of bounds, move it in bounds
-    curInputY = curInputY - dy*inputTopLeft_inOutput(1) + 0.5;
-    inputTopLeft_inOutput(1) = 0;
-else
-    % If the start pixel is not an integer, round it up
-    remainder1 = ceil(inputTopLeft_inOutput(1)) - 0.5 - inputTopLeft_inOutput(1);
-    curInputY = curInputY + dy*remainder1;
-    inputTopLeft_inOutput(1) = ceil(inputTopLeft_inOutput(1)) - 0.5;
-end
+% Remove the extra 0.5 offset, to save doing it every step
+curInputCoordinates = curInputCoordinatesRaw - 0.5
 
-if inputTopLeft_inOutput(2) < 0
-    % If the start pixel is out of bounds, move it in bounds    
-    curInputX = curInputX - dx*inputTopLeft_inOutput(2) - 0.5;
-    inputTopLeft_inOutput(2) = 0;
-else
-    % If the start pixel is not an integer, round it up
-    remainder2 = ceil(inputTopLeft_inOutput(2)) - 0.5 - inputTopLeft_inOutput(2);
-    curInputX = curInputX + dx*remainder2;
-    inputTopLeft_inOutput(2) = ceil(inputTopLeft_inOutput(2)) + 0.5;
-end
-
-if inputBottomRight_inOutput(1) > (outputImageSize(1)-1)
-    % If the final pixel is out of bounds, move it in bounds
-    inputBottomRight_inOutput(1) = floor(outputImageSize(1)-1);
-end
-
-if inputBottomRight_inOutput(2) > (outputImageSize(2)-1)
-    % If the final pixel is out of bounds, move it in bounds
-    inputBottomRight_inOutput(2) = floor(outputImageSize(2)-1);
-end
-
-for y = inputTopLeft_inOutput(1):inputBottomRight_inOutput(1)
-    curInputY0 = floor(curInputY);
-    alphaYinverse = curInputY - curInputY0;
-    alphaY = 1 - alphaYinverse;
-    
-    for x = inputTopLeft_inOutput(2):inputBottomRight_inOutput(2)
-        curInputX0 = floor(curInputX);
-        alphaXinverse = curInputX - curInputX0;
-        alphaX = 1 - alphaXinverse;
-        
-        pixel00 = inputImage(curInputY0+1, curInputX0+1);
-        pixel01 = inputImage(curInputY0+1, curInputX0+2);
-        pixel10 = inputImage(curInputY0+2, curInputX0+1);
-        pixel11 = inputImage(curInputY0+2, curInputX0+2);
-        
-        interpolatedTop = alphaXinverse*pixel00 + alphaX*pixel01;
-        interpolatedBottom = alphaXinverse*pixel10 + alphaX*pixel11;
-        interpolatedPixel = alphaYinverse*interpolatedTop + alphaY*interpolatedBottom;
-        
-        output(y+1, x+1) = interpolatedPixel;
-        
-        curInputX = curInputX + dx;
-    end
-    curInputY = curInputY + dy;
-end
-    
 keyboard
+
+% % These coordinates are the outer border of the scaled and translated
+% % inputImage.
+% % minOutputCoordinates = [(-imageScale(1)*(inputImageSize(1)/2)) + imageTranslation(1),...
+% %                         (-imageScale(2)*(inputImageSize(2)/2)) + imageTranslation(2)];
+% %
+% % maxOutputCoordinates = [(imageScale(1)*(inputImageSize(1)/2)) + imageTranslation(1),...
+% %                              (imageScale(2)*(inputImageSize(2)/2)) + imageTranslation(2)];
+%
+% % These coordinates are the minimum and maximum input coordinates that are
+% % required to interpolate the output image. If the topLeft is negative or
+% % the bottomRight is larger than outputImageSize, then the whole input
+% % image won't be used.
+% minOutputCoordinates = [(-imageScale(1)*(inputImageSize(1)/2-0.5)) + imageTranslation(1),...
+%                         (-imageScale(2)*(inputImageSize(2)/2-0.5)) + imageTranslation(2)];
+%
+% maxOutputCoordinates = [(imageScale(1)*(inputImageSize(1)/2-0.5)) + imageTranslation(1),...
+%                              (imageScale(2)*(inputImageSize(2)/2-0.5)) + imageTranslation(2)];
+%
+% % maxOutputCoordinates = floor(maxOutputCoordinates);
+%
+% dy = 1 / imageScale(1);
+% dx = 1 / imageScale(2);
+%
+% curInputY = 0;
+% curInputX = 0;
+%
+% if minOutputCoordinates(1) < 0
+%     % If the start pixel is out of bounds, move it in bounds
+%     curInputY = curInputY - dy*minOutputCoordinates(1) + 0.5;
+%     minOutputCoordinates(1) = 0;
+% else
+%     % If the start pixel is not an integer, round it up
+%     remainder1 = ceil(minOutputCoordinates(1)) - 0.5 - minOutputCoordinates(1);
+%     curInputY = curInputY + dy*remainder1;
+%     minOutputCoordinates(1) = ceil(minOutputCoordinates(1)) - 0.5;
+% end
+%
+% if minOutputCoordinates(2) < 0
+%     % If the start pixel is out of bounds, move it in bounds
+%     curInputX = curInputX - dx*minOutputCoordinates(2) - 0.5;
+%     minOutputCoordinates(2) = 0;
+% else
+%     % If the start pixel is not an integer, round it up
+%     remainder2 = ceil(minOutputCoordinates(2)) - 0.5 - minOutputCoordinates(2);
+%     curInputX = curInputX + dx*remainder2;
+%     minOutputCoordinates(2) = ceil(minOutputCoordinates(2)) + 0.5;
+% end
+%
+% if maxOutputCoordinates(1) > (outputImageSize(1)-1)
+%     % If the final pixel is out of bounds, move it in bounds
+%     maxOutputCoordinates(1) = floor(outputImageSize(1)-1);
+% end
+%
+% if maxOutputCoordinates(2) > (outputImageSize(2)-1)
+%     % If the final pixel is out of bounds, move it in bounds
+%     maxOutputCoordinates(2) = floor(outputImageSize(2)-1);
+% end
+%
+% for y = minOutputCoordinates(1):maxOutputCoordinates(1)
+%     curInputY0 = floor(curInputY);
+%     alphaYinverse = curInputY - curInputY0;
+%     alphaY = 1 - alphaYinverse;
+%
+%     for x = minOutputCoordinates(2):maxOutputCoordinates(2)
+%         curInputX0 = floor(curInputX);
+%         alphaXinverse = curInputX - curInputX0;
+%         alphaX = 1 - alphaXinverse;
+%
+%         pixel00 = inputImage(curInputY0+1, curInputX0+1);
+%         pixel01 = inputImage(curInputY0+1, curInputX0+2);
+%         pixel10 = inputImage(curInputY0+2, curInputX0+1);
+%         pixel11 = inputImage(curInputY0+2, curInputX0+2);
+%
+%         interpolatedTop = alphaXinverse*pixel00 + alphaX*pixel01;
+%         interpolatedBottom = alphaXinverse*pixel10 + alphaX*pixel11;
+%         interpolatedPixel = alphaYinverse*interpolatedTop + alphaY*interpolatedBottom;
+%
+%         output(y+1, x+1) = interpolatedPixel;
+%
+%         curInputX = curInputX + dx;
+%     end
+%     curInputY = curInputY + dy;
+% end
+%
+% keyboard
