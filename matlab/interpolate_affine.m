@@ -8,11 +8,11 @@
 % inputImage = zeros([5,5]); for y=1:5 inputImage(y,:)=y*(1:5); end
 % output = interpolate_affine(inputImage, [2,1.5,0;.1,2,1.5], zeros(13,11));
 
-function output = interpolate_affine(inputImage, homography, template)
+function interpolate_affine(inputImage, homography, template)
 DISPLAY_PLOTS = true;
 % DISPLAY_PLOTS = false;
 
-homography = homography(1:2, :);
+homography = homography(1:2, :)
 
 % Warp the inputImage corners to the template coordinates
 % Clockwise from the upper-left
@@ -43,77 +43,114 @@ end
 minIndexes = Inf * ones(size(template,1),1);
 maxIndexes = -Inf * ones(size(template,1),1);
 
-indexClockwiseToLeftmost = mod(leftmostIndex, 4) + 1;
-indexTwiceClockwiseToLeftmost = mod(indexClockwiseToLeftmost, 4) + 1;
+leftmost_clockwise1 = mod(leftmostIndex, 4) + 1;
+leftmost_clockwise2 = mod(leftmost_clockwise1, 4) + 1;
 
-indexCounterclockwiseToLeftmost = mod(leftmostIndex-2, 4) + 1;
-indexTwiceCounterclockwiseToLeftmost = mod(indexCounterclockwiseToLeftmost-2, 4) + 1;
+leftmost_counter1 = mod(leftmostIndex-2, 4) + 1;
+leftmost_counter2 = mod(leftmost_counter1-2, 4) + 1;
 
-if warpedPoints(2,indexCounterclockwiseToLeftmost) > warpedPoints(2,leftmostIndex)
-    minIndexes = updateMinimums(warpedPoints(:,leftmostIndex),...
-        warpedPoints(:,indexCounterclockwiseToLeftmost),...
-        minIndexes,...
-        size(template));
-    
-    if warpedPoints(2,indexTwiceCounterclockwiseToLeftmost) > warpedPoints(2,indexCounterclockwiseToLeftmost)
-        minIndexes = updateMinimums(warpedPoints(:,indexCounterclockwiseToLeftmost),...
-            warpedPoints(:,indexTwiceCounterclockwiseToLeftmost),...
-            minIndexes,...
-            size(template));
-    end
-    
-%     x = warpedPoints(1,leftmostIndex);
-%     
-%     if abs(warpedPoints(1,leftmostIndex) - warpedPoints(1,indexCounterclockwiseToLeftmost)) < .0001
-%         dx = 0;
-%     else
-%         dx = (warpedPoints(1,leftmostIndex) - warpedPoints(1,indexCounterclockwiseToLeftmost)) /...
-%              (warpedPoints(2,leftmostIndex) - warpedPoints(2,indexCounterclockwiseToLeftmost));
-%     end
-%     
-%     minY = warpedPoints(2,leftmostIndex);
-%     minYRounded = min(size(template,1)-1, max(0, ceil(minY)));
-%     
-%     maxY = warpedPoints(2,indexCounterclockwiseToLeftmost);
-%     maxYRounded = min(size(template,1)-1, max(0, floor(maxY)));
-%     
-%     x = x + dx * (minYRounded-minY);
-%     
-%     for y = minYRounded:maxYRounded
-%         minIndexes(y+1) = x;
-%         x = x + dx;
-%     end
-%     
-%     if warpedPoints(2,indexTwiceCounterclockwiseToLeftmost) > warpedPoints(2,indexCounterclockwiseToLeftmost) &&...
-%             (maxY+1) < size(template,1)
-%         
-%         x = warpedPoints(1,indexCounterclockwiseToLeftmost);
-%         if abs(warpedPoints(1,indexCounterclockwiseToLeftmost) - warpedPoints(1,indexTwiceCounterclockwiseToLeftmost)) < .0001
-%             dx = 0;
-%         else
-%             dx = (warpedPoints(1,indexCounterclockwiseToLeftmost) - warpedPoints(1,indexTwiceCounterclockwiseToLeftmost)) /...
-%                  (warpedPoints(2,indexCounterclockwiseToLeftmost) - warpedPoints(2,indexTwiceCounterclockwiseToLeftmost));
-%         end
-%         
-%         minY = warpedPoints(2,indexCounterclockwiseToLeftmost);
-%         minYRounded = min(size(template,1)-1, max(0, ceil(minY)));
-%         
-%         maxY = warpedPoints(2,indexTwiceCounterclockwiseToLeftmost);
-%         maxYRounded = min(size(template,1)-1, max(0, floor(maxY)));
-%         
-%         x = x + dx * (minYRounded-minY);
-%         for y = minYRounded:maxYRounded
-%             minIndexes(y+1) = x;
-%             x = x + dx;
-%         end
-%     end
+rightmost_clockwise1 = mod(rightmostIndex, 4) + 1;
+rightmost_clockwise2 = mod(rightmost_clockwise1, 4) + 1;
+
+rightmost_counter1 = mod(rightmostIndex-2, 4) + 1;
+rightmost_counter2 = mod(rightmost_counter1-2, 4) + 1;
+
+% Compute the mins
+
+minIndexes = updateMinimums(warpedPoints(:,leftmostIndex),...
+    warpedPoints(:,leftmost_counter1),...
+    minIndexes, size(template));
+
+if warpedPoints(2,leftmost_counter2) > warpedPoints(2,leftmostIndex)
+    minIndexes = updateMinimums(warpedPoints(:,leftmost_counter1),...
+        warpedPoints(:,leftmost_counter2),...
+        minIndexes, size(template));
 end
-    
-keyboard
+
+minIndexes = updateMinimums(warpedPoints(:,leftmost_clockwise1),...
+    warpedPoints(:,leftmostIndex),...
+    minIndexes, size(template));
+
+if warpedPoints(2,leftmostIndex) > warpedPoints(2,leftmost_clockwise2)
+    minIndexes = updateMinimums(warpedPoints(:,leftmost_clockwise2),...
+        warpedPoints(:,leftmost_clockwise1),...
+        minIndexes, size(template));
+end
+
+% Compute the maxes
+
+maxIndexes = updateMaximums(warpedPoints(:,rightmostIndex),...
+    warpedPoints(:,rightmost_clockwise1),...
+    maxIndexes, size(template));
+
+if warpedPoints(2,rightmost_clockwise2) > warpedPoints(2,rightmostIndex)
+    maxIndexes = updateMinimums(warpedPoints(:,rightmost_clockwise1),...
+        warpedPoints(:,rightmost_clockwise2),...
+        maxIndexes, size(template));    
+end
+
+maxIndexes = updateMaximums(warpedPoints(:,rightmost_counter1),...
+    warpedPoints(:,rightmostIndex),...
+    maxIndexes, size(template));
+
+if warpedPoints(2,rightmostIndex) > warpedPoints(2,rightmost_counter2)
+    maxIndexes = updateMinimums(warpedPoints(:,rightmost_counter2),...
+        warpedPoints(:,rightmost_counter1),...
+        maxIndexes, size(template));    
+end
+
+assert(length(minIndexes) == length(maxIndexes));
+
+minIndexes = max(0, minIndexes);
+maxIndexes = min(size(template,2), maxIndexes);
+
+if DISPLAY_PLOTS
+    for i = 1:length(minIndexes)
+        hold on;
+        plot([minIndexes(i),maxIndexes(i)], [-i+1,-i+1], 'g');        
+        axis equal
+    end
+end % if DISPLAY_PLOTS
+minIndexes
+maxIndexes
+
+% keyboard
 
 end % function interpolate_affine()
 
 function minIndexes = updateMinimums(topPoint, bottomPoint, minIndexes, templateSize)
+    if bottomPoint(2) > topPoint(2)
+        x = topPoint(1);
+
+        if abs(topPoint(1) - bottomPoint(1)) < .0001
+            dx = 0;
+        else
+            dx = (topPoint(1) - bottomPoint(1)) /...
+                 (topPoint(2) - bottomPoint(2));
+        end
+
+        minY = topPoint(2);
+        minYRounded = min(templateSize(1)-1, max(0, ceil(minY)));
+        
+        if ceil(minY) >= templateSize(1)
+            return;
+        end
+
+        maxY = bottomPoint(2);
+        maxYRounded = min(templateSize(1)-1, max(0, floor(maxY)));
+
+        % x was first computed at the floating-point coordinate of the
+        % corner. Update it to the nearest integer y coordinate
+        x = x + dx * (minYRounded-minY);
+
+        for y = minYRounded:maxYRounded
+            minIndexes(y+1) = x;
+            x = x + dx;
+        end
+    end
+end % function updateMinimums()
+
+function maxIndexes = updateMaximums(topPoint, bottomPoint, maxIndexes, templateSize)
     if bottomPoint(2) > topPoint(2)
         x = topPoint(1);
     
@@ -134,13 +171,15 @@ function minIndexes = updateMinimums(topPoint, bottomPoint, minIndexes, template
         maxY = bottomPoint(2);
         maxYRounded = min(templateSize(1)-1, max(0, floor(maxY)));
 
+        % x was first computed at the floating-point coordinate of the
+        % corner. Update it to the nearest integer y coordinate
         x = x + dx * (minYRounded-minY);
 
         for y = minYRounded:maxYRounded
-            minIndexes(y+1) = x;
+            maxIndexes(y+1) = x;
             x = x + dx;
         end
     end
-end % function updateMinimums()
+end % function updateMaximums()
 
 
