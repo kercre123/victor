@@ -44,6 +44,7 @@ classdef LucasKanadeTracker < handle
         estimateAffine;
         
         useBlurring;
+        useNormalization;
     end
     
     methods % public methods
@@ -56,10 +57,12 @@ classdef LucasKanadeTracker < handle
             EstimateScale = true;
             EstimateAffine = false;
             UseBlurring = true;
+            UseNormalization = false;
             
             parseVarargin(varargin{:});
             
             this.minSize = MinSize;
+            this.useNormalization = UseNormalization;
             %assert(isscalar(NumScales));
             %this.numScales = NumScales;
             
@@ -157,8 +160,15 @@ classdef LucasKanadeTracker < handle
                     this.xgrid{i_scale} + this.xcen, ...
                     this.ygrid{i_scale} + this.ycen, 'linear');
                 
+                if this.useNormalization
+                    this.target{i_scale} = (this.target{i_scale} - ...
+                        mean(this.target{i_scale}(:))) / ...
+                        std(this.target{i_scale}(:));
+                end
+                
                 %targetBlur = separable_filter(this.target{i_scale}, gaussian_kernel(i_scale));
                 targetBlur = this.target{i_scale};
+               
                 %Ix = (image_right(targetBlur) - targetBlur) * spacing;
                 %Iy = (image_down(targetBlur) - targetBlur) * spacing;
                 Ix = (image_right(targetBlur) - image_left(targetBlur))/2 * spacing;
@@ -291,11 +301,15 @@ classdef LucasKanadeTracker < handle
             yi = this.tform(2,1)*this.xgrid{1} + ...
                 this.tform(2,2)*this.ygrid{1} + ...
                 this.tform(2,3);
+            imgi = interp2(imgBlur{1}, xi(:) + this.xcen, ...
+                yi(:) + this.ycen, 'linear');
+            inBounds = ~isnan(imgi);
             
-            It = this.target{1}(:) - interp2(imgBlur{1}, ...
-                xi(:) + this.xcen, yi(:) + this.ycen, 'linear');
-            inBounds = ~isnan(It);
-                         
+            if this.useNormalization
+                imgi = (imgi - mean(imgi(inBounds)))/std(imgi(inBounds));
+            end
+            It = this.target{1}(:) - imgi;
+                                     
             this.err = mean(abs(It(inBounds)));
             
             
@@ -363,9 +377,16 @@ classdef LucasKanadeTracker < handle
                 % RMS error between pixel locations and previous locations
                 change = sqrt(mean((xPrev(:)-xi(:)).^2 + (yPrev(:)-yi(:)).^2));
                 
-                It = this.target{i_scale}(:) - interp2(img, ...
+                imgi = interp2(img, ...
                     xi(:) + this.xcen, yi(:) + this.ycen, 'linear');
-                inBounds = ~isnan(It);
+                inBounds = ~isnan(imgi);
+                
+                if this.useNormalization
+                    imgi = (imgi - mean(imgi(inBounds)))/std(imgi(inBounds));
+                end
+                           
+                It = this.target{i_scale}(:) - imgi;
+                
                 %It(isnan(It)) = 0;
                 %inBounds = true(size(It));
                                                 
