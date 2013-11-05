@@ -20,6 +20,10 @@ namespace Anki {
           const u16 MAX_TEXT_DISPLAY_LENGTH = 1024;
           
           char displayText_[MAX_TEXT_DISPLAY_LENGTH];
+          
+          webots::Node* estPose_      = CozmoBot->getFromDef("CozmoBotPose");
+          webots::Field* translation_ = estPose_->getField("translation");
+          webots::Field* rotation_    = estPose_->getField("rotation");
         }
         
         void SetText(TextID ot_id, const char* formatStr, ...)
@@ -33,6 +37,15 @@ namespace Anki {
                              0.05f + static_cast<f32>(ot_id) * (OVERLAY_TEXT_SIZE/3.f),
                              OVERLAY_TEXT_SIZE, OVERLAY_TEXT_COLOR, 0);
         } // SetText()
+        
+        void UpdateEstimatedPose(const f32 x, const f32 y, const f32 angle)
+        {
+          const double estTrans[3] = {-x, 0, y};
+          const double estRot[4] = {0, 1, 0, angle};
+          
+          translation_->setSFVec3f(estTrans);
+          rotation_->setSFRotation(estRot);
+        }
         
       } // namespace OverlayDisplay
     } // namespace Sim

@@ -3,8 +3,6 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-project(overlay_display_supervisor)
-
 # Include paths
 include_directories(
   ${WEBOTS_C_INCLUDE_DIR}

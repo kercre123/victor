@@ -49,17 +49,20 @@ namespace Anki {
           
           SetText(CURR_TRUE_POSE, "True Pose: (x,y)=(%.4f, %.4f) at angle=%.1f",
                   xTrue, yTrue, angleRad.getDegrees());
+          
+          UpdateEstimatedPose(currentMatX_, currentMatY_, currentMatHeading_.ToFloat());
         }
 #endif
 
-      }
+      } // SetCurrentMatPose()
       
       void GetCurrentMatPose(f32& x, f32& y, Radians& angle)
       {
         x = currentMatX_;
         y = currentMatY_;
         angle = currentMatHeading_;
-      }
+      } // GetCurrentMatPose()
+      
   
       Radians GetCurrentMatOrientation()
       {

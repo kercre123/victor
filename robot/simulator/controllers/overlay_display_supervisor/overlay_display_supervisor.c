@@ -40,6 +40,10 @@ int main() {
   WbFieldRef translationField = wb_supervisor_node_get_field(mybot,"translation");
   const double *translation;
   
+  WbNodeRef estPose = wb_supervisor_node_get_from_def("CozmoBotPose");
+  WbFieldRef estTranslationField = wb_supervisor_node_get_field(estPose, "translation");
+  const double *estTranslation;
+  
   // paint the display's background
   //wb_display_set_color(ground_display,LIGHT_GREY);
   wb_display_fill_rectangle(ground_display,0,0,width,height);
@@ -67,15 +71,22 @@ int main() {
     // Update the counter
     counter++;
     
-    // display the robot position
+    // display the robot's true position
     wb_display_set_opacity(ground_display,PATH_TRACK_BLEED_RATE);
     wb_display_set_color(ground_display,GREEN);
-    wb_display_fill_oval(
-      ground_display,
-      width*(translation[0]+GROUND_X/2)/GROUND_X,
-      height*(translation[2]+GROUND_Z/2)/GROUND_Z,
-      1,
-      1);
+    wb_display_fill_oval(ground_display,
+                         width*(translation[0]+GROUND_X/2)/GROUND_X,
+                         height*(translation[2]+GROUND_Z/2)/GROUND_Z,
+                         1, 1);
+    
+    // display the robot's estimated position
+    wb_display_set_opacity(ground_display,0.5f);
+    estTranslation = wb_supervisor_field_get_sf_vec3f(estTranslationField);
+    wb_display_set_color(ground_display, RED);
+    wb_display_draw_oval(ground_display,
+                         width*(estTranslation[0] + GROUND_X/2)/GROUND_X,
+                         height*(estTranslation[2]+GROUND_Z/2)/GROUND_Z,
+                         1.5, 1.5);
     
     // Clear previous to_store
     if (to_store) {
