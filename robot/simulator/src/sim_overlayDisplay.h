@@ -19,6 +19,8 @@ namespace Anki {
         
         void SetText(TextID id, const char *formatStr, ...);
         
+        void UpdateEstimatedPose(const f32 x, const f32 y, const f32 angle);
+        
       } //OverlayDisplay
     } // namespace Sim
   } // namespace Cozmo
