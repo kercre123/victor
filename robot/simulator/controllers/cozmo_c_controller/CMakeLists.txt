@@ -82,8 +82,8 @@ set_target_properties(
 	cozmo_c_controller PROPERTIES
   COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
 	LINK_FLAGS "-Wl,-rpath,${MATLAB_ROOT_DIR}/bin/maci64/"
-	XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
-	XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
+	#XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
+	#XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
 )
 
 # Make sure a copy of the target exists in cozmo_c_controller/
