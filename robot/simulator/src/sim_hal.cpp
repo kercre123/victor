@@ -1,5 +1,6 @@
 // System Includes
 #include <cmath>
+#include <cstdlib>
 
 // Our Includes
 #include "anki/cozmo/robot/hal.h"

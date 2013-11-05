@@ -1,10 +1,7 @@
-#ifndef SIM_ROBOT_H
-#define SIM_ROBOT_H
+#ifndef ANKI_COZMOBOT_H
+#define ANKI_COZMOBOT_H
 
 #include "anki/common/types.h"
-
-#include <webots/Supervisor.hpp>
-
 
 namespace Anki {
   
@@ -61,4 +58,4 @@ namespace Anki {
   
 } // namespace Anki
 
-#endif
+#endif // ANKI_COZMOBOT_H
