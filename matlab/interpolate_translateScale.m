@@ -31,11 +31,11 @@ output = zeros(outputImageSize);
 % possible to interpolate the output image. If the topLeft is negative or
 % the bottomRight is larger than outputImageSize, then the whole input
 % image won't be used.
-minOutputCoordinates = [(-imageScale(1)*(inputImageSize(1)/2-0.5)) + imageTranslation(1),...
-                        (-imageScale(2)*(inputImageSize(2)/2-0.5)) + imageTranslation(2)];
+minOutputCoordinates = [(-(inputImageSize(1)/2-0.5)*imageScale(1)) + imageTranslation(1),...
+                        (-(inputImageSize(2)/2-0.5)*imageScale(2)) + imageTranslation(2)];
 
-maxOutputCoordinates = [(imageScale(1)*(inputImageSize(1)/2-0.5)) + imageTranslation(1),...
-                             (imageScale(2)*(inputImageSize(2)/2-0.5)) + imageTranslation(2)];
+maxOutputCoordinates = [((inputImageSize(1)/2-0.5)*imageScale(1)) + imageTranslation(1),...
+                             ((inputImageSize(2)/2-0.5)*imageScale(2)) + imageTranslation(2)];
 
 % Check if the interpolated image is inside the boundaries of the
 % outputImage. Clip the coordinates if not.
@@ -75,13 +75,19 @@ dy = 1 / imageScale(1);
 dx = 1 / imageScale(2);
 
 % We will loop on integer indices, so remove the extra 0.5 offset
-minOutputCoordinates = minOutputCoordinates - 0.5
-maxOutputCoordinates = maxOutputCoordinates - 0.5
+minOutputCoordinates = minOutputCoordinates - 0.5;
+maxOutputCoordinates = maxOutputCoordinates - 0.5;
 
 % Remove the extra 0.5 offset, to save doing it every step
-curInputCoordinates = curInputCoordinatesRaw - 0.5
+%
+% The integer part of curInputCoordinates is the upper-left pixel to
+% interpolate. The fractional part is the percent of the lower-right
+% pixel's interpolation weight. For example, [1.25, 1.25] means to use pixels at
+% coordinates [1,1], [1,2], [2,1], and [2,2]. The weights are 75% on the
+% upper-left pixels, and 25% on the lower right pixels.
+curInputCoordinates = curInputCoordinatesRaw - 0.5;
 
-keyboard
+keyboard 
 
 % % These coordinates are the outer border of the scaled and translated
 % % inputImage.
