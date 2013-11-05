@@ -33,9 +33,10 @@ namespace Anki {
     const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 30.f);
     
     // TODO: make these 3-element f32 arrays. Currently, can't instantiate with those.
-#define NECK_JOINT_POSITION {{0.f, 9.5f, 25.f}} // relative to robot origin
-#define HEAD_CAM_POSITION   {{0.f, 25.f, 15.f}} // relative to neck joint
-#define LIFT_BASE_POSITION  {{0.f, -35.f, 27.f}} // relative to robot origin
+#define NECK_JOINT_POSITION {{-15.5f, 0.f, 25.f}} // relative to robot origin
+#define HEAD_CAM_POSITION   {{ 25.0f, 0.f, 15.f}} // relative to neck joint
+#define LIFT_BASE_POSITION  {{-60.0f, 0.f, 27.f}} // relative to robot origin
+#define MAT_CAM_POSITION    {{-25.0f, 0.f, -3.f}} // relative to robot origin
     
 #define BLOCKMARKER3D_USE_OUTSIDE_SQUARE false
     

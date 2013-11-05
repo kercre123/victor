@@ -190,7 +190,7 @@ Supervisor {
         density 5000
       }
     }
-    DEF WHEEL_REAR_RIGHT HingeJoint {
+    DEF WHEEL_REAR_LEFT HingeJoint {
       jointParameters HingeJointParameters {
         anchor -0.05 0 0.03
         axis 0 0 1
@@ -233,7 +233,7 @@ Supervisor {
         }
       }
     }
-    DEF WHEEL_REAR_LEFT HingeJoint {
+    DEF WHEEL_REAR_RIGHT HingeJoint {
       jointParameters HingeJointParameters {
         position -1.15762e-11
         anchor -0.05 0 -0.03
@@ -259,7 +259,7 @@ Supervisor {
     DEF COMPASS_SENSOR Compass {
       name "compass"
     }
-    DEF WHEEL_FRONT_RIGHT HingeJoint {
+    DEF WHEEL_FRONT_LEFT HingeJoint {
       jointParameters HingeJointParameters {
         anchor 0 0 0.03
         axis 0 0 1
@@ -282,7 +282,7 @@ Supervisor {
         }
       }
     }
-    DEF WHEEL_FRONT_LEFT HingeJoint {
+    DEF WHEEL_FRONT_RIGHT HingeJoint {
       jointParameters HingeJointParameters {
         position -1.15794e-11
         anchor 0 0 -0.03
@@ -350,7 +350,7 @@ Supervisor {
             colorNoise 0.01
           }
           DEF EYE_LEFT Transform {
-            translation -0.015 0.045 -0.017
+            translation -0.015 0.045 0.017
             rotation 0 0 1 -1.5708
             children [
               DEF EYE_SHAPE Shape {
@@ -368,7 +368,7 @@ Supervisor {
             ]
           }
           DEF EYE_RIGHT Transform {
-            translation -0.015 0.045 0.017
+            translation -0.015 0.045 -0.017
             rotation 0 0 1 -1.5708
             children [
               USE EYE_SHAPE
