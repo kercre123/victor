@@ -1,4 +1,5 @@
-#A 2x1 block prototype
+#VRML_SIM V7.3.0 utf8
+
 PROTO Block2x1 [
   field SFString name "Block000"
   field SFVec3f translation 0 0.03 0

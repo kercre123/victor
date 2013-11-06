@@ -1,3 +1,5 @@
+#VRML_SIM V7.3.0 utf8
+
 PROTO OverlayDisplay [ ]
 {
 Supervisor {
