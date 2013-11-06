@@ -1,14 +1,14 @@
-% function output = interpolateAffine_rowLimits(inputImage, homography, outputImageSize)
+% function output = interpolateAffine_rowLimits(inputImageQuad, homography, outputImageSize)
 
 % homography can be either 2x3 or 3x3, though only the first two rows are
 % used. The x-coordinate comes first.
 % 
 % homography warps the input image coordinates to the template coordinates
 
-% inputImage = zeros([5,5]); for y=1:5 inputImage(y,:)=y*(1:5); end
-% output = interpolateAffine_rowLimits(inputImage, [2,1.5,0;.1,2,1.5], zeros(13,11));
+% interpolateAffine_rowLimits([0,0;3,1;2,4;-1,3], [2,1.5,0;.1,2,1.5], [13,11]);
+% for i=1:100 interpolateAffine_rowLimits(4*[0,0;3,1;2,4;-1,3], 5*(2*rand([2,3])-1), [13,11]); pause(); end
 
-function interpolateAffine_rowLimits(inputImage, homography, template)
+function interpolateAffine_rowLimits(inputImageQuad, homography, templateSize)
 DISPLAY_PLOTS = true;
 % DISPLAY_PLOTS = false;
 
@@ -16,23 +16,31 @@ homography = homography(1:2, :)
 
 % Warp the inputImage corners to the template coordinates
 % Clockwise from the upper-left
-inputCornerPoints = [0,                  0,                  1;
-                     size(inputImage,2), 0,                  1;
-                     size(inputImage,2), size(inputImage,1), 1;
-                     0,                  size(inputImage,1), 1]';
+% inputCornerPoints = [0,                  0,                  1;
+%                      size(inputImage,2), 0,                  1;
+%                      size(inputImage,2), size(inputImage,1), 1;
+%                      0,                  size(inputImage,1), 1]';
 
-warpedPoints = homography*inputCornerPoints;
+inputImageQuadSqueezed = squeezeQuadrilateral(inputImageQuad, 1.0);
+
+inputImageQuadSqueezed(:,3) = 1;
+warpedPoints = homography*inputImageQuadSqueezed';
 
 if DISPLAY_PLOTS
     figure(1);
     templateCornerPoints = [0,                0,              ;
-                            size(template,2), 0,              ;
-                            size(template,2), size(template,1);
-                            0,                size(template,1)]';
+                            templateSize(2), 0,              ;
+                            templateSize(2), templateSize(1);
+                            0,                templateSize(1)]';
+                        
+    inputImageQuad(:,3) = 1;
+    warpedPoints_nonSqueezed = homography*inputImageQuad';                        
+                        
     hold off;
     plot(templateCornerPoints(1,[1:4,1]), -templateCornerPoints(2,[1:4,1]), 'b');
     hold on;
-    plot(warpedPoints(1,[1:4,1]), -warpedPoints(2,[1:4,1]), 'r');
+    plot(warpedPoints_nonSqueezed(1,[1:4,1]), -warpedPoints_nonSqueezed(2,[1:4,1]), 'y');
+    plot(warpedPoints(1,[1:4,1]), -warpedPoints(2,[1:4,1]), 'g');
     axis equal
     hold off
 end
@@ -40,8 +48,8 @@ end
 [~, leftmostIndex] = min(warpedPoints(1,:));
 [~, rightmostIndex] = max(warpedPoints(1,:));
 
-minIndexes = Inf * ones(size(template,1),1);
-maxIndexes = -Inf * ones(size(template,1),1);
+minIndexes = Inf * ones(templateSize(1),1);
+maxIndexes = -Inf * ones(templateSize(1),1);
 
 %check if the quad is flipped
 % TODO: make simpler
@@ -109,44 +117,44 @@ end
 
 minIndexes = updateExtrema(warpedPoints(:,leftmostIndex),...
     warpedPoints(:,leftmost_counter1),...
-    minIndexes, size(template));
+    minIndexes, templateSize);
 
 if warpedPoints(2,leftmost_counter2) > warpedPoints(2,leftmostIndex)
     minIndexes = updateExtrema(warpedPoints(:,leftmost_counter1),...
         warpedPoints(:,leftmost_counter2),...
-        minIndexes, size(template));
+        minIndexes, templateSize);
 end
 
 minIndexes = updateExtrema(warpedPoints(:,leftmost_clockwise1),...
     warpedPoints(:,leftmostIndex),...
-    minIndexes, size(template));
+    minIndexes, templateSize);
 
 if warpedPoints(2,leftmostIndex) > warpedPoints(2,leftmost_clockwise2)
     minIndexes = updateExtrema(warpedPoints(:,leftmost_clockwise2),...
         warpedPoints(:,leftmost_clockwise1),...
-        minIndexes, size(template));
+        minIndexes, templateSize);
 end
 
 % Compute the maxes
 
 maxIndexes = updateExtrema(warpedPoints(:,rightmostIndex),...
     warpedPoints(:,rightmost_clockwise1),...
-    maxIndexes, size(template));
+    maxIndexes, templateSize);
 
 if warpedPoints(2,rightmost_clockwise2) > warpedPoints(2,rightmostIndex)
     maxIndexes = updateExtrema(warpedPoints(:,rightmost_clockwise1),...
         warpedPoints(:,rightmost_clockwise2),...
-        maxIndexes, size(template));
+        maxIndexes, templateSize);
 end
 
 maxIndexes = updateExtrema(warpedPoints(:,rightmost_counter1),...
     warpedPoints(:,rightmostIndex),...
-    maxIndexes, size(template));
+    maxIndexes, templateSize);
 
 if warpedPoints(2,rightmostIndex) > warpedPoints(2,rightmost_counter2)
     maxIndexes = updateExtrema(warpedPoints(:,rightmost_counter2),...
         warpedPoints(:,rightmost_counter1),...
-        maxIndexes, size(template));    
+        maxIndexes, templateSize);    
 end
 
 assert(length(minIndexes) == length(maxIndexes));
@@ -160,7 +168,7 @@ for i = 1:length(minIndexes)
 end
 
 minIndexes = max(0, minIndexes);
-maxIndexes = min(size(template,2), maxIndexes);
+maxIndexes = min(templateSize(2), maxIndexes);
 
 for i = 1:length(minIndexes)
     if minIndexes(i) >= maxIndexes(i)
@@ -176,8 +184,9 @@ if DISPLAY_PLOTS
         axis equal
     end
 end % if DISPLAY_PLOTS
-minIndexes
-maxIndexes
+
+% minIndexes
+% maxIndexes
 
 % keyboard
 
@@ -218,6 +227,30 @@ function extremaIndexes = updateExtrema(topPoint, bottomPoint, extremaIndexes, t
         end
     end
 end % function updateExtrema()
+
+function quad = squeezeQuadrilateral(quad, numPixelsToReduce)
+
+    assert(size(quad,1) == 4);
+    
+    centroid = mean(quad, 1);
+    
+    for i = 1:4
+        offset = quad(i,:) - centroid;
+        offsetMagnitude = sqrt(offset(1)^2+offset(2)^2);
+        normalizedOffset = offset / offsetMagnitude;
+
+        quad(i,1) = quad(i,1) - numPixelsToReduce*normalizedOffset(1);
+        quad(i,2) = quad(i,2) - numPixelsToReduce*normalizedOffset(2);
+    end
+    
+end % function quad = squeezeQuadrilateral()
+
+
+
+
+
+
+
 
 
 
