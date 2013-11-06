@@ -28,6 +28,7 @@ LEON_SOURCE += addSources('./vision')
 LEON_SOURCE += addSources('../coretech/vision/robot/src')
 LEON_SOURCE += addSources('../coretech/messaging/robot/src')
 LEON_SOURCE += addSources('../coretech/common/robot/src')
+LEON_SOURCE += addSources('../coretech/common/shared/src')
 
 SHAVE_SOURCE = []
 
@@ -207,6 +208,7 @@ if __name__ == '__main__':
       LEON_SOURCE += addSources('../coretech/common/robot/project/myriad1/unitTests/leon')
       LEON_SOURCE += addSources('../coretech/common/robot/test')
       LEON_SOURCE += addSources('../coretech/common/robot/src/')
+      LEON_SOURCE += addSources('../coretech/common/shared/src/')
       SHAVE_SOURCE += addSources('../coretech/common/robot/project/myriad1/unitTests/shave')
 
   # TODO: Get supervisor directory building/linking

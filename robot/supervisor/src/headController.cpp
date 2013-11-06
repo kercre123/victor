@@ -1,9 +1,7 @@
 #include "headController.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/common/robot/utilities_c.h"
-
-// TODO: this needs to get moved out of basestation
-#include "anki/common/basestation/math/radians.h"
+#include "anki/common/shared/radians.h"
 
 namespace Anki {
   namespace Cozmo {

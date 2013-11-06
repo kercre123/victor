@@ -2,9 +2,7 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/common/robot/utilities_c.h"
-
-// TODO: this needs to get moved out of basestation
-#include "anki/common/basestation/math/radians.h"
+#include "anki/common/shared/radians.h"
 
 #include "cmath"
 

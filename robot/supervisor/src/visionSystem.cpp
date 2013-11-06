@@ -3,9 +3,7 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 
 #include "anki/cozmo/messageProtocol.h"
-
-// TODO: We should have no basestation includes, move this to shared
-#include "anki/common/basestation/math/Radians.h"
+#include "anki/common/shared/radians.h"
 
 #include <iostream>
 

@@ -1,9 +1,7 @@
 #ifndef COZMO_TYPES_H
 #define COZMO_TYPES_H
 
-// TODO: Probably shouldn't be including a "basestation" files here!
-//       (Can the radians code be promoted to shared robot/basestation code?)
-#include "anki/common/basestation/math/radians.h"
+#include "anki/common/shared/radians.h"
 
 #include "anki/common/types.h"
 #include "anki/common/robot/geometry.h"
