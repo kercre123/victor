@@ -1,4 +1,62 @@
 function grabs = CameraCapture(varargin)
+% Read / display / process images from a camera or stored sequence.
+%
+% frameGrabs = CameraCapture(<name/value pairs...>)
+%  
+%  Opens a USB device or saved image sequence and displays it frame by
+%  frame, with optional processing applied.  Pressing the spacebar will
+%  "grab" the current frame and append it to the output cell array
+%  "frameGrabs".  
+%  
+%  Parameter names and [default values] provided below:
+%
+%  'fps' [25]
+%    Frames per second for the camera or for reading files.  Note that this
+%    is the max; the actual speed may be slower, depending on I/O or
+%    processing.
+%
+%  'device', [0]
+%    The USB device number to open, or a filename pattern to read, such as
+%    '~/some/path/frame*.png'
+%
+%  'resolution' [640 480]
+%    The resolution of captured frames, [resX resY].  If saved files are
+%    being used, they will be resized to this resolution after reading.
+% 
+%  'numFrames' [Inf]
+%    Total number of frames to capture before returning.  If Inf, the
+%    camera capture will run contuniously or until the ESC is pressed, or
+%    until the files run out.
+%
+%  'grabInc' []
+%    Scalar integer. If non-empty, every 'grabInc' frames will be returned
+%    in the output cell array grabFrames.  If empty, grabs will occur when
+%    the user presses the spacebar.
+%
+%  'appendGrabs' {}
+%    To add grabFrames to an initial cell array of previous grabbed frames,
+%    pass that initial cell array as this parameter.
+%
+%  'figureName' ['CameraCapture']
+%    The name to give the figure showing the frames.
+%
+%  'processFcn' []
+%    A handle to a function of the form:
+%       processFcn(frame, h_axesProc, h_imgProc); 
+%    Where 'frame' is the current image data, 'h_axesProc' is the handle of
+%    the axes where that frame is to be displayed, and 'h_imgProc' is the
+%    handle to the processed image displayed on those axes.  So your
+%    processing function can do set(h_imgProc, 'CData', someFcn(frame)),
+%    for example.
+%
+%  'doContinuousProcessing' [false]
+%    Whether to process every frame (true) or only process when a key is
+%    pressed (false).  (When processFcn is provided.)
+%
+% Relies on mexCameraCapture for interfacing to USB cameras.
+% ------------
+% Andrew Stein
+% 
 
 fps = 25;
 device = 0;
@@ -42,10 +100,33 @@ OPEN  = 0;
 GRAB  = 1;
 CLOSE = 2;
 
+    function frame = readFrameFromFile(i_frame, framePath, frameName)
+        frame = imread(fullfile(framePath, frameName{i_frame}));
+        if size(frame,1)~=resolution(2) || size(frame,2) ~= resolution(1)
+            frame = imresize(frame, resolution([2 1]));
+        end
+    end
+
+    function frame = readFrameFromCamera(~)
+        frame = mexCameraCapture(GRAB, device);
+        frame = frame(:,:,[3 2 1]); % BGR to RGB
+    end
 try
     
     % Initialize and grab first frame
-    frame = mexCameraCapture(OPEN, device, resolution(1), resolution(2));
+    if ischar(device)
+        [framePath, pattern, patternExt] = fileparts(device);
+        frameList = getfnames(framePath, [pattern patternExt]);
+        if isempty(frameList)
+            error('No frames found at %s.\n', device);
+        end
+        numFrames = min(numFrames, length(frameList));
+        frame = readFrameFromFile(1, framePath, frameList);
+        getFrameFcn = @(i_frame)readFrameFromFile(i_frame, framePath, frameList);
+    else
+        frame = mexCameraCapture(OPEN, device, resolution(1), resolution(2));
+        getFrameFcn = @readFrameFromCamera;
+    end
     
     h_img = imagesc(frame, 'Parent', displayAxes);
     axis(displayAxes, 'image', 'off');
@@ -60,11 +141,10 @@ try
     pause(1/fps)
     
     % Capture remaining frames
-    i_frame = 1;
+    i_frame = 2;
     while i_frame < numFrames && get(h_fig, 'CurrentCharacter') ~= 27 % ESCAPE
         t = tic;
-        frame = mexCameraCapture(GRAB, device);
-        frame = frame(:,:,[3 2 1]); % BGR to RGB
+        frame = getFrameFcn(i_frame);
         
         set(h_img, 'CData', frame);
         if ~isempty(processFcn)
@@ -72,11 +152,11 @@ try
                 if ~doContinuousProcessing
                     disp('Processing frame')
                 end
-                try
+                %try
                     processFcn(frame, processAxes, h_imgProc); %#ok<NOEFF>
-                catch E
-                    warning(E.message)
-                end
+                %catch E
+                 %   warning(E.message)
+                %end
                     
                 set(h_fig, 'CurrentCharacter', '~');
             end
