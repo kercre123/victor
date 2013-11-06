@@ -28,7 +28,7 @@
 #ifndef __CoreTech_Math__rotation__
 #define __CoreTech_Math__rotation__
 
-#include "radians.h"
+#include "anki/common/shared/radians.h"
 #include "matrix.h"
 #include "point.h"
 

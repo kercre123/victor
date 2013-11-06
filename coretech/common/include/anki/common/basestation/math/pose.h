@@ -35,7 +35,7 @@
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/quad.h"
 #include "anki/common/basestation/math/rotation.h"
-#include "anki/common/basestation/math/radians.h"
+#include "anki/common/shared/radians.h"
 
 namespace Anki {
 
