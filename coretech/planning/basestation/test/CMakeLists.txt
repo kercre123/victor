@@ -6,3 +6,13 @@ add_executable(run_coreTechPlanningStandalone
 
 target_link_libraries(run_coreTechPlanningStandalone
 	CoreTech_Planning_Basestation)
+
+include_directories(../src)
+
+add_executable(run_coreTechPlanningTests
+        run_coreTechPlanningTests.cpp
+        testRectangle.cpp)
+
+target_link_libraries(run_coreTechPlanningTests
+        CoreTech_Planning_Basestation
+        gtest)

@@ -16,22 +16,28 @@
 
 #include "anki/cozmo/messageProtocol.h"
 
-
 namespace Anki {
   namespace Cozmo {
     
     Robot::Robot()
     : addedToWorld(false),
-      pose(0.f, Pose3d::Z_AXIS, {{0.f, 0.f, WHEEL_RAD_TO_MM}}),
+      pose(0.f, Z_AXIS_3D, {{0.f, 0.f, WHEEL_RAD_TO_MM}}),
       camDownCalibSet(false), camHeadCalibSet(false),
-      neckPose(0.f, {{1.f, 0.f, 0.f}}, NECK_JOINT_POSITION, &pose),
-      headCamPose(-M_PI_2, {{1.0f, 0.f, 0.f}}, HEAD_CAM_POSITION, &neckPose),
-      liftBasePose(0.f, {{1.f, 0.f, 0.f}}, LIFT_BASE_POSITION, &pose),
+      neckPose(0.f,Y_AXIS_3D, NECK_JOINT_POSITION, &pose),
+      headCamPose(2.094395102393196, // Rotate -90deg around Y, then 90deg around Z
+                  {{sqrtf(3.f)/3.f, -sqrtf(3.f)/3.f, sqrtf(3.f)/3.f}},
+                  HEAD_CAM_POSITION, &neckPose),
+      liftBasePose(0.f, Y_AXIS_3D, LIFT_BASE_POSITION, &pose),
+      matCamPose(M_PI, // Rotate 180deg around Y, then 90deg around Z
+                 {{sqrtf(2.f)/2.f, -sqrtf(2.f)/2.f, 0.f}},
+                 MAT_CAM_POSITION, &pose),
       currentHeadAngle(0.f),
       isCarryingBlock(false),
       matMarker(NULL)
     {
       this->set_headAngle(currentHeadAngle);
+      
+      this->camDown.set_pose(this->matCamPose);
       
     } // Constructor: Robot
     
@@ -96,7 +102,7 @@ namespace Anki {
         const CameraCalibration& camCalib = camDown.get_calibration();
         
         const Point2f& imageCenterPt = camCalib.get_center();
-        
+        /*
         if(BlockWorld::ZAxisPointsUp) {
           // xvec = imgCen(1)-xcenIndex;
           // yvec = imgCen(2)-ycenIndex;
@@ -104,12 +110,12 @@ namespace Anki {
           centerVec *= -1.f;
           centerVec += imageCenterPt;
           
-        } else {
+        } else {*/
           // xvec = xcenIndex - imgCen(1);
           // yvec = ycenIndex - imgCen(2);
           
           centerVec -= imageCenterPt;
-        }
+        //}
         
         //xvecRot =  xvec*cos(-marker.upAngle) + yvec*sin(-marker.upAngle);
         //yvecRot = -xvec*sin(-marker.upAngle) + yvec*cos(-marker.upAngle);
@@ -138,26 +144,26 @@ namespace Anki {
         // Using negative angle to switch between Z axis that goes into
         // the ground (mat camera's Z axis) and one that points up, out
         // of the ground (our world).
-        Radians angle(-matMarker->get_imagePose().get_angle());
-        
+        Radians angle(matMarker->get_imagePose().get_angle());
+/*
         // Subtract 90 degrees because the matMarker currently indicates the
         // direction towards the front of the robot, but in our world
         // coordinate system, that's in the y direction and we want 0 degrees
         // not to represent the world y axis direction, but rather the world
         // x axis direction.
-        angle -= M_PI_2;
-        
+        angle += M_PI_2;
+ 
         if(not BlockWorld::ZAxisPointsUp) {
           // TODO: is this correct??
           matPoint.x() *= -1.f;
           //matPoint.y() *= -1.f;
           //angle = -angle;
         }
-        
+    */
         // TODO: embed 2D pose in 3D space using its plane
         //this->pose = Pose3d( Pose2d(angle, matPoint) ); // bad! need to preserve original pose b/c other poses point to it!
-        this->pose.set_rotation(angle, Pose3d::Z_AXIS);
-        this->pose.set_translation({{matPoint.x(), matPoint.y(), WHEEL_RAD_TO_MM}});
+        this->pose.set_rotation(angle, Z_AXIS_3D);
+        this->pose.set_translation({{matPoint.y(), matPoint.x(), WHEEL_RAD_TO_MM}});
         
         // Delete the matMarker once we're done with it
         delete matMarker;
@@ -466,7 +472,8 @@ namespace Anki {
       Pose3d newHeadPose(this->headCamPose);
       
       // Rotate that by the given angle
-      newHeadPose.rotateBy(-currentHeadAngle);
+      RotationVector3d Rvec(-currentHeadAngle, Y_AXIS_3D);
+      newHeadPose.rotateBy(Rvec);
       
       // Update the head camera's pose
       this->camHead.set_pose(newHeadPose);
@@ -515,11 +522,11 @@ namespace Anki {
         
         // Compute lift angle to achieve that height
         Radians desiredLiftAngle = asinf((desiredLiftHeight - LIFT_JOINT_HEIGHT) / LIFT_LENGTH);
-        RotationMatrix3d R(desiredLiftAngle, Pose3d::X_AXIS);
+        RotationMatrix3d R(desiredLiftAngle, X_AXIS_3D);
         Vec3f liftVec(0.f, LIFT_LENGTH, 0.f);
         liftVec = R * liftVec;
       
-        Pose3d desiredLiftPose(0.f, Pose3d::X_AXIS, liftVec, &(this->liftBasePose));
+        Pose3d desiredLiftPose(0.f, X_AXIS_3D, liftVec, &(this->liftBasePose));
 
         Pose3d desiredDockingFacePose = desiredLiftPose.getWithRespectTo(&(this->pose));
       

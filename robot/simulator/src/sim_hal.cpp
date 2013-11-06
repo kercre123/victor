@@ -1,5 +1,6 @@
 // System Includes
 #include <cmath>
+#include <cstdlib>
 
 // Our Includes
 #include "anki/cozmo/robot/hal.h"
@@ -10,6 +11,7 @@
 #include "sim_overlayDisplay.h"
 
 // Webots Includes
+#include <webots/Robot.hpp>
 #include <webots/Supervisor.hpp>
 
 
@@ -54,6 +56,7 @@ namespace Anki {
       // For pose information
       webots::GPS* gps_;
       webots::Compass* compass_;
+      webots::Node* estPose_;
       //char locStr[MAX_TEXT_DISPLAY_LENGTH];
       
       // For measuring wheel speed
@@ -196,6 +199,7 @@ namespace Anki {
       compass_ = webotRobot_.getCompass("compass");
       gps_->enable(TIME_STEP);
       compass_->enable(TIME_STEP);
+      estPose_ = webotRobot_.getFromDef("CozmoBotPose");
       
       // Get wheel speed sensors
       leftWheelGyro_->enable(TIME_STEP);
@@ -246,9 +250,9 @@ namespace Anki {
       const double* northVector = compass_->getValues();
       
       x = position[0];
-      y = -position[2];
+      y = position[2];
       
-      rad = std::atan2(northVector[0], -northVector[2]);
+      rad = std::atan2(northVector[2], northVector[0]);
       
     } // GetGroundTruthPose()
     

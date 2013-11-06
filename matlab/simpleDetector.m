@@ -1,6 +1,5 @@
 function markers = simpleDetector(img, varargin)
 
-
 downsampleFactor = 2;
 usePyramid = true;
 usePerimeterCheck = false;
@@ -119,6 +118,7 @@ else % if strcmp(embeddedConversions.completeCImplementationType, 'c_singleStep1
             if numRegions == 0
                 % Didn't even find any regions in the binary image, nothing to
                 % do!
+                markers = {};
                 return;
             end
 

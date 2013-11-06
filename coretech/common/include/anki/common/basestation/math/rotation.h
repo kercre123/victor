@@ -45,7 +45,7 @@ namespace Anki {
   class RotationMatrix3d;
   
   
-  class RotationVector3d : public Vec3f
+  class RotationVector3d
   {
   public:
     RotationVector3d(); // no rotation around z axis
@@ -56,16 +56,13 @@ namespace Anki {
     // Accessors for angle and axis.  Note that it is more efficient
     // to request both simultaneously if you need both, because the
     // angle must be computed to get the axis anyway.
-    Radians get_angle() const;
-    Vec3f   get_axis()  const;
-    void    get_angleAndAxis(Radians &angle, Vec3f &axis) const;
-
-#if ANKICORETECH_USE_OPENCV
-    using Vec3f::get_CvPoint_;
-    using Vec3f::x;
-    using Vec3f::y;
-    using Vec3f::z;
-#endif
+    Radians       get_angle() const;
+    const Vec3f&  get_axis()  const;
+    void          get_angleAndAxis(Radians &angle, Vec3f &axis) const;
+   
+  private:
+    Radians angle;
+    Vec3f axis; // unit vector
     
   }; // class RotationVector3d
   
@@ -110,21 +107,19 @@ namespace Anki {
   
   inline Radians RotationVector3d::get_angle(void) const
   {
-    return this->length();
+    return this->angle;
   }
   
-  inline Vec3f RotationVector3d::get_axis(void) const
+  inline const Vec3f& RotationVector3d::get_axis(void) const
   {
-    Vec3f axis(*this);
-    axis.makeUnitLength();
-    return axis;
+    return this->axis;
   }
   
   inline void RotationVector3d::get_angleAndAxis(Radians &angle,
                                                  Vec3f   &axis) const
   {
-    axis = *this;
-    angle = axis.makeUnitLength();
+    axis = this->axis;
+    angle = this->angle;
   }
 
 } // namespace Anki

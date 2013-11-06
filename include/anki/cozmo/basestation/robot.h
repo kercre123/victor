@@ -80,6 +80,7 @@ namespace Anki {
       const Pose3d neckPose; // joint around which head rotates
       const Pose3d headCamPose; // in canonical (untilted) position w.r.t. neck joint
       const Pose3d liftBasePose; // around which the base rotates/lifts
+      const Pose3d matCamPose; 
       Radians currentHeadAngle;
       
       

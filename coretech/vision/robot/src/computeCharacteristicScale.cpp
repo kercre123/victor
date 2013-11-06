@@ -252,7 +252,9 @@ namespace Anki
           printf("\n");
           }*/
         } else {         //    else % if pyramidLevel == 2 ... elseif pyramidLevel <= 5
-#if HAVE_64_BIT_ARITHMETIC // The movidius compiler is missing __ashrdi3, so this part won't compile
+#if !HAVE_64_BIT_ARITHMETIC
+          assert(false);
+#else  // The movidius compiler is missing __ashrdi3, so this part won't compile
           const s32 largeIndexMin = scaleFactors[pyramidLevel-1] / 2; // SQ31.0
 
           const s32 numAlphas = scaleFactors[pyramidLevel-1];
