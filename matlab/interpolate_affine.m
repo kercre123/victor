@@ -39,21 +39,87 @@ end
 
 [~, leftmostIndex] = min(warpedPoints(1,:));
 [~, rightmostIndex] = max(warpedPoints(1,:));
+% [~, topmostIndex] = min(warpedPoints(2,:));
+% [~, bottommostIndex] = max(warpedPoints(2,:));
 
 minIndexes = Inf * ones(size(template,1),1);
 maxIndexes = -Inf * ones(size(template,1),1);
 
-leftmost_clockwise1 = mod(leftmostIndex, 4) + 1;
-leftmost_clockwise2 = mod(leftmost_clockwise1, 4) + 1;
+%check if the quad is flipped
+centroid = mean(warpedPoints, 2);
+% oppositeLeftCorner = mod(mod(leftmostIndex, 4) + 1, 4) + 1;
+% oppositeTopCorner = mod(mod(topmostIndex, 4) + 1, 4) + 1;
+anglesFromCenter = atan2(warpedPoints(2,:)'-repmat(centroid(2,:), [1,4])', warpedPoints(1,:)'-repmat(centroid(1,:), [1,4])')
 
-leftmost_counter1 = mod(leftmostIndex-2, 4) + 1;
-leftmost_counter2 = mod(leftmost_counter1-2, 4) + 1;
+% Find the minimum angle to the left of the current one
+% TODO: make simpler
 
-rightmost_clockwise1 = mod(rightmostIndex, 4) + 1;
-rightmost_clockwise2 = mod(rightmost_clockwise1, 4) + 1;
+inds = (anglesFromCenter<0);
+anglesFromCenter(inds) = anglesFromCenter(inds) + 2*pi
 
-rightmost_counter1 = mod(rightmostIndex-2, 4) + 1;
-rightmost_counter2 = mod(rightmost_counter1-2, 4) + 1;
+if anglesFromCenter(1) == max(anglesFromCenter)
+    [~,ind] = min(anglesFromCenter); 
+else
+    angleDifferences = anglesFromCenter(2:4) - anglesFromCenter(1);
+    angleDifferences(angleDifferences<0) = Inf; 
+    [~,ind] = min(angleDifferences); 
+
+    ind = ind + 1;
+end
+% 
+% if anglesFromCenter(1)<0
+%     anglesFromCenter = anglesFromCenter + pi; 
+% end 
+
+assert(ind ~= 3); % I don't think this should ever happen
+
+if ind == 2 
+    direction = 1;
+else
+    direction = -1;
+end
+
+% disp(sprintf('%f->%d',aa(1),aa(ind+1)));
+
+% return;
+
+% if (warpedPoints(1, oppositeLeftCorner) > warpedPoints(1, leftmostIndex) || warpedPoints(2, oppositeLeftCorner) > warpedPoints(2, leftmostIndex)) ...
+%         && ~(warpedPoints(1, oppositeLeftCorner) > warpedPoints(1, leftmostIndex) && warpedPoints(2, oppositeLeftCorner) > warpedPoints(2, leftmostIndex))
+% if (warpedPoints(1, oppositeLeftCorner) > warpedPoints(1, leftmostIndex))
+if direction == 1
+    disp('normal');
+    leftmost_clockwise1 = mod(leftmostIndex, 4) + 1;
+    leftmost_clockwise2 = mod(leftmost_clockwise1, 4) + 1;
+
+    leftmost_counter1 = mod(leftmostIndex-2, 4) + 1;
+    leftmost_counter2 = mod(leftmost_counter1-2, 4) + 1;
+
+    rightmost_clockwise1 = mod(rightmostIndex, 4) + 1;
+    rightmost_clockwise2 = mod(rightmost_clockwise1, 4) + 1;
+
+    rightmost_counter1 = mod(rightmostIndex-2, 4) + 1;
+    rightmost_counter2 = mod(rightmost_counter1-2, 4) + 1;
+else    
+    disp('flipped');
+    leftmost_clockwise1 = mod(leftmostIndex-2, 4) + 1;
+    leftmost_clockwise2 = mod(leftmost_clockwise1-2, 4) + 1;
+
+    leftmost_counter1 = mod(leftmostIndex, 4) + 1;
+    leftmost_counter2 = mod(leftmost_counter1, 4) + 1;
+
+    rightmost_clockwise1 = mod(rightmostIndex-2, 4) + 1;
+    rightmost_clockwise2 = mod(rightmost_clockwise1-2, 4) + 1;
+
+    rightmost_counter1 = mod(rightmostIndex, 4) + 1;
+    rightmost_counter2 = mod(rightmost_counter1, 4) + 1;
+end
+
+% warpedPoints(:, leftmostIndex)
+% warpedPoints(:, leftmost_counter1)
+% warpedPoints(:, leftmost_counter2)
+% 
+% warpedPoints(:, leftmost_clockwise1)
+% warpedPoints(:, leftmost_clockwise2)
 
 % Compute the mins
 
@@ -86,7 +152,7 @@ maxIndexes = updateMaximums(warpedPoints(:,rightmostIndex),...
 if warpedPoints(2,rightmost_clockwise2) > warpedPoints(2,rightmostIndex)
     maxIndexes = updateMinimums(warpedPoints(:,rightmost_clockwise1),...
         warpedPoints(:,rightmost_clockwise2),...
-        maxIndexes, size(template));    
+        maxIndexes, size(template));
 end
 
 maxIndexes = updateMaximums(warpedPoints(:,rightmost_counter1),...
@@ -101,8 +167,23 @@ end
 
 assert(length(minIndexes) == length(maxIndexes));
 
+
+for i = 1:length(minIndexes)
+    if minIndexes(i) >= maxIndexes(i)
+        minIndexes(i) = Inf;
+        maxIndexes(i) = -Inf;        
+    end
+end
+
 minIndexes = max(0, minIndexes);
 maxIndexes = min(size(template,2), maxIndexes);
+
+for i = 1:length(minIndexes)
+    if minIndexes(i) >= maxIndexes(i)
+        minIndexes(i) = Inf;
+        maxIndexes(i) = -Inf;        
+    end
+end
 
 if DISPLAY_PLOTS
     for i = 1:length(minIndexes)
@@ -138,6 +219,10 @@ function minIndexes = updateMinimums(topPoint, bottomPoint, minIndexes, template
 
         maxY = bottomPoint(2);
         maxYRounded = min(templateSize(1)-1, max(0, floor(maxY)));
+        
+        if maxY < 0
+            return;
+        end
 
         % x was first computed at the floating-point coordinate of the
         % corner. Update it to the nearest integer y coordinate
@@ -171,6 +256,10 @@ function maxIndexes = updateMaximums(topPoint, bottomPoint, maxIndexes, template
         maxY = bottomPoint(2);
         maxYRounded = min(templateSize(1)-1, max(0, floor(maxY)));
 
+        if maxY < 0
+            return;
+        end
+        
         % x was first computed at the floating-point coordinate of the
         % corner. Update it to the nearest integer y coordinate
         x = x + dx * (minYRounded-minY);
