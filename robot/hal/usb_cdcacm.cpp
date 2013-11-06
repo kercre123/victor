@@ -2,6 +2,7 @@
 #include "movidius.h"
 #include "usbDefines.h"
 
+#undef REG_WORD
 #define REG_WORD(x) *(volatile u32*)(USB_BASE_ADDR + (x))
 #define REG_HALF(x) *(volatile u16*)(USB_BASE_ADDR + (x))
 
