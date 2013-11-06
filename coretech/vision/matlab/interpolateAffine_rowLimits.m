@@ -1,4 +1,4 @@
-% function output = interpolate_affine(inputImage, homography, outputImageSize)
+% function output = interpolateAffine_rowLimits(inputImage, homography, outputImageSize)
 
 % homography can be either 2x3 or 3x3, though only the first two rows are
 % used. The x-coordinate comes first.
@@ -6,9 +6,9 @@
 % homography warps the input image coordinates to the template coordinates
 
 % inputImage = zeros([5,5]); for y=1:5 inputImage(y,:)=y*(1:5); end
-% output = interpolate_affine(inputImage, [2,1.5,0;.1,2,1.5], zeros(13,11));
+% output = interpolateAffine_rowLimits(inputImage, [2,1.5,0;.1,2,1.5], zeros(13,11));
 
-function interpolate_affine(inputImage, homography, template)
+function interpolateAffine_rowLimits(inputImage, homography, template)
 DISPLAY_PLOTS = true;
 % DISPLAY_PLOTS = false;
 
