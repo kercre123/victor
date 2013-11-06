@@ -244,7 +244,7 @@ namespace Anki {
 #endif
       
 #if(DEBUG_SPEED_CONTROLLER)
-      fprintf(stdout, " controllerSpeed: %d, currError: %d, errorSum: %d\n", controllerCommandedVehicleSpeed, currerror, errorsum);
+      PRINT(" SPEED_CTRL: userDesSpeed: %d, userCurrSpeed: %d, userAccel: %d, controllerSpeed: %d, currError: %d, errorSum: %d\n", userCommandedDesiredVehicleSpeed_, userCommandedCurrentVehicleSpeed_, userCommandedAcceleration_, controllerCommandedVehicleSpeed_, currerror, errorsum_);
 #endif
       
       Traces16(TRACE_VAR_VSC_DESIRED_SPEED, desVehicleSpeed, TRACE_MASK_MOTOR_CONTROLLER);

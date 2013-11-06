@@ -44,12 +44,12 @@ namespace Anki {
               const CozmoMsg_RobotAdded* msg = reinterpret_cast<const CozmoMsg_RobotAdded*>(msgBuffer);
               
               if(msg->robotID != HAL::GetRobotID()) {
-                fprintf(stdout, "Robot received ADDED_TO_WORLD handshake with "
+                PRINT("Robot received ADDED_TO_WORLD handshake with "
                         " wrong robotID (%d instead of %d).\n",
                         msg->robotID, HAL::GetRobotID());
               }
               
-              fprintf(stdout, "Robot received handshake from basestation, "
+              PRINT("Robot received handshake from basestation, "
                       "sending camera calibration.\n");
               const HAL::CameraInfo *matCamInfo  = HAL::GetMatCamInfo();
               const HAL::CameraInfo *headCamInfo = HAL::GetHeadCamInfo();
@@ -102,7 +102,7 @@ namespace Anki {
               Radians currentMatHeading = msg->headingAngle;
               Localization::SetCurrentMatPose(currentMatX, currentMatY, currentMatHeading);
               
-              fprintf(stdout, "Robot received localization update from "
+              PRINT("Robot received localization update from "
                       "basestation: (%.3f,%.3f) at %.1f degrees\n",
                       currentMatX, currentMatY,
                       currentMatHeading.getDegrees());
@@ -122,19 +122,19 @@ namespace Anki {
               
               if(DockingController::SetGoals(msg) == EXIT_SUCCESS) {
                 
-                fprintf(stdout, "Robot received Initiate Dock message, now in DOCK mode.\n");
+                PRINT("Robot received Initiate Dock message, now in DOCK mode.\n");
                 
                 Robot::SetOperationMode(Robot::DOCK);
               }
               else {
-                fprintf(stdout, "Initiate Dock message received, failed to set docking goals.\n");
+                PRINT("Initiate Dock message received, failed to set docking goals.\n");
               }
               
               break;
             }
 
             default:
-              fprintf(stdout, "Unrecognized command in received message.\n");
+              PRINT("Unrecognized command in received message.\n");
               
           } // switch(cmd)
         }

@@ -225,7 +225,7 @@ namespace Anki {
       s16 wright = (s16)CLIP(rightspeed,s16_MIN,s16_MAX);
       
 #if(DEBUG_STEERING_CONTROLLER)
-      fprintf(stdout, " STEERING: %d (L), %d (R)\n", wleft, wright);
+      PRINT(" STEERING: %d (L), %d (R)\n", wleft, wright);
 #endif
       
       //Command the desired wheel speeds to the wheels

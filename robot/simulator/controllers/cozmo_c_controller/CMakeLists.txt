@@ -22,6 +22,9 @@ include_directories(
 # Link paths
 link_directories( ${WEBOTS_LIB_DIR} )
 
+# Defines
+add_definitions(-DSIMULATOR)
+
 # NEed to get Cmake to do this somehow...
 #-L/Applications/Webots/lib/ -lCppController -L../../../coretech-common/build/xcode4/lib/ -lCoreTech_Common_Embedded_64Debug -lCoreTech_Common_64Debug -L/Applications/MATLAB_R2012b.app/bin/maci64/ -lmx -leng -Wl,-rpath,${MATLAB_APP_ROOT}/bin/maci64/
 

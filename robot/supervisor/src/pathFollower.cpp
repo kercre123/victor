@@ -78,7 +78,7 @@ namespace Anki
         
 #if ENABLE_PATH_VIZ
         if(Viz::Init() == EXIT_FAILURE) {
-          fprintf(stdout, "PathFollower visualization init failed.\n");
+          PRINT("PathFollower visualization init failed.\n");
           return EXIT_FAILURE;
         }
 #endif

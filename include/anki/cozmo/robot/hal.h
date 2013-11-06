@@ -45,6 +45,9 @@ extern "C" {
 #ifdef MOVI_TOOLS
 #undef printf
 #define printf(...) _xprintf(Anki::Cozmo::HAL::UARTPutChar, 0, __VA_ARGS__)
+#define PRINT(...) _xprintf(Anki::Cozmo::HAL::UARTPutChar, 0, __VA_ARGS__)
+#elif defined(SIMULATOR)
+#define PRINT(...) fprintf(stdout, __VA_ARGS__)
 #endif  // MOVI_TOOLS
 
 namespace Anki

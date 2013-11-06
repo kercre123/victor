@@ -16,9 +16,10 @@
 
 
 // If enabled, will use Matlab as the vision system for processing images
+#ifdef SIMULATOR
 #define USE_MATLAB_FOR_HEAD_CAMERA
 #define USE_MATLAB_FOR_MAT_CAMERA
-
+#endif
 
 namespace Anki {
   namespace Cozmo {

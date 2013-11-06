@@ -157,12 +157,12 @@ namespace Anki {
       if (lastDelimPos != std::string::npos) {
         robotID_ = atoi( name.substr(lastDelimPos+1).c_str() );
         if (robotID_ < 1) {
-          fprintf(stdout, "***ERROR: Invalid robot name (%s). ID must be greater than 0\n", name.c_str());
+          PRINT("***ERROR: Invalid robot name (%s). ID must be greater than 0\n", name.c_str());
           return EXIT_FAILURE;
         }
-        fprintf(stdout, "Initializing robot ID: %d\n", robotID_);
+        PRINT("Initializing robot ID: %d\n", robotID_);
       } else {
-        fprintf(stdout, "***ERROR: Cozmo robot name %s is invalid.  Must end with '_<ID number>'\n.", name.c_str());
+        PRINT("***ERROR: Cozmo robot name %s is invalid.  Must end with '_<ID number>'\n.", name.c_str());
         return EXIT_FAILURE;
       }
       
@@ -318,7 +318,7 @@ namespace Anki {
       {
         headMotor_->setVelocity(rad_per_sec);
       } else {
-        fprintf(stdout, "Head at angular limit, refusing to tilt.\n");
+        PRINT("Head at angular limit, refusing to tilt.\n");
         headMotor_->setVelocity(0.0);
         // TODO: return a failure?
       }
@@ -383,7 +383,7 @@ namespace Anki {
     {
       using namespace Sim::OverlayDisplay;
      /*
-      fprintf(stdout, "speedDes: %d, speedCur: %d, speedCtrl: %d, speedMeas: %d\n",
+      PRINT("speedDes: %d, speedCur: %d, speedCtrl: %d, speedMeas: %d\n",
               GetUserCommandedDesiredVehicleSpeed(),
               GetUserCommandedCurrentVehicleSpeed(),
               GetControllerCommandedVehicleSpeed(),
@@ -441,7 +441,7 @@ namespace Anki {
         COZMO_WORLD_MSG_HEADER_BYTE_2, static_cast<u8>(robotID_)};
       
       if(size+3 > 1024) {
-        fprintf(stdout, "Data too large to send with prepended header!\n");
+        PRINT("Data too large to send with prepended header!\n");
       } else {
         memcpy(msg+3, data, size);
         tx_->send(msg, size+3);

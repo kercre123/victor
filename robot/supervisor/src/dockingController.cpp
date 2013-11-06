@@ -164,7 +164,7 @@ namespace Anki {
                 ApproachBlock();
                 
               } else {
-                fprintf(stdout, "Failed to find docking target.\n");
+                PRINT("Failed to find docking target.\n");
                 mode_ = DONE;
                 success_ = false;
                 
@@ -196,7 +196,7 @@ namespace Anki {
             {
               mode_ = DONE;
               success_ = false;
-              fprintf(stdout, "Reached default case in DockingController "
+              PRINT("Reached default case in DockingController "
                       "mode switch statement.\n");
             } // default case
               

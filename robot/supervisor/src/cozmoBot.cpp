@@ -75,7 +75,7 @@ namespace Anki {
       ReturnCode Init(void)
       {
         if(HAL::Init() == EXIT_FAILURE) {
-          fprintf(stdout, "Hardware Interface initialization failed!\n");
+          PRINT("Hardware Interface initialization failed!\n");
           return EXIT_FAILURE;
         }
         
@@ -86,39 +86,39 @@ namespace Anki {
                               &blockMarkerMailbox_,
                               &matMarkerMailbox_) == EXIT_FAILURE)
         {
-          fprintf(stdout, "Vision System initialization failed.");
+          PRINT("Vision System initialization failed.");
           return EXIT_FAILURE;
         }
         
         if(PathFollower::Init() == EXIT_FAILURE) {
-          fprintf(stdout, "PathFollower initialization failed.\n");
+          PRINT("PathFollower initialization failed.\n");
           return EXIT_FAILURE;
         }
         
         // Initialize subsystems if/when available:
         /*
          if(WheelController::Init() == EXIT_FAILURE) {
-         fprintf(stdout, "WheelController initialization failed.\n");
+         PRINT("WheelController initialization failed.\n");
          return EXIT_FAILURE;
          }
          
          if(SpeedController::Init() == EXIT_FAILURE) {
-         fprintf(stdout, "SpeedController initialization failed.\n");
+         PRINT("SpeedController initialization failed.\n");
          return EXIT_FAILURE;
          }
          
          if(SteeringController::Init() == EXIT_FAILURE) {
-         fprintf(stdout, "SteeringController initialization failed.\n");
+         PRINT("SteeringController initialization failed.\n");
          return EXIT_FAILURE;
          }
          
          if(HeadController::Init() == EXIT_FAILURE) {
-         fprintf(stdout, "HeadController initialization failed.\n");
+         PRINT("HeadController initialization failed.\n");
          return EXIT_FAILURE;
          }
          
          if(LiftController::Init() == EXIT_FAILURE) {
-         fprintf(stdout, "LiftController initialization failed.\n");
+         PRINT("LiftController initialization failed.\n");
          return EXIT_FAILURE;
          }
          
@@ -129,7 +129,7 @@ namespace Anki {
         
         // Once initialization is done, broadcast a message that this robot
         // is ready to go
-        fprintf(stdout, "Robot broadcasting availability message.\n");
+        PRINT("Robot broadcasting availability message.\n");
         CozmoMsg_RobotAvailable msg;
         msg.size = sizeof(CozmoMsg_RobotAvailable);
         msg.msgID = MSG_V2B_CORE_ROBOT_AVAILABLE;
@@ -206,7 +206,7 @@ namespace Anki {
             !testPathStarted) {
           SpeedController::SetUserCommandedAcceleration( MAX(ONE_OVER_CONTROL_DT + 1, 500) );  // This can't be smaller than 1/CONTROL_DT!
           SpeedController::SetUserCommandedDesiredVehicleSpeed(160);
-          fprintf(stdout, "Speed commanded: %d mm/s\n",
+          PRINT("Speed commanded: %d mm/s\n",
                   SpeedController::GetUserCommandedDesiredVehicleSpeed() );
           
           // Create a path and follow it
@@ -229,7 +229,7 @@ namespace Anki {
         {
           case INITIALIZING:
           {
-            fprintf(stdout, "Robot still initializing.\n");
+            PRINT("Robot still initializing.\n");
             break;
           }
             
@@ -267,7 +267,7 @@ namespace Anki {
             break;
           }
           default:
-            fprintf(stdout, "Unrecognized CozmoBot mode.\n");
+            PRINT("Unrecognized CozmoBot mode.\n");
             
         } // switch(mode_)
         
