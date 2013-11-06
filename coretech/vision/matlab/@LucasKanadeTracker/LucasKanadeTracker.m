@@ -78,19 +78,20 @@ classdef LucasKanadeTracker < handle
             this.xgrid = cell(1, this.numScales);
             this.ygrid = cell(1, this.numScales);
 
-            [nrows,ncols,nbands] = size(firstImg);
+            [~,~,nbands] = size(firstImg);
             firstImg = im2double(firstImg);
             if nbands>1 
                 firstImg = mean(firstImg,3);
             end
             
-            this.numScales = ceil( log2(min(nrows,ncols)/this.minSize) );
+            %this.numScales = ceil( log2(min(nrows,ncols)/this.minSize) );
             
             [y,x] = find(targetMask);
             xmin = min(x); xmax = max(x);
             ymin = min(y); ymax = max(y);
             maskBBox = [xmin ymin xmax-xmin ymax-ymin];
             
+            this.numScales = ceil( log2(min(maskBBox(3:4))/this.minSize) );
               
             targetMask = false(size(targetMask));
             targetMask(maskBBox(2):(maskBBox(2)+maskBBox(4)), ...
@@ -385,7 +386,7 @@ classdef LucasKanadeTracker < handle
                     imgi = (imgi - mean(imgi(inBounds)))/std(imgi(inBounds));
                 end
                            
-                It = this.target{i_scale}(:) - imgi;
+                It = imgi - this.target{i_scale}(:);
                 
                 %It(isnan(It)) = 0;
                 %inBounds = true(size(It));
@@ -469,11 +470,13 @@ classdef LucasKanadeTracker < handle
                             0 0 1];
                     end
                     
-                    this.tform = tformUpdate*this.tform;
+                    % TODO: hardcode this inverse
+                    %this.tform = this.tform*inv(tformUpdate);
+                    this.tform = this.tform / tformUpdate;
                 else
                     %this.tx = this.tx + update(1);
                     %this.ty = this.ty + update(2);
-                    this.tform(1:2,3) = this.tform(1:2,3) + update;
+                    this.tform(1:2,3) = this.tform(1:2,3) - update;
                 end
                 
                 iteration = iteration + 1;
