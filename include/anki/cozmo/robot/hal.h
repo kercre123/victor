@@ -50,6 +50,8 @@ extern "C" {
 #define PRINT(...) fprintf(stdout, __VA_ARGS__)
 #endif  // MOVI_TOOLS
 
+#define REG_WORD(x) *(volatile u32*)(x)
+
 namespace Anki
 {
   namespace Cozmo
@@ -142,6 +144,8 @@ namespace Anki
 
       // Get the number of microseconds since boot
       u32 GetMicroCounter(void);
+      void MicroWait(u32 microseconds);
+
       s32 GetRobotID(void);
 
       // Take a step (needed for webots, possibly a no-op for real robot?)
@@ -151,15 +155,140 @@ namespace Anki
       void GetGroundTruthPose(f32 &x, f32 &y, f32& rad);
 
       // UART
-      void UARTInit();
       int UARTPutChar(int c);
 
-      // USB
-      void USBInit();
-      void USBUpdate();
       
-      // Encoders
-      void EncodersInit();
+      // .....................
+
+
+      // Audio
+      const u32 AUDIO_SAMPLE_SIZE = 480;
+
+      // Play an audio sample at 24 kHz. Returns true if it was played.
+      bool AudioPlay(s16 buffer[AUDIO_SAMPLE_SIZE]);
+
+      // Flash memory
+      const u32 FLASH_PAGE_SIZE = 4 * 1024;
+      void FlashWrite(u32 page, u8 data[FLASH_PAGE_SIZE]);
+      void FlashRead(u32 page, u8 data[FLASH_PAGE_SIZE]);
+
+      // USB / UART
+      void USBSendBuffer(u8* buffer, u32 size);
+      s32 USBGetChar();
+      int USBPutChar(int c);
+
+      // Motors
+      enum MotorID
+      {
+        MOTOR_LEFT_WHEEL = 0,
+        MOTOR_RIGHT_WHEEL,
+        MOTOR_LIFT,
+        MOTOR_GRIP,
+        MOTOR_HEAD,
+        MOTOR_COUNT
+      };
+
+      // Set the motor power in the unitless range [-1.0, 1.0]
+      void MotorSetPower(MotorID motor, f32 power);
+
+      // Reset the internal position of the specified motor to 0
+      void MotorResetPosition(MotorID motor);
+
+      // Returns units based on the specified motor type:
+      // Wheels are in mm/s, everything else is in degrees/s.
+      f32 MotorGetSpeed(MotorID motor);
+
+      // Returns units based on the specified motor type:
+      // Wheels are in mm since reset, everything else is in degrees.
+      f32 MotorGetPosition(MotorID motor);
+
+      // Measures the unitless load on all motors
+      s32 MotorGetLoad();
+
+      // Cameras
+      enum CameraID
+      {
+        CAMERA_HEAD = 0,
+        CAMERA_MAT,
+        CAMERA_COUNT
+      };
+
+      enum CameraMode
+      {
+        CAMERA_MODE_VGA = 0,
+        CAMERA_MODE_QVGA,
+        CAMERA_MODE_QQVGA,
+      };
+
+      // Starts camera frame synchronization
+      void CameraStartFrame(CameraID camera, u8* frame, CameraMode mode,
+          u16 exposure, bool enableLight);
+
+      // Get the number of lines received so far for the specified camera
+      u32 CameraGetReceivedLines(CameraID camera);
+
+      // Returns whether or not the specfied camera has received a full frame
+      bool CameraIsEndOfFrame(CameraID camera);
+
+      // Battery
+      // Get the battery percent between [0, 100]
+      u8 BatteryGetPercent();
+
+      // Return whether or not the battery is charging
+      bool BatteryIsCharging();
+
+      // Return whether or not the robot is connected to a charger
+      bool BatteryIsOnCharger();
+
+      // UI LEDs
+      const u32 LED_CHANNEL_COUNT = 8;
+
+      // Set the intensity for each LED channel in the range [0, 255]
+      void LEDSet(u8 leds[LED_CHANNEL_COUNT]);
+
+      // Radio
+      enum RadioState
+      {
+        RADIO_STATE_ADVERTISING = 0,
+        RADIO_STATE_CONNECTED
+      };
+
+      const u32 RADIO_BUFFER_SIZE = 100;
+      
+      // Returns number of bytes received from the basestation
+      u32 RadioFromBase(u8 buffer[RADIO_BUFFER_SIZE]);
+     
+      // Returns true if the buffer has been sent to the basestation
+      bool RadioToBase(u8* buffer, u32 size);
+
+      // Power management
+      enum PowerState
+      {
+        POWER_STATE_OFF = 0,
+        POWER_STATE_OFF_WAKE_ON_RADIO,
+        POWER_STATE_ON,
+        POWER_STATE_REBOOT,
+        POWER_STATE_IDLE,
+        POWER_STATE_CHARGING
+      };
+
+      void PowerSetMode(PowerState state);
+
+      // Accelerometer
+      // Returns each axis in Gs
+      void AccelGetXYZ(f32& x, f32& y, f32& z);
+
+      // Permanent robot information written at factory
+      struct BirthCertificate
+      {
+        u32 esn;
+        u32 modelNumber;
+        u32 lotCode;
+        u32 birthday;
+        u32 hwVersion;
+      };
+
+      const BirthCertificate& GetBirthCertificate();
 
     } // namespace HAL
   } // namespace Cozmo
