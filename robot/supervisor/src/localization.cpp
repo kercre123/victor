@@ -1,8 +1,12 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/localization.h"
 
+#define USE_OVERLAY_DISPLAY 1
 
-
+#if(USE_OVERLAY_DISPLAY)
+#include "anki/cozmo/robot/hal.h"
+#include "sim_overlayDisplay.h"
+#endif
 
 namespace Anki {
   namespace Cozmo {

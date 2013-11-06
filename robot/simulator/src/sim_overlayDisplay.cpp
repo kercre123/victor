@@ -40,7 +40,7 @@ namespace Anki {
         
         void UpdateEstimatedPose(const f32 x, const f32 y, const f32 angle)
         {
-          const double estTrans[3] = {-x, 0, y};
+          const double estTrans[3] = {x, 0, y};
           const double estRot[4] = {0, 1, 0, angle};
           
           translation_->setSFVec3f(estTrans);
