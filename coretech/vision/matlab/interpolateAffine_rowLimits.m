@@ -8,9 +8,10 @@
 % interpolateAffine_rowLimits([0,0;3,1;2,4;-1,3], [2,1.5,0;.1,2,1.5], [13,11]);
 % for i=1:100 interpolateAffine_rowLimits(4*[0,0;3,1;2,4;-1,3], 5*(2*rand([2,3])-1), [13,11]); pause(); end
 
-function interpolateAffine_rowLimits(inputImageQuad, homography, templateSize)
-DISPLAY_PLOTS = true;
-% DISPLAY_PLOTS = false;
+function [minIndexes, maxIndexes] = interpolateAffine_rowLimits(inputImageQuad, homography, templateSize)
+
+% DISPLAY_PLOTS = true;
+DISPLAY_PLOTS = false;
 
 homography = homography(1:2, :)
 
