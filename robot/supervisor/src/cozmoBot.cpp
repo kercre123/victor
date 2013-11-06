@@ -27,12 +27,6 @@
 
 ///////// TESTING //////////
 #define EXECUTE_TEST_PATH 0
-#define USE_OVERLAY_DISPLAY 1
-
-
-#if(USE_OVERLAY_DISPLAY)
-#include "sim_overlayDisplay.h"
-#endif
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB && USING_MATLAB_VISION
 #include "anki/embeddedCommon/matlabConverters.h"

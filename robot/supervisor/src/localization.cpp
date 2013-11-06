@@ -1,8 +1,12 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/localization.h"
 
+#define USE_OVERLAY_DISPLAY 1
 
-
+#if(USE_OVERLAY_DISPLAY)
+#include "anki/cozmo/robot/hal.h"
+#include "sim_overlayDisplay.h"
+#endif
 
 namespace Anki {
   namespace Cozmo {
@@ -49,17 +53,20 @@ namespace Anki {
           
           SetText(CURR_TRUE_POSE, "True Pose: (x,y)=(%.4f, %.4f) at angle=%.1f",
                   xTrue, yTrue, angleRad.getDegrees());
+          
+          UpdateEstimatedPose(currentMatX_, currentMatY_, currentMatHeading_.ToFloat());
         }
 #endif
 
-      }
+      } // SetCurrentMatPose()
       
       void GetCurrentMatPose(f32& x, f32& y, Radians& angle)
       {
         x = currentMatX_;
         y = currentMatY_;
         angle = currentMatHeading_;
-      }
+      } // GetCurrentMatPose()
+      
   
       Radians GetCurrentMatOrientation()
       {

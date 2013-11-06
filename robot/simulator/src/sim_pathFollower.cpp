@@ -1,3 +1,5 @@
+#include <cstdlib>
+
 #include "anki/cozmo/robot/hal.h"
 
 #include "sim_pathFollower.h"

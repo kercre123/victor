@@ -3,6 +3,8 @@
 
 //#include "anki/cozmo/robot/cozmoTypes.h"
 
+#include <webots/Supervisor.hpp>
+
 namespace Anki {
   namespace Cozmo {
     

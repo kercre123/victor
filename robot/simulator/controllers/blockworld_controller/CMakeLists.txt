@@ -2,8 +2,8 @@
 
 # Include paths
   include_directories(
-  ${WEBOTS_C_INCLUDE_DIR}
-#  ${WEBOTS_CPP_INCLUDE_DIR}
+#  ${WEBOTS_C_INCLUDE_DIR}
+  ${WEBOTS_CPP_INCLUDE_DIR}
 #  ${PROJECT_SOURCE_DIR}/coretech/messaging/include
   ${PROJECT_SOURCE_DIR}/include
 #  ${PROJECT_SOURCE_DIR}/coretech/
@@ -36,8 +36,8 @@ target_link_libraries(blockworld_controller
   Cozmo_Basestation
   CoreTech_Common_Basestation
   CoreTech_Vision_Basestation
- Controller # Webots C Controller
-#  CppController # Webots C++ Controller
+# Controller # Webots C Controller
+  CppController # Webots C++ Controller
   ${OPENCV_LIBS}
 )
 

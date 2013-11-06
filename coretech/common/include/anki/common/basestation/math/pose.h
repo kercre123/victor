@@ -57,7 +57,6 @@ namespace Anki {
   {
   public:
     static Pose2d* World;
-    static const Vec2f X_AXIS, Y_AXIS;
     
     // Constructors:
     Pose2d(const Radians &angle, const Point2f &translation);
@@ -143,9 +142,7 @@ namespace Anki {
     
   public:
     static Pose3d* World;
-    
-    static const Vec3f X_AXIS, Y_AXIS, Z_AXIS;
-    
+        
     // Default pose: no rotation, no translation, world as parent
     Pose3d();
     

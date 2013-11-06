@@ -27,6 +27,7 @@
 
 #include <cmath>
 
+#include "anki/common/types.h"
 #include "anki/common/basestation/exceptions.h"
 
 #if ANKICORETECH_USE_OPENCV
@@ -122,12 +123,52 @@ namespace Anki {
   template <typename T>
   using Point3 = Point<3, T>;
   
-  typedef Point2<float> Point2f;
-  typedef Point3<float> Point3f;
+  typedef Point2<f32> Point2f;
+  typedef Point3<f32> Point3f;
   
-  // TODO: Do need a separate Vec class?
   typedef Point2f Vec2f;
   typedef Point3f Vec3f;
+  
+  const Vec2f X_AXIS_2D(1.f, 0.f);
+  const Vec2f Y_AXIS_2D(0.f, 1.f);
+  
+  const Vec3f X_AXIS_3D(1.f, 0.f, 0.f);
+  const Vec3f Y_AXIS_3D(0.f, 1.f, 0.f);
+  const Vec3f Z_AXIS_3D(0.f, 0.f, 1.f);
+  
+  /*
+  template<size_t N, typename T>
+  class UnitVector : public Point<N,T>
+  {
+    template <typename... Tail>
+    UnitVector(typename std::enable_if<sizeof...(Tail)+1 == N, T>::type head, Tail... tail)
+    : Point<N,T>(head, T(tail)...)
+    {
+      this->makeUnitLength();
+    }
+    
+    // All setters call superclass set function and then renormalize?
+    
+    // Always returns one:
+    T length(void) const { return T(1); };
+    
+  }; // class UnitVector
+  */
+  
+  /*
+   // TODO: Do need a separate Vec class?
+  template<size_t N, typename T>
+  class Vec : public Point<N,T>
+  {
+    
+  }; // class Vec
+  
+  template<typename T>
+  using Vec2 = Vec<2,T>;
+  
+  template<typename T>
+  using Vec3 = Vec<3,T>;
+  */
   
   // Display / Logging:
   template<size_t N, typename T>
