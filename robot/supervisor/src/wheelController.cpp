@@ -20,6 +20,7 @@
 #include <stdio.h>
 
 namespace Anki {
+  namespace Cozmo {
   namespace WheelController {
     
     // private members
@@ -288,5 +289,5 @@ namespace Anki {
     }
     
   } // namespace WheelController
-  
+  } // namespace Cozmo
 } // namespace Anki

@@ -18,7 +18,7 @@
 //        out of products-cozmo)
 
 namespace Anki {
-  
+  namespace Cozmo {
   namespace SteeringController {
     
     // Parameters / Constants:
@@ -67,7 +67,7 @@ namespace Anki {
     void ReInit(void);
     
   } // namespace SteeringController
-  
+  } // namespace Cozmo
 } // namespace Anki
 
 #endif // STEERING_CONTROLLER_H_

@@ -42,6 +42,7 @@
 #include "anki/common/robot/utilities_c.h"
 
 namespace Anki {
+  namespace Cozmo {
   namespace SpeedController {
     
     
@@ -269,6 +270,7 @@ namespace Anki {
     }
     
   } // namespace SpeedController
+  } // namespace Cozmo
 } // namespace Anki
 
 

@@ -9,9 +9,8 @@
 #ifndef WHEEL_CONTROLLER_H_
 #define WHEEL_CONTROLLER_H_
 
-#include "anki/cozmo/robot/cozmoTypes.h"
-
 namespace Anki {
+  namespace Cozmo {
   namespace WheelController {
     
     //The default gains for the wheel speed controller
@@ -74,6 +73,7 @@ namespace Anki {
     void DoCoastUntilStop(void);
     
   } // namespace WheelController
+  } // namespace Cozmo
 } // namespace Anki
 
 

@@ -22,7 +22,7 @@
 
 
 namespace Anki {
-  
+  namespace Cozmo {
   namespace SteeringController {
 
    
@@ -233,6 +233,7 @@ namespace Anki {
     }
     
   } // namespace SteeringController
+  } // namespace Cozmo
 } // namespace Anki
 
 
