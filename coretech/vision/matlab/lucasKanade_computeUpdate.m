@@ -1,6 +1,11 @@
 % function lucasKanade_computeUpdate()
 
-% [update, A, b] = lucasKanade_computeUpdate(templateImage, templateQuad, A_translationOnly{1}, templateImage, homography, 1, true);
+% templateImage = zeros(16,16); for y=1:size(templateImage,1) templateImage(y,:) = y*(1:size(templateImage,2)); end;
+% warpedTemplateImage = lucasKande_warpGroundTruth(templateImage, [1,0,0.5; 0,1,0.1; 0,0,1], size(templateImage));
+% templateQuad = [5,4;10,4;10,8;5,8];
+% numScales = 2;
+% [A_translationOnly, A_affine] = lucasKanade_init(templateImage, templateQuad, numScales, false, true);
+% [update, A, b] = lucasKanade_computeUpdate(templateImage, templateQuad, A_translationOnly{1}, warpedTemplateImage, eye(3), 1, true);
 
 function [update, A, b] = lucasKanade_computeUpdate(templateImage, templateQuad, AFull, newImage, homography, scale, debugDisplay)
 
