@@ -88,16 +88,16 @@ namespace Anki {
       float GetLeftWheelSpeed()
       {
         const double* axesSpeeds_rad_per_s = leftWheelGyro_->getValues();
-        float mm_per_s = -axesSpeeds_rad_per_s[0] * WHEEL_RAD_TO_MM;
-        //printf("LEFT: %f rad/s, %f mm/s\n", -axesSpeeds_rad_per_s[0], mm_per_s);
+        float mm_per_s = -axesSpeeds_rad_per_s[1] * WHEEL_RAD_TO_MM;
+        //PRINT("LEFT: %f rad/s, %f mm/s\n", -axesSpeeds_rad_per_s[1], mm_per_s);
         return mm_per_s;
       }
       
       float GetRightWheelSpeed()
       {
         const double* axesSpeeds_rad_per_s = rightWheelGyro_->getValues();
-        float mm_per_s = -axesSpeeds_rad_per_s[0] * WHEEL_RAD_TO_MM;
-        //printf("RIGHT: %f rad/s, %f mm/s\n", -axesSpeeds_rad_per_s[0], mm_per_s);
+        float mm_per_s = -axesSpeeds_rad_per_s[1] * WHEEL_RAD_TO_MM;
+        //PRINT("RIGHT: %f rad/s, %f mm/s\n", -axesSpeeds_rad_per_s[1], mm_per_s);
         return mm_per_s;
       }
 
@@ -353,9 +353,13 @@ namespace Anki {
       const double* northVector = compass_->getValues();
       
       x = position[0];
-      y = position[2];
+      y = -position[2];
       
       rad = std::atan2(northVector[2], northVector[0]);
+      
+      //PRINT("GroundTruth:  pos %f %f %f   rad %f %f %f\n", position[0], position[1], position[2],
+      //      northVector[0], northVector[1], northVector[2]);
+      
       
     } // GetGroundTruthPose()
     
