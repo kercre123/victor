@@ -104,13 +104,13 @@ namespace Anki {
       
       void SetLeftWheelSpeed(f32 mm_per_s)
       {
-        f32 rad_per_s = mm_per_s / WHEEL_RAD_TO_MM;
+        f32 rad_per_s = -mm_per_s / WHEEL_RAD_TO_MM;
         leftWheelMotor_->setVelocity(rad_per_s);
       }
       
       void SetRightWheelSpeed(f32 mm_per_s)
       {
-        f32 rad_per_s = mm_per_s / WHEEL_RAD_TO_MM;
+        f32 rad_per_s = -mm_per_s / WHEEL_RAD_TO_MM;
         rightWheelMotor_->setVelocity(rad_per_s);
       }
       
