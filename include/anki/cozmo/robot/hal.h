@@ -104,11 +104,7 @@ namespace Anki
       
       ReturnCode Init(void);
       void Destroy(void);
-      
-      // Wheel motors
-      void SetWheelAngularVelocity(f32 left_rad_per_sec,
-                                   f32 right_rad_per_sec);
-      
+
       // Gripper control
       bool IsGripperEngaged();
       

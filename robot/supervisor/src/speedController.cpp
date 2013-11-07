@@ -30,7 +30,7 @@
 
 //#include <math.h>
 //#include "hal/portable.h"
-#include "anki/cozmo/robot/assert.h"
+#include <assert.h>
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/debug.h"
 #include "anki/cozmo/robot/speedController.h"

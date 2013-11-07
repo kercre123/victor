@@ -39,14 +39,6 @@ namespace Anki {
       OperationMode GetOperationMode();
       void SetOperationMode(OperationMode newMode);
 
-      
-      // TODO: Move this to HAL?
-      //Sets an open loop speed to the two motors. The open loop speed value ranges
-      //from: [0..MOTOR_PWM_MAXVAL] and HAS to be within those boundaries
-      void SetOpenLoopMotorSpeed(s16 leftSpeed, s16 rightSpeed);
-           
-
-      
     } // namespace Robot
     
   } // namespace Cozmo

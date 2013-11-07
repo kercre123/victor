@@ -38,8 +38,8 @@ namespace Anki {
       f32 Kd_ = DEFAULT_WHEEL_KD;
       
       //Returns/Sets the desired speed of the wheels (in mm/sec)
-      s16 desiredWheelSpeedL_ = 0;
-      s16 desiredWheelSpeedR_ = 0;
+      f32 desiredWheelSpeedL_ = 0;
+      f32 desiredWheelSpeedR_ = 0;
       
       // PWM values:
       s16 pwmL_ = 0;
@@ -61,9 +61,6 @@ namespace Anki {
       float error_sumL_ = 0;
       float error_sumR_ = 0;
       
-      // For detecting out-of-control spinning
-      u16 reverseDrivingCnt_ = 0;
-      u16 spinCnt_ = 0;
       
     } // private namespace
     
@@ -96,7 +93,7 @@ namespace Anki {
         PRINT(" WHEEL speeds: %f (L), %f (R)   (Curr: %d, %d)\n",
                 filterWheelSpeedL_, filterWheelSpeedR_,
                 measuredWheelSpeedL_, measuredWheelSpeedR_);
-        PRINT(" WHEEL desired speeds: %d (L), %d (R)\n",
+        PRINT(" WHEEL desired speeds: %f (L), %f (R)\n",
                 desiredWheelSpeedL_, desiredWheelSpeedR_);
 #endif
         
@@ -201,7 +198,16 @@ namespace Anki {
 #endif
       
       //Command the computed speed (as PWM values) to the motors
-      Cozmo::Robot::SetOpenLoopMotorSpeed(*motorvalueoutL, *motorvalueoutR);
+      //Cozmo::Robot::SetOpenLoopMotorSpeed(*motorvalueoutL, *motorvalueoutR);
+      
+      // TODO: Scaling PWM command to be between -1 and 1 so we can use the proper
+      // HAL::MotorSetPower function, but this breaks everything controller needs to be re-tuned.
+      //f32 power_l = CLIP((f32)*motorvalueoutL / HAL::MOTOR_PWM_MAXVAL, -1.0, 1.0);
+      //f32 power_r = CLIP((f32)*motorvalueoutR / HAL::MOTOR_PWM_MAXVAL, -1.0, 1.0);
+      f32 power_l = CLIP((f32)*motorvalueoutL / 200, -1.0, 1.0);
+      f32 power_r = CLIP((f32)*motorvalueoutR / 200, -1.0, 1.0);
+      HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, power_l);
+      HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, power_r);
       
     } // Run()
     
@@ -240,13 +246,13 @@ namespace Anki {
     }
     
     //Get the wheel speeds in mm/sec
-    void GetDesiredWheelSpeeds(s16 *leftws, s16 *rightws) {
+    void GetDesiredWheelSpeeds(f32 *leftws, f32 *rightws) {
       *leftws  = desiredWheelSpeedL_;
       *rightws = desiredWheelSpeedR_;
     }
     
     //Set the wheel speeds in mm/sec
-    void SetDesiredWheelSpeeds(s16 leftws, s16 rightws) {
+    void SetDesiredWheelSpeeds(f32 leftws, f32 rightws) {
       desiredWheelSpeedL_ = leftws;
       desiredWheelSpeedR_ = rightws;
     }

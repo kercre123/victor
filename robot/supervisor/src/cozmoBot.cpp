@@ -142,7 +142,7 @@ namespace Anki {
       ReturnCode step_MainExecution()
       {
 #if(DEBUG_ANY)
-        PRINT("\n==== FRAME START ====\n");
+        PRINT("\n==== FRAME START (time = %d us) ====\n", HAL::GetMicroCounter() );
 #endif
         
         // If the hardware interface needs to be advanced (as in the case of
@@ -225,10 +225,7 @@ namespace Anki {
             
           case FOLLOW_PATH:
           {
-            if(PathFollower::IsTraversingPath())
-            {
-              PathFollower::Update();
-            }
+            PathFollower::Update();
             break;
           }
             
@@ -261,7 +258,11 @@ namespace Anki {
             
         } // switch(mode_)
         
-        
+
+        // Manage the various motion controllers:
+        SpeedController::Manage();
+        SteeringController::Manage();
+        WheelController::Manage();
         //////////////////////////////////////////////////////////////
         // Feedback / Display
         //////////////////////////////////////////////////////////////
@@ -293,23 +294,6 @@ namespace Anki {
         return EXIT_SUCCESS;
         
       } // Robot::step_longExecution()
-      
-      
-      void SetOpenLoopMotorSpeed(s16 speedl, s16 speedr)
-      {
-        // Convert PWM to rad/s
-        // TODO: Do this properly.  For now assume MOTOR_PWM_MAXVAL achieves 1m/s lateral speed.
-        
-        // "FACTOR" is the converstion factor for computing radians/second
-        // from commanded speed: 2*pi * (1 meter / wheel_circumference)
-        const float FACTOR = ((2.f*M_PI) *
-                              (1000.f / (Cozmo::WHEEL_DIAMETER_MM*M_PI)));
-        f32 left_rad_per_s  = speedl * FACTOR / HAL::MOTOR_PWM_MAXVAL;
-        f32 right_rad_per_s = speedr * FACTOR / HAL::MOTOR_PWM_MAXVAL;
-        
-        HAL::SetWheelAngularVelocity(left_rad_per_s, right_rad_per_s);
-        
-      } // Robot::SetOpenLoopMotorSpeed()
       
     } // namespace Robot
   } // namespace Cozmo

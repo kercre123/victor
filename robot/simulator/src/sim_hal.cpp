@@ -390,13 +390,6 @@ namespace Anki {
       
     } // GetGroundTruthPose()
     
-    
-    void HAL::SetWheelAngularVelocity(float left_rad_per_sec, float right_rad_per_sec)
-    {
-      leftWheelMotor_->setVelocity(-left_rad_per_sec);
-      rightWheelMotor_->setVelocity(-right_rad_per_sec);
-    }
-  
     /* Won't be able to do this on real robot, can only command power/speed
     void HAL::SetHeadPitch(float pitch_rad)
     {

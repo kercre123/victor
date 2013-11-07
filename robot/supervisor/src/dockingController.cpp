@@ -4,6 +4,7 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/visionSystem.h"
+#include "anki/cozmo/robot/steeringController.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -138,8 +139,9 @@ namespace Anki {
         }
         
         // Command the speeds
-        // TODO: convert from desired velocity to power and use SetOpenLoopMotorSpeed()
-        HAL::SetWheelAngularVelocity(leftMotorVelocity, leftMotorVelocity);
+        // TODO: Replacing obsolete SetWheelAngularVelocity(). This probably breaks everything since inputs are now in mm/s
+        //       and the underlying controller is different.
+        SteeringController::ExecuteDirectDrive(leftMotorVelocity, leftMotorVelocity);
         
       } // ApproachBlock()
       

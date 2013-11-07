@@ -51,8 +51,8 @@ namespace Anki {
     void Manage();
     
     //Sets/Gets the desired speeds for the wheels (in mm/sec forward speed)
-    void GetDesiredWheelSpeeds(s16 *leftws, s16 *rightws);
-    void SetDesiredWheelSpeeds(s16 leftws, s16 rightws);
+    void GetDesiredWheelSpeeds(f32 *leftws, f32 *rightws);
+    void SetDesiredWheelSpeeds(f32 leftws, f32 rightws);
     
     void GetFilteredWheelSpeeds(f32 *left, f32 *right);
     

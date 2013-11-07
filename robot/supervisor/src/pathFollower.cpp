@@ -9,16 +9,20 @@
 
 #include "anki/common/robot/utilities_c.h"
 
-#include <stdio.h>
-
-#define ENABLE_PATH_VIZ 1
-
-#if ENABLE_PATH_VIZ
-#include "sim_pathFollower.h"
-#endif
+#include "anki/cozmo/robot/hal.h"
 
 #if(DEBUG_MAIN_EXECUTION)
 #include "sim_overlayDisplay.h"
+#endif
+
+#ifndef SIMULATOR
+#define ENABLE_PATH_VIZ 0
+#else
+#define ENABLE_PATH_VIZ 1
+#endif
+
+#if ENABLE_PATH_VIZ
+#include "sim_pathFollower.h"
 #endif
 
 namespace Anki
@@ -31,29 +35,48 @@ namespace Anki
       namespace { // Private Members
         typedef enum {
           PST_LINE,
-          PST_ARC
+          PST_ARC,
+          PST_POINT_TURN
         } PathSegmentType;
+        
+        //typedef union {
+        typedef struct {
+          // Line
+          struct s_line {
+            Anki::Embedded::Point2f startPt;
+            Anki::Embedded::Point2f endPt;
+            f32 m;  // slope of line
+            f32 b;  // y-intersect of line
+            f32 dy_sign; // 1 if endPt.y - startPt.y >= 0
+            Anki::Radians theta; // angle of line
+            // TODO: Speed profile (by distance along line)
+          } line;
+          
+          // Arc
+          struct s_arc {
+            Anki::Embedded::Point2f centerPt;
+            f32 radius;
+            Anki::Radians startRad;
+            Anki::Radians endRad;
+            bool movingCCW;
+          } arc;
+          
+          // Point turn
+          struct s_turn {
+            float targetAngle;
+            float maxAngularVel;
+            float angularAccel;
+            float angularDecel;
+          } turn;
+        } PathSegmentDef;
         
         typedef struct
         {
           PathSegmentType type;
-          
-          // Line
-          Anki::Embedded::Point2f startPt;
-          Anki::Embedded::Point2f endPt;
-          float m;  // slope of line
-          float b;  // y-intersect of line
-          float dy_sign; // 1 if endPt.y - startPt.y >= 0
-          Anki::Radians theta; // angle of line
-          // TODO: Speed profile (by distance along line)
-          
-          
-          // Arc
-          Anki::Embedded::Point2f centerPt;
-          float radius;
-          Anki::Radians startRad;
-          Anki::Radians endRad;
-          bool movingCCW;
+          s16 desiredSpeed_mmPerSec;  // Desired speed during segment
+          s16 terminalSpeed_mmPerSec; // Desired speed by the time we reach the end of the segment
+
+          PathSegmentDef def;
           
         } PathSegment;
         
@@ -62,9 +85,11 @@ namespace Anki
         s16 numPathSegments_ = 0;
         s16 currPathSegment_ = -1;
         
-        s16 lineFollowIndex_ = 0;
-        f32 pathDistError_ = 0.f;
-        f32 pathRadError_ = 0.f;
+        
+        f32 distToPath_m_ = 0;
+        f32 radToPath_ = 0;
+        
+        bool pointTurnStarted_ = false;
         
         bool visualizePath_ = TRUE;
         
@@ -86,36 +111,6 @@ namespace Anki
         return EXIT_SUCCESS;
       }
       
-      ReturnCode Update()
-      {
-        if (IsTraversingPath()) {
-          bool gotError = GetPathError(pathDistError_, pathRadError_);
-          
-          if (gotError) {
-            lineFollowIndex_ = pathDistError_*1000.f; // Convert to mm
-            printf("fidx: %d\n\n", lineFollowIndex_);
-#if(DEBUG_MAIN_EXECUTION)
-            {
-              using namespace Sim::OverlayDisplay;
-              SetText(PATH_ERROR, "PathError: %.4f m, %.1f deg  => fidx: %d",
-                      pathDistError_, pathRadError_ * (180.f/M_PI),
-                      lineFollowIndex_);
-            }
-#endif
-          } else {
-            SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
-          }
-        }
-        
-        // Manage the various motion controllers:
-        SpeedController::Manage();
-        SteeringController::Manage(lineFollowIndex_, pathRadError_);
-        WheelController::Manage();
-        
-        return EXIT_SUCCESS;
-        
-      } // Update()
-      
       
       // Deletes current path
       void ClearPath(void)
@@ -135,23 +130,23 @@ namespace Anki
       
       // Add path segment
       // tODO: Change units to meters
-      bool AppendPathSegment_Line(u32 matID, float x_start_m, float y_start_m, float x_end_m, float y_end_m)
+      bool AppendPathSegment_Line(u32 matID, f32 x_start_m, f32 y_start_m, f32 x_end_m, f32 y_end_m)
       {
         if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
           return FALSE;
         }
         
         Path[numPathSegments_].type = PST_LINE;
-        Path[numPathSegments_].startPt.x = x_start_m;
-        Path[numPathSegments_].startPt.y = y_start_m;
-        Path[numPathSegments_].endPt.x = x_end_m;
-        Path[numPathSegments_].endPt.y = y_end_m;
+        Path[numPathSegments_].def.line.startPt.x = x_start_m;
+        Path[numPathSegments_].def.line.startPt.y = y_start_m;
+        Path[numPathSegments_].def.line.endPt.x = x_end_m;
+        Path[numPathSegments_].def.line.endPt.y = y_end_m;
         
         // Pre-processed for convenience
-        Path[numPathSegments_].m = (y_end_m - y_start_m) / (x_end_m - x_start_m);
-        Path[numPathSegments_].b = Path[numPathSegments_].m * y_start_m + x_start_m;
-        Path[numPathSegments_].dy_sign = ((y_end_m - y_start_m) >= 0) ? 1.0 : -1.0;
-        Path[numPathSegments_].theta = atan2(y_end_m - y_start_m, x_end_m - x_start_m);
+        Path[numPathSegments_].def.line.m = (y_end_m - y_start_m) / (x_end_m - x_start_m);
+        Path[numPathSegments_].def.line.b = Path[numPathSegments_].def.line.m * y_start_m + x_start_m;
+        Path[numPathSegments_].def.line.dy_sign = ((y_end_m - y_start_m) >= 0) ? 1.0 : -1.0;
+        Path[numPathSegments_].def.line.theta = atan2f(y_end_m - y_start_m, x_end_m - x_start_m);
         
         numPathSegments_++;
         
@@ -163,7 +158,7 @@ namespace Anki
       }
       
       
-      bool AppendPathSegment_Arc(u32 matID, float x_center_m, float y_center_m, float radius_m, float startRad, float endRad)
+      bool AppendPathSegment_Arc(u32 matID, f32 x_center_m, f32 y_center_m, f32 radius_m, f32 startRad, f32 endRad)
       {
         if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
           return FALSE;
@@ -177,14 +172,14 @@ namespace Anki
                );
         
         Path[numPathSegments_].type = PST_ARC;
-        Path[numPathSegments_].centerPt.x = x_center_m;
-        Path[numPathSegments_].centerPt.y = y_center_m;
-        Path[numPathSegments_].radius = radius_m;
-        Path[numPathSegments_].startRad = startRad;
-        Path[numPathSegments_].endRad = endRad;
+        Path[numPathSegments_].def.arc.centerPt.x = x_center_m;
+        Path[numPathSegments_].def.arc.centerPt.y = y_center_m;
+        Path[numPathSegments_].def.arc.radius = radius_m;
+        Path[numPathSegments_].def.arc.startRad = startRad;
+        Path[numPathSegments_].def.arc.endRad = endRad;
         
         // Pre-processed for convenience
-        Path[numPathSegments_].movingCCW = endRad > startRad;
+        Path[numPathSegments_].def.arc.movingCCW = endRad > startRad;
         
         numPathSegments_++;
         
@@ -197,6 +192,22 @@ namespace Anki
       }
       
       
+      bool AppendPathSegment_PointTurn(u32 matID, f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel)
+      {
+        if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
+          return FALSE;
+        }
+        
+        Path[numPathSegments_].type = PST_POINT_TURN;
+        Path[numPathSegments_].def.turn.targetAngle = targetAngle;
+        Path[numPathSegments_].def.turn.maxAngularVel = maxAngularVel;
+        Path[numPathSegments_].def.turn.angularAccel = angularAccel;
+        Path[numPathSegments_].def.turn.angularDecel = angularDecel;
+        
+        numPathSegments_++;
+        
+        return TRUE;
+      }
       
       
       int GetNumPathSegments(void)
@@ -210,6 +221,7 @@ namespace Anki
         // Set first path segment
         if (numPathSegments_ > 0) {
           currPathSegment_ = 0;
+          Robot::SetOperationMode(Robot::FOLLOW_PATH);
         }
         
         // Visualize path
@@ -229,20 +241,20 @@ namespace Anki
       }
       
       
-      bool ProcessPathSegmentLine(float &shortestDistanceToPath_m, float &radDiff)
+      bool ProcessPathSegmentLine(f32 &shortestDistanceToPath_m, f32 &radDiff)
       {
-        PathSegment* currSeg = &(Path[currPathSegment_]);
+        PathSegmentDef::s_line* currSeg = &(Path[currPathSegment_].def.line);
         
         // Find shortest path to current segment.
         // Shortest path is along a line with inverse negative slope (i.e. -1/m).
         // Point of intersection is solution to mx + b == (-1/m)*x + b_inv where b_inv = y-(-1/m)*x
-        float x, y;
+        f32 x, y;
         Radians angle;
         Localization::GetCurrentMatPose(x, y, angle);
         
 #if(DEBUG_PATH_FOLLOWER)
-        printf("currPathSeg: %d, LINE (%f, %f, %f, %f)\n", currPathSegment_, currSeg->startPt.x, currSeg->startPt.y, currSeg->endPt.x, currSeg->endPt.y);
-        printf("x: %f, y: %f\n", x,y);
+        PRINT("currPathSeg: %d, LINE (%f, %f, %f, %f)\n", currPathSegment_, currSeg->startPt.x, currSeg->startPt.y, currSeg->endPt.x, currSeg->endPt.y);
+        PRINT("x: %f, y: %f\n", x,y);
 #endif
         
         if (FLT_NEAR(currSeg->startPt.x, currSeg->endPt.x)) {
@@ -266,25 +278,26 @@ namespace Anki
           
         } else {
           
-          float m = currSeg->m;
-          float b = currSeg->b;
+          f32 m = currSeg->m;
+          f32 b = currSeg->b;
           
-          float b_inv = y + x/m;
+          f32 b_inv = y + x/m;
           
-          float x_intersect = m * (b_inv - b) / (m*m + 1);
-          float y_intersect = - (x_intersect / m) + b_inv;
+          f32 x_intersect = m * (b_inv - b) / (m*m + 1);
+          f32 y_intersect = - (x_intersect / m) + b_inv;
           
-          float dy = y - y_intersect;
-          float dx = x - x_intersect;
+          f32 dy = y - y_intersect;
+          f32 dx = x - x_intersect;
           
           shortestDistanceToPath_m = sqrt(dy*dy + dx*dx);
           
 #if(DEBUG_PATH_FOLLOWER)
-          printf("m: %f, b: %f\n",m,b);
-          printf("x_int: %f, y_int: %f, b_inv: %f\n", x_intersect, y_intersect, b_inv);
-          printf("dy: %f, dx: %f, dist: %f\n", dy, dx, shortestDistanceToPath_m);
-          printf("SIGN(dy): %d, dy_sign: %f\n", (SIGN(dy) ? 1 : -1), currSeg->dy_sign);
-          printf("lineTheta: %f, robotTheta: %f\n", currSeg->theta.ToFloat(), currPose.get_angle().ToFloat());
+          PRINT("m: %f, b: %f\n",m,b);
+          PRINT("x_int: %f, y_int: %f, b_inv: %f\n", x_intersect, y_intersect, b_inv);
+          PRINT("dy: %f, dx: %f, dist: %f\n", dy, dx, shortestDistanceToPath_m);
+          PRINT("SIGN(dy): %d, dy_sign: %f\n", (SIGN(dy) ? 1 : -1), currSeg->dy_sign);
+          PRINT("lineTheta: %f\n", currSeg->theta.ToFloat());
+          //PRINT("lineTheta: %f, robotTheta: %f\n", currSeg->theta.ToFloat(), currPose.get_angle().ToFloat());
 #endif
           
           if (m >= 0) {
@@ -311,16 +324,16 @@ namespace Anki
       }
       
       
-      bool ProcessPathSegmentArc(float &shortestDistanceToPath_m, float &radDiff)
+      bool ProcessPathSegmentArc(f32 &shortestDistanceToPath_m, f32 &radDiff)
       {
-        PathSegment* currSeg = &(Path[currPathSegment_]);
+        PathSegmentDef::s_arc* currSeg = &(Path[currPathSegment_].def.arc);
         
 #if(DEBUG_PATH_FOLLOWER)
-        printf("currPathSeg: %d, ARC (%f, %f), startRad: %f, endRad: %f, radius: %f\n",
+        PRINT("currPathSeg: %d, ARC (%f, %f), startRad: %f, endRad: %f, radius: %f\n",
                currPathSegment_, currSeg->centerPt.x, currSeg->centerPt.y, currSeg->startRad.ToFloat(), currSeg->endRad.ToFloat(), currSeg->radius);
 #endif
         
-        float x, y;
+        f32 x, y;
         Radians angle;
         Localization::GetCurrentMatPose(x, y, angle);
         
@@ -328,17 +341,24 @@ namespace Anki
         // Assuming arc is broken up so that it is a true function
         
         // Arc paramters
-        float x_center = currSeg->centerPt.x;
-        float y_center = currSeg->centerPt.y;
-        float r = currSeg->radius;
+        f32 x_center = currSeg->centerPt.x;
+        f32 y_center = currSeg->centerPt.y;
+        f32 r = currSeg->radius;
         Anki::Radians startRad = currSeg->startRad;
         Anki::Radians endRad = currSeg->endRad;
         
         // Line formed by circle center and robot pose
-        float dy = y - y_center;
-        float dx = x - x_center;
-        float m = dy / dx;
-        float b = y - m*x;
+        f32 dy = y - y_center;
+        f32 dx = x - x_center;
+        f32 m = dy / dx;
+        f32 b = y - m*x;
+        
+        
+        // Find heading error
+        Anki::Radians theta_line = atan2f(dy,dx); // angle of line from circle center to robot
+        Anki::Radians theta_tangent = theta_line + Anki::Radians((currSeg->movingCCW ? 1 : -1 ) * PIDIV2);
+        
+        radDiff = (theta_tangent - angle).ToFloat();
         
         
         // Where does circle (x - x_center)^2 + (y - y_center)^2 = r^2 and y=mx+b intersect where y=mx+b represents
@@ -353,47 +373,55 @@ namespace Anki
         // Use quadratic formula to solve
         
         // Quadratic formula coefficients
-        float A = m*m + 1;
-        float B = 2*m*(b-y_center) - 2*x_center;
-        float C = (b - y_center)*(b - y_center) - r*r + x_center*x_center;
-        float sqrtPart = sqrt(B*B - 4*A*C);
+        f32 A = m*m + 1;
+        f32 B = 2*m*(b-y_center) - 2*x_center;
+        f32 C = (b - y_center)*(b - y_center) - r*r + x_center*x_center;
+        f32 sqrtPart = sqrt(B*B - 4*A*C);
         
-        float x_intersect_1 = (-B + sqrtPart) / (2*A);
-        float x_intersect_2 = (-B - sqrtPart) / (2*A);
+        f32 x_intersect_1 = (-B + sqrtPart) / (2*A);
+        f32 x_intersect_2 = (-B - sqrtPart) / (2*A);
         
         
         // Now we have 2 roots.
         // Select the one that's on the same side of the circle center as the robot is.
-        float x_intersect = x_intersect_2;
-        if (SIGN(x - x_center) == SIGN(x_intersect_1 - x_center)) {
+        f32 x_intersect = x_intersect_2;
+        if (SIGN(dx) == SIGN(x_intersect_1 - x_center)) {
           x_intersect = x_intersect_1;
         }
         
-        float y_intersect = x_intersect * m + b;
-        float y_int_alt = sqrt(r*r - x_intersect * x_intersect);
+        // Find y value of intersection
+        f32 y_intersect = y_center + (dy > 0 ? 1 : -1) * sqrt(r*r - (x_intersect - x_center) * (x_intersect - x_center));
         
+        // Compute distance to intersection point (i.e. shortest distance to arc)
         shortestDistanceToPath_m = sqrt((x - x_intersect) * (x - x_intersect) + (y - y_intersect) * (y - y_intersect));
-        
-        float arcSweep = (currSeg->endRad - currSeg->startRad).ToFloat();
+
+        // Check for numerical errors due to very vertical line.
+        // For now, assuming that a nan shortest distance to path means the
+        // shortest distance is vertical.
+        // TODO(kevin): Are there other cases this could be nan?
+        if (std::isnan(shortestDistanceToPath_m) && NEAR(ABS(theta_line.ToFloat()), PIDIV2, 0.01)) {
+          shortestDistanceToPath_m = ABS(dy)-r;
+        }
+        f32 arcSweep = (currSeg->endRad - currSeg->startRad).ToFloat();
         bool robotInsideCircle = ABS(dx) < ABS(x_intersect - x_center);
         if ((robotInsideCircle && arcSweep < 0) || (!robotInsideCircle && arcSweep > 0)) {
           shortestDistanceToPath_m *= -1;
         }
         
         
-        // Find heading error
-        Anki::Radians theta_line = atan2(dy,dx); // angle of line from circle center to robot
-        Anki::Radians theta_tangent = theta_line + Anki::Radians((currSeg->movingCCW ? 1 : -1 ) * PIDIV2);
         
-        radDiff = (theta_tangent - angle).ToFloat();
+        
+
         
 #if(DEBUG_PATH_FOLLOWER)
-        printf("x: %f, y: %f, m: %f, b: %f\n", x,y,m,b);
-        printf("x_center: %f, y_center: %f\n", x_center, y_center);
-        printf("x_int: %f, y_int: %f, x's: (%f %f), alternate y_int: %f\n", x_intersect, y_intersect, x_intersect_1, x_intersect_2, y_int_alt);
-        printf("dy: %f, dx: %f, dist: %f\n", dy, dx, shortestDistanceToPath_m);
-        printf("arcSweep: %f, insideCircle: %d\n", arcSweep, robotInsideCircle);
-        printf("theta_line: %f, theta_tangent: %f\n", theta_line.ToFloat(), theta_tangent.ToFloat());
+        PRINT("A: %f, B: %f, C: %f, sqrt: %f\n", A, B, C, sqrtPart);
+        PRINT("x: %f, y: %f, m: %f, b: %f\n", x,y,m,b);
+        PRINT("x_center: %f, y_center: %f\n", x_center, y_center);
+        //PRINT("x_int: %f, y_int: %f, x's: (%f %f), alternate y_int: %f\n", x_intersect, y_intersect, x_intersect_1, x_intersect_2, y_int_alt);
+        PRINT("x_int: %f, y_int: %f, x's: (%f %f)\n", x_intersect, y_intersect, x_intersect_1, x_intersect_2);
+        PRINT("dy: %f, dx: %f, dist: %f, radDiff: %f\n", dy, dx, shortestDistanceToPath_m, radDiff);
+        PRINT("arcSweep: %f, insideCircle: %d\n", arcSweep, robotInsideCircle);
+        PRINT("theta_line: %f, theta_tangent: %f\n", theta_line.ToFloat(), theta_tangent.ToFloat());
 #endif
         
         // Did we pass the current segment?
@@ -407,40 +435,101 @@ namespace Anki
       }
       
 
-      bool GetPathError(float &shortestDistanceToPath_m, float &radDiff)
+      bool ProcessPathSegmentPointTurn(f32 &shortestDistanceToPath_m, f32 &radDiff)
       {
-        if (currPathSegment_ < 0) {
-          return FALSE;
+        PathSegmentDef::s_turn* currSeg = &(Path[currPathSegment_].def.turn);
+        
+#if(DEBUG_PATH_FOLLOWER)
+        Radians currOrientation = Localization::GetCurrentMatOrientation();
+        PRINT("currPathSeg: %d, TURN  currAngle: %f, targetAngle: %f, maxAngVel: %f, angAccel: %f, angDecel: %f\n",
+               currPathSegment_, currOrientation.ToFloat(), currSeg->targetAngle, currSeg->maxAngularVel, currSeg->angularAccel, currSeg->angularDecel);
+#endif
+        
+        // When the car is stopped, initiate point turn
+        if (!pointTurnStarted_) {
+#if(DEBUG_PATH_FOLLOWER)
+          PRINT("EXECUTE POINT TURN\n");
+#endif
+          SteeringController::ExecutePointTurn(currSeg->targetAngle,
+                                               currSeg->maxAngularVel,
+                                               currSeg->angularAccel,
+                                               currSeg->angularDecel);
+          pointTurnStarted_ = true;
+
+        } else {
+          if (SteeringController::GetMode() != SteeringController::SM_POINT_TURN) {
+            pointTurnStarted_ = false;
+            return false;
+          }
+        }
+
+        
+        return true;
+      }
+      
+      // Post-path completion cleanup
+      void PathComplete()
+      {
+        pointTurnStarted_ = false;
+        currPathSegment_ = -1;
+#if(DEBUG_PATH_FOLLOWER)
+        PRINT("PATH COMPLETE\n");
+#endif
+#if(ENABLE_PATH_VIZ)
+        Viz::ErasePath(0);
+#endif
+        Robot::SetOperationMode(Robot::WAITING);
+      }
+      
+      
+      bool GetPathError(f32 &shortestDistanceToPath_m, f32 &radDiff)
+      {
+        if (!IsTraversingPath()) {
+          return false;
         }
         
-        static bool wasInRange = FALSE;
-        bool inRange;
+        shortestDistanceToPath_m = distToPath_m_;
+        radDiff = radToPath_;
+        return true;
+      }
+      
+      
+      
+      ReturnCode Update()
+      {
+       
+        static bool wasInRange = false;
+        bool inRange = false;
         
         switch (Path[currPathSegment_].type) {
           case PST_LINE:
-            inRange = ProcessPathSegmentLine(shortestDistanceToPath_m, radDiff);
+            inRange = ProcessPathSegmentLine(distToPath_m_, radToPath_);
             break;
           case PST_ARC:
-            inRange = ProcessPathSegmentArc(shortestDistanceToPath_m, radDiff);
+            inRange = ProcessPathSegmentArc(distToPath_m_, radToPath_);
+            break;
+          case PST_POINT_TURN:
+            inRange = ProcessPathSegmentPointTurn(distToPath_m_, radToPath_);
             break;
           default:
             // TODO: Error?
             break;
         }
         
+#if(DEBUG_PATH_FOLLOWER)
+        PRINT("PATH ERROR: %f m, %f deg\n", distToPath_m_, RAD_TO_DEG(radToPath_));
+#endif
+        
         // Go to next path segment if no longer in range of the current one
         if (!inRange && wasInRange) {
           if (++currPathSegment_ >= numPathSegments_) {
             // Path is complete
-            currPathSegment_ = -1;
-#if(DEBUG_PATH_FOLLOWER)
-            printf("PATH COMPLETE\n");
-#endif
-#if(ENABLE_PATH_VIZ)
-            Viz::ErasePath(0);
-#endif
-            return FALSE;
+            PathComplete();
+            return EXIT_SUCCESS;
           }
+#if(DEBUG_PATH_FOLLOWER)
+          PRINT("PATH SEGMENT %d\n", currPathSegment_);
+#endif
         }
         
         wasInRange = inRange;
@@ -448,15 +537,15 @@ namespace Anki
         
         // Check that starting error is not too big
         // TODO: Check for excessive heading error as well?
-        if (shortestDistanceToPath_m > 0.05) {
+        if (distToPath_m_ > 0.05) {
           currPathSegment_ = -1;
 #if(DEBUG_PATH_FOLLOWER)
-          printf("PATH STARTING ERROR TOO LARGE %f\n", shortestDistanceToPath_m);
+          PRINT("PATH STARTING ERROR TOO LARGE %f\n", distToPath_m_);
 #endif
-          return FALSE;
+          return EXIT_FAILURE;
         }
         
-        return TRUE;
+        return EXIT_SUCCESS;
       }
       
       

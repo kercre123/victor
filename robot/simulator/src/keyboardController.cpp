@@ -3,6 +3,7 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/pathFollower.h"
+#include "anki/cozmo/robot/steeringController.h"
 
 #include "headController.h"
 #include "keyboardController.h"
@@ -25,7 +26,8 @@ namespace Anki {
       // Private memers:
       namespace {
         // Constants for Webots:
-        const f32 DRIVE_VELOCITY_SLOW = 5.0f;
+        const f32 DRIVE_VELOCITY_SLOW = 100.0f; // mm/s
+        const f32 TURN_WHEEL_VELOCITY_SLOW = 50.0f;  //mm/s
         const f32 TURN_VELOCITY_SLOW = 1.0f;
         const f32 LIFT_CENTER = -0.275;
         const f32 LIFT_UP = 0.635;
@@ -83,25 +85,25 @@ namespace Anki {
           {
             case webots::Robot::KEYBOARD_UP:
             {
-              SetWheelAngularVelocity(DRIVE_VELOCITY_SLOW, DRIVE_VELOCITY_SLOW);
+              SteeringController::ExecuteDirectDrive(DRIVE_VELOCITY_SLOW, DRIVE_VELOCITY_SLOW);
               break;
             }
               
             case webots::Robot::KEYBOARD_DOWN:
             {
-              SetWheelAngularVelocity(-DRIVE_VELOCITY_SLOW, -DRIVE_VELOCITY_SLOW);
+              SteeringController::ExecuteDirectDrive(-DRIVE_VELOCITY_SLOW, -DRIVE_VELOCITY_SLOW);
               break;
             }
               
             case webots::Robot::KEYBOARD_LEFT:
             {
-              SetWheelAngularVelocity(-TURN_VELOCITY_SLOW, TURN_VELOCITY_SLOW);
+              SteeringController::ExecuteDirectDrive(-TURN_WHEEL_VELOCITY_SLOW, TURN_WHEEL_VELOCITY_SLOW);
               break;
             }
               
             case webots::Robot::KEYBOARD_RIGHT:
             {
-              SetWheelAngularVelocity(TURN_VELOCITY_SLOW, -TURN_VELOCITY_SLOW);
+              SteeringController::ExecuteDirectDrive(TURN_WHEEL_VELOCITY_SLOW, -TURN_WHEEL_VELOCITY_SLOW);
               break;
             }
               
@@ -156,7 +158,8 @@ namespace Anki {
               if(Robot::GetOperationMode() == Robot::WAITING) {
                 // Don't stop the motors if they are being controlled
                 // by other processes
-                SetWheelAngularVelocity(0.f, 0.f);
+                if (SteeringController::GetMode() == SteeringController::SM_DIRECT_DRIVE)
+                  SteeringController::ExecuteDirectDrive(0.f, 0.f);
                 
                 if(LiftController::IsInPosition()) {
                   LiftController::SetAngularVelocity(0.f);
