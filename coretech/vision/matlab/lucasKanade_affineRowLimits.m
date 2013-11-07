@@ -16,13 +16,7 @@ end
 
 homography = homography(1:2, :)
 
-% Warp the inputImage corners to the template coordinates
-% Clockwise from the upper-left
-% inputCornerPoints = [0,                  0,                  1;
-%                      size(inputImage,2), 0,                  1;
-%                      size(inputImage,2), size(inputImage,1), 1;
-%                      0,                  size(inputImage,1), 1]';
-
+% Warp the inputImageQuad corners to the template coordinates
 inputImageQuadSqueezed = squeezeQuadrilateral(inputImageQuad, 1.0);
 
 inputImageQuadSqueezed(:,3) = 1;

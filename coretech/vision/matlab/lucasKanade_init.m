@@ -5,9 +5,9 @@
 % templateQuad = [5,4;10,4;10,8;5,8];
 % numScales = 2;
 
-% [A_translationOnly, A_affine] = lucasKanade_init(templateImage, templateQuad, numScales, false, true)
+% [A_translationOnly, A_affine, templateImagePyramid] = lucasKanade_init(templateImage, templateQuad, numScales, false, true)
 
-function [A_translationOnly, A_affine] = lucasKanade_init(templateImage, templateQuad, numScales, useBlurring, estimateAffine)
+function [A_translationOnly, A_affine, templateImagePyramid] = lucasKanade_init(templateImage, templateQuad, numScales, useBlurring, estimateAffine)
 
 assert(~useBlurring);
 
@@ -23,6 +23,8 @@ templateImage = double(templateImage);
 if ndims(templateImage) == 3
     templateImage = rgb2gray(templateImage);
 end
+
+templateImagePyramid = cell(numScales,1);
 
 A_translationOnly = cell(numScales,1);
 
@@ -50,6 +52,8 @@ for iScale = 1:numScales
             curTemplateImage = (prevTemplateImageRaw(1:2:end, 1:2:end) + prevTemplateImageRaw(2:2:end, 1:2:end) + prevTemplateImageRaw(1:2:end, 2:2:end) + prevTemplateImageRaw(2:2:end, 2:2:end)) / 4; %#ok<NODEF>
         end
     end
+    
+    templateImagePyramid{iScale} = curTemplateImage;
 
     derivativeX = imfilter(curTemplateImage, scale*[-.5,0,.5]);
     derivativeY = imfilter(curTemplateImage, scale*[-.5,0,.5]');
