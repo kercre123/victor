@@ -1,14 +1,14 @@
-% function output = interpolateAffine_rowLimits(inputImageQuad, homography, templateSize, debugDisplay)
+% function output = lucasKande_interpolateAffine_rowLimits(inputImageQuad, homography, templateSize, debugDisplay)
 
 % homography can be either 2x3 or 3x3, though only the first two rows are
 % used. The x-coordinate comes first.
 %
 % homography warps the input image coordinates to the template coordinates
 
-% interpolateAffine_rowLimits([0,0;3,1;2,4;-1,3], [2,1.5,0;.1,2,1.5], [13,11], true);
-% for i=1:100 interpolateAffine_rowLimits(4*[0,0;3,1;2,4;-1,3], 5*(2*rand([2,3])-1), [13,11], true); pause(); end
+% lucasKande_interpolateAffine_rowLimits([0,0;3,1;2,4;-1,3], [2,1.5,0;.1,2,1.5], [13,11], true);
+% for i=1:100 lucasKande_interpolateAffine_rowLimits(4*[0,0;3,1;2,4;-1,3], 5*(2*rand([2,3])-1), [13,11], true); pause(); end
 
-function [minIndexes, maxIndexes] = interpolateAffine_rowLimits(inputImageQuad, homography, templateSize, debugDisplay)
+function [minIndexes, maxIndexes] = lucasKande_interpolateAffine_rowLimits(inputImageQuad, homography, templateSize, debugDisplay)
 
 if ~exist('debugDisplay', 'var')
     debugDisplay = false;
