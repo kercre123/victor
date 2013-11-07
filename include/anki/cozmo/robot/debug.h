@@ -7,4 +7,10 @@
 #define DEBUG_SPEED_CONTROLLER 0
 #define DEBUG_PATH_FOLLOWER 0
 
+#define DEBUG_ANY (DEBUG_MAIN_EXECUTION \
+                || DEBUG_WHEEL_CONTROLLER \
+                || DEBUG_STEERING_CONTROLLER \
+                || DEBUG_SPEED_CONTROLLER \
+                || DEBUG_PATH_FOLLOWER )
+
 #endif

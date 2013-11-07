@@ -9,6 +9,7 @@
 #include "headController.h"
 #include "liftController.h"
 #include "anki/cozmo/robot/commandHandler.h"
+#include "anki/cozmo/robot/debug.h"
 #include "anki/cozmo/robot/localization.h"
 #include "anki/cozmo/robot/pathFollower.h"
 #include "anki/cozmo/robot/vehicleMath.h"
@@ -18,12 +19,6 @@
 #include "anki/cozmo/robot/visionSystem.h"
 
 #include "anki/messaging/robot/utilMessaging.h"
-
-//#include "cozmo_physics.h"
-
-#include <cmath>
-#include <cstdio>
-#include <string>
 
 ///////// TESTING //////////
 #define EXECUTE_TEST_PATH 0
@@ -146,6 +141,10 @@ namespace Anki {
       
       ReturnCode step_MainExecution()
       {
+#if(DEBUG_ANY)
+        PRINT("\n==== FRAME START ====\n");
+#endif
+        
         // If the hardware interface needs to be advanced (as in the case of
         // a Webots simulation), do that first.
         HAL::Step();
