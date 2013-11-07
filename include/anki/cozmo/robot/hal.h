@@ -127,9 +127,6 @@ namespace Anki
       const CameraInfo* GetMatCamInfo() ;
       
       // Communications
-      void ManageRecvBuffer();
-      void SendMessage(const void* data, s32 size);
-      s32  RecvMessage(void* data);
       bool IsConnected();
       
       // Misc

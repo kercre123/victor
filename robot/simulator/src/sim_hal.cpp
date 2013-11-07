@@ -176,6 +176,33 @@ namespace Anki {
         }
       }
       
+      /////////// Comms /////////////
+      void ManageRecvBuffer()
+      {
+        // Check for incoming data.
+        // Add it to receive buffer.
+        // Check for special "radio-level" messages (i.e. pings, connection requests)
+        // and respond accordingly.
+        
+        int dataSize;
+        const void* data;
+        
+        // Read receiver for as long as it is not empty.
+        while (rx_->getQueueLength() > 0) {
+          
+          // Get head packet
+          data = rx_->getData();
+          dataSize = rx_->getDataSize();
+          
+          // Copy data to receive buffer
+          memcpy(&recvBuf_[recvBufSize_], data, dataSize);
+          recvBufSize_ += dataSize;
+          
+          // Delete processed packet from queue
+          rx_->nextPacket();
+        }
+      } // ManageRecvBuffer()
+
       
     } // "private" namespace
     
@@ -523,34 +550,8 @@ namespace Anki {
     
     
     
-    /////////// Comms /////////////
-    void HAL::ManageRecvBuffer()
-    {
-      // Check for incoming data.
-      // Add it to receive buffer.
-      // Check for special "radio-level" messages (i.e. pings, connection requests)
-      // and respond accordingly.
-      
-      int dataSize;
-      const void* data;
-      
-      // Read receiver for as long as it is not empty.
-      while (rx_->getQueueLength() > 0) {
-        
-        // Get head packet
-        data = rx_->getData();
-        dataSize = rx_->getDataSize();
-        
-        // Copy data to receive buffer
-        memcpy(&recvBuf_[recvBufSize_], data, dataSize);
-        recvBufSize_ += dataSize;
-        
-        // Delete processed packet from queue
-        rx_->nextPacket();
-      }
-    } // ManageRecvBuffer()
     
-    void HAL::SendMessage(const void* data, int size)
+    bool HAL::RadioToBase(u8* buffer, u32 size)
     {
       // Prefix data with message header (0xBEEF + robotID)
       u8 msg[1024] = {COZMO_WORLD_MSG_HEADER_BYTE_1,
@@ -559,13 +560,16 @@ namespace Anki {
       if(size+3 > 1024) {
         PRINT("Data too large to send with prepended header!\n");
       } else {
-        memcpy(msg+3, data, size);
+        memcpy(msg+3, buffer, size);
         tx_->send(msg, size+3);
       }
+      return true;
     } // SendMessage()
     
-    int HAL::RecvMessage(void* data)
+    u32 HAL::RadioFromBase(u8 buffer[RADIO_BUFFER_SIZE])
     {
+      ManageRecvBuffer();
+      
       // TODO: check for and remove 0xBEEF?
       
       // Is there any data in the receive buffer?
@@ -576,7 +580,7 @@ namespace Anki {
         if (recvBufSize_ >= firstMsgSize) {
           
           // Copy to passed in buffer
-          memcpy(data, recvBuf_, firstMsgSize);
+          memcpy(buffer, recvBuf_, firstMsgSize);
           
           // Shift data down
           recvBufSize_ -= firstMsgSize;

@@ -123,7 +123,7 @@ namespace Anki {
         msg.size = sizeof(CozmoMsg_RobotAvailable);
         msg.msgID = MSG_V2B_CORE_ROBOT_AVAILABLE;
         msg.robotID = HAL::GetRobotID();
-        HAL::SendMessage(reinterpret_cast<u8 *>(&msg), msg.size);
+        HAL::RadioToBase(reinterpret_cast<u8 *>(&msg), msg.size);
         
         mode_ = WAITING;
         
@@ -158,10 +158,7 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         // Communications
         //////////////////////////////////////////////////////////////
-        
-        // Buffer any incoming data from basestation
-        HAL::ManageRecvBuffer();
-        
+
         // Process any messages from the basestation
         CommandHandler::ProcessIncomingMessages();
         
@@ -170,13 +167,13 @@ namespace Anki {
         while( matMarkerMailbox_.hasMail() )
         {
           const CozmoMsg_ObservedMatMarker matMsg = matMarkerMailbox_.getMessage();
-          HAL::SendMessage(&matMsg, sizeof(CozmoMsg_ObservedMatMarker));
+          HAL::RadioToBase((u8*)(&matMsg), sizeof(CozmoMsg_ObservedMatMarker));
         }
         
         while( blockMarkerMailbox_.hasMail() )
         {
           const CozmoMsg_ObservedBlockMarker blockMsg = blockMarkerMailbox_.getMessage();
-          HAL::SendMessage(&blockMsg, sizeof(CozmoMsg_ObservedBlockMarker));
+          HAL::RadioToBase((u8*)(&blockMsg), sizeof(CozmoMsg_ObservedBlockMarker));
         }
         
         //////////////////////////////////////////////////////////////
