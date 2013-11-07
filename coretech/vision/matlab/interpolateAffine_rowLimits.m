@@ -81,7 +81,7 @@ else
 end
 
 if direction == 1
-    disp('normal');
+%     disp('normal');
     leftmost_clockwise1 = mod(leftmostIndex, 4) + 1;
     leftmost_clockwise2 = mod(leftmost_clockwise1, 4) + 1;
 
@@ -94,7 +94,7 @@ if direction == 1
     rightmost_counter1 = mod(rightmostIndex-2, 4) + 1;
     rightmost_counter2 = mod(rightmost_counter1-2, 4) + 1;
 else
-    disp('flipped');
+%     disp('flipped');
     leftmost_clockwise1 = mod(leftmostIndex-2, 4) + 1;
     leftmost_clockwise2 = mod(leftmost_clockwise1-2, 4) + 1;
 
