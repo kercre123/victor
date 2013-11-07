@@ -1,5 +1,5 @@
 
-% function lucasKande_interpolateAndDifference_affine()
+% function lucasKanade_interpolateAndDifference_affine()
 
 % templateImage = zeros(16,16); for y=1:size(templateImage,1) templateImage(y,:) = y*(1:size(templateImage,2)); end;
 % newImage = zeros(16,16); for y=1:size(newImage,1) newImage(y,:) = .1*y + (1:size(newImage,2)); end;
@@ -9,9 +9,9 @@
 % homography = [.5,0,0;0,1,0;0,0,1];
 % homography = [cos(.1), -sin(.1), 0; sin(.1), cos(.1), 0; 0,0,1];
 
-% difference = lucasKande_interpolateAndDifference_affine(templateImage, templateQuad, newImage, homography, 1);
+% difference = lucasKanade_interpolateAndDifference_affine(templateImage, templateQuad, newImage, homography, 1);
 
-function differences = lucasKande_interpolateAndDifference_affine(templateImage, templateQuad, newImage, homography, scale, debugDisplay)
+function differences = lucasKanade_interpolateAndDifference_affine(templateImage, templateQuad, newImage, homography, scale, debugDisplay)
 
 assert(isQuadARectangle(templateQuad))
 

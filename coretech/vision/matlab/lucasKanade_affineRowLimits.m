@@ -1,14 +1,14 @@
-% function output = lucasKande_affineRowLimits(inputImageQuad, homography, templateSize, debugDisplay)
+% function output = lucasKanade_affineRowLimits(inputImageQuad, homography, templateSize, debugDisplay)
 
 % homography can be either 2x3 or 3x3, though only the first two rows are
 % used. The x-coordinate comes first.
 %
 % homography warps the input image coordinates to the template coordinates
 
-% lucasKande_affineRowLimits([0,0;3,1;2,4;-1,3], [2,1.5,0;.1,2,1.5], [13,11], true);
-% for i=1:100 lucasKande_affineRowLimits(4*[0,0;3,1;2,4;-1,3], 5*(2*rand([2,3])-1), [13,11], true); pause(); end
+% lucasKanade_affineRowLimits([0,0;3,1;2,4;-1,3], [2,1.5,0;.1,2,1.5], [13,11], true);
+% for i=1:100 lucasKanade_affineRowLimits(4*[0,0;3,1;2,4;-1,3], 5*(2*rand([2,3])-1), [13,11], true); pause(); end
 
-function [minIndexes, maxIndexes] = lucasKande_affineRowLimits(inputImageQuad, homography, templateSize, debugDisplay)
+function [minIndexes, maxIndexes] = lucasKanade_affineRowLimits(inputImageQuad, homography, templateSize, debugDisplay)
 
 if ~exist('debugDisplay', 'var')
     debugDisplay = false;
