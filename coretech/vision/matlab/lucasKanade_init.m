@@ -4,17 +4,19 @@ function [A_translationOnly, A_affine] = lucasKanade_init(templateImage, templat
 
 assert(~useBlurring);
 
-assert(size(templateQuad,1) == 4);
+% assert(size(templateQuad,1) == 4);
+
+% minTemplateQuadX = min(templateQuad(:,1));
+% maxTemplateQuadX = max(templateQuad(:,1));
+% minTemplateQuadY = min(templateQuad(:,2));
+% maxTemplateQuadY = max(templateQuad(:,2));
+% assert(length(find(templateQuad(:,1)==minTemplateQuadX)) == 2);
+% assert(length(find(templateQuad(:,1)==maxTemplateQuadX)) == 2);
+% assert(length(find(templateQuad(:,2)==minTemplateQuadY)) == 2);
+% assert(length(find(templateQuad(:,2)==maxTemplateQuadY)) == 2);
 
 % Currently, the template quad must be a rectangle
-minTemplateQuadX = min(templateQuad(:,1));
-maxTemplateQuadX = max(templateQuad(:,1));
-minTemplateQuadY = min(templateQuad(:,2));
-maxTemplateQuadY = max(templateQuad(:,2));
-assert(length(find(templateQuad(:,1)==minTemplateQuadX)) == 2);
-assert(length(find(templateQuad(:,1)==maxTemplateQuadX)) == 2);
-assert(length(find(templateQuad(:,2)==minTemplateQuadY)) == 2);
-assert(length(find(templateQuad(:,2)==maxTemplateQuadY)) == 2);
+assert(isQuadARectangle(templateQuad));
 
 if find(round(size(templateImage)/2) == size(templateImage)/2) ~= 2
     disp('Non even input image size');

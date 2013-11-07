@@ -208,6 +208,7 @@ function extremaIndexes = updateExtrema(topPoint, bottomPoint, extremaIndexes, t
         minY = topPoint(2);
         minYRounded = min(templateSize(1)-0.5, max(0.5, ceil(minY-0.5)+0.5));
 
+        % I think this is safe as +0.5, versus a ceil, but think about this
 %         if ceil(minY) >= templateSize(1)
         if (minY+0.5) >= templateSize(1)
             return;
