@@ -4,11 +4,6 @@
  * Author: Boris Sofman (boris)
  * Created: 6/14/2008
  * 
- * Information on last revision to this file:
- *    $LastChangedDate$
- *    $LastChangedBy$
- *    $LastChangedRevision$
- * 
  * Description: Implementation of a radians class that automatically rescales
  *              the value after any computation to be within (-PI, PI].  Since
  *              the object can be cast directly to the double, it can be used
@@ -18,9 +13,16 @@
  *
  **/
 
-#include "anki/common/basestation/general.h"
+#include "anki/common/constantsAndMacros.h"
+#include "anki/common/shared/radians.h"
 
-#include "anki/common/basestation/math/radians.h"
+
+#ifdef MOVI_TOOLS
+#include <math_not_really_double.h>
+#endif
+
+#include <math.h>
+#include <assert.h>
 
 namespace Anki {
 
@@ -151,13 +153,10 @@ void Radians::operator*=(double b)
 // Angle division operator
 Radians operator/(const Radians& a, double b)
 {
-  Radians newRadians;
-
   // Check for divide by 0
-  if (NEAR_ZERO(b)) {
-    PRINT_NAMED_ERROR("Radians", "Attempting to divide by 0!");
-  }
-
+  assert(!NEAR_ZERO(b));  // Check for divide by 0
+  
+  Radians newRadians;
   newRadians.radians_ = a.radians_ / b;
   newRadians.rescale();
 
