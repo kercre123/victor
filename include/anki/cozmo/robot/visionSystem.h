@@ -7,8 +7,6 @@
  public:
  */
 
-#include <cassert>
-
 #include "anki/common/types.h"
 
 #include "anki/cozmo/robot/hal.h"

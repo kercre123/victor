@@ -1,3 +1,4 @@
+#include "anki/common/robot/config.h"
 #include "anki/cozmo/robot/visionSystem.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/cozmoBot.h"
@@ -5,7 +6,6 @@
 #include "anki/cozmo/messageProtocol.h"
 #include "anki/common/shared/radians.h"
 
-#include <iostream>
 
 #define USING_MATLAB_VISION (defined(USE_MATLAB_FOR_HEAD_CAMERA) || \
 defined(USE_MATLAB_FOR_MAT_CAMERA))
