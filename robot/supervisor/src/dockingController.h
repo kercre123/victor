@@ -36,6 +36,11 @@ namespace Anki {
       bool DidSucceed();
       ReturnCode Update();
       
+      // Gripper control
+      void EngageGripper();
+      void DisengageGripper();
+      bool IsGripperEngaged();
+      
     } // namespace DockingController
   } // namespace Cozmo
 } // namespace Anki

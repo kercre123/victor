@@ -264,7 +264,7 @@ namespace Anki {
           mxArray *mxUpDir = engGetVariable(matlabEngine_, "upDir");
           msg.upDirection = static_cast<u8>(mxGetScalar(mxUpDir)) - 1; // Note the -1 for C vs. Matlab indexing
           
-          msg.headAngle = HAL::GetHeadAngle();
+          msg.headAngle = HAL::MotorGetPosition(HAL::MOTOR_HEAD);
    //       // NOTE the negation here!
    //       msg.headAngle = -HAL::GetHeadAngle();
           

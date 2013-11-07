@@ -92,10 +92,10 @@ namespace Anki {
       if(!coastMode_ && !coastUntilStop_) {
         
 #if(DEBUG_WHEEL_CONTROLLER)
-        fprintf(stdout, " WHEEL speeds: %f (L), %f (R)   (Curr: %d, %d)\n",
+        PRINT(" WHEEL speeds: %f (L), %f (R)   (Curr: %d, %d)\n",
                 filterWheelSpeedL_, filterWheelSpeedR_,
                 measuredWheelSpeedL_, measuredWheelSpeedR_);
-        fprintf(stdout, " WHEEL desired speeds: %d (L), %d (R)\n",
+        PRINT(" WHEEL desired speeds: %d (L), %d (R)\n",
                 desiredWheelSpeedL_, desiredWheelSpeedR_);
 #endif
         
@@ -115,7 +115,7 @@ namespace Anki {
         float outr = MM_PER_SEC_TO_MOTOR_VAL( (float)(Kp_ * errorR) + (error_sumR_ * Ki_) );
         
 #if(DEBUG_WHEEL_CONTROLLER)
-        fprintf(stdout, " WHEEL error: %f (L), %f (R)   error_sum: %f (L), %f (R)\n", errorL, errorR, error_sumL_, error_sumR_);
+        PRINT(" WHEEL error: %f (L), %f (R)   error_sum: %f (L), %f (R)\n", errorL, errorR, error_sumL_, error_sumR_);
 #endif
         
         /*
@@ -196,7 +196,7 @@ namespace Anki {
       }
       
 #if(DEBUG_WHEEL_CONTROLLER)
-      fprintf(stdout, " WHEEL pwm: %d (L), %d (R)\n", *motorvalueoutL, *motorvalueoutR);
+      PRINT(" WHEEL pwm: %d (L), %d (R)\n", *motorvalueoutL, *motorvalueoutR);
 #endif
       
       //Command the computed speed (as PWM values) to the motors
@@ -210,13 +210,13 @@ namespace Anki {
     void EncoderSpeedFilterIteration(void)
     {
       // Get true (gyro measured) speeds from robot model
-      measuredWheelSpeedL_ = Cozmo::HAL::GetLeftWheelSpeed();
-      measuredWheelSpeedR_ = Cozmo::HAL::GetRightWheelSpeed();
+      measuredWheelSpeedL_ = Cozmo::HAL::MotorGetSpeed(HAL::MOTOR_LEFT_WHEEL);
+      measuredWheelSpeedR_ = Cozmo::HAL::MotorGetSpeed(HAL::MOTOR_RIGHT_WHEEL);
       
-      filterWheelSpeedL_ = (Cozmo::HAL::GetLeftWheelSpeed() *
+      filterWheelSpeedL_ = (measuredWheelSpeedL_ *
                        (1.0f - ENCODER_FILTERING_COEFF) +
                        (filterWheelSpeedL_ * ENCODER_FILTERING_COEFF));
-      filterWheelSpeedR_ = (Cozmo::HAL::GetLeftWheelSpeed() *
+      filterWheelSpeedR_ = (measuredWheelSpeedR_ *
                        (1.0f - ENCODER_FILTERING_COEFF) +
                        (filterWheelSpeedR_ * ENCODER_FILTERING_COEFF));
       

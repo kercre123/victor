@@ -20,6 +20,15 @@ namespace Anki {
       
     } // "private" members
 
+    void SetAngularVelocity(const f32 rad_per_sec)
+    {
+      // TODO: Figure out power-to-speed ratio on actual robot. Normalize with battery power?
+      f32 power = CLIP(rad_per_sec / HAL::MAX_HEAD_SPEED, -1.0, 1.0);
+      HAL::MotorSetPower(HAL::MOTOR_HEAD, power);
+      inPosition_ = true;
+    }
+    
+    
     void SetDesiredAngle(const f32 angle)
     {
       desiredAngle_ = angle;
@@ -39,16 +48,16 @@ namespace Anki {
         
         // Simple proportional control for now
         // TODO: better controller?
-        currentAngle_ = HAL::GetHeadAngle();
+        currentAngle_ = HAL::MotorGetPosition(HAL::MOTOR_HEAD);
         angleError_ = desiredAngle_ - currentAngle_;
         
         // TODO: convert angleError_ to power / speed in some reasonable way
         if(ABS(angleError_) < ANGLE_TOLERANCE) {
           inPosition_ = true;
-          HAL::SetHeadAngularVelocity(0.f);
+          SetAngularVelocity(0.f);
         } else {
           inPosition_ = false;
-          HAL::SetHeadAngularVelocity(Kp * angleError_.ToFloat());
+          SetAngularVelocity(Kp * angleError_.ToFloat());
         }
         
       } // if not in position

@@ -34,6 +34,7 @@
 #define ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
 
 #include "anki/common/types.h"
+#include "anki/common/constantsAndMacros.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,6 +66,21 @@ namespace Anki
       const u8  NUM_RADIAL_DISTORTION_COEFFS = 5;
       const f32 MOTOR_PWM_MAXVAL = 2400.f;
       
+      ///////////////////
+      // TODO: The following are constants for a naive linear approximation of power to speed,
+      // which is definitely a non-linear relationship. Eventually, we should figure out the true
+      // relationship on the robot so that the simulator can approximate it.
+      
+      // The max angular speed the head can move when max power is commanded.
+      const f32 MAX_HEAD_SPEED = 2*PI; // rad/s
+      
+      // The max angular speed the head can move when max power is commanded.
+      const f32 MAX_LIFT_SPEED = PI/2; // rad/s
+      
+      const f32 MAX_WHEEL_SPEED = 300; //mm/s
+      //////////////////////
+      
+      
       //
       // Typedefs
       //
@@ -90,32 +106,10 @@ namespace Anki
       void Destroy(void);
       
       // Wheel motors
-      void SetLeftWheelAngularVelocity(f32 rad_per_sec);
-      void SetRightWheelAngularVelocity(f32 rad_per_sec);
-      
       void SetWheelAngularVelocity(f32 left_rad_per_sec,
                                    f32 right_rad_per_sec);
       
-      f32  GetLeftWheelPosition();
-      f32  GetRightWheelPosition();
-      void GetWheelPositions(f32 &left_rad, f32 &right_rad);
-      
-      f32 GetLeftWheelSpeed();
-      f32 GetRightWheelSpeed();
-      
-      // Head pitch
-      //void SetHeadPitch(f32 pitch_rad);
-      void SetHeadAngularVelocity(const f32 rad_per_sec);
-      f32  GetHeadAngle();
-      
-      // Lift position
-      //void SetLiftPitch(f32 pitch_rad);
-      void SetLiftAngularVelocity(const f32 rad_per_sec);
-      f32  GetLiftAngle();
-      
       // Gripper control
-      void EngageGripper();
-      void DisengageGripper();
       bool IsGripperEngaged();
       
       // Cameras
