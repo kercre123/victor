@@ -51,6 +51,7 @@ for iScale = 1:numScales
         if iScale == 1
             curTemplateImage = templateImage;
         else
+            assert(all(mod(size(prevTemplateImageRaw),2) == 0));
             curTemplateImage = (prevTemplateImageRaw(1:2:end, 1:2:end) + prevTemplateImageRaw(2:2:end, 1:2:end) + prevTemplateImageRaw(1:2:end, 2:2:end) + prevTemplateImageRaw(2:2:end, 2:2:end)) / 4; %#ok<NODEF>
         end
     end

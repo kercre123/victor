@@ -1,163 +1,67 @@
 % function lucasKanade_iterativelyOptimize()
 
-function lucasKanade_iterativelyOptimize(A_translationOnly, A_affine, whichScale, maxIterations)
+% im1 = imresize(im2double(rgb2gray(imread('C:\Anki\blockImages\blockImages00020.png'))), [240,320]);
+% im2 = imresize(im2double(rgb2gray(imread('C:\Anki\blockImages\blockImages00021.png'))), [240,320]);
 
-% function converged = trackHelper(this, img, i_scale, translationDone)
-            
-spacing = 2^(i_scale-1);
+% templateQuad = round([95, 78; 371, 83; 361, 368; 83, 354] / 2);
+% x0 = min(templateQuad(:,2)); x1 = max(templateQuad(:,2));
+% y0 = min(templateQuad(:,1)); y1 = max(templateQuad(:,1));
+% templateRect = [x0,y0;x1,y0;x1,y1;x0,y1];
 
-xPrev = this.xgrid{i_scale};
-yPrev = this.ygrid{i_scale};
+% initialHomography = eye(3);
+% whichScales = 1:4;
+% maxIterations = 10;
+% convergenceThreshold = Inf;
+% debugDisplay = true;
 
-iteration = 1;
-tform_orig = this.tform;
+% [A_translationOnly, A_affine, templateImagePyramid] = lucasKanade_init(im1, templateRect, max(whichScales), false, false);
 
-converged = false;
-while ~converged && iteration < this.maxIterations
+% homography = lucasKanade_iterativelyOptimize(A_translationOnly, A_affine, templateImagePyramid, templateRect, im2, initialHomography, whichScales, maxIterations, convergenceThreshold, debugDisplay)
 
-    xi = this.tform(1,1)*this.xgrid{i_scale} + ...
-        this.tform(1,2)*this.ygrid{i_scale} + ...
-        this.tform(1,3);
+function homography = lucasKanade_iterativelyOptimize(A_translationOnly, A_affine, templateImagePyramid, templateRect, newImage, initialHomography, whichScales, maxIterations, convergenceThreshold, debugDisplay)
 
-    yi = this.tform(2,1)*this.xgrid{i_scale} + ...
-        this.tform(2,2)*this.ygrid{i_scale} + ...
-        this.tform(2,3);
+whichScales = sort(whichScales,'descend');
 
-    % RMS error between pixel locations and previous locations
-    change = sqrt(mean((xPrev(:)-xi(:)).^2 + (yPrev(:)-yi(:)).^2));
+homography = initialHomography;
 
-    imgi = interp2(img, ...
-        xi(:) + this.xcen, yi(:) + this.ycen, 'linear');
-    inBounds = ~isnan(imgi);
-
-    if this.useNormalization
-        imgi = (imgi - mean(imgi(inBounds)))/std(imgi(inBounds));
+for iScale = whichScales
+    newImageSmall = imresize(newImage, size(newImage)/(2^(iScale-1)));
+    
+    for iteration = 1:maxIterations
+        [update, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{iScale}, templateRect, A_translationOnly{iScale}, newImageSmall, homography, 2^iScale, false);
+        homography = homography - [0,0,update(1);0,0,update(2);0,0,0];
+    end    
+       
+    if debugDisplay
+        figure(iScale); plotResults(newImage, templateRect, homography);
     end
+    
+    % TODO: check for convergence
+end
 
-    It = imgi - this.target{i_scale}(:);
+end % function lucasKanade_iterativelyOptimize()
 
-    %It(isnan(It)) = 0;
-    %inBounds = true(size(It));
+function plotResults(image, corners, homography)
 
-    if numel(inBounds) < 16
-        warning('Template drifted too far out of image.');
-        break;
-    end
+    cen = mean(corners,1);
 
-    this.err = mean(abs(It(inBounds)));
+    order = [1,2,3,4,1];
 
-    %{
-    namedFigure('It')
-    imagesc(It), axis image, 
-    title(sprintf('Error=%.3f, Previous=%.3f, AbsDiff=%.3f', ...
-        err, prevErr, abs(err-prevErr))), pause(.1)
-    %}
+    hold off;
+    imshow(image);
+    hold on;
+    plot(corners(order,1), corners(order,2), 'b--', ...
+                    'LineWidth', 2, 'Tag', 'TrackRect');
 
-    %hold off, imagesc(img), axis image, hold on
-    %plot(xi, yi, 'rx'); drawnow
-    % %                 [nrows,ncols] = size(img);
-    % %                 temp = zeros(nrows,ncols);
-    % %                 temp(sub2ind([nrows ncols], ...
-    % %                     max(1,min(nrows,round(yi))), ...
-    % %                     max(1,min(ncols,round(xi))))) = It;
-    % %                 hold off, imagesc(temp), axis image, drawnow
+    tempx = homography(1,1)*(corners(:,1)-cen(1)) + ...
+        homography(1,2)*(corners(:,2)-cen(2)) + ...
+        homography(1,3) + cen(1);
 
+    tempy = homography(2,1)*(corners(:,1)-cen(1)) + ...
+        homography(2,2)*(corners(:,2)-cen(2)) + ...
+        homography(2,3) + cen(2);
 
-    if translationDone
-        if this.estimateAffine
-            A = this.A_affine{i_scale};
-        elseif this.estimateScale
-            A = this.A_scale{i_scale};
-        else
-            error('Should not get here.');
-        end
-        %{
-        AtWA = this.A_scale{i_scale}(inBounds,:)'*(this.W{i_scale}(:,ones(1,3)).*this.A_scale{i_scale}(inBo
-        AtWA = this.AtWA_scale{i_scale};
-        AtW = this.AtW_scale{i_scale};
-        %}
-    else
-        A = this.A_trans{i_scale};
-        %{
-        AtWA = this.AtWA_trans{i_scale};
-        AtW = this.AtW_trans{i_scale};
-        %}
-    end
+    plot(tempx, tempy, 'r', ...
+                    'LineWidth', 2, 'Tag', 'TrackRect');
+end % function plotResults()
 
-    AtW = (A(inBounds,:).*this.W{i_scale}(inBounds,ones(1,size(A,2))))';
-    AtWA = AtW*A(inBounds,:);% + diag(this.ridgeWeight*ones(1,size(A,2)));                
-
-    b = AtW*It(inBounds);
-
-    update = AtWA\b;
-    %update = least_squares_norm(AtWA, b);
-    %update = robust_least_squares(AtWA, b);
-
-    %err = norm(b-AtWA*update);
-
-%                 if this.debugDisplay
-%                     edata = [get(this.h_errPlot, 'YData') err];
-%                     xdata = 1:(length(edata));
-%                     set(this.h_errPlot, 'XData', xdata, 'YData', edata);
-%                     set(get(this.h_errPlot, 'Parent'), ...
-%                         'XLim', [1 length(edata)], ...
-%                         'YLim', [0 1.1*max(edata)]);
-%                 end
-
-    %update = spacing * update;
-
-    % Compose the update with the current transformation
-    if translationDone
-
-        if this.estimateAffine
-            tformUpdate = eye(3) + [update(1:3)'; update(4:6)'; zeros(1,3)];
-
-        elseif this.estimateScale
-            tformUpdate = [(1+update(3)) 0 update(1); 
-                0 (1+update(3)) update(2);
-                0 0 1];
-        end
-
-        % TODO: hardcode this inverse
-        %this.tform = this.tform*inv(tformUpdate);
-        this.tform = this.tform / tformUpdate;
-    else
-        %this.tx = this.tx + update(1);
-        %this.ty = this.ty + update(2);
-        this.tform(1:2,3) = this.tform(1:2,3) - update;
-    end
-
-    iteration = iteration + 1;
-
-    %change = abs(err - prevErr);
-    %change = err;
-    %change = abs(update - prevUpdate) ./ (abs(prevUpdate)+eps);
-    if all(change < this.convergenceTolerance*spacing)
-        converged = true;
-    end
-
-    if this.debugDisplay 
-        edata = [get(this.h_errPlot, 'YData') change];
-        xdata = 1:(length(edata));
-        set(this.h_errPlot, 'XData', xdata, 'YData', edata);
-        set(get(this.h_errPlot, 'Parent'), ...
-            'XLim', [1 length(edata)], ...
-            'YLim', [0 max(eps,1.1*max(edata))]);
-
-        if converged
-            h = get(this.h_errPlot, 'Parent');
-            hold(h, 'on')
-            plot(xdata(end), edata(end), 'go', 'Parent', h);
-            hold(h, 'off');
-        end
-    end
-
-    %prevErr = err;
-    xPrev = xi;
-    yPrev = yi;
-
-end % WHILE not converged
-
-% if ~converged
-%     this.tform = tform_orig;
-% end
