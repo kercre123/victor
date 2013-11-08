@@ -146,7 +146,7 @@ namespace Anki
         Path[numPathSegments_].def.line.m = (y_end_m - y_start_m) / (x_end_m - x_start_m);
         Path[numPathSegments_].def.line.b = Path[numPathSegments_].def.line.m * y_start_m + x_start_m;
         Path[numPathSegments_].def.line.dy_sign = ((y_end_m - y_start_m) >= 0) ? 1.0 : -1.0;
-        Path[numPathSegments_].def.line.theta = atan2f(y_end_m - y_start_m, x_end_m - x_start_m);
+        Path[numPathSegments_].def.line.theta = atan2_fast(y_end_m - y_start_m, x_end_m - x_start_m);
         
         numPathSegments_++;
         
@@ -289,7 +289,7 @@ namespace Anki
           f32 dy = y - y_intersect;
           f32 dx = x - x_intersect;
           
-          shortestDistanceToPath_m = sqrt(dy*dy + dx*dx);
+          shortestDistanceToPath_m = sqrtf(dy*dy + dx*dx);
           
 #if(DEBUG_PATH_FOLLOWER)
           PRINT("m: %f, b: %f\n",m,b);
@@ -355,7 +355,7 @@ namespace Anki
         
         
         // Find heading error
-        Anki::Radians theta_line = atan2f(dy,dx); // angle of line from circle center to robot
+        Anki::Radians theta_line = atan2_fast(dy,dx); // angle of line from circle center to robot
         Anki::Radians theta_tangent = theta_line + Anki::Radians((currSeg->movingCCW ? 1 : -1 ) * PIDIV2);
         
         radDiff = (theta_tangent - angle).ToFloat();
@@ -376,7 +376,7 @@ namespace Anki
         f32 A = m*m + 1;
         f32 B = 2*m*(b-y_center) - 2*x_center;
         f32 C = (b - y_center)*(b - y_center) - r*r + x_center*x_center;
-        f32 sqrtPart = sqrt(B*B - 4*A*C);
+        f32 sqrtPart = sqrtf(B*B - 4*A*C);
         
         f32 x_intersect_1 = (-B + sqrtPart) / (2*A);
         f32 x_intersect_2 = (-B - sqrtPart) / (2*A);
@@ -390,10 +390,10 @@ namespace Anki
         }
         
         // Find y value of intersection
-        f32 y_intersect = y_center + (dy > 0 ? 1 : -1) * sqrt(r*r - (x_intersect - x_center) * (x_intersect - x_center));
+        f32 y_intersect = y_center + (dy > 0 ? 1 : -1) * sqrtf(r*r - (x_intersect - x_center) * (x_intersect - x_center));
         
         // Compute distance to intersection point (i.e. shortest distance to arc)
-        shortestDistanceToPath_m = sqrt((x - x_intersect) * (x - x_intersect) + (y - y_intersect) * (y - y_intersect));
+        shortestDistanceToPath_m = sqrtf((x - x_intersect) * (x - x_intersect) + (y - y_intersect) * (y - y_intersect));
 
         // Check for numerical errors due to very vertical line.
         // For now, assuming that a nan shortest distance to path means the

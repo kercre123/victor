@@ -4,12 +4,20 @@
  * Author: Kevin Yoon
  * Created: 22-OCT-2012
  * 
+ * Some trig functions to supplement incomplete math libraries on embedded targets.
+ * Error of all functions is less than +/- 0.01.
+ * For bettery accuracy, lookup tables should be regenerated with u16.
  *
  **/
 #ifndef _VEHICLEMATH_H
 #define _VEHICLEMATH_H
 
-// When defined, uses smaller tables to save space at the cost of more computation (and higher accuracy)
+// When USE_SMALL_LUT defined, a smaller lookup table is used to conserve space.
+// USE_INTERPOLATION is also automatically defined, since without it answers are probably too wrong to be useful.
+// If USE_SMALL_LUT is not defined, a large LUT is used.
+//#define USE_SMALL_LUT
+
+// When defined, interpolates between lookup values for higher accuracy.
 #define USE_INTERPOLATION  
 
 // Arctangent function based on lookup table
@@ -17,5 +25,8 @@ float atan_fast(float x);
 
 // Arcsine function based on lookup table
 float asin_fast(float x);
+
+// Arctangent function which uses atan_fast
+float atan2_fast(float y, float x);
 
 #endif
