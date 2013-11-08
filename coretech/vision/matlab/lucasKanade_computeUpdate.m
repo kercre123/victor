@@ -8,19 +8,23 @@
 % templateImage = zeros(120,160); for y=1:size(templateImage,1) templateImage(y,:) = y*(1:size(templateImage,2)); end;
 % warpedTemplateImage = lucasKande_warpGroundTruth(templateImage, [1,0,0.5; 0,1,0.1; 0,0,1], size(templateImage));
 % templateQuad = [50,50;50,100;100,100;100,50];
-% numScales = 2;
+% numScales = 4;
 
 % templateImage = zeros(120,160); for y=1:size(templateImage,1) templateImage(y,:) = y*(1:size(templateImage,2)); end;
-% templateQuad = [48,48;48,102;72,102;72,48];
-% warpedTemplateImage = lucasKande_warpGroundTruth(templateImage, [1,0,2; 0,1,0; 0,0,1], size(templateImage), templateQuad);
-% warpedTemplateImage(isnan(warpedTemplateImage)) = templateImage(isnan(warpedTemplateImage));
-% templateQuad = [50,50;50,100;70,100;70,50];
-% numScales = 2;
+% templateImage = templateImage / max(templateImage(:)); templateImage = round(50*templateImage);
+% templateQuad = [3,3;3,152;142,152;142,3];
+% [warpedTemplateImage, mask, warpedMask] = lucasKande_warpGroundTruth(templateImage, [1,0,1; 0,1,0; 0,0,1], size(templateImage), templateQuad);
+% warpedTemplateImage(isnan(warpedTemplateImage)) = 0;
+% templateQuad = [5,5;5,150;140,150;140,5];
+% numScales = 4;
 
 % [A_translationOnly, A_affine, templateImagePyramid] = lucasKanade_init(templateImage, templateQuad, numScales, false, true);
 % [update, A, b] = lucasKanade_computeUpdate(templateImagePyramid{1}, templateQuad, A_translationOnly{1}, warpedTemplateImage, eye(3), 1, false);
-
 % [update, A, b] = lucasKanade_computeUpdate(templateImagePyramid{2}, templateQuad, A_translationOnly{2}, imresize(warpedTemplateImage, size(warpedTemplateImage)/2), eye(3), 2, false);
+% [update, A, b] = lucasKanade_computeUpdate(templateImagePyramid{3}, templateQuad, A_translationOnly{3}, imresize(warpedTemplateImage, size(warpedTemplateImage)/(2^2)), eye(3), 2^2, false);
+% [update, A, b] = lucasKanade_computeUpdate(templateImagePyramid{4}, templateQuad, A_translationOnly{4}, imresize(warpedTemplateImage, size(warpedTemplateImage)/(2^3)), eye(3), 2^3, false);
+
+% H = eye(3); for i=1:5 [update, A, b] = lucasKanade_computeUpdate(templateImagePyramid{1}, templateQuad, A_translationOnly{1}, warpedTemplateImage, H, 1, false); H(1:2,3) = H(1:2,3) - update(1:2); disp(H); end;
 
 function [update, A, b] = lucasKanade_computeUpdate(templateImage, templateQuad, AFull, newImage, homography, scale, debugDisplay)
 
@@ -37,10 +41,12 @@ end
 
 numModelParameters = size(AFull,3);
 
-minTemplateQuadX = min(templateQuad(:,1)) / scale;
-maxTemplateQuadX = max(templateQuad(:,1)) / scale;
-minTemplateQuadY = min(templateQuad(:,2)) / scale;
-maxTemplateQuadY = max(templateQuad(:,2)) / scale;
+minTemplateQuadX = round(min(templateQuad(:,1)) / scale);
+maxTemplateQuadX = round(max(templateQuad(:,1)) / scale);
+minTemplateQuadY = round(min(templateQuad(:,2)) / scale);
+maxTemplateQuadY = round(max(templateQuad(:,2)) / scale);
+
+homography(1,3) = homography(1,3) + 0.5;
 
 % homography(1:2,1:3) = homography(1:2,1:3) * scale;
 homography(1:2,3) = homography(1:2,3) * scale;
@@ -62,6 +68,7 @@ end
 
 homography(3,:) = [0,0,1];
 homographyInv = inv(homography);
+% homographyInv = (homography);
 
 newImageCoords_x0y0 = homographyInv*[0;0;1];
 newImageCoords_x1y0 = homographyInv*[1;0;1];
@@ -76,6 +83,10 @@ x_dy = newImageCoords_x1y0(2) - newImageCoords_x0y0(2);
 
 numInBounds = 0;
 for y = minTemplateQuadY:maxTemplateQuadY
+    if isinf(minIndexes(y+1)) || isinf(maxIndexes(y+1))
+        continue;
+    end
+    
     minX = ceil((max(minIndexes(y+1), minTemplateQuadX+0.5))-0.5) + 0.5;
     maxX = floor(min(maxIndexes(y+1), maxTemplateQuadX+1.0-0.5)-0.5) + 0.5;
 
@@ -93,17 +104,25 @@ A = zeros(numInBounds, numModelParameters);
 curInBoundsElements = 1;
 
 interpolatedFrom = zeros(size(newImage));
+interpolatedSelection = zeros(size(templateImage));
 
 for y = minTemplateQuadY:maxTemplateQuadY
+    if isinf(minIndexes(y+1)) || isinf(maxIndexes(y+1))
+        continue;
+    end
+    
     minX = ceil((max(minIndexes(y+1), minTemplateQuadX+0.5))-0.5) + 0.5;
     maxX = floor(min(maxIndexes(y+1), maxTemplateQuadX+1.0-0.5)-0.5) + 0.5;
 
     % compute the (x,y) coordinates of the leftmost pixel in the newImage
     % coordinates
     newImageCoords = homographyInv*[minX;y+0.5;1];
-
+    
     for x = (minX:maxX) - 0.5
         templatePixel = templateImage(y+1, x+1);
+        
+%         % TODO: remove
+        newImageCoords = homographyInv * [x+0.5;y+0.5;1]; %#ok<*MINV>
 
         x0 = floor(newImageCoords(1)-0.5)+1;
         x1 = ceil(newImageCoords(1)-0.5)+1;
@@ -114,10 +133,14 @@ for y = minTemplateQuadY:maxTemplateQuadY
         interpolatedFrom(y0:y1, x0:x1) = 1;
         
         pixel00 = newImage(y0, x0);
-        pixel01 = newImage(y1, x0);
-        pixel10 = newImage(y0, x1);
+        pixel01 = newImage(y0, x1);
+        pixel10 = newImage(y1, x0);
         pixel11 = newImage(y1, x1);
 
+%         if y0 ~= y1 || x0 ~= x1
+%             keyboard
+%         end
+        
         alphaY = newImageCoords(2) - (floor(newImageCoords(2)- 0.5)+0.5);
         alphaYinverse = 1 - alphaY;
 
@@ -125,7 +148,10 @@ for y = minTemplateQuadY:maxTemplateQuadY
         alphaXinverse = 1 - alphaX;
 
         interpolatedPixel = interpolate2d(pixel00, pixel01, pixel10, pixel11, alphaY, alphaYinverse, alphaX, alphaXinverse);
-
+%         interpolatedPixel = interpolate2d(pixel00, pixel01, pixel10, pixel11, alphaYinverse, alphaY, alphaXinverse, alphaX);
+ 
+        interpolatedSelection(y+1,x+1) = interpolatedPixel;
+        
 %         disp(sprintf('%f %f', templatePixel, interpolatedPixel));
 
         It(curInBoundsElements) = interpolatedPixel - templatePixel;
@@ -139,10 +165,15 @@ for y = minTemplateQuadY:maxTemplateQuadY
 %     keyboard
 end % for y = minTemplateQuadY:maxTemplateQuadY
 
+% figure();
+% imshow(interpolatedSelection);
+
 AtA = A' * A;
 b = A' * It;
 
-update = AtA \ b % TODO: use SVD
+update = AtA \ b; % TODO: use SVD
+
+mean(abs(It(:)))
 
 keyboard
 

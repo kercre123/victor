@@ -30,6 +30,8 @@ A_translationOnly = cell(numScales,1);
 
 if estimateAffine
     A_affine = cell(numScales,1);
+else
+    A_affine = [];
 end
 
 for iScale = 1:numScales

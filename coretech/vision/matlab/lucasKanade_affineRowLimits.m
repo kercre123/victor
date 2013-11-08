@@ -14,7 +14,7 @@ if ~exist('debugDisplay', 'var')
     debugDisplay = false;
 end
 
-homography = homography(1:2, :)
+homography = homography(1:2, :);
 
 % Warp the inputImageQuad corners to the template coordinates
 inputImageQuadSqueezed = squeezeQuadrilateral(inputImageQuad, 1.0);
