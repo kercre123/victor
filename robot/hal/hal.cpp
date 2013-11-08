@@ -232,18 +232,34 @@ int main()
 
     //printf("%X\n", *(volatile u32*)TIM1_CNT_VAL_ADR);
 
-//    HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 1.0);
+//    HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 0.05f);
+
+//    HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 1.00f);
+//    HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 1.00f);
+//    HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 1.00f);
+//    SleepMs(1000);
+//    HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, -1.00f);
 //    SleepMs(1000);
 
-/*    printf("%08X %08X %08X %08X\n",
-      REG_WORD(GPIO_PWM_DEC_0_N1_ADR),
-      REG_WORD(GPIO_PWM_DEC_1_N1_ADR),
-      REG_WORD(GPIO_PWM_DEC_2_N1_ADR),
-      REG_WORD(GPIO_PWM_DEC0_VLD_ADR));
-*/
-//      if (REG_WORD(GPIO_PWM_DEC0_VLD_ADR) & 0x7F)
-//        printf("%08X\n",
-//          REG_WORD(GPIO_PWM_DEC_0_N1_ADR));
+/*    printf("%d %d %d\n",
+        DrvGpioGetPin(106),
+        DrvGpioGetPin(32),
+        DrvGpioGetPin(35));*/
+
+/*    printf("%d %d %d\n",
+        DrvGpioGetPin(106),
+        DrvGpioGetPin(32),
+        DrvGpioGetPin(35)); */
+
+/*      if ((REG_WORD(GPIO_PWM_DEC0_VLD_ADR) & 0x3F) == 0x3F)
+      {
+        u32 dec = REG_WORD(GPIO_PWM_DEC_0_N1_ADR);
+        printf("%d %d\n",
+          dec >> 16,
+          dec & 0xFFFF);
+
+        SET_REG_WORD(GPIO_PWM_CLR_ADR, 0xFF);
+      } */
 
 //    HAL::MotorSetPower(HAL::MOTOR_GRIP, -1.0f);
 //    SleepMs(1000);

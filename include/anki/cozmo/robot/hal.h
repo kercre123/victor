@@ -182,11 +182,11 @@ namespace Anki
       void MotorResetPosition(MotorID motor);
 
       // Returns units based on the specified motor type:
-      // Wheels are in mm/s, everything else is in degrees/s.
+      // Wheels are in mm/s, everything else is in radians/s.
       f32 MotorGetSpeed(MotorID motor);
 
       // Returns units based on the specified motor type:
-      // Wheels are in mm since reset, everything else is in degrees.
+      // Wheels are in mm since reset, everything else is in radians.
       f32 MotorGetPosition(MotorID motor);
 
       // Measures the unitless load on all motors
