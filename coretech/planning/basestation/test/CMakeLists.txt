@@ -11,7 +11,8 @@ include_directories(../src)
 
 add_executable(run_coreTechPlanningTests
         run_coreTechPlanningTests.cpp
-        testRectangle.cpp)
+        testRectangle.cpp
+        testEnvironment.cpp)
 
 target_link_libraries(run_coreTechPlanningTests
         CoreTech_Planning_Basestation

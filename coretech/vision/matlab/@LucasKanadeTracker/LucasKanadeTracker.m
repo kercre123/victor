@@ -378,19 +378,24 @@ classdef LucasKanadeTracker < handle
             
             spacing = 2^(i_scale-1);
             
-            xPrev = this.xgrid{i_scale};
-            yPrev = this.ygrid{i_scale};
+            xPrev = 0; %this.xgrid{i_scale};
+            yPrev = 0; %this.ygrid{i_scale};
             
             iteration = 1;
             tform_orig = this.tform;
             
             converged = false;
-            while ~converged && iteration < this.maxIterations
+            while iteration < this.maxIterations
                 
                 [xi, yi] = this.getImagePoints(i_scale);
                 
-                % RMS error between pixel locations and previous locations
+                % RMS error between pixel locations according to current
+                % transformation and previous locations. 
                 change = sqrt(mean((xPrev(:)-xi(:)).^2 + (yPrev(:)-yi(:)).^2));
+                if change < this.convergenceTolerance*spacing
+                    converged = true;
+                    break;
+                end
                 
                 imgi = interp2(img, xi(:), yi(:), 'linear');
                 inBounds = ~isnan(imgi);
@@ -498,9 +503,7 @@ classdef LucasKanadeTracker < handle
                 %change = abs(err - prevErr);
                 %change = err;
                 %change = abs(update - prevUpdate) ./ (abs(prevUpdate)+eps);
-                if all(change < this.convergenceTolerance*spacing)
-                    converged = true;
-                end
+                
                 
                 if this.debugDisplay
                     edata = [get(this.h_errPlot, 'YData') change];

@@ -17,19 +17,19 @@ namespace Planning
  */
 
 
-#define MAX_THETA_BITS 6
-#define MAX_XY_BITS 13
+#define THETA_BITS 4
+#define MAX_XY_BITS 14
+#define INVALID_ACTION_ID 255
 
 typedef uint8_t StateTheta;
 typedef int16_t StateXY;
 typedef float Cost;
 typedef uint8_t ActionID;
-typedef uint32_t StateID;
-
-#define INVALID_ACTION_ID 255
 
 class Rectangle;
 class xythetaEnvironment;
+class State;
+class StateID;
 
 class State
 {
@@ -40,6 +40,8 @@ public:
   State(StateID sid);
   State(StateXY x, StateXY y, StateTheta theta) : x(x), y(y), theta(theta) {};
 
+  bool operator==(const State& other) const;
+
   StateID GetStateID() const;
 
   StateXY x;
@@ -47,6 +49,17 @@ public:
   StateTheta theta;
 };
 
+// bit field representation that packs into an int
+class StateID
+{
+public:
+  // This constructor adds the offset to the given state
+  StateID() : theta(0), x(0), y(0) {};
+
+  unsigned int theta : THETA_BITS;
+  signed int x : MAX_XY_BITS;
+  signed int y : MAX_XY_BITS;
+};
 
 // continuous states are set up with the exact state being at the
 // bottom left of the cell // TODO:(bn) think more about that
@@ -75,7 +88,10 @@ public:
   // Cost of this action
   Cost cost;
 
-  StateID endID;
+  // This is a state where x and y will be added to the current state,
+  // but the resulting angle will be set by exactly the theta
+  // here. This is possible because we already know the starting theta
+  State endStateOffset;
 
   // vector containing continuous relative offsets for positions in
   // between (0,0,startTheta) and (end)
@@ -112,6 +128,7 @@ public:
 private:
 
   State_c start_c_;
+  State start_;
   Cost startG_;
 
   // once Next() is called, it will evaluate this action
@@ -141,6 +158,8 @@ class xythetaEnvironment
 {
   friend class SuccessorIterator;
 public:
+  // for testing, has no prims or map!
+  xythetaEnvironment();
 
   // just for now, eventually we won't use filenames like this, obviously......
   xythetaEnvironment(const char* mprimFilename, const char* mapFile);
@@ -160,6 +179,10 @@ public:
   inline float GetTheta_c(StateTheta theta) const;
 
 private:
+
+  // returns true on success
+  bool ReadMotionPrimitives(FILE* fMotPrims);
+  bool ReadinMotionPrimitive(MotionPrimitive& prim, FILE* fMotPrims);
 
   float resolution_cm_;
 
@@ -182,22 +205,22 @@ State_c xythetaEnvironment::State2State_c(const State& c) const
 
 State_c xythetaEnvironment::StateID2State_c(StateID sid) const
 {
-  return State2State_c(sid);
+  return State_c(GetX_cm(sid.x), GetY_cm(sid.y), GetTheta_c(sid.theta));
 }
 
 float xythetaEnvironment::GetXFromStateID(StateID sid)
 {
-  return sid & ((1<<MAX_XY_BITS) - 1);
+  return sid.x; //sid & ((1<<MAX_XY_BITS) - 1);
 }
 
 float xythetaEnvironment::GetYFromStateID(StateID sid)
 {
-  return (sid >> MAX_XY_BITS) & ((1<<MAX_XY_BITS) - 1);
+  return sid.y; //(sid >> MAX_XY_BITS) & ((1<<MAX_XY_BITS) - 1);
 }
 
 float xythetaEnvironment::GetThetaFromStateID(StateID sid)
 {
-  return sid >> (2*MAX_XY_BITS);
+  return sid.theta; //sid >> (2*MAX_XY_BITS);
 }
 
 float xythetaEnvironment::GetX_cm(StateXY x) const

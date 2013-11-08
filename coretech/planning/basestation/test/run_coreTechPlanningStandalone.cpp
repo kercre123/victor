@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     State curr = plan.start_;
     Cost g = 0.0;
 
-    while(choice > 0) {
+    while(choice >= 0) {
       cout<<"current state: "<<curr<<" g = "<<g<<"\nactions:\n";
 
       SuccessorIterator it = env.GetSuccessors(curr.GetStateID(), g);
@@ -40,14 +40,21 @@ int main(int argc, char *argv[])
       it.Next();
 
       vector<ActionID> actions;
+      vector<StateID> results;
 
       while(!it.Done()) {
-        cout<<"  "<<it.Front().actionID<<": "<<it.Front().stateID<<" cost = "<<(it.Front().g - g)<<endl;
+        cout<<"  "<<actions.size()<<": (id="<<(int)it.Front().actionID<<") "
+            <<State(it.Front().stateID)<<" cost = "<<(it.Front().g - g)<<endl;
         actions.push_back(it.Front().actionID);
+        results.push_back(it.Front().stateID);
         it.Next();
       }
 
-      choice = -1;
+      cout<<"> ";
+      cin>>choice;
+
+      plan.Push(actions[choice]);
+      curr = State(results[choice]);
     }
   }
 
