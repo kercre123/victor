@@ -24,10 +24,10 @@ warpedPoints = homography*inputImageQuadSqueezed';
 
 if debugDisplay
     figure(2);
-    templateCornerPoints = [0,                0,              ;
-                            templateSize(2), 0,              ;
+    templateCornerPoints = [0,               0              ;
+                            templateSize(2), 0              ;
                             templateSize(2), templateSize(1);
-                            0,                templateSize(1)]';
+                            0,               templateSize(1)]';
 
     inputImageQuad(:,3) = 1;
     warpedPoints_nonSqueezed = homography*inputImageQuad';
@@ -102,13 +102,6 @@ else
     rightmost_counter2 = mod(rightmost_counter1, 4) + 1;
 end
 
-% warpedPoints(:, leftmostIndex)
-% warpedPoints(:, leftmost_counter1)
-% warpedPoints(:, leftmost_counter2)
-%
-% warpedPoints(:, leftmost_clockwise1)
-% warpedPoints(:, leftmost_clockwise2)
-
 % Compute the mins 
 
 minIndexes = updateExtrema(warpedPoints(:,leftmostIndex),...
@@ -180,11 +173,6 @@ if debugDisplay
         axis equal
     end
 end % if debugDisplay
-
-% minIndexes
-% maxIndexes
-
-% keyboard
 
 end % function interpolate_affine()
 

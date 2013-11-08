@@ -54,9 +54,7 @@ for iScale = 1:numScales
             curTemplateImage = (prevTemplateImageRaw(1:2:end, 1:2:end) + prevTemplateImageRaw(2:2:end, 1:2:end) + prevTemplateImageRaw(1:2:end, 2:2:end) + prevTemplateImageRaw(2:2:end, 2:2:end)) / 4; %#ok<NODEF>
         end
     end
-    
-%     figure(); imshow(curTemplateImage)
-    
+
     templateImagePyramid{iScale} = curTemplateImage;
 
     derivativeX = imfilter(curTemplateImage, [-.5,0,.5]/scale);
@@ -69,7 +67,7 @@ for iScale = 1:numScales
     A_translationOnly{iScale} = zeros(size(derivativeX,1), size(derivativeX,2), 2);
     A_translationOnly{iScale}(:,:,1) = derivativeX;
     A_translationOnly{iScale}(:,:,2) = derivativeY;
-    
+
     if estimateAffine
         ys = scale * (0.5 + (1:size(curTemplateImage,1)));
         xs = scale * (0.5 + (1:size(curTemplateImage,2)));

@@ -13,16 +13,16 @@ templateQuad = [95, 78;
         371, 83;
         361, 368;
         83, 354];
-    
+
 x0 = min(templateQuad(:,2));
 x1 = max(templateQuad(:,2));
 y0 = min(templateQuad(:,1));
 y1 = max(templateQuad(:,1));
 
 templateRect = [x0,y0;x1,y0;x1,y1;x0,y1];
-    
+
 mask1 = roipoly(im1, templateRect(:,1), templateRect(:,2));
- 
+
 scale = 2;
 numScales = 5;
 
@@ -34,7 +34,7 @@ templateQuad = templateQuad / scale;
 templateRect = templateRect / scale;
 
 corners = templateQuad;
-    
+
 % Test original tracker
 LKtracker = LucasKanadeTracker(im1Small, mask1Small, 'EstimateAffine', false, 'EstimateScale', false, 'DebugDisplay', false, 'UseBlurring', false, 'UseNormalization', false, 'NumScales', numScales);
 converged = LKtracker.track(im2Small, 'MaxIterations', 50, 'ConvergenceTolerance', .25);
@@ -42,7 +42,7 @@ disp(LKtracker.tform);
 
 % Test expanded tracker
 [A_translationOnly, A_affine, templateImagePyramid] = lucasKanade_init(im1Small, templateRect, numScales, false, false);
-% 
+%
 H = eye(3);
 
 for i = 1:2
@@ -74,7 +74,7 @@ end
 % [update2, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{2}, templateRect, A_translationOnly{2}, imresize(im2Small, size(im2Small)/2), eye(3), 2, false);
 % [update3, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{3}, templateRect, A_translationOnly{3}, imresize(im2Small, size(im2Small)/(2^2)), eye(3), 2^2, false);
 % [update4, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{4}, templateRect, A_translationOnly{4}, imresize(im2Small, size(im2Small)/(2^3)), eye(3), 2^3, false);
-% 
+%
 % disp(update1)
 % disp(update2)
 % disp(update3)
@@ -93,7 +93,7 @@ end % function test_lucasKanade()
 
 function plotResults(im1, im2, corners, H)
 
-    cen = mean(corners,1);  
+    cen = mean(corners,1);
 
     order = [1,2,3,4,1];
 
@@ -107,7 +107,7 @@ function plotResults(im1, im2, corners, H)
     hold on;
     plot(corners(order,1), corners(order,2), 'b--', ...
                     'LineWidth', 2, 'Tag', 'TrackRect');
-    
+
     tempx = H(1,1)*(corners(:,1)-cen(1)) + ...
         H(1,2)*(corners(:,2)-cen(2)) + ...
         H(1,3) + cen(1);

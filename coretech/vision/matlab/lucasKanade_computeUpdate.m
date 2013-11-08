@@ -28,11 +28,6 @@
 
 function [update, A, b] = lucasKanade_computeUpdate(templateImage, templateQuad, AFull, newImage, homography, scale, debugDisplay)
 
-% AtW = (A(inBounds,:).*this.W{i_scale}(inBounds,ones(1,size(A,2))))'; % 2x169 or 6x169
-% AtWA = AtW*A(inBounds,:); % 2x2 or 6x6
-% b = AtW*It(inBounds); % 2x1 or 6x1
-% update = AtWA\b; % 2x1 or 6x1
-
 assert(isQuadARectangle(templateQuad))
 
 if ~exist('debugDisplay', 'var')
@@ -46,16 +41,12 @@ maxTemplateQuadX = round(max(templateQuad(:,1)) / scale);
 minTemplateQuadY = round(min(templateQuad(:,2)) / scale);
 maxTemplateQuadY = round(max(templateQuad(:,2)) / scale);
 
-% homography(1,3) = homography(1,3) + 0.5;
-
-% homography(1:2,1:3) = homography(1:2,1:3) * scale;
-% homography(1:2,3) = homography(1:2,3) * scale;
-
 inputImageQuad = [0,0;size(newImage,2),0;size(newImage,2),size(newImage,1);0,size(newImage,1)];
 
-% Should it be round() or floor() or something else?
 smallHomography = homography;
 smallHomography(1:2,3) = smallHomography(1:2,3) / scale;
+smallHomography(3,:) = [0,0,1];
+
 [minIndexes, maxIndexes] = lucasKanade_affineRowLimits(inputImageQuad, smallHomography, size(templateImage), debugDisplay);
 
 if debugDisplay
@@ -68,10 +59,6 @@ if debugDisplay
     plot(templateCornerPoints(1,[1:4,1]), -templateCornerPoints(2,[1:4,1]), 'r--');
     hold off;
 end
-
-smallHomography(3,:) = [0,0,1];
-% homographyInv = inv(homography);
-% homographyInv = (homography);
 
 newImageCoords_x0y0 = smallHomography*[0;0;1];
 newImageCoords_x1y0 = smallHomography*[1;0;1];
@@ -89,21 +76,17 @@ for y = minTemplateQuadY:maxTemplateQuadY
     if isinf(minIndexes(y+1)) || isinf(maxIndexes(y+1))
         continue;
     end
-    
+
     minX = ceil((max(minIndexes(y+1), minTemplateQuadX+0.5))-0.5) + 0.5;
     maxX = floor(min(maxIndexes(y+1), maxTemplateQuadX+1.0-0.5)-0.5) + 0.5;
-    
+
     if maxX < minX % should the happen if there's no bugs?
+        keyboard
         continue;
-    end        
+    end
 
     numInBounds = numInBounds + maxX - minX + 1 - 2;
 end
-
-% AtW = (A(inBounds,:).*this.W{i_scale}(inBounds,ones(1,size(A,2))))'; % 2x169 or 6x169
-% AtWA = AtW*A(inBounds,:); % 2x2 or 6x6 % A is 169x6
-% b = AtW*It(inBounds); % b is 2x1 or 6x1 % It is 169x1
-% update = AtWA\b; % 2x1 or 6x1
 
 It = zeros(numInBounds,1);
 A = zeros(numInBounds, numModelParameters);
@@ -117,19 +100,20 @@ for y = minTemplateQuadY:maxTemplateQuadY
     if isinf(minIndexes(y+1)) || isinf(maxIndexes(y+1))
         continue;
     end
-    
+
     minX = ceil((max(minIndexes(y+1), minTemplateQuadX+0.5))-0.5) + 0.5 + 1;
     maxX = floor(min(maxIndexes(y+1), maxTemplateQuadX+1.0-0.5)-0.5) + 0.5 - 1;
 
     % compute the (x,y) coordinates of the leftmost pixel in the newImage
-    % coordinates
+    % coordinates at this row
     newImageCoords = smallHomography*[minX;y+0.5;1];
-    
+
     for x = (minX:maxX) - 0.5
         templatePixel = templateImage(y+1, x+1);
-        
-%         % TODO: remove
-        newImageCoords = smallHomography * [x+0.5;y+0.5;1]; %#ok<*MINV>
+
+        % Because of the additions performed every loop, newImageCoords
+        % should be equal to the following expression:
+        % newImageCoords = smallHomography * [x+0.5;y+0.5;1];
 
         x0 = floor(newImageCoords(1)-0.5)+1;
         x1 = ceil(newImageCoords(1)-0.5)+1;
@@ -138,16 +122,12 @@ for y = minTemplateQuadY:maxTemplateQuadY
         y1 = ceil(newImageCoords(2)-0.5)+1;
 
         interpolatedFrom(y0:y1, x0:x1) = 1;
-        
+
         pixel00 = newImage(y0, x0);
         pixel01 = newImage(y0, x1);
         pixel10 = newImage(y1, x0);
         pixel11 = newImage(y1, x1);
 
-%         if y0 ~= y1 || x0 ~= x1
-%             keyboard
-%         end
-        
         alphaY = newImageCoords(2) - (floor(newImageCoords(2)- 0.5)+0.5);
         alphaYinverse = 1 - alphaY;
 
@@ -155,10 +135,9 @@ for y = minTemplateQuadY:maxTemplateQuadY
         alphaXinverse = 1 - alphaX;
 
         interpolatedPixel = interpolate2d(pixel00, pixel01, pixel10, pixel11, alphaY, alphaYinverse, alphaX, alphaXinverse);
-%         interpolatedPixel = interpolate2d(pixel00, pixel01, pixel10, pixel11, alphaYinverse, alphaY, alphaXinverse, alphaX);
- 
+
         interpolatedSelection(y+1,x+1) = interpolatedPixel;
-        
+
 %         disp(sprintf('%f %f', templatePixel, interpolatedPixel));
 
         It(curInBoundsElements) = interpolatedPixel - templatePixel;
@@ -168,21 +147,14 @@ for y = minTemplateQuadY:maxTemplateQuadY
 
         newImageCoords = newImageCoords + [x_dx;x_dy;0];
     end % for x = (minX:maxX) + 0.5
-
-%     keyboard
 end % for y = minTemplateQuadY:maxTemplateQuadY
 
-% figure();
-% imshow(interpolatedSelection);
+% figure(); imshow(interpolatedSelection);
 
-AtA = A' * A
-b = A' * It
+AtA = A' * A;
+b = A' * It;
 
-update = AtA \ b % TODO: use SVD
-
-% mean(abs(It(:)))
-
-% keyboard
+update = AtA \ b; % TODO: use SVD
 
 end % function interpolateAndDifference_affine()
 
