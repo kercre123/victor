@@ -28,7 +28,7 @@ for iScale = whichScales
     newImageSmall = imresize(newImage, size(newImage)/(2^(iScale-1)));
     
     for iteration = 1:maxIterations
-        [update, ~, ~] = lucasKanade_computeTranslationUpdate(templateImagePyramid{iScale}, templateRect, A_translationOnly{iScale}, newImageSmall, homography, 2^iScale, false);
+        [update, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{iScale}, templateRect, A_translationOnly{iScale}, newImageSmall, homography, 2^iScale, false);
         homography = homography - [0,0,update(1);0,0,update(2);0,0,0];
     end    
        

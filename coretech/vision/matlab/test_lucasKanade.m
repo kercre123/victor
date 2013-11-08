@@ -46,34 +46,34 @@ disp(LKtracker.tform);
 H = eye(3);
 
 for i = 1:2
-    [update, ~, ~] = lucasKanade_computeTranslationUpdate(templateImagePyramid{5}, templateRect, A_translationOnly{5}, imresize(im2Small, size(im2Small)/16), H, 16, false)
+    [update, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{5}, templateRect, A_translationOnly{5}, imresize(im2Small, size(im2Small)/16), H, 16, false)
     H = H - [0,0,update(1);0,0,update(2);0,0,0];
     figure(); plotResults(im1Small, im2Small, corners, H);
 end
 
 % for i = 1:3
 for i = 1:2
-    [update, ~, ~] = lucasKanade_computeTranslationUpdate(templateImagePyramid{3}, templateRect, A_translationOnly{3}, imresize(im2Small, size(im2Small)/4), H, 4, false)
+    [update, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{3}, templateRect, A_translationOnly{3}, imresize(im2Small, size(im2Small)/4), H, 4, false)
     H = H - [0,0,update(1);0,0,update(2);0,0,0];
     figure(); plotResults(im1Small, im2Small, corners, H);
 end
 
 % for i = 1:3
 % for i = 1
-%     [update, ~, ~] = lucasKanade_computeTranslationUpdate(templateImagePyramid{2}, templateRect, A_translationOnly{2}, imresize(im2Small, size(im2Small)/2), H, 2, false);
+%     [update, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{2}, templateRect, A_translationOnly{2}, imresize(im2Small, size(im2Small)/2), H, 2, false);
 %     H = H - [0,0,update(1);0,0,update(2);0,0,0];
 %     figure(); plotResults(im1Small, im2Small, corners, H);
 % end
 
 for i = 1:2
-    [update, ~, ~] = lucasKanade_computeTranslationUpdate(templateImagePyramid{1}, templateRect, A_translationOnly{1}, im2Small, H, 1, false);
+    [update, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{1}, templateRect, A_translationOnly{1}, im2Small, H, 1, false);
     H = H - [0,0,update(1);0,0,update(2);0,0,0];
     figure(); plotResults(im1Small, im2Small, corners, H);
 end
 
-% [update2, ~, ~] = lucasKanade_computeTranslationUpdate(templateImagePyramid{2}, templateRect, A_translationOnly{2}, imresize(im2Small, size(im2Small)/2), eye(3), 2, false);
-% [update3, ~, ~] = lucasKanade_computeTranslationUpdate(templateImagePyramid{3}, templateRect, A_translationOnly{3}, imresize(im2Small, size(im2Small)/(2^2)), eye(3), 2^2, false);
-% [update4, ~, ~] = lucasKanade_computeTranslationUpdate(templateImagePyramid{4}, templateRect, A_translationOnly{4}, imresize(im2Small, size(im2Small)/(2^3)), eye(3), 2^3, false);
+% [update2, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{2}, templateRect, A_translationOnly{2}, imresize(im2Small, size(im2Small)/2), eye(3), 2, false);
+% [update3, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{3}, templateRect, A_translationOnly{3}, imresize(im2Small, size(im2Small)/(2^2)), eye(3), 2^2, false);
+% [update4, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{4}, templateRect, A_translationOnly{4}, imresize(im2Small, size(im2Small)/(2^3)), eye(3), 2^3, false);
 %
 % disp(update1)
 % disp(update2)
