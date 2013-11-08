@@ -222,6 +222,7 @@ namespace Anki
         if (numPathSegments_ > 0) {
           currPathSegment_ = 0;
           Robot::SetOperationMode(Robot::FOLLOW_PATH);
+          SteeringController::SetPathFollowMode();
         }
         
         // Visualize path

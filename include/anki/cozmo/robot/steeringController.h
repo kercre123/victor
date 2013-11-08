@@ -58,6 +58,12 @@ namespace Anki {
     
     SteerMode GetMode();
     
+    // SM_PATH_FOLLOW
+    // Simply sets the mode to path following mode which on every cycle
+    // tries to reduce the current path error. Respects the speed as set by
+    // SpeedController::SetUserCommandedDesiredVehicleSpeed().
+    void SetPathFollowMode();
+    
     // SM_DIRECT_DRIVE
     // TODO(kevin): Command left and right wheel speeds and accelerations.
     //               Terminate with stop function or terminating condition?

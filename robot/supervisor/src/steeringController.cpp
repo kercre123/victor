@@ -60,6 +60,7 @@ namespace Anki {
     // Private function declarations
     //Non linear version of the steering controller (For SM_PATH_FOLLOW)
     void RunLineFollowControllerNL(s16 location_pix, float headingError_rad);
+    void ManagePathFollow();
     void ManagePointTurn();
     void ManageDirectDrive();
     
@@ -91,39 +92,7 @@ namespace Anki {
       switch(currSteerMode_) {
       
         case SM_PATH_FOLLOW:
-          {
-            f32 pathDistErr = 0, pathRadErr = 0;
-            s16 fidx = INVALID_IDEAL_FOLLOW_LINE_IDX;
-            if (PathFollower::IsTraversingPath()) {
-              bool gotError = PathFollower::GetPathError(pathDistErr, pathRadErr);
-              
-              if (gotError) {
-                fidx = pathDistErr*1000.f; // Convert to mm
-                PRINT("fidx: %d\n", fidx);
-  #if(DEBUG_MAIN_EXECUTION)
-                {
-                  using namespace Sim::OverlayDisplay;
-                  SetText(PATH_ERROR, "PathError: %.4f m, %.1f deg  => fidx: %d",
-                          pathDistErr, pathRadErr * (180.f/M_PI),
-                          fidx);
-                }
-  #endif
-              } else {
-                SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
-              }
-            }
-            
-            
-            //If we found a valid followline, let's run the controller
-            if (fidx != INVALID_IDEAL_FOLLOW_LINE_IDX) {
-              // Run controller and pass in current speed
-              RunLineFollowControllerNL( fidx, pathRadErr );
-              
-            } else {
-              // No steering intention -- pass through speed to each wheel to drive straight while in normal mode
-              // we'll continue to use the previously commanded fidx
-            }
-          }
+          ManagePathFollow();
           break;
         case SM_DIRECT_DRIVE:
           ManageDirectDrive();
@@ -290,8 +259,49 @@ namespace Anki {
     }
     
     
+    void SetPathFollowMode()
+    {
+      currSteerMode_ = SM_PATH_FOLLOW;
+    }
     
-      void ExecuteDirectDrive(f32 left_vel, f32 right_vel, f32 left_accel, f32 right_accel)
+    
+    void ManagePathFollow()
+    {
+      f32 pathDistErr = 0, pathRadErr = 0;
+      s16 fidx = INVALID_IDEAL_FOLLOW_LINE_IDX;
+      if (PathFollower::IsTraversingPath()) {
+        bool gotError = PathFollower::GetPathError(pathDistErr, pathRadErr);
+        
+        if (gotError) {
+          fidx = pathDistErr*1000.f; // Convert to mm
+          PRINT("fidx: %d\n", fidx);
+#if(DEBUG_MAIN_EXECUTION)
+          {
+            using namespace Sim::OverlayDisplay;
+            SetText(PATH_ERROR, "PathError: %.4f m, %.1f deg  => fidx: %d",
+                    pathDistErr, pathRadErr * (180.f/M_PI),
+                    fidx);
+          }
+#endif
+        } else {
+          SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
+        }
+      }
+      
+      
+      //If we found a valid followline, let's run the controller
+      if (fidx != INVALID_IDEAL_FOLLOW_LINE_IDX) {
+        // Run controller and pass in current speed
+        RunLineFollowControllerNL( fidx, pathRadErr );
+        
+      } else {
+        // No steering intention -- pass through speed to each wheel to drive straight while in normal mode
+        // we'll continue to use the previously commanded fidx
+      }
+    }
+
+    
+    void ExecuteDirectDrive(f32 left_vel, f32 right_vel, f32 left_accel, f32 right_accel)
     {
       //PRINT("DIRECT DRIVE %f %f\n", left_vel, right_vel);
       currSteerMode_ = SM_DIRECT_DRIVE;
