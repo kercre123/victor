@@ -55,10 +55,12 @@ for iScale = 1:numScales
         end
     end
     
+%     figure(); imshow(curTemplateImage)
+    
     templateImagePyramid{iScale} = curTemplateImage;
 
-    derivativeX = imfilter(curTemplateImage, scale*[-.5,0,.5]);
-    derivativeY = imfilter(curTemplateImage, scale*[-.5,0,.5]');
+    derivativeX = imfilter(curTemplateImage, [-.5,0,.5]/scale);
+    derivativeY = imfilter(curTemplateImage, ([-.5,0,.5]/scale)');
 
     % Gaussian weighting function to give more weight to center of target
     % TODO?

@@ -46,10 +46,10 @@ maxTemplateQuadX = round(max(templateQuad(:,1)) / scale);
 minTemplateQuadY = round(min(templateQuad(:,2)) / scale);
 maxTemplateQuadY = round(max(templateQuad(:,2)) / scale);
 
-homography(1,3) = homography(1,3) + 0.5;
+% homography(1,3) = homography(1,3) + 0.5;
 
 % homography(1:2,1:3) = homography(1:2,1:3) * scale;
-homography(1:2,3) = homography(1:2,3) * scale;
+% homography(1:2,3) = homography(1:2,3) * scale;
 
 inputImageQuad = [0,0;size(newImage,2),0;size(newImage,2),size(newImage,1);0,size(newImage,1)];
 
@@ -168,12 +168,12 @@ end % for y = minTemplateQuadY:maxTemplateQuadY
 % figure();
 % imshow(interpolatedSelection);
 
-AtA = A' * A;
-b = A' * It;
+AtA = A' * A
+b = A' * It
 
-update = AtA \ b; % TODO: use SVD
+update = AtA \ b % TODO: use SVD
 
-mean(abs(It(:)))
+% mean(abs(It(:)))
 
 % keyboard
 

@@ -23,8 +23,8 @@ templateRect = [x0,y0;x1,y0;x1,y1;x0,y1];
     
 mask1 = roipoly(im1, templateRect(:,1), templateRect(:,2));
  
-scale = 8;
-numScales = 3;
+scale = 2;
+numScales = 5;
 
 im1Small = imresize(im1, size(im1)/scale);
 im2Small = imresize(im2, size(im2)/scale);
@@ -45,19 +45,27 @@ disp(LKtracker.tform);
 % 
 H = eye(3);
 
+for i = 1:3
+    [update, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{5}, templateRect, A_translationOnly{5}, imresize(im2Small, size(im2Small)/16), H, 16, false)
+    H = H - [0,0,update(1);0,0,update(2);0,0,0];
+    figure(); plotResults(im1Small, im2Small, corners, H);
+end
+
 % for i = 1:3
-%     [update, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{3}, templateRect, A_translationOnly{3}, im2Small, H, 4, false);
-%     H = H - [0,0,update(1);0,0,update(2);0,0,0];
-%     figure(); plotResults(im1Small, im2Small, corners, H);
-% end
-% 
+for i = 1
+    [update, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{3}, templateRect, A_translationOnly{3}, imresize(im2Small, size(im2Small)/4), H, 4, false)
+    H = H - [0,0,update(1);0,0,update(2);0,0,0];
+    figure(); plotResults(im1Small, im2Small, corners, H);
+end
+
 % for i = 1:3
-%     [update, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{2}, templateRect, A_translationOnly{2}, im2Small, H, 2, false);
+% for i = 1
+%     [update, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{2}, templateRect, A_translationOnly{2}, imresize(im2Small, size(im2Small)/2), H, 2, false);
 %     H = H - [0,0,update(1);0,0,update(2);0,0,0];
 %     figure(); plotResults(im1Small, im2Small, corners, H);
 % end
 
-for i = 1:10
+for i = 1:4
     [update, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{1}, templateRect, A_translationOnly{1}, im2Small, H, 1, false);
     H = H - [0,0,update(1);0,0,update(2);0,0,0];
     figure(); plotResults(im1Small, im2Small, corners, H);
@@ -73,7 +81,7 @@ end
 % disp(update4)
 
 % h_axes = figure(1);
-figure(100); plotResults(im1Small, im2Small, corners, LKtracker.tform);
+% figure(100); plotResults(im1Small, im2Small, corners, LKtracker.tform);
 % figure(2); plotResults(im1Small, im2Small, corners, eye(3) - [0,0,update1(1);0,0,update1(2);0,0,0]);
 % figure(2); plotResults(im1Small, im2Small, corners, H);
 % figure(3); plotResults(im1Small, im2Small, corners, eye(3) - [0,0,update2(1);0,0,update2(2);0,0,0]);
