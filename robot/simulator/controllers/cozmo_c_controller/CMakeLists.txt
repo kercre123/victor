@@ -47,11 +47,7 @@ set(SOURCE_FILES
   ${ROBOT_SRC_DIR}/steeringController.cpp
   ${ROBOT_SRC_DIR}/speedController.cpp
 	${ROBOT_SRC_DIR}/wheelController.cpp
-	${ROBOT_SRC_DIR}/vehicleMath.cpp
 	${ROBOT_SRC_DIR}/visionSystem.cpp
-
-#	${COZMO_ROBOT_SRC_DIR}/mainExecution.cpp
-#	${COZMO_ROBOT_SRC_DIR}/sim_localization.cpp
 
 	${PROJECT_SOURCE_DIR}/coretech/messaging/robot/utilMessaging.c
 

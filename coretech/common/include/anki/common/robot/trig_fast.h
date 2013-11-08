@@ -1,5 +1,5 @@
 /**
- * File: vehicleMath.h
+ * File: trig_fast.h
  *
  * Author: Kevin Yoon
  * Created: 22-OCT-2012
@@ -9,8 +9,8 @@
  * For bettery accuracy, lookup tables should be regenerated with u16.
  *
  **/
-#ifndef _VEHICLEMATH_H
-#define _VEHICLEMATH_H
+#ifndef _TRIG_FAST_H
+#define _TRIG_FAST_H
 
 // When USE_SMALL_LUT defined, a smaller lookup table is used to conserve space.
 // USE_INTERPOLATION is also automatically defined, since without it answers are probably too wrong to be useful.

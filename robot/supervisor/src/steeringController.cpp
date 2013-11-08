@@ -15,12 +15,12 @@
 #include "anki/cozmo/robot/wheelController.h"
 //#include "hal/portable.h"
 //#include "hal/encoders.h"
-#include "anki/cozmo/robot/vehicleMath.h"
 #include "anki/cozmo/robot/trace.h"
 #include "anki/cozmo/robot/debug.h"
 
 #include "anki/cozmo/robot/hal.h"
 
+#include "anki/common/robot/trig_fast.h"
 
 namespace Anki {
   namespace Cozmo {

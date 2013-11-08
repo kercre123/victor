@@ -12,7 +12,6 @@
 #include "anki/cozmo/robot/debug.h"
 #include "anki/cozmo/robot/localization.h"
 #include "anki/cozmo/robot/pathFollower.h"
-#include "anki/cozmo/robot/vehicleMath.h"
 #include "anki/cozmo/robot/speedController.h"
 #include "anki/cozmo/robot/steeringController.h"
 #include "anki/cozmo/robot/wheelController.h"

@@ -1,7 +1,7 @@
 #include "liftController.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/robot/vehicleMath.h"
+#include "anki/common/robot/trig_fast.h"
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/shared/radians.h"
 

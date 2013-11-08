@@ -1,5 +1,5 @@
 /**
- * File: vehicleMath.c
+ * File: trig_fast.cpp
  *
  * Author: Kevin Yoon
  * Created: 22-OCT-2012 
@@ -12,11 +12,11 @@
  *  
  *  
  **/
-
+#include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
-#include "anki/cozmo/robot/cozmoTypes.h"
-#include "anki/cozmo/robot/vehicleMath.h"
+#include "anki/common/robot/trig_fast.h"
 
+#include <assert.h>
 
 // For larger input values to atan, use approximations
 // at fixed steps. (Essentially extends the LUT with courser 
@@ -119,7 +119,7 @@ float atan_fast(float x)
 {
   // LUT accepts positive input only so need to remember sign so that we
   // can flip result if input is negative.
-  BOOL isNegative = x < 0;
+  u8 isNegative = x < 0 ? 1 : 0;
 
 #ifdef DO_ATAN_DISCRETE_STEP_APPROX
   // Check if input is in discrete step approximation range
@@ -217,7 +217,7 @@ float asin_fast(float x)
 
   // LUT accepts positive input only so need to remember sign so that we
   // can flip result if input is negative.
-  BOOL isNegative = x < 0;
+  u8 isNegative = x < 0 ? 1 : 0;
 
   // Check if input exceeds LUT range
   float lut_result;
@@ -237,7 +237,7 @@ float asin_fast(float x)
   
   // LUT accepts positive input only so need to remember sign so that we
   // can flip result if input is negative.
-  BOOL isNegative = x < 0;
+  u8 isNegative = x < 0 ? 1 : 0;
   
   // Check if input exceeds LUT range
   float lut_result;

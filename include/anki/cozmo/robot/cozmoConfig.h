@@ -4,7 +4,6 @@
 #include "anki/common/constantsAndMacros.h"
 #include "anki/common/types.h"
 
-#include "anki/cozmo/robot/vehicleMath.h"
 
 namespace Anki {
   namespace Cozmo {
