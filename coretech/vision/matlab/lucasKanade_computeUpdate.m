@@ -67,8 +67,8 @@ if debugDisplay
 end
 
 homography(3,:) = [0,0,1];
-homographyInv = inv(homography);
-% homographyInv = (homography);
+% homographyInv = inv(homography);
+homographyInv = (homography);
 
 newImageCoords_x0y0 = homographyInv*[0;0;1];
 newImageCoords_x1y0 = homographyInv*[1;0;1];
@@ -175,7 +175,7 @@ update = AtA \ b; % TODO: use SVD
 
 mean(abs(It(:)))
 
-keyboard
+% keyboard
 
 end % function interpolateAndDifference_affine()
 
