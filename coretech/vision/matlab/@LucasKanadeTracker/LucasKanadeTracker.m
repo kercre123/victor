@@ -17,7 +17,7 @@ classdef LucasKanadeTracker < handle
         ycen;
         width;
         height;
-        
+            
         W; % weights, per scale
         
         % Translation Only
@@ -49,7 +49,7 @@ classdef LucasKanadeTracker < handle
         function this = LucasKanadeTracker(firstImg, targetMask, varargin)
             
             MinSize = 8;
-            %NumScales = 1;
+            NumScales = [];
             DebugDisplay = false;
             Type = 'translation';
             UseBlurring = true;
@@ -61,9 +61,6 @@ classdef LucasKanadeTracker < handle
             this.minSize = MinSize;
             this.useNormalization = UseNormalization;
             this.ridgeWeight = RidgeWeight;
-            %assert(isscalar(NumScales));
-            %this.numScales = NumScales;
-            
             
             this.debugDisplay = DebugDisplay;
             this.tformType = Type;
@@ -88,7 +85,12 @@ classdef LucasKanadeTracker < handle
             ymin = min(y); ymax = max(y);
             maskBBox = [xmin ymin xmax-xmin ymax-ymin];
             
-            this.numScales = ceil( log2(min(maskBBox(3:4))/this.minSize) );
+            if isempty(NumScales)
+                this.numScales = ceil( log2(min(maskBBox(3:4))/this.minSize) );
+            else
+                assert(isscalar(NumScales));
+                this.numScales = NumScales;
+            end
             
             targetMask = false(size(targetMask));
             targetMask(maskBBox(2):(maskBBox(2)+maskBBox(4)), ...
