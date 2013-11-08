@@ -1,4 +1,4 @@
-% function lucasKanade_computeUpdate()
+% function lucasKanade_computeTranslationUpdate()
 
 % templateImage = zeros(16,16); for y=1:size(templateImage,1) templateImage(y,:) = y*(1:size(templateImage,2)); end;
 % warpedTemplateImage = lucasKande_warpGroundTruth(templateImage, [1,0,0.5; 0,1,0.1; 0,0,1], size(templateImage));
@@ -19,14 +19,14 @@
 % numScales = 4;
 
 % [A_translationOnly, A_affine, templateImagePyramid] = lucasKanade_init(templateImage, templateQuad, numScales, false, true);
-% [update, A, b] = lucasKanade_computeUpdate(templateImagePyramid{1}, templateQuad, A_translationOnly{1}, warpedTemplateImage, eye(3), 1, false);
-% [update, A, b] = lucasKanade_computeUpdate(templateImagePyramid{2}, templateQuad, A_translationOnly{2}, imresize(warpedTemplateImage, size(warpedTemplateImage)/2), eye(3), 2, false);
-% [update, A, b] = lucasKanade_computeUpdate(templateImagePyramid{3}, templateQuad, A_translationOnly{3}, imresize(warpedTemplateImage, size(warpedTemplateImage)/(2^2)), eye(3), 2^2, false);
-% [update, A, b] = lucasKanade_computeUpdate(templateImagePyramid{4}, templateQuad, A_translationOnly{4}, imresize(warpedTemplateImage, size(warpedTemplateImage)/(2^3)), eye(3), 2^3, false);
+% [update, A, b] = lucasKanade_computeTranslationUpdate(templateImagePyramid{1}, templateQuad, A_translationOnly{1}, warpedTemplateImage, eye(3), 1, false);
+% [update, A, b] = lucasKanade_computeTranslationUpdate(templateImagePyramid{2}, templateQuad, A_translationOnly{2}, imresize(warpedTemplateImage, size(warpedTemplateImage)/2), eye(3), 2, false);
+% [update, A, b] = lucasKanade_computeTranslationUpdate(templateImagePyramid{3}, templateQuad, A_translationOnly{3}, imresize(warpedTemplateImage, size(warpedTemplateImage)/(2^2)), eye(3), 2^2, false);
+% [update, A, b] = lucasKanade_computeTranslationUpdate(templateImagePyramid{4}, templateQuad, A_translationOnly{4}, imresize(warpedTemplateImage, size(warpedTemplateImage)/(2^3)), eye(3), 2^3, false);
 
-% H = eye(3); for i=1:5 [update, A, b] = lucasKanade_computeUpdate(templateImagePyramid{1}, templateQuad, A_translationOnly{1}, warpedTemplateImage, H, 1, false); H(1:2,3) = H(1:2,3) - update(1:2); disp(H); end;
+% H = eye(3); for i=1:5 [update, A, b] = lucasKanade_computeTranslationUpdate(templateImagePyramid{1}, templateQuad, A_translationOnly{1}, warpedTemplateImage, H, 1, false); H(1:2,3) = H(1:2,3) - update(1:2); disp(H); end;
 
-function [update, A, b] = lucasKanade_computeUpdate(templateImage, templateQuad, AFull, newImage, homography, scale, debugDisplay)
+function update = lucasKanade_computeTranslationUpdate(templateImage, templateQuad, AFull, newImage, homography, scale, debugDisplay)
 
 assert(isQuadARectangle(templateQuad))
 
