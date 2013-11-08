@@ -1,95 +1,67 @@
 % function lucasKanade_iterativelyOptimize()
 
-function lucasKanade_iterativelyOptimize(A_translationOnly, A_affine, whichScale, maxIterations)
+% im1 = imresize(im2double(rgb2gray(imread('C:\Anki\blockImages\blockImages00020.png'))), [240,320]);
+% im2 = imresize(im2double(rgb2gray(imread('C:\Anki\blockImages\blockImages00021.png'))), [240,320]);
 
-% function converged = trackHelper(this, img, i_scale, translationDone)
+% templateQuad = round([95, 78; 371, 83; 361, 368; 83, 354] / 2);
+% x0 = min(templateQuad(:,2)); x1 = max(templateQuad(:,2));
+% y0 = min(templateQuad(:,1)); y1 = max(templateQuad(:,1));
+% templateRect = [x0,y0;x1,y0;x1,y1;x0,y1];
 
-scale = 2^(whichScale-1);
+% initialHomography = eye(3);
+% whichScales = 1:4;
+% maxIterations = 10;
+% convergenceThreshold = Inf;
+% debugDisplay = true;
 
-% xPrev = this.xgrid{i_scale};
-% yPrev = this.ygrid{i_scale};
+% [A_translationOnly, A_affine, templateImagePyramid] = lucasKanade_init(im1, templateRect, max(whichScales), false, false);
 
-iteration = 1;
-% tform_orig = this.tform;
+% homography = lucasKanade_iterativelyOptimize(A_translationOnly, A_affine, templateImagePyramid, templateRect, im2, initialHomography, whichScales, maxIterations, convergenceThreshold, debugDisplay)
 
-converged = false;
-while ~converged && iteration < maxIterations
+function homography = lucasKanade_iterativelyOptimize(A_translationOnly, A_affine, templateImagePyramid, templateRect, newImage, initialHomography, whichScales, maxIterations, convergenceThreshold, debugDisplay)
 
-    xi = this.tform(1,1)*this.xgrid{i_scale} + ...
-        this.tform(1,2)*this.ygrid{i_scale} + ...
-        this.tform(1,3);
+whichScales = sort(whichScales,'descend');
 
-    yi = this.tform(2,1)*this.xgrid{i_scale} + ...
-        this.tform(2,2)*this.ygrid{i_scale} + ...
-        this.tform(2,3);
+homography = initialHomography;
 
-    % RMS error between pixel locations and previous locations
-    change = sqrt(mean((xPrev(:)-xi(:)).^2 + (yPrev(:)-yi(:)).^2));
-
-    imgi = interp2(img, ...
-        xi(:) + this.xcen, yi(:) + this.ycen, 'linear');
-    inBounds = ~isnan(imgi);
-
-    if this.useNormalization
-        imgi = (imgi - mean(imgi(inBounds)))/std(imgi(inBounds));
+for iScale = whichScales
+    newImageSmall = imresize(newImage, size(newImage)/(2^(iScale-1)));
+    
+    for iteration = 1:maxIterations
+        [update, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{iScale}, templateRect, A_translationOnly{iScale}, newImageSmall, homography, 2^iScale, false);
+        homography = homography - [0,0,update(1);0,0,update(2);0,0,0];
+    end    
+       
+    if debugDisplay
+        figure(iScale); plotResults(newImage, templateRect, homography);
     end
+    
+    % TODO: check for convergence
+end
 
-    It = this.target{i_scale}(:) - imgi;
+end % function lucasKanade_iterativelyOptimize()
 
-    if numel(inBounds) < 16
-        warning('Template drifted too far out of image.');
-        break;
-    end
+function plotResults(image, corners, homography)
 
-    this.err = mean(abs(It(inBounds)));
+    cen = mean(corners,1);
 
-    if translationDone
-        if this.estimateAffine
-            A = this.A_affine{i_scale};
-        elseif this.estimateScale
-            A = this.A_scale{i_scale};
-        else
-            error('Should not get here.');
-        end
-    else
-        A = this.A_trans{i_scale};
-    end
+    order = [1,2,3,4,1];
 
-    AtW = (A(inBounds,:).*this.W{i_scale}(inBounds,ones(1,size(A,2))))';
-    AtWA = AtW*A(inBounds,:);
+    hold off;
+    imshow(image);
+    hold on;
+    plot(corners(order,1), corners(order,2), 'b--', ...
+                    'LineWidth', 2, 'Tag', 'TrackRect');
 
-    b = AtW*It(inBounds);
+    tempx = homography(1,1)*(corners(:,1)-cen(1)) + ...
+        homography(1,2)*(corners(:,2)-cen(2)) + ...
+        homography(1,3) + cen(1);
 
-    update = AtWA\b;
+    tempy = homography(2,1)*(corners(:,1)-cen(1)) + ...
+        homography(2,2)*(corners(:,2)-cen(2)) + ...
+        homography(2,3) + cen(2);
 
-    % Compose the update with the current transformation
-    if translationDone
+    plot(tempx, tempy, 'r', ...
+                    'LineWidth', 2, 'Tag', 'TrackRect');
+end % function plotResults()
 
-        if this.estimateAffine
-            tformUpdate = eye(3) + [update(1:3)'; update(4:6)'; zeros(1,3)];
-
-        elseif this.estimateScale
-            tformUpdate = [(1+update(3)) 0 update(1);
-                0 (1+update(3)) update(2);
-                0 0 1];
-        end
-
-        this.tform = tformUpdate*this.tform;
-    else
-        this.tform(1:2,3) = this.tform(1:2,3) + update;
-    end
-
-    iteration = iteration + 1;
-
-    if all(change < this.convergenceTolerance*spacing)
-        converged = true;
-    end
-
-    xPrev = xi;
-    yPrev = yi;
-
-end % WHILE not converged
-
-% if ~converged
-%     this.tform = tform_orig;
-% end

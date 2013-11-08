@@ -1,20 +1,18 @@
 % function lucasKanade_init()
 
-function [A_translationOnly, A_affine] = lucasKanade_init(templateImage, templateQuad, numScales, useBlurring, estimateAffine)
+% templateImage = zeros(16,16); for y=1:size(templateImage,1) templateImage(y,:) = y*(1:size(templateImage,2)); end;
+% newImage = lucasKande_warpGroundTruth(templateImage, [cos(.1), -sin(.1), 0; sin(.1), cos(.1), 0; 0,0,1], size(templateImage));
+% templateQuad = [5,4;10,4;10,8;5,8];
+% numScales = 2;
+
+% [A_translationOnly, A_affine, templateImagePyramid] = lucasKanade_init(templateImage, templateQuad, numScales, false, true)
+
+function [A_translationOnly, A_affine, templateImagePyramid] = lucasKanade_init(templateImage, templateQuad, numScales, useBlurring, estimateAffine)
 
 assert(~useBlurring);
 
-assert(size(templateQuad,1) == 4);
-
 % Currently, the template quad must be a rectangle
-minTemplateQuadX = min(templateQuad(:,1));
-maxTemplateQuadX = max(templateQuad(:,1));
-minTemplateQuadY = min(templateQuad(:,2));
-maxTemplateQuadY = max(templateQuad(:,2));
-assert(length(find(templateQuad(:,1)==minTemplateQuadX)) == 2);
-assert(length(find(templateQuad(:,1)==maxTemplateQuadX)) == 2);
-assert(length(find(templateQuad(:,2)==minTemplateQuadY)) == 2);
-assert(length(find(templateQuad(:,2)==maxTemplateQuadY)) == 2);
+assert(isQuadARectangle(templateQuad));
 
 if find(round(size(templateImage)/2) == size(templateImage)/2) ~= 2
     disp('Non even input image size');
@@ -26,13 +24,14 @@ if ndims(templateImage) == 3
     templateImage = rgb2gray(templateImage);
 end
 
-% originalTemplateSize = [maxTemplateQuadX - minTemplateQuadX + 1,...
-%                         maxTemplateQuadY - minTemplateQuadY + 1];
+templateImagePyramid = cell(numScales,1);
 
 A_translationOnly = cell(numScales,1);
 
 if estimateAffine
     A_affine = cell(numScales,1);
+else
+    A_affine = [];
 end
 
 for iScale = 1:numScales
@@ -50,34 +49,30 @@ for iScale = 1:numScales
        assert(false);
     else
         if iScale == 1
-            curTemplateImageRaw = templateImage;
+            curTemplateImage = templateImage;
         else
-            curTemplateImageRaw = (prevTemplateImageRaw(1:2:end, 1:2:end) + prevTemplateImageRaw(2:2:end, 1:2:end) + prevTemplateImageRaw(1:2:end, 2:2:end) + prevTemplateImageRaw(2:2:end, 2:2:end)) / 4; %#ok<NODEF>
+            assert(all(mod(size(prevTemplateImageRaw),2) == 0));
+            curTemplateImage = (prevTemplateImageRaw(1:2:end, 1:2:end) + prevTemplateImageRaw(2:2:end, 1:2:end) + prevTemplateImageRaw(1:2:end, 2:2:end) + prevTemplateImageRaw(2:2:end, 2:2:end)) / 4; %#ok<NODEF>
         end
     end
 
-    curTemplateQuad = round(templateQuad / scale);
-    minCurTemplateQuadX = min(curTemplateQuad(:,1));
-    maxCurTemplateQuadX = max(curTemplateQuad(:,1));
-    minCurTemplateQuadY = min(curTemplateQuad(:,2));
-    maxCurTemplateQuadY = max(curTemplateQuad(:,2));
+    templateImagePyramid{iScale} = curTemplateImage;
 
-    curTemplateImage = curTemplateImageRaw(minCurTemplateQuadY:maxCurTemplateQuadY, minCurTemplateQuadX:maxCurTemplateQuadX);
-
-    derivativeX = imfilter(curTemplateImage, scale*[-.5,0,.5]);
-    derivativeY = imfilter(curTemplateImage, scale*[-.5,0,.5]');
+    derivativeX = imfilter(curTemplateImage, [-.5,0,.5]/scale);
+    derivativeY = imfilter(curTemplateImage, ([-.5,0,.5]/scale)');
 
     % Gaussian weighting function to give more weight to center of target
     % TODO?
 
     % Always estimate translation
-    A_translationOnly{iScale} = [derivativeX(:) derivativeY(:)];
+    A_translationOnly{iScale} = zeros(size(derivativeX,1), size(derivativeX,2), 2);
+    A_translationOnly{iScale}(:,:,1) = derivativeX;
+    A_translationOnly{iScale}(:,:,2) = derivativeY;
 
     if estimateAffine
-        ys = scale * (0.5 + (minCurTemplateQuadY:maxCurTemplateQuadY));
-        xs = scale * (0.5 + (minCurTemplateQuadX:maxCurTemplateQuadX));
-        A_affine{iScale} = Inf * ones(length(ys)*length(xs), 6);
-        iPixel = 1;
+        ys = scale * (0.5 + (1:size(curTemplateImage,1)));
+        xs = scale * (0.5 + (1:size(curTemplateImage,2)));
+        A_affine{iScale} = Inf * ones([size(curTemplateImage,1), size(curTemplateImage,2), 6]);
 
         for ix = 1:length(xs)
             x = xs(ix);
@@ -86,14 +81,12 @@ for iScale = 1:numScales
                 curDerivativeX = derivativeX(iy,ix);
                 curDerivativeY = derivativeY(iy,ix);
 
-                A_affine{iScale}(iPixel,:) = [x*curDerivativeX, y*curDerivativeX, curDerivativeX, x*curDerivativeY, y*curDerivativeY, curDerivativeY];
-
-                iPixel = iPixel + 1;
+                A_affine{iScale}(iy,ix,:) = [x*curDerivativeX, y*curDerivativeX, curDerivativeX, x*curDerivativeY, y*curDerivativeY, curDerivativeY];
             end
         end
     end
 
-    prevTemplateImageRaw = curTemplateImageRaw;
+    prevTemplateImageRaw = curTemplateImage;
 end % for iScale = 1:numScales
 
 % keyboard
