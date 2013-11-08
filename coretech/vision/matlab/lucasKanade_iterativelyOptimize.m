@@ -14,9 +14,16 @@
 % convergenceThreshold = Inf;
 % debugDisplay = true;
 
-% [A_translationOnly, A_affine, templateImagePyramid] = lucasKanade_init(im1, templateRect, max(whichScales), false, false);
+% [A_translationOnly, A_affine, templateImagePyramid] = lucasKanade_init(im1, templateRect, max(whichScales), false, true);
 
 % homography = lucasKanade_iterativelyOptimize(A_translationOnly, A_affine, templateImagePyramid, templateRect, im2, initialHomography, whichScales, maxIterations, convergenceThreshold, debugDisplay)
+
+
+
+% mask1 = roipoly(im1, templateRect(:,1), templateRect(:,2));
+% LKtracker = LucasKanadeTracker(im1, mask1, 'Type', 'affine', 'DebugDisplay', false, 'UseBlurring', false, 'UseNormalization', false, 'NumScales', max(whichScales));
+% converged = LKtracker.track(im2, 'MaxIterations', 50, 'ConvergenceTolerance', .25);
+% disp(LKtracker.tform);
 
 function homography = lucasKanade_iterativelyOptimize(A_translationOnly, A_affine, templateImagePyramid, templateRect, newImage, initialHomography, whichScales, maxIterations, convergenceThreshold, debugDisplay)
 
@@ -27,13 +34,31 @@ homography = initialHomography;
 for iScale = whichScales
     newImageSmall = imresize(newImage, size(newImage)/(2^(iScale-1)));
     
-    for iteration = 1:maxIterations
-        [update, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{iScale}, templateRect, A_translationOnly{iScale}, newImageSmall, homography, 2^iScale, false);
-        homography = homography - [0,0,update(1);0,0,update(2);0,0,0];
-    end    
+    if debugDisplay
+        figure(100 + iScale); 
+    end
+    
+    if ~isempty(A_translationOnly)
+        for iteration = 1:maxIterations
+            [update, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{iScale}, templateRect, A_translationOnly{iScale}, newImageSmall, homography, 2^iScale, false);
+            homography = homography - [0,0,update(1);0,0,update(2);0,0,0];
+        end
+    end
+    
+    if debugDisplay
+        subplot(1,2,1); plotResults(newImage, templateRect, homography);
+    end
+    
+    if ~isempty(A_affine)
+        for iteration = 1:maxIterations
+            [update, ~, ~] = lucasKanade_computeUpdate(templateImagePyramid{iScale}, templateRect, A_affine{iScale}, newImageSmall, homography, 2^iScale, false);
+            tformUpdate = eye(3) + [update(1:3)'; update(4:6)'; zeros(1,3)];
+            homography = homography / tformUpdate;
+        end
+    end
        
     if debugDisplay
-        figure(iScale); plotResults(newImage, templateRect, homography);
+        subplot(1,2,2); plotResults(newImage, templateRect, homography);
     end
     
     % TODO: check for convergence

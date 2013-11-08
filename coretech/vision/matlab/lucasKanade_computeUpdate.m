@@ -123,10 +123,10 @@ for y = minTemplateQuadY:maxTemplateQuadY
 
         interpolatedFrom(y0:y1, x0:x1) = 1;
 
-        pixel00 = newImage(y0, x0);
-        pixel01 = newImage(y0, x1);
-        pixel10 = newImage(y1, x0);
-        pixel11 = newImage(y1, x1);
+        pixelTL = newImage(y0, x0);
+        pixelTR = newImage(y0, x1);
+        pixelBL = newImage(y1, x0);
+        pixelBR = newImage(y1, x1);
 
         alphaY = newImageCoords(2) - (floor(newImageCoords(2)- 0.5)+0.5);
         alphaYinverse = 1 - alphaY;
@@ -134,7 +134,7 @@ for y = minTemplateQuadY:maxTemplateQuadY
         alphaX = newImageCoords(1) - (floor(newImageCoords(1)- 0.5)+0.5);
         alphaXinverse = 1 - alphaX;
 
-        interpolatedPixel = interpolate2d(pixel00, pixel01, pixel10, pixel11, alphaY, alphaYinverse, alphaX, alphaXinverse);
+        interpolatedPixel = interpolate2d(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
 
         interpolatedSelection(y+1,x+1) = interpolatedPixel;
 
@@ -158,9 +158,9 @@ update = AtA \ b; % TODO: use SVD
 
 end % function interpolateAndDifference_affine()
 
-function interpolatedPixel = interpolate2d(pixel00, pixel01, pixel10, pixel11, alphaY, alphaYinverse, alphaX, alphaXinverse)
-    interpolatedTop = alphaXinverse*pixel00 + alphaX*pixel01;
-    interpolatedBottom = alphaXinverse*pixel10 + alphaX*pixel11;
+function interpolatedPixel = interpolate2d(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse)
+    interpolatedTop = alphaXinverse*pixelTL + alphaX*pixelTR;
+    interpolatedBottom = alphaXinverse*pixelBL + alphaX*pixelBR;
 
     interpolatedPixel = alphaYinverse*interpolatedTop + alphaY*interpolatedBottom;
 end
