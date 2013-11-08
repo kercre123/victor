@@ -53,7 +53,10 @@ maxTemplateQuadY = round(max(templateQuad(:,2)) / scale);
 
 inputImageQuad = [0,0;size(newImage,2),0;size(newImage,2),size(newImage,1);0,size(newImage,1)];
 
-[minIndexes, maxIndexes] = lucasKanade_affineRowLimits(inputImageQuad, homography, scale*size(templateImage), debugDisplay);
+% Should it be round() or floor() or something else?
+smallHomography = homography;
+smallHomography(1:2,3) = smallHomography(1:2,3) / scale;
+[minIndexes, maxIndexes] = lucasKanade_affineRowLimits(inputImageQuad, smallHomography, size(templateImage), debugDisplay);
 
 if debugDisplay
     templateCornerPoints = [minTemplateQuadX, minTemplateQuadY;
@@ -66,12 +69,12 @@ if debugDisplay
     hold off;
 end
 
-homography(3,:) = [0,0,1];
+smallHomography(3,:) = [0,0,1];
 % homographyInv = inv(homography);
-homographyInv = (homography);
+% homographyInv = (homography);
 
-newImageCoords_x0y0 = homographyInv*[0;0;1];
-newImageCoords_x1y0 = homographyInv*[1;0;1];
+newImageCoords_x0y0 = smallHomography*[0;0;1];
+newImageCoords_x1y0 = smallHomography*[1;0;1];
 
 % x_dx is the change in the newImage coordinates x value, when moving one
 % pixel right in templateImage coordinates
@@ -89,8 +92,12 @@ for y = minTemplateQuadY:maxTemplateQuadY
     
     minX = ceil((max(minIndexes(y+1), minTemplateQuadX+0.5))-0.5) + 0.5;
     maxX = floor(min(maxIndexes(y+1), maxTemplateQuadX+1.0-0.5)-0.5) + 0.5;
+    
+    if maxX < minX % should the happen if there's no bugs?
+        continue;
+    end        
 
-    numInBounds = numInBounds + maxX - minX + 1;
+    numInBounds = numInBounds + maxX - minX + 1 - 2;
 end
 
 % AtW = (A(inBounds,:).*this.W{i_scale}(inBounds,ones(1,size(A,2))))'; % 2x169 or 6x169
@@ -111,18 +118,18 @@ for y = minTemplateQuadY:maxTemplateQuadY
         continue;
     end
     
-    minX = ceil((max(minIndexes(y+1), minTemplateQuadX+0.5))-0.5) + 0.5;
-    maxX = floor(min(maxIndexes(y+1), maxTemplateQuadX+1.0-0.5)-0.5) + 0.5;
+    minX = ceil((max(minIndexes(y+1), minTemplateQuadX+0.5))-0.5) + 0.5 + 1;
+    maxX = floor(min(maxIndexes(y+1), maxTemplateQuadX+1.0-0.5)-0.5) + 0.5 - 1;
 
     % compute the (x,y) coordinates of the leftmost pixel in the newImage
     % coordinates
-    newImageCoords = homographyInv*[minX;y+0.5;1];
+    newImageCoords = smallHomography*[minX;y+0.5;1];
     
     for x = (minX:maxX) - 0.5
         templatePixel = templateImage(y+1, x+1);
         
 %         % TODO: remove
-        newImageCoords = homographyInv * [x+0.5;y+0.5;1]; %#ok<*MINV>
+        newImageCoords = smallHomography * [x+0.5;y+0.5;1]; %#ok<*MINV>
 
         x0 = floor(newImageCoords(1)-0.5)+1;
         x1 = ceil(newImageCoords(1)-0.5)+1;
