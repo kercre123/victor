@@ -90,16 +90,19 @@ void SuccessorIterator::Next()
       nextSucc_.actionID = nextAction_;
       break;
     }
-    else {
-      // TEMP: 
-      printf("DEBUG: skip!\n");
-    }
 
     nextAction_++;
   }
 
   nextAction_++;
 }
+
+xythetaEnvironment::~xythetaEnvironment()
+{
+  for(size_t i=0; i<obstacles_.size(); ++i)
+    delete obstacles_[i];
+}
+
 
 xythetaEnvironment::xythetaEnvironment()
 {
@@ -118,6 +121,12 @@ xythetaEnvironment::xythetaEnvironment(const char* mprimFilename, const char* ma
   FILE* fMotPrims = fopen(mprimFilename, "r");
   ReadMotionPrimitives(fMotPrims);
   fclose(fMotPrims);
+
+  if(mapFile != NULL) {
+    FILE* fMap = fopen(mapFile, "r");
+    ReadEnvironment(fMap);
+    fclose(fMap);
+  }
 
   numAngles_ = 1<<THETA_BITS;
   radiansPerAngle_ = 2*M_PI/numAngles_;
@@ -294,6 +303,18 @@ bool xythetaEnvironment::ReadinMotionPrimitive(MotionPrimitive& prim, FILE* fIn)
   return true;
 }
 
+bool xythetaEnvironment::ReadEnvironment(FILE* fEnv)
+{
+  float x0,y0,x1,y1,len;
+
+  while(fscanf(fEnv, "%f %f %f %f %f", &x0, &y0, &x1, &y1, &len) == 5) {
+    obstacles_.push_back(new Rectangle(x0, y0, x1, y1, len));
+  }
+
+  return true;
+}
+
+
 
 SuccessorIterator xythetaEnvironment::GetSuccessors(StateID startID, Cost currG) const
 {
@@ -309,7 +330,7 @@ void xythetaEnvironment::ConvertToXYPlan(const xythetaPlan& plan, std::vector<St
   // TODO:(bn) replace theta with radians? maybe just cast it here
 
   for(size_t i=0; i<plan.actions_.size(); ++i) {
-    printf("curr = (%f, %f, %f [%d])\n", curr_c.x_cm, curr_c.y_cm, curr_c.theta, currTheta);
+    // printf("curr = (%f, %f, %f [%d])\n", curr_c.x_cm, curr_c.y_cm, curr_c.theta, currTheta);
 
     if(currTheta >= allMotionPrimitives_.size() || plan.actions_[i] >= allMotionPrimitives_[currTheta].size()) {
       printf("ERROR: can't look up prim for angle %d and action id %d\n", currTheta, plan.actions_[i]);
@@ -323,13 +344,13 @@ void xythetaEnvironment::ConvertToXYPlan(const xythetaPlan& plan, std::vector<St
         float y = curr_c.y_cm + prim->intermediatePositions[j].y_cm;
         float theta = prim->intermediatePositions[j].theta;
 
-        printf("  (%+5f, %+5f, %+5f) -> (%+5f, %+5f, %+5f)\n",
-                   prim->intermediatePositions[j].x_cm,
-                   prim->intermediatePositions[j].y_cm,
-                   prim->intermediatePositions[j].theta,
-                   x,
-                   y,
-                   theta);
+        // printf("  (%+5f, %+5f, %+5f) -> (%+5f, %+5f, %+5f)\n",
+        //            prim->intermediatePositions[j].x_cm,
+        //            prim->intermediatePositions[j].y_cm,
+        //            prim->intermediatePositions[j].theta,
+        //            x,
+        //            y,
+        //            theta);
 
         continuousPlan.push_back(State_c(x, y, theta));
       }

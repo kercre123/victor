@@ -1,9 +1,10 @@
-function plotPath(filename)
-
-animate = true
+function plotPath(filename, animate)
 
 if nargin == 0
    filename = "path.txt"
+   animate = true
+elseif nargin == 1
+  animate = true
 end
 
 path = [];
@@ -42,17 +43,18 @@ if exist(filename, 'file')
 
       ## axis(ax);
 
-      H = plot(path(1,1), path(1,2), 'g-');
+      H = plot(path(1,1), path(1,2), 'g.-');
       robot = plotRobot(path(1,1), path(1,2), path(1,3));
 
       for idx = 1:size(path,1)
-          sleep(0.1);
+          sleep(0.05);
           set(H, 'XData', path(1:idx, 1));
           set(H, 'YData', path(1:idx, 2));
           plotRobot(path(idx,1), path(idx,2), path(idx,3), robot);
       end
    else
-     plot(path(:,1), path(:,2), 'g-');
+     plot(path(:,1), path(:,2), 'g.-');
+     plotRobot(path(end,1), path(end,2), path(end,3));
    end
 end
 

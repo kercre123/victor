@@ -160,6 +160,9 @@ public:
   // just for now, eventually we won't use filenames like this, obviously......
   xythetaEnvironment(const char* mprimFilename, const char* mapFile);
 
+  ~xythetaEnvironment();
+
+
   // Returns an iterator to the successors from state "start"
   SuccessorIterator GetSuccessors(StateID startID, Cost currG) const;
 
@@ -183,6 +186,7 @@ private:
   // returns true on success
   bool ReadMotionPrimitives(FILE* fMotPrims);
   bool ReadinMotionPrimitive(MotionPrimitive& prim, FILE* fMotPrims);
+  bool ReadEnvironment(FILE* fEnv);
 
   float resolution_cm_;
 
