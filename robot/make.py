@@ -224,9 +224,20 @@ if __name__ == '__main__':
   print 'Linking ' + TARGET + '.elf'
   file = OUTPUT + TARGET + '.elf'
   s = LD + ' ' + LDOPT + ' -o ' + file + ' ' + objects + ' > ' + OUTPUT + TARGET + '.map'
-  os.system(s)
+  if os.system(s) != 0:
+    sys.exit(1)
 
   s = MVCONV + ' -elfInput ' + file + ' -mvcmd:' + OUTPUT + TARGET + '.mvcmd'
-  os.system(s)
+  if os.system(s) != 0:
+    sys.exit(1)
+
+  # Output the flash script
+  with open(OUTPUT + TARGET + '.scr', 'w+') as f:
+    size = os.stat(OUTPUT + TARGET + '.mvcmd').st_size
+    f.write('breset\nstart a\ntarget l\nddrinit\nddrinit\n')
+    f.write('loadandverify ' + MV_COMMON_BASE + '/utils/jtag_flasher/flasher.elf\n')
+    f.write('set 0x48000000 ' + str(size) + '\n')
+    f.write('load 0x48000004 bbe ' + TARGET + '.mvcmd\n')
+    f.write('runw\n')
 
 
