@@ -1,7 +1,8 @@
 #include "anki/planning/basestation/xythetaEnvironment.h"
 #include "rectangle.h"
-#include <stdio.h>
 #include <iostream>
+#include <math.h>
+#include <stdio.h>
 
 using namespace std;
 
@@ -57,11 +58,11 @@ bool SuccessorIterator::Done() const
 void SuccessorIterator::Next()
 {
   while(nextAction_ < motionPrimitives_.size()) {
-    const MotionPrimitive& prim = motionPrimitives_[nextAction_];
+    const MotionPrimitive* prim = &motionPrimitives_[nextAction_];
 
     // collision checking
     size_t endObs = obstacles_.size();
-    int endPoints = prim.intermediatePositions.size();
+    int endPoints = prim->intermediatePositions.size();
     bool collision = false;
 
     // iterate first through action, starting at the end because this
@@ -69,8 +70,8 @@ void SuccessorIterator::Next()
     for(int pointIdx = endPoints-1; pointIdx >= 0 && !collision; --pointIdx) {
       for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
         float x,y;
-        x = start_c_.x_cm + prim.intermediatePositions[pointIdx].x_cm;
-        y = start_c_.y_cm + prim.intermediatePositions[pointIdx].y_cm;
+        x = start_c_.x_cm + prim->intermediatePositions[pointIdx].x_cm;
+        y = start_c_.y_cm + prim->intermediatePositions[pointIdx].y_cm;
         if(obstacles_[obsIdx]->IsPointInside(x, y)) {
           collision = true;
           break;
@@ -80,12 +81,12 @@ void SuccessorIterator::Next()
 
     if(!collision) {
       State result(start_);
-      result.x += prim.endStateOffset.x;
-      result.y += prim.endStateOffset.y;
-      result.theta = prim.endStateOffset.theta;
+      result.x += prim->endStateOffset.x;
+      result.y += prim->endStateOffset.y;
+      result.theta = prim->endStateOffset.theta;
 
       nextSucc_.stateID = result.GetStateID();
-      nextSucc_.g = startG_ + prim.cost;
+      nextSucc_.g = startG_ + prim->cost;
       nextSucc_.actionID = nextAction_;
       break;
     }
@@ -103,6 +104,7 @@ void SuccessorIterator::Next()
 xythetaEnvironment::xythetaEnvironment()
 {
   numAngles_ = 1<<THETA_BITS;
+  radiansPerAngle_ = 2*M_PI/numAngles_;
 }
 
 xythetaEnvironment::xythetaEnvironment(const char* mprimFilename, const char* mapFile)
@@ -116,6 +118,9 @@ xythetaEnvironment::xythetaEnvironment(const char* mprimFilename, const char* ma
   FILE* fMotPrims = fopen(mprimFilename, "r");
   ReadMotionPrimitives(fMotPrims);
   fclose(fMotPrims);
+
+  numAngles_ = 1<<THETA_BITS;
+  radiansPerAngle_ = 2*M_PI/numAngles_;
 }
 
 bool xythetaEnvironment::ReadMotionPrimitives(FILE* fMotPrims)
@@ -135,6 +140,7 @@ bool xythetaEnvironment::ReadMotionPrimitives(FILE* fMotPrims)
     return false;
   }
   if (fscanf(fMotPrims, "%f", &fTemp) == 0) return false;
+  resolution_cm_ = fTemp;
   // if (fabs(fTemp - EnvNAVXYTHETALATCfg.cellsize_m) > ERR_EPS) {
   //   printf("ERROR: invalid resolution %f (instead of %f) in the dynamics file\n", fTemp,
   //                  EnvNAVXYTHETALATCfg.cellsize_m);
@@ -224,10 +230,14 @@ bool xythetaEnvironment::ReadinMotionPrimitive(MotionPrimitive& prim, FILE* fIn)
     return false;
   }
 
-  if (fscanf(fIn, "%d %d %d", &prim.endStateOffset.x, &prim.endStateOffset.y, &prim.endStateOffset.theta) != 3) {
+  int x, y, theta;
+  if (fscanf(fIn, "%d %d %d", &x, &y, &theta) != 3) {
     printf("ERROR: failed to read in endsearchpose\n");
     return false;
   }
+  prim.endStateOffset.x = x;
+  prim.endStateOffset.y = y;
+  prim.endStateOffset.theta = theta;
 
   //read in action cost
   strcpy(sExpected, "additionalactioncostmult:");
@@ -290,6 +300,48 @@ SuccessorIterator xythetaEnvironment::GetSuccessors(StateID startID, Cost currG)
   return SuccessorIterator(this, startID, currG);
 }
 
+void xythetaEnvironment::ConvertToXYPlan(const xythetaPlan& plan, std::vector<State_c>& continuousPlan) const
+{
+  continuousPlan.clear();
+
+  State_c curr_c = State2State_c(plan.start_);
+  StateTheta currTheta = plan.start_.theta;
+  // TODO:(bn) replace theta with radians? maybe just cast it here
+
+  for(size_t i=0; i<plan.actions_.size(); ++i) {
+    printf("curr = (%f, %f, %f [%d])\n", curr_c.x_cm, curr_c.y_cm, curr_c.theta, currTheta);
+
+    if(currTheta >= allMotionPrimitives_.size() || plan.actions_[i] >= allMotionPrimitives_[currTheta].size()) {
+      printf("ERROR: can't look up prim for angle %d and action id %d\n", currTheta, plan.actions_[i]);
+      break;
+    }
+    else {
+
+      const MotionPrimitive* prim = &allMotionPrimitives_[currTheta][plan.actions_[i]];
+      for(size_t j=0; j<prim->intermediatePositions.size(); ++j) {
+        float x = curr_c.x_cm + prim->intermediatePositions[j].x_cm;
+        float y = curr_c.y_cm + prim->intermediatePositions[j].y_cm;
+        float theta = prim->intermediatePositions[j].theta;
+
+        printf("  (%+5f, %+5f, %+5f) -> (%+5f, %+5f, %+5f)\n",
+                   prim->intermediatePositions[j].x_cm,
+                   prim->intermediatePositions[j].y_cm,
+                   prim->intermediatePositions[j].theta,
+                   x,
+                   y,
+                   theta);
+
+        continuousPlan.push_back(State_c(x, y, theta));
+      }
+
+      if(!continuousPlan.empty())
+        curr_c = continuousPlan.back();
+      else
+        printf("ERROR: no intermediate positiong?!\n");
+      currTheta = prim->endStateOffset.theta;
+    }
+  }
+}
 
 }
 }

@@ -148,10 +148,6 @@ public:
   std::vector<ActionID> actions_;
   
   void Push(ActionID action) {actions_.push_back(action);}
-
-  // This function fills up the given vector with (x,y,theta) coordinates of
-  // following the plan
-  void ConvertToXYPlan(std::vector<State_c>& continuousPlan) const;
 };
 
 class xythetaEnvironment
@@ -177,6 +173,10 @@ public:
   inline float GetX_cm(StateXY x) const;
   inline float GetY_cm(StateXY y) const;
   inline float GetTheta_c(StateTheta theta) const;
+
+  // This function fills up the given vector with (x,y,theta) coordinates of
+  // following the plan
+  void ConvertToXYPlan(const xythetaPlan& plan, std::vector<State_c>& continuousPlan) const;
 
 private:
 
