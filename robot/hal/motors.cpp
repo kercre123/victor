@@ -12,16 +12,16 @@ namespace Anki
 
       static const u8 DISCONNECTED_MODE           = 7;
 
-      static const u8 LEFT_WHEEL_FORWARD_PIN      = 0;
-      static const u8 LEFT_WHEEL_FORWARD_MODE     = 4;
-      static const u8 LEFT_WHEEL_BACKWARD_PIN     = 3;
-      static const u8 LEFT_WHEEL_BACKWARD_MODE    = 3;
+      static const u8 LEFT_WHEEL_FORWARD_PIN      = 3;
+      static const u8 LEFT_WHEEL_FORWARD_MODE     = 3;
+      static const u8 LEFT_WHEEL_BACKWARD_PIN     = 0;
+      static const u8 LEFT_WHEEL_BACKWARD_MODE    = 4;
       static const u8 LEFT_WHEEL_PWM              = 0;
 
-      static const u8 RIGHT_WHEEL_FORWARD_PIN     = 81;
-      static const u8 RIGHT_WHEEL_FORWARD_MODE    = 5;
-      static const u8 RIGHT_WHEEL_BACKWARD_PIN    = 90;
-      static const u8 RIGHT_WHEEL_BACKWARD_MODE   = 3;
+      static const u8 RIGHT_WHEEL_FORWARD_PIN     = 90;
+      static const u8 RIGHT_WHEEL_FORWARD_MODE    = 3;
+      static const u8 RIGHT_WHEEL_BACKWARD_PIN    = 81;
+      static const u8 RIGHT_WHEEL_BACKWARD_MODE   = 5;
       static const u8 RIGHT_WHEEL_PWM             = 4;
 
       static const u8 LIFT_UP_PIN                 = 82;
@@ -199,8 +199,8 @@ namespace Anki
           power = -1.0f;
 
         u32 period = (DrvCprGetSysClockKhz() / FREQUENCY_KHZ);
-        u32 highCount = period * fabs(power);
-        u32 lowCount = period - highCount;
+        u32 lowCount = period * fabs(power);
+        u32 highCount = period - lowCount;
 
         const MotorInfo* motorInfo = &m_motors[motor];
 
@@ -208,18 +208,18 @@ namespace Anki
         {
           // Disable the opposite direction from influencing the motor driver
           DrvGpioMode(motorInfo->backwardDownPin, DISCONNECTED_MODE);
-          DrvGpioSetPinLo(motorInfo->backwardDownPin);
+          DrvGpioSetPinHi(motorInfo->backwardDownPin);
           DrvGpioMode(motorInfo->forwardUpPin, motorInfo->forwardUpMode);
         } else if (power < 0) {
           // Disable the opposite direction from incluencing the motor driver
           DrvGpioMode(motorInfo->forwardUpPin, DISCONNECTED_MODE);
-          DrvGpioSetPinLo(motorInfo->forwardUpPin);
+          DrvGpioSetPinHi(motorInfo->forwardUpPin);
           DrvGpioMode(motorInfo->backwardDownPin, motorInfo->backwardDownMode);
         } else {
           DrvGpioMode(motorInfo->forwardUpPin, DISCONNECTED_MODE);
           DrvGpioMode(motorInfo->backwardDownPin, DISCONNECTED_MODE);
-          DrvGpioSetPinHi(motorInfo->backwardDownPin);
-          DrvGpioSetPinHi(motorInfo->forwardUpPin);
+          DrvGpioSetPinLo(motorInfo->backwardDownPin);
+          DrvGpioSetPinLo(motorInfo->forwardUpPin);
 
           // Disable the PWM
           u32 pwmLeadInAddress = GPIO_PWM_LEADIN0_ADR + (4 * motorInfo->pwm);

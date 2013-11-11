@@ -144,28 +144,7 @@ namespace Anki
           D_GPIO_PAD_LOCAL_PIN_OUT
         },
         
-/*         {
-          17, 17,   ACTION_UPDATE_ALL,  // TEMP
-          PIN_LEVEL_HIGH,
-          D_GPIO_MODE_7             |
-          D_GPIO_DIR_OUT            |
-          D_GPIO_DATA_INV_OFF       |
-          D_GPIO_WAKEUP_OFF         |
-          D_GPIO_IRQ_SRC_NONE,
-
-          D_GPIO_PAD_NO_PULL        |
-          D_GPIO_PAD_DRIVE_8mA      |
-          D_GPIO_PAD_VOLT_2V5       |
-          D_GPIO_PAD_SLEW_SLOW      |
-          D_GPIO_PAD_SCHMITT_OFF    |
-          D_GPIO_PAD_RECEIVER_ON    |
-          D_GPIO_PAD_BIAS_2V5       |
-          D_GPIO_PAD_LOCALCTRL_OFF  |
-          D_GPIO_PAD_LOCALDATA_LO   |
-          D_GPIO_PAD_LOCAL_PIN_OUT
-        }, */
-
-       {
+        {
           114, 114, ACTION_UPDATE_ALL,  // CAM1_MCLK
           PIN_LEVEL_LOW,
           D_GPIO_MODE_0             |

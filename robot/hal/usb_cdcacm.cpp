@@ -376,6 +376,12 @@ namespace Anki
           ;
         // Clear SOF
         REG_WORD(REG_USBSTS) = USB_USBSTS_SRI;
+        // Clear IRQ
+        //SET_REG_WORD(ICB_INT_CLEAR, (1 << IRQ_USB));
+        // Configure interrupt level and edge
+        //SET_REG_WORD(ICB_USB_CONFIG, (IRQ_POS_LEVEL | (IRQ_USB_PRIO << 2)));
+        // Enable USB interrupts
+        //REG_WORD(USBINTR) = USBSTS_SRI;
       }
 
       static void Reset()
@@ -474,6 +480,8 @@ namespace Anki
           // Clear SOF
           REG_WORD(REG_USBSTS) = USB_USBSTS_SRI;
 
+          SET_REG_WORD(ICB_INT_CLEAR, (1 << IRQ_USB));
+
           // Increment the clock counter
           m_deviceClock++;
 
@@ -510,7 +518,10 @@ namespace Anki
         static u32 s_setupStatus = 0, s_usbmode = 0, s_usbsts = 0, s_deviceStatus = 0;
         setupStatus = REG_WORD(REG_ENDPTSETUPSTAT);
 
-        if (s_setupStatus != setupStatus || s_usbmode != REG_WORD(REG_USBMODE) || s_usbsts != REG_WORD(REG_USBSTS) || s_deviceStatus != m_deviceStatus)
+        if (s_setupStatus != setupStatus ||
+            s_usbmode != REG_WORD(REG_USBMODE) ||
+            s_usbsts != REG_WORD(REG_USBSTS) ||
+            s_deviceStatus != m_deviceStatus)
         {
           s_setupStatus = setupStatus;
           s_usbmode = REG_WORD(REG_USBMODE);
