@@ -57,7 +57,7 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 // This test requires a stopwatch, and takes about ten seconds to do manually
 #define TEST_BENCHMARKING
 #ifdef TEST_BENCHMARKING
-IN_DDR GTEST_TEST(CoreTech_Common, Benchmarking)
+GTEST_TEST(CoreTech_Common, Benchmarking)
 {
   InitBenchmarking();
 
@@ -91,7 +91,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, Benchmarking)
 }
 #endif //#ifdef TEST_BENCHMARKING
 
-IN_DDR GTEST_TEST(CoreTech_Common, MemoryStackId)
+GTEST_TEST(CoreTech_Common, MemoryStackId)
 {
   //printf("%f %f %f %f %f\n", 43423442334324.010203, 15.500, 15.0, 0.05, 0.12004333);
 
@@ -126,7 +126,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStackId)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, ApproximateExp)
+GTEST_TEST(CoreTech_Common, ApproximateExp)
 {
   // To compute the ground truth, in Matlab, type:
   // x = logspace(-5, 5, 11); yPos = exp(x); yNeg = exp(-x);
@@ -168,7 +168,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, ApproximateExp)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, MatrixMultiply)
+GTEST_TEST(CoreTech_Common, MatrixMultiply)
 {
   const s32 numBytes = MIN(MAX_BYTES, 5000);
   ASSERT_TRUE(buffer != NULL);
@@ -217,7 +217,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, MatrixMultiply)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, ComputeHomography)
+GTEST_TEST(CoreTech_Common, ComputeHomography)
 {
   const s32 numBytes = MIN(MAX_BYTES, 5000);
   ASSERT_TRUE(buffer != NULL);
@@ -284,7 +284,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, ComputeHomography)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, SVD32)
+GTEST_TEST(CoreTech_Common, SVD32)
 {
   const s32 numBytes = MIN(MAX_BYTES, 5000);
   ASSERT_TRUE(buffer != NULL);
@@ -379,7 +379,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD32)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, SVD64)
+GTEST_TEST(CoreTech_Common, SVD64)
 {
   const s32 numBytes = MIN(MAX_BYTES, 5000);
   ASSERT_TRUE(buffer != NULL);
@@ -468,7 +468,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD64)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack)
+GTEST_TEST(CoreTech_Common, MemoryStack)
 {
   ASSERT_TRUE(MEMORY_ALIGNMENT == 16);
 
@@ -546,20 +546,20 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR s32 CheckMemoryStackUsage(MemoryStack ms, s32 numBytes)
+s32 CheckMemoryStackUsage(MemoryStack ms, s32 numBytes)
 {
   ms.Allocate(numBytes);
   return ms.get_usedBytes();
 }
 
-IN_DDR s32 CheckConstCasting(const MemoryStack ms, s32 numBytes)
+s32 CheckConstCasting(const MemoryStack ms, s32 numBytes)
 {
   // ms.Allocate(1); // Will not compile
 
   return CheckMemoryStackUsage(ms, numBytes);
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack_call)
+GTEST_TEST(CoreTech_Common, MemoryStack_call)
 {
   const s32 numBytes = MIN(MAX_BYTES, 100);
   ASSERT_TRUE(buffer != NULL);
@@ -582,7 +582,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack_call)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
+GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
 {
   ASSERT_TRUE(MEMORY_ALIGNMENT == 16);
 
@@ -619,7 +619,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
 }
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB
-IN_DDR GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
+GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
 {
   matlab.EvalStringEcho("simpleVector = double([1.1,2.1,3.1,4.1,5.1]);");
   double *simpleVector = matlab.Get<double>("simpleVector");
@@ -639,7 +639,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
 #endif //#if ANKICORETECH_EMBEDDED_USE_MATLAB
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB
-IN_DDR GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
+GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
 {
   matlab.EvalStringEcho("simpleArray = int16([1,2,3,4,5;6,7,8,9,10]);");
   Array<s16> simpleArray = matlab.GetArray<s16>("simpleArray");
@@ -664,7 +664,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
 #endif //#if ANKICORETECH_EMBEDDED_USE_MATLAB
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-IN_DDR GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
+GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 {
   cv::Mat src, dst;
 
@@ -701,7 +701,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 }
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
-IN_DDR GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
+GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 {
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = MIN(MAX_BYTES, 1000);
@@ -784,7 +784,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
+GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 {
   const s32 numBytes = MIN(MAX_BYTES, 1000);
   ASSERT_TRUE(buffer != NULL);
@@ -810,7 +810,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, ArrayAlignment1)
+GTEST_TEST(CoreTech_Common, ArrayAlignment1)
 {
   const s32 numBytes = MIN(MAX_BYTES, 1000);
   ASSERT_TRUE(buffer != NULL);
@@ -831,7 +831,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, ArrayAlignment1)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
+GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
 {
   const s32 numBytes = MIN(MAX_BYTES, 1000);
   ASSERT_TRUE(buffer != NULL);
@@ -851,7 +851,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, ArrayFillPattern)
+GTEST_TEST(CoreTech_Common, ArrayFillPattern)
 {
   const s32 width = 6, height = 10;
   const s32 numBytes = MIN(MAX_BYTES, 1000);
@@ -915,7 +915,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, ArrayFillPattern)
 }
 
 #if !defined(ANKICORETECH_EMBEDDED_USE_GTEST)
-IN_DDR int RUN_ALL_TESTS()
+int RUN_ALL_TESTS()
 {
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;

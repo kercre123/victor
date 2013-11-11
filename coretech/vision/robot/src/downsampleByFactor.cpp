@@ -4,7 +4,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    IN_DDR Result DownsampleByFactor(const Array<u8> &image, const s32 downsampleFactor, Array<u8> &imageDownsampled)
+    Result DownsampleByFactor(const Array<u8> &image, const s32 downsampleFactor, Array<u8> &imageDownsampled)
     {
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);

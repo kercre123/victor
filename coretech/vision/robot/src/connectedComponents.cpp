@@ -33,7 +33,7 @@ namespace Anki
       return false;
     }
 
-    IN_DDR Result ConnectedComponents::Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment> &components)
+    Result ConnectedComponents::Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment> &components)
     {
       bool onComponent;
       s16 componentStart;
@@ -107,7 +107,7 @@ namespace Anki
       this->equivalentComponents = FixedLengthList<u16>(maxComponentSegments, memory);
     } // ConnectedComponents(const s32 maxComponentSegments, MemoryStack &memory)
 
-    IN_DDR Result ConnectedComponents::Extract2dComponents_PerRow_Initialize()
+    Result ConnectedComponents::Extract2dComponents_PerRow_Initialize()
     {
       const u16 MAX_2D_COMPONENTS = static_cast<u16>(components.get_maximumSize());
 
@@ -123,7 +123,7 @@ namespace Anki
       return RESULT_OK;
     } // Result ConnectedComponents::Extract2dComponents_PerRow_Initialize()
 
-    IN_DDR Result ConnectedComponents::Extract2dComponents_PerRow_NextRow(const u8 * restrict binaryImageRow, const s32 imageWidth, const s16 whichRow, const s16 minComponentWidth, const s16 maxSkipDistance)
+    Result ConnectedComponents::Extract2dComponents_PerRow_NextRow(const u8 * restrict binaryImageRow, const s32 imageWidth, const s16 whichRow, const s16 minComponentWidth, const s16 maxSkipDistance)
     {
       assert(imageWidth <= maxImageWidth);
 
@@ -205,7 +205,7 @@ namespace Anki
       return RESULT_OK;
     } // Result ConnectedComponents::Extract2dComponents_PerRow_NextRow(const Array<u8> &binaryImageRow, const s16 minComponentWidth, const s16 maxSkipDistance)
 
-    IN_DDR Result ConnectedComponents::Extract2dComponents_PerRow_Finalize()
+    Result ConnectedComponents::Extract2dComponents_PerRow_Finalize()
     {
       const s32 MAX_EQUIVALENT_ITERATIONS = 3;
       u16 * restrict pEquivalentComponents = equivalentComponents.Pointer(0);
@@ -260,7 +260,7 @@ namespace Anki
       return RESULT_OK;
     } // Result ConnectedComponents::Extract2dComponents_PerRow_Finalize()
 
-    IN_DDR Result ConnectedComponents::Extract2dComponents_FullImage(const Array<u8> &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance)
+    Result ConnectedComponents::Extract2dComponents_FullImage(const Array<u8> &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance)
     {
       const s32 imageHeight = binaryImage.get_size(0);
       const s32 imageWidth = binaryImage.get_size(1);
@@ -283,7 +283,7 @@ namespace Anki
 
     // Sort the components by id (the ids are sorted in increasing value, but with zero at the end {1...MAX_VALUE,0}), then y, then xStart
     // TODO: determine how fast this method is, then suggest usage
-    IN_DDR Result ConnectedComponents::SortConnectedComponentSegments()
+    Result ConnectedComponents::SortConnectedComponentSegments()
     {
       // Performs insersion sort
       // TODO: do bucket sort by id first, then run this
@@ -432,7 +432,7 @@ namespace Anki
     //
     // For a ConnectedComponent that has a maximum id of N, this function requires
     // 12n + 12 bytes of scratch.
-    IN_DDR Result ConnectedComponents::ComputeComponentCentroids(FixedLengthList<Point<s16> > &componentCentroids, MemoryStack scratch)
+    Result ConnectedComponents::ComputeComponentCentroids(FixedLengthList<Point<s16> > &componentCentroids, MemoryStack scratch)
     {
       AnkiConditionalErrorAndReturnValue(componentCentroids.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "componentCentroids is not valid");
       AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "components is not valid");
@@ -487,7 +487,7 @@ namespace Anki
     // Iterate through components, and compute bounding box for each component
     // componentBoundingBoxes must be at least sizeof(Rectangle<s16>)*(maximumdId+1) bytes
     // Note: this is probably inefficient, compared with interlacing the loops in a kernel
-    IN_DDR Result ConnectedComponents::ComputeComponentBoundingBoxes(FixedLengthList<Rectangle<s16> > &componentBoundingBoxes)
+    Result ConnectedComponents::ComputeComponentBoundingBoxes(FixedLengthList<Rectangle<s16> > &componentBoundingBoxes)
     {
       AnkiConditionalErrorAndReturnValue(componentBoundingBoxes.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "componentBoundingBoxes is not valid");
       AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "components is not valid");
@@ -525,7 +525,7 @@ namespace Anki
     // Iterate through components, and compute the number of componentSegments that have each id
     // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes
     // Note: this is probably inefficient, compared with interlacing the loops in a kernel
-    IN_DDR Result ConnectedComponents::ComputeNumComponentSegmentsForEachId(FixedLengthList<s32> &numComponentSegments)
+    Result ConnectedComponents::ComputeNumComponentSegmentsForEachId(FixedLengthList<s32> &numComponentSegments)
     {
       AnkiConditionalErrorAndReturnValue(numComponentSegments.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "numComponentSegments is not valid");
       AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "components is not valid");
@@ -555,7 +555,7 @@ namespace Anki
     // 3n + 3 bytes of scratch.
     //
     // TODO: If scratch usage is a bigger issue than computation time, this could be done with a bitmask
-    IN_DDR Result ConnectedComponents::CompressConnectedComponentSegmentIds(MemoryStack scratch)
+    Result ConnectedComponents::CompressConnectedComponentSegmentIds(MemoryStack scratch)
     {
       s32 numUsedIds = 0;
 
@@ -608,7 +608,7 @@ namespace Anki
     //
     // For a ConnectedComponent that has a maximum id of N, this function requires
     // 4n + 4 bytes of scratch.
-    IN_DDR Result ConnectedComponents::InvalidateSmallOrLargeComponents(const s32 minimumNumPixels, const s32 maximumNumPixels, MemoryStack scratch)
+    Result ConnectedComponents::InvalidateSmallOrLargeComponents(const s32 minimumNumPixels, const s32 maximumNumPixels, MemoryStack scratch)
     {
       const ConnectedComponentSegment * restrict pConstComponents = components.Pointer(0);
 
@@ -662,7 +662,7 @@ namespace Anki
     //
     // For a ConnectedComponent that has a maximum id of N, this function requires
     // 8N + 8 bytes of scratch.
-    IN_DDR Result ConnectedComponents::InvalidateSolidOrSparseComponents(const s32 sparseMultiplyThreshold, const s32 solidMultiplyThreshold, MemoryStack scratch)
+    Result ConnectedComponents::InvalidateSolidOrSparseComponents(const s32 sparseMultiplyThreshold, const s32 solidMultiplyThreshold, MemoryStack scratch)
     {
       const ConnectedComponentSegment * restrict pConstComponents = components.Pointer(0);
 
@@ -753,7 +753,7 @@ namespace Anki
     //
     // For a ConnectedComponent that has a maximum id of N, this function requires 10N + 10 bytes
     // of scratch.
-    IN_DDR Result ConnectedComponents::InvalidateFilledCenterComponents(const s32 percentHorizontal, const s32 percentVertical, MemoryStack scratch)
+    Result ConnectedComponents::InvalidateFilledCenterComponents(const s32 percentHorizontal, const s32 percentVertical, MemoryStack scratch)
     {
       const s32 numFractionalBitsForPercents = 8;
 
@@ -842,7 +842,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    IN_DDR Result ConnectedComponents::PushBack(const ConnectedComponentSegment &value)
+    Result ConnectedComponents::PushBack(const ConnectedComponentSegment &value)
     {
       const Result result = components.PushBack(value);
 

@@ -13,7 +13,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    IN_DDR void PrintfOneArray_f32(const Array<f32> &array, const char * variableName)
+    void PrintfOneArray_f32(const Array<f32> &array, const char * variableName)
     {
       const s32 arrayHeight = array.get_size(0);
       const s32 arrayWidth = array.get_size(1);
@@ -46,7 +46,7 @@ namespace Anki
       printf("\n");
     }
 
-    IN_DDR void PrintfOneArray_f64(const Array<f64> &array, const char * variableName)
+    void PrintfOneArray_f64(const Array<f64> &array, const char * variableName)
     {
       const s32 arrayHeight = array.get_size(0);
       const s32 arrayWidth = array.get_size(1);
@@ -79,7 +79,7 @@ namespace Anki
       printf("\n");
     }
 
-    IN_DDR s32 Sum(const Array<u8> &image)
+    s32 Sum(const Array<u8> &image)
     {
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
@@ -96,7 +96,7 @@ namespace Anki
     }
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-    IN_DDR int ConvertToOpenCvType(const char *typeName, size_t byteDepth)
+    int ConvertToOpenCvType(const char *typeName, size_t byteDepth)
     {
       if(typeName[0] == 'u') { //unsigned
         if(byteDepth == 1) {
