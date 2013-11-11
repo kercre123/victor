@@ -61,6 +61,8 @@ namespace Anki
       // Forward declarations
       void UARTInit();
       void MotorInit();
+      void USBInit();
+      void USBUpdate();
 
       static void SendFrame()
       {
@@ -72,9 +74,9 @@ namespace Anki
         UARTPutChar(0xFF);
         UARTPutChar(0xBD);
 
-        for (int y = 0; y < 480; y += 1)
+        for (int y = 0; y < 480; y += 8)
         {
-          for (int x = 0; x < 640; x += 1)
+          for (int x = 0; x < 640; x += 8)
           {
             UARTPutChar(image[x * 2 + 0 + y * 1280]);
           }
@@ -148,7 +150,7 @@ namespace Anki
         DrvGpioIrqResetAll();
 
         // Force big-endian memory swap
-        *(volatile u32*)LHB_CMX_CTRL_MISC |= 1 << 24;
+        REG_WORD(LHB_CMX_CTRL_MISC) |= 1 << 24;
 
         // Setup L2 cache
         DrvL2CacheSetupPartition(PART128KB);
@@ -156,10 +158,8 @@ namespace Anki
         swcLeonFlushCaches();
 
         UARTInit();
-        printf("\nUART Initialized\n");
 
-        //FrontCameraInit();
-        //printf("\nFront Camera Initialized\n");
+        FrontCameraInit();
 
         //USBInit();
 
@@ -185,11 +185,18 @@ int main()
 
   while (true)
   {
+    //HAL::SendFrame();
+
+    //HAL::USBUpdate();
+
     Robot::step_LongExecution();
 
     //printf("%X\n", *(volatile u32*)TIM1_CNT_VAL_ADR);
 
-//    HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 0.05f);
+    //HAL::MotorSetPower(HAL::MOTOR_LIFT, 1.0);
+    //SleepMs(1000);
+    //HAL::MotorSetPower(HAL::MOTOR_LIFT, -1.0);
+    //SleepMs(1000);
 
 //    HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 1.00f);
 //    HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 1.00f);
