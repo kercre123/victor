@@ -9,6 +9,7 @@
 #include "anki/common/robot/geometry.h"
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/robot/cInterfaces_c.h"
+#include "anki/common/robot/sequences.h"
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include "opencv2/core/core.hpp"
@@ -44,6 +45,9 @@ namespace Anki
       // Constructor for a Array, pointing to user-allocated MemoryStack
       // All memory in the array is zeroed out once it is allocated
       Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
+
+      // Immediate evaluation of a LinearSequence, into this Array
+      Array(const LinearSequence<Type> &sequence, MemoryStack &memory);
 
       // Pointer to the data, at a given (y,x) location
       //
@@ -175,11 +179,12 @@ namespace Anki
       void * rawDataPointer;
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-      //s32 cvMatMirror_sizeBuffer[2];
       cv::Mat_<Type> cvMatMirror;
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
-      void Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
+      void* AllocateBufferFromMemoryStack(const s32 numRows, const s32 stride, MemoryStack &memory, s32 &numBytesAllocated, const bool useBoundaryFillPatterns);
+
+      void InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
 
       void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
 
@@ -262,7 +267,7 @@ namespace Anki
       AnkiConditionalError(numCols > 0 && numRows > 0 && dataLength > 0,
         "Array<Type>::Array", "Invalid size");
 
-      Initialize(numRows,
+      InitializeBuffer(numRows,
         numCols,
         data,
         dataLength,
@@ -270,22 +275,48 @@ namespace Anki
     }
 
     template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns)
-      : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
     {
       AnkiConditionalError(numCols > 0 && numRows > 0,
         "Array<Type>::Array", "Invalid size");
 
-      const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? static_cast<s32>(MEMORY_ALIGNMENT) : 0);
-      const s32 numBytesRequested = numRows * this->stride + extraBoundaryPatternBytes;
       s32 numBytesAllocated = 0;
 
-      void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
+      void * const allocatedBuffer = AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, useBoundaryFillPatterns), memory, numBytesAllocated, useBoundaryFillPatterns);
 
-      Initialize(numRows,
+      InitializeBuffer(numRows,
         numCols,
         reinterpret_cast<Type*>(allocatedBuffer),
         numBytesAllocated,
         useBoundaryFillPatterns);
+    }
+
+    // Immediate evaluation of a LinearSequence, into this Array
+    template<typename Type> Array<Type>::Array(const LinearSequence<Type> &sequence, MemoryStack &memory)
+    {
+      const s32 numRows = 1;
+      const s32 numCols = sequence.get_size();
+
+      AnkiConditionalError(numCols > 0 && numRows > 0,
+        "Array<Type>::Array", "Invalid size");
+
+      s32 numBytesAllocated = 0;
+
+      void * const allocatedBuffer = AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, useBoundaryFillPatterns), memory, numBytesAllocated, useBoundaryFillPatterns);
+
+      InitializeBuffer(numRows,
+        numCols,
+        reinterpret_cast<Type*>(allocatedBuffer),
+        numBytesAllocated,
+        useBoundaryFillPatterns);
+
+      const Type startValue = sequence.get_startValue();
+      const Type increment = sequence.get_increment();
+
+      Type curValue = startValue;
+      for(s32 x=0; x<numCols; x++) {
+        this->data[x] = curValue;
+        curValue += increment;
+      }
     }
 
     template<typename Type> const Type* Array<Type>::Pointer(const s32 index0, const s32 index1) const
@@ -665,10 +696,25 @@ namespace Anki
       return useBoundaryFillPatterns;
     }
 
-    template<typename Type> void Array<Type>::Initialize(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
+    template<typename Type> void* Array<Type>::AllocateBufferFromMemoryStack(const s32 numRows, const s32 stride, MemoryStack &memory, s32 &numBytesAllocated, const bool useBoundaryFillPatterns)
+    {
+      AnkiConditionalError(numRows > 0 && stride > 0,
+        "Array<Type>::AllocateBufferFromMemoryStack", "Invalid size");
+
+      this->stride = stride;
+
+      const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? static_cast<s32>(MEMORY_ALIGNMENT) : 0);
+      const s32 numBytesRequested = numRows * this->stride + extraBoundaryPatternBytes;
+
+      void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
+
+      return allocatedBuffer;
+    }
+
+    template<typename Type> void Array<Type>::InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
     {
       AnkiConditionalErrorAndReturn(numCols > 0 && numRows > 0 && dataLength > 0,
-        "Array<Type>::Initialize", "Negative dimension");
+        "Array<Type>::InitializeBuffer", "Negative dimension");
 
       this->useBoundaryFillPatterns = useBoundaryFillPatterns;
 
@@ -716,7 +762,7 @@ namespace Anki
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       cvMatMirror = cv::Mat_<Type>(size[0], size[1], data, stride);
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
-    } // Array<Type>::Initialize()
+    } // Array<Type>::InitializeBuffer()
 
     // Set all the buffers and sizes to zero, to signal an invalid array
     template<typename Type> void Array<Type>::InvalidateArray()

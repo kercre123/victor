@@ -54,8 +54,60 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, LinearSequence)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  MemoryStack ms1(buffer, 50);
+
+  // Test s32 sequences
+  const s32 sequenceLimits1[15][3] = {{0,1,1}, {0,2,1}, {-1,1,1}, {-1,2,1}, {-1,3,1},
+  {-50,2,-3}, {-3,3,-50}, {10,-4,1}, {10,3,1}, {-10,3,1},
+  {-7,7,0}, {12,-4,-10}, {100,-1,0}, {0,3,100}, {0,2,10000}};
+
+  // [length(0:1:1), length(0:2:1), length(-1:1:1), length(-1:2:1), length(-1:3:1), length(-50:2:-3), length(-3:3:-50), length(10:-4:1), length(10:3:1), length(-10:3:1), length(-7:7:0), length(12:-4:-10), length(100:-1:0), length(0:3:100), length(0:2:10000)]'
+  const s32 length1_groundTruth[15] = {2, 1, 3, 2, 1, 24, 0, 3, 0, 4, 2, 6, 101, 34, 5001};
+
+  for(s32 i=0; i<15; i++) {
+    LinearSequence<s32> sequence(sequenceLimits1[i][0], sequenceLimits1[i][1], sequenceLimits1[i][2]);
+    ASSERT_TRUE(sequence.get_size() == length1_groundTruth[i]);
+  }
+
+  // Tests f32 sequences
+  const f32 sequenceLimits2[25][3] = {{0.0f,1.0f,1.0f}, {0.0f,2.0f,1.0f}, {-1.0f,1.0f,1.0f}, {-1.0f,2.0f,1.0f}, {-1.0f,3.0f,1.0f},
+  {-50.0f,2.0f,-3.0f}, {-3.0f,3.0f,-50.0f}, {10.0f,-4.0f,1.0f}, {10.0f,3.0f,1.0f}, {-10.0f,3.0f,1.0f},
+  {-7.0f,7.0f,0.0f}, {12.0f,-4.0f,-10.0f}, {100.0f,-1.0f,0.0f}, {0.0f,3.0f,100.0f}, {0.0f,2.0f,10000.0f},
+  {0.1f,0.1f,0.1f}, {0.1f,0.11f,0.3f}, {0.1f,0.09f,0.3f}, {-0.5f,0.1f,0.5f}, {0.3f,0.1f,0.2f},
+  {-0.5f,-0.05f,-0.4f}, {-0.5f,0.6f,0.0f}, {-0.5f,0.25f,0.0f}, {-4.0f,0.01f,100.0f}, {0.1f,-0.1f,-0.4f}};
+
+  // [length(0.1:0.1:0.1), length(0.1:0.11:0.3), length(0.1:0.09:0.3), length(-0.5:0.1:0.5), length(0.3:0.1:0.2), length(-0.5:-0.05:-0.4), length(-0.5:0.6:0.0), length(-0.5:0.25:0.0), length(-4.0:0.01:100.0), length(0.1:-0.1:-0.4)]'
+  const s32 length2_groundTruth[25] = {2, 1, 3, 2, 1, 24, 0, 3, 0, 4, 2, 6, 101, 34, 5001, 1, 2, 3, 11, 0, 0, 1, 3, 10401, 6};
+
+  for(s32 i=0; i<25; i++) {
+    LinearSequence<f32> sequence(sequenceLimits2[i][0], sequenceLimits2[i][1], sequenceLimits2[i][2]);
+    ASSERT_TRUE(sequence.get_size() == length2_groundTruth[i]);
+  }
+
+  // Test sequence assignment to an Array
+  const LinearSequence<s32> sequence(-4,2,4);
+
+  Array<s32> sequenceArray(sequence, ms);
+  const s32 sequenceArray_groundTruth[5] = {-4, -2, 0, 2, 4};
+
+  ASSERT_TRUE(sequenceArray.get_size(0) == 1);
+  ASSERT_TRUE(sequenceArray.get_size(1) == 5);
+
+  for(s32 i=0; i<5; i++) {
+    ASSERT_TRUE(sequenceArray[0][i] == sequenceArray_groundTruth[i]);
+  }
+
+  GTEST_RETURN_HERE;
+}
+
 // This test requires a stopwatch, and takes about ten seconds to do manually
-#define TEST_BENCHMARKING
+//#define TEST_BENCHMARKING
 #ifdef TEST_BENCHMARKING
 GTEST_TEST(CoreTech_Common, Benchmarking)
 {
