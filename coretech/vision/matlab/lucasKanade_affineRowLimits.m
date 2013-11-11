@@ -10,6 +10,8 @@
 
 function [minIndexes, maxIndexes] = lucasKanade_affineRowLimits(inputImageQuad, homography, templateSize, debugDisplay)
 
+numPixelsToReduce = 1.0;
+
 if ~exist('debugDisplay', 'var')
     debugDisplay = false;
 end
@@ -17,7 +19,7 @@ end
 homography = homography(1:2, :);
 
 % Warp the inputImageQuad corners to the template coordinates
-inputImageQuadSqueezed = squeezeQuadrilateral(inputImageQuad, 1.0);
+inputImageQuadSqueezed = squeezeQuadrilateral(inputImageQuad, numPixelsToReduce);
 
 inputImageQuadSqueezed(:,3) = 1;
 warpedPoints = homography*inputImageQuadSqueezed';

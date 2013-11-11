@@ -6,7 +6,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    IN_DDR MemoryStack::MemoryStack(void *buffer, s32 bufferLength)
+    MemoryStack::MemoryStack(void *buffer, s32 bufferLength)
       : buffer(buffer), totalBytes(bufferLength), usedBytes(0)
     {
       static s32 maxId = 0;
@@ -19,7 +19,7 @@ namespace Anki
       AnkiConditionalError(MEMORY_ALIGNMENT == 16, "Anki.MemoryStack.MemoryStack", "Currently, only MEMORY_ALIGNMENT == 16 is supported");
     }
 
-    IN_DDR MemoryStack::MemoryStack(const MemoryStack& ms)
+    MemoryStack::MemoryStack(const MemoryStack& ms)
       : buffer(ms.buffer), totalBytes(ms.totalBytes), usedBytes(ms.usedBytes), id(ms.id)
     {
       AnkiConditionalWarn(ms.buffer, "Anki.MemoryStack.MemoryStack", "Buffer must be allocated");
@@ -28,7 +28,7 @@ namespace Anki
       AnkiConditionalWarn(ms.totalBytes >= ms.usedBytes, "Anki.MemoryStack.MemoryStack", "Buffer is using more bytes than it has. Try running IsValid() to test for memory corruption.");
     }
 
-    IN_DDR void* MemoryStack::Allocate(s32 numBytesRequested, s32 *numBytesAllocated)
+    void* MemoryStack::Allocate(s32 numBytesRequested, s32 *numBytesAllocated)
     {
       AnkiConditionalErrorAndReturnValue(numBytesRequested > 0, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested > 0");
       AnkiConditionalErrorAndReturnValue(numBytesRequested <= 0x3FFFFFFF, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested <= 0x3FFFFFFF");
@@ -67,7 +67,7 @@ namespace Anki
       return segmentMemory;
     }
 
-    IN_DDR bool MemoryStack::IsValid() const
+    bool MemoryStack::IsValid() const
     {
       const size_t LOOP_MAX = 1000000;
       const char * const bufferCharStar = reinterpret_cast<const char*>(buffer);
@@ -120,7 +120,7 @@ namespace Anki
       return true;
     }
 
-    IN_DDR s32 MemoryStack::ComputeLargestPossibleAllocation() const
+    s32 MemoryStack::ComputeLargestPossibleAllocation() const
     {
       const size_t bufferNextFree = reinterpret_cast<size_t>(buffer) + usedBytes;
       const size_t bufferNextFreePlusHeaderAndAlignment = RoundUp<size_t>(bufferNextFree+HEADER_LENGTH, MEMORY_ALIGNMENT);
@@ -136,34 +136,34 @@ namespace Anki
       return maxFreeSpace;
     }
 
-    IN_DDR Result MemoryStack::Print() const
+    Result MemoryStack::Print() const
     {
       const s32 maxAllocationBytes = ComputeLargestPossibleAllocation();
       printf("(id:%d totalBytes:%d usedBytes:%d maxAllocationBytes:%d bufferLocation:%d) ", id, totalBytes, usedBytes, maxAllocationBytes, buffer);
       return RESULT_OK;
     }
 
-    IN_DDR s32 MemoryStack::get_totalBytes() const
+    s32 MemoryStack::get_totalBytes() const
     {
       return totalBytes;
     }
 
-    IN_DDR s32 MemoryStack::get_usedBytes() const
+    s32 MemoryStack::get_usedBytes() const
     {
       return usedBytes;
     }
 
-    IN_DDR void* MemoryStack::get_buffer()
+    void* MemoryStack::get_buffer()
     {
       return buffer;
     }
 
-    IN_DDR const void* MemoryStack::get_buffer() const
+    const void* MemoryStack::get_buffer() const
     {
       return buffer;
     }
 
-    IN_DDR s32 MemoryStack::get_id() const
+    s32 MemoryStack::get_id() const
     {
       return id;
     }

@@ -13,7 +13,7 @@ namespace Anki
 #define MAX_PYRAMID_LEVELS 8
 #define MAX_ALPHAS 128
     // //function scaleImage = computeCharacteristicScaleImage_loopsAndFixedPoint(image, numPyramidLevels, computeDogAtFullSize, filterWithMex)
-    IN_DDR Result ComputeCharacteristicScaleImage(const Array<u8> &image, const s32 numPyramidLevels, FixedPointArray<u32> &scaleImage, MemoryStack scratch)
+    Result ComputeCharacteristicScaleImage(const Array<u8> &image, const s32 numPyramidLevels, FixedPointArray<u32> &scaleImage, MemoryStack scratch)
     {
       //double times[20];
 
@@ -350,7 +350,7 @@ namespace Anki
       return RESULT_OK;
     } // Result ComputeCharacteristicScaleImage(const Array<u8> &image, s32 numPyramidLevels, Array<u32> &scaleImage, MemoryStack scratch)
 
-    IN_DDR Result ComputeCharacteristicScaleImageAndBinarize(const Array<u8> &image, const s32 numPyramidLevels, Array<u8> &binaryImage, const s32 thresholdMultiplier, MemoryStack scratch)
+    Result ComputeCharacteristicScaleImageAndBinarize(const Array<u8> &image, const s32 numPyramidLevels, Array<u8> &binaryImage, const s32 thresholdMultiplier, MemoryStack scratch)
     {
       const s32 thresholdMultiplier_numFractionalBits = 16;
 

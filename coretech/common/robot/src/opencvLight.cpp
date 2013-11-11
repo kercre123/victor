@@ -103,7 +103,7 @@ namespace Anki
       return (void*)( ((size_t)ptr + align - 1) & ~(size_t)(align-1) );
     }
 
-    IN_DDR static void icvMatrAXPY3_32f( int m, int n, const float* x, int l, float* y, double h )
+    static void icvMatrAXPY3_32f( int m, int n, const float* x, int l, float* y, double h )
     {
       int i, j;
 
@@ -138,7 +138,7 @@ namespace Anki
 
     /* y[1:m,-1] = h*y[1:m,0:n]*x[0:1,0:n]'*x[-1]  (this is used for U&V reconstruction)
     y[1:m,0:n] += h*y[1:m,0:n]*x[0:1,0:n]'*x[0:1,0:n] */
-    IN_DDR static void icvMatrAXPY3_64f( int m, int n, const double* x, int l, double* y, double h )
+    static void icvMatrAXPY3_64f( int m, int n, const double* x, int l, double* y, double h )
     {
       int i, j;
 
@@ -173,7 +173,7 @@ namespace Anki
     }
 
     /* accurate hypotenuse calculation */
-    IN_DDR static double pythag( double a, double b )
+    static double pythag( double a, double b )
     {
       a = fabs( a );
       b = fabs( b );
@@ -191,7 +191,7 @@ namespace Anki
       return a;
     }
 
-    IN_DDR static void icvMatrAXPY_32f( int m, int n, const float* x, int dx,
+    static void icvMatrAXPY_32f( int m, int n, const float* x, int dx,
       const float* a, float* y, int dy )
     {
       int i, j;
@@ -218,7 +218,7 @@ namespace Anki
     }
 
     /* y[0:m,0:n] += diag(a[0:1,0:m]) * x[0:m,0:n] */
-    IN_DDR static void icvMatrAXPY_64f( int m, int n, const double* x, int dx,
+    static void icvMatrAXPY_64f( int m, int n, const double* x, int dx,
       const double* a, double* y, int dy )
     {
       int i, j;
@@ -244,7 +244,7 @@ namespace Anki
     }
 
     /*! Performs an Singular Value Decomposition on the mXn, float32 input array. [u^t,w,v^t] = SVD(a); */
-    IN_DDR Result svd_f32(
+    Result svd_f32(
       Array<f32> &a, //!< Input array mXn
       Array<f32> &w, //!< W array 1Xm
       Array<f32> &uT, //!< U-transpose array mXm
@@ -308,7 +308,7 @@ namespace Anki
     }
 
     /*! Performs an Singular Value Decomposition on the mXn, float64 input array. [u^t,w,v^t] = SVD(a); */
-    IN_DDR Result svd_f64(
+    Result svd_f64(
       Array<f64> &a,  //!< Input array mXn
       Array<f64> &w,  //!< W array 1xm
       Array<f64> &uT, //!< U-transpose array mXm
@@ -376,7 +376,7 @@ namespace Anki
     WARNING: I think that if any of the input arrays have stride padding,
     the stride padding must be set to zero before calling.
     */
-    IN_DDR void icvLightSVD_32f(
+    void icvLightSVD_32f(
       f32* a,   //!< Pointer to the upper-left of the input array. Warning: this array will be modified.
       s32 lda,  //!< A_stride_in_bytes / sizeof(float)
       s32 m,    //!< Number of rows of A
@@ -789,7 +789,7 @@ namespace Anki
     WARNING: I think that if any of the input arrays have stride padding,
     the stride padding must be set to zero before calling.
     */
-    IN_DDR void icvLightSVD_64f(
+    void icvLightSVD_64f(
       f64* a,   //!< Pointer to the upper-left of the input array. Warning: this array will be modified.
       s32 lda,  //!< A_stride_in_bytes / sizeof(float)
       s32 m,    //!< Number of rows of A
@@ -1198,7 +1198,7 @@ namespace Anki
     }
 
     /*! Compute the homography such that "transformedPoints = homography * originalPoints" */
-    IN_DDR Result EstimateHomography(
+    Result EstimateHomography(
       const FixedLengthList<Point<f64> > &originalPoints,    //!<
       const FixedLengthList<Point<f64> > &transformedPoints, //!<
       Array<f64> &homography, //!<

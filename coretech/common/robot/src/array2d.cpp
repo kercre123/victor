@@ -9,7 +9,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    template<> IN_DDR Result Array<u8>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    template<> Result Array<u8>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
@@ -28,7 +28,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    template<> IN_DDR Result Array<f32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    template<> Result Array<f32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
@@ -47,7 +47,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    template<> IN_DDR Result Array<f64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    template<> Result Array<f64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
@@ -66,7 +66,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    template<> IN_DDR Result Array<Point<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    template<> Result Array<Point<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Point<s16> >::Print", "Array<Point<s16> > is not valid");
@@ -387,7 +387,7 @@ namespace Anki
     //#endif // #ifdef USING_MOVIDIUS_GCC_COMPILER
     //
     //#ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
-    //    template<> IN_DDR s32 Array<f32>::Set(const char * const values)
+    //    template<> s32 Array<f32>::Set(const char * const values)
     //    {
     //      AnkiConditionalErrorAndReturnValue(this->IsValid(),
     //        RESULT_FAIL, "Array<f32>::Set", "Array<f32> is not valid");
@@ -416,7 +416,7 @@ namespace Anki
     //#endif // #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
     //
     //#ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
-    //    template<> IN_DDR s32 Array<f64>::Set(const char * const values)
+    //    template<> s32 Array<f64>::Set(const char * const values)
     //    {
     //      AnkiConditionalErrorAndReturnValue(this->IsValid(),
     //        RESULT_FAIL, "Array<f64>::Set", "Array<f64> is not valid");

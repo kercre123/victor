@@ -15,7 +15,7 @@ namespace Anki
   namespace Embedded
   {
     // Replaces the matlab code for the first three steps of SimpleDetector
-    IN_DDR Result SimpleDetector_Steps123(
+    Result SimpleDetector_Steps123(
       const Array<u8> &image,
       const CharacteristicScaleAlgorithm scaleAlgorithm,
       const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
@@ -124,7 +124,7 @@ namespace Anki
       return RESULT_OK;
     } // SimpleDetector_Steps123()
 
-    IN_DDR Result SimpleDetector_Steps1234(
+    Result SimpleDetector_Steps1234(
       const Array<u8> &image,
       FixedLengthList<BlockMarker> &markers,
       FixedLengthList<Array<f64> > &homographies,
@@ -272,7 +272,7 @@ namespace Anki
       return RESULT_OK;
     } //  SimpleDetector_Steps1234()
 
-    IN_DDR Result SimpleDetector_Steps12345(
+    Result SimpleDetector_Steps12345(
       const Array<u8> &image,
       FixedLengthList<BlockMarker> &markers,
       FixedLengthList<Array<f64> > &homographies,
@@ -522,7 +522,7 @@ namespace Anki
       return RESULT_OK;
     } //  SimpleDetector_Steps12345()
 
-    IN_DDR Result SimpleDetector_Steps12345_lowMemory(
+    Result SimpleDetector_Steps12345_lowMemory(
       const Array<u8> &image,
       FixedLengthList<BlockMarker> &markers,
       FixedLengthList<Array<f64> > &homographies,

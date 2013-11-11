@@ -5,7 +5,7 @@ namespace Anki
   namespace Embedded
   {
     // binaryImg = img < averageImg;
-    IN_DDR Result BinarizeScaleImage(const Array<u8> &originalImage, const FixedPointArray<u32> &scaleImage, Array<u8> &binaryImage)
+    Result BinarizeScaleImage(const Array<u8> &originalImage, const FixedPointArray<u32> &scaleImage, Array<u8> &binaryImage)
     {
       const s32 scaleImageHeight = scaleImage.get_size(0);
       const s32 scaleImageWidth = scaleImage.get_size(1);

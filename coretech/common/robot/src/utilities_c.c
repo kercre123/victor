@@ -328,7 +328,7 @@ void PrintHex(u32 value)
   return;
 } // void printInt(s32 value)
 
-IN_DDR double GetTime()
+double GetTime()
 {
 #if defined(_MSC_VER)
   f64 timeInSeconds;
@@ -366,7 +366,7 @@ f64 Round(const f64 number)
     return (f64)(floorf((f32)(number) - 0.5f));
 }
 
-IN_DDR s32 IsPowerOfTwo(u32 x)
+s32 IsPowerOfTwo(u32 x)
 {
   // While x is even and greater than 1, keep dividing by two
   while (((x & 1) == 0) && x > 1)
@@ -395,7 +395,7 @@ s32 Determinant2x2(const s32 a, const s32 b, const s32 c, const s32 d)
   return a*d - b*c;
 }
 
-IN_DDR u32 Log2u32(u32 x)
+u32 Log2u32(u32 x)
 {
   u32 powerCount = 0;
   // While x is even and greater than 1, keep dividing by two
@@ -406,7 +406,7 @@ IN_DDR u32 Log2u32(u32 x)
   return powerCount;
 }
 
-IN_DDR u64 Log2u64(u64 x)
+u64 Log2u64(u64 x)
 {
   u64 powerCount = 0;
   // While x is even and greater than 1, keep dividing by two
@@ -418,7 +418,7 @@ IN_DDR u64 Log2u64(u64 x)
 }
 
 #if defined(USING_MOVIDIUS_GCC_COMPILER)
-IN_DDR void* explicitMemset(void * dst, int value, size_t size)
+void* explicitMemset(void * dst, int value, size_t size)
 {
   size_t i;
   for(i=0; i<size; i++)
@@ -431,7 +431,7 @@ IN_DDR void* explicitMemset(void * dst, int value, size_t size)
 #endif // #if defined(USING_MOVIDIUS_GCC_COMPILER)
 
 #if defined(USING_MOVIDIUS_GCC_COMPILER)
-IN_DDR f32 powF32S32(const f32 x, const s32 y)
+f32 powF32S32(const f32 x, const s32 y)
 {
   s32 i;
   f32 xAbs;
@@ -454,7 +454,7 @@ IN_DDR f32 powF32S32(const f32 x, const s32 y)
 #endif // #if defined(USING_MOVIDIUS_GCC_COMPILER)
 
 #if defined(USING_MOVIDIUS_GCC_COMPILER)
-IN_DDR f64 powF64S32(const f64 x, const s32 y)
+f64 powF64S32(const f64 x, const s32 y)
 {
   s32 i;
   f64 xAbs;
