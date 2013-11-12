@@ -451,7 +451,7 @@ namespace Anki
       cVersion.size0 = array.get_size(0);
       cVersion.size1 = array.get_size(1);
       cVersion.stride = array.get_stride();
-      cVersion.useBoundaryFillPatterns = array.get_useBoundaryFillPatterns();
+      cVersion.flags = array.get_flags().get_rawFlags();
       cVersion.data = array.Pointer(0,0);
 
       return cVersion;

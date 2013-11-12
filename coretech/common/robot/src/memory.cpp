@@ -6,9 +6,54 @@ namespace Anki
 {
   namespace Embedded
   {
-    MemoryStack::MemoryStack(void *buffer, s32 bufferLength)
-      : buffer(buffer), totalBytes(bufferLength), usedBytes(0)
+    BufferFlags::BufferFlags()
+      : flags(0)
     {
+    }
+
+    BufferFlags::BufferFlags(bool zeroAllocatedMemory, bool useBoundaryFillPatterns)
+      : flags(0)
+    {
+      this->set_zeroAllocatedMemory(zeroAllocatedMemory);
+      this->set_useBoundaryFillPatterns(useBoundaryFillPatterns);
+    }
+
+    void BufferFlags::set_zeroAllocatedMemory(bool value)
+    {
+      this->flags &= ~BufferFlags::ZERO_ALLOCATED_MEMORY;
+
+      if(value)
+        this->flags |= BufferFlags::ZERO_ALLOCATED_MEMORY;
+    }
+
+    bool BufferFlags::get_zeroAllocatedMemory() const
+    {
+      return (this->flags & BufferFlags::ZERO_ALLOCATED_MEMORY) != 0;
+    }
+
+    void BufferFlags::set_useBoundaryFillPatterns(bool value)
+    {
+      this->flags &= ~BufferFlags::USE_BOUNDARY_FILL_PATTERNS;
+
+      if(value)
+        this->flags |= BufferFlags::USE_BOUNDARY_FILL_PATTERNS;
+    }
+
+    bool BufferFlags::get_useBoundaryFillPatterns() const
+    {
+      return (this->flags & BufferFlags::USE_BOUNDARY_FILL_PATTERNS) != 0;
+    }
+
+    u32 BufferFlags::get_rawFlags() const
+    {
+      return this->flags;
+    }
+
+    MemoryStack::MemoryStack(void *buffer, s32 bufferLength, BufferFlags flags)
+      : buffer(buffer), totalBytes(bufferLength), usedBytes(0), flags(flags)
+    {
+      assert(flags.get_useBoundaryFillPatterns());
+
       static s32 maxId = 0;
 
       this->id = maxId;
@@ -20,7 +65,7 @@ namespace Anki
     }
 
     MemoryStack::MemoryStack(const MemoryStack& ms)
-      : buffer(ms.buffer), totalBytes(ms.totalBytes), usedBytes(ms.usedBytes), id(ms.id)
+      : buffer(ms.buffer), totalBytes(ms.totalBytes), usedBytes(ms.usedBytes), id(ms.id), flags(ms.flags)
     {
       AnkiConditionalWarn(ms.buffer, "Anki.MemoryStack.MemoryStack", "Buffer must be allocated");
       AnkiConditionalWarn(ms.totalBytes <= 0x3FFFFFFF, "Anki.MemoryStack.MemoryStack", "Maximum size of a MemoryStack is 2^30 - 1");
@@ -61,8 +106,8 @@ namespace Anki
         *numBytesAllocated = numBytesRequestedRounded;
       }
 
-      // TODO: if this is slow, make this optional (or just remove it)
-      memset(segmentMemory, 0, numBytesRequestedRounded);
+      if(flags.get_zeroAllocatedMemory())
+        memset(segmentMemory, 0, numBytesRequestedRounded);
 
       return segmentMemory;
     }
@@ -166,6 +211,11 @@ namespace Anki
     s32 MemoryStack::get_id() const
     {
       return id;
+    }
+
+    BufferFlags MemoryStack::get_flags() const
+    {
+      return flags;
     }
 
     // Not sure if these should be supported. But I'm leaving them here for the time being.

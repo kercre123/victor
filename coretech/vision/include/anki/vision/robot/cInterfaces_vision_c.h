@@ -14,7 +14,7 @@ extern "C" {
     //
     s32 size0, size1;
     s32 stride;
-    s32 useBoundaryFillPatterns;
+    s32 flags;
 
     s32 * restrict data;
 

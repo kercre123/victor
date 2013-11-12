@@ -2322,7 +2322,7 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
 
   ASSERT_TRUE(ms.IsValid());
 
-  Array<u8> image(imageHeight, imageWidth, ms, false);
+  Array<u8> image(imageHeight, imageWidth, ms);
   image.SetZero();
 
   Array<u8> imageFiltered(imageHeight, imageWidth, ms);

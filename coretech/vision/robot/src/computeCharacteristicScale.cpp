@@ -49,9 +49,9 @@ namespace Anki
 
       //imagePyramid = cell(1, numPyramidLevels+1);
       Array<u8> imagePyramid[MAX_PYRAMID_LEVELS+1];
-      imagePyramid[0] = Array<u8>(fullSizeHeight, fullSizeWidth, scratch, false);
+      imagePyramid[0] = Array<u8>(fullSizeHeight, fullSizeWidth, scratch);
       for(s32 i=1; i<=numPyramidLevels; i++) {
-        imagePyramid[i] = Array<u8>(fullSizeHeight >> i, fullSizeWidth >> i, scratch, false);
+        imagePyramid[i] = Array<u8>(fullSizeHeight >> i, fullSizeWidth >> i, scratch);
       }
 
       //scaleFactors = int32(2.^[0:(numPyramidLevels)]); %#ok<NBRAK>
@@ -398,7 +398,7 @@ namespace Anki
       // Prepare the memory for the filtered rows for each level of the pyramid
       Array<s32> filteredRows[5];
       for(s32 i=0; i<=numPyramidLevels; i++) {
-        filteredRows[i] = Array<s32>(1, imageWidth, scratch, false);
+        filteredRows[i] = Array<s32>(1, imageWidth, scratch);
       }
 
       s32 imageY = 0;
@@ -503,7 +503,7 @@ namespace Anki
       // Prepare the memory for the filtered rows for each level of the pyramid
       Array<s32> filteredRows[5];
       for(s32 i=0; i<=scaleImage_numPyramidLevels; i++) {
-        filteredRows[i] = Array<s32>(1, imageWidth, scratch, false);
+        filteredRows[i] = Array<s32>(1, imageWidth, scratch);
       }
 
       Array<u8> binaryImageRow(1, imageWidth, scratch);

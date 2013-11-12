@@ -29,9 +29,9 @@ namespace Anki
     template<typename Type> class Array
     {
     public:
-      static s32 ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns);
+      static s32 ComputeRequiredStride(const s32 numCols, const BufferFlags flags);
 
-      static s32 ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns);
+      static s32 ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const BufferFlags flags);
 
       Array();
 
@@ -40,14 +40,14 @@ namespace Anki
       // Unfortunately, this is more restrictive than most matrix libraries, and as an example,
       // it may make it hard to convert from OpenCV to Array, though the reverse is trivial.
       // All memory in the array is zeroed out once it is allocated
-      Array(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const bool useBoundaryFillPatterns=false);
+      Array(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const BufferFlags flags=BufferFlags(true,false));
 
       // Constructor for a Array, pointing to user-allocated MemoryStack
       // All memory in the array is zeroed out once it is allocated
-      Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
+      Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const BufferFlags flags=BufferFlags(true,false));
 
       // Immediate evaluation of a LinearSequence, into this Array
-      Array(const LinearSequence<Type> &sequence, MemoryStack &memory);
+      Array(const LinearSequence<Type> &sequence, MemoryStack &memory, const BufferFlags flags=BufferFlags(true,false));
 
       // Pointer to the data, at a given (y,x) location
       //
@@ -103,10 +103,10 @@ namespace Anki
       // Print out the contents of this Array
       Result Print(const char * const variableName = "Array", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
 
-      // If the Array was constructed with the useBoundaryFillPatterns=true, then
+      // Checks the basic parameters of this Array.
+      // If the Array was constructed with flags |= BufferFlags::USE_BOUNDARY_FILL_PATTERNS, then
       // return if any memory was written out of bounds (via fill patterns at the
-      // beginning and end).  If the Array was not constructed with the
-      // useBoundaryFillPatterns=true, this method always returns true
+      // beginning and end).
       bool IsValid() const;
 
       // Return the minimum element in this Array
@@ -156,7 +156,7 @@ namespace Anki
 
       const void* get_rawDataPointer() const;
 
-      bool get_useBoundaryFillPatterns() const;
+      BufferFlags get_flags() const;
 
     protected:
       // Bit-inverse of MemoryStack patterns. The pattern will be put twice at
@@ -169,7 +169,7 @@ namespace Anki
 
       s32 size[2];
       s32 stride;
-      bool useBoundaryFillPatterns;
+      BufferFlags flags;
 
       Type * data;
 
@@ -182,9 +182,9 @@ namespace Anki
       cv::Mat_<Type> cvMatMirror;
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
-      void* AllocateBufferFromMemoryStack(const s32 numRows, const s32 stride, MemoryStack &memory, s32 &numBytesAllocated, const bool useBoundaryFillPatterns);
+      void* AllocateBufferFromMemoryStack(const s32 numRows, const s32 stride, MemoryStack &memory, s32 &numBytesAllocated, const BufferFlags flags);
 
-      void InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns);
+      void InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const BufferFlags flags);
 
       void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
 
@@ -203,11 +203,11 @@ namespace Anki
       // Unfortunately, this is more restrictive than most matrix libraries, and as an example,
       // it may make it hard to convert from OpenCV to Array, though the reverse is trivial.
       // All memory in the array is zeroed out once it is allocated
-      FixedPointArray(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const s32 numFractionalBits, const bool useBoundaryFillPatterns=false);
+      FixedPointArray(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const s32 numFractionalBits, const BufferFlags flags=BufferFlags(true,false));
 
       // Constructor for a Array, pointing to user-allocated MemoryStack
       // All memory in the array is zeroed out once it is allocated
-      FixedPointArray(const s32 numRows, const s32 numCols, const s32 numFractionalBits, MemoryStack &memory, const bool useBoundaryFillPatterns=false);
+      FixedPointArray(const s32 numRows, const s32 numCols, const s32 numFractionalBits, MemoryStack &memory, const BufferFlags flags=BufferFlags(true,false));
 
       s32 get_numFractionalBits() const;
 
@@ -220,40 +220,40 @@ namespace Anki
     // Factory method to create an Array from the heap. The data of the returned Array must be freed by the user.
     // This is separate from the normal constructor, as Array objects are not supposed to manage memory
 #ifndef USING_MOVIDIUS_COMPILER
-    template<typename Type> Array<Type> AllocateArrayFromHeap(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns=false)
+    template<typename Type> Array<Type> AllocateArrayFromHeap(const s32 numRows, const s32 numCols, const BufferFlags flags=BufferFlags(true,false))
     {
-      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(numRows, numCols, flags); // The required memory, plus a bit more
 
-      Array<Type> mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+      Array<Type> mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, flags);
 
       return mat;
     }
 
-    template<typename Type> FixedPointArray<Type> AllocateFixedPointArrayFromHeap(const s32 numRows, const s32 numCols, const s32 numFractionalBits, const bool useBoundaryFillPatterns=false)
+    template<typename Type> FixedPointArray<Type> AllocateFixedPointArrayFromHeap(const s32 numRows, const s32 numCols, const s32 numFractionalBits, const BufferFlags flags=BufferFlags(true,false))
     {
-      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(numRows, numCols, useBoundaryFillPatterns); // The required memory, plus a bit more
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(numRows, numCols, flags); // The required memory, plus a bit more
 
-      FixedPointArray<Type> mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, numFractionalBits, useBoundaryFillPatterns);
+      FixedPointArray<Type> mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, numFractionalBits, flags);
 
       return mat;
     }
 #endif // #ifndef USING_MOVIDIUS_COMPILER
 
-    template<typename Type> s32 Array<Type>::ComputeRequiredStride(const s32 numCols, const bool useBoundaryFillPatterns)
+    template<typename Type> s32 Array<Type>::ComputeRequiredStride(const s32 numCols, const BufferFlags flags)
     {
       AnkiConditionalErrorAndReturnValue(numCols > 0,
         0, "Array<Type>::ComputeRequiredStride", "Invalid size");
 
-      const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? (HEADER_LENGTH+FOOTER_LENGTH) : 0);
+      const s32 extraBoundaryPatternBytes = flags.get_useBoundaryFillPatterns() ? (HEADER_LENGTH+FOOTER_LENGTH) : 0;
       return static_cast<s32>(RoundUp<size_t>(sizeof(Type)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
     }
 
-    template<typename Type> s32 Array<Type>::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const bool useBoundaryFillPatterns)
+    template<typename Type> s32 Array<Type>::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const BufferFlags flags)
     {
       AnkiConditionalErrorAndReturnValue(numCols > 0 && numRows > 0,
         0, "Array<Type>::ComputeMinimumRequiredMemory", "Invalid size");
 
-      return numRows * Array<Type>::ComputeRequiredStride(numCols, useBoundaryFillPatterns);
+      return numRows * Array<Type>::ComputeRequiredStride(numCols, flags);
     }
 
     template<typename Type> Array<Type>::Array()
@@ -261,8 +261,8 @@ namespace Anki
       InvalidateArray();
     }
 
-    template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const bool useBoundaryFillPatterns)
-      : stride(ComputeRequiredStride(numCols, useBoundaryFillPatterns))
+    template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const BufferFlags flags)
+      : stride(ComputeRequiredStride(numCols, flags))
     {
       AnkiConditionalError(numCols > 0 && numRows > 0 && dataLength > 0,
         "Array<Type>::Array", "Invalid size");
@@ -271,27 +271,27 @@ namespace Anki
         numCols,
         data,
         dataLength,
-        useBoundaryFillPatterns);
+        flags);
     }
 
-    template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const bool useBoundaryFillPatterns)
+    template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const BufferFlags flags)
     {
       AnkiConditionalError(numCols > 0 && numRows > 0,
         "Array<Type>::Array", "Invalid size");
 
       s32 numBytesAllocated = 0;
 
-      void * const allocatedBuffer = AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, useBoundaryFillPatterns), memory, numBytesAllocated, useBoundaryFillPatterns);
+      void * const allocatedBuffer = AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, flags), memory, numBytesAllocated, flags);
 
       InitializeBuffer(numRows,
         numCols,
         reinterpret_cast<Type*>(allocatedBuffer),
         numBytesAllocated,
-        useBoundaryFillPatterns);
+        flags);
     }
 
     // Immediate evaluation of a LinearSequence, into this Array
-    template<typename Type> Array<Type>::Array(const LinearSequence<Type> &sequence, MemoryStack &memory)
+    template<typename Type> Array<Type>::Array(const LinearSequence<Type> &sequence, MemoryStack &memory, const BufferFlags flags)
     {
       const s32 numRows = 1;
       const s32 numCols = sequence.get_size();
@@ -301,13 +301,13 @@ namespace Anki
 
       s32 numBytesAllocated = 0;
 
-      void * const allocatedBuffer = AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, useBoundaryFillPatterns), memory, numBytesAllocated, useBoundaryFillPatterns);
+      void * const allocatedBuffer = AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, flags), memory, numBytesAllocated, flags);
 
       InitializeBuffer(numRows,
         numCols,
         reinterpret_cast<Type*>(allocatedBuffer),
         numBytesAllocated,
-        useBoundaryFillPatterns);
+        flags);
 
       const Type startValue = sequence.get_startValue();
       const Type increment = sequence.get_increment();
@@ -486,8 +486,10 @@ namespace Anki
         return false;
       }
 
-      if(useBoundaryFillPatterns) {
-        const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1],false);
+      if(flags.get_useBoundaryFillPatterns()) {
+        BufferFlags flagsWithoutBoundary = flags;
+        flagsWithoutBoundary.set_useBoundaryFillPatterns(false);
+        const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1],flagsWithoutBoundary);
 
         for(s32 y=0; y<size[0]; y++) {
           if((reinterpret_cast<u32*>( reinterpret_cast<char*>(this->data) + y*stride - HEADER_LENGTH)[0]) != FILL_PATTERN_START ||
@@ -499,9 +501,9 @@ namespace Anki
         }
 
         return true;
-      } else { // if(useBoundaryFillPatterns) {
+      } else { // if(flags.get_useBoundaryFillPatterns()) {
         return true;
-      } // if(useBoundaryFillPatterns) { ... else
+      } // if(flags.get_useBoundaryFillPatterns()) { ... else
     }
 
     // Set every element in the Array to zero, including the stride padding, but not including the optional fill patterns (if they exist)
@@ -641,7 +643,7 @@ namespace Anki
       this->size[1] = rightHandSide.size[1];
 
       this->stride = rightHandSide.stride;
-      this->useBoundaryFillPatterns = rightHandSide.useBoundaryFillPatterns;
+      this->flags = rightHandSide.flags;
       this->data = rightHandSide.data;
       this->rawDataPointer = rightHandSide.rawDataPointer;
 
@@ -677,7 +679,10 @@ namespace Anki
 
     template<typename Type> s32 Array<Type>::get_strideWithoutFillPatterns() const
     {
-      const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1],false);
+      BufferFlags flagsWithoutBoundary = this->flags;
+      flagsWithoutBoundary.set_useBoundaryFillPatterns(false);
+
+      const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1],flagsWithoutBoundary);
       return strideWithoutFillPatterns;
     }
 
@@ -691,19 +696,19 @@ namespace Anki
       return rawDataPointer;
     }
 
-    template<typename Type> bool Array<Type>::get_useBoundaryFillPatterns() const
+    template<typename Type> BufferFlags Array<Type>::get_flags() const
     {
-      return useBoundaryFillPatterns;
+      return flags;
     }
 
-    template<typename Type> void* Array<Type>::AllocateBufferFromMemoryStack(const s32 numRows, const s32 stride, MemoryStack &memory, s32 &numBytesAllocated, const bool useBoundaryFillPatterns)
+    template<typename Type> void* Array<Type>::AllocateBufferFromMemoryStack(const s32 numRows, const s32 stride, MemoryStack &memory, s32 &numBytesAllocated, const BufferFlags flags)
     {
       AnkiConditionalError(numRows > 0 && stride > 0,
         "Array<Type>::AllocateBufferFromMemoryStack", "Invalid size");
 
       this->stride = stride;
 
-      const s32 extraBoundaryPatternBytes = (useBoundaryFillPatterns ? static_cast<s32>(MEMORY_ALIGNMENT) : 0);
+      const s32 extraBoundaryPatternBytes = flags.get_useBoundaryFillPatterns() ? static_cast<s32>(MEMORY_ALIGNMENT) : 0;
       const s32 numBytesRequested = numRows * this->stride + extraBoundaryPatternBytes;
 
       void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
@@ -711,12 +716,12 @@ namespace Anki
       return allocatedBuffer;
     }
 
-    template<typename Type> void Array<Type>::InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const bool useBoundaryFillPatterns)
+    template<typename Type> void Array<Type>::InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const BufferFlags flags)
     {
       AnkiConditionalErrorAndReturn(numCols > 0 && numRows > 0 && dataLength > 0,
         "Array<Type>::InitializeBuffer", "Negative dimension");
 
-      this->useBoundaryFillPatterns = useBoundaryFillPatterns;
+      this->flags = flags;
 
       if(!rawData) {
         AnkiError("Anki.Array2d.initialize", "input data buffer is NULL");
@@ -726,9 +731,9 @@ namespace Anki
 
       this->rawDataPointer = rawData;
 
-      const size_t extraBoundaryPatternBytes = useBoundaryFillPatterns ? static_cast<size_t>(HEADER_LENGTH) : 0;
+      const size_t extraBoundaryPatternBytes = flags.get_useBoundaryFillPatterns() ? static_cast<size_t>(HEADER_LENGTH) : 0;
       const s32 extraAlignmentBytes = static_cast<s32>(RoundUp<size_t>(reinterpret_cast<size_t>(rawData)+extraBoundaryPatternBytes, MEMORY_ALIGNMENT) - extraBoundaryPatternBytes - reinterpret_cast<size_t>(rawData));
-      const s32 requiredBytes = ComputeRequiredStride(numCols,useBoundaryFillPatterns)*numRows + extraAlignmentBytes;
+      const s32 requiredBytes = ComputeRequiredStride(numCols,flags)*numRows + extraAlignmentBytes;
 
       if(requiredBytes > dataLength) {
         AnkiError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
@@ -739,8 +744,10 @@ namespace Anki
       this->size[0] = numRows;
       this->size[1] = numCols;
 
-      if(useBoundaryFillPatterns) {
-        const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1], false);
+      if(flags.get_useBoundaryFillPatterns()) {
+        BufferFlags flagsWithoutBoundary = flags;
+        flagsWithoutBoundary.set_useBoundaryFillPatterns(false);
+        const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1], flagsWithoutBoundary);
         this->data = reinterpret_cast<Type*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes + HEADER_LENGTH );
         for(s32 y=0; y<size[0]; y++) {
           // Add the fill patterns just before the data on each line
@@ -813,14 +820,14 @@ namespace Anki
     {
     }
 
-    template<typename Type> FixedPointArray<Type>::FixedPointArray(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const s32 numFractionalBits, const bool useBoundaryFillPatterns)
-      : Array<Type>(numRows, numCols, data, dataLength, useBoundaryFillPatterns), numFractionalBits(numFractionalBits)
+    template<typename Type> FixedPointArray<Type>::FixedPointArray(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const s32 numFractionalBits, const BufferFlags flags)
+      : Array<Type>(numRows, numCols, data, dataLength, flags), numFractionalBits(numFractionalBits)
     {
       AnkiConditionalError(numFractionalBits >= 0 && numFractionalBits <= (sizeof(Type)*8),  "FixedPointArray<Type>", "numFractionalBits number is invalid");
     }
 
-    template<typename Type> FixedPointArray<Type>::FixedPointArray(s32 numRows, s32 numCols, s32 numFractionalBits, MemoryStack &memory, bool useBoundaryFillPatterns)
-      : Array<Type>(numRows, numCols, memory, useBoundaryFillPatterns), numFractionalBits(numFractionalBits)
+    template<typename Type> FixedPointArray<Type>::FixedPointArray(s32 numRows, s32 numCols, s32 numFractionalBits, MemoryStack &memory, const BufferFlags flags)
+      : Array<Type>(numRows, numCols, memory, flags), numFractionalBits(numFractionalBits)
     {
       AnkiConditionalError(numFractionalBits >= 0 && numFractionalBits <= static_cast<s32>(sizeof(Type)*8),  "FixedPointArray<Type>", "numFractionalBits number is invalid");
     }
