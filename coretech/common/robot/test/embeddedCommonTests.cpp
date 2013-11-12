@@ -54,13 +54,36 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
-GTEST_TEST(CoreTech_Common, LinearSequence)
+GTEST_TEST(CoreTech_Common, ReallocateMemoryStack)
 {
   ASSERT_TRUE(buffer != NULL);
   MemoryStack ms(buffer, MAX_BYTES);
   ASSERT_TRUE(ms.IsValid());
 
-  MemoryStack ms1(buffer, 50);
+  void *memory1 = ms.Allocate(100);
+  void *memory2 = ms.Allocate(100);
+  void *memory3 = ms.Allocate(100);
+
+  ASSERT_TRUE(memory3 != NULL);
+  memory3 = ms.Reallocate(memory3, 50);
+  ASSERT_TRUE(memory3 != NULL);
+
+  ASSERT_TRUE(memory2 != NULL);
+  memory2 = ms.Reallocate(memory2, 50);
+  ASSERT_TRUE(memory2 == NULL);
+
+  ASSERT_TRUE(memory1 != NULL);
+  memory1 = ms.Reallocate(memory1, 50);
+  ASSERT_TRUE(memory1 == NULL);
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, LinearSequence)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
 
   // Test s32 sequences
   const s32 sequenceLimits1[15][3] = {{0,1,1}, {0,2,1}, {-1,1,1}, {-1,2,1}, {-1,3,1},

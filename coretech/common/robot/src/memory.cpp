@@ -50,7 +50,7 @@ namespace Anki
     }
 
     MemoryStack::MemoryStack(void *buffer, s32 bufferLength, BufferFlags flags)
-      : buffer(buffer), totalBytes(bufferLength), usedBytes(0), flags(flags)
+      : buffer(buffer), totalBytes(bufferLength), usedBytes(0), usedBytesBeforeLastAllocation(0), lastAllocatedMemory(NULL), flags(flags)
     {
       assert(flags.get_useBoundaryFillPatterns());
 
@@ -65,7 +65,7 @@ namespace Anki
     }
 
     MemoryStack::MemoryStack(const MemoryStack& ms)
-      : buffer(ms.buffer), totalBytes(ms.totalBytes), usedBytes(ms.usedBytes), id(ms.id), flags(ms.flags)
+      : buffer(ms.buffer), totalBytes(ms.totalBytes), usedBytes(ms.usedBytes), usedBytesBeforeLastAllocation(ms.usedBytesBeforeLastAllocation), lastAllocatedMemory(ms.lastAllocatedMemory), id(ms.id), flags(ms.flags)
     {
       AnkiConditionalWarn(ms.buffer, "Anki.MemoryStack.MemoryStack", "Buffer must be allocated");
       AnkiConditionalWarn(ms.totalBytes <= 0x3FFFFFFF, "Anki.MemoryStack.MemoryStack", "Maximum size of a MemoryStack is 2^30 - 1");
@@ -75,6 +75,9 @@ namespace Anki
 
     void* MemoryStack::Allocate(s32 numBytesRequested, s32 *numBytesAllocated)
     {
+      if(numBytesAllocated)
+        *numBytesAllocated = 0;
+
       AnkiConditionalErrorAndReturnValue(numBytesRequested > 0, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested > 0");
       AnkiConditionalErrorAndReturnValue(numBytesRequested <= 0x3FFFFFFF, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested <= 0x3FFFFFFF");
 
@@ -92,15 +95,20 @@ namespace Anki
 
       AnkiConditionalErrorAndReturnValue((usedBytes+requestedBytes) <= totalBytes, NULL, "Anki.MemoryStack.Allocate", "Ran out of scratch space");
 
+      // Is this possible?
+      AnkiConditionalErrorAndReturnValue(static_cast<s32>(reinterpret_cast<size_t>(segmentFooter) - reinterpret_cast<size_t>(segmentMemory)) == numBytesRequestedRounded,
+        NULL, "Anki.MemoryStack.Allocate", "Odd error");
+
       // Next, add the header for this block
       segmentHeader[0] = numBytesRequestedRounded;
       segmentHeader[1] = FILL_PATTERN_START;
       segmentFooter[0] = FILL_PATTERN_END;
 
-      usedBytes += requestedBytes;
+      // For Reallocate()
+      usedBytesBeforeLastAllocation = usedBytes;
+      lastAllocatedMemory = segmentMemory;
 
-      AnkiConditionalWarnAndReturnValue(static_cast<s32>(reinterpret_cast<size_t>(segmentFooter) - reinterpret_cast<size_t>(segmentMemory)) == numBytesRequestedRounded,
-        NULL, "Anki.MemoryStack.Allocate", "Ran out of scratch space");
+      usedBytes += requestedBytes;
 
       if(numBytesAllocated) {
         *numBytesAllocated = numBytesRequestedRounded;
@@ -108,6 +116,26 @@ namespace Anki
 
       if(flags.get_zeroAllocatedMemory())
         memset(segmentMemory, 0, numBytesRequestedRounded);
+
+      return segmentMemory;
+    }
+
+    void* MemoryStack::Reallocate(void* memoryLocation, s32 numBytesRequested, s32 *numBytesAllocated)
+    {
+      if(numBytesAllocated)
+        *numBytesAllocated = 0;
+
+      AnkiConditionalErrorAndReturnValue(memoryLocation == lastAllocatedMemory, NULL, "Anki.MemoryStack.Reallocate", "The requested memory is not at the end of the stack");
+
+      // Don't clear the reallocated memory
+      const bool clearMemory = this->flags.get_zeroAllocatedMemory();
+      this->flags.set_zeroAllocatedMemory(false);
+
+      this->usedBytes = usedBytesBeforeLastAllocation;
+
+      void *segmentMemory = Allocate(numBytesRequested, numBytesAllocated);
+
+      this->flags.set_zeroAllocatedMemory(clearMemory);
 
       return segmentMemory;
     }

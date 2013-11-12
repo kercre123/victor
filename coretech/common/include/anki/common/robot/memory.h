@@ -69,6 +69,13 @@ namespace Anki
       // All memory in the array is zeroed out once it is allocated, making Allocate more like calloc() than malloc()
       void* Allocate(const s32 numBytesRequested, s32 *numBytesAllocated=NULL);
 
+      // Reallocate will change the size of the last allocated memory chunk. It only works on the last chunk.
+      // The return value is equal to memoryLocation, or NULL if there was an error.
+      // The reallocated memory will not be cleared
+      //
+      // WARNING: This will not update any references to the memory, you must update all references manually.
+      void* Reallocate(void* memoryLocation, s32 numBytesRequested, s32 *numBytesAllocated=NULL);
+
       // Check if any Allocate() memory was written out of bounds (via fill patterns at the beginning and end)
       bool IsValid() const;
 
@@ -103,6 +110,10 @@ namespace Anki
       void * buffer;
       s32 totalBytes;
       s32 usedBytes;
+
+      // Useful information for Reallocate()
+      s32 usedBytesBeforeLastAllocation;
+      void *lastAllocatedMemory;
 
       s32 id;
 
