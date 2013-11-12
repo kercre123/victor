@@ -1298,8 +1298,8 @@ namespace Anki
         }
       }
 
-      Matrix::Multiply<Array<f64>,f64>(_invHomographyNorm, _homography0, _homographyTemp);
-      Matrix::Multiply<Array<f64>,f64>(_homographyTemp, _homographyNorm2, homography);
+      Matrix::Multiply<f64>(_invHomographyNorm, _homography0, _homographyTemp);
+      Matrix::Multiply<f64>(_homographyTemp, _homographyNorm2, homography);
 
       {
         const f64 inverseHomogeneousScale = 1.0 / (*homography.Pointer(2,2));

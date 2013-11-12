@@ -19,7 +19,7 @@ namespace Anki
 
       // Perform the matrix multiplication "matOut = mat1 * mat2"
       // Note that this is the naive O(n^3) implementation
-      template<typename Array_Type, typename Type> Result Multiply(const Array_Type &mat1, const Array_Type &mat2, Array_Type &matOut);
+      template<typename Type> Result Multiply(const Array<Type> &mat1, const Array<Type> &mat2, Array<Type> &matOut);
 
       // Return the sum of every element in the Array
       template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(const Array<Array_Type> &image);
@@ -45,7 +45,7 @@ namespace Anki
         return RESULT_OK;
       } // template<typename Type> Result MakeSymmetric(Type &arr, bool lowerToUpper)
 
-      template<typename Array_Type, typename Type> Result Multiply(const Array_Type &mat1, const Array_Type &mat2, Array_Type &matOut)
+      template<typename Type> Result Multiply(const Array<Type> &mat1, const Array<Type> &mat2, Array<Type> &matOut)
       {
         const s32 mat1Height = mat1.get_size(0);
         const s32 mat1Width = mat1.get_size(1);
