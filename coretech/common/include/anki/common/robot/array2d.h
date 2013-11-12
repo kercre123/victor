@@ -85,21 +85,6 @@ namespace Anki
 
       void Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues=false) const;
 
-      // Check every element of this array against the input array. If the arrays are different
-      // sizes, uninitialized, or if any element is more different than the threshold, then
-      // return false.
-      bool IsElementwiseEqual(const Array &array2, const Type threshold = static_cast<Type>(0.0001)) const;
-
-      // Check every element of this array against the input array. If the arrays are different
-      // sizes or uninitialized, return false. The percentThreshold is between 0.0 and 1.0. To
-      // return false, an element must fail both thresholds. The percent threshold fails if an
-      // element is more than a percentage different than its matching element (calulated from the
-      // maximum of the two).
-      bool IsElementwiseEqual_PercentThreshold(const Array &array2, const double percentThreshold = 0.01, const double absoluteThreshold = 0.0001) const;
-
-      // If this array or array2 are different sizes or uninitialized, then return false.
-      bool IsEqualSize(const Array &array2) const;
-
       // Print out the contents of this Array
       Result Print(const char * const variableName = "Array", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
 
@@ -405,63 +390,6 @@ namespace Anki
         cv::waitKey();
       }
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
-    }
-
-    template<typename Type> bool Array<Type>::IsElementwiseEqual(const Array &array2, const Type threshold) const
-    {
-      if(!this->IsEqualSize(array2))
-        return false;
-
-      for(s32 y=0; y<size[0]; y++) {
-        const Type * const pThisData = this->Pointer(y, 0);
-        const Type * const pArray2 = array2.Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
-          if(pThisData[x] > pArray2[x]) {
-            if((pThisData[x] - pArray2[x]) > threshold)
-              return false;
-          } else {
-            if((pArray2[x] - pThisData[x]) > threshold)
-              return false;
-          }
-        }
-      }
-
-      return true;
-    }
-
-    template<typename Type> bool Array<Type>::IsElementwiseEqual_PercentThreshold(const Array &array2, const double percentThreshold, const double absoluteThreshold) const
-    {
-      if(!this->IsEqualSize(array2))
-        return false;
-
-      for(s32 y=0; y<size[0]; y++) {
-        const Type * const pThisData = this->Pointer(y, 0);
-        const Type * const pArray2 = array2.Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
-          const double value1 = static_cast<double>(pThisData[x]);
-          const double value2 = static_cast<double>(pArray2[x]);
-          const double percentThresholdValue = percentThreshold * MAX(value1,value2);
-
-          if(fabs(value1 - value2) > percentThresholdValue && fabs(value1 - value2) > absoluteThreshold)
-            return false;
-        }
-      }
-
-      return true;
-    }
-
-    template<typename Type> bool Array<Type>::IsEqualSize(const Array &array2) const
-    {
-      if(!this->IsValid())
-        return false;
-
-      if(!array2.IsValid())
-        return false;
-
-      if(this->get_size(0) != array2.get_size(0) || this->get_size(1) != array2.get_size(1))
-        return false;
-
-      return true;
     }
 
     template<typename Type> Result Array<Type>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const

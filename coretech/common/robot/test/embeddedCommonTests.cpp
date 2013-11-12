@@ -7,6 +7,7 @@
 #include "anki/common/robot/opencvLight.h"
 #include "anki/common/robot/gtestLight.h"
 #include "anki/common/robot/matrix.h"
+#include "anki/common/robot/comparisons.h"
 
 using namespace Anki::Embedded;
 
@@ -317,7 +318,7 @@ GTEST_TEST(CoreTech_Common, MatrixMultiply)
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  ASSERT_TRUE(matOut.IsElementwiseEqual(matOut_groundTruth));
+  ASSERT_TRUE(AreElementwiseEqual(matOut, matOut_groundTruth));
 
   GTEST_RETURN_HERE;
 }
@@ -384,7 +385,7 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
 
   //homography.Print("homography");
 
-  ASSERT_TRUE(homography.IsElementwiseEqual_PercentThreshold(homography_groundTruth, .01, .001));
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(homography, homography_groundTruth, .01, .001));
 
   GTEST_RETURN_HERE;
 }
@@ -475,8 +476,8 @@ GTEST_TEST(CoreTech_Common, SVD32)
   PrintfOneArray_f32(uT, "uT");
   PrintfOneArray_f32(uT_groundTruth, "uT_groundTruth");
 
-  ASSERT_TRUE(w.IsElementwiseEqual_PercentThreshold(w_groundTruth, .05, .001));
-  ASSERT_TRUE(uT.IsElementwiseEqual_PercentThreshold(uT_groundTruth, .05, .001));
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(w, w_groundTruth, .05, .001));
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(uT, uT_groundTruth, .05, .001));
 
   // I don't know why, but the v-transpose for this SVD doesn't match Matlab's. Probably this version is more efficient, in either memory or computation.
   //ASSERT_TRUE(vT.IsElementwiseEqual_PercentThreshold(vT_groundTruth, .05, .001));
@@ -564,8 +565,8 @@ GTEST_TEST(CoreTech_Common, SVD64)
   //  vT.Print("vT");
   //  vT_groundTruth.Print("vT_groundTruth");
 
-  ASSERT_TRUE(w.IsElementwiseEqual_PercentThreshold(w_groundTruth, .05, .001));
-  ASSERT_TRUE(uT.IsElementwiseEqual_PercentThreshold(uT_groundTruth, .05, .001));
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(w, w_groundTruth, .05, .001));
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(uT, uT_groundTruth, .05, .001));
 
   // I don't know why, but the v-transpose for this SVD doesn't match Matlab's. Probably this version's is more efficient, in either memory or computation.
   //ASSERT_TRUE(vT.IsElementwiseEqual_PercentThreshold(vT_groundTruth, .05, .001));
