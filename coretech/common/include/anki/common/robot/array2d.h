@@ -115,6 +115,13 @@ namespace Anki
       // Return the maximum element in this Array
       Type Max() const;
 
+      // Resize will use MemoryStack::Reallocate() to change the Array's size. It only works if this
+      // Array was the last thing allocated. The reallocated memory will not be cleared
+      //
+      // WARNING: This will not update any references to the memory, you must update all references
+      //          manually.
+      Result Resize(const s32 numRows, const s32 numCols, MemoryStack &memory);
+
       // Set every element in the Array to zero, including the stride padding
       void SetZero();
 
@@ -182,9 +189,9 @@ namespace Anki
       cv::Mat_<Type> cvMatMirror;
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
-      void* AllocateBufferFromMemoryStack(const s32 numRows, const s32 stride, MemoryStack &memory, s32 &numBytesAllocated, const BufferFlags flags);
+      void* AllocateBufferFromMemoryStack(const s32 numRows, const s32 stride, MemoryStack &memory, s32 &numBytesAllocated, const BufferFlags flags, bool reAllocate);
 
-      void InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const BufferFlags flags);
+      Result InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const BufferFlags flags);
 
       void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
 
@@ -281,7 +288,7 @@ namespace Anki
 
       s32 numBytesAllocated = 0;
 
-      void * const allocatedBuffer = AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, flags), memory, numBytesAllocated, flags);
+      void * const allocatedBuffer = AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, flags), memory, numBytesAllocated, flags, false);
 
       InitializeBuffer(numRows,
         numCols,
@@ -301,7 +308,7 @@ namespace Anki
 
       s32 numBytesAllocated = 0;
 
-      void * const allocatedBuffer = AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, flags), memory, numBytesAllocated, flags);
+      void * const allocatedBuffer = AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, flags), memory, numBytesAllocated, flags, false);
 
       InitializeBuffer(numRows,
         numCols,
@@ -506,6 +513,30 @@ namespace Anki
       } // if(flags.get_useBoundaryFillPatterns()) { ... else
     }
 
+    template<typename Type> Result Array<Type>::Resize(const s32 numRows, const s32 numCols, MemoryStack &memory)
+    {
+      AnkiConditionalErrorAndReturnValue(numCols > 0 && numRows > 0,
+        RESULT_FAIL, "Array<Type>::Resize", "Invalid size");
+
+      s32 numBytesAllocated = 0;
+
+      this->rawDataPointer = AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, flags), memory, numBytesAllocated, flags, true);
+
+      // Don't clear the reallocated memory
+      const bool clearMemory = this->flags.get_zeroAllocatedMemory();
+      this->flags.set_zeroAllocatedMemory(false);
+
+      const Result result = InitializeBuffer(numRows,
+        numCols,
+        this->rawDataPointer,
+        numBytesAllocated,
+        flags);
+
+      this->flags.set_zeroAllocatedMemory(clearMemory);
+
+      return result;
+    }
+
     // Set every element in the Array to zero, including the stride padding, but not including the optional fill patterns (if they exist)
     template<typename Type> void Array<Type>::SetZero()
     {
@@ -701,7 +732,7 @@ namespace Anki
       return flags;
     }
 
-    template<typename Type> void* Array<Type>::AllocateBufferFromMemoryStack(const s32 numRows, const s32 stride, MemoryStack &memory, s32 &numBytesAllocated, const BufferFlags flags)
+    template<typename Type> void* Array<Type>::AllocateBufferFromMemoryStack(const s32 numRows, const s32 stride, MemoryStack &memory, s32 &numBytesAllocated, const BufferFlags flags, bool reAllocate)
     {
       AnkiConditionalError(numRows > 0 && stride > 0,
         "Array<Type>::AllocateBufferFromMemoryStack", "Invalid size");
@@ -711,22 +742,24 @@ namespace Anki
       const s32 extraBoundaryPatternBytes = flags.get_useBoundaryFillPatterns() ? static_cast<s32>(MEMORY_ALIGNMENT) : 0;
       const s32 numBytesRequested = numRows * this->stride + extraBoundaryPatternBytes;
 
-      void * allocatedBuffer = memory.Allocate(numBytesRequested, &numBytesAllocated);
-
-      return allocatedBuffer;
+      if(reAllocate) {
+        return memory.Reallocate(this->rawDataPointer, numBytesRequested, &numBytesAllocated);
+      } else {
+        return memory.Allocate(numBytesRequested, &numBytesAllocated);
+      }
     }
 
-    template<typename Type> void Array<Type>::InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const BufferFlags flags)
+    template<typename Type> Result Array<Type>::InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const BufferFlags flags)
     {
-      AnkiConditionalErrorAndReturn(numCols > 0 && numRows > 0 && dataLength > 0,
-        "Array<Type>::InitializeBuffer", "Negative dimension");
+      AnkiConditionalErrorAndReturnValue(numCols > 0 && numRows > 0 && dataLength > 0,
+        RESULT_FAIL, "Array<Type>::InitializeBuffer", "Negative dimension");
 
       this->flags = flags;
 
       if(!rawData) {
         AnkiError("Anki.Array2d.initialize", "input data buffer is NULL");
         InvalidateArray();
-        return;
+        return RESULT_FAIL;
       }
 
       this->rawDataPointer = rawData;
@@ -738,7 +771,7 @@ namespace Anki
       if(requiredBytes > dataLength) {
         AnkiError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
         InvalidateArray();
-        return;
+        return RESULT_FAIL;
       }
 
       this->size[0] = numRows;
@@ -763,12 +796,14 @@ namespace Anki
       }
 
       // Zero out the entire buffer
-      // TODO: if this is slow, make this optional (or just remove it)
-      this->SetZero();
+      if(flags.get_zeroAllocatedMemory())
+        this->SetZero();
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       cvMatMirror = cv::Mat_<Type>(size[0], size[1], data, stride);
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
+
+      return RESULT_OK;
     } // Array<Type>::InitializeBuffer()
 
     // Set all the buffers and sizes to zero, to signal an invalid array

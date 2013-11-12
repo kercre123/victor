@@ -54,6 +54,35 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, ReallocateArray)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u8> array1(20,30,ms);
+  Array<u8> array2(20,30,ms);
+  Array<u8> array3(20,30,ms);
+
+  ASSERT_TRUE(array1.IsValid());
+  ASSERT_TRUE(array2.IsValid());
+  ASSERT_TRUE(array3.IsValid());
+
+  ASSERT_TRUE(array1.IsValid());
+  ASSERT_TRUE(array1.Resize(20,15,ms) == RESULT_FAIL);
+  ASSERT_TRUE(!array1.IsValid());
+
+  ASSERT_TRUE(array3.IsValid());
+  ASSERT_TRUE(array3.Resize(20,15,ms) == RESULT_OK);
+  ASSERT_TRUE(array3.IsValid());
+
+  ASSERT_TRUE(array2.IsValid());
+  ASSERT_TRUE(array2.Resize(20,15,ms) == RESULT_FAIL);
+  ASSERT_TRUE(!array2.IsValid());
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, ReallocateMemoryStack)
 {
   ASSERT_TRUE(buffer != NULL);
