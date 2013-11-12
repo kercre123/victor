@@ -11,6 +11,13 @@ namespace Anki
     namespace Matrix
     {
 #pragma mark --- Definitions ---
+
+      // Return the minimum element in this Array
+      template<typename Type> Type Min(const Array<Type> &mat);
+
+      // Return the maximum element in this Array
+      template<typename Type> Type Max(const Array<Type> &mat);
+
       // For a square array, either:
       // 1. When lowerToUpper==true,  copies the lower (left)  triangle to the upper (right) triangle
       // 2. When lowerToUpper==false, copies the upper (right) triangle to the lower (left)  triangle
@@ -25,6 +32,38 @@ namespace Anki
       template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(const Array<Array_Type> &image);
 
 #pragma mark --- Implementations ---
+
+      template<typename Type> Type Min(const Array<Type> &mat)
+      {
+        AnkiConditionalErrorAndReturnValue(this->IsValid(),
+          0, "Matrix::Min", "Array<Type> is not valid");
+
+        Type minValue = *this->Pointer(0, 0);
+        for(s32 y=0; y<size[0]; y++) {
+          const Type * const pThisData = this->Pointer(y, 0);
+          for(s32 x=0; x<size[1]; x++) {
+            minValue = MIN(minValue, pThisData[x]);
+          }
+        }
+
+        return minValue;
+      }
+
+      template<typename Type> Type Max(const Array<Type> &mat)
+      {
+        AnkiConditionalErrorAndReturnValue(this->IsValid(),
+          0, "Matrix::Min", "Array<Type> is not valid");
+
+        Type maxValue = *this->Pointer(0, 0);
+        for(s32 y=0; y<size[0]; y++) {
+          const Type * const pThisData = this->Pointer(y, 0);
+          for(s32 x=0; x<size[1]; x++) {
+            maxValue = MAX(maxValue, pThisData[x]);
+          }
+        }
+
+        return maxValue;
+      }
 
       template<typename Type> Result MakeSymmetric(Type &arr, bool lowerToUpper)
       {

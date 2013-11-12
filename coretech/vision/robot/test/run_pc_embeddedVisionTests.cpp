@@ -20,4 +20,4 @@ int main()
 
   return result;
 }
-#endif
+#endif-

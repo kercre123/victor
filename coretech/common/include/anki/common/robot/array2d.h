@@ -94,12 +94,6 @@ namespace Anki
       // beginning and end).
       bool IsValid() const;
 
-      // Return the minimum element in this Array
-      Type Min() const;
-
-      // Return the maximum element in this Array
-      Type Max() const;
-
       // Resize will use MemoryStack::Reallocate() to change the Array's size. It only works if this
       // Array was the last thing allocated. The reallocated memory will not be cleared
       //
@@ -131,6 +125,9 @@ namespace Anki
       s32 Set(const char * const values);
 #endif
 
+      // This is a shallow copy. There's no reference counting. Updating the data of one array will
+      // update that of others (because they point to the same location in memory). However,
+      // Resizing or other operations on an array won't update the others.
       Array& operator= (const Array & rightHandSide);
 
       // Similar to Matlabs size(matrix, dimension), and dimension is in {0,1}
@@ -374,8 +371,8 @@ namespace Anki
         cv::Mat_<f64> scaledArray(this->get_size(0), this->get_size(1));
         scaledArray = cvMatMirror;
 
-        const f64 minValue = this->Min();
-        const f64 maxValue = this->Max();
+        const f64 minValue = Matrix::Min(*this);
+        const f64 maxValue = Matrix::Max(*this);
         const f64 range = maxValue - minValue;
 
         scaledArray -= minValue;
@@ -743,38 +740,6 @@ namespace Anki
       this->data = NULL;
       this->rawDataPointer = NULL;
     } // void Array<Type>::InvalidateArray()
-
-    template<typename Type> Type Array<Type>::Min() const
-    {
-      AnkiConditionalErrorAndReturnValue(this->IsValid(),
-        0, "Array<Type>::Min", "Array<Type> is not valid");
-
-      Type minValue = *this->Pointer(0, 0);
-      for(s32 y=0; y<size[0]; y++) {
-        const Type * const pThisData = this->Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
-          minValue = MIN(minValue, pThisData[x]);
-        }
-      }
-
-      return minValue;
-    }
-
-    template<typename Type> Type Array<Type>::Max() const
-    {
-      AnkiConditionalErrorAndReturnValue(this->IsValid(),
-        0, "Array<Type>::Min", "Array<Type> is not valid");
-
-      Type maxValue = *this->Pointer(0, 0);
-      for(s32 y=0; y<size[0]; y++) {
-        const Type * const pThisData = this->Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
-          maxValue = MAX(maxValue, pThisData[x]);
-        }
-      }
-
-      return maxValue;
-    }
 
 #pragma mark --- FixedPointArray Implementations ---
 
