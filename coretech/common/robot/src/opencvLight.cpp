@@ -41,6 +41,7 @@
 
 #include "anki/common/robot/opencvLight.h"
 #include "anki/common/robot/errorHandling.h"
+#include "anki/common/robot/matrix.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -1267,7 +1268,7 @@ namespace Anki
           }
         }
       }
-      MakeArraySymmetric(_LtL, false);
+      Matrix::MakeSymmetric(_LtL, false);
 
       Result result;
       {
@@ -1297,8 +1298,8 @@ namespace Anki
         }
       }
 
-      MultiplyMatrices<Array<f64>,f64>(_invHomographyNorm, _homography0, _homographyTemp);
-      MultiplyMatrices<Array<f64>,f64>(_homographyTemp, _homographyNorm2, homography);
+      Matrix::Multiply<Array<f64>,f64>(_invHomographyNorm, _homography0, _homographyTemp);
+      Matrix::Multiply<Array<f64>,f64>(_homographyTemp, _homographyNorm2, homography);
 
       {
         const f64 inverseHomogeneousScale = 1.0 / (*homography.Pointer(2,2));

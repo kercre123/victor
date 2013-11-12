@@ -6,6 +6,7 @@
 #include "anki/common/robot/memory.h"
 #include "anki/common/robot/opencvLight.h"
 #include "anki/common/robot/gtestLight.h"
+#include "anki/common/robot/matrix.h"
 
 using namespace Anki::Embedded;
 
@@ -312,7 +313,7 @@ GTEST_TEST(CoreTech_Common, MatrixMultiply)
   mat2.Set(mat2Data, MatrixMultiply_mat2DataLength);
   matOut_groundTruth.Set(matOutGroundTruthData, MatrixMultiply_matOutGroundTruthDataLength);
 
-  const Result result = MultiplyMatrices<Array<f64>, f64>(mat1, mat2, matOut);
+  const Result result = Matrix::Multiply<Array<f64>, f64>(mat1, mat2, matOut);
 
   ASSERT_TRUE(result == RESULT_OK);
 
@@ -358,7 +359,7 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
   homography_groundTruth.Set(homographyGroundTruthData, ComputeHomography_homographyGroundTruthDataLength);
   originalPoints.Set(originalPointsData, ComputeHomography_originalPointsDataLength);
 
-  MultiplyMatrices<Array<f64>, f64>(homography_groundTruth, originalPoints, transformedPoints);
+  Matrix::Multiply<Array<f64>, f64>(homography_groundTruth, originalPoints, transformedPoints);
 
   for(s32 i=0; i<originalPoints.get_size(1); i++) {
     const f64 x0 = (*originalPoints.Pointer(0,i)) / (*originalPoints.Pointer(2,i));
