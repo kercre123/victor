@@ -112,7 +112,6 @@ void explicitPrintf(int reverseEachFourCharacters, const char *format, ...)
 void PrintFloat(f64 value)
 {
   const s32 maxDecimalDigits = 6;
-  const f64 decimalPart = value - (f64)floorf(value);
 
   s32 digitIndex = -1;
   s32 numDecimalDigitsUsed = 0;
@@ -121,6 +120,8 @@ void PrintFloat(f64 value)
     putchar('-');
     value = -value;
   }
+  
+  const f64 decimalPart = value - (f64)floorf(value);
 
   // Print the part before the decimal digit
 
@@ -133,6 +134,14 @@ void PrintFloat(f64 value)
     return;
   }
 
+  // If value is close enough to the ceil value, just print the ceil value.
+  if (FLT_NEAR(value, ceilf(value))) {
+    PrintInt((s32)ceilf(value));
+    putchar('.');
+    putchar('0');
+    return;
+  }
+  
   PrintInt((s32)floorf(value));
 
   // The remainder of this function prints the part after the decimal digit
@@ -155,13 +164,17 @@ void PrintFloat(f64 value)
 
     value *= 10.0f;
 
-    if(value < 1.0f) {
+    if(value < (1.0f - FLOATING_POINT_COMPARISON_TOLERANCE)) {
       putchar('0');
       continue;
     }
 
-    curDigit = (s32)(Roundf((f32)(value - (10.0*floorf((f32)(value/10.0))))));
-    //const int curDigit = ABS(value) % 10;
+    if (FLT_NEAR(value, ceilf(value))) {
+      curDigit = (s32)(Roundf((f32)(value)));
+      numDecimalDigitsUsed = maxDecimalDigits; // To exit while loop since this is the last digit we want to print
+    } else {
+      curDigit = (s32)(floorf((f32)(value)));
+    }
 
     // This if statement should nenver be true, but it sometimes is on the myriad1. This will output "BUG".
     if(value < 0.0f){

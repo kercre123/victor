@@ -32,7 +32,8 @@
 
 #ifndef ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
 #define ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
-
+#include "anki/common/robot/config.h"
+#include "anki/common/robot/utilities_c.h"
 #include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
 
@@ -46,9 +47,31 @@ extern "C" {
 #ifdef MOVI_TOOLS
 #undef printf
 #define printf(...) _xprintf(Anki::Cozmo::HAL::UARTPutChar, 0, __VA_ARGS__)
-#define PRINT(...) _xprintf(Anki::Cozmo::HAL::UARTPutChar, 0, __VA_ARGS__)
+//#define PRINT(...) _xprintf(Anki::Cozmo::HAL::UARTPutChar, 0, __VA_ARGS__)
+#define PRINT(...) explicitPrintf(0, __VA_ARGS__)
+
+// Prints once every num_calls_between_prints times you call it
+#define PERIODIC_PRINT(num_calls_between_prints, ...)  \
+{ \
+  static u16 cnt = num_calls_between_prints; \
+  if (cnt++ >= num_calls_between_prints) { \
+    explicitPrintf(0, __VA_ARGS__); \
+    cnt = 0; \
+  } \
+}
+
 #elif defined(SIMULATOR)
 #define PRINT(...) fprintf(stdout, __VA_ARGS__)
+
+#define PERIODIC_PRINT(num_calls_between_prints, ...)  \
+{ \
+  static u16 cnt = num_calls_between_prints; \
+  if (cnt++ >= num_calls_between_prints) { \
+    fprintf(stdout, __VA_ARGS__); \
+    cnt = 0; \
+  } \
+}
+
 #endif  // MOVI_TOOLS
 
 #define REG_WORD(x) *(volatile u32*)(x)
