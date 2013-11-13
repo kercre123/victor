@@ -26,17 +26,24 @@ namespace Anki
 
       //ConstArraySlice<Type>& ConstArraySlice<Type>::operator= (const Array<Type> & rightHandSide); // Implicit conversion
 
+      // ArraySlice Transpose doesn't modify the data, it just sets a flag
+      ConstArraySlice Transpose() const;
+
       const LinearSequence<s32>& get_ySlice() const;
 
       const LinearSequence<s32>& get_xSlice() const;
 
       const Array<Type>& get_array() const;
 
+      bool get_isTransposed() const;
+
     protected:
       LinearSequence<s32> ySlice;
       LinearSequence<s32> xSlice;
 
       Array<Type> array;
+
+      bool isTransposed;
     }; // template<typename Type> class ArraySlice
 
     template<typename Type> class ArraySlice : public ConstArraySlice<Type>
@@ -51,6 +58,9 @@ namespace Anki
       ArraySlice(Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice);
 
       //ArraySlice<Type>& ArraySlice<Type>::operator= (Array<Type> & rightHandSide); // Implicit conversion
+
+      // ArraySlice Transpose doesn't modify the data, it just sets a flag
+      ArraySlice Transpose() const;
 
       // If automaticTranspose==true, then you can set a MxN slice with a NxM input
       // Matlab allows this for vectors, though this will also work for arbitrary-sized arrays
@@ -80,17 +90,17 @@ namespace Anki
 #pragma mark --- Implementations ---
 
     template<typename Type> ConstArraySlice<Type>::ConstArraySlice()
-      : array(Array<Type>()), ySlice(LinearSequence<Type>()), xSlice(LinearSequence<Type>())
+      : array(Array<Type>()), ySlice(LinearSequence<Type>()), xSlice(LinearSequence<Type>()), isTransposed(false)
     {
     }
 
     template<typename Type> ConstArraySlice<Type>::ConstArraySlice(const Array<Type> &array)
-      : array(array), ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1))
+      : array(array), ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1)), isTransposed(false)
     {
     }
 
     template<typename Type> ConstArraySlice<Type>::ConstArraySlice(const Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice)
-      : array(array), ySlice(ySlice), xSlice(xSlice)
+      : array(array), ySlice(ySlice), xSlice(xSlice), isTransposed(false)
     {
     }
 
@@ -102,6 +112,13 @@ namespace Anki
 
     return *this;
     }*/
+
+    template<typename Type> ConstArraySlice& ConstArraySlice<Type>::Transpose() const
+    {
+      this->isTransposed = !this->isTransposed;
+
+      return *this;
+    }
 
     template<typename Type> const LinearSequence<s32>& ConstArraySlice<Type>::get_ySlice() const
     {
@@ -116,6 +133,11 @@ namespace Anki
     template<typename Type> const Array<Type>& ConstArraySlice<Type>::get_array() const
     {
       return array;
+    }
+
+    template<typename Type> bool ConstArraySlice<Type>::get_isTransposed() const
+    {
+      return isTransposed;
     }
 
     template<typename Type> ArraySlice<Type>::ArraySlice()
@@ -144,6 +166,13 @@ namespace Anki
 
     return *this;
     }*/
+
+    template<typename Type> ArraySlice& ArraySlice<Type>::Transpose() const
+    {
+      this->isTransposed = !this->isTransposed;
+
+      return *this;
+    }
 
     template<typename Type> Result ArraySlice<Type>::Set(ConstArraySlice<Type> input, bool automaticTranspose=true)
     {

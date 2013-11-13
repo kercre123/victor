@@ -12,24 +12,48 @@ namespace Anki
     {
 #pragma mark --- Definitions ---
 
+      //
+      // Simple matrix statistics
+      //
+
       // Return the minimum element in this Array
       template<typename Type> Type Min(ConstArraySlice<Type> &mat);
 
       // Return the maximum element in this Array
       template<typename Type> Type Max(ConstArraySlice<Type> &mat);
 
-      // For a square array, either:
-      // 1. When lowerToUpper==true,  copies the lower (left)  triangle to the upper (right) triangle
-      // 2. When lowerToUpper==false, copies the upper (right) triangle to the lower (left)  triangle
-      // Functionally the same as OpenCV completeSymm()
-      template<typename Type> Result MakeSymmetric(Type &arr, bool lowerToUpper = false);
+      // Return the sum of every element in the Array
+      template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(ConstArraySlice<Array_Type> &mat);
+
+      //
+      // Elementwise matrix operations
+      //
+
+      //template<typename Type> Type Add(ArraySlice<Type> &mat1, ArraySlice<Type> &mat2, ConstArraySlice<Type> &out);
+
+      //template<typename Type> Type Subtract(ArraySlice<Type> &mat1, ArraySlice<Type> &mat2, ConstArraySlice<Type> &out);
+
+      //template<typename Type> Type DotMultiply(ArraySlice<Type> &mat1, ArraySlice<Type> &mat2, ConstArraySlice<Type> &out);
+
+      //template<typename Type> Type DotDivide(ArraySlice<Type> &mat1, ArraySlice<Type> &mat2, ConstArraySlice<Type> &out);
+
+      //
+      // Standard matrix operations
+      //
 
       // Perform the matrix multiplication "matOut = mat1 * mat2"
       // Note that this is the naive O(n^3) implementation
       template<typename Type> Result Multiply(const Array<Type> &mat1, const Array<Type> &mat2, Array<Type> &matOut);
 
-      // Return the sum of every element in the Array
-      template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(ConstArraySlice<Array_Type> &mat);
+      //
+      // Misc matrix operations
+      //
+
+      // For a square array, either:
+      // 1. When lowerToUpper==true,  copies the lower (left)  triangle to the upper (right) triangle
+      // 2. When lowerToUpper==false, copies the upper (right) triangle to the lower (left)  triangle
+      // Functionally the same as OpenCV completeSymm()
+      template<typename Type> Result MakeSymmetric(Type &arr, bool lowerToUpper = false);
 
 #pragma mark --- Implementations ---
 
@@ -73,24 +97,25 @@ namespace Anki
         return maxValue;
       }
 
-      template<typename Type> Result MakeSymmetric(Type &arr, bool lowerToUpper)
+      template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(ConstArraySlice<Array_Type> &mat)
       {
-        AnkiConditionalErrorAndReturnValue(arr.get_size(0) == arr.get_size(1),
-          RESULT_FAIL, "copyHalfArray", "Input array must be square");
+        const Array<Array_Type> &array = mat.get_array();
 
-        const s32 arrHeight = arr.get_size(0);
-        for(s32 y = 0; y < arrHeight; y++)
-        {
-          const s32 x0 = lowerToUpper ? (y+1)     : 0;
-          const s32 x1 = lowerToUpper ? arrHeight : y;
+        AnkiConditionalErrorAndReturnValue(array.IsValid(),
+          0, "Matrix::Sum", "Array<Type> is not valid");
 
-          for(s32 x = x0; x < x1; x++) {
-            *arr.Pointer(y,x) = *arr.Pointer(x,y);
+        const ArraySliceLimits<Array_Type> matLimits(mat);
+
+        Accumulator_Type sum = 0;
+        for(s32 y=matLimits.yStart; y<=matLimits.yEnd; y+=matLimits.yIncrement) {
+          const Array_Type * restrict pMat = array.Pointer(y, 0);
+          for(s32 x=matLimits.xStart; x<=matLimits.xEnd; x+=matLimits.xIncrement) {
+            sum += pMat[x];
           }
         }
 
-        return RESULT_OK;
-      } // template<typename Type> Result MakeSymmetric(Type &arr, bool lowerToUpper)
+        return sum;
+      } // template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(const Array<Array_Type> &image)
 
       template<typename Type> Result Multiply(const Array<Type> &mat1, const Array<Type> &mat2, Array<Type> &matOut)
       {
@@ -125,25 +150,24 @@ namespace Anki
         return RESULT_OK;
       } // template<typename Array_Type, typename Type> Result Multiply(const Array_Type &mat1, const Array_Type &mat2, Array_Type &matOut)
 
-      template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(ConstArraySlice<Array_Type> &mat)
+      template<typename Type> Result MakeSymmetric(Type &arr, bool lowerToUpper)
       {
-        const Array<Array_Type> &array = mat.get_array();
+        AnkiConditionalErrorAndReturnValue(arr.get_size(0) == arr.get_size(1),
+          RESULT_FAIL, "copyHalfArray", "Input array must be square");
 
-        AnkiConditionalErrorAndReturnValue(array.IsValid(),
-          0, "Matrix::Sum", "Array<Type> is not valid");
+        const s32 arrHeight = arr.get_size(0);
+        for(s32 y = 0; y < arrHeight; y++)
+        {
+          const s32 x0 = lowerToUpper ? (y+1)     : 0;
+          const s32 x1 = lowerToUpper ? arrHeight : y;
 
-        const ArraySliceLimits<Array_Type> matLimits(mat);
-
-        Accumulator_Type sum = 0;
-        for(s32 y=matLimits.yStart; y<=matLimits.yEnd; y+=matLimits.yIncrement) {
-          const Array_Type * restrict pMat = array.Pointer(y, 0);
-          for(s32 x=matLimits.xStart; x<=matLimits.xEnd; x+=matLimits.xIncrement) {
-            sum += pMat[x];
+          for(s32 x = x0; x < x1; x++) {
+            *arr.Pointer(y,x) = *arr.Pointer(x,y);
           }
         }
 
-        return sum;
-      } // template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(const Array<Array_Type> &image)
+        return RESULT_OK;
+      } // template<typename Type> Result MakeSymmetric(Type &arr, bool lowerToUpper)
     } // namespace Matrix
   } // namespace Embedded
 } // namespace Anki
