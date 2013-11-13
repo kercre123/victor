@@ -54,12 +54,16 @@ namespace Anki {
     
 #pragma mark --- VisionSystem::Mailbox Implementations ---
     
-    
+    /*
+     //TODO: Was having trouble getting this to compile on robot.
+     //      Default logic should still work when commenting this out.
     template<>
     void VisionSystem::MatMarkerMailbox::advanceIndex(u8 &index)
     {
       return;
     }
+     */
+    
     
 #pragma mark --- VisionSystem Method Implementations ---
     

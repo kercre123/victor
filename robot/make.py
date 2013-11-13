@@ -213,7 +213,7 @@ if __name__ == '__main__':
 
   # TODO: Get supervisor directory building/linking
   if not isTest:
-    #LEON_SOURCE += addSources('./supervisor/src')
+    LEON_SOURCE += addSources('./supervisor/src')
     pass
   
   for src in (LEON_SOURCE):
