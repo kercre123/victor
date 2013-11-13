@@ -26,6 +26,7 @@ namespace Anki
   {
     template<typename Type> class ArraySlice;
     template<typename Type> class ConstArraySlice;
+    template<typename Type> class ConstArraySliceExpression;
 
 #pragma mark --- Array Class Definition ---
 
@@ -94,6 +95,9 @@ namespace Anki
       ConstArraySlice<Type> operator() (s32 minY, s32 incrementY, s32 maxY, s32 minX, s32 incrementX, s32 maxX) const; // If min or max is less than 0, it is equivalent to (end+value)
       //operator ConstArraySlice<Type>() const; // Implicit conversion
 
+      // ArraySlice Transpose doesn't modify the data, it just sets a flag
+      ConstArraySliceExpression<Type> Transpose() const;
+
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       // Returns a templated cv::Mat_ that shares the same buffer with this Array. No data is copied.
       cv::Mat_<Type>& get_CvMat_();
@@ -117,8 +121,9 @@ namespace Anki
       //          manually.
       Result Resize(const s32 numRows, const s32 numCols, MemoryStack &memory);
 
-      // Set every element in the Array to zero, including the stride padding
-      void SetZero();
+      // Set every element in the Array to zero, including the stride padding, but not including the optional fill patterns (if they exist)
+      // Returns the number of bytes set to zero
+      s32 SetZero();
 
       // Set every element in the Array to this value
       // Returns the number of values set
@@ -448,6 +453,14 @@ namespace Anki
       return slice;
     }
 
+    template<typename Type> ConstArraySliceExpression<Type> Array<Type>::Transpose() const
+    {
+      ConstArraySliceExpression<Type> expression(this->operator() ());
+      expression.Transpose();
+
+      return expression;
+    }
+
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
     template<typename Type> cv::Mat_<Type>& Array<Type>::get_CvMat_()
     {
@@ -558,16 +571,18 @@ namespace Anki
       return result;
     }
 
-    // Set every element in the Array to zero, including the stride padding, but not including the optional fill patterns (if they exist)
-    template<typename Type> void Array<Type>::SetZero()
+    template<typename Type> s32 Array<Type>::SetZero()
     {
-      AnkiConditionalError(this->IsValid(), "Array<Type>::SetZero", "Array<Type> is not valid");
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        0, "Array<Type>::SetZero", "Array<Type> is not valid");
 
       const s32 strideWithoutFillPatterns = this->get_strideWithoutFillPatterns();
       for(s32 y=0; y<size[0]; y++) {
         char * restrict pThisData = reinterpret_cast<char*>(Pointer(y, 0));
         memset(pThisData, 0, strideWithoutFillPatterns);
       }
+
+      return strideWithoutFillPatterns*size[0];
     }
 
     // Note: The myriad has many issues with static initialization of arrays, so this should not used with caution

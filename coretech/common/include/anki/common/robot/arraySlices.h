@@ -10,6 +10,10 @@ namespace Anki
   {
 #pragma mark --- Class Definitions ---
 
+    template<typename Type> class ConstArraySlice;
+    template<typename Type> class ArraySlice;
+    template<typename Type> class ConstArraySliceExpression;
+
     // TODO: support non-int indexes
     // TODO: add lazy transpose?
     // TODO: is there a better way of doing this than a completely different class, different only by const?
@@ -27,7 +31,7 @@ namespace Anki
       //ConstArraySlice<Type>& ConstArraySlice<Type>::operator= (const Array<Type> & rightHandSide); // Implicit conversion
 
       // ArraySlice Transpose doesn't modify the data, it just sets a flag
-      ConstArraySlice Transpose() const;
+      ConstArraySliceExpression<Type> Transpose() const;
 
       const LinearSequence<s32>& get_ySlice() const;
 
@@ -35,15 +39,11 @@ namespace Anki
 
       const Array<Type>& get_array() const;
 
-      bool get_isTransposed() const;
-
     protected:
       LinearSequence<s32> ySlice;
       LinearSequence<s32> xSlice;
 
       Array<Type> array;
-
-      bool isTransposed;
     }; // template<typename Type> class ArraySlice
 
     template<typename Type> class ArraySlice : public ConstArraySlice<Type>
@@ -59,15 +59,31 @@ namespace Anki
 
       //ArraySlice<Type>& ArraySlice<Type>::operator= (Array<Type> & rightHandSide); // Implicit conversion
 
-      // ArraySlice Transpose doesn't modify the data, it just sets a flag
-      ArraySlice Transpose() const;
-
       // If automaticTranspose==true, then you can set a MxN slice with a NxM input
       // Matlab allows this for vectors, though this will also work for arbitrary-sized arrays
-      Result Set(ConstArraySlice<Type> input, bool automaticTranspose=true);
+      Result Set(ConstArraySliceExpression<Type> input, bool automaticTranspose=true);
 
       Array<Type>& get_array();
     }; // template<typename Type> class ArraySlice
+
+    // An ConstArraySliceExpression is like a ConstArraySlice, but can also be transposed
+    // It may have other abilities in the future, but will probably always be const
+    template<typename Type> class ConstArraySliceExpression : public ConstArraySlice<Type>
+    {
+    public:
+      ConstArraySliceExpression();
+
+      ConstArraySliceExpression(const ConstArraySlice<Type> &input, bool isTransposed=false);
+
+      // ArraySlice Transpose doesn't modify the data, it just sets a flag
+      // This object isn't modified, but the returned object is.
+      ConstArraySliceExpression<Type> Transpose() const;
+
+      bool get_isTransposed() const;
+
+    protected:
+      bool isTransposed;
+    };
 
     // To aid the compiler optimizer, an ArraySliceLimits can be initialized at the beginning of the
     // function, then used as the limits for the inner loops.
@@ -90,17 +106,17 @@ namespace Anki
 #pragma mark --- Implementations ---
 
     template<typename Type> ConstArraySlice<Type>::ConstArraySlice()
-      : array(Array<Type>()), ySlice(LinearSequence<Type>()), xSlice(LinearSequence<Type>()), isTransposed(false)
+      : array(Array<Type>()), ySlice(LinearSequence<Type>()), xSlice(LinearSequence<Type>())
     {
     }
 
     template<typename Type> ConstArraySlice<Type>::ConstArraySlice(const Array<Type> &array)
-      : array(array), ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1)), isTransposed(false)
+      : array(array), ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1))
     {
     }
 
     template<typename Type> ConstArraySlice<Type>::ConstArraySlice(const Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice)
-      : array(array), ySlice(ySlice), xSlice(xSlice), isTransposed(false)
+      : array(array), ySlice(ySlice), xSlice(xSlice)
     {
     }
 
@@ -113,11 +129,11 @@ namespace Anki
     return *this;
     }*/
 
-    template<typename Type> ConstArraySlice& ConstArraySlice<Type>::Transpose() const
+    template<typename Type> ConstArraySliceExpression<Type> ConstArraySlice<Type>::Transpose() const
     {
-      this->isTransposed = !this->isTransposed;
+      ConstArraySliceExpression<Type> expression(*this, true);
 
-      return *this;
+      return expression;
     }
 
     template<typename Type> const LinearSequence<s32>& ConstArraySlice<Type>::get_ySlice() const
@@ -133,11 +149,6 @@ namespace Anki
     template<typename Type> const Array<Type>& ConstArraySlice<Type>::get_array() const
     {
       return array;
-    }
-
-    template<typename Type> bool ConstArraySlice<Type>::get_isTransposed() const
-    {
-      return isTransposed;
     }
 
     template<typename Type> ArraySlice<Type>::ArraySlice()
@@ -167,14 +178,7 @@ namespace Anki
     return *this;
     }*/
 
-    template<typename Type> ArraySlice& ArraySlice<Type>::Transpose() const
-    {
-      this->isTransposed = !this->isTransposed;
-
-      return *this;
-    }
-
-    template<typename Type> Result ArraySlice<Type>::Set(ConstArraySlice<Type> input, bool automaticTranspose=true)
+    template<typename Type> Result ArraySlice<Type>::Set(ConstArraySliceExpression<Type> input, bool automaticTranspose=true)
     {
       AnkiConditionalErrorAndReturnValue(this->get_array().IsValid(),
         RESULT_FAIL, "ArraySlice<Type>::Set", "Invalid array");
@@ -192,6 +196,8 @@ namespace Anki
       const Array<Type> &inputArray = input.get_array();
 
       if(thisLimits.xSize == inputLimits.xSize && thisLimits.ySize == inputLimits.ySize) {
+        // If the input isn't transposed, we will do the maximally efficient loop iteration
+
         s32 thisY = thisLimits.yStart;
         s32 inputY = inputLimits.yStart;
 
@@ -212,7 +218,10 @@ namespace Anki
           thisY += thisLimits.yIncrement;
           inputY += inputLimits.yIncrement;
         }
-      } else if(automaticTranspose && (thisLimits.xSize == inputLimits.ySize && thisLimits.ySize == inputLimits.xSize)) {
+      } else if((automaticTranspose||input.get_isTransposed()) && (thisLimits.xSize == inputLimits.ySize && thisLimits.ySize == inputLimits.xSize)) {
+        // If the input is transposed or if automaticTransposing is allowed, then we will do an inefficent loop iteration
+        // TODO: make fast if needed
+
         s32 thisY = thisLimits.yStart;
         s32 inputX = inputLimits.xStart;
 
@@ -246,6 +255,28 @@ namespace Anki
     template<typename Type> Array<Type>& ArraySlice<Type>::get_array()
     {
       return array;
+    }
+
+    template<typename Type> ConstArraySliceExpression<Type>::ConstArraySliceExpression()
+      : ConstArraySlice<Type>(), isTransposed(false)
+    {
+    }
+
+    template<typename Type> ConstArraySliceExpression<Type>::ConstArraySliceExpression(const ConstArraySlice<Type> &input, bool isTransposed)
+      : ConstArraySlice<Type>(input), isTransposed(isTransposed)
+    {
+    }
+
+    template<typename Type> ConstArraySliceExpression<Type> ConstArraySliceExpression<Type>::Transpose() const
+    {
+      ConstArraySliceExpression<Type> expression(*this, !this->get_isTransposed());
+
+      return expression;
+    }
+
+    template<typename Type> bool ConstArraySliceExpression<Type>::get_isTransposed() const
+    {
+      return isTransposed;
     }
 
     template<typename Type> ArraySliceLimits<Type>::ArraySliceLimits(ConstArraySlice<Type> &slice)

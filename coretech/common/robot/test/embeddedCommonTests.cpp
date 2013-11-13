@@ -74,11 +74,11 @@ GTEST_TEST(CoreTech_Common, SliceArrayAssignment)
   }
 
   // Test the non-transposed Set()
-  array1.SetZero();
-  array1(0,2,0,3).Set(array2(1,3,1,4));
+  ASSERT_TRUE(array1.SetZero() != 0);
+  ASSERT_TRUE(array1(0,2,0,3).Set(array2(1,3,1,4)) == RESULT_OK);
 
-  array1.Print("array1");
-  array2.Print("array2");
+  //array1.Print("array1");
+  //array2.Print("array2");
 
   for(s32 y=0; y<=2; y++) {
     for(s32 x=0; x<=3; x++) {
@@ -94,12 +94,32 @@ GTEST_TEST(CoreTech_Common, SliceArrayAssignment)
     }
   }
 
-  // Test the transposed Set()
-  array1.SetZero();
-  array1(0,-1,0,2).Set(array2(1,3,0,4));
+  // Test the automatically transposed Set()
+  ASSERT_TRUE(array1.SetZero() != 0);
+  ASSERT_TRUE(array1(0,-1,0,2).Set(array2(1,3,0,4)) == RESULT_OK);
 
-  array1.Print("array1");
-  array2.Print("array2");
+  //array1.Print("array1");
+  //array2.Print("array2");
+
+  for(s32 y=0; y<5; y++) {
+    for(s32 x=0; x<=2; x++) {
+      ASSERT_TRUE(array1[y][x] == array2[x+1][y]);
+    }
+    for(s32 x=3; x<6; x++) {
+      ASSERT_TRUE(array1[y][x] == 0);
+    }
+  }
+
+  // Test for a failure in the manually transposed Set()
+  ASSERT_TRUE(array1.SetZero() != 0);
+  ASSERT_TRUE(array1(0,-1,0,2).Set(array2(1,3,0,4), false) == RESULT_FAIL);
+
+  // Test the manually transposed Set()
+  ASSERT_TRUE(array1.SetZero() != 0);
+  ASSERT_TRUE(array1(0,-1,0,2).Set(array2(1,3,0,4).Transpose(), false) == RESULT_OK);
+
+  //array1.Print("array1");
+  //array2.Print("array2");
 
   for(s32 y=0; y<5; y++) {
     for(s32 x=0; x<=2; x++) {
