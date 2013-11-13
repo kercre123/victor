@@ -46,6 +46,8 @@ namespace Anki
 #endif
 
   typedef s32 ReturnCode;
+#define	EXIT_FAILURE	1
+#define	EXIT_SUCCESS	0
 
 #ifdef __cplusplus
 } // namespace Anki
