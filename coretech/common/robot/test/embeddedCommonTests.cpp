@@ -69,16 +69,23 @@ GTEST_TEST(CoreTech_Common, SliceArray)
 
   const Array<u8> array2(20,30,ms);
 
+  // Will not compile
+  //ArraySlice<u8> slice2 = array2(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
+
+  // This is okay
+  ConstArraySlice<u8> slice1b = array1(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
+
   // This is okay
   ConstArraySlice<u8> slice2 = array2(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
 
   printf("%d %d %d\n", slice1.get_xSlice().get_startValue(), slice1.get_xSlice().get_endValue(), *slice1.get_array().Pointer(0,0));
+  printf("%d %d %d\n", slice1b.get_xSlice().get_startValue(), slice1b.get_xSlice().get_endValue(), *slice1b.get_array().Pointer(0,0));
   printf("%d %d %d\n", slice2.get_xSlice().get_startValue(), slice2.get_xSlice().get_endValue(), *slice2.get_array().Pointer(0,0));
 
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, MatrixMinAndMax)
+GTEST_TEST(CoreTech_Common, MatrixMinAndMaxAndSum)
 {
   ASSERT_TRUE(buffer != NULL);
   MemoryStack ms(buffer, MAX_BYTES);
@@ -93,13 +100,33 @@ GTEST_TEST(CoreTech_Common, MatrixMinAndMax)
     }
   }
 
-  const s32 minValue1 = Matrix::Min<u8>(ArraySlice<u8>(array));
+  array.Print("array");
+
+  ArraySlice<u8> slice = array;
+
+  const s32 minValue1 = Matrix::Min<u8>(array());
   const s32 minValue2 = Matrix::Min<u8>(array(2,-1,2,-1));
   const s32 minValue3 = Matrix::Min<u8>(array(2,-1,-1,-1));
 
-  const s32 maxValue1 = Matrix::Max<u8>(array);
+  const s32 maxValue1 = Matrix::Max<u8>(array());
   const s32 maxValue2 = Matrix::Max<u8>(array(0,-3,0,-1));
-  const s32 maxValue3 = Matrix::Max<u8>(array(0,-1,-1,-1));
+  const s32 maxValue3 = Matrix::Max<u8>(array(0,-1,-2,-2));
+
+  const s32 sum1 = Matrix::Sum<u8,s32>(array());
+  const s32 sum2 = Matrix::Sum<u8,s32>(array(0,-3,0,-1));
+  const s32 sum3 = Matrix::Sum<u8,s32>(array(0,-1,-2,-2));
+
+  ASSERT_TRUE(minValue1 == 0);
+  ASSERT_TRUE(minValue2 == 12);
+  ASSERT_TRUE(minValue3 == 14);
+
+  ASSERT_TRUE(maxValue1 == 24);
+  ASSERT_TRUE(maxValue2 == 14);
+  ASSERT_TRUE(maxValue3 == 23);
+
+  ASSERT_TRUE(sum1 == 300);
+  ASSERT_TRUE(sum2 == 105);
+  ASSERT_TRUE(sum3 == 65);
 
   GTEST_RETURN_HERE;
 }

@@ -82,13 +82,17 @@ namespace Anki
       inline Type* Pointer(const Point<s16> &point);
 
       // Return a slice accessor for this array, like the Matlab expression "array(1:5, 2:3:5)"
+      ArraySlice<Type> operator() ();
       ArraySlice<Type> operator() (const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice);
       ArraySlice<Type> operator() (s32 minY, s32 maxY, s32 minX, s32 maxX); // If min or max is less than 0, it is equivalent to (end+value)
       ArraySlice<Type> operator() (s32 minY, s32 incrementY, s32 maxY, s32 minX, s32 incrementX, s32 maxX); // If min or max is less than 0, it is equivalent to (end+value)
+      //operator ArraySlice<Type>(); // Implicit conversion
 
+      ConstArraySlice<Type> operator() () const;
       ConstArraySlice<Type> operator() (const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice) const;
       ConstArraySlice<Type> operator() (s32 minY, s32 maxY, s32 minX, s32 maxX) const; // If min or max is less than 0, it is equivalent to (end+value)
       ConstArraySlice<Type> operator() (s32 minY, s32 incrementY, s32 maxY, s32 minX, s32 incrementX, s32 maxX) const; // If min or max is less than 0, it is equivalent to (end+value)
+      //operator ConstArraySlice<Type>() const; // Implicit conversion
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       // Returns a templated cv::Mat_ that shares the same buffer with this Array. No data is copied.
@@ -206,6 +210,8 @@ namespace Anki
       // It's probably easier to call array.operator() than this constructor directly
       ConstArraySlice(const Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice);
 
+      //ConstArraySlice<Type>& ConstArraySlice<Type>::operator= (const Array<Type> & rightHandSide); // Implicit conversion
+
       const LinearSequence<s32>& get_ySlice() const;
 
       const LinearSequence<s32>& get_xSlice() const;
@@ -219,7 +225,7 @@ namespace Anki
       Array<Type> array;
     }; // template<typename Type> class ArraySlice
 
-    template<typename Type> class ArraySlice
+    template<typename Type> class ArraySlice : public ConstArraySlice<Type>
     {
     public:
       ArraySlice();
@@ -230,17 +236,9 @@ namespace Anki
       // It's probably easier to call array.operator() than this constructor directly
       ArraySlice(Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice);
 
-      const LinearSequence<s32>& get_ySlice() const;
-
-      const LinearSequence<s32>& get_xSlice() const;
+      //ArraySlice<Type>& ArraySlice<Type>::operator= (Array<Type> & rightHandSide); // Implicit conversion
 
       Array<Type>& get_array();
-
-    protected:
-      LinearSequence<s32> ySlice;
-      LinearSequence<s32> xSlice;
-
-      Array<Type> array;
     }; // template<typename Type> class ArraySlice
 
 #pragma mark --- FixedPointArray Class Definition ---
@@ -415,6 +413,13 @@ namespace Anki
       return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
     }
 
+    template<typename Type> ArraySlice<Type> Array<Type>::operator() ()
+    {
+      ArraySlice<Type> slice(*this);
+
+      return slice;
+    }
+
     template<typename Type> ArraySlice<Type> Array<Type>::operator() (const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice)
     {
       ArraySlice<Type> slice(*this, ySlice, xSlice);
@@ -438,6 +443,27 @@ namespace Anki
       LinearSequence<s32> xSlice = IndexSequence(minX, incrementX, maxX, this->size[1]);
 
       ArraySlice<Type> slice(*this, ySlice, xSlice);
+
+      return slice;
+    }
+
+    //template<typename Type> Array<Type>::operator ArraySlice<Type>()
+    //{
+    //  ArraySlice<Type> slice(*this);
+
+    //  return slice;
+    //}
+
+    //template<typename Type> Array<Type>::operator ConstArraySlice<Type>() const
+    //{
+    //  ConstArraySlice<Type> slice(*this);
+
+    //  return slice;
+    //}
+
+    template<typename Type> ConstArraySlice<Type> Array<Type>::operator() () const
+    {
+      ConstArraySlice<Type> slice(*this);
 
       return slice;
     }
@@ -875,6 +901,15 @@ namespace Anki
     {
     }
 
+    /*template<typename Type> ConstArraySlice<Type>& ConstArraySlice<Type>::operator= (const Array<Type> & rightHandSide)
+    {
+    this->array = rightHandSide;
+    this->ySlice = LinearSequence<s32>(0,array.get_size(0)-1);
+    this->xSlice = LinearSequence<s32>(0,array.get_size(1)-1);
+
+    return *this;
+    }*/
+
     template<typename Type> const LinearSequence<s32>& ConstArraySlice<Type>::get_ySlice() const
     {
       return ySlice;
@@ -891,29 +926,31 @@ namespace Anki
     }
 
     template<typename Type> ArraySlice<Type>::ArraySlice()
-      : array(Array<Type>()), ySlice(LinearSequence<Type>()), xSlice(LinearSequence<Type>())
+      //: array(Array<Type>()), ySlice(LinearSequence<Type>()), xSlice(LinearSequence<Type>())
+      : ConstArraySlice<Type>()
     {
     }
 
     template<typename Type> ArraySlice<Type>::ArraySlice(Array<Type> &array)
-      : array(array), ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1))
+      //: array(array), ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1))
+      : ConstArraySlice<Type>(array)
     {
     }
 
     template<typename Type> ArraySlice<Type>::ArraySlice(Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice)
-      : array(array), ySlice(ySlice), xSlice(xSlice)
+      //: array(array), ySlice(ySlice), xSlice(xSlice)
+      : ConstArraySlice<Type>(array, ySlice, xSlice)
     {
     }
 
-    template<typename Type> const LinearSequence<s32>& ArraySlice<Type>::get_ySlice() const
+    /*template<typename Type> ArraySlice<Type>& ArraySlice<Type>::operator= (Array<Type> & rightHandSide)
     {
-      return ySlice;
-    }
+    this->array = rightHandSide;
+    this->ySlice = LinearSequence<s32>(0,array.get_size(0)-1);
+    this->xSlice = LinearSequence<s32>(0,array.get_size(1)-1);
 
-    template<typename Type> const LinearSequence<s32>& ArraySlice<Type>::get_xSlice() const
-    {
-      return xSlice;
-    }
+    return *this;
+    }*/
 
     template<typename Type> Array<Type>& ArraySlice<Type>::get_array()
     {
