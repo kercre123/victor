@@ -241,6 +241,22 @@ namespace Anki
       Array<Type>& get_array();
     }; // template<typename Type> class ArraySlice
 
+    // To aid the compiler optimizer, an ArraySliceLimits can be initialized at the beginning of the
+    // function, then used as the limits for the inner loops.
+    template<typename Type> class ArraySliceLimits
+    {
+    public:
+      const s32 xStart;
+      const s32 xIncrement;
+      const s32 xEnd;
+
+      const s32 yStart;
+      const s32 yIncrement;
+      const s32 yEnd;
+
+      ArraySliceLimits(ConstArraySlice<Type> &slice);
+    };
+
 #pragma mark --- FixedPointArray Class Definition ---
 
     template<typename Type> class FixedPointArray : public Array<Type>
@@ -359,7 +375,7 @@ namespace Anki
         numBytesAllocated,
         flags);
 
-      const Type startValue = sequence.get_startValue();
+      const Type startValue = sequence.get_start();
       const Type increment = sequence.get_increment();
 
       Type curValue = startValue;
@@ -955,6 +971,12 @@ namespace Anki
     template<typename Type> Array<Type>& ArraySlice<Type>::get_array()
     {
       return array;
+    }
+
+    template<typename Type> ArraySliceLimits<Type>::ArraySliceLimits(ConstArraySlice<Type> &slice)
+      : xStart(slice.get_xSlice().get_start()), xIncrement(slice.get_xSlice().get_increment()), xEnd(slice.get_xSlice().get_end()),
+      yStart(slice.get_ySlice().get_start()), yIncrement(slice.get_ySlice().get_increment()), yEnd(slice.get_ySlice().get_end())
+    {
     }
 
 #pragma mark --- FixedPointArray Implementations ---

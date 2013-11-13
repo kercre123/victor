@@ -20,38 +20,38 @@ namespace Anki
 
       LinearSequence();
 
-      // Matlab equivalent: startValue:endValue
-      LinearSequence(const Type startValue, const Type endValue);
+      // Matlab equivalent: start:end
+      LinearSequence(const Type start, const Type end);
 
-      // Matlab equivalent: startValue:increment:endValue
-      LinearSequence(const Type startValue, const Type increment, const Type endValue);
+      // Matlab equivalent: start:increment:end
+      LinearSequence(const Type start, const Type increment, const Type end);
 
-      Type get_startValue() const;
+      Type get_start() const;
 
       Type get_increment() const;
 
-      Type get_endValue() const;
+      Type get_end() const;
 
       s32 get_size() const;
 
     protected:
-      Type startValue;
+      Type start;
       Type increment;
-      Type endValue;
+      Type end;
 
       s32 size;
 
-      static s32 computeSize(const Type startValue, const Type increment, const Type endValue);
+      static s32 computeSize(const Type start, const Type increment, const Type end);
     }; // class LinearSequence
 
     // IndexSequence creates the input for slicing an Array
-    // If startValue or endValue is less than 0, it is equivalent to (end+value)
-    template<typename Type> LinearSequence<Type> IndexSequence(Type startValue, Type endValue, s32 arraySize);
-    template<typename Type> LinearSequence<Type> IndexSequence(Type startValue, Type increment, Type endValue, s32 arraySize);
-    LinearSequence<s32> IndexSequence(s32 arraySize); // Internally, it sets startValue==0, endValue=arraySize-1, like the Matlab colon operator array(:,:)
+    // If start or end is less than 0, it is equivalent to (end+value)
+    template<typename Type> LinearSequence<Type> IndexSequence(Type start, Type end, s32 arraySize);
+    template<typename Type> LinearSequence<Type> IndexSequence(Type start, Type increment, Type end, s32 arraySize);
+    LinearSequence<s32> IndexSequence(s32 arraySize); // Internally, it sets start==0, end=arraySize-1, like the Matlab colon operator array(:,:)
 
     // TODO: linspace
-    //template<typename Type> LinearSequence<Type> Linspace(const Type startValue, const Type endValue, const s32 size);
+    //template<typename Type> LinearSequence<Type> Linspace(const Type start, const Type end, const s32 size);
 
     // TODO: Logspace
     //template<typename Type> class Logspace : public Sequence<Type>
@@ -72,28 +72,28 @@ namespace Anki
 #pragma mark --- Implementations ---
 
     template<typename Type> LinearSequence<Type>::LinearSequence()
-      : startValue(-1), increment(static_cast<Type>(-1)), endValue(-1)
+      : start(-1), increment(static_cast<Type>(-1)), end(-1)
     {
       this->size = -1;
     }
 
-    template<typename Type> LinearSequence<Type>::LinearSequence(const Type startValue, const Type endValue)
-      : startValue(startValue), increment(static_cast<Type>(1))
+    template<typename Type> LinearSequence<Type>::LinearSequence(const Type start, const Type end)
+      : start(start), increment(static_cast<Type>(1))
     {
-      this->size = computeSize(this->startValue, this->increment, endValue);
-      this->endValue = this->startValue + (this->size-1) * this->increment;
+      this->size = computeSize(this->start, this->increment, end);
+      this->end = this->start + (this->size-1) * this->increment;
     }
 
-    template<typename Type> LinearSequence<Type>::LinearSequence(const Type startValue, const Type increment, const Type endValue)
-      : startValue(startValue), increment(increment)
+    template<typename Type> LinearSequence<Type>::LinearSequence(const Type start, const Type increment, const Type end)
+      : start(start), increment(increment)
     {
-      this->size = computeSize(this->startValue, this->increment, endValue);
-      this->endValue = this->startValue + (this->size-1) * this->increment;
+      this->size = computeSize(this->start, this->increment, end);
+      this->end = this->start + (this->size-1) * this->increment;
     }
 
-    template<typename Type> Type LinearSequence<Type>::get_startValue() const
+    template<typename Type> Type LinearSequence<Type>::get_start() const
     {
-      return startValue;
+      return start;
     }
 
     template<typename Type> Type LinearSequence<Type>::get_increment() const
@@ -101,9 +101,9 @@ namespace Anki
       return increment;
     }
 
-    template<typename Type> Type LinearSequence<Type>::get_endValue() const
+    template<typename Type> Type LinearSequence<Type>::get_end() const
     {
-      return endValue;
+      return end;
     }
 
     template<typename Type> s32 LinearSequence<Type>::get_size() const
@@ -112,22 +112,22 @@ namespace Anki
     }
 
     // TODO: instantiate for float
-    template<typename Type> s32 LinearSequence<Type>::computeSize(const Type startValue, const Type increment, const Type endValue)
+    template<typename Type> s32 LinearSequence<Type>::computeSize(const Type start, const Type increment, const Type end)
     {
       assert(increment != static_cast<Type>(0));
 
       // 10:-1:12
-      if(increment < 0 && startValue < endValue) {
+      if(increment < 0 && start < end) {
         return 0;
       }
 
       // 12:1:10
-      if(increment > 0 && startValue > endValue) {
+      if(increment > 0 && start > end) {
         return 0;
       }
 
-      const Type minLimit = MIN(startValue, endValue);
-      const Type maxLimit = MAX(startValue, endValue);
+      const Type minLimit = MIN(start, end);
+      const Type maxLimit = MAX(start, end);
       const Type incrementMagnitude = ABS(increment);
 
       const Type validRange = maxLimit - minLimit + 1;
@@ -136,32 +136,32 @@ namespace Anki
       return size;
     }
 
-    template<typename Type> LinearSequence<Type> IndexSequence(Type startValue, Type endValue, s32 arraySize)
+    template<typename Type> LinearSequence<Type> IndexSequence(Type start, Type end, s32 arraySize)
     {
-      return IndexSequence(startValue, static_cast<Type>(1), endValue, arraySize);
+      return IndexSequence(start, static_cast<Type>(1), end, arraySize);
     }
 
-    template<typename Type> LinearSequence<Type> IndexSequence(Type startValue, Type increment, Type endValue, s32 arraySize)
+    template<typename Type> LinearSequence<Type> IndexSequence(Type start, Type increment, Type end, s32 arraySize)
     {
-      if(startValue < 0)
-        startValue += arraySize;
+      if(start < 0)
+        start += arraySize;
 
-      assert(startValue >=0 && startValue < arraySize);
+      assert(start >=0 && start < arraySize);
 
-      if(endValue < 0)
-        endValue += arraySize;
+      if(end < 0)
+        end += arraySize;
 
-      assert(endValue >=0 && endValue < arraySize);
+      assert(end >=0 && end < arraySize);
 
-      LinearSequence<Type> sequence(startValue, increment, endValue);
+      LinearSequence<Type> sequence(start, increment, end);
 
       return sequence;
     }
 
 #pragma mark --- Specializations ---
 
-    template<> s32 LinearSequence<f32>::computeSize(const f32 startValue, const f32 increment, const f32 endValue);
-    template<> s32 LinearSequence<f64>::computeSize(const f64 startValue, const f64 increment, const f64 endValue);
+    template<> s32 LinearSequence<f32>::computeSize(const f32 start, const f32 increment, const f32 end);
+    template<> s32 LinearSequence<f64>::computeSize(const f64 start, const f64 increment, const f64 end);
   } // namespace Embedded
 } //namespace Anki
 

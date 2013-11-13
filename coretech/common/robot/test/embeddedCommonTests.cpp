@@ -78,9 +78,9 @@ GTEST_TEST(CoreTech_Common, SliceArray)
   // This is okay
   ConstArraySlice<u8> slice2 = array2(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
 
-  printf("%d %d %d\n", slice1.get_xSlice().get_startValue(), slice1.get_xSlice().get_endValue(), *slice1.get_array().Pointer(0,0));
-  printf("%d %d %d\n", slice1b.get_xSlice().get_startValue(), slice1b.get_xSlice().get_endValue(), *slice1b.get_array().Pointer(0,0));
-  printf("%d %d %d\n", slice2.get_xSlice().get_startValue(), slice2.get_xSlice().get_endValue(), *slice2.get_array().Pointer(0,0));
+  printf("%d %d %d\n", slice1.get_xSlice().get_start(), slice1.get_xSlice().get_end(), *slice1.get_array().Pointer(0,0));
+  printf("%d %d %d\n", slice1b.get_xSlice().get_start(), slice1b.get_xSlice().get_end(), *slice1b.get_array().Pointer(0,0));
+  printf("%d %d %d\n", slice2.get_xSlice().get_start(), slice2.get_xSlice().get_end(), *slice2.get_array().Pointer(0,0));
 
   GTEST_RETURN_HERE;
 }
@@ -100,7 +100,7 @@ GTEST_TEST(CoreTech_Common, MatrixMinAndMaxAndSum)
     }
   }
 
-  array.Print("array");
+  //array.Print("array");
 
   ArraySlice<u8> slice = array;
 

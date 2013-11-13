@@ -40,21 +40,12 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(array.IsValid(),
           0, "Matrix::Min", "Array<Type> is not valid");
 
-        const LinearSequence<s32>& xSlice = mat.get_xSlice();
-        const LinearSequence<s32>& ySlice = mat.get_ySlice();
+        const ArraySliceLimits<Type> matLimits(mat);
 
-        const s32 xMin = xSlice.get_startValue();
-        const s32 xIncrement = xSlice.get_increment();
-        const s32 xMax = xSlice.get_endValue();
-
-        const s32 yMin = ySlice.get_startValue();
-        const s32 yIncrement = ySlice.get_increment();
-        const s32 yMax = ySlice.get_endValue();
-
-        Type minValue = *array.Pointer(yMin, xMin);
-        for(s32 y=yMin; y<=yMax; y+=yIncrement) {
+        Type minValue = *array.Pointer(matLimits.yStart, matLimits.xStart);
+        for(s32 y=matLimits.yStart; y<=matLimits.yEnd; y+=matLimits.yIncrement) {
           const Type * const pMat = array.Pointer(y, 0);
-          for(s32 x=xMin; x<=xMax; x+=xIncrement) {
+          for(s32 x=matLimits.xStart; x<=matLimits.xEnd; x+=matLimits.xIncrement) {
             minValue = MIN(minValue, pMat[x]);
           }
         }
@@ -69,21 +60,12 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(array.IsValid(),
           0, "Matrix::Max", "Array<Type> is not valid");
 
-        const LinearSequence<s32>& xSlice = mat.get_xSlice();
-        const LinearSequence<s32>& ySlice = mat.get_ySlice();
+        const ArraySliceLimits<Type> matLimits(mat);
 
-        const s32 xMin = xSlice.get_startValue();
-        const s32 xIncrement = xSlice.get_increment();
-        const s32 xMax = xSlice.get_endValue();
-
-        const s32 yMin = ySlice.get_startValue();
-        const s32 yIncrement = ySlice.get_increment();
-        const s32 yMax = ySlice.get_endValue();
-
-        Type maxValue = *array.Pointer(yMin, xMin);
-        for(s32 y=yMin; y<=yMax; y+=yIncrement) {
+        Type maxValue = *array.Pointer(matLimits.yStart, matLimits.xStart);
+        for(s32 y=matLimits.yStart; y<=matLimits.yEnd; y+=matLimits.yIncrement) {
           const Type * const pMat = array.Pointer(y, 0);
-          for(s32 x=xMin; x<=xMax; x+=xIncrement) {
+          for(s32 x=matLimits.xStart; x<=matLimits.xEnd; x+=matLimits.xIncrement) {
             maxValue = MAX(maxValue, pMat[x]);
           }
         }
@@ -150,21 +132,12 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(array.IsValid(),
           0, "Matrix::Sum", "Array<Type> is not valid");
 
-        const LinearSequence<s32>& xSlice = mat.get_xSlice();
-        const LinearSequence<s32>& ySlice = mat.get_ySlice();
-
-        const s32 xMin = xSlice.get_startValue();
-        const s32 xIncrement = xSlice.get_increment();
-        const s32 xMax = xSlice.get_endValue();
-
-        const s32 yMin = ySlice.get_startValue();
-        const s32 yIncrement = ySlice.get_increment();
-        const s32 yMax = ySlice.get_endValue();
+        const ArraySliceLimits<Array_Type> matLimits(mat);
 
         Accumulator_Type sum = 0;
-        for(s32 y=yMin; y<=yMax; y+=yIncrement) {
+        for(s32 y=matLimits.yStart; y<=matLimits.yEnd; y+=matLimits.yIncrement) {
           const Array_Type * const pMat = array.Pointer(y, 0);
-          for(s32 x=xMin; x<=xMax; x+=xIncrement) {
+          for(s32 x=matLimits.xStart; x<=matLimits.xEnd; x+=matLimits.xIncrement) {
             sum += pMat[x];
           }
         }
