@@ -25,7 +25,7 @@ namespace Anki
       const f32 incrementMagnitude = ABS(increment);
 
       const f32 validRange = maxLimit - minLimit;
-      const s32 size = static_cast<s32>(floor((validRange+incrementMagnitude)/incrementMagnitude));
+      const s32 size = static_cast<s32>(floorf((validRange+incrementMagnitude)/incrementMagnitude));
 
       return size;
     }
@@ -51,7 +51,7 @@ namespace Anki
       const f64 incrementMagnitude = ABS(increment);
 
       const f64 validRange = maxLimit - minLimit;
-      const s32 size = static_cast<s32>(floor((validRange+incrementMagnitude)/incrementMagnitude));
+      const s32 size = static_cast<s32>(floorf((validRange+incrementMagnitude)/incrementMagnitude));
 
       return size;
     }

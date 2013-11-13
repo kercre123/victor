@@ -26,7 +26,7 @@ namespace Anki
       u32 get_rawFlags() const;
 
     protected:
-      typedef enum Flags
+      enum Flags
       {
         USE_BOUNDARY_FILL_PATTERNS = 1,
         ZERO_ALLOCATED_MEMORY = (1<<1)

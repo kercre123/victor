@@ -157,7 +157,7 @@ namespace Anki
 
     template<typename Type> const Array<Type>& ConstArraySlice<Type>::get_array() const
     {
-      return array;
+      return this->array;
     }
 
     template<typename Type> ArraySlice<Type>::ArraySlice()
@@ -187,7 +187,7 @@ namespace Anki
     return *this;
     }*/
 
-    template<typename Type> Result ArraySlice<Type>::Set(ConstArraySliceExpression<Type> input, bool automaticTranspose=true)
+    template<typename Type> Result ArraySlice<Type>::Set(ConstArraySliceExpression<Type> input, bool automaticTranspose)
     {
       AnkiConditionalErrorAndReturnValue(this->get_array().IsValid(),
         RESULT_FAIL, "ArraySlice<Type>::Set", "Invalid array");
@@ -263,7 +263,7 @@ namespace Anki
 
     template<typename Type> Array<Type>& ArraySlice<Type>::get_array()
     {
-      return array;
+      return this->array;
     }
 
     template<typename Type> ConstArraySliceExpression<Type>::ConstArraySliceExpression()
