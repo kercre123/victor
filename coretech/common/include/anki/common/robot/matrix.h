@@ -44,7 +44,7 @@ namespace Anki
 
         Type minValue = *array.Pointer(matLimits.yStart, matLimits.xStart);
         for(s32 y=matLimits.yStart; y<=matLimits.yEnd; y+=matLimits.yIncrement) {
-          const Type * const pMat = array.Pointer(y, 0);
+          const Type * restrict pMat = array.Pointer(y, 0);
           for(s32 x=matLimits.xStart; x<=matLimits.xEnd; x+=matLimits.xIncrement) {
             minValue = MIN(minValue, pMat[x]);
           }
@@ -64,7 +64,7 @@ namespace Anki
 
         Type maxValue = *array.Pointer(matLimits.yStart, matLimits.xStart);
         for(s32 y=matLimits.yStart; y<=matLimits.yEnd; y+=matLimits.yIncrement) {
-          const Type * const pMat = array.Pointer(y, 0);
+          const Type * restrict pMat = array.Pointer(y, 0);
           for(s32 x=matLimits.xStart; x<=matLimits.xEnd; x+=matLimits.xIncrement) {
             maxValue = MAX(maxValue, pMat[x]);
           }
@@ -136,7 +136,7 @@ namespace Anki
 
         Accumulator_Type sum = 0;
         for(s32 y=matLimits.yStart; y<=matLimits.yEnd; y+=matLimits.yIncrement) {
-          const Array_Type * const pMat = array.Pointer(y, 0);
+          const Array_Type * restrict pMat = array.Pointer(y, 0);
           for(s32 x=matLimits.xStart; x<=matLimits.xEnd; x+=matLimits.xIncrement) {
             sum += pMat[x];
           }

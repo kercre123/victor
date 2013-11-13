@@ -8,6 +8,7 @@
 #include "anki/common/robot/gtestLight.h"
 #include "anki/common/robot/matrix.h"
 #include "anki/common/robot/comparisons.h"
+#include "anki/common/robot/arraySlices.h"
 
 using namespace Anki::Embedded;
 
@@ -56,8 +57,65 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
-GTEST_TEST(CoreTech_Common, SliceArray)
+GTEST_TEST(CoreTech_Common, SliceArrayAssignment)
 {
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u8> array1(5,6,ms);
+  Array<u8> array2(5,6,ms);
+
+  s32 i = 0;
+  for(s32 y=0; y<5; y++) {
+    for(s32 x=0; x<6; x++) {
+      array2[y][x] = i++;
+    }
+  }
+
+  // Test the non-transposed Set()
+  array1.SetZero();
+  array1(0,2,0,3).Set(array2(1,3,1,4));
+
+  array1.Print("array1");
+  array2.Print("array2");
+
+  for(s32 y=0; y<=2; y++) {
+    for(s32 x=0; x<=3; x++) {
+      ASSERT_TRUE(array1[y][x] == array2[y+1][x+1]);
+    }
+    for(s32 x=4; x<6; x++) {
+      ASSERT_TRUE(array1[y][x] == 0);
+    }
+  }
+  for(s32 y=3; y<5; y++) {
+    for(s32 x=0; x<6; x++) {
+      ASSERT_TRUE(array1[y][x] == 0);
+    }
+  }
+
+  // Test the transposed Set()
+  array1.SetZero();
+  array1(0,-1,0,2).Set(array2(1,3,0,4));
+
+  array1.Print("array1");
+  array2.Print("array2");
+
+  for(s32 y=0; y<5; y++) {
+    for(s32 x=0; x<=2; x++) {
+      ASSERT_TRUE(array1[y][x] == array2[x+1][y]);
+    }
+    for(s32 x=3; x<6; x++) {
+      ASSERT_TRUE(array1[y][x] == 0);
+    }
+  }
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
+{
+  // This is just a compile test, and should always pass unless there's a very serious error
   ASSERT_TRUE(buffer != NULL);
   MemoryStack ms(buffer, MAX_BYTES);
   ASSERT_TRUE(ms.IsValid());
@@ -78,9 +136,9 @@ GTEST_TEST(CoreTech_Common, SliceArray)
   // This is okay
   ConstArraySlice<u8> slice2 = array2(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
 
-  printf("%d %d %d\n", slice1.get_xSlice().get_start(), slice1.get_xSlice().get_end(), *slice1.get_array().Pointer(0,0));
-  printf("%d %d %d\n", slice1b.get_xSlice().get_start(), slice1b.get_xSlice().get_end(), *slice1b.get_array().Pointer(0,0));
-  printf("%d %d %d\n", slice2.get_xSlice().get_start(), slice2.get_xSlice().get_end(), *slice2.get_array().Pointer(0,0));
+  //printf("%d %d %d\n", slice1.get_xSlice().get_start(), slice1.get_xSlice().get_end(), *slice1.get_array().Pointer(0,0));
+  //printf("%d %d %d\n", slice1b.get_xSlice().get_start(), slice1b.get_xSlice().get_end(), *slice1b.get_array().Pointer(0,0));
+  //printf("%d %d %d\n", slice2.get_xSlice().get_start(), slice2.get_xSlice().get_end(), *slice2.get_array().Pointer(0,0));
 
   GTEST_RETURN_HERE;
 }

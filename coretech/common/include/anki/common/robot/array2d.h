@@ -127,7 +127,7 @@ namespace Anki
       // Copy values to this Array.
       // If the input array does not contain enough elements, the remainder of this Array will be filled with zeros.
       // Returns the number of values set (not counting extra zeros)
-      // Note: The myriad has many issues with static initialization of arrays, so this should not used with caution
+      // Note: The myriad has many issues with static initialization of arrays, so this should be used with caution
 #ifdef ANKI_ARRAY_USE_ARRAY_SET
       s32 Set_unsafe(const Type * const values, const s32 numValues);
       s32 Set(const s32 * const values, const s32 numValues);
@@ -193,69 +193,6 @@ namespace Anki
 
       void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
     }; // class Array
-
-#pragma mark --- ArraySlice Class Definition ---
-
-    // TODO: support non-int indexes
-    // TODO: add lazy transpose?
-    // TODO: is there a better way of doing this than a completely different class, different only by const?
-    template<typename Type> class ConstArraySlice
-    {
-    public:
-      ConstArraySlice();
-
-      // Directly convert an array to an ArraySlice, so all Arrays can be used as input
-      ConstArraySlice(const Array<Type> &array);
-
-      // It's probably easier to call array.operator() than this constructor directly
-      ConstArraySlice(const Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice);
-
-      //ConstArraySlice<Type>& ConstArraySlice<Type>::operator= (const Array<Type> & rightHandSide); // Implicit conversion
-
-      const LinearSequence<s32>& get_ySlice() const;
-
-      const LinearSequence<s32>& get_xSlice() const;
-
-      const Array<Type>& get_array() const;
-
-    protected:
-      LinearSequence<s32> ySlice;
-      LinearSequence<s32> xSlice;
-
-      Array<Type> array;
-    }; // template<typename Type> class ArraySlice
-
-    template<typename Type> class ArraySlice : public ConstArraySlice<Type>
-    {
-    public:
-      ArraySlice();
-
-      // Directly convert an array to an ArraySlice, so all Arrays can be used as input
-      ArraySlice(Array<Type> &array);
-
-      // It's probably easier to call array.operator() than this constructor directly
-      ArraySlice(Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice);
-
-      //ArraySlice<Type>& ArraySlice<Type>::operator= (Array<Type> & rightHandSide); // Implicit conversion
-
-      Array<Type>& get_array();
-    }; // template<typename Type> class ArraySlice
-
-    // To aid the compiler optimizer, an ArraySliceLimits can be initialized at the beginning of the
-    // function, then used as the limits for the inner loops.
-    template<typename Type> class ArraySliceLimits
-    {
-    public:
-      const s32 xStart;
-      const s32 xIncrement;
-      const s32 xEnd;
-
-      const s32 yStart;
-      const s32 yIncrement;
-      const s32 yEnd;
-
-      ArraySliceLimits(ConstArraySlice<Type> &slice);
-    };
 
 #pragma mark --- FixedPointArray Class Definition ---
 
@@ -899,85 +836,6 @@ namespace Anki
       this->data = NULL;
       this->rawDataPointer = NULL;
     } // void Array<Type>::InvalidateArray()
-
-#pragma mark --- ArraySlice Implementations ---
-
-    template<typename Type> ConstArraySlice<Type>::ConstArraySlice()
-      : array(Array<Type>()), ySlice(LinearSequence<Type>()), xSlice(LinearSequence<Type>())
-    {
-    }
-
-    template<typename Type> ConstArraySlice<Type>::ConstArraySlice(const Array<Type> &array)
-      : array(array), ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1))
-    {
-    }
-
-    template<typename Type> ConstArraySlice<Type>::ConstArraySlice(const Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice)
-      : array(array), ySlice(ySlice), xSlice(xSlice)
-    {
-    }
-
-    /*template<typename Type> ConstArraySlice<Type>& ConstArraySlice<Type>::operator= (const Array<Type> & rightHandSide)
-    {
-    this->array = rightHandSide;
-    this->ySlice = LinearSequence<s32>(0,array.get_size(0)-1);
-    this->xSlice = LinearSequence<s32>(0,array.get_size(1)-1);
-
-    return *this;
-    }*/
-
-    template<typename Type> const LinearSequence<s32>& ConstArraySlice<Type>::get_ySlice() const
-    {
-      return ySlice;
-    }
-
-    template<typename Type> const LinearSequence<s32>& ConstArraySlice<Type>::get_xSlice() const
-    {
-      return xSlice;
-    }
-
-    template<typename Type> const Array<Type>& ConstArraySlice<Type>::get_array() const
-    {
-      return array;
-    }
-
-    template<typename Type> ArraySlice<Type>::ArraySlice()
-      //: array(Array<Type>()), ySlice(LinearSequence<Type>()), xSlice(LinearSequence<Type>())
-      : ConstArraySlice<Type>()
-    {
-    }
-
-    template<typename Type> ArraySlice<Type>::ArraySlice(Array<Type> &array)
-      //: array(array), ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1))
-      : ConstArraySlice<Type>(array)
-    {
-    }
-
-    template<typename Type> ArraySlice<Type>::ArraySlice(Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice)
-      //: array(array), ySlice(ySlice), xSlice(xSlice)
-      : ConstArraySlice<Type>(array, ySlice, xSlice)
-    {
-    }
-
-    /*template<typename Type> ArraySlice<Type>& ArraySlice<Type>::operator= (Array<Type> & rightHandSide)
-    {
-    this->array = rightHandSide;
-    this->ySlice = LinearSequence<s32>(0,array.get_size(0)-1);
-    this->xSlice = LinearSequence<s32>(0,array.get_size(1)-1);
-
-    return *this;
-    }*/
-
-    template<typename Type> Array<Type>& ArraySlice<Type>::get_array()
-    {
-      return array;
-    }
-
-    template<typename Type> ArraySliceLimits<Type>::ArraySliceLimits(ConstArraySlice<Type> &slice)
-      : xStart(slice.get_xSlice().get_start()), xIncrement(slice.get_xSlice().get_increment()), xEnd(slice.get_xSlice().get_end()),
-      yStart(slice.get_ySlice().get_start()), yIncrement(slice.get_ySlice().get_increment()), yEnd(slice.get_ySlice().get_end())
-    {
-    }
 
 #pragma mark --- FixedPointArray Implementations ---
 
