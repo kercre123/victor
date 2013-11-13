@@ -55,5 +55,10 @@ namespace Anki
 
       return size;
     }
+
+    LinearSequence<s32> IndexSequence(s32 arraySize)
+    {
+      return IndexSequence<s32>(0, 1, arraySize-1, arraySize);
+    }
   } // namespace Embedded
 } //namespace Anki

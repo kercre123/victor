@@ -187,6 +187,8 @@ namespace Anki
 
 #pragma mark --- ArraySlice Class Definition ---
 
+    // TODO: support non-int indexes
+    // TODO: add lazy transpose?
     // TODO: is there a better way of doing this than a completely different class, different only by const?
     template<typename Type> class ConstArraySlice
     {

@@ -18,12 +18,9 @@ namespace Anki
     {
     public:
 
-      // Matlab equivalent is the colon operator, for all, like array(:)
-      // Internally, it sets startValue==endValue==AllElements
       LinearSequence();
 
       // Matlab equivalent: startValue:endValue
-      // If startValue or endValue is less than 0, it is equivalent to (end+value)
       LinearSequence(const Type startValue, const Type endValue);
 
       // Matlab equivalent: startValue:increment:endValue
@@ -47,6 +44,12 @@ namespace Anki
       static s32 computeSize(const Type startValue, const Type increment, const Type endValue);
     }; // class LinearSequence
 
+    // IndexSequence creates the input for slicing an Array
+    // If startValue or endValue is less than 0, it is equivalent to (end+value)
+    template<typename Type> LinearSequence<Type> IndexSequence(Type startValue, Type endValue, s32 arraySize);
+    template<typename Type> LinearSequence<Type> IndexSequence(Type startValue, Type increment, Type endValue, s32 arraySize);
+    LinearSequence<s32> IndexSequence(s32 arraySize); // Internally, it sets startValue==0, endValue=arraySize-1, like the Matlab colon operator array(:,:)
+
     // TODO: linspace
     //template<typename Type> LinearSequence<Type> Linspace(const Type startValue, const Type endValue, const s32 size);
 
@@ -69,9 +72,9 @@ namespace Anki
 #pragma mark --- Implementations ---
 
     template<typename Type> LinearSequence<Type>::LinearSequence()
-      : startValue(AllElements), increment(static_cast<Type>(1)), endValue(AllElements)
+      : startValue(-1), increment(static_cast<Type>(-1)), endValue(-1)
     {
-      this->size = AllElements;
+      this->size = -1;
     }
 
     template<typename Type> LinearSequence<Type>::LinearSequence(const Type startValue, const Type endValue)
@@ -131,6 +134,24 @@ namespace Anki
       const s32 size = (validRange+incrementMagnitude-1)/incrementMagnitude;
 
       return size;
+    }
+
+    template<typename Type> LinearSequence<Type> IndexSequence(Type startValue, Type endValue, s32 arraySize)
+    {
+      return IndexSequence(startValue, static_cast<Type>(1), endValue, arraySize);
+    }
+
+    template<typename Type> LinearSequence<Type> IndexSequence(Type startValue, Type increment, Type endValue, s32 arraySize)
+    {
+      if(startValue < 0)
+        startValue += arraySize;
+
+      if(endValue < 0)
+        endValue += arraySize;
+
+      LinearSequence<Type> sequence(startValue, increment, endValue);
+
+      return sequence;
     }
 
 #pragma mark --- Specializations ---
