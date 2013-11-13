@@ -56,6 +56,35 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, SliceArray)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u8> array1(20,30,ms);
+
+  // This is okay
+  ArraySlice<u8> slice1 = array1(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
+
+  const Array<u8> array2(20,30,ms);
+
+  // Will not compile
+  //ArraySlice<u8> slice2 = array2(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
+
+  // This is okay
+  ConstArraySlice<u8> slice1b = array1(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
+
+  // This is okay
+  ConstArraySlice<u8> slice2 = array2(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
+
+  printf("%d %d %d\n", slice1.get_xSlice().get_startValue(), slice1.get_xSlice().get_endValue(), *slice1.get_array().Pointer(0,0));
+  printf("%d %d %d\n", slice1b.get_xSlice().get_startValue(), slice1b.get_xSlice().get_endValue(), *slice1b.get_array().Pointer(0,0));
+  printf("%d %d %d\n", slice2.get_xSlice().get_startValue(), slice2.get_xSlice().get_endValue(), *slice2.get_array().Pointer(0,0));
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, ReallocateArray)
 {
   ASSERT_TRUE(buffer != NULL);

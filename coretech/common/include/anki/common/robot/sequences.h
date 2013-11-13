@@ -7,6 +7,8 @@ namespace Anki
 {
   namespace Embedded
   {
+    const s32 AllElements = 0x8000000;
+
 #pragma mark --- Class Definitions ---
     template<typename Type> class Sequence
     {
@@ -15,7 +17,13 @@ namespace Anki
     template<typename Type> class LinearSequence : public Sequence<Type>
     {
     public:
+
+      // Matlab equivalent is the colon operator, for all, like array(:)
+      // Internally, it sets startValue==endValue==AllElements
+      LinearSequence();
+
       // Matlab equivalent: startValue:endValue
+      // If startValue or endValue is less than 0, it is equivalent to (end+value)
       LinearSequence(const Type startValue, const Type endValue);
 
       // Matlab equivalent: startValue:increment:endValue
@@ -60,7 +68,12 @@ namespace Anki
 
 #pragma mark --- Implementations ---
 
-    // Matlab equivalent: startValue:endValue
+    template<typename Type> LinearSequence<Type>::LinearSequence()
+      : startValue(AllElements), increment(static_cast<Type>(1)), endValue(AllElements)
+    {
+      this->size = AllElements;
+    }
+
     template<typename Type> LinearSequence<Type>::LinearSequence(const Type startValue, const Type endValue)
       : startValue(startValue), increment(static_cast<Type>(1))
     {
@@ -68,7 +81,6 @@ namespace Anki
       this->endValue = this->startValue + (this->size-1) * this->increment;
     }
 
-    // Matlab equivalent: startValue:increment:endValue
     template<typename Type> LinearSequence<Type>::LinearSequence(const Type startValue, const Type increment, const Type endValue)
       : startValue(startValue), increment(increment)
     {

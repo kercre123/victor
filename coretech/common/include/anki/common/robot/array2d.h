@@ -24,6 +24,9 @@ namespace Anki
 {
   namespace Embedded
   {
+    template<typename Type> class ArraySlice;
+    template<typename Type> class ConstArraySlice;
+
 #pragma mark --- Array Class Definition ---
 
     template<typename Type> class Array
@@ -77,6 +80,10 @@ namespace Anki
       // then index pArray in the inner loop.
       inline const Type* Pointer(const Point<s16> &point) const;
       inline Type* Pointer(const Point<s16> &point);
+
+      // Return a slice accessor for this array, like the Matlab expression "array(1:5, 2:3:5)"
+      ArraySlice<Type> operator() (const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice);
+      ConstArraySlice<Type> operator() (const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice) const;
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       // Returns a templated cv::Mat_ that shares the same buffer with this Array. No data is copied.
@@ -176,9 +183,44 @@ namespace Anki
       Result InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const BufferFlags flags);
 
       void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
-
-    private:
     }; // class Array
+
+#pragma mark --- ArraySlice Class Definition ---
+
+    // TODO: is there a better way of doing this than a completely different class, different only by const?
+    template<typename Type> class ConstArraySlice
+    {
+    public:
+      ConstArraySlice();
+      const LinearSequence<s32>& get_ySlice() const;
+
+      const LinearSequence<s32>& get_xSlice() const;
+
+      const Array<Type>& get_array() const;
+
+    protected:
+      friend class Array<Type>;
+
+      LinearSequence<s32> ySlice;
+      LinearSequence<s32> xSlice;
+
+      Array<Type> array;
+
+      ConstArraySlice(const Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice);
+    }; // template<typename Type> class ArraySlice
+
+    template<typename Type> class ArraySlice : public ConstArraySlice<Type>
+    {
+    public:
+      ArraySlice();
+
+      Array<Type>& get_array();
+
+    protected:
+      friend class Array<Type>;
+
+      ArraySlice(const Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice);
+    }; // template<typename Type> class ArraySlice
 
 #pragma mark --- FixedPointArray Class Definition ---
 
@@ -350,6 +392,20 @@ namespace Anki
     template<typename Type> Type* Array<Type>::Pointer(const Point<s16> &point)
     {
       return Pointer(static_cast<s32>(point.y), static_cast<s32>(point.x));
+    }
+
+    template<typename Type> ArraySlice<Type> Array<Type>::operator() (const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice)
+    {
+      ArraySlice<Type> slice(*this, ySlice, xSlice);
+
+      return slice;
+    }
+
+    template<typename Type> ConstArraySlice<Type> Array<Type>::operator() (const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice) const
+    {
+      ConstArraySlice<Type> slice(*this, ySlice, xSlice);
+
+      return slice;
     }
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
@@ -740,6 +796,48 @@ namespace Anki
       this->data = NULL;
       this->rawDataPointer = NULL;
     } // void Array<Type>::InvalidateArray()
+
+#pragma mark --- ArraySlice Implementations ---
+
+    template<typename Type> ConstArraySlice<Type>::ConstArraySlice()
+      : array(Array<Type>()), ySlice(LinearSequence<Type>()), xSlice(LinearSequence<Type>())
+    {
+    }
+
+    template<typename Type> ConstArraySlice<Type>::ConstArraySlice(const Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice)
+      : array(array), ySlice(ySlice), xSlice(xSlice)
+    {
+    }
+
+    template<typename Type> const LinearSequence<s32>& ConstArraySlice<Type>::get_ySlice() const
+    {
+      return ySlice;
+    }
+
+    template<typename Type> const LinearSequence<s32>& ConstArraySlice<Type>::get_xSlice() const
+    {
+      return xSlice;
+    }
+
+    template<typename Type> const Array<Type>& ConstArraySlice<Type>::get_array() const
+    {
+      return array;
+    }
+
+    template<typename Type> ArraySlice<Type>::ArraySlice()
+      : ConstArraySlice<Type>()
+    {
+    }
+
+    template<typename Type> ArraySlice<Type>::ArraySlice(const Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice)
+      : ConstArraySlice<Type>(array, ySlice, xSlice)
+    {
+    }
+
+    template<typename Type> Array<Type>& ArraySlice<Type>::get_array()
+    {
+      return array;
+    }
 
 #pragma mark --- FixedPointArray Implementations ---
 
