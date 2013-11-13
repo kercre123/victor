@@ -88,7 +88,8 @@ namespace Anki {
       float GetLeftWheelSpeed()
       {
         const double* axesSpeeds_rad_per_s = leftWheelGyro_->getValues();
-        float mm_per_s = -axesSpeeds_rad_per_s[1] * WHEEL_RAD_TO_MM;
+        //float mm_per_s = -axesSpeeds_rad_per_s[1] * WHEEL_RAD_TO_MM;   // true speed
+        float mm_per_s = ABS(axesSpeeds_rad_per_s[1] * WHEEL_RAD_TO_MM); // non-quadrature encoder speed (i.e. always +ve)
         //PRINT("LEFT: %f rad/s, %f mm/s\n", -axesSpeeds_rad_per_s[1], mm_per_s);
         return mm_per_s;
       }
@@ -96,7 +97,8 @@ namespace Anki {
       float GetRightWheelSpeed()
       {
         const double* axesSpeeds_rad_per_s = rightWheelGyro_->getValues();
-        float mm_per_s = -axesSpeeds_rad_per_s[1] * WHEEL_RAD_TO_MM;
+        //float mm_per_s = -axesSpeeds_rad_per_s[1] * WHEEL_RAD_TO_MM;   // true speed
+        float mm_per_s = ABS(axesSpeeds_rad_per_s[1] * WHEEL_RAD_TO_MM); // non-quadrature encoder speed (i.e. always +ve)
         //PRINT("RIGHT: %f rad/s, %f mm/s\n", -axesSpeeds_rad_per_s[1], mm_per_s);
         return mm_per_s;
       }

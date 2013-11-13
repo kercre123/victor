@@ -216,9 +216,33 @@ namespace Anki {
     // Runs one step of the wheel encoder filter;
     void EncoderSpeedFilterIteration(void)
     {
-      // Get true (gyro measured) speeds from robot model
+      // Get encoder speed measurements
       measuredWheelSpeedL_ = Cozmo::HAL::MotorGetSpeed(HAL::MOTOR_LEFT_WHEEL);
       measuredWheelSpeedR_ = Cozmo::HAL::MotorGetSpeed(HAL::MOTOR_RIGHT_WHEEL);
+      
+      
+      // Figure out what direction wheels are moving in.
+      // Since we don't have quadrature encoders we assume
+      // direction of motion to be the direction of the current
+      // motor drive.
+      //
+      // TODO: This assumption is false for a few frames when the motor drive
+      //       changes sign. Handle this?
+      if (power_l_ < 0) {
+        measuredWheelSpeedL_ *= -1;
+      }
+      if (power_r_ < 0) {
+        measuredWheelSpeedR_ *= -1;
+      }
+      
+      // When no power applied, rely on sign of current speed
+      if (NEAR_ZERO(power_l_)) {
+        measuredWheelSpeedL_ *= SIGN(filterWheelSpeedL_) ? 1 : -1;
+      }
+      if (NEAR_ZERO(power_r_)) {
+        measuredWheelSpeedR_ *= SIGN(filterWheelSpeedR_) ? 1 : -1;
+      }
+      
       
       filterWheelSpeedL_ = (measuredWheelSpeedL_ *
                        (1.0f - ENCODER_FILTERING_COEFF) +
