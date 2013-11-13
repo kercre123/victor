@@ -199,18 +199,30 @@ classdef LucasKanadeTracker < handle
                 
                 switch(this.tformType)
                     case 'translation'
-                        % nothing to do
+                        % translation only: nothing to do
                         
+                    case 'rotation'
+                        % Image-plane rotation + translation (no
+                        % skew/scale)
+                        X = this.xgrid{i_scale}(:);
+                        Y = this.ygrid{i_scale}(:);
+                        this.A_full{i_scale} = [ ...
+                            X.*Ix(:) Y.*Iy(:) (-Y.*Ix(:) + X.*Iy(:))];
+                            
                     case 'affine'
+                        % Full affine transformation (rotation, scale,
+                        % skew, translation)                        
                         this.A_full{i_scale} = [ ...
                             this.xgrid{i_scale}(:).*Ix(:) this.ygrid{i_scale}(:).*Ix(:) Ix(:) ...
                             this.xgrid{i_scale}(:).*Iy(:) this.ygrid{i_scale}(:).*Iy(:) Iy(:)];
                         
                     case 'scale'
+                        % Translation + scaling only
                         this.A_full{i_scale} = [this.A_trans{i_scale} ...
                             (this.xgrid{i_scale}(:).*Ix(:) + this.ygrid{i_scale}(:).*Iy(:))];
                         
                     case 'homography'
+                        % Full perspective homography
                         X = this.xgrid{i_scale}(:);
                         Y = this.ygrid{i_scale}(:);
                         this.A_full{i_scale} = [ ...
@@ -474,6 +486,13 @@ classdef LucasKanadeTracker < handle
                 if translationDone
                     
                     switch(this.tformType)
+                        case 'rotation'
+                            cosTheta = cos(update(3));
+                            sinTheta = sin(update(3));
+                            tformUpdate = [cosTheta -sinTheta update(1);
+                                sinTheta cosTheta update(2); 
+                                0 0 1];
+                            
                         case 'affine'
                             tformUpdate = eye(3) + [update(1:3)'; update(4:6)'; zeros(1,3)];
                             
