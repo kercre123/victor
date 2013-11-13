@@ -73,6 +73,8 @@ processAxes = [];
 parseVarargin(varargin{:});
 
 grabs = appendGrabs;
+escapePressed = false;
+processKeyPressed = false;
 
 % Set up display figure
 h_fig = namedFigure(figureName, 'CurrentCharacter', '~');
@@ -142,13 +144,13 @@ try
     
     % Capture remaining frames
     i_frame = 2;
-    while i_frame < numFrames && get(h_fig, 'CurrentCharacter') ~= 27 % ESCAPE
+    while i_frame < numFrames && ~escapePressed
         t = tic;
         frame = getFrameFcn(i_frame);
         
         set(h_img, 'CData', frame);
         if ~isempty(processFcn)
-            if doContinuousProcessing || get(h_fig, 'CurrentCharacter') ~= '~' 
+            if doContinuousProcessing || processKeyPressed
                 if ~doContinuousProcessing
                     disp('Processing frame')
                 end
@@ -157,8 +159,8 @@ try
                 %catch E
                  %   warning(E.message)
                 %end
-                    
-                set(h_fig, 'CurrentCharacter', '~');
+                   
+                processKeyPressed = false;
             end
         end
         
@@ -188,7 +190,11 @@ end
 
 
     function keypress(~, edata)
+        if isempty(edata.Modifier)
         switch(edata.Key)
+            case 'escape'
+                escapePressed = true;
+                
             case 'space'
                 disp('Frame grabbed.');
                 grabs{end+1} = frame;
@@ -198,6 +204,10 @@ end
                 %                     processFcn(frame);
                 %                 end
                 
+            otherwise
+                processKeyPressed = true;
+                
+        end
         end
     end
 
