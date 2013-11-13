@@ -46,16 +46,21 @@ namespace Anki
       Array<Type> array;
     }; // template<typename Type> class ArraySlice
 
+    // A non-const version of ConstArraySlice
+    // Warning: A "const ArraySlice" doesn't have a const Array. Only ConstArraySlice has a const
+    //          Array. This allows for implicit conversion to non-const function parameters.
     template<typename Type> class ArraySlice : public ConstArraySlice<Type>
     {
     public:
       ArraySlice();
 
       // Directly convert an array to an ArraySlice, so all Arrays can be used as input
-      ArraySlice(Array<Type> &array);
+      // The Array parameter is not a reference, to allow for implicit conversion
+      ArraySlice(Array<Type> array);
 
       // It's probably easier to call array.operator() than this constructor directly
-      ArraySlice(Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice);
+      // The Array parameter is not a reference, to allow for implicit conversion
+      ArraySlice(Array<Type> array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice);
 
       //ArraySlice<Type>& ArraySlice<Type>::operator= (Array<Type> & rightHandSide); // Implicit conversion
 
@@ -72,6 +77,10 @@ namespace Anki
     {
     public:
       ConstArraySliceExpression();
+
+      ConstArraySliceExpression(const Array<Type> input, bool isTransposed=false);
+
+      ConstArraySliceExpression(const ArraySlice<Type> &input, bool isTransposed=false);
 
       ConstArraySliceExpression(const ConstArraySlice<Type> &input, bool isTransposed=false);
 
@@ -100,7 +109,7 @@ namespace Anki
       s32 yEnd;
       s32 ySize;
 
-      ArraySliceLimits(ConstArraySlice<Type> &slice);
+      ArraySliceLimits(const ConstArraySlice<Type> &slice);
     };
 
 #pragma mark --- Implementations ---
@@ -157,13 +166,13 @@ namespace Anki
     {
     }
 
-    template<typename Type> ArraySlice<Type>::ArraySlice(Array<Type> &array)
+    template<typename Type> ArraySlice<Type>::ArraySlice(Array<Type> array)
       //: array(array), ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1))
       : ConstArraySlice<Type>(array)
     {
     }
 
-    template<typename Type> ArraySlice<Type>::ArraySlice(Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice)
+    template<typename Type> ArraySlice<Type>::ArraySlice(Array<Type> array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice)
       //: array(array), ySlice(ySlice), xSlice(xSlice)
       : ConstArraySlice<Type>(array, ySlice, xSlice)
     {
@@ -262,6 +271,16 @@ namespace Anki
     {
     }
 
+    template<typename Type> ConstArraySliceExpression<Type>::ConstArraySliceExpression(const Array<Type> input, bool isTransposed)
+      : ConstArraySlice<Type>(input), isTransposed(isTransposed)
+    {
+    }
+
+    template<typename Type> ConstArraySliceExpression<Type>::ConstArraySliceExpression(const ArraySlice<Type> &input, bool isTransposed)
+      : ConstArraySlice<Type>(input), isTransposed(isTransposed)
+    {
+    }
+
     template<typename Type> ConstArraySliceExpression<Type>::ConstArraySliceExpression(const ConstArraySlice<Type> &input, bool isTransposed)
       : ConstArraySlice<Type>(input), isTransposed(isTransposed)
     {
@@ -279,7 +298,7 @@ namespace Anki
       return isTransposed;
     }
 
-    template<typename Type> ArraySliceLimits<Type>::ArraySliceLimits(ConstArraySlice<Type> &slice)
+    template<typename Type> ArraySliceLimits<Type>::ArraySliceLimits(const ConstArraySlice<Type> &slice)
       : xStart(slice.get_xSlice().get_start()), xIncrement(slice.get_xSlice().get_increment()), xEnd(slice.get_xSlice().get_end()), xSize(slice.get_xSlice().get_size()),
       yStart(slice.get_ySlice().get_start()), yIncrement(slice.get_ySlice().get_increment()), yEnd(slice.get_ySlice().get_end()), ySize(slice.get_ySlice().get_size())
     {

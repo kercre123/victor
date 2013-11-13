@@ -17,25 +17,25 @@ namespace Anki
       //
 
       // Return the minimum element in this Array
-      template<typename Type> Type Min(ConstArraySlice<Type> &mat);
+      template<typename Type> Type Min(const ConstArraySliceExpression<Type> &mat);
 
       // Return the maximum element in this Array
-      template<typename Type> Type Max(ConstArraySlice<Type> &mat);
+      template<typename Type> Type Max(const ConstArraySliceExpression<Type> &mat);
 
       // Return the sum of every element in the Array
-      template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(ConstArraySlice<Array_Type> &mat);
+      template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(const ConstArraySliceExpression<Array_Type> &mat);
 
       //
       // Elementwise matrix operations
       //
 
-      //template<typename Type> Type Add(ArraySlice<Type> &mat1, ArraySlice<Type> &mat2, ConstArraySlice<Type> &out);
+      //template<typename Type> Result Add(const ConstArraySliceExpression<Type> &mat1, const ConstArraySliceExpression<Type> &mat2, const ArraySlice<Type> &out);
 
-      //template<typename Type> Type Subtract(ArraySlice<Type> &mat1, ArraySlice<Type> &mat2, ConstArraySlice<Type> &out);
+      //template<typename Type> Result Subtract(const ConstArraySliceExpression<Type> &mat1, const ConstArraySliceExpression<Type> &mat2, const ArraySlice<Type> &out);
 
-      //template<typename Type> Type DotMultiply(ArraySlice<Type> &mat1, ArraySlice<Type> &mat2, ConstArraySlice<Type> &out);
+      //template<typename Type> Result DotMultiply(const ConstArraySliceExpression<Type> &mat1, const ConstArraySliceExpression<Type> &mat2, const ArraySlice<Type> &out);
 
-      //template<typename Type> Type DotDivide(ArraySlice<Type> &mat1, ArraySlice<Type> &mat2, ConstArraySlice<Type> &out);
+      //template<typename Type> Result DotDivide(const ConstArraySliceExpression<Type> &mat1, const ConstArraySliceExpression<Type> &mat2, const ArraySlice<Type> &out);
 
       //
       // Standard matrix operations
@@ -57,7 +57,7 @@ namespace Anki
 
 #pragma mark --- Implementations ---
 
-      template<typename Type> Type Min(ConstArraySlice<Type> &mat)
+      template<typename Type> Type Min(const ConstArraySliceExpression<Type> &mat)
       {
         const Array<Type> &array = mat.get_array();
 
@@ -77,7 +77,7 @@ namespace Anki
         return minValue;
       }
 
-      template<typename Type> Type Max(ConstArraySlice<Type> &mat)
+      template<typename Type> Type Max(const ConstArraySliceExpression<Type> &mat)
       {
         const Array<Type> &array = mat.get_array();
 
@@ -97,7 +97,7 @@ namespace Anki
         return maxValue;
       }
 
-      template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(ConstArraySlice<Array_Type> &mat)
+      template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(const ConstArraySliceExpression<Array_Type> &mat)
       {
         const Array<Array_Type> &array = mat.get_array();
 

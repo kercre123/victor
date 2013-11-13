@@ -178,19 +178,15 @@ GTEST_TEST(CoreTech_Common, MatrixMinAndMaxAndSum)
     }
   }
 
-  //array.Print("array");
-
-  ArraySlice<u8> slice = array;
-
-  const s32 minValue1 = Matrix::Min<u8>(array());
+  const s32 minValue1 = Matrix::Min<u8>(array);
   const s32 minValue2 = Matrix::Min<u8>(array(2,-1,2,-1));
   const s32 minValue3 = Matrix::Min<u8>(array(2,-1,-1,-1));
 
-  const s32 maxValue1 = Matrix::Max<u8>(array());
+  const s32 maxValue1 = Matrix::Max<u8>(array);
   const s32 maxValue2 = Matrix::Max<u8>(array(0,-3,0,-1));
   const s32 maxValue3 = Matrix::Max<u8>(array(0,-1,-2,-2));
 
-  const s32 sum1 = Matrix::Sum<u8,s32>(array());
+  const s32 sum1 = Matrix::Sum<u8,s32>(array);
   const s32 sum2 = Matrix::Sum<u8,s32>(array(0,-3,0,-1));
   const s32 sum3 = Matrix::Sum<u8,s32>(array(0,-1,-2,-2));
 
