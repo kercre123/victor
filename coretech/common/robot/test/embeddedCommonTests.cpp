@@ -69,18 +69,37 @@ GTEST_TEST(CoreTech_Common, SliceArray)
 
   const Array<u8> array2(20,30,ms);
 
-  // Will not compile
-  //ArraySlice<u8> slice2 = array2(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
-
-  // This is okay
-  ConstArraySlice<u8> slice1b = array1(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
-
   // This is okay
   ConstArraySlice<u8> slice2 = array2(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
 
   printf("%d %d %d\n", slice1.get_xSlice().get_startValue(), slice1.get_xSlice().get_endValue(), *slice1.get_array().Pointer(0,0));
-  printf("%d %d %d\n", slice1b.get_xSlice().get_startValue(), slice1b.get_xSlice().get_endValue(), *slice1b.get_array().Pointer(0,0));
   printf("%d %d %d\n", slice2.get_xSlice().get_startValue(), slice2.get_xSlice().get_endValue(), *slice2.get_array().Pointer(0,0));
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, MatrixMinAndMax)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u8> array(5,5,ms);
+
+  s32 i = 0;
+  for(s32 y=0; y<5; y++) {
+    for(s32 x=0; x<5; x++) {
+      array[y][x] = i++;
+    }
+  }
+
+  const s32 minValue1 = Matrix::Min<u8>(ArraySlice<u8>(array));
+  const s32 minValue2 = Matrix::Min<u8>(array(2,-1,2,-1));
+  const s32 minValue3 = Matrix::Min<u8>(array(2,-1,-1,-1));
+
+  const s32 maxValue1 = Matrix::Max<u8>(array);
+  const s32 maxValue2 = Matrix::Max<u8>(array(0,-3,0,-1));
+  const s32 maxValue3 = Matrix::Max<u8>(array(0,-1,-1,-1));
 
   GTEST_RETURN_HERE;
 }

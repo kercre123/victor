@@ -13,10 +13,10 @@ namespace Anki
 #pragma mark --- Definitions ---
 
       // Return the minimum element in this Array
-      template<typename Type> Type Min(const Array<Type> &mat);
+      template<typename Type> Type Min(ConstArraySlice<Type> &mat);
 
       // Return the maximum element in this Array
-      template<typename Type> Type Max(const Array<Type> &mat);
+      template<typename Type> Type Max(ConstArraySlice<Type> &mat);
 
       // For a square array, either:
       // 1. When lowerToUpper==true,  copies the lower (left)  triangle to the upper (right) triangle
@@ -29,36 +29,62 @@ namespace Anki
       template<typename Type> Result Multiply(const Array<Type> &mat1, const Array<Type> &mat2, Array<Type> &matOut);
 
       // Return the sum of every element in the Array
-      template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(const Array<Array_Type> &image);
+      template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(const ArraySlice<Array_Type> &image);
 
 #pragma mark --- Implementations ---
 
-      template<typename Type> Type Min(const Array<Type> &mat)
+      template<typename Type> Type Min(ConstArraySlice<Type> &mat)
       {
-        AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        const Array<Type> &array = mat.get_array();
+
+        AnkiConditionalErrorAndReturnValue(array.IsValid(),
           0, "Matrix::Min", "Array<Type> is not valid");
 
-        Type minValue = *this->Pointer(0, 0);
-        for(s32 y=0; y<size[0]; y++) {
-          const Type * const pThisData = this->Pointer(y, 0);
-          for(s32 x=0; x<size[1]; x++) {
-            minValue = MIN(minValue, pThisData[x]);
+        const LinearSequence<s32>& xSlice = mat.get_xSlice();
+        const LinearSequence<s32>& ySlice = mat.get_ySlice();
+
+        const s32 xMin = xSlice.get_startValue();
+        const s32 xIncrement = xSlice.get_increment();
+        const s32 xMax = xSlice.get_startValue();
+
+        const s32 yMin = ySlice.get_startValue();
+        const s32 yIncrement = ySlice.get_increment();
+        const s32 yMax = ySlice.get_startValue();
+
+        Type minValue = *array.Pointer(yMin, xMin);
+        for(s32 y=yMin; y<yMax; y+=yIncrement) {
+          const Type * const pMat = array.Pointer(y, 0);
+          for(s32 x=xMin; x<xMax; x+=xIncrement) {
+            minValue = MIN(minValue, pMat[x]);
           }
         }
 
         return minValue;
       }
 
-      template<typename Type> Type Max(const Array<Type> &mat)
+      template<typename Type> Type Max(ConstArraySlice<Type> &mat)
       {
-        AnkiConditionalErrorAndReturnValue(this->IsValid(),
-          0, "Matrix::Min", "Array<Type> is not valid");
+        const Array<Type> &array = mat.get_array();
 
-        Type maxValue = *this->Pointer(0, 0);
-        for(s32 y=0; y<size[0]; y++) {
-          const Type * const pThisData = this->Pointer(y, 0);
-          for(s32 x=0; x<size[1]; x++) {
-            maxValue = MAX(maxValue, pThisData[x]);
+        AnkiConditionalErrorAndReturnValue(array.IsValid(),
+          0, "Matrix::Max", "Array<Type> is not valid");
+
+        const LinearSequence<s32>& xSlice = mat.get_xSlice();
+        const LinearSequence<s32>& ySlice = mat.get_ySlice();
+
+        const s32 xMin = xSlice.get_startValue();
+        const s32 xIncrement = xSlice.get_increment();
+        const s32 xMax = xSlice.get_startValue();
+
+        const s32 yMin = ySlice.get_startValue();
+        const s32 yIncrement = ySlice.get_increment();
+        const s32 yMax = ySlice.get_startValue();
+
+        Type maxValue = *array.Pointer(yMin, xMin);
+        for(s32 y=yMin; y<yMax; y+=yIncrement) {
+          const Type * const pMat = array.Pointer(y, 0);
+          for(s32 x=xMin; x<xMax; x+=xIncrement) {
+            maxValue = MAX(minValue, pMat[x]);
           }
         }
 
@@ -117,7 +143,7 @@ namespace Anki
         return RESULT_OK;
       } // template<typename Array_Type, typename Type> Result Multiply(const Array_Type &mat1, const Array_Type &mat2, Array_Type &matOut)
 
-      template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(const Array<Array_Type> &image)
+      template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(const ArraySlice<Array_Type> &image)
       {
         const s32 imageHeight = image.get_size(0);
         const s32 imageWidth = image.get_size(1);

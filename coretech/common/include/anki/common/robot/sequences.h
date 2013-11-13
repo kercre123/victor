@@ -146,8 +146,12 @@ namespace Anki
       if(startValue < 0)
         startValue += arraySize;
 
+      assert(startValue >=0 && startValue < arraySize);
+
       if(endValue < 0)
         endValue += arraySize;
+
+      assert(endValue >=0 && endValue < arraySize);
 
       LinearSequence<Type> sequence(startValue, increment, endValue);
 
