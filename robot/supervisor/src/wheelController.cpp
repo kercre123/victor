@@ -9,7 +9,6 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/debug.h"
-//#include "anki/cozmo/robot/hal.h" // needed?
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/steeringController.h"
 #include "anki/cozmo/robot/trace.h"
@@ -26,10 +25,11 @@ namespace Anki {
     // private members
     namespace {
       
-      // Cap error_sum so that integral component of outl does not exceed say some percent of MOTOR_PWM_MAXVAL.
-      // e.g. 25% of 2400 = 600.  600 / wKi = 24000.
-      // 24000 is also less than fix16 max value should we want to convert to fixed point.
-      const f32 MAX_ERROR_SUM = 24000.f;
+      // Cap error_sum so that integral component of outl does not exceed some percent of MOTOR_MAX_POWER.
+      // e.g. 25% of 1.0 = 0.25  =>   0.25 = wKi * MAX_ERROR_SUM.
+      const f32 MAX_ERROR_SUM = 5000.f;
+      
+      // Speed filtering rate
       const f32 ENCODER_FILTERING_COEFF = 0.9f;
       
       // Gains for wheel controller
@@ -41,9 +41,9 @@ namespace Anki {
       f32 desiredWheelSpeedL_ = 0;
       f32 desiredWheelSpeedR_ = 0;
       
-      // PWM values:
-      s16 pwmL_ = 0;
-      s16 pwmR_ = 0;
+      // Motor power values
+      f32 power_l_ = 0;
+      f32 power_r_ = 0;
       
       // Encoder / Wheel Speed Filtering
       s32 measuredWheelSpeedL_ = 0;
@@ -58,8 +58,8 @@ namespace Anki {
       bool coastUntilStop_ = false;
       
       // Integral gain sums for wheel controllers
-      float error_sumL_ = 0;
-      float error_sumR_ = 0;
+      f32 error_sumL_ = 0;
+      f32 error_sumR_ = 0;
       
       
     } // private namespace
@@ -76,18 +76,11 @@ namespace Anki {
       Kd_ = kd;
     }
     
-    //Manage wheel controller:
-    //If controller off,
-    //Directly output the input but "converted" from mm/sec to motor units (!!: approx. only. See function description)
-    // *motorvalueoutL =  desiredWheelSpeedL;
-    // *motorvalueoutR =  desiredWheelSpeedR;
-    
-    
     //Run the wheel controller
-    //The output motor value is in the range of -2400..2400
-    void Run(s16 *motorvalueoutL, s16 *motorvalueoutR)
+    void Run()
     {
-      if(!coastMode_ && !coastUntilStop_) {
+      if(1) {
+//      if(!coastMode_ && !coastUntilStop_) {
         
 #if(DEBUG_WHEEL_CONTROLLER)
         PRINT(" WHEEL speeds: %f (L), %f (R)   (Curr: %d, %d)\n",
@@ -107,10 +100,33 @@ namespace Anki {
         Tracefloat(TRACE_VAR_WSPD_FILT_R, filterSpeedR_, TRACE_MASK_MOTOR_CONTROLLER);
         Tracefloat(TRACE_VAR_ERROR_L, error_sumL_, TRACE_MASK_MOTOR_CONTROLLER);
         Tracefloat(TRACE_VAR_ERROR_R, error_sumR_, TRACE_MASK_MOTOR_CONTROLLER);
+    
+        f32 dirL = desiredWheelSpeedL_ >= 0 ? 1 : -1;
+        f32 dirR = desiredWheelSpeedR_ >= 0 ? 1 : -1;
         
-        // NDM: Convert to int only AFTER clamping, to avoid int overflow
-        float outl = MM_PER_SEC_TO_MOTOR_VAL( (float)(Kp_ * errorL) + (error_sumL_ * Ki_) );
-        float outr = MM_PER_SEC_TO_MOTOR_VAL( (float)(Kp_ * errorR) + (error_sumR_ * Ki_) );
+        f32 outl_ol = 0, outr_ol = 0;
+        f32 outl_corr = 0, outr_corr = 0;
+        f32 outl = 0, outr = 0;
+    
+        // Compute open loop component and error correction component of wheel motor command
+        if (ABS(desiredWheelSpeedL_) >= TRANSITION_POWER) {
+          outl_ol = (desiredWheelSpeedL_ + (dirL * HIGH_OPEN_LOOP_OFFSET)) * HIGH_OPEN_LOOP_GAIN;
+          outl_corr = ( (Kp_ * errorL) + (error_sumL_ * Ki_) );
+        } else {
+          outl_ol = (desiredWheelSpeedL_) * LOW_OPEN_LOOP_GAIN;
+          outl_corr = ( (DEFAULT_WHEEL_LOW_KP * errorL) + (error_sumL_ * DEFAULT_WHEEL_LOW_KI) );
+        }
+        outl = outl_ol + outl_corr;
+
+        if (ABS(desiredWheelSpeedR_) >= TRANSITION_POWER) {
+          outr_ol = (desiredWheelSpeedR_ + (dirR * HIGH_OPEN_LOOP_OFFSET)) * HIGH_OPEN_LOOP_GAIN;
+          outr_corr = ( (Kp_ * errorR) + (error_sumR_ * Ki_) );
+        } else {
+          outr_ol = (desiredWheelSpeedR_) * LOW_OPEN_LOOP_GAIN;
+          outr_corr = ( (DEFAULT_WHEEL_LOW_KP * errorR) + (error_sumR_ * DEFAULT_WHEEL_LOW_KI) );
+        }
+        outr = outr_ol + outr_corr;
+        
         
 #if(DEBUG_WHEEL_CONTROLLER)
         PRINT(" WHEEL error: %f (L), %f (R)   error_sum: %f (L), %f (R)\n", errorL, errorR, error_sumL_, error_sumR_);
@@ -128,46 +144,20 @@ namespace Anki {
          }
          */
         
-        *motorvalueoutL = CLIP(outl,
-                               -Cozmo::HAL::MOTOR_PWM_MAXVAL,
-                               Cozmo::HAL::MOTOR_PWM_MAXVAL);
-        *motorvalueoutR = CLIP(outr,
-                               -Cozmo::HAL::MOTOR_PWM_MAXVAL,
-                               Cozmo::HAL::MOTOR_PWM_MAXVAL);
+        power_l_ = CLIP(outl, -HAL::MOTOR_MAX_POWER, HAL::MOTOR_MAX_POWER);
+        power_r_ = CLIP(outr, -HAL::MOTOR_MAX_POWER, HAL::MOTOR_MAX_POWER);
         
-        //Anti zero-crossover
-        //Define a deadband above 0 where we command nothing to the wheels:
-        //1) If the current wheelspeed is smaller= than the deadband
-        //2) And the desired speed is smaller than the current speed
-        //ATTENTION: This should work in reverse dirving as well, BUT requires
-        //the encoders to return values
-        if (ABS(filterWheelSpeedL_) <= WHEEL_DEAD_BAND_MM_S) {
-          if ((filterWheelSpeedL_ >= 0 &&
-               desiredWheelSpeedL_ <= filterWheelSpeedL_) ||
-              (filterWheelSpeedL_ < 0 &&
-               desiredWheelSpeedL_ >= filterWheelSpeedL_)) {
-            *motorvalueoutL = 0;
-            error_sumL_ = 0;
-          }
-        }
+        
         // If considered stopped, force stop
         if (ABS(desiredWheelSpeedL_) <= WHEEL_SPEED_COMMAND_STOPPED_MM_S) {
-          *motorvalueoutL = 0;
+          power_l_ = 0;
           error_sumL_ = 0;
         }
         
-        if (ABS(filterWheelSpeedR_) <= WHEEL_DEAD_BAND_MM_S) {
-          if ((filterWheelSpeedR_ >= 0 &&
-               desiredWheelSpeedR_ <= filterWheelSpeedR_) ||
-              (desiredWheelSpeedR_ < 0 &&
-               desiredWheelSpeedR_ >= filterWheelSpeedR_)) {
-            *motorvalueoutR = 0;
-            error_sumR_ = 0;
-          }
-        }
+        
         // If considered stopped, force stop
         if (ABS(desiredWheelSpeedR_) <= WHEEL_SPEED_COMMAND_STOPPED_MM_S) {
-          *motorvalueoutR = 0;
+          power_r_ = 0;
           error_sumR_ = 0;
         }
         
@@ -181,8 +171,8 @@ namespace Anki {
         }
       } else {
         // Coasting -- command 0 to motors
-        *motorvalueoutL = 0;
-        *motorvalueoutR = 0;
+        power_l_ = 0;
+        power_r_ = 0;
         error_sumL_ = 0;
         error_sumR_ = 0;
         
@@ -194,20 +184,13 @@ namespace Anki {
       }
       
 #if(DEBUG_WHEEL_CONTROLLER)
-      PRINT(" WHEEL pwm: %d (L), %d (R)\n", *motorvalueoutL, *motorvalueoutR);
+      PRINT(" WHEEL power: %f (L), %f (R)\n", power_l_, power_r_);
 #endif
       
-      //Command the computed speed (as PWM values) to the motors
-      //Cozmo::Robot::SetOpenLoopMotorSpeed(*motorvalueoutL, *motorvalueoutR);
-      
-      // TODO: Scaling PWM command to be between -1 and 1 so we can use the proper
-      // HAL::MotorSetPower function, but this breaks everything controller needs to be re-tuned.
-      //f32 power_l = CLIP((f32)*motorvalueoutL / HAL::MOTOR_PWM_MAXVAL, -1.0, 1.0);
-      //f32 power_r = CLIP((f32)*motorvalueoutR / HAL::MOTOR_PWM_MAXVAL, -1.0, 1.0);
-      f32 power_l = CLIP((f32)*motorvalueoutL / 200, -1.0, 1.0);
-      f32 power_r = CLIP((f32)*motorvalueoutR / 200, -1.0, 1.0);
-      HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, power_l);
-      HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, power_r);
+      //Command the computed motor power values
+      HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, power_l_);
+      HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, power_r_);
+
       
     } // Run()
     
@@ -258,7 +241,7 @@ namespace Anki {
     void Manage()
     {
       //In many other case (as of now), we run the wheel controller normally
-      Run(&pwmL_, &pwmR_);
+      Run();
       
       EncoderSpeedFilterIteration();
     }

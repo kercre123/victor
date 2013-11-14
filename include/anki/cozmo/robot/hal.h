@@ -88,6 +88,7 @@ namespace Anki
       //
       const u8  NUM_RADIAL_DISTORTION_COEFFS = 5;
       const f32 MOTOR_PWM_MAXVAL = 2400.f;
+      const f32 MOTOR_MAX_POWER = 1.0f;
       
       ///////////////////
       // TODO: The following are constants for a naive linear approximation of power to speed,

@@ -13,10 +13,27 @@ namespace Anki {
   namespace Cozmo {
   namespace WheelController {
     
-    //The default gains for the wheel speed controller
-    const float DEFAULT_WHEEL_KP = 0.1f; //1.0f
-    const float DEFAULT_WHEEL_KI = 0.005f; //0.05f
+    // Controller gains for generating wheel power commands.
+    // Approximating power-speed model with piecewise function with 2 linear segments.
+    // One slope from a power of 0 to a transition power, the other from the transition power to 1.0.
+    //
+    // Piecwise trendline:
+    //    HIGH PIECE: for speed >= 80
+    //    speed = 315.4 * power - 45  => power = 0.00317 * (speed + 45)
+    //
+    //    LOW PIECE: for speed < 80
+    //    transition power = ( 80 + 45 ) / 315.4 = 0.396322
+    //    speed = (80 / 0.396322) * power =>  power = 0.004954 * speed
+    const f32 TRANSITION_POWER = 80;
+    const f32 HIGH_OPEN_LOOP_OFFSET = 45;
+    const f32 HIGH_OPEN_LOOP_GAIN = 0.00317;
+    const f32 LOW_OPEN_LOOP_GAIN = 0.004954;
+    const float DEFAULT_WHEEL_KP = 0.0005f;
+    const float DEFAULT_WHEEL_KI = 0.00005f;
     const float DEFAULT_WHEEL_KD = 0.0f;
+    const float DEFAULT_WHEEL_LOW_KP = 0.005f;
+    const float DEFAULT_WHEEL_LOW_KI = 0.0001f;
+    
     
     const float WHEEL_SPEED_COMMAND_STOPPED_MM_S = 2.0;
     
@@ -30,19 +47,6 @@ namespace Anki {
     //If we are in this deadband, we won't command anythign to the wheels if we are trying to slow down
     const float WHEEL_DEAD_BAND_MM_S = 2; // TODO: float or int?
     
-    
-    // This is an openloop function which is supposed convert mm/sec to motor values.
-    // ATTENTION: This is open loop, and by definition naive and not accurate
-    // It depends on what surface we drive on, what the other whell does, etc.
-    // The ONLY reason for this function is to make it a little easier for the PID controller
-    // ALso, if possible, it would be good to come up with a better one by taking data
-    // off of a running car and see what speed we get when driving straight at different
-    // velocities
-    //#if HAS_BELKER_SHELL
-#define MM_PER_SEC_TO_MOTOR_VAL(n) (n)
-    //#else
-    //#define MM_PER_SEC_TO_MOTOR_VAL(n) (n + 500.0f)
-    //#endif
     
     //Set the gains for the PID controllers (same gains for left and right wheel)
     void SetGains(float kp, float ki, float kd);
