@@ -312,8 +312,8 @@ namespace Anki {
       
       targetLeftVel_ = left_vel;
       targetRightVel_ = right_vel;
-      leftAccelPerCycle_ = ABS(left_accel) / CONTROL_DT;
-      rightAccelPerCycle_ = ABS(right_accel) / CONTROL_DT;
+      leftAccelPerCycle_ = ABS(left_accel) * CONTROL_DT;
+      rightAccelPerCycle_ = ABS(right_accel) * CONTROL_DT;
       
       if (currLeftVel > targetLeftVel_)
         leftAccelPerCycle_ *= -1;

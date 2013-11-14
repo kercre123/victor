@@ -28,6 +28,10 @@ namespace Anki {
         
         const u32 TOGGLE_DIRECTION_PERIOD_MS = 2000;
         
+        // Acceleration
+        const f32 accel_mmps2 = 0;  // 0 for infinite acceleration.
+                                    // Only works in WheelController mode (i.e. DIRECT_HAL_MOTOR_TEST == 0)
+        
         // COAST MODE
         // Measurements taken from a prototype cozmo.
         // Used to model open loop motor command in WheelController.
@@ -138,7 +142,7 @@ namespace Anki {
             WheelController::Disable();
 #else
             PRINT("Going forward %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", SPEED_CMD_MMPS, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-            SteeringController::ExecuteDirectDrive(SPEED_CMD_MMPS,SPEED_CMD_MMPS);
+            SteeringController::ExecuteDirectDrive(SPEED_CMD_MMPS,SPEED_CMD_MMPS,accel_mmps2,accel_mmps2);
 #endif
           } else {
 #if(DIRECT_HAL_MOTOR_TEST)
@@ -148,7 +152,7 @@ namespace Anki {
             WheelController::Disable();
 #else
             PRINT("Going reverse %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", SPEED_CMD_MMPS, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-            SteeringController::ExecuteDirectDrive(-SPEED_CMD_MMPS,-SPEED_CMD_MMPS);
+            SteeringController::ExecuteDirectDrive(-SPEED_CMD_MMPS,-SPEED_CMD_MMPS,accel_mmps2,accel_mmps2);
 #endif
             
           }
