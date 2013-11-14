@@ -119,13 +119,32 @@ GTEST_TEST(CoreTech_Common, MatrixAdd)
     const Result result = Matrix::Add<s32,s32>(in1(0,1,0,0,2,4), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
     ASSERT_TRUE(result == RESULT_OK);
 
-    in1.Print("in1");
-    in2.Print("in2");
-    out.Print("out");
-
     ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] + in2[0][0]));
     ASSERT_TRUE((s32)out[0][2] == (s32)(in1[0][2] + in2[2][0]));
     ASSERT_TRUE((s32)out[0][4] == (s32)(in1[0][4] + in2[4][0]));
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        if(!(y==0 && (x==0 || x==2 || x==4))) {
+          ASSERT_TRUE(out[y][x] == 0);
+        }
+      }
+    }
+  }
+
+  // Test slice transpose in1 and in2 elementwise addition
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::Add<s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
+    ASSERT_TRUE(result == RESULT_OK);
+
+    //in1.Print("in1");
+    //in2.Print("in2");
+    //out.Print("out");
+
+    ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] + in2[0][0]));
+    ASSERT_TRUE((s32)out[0][2] == (s32)(in1[2][0] + in2[2][0]));
+    ASSERT_TRUE((s32)out[0][4] == (s32)(in1[4][0] + in2[4][0]));
 
     for(s32 y=0; y<5; y++) {
       for(s32 x=0; x<6; x++) {
