@@ -157,19 +157,19 @@ namespace Anki
         if(limits.isSimpleIteration) {
           // If the input isn't transposed, we will do the maximally efficient loop iteration
 
-          for(s32 y=0; y<limits.out1_ySize; y++) {
+          for(s32 y=0; y<limits.ySize; y++) {
             const InType * const pIn1 = in1Array.Pointer(limits.in1Y, 0);
             const InType * const pIn2 = in2Array.Pointer(limits.in2Y, 0);
             OutType * const pOut1 = out1Array.Pointer(limits.out1Y, 0);
 
             limits.OuterIncrementTop();
 
-            for(s32 x=0; x<limits.out1_xSize; x++) {
+            for(s32 x=0; x<limits.xSize; x++) {
               pOut1[limits.out1X] = pIn1[limits.in1X] + pIn2[limits.in2X];
 
-              limits.in1X += limits.in1_xIncrement;
-              limits.in2X += limits.in2_xIncrement;
-              limits.out1X += limits.out1_xIncrement;
+              limits.in1X += limits.in1_xInnerIncrement;
+              limits.in2X += limits.in2_xInnerIncrement;
+              limits.out1X += limits.out1_xInnerIncrement;
             }
 
             limits.OuterIncrementBottom();
@@ -177,12 +177,12 @@ namespace Anki
         } else { // if(limits.isSimpleIteration)
           // If either input is transposed is allowed, then we will do an inefficent loop iteration
 
-          for(s32 y=0; y<limits.out1_ySize; y++) {
+          for(s32 y=0; y<limits.ySize; y++) {
             OutType * const pOut1 = out1Array.Pointer(limits.out1Y, 0);
 
             limits.OuterIncrementTop();
 
-            for(s32 x=0; x<limits.out1_xSize; x++) {
+            for(s32 x=0; x<limits.xSize; x++) {
               const InType valIn1 = *in1Array.Pointer(limits.in1Y, limits.in1X);
               const InType valIn2 = *in2Array.Pointer(limits.in2Y, limits.in2X);
 
@@ -192,7 +192,7 @@ namespace Anki
               limits.in1Y += limits.in1_yInnerIncrement;
               limits.in2X += limits.in2_xInnerIncrement;
               limits.in2Y += limits.in2_yInnerIncrement;
-              limits.out1X += limits.out1_xIncrement;
+              limits.out1X += limits.out1_xInnerIncrement;
             }
 
             limits.OuterIncrementBottom();

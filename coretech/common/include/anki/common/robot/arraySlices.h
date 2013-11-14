@@ -145,7 +145,7 @@ namespace Anki
       s32 in1Y;
       s32 in1X;
 
-      // The loops will be based on these iterators (these should match with the inputs')
+      // The loops will be based on these iterators (these should match with the output's and inputs' sizes)
       s32 ySize;
       s32 xSize;
 
@@ -165,10 +165,10 @@ namespace Anki
       inline void OuterIncrementBottom();
 
     protected:
+      ArraySliceSimpleLimits<Type> rawOut1Limits;
+
       ArraySliceSimpleLimits<Type> rawIn1Limits;
       bool in1_isTransposed;
-
-      ArraySliceSimpleLimits<Type> rawOut1Limits;
     };
 
     // Two inputs, one output
@@ -189,18 +189,12 @@ namespace Anki
       s32 in2Y;
       s32 in2X;
 
-      Type in1_yIncrement;
-      Type in1_xIncrement;
+      // The loops will be based on these iterators (these should match with the output's and inputs' sizes)
+      s32 ySize;
+      s32 xSize;
 
-      Type in2_yIncrement;
-      Type in2_xIncrement;
-
-      Type out1_yIncrement;
-      Type out1_xIncrement;
-
-      s32  out1_ySize;
-      s32  out1_xSize;
-
+      // Depending on whether ths input is transposed or not, either its X or Y coordinate should be incremented
+      s32 out1_xInnerIncrement;
       s32 in1_xInnerIncrement;
       s32 in1_yInnerIncrement;
       s32 in2_xInnerIncrement;
@@ -218,22 +212,13 @@ namespace Anki
       inline void OuterIncrementBottom();
 
     protected:
-      Type in1_yStart;
-      Type in1_yEnd;
-      Type in1_xStart;
-      Type in1_xEnd;
+      ArraySliceSimpleLimits<Type> rawOut1Limits;
+
+      ArraySliceSimpleLimits<Type> rawIn1Limits;
       bool in1_isTransposed;
 
-      Type in2_yStart;
-      Type in2_yEnd;
-      Type in2_xStart;
-      Type in2_xEnd;
+      ArraySliceSimpleLimits<Type> rawIn2Limits;
       bool in2_isTransposed;
-
-      Type out1_yStart;
-      Type out1_yEnd;
-      Type out1_xStart;
-      Type out1_xEnd;
     };
 
 #pragma mark --- Implementations ---
@@ -433,9 +418,13 @@ namespace Anki
     } // ArraySliceLimits_in1_out0
 
     template<typename Type> ArraySliceLimits_in1_out1<Type>::ArraySliceLimits_in1_out1(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice, bool in1_isTransposed, const LinearSequence<Type> &out1_ySlice, const LinearSequence<Type> &out1_xSlice)
-      :  rawIn1Limits(in1_ySlice, in1_xSlice), in1_isTransposed(in1_isTransposed), rawOut1Limits(out1_ySlice, out1_xSlice), ySize(out1_ySlice.get_size()), xSize(out1_xSlice.get_size())
+      :  rawIn1Limits(in1_ySlice, in1_xSlice), in1_isTransposed(in1_isTransposed),
+      rawOut1Limits(out1_ySlice, out1_xSlice),
+      ySize(out1_ySlice.get_size()), xSize(out1_xSlice.get_size())
     {
       isValid = false;
+
+      this->out1_xInnerIncrement = this->rawOut1Limits.xIncrement;
 
       if(!in1_isTransposed) {
         if(rawOut1Limits.xSize == rawIn1Limits.xSize && rawOut1Limits.ySize == rawIn1Limits.ySize) {
@@ -445,7 +434,6 @@ namespace Anki
           this->in1Y = this->rawIn1Limits.yStart;
           this->out1Y = this->rawOut1Limits.yStart;
 
-          this->out1_xInnerIncrement = this->rawOut1Limits.xIncrement;
           this->in1_xInnerIncrement = this->rawIn1Limits.xIncrement;
           this->in1_yInnerIncrement = 0;
         }
@@ -457,7 +445,6 @@ namespace Anki
           this->in1X = this->rawIn1Limits.xStart;
           this->out1Y = this->rawOut1Limits.yStart;
 
-          this->out1_xInnerIncrement = this->rawOut1Limits.xIncrement;
           this->in1_xInnerIncrement = 0;
           this->in1_yInnerIncrement = this->rawIn1Limits.yIncrement;
         }
@@ -494,31 +481,32 @@ namespace Anki
     } // ArraySliceLimits_in1_out1<Type>::OuterIncrementBottom()
 
     template<typename Type> ArraySliceLimits_in2_out1<Type>::ArraySliceLimits_in2_out1(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice, bool in1_isTransposed, const LinearSequence<Type> &in2_ySlice, const LinearSequence<Type> &in2_xSlice, bool in2_isTransposed, const LinearSequence<Type> &out1_ySlice, const LinearSequence<Type> &out1_xSlice)
-      : in1_yStart(in1_ySlice.get_start()), in1_yIncrement(in1_ySlice.get_increment()), in1_yEnd(in1_ySlice.get_end()),
-      in1_xStart(in1_xSlice.get_start()), in1_xIncrement(in1_xSlice.get_increment()), in1_xEnd(in1_xSlice.get_end()), in1_isTransposed(in1_isTransposed),
-      in2_yStart(in2_ySlice.get_start()), in2_yIncrement(in2_ySlice.get_increment()), in2_yEnd(in2_ySlice.get_end()),
-      in2_xStart(in2_xSlice.get_start()), in2_xIncrement(in2_xSlice.get_increment()), in2_xEnd(in2_xSlice.get_end()), in2_isTransposed(in2_isTransposed),
-      out1_yStart(out1_ySlice.get_start()), out1_yIncrement(out1_ySlice.get_increment()), out1_yEnd(out1_ySlice.get_end()),
-      out1_xStart(out1_xSlice.get_start()), out1_xIncrement(out1_xSlice.get_increment()), out1_xEnd(out1_xSlice.get_end()),
-      out1_ySize(out1_ySlice.get_size()), out1_xSize(out1_xSlice.get_size())
+      : rawIn1Limits(in1_ySlice, in1_xSlice), in1_isTransposed(in1_isTransposed),
+      rawIn2Limits(in2_ySlice, in2_xSlice), in2_isTransposed(in2_isTransposed),
+      rawOut1Limits(out1_ySlice, out1_xSlice),
+      ySize(out1_ySlice.get_size()), xSize(out1_xSlice.get_size())
     {
       isValid = false;
 
+      this->out1_xInnerIncrement = this->rawOut1Limits.xIncrement;
       this->in1_yInnerIncrement = 0;
       this->in1_xInnerIncrement = 0;
       this->in2_yInnerIncrement = 0;
       this->in2_xInnerIncrement = 0;
 
       if(!in1_isTransposed && !in2_isTransposed) {
-        const bool sizesMatch = (in1_xSlice.get_size() == in2_xSlice.get_size()) && (in1_xSlice.get_size() == out1_xSize) && (in1_ySlice.get_size() == in2_ySlice.get_size()) && (in1_ySlice.get_size() == out1_ySize);
+        const bool sizesMatch = (in1_xSlice.get_size() == in2_xSlice.get_size()) && (in1_xSlice.get_size() == out1_xSlice.get_size()) && (in1_ySlice.get_size() == in2_ySlice.get_size()) && (in1_ySlice.get_size() == out1_ySlice.get_size());
 
         if(sizesMatch) {
           isValid = true;
           isSimpleIteration = true;
 
-          this->in1Y = this->in1_yStart;
-          this->in2Y = this->in2_yStart;
-          this->out1Y = this->out1_yStart;
+          this->in1_xInnerIncrement = this->rawIn1Limits.xIncrement;
+          this->in2_xInnerIncrement = this->rawIn2Limits.xIncrement;
+
+          this->in1Y = this->rawIn1Limits.yStart;
+          this->in2Y = this->rawIn2Limits.yStart;
+          this->out1Y = this->rawOut1Limits.yStart;
         }
       } else { // if(!in1_isTransposed)
         isSimpleIteration = false;
@@ -527,16 +515,16 @@ namespace Anki
 
         if(in1_isTransposed && in2_isTransposed) {
           sizesMatch = (in1_xSlice.get_size() == in2_xSlice.get_size()) && (in1_xSlice.get_size() == out1_ySlice.get_size()) && (in1_ySlice.get_size() == in2_ySlice.get_size()) && (in1_ySlice.get_size() == out1_xSlice.get_size());
-          this->in1_yInnerIncrement = in1_yIncrement;
-          this->in2_yInnerIncrement = in2_yIncrement;
+          this->in1_yInnerIncrement = this->rawIn1Limits.yIncrement;
+          this->in2_yInnerIncrement = this->rawIn2Limits.yIncrement;
         } else if(in1_isTransposed) {
           sizesMatch = (in1_xSlice.get_size() == in2_ySlice.get_size()) && (in1_xSlice.get_size() == out1_ySlice.get_size()) && (in1_ySlice.get_size() == in2_xSlice.get_size()) && (in1_ySlice.get_size() == out1_xSlice.get_size());
-          this->in1_yInnerIncrement = in1_yIncrement;
-          this->in2_xInnerIncrement = in2_xIncrement;
+          this->in1_yInnerIncrement = this->rawIn1Limits.yIncrement;
+          this->in2_xInnerIncrement = this->rawIn2Limits.xIncrement;
         } else if(in2_isTransposed) {
           sizesMatch = (in1_xSlice.get_size() == in2_ySlice.get_size()) && (in1_xSlice.get_size() == out1_xSlice.get_size()) && (in1_ySlice.get_size() == in2_xSlice.get_size()) && (in1_ySlice.get_size() == out1_ySlice.get_size());
-          this->in1_xInnerIncrement = in1_xIncrement;
-          this->in2_yInnerIncrement = in2_yIncrement;
+          this->in1_xInnerIncrement = this->rawIn1Limits.xIncrement;
+          this->in2_yInnerIncrement = this->rawIn2Limits.yIncrement;
         } else {
           assert(false); // should not be possible
         }
@@ -548,12 +536,12 @@ namespace Anki
 
         isValid = true;
 
-        this->in1X = in1_xStart;
-        this->in1Y = in1_yStart;
-        this->in2X = in2_xStart;
-        this->in2Y = in2_yStart;
+        this->in1X = this->rawIn1Limits.xStart;
+        this->in1Y = this->rawIn1Limits.yStart;
+        this->in2X = this->rawIn2Limits.xStart;
+        this->in2Y = this->rawIn2Limits.yStart;
 
-        this->out1Y = out1_yStart;
+        this->out1Y = this->rawOut1Limits.yStart;
       } // if(!in1_isTransposed) ... else
     } // ArraySliceLimits_in1_out1
 
@@ -561,22 +549,22 @@ namespace Anki
     template<typename Type> inline void ArraySliceLimits_in2_out1<Type>::OuterIncrementTop()
     {
       if(isSimpleIteration) {
-        this->out1X = this->out1_xStart;
-        this->in1X = this->in1_xStart;
-        this->in2X = this->in2_xStart;
+        this->out1X = this->rawOut1Limits.xStart;
+        this->in1X = this->rawIn1Limits.xStart;
+        this->in2X = this->rawIn2Limits.xStart;
       } else { // if(isSimpleIteration)
-        this->out1X = this->out1_xStart;
+        this->out1X = this->rawOut1Limits.xStart;
 
         if(in1_isTransposed) {
-          this->in1Y = in1_yStart;
+          this->in1Y = this->rawIn1Limits.yStart;
         } else {
-          this->in1X = in1_xStart;
+          this->in1X = this->rawIn1Limits.xStart;
         }
 
         if(in2_isTransposed) {
-          this->in2Y = in2_yStart;
+          this->in2Y = this->rawIn2Limits.yStart;
         } else {
-          this->in2X = in2_xStart;
+          this->in2X = this->rawIn2Limits.xStart;
         }
       } // if(isSimpleIteration) ... else
     } // ArraySliceLimits_in2_out1<Type>::OuterIncrementTop()
@@ -585,22 +573,22 @@ namespace Anki
     template<typename Type> inline void ArraySliceLimits_in2_out1<Type>::OuterIncrementBottom()
     {
       if(isSimpleIteration) {
-        this->in1Y += this->in1_yIncrement;
-        this->in2Y += this->in2_yIncrement;
-        this->out1Y += this->out1_yIncrement;
+        this->in1Y += this->rawIn1Limits.yIncrement;
+        this->in2Y += this->rawIn2Limits.yIncrement;
+        this->out1Y += this->rawOut1Limits.yIncrement;
       } else { // if(isSimpleIteration)
-        this->out1Y += this->out1_yIncrement;
+        this->out1Y += this->rawOut1Limits.yIncrement;
 
         if(in1_isTransposed) {
-          this->in1X += in1_xIncrement;
+          this->in1X += this->rawIn1Limits.xIncrement;
         } else {
-          this->in1Y += in1_yIncrement;
+          this->in1Y += this->rawIn1Limits.yIncrement;
         }
 
         if(in2_isTransposed) {
-          this->in2X += in2_xIncrement;
+          this->in2X += this->rawIn2Limits.xIncrement;
         } else {
-          this->in2Y += in2_yIncrement;
+          this->in2Y += this->rawIn2Limits.yIncrement;
         }
       } // if(isSimpleIteration) ... else
     } // ArraySliceLimits_in2_out1<Type>::OuterIncrementBottom()
