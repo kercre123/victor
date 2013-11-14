@@ -137,23 +137,11 @@ namespace Anki
       s32 in1Y;
       s32 in1X;
 
-      Type in1_yStart;
       Type in1_yIncrement;
-      Type in1_yEnd;
-
-      Type in1_xStart;
       Type in1_xIncrement;
-      Type in1_xEnd;
 
-      bool in1_isTransposed;
-
-      Type out1_yStart;
       Type out1_yIncrement;
-      Type out1_yEnd;
-
-      Type out1_xStart;
       Type out1_xIncrement;
-      Type out1_xEnd;
 
       s32  out1_ySize;
       s32  out1_xSize;
@@ -169,6 +157,18 @@ namespace Anki
 
       // This should be called at the botom of the y-iteration loop, after the x-iteration loop. This will update the out# and in# values for X and Y.
       inline void IncrementBottom();
+
+    protected:
+      Type in1_yStart;
+      Type in1_yEnd;
+      Type in1_xStart;
+      Type in1_xEnd;
+      bool in1_isTransposed;
+
+      Type out1_yStart;
+      Type out1_yEnd;
+      Type out1_xStart;
+      Type out1_xEnd;
     };
 
     // Two inputs, one output
@@ -189,33 +189,14 @@ namespace Anki
       s32 in2Y;
       s32 in2X;
 
-      Type in1_yStart;
       Type in1_yIncrement;
-      Type in1_yEnd;
-
-      Type in1_xStart;
       Type in1_xIncrement;
-      Type in1_xEnd;
 
-      bool in1_isTransposed;
-
-      Type in2_yStart;
       Type in2_yIncrement;
-      Type in2_yEnd;
-
-      Type in2_xStart;
       Type in2_xIncrement;
-      Type in2_xEnd;
 
-      bool in2_isTransposed;
-
-      Type out1_yStart;
       Type out1_yIncrement;
-      Type out1_yEnd;
-
-      Type out1_xStart;
       Type out1_xIncrement;
-      Type out1_xEnd;
 
       s32  out1_ySize;
       s32  out1_xSize;
@@ -235,6 +216,24 @@ namespace Anki
 
       // This should be called at the botom of the y-iteration loop, after the x-iteration loop. This will update the out# and in# values for X and Y.
       inline void IncrementBottom();
+
+    protected:
+      Type in1_yStart;
+      Type in1_yEnd;
+      Type in1_xStart;
+      Type in1_xEnd;
+      bool in1_isTransposed;
+
+      Type in2_yStart;
+      Type in2_yEnd;
+      Type in2_xStart;
+      Type in2_xEnd;
+      bool in2_isTransposed;
+
+      Type out1_yStart;
+      Type out1_yEnd;
+      Type out1_xStart;
+      Type out1_xEnd;
     };
 
 #pragma mark --- Implementations ---
