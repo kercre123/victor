@@ -8,6 +8,7 @@
 #include "dockingController.h"
 #include "headController.h"
 #include "liftController.h"
+#include "testModeController.h"
 #include "anki/cozmo/robot/commandHandler.h"
 #include "anki/cozmo/robot/debug.h"
 #include "anki/cozmo/robot/localization.h"
@@ -20,7 +21,7 @@
 #include "anki/messaging/robot/utilMessaging.h"
 
 ///////// TESTING //////////
-#define EXECUTE_TEST_PATH 0
+  const Anki::Cozmo::TestModeController::TestMode DEFAULT_TEST_MODE = Anki::Cozmo::TestModeController::TM_NONE;
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB && USING_MATLAB_VISION
 #include "anki/embeddedCommon/matlabConverters.h"
@@ -42,7 +43,7 @@ namespace Anki {
         VisionSystem::BlockMarkerMailbox blockMarkerMailbox_;
         VisionSystem::MatMarkerMailbox   matMarkerMailbox_;
         
-        Robot::OperationMode mode_ = INITIALIZING, nextMode_ = WAITING;
+        Robot::OperationMode mode_ = INITIALIZING;
         
       } // Robot private namespace
       
@@ -66,6 +67,9 @@ namespace Anki {
           PRINT("Hardware Interface initialization failed!\n");
           return EXIT_FAILURE;
         }
+        
+        // Setup test mode
+        TestModeController::Init(DEFAULT_TEST_MODE);
         
         if(VisionSystem::Init(HAL::GetHeadFrameGrabber(),
                               HAL::GetMatFrameGrabber(),
@@ -147,6 +151,12 @@ namespace Anki {
         // If the hardware interface needs to be advanced (as in the case of
         // a Webots simulation), do that first.
         HAL::Step();
+
+        //////////////////////////////////////////////////////////////
+        // Test Mode
+        //////////////////////////////////////////////////////////////
+        TestModeController::Update();
+        
         
         //////////////////////////////////////////////////////////////
         // Localization
@@ -181,34 +191,7 @@ namespace Anki {
         
         HeadController::Update();
         LiftController::Update();
-        
-        //////////////////////////////////////////////////////////////
-        // Path Following
-        //////////////////////////////////////////////////////////////
-        
-#if(EXECUTE_TEST_PATH)
-        // TESTING
-        const u32 startDriveTime_us = 500000;
-        static bool testPathStarted = false;
-        if (not PathFollower::IsTraversingPath() &&
-            HAL::GetMicroCounter() > startDriveTime_us &&
-            !testPathStarted) {
-          SpeedController::SetUserCommandedAcceleration( MAX(ONE_OVER_CONTROL_DT + 1, 500) );  // This can't be smaller than 1/CONTROL_DT!
-          SpeedController::SetUserCommandedDesiredVehicleSpeed(160);
-          PRINT("Speed commanded: %d mm/s\n",
-                  SpeedController::GetUserCommandedDesiredVehicleSpeed() );
-          
-          // Create a path and follow it
-          PathFollower::AppendPathSegment_Line(0, 0.0, 0.0, 0.3, -0.3);
-          float arc1_radius = sqrt(0.005);  // Radius of sqrt(0.05^2 + 0.05^2)
-          PathFollower::AppendPathSegment_Arc(0, 0.35, -0.25, arc1_radius, -0.75*PI, 0);
-          PathFollower::AppendPathSegment_Line(0, 0.35 + arc1_radius, -0.25, 0.35 + arc1_radius, 0.2);
-          float arc2_radius = sqrt(0.02); // Radius of sqrt(0.1^2 + 0.1^2)
-          PathFollower::AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, PIDIV2);
-          PathFollower::StartPathTraversal();
-          testPathStarted = true;
-        }
-#endif //EXECUTE_TEST_PATH
+ 
         
         //////////////////////////////////////////////////////////////
         // State Machine

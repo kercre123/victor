@@ -61,6 +61,8 @@ namespace Anki {
       f32 error_sumL_ = 0;
       f32 error_sumR_ = 0;
       
+      // Whether or not controller should run
+      bool enable_ = true;
       
     } // private namespace
     
@@ -74,6 +76,16 @@ namespace Anki {
       Kp_ = kp;
       Ki_ = ki;
       Kd_ = kd;
+    }
+    
+    void Enable()
+    {
+      enable_ = true;
+    }
+    
+    void Disable()
+    {
+      enable_ = false;
     }
     
     //Run the wheel controller
@@ -241,7 +253,9 @@ namespace Anki {
     void Manage()
     {
       //In many other case (as of now), we run the wheel controller normally
-      Run();
+      if (enable_) {
+        Run();
+      }
       
       EncoderSpeedFilterIteration();
     }

@@ -50,6 +50,11 @@ namespace Anki {
     
     //Set the gains for the PID controllers (same gains for left and right wheel)
     void SetGains(float kp, float ki, float kd);
+
+    // Enable/Disable the wheel controller.
+    // Mostly only useful for test mode or special simluation modes.
+    void Enable();
+    void Disable();
     
     //This manages at a high level what the wheel speed controller needs to do
     void Manage();

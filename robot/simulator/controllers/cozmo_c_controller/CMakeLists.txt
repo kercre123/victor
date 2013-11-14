@@ -48,6 +48,7 @@ set(SOURCE_FILES
   ${ROBOT_SRC_DIR}/speedController.cpp
 	${ROBOT_SRC_DIR}/wheelController.cpp
 	${ROBOT_SRC_DIR}/visionSystem.cpp
+	${ROBOT_SRC_DIR}/testModeController.cpp
 
 	${PROJECT_SOURCE_DIR}/coretech/messaging/robot/utilMessaging.c
 
@@ -60,6 +61,7 @@ set(HEADER_FILES
  ${ROBOT_SRC_DIR}/dockingController.h
  ${ROBOT_SRC_DIR}/headController.h
  ${ROBOT_SRC_DIR}/liftController.h
+ ${ROBOT_SRC_DIR}/testModeController.h
 
 	${SIMULATOR_SRC_DIR}/keyboardController.h
   ${SIMULATOR_SRC_DIR}/sim_pathFollower.h
