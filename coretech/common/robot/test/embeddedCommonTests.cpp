@@ -87,6 +87,10 @@ GTEST_TEST(CoreTech_Common, MatrixAdd)
     const Result result = Matrix::Add<s32,s32>(in1, in2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
+    //in1.Print("in1");
+    //in2.Print("in2");
+    //out.Print("out");
+
     for(s32 y=0; y<5; y++) {
       for(s32 x=0; x<6; x++) {
         ASSERT_TRUE((s32)out[y][x] == (s32)(in1[y][x] + in2[y][x]));
