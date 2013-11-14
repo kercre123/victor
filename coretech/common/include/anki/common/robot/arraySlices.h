@@ -66,7 +66,7 @@ namespace Anki
 
       // If automaticTranspose==true, then you can set a MxN slice with a NxM input
       // Matlab allows this for vectors, though this will also work for arbitrary-sized arrays
-      Result Set(ConstArraySliceExpression<Type> input, bool automaticTranspose=true);
+      Result Set(const ConstArraySliceExpression<Type> &input, bool automaticTranspose=true);
 
       Array<Type>& get_array();
     }; // template<typename Type> class ArraySlice
@@ -94,22 +94,82 @@ namespace Anki
       bool isTransposed;
     };
 
-    // To aid the compiler optimizer, an ArraySliceLimits can be initialized at the beginning of the
-    // function, then used as the limits for the inner loops.
-    template<typename Type> class ArraySliceLimits
+    // To simplify the creation of kernels using an ArraySlice, and to aid the compiler optimizer,
+    // an ArraySliceLimits can be initialized at the beginning of the function, then used as the
+    // limits for the inner loops.
+
+    // The suffix of in# and out# refer to the number of input and output matrices.
+    // If output == 0, then the output is a scalar.
+
+    // In1 and out0 is a special, ultra-simple case, for one matrix input and a scalar output
+    template<typename Type> class ArraySliceLimits_in1_out0
     {
     public:
-      s32 xStart;
-      s32 xIncrement;
-      s32 xEnd;
-      s32 xSize;
+      // Was this ArraySliceLimits initialized?
+      bool isValid;
 
-      s32 yStart;
-      s32 yIncrement;
-      s32 yEnd;
-      s32 ySize;
+      Type xStart;
+      Type xIncrement;
+      Type xEnd;
+      s32  xSize;
 
-      ArraySliceLimits(const ConstArraySlice<Type> &slice);
+      Type yStart;
+      Type yIncrement;
+      Type yEnd;
+      s32  ySize;
+
+      ArraySliceLimits_in1_out0(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice);
+    };
+
+    // One input, one output
+    template<typename Type> class ArraySliceLimits_in1_out1
+    {
+    public:
+      // Was this ArraySliceLimits initialized?
+      bool isValid;
+
+      // Can a simple (non-transposed) iteration be performed?
+      bool isSimpleIteration;
+
+      // These are the current values for the iterations
+      s32 out1Y;
+      s32 out1X;
+      s32 in1Y;
+      s32 in1X;
+
+      Type in1_yStart;
+      Type in1_yIncrement;
+      Type in1_yEnd;
+
+      Type in1_xStart;
+      Type in1_xIncrement;
+      Type in1_xEnd;
+
+      bool in1_isTransposed;
+
+      Type out1_yStart;
+      Type out1_yIncrement;
+      Type out1_yEnd;
+
+      Type out1_xStart;
+      Type out1_xIncrement;
+      Type out1_xEnd;
+
+      s32  out1_ySize;
+      s32  out1_xSize;
+
+      s32 in1InnerIncrementY;
+      s32 out1InnerIncrementX;
+
+      ArraySliceLimits_in1_out1(
+        const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice, bool in1_isTransposed,
+        const LinearSequence<Type> &out1_ySlice, const LinearSequence<Type> &out1_xSlice);
+
+      // This should be called at the top of the y-iteration loop, before the x-iteration loop. This will update the out# and in# values for X and Y.
+      inline void IncrementTop();
+
+      // This should be called at the botom of the y-iteration loop, after the x-iteration loop. This will update the out# and in# values for X and Y.
+      inline void IncrementBottom();
     };
 
 #pragma mark --- Implementations ---
@@ -187,7 +247,7 @@ namespace Anki
     return *this;
     }*/
 
-    template<typename Type> Result ArraySlice<Type>::Set(ConstArraySliceExpression<Type> input, bool automaticTranspose)
+    template<typename Type> Result ArraySlice<Type>::Set(const ConstArraySliceExpression<Type> &input, bool automaticTranspose)
     {
       AnkiConditionalErrorAndReturnValue(this->get_array().IsValid(),
         RESULT_FAIL, "ArraySlice<Type>::Set", "Invalid array");
@@ -198,64 +258,63 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(this->get_array().get_rawDataPointer() != input.get_array().get_rawDataPointer(),
         RESULT_FAIL, "ArraySlice<Type>::Set", "Arrays must be in different memory locations");
 
-      const ArraySliceLimits<Type> thisLimits(*this);
-      const ArraySliceLimits<Type> inputLimits(input);
+      ArraySliceLimits_in1_out1<s32> limits(
+        input.get_ySlice(), input.get_xSlice(), input.get_isTransposed(),
+        this->get_ySlice(), this->get_xSlice());
 
-      Array<Type> &thisArray = this->array;
-      const Array<Type> &inputArray = input.get_array();
+      if(!limits.isValid) {
+        if(automaticTranspose) {
+          // If we're allowed to transpose, give it another shot
+          limits = ArraySliceLimits_in1_out1<s32> (input.get_ySlice(), input.get_xSlice(), !input.get_isTransposed(), this->get_ySlice(), this->get_xSlice());
 
-      if(thisLimits.xSize == inputLimits.xSize && thisLimits.ySize == inputLimits.ySize) {
+          if(!limits.isValid) {
+            AnkiError("ArraySlice<Type>::Set", "Subscripted assignment dimension mismatch");
+            return RESULT_FAIL;
+          }
+        } else {
+          AnkiError("ArraySlice<Type>::Set", "Subscripted assignment dimension mismatch");
+          return RESULT_FAIL;
+        }
+      }
+
+      Array<Type> &out1Array = this->get_array();
+      const Array<Type> &in1Array = input.get_array();
+
+      if(limits.isSimpleIteration) {
         // If the input isn't transposed, we will do the maximally efficient loop iteration
 
-        s32 thisY = thisLimits.yStart;
-        s32 inputY = inputLimits.yStart;
+        for(s32 y=0; y<limits.out1_ySize; y++) {
+          const Type * restrict pIn1 = in1Array.Pointer(limits.in1Y, 0);
+          Type * restrict pOut1 = out1Array.Pointer(limits.out1Y, 0);
 
-        for(s32 y=0; y<thisLimits.ySize; y++) {
-          Type * restrict pThis = thisArray.Pointer(thisY, 0);
-          const Type * restrict pInput = inputArray.Pointer(inputY, 0);
+          limits.IncrementTop();
 
-          s32 thisX = thisLimits.xStart;
-          s32 inputX = inputLimits.xStart;
+          for(s32 x=0; x<limits.out1_xSize; x++) {
+            pOut1[limits.out1X] = pIn1[limits.in1X];
 
-          for(s32 x=0; x<thisLimits.xSize; x++) {
-            pThis[thisX] = pInput[inputX];
-
-            thisX += thisLimits.xIncrement;
-            inputX += inputLimits.xIncrement;
+            limits.out1X += limits.out1_xIncrement;
+            limits.in1X += limits.in1_xIncrement;
           }
 
-          thisY += thisLimits.yIncrement;
-          inputY += inputLimits.yIncrement;
-        }
-      } else if((automaticTranspose||input.get_isTransposed()) && (thisLimits.xSize == inputLimits.ySize && thisLimits.ySize == inputLimits.xSize)) {
-        // If the input is transposed or if automaticTransposing is allowed, then we will do an inefficent loop iteration
-        // TODO: make fast if needed
-
-        s32 thisY = thisLimits.yStart;
-        s32 inputX = inputLimits.xStart;
-
-        // TODO: replace the Pointer() call with an addition, if speed is a problem
-        for(s32 y=0; y<thisLimits.ySize; y++) {
-          Type * restrict pThis = thisArray.Pointer(thisY, 0);
-
-          s32 thisX = thisLimits.xStart;
-          s32 inputY = inputLimits.yStart;
-
-          for(s32 x=0; x<thisLimits.xSize; x++) {
-            const Type pInput = *inputArray.Pointer(inputY, inputX);
-
-            pThis[thisX] = pInput;
-
-            thisX += thisLimits.xIncrement;
-            inputY += inputLimits.yIncrement;
-          }
-
-          thisY += thisLimits.yIncrement;
-          inputX += inputLimits.xIncrement;
+          limits.IncrementBottom();
         }
       } else {
-        AnkiError("ArraySlice<Type>::Set", "Subscripted assignment dimension mismatch");
-        return RESULT_FAIL;
+        for(s32 y=0; y<limits.out1_ySize; y++) {
+          Type * restrict pOut1 = out1Array.Pointer(limits.out1Y, 0);
+
+          limits.IncrementTop();
+
+          for(s32 x=0; x<limits.out1_xSize; x++) {
+            const Type pIn1 = *in1Array.Pointer(limits.in1Y, limits.in1X);
+
+            pOut1[limits.out1X] = pIn1;
+
+            limits.out1X += limits.out1InnerIncrementX;
+            limits.in1Y += limits.in1InnerIncrementY;
+          }
+
+          limits.IncrementBottom();
+        }
       }
 
       return RESULT_OK;
@@ -298,10 +357,68 @@ namespace Anki
       return isTransposed;
     }
 
-    template<typename Type> ArraySliceLimits<Type>::ArraySliceLimits(const ConstArraySlice<Type> &slice)
-      : xStart(slice.get_xSlice().get_start()), xIncrement(slice.get_xSlice().get_increment()), xEnd(slice.get_xSlice().get_end()), xSize(slice.get_xSlice().get_size()),
-      yStart(slice.get_ySlice().get_start()), yIncrement(slice.get_ySlice().get_increment()), yEnd(slice.get_ySlice().get_end()), ySize(slice.get_ySlice().get_size())
+    template<typename Type> ArraySliceLimits_in1_out0<Type>::ArraySliceLimits_in1_out0(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice)
+      : isValid(true),
+      xStart(in1_xSlice.get_start()), xIncrement(in1_xSlice.get_increment()), xEnd(in1_xSlice.get_end()), xSize(in1_xSlice.get_size()),
+      yStart(in1_ySlice.get_start()), yIncrement(in1_ySlice.get_increment()), yEnd(in1_ySlice.get_end()), ySize(in1_ySlice.get_size())
     {
+    } // ArraySliceLimits_in1_out0
+
+    template<typename Type> ArraySliceLimits_in1_out1<Type>::ArraySliceLimits_in1_out1(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice, bool in1_isTransposed, const LinearSequence<Type> &out1_ySlice, const LinearSequence<Type> &out1_xSlice)
+      : in1_yStart(in1_ySlice.get_start()), in1_yIncrement(in1_ySlice.get_increment()), in1_yEnd(in1_ySlice.get_end()),
+      in1_xStart(in1_xSlice.get_start()), in1_xIncrement(in1_xSlice.get_increment()), in1_xEnd(in1_xSlice.get_end()), in1_isTransposed(in1_isTransposed),
+      out1_yStart(out1_ySlice.get_start()), out1_yIncrement(out1_ySlice.get_increment()), out1_yEnd(out1_ySlice.get_end()),
+      out1_xStart(out1_xSlice.get_start()), out1_xIncrement(out1_xSlice.get_increment()), out1_xEnd(out1_xSlice.get_end()),
+      out1_ySize(out1_ySlice.get_size()), out1_xSize(out1_xSlice.get_size())
+    {
+      isValid = false;
+
+      if(!in1_isTransposed) {
+        isSimpleIteration = true;
+
+        this->in1Y = this->in1_yStart;
+        this->out1Y = this->out1_yStart;
+
+        if(out1_xSlice.get_size() == in1_xSlice.get_size() && out1_ySlice.get_size() == in1_ySlice.get_size()) {
+          isValid = true;
+        }
+      } else { // if(!in1_isTransposed)
+        isSimpleIteration = false;
+
+        this->in1X = this->in1_xStart;
+        this->out1Y = this->out1_yStart;
+
+        this->in1InnerIncrementY = this->in1_yIncrement;
+        this->out1InnerIncrementX = this->in1_xIncrement;
+
+        if(out1_xSlice.get_size() == in1_ySlice.get_size() && out1_ySlice.get_size() == in1_xSlice.get_size()) {
+          isValid = true;
+        }
+      } // if(!in1_isTransposed) ... else
+    } // ArraySliceLimits_in1_out1
+
+    // This should be called at the top of the y-iteration loop, before the x-iteration loop. This will update the out1 and in# values for X and Y.
+    template<typename Type> inline void ArraySliceLimits_in1_out1<Type>::IncrementTop()
+    {
+      if(isSimpleIteration) {
+        this->in1X = this->in1_xStart;
+        this->out1X = this->out1_xStart;
+      } else { // if(isSimpleIteration)
+        this->in1Y = this->in1_yStart;
+        this->out1X = this->out1_xStart;
+      } // if(isSimpleIteration) ... else
+    }
+
+    // This should be called at the botom of the y-iteration loop, after the x-iteration loop. This will update the out and in# values for X and Y.
+    template<typename Type> inline void ArraySliceLimits_in1_out1<Type>::IncrementBottom()
+    {
+      if(isSimpleIteration) {
+        this->in1Y += this->in1_yIncrement;
+        this->out1Y += this->out1_yIncrement;
+      } else { // if(isSimpleIteration)
+        this->in1X += this->in1_xIncrement;
+        this->out1Y += this->out1_yIncrement;
+      } // if(isSimpleIteration) ... else
     }
   } // namespace Embedded
 } // namespace Anki

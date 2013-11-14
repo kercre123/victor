@@ -69,7 +69,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(array.IsValid(),
           0, "Matrix::Min", "Array<Type> is not valid");
 
-        const ArraySliceLimits<Type> matLimits(mat);
+        const ArraySliceLimits_in1_out0<s32> matLimits(mat.get_ySlice(), mat.get_xSlice());
 
         Type minValue = *array.Pointer(matLimits.yStart, matLimits.xStart);
         for(s32 y=matLimits.yStart; y<=matLimits.yEnd; y+=matLimits.yIncrement) {
@@ -89,7 +89,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(array.IsValid(),
           0, "Matrix::Max", "Array<Type> is not valid");
 
-        const ArraySliceLimits<Type> matLimits(mat);
+        const ArraySliceLimits_in1_out0<s32> matLimits(mat.get_ySlice(), mat.get_xSlice());
 
         Type maxValue = *array.Pointer(matLimits.yStart, matLimits.xStart);
         for(s32 y=matLimits.yStart; y<=matLimits.yEnd; y+=matLimits.yIncrement) {
@@ -109,7 +109,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(array.IsValid(),
           0, "Matrix::Sum", "Array<Type> is not valid");
 
-        const ArraySliceLimits<Array_Type> matLimits(mat);
+        const ArraySliceLimits_in1_out0<s32> matLimits(mat.get_ySlice(), mat.get_xSlice());
 
         Accumulator_Type sum = 0;
         for(s32 y=matLimits.yStart; y<=matLimits.yEnd; y+=matLimits.yIncrement) {
@@ -124,139 +124,141 @@ namespace Anki
 
       template<typename InType, typename OutType> Result Add(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
       {
-        const Array<InType> &in1Array = in1.get_array();
-        const Array<InType> &in2Array = in2.get_array();
-        Array<OutType> &outArray = out.get_array();
+        //TODO: fix
 
-        AnkiConditionalErrorAndReturnValue(in1Array.IsValid(),
-          RESULT_FAIL, "ArraySlice<Type>::Set", "Invalid array in1");
+        //const Array<InType> &in1Array = in1.get_array();
+        //const Array<InType> &in2Array = in2.get_array();
+        //Array<OutType> &outArray = out.get_array();
 
-        AnkiConditionalErrorAndReturnValue(in2Array.IsValid(),
-          RESULT_FAIL, "ArraySlice<Type>::Set", "Invalid array in2");
+        //AnkiConditionalErrorAndReturnValue(in1Array.IsValid(),
+        //  RESULT_FAIL, "ArraySlice<Type>::Set", "Invalid array in1");
 
-        AnkiConditionalErrorAndReturnValue(outArray.IsValid(),
-          RESULT_FAIL, "ArraySlice<Type>::Set", "Invalid array out");
+        //AnkiConditionalErrorAndReturnValue(in2Array.IsValid(),
+        //  RESULT_FAIL, "ArraySlice<Type>::Set", "Invalid array in2");
 
-        const ArraySliceLimits<InType> in1Limits(in1);
-        const ArraySliceLimits<InType> in2Limits(in2);
-        const ArraySliceLimits<OutType> outLimits(out);
+        //AnkiConditionalErrorAndReturnValue(outArray.IsValid(),
+        //  RESULT_FAIL, "ArraySlice<Type>::Set", "Invalid array out");
 
-        const bool sizesMatch = (in1Limits.xSize == in2Limits.xSize) && (in1Limits.xSize == outLimits.xSize) && (in1Limits.ySize == in2Limits.ySize) && (in1Limits.ySize == outLimits.ySize);
-        if(sizesMatch) {
-          // If the input isn't transposed, we will do the maximally efficient loop iteration
+        //const ArraySliceLimits<InType> in1Limits(in1);
+        //const ArraySliceLimits<InType> in2Limits(in2);
+        //const ArraySliceLimits<OutType> outLimits(out);
 
-          s32 in1Y = in1Limits.yStart;
-          s32 in2Y = in2Limits.yStart;
-          s32 outY = outLimits.yStart;
+        //const bool sizesMatch = (in1Limits.xSize == in2Limits.xSize) && (in1Limits.xSize == outLimits.xSize) && (in1Limits.ySize == in2Limits.ySize) && (in1Limits.ySize == outLimits.ySize);
+        //if(sizesMatch) {
+        //  // If the input isn't transposed, we will do the maximally efficient loop iteration
 
-          for(s32 y=0; y<outLimits.ySize; y++) {
-            const InType * const pIn1 = in1Array.Pointer(in1Y, 0);
-            const InType * const pIn2 = in2Array.Pointer(in2Y, 0);
-            OutType * const pOut = outArray.Pointer(outY, 0);
+        //  s32 in1Y = in1Limits.yStart;
+        //  s32 in2Y = in2Limits.yStart;
+        //  s32 outY = outLimits.yStart;
 
-            s32 in1X = in1Limits.xStart;
-            s32 in2X = in2Limits.xStart;
-            s32 outX = outLimits.xStart;
+        //  for(s32 y=0; y<outLimits.ySize; y++) {
+        //    const InType * const pIn1 = in1Array.Pointer(in1Y, 0);
+        //    const InType * const pIn2 = in2Array.Pointer(in2Y, 0);
+        //    OutType * const pOut = outArray.Pointer(outY, 0);
 
-            for(s32 x=0; x<outLimits.xSize; x++) {
-              pOut[outX] = pIn1[in1X] + pIn2[in2X];
+        //    s32 in1X = in1Limits.xStart;
+        //    s32 in2X = in2Limits.xStart;
+        //    s32 outX = outLimits.xStart;
 
-              in1X += in1Limits.xIncrement;
-              in2X += in2Limits.xIncrement;
-              outX += outLimits.xIncrement;
-            }
+        //    for(s32 x=0; x<outLimits.xSize; x++) {
+        //      pOut[outX] = pIn1[in1X] + pIn2[in2X];
 
-            in1Y += in1Limits.yIncrement;
-            in2Y += in2Limits.yIncrement;
-            outY += outLimits.yIncrement;
-          }
-        } else if(in1.get_isTransposed() || in2.get_isTransposed()) {
-          // If the input is transposed or if automaticTransposing is allowed, then we will do an inefficent loop iteration
-          // TODO: make fast if needed
-          const bool in1Transposed = in1.get_isTransposed();
-          const bool in2Transposed = in2.get_isTransposed();
+        //      in1X += in1Limits.xIncrement;
+        //      in2X += in2Limits.xIncrement;
+        //      outX += outLimits.xIncrement;
+        //    }
 
-          bool sizesMatch = false;
+        //    in1Y += in1Limits.yIncrement;
+        //    in2Y += in2Limits.yIncrement;
+        //    outY += outLimits.yIncrement;
+        //  }
+        //} else if(in1.get_isTransposed() || in2.get_isTransposed()) {
+        //  // If the input is transposed or if automaticTransposing is allowed, then we will do an inefficent loop iteration
+        //  // TODO: make fast if needed
+        //  const bool in1Transposed = in1.get_isTransposed();
+        //  const bool in2Transposed = in2.get_isTransposed();
 
-          s32 in1InnerIncrementY = 0;
-          s32 in1InnerIncrementX = 0;
-          s32 in2InnerIncrementY = 0;
-          s32 in2InnerIncrementX = 0;
+        //  bool sizesMatch = false;
 
-          if(in1Transposed && in2Transposed) {
-            sizesMatch = (in1Limits.xSize == in2Limits.xSize) && (in1Limits.xSize == outLimits.ySize) && (in1Limits.ySize == in2Limits.ySize) && (in1Limits.ySize == outLimits.xSize);
-            in1InnerIncrementY = in1Limits.yIncrement;
-            in2InnerIncrementY = in2Limits.yIncrement;
-          } else if(in1Transposed) {
-            sizesMatch = (in1Limits.xSize == in2Limits.ySize) && (in1Limits.xSize == outLimits.ySize) && (in1Limits.ySize == in2Limits.xSize) && (in1Limits.ySize == outLimits.xSize);
-            in1InnerIncrementY = in1Limits.yIncrement;
-            in2InnerIncrementX = in2Limits.xIncrement;
-          } else if(in2Transposed) {
-            sizesMatch = (in1Limits.xSize == in2Limits.ySize) && (in1Limits.xSize == outLimits.xSize) && (in1Limits.ySize == in2Limits.xSize) && (in1Limits.ySize == outLimits.ySize);
-            in1InnerIncrementX = in1Limits.xIncrement;
-            in2InnerIncrementY = in2Limits.yIncrement;
-          } else {
-            assert(false); // should not be possible
-          }
+        //  s32 in1InnerIncrementY = 0;
+        //  s32 in1InnerIncrementX = 0;
+        //  s32 in2InnerIncrementY = 0;
+        //  s32 in2InnerIncrementX = 0;
 
-          if(!sizesMatch) {
-            AnkiError("ArraySlice<Type>::Add", "Subscripted assignment dimension mismatch");
-            return RESULT_FAIL;
-          }
+        //  if(in1Transposed && in2Transposed) {
+        //    sizesMatch = (in1Limits.xSize == in2Limits.xSize) && (in1Limits.xSize == outLimits.ySize) && (in1Limits.ySize == in2Limits.ySize) && (in1Limits.ySize == outLimits.xSize);
+        //    in1InnerIncrementY = in1Limits.yIncrement;
+        //    in2InnerIncrementY = in2Limits.yIncrement;
+        //  } else if(in1Transposed) {
+        //    sizesMatch = (in1Limits.xSize == in2Limits.ySize) && (in1Limits.xSize == outLimits.ySize) && (in1Limits.ySize == in2Limits.xSize) && (in1Limits.ySize == outLimits.xSize);
+        //    in1InnerIncrementY = in1Limits.yIncrement;
+        //    in2InnerIncrementX = in2Limits.xIncrement;
+        //  } else if(in2Transposed) {
+        //    sizesMatch = (in1Limits.xSize == in2Limits.ySize) && (in1Limits.xSize == outLimits.xSize) && (in1Limits.ySize == in2Limits.xSize) && (in1Limits.ySize == outLimits.ySize);
+        //    in1InnerIncrementX = in1Limits.xIncrement;
+        //    in2InnerIncrementY = in2Limits.yIncrement;
+        //  } else {
+        //    assert(false); // should not be possible
+        //  }
 
-          s32 in1X = in1Limits.xStart;
-          s32 in1Y = in1Limits.yStart;
-          s32 in2X = in2Limits.xStart;
-          s32 in2Y = in2Limits.yStart;
+        //  if(!sizesMatch) {
+        //    AnkiError("ArraySlice<Type>::Add", "Subscripted assignment dimension mismatch");
+        //    return RESULT_FAIL;
+        //  }
 
-          s32 outY = outLimits.yStart;
+        //  s32 in1X = in1Limits.xStart;
+        //  s32 in1Y = in1Limits.yStart;
+        //  s32 in2X = in2Limits.xStart;
+        //  s32 in2Y = in2Limits.yStart;
 
-          // TODO: replace the Pointer() call with an addition, if speed is a problem
-          for(s32 y=0; y<outLimits.ySize; y++) {
-            OutType * const pOut = outArray.Pointer(outY, 0);
+        //  s32 outY = outLimits.yStart;
 
-            s32 outX = outLimits.xStart;
+        //  // TODO: replace the Pointer() call with an addition, if speed is a problem
+        //  for(s32 y=0; y<outLimits.ySize; y++) {
+        //    OutType * const pOut = outArray.Pointer(outY, 0);
 
-            if(in1Transposed) {
-              in1Y = in1Limits.yStart;
-            } else {
-              in1X = in1Limits.xStart;
-            }
+        //    s32 outX = outLimits.xStart;
 
-            if(in2Transposed) {
-              in2Y = in2Limits.yStart;
-            } else {
-              in2X = in2Limits.xStart;
-            }
+        //    if(in1Transposed) {
+        //      in1Y = in1Limits.yStart;
+        //    } else {
+        //      in1X = in1Limits.xStart;
+        //    }
 
-            for(s32 x=0; x<outLimits.xSize; x++) {
-              const InType pIn1 = *in1Array.Pointer(in1Y, in1X);
-              const InType pIn2 = *in2Array.Pointer(in2Y, in2X);
+        //    if(in2Transposed) {
+        //      in2Y = in2Limits.yStart;
+        //    } else {
+        //      in2X = in2Limits.xStart;
+        //    }
 
-              pOut[outX] = pIn1 + pIn2;
+        //    for(s32 x=0; x<outLimits.xSize; x++) {
+        //      const InType pIn1 = *in1Array.Pointer(in1Y, in1X);
+        //      const InType pIn2 = *in2Array.Pointer(in2Y, in2X);
 
-              in1X += in1InnerIncrementX;
-              in1Y += in1InnerIncrementY;
-              in2X += in2InnerIncrementX;
-              in2Y += in2InnerIncrementY;
-              outX += outLimits.xIncrement;
-            }
+        //      pOut[outX] = pIn1 + pIn2;
 
-            outY += outLimits.yIncrement;
+        //      in1X += in1InnerIncrementX;
+        //      in1Y += in1InnerIncrementY;
+        //      in2X += in2InnerIncrementX;
+        //      in2Y += in2InnerIncrementY;
+        //      outX += outLimits.xIncrement;
+        //    }
 
-            if(in1Transposed) {
-              in1X += in1Limits.xIncrement;
-            } else {
-              in1Y += in1Limits.yIncrement;
-            }
+        //    outY += outLimits.yIncrement;
 
-            if(in2Transposed) {
-              in2X += in2Limits.xIncrement;
-            } else {
-              in2Y += in2Limits.yIncrement;
-            }
-          }
-        }
+        //    if(in1Transposed) {
+        //      in1X += in1Limits.xIncrement;
+        //    } else {
+        //      in1Y += in1Limits.yIncrement;
+        //    }
+
+        //    if(in2Transposed) {
+        //      in2X += in2Limits.xIncrement;
+        //    } else {
+        //      in2Y += in2Limits.yIncrement;
+        //    }
+        //  }
+        //}
 
         return RESULT_OK;
       } // template<typename Type> Result Add(const ConstArraySliceExpression<Type> &in1, const ConstArraySliceExpression<Type> &in2, const ArraySlice<Type> &out)
