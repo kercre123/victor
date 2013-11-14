@@ -57,6 +57,88 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, MatrixAdd)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<s32> in1(5,6,ms);
+  Array<s32> in2(5,6,ms);
+  Array<s32> out(5,6,ms);
+
+  ASSERT_TRUE(in1.IsValid());
+  ASSERT_TRUE(in2.IsValid());
+  ASSERT_TRUE(out.IsValid());
+
+  s32 i1 = 0;
+  s32 i2 = 0;
+  for(s32 y=0; y<5; y++) {
+    for(s32 x=0; x<6; x++) {
+      in1[y][x] = i1++;
+      in2[y][x] = i2*100;
+      i2++;
+    }
+  }
+
+  // Test normal elementwise addition
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::Add<s32,s32>(in1, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(in1[y][x] + in2[y][x]));
+      }
+    }
+  }
+
+  // Test slice transpose in1 elementwise addition
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::Add<s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,1,0,0,2,4), out(0,1,0,0,2,4));
+    ASSERT_TRUE(result == RESULT_OK);
+
+    ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] + in2[0][0]));
+    ASSERT_TRUE((s32)out[0][2] == (s32)(in1[2][0] + in2[0][2]));
+    ASSERT_TRUE((s32)out[0][4] == (s32)(in1[4][0] + in2[0][4]));
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        if(!(y==0 && (x==0 || x==2 || x==4))) {
+          ASSERT_TRUE(out[y][x] == 0);
+        }
+      }
+    }
+  }
+
+  // Test slice transpose in2 elementwise addition
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::Add<s32,s32>(in1(0,1,0,0,2,4), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
+    ASSERT_TRUE(result == RESULT_OK);
+
+    in1.Print("in1");
+    in2.Print("in2");
+    out.Print("out");
+
+    ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] + in2[0][0]));
+    ASSERT_TRUE((s32)out[0][2] == (s32)(in1[0][2] + in2[2][0]));
+    ASSERT_TRUE((s32)out[0][4] == (s32)(in1[0][4] + in2[4][0]));
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        if(!(y==0 && (x==0 || x==2 || x==4))) {
+          ASSERT_TRUE(out[y][x] == 0);
+        }
+      }
+    }
+  }
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, SliceArrayAssignment)
 {
   ASSERT_TRUE(buffer != NULL);
@@ -65,6 +147,9 @@ GTEST_TEST(CoreTech_Common, SliceArrayAssignment)
 
   Array<u8> array1(5,6,ms);
   Array<u8> array2(5,6,ms);
+
+  ASSERT_TRUE(array1.IsValid());
+  ASSERT_TRUE(array2.IsValid());
 
   s32 i = 0;
   for(s32 y=0; y<5; y++) {

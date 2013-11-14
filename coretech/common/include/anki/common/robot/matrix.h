@@ -30,21 +30,25 @@ namespace Anki
       // Elementwise matrix operations
       //
 
-      //template<typename Type> Result Add(const ConstArraySliceExpression<Type> &mat1, const ConstArraySliceExpression<Type> &mat2, const ArraySlice<Type> &out);
+      // Elementwise add two arrays. in1, in2, and out can be the same array
+      template<typename InType, typename OutType> Result Add(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
 
-      //template<typename Type> Result Subtract(const ConstArraySliceExpression<Type> &mat1, const ConstArraySliceExpression<Type> &mat2, const ArraySlice<Type> &out);
+      // Elementwise subtract two arrays. in1, in2, and out can be the same array
+      template<typename InType, typename OutType> Result Subtract(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
 
-      //template<typename Type> Result DotMultiply(const ConstArraySliceExpression<Type> &mat1, const ConstArraySliceExpression<Type> &mat2, const ArraySlice<Type> &out);
+      // Elementwise multiply two arrays. in1, in2, and out can be the same array
+      template<typename InType, typename OutType> Result DotMultiply(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<OutType> &in2, ArraySlice<OutType> out);
 
-      //template<typename Type> Result DotDivide(const ConstArraySliceExpression<Type> &mat1, const ConstArraySliceExpression<Type> &mat2, const ArraySlice<Type> &out);
+      // Elementwise divide two arrays. in1, in2, and out can be the same array
+      template<typename InType, typename OutType> Result DotDivide(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
 
       //
       // Standard matrix operations
       //
 
-      // Perform the matrix multiplication "matOut = mat1 * mat2"
+      // Perform the matrix multiplication "out = in1 * in2"
       // Note that this is the naive O(n^3) implementation
-      template<typename Type> Result Multiply(const Array<Type> &mat1, const Array<Type> &mat2, Array<Type> &matOut);
+      template<typename InType, typename OutType> Result Multiply(const Array<InType> &in1, const Array<InType> &in2, Array<OutType> &out);
 
       //
       // Misc matrix operations
@@ -118,38 +122,189 @@ namespace Anki
         return sum;
       } // template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(const Array<Array_Type> &image)
 
-      template<typename Type> Result Multiply(const Array<Type> &mat1, const Array<Type> &mat2, Array<Type> &matOut)
+      template<typename InType, typename OutType> Result Add(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
       {
-        const s32 mat1Height = mat1.get_size(0);
-        const s32 mat1Width = mat1.get_size(1);
+        const Array<InType> &in1Array = in1.get_array();
+        const Array<InType> &in2Array = in2.get_array();
+        Array<OutType> &outArray = out.get_array();
 
-        const s32 mat2Height = mat2.get_size(0);
-        const s32 mat2Width = mat2.get_size(1);
+        AnkiConditionalErrorAndReturnValue(in1Array.IsValid(),
+          RESULT_FAIL, "ArraySlice<Type>::Set", "Invalid array in1");
 
-        AnkiConditionalErrorAndReturnValue(mat1Width == mat2Height,
-          RESULT_FAIL, "Multiply", "Input matrices are incompatible sizes");
+        AnkiConditionalErrorAndReturnValue(in2Array.IsValid(),
+          RESULT_FAIL, "ArraySlice<Type>::Set", "Invalid array in2");
 
-        AnkiConditionalErrorAndReturnValue(matOut.get_size(0) == mat1Height,
-          RESULT_FAIL, "Multiply", "Input and Output matrices are incompatible sizes");
+        AnkiConditionalErrorAndReturnValue(outArray.IsValid(),
+          RESULT_FAIL, "ArraySlice<Type>::Set", "Invalid array out");
 
-        AnkiConditionalErrorAndReturnValue(matOut.get_size(1) == mat2Width,
-          RESULT_FAIL, "Multiply", "Input and Output matrices are incompatible sizes");
+        const ArraySliceLimits<InType> in1Limits(in1);
+        const ArraySliceLimits<InType> in2Limits(in2);
+        const ArraySliceLimits<OutType> outLimits(out);
 
-        for(s32 y1=0; y1<mat1Height; y1++) {
-          const Type * restrict pMat1 = mat1.Pointer(y1, 0);
-          Type * restrict pMatOut = matOut.Pointer(y1, 0);
+        const bool sizesMatch = (in1Limits.xSize == in2Limits.xSize) && (in1Limits.xSize == outLimits.xSize) && (in1Limits.ySize == in2Limits.ySize) && (in1Limits.ySize == outLimits.ySize);
+        if(sizesMatch) {
+          // If the input isn't transposed, we will do the maximally efficient loop iteration
 
-          for(s32 x2=0; x2<mat2Width; x2++) {
-            pMatOut[x2] = 0;
+          s32 in1Y = in1Limits.yStart;
+          s32 in2Y = in2Limits.yStart;
+          s32 outY = outLimits.yStart;
 
-            for(s32 y2=0; y2<mat2Height; y2++) {
-              pMatOut[x2] += pMat1[y2] * (*mat2.Pointer(y2, x2));
+          for(s32 y=0; y<outLimits.ySize; y++) {
+            const InType * const pIn1 = in1Array.Pointer(in1Y, 0);
+            const InType * const pIn2 = in2Array.Pointer(in2Y, 0);
+            OutType * const pOut = outArray.Pointer(outY, 0);
+
+            s32 in1X = in1Limits.xStart;
+            s32 in2X = in2Limits.xStart;
+            s32 outX = outLimits.xStart;
+
+            for(s32 x=0; x<outLimits.xSize; x++) {
+              pOut[outX] = pIn1[in1X] + pIn2[in2X];
+
+              in1X += in1Limits.xIncrement;
+              in2X += in2Limits.xIncrement;
+              outX += outLimits.xIncrement;
+            }
+
+            in1Y += in1Limits.yIncrement;
+            in2Y += in2Limits.yIncrement;
+            outY += outLimits.yIncrement;
+          }
+        } else if(in1.get_isTransposed() || in2.get_isTransposed()) {
+          // If the input is transposed or if automaticTransposing is allowed, then we will do an inefficent loop iteration
+          // TODO: make fast if needed
+          const bool in1Transposed = in1.get_isTransposed();
+          const bool in2Transposed = in2.get_isTransposed();
+
+          bool sizesMatch = false;
+
+          s32 in1InnerIncrementY = 0;
+          s32 in1InnerIncrementX = 0;
+          s32 in2InnerIncrementY = 0;
+          s32 in2InnerIncrementX = 0;
+
+          if(in1Transposed && in2Transposed) {
+            sizesMatch = (in1Limits.xSize == in2Limits.xSize) && (in1Limits.xSize == outLimits.ySize) && (in1Limits.ySize == in2Limits.ySize) && (in1Limits.ySize == outLimits.xSize);
+            in1InnerIncrementY = in1Limits.yIncrement;
+            in2InnerIncrementY = in2Limits.yIncrement;
+          } else if(in1Transposed) {
+            sizesMatch = (in1Limits.xSize == in2Limits.ySize) && (in1Limits.xSize == outLimits.ySize) && (in1Limits.ySize == in2Limits.xSize) && (in1Limits.ySize == outLimits.xSize);
+            in1InnerIncrementY = in1Limits.yIncrement;
+            in2InnerIncrementX = in2Limits.xIncrement;
+          } else if(in2Transposed) {
+            sizesMatch = (in1Limits.xSize == in2Limits.ySize) && (in1Limits.xSize == outLimits.xSize) && (in1Limits.ySize == in2Limits.xSize) && (in1Limits.ySize == outLimits.ySize);
+            in1InnerIncrementX = in1Limits.xIncrement;
+            in2InnerIncrementY = in2Limits.yIncrement;
+          } else {
+            assert(false); // should not be possible
+          }
+
+          if(!sizesMatch) {
+            AnkiError("ArraySlice<Type>::Add", "Subscripted assignment dimension mismatch");
+            return RESULT_FAIL;
+          }
+
+          s32 in1X = in1Limits.xStart;
+          s32 in1Y = in1Limits.yStart;
+          s32 in2X = in2Limits.xStart;
+          s32 in2Y = in2Limits.yStart;
+
+          s32 outY = outLimits.yStart;
+
+          // TODO: replace the Pointer() call with an addition, if speed is a problem
+          for(s32 y=0; y<outLimits.ySize; y++) {
+            OutType * const pOut = outArray.Pointer(outY, 0);
+
+            s32 outX = outLimits.xStart;
+
+            if(in1Transposed) {
+              in1Y = in1Limits.yStart;
+            } else {
+              in1X = in1Limits.xStart;
+            }
+
+            if(in2Transposed) {
+              in2Y = in2Limits.yStart;
+            } else {
+              in2X = in2Limits.xStart;
+            }
+
+            for(s32 x=0; x<outLimits.xSize; x++) {
+              const InType pIn1 = *in1Array.Pointer(in1Y, in1X);
+              const InType pIn2 = *in2Array.Pointer(in2Y, in2X);
+
+              pOut[outX] = pIn1 + pIn2;
+
+              in1X += in1InnerIncrementX;
+              in1Y += in1InnerIncrementY;
+              in2X += in2InnerIncrementX;
+              in2Y += in2InnerIncrementY;
+              outX += outLimits.xIncrement;
+            }
+
+            outY += outLimits.yIncrement;
+
+            if(in1Transposed) {
+              in1X += in1Limits.xIncrement;
+            } else {
+              in1Y += in1Limits.yIncrement;
+            }
+
+            if(in2Transposed) {
+              in2X += in2Limits.xIncrement;
+            } else {
+              in2Y += in2Limits.yIncrement;
             }
           }
         }
 
         return RESULT_OK;
-      } // template<typename Array_Type, typename Type> Result Multiply(const Array_Type &mat1, const Array_Type &mat2, Array_Type &matOut)
+      } // template<typename Type> Result Add(const ConstArraySliceExpression<Type> &in1, const ConstArraySliceExpression<Type> &in2, const ArraySlice<Type> &out)
+
+      template<typename Type> Result Subtract(const ConstArraySliceExpression<Type> &in1, const ConstArraySliceExpression<Type> &in2, const ArraySlice<Type> &out)
+      {
+      } // template<typename Type> Result Subtract(const ConstArraySliceExpression<Type> &in1, const ConstArraySliceExpression<Type> &in2, const ArraySlice<Type> &out)
+
+      template<typename Type> Result DotMultiply(const ConstArraySliceExpression<Type> &in1, const ConstArraySliceExpression<Type> &in2, const ArraySlice<Type> &out)
+      {
+      } // template<typename Type> Result DotMultiply(const ConstArraySliceExpression<Type> &in1, const ConstArraySliceExpression<Type> &in2, const ArraySlice<Type> &out)
+
+      template<typename Type> Result DotDivide(const ConstArraySliceExpression<Type> &in1, const ConstArraySliceExpression<Type> &in2, const ArraySlice<Type> &out)
+      {
+      } // template<typename Type> Result DotDivide(const ConstArraySliceExpression<Type> &in1, const ConstArraySliceExpression<Type> &in2, const ArraySlice<Type> &out)
+
+      template<typename InType, typename OutType> Result Multiply(const Array<InType> &in1, const Array<InType> &in2, Array<OutType> &out)
+      {
+        const s32 in1Height = in1.get_size(0);
+        const s32 in1Width = in1.get_size(1);
+
+        const s32 in2Height = in2.get_size(0);
+        const s32 in2Width = in2.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue(in1Width == in2Height,
+          RESULT_FAIL, "Multiply", "Input matrices are incompatible sizes");
+
+        AnkiConditionalErrorAndReturnValue(out.get_size(0) == in1Height,
+          RESULT_FAIL, "Multiply", "Input and Output matrices are incompatible sizes");
+
+        AnkiConditionalErrorAndReturnValue(out.get_size(1) == in2Width,
+          RESULT_FAIL, "Multiply", "Input and Output matrices are incompatible sizes");
+
+        for(s32 y1=0; y1<in1Height; y1++) {
+          const InType * restrict pMat1 = in1.Pointer(y1, 0);
+          OutType * restrict pMatOut = out.Pointer(y1, 0);
+
+          for(s32 x2=0; x2<in2Width; x2++) {
+            pMatOut[x2] = 0;
+
+            for(s32 y2=0; y2<in2Height; y2++) {
+              pMatOut[x2] += pMat1[y2] * (*in2.Pointer(y2, x2));
+            }
+          }
+        }
+
+        return RESULT_OK;
+      } // template<typename InType, typename OutType> Result Multiply(const Array<InType> &in1, const Array<InType> &in2, Array<OutType> &out)
 
       template<typename Type> Result MakeSymmetric(Type &arr, bool lowerToUpper)
       {
