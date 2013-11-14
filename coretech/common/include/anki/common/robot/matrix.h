@@ -74,10 +74,10 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(limits.isValid,
           0, "Matrix::Min", "Limits is not valid");
 
-        Type minValue = *array.Pointer(limits.yStart, limits.xStart);
-        for(s32 y=limits.yStart; y<=limits.yEnd; y+=limits.yIncrement) {
+        Type minValue = *array.Pointer(limits.rawIn1Limits.yStart, limits.rawIn1Limits.xStart);
+        for(s32 y=limits.rawIn1Limits.yStart; y<=limits.rawIn1Limits.yEnd; y+=limits.rawIn1Limits.yIncrement) {
           const Type * restrict pMat = array.Pointer(y, 0);
-          for(s32 x=limits.xStart; x<=limits.xEnd; x+=limits.xIncrement) {
+          for(s32 x=limits.rawIn1Limits.xStart; x<=limits.rawIn1Limits.xEnd; x+=limits.rawIn1Limits.xIncrement) {
             minValue = MIN(minValue, pMat[x]);
           }
         }
@@ -97,10 +97,10 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(limits.isValid,
           0, "Matrix::Max", "Limits is not valid");
 
-        Type maxValue = *array.Pointer(limits.yStart, limits.xStart);
-        for(s32 y=limits.yStart; y<=limits.yEnd; y+=limits.yIncrement) {
+        Type maxValue = *array.Pointer(limits.rawIn1Limits.yStart, limits.rawIn1Limits.xStart);
+        for(s32 y=limits.rawIn1Limits.yStart; y<=limits.rawIn1Limits.yEnd; y+=limits.rawIn1Limits.yIncrement) {
           const Type * restrict pMat = array.Pointer(y, 0);
-          for(s32 x=limits.xStart; x<=limits.xEnd; x+=limits.xIncrement) {
+          for(s32 x=limits.rawIn1Limits.xStart; x<=limits.rawIn1Limits.xEnd; x+=limits.rawIn1Limits.xIncrement) {
             maxValue = MAX(maxValue, pMat[x]);
           }
         }
@@ -121,9 +121,9 @@ namespace Anki
           0, "Matrix::Sum", "Limits is not valid");
 
         Accumulator_Type sum = 0;
-        for(s32 y=limits.yStart; y<=limits.yEnd; y+=limits.yIncrement) {
+        for(s32 y=limits.rawIn1Limits.yStart; y<=limits.rawIn1Limits.yEnd; y+=limits.rawIn1Limits.yIncrement) {
           const Array_Type * restrict pMat = array.Pointer(y, 0);
-          for(s32 x=limits.xStart; x<=limits.xEnd; x+=limits.xIncrement) {
+          for(s32 x=limits.rawIn1Limits.xStart; x<=limits.rawIn1Limits.xEnd; x+=limits.rawIn1Limits.xIncrement) {
             sum += pMat[x];
           }
         }
@@ -162,7 +162,7 @@ namespace Anki
             const InType * const pIn2 = in2Array.Pointer(limits.in2Y, 0);
             OutType * const pOut1 = out1Array.Pointer(limits.out1Y, 0);
 
-            limits.IncrementTop();
+            limits.OuterIncrementTop();
 
             for(s32 x=0; x<limits.out1_xSize; x++) {
               pOut1[limits.out1X] = pIn1[limits.in1X] + pIn2[limits.in2X];
@@ -172,7 +172,7 @@ namespace Anki
               limits.out1X += limits.out1_xIncrement;
             }
 
-            limits.IncrementBottom();
+            limits.OuterIncrementBottom();
           }
         } else { // if(limits.isSimpleIteration)
           // If either input is transposed is allowed, then we will do an inefficent loop iteration
@@ -180,7 +180,7 @@ namespace Anki
           for(s32 y=0; y<limits.out1_ySize; y++) {
             OutType * const pOut1 = out1Array.Pointer(limits.out1Y, 0);
 
-            limits.IncrementTop();
+            limits.OuterIncrementTop();
 
             for(s32 x=0; x<limits.out1_xSize; x++) {
               const InType valIn1 = *in1Array.Pointer(limits.in1Y, limits.in1X);
@@ -188,14 +188,14 @@ namespace Anki
 
               pOut1[limits.out1X] = valIn1 + valIn2;
 
-              limits.in1X += limits.in1InnerIncrementX;
-              limits.in1Y += limits.in1InnerIncrementY;
-              limits.in2X += limits.in2InnerIncrementX;
-              limits.in2Y += limits.in2InnerIncrementY;
+              limits.in1X += limits.in1_xInnerIncrement;
+              limits.in1Y += limits.in1_yInnerIncrement;
+              limits.in2X += limits.in2_xInnerIncrement;
+              limits.in2Y += limits.in2_yInnerIncrement;
               limits.out1X += limits.out1_xIncrement;
             }
 
-            limits.IncrementBottom();
+            limits.OuterIncrementBottom();
           }
         } //   if(limits.isSimpleIteration)  ... else
 

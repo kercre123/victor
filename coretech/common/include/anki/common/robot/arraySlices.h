@@ -101,13 +101,9 @@ namespace Anki
     // The suffix of in# and out# refer to the number of input and output matrices.
     // If output == 0, then the output is a scalar.
 
-    // In1 and out0 is a special, ultra-simple case, for one matrix input and a scalar output
-    template<typename Type> class ArraySliceLimits_in1_out0
+    template<typename Type> class ArraySliceSimpleLimits
     {
     public:
-      // Was this ArraySliceLimits initialized?
-      bool isValid;
-
       Type xStart;
       Type xIncrement;
       Type xEnd;
@@ -117,6 +113,18 @@ namespace Anki
       Type yIncrement;
       Type yEnd;
       s32  ySize;
+
+      ArraySliceSimpleLimits(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice);
+    };
+
+    // In1 and out0 is a special, ultra-simple case, for one matrix input and a scalar output
+    template<typename Type> class ArraySliceLimits_in1_out0
+    {
+    public:
+      // Was this ArraySliceLimits initialized?
+      bool isValid;
+
+      ArraySliceSimpleLimits<Type> rawIn1Limits;
 
       ArraySliceLimits_in1_out0(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice);
     };
@@ -137,38 +145,30 @@ namespace Anki
       s32 in1Y;
       s32 in1X;
 
-      Type in1_yIncrement;
-      Type in1_xIncrement;
+      // The loops will be based on these iterators (these should match with the inputs')
+      s32 ySize;
+      s32 xSize;
 
-      Type out1_yIncrement;
-      Type out1_xIncrement;
-
-      s32  out1_ySize;
-      s32  out1_xSize;
-
-      s32 in1InnerIncrementY;
+      // Depending on whether ths input is transposed or not, either its X or Y coordinate should be incremented
+      s32 out1_xInnerIncrement;
+      s32 in1_xInnerIncrement;
+      s32 in1_yInnerIncrement;
 
       ArraySliceLimits_in1_out1(
         const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice, bool in1_isTransposed,
         const LinearSequence<Type> &out1_ySlice, const LinearSequence<Type> &out1_xSlice);
 
       // This should be called at the top of the y-iteration loop, before the x-iteration loop. This will update the out# and in# values for X and Y.
-      inline void IncrementTop();
+      inline void OuterIncrementTop();
 
       // This should be called at the botom of the y-iteration loop, after the x-iteration loop. This will update the out# and in# values for X and Y.
-      inline void IncrementBottom();
+      inline void OuterIncrementBottom();
 
     protected:
-      Type in1_yStart;
-      Type in1_yEnd;
-      Type in1_xStart;
-      Type in1_xEnd;
+      ArraySliceSimpleLimits<Type> rawIn1Limits;
       bool in1_isTransposed;
 
-      Type out1_yStart;
-      Type out1_yEnd;
-      Type out1_xStart;
-      Type out1_xEnd;
+      ArraySliceSimpleLimits<Type> rawOut1Limits;
     };
 
     // Two inputs, one output
@@ -201,10 +201,10 @@ namespace Anki
       s32  out1_ySize;
       s32  out1_xSize;
 
-      s32 in1InnerIncrementX;
-      s32 in1InnerIncrementY;
-      s32 in2InnerIncrementX;
-      s32 in2InnerIncrementY;
+      s32 in1_xInnerIncrement;
+      s32 in1_yInnerIncrement;
+      s32 in2_xInnerIncrement;
+      s32 in2_yInnerIncrement;
 
       ArraySliceLimits_in2_out1(
         const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice, bool in1_isTransposed,
@@ -212,10 +212,10 @@ namespace Anki
         const LinearSequence<Type> &out1_ySlice, const LinearSequence<Type> &out1_xSlice);
 
       // This should be called at the top of the y-iteration loop, before the x-iteration loop. This will update the out# and in# values for X and Y.
-      inline void IncrementTop();
+      inline void OuterIncrementTop();
 
       // This should be called at the botom of the y-iteration loop, after the x-iteration loop. This will update the out# and in# values for X and Y.
-      inline void IncrementBottom();
+      inline void OuterIncrementBottom();
 
     protected:
       Type in1_yStart;
@@ -347,37 +347,37 @@ namespace Anki
       if(limits.isSimpleIteration) {
         // If the input isn't transposed, we will do the maximally efficient loop iteration
 
-        for(s32 y=0; y<limits.out1_ySize; y++) {
+        for(s32 y=0; y<limits.ySize; y++) {
           const Type * restrict pIn1 = in1Array.Pointer(limits.in1Y, 0);
           Type * restrict pOut1 = out1Array.Pointer(limits.out1Y, 0);
 
-          limits.IncrementTop();
+          limits.OuterIncrementTop();
 
-          for(s32 x=0; x<limits.out1_xSize; x++) {
+          for(s32 x=0; x<limits.xSize; x++) {
             pOut1[limits.out1X] = pIn1[limits.in1X];
 
-            limits.out1X += limits.out1_xIncrement;
-            limits.in1X += limits.in1_xIncrement;
+            limits.out1X += limits.out1_xInnerIncrement;
+            limits.in1X += limits.in1_xInnerIncrement;
           }
 
-          limits.IncrementBottom();
+          limits.OuterIncrementBottom();
         }
       } else {
-        for(s32 y=0; y<limits.out1_ySize; y++) {
+        for(s32 y=0; y<limits.ySize; y++) {
           Type * restrict pOut1 = out1Array.Pointer(limits.out1Y, 0);
 
-          limits.IncrementTop();
+          limits.OuterIncrementTop();
 
-          for(s32 x=0; x<limits.out1_xSize; x++) {
+          for(s32 x=0; x<limits.xSize; x++) {
             const Type pIn1 = *in1Array.Pointer(limits.in1Y, limits.in1X);
 
             pOut1[limits.out1X] = pIn1;
 
-            limits.out1X += limits.out1_xIncrement;
-            limits.in1Y += limits.in1InnerIncrementY;
+            limits.out1X += limits.out1_xInnerIncrement;
+            limits.in1Y += limits.in1_yInnerIncrement;
           }
 
-          limits.IncrementBottom();
+          limits.OuterIncrementBottom();
         }
       }
 
@@ -421,42 +421,45 @@ namespace Anki
       return isTransposed;
     }
 
-    template<typename Type> ArraySliceLimits_in1_out0<Type>::ArraySliceLimits_in1_out0(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice)
-      : isValid(true),
-      xStart(in1_xSlice.get_start()), xIncrement(in1_xSlice.get_increment()), xEnd(in1_xSlice.get_end()), xSize(in1_xSlice.get_size()),
+    template<typename Type> ArraySliceSimpleLimits<Type>::ArraySliceSimpleLimits(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice)
+      : xStart(in1_xSlice.get_start()), xIncrement(in1_xSlice.get_increment()), xEnd(in1_xSlice.get_end()), xSize(in1_xSlice.get_size()),
       yStart(in1_ySlice.get_start()), yIncrement(in1_ySlice.get_increment()), yEnd(in1_ySlice.get_end()), ySize(in1_ySlice.get_size())
+    {
+    }
+
+    template<typename Type> ArraySliceLimits_in1_out0<Type>::ArraySliceLimits_in1_out0(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice)
+      : isValid(true), rawIn1Limits(in1_ySlice, in1_xSlice)
     {
     } // ArraySliceLimits_in1_out0
 
     template<typename Type> ArraySliceLimits_in1_out1<Type>::ArraySliceLimits_in1_out1(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice, bool in1_isTransposed, const LinearSequence<Type> &out1_ySlice, const LinearSequence<Type> &out1_xSlice)
-      : in1_yStart(in1_ySlice.get_start()), in1_yIncrement(in1_ySlice.get_increment()), in1_yEnd(in1_ySlice.get_end()),
-      in1_xStart(in1_xSlice.get_start()), in1_xIncrement(in1_xSlice.get_increment()), in1_xEnd(in1_xSlice.get_end()), in1_isTransposed(in1_isTransposed),
-      out1_yStart(out1_ySlice.get_start()), out1_yIncrement(out1_ySlice.get_increment()), out1_yEnd(out1_ySlice.get_end()),
-      out1_xStart(out1_xSlice.get_start()), out1_xIncrement(out1_xSlice.get_increment()), out1_xEnd(out1_xSlice.get_end()),
-      out1_ySize(out1_ySlice.get_size()), out1_xSize(out1_xSlice.get_size())
+      :  rawIn1Limits(in1_ySlice, in1_xSlice), in1_isTransposed(in1_isTransposed), rawOut1Limits(out1_ySlice, out1_xSlice), ySize(out1_ySlice.get_size()), xSize(out1_xSlice.get_size())
     {
       isValid = false;
 
       if(!in1_isTransposed) {
-        if(out1_xSlice.get_size() == in1_xSlice.get_size() && out1_ySlice.get_size() == in1_ySlice.get_size()) {
+        if(rawOut1Limits.xSize == rawIn1Limits.xSize && rawOut1Limits.ySize == rawIn1Limits.ySize) {
           isValid = true;
           isSimpleIteration = true;
 
-          this->in1Y = this->in1_yStart;
-          this->out1Y = this->out1_yStart;
+          this->in1Y = this->rawIn1Limits.yStart;
+          this->out1Y = this->rawOut1Limits.yStart;
 
-          // These shouldn't be used
-          this->in1InnerIncrementY = 0;
+          this->out1_xInnerIncrement = this->rawOut1Limits.xIncrement;
+          this->in1_xInnerIncrement = this->rawIn1Limits.xIncrement;
+          this->in1_yInnerIncrement = 0;
         }
       } else { // if(!in1_isTransposed)
-        if(out1_xSlice.get_size() == in1_ySlice.get_size() && out1_ySlice.get_size() == in1_xSlice.get_size()) {
+        if(rawOut1Limits.xSize == rawIn1Limits.ySize && rawOut1Limits.ySize == rawIn1Limits.xSize) {
           isValid = true;
           isSimpleIteration = false;
 
-          this->in1X = this->in1_xStart;
-          this->out1Y = this->out1_yStart;
+          this->in1X = this->rawIn1Limits.xStart;
+          this->out1Y = this->rawOut1Limits.yStart;
 
-          this->in1InnerIncrementY = this->in1_yIncrement;
+          this->out1_xInnerIncrement = this->rawOut1Limits.xIncrement;
+          this->in1_xInnerIncrement = 0;
+          this->in1_yInnerIncrement = this->rawIn1Limits.yIncrement;
         }
       } // if(!in1_isTransposed) ... else
 
@@ -467,28 +470,28 @@ namespace Anki
     } // ArraySliceLimits_in1_out1
 
     // This should be called at the top of the y-iteration loop, before the x-iteration loop. This will update the out1 and in# values for X and Y.
-    template<typename Type> inline void ArraySliceLimits_in1_out1<Type>::IncrementTop()
+    template<typename Type> inline void ArraySliceLimits_in1_out1<Type>::OuterIncrementTop()
     {
       if(isSimpleIteration) {
-        this->in1X = this->in1_xStart;
-        this->out1X = this->out1_xStart;
+        this->in1X = this->rawIn1Limits.xStart;
+        this->out1X = this->rawOut1Limits.xStart;
       } else { // if(isSimpleIteration)
-        this->in1Y = this->in1_yStart;
-        this->out1X = this->out1_xStart;
+        this->in1Y = this->rawIn1Limits.yStart;
+        this->out1X = this->rawOut1Limits.xStart;
       } // if(isSimpleIteration) ... else
-    } // ArraySliceLimits_in1_out1<Type>::IncrementTop()
+    } // ArraySliceLimits_in1_out1<Type>::OuterIncrementTop()
 
     // This should be called at the botom of the y-iteration loop, after the x-iteration loop. This will update the out and in# values for X and Y.
-    template<typename Type> inline void ArraySliceLimits_in1_out1<Type>::IncrementBottom()
+    template<typename Type> inline void ArraySliceLimits_in1_out1<Type>::OuterIncrementBottom()
     {
       if(isSimpleIteration) {
-        this->in1Y += this->in1_yIncrement;
-        this->out1Y += this->out1_yIncrement;
+        this->in1Y += this->rawIn1Limits.yIncrement;
+        this->out1Y += this->rawOut1Limits.yIncrement;
       } else { // if(isSimpleIteration)
-        this->in1X += this->in1_xIncrement;
-        this->out1Y += this->out1_yIncrement;
+        this->in1X += this->rawIn1Limits.xIncrement;
+        this->out1Y += this->rawOut1Limits.yIncrement;
       } // if(isSimpleIteration) ... else
-    } // ArraySliceLimits_in1_out1<Type>::IncrementBottom()
+    } // ArraySliceLimits_in1_out1<Type>::OuterIncrementBottom()
 
     template<typename Type> ArraySliceLimits_in2_out1<Type>::ArraySliceLimits_in2_out1(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice, bool in1_isTransposed, const LinearSequence<Type> &in2_ySlice, const LinearSequence<Type> &in2_xSlice, bool in2_isTransposed, const LinearSequence<Type> &out1_ySlice, const LinearSequence<Type> &out1_xSlice)
       : in1_yStart(in1_ySlice.get_start()), in1_yIncrement(in1_ySlice.get_increment()), in1_yEnd(in1_ySlice.get_end()),
@@ -501,10 +504,10 @@ namespace Anki
     {
       isValid = false;
 
-      this->in1InnerIncrementY = 0;
-      this->in1InnerIncrementX = 0;
-      this->in2InnerIncrementY = 0;
-      this->in2InnerIncrementX = 0;
+      this->in1_yInnerIncrement = 0;
+      this->in1_xInnerIncrement = 0;
+      this->in2_yInnerIncrement = 0;
+      this->in2_xInnerIncrement = 0;
 
       if(!in1_isTransposed && !in2_isTransposed) {
         const bool sizesMatch = (in1_xSlice.get_size() == in2_xSlice.get_size()) && (in1_xSlice.get_size() == out1_xSize) && (in1_ySlice.get_size() == in2_ySlice.get_size()) && (in1_ySlice.get_size() == out1_ySize);
@@ -524,16 +527,16 @@ namespace Anki
 
         if(in1_isTransposed && in2_isTransposed) {
           sizesMatch = (in1_xSlice.get_size() == in2_xSlice.get_size()) && (in1_xSlice.get_size() == out1_ySlice.get_size()) && (in1_ySlice.get_size() == in2_ySlice.get_size()) && (in1_ySlice.get_size() == out1_xSlice.get_size());
-          this->in1InnerIncrementY = in1_yIncrement;
-          this->in2InnerIncrementY = in2_yIncrement;
+          this->in1_yInnerIncrement = in1_yIncrement;
+          this->in2_yInnerIncrement = in2_yIncrement;
         } else if(in1_isTransposed) {
           sizesMatch = (in1_xSlice.get_size() == in2_ySlice.get_size()) && (in1_xSlice.get_size() == out1_ySlice.get_size()) && (in1_ySlice.get_size() == in2_xSlice.get_size()) && (in1_ySlice.get_size() == out1_xSlice.get_size());
-          this->in1InnerIncrementY = in1_yIncrement;
-          this->in2InnerIncrementX = in2_xIncrement;
+          this->in1_yInnerIncrement = in1_yIncrement;
+          this->in2_xInnerIncrement = in2_xIncrement;
         } else if(in2_isTransposed) {
           sizesMatch = (in1_xSlice.get_size() == in2_ySlice.get_size()) && (in1_xSlice.get_size() == out1_xSlice.get_size()) && (in1_ySlice.get_size() == in2_xSlice.get_size()) && (in1_ySlice.get_size() == out1_ySlice.get_size());
-          this->in1InnerIncrementX = in1_xIncrement;
-          this->in2InnerIncrementY = in2_yIncrement;
+          this->in1_xInnerIncrement = in1_xIncrement;
+          this->in2_yInnerIncrement = in2_yIncrement;
         } else {
           assert(false); // should not be possible
         }
@@ -555,7 +558,7 @@ namespace Anki
     } // ArraySliceLimits_in1_out1
 
     // This should be called at the top of the y-iteration loop, before the x-iteration loop. This will update the out1 and in# values for X and Y.
-    template<typename Type> inline void ArraySliceLimits_in2_out1<Type>::IncrementTop()
+    template<typename Type> inline void ArraySliceLimits_in2_out1<Type>::OuterIncrementTop()
     {
       if(isSimpleIteration) {
         this->out1X = this->out1_xStart;
@@ -576,10 +579,10 @@ namespace Anki
           this->in2X = in2_xStart;
         }
       } // if(isSimpleIteration) ... else
-    } // ArraySliceLimits_in2_out1<Type>::IncrementTop()
+    } // ArraySliceLimits_in2_out1<Type>::OuterIncrementTop()
 
     // This should be called at the botom of the y-iteration loop, after the x-iteration loop. This will update the out and in# values for X and Y.
-    template<typename Type> inline void ArraySliceLimits_in2_out1<Type>::IncrementBottom()
+    template<typename Type> inline void ArraySliceLimits_in2_out1<Type>::OuterIncrementBottom()
     {
       if(isSimpleIteration) {
         this->in1Y += this->in1_yIncrement;
@@ -600,7 +603,7 @@ namespace Anki
           this->in2Y += in2_yIncrement;
         }
       } // if(isSimpleIteration) ... else
-    } // ArraySliceLimits_in2_out1<Type>::IncrementBottom()
+    } // ArraySliceLimits_in2_out1<Type>::OuterIncrementBottom()
   } // namespace Embedded
 } // namespace Anki
 
