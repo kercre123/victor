@@ -15,7 +15,6 @@ namespace Anki
     template<typename Type> class ConstArraySliceExpression;
 
     // TODO: support non-int indexes
-    // TODO: add lazy transpose?
     // TODO: is there a better way of doing this than a completely different class, different only by const?
     template<typename Type> class ConstArraySlice
     {
@@ -27,8 +26,6 @@ namespace Anki
 
       // It's probably easier to call array.operator() than this constructor directly
       ConstArraySlice(const Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice);
-
-      //ConstArraySlice<Type>& ConstArraySlice<Type>::operator= (const Array<Type> & rightHandSide); // Implicit conversion
 
       // ArraySlice Transpose doesn't modify the data, it just sets a flag
       ConstArraySliceExpression<Type> Transpose() const;
@@ -61,8 +58,6 @@ namespace Anki
       // It's probably easier to call array.operator() than this constructor directly
       // The Array parameter is not a reference, to allow for implicit conversion
       ArraySlice(Array<Type> array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice);
-
-      //ArraySlice<Type>& ArraySlice<Type>::operator= (Array<Type> & rightHandSide); // Implicit conversion
 
       // If automaticTranspose==true, then you can set a MxN slice with a NxM input
       // Matlab allows this for vectors, though this will also work for arbitrary-sized arrays
@@ -139,7 +134,7 @@ namespace Anki
       // Can a simple (non-transposed) iteration be performed?
       bool isSimpleIteration;
 
-      // These are the current values for the iterations
+      // These are the current values for the coordinates in the input and output images
       s32 out1Y;
       s32 out1X;
       s32 in1Y;
@@ -149,7 +144,8 @@ namespace Anki
       s32 ySize;
       s32 xSize;
 
-      // Depending on whether ths input is transposed or not, either its X or Y coordinate should be incremented
+      // Depending on whether ths input is transposed or not, either its X or Y coordinate should be
+      // incremented every iteration of the inner loop
       s32 out1_xInnerIncrement;
       s32 in1_xInnerIncrement;
       s32 in1_yInnerIncrement;
@@ -181,7 +177,7 @@ namespace Anki
       // Can a simple (non-transposed) iteration be performed?
       bool isSimpleIteration;
 
-      // These are the current values for the iterations
+      // These are the current values for the coordinates in the input and output images
       s32 out1Y;
       s32 out1X;
       s32 in1Y;
@@ -193,7 +189,8 @@ namespace Anki
       s32 ySize;
       s32 xSize;
 
-      // Depending on whether ths input is transposed or not, either its X or Y coordinate should be incremented
+      // Depending on whether ths input is transposed or not, either its X or Y coordinate should be
+      // incremented every iteration of the inner loop
       s32 out1_xInnerIncrement;
       s32 in1_xInnerIncrement;
       s32 in1_yInnerIncrement;
@@ -238,15 +235,6 @@ namespace Anki
     {
     }
 
-    /*template<typename Type> ConstArraySlice<Type>& ConstArraySlice<Type>::operator= (const Array<Type> & rightHandSide)
-    {
-    this->array = rightHandSide;
-    this->ySlice = LinearSequence<s32>(0,array.get_size(0)-1);
-    this->xSlice = LinearSequence<s32>(0,array.get_size(1)-1);
-
-    return *this;
-    }*/
-
     template<typename Type> ConstArraySliceExpression<Type> ConstArraySlice<Type>::Transpose() const
     {
       ConstArraySliceExpression<Type> expression(*this, true);
@@ -286,15 +274,6 @@ namespace Anki
       : ConstArraySlice<Type>(array, ySlice, xSlice)
     {
     }
-
-    /*template<typename Type> ArraySlice<Type>& ArraySlice<Type>::operator= (Array<Type> & rightHandSide)
-    {
-    this->array = rightHandSide;
-    this->ySlice = LinearSequence<s32>(0,array.get_size(0)-1);
-    this->xSlice = LinearSequence<s32>(0,array.get_size(1)-1);
-
-    return *this;
-    }*/
 
     template<typename Type> Result ArraySlice<Type>::Set(const ConstArraySliceExpression<Type> &input, bool automaticTranspose)
     {

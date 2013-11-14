@@ -405,20 +405,6 @@ namespace Anki
       return slice;
     }
 
-    //template<typename Type> Array<Type>::operator ArraySlice<Type>()
-    //{
-    //  ArraySlice<Type> slice(*this);
-
-    //  return slice;
-    //}
-
-    //template<typename Type> Array<Type>::operator ConstArraySlice<Type>() const
-    //{
-    //  ConstArraySlice<Type> slice(*this);
-
-    //  return slice;
-    //}
-
     template<typename Type> ConstArraySlice<Type> Array<Type>::operator() () const
     {
       ConstArraySlice<Type> slice(*this);
