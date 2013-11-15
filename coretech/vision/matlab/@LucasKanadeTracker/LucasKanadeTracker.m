@@ -1,17 +1,22 @@
 classdef LucasKanadeTracker < handle
     
+    properties(SetAccess = 'protected', Dependent = true)
+        corners;
+    end
+    
     properties(GetAccess = 'public', SetAccess = 'protected')
         tform;
         err = Inf;
+        target;
     end
     
     properties(GetAccess = 'protected', SetAccess = 'protected')
         
         tformType;
         
-        target;
         xgrid;
         ygrid;
+        initCorners;
         
         xcen;
         ycen;
@@ -33,6 +38,7 @@ classdef LucasKanadeTracker < handle
         % Parameters
         minSize;
         numScales;
+        finestScale;
         convergenceTolerance;
         maxIterations;
         
@@ -55,6 +61,7 @@ classdef LucasKanadeTracker < handle
             UseBlurring = true;
             UseNormalization = false;
             RidgeWeight = 0;
+            TrackingResolution = size(firstImg(:,:,1));
             
             parseVarargin(varargin{:});
             
@@ -72,7 +79,7 @@ classdef LucasKanadeTracker < handle
             this.xgrid = cell(1, this.numScales);
             this.ygrid = cell(1, this.numScales);
             
-            [~,~,nbands] = size(firstImg);
+            [nrows,ncols,nbands] = size(firstImg);
             firstImg = im2double(firstImg);
             if nbands>1
                 firstImg = mean(firstImg,3);
@@ -80,19 +87,84 @@ classdef LucasKanadeTracker < handle
             
             %this.numScales = ceil( log2(min(nrows,ncols)/this.minSize) );
             
-            [y,x] = find(targetMask);
-            xmin = min(x); xmax = max(x);
-            ymin = min(y); ymax = max(y);
-            maskBBox = [xmin ymin xmax-xmin ymax-ymin];
-            
-            if isempty(NumScales)
-                this.numScales = ceil( log2(min(maskBBox(3:4))/this.minSize) );
+            if isequal(size(targetMask), [4 2])
+                % 4 corners provided
+                x = targetMask(:,1);
+                y = targetMask(:,2);
+                %xmin = min(x); xmax = max(x);
+                %ymin = min(y); ymax = max(y);
             else
-                assert(isscalar(NumScales));
-                this.numScales = NumScales;
+                % binary mask provided
+                assert(isequal(size(targetMask), size(firstImg)));
+                [y,x] = find(targetMask);
+                
+                % Convert to corners
+                xmin = min(x); xmax = max(x);
+                ymin = min(y); ymax = max(y);
+                x = [xmin xmin xmax xmax]';
+                y = [ymin ymax ymin ymax]';
             end
             
-            targetMask = false(size(targetMask));
+            %{
+            origResWidth  = xmax - xmin + 1;
+            origResHeight = ymax - ymin + 1;
+            
+            
+            % Downsample the first image so that the target is roughly the
+            % desired tracking resolution.  Adjust x,y coordinates of the
+            % target accordingly.
+            if ~isempty(TrackingResolution)
+                if isscalar(TrackingResolution)
+                    % Downsample factor provided
+                   TrackingResolution = [ncols nrows]/TrackingResolution;
+                end
+                desiredDiagonal = sqrt(sum(TrackingResolution.^2));
+                currentDiagonal = sqrt( (xmax-xmin)^2 + (ymax-ymin)^2 );
+                
+                if currentDiagonal > desiredDiagonal
+                    % Downsample, being careful to scale everything around
+                    % the image center so the scaled x,y coordinates end up
+                    % in the corresponding place at lower resolution.
+                    scale = desiredDiagonal/currentDiagonal;
+                    
+                    X = linspace(-TrackingResolution(1)/2, TrackingResolution(1)/2, ncols);
+                    Y = linspace(-TrackingResolution(2)/2, TrackingResolution(2)/2, nrows);
+                    [xi,yi] = meshgrid( ...
+                        linspace(-TrackingResolution(1)/2, TrackingResolution(1)/2, scale*ncols), ...
+                        linspace(-TrackingResolution(2)/2, TrackingResolution(2)/2, scale*nrows));
+                    
+                    firstImg = interp2(X,Y, firstImg, xi, yi, 'linear');
+                    origResWidth  = scale*origResWidth;
+                    origResHeight = scale*origResHeight;
+                    
+                    %[xi,yi] = meshgrid(1:1/scale:ncols, 1:1/scale:nrows);
+                    %firstImg = interp2(firstImg, xi, yi, 'nearest');
+                end
+                
+                x = (x-1)/ncols * TrackingResolution(1) + 1;
+                y = (y-1)/nrows * TrackingResolution(2) + 1;
+                
+                Ximg = linspace(1, TrackingResolution(1), size(firstImg,2));
+                Yimg = linspace(1, TrackingResolution(2), size(firstImg,1));
+                
+            else
+                TrackingResolution = [ncols nrows];
+                Ximg = 1:ncols;
+                Yimg = 1:nrows;
+            end
+            %}
+            
+            this.initCorners = [x y];
+            xmin = floor(min(x)); xmax = ceil(max(x));
+            ymin = floor(min(y)); ymax = ceil(max(y));
+            
+            this.height = ymax - ymin + 1;
+            this.width  = xmax - xmin + 1;
+            
+            maskBBox = [xmin ymin xmax-xmin ymax-ymin];
+            
+            %targetMask = false(TrackingResolution(2), TrackingResolution(1));
+            targetMask = false(nrows,ncols);
             targetMask(maskBBox(2):(maskBBox(2)+maskBBox(4)), ...
                 maskBBox(1):(maskBBox(1)+maskBBox(3))) = true;
             
@@ -107,17 +179,33 @@ classdef LucasKanadeTracker < handle
                 subplot(2,2,[3 4]), cla
                 this.h_errPlot = plot(nan,nan, 'r-x');
             end
-            
-            %this.target{1} = firstImg(targetMask);
-            this.target{1} = imcrop(firstImg,maskBBox);
-            
+                      
             %[this.ygrid{1},this.xgrid{1}] = find(targetMask);
-            this.height = ymax - ymin + 1;
-            this.width  = xmax - xmin + 1;
+ 
+            if isempty(NumScales)
+                %this.numScales = ceil( log2(min(TrackingResolution)/this.minSize) );
+                this.numScales = ceil( log2(min(this.width,this.height)/this.minSize) );
+            else
+                assert(isscalar(NumScales));
+                this.numScales = NumScales;
+            end
             
+            this.finestScale = 1;
+            Downsample = 1;
+            if ~isempty(TrackingResolution)
+               
+                if isscalar(TrackingResolution)
+                    % Scalar downsampling factor provided.
+                    Downsample = TrackingResolution;
+                    TrackingResolution = [ncols nrows]/Downsample;
+                else
+                    Downsample = mean([ncols nrows]./TrackingResolution);
+                end
+                
+                this.finestScale = floor(log2(min(nrows,ncols)/min(TrackingResolution)));
+                
+            end
             
-            %this.xcen = mean(this.xgrid{1});
-            %this.ycen = mean(this.ygrid{1});
             this.xcen = (xmax + xmin)/2;
             this.ycen = (ymax + ymin)/2;
             
@@ -143,12 +231,12 @@ classdef LucasKanadeTracker < handle
             
             this.tform = eye(3);
             
-            for i_scale = 1:this.numScales
+            for i_scale = this.finestScale:this.numScales
                 
                 spacing = 2^(i_scale-1);
                 
                 [this.xgrid{i_scale}, this.ygrid{i_scale}] = meshgrid( ...
-                    linspace(-this.width/2, this.width/2, this.width/spacing), ...
+                    linspace(-this.width/2,  this.width/2,  this.width/spacing), ...
                     linspace(-this.height/2, this.height/2, this.height/spacing));
                 
                 if this.useBlurring
@@ -187,12 +275,25 @@ classdef LucasKanadeTracker < handle
                 %                 Iy = (targetDown  - this.target{i_scale});% * spacing;
                 
                 %W_mask = 1;
+                % Don't need to use Ximg, Yimg here because the mask is
+                % already defined in TrackingResolution coordinates.
                 W_mask = interp2(double(targetMask), xi, yi, 'linear', 0);
                 
                 % Gaussian weighting function to give more weight to center of target
                 W_ = W_mask .* exp(-((this.xgrid{i_scale}).^2 + ...
                     (this.ygrid{i_scale}).^2) / (2*(W_sigma)^2));
                 this.W{i_scale} = W_(:);
+                
+                if Downsample ~= 1
+                    % Adjust the target coordinates from original
+                    % resolution to tracking resolution. Note that we don't
+                    % have to scale around (1,1) here because these
+                    % coordinates are already referenced to the target's
+                    % center (0,0), i.e. they get shifted by (xcen,ycen),
+                    % which gets scaled below.
+                    this.xgrid{i_scale} = this.xgrid{i_scale}/Downsample;
+                    this.ygrid{i_scale} = this.ygrid{i_scale}/Downsample;
+                end
                 
                 % System of Equations for Translation Only
                 this.A_trans{i_scale} = [Ix(:) Iy(:)];
@@ -256,6 +357,15 @@ classdef LucasKanadeTracker < handle
                 %                 end
             end % FOR each scale
             
+            if Downsample ~= 1
+                % Adjust the target center point and the original corner
+                % locations from original resolution to tracking resolution
+                % coordinates
+                this.xcen = (this.xcen-1)/Downsample + 1;
+                this.ycen = (this.ycen-1)/Downsample + 1;
+                this.initCorners = (this.initCorners-1)/Downsample + 1;
+            end
+            
             return;
             
         end % CONSTRUCTOR
@@ -264,6 +374,13 @@ classdef LucasKanadeTracker < handle
             
             if nargin==2
                 i_scale = varargin{1};
+                if i_scale < this.finestScale
+                    warning(['Finest scale available is %d. Returning ' ...
+                        'that instead of requested scale %d.'], ...
+                        this.finestScale, i_scale);
+                    i_scale = this.finestScale;
+                end
+                
                 x = this.xgrid{i_scale};
                 y = this.ygrid{i_scale};
             else
@@ -320,7 +437,7 @@ classdef LucasKanadeTracker < handle
                 [imgBlur{:}] = deal(nextImg);
             end
             
-            for i_scale = this.numScales:-1:1
+            for i_scale = this.numScales:-1:this.finestScale
                 % TODO: just blur previously-blurred image
                 %imgBlur = separable_filter(imgBlur, gaussian_kernel(spacing/3));
                 %imgBlur = mexGaussianBlur(nextImg, spacing/3, 2);
@@ -336,15 +453,15 @@ classdef LucasKanadeTracker < handle
             end % FOR each scale
             
             % Compute final error
-            [xi,yi] = this.getImagePoints(1);
+            [xi,yi] = this.getImagePoints(this.finestScale);
             
-            imgi = interp2(imgBlur{1}, xi(:), yi(:), 'linear');
+            imgi = interp2(imgBlur{this.finestScale}, xi(:), yi(:), 'linear');
             inBounds = ~isnan(imgi);
             
             if this.useNormalization
                 imgi = (imgi - mean(imgi(inBounds)))/std(imgi(inBounds));
             end
-            It = this.target{1}(:) - imgi;
+            It = this.target{this.finestScale}(:) - imgi;
             
             this.err = mean(abs(It(inBounds)));
             
@@ -381,6 +498,11 @@ classdef LucasKanadeTracker < handle
             end
             
         end % FUNCTION track()
+        
+        function c = get.corners(this)
+            [x,y] = this.getImagePoints(this.initCorners(:,1), this.initCorners(:,2));
+            c = [x y];
+        end
         
     end % public methods
     
