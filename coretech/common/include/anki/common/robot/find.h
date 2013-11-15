@@ -13,18 +13,6 @@ namespace Anki
     template<typename Type> class ConstArraySlice;
     template<typename Type> class ConstArraySliceExpression;
 
-    //namespace Comparison
-    //{
-    //  enum Comparison {
-    //    EQUAL,
-    //    NOT_EQUAL,
-    //    LESS_THAN,
-    //    LESS_THAN_OR_EQUAL,
-    //    GREATER_THAN,
-    //    GREATER_THAN_OR_EQUAL
-    //  };
-    //}
-
     template<typename Type1, typename Type2> class Comparison_Equal {
     public:
       static inline bool Compare(const Type1 value1, const Type2 value2) {return value1 == value2;}
@@ -67,8 +55,8 @@ namespace Anki
 
       // Allocated the memory for yIndexes and xIndexes, and sets them to the index values that match this expression
       // The Indexes Arrays will be allocated by these methods
-      //Result Evaluate(Array<s32> &indexes, MemoryStack &memory) const; // For 1-dimensional arrays only
-      //Result Evaluate(Array<s32> &yIndexes, Array<s32> &xIndexes, MemoryStack &memory) const; // For 1-dimensional or 2-dimensional arrays
+      Result Evaluate(Array<s32> &indexes, MemoryStack &memory) const; // For 1-dimensional arrays only
+      Result Evaluate(Array<s32> &yIndexes, Array<s32> &xIndexes, MemoryStack &memory) const; // For 1-dimensional or 2-dimensional arrays
 
       // TODO: implement all these
       //template<typename ArrayType> Result SetArray(Array<ArrayType> &out, const ArrayType value);
@@ -109,13 +97,6 @@ namespace Anki
 
       // Compute the min and max values for the X and Y dimensions, plus the number of matches
       Result ComputeLimits() const;
-
-      // Helper function for ComputeLimits()
-      //static inline void UpdateLimitsWithEntry(Rectangle<s32> &limits, s32 &numMatches, s32 y, s32 x);
-
-      // Helper function for Evaluate()
-      // If xIndexes is null, one dimensional indexes are returned
-      //Result ComputeEvaluateIndexes(Array<s32> *yIndexes, Array<s32> *xIndexes=NULL);
     }; // class FindLazy
 
 #pragma mark --- Implementations ---
@@ -147,167 +128,133 @@ namespace Anki
       Initialize();
     }
 
-    /*template<typename Type1, typename Operator, typename Type2> Result Find<Type1,Operator,Type2>::Evaluate(Array<s32> &indexes, MemoryStack &memory) const
+    template<typename Type1, typename Operator, typename Type2> Result Find<Type1,Operator,Type2>::Evaluate(Array<s32> &indexes, MemoryStack &memory) const
     {
-    AnkiConditionalErrorAndReturnValue(this->IsValid(),
-    RESULT_FAIL, "Find.Evaluate", "This Find object is invalid");
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Find.Evaluate", "This Find object is invalid");
 
-    AnkiConditionalErrorAndReturnValue(outputDimensions == 1,
-    RESULT_FAIL, "Find.Evaluate", "One-dimensional Evaluate only works with one-dimensional Array input");
+      AnkiConditionalErrorAndReturnValue(outputDimensions == 1,
+        RESULT_FAIL, "Find.Evaluate", "One-dimensional Evaluate only works with one-dimensional Array input");
 
-    indexes = Array<s32>(1, this->get_numMatches(), memory);
+      const s32 arrayHeight = array1.get_size(0);
+      const s32 arrayWidth = array1.get_size(1);
 
-    return RESULT_OK;
-    }*/
+      assert( (arrayHeight==1) || (arrayWidth==1) );
 
-    /*template<typename Type1, typename Operator, typename Type2> Result Find<Type1,Operator,Type2>::Evaluate(Array<s32> &yIndexes, Array<s32> &xIndexes, MemoryStack &memory) const
+      indexes = Array<s32>(1, this->get_numMatches(), memory);
+
+      s32 * const pIndexes = indexes.Pointer(0,0);
+
+      s32 curIndex = 0;
+
+      if(compareWithValue) {
+        if(arrayHeight == 1) {
+          const s32 y = 0;
+          const Type1 * const pArray1 = array1.Pointer(y, 0);
+
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(Operator::Compare(pArray1[x], value)) {
+              pIndexes[curIndex] = x;
+              curIndex++;
+            }
+          } // for(s32 x=0; x<arrayWidth; x++)
+        } else { // if(arrayHeight == 1)
+          assert(arrayWidth == 1);
+          const s32 x = 0;
+
+          for(s32 y=0; y<arrayHeight; y++) {
+            const Type1 * const pArray1 = array1.Pointer(y, 0);
+
+            if(Operator::Compare(pArray1[x], value)) {
+              pIndexes[curIndex] = y;
+              curIndex++;
+            }
+          } // for(s32 y=0; y<arrayHeight; y++)
+        } // if(arrayHeight == 1) ... else
+      } else { // if(compareWithValue)
+        // These should be checked earlier
+        assert(array1.get_size(0) == array2.get_size(0));
+        assert(array1.get_size(1) == array2.get_size(1));
+
+        if(arrayHeight == 1) {
+          const s32 y = 0;
+          const Type1 * const pArray1 = array1.Pointer(y, 0);
+          const Type2 * const pArray2 = array2.Pointer(y, 0);
+
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(Operator::Compare(pArray1[x], pArray2[x])) {
+              pIndexes[curIndex] = x;
+              curIndex++;
+            }
+          } // for(s32 x=0; x<arrayWidth; x++)
+        } else { // if(arrayHeight == 1)
+          assert(arrayWidth == 1);
+          const s32 x = 0;
+
+          for(s32 y=0; y<arrayHeight; y++) {
+            const Type1 * const pArray1 = array1.Pointer(y, 0);
+            const Type2 * const pArray2 = array2.Pointer(y, 0);
+
+            if(Operator::Compare(pArray1[x], pArray2[x])) {
+              pIndexes[curIndex] = y;
+              curIndex++;
+            }
+          } // for(s32 y=0; y<arrayHeight; y++)
+        } // if(arrayHeight == 1) ... else
+      } // if(compareWithValue) ... else
+
+      return RESULT_OK;
+    }
+
+    template<typename Type1, typename Operator, typename Type2> Result Find<Type1,Operator,Type2>::Evaluate(Array<s32> &yIndexes, Array<s32> &xIndexes, MemoryStack &memory) const
     {
-    AnkiConditionalErrorAndReturnValue(this->IsValid(),
-    RESULT_FAIL, "Find.Evaluate", "This Find object is invalid");
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Find.Evaluate", "This Find object is invalid");
 
-    yIndexes = Array<s32>(1, this->get_numMatches(), memory);
-    xIndexes = Array<s32>(1, this->get_numMatches(), memory);
+      const s32 arrayHeight = array1.get_size(0);
+      const s32 arrayWidth = array1.get_size(1);
 
-    return RESULT_OK;
-    }*/
+      yIndexes = Array<s32>(1, this->get_numMatches(), memory);
+      xIndexes = Array<s32>(1, this->get_numMatches(), memory);
 
-    /*template<typename Type1, typename Operator, typename Type2> Result ComputeEvaluateIndexes(Array<s32> *yIndexes, Array<s32> *xIndexes)
-    {
-    AnkiConditionalErrorAndReturnValue(yIndexes && yIndexes->IsValid(),
-    RESULT_FAIL, "Find.ComputeEvaluateIndexes", "yIndexes are not valid");
+      s32 * const pYIndexes = yIndexes.Pointer(0,0);
+      s32 * const pXIndexes = xIndexes.Pointer(0,0);
 
-    AnkiConditionalErrorAndReturnValue(!xIndexes || xIndexes->IsValid(),
-    RESULT_FAIL, "Find.ComputeEvaluateIndexes", "xIndexes are not valid");
+      s32 curIndex = 0;
 
-    AnkiConditionalErrorAndReturnValue(this->IsValid(),
-    RESULT_FAIL, "Find.ComputeEvaluateIndexes", "This object is not valid");
+      if(compareWithValue) {
+        for(s32 y=0; y<arrayHeight; y++) {
+          const Type1 * const pArray1 = array1.Pointer(y, 0);
 
-    const s32 arrayHeight = array1.get_size(0);
-    const s32 arrayWidth = array1.get_size(1);
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(Operator::Compare(pArray1[x], value)) {
+              pYIndexes[curIndex] = y;
+              pXIndexes[curIndex] = x;
+              curIndex++;
+            }
+          } // for(s32 x=0; x<arrayWidth; x++)
+        } // for(s32 y=0; y<arrayHeight; y++)
+      } else { // if(compareWithValue)
+        // These should be checked earlier
+        assert(array1.get_size(0) == array2.get_size(0));
+        assert(array1.get_size(1) == array2.get_size(1));
 
-    s32 curIndex = 0;
-    if(compareWithValue) {
-    for(s32 y=0; y<arrayHeight; y++) {
-    const Type1 * const pArray1 = array1.Pointer(y, 0);
+        for(s32 y=0; y<arrayHeight; y++) {
+          const Type1 * const pArray1 = array1.Pointer(y, 0);
+          const Type2 * const pArray2 = array2.Pointer(y, 0);
 
-    switch(this->comparison) {
-    case Comparison::EQUAL:
-    if(xIndexes){
-    for(s32 x=0; x<arrayWidth; x++) {
-    if(pArray1[x] == value) {
-    yIndexes[curIndex] = y;
-    xIndexes[curIndex] = x;
-    curIndex++;
-    }
-    }
-    } else if(arrayHeight == 1) {
-    for(s32 x=0; x<arrayWidth; x++) {
-    if(pArray1[x] == value) {
-    yIndexes[curIndex] = x;
-    curIndex++;
-    }
-    }
-    } else { // arrayWidth == 1
-    assert(arrayWidth == 1);
-    for(s32 x=0; x<arrayWidth; x++) {
-    if(pArray1[x] == value) {
-    yIndexes[curIndex] = y;
-    curIndex++;
-    }
-    }
-    }
-    }
-    break;
-    case Comparison::NOT_EQUAL:
-    for(s32 x=0; x<arrayWidth; x++) {
-    if(pArray1[x] != value)
-    newNumMatches++;
-    }
-    break;
-    case Comparison::LESS_THAN:
-    for(s32 x=0; x<arrayWidth; x++) {
-    if(pArray1[x] < value)
-    newNumMatches++;
-    }
-    break;
-    case Comparison::LESS_THAN_OR_EQUAL:
-    for(s32 x=0; x<arrayWidth; x++) {
-    if(pArray1[x] <= value)
-    newNumMatches++;
-    }
-    break;
-    case Comparison::GREATER_THAN:
-    for(s32 x=0; x<arrayWidth; x++) {
-    if(pArray1[x] > value)
-    newNumMatches++;
-    }
-    break;
-    case Comparison::GREATER_THAN_OR_EQUAL:
-    for(s32 x=0; x<arrayWidth; x++) {
-    if(pArray1[x] >= value)
-    newNumMatches++;
-    }
-    break;
-    default:
-    assert(false);
-    break;
-    } // switch(this->comparison)
-    } // for(s32 y=0; y<arrayHeight; y++)
-    } else { // if(compareWithValue)
-    // These should be checked earlier
-    assert(array1.get_size(0) == array2.get_size(0));
-    assert(array1.get_size(1) == array2.get_size(1));
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(Operator::Compare(pArray1[x], pArray2[x])) {
+              pYIndexes[curIndex] = y;
+              pXIndexes[curIndex] = x;
+              curIndex++;
+            }
+          } // for(s32 x=0; x<arrayWidth; x++)
+        } // for(s32 y=0; y<arrayHeight; y++)
+      } // if(compareWithValue) ... else
 
-    for(s32 y=0; y<arrayHeight; y++) {
-    const Type1 * const pArray1 = array1.Pointer(y, 0);
-    const Type2 * const pArray2 = array2.Pointer(y, 0);
-
-    switch(this->comparison) {
-    case Comparison::EQUAL:
-    for(s32 x=0; x<arrayWidth; x++) {
-    if(pArray1[x] == pArray2[x])
-    newNumMatches++;
+      return RESULT_OK;
     }
-    break;
-    case Comparison::NOT_EQUAL:
-    for(s32 x=0; x<arrayWidth; x++) {
-    if(pArray1[x] != pArray2[x])
-    newNumMatches++;
-    }
-    break;
-    case Comparison::LESS_THAN:
-    for(s32 x=0; x<arrayWidth; x++) {
-    if(pArray1[x] < pArray2[x])
-    newNumMatches++;
-    }
-    break;
-    case Comparison::LESS_THAN_OR_EQUAL:
-    for(s32 x=0; x<arrayWidth; x++) {
-    if(pArray1[x] <= pArray2[x])
-    newNumMatches++;
-    }
-    break;
-    case Comparison::GREATER_THAN:
-    for(s32 x=0; x<arrayWidth; x++) {
-    if(pArray1[x] > pArray2[x])
-    newNumMatches++;
-    }
-    break;
-    case Comparison::GREATER_THAN_OR_EQUAL:
-    for(s32 x=0; x<arrayWidth; x++) {
-    if(pArray1[x] >= pArray2[x])
-    newNumMatches++;
-    }
-    break;
-    default:
-    assert(false);
-    break;
-    } // switch(this->comparison)
-    } // for(s32 y=0; y<arrayHeight; y++)
-    } // if(compareWithValue) ... else
-
-    return RESULT_OK;
-    }*/
 
     template<typename Type1, typename Operator, typename Type2> void Find<Type1,Operator,Type2>::Initialize()
     {
@@ -341,7 +288,7 @@ namespace Anki
             if(Operator::Compare(pArray1[x], value)) {
               newNumMatches++;
             }
-          }
+          } // for(s32 x=0; x<arrayWidth; x++)
         } // for(s32 y=0; y<arrayHeight; y++)
       } else { // if(compareWithValue)
         // These should be checked earlier
@@ -356,7 +303,7 @@ namespace Anki
             if(Operator::Compare(pArray1[x], pArray2[x])) {
               newNumMatches++;
             }
-          }
+          } // for(s32 x=0; x<arrayWidth; x++)
         } // for(s32 y=0; y<arrayHeight; y++)
       } // if(compareWithValue) ... else
 
@@ -369,15 +316,6 @@ namespace Anki
 
       return RESULT_OK;
     } // template<typename Type1, typename Operator, typename Type2> s32 Find<Type1,Operator,Type2>::ComputeNumMatches() const
-
-    /*    template<typename Type1, typename Operator, typename Type2> inline void Find<Type1,Operator,Type2>::UpdateLimitsWithEntry(Rectangle<s32> &limits, s32 &numMatches, s32 y, s32 x)
-    {
-    limits.top = MIN(limits.top, y);
-    limits.bottom = MAX(limits.bottom, y);
-    limits.left = MIN(limits.left, x);
-    limits.right = MAX(limits.right, x);
-    numMatches++;
-    }*/
 
     template<typename Type1, typename Operator, typename Type2> Result Find<Type1,Operator,Type2>::ComputeLimits() const
     {
@@ -398,7 +336,7 @@ namespace Anki
               newLimits.right = MAX(newLimits.right, x);
               newNumMatches++;
             }
-          }
+          } // for(s32 x=0; x<arrayWidth; x++)
         } // for(s32 y=0; y<arrayHeight; y++)
       } else { // if(compareWithValue)
         // These should be checked earlier
@@ -417,7 +355,7 @@ namespace Anki
               newLimits.right = MAX(newLimits.right, x);
               newNumMatches++;
             }
-          }
+          } // for(s32 x=0; x<arrayWidth; x++)
         } // for(s32 y=0; y<arrayHeight; y++)
       } // if(compareWithValue) ... else
 
