@@ -4,7 +4,6 @@
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/utilities.h"
 #include "anki/common/robot/memory.h"
-#include "anki/common/robot/find.h"
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/dataStructures.h"
 #include "anki/common/robot/geometry.h"
