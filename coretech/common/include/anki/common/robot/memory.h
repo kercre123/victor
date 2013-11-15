@@ -11,6 +11,30 @@ namespace Anki
   MemoryStack memoryStack ## _pushedTmp(memoryStack);\
   memoryStack = memoryStack ## _pushedTmp;
 
+    class BufferFlags
+    {
+    public:
+      BufferFlags();
+      BufferFlags(bool zeroAllocatedMemory, bool useBoundaryFillPatterns);
+
+      void set_zeroAllocatedMemory(bool value);
+      bool get_zeroAllocatedMemory() const;
+
+      void set_useBoundaryFillPatterns(bool value);
+      bool get_useBoundaryFillPatterns() const;
+
+      u32 get_rawFlags() const;
+
+    protected:
+      enum Flags
+      {
+        USE_BOUNDARY_FILL_PATTERNS = 1,
+        ZERO_ALLOCATED_MEMORY = (1<<1)
+      };
+
+      u32 flags;
+    };
+
     // A MemoryStack keeps track of an external memory buffer, by using the system stack. It is not
     // thread safe. Data that is allocated with Allocate() will be MEMORY_ALIGNMENT bytes-aligned.
     // Allocate() data has fill patterns at the beginning and end, to ensure that buffers did not
@@ -31,7 +55,8 @@ namespace Anki
     class MemoryStack
     {
     public:
-      MemoryStack(void *buffer, s32 bufferLength);
+
+      MemoryStack(void *buffer, const s32 bufferLength, const BufferFlags flags=BufferFlags(true,true));
       MemoryStack(const MemoryStack &ms); // This is a safe way to remove const by making a copy, rather than using const_cast()
 
       // Allocate numBytes worth of memory, with the start byte-aligned to MEMORY_ALIGNMENT
@@ -42,7 +67,15 @@ namespace Anki
       // patterns.
       //
       // All memory in the array is zeroed out once it is allocated, making Allocate more like calloc() than malloc()
-      void* Allocate(s32 numBytesRequested, s32 *numBytesAllocated=NULL);
+      void* Allocate(const s32 numBytesRequested, s32 *numBytesAllocated=NULL);
+
+      // Reallocate will change the size of the last allocated memory segment. It only works on the
+      // last segment. The return value is equal to memoryLocation, or NULL if there was an error.
+      // The reallocated memory will not be cleared
+      //
+      // WARNING: This will not update any references to the memory, you must update all references
+      //          manually.
+      void* Reallocate(void* memoryLocation, s32 numBytesRequested, s32 *numBytesAllocated=NULL);
 
       // Check if any Allocate() memory was written out of bounds (via fill patterns at the beginning and end)
       bool IsValid() const;
@@ -65,8 +98,8 @@ namespace Anki
       // usage.
       s32 get_id() const;
 
-      // Probably these should not be used?
-      // void Clear(); // Reset usedBytes to zero
+      // Flags are bitwise OR of MemoryStack::Flags
+      BufferFlags get_flags() const;
 
     protected:
       static const u32 FILL_PATTERN_START = 0xABCD1089;
@@ -79,10 +112,17 @@ namespace Anki
       s32 totalBytes;
       s32 usedBytes;
 
+      // Useful information for Reallocate()
+      s32 usedBytesBeforeLastAllocation;
+      void *lastAllocatedMemory;
+
       s32 id;
 
+      // flags are set via MemoryStack::Flags
+      BufferFlags flags;
+
     private:
-      const void* Allocate(s32 numBytes) const; // Not allowed
+      const void* Allocate(const s32 numBytes) const; // Not allowed
       //MemoryStack & operator= (const MemoryStack & rightHandSide); // Not allowed
     };
   } // namespace Embedded

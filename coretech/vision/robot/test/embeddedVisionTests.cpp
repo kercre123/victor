@@ -112,7 +112,7 @@ char *bigBuffer1 = NULL;
 char *bigBuffer2 = NULL;
 #endif // #ifdef USE_STATIC_BUFFERS ... else ...
 
-IN_DDR void InitializeBuffers()
+void InitializeBuffers()
 {
 #ifndef USE_STATIC_BUFFERS
 #if defined(USING_MOVIDIUS_COMPILER)
@@ -137,7 +137,7 @@ IN_DDR void InitializeBuffers()
 #endif // #ifndef USE_STATIC_BUFFERS
 }
 
-//IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScaleAndBinarize)
+//GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScaleAndBinarize)
 //{
 //  InitializeBuffers();
 //
@@ -237,9 +237,9 @@ IN_DDR void InitializeBuffers()
 //#endif
 //
 //  GTEST_RETURN_HERE;
-//} // IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScaleAndBinarize)
+//} // GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScaleAndBinarize)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C_emulateShave)
+GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C_emulateShave)
 {
   C_Acceleration acceleration_none, acceleration_shave;
   acceleration_none.type = C_ACCELERATION_NATURAL_CPP;
@@ -398,7 +398,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C_emulateShav
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C)
+GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C)
 {
   C_Acceleration acceleration;
   acceleration.type = C_ACCELERATION_NATURAL_C;
@@ -526,7 +526,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
+GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
 {
   C_Acceleration acceleration;
   acceleration.type = C_ACCELERATION_NATURAL_CPP;
@@ -654,7 +654,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Vision, ScrollingIntegralImage)
+GTEST_TEST(CoreTech_Vision, ScrollingIntegralImage)
 {
   MemoryStack ms(&bigBuffer1[0], BIG_BUFFER_SIZE1);
   ASSERT_TRUE(ms.IsValid());
@@ -846,7 +846,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ScrollingIntegralImage)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
+GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
 {
   //s32 combined = 0;
   //for(s32 i=0; i<640*480; i++)
@@ -969,7 +969,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
+GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
 {
 #ifndef RUN_LOW_MEMORY_12345
   ASSERT_TRUE(false);
@@ -1121,7 +1121,7 @@ static Result DrawExampleProbesImage(Array<u8> &image, Quadrilateral<s16> &quad,
 }
 #endif // #ifdef RUN_ALL_BIG_MEMORY_TESTS
 
-IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
+GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
 {
 #ifndef RUN_ALL_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
@@ -1217,7 +1217,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
 }
 
 // The test is if it can run without crashing
-IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
+GTEST_TEST(CoreTech_Vision, FiducialMarker)
 {
 #ifndef RUN_ALL_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
@@ -1270,7 +1270,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, FiducialMarker)
 }
 
 // The test is if it can run without crashing
-IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
+GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
 {
 #ifndef RUN_ALL_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
@@ -1354,7 +1354,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
+GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
 {
   const s32 numComponents = 60;
   const s32 minQuadArea = 100;
@@ -1412,7 +1412,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
+GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 {
   const s32 numBytes = MIN(BIG_BUFFER_SIZE1, 5000);
   MemoryStack ms(&bigBuffer1[0], numBytes);
@@ -1442,7 +1442,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
+GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
 {
 #define LaplacianPeaks_BOUNDARY_LENGTH 65
   const s32 numBytes = MIN(BIG_BUFFER_SIZE1, 5000);
@@ -1485,7 +1485,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, Correlate1d)
+GTEST_TEST(CoreTech_Vision, Correlate1d)
 {
   const s32 numBytes = MIN(BIG_BUFFER_SIZE1, 5000);
   MemoryStack ms(&bigBuffer1[0], numBytes);
@@ -1602,7 +1602,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, Correlate1d)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, Correlate1d)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
+GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
 {
   const s32 numComponents = 17;
   const s32 boundaryLength = 65;
@@ -1656,9 +1656,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   }
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
+} // GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
+GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
 {
   const s32 numComponents = 10;
 
@@ -1702,9 +1702,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
   ASSERT_TRUE(*componentBoundingBoxes.Pointer(5) == Anki::Embedded::Rectangle<s16>(5,1000,9,9));
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
+} // GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
+GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
 {
   const s32 numComponents = 10;
 
@@ -1748,10 +1748,10 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
   ASSERT_TRUE(*componentCentroids.Pointer(5) == Point<s16>(500,9));
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
+} // GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
 
 // The test is if it can run without crashing
-IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
+GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
 {
 #ifndef RUN_ALL_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
@@ -1823,7 +1823,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
 }
 
 // The test is if it can run without crashing
-IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
+GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
 {
 #ifndef RUN_ALL_BIG_MEMORY_TESTS
   ASSERT_TRUE(false);
@@ -1889,9 +1889,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
 #endif // #ifdef RUN_ALL_BIG_MEMORY_TESTS
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
+} // GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
+GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
 {
   const s32 numComponents = 10;
   const s32 sparseMultiplyThreshold = 10 << 5;
@@ -1941,9 +1941,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
   ASSERT_TRUE(components.Pointer(9)->id == 0);
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
+} // GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
+GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
 {
   const s32 numComponents = 10;
   const s32 minimumNumPixels = 6;
@@ -2012,9 +2012,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
   ASSERT_TRUE(components.Pointer(9)->id == 0);
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
+} // GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, CompressComponentIds)
+GTEST_TEST(CoreTech_Vision, CompressComponentIds)
 {
   const s32 numComponents = 10;
 
@@ -2065,10 +2065,10 @@ IN_DDR GTEST_TEST(CoreTech_Vision, CompressComponentIds)
   ASSERT_TRUE(components.Pointer(9)->id == 3);
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, CompressComponentIds)
+} // GTEST_TEST(CoreTech_Vision, CompressComponentIds)
 
 // Not really a test, but computes the size of a list of ComponentSegments, to ensure that c++ isn't adding junk
-IN_DDR GTEST_TEST(CoreTech_Vision, ComponentsSize)
+GTEST_TEST(CoreTech_Vision, ComponentsSize)
 {
   const s32 numComponents = 500;
   const s32 numBytes = MIN(BIG_BUFFER_SIZE1, 10000);
@@ -2102,9 +2102,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComponentsSize)
   ASSERT_TRUE(difference > -0.0001 && difference < 1.0);
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, ComponentsSize)
+} // GTEST_TEST(CoreTech_Vision, ComponentsSize)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, SortComponents)
+GTEST_TEST(CoreTech_Vision, SortComponents)
 {
   const s32 numComponents = 10;
 
@@ -2150,9 +2150,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SortComponents)
   ASSERT_TRUE(*components.Pointer(9) == component1);
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, SortComponents)
+} // GTEST_TEST(CoreTech_Vision, SortComponents)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, SortComponentsById)
+GTEST_TEST(CoreTech_Vision, SortComponentsById)
 {
   const s32 numComponents = 10;
 
@@ -2199,9 +2199,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, SortComponentsById)
   ASSERT_TRUE(*components.Pointer(8) == component8);
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, SortComponents)
+} // GTEST_TEST(CoreTech_Vision, SortComponents)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
+GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 {
   const s32 imageWidth = 18;
   const s32 imageHeight = 5;
@@ -2270,9 +2270,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
   }
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
+} // GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
+GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
 {
   const s32 imageWidth = 50;
   const s32 numBytes = MIN(BIG_BUFFER_SIZE1, 5000);
@@ -2309,9 +2309,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
   ASSERT_TRUE(extractedComponentSegments.Pointer(2)->xStart == 43 && extractedComponentSegments.Pointer(2)->xEnd == 49);
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
+} // GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, BinomialFilter)
+GTEST_TEST(CoreTech_Vision, BinomialFilter)
 {
   const s32 imageWidth = 10;
   const s32 imageHeight = 5;
@@ -2322,7 +2322,7 @@ IN_DDR GTEST_TEST(CoreTech_Vision, BinomialFilter)
 
   ASSERT_TRUE(ms.IsValid());
 
-  Array<u8> image(imageHeight, imageWidth, ms, false);
+  Array<u8> image(imageHeight, imageWidth, ms);
   image.SetZero();
 
   Array<u8> imageFiltered(imageHeight, imageWidth, ms);
@@ -2354,9 +2354,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, BinomialFilter)
   }
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, BinomialFilter)
+} // GTEST_TEST(CoreTech_Vision, BinomialFilter)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
+GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
 {
   const s32 imageWidth = 10;
   const s32 imageHeight = 4;
@@ -2393,9 +2393,9 @@ IN_DDR GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
   }
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
+} // GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
 
-IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
+GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
 {
   const s32 imageWidth = 16;
   const s32 imageHeight = 16;
@@ -2465,10 +2465,10 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
   }
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
+} // GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB && defined(RUN_MATLAB_IMAGE_TEST)
-IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
+GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 {
   InitializeBuffers();
 
@@ -2498,10 +2498,10 @@ IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
   matlab.PutArray<u32>(scaleImage, "scaleImage6_c");
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
+} // GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 #endif // #if ANKICORETECH_EMBEDDED_USE_MATLAB
 
-IN_DDR GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
+GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
 {
   const s32 imageWidth = 16;
   const s32 imageHeight = 16;
@@ -2564,10 +2564,10 @@ IN_DDR GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
   }
 
   GTEST_RETURN_HERE;
-} // IN_DDR GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
+} // GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
 
 #if !ANKICORETECH_EMBEDDED_USE_GTEST
-IN_DDR int RUN_ALL_TESTS()
+int RUN_ALL_TESTS()
 {
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;

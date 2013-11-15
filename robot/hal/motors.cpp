@@ -12,16 +12,16 @@ namespace Anki
 
       static const u8 DISCONNECTED_MODE           = 7;
 
-      static const u8 LEFT_WHEEL_FORWARD_PIN      = 0;
-      static const u8 LEFT_WHEEL_FORWARD_MODE     = 4;
-      static const u8 LEFT_WHEEL_BACKWARD_PIN     = 3;
-      static const u8 LEFT_WHEEL_BACKWARD_MODE    = 3;
+      static const u8 LEFT_WHEEL_FORWARD_PIN      = 3;
+      static const u8 LEFT_WHEEL_FORWARD_MODE     = 3;
+      static const u8 LEFT_WHEEL_BACKWARD_PIN     = 0;
+      static const u8 LEFT_WHEEL_BACKWARD_MODE    = 4;
       static const u8 LEFT_WHEEL_PWM              = 0;
 
-      static const u8 RIGHT_WHEEL_FORWARD_PIN     = 81;
-      static const u8 RIGHT_WHEEL_FORWARD_MODE    = 5;
-      static const u8 RIGHT_WHEEL_BACKWARD_PIN    = 90;
-      static const u8 RIGHT_WHEEL_BACKWARD_MODE   = 3;
+      static const u8 RIGHT_WHEEL_FORWARD_PIN     = 90;
+      static const u8 RIGHT_WHEEL_FORWARD_MODE    = 3;
+      static const u8 RIGHT_WHEEL_BACKWARD_PIN    = 81;
+      static const u8 RIGHT_WHEEL_BACKWARD_MODE   = 5;
       static const u8 RIGHT_WHEEL_PWM             = 4;
 
       static const u8 LIFT_UP_PIN                 = 82;
@@ -49,6 +49,14 @@ namespace Anki
         u8 forwardUpMode;
         u8 backwardDownPin;
         u8 backwardDownMode;
+      };
+
+      struct MotorPosition
+      {
+        f32 position;
+        u32 lastTick;
+        u32 delta;
+        u8 pin;
       };
 
       static const MotorInfo m_motors[] =
@@ -90,69 +98,61 @@ namespace Anki
         }
       };
 
-      static f32 m_motorSpeeds[MOTOR_COUNT] = {0};
-      static f32 m_motorPositions[MOTOR_COUNT] = {0};
+      // Given a gear ratio of 91.7:1 and 125.67mm wheel circumference, we
+      // compute the units per tick as such (using 4 magnets):
+      static const f32 UNITS_PER_TICK = 125.67 / 91.7 / 4.0;
 
-      static const u32 m_encoder1Pin = 106;
-      static const u32 m_encoder2Pin = 32;
-      static const u32 m_encoder3Pin = 35;
+      // If no encoder activity for 200ms, we may as well be stopped
+      static const u32 ENCODER_TIMEOUT_US = 200000;
+
+      // Set a max speed and reject all noise above it
+      static const u32 MAX_SPEED_MM_S = 500;
+      static const u32 DEBOUNCE_US = (UNITS_PER_TICK * 1000) / MAX_SPEED_MM_S;
+
+      // Setup the GPIO indices
+      static const u32 ENCODER_COUNT = 3;
+      static const u32 ENCODER_1_PIN = 106;
+      static const u32 ENCODER_2_PIN = 32;
+      static const u32 ENCODER_3_PIN = 35;
+
+      // NOTE: Do NOT re-order the MotorID enum, because this depends on it
+      static MotorPosition m_motorPositions[MOTOR_COUNT] =
+      {
+        {0, 0, 0, ENCODER_1_PIN},  // MOTOR_LEFT_WHEEL
+        {0, 0, 0, ENCODER_2_PIN},  // MOTOR_RIGHT_WHEEL
+        {0, 0, 0, ENCODER_3_PIN},  // MOTOR_LIFT
+        {0}  // Zero out the rest
+      };
 
       static const u32 m_src = D_GPIO_IRQ_SRC_0;
       static const u32 m_irq = IRQ_GPIO_0;
       static const u32 m_priority = 5;
       static const u32 m_type = POS_EDGE_INT;
 
-      static u64 m_encoder1LastTick = 0;
-      static u64 m_encoder2LastTick = 0;
-      static u64 m_encoder3LastTick = 0;
-      static u64 m_encoder1Difference = 0;
-      static u64 m_encoder2Difference = 0;
-      static u64 m_encoder3Difference = 0;
-
       // Update the encoder values
       void MotorIRQ(u32 source)
       {
-        u8 state1 = DrvGpioGetPin(m_encoder1Pin);
-        u8 state2 = DrvGpioGetPin(m_encoder2Pin);
-        u8 state3 = DrvGpioGetPin(m_encoder3Pin);
-
-        u32 mode1 = DrvGpioGetMode(m_encoder1Pin);
-        u32 mode2 = DrvGpioGetMode(m_encoder2Pin);
-        u32 mode3 = DrvGpioGetMode(m_encoder3Pin);
-
-        if (state1)
+        // Only update the motors with encoder feedback
+        for (int i = 0; i < ENCODER_COUNT; i++)
         {
-          // Only switch if it was a real logic-level rising edge
-          if (!(mode1 & D_GPIO_DATA_INV_ON))
-          {
-            u64 ticks = GetMicroCounter();
-            m_encoder1Difference = ticks - m_encoder1LastTick;
-            m_encoder1LastTick = ticks;
-          }
+          u32 ticks = GetMicroCounter();
+          MotorPosition* motorPosition = &m_motorPositions[i];
 
-          DrvGpioMode(m_encoder1Pin, mode1 ^ D_GPIO_DATA_INV_ON);
-        }
-        if (state2)
-        {
-          if (!(mode2 & D_GPIO_DATA_INV_ON))
+          // Make sure not to use DrvGpioGetPin, because it changes the mode
+          u32 state = DrvGpioGet(motorPosition->pin);
+          if (state && (ticks - motorPosition->lastTick) > DEBOUNCE_US)
           {
-            u64 ticks = GetMicroCounter();
-            m_encoder2Difference = ticks - m_encoder2LastTick;
-            m_encoder2LastTick = ticks;
-          }
+            u32 mode = DrvGpioGetMode(motorPosition->pin);
+            // Only switch if it was a real logic-level rising edge
+            if (!(mode & D_GPIO_DATA_INV_ON))
+            {
+              motorPosition->delta = ticks - motorPosition->lastTick;
+              motorPosition->lastTick = ticks;
+              motorPosition->position += UNITS_PER_TICK;
+            }
 
-          DrvGpioMode(m_encoder2Pin, mode2 ^ D_GPIO_DATA_INV_ON);
-        }
-        if (state3)
-        {
-          if (!(mode3 & D_GPIO_DATA_INV_ON))
-          {
-            u64 ticks = GetMicroCounter();
-            m_encoder3Difference = ticks - m_encoder3LastTick;
-            m_encoder3LastTick = ticks;
+            DrvGpioMode(motorPosition->pin, mode ^ D_GPIO_DATA_INV_ON);
           }
-
-          DrvGpioMode(m_encoder3Pin, mode3 ^ D_GPIO_DATA_INV_ON);
         }
 
         DrvIcbIrqClear(m_irq);
@@ -160,10 +160,12 @@ namespace Anki
 
       void MotorInit()
       {
-        DrvGpioIrqConfig(m_encoder1Pin, m_src, m_type, m_priority, MotorIRQ);
-        DrvGpioIrqConfig(m_encoder2Pin, m_src, m_type, m_priority, MotorIRQ);
-        DrvGpioIrqConfig(m_encoder3Pin, m_src, m_type, m_priority, MotorIRQ);
+        // Enable encoder interrupts
+        DrvGpioIrqConfig(ENCODER_1_PIN, m_src, m_type, m_priority, MotorIRQ);
+        DrvGpioIrqConfig(ENCODER_2_PIN, m_src, m_type, m_priority, MotorIRQ);
+        DrvGpioIrqConfig(ENCODER_3_PIN, m_src, m_type, m_priority, MotorIRQ);
 
+        // Set the correct pad attributes
         u32 pad = D_GPIO_PAD_NO_PULL |
           D_GPIO_PAD_DRIVE_2mA |
           D_GPIO_PAD_VOLT_2V5 |
@@ -175,20 +177,16 @@ namespace Anki
           D_GPIO_PAD_LOCALDATA_LO |
           D_GPIO_PAD_LOCAL_PIN_OUT;
 
-        GpioPadSet(m_encoder1Pin, pad);
-        GpioPadSet(m_encoder2Pin, pad);
-        GpioPadSet(m_encoder3Pin, pad);
+        GpioPadSet(ENCODER_1_PIN, pad);
+        GpioPadSet(ENCODER_2_PIN, pad);
+        GpioPadSet(ENCODER_3_PIN, pad);
 
-        u64 ticks = GetMicroCounter();
-        m_encoder1LastTick = m_encoder2LastTick = m_encoder3LastTick = ticks;
-
-        u32 selection = m_encoder1Pin |
-          (m_encoder2Pin << 8) |
-          (m_encoder3Pin << 16);
-
-        SET_REG_WORD(GPIO_PWM_SEL0_ADR, selection);
-        SET_REG_WORD(GPIO_PWM_CLR_ADR, 7);  // Clear the 3 encoders
-        SET_REG_WORD(GPIO_PWM_EN_ADR, 7);   // Enable the 3 encoders
+        for (int i = 0; i < MOTOR_COUNT; i++)
+        {
+          const MotorInfo* motorInfo = &m_motors[i];
+          GpioPadSet(motorInfo->forwardUpPin, pad);
+          GpioPadSet(motorInfo->backwardDownPin, pad);
+        }
       }
  
       void MotorSetPower(MotorID motor, f32 power)
@@ -201,56 +199,58 @@ namespace Anki
           power = -1.0f;
 
         u32 period = (DrvCprGetSysClockKhz() / FREQUENCY_KHZ);
-        u32 highCount = period * fabs(power);
-        u32 lowCount = period - highCount;
-        
-        const MotorInfo* motorInfo = &m_motors[motor];
+        u32 lowCount = period * fabs(power);
+        u32 highCount = period - lowCount;
 
-        // Disable the PWM
-        u32 pwmLeadInAddress = GPIO_PWM_LEADIN0_ADR + (4 * motorInfo->pwm);
-        SET_REG_WORD(pwmLeadInAddress, 0);
+        const MotorInfo* motorInfo = &m_motors[motor];
 
         if (power > 0)
         {
           // Disable the opposite direction from influencing the motor driver
           DrvGpioMode(motorInfo->backwardDownPin, DISCONNECTED_MODE);
-          DrvGpioSetPinLo(motorInfo->backwardDownPin);
+          DrvGpioSetPinHi(motorInfo->backwardDownPin);
           DrvGpioMode(motorInfo->forwardUpPin, motorInfo->forwardUpMode);
         } else if (power < 0) {
           // Disable the opposite direction from incluencing the motor driver
           DrvGpioMode(motorInfo->forwardUpPin, DISCONNECTED_MODE);
-          DrvGpioSetPinLo(motorInfo->forwardUpPin);
+          DrvGpioSetPinHi(motorInfo->forwardUpPin);
           DrvGpioMode(motorInfo->backwardDownPin, motorInfo->backwardDownMode);
         } else {
           DrvGpioMode(motorInfo->forwardUpPin, DISCONNECTED_MODE);
           DrvGpioMode(motorInfo->backwardDownPin, DISCONNECTED_MODE);
-          DrvGpioSetPinHi(motorInfo->backwardDownPin);
-          DrvGpioSetPinHi(motorInfo->forwardUpPin);
-        }
+          DrvGpioSetPinLo(motorInfo->backwardDownPin);
+          DrvGpioSetPinLo(motorInfo->forwardUpPin);
+
+          // Disable the PWM
+          u32 pwmLeadInAddress = GPIO_PWM_LEADIN0_ADR + (4 * motorInfo->pwm);
+          SET_REG_WORD(pwmLeadInAddress, 0);
+       }
 
         DrvPwmConfigure(motorInfo->pwm, 0, 0, highCount, lowCount, 1);
       }
 
       void MotorResetPosition(MotorID motor)
       {
-        //ASSERT(motor < MOTOR_COUNT);
-
-        m_motorPositions[motor] = 0;
-        m_motorSpeeds[motor] = 0;
+        m_motorPositions[motor].position = 0;
       }
 
       f32 MotorGetSpeed(MotorID motor)
       {
-        //ASSERT(motor < MOTOR_COUNT);
+        MotorPosition* motorPosition = &m_motorPositions[motor];
+        u32 howLate = GetMicroCounter() - motorPosition->lastTick;
 
-        return m_motorSpeeds[motor];
+        if (motorPosition->delta > ENCODER_TIMEOUT_US ||
+            howLate > ENCODER_TIMEOUT_US)
+        {
+          return 0;
+        }
+
+        return (UNITS_PER_TICK * 1000000.0f) / motorPosition->delta;
       }
 
       f32 MotorGetPosition(MotorID motor)
       {
-        //ASSERT(motor < MOTOR_COUNT);
-
-        return m_motorPositions[motor];
+        return m_motorPositions[motor].position;
       }
     }
   }

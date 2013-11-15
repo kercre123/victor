@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 #ifdef USING_MOVIDIUS_GCC_COMPILER
-  IN_DDR void _Anki_Logf(int logLevel, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
+  void _Anki_Logf(int logLevel, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
 #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
     explicitPrintf(EXPLICIT_PRINTF_FLIP_CHARACTERS, "LOG[%d] - ", logLevel);
@@ -20,7 +20,7 @@ extern "C" {
 #endif // #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
   }
 
-  IN_DDR void _Anki_Log(int logLevel, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
+  void _Anki_Log(int logLevel, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
 #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
     explicitPrintf(EXPLICIT_PRINTF_FLIP_CHARACTERS, "LOG[%d] - ", logLevel);
@@ -37,7 +37,7 @@ extern "C" {
 
 #pragma warning(push)
 #pragma warning(disable: 4100) // Unreference formal parameter
-  IN_DDR void _Anki_Logf(int logLevel, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
+  void _Anki_Logf(int logLevel, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
 #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
     va_list argList;
@@ -49,7 +49,7 @@ extern "C" {
 #endif // #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
   }
 
-  IN_DDR void _Anki_Log(int logLevel, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
+  void _Anki_Log(int logLevel, const char* eventName, const char* eventValue, const char* file, const char* funct, int line, ...)
   {
 #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
     va_list argList;

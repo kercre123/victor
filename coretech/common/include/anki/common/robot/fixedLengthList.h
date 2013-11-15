@@ -20,10 +20,10 @@ namespace Anki
       FixedLengthList();
 
       // Constructor for a FixedLengthList, pointing to user-allocated data.
-      FixedLengthList(s32 maximumSize, void * data, s32 dataLength, bool useBoundaryFillPatterns=false);
+      FixedLengthList(s32 maximumSize, void * data, s32 dataLength, const BufferFlags flags=BufferFlags(true,false));
 
       // Constructor for a FixedLengthList, pointing to user-allocated MemoryStack
-      FixedLengthList(s32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns=false);
+      FixedLengthList(s32 maximumSize, MemoryStack &memory, const BufferFlags flags=BufferFlags(true,false));
 
       bool IsValid() const;
 
@@ -75,15 +75,14 @@ namespace Anki
 #pragma mark --- FixedLengthList Implementations ---
 
 #ifndef USING_MOVIDIUS_COMPILER
-    template<typename Type> FixedLengthList<Type> AllocateFixedLengthListFromHeap(s32 maximumSize, bool useBoundaryFillPatterns=false)
+    template<typename Type> FixedLengthList<Type> AllocateFixedLengthListFromHeap(s32 maximumSize, const BufferFlags flags=BufferFlags(true,false))
     {
-      // const s32 stride = FixedLengthList<Type>::ComputeRequiredStride(maximumSize, useBoundaryFillPatterns);
-      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(1, maximumSize, useBoundaryFillPatterns); // The required memory, plus a bit more
+      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(1, maximumSize, flags); // The required memory, plus a bit more
 
-      FixedLengthList<Type> mat(maximumSize, calloc(requiredMemory, 1), requiredMemory, useBoundaryFillPatterns);
+      FixedLengthList<Type> mat(maximumSize, calloc(requiredMemory, 1), requiredMemory, flags);
 
       return mat;
-    } // FixedLengthList AllocateFixedLengthListFromHeap_Type(s32 maximumSize, bool useBoundaryFillPatterns)
+    } // FixedLengthList AllocateFixedLengthListFromHeap_Type(s32 maximumSize, const BufferFlags flags=BufferFlags(true,false))
 #endif // #ifndef USING_MOVIDIUS_COMPILER
 
     template<typename Type> inline Type* FixedLengthList<Type>::Pointer(const s32 index)
@@ -111,15 +110,15 @@ namespace Anki
     {
     } // FixedLengthList<Type>::FixedLengthList()
 
-    template<typename Type> FixedLengthList<Type>::FixedLengthList(s32 maximumSize, void * data, s32 dataLength, bool useBoundaryFillPatterns)
-      : Array<Type>(1, maximumSize, data, dataLength, useBoundaryFillPatterns), capacityUsed(0)
+    template<typename Type> FixedLengthList<Type>::FixedLengthList(s32 maximumSize, void * data, s32 dataLength, const BufferFlags flags)
+      : Array<Type>(1, maximumSize, data, dataLength, flags), capacityUsed(0)
     {
-    } // FixedLengthList<Type>::FixedLengthList(s32 maximumSize, void * data, s32 dataLength, bool useBoundaryFillPatterns)
+    } // FixedLengthList<Type>::FixedLengthList(s32 maximumSize, void * data, s32 dataLength, const BufferFlags flags)
 
-    template<typename Type> FixedLengthList<Type>::FixedLengthList(s32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns)
-      : Array<Type>(1, maximumSize, memory, useBoundaryFillPatterns), capacityUsed(0)
+    template<typename Type> FixedLengthList<Type>::FixedLengthList(s32 maximumSize, MemoryStack &memory, const BufferFlags flags)
+      : Array<Type>(1, maximumSize, memory, flags), capacityUsed(0)
     {
-    } // FixedLengthList<Type>::FixedLengthList(s32 maximumSize, MemoryStack &memory, bool useBoundaryFillPatterns)
+    } // FixedLengthList<Type>::FixedLengthList(s32 maximumSize, MemoryStack &memory, const BufferFlags flags)
 
     template<typename Type> bool FixedLengthList<Type>::IsValid() const
     {

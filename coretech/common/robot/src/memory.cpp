@@ -6,9 +6,54 @@ namespace Anki
 {
   namespace Embedded
   {
-    IN_DDR MemoryStack::MemoryStack(void *buffer, s32 bufferLength)
-      : buffer(buffer), totalBytes(bufferLength), usedBytes(0)
+    BufferFlags::BufferFlags()
+      : flags(0)
     {
+    }
+
+    BufferFlags::BufferFlags(bool zeroAllocatedMemory, bool useBoundaryFillPatterns)
+      : flags(0)
+    {
+      this->set_zeroAllocatedMemory(zeroAllocatedMemory);
+      this->set_useBoundaryFillPatterns(useBoundaryFillPatterns);
+    }
+
+    void BufferFlags::set_zeroAllocatedMemory(bool value)
+    {
+      this->flags &= ~BufferFlags::ZERO_ALLOCATED_MEMORY;
+
+      if(value)
+        this->flags |= BufferFlags::ZERO_ALLOCATED_MEMORY;
+    }
+
+    bool BufferFlags::get_zeroAllocatedMemory() const
+    {
+      return (this->flags & BufferFlags::ZERO_ALLOCATED_MEMORY) != 0;
+    }
+
+    void BufferFlags::set_useBoundaryFillPatterns(bool value)
+    {
+      this->flags &= ~BufferFlags::USE_BOUNDARY_FILL_PATTERNS;
+
+      if(value)
+        this->flags |= BufferFlags::USE_BOUNDARY_FILL_PATTERNS;
+    }
+
+    bool BufferFlags::get_useBoundaryFillPatterns() const
+    {
+      return (this->flags & BufferFlags::USE_BOUNDARY_FILL_PATTERNS) != 0;
+    }
+
+    u32 BufferFlags::get_rawFlags() const
+    {
+      return this->flags;
+    }
+
+    MemoryStack::MemoryStack(void *buffer, s32 bufferLength, BufferFlags flags)
+      : buffer(buffer), totalBytes(bufferLength), usedBytes(0), usedBytesBeforeLastAllocation(0), lastAllocatedMemory(NULL), flags(flags)
+    {
+      assert(flags.get_useBoundaryFillPatterns());
+
       static s32 maxId = 0;
 
       this->id = maxId;
@@ -19,8 +64,8 @@ namespace Anki
       AnkiConditionalError(MEMORY_ALIGNMENT == 16, "Anki.MemoryStack.MemoryStack", "Currently, only MEMORY_ALIGNMENT == 16 is supported");
     }
 
-    IN_DDR MemoryStack::MemoryStack(const MemoryStack& ms)
-      : buffer(ms.buffer), totalBytes(ms.totalBytes), usedBytes(ms.usedBytes), id(ms.id)
+    MemoryStack::MemoryStack(const MemoryStack& ms)
+      : buffer(ms.buffer), totalBytes(ms.totalBytes), usedBytes(ms.usedBytes), usedBytesBeforeLastAllocation(ms.usedBytesBeforeLastAllocation), lastAllocatedMemory(ms.lastAllocatedMemory), id(ms.id), flags(ms.flags)
     {
       AnkiConditionalWarn(ms.buffer, "Anki.MemoryStack.MemoryStack", "Buffer must be allocated");
       AnkiConditionalWarn(ms.totalBytes <= 0x3FFFFFFF, "Anki.MemoryStack.MemoryStack", "Maximum size of a MemoryStack is 2^30 - 1");
@@ -28,8 +73,11 @@ namespace Anki
       AnkiConditionalWarn(ms.totalBytes >= ms.usedBytes, "Anki.MemoryStack.MemoryStack", "Buffer is using more bytes than it has. Try running IsValid() to test for memory corruption.");
     }
 
-    IN_DDR void* MemoryStack::Allocate(s32 numBytesRequested, s32 *numBytesAllocated)
+    void* MemoryStack::Allocate(s32 numBytesRequested, s32 *numBytesAllocated)
     {
+      if(numBytesAllocated)
+        *numBytesAllocated = 0;
+
       AnkiConditionalErrorAndReturnValue(numBytesRequested > 0, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested > 0");
       AnkiConditionalErrorAndReturnValue(numBytesRequested <= 0x3FFFFFFF, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested <= 0x3FFFFFFF");
 
@@ -47,27 +95,52 @@ namespace Anki
 
       AnkiConditionalErrorAndReturnValue((usedBytes+requestedBytes) <= totalBytes, NULL, "Anki.MemoryStack.Allocate", "Ran out of scratch space");
 
+      // Is this possible?
+      AnkiConditionalErrorAndReturnValue(static_cast<s32>(reinterpret_cast<size_t>(segmentFooter) - reinterpret_cast<size_t>(segmentMemory)) == numBytesRequestedRounded,
+        NULL, "Anki.MemoryStack.Allocate", "Odd error");
+
       // Next, add the header for this block
       segmentHeader[0] = numBytesRequestedRounded;
       segmentHeader[1] = FILL_PATTERN_START;
       segmentFooter[0] = FILL_PATTERN_END;
 
-      usedBytes += requestedBytes;
+      // For Reallocate()
+      usedBytesBeforeLastAllocation = usedBytes;
+      lastAllocatedMemory = segmentMemory;
 
-      AnkiConditionalWarnAndReturnValue(static_cast<s32>(reinterpret_cast<size_t>(segmentFooter) - reinterpret_cast<size_t>(segmentMemory)) == numBytesRequestedRounded,
-        NULL, "Anki.MemoryStack.Allocate", "Ran out of scratch space");
+      usedBytes += requestedBytes;
 
       if(numBytesAllocated) {
         *numBytesAllocated = numBytesRequestedRounded;
       }
 
-      // TODO: if this is slow, make this optional (or just remove it)
-      memset(segmentMemory, 0, numBytesRequestedRounded);
+      if(flags.get_zeroAllocatedMemory())
+        memset(segmentMemory, 0, numBytesRequestedRounded);
 
       return segmentMemory;
     }
 
-    IN_DDR bool MemoryStack::IsValid() const
+    void* MemoryStack::Reallocate(void* memoryLocation, s32 numBytesRequested, s32 *numBytesAllocated)
+    {
+      if(numBytesAllocated)
+        *numBytesAllocated = 0;
+
+      AnkiConditionalErrorAndReturnValue(memoryLocation == lastAllocatedMemory, NULL, "Anki.MemoryStack.Reallocate", "The requested memory is not at the end of the stack");
+
+      // Don't clear the reallocated memory
+      const bool clearMemory = this->flags.get_zeroAllocatedMemory();
+      this->flags.set_zeroAllocatedMemory(false);
+
+      this->usedBytes = usedBytesBeforeLastAllocation;
+
+      void *segmentMemory = Allocate(numBytesRequested, numBytesAllocated);
+
+      this->flags.set_zeroAllocatedMemory(clearMemory);
+
+      return segmentMemory;
+    }
+
+    bool MemoryStack::IsValid() const
     {
       const size_t LOOP_MAX = 1000000;
       const char * const bufferCharStar = reinterpret_cast<const char*>(buffer);
@@ -120,7 +193,7 @@ namespace Anki
       return true;
     }
 
-    IN_DDR s32 MemoryStack::ComputeLargestPossibleAllocation() const
+    s32 MemoryStack::ComputeLargestPossibleAllocation() const
     {
       const size_t bufferNextFree = reinterpret_cast<size_t>(buffer) + usedBytes;
       const size_t bufferNextFreePlusHeaderAndAlignment = RoundUp<size_t>(bufferNextFree+HEADER_LENGTH, MEMORY_ALIGNMENT);
@@ -136,36 +209,41 @@ namespace Anki
       return maxFreeSpace;
     }
 
-    IN_DDR Result MemoryStack::Print() const
+    Result MemoryStack::Print() const
     {
       const s32 maxAllocationBytes = ComputeLargestPossibleAllocation();
       printf("(id:%d totalBytes:%d usedBytes:%d maxAllocationBytes:%d bufferLocation:%d) ", id, totalBytes, usedBytes, maxAllocationBytes, buffer);
       return RESULT_OK;
     }
 
-    IN_DDR s32 MemoryStack::get_totalBytes() const
+    s32 MemoryStack::get_totalBytes() const
     {
       return totalBytes;
     }
 
-    IN_DDR s32 MemoryStack::get_usedBytes() const
+    s32 MemoryStack::get_usedBytes() const
     {
       return usedBytes;
     }
 
-    IN_DDR void* MemoryStack::get_buffer()
+    void* MemoryStack::get_buffer()
     {
       return buffer;
     }
 
-    IN_DDR const void* MemoryStack::get_buffer() const
+    const void* MemoryStack::get_buffer() const
     {
       return buffer;
     }
 
-    IN_DDR s32 MemoryStack::get_id() const
+    s32 MemoryStack::get_id() const
     {
       return id;
+    }
+
+    BufferFlags MemoryStack::get_flags() const
+    {
+      return flags;
     }
 
     // Not sure if these should be supported. But I'm leaving them here for the time being.

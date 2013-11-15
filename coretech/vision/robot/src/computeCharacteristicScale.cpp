@@ -13,7 +13,7 @@ namespace Anki
 #define MAX_PYRAMID_LEVELS 8
 #define MAX_ALPHAS 128
     // //function scaleImage = computeCharacteristicScaleImage_loopsAndFixedPoint(image, numPyramidLevels, computeDogAtFullSize, filterWithMex)
-    IN_DDR Result ComputeCharacteristicScaleImage(const Array<u8> &image, const s32 numPyramidLevels, FixedPointArray<u32> &scaleImage, MemoryStack scratch)
+    Result ComputeCharacteristicScaleImage(const Array<u8> &image, const s32 numPyramidLevels, FixedPointArray<u32> &scaleImage, MemoryStack scratch)
     {
       //double times[20];
 
@@ -49,9 +49,9 @@ namespace Anki
 
       //imagePyramid = cell(1, numPyramidLevels+1);
       Array<u8> imagePyramid[MAX_PYRAMID_LEVELS+1];
-      imagePyramid[0] = Array<u8>(fullSizeHeight, fullSizeWidth, scratch, false);
+      imagePyramid[0] = Array<u8>(fullSizeHeight, fullSizeWidth, scratch);
       for(s32 i=1; i<=numPyramidLevels; i++) {
-        imagePyramid[i] = Array<u8>(fullSizeHeight >> i, fullSizeWidth >> i, scratch, false);
+        imagePyramid[i] = Array<u8>(fullSizeHeight >> i, fullSizeWidth >> i, scratch);
       }
 
       //scaleFactors = int32(2.^[0:(numPyramidLevels)]); %#ok<NBRAK>
@@ -350,7 +350,7 @@ namespace Anki
       return RESULT_OK;
     } // Result ComputeCharacteristicScaleImage(const Array<u8> &image, s32 numPyramidLevels, Array<u32> &scaleImage, MemoryStack scratch)
 
-    IN_DDR Result ComputeCharacteristicScaleImageAndBinarize(const Array<u8> &image, const s32 numPyramidLevels, Array<u8> &binaryImage, const s32 thresholdMultiplier, MemoryStack scratch)
+    Result ComputeCharacteristicScaleImageAndBinarize(const Array<u8> &image, const s32 numPyramidLevels, Array<u8> &binaryImage, const s32 thresholdMultiplier, MemoryStack scratch)
     {
       const s32 thresholdMultiplier_numFractionalBits = 16;
 
@@ -398,7 +398,7 @@ namespace Anki
       // Prepare the memory for the filtered rows for each level of the pyramid
       Array<s32> filteredRows[5];
       for(s32 i=0; i<=numPyramidLevels; i++) {
-        filteredRows[i] = Array<s32>(1, imageWidth, scratch, false);
+        filteredRows[i] = Array<s32>(1, imageWidth, scratch);
       }
 
       s32 imageY = 0;
@@ -503,7 +503,7 @@ namespace Anki
       // Prepare the memory for the filtered rows for each level of the pyramid
       Array<s32> filteredRows[5];
       for(s32 i=0; i<=scaleImage_numPyramidLevels; i++) {
-        filteredRows[i] = Array<s32>(1, imageWidth, scratch, false);
+        filteredRows[i] = Array<s32>(1, imageWidth, scratch);
       }
 
       Array<u8> binaryImageRow(1, imageWidth, scratch);

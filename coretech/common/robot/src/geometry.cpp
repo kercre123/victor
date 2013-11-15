@@ -6,47 +6,47 @@ namespace Anki
 {
   namespace Embedded
   {
-    template<> IN_DDR void Point<f32>::Print() const
+    template<> void Point<f32>::Print() const
     {
       printf("(%f,%f) ", this->x, this->y);
     }
 
-    template<> IN_DDR void Point<f64>::Print() const
+    template<> void Point<f64>::Print() const
     {
       printf("(%f,%f) ", this->x, this->y);
     }
 
-    template<> IN_DDR void Rectangle<f32>::Print() const
+    template<> void Rectangle<f32>::Print() const
     {
       printf("(%f,%f)->(%f,%f) ", this->left, this->top, this->right, this->bottom);
     }
 
-    template<> IN_DDR void Rectangle<f64>::Print() const
+    template<> void Rectangle<f64>::Print() const
     {
       printf("(%f,%f)->(%f,%f) ", this->left, this->top, this->right, this->bottom);
     }
 
-    template<> IN_DDR f32 Rectangle<f32>::get_width() const
+    template<> f32 Rectangle<f32>::get_width() const
     {
       return right - left;
     }
 
-    template<> IN_DDR f64 Rectangle<f64>::get_width() const
+    template<> f64 Rectangle<f64>::get_width() const
     {
       return right - left;
     }
 
-    template<> IN_DDR f32 Rectangle<f32>::get_height() const
+    template<> f32 Rectangle<f32>::get_height() const
     {
       return bottom - top;
     }
 
-    template<> IN_DDR f64 Rectangle<f64>::get_height() const
+    template<> f64 Rectangle<f64>::get_height() const
     {
       return bottom - top;
     }
 
-    template<> IN_DDR void Quadrilateral<f32>::Print() const
+    template<> void Quadrilateral<f32>::Print() const
     {
       printf("{(%f,%f), (%f,%f), (%f,%f), (%f,%f)} ",
         this->corners[0].x, this->corners[0].y,
@@ -55,7 +55,7 @@ namespace Anki
         this->corners[3].x, this->corners[3].y);
     }
 
-    template<> IN_DDR void Quadrilateral<f64>::Print() const
+    template<> void Quadrilateral<f64>::Print() const
     {
       printf("{(%f,%f), (%f,%f), (%f,%f), (%f,%f)} ",
         this->corners[0].x, this->corners[0].y,

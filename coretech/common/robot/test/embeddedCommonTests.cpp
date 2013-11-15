@@ -6,6 +6,9 @@
 #include "anki/common/robot/memory.h"
 #include "anki/common/robot/opencvLight.h"
 #include "anki/common/robot/gtestLight.h"
+#include "anki/common/robot/matrix.h"
+#include "anki/common/robot/comparisons.h"
+#include "anki/common/robot/arraySlices.h"
 
 using namespace Anki::Embedded;
 
@@ -54,10 +57,262 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, SliceArrayAssignment)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u8> array1(5,6,ms);
+  Array<u8> array2(5,6,ms);
+
+  s32 i = 0;
+  for(s32 y=0; y<5; y++) {
+    for(s32 x=0; x<6; x++) {
+      array2[y][x] = i++;
+    }
+  }
+
+  // Test the non-transposed Set()
+  ASSERT_TRUE(array1.SetZero() != 0);
+  ASSERT_TRUE(array1(0,2,0,3).Set(array2(1,3,1,4)) == RESULT_OK);
+
+  //array1.Print("array1");
+  //array2.Print("array2");
+
+  for(s32 y=0; y<=2; y++) {
+    for(s32 x=0; x<=3; x++) {
+      ASSERT_TRUE(array1[y][x] == array2[y+1][x+1]);
+    }
+    for(s32 x=4; x<6; x++) {
+      ASSERT_TRUE(array1[y][x] == 0);
+    }
+  }
+  for(s32 y=3; y<5; y++) {
+    for(s32 x=0; x<6; x++) {
+      ASSERT_TRUE(array1[y][x] == 0);
+    }
+  }
+
+  // Test the automatically transposed Set()
+  ASSERT_TRUE(array1.SetZero() != 0);
+  ASSERT_TRUE(array1(0,-1,0,2).Set(array2(1,3,0,4)) == RESULT_OK);
+
+  //array1.Print("array1");
+  //array2.Print("array2");
+
+  for(s32 y=0; y<5; y++) {
+    for(s32 x=0; x<=2; x++) {
+      ASSERT_TRUE(array1[y][x] == array2[x+1][y]);
+    }
+    for(s32 x=3; x<6; x++) {
+      ASSERT_TRUE(array1[y][x] == 0);
+    }
+  }
+
+  // Test for a failure in the manually transposed Set()
+  ASSERT_TRUE(array1.SetZero() != 0);
+  ASSERT_TRUE(array1(0,-1,0,2).Set(array2(1,3,0,4), false) == RESULT_FAIL);
+
+  // Test the manually transposed Set()
+  ASSERT_TRUE(array1.SetZero() != 0);
+  ASSERT_TRUE(array1(0,-1,0,2).Set(array2(1,3,0,4).Transpose(), false) == RESULT_OK);
+
+  //array1.Print("array1");
+  //array2.Print("array2");
+
+  for(s32 y=0; y<5; y++) {
+    for(s32 x=0; x<=2; x++) {
+      ASSERT_TRUE(array1[y][x] == array2[x+1][y]);
+    }
+    for(s32 x=3; x<6; x++) {
+      ASSERT_TRUE(array1[y][x] == 0);
+    }
+  }
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
+{
+  // This is just a compile test, and should always pass unless there's a very serious error
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u8> array1(20,30,ms);
+
+  // This is okay
+  ArraySlice<u8> slice1 = array1(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
+
+  const Array<u8> array2(20,30,ms);
+
+  // Will not compile
+  //ArraySlice<u8> slice2 = array2(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
+
+  // This is okay
+  ConstArraySlice<u8> slice1b = array1(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
+
+  // This is okay
+  ConstArraySlice<u8> slice2 = array2(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
+
+  //printf("%d %d %d\n", slice1.get_xSlice().get_start(), slice1.get_xSlice().get_end(), *slice1.get_array().Pointer(0,0));
+  //printf("%d %d %d\n", slice1b.get_xSlice().get_start(), slice1b.get_xSlice().get_end(), *slice1b.get_array().Pointer(0,0));
+  //printf("%d %d %d\n", slice2.get_xSlice().get_start(), slice2.get_xSlice().get_end(), *slice2.get_array().Pointer(0,0));
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, MatrixMinAndMaxAndSum)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u8> array(5,5,ms);
+
+  s32 i = 0;
+  for(s32 y=0; y<5; y++) {
+    for(s32 x=0; x<5; x++) {
+      array[y][x] = i++;
+    }
+  }
+
+  const s32 minValue1 = Matrix::Min<u8>(array);
+  const s32 minValue2 = Matrix::Min<u8>(array(2,-1,2,-1));
+  const s32 minValue3 = Matrix::Min<u8>(array(2,-1,-1,-1));
+
+  const s32 maxValue1 = Matrix::Max<u8>(array);
+  const s32 maxValue2 = Matrix::Max<u8>(array(0,-3,0,-1));
+  const s32 maxValue3 = Matrix::Max<u8>(array(0,-1,-2,-2));
+
+  const s32 sum1 = Matrix::Sum<u8,s32>(array);
+  const s32 sum2 = Matrix::Sum<u8,s32>(array(0,-3,0,-1));
+  const s32 sum3 = Matrix::Sum<u8,s32>(array(0,-1,-2,-2));
+
+  ASSERT_TRUE(minValue1 == 0);
+  ASSERT_TRUE(minValue2 == 12);
+  ASSERT_TRUE(minValue3 == 14);
+
+  ASSERT_TRUE(maxValue1 == 24);
+  ASSERT_TRUE(maxValue2 == 14);
+  ASSERT_TRUE(maxValue3 == 23);
+
+  ASSERT_TRUE(sum1 == 300);
+  ASSERT_TRUE(sum2 == 105);
+  ASSERT_TRUE(sum3 == 65);
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, ReallocateArray)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u8> array1(20,30,ms);
+  Array<u8> array2(20,30,ms);
+  Array<u8> array3(20,30,ms);
+
+  ASSERT_TRUE(array1.IsValid());
+  ASSERT_TRUE(array2.IsValid());
+  ASSERT_TRUE(array3.IsValid());
+
+  ASSERT_TRUE(array1.IsValid());
+  ASSERT_TRUE(array1.Resize(20,15,ms) == RESULT_FAIL);
+  ASSERT_TRUE(!array1.IsValid());
+
+  ASSERT_TRUE(array3.IsValid());
+  ASSERT_TRUE(array3.Resize(20,15,ms) == RESULT_OK);
+  ASSERT_TRUE(array3.IsValid());
+
+  ASSERT_TRUE(array2.IsValid());
+  ASSERT_TRUE(array2.Resize(20,15,ms) == RESULT_FAIL);
+  ASSERT_TRUE(!array2.IsValid());
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, ReallocateMemoryStack)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  void *memory1 = ms.Allocate(100);
+  void *memory2 = ms.Allocate(100);
+  void *memory3 = ms.Allocate(100);
+
+  ASSERT_TRUE(memory3 != NULL);
+  memory3 = ms.Reallocate(memory3, 50);
+  ASSERT_TRUE(memory3 != NULL);
+
+  ASSERT_TRUE(memory2 != NULL);
+  memory2 = ms.Reallocate(memory2, 50);
+  ASSERT_TRUE(memory2 == NULL);
+
+  ASSERT_TRUE(memory1 != NULL);
+  memory1 = ms.Reallocate(memory1, 50);
+  ASSERT_TRUE(memory1 == NULL);
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, LinearSequence)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  // Test s32 sequences
+  const s32 sequenceLimits1[15][3] = {{0,1,1}, {0,2,1}, {-1,1,1}, {-1,2,1}, {-1,3,1},
+  {-50,2,-3}, {-3,3,-50}, {10,-4,1}, {10,3,1}, {-10,3,1},
+  {-7,7,0}, {12,-4,-10}, {100,-1,0}, {0,3,100}, {0,2,10000}};
+
+  // [length(0:1:1), length(0:2:1), length(-1:1:1), length(-1:2:1), length(-1:3:1), length(-50:2:-3), length(-3:3:-50), length(10:-4:1), length(10:3:1), length(-10:3:1), length(-7:7:0), length(12:-4:-10), length(100:-1:0), length(0:3:100), length(0:2:10000)]'
+  const s32 length1_groundTruth[15] = {2, 1, 3, 2, 1, 24, 0, 3, 0, 4, 2, 6, 101, 34, 5001};
+
+  for(s32 i=0; i<15; i++) {
+    LinearSequence<s32> sequence(sequenceLimits1[i][0], sequenceLimits1[i][1], sequenceLimits1[i][2]);
+    ASSERT_TRUE(sequence.get_size() == length1_groundTruth[i]);
+  }
+
+  // Tests f32 sequences
+  const f32 sequenceLimits2[25][3] = {{0.0f,1.0f,1.0f}, {0.0f,2.0f,1.0f}, {-1.0f,1.0f,1.0f}, {-1.0f,2.0f,1.0f}, {-1.0f,3.0f,1.0f},
+  {-50.0f,2.0f,-3.0f}, {-3.0f,3.0f,-50.0f}, {10.0f,-4.0f,1.0f}, {10.0f,3.0f,1.0f}, {-10.0f,3.0f,1.0f},
+  {-7.0f,7.0f,0.0f}, {12.0f,-4.0f,-10.0f}, {100.0f,-1.0f,0.0f}, {0.0f,3.0f,100.0f}, {0.0f,2.0f,10000.0f},
+  {0.1f,0.1f,0.1f}, {0.1f,0.11f,0.3f}, {0.1f,0.09f,0.3f}, {-0.5f,0.1f,0.5f}, {0.3f,0.1f,0.2f},
+  {-0.5f,-0.05f,-0.4f}, {-0.5f,0.6f,0.0f}, {-0.5f,0.25f,0.0f}, {-4.0f,0.01f,100.0f}, {0.1f,-0.1f,-0.4f}};
+
+  // [length(0.1:0.1:0.1), length(0.1:0.11:0.3), length(0.1:0.09:0.3), length(-0.5:0.1:0.5), length(0.3:0.1:0.2), length(-0.5:-0.05:-0.4), length(-0.5:0.6:0.0), length(-0.5:0.25:0.0), length(-4.0:0.01:100.0), length(0.1:-0.1:-0.4)]'
+  const s32 length2_groundTruth[25] = {2, 1, 3, 2, 1, 24, 0, 3, 0, 4, 2, 6, 101, 34, 5001, 1, 2, 3, 11, 0, 0, 1, 3, 10401, 6};
+
+  for(s32 i=0; i<25; i++) {
+    LinearSequence<f32> sequence(sequenceLimits2[i][0], sequenceLimits2[i][1], sequenceLimits2[i][2]);
+    ASSERT_TRUE(sequence.get_size() == length2_groundTruth[i]);
+  }
+
+  // Test sequence assignment to an Array
+  const LinearSequence<s32> sequence(-4,2,4);
+
+  Array<s32> sequenceArray(sequence, ms);
+  const s32 sequenceArray_groundTruth[5] = {-4, -2, 0, 2, 4};
+
+  ASSERT_TRUE(sequenceArray.get_size(0) == 1);
+  ASSERT_TRUE(sequenceArray.get_size(1) == 5);
+
+  for(s32 i=0; i<5; i++) {
+    ASSERT_TRUE(sequenceArray[0][i] == sequenceArray_groundTruth[i]);
+  }
+
+  GTEST_RETURN_HERE;
+}
+
 // This test requires a stopwatch, and takes about ten seconds to do manually
-#define TEST_BENCHMARKING
+//#define TEST_BENCHMARKING
 #ifdef TEST_BENCHMARKING
-IN_DDR GTEST_TEST(CoreTech_Common, Benchmarking)
+GTEST_TEST(CoreTech_Common, Benchmarking)
 {
   InitBenchmarking();
 
@@ -91,7 +346,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, Benchmarking)
 }
 #endif //#ifdef TEST_BENCHMARKING
 
-IN_DDR GTEST_TEST(CoreTech_Common, MemoryStackId)
+GTEST_TEST(CoreTech_Common, MemoryStackId)
 {
   //printf("%f %f %f %f %f\n", 43423442334324.010203, 15.500, 15.0, 0.05, 0.12004333);
 
@@ -126,7 +381,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStackId)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, ApproximateExp)
+GTEST_TEST(CoreTech_Common, ApproximateExp)
 {
   // To compute the ground truth, in Matlab, type:
   // x = logspace(-5, 5, 11); yPos = exp(x); yNeg = exp(-x);
@@ -168,7 +423,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, ApproximateExp)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, MatrixMultiply)
+GTEST_TEST(CoreTech_Common, MatrixMultiply)
 {
   const s32 numBytes = MIN(MAX_BYTES, 5000);
   ASSERT_TRUE(buffer != NULL);
@@ -208,16 +463,16 @@ IN_DDR GTEST_TEST(CoreTech_Common, MatrixMultiply)
   mat2.Set(mat2Data, MatrixMultiply_mat2DataLength);
   matOut_groundTruth.Set(matOutGroundTruthData, MatrixMultiply_matOutGroundTruthDataLength);
 
-  const Result result = MultiplyMatrices<Array<f64>, f64>(mat1, mat2, matOut);
+  const Result result = Matrix::Multiply<f64>(mat1, mat2, matOut);
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  ASSERT_TRUE(matOut.IsElementwiseEqual(matOut_groundTruth));
+  ASSERT_TRUE(AreElementwiseEqual(matOut, matOut_groundTruth));
 
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, ComputeHomography)
+GTEST_TEST(CoreTech_Common, ComputeHomography)
 {
   const s32 numBytes = MIN(MAX_BYTES, 5000);
   ASSERT_TRUE(buffer != NULL);
@@ -254,7 +509,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, ComputeHomography)
   homography_groundTruth.Set(homographyGroundTruthData, ComputeHomography_homographyGroundTruthDataLength);
   originalPoints.Set(originalPointsData, ComputeHomography_originalPointsDataLength);
 
-  MultiplyMatrices<Array<f64>, f64>(homography_groundTruth, originalPoints, transformedPoints);
+  Matrix::Multiply<f64>(homography_groundTruth, originalPoints, transformedPoints);
 
   for(s32 i=0; i<originalPoints.get_size(1); i++) {
     const f64 x0 = (*originalPoints.Pointer(0,i)) / (*originalPoints.Pointer(2,i));
@@ -279,12 +534,12 @@ IN_DDR GTEST_TEST(CoreTech_Common, ComputeHomography)
 
   //homography.Print("homography");
 
-  ASSERT_TRUE(homography.IsElementwiseEqual_PercentThreshold(homography_groundTruth, .01, .001));
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(homography, homography_groundTruth, .01, .001));
 
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, SVD32)
+GTEST_TEST(CoreTech_Common, SVD32)
 {
   const s32 numBytes = MIN(MAX_BYTES, 5000);
   ASSERT_TRUE(buffer != NULL);
@@ -370,8 +625,8 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD32)
   PrintfOneArray_f32(uT, "uT");
   PrintfOneArray_f32(uT_groundTruth, "uT_groundTruth");
 
-  ASSERT_TRUE(w.IsElementwiseEqual_PercentThreshold(w_groundTruth, .05, .001));
-  ASSERT_TRUE(uT.IsElementwiseEqual_PercentThreshold(uT_groundTruth, .05, .001));
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(w, w_groundTruth, .05, .001));
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(uT, uT_groundTruth, .05, .001));
 
   // I don't know why, but the v-transpose for this SVD doesn't match Matlab's. Probably this version is more efficient, in either memory or computation.
   //ASSERT_TRUE(vT.IsElementwiseEqual_PercentThreshold(vT_groundTruth, .05, .001));
@@ -379,7 +634,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD32)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, SVD64)
+GTEST_TEST(CoreTech_Common, SVD64)
 {
   const s32 numBytes = MIN(MAX_BYTES, 5000);
   ASSERT_TRUE(buffer != NULL);
@@ -459,8 +714,8 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD64)
   //  vT.Print("vT");
   //  vT_groundTruth.Print("vT_groundTruth");
 
-  ASSERT_TRUE(w.IsElementwiseEqual_PercentThreshold(w_groundTruth, .05, .001));
-  ASSERT_TRUE(uT.IsElementwiseEqual_PercentThreshold(uT_groundTruth, .05, .001));
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(w, w_groundTruth, .05, .001));
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(uT, uT_groundTruth, .05, .001));
 
   // I don't know why, but the v-transpose for this SVD doesn't match Matlab's. Probably this version's is more efficient, in either memory or computation.
   //ASSERT_TRUE(vT.IsElementwiseEqual_PercentThreshold(vT_groundTruth, .05, .001));
@@ -468,7 +723,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, SVD64)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack)
+GTEST_TEST(CoreTech_Common, MemoryStack)
 {
   ASSERT_TRUE(MEMORY_ALIGNMENT == 16);
 
@@ -546,20 +801,20 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR s32 CheckMemoryStackUsage(MemoryStack ms, s32 numBytes)
+s32 CheckMemoryStackUsage(MemoryStack ms, s32 numBytes)
 {
   ms.Allocate(numBytes);
   return ms.get_usedBytes();
 }
 
-IN_DDR s32 CheckConstCasting(const MemoryStack ms, s32 numBytes)
+s32 CheckConstCasting(const MemoryStack ms, s32 numBytes)
 {
   // ms.Allocate(1); // Will not compile
 
   return CheckMemoryStackUsage(ms, numBytes);
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack_call)
+GTEST_TEST(CoreTech_Common, MemoryStack_call)
 {
   const s32 numBytes = MIN(MAX_BYTES, 100);
   ASSERT_TRUE(buffer != NULL);
@@ -582,7 +837,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack_call)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
+GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
 {
   ASSERT_TRUE(MEMORY_ALIGNMENT == 16);
 
@@ -619,7 +874,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1)
 }
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB
-IN_DDR GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
+GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
 {
   matlab.EvalStringEcho("simpleVector = double([1.1,2.1,3.1,4.1,5.1]);");
   double *simpleVector = matlab.Get<double>("simpleVector");
@@ -639,7 +894,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
 #endif //#if ANKICORETECH_EMBEDDED_USE_MATLAB
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB
-IN_DDR GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
+GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
 {
   matlab.EvalStringEcho("simpleArray = int16([1,2,3,4,5;6,7,8,9,10]);");
   Array<s16> simpleArray = matlab.GetArray<s16>("simpleArray");
@@ -664,7 +919,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
 #endif //#if ANKICORETECH_EMBEDDED_USE_MATLAB
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-IN_DDR GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
+GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 {
   cv::Mat src, dst;
 
@@ -701,7 +956,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleOpenCVTest)
 }
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
-IN_DDR GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
+GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
 {
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = MIN(MAX_BYTES, 1000);
@@ -784,7 +1039,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
+GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 {
   const s32 numBytes = MIN(MAX_BYTES, 1000);
   ASSERT_TRUE(buffer != NULL);
@@ -810,7 +1065,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, ArrayAlignment1)
+GTEST_TEST(CoreTech_Common, ArrayAlignment1)
 {
   const s32 numBytes = MIN(MAX_BYTES, 1000);
   ASSERT_TRUE(buffer != NULL);
@@ -831,7 +1086,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, ArrayAlignment1)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
+GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
 {
   const s32 numBytes = MIN(MAX_BYTES, 1000);
   ASSERT_TRUE(buffer != NULL);
@@ -851,7 +1106,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, MemoryStackAlignment)
   GTEST_RETURN_HERE;
 }
 
-IN_DDR GTEST_TEST(CoreTech_Common, ArrayFillPattern)
+GTEST_TEST(CoreTech_Common, ArrayFillPattern)
 {
   const s32 width = 6, height = 10;
   const s32 numBytes = MIN(MAX_BYTES, 1000);
@@ -862,7 +1117,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, ArrayFillPattern)
   MemoryStack ms(alignedBuffer, numBytes-MEMORY_ALIGNMENT);
 
   // Create a matrix, and manually set a few values
-  Array<s16> simpleArray(height, width, ms, true);
+  Array<s16> simpleArray(height, width, ms, BufferFlags(true,true));
   ASSERT_TRUE(simpleArray.get_rawDataPointer() != NULL);
 
   ASSERT_TRUE(simpleArray.IsValid());
@@ -915,7 +1170,7 @@ IN_DDR GTEST_TEST(CoreTech_Common, ArrayFillPattern)
 }
 
 #if !defined(ANKICORETECH_EMBEDDED_USE_GTEST)
-IN_DDR int RUN_ALL_TESTS()
+int RUN_ALL_TESTS()
 {
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;

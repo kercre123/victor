@@ -28,7 +28,7 @@ using namespace Anki::Embedded;
 // components2d = mexSimpleDetectorSteps123(image, scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold);
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-  //     IN_DDR Result SimpleDetector_Steps123(
+  //     Result SimpleDetector_Steps123(
   //       const Array<u8> &image,
   //       const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
   //       const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,

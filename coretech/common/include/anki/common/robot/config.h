@@ -84,7 +84,6 @@ Everything in this file should be compatible with plain C, as well as C++
 
 #ifndef IN_DDR
 #define IN_DDR __attribute__((section(".ddr_direct.text")))
-//#define IN_DDR __attribute__((section(".ddr.text")))
 #endif
 
 #endif // #if defined(USING_MOVIDIUS_COMPILER)
