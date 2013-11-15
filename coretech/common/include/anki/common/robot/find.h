@@ -36,7 +36,9 @@ namespace Anki
       Find(const Array<Type1> &array, const Comparison::Comparison comparison, const Type2 &value);
 
       // Allocated the memory for yIndexes and xIndexes, and sets them to the index values that match this expression
-      Result Evaluate(Array<s32> &yIndexes, Array<s32> &xIndexes, MemoryStack &memory) const;
+      // The Indexes Arrays will be allocated by these methods
+      Result Evaluate(Array<s32> &indexes, MemoryStack &memory) const; // For 1-dimensional arrays only
+      Result Evaluate(Array<s32> &yIndexes, Array<s32> &xIndexes, MemoryStack &memory) const; // For 1-dimensional or 2-dimensional arrays
 
       // TODO: implement all these
       template<typename ArrayType> Result SetArray(Array<ArrayType> &out, const ArrayType value);
@@ -81,6 +83,10 @@ namespace Anki
 
       // Helper function for ComputeLimits()
       static inline void UpdateLimitsWithEntry(Rectangle<s32> &limits, s32 &numMatches, s32 y, s32 x);
+
+      // Helper function for Evaluate()
+      // If xIndexes is null, one dimensional indexes are returned
+      Result ComputeEvaluateIndexes(Array<s32> *yIndexes, Array<s32> *xIndexes=NULL);
     }; // class FindLazy
 
 #pragma mark --- Implementations ---
@@ -112,41 +118,77 @@ namespace Anki
       Initialize();
     }
 
-    template<typename Type1, typename Type2> void Find<Type1,Type2>::Initialize()
+    template<typename Type1, typename Type2> Result Find<Type1,Type2>::Evaluate(Array<s32> &indexes, MemoryStack &memory) const
     {
-      this->isValid = true;
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Find.Evaluate", "This Find object is invalid");
 
-      if(MIN(array1.get_size(0), array1.get_size(1)) == 1) {
-        this->outputDimensions = 1;
-      } else {
-        this->outputDimensions = 2;
-      }
+      AnkiConditionalErrorAndReturnValue(outputDimensions == 1,
+        RESULT_FAIL, "Find.Evaluate", "One-dimensional Evaluate only works with one-dimensional Array input");
 
-      this->numMatchesComputed = false;
-      this->limitsComputed = false;
+      indexes = Array<s32>(1, this->get_numMatches(), memory);
 
-      this->numMatches = -1;
-      this->limits = Rectangle<s32>(-1, -1, -1, -1);
+      return RESULT_OK;
     }
 
-    template<typename Type1, typename Type2> Result Find<Type1,Type2>::ComputeNumMatches() const
+    template<typename Type1, typename Type2> Result Find<Type1,Type2>::Evaluate(Array<s32> &yIndexes, Array<s32> &xIndexes, MemoryStack &memory) const
     {
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Find.Evaluate", "This Find object is invalid");
+
+      yIndexes = Array<s32>(1, this->get_numMatches(), memory);
+      xIndexes = Array<s32>(1, this->get_numMatches(), memory);
+
+      return RESULT_OK;
+    }
+
+    template<typename Type1, typename Type2> Result ComputeEvaluateIndexes(Array<s32> *yIndexes, Array<s32> *xIndexes)
+    {
+      AnkiConditionalErrorAndReturnValue(yIndexes && yIndexes->IsValid(),
+        RESULT_FAIL, "Find.ComputeEvaluateIndexes", "yIndexes are not valid");
+
+      AnkiConditionalErrorAndReturnValue(!xIndexes || xIndexes->IsValid(),
+        RESULT_FAIL, "Find.ComputeEvaluateIndexes", "xIndexes are not valid");
+
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Find.ComputeEvaluateIndexes", "This object is not valid");
+
       const s32 arrayHeight = array1.get_size(0);
       const s32 arrayWidth = array1.get_size(1);
 
-      s32 newNumMatches = 0;
-
+      s32 curIndex = 0;
       if(compareWithValue) {
         for(s32 y=0; y<arrayHeight; y++) {
           const Type1 * const pArray1 = array1.Pointer(y, 0);
 
           switch(this->comparison) {
           case Comparison::EQUAL:
-            for(s32 x=0; x<arrayWidth; x++) {
-              if(pArray1[x] == value)
-                newNumMatches++;
+            if(xIndexes){
+              for(s32 x=0; x<arrayWidth; x++) {
+                if(pArray1[x] == value) {
+                  yIndexes[curIndex] = y;
+                  xIndexes[curIndex] = x;
+                  curIndex++;
+                }
+              }
+            } else if(arrayHeight == 1) {
+              for(s32 x=0; x<arrayWidth; x++) {
+                if(pArray1[x] == value) {
+                  yIndexes[curIndex] = x;
+                  curIndex++;
+                }
+              }
+            } else { // arrayWidth == 1
+              assert(arrayWidth == 1);
+              for(s32 x=0; x<arrayWidth; x++) {
+                if(pArray1[x] == value) {
+                  yIndexes[curIndex] = y;
+                  curIndex++;
+                }
+              }
             }
-            break;
+          }
+          break;
           case Comparison::NOT_EQUAL:
             for(s32 x=0; x<arrayWidth; x++) {
               if(pArray1[x] != value)
@@ -180,228 +222,354 @@ namespace Anki
           default:
             assert(false);
             break;
-          } // switch(this->comparison)
-        } // for(s32 y=0; y<arrayHeight; y++)
-      } else { // if(compareWithValue)
-        // These should be checked earlier
-        assert(array1.get_size(0) == array2.get_size(0));
-        assert(array1.get_size(1) == array2.get_size(1));
+        } // switch(this->comparison)
+      } // for(s32 y=0; y<arrayHeight; y++)
+    } else { // if(compareWithValue)
+      // These should be checked earlier
+      assert(array1.get_size(0) == array2.get_size(0));
+      assert(array1.get_size(1) == array2.get_size(1));
 
-        for(s32 y=0; y<arrayHeight; y++) {
-          const Type1 * const pArray1 = array1.Pointer(y, 0);
-          const Type2 * const pArray2 = array2.Pointer(y, 0);
+      for(s32 y=0; y<arrayHeight; y++) {
+        const Type1 * const pArray1 = array1.Pointer(y, 0);
+        const Type2 * const pArray2 = array2.Pointer(y, 0);
 
-          switch(this->comparison) {
-          case Comparison::EQUAL:
-            for(s32 x=0; x<arrayWidth; x++) {
-              if(pArray1[x] == pArray2[x])
-                newNumMatches++;
-            }
-            break;
-          case Comparison::NOT_EQUAL:
-            for(s32 x=0; x<arrayWidth; x++) {
-              if(pArray1[x] != pArray2[x])
-                newNumMatches++;
-            }
-            break;
-          case Comparison::LESS_THAN:
-            for(s32 x=0; x<arrayWidth; x++) {
-              if(pArray1[x] < pArray2[x])
-                newNumMatches++;
-            }
-            break;
-          case Comparison::LESS_THAN_OR_EQUAL:
-            for(s32 x=0; x<arrayWidth; x++) {
-              if(pArray1[x] <= pArray2[x])
-                newNumMatches++;
-            }
-            break;
-          case Comparison::GREATER_THAN:
-            for(s32 x=0; x<arrayWidth; x++) {
-              if(pArray1[x] > pArray2[x])
-                newNumMatches++;
-            }
-            break;
-          case Comparison::GREATER_THAN_OR_EQUAL:
-            for(s32 x=0; x<arrayWidth; x++) {
-              if(pArray1[x] >= pArray2[x])
-                newNumMatches++;
-            }
-            break;
-          default:
-            assert(false);
-            break;
-          } // switch(this->comparison)
-        } // for(s32 y=0; y<arrayHeight; y++)
-      } // if(compareWithValue) ... else
+        switch(this->comparison) {
+        case Comparison::EQUAL:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] == pArray2[x])
+              newNumMatches++;
+          }
+          break;
+        case Comparison::NOT_EQUAL:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] != pArray2[x])
+              newNumMatches++;
+          }
+          break;
+        case Comparison::LESS_THAN:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] < pArray2[x])
+              newNumMatches++;
+          }
+          break;
+        case Comparison::LESS_THAN_OR_EQUAL:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] <= pArray2[x])
+              newNumMatches++;
+          }
+          break;
+        case Comparison::GREATER_THAN:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] > pArray2[x])
+              newNumMatches++;
+          }
+          break;
+        case Comparison::GREATER_THAN_OR_EQUAL:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] >= pArray2[x])
+              newNumMatches++;
+          }
+          break;
+        default:
+          assert(false);
+          break;
+        } // switch(this->comparison)
+      } // for(s32 y=0; y<arrayHeight; y++)
+    } // if(compareWithValue) ... else
 
-      if(this->numMatchesComputed) {
-        assert(newNumMatches == this->numMatches); // This should only happen if the data is changed, which it shouldn't be
-      }
+    return RESULT_OK;
+  }
 
-      this->numMatches = newNumMatches;
-      this->numMatchesComputed = true;
+  template<typename Type1, typename Type2> void Find<Type1,Type2>::Initialize()
+  {
+    this->isValid = true;
 
-      return RESULT_OK;
-    } // template<typename Type1, typename Type2> s32 Find<Type1,Type2>::ComputeNumMatches() const
-
-    template<typename Type1, typename Type2> inline void Find<Type1,Type2>::UpdateLimitsWithEntry(Rectangle<s32> &limits, s32 &numMatches, s32 y, s32 x)
-    {
-      limits.top = MIN(limits.top, y);
-      limits.bottom = MAX(limits.bottom, y);
-      limits.left = MIN(limits.left, x);
-      limits.right = MAX(limits.right, x);
-      numMatches++;
+    if(MIN(array1.get_size(0), array1.get_size(1)) == 1) {
+      this->outputDimensions = 1;
+    } else {
+      this->outputDimensions = 2;
     }
 
-    template<typename Type1, typename Type2> Result Find<Type1,Type2>::ComputeLimits() const
-    {
-      const s32 arrayHeight = array1.get_size(0);
-      const s32 arrayWidth = array1.get_size(1);
+    this->numMatchesComputed = false;
+    this->limitsComputed = false;
 
-      Rectangle<s32> newLimits(arrayWidth+1, -1, arrayHeight+1, -1);
-      s32 newNumMatches = 0;
+    this->numMatches = -1;
+    this->limits = Rectangle<s32>(-1, -1, -1, -1);
+  }
 
-      if(compareWithValue) {
-        for(s32 y=0; y<arrayHeight; y++) {
-          const Type1 * const pArray1 = array1.Pointer(y, 0);
+  template<typename Type1, typename Type2> Result Find<Type1,Type2>::ComputeNumMatches() const
+  {
+    const s32 arrayHeight = array1.get_size(0);
+    const s32 arrayWidth = array1.get_size(1);
 
-          switch(this->comparison) {
-          case Comparison::EQUAL:
-            for(s32 x=0; x<arrayWidth; x++) {
-              if(pArray1[x] == value)
-                UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
-            }
-            break;
-          case Comparison::NOT_EQUAL:
-            for(s32 x=0; x<arrayWidth; x++) {
-              if(pArray1[x] != value)
-                UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
-            }
-            break;
-          case Comparison::LESS_THAN:
-            for(s32 x=0; x<arrayWidth; x++) {
-              if(pArray1[x] < value)
-                UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
-            }
-            break;
-          case Comparison::LESS_THAN_OR_EQUAL:
-            for(s32 x=0; x<arrayWidth; x++) {
-              if(pArray1[x] <= value)
-                UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
-            }
-            break;
-          case Comparison::GREATER_THAN:
-            for(s32 x=0; x<arrayWidth; x++) {
-              if(pArray1[x] > value)
-                UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
-            }
-            break;
-          case Comparison::GREATER_THAN_OR_EQUAL:
-            for(s32 x=0; x<arrayWidth; x++) {
-              if(pArray1[x] >= value)
-                UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
-            }
-            break;
-          default:
-            assert(false);
-            break;
-          } // switch(this->comparison)
-        } // for(s32 y=0; y<arrayHeight; y++)
-      } else { // if(compareWithValue)
-        // These should be checked earlier
-        assert(array1.get_size(0) == array2.get_size(0));
-        assert(array1.get_size(1) == array2.get_size(1));
+    s32 newNumMatches = 0;
 
-        for(s32 y=0; y<arrayHeight; y++) {
-          const Type1 * const pArray1 = array1.Pointer(y, 0);
-          const Type2 * const pArray2 = array2.Pointer(y, 0);
+    if(compareWithValue) {
+      for(s32 y=0; y<arrayHeight; y++) {
+        const Type1 * const pArray1 = array1.Pointer(y, 0);
 
-          switch(this->comparison) {
-          case Comparison::EQUAL:
-            for(s32 x=0; x<arrayWidth; x++) {
-              if(pArray1[x] == pArray2[x])
-                UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
-            }
-            break;
-          case Comparison::NOT_EQUAL:
-            for(s32 x=0; x<arrayWidth; x++) {
-              if(pArray1[x] != pArray2[x])
-                UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
-            }
-            break;
-          case Comparison::LESS_THAN:
-            for(s32 x=0; x<arrayWidth; x++) {
-              if(pArray1[x] < pArray2[x])
-                UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
-            }
-            break;
-          case Comparison::LESS_THAN_OR_EQUAL:
-            for(s32 x=0; x<arrayWidth; x++) {
-              if(pArray1[x] <= pArray2[x])
-                UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
-            }
-            break;
-          case Comparison::GREATER_THAN:
-            for(s32 x=0; x<arrayWidth; x++) {
-              if(pArray1[x] > pArray2[x])
-                UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
-            }
-            break;
-          case Comparison::GREATER_THAN_OR_EQUAL:
-            for(s32 x=0; x<arrayWidth; x++) {
-              if(pArray1[x] >= pArray2[x])
-                UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
-            }
-            break;
-          default:
-            assert(false);
-            break;
-          } // switch(this->comparison)
-        } // for(s32 y=0; y<arrayHeight; y++)
-      } // if(compareWithValue) ... else
+        switch(this->comparison) {
+        case Comparison::EQUAL:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] == value)
+              newNumMatches++;
+          }
+          break;
+        case Comparison::NOT_EQUAL:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] != value)
+              newNumMatches++;
+          }
+          break;
+        case Comparison::LESS_THAN:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] < value)
+              newNumMatches++;
+          }
+          break;
+        case Comparison::LESS_THAN_OR_EQUAL:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] <= value)
+              newNumMatches++;
+          }
+          break;
+        case Comparison::GREATER_THAN:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] > value)
+              newNumMatches++;
+          }
+          break;
+        case Comparison::GREATER_THAN_OR_EQUAL:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] >= value)
+              newNumMatches++;
+          }
+          break;
+        default:
+          assert(false);
+          break;
+        } // switch(this->comparison)
+      } // for(s32 y=0; y<arrayHeight; y++)
+    } else { // if(compareWithValue)
+      // These should be checked earlier
+      assert(array1.get_size(0) == array2.get_size(0));
+      assert(array1.get_size(1) == array2.get_size(1));
 
-      if(this->numMatchesComputed) {
-        assert(newNumMatches == this->numMatches); // This should only happen if the data is changed, which it shouldn't be
-      }
-      this->numMatches = newNumMatches;
-      this->numMatchesComputed = true;
+      for(s32 y=0; y<arrayHeight; y++) {
+        const Type1 * const pArray1 = array1.Pointer(y, 0);
+        const Type2 * const pArray2 = array2.Pointer(y, 0);
 
-      if(this->limitsComputed) {
-        assert(newLimits == this->limits);
-      }
-      this->limits = newLimits;
-      this->limitsComputed = true;
+        switch(this->comparison) {
+        case Comparison::EQUAL:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] == pArray2[x])
+              newNumMatches++;
+          }
+          break;
+        case Comparison::NOT_EQUAL:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] != pArray2[x])
+              newNumMatches++;
+          }
+          break;
+        case Comparison::LESS_THAN:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] < pArray2[x])
+              newNumMatches++;
+          }
+          break;
+        case Comparison::LESS_THAN_OR_EQUAL:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] <= pArray2[x])
+              newNumMatches++;
+          }
+          break;
+        case Comparison::GREATER_THAN:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] > pArray2[x])
+              newNumMatches++;
+          }
+          break;
+        case Comparison::GREATER_THAN_OR_EQUAL:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] >= pArray2[x])
+              newNumMatches++;
+          }
+          break;
+        default:
+          assert(false);
+          break;
+        } // switch(this->comparison)
+      } // for(s32 y=0; y<arrayHeight; y++)
+    } // if(compareWithValue) ... else
 
-      return RESULT_OK;
-    } // template<typename Type1, typename Type2> Rectangle<s32> Find<Type1,Type2>::ComputeLimits() const
-
-    template<typename Type1, typename Type2> bool Find<Type1,Type2>::IsValid() const
-    {
-      if(!this->isValid)
-        return false;
-
-      // TODO: check other things with the arrays, like to guess if they've been changed
-
-      return true;
+    if(this->numMatchesComputed) {
+      assert(newNumMatches == this->numMatches); // This should only happen if the data is changed, which it shouldn't be
     }
 
-    template<typename Type1, typename Type2> s32 Find<Type1,Type2>::get_numMatches() const
-    {
-      if(!numMatchesComputed)
-        ComputeNumMatches();
+    this->numMatches = newNumMatches;
+    this->numMatchesComputed = true;
 
-      return numMatches;
+    return RESULT_OK;
+  } // template<typename Type1, typename Type2> s32 Find<Type1,Type2>::ComputeNumMatches() const
+
+  template<typename Type1, typename Type2> inline void Find<Type1,Type2>::UpdateLimitsWithEntry(Rectangle<s32> &limits, s32 &numMatches, s32 y, s32 x)
+  {
+    limits.top = MIN(limits.top, y);
+    limits.bottom = MAX(limits.bottom, y);
+    limits.left = MIN(limits.left, x);
+    limits.right = MAX(limits.right, x);
+    numMatches++;
+  }
+
+  template<typename Type1, typename Type2> Result Find<Type1,Type2>::ComputeLimits() const
+  {
+    const s32 arrayHeight = array1.get_size(0);
+    const s32 arrayWidth = array1.get_size(1);
+
+    Rectangle<s32> newLimits(arrayWidth+1, -1, arrayHeight+1, -1);
+    s32 newNumMatches = 0;
+
+    if(compareWithValue) {
+      for(s32 y=0; y<arrayHeight; y++) {
+        const Type1 * const pArray1 = array1.Pointer(y, 0);
+
+        switch(this->comparison) {
+        case Comparison::EQUAL:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] == value)
+              UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
+          }
+          break;
+        case Comparison::NOT_EQUAL:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] != value)
+              UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
+          }
+          break;
+        case Comparison::LESS_THAN:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] < value)
+              UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
+          }
+          break;
+        case Comparison::LESS_THAN_OR_EQUAL:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] <= value)
+              UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
+          }
+          break;
+        case Comparison::GREATER_THAN:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] > value)
+              UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
+          }
+          break;
+        case Comparison::GREATER_THAN_OR_EQUAL:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] >= value)
+              UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
+          }
+          break;
+        default:
+          assert(false);
+          break;
+        } // switch(this->comparison)
+      } // for(s32 y=0; y<arrayHeight; y++)
+    } else { // if(compareWithValue)
+      // These should be checked earlier
+      assert(array1.get_size(0) == array2.get_size(0));
+      assert(array1.get_size(1) == array2.get_size(1));
+
+      for(s32 y=0; y<arrayHeight; y++) {
+        const Type1 * const pArray1 = array1.Pointer(y, 0);
+        const Type2 * const pArray2 = array2.Pointer(y, 0);
+
+        switch(this->comparison) {
+        case Comparison::EQUAL:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] == pArray2[x])
+              UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
+          }
+          break;
+        case Comparison::NOT_EQUAL:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] != pArray2[x])
+              UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
+          }
+          break;
+        case Comparison::LESS_THAN:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] < pArray2[x])
+              UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
+          }
+          break;
+        case Comparison::LESS_THAN_OR_EQUAL:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] <= pArray2[x])
+              UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
+          }
+          break;
+        case Comparison::GREATER_THAN:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] > pArray2[x])
+              UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
+          }
+          break;
+        case Comparison::GREATER_THAN_OR_EQUAL:
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(pArray1[x] >= pArray2[x])
+              UpdateLimitsWithEntry(newLimits, newNumMatches, y, x);
+          }
+          break;
+        default:
+          assert(false);
+          break;
+        } // switch(this->comparison)
+      } // for(s32 y=0; y<arrayHeight; y++)
+    } // if(compareWithValue) ... else
+
+    if(this->numMatchesComputed) {
+      assert(newNumMatches == this->numMatches); // This should only happen if the data is changed, which it shouldn't be
     }
+    this->numMatches = newNumMatches;
+    this->numMatchesComputed = true;
 
-    template<typename Type1, typename Type2> const Rectangle<s32>& Find<Type1,Type2>::get_limits() const
-    {
-      if(!limitsComputed)
-        ComputeLimits();
-
-      return limits;
+    if(this->limitsComputed) {
+      assert(newLimits == this->limits);
     }
-  } // namespace Embedded
+    this->limits = newLimits;
+    this->limitsComputed = true;
+
+    return RESULT_OK;
+  } // template<typename Type1, typename Type2> Rectangle<s32> Find<Type1,Type2>::ComputeLimits() const
+
+  template<typename Type1, typename Type2> bool Find<Type1,Type2>::IsValid() const
+  {
+    if(!this->isValid)
+      return false;
+
+    // TODO: check other things with the arrays, like to guess if they've been changed
+
+    return true;
+  }
+
+  template<typename Type1, typename Type2> s32 Find<Type1,Type2>::get_numMatches() const
+  {
+    if(!numMatchesComputed)
+      ComputeNumMatches();
+
+    return numMatches;
+  }
+
+  template<typename Type1, typename Type2> const Rectangle<s32>& Find<Type1,Type2>::get_limits() const
+  {
+    if(!limitsComputed)
+      ComputeLimits();
+
+    return limits;
+  }
+} // namespace Embedded
 } // namespace Anki
 
 #endif // _ANKICORETECHEMBEDDED_COMMON_FIND_H_
