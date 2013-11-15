@@ -10,21 +10,34 @@ classdef CozmoDocker < handle
         escapePressed;
         camera;
         calibration;
+        
+        detectionResolution;
+        trackingResolution;
+        
+        trackerType;
     end
     
     
     methods
         function this = CozmoDocker(varargin)
+            
             Port = 'COM4';
+            DetectionResolution = 'QVGA';
+            TrackingResolution  = 'QQQVGA';
             Calibration = []; % at 320x240 (QVGA)
+            TrackerType = 'affine';
             
             parseVarargin(varargin{:});
            
-            this.calibration = Calibration;
-            this.escapePressed = false;
-
-            this.camera = SerialCamera(Port);
+            this.calibration         = Calibration;
+            this.detectionResolution = DetectionResolution;
+            this.trackingResolution  = TrackingResolution;
+            this.trackerType         = TrackerType;
             
+            this.camera              = SerialCamera(Port);
+            this.escapePressed       = false;
+            
+            % Set up display figure/axes:
             this.h_fig = namedFigure('Docking', 'CurrentCharacter', '~', ...
                 'KeyPressFcn', @(src,edata)this.keyPressCallback(src,edata));
             
@@ -36,20 +49,22 @@ classdef CozmoDocker < handle
             hold(this.h_axes, 'on');
             this.h_target = plot(nan, nan, 'r', 'LineWidth', 2, 'Parent', this.h_axes);
             hold(this.h_axes, 'off');
-        end
+            
+        end % CONSTRUCTOR CozmoDocker()
         
         function run(this)
             
             this.escapePressed = false;
             dockingDone = false;
-            set(this.h_target, 'XData', nan, 'YData', nan);
             
             while ~this.escapePressed && ~dockingDone
                  
-                % Put the camera in QVGA mode for detection
-                this.camera.changeResolution('QVGA');
-                set(this.h_axes, 'XLim', [.5 320.5], 'YLim', [.5 240.5]);
-                set(this.h_img, 'CData', zeros(240,320));
+                % Set the camera's resolution for detection.
+                this.camera.changeResolution(this.detectionResolution);
+                dims = this.camera.framesize;
+                set(this.h_axes, 'XLim', [.5 dims(1)+.5], 'YLim', [.5 dims(2)+.5]);
+                set(this.h_img, 'CData', zeros(dims(2),dims(1)));
+                set(this.h_target, 'XData', nan, 'YData', nan);
                 drawnow
                 
                 % Wait until we get a valid marker\
@@ -66,26 +81,24 @@ classdef CozmoDocker < handle
                 end
                 
                 if ~this.escapePressed
+                    this.camera.changeResolution(this.trackingResolution);
                     
                     % Initialize the tracker with the full resolution first
                     % image, but tell it we're going to do tracking at
                     % QQQVGA.
                     LKtracker = LucasKanadeTracker(img, marker{1}.corners, ...
-                        'Type', 'affine', 'RidgeWeight', 1e-3, ...
+                        'Type', this.trackerType, 'RidgeWeight', 1e-3, ...
                         'DebugDisplay', false, 'UseBlurring', false, ...
-                        'UseNormalization', true, 'TrackingResolution', [80 60]);
+                        'UseNormalization', true, ...
+                        'TrackingResolution', this.camera.framesize);
                     
                     % Show the target we'll be tracking
                     imagesc(LKtracker.target{1}, 'Parent', this.h_pip);
                     axis(this.h_pip, 'image', 'off');
                     
-                    this.camera.changeResolution('QQQVGA');
-                    %pause(1)
-                    % Put the first image, the corners, and the camera in
-                    % QQQVGA resolution:
-                    %img = imresize(img, [60 80]);
-                    %corners = LKtracker.corners;
-                    set(this.h_axes, 'XLim', [.5 80.5], 'YLim', [.5 60.5]);
+                    set(this.h_axes, ...
+                        'XLim', [.5 this.camera.framesize(1)+.5], ...
+                        'YLim', [.5 this.camera.framesize(2)+.5]);
                     %set(this.h_img, 'CData', imresize(img, [60 80], 'nearest'));
                     %set(this.h_target, 'XData', corners([1 2 4 3 1],1), ...
                     %    'YData', corners([1 2 4 3 1],2));
@@ -114,7 +127,8 @@ classdef CozmoDocker < handle
                             if converged
                                 lost = 0;
                                 corners = LKtracker.corners;
-                                set(this.h_target, 'XData', corners([1 2 4 3 1],1), ...
+                                set(this.h_target, ...
+                                    'XData', corners([1 2 4 3 1],1), ...
                                     'YData', corners([1 2 4 3 1],2));   
                                 title(this.h_pip, sprintf('Error = %.2f', LKtracker.err));
                             else
