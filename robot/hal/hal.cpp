@@ -64,21 +64,28 @@ namespace Anki
       void USBInit();
       void USBUpdate();
 
+
+      static u32 FRAME = 0;
+
       static void SendFrame()
       {
-        const u8* image = HAL::FrontCameraGetFrame();
+        const u8* image = HAL::FrontCameraGetFrame() + (640*480*0);
 
-        UARTPutChar(0xBE);
-        UARTPutChar(0xEF);
-        UARTPutChar(0xF0);
-        UARTPutChar(0xFF);
-        UARTPutChar(0xBD);
+        USBPutChar(0xBE);
+        USBPutChar(0xEF);
+        USBPutChar(0xF0);
+        USBPutChar(0xFF);
 
-        for (int y = 0; y < 480; y += 8)
+        u32 inc = 1; //FRAME == 0 ? 8 : 2;
+
+        USBPutChar(FRAME == 0 ? 0xBD : 0xB8);
+
+        for (int y = 0; y < 480; y += inc)
         {
-          for (int x = 0; x < 640; x += 8)
+          for (int x = 0; x < 640; x += inc)
           {
-            UARTPutChar(image[x * 2 + 0 + y * 1280]);
+            USBPutChar(image[(x * 1 + 0 + y * 640) ^ 3]);
+            //USBPutChar((y * 256) / 480);
           }
         }
       }
@@ -185,11 +192,17 @@ int main()
 
   while (true)
   {
-    //HAL::SendFrame();
+    Robot::step_LongExecution();
+
+/*    HAL::SendFrame();
+
+    int c = HAL::USBGetChar();
+    if (c == 'X')
+      HAL::FRAME = 1;
+    else if (c == 'Z')
+      HAL::FRAME = 0; */
 
     //HAL::USBUpdate();
-
-    Robot::step_LongExecution();
 
     //printf("%X\n", *(volatile u32*)TIM1_CNT_VAL_ADR);
 

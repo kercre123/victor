@@ -42,9 +42,9 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-#ifdef MOVI_TOOLS
+#ifndef SIMULATOR
 #undef printf
-#define printf(...) _xprintf(Anki::Cozmo::HAL::UARTPutChar, 0, __VA_ARGS__)
+#define printf(...) _xprintf(Anki::Cozmo::HAL::USBPutChar, 0, __VA_ARGS__)
 #endif  // MOVI_TOOLS
 
 #define REG_WORD(x) *(volatile u32*)(x)
@@ -151,10 +151,6 @@ namespace Anki
       // Ground truth (no-op if not in simulation?)
       void GetGroundTruthPose(f32 &x, f32 &y, f32& rad);
 
-      // UART
-      int UARTPutChar(int c);
-
-      
       // .....................
 
 
@@ -170,8 +166,16 @@ namespace Anki
       void FlashRead(u32 page, u8 data[FLASH_PAGE_SIZE]);
 
       // USB / UART
+      // Send a variable length buffer
       void USBSendBuffer(u8* buffer, u32 size);
-      s32 USBGetChar();
+
+      // Get a character from the serial buffer.
+      // Timeout is in microseconds.
+      // Returns < 0 if no character available within timeout.
+      s32 USBGetChar(u32 timeout = 0);
+
+      // Send a byte.
+      // Prototype matches putc for printf.
       int USBPutChar(int c);
 
       // Motors

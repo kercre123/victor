@@ -100,14 +100,14 @@ namespace Anki
 
       // Given a gear ratio of 91.7:1 and 125.67mm wheel circumference, we
       // compute the units per tick as such (using 4 magnets):
-      static const f32 UNITS_PER_TICK = 125.67 / 91.7 / 4.0;
+      static const f32 MM_PER_TICK = 125.67 / 91.7 / 4.0;
 
       // If no encoder activity for 200ms, we may as well be stopped
       static const u32 ENCODER_TIMEOUT_US = 200000;
 
       // Set a max speed and reject all noise above it
       static const u32 MAX_SPEED_MM_S = 500;
-      static const u32 DEBOUNCE_US = (UNITS_PER_TICK * 1000) / MAX_SPEED_MM_S;
+      static const u32 DEBOUNCE_US = (MM_PER_TICK * 1000) / MAX_SPEED_MM_S;
 
       // Setup the GPIO indices
       static const u32 ENCODER_COUNT = 3;
@@ -148,7 +148,7 @@ namespace Anki
             {
               motorPosition->delta = ticks - motorPosition->lastTick;
               motorPosition->lastTick = ticks;
-              motorPosition->position += UNITS_PER_TICK;
+              motorPosition->position += MM_PER_TICK;
             }
 
             DrvGpioMode(motorPosition->pin, mode ^ D_GPIO_DATA_INV_ON);
@@ -245,7 +245,7 @@ namespace Anki
           return 0;
         }
 
-        return (UNITS_PER_TICK * 1000000.0f) / motorPosition->delta;
+        return (MM_PER_TICK * 1000000.0f) / motorPosition->delta;
       }
 
       f32 MotorGetPosition(MotorID motor)
