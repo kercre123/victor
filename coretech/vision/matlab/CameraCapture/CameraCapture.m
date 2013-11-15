@@ -16,8 +16,8 @@ function grabs = CameraCapture(varargin)
 %    processing.
 %
 %  'device', [0]
-%    The USB device number to open, or a filename pattern to read, such as
-%    '~/some/path/frame*.png'
+%    The USB device number to open, a filename pattern to read, (such as
+%    '~/some/path/frame*.png'), or a SerialCamera object handle.
 %
 %  'resolution' [640 480]
 %    The resolution of captured frames, [resX resY].  If saved files are
@@ -73,6 +73,8 @@ processAxes = [];
 parseVarargin(varargin{:});
 
 grabs = appendGrabs;
+escapePressed = false;
+processKeyPressed = false;
 
 % Set up display figure
 h_fig = namedFigure(figureName, 'CurrentCharacter', '~');
@@ -115,6 +117,7 @@ try
     
     % Initialize and grab first frame
     if ischar(device)
+        deviceType = 'file';
         [framePath, pattern, patternExt] = fileparts(device);
         frameList = getfnames(framePath, [pattern patternExt]);
         if isempty(frameList)
@@ -123,7 +126,17 @@ try
         numFrames = min(numFrames, length(frameList));
         frame = readFrameFromFile(1, framePath, frameList);
         getFrameFcn = @(i_frame)readFrameFromFile(i_frame, framePath, frameList);
+    elseif isa(device, 'SerialCamera')
+        deviceType = 'serialCamera';
+        
+        getFrameFcn = @(i_frame)getFrame(device);
+        frame = getFrameFcn();
+        if size(frame,3)==1
+            colormap(h_fig, gray);
+        end
     else
+        deviceType = 'usbCamera';
+        
         frame = mexCameraCapture(OPEN, device, resolution(1), resolution(2));
         getFrameFcn = @readFrameFromCamera;
     end
@@ -142,13 +155,13 @@ try
     
     % Capture remaining frames
     i_frame = 2;
-    while i_frame < numFrames && get(h_fig, 'CurrentCharacter') ~= 27 % ESCAPE
+    while i_frame < numFrames && ~escapePressed
         t = tic;
         frame = getFrameFcn(i_frame);
         
         set(h_img, 'CData', frame);
         if ~isempty(processFcn)
-            if doContinuousProcessing || get(h_fig, 'CurrentCharacter') ~= '~' 
+            if doContinuousProcessing || processKeyPressed
                 if ~doContinuousProcessing
                     disp('Processing frame')
                 end
@@ -157,8 +170,8 @@ try
                 %catch E
                  %   warning(E.message)
                 %end
-                    
-                set(h_fig, 'CurrentCharacter', '~');
+                   
+                processKeyPressed = false;
             end
         end
         
@@ -175,11 +188,16 @@ try
     
 catch E
     iptremovecallback(h_fig, 'KeyPressFcn', keypressID);
-    mexCameraCapture(CLOSE);
+    if strcmp(deviceType, 'usbCamera')
+        mexCameraCapture(CLOSE);
+    end
     rethrow(E)
 end
 
-mexCameraCapture(CLOSE);
+if strcmp(deviceType, 'usbCamera')
+    mexCameraCapture(CLOSE);
+end
+
 iptremovecallback(h_fig, 'KeyPressFcn', keypressID);
 
 if nargout==0
@@ -188,7 +206,11 @@ end
 
 
     function keypress(~, edata)
+        if isempty(edata.Modifier)
         switch(edata.Key)
+            case 'escape'
+                escapePressed = true;
+                
             case 'space'
                 disp('Frame grabbed.');
                 grabs{end+1} = frame;
@@ -198,6 +220,10 @@ end
                 %                     processFcn(frame);
                 %                 end
                 
+            otherwise
+                processKeyPressed = true;
+                
+        end
         end
     end
 
