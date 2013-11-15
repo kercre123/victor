@@ -16,8 +16,8 @@ function grabs = CameraCapture(varargin)
 %    processing.
 %
 %  'device', [0]
-%    The USB device number to open, or a filename pattern to read, such as
-%    '~/some/path/frame*.png'
+%    The USB device number to open, a filename pattern to read, (such as
+%    '~/some/path/frame*.png'), or a SerialCamera object handle.
 %
 %  'resolution' [640 480]
 %    The resolution of captured frames, [resX resY].  If saved files are
@@ -117,6 +117,7 @@ try
     
     % Initialize and grab first frame
     if ischar(device)
+        deviceType = 'file';
         [framePath, pattern, patternExt] = fileparts(device);
         frameList = getfnames(framePath, [pattern patternExt]);
         if isempty(frameList)
@@ -125,7 +126,17 @@ try
         numFrames = min(numFrames, length(frameList));
         frame = readFrameFromFile(1, framePath, frameList);
         getFrameFcn = @(i_frame)readFrameFromFile(i_frame, framePath, frameList);
+    elseif isa(device, 'SerialCamera')
+        deviceType = 'serialCamera';
+        
+        getFrameFcn = @(i_frame)getFrame(device);
+        frame = getFrameFcn();
+        if size(frame,3)==1
+            colormap(h_fig, gray);
+        end
     else
+        deviceType = 'usbCamera';
+        
         frame = mexCameraCapture(OPEN, device, resolution(1), resolution(2));
         getFrameFcn = @readFrameFromCamera;
     end
@@ -177,11 +188,16 @@ try
     
 catch E
     iptremovecallback(h_fig, 'KeyPressFcn', keypressID);
-    mexCameraCapture(CLOSE);
+    if strcmp(deviceType, 'usbCamera')
+        mexCameraCapture(CLOSE);
+    end
     rethrow(E)
 end
 
-mexCameraCapture(CLOSE);
+if strcmp(deviceType, 'usbCamera')
+    mexCameraCapture(CLOSE);
+end
+
 iptremovecallback(h_fig, 'KeyPressFcn', keypressID);
 
 if nargout==0
