@@ -101,8 +101,10 @@ GTEST_TEST(CoreTech_Common, Find_NumMatches)
   Find<s32,s32> find(in1, Comparison::GREATER_THAN, in2);
 
   ASSERT_TRUE(find.IsValid());
+
   ASSERT_TRUE(find.get_numMatches() == 8);
   
+  ASSERT_TRUE(find.get_limits() == Rectangle<s32>(0,5,2,3));
 
   GTEST_RETURN_HERE;
 }
