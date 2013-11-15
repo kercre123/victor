@@ -13,10 +13,8 @@ namespace Anki
     template<typename Type> class ConstArraySlice;
     template<typename Type> class ConstArraySliceExpression;
 
-#pragma mark --- Definitions ---
-    template<typename Type1, typename Type2> class Find
+    namespace Comparison
     {
-    public:
       enum Comparison {
         EQUAL,
         NOT_EQUAL,
@@ -25,12 +23,17 @@ namespace Anki
         GREATER_THAN,
         GREATER_THAN_OR_EQUAL
       };
+    }
 
+#pragma mark --- Definitions ---
+    template<typename Type1, typename Type2> class Find
+    {
+    public:
       // Warning: This evaluation is lazy, so it depends on the value of array1 and array2 at the
       //          time of evaluation, NOT at the time the constructor is called. If they are changed
       //          between the constructor and the evaluation, the ouput won't be correct.
-      Find(const Array<Type1> &array1, const Comparison comparison, const Array<Type2> &array2);
-      Find(const Array<Type1> &array, const Comparison comparison, const Type2 &value);
+      Find(const Array<Type1> &array1, const Comparison::Comparison comparison, const Array<Type2> &array2);
+      Find(const Array<Type1> &array, const Comparison::Comparison comparison, const Type2 &value);
 
       // Allocated the memory for yIndexes and xIndexes, and sets them to the index values that match this expression
       Result Evaluate(Array<s32> &yIndexes, Array<s32> &xIndexes, MemoryStack &memory) const;
@@ -50,7 +53,7 @@ namespace Anki
 
     protected:
       const Array<Type1> &array1;
-      const Comparison comparison;
+      const Comparison::Comparison comparison;
 
       const bool compareWithValue;
       const Array<Type2> &array2;
@@ -64,8 +67,8 @@ namespace Anki
 
 #pragma mark --- Implementations ---
 
-    template<typename Type1, typename Type2> Find<Type1,Type2>::Find(const Array<Type1> &array1, const Comparison comparison, const Array<Type2> &array2)
-      : array1(array1), comparison(comparison), array2(array2), compareWithValue(false)
+    template<typename Type1, typename Type2> Find<Type1,Type2>::Find(const Array<Type1> &array1, const Comparison::Comparison comparison, const Array<Type2> &array2)
+      : array1(array1), comparison(comparison), array2(array2), compareWithValue(false), value(static_cast<Type2>(0))
     {
       if(!array1.IsValid() ||
         !array2.IsValid() ||
@@ -81,8 +84,8 @@ namespace Anki
       this->numMatches = computeNumMatches();
     }
 
-    template<typename Type1, typename Type2> Find<Type1,Type2>::Find(const Array<Type1> &array, const Comparison comparison, const Type2 &value)
-      : array1(array), comparison(comparison), value(value), compareWithValue(true)
+    template<typename Type1, typename Type2> Find<Type1,Type2>::Find(const Array<Type1> &array, const Comparison::Comparison comparison, const Type2 &value)
+      : array1(array), comparison(comparison), array2(Array<Type2>()), compareWithValue(true), value(value)
     {
       if(!array1.IsValid()) {
         this->isValid = false;
@@ -107,37 +110,37 @@ namespace Anki
           const Type1 * const pArray1 = array1.Pointer(y, 0);
 
           switch(this->comparison) {
-          case Find::EQUAL:
+          case Comparison::EQUAL:
             for(s32 x=0; x<arrayWidth; x++) {
               if(pArray1[x] == value)
                 numMatches++;
             }
             break;
-          case Find::NOT_EQUAL:
+          case Comparison::NOT_EQUAL:
             for(s32 x=0; x<arrayWidth; x++) {
               if(pArray1[x] != value)
                 numMatches++;
             }
             break;
-          case Find::LESS_THAN:
+          case Comparison::LESS_THAN:
             for(s32 x=0; x<arrayWidth; x++) {
               if(pArray1[x] < value)
                 numMatches++;
             }
             break;
-          case Find::LESS_THAN_OR_EQUAL:
+          case Comparison::LESS_THAN_OR_EQUAL:
             for(s32 x=0; x<arrayWidth; x++) {
               if(pArray1[x] <= value)
                 numMatches++;
             }
             break;
-          case Find::GREATER_THAN:
+          case Comparison::GREATER_THAN:
             for(s32 x=0; x<arrayWidth; x++) {
               if(pArray1[x] > value)
                 numMatches++;
             }
             break;
-          case Find::GREATER_THAN_OR_EQUAL:
+          case Comparison::GREATER_THAN_OR_EQUAL:
             for(s32 x=0; x<arrayWidth; x++) {
               if(pArray1[x] >= value)
                 numMatches++;
@@ -158,37 +161,37 @@ namespace Anki
           const Type2 * const pArray2 = array2.Pointer(y, 0);
 
           switch(this->comparison) {
-          case Find::EQUAL:
+          case Comparison::EQUAL:
             for(s32 x=0; x<arrayWidth; x++) {
               if(pArray1[x] == pArray2[x])
                 numMatches++;
             }
             break;
-          case Find::NOT_EQUAL:
+          case Comparison::NOT_EQUAL:
             for(s32 x=0; x<arrayWidth; x++) {
               if(pArray1[x] != pArray2[x])
                 numMatches++;
             }
             break;
-          case Find::LESS_THAN:
+          case Comparison::LESS_THAN:
             for(s32 x=0; x<arrayWidth; x++) {
               if(pArray1[x] < pArray2[x])
                 numMatches++;
             }
             break;
-          case Find::LESS_THAN_OR_EQUAL:
+          case Comparison::LESS_THAN_OR_EQUAL:
             for(s32 x=0; x<arrayWidth; x++) {
               if(pArray1[x] <= pArray2[x])
                 numMatches++;
             }
             break;
-          case Find::GREATER_THAN:
+          case Comparison::GREATER_THAN:
             for(s32 x=0; x<arrayWidth; x++) {
               if(pArray1[x] > pArray2[x])
                 numMatches++;
             }
             break;
-          case Find::GREATER_THAN_OR_EQUAL:
+          case Comparison::GREATER_THAN_OR_EQUAL:
             for(s32 x=0; x<arrayWidth; x++) {
               if(pArray1[x] >= pArray2[x])
                 numMatches++;

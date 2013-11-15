@@ -9,6 +9,7 @@
 #include "anki/common/robot/matrix.h"
 #include "anki/common/robot/comparisons.h"
 #include "anki/common/robot/arraySlices.h"
+#include "anki/common/robot/find.h"
 
 using namespace Anki::Embedded;
 
@@ -81,13 +82,15 @@ GTEST_TEST(CoreTech_Common, Find_NumMatches)
     }
   }
 
+  in1(2,-1,0,-1).Set(2000);
+
   //in1:
   //0 1 2 3 4 5
   //6 7 8 9 10 11
-  //12 13 14 15 16 17
-  //18 19 20 21 22 23
-  //24 25 26 27 28 29
-  //
+  //2000 2000 2000 2000 2000 2000
+  //2000 2000 2000 2000 2000 2000
+  //2000 2000 2000 2000 2000 2000
+
   //in2:
   //0 100 200 300 400 500
   //600 700 800 900 1000 1100
@@ -95,11 +98,11 @@ GTEST_TEST(CoreTech_Common, Find_NumMatches)
   //1800 1900 2000 2100 2200 2300
   //2400 2500 2600 2700 2800 2900
 
-  in1(2,-1,0,-1).Set(2000);
+  Find<s32,s32> find(in1, Comparison::GREATER_THAN, in2);
 
-  in1.Print("in1");
-
-  // TODO: continue
+  ASSERT_TRUE(find.IsValid());
+  ASSERT_TRUE(find.get_numMatches() == 8);
+  
 
   GTEST_RETURN_HERE;
 }
