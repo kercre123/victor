@@ -48,14 +48,14 @@ CameraCapture('processFcn', @trackHelper, ...
             
             corners = marker{1}.corners;
             
-            if Downsample ~= 1
-                img = imresize(img, 1/Downsample, 'nearest');
-                corners = corners/Downsample;
-            end
+%             if Downsample ~= 1
+%                 img = imresize(img, 1/Downsample, 'nearest');
+%                 corners = corners/Downsample;
+%             end
             
             order = [1 2 4 3 1];
             [nrows,ncols,~] = size(img);
-            mask = poly2mask(corners(order,1), corners(order,2), nrows, ncols);
+            %mask = poly2mask(corners(order,1), corners(order,2), nrows, ncols);
             
             %cen = mean(corners,1);
             
@@ -70,10 +70,10 @@ CameraCapture('processFcn', @trackHelper, ...
             h_target = plot(corners(order,1), corners(order,2), 'r', ...
                 'LineWidth', 2, 'Tag', 'TrackRect', 'Parent', h_axes);
             
-            LKtracker = LucasKanadeTracker(img, mask, ...
+            LKtracker = LucasKanadeTracker(img, corners, ...
                 'Type', TrackerType, 'RidgeWeight', 1e-3, ...
                 'DebugDisplay', false, 'UseBlurring', false, ...
-                'UseNormalization', true);
+                'UseNormalization', true, 'TrackingResolution', Downsample);
             
             
             if strcmp(TrackerType, 'homography') && ~isempty(calibration)
@@ -113,7 +113,8 @@ CameraCapture('processFcn', @trackHelper, ...
             end
             
             if Downsample ~= 1
-                img = imresize(img, 1/Downsample, 'nearest');
+                img = imresize(img, 1/Downsample, 'bilinear');
+                set(h_axes, 'XLim', [.5 size(img,2)+.5], 'YLim', [.5 size(img,1)+.5]);
             end
             
             %t = tic;
@@ -128,7 +129,10 @@ CameraCapture('processFcn', @trackHelper, ...
                 return
             end
             
-            set(h_img, 'CData', img(:,:,[3 2 1]));
+            if size(img,3)>1
+                img = img(:,:,[3 2 1]);
+            end
+            set(h_img, 'CData', img);
             
             title(h_axes, sprintf('Error: %.3f', LKtracker.err));
             if LKtracker.err < 0.3
@@ -138,10 +142,11 @@ CameraCapture('processFcn', @trackHelper, ...
             end
             %temp = LKtracker.scale*(corners - cen(ones(4,1),:)) + cen(ones(4,1),:) + ...
             %    ones(4,1)*[LKtracker.tx LKtracker.ty];
-            [tempx, tempy] = LKtracker.getImagePoints(corners(:,1), corners(:,2));
+            %[tempx, tempy] = LKtracker.getImagePoints(corners(:,1), corners(:,2));
+            crntCorners = LKtracker.corners;
            
-            set(h_target, 'XData', tempx([1 2 4 3 1]), ...
-                'YData', tempy([1 2 4 3 1]));
+            set(h_target, 'XData', crntCorners([1 2 4 3 1],1), ...
+                'YData', crntCorners([1 2 4 3 1],2));
                      
             if strcmp(TrackerType, 'homography') && ~isempty(calibration)
 
