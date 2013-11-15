@@ -98,12 +98,12 @@ GTEST_TEST(CoreTech_Common, Find_NumMatches)
   //1800 1900 2000 2100 2200 2300
   //2400 2500 2600 2700 2800 2900
 
-  Find<s32,s32> find(in1, Comparison::GREATER_THAN, in2);
+  Find<s32,Comparison_GreaterThan<s32,s32>,s32> find(in1, in2);
 
   ASSERT_TRUE(find.IsValid());
 
   ASSERT_TRUE(find.get_numMatches() == 8);
-  
+
   ASSERT_TRUE(find.get_limits() == Rectangle<s32>(0,5,2,3));
 
   GTEST_RETURN_HERE;
