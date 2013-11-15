@@ -4,6 +4,7 @@
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/utilities.h"
 #include "anki/common/robot/memory.h"
+#include "anki/common/robot/find.h"
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/dataStructures.h"
 #include "anki/common/robot/geometry.h"
@@ -27,6 +28,8 @@ namespace Anki
     template<typename Type> class ArraySlice;
     template<typename Type> class ConstArraySlice;
     template<typename Type> class ConstArraySliceExpression;
+
+    //template<typename Type1, typename Type2> class Find;
 
 #pragma mark --- Array Class Definition ---
 
@@ -145,6 +148,11 @@ namespace Anki
 #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
       s32 Set(const char * const values);
 #endif
+
+      // TODO: implement all these
+      //template<typename FindType1, typename FindType2> s32 Set(const Find<FindType1, FindType2> &find, const Type value);
+      //template<typename FindType1, typename FindType2> s32 Set(const Find<FindType1, FindType2> &find, const Array<Type> &in, bool useFindForInput=false);
+      //template<typename FindType1, typename FindType2> s32 Set(const Find<FindType1, FindType2> &find, const ConstArraySlice<Type> &in);
 
       // This is a shallow copy. There's no reference counting. Updating the data of one array will
       // update that of others (because they point to the same location in memory). However,

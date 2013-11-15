@@ -63,6 +63,8 @@ namespace Anki
       // Matlab allows this for vectors, though this will also work for arbitrary-sized arrays
       Result Set(const ConstArraySliceExpression<Type> &input, bool automaticTranspose=true);
 
+      Result Set(const Type value);
+
       Array<Type>& get_array();
     }; // template<typename Type> class ArraySlice
 
@@ -342,6 +344,28 @@ namespace Anki
           }
 
           limits.OuterIncrementBottom();
+        }
+      }
+
+      return RESULT_OK;
+    }
+
+    template<typename Type> Result ArraySlice<Type>::Set(const Type value)
+    {
+      Array<Type> &array = this->get_array();
+
+      AnkiConditionalErrorAndReturnValue(array.IsValid(),
+        RESULT_FAIL, "ArraySlice<Type>::Set", "Array<Type> is not valid");
+
+      const ArraySliceLimits_in1_out0<s32> limits(this->get_ySlice(), this->get_xSlice());
+
+      AnkiConditionalErrorAndReturnValue(limits.isValid,
+        RESULT_FAIL, "ArraySlice<Type>::Set", "Limits is not valid");
+
+      for(s32 y=limits.rawIn1Limits.yStart; y<=limits.rawIn1Limits.yEnd; y+=limits.rawIn1Limits.yIncrement) {
+        Type * restrict pMat = array.Pointer(y, 0);
+        for(s32 x=limits.rawIn1Limits.xStart; x<=limits.rawIn1Limits.xEnd; x+=limits.rawIn1Limits.xIncrement) {
+          pMat[x] = value;
         }
       }
 

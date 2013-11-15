@@ -57,6 +57,53 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, Find_NumMatches)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<s32> in1(5,6,ms);
+  Array<s32> in2(5,6,ms);
+  Array<s32> out(5,6,ms);
+
+  ASSERT_TRUE(in1.IsValid());
+  ASSERT_TRUE(in2.IsValid());
+  ASSERT_TRUE(out.IsValid());
+
+  s32 i1 = 0;
+  s32 i2 = 0;
+  for(s32 y=0; y<5; y++) {
+    for(s32 x=0; x<6; x++) {
+      in1[y][x] = i1++;
+      in2[y][x] = i2*100;
+      i2++;
+    }
+  }
+
+  //in1:
+  //0 1 2 3 4 5
+  //6 7 8 9 10 11
+  //12 13 14 15 16 17
+  //18 19 20 21 22 23
+  //24 25 26 27 28 29
+  //
+  //in2:
+  //0 100 200 300 400 500
+  //600 700 800 900 1000 1100
+  //1200 1300 1400 1500 1600 1700
+  //1800 1900 2000 2100 2200 2300
+  //2400 2500 2600 2700 2800 2900
+
+  in1(2,-1,0,-1).Set(2000);
+
+  in1.Print("in1");
+
+  // TODO: continue
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, MatrixAdd)
 {
   ASSERT_TRUE(buffer != NULL);

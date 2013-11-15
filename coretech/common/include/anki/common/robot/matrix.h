@@ -33,14 +33,14 @@ namespace Anki
       // Elementwise add two arrays. in1, in2, and out can be the same array
       template<typename InType, typename OutType> Result Add(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
 
-      // Elementwise subtract two arrays. in1, in2, and out can be the same array
-      template<typename InType, typename OutType> Result Subtract(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      //// Elementwise subtract two arrays. in1, in2, and out can be the same array
+      //template<typename InType, typename OutType> Result Subtract(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
 
-      // Elementwise multiply two arrays. in1, in2, and out can be the same array
-      template<typename InType, typename OutType> Result DotMultiply(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<OutType> &in2, ArraySlice<OutType> out);
+      //// Elementwise multiply two arrays. in1, in2, and out can be the same array
+      //template<typename InType, typename OutType> Result DotMultiply(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<OutType> &in2, ArraySlice<OutType> out);
 
-      // Elementwise divide two arrays. in1, in2, and out can be the same array
-      template<typename InType, typename OutType> Result DotDivide(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      //// Elementwise divide two arrays. in1, in2, and out can be the same array
+      //template<typename InType, typename OutType> Result DotDivide(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
 
       //
       // Standard matrix operations
