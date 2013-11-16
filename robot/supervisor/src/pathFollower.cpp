@@ -361,55 +361,58 @@ namespace Anki
         
         radDiff = (theta_tangent - angle).ToFloat();
         
-        
-        // Where does circle (x - x_center)^2 + (y - y_center)^2 = r^2 and y=mx+b intersect where y=mx+b represents
-        // the line between the circle center and the robot?
-        // (y - y_center)^2 == r^2 - (x - x_center)^2
-        // y = sqrt(r^2 - (x - x_center)^2) + y_center
-        //   = mx + b
-        // (mx + b - y_center)^2 == r^2 - (x - x_center)^2
-        // m^2*x^2 + 2*m*(b - y_center)*x + (b - y_center)^2 == r^2 - x^2 + 2*x_center*x - x_center^2
-        // (m^2+1) * x^2 + (2*m*(b - y_center) - 2*x_center) * x + (b - y_center)^2 - r^2 + x_center^2 == 0
-        //
-        // Use quadratic formula to solve
-        
-        // Quadratic formula coefficients
-        f32 A = m*m + 1;
-        f32 B = 2*m*(b-y_center) - 2*x_center;
-        f32 C = (b - y_center)*(b - y_center) - r*r + x_center*x_center;
-        f32 sqrtPart = sqrtf(B*B - 4*A*C);
-        
-        f32 x_intersect_1 = (-B + sqrtPart) / (2*A);
-        f32 x_intersect_2 = (-B - sqrtPart) / (2*A);
-        
-        
-        // Now we have 2 roots.
-        // Select the one that's on the same side of the circle center as the robot is.
-        f32 x_intersect = x_intersect_2;
-        if (SIGN(dx) == SIGN(x_intersect_1 - x_center)) {
-          x_intersect = x_intersect_1;
+        // If the line is nearly vertical (within 0.5deg), approximate it
+        // with true vertical so we don't take sqrts of -ve numbers.
+        f32 x_intersect, y_intersect;
+        if (NEAR(ABS(theta_line.ToFloat()), PIDIV2, 0.01)) {
+          shortestDistanceToPath_m = ABS(dy) - r;
+          x_intersect = x_center;
+          y_intersect = y_center + r * (dx > 0 ? 1 : -1);
+          
+        } else {
+          
+          // Where does circle (x - x_center)^2 + (y - y_center)^2 = r^2 and y=mx+b intersect where y=mx+b represents
+          // the line between the circle center and the robot?
+          // (y - y_center)^2 == r^2 - (x - x_center)^2
+          // y = sqrt(r^2 - (x - x_center)^2) + y_center
+          //   = mx + b
+          // (mx + b - y_center)^2 == r^2 - (x - x_center)^2
+          // m^2*x^2 + 2*m*(b - y_center)*x + (b - y_center)^2 == r^2 - x^2 + 2*x_center*x - x_center^2
+          // (m^2+1) * x^2 + (2*m*(b - y_center) - 2*x_center) * x + (b - y_center)^2 - r^2 + x_center^2 == 0
+          //
+          // Use quadratic formula to solve
+          
+          // Quadratic formula coefficients
+          f32 A = m*m + 1;
+          f32 B = 2*m*(b-y_center) - 2*x_center;
+          f32 C = (b - y_center)*(b - y_center) - r*r + x_center*x_center;
+          f32 sqrtPart = sqrtf(B*B - 4*A*C);
+          
+          f32 x_intersect_1 = (-B + sqrtPart) / (2*A);
+          f32 x_intersect_2 = (-B - sqrtPart) / (2*A);
+          
+          
+          // Now we have 2 roots.
+          // Select the one that's on the same side of the circle center as the robot is.
+          x_intersect = x_intersect_2;
+          if (SIGN(dx) == SIGN(x_intersect_1 - x_center)) {
+            x_intersect = x_intersect_1;
+          }
+          
+          // Find y value of intersection
+          y_intersect = y_center + (dy > 0 ? 1 : -1) * sqrtf(r*r - (x_intersect - x_center) * (x_intersect - x_center));
+          
+          // Compute distance to intersection point (i.e. shortest distance to arc)
+          shortestDistanceToPath_m = sqrtf((x - x_intersect) * (x - x_intersect) + (y - y_intersect) * (y - y_intersect));
+ 
         }
         
-        // Find y value of intersection
-        f32 y_intersect = y_center + (dy > 0 ? 1 : -1) * sqrtf(r*r - (x_intersect - x_center) * (x_intersect - x_center));
-        
-        // Compute distance to intersection point (i.e. shortest distance to arc)
-        shortestDistanceToPath_m = sqrtf((x - x_intersect) * (x - x_intersect) + (y - y_intersect) * (y - y_intersect));
-
-        // Check for numerical errors due to very vertical line.
-        // For now, assuming that a nan shortest distance to path means the
-        // shortest distance is vertical.
-        // TODO(kevin): Are there other cases this could be nan?
-        if (std::isnan(shortestDistanceToPath_m) && NEAR(ABS(theta_line.ToFloat()), PIDIV2, 0.01)) {
-          shortestDistanceToPath_m = ABS(dy)-r;
-        }
+        // Figure out sign of distance according to robot orientation and whether it's inside or outside the circle.
         f32 arcSweep = (currSeg->endRad - currSeg->startRad).ToFloat();
         bool robotInsideCircle = ABS(dx) < ABS(x_intersect - x_center);
         if ((robotInsideCircle && arcSweep < 0) || (!robotInsideCircle && arcSweep > 0)) {
           shortestDistanceToPath_m *= -1;
         }
-        
-        
         
         
 
