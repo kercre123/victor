@@ -846,6 +846,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImage)
   GTEST_RETURN_HERE;
 }
 
+#ifdef RUN_MAIN_BIG_MEMORY_TESTS
 GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
 {
   //s32 combined = 0;
@@ -853,9 +854,6 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
   //  combined += blockImage50[i];
 
   //printf("steps12345: %d %d %d %d\n", blockImage50[0], blockImage50[640*240], blockImage50[640*480 - 1], combined);
-#ifndef RUN_MAIN_BIG_MEMORY_TESTS
-  ASSERT_TRUE(false);
-#else
 
   InitializeBuffers();
 
@@ -964,10 +962,9 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
     ASSERT_TRUE(markers[0].corners[3] == Point<s16>(279,339));
   }
 
-#endif // RUN_MAIN_BIG_MEMORY_TESTS
-
   GTEST_RETURN_HERE;
 }
+#endif // RUN_MAIN_BIG_MEMORY_TESTS
 
 GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
 {
@@ -1091,7 +1088,7 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
   ASSERT_TRUE(markers[0].corners[2] == Point<s16>(282,265));
   ASSERT_TRUE(markers[0].corners[3] == Point<s16>(279,339));
 
-#endif // RUN_MAIN_BIG_MEMORY_TESTS
+#endif // RUN_LOW_MEMORY_12345
 
   GTEST_RETURN_HERE;
 }
@@ -1121,12 +1118,9 @@ static Result DrawExampleProbesImage(Array<u8> &image, Quadrilateral<s16> &quad,
 }
 #endif // #ifdef RUN_ALL_BIG_MEMORY_TESTS
 
+#ifdef RUN_ALL_BIG_MEMORY_TESTS
 GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
 {
-#ifndef RUN_ALL_BIG_MEMORY_TESTS
-  ASSERT_TRUE(false);
-#else
-
   InitializeBuffers();
 
   const CharacteristicScaleAlgorithm scaleImage_useWhichAlgorithm = CHARACTERISTIC_SCALE_ORIGINAL; // CHARACTERISTIC_SCALE_ORIGINAL, CHARACTERISTIC_SCALE_MEDIUM_MEMORY
@@ -1211,18 +1205,14 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
   ASSERT_TRUE(markers[0].corners[2] == Point<s16>(235,21));
   ASSERT_TRUE(markers[0].corners[3] == Point<s16>(235,235));
 
-#endif // #ifdef RUN_ALL_BIG_MEMORY_TESTS
-
   GTEST_RETURN_HERE;
 }
+#endif // #ifdef RUN_ALL_BIG_MEMORY_TESTS
 
+#ifdef RUN_ALL_BIG_MEMORY_TESTS
 // The test is if it can run without crashing
 GTEST_TEST(CoreTech_Vision, FiducialMarker)
 {
-#ifndef RUN_ALL_BIG_MEMORY_TESTS
-  ASSERT_TRUE(false);
-#else
-
   InitializeBuffers();
 
   const s32 imageWidth = fiducial105_6_WIDTH;
@@ -1264,18 +1254,14 @@ GTEST_TEST(CoreTech_Vision, FiducialMarker)
     ASSERT_TRUE(marker.corners[i] == quad[i]);
   }
 
-#endif // #ifdef RUN_ALL_BIG_MEMORY_TESTS
-
   GTEST_RETURN_HERE;
 }
+#endif // #ifdef RUN_ALL_BIG_MEMORY_TESTS
 
+#ifdef RUN_ALL_BIG_MEMORY_TESTS
 // The test is if it can run without crashing
 GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
 {
-#ifndef RUN_ALL_BIG_MEMORY_TESTS
-  ASSERT_TRUE(false);
-#else
-
   InitializeBuffers();
 
   const CharacteristicScaleAlgorithm scaleImage_useWhichAlgorithm = CHARACTERISTIC_SCALE_MEDIUM_MEMORY; // CHARACTERISTIC_SCALE_ORIGINAL, CHARACTERISTIC_SCALE_MEDIUM_MEMORY
@@ -1349,10 +1335,9 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
     ASSERT_TRUE(result == RESULT_OK);
   }
 
-#endif // #ifdef RUN_ALL_BIG_MEMORY_TESTS
-
   GTEST_RETURN_HERE;
 }
+#endif // #ifdef RUN_ALL_BIG_MEMORY_TESTS
 
 GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
 {
@@ -1750,13 +1735,10 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
 
+#ifdef RUN_ALL_BIG_MEMORY_TESTS
 // The test is if it can run without crashing
 GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
 {
-#ifndef RUN_ALL_BIG_MEMORY_TESTS
-  ASSERT_TRUE(false);
-#else
-
   InitializeBuffers();
 
   const CharacteristicScaleAlgorithm scaleImage_useWhichAlgorithm = CHARACTERISTIC_SCALE_MEDIUM_MEMORY; // CHARACTERISTIC_SCALE_ORIGINAL, CHARACTERISTIC_SCALE_MEDIUM_MEMORY
@@ -1817,17 +1799,14 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
   //matlab.PutArray(drawnComponents, "drawnComponents1");
   //drawnComponents.Show("drawnComponents1", true, false);
 
-#endif // #ifdef RUN_ALL_BIG_MEMORY_TESTS
-
   GTEST_RETURN_HERE;
 }
+#endif // #ifdef RUN_ALL_BIG_MEMORY_TESTS
 
+#ifdef RUN_ALL_BIG_MEMORY_TESTS
 // The test is if it can run without crashing
 GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
 {
-#ifndef RUN_ALL_BIG_MEMORY_TESTS
-  ASSERT_TRUE(false);
-#else
   InitializeBuffers();
 
   const s32 imageWidth = 640;
@@ -1886,10 +1865,9 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
   //matlab.PutArray(drawnComponents, "drawnComponents");
   //drawnComponents.Show("drawnComponents", true, false);
 
-#endif // #ifdef RUN_ALL_BIG_MEMORY_TESTS
-
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
+#endif // #ifdef RUN_ALL_BIG_MEMORY_TESTS
 
 GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
 {
@@ -2579,8 +2557,12 @@ int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImage);
 
-#ifdef RUN_ALL_BIG_MEMORY_TESTS
+#ifdef RUN_MAIN_BIG_MEMORY_TESTS
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage);
+#endif
+
+#ifdef RUN_ALL_BIG_MEMORY_TESTS
+
   CALL_GTEST_TEST(CoreTech_Vision, FiducialMarker);
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123);
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage);

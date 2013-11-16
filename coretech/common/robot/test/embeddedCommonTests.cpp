@@ -922,17 +922,17 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
     transformedPointsList.PushBack(Point<f64>(x1, y1));
   }
 
-  //originalPoints.Print("originalPoints");
-  //transformedPoints.Print("transformedPoints");
+  originalPoints.Print("originalPoints");
+  transformedPoints.Print("transformedPoints");
 
-  //originalPointsList.Print("originalPointsList");
-  //transformedPointsList.Print("transformedPointsList");
+  originalPointsList.Print("originalPointsList");
+  transformedPointsList.Print("transformedPointsList");
 
   const Result result = EstimateHomography(originalPointsList, transformedPointsList, homography, ms);
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  //homography.Print("homography");
+  homography.Print("homography");
 
   ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(homography, homography_groundTruth, .01, .001));
 

@@ -7,7 +7,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    const s32 AllElements = 0x8000000;
+    template<typename Type> class FixedLengthList;
 
 #pragma mark --- Class Definitions ---
     template<typename Type> class Sequence
@@ -35,6 +35,10 @@ namespace Anki
       s32 get_size() const;
 
     protected:
+      // For speed, FixedLengthList is allowed to access protected members, instead of having to
+      // construct a new LinearSequence every time an element is popped or pushed is changed
+      template<typename Type> friend class FixedLengthList;
+
       Type start;
       Type increment;
       Type end;

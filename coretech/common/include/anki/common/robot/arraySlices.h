@@ -223,7 +223,7 @@ namespace Anki
 #pragma mark --- Implementations ---
 
     template<typename Type> ConstArraySlice<Type>::ConstArraySlice()
-      : array(Array<Type>()), ySlice(LinearSequence<Type>()), xSlice(LinearSequence<Type>())
+      : array(Array<Type>()), ySlice(LinearSequence<s32>()), xSlice(LinearSequence<s32>())
     {
     }
 
