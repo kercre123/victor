@@ -37,7 +37,7 @@ namespace Anki
     protected:
       // For speed, FixedLengthList is allowed to access protected members, instead of having to
       // construct a new LinearSequence every time an element is popped or pushed is changed
-      template<typename Type> friend class FixedLengthList;
+      template<typename FixedLengthListType> friend class FixedLengthList;
 
       Type start;
       Type increment;
