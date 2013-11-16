@@ -58,6 +58,41 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, ZeroSizedArray)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<s32> in1(1,6,ms);
+  Array<s32> in2(1,6,ms);
+
+  ASSERT_TRUE(in1.IsValid());
+  ASSERT_TRUE(in2.IsValid());
+
+  for(s32 x=0; x<6; x++) {
+    in1[0][x] = x;
+    in2[0][x] = x*100;
+  }
+
+  // This is always false
+  Find<s32,Comparison::GreaterThan<s32,s32>,s32> find(in1, in2);
+
+  Array<s32> yIndexes;
+  Array<s32> xIndexes;
+
+  ASSERT_TRUE(find.Evaluate(yIndexes, xIndexes, ms) == RESULT_OK);
+
+  ASSERT_TRUE(!yIndexes.IsValid());
+  ASSERT_TRUE(!xIndexes.IsValid());
+  ASSERT_TRUE(yIndexes.get_size(0) == 1);
+  ASSERT_TRUE(yIndexes.get_size(1) == 0);
+  ASSERT_TRUE(xIndexes.get_size(0) == 1);
+  ASSERT_TRUE(xIndexes.get_size(1) == 0);
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
 {
   ASSERT_TRUE(buffer != NULL);
@@ -93,8 +128,8 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
   //in2:
   //0 100 200 300 400 500
 
-  Find<s32,Comparison_LessThanOrEqual<s32,s32>,s32> find(in1, in2);
-  Find<s32,Comparison_LessThanOrEqual<s32,s32>,s32> findB(in1b, in2b);
+  Find<s32,Comparison::LessThanOrEqual<s32,s32>,s32> find(in1, in2);
+  Find<s32,Comparison::LessThanOrEqual<s32,s32>,s32> findB(in1b, in2b);
 
   ASSERT_TRUE(find.IsValid());
 
@@ -233,7 +268,7 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate2D)
   //1800 1900 2000 2100 2200 2300
   //2400 2500 2600 2700 2800 2900
 
-  Find<s32,Comparison_LessThanOrEqual<s32,s32>,s32> find(in1, in2);
+  Find<s32,Comparison::LessThanOrEqual<s32,s32>,s32> find(in1, in2);
 
   ASSERT_TRUE(find.IsValid());
 
@@ -303,7 +338,7 @@ GTEST_TEST(CoreTech_Common, Find_NumMatchesAndBoundingRectangle)
   //1800 1900 2000 2100 2200 2300
   //2400 2500 2600 2700 2800 2900
 
-  Find<s32,Comparison_GreaterThan<s32,s32>,s32> find(in1, in2);
+  Find<s32,Comparison::GreaterThan<s32,s32>,s32> find(in1, in2);
 
   ASSERT_TRUE(find.IsValid());
 

@@ -279,7 +279,7 @@ namespace Anki
     template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const BufferFlags flags)
       : stride(ComputeRequiredStride(numCols, flags))
     {
-      AnkiConditionalError(numCols > 0 && numRows > 0 && dataLength > 0,
+      AnkiConditionalError(numCols >= 0 && numRows >= 0 && dataLength >= 0,
         "Array<Type>::Array", "Invalid size");
 
       InitializeBuffer(numRows,
@@ -291,7 +291,7 @@ namespace Anki
 
     template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const BufferFlags flags)
     {
-      AnkiConditionalError(numCols > 0 && numRows > 0,
+      AnkiConditionalError(numCols >= 0 && numRows >= 0,
         "Array<Type>::Array", "Invalid size");
 
       s32 numBytesAllocated = 0;
@@ -311,7 +311,7 @@ namespace Anki
       const s32 numRows = 1;
       const s32 numCols = sequence.get_size();
 
-      AnkiConditionalError(numCols > 0 && numRows > 0,
+      AnkiConditionalError(numCols >= 0 && numRows >= 0,
         "Array<Type>::Array", "Invalid size");
 
       s32 numBytesAllocated = 0;
@@ -723,9 +723,6 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(dimension >= 0,
         0, "Array<Type>::get_size", "Negative dimension");
 
-      AnkiConditionalErrorAndReturnValue(this->IsValid(),
-        0, "Array<Type>::get_size", "Array<Type> is not valid");
-
       if(dimension > 1 || dimension < 0)
         return 0;
 
@@ -780,10 +777,22 @@ namespace Anki
 
     template<typename Type> Result Array<Type>::InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const BufferFlags flags)
     {
-      AnkiConditionalErrorAndReturnValue(numCols > 0 && numRows > 0 && dataLength > 0,
+      AnkiConditionalErrorAndReturnValue(numCols >= 0 && numRows >= 0 && dataLength >= 0,
         RESULT_FAIL, "Array<Type>::InitializeBuffer", "Negative dimension");
 
       this->flags = flags;
+      this->size[0] = numRows;
+      this->size[1] = numCols;
+
+      // Initialize an empty array.
+      //
+      // An empty array is invalid, and will return false from
+      // Array::IsValid(), but is a possible return value from some functions
+      if(numCols == 0 || numRows == 0) {
+        this->rawDataPointer = NULL;
+        this->data = NULL;
+        return RESULT_OK;
+      }
 
       if(!rawData) {
         AnkiError("Anki.Array2d.initialize", "input data buffer is NULL");
@@ -802,9 +811,6 @@ namespace Anki
         InvalidateArray();
         return RESULT_FAIL;
       }
-
-      this->size[0] = numRows;
-      this->size[1] = numCols;
 
       if(flags.get_useBoundaryFillPatterns()) {
         BufferFlags flagsWithoutBoundary = flags;
@@ -835,12 +841,12 @@ namespace Anki
       return RESULT_OK;
     } // Array<Type>::InitializeBuffer()
 
-    // Set all the buffers and sizes to zero, to signal an invalid array
+    // Set all the buffers and sizes to -1, to signal an invalid array
     template<typename Type> void Array<Type>::InvalidateArray()
     {
-      this->size[0] = 0;
-      this->size[1] = 0;
-      this->stride = 0;
+      this->size[0] = -1;
+      this->size[1] = -1;
+      this->stride = -1;
       this->data = NULL;
       this->rawDataPointer = NULL;
     } // void Array<Type>::InvalidateArray()

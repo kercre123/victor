@@ -13,35 +13,38 @@ namespace Anki
     template<typename Type> class ConstArraySlice;
     template<typename Type> class ConstArraySliceExpression;
 
-    template<typename Type1, typename Type2> class Comparison_Equal {
-    public:
-      static inline bool Compare(const Type1 value1, const Type2 value2) {return value1 == value2;}
-    };
+    namespace Comparison
+    {
+      template<typename Type1, typename Type2> class Equal {
+      public:
+        static inline bool Compare(const Type1 value1, const Type2 value2) {return value1 == value2;}
+      };
 
-    template<typename Type1, typename Type2> class Comparison_NotEqual {
-    public:
-      static inline bool Compare(const Type1 value1, const Type2 value2) {return value1 != value2;}
-    };
+      template<typename Type1, typename Type2> class NotEqual {
+      public:
+        static inline bool Compare(const Type1 value1, const Type2 value2) {return value1 != value2;}
+      };
 
-    template<typename Type1, typename Type2> class Comparison_LessThan {
-    public:
-      static inline bool Compare(const Type1 value1, const Type2 value2) {return value1 < value2;}
-    };
+      template<typename Type1, typename Type2> class LessThan {
+      public:
+        static inline bool Compare(const Type1 value1, const Type2 value2) {return value1 < value2;}
+      };
 
-    template<typename Type1, typename Type2> class Comparison_LessThanOrEqual {
-    public:
-      static inline bool Compare(const Type1 value1, const Type2 value2) {return value1 <= value2;}
-    };
+      template<typename Type1, typename Type2> class LessThanOrEqual {
+      public:
+        static inline bool Compare(const Type1 value1, const Type2 value2) {return value1 <= value2;}
+      };
 
-    template<typename Type1, typename Type2> class Comparison_GreaterThan {
-    public:
-      static inline bool Compare(const Type1 value1, const Type2 value2) {return value1 > value2;}
-    };
+      template<typename Type1, typename Type2> class GreaterThan {
+      public:
+        static inline bool Compare(const Type1 value1, const Type2 value2) {return value1 > value2;}
+      };
 
-    template<typename Type1, typename Type2> class Comparison_GreaterThanOrEqual {
-    public:
-      static inline bool Compare(const Type1 value1, const Type2 value2) {return value1 >= value2;}
-    };
+      template<typename Type1, typename Type2> class GreaterThanOrEqual {
+      public:
+        static inline bool Compare(const Type1 value1, const Type2 value2) {return value1 >= value2;}
+      };
+    } // namepace Comparison
 
 #pragma mark --- Definitions ---
     template<typename Type1, typename Operator, typename Type2> class Find
