@@ -2,6 +2,7 @@
 #define _ANKICORETECHEMBEDDED_COMMON_MEMORY_H_
 
 #include "anki/common/robot/config.h"
+#include "anki/common/robot/flags.h"
 
 namespace Anki
 {
@@ -10,30 +11,6 @@ namespace Anki
 #define PUSH_MEMORY_STACK(memoryStack) \
   MemoryStack memoryStack ## _pushedTmp(memoryStack);\
   memoryStack = memoryStack ## _pushedTmp;
-
-    class BufferFlags
-    {
-    public:
-      BufferFlags();
-      BufferFlags(bool zeroAllocatedMemory, bool useBoundaryFillPatterns);
-
-      void set_zeroAllocatedMemory(bool value);
-      bool get_zeroAllocatedMemory() const;
-
-      void set_useBoundaryFillPatterns(bool value);
-      bool get_useBoundaryFillPatterns() const;
-
-      u32 get_rawFlags() const;
-
-    protected:
-      enum Flags
-      {
-        USE_BOUNDARY_FILL_PATTERNS = 1,
-        ZERO_ALLOCATED_MEMORY = (1<<1)
-      };
-
-      u32 flags;
-    };
 
     // A MemoryStack keeps track of an external memory buffer, by using the system stack. It is not
     // thread safe. Data that is allocated with Allocate() will be MEMORY_ALIGNMENT bytes-aligned.
@@ -56,7 +33,7 @@ namespace Anki
     {
     public:
 
-      MemoryStack(void *buffer, const s32 bufferLength, const BufferFlags flags=BufferFlags(true,true));
+      MemoryStack(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(true,true));
       MemoryStack(const MemoryStack &ms); // This is a safe way to remove const by making a copy, rather than using const_cast()
 
       // Allocate numBytes worth of memory, with the start byte-aligned to MEMORY_ALIGNMENT
@@ -99,7 +76,7 @@ namespace Anki
       s32 get_id() const;
 
       // Flags are bitwise OR of MemoryStack::Flags
-      BufferFlags get_flags() const;
+      Flags::Buffer get_flags() const;
 
     protected:
       static const u32 FILL_PATTERN_START = 0xABCD1089;
@@ -119,7 +96,7 @@ namespace Anki
       s32 id;
 
       // flags are set via MemoryStack::Flags
-      BufferFlags flags;
+      Flags::Buffer flags;
 
     private:
       const void* Allocate(const s32 numBytes) const; // Not allowed

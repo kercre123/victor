@@ -108,7 +108,7 @@ namespace Anki
 
       const size_t numCols = mxGetM(arrayTmp);
       const size_t numRows = mxGetN(arrayTmp);
-      const s32 stride = Array<Type>::ComputeRequiredStride(static_cast<s32>(numCols), BufferFlags(true,false));
+      const s32 stride = Array<Type>::ComputeRequiredStride(static_cast<s32>(numCols), Flags::Buffer(true,false));
 
       Array<Type> ankiArray(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<Type*>(calloc(stride*numCols,1)), stride*static_cast<s32>(numCols));
 
