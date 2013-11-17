@@ -204,6 +204,8 @@ namespace Anki
       Result InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const Flags::Buffer flags);
 
       void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
+
+      Result PrintBasicType(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     }; // class Array
 
 #pragma mark --- FixedPointArray Class Definition ---
@@ -501,7 +503,7 @@ namespace Anki
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const Type * const pThisData = this->Pointer(y, 0);
         for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
-          printf("%d ", pThisData[x]);
+          pThisData[x].Print();
         }
         printf("\n");
       }
@@ -851,6 +853,37 @@ namespace Anki
       this->rawDataPointer = NULL;
     } // void Array<Type>::InvalidateArray()
 
+    template<typename Type> Result Array<Type>::PrintBasicType(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX)  const
+    {
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
+
+      printf(variableName);
+      printf(":\n");
+      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
+        const Type * const pThisData = this->Pointer(y, 0);
+        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
+          if(Flags::TypeCharacteristics<Type>::isBasicType) {
+            if(Flags::TypeCharacteristics<Type>::isInteger) {
+              if(Flags::TypeCharacteristics<Type>::isSigned) {
+                printf("%d ", static_cast<s64>(pThisData[x]));
+              } else {
+                printf("%d ", static_cast<u64>(pThisData[x]));
+              }
+            } else {
+              printf("%f ", pThisData[x]);
+            }
+          } else {
+            printf("! ");
+          }
+        }
+        printf("\n");
+      }
+      printf("\n");
+
+      return RESULT_OK;
+    }
+
 #pragma mark --- FixedPointArray Implementations ---
 
     template<typename Type> FixedPointArray<Type>::FixedPointArray()
@@ -877,27 +910,17 @@ namespace Anki
 
 #pragma mark --- Array Specializations ---
 
+    template<> Result Array<bool>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<u8>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<s8>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<u16>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<s16>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<u32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<s32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<u64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<s64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<f32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<f64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
-    template<> Result Array<Point<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
-    template<> Result Array<Point<f32> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
-    template<> Result Array<Point<f64> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
-    template<> Result Array<Rectangle<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
-    template<> Result Array<Quadrilateral<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
-
-    //#ifdef USING_MOVIDIUS_GCC_COMPILER
-    //    template<> s32 Array<u8>::Set(const u8 * const values, const s32 numValues);
-    //    template<> s32 Array<s8>::Set(const s8 * const values, const s32 numValues);
-    //    template<> s32 Array<u16>::Set(const u16 * const values, const s32 numValues);
-    //    template<> s32 Array<s16>::Set(const s16 * const values, const s32 numValues);
-    //    template<> s32 Array<u32>::Set(const u32 * const values, const s32 numValues);
-    //    template<> s32 Array<s32>::Set(const s32 * const values, const s32 numValues);
-    //    template<> s32 Array<u64>::Set(const u64 * const values, const s32 numValues);
-    //    template<> s32 Array<s64>::Set(const s64 * const values, const s32 numValues);
-    //    template<> s32 Array<f32>::Set(const f32 * const values, const s32 numValues);
-    //    template<> s32 Array<f64>::Set(const f64 * const values, const s32 numValues);
-    //#endif
 
 #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
     template<> s32 Array<f32>::Set(const char * const values);
