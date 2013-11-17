@@ -9,6 +9,7 @@ namespace Anki
   {
     namespace Flags
     {
+#pragma mark --- Definitions ---
       class Buffer
       {
       public:
@@ -31,6 +32,83 @@ namespace Anki
         };
 
         u32 flags;
+      };
+
+      // This set of flags is computed automatically at compile time
+      template<typename Type> class TypeCharacteristics
+      {
+      public:
+        enum Characteristics { IS_FLOAT = 0, IS_INT = 0, IS_SIGNED = 0, IS_BASIC_TYPE = 0 };
+      };
+
+#pragma mark --- Implementations ---
+
+#pragma mark --- Specializations ---
+
+      template<> class TypeCharacteristics<bool>
+      {
+      public:
+        enum Characteristics { IS_FLOAT = 0, IS_INT = 1, IS_SIGNED = 0, IS_BASIC_TYPE = 1 };
+      };
+
+      template<> class TypeCharacteristics<s8>
+      {
+      public:
+        enum Characteristics { IS_FLOAT = 0, IS_INT = 1, IS_SIGNED = 1, IS_BASIC_TYPE = 1 };
+      };
+
+      template<> class TypeCharacteristics<u8>
+      {
+      public:
+        enum Characteristics { IS_FLOAT = 0, IS_INT = 1, IS_SIGNED = 0, IS_BASIC_TYPE = 1 };
+      };
+
+      template<> class TypeCharacteristics<s16>
+      {
+      public:
+        enum Characteristics { IS_FLOAT = 0, IS_INT = 1, IS_SIGNED = 1, IS_BASIC_TYPE = 1 };
+      };
+
+      template<> class TypeCharacteristics<u16>
+      {
+      public:
+        enum Characteristics { IS_FLOAT = 0, IS_INT = 1, IS_SIGNED = 0, IS_BASIC_TYPE = 1 };
+      };
+
+      template<> class TypeCharacteristics<s32>
+      {
+      public:
+        enum Characteristics { IS_FLOAT = 0, IS_INT = 1, IS_SIGNED = 1, IS_BASIC_TYPE = 1 };
+      };
+
+      template<> class TypeCharacteristics<u32>
+      {
+      public:
+        enum Characteristics { IS_FLOAT = 0, IS_INT = 1, IS_SIGNED = 0, IS_BASIC_TYPE = 1 };
+      };
+
+      template<> class TypeCharacteristics<s64>
+      {
+      public:
+        enum Characteristics { IS_FLOAT = 0, IS_INT = 1, IS_SIGNED = 1, IS_BASIC_TYPE = 1 };
+      };
+
+      template<> class TypeCharacteristics<u64>
+      {
+      public:
+        enum Characteristics { IS_FLOAT = 0, IS_INT = 1, IS_SIGNED = 0, IS_BASIC_TYPE = 1 };
+      };
+
+      template<> class TypeCharacteristics<f32>
+      {
+      public:
+        enum Characteristics { IS_FLOAT = 1, IS_INT = 0, IS_SIGNED = 1, IS_BASIC_TYPE = 1 };
+      };
+
+      template<> class TypeCharacteristics<f64>
+      {
+      public:
+        enum Characteristics { IS_FLOAT = 1, IS_INT = 0, IS_SIGNED = 1, IS_BASIC_TYPE = 1 };
       };
     } // namespace Flags
   } // namespace Embedded
