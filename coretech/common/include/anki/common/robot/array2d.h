@@ -35,8 +35,6 @@ namespace Anki
     template<typename Type> class Array
     {
     public:
-      Flags::TypeCharacteristics<Type> characteristics;
-
       static s32 ComputeRequiredStride(const s32 numCols, const Flags::Buffer flags);
 
       static s32 ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const Flags::Buffer flags);
