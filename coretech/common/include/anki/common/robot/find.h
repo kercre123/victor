@@ -62,9 +62,9 @@ namespace Anki
       Result Evaluate(Array<s32> &yIndexes, Array<s32> &xIndexes, MemoryStack &memory) const; // For 1-dimensional or 2-dimensional arrays
 
       // TODO: implement all these
-      //template<typename ArrayType> Result SetArray(Array<ArrayType> &out, const ArrayType value);
-      //template<typename ArrayType> Result SetArray(Array<ArrayType> &out, const Array<ArrayType> &in, bool useFindForInput=false);
-      //template<typename ArrayType> Result SetArray(Array<ArrayType> &out, const ConstArraySlice<ArrayType> &in);
+      template<typename ArrayType> Result SetArray(Array<ArrayType> &out, const ArrayType value) const;
+      template<typename ArrayType> Result SetArray(Array<ArrayType> &out, const Array<ArrayType> &input, bool useFindForInput=false) const;
+      template<typename ArrayType> Result SetArray(Array<ArrayType> &out, const ConstArraySlice<ArrayType> &in) const;
 
       bool IsValid() const;
 
@@ -376,6 +376,64 @@ namespace Anki
 
       return RESULT_OK;
     } // template<typename Type1, typename Operator, typename Type2> Rectangle<s32> Find<Type1,Operator,Type2>::ComputeLimits() const
+
+    template<typename Type1, typename Operator, typename Type2> template<typename ArrayType> Result Find<Type1,Operator,Type2>::SetArray(Array<ArrayType> &out, const ArrayType value) const
+    {
+      const s32 arrayHeight = array1.get_size(0);
+      const s32 arrayWidth = array1.get_size(1);
+
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Find.SetArray", "This Find object is invalid");
+
+      AnkiConditionalErrorAndReturnValue(out.IsValid(),
+        RESULT_FAIL, "Find.SetArray", "out is invalid");
+
+      AnkiConditionalErrorAndReturnValue(out.get_size(0) == arrayHeight && out.get_size(1) == arrayWidth,
+        RESULT_FAIL, "Find.SetArray", "out is not the same size as the input(s)");
+
+      if(compareWithValue) {
+        for(s32 y=0; y<arrayHeight; y++) {
+          const Type1 * const pArray1 = array1.Pointer(y, 0);
+
+          const Type1 * const pOut = out.Pointer(y, 0);
+
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(Operator::Compare(pArray1[x], value)) {
+              pOut[x] = value;
+            }
+          } // for(s32 x=0; x<arrayWidth; x++)
+        } // for(s32 y=0; y<arrayHeight; y++)
+      } else { // if(compareWithValue)
+        // These should be checked earlier
+        assert(array1.get_size(0) == array2.get_size(0));
+        assert(array1.get_size(1) == array2.get_size(1));
+
+        for(s32 y=0; y<arrayHeight; y++) {
+          const Type1 * const pArray1 = array1.Pointer(y, 0);
+          const Type2 * const pArray2 = array2.Pointer(y, 0);
+
+          const Type1 * const pOut = out.Pointer(y, 0);
+
+          for(s32 x=0; x<arrayWidth; x++) {
+            if(Operator::Compare(pArray1[x], pArray2[x])) {
+              pOut[x] = value;
+            }
+          } // for(s32 x=0; x<arrayWidth; x++)
+        } // for(s32 y=0; y<arrayHeight; y++)
+      } // if(compareWithValue) ... else
+
+      return RESULT_OK;
+    }
+
+    //template<typename Type1, typename Operator, typename Type2, typename Artemplate<typename Type1, typename Operator, typename Type2> template<typename ArrayType>rayType> Result Find<Type1,Operator,Type2>::SetArray(Array<ArrayType> &out, const Array<ArrayType> &input, bool useFindForInput) const
+    //{
+    //  return RESULT_OK;
+    //}
+
+    //template<typename Type1, typename Operator, typename Type2> template<typename ArrayType> Result Find<Type1,Operator,Type2>::SetArray(Array<ArrayType> &out, const ConstArraySlice<ArrayType> &in) const
+    //{
+    //  return RESULT_OK;
+    //}
 
     template<typename Type1, typename Operator, typename Type2> bool Find<Type1,Operator,Type2>::IsValid() const
     {

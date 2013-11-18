@@ -58,6 +58,52 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, Find_SetValue)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u16> in1(5,6,ms);
+  Array<u16> in2(5,6,ms);
+
+  ASSERT_TRUE(in1.IsValid());
+  ASSERT_TRUE(in2.IsValid());
+
+  u16 i1 = 0;
+  u16 i2 = 0;
+  for(s32 y=0; y<5; y++) {
+    for(s32 x=0; x<6; x++) {
+      in1[y][x] = i1++;
+      in2[y][x] = i2*100;
+      i2++;
+    }
+  }
+
+  in1(2,-1,0,-1).Set(1600);
+
+  Find<u16,Comparison::Equal<u16,u16>,u16> find(in1, in2);
+
+  ASSERT_TRUE(find.IsValid());
+
+  ASSERT_TRUE(find.SetArray<u16>(in1, 4242) == RESULT_OK);
+
+  const u16 in1_groundTruth[5][6] = {
+    {0, 1, 2, 3, 4, 5},
+    {6, 7, 8, 9, 10, 11},
+    {1600, 1600, 1600, 1600, 4242, 1600},
+    {1600, 1600, 1600, 1600, 1600, 1600},
+    {1600, 1600, 1600, 1600, 1600, 1600}};
+
+  for(s32 y=0; y<5; y++) {
+    for(s32 x=0; x<6; x++) {
+      ASSERT_TRUE(in1[y][x] == in1_groundTruth[y][x]);
+    }
+  }
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, ZeroSizedArray)
 {
   ASSERT_TRUE(buffer != NULL);
