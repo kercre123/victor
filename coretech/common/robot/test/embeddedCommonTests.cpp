@@ -89,11 +89,13 @@ GTEST_TEST(CoreTech_Common, Find_SetValue)
   ASSERT_TRUE(find.SetArray<u16>(in1, 4242) == RESULT_OK);
 
   const u16 in1_groundTruth[5][6] = {
-    {0, 1, 2, 3, 4, 5},
+    {4242, 1, 2, 3, 4, 5},
     {6, 7, 8, 9, 10, 11},
     {1600, 1600, 1600, 1600, 4242, 1600},
     {1600, 1600, 1600, 1600, 1600, 1600},
     {1600, 1600, 1600, 1600, 1600, 1600}};
+
+  in1.Print("in1");
 
   for(s32 y=0; y<5; y++) {
     for(s32 x=0; x<6; x++) {
