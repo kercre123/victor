@@ -143,7 +143,7 @@ classdef SerialCamera < handle
             this.buffer = '';
         end % reset()
         
-        function success = changeResolution(this, newResolution, frameRate)
+        function changeResolution(this, newResolution, frameRate)
             % Send magic command to change the resolution
             switch(newResolution)
                 case 'VGA' % [640 480]
@@ -166,7 +166,7 @@ classdef SerialCamera < handle
                     end
                 otherwise
                     error('Unrecognized resolution specified.');
-            end
+            end % SWITCH(newResolution)
             
             fwrite(this.serialObj, serialCmd, 'char');
             this.framelength = prod(this.framesize);
@@ -187,8 +187,7 @@ classdef SerialCamera < handle
             end
             
             this.buffer = '';
-          
-            success = true;
+
         end % FUNCTION changeResolution()
         
     end % public methods
