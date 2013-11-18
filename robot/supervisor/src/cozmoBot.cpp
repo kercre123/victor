@@ -263,12 +263,12 @@ namespace Anki {
       {
         
         if(VisionSystem::lookForBlocks() == EXIT_FAILURE) {
-          fprintf(stdout, "VisionSystem::lookForBLocks() failed.\n");
+          PRINT("VisionSystem::lookForBLocks() failed.\n");
           return EXIT_FAILURE;
         }
         
         if(VisionSystem::localizeWithMat() == EXIT_FAILURE) {
-          fprintf(stdout, "VisionSystem::localizeWithMat() failed.\n");
+          PRINT("VisionSystem::localizeWithMat() failed.\n");
           return EXIT_FAILURE;
         }
         
