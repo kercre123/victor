@@ -15,8 +15,8 @@ namespace Anki
     {
     }
 
-    ScrollingIntegralImage_u8_s32::ScrollingIntegralImage_u8_s32(const s32 bufferHeight, const s32 imageWidth, const s32 numBorderPixels, MemoryStack &memory, const bool useBoundaryFillPatterns)
-      : Array<s32>(bufferHeight, imageWidth+2*numBorderPixels, memory, useBoundaryFillPatterns), imageWidth(imageWidth), numBorderPixels(numBorderPixels), maxRow(-1), rowOffset(-numBorderPixels)
+    ScrollingIntegralImage_u8_s32::ScrollingIntegralImage_u8_s32(const s32 bufferHeight, const s32 imageWidth, const s32 numBorderPixels, MemoryStack &memory, const BufferFlags flags)
+      : Array<s32>(bufferHeight, imageWidth+2*numBorderPixels, memory, flags), imageWidth(imageWidth), numBorderPixels(numBorderPixels), maxRow(-1), rowOffset(-numBorderPixels)
     {
       assert(imageWidth%ANKI_VISION_IMAGE_WIDTH_SHIFT == 0);
 
@@ -393,7 +393,7 @@ namespace Anki
       cVersion.size0 = this->size[0];
       cVersion.size1 = this->size[1];
       cVersion.stride = this->stride;
-      cVersion.useBoundaryFillPatterns = this->useBoundaryFillPatterns;
+      cVersion.flags = this->get_flags().get_rawFlags();
 
       cVersion.data = this->data;
 

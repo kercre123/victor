@@ -86,15 +86,15 @@ namespace Anki
       return RESULT_OK;
     } // void Array<Point<s16> >::Print() const
 
-    template<> Result Array<Rectangle<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    template<> Result Array<Point<f32> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
-        RESULT_FAIL, "Array<Rectangle<s16> >::Print", "Array<Rectangle<s16> > is not valid");
+        RESULT_FAIL, "Array<Point<f32> >::Print", "Array<Point<f32> > is not valid");
 
       printf(variableName);
       printf(":\n");
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
-        const Rectangle<s16> * const pThisData = this->Pointer(y, 0);
+        const Point<f32> * const pThisData = this->Pointer(y, 0);
         for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
           pThisData[x].Print();
           printf(" ");
@@ -104,7 +104,47 @@ namespace Anki
       printf("\n");
 
       return RESULT_OK;
-    } // void Array<Point<s16> >::Print() const
+    } // void Array<Point<f32> >::Print() const
+
+    template<> Result Array<Point<f64> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    {
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array<Point<f64> >::Print", "Array<Point<f64> > is not valid");
+
+      printf(variableName);
+      printf(":\n");
+      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
+        const Point<f64> * const pThisData = this->Pointer(y, 0);
+        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
+          pThisData[x].Print();
+          printf(" ");
+        }
+        printf("\n");
+      }
+      printf("\n");
+
+      return RESULT_OK;
+    } // void Array<Point<f64> >::Print() const
+
+    template<> Result Array<Rectangle<f64> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    {
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array<Rectangle<f64> >::Print", "Array<Rectangle<f64> > is not valid");
+
+      printf(variableName);
+      printf(":\n");
+      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
+        const Rectangle<f64> * const pThisData = this->Pointer(y, 0);
+        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
+          pThisData[x].Print();
+          printf(" ");
+        }
+        printf("\n");
+      }
+      printf("\n");
+
+      return RESULT_OK;
+    } // void Array<Point<f64> >::Print() const
 
     template<> Result Array<Quadrilateral<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
@@ -451,7 +491,7 @@ namespace Anki
       cVersion.size0 = array.get_size(0);
       cVersion.size1 = array.get_size(1);
       cVersion.stride = array.get_stride();
-      cVersion.useBoundaryFillPatterns = array.get_useBoundaryFillPatterns();
+      cVersion.flags = array.get_flags().get_rawFlags();
       cVersion.data = array.Pointer(0,0);
 
       return cVersion;

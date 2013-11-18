@@ -95,22 +95,22 @@ namespace Anki
 
     template<typename Type> Array<Type> Matlab::GetArray(const std::string name)
     {
-      AnkiConditionalErrorAndReturnValue(ep, Array<Type>(0, 0, NULL, 0, false), "Anki.GetArray<Type>", "Matlab engine is not started/connected");
+      AnkiConditionalErrorAndReturnValue(ep, Array<Type>(0, 0, NULL, 0), "Anki.GetArray<Type>", "Matlab engine is not started/connected");
 
       const std::string tmpName = name + std::string("_AnkiTMP");
 
       EvalString("%s=%s';", tmpName.data(), name.data());
       mxArray *arrayTmp = GetArray(tmpName.data());
 
-      AnkiConditionalErrorAndReturnValue(arrayTmp, Array<Type>(0, 0, NULL, 0, false), "Anki.GetArray<Type>", "%s could not be got from Matlab", tmpName.data());
+      AnkiConditionalErrorAndReturnValue(arrayTmp, Array<Type>(0, 0, NULL, 0), "Anki.GetArray<Type>", "%s could not be got from Matlab", tmpName.data());
 
-      AnkiConditionalErrorAndReturnValue(mxGetClassID(arrayTmp) == getMatlabClassID<Type>(), Array<Type>(0, 0, NULL, 0, false), "Anki.GetArray<Type>", "matlabClassId != ankiVisionClassId");
+      AnkiConditionalErrorAndReturnValue(mxGetClassID(arrayTmp) == getMatlabClassID<Type>(), Array<Type>(0, 0, NULL, 0), "Anki.GetArray<Type>", "matlabClassId != ankiVisionClassId");
 
       const size_t numCols = mxGetM(arrayTmp);
       const size_t numRows = mxGetN(arrayTmp);
-      const s32 stride = Array<Type>::ComputeRequiredStride(static_cast<s32>(numCols),false);
+      const s32 stride = Array<Type>::ComputeRequiredStride(static_cast<s32>(numCols), BufferFlags(true,false));
 
-      Array<Type> ankiArray(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<Type*>(calloc(stride*numCols,1)), stride*static_cast<s32>(numCols), false);
+      Array<Type> ankiArray(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<Type*>(calloc(stride*numCols,1)), stride*static_cast<s32>(numCols));
 
       Type *matlabArrayTmp = reinterpret_cast<Type*>(mxGetPr(arrayTmp));
       s32 matlabIndex = 0;
