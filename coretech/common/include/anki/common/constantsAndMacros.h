@@ -129,10 +129,10 @@
 // UNIT CONVERSION MACROS
 //////////////////////////////////////////////////////////////////////////////
 
-#define DEG_TO_RAD_F64(deg) (((f64)deg)*0.017453292519943295474)
+#define DEG_TO_RAD(deg) (((f64)deg)*0.017453292519943295474)
 #define DEG_TO_RAD_F32(deg) (((f32)deg)*0.017453292519943295474f)
 
-#define RAD_TO_DEG_F64(rad) (((f64)rad)*57.295779513082322865)
+#define RAD_TO_DEG(rad) (((f64)rad)*57.295779513082322865)
 #define RAD_TO_DEG_F32(rad) (((f32)rad)*57.295779513082322865f)
 
 #define NANOS_TO_SEC(nanos) ((nanos) / 1000000000.0f)
