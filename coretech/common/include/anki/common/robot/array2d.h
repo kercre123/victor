@@ -10,6 +10,7 @@
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/robot/cInterfaces_c.h"
 #include "anki/common/robot/sequences.h"
+#include "anki/common/robot/matrix.h"
 
 // #define ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
 
