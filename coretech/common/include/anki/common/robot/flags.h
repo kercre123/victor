@@ -1,7 +1,7 @@
 #ifndef _ANKICORETECHEMBEDDED_COMMON_FLAGS_H_
 #define _ANKICORETECHEMBEDDED_COMMON_FLAGS_H_
 
-#include "anki/common/robot/config.h"
+#include "anki/common/robot/flags_declarations.h"
 
 namespace Anki
 {
@@ -11,42 +11,7 @@ namespace Anki
     {
 #pragma mark --- Definitions ---
 
-      class Buffer
-      {
-      public:
-        Buffer();
-        Buffer(bool zeroAllocatedMemory, bool useBoundaryFillPatterns);
-
-        void set_zeroAllocatedMemory(bool value);
-        bool get_zeroAllocatedMemory() const;
-
-        void set_useBoundaryFillPatterns(bool value);
-        bool get_useBoundaryFillPatterns() const;
-
-        u32 get_rawFlags() const;
-
-      protected:
-        enum Flags
-        {
-          USE_BOUNDARY_FILL_PATTERNS = 1,
-          ZERO_ALLOCATED_MEMORY = (1<<1)
-        };
-
-        u32 flags;
-      };
-
-      template<typename Type> class TypeCharacteristics
-      {
-      public:
-        const static bool isBasicType = false;
-        const static bool isInteger = false;
-        const static bool isSigned = false;
-        const static bool isFloat = false;
-      };
-
-#pragma mark --- Implementations ---
-
-#pragma mark --- Specializations ---
+#pragma mark --- Declaration Specializations ---
       template<> class TypeCharacteristics<bool>
       {
       public:

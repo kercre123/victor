@@ -1,0 +1,225 @@
+#ifndef _ANKICORETECHEMBEDDED_COMMON_ARRAYSLICES_DECLARATIONS_H_
+#define _ANKICORETECHEMBEDDED_COMMON_ARRAYSLICES_DECLARATIONS_H_
+
+#include "anki/common/robot/config.h"
+#include "anki/common/robot/array2d_declarations.h"
+
+namespace Anki
+{
+  namespace Embedded
+  {
+#pragma mark --- Class Declarations ---
+
+    template<typename Type> class ConstArraySlice;
+    template<typename Type> class ArraySlice;
+    template<typename Type> class ConstArraySliceExpression;
+
+    // TODO: support non-int indexes
+    // TODO: is there a better way of doing this than a completely different class, different only by const?
+    template<typename Type> class ConstArraySlice
+    {
+    public:
+      ConstArraySlice();
+
+      // Directly convert an array to an ArraySlice, so all Arrays can be used as input
+      ConstArraySlice(const Array<Type> &array);
+
+      // It's probably easier to call array.operator() than this constructor directly
+      ConstArraySlice(const Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice);
+
+      // ArraySlice Transpose doesn't modify the data, it just sets a flag
+      ConstArraySliceExpression<Type> Transpose() const;
+
+      const LinearSequence<s32>& get_ySlice() const;
+
+      const LinearSequence<s32>& get_xSlice() const;
+
+      const Array<Type>& get_array() const;
+
+    protected:
+      LinearSequence<s32> ySlice;
+      LinearSequence<s32> xSlice;
+
+      Array<Type> array;
+    }; // template<typename Type> class ArraySlice
+
+    // A non-const version of ConstArraySlice
+    // Warning: A "const ArraySlice" doesn't have a const Array. Only ConstArraySlice has a const
+    //          Array. This allows for implicit conversion to non-const function parameters.
+    template<typename Type> class ArraySlice : public ConstArraySlice<Type>
+    {
+    public:
+      ArraySlice();
+
+      // Directly convert an array to an ArraySlice, so all Arrays can be used as input
+      // The Array parameter is not a reference, to allow for implicit conversion
+      ArraySlice(Array<Type> array);
+
+      // It's probably easier to call array.operator() than this constructor directly
+      // The Array parameter is not a reference, to allow for implicit conversion
+      ArraySlice(Array<Type> array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice);
+
+      // If automaticTranspose==true, then you can set a MxN slice with a NxM input
+      // Matlab allows this for vectors, though this will also work for arbitrary-sized arrays
+      Result Set(const ConstArraySliceExpression<Type> &input, bool automaticTranspose=true);
+
+      Result Set(const Type value);
+
+      Array<Type>& get_array();
+    }; // template<typename Type> class ArraySlice
+
+    // An ConstArraySliceExpression is like a ConstArraySlice, but can also be transposed
+    // It may have other abilities in the future, but will probably always be const
+    template<typename Type> class ConstArraySliceExpression : public ConstArraySlice<Type>
+    {
+    public:
+      ConstArraySliceExpression();
+
+      ConstArraySliceExpression(const Array<Type> input, bool isTransposed=false);
+
+      ConstArraySliceExpression(const ArraySlice<Type> &input, bool isTransposed=false);
+
+      ConstArraySliceExpression(const ConstArraySlice<Type> &input, bool isTransposed=false);
+
+      // ArraySlice Transpose doesn't modify the data, it just sets a flag
+      // This object isn't modified, but the returned object is.
+      ConstArraySliceExpression<Type> Transpose() const;
+
+      bool get_isTransposed() const;
+
+    protected:
+      bool isTransposed;
+    };
+
+    // To simplify the creation of kernels using an ArraySlice, and to aid the compiler optimizer,
+    // an ArraySliceLimits can be initialized at the beginning of the function, then used as the
+    // limits for the inner loops.
+
+    // The suffix of in# and out# refer to the number of input and output matrices.
+    // If output == 0, then the output is a scalar.
+
+    template<typename Type> class ArraySliceSimpleLimits
+    {
+    public:
+      Type xStart;
+      Type xIncrement;
+      Type xEnd;
+      s32  xSize;
+
+      Type yStart;
+      Type yIncrement;
+      Type yEnd;
+      s32  ySize;
+
+      ArraySliceSimpleLimits(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice);
+    };
+
+    // In1 and out0 is a special, ultra-simple case, for one matrix input and a scalar output
+    template<typename Type> class ArraySliceLimits_in1_out0
+    {
+    public:
+      // Was this ArraySliceLimits initialized?
+      bool isValid;
+
+      ArraySliceSimpleLimits<Type> rawIn1Limits;
+
+      ArraySliceLimits_in1_out0(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice);
+    };
+
+    // One input, one output
+    template<typename Type> class ArraySliceLimits_in1_out1
+    {
+    public:
+      // Was this ArraySliceLimits initialized?
+      bool isValid;
+
+      // Can a simple (non-transposed) iteration be performed?
+      bool isSimpleIteration;
+
+      // These are the current values for the coordinates in the input and output images
+      s32 out1Y;
+      s32 out1X;
+      s32 in1Y;
+      s32 in1X;
+
+      // The loops will be based on these iterators (these should match with the output's and inputs' sizes)
+      s32 ySize;
+      s32 xSize;
+
+      // Depending on whether ths input is transposed or not, either its X or Y coordinate should be
+      // incremented every iteration of the inner loop
+      s32 out1_xInnerIncrement;
+      s32 in1_xInnerIncrement;
+      s32 in1_yInnerIncrement;
+
+      ArraySliceLimits_in1_out1(
+        const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice, bool in1_isTransposed,
+        const LinearSequence<Type> &out1_ySlice, const LinearSequence<Type> &out1_xSlice);
+
+      // This should be called at the top of the y-iteration loop, before the x-iteration loop. This will update the out# and in# values for X and Y.
+      inline void OuterIncrementTop();
+
+      // This should be called at the botom of the y-iteration loop, after the x-iteration loop. This will update the out# and in# values for X and Y.
+      inline void OuterIncrementBottom();
+
+    protected:
+      ArraySliceSimpleLimits<Type> rawOut1Limits;
+
+      ArraySliceSimpleLimits<Type> rawIn1Limits;
+      bool in1_isTransposed;
+    };
+
+    // Two inputs, one output
+    template<typename Type> class ArraySliceLimits_in2_out1
+    {
+    public:
+      // Was this ArraySliceLimits initialized?
+      bool isValid;
+
+      // Can a simple (non-transposed) iteration be performed?
+      bool isSimpleIteration;
+
+      // These are the current values for the coordinates in the input and output images
+      s32 out1Y;
+      s32 out1X;
+      s32 in1Y;
+      s32 in1X;
+      s32 in2Y;
+      s32 in2X;
+
+      // The loops will be based on these iterators (these should match with the output's and inputs' sizes)
+      s32 ySize;
+      s32 xSize;
+
+      // Depending on whether ths input is transposed or not, either its X or Y coordinate should be
+      // incremented every iteration of the inner loop
+      s32 out1_xInnerIncrement;
+      s32 in1_xInnerIncrement;
+      s32 in1_yInnerIncrement;
+      s32 in2_xInnerIncrement;
+      s32 in2_yInnerIncrement;
+
+      ArraySliceLimits_in2_out1(
+        const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice, bool in1_isTransposed,
+        const LinearSequence<Type> &in2_ySlice, const LinearSequence<Type> &in2_xSlice, bool in2_isTransposed,
+        const LinearSequence<Type> &out1_ySlice, const LinearSequence<Type> &out1_xSlice);
+
+      // This should be called at the top of the y-iteration loop, before the x-iteration loop. This will update the out# and in# values for X and Y.
+      inline void OuterIncrementTop();
+
+      // This should be called at the botom of the y-iteration loop, after the x-iteration loop. This will update the out# and in# values for X and Y.
+      inline void OuterIncrementBottom();
+
+    protected:
+      ArraySliceSimpleLimits<Type> rawOut1Limits;
+
+      ArraySliceSimpleLimits<Type> rawIn1Limits;
+      bool in1_isTransposed;
+
+      ArraySliceSimpleLimits<Type> rawIn2Limits;
+      bool in2_isTransposed;
+    };
+  } // namespace Embedded
+} // namespace Anki
+
+#endif // _ANKICORETECHEMBEDDED_COMMON_ARRAYSLICES_DECLARATIONS_H_

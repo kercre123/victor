@@ -2,7 +2,7 @@
 #define _ANKICORETECHEMBEDDED_COMMON_MEMORY_H_
 
 #include "anki/common/robot/config.h"
-#include "anki/common/robot/flags.h"
+#include "anki/common/robot/flags_declarations.h"
 
 namespace Anki
 {
