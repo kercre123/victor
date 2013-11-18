@@ -1,17 +1,17 @@
 /**
- * File: trig_fast.cpp
- *
- * Author: Kevin Yoon
- * Created: 22-OCT-2012 
- *  
- * The arctangent lookup table atan_lut stores at each 
- * index=x*ATAN_LUT_INPUT_MULTIPLIER the value 
- * atan(x)*ATAN_LUT_OUTPUT_MULTIPLIER as u8 
- *  
- * Ditto for arcsine lookup table asin_lut. 
- *  
- *  
- **/
+* File: trig_fast.cpp
+*
+* Author: Kevin Yoon
+* Created: 22-OCT-2012
+*
+* The arctangent lookup table atan_lut stores at each
+* index=x*ATAN_LUT_INPUT_MULTIPLIER the value
+* atan(x)*ATAN_LUT_OUTPUT_MULTIPLIER as u8
+*
+* Ditto for arcsine lookup table asin_lut.
+*
+*
+**/
 #include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
 #include "anki/common/robot/trig_fast.h"
@@ -19,10 +19,9 @@
 #include <assert.h>
 
 // For larger input values to atan, use approximations
-// at fixed steps. (Essentially extends the LUT with courser 
+// at fixed steps. (Essentially extends the LUT with courser
 // resolution at higher input values.)
 #define DO_ATAN_DISCRETE_STEP_APPROX
-
 
 #ifdef USE_SMALL_LUT
 // For small table, automatically use interpolation
@@ -31,7 +30,7 @@
 #define ASIN_LUT_SIZE 51
 #define ASIN_LUT_INPUT_MULTIPLIER 50
 #define ASIN_LUT_OUTPUT_MULTIPLIER 100
-const u8 asin_lut[] = 
+const u8 asin_lut[] =
 {
   0,2,4,6,8,10,12,14,16,18,
   20,22,24,26,28,30,33,35,37,39,
@@ -54,13 +53,12 @@ const u8 atan_lut[] =
   152,
 };
 
-
 #else  // not defined USE_SMALL_LUT
 
 #define ASIN_LUT_SIZE 101
 #define ASIN_LUT_INPUT_MULTIPLIER 100
 #define ASIN_LUT_OUTPUT_MULTIPLIER 100
-const u8 asin_lut[] = 
+const u8 asin_lut[] =
 {
   0,1,2,3,4,5,6,7,8,9,
   10,11,12,13,14,15,16,17,18,19,
@@ -94,15 +92,14 @@ const u8 atan_lut[] =
 };
 #endif // USE_SMALL_LUT
 
-
 #ifdef DO_ATAN_DISCRETE_STEP_APPROX
 const float ATAN_LUT_MAX = (float)(atan_lut[ATAN_LUT_SIZE-1])/ATAN_LUT_OUTPUT_MULTIPLIER;
-#define ATAN25 1.5308
-#define ATAN30 1.5375
-#define ATAN40 1.5458
-#define ATAN60 1.5541
-#define ATAN120 1.5625
-#define ATAN600 1.5691
+#define ATAN25 1.5308f
+#define ATAN30 1.5375f
+#define ATAN40 1.5458f
+#define ATAN60 1.5541f
+#define ATAN120 1.5625f
+#define ATAN600 1.5691f
 const float ATAN_LUT_MAX_INPUT = (ATAN_LUT_SIZE-1)/ATAN_LUT_INPUT_MULTIPLIER;
 const float SLOPE_TO_25 = (ATAN25-ATAN_LUT_MAX)/(25 - ATAN_LUT_MAX_INPUT);
 const float SLOPE_TO_30 = (ATAN30-ATAN25)/(30 - 25);
@@ -111,7 +108,6 @@ const float SLOPE_TO_60 = (ATAN60-ATAN40)/(60 - 40);
 const float SLOPE_TO_120 = (ATAN120-ATAN60)/(120 - 60);
 const float SLOPE_TO_600 = (ATAN600-ATAN120)/(600 - 120);
 #endif // DO_ATAN_DISCRETE_STEP_APPROX
-
 
 // Uses lookup table for input values upto (ATAN_LUT_SIZE-1)/ATAN_LUT_INPUT_MULTIPLIER.
 // Approximates values beyond that with discrete step values. Clunky but fast and good enough. Trying to keep ~0.01 accuracy.
@@ -126,9 +122,9 @@ float atan_fast(float x)
   float absx = ABS(x);
   if (absx >= ATAN_LUT_MAX_INPUT) {
     float res;
-    
+
     if (absx >= 600) {
-      res = PIDIV2;
+      res = PIDIV2_F;
     }
     else if (absx >= 120) {
       res = SLOPE_TO_600 * (absx - 120) + ATAN120;
@@ -148,30 +144,27 @@ float atan_fast(float x)
     else {
       res = SLOPE_TO_25 * (absx - ATAN_LUT_MAX_INPUT) + ATAN_LUT_MAX;
     }
-    
+
     if (isNegative) {
       res *= -1;
     }
-    
+
     return res;
   }
 #endif
 
-  
 #ifdef USE_INTERPOLATION
-  
+
   // Convert x to LUT index
   float x_lut_idx = ABS(x)*ATAN_LUT_INPUT_MULTIPLIER;
   u8 x_lut_pre_idx = (int)(x_lut_idx);
   u8 x_lut_post_idx = x_lut_pre_idx + 1;
   float frac = x_lut_idx - (float)x_lut_pre_idx;
 
-  
-
   // Check if input exceeds LUT range
   float lut_result;
   if (x_lut_post_idx >= ATAN_LUT_SIZE) {
-    lut_result = PIDIV2;
+    lut_result = PIDIV2_F;
   } else {
     u8 atan_pre_res = atan_lut[x_lut_pre_idx];
     u8 atan_post_res = atan_lut[x_lut_post_idx];
@@ -180,10 +173,10 @@ float atan_fast(float x)
   }
 
 #else
-  
+
   // Convert x to LUT index
   int x_lut_idx = (int)(ABS(x)*ATAN_LUT_INPUT_MULTIPLIER);
-  
+
   // Check if input exceeds LUT range
   float lut_result;
   if (x_lut_idx >= ATAN_LUT_SIZE) {
@@ -192,15 +185,13 @@ float atan_fast(float x)
     lut_result = (float)atan_lut[x_lut_idx] / ATAN_LUT_OUTPUT_MULTIPLIER;
   }
 #endif
-  
-  
+
   if (isNegative) {
     lut_result *= -1;
   }
 
   return lut_result;
 }
-
 
 float asin_fast(float x)
 {
@@ -214,7 +205,6 @@ float asin_fast(float x)
   u8 x_lut_post_idx = x_lut_pre_idx + 1;
   float frac = x_lut_idx - (float)x_lut_pre_idx;
 
-
   // LUT accepts positive input only so need to remember sign so that we
   // can flip result if input is negative.
   u8 isNegative = x < 0 ? 1 : 0;
@@ -222,23 +212,23 @@ float asin_fast(float x)
   // Check if input exceeds LUT range
   float lut_result;
   if (x_lut_post_idx >= ASIN_LUT_SIZE) {
-    lut_result = PIDIV2;
+    lut_result = PIDIV2_F;
   } else {
     u8 asin_pre_res = asin_lut[x_lut_pre_idx];
     u8 asin_post_res = asin_lut[x_lut_post_idx];
 
     lut_result = ((float)(asin_post_res - asin_pre_res)*frac + asin_pre_res) / ASIN_LUT_OUTPUT_MULTIPLIER;
   }
-  
+
 #else
-  
+
   // Convert x to LUT index
   int x_lut_idx = (int)(ABS(x)*ASIN_LUT_INPUT_MULTIPLIER);
-  
+
   // LUT accepts positive input only so need to remember sign so that we
   // can flip result if input is negative.
   u8 isNegative = x < 0 ? 1 : 0;
-  
+
   // Check if input exceeds LUT range
   float lut_result;
   if (x_lut_idx >= ASIN_LUT_SIZE) {
@@ -256,23 +246,21 @@ float asin_fast(float x)
   return lut_result;
 }
 
-
 float atan2_fast(float y, float x)
 {
   assert( !(y == 0 && x == 0) );
-  
+
   if (x>0) {
     return atan_fast(y/x);
   } else if (y >= 0 && x < 0) {
-    return atan_fast(y/x) + PI;
+    return atan_fast(y/x) + PI_F;
   } else if (y < 0 && x < 0) {
-    return atan_fast(y/x) - PI;
+    return atan_fast(y/x) - PI_F;
   } else if (y > 0 && x == 0) {
-    return PIDIV2;
+    return PIDIV2_F;
   } else if (y < 0 && x == 0) {
-    return -PIDIV2;
+    return -PIDIV2_F;
   }
-  
+
   return 0;
 }
-

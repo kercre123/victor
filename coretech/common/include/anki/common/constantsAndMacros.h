@@ -58,12 +58,19 @@
 #endif
 
 #ifndef PI
-//#define PI                    3.14159265358979323846   /* pi */
 #define PI M_PI
 #endif
+
+#ifndef PI_F
+#define PI_F ((float) PI)
+#endif
+
 #ifndef PIDIV2
-//#define PIDIV2                1.5707963                /* pi/2 */
 #define PIDIV2 M_PI_2
+#endif
+
+#ifndef PIDIV2_F
+#define PIDIV2_F ((float) M_PI_2)
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -122,8 +129,11 @@
 // UNIT CONVERSION MACROS
 //////////////////////////////////////////////////////////////////////////////
 
-#define DEG_TO_RAD(deg)	  (((double)deg)*0.017453292519943295474)
-#define RAD_TO_DEG(rad)   (((double)rad)*57.295779513082322865)
+#define DEG_TO_RAD_F64(deg) (((f64)deg)*0.017453292519943295474)
+#define DEG_TO_RAD_F32(deg) (((f32)deg)*0.017453292519943295474f)
+
+#define RAD_TO_DEG_F64(rad) (((f64)rad)*57.295779513082322865)
+#define RAD_TO_DEG_F32(rad) (((f32)rad)*57.295779513082322865f)
 
 #define NANOS_TO_SEC(nanos) ((nanos) / 1000000000.0f)
 #define SEC_TO_NANOS(sec) ((sec) * 1000000000.0f)
