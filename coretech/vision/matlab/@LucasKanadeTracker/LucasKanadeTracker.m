@@ -6,8 +6,14 @@ classdef LucasKanadeTracker < handle
     
     properties(GetAccess = 'public', SetAccess = 'protected')
         tform;
+        xcen;
+        ycen;
+        
+        initCorners;
+        
         err = Inf;
         target;
+        finestScale;
     end
     
     properties(GetAccess = 'protected', SetAccess = 'protected')
@@ -16,10 +22,8 @@ classdef LucasKanadeTracker < handle
         
         xgrid;
         ygrid;
-        initCorners;
+        %initCorners;
         
-        xcen;
-        ycen;
         width;
         height;
             
@@ -38,7 +42,6 @@ classdef LucasKanadeTracker < handle
         % Parameters
         minSize;
         numScales;
-        finestScale;
         convergenceTolerance;
         maxIterations;
         
@@ -271,9 +274,17 @@ classdef LucasKanadeTracker < handle
                 % Adjust the target center point and the original corner
                 % locations from original resolution to tracking resolution
                 % coordinates
+                
+                % Scale around (1,1)
                 this.xcen = (this.xcen-1)/Downsample + 1;
                 this.ycen = (this.ycen-1)/Downsample + 1;
                 this.initCorners = (this.initCorners-1)/Downsample + 1;
+                
+                % Scale around image center
+                %this.xcen = (this.xcen - ncols/2)/Downsample + ncols/Downsample/2;
+                %this.ycen = (this.ycen - nrows/2)/Downsample + nrows/Downsample/2;
+                %this.initCorners(:,1) = (this.initCorners(:,1) - ncols/2)/Downsample + ncols/Downsample/2;
+                %this.initCorners(:,2) = (this.initCorners(:,2) - nrows/2)/Downsample + nrows/Downsample/2;
             end
             
             return;
