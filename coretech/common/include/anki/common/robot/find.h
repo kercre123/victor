@@ -395,7 +395,7 @@ namespace Anki
         for(s32 y=0; y<arrayHeight; y++) {
           const Type1 * const pArray1 = array1.Pointer(y, 0);
 
-          const Type1 * const pOut = out.Pointer(y, 0);
+          Type1 * const pOut = out.Pointer(y, 0);
 
           for(s32 x=0; x<arrayWidth; x++) {
             if(Operator::Compare(pArray1[x], value)) {
@@ -412,7 +412,7 @@ namespace Anki
           const Type1 * const pArray1 = array1.Pointer(y, 0);
           const Type2 * const pArray2 = array2.Pointer(y, 0);
 
-          const Type1 * const pOut = out.Pointer(y, 0);
+          Type1 * const pOut = out.Pointer(y, 0);
 
           for(s32 x=0; x<arrayWidth; x++) {
             if(Operator::Compare(pArray1[x], pArray2[x])) {

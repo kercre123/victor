@@ -112,6 +112,7 @@ void explicitPrintf(int reverseEachFourCharacters, const char *format, ...)
 void PrintFloat(f64 value)
 {
   const s32 maxDecimalDigits = 6;
+  f64 decimalPart;
 
   s32 digitIndex = -1;
   s32 numDecimalDigitsUsed = 0;
@@ -121,7 +122,7 @@ void PrintFloat(f64 value)
     value = -value;
   }
   
-  const f64 decimalPart = value - (f64)floorf(value);
+  decimalPart = value - (f64)floorf(value);
 
   // Print the part before the decimal digit
 
