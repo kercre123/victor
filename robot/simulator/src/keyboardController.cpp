@@ -3,10 +3,12 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/pathFollower.h"
+#include "anki/cozmo/robot/steeringController.h"
 
 #include "headController.h"
 #include "keyboardController.h"
 #include "liftController.h"
+#include "dockingController.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -24,7 +26,8 @@ namespace Anki {
       // Private memers:
       namespace {
         // Constants for Webots:
-        const f32 DRIVE_VELOCITY_SLOW = 5.0f;
+        const f32 DRIVE_VELOCITY_SLOW = 100.0f; // mm/s
+        const f32 TURN_WHEEL_VELOCITY_SLOW = 50.0f;  //mm/s
         const f32 TURN_VELOCITY_SLOW = 1.0f;
         const f32 LIFT_CENTER = -0.275;
         const f32 LIFT_UP = 0.635;
@@ -82,48 +85,48 @@ namespace Anki {
           {
             case webots::Robot::KEYBOARD_UP:
             {
-              SetWheelAngularVelocity(DRIVE_VELOCITY_SLOW, DRIVE_VELOCITY_SLOW);
+              SteeringController::ExecuteDirectDrive(DRIVE_VELOCITY_SLOW, DRIVE_VELOCITY_SLOW);
               break;
             }
               
             case webots::Robot::KEYBOARD_DOWN:
             {
-              SetWheelAngularVelocity(-DRIVE_VELOCITY_SLOW, -DRIVE_VELOCITY_SLOW);
+              SteeringController::ExecuteDirectDrive(-DRIVE_VELOCITY_SLOW, -DRIVE_VELOCITY_SLOW);
               break;
             }
               
             case webots::Robot::KEYBOARD_LEFT:
             {
-              SetWheelAngularVelocity(-TURN_VELOCITY_SLOW, TURN_VELOCITY_SLOW);
+              SteeringController::ExecuteDirectDrive(-TURN_WHEEL_VELOCITY_SLOW, TURN_WHEEL_VELOCITY_SLOW);
               break;
             }
               
             case webots::Robot::KEYBOARD_RIGHT:
             {
-              SetWheelAngularVelocity(TURN_VELOCITY_SLOW, -TURN_VELOCITY_SLOW);
+              SteeringController::ExecuteDirectDrive(TURN_WHEEL_VELOCITY_SLOW, -TURN_WHEEL_VELOCITY_SLOW);
               break;
             }
               
             case CKEY_HEAD_UP: //s-key: move head up
             {
-              SetHeadAngularVelocity(1.5f*TURN_VELOCITY_SLOW);
+              HeadController::SetAngularVelocity(1.5f*TURN_VELOCITY_SLOW);
               break;
             }
               
             case CKEY_HEAD_DOWN: //x-key: move head down
             {
-              SetHeadAngularVelocity(-1.5f*TURN_VELOCITY_SLOW);
+              HeadController::SetAngularVelocity(-1.5f*TURN_VELOCITY_SLOW);
               break;
             }
             case CKEY_LIFT_UP: //a-key: move lift up
             {
-              SetLiftAngularVelocity(1.5f*TURN_VELOCITY_SLOW);
+              LiftController::SetAngularVelocity(1.5f*TURN_VELOCITY_SLOW);
               break;
             }
               
             case CKEY_LIFT_DOWN: //z-key: move lift down
             {
-              SetLiftAngularVelocity(-1.5f*TURN_VELOCITY_SLOW);
+              LiftController::SetAngularVelocity(-1.5f*TURN_VELOCITY_SLOW);
               break;
             }
               /*
@@ -146,7 +149,7 @@ namespace Anki {
               
             case CKEY_UNLOCK: //spacebar-key: unlock
             {
-              DisengageGripper();
+              DockingController::DisengageGripper();
               break;
             }
             default:
@@ -155,13 +158,14 @@ namespace Anki {
               if(Robot::GetOperationMode() == Robot::WAITING) {
                 // Don't stop the motors if they are being controlled
                 // by other processes
-                SetWheelAngularVelocity(0.f, 0.f);
+                if (SteeringController::GetMode() == SteeringController::SM_DIRECT_DRIVE)
+                  SteeringController::ExecuteDirectDrive(0.f, 0.f);
                 
                 if(LiftController::IsInPosition()) {
-                  SetLiftAngularVelocity(0.f);
+                  LiftController::SetAngularVelocity(0.f);
                 }
                 if(HeadController::IsInPosition()) {
-                  SetHeadAngularVelocity(0.f);
+                  HeadController::SetAngularVelocity(0.f);
                 }
               }
             }

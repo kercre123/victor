@@ -1,10 +1,6 @@
 #ifndef KEYBOARD_CONTROLLER_H
 #define KEYBOARD_CONTROLLER_H
 
-//#include "anki/cozmo/robot/cozmoTypes.h"
-
-#include <webots/Supervisor.hpp>
-
 namespace Anki {
   namespace Cozmo {
     

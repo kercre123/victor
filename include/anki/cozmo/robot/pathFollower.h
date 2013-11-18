@@ -19,12 +19,13 @@ namespace Anki
       
       
       // Add path segment
-      bool AppendPathSegment_Line(u32 matID, float x_start_m, float y_start_m, float x_end_m, float y_end_m);
-      bool AppendPathSegment_Arc(u32 matID, float x_center_m, float y_center_m, float radius_m, float startRad, float endRad);
+      bool AppendPathSegment_Line(u32 matID, f32 x_start_m, f32 y_start_m, f32 x_end_m, f32 y_end_m);
+      bool AppendPathSegment_Arc(u32 matID, f32 x_center_m, f32 y_center_m, f32 radius_m, f32 startRad, f32 endRad);
+      bool AppendPathSegment_PointTurn(u32 matID, f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel);
       
       int GetNumPathSegments(void);
       
-      bool GetPathError(float &shortestDistanceToPath_m, float &radDiff);
+      bool GetPathError(f32 &shortestDistanceToPath_m, f32 &radDiff);
       
       bool StartPathTraversal(void);
       bool IsTraversingPath(void);

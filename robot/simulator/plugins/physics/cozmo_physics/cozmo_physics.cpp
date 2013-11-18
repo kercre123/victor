@@ -183,42 +183,45 @@ void webots_physics_step() {
 
 }
 
-void webots_physics_draw() {
-  
-   // setup draw style
-   glDisable(GL_LIGHTING);
-   glLineWidth(2);
-
-   RobotPathMap_t::iterator robotPathMapIt;
-   for (robotPathMapIt = robotPathMap.begin(); robotPathMapIt != robotPathMap.end(); robotPathMapIt++) {
-     PathMap_t::iterator pathMapIt;
-     int robotID = robotPathMapIt->first;
-     for (pathMapIt = robotPathMapIt->second.begin(); pathMapIt != robotPathMapIt->second.end(); pathMapIt++) {
-       Path_t::iterator pathIt;
-       int pathID = pathMapIt->first;
+void webots_physics_draw(int pass, const char *view) {
+ 
+  // Only draw in main 3D view (view == NULL) and not the camera views
+  if (pass == 1 && view == NULL) {
+    
+    // setup draw style
+    glDisable(GL_LIGHTING);
+    glLineWidth(2);
+    
+    RobotPathMap_t::iterator robotPathMapIt;
+    for (robotPathMapIt = robotPathMap.begin(); robotPathMapIt != robotPathMap.end(); robotPathMapIt++) {
+      PathMap_t::iterator pathMapIt;
+      int robotID = robotPathMapIt->first;
+      for (pathMapIt = robotPathMapIt->second.begin(); pathMapIt != robotPathMapIt->second.end(); pathMapIt++) {
+        Path_t::iterator pathIt;
+        int pathID = pathMapIt->first;
         
-       // Draw the path
-       glBegin(GL_LINE_STRIP);
-
-       // Set path color
-       if (pathID == 0) {
-         // Commanded path
-         glColor3f(1, 1, 0);
-       } else if (pathID == 1) { 
-         // Actual path traversed
-         glColor3f(0, 1, 0);
-       } else {
-         glColor3f(1, 0, 0);
-       }
-
-       for (pathIt = pathMapIt->second.begin(); pathIt != pathMapIt->second.end(); pathIt++) {
-         glVertex3f((*pathIt)[0],(*pathIt)[2],-(*pathIt)[1]); // Map to simulation world coords
-       }
-       glEnd();
-
-     }
-   }
-
+        // Draw the path
+        glBegin(GL_LINE_STRIP);
+        
+        // Set path color
+        if (pathID == 0) {
+          // Commanded path
+          glColor3f(1, 1, 0);
+        } else if (pathID == 1) {
+          // Actual path traversed
+          glColor3f(0, 1, 0);
+        } else {
+          glColor3f(1, 0, 0);
+        }
+        
+        for (pathIt = pathMapIt->second.begin(); pathIt != pathMapIt->second.end(); pathIt++) {
+          glVertex3f((*pathIt)[0],(*pathIt)[2],-(*pathIt)[1]); // Map to simulation world coords
+        }
+        glEnd();
+        
+      }
+    }
+  }
 }
 
 int webots_physics_collide(dGeomID g1, dGeomID g2) {

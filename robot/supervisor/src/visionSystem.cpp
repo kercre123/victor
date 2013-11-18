@@ -1,13 +1,11 @@
+#include "anki/common/robot/config.h"
 #include "anki/cozmo/robot/visionSystem.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 
 #include "anki/cozmo/messageProtocol.h"
+#include "anki/common/shared/radians.h"
 
-// TODO: We should have no basestation includes, move this to shared
-#include "anki/common/basestation/math/Radians.h"
-
-#include <iostream>
 
 #define USING_MATLAB_VISION (defined(USE_MATLAB_FOR_HEAD_CAMERA) || \
 defined(USE_MATLAB_FOR_MAT_CAMERA))
@@ -56,12 +54,16 @@ namespace Anki {
     
 #pragma mark --- VisionSystem::Mailbox Implementations ---
     
-    
+    /*
+     //TODO: Was having trouble getting this to compile on robot.
+     //      Default logic should still work when commenting this out.
     template<>
     void VisionSystem::MatMarkerMailbox::advanceIndex(u8 &index)
     {
       return;
     }
+     */
+    
     
 #pragma mark --- VisionSystem Method Implementations ---
     
@@ -76,37 +78,37 @@ namespace Anki {
       isInitialized_ = false;
       
       if(headCamFrameGrabber == NULL) {
-        fprintf(stdout, "VisionSystem::Init() - HeadCam FrameGrabber is NULL!\n");
+        PRINT("VisionSystem::Init() - HeadCam FrameGrabber is NULL!\n");
         return EXIT_FAILURE;
       }
       headCamFrameGrabber_ = headCamFrameGrabber;
       
       if(matCamFrameGrabber == NULL) {
-        fprintf(stdout, "VisionSystem::Init() - MatCam FrameGrabber is NULL!\n");
+        PRINT("VisionSystem::Init() - MatCam FrameGrabber is NULL!\n");
         return EXIT_FAILURE;
       }
       matCamFrameGrabber_  = matCamFrameGrabber;
       
       if(headCamInfo == NULL) {
-        fprintf(stdout, "VisionSystem::Init() - HeadCam Info pointer is NULL!\n");
+        PRINT("VisionSystem::Init() - HeadCam Info pointer is NULL!\n");
         return EXIT_FAILURE;
       }
       headCamInfo_ = headCamInfo;
       
       if(matCamInfo == NULL) {
-        fprintf(stdout, "VisionSystem::Init() - MatCam Info pointer is NULL!\n");
+        PRINT("VisionSystem::Init() - MatCam Info pointer is NULL!\n");
         return EXIT_FAILURE;
       }
       matCamInfo_  = matCamInfo;
       
       if(blockMarkerMailbox == NULL) {
-        fprintf(stdout, "VisionSystem::Init() - BlockMarkerMailbox pointer is NULL!\n");
+        PRINT("VisionSystem::Init() - BlockMarkerMailbox pointer is NULL!\n");
         return EXIT_FAILURE;
       }
       blockMarkerMailbox_ = blockMarkerMailbox;
       
       if(matMarkerMailbox == NULL) {
-        fprintf(stdout, "VisionSystem::Init() - MatMarkerMailbox pointer is NULL!\n");
+        PRINT("VisionSystem::Init() - MatMarkerMailbox pointer is NULL!\n");
         return EXIT_FAILURE;
       }
       matMarkerMailbox_ = matMarkerMailbox;
@@ -122,7 +124,7 @@ namespace Anki {
       
       matlabEngine_ = NULL;
       if (!(matlabEngine_ = engOpen(""))) {
-        fprintf(stdout, "\nCan't start MATLAB engine!\n");
+        PRINT("\nCan't start MATLAB engine!\n");
         return EXIT_FAILURE;
       }
       
@@ -132,7 +134,7 @@ namespace Anki {
       engEvalString(matlabEngine_, "usingOutsideSquare = BlockMarker2D.UseOutsideOfSquare;");
       mxArray *mxUseOutsideOfSquare = engGetVariable(matlabEngine_, "usingOutsideSquare");
       if(mxIsLogicalScalarTrue(mxUseOutsideOfSquare) != BLOCKMARKER3D_USE_OUTSIDE_SQUARE) {
-        fprintf(stdout, "UseOutsideOfSquare settings between Matlab and C++ don't match!\n");
+        PRINT("UseOutsideOfSquare settings between Matlab and C++ don't match!\n");
         return EXIT_FAILURE;
       }
       
@@ -210,7 +212,7 @@ namespace Anki {
         
         int numMarkers = static_cast<int>(mxGetScalar(engGetVariable(matlabEngine_, "numMarkers")));
         
-        fprintf(stdout, "Found %d block markers.\n", numMarkers);
+        PRINT("Found %d block markers.\n", numMarkers);
         
         // Can't get the blockMarkers directly because they are Matlab objects
         // which are not happy with engGetVariable.
@@ -266,11 +268,11 @@ namespace Anki {
           mxArray *mxUpDir = engGetVariable(matlabEngine_, "upDir");
           msg.upDirection = static_cast<u8>(mxGetScalar(mxUpDir)) - 1; // Note the -1 for C vs. Matlab indexing
           
-          msg.headAngle = HAL::GetHeadAngle();
+          msg.headAngle = HAL::MotorGetPosition(HAL::MOTOR_HEAD);
    //       // NOTE the negation here!
    //       msg.headAngle = -HAL::GetHeadAngle();
           
-          fprintf(stdout, "Sending ObservedBlockMarker message: Block %d, Face %d "
+          PRINT("Sending ObservedBlockMarker message: Block %d, Face %d "
                   "at [(%.1f,%.1f) (%.1f,%.1f) (%.1f,%.1f) (%.1f,%.1f)] with "
                   "upDirection=%d, headAngle=%.1fdeg\n",
                   msg.blockType, msg.faceType,
@@ -291,7 +293,7 @@ namespace Anki {
 #else  // NOT defined(USE_MATLAB_FOR_HEAD_CAMERA)
       
       // TODO: Hook this up to Pete's vision code
-      fprintf(stderr, "Robot::processHeadImage(): embedded vision "
+      PRINT("Robot::processHeadImage(): embedded vision "
               "processing not hooked up yet.\n");
       return EXIT_FAILURE;
       
@@ -372,7 +374,7 @@ namespace Anki {
           mxArray *mx_matAngle = engGetVariable(matlabEngine_, "matOrient");
           msg.angle = static_cast<f32>(mxGetScalar(mx_matAngle));
           
-          fprintf(stdout, "Sending ObservedMatMarker message: Square (%d,%d) "
+          PRINT("Sending ObservedMatMarker message: Square (%d,%d) "
                   "at (%.1f,%.1f) with orientation %.1f degrees and upDirection=%d\n",
                   msg.x_MatSquare, msg.y_MatSquare,
                   msg.x_imgCenter, msg.y_imgCenter,
@@ -381,20 +383,20 @@ namespace Anki {
           matMarkerMailbox_->putMessage(msg);
           
         } else {
-          fprintf(stdout, "No valid MatMarker found!\n");
+          PRINT("No valid MatMarker found!\n");
           
         } // if marker is valid
         
         retVal = EXIT_SUCCESS;
         
       } else {
-        fprintf(stderr, "Robot::processHeadImage(): could not convert image to mxArray.");
+        PRINT("Robot::processHeadImage(): could not convert image to mxArray.");
       }
       
 #else  // NOT defined(USE_MATLAB_FOR_MAT_CAMERA)
       
       // TODO: Hook this up to Pete's vision code
-      fprintf(stderr, "Robot::processMatImage(): embedded vision "
+      PRINT("Robot::processMatImage(): embedded vision "
               "processing not hooked up yet.\n");
       retVal = -1;
       
@@ -435,7 +437,7 @@ namespace Anki {
       if(dockTargetWinX_ < 0 || dockTargetWinY_ < 0 ||
          dockTargetWinW_ < 0 || dockTargetWinH_ < 0)
       {
-        fprintf(stdout, "No docking window set for call to findDockingTarget().\n");
+        PRINT("No docking window set for call to findDockingTarget().\n");
         retVal = EXIT_FAILURE;
       }
       else {
@@ -485,14 +487,14 @@ namespace Anki {
           if(not mxIsEmpty(mx_errMsg)) {
             char errStr[1024];
             mxGetString(mx_errMsg, errStr, 1023);
-            fprintf(stdout, "Error detected running findFourDotTarget: %s\n",
+            PRINT("Error detected running findFourDotTarget: %s\n",
                     errStr);
             retVal = EXIT_FAILURE;
           }
           else if(mxGetNumberOfElements(mx_xDock) != 4 ||
              mxGetNumberOfElements(mx_yDock) != 4)
           {
-            fprintf(stdout, "xDock and yDock were not 4 elements long.\n");
+            PRINT("xDock and yDock were not 4 elements long.\n");
             retVal = EXIT_FAILURE;
           }
           else
@@ -510,7 +512,7 @@ namespace Anki {
           
         } else {
           
-          fprintf(stdout, "Robot::findDockingTarget() could not get headCamImage "
+          PRINT("Robot::findDockingTarget() could not get headCamImage "
                   "for processing in Matlab.\n");
           retVal = EXIT_FAILURE;
           
@@ -520,7 +522,7 @@ namespace Anki {
 #else  // NOT defined(USE_MATLAB_FOR_HEAD_CAMERA)
         
         // TODO: Hook this up to Pete's vision code
-        fprintf(stderr, "Robot::findDockingTarget(): embedded vision "
+        PRINT("Robot::findDockingTarget(): embedded vision "
                 "processing not hooked up yet.\n");
         
         retVal = EXIT_FAILURE;
@@ -540,7 +542,7 @@ namespace Anki {
         f32 height = 2.f*(target.dotY[3] - target.dotY[0]);
         
         if(width <= 0.f || height <= 0.f) {
-          fprintf(stdout, "Width/height of docking target <= 0\n");
+          PRINT("Width/height of docking target <= 0\n");
           retVal = EXIT_FAILURE;
         } else {
           dockTargetWinX_ = xcen - 0.5f*width;

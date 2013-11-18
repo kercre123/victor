@@ -1,7 +1,18 @@
 #include "anki/cozmo/robot/cozmoBot.h"
+#include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/localization.h"
 
+
+
+#ifdef SIMULATOR
+// Whether or not to use simulator "ground truth" pose
+#define USE_SIM_GROUND_TRUTH_POSE 1
 #define USE_OVERLAY_DISPLAY 1
+#else // else not simulator
+#define USE_SIM_GROUND_TRUTH_POSE 0
+#define USE_OVERLAY_DISPLAY 0
+#endif // #ifdef SIMULATOR
+
 
 #if(USE_OVERLAY_DISPLAY)
 #include "anki/cozmo/robot/hal.h"
@@ -31,7 +42,23 @@ namespace Anki {
         return currMatPose;
       }
 */
-      void Update() {
+      void Update()
+      {
+
+#if(USE_SIM_GROUND_TRUTH_POSE)
+        // For initial testing only
+        float angle;
+        HAL::GetGroundTruthPose(currentMatX_,currentMatY_,angle);
+        currentMatHeading_ = angle;
+#else
+        // TODO: Update current pose estimate
+        // ...
+       
+#endif
+
+#if(DEBUG_LOCALIZATION)
+        PRINT("LOC: %f, %f, %f\n", currentMatX_, currentMatY_, currentMatHeading_.getDegrees());
+#endif
       }
 
       

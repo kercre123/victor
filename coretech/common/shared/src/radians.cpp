@@ -4,23 +4,17 @@
  * Author: Boris Sofman (boris)
  * Created: 6/14/2008
  * 
- * Information on last revision to this file:
- *    $LastChangedDate$
- *    $LastChangedBy$
- *    $LastChangedRevision$
- * 
  * Description: Implementation of a radians class that automatically rescales
- *              the value after any computation to be within (-PI, PI].  Since
- *              the object can be cast directly to the double, it can be used
- *              with any trigonometry functions.
+ *              the value after any computation to be within (-PI, PI].  
  *
  * Copyright: Anki, Inc. 2008-2011
  *
  **/
 
-#include "anki/common/basestation/general.h"
+#include "anki/common/robot/config.h"
+#include "anki/common/constantsAndMacros.h"
+#include "anki/common/shared/radians.h"
 
-#include "anki/common/basestation/math/radians.h"
 
 namespace Anki {
 
@@ -36,7 +30,7 @@ Radians::Radians()
 }
 
 // Constructs Radians object from input double (rescales accordingly)
-Radians::Radians(double initRad)
+Radians::Radians(float initRad)
 {
   doRescaling_ = true;
   (*this) = initRad;
@@ -65,15 +59,15 @@ Radians operator+(const Radians& a, const Radians& b)
 
   return newRadians;
 }
-Radians operator+(const Radians& a, double b)
+Radians operator+(const Radians& a, float b)
 {
   return a + Radians(b);
 }
-Radians operator+(double a, const Radians& b)
+Radians operator+(float a, const Radians& b)
 {
   return Radians(a) + b;
 }
-void Radians::operator+=(double b)
+void Radians::operator+=(float b)
 {
   (*this) = (*this) + b;
 }
@@ -93,15 +87,15 @@ Radians operator-(const Radians& a, const Radians& b)
 
   return newRadians;
 }
-Radians operator-(const Radians& a, double b)
+Radians operator-(const Radians& a, float b)
 {
   return a - Radians(b);
 }
-Radians operator-(double a, const Radians& b)
+Radians operator-(float a, const Radians& b)
 {
   return Radians(a) - b;
 }
-void Radians::operator-=(double b)
+void Radians::operator-=(float b)
 {
   (*this) = (*this) - b;
 }
@@ -129,7 +123,7 @@ Radians Radians::operator-() const
 
 
 // Angle multiplication operators
-Radians operator*(const Radians& a, double b)
+Radians operator*(const Radians& a, float b)
 {
   Radians newRadians;
 
@@ -138,32 +132,29 @@ Radians operator*(const Radians& a, double b)
 
   return newRadians;
 }
-Radians operator*(double a, const Radians& b)
+Radians operator*(float a, const Radians& b)
 {
   return b * a;
 }
-void Radians::operator*=(double b)
+void Radians::operator*=(float b)
 {
   (*this) = (*this) * b;
 }
 
 
 // Angle division operator
-Radians operator/(const Radians& a, double b)
+Radians operator/(const Radians& a, float b)
 {
-  Radians newRadians;
-
   // Check for divide by 0
-  if (NEAR_ZERO(b)) {
-    PRINT_NAMED_ERROR("Radians", "Attempting to divide by 0!");
-  }
-
+  assert(!NEAR_ZERO(b));  // Check for divide by 0
+  
+  Radians newRadians;
   newRadians.radians_ = a.radians_ / b;
   newRadians.rescale();
 
   return newRadians;
 }
-void Radians::operator/=(double b)
+void Radians::operator/=(float b)
 {
   (*this) = (*this) / b;
 }
@@ -186,7 +177,7 @@ bool operator!=(const Radians& a, const Radians& b)
 // Returns true if a > b
 bool operator>(const Radians& a, const Radians& b)
 {
-  return((a.ToDouble() - b.ToDouble()) > 0) && (a != b);
+  return((a.ToFloat() - b.ToFloat()) > 0) && (a != b);
 }
 
 // Returns true if a >= b
@@ -214,7 +205,7 @@ void Radians::operator=(const Radians& b)
   radians_ = b.radians_;
   doRescaling_ = b.doRescaling_;
 }
-void Radians::operator=(double b)
+void Radians::operator=(float b)
 {
   radians_ = b;
   rescale();
@@ -229,14 +220,14 @@ Radians Radians::getAbsoluteVal()
 
 
 // Returns the object's radians value in degrees
-double Radians::getDegrees() const 
+float Radians::getDegrees() const 
 {
   return RAD_TO_DEG(radians_);
 }
 
 // Converts the passed argument from degrees to radians and sets the object's
 // value to the result
-void Radians::setDegrees(double degrees)
+void Radians::setDegrees(float degrees)
 {
   radians_ = DEG_TO_RAD(degrees);
   rescale();
@@ -248,10 +239,10 @@ void Radians::performRescaling(bool doRescaling)
   doRescaling_ = doRescaling;
 }
 
-double Radians::angularDistance(const Radians& destAngle, bool clockwise) {
+float Radians::angularDistance(const Radians& destAngle, bool clockwise) {
   
   // Get absolute difference
-  double diff = destAngle.ToDouble() - radians_;
+  float diff = destAngle.ToFloat() - radians_;
 
   // If clockwise then difference should be -ve, and vice versa.
   if(!clockwise && diff < 0) {
@@ -294,8 +285,8 @@ void Radians::rescale()
 
     // If not, compute amount to shift by.  Divide by 2*PI but subtract .5 since
     // we're going to be in the (-PI, PI] range.
-    shiftAmt = (int)ceil((radians_ / (2.0 * PI)) - 0.5);
-    radians_ -= (2.0 * PI * (double)shiftAmt);
+    shiftAmt = (int)ceilf((radians_ / (2.0 * PI)) - 0.5);
+    radians_ -= (2.0 * PI * (float)shiftAmt);
   }
 
 }

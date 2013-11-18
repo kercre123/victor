@@ -8,21 +8,22 @@
 #include <math.h>
 
 #include "anki/cozmo/robot/cozmoConfig.h"
-
+#include "anki/cozmo/robot/localization.h"
+#include "anki/cozmo/robot/pathFollower.h"
 #include "anki/cozmo/robot/speedController.h"
 #include "anki/cozmo/robot/steeringController.h"
 #include "anki/cozmo/robot/wheelController.h"
 //#include "hal/portable.h"
 //#include "hal/encoders.h"
-#include "anki/cozmo/robot/vehicleMath.h"
 #include "anki/cozmo/robot/trace.h"
 #include "anki/cozmo/robot/debug.h"
 
-#include <stdio.h>
+#include "anki/cozmo/robot/hal.h"
 
+#include "anki/common/robot/trig_fast.h"
 
 namespace Anki {
-  
+  namespace Cozmo {
   namespace SteeringController {
 
    
@@ -31,17 +32,38 @@ namespace Anki {
       //Steering gains: Heading tracking gain K1, Crosstrack approach rate K2
       f32 K1_ = DEFAULT_STEERING_K1;
       f32 K2_ = DEFAULT_STEERING_K2;
-      
-      bool enableAlwaysOnSteering_ = false;
 
       bool isInit_ = false;
 
+      SteerMode currSteerMode_ = SM_PATH_FOLLOW;
+      
+      // Direct drive
+      f32 targetLeftVel_;
+      f32 targetRightVel_;
+      f32 leftAccelPerCycle_;
+      f32 rightAccelPerCycle_;
+      
+      // Point turn
+      Radians targetRad_;
+      f32 maxAngularVel_;
+      f32 angularAccel_;
+      f32 angularDecel_;
+      
+      f32 currAngularVel_;
+      bool startedPointTurn_;
+      
+      // If distance to target is less than this, point turn is considered to be complete.
+      const float POINT_TURN_TARGET_DIST_STOP_RAD = 0.05;
+      
     } // Private namespace
     
-    void EnableAlwaysOnSteering(bool on)
-    {
-      enableAlwaysOnSteering_ = on;
-    }
+    // Private function declarations
+    //Non linear version of the steering controller (For SM_PATH_FOLLOW)
+    void RunLineFollowControllerNL(s16 location_pix, float headingError_rad);
+    void ManagePathFollow();
+    void ManagePointTurn();
+    void ManageDirectDrive();
+    
     
     void ReInit()
     {
@@ -55,21 +77,32 @@ namespace Anki {
       K2_ = k2;
     }
     
-    //This manages at a high level what the steering controller needs to do (steer, use open loop, etc.)
-    void Manage(s16 fidx, float headingError_rad)
+    
+    SteerMode GetMode()
     {
+      return currSteerMode_;
+    }
+    
+    //This manages at a high level what the steering controller needs to do (steer, use open loop, etc.)
+    void Manage()
+    {
+#if(DEBUG_STEERING_CONTROLLER)
+      PRINT("STEER MODE: %d\n", currSteerMode_);
+#endif
+      switch(currSteerMode_) {
       
-      // Get desired vehicle speed
-      s16 desiredVehicleSpeed = SpeedController::GetControllerCommandedVehicleSpeed();
-      
-      //If we found a valid followline, let's run the controller
-      if (fidx != INVALID_IDEAL_FOLLOW_LINE_IDX) {
-        // Run controller and pass in current speed
-        RunLineFollowControllerNL( fidx, headingError_rad );
-        
-      } else {
-        // No steering intention -- pass through speed to each wheel to drive straight while in normal mode
-        // we'll continue to use the previously commanded fidx
+        case SM_PATH_FOLLOW:
+          ManagePathFollow();
+          break;
+        case SM_DIRECT_DRIVE:
+          ManageDirectDrive();
+          break;
+        case SM_POINT_TURN:
+          ManagePointTurn();
+          break;
+        default:
+          break;
+          
       }
       
     }
@@ -136,27 +169,20 @@ namespace Anki {
       }
       
       
-      // Do ALWAYS_ON_STEERING only when car is connected
-      //if (enableAlwaysOnSteering && GetRadioSetupState() == RADIO_SETUP_CONNECTED) {
       // Desired behavior?  We probably only want the robot to actively steering when it's attempting to follow a path.
       // When it's not following a path, you should be able to push it around freely.
-      if (enableAlwaysOnSteering_) {
+      
+      //Deactivate steering if: We are not really moving and the commanded speed is zero (or smaller than 0+eps)
+      if (SpeedController::IsVehicleStopped() == TRUE && desspeed <= SpeedController::SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
+        steering_active = false;
+        
+        // Set wheel controller coast mode as we finish decelerating to 0
+        WheelController::SetCoastMode(true);
+      }
+      
+      // If we're commanding any non-zero speed, don't coast
+      if(desspeed > SpeedController::SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
         WheelController::SetCoastMode(false);
-        steering_active = TRUE;
-      } else {
-        //Deactivate steering if: We are not really moving and the commanded speed is zero (or smaller than 0+eps)
-        if (SpeedController::IsVehicleStopped() == TRUE && desspeed <= SpeedController::SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
-          steering_active = false;
-          
-          // Set wheel controller coast mode as we finish decelerating to 0
-          WheelController::SetCoastMode(true);
-        }
-        
-        // If we're commanding any non-zero speed, don't coast
-        if(desspeed > SpeedController::SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
-          WheelController::SetCoastMode(false);
-        }
-        
       }
       
       ///////////////////////////////////////////////////////////////////////////////
@@ -225,14 +251,177 @@ namespace Anki {
       s16 wright = (s16)CLIP(rightspeed,s16_MIN,s16_MAX);
       
 #if(DEBUG_STEERING_CONTROLLER)
-      fprintf(stdout, " STEERING: %d (L), %d (R)\n", wleft, wright);
+      PRINT(" STEERING: %d (L), %d (R)\n", wleft, wright);
 #endif
       
       //Command the desired wheel speeds to the wheels
       WheelController::SetDesiredWheelSpeeds(wleft, wright);
     }
     
+    
+    void SetPathFollowMode()
+    {
+      currSteerMode_ = SM_PATH_FOLLOW;
+    }
+    
+    
+    void ManagePathFollow()
+    {
+      f32 pathDistErr = 0, pathRadErr = 0;
+      s16 fidx = INVALID_IDEAL_FOLLOW_LINE_IDX;
+      if (PathFollower::IsTraversingPath()) {
+        bool gotError = PathFollower::GetPathError(pathDistErr, pathRadErr);
+        
+        if (gotError) {
+          fidx = pathDistErr*1000.f; // Convert to mm
+          PRINT("fidx: %d\n", fidx);
+#if(DEBUG_MAIN_EXECUTION)
+          {
+            using namespace Sim::OverlayDisplay;
+            SetText(PATH_ERROR, "PathError: %.4f m, %.1f deg  => fidx: %d",
+                    pathDistErr, pathRadErr * (180.f/M_PI),
+                    fidx);
+          }
+#endif
+        } else {
+          SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
+        }
+      }
+      
+      
+      //If we found a valid followline, let's run the controller
+      if (fidx != INVALID_IDEAL_FOLLOW_LINE_IDX) {
+        // Run controller and pass in current speed
+        RunLineFollowControllerNL( fidx, pathRadErr );
+        
+      } else {
+        // No steering intention -- pass through speed to each wheel to drive straight while in normal mode
+        // we'll continue to use the previously commanded fidx
+      }
+    }
+
+    
+    void ExecuteDirectDrive(f32 left_vel, f32 right_vel, f32 left_accel, f32 right_accel)
+    {
+      //PRINT("DIRECT DRIVE %f %f\n", left_vel, right_vel);
+      currSteerMode_ = SM_DIRECT_DRIVE;
+      
+      // Get current desired wheel speeds
+      f32 currLeftVel, currRightVel;
+      WheelController::GetDesiredWheelSpeeds(&currLeftVel, &currRightVel);
+      
+      targetLeftVel_ = left_vel;
+      targetRightVel_ = right_vel;
+      leftAccelPerCycle_ = ABS(left_accel) * CONTROL_DT;
+      rightAccelPerCycle_ = ABS(right_accel) * CONTROL_DT;
+      
+      if (currLeftVel > targetLeftVel_)
+        leftAccelPerCycle_ *= -1;
+      if (currRightVel > targetRightVel_)
+        rightAccelPerCycle_ *= -1;
+      
+    }
+    
+    void ManageDirectDrive()
+    {
+      // Get current desired wheel speeds
+      f32 currLeftVel, currRightVel;
+      WheelController::GetDesiredWheelSpeeds(&currLeftVel, &currRightVel);
+      
+//      PRINT("CURR: %f %f\n", targetLeftVel_, targetRightVel_);
+     
+      if (leftAccelPerCycle_ == 0) {
+        // max acceleration (i.e. command target velocity)
+        currLeftVel = targetLeftVel_;
+      } else {
+        if (ABS(currLeftVel - targetLeftVel_) < ABS(leftAccelPerCycle_)) {
+          currLeftVel = targetLeftVel_;
+        } else {
+          currLeftVel += leftAccelPerCycle_;
+        }
+      }
+      
+      if (rightAccelPerCycle_ == 0) {
+        // max acceleration (i.e. command target velocity)
+        currRightVel = targetRightVel_;
+      } else {
+        if (ABS(currRightVel - targetRightVel_) < ABS(rightAccelPerCycle_)) {
+          currRightVel = targetRightVel_;
+        } else {
+          currRightVel += rightAccelPerCycle_;
+        }
+      }
+      
+      WheelController::SetDesiredWheelSpeeds(currLeftVel, currRightVel);
+      
+    }
+    
+    void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel)
+    {
+      currSteerMode_ = SM_POINT_TURN;
+      
+      // Stop the robot if not already
+      if (SpeedController::GetUserCommandedDesiredVehicleSpeed() != 0) {
+        SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
+      }
+      
+      targetRad_ = targetAngle;
+      maxAngularVel_ = maxAngularVel;
+      angularAccel_ = angularAccel;
+      angularDecel_ = angularDecel;
+      startedPointTurn_ = false;
+    }
+    
+    void ManagePointTurn()
+    {
+      if (!SpeedController::IsVehicleStopped() && !startedPointTurn_) {
+        RunLineFollowControllerNL(0,0);
+        return;
+      }
+
+      startedPointTurn_ = true;
+      
+      
+      // TODO(kevin): Computate max reachable angular velocity and angular distance to target where we begin slowing down.
+      //...
+      
+      
+      // Compute distance to target
+      Radians currAngle = Cozmo::Localization::GetCurrentMatOrientation();
+      float angularDistToTarget = currAngle.angularDistance(targetRad_, maxAngularVel_ < 0);
+      
+      // TODO(kevin): Update current angular velocity.
+      //...For now, just command constant angular speed
+      currAngularVel_ = PIDIV2;
+      
+      // Check for stop condition
+      if (ABS(angularDistToTarget) < POINT_TURN_TARGET_DIST_STOP_RAD) {
+        currSteerMode_ = SM_PATH_FOLLOW;
+        currAngularVel_ = 0;
+#if(DEBUG_STEERING_CONTROLLER)
+        PRINT("POINT TURN: Stopping\n");
+#endif
+      }
+      
+      // Compute the velocity along the arc length equivalent of currAngularVel.
+      // currAngularVel_ / PI = arcVel / (PI * R)
+      s16 arcVel = (s16)(currAngularVel_ * WHEEL_DIST_HALF_MM); // mm/s
+      
+      // Compute the wheel velocities
+      s16 wleft = -arcVel;
+      s16 wright = arcVel;
+
+      
+#if(DEBUG_STEERING_CONTROLLER)
+      PRINT("POINT TURN: angularDistToTarget: %f radians, arcVel: %d mm/s\n", angularDistToTarget, arcVel);
+#endif
+      
+      WheelController::SetDesiredWheelSpeeds(wleft, wright);
+    }
+    
+    
   } // namespace SteeringController
+  } // namespace Cozmo
 } // namespace Anki
 
 
