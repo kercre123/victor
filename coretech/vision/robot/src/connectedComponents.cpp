@@ -1,5 +1,4 @@
 #include "anki/vision/robot/connectedComponents.h"
-#include "anki/vision/robot/fixedLengthList_vision.h"
 
 namespace Anki
 {

@@ -1,0 +1,19 @@
+#ifndef _ANKICORETECHEMBEDDED_VISION_DRAW_VISION_DECLARATIONS_H_
+#define _ANKICORETECHEMBEDDED_VISION_DRAW_VISION_DECLARATIONS_H_
+
+#include "anki/common/robot/array2d_declarations.h"
+#include "anki/common/robot/draw_declarations.h"
+
+#include "anki/vision/robot/connectedComponents_declarations.h"
+
+namespace Anki
+{
+  namespace Embedded
+  {
+    // Draw the components on the image
+    // If minValue == maxValue == 0, no scaling will be performed
+    template<typename Type> Result DrawComponents(Array<Type> &image, ConnectedComponents &components, Type minValue, Type maxValue);
+  } // namespace Embedded
+} // namespace Anki
+
+#endif // _ANKICORETECHEMBEDDED_VISION_DRAW_VISION_DECLARATIONS_H_
