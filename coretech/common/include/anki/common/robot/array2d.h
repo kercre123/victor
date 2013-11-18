@@ -258,7 +258,7 @@ namespace Anki
     }
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
-    template<typename Type> void  Array<Type>::Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues) const
+    template<typename Type> void Array<Type>::Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues) const
     {
       // If opencv is not used, just do nothing
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
@@ -268,8 +268,8 @@ namespace Anki
         cv::Mat_<f64> scaledArray(this->get_size(0), this->get_size(1));
         scaledArray = cvMatMirror;
 
-        const f64 minValue = Matrix::Min(*this);
-        const f64 maxValue = Matrix::Max(*this);
+        const f64 minValue = Matrix::Min<Type>(*this);
+        const f64 maxValue = Matrix::Max<Type>(*this);
         const f64 range = maxValue - minValue;
 
         scaledArray -= minValue;

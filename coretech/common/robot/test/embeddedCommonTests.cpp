@@ -134,6 +134,8 @@ GTEST_TEST(CoreTech_Common, Find_SetValue)
   ASSERT_TRUE(in1.IsValid());
   ASSERT_TRUE(in2.IsValid());
 
+  in1.Show("in1", true, true);
+
   u16 i1 = 0;
   u16 i2 = 0;
   for(s32 y=0; y<5; y++) {
