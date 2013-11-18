@@ -114,7 +114,7 @@ classdef Marker2D
         
         numIDs;
         origin;
-        
+        unorderedCorners;
     end
     
     %% Protected Properties
@@ -197,6 +197,8 @@ classdef Marker2D
             updated = this;
             updated.corners = newCorners(this.reorderCorners,:);
         end
+        
+        
     end 
     
     %% Dependent Get/Set Methods
@@ -207,6 +209,11 @@ classdef Marker2D
         
         function o = get.origin(this)
             o = this.corners(1,:);
+        end
+        
+        function c = get.unorderedCorners(this)
+            c = zeros(4,2);
+            c(this.reorderCorners,:) = this.corners;
         end
             
     end
