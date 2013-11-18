@@ -504,11 +504,25 @@ namespace Anki
 
                 outY++;
               } // if(Operator::Compare(pArray1[x], value))
-            } // for(s32 y=0; y<array1Height; y++)
+            } // for(s32 i=0; i<array1Width; i++)
           } else { // if(findWhichDimension == 0)
-            //
-            //
-            //
+            const Type1 * const pArray1 = array1.Pointer(0, 0);
+
+            s32 outX = 0;
+
+            // i iterates on both the width of Array array1 and the width of Array in
+            for(s32 i=0; i<array1Width; i++) {
+              if(Operator::Compare(pArray1[i], value)) {
+                for(s32 y=0; y<outHeight; y++) {
+                  ArrayType * const pOut = out.Pointer(y, outX);
+                  const ArrayType * const pIn = in.Pointer(y, i);
+
+                  *pOut = *pIn;
+                } // for(s32 y=0; y<outHeight; y++)
+
+                outX++;
+              } // if(Operator::Compare(pArray1[i], value))
+            } // for(s32 i=0; i<array1Width; i++)
           } // if(findWhichDimension == 0) ... else
         } else { // if(array1Height == 1)
           assert(array1Width == 1);

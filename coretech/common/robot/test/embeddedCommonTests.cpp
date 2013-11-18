@@ -85,6 +85,7 @@ GTEST_TEST(CoreTech_Common, Find_SetArray)
     }
   }
 
+  // Case 1-1-1
   {
     PUSH_MEMORY_STACK(ms);
     Array<s16> outB;
@@ -97,6 +98,23 @@ GTEST_TEST(CoreTech_Common, Find_SetArray)
     for(s32 y=0; y<3; y++) {
       for(s32 x=0; x<6; x++) {
         ASSERT_TRUE(outB[y][x] == inB[y+3][x]);
+      }
+    }
+  } // PUSH_MEMORY_STACK(memory);
+
+  // Case 1-1-2
+  {
+    PUSH_MEMORY_STACK(ms);
+    Array<s16> outB;
+
+    ASSERT_TRUE(find.AllocateAndSetArray(outB, inB, 1, ms) == RESULT_OK);
+
+    ASSERT_TRUE(outB.get_size(0) == 6);
+    ASSERT_TRUE(outB.get_size(1) == 3);
+
+    for(s32 y=0; y<6; y++) {
+      for(s32 x=0; x<3; x++) {
+        ASSERT_TRUE(outB[y][x] == inB[y][x+3]);
       }
     }
   } // PUSH_MEMORY_STACK(memory);
