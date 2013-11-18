@@ -74,6 +74,138 @@ namespace Anki {
       // Localization
       //void GetGlobalPose(f32 &x, f32 &y, f32& rad);
       
+
+      float GetHeadAngle()
+      {
+        return headMotor_->getPosition();
+      }
+      
+      float GetLiftAngle()
+      {
+        return liftMotor_->getPosition();
+      }
+
+      float GetLeftWheelSpeed()
+      {
+        const double* axesSpeeds_rad_per_s = leftWheelGyro_->getValues();
+        //float mm_per_s = -axesSpeeds_rad_per_s[1] * WHEEL_RAD_TO_MM;   // true speed
+        float mm_per_s = ABS(axesSpeeds_rad_per_s[1] * WHEEL_RAD_TO_MM); // non-quadrature encoder speed (i.e. always +ve)
+        //PRINT("LEFT: %f rad/s, %f mm/s\n", -axesSpeeds_rad_per_s[1], mm_per_s);
+        return mm_per_s;
+      }
+      
+      float GetRightWheelSpeed()
+      {
+        const double* axesSpeeds_rad_per_s = rightWheelGyro_->getValues();
+        //float mm_per_s = -axesSpeeds_rad_per_s[1] * WHEEL_RAD_TO_MM;   // true speed
+        float mm_per_s = ABS(axesSpeeds_rad_per_s[1] * WHEEL_RAD_TO_MM); // non-quadrature encoder speed (i.e. always +ve)
+        //PRINT("RIGHT: %f rad/s, %f mm/s\n", -axesSpeeds_rad_per_s[1], mm_per_s);
+        return mm_per_s;
+      }
+
+      
+      void SetLeftWheelSpeed(f32 mm_per_s)
+      {
+        f32 rad_per_s = -mm_per_s / WHEEL_RAD_TO_MM;
+        leftWheelMotor_->setVelocity(rad_per_s);
+      }
+      
+      void SetRightWheelSpeed(f32 mm_per_s)
+      {
+        f32 rad_per_s = -mm_per_s / WHEEL_RAD_TO_MM;
+        rightWheelMotor_->setVelocity(rad_per_s);
+      }
+      
+      float GetLeftWheelPosition()
+      {
+        return leftWheelMotor_->getPosition();
+      }
+      
+      float GetRightWheelPosition()
+      {
+        return rightWheelMotor_->getPosition();
+      }
+      
+      
+      void SetHeadAngularVelocity(const f32 rad_per_sec)
+      {
+        // Only tilt if we are within limits
+        // (Webots MaxStop and MinStop don't seem to be working: perhaps
+        //  because the motors are in velocity control mode?)
+        const f32 currentHeadAngle = GetHeadAngle();
+        if(currentHeadAngle >= MIN_HEAD_ANGLE &&
+           currentHeadAngle <= MAX_HEAD_ANGLE)
+        {
+          headMotor_->setVelocity(rad_per_sec);
+        } else {
+          PRINT("Head at angular limit, refusing to tilt.\n");
+          headMotor_->setVelocity(0.0);
+          // TODO: return a failure?
+        }
+      }
+      
+      
+      void SetLiftAngularVelocity(const f32 rad_per_sec)
+      {
+        liftMotor_->setVelocity(rad_per_sec);
+        liftMotor2_->setVelocity(-rad_per_sec);
+      }
+      
+      void EngageGripper()
+      {
+        //Should we lock to a block which is close to the connector?
+        if (!gripperEngaged_ && con_->getPresence() == 1)
+        {
+          if (unlockhysteresis_ == 0)
+          {
+            con_->lock();
+            gripperEngaged_ = true;
+            //printf("LOCKED!\n");
+          }else{
+            unlockhysteresis_--;
+          }
+        }
+      }
+      
+      void DisengageGripper()
+      {
+        if (gripperEngaged_)
+        {
+          gripperEngaged_ = false;
+          unlockhysteresis_ = UNLOCK_HYSTERESIS;
+          con_->unlock();
+          //printf("UNLOCKED!\n");
+        }
+      }
+      
+      /////////// Comms /////////////
+      void ManageRecvBuffer()
+      {
+        // Check for incoming data.
+        // Add it to receive buffer.
+        // Check for special "radio-level" messages (i.e. pings, connection requests)
+        // and respond accordingly.
+        
+        int dataSize;
+        const void* data;
+        
+        // Read receiver for as long as it is not empty.
+        while (rx_->getQueueLength() > 0) {
+          
+          // Get head packet
+          data = rx_->getData();
+          dataSize = rx_->getDataSize();
+          
+          // Copy data to receive buffer
+          memcpy(&recvBuf_[recvBufSize_], data, dataSize);
+          recvBufSize_ += dataSize;
+          
+          // Delete processed packet from queue
+          rx_->nextPacket();
+        }
+      } // ManageRecvBuffer()
+
+      
     } // "private" namespace
     
     namespace Sim {
@@ -160,12 +292,12 @@ namespace Anki {
       if (lastDelimPos != std::string::npos) {
         robotID_ = atoi( name.substr(lastDelimPos+1).c_str() );
         if (robotID_ < 1) {
-          fprintf(stdout, "***ERROR: Invalid robot name (%s). ID must be greater than 0\n", name.c_str());
+          PRINT("***ERROR: Invalid robot name (%s). ID must be greater than 0\n", name.c_str());
           return EXIT_FAILURE;
         }
-        fprintf(stdout, "Initializing robot ID: %d\n", robotID_);
+        PRINT("Initializing robot ID: %d\n", robotID_);
       } else {
-        fprintf(stdout, "***ERROR: Cozmo robot name %s is invalid.  Must end with '_<ID number>'\n.", name.c_str());
+        PRINT("***ERROR: Cozmo robot name %s is invalid.  Must end with '_<ID number>'\n.", name.c_str());
         return EXIT_FAILURE;
       }
       
@@ -250,88 +382,22 @@ namespace Anki {
       const double* northVector = compass_->getValues();
       
       x = position[0];
-      y = position[2];
+      y = -position[2];
       
       rad = std::atan2(northVector[2], northVector[0]);
       
+      //PRINT("GroundTruth:  pos %f %f %f   rad %f %f %f\n", position[0], position[1], position[2],
+      //      northVector[0], northVector[1], northVector[2]);
+      
+      
     } // GetGroundTruthPose()
     
-    
-    void HAL::SetLeftWheelAngularVelocity(float rad_per_sec)
-    {
-      leftWheelMotor_->setVelocity(-rad_per_sec);
-    }
-    
-    void HAL::SetRightWheelAngularVelocity(float rad_per_sec)
-    {
-      rightWheelMotor_->setVelocity(-rad_per_sec);
-    }
-    
-    void HAL::SetWheelAngularVelocity(float left_rad_per_sec, float right_rad_per_sec)
-    {
-      leftWheelMotor_->setVelocity(-left_rad_per_sec);
-      rightWheelMotor_->setVelocity(-right_rad_per_sec);
-    }
-    
-    float HAL::GetLeftWheelPosition()
-    {
-      return leftWheelMotor_->getPosition();
-    }
-    
-    float HAL::GetRightWheelPosition()
-    {
-      return rightWheelMotor_->getPosition();
-    }
-    
-    void HAL::GetWheelPositions(float &left_rad, float &right_rad)
-    {
-      left_rad = leftWheelMotor_->getPosition();
-      right_rad = rightWheelMotor_->getPosition();
-    }
-    
-    float HAL::GetLeftWheelSpeed()
-    {
-      const double* axesSpeeds_rad_per_s = leftWheelGyro_->getValues();
-      float mm_per_s = -axesSpeeds_rad_per_s[0] * WHEEL_RAD_TO_MM;
-      //printf("LEFT: %f rad/s, %f mm/s\n", -axesSpeeds_rad_per_s[0], mm_per_s);
-      return mm_per_s;
-    }
-    
-    float HAL::GetRightWheelSpeed()
-    {
-      const double* axesSpeeds_rad_per_s = rightWheelGyro_->getValues();
-      float mm_per_s = -axesSpeeds_rad_per_s[0] * WHEEL_RAD_TO_MM;
-      //printf("RIGHT: %f rad/s, %f mm/s\n", -axesSpeeds_rad_per_s[0], mm_per_s);
-      return mm_per_s;
-    }
-  
     /* Won't be able to do this on real robot, can only command power/speed
     void HAL::SetHeadPitch(float pitch_rad)
     {
       headMotor_->setPosition(pitch_rad);
     }
      */
-    void HAL::SetHeadAngularVelocity(const f32 rad_per_sec)
-    {
-      // Only tilt if we are within limits
-      // (Webots MaxStop and MinStop don't seem to be working: perhaps
-      //  because the motors are in velocity control mode?)
-      const f32 currentHeadAngle = HAL::GetHeadAngle();
-      if(currentHeadAngle >= MIN_HEAD_ANGLE &&
-         currentHeadAngle <= MAX_HEAD_ANGLE)
-      {
-        headMotor_->setVelocity(rad_per_sec);
-      } else {
-        fprintf(stdout, "Head at angular limit, refusing to tilt.\n");
-        headMotor_->setVelocity(0.0);
-        // TODO: return a failure?
-      }
-    }
-    
-    float HAL::GetHeadAngle()
-    {
-      return headMotor_->getPosition();
-    }
     
     /* Won't be able to command angular position directly on real robot, can 
      only set power/speed
@@ -341,43 +407,6 @@ namespace Anki {
       liftMotor2_->setPosition(-pitch_rad);
     }
      */
-    void HAL::SetLiftAngularVelocity(const f32 rad_per_sec)
-    {
-      liftMotor_->setVelocity(rad_per_sec);
-      liftMotor2_->setVelocity(-rad_per_sec);
-    }
-    
-    float HAL::GetLiftAngle()
-    {
-      return liftMotor_->getPosition();
-    }
-        
-    void HAL::EngageGripper()
-    {
-      //Should we lock to a block which is close to the connector?
-      if (!gripperEngaged_ && con_->getPresence() == 1)
-      {
-        if (unlockhysteresis_ == 0)
-        {
-          con_->lock();
-          gripperEngaged_ = true;
-          //printf("LOCKED!\n");
-        }else{
-          unlockhysteresis_--;
-        }
-      }
-    }
-    
-    void HAL::DisengageGripper()
-    {
-      if (gripperEngaged_)
-      {
-        gripperEngaged_ = false;
-        unlockhysteresis_ = UNLOCK_HYSTERESIS;
-        con_->unlock();
-        //printf("UNLOCKED!\n");
-      }
-    }
     
     bool HAL::IsGripperEngaged() {
       return gripperEngaged_;
@@ -387,7 +416,7 @@ namespace Anki {
     {
       using namespace Sim::OverlayDisplay;
      /*
-      fprintf(stdout, "speedDes: %d, speedCur: %d, speedCtrl: %d, speedMeas: %d\n",
+      PRINT("speedDes: %d, speedCur: %d, speedCtrl: %d, speedMeas: %d\n",
               GetUserCommandedDesiredVehicleSpeed(),
               GetUserCommandedCurrentVehicleSpeed(),
               GetControllerCommandedVehicleSpeed(),
@@ -395,6 +424,111 @@ namespace Anki {
       */
        
     } // HAL::UpdateDisplay()
+    
+    
+    
+    // Set the motor power in the unitless range [-1.0, 1.0]
+    void HAL::MotorSetPower(MotorID motor, f32 power)
+    {
+      switch(motor) {
+        case MOTOR_LEFT_WHEEL:
+          // TODO: Assuming linear relationship, but it's not!
+          SetLeftWheelSpeed(power * MAX_WHEEL_SPEED);
+          break;
+        case MOTOR_RIGHT_WHEEL:
+          // TODO: Assuming linear relationship, but it's not!
+          SetRightWheelSpeed(power * MAX_WHEEL_SPEED);
+          break;
+        case MOTOR_LIFT:
+          // TODO: Assuming linear relationship, but it's not!
+          SetLiftAngularVelocity(power * MAX_LIFT_SPEED);
+          break;
+        case MOTOR_GRIP:
+          if (power > 0) {
+            EngageGripper();
+          } else {
+            DisengageGripper();
+          }
+          break;
+        case MOTOR_HEAD:
+          // TODO: Assuming linear relationship, but it's not!
+          SetHeadAngularVelocity(power * MAX_HEAD_SPEED);
+          break;
+        default:
+          PRINT("ERROR (HAL::MotorSetPower) - Undefined motor type %d\n", motor);
+          return;
+      }
+    }
+    
+    // Reset the internal position of the specified motor to 0
+    void HAL::MotorResetPosition(MotorID motor)
+    {
+      // TODO
+      switch(motor) {
+        case MOTOR_LEFT_WHEEL:
+          break;
+        case MOTOR_RIGHT_WHEEL:
+          break;
+        case MOTOR_LIFT:
+          break;
+        case MOTOR_GRIP:
+          break;
+        case MOTOR_HEAD:
+          break;
+        default:
+          PRINT("ERROR (HAL::MotorResetPosition) - Undefined motor type %d\n", motor);
+          return;
+      }
+    }
+    
+    // Returns units based on the specified motor type:
+    // Wheels are in mm/s, everything else is in degrees/s.
+    f32 HAL::MotorGetSpeed(MotorID motor)
+    {
+      switch(motor) {
+        case MOTOR_LEFT_WHEEL:
+          return GetLeftWheelSpeed();
+        case MOTOR_RIGHT_WHEEL:
+          return GetRightWheelSpeed();
+        case MOTOR_LIFT:
+          // TODO: add gyros
+          break;
+        case MOTOR_GRIP:
+          // TODO
+          break;
+        case MOTOR_HEAD:
+          // TODO
+          break;
+        default:
+          PRINT("ERROR (HAL::MotorGetSpeed) - Undefined motor type %d\n", motor);
+          break;
+      }
+      return 0;
+    }
+    
+    // Returns units based on the specified motor type:
+    // Wheels are in mm since reset, everything else is in degrees.
+    f32 HAL::MotorGetPosition(MotorID motor)
+    {
+      switch(motor) {
+        case MOTOR_LEFT_WHEEL:
+          return GetLeftWheelPosition();
+        case MOTOR_RIGHT_WHEEL:
+          return GetRightWheelPosition(); // TODO: Change to mm/s!
+        case MOTOR_LIFT:
+          return GetLiftAngle();
+        case MOTOR_GRIP:
+          // TODO
+          break;
+        case MOTOR_HEAD:
+          return GetHeadAngle();
+        default:
+          PRINT("ERROR (HAL::MotorGetPosition) - Undefined motor type %d\n", motor);
+          break;
+      }
+      return 0;
+    }
+    
     
     
     ReturnCode HAL::Step(void)
@@ -411,49 +545,26 @@ namespace Anki {
     
     
     
-    /////////// Comms /////////////
-    void HAL::ManageRecvBuffer()
-    {
-      // Check for incoming data.
-      // Add it to receive buffer.
-      // Check for special "radio-level" messages (i.e. pings, connection requests)
-      // and respond accordingly.
-      
-      int dataSize;
-      const void* data;
-      
-      // Read receiver for as long as it is not empty.
-      while (rx_->getQueueLength() > 0) {
-        
-        // Get head packet
-        data = rx_->getData();
-        dataSize = rx_->getDataSize();
-        
-        // Copy data to receive buffer
-        memcpy(&recvBuf_[recvBufSize_], data, dataSize);
-        recvBufSize_ += dataSize;
-        
-        // Delete processed packet from queue
-        rx_->nextPacket();
-      }
-    } // ManageRecvBuffer()
     
-    void HAL::SendMessage(const void* data, int size)
+    bool HAL::RadioToBase(u8* buffer, u32 size)
     {
       // Prefix data with message header (0xBEEF + robotID)
       u8 msg[1024] = {COZMO_WORLD_MSG_HEADER_BYTE_1,
         COZMO_WORLD_MSG_HEADER_BYTE_2, static_cast<u8>(robotID_)};
       
       if(size+3 > 1024) {
-        fprintf(stdout, "Data too large to send with prepended header!\n");
+        PRINT("Data too large to send with prepended header!\n");
       } else {
-        memcpy(msg+3, data, size);
+        memcpy(msg+3, buffer, size);
         tx_->send(msg, size+3);
       }
+      return true;
     } // SendMessage()
     
-    int HAL::RecvMessage(void* data)
+    u32 HAL::RadioFromBase(u8 buffer[RADIO_BUFFER_SIZE])
     {
+      ManageRecvBuffer();
+      
       // TODO: check for and remove 0xBEEF?
       
       // Is there any data in the receive buffer?
@@ -464,7 +575,7 @@ namespace Anki {
         if (recvBufSize_ >= firstMsgSize) {
           
           // Copy to passed in buffer
-          memcpy(data, recvBuf_, firstMsgSize);
+          memcpy(buffer, recvBuf_, firstMsgSize);
           
           // Shift data down
           recvBufSize_ -= firstMsgSize;

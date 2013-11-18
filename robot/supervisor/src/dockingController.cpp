@@ -4,12 +4,21 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/visionSystem.h"
+#include "anki/cozmo/robot/steeringController.h"
 
 namespace Anki {
   namespace Cozmo {
     namespace DockingController {
       
       namespace {
+        
+        // Constants
+        
+        // Power that is applied when engaging the gripper
+        const f32 GRIPPER_ENGAGE_POWER = 0.5;
+        
+        // Power that is applied when disengaging the gripper
+        const f32 GRIPPER_DISENGAGE_POWER = -0.05;
         
         // Phases of docking: approach the block using visual servoing,
         // set the lift for gripping, grip the block.
@@ -130,8 +139,9 @@ namespace Anki {
         }
         
         // Command the speeds
-        // TODO: convert from desired velocity to power and use SetOpenLoopMotorSpeed()
-        HAL::SetWheelAngularVelocity(leftMotorVelocity, leftMotorVelocity);
+        // TODO: Replacing obsolete SetWheelAngularVelocity(). This probably breaks everything since inputs are now in mm/s
+        //       and the underlying controller is different.
+        SteeringController::ExecuteDirectDrive(leftMotorVelocity, leftMotorVelocity);
         
       } // ApproachBlock()
       
@@ -164,7 +174,7 @@ namespace Anki {
                 ApproachBlock();
                 
               } else {
-                fprintf(stdout, "Failed to find docking target.\n");
+                PRINT("Failed to find docking target.\n");
                 mode_ = DONE;
                 success_ = false;
                 
@@ -182,9 +192,9 @@ namespace Anki {
             case GRIP:
             {
               
-              HAL::EngageGripper();
+              EngageGripper();
               
-              if(HAL::IsGripperEngaged()) {
+              if(IsGripperEngaged()) {
                 mode_ = DONE;
                 success_ = true;
               }
@@ -196,7 +206,7 @@ namespace Anki {
             {
               mode_ = DONE;
               success_ = false;
-              fprintf(stdout, "Reached default case in DockingController "
+              PRINT("Reached default case in DockingController "
                       "mode switch statement.\n");
             } // default case
               
@@ -212,6 +222,25 @@ namespace Anki {
         return retVal;
         
       } // Update()
+      
+      
+      
+      // Gripper control
+      void EngageGripper()
+      {
+        HAL::MotorSetPower(HAL::MOTOR_GRIP, GRIPPER_ENGAGE_POWER);
+      }
+      void DisengageGripper()
+      {
+        HAL::MotorSetPower(HAL::MOTOR_GRIP, GRIPPER_DISENGAGE_POWER);
+      }
+      bool IsGripperEngaged()
+      {
+        // TODO: Check load or position to see if gripper is engaged?
+        //       Need to rethink this function...
+        return HAL::IsGripperEngaged();
+      }
+      
 
       } // namespace DockingController
     } // namespace Cozmo

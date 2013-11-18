@@ -30,7 +30,7 @@
 
 //#include <math.h>
 //#include "hal/portable.h"
-#include "anki/cozmo/robot/assert.h"
+#include <assert.h>
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/debug.h"
 #include "anki/cozmo/robot/speedController.h"
@@ -42,6 +42,7 @@
 #include "anki/common/robot/utilities_c.h"
 
 namespace Anki {
+  namespace Cozmo {
   namespace SpeedController {
     
     
@@ -56,7 +57,8 @@ namespace Anki {
       s16 userCommandedCurrentVehicleSpeed_ = 0;
       
       // The absolute value (max value) acceleration/deceleration the user commanded to the car [mm/sec^2]
-      s16 userCommandedAcceleration_ = 0;
+      const s16 DEFAULT_ACCEL_MMPS = 1000;
+      s16 userCommandedAcceleration_ = MAX(Anki::Cozmo::ONE_OVER_CONTROL_DT, DEFAULT_ACCEL_MMPS);
       
       // The controller needs to regulate the speed of the car "around" the user commanded speed [mm/sec]
       s16 controllerCommandedVehicleSpeed_ = 0;
@@ -244,7 +246,7 @@ namespace Anki {
 #endif
       
 #if(DEBUG_SPEED_CONTROLLER)
-      fprintf(stdout, " controllerSpeed: %d, currError: %d, errorSum: %d\n", controllerCommandedVehicleSpeed, currerror, errorsum);
+      PRINT(" SPEED_CTRL: userDesSpeed: %d, userCurrSpeed: %d, userAccel: %d, controllerSpeed: %d, currError: %d, errorSum: %d\n", userCommandedDesiredVehicleSpeed_, userCommandedCurrentVehicleSpeed_, userCommandedAcceleration_, controllerCommandedVehicleSpeed_, currerror, errorsum_);
 #endif
       
       Traces16(TRACE_VAR_VSC_DESIRED_SPEED, desVehicleSpeed, TRACE_MASK_MOTOR_CONTROLLER);
@@ -269,6 +271,7 @@ namespace Anki {
     }
     
   } // namespace SpeedController
+  } // namespace Cozmo
 } // namespace Anki
 
 

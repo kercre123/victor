@@ -29,6 +29,7 @@ namespace Anki {
       // TODO: Add if/when needed?
       // ReturnCode Init();
       
+      void SetAngularVelocity(const f32 rad_per_sec);
       void SetDesiredHeight(const f32 height_mm);
       bool IsInPosition();
       

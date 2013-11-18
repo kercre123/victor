@@ -22,6 +22,9 @@ include_directories(
 # Link paths
 link_directories( ${WEBOTS_LIB_DIR} )
 
+# Defines
+add_definitions(-DSIMULATOR)
+
 # NEed to get Cmake to do this somehow...
 #-L/Applications/Webots/lib/ -lCppController -L../../../coretech-common/build/xcode4/lib/ -lCoreTech_Common_Embedded_64Debug -lCoreTech_Common_64Debug -L/Applications/MATLAB_R2012b.app/bin/maci64/ -lmx -leng -Wl,-rpath,${MATLAB_APP_ROOT}/bin/maci64/
 
@@ -44,11 +47,8 @@ set(SOURCE_FILES
   ${ROBOT_SRC_DIR}/steeringController.cpp
   ${ROBOT_SRC_DIR}/speedController.cpp
 	${ROBOT_SRC_DIR}/wheelController.cpp
-	${ROBOT_SRC_DIR}/vehicleMath.cpp
 	${ROBOT_SRC_DIR}/visionSystem.cpp
-
-#	${COZMO_ROBOT_SRC_DIR}/mainExecution.cpp
-#	${COZMO_ROBOT_SRC_DIR}/sim_localization.cpp
+	${ROBOT_SRC_DIR}/testModeController.cpp
 
 	${PROJECT_SOURCE_DIR}/coretech/messaging/robot/utilMessaging.c
 
@@ -61,6 +61,7 @@ set(HEADER_FILES
  ${ROBOT_SRC_DIR}/dockingController.h
  ${ROBOT_SRC_DIR}/headController.h
  ${ROBOT_SRC_DIR}/liftController.h
+ ${ROBOT_SRC_DIR}/testModeController.h
 
 	${SIMULATOR_SRC_DIR}/keyboardController.h
   ${SIMULATOR_SRC_DIR}/sim_pathFollower.h

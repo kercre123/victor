@@ -38,7 +38,7 @@ int main(int argc, char **argv)
     return -1;
   }
   
-  Sim::KeyboardController::Enable();
+  //Sim::KeyboardController::Enable();
   
   while(Robot::step_MainExecution() == EXIT_SUCCESS)
   {

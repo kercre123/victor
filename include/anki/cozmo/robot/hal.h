@@ -32,8 +32,10 @@
 
 #ifndef ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
 #define ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
-
+#include "anki/common/robot/config.h"
+#include "anki/common/robot/utilities_c.h"
 #include "anki/common/types.h"
+#include "anki/common/constantsAndMacros.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,6 +47,31 @@ extern "C" {
 #ifdef MOVI_TOOLS
 #undef printf
 #define printf(...) _xprintf(Anki::Cozmo::HAL::UARTPutChar, 0, __VA_ARGS__)
+//#define PRINT(...) _xprintf(Anki::Cozmo::HAL::UARTPutChar, 0, __VA_ARGS__)
+#define PRINT(...) explicitPrintf(0, __VA_ARGS__)
+
+// Prints once every num_calls_between_prints times you call it
+#define PERIODIC_PRINT(num_calls_between_prints, ...)  \
+{ \
+  static u16 cnt = num_calls_between_prints; \
+  if (cnt++ >= num_calls_between_prints) { \
+    explicitPrintf(0, __VA_ARGS__); \
+    cnt = 0; \
+  } \
+}
+
+#elif defined(SIMULATOR)
+#define PRINT(...) fprintf(stdout, __VA_ARGS__)
+
+#define PERIODIC_PRINT(num_calls_between_prints, ...)  \
+{ \
+  static u16 cnt = num_calls_between_prints; \
+  if (cnt++ >= num_calls_between_prints) { \
+    fprintf(stdout, __VA_ARGS__); \
+    cnt = 0; \
+  } \
+}
+
 #endif  // MOVI_TOOLS
 
 #define REG_WORD(x) *(volatile u32*)(x)
@@ -61,6 +88,22 @@ namespace Anki
       //
       const u8  NUM_RADIAL_DISTORTION_COEFFS = 5;
       const f32 MOTOR_PWM_MAXVAL = 2400.f;
+      const f32 MOTOR_MAX_POWER = 1.0f;
+      
+      ///////////////////
+      // TODO: The following are constants for a naive linear approximation of power to speed,
+      // which is definitely a non-linear relationship. Eventually, we should figure out the true
+      // relationship on the robot so that the simulator can approximate it.
+      
+      // The max angular speed the head can move when max power is commanded.
+      const f32 MAX_HEAD_SPEED = 2*PI; // rad/s
+      
+      // The max angular speed the head can move when max power is commanded.
+      const f32 MAX_LIFT_SPEED = PI/2; // rad/s
+      
+      const f32 MAX_WHEEL_SPEED = 300; //mm/s
+      //////////////////////
+      
       
       //
       // Typedefs
@@ -85,34 +128,8 @@ namespace Anki
       
       ReturnCode Init(void);
       void Destroy(void);
-      
-      // Wheel motors
-      void SetLeftWheelAngularVelocity(f32 rad_per_sec);
-      void SetRightWheelAngularVelocity(f32 rad_per_sec);
-      
-      void SetWheelAngularVelocity(f32 left_rad_per_sec,
-                                   f32 right_rad_per_sec);
-      
-      f32  GetLeftWheelPosition();
-      f32  GetRightWheelPosition();
-      void GetWheelPositions(f32 &left_rad, f32 &right_rad);
-      
-      f32 GetLeftWheelSpeed();
-      f32 GetRightWheelSpeed();
-      
-      // Head pitch
-      //void SetHeadPitch(f32 pitch_rad);
-      void SetHeadAngularVelocity(const f32 rad_per_sec);
-      f32  GetHeadAngle();
-      
-      // Lift position
-      //void SetLiftPitch(f32 pitch_rad);
-      void SetLiftAngularVelocity(const f32 rad_per_sec);
-      f32  GetLiftAngle();
-      
+
       // Gripper control
-      void EngageGripper();
-      void DisengageGripper();
       bool IsGripperEngaged();
       
       // Cameras
@@ -130,9 +147,6 @@ namespace Anki
       const CameraInfo* GetMatCamInfo() ;
       
       // Communications
-      void ManageRecvBuffer();
-      void SendMessage(const void* data, s32 size);
-      s32  RecvMessage(void* data);
       bool IsConnected();
       
       // Misc

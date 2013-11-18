@@ -4,13 +4,17 @@
 #include "anki/common/constantsAndMacros.h"
 #include "anki/common/types.h"
 
-#include "anki/cozmo/robot/vehicleMath.h"
 
 namespace Anki {
   namespace Cozmo {
 
-    // Cozmo control loop is 100Hz
+#ifdef SIMULATOR
+    // Cozmo control loop is 100Hz on simulator. (That's as fast as it goes!)
     const s32 TIME_STEP = 10;
+#else
+    // Control loop on robot is 500Hz.
+    const s32 TIME_STEP = 2;
+#endif
     
     const f32 CONTROL_DT = TIME_STEP*0.001f;
     const f32 ONE_OVER_CONTROL_DT = 1.0f/CONTROL_DT;

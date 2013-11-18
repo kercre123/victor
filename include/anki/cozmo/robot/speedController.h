@@ -7,6 +7,7 @@
 #define VEHICLEARM_SPEED_CONTROLLER_H_
 
 namespace Anki {
+  namespace Cozmo {
   namespace SpeedController {
     
     // Controller params
@@ -59,6 +60,7 @@ namespace Anki {
     void TraceSpeedControllerVars(u8 traceLevel);
     
   } // namespace SpeedController
+  } // namespace Cozmo
 } // namespace Anki
 
 #endif

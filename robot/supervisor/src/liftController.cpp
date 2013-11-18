@@ -1,12 +1,10 @@
 #include "liftController.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/common/robot/trig_fast.h"
 #include "anki/common/robot/utilities_c.h"
+#include "anki/common/shared/radians.h"
 
-// TODO: this needs to get moved out of basestation
-#include "anki/common/basestation/math/radians.h"
-
-#include "cmath"
 
 namespace Anki {
   namespace Cozmo {
@@ -25,10 +23,19 @@ namespace Anki {
         
       } // "private" members
       
+      void SetAngularVelocity(const f32 rad_per_sec)
+      {
+        // TODO: Figure out power-to-speed ratio on actual robot. Normalize with battery power?
+        f32 power = CLIP(rad_per_sec / HAL::MAX_LIFT_SPEED, -1.0, 1.0);
+        HAL::MotorSetPower(HAL::MOTOR_LIFT, power);
+        inPosition_ = true;
+      }
+      
+      
       void SetDesiredHeight(const f32 height_mm)
       {
         // Convert desired height into the necessary angle:
-        desiredAngle_ = asinf((height_mm - LIFT_JOINT_HEIGHT)/LIFT_LENGTH);
+        desiredAngle_ = asin_fast((height_mm - LIFT_JOINT_HEIGHT)/LIFT_LENGTH);
         inPosition_ = false;
       }
       
@@ -45,16 +52,16 @@ namespace Anki {
           
           // Simple proportional control for now
           // TODO: better controller?
-          currentAngle_ = HAL::GetLiftAngle();
+          currentAngle_ = HAL::MotorGetPosition(HAL::MOTOR_LIFT);
           angleError_ = desiredAngle_ - currentAngle_;
           
           // TODO: convert angleError_ to power / speed in some reasonable way
           if(ABS(angleError_) < ANGLE_TOLERANCE) {
             inPosition_ = true;
-            HAL::SetLiftAngularVelocity(0.f);
+            SetAngularVelocity(0.f);
           } else {
             inPosition_ = false;
-            HAL::SetLiftAngularVelocity(Kp * angleError_.ToFloat());
+            SetAngularVelocity(Kp * angleError_.ToFloat());
           }
         } // if not in position
         

@@ -9,6 +9,7 @@
 #include "anki/common/robot/matrix.h"
 #include "anki/common/robot/comparisons.h"
 #include "anki/common/robot/arraySlices.h"
+#include "anki/common/robot/find.h"
 
 using namespace Anki::Embedded;
 
@@ -57,6 +58,402 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, ZeroSizedArray)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<s32> in1(1,6,ms);
+  Array<s32> in2(1,6,ms);
+
+  ASSERT_TRUE(in1.IsValid());
+  ASSERT_TRUE(in2.IsValid());
+
+  for(s32 x=0; x<6; x++) {
+    in1[0][x] = x;
+    in2[0][x] = x*100;
+  }
+
+  // This is always false
+  Find<s32,Comparison::GreaterThan<s32,s32>,s32> find(in1, in2);
+
+  Array<s32> yIndexes;
+  Array<s32> xIndexes;
+
+  ASSERT_TRUE(find.Evaluate(yIndexes, xIndexes, ms) == RESULT_OK);
+
+  ASSERT_TRUE(!yIndexes.IsValid());
+  ASSERT_TRUE(!xIndexes.IsValid());
+  ASSERT_TRUE(yIndexes.get_size(0) == 1);
+  ASSERT_TRUE(yIndexes.get_size(1) == 0);
+  ASSERT_TRUE(xIndexes.get_size(0) == 1);
+  ASSERT_TRUE(xIndexes.get_size(1) == 0);
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<s32> in1(1,6,ms);
+  Array<s32> in2(1,6,ms);
+
+  Array<s32> in1b(6,1,ms);
+  Array<s32> in2b(6,1,ms);
+
+  ASSERT_TRUE(in1.IsValid());
+  ASSERT_TRUE(in2.IsValid());
+
+  ASSERT_TRUE(in1b.IsValid());
+  ASSERT_TRUE(in2b.IsValid());
+
+  for(s32 x=0; x<6; x++) {
+    in1[0][x] = x;
+    in2[0][x] = x*100;
+
+    in1b[x][0] = x;
+    in2b[x][0] = x*100;
+  }
+
+  in1(0,0,0,2).Set(2000);
+  in1b(0,2,0,0).Set(2000);
+
+  //in1:
+  //2000 2000 2000 3 4 5
+
+  //in2:
+  //0 100 200 300 400 500
+
+  Find<s32,Comparison::LessThanOrEqual<s32,s32>,s32> find(in1, in2);
+  Find<s32,Comparison::LessThanOrEqual<s32,s32>,s32> findB(in1b, in2b);
+
+  ASSERT_TRUE(find.IsValid());
+
+  // 2D indexes horizontal
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s32> yIndexes;
+    Array<s32> xIndexes;
+
+    ASSERT_TRUE(find.Evaluate(yIndexes, xIndexes, ms) == RESULT_OK);
+
+    ASSERT_TRUE(yIndexes.get_size(0) == 1);
+    ASSERT_TRUE(yIndexes.get_size(1) == 3);
+
+    ASSERT_TRUE(xIndexes.get_size(0) == 1);
+    ASSERT_TRUE(xIndexes.get_size(1) == 3);
+
+    //yIndexes.Print("yIndexes");
+    //xIndexes.Print("xIndexes");
+
+    const s32 yIndexes_groundTruth[3] = {0, 0, 0};
+    const s32 xIndexes_groundTruth[3] = {3, 4, 5};
+
+    for(s32 i=0; i<3; i++) {
+      ASSERT_TRUE(yIndexes[0][i] == yIndexes_groundTruth[i]);
+      ASSERT_TRUE(xIndexes[0][i] == xIndexes_groundTruth[i]);
+    }
+  } // PUSH_MEMORY_STACK(ms)
+
+  // 1D indexes horizontal
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s32> indexes;
+
+    ASSERT_TRUE(find.Evaluate(indexes, ms) == RESULT_OK);
+
+    ASSERT_TRUE(indexes.get_size(0) == 1);
+    ASSERT_TRUE(indexes.get_size(1) == 3);
+
+    //indexes.Print("indexes");
+
+    const s32 indexes_groundTruth[3] = {3, 4, 5};
+
+    for(s32 i=0; i<3; i++) {
+      ASSERT_TRUE(indexes[0][i] == indexes_groundTruth[i]);
+    }
+  } // PUSH_MEMORY_STACK(ms)
+
+  // 2D indexes vertical
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s32> yIndexes;
+    Array<s32> xIndexes;
+
+    ASSERT_TRUE(findB.Evaluate(yIndexes, xIndexes, ms) == RESULT_OK);
+
+    ASSERT_TRUE(yIndexes.get_size(0) == 1);
+    ASSERT_TRUE(yIndexes.get_size(1) == 3);
+
+    ASSERT_TRUE(xIndexes.get_size(0) == 1);
+    ASSERT_TRUE(xIndexes.get_size(1) == 3);
+
+    //yIndexes.Print("yIndexes");
+    //xIndexes.Print("xIndexes");
+
+    const s32 xIndexes_groundTruth[3] = {0, 0, 0};
+    const s32 yIndexes_groundTruth[3] = {3, 4, 5};
+
+    for(s32 i=0; i<3; i++) {
+      ASSERT_TRUE(yIndexes[0][i] == yIndexes_groundTruth[i]);
+      ASSERT_TRUE(xIndexes[0][i] == xIndexes_groundTruth[i]);
+    }
+  } // PUSH_MEMORY_STACK(ms)
+
+  // 1D indexes vertical
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s32> indexes;
+
+    ASSERT_TRUE(findB.Evaluate(indexes, ms) == RESULT_OK);
+
+    ASSERT_TRUE(indexes.get_size(0) == 1);
+    ASSERT_TRUE(indexes.get_size(1) == 3);
+
+    //indexes.Print("indexes");
+
+    const s32 indexes_groundTruth[3] = {3, 4, 5};
+
+    for(s32 i=0; i<3; i++) {
+      ASSERT_TRUE(indexes[0][i] == indexes_groundTruth[i]);
+    }
+  } // PUSH_MEMORY_STACK(ms)
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, Find_Evaluate2D)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<s32> in1(5,6,ms);
+  Array<s32> in2(5,6,ms);
+
+  ASSERT_TRUE(in1.IsValid());
+  ASSERT_TRUE(in2.IsValid());
+
+  s32 i1 = 0;
+  s32 i2 = 0;
+  for(s32 y=0; y<5; y++) {
+    for(s32 x=0; x<6; x++) {
+      in1[y][x] = i1++;
+      in2[y][x] = i2*100;
+      i2++;
+    }
+  }
+
+  in1(2,-1,0,-1).Set(2000);
+
+  //in1:
+  //0 1 2 3 4 5
+  //6 7 8 9 10 11
+  //2000 2000 2000 2000 2000 2000
+  //2000 2000 2000 2000 2000 2000
+  //2000 2000 2000 2000 2000 2000
+
+  //in2:
+  //0 100 200 300 400 500
+  //600 700 800 900 1000 1100
+  //1200 1300 1400 1500 1600 1700
+  //1800 1900 2000 2100 2200 2300
+  //2400 2500 2600 2700 2800 2900
+
+  Find<s32,Comparison::LessThanOrEqual<s32,s32>,s32> find(in1, in2);
+
+  ASSERT_TRUE(find.IsValid());
+
+  Array<s32> yIndexes;
+  Array<s32> xIndexes;
+
+  ASSERT_TRUE(find.Evaluate(yIndexes, ms) == RESULT_FAIL);
+  ASSERT_TRUE(find.Evaluate(yIndexes, xIndexes, ms) == RESULT_OK);
+
+  ASSERT_TRUE(yIndexes.get_size(0) == 1);
+  ASSERT_TRUE(yIndexes.get_size(1) == 22);
+
+  ASSERT_TRUE(xIndexes.get_size(0) == 1);
+  ASSERT_TRUE(xIndexes.get_size(1) == 22);
+
+  //yIndexes.Print("yIndexes");
+  //xIndexes.Print("xIndexes");
+
+  const s32 yIndexes_groundTruth[22] = {0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4};
+  const s32 xIndexes_groundTruth[22] = {0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5};
+
+  for(s32 i=0; i<22; i++) {
+    ASSERT_TRUE(yIndexes[0][i] == yIndexes_groundTruth[i]);
+    ASSERT_TRUE(xIndexes[0][i] == xIndexes_groundTruth[i]);
+  }
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, Find_NumMatchesAndBoundingRectangle)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<s32> in1(5,6,ms);
+  Array<s32> in2(5,6,ms);
+  Array<s32> out(5,6,ms);
+
+  ASSERT_TRUE(in1.IsValid());
+  ASSERT_TRUE(in2.IsValid());
+  ASSERT_TRUE(out.IsValid());
+
+  s32 i1 = 0;
+  s32 i2 = 0;
+  for(s32 y=0; y<5; y++) {
+    for(s32 x=0; x<6; x++) {
+      in1[y][x] = i1++;
+      in2[y][x] = i2*100;
+      i2++;
+    }
+  }
+
+  in1(2,-1,0,-1).Set(2000);
+
+  //in1:
+  //0 1 2 3 4 5
+  //6 7 8 9 10 11
+  //2000 2000 2000 2000 2000 2000
+  //2000 2000 2000 2000 2000 2000
+  //2000 2000 2000 2000 2000 2000
+
+  //in2:
+  //0 100 200 300 400 500
+  //600 700 800 900 1000 1100
+  //1200 1300 1400 1500 1600 1700
+  //1800 1900 2000 2100 2200 2300
+  //2400 2500 2600 2700 2800 2900
+
+  Find<s32,Comparison::GreaterThan<s32,s32>,s32> find(in1, in2);
+
+  ASSERT_TRUE(find.IsValid());
+
+  ASSERT_TRUE(find.get_numMatches() == 8);
+
+  ASSERT_TRUE(find.get_limits() == Rectangle<s32>(0,5,2,3));
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, MatrixAdd)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<s32> in1(5,6,ms);
+  Array<s32> in2(5,6,ms);
+  Array<s32> out(5,6,ms);
+
+  ASSERT_TRUE(in1.IsValid());
+  ASSERT_TRUE(in2.IsValid());
+  ASSERT_TRUE(out.IsValid());
+
+  s32 i1 = 0;
+  s32 i2 = 0;
+  for(s32 y=0; y<5; y++) {
+    for(s32 x=0; x<6; x++) {
+      in1[y][x] = i1++;
+      in2[y][x] = i2*100;
+      i2++;
+    }
+  }
+
+  // Test normal elementwise addition
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::Add<s32,s32>(in1, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    //in1.Print("in1");
+    //in2.Print("in2");
+    //out.Print("out");
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(in1[y][x] + in2[y][x]));
+      }
+    }
+  }
+
+  // Test slice transpose in1 elementwise addition
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::Add<s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,1,0,0,2,4), out(0,1,0,0,2,4));
+    ASSERT_TRUE(result == RESULT_OK);
+
+    ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] + in2[0][0]));
+    ASSERT_TRUE((s32)out[0][2] == (s32)(in1[2][0] + in2[0][2]));
+    ASSERT_TRUE((s32)out[0][4] == (s32)(in1[4][0] + in2[0][4]));
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        if(!(y==0 && (x==0 || x==2 || x==4))) {
+          ASSERT_TRUE(out[y][x] == 0);
+        }
+      }
+    }
+  }
+
+  // Test slice transpose in2 elementwise addition
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::Add<s32,s32>(in1(0,1,0,0,2,4), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
+    ASSERT_TRUE(result == RESULT_OK);
+
+    ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] + in2[0][0]));
+    ASSERT_TRUE((s32)out[0][2] == (s32)(in1[0][2] + in2[2][0]));
+    ASSERT_TRUE((s32)out[0][4] == (s32)(in1[0][4] + in2[4][0]));
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        if(!(y==0 && (x==0 || x==2 || x==4))) {
+          ASSERT_TRUE(out[y][x] == 0);
+        }
+      }
+    }
+  }
+
+  // Test slice transpose in1 and in2 elementwise addition
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::Add<s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
+    ASSERT_TRUE(result == RESULT_OK);
+
+    //in1.Print("in1");
+    //in2.Print("in2");
+    //out.Print("out");
+
+    ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] + in2[0][0]));
+    ASSERT_TRUE((s32)out[0][2] == (s32)(in1[2][0] + in2[2][0]));
+    ASSERT_TRUE((s32)out[0][4] == (s32)(in1[4][0] + in2[4][0]));
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        if(!(y==0 && (x==0 || x==2 || x==4))) {
+          ASSERT_TRUE(out[y][x] == 0);
+        }
+      }
+    }
+  }
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, SliceArrayAssignment)
 {
   ASSERT_TRUE(buffer != NULL);
@@ -65,6 +462,9 @@ GTEST_TEST(CoreTech_Common, SliceArrayAssignment)
 
   Array<u8> array1(5,6,ms);
   Array<u8> array2(5,6,ms);
+
+  ASSERT_TRUE(array1.IsValid());
+  ASSERT_TRUE(array2.IsValid());
 
   s32 i = 0;
   for(s32 y=0; y<5; y++) {
@@ -522,17 +922,17 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
     transformedPointsList.PushBack(Point<f64>(x1, y1));
   }
 
-  //originalPoints.Print("originalPoints");
-  //transformedPoints.Print("transformedPoints");
+  originalPoints.Print("originalPoints");
+  transformedPoints.Print("transformedPoints");
 
-  //originalPointsList.Print("originalPointsList");
-  //transformedPointsList.Print("transformedPointsList");
+  originalPointsList.Print("originalPointsList");
+  transformedPointsList.Print("transformedPointsList");
 
   const Result result = EstimateHomography(originalPointsList, transformedPointsList, homography, ms);
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  //homography.Print("homography");
+  homography.Print("homography");
 
   ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(homography, homography_groundTruth, .01, .001));
 

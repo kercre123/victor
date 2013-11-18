@@ -8,10 +8,11 @@
 #include "dockingController.h"
 #include "headController.h"
 #include "liftController.h"
+#include "testModeController.h"
 #include "anki/cozmo/robot/commandHandler.h"
+#include "anki/cozmo/robot/debug.h"
 #include "anki/cozmo/robot/localization.h"
 #include "anki/cozmo/robot/pathFollower.h"
-#include "anki/cozmo/robot/vehicleMath.h"
 #include "anki/cozmo/robot/speedController.h"
 #include "anki/cozmo/robot/steeringController.h"
 #include "anki/cozmo/robot/wheelController.h"
@@ -19,14 +20,8 @@
 
 #include "anki/messaging/robot/utilMessaging.h"
 
-//#include "cozmo_physics.h"
-
-#include <cmath>
-#include <cstdio>
-#include <string>
-
 ///////// TESTING //////////
-#define EXECUTE_TEST_PATH 0
+  const Anki::Cozmo::TestModeController::TestMode DEFAULT_TEST_MODE = Anki::Cozmo::TestModeController::TM_NONE;
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB && USING_MATLAB_VISION
 #include "anki/embeddedCommon/matlabConverters.h"
@@ -48,7 +43,7 @@ namespace Anki {
         VisionSystem::BlockMarkerMailbox blockMarkerMailbox_;
         VisionSystem::MatMarkerMailbox   matMarkerMailbox_;
         
-        Robot::OperationMode mode_ = INITIALIZING, nextMode_ = WAITING;
+        Robot::OperationMode mode_ = INITIALIZING;
         
       } // Robot private namespace
       
@@ -69,9 +64,12 @@ namespace Anki {
       ReturnCode Init(void)
       {
         if(HAL::Init() == EXIT_FAILURE) {
-          fprintf(stdout, "Hardware Interface initialization failed!\n");
+          PRINT("Hardware Interface initialization failed!\n");
           return EXIT_FAILURE;
         }
+        
+        // Setup test mode
+        TestModeController::Init(DEFAULT_TEST_MODE);
         
         if(VisionSystem::Init(HAL::GetHeadFrameGrabber(),
                               HAL::GetMatFrameGrabber(),
@@ -80,39 +78,39 @@ namespace Anki {
                               &blockMarkerMailbox_,
                               &matMarkerMailbox_) == EXIT_FAILURE)
         {
-          fprintf(stdout, "Vision System initialization failed.");
+          PRINT("Vision System initialization failed.");
           return EXIT_FAILURE;
         }
         
         if(PathFollower::Init() == EXIT_FAILURE) {
-          fprintf(stdout, "PathFollower initialization failed.\n");
+          PRINT("PathFollower initialization failed.\n");
           return EXIT_FAILURE;
         }
         
         // Initialize subsystems if/when available:
         /*
          if(WheelController::Init() == EXIT_FAILURE) {
-         fprintf(stdout, "WheelController initialization failed.\n");
+         PRINT("WheelController initialization failed.\n");
          return EXIT_FAILURE;
          }
          
          if(SpeedController::Init() == EXIT_FAILURE) {
-         fprintf(stdout, "SpeedController initialization failed.\n");
+         PRINT("SpeedController initialization failed.\n");
          return EXIT_FAILURE;
          }
          
          if(SteeringController::Init() == EXIT_FAILURE) {
-         fprintf(stdout, "SteeringController initialization failed.\n");
+         PRINT("SteeringController initialization failed.\n");
          return EXIT_FAILURE;
          }
          
          if(HeadController::Init() == EXIT_FAILURE) {
-         fprintf(stdout, "HeadController initialization failed.\n");
+         PRINT("HeadController initialization failed.\n");
          return EXIT_FAILURE;
          }
          
          if(LiftController::Init() == EXIT_FAILURE) {
-         fprintf(stdout, "LiftController initialization failed.\n");
+         PRINT("LiftController initialization failed.\n");
          return EXIT_FAILURE;
          }
          
@@ -123,12 +121,12 @@ namespace Anki {
         
         // Once initialization is done, broadcast a message that this robot
         // is ready to go
-        fprintf(stdout, "Robot broadcasting availability message.\n");
+        PRINT("Robot broadcasting availability message.\n");
         CozmoMsg_RobotAvailable msg;
         msg.size = sizeof(CozmoMsg_RobotAvailable);
         msg.msgID = MSG_V2B_CORE_ROBOT_AVAILABLE;
         msg.robotID = HAL::GetRobotID();
-        HAL::SendMessage(reinterpret_cast<u8 *>(&msg), msg.size);
+        HAL::RadioToBase(reinterpret_cast<u8 *>(&msg), msg.size);
         
         mode_ = WAITING;
         
@@ -146,9 +144,19 @@ namespace Anki {
       
       ReturnCode step_MainExecution()
       {
+#if(DEBUG_ANY)
+        PRINT("\n==== FRAME START (time = %d us) ====\n", HAL::GetMicroCounter() );
+#endif
+        
         // If the hardware interface needs to be advanced (as in the case of
         // a Webots simulation), do that first.
         HAL::Step();
+
+        //////////////////////////////////////////////////////////////
+        // Test Mode
+        //////////////////////////////////////////////////////////////
+        TestModeController::Update();
+        
         
         //////////////////////////////////////////////////////////////
         // Localization
@@ -159,10 +167,7 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         // Communications
         //////////////////////////////////////////////////////////////
-        
-        // Buffer any incoming data from basestation
-        HAL::ManageRecvBuffer();
-        
+
         // Process any messages from the basestation
         CommandHandler::ProcessIncomingMessages();
         
@@ -171,13 +176,13 @@ namespace Anki {
         while( matMarkerMailbox_.hasMail() )
         {
           const CozmoMsg_ObservedMatMarker matMsg = matMarkerMailbox_.getMessage();
-          HAL::SendMessage(&matMsg, sizeof(CozmoMsg_ObservedMatMarker));
+          HAL::RadioToBase((u8*)(&matMsg), sizeof(CozmoMsg_ObservedMatMarker));
         }
         
         while( blockMarkerMailbox_.hasMail() )
         {
           const CozmoMsg_ObservedBlockMarker blockMsg = blockMarkerMailbox_.getMessage();
-          HAL::SendMessage(&blockMsg, sizeof(CozmoMsg_ObservedBlockMarker));
+          HAL::RadioToBase((u8*)(&blockMsg), sizeof(CozmoMsg_ObservedBlockMarker));
         }
         
         //////////////////////////////////////////////////////////////
@@ -186,34 +191,7 @@ namespace Anki {
         
         HeadController::Update();
         LiftController::Update();
-        
-        //////////////////////////////////////////////////////////////
-        // Path Following
-        //////////////////////////////////////////////////////////////
-        
-#if(EXECUTE_TEST_PATH)
-        // TESTING
-        const u32 startDriveTime_us = 500000;
-        static bool testPathStarted = false;
-        if (not PathFollower::IsTraversingPath() &&
-            HAL::GetMicroCounter() > startDriveTime_us &&
-            !testPathStarted) {
-          SpeedController::SetUserCommandedAcceleration( MAX(ONE_OVER_CONTROL_DT + 1, 500) );  // This can't be smaller than 1/CONTROL_DT!
-          SpeedController::SetUserCommandedDesiredVehicleSpeed(160);
-          fprintf(stdout, "Speed commanded: %d mm/s\n",
-                  SpeedController::GetUserCommandedDesiredVehicleSpeed() );
-          
-          // Create a path and follow it
-          PathFollower::AppendPathSegment_Line(0, 0.0, 0.0, 0.3, -0.3);
-          float arc1_radius = sqrt(0.005);  // Radius of sqrt(0.05^2 + 0.05^2)
-          PathFollower::AppendPathSegment_Arc(0, 0.35, -0.25, arc1_radius, -0.75*PI, 0);
-          PathFollower::AppendPathSegment_Line(0, 0.35 + arc1_radius, -0.25, 0.35 + arc1_radius, 0.2);
-          float arc2_radius = sqrt(0.02); // Radius of sqrt(0.1^2 + 0.1^2)
-          PathFollower::AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, PIDIV2);
-          PathFollower::StartPathTraversal();
-          testPathStarted = true;
-        }
-#endif //EXECUTE_TEST_PATH
+ 
         
         //////////////////////////////////////////////////////////////
         // State Machine
@@ -223,16 +201,13 @@ namespace Anki {
         {
           case INITIALIZING:
           {
-            fprintf(stdout, "Robot still initializing.\n");
+            PRINT("Robot still initializing.\n");
             break;
           }
             
           case FOLLOW_PATH:
           {
-            if(PathFollower::IsTraversingPath())
-            {
-              PathFollower::Update();
-            }
+            PathFollower::Update();
             break;
           }
             
@@ -261,11 +236,15 @@ namespace Anki {
             break;
           }
           default:
-            fprintf(stdout, "Unrecognized CozmoBot mode.\n");
+            PRINT("Unrecognized CozmoBot mode.\n");
             
         } // switch(mode_)
         
-        
+
+        // Manage the various motion controllers:
+        SpeedController::Manage();
+        SteeringController::Manage();
+        WheelController::Manage();
         //////////////////////////////////////////////////////////////
         // Feedback / Display
         //////////////////////////////////////////////////////////////
@@ -284,12 +263,12 @@ namespace Anki {
       {
         
         if(VisionSystem::lookForBlocks() == EXIT_FAILURE) {
-          fprintf(stdout, "VisionSystem::lookForBLocks() failed.\n");
+          PRINT("VisionSystem::lookForBLocks() failed.\n");
           return EXIT_FAILURE;
         }
         
         if(VisionSystem::localizeWithMat() == EXIT_FAILURE) {
-          fprintf(stdout, "VisionSystem::localizeWithMat() failed.\n");
+          PRINT("VisionSystem::localizeWithMat() failed.\n");
           return EXIT_FAILURE;
         }
         
@@ -297,23 +276,6 @@ namespace Anki {
         return EXIT_SUCCESS;
         
       } // Robot::step_longExecution()
-      
-      
-      void SetOpenLoopMotorSpeed(s16 speedl, s16 speedr)
-      {
-        // Convert PWM to rad/s
-        // TODO: Do this properly.  For now assume MOTOR_PWM_MAXVAL achieves 1m/s lateral speed.
-        
-        // "FACTOR" is the converstion factor for computing radians/second
-        // from commanded speed: 2*pi * (1 meter / wheel_circumference)
-        const float FACTOR = ((2.f*M_PI) *
-                              (1000.f / (Cozmo::WHEEL_DIAMETER_MM*M_PI)));
-        f32 left_rad_per_s  = speedl * FACTOR / HAL::MOTOR_PWM_MAXVAL;
-        f32 right_rad_per_s = speedr * FACTOR / HAL::MOTOR_PWM_MAXVAL;
-        
-        HAL::SetWheelAngularVelocity(left_rad_per_s, right_rad_per_s);
-        
-      } // Robot::SetOpenLoopMotorSpeed()
       
     } // namespace Robot
   } // namespace Cozmo

@@ -30,7 +30,8 @@ namespace Anki {
       
       // TODO: Add if/when needed?
       // ReturnCode Init();
-      
+
+      void SetAngularVelocity(const f32 rad_per_sec);
       void SetDesiredAngle(const f32 angle);
       bool IsInPosition();
       
