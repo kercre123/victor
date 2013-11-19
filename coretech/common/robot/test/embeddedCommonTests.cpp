@@ -572,6 +572,32 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
     }
   }
 
+  // Test normal elementwise addition with a scalar as parameter 1
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::Add<s32,s32>(in1, 5, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(in1[y][x] + 5));
+      }
+    }
+  }
+
+  // Test normal elementwise addition with a scalar as parameter 2
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::Add<s32,s32>(-4, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(-4 + in2[y][x]));
+      }
+    }
+  }
+
   // Test normal elementwise subtraction
   {
     ASSERT_TRUE(out.SetZero() != 0);
@@ -581,6 +607,32 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
     for(s32 y=0; y<5; y++) {
       for(s32 x=0; x<6; x++) {
         ASSERT_TRUE((s32)out[y][x] == (s32)(in1[y][x] - in2[y][x]));
+      }
+    }
+  }
+
+  // Test normal elementwise subtraction with a scalar as parameter 1
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::Subtract<s32,s32>(100, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(100 - in2[y][x]));
+      }
+    }
+  }
+
+  // Test normal elementwise subtraction with a scalar as parameter 2
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::Subtract<s32,s32>(in1, 1, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(in1[y][x] - 1));
       }
     }
   }
@@ -598,6 +650,32 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
     }
   }
 
+  // Test normal elementwise multiplication with a scalar as parameter 1
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::DotMultiply<s32,s32>(in1, 2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(in1[y][x] * 2));
+      }
+    }
+  }
+
+  // Test normal elementwise multiplication with a scalar as parameter 2
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::DotMultiply<s32,s32>(-2, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)((-2) * in2[y][x]));
+      }
+    }
+  }
+
   // Test normal elementwise division
   {
     ASSERT_TRUE(out.SetZero() != 0);
@@ -607,6 +685,32 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
     for(s32 y=0; y<5; y++) {
       for(s32 x=0; x<6; x++) {
         ASSERT_TRUE((s32)out[y][x] == (s32)(in1[y][x] / in2[y][x]));
+      }
+    }
+  }
+
+  // Test normal elementwise division with a scalar as parameter 1
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::DotDivide<s32,s32>(in1, 2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(in1[y][x] / 2));
+      }
+    }
+  }
+
+  // Test normal elementwise division with a scalar as parameter 2
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::DotDivide<s32,s32>(10, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(10 / in2[y][x]));
       }
     }
   }
