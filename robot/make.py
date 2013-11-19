@@ -226,9 +226,14 @@ if __name__ == '__main__':
   print 'Linking ' + TARGET + '.elf'
   file = OUTPUT + TARGET + '.elf'
   s = LD + ' ' + LDOPT + ' -o ' + file + ' ' + objects + ' > ' + OUTPUT + TARGET + '.map'
-  if os.system(s) != 0:
+  
+  # Write command line out to file and execute from there
+  # so that we don't exceed the command line limit of os.system()  
+  with open('ldCmd.bat', 'w+') as f:
+    f.write(s)
+  if os.system('ldCmd.bat') != 0:
     sys.exit(1)
-
+  
   s = MVCONV + ' -elfInput ' + file + ' -mvcmd:' + OUTPUT + TARGET + '.mvcmd'
   if os.system(s) != 0:
     sys.exit(1)
