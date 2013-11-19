@@ -149,8 +149,7 @@ namespace Anki
       AnkiConditionalWarnAndReturnValue(this->IsValid(),
         0, "Array<Type>::Pointer", "Array<Type> is not valid");
 
-      return reinterpret_cast<const Type*>( reinterpret_cast<const char*>(this->data) +
-        index1*sizeof(Type) + index0*stride );
+      return reinterpret_cast<const Type*>( reinterpret_cast<const char*>(this->data) + index0*stride ) + index1;
     }
 
     template<typename Type> Type* Array<Type>::Pointer(const s32 index0, const s32 index1)
@@ -161,18 +160,17 @@ namespace Anki
       AnkiConditionalWarnAndReturnValue(this->IsValid(),
         0, "Array<Type>::Pointer", "Array<Type> is not valid");
 
-      return reinterpret_cast<Type*>( reinterpret_cast<char*>(this->data) +
-        index1*sizeof(Type) + index0*stride );
+      return reinterpret_cast<Type*>( reinterpret_cast<char*>(this->data) + index0*stride ) + index1;
     }
 
     template<typename Type> inline const Type * Array<Type>::operator[](const s32 index0) const
     {
-      return Pointer(index0, 0);
+      return reinterpret_cast<const Type*>( reinterpret_cast<const char*>(this->data) + index0*stride );
     }
 
     template<typename Type> inline Type * Array<Type>::operator[](const s32 index0)
     {
-      return Pointer(index0, 0);
+      return reinterpret_cast<Type*>( reinterpret_cast<char*>(this->data) + index0*stride );
     }
 
     template<typename Type> const Type* Array<Type>::Pointer(const Point<s16> &point) const
