@@ -74,10 +74,10 @@ namespace Anki
       const s32 xEnd = array.get_xSlice().get_end();
 
       Type * pArray = outArray.Pointer(yStart,0);
-      Type curValue = sequenceStartValue;
+      Type curSequenceValue = sequenceStartValue;
       for(s32 x=xStart; x<=xEnd; x+=xIncrement) {
-        pArray[x] = curValue;
-        curValue += sequenceIncrement;
+        pArray[x] = curSequenceValue;
+        curSequenceValue += sequenceIncrement;
       }
 
       return RESULT_OK;
@@ -185,6 +185,125 @@ namespace Anki
         sequence, "Linspace", "Could not set sequence to have the correct size.");
 
       return sequence;
+    }
+
+    template<typename Type> Meshgrid<Type>::Meshgrid(const LinearSequence<Type> xGridVector, const LinearSequence<Type> yGridVector)
+      : xGridVector(xGridVector), yGridVector(yGridVector)
+    {
+    }
+
+    template<typename Type> Array<Type> Meshgrid<Type>::Evaluate(bool xGridVector, bool columnMajor, MemoryStack &memory, const Flags::Buffer flags) const
+    {
+      const s32 numRows = 1;
+      const s32 numCols = this->xGridVector.get_size();
+
+      Array<Type> array(numRows, numCols, memory, flags);
+
+      this->Evaluate(xGridVector, columnMajor, array);
+
+      return array;
+    }
+
+    template<typename Type> Result Meshgrid<Type>::Evaluate(bool xGridVector, bool columnMajor, ArraySlice<Type> array) const
+    {
+      const s32 xGridSize = this->xGridVector.get_size();
+      const s32 yGridSize = this->yGridVector.get_size();
+      const s32 size = xGridSize * yGridSize;
+
+      Array<Type> &outArray = array.get_array();
+
+      AnkiConditionalErrorAndReturnValue(outArray.IsValid(),
+        RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Invalid array");
+
+      AnkiConditionalErrorAndReturnValue(array.get_ySlice().get_size()==1 && array.get_xSlice().get_size()==size,
+        RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Invalid array");
+
+      const s32 outYStart = array.get_ySlice().get_start();
+
+      s32 outIndex = array.get_xSlice().get_start();
+      const s32 outXIncrement = array.get_xSlice().get_increment();
+
+      Type * pArray = outArray.Pointer(outYStart,0);
+
+      // Matlab equivalent: [x,y] = meshgrid(1:N,1:M)
+
+      if(xGridVector) {
+        const Type sequenceStartValue = this->xGridVector.get_start();
+        const Type sequenceIncrement = this->xGridVector.get_increment();
+
+        if(columnMajor) {
+          // Matlab equivalent: x(:)
+
+          Type curSequenceValue = sequenceStartValue;
+
+          for(s32 x=0; x<xGridSize; x++) {
+            for(s32 y=0; y<yGridSize; y++) {
+              pArray[outIndex] = curSequenceValue;
+
+              outIndex += outXIncrement;
+            }
+
+            curSequenceValue += sequenceIncrement;
+          }
+        } else {
+          // Matlab equivalent: x=x'; x(:)
+
+          for(s32 y=0; y<yGridSize; y++) {
+            Type curSequenceValue = sequenceStartValue;
+
+            for(s32 x=0; x<xGridSize; x++) {
+              pArray[outIndex] = curSequenceValue;
+
+              outIndex += outXIncrement;
+              curSequenceValue += sequenceIncrement;
+            }
+          }
+        }
+      } else { // if(xGridVector)
+        const Type sequenceStartValue = this->yGridVector.get_start();
+        const Type sequenceIncrement = this->yGridVector.get_increment();
+
+        if(columnMajor) {
+          // Matlab equivalent: y(:)
+
+          for(s32 x=0; x<xGridSize; x++) {
+            Type curSequenceValue = sequenceStartValue;
+
+            for(s32 y=0; y<yGridSize; y++) {
+              pArray[outIndex] = curSequenceValue;
+
+              outIndex += outXIncrement;
+              curSequenceValue += sequenceIncrement;
+            }
+          }
+        } else {
+          // Matlab equivalent: y=y'; y(:)
+
+          Type curSequenceValue = sequenceStartValue;
+
+          for(s32 y=0; y<yGridSize; y++) {
+            for(s32 x=0; x<xGridSize; x++) {
+              pArray[outIndex] = curSequenceValue;
+
+              outIndex += outXIncrement;
+            }
+
+            curSequenceValue += sequenceIncrement;
+          }
+        }
+      } // if(xGridVector) ... else
+
+      return RESULT_OK;
+    }
+
+    template<typename Type> inline const LinearSequence<Type>& Meshgrid<Type>::get_xGridVector() const
+    {
+      return xGridVector;
+    }
+
+    template<typename Type> inline const LinearSequence<Type>& Meshgrid<Type>::get_yGridVector() const
+    {
+      return yGridVector;
     }
 
 #pragma mark --- Specializations ---

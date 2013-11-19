@@ -83,14 +83,25 @@ namespace Anki
     //protected:
     //};
 
-    // TODO: Meshgrid
-    //template<typename Type> class Meshgrid
-    //{
-    //public:
-    //  // Matlab equivalent:
-    //  Meshgrid(LinearSequence<Type> xGridVector, LinearSequence<Type> yGridVector);
-    //protected:
-    //};
+    template<typename Type> class Meshgrid
+    {
+    public:
+      // Matlab equivalent: meshgrid(xGridVector, yGridVector)
+      Meshgrid(const LinearSequence<Type> xGridVector, const LinearSequence<Type> yGridVector);
+
+      // If xVector==true, evaluate xGridVector. If false, evaluate yGridVector
+      // If columnMajor==true, then the output vector will be column-major(like Matlab)
+      Array<Type> Evaluate(bool xGridVector, bool columnMajor, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
+      Result Evaluate(bool xGridVector, bool columnMajor, ArraySlice<Type> array) const;
+
+      inline const LinearSequence<Type>& get_xGridVector() const;
+
+      inline const LinearSequence<Type>& get_yGridVector() const;
+
+    protected:
+      LinearSequence<Type> xGridVector;
+      LinearSequence<Type> yGridVector;
+    };
   } // namespace Embedded
 } //namespace Anki
 

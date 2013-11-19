@@ -69,6 +69,53 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, Meshgrid)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  // [x,y] = meshgrid(1:5,1:3)
+  Meshgrid<s32> mesh(LinearSequence<s32>(1,5), LinearSequence<s32>(1,3));
+
+  Array<s32> out(20,20,ms);
+  ASSERT_TRUE(out.IsValid());
+
+  {
+    ASSERT_TRUE(mesh.Evaluate(true, true, out(3,3,2,16)) == RESULT_OK);
+    const s32 out_groundTruth[15] = {1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5};
+    for(s32 x=0; x<15; x++) {
+      ASSERT_TRUE(out[3][x+2] == out_groundTruth[x]);
+    }
+  }
+
+  {
+    ASSERT_TRUE(mesh.Evaluate(true, false, out(3,3,2,16)) == RESULT_OK);
+    const s32 out_groundTruth[15] = {1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5};
+    for(s32 x=0; x<15; x++) {
+      ASSERT_TRUE(out[3][x+2] == out_groundTruth[x]);
+    }
+  }
+
+  {
+    ASSERT_TRUE(mesh.Evaluate(false, true, out(3,3,2,16)) == RESULT_OK);
+    const s32 out_groundTruth[15] = {1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3};
+    for(s32 x=0; x<15; x++) {
+      ASSERT_TRUE(out[3][x+2] == out_groundTruth[x]);
+    }
+  }
+
+  {
+    ASSERT_TRUE(mesh.Evaluate(false, false, out(3,3,2,16)) == RESULT_OK);
+    const s32 out_groundTruth[15] = {1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3};
+    for(s32 x=0; x<15; x++) {
+      ASSERT_TRUE(out[3][x+2] == out_groundTruth[x]);
+    }
+  }
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, Linspace)
 {
   ASSERT_TRUE(buffer != NULL);
