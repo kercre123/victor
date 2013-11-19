@@ -4,13 +4,7 @@
  * Author: Andrew Stein (andrew)
  * Created: 10/28/2013
  *
- * Information on last revision to this file:
- *    $LastChangedDate$
- *    $LastChangedBy$
- *    $LastChangedRevision$
- *
  * Description:
- *
  *   Controller for adjusting the lifter height.
  *
  * Copyright: Anki, Inc. 2013
@@ -27,11 +21,36 @@ namespace Anki {
     namespace LiftController {
       
       // TODO: Add if/when needed?
-      // ReturnCode Init();
+      ReturnCode Init();
+
+      // Enable/Disable commands to the motor via HAL functions
+      // Mostly for debug.
+      void Enable();
+      void Disable();
       
+      // Moves lift all the way down and sets that position to 0
+      void StartCalibrationRoutine();
+      
+      // Returns true if calibration has completed
+      bool IsCalibrated();
+
+      // Specifies max velocity and acceleration that SetDesiredHeight() uses.
+      void SetSpeedAndAccel(f32 max_speed_rad_per_sec, f32 accel_rad_per_sec2);
+      
+      f32 GetAngularVelocity();
+      
+      // TODO: Get rid of SetAngularVelocty?
       void SetAngularVelocity(const f32 rad_per_sec);
+      
+      // Command the desired height of the lift
       void SetDesiredHeight(const f32 height_mm);
       bool IsInPosition();
+      
+      // Get current height of the lift
+      f32 GetHeightMM();
+      
+      // Get current angle of the lift
+      f32 GetAngleRad();
       
       ReturnCode Update();
       
