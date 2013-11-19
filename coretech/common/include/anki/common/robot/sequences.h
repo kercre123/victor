@@ -13,6 +13,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define _ANKICORETECHEMBEDDED_COMMON_SEQUENCES_H_
 
 #include "anki/common/robot/sequences_declarations.h"
+#include "anki/common/robot/arraySlices.h"
 
 namespace Anki
 {
@@ -52,24 +53,31 @@ namespace Anki
       return array;
     }
 
-    template<typename Type> Result LinearSequence<Type>::Evaluate(Array<Type> &array) const
+    template<typename Type> Result LinearSequence<Type>::Evaluate(ArraySlice<Type> array) const
     {
       const s32 size = this->get_size();
+      Array<Type> &outArray = array.get_array();
 
-      AnkiConditionalErrorAndReturnValue(array.IsValid(),
+      AnkiConditionalErrorAndReturnValue(outArray.IsValid(),
         RESULT_FAIL, "LinearSequence<Type>::Evaluate", "Invalid array");
 
-      AnkiConditionalErrorAndReturnValue(array.get_size(0)==1 && array.get_size(1)==size,
+      AnkiConditionalErrorAndReturnValue(array.get_ySlice().get_size()==1 && array.get_xSlice().get_size()==size,
         RESULT_FAIL, "LinearSequence<Type>::Evaluate", "Invalid array");
 
-      const Type startValue = this->get_start();
-      const Type increment = this->get_increment();
+      const Type sequenceStartValue = this->get_start();
+      const Type sequenceIncrement = this->get_increment();
 
-      Type * pArray = array.Pointer(0,0);
-      Type curValue = startValue;
-      for(s32 x=0; x<size; x++) {
+      const s32 yStart = array.get_ySlice().get_start();
+
+      const s32 xStart = array.get_xSlice().get_start();
+      const s32 xIncrement = array.get_xSlice().get_increment();
+      const s32 xEnd = array.get_xSlice().get_end();
+
+      Type * pArray = outArray.Pointer(yStart,0);
+      Type curValue = sequenceStartValue;
+      for(s32 x=xStart; x<=xEnd; x+=xIncrement) {
         pArray[x] = curValue;
-        curValue += increment;
+        curValue += sequenceIncrement;
       }
 
       return RESULT_OK;

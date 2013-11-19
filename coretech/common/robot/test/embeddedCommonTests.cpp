@@ -1093,15 +1093,56 @@ GTEST_TEST(CoreTech_Common, LinearSequence)
   // Test sequence assignment to an Array
   const LinearSequence<s32> sequence(-4,2,4);
 
-  Array<s32> sequenceArray = sequence.Evaluate(ms);
-  const s32 sequenceArray_groundTruth[5] = {-4, -2, 0, 2, 4};
+  // Test a normal Array
+  {
+    PUSH_MEMORY_STACK(ms);
+    Array<s32> sequenceArray = sequence.Evaluate(ms);
 
-  ASSERT_TRUE(sequenceArray.get_size(0) == 1);
-  ASSERT_TRUE(sequenceArray.get_size(1) == 5);
+    ASSERT_TRUE(sequenceArray.IsValid());
 
-  for(s32 i=0; i<5; i++) {
-    ASSERT_TRUE(sequenceArray[0][i] == sequenceArray_groundTruth[i]);
-  }
+    const s32 sequenceArray_groundTruth[5] = {-4, -2, 0, 2, 4};
+
+    ASSERT_TRUE(sequenceArray.get_size(0) == 1);
+    ASSERT_TRUE(sequenceArray.get_size(1) == 5);
+
+    for(s32 i=0; i<5; i++) {
+      ASSERT_TRUE(sequenceArray[0][i] == sequenceArray_groundTruth[i]);
+    }
+  } // PUSH_MEMORY_STACK(ms)
+
+  // Test an ArraySlice
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s32> sequenceArray(4,100,ms);
+
+    ASSERT_TRUE(sequenceArray.IsValid());
+
+    ASSERT_TRUE(sequence.Evaluate(sequenceArray(2,2,4,8)) == RESULT_OK);
+
+    const s32 sequenceArray_groundTruth[5] = {-4, -2, 0, 2, 4};
+
+    for(s32 i=0; i<=3; i++) {
+      ASSERT_TRUE(sequenceArray[2][i] == 0);
+    }
+
+    for(s32 i=4; i<=8; i++) {
+      ASSERT_TRUE(sequenceArray[2][i] == sequenceArray_groundTruth[i-4]);
+    }
+
+    for(s32 i=9; i<100; i++) {
+      ASSERT_TRUE(sequenceArray[2][i] == 0);
+    }
+
+    for(s32 x=0; x<100; x++) {
+      for(s32 y=0; y<=1; y++) {
+        ASSERT_TRUE(sequenceArray[y][x] == 0);
+      }
+      for(s32 y=3; y<=3; y++) {
+        ASSERT_TRUE(sequenceArray[y][x] == 0);
+      }
+    }
+  } // PUSH_MEMORY_STACK(ms)
 
   GTEST_RETURN_HERE;
 }

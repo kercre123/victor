@@ -21,6 +21,7 @@ namespace Anki
   {
     template<typename Type> class Array;
     template<typename Type> class FixedLengthList;
+    template<typename Type> class ArraySlice;
     class MemoryStack;
 
 #pragma mark --- Class Declarations ---
@@ -41,7 +42,7 @@ namespace Anki
       LinearSequence(const Type start, const Type increment, const Type end);
 
       Array<Type> Evaluate(MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
-      Result Evaluate(Array<Type> &array) const;
+      Result Evaluate(ArraySlice<Type> array) const;
 
       Type get_start() const;
 
