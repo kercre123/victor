@@ -1,3 +1,14 @@
+/**
+File: draw_vision_declarations.h
+Author: Peter Barnum
+Created: 2013
+
+Declarations for draw_vision.h
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
+
 #ifndef _ANKICORETECHEMBEDDED_VISION_DRAW_VISION_DECLARATIONS_H_
 #define _ANKICORETECHEMBEDDED_VISION_DRAW_VISION_DECLARATIONS_H_
 
