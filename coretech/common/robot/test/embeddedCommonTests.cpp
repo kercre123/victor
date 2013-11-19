@@ -1074,7 +1074,7 @@ GTEST_TEST(CoreTech_Common, LinearSequence)
   // Test sequence assignment to an Array
   const LinearSequence<s32> sequence(-4,2,4);
 
-  Array<s32> sequenceArray(sequence, ms);
+  Array<s32> sequenceArray = sequence.Evaluate(ms);
   const s32 sequenceArray_groundTruth[5] = {-4, -2, 0, 2, 4};
 
   ASSERT_TRUE(sequenceArray.get_size(0) == 1);

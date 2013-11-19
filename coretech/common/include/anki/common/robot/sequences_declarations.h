@@ -13,12 +13,15 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define _ANKICORETECHEMBEDDED_COMMON_SEQUENCES_DECLARATIONS_H_
 
 #include "anki/common/robot/config.h"
+#include "anki/common/robot/flags_declarations.h"
 
 namespace Anki
 {
   namespace Embedded
   {
+    template<typename Type> class Array;
     template<typename Type> class FixedLengthList;
+    class MemoryStack;
 
 #pragma mark --- Class Declarations ---
     template<typename Type> class Sequence
@@ -37,6 +40,9 @@ namespace Anki
       // Matlab equivalent: start:increment:end
       LinearSequence(const Type start, const Type increment, const Type end);
 
+      Array<Type> Evaluate(MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
+      Result Evaluate(Array<Type> &array) const;
+
       Type get_start() const;
 
       Type get_increment() const;
@@ -47,7 +53,7 @@ namespace Anki
 
     protected:
       // For speed, FixedLengthList is allowed to access protected members, instead of having to
-      // construct a new LinearSequence every time an element is popped or pushed is changed
+      // construct a new LinearSequence every time an element is popped or pushed
       template<typename FixedLengthListType> friend class FixedLengthList;
 
       Type start;

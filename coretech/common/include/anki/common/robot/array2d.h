@@ -112,35 +112,6 @@ namespace Anki
         flags);
     }
 
-    // Immediate evaluation of a LinearSequence, into this Array
-    template<typename Type> Array<Type>::Array(const LinearSequence<Type> &sequence, MemoryStack &memory, const Flags::Buffer flags)
-    {
-      const s32 numRows = 1;
-      const s32 numCols = sequence.get_size();
-
-      AnkiConditionalError(numCols >= 0 && numRows >= 0,
-        "Array<Type>::Array", "Invalid size");
-
-      s32 numBytesAllocated = 0;
-
-      void * const allocatedBuffer = AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, flags), memory, numBytesAllocated, flags, false);
-
-      InitializeBuffer(numRows,
-        numCols,
-        reinterpret_cast<Type*>(allocatedBuffer),
-        numBytesAllocated,
-        flags);
-
-      const Type startValue = sequence.get_start();
-      const Type increment = sequence.get_increment();
-
-      Type curValue = startValue;
-      for(s32 x=0; x<numCols; x++) {
-        this->data[x] = curValue;
-        curValue += increment;
-      }
-    }
-
     template<typename Type> const Type* Array<Type>::Pointer(const s32 index0, const s32 index1) const
     {
       AnkiConditionalWarnAndReturnValue(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1],

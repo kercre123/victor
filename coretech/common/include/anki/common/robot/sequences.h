@@ -40,6 +40,41 @@ namespace Anki
       this->end = this->start + (this->size-1) * this->increment;
     }
 
+    template<typename Type> Array<Type> LinearSequence<Type>::Evaluate(MemoryStack &memory, const Flags::Buffer flags) const
+    {
+      const s32 numRows = 1;
+      const s32 numCols = this->get_size();
+
+      Array<Type> array(numRows, numCols, memory, flags);
+
+      this->Evaluate(array);
+
+      return array;
+    }
+
+    template<typename Type> Result LinearSequence<Type>::Evaluate(Array<Type> &array) const
+    {
+      const s32 size = this->get_size();
+
+      AnkiConditionalErrorAndReturnValue(array.IsValid(),
+        RESULT_FAIL, "LinearSequence<Type>::Evaluate", "Invalid array");
+
+      AnkiConditionalErrorAndReturnValue(array.get_size(0)==1 && array.get_size(1)==size,
+        RESULT_FAIL, "LinearSequence<Type>::Evaluate", "Invalid array");
+
+      const Type startValue = this->get_start();
+      const Type increment = this->get_increment();
+
+      Type * pArray = array.Pointer(0,0);
+      Type curValue = startValue;
+      for(s32 x=0; x<size; x++) {
+        pArray[x] = curValue;
+        curValue += increment;
+      }
+
+      return RESULT_OK;
+    }
+
     template<typename Type> Type LinearSequence<Type>::get_start() const
     {
       return start;

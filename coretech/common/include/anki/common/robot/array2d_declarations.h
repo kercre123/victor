@@ -62,9 +62,6 @@ namespace Anki
       // All memory in the array is zeroed out once it is allocated
       Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false));
 
-      // Immediate evaluation of a LinearSequence, into this Array
-      Array(const LinearSequence<Type> &sequence, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false));
-
       // Pointer to the data, at a given (y,x) location
       //
       // NOTE:
