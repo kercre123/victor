@@ -1,3 +1,12 @@
+/**
+File: utilities_c.c
+Author: Peter Barnum
+Created: 2013
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
+
 #include "anki/common/robot/utilities_c.h"
 
 #if defined(_MSC_VER)
@@ -121,7 +130,7 @@ void PrintFloat(f64 value)
     putchar('-');
     value = -value;
   }
-  
+
   decimalPart = value - (f64)floorf(value);
 
   // Print the part before the decimal digit
@@ -142,7 +151,7 @@ void PrintFloat(f64 value)
     putchar('0');
     return;
   }
-  
+
   PrintInt((s32)floorf(value));
 
   // The remainder of this function prints the part after the decimal digit

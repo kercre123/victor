@@ -1,3 +1,14 @@
+/**
+File: sequences.h
+Author: Peter Barnum
+Created: 2013
+
+A Sequence is a mathematically-defined, ordered list. The sequence classes allow for operations on sequences, without requiring them to be explicitly evaluated.
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
+
 #ifndef _ANKICORETECHEMBEDDED_COMMON_SEQUENCES_H_
 #define _ANKICORETECHEMBEDDED_COMMON_SEQUENCES_H_
 

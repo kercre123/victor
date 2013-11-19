@@ -1,7 +1,14 @@
-/*
+/**
+File: config.h
+Author: Peter Barnum
+Created: 2013
+
 Basic configuation file for all common files, as well as all other coretech libraries.
 Everything in this file should be compatible with plain C, as well as C++
-*/
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
 
 #ifndef _ANKICORETECHEMBEDDED_COMMON_CONFIG_H_
 #define _ANKICORETECHEMBEDDED_COMMON_CONFIG_H_
