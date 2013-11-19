@@ -332,26 +332,6 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
     }
   } // PUSH_MEMORY_STACK(ms)
 
-  // 1D indexes vertical
-  {
-    PUSH_MEMORY_STACK(ms);
-
-    Array<s32> indexes;
-
-    ASSERT_TRUE(findB.Evaluate(indexes, ms) == RESULT_OK);
-
-    ASSERT_TRUE(indexes.get_size(0) == 1);
-    ASSERT_TRUE(indexes.get_size(1) == 3);
-
-    //indexes.Print("indexes");
-
-    const s32 indexes_groundTruth[3] = {3, 4, 5};
-
-    for(s32 i=0; i<3; i++) {
-      ASSERT_TRUE(indexes[0][i] == indexes_groundTruth[i]);
-    }
-  } // PUSH_MEMORY_STACK(ms)
-
   GTEST_RETURN_HERE;
 }
 

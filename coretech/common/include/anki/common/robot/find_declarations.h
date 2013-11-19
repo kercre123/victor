@@ -105,7 +105,7 @@ namespace Anki
       const Array<Type2> &array2;
       const Type2 value;
 
-      s32 outputDimensions;
+      s32 numOutputDimensions;
 
       bool isValid;
 

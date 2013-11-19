@@ -23,7 +23,7 @@ namespace Anki
 #pragma mark --- Definitions ---
 
     template<typename Type1, typename Operator, typename Type2> Find<Type1,Operator,Type2>::Find(const Array<Type1> &array1, const Array<Type2> &array2)
-      : array1(array1), array2(array2), compareWithValue(false), value(static_cast<Type2>(0)), outputDimensions(0)
+      : array1(array1), array2(array2), compareWithValue(false), value(static_cast<Type2>(0)), numOutputDimensions(0)
     {
       if(!array1.IsValid() ||
         !array2.IsValid() ||
@@ -38,7 +38,7 @@ namespace Anki
     }
 
     template<typename Type1, typename Operator, typename Type2> Find<Type1,Operator,Type2>::Find(const Array<Type1> &array, const Type2 &value)
-      : array1(array), array2(array), compareWithValue(true), value(value), outputDimensions(0)
+      : array1(array), array2(array), compareWithValue(true), value(value), numOutputDimensions(0)
       // array2 is initialized to array, but this is just because it has to point to something, though it should not be accessed
     {
       if(!array1.IsValid()) {
@@ -55,14 +55,13 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Find.Evaluate", "This Find object is invalid");
 
-      AnkiConditionalErrorAndReturnValue(outputDimensions == 1,
+      AnkiConditionalErrorAndReturnValue(this->numOutputDimensions == 1,
         RESULT_FAIL, "Find.Evaluate", "One-dimensional Evaluate only works with one-dimensional Array input");
 
       const s32 arrayHeight = array1.get_size(0);
       const s32 arrayWidth = array1.get_size(1);
 
-      assert( (arrayHeight==1) || (arrayWidth==1) );
-      assert(this->outputDimensions == 1);
+      assert(arrayHeight == 1);
 
       indexes = Array<s32>(1, this->get_numMatches(), memory);
 
@@ -71,59 +70,30 @@ namespace Anki
       s32 curIndex = 0;
 
       if(this->compareWithValue) {
-        if(arrayHeight == 1) {
-          const s32 y = 0;
-          const Type1 * const pArray1 = array1.Pointer(y, 0);
+        const s32 y = 0;
+        const Type1 * const pArray1 = array1.Pointer(y, 0);
 
-          for(s32 x=0; x<arrayWidth; x++) {
-            if(Operator::Compare(pArray1[x], value)) {
-              pIndexes[curIndex] = x;
-              curIndex++;
-            }
-          } // for(s32 x=0; x<arrayWidth; x++)
-        } else { // if(arrayHeight == 1)
-          assert(arrayWidth == 1);
-          const s32 x = 0;
-
-          for(s32 y=0; y<arrayHeight; y++) {
-            const Type1 * const pArray1 = array1.Pointer(y, 0);
-
-            if(Operator::Compare(pArray1[x], value)) {
-              pIndexes[curIndex] = y;
-              curIndex++;
-            }
-          } // for(s32 y=0; y<arrayHeight; y++)
-        } // if(arrayHeight == 1) ... else
+        for(s32 x=0; x<arrayWidth; x++) {
+          if(Operator::Compare(pArray1[x], value)) {
+            pIndexes[curIndex] = x;
+            curIndex++;
+          }
+        } // for(s32 x=0; x<arrayWidth; x++)
       } else { // if(this->compareWithValue)
         // These should be checked earlier
         assert(array1.get_size(0) == array2.get_size(0));
         assert(array1.get_size(1) == array2.get_size(1));
 
-        if(arrayHeight == 1) {
-          const s32 y = 0;
-          const Type1 * const pArray1 = array1.Pointer(y, 0);
-          const Type2 * const pArray2 = array2.Pointer(y, 0);
+        const s32 y = 0;
+        const Type1 * const pArray1 = array1.Pointer(y, 0);
+        const Type2 * const pArray2 = array2.Pointer(y, 0);
 
-          for(s32 x=0; x<arrayWidth; x++) {
-            if(Operator::Compare(pArray1[x], pArray2[x])) {
-              pIndexes[curIndex] = x;
-              curIndex++;
-            }
-          } // for(s32 x=0; x<arrayWidth; x++)
-        } else { // if(arrayHeight == 1)
-          assert(arrayWidth == 1);
-          const s32 x = 0;
-
-          for(s32 y=0; y<arrayHeight; y++) {
-            const Type1 * const pArray1 = array1.Pointer(y, 0);
-            const Type2 * const pArray2 = array2.Pointer(y, 0);
-
-            if(Operator::Compare(pArray1[x], pArray2[x])) {
-              pIndexes[curIndex] = y;
-              curIndex++;
-            }
-          } // for(s32 y=0; y<arrayHeight; y++)
-        } // if(arrayHeight == 1) ... else
+        for(s32 x=0; x<arrayWidth; x++) {
+          if(Operator::Compare(pArray1[x], pArray2[x])) {
+            pIndexes[curIndex] = x;
+            curIndex++;
+          }
+        } // for(s32 x=0; x<arrayWidth; x++)
       } // if(this->compareWithValue) ... else
 
       return RESULT_OK;
@@ -183,10 +153,11 @@ namespace Anki
     {
       this->isValid = true;
 
-      if(MIN(array1.get_size(0), array1.get_size(1)) == 1) {
-        this->outputDimensions = 1;
+      // If the input is a row vector, then it can be used for 1-dimensional indexing
+      if(array1.get_size(0) == 1) {
+        this->numOutputDimensions = 1;
       } else {
-        this->outputDimensions = 2;
+        this->numOutputDimensions = 2;
       }
 
       this->numMatchesComputed = false;
@@ -356,6 +327,9 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(out.IsValid(),
         RESULT_FAIL, "Find.SetArray", "out is invalid");
 
+      AnkiConditionalErrorAndReturnValue(this->numOutputDimensions == 1,
+        RESULT_FAIL, "Find.SetArray", "One-dimensional SetArray only works with one-dimensional Array input");
+
       const s32 array1Height = array1.get_size(0);
       const s32 array1Width = array1.get_size(1);
 
@@ -367,8 +341,7 @@ namespace Anki
 
       const s32 numMatches = this->get_numMatches();
 
-      assert( (array1Height==1) || (array1Width==1) );
-      assert(this->outputDimensions == 1);
+      assert(array1Height == 1);
 
       if(findWhichDimension == 0) {
         AnkiConditionalErrorAndReturnValue(outHeight == numMatches && outWidth == inWidth,
@@ -384,66 +357,51 @@ namespace Anki
           RESULT_FAIL, "Find.SetArray", "in is not the correct size");
       }
 
-      // This is a three-deep nested set of binary if-thens. Each of the eight "leaves" will iterate
+      // This is a two-deep nested set of binary if-thens. Each of the four "leaves" will iterate
       // through the entire array, and set the appropriate values.
       //
       // Levels:
       // 1. Is this a array-to-value comparison? (versus array-to-array)
-      // 2. Is the input array 1xN? (versus Nx1)
-      // 3. Will we use the comparisons to set dimension 0? (versus dimension 1)
+      // 2. Will we use the comparisons to set dimension 0? (versus dimension 1)
       if(this->compareWithValue) {
-        if(array1Height == 1) {
-          if(findWhichDimension == 0) {
-            const Type1 * const pArray1 = array1.Pointer(0, 0);
+        if(findWhichDimension == 0) {
+          const Type1 * const pArray1 = array1.Pointer(0, 0);
 
-            s32 outY = 0;
+          s32 outY = 0;
 
-            // i iterates on both the width of Array array1 and the height of Array in
-            for(s32 i=0; i<array1Width; i++) {
-              if(Operator::Compare(pArray1[i], value)) {
-                const ArrayType * const pIn = in.Pointer(i, 0);
+          // i iterates on both the width of Array array1 and the height of Array in
+          for(s32 i=0; i<array1Width; i++) {
+            if(Operator::Compare(pArray1[i], value)) {
+              const ArrayType * const pIn = in.Pointer(i, 0);
 
-                ArrayType * const pOut = out.Pointer(outY, 0);
+              ArrayType * const pOut = out.Pointer(outY, 0);
 
-                for(s32 x=0; x<outWidth; x++) {
-                  pOut[x] = pIn[x];
-                } // for(s32 x=0; x<array1Width; x++)
+              for(s32 x=0; x<outWidth; x++) {
+                pOut[x] = pIn[x];
+              } // for(s32 x=0; x<array1Width; x++)
 
-                outY++;
-              } // if(Operator::Compare(pArray1[x], value))
-            } // for(s32 i=0; i<array1Width; i++)
-          } else { // if(findWhichDimension == 0)
-            const Type1 * const pArray1 = array1.Pointer(0, 0);
+              outY++;
+            } // if(Operator::Compare(pArray1[x], value))
+          } // for(s32 i=0; i<array1Width; i++)
+        } else { // if(findWhichDimension == 0)
+          const Type1 * const pArray1 = array1.Pointer(0, 0);
 
-            s32 outX = 0;
+          s32 outX = 0;
 
-            // i iterates on both the width of Array array1 and the width of Array in
-            for(s32 i=0; i<array1Width; i++) {
-              if(Operator::Compare(pArray1[i], value)) {
-                for(s32 y=0; y<outHeight; y++) {
-                  ArrayType * const pOut = out.Pointer(y, outX);
-                  const ArrayType * const pIn = in.Pointer(y, i);
+          // i iterates on both the width of Array array1 and the width of Array in
+          for(s32 i=0; i<array1Width; i++) {
+            if(Operator::Compare(pArray1[i], value)) {
+              for(s32 y=0; y<outHeight; y++) {
+                ArrayType * const pOut = out.Pointer(y, outX);
+                const ArrayType * const pIn = in.Pointer(y, i);
 
-                  *pOut = *pIn;
-                } // for(s32 y=0; y<outHeight; y++)
+                *pOut = *pIn;
+              } // for(s32 y=0; y<outHeight; y++)
 
-                outX++;
-              } // if(Operator::Compare(pArray1[i], value))
-            } // for(s32 i=0; i<array1Width; i++)
-          } // if(findWhichDimension == 0) ... else
-        } else { // if(array1Height == 1)
-          assert(array1Width == 1);
-          //const s32 x = 0;
-
-          //for(s32 y=0; y<array1Height; y++) {
-          //  const Type1 * const pArray1 = array1.Pointer(y, 0);
-
-          //  if(Operator::Compare(pArray1[x], value)) {
-          //    pIndexes[curIndex] = y;
-          //    curIndex++;
-          //  }
-          //} // for(s32 y=0; y<array1Height; y++)
-        } // if(array1Height == 1) ... else
+              outX++;
+            } // if(Operator::Compare(pArray1[i], value))
+          } // for(s32 i=0; i<array1Width; i++)
+        } // if(findWhichDimension == 0) ... else
       } else { // if(this->compareWithValue)
         //// These should be checked earlier
         //assert(array1.get_size(0) == array2.get_size(0));
