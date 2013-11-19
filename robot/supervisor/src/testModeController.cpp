@@ -63,8 +63,16 @@ namespace Anki {
         //// End of LiftTest defines //////
         
         
+        /////// HeadTest defines /////////
+        // 0: Set power directly with MotorSetPower
+        // 1: Command a desired head angle (i.e. use HeadController)
+        #define HEAD_POSITION_TEST 0
         
-
+        const f32 HEAD_POWER_CMD = 0.3;
+        const f32 HEAD_DES_HIGH_ANGLE = 0.5f;
+        const f32 HEAD_DES_LOW_ANGLE = -0.2f;
+        //// End of HeadTest defines //////
+        
 
         // Current test mode
         TestMode testMode_ = TM_NONE;
@@ -184,6 +192,9 @@ namespace Anki {
       
       ReturnCode LiftTestInit()
       {
+#if(!LIFT_HEIGHT_TEST)
+        LiftController::Disable();
+#endif
         return EXIT_SUCCESS;
       }
       
@@ -212,11 +223,9 @@ namespace Anki {
           if (up) {
             PRINT("Lift UP %f power\n", LIFT_POWER_CMD);
             HAL::MotorSetPower(HAL::MOTOR_LIFT, LIFT_POWER_CMD);
-            LiftController::Disable();
           } else {
             PRINT("Lift DOWN %f power\n", -LIFT_POWER_CMD);
             HAL::MotorSetPower(HAL::MOTOR_LIFT, -LIFT_POWER_CMD);
-            LiftController::Disable();
           }
 #endif
           
@@ -240,6 +249,60 @@ namespace Anki {
         return EXIT_SUCCESS;
       }
       
+      
+      ReturnCode HeadTestInit()
+      {
+#if(!HEAD_POSITION_TEST)
+        HeadController::Disable();
+#endif
+        return EXIT_SUCCESS;
+      }
+      
+      
+      ReturnCode HeadTestUpdate()
+      {
+        static bool up = false;
+        static u32 cnt = 0, printCnt = 0;
+        
+        // Change direction
+        if (cnt++ >= 4000 / TIME_STEP) {
+          
+          
+#if(HEAD_POSITION_TEST)
+          up = !up;
+          if (up) {
+            PRINT("Head HIGH %f rad\n", HEAD_DES_HIGH_ANGLE);
+            HeadController::SetDesiredAngle(HEAD_DES_HIGH_ANGLE);
+          } else {
+            PRINT("Head LOW %f rad\n", HEAD_DES_LOW_ANGLE);
+            HeadController::SetDesiredAngle(HEAD_DES_LOW_ANGLE);
+          }
+#else
+          up = !up;
+          if (up) {
+            PRINT("Head UP %f power\n", HEAD_POWER_CMD);
+            HAL::MotorSetPower(HAL::MOTOR_HEAD, HEAD_POWER_CMD);
+          } else {
+            PRINT("Head DOWN %f power\n", -HEAD_POWER_CMD);
+            HAL::MotorSetPower(HAL::MOTOR_HEAD, -HEAD_POWER_CMD);
+          }
+#endif
+          
+          cnt = 0;
+        }
+        
+        // Print speed
+        if (printCnt++ >= 200 / TIME_STEP) {
+          f32 hSpeed = HAL::MotorGetSpeed(HAL::MOTOR_HEAD);
+          f32 hPos = HeadController::GetAngleRad();
+          
+          PRINT("Head speed %f rad/s, angle %f rad\n", hSpeed, hPos);
+          printCnt = 0;
+        }
+        
+        
+        return EXIT_SUCCESS;
+      }
       
       ReturnCode GripperTestInit()
       {
@@ -317,6 +380,10 @@ namespace Anki {
           case TM_LIFT:
             ret = LiftTestInit();
             updateFunc = LiftTestUpdate;
+            break;
+          case TM_HEAD:
+            ret = HeadTestInit();
+            updateFunc = HeadTestUpdate;
             break;
           case TM_GRIPPER:
             ret = GripperTestInit();
