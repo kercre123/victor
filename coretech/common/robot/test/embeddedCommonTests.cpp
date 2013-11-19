@@ -69,6 +69,25 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, Linspace)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  LinearSequence<f32> sequence1 = Linspace<f32>(0,9,10);
+  LinearSequence<f32> sequence2 = Linspace<f32>(0,9,1<<29);
+  LinearSequence<s32> sequence3 = Linspace<s32>(0,9,10);
+  LinearSequence<s32> sequence4 = Linspace<s32>(0,9,9);
+
+  ASSERT_TRUE(sequence1.get_size() == 10);
+  ASSERT_TRUE(sequence2.get_size() == 536870912);
+  ASSERT_TRUE(sequence3.get_size() == 10);
+  ASSERT_TRUE(sequence4.get_size() == 10);
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, Find_SetArray1)
 {
   ASSERT_TRUE(buffer != NULL);

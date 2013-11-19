@@ -71,8 +71,9 @@ namespace Anki
     template<typename Type> LinearSequence<Type> IndexSequence(Type start, Type increment, Type end, s32 arraySize);
     LinearSequence<s32> IndexSequence(s32 arraySize); // Internally, it sets start==0, end=arraySize-1, like the Matlab colon operator array(:,:)
 
-    // TODO: linspace
-    //template<typename Type> LinearSequence<Type> Linspace(const Type start, const Type end, const s32 size);
+    // Linspace only really works correctly for f32 and f64, because getting the correct start and
+    // end may be impossible for integers.
+    template<typename Type> LinearSequence<Type> Linspace(const Type start, const Type end, const s32 size);
 
     // TODO: Logspace
     //template<typename Type> class Logspace : public Sequence<Type>

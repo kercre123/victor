@@ -8,6 +8,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 **/
 
 #include "anki/common/robot/sequences.h"
+#include "anki/common/robot/errorHandling.h"
 
 namespace Anki
 {
@@ -15,9 +16,10 @@ namespace Anki
   {
     template<> s32 LinearSequence<f32>::computeSize(const f32 start, const f32 increment, const f32 end)
     {
-      const f32 smallestIncrement = 0.00001f;
+      const f32 smallestIncrement = static_cast<f32>(1e-8);
 
-      assert(ABS(increment) > smallestIncrement);
+      AnkiConditionalErrorAndReturnValue(ABS(increment) > smallestIncrement,
+        0, "LinearSequence<f32>::computeSize", "increment is too small");
 
       // 10:-1:12
       if(increment < 0.0f && start < end) {
@@ -36,14 +38,18 @@ namespace Anki
       const f32 validRange = maxLimit - minLimit;
       const s32 size = static_cast<s32>(floorf((validRange+incrementMagnitude)/incrementMagnitude));
 
+      AnkiConditionalErrorAndReturnValue(size >= 0,
+        0, "LinearSequence<f32>::computeSize", "size estimation failed");
+
       return size;
     }
 
     template<> s32 LinearSequence<f64>::computeSize(const f64 start, const f64 increment, const f64 end)
     {
-      const f64 smallestIncrement = 0.00001;
+      const f64 smallestIncrement = static_cast<f64>(1e-8);
 
-      assert(ABS(increment) > smallestIncrement);
+      AnkiConditionalErrorAndReturnValue(ABS(increment) > smallestIncrement,
+        0, "LinearSequence<f64>::computeSize", "increment is too small");
 
       // 10:-1:12
       if(increment < 0.0 && start < end) {
@@ -61,6 +67,9 @@ namespace Anki
 
       const f64 validRange = maxLimit - minLimit;
       const s32 size = static_cast<s32>(floorf(static_cast<f32>((validRange+incrementMagnitude)/incrementMagnitude)));
+
+      AnkiConditionalErrorAndReturnValue(size >= 0,
+        0, "LinearSequence<f32>::computeSize", "size estimation failed");
 
       return size;
     }

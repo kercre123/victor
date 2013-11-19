@@ -95,7 +95,6 @@ namespace Anki
       return size;
     }
 
-    // TODO: instantiate for float
     template<typename Type> s32 LinearSequence<Type>::computeSize(const Type start, const Type increment, const Type end)
     {
       assert(increment != static_cast<Type>(0));
@@ -138,6 +137,44 @@ namespace Anki
       assert(end >=0 && end < arraySize);
 
       LinearSequence<Type> sequence(start, increment, end);
+
+      return sequence;
+    }
+
+    template<typename Type> LinearSequence<Type> Linspace(const Type start, const Type end, const s32 size)
+    {
+      const Type increment = (end-start) / (size-1);
+      LinearSequence<Type> sequence(start, increment, end);
+
+      // If Type is not a float, and the sequence is the wrong size, just give up
+      if((sequence.get_size() != size) && static_cast<Type>(1e-5)==0) {
+        AnkiError("Linspace", "Size is incorrect, probably because the Type is an integer type");
+        return sequence;
+      }
+
+      // The size of the generated sequence may be incorrect, due to numerical precision. If so, try
+      // to tweak it.
+      // TODO: check if this actually can happen
+      if(sequence.get_size() < size) {
+        for(s32 i=0; i<128; i++) {
+          const Type offset = static_cast<Type>(1e-15) * static_cast<Type>(1 << (i+1));
+          sequence = LinearSequence<Type>(start, increment + offset, end);
+
+          if(sequence.get_size() >= size)
+            break;
+        }
+      } else if(sequence.get_size() > size) {
+        for(s32 i=0; i<128; i++) {
+          const Type offset = static_cast<Type>(1e-15) * static_cast<Type>(1 << (i+1));
+          sequence = LinearSequence<Type>(start, increment - offset, end);
+
+          if(sequence.get_size() <= size)
+            break;
+        }
+      }
+
+      AnkiConditionalErrorAndReturnValue(sequence.get_size() == size,
+        sequence, "Linspace", "Could not set sequence to have the correct size.");
 
       return sequence;
     }
