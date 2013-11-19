@@ -404,6 +404,15 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
     }
   } // PUSH_MEMORY_STACK(ms)
 
+  // 1D indexes vertical
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s32> indexes;
+
+    ASSERT_TRUE(findB.Evaluate(indexes, ms) == RESULT_FAIL);
+  } // PUSH_MEMORY_STACK(ms)
+
   GTEST_RETURN_HERE;
 }
 
