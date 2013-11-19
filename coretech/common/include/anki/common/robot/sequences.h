@@ -46,32 +46,32 @@ namespace Anki
       const s32 numRows = 1;
       const s32 numCols = this->get_size();
 
-      Array<Type> array(numRows, numCols, memory, flags);
+      Array<Type> out(numRows, numCols, memory, flags);
 
-      this->Evaluate(array);
+      this->Evaluate(out);
 
-      return array;
+      return out;
     }
 
-    template<typename Type> Result LinearSequence<Type>::Evaluate(ArraySlice<Type> array) const
+    template<typename Type> Result LinearSequence<Type>::Evaluate(ArraySlice<Type> out) const
     {
       const s32 size = this->get_size();
-      Array<Type> &outArray = array.get_array();
+      Array<Type> &outArray = out.get_array();
 
       AnkiConditionalErrorAndReturnValue(outArray.IsValid(),
         RESULT_FAIL, "LinearSequence<Type>::Evaluate", "Invalid array");
 
-      AnkiConditionalErrorAndReturnValue(array.get_ySlice().get_size()==1 && array.get_xSlice().get_size()==size,
+      AnkiConditionalErrorAndReturnValue(out.get_ySlice().get_size()==1 && out.get_xSlice().get_size()==size,
         RESULT_FAIL, "LinearSequence<Type>::Evaluate", "Invalid array");
 
       const Type sequenceStartValue = this->get_start();
       const Type sequenceIncrement = this->get_increment();
 
-      const s32 yStart = array.get_ySlice().get_start();
+      const s32 yStart = out.get_ySlice().get_start();
 
-      const s32 xStart = array.get_xSlice().get_start();
-      const s32 xIncrement = array.get_xSlice().get_increment();
-      const s32 xEnd = array.get_xSlice().get_end();
+      const s32 xStart = out.get_xSlice().get_start();
+      const s32 xIncrement = out.get_xSlice().get_increment();
+      const s32 xEnd = out.get_xSlice().get_end();
 
       Type * pArray = outArray.Pointer(yStart,0);
       Type curSequenceValue = sequenceStartValue;
@@ -197,31 +197,31 @@ namespace Anki
       const s32 numRows = 1;
       const s32 numCols = this->xGridVector.get_size();
 
-      Array<Type> array(numRows, numCols, memory, flags);
+      Array<Type> out(numRows, numCols, memory, flags);
 
-      this->Evaluate(xGridVector, columnMajor, array);
+      this->Evaluate(xGridVector, columnMajor, out);
 
-      return array;
+      return out;
     }
 
-    template<typename Type> Result Meshgrid<Type>::Evaluate(bool xGridVector, bool columnMajor, ArraySlice<Type> array) const
+    template<typename Type> Result Meshgrid<Type>::Evaluate(bool xGridVector, bool columnMajor, ArraySlice<Type> out) const
     {
       const s32 xGridSize = this->xGridVector.get_size();
       const s32 yGridSize = this->yGridVector.get_size();
       const s32 size = xGridSize * yGridSize;
 
-      Array<Type> &outArray = array.get_array();
+      Array<Type> &outArray = out.get_array();
 
       AnkiConditionalErrorAndReturnValue(outArray.IsValid(),
         RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Invalid array");
 
-      AnkiConditionalErrorAndReturnValue(array.get_ySlice().get_size()==1 && array.get_xSlice().get_size()==size,
+      AnkiConditionalErrorAndReturnValue(out.get_ySlice().get_size()==1 && out.get_xSlice().get_size()==size,
         RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Invalid array");
 
-      const s32 outYStart = array.get_ySlice().get_start();
+      const s32 outYStart = out.get_ySlice().get_start();
 
-      s32 outIndex = array.get_xSlice().get_start();
-      const s32 outXIncrement = array.get_xSlice().get_increment();
+      s32 outIndex = out.get_xSlice().get_start();
+      const s32 outXIncrement = out.get_xSlice().get_increment();
 
       Type * pArray = outArray.Pointer(outYStart,0);
 

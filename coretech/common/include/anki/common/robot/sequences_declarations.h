@@ -42,7 +42,7 @@ namespace Anki
       LinearSequence(const Type start, const Type increment, const Type end);
 
       Array<Type> Evaluate(MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
-      Result Evaluate(ArraySlice<Type> array) const;
+      Result Evaluate(ArraySlice<Type> out) const;
 
       Type get_start() const;
 
@@ -92,7 +92,7 @@ namespace Anki
       // If xVector==true, evaluate xGridVector. If false, evaluate yGridVector
       // If columnMajor==true, then the output vector will be column-major(like Matlab)
       Array<Type> Evaluate(bool xGridVector, bool columnMajor, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
-      Result Evaluate(bool xGridVector, bool columnMajor, ArraySlice<Type> array) const;
+      Result Evaluate(bool xGridVector, bool columnMajor, ArraySlice<Type> out) const;
 
       inline const LinearSequence<Type>& get_xGridVector() const;
 
