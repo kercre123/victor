@@ -526,7 +526,7 @@ GTEST_TEST(CoreTech_Common, Find_NumMatchesAndBoundingRectangle)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, MatrixAdd)
+GTEST_TEST(CoreTech_Common, MatrixElementwise)
 {
   ASSERT_TRUE(buffer != NULL);
   MemoryStack ms(buffer, MAX_BYTES);
@@ -545,7 +545,7 @@ GTEST_TEST(CoreTech_Common, MatrixAdd)
   for(s32 y=0; y<5; y++) {
     for(s32 x=0; x<6; x++) {
       in1[y][x] = i1++;
-      in2[y][x] = i2*100;
+      in2[y][x] = i2*100 + 1;
       i2++;
     }
   }
@@ -556,13 +556,48 @@ GTEST_TEST(CoreTech_Common, MatrixAdd)
     const Result result = Matrix::Add<s32,s32>(in1, in2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
-    //in1.Print("in1");
-    //in2.Print("in2");
-    //out.Print("out");
-
     for(s32 y=0; y<5; y++) {
       for(s32 x=0; x<6; x++) {
         ASSERT_TRUE((s32)out[y][x] == (s32)(in1[y][x] + in2[y][x]));
+      }
+    }
+  }
+
+  // Test normal elementwise subtraction
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::Subtract<s32,s32>(in1, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(in1[y][x] - in2[y][x]));
+      }
+    }
+  }
+
+  // Test normal elementwise multiplication
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::DotMultiply<s32,s32>(in1, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(in1[y][x] * in2[y][x]));
+      }
+    }
+  }
+
+  // Test normal elementwise division
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::DotDivide<s32,s32>(in1, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(in1[y][x] / in2[y][x]));
       }
     }
   }
@@ -611,13 +646,66 @@ GTEST_TEST(CoreTech_Common, MatrixAdd)
     const Result result = Matrix::Add<s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
     ASSERT_TRUE(result == RESULT_OK);
 
-    //in1.Print("in1");
-    //in2.Print("in2");
-    //out.Print("out");
-
     ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] + in2[0][0]));
     ASSERT_TRUE((s32)out[0][2] == (s32)(in1[2][0] + in2[2][0]));
     ASSERT_TRUE((s32)out[0][4] == (s32)(in1[4][0] + in2[4][0]));
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        if(!(y==0 && (x==0 || x==2 || x==4))) {
+          ASSERT_TRUE(out[y][x] == 0);
+        }
+      }
+    }
+  }
+
+  // Test slice transpose in1 and in2 elementwise subtraction
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::Subtract<s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
+    ASSERT_TRUE(result == RESULT_OK);
+
+    ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] - in2[0][0]));
+    ASSERT_TRUE((s32)out[0][2] == (s32)(in1[2][0] - in2[2][0]));
+    ASSERT_TRUE((s32)out[0][4] == (s32)(in1[4][0] - in2[4][0]));
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        if(!(y==0 && (x==0 || x==2 || x==4))) {
+          ASSERT_TRUE(out[y][x] == 0);
+        }
+      }
+    }
+  }
+
+  // Test slice transpose in1 and in2 elementwise multiply
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::DotMultiply<s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
+    ASSERT_TRUE(result == RESULT_OK);
+
+    ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] * in2[0][0]));
+    ASSERT_TRUE((s32)out[0][2] == (s32)(in1[2][0] * in2[2][0]));
+    ASSERT_TRUE((s32)out[0][4] == (s32)(in1[4][0] * in2[4][0]));
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        if(!(y==0 && (x==0 || x==2 || x==4))) {
+          ASSERT_TRUE(out[y][x] == 0);
+        }
+      }
+    }
+  }
+
+  // Test slice transpose in1 and in2 elementwise division
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::DotDivide<s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
+    ASSERT_TRUE(result == RESULT_OK);
+
+    ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] / in2[0][0]));
+    ASSERT_TRUE((s32)out[0][2] == (s32)(in1[2][0] / in2[2][0]));
+    ASSERT_TRUE((s32)out[0][4] == (s32)(in1[4][0] / in2[4][0]));
 
     for(s32 y=0; y<5; y++) {
       for(s32 x=0; x<6; x++) {

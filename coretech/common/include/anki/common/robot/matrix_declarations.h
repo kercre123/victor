@@ -44,14 +44,14 @@ namespace Anki
       // Elementwise add two arrays. in1, in2, and out can be the same array
       template<typename InType, typename OutType> Result Add(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
 
-      //// Elementwise subtract two arrays. in1, in2, and out can be the same array
-      //template<typename InType, typename OutType> Result Subtract(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      // Elementwise subtract two arrays. in1, in2, and out can be the same array
+      template<typename InType, typename OutType> Result Subtract(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
 
-      //// Elementwise multiply two arrays. in1, in2, and out can be the same array
-      //template<typename InType, typename OutType> Result DotMultiply(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<OutType> &in2, ArraySlice<OutType> out);
+      // Elementwise multiply two arrays. in1, in2, and out can be the same array
+      template<typename InType, typename OutType> Result DotMultiply(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
 
-      //// Elementwise divide two arrays. in1, in2, and out can be the same array
-      //template<typename InType, typename OutType> Result DotDivide(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      // Elementwise divide two arrays. in1, in2, and out can be the same array
+      template<typename InType, typename OutType> Result DotDivide(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
 
       //
       // Standard matrix operations
@@ -70,6 +70,32 @@ namespace Anki
       // 2. When lowerToUpper==false, copies the upper (right) triangle to the lower (left)  triangle
       // Functionally the same as OpenCV completeSymm()
       template<typename Type> Result MakeSymmetric(Type &arr, bool lowerToUpper = false);
+
+      // There's probably no need to use these directly. Instead, use the normal Matrix:: operations, like Matrix::Add
+      namespace Elementwise
+      {
+        template<typename Type> class Add {
+        public:
+          static inline Type BinaryElementwiseOperation(const Type value1, const Type value2) {return value1 + value2;}
+        };
+
+        template<typename Type> class Subtract {
+        public:
+          static inline Type BinaryElementwiseOperation(const Type value1, const Type value2) {return value1 - value2;}
+        };
+
+        template<typename Type> class DotMultiply {
+        public:
+          static inline Type BinaryElementwiseOperation(const Type value1, const Type value2) {return value1 * value2;}
+        };
+
+        template<typename Type> class DotDivide {
+        public:
+          static inline Type BinaryElementwiseOperation(const Type value1, const Type value2) {return value1 / value2;}
+        };
+
+        template<typename InType, typename Operator, typename OutType> Result ApplyOperation(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      }
     } // namespace Matrix
   } // namespace Embedded
 } // namespace Anki

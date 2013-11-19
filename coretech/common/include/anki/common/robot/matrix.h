@@ -95,85 +95,22 @@ namespace Anki
 
       template<typename InType, typename OutType> Result Add(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
       {
-        const Array<InType> &in1Array = in1.get_array();
-        const Array<InType> &in2Array = in2.get_array();
-        Array<OutType> &out1Array = out.get_array();
-
-        AnkiConditionalErrorAndReturnValue(in1Array.IsValid(),
-          RESULT_FAIL, "Matrix::Add", "Invalid array in1");
-
-        AnkiConditionalErrorAndReturnValue(in2Array.IsValid(),
-          RESULT_FAIL, "Matrix::Add", "Invalid array in2");
-
-        AnkiConditionalErrorAndReturnValue(out1Array.IsValid(),
-          RESULT_FAIL, "Matrix::Add", "Invalid array out");
-
-        ArraySliceLimits_in2_out1<s32> limits(
-          in1.get_ySlice(), in1.get_xSlice(), in1.get_isTransposed(),
-          in2.get_ySlice(), in2.get_xSlice(), in2.get_isTransposed(),
-          out.get_ySlice(), out.get_xSlice());
-
-        AnkiConditionalErrorAndReturnValue(limits.isValid,
-          RESULT_FAIL, "Matrix::Add", "Limits is not valid");
-
-        if(limits.isSimpleIteration) {
-          // If the input isn't transposed, we will do the maximally efficient loop iteration
-
-          for(s32 y=0; y<limits.ySize; y++) {
-            const InType * const pIn1 = in1Array.Pointer(limits.in1Y, 0);
-            const InType * const pIn2 = in2Array.Pointer(limits.in2Y, 0);
-            OutType * const pOut1 = out1Array.Pointer(limits.out1Y, 0);
-
-            limits.OuterIncrementTop();
-
-            for(s32 x=0; x<limits.xSize; x++) {
-              pOut1[limits.out1X] = pIn1[limits.in1X] + pIn2[limits.in2X];
-
-              limits.in1X += limits.in1_xInnerIncrement;
-              limits.in2X += limits.in2_xInnerIncrement;
-              limits.out1X += limits.out1_xInnerIncrement;
-            }
-
-            limits.OuterIncrementBottom();
-          }
-        } else { // if(limits.isSimpleIteration)
-          // If either input is transposed is allowed, then we will do an inefficent loop iteration
-
-          for(s32 y=0; y<limits.ySize; y++) {
-            OutType * const pOut1 = out1Array.Pointer(limits.out1Y, 0);
-
-            limits.OuterIncrementTop();
-
-            for(s32 x=0; x<limits.xSize; x++) {
-              const InType valIn1 = *in1Array.Pointer(limits.in1Y, limits.in1X);
-              const InType valIn2 = *in2Array.Pointer(limits.in2Y, limits.in2X);
-
-              pOut1[limits.out1X] = valIn1 + valIn2;
-
-              limits.in1X += limits.in1_xInnerIncrement;
-              limits.in1Y += limits.in1_yInnerIncrement;
-              limits.in2X += limits.in2_xInnerIncrement;
-              limits.in2Y += limits.in2_yInnerIncrement;
-              limits.out1X += limits.out1_xInnerIncrement;
-            }
-
-            limits.OuterIncrementBottom();
-          }
-        } //   if(limits.isSimpleIteration)  ... else
-
-        return RESULT_OK;
+        return Elementwise::ApplyOperation<InType, Elementwise::Add<InType>, OutType>(in1, in2, out);
       } // template<typename Type> Result Add(const ConstArraySliceExpression<Type> &in1, const ConstArraySliceExpression<Type> &in2, const ArraySlice<Type> &out)
 
-      template<typename Type> Result Subtract(const ConstArraySliceExpression<Type> &in1, const ConstArraySliceExpression<Type> &in2, const ArraySlice<Type> &out)
+      template<typename InType, typename OutType> Result Subtract(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
       {
+        return Elementwise::ApplyOperation<InType, Elementwise::Subtract<InType>, OutType>(in1, in2, out);
       } // template<typename Type> Result Subtract(const ConstArraySliceExpression<Type> &in1, const ConstArraySliceExpression<Type> &in2, const ArraySlice<Type> &out)
 
-      template<typename Type> Result DotMultiply(const ConstArraySliceExpression<Type> &in1, const ConstArraySliceExpression<Type> &in2, const ArraySlice<Type> &out)
+      template<typename InType, typename OutType> Result DotMultiply(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
       {
+        return Elementwise::ApplyOperation<InType, Elementwise::DotMultiply<InType>, OutType>(in1, in2, out);
       } // template<typename Type> Result DotMultiply(const ConstArraySliceExpression<Type> &in1, const ConstArraySliceExpression<Type> &in2, const ArraySlice<Type> &out)
 
-      template<typename Type> Result DotDivide(const ConstArraySliceExpression<Type> &in1, const ConstArraySliceExpression<Type> &in2, const ArraySlice<Type> &out)
+      template<typename InType, typename OutType> Result DotDivide(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
       {
+        return Elementwise::ApplyOperation<InType, Elementwise::DotDivide<InType>, OutType>(in1, in2, out);
       } // template<typename Type> Result DotDivide(const ConstArraySliceExpression<Type> &in1, const ConstArraySliceExpression<Type> &in2, const ArraySlice<Type> &out)
 
       template<typename InType, typename OutType> Result Multiply(const Array<InType> &in1, const Array<InType> &in2, Array<OutType> &out)
@@ -227,6 +164,80 @@ namespace Anki
 
         return RESULT_OK;
       } // template<typename Type> Result MakeSymmetric(Type &arr, bool lowerToUpper)
+
+      namespace Elementwise
+      {
+        template<typename InType, typename Operator, typename OutType> Result ApplyOperation(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
+        {
+          const Array<InType> &in1Array = in1.get_array();
+          const Array<InType> &in2Array = in2.get_array();
+          Array<OutType> &out1Array = out.get_array();
+
+          AnkiConditionalErrorAndReturnValue(in1Array.IsValid(),
+            RESULT_FAIL, "Matrix::Elementwise::ApplyOperation", "Invalid array in1");
+
+          AnkiConditionalErrorAndReturnValue(in2Array.IsValid(),
+            RESULT_FAIL, "Matrix::Elementwise::ApplyOperation", "Invalid array in2");
+
+          AnkiConditionalErrorAndReturnValue(out1Array.IsValid(),
+            RESULT_FAIL, "Matrix::Elementwise::ApplyOperation", "Invalid array out");
+
+          ArraySliceLimits_in2_out1<s32> limits(
+            in1.get_ySlice(), in1.get_xSlice(), in1.get_isTransposed(),
+            in2.get_ySlice(), in2.get_xSlice(), in2.get_isTransposed(),
+            out.get_ySlice(), out.get_xSlice());
+
+          AnkiConditionalErrorAndReturnValue(limits.isValid,
+            RESULT_FAIL, "Matrix::Elementwise::ApplyOperation", "Limits is not valid");
+
+          if(limits.isSimpleIteration) {
+            // If the input isn't transposed, we will do the maximally efficient loop iteration
+
+            for(s32 y=0; y<limits.ySize; y++) {
+              const InType * const pIn1 = in1Array.Pointer(limits.in1Y, 0);
+              const InType * const pIn2 = in2Array.Pointer(limits.in2Y, 0);
+              OutType * const pOut1 = out1Array.Pointer(limits.out1Y, 0);
+
+              limits.OuterIncrementTop();
+
+              for(s32 x=0; x<limits.xSize; x++) {
+                pOut1[limits.out1X] = Operator::BinaryElementwiseOperation(pIn1[limits.in1X], pIn2[limits.in2X]);
+
+                limits.in1X += limits.in1_xInnerIncrement;
+                limits.in2X += limits.in2_xInnerIncrement;
+                limits.out1X += limits.out1_xInnerIncrement;
+              }
+
+              limits.OuterIncrementBottom();
+            }
+          } else { // if(limits.isSimpleIteration)
+            // If either input is transposed is allowed, then we will do an inefficent loop iteration
+
+            for(s32 y=0; y<limits.ySize; y++) {
+              OutType * const pOut1 = out1Array.Pointer(limits.out1Y, 0);
+
+              limits.OuterIncrementTop();
+
+              for(s32 x=0; x<limits.xSize; x++) {
+                const InType valIn1 = *in1Array.Pointer(limits.in1Y, limits.in1X);
+                const InType valIn2 = *in2Array.Pointer(limits.in2Y, limits.in2X);
+
+                pOut1[limits.out1X] = Operator::BinaryElementwiseOperation(valIn1, valIn2);
+
+                limits.in1X += limits.in1_xInnerIncrement;
+                limits.in1Y += limits.in1_yInnerIncrement;
+                limits.in2X += limits.in2_xInnerIncrement;
+                limits.in2Y += limits.in2_yInnerIncrement;
+                limits.out1X += limits.out1_xInnerIncrement;
+              }
+
+              limits.OuterIncrementBottom();
+            }
+          } //   if(limits.isSimpleIteration)  ... else
+
+          return RESULT_OK;
+        }
+      } // namespace Elementwise
     } // namespace Matrix
   } // namespace Embedded
 } // namespace Anki
