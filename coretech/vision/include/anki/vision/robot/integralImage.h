@@ -1,9 +1,20 @@
+/**
+File: integralImage.h
+Author: Peter Barnum
+Created: 2013
+
+A ScrollingIntegralImage is a class that hold a small part of an integral image in memory. The integral image is used to box filter.
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
+
 #ifndef _ANKICORETECHEMBEDDED_VISION_INTEGRAL_IMAGE_H_
 #define _ANKICORETECHEMBEDDED_VISION_INTEGRAL_IMAGE_H_
 
 #include "anki/common/robot/config.h"
+#include "anki/common/robot/array2d.h"
 
-#include "anki/vision/robot/array2d_vision.h"
 #include "anki/vision/robot/movidiusPrototyping.h"
 #include "anki/vision/robot/cInterfaces_vision_c.h"
 
@@ -33,7 +44,7 @@ namespace Anki
       // with "numBorderPixels" extra pixels. For example, using a 5x5 filter would require an extra
       // 3 border pixels, because floor(5/2)+1 = 3. When numBorderPixels>0, then the outermost pixel
       // will be replicated to estimate the unknown values.
-      ScrollingIntegralImage_u8_s32(const s32 bufferHeight, const s32 imageWidth, const s32 numBorderPixels, MemoryStack &memory, const BufferFlags flags=BufferFlags(true,false));
+      ScrollingIntegralImage_u8_s32(const s32 bufferHeight, const s32 imageWidth, const s32 numBorderPixels, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false));
 
       // Using the data from "image", scroll this integral image down. For example, if the integral
       // image is windowed between rows 0 to 100, then scrolling down by 10 lines would make it

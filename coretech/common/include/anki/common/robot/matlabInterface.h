@@ -1,3 +1,14 @@
+/**
+File: matlabInterface.h
+Author: Peter Barnum
+Created: 2013
+
+A simple wrapper around the Matlab interface between C and matlab. These routines can be used to send and receive data from the Matlab process, and to execute commands in the Matlab window.
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
+
 #ifndef _ANKICORETECHEMBEDDED_COMMON_MATLAB_INTERFACE_H_
 #define _ANKICORETECHEMBEDDED_COMMON_MATLAB_INTERFACE_H_
 
@@ -108,7 +119,7 @@ namespace Anki
 
       const size_t numCols = mxGetM(arrayTmp);
       const size_t numRows = mxGetN(arrayTmp);
-      const s32 stride = Array<Type>::ComputeRequiredStride(static_cast<s32>(numCols), BufferFlags(true,false));
+      const s32 stride = Array<Type>::ComputeRequiredStride(static_cast<s32>(numCols), Flags::Buffer(true,false));
 
       Array<Type> ankiArray(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<Type*>(calloc(stride*numCols,1)), stride*static_cast<s32>(numCols));
 

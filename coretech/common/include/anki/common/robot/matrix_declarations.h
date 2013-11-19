@@ -1,0 +1,77 @@
+/**
+File: matrix_declarations.h
+Author: Peter Barnum
+Created: 2013
+
+Declarations of matrix.h
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
+
+#ifndef _ANKICORETECHEMBEDDED_COMMON_MATRIX_DECLARATIONS_H_
+#define _ANKICORETECHEMBEDDED_COMMON_MATRIX_DECLARATIONS_H_
+
+#include "anki/common/robot/config.h"
+#include "anki/common/robot/array2d_declarations.h"
+#include "anki/common/robot/arraySlices_declarations.h"
+
+namespace Anki
+{
+  namespace Embedded
+  {
+    namespace Matrix
+    {
+#pragma mark --- Declarations ---
+
+      //
+      // Simple matrix statistics
+      //
+
+      // Return the minimum element in this Array
+      template<typename Type> Type Min(const ConstArraySliceExpression<Type> &mat);
+
+      // Return the maximum element in this Array
+      template<typename Type> Type Max(const ConstArraySliceExpression<Type> &mat);
+
+      // Return the sum of every element in the Array
+      template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(const ConstArraySliceExpression<Array_Type> &mat);
+
+      //
+      // Elementwise matrix operations
+      //
+
+      // Elementwise add two arrays. in1, in2, and out can be the same array
+      template<typename InType, typename OutType> Result Add(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+
+      //// Elementwise subtract two arrays. in1, in2, and out can be the same array
+      //template<typename InType, typename OutType> Result Subtract(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+
+      //// Elementwise multiply two arrays. in1, in2, and out can be the same array
+      //template<typename InType, typename OutType> Result DotMultiply(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<OutType> &in2, ArraySlice<OutType> out);
+
+      //// Elementwise divide two arrays. in1, in2, and out can be the same array
+      //template<typename InType, typename OutType> Result DotDivide(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+
+      //
+      // Standard matrix operations
+      //
+
+      // Perform the matrix multiplication "out = in1 * in2"
+      // Note that this is the naive O(n^3) Definition
+      template<typename InType, typename OutType> Result Multiply(const Array<InType> &in1, const Array<InType> &in2, Array<OutType> &out);
+
+      //
+      // Misc matrix operations
+      //
+
+      // For a square array, either:
+      // 1. When lowerToUpper==true,  copies the lower (left)  triangle to the upper (right) triangle
+      // 2. When lowerToUpper==false, copies the upper (right) triangle to the lower (left)  triangle
+      // Functionally the same as OpenCV completeSymm()
+      template<typename Type> Result MakeSymmetric(Type &arr, bool lowerToUpper = false);
+    } // namespace Matrix
+  } // namespace Embedded
+} // namespace Anki
+
+#endif // _ANKICORETECHEMBEDDED_COMMON_MATRIX_DECLARATIONS_H_

@@ -1,3 +1,14 @@
+/**
+File: embeddedCommonTests.cpp
+Author: Peter Barnum
+Created: 2013
+
+Various tests of the coretech common embedded library.
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
+
 //#define USING_MOVIDIUS_COMPILER
 
 #include "anki/common/robot/array2d.h"
@@ -57,6 +68,120 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 #endif // #ifdef BUFFER_IN_CMX ... #else
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
+
+GTEST_TEST(CoreTech_Common, Find_SetArray)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<s32> in1(1,6,ms); //in1: 2000 2000 2000 3 4 5
+
+  ASSERT_TRUE(in1.IsValid());
+
+  for(s32 x=0; x<6; x++) {
+    in1[0][x] = x;
+  }
+
+  in1(0,0,0,2).Set(2000);
+
+  Find<s32,Comparison::LessThanOrEqual<s32,s32>,s32> find(in1, 5);
+
+  Array<s16> inB(6,6,ms);
+
+  s16 i1 = 0;
+  for(s32 y=0; y<6; y++) {
+    for(s32 x=0; x<6; x++) {
+      inB[y][x] = i1++;
+    }
+  }
+
+  // Case 1-1-1
+  {
+    PUSH_MEMORY_STACK(ms);
+    Array<s16> outB;
+
+    ASSERT_TRUE(find.AllocateAndSetArray(outB, inB, 0, ms) == RESULT_OK);
+
+    ASSERT_TRUE(outB.get_size(0) == 3);
+    ASSERT_TRUE(outB.get_size(1) == 6);
+
+    for(s32 y=0; y<3; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE(outB[y][x] == inB[y+3][x]);
+      }
+    }
+  } // PUSH_MEMORY_STACK(memory);
+
+  // Case 1-1-2
+  {
+    PUSH_MEMORY_STACK(ms);
+    Array<s16> outB;
+
+    ASSERT_TRUE(find.AllocateAndSetArray(outB, inB, 1, ms) == RESULT_OK);
+
+    ASSERT_TRUE(outB.get_size(0) == 6);
+    ASSERT_TRUE(outB.get_size(1) == 3);
+
+    for(s32 y=0; y<6; y++) {
+      for(s32 x=0; x<3; x++) {
+        ASSERT_TRUE(outB[y][x] == inB[y][x+3]);
+      }
+    }
+  } // PUSH_MEMORY_STACK(memory);
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, Find_SetValue)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u16> in1(5,6,ms);
+  Array<u16> in2(5,6,ms);
+
+  ASSERT_TRUE(in1.IsValid());
+  ASSERT_TRUE(in2.IsValid());
+
+  //in1.Show("in1", true, true);
+
+  u16 i1 = 0;
+  u16 i2 = 0;
+  for(s32 y=0; y<5; y++) {
+    for(s32 x=0; x<6; x++) {
+      in1[y][x] = i1++;
+      in2[y][x] = i2*100;
+      i2++;
+    }
+  }
+
+  in1(2,-1,0,-1).Set(1600);
+
+  Find<u16,Comparison::Equal<u16,u16>,u16> find(in1, in2);
+
+  ASSERT_TRUE(find.IsValid());
+
+  ASSERT_TRUE(find.SetArray<u16>(in1, 4242) == RESULT_OK);
+
+  const u16 in1_groundTruth[5][6] = {
+    {4242, 1, 2, 3, 4, 5},
+    {6, 7, 8, 9, 10, 11},
+    {1600, 1600, 1600, 1600, 4242, 1600},
+    {1600, 1600, 1600, 1600, 1600, 1600},
+    {1600, 1600, 1600, 1600, 1600, 1600}};
+
+  //in1.Print("in1");
+
+  for(s32 y=0; y<5; y++) {
+    for(s32 x=0; x<6; x++) {
+      ASSERT_TRUE(in1[y][x] == in1_groundTruth[y][x]);
+    }
+  }
+
+  GTEST_RETURN_HERE;
+}
 
 GTEST_TEST(CoreTech_Common, ZeroSizedArray)
 {
@@ -1517,7 +1642,7 @@ GTEST_TEST(CoreTech_Common, ArrayFillPattern)
   MemoryStack ms(alignedBuffer, numBytes-MEMORY_ALIGNMENT);
 
   // Create a matrix, and manually set a few values
-  Array<s16> simpleArray(height, width, ms, BufferFlags(true,true));
+  Array<s16> simpleArray(height, width, ms, Flags::Buffer(true,true));
   ASSERT_TRUE(simpleArray.get_rawDataPointer() != NULL);
 
   ASSERT_TRUE(simpleArray.IsValid());

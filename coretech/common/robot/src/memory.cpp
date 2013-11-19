@@ -1,3 +1,12 @@
+/**
+File: memory.cpp
+Author: Peter Barnum
+Created: 2013
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
+
 #include "anki/common/robot/memory.h"
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/utilities.h"
@@ -6,50 +15,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    BufferFlags::BufferFlags()
-      : flags(0)
-    {
-    }
-
-    BufferFlags::BufferFlags(bool zeroAllocatedMemory, bool useBoundaryFillPatterns)
-      : flags(0)
-    {
-      this->set_zeroAllocatedMemory(zeroAllocatedMemory);
-      this->set_useBoundaryFillPatterns(useBoundaryFillPatterns);
-    }
-
-    void BufferFlags::set_zeroAllocatedMemory(bool value)
-    {
-      this->flags &= ~BufferFlags::ZERO_ALLOCATED_MEMORY;
-
-      if(value)
-        this->flags |= BufferFlags::ZERO_ALLOCATED_MEMORY;
-    }
-
-    bool BufferFlags::get_zeroAllocatedMemory() const
-    {
-      return (this->flags & BufferFlags::ZERO_ALLOCATED_MEMORY) != 0;
-    }
-
-    void BufferFlags::set_useBoundaryFillPatterns(bool value)
-    {
-      this->flags &= ~BufferFlags::USE_BOUNDARY_FILL_PATTERNS;
-
-      if(value)
-        this->flags |= BufferFlags::USE_BOUNDARY_FILL_PATTERNS;
-    }
-
-    bool BufferFlags::get_useBoundaryFillPatterns() const
-    {
-      return (this->flags & BufferFlags::USE_BOUNDARY_FILL_PATTERNS) != 0;
-    }
-
-    u32 BufferFlags::get_rawFlags() const
-    {
-      return this->flags;
-    }
-
-    MemoryStack::MemoryStack(void *buffer, s32 bufferLength, BufferFlags flags)
+    MemoryStack::MemoryStack(void *buffer, s32 bufferLength, Flags::Buffer flags)
       : buffer(buffer), totalBytes(bufferLength), usedBytes(0), usedBytesBeforeLastAllocation(0), lastAllocatedMemory(NULL), flags(flags)
     {
       assert(flags.get_useBoundaryFillPatterns());
@@ -241,7 +207,7 @@ namespace Anki
       return id;
     }
 
-    BufferFlags MemoryStack::get_flags() const
+    Flags::Buffer MemoryStack::get_flags() const
     {
       return flags;
     }

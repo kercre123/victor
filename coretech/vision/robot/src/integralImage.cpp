@@ -1,3 +1,12 @@
+/**
+File: integralImage.cpp
+Author: Peter Barnum
+Created: 2013
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
+
 #include "anki/vision/robot/integralImage.h"
 
 #define SwapEndianU32(value) \
@@ -15,7 +24,7 @@ namespace Anki
     {
     }
 
-    ScrollingIntegralImage_u8_s32::ScrollingIntegralImage_u8_s32(const s32 bufferHeight, const s32 imageWidth, const s32 numBorderPixels, MemoryStack &memory, const BufferFlags flags)
+    ScrollingIntegralImage_u8_s32::ScrollingIntegralImage_u8_s32(const s32 bufferHeight, const s32 imageWidth, const s32 numBorderPixels, MemoryStack &memory, const Flags::Buffer flags)
       : Array<s32>(bufferHeight, imageWidth+2*numBorderPixels, memory, flags), imageWidth(imageWidth), numBorderPixels(numBorderPixels), maxRow(-1), rowOffset(-numBorderPixels)
     {
       assert(imageWidth%ANKI_VISION_IMAGE_WIDTH_SHIFT == 0);

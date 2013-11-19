@@ -49,7 +49,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   ConditionalErrorAndReturn(startPointMatrix.get_rawDataPointer() != 0, "mexTraceBoundary", "Could not allocate Matrix startPointMatrix");
 
   FixedLengthList<Point<s16> > boundary = AllocateFixedLengthListFromHeap<Point<s16> >(MAX_BOUNDARY_LENGTH);
-  ConditionalErrorAndReturn(boundary.get_rawDataPointer() != 0, "mexTraceBoundary", "Could not allocate FixedLengthList boundary");
+  ConditionalErrorAndReturn(boundary.get_array().get_rawDataPointer() != 0, "mexTraceBoundary", "Could not allocate FixedLengthList boundary");
   ConditionalErrorAndReturn(initialDirectionString != 0, "mexTraceBoundary", "Could not read initialDirectionString");
 
   Point<s16> startPoint(static_cast<s16>(*startPointMatrix.Pointer(0,1)-1), static_cast<s16>(*startPointMatrix.Pointer(0,0)-1));

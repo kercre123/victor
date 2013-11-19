@@ -1,20 +1,27 @@
+/**
+File: array2d.h
+Author: Peter Barnum
+Created: 2013
+
+An Array is the basic large data structure for embedded work. It is designed for easy acceleration of algorithms on embedded hardware.
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
+
 #ifndef _ANKICORETECHEMBEDDED_COMMON_ARRAY2D_H_
 #define _ANKICORETECHEMBEDDED_COMMON_ARRAY2D_H_
 
-#include "anki/common/robot/config.h"
+#include "anki/common/robot/array2d_declarations.h"
+
 #include "anki/common/robot/utilities.h"
 #include "anki/common/robot/memory.h"
 #include "anki/common/robot/errorHandling.h"
-#include "anki/common/robot/dataStructures.h"
 #include "anki/common/robot/geometry.h"
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/robot/cInterfaces_c.h"
 #include "anki/common/robot/sequences.h"
-
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#endif
+#include "anki/common/robot/matrix.h"
 
 // #define ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
 
@@ -30,212 +37,12 @@ namespace Anki
 
     //template<typename Type1, typename Type2> class Find;
 
-#pragma mark --- Array Class Definition ---
-
-    template<typename Type> class Array
-    {
-    public:
-      static s32 ComputeRequiredStride(const s32 numCols, const BufferFlags flags);
-
-      static s32 ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const BufferFlags flags);
-
-      Array();
-
-      // Constructor for a Array, pointing to user-allocated data. If the pointer to *data is not
-      // aligned to MEMORY_ALIGNMENT, this Array will start at the next aligned location.
-      // Unfortunately, this is more restrictive than most matrix libraries, and as an example,
-      // it may make it hard to convert from OpenCV to Array, though the reverse is trivial.
-      // All memory in the array is zeroed out once it is allocated
-      Array(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const BufferFlags flags=BufferFlags(true,false));
-
-      // Constructor for a Array, pointing to user-allocated MemoryStack
-      // All memory in the array is zeroed out once it is allocated
-      Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const BufferFlags flags=BufferFlags(true,false));
-
-      // Immediate evaluation of a LinearSequence, into this Array
-      Array(const LinearSequence<Type> &sequence, MemoryStack &memory, const BufferFlags flags=BufferFlags(true,false));
-
-      // Pointer to the data, at a given (y,x) location
-      //
-      // NOTE:
-      // Using this in a inner loop is very innefficient. Instead, declare a pointer outside the
-      // inner loop, like: "Type * restrict pArray = Array.Pointer(5);", then index
-      // pArray in the inner loop.
-      inline const Type* Pointer(const s32 index0, const s32 index1) const;
-      inline Type* Pointer(const s32 index0, const s32 index1);
-
-      // Use this operator for normal C-style 2d matrix indexing. For example, "array[5][0] = 6;"
-      // will set the element in the fifth row and first column to 6. This is the same as
-      // "array.Pointer(5)[0] = 6;"
-      //
-      // NOTE:
-      // Using this in a inner loop is very innefficient. Instead, declare a pointer outside the
-      // inner loop, like: "Type * restrict pArray = Array[5];", then index
-      // pArray in the inner loop.
-      inline const Type * operator[](const s32 index0) const;
-      inline Type * operator[](const s32 index0);
-
-      // Pointer to the data, at a given (y,x) location
-      //
-      // NOTE:
-      // Using this in a inner loop is very innefficient. Instead, declare a pointer outside the
-      // inner loop, like: "Type * restrict pArray = Array.Pointer(Point<s16>(5,0));",
-      // then index pArray in the inner loop.
-      inline const Type* Pointer(const Point<s16> &point) const;
-      inline Type* Pointer(const Point<s16> &point);
-
-      // Return a slice accessor for this array, like the Matlab expression "array(1:5, 2:3:5)"
-      ArraySlice<Type> operator() ();
-      ArraySlice<Type> operator() (const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice);
-      ArraySlice<Type> operator() (s32 minY, s32 maxY, s32 minX, s32 maxX); // If min or max is less than 0, it is equivalent to (end+value)
-      ArraySlice<Type> operator() (s32 minY, s32 incrementY, s32 maxY, s32 minX, s32 incrementX, s32 maxX); // If min or max is less than 0, it is equivalent to (end+value)
-      //operator ArraySlice<Type>(); // Implicit conversion
-
-      ConstArraySlice<Type> operator() () const;
-      ConstArraySlice<Type> operator() (const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice) const;
-      ConstArraySlice<Type> operator() (s32 minY, s32 maxY, s32 minX, s32 maxX) const; // If min or max is less than 0, it is equivalent to (end+value)
-      ConstArraySlice<Type> operator() (s32 minY, s32 incrementY, s32 maxY, s32 minX, s32 incrementX, s32 maxX) const; // If min or max is less than 0, it is equivalent to (end+value)
-      //operator ConstArraySlice<Type>() const; // Implicit conversion
-
-      // ArraySlice Transpose doesn't modify the data, it just sets a flag
-      ConstArraySliceExpression<Type> Transpose() const;
-
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-      // Returns a templated cv::Mat_ that shares the same buffer with this Array. No data is copied.
-      cv::Mat_<Type>& get_CvMat_();
-#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
-
-      void Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues=false) const;
-
-      // Print out the contents of this Array
-      Result Print(const char * const variableName = "Array", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
-
-      // Checks the basic parameters of this Array.
-      // If the Array was constructed with flags |= BufferFlags::USE_BOUNDARY_FILL_PATTERNS, then
-      // return if any memory was written out of bounds (via fill patterns at the
-      // beginning and end).
-      bool IsValid() const;
-
-      // Resize will use MemoryStack::Reallocate() to change the Array's size. It only works if this
-      // Array was the last thing allocated. The reallocated memory will not be cleared
-      //
-      // WARNING: This will not update any references to the memory, you must update all references
-      //          manually.
-      Result Resize(const s32 numRows, const s32 numCols, MemoryStack &memory);
-
-      // Set every element in the Array to zero, including the stride padding, but not including the optional fill patterns (if they exist)
-      // Returns the number of bytes set to zero
-      s32 SetZero();
-
-      // Set every element in the Array to this value
-      // Returns the number of values set
-      s32 Set(const Type value);
-
-      // Copy values to this Array.
-      // If the input array does not contain enough elements, the remainder of this Array will be filled with zeros.
-      // Returns the number of values set (not counting extra zeros)
-      // Note: The myriad has many issues with static initialization of arrays, so this should be used with caution
-#ifdef ANKI_ARRAY_USE_ARRAY_SET
-      s32 Set_unsafe(const Type * const values, const s32 numValues);
-      s32 Set(const s32 * const values, const s32 numValues);
-      s32 Set(const f64 * const values, const s32 numValues);
-#endif
-
-      // Parse a space-seperated string, and copy values to this Array.
-      // If the string does not contain enough elements, the remainder of the Array will be filled with zeros.
-      // Returns the number of values set (not counting extra zeros)
-#ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
-      s32 Set(const char * const values);
-#endif
-
-      // TODO: implement all these
-      //template<typename FindType1, typename FindType2> s32 Set(const Find<FindType1, FindType2> &find, const Type value);
-      //template<typename FindType1, typename FindType2> s32 Set(const Find<FindType1, FindType2> &find, const Array<Type> &in, bool useFindForInput=false);
-      //template<typename FindType1, typename FindType2> s32 Set(const Find<FindType1, FindType2> &find, const ConstArraySlice<Type> &in);
-
-      // This is a shallow copy. There's no reference counting. Updating the data of one array will
-      // update that of others (because they point to the same location in memory). However,
-      // Resizing or other operations on an array won't update the others.
-      Array& operator= (const Array & rightHandSide);
-
-      // Similar to Matlabs size(matrix, dimension), and dimension is in {0,1}
-      s32 get_size(s32 dimension) const;
-
-      // Get the stride, which is the number of bytes between an element at (n,m) and one at (n+1,m)
-      s32 get_stride() const;
-
-      // Get the stride, without the optional fill pattern. This is the number of bytes on a
-      // horizontal line that can safely be read and written to. If this array was created without
-      // fill patterns, it returns the same value as get_stride().
-      s32 get_strideWithoutFillPatterns() const;
-
-      void* get_rawDataPointer();
-
-      const void* get_rawDataPointer() const;
-
-      BufferFlags get_flags() const;
-
-    protected:
-      // Bit-inverse of MemoryStack patterns. The pattern will be put twice at
-      // the beginning and end of each line.
-      static const u32 FILL_PATTERN_START = 0X5432EF76;
-      static const u32 FILL_PATTERN_END = 0X7610FE76;
-
-      static const s32 HEADER_LENGTH = 8;
-      static const s32 FOOTER_LENGTH = 8;
-
-      s32 size[2];
-      s32 stride;
-      BufferFlags flags;
-
-      Type * data;
-
-      // To enforce alignment, rawDataPointer may be slightly before Type * data.
-      // If the inputted data buffer was from malloc, this is the pointer that
-      // should be used to free.
-      void * rawDataPointer;
-
-#if ANKICORETECH_EMBEDDED_USE_OPENCV
-      cv::Mat_<Type> cvMatMirror;
-#endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
-
-      void* AllocateBufferFromMemoryStack(const s32 numRows, const s32 stride, MemoryStack &memory, s32 &numBytesAllocated, const BufferFlags flags, bool reAllocate);
-
-      Result InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const BufferFlags flags);
-
-      void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
-    }; // class Array
-
-#pragma mark --- FixedPointArray Class Definition ---
-
-    template<typename Type> class FixedPointArray : public Array<Type>
-    {
-    public:
-      FixedPointArray();
-
-      // Constructor for a Array, pointing to user-allocated data. If the pointer to *data is not
-      // aligned to MEMORY_ALIGNMENT, this Array will start at the next aligned location.
-      // Unfortunately, this is more restrictive than most matrix libraries, and as an example,
-      // it may make it hard to convert from OpenCV to Array, though the reverse is trivial.
-      // All memory in the array is zeroed out once it is allocated
-      FixedPointArray(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const s32 numFractionalBits, const BufferFlags flags=BufferFlags(true,false));
-
-      // Constructor for a Array, pointing to user-allocated MemoryStack
-      // All memory in the array is zeroed out once it is allocated
-      FixedPointArray(const s32 numRows, const s32 numCols, const s32 numFractionalBits, MemoryStack &memory, const BufferFlags flags=BufferFlags(true,false));
-
-      s32 get_numFractionalBits() const;
-
-    protected:
-      s32 numFractionalBits;
-    };
-
-#pragma mark --- Array Implementations ---
+#pragma mark --- Array Definitions ---
 
     // Factory method to create an Array from the heap. The data of the returned Array must be freed by the user.
     // This is separate from the normal constructor, as Array objects are not supposed to manage memory
 #ifndef USING_MOVIDIUS_COMPILER
-    template<typename Type> Array<Type> AllocateArrayFromHeap(const s32 numRows, const s32 numCols, const BufferFlags flags=BufferFlags(true,false))
+    template<typename Type> Array<Type> AllocateArrayFromHeap(const s32 numRows, const s32 numCols, const Flags::Buffer flags=Flags::Buffer(true,false))
     {
       const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(numRows, numCols, flags); // The required memory, plus a bit more
 
@@ -244,7 +51,7 @@ namespace Anki
       return mat;
     }
 
-    template<typename Type> FixedPointArray<Type> AllocateFixedPointArrayFromHeap(const s32 numRows, const s32 numCols, const s32 numFractionalBits, const BufferFlags flags=BufferFlags(true,false))
+    template<typename Type> FixedPointArray<Type> AllocateFixedPointArrayFromHeap(const s32 numRows, const s32 numCols, const s32 numFractionalBits, const Flags::Buffer flags=Flags::Buffer(true,false))
     {
       const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(numRows, numCols, flags); // The required memory, plus a bit more
 
@@ -254,7 +61,7 @@ namespace Anki
     }
 #endif // #ifndef USING_MOVIDIUS_COMPILER
 
-    template<typename Type> s32 Array<Type>::ComputeRequiredStride(const s32 numCols, const BufferFlags flags)
+    template<typename Type> s32 Array<Type>::ComputeRequiredStride(const s32 numCols, const Flags::Buffer flags)
     {
       AnkiConditionalErrorAndReturnValue(numCols > 0,
         0, "Array<Type>::ComputeRequiredStride", "Invalid size");
@@ -263,7 +70,7 @@ namespace Anki
       return static_cast<s32>(RoundUp<size_t>(sizeof(Type)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
     }
 
-    template<typename Type> s32 Array<Type>::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const BufferFlags flags)
+    template<typename Type> s32 Array<Type>::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const Flags::Buffer flags)
     {
       AnkiConditionalErrorAndReturnValue(numCols > 0 && numRows > 0,
         0, "Array<Type>::ComputeMinimumRequiredMemory", "Invalid size");
@@ -276,7 +83,7 @@ namespace Anki
       InvalidateArray();
     }
 
-    template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const BufferFlags flags)
+    template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const Flags::Buffer flags)
       : stride(ComputeRequiredStride(numCols, flags))
     {
       AnkiConditionalError(numCols >= 0 && numRows >= 0 && dataLength >= 0,
@@ -289,7 +96,7 @@ namespace Anki
         flags);
     }
 
-    template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const BufferFlags flags)
+    template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const Flags::Buffer flags)
     {
       AnkiConditionalError(numCols >= 0 && numRows >= 0,
         "Array<Type>::Array", "Invalid size");
@@ -306,7 +113,7 @@ namespace Anki
     }
 
     // Immediate evaluation of a LinearSequence, into this Array
-    template<typename Type> Array<Type>::Array(const LinearSequence<Type> &sequence, MemoryStack &memory, const BufferFlags flags)
+    template<typename Type> Array<Type>::Array(const LinearSequence<Type> &sequence, MemoryStack &memory, const Flags::Buffer flags)
     {
       const s32 numRows = 1;
       const s32 numCols = sequence.get_size();
@@ -463,7 +270,7 @@ namespace Anki
     }
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
-    template<typename Type> void  Array<Type>::Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues) const
+    template<typename Type> void Array<Type>::Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues) const
     {
       // If opencv is not used, just do nothing
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
@@ -473,8 +280,8 @@ namespace Anki
         cv::Mat_<f64> scaledArray(this->get_size(0), this->get_size(1));
         scaledArray = cvMatMirror;
 
-        const f64 minValue = Matrix::Min(*this);
-        const f64 maxValue = Matrix::Max(*this);
+        const f64 minValue = Matrix::Min<Type>(*this);
+        const f64 maxValue = Matrix::Max<Type>(*this);
         const f64 range = maxValue - minValue;
 
         scaledArray -= minValue;
@@ -501,7 +308,7 @@ namespace Anki
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const Type * const pThisData = this->Pointer(y, 0);
         for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
-          printf("%d ", pThisData[x]);
+          pThisData[x].Print();
         }
         printf("\n");
       }
@@ -521,7 +328,7 @@ namespace Anki
       }
 
       if(flags.get_useBoundaryFillPatterns()) {
-        BufferFlags flagsWithoutBoundary = flags;
+        Flags::Buffer flagsWithoutBoundary = flags;
         flagsWithoutBoundary.set_useBoundaryFillPatterns(false);
         const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1],flagsWithoutBoundary);
 
@@ -736,7 +543,7 @@ namespace Anki
 
     template<typename Type> s32 Array<Type>::get_strideWithoutFillPatterns() const
     {
-      BufferFlags flagsWithoutBoundary = this->flags;
+      Flags::Buffer flagsWithoutBoundary = this->flags;
       flagsWithoutBoundary.set_useBoundaryFillPatterns(false);
 
       const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1],flagsWithoutBoundary);
@@ -753,12 +560,12 @@ namespace Anki
       return rawDataPointer;
     }
 
-    template<typename Type> BufferFlags Array<Type>::get_flags() const
+    template<typename Type> Flags::Buffer Array<Type>::get_flags() const
     {
       return flags;
     }
 
-    template<typename Type> void* Array<Type>::AllocateBufferFromMemoryStack(const s32 numRows, const s32 stride, MemoryStack &memory, s32 &numBytesAllocated, const BufferFlags flags, bool reAllocate)
+    template<typename Type> void* Array<Type>::AllocateBufferFromMemoryStack(const s32 numRows, const s32 stride, MemoryStack &memory, s32 &numBytesAllocated, const Flags::Buffer flags, bool reAllocate)
     {
       AnkiConditionalError(numRows > 0 && stride > 0,
         "Array<Type>::AllocateBufferFromMemoryStack", "Invalid size");
@@ -775,7 +582,7 @@ namespace Anki
       }
     }
 
-    template<typename Type> Result Array<Type>::InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const BufferFlags flags)
+    template<typename Type> Result Array<Type>::InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const Flags::Buffer flags)
     {
       AnkiConditionalErrorAndReturnValue(numCols >= 0 && numRows >= 0 && dataLength >= 0,
         RESULT_FAIL, "Array<Type>::InitializeBuffer", "Negative dimension");
@@ -813,7 +620,7 @@ namespace Anki
       }
 
       if(flags.get_useBoundaryFillPatterns()) {
-        BufferFlags flagsWithoutBoundary = flags;
+        Flags::Buffer flagsWithoutBoundary = flags;
         flagsWithoutBoundary.set_useBoundaryFillPatterns(false);
         const s32 strideWithoutFillPatterns = ComputeRequiredStride(size[1], flagsWithoutBoundary);
         this->data = reinterpret_cast<Type*>( reinterpret_cast<char*>(rawData) + extraAlignmentBytes + HEADER_LENGTH );
@@ -851,20 +658,51 @@ namespace Anki
       this->rawDataPointer = NULL;
     } // void Array<Type>::InvalidateArray()
 
-#pragma mark --- FixedPointArray Implementations ---
+    template<typename Type> Result Array<Type>::PrintBasicType(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX)  const
+    {
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
+
+      printf(variableName);
+      printf(":\n");
+      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
+        const Type * const pThisData = this->Pointer(y, 0);
+        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
+          if(Flags::TypeCharacteristics<Type>::isBasicType) {
+            if(Flags::TypeCharacteristics<Type>::isInteger) {
+              if(Flags::TypeCharacteristics<Type>::isSigned) {
+                printf("%d ", static_cast<s64>(pThisData[x]));
+              } else {
+                printf("%d ", static_cast<u64>(pThisData[x]));
+              }
+            } else {
+              printf("%f ", pThisData[x]);
+            }
+          } else {
+            printf("! ");
+          }
+        }
+        printf("\n");
+      }
+      printf("\n");
+
+      return RESULT_OK;
+    }
+
+#pragma mark --- FixedPointArray Definitions ---
 
     template<typename Type> FixedPointArray<Type>::FixedPointArray()
       : Array<Type>(), numFractionalBits(-1)
     {
     }
 
-    template<typename Type> FixedPointArray<Type>::FixedPointArray(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const s32 numFractionalBits, const BufferFlags flags)
+    template<typename Type> FixedPointArray<Type>::FixedPointArray(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const s32 numFractionalBits, const Flags::Buffer flags)
       : Array<Type>(numRows, numCols, data, dataLength, flags), numFractionalBits(numFractionalBits)
     {
       AnkiConditionalError(numFractionalBits >= 0 && numFractionalBits <= (sizeof(Type)*8),  "FixedPointArray<Type>", "numFractionalBits number is invalid");
     }
 
-    template<typename Type> FixedPointArray<Type>::FixedPointArray(s32 numRows, s32 numCols, s32 numFractionalBits, MemoryStack &memory, const BufferFlags flags)
+    template<typename Type> FixedPointArray<Type>::FixedPointArray(s32 numRows, s32 numCols, s32 numFractionalBits, MemoryStack &memory, const Flags::Buffer flags)
       : Array<Type>(numRows, numCols, memory, flags), numFractionalBits(numFractionalBits)
     {
       AnkiConditionalError(numFractionalBits >= 0 && numFractionalBits <= static_cast<s32>(sizeof(Type)*8),  "FixedPointArray<Type>", "numFractionalBits number is invalid");
@@ -877,27 +715,17 @@ namespace Anki
 
 #pragma mark --- Array Specializations ---
 
+    template<> Result Array<bool>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<u8>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<s8>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<u16>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<s16>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<u32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<s32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<u64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<s64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<f32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<f64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
-    template<> Result Array<Point<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
-    template<> Result Array<Point<f32> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
-    template<> Result Array<Point<f64> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
-    template<> Result Array<Rectangle<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
-    template<> Result Array<Quadrilateral<s16> >::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
-
-    //#ifdef USING_MOVIDIUS_GCC_COMPILER
-    //    template<> s32 Array<u8>::Set(const u8 * const values, const s32 numValues);
-    //    template<> s32 Array<s8>::Set(const s8 * const values, const s32 numValues);
-    //    template<> s32 Array<u16>::Set(const u16 * const values, const s32 numValues);
-    //    template<> s32 Array<s16>::Set(const s16 * const values, const s32 numValues);
-    //    template<> s32 Array<u32>::Set(const u32 * const values, const s32 numValues);
-    //    template<> s32 Array<s32>::Set(const s32 * const values, const s32 numValues);
-    //    template<> s32 Array<u64>::Set(const u64 * const values, const s32 numValues);
-    //    template<> s32 Array<s64>::Set(const s64 * const values, const s32 numValues);
-    //    template<> s32 Array<f32>::Set(const f32 * const values, const s32 numValues);
-    //    template<> s32 Array<f64>::Set(const f64 * const values, const s32 numValues);
-    //#endif
 
 #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
     template<> s32 Array<f32>::Set(const char * const values);
