@@ -20,7 +20,6 @@ namespace Anki {
   namespace Cozmo {
     namespace LiftController {
       
-      // TODO: Add if/when needed?
       ReturnCode Init();
 
       // Enable/Disable commands to the motor via HAL functions

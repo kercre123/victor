@@ -2,6 +2,7 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "dockingController.h"
+#include "gripController.h"
 #include "headController.h"
 #include "liftController.h"
 #include "testModeController.h"
@@ -56,9 +57,12 @@ namespace Anki {
         // 1: Command a desired lift height (i.e. use LiftController)
         #define LIFT_HEIGHT_TEST 1
         
-        
-        
+        const f32 LIFT_POWER_CMD = 0.3;
+        const f32 LIFT_DES_HIGH_HEIGHT = 50.f;
+        const f32 LIFT_DES_LOW_HEIGHT = 22.f;
         //// End of LiftTest defines //////
+        
+        
         
 
 
@@ -194,8 +198,6 @@ namespace Anki {
           
 
 #if(LIFT_HEIGHT_TEST)
-          const f32 LIFT_DES_HIGH_HEIGHT = 50.f;
-          const f32 LIFT_DES_LOW_HEIGHT = 22.f;
           up = !up;
           if (up) {
             PRINT("Lift HIGH %f mm\n", LIFT_DES_HIGH_HEIGHT);
@@ -206,14 +208,13 @@ namespace Anki {
           }
           
 #else
-          const f32 LIFT_POWER_CMD = 0.3;
           up = !up;
           if (up) {
             PRINT("Lift UP %f power\n", LIFT_POWER_CMD);
             HAL::MotorSetPower(HAL::MOTOR_LIFT, LIFT_POWER_CMD);
             LiftController::Disable();
           } else {
-            PRINT("Lift DOWN %f power\n", LIFT_POWER_CMD);
+            PRINT("Lift DOWN %f power\n", -LIFT_POWER_CMD);
             HAL::MotorSetPower(HAL::MOTOR_LIFT, -LIFT_POWER_CMD);
             LiftController::Disable();
           }
@@ -239,6 +240,35 @@ namespace Anki {
         return EXIT_SUCCESS;
       }
       
+      
+      ReturnCode GripperTestInit()
+      {
+        return EXIT_SUCCESS;
+      }
+      
+      
+      ReturnCode GripperTestUpdate()
+      {
+        static bool up = false;
+        static u32 cnt = 0;
+        
+        // Change direction
+        if (cnt++ >= 2000 / TIME_STEP) {
+          
+          up = !up;
+          if (up) {
+            PRINT("Gripper ENGAGED\n");
+            GripController::EngageGripper();
+          } else {
+            PRINT("Gripper DISENGAGED\n");
+            GripController::DisengageGripper();
+          }
+          
+          cnt = 0;
+        }
+        
+        return EXIT_SUCCESS;
+      }
       
       ReturnCode MaxPowerTestInit()
       {
@@ -287,6 +317,10 @@ namespace Anki {
           case TM_LIFT:
             ret = LiftTestInit();
             updateFunc = LiftTestUpdate;
+            break;
+          case TM_GRIPPER:
+            ret = GripperTestInit();
+            updateFunc = GripperTestUpdate;
             break;
           case TM_MAX_POWER_TEST:
             ret = MaxPowerTestInit();

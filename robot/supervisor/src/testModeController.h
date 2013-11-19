@@ -28,6 +28,7 @@ namespace Anki {
         TM_PATH_FOLLOW,
         TM_DIRECT_DRIVE,
         TM_LIFT,
+        TM_GRIPPER,
         TM_MAX_POWER_TEST
       } TestMode;
       

@@ -40,6 +40,7 @@ set(SOURCE_FILES
   ${ROBOT_SRC_DIR}/cozmoBot.cpp
   ${ROBOT_SRC_DIR}/dockingController.cpp
   ${ROBOT_SRC_DIR}/commandHandler.cpp
+  ${ROBOT_SRC_DIR}/gripController.cpp
  ${ROBOT_SRC_DIR}/headController.cpp
  ${ROBOT_SRC_DIR}/liftController.cpp
   ${ROBOT_SRC_DIR}/localization.cpp
@@ -59,6 +60,7 @@ set(SOURCE_FILES
 
 set(HEADER_FILES
  ${ROBOT_SRC_DIR}/dockingController.h
+ ${ROBOT_SRC_DIR}/gripController.h
  ${ROBOT_SRC_DIR}/headController.h
  ${ROBOT_SRC_DIR}/liftController.h
  ${ROBOT_SRC_DIR}/testModeController.h

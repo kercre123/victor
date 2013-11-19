@@ -6,6 +6,7 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
 #include "dockingController.h"
+#include "gripController.h"
 #include "headController.h"
 #include "liftController.h"
 #include "testModeController.h"
@@ -67,6 +68,7 @@ namespace Anki {
       void StartMotorCalibrationRoutine()
       {
         LiftController::StartCalibrationRoutine();
+        GripController::DisengageGripper();
         SteeringController::ExecuteDirectDrive(0,0);
       }
       
@@ -215,7 +217,7 @@ namespace Anki {
         
         HeadController::Update();
         LiftController::Update();
- 
+        GripController::Update();
         
         //////////////////////////////////////////////////////////////
         // State Machine
