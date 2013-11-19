@@ -69,7 +69,7 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
-GTEST_TEST(CoreTech_Common, Find_SetArray)
+GTEST_TEST(CoreTech_Common, Find_SetArray1)
 {
   ASSERT_TRUE(buffer != NULL);
   MemoryStack ms(buffer, MAX_BYTES);
@@ -96,7 +96,7 @@ GTEST_TEST(CoreTech_Common, Find_SetArray)
     }
   }
 
-  // Case 1-1-1
+  // Case 1-1
   {
     PUSH_MEMORY_STACK(ms);
     Array<s16> outB;
@@ -113,7 +113,79 @@ GTEST_TEST(CoreTech_Common, Find_SetArray)
     }
   } // PUSH_MEMORY_STACK(memory);
 
-  // Case 1-1-2
+  // Case 1-2
+  {
+    PUSH_MEMORY_STACK(ms);
+    Array<s16> outB;
+
+    ASSERT_TRUE(find.AllocateAndSetArray(outB, inB, 1, ms) == RESULT_OK);
+
+    ASSERT_TRUE(outB.get_size(0) == 6);
+    ASSERT_TRUE(outB.get_size(1) == 3);
+
+    for(s32 y=0; y<6; y++) {
+      for(s32 x=0; x<3; x++) {
+        ASSERT_TRUE(outB[y][x] == inB[y][x+3]);
+      }
+    }
+  } // PUSH_MEMORY_STACK(memory);
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, Find_SetArray2)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<f32> in1(1,6,ms);
+  Array<f32> in2(1,6,ms);
+
+  ASSERT_TRUE(in1.IsValid());
+  ASSERT_TRUE(in2.IsValid());
+
+  for(s32 x=0; x<6; x++) {
+    in1[0][x] = float(x) + 0.1f;
+    in2[0][x] = float(x)*100.0f;
+  }
+
+  in2(0,0,0,2).Set(0.0f);
+
+  in1.Print("in1");
+  in2.Print("in2");
+
+  Find<f32,Comparison::LessThanOrEqual<f32,f32>,f32> find(in1, in2);
+
+  Array<s16> inB(6,6,ms);
+
+  {
+    s16 i1 = 0;
+    for(s32 y=0; y<6; y++) {
+      for(s32 x=0; x<6; x++) {
+        inB[y][x] = i1++;
+      }
+    }
+  }
+
+  // Case 2-1
+  {
+    PUSH_MEMORY_STACK(ms);
+    Array<s16> outB;
+
+    ASSERT_TRUE(find.AllocateAndSetArray(outB, inB, 0, ms) == RESULT_OK);
+
+    ASSERT_TRUE(outB.get_size(0) == 3);
+    ASSERT_TRUE(outB.get_size(1) == 6);
+
+    for(s32 y=0; y<3; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE(outB[y][x] == inB[y+3][x]);
+      }
+    }
+  } // PUSH_MEMORY_STACK(memory);
+
+  // Case 2-2
   {
     PUSH_MEMORY_STACK(ms);
     Array<s16> outB;

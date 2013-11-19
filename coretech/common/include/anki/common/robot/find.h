@@ -403,35 +403,50 @@ namespace Anki
           } // for(s32 i=0; i<array1Width; i++)
         } // if(findWhichDimension == 0) ... else
       } else { // if(this->compareWithValue)
-        //// These should be checked earlier
-        //assert(array1.get_size(0) == array2.get_size(0));
-        //assert(array1.get_size(1) == array2.get_size(1));
+        // These should be checked earlier
+        assert(array1.get_size(0) == array2.get_size(0));
+        assert(array1.get_size(1) == array2.get_size(1));
 
-        //if(array1Height == 1) {
-        //  const s32 y = 0;
-        //  const Type1 * const pArray1 = array1.Pointer(y, 0);
-        //  const Type2 * const pArray2 = array2.Pointer(y, 0);
+        if(findWhichDimension == 0) {
+          const Type1 * const pArray1 = array1.Pointer(0, 0);
+          const Type1 * const pArray2 = array2.Pointer(0, 0);
 
-        //  for(s32 x=0; x<array1Width; x++) {
-        //    if(Operator::Compare(pArray1[x], pArray2[x])) {
-        //      pIndexes[curIndex] = x;
-        //      curIndex++;
-        //    }
-        //  } // for(s32 x=0; x<array1Width; x++)
-        //} else { // if(array1Height == 1)
-        //  assert(array1Width == 1);
-        //  const s32 x = 0;
+          s32 outY = 0;
 
-        //  for(s32 y=0; y<array1Height; y++) {
-        //    const Type1 * const pArray1 = array1.Pointer(y, 0);
-        //    const Type2 * const pArray2 = array2.Pointer(y, 0);
+          // i iterates on the widths of Array array1 and Array array2, and the height of Array in
+          for(s32 i=0; i<array1Width; i++) {
+            if(Operator::Compare(pArray1[i], pArray2[i])) {
+              const ArrayType * const pIn = in.Pointer(i, 0);
 
-        //    if(Operator::Compare(pArray1[x], pArray2[x])) {
-        //      pIndexes[curIndex] = y;
-        //      curIndex++;
-        //    }
-        //  } // for(s32 y=0; y<array1Height; y++)
-        //} // if(array1Height == 1) ... else
+              ArrayType * const pOut = out.Pointer(outY, 0);
+
+              for(s32 x=0; x<outWidth; x++) {
+                pOut[x] = pIn[x];
+              } // for(s32 x=0; x<array1Width; x++)
+
+              outY++;
+            } // if(Operator::Compare(pArray1[x], value))
+          } // for(s32 i=0; i<array1Width; i++)
+        } else { // if(findWhichDimension == 0)
+          const Type1 * const pArray1 = array1.Pointer(0, 0);
+          const Type1 * const pArray2 = array2.Pointer(0, 0);
+
+          s32 outX = 0;
+
+          // i iterates on the widths of Array array1, Array array2, and Array in
+          for(s32 i=0; i<array1Width; i++) {
+            if(Operator::Compare(pArray1[i], pArray2[i])) {
+              for(s32 y=0; y<outHeight; y++) {
+                ArrayType * const pOut = out.Pointer(y, outX);
+                const ArrayType * const pIn = in.Pointer(y, i);
+
+                *pOut = *pIn;
+              } // for(s32 y=0; y<outHeight; y++)
+
+              outX++;
+            } // if(Operator::Compare(pArray1[i], value))
+          } // for(s32 i=0; i<array1Width; i++)
+        } // if(findWhichDimension == 0) ... else
       } // if(this->compareWithValue) ... else
 
       return RESULT_OK;
