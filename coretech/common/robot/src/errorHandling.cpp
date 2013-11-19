@@ -1,5 +1,5 @@
 /**
-File:
+File: errorHandling.cpp
 Author: Peter Barnum
 Created: 2013
 

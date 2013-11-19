@@ -1,3 +1,14 @@
+/**
+File: run_pc_embeddedCommonTests.cpp
+Author: Peter Barnum
+Created: 2013
+
+Code to run the unit tests in embeddedCommonTests.cpp on a PC.
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
+
 //#define USING_MOVIDIUS_COMPILER
 
 #ifndef MOVI_TOOLS
