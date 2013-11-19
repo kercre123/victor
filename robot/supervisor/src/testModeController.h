@@ -26,7 +26,9 @@ namespace Anki {
       typedef enum {
         TM_NONE,
         TM_PATH_FOLLOW,
-        TM_DIRECT_DRIVE
+        TM_DIRECT_DRIVE,
+        TM_LIFT,
+        TM_MAX_POWER_TEST
       } TestMode;
       
       

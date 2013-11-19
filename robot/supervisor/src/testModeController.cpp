@@ -26,7 +26,7 @@ namespace Anki {
         #define DIRECT_HAL_MOTOR_TEST 0   // 0: Test WheelController
                                           // 1: Test direct drive via HAL::MotorSetPower
         
-        const u32 TOGGLE_DIRECTION_PERIOD_MS = 2000;
+        const u32 WHEEL_TOGGLE_DIRECTION_PERIOD_MS = 2000;
         
         // Acceleration
         const f32 accel_mmps2 = 0;  // 0 for infinite acceleration.
@@ -46,9 +46,20 @@ namespace Anki {
         // 0.4     90      112
         // 0.3     55      80
         // 0.25    40      65
-        const f32 POWER_CMD = 0.4;
-        const f32 SPEED_CMD_MMPS = 100;
-        ///////////////////////////////////
+        const f32 WHEEL_POWER_CMD = 0.4;
+        const f32 WHEEL_SPEED_CMD_MMPS = 100;
+        ////// End of DriveTest defines ////////
+        
+        
+        /////// LiftTest defines /////////
+        // 0: Set power directly with MotorSetPower
+        // 1: Command a desired lift height (i.e. use LiftController)
+        #define LIFT_HEIGHT_TEST 1
+        
+        
+        
+        //// End of LiftTest defines //////
+        
 
 
         // Current test mode
@@ -112,7 +123,7 @@ namespace Anki {
         static u32 cnt = 0;
 
         // Change direction (or at least print speed
-        if (cnt++ >= TOGGLE_DIRECTION_PERIOD_MS / TIME_STEP) {
+        if (cnt++ >= WHEEL_TOGGLE_DIRECTION_PERIOD_MS / TIME_STEP) {
 
           f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LEFT_WHEEL);
           f32 rSpeed = HAL::MotorGetSpeed(HAL::MOTOR_RIGHT_WHEEL);
@@ -123,9 +134,9 @@ namespace Anki {
 
           if (firstSpeedCommanded){
 #if(DIRECT_HAL_MOTOR_TEST)
-            PRINT("Going forward %f power (currSpeed %f %f, filtSpeed %f %f)\n", POWER_CMD, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
+            PRINT("Going forward %f power (currSpeed %f %f, filtSpeed %f %f)\n", WHEEL_POWER_CMD, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
 #else
-            PRINT("Going forward %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", SPEED_CMD_MMPS, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
+            PRINT("Going forward %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", WHEEL_SPEED_CMD_MMPS, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
 #endif
             cnt = 0;
             return EXIT_SUCCESS;
@@ -136,23 +147,23 @@ namespace Anki {
           fwd = !fwd;
           if (fwd) {
 #if(DIRECT_HAL_MOTOR_TEST)
-            PRINT("Going forward %f power (currSpeed %f %f, filtSpeed %f %f)\n", POWER_CMD, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-            HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, POWER_CMD);
-            HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, POWER_CMD);
+            PRINT("Going forward %f power (currSpeed %f %f, filtSpeed %f %f)\n", WHEEL_POWER_CMD, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
+            HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, WHEEL_POWER_CMD);
+            HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, WHEEL_POWER_CMD);
             WheelController::Disable();
 #else
-            PRINT("Going forward %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", SPEED_CMD_MMPS, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-            SteeringController::ExecuteDirectDrive(SPEED_CMD_MMPS,SPEED_CMD_MMPS,accel_mmps2,accel_mmps2);
+            PRINT("Going forward %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", WHEEL_SPEED_CMD_MMPS, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
+            SteeringController::ExecuteDirectDrive(WHEEL_SPEED_CMD_MMPS,WHEEL_SPEED_CMD_MMPS,accel_mmps2,accel_mmps2);
 #endif
           } else {
 #if(DIRECT_HAL_MOTOR_TEST)
-            PRINT("Going reverse %f power (currSpeed %f %f, filtSpeed %f %f)\n", POWER_CMD, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-            HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, -POWER_CMD);
-            HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, -POWER_CMD);
+            PRINT("Going reverse %f power (currSpeed %f %f, filtSpeed %f %f)\n", WHEEL_POWER_CMD, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
+            HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, -WHEEL_POWER_CMD);
+            HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, -WHEEL_POWER_CMD);
             WheelController::Disable();
 #else
-            PRINT("Going reverse %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", SPEED_CMD_MMPS, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-            SteeringController::ExecuteDirectDrive(-SPEED_CMD_MMPS,-SPEED_CMD_MMPS,accel_mmps2,accel_mmps2);
+            PRINT("Going reverse %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", WHEEL_SPEED_CMD_MMPS, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
+            SteeringController::ExecuteDirectDrive(-WHEEL_SPEED_CMD_MMPS,-WHEEL_SPEED_CMD_MMPS,accel_mmps2,accel_mmps2);
 #endif
             
           }
@@ -167,6 +178,94 @@ namespace Anki {
       }
       
       
+      ReturnCode LiftTestInit()
+      {
+        return EXIT_SUCCESS;
+      }
+      
+      
+      ReturnCode LiftTestUpdate()
+      {
+        static bool up = false;
+        static u32 cnt = 0, printCnt = 0;
+        
+        // Change direction
+        if (cnt++ >= 4000 / TIME_STEP) {
+          
+
+#if(LIFT_HEIGHT_TEST)
+          const f32 LIFT_DES_HIGH_HEIGHT = 50.f;
+          const f32 LIFT_DES_LOW_HEIGHT = 22.f;
+          up = !up;
+          if (up) {
+            PRINT("Lift HIGH %f mm\n", LIFT_DES_HIGH_HEIGHT);
+            LiftController::SetDesiredHeight(LIFT_DES_HIGH_HEIGHT);
+          } else {
+            PRINT("Lift LOW %f mm\n", LIFT_DES_LOW_HEIGHT);
+            LiftController::SetDesiredHeight(LIFT_DES_LOW_HEIGHT);
+          }
+          
+#else
+          const f32 LIFT_POWER_CMD = 0.3;
+          up = !up;
+          if (up) {
+            PRINT("Lift UP %f power\n", LIFT_POWER_CMD);
+            HAL::MotorSetPower(HAL::MOTOR_LIFT, LIFT_POWER_CMD);
+            LiftController::Disable();
+          } else {
+            PRINT("Lift DOWN %f power\n", LIFT_POWER_CMD);
+            HAL::MotorSetPower(HAL::MOTOR_LIFT, -LIFT_POWER_CMD);
+            LiftController::Disable();
+          }
+#endif
+          
+          cnt = 0;
+        }
+        
+        // Print speed
+        if (printCnt++ >= 200 / TIME_STEP) {
+          f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
+          f32 lSpeed_filt = LiftController::GetAngularVelocity();
+          f32 lPos = LiftController::GetAngleRad(); // HAL::MotorGetPosition(HAL::MOTOR_LIFT);
+          f32 lHeight = LiftController::GetHeightMM();
+          
+          //f32 lSpeed_filt;
+          //          WheelController::GetFilteredWheelSpeeds(&lSpeed_filt,&rSpeed_filt);
+          //PRINT("Lift speed %f rad/s, filt_speed %f rad/s, position %f rad, %f mm\n", lSpeed, lSpeed_filt, lPos, lHeight);
+          printCnt = 0;
+        }
+        
+        
+        return EXIT_SUCCESS;
+      }
+      
+      
+      ReturnCode MaxPowerTestInit()
+      {
+        // Disable all controllers so that they can be overriden with HAL power commands
+        WheelController::Disable();
+        LiftController::Disable();
+        
+        return EXIT_SUCCESS;
+      }
+      
+      
+      ReturnCode MaxPowerTestUpdate()
+      {
+        static u16 cnt = 0;
+        static f32 pwr = 1.0;
+        if (cnt++ > 5000 / TIME_STEP) {
+          PRINT("SWITCHING POWER: %f\n", pwr);
+          HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 1.0);
+          HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 1.0);
+          //HAL::MotorSetPower(HAL::MOTOR_LIFT, pwr);
+          //HAL::MotorSetPower(HAL::MOTOR_HEAD, pwr);
+          //HAL::MotorSetPower(HAL::MOTOR_GRIP, pwr);
+          pwr *= -1;
+          cnt = 0;
+        }
+        return EXIT_SUCCESS;
+      }
       
       ReturnCode Init(TestMode mode)
       {
@@ -184,6 +283,14 @@ namespace Anki {
           case TM_DIRECT_DRIVE:
             ret = DriveTestInit();
             updateFunc = DriveTestUpdate;
+            break;
+          case TM_LIFT:
+            ret = LiftTestInit();
+            updateFunc = LiftTestUpdate;
+            break;
+          case TM_MAX_POWER_TEST:
+            ret = MaxPowerTestInit();
+            updateFunc = MaxPowerTestUpdate;
             break;
           default:
             PRINT("ERROR (TestModeController): Undefined mode %d\n", testMode_);
