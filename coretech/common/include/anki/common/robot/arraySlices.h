@@ -148,6 +148,11 @@ namespace Anki
       return RESULT_OK;
     }
 
+    template<typename Type> Result ArraySlice<Type>::Set(const LinearSequence<Type> &input)
+    {
+      return input.Evaluate(*this);
+    }
+
     template<typename Type> Result ArraySlice<Type>::Set(const Type value)
     {
       Array<Type> &array = this->get_array();

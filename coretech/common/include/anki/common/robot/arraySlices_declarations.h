@@ -74,6 +74,8 @@ namespace Anki
       // Matlab allows this for vectors, though this will also work for arbitrary-sized arrays
       Result Set(const ConstArraySliceExpression<Type> &input, bool automaticTranspose=true);
 
+      Result Set(const LinearSequence<Type> &input);
+
       Result Set(const Type value);
 
       Array<Type>& get_array();
