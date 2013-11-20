@@ -35,6 +35,7 @@ classdef CozmoDocker < handle
         function this = CozmoDocker(varargin)
             
             Port = 'COM4';
+            BaudRate = 1500000;
             DetectionResolution = 'QVGA';
             TrackingResolution  = 'QQQVGA';
             Calibration = []; % at Tracking resolution!
@@ -48,7 +49,7 @@ classdef CozmoDocker < handle
             this.trackingResolution  = TrackingResolution;
             this.trackerType         = TrackerType;
             
-            this.camera              = SerialCamera(Port);
+            this.camera              = SerialCamera(Port, 'BaudRate', BaudRate);
             this.escapePressed       = false;
             
             this.dockingDistance = DockDistanceMM;
@@ -61,18 +62,32 @@ classdef CozmoDocker < handle
             this.h_pip = axes('Position', [0 .75 .2 .2], 'Parent', this.h_fig);
             title(this.h_pip, 'Target');
             
+            % Angle Error Plot
+            ERRORBAR_LINEWIDTH = 25;
             h = axes('Position', [0 0 .2 .2], 'Parent', this.h_fig);
             title(h, 'Angle Error')
-            this.h_angleError = barh(0, 'Parent', h);
+            this.h_angleError = plot([0 0], [0 0], 'r', 'Parent', h, 'LineWidth', ERRORBAR_LINEWIDTH);
+            set(h, 'YTick', [], 'XTick', -45:5:45, ...
+                'XTickLabel', [], 'YTickLabel', [], ...
+                'XLim', pi/4*[-1 1], 'YLim', .25*[-1 1], 'XGrid', 'on');
             
+            % Distance Error Plot
             h = axes('Position', [.8 0 .2 .2], 'Parent', this.h_fig);
             title(h, 'Distance');
-            this.h_distError = bar(0, 'Parent', h); 
+            this.h_distError = plot([0 0], [0 0], 'r', 'Parent', h, 'LineWidth', ERRORBAR_LINEWIDTH);
+            set(h, 'XTick', [], 'YTick', 0:20:150, ...
+                'XTickLabel', [], 'YTickLabel', [], ...
+                'XLim', .25*[-1 1], 'YLim', [0 150], 'YGrid', 'on');
             
+            % Horizontal Error Plot
             h = axes('Position', [.8 .75 .2 .2], 'Parent', this.h_fig);
             title(h, 'Horizontal Error');
-            this.h_leftRightError = barh(0, 'Parent', h);
-            
+            %this.h_leftRightError = barh(0, 'Parent', h);
+            this.h_leftRightError = plot([0 0], [0 0], 'r', 'Parent', h, 'LineWidth', ERRORBAR_LINEWIDTH);
+            set(h, 'XTick', -20:5:20, 'YTick', [], ...
+                'XTickLabel', [], 'YTickLabel', [], ...
+                'XLim', [-20 20], 'YLim', .25*[-1 1], 'XGrid', 'on');
+           
             this.h_img = imagesc(zeros(240,320), 'Parent', this.h_axes);
             axis(this.h_axes, 'image');
             colormap(this.h_fig, gray);
@@ -82,9 +97,11 @@ classdef CozmoDocker < handle
             
             if strcmp(this.trackerType, 'homography')
                 % For convenience, create a 3x3 camera calibration matrix
+                if ~isempty(this.calibration)
                 this.K = [this.calibration.fc(1) 0 this.calibration.cc(1); ...
                     0 this.calibration.fc(2) this.calibration.cc(2); ...
                     0 0 1];
+                end
                         
                 WIDTH = BlockMarker3D.ReferenceWidth;
                 this.marker3d = WIDTH/2 * [-1 -1 0; -1 1 0; 1 -1 0; 1 1 0];
@@ -308,19 +325,19 @@ classdef CozmoDocker < handle
             
             distError = currentDistance - this.dockingDistance;
              
-            set(this.h_angleError, 'YData', angleError);
+            set(this.h_angleError, 'XData', [0 angleError*180/pi]);
             h = get(this.h_angleError, 'Parent');
-            set(h, 'XLim', pi/4*[-1 1], 'YLim', [.25 1.75], 'XGrid', 'on');
+            %set(h, 'XLim', pi/4*[-1 1], 'YLim', [.25 1.75], 'XGrid', 'on');
             title(h, sprintf('AngleErr = %.1fdeg', angleError*180/pi), 'Back', 'w');
             
-            set(this.h_distError, 'YData', distError);
+            set(this.h_distError, 'YData', [0 distError]);
             h = get(this.h_distError, 'Parent');
-            set(h, 'XLim', [.25 1.75], 'YLim', [0 150], 'YGrid', 'on');
+            %set(h, 'XLim', [.25 1.75], 'YLim', [0 150], 'YGrid', 'on');
             title(h, sprintf('DistToGo = %.1fmm', distError), 'Back', 'w');
             
-            set(this.h_leftRightError, 'YData', midPointErr);
+            set(this.h_leftRightError, 'XData', [0 midPointErr]);
             h = get(this.h_leftRightError, 'Parent');
-            set(h, 'XLim', [-20 20], 'YLim', [.25 1.75], 'XGrid', 'on');
+            %set(h, 'XLim', [-20 20], 'YLim', [.25 1.75], 'XGrid', 'on');
             title(h, sprintf('LeftRightErr = %.1fmm', midPointErr), 'Back', 'w');
             
             % TODO: send the error signals back over the serial connection
