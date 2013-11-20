@@ -2,8 +2,17 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "movidius.h"
 
+#define DDR_BUFFER    __attribute__((section(".ddr.text")))
+
 #define CMX_CONFIG      (0x66666666)
 #define L2CACHE_CONFIG  (L2CACHE_NORMAL_MODE)
+
+      static const u32 FRAME_WIDTH = 640;
+      static const u32 FRAME_HEIGHT = 480;
+      static const u32 FRAME_SIZE = FRAME_WIDTH * FRAME_HEIGHT;
+
+      static DDR_BUFFER u8 frame[FRAME_SIZE];
+
 
 u32 __cmx_config __attribute__((section(".cmx.ctrl"))) = CMX_CONFIG;
 u32 __l2_config  __attribute__((section(".l2.mode")))  = L2CACHE_CONFIG;
@@ -64,21 +73,35 @@ namespace Anki
       void USBInit();
       void USBUpdate();
 
+
+      static u32 FRAME = 0;
+
       static void SendFrame()
       {
-        const u8* image = HAL::FrontCameraGetFrame();
+        const u8* image = frame;
 
-        UARTPutChar(0xBE);
-        UARTPutChar(0xEF);
-        UARTPutChar(0xF0);
-        UARTPutChar(0xFF);
-        UARTPutChar(0xBD);
+        USBPutChar(0xBE);
+        USBPutChar(0xEF);
+        USBPutChar(0xF0);
+        USBPutChar(0xFF);
 
-        for (int y = 0; y < 480; y += 8)
+        u32 inc = FRAME == 0 ? 8 : 2;
+
+        USBPutChar(FRAME == 0 ? 0xBD : 0xB8);
+
+        for (int y = 0; y < 480; y += inc)
         {
-          for (int x = 0; x < 640; x += 8)
+          for (int x = 0; x < 640; x += inc)
           {
-            UARTPutChar(image[x * 2 + 0 + y * 1280]);
+            int sum = 0;
+            for (int y1 = y; y1 < y + inc; y1++)
+            {
+              for (int x1 = x; x1 < x + inc; x1++)
+              {
+                sum += image[(x1 + y1 * 640) ^ 3];
+              }
+            }
+            USBPutChar(sum / (inc * inc));
           }
         }
       }
@@ -226,13 +249,33 @@ int main()
 
   HAL::SetupMainExecution();
 
+
+  u32 t = HAL::GetMicroCounter();
+
   while (true)
   {
-    //HAL::SendFrame();
+    Robot::step_LongExecution();
+
+/*    CameraStartFrame(HAL::CAMERA_FRONT, frame, HAL::CAMERA_MODE_VGA,
+        HAL::CAMERA_UPDATE_SINGLE, 0, false);
+
+    HAL::SendFrame();
+
+    while (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT))
+    {
+    }
+
+    u32 t2 = HAL::GetMicroCounter();
+    //printf("%i\n", (t2 - t));
+    t = t2;
+ 
+    int c = HAL::USBGetChar();
+    if (c == 'X')
+      HAL::FRAME = 1;
+    else if (c == 'Z')
+      HAL::FRAME = 0; */
 
     //HAL::USBUpdate();
-
-    Robot::step_LongExecution();
 
     //printf("%X\n", *(volatile u32*)TIM1_CNT_VAL_ADR);
 
