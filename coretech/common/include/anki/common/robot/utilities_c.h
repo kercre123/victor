@@ -1,3 +1,14 @@
+/**
+File: utilities_c.h
+Author: Various
+Created: 201X - 2013
+
+Various simple macros and utilities. Everything in this file should be usable with C99, and not require any C++.
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
+
 #ifndef _ANKICORETECHEMBEDDED_COMMON_UTILITIES_C_H_
 #define _ANKICORETECHEMBEDDED_COMMON_UTILITIES_C_H_
 

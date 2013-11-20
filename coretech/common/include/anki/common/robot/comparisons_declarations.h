@@ -1,3 +1,14 @@
+/**
+File: comparisons_declarations.h
+Author: Peter Barnum
+Created: 2013
+
+Declarations for comparisons.h
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
+
 #ifndef _ANKICORETECHEMBEDDED_COMMON_COMPARISONS_DECLARATIONS_H_
 #define _ANKICORETECHEMBEDDED_COMMON_COMPARISONS_DECLARATIONS_H_
 

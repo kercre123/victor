@@ -1,23 +1,23 @@
 /**
- * File: types.h
- *
- * Author: Andrew Stein (andrew)
- * Created: 10/7/2013
- *
- * Information on last revision to this file:
- *    $LastChangedDate$
- *    $LastChangedBy$
- *    $LastChangedRevision$
- *
- * Description:
- *
- *   We specify types according to their sign and bits. We should use these in
- *   our code instead of the normal 'int','short', etc. because different
- *   compilers on different architectures treat these differently.
- *
- * Copyright: Anki, Inc. 2013
- *
- **/
+* File: types.h
+*
+* Author: Andrew Stein (andrew)
+* Created: 10/7/2013
+*
+* Information on last revision to this file:
+*    $LastChangedDate$
+*    $LastChangedBy$
+*    $LastChangedRevision$
+*
+* Description:
+*
+*   We specify types according to their sign and bits. We should use these in
+*   our code instead of the normal 'int','short', etc. because different
+*   compilers on different architectures treat these differently.
+*
+* Copyright: Anki, Inc. 2013
+*
+**/
 
 #ifndef ANKICORETECH_COMMON_TYPES_H_
 #define ANKICORETECH_COMMON_TYPES_H_

@@ -1,3 +1,14 @@
+/**
+File: flags.h
+Author: Peter Barnum
+Created: 2013
+
+Different classes and functions need several variable-argument parameters and flags. These flag classes help separate interface and implementation.
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
+
 #ifndef _ANKICORETECHEMBEDDED_COMMON_FLAGS_H_
 #define _ANKICORETECHEMBEDDED_COMMON_FLAGS_H_
 
@@ -10,106 +21,6 @@ namespace Anki
     namespace Flags
     {
 #pragma mark --- Definitions ---
-
-#pragma mark --- Declaration Specializations ---
-      template<> class TypeCharacteristics<bool>
-      {
-      public:
-        const static bool isBasicType = true;
-        const static bool isInteger = true;
-        const static bool isSigned = false;
-        const static bool isFloat = false;
-      };
-
-      template<> class TypeCharacteristics<u8>
-      {
-      public:
-        const static bool isBasicType = true;
-        const static bool isInteger = true;
-        const static bool isSigned = false;
-        const static bool isFloat = false;
-      };
-
-      template<> class TypeCharacteristics<s8>
-      {
-      public:
-        const static bool isBasicType = true;
-        const static bool isInteger = true;
-        const static bool isSigned = true;
-        const static bool isFloat = false;
-      };
-
-      template<> class TypeCharacteristics<u16>
-      {
-      public:
-        const static bool isBasicType = true;
-        const static bool isInteger = true;
-        const static bool isSigned = false;
-        const static bool isFloat = false;
-      };
-
-      template<> class TypeCharacteristics<s16>
-      {
-      public:
-        const static bool isBasicType = true;
-        const static bool isInteger = true;
-        const static bool isSigned = true;
-        const static bool isFloat = false;
-      };
-
-      template<> class TypeCharacteristics<u32>
-      {
-      public:
-        const static bool isBasicType = true;
-        const static bool isInteger = true;
-        const static bool isSigned = false;
-        const static bool isFloat = false;
-      };
-
-      template<> class TypeCharacteristics<s32>
-      {
-      public:
-        const static bool isBasicType = true;
-        const static bool isInteger = true;
-        const static bool isSigned = true;
-        const static bool isFloat = false;
-      };
-
-      template<> class TypeCharacteristics<u64>
-      {
-      public:
-        const static bool isBasicType = true;
-        const static bool isInteger = true;
-        const static bool isSigned = false;
-        const static bool isFloat = false;
-      };
-
-      template<> class TypeCharacteristics<s64>
-      {
-      public:
-        const static bool isBasicType = true;
-        const static bool isInteger = true;
-        const static bool isSigned = true;
-        const static bool isFloat = false;
-      };
-
-      template<> class TypeCharacteristics<f32>
-      {
-      public:
-        const static bool isBasicType = true;
-        const static bool isInteger = false;
-        const static bool isSigned = true;
-        const static bool isFloat = true;
-      };
-
-      template<> class TypeCharacteristics<f64>
-      {
-      public:
-        const static bool isBasicType = true;
-        const static bool isInteger = false;
-        const static bool isSigned = true;
-        const static bool isFloat = true;
-      };
     } // namespace Flags
   } // namespace Embedded
 } // namespace Anki

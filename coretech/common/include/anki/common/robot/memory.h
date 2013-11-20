@@ -1,3 +1,14 @@
+/**
+File: memory.h
+Author: Peter Barnum
+Created: 2013
+
+Routines and classes to do with the handling of large amounts of memory.
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
+
 #ifndef _ANKICORETECHEMBEDDED_COMMON_MEMORY_H_
 #define _ANKICORETECHEMBEDDED_COMMON_MEMORY_H_
 

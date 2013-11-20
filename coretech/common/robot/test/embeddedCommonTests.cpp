@@ -1,3 +1,14 @@
+/**
+File: embeddedCommonTests.cpp
+Author: Peter Barnum
+Created: 2013
+
+Various tests of the coretech common embedded library.
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
+
 //#define USING_MOVIDIUS_COMPILER
 
 #include "anki/common/robot/array2d.h"

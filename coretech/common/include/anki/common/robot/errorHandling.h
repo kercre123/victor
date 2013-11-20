@@ -1,4 +1,14 @@
-//  errorHandling.h is based off Das.h
+/**
+File: errorHandling.h
+Author: Peter Barnum
+Created: 2013
+
+errorHandling.h is based off Das.h
+It acts as a low-level interface to error logging and reporting.
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
 
 #ifndef __Anki_LIGHT_H__
 #define __Anki_LIGHT_H__

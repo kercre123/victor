@@ -1,3 +1,14 @@
+/**
+File: movidiusPrototyping.h
+Author: Peter Barnum
+Created: 2013
+
+Some tests for accelerating functions on the SHAVE processors.
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
+
 #ifndef _ANKICORETECHEMBEDDED_VISION_MOVIDIUS_PROTOTYPING_H_
 #define _ANKICORETECHEMBEDDED_VISION_MOVIDIUS_PROTOTYPING_H_
 
