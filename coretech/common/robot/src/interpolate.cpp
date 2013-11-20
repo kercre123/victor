@@ -53,10 +53,10 @@ namespace Anki
         const f32 curY = pYCoordinates[i];
 
         const f32 x0 = floorf(curX);
-        const f32 x1 = x0 + 1.0f; // ceilf(curX);
+        const f32 x1 = ceilf(curX); // x0 + 1.0f;
 
         const f32 y0 = floorf(curY);
-        const f32 y1 = y0 + 1.0f; // ceilf(curY);
+        const f32 y1 = ceilf(curY); // y0 + 1.0f;
 
         // If out of bounds, set as invalid and continue
         if(x0 < xyMin || x1 > xMax || y0 < xyMin || y1 > yMax) {
