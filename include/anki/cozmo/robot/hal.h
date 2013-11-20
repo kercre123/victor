@@ -44,9 +44,9 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-#ifdef MOVI_TOOLS
+#ifndef SIMULATOR
 #undef printf
-#define printf(...) _xprintf(Anki::Cozmo::HAL::UARTPutChar, 0, __VA_ARGS__)
+#define printf(...) _xprintf(Anki::Cozmo::HAL::USBPutChar, 0, __VA_ARGS__)
 //#define PRINT(...) _xprintf(Anki::Cozmo::HAL::UARTPutChar, 0, __VA_ARGS__)
 #define PRINT(...) explicitPrintf(0, __VA_ARGS__)
 
@@ -72,7 +72,7 @@ extern "C" {
   } \
 }
 
-#endif  // MOVI_TOOLS
+#endif  // SIMULATOR
 
 #define REG_WORD(x) *(volatile u32*)(x)
 
@@ -136,9 +136,6 @@ namespace Anki
       // TODO: Add functions for adjusting ROI of cameras?
       void MatCameraInit();
       void FrontCameraInit();
-      
-      const u8* MatCameraGetFrame();
-      const u8* FrontCameraGetFrame(); 
 
       const FrameGrabber GetHeadFrameGrabber();
       const FrameGrabber GetMatFrameGrabber();
@@ -165,10 +162,6 @@ namespace Anki
       // Ground truth (no-op if not in simulation?)
       void GetGroundTruthPose(f32 &x, f32 &y, f32& rad);
 
-      // UART
-      int UARTPutChar(int c);
-
-      
       // .....................
 
 
@@ -184,8 +177,16 @@ namespace Anki
       void FlashRead(u32 page, u8 data[FLASH_PAGE_SIZE]);
 
       // USB / UART
+      // Send a variable length buffer
       void USBSendBuffer(u8* buffer, u32 size);
-      s32 USBGetChar();
+
+      // Get a character from the serial buffer.
+      // Timeout is in microseconds.
+      // Returns < 0 if no character available within timeout.
+      s32 USBGetChar(u32 timeout = 0);
+
+      // Send a byte.
+      // Prototype matches putc for printf.
       int USBPutChar(int c);
 
       // Motors
@@ -219,7 +220,7 @@ namespace Anki
       // Cameras
       enum CameraID
       {
-        CAMERA_HEAD = 0,
+        CAMERA_FRONT = 0,
         CAMERA_MAT,
         CAMERA_COUNT
       };
@@ -229,17 +230,26 @@ namespace Anki
         CAMERA_MODE_VGA = 0,
         CAMERA_MODE_QVGA,
         CAMERA_MODE_QQVGA,
+        CAMERA_MODE_COUNT,
+
+        CAMERA_MODE_NONE = CAMERA_MODE_COUNT
+      };
+
+      enum CameraUpdateMode
+      {
+        CAMERA_UPDATE_CONTINUOUS = 0,
+        CAMERA_UPDATE_SINGLE
       };
 
       // Starts camera frame synchronization
-      void CameraStartFrame(CameraID camera, u8* frame, CameraMode mode,
-          u16 exposure, bool enableLight);
+      void CameraStartFrame(CameraID cameraID, u8* frame, CameraMode mode,
+          CameraUpdateMode updateMode, u16 exposure, bool enableLight);
 
       // Get the number of lines received so far for the specified camera
-      u32 CameraGetReceivedLines(CameraID camera);
+      u32 CameraGetReceivedLines(CameraID cameraID);
 
       // Returns whether or not the specfied camera has received a full frame
-      bool CameraIsEndOfFrame(CameraID camera);
+      bool CameraIsEndOfFrame(CameraID cameraID);
 
       // Battery
       // Get the battery percent between [0, 100]

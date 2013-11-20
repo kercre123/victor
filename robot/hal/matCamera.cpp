@@ -13,7 +13,7 @@ namespace Anki
   {
     namespace HAL
     {
-      static u32 I2CErrorHandler(I2CM_StatusType i2cCommsError, u32 slaveAddr,
+/*      static u32 I2CErrorHandler(I2CM_StatusType i2cCommsError, u32 slaveAddr,
           u32 regAddr);
       
       static u8 m_camWriteProto[] = I2C_PROTO_WRITE_16BA;
@@ -123,11 +123,11 @@ namespace Anki
         {0x3008, 0x02},  // Enable output
       };
 
-      static CameraSpecification m_camSpecVGA = {
-        YUV422p,          // type
-        FRAME_WIDTH * 2,  // width
+      static CameraSpecification m_camSpecVGA =
+      {
+        BAYER,            // type
+        FRAME_WIDTH,      // width
         FRAME_HEIGHT,     // height
-        FRAME_WIDTH,      // stride
         2,                // bytesPP
         24,               // referenceFrequency
         (0x78 >> 1),      // sensorI2CAddress
@@ -135,7 +135,8 @@ namespace Anki
         m_OV7739_VGA      // regValues
       };
 
-      static const tyI2cConfig m_i2cConfig = {
+      static const tyI2cConfig m_i2cConfig =
+      {
         GPIO_BITBASH,
         65,           // SCL GPIO
         66,           // SDA GPIO
@@ -322,7 +323,6 @@ namespace Anki
         }
       };
 
-      static FrameBuffer m_cameraBuffer;
       static CameraHandle m_handle;
       static I2CM_Device m_i2c;
 
@@ -331,7 +331,7 @@ namespace Anki
 
       static volatile bool m_isFrameReady;
 
-      static void FrameReady(FrameBuffer* fb)
+      static void FrameReady()
       {
         m_isFrameReady = true;
       }
@@ -356,10 +356,6 @@ namespace Anki
         // Initialize the camera buffer
         m_isFrameReady = false;
 
-        m_cameraBuffer.p1 = m_buffer;
-        m_cameraBuffer.p2 = m_buffer + FRAME_WIDTH * FRAME_HEIGHT;
-        m_cameraBuffer.p3 = m_cameraBuffer.p2 + + FRAME_WIDTH * FRAME_HEIGHT;
-
         int i;
         for (i = 0; i < FRAME_WIDTH * FRAME_HEIGHT; i++)
           m_buffer[i] = 0xFF;
@@ -378,7 +374,7 @@ namespace Anki
         // Verify camera communication (sort of) TODO: actually verify
         //DrvI2cMReadByte(&m_i2c, m_camSpecVGA.sensorI2CAddress, 0x3103);
 
-        CameraInit(&m_handle, CAMERA_2, &m_i2c, &m_cameraBuffer, &m_camSpecVGA,
+        CameraInit(&m_handle, CAMERA_MAT, &m_i2c, &m_camSpecVGA, m_buffer,
             FrameReady);
         CameraStart(&m_handle, RESET_PIN, true, m_camWriteProto);
       }
@@ -392,7 +388,7 @@ namespace Anki
         }
 
         return NULL;
-      }
+      } */
     }
   }
 }
