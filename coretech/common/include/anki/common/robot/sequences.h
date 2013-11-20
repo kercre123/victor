@@ -192,31 +192,31 @@ namespace Anki
     {
     }
 
-    template<typename Type> Array<Type> Meshgrid<Type>::EvaluateX(bool columnMajor, MemoryStack &memory, const Flags::Buffer flags) const
+    template<typename Type> Array<Type> Meshgrid<Type>::EvaluateX(bool isColumnMajor, MemoryStack &memory, const Flags::Buffer flags) const
     {
       const s32 numRows = 1;
       const s32 numCols = this->xGridVector.get_size() * this->yGridVector.get_size();
 
       Array<Type> out(numRows, numCols, memory, flags);
 
-      this->EvaluateX(columnMajor, out);
+      this->EvaluateX(isColumnMajor, out);
 
       return out;
     }
 
-    template<typename Type> Array<Type> Meshgrid<Type>::EvaluateY(bool columnMajor, MemoryStack &memory, const Flags::Buffer flags) const
+    template<typename Type> Array<Type> Meshgrid<Type>::EvaluateY(bool isColumnMajor, MemoryStack &memory, const Flags::Buffer flags) const
     {
       const s32 numRows = 1;
       const s32 numCols = this->xGridVector.get_size() * this->yGridVector.get_size();
 
       Array<Type> out(numRows, numCols, memory, flags);
 
-      this->EvaluateY(columnMajor, out);
+      this->EvaluateY(isColumnMajor, out);
 
       return out;
     }
 
-    template<typename Type> Result Meshgrid<Type>::EvaluateX(bool columnMajor, ArraySlice<Type> out) const
+    template<typename Type> Result Meshgrid<Type>::EvaluateX(bool isColumnMajor, ArraySlice<Type> out) const
     {
       const s32 xGridSize = this->xGridVector.get_size();
       const s32 yGridSize = this->yGridVector.get_size();
@@ -242,7 +242,7 @@ namespace Anki
       const Type sequenceStartValue = this->xGridVector.get_start();
       const Type sequenceIncrement = this->xGridVector.get_increment();
 
-      if(columnMajor) {
+      if(isColumnMajor) {
         // Matlab equivalent: x(:)
 
         Type curSequenceValue = sequenceStartValue;
@@ -274,7 +274,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    template<typename Type> Result Meshgrid<Type>::EvaluateY(bool columnMajor, ArraySlice<Type> out) const
+    template<typename Type> Result Meshgrid<Type>::EvaluateY(bool isColumnMajor, ArraySlice<Type> out) const
     {
       const s32 xGridSize = this->xGridVector.get_size();
       const s32 yGridSize = this->yGridVector.get_size();
@@ -300,7 +300,7 @@ namespace Anki
       const Type sequenceStartValue = this->yGridVector.get_start();
       const Type sequenceIncrement = this->yGridVector.get_increment();
 
-      if(columnMajor) {
+      if(isColumnMajor) {
         // Matlab equivalent: y(:)
 
         for(s32 x=0; x<xGridSize; x++) {
@@ -330,6 +330,12 @@ namespace Anki
       }
 
       return RESULT_OK;
+    }
+
+    template<typename Type> s32 Meshgrid<Type>::get_numElements() const
+    {
+      const s32 numElements = xGridVector.get_size() * yGridVector.get_size();
+      return numElements;
     }
 
     template<typename Type> inline const LinearSequence<Type>& Meshgrid<Type>::get_xGridVector() const

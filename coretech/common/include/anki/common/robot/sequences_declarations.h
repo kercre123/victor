@@ -90,11 +90,13 @@ namespace Anki
       Meshgrid(const LinearSequence<Type> xGridVector, const LinearSequence<Type> yGridVector);
 
       // If xVector==true, evaluate xGridVector. If false, evaluate yGridVector
-      // If columnMajor==true, then the output vector will be column-major(like Matlab)
-      Array<Type> EvaluateX(bool columnMajor, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
-      Array<Type> EvaluateY(bool columnMajor, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
-      Result EvaluateX(bool columnMajor, ArraySlice<Type> out) const;
-      Result EvaluateY(bool columnMajor, ArraySlice<Type> out) const;
+      // If isColumnMajor==true, then the output vector will be column-major(like Matlab)
+      Array<Type> EvaluateX(bool isColumnMajor, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
+      Array<Type> EvaluateY(bool isColumnMajor, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
+      Result EvaluateX(bool isColumnMajor, ArraySlice<Type> out) const;
+      Result EvaluateY(bool isColumnMajor, ArraySlice<Type> out) const;
+
+      s32 get_numElements() const;
 
       inline const LinearSequence<Type>& get_xGridVector() const;
 
