@@ -316,7 +316,7 @@ namespace Anki {
         static u32 cnt = 0;
         
         // Change direction
-        if (cnt++ >= 2000 / TIME_STEP) {
+        if (cnt++ >= 4000 / TIME_STEP) {
           
           up = !up;
           if (up) {

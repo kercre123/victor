@@ -11,13 +11,13 @@ namespace Anki {
         // Constants
         
         // Power that is applied when engaging the gripper
-        const f32 GRIPPER_ENGAGE_POWER = 0.5;
+        const f32 GRIPPER_ENGAGE_POWER = -0.5;
         
         // Power that is applied when disengaging the gripper
-        const f32 GRIPPER_DISENGAGE_POWER = -0.05;
+        const f32 GRIPPER_DISENGAGE_POWER = 0.5;
         
         // How long power should be applied when engaging/disengaging the gripper
-        const u32 GRIPPER_MOTOR_ENGAGE_TIME_US = 1000000;
+        const u32 GRIPPER_MOTOR_ENGAGE_TIME_US = 600000;
         
         // The time when power was applied to the gripper
         u32 gripperPowerAppliedTime_ = 0;
