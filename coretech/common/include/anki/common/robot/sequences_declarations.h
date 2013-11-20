@@ -91,8 +91,10 @@ namespace Anki
 
       // If xVector==true, evaluate xGridVector. If false, evaluate yGridVector
       // If columnMajor==true, then the output vector will be column-major(like Matlab)
-      Array<Type> Evaluate(bool xGridVector, bool columnMajor, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
-      Result Evaluate(bool xGridVector, bool columnMajor, ArraySlice<Type> out) const;
+      Array<Type> EvaluateX(bool columnMajor, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
+      Array<Type> EvaluateY(bool columnMajor, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
+      Result EvaluateX(bool columnMajor, ArraySlice<Type> out) const;
+      Result EvaluateY(bool columnMajor, ArraySlice<Type> out) const;
 
       inline const LinearSequence<Type>& get_xGridVector() const;
 

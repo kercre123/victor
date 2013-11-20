@@ -192,19 +192,31 @@ namespace Anki
     {
     }
 
-    template<typename Type> Array<Type> Meshgrid<Type>::Evaluate(bool xGridVector, bool columnMajor, MemoryStack &memory, const Flags::Buffer flags) const
+    template<typename Type> Array<Type> Meshgrid<Type>::EvaluateX(bool columnMajor, MemoryStack &memory, const Flags::Buffer flags) const
     {
       const s32 numRows = 1;
-      const s32 numCols = this->xGridVector.get_size();
+      const s32 numCols = this->xGridVector.get_size() * this->yGridVector.get_size();
 
       Array<Type> out(numRows, numCols, memory, flags);
 
-      this->Evaluate(xGridVector, columnMajor, out);
+      this->EvaluateX(columnMajor, out);
 
       return out;
     }
 
-    template<typename Type> Result Meshgrid<Type>::Evaluate(bool xGridVector, bool columnMajor, ArraySlice<Type> out) const
+    template<typename Type> Array<Type> Meshgrid<Type>::EvaluateY(bool columnMajor, MemoryStack &memory, const Flags::Buffer flags) const
+    {
+      const s32 numRows = 1;
+      const s32 numCols = this->xGridVector.get_size() * this->yGridVector.get_size();
+
+      Array<Type> out(numRows, numCols, memory, flags);
+
+      this->EvaluateY(columnMajor, out);
+
+      return out;
+    }
+
+    template<typename Type> Result Meshgrid<Type>::EvaluateX(bool columnMajor, ArraySlice<Type> out) const
     {
       const s32 xGridSize = this->xGridVector.get_size();
       const s32 yGridSize = this->yGridVector.get_size();
@@ -227,71 +239,95 @@ namespace Anki
 
       // Matlab equivalent: [x,y] = meshgrid(1:N,1:M)
 
-      if(xGridVector) {
-        const Type sequenceStartValue = this->xGridVector.get_start();
-        const Type sequenceIncrement = this->xGridVector.get_increment();
+      const Type sequenceStartValue = this->xGridVector.get_start();
+      const Type sequenceIncrement = this->xGridVector.get_increment();
 
-        if(columnMajor) {
-          // Matlab equivalent: x(:)
+      if(columnMajor) {
+        // Matlab equivalent: x(:)
 
+        Type curSequenceValue = sequenceStartValue;
+
+        for(s32 x=0; x<xGridSize; x++) {
+          for(s32 y=0; y<yGridSize; y++) {
+            pArray[outIndex] = curSequenceValue;
+
+            outIndex += outXIncrement;
+          }
+
+          curSequenceValue += sequenceIncrement;
+        }
+      } else {
+        // Matlab equivalent: x=x'; x(:)
+
+        for(s32 y=0; y<yGridSize; y++) {
           Type curSequenceValue = sequenceStartValue;
 
           for(s32 x=0; x<xGridSize; x++) {
-            for(s32 y=0; y<yGridSize; y++) {
-              pArray[outIndex] = curSequenceValue;
+            pArray[outIndex] = curSequenceValue;
 
-              outIndex += outXIncrement;
-            }
-
+            outIndex += outXIncrement;
             curSequenceValue += sequenceIncrement;
           }
-        } else {
-          // Matlab equivalent: x=x'; x(:)
-
-          for(s32 y=0; y<yGridSize; y++) {
-            Type curSequenceValue = sequenceStartValue;
-
-            for(s32 x=0; x<xGridSize; x++) {
-              pArray[outIndex] = curSequenceValue;
-
-              outIndex += outXIncrement;
-              curSequenceValue += sequenceIncrement;
-            }
-          }
         }
-      } else { // if(xGridVector)
-        const Type sequenceStartValue = this->yGridVector.get_start();
-        const Type sequenceIncrement = this->yGridVector.get_increment();
+      }
 
-        if(columnMajor) {
-          // Matlab equivalent: y(:)
+      return RESULT_OK;
+    }
 
-          for(s32 x=0; x<xGridSize; x++) {
-            Type curSequenceValue = sequenceStartValue;
+    template<typename Type> Result Meshgrid<Type>::EvaluateY(bool columnMajor, ArraySlice<Type> out) const
+    {
+      const s32 xGridSize = this->xGridVector.get_size();
+      const s32 yGridSize = this->yGridVector.get_size();
+      const s32 size = xGridSize * yGridSize;
 
-            for(s32 y=0; y<yGridSize; y++) {
-              pArray[outIndex] = curSequenceValue;
+      Array<Type> &outArray = out.get_array();
 
-              outIndex += outXIncrement;
-              curSequenceValue += sequenceIncrement;
-            }
-          }
-        } else {
-          // Matlab equivalent: y=y'; y(:)
+      AnkiConditionalErrorAndReturnValue(outArray.IsValid(),
+        RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Invalid array");
 
+      AnkiConditionalErrorAndReturnValue(out.get_ySlice().get_size()==1 && out.get_xSlice().get_size()==size,
+        RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Invalid array");
+
+      const s32 outYStart = out.get_ySlice().get_start();
+
+      s32 outIndex = out.get_xSlice().get_start();
+      const s32 outXIncrement = out.get_xSlice().get_increment();
+
+      Type * pArray = outArray.Pointer(outYStart,0);
+
+      // Matlab equivalent: [x,y] = meshgrid(1:N,1:M)
+
+      const Type sequenceStartValue = this->yGridVector.get_start();
+      const Type sequenceIncrement = this->yGridVector.get_increment();
+
+      if(columnMajor) {
+        // Matlab equivalent: y(:)
+
+        for(s32 x=0; x<xGridSize; x++) {
           Type curSequenceValue = sequenceStartValue;
 
           for(s32 y=0; y<yGridSize; y++) {
-            for(s32 x=0; x<xGridSize; x++) {
-              pArray[outIndex] = curSequenceValue;
+            pArray[outIndex] = curSequenceValue;
 
-              outIndex += outXIncrement;
-            }
-
+            outIndex += outXIncrement;
             curSequenceValue += sequenceIncrement;
           }
         }
-      } // if(xGridVector) ... else
+      } else {
+        // Matlab equivalent: y=y'; y(:)
+
+        Type curSequenceValue = sequenceStartValue;
+
+        for(s32 y=0; y<yGridSize; y++) {
+          for(s32 x=0; x<xGridSize; x++) {
+            pArray[outIndex] = curSequenceValue;
+
+            outIndex += outXIncrement;
+          }
+
+          curSequenceValue += sequenceIncrement;
+        }
+      }
 
       return RESULT_OK;
     }

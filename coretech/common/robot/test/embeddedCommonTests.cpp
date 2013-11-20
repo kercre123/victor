@@ -21,6 +21,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/comparisons.h"
 #include "anki/common/robot/arraySlices.h"
 #include "anki/common/robot/find.h"
+#include "anki/common/robot/interpolate.h"
 
 using namespace Anki::Embedded;
 
@@ -69,6 +70,39 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, Interp2)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u8> reference(3,5,ms);
+
+  // reference = [1:5; 11:15; 21:25];
+  reference(0,0,0,-1).Set(LinearSequence<u8>(1,5));
+  reference(1,1,0,-1).Set(LinearSequence<u8>(11,15));
+  reference(2,2,0,-1).Set(LinearSequence<u8>(21,25));
+
+  // [xGridVector, yGridVector] = meshgrid(1+(-0.9:0.9:6), 1+(-1:1:4));
+  Meshgrid<f32> mesh(LinearSequence<f32>(-0.9f,0.9f,6.0f), LinearSequence<f32>(-1.0f,1.0f,4.0f));
+  Array<f32> xGridVector = mesh.EvaluateX(true, ms);
+  Array<f32> yGridVector = mesh.EvaluateY(true, ms);
+
+  // result = round(interp2(reference, xGridVector(:), yGridVector(:)))
+  Array<u8> result(1, xGridVector.get_size(1), ms);
+  ASSERT_TRUE(Interp2(reference, xGridVector, yGridVector, result) == RESULT_OK);
+
+  const u8 result_groundTruth[48] = {0, 0, 0, 0, 0, 0, 0, 1, 11, 21, 0, 0, 0, 2, 12, 22, 0, 0, 0, 3, 13, 23, 0, 0, 0, 4, 14, 24, 0, 0, 0, 5, 15, 25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+  result.Print("result");
+
+  for(s32 i=0; i<48; i++) {
+    ASSERT_TRUE(result[0][i] == result_groundTruth[i]);
+  }
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, Meshgrid)
 {
   ASSERT_TRUE(buffer != NULL);
@@ -82,7 +116,7 @@ GTEST_TEST(CoreTech_Common, Meshgrid)
   ASSERT_TRUE(out.IsValid());
 
   {
-    ASSERT_TRUE(mesh.Evaluate(true, true, out(3,3,2,16)) == RESULT_OK);
+    ASSERT_TRUE(mesh.EvaluateX(true, out(3,3,2,16)) == RESULT_OK);
     const s32 out_groundTruth[15] = {1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5};
     for(s32 x=0; x<15; x++) {
       ASSERT_TRUE(out[3][x+2] == out_groundTruth[x]);
@@ -90,7 +124,7 @@ GTEST_TEST(CoreTech_Common, Meshgrid)
   }
 
   {
-    ASSERT_TRUE(mesh.Evaluate(true, false, out(3,3,2,16)) == RESULT_OK);
+    ASSERT_TRUE(mesh.EvaluateX(false, out(3,3,2,16)) == RESULT_OK);
     const s32 out_groundTruth[15] = {1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5};
     for(s32 x=0; x<15; x++) {
       ASSERT_TRUE(out[3][x+2] == out_groundTruth[x]);
@@ -98,7 +132,7 @@ GTEST_TEST(CoreTech_Common, Meshgrid)
   }
 
   {
-    ASSERT_TRUE(mesh.Evaluate(false, true, out(3,3,2,16)) == RESULT_OK);
+    ASSERT_TRUE(mesh.EvaluateY(true, out(3,3,2,16)) == RESULT_OK);
     const s32 out_groundTruth[15] = {1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3};
     for(s32 x=0; x<15; x++) {
       ASSERT_TRUE(out[3][x+2] == out_groundTruth[x]);
@@ -106,7 +140,7 @@ GTEST_TEST(CoreTech_Common, Meshgrid)
   }
 
   {
-    ASSERT_TRUE(mesh.Evaluate(false, false, out(3,3,2,16)) == RESULT_OK);
+    ASSERT_TRUE(mesh.EvaluateY(false, out(3,3,2,16)) == RESULT_OK);
     const s32 out_groundTruth[15] = {1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3};
     for(s32 x=0; x<15; x++) {
       ASSERT_TRUE(out[3][x+2] == out_groundTruth[x]);

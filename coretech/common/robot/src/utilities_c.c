@@ -377,7 +377,7 @@ f32 Roundf(const f32 number)
   if(number > 0)
     return floorf(number + 0.5f);
   else
-    return floorf(number - 0.5f);
+    return ceilf(number - 0.5f);
 }
 
 f64 Round(const f64 number)
@@ -386,7 +386,7 @@ f64 Round(const f64 number)
   if(number > 0)
     return (f64)(floorf((f32)(number) + 0.5f));
   else
-    return (f64)(floorf((f32)(number) - 0.5f));
+    return (f64)(ceilf((f32)(number) - 0.5f));
 }
 
 s32 IsPowerOfTwo(u32 x)
