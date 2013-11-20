@@ -37,15 +37,15 @@ namespace Anki {
         // Measurements taken from a prototype cozmo.
         // Used to model open loop motor command in WheelController.
         //
-        // Power   LSpeed  RSpeed     (approx,In-air speeds)
-        // 1.0     290     300
+        // Power   LSpeed  RSpeed,  2x reduc (diff robot): LSpeed RSpeed  (approx,In-air speeds)
+        // 1.0     290     300    .......................  175    155
         // 0.9     255     275
-        // 0.8     233     248
+        // 0.8     233     248    .......................
         // 0.7     185     200
-        // 0.6     160     175
+        // 0.6     160     175    .......................  96     80
         // 0.5     120     140
-        // 0.4     90      112
-        // 0.3     55      80
+        // 0.4     90      112    .......................  60     38
+        // 0.3     55      80     .......................  40     20
         // 0.25    40      65
         const f32 WHEEL_POWER_CMD = 0.4;
         const f32 WHEEL_SPEED_CMD_MMPS = 100;

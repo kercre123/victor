@@ -121,8 +121,8 @@ namespace Anki {
         f32 outl = 0, outr = 0;
     
         // Compute open loop component and error correction component of wheel motor command
-        if (ABS(desiredWheelSpeedL_) >= TRANSITION_POWER) {
-          outl_ol = (desiredWheelSpeedL_ + (dirL * HIGH_OPEN_LOOP_OFFSET)) * HIGH_OPEN_LOOP_GAIN;
+        if (ABS(desiredWheelSpeedL_) >= TRANSITION_SPEED) {
+          outl_ol = (desiredWheelSpeedL_ + (dirL * TRANSITION_POWER)) * HIGH_OPEN_LOOP_GAIN;
           outl_corr = ( (Kp_ * errorL) + (error_sumL_ * Ki_) );
         } else {
           outl_ol = (desiredWheelSpeedL_) * LOW_OPEN_LOOP_GAIN;
@@ -130,8 +130,8 @@ namespace Anki {
         }
         outl = outl_ol + outl_corr;
 
-        if (ABS(desiredWheelSpeedR_) >= TRANSITION_POWER) {
-          outr_ol = (desiredWheelSpeedR_ + (dirR * HIGH_OPEN_LOOP_OFFSET)) * HIGH_OPEN_LOOP_GAIN;
+        if (ABS(desiredWheelSpeedR_) >= TRANSITION_SPEED) {
+          outr_ol = (desiredWheelSpeedR_ + (dirR * TRANSITION_POWER)) * HIGH_OPEN_LOOP_GAIN;
           outr_corr = ( (Kp_ * errorR) + (error_sumR_ * Ki_) );
         } else {
           outr_ol = (desiredWheelSpeedR_) * LOW_OPEN_LOOP_GAIN;

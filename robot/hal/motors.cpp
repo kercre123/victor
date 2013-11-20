@@ -100,7 +100,7 @@ namespace Anki
 
       // Given a gear ratio of 91.7:1 and 125.67mm wheel circumference, we
       // compute the units per tick as such (using 4 magnets):
-      static const f32 UNITS_PER_TICK = 125.67 / 91.7 / 4.0;
+      static const f32 UNITS_PER_TICK = 125.67 / 182.0 / 4.0;
 
       // If no encoder activity for 200ms, we may as well be stopped
       static const u32 ENCODER_TIMEOUT_US = 200000;
