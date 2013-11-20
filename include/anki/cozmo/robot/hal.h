@@ -119,9 +119,6 @@ namespace Anki
       // TODO: Add functions for adjusting ROI of cameras?
       void MatCameraInit();
       void FrontCameraInit();
-      
-      const u8* MatCameraGetFrame();
-      const u8* FrontCameraGetFrame(); 
 
       const FrameGrabber GetHeadFrameGrabber();
       const FrameGrabber GetMatFrameGrabber();
@@ -209,7 +206,7 @@ namespace Anki
       // Cameras
       enum CameraID
       {
-        CAMERA_HEAD = 0,
+        CAMERA_FRONT = 0,
         CAMERA_MAT,
         CAMERA_COUNT
       };
@@ -219,17 +216,26 @@ namespace Anki
         CAMERA_MODE_VGA = 0,
         CAMERA_MODE_QVGA,
         CAMERA_MODE_QQVGA,
+        CAMERA_MODE_COUNT,
+
+        CAMERA_MODE_NONE = CAMERA_MODE_COUNT
+      };
+
+      enum CameraUpdateMode
+      {
+        CAMERA_UPDATE_CONTINUOUS = 0,
+        CAMERA_UPDATE_SINGLE
       };
 
       // Starts camera frame synchronization
-      void CameraStartFrame(CameraID camera, u8* frame, CameraMode mode,
-          u16 exposure, bool enableLight);
+      void CameraStartFrame(CameraID cameraID, u8* frame, CameraMode mode,
+          CameraUpdateMode updateMode, u16 exposure, bool enableLight);
 
       // Get the number of lines received so far for the specified camera
-      u32 CameraGetReceivedLines(CameraID camera);
+      u32 CameraGetReceivedLines(CameraID cameraID);
 
       // Returns whether or not the specfied camera has received a full frame
-      bool CameraIsEndOfFrame(CameraID camera);
+      bool CameraIsEndOfFrame(CameraID cameraID);
 
       // Battery
       // Get the battery percent between [0, 100]

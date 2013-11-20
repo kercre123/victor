@@ -1,7 +1,6 @@
 #include "anki/cozmo/robot/hal.h"
 #include "cameras.h"
 
-#define DDR_BUFFER    __attribute__((section(".ddr.text")))
 
 /**
  * NOTE: This camera has reset active high, instead of low like normal
@@ -14,9 +13,6 @@ namespace Anki
     namespace HAL
     {
       static const u8 RESET_PIN = 94;
-      static const u32 FRAME_WIDTH = 640;
-      static const u32 FRAME_HEIGHT = 480;
-      static const u32 FRAME_SIZE = FRAME_WIDTH * FRAME_HEIGHT * 2;
 
       static u32 I2CErrorHandler(I2CM_StatusType i2cCommsError, u32 slaveAddr,
           u32 regAddr);
@@ -106,7 +102,7 @@ namespace Anki
         { 0x10, 0x20 },  // Set exposure to half of default (0x40)
       }; */
 
-      static const unsigned short m_OV7725_VGA[][2] =
+      static const u16 m_OV7725_VGA[] =
       {
         0x12, 0x80,
         0x3d, 0x03,
@@ -119,7 +115,7 @@ namespace Anki
         0x29, 0xa0,
         0x2c, 0xf0,
         0x2a, 0x00,
-        0x11, 0x00, // 00/01/03/07 for 60/30/15/7.5fps - set to 60 fps
+        0x11, 0x02,  // pre-scaler
 
         0x15, 0x00,
 
@@ -132,7 +128,7 @@ namespace Anki
         0x66, 0x00, // ... ?
         0x67, 0x4a,  // RAW8 Output Selection
         0x13, 0xf0,
-        0x0d, 0x31, // 51/61/71 for different AEC/AGC window
+        0x0d, 0x71, // PLL = 8x
         0x0f, 0xc5,
         0x14, 0x11,
         0x22, 0xff, // ff/7f/3f/1f for 60/30/15/7.5fps  -- banding filter
@@ -140,7 +136,7 @@ namespace Anki
         0x24, 0x40,
         0x25, 0x30,
         0x26, 0xa1,
-        0x2b, 0x00, // 00/9e for 60/50Hz
+        0x2b, 0x00, // Dummy bytes LSB
         0x6b, 0xaa,
         0x13, 0xff,
         0x90, 0x05,
@@ -176,17 +172,16 @@ namespace Anki
         0x8d, 0x20,
       };
 
-      static CameraSpecification m_camSpecVGA = {
+/*      static CameraSpecification m_camSpecVGA = {
         BAYER_TO_Y,       // type
         FRAME_WIDTH,      // width
         FRAME_HEIGHT,     // height
-        FRAME_WIDTH,      // stride
         1,                // bytesPP
         24,               // referenceFrequency
         (0x42 >> 1),      // sensorI2CAddress
         sizeof(m_OV7725_VGA) / (sizeof(short) * 2),  // registerCount
         m_OV7725_VGA      // regValues
-      };
+      }; */
 
 
 /*      static u8 m_camWriteProto[] = I2C_PROTO_WRITE_16BA;
@@ -335,7 +330,7 @@ namespace Anki
 
           D_GPIO_PAD_NO_PULL        |
           D_GPIO_PAD_DRIVE_8mA      |
-          D_GPIO_PAD_VOLT_1V8       |
+          D_GPIO_PAD_VOLT_2V5       |
           D_GPIO_PAD_SLEW_SLOW      |
           D_GPIO_PAD_SCHMITT_OFF    |
           D_GPIO_PAD_RECEIVER_ON    |
@@ -356,7 +351,7 @@ namespace Anki
 
           D_GPIO_PAD_NO_PULL        |
           D_GPIO_PAD_DRIVE_8mA      |
-          D_GPIO_PAD_VOLT_1V8       |
+          D_GPIO_PAD_VOLT_2V5       |
           D_GPIO_PAD_SLEW_SLOW      |
           D_GPIO_PAD_SCHMITT_OFF    |
           D_GPIO_PAD_RECEIVER_ON    |
@@ -377,7 +372,7 @@ namespace Anki
 
           D_GPIO_PAD_NO_PULL        |
           D_GPIO_PAD_DRIVE_2mA      |
-          D_GPIO_PAD_VOLT_1V8       |
+          D_GPIO_PAD_VOLT_2V5       |
           D_GPIO_PAD_SLEW_SLOW      |
           D_GPIO_PAD_SCHMITT_ON     |
           D_GPIO_PAD_RECEIVER_ON    |
@@ -398,7 +393,7 @@ namespace Anki
 
           D_GPIO_PAD_NO_PULL        |
           D_GPIO_PAD_DRIVE_2mA      |
-          D_GPIO_PAD_VOLT_1V8       |
+          D_GPIO_PAD_VOLT_2V5       |
           D_GPIO_PAD_SLEW_SLOW      |
           D_GPIO_PAD_SCHMITT_ON     |
           D_GPIO_PAD_RECEIVER_ON    |
@@ -419,7 +414,7 @@ namespace Anki
 
           D_GPIO_PAD_NO_PULL        |
           D_GPIO_PAD_DRIVE_2mA      |
-          D_GPIO_PAD_VOLT_1V8       |
+          D_GPIO_PAD_VOLT_2V5       |
           D_GPIO_PAD_SLEW_SLOW      |
           D_GPIO_PAD_SCHMITT_ON     |
           D_GPIO_PAD_RECEIVER_ON    |
@@ -440,7 +435,7 @@ namespace Anki
 
           D_GPIO_PAD_NO_PULL        |
           D_GPIO_PAD_DRIVE_2mA      |
-          D_GPIO_PAD_VOLT_1V8       |
+          D_GPIO_PAD_VOLT_2V5       |
           D_GPIO_PAD_SLEW_SLOW      |
           D_GPIO_PAD_SCHMITT_ON     |
           D_GPIO_PAD_RECEIVER_ON    |
@@ -461,7 +456,7 @@ namespace Anki
 
           D_GPIO_PAD_NO_PULL        |
           D_GPIO_PAD_DRIVE_2mA      |
-          D_GPIO_PAD_VOLT_1V8       |
+          D_GPIO_PAD_VOLT_2V5       |
           D_GPIO_PAD_SLEW_SLOW      |
           D_GPIO_PAD_SCHMITT_OFF    |
           D_GPIO_PAD_RECEIVER_ON    |
@@ -482,7 +477,7 @@ namespace Anki
 
           D_GPIO_PAD_NO_PULL        |
           D_GPIO_PAD_DRIVE_2mA      |
-          D_GPIO_PAD_VOLT_1V8       |
+          D_GPIO_PAD_VOLT_2V5       |
           D_GPIO_PAD_SLEW_SLOW      |
           D_GPIO_PAD_SCHMITT_OFF    |
           D_GPIO_PAD_RECEIVER_ON    |
@@ -500,30 +495,8 @@ namespace Anki
         }
       };
 
-      static FrameBuffer m_cameraBuffer;
       static CameraHandle m_handle;
       static I2CM_Device m_i2c;
-
-      static DDR_BUFFER unsigned char m_buffer[FRAME_SIZE];
-      static CameraSpecification m_cameraSpec;
-
-      //DDR_BUFFER u8 m_frontBuffer[FRAME_SIZE];
-
-      static volatile bool m_isFrameReady;
-
-      static void FrameReady(FrameBuffer* fb)
-      {
-        static int frame = 0;
-        frame++;
-        //if ((frame % 10) == 0)
-        {
-          //for (int i = 0; i < FRAME_SIZE; i += 4)
-          {
-            //*(u32*)&m_frontBuffer[i] = *(u32*)&m_buffer[i];
-          }
-        }
-        m_isFrameReady = true;
-      }
 
       static u32 I2CErrorHandler(I2CM_StatusType i2cCommsError, u32 slaveAddr,
           u32 regAddr)
@@ -542,17 +515,6 @@ namespace Anki
         // Initialize the camera GPIO
         DrvGpioInitialiseRange(m_cameraGPIO);
 
-        // Initialize the camera buffer
-        m_isFrameReady = false;
-
-        m_cameraBuffer.p1 = m_buffer;
-        m_cameraBuffer.p2 = 0; //&m_buffer[(FRAME_WIDTH * FRAME_HEIGHT) * 1];
-        m_cameraBuffer.p3 = 0; //&m_buffer[(FRAME_WIDTH * FRAME_HEIGHT) * 2];
-
-        int i;
-        for (i = 0; i < FRAME_WIDTH * FRAME_HEIGHT; i++)
-          m_buffer[i] = 0xFF;
-
         // Initialize I2C
         if (DrvI2cMInitFromConfig(&m_i2c, &m_i2cConfig) != I2CM_STAT_OK)
         {
@@ -567,14 +529,21 @@ namespace Anki
         // Verify camera communication (sort of) TODO: actually verify
         //DrvI2cMReadByte(&m_i2c, m_camSpecVGA.sensorI2CAddress, 0x3103);
 
-        CameraInit(&m_handle, CAMERA_1, &m_i2c, &m_cameraBuffer, &m_camSpecVGA,
-            FrameReady);
-        CameraStart(&m_handle, RESET_PIN, true, m_camWriteProto);
-      }
+        //CameraInit(&m_handle, CAMERA_HEAD, &m_i2c, &m_camSpecVGA, m_buffer,
+        //    FrameReady);
+        //CameraStart(&m_handle, RESET_PIN, true, m_camWriteProto);
 
-      const u8* FrontCameraGetFrame()
-      {
-        return m_buffer;
+        const u32 BYTES_PER_PIXEL = 1;
+        const u32 REFERENCE_FREQUENCY_MHZ = 24;
+        const u32 I2C_ADDRESS = (0x42 >> 1);
+        const u32 VGA_REG_COUNT = sizeof(m_OV7725_VGA) / (sizeof(short) * 2);
+        const u32 QVGA_REG_COUNT = 0;
+        const u32 QQVGA_REG_COUNT = 0;
+        const bool IS_ACTIVE_LOW = true;
+        CameraInit(&m_handle, CAMERA_FRONT, BAYER_TO_Y, BYTES_PER_PIXEL,
+            REFERENCE_FREQUENCY_MHZ, I2C_ADDRESS, &m_i2c, m_OV7725_VGA,
+            VGA_REG_COUNT, NULL, QVGA_REG_COUNT, NULL, QQVGA_REG_COUNT,
+            RESET_PIN, IS_ACTIVE_LOW, m_camWriteProto);
       }
     }
   }

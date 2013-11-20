@@ -56,6 +56,7 @@ namespace Anki
         f32 position;
         u32 lastTick;
         u32 delta;
+        f32 constant;
         u8 pin;
       };
 
@@ -99,8 +100,12 @@ namespace Anki
       };
 
       // Given a gear ratio of 91.7:1 and 125.67mm wheel circumference, we
-      // compute the units per tick as such (using 4 magnets):
+      // compute the mm per tick as (using 4 magnets):
       static const f32 MM_PER_TICK = 125.67 / 91.7 / 4.0;
+
+      // Given a gear ratio of 815.4:1 and 4 encoder ticks per revolution, we
+      // compute the radians per tick on the lift as:
+      static const f32 RADIANS_PER_LIFT_TICK = (0.5 * M_PI) / 815.4;
 
       // If no encoder activity for 200ms, we may as well be stopped
       static const u32 ENCODER_TIMEOUT_US = 200000;
@@ -118,9 +123,9 @@ namespace Anki
       // NOTE: Do NOT re-order the MotorID enum, because this depends on it
       static MotorPosition m_motorPositions[MOTOR_COUNT] =
       {
-        {0, 0, 0, ENCODER_1_PIN},  // MOTOR_LEFT_WHEEL
-        {0, 0, 0, ENCODER_2_PIN},  // MOTOR_RIGHT_WHEEL
-        {0, 0, 0, ENCODER_3_PIN},  // MOTOR_LIFT
+        {0, 0, 0, MM_PER_TICK, ENCODER_1_PIN},  // MOTOR_LEFT_WHEEL
+        {0, 0, 0, MM_PER_TICK, ENCODER_2_PIN},  // MOTOR_RIGHT_WHEEL
+        {0, 0, 0, RADIANS_PER_LIFT_TICK, ENCODER_3_PIN},  // MOTOR_LIFT
         {0}  // Zero out the rest
       };
 
@@ -148,7 +153,7 @@ namespace Anki
             {
               motorPosition->delta = ticks - motorPosition->lastTick;
               motorPosition->lastTick = ticks;
-              motorPosition->position += MM_PER_TICK;
+              motorPosition->position += motorPosition->constant;
             }
 
             DrvGpioMode(motorPosition->pin, mode ^ D_GPIO_DATA_INV_ON);
@@ -203,6 +208,7 @@ namespace Anki
         u32 highCount = period - lowCount;
 
         const MotorInfo* motorInfo = &m_motors[motor];
+        MotorPosition* motorPosition = &m_motorPositions[motor];
 
         if (power > 0)
         {
@@ -210,11 +216,13 @@ namespace Anki
           DrvGpioMode(motorInfo->backwardDownPin, DISCONNECTED_MODE);
           DrvGpioSetPinHi(motorInfo->backwardDownPin);
           DrvGpioMode(motorInfo->forwardUpPin, motorInfo->forwardUpMode);
+          motorPosition->constant = fabs(motorPosition->constant);
         } else if (power < 0) {
           // Disable the opposite direction from incluencing the motor driver
           DrvGpioMode(motorInfo->forwardUpPin, DISCONNECTED_MODE);
           DrvGpioSetPinHi(motorInfo->forwardUpPin);
           DrvGpioMode(motorInfo->backwardDownPin, motorInfo->backwardDownMode);
+          motorPosition->constant = -fabs(motorPosition->constant);
         } else {
           DrvGpioMode(motorInfo->forwardUpPin, DISCONNECTED_MODE);
           DrvGpioMode(motorInfo->backwardDownPin, DISCONNECTED_MODE);
@@ -245,7 +253,7 @@ namespace Anki
           return 0;
         }
 
-        return (MM_PER_TICK * 1000000.0f) / motorPosition->delta;
+        return (motorPosition->constant * 1000000.0f) / motorPosition->delta;
       }
 
       f32 MotorGetPosition(MotorID motor)

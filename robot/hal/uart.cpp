@@ -7,7 +7,7 @@ namespace Anki
   {
     namespace HAL
     {
-      const u32 BAUDRATE = 1000000;
+      const u32 BAUDRATE = 1500000;
       const u8 TX_PIN = 69;
       const u32 TX_MODE = D_GPIO_MODE_1;
       const u8 RX_PIN = 70;
@@ -21,7 +21,7 @@ namespace Anki
                     (1 << 12) |  // Output enable
                     (1 << 1)  |  // TX enable
                     (1 << 0);    // RX enable
-        u32 scaler = (DrvCprGetSysClockKhz() * 1000) / (BAUDRATE << 3);
+        u32 scaler = (DrvCprGetSysClockKhz() * 1000) / (BAUDRATE << 3) - 1;
         SET_REG_WORD(UART_CTRL_ADR, mask);
         SET_REG_WORD(UART_SCALER_ADR, scaler);
         DrvGpioMode(TX_PIN, TX_MODE);
