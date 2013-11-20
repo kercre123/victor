@@ -229,10 +229,12 @@ if __name__ == '__main__':
   
   # Write command line out to file and execute from there
   # so that we don't exceed the command line limit of os.system()  
-  with open('ldCmd.bat', 'w+') as f:
+  ldCmdFile = 'ldCmd.bat'
+  with open(ldCmdFile, 'w+') as f:
     f.write(s)
-  if os.system('ldCmd.bat') != 0:
+  if os.system(ldCmdFile) != 0:
     sys.exit(1)
+  os.remove(ldCmdFile)
   
   s = MVCONV + ' -elfInput ' + file + ' -mvcmd:' + OUTPUT + TARGET + '.mvcmd'
   if os.system(s) != 0:
