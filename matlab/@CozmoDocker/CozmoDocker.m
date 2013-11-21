@@ -1,5 +1,12 @@
 classdef CozmoDocker < handle
 
+    properties(Constant = true)
+        NECK_JOINT_POSITION = [-15  0   45]; % relative to robot origin
+        HEAD_CAM_ROTATION   = [0 0 1; -1 0 0; 0 -1 0]; % (rodrigues(-pi/2*[0 1 0])*rodrigues(pi/2*[1 0 0]))'
+        HEAD_CAM_POSITION   = [ 20  0  -10]; % relative to neck joint
+        LIFT_DISTANCE       = 34;  % forward from robot origin
+    end
+    
     properties
         h_fig;
         h_axes;
@@ -25,9 +32,18 @@ classdef CozmoDocker < handle
         marker3d;
         H_init;
         K; % calibration matrix
-        h_cam;
-        h_poseAxes;
         
+        drawPose;
+        h_cam;
+        h_robot;
+        h_camPoseAxes;
+        h_robotPoseAxes;
+        
+        % Poses
+        robotPose;
+        neckPose;
+        headCamPose;
+        blockPose;
     end
     
     
@@ -41,9 +57,11 @@ classdef CozmoDocker < handle
             Calibration = []; % at Tracking resolution!
             TrackerType = 'affine';
             DockDistanceMM = 30; % distance to top bar. this depends on head angle!
-                        
+            HeadAngle = 0; % in degrees!
+            DrawPose = true;
+            
             parseVarargin(varargin{:});
-           
+            
             this.calibration         = Calibration;
             this.detectionResolution = DetectionResolution;
             this.trackingResolution  = TrackingResolution;
@@ -52,8 +70,16 @@ classdef CozmoDocker < handle
             this.camera              = SerialCamera(Port, 'BaudRate', BaudRate);
             this.escapePressed       = false;
             
-            this.dockingDistance = DockDistanceMM;
-                        
+            this.dockingDistance     = DockDistanceMM;
+            this.drawPose            = DrawPose;
+            
+            % Set up Robot head camera geometry
+            this.robotPose = Pose();
+            this.neckPose = Pose([0 0 0], CozmoDocker.NECK_JOINT_POSITION);
+            this.neckPose.parent = this.robotPose;
+            
+            this.setHeadAngle(HeadAngle * pi/180);
+            
             % Set up display figure/axes:
             this.h_fig = namedFigure('Docking', 'CurrentCharacter', '~', ...
                 'KeyPressFcn', @(src,edata)this.keyPressCallback(src,edata));
@@ -67,9 +93,9 @@ classdef CozmoDocker < handle
             h = axes('Position', [0 0 .2 .2], 'Parent', this.h_fig);
             title(h, 'Angle Error')
             this.h_angleError = plot([0 0], [0 0], 'r', 'Parent', h, 'LineWidth', ERRORBAR_LINEWIDTH);
-            set(h, 'YTick', [], 'XTick', -45:5:45, ...
+            set(h, 'YTick', [], 'XTick', -30:5:30, ...
                 'XTickLabel', [], 'YTickLabel', [], ...
-                'XLim', pi/4*[-1 1], 'YLim', .25*[-1 1], 'XGrid', 'on');
+                'XLim', 30*[-1 1], 'YLim', .25*[-1 1], 'XGrid', 'on');
             
             % Distance Error Plot
             h = axes('Position', [.8 0 .2 .2], 'Parent', this.h_fig);
@@ -96,41 +122,68 @@ classdef CozmoDocker < handle
             hold(this.h_axes, 'off');
             
             if strcmp(this.trackerType, 'homography')
-                % For convenience, create a 3x3 camera calibration matrix
                 if ~isempty(this.calibration)
-                this.K = [this.calibration.fc(1) 0 this.calibration.cc(1); ...
-                    0 this.calibration.fc(2) this.calibration.cc(2); ...
-                    0 0 1];
+                    % For convenience, create a 3x3 camera calibration matrix
+                    this.K = [this.calibration.fc(1) 0 this.calibration.cc(1); ...
+                        0 this.calibration.fc(2) this.calibration.cc(2); ...
+                        0 0 1];
                 end
-                        
+                
                 WIDTH = BlockMarker3D.ReferenceWidth;
                 this.marker3d = WIDTH/2 * [-1 -1 0; -1 1 0; 1 -1 0; 1 1 0];
-                
-                h_poseFig = namedFigure('Docking Pose', 'KeyPressFcn', ...
-                    @(src,edata)this.keyPressCallback(src,edata));
-                this.h_poseAxes = subplot(1,1,1, 'Parent', h_poseFig);
-                
-                hold(this.h_poseAxes, 'off')
-                order = [1 2 4 3 1];
-                plot3(this.marker3d(order,1), this.marker3d(order,2), ...
-                    this.marker3d(order,3), 'b', 'Parent', this.h_poseAxes);
-                hold(this.h_poseAxes, 'on')
-                block3d = 30*[-1 -1 0; -1 1 0; 1 -1 0; 1 1 0];
-                plot3(block3d(order,1), block3d(order,2), block3d(order,3), ...
-                    'g', 'Parent', this.h_poseAxes);
-                
-                axis(this.h_poseAxes, 'equal');
-                grid(this.h_poseAxes, 'on');
-                
-                set(this.h_poseAxes, 'XLim', [-50 50], ...
-                    'YLim', [-50 50], 'ZLim', [-200 10], ...
-                    'View', [0 0]);
-                
-                xlabel(this.h_poseAxes, 'X Error')
-                ylabel(this.h_poseAxes, 'Y Error')
-                zlabel(this.h_poseAxes, 'Z Error')
-                
-            end
+                    
+                if this.drawPose
+                    h_poseFig = namedFigure('Docking Pose', 'KeyPressFcn', ...
+                        @(src,edata)this.keyPressCallback(src,edata));
+                    this.h_camPoseAxes = subplot(1,2,1, 'Parent', h_poseFig);
+                    
+                    hold(this.h_camPoseAxes, 'off')
+                    order = [1 2 4 3 1];
+                    plot3(this.marker3d(order,1), this.marker3d(order,2), ...
+                        this.marker3d(order,3), 'b', 'Parent', this.h_camPoseAxes);
+                    hold(this.h_camPoseAxes, 'on')
+                    block3d = 30*[-1 -1 0; -1 1 0; 1 -1 0; 1 1 0];
+                    plot3(block3d(order,1), block3d(order,2), block3d(order,3), ...
+                        'g', 'Parent', this.h_camPoseAxes);
+                    
+                    axis(this.h_camPoseAxes, 'equal');
+                    grid(this.h_camPoseAxes, 'on');
+                    
+                    set(this.h_camPoseAxes, 'XLim', [-50 50], ...
+                        'YLim', [-50 50], 'ZLim', [-150 10], ...
+                        'View', [0 0]);
+                    
+                    xlabel(this.h_camPoseAxes, 'X Error')
+                    ylabel(this.h_camPoseAxes, 'Y Error')
+                    zlabel(this.h_camPoseAxes, 'Z Error')
+                    title(this.h_camPoseAxes, 'Camera Pose');
+                    
+                    this.h_robotPoseAxes = subplot(1,2,2, 'Parent', h_poseFig);
+                    
+                    hold(this.h_robotPoseAxes, 'off')
+                    order = [1 2 3 4 1];
+                    robot = [30 40 20; 30 -40 20; -90 -40 20; -90 40 20];
+                    plot3(robot(order,1), robot(order,2), robot(order,3), ...
+                        'b', 'Parent', this.h_robotPoseAxes);
+                    %plot3(this.marker3d(order,3), -this.marker3d(order,1), ...
+                    %    -this.marker3d(order,2), 'b', 'Parent', this.h_robotPoseAxes);
+                    hold(this.h_robotPoseAxes, 'on')
+                    %plot3(block3d(order,3), -block3d(order,1), -block3d(order,2), ...
+                    %    'g', 'Parent', this.h_robotPoseAxes);
+                    
+                    axis(this.h_robotPoseAxes, 'equal');
+                    grid(this.h_robotPoseAxes, 'on');
+                    
+                    set(this.h_robotPoseAxes, 'XLim', [-10 150], ...
+                        'YLim', [-50 50], 'ZLim', [-50 50], ...
+                        'View', [-90 90]);
+                    
+                    xlabel(this.h_robotPoseAxes, 'X Error')
+                    ylabel(this.h_robotPoseAxes, 'Y Error')
+                    zlabel(this.h_robotPoseAxes, 'Z Error')
+                    title(this.h_robotPoseAxes, 'Robot Pose');
+                end % IF drawPose
+            end % IF homography
             
         end % CONSTRUCTOR CozmoDocker()
         
@@ -140,7 +193,7 @@ classdef CozmoDocker < handle
             dockingDone = false;
             
             while ~this.escapePressed && ~dockingDone
-                 
+               
                 % Set the camera's resolution for detection.
                 this.camera.changeResolution(this.detectionResolution);
                 dims = this.camera.framesize;
@@ -154,12 +207,14 @@ classdef CozmoDocker < handle
                 % to pick up!
                 marker = [];
                 while ~this.escapePressed && (isempty(marker) || ~marker{1}.isValid)
-                    %pause(1/10);
+                    t_detect = tic;
                     img = this.camera.getFrame();
                     if ~isempty(img)
                         set(this.h_img, 'CData', img); drawnow;
-                        marker = simpleDetector(img); 
+                        marker = simpleDetector(img);
                     end
+                    title(this.h_axes, sprintf('Detecting: %.1f FPS', 1/toc(t_detect)));
+                    drawnow
                 end
                 
                 if ~this.escapePressed
@@ -190,12 +245,12 @@ classdef CozmoDocker < handle
                             this.K\[LKtracker.corners';ones(1,4)], ...
                             this.marker3d(:,1:2)');
                         
-                        [Rmat, T] = this.getCameraPose(this.H_init);
+                        this.updateBlockPose(this.H_init);
                         
                         %[Rmat, T] = this.getCameraPose(LKtracker.corners, this.marker3d);
-                         
-                        this.drawCamera(Rmat, T);
-                        
+                        if this.drawPose
+                            this.drawCamera();
+                        end
                     end
                     
                     % Show the target we'll be tracking
@@ -213,7 +268,8 @@ classdef CozmoDocker < handle
                     lost = 0;
                     numEmpty = 0;
                     while lost < 5 && ~this.escapePressed
-                        %pause(1/30);
+                        t_track = tic;
+                        
                         img = this.camera.getFrame();
                         if isempty(img)
                             numEmpty = numEmpty + 1;
@@ -225,7 +281,7 @@ classdef CozmoDocker < handle
                             end
                         else
                             numEmpty = 0;
-                            set(this.h_img, 'CData', img); 
+                            set(this.h_img, 'CData', img);
                             converged = LKtracker.track(img, ...
                                 'MaxIterations', 50, ...
                                 'ConvergenceTolerance', .25);
@@ -240,13 +296,16 @@ classdef CozmoDocker < handle
                                 
                                 set(this.h_target, ...
                                     'XData', corners([1 2 4 3 1],1), ...
-                                    'YData', corners([1 2 4 3 1],2));   
+                                    'YData', corners([1 2 4 3 1],2));
                                 title(this.h_pip, sprintf('TargetError = %.2f', LKtracker.err), 'Back', 'w');
                             else
                                 lost = lost + 1;
                             end
-                            drawnow
-                        end
+                            
+                             title(this.h_axes, sprintf('Tracking: %.1f FPS', 1/toc(t_track)));
+                             drawnow
+                        end % IF / ELSE image is empty
+                        
                     end % WHILE not lost
                     
                 end % IF escape not pressed
@@ -267,7 +326,7 @@ classdef CozmoDocker < handle
                     % using the unordered marker corners above and i
                     % thought that would fix it...
                     %
-                    % Block may be rotated with top side of marker not 
+                    % Block may be rotated with top side of marker not
                     % facing up, so reorient to make sure we got top
                     % corners
                     [th,~] = cart2pol(corners(:,1)-mean(corners(:,1)), corners(:,2)-mean(corners(:,2)));
@@ -281,25 +340,28 @@ classdef CozmoDocker < handle
                     
                     assert(upperRight(1) > upperLeft(1), ...%if upperRight(1) < upperLeft(1)
                         ['UpperRight corner should be to the right ' ...
-                            'of the UpperLeft corner.']);
-                        %keyboard
+                        'of the UpperLeft corner.']);
+                    %keyboard
                     %end
                     
-                    % Get the angle from vertical of the top bar of the 
+                    % Get the angle from vertical of the top bar of the
                     % marker we're tracking
                     L = sqrt(sum(upperRight-upperLeft).^2);
                     angleError = asin( (upperRight(2)-upperLeft(2)) / L);
                     
                     currentDistance = BlockMarker3D.ReferenceWidth * this.calibration.fc(1) / L;
-                                       
+                    distError = currentDistance - this.dockingDistance;
+                    
                     % TODO: should i be comparing to ncols/2 or calibration center?
                     midPointErr = (upperRight(1)+upperLeft(1))/2 - ...
                         this.trackingResolution(1)/2;
                     midPointErr = midPointErr * currentDistance / this.calibration.fc(1);
-                                        
+                    
                 case 'homography'
-
-                    C = [1 0 -LKtracker.xcen; 0 1 -LKtracker.ycen; 0 0 1]; 
+                    
+                    % Note that LKtracker internally does recentering -- we
+                    % need to factor that in here as well. Thus the C term.
+                    C = [1 0 -LKtracker.xcen; 0 1 -LKtracker.ycen; 0 0 1];
                     H = this.K\(C\LKtracker.tform*C*this.K*this.H_init);
                     
                     % This computes the equivalent H, but is more expensive
@@ -309,38 +371,44 @@ classdef CozmoDocker < handle
                     % by the tracker, as above.
                     %H = compute_homography(this.K\[LKtracker.corners';ones(1,4)], ...
                     %        this.marker3d(:,1:2)');
-                        
-                    [Rmat, T] = this.getCameraPose(H);
                     
-                    this.drawCamera(Rmat, T);
+                    this.updateBlockPose(H);
                     
-                    currentDistance = -T(3);
-                    midPointErr = T(1);
-                    angleError = 0;
+                    if this.drawPose
+                        this.drawCamera();
+                        this.drawRobot();
+                    end
+                    
+                    blockWRTrobot = this.blockPose.getWithRespectTo(this.robotPose);
+                    distError     = blockWRTrobot.T(1) - CozmoDocker.LIFT_DISTANCE;
+                    midPointErr   = blockWRTrobot.T(2);
+                    angleError    = atan2(blockWRTrobot.Rmat(2,1), blockWRTrobot.Rmat(1,1)) + pi/2;
                     
                 otherwise
                     error(['Not sure how to compute an error signal ' ...
                         'when using a %s tracker.'], this.trackerType);
             end % SWITCH(trackerType)
-            
-            distError = currentDistance - this.dockingDistance;
              
+            % Update the error displays
             set(this.h_angleError, 'XData', [0 angleError*180/pi]);
             h = get(this.h_angleError, 'Parent');
-            %set(h, 'XLim', pi/4*[-1 1], 'YLim', [.25 1.75], 'XGrid', 'on');
             title(h, sprintf('AngleErr = %.1fdeg', angleError*180/pi), 'Back', 'w');
             
             set(this.h_distError, 'YData', [0 distError]);
             h = get(this.h_distError, 'Parent');
-            %set(h, 'XLim', [.25 1.75], 'YLim', [0 150], 'YGrid', 'on');
             title(h, sprintf('DistToGo = %.1fmm', distError), 'Back', 'w');
             
             set(this.h_leftRightError, 'XData', [0 midPointErr]);
             h = get(this.h_leftRightError, 'Parent');
-            %set(h, 'XLim', [-20 20], 'YLim', [.25 1.75], 'XGrid', 'on');
             title(h, sprintf('LeftRightErr = %.1fmm', midPointErr), 'Back', 'w');
             
             % TODO: send the error signals back over the serial connection
+            dockErrorPacket = [uint8('E') ...
+                typecast(single([distError midPointErr angleError]), 'uint8')];
+            assert(length(dockErrorPacket)==13, ...
+                'Expecting docking error packet to be 13 bytes long.');
+            
+            this.camera.sendMessage(dockErrorPacket);
             
         end % FUNCTION sendError()
         
@@ -356,25 +424,48 @@ classdef CozmoDocker < handle
             end
         end % keyPressCallback()
         
-        function drawCamera(this, R, t)
-            
+        function drawCamera(this)
+            tempPose = this.headCamPose.getWithRespectTo(this.blockPose);
+                        
             scale = 5;
             verts = scale*[-1 -1 0; -1 1 0; 1 1 0; 1 -1 0; 0 0 -.5];
-            verts = (R*verts' + t(:,ones(1,5)))';
+            verts = tempPose.applyTo(verts);
             order = [1 2; 2 3; 3 4; 4 1; 1 5; 2 5; 3 5; 4 5]';
             if isempty(this.h_cam)
-                this.h_cam = plot3(verts(order,1), verts(order,2), verts(order,3), 'Parent', this.h_poseAxes);
+                this.h_cam = plot3(verts(order,1), verts(order,2), verts(order,3), 'Parent', this.h_camPoseAxes);
             else
                 set(this.h_cam, 'XData', verts(order,1), 'YData', verts(order,2), 'ZData', verts(order,3));
             end
-            
-        end % FUNCTION drawCamera()
+         end % FUNCTION drawCamera()
+        
+        function drawRobot(this)
+            %tempPose = this.blockPose.getWithRespectTo(this.robotPose);
+          
+            % Bounding box of robot in camera coordinates, centered around
+            % the camera origin -- this gets rotated and recentered by the
+            % application of tempPose.inv
+            %verts = [40 0 30; -40 0 30; -40 0 -90; 40 0 -90];
 
-    end % methods
-    
-    methods
-        function [Rmat, T] = getCameraPose(this, varargin)
+            % Block vertices in world coordinates
+            %verts = [0 30 30; 0 -30 30; 0 -30 -30; 0 30 -30];
+            %verts = tempPose.applyTo(verts);
             
+            block = this.marker3d /(BlockMarker3D.ReferenceWidth/2)*30;
+            verts = this.blockPose.applyTo(block);
+            
+            order = [1 2 4 3 1];
+            if isempty(this.h_robot)
+                this.h_robot = plot3(verts(order,1), verts(order,2), verts(order,3), 'r', 'Parent', this.h_robotPoseAxes);
+            else
+                set(this.h_robot, 'XData', verts(order,1), 'YData', verts(order,2), 'ZData', verts(order,3));
+            end
+            
+        end
+        
+        
+        function updateBlockPose(this, varargin)
+            
+            % Compute pose of block w.r.t. camera
             if nargin == 2
                 H = varargin{1};
                 
@@ -388,23 +479,42 @@ classdef CozmoDocker < handle
                 u2 = H(:,2) - dot(u1,H(:,2)) * u1;
                 u2 = u2 / norm(u2);
                 u3 = cross(u1,u2);
-                Rmat = [u1 u2 u3];
+                R = [u1 u2 u3];
                 %Rvec = rodrigues(Rmat);
                 T    = H(:,3);
                 
             else
+                warning('Should not need to call compute_extrinsic_init anymore!');
+                
                 pts2d = varargin{1};
                 pts3d = varargin{2};
                 
-                [~,T,Rmat] = compute_extrinsic_init(pts2d', pts3d', ...
+                [~,T,R] = compute_extrinsic_init(pts2d', pts3d', ...
                     this.calibration.fc, this.calibration.cc, zeros(4,1), 0);
             end
             
-            Rmat = Rmat';
-            T    = -Rmat*T;
+            % Now switch to block with respect to robot, instead of camera
+            this.blockPose = Pose(R,T);
+            this.blockPose.parent = this.headCamPose;
+            this.blockPose = this.blockPose.getWithRespectTo(this.robotPose);
             
-        end % getCameraPose()
-    end
+        end % updateBlockPose()
+        
+        
+        function setHeadAngle(this, newHeadAngle)
+            
+            % Get rotation matrix for the current head pitch, rotating
+            % around the Y axis (which points to robot's LEFT!)
+            Rpitch = rodrigues(-newHeadAngle*[0 1 0]);
+                        
+            this.headCamPose = Pose( ...
+                Rpitch * CozmoDocker.HEAD_CAM_ROTATION,  ...
+                Rpitch * CozmoDocker.HEAD_CAM_POSITION(:));
+            this.headCamPose.parent = this.neckPose;
+            
+        end
+        
+    end % methods
 
 end % classdef CozmoDocker
 
