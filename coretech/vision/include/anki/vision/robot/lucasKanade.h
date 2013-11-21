@@ -77,8 +77,8 @@ namespace Anki
 
         // The templateRegion sizes are the sizes of the part of the template image that will
         // actually be tracked, so must be smaller or equal to the templateImage sizes
-        s32 templateRegionHeight;
-        s32 templateRegionWidth;
+        f32 templateRegionHeight;
+        f32 templateRegionWidth;
 
         PlaneTransformation_f32 transformation;
 
@@ -91,8 +91,6 @@ namespace Anki
 
         bool isValid;
         bool isInitialized;
-
-        Result computeTransformedPoints(Array<f32> &xi, Array<f32> &yi, const s32 scale, ) const;
       };
     } // namespace TemplateTracker
   } // namespace Embedded
