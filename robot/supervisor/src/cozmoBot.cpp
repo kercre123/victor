@@ -88,9 +88,7 @@ namespace Anki {
           PRINT("Hardware Interface initialization failed!\n");
           return EXIT_FAILURE;
         }
-        if(VisionSystem::Init(HAL::GetHeadFrameGrabber(),
-                              HAL::GetMatFrameGrabber(),
-                              HAL::GetHeadCamInfo(),
+        if(VisionSystem::Init(HAL::GetHeadCamInfo(),
                               HAL::GetMatCamInfo(),
                               &blockMarkerMailbox_,
                               &matMarkerMailbox_) == EXIT_FAILURE)

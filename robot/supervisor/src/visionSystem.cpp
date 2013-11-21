@@ -27,11 +27,21 @@ namespace Anki {
       
       bool isInitialized_ = false;
       
-      HAL::FrameGrabber headCamFrameGrabber_ = NULL;
-      HAL::FrameGrabber matCamFrameGrabber_  = NULL;
-      
       const HAL::CameraInfo* headCamInfo_ = NULL;
       const HAL::CameraInfo* matCamInfo_  = NULL;
+      
+      // Image buffers (Only used when using MATLAB)
+#ifdef USE_MATLAB_FOR_HEAD_CAMERA
+      u8 headCamImage_[640*480*4];
+#endif
+#ifdef USE_MATLAB_FOR_MAT_CAMERA
+      u8 matCamImage_[640*480*4];
+#endif
+      
+      // Whether or not we're in the process of waiting for an image to be acquired
+      bool acquiringHeadCamImage_ = false;
+      bool acquiringMatCamImage_ = false;
+    
       
       VisionSystem::BlockMarkerMailbox* blockMarkerMailbox_ = NULL;
       VisionSystem::MatMarkerMailbox*   matMarkerMailbox_   = NULL;
@@ -68,27 +78,13 @@ namespace Anki {
 #pragma mark --- VisionSystem Method Implementations ---
     
     
-    ReturnCode VisionSystem::Init(HAL::FrameGrabber      headCamFrameGrabber,
-                                  HAL::FrameGrabber      matCamFrameGrabber,
-                                  const HAL::CameraInfo* headCamInfo,
+    ReturnCode VisionSystem::Init(const HAL::CameraInfo* headCamInfo,
                                   const HAL::CameraInfo* matCamInfo,
                                   BlockMarkerMailbox*    blockMarkerMailbox,
                                   MatMarkerMailbox*      matMarkerMailbox)
     {
       isInitialized_ = false;
-      
-      if(headCamFrameGrabber == NULL) {
-        PRINT("VisionSystem::Init() - HeadCam FrameGrabber is NULL!\n");
-        return EXIT_FAILURE;
-      }
-      headCamFrameGrabber_ = headCamFrameGrabber;
-      
-      if(matCamFrameGrabber == NULL) {
-        PRINT("VisionSystem::Init() - MatCam FrameGrabber is NULL!\n");
-        return EXIT_FAILURE;
-      }
-      matCamFrameGrabber_  = matCamFrameGrabber;
-      
+
       if(headCamInfo == NULL) {
         PRINT("VisionSystem::Init() - HeadCam Info pointer is NULL!\n");
         return EXIT_FAILURE;
@@ -185,14 +181,26 @@ namespace Anki {
     
     ReturnCode VisionSystem::lookForBlocks()
     {
+#if defined(USE_MATLAB_FOR_HEAD_CAMERA)
       u32 numBlocks = 0;
       
-      const u8 *image = HAL::FrontCameraGetFrame(); //getHeadCamImage();
+      // Start image capture
+      if (!acquiringHeadCamImage_) {
+        HAL::CameraStartFrame(HAL::CAMERA_FRONT, headCamImage_, HAL::CAMERA_MODE_VGA, HAL::CAMERA_UPDATE_SINGLE, 100, true);
+        acquiringHeadCamImage_ = true;
+      }
+      
+      // Wait until frame is ready
+      if (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT)) {
+        return EXIT_SUCCESS;
+      }
+      acquiringHeadCamImage_ = false;
+      
+      
       const s32 nrows = headCamInfo_->nrows;
       const s32 ncols = headCamInfo_->ncols;
       
-#if defined(USE_MATLAB_FOR_HEAD_CAMERA)
-      mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(image, nrows, ncols, 4);
+      mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(headCamImage_, nrows, ncols, 4);
       
       if(mxImg != NULL) {
         // Send the image to matlab
@@ -308,12 +316,24 @@ namespace Anki {
     {
       ReturnCode retVal = -1;
       
-      const u8 *image = HAL::MatCameraGetFrame();// getMatCamImage();
+#if defined(USE_MATLAB_FOR_MAT_CAMERA)
+      
+      // Start image capture
+      if (!acquiringMatCamImage_) {
+        HAL::CameraStartFrame(HAL::CAMERA_MAT, matCamImage_, HAL::CAMERA_MODE_VGA, HAL::CAMERA_UPDATE_SINGLE, 100, true);
+        acquiringMatCamImage_ = true;
+      }
+      
+      // Wait until frame is ready
+      if (!HAL::CameraIsEndOfFrame(HAL::CAMERA_MAT)) {
+        return EXIT_SUCCESS;
+      }
+      acquiringMatCamImage_ = false;
+
       const int nrows = matCamInfo_->nrows;
       const int ncols = matCamInfo_->ncols;
       
-#if defined(USE_MATLAB_FOR_MAT_CAMERA)
-      mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(image, nrows, ncols, 4);
+      mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(matCamImage_, nrows, ncols, 4);
       
       if(mxImg != NULL) {
         // Display Mat Image in Matlab
@@ -430,7 +450,21 @@ namespace Anki {
     ReturnCode VisionSystem::findDockingTarget(DockingTarget& target)
     {
       ReturnCode retVal = EXIT_SUCCESS;
-      const u8 *image = HAL::FrontCameraGetFrame(); // getMatCamImage();
+
+#if defined(USE_MATLAB_FOR_HEAD_CAMERA)
+      
+      // Start image capture
+      if (!acquiringHeadCamImage_) {
+        HAL::CameraStartFrame(HAL::CAMERA_FRONT, headCamImage_, HAL::CAMERA_MODE_VGA, HAL::CAMERA_UPDATE_SINGLE, 100, true);
+        acquiringHeadCamImage_ = true;
+      }
+      
+      // Wait until frame is ready
+      if (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT)) {
+        return EXIT_SUCCESS;
+      }
+      acquiringHeadCamImage_ = false;
+
       const u16 nrows = matCamInfo_->nrows;
       const u16 ncols = matCamInfo_->ncols;
       
@@ -441,8 +475,8 @@ namespace Anki {
         retVal = EXIT_FAILURE;
       }
       else {
-#if defined(USE_MATLAB_FOR_HEAD_CAMERA)
-        mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(image, nrows, ncols, 4);
+
+        mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(headCamImage_, nrows, ncols, 4);
         
         if(mxImg != NULL) {
           
@@ -517,20 +551,9 @@ namespace Anki {
           retVal = EXIT_FAILURE;
           
         } // if mxImg != NULL
-        
-        
-#else  // NOT defined(USE_MATLAB_FOR_HEAD_CAMERA)
-        
-        // TODO: Hook this up to Pete's vision code
-        PRINT("Robot::findDockingTarget(): embedded vision "
-                "processing not hooked up yet.\n");
-        
-        retVal = EXIT_FAILURE;
-        
-#endif // defined(USE_MATLAB_FOR_HEAD_CAMERA)
-        
       } // if docking window set
-      
+        
+
       if(retVal == EXIT_SUCCESS) {
         // Update the search window based on the target we found
         f32 xcen = 0.25f*(target.dotX[0] + target.dotX[1] +
@@ -553,9 +576,19 @@ namespace Anki {
         
       }
       return retVal;
+
+#else  // NOT defined(USE_MATLAB_FOR_HEAD_CAMERA)
+      
+      // TODO: Hook this up to Pete's vision code
+      PRINT("Robot::findDockingTarget(): embedded vision "
+            "processing not hooked up yet.\n");
+      
+      return EXIT_FAILURE;
+
+#endif
       
     } // findDockingTarget()
-    
+
     
   } // namespace Cozmo
 } // namespace Anki
