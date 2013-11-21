@@ -91,10 +91,18 @@ namespace Anki
 
       // If xVector==true, evaluate xGridVector. If false, evaluate yGridVector
       // If isOutColumnMajor==true, then the output vector will be column-major(like Matlab)
-      Array<Type> EvaluateX(bool isOutColumnMajor, bool isOutTwoDimensional, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
-      Array<Type> EvaluateY(bool isOutColumnMajor, bool isOutTwoDimensional, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
-      Result EvaluateX(bool isOutColumnMajor, bool isOutTwoDimensional, ArraySlice<Type> out) const;
-      Result EvaluateY(bool isOutColumnMajor, bool isOutTwoDimensional, ArraySlice<Type> out) const;
+      // The finax suffix 1 or 2 is for 1D or 2D output
+      Array<Type> EvaluateX1(bool isOutColumnMajor, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
+      Array<Type> EvaluateX2(MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
+
+      Array<Type> EvaluateY1(bool isOutColumnMajor, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
+      Array<Type> EvaluateY2(MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
+
+      Result EvaluateX1(bool isOutColumnMajor, ArraySlice<Type> out) const;
+      Result EvaluateX2(ArraySlice<Type> out) const;
+
+      Result EvaluateY1(bool isOutColumnMajor, ArraySlice<Type> out) const;
+      Result EvaluateY2(ArraySlice<Type> out) const;
 
       s32 get_numElements() const;
 

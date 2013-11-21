@@ -85,8 +85,8 @@ GTEST_TEST(CoreTech_Common, Interp2_oneDimensional)
 
   // [xGridVector, yGridVector] = meshgrid(1+(-0.9:0.9:6), 1+(-1:1:4));
   Meshgrid<f32> mesh(LinearSequence<f32>(-0.9f,0.9f,6.0f), LinearSequence<f32>(-1.0f,1.0f,4.0f));
-  Array<f32> xGridVector = mesh.EvaluateX(true, false, ms);
-  Array<f32> yGridVector = mesh.EvaluateY(true, false, ms);
+  Array<f32> xGridVector = mesh.EvaluateX1(true, ms);
+  Array<f32> yGridVector = mesh.EvaluateY1(true, ms);
 
   // result = round(interp2(reference, xGridVector(:), yGridVector(:)))
   Array<u8> result(1, xGridVector.get_size(1), ms);
@@ -99,6 +99,37 @@ GTEST_TEST(CoreTech_Common, Interp2_oneDimensional)
   for(s32 i=0; i<48; i++) {
     ASSERT_TRUE(result[0][i] == result_groundTruth[i]);
   }
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, Meshgrid_twoDimensional)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  // [x,y] = meshgrid(1:5,1:3)
+  Meshgrid<s32> mesh(LinearSequence<s32>(1,5), LinearSequence<s32>(1,3));
+
+  Array<s32> out(20,20,ms);
+  ASSERT_TRUE(out.IsValid());
+  /*
+  {
+  ASSERT_TRUE(mesh.EvaluateX2(out(3,7,2,4)) == RESULT_OK);
+  const s32 out_groundTruth[5][3] = {{1, 1, 1}, {2, 2, 2}, {3, 3, 3}, {4, 4, 4}, {5, 5, 5}};
+  for(s32 x=0; x<15; x++) {
+  ASSERT_TRUE(out[3][x+2] == out_groundTruth[x]);
+  }
+  }
+
+  {
+  ASSERT_TRUE(mesh.EvaluateY2(out(3,7,2,4)) == RESULT_OK);
+  const s32 out_groundTruth[5][3] = {1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3};
+  for(s32 x=0; x<15; x++) {
+  ASSERT_TRUE(out[3][x+2] == out_groundTruth[x]);
+  }
+  }*/
 
   GTEST_RETURN_HERE;
 }
@@ -116,7 +147,7 @@ GTEST_TEST(CoreTech_Common, Meshgrid_oneDimensional)
   ASSERT_TRUE(out.IsValid());
 
   {
-    ASSERT_TRUE(mesh.EvaluateX(true, false, out(3,3,2,16)) == RESULT_OK);
+    ASSERT_TRUE(mesh.EvaluateX1(true, out(3,3,2,16)) == RESULT_OK);
     const s32 out_groundTruth[15] = {1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5};
     for(s32 x=0; x<15; x++) {
       ASSERT_TRUE(out[3][x+2] == out_groundTruth[x]);
@@ -124,7 +155,7 @@ GTEST_TEST(CoreTech_Common, Meshgrid_oneDimensional)
   }
 
   {
-    ASSERT_TRUE(mesh.EvaluateX(false, false, out(3,3,2,16)) == RESULT_OK);
+    ASSERT_TRUE(mesh.EvaluateX1(false, out(3,3,2,16)) == RESULT_OK);
     const s32 out_groundTruth[15] = {1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5};
     for(s32 x=0; x<15; x++) {
       ASSERT_TRUE(out[3][x+2] == out_groundTruth[x]);
@@ -132,7 +163,7 @@ GTEST_TEST(CoreTech_Common, Meshgrid_oneDimensional)
   }
 
   {
-    ASSERT_TRUE(mesh.EvaluateY(true, false, out(3,3,2,16)) == RESULT_OK);
+    ASSERT_TRUE(mesh.EvaluateY1(true, out(3,3,2,16)) == RESULT_OK);
     const s32 out_groundTruth[15] = {1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3};
     for(s32 x=0; x<15; x++) {
       ASSERT_TRUE(out[3][x+2] == out_groundTruth[x]);
@@ -140,7 +171,7 @@ GTEST_TEST(CoreTech_Common, Meshgrid_oneDimensional)
   }
 
   {
-    ASSERT_TRUE(mesh.EvaluateY(false, false, out(3,3,2,16)) == RESULT_OK);
+    ASSERT_TRUE(mesh.EvaluateY1(false, out(3,3,2,16)) == RESULT_OK);
     const s32 out_groundTruth[15] = {1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3};
     for(s32 x=0; x<15; x++) {
       ASSERT_TRUE(out[3][x+2] == out_groundTruth[x]);

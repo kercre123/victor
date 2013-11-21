@@ -171,8 +171,8 @@ namespace Anki
 
           const s32 numValidPoints = templateCoordinates[iScale].get_numElements();
 
-          Array<f32> xIn = templateCoordinates[iScale].EvaluateX(isOutColumnMajor, true, memory);
-          Array<f32> yIn = templateCoordinates[iScale].EvaluateY(isOutColumnMajor, true, memory);
+          Array<f32> xIn = templateCoordinates[iScale].EvaluateX2(memory);
+          Array<f32> yIn = templateCoordinates[iScale].EvaluateY2(memory);
 
           assert(xIn.get_size(1) == numValidPoints);
           assert(xIn.get_size(1) == yIn.get_size(1));
