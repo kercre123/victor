@@ -249,7 +249,7 @@ int main()
 
     Robot::step_LongExecution();
 
-    CameraStartFrame(HAL::CAMERA_FRONT, frame, HAL::CAMERA_MODE_VGA,
+/*    CameraStartFrame(HAL::CAMERA_FRONT, frame, HAL::CAMERA_MODE_VGA,
         HAL::CAMERA_UPDATE_SINGLE, 0, false);
 
     HAL::SendFrame();
@@ -258,7 +258,7 @@ int main()
     {
     }
 
-    /*u32 t2 = HAL::GetMicroCounter();
+    u32 t2 = HAL::GetMicroCounter();
     //printf("%i\n", (t2 - t));
     t = t2;
  

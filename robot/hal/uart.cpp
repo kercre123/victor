@@ -20,8 +20,8 @@ namespace Anki
       static const u8 BUFFER_SIZE = 128;
       static const u8 BUFFER_MASK = 0x7f;
       static volatile u8 m_buffer[BUFFER_SIZE];
-      static volatile u8 m_lastRead = 0;
-      static volatile u8 m_lastWrite = 0;
+      static volatile u8 m_currentRead = 0;
+      static volatile u8 m_currentWrite = 0;
 
       void UARTInit()
       {
@@ -72,11 +72,11 @@ namespace Anki
           //{
           //  return REG_WORD(UART_DATA_ADR);
           //}
-          if (m_lastRead != m_lastWrite)
+          if (m_currentRead != m_currentWrite)
           {
-            u32 index = (m_lastRead + 1) & BUFFER_MASK;
-            m_lastRead = index;
-            return m_buffer[index];
+            s32 c = m_buffer[m_currentRead] & 0xff;
+            m_currentRead = (m_currentRead + 1) & BUFFER_MASK;
+            return c;
           }
         } while (GetMicroCounter() < end);
 
@@ -95,10 +95,8 @@ namespace Anki
       {
         while (REG_WORD(UART_STATUS_ADR) >> 26)
         {
-          u32 index = (m_lastWrite + 1) & BUFFER_MASK;
-          m_buffer[index] = REG_WORD(UART_DATA_ADR);
-          m_lastWrite = index;
-          printf("%c", m_buffer[index]);
+          m_buffer[m_currentWrite] = REG_WORD(UART_DATA_ADR);
+          m_currentWrite = (m_currentWrite + 1) & BUFFER_MASK;
         }
 
         // Clear the interrupt
