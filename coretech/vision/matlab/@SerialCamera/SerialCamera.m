@@ -13,11 +13,15 @@ classdef SerialCamera < handle
         % Default header (final 'BD' is for 80x60), converted from hex to a
         % byte array.
         BEEFFOFF = char(sscanf('BEEFF0FF', '%2x'))'; 
+        
+        % Byte following header that indicates a message
+        MESSAGE_SUFFIX = char(sscanf('DD', '%2x'));
     end
     
     properties(SetAccess = 'protected')
         port;
         header;
+        formatSuffix; % image format to be looking for
         framesize;
         framelength;
         serialObj;
@@ -28,6 +32,8 @@ classdef SerialCamera < handle
         
         numFrames;
         numDropped;
+        
+        message;
     end
     
     
@@ -58,6 +64,9 @@ classdef SerialCamera < handle
                 delete(instrfind);
             end
             
+            this.header = SerialCamera.BEEFFOFF;
+            this.message = '';
+            
             this.serialObj = serial(this.port, 'BaudRate', BaudRate);
             fopen(this.serialObj);
                         
@@ -73,6 +82,7 @@ classdef SerialCamera < handle
         function img = getFrame(this)
             
             img = [];
+            this.message = '';
             
             bytesToRead = this.framelength*2-length(this.buffer);
             if bytesToRead > 0
@@ -112,25 +122,41 @@ classdef SerialCamera < handle
                     assert(strcmp(this.buffer(1:length(this.header)), this.header), ...
                         'Expecting the buffer to begin with the header at this point.');
                     
-                    % Read frame from index(1) to index(2)
-                    readLength = min(this.framelength, index(2)-index(1)-length(this.header));
+                    firstDataIndex = length(this.header)+1;
+                    readLength = index(2)-index(1)-firstDataIndex;
                     
-                    if readLength < this.framelength
-                        %set(h_axes, 'XColor', 'r', 'YColor', 'r');
-                        %set(h_img, 'CData', zeros(60,80));
-                        this.numDropped = this.numDropped + 1;
-                    else
-                        assert(readLength == this.framelength);
-                        img = uint8(this.buffer(length(this.header)+(1:readLength)));
-                        img = reshape(fliplr(img), this.framesize)';
-                        if this.doVerticalFlip
-                            img = flipud(img);
-                        end
-                        %set(h_img, 'CData', reshape(img, [80 60])');
-                        %set(h_axes, 'XColor', 'g', 'YColor', 'g');
-                        this.numFrames = this.numFrames + 1;
+                    switch(this.buffer(length(this.header)+1))
+                        case SerialCamera.MESSAGE_SUFFIX
+                            % Read and ASCII message data from index(1) to
+                            % index(2)
+                            this.message = this.buffer(firstDataIndex + (1:readLength));
+                                                       
+                        case this.formatSuffix
+                            % Read frame from index(1) to index(2)
+                            readLength = min(this.framelength, readLength);
+                            
+                            if readLength < this.framelength
+                                %set(h_axes, 'XColor', 'r', 'YColor', 'r');
+                                %set(h_img, 'CData', zeros(60,80));
+                                this.numDropped = this.numDropped + 1;
+                            else
+                                assert(readLength == this.framelength);
+                                img = uint8(this.buffer(firstDataIndex+(1:readLength)));
+                                img = reshape(fliplr(img), this.framesize)';
+                                if this.doVerticalFlip
+                                    img = flipud(img);
+                                end
+                                %set(h_img, 'CData', reshape(img, [80 60])');
+                                %set(h_axes, 'XColor', 'g', 'YColor', 'g');
+                                this.numFrames = this.numFrames + 1;
+                            end
+                            
+                        otherwise
+                            warning('Unrecognized header suffix found.');
                     end
-                    this.buffer(1:(readLength+length(this.header))) = [];
+                        
+                    this.buffer(1:(readLength+firstDataIndex)) = [];
+                   
                 end % IF at least 2 indexes
             end % IF / ELSE isempty(index)
             
@@ -148,29 +174,34 @@ classdef SerialCamera < handle
             switch(newResolution)
                 case 'VGA' % [640 480]
                     error('VGA unsupported.');
+                    
                 case 'QVGA' % [320 240]
                     this.framesize = [320 240]; 
                     serialCmd = 'X';
-                    formatSuffix = sscanf('B8', '%x');
+                    this.formatSuffix = sscanf('B8', '%x');
                     if nargin < 3
                         frameRate = 10;
                     end
+                    
                 case 'QQVGA' % [160 120]
                     error('QQVGA unsupported.');
+                    
                 case 'QQQVGA' % [80 60]
                     this.framesize = [80 60];
                     serialCmd = 'Z';
-                    formatSuffix = sscanf('BD', '%x');
+                    this.formatSuffix = sscanf('BD', '%x');
                     if nargin < 3
                         frameRate = 30;
                     end
+                    
                 otherwise
                     error('Unrecognized resolution specified.');
+                    
             end % SWITCH(newResolution)
             
             fwrite(this.serialObj, serialCmd, 'char');
             this.framelength = prod(this.framesize);
-            this.header = [SerialCamera.BEEFFOFF char(formatSuffix)];
+            %this.header = [SerialCamera.BEEFFOFF char(formatSuffix)];
             this.fps = frameRate;
             
             fclose(this.serialObj);
