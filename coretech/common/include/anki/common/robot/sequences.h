@@ -337,7 +337,7 @@ namespace Anki
         Type curSequenceValue = sequenceStartValue;
 
         for(s32 x=0; x<xGridSize; x++) {
-          pOut[x] = curSequenceValue;
+          pOut[curOutX] = curSequenceValue;
 
           curOutX += outXIncrement;
           curSequenceValue += sequenceIncrement;
@@ -450,7 +450,7 @@ namespace Anki
         s32 curOutX = outXStart;
 
         for(s32 x=0; x<xGridSize; x++) {
-          pOut[x] = curSequenceValue;
+          pOut[curOutX] = curSequenceValue;
 
           curOutX += outXIncrement;
         } // for(s32 x=0; x<xGridSize; x++)

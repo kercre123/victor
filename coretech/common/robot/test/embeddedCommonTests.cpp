@@ -114,22 +114,26 @@ GTEST_TEST(CoreTech_Common, Meshgrid_twoDimensional)
 
   Array<s32> out(20,20,ms);
   ASSERT_TRUE(out.IsValid());
-  /*
+
   {
-  ASSERT_TRUE(mesh.EvaluateX2(out(3,7,2,4)) == RESULT_OK);
-  const s32 out_groundTruth[5][3] = {{1, 1, 1}, {2, 2, 2}, {3, 3, 3}, {4, 4, 4}, {5, 5, 5}};
-  for(s32 x=0; x<15; x++) {
-  ASSERT_TRUE(out[3][x+2] == out_groundTruth[x]);
-  }
+    ASSERT_TRUE(mesh.EvaluateX2(out(3,5,2,6)) == RESULT_OK);
+    const s32 out_groundTruth[3][5] = {{1, 2, 3, 4, 5}, {1, 2, 3, 4, 5}, {1, 2, 3, 4, 5}};
+    for(s32 y=0; y<3; y++) {
+      for(s32 x=0; x<5; x++) {
+        ASSERT_TRUE(out[y+3][x+2] == out_groundTruth[y][x]);
+      }
+    }
   }
 
   {
-  ASSERT_TRUE(mesh.EvaluateY2(out(3,7,2,4)) == RESULT_OK);
-  const s32 out_groundTruth[5][3] = {1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3};
-  for(s32 x=0; x<15; x++) {
-  ASSERT_TRUE(out[3][x+2] == out_groundTruth[x]);
+    ASSERT_TRUE(mesh.EvaluateY2(out(3,5,2,6)) == RESULT_OK);
+    const s32 out_groundTruth[3][5] = {{1, 1, 1, 1, 1}, {2, 2, 2, 2, 2}, {3, 3, 3, 3, 3}};
+    for(s32 y=0; y<3; y++) {
+      for(s32 x=0; x<5; x++) {
+        ASSERT_TRUE(out[y+3][x+2] == out_groundTruth[y][x]);
+      }
+    }
   }
-  }*/
 
   GTEST_RETURN_HERE;
 }
