@@ -738,7 +738,7 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
   // Test normal elementwise addition
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::Add<s32,s32>(in1, in2, out);
+    const Result result = Matrix::Add<s32,s32,s32>(in1, in2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
     for(s32 y=0; y<5; y++) {
@@ -751,7 +751,7 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
   // Test normal elementwise addition with a scalar as parameter 1
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::Add<s32,s32>(in1, 5, out);
+    const Result result = Matrix::Add<s32,s32,s32>(in1, 5, out);
     ASSERT_TRUE(result == RESULT_OK);
 
     for(s32 y=0; y<5; y++) {
@@ -764,7 +764,7 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
   // Test normal elementwise addition with a scalar as parameter 2
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::Add<s32,s32>(-4, in2, out);
+    const Result result = Matrix::Add<s32,s32,s32>(-4, in2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
     for(s32 y=0; y<5; y++) {
@@ -777,7 +777,7 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
   // Test normal elementwise subtraction
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::Subtract<s32,s32>(in1, in2, out);
+    const Result result = Matrix::Subtract<s32,s32,s32>(in1, in2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
     for(s32 y=0; y<5; y++) {
@@ -790,7 +790,7 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
   // Test normal elementwise subtraction with a scalar as parameter 1
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::Subtract<s32,s32>(100, in2, out);
+    const Result result = Matrix::Subtract<s32,s32,s32>(100, in2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
     for(s32 y=0; y<5; y++) {
@@ -803,7 +803,7 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
   // Test normal elementwise subtraction with a scalar as parameter 2
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::Subtract<s32,s32>(in1, 1, out);
+    const Result result = Matrix::Subtract<s32,s32,s32>(in1, 1, out);
     ASSERT_TRUE(result == RESULT_OK);
 
     for(s32 y=0; y<5; y++) {
@@ -816,7 +816,7 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
   // Test normal elementwise multiplication
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::DotMultiply<s32,s32>(in1, in2, out);
+    const Result result = Matrix::DotMultiply<s32,s32,s32>(in1, in2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
     for(s32 y=0; y<5; y++) {
@@ -829,7 +829,7 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
   // Test normal elementwise multiplication with a scalar as parameter 1
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::DotMultiply<s32,s32>(in1, 2, out);
+    const Result result = Matrix::DotMultiply<s32,s32,s32>(in1, 2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
     for(s32 y=0; y<5; y++) {
@@ -842,7 +842,7 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
   // Test normal elementwise multiplication with a scalar as parameter 2
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::DotMultiply<s32,s32>(-2, in2, out);
+    const Result result = Matrix::DotMultiply<s32,s32,s32>(-2, in2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
     for(s32 y=0; y<5; y++) {
@@ -855,7 +855,7 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
   // Test normal elementwise division
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::DotDivide<s32,s32>(in1, in2, out);
+    const Result result = Matrix::DotDivide<s32,s32,s32>(in1, in2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
     for(s32 y=0; y<5; y++) {
@@ -868,7 +868,7 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
   // Test normal elementwise division with a scalar as parameter 1
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::DotDivide<s32,s32>(in1, 2, out);
+    const Result result = Matrix::DotDivide<s32,s32,s32>(in1, 2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
     for(s32 y=0; y<5; y++) {
@@ -881,7 +881,7 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
   // Test normal elementwise division with a scalar as parameter 2
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::DotDivide<s32,s32>(10, in2, out);
+    const Result result = Matrix::DotDivide<s32,s32,s32>(10, in2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
     for(s32 y=0; y<5; y++) {
@@ -894,7 +894,7 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
   // Test slice transpose in1 elementwise addition
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::Add<s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,1,0,0,2,4), out(0,1,0,0,2,4));
+    const Result result = Matrix::Add<s32,s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,1,0,0,2,4), out(0,1,0,0,2,4));
     ASSERT_TRUE(result == RESULT_OK);
 
     ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] + in2[0][0]));
@@ -913,7 +913,7 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
   // Test slice transpose in2 elementwise addition
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::Add<s32,s32>(in1(0,1,0,0,2,4), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
+    const Result result = Matrix::Add<s32,s32,s32>(in1(0,1,0,0,2,4), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
     ASSERT_TRUE(result == RESULT_OK);
 
     ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] + in2[0][0]));
@@ -932,7 +932,7 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
   // Test slice transpose in1 and in2 elementwise addition
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::Add<s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
+    const Result result = Matrix::Add<s32,s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
     ASSERT_TRUE(result == RESULT_OK);
 
     ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] + in2[0][0]));
@@ -951,7 +951,7 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
   // Test slice transpose in1 and in2 elementwise subtraction
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::Subtract<s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
+    const Result result = Matrix::Subtract<s32,s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
     ASSERT_TRUE(result == RESULT_OK);
 
     ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] - in2[0][0]));
@@ -970,7 +970,7 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
   // Test slice transpose in1 and in2 elementwise multiply
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::DotMultiply<s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
+    const Result result = Matrix::DotMultiply<s32,s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
     ASSERT_TRUE(result == RESULT_OK);
 
     ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] * in2[0][0]));
@@ -989,7 +989,7 @@ GTEST_TEST(CoreTech_Common, MatrixElementwise)
   // Test slice transpose in1 and in2 elementwise division
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::DotDivide<s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
+    const Result result = Matrix::DotDivide<s32,s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
     ASSERT_TRUE(result == RESULT_OK);
 
     ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] / in2[0][0]));

@@ -42,24 +42,24 @@ namespace Anki
       //
 
       // Elementwise add two arrays. in1, in2, and out can be the same array
-      template<typename InType, typename OutType> Result Add(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
-      template<typename InType, typename OutType> Result Add(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out);
-      template<typename InType, typename OutType> Result Add(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result Add(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result Add(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result Add(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
 
       // Elementwise subtract two arrays. in1, in2, and out can be the same array
-      template<typename InType, typename OutType> Result Subtract(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
-      template<typename InType, typename OutType> Result Subtract(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out);
-      template<typename InType, typename OutType> Result Subtract(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result Subtract(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result Subtract(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result Subtract(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
 
       // Elementwise multiply two arrays. in1, in2, and out can be the same array
-      template<typename InType, typename OutType> Result DotMultiply(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
-      template<typename InType, typename OutType> Result DotMultiply(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out);
-      template<typename InType, typename OutType> Result DotMultiply(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result DotMultiply(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result DotMultiply(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result DotMultiply(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
 
       // Elementwise divide two arrays. in1, in2, and out can be the same array
-      template<typename InType, typename OutType> Result DotDivide(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
-      template<typename InType, typename OutType> Result DotDivide(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out);
-      template<typename InType, typename OutType> Result DotDivide(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result DotDivide(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result DotDivide(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result DotDivide(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
 
       //
       // Standard matrix operations
@@ -82,24 +82,24 @@ namespace Anki
       // There's probably no need to use these directly. Instead, use the normal Matrix:: operations, like Matrix::Add
       namespace Elementwise
       {
-        template<typename InType, typename OutType> class Add {
+        template<typename InType, typename IntermediateType, typename OutType> class Add {
         public:
-          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(value1) + static_cast<OutType>(value2);}
+          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(static_cast<IntermediateType>(value1) + static_cast<IntermediateType>(value2));}
         };
 
-        template<typename InType, typename OutType> class Subtract {
+        template<typename InType, typename IntermediateType, typename OutType> class Subtract {
         public:
-          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(value1) - static_cast<OutType>(value2);}
+          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(static_cast<IntermediateType>(value1) - static_cast<IntermediateType>(value2));}
         };
 
-        template<typename InType, typename OutType> class DotMultiply {
+        template<typename InType, typename IntermediateType, typename OutType> class DotMultiply {
         public:
-          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(value1) * static_cast<OutType>(value2);}
+          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(static_cast<IntermediateType>(value1) * static_cast<IntermediateType>(value2));}
         };
 
-        template<typename InType, typename OutType> class DotDivide {
+        template<typename InType, typename IntermediateType, typename OutType> class DotDivide {
         public:
-          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(value1) / static_cast<OutType>(value2);}
+          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(static_cast<IntermediateType>(value1) / static_cast<IntermediateType>(value2));}
         };
 
         template<typename InType, typename Operator, typename OutType> Result ApplyOperation(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
