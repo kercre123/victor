@@ -205,12 +205,6 @@ namespace Anki
       bool IsGripperEngaged() {return false;}
       
       // Cameras
-      //const u8* MatCameraGetFrame() {return NULL;}
-      //const u8* FrontCameraGetFrame() {return NULL;}
-      
-      const FrameGrabber GetHeadFrameGrabber() {FrameGrabber junk; return junk;}
-      const FrameGrabber GetMatFrameGrabber() {FrameGrabber junk; return junk;}
-      
       const CameraInfo* GetHeadCamInfo() {CameraInfo* junk; return junk;}
       const CameraInfo* GetMatCamInfo() {CameraInfo* junk; return junk;}
       
