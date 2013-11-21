@@ -400,17 +400,17 @@ s32 IsPowerOfTwo(u32 x)
 
 s32 IsOdd(const s32 x)
 {
-#if defined(USING_MOVIDIUS_GCC_COMPILER)
+//#if defined(USING_MOVIDIUS_GCC_COMPILER)
   if(((x>>1)<<1) == x)
     return 0;
   else
     return 1;
-#else
-  if(x | 1)
-    return 1;
-  else
-    return 0;
-#endif
+//#else
+//  if(x | 1)
+//    return 1;
+//  else
+//    return 0;
+//#endif
 }
 
 s32 Determinant2x2(const s32 a, const s32 b, const s32 c, const s32 d)

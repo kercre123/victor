@@ -29,7 +29,7 @@ namespace Anki
         const Point<f32> &centerOffset,
         Array<f32> &xOut, Array<f32> &yOut)
       {
-        const s32 numPoints = xIn.get_size(1);
+        //const s32 numPoints = xIn.get_size(1);
 
         AnkiConditionalErrorAndReturnValue(xIn.IsValid() && yIn.IsValid() && xOut.IsValid() && yOut.IsValid(),
           RESULT_FAIL, "PlaneTransformation_f32::TransformPoints", "All inputs and outputs must be allocated and valid");
@@ -38,25 +38,31 @@ namespace Anki
           RESULT_FAIL, "PlaneTransformation_f32::TransformPoints", "In and Out arrays must be in different memory locations");
 
         AnkiConditionalErrorAndReturnValue(
-          xIn.get_size(0) == 1 && yIn.get_size(0) == 1 && xOut.get_size(0) == 1 && yOut.get_size(0) == 1 &&
-          xIn.get_size(1) == numPoints && yIn.get_size(1) == numPoints && xOut.get_size(1) == numPoints && yOut.get_size(1) == numPoints,
-          RESULT_FAIL, "PlaneTransformation_f32::TransformPoints", "All inputs and outputs must be 1xN");
+          xIn.get_size(0) == yIn.get_size(0) && xIn.get_size(0) == xOut.get_size(0) && xIn.get_size(0) == yOut.get_size(0) &&
+          xIn.get_size(1) == yIn.get_size(1) && xIn.get_size(1) == xOut.get_size(1) && xIn.get_size(1) == yOut.get_size(1),
+          RESULT_FAIL, "PlaneTransformation_f32::TransformPoints", "All inputs and outputs must be the same size");
 
-        //Array<f32> tmp(1, numPoints, scratch);
-
-        const f32 * restrict pXIn = xIn.Pointer(0,0);
-        const f32 * restrict pYIn = yIn.Pointer(0,0);
-        f32 * restrict pXOut = xOut.Pointer(0,0);
-        f32 * restrict pYOut = yOut.Pointer(0,0);
+        const s32 numPointsY = xIn.get_size(0);
+        const s32 numPointsX = xIn.get_size(1);
 
         if(transformType == TRANSFORM_TRANSLATION) {
           const f32 dx = homography[0][2];
           const f32 dy = homography[1][2];
-          for(s32 i=0; i<numPoints; i++) {
-            pXOut[i] = pXIn[i] + dx + centerOffset.x;
-            pYOut[i] = pYIn[i] + dy + centerOffset.y;
+
+          for(s32 y=0; y<numPointsY; y++) {
+            const f32 * restrict pXIn = xIn.Pointer(y,0);
+            const f32 * restrict pYIn = yIn.Pointer(y,0);
+            f32 * restrict pXOut = xOut.Pointer(y,0);
+            f32 * restrict pYOut = yOut.Pointer(y,0);
+
+            for(s32 x=0; x<numPointsX; x++) {
+              pXOut[x] = pXIn[x] + dx + centerOffset.x;
+              pYOut[x] = pYIn[x] + dy + centerOffset.y;
+            }
           }
         } else {
+          // Should be checked earlier
+          assert(false);
           return RESULT_FAIL;
         }
 
@@ -66,7 +72,7 @@ namespace Anki
       LucasKanadeTracker_f32::LucasKanadeTracker_f32(const s32 templateImageHeight, const s32 templateImageWidth, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory)
         : isValid(false), templateImageHeight(templateImageHeight), templateImageWidth(templateImageWidth), numPyramidLevels(numPyramidLevels), transformation(PlaneTransformation_f32(transformType)), ridgeWeight(ridgeWeight), isInitialized(false)
       {
-        AnkiConditionalErrorAndReturn(templateImageHeight > 0 && templateImageWidth > 0 && (templateImageHeight%ANKI_VISION_IMAGE_WIDTH_MULTIPLE)==0 && (templateImageWidth%ANKI_VISION_IMAGE_WIDTH_MULTIPLE)==0,
+        AnkiConditionalErrorAndReturn(templateImageHeight > 0 && templateImageWidth > 0,
           "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "template widths and heights must be greater than zero, and multiples of %d", ANKI_VISION_IMAGE_WIDTH_MULTIPLE);
 
         AnkiConditionalErrorAndReturn(numPyramidLevels > 0,
@@ -100,28 +106,6 @@ namespace Anki
 
         templateCoordinates.set_size(numPyramidLevels);
 
-        /*        A_full[0] = Array<f32>(8, templateImageHeight*templateImageWidth, memory);
-        AnkiConditionalErrorAndReturn(A_full[0].IsValid(),
-        "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Could not allocate A_full[0]");
-
-        for(s32 i=1; i<numPyramidLevels; i++) {
-        const s32 curTemplateHeight = templateImageHeight >> i;
-        const s32 curTemplateWidth = templateImageWidth >> i;
-
-        A_full[i] = Array<f32>(8, curTemplateHeight*curTemplateWidth, memory);;
-
-        AnkiConditionalErrorAndReturn(A_full[i].IsValid(),
-        "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Could not allocate A_full[i]");
-        }
-
-        templateMask = Array<f32>(templateImageHeight, templateImageWidth, memory);
-        AnkiConditionalErrorAndReturn(templateMask.IsValid(),
-        "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Could not allocate templateMask");
-
-        templateWeights = Array<f32>(templateImageHeight, templateImageWidth, memory);
-        AnkiConditionalErrorAndReturn(templateWeights.IsValid(),
-        "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Could not allocate templateWeights");*/
-
         this->isValid = true;
       }
 
@@ -139,6 +123,7 @@ namespace Anki
         // to leak memory with multiple calls to this object
         this->isInitialized = true;
 
+        templateMask = Array<f32>(templateImageHeight, templateImageWidth, memory);
         templateMask.SetZero();
         templateMask(
           static_cast<s32>(Roundf(templateRegion.top)),
@@ -161,6 +146,12 @@ namespace Anki
           templateCoordinates[iScale] = Meshgrid<f32>(
             Linspace(-this->templateRegionWidth/2.0f, this->templateRegionWidth/2.0f, static_cast<s32>(Roundf(this->templateRegionWidth/scale))),
             Linspace(-this->templateRegionHeight/2.0f, this->templateRegionHeight/2.0f, static_cast<s32>(Roundf(this->templateRegionHeight/scale))));
+
+          const s32 numValidPoints = templateCoordinates[iScale].get_numElements();
+
+          A_full[iScale] = Array<f32>(8, numValidPoints, memory);
+          AnkiConditionalErrorAndReturnValue(A_full[iScale].IsValid(),
+            RESULT_FAIL, "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Could not allocate A_full[iScale]");
         }
 
         fScale = 0.0f;
@@ -169,23 +160,22 @@ namespace Anki
 
           const f32 scale = powf(2.0f, fScale);
 
-          const s32 numValidPoints = templateCoordinates[iScale].get_numElements();
-
           Array<f32> xIn = templateCoordinates[iScale].EvaluateX2(memory);
           Array<f32> yIn = templateCoordinates[iScale].EvaluateY2(memory);
 
-          assert(xIn.get_size(1) == numValidPoints);
+          assert(xIn.get_size(0) == yIn.get_size(0));
           assert(xIn.get_size(1) == yIn.get_size(1));
 
-          Array<f32> xTransformed(1, numValidPoints, memory);
-          Array<f32> yTransformed(1, numValidPoints, memory);
+          const s32 numPointsY = xIn.get_size(0);
+          const s32 numPointsX = xIn.get_size(1);
+
+          Array<f32> xTransformed(numPointsY, numPointsX, memory);
+          Array<f32> yTransformed(numPointsY, numPointsX, memory);
 
           if(transformation.TransformPoints(xIn, yIn, scale, this->center, xTransformed, yTransformed) != RESULT_OK)
             return RESULT_FAIL;
 
-          A_full[iScale] = Array<f32>(8, numValidPoints, memory);
-          AnkiConditionalErrorAndReturnValue(A_full[iScale].IsValid(),
-            RESULT_FAIL, "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Could not allocate A_full[iScale]");
+          const s32 numValidPoints = templateCoordinates[iScale].get_numElements();
         }
 
         return RESULT_OK;
@@ -199,16 +189,18 @@ namespace Anki
         if(!A_full.IsValid())
           return false;
 
-        for(s32 i=0; i<numPyramidLevels; i++) {
-          if(!A_full[i].IsValid())
+        if(this->isInitialized) {
+          for(s32 i=0; i<numPyramidLevels; i++) {
+            if(!A_full[i].IsValid())
+              return false;
+          }
+
+          if(!templateMask.IsValid())
+            return false;
+
+          if(!templateWeights.IsValid())
             return false;
         }
-
-        if(!templateMask.IsValid())
-          return false;
-
-        if(!templateWeights.IsValid())
-          return false;
 
         return true;
       }
