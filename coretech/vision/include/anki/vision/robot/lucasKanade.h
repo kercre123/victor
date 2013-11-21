@@ -66,9 +66,7 @@ namespace Anki
         FixedLengthList<Array<f32>> A_full;
         FixedLengthList<Array<u8>> templateImagePyramid;
         FixedLengthList<Meshgrid<f32>> templateCoordinates;
-
-        Array<f32> templateMask;
-        Array<f32> templateWeights;
+        FixedLengthList<Array<f32>> templateWeights;
 
         // The templateImage sizes are the sizes of the image that contains the template
         s32 templateImageHeight;

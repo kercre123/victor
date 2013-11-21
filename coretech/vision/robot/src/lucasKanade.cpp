@@ -115,6 +115,13 @@ namespace Anki
 
         templateImagePyramid.set_size(numPyramidLevels);
 
+        templateWeights = FixedLengthList<Array<f32>>(numPyramidLevels, memory);
+
+        AnkiConditionalErrorAndReturn(templateWeights.IsValid(),
+          "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Could not allocate templateWeights");
+
+        templateWeights.set_size(numPyramidLevels);
+
         this->isValid = true;
       }
 
@@ -132,22 +139,15 @@ namespace Anki
         // to leak memory with multiple calls to this object
         this->isInitialized = true;
 
-        templateMask = Array<f32>(templateImageHeight, templateImageWidth, memory);
-        templateMask.SetZero();
-        templateMask(
-          static_cast<s32>(Roundf(templateRegion.top)),
-          static_cast<s32>(Roundf(templateRegion.bottom)),
-          static_cast<s32>(Roundf(templateRegion.left)),
-          static_cast<s32>(Roundf(templateRegion.right))).Set(1.0f);
-
         this->templateRegionHeight = templateRegion.bottom - templateRegion.top + 1;
         this->templateRegionWidth = templateRegion.right - templateRegion.left + 1;
+
+        this->templateWeightsSigma = sqrtf(this->templateRegionWidth*this->templateRegionWidth + this->templateRegionHeight*this->templateRegionHeight) / 2.0f;
 
         this->center.y = (templateRegion.bottom + templateRegion.top) / 2;
         this->center.x = (templateRegion.right + templateRegion.left) / 2;
 
-        this->templateWeightsSigma = sqrtf(this->templateRegionWidth*this->templateRegionWidth + this->templateRegionHeight*this->templateRegionHeight) / 2.0f;
-
+        // Allocate all permanent memory
         this->templateImagePyramid[0] = Array<u8>(templateImageHeight, templateImageWidth, memory);
 
         f32 fScale = 0.0f;
@@ -160,75 +160,102 @@ namespace Anki
 
           const s32 numValidPoints = templateCoordinates[iScale].get_numElements();
 
-          A_full[iScale] = Array<f32>(8, numValidPoints, memory);
-          AnkiConditionalErrorAndReturnValue(A_full[iScale].IsValid(),
+          this->A_full[iScale] = Array<f32>(8, numValidPoints, memory);
+          AnkiConditionalErrorAndReturnValue(this->A_full[iScale].IsValid(),
             RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "Could not allocate A_full[iScale]");
-        }
-
-        fScale = 0.0f;
-        for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++, fScale++) {
-          PUSH_MEMORY_STACK(memory);
 
           const s32 numPointsY = templateCoordinates[iScale].get_yGridVector().get_size();
           const s32 numPointsX = templateCoordinates[iScale].get_xGridVector().get_size();
 
-          const f32 scale = powf(2.0f, fScale);
-
-          Array<f32> xTransformed(numPointsY, numPointsX, memory);
-          Array<f32> yTransformed(numPointsY, numPointsX, memory);
-
-          {
-            PUSH_MEMORY_STACK(memory);
-
-            Array<f32> xIn = templateCoordinates[iScale].EvaluateX2(memory);
-            Array<f32> yIn = templateCoordinates[iScale].EvaluateY2(memory);
-
-            assert(xIn.get_size(0) == yIn.get_size(0));
-            assert(xIn.get_size(1) == yIn.get_size(1));
-
-            if(transformation.TransformPoints(xIn, yIn, scale, this->center, xTransformed, yTransformed) != RESULT_OK)
-              return RESULT_FAIL;
-          } // PUSH_MEMORY_STACK(memory);
-
-          this->templateImagePyramid[iScale] = Array<u8>(xTransformed.get_size(0), xTransformed.get_size(1), memory);
+          this->templateImagePyramid[iScale] = Array<u8>(numPointsY, numPointsX, memory);
 
           AnkiConditionalErrorAndReturnValue(this->templateImagePyramid[iScale].IsValid(),
             RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "Could not allocate templateImagePyramid[i]");
 
           //templateImage.Show("templateImage", true);
-
-          if(Interp2(templateImage, xTransformed, yTransformed, this->templateImagePyramid[iScale], INTERPOLATE_BILINEAR) != RESULT_OK)
-            return RESULT_FAIL;
-
-          //{
-          //  Matlab matlab(false);
-          //  matlab.PutArray(xIn, "xIn");
-          //  matlab.PutArray(yIn, "yIn");
-          //  matlab.PutArray(xTransformed, "xTransformed");
-          //  matlab.PutArray(yTransformed, "yTransformed");
-          //  matlab.PutArray(this->templateImagePyramid[iScale], "templateImagePyramid0");
-          //  matlab.PutArray(templateImage, "templateImage");
-          //}
-
-          Array<f32> templateDerivativeX(numPointsY, numPointsX, memory);
-          Array<f32> templateDerivativeY(numPointsY, numPointsX, memory);
-
-          //Ix = (image_right(targetBlur) - image_left(targetBlur))/2 * spacing;
-          //Iy = (image_down(targetBlur) - image_up(targetBlur))/2 * spacing;
-          Matrix::Subtract<u8,f32,f32>(templateImagePyramid[iScale](1,-2,2,-1), templateImagePyramid[iScale](1,-2,0,-3), templateDerivativeX(1,-2,1,-2));
-          Matrix::Subtract<u8,f32,f32>(templateImagePyramid[iScale](2,-1,1,-2), templateImagePyramid[iScale](0,-3,1,-2), templateDerivativeY(1,-2,1,-2));
-          Matrix::DotMultiply<f32,f32,f32>(templateDerivativeX, scale / 2.0f, templateDerivativeX);
-          Matrix::DotMultiply<f32,f32,f32>(templateDerivativeY, scale / 2.0f, templateDerivativeY);
-
-          {
-            Matlab matlab(false);
-            matlab.PutArray(this->templateImagePyramid[iScale], "templateImagePyramid0");
-            matlab.PutArray(templateDerivativeX, "templateDerivativeX");
-            matlab.PutArray(templateDerivativeY, "templateDerivativeY");
-          }
-
-          const s32 numValidPoints = templateCoordinates[iScale].get_numElements();
         }
+
+        // Everything below here is temporary
+        {
+          PUSH_MEMORY_STACK(memory);
+          Array<f32> templateMask = Array<f32>(templateImageHeight, templateImageWidth, memory);
+          templateMask.SetZero();
+          templateMask(
+            static_cast<s32>(Roundf(templateRegion.top)),
+            static_cast<s32>(Roundf(templateRegion.bottom)),
+            static_cast<s32>(Roundf(templateRegion.left)),
+            static_cast<s32>(Roundf(templateRegion.right))).Set(1.0f);
+
+          fScale = 0.0f;
+          for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++, fScale++) {
+            PUSH_MEMORY_STACK(memory);
+
+            const s32 numPointsY = templateCoordinates[iScale].get_yGridVector().get_size();
+            const s32 numPointsX = templateCoordinates[iScale].get_xGridVector().get_size();
+
+            const f32 scale = powf(2.0f, fScale);
+
+            Array<f32> xTransformed(numPointsY, numPointsX, memory);
+            Array<f32> yTransformed(numPointsY, numPointsX, memory);
+
+            {
+              PUSH_MEMORY_STACK(memory);
+
+              Array<f32> xIn = templateCoordinates[iScale].EvaluateX2(memory);
+              Array<f32> yIn = templateCoordinates[iScale].EvaluateY2(memory);
+
+              assert(xIn.get_size(0) == yIn.get_size(0));
+              assert(xIn.get_size(1) == yIn.get_size(1));
+
+              if(transformation.TransformPoints(xIn, yIn, scale, this->center, xTransformed, yTransformed) != RESULT_OK)
+                return RESULT_FAIL;
+            } // PUSH_MEMORY_STACK(memory);
+
+            if(Interp2(templateImage, xTransformed, yTransformed, this->templateImagePyramid[iScale], INTERPOLATE_BILINEAR) != RESULT_OK)
+              return RESULT_FAIL;
+
+            //{
+            //  Matlab matlab(false);
+            //  matlab.PutArray(xIn, "xIn");
+            //  matlab.PutArray(yIn, "yIn");
+            //  matlab.PutArray(xTransformed, "xTransformed");
+            //  matlab.PutArray(yTransformed, "yTransformed");
+            //  matlab.PutArray(this->templateImagePyramid[iScale], "templateImagePyramid0");
+            //  matlab.PutArray(templateImage, "templateImage");
+            //}
+
+            Array<f32> templateDerivativeX(numPointsY, numPointsX, memory);
+            Array<f32> templateDerivativeY(numPointsY, numPointsX, memory);
+
+            // Ix = (image_right(targetBlur) - image_left(targetBlur))/2 * spacing;
+            // Iy = (image_down(targetBlur) - image_up(targetBlur))/2 * spacing;
+            Matrix::Subtract<u8,f32,f32>(templateImagePyramid[iScale](1,-2,2,-1), templateImagePyramid[iScale](1,-2,0,-3), templateDerivativeX(1,-2,1,-2));
+            Matrix::Subtract<u8,f32,f32>(templateImagePyramid[iScale](2,-1,1,-2), templateImagePyramid[iScale](0,-3,1,-2), templateDerivativeY(1,-2,1,-2));
+            Matrix::DotMultiply<f32,f32,f32>(templateDerivativeX, scale / 2.0f, templateDerivativeX);
+            Matrix::DotMultiply<f32,f32,f32>(templateDerivativeY, scale / 2.0f, templateDerivativeY);
+
+            {
+              PUSH_MEMORY_STACK(memory);
+
+              // W_mask = interp2(double(targetMask), xi, yi, 'linear', 0);
+
+              Array<f32> templateWeightsTmp(numPointsY, numPointsX, memory);
+
+              if(Interp2(templateMask, xTransformed, yTransformed, templateWeightsTmp, INTERPOLATE_BILINEAR) != RESULT_OK)
+                return RESULT_FAIL;
+
+              {
+                Matlab matlab(false);
+                matlab.PutArray(this->templateImagePyramid[iScale], "templateImagePyramid0");
+                matlab.PutArray(templateDerivativeX, "templateDerivativeX");
+                matlab.PutArray(templateDerivativeY, "templateDerivativeY");
+                matlab.PutArray(templateWeightsTmp, "templateWeightsTmp");
+              }
+            } // PUSH_MEMORY_STACK(memory);
+
+            const s32 numValidPoints = templateCoordinates[iScale].get_numElements();
+          } // for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++, fScale++)
+        } // PUSH_MEMORY_STACK(memory);
 
         return RESULT_OK;
       }
@@ -244,22 +271,23 @@ namespace Anki
         if(!templateImagePyramid.IsValid())
           return false;
 
-        if(this->isInitialized) {
-          for(s32 i=0; i<numPyramidLevels; i++) {
-            if(!templateImagePyramid[i].IsValid())
-              return false;
-          }
+        if(!templateCoordinates.IsValid())
+          return false;
 
+        if(!templateWeights.IsValid())
+          return false;
+
+        if(this->isInitialized) {
           for(s32 i=0; i<numPyramidLevels; i++) {
             if(!A_full[i].IsValid())
               return false;
+
+            if(!templateImagePyramid[i].IsValid())
+              return false;
+
+            if(!templateWeights[i].IsValid())
+              return false;
           }
-
-          if(!templateMask.IsValid())
-            return false;
-
-          if(!templateWeights.IsValid())
-            return false;
         }
 
         return true;
