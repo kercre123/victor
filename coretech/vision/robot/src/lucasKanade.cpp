@@ -191,23 +191,20 @@ namespace Anki
           AnkiConditionalErrorAndReturnValue(this->templateImagePyramid[iScale].IsValid(),
             RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "Could not allocate templateImagePyramid[i]");
 
-          templateImage.Show("templateImage", true);
+          //templateImage.Show("templateImage", true);
 
           if(Interp2(templateImage, xTransformed, yTransformed, this->templateImagePyramid[iScale], INTERPOLATE_BILINEAR) != RESULT_OK)
             return RESULT_FAIL;
 
-          {
-            Matlab matlab(false);
-            matlab.PutArray(xIn, "xIn");
-            matlab.PutArray(yIn, "yIn");
-            matlab.PutArray(xTransformed, "xTransformed");
-            matlab.PutArray(yTransformed, "yTransformed");
-            matlab.PutArray(this->templateImagePyramid[iScale], "templateImagePyramid0");
-          }
-          //xIn.Print("xIn");
-          //yIn.Print("yIn");
-          //xTransformed.Print("xTransformed");
-          //yTransformed.Print("yTransformed");
+          //{
+          //  Matlab matlab(false);
+          //  matlab.PutArray(xIn, "xIn");
+          //  matlab.PutArray(yIn, "yIn");
+          //  matlab.PutArray(xTransformed, "xTransformed");
+          //  matlab.PutArray(yTransformed, "yTransformed");
+          //  matlab.PutArray(this->templateImagePyramid[iScale], "templateImagePyramid0");
+          //  matlab.PutArray(templateImage, "templateImage");
+          //}
 
           const s32 numValidPoints = templateCoordinates[iScale].get_numElements();
         }

@@ -1,7 +1,7 @@
 % function test_lucasKanade2()
 
-% im1 = imresize(imread('C:\Anki\blockImages\blockImages00189.png'), [480,640]/8);
-% im2 = imresize(imread('C:\Anki\blockImages\blockImages00190.png'), [480,640]/8);
+% im1 = rgb2gray(imresize(imread('C:\Anki\blockImages\blockImages00189.png'), [480,640]/8));
+% im2 = rgb2gray(imresize(imread('C:\Anki\blockImages\blockImages00190.png'), [480,640]/8));
 % % templateQuad = [20.2659574468085,21.6276595744681;35.3297872340426,29.0319148936170;28.1808510638298,43.9680851063830;12.7340425531915,37.0744680851064]
 % templateQuad = [20,22;35,29;28,44;13,37];
 % test_lucasKanade2(im1, im2, templateQuad)
