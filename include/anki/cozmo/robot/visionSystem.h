@@ -55,9 +55,7 @@ namespace Anki {
       typedef Mailbox<CozmoMsg_ObservedMatMarker, MAX_MAT_MARKER_MESSAGES> MatMarkerMailbox;
       
       
-      ReturnCode Init(HAL::FrameGrabber       headCamFrameGrabber,
-                      HAL::FrameGrabber       matCamFrameGrabber,
-                      const HAL::CameraInfo*  headCamInfo,
+      ReturnCode Init(const HAL::CameraInfo*  headCamInfo,
                       const HAL::CameraInfo*  matCamInfo,
                       BlockMarkerMailbox*     blockMarkerMailbox,
                       MatMarkerMailbox*       matMarkerMailbox);

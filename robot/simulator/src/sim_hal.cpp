@@ -26,6 +26,10 @@ namespace Anki {
       const s32 UNLOCK_HYSTERESIS = 50;
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();
       
+      
+      const u32 CAMERA_SINGLE_CAPTURE_TIME_US = 1000000 / 15;  // 15Hz, VGA
+      const u32 CAMERA_CONTINUOUS_CAPTURE_TIME_US = 1000000 / 30;  // 30Hz, VGA
+      
 #pragma mark --- Simulated HardwareInterface "Member Variables" ---
       
       bool isInitialized = false;
@@ -52,6 +56,14 @@ namespace Anki {
       webots::Camera* headCam_;
       HAL::CameraInfo headCamInfo_;
       HAL::CameraInfo matCamInfo_;
+      u8* headCamBuffer_;
+      u8* matCamBuffer_;
+      u32 headCamCaptureTime_;
+      u32 matCamCaptureTime_;
+      u32 headCamStartCaptureTime_ = 0;
+      u32 matCamStartCaptureTime_ = 0;
+      HAL::CameraUpdateMode headCamUpdateMode_;
+      HAL::CameraUpdateMode matCamUpdateMode_;
       
       // For pose information
       webots::GPS* gps_;
@@ -217,15 +229,7 @@ namespace Anki {
     }
     
 #pragma mark --- Simulated Hardware Method Implementations ---
-    
-    const u8* HAL::FrontCameraGetFrame(void) {
-      return headCam_->getImage();
-    }
-    
-    const u8* HAL::MatCameraGetFrame(void) {
-      return matCam_->getImage();
-    }
-    
+
     // Helper function to create a CameraInfo struct from Webots camera properties:
     void FillCameraInfo(const webots::Camera *camera,
                         HAL::CameraInfo &info)
@@ -587,17 +591,7 @@ namespace Anki {
       
       return NULL;
     } // RecvMessage()
-    
-    const HAL::FrameGrabber HAL::GetHeadFrameGrabber(void)
-    {
-      return &FrontCameraGetFrame;
-    }
-    
-    const HAL::FrameGrabber HAL::GetMatFrameGrabber(void)
-    {
-      return &MatCameraGetFrame;
-    }
-    
+
     const HAL::CameraInfo* HAL::GetHeadCamInfo(void)
     {
       return &(headCamInfo_);
@@ -606,6 +600,140 @@ namespace Anki {
     const HAL::CameraInfo* HAL::GetMatCamInfo(void)
     {
       return &(matCamInfo_);
+    }
+    
+    void CaptureHeadCamFrame()
+    {
+      /*
+      // Acquire grey image
+      // (Closest thing to Y channel?)
+      const u8* image = headCam_->getImage();
+      u16 pixel = 0;
+      for (int y=0; y< headCam_->getHeight(); y++ ) {
+        for (int x=0; x< headCam_->getWidth(); x++ ) {
+          headCamBuffer_[pixel++] = webots::Camera::imageGetGrey(image, headCam_->getWidth(), x, y);
+        }
+      }
+      */
+      
+      memcpy(headCamBuffer_, headCam_->getImage(), headCam_->getHeight() * headCam_->getWidth() * 4);
+    }
+    
+    void CaptureMatCamFrame()
+    {
+      /*
+      // Acquire grey image
+      // (Closest thing to Y channel?)
+      const u8* image = matCam_->getImage();
+      u16 pixel = 0;
+      for (int y=0; y< matCam_->getHeight(); y++ ) {
+        for (int x=0; x< matCam_->getWidth(); x++ ) {
+          matCamBuffer_[pixel++] = webots::Camera::imageGetGrey(image, matCam_->getWidth(), x, y);
+        }
+      }
+      */
+      
+       memcpy(matCamBuffer_, matCam_->getImage(), matCam_->getHeight() * matCam_->getWidth() * 4);
+    }
+    
+    
+    // Starts camera frame synchronization
+    void HAL::CameraStartFrame(CameraID cameraID, u8* frame, CameraMode mode,
+                          CameraUpdateMode updateMode, u16 exposure, bool enableLight)
+    {
+      // TODO: exposure? enableLight?
+      
+      switch(cameraID) {
+        case CAMERA_FRONT:
+        {
+          if (mode != CAMERA_MODE_VGA) {
+            PRINT("ERROR (CameraStartFrame): Head camera only supports VGA\n");
+            return;
+          }
+          
+          headCamUpdateMode_ = updateMode;
+          headCamCaptureTime_ = headCamUpdateMode_ == CAMERA_UPDATE_SINGLE ? CAMERA_SINGLE_CAPTURE_TIME_US : CAMERA_CONTINUOUS_CAPTURE_TIME_US;
+          headCamStartCaptureTime_ = GetMicroCounter();
+          headCamBuffer_ = frame;
+          
+          CaptureHeadCamFrame();
+
+          break;
+        }
+          
+        case CAMERA_MAT:
+        {
+          if (mode != CAMERA_MODE_VGA) {
+            PRINT("ERROR (CameraStartFrame): Mat camera only supports VGA\n");
+            return;
+          }
+          
+          matCamUpdateMode_ = updateMode;
+          matCamCaptureTime_ = matCamUpdateMode_ == CAMERA_UPDATE_SINGLE ? CAMERA_SINGLE_CAPTURE_TIME_US : CAMERA_CONTINUOUS_CAPTURE_TIME_US;
+          matCamStartCaptureTime_ = GetMicroCounter();
+          matCamBuffer_ = frame;
+          
+          CaptureMatCamFrame();
+          
+          break;
+        }
+          
+        default:
+          PRINT("ERROR (CameraStartFrame): Invalid camera %d\n", cameraID);
+          break;
+      }
+    }
+    
+    // Get the number of lines received so far for the specified camera
+    u32 HAL::CameraGetReceivedLines(CameraID cameraID)
+    {
+      switch(cameraID) {
+        case CAMERA_FRONT:
+          return headCamInfo_.nrows;
+        case CAMERA_MAT:
+          return matCamInfo_.nrows;
+        default:
+          PRINT("ERROR (CameraGetReceivedLines): Invalid camera %d\n", cameraID);
+          return 0;
+      }
+
+    }
+    
+    // Returns whether or not the specfied camera has received a full frame
+    bool HAL::CameraIsEndOfFrame(CameraID cameraID)
+    {
+      switch(cameraID) {
+        case CAMERA_FRONT:
+        
+          if (headCamStartCaptureTime_ != 0 && GetMicroCounter() - headCamStartCaptureTime_ > headCamCaptureTime_) {
+            if (headCamUpdateMode_ == CAMERA_UPDATE_CONTINUOUS) {
+              headCamStartCaptureTime_ = GetMicroCounter();
+              CaptureHeadCamFrame();
+            } else { // Single mode
+              headCamStartCaptureTime_ = 0;
+            }
+            return true;
+          }
+          break;
+        
+        case CAMERA_MAT:
+        
+          if (matCamStartCaptureTime_ != 0 && GetMicroCounter() - matCamStartCaptureTime_ > matCamCaptureTime_) {
+            if (matCamUpdateMode_ == CAMERA_UPDATE_CONTINUOUS) {
+              matCamStartCaptureTime_ = GetMicroCounter();
+              CaptureMatCamFrame();
+            } else { // Single mode
+              matCamStartCaptureTime_ = 0;
+            }
+            return true;
+          }
+          break;
+        
+        default:
+          PRINT("ERROR (CameraIsEndOfFrame): Invalid camera %d\n", cameraID);
+          break;
+      }
+      return false;
     }
     
     // Get the number of microseconds since boot

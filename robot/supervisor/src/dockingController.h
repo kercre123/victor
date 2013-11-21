@@ -4,11 +4,6 @@
  * Author: Andrew Stein (andrew)
  * Created: 10/29/2013
  *
- * Information on last revision to this file:
- *    $LastChangedDate$
- *    $LastChangedBy$
- *    $LastChangedRevision$
- *
  * Description:
  *
  *   Controller for the docking process (approaching the block and lifting)
@@ -35,12 +30,7 @@ namespace Anki {
       bool IsDone(); // whether or not it was successful
       bool DidSucceed();
       ReturnCode Update();
-      
-      // Gripper control
-      void EngageGripper();
-      void DisengageGripper();
-      bool IsGripperEngaged();
-      
+
     } // namespace DockingController
   } // namespace Cozmo
 } // namespace Anki

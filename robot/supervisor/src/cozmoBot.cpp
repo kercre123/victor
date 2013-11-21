@@ -6,6 +6,7 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
 #include "dockingController.h"
+#include "gripController.h"
 #include "headController.h"
 #include "liftController.h"
 #include "testModeController.h"
@@ -21,7 +22,6 @@
 #include "anki/messaging/robot/utilMessaging.h"
 
 ///////// TESTING //////////
-  const Anki::Cozmo::TestModeController::TestMode DEFAULT_TEST_MODE = Anki::Cozmo::TestModeController::TM_NONE;
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB && USING_MATLAB_VISION
 #include "anki/embeddedCommon/matlabConverters.h"
@@ -37,6 +37,10 @@ namespace Anki {
       namespace {
         
         // Parameters / Constants:
+        
+        // TESTING
+        const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_NONE;
+        
         
         // Create Mailboxes for holding messages from the VisionSystem,
         // to be relayed up to the Basestation.
@@ -61,19 +65,30 @@ namespace Anki {
       // Methods:
       //
       
+      void StartMotorCalibrationRoutine()
+      {
+        LiftController::StartCalibrationRoutine();
+        GripController::DisengageGripper();
+        SteeringController::ExecuteDirectDrive(0,0);
+      }
+      
+      
+      // The initial "stretch" and reset motor positions routine
+      void MotorCalibrationUpdate()
+      {
+        if (LiftController::IsCalibrated()) {
+          PRINT("Motors calibrated\n");
+          mode_ = WAITING;
+        }
+      }
+      
       ReturnCode Init(void)
       {
         if(HAL::Init() == EXIT_FAILURE) {
           PRINT("Hardware Interface initialization failed!\n");
           return EXIT_FAILURE;
         }
-        
-        // Setup test mode
-        TestModeController::Init(DEFAULT_TEST_MODE);
-        
-        if(VisionSystem::Init(HAL::GetHeadFrameGrabber(),
-                              HAL::GetMatFrameGrabber(),
-                              HAL::GetHeadCamInfo(),
+        if(VisionSystem::Init(HAL::GetHeadCamInfo(),
                               HAL::GetMatCamInfo(),
                               &blockMarkerMailbox_,
                               &matMarkerMailbox_) == EXIT_FAILURE)
@@ -108,16 +123,23 @@ namespace Anki {
          PRINT("HeadController initialization failed.\n");
          return EXIT_FAILURE;
          }
-         
+         */
+        
          if(LiftController::Init() == EXIT_FAILURE) {
          PRINT("LiftController initialization failed.\n");
          return EXIT_FAILURE;
          }
          
-         */
+        // Setup test mode
+        if(TestModeController::Init(DEFAULT_TEST_MODE) == EXIT_FAILURE) {
+          PRINT("TestMode initialization failed.\n");
+          return EXIT_FAILURE;
+        }
         
-        // Lower the lift
-        LiftController::SetDesiredHeight(LIFT_HEIGHT_LOW);
+        
+        // Start calibration
+        StartMotorCalibrationRoutine();
+      
         
         // Once initialization is done, broadcast a message that this robot
         // is ready to go
@@ -128,7 +150,9 @@ namespace Anki {
         msg.robotID = HAL::GetRobotID();
         HAL::RadioToBase(reinterpret_cast<u8 *>(&msg), msg.size);
         
-        mode_ = WAITING;
+        
+        mode_ = INITIALIZING;
+
         
         return EXIT_SUCCESS;
         
@@ -144,7 +168,7 @@ namespace Anki {
       
       ReturnCode step_MainExecution()
       {
-#if(DEBUG_ANY)
+#if(DEBUG_ANY && defined(SIMULATOR))
         PRINT("\n==== FRAME START (time = %d us) ====\n", HAL::GetMicroCounter() );
 #endif
         
@@ -191,7 +215,7 @@ namespace Anki {
         
         HeadController::Update();
         LiftController::Update();
- 
+        GripController::Update();
         
         //////////////////////////////////////////////////////////////
         // State Machine
@@ -201,7 +225,7 @@ namespace Anki {
         {
           case INITIALIZING:
           {
-            PRINT("Robot still initializing.\n");
+            MotorCalibrationUpdate();
             break;
           }
             

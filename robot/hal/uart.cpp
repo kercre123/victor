@@ -12,20 +12,43 @@ namespace Anki
       const u32 TX_MODE = D_GPIO_MODE_1;
       const u8 RX_PIN = 70;
       const u32 RX_MODE = D_GPIO_MODE_1;
+      static const u32 IRQ = IRQ_UART;
+      static const u32 IRQ_LEVEL = 1;
+
+      static void UARTIRQ(u32 source);
+
+      static const u8 BUFFER_SIZE = 128;
+      static const u8 BUFFER_MASK = 0x7f;
+      static volatile u8 m_buffer[BUFFER_SIZE];
+      static volatile u8 m_currentRead = 0;
+      static volatile u8 m_currentWrite = 0;
 
       void UARTInit()
       {
         DrvCprSysDeviceAction(ENABLE_CLKS, DEV_UART);
 
+        // Setup the interrupt trigger
+        DrvIcbDisableIrq(IRQ);
+        DrvIcbIrqClear(IRQ);
+        swcLeonSetPIL(0);
+        DrvIcbSetIrqHandler(IRQ, UARTIRQ);
+        DrvIcbConfigureIrq(IRQ, IRQ_LEVEL, POS_EDGE_INT);
+        DrvIcbEnableIrq(IRQ);
+
+        // Calculate the mask to enable specific features
         u32 mask =  (1 << 31) |  // FIFO write enable
                     (1 << 12) |  // Output enable
+                    (1 << 2)  |  // Receive interrupt enable
                     (1 << 1)  |  // TX enable
                     (1 << 0);    // RX enable
+        // Calculate the baudrate prescaler
         u32 scaler = (DrvCprGetSysClockKhz() * 1000) / (BAUDRATE << 3) - 1;
         SET_REG_WORD(UART_CTRL_ADR, mask);
         SET_REG_WORD(UART_SCALER_ADR, scaler);
         DrvGpioMode(TX_PIN, TX_MODE);
         DrvGpioMode(RX_PIN, RX_MODE);
+        // Re-enable interrupts
+        swcLeonEnableTraps();
       }
 
       int USBPutChar(int c)
@@ -45,9 +68,15 @@ namespace Anki
         do
         {
           // Check RCNT - Receiver FIFO count
-          if (REG_WORD(UART_STATUS_ADR) >> 26)
+          //if (REG_WORD(UART_STATUS_ADR) >> 26)
+          //{
+          //  return REG_WORD(UART_DATA_ADR);
+          //}
+          if (m_currentRead != m_currentWrite)
           {
-            return REG_WORD(UART_DATA_ADR);
+            s32 c = m_buffer[m_currentRead] & 0xff;
+            m_currentRead = (m_currentRead + 1) & BUFFER_MASK;
+            return c;
           }
         } while (GetMicroCounter() < end);
 
@@ -60,6 +89,18 @@ namespace Anki
         {
           USBPutChar(buffer[i]);
         }
+      }
+
+      void UARTIRQ(u32 source)
+      {
+        while (REG_WORD(UART_STATUS_ADR) >> 26)
+        {
+          m_buffer[m_currentWrite] = REG_WORD(UART_DATA_ADR);
+          m_currentWrite = (m_currentWrite + 1) & BUFFER_MASK;
+        }
+
+        // Clear the interrupt
+        DrvIcbIrqClear(IRQ);
       }
     }
   }

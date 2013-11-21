@@ -137,9 +137,6 @@ namespace Anki
       void MatCameraInit();
       void FrontCameraInit();
 
-      const FrameGrabber GetHeadFrameGrabber();
-      const FrameGrabber GetMatFrameGrabber();
-      
       const CameraInfo* GetHeadCamInfo();
       const CameraInfo* GetMatCamInfo() ;
       

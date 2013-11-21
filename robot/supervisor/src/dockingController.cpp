@@ -1,4 +1,5 @@
 #include "dockingController.h"
+#include "gripController.h"
 #include "headController.h"
 #include "liftController.h"
 
@@ -13,15 +14,6 @@ namespace Anki {
       namespace {
         
         // Constants
-        
-        // Power that is applied when engaging the gripper
-        const f32 GRIPPER_ENGAGE_POWER = 0.5;
-        
-        // Power that is applied when disengaging the gripper
-        const f32 GRIPPER_DISENGAGE_POWER = -0.05;
-        
-        // Phases of docking: approach the block using visual servoing,
-        // set the lift for gripping, grip the block.
         
         enum Mode {
           APPROACH,
@@ -192,9 +184,9 @@ namespace Anki {
             case GRIP:
             {
               
-              EngageGripper();
+              GripController::EngageGripper();
               
-              if(IsGripperEngaged()) {
+              if(GripController::IsGripperEngaged()) {
                 mode_ = DONE;
                 success_ = true;
               }
@@ -222,24 +214,7 @@ namespace Anki {
         return retVal;
         
       } // Update()
-      
-      
-      
-      // Gripper control
-      void EngageGripper()
-      {
-        HAL::MotorSetPower(HAL::MOTOR_GRIP, GRIPPER_ENGAGE_POWER);
-      }
-      void DisengageGripper()
-      {
-        HAL::MotorSetPower(HAL::MOTOR_GRIP, GRIPPER_DISENGAGE_POWER);
-      }
-      bool IsGripperEngaged()
-      {
-        // TODO: Check load or position to see if gripper is engaged?
-        //       Need to rethink this function...
-        return HAL::IsGripperEngaged();
-      }
+
       
 
       } // namespace DockingController

@@ -3,34 +3,42 @@
 
 #include "anki/common/constantsAndMacros.h"
 #include "anki/common/types.h"
-
+#include "anki/cozmo/robot/debug.h"
 
 namespace Anki {
   namespace Cozmo {
 
-#ifdef SIMULATOR
-    // Cozmo control loop is 100Hz on simulator. (That's as fast as it goes!)
-    const s32 TIME_STEP = 10;
-#else
-    // Control loop on robot is 500Hz.
-    const s32 TIME_STEP = 2;
-#endif
-    
-    const f32 CONTROL_DT = TIME_STEP*0.001f;
-    const f32 ONE_OVER_CONTROL_DT = 1.0f/CONTROL_DT;
-    
     const f32 WHEEL_DIAMETER_MM = 40.f;  // This should be in sync with the CozmoBot proto file
     const f32 HALF_WHEEL_CIRCUM = WHEEL_DIAMETER_MM * M_PI_2;
     const f32 WHEEL_RAD_TO_MM = WHEEL_DIAMETER_MM / 2.f;  // or HALF_WHEEL_CIRCUM / PI;
     const f32 WHEEL_BASE = 50.f; // distance b/w the axles
-
+    
     const f32 MAT_CAM_HEIGHT_FROM_GROUND_MM = (0.5f*WHEEL_DIAMETER_MM) - 3.f;
+
+    
+#ifdef SIMULATOR
+    // Cozmo control loop is 100Hz on simulator. (That's as fast as it goes!)
+    const s32 TIME_STEP = 10;
     
     // TODO: Currently set to Webots specs
     const f32 LIFT_JOINT_HEIGHT = 27.f + (0.5f*WHEEL_DIAMETER_MM);
     const f32 LIFT_LENGTH = 97.5f;
     const f32 LIFT_HEIGHT_LOW = 5.f;
-    const f32 LIFT_HEIGHT_HIGHT = 95.f; 
+    const f32 LIFT_HEIGHT_HIGHT = 95.f;
+#else
+    // Control loop on robot is 500Hz.
+    const s32 TIME_STEP = 2;
+    
+    const f32 LIFT_JOINT_HEIGHT = 45.f;
+    const f32 LIFT_LENGTH = 91.f;
+    const f32 LIFT_HEIGHT_LOW = 22.f;
+    const f32 LIFT_HEIGHT_HIGHT = 70.f;
+
+#endif
+    
+    const f32 CONTROL_DT = TIME_STEP*0.001f;
+    const f32 ONE_OVER_CONTROL_DT = 1.0f/CONTROL_DT;
+    
     
     // TODO: convert to using these in degree form?
     const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);
