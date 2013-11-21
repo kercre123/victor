@@ -1,10 +1,10 @@
 classdef CozmoDocker < handle
 
     properties(Constant = true)
-        NECK_JOINT_POSITION = [-15.5  0  25]; % relative to robot origin
+        NECK_JOINT_POSITION = [-15  0   45]; % relative to robot origin
         HEAD_CAM_ROTATION   = [0 0 1; -1 0 0; 0 -1 0]; % (rodrigues(-pi/2*[0 1 0])*rodrigues(pi/2*[1 0 0]))'
-        HEAD_CAM_POSITION   = [25    0  15]; % relative to neck joint
-        WHEEL_BASE          = 55; % distance b/w axels
+        HEAD_CAM_POSITION   = [ 22  0  -10]; % relative to neck joint
+        LIFT_DISTANCE       = 34;  % forward from robot origin
     end
     
     properties
@@ -72,7 +72,7 @@ classdef CozmoDocker < handle
             % Set up Robot head camera geometry
             this.robotPose = Pose();
             this.neckPose = Pose([0 0 0], CozmoDocker.NECK_JOINT_POSITION);
-            this.neckPose = this.robotPose;
+            this.neckPose.parent = this.robotPose;
             
             this.setHeadAngle(HeadAngle * pi/180);
             
@@ -143,7 +143,7 @@ classdef CozmoDocker < handle
                 
                 axis(this.h_camPoseAxes, 'equal');
                 grid(this.h_camPoseAxes, 'on');
-                
+                                
                 set(this.h_camPoseAxes, 'XLim', [-50 50], ...
                     'YLim', [-50 50], 'ZLim', [-150 10], ...
                     'View', [0 0]);
@@ -151,29 +151,32 @@ classdef CozmoDocker < handle
                 xlabel(this.h_camPoseAxes, 'X Error')
                 ylabel(this.h_camPoseAxes, 'Y Error')
                 zlabel(this.h_camPoseAxes, 'Z Error')
+                title(this.h_camPoseAxes, 'Camera Pose');
                 
-                
-                 this.h_robotPoseAxes = subplot(1,2,2, 'Parent', h_poseFig);
+                this.h_robotPoseAxes = subplot(1,2,2, 'Parent', h_poseFig);
                 
                 hold(this.h_robotPoseAxes, 'off')
-                order = [1 2 4 3 1];
-                plot3(this.marker3d(order,3), -this.marker3d(order,1), ...
-                    -this.marker3d(order,2), 'b', 'Parent', this.h_robotPoseAxes);
+                order = [1 2 3 4 1];
+                robot = [30 40 20; 30 -40 20; -90 -40 20; -90 40 20];
+                plot3(robot(order,1), robot(order,2), robot(order,3), ...
+                    'b', 'Parent', this.h_robotPoseAxes);
+                %plot3(this.marker3d(order,3), -this.marker3d(order,1), ...
+                %    -this.marker3d(order,2), 'b', 'Parent', this.h_robotPoseAxes);
                 hold(this.h_robotPoseAxes, 'on')
-                plot3(block3d(order,3), -block3d(order,1), -block3d(order,2), ...
-                    'g', 'Parent', this.h_robotPoseAxes);
+                %plot3(block3d(order,3), -block3d(order,1), -block3d(order,2), ...
+                %    'g', 'Parent', this.h_robotPoseAxes);
                 
                 axis(this.h_robotPoseAxes, 'equal');
                 grid(this.h_robotPoseAxes, 'on');
                 
                 set(this.h_robotPoseAxes, 'XLim', [-10 150], ...
                     'YLim', [-50 50], 'ZLim', [-50 50], ...
-                    'View', [90 90]);
+                    'View', [-90 90]);
                 
                 xlabel(this.h_robotPoseAxes, 'X Error')
                 ylabel(this.h_robotPoseAxes, 'Y Error')
                 zlabel(this.h_robotPoseAxes, 'Z Error')
-                
+                title(this.h_robotPoseAxes, 'Robot Pose');
             end
             
         end % CONSTRUCTOR CozmoDocker()
@@ -335,7 +338,8 @@ classdef CozmoDocker < handle
                     angleError = asin( (upperRight(2)-upperLeft(2)) / L);
                     
                     currentDistance = BlockMarker3D.ReferenceWidth * this.calibration.fc(1) / L;
-                                        
+                    distError = currentDistance - this.dockingDistance;
+                    
                     % TODO: should i be comparing to ncols/2 or calibration center?
                     midPointErr = (upperRight(1)+upperLeft(1))/2 - ...
                         this.trackingResolution(1)/2;
@@ -362,17 +366,16 @@ classdef CozmoDocker < handle
                     this.drawRobot();
                     
                     blockWRTrobot = this.blockPose.getWithRespectTo(this.robotPose);
-                    currentDistance = blockWRTrobot.T(1) - CozmoDocker.WHEEL_BASE/2;
-                    midPointErr     = blockWRTrobot.T(2);
-                    angleError      = atan2(blockWRTrobot.Rmat(2,1), blockWRTrobot.Rmat(1,1)) + pi/2;
+                    distError     = blockWRTrobot.T(1) - CozmoDocker.LIFT_DISTANCE;
+                    midPointErr   = blockWRTrobot.T(2);
+                    angleError    = atan2(blockWRTrobot.Rmat(2,1), blockWRTrobot.Rmat(1,1)) + pi/2;
                     
                 otherwise
                     error(['Not sure how to compute an error signal ' ...
                         'when using a %s tracker.'], this.trackerType);
             end % SWITCH(trackerType)
              
-            distError = currentDistance - this.dockingDistance;
-            
+            % Update the error displays
             set(this.h_angleError, 'XData', [0 angleError*180/pi]);
             h = get(this.h_angleError, 'Parent');
             title(h, sprintf('AngleErr = %.1fdeg', angleError*180/pi), 'Back', 'w');
@@ -402,14 +405,6 @@ classdef CozmoDocker < handle
         end % keyPressCallback()
         
         function drawCamera(this)
-            %{
-            % Assumes R and t are block w.r.t to robot. We are drawing
-            % robot w.r.t block:
-            R = R';
-            t = -R*t;
-            %}
-            
-            %tempPose = this.robotPose.getWithRespectTo(this.blockPose);
             tempPose = this.headCamPose.getWithRespectTo(this.blockPose);
                         
             scale = 5;
@@ -421,21 +416,24 @@ classdef CozmoDocker < handle
             else
                 set(this.h_cam, 'XData', verts(order,1), 'YData', verts(order,2), 'ZData', verts(order,3));
             end
-            
-            
-            
-        end % FUNCTION drawCamera()
+         end % FUNCTION drawCamera()
         
         function drawRobot(this)
-            tempPose = this.robotPose.getWithRespectTo(this.blockPose);
+            %tempPose = this.blockPose.getWithRespectTo(this.robotPose);
           
             % Bounding box of robot in camera coordinates, centered around
             % the camera origin -- this gets rotated and recentered by the
             % application of tempPose.inv
-            verts = [40 0 60; -40 0 60; -40 0 -60; 40 0 -60];
-            verts = tempPose.applyInvTo(verts);
+            %verts = [40 0 30; -40 0 30; -40 0 -90; 40 0 -90];
+
+            % Block vertices in world coordinates
+            %verts = [0 30 30; 0 -30 30; 0 -30 -30; 0 30 -30];
+            %verts = tempPose.applyTo(verts);
             
-            order = [1 2 3 4 1];
+            block = this.marker3d /(BlockMarker3D.ReferenceWidth/2)*30;
+            verts = this.blockPose.applyTo(block);
+            
+            order = [1 2 4 3 1];
             if isempty(this.h_robot)
                 this.h_robot = plot3(verts(order,1), verts(order,2), verts(order,3), 'r', 'Parent', this.h_robotPoseAxes);
             else
@@ -487,9 +485,8 @@ classdef CozmoDocker < handle
             
             % Get rotation matrix for the current head pitch, rotating
             % around the Y axis (which points to robot's LEFT!)
-            %Rpitch = rodrigues(-newHeadAngle*[0 1 0]);
-            Rpitch = eye(3);
-            
+            Rpitch = rodrigues(-newHeadAngle*[0 1 0]);
+                        
             this.headCamPose = Pose( ...
                 Rpitch * CozmoDocker.HEAD_CAM_ROTATION,  ...
                 Rpitch * CozmoDocker.HEAD_CAM_POSITION(:));
