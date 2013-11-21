@@ -101,7 +101,7 @@ namespace Anki
 
       // Given a gear ratio of 91.7:1 and 125.67mm wheel circumference, we
       // compute the mm per tick as (using 4 magnets):
-      static const f32 MM_PER_TICK = 125.67 / 91.7 / 4.0;
+      static const f32 MM_PER_TICK = 125.67 / 182.0 / 4.0;
 
       // Given a gear ratio of 815.4:1 and 4 encoder ticks per revolution, we
       // compute the radians per tick on the lift as:

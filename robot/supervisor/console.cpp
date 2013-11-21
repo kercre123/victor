@@ -1,0 +1,170 @@
+#include "console.h"
+#include "anki/cozmo/robot/hal.h"
+
+// TODO: use this when switching to M2. No support for strcasecmp on M1.
+//#include <string.h>
+
+int strcasecmp(const char* buffer1, const char* buffer2)
+{
+  char* b1 = (char*)buffer1;
+  char* b2 = (char*)buffer2;
+  while(*b1 && *b2)
+  {
+    char c1 = *buffer1;
+    char c2 = *buffer2;
+    if (c1 >= 'A' && c1 <= 'Z')
+      c1 = 'a' + c1 - 'A';
+    if (c2 >= 'A' && c2 <= 'Z')
+      c2 = 'a' + c2 - 'A';
+    if (c1 != c2)
+      return 1;
+    b1++;
+    b2++;
+  }
+  // Return 0 if they both match
+  return *buffer1 | *buffer2;
+}
+
+namespace Anki
+{
+  namespace Cozmo
+  {
+    namespace Console
+    {
+      static const u32 BUFFER_SIZE = 128;
+      static const u32 BUFFER_MASK = 0x7f;
+      static char m_buffer[BUFFER_SIZE];
+      static u32 m_index = 0;
+      static u32 m_argumentCount = 0;
+
+      typedef int (*ConsoleFunction)();
+      static void ParseCommand();
+
+      static char* GetArgument(u8 index)
+      {
+        if (index >= m_argumentCount)
+        {
+          return NULL;
+        }
+
+        u8 currentIndex = 0;
+        char* c = m_buffer;
+        while (currentIndex != index)
+        {
+          if (*c == 0)
+          {
+            currentIndex++;
+          }
+          c++;
+        }
+      }
+
+      void Init()
+      {
+      }
+
+      void Update()
+      {
+        int value = HAL::USBGetChar();
+        if (value < 0)  // No work to do if there's no data
+          return;
+
+        u8 c = value;  // Using u8 should eliminate sign-extension
+
+        // Echo legal ASCII back to the console
+        if (c >= 32 && c <= 126)
+        {
+          printf("%c", c);
+          // Prevent overflow
+          if (m_index + 1 >= BUFFER_SIZE)
+          {
+            m_index = 0;
+          }
+
+          m_buffer[m_index++] = c;
+        } else if (c == 27) {  // Check for escape
+          m_index = 0;
+        } else if (c == 0x7f || c == 8) {  // Check for delete
+          printf("%c", c);
+          
+          m_index--;
+          if (m_index < 0)
+          {
+            m_index = 0;
+          }
+          m_buffer[m_index] = 0;
+        } else if ('\r' || c == '\n') {
+          printf("\n");
+          m_buffer[m_index] = 0;
+          m_index = 0;
+          ParseCommand();
+        }
+      }
+
+      int SetMotors()
+      {
+        return 0;
+      }
+
+      struct ConsoleCommand
+      {
+        const char* command;
+        ConsoleFunction function;
+      };
+
+      static const ConsoleCommand m_commands[] =
+      {
+        {"SetMotors", SetMotors},
+      };
+
+      static void ParseCommand()
+      {
+
+        const int functionCount = sizeof(m_commands) / sizeof(ConsoleCommand);
+        char* buffer = m_buffer;
+        if (!strcasecmp(buffer, "?"))
+        {
+          printf("\nCommands:\n");
+          for (int i = 0; i < functionCount; i++)
+          {
+            printf("%s\n", m_commands[i].command);
+          }
+          printf("\n");
+        } else {
+          // Tokenize by spaces
+          m_argumentCount = 1;
+          char* b = buffer;
+          while (*b)
+          {
+            if (*b == ' ')
+            {
+              *b = 0;
+              m_argumentCount++;
+            }
+            b++;
+          }
+
+          bool foundCommand = false;
+          for (int i = 0; i < functionCount; i++)
+          {
+            const ConsoleCommand* cmd = &m_commands[i];
+            if (!strcasecmp(cmd->command, buffer) && cmd->function)
+            {
+              foundCommand = true;
+
+              int ret = cmd->function();
+              printf("status,%i\n", ret);
+              break;
+            }
+          }
+
+          if (!foundCommand)
+          {
+            printf("Unknown command: %s\n", buffer);
+          }
+        }
+      }
+    }
+  }
+}
+

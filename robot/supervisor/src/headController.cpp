@@ -1,4 +1,5 @@
 #include "headController.h"
+#include "anki/cozmo/robot/debug.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/shared/radians.h"
@@ -17,9 +18,29 @@ namespace Anki {
       Radians desiredAngle_ = 0.f;
       Radians angleError_   = 1e9f;
       bool inPosition_  = true;
+     
+      f32 radSpeed_ = 0.f;
+      
+      bool enable_ = true;
       
     } // "private" members
 
+    
+    void Enable()
+    {
+      enable_ = true;
+    }
+    
+    void Disable()
+    {
+      enable_ = false;
+    }
+
+    f32 GetAngleRad()
+    {
+      return HAL::MotorGetPosition(HAL::MOTOR_HEAD);
+    }
+    
     void SetAngularVelocity(const f32 rad_per_sec)
     {
       // TODO: Figure out power-to-speed ratio on actual robot. Normalize with battery power?
@@ -33,6 +54,9 @@ namespace Anki {
     {
       desiredAngle_ = angle;
       inPosition_ = false;
+#if(DEBUG_HEAD_CONTROLLER)
+      PRINT("HEAD: SetDesiredAngle %f rads\n", desiredAngle_.ToFloat());
+#endif
     }
     
     bool IsInPosition(void) {
@@ -41,6 +65,10 @@ namespace Anki {
     
     ReturnCode Update()
     {
+      if (!enable_)
+        return EXIT_SUCCESS;
+      
+      
       // Note that a new call to SetDesiredAngle will get
       // Update() working again after it has reached a previous
       // setting.
@@ -50,14 +78,18 @@ namespace Anki {
         // TODO: better controller?
         currentAngle_ = HAL::MotorGetPosition(HAL::MOTOR_HEAD);
         angleError_ = desiredAngle_ - currentAngle_;
+
+#if(DEBUG_HEAD_CONTROLLER)
+        PRINT("HEAD: currAngle %f, error %f\n", currentAngle_.ToFloat(), angleError_.ToFloat());
+#endif
         
         // TODO: convert angleError_ to power / speed in some reasonable way
         if(ABS(angleError_) < ANGLE_TOLERANCE) {
-          inPosition_ = true;
           SetAngularVelocity(0.f);
+          inPosition_ = true;
         } else {
-          inPosition_ = false;
           SetAngularVelocity(Kp * angleError_.ToFloat());
+          inPosition_ = false;
         }
         
       } // if not in position

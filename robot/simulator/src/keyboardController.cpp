@@ -5,6 +5,7 @@
 #include "anki/cozmo/robot/pathFollower.h"
 #include "anki/cozmo/robot/steeringController.h"
 
+#include "gripController.h"
 #include "headController.h"
 #include "keyboardController.h"
 #include "liftController.h"
@@ -149,7 +150,7 @@ namespace Anki {
               
             case CKEY_UNLOCK: //spacebar-key: unlock
             {
-              DockingController::DisengageGripper();
+              GripController::DisengageGripper();
               break;
             }
             default:

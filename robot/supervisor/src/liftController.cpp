@@ -1,42 +1,259 @@
 #include "liftController.h"
+#include "anki/common/robot/config.h"
+#include "anki/common/shared/velocityProfileGenerator.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
-#include "anki/common/robot/trig_fast.h"
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/shared/radians.h"
+
 
 
 namespace Anki {
   namespace Cozmo {
     namespace LiftController {
       
+      
       namespace {
-        // All angles will be measured in DEGREES.
+        // Re-calibrates lift position whenever LIFT_HEIGHT_LOW is commanded.
+        #define RECALIBRATE_AT_LOW_HEIGHT 1
         
-        const f32 Kp = 5.f; // proportional control constant
-        const Radians ANGLE_TOLERANCE = DEG_TO_RAD(0.5f);
+        const f32 SPEED_FILTERING_COEFF = 0.9f;
+        
+        const f32 Kp_ = 0.5f; // proportional control constant
+        const f32 Ki_ = 0.001f; // integral control constant
+        f32 angleErrorSum_ = 0.f;
+        const f32 MAX_ERROR_SUM = 200.f;
+        
+        const f32 ANGLE_TOLERANCE = DEG_TO_RAD(0.5f);
+        f32 LIFT_ANGLE_LOW; // Initialize in Init()
+        
+        // Minimum power required to move lift (no load)
+        const f32 MIN_POWER = 0.3;
+        f32 minPower_ = 0.f;
         
         Radians currentAngle_ = 0.f;
         Radians desiredAngle_ = 0.f;
-        Radians angleError_   = 1e9f;
+        f32 currDesiredAngle_ = 0.f;
+        f32 currDesiredRadVel_ = 0.f;
+        f32 angleError_ = 0.f;
+        f32 prevHalPos_ = 0.f;
         bool inPosition_  = true;
         
+        // Speed and acceleration params
+        f32 maxSpeedRad_ = 1.0f;
+        f32 accelRad_ = 2.0f;
+        f32 approachSpeedRad_ = 0.1f;
+        
+        // For generating position and speed profile
+        VelocityProfileGenerator vpg_;
+        
+        // Current speed
+        f32 radSpeed_ = 0;
+        
+        // Currently applied power
+        f32 power_ = 0;
+
+        
+        // Calibration parameters
+        typedef enum {
+          LCS_IDLE,
+          LCS_LOWER_LIFT,
+          LCS_WAIT_FOR_STOP,
+          LCS_SET_CURR_ANGLE
+        } LiftCalibState;
+        
+        LiftCalibState calState_ = LCS_IDLE;
+        bool doCalib_ = false;
+        bool isCalibrated_ = false;
+        bool limitingDetected_ = false;
+        u32 lastLiftMovedTime_us = 0;
+        
+        // Whether or not to command anything to motor
+        bool enable_ = true;
+        
       } // "private" members
+
+      f32 Height2Rad(f32 height_mm) {
+        return asinf((height_mm - LIFT_JOINT_HEIGHT)/LIFT_LENGTH);
+      }
+      
+      f32 Rad2Height(f32 angle) {
+        return (sinf(angle) * LIFT_LENGTH) + LIFT_JOINT_HEIGHT;
+      }
+      
+      
+      ReturnCode Init()
+      {
+        // Init consts
+        LIFT_ANGLE_LOW = Height2Rad(LIFT_HEIGHT_LOW);
+        return EXIT_SUCCESS;
+      }
+      
+      
+      
+      void Enable()
+      {
+        enable_ = true;
+      }
+      
+      void Disable()
+      {
+        enable_ = false;
+      }
+      
+      
+      void StartCalibrationRoutine()
+      {
+        PRINT("Starting Lift calibration\n");
+        calState_ = LCS_LOWER_LIFT;
+        isCalibrated_ = false;
+      }
+      
+      bool IsCalibrated()
+      {
+        return isCalibrated_;
+      }
+      
+      
+      void ResetLowAnglePosition()
+      {
+        currentAngle_ = LIFT_ANGLE_LOW;
+        HAL::MotorResetPosition(HAL::MOTOR_LIFT);
+        prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_LIFT) * 0.003; //TODO: scalar because HAL returnig crap now
+        doCalib_ = false;
+        isCalibrated_ = true;
+      }
+      
+      void CalibrationUpdate()
+      {
+        if (!isCalibrated_) {
+          
+          switch(calState_) {
+              
+            case LCS_IDLE:
+              break;
+              
+            case LCS_LOWER_LIFT:
+              HAL::MotorSetPower(HAL::MOTOR_LIFT, -0.4);
+              lastLiftMovedTime_us = HAL::GetMicroCounter();
+              calState_ = LCS_WAIT_FOR_STOP;
+              break;
+              
+            case LCS_WAIT_FOR_STOP:
+              // Check for when lift stops moving for 0.2 seconds
+              if (NEAR_ZERO(HAL::MotorGetSpeed(HAL::MOTOR_LIFT))) {
+                if (HAL::GetMicroCounter() - lastLiftMovedTime_us > 200000) {
+                  // Turn off motor
+                  HAL::MotorSetPower(HAL::MOTOR_LIFT, 0.0);
+                  
+                  // Set timestamp to be used in next state to wait for motor to "relax"
+                  lastLiftMovedTime_us = HAL::GetMicroCounter();
+                  
+                  // Go to next state
+                  calState_ = LCS_SET_CURR_ANGLE;
+                }
+              } else {
+                lastLiftMovedTime_us = HAL::GetMicroCounter();
+              }
+              break;
+              
+            case LCS_SET_CURR_ANGLE:
+              // Wait for motor to relax and then set angle
+              if (HAL::GetMicroCounter() - lastLiftMovedTime_us > 200000) {
+                ResetLowAnglePosition();
+                calState_ = LCS_IDLE;
+              }
+              break;
+          }
+        }
+        
+      }
+
+      f32 GetHeightMM()
+      {
+        return Rad2Height(currentAngle_.ToFloat());
+      }
+      
+      f32 GetAngleRad()
+      {
+        return currentAngle_.ToFloat();
+      }
+      
+      void SetSpeedAndAccel(f32 max_speed_rad_per_sec, f32 accel_rad_per_sec2)
+      {
+        maxSpeedRad_ = max_speed_rad_per_sec;
+        accelRad_ = accel_rad_per_sec2;
+      }
+      
       
       void SetAngularVelocity(const f32 rad_per_sec)
       {
         // TODO: Figure out power-to-speed ratio on actual robot. Normalize with battery power?
-        f32 power = CLIP(rad_per_sec / HAL::MAX_LIFT_SPEED, -1.0, 1.0);
-        HAL::MotorSetPower(HAL::MOTOR_LIFT, power);
+        power_ = CLIP(rad_per_sec / HAL::MAX_LIFT_SPEED, -1.0, 1.0);
+        HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
         inPosition_ = true;
+      }
+
+      f32 GetAngularVelocity()
+      {
+        return radSpeed_;
+      }
+      
+      void PoseAndSpeedFilterUpdate()
+      {
+        // Get encoder speed measurements
+        f32 measuredSpeed = Cozmo::HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
+        
+        // Direction of motion
+        f32 dir = 1;
+
+        // If -ve or no power is applied, assume lift is going down.
+        if (power_ < FLOATING_POINT_COMPARISON_TOLERANCE) {
+          dir = -1;
+        }
+        
+        // Filter speed
+        measuredSpeed *= dir;
+        radSpeed_ = (measuredSpeed *
+                     (1.0f - SPEED_FILTERING_COEFF) +
+                     (radSpeed_ * SPEED_FILTERING_COEFF));
+        
+        // Update position
+        currentAngle_ += dir * (HAL::MotorGetPosition(HAL::MOTOR_LIFT) - prevHalPos_) * 0.003; //TODO: scalar because HAL returnig crap now
+        prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_LIFT);
       }
       
       
       void SetDesiredHeight(const f32 height_mm)
       {
         // Convert desired height into the necessary angle:
-        desiredAngle_ = asin_fast((height_mm - LIFT_JOINT_HEIGHT)/LIFT_LENGTH);
+#if(DEBUG_LIFT_CONTROLLER)
+        PRINT("LIFT DESIRED HEIGHT: %f mm (curr height %f mm)\n", height_mm, GetHeightMM());
+#endif
+        desiredAngle_ = Height2Rad(height_mm);
+        angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
+        angleErrorSum_ = 0.f;
+
+        // Minimum power required to move the lift
+        minPower_ = MIN_POWER;
+        if (angleError_ < 0) {
+          minPower_ = -MIN_POWER;
+        }
+        
+        limitingDetected_ = false;
         inPosition_ = false;
+
+        // Start profile of lift trajectory
+        vpg_.StartProfile(radSpeed_, currentAngle_.ToFloat(),
+                          maxSpeedRad_, accelRad_,
+                          approachSpeedRad_, desiredAngle_.ToFloat(),
+                          CONTROL_DT);
+
+#if(DEBUG_LIFT_CONTROLLER)
+        PRINT("LIFT VPG: startVel %f, startPos %f, maxVel %f, endVel %f, endPos %f\n",
+              radSpeed_, currentAngle_.ToFloat(), maxSpeedRad_, approachSpeedRad_, desiredAngle_.ToFloat());
+#endif
+        
       }
       
       bool IsInPosition(void) {
@@ -45,24 +262,91 @@ namespace Anki {
       
       ReturnCode Update()
       {
-        // Note that a new call to SetDesiredAngle will get
-        // Update() working again after it has reached a previous
-        // setting.
+        // Update routine for calibration sequence
+        CalibrationUpdate();
+        
+        PoseAndSpeedFilterUpdate();
+        
+        // If disabled, do not activate motors
+        if(!enable_) {
+          return EXIT_SUCCESS;
+        }
+        
         if(not inPosition_) {
+          
+          // Get the current desired lift angle
+          vpg_.Step(currDesiredRadVel_, currDesiredAngle_);
+          
           
           // Simple proportional control for now
           // TODO: better controller?
-          currentAngle_ = HAL::MotorGetPosition(HAL::MOTOR_LIFT);
-          angleError_ = desiredAngle_ - currentAngle_;
+          angleError_ = currDesiredAngle_ - currentAngle_.ToFloat();
           
           // TODO: convert angleError_ to power / speed in some reasonable way
           if(ABS(angleError_) < ANGLE_TOLERANCE) {
-            inPosition_ = true;
-            SetAngularVelocity(0.f);
+            angleErrorSum_ = 0.f;
+            
+            // If desired angle is low position, let it fall through to recalibration
+            if (!RECALIBRATE_AT_LOW_HEIGHT || desiredAngle_ != LIFT_ANGLE_LOW) {
+              power_ = 0.f;
+              
+              if (desiredAngle_ == currDesiredAngle_) {
+                inPosition_ = true;
+#if(DEBUG_LIFT_CONTROLLER)
+                PRINT(" LIFT HEIGHT REACHED (%f mm)\n", GetHeightMM());
+#endif
+              }
+            }
           } else {
+            power_ = minPower_ + (Kp_ * angleError_) + (Ki_ * angleErrorSum_);
+            angleErrorSum_ += angleError_;
+            angleErrorSum_ = CLIP(angleErrorSum_, -MAX_ERROR_SUM, MAX_ERROR_SUM);
             inPosition_ = false;
-            SetAngularVelocity(Kp * angleError_.ToFloat());
           }
+
+#if(DEBUG_LIFT_CONTROLLER)
+          PERIODIC_PRINT(100, "LIFT: currA %f, curDesA %f, desA %f, err %f, errSum %f, pwr %f, spd %f\n",
+                         currentAngle_.ToFloat(),
+                         currDesiredAngle_,
+                         desiredAngle_.ToFloat(),
+                         angleError_,
+                         angleErrorSum_,
+                         power_,
+                         radSpeed_);
+          PERIODIC_PRINT(100, "  POWER terms: %f  %f\n", (Kp_ * angleError_), (Ki_ * angleErrorSum_))
+#endif
+          
+          power_ = CLIP(power_, -1.0, 1.0);
+          
+          
+          // If within 5 degrees of LIFT_HEIGHT_LOW and the lift isn't moving while downward power is applied,
+          // assume we've hit the limit and recalibrate.
+          if (limitingDetected_ ||
+              ((power_ < 0)
+              && (desiredAngle_ == LIFT_ANGLE_LOW)
+              && (desiredAngle_ == currDesiredAngle_)
+              && (ABS(angleError_) < 0.1)
+              && NEAR_ZERO(HAL::MotorGetSpeed(HAL::MOTOR_LIFT)))) {
+            
+            if (!limitingDetected_) {
+#if(DEBUG_LIFT_CONTROLLER)
+              PRINT("START RECAL LIFT\n");
+#endif
+              lastLiftMovedTime_us = HAL::GetMicroCounter();
+              limitingDetected_ = true;
+            } else if (HAL::GetMicroCounter() - lastLiftMovedTime_us > 200000) {
+#if(DEBUG_LIFT_CONTROLLER)
+              PRINT("END RECAL LIFT\n");
+#endif
+              ResetLowAnglePosition();
+              inPosition_ = true;
+            }
+            power_ = 0.f;
+            
+          }
+          
+          HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
+          
         } // if not in position
         
         return EXIT_SUCCESS;

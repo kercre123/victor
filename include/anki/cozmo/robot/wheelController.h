@@ -17,17 +17,22 @@ namespace Anki {
     // Approximating power-speed model with piecewise function with 2 linear segments.
     // One slope from a power of 0 to a transition power, the other from the transition power to 1.0.
     //
-    // Piecwise trendline:
-    //    HIGH PIECE: for speed >= 80
-    //    speed = 315.4 * power - 45  => power = 0.00317 * (speed + 45)
-    //
-    //    LOW PIECE: for speed < 80
-    //    transition power = ( 80 + 45 ) / 315.4 = 0.396322
-    //    speed = (80 / 0.396322) * power =>  power = 0.004954 * speed
-    const f32 TRANSITION_POWER = 80;
-    const f32 HIGH_OPEN_LOOP_OFFSET = 45;
-    const f32 HIGH_OPEN_LOOP_GAIN = 0.00317;
-    const f32 LOW_OPEN_LOOP_GAIN = 0.004954;
+    // Piecewise trendline:
+    //    Two pieces: 1) from 0 power at 0 speed to TRANSITION_POWER at TRANSITION_SPEED (slope = LOW_OPEN_LOOP_GAIN)
+    //                2) from TRANSITION_POWER at TRANSITION_SPEED to 1.0 power  with slope of HIGH_OPEN_LOOP_GAIN
+    
+    // Point at which open loop speed-power trendlines meet
+    const f32 TRANSITION_SPEED = 40.0f;  // mm/s
+    const f32 TRANSITION_POWER = 0.35f;  // wheel motor power
+    
+    // Slope of power:speed in upper line.
+    // Obtained from plotting average open loop response of both wheels.
+    const f32 HIGH_OPEN_LOOP_GAIN = 1.0 / 193.0;
+    
+    // Slope of power:speed in lower line
+    const f32 LOW_OPEN_LOOP_GAIN = TRANSITION_POWER / TRANSITION_SPEED;
+    
+    // Controller gains
     const float DEFAULT_WHEEL_KP = 0.0005f;
     const float DEFAULT_WHEEL_KI = 0.00005f;
     const float DEFAULT_WHEEL_KD = 0.0f;
