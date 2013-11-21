@@ -127,7 +127,7 @@ namespace Anki
 
       Result LucasKanadeTracker_f32::InitializeTemplate(const Array<u8> &templateImage, const Rectangle<f32> templateRegion, MemoryStack &memory)
       {
-        const bool isColumnMajor = true; // TODO: change to false, which will probably be faster
+        const bool isOutColumnMajor = true; // TODO: change to false, which will probably be faster
 
         AnkiConditionalErrorAndReturnValue(this->isInitialized == false,
           RESULT_FAIL, "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "This object has already been initialized");
@@ -171,8 +171,8 @@ namespace Anki
 
           const s32 numValidPoints = templateCoordinates[iScale].get_numElements();
 
-          Array<f32> xIn = templateCoordinates[iScale].EvaluateX(isColumnMajor, memory);
-          Array<f32> yIn = templateCoordinates[iScale].EvaluateY(isColumnMajor, memory);
+          Array<f32> xIn = templateCoordinates[iScale].EvaluateX(isOutColumnMajor, true, memory);
+          Array<f32> yIn = templateCoordinates[iScale].EvaluateY(isOutColumnMajor, true, memory);
 
           assert(xIn.get_size(1) == numValidPoints);
           assert(xIn.get_size(1) == yIn.get_size(1));

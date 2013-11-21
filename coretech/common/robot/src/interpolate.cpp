@@ -4,6 +4,7 @@ namespace Anki
 {
   namespace Embedded
   {
+    // This function just checks all the parameters, and calls either the 1D or 2D version
     Result Interp2(const Array<u8> &reference, const Array<f32> &xCoordinates, const Array<f32> &yCoordinates, Array<u8> &out, const InterpolationType interpolationType, const u8 invalidValue)
     {
       AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_BILINEAR,
@@ -21,72 +22,88 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(out.IsValid(),
         RESULT_FAIL, "Interp2", "out is not valid");
 
-      AnkiConditionalErrorAndReturnValue(xCoordinates.get_size(1) == yCoordinates.get_size(1) &&
-        xCoordinates.get_size(1) == out.get_size(1) &&
-        xCoordinates.get_size(0) == 1 &&
-        yCoordinates.get_size(0) == 1 &&
-        out.get_size(0) == 1,
-        RESULT_FAIL, "Interp2", "xCoordinates, yCoordinates, and out must be 1xN");
+      const s32 referenceHeight = reference.get_size(0);
+      const s32 referenceWidth = reference.get_size(1);
+
+      const s32 outHeight = out.get_size(0);
+      const s32 outWidth = out.get_size(1);
+
+      const s32 numOutputElements = outHeight * outWidth;
+
+      const bool isOutputOneDimensional = (out.get_size(0) == 1);
+
+      if(isOutputOneDimensional) {
+        AnkiConditionalErrorAndReturnValue(
+          out.get_size(1) == numOutputElements && xCoordinates.get_size(1) == numOutputElements && yCoordinates.get_size(1) == numOutputElements &&
+          xCoordinates.get_size(0) == 1 && yCoordinates.get_size(0) == 1,
+          RESULT_FAIL, "Interp2", "If out is a row vector, then out, xCoordinates, and yCoordinates must all be 1xN");
+      } else {
+        AnkiConditionalErrorAndReturnValue(
+          xCoordinates.get_size(0) == outHeight && xCoordinates.get_size(1) == outWidth &&
+          yCoordinates.get_size(0) == outHeight && yCoordinates.get_size(1) == outWidth,
+          RESULT_FAIL, "Interp2", "If the out is not 1 dimensional, then xCoordinates, yCoordinates, and out must all be the same sizes");
+      }
 
       AnkiConditionalErrorAndReturnValue(xCoordinates.get_rawDataPointer() != out.get_rawDataPointer() &&
         yCoordinates.get_rawDataPointer() != out.get_rawDataPointer() &&
         reference.get_rawDataPointer() != out.get_rawDataPointer(),
         RESULT_FAIL, "Interp2", "xCoordinates, yCoordinates, and reference cannot be the same as out");
 
-      const s32 referenceHeight = reference.get_size(0);
-      const s32 referenceWidth = reference.get_size(1);
-
-      const f32 xyMin = 0.0f;
-      const f32 xMax = static_cast<f32>(referenceWidth) - 1.0f;
-      const f32 yMax = static_cast<f32>(referenceHeight) - 1.0f;
+      const f32 xyReferenceMin = 0.0f;
+      const f32 xReferenceMax = static_cast<f32>(referenceWidth) - 1.0f;
+      const f32 yReferenceMax = static_cast<f32>(referenceHeight) - 1.0f;
 
       const s32 numValues = xCoordinates.get_size(1);
 
       const f32 * restrict pXCoordinates = xCoordinates.Pointer(0,0);
       const f32 * restrict pYCoordinates = yCoordinates.Pointer(0,0);
-      const u8 * restrict pReference = reference.Pointer(0,0);
 
-      u8 * restrict pOut = out.Pointer(0,0);
+      const s32 yIterationMax = isOutputOneDimensional ? 1                    : outHeight;
+      const s32 xIterationMax = isOutputOneDimensional ? (outHeight*outWidth) : outWidth;
 
-      for(s32 i=0; i<numValues; i++) {
-        const f32 curX = pXCoordinates[i];
-        const f32 curY = pYCoordinates[i];
+      for(s32 y=0; y<yIterationMax; y++) {
+        u8 * restrict pOut = out.Pointer(y,0);
 
-        const f32 x0 = floorf(curX);
-        const f32 x1 = ceilf(curX); // x0 + 1.0f;
+        for(s32 x=0; x<xIterationMax; x++) {
+          const f32 curX = pXCoordinates[x];
+          const f32 curY = pYCoordinates[x];
 
-        const f32 y0 = floorf(curY);
-        const f32 y1 = ceilf(curY); // y0 + 1.0f;
+          const f32 x0 = floorf(curX);
+          const f32 x1 = ceilf(curX); // x0 + 1.0f;
 
-        // If out of bounds, set as invalid and continue
-        if(x0 < xyMin || x1 > xMax || y0 < xyMin || y1 > yMax) {
-          pOut[i] = invalidValue;
-          continue;
-        }
+          const f32 y0 = floorf(curY);
+          const f32 y1 = ceilf(curY); // y0 + 1.0f;
 
-        const f32 alphaX = curX - x0;
-        const f32 alphaXinverse = 1 - alphaX;
+          // If out of bounds, set as invalid and continue
+          if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
+            pOut[x] = invalidValue;
+            continue;
+          }
 
-        const f32 alphaY = curY - y0;
-        const f32 alphaYinverse = 1.0f - alphaY;
+          const f32 alphaX = curX - x0;
+          const f32 alphaXinverse = 1 - alphaX;
 
-        const s32 y0S32 = static_cast<s32>(Roundf(y0));
-        const s32 y1S32 = static_cast<s32>(Roundf(y1));
-        const s32 x0S32 = static_cast<s32>(Roundf(x0));
+          const f32 alphaY = curY - y0;
+          const f32 alphaYinverse = 1.0f - alphaY;
 
-        const u8 * restrict pReference_y0 = reference.Pointer(y0S32, x0S32);
-        const u8 * restrict pReference_y1 = reference.Pointer(y1S32, x0S32);
+          const s32 y0S32 = static_cast<s32>(Roundf(y0));
+          const s32 y1S32 = static_cast<s32>(Roundf(y1));
+          const s32 x0S32 = static_cast<s32>(Roundf(x0));
 
-        const f32 pixelTL = *pReference_y0;
-        const f32 pixelTR = *(pReference_y0+1);
-        const f32 pixelBL = *pReference_y1;
-        const f32 pixelBR = *(pReference_y1+1);
+          const u8 * restrict pReference_y0 = reference.Pointer(y0S32, x0S32);
+          const u8 * restrict pReference_y1 = reference.Pointer(y1S32, x0S32);
 
-        const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
-        const u8 interpolatedPixel = static_cast<u8>(Roundf(interpolatedPixelF32));
+          const f32 pixelTL = *pReference_y0;
+          const f32 pixelTR = *(pReference_y0+1);
+          const f32 pixelBL = *pReference_y1;
+          const f32 pixelBR = *(pReference_y1+1);
 
-        pOut[i] = interpolatedPixel;
-      }
+          const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
+          const u8 interpolatedPixel = static_cast<u8>(Roundf(interpolatedPixelF32));
+
+          pOut[x] = interpolatedPixel;
+        } // for(s32 x=0; x<xIterationMax; x++)
+      } // for(s32 y=0; y<yIterationMax; y++)
 
       return RESULT_OK;
     }
