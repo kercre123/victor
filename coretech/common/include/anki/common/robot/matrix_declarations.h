@@ -82,24 +82,24 @@ namespace Anki
       // There's probably no need to use these directly. Instead, use the normal Matrix:: operations, like Matrix::Add
       namespace Elementwise
       {
-        template<typename Type> class Add {
+        template<typename InType, typename OutType> class Add {
         public:
-          static inline Type BinaryElementwiseOperation(const Type value1, const Type value2) {return value1 + value2;}
+          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(value1) + static_cast<OutType>(value2);}
         };
 
-        template<typename Type> class Subtract {
+        template<typename InType, typename OutType> class Subtract {
         public:
-          static inline Type BinaryElementwiseOperation(const Type value1, const Type value2) {return value1 - value2;}
+          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(value1) - static_cast<OutType>(value2);}
         };
 
-        template<typename Type> class DotMultiply {
+        template<typename InType, typename OutType> class DotMultiply {
         public:
-          static inline Type BinaryElementwiseOperation(const Type value1, const Type value2) {return value1 * value2;}
+          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(value1) * static_cast<OutType>(value2);}
         };
 
-        template<typename Type> class DotDivide {
+        template<typename InType, typename OutType> class DotDivide {
         public:
-          static inline Type BinaryElementwiseOperation(const Type value1, const Type value2) {return value1 / value2;}
+          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(value1) / static_cast<OutType>(value2);}
         };
 
         template<typename InType, typename Operator, typename OutType> Result ApplyOperation(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);

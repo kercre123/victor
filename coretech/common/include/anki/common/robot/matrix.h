@@ -95,62 +95,62 @@ namespace Anki
 
       template<typename InType, typename OutType> Result Add(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
       {
-        return Elementwise::ApplyOperation<InType, Elementwise::Add<InType>, OutType>(in1, in2, out);
+        return Elementwise::ApplyOperation<InType, Elementwise::Add<InType, OutType>, OutType>(in1, in2, out);
       } // template<typename Type> Result Add(const ConstArraySliceExpression<Type> &in1, const ConstArraySliceExpression<Type> &in2, const ArraySlice<Type> &out)
 
       template<typename InType, typename OutType> Result Add(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out)
       {
-        return Elementwise::ApplyOperation<InType, Elementwise::Add<InType>, OutType>(in1, value2, out);
+        return Elementwise::ApplyOperation<InType, Elementwise::Add<InType, OutType>, OutType>(in1, value2, out);
       }
 
       template<typename InType, typename OutType> Result Add(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
       {
-        return Elementwise::ApplyOperation<InType, Elementwise::Add<InType>, OutType>(value1, in2, out);
+        return Elementwise::ApplyOperation<InType, Elementwise::Add<InType, OutType>, OutType>(value1, in2, out);
       }
 
       template<typename InType, typename OutType> Result Subtract(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
       {
-        return Elementwise::ApplyOperation<InType, Elementwise::Subtract<InType>, OutType>(in1, in2, out);
+        return Elementwise::ApplyOperation<InType, Elementwise::Subtract<InType, OutType>, OutType>(in1, in2, out);
       } // template<typename Type> Result Subtract(const ConstArraySliceExpression<Type> &in1, const ConstArraySliceExpression<Type> &in2, const ArraySlice<Type> &out)
 
       template<typename InType, typename OutType> Result Subtract(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out)
       {
-        return Elementwise::ApplyOperation<InType, Elementwise::Subtract<InType>, OutType>(in1, value2, out);
+        return Elementwise::ApplyOperation<InType, Elementwise::Subtract<InType, OutType>, OutType>(in1, value2, out);
       }
 
       template<typename InType, typename OutType> Result Subtract(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
       {
-        return Elementwise::ApplyOperation<InType, Elementwise::Subtract<InType>, OutType>(value1, in2, out);
+        return Elementwise::ApplyOperation<InType, Elementwise::Subtract<InType, OutType>, OutType>(value1, in2, out);
       }
 
       template<typename InType, typename OutType> Result DotMultiply(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
       {
-        return Elementwise::ApplyOperation<InType, Elementwise::DotMultiply<InType>, OutType>(in1, in2, out);
+        return Elementwise::ApplyOperation<InType, Elementwise::DotMultiply<InType, OutType>, OutType>(in1, in2, out);
       } // template<typename Type> Result DotMultiply(const ConstArraySliceExpression<Type> &in1, const ConstArraySliceExpression<Type> &in2, const ArraySlice<Type> &out)
 
       template<typename InType, typename OutType> Result DotMultiply(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out)
       {
-        return Elementwise::ApplyOperation<InType, Elementwise::DotMultiply<InType>, OutType>(in1, value2, out);
+        return Elementwise::ApplyOperation<InType, Elementwise::DotMultiply<InType, OutType>, OutType>(in1, value2, out);
       }
 
       template<typename InType, typename OutType> Result DotMultiply(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
       {
-        return Elementwise::ApplyOperation<InType, Elementwise::DotMultiply<InType>, OutType>(value1, in2, out);
+        return Elementwise::ApplyOperation<InType, Elementwise::DotMultiply<InType, OutType>, OutType>(value1, in2, out);
       }
 
       template<typename InType, typename OutType> Result DotDivide(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
       {
-        return Elementwise::ApplyOperation<InType, Elementwise::DotDivide<InType>, OutType>(in1, in2, out);
+        return Elementwise::ApplyOperation<InType, Elementwise::DotDivide<InType, OutType>, OutType>(in1, in2, out);
       } // template<typename Type> Result DotDivide(const ConstArraySliceExpression<Type> &in1, const ConstArraySliceExpression<Type> &in2, const ArraySlice<Type> &out)
 
       template<typename InType, typename OutType> Result DotDivide(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out)
       {
-        return Elementwise::ApplyOperation<InType, Elementwise::DotDivide<InType>, OutType>(in1, value2, out);
+        return Elementwise::ApplyOperation<InType, Elementwise::DotDivide<InType, OutType>, OutType>(in1, value2, out);
       }
 
       template<typename InType, typename OutType> Result DotDivide(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
       {
-        return Elementwise::ApplyOperation<InType, Elementwise::DotDivide<InType>, OutType>(value1, in2, out);
+        return Elementwise::ApplyOperation<InType, Elementwise::DotDivide<InType, OutType>, OutType>(value1, in2, out);
       }
 
       template<typename InType, typename OutType> Result Multiply(const Array<InType> &in1, const Array<InType> &in2, Array<OutType> &out)
