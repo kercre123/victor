@@ -190,6 +190,11 @@ classdef SerialCamera < handle
 
         end % FUNCTION changeResolution()
         
+        function sendMessage(this, msg)
+            assert(isa(msg, 'uint8'), 'Message must be a uint8 array.');
+        
+            fwrite(this.serialObj, msg, 'uint8'); 
+        end
     end % public methods
     
 end % classdef SerialCamera
