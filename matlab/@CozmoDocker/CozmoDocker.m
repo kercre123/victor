@@ -389,6 +389,12 @@ classdef CozmoDocker < handle
             title(h, sprintf('LeftRightErr = %.1fmm', midPointErr), 'Back', 'w');
             
             % TODO: send the error signals back over the serial connection
+            dockErrorPacket = [uint8('E') ...
+                typecast(single([distError midPointErr angleError]), 'uint8')];
+            assert(length(dockErrorPacket)==13, ...
+                'Expecting docking error packet to be 13 bytes long.');
+            
+            this.camera.sendMessage(dockErrorPacket);
             
         end % FUNCTION sendError()
         
