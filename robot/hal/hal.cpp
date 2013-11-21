@@ -195,7 +195,6 @@ namespace Anki
         return 0;
       }
       
-      
       ///////////////////////////////////////
       // Function stubs
       //
@@ -229,8 +228,6 @@ namespace Anki
       
       // Ground truth (no-op if not in simulation?)
       void GetGroundTruthPose(f32 &x, f32 &y, f32& rad) {};
-      
-      
     }
   }
 }
@@ -248,9 +245,11 @@ int main()
 
   while (true)
   {
+    //Console::Update();
+
     Robot::step_LongExecution();
 
-/*    CameraStartFrame(HAL::CAMERA_FRONT, frame, HAL::CAMERA_MODE_VGA,
+    CameraStartFrame(HAL::CAMERA_FRONT, frame, HAL::CAMERA_MODE_VGA,
         HAL::CAMERA_UPDATE_SINGLE, 0, false);
 
     HAL::SendFrame();
@@ -259,7 +258,7 @@ int main()
     {
     }
 
-    u32 t2 = HAL::GetMicroCounter();
+    /*u32 t2 = HAL::GetMicroCounter();
     //printf("%i\n", (t2 - t));
     t = t2;
  
