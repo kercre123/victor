@@ -294,7 +294,6 @@ namespace Anki
           CameraUpdateMode updateMode, u16 exposure, bool enableLight)
       {
         CamHWRegs* cam = &m_cams[cameraID];
-        cam->isWaitingForFrame = true;
 
         CameraHandle* handle = m_handles[cameraID];
 
@@ -304,6 +303,13 @@ namespace Anki
           CameraConfigure(handle, cam->MXI_CAMX_BASE_ADR, mode, frame);
           cam->lastMode = mode;
         }
+
+        IRQDisable();
+        cam->updateMode = updateMode;
+        cam->isWaitingForFrame = true;
+        IRQEnable();
+
+        // TODO: Set new framebuffer address here
 
         // Setup continuous mode here to start running
         u32 address = cam->CIFX_DMA0_CFG_ADR;
@@ -319,10 +325,6 @@ namespace Anki
             D_CIF_DMA_ENABLE |
             D_CIF_DMA_AUTO_RESTART_ONCE_SHADOW;
         }
-
-        cam->updateMode = updateMode;
-
-        // TODO: Set new framebuffer address here
       }
 
       u32 CameraGetReceivedLines(CameraID cameraID)

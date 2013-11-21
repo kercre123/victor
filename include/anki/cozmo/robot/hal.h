@@ -308,6 +308,10 @@ namespace Anki
 
       const BirthCertificate& GetBirthCertificate();
 
+      // Interrupts
+      void IRQDisable();
+      void IRQEnable();
+
     } // namespace HAL
   } // namespace Cozmo
 } // namespace Anki

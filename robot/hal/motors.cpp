@@ -24,16 +24,16 @@ namespace Anki
       static const u8 RIGHT_WHEEL_BACKWARD_MODE   = 5;
       static const u8 RIGHT_WHEEL_PWM             = 4;
 
-      static const u8 LIFT_UP_PIN                 = 82;
-      static const u8 LIFT_UP_MODE                = 5;
-      static const u8 LIFT_DOWN_PIN               = 93;
-      static const u8 LIFT_DOWN_MODE              = 1;
+      static const u8 LIFT_UP_PIN                 = 93;
+      static const u8 LIFT_UP_MODE                = 1;
+      static const u8 LIFT_DOWN_PIN               = 82;
+      static const u8 LIFT_DOWN_MODE              = 5;
       static const u8 LIFT_PWM                    = 5;
 
-      static const u8 GRIPPER_UP_PIN              = 80;
-      static const u8 GRIPPER_UP_MODE             = 5;
-      static const u8 GRIPPER_DOWN_PIN            = 83;
-      static const u8 GRIPPER_DOWN_MODE           = 1;
+      static const u8 GRIPPER_UP_PIN              = 83;
+      static const u8 GRIPPER_UP_MODE             = 1;
+      static const u8 GRIPPER_DOWN_PIN            = 80;
+      static const u8 GRIPPER_DOWN_MODE           = 5;
       static const u8 GRIPPER_PWM                 = 3;
 
       static const u8 HEAD_UP_PIN                 = 17;
