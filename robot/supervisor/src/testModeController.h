@@ -25,11 +25,31 @@ namespace Anki {
       
       typedef enum {
         TM_NONE,
+        
+        // Attempts to dock to a block that is placed in front of it
+        TM_DOCK,
+        
+        // Follows an example path. Requires localization
         TM_PATH_FOLLOW,
+        
+        // Tests ExecuteDirectDrive() or open loop control via HAL::MotorSetPower()
         TM_DIRECT_DRIVE,
+
+        // Moves lift up and down
         TM_LIFT,
+        
+        // Tilts head up and down
         TM_HEAD,
+        
+        // Engages and disengages gripper
         TM_GRIPPER,
+        
+        // Drives slow and then stops.
+        // Drives fast and then stops.
+        // Reports stopping distance and time (in tics).
+        TM_STOP_TEST,
+        
+        // Drives all motors at max power simultaneously.
         TM_MAX_POWER_TEST
       } TestMode;
       

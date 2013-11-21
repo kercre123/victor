@@ -20,7 +20,13 @@ namespace Anki {
       // "Private Member Variables"
       namespace {
         
-        ////// DriveTest defines /////////
+        // Some common vars that can be used across multiple tests
+        u32 ticCnt_, ticCnt2_;   // Multi-purpose tic counters
+        u8 dir_;                 // Multi-purpose direction flag
+        bool pathStarted_;       // Flag for whether or not we started to traverse a path
+        
+        
+        //////// DriveTest /////////
         #define TOGGLE_DIRECTION_TEST 0   // 0: Only drive forward
                                           // 1: Switch between driving forward and reverse
         
@@ -49,10 +55,10 @@ namespace Anki {
         // 0.25    40      65
         const f32 WHEEL_POWER_CMD = 0.4;
         const f32 WHEEL_SPEED_CMD_MMPS = 100;
-        ////// End of DriveTest defines ////////
+        ////// End of DriveTest ////////
         
         
-        /////// LiftTest defines /////////
+        /////// LiftTest /////////
         // 0: Set power directly with MotorSetPower
         // 1: Command a desired lift height (i.e. use LiftController)
         #define LIFT_HEIGHT_TEST 1
@@ -60,10 +66,10 @@ namespace Anki {
         const f32 LIFT_POWER_CMD = 0.3;
         const f32 LIFT_DES_HIGH_HEIGHT = 50.f;
         const f32 LIFT_DES_LOW_HEIGHT = 22.f;
-        //// End of LiftTest defines //////
+        //// End of LiftTest  //////
         
         
-        /////// HeadTest defines /////////
+        //////// HeadTest /////////
         // 0: Set power directly with MotorSetPower
         // 1: Command a desired head angle (i.e. use HeadController)
         #define HEAD_POSITION_TEST 0
@@ -71,9 +77,26 @@ namespace Anki {
         const f32 HEAD_POWER_CMD = 0.3;
         const f32 HEAD_DES_HIGH_ANGLE = 0.5f;
         const f32 HEAD_DES_LOW_ANGLE = -0.2f;
-        //// End of HeadTest defines //////
+        //// End of HeadTest //////
         
+        
+        //////// DockTest /////////
+        const f32 DOCK_APPROACH_SPEED_MMPS = 30;
+        const f32 DOCK_APPROACH_ACCEL_MMPS2 = 500;
+        
+        ////// End of DockTest ////
 
+        
+        //////// StopTest /////////
+        bool ST_go;
+        f32 ST_speed;
+        bool ST_slowingDown;
+        f32 ST_prevLeftPos, ST_prevRightPos;
+        u16 ST_slowDownTics;
+        ///// End of StopTest /////
+        
+        
+        
         // Current test mode
         TestMode testMode_ = TM_NONE;
         
@@ -85,19 +108,50 @@ namespace Anki {
       
       
       // Commands a path and executes it
+      ReturnCode DockTestInit()
+      {
+        PRINT("\n==== Starting DockTest =====\n");
+        pathStarted_ = false;
+        return EXIT_SUCCESS;
+      }
+      
+      ReturnCode DockTestUpdate()
+      {
+        const u32 startDriveTime_us = 2000000;
+
+        if (!pathStarted_ && HAL::GetMicroCounter() > startDriveTime_us) {
+          
+          // Set speed and accel
+          SpeedController::SetUserCommandedAcceleration( DOCK_APPROACH_ACCEL_MMPS2 );
+          SpeedController::SetUserCommandedDesiredVehicleSpeed( DOCK_APPROACH_SPEED_MMPS );
+          PRINT("Speed commanded: %d mm/s\n", SpeedController::GetUserCommandedDesiredVehicleSpeed() );
+          
+          // Create a path and follow it
+          PathFollower::AppendPathSegment_Line(0, 0.0, 0.0, 0.3, 0.0);
+          
+          
+
+          PathFollower::StartPathTraversal();
+          pathStarted_ = true;
+        }
+        
+        return EXIT_SUCCESS;
+      }
+
+      
+      
+      // Commands a path and executes it
       ReturnCode PathFollowTestInit()
       {
-        PRINT("=== Starting Path Follow test mode ===\n");
+        PRINT("\n=== Starting PathFollowTest ===\n");
+        pathStarted_ = false;
         return EXIT_SUCCESS;
       }
       
       ReturnCode PathFollowTestUpdate()
       {
         const u32 startDriveTime_us = 500000;
-        static bool testPathStarted = false;
-        if (not PathFollower::IsTraversingPath() &&
-            HAL::GetMicroCounter() > startDriveTime_us &&
-            !testPathStarted) {
+        if (!pathStarted_ && HAL::GetMicroCounter() > startDriveTime_us) {
           SpeedController::SetUserCommandedAcceleration( MAX(ONE_OVER_CONTROL_DT + 1, 500) );  // This can't be smaller than 1/CONTROL_DT!
           SpeedController::SetUserCommandedDesiredVehicleSpeed(160);
           PRINT("Speed commanded: %d mm/s\n",
@@ -114,7 +168,7 @@ namespace Anki {
           float arc2_radius = sqrt(0.02); // Radius of sqrt(0.1^2 + 0.1^2)
           PathFollower::AppendPathSegment_Arc(0, 0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, PIDIV2);
           PathFollower::StartPathTraversal();
-          testPathStarted = true;
+          pathStarted_ = true;
         }
         
         return EXIT_SUCCESS;
@@ -124,7 +178,8 @@ namespace Anki {
       
       ReturnCode DriveTestInit()
       {
-        PRINT("=== Starting Direct drive test mode ===\n");
+        PRINT("\n=== Starting DirectDriveTest ===\n");
+        ticCnt_ = 0;
         return EXIT_SUCCESS;
       }
       
@@ -132,10 +187,9 @@ namespace Anki {
       {
         static bool fwd = false;
         static bool firstSpeedCommanded = false;
-        static u32 cnt = 0;
 
         // Change direction (or at least print speed
-        if (cnt++ >= WHEEL_TOGGLE_DIRECTION_PERIOD_MS / TIME_STEP) {
+        if (ticCnt_++ >= WHEEL_TOGGLE_DIRECTION_PERIOD_MS / TIME_STEP) {
 
           f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LEFT_WHEEL);
           f32 rSpeed = HAL::MotorGetSpeed(HAL::MOTOR_RIGHT_WHEEL);
@@ -150,7 +204,7 @@ namespace Anki {
 #else
             PRINT("Going forward %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", WHEEL_SPEED_CMD_MMPS, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
 #endif
-            cnt = 0;
+            ticCnt_ = 0;
             return EXIT_SUCCESS;
           }
           
@@ -179,7 +233,7 @@ namespace Anki {
 #endif
             
           }
-          cnt = 0;
+          ticCnt_ = 0;
           
 #if(TOGGLE_DIRECTION_TEST == 0)
           firstSpeedCommanded = true;
@@ -192,6 +246,10 @@ namespace Anki {
       
       ReturnCode LiftTestInit()
       {
+        PRINT("\n==== Starting LiftTest =====\n");
+        ticCnt_ = 0;
+        ticCnt2_ = 0;
+        dir_ = 0;
 #if(!LIFT_HEIGHT_TEST)
         LiftController::Disable();
 #endif
@@ -202,10 +260,9 @@ namespace Anki {
       ReturnCode LiftTestUpdate()
       {
         static bool up = false;
-        static u32 cnt = 0, printCnt = 0;
         
         // Change direction
-        if (cnt++ >= 4000 / TIME_STEP) {
+        if (ticCnt_++ >= 4000 / TIME_STEP) {
           
 
 #if(LIFT_HEIGHT_TEST)
@@ -229,11 +286,11 @@ namespace Anki {
           }
 #endif
           
-          cnt = 0;
+          ticCnt_ = 0;
         }
         
         // Print speed
-        if (printCnt++ >= 200 / TIME_STEP) {
+        if (ticCnt2_++ >= 200 / TIME_STEP) {
           f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
           f32 lSpeed_filt = LiftController::GetAngularVelocity();
           f32 lPos = LiftController::GetAngleRad(); // HAL::MotorGetPosition(HAL::MOTOR_LIFT);
@@ -242,7 +299,7 @@ namespace Anki {
           //f32 lSpeed_filt;
           //          WheelController::GetFilteredWheelSpeeds(&lSpeed_filt,&rSpeed_filt);
           //PRINT("Lift speed %f rad/s, filt_speed %f rad/s, position %f rad, %f mm\n", lSpeed, lSpeed_filt, lPos, lHeight);
-          printCnt = 0;
+          ticCnt2_ = 0;
         }
         
         
@@ -252,6 +309,9 @@ namespace Anki {
       
       ReturnCode HeadTestInit()
       {
+        PRINT("\n==== Starting HeadTest =====\n");
+        ticCnt_ = 0;
+        ticCnt2_ = 0;
 #if(!HEAD_POSITION_TEST)
         HeadController::Disable();
 #endif
@@ -262,10 +322,9 @@ namespace Anki {
       ReturnCode HeadTestUpdate()
       {
         static bool up = false;
-        static u32 cnt = 0, printCnt = 0;
         
         // Change direction
-        if (cnt++ >= 4000 / TIME_STEP) {
+        if (ticCnt_++ >= 4000 / TIME_STEP) {
           
           
 #if(HEAD_POSITION_TEST)
@@ -288,16 +347,16 @@ namespace Anki {
           }
 #endif
           
-          cnt = 0;
+          ticCnt_ = 0;
         }
         
         // Print speed
-        if (printCnt++ >= 200 / TIME_STEP) {
+        if (ticCnt2_++ >= 200 / TIME_STEP) {
           f32 hSpeed = HAL::MotorGetSpeed(HAL::MOTOR_HEAD);
           f32 hPos = HeadController::GetAngleRad();
           
           PRINT("Head speed %f rad/s, angle %f rad\n", hSpeed, hPos);
-          printCnt = 0;
+          ticCnt2_ = 0;
         }
         
         
@@ -306,6 +365,8 @@ namespace Anki {
       
       ReturnCode GripperTestInit()
       {
+        PRINT("\n==== Starting GripperTest =====\n");
+        ticCnt_ = 0;
         return EXIT_SUCCESS;
       }
       
@@ -313,10 +374,9 @@ namespace Anki {
       ReturnCode GripperTestUpdate()
       {
         static bool up = false;
-        static u32 cnt = 0;
         
         // Change direction
-        if (cnt++ >= 4000 / TIME_STEP) {
+        if (ticCnt_++ >= 4000 / TIME_STEP) {
           
           up = !up;
           if (up) {
@@ -327,14 +387,68 @@ namespace Anki {
             GripController::DisengageGripper();
           }
           
-          cnt = 0;
+          ticCnt_ = 0;
         }
         
         return EXIT_SUCCESS;
       }
       
+      ReturnCode StopTestInit()
+      {
+        PRINT("\n==== Starting StopTest =====\n");
+        ticCnt_ = 0;
+        ST_go = false;
+        ST_speed = 0.f;
+        ST_slowingDown = false;
+        return EXIT_SUCCESS;
+      }
+      
+      
+      ReturnCode StopTestUpdate()
+      {
+        if (ticCnt_++ > 2000 / TIME_STEP) {
+          ST_go = !ST_go;
+          if(ST_go) {
+            // Toggle speed
+            if (ST_speed == 100.f)
+              ST_speed = 20.f;
+            else
+              ST_speed = 100.f;
+            
+            PRINT("\nGO: %f mm/s\n", ST_speed);
+            SteeringController::ExecuteDirectDrive(ST_speed, ST_speed);
+          } else {
+            // Stopping
+            SteeringController::ExecuteDirectDrive(0, 0);
+            HAL::MotorResetPosition(HAL::MOTOR_LEFT_WHEEL);
+            HAL::MotorResetPosition(HAL::MOTOR_RIGHT_WHEEL);
+            ST_prevLeftPos = 1000;
+            ST_prevRightPos = 1000;
+            ST_slowDownTics = 0;
+            ST_slowingDown = true;
+          }
+          ticCnt_ = 0;
+        }
+        
+        // Report stopping distance once it has come to a complete stop
+        if(ST_slowingDown) {
+          if (HAL::MotorGetPosition(HAL::MOTOR_LEFT_WHEEL) == ST_prevLeftPos &&
+              HAL::MotorGetPosition(HAL::MOTOR_RIGHT_WHEEL) == ST_prevRightPos) {
+            PRINT("STOPPED: (%f, %f) mm in %d tics\n", ST_prevLeftPos, ST_prevRightPos, ST_slowDownTics);
+            ST_slowingDown = false;
+          }
+          ST_prevLeftPos = HAL::MotorGetPosition(HAL::MOTOR_LEFT_WHEEL);
+          ST_prevRightPos = HAL::MotorGetPosition(HAL::MOTOR_RIGHT_WHEEL);
+          ST_slowDownTics++;
+        }
+        
+        return EXIT_SUCCESS;
+      }
+
       ReturnCode MaxPowerTestInit()
       {
+        ticCnt_ = 0;
+        
         // Disable all controllers so that they can be overriden with HAL power commands
         WheelController::Disable();
         LiftController::Disable();
@@ -345,9 +459,8 @@ namespace Anki {
       
       ReturnCode MaxPowerTestUpdate()
       {
-        static u16 cnt = 0;
         static f32 pwr = 1.0;
-        if (cnt++ > 5000 / TIME_STEP) {
+        if (ticCnt_++ > 5000 / TIME_STEP) {
           PRINT("SWITCHING POWER: %f\n", pwr);
           HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 1.0);
           HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 1.0);
@@ -355,7 +468,7 @@ namespace Anki {
           //HAL::MotorSetPower(HAL::MOTOR_HEAD, pwr);
           //HAL::MotorSetPower(HAL::MOTOR_GRIP, pwr);
           pwr *= -1;
-          cnt = 0;
+          ticCnt_ = 0;
         }
         return EXIT_SUCCESS;
       }
@@ -368,6 +481,10 @@ namespace Anki {
         switch(testMode_) {
           case TM_NONE:
             updateFunc = NULL;
+            break;
+          case TM_DOCK:
+            ret = DockTestInit();
+            updateFunc = DockTestUpdate;
             break;
           case TM_PATH_FOLLOW:
             ret = PathFollowTestInit();
@@ -388,6 +505,10 @@ namespace Anki {
           case TM_GRIPPER:
             ret = GripperTestInit();
             updateFunc = GripperTestUpdate;
+            break;
+          case TM_STOP_TEST:
+            ret = StopTestInit();
+            updateFunc = StopTestUpdate;
             break;
           case TM_MAX_POWER_TEST:
             ret = MaxPowerTestInit();
