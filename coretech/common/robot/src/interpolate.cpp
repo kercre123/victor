@@ -4,8 +4,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    // This function just checks all the parameters, and calls either the 1D or 2D version
-    Result Interp2(const Array<u8> &reference, const Array<f32> &xCoordinates, const Array<f32> &yCoordinates, Array<u8> &out, const InterpolationType interpolationType, const u8 invalidValue)
+    template<> Result Interp2(const Array<u8> &reference, const Array<f32> &xCoordinates, const Array<f32> &yCoordinates, Array<u8> &out, const InterpolationType interpolationType, const u8 invalidValue)
     {
       AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_BILINEAR,
         RESULT_FAIL, "Interp2", "Only INTERPOLATE_BILINEAR is supported");
@@ -99,6 +98,7 @@ namespace Anki
           const f32 pixelBR = *(pReference_y1+1);
 
           const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
+
           const u8 interpolatedPixel = static_cast<u8>(Roundf(interpolatedPixelF32));
 
           pOut[x] = interpolatedPixel;

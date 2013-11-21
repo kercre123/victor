@@ -48,7 +48,7 @@ namespace Anki
     };
 
     // Similar to Matlab Interp2, except the upper-left corner is (0,0) instead of (1,1)
-    Result Interp2(const Array<u8> &reference, const Array<f32> &xCoordinates, const Array<f32> &yCoordinates, Array<u8> &out, const InterpolationType interpolationType = INTERPOLATE_BILINEAR, const u8 invalidValue = 0);
+    template<typename DataType> Result Interp2(const Array<DataType> &reference, const Array<f32> &xCoordinates, const Array<f32> &yCoordinates, Array<DataType> &out, const InterpolationType interpolationType=INTERPOLATE_BILINEAR, const DataType invalidValue=static_cast<DataType>(0));
 
     // T = Top, B = Bottom, L = Left, R = Right
     template<typename Type> inline Type InterpolateBilinear2d(const Type pixelTL, const Type pixelTR, const Type pixelBL, const Type pixelBR, const Type alphaY, const Type alphaYinverse, const Type alphaX, const Type alphaXinverse);
