@@ -194,49 +194,6 @@ namespace Anki
       {
         return 0;
       }
-      
-      
-      ///////////////////////////////////////
-      // Function stubs
-      //
-      // Flesh out and move to appropriate place!
-      
-      // Gripper control
-      bool IsGripperEngaged() {return false;}
-      
-      // Cameras
-      //const u8* MatCameraGetFrame() {return NULL;}
-      //const u8* FrontCameraGetFrame() {return NULL;}
-      
-      const FrameGrabber GetHeadFrameGrabber() {FrameGrabber junk; return junk;}
-      const FrameGrabber GetMatFrameGrabber() {FrameGrabber junk; return junk;}
-      
-      const CameraInfo* GetHeadCamInfo() {CameraInfo* junk; return junk;}
-      const CameraInfo* GetMatCamInfo() {CameraInfo* junk; return junk;}
-      
-      // Communications
-      //bool IsConnected() {return false;}
-      u32 RadioFromBase(u8 buffer[RADIO_BUFFER_SIZE]) {return 0;}
-      bool RadioToBase(u8* buffer, u32 size) {return true;}
-      
-      
-      // Misc
-      //bool IsInitialized();
-      void UpdateDisplay() {};
-      
-      // Get the number of microseconds since boot
-      //u32 GetMicroCounter(void);
-      //void MicroWait(u32 microseconds);
-      
-      s32 GetRobotID(void) {return 0;}
-      
-      // Take a step (needed for webots, possibly a no-op for real robot?)
-      ReturnCode Step(void) {return EXIT_SUCCESS;}
-      
-      // Ground truth (no-op if not in simulation?)
-      void GetGroundTruthPose(f32 &x, f32 &y, f32& rad) {};
-      
-      
     }
   }
 }
@@ -254,6 +211,8 @@ int main()
 
   while (true)
   {
+    //Console::Update();
+
     Robot::step_LongExecution();
 
 /*    CameraStartFrame(HAL::CAMERA_FRONT, frame, HAL::CAMERA_MODE_VGA,
