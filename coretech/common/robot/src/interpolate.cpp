@@ -55,13 +55,13 @@ namespace Anki
 
       const s32 numValues = xCoordinates.get_size(1);
 
-      const f32 * restrict pXCoordinates = xCoordinates.Pointer(0,0);
-      const f32 * restrict pYCoordinates = yCoordinates.Pointer(0,0);
-
       const s32 yIterationMax = isOutputOneDimensional ? 1                    : outHeight;
       const s32 xIterationMax = isOutputOneDimensional ? (outHeight*outWidth) : outWidth;
 
       for(s32 y=0; y<yIterationMax; y++) {
+        const f32 * restrict pXCoordinates = xCoordinates.Pointer(y,0);
+        const f32 * restrict pYCoordinates = yCoordinates.Pointer(y,0);
+
         u8 * restrict pOut = out.Pointer(y,0);
 
         for(s32 x=0; x<xIterationMax; x++) {

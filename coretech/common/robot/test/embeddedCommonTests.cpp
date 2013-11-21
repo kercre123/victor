@@ -70,6 +70,47 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, Interp2_twoDimensional)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u8> reference(3,5,ms);
+
+  // reference = [1:5; 11:15; 21:25];
+  reference(0,0,0,-1).Set(LinearSequence<u8>(1,5));
+  reference(1,1,0,-1).Set(LinearSequence<u8>(11,15));
+  reference(2,2,0,-1).Set(LinearSequence<u8>(21,25));
+
+  // [xGridVector, yGridVector] = meshgrid(1+(-0.9:0.9:6), 1+(-1:1:4));
+  Meshgrid<f32> mesh(LinearSequence<f32>(-0.9f,0.9f,6.0f), LinearSequence<f32>(-1.0f,1.0f,4.0f));
+  Array<f32> xGridMatrix = mesh.EvaluateX2(ms);
+  Array<f32> yGridMatrix = mesh.EvaluateY2(ms);
+
+  // result = round(interp2(reference, xGridVector, yGridVector)); result(isnan(result)) = 0
+  Array<u8> result(xGridMatrix.get_size(0), xGridMatrix.get_size(1), ms);
+  ASSERT_TRUE(Interp2(reference, xGridMatrix, yGridMatrix, result) == RESULT_OK);
+
+  const u8 result_groundTruth[6][8] = {
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 1, 2, 3, 4, 5, 0, 0},
+    {0, 11, 12, 13, 14, 15, 0, 0},
+    {0, 21, 22, 23, 24, 25, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0}};
+
+  //result.Print("result");
+
+  for(s32 y=0; y<6; y++) {
+    for(s32 x=0; x<8; x++) {
+      ASSERT_TRUE(result[y][x] == result_groundTruth[y][x]);
+    }
+  }
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, Interp2_oneDimensional)
 {
   ASSERT_TRUE(buffer != NULL);
@@ -94,7 +135,7 @@ GTEST_TEST(CoreTech_Common, Interp2_oneDimensional)
 
   const u8 result_groundTruth[48] = {0, 0, 0, 0, 0, 0, 0, 1, 11, 21, 0, 0, 0, 2, 12, 22, 0, 0, 0, 3, 13, 23, 0, 0, 0, 4, 14, 24, 0, 0, 0, 5, 15, 25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-  result.Print("result");
+  //result.Print("result");
 
   for(s32 i=0; i<48; i++) {
     ASSERT_TRUE(result[0][i] == result_groundTruth[i]);
