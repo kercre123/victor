@@ -169,22 +169,26 @@ namespace Anki
         for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++, fScale++) {
           PUSH_MEMORY_STACK(memory);
 
+          const s32 numPointsY = templateCoordinates[iScale].get_yGridVector().get_size();
+          const s32 numPointsX = templateCoordinates[iScale].get_xGridVector().get_size();
+
           const f32 scale = powf(2.0f, fScale);
-
-          Array<f32> xIn = templateCoordinates[iScale].EvaluateX2(memory);
-          Array<f32> yIn = templateCoordinates[iScale].EvaluateY2(memory);
-
-          assert(xIn.get_size(0) == yIn.get_size(0));
-          assert(xIn.get_size(1) == yIn.get_size(1));
-
-          const s32 numPointsY = xIn.get_size(0);
-          const s32 numPointsX = xIn.get_size(1);
 
           Array<f32> xTransformed(numPointsY, numPointsX, memory);
           Array<f32> yTransformed(numPointsY, numPointsX, memory);
 
-          if(transformation.TransformPoints(xIn, yIn, scale, this->center, xTransformed, yTransformed) != RESULT_OK)
-            return RESULT_FAIL;
+          {
+            PUSH_MEMORY_STACK(memory);
+
+            Array<f32> xIn = templateCoordinates[iScale].EvaluateX2(memory);
+            Array<f32> yIn = templateCoordinates[iScale].EvaluateY2(memory);
+
+            assert(xIn.get_size(0) == yIn.get_size(0));
+            assert(xIn.get_size(1) == yIn.get_size(1));
+
+            if(transformation.TransformPoints(xIn, yIn, scale, this->center, xTransformed, yTransformed) != RESULT_OK)
+              return RESULT_FAIL;
+          } // PUSH_MEMORY_STACK(memory);
 
           this->templateImagePyramid[iScale] = Array<u8>(xTransformed.get_size(0), xTransformed.get_size(1), memory);
 
@@ -205,6 +209,23 @@ namespace Anki
           //  matlab.PutArray(this->templateImagePyramid[iScale], "templateImagePyramid0");
           //  matlab.PutArray(templateImage, "templateImage");
           //}
+
+          Array<f32> templateDerivativeX(numPointsY, numPointsX, memory);
+          Array<f32> templateDerivativeY(numPointsY, numPointsX, memory);
+
+          //Ix = (image_right(targetBlur) - image_left(targetBlur))/2 * spacing;
+          //Iy = (image_down(targetBlur) - image_up(targetBlur))/2 * spacing;
+          Matrix::Subtract<u8,f32,f32>(templateImagePyramid[iScale](1,-2,2,-1), templateImagePyramid[iScale](1,-2,0,-3), templateDerivativeX(1,-2,1,-2));
+          Matrix::Subtract<u8,f32,f32>(templateImagePyramid[iScale](2,-1,1,-2), templateImagePyramid[iScale](0,-3,1,-2), templateDerivativeY(1,-2,1,-2));
+          Matrix::DotMultiply<f32,f32,f32>(templateDerivativeX, scale / 2.0f, templateDerivativeX);
+          Matrix::DotMultiply<f32,f32,f32>(templateDerivativeY, scale / 2.0f, templateDerivativeY);
+
+          {
+            Matlab matlab(false);
+            matlab.PutArray(this->templateImagePyramid[iScale], "templateImagePyramid0");
+            matlab.PutArray(templateDerivativeX, "templateDerivativeX");
+            matlab.PutArray(templateDerivativeY, "templateDerivativeY");
+          }
 
           const s32 numValidPoints = templateCoordinates[iScale].get_numElements();
         }
