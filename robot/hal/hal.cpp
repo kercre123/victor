@@ -111,7 +111,7 @@ namespace Anki
         // Check neck potentiometer here, until radio implements it
         // ...
 
-        //Robot::step_MainExecution();
+        Robot::step_MainExecution();
 
         // Pet the watchdog
         // Other HAL tasks?
@@ -257,7 +257,7 @@ int main()
   {
     //Console::Update();
 
-    //Robot::step_LongExecution();
+    Robot::step_LongExecution();
 
     CameraStartFrame(HAL::CAMERA_FRONT, frame, HAL::CAMERA_MODE_VGA,
         HAL::CAMERA_UPDATE_SINGLE, 0, false);
