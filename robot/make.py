@@ -233,6 +233,7 @@ if __name__ == '__main__':
   with open(ldCmdFile, 'w+') as f:
     f.write(s)
   if os.system(ldCmdFile) != 0:
+    os.remove(ldCmdFile)
     sys.exit(1)
   os.remove(ldCmdFile)
   
