@@ -8,6 +8,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 **/
 
 #include "anki/vision/robot/lucasKanade.h"
+#include "anki/common/robot/matlabInterface.h"
+#include "anki/common/robot/interpolate.h"
 
 namespace Anki
 {
@@ -106,6 +108,13 @@ namespace Anki
 
         templateCoordinates.set_size(numPyramidLevels);
 
+        templateImagePyramid = FixedLengthList<Array<u8>>(numPyramidLevels, memory);
+
+        AnkiConditionalErrorAndReturn(templateImagePyramid.IsValid(),
+          "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Could not allocate templateImagePyramid");
+
+        templateImagePyramid.set_size(numPyramidLevels);
+
         this->isValid = true;
       }
 
@@ -114,10 +123,10 @@ namespace Anki
         const bool isOutColumnMajor = true; // TODO: change to false, which will probably be faster
 
         AnkiConditionalErrorAndReturnValue(this->isInitialized == false,
-          RESULT_FAIL, "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "This object has already been initialized");
+          RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "This object has already been initialized");
 
         AnkiConditionalErrorAndReturnValue(templateImageHeight == templateImage.get_size(0) && templateImageWidth == templateImage.get_size(1),
-          RESULT_FAIL, "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "template size doesn't match constructor");
+          RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "template size doesn't match constructor");
 
         // We do this early, before any memory is allocated This way, an early return won't be able
         // to leak memory with multiple calls to this object
@@ -131,13 +140,15 @@ namespace Anki
           static_cast<s32>(Roundf(templateRegion.left)),
           static_cast<s32>(Roundf(templateRegion.right))).Set(1.0f);
 
-        this->templateRegionHeight = templateRegion.bottom - templateRegion.top;
-        this->templateRegionWidth = templateRegion.right - templateRegion.left;
+        this->templateRegionHeight = templateRegion.bottom - templateRegion.top + 1;
+        this->templateRegionWidth = templateRegion.right - templateRegion.left + 1;
 
-        this->center.y = this->templateRegionHeight / 2;
-        this->center.x = this->templateRegionWidth / 2;
+        this->center.y = (templateRegion.bottom + templateRegion.top) / 2;
+        this->center.x = (templateRegion.right + templateRegion.left) / 2;
 
         this->templateWeightsSigma = sqrtf(this->templateRegionWidth*this->templateRegionWidth + this->templateRegionHeight*this->templateRegionHeight) / 2.0f;
+
+        this->templateImagePyramid[0] = Array<u8>(templateImageHeight, templateImageWidth, memory);
 
         f32 fScale = 0.0f;
         for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++, fScale++) {
@@ -151,7 +162,7 @@ namespace Anki
 
           A_full[iScale] = Array<f32>(8, numValidPoints, memory);
           AnkiConditionalErrorAndReturnValue(A_full[iScale].IsValid(),
-            RESULT_FAIL, "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Could not allocate A_full[iScale]");
+            RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "Could not allocate A_full[iScale]");
         }
 
         fScale = 0.0f;
@@ -175,6 +186,29 @@ namespace Anki
           if(transformation.TransformPoints(xIn, yIn, scale, this->center, xTransformed, yTransformed) != RESULT_OK)
             return RESULT_FAIL;
 
+          this->templateImagePyramid[iScale] = Array<u8>(xTransformed.get_size(0), xTransformed.get_size(1), memory);
+
+          AnkiConditionalErrorAndReturnValue(this->templateImagePyramid[iScale].IsValid(),
+            RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "Could not allocate templateImagePyramid[i]");
+
+          templateImage.Show("templateImage", true);
+
+          if(Interp2(templateImage, xTransformed, yTransformed, this->templateImagePyramid[iScale], INTERPOLATE_BILINEAR) != RESULT_OK)
+            return RESULT_FAIL;
+
+          {
+            Matlab matlab(false);
+            matlab.PutArray(xIn, "xIn");
+            matlab.PutArray(yIn, "yIn");
+            matlab.PutArray(xTransformed, "xTransformed");
+            matlab.PutArray(yTransformed, "yTransformed");
+            matlab.PutArray(this->templateImagePyramid[iScale], "templateImagePyramid0");
+          }
+          //xIn.Print("xIn");
+          //yIn.Print("yIn");
+          //xTransformed.Print("xTransformed");
+          //yTransformed.Print("yTransformed");
+
           const s32 numValidPoints = templateCoordinates[iScale].get_numElements();
         }
 
@@ -189,7 +223,15 @@ namespace Anki
         if(!A_full.IsValid())
           return false;
 
+        if(!templateImagePyramid.IsValid())
+          return false;
+
         if(this->isInitialized) {
+          for(s32 i=0; i<numPyramidLevels; i++) {
+            if(!templateImagePyramid[i].IsValid())
+              return false;
+          }
+
           for(s32 i=0; i<numPyramidLevels; i++) {
             if(!A_full[i].IsValid())
               return false;

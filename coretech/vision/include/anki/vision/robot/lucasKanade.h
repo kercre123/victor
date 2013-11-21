@@ -64,6 +64,7 @@ namespace Anki
       protected:
         // A_full is the list of derivative matrices for each level of the pyramid
         FixedLengthList<Array<f32>> A_full;
+        FixedLengthList<Array<u8>> templateImagePyramid;
         FixedLengthList<Meshgrid<f32>> templateCoordinates;
 
         Array<f32> templateMask;

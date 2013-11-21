@@ -161,7 +161,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
   const f32 ridgeWeight = 0.0f;
 
-  const Rectangle<f32> templateRegion(22, 44, 13, 35);
+  const Rectangle<f32> templateRegion(13, 33, 22, 43);
 
   InitializeBuffers();
 
@@ -177,10 +177,10 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
   ASSERT_TRUE(blockImages00189_80x60_WIDTH == imageWidth && blockImages00190_80x60_WIDTH == imageWidth);
 
   Array<u8> image1(imageHeight, imageWidth, scratch0);
-  image1.Set_unsafe(blockImage50, imageWidth*imageHeight);
+  image1.Set_unsafe(blockImages00189_80x60, imageWidth*imageHeight);
 
   Array<u8> image2(imageHeight, imageWidth, scratch0);
-  image2.Set_unsafe(blockImage50, imageWidth*imageHeight);
+  image2.Set_unsafe(blockImages00190_80x60, imageWidth*imageHeight);
 
   TemplateTracker::LucasKanadeTracker_f32 tracker(imageHeight, imageWidth, numPyramidLevels, TemplateTracker::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
 
