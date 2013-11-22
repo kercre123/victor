@@ -74,6 +74,8 @@ extern "C" {
 
 #endif  // SIMULATOR
 
+#define STREAM_CAMERA_TO_UART 1
+
 #define REG_WORD(x) *(volatile u32*)(x)
 
 namespace Anki

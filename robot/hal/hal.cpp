@@ -266,7 +266,9 @@ int main()
     {
     }
 
+#if(STREAM_CAMERA_TO_UART)
     HAL::SendFrame();
+#endif
 
     u32 t2 = HAL::GetMicroCounter();
     //printf("%i\n", (t2 - t));
