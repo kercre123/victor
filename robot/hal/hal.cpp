@@ -194,6 +194,16 @@ namespace Anki
       {
         return 0;
       }
+
+      void IRQDisable()
+      {
+        swcLeonSetPIL(0);
+      }
+
+      void IRQEnable()
+      {
+        swcLeonEnableTraps();
+      }
       
       ///////////////////////////////////////
       // Function stubs
@@ -249,14 +259,14 @@ int main()
 
     Robot::step_LongExecution();
 
-/*    CameraStartFrame(HAL::CAMERA_FRONT, frame, HAL::CAMERA_MODE_VGA,
+    CameraStartFrame(HAL::CAMERA_FRONT, frame, HAL::CAMERA_MODE_VGA,
         HAL::CAMERA_UPDATE_SINGLE, 0, false);
-
-    HAL::SendFrame();
 
     while (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT))
     {
     }
+
+    HAL::SendFrame();
 
     u32 t2 = HAL::GetMicroCounter();
     //printf("%i\n", (t2 - t));
@@ -266,7 +276,7 @@ int main()
     if (c == 'X')
       HAL::FRAME = 1;
     else if (c == 'Z')
-      HAL::FRAME = 0; */
+      HAL::FRAME = 0;
 
     //HAL::USBUpdate();
 
