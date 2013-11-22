@@ -131,7 +131,7 @@ namespace Anki
 
       static const u32 m_src = D_GPIO_IRQ_SRC_0;
       static const u32 m_irq = IRQ_GPIO_0;
-      static const u32 m_priority = 5;
+      static const u32 m_priority = 4;
       static const u32 m_type = POS_EDGE_INT;
 
       // Update the encoder values

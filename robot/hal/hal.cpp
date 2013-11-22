@@ -31,6 +31,14 @@ namespace Anki
       static const u32 D_TIMER_CFG_CHAIN        = (1 << 3);
       static const u32 D_TIMER_CFG_IRQ_PENDING  = (1 << 4);
       static const u32 D_TIMER_CFG_FORCE_RELOAD = (1 << 5);
+
+      // Forward declarations
+      void UARTInit();
+      void MotorInit();
+      void USBInit();
+      void USBUpdate();
+      void SendHeader(const u8 packetType);
+      void SendFooter(const u8 packetType);
       
 #ifdef SERIAL_IMAGING
       namespace USBprintBuffer
@@ -53,6 +61,22 @@ namespace Anki
           }
         }
         
+        void SendMessage()
+        {
+          SendHeader(0xDD);
+          
+          // Send all the characters in the buffer as of right now
+          const u32 endIndex = writeIndex; // make a copy of where we should stop
+          while(readIndex != endIndex)
+          {
+            // Send the character and circularly increment the read index:
+            HAL::USBPutChar(buffer[readIndex]);
+            IncrementIndex(readIndex);
+          }
+          
+          SendFooter(0xDD);
+        }
+        
       } // namespace USBprintBuffer
       
       // Add a character to the ring buffer
@@ -62,7 +86,9 @@ namespace Anki
         buffer[writeIndex] = (char) c;
         IncrementIndex(writeIndex);
       }
-#endif
+      
+#endif // SERIAL_IMAGING
+      
       
 
 
@@ -101,43 +127,94 @@ namespace Anki
         m_auxClockConfig
       };
 
-      // Forward declarations
-      void UARTInit();
-      void MotorInit();
-      void USBInit();
-      void USBUpdate();
-
-
-      static u32 FRAME = 0;
-
+      static u8 frameResolution = CAMERA_MODE_QQQVGA;
+      
+      
+      static void SendHeader(const u8 packetType)
+      {
+        USBPutChar(USB_PACKET_HEADER[0]);
+        USBPutChar(USB_PACKET_HEADER[1]);
+        USBPutChar(USB_PACKET_HEADER[2]);
+        USBPutChar(USB_PACKET_HEADER[3]);
+        USBPutChar(packetType);
+      }
+      
+      static void SendFooter(const u8 packetType)
+      {
+        USBPutChar(USB_PACKET_FOOTER[0]);
+        USBPutChar(USB_PACKET_FOOTER[1]);
+        USBPutChar(USB_PACKET_FOOTER[2]);
+        USBPutChar(USB_PACKET_FOOTER[3]);
+        USBPutChar(packetType);
+      }
+      
       static void SendFrame()
       {
         const u8* image = frame;
 
-        USBPutChar(0xBE);
-        USBPutChar(0xEF);
-        USBPutChar(0xF0);
-        USBPutChar(0xFF);
-
-        u32 inc = FRAME == 0 ? 8 : 2;
-
-        USBPutChar(FRAME == 0 ? 0xBD : 0xB8);
-
-        for (int y = 0; y < 480; y += inc)
+        // Set window size for averaging when downsampling and send
+        // a corresponding header
+        u32 inc = 1;
+        u8  frameResolution = 0;
+        switch(frameResolution)
         {
-          for (int x = 0; x < 640; x += inc)
-          {
-            int sum = 0;
-            for (int y1 = y; y1 < y + inc; y1++)
-            {
-              for (int x1 = x; x1 < x + inc; x1++)
-              {
-                sum += image[(x1 + y1 * 640) ^ 3];
-              }
-            }
-            USBPutChar(sum / (inc * inc));
-          }
+          case CAMERA_MODE_QVGA:
+            inc = 2;
+            frameResolution = CAMERA_MODE_QVGA_HEADER;
+            break;
+            
+          case CAMERA_MODE_QQVGA:
+            inc = 4;
+            frameResolution = CAMERA_MODE_QQVGA_HEADER;
+            break;
+            
+          case CAMERA_MODE_QQQVGA:
+            inc = 8;
+            frameResolution = CAMERA_MODE_QQQVGA_HEADER;
+            break;
+            
+          case CAMERA_MODE_QQQQVGA:
+            inc = 16;
+            frameResolution = CAMERA_MODE_QQQQVGA_HEADER;
+            break;
+
+          case CAMERA_MODE_VGA:
+          default:
+            inc = 1;
+            frameResolution = CAMERA_MODE_VGA_HEADER;
         }
+        
+        SendHeader(frameResolution);
+
+        if(inc==1)
+        {
+          // No averaging
+          for(int i=0; i < 640*480; i++)
+          {
+            USBPutChar(image[i]);
+          }
+          
+        } else {
+          // Average inc x inc windows
+          for (int y = 0; y < 480; y += inc)
+          {
+            for (int x = 0; x < 640; x += inc)
+            {
+              int sum = 0;
+              for (int y1 = y; y1 < y + inc; y1++)
+              {
+                for (int x1 = x; x1 < x + inc; x1++)
+                {
+                  sum += image[(x1 + y1 * 640) ^ 3];
+                }
+              }
+              USBPutChar(sum / (inc * inc));
+            }
+          }
+        } // IF / ELSE inc==1
+        
+        SendFooter(frameResolution);
+        
       }
 
       static u32 MainExecutionIRQ(u32, u32)
@@ -155,7 +232,7 @@ namespace Anki
 
       static void SetupMainExecution()
       {
-        const int PRIORITY = 10;
+        const int PRIORITY = 1;
 
         // TODO: Fix this and use instead of movi timer code
         /*const u32 timerConfig = (1 << 0) |  // D_TIMER_CFG_ENABLE
@@ -213,6 +290,10 @@ namespace Anki
         DrvL2CacheSetupPartition(PART128KB);
         DrvL2CacheAllocateSetPartitions();
         swcLeonFlushCaches();
+
+        // Acknowledge all interrupts
+        REG_WORD(ICB_CLEAR_0_ADR) = 0xFFFFffff;
+        REG_WORD(ICB_CLEAR_1_ADR) = 0xFFFFffff;
 
         UARTInit();
 
@@ -326,6 +407,7 @@ int main()
         IncrementIndex(readIndex);
       }
     }
+    HAL::USBprintBuffer::SendMessage();
 #endif
     
     
@@ -333,11 +415,30 @@ int main()
     //printf("%i\n", (t2 - t));
     t = t2;
  
-    int c = HAL::USBGetChar();
-    if (c == 'X')
-      HAL::FRAME = 1;
-    else if (c == 'Z')
-      HAL::FRAME = 0;
+    switch(HAL::USBGetChar())
+    {
+      case CAMERA_MODE_VGA_HEADER:
+        frameResolution = CAMERA_MODE_VGA;
+        break;
+        
+      case CAMERA_MODE_QVGA_HEADER:
+        frameResolution = CAMERA_MODE_QVGA;
+        break;
+        
+      case CAMERA_MODE_QQVGA_HEADER:
+        frameResolution = CAMERA_MODE_QQVGA;
+        break;
+        
+      case CAMERA_MODE_QQQQVGA_HEADER:
+        frameResolution = CAMERA_MODE_QQQQVGA;
+        break;
+
+      case CAMERA_MODE_QQQVGA_HEADER:
+      default:
+        frameResolution = CAMERA_MODE_QQQVGA;
+    }
+
+    
 
     //HAL::USBUpdate();
 

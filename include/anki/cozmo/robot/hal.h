@@ -187,6 +187,11 @@ namespace Anki
       void FlashRead(u32 page, u8 data[FLASH_PAGE_SIZE]);
 
       // USB / UART
+      
+      // Packet header/footer:
+      const u8 USB_PACKET_HEADER[4] = {0xBE, 0xEF, 0xF0, 0xFF};
+      const u8 USB_PACKET_FOOTER[4] = {0xFF, 0x0F, 0xFE, 0xEB};
+      
       // Send a variable length buffer
       void USBSendBuffer(u8* buffer, u32 size);
 
@@ -248,11 +253,20 @@ namespace Anki
         CAMERA_MODE_VGA = 0,
         CAMERA_MODE_QVGA,
         CAMERA_MODE_QQVGA,
+        CAMERA_MODE_QQQVGA,
+        CAMERA_MODE_QQQQVGA,
         CAMERA_MODE_COUNT,
 
         CAMERA_MODE_NONE = CAMERA_MODE_COUNT
       };
-
+      
+      // Final byte in frame header to determine/specify resolution
+      const u8 CAMERA_MODE_VGA_HEADER     = 0xBA;
+      const u8 CAMERA_MODE_QVGA_HEADER    = 0xBC;
+      const u8 CAMERA_MODE_QQVGA_HEADER   = 0xB8;
+      const u8 CAMERA_MODE_QQQVGA_HEADER  = 0xBD;
+      const u8 CAMERA_MODE_QQQQVGA_HEADER = 0xB7;
+      
       enum CameraUpdateMode
       {
         CAMERA_UPDATE_CONTINUOUS = 0,
