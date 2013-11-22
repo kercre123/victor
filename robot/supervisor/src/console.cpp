@@ -4,26 +4,28 @@
 // TODO: use this when switching to M2. No support for strcasecmp on M1.
 //#include <string.h>
 
-int strcasecmp(const char* buffer1, const char* buffer2)
+/*int strcasecmp(const char* buffer1, const char* buffer2)
 {
   char* b1 = (char*)buffer1;
   char* b2 = (char*)buffer2;
   while(*b1 && *b2)
   {
-    char c1 = *buffer1;
-    char c2 = *buffer2;
+    char c1 = *b1;
+    char c2 = *b2;
     if (c1 >= 'A' && c1 <= 'Z')
       c1 = 'a' + c1 - 'A';
     if (c2 >= 'A' && c2 <= 'Z')
       c2 = 'a' + c2 - 'A';
     if (c1 != c2)
+    {
       return 1;
+    }
     b1++;
     b2++;
   }
   // Return 0 if they both match
-  return *buffer1 | *buffer2;
-}
+  return *b1 | *b2;
+}*/
 
 namespace Anki
 {
@@ -122,7 +124,7 @@ namespace Anki
 
         const int functionCount = sizeof(m_commands) / sizeof(ConsoleCommand);
         char* buffer = m_buffer;
-        if (!strcasecmp(buffer, "?"))
+        if (!strcmp(buffer, "?"))
         {
           printf("\nCommands:\n");
           for (int i = 0; i < functionCount; i++)
@@ -148,7 +150,7 @@ namespace Anki
           for (int i = 0; i < functionCount; i++)
           {
             const ConsoleCommand* cmd = &m_commands[i];
-            if (!strcasecmp(cmd->command, buffer) && cmd->function)
+            if (!strcmp(cmd->command, buffer) && cmd->function)
             {
               foundCommand = true;
 
@@ -158,7 +160,7 @@ namespace Anki
             }
           }
 
-          if (!foundCommand)
+          if (!foundCommand && strcmp(buffer, ""))
           {
             printf("Unknown command: %s\n", buffer);
           }
