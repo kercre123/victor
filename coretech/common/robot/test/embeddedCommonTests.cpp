@@ -22,6 +22,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/arraySlices.h"
 #include "anki/common/robot/find.h"
 #include "anki/common/robot/interpolate.h"
+#include "anki/common/robot/arrayPatterns.h"
 
 using namespace Anki::Embedded;
 
@@ -69,6 +70,85 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 #endif // #ifdef BUFFER_IN_CMX ... #else
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
+
+GTEST_TEST(CoreTech_Common, ArrayPatterns)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  const s32 arrayHeight = 3;
+  const s32 arrayWidth = 2;
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s16> out = Zeros<s16>(arrayHeight, arrayWidth, ms);
+
+    for(s32 y=0; y<arrayHeight; y++) {
+      const s16 * const pOut = out.Pointer(y, 0);
+
+      for(s32 x=0; x<arrayWidth; x++) {
+        ASSERT_TRUE(pOut[x] == 0);
+      }
+    }
+  }
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<u8> out = Ones<u8>(arrayHeight, arrayWidth, ms);
+
+    for(s32 y=0; y<arrayHeight; y++) {
+      const u8 * const pOut = out.Pointer(y, 0);
+
+      for(s32 x=0; x<arrayWidth; x++) {
+        ASSERT_TRUE(pOut[x] == 1);
+      }
+    }
+  }
+
+  {
+    PUSH_MEMORY_STACK(ms);
+    Array<f64> out = Eye<f64>(arrayHeight, arrayWidth, ms);
+
+    for(s32 y=0; y<arrayHeight; y++) {
+      const f64 * const pOut = out.Pointer(y, 0);
+
+      for(s32 x=0; x<arrayWidth; x++) {
+        if(x==y) {
+          ASSERT_TRUE(FLT_NEAR(pOut[x], 1.0));
+        } else {
+          ASSERT_TRUE(FLT_NEAR(pOut[x], 0.0));
+        }
+      }
+    }
+  }
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    // [logspace(-3,1,5), 3.14159]
+    const f32 inData[6] = {0.001f, 0.01f, 0.1f, 1.0f, 10.0f, 3.14159f};
+
+    Array<f32> expIn(arrayHeight, arrayWidth, ms);
+    expIn.Set_unsafe(inData, 6);
+
+    Array<f32> out = Exp<f32>(expIn, ms);
+
+    const f32 out_groundTruthData[6] = {1.00100050016671f, 1.01005016708417f, 1.10517091807565f, 2.71828182845905f, 22026.4657948067f, 23.1406312269550f};
+
+    Array<f32> out_groundTruth = Array<f32>(3,2,ms);
+    out_groundTruth.Set_unsafe(out_groundTruthData, 6);
+
+    //out.Print("out");
+    //out_groundTruth.Print("out_groundTruth");
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(out, out_groundTruth, .05, .001));
+  }
+
+  GTEST_RETURN_HERE;
+}
 
 GTEST_TEST(CoreTech_Common, Interp2_twoDimensional)
 {
