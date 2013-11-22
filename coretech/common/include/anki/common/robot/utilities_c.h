@@ -75,12 +75,12 @@ extern "C" {
   // Get the current system time. Currently only implemented for MSVC and generic linux
   double GetTime();
 
-  void explicitPrintf(int reverseEachFourCharacters, const char *format, ...);
+  void explicitPrintf(int (*writeChar)(int), int reverseEachFourCharacters, const char *format, ...);
   // void explicitPrintfWithExplicitBuffer(int reverseEachFourCharacters, int * buffer, const char *format, ...);
 
-  void PrintInt(s32 value); // Print a single number
-  void PrintHex(u32 value); // Print a single unsigned int in hex format 0xabcd0123
-  void PrintFloat(f64 value); // Print a single float
+  void PrintInt(int (*writeChar)(int), s32 value); // Print a single number
+  void PrintHex(int (*writeChar)(int), u32 value); // Print a single unsigned int in hex format 0xabcd0123
+  void PrintFloat(int (*writeChar)(int), f64 value); // Print a single float
 
 #if defined(USING_MOVIDIUS_GCC_COMPILER)
 

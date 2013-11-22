@@ -120,7 +120,7 @@ extern "C" {
 #define EXPLICIT_PRINTF_FLIP_CHARACTERS 0
 
 #undef printf
-#define printf(...) explicitPrintf(EXPLICIT_PRINTF_FLIP_CHARACTERS, __VA_ARGS__)
+#define printf(...) explicitPrintf(0, EXPLICIT_PRINTF_FLIP_CHARACTERS, __VA_ARGS__)
 
   //#define printf(...) (_xprintf(SYSTEM_PUTCHAR_FUNCTION , 0, __VA_ARGS__ ) )
 #define xprintf(...) (_xprintf(SYSTEM_PUTCHAR_FUNCTION , 0, __VA_ARGS__ ) )
@@ -148,7 +148,7 @@ extern "C" {
 #ifndef ANKI_MEX_BUILD
 #define EXPLICIT_PRINTF_FLIP_CHARACTERS 0
 #undef printf
-#define printf(...) explicitPrintf(EXPLICIT_PRINTF_FLIP_CHARACTERS, __VA_ARGS__)
+#define printf(...) explicitPrintf(0, EXPLICIT_PRINTF_FLIP_CHARACTERS, __VA_ARGS__)
 #endif
 
 #include "anki/common/types.h"
