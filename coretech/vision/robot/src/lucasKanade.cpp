@@ -161,9 +161,8 @@ namespace Anki
         // Allocate all permanent memory
         this->templateImagePyramid[0] = Array<u8>(templateImageHeight, templateImageWidth, memory);
 
-        f32 fScale = 0.0f;
-        for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++, fScale++) {
-          const f32 scale = powf(2.0f, fScale);
+        for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++) {
+          const f32 scale = static_cast<f32>(1 << iScale);
 
           templateCoordinates[iScale] = Meshgrid<f32>(
             Linspace(-this->templateRegionWidth/2.0f, this->templateRegionWidth/2.0f, static_cast<s32>(floorf(this->templateRegionWidth/scale))),
@@ -202,14 +201,13 @@ namespace Anki
             static_cast<s32>(Roundf(templateRegion.left)),
             static_cast<s32>(Roundf(templateRegion.right))).Set(1.0f);
 
-          fScale = 0.0f;
-          for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++, fScale++) {
+          for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++) {
             PUSH_MEMORY_STACK(memory);
 
             const s32 numPointsY = templateCoordinates[iScale].get_yGridVector().get_size();
             const s32 numPointsX = templateCoordinates[iScale].get_xGridVector().get_size();
 
-            const f32 scale = powf(2.0f, fScale);
+            const f32 scale = static_cast<f32>(1 << iScale);
 
             Array<f32> xTransformed(numPointsY, numPointsX, memory);
             Array<f32> yTransformed(numPointsY, numPointsX, memory);
@@ -250,12 +248,12 @@ namespace Anki
               Matrix::Vectorize(true, templateDerivativeY, tmp);
               this->A_full[iScale](1,1,0,-1).Set(tmp);
 
-              {
-                Matlab matlab(false);
-                matlab.PutArray(templateDerivativeX, "templateDerivativeX");
-                matlab.PutArray(templateDerivativeY, "templateDerivativeY");
-                matlab.PutArray(this->A_full[iScale], "A_full0");
-              }
+              //{
+              //  Matlab matlab(false);
+              //  matlab.PutArray(templateDerivativeX, "templateDerivativeX");
+              //  matlab.PutArray(templateDerivativeY, "templateDerivativeY");
+              //  matlab.PutArray(this->A_full[iScale], "A_full0");
+              //}
             }
 
             //{
@@ -320,13 +318,38 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result LucasKanadeTracker_f32::UpdateTrack(const Array<u8> &nextImage, MemoryStack &memory)
+      Result LucasKanadeTracker_f32::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, MemoryStack memory)
       {
         for(s32 iScale=numPyramidLevels; iScale>=0; iScale--) {
-        }
+          bool converged = false;
+
+          if(IterativelyRefineTrack(nextImage, maxIterations, iScale, converged, memory) != RESULT_OK)
+            return RESULT_FAIL;
+        } // for(s32 iScale=numPyramidLevels; iScale>=0; iScale--)
 
         return RESULT_OK;
       }
+
+      Result LucasKanadeTracker_f32::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, bool &converged, MemoryStack memory)
+      {
+        for(s32 iteration=0; iteration<maxIterations; iteration++) {
+          const s32 numPointsY = templateCoordinates[whichScale].get_yGridVector().get_size();
+          const s32 numPointsX = templateCoordinates[whichScale].get_xGridVector().get_size();
+
+          const f32 scale = static_cast<f32>(1 << whichScale);
+
+          Array<f32> xTransformed(numPointsY, numPointsX, memory);
+          Array<f32> yTransformed(numPointsY, numPointsX, memory);
+
+          Array<f32> xIn = templateCoordinates[whichScale].EvaluateX2(memory);
+          Array<f32> yIn = templateCoordinates[whichScale].EvaluateY2(memory);
+
+          if(transformation.TransformPoints(xIn, yIn, scale, this->center, xTransformed, yTransformed) != RESULT_OK)
+            return RESULT_FAIL;
+        }
+
+        return RESULT_OK;
+      } // Result LucasKanadeTracker_f32::IterativelyRefineTrack()
 
       bool LucasKanadeTracker_f32::IsValid() const
       {

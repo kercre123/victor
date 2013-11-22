@@ -192,7 +192,7 @@ namespace Anki
     {
     }
 
-    template<typename Type> Array<Type> Meshgrid<Type>::EvaluateX1(bool isOutColumnMajor, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const
+    template<typename Type> Array<Type> Meshgrid<Type>::EvaluateX1(bool isOutColumnMajor, MemoryStack &memory, const Flags::Buffer flags) const
     {
       const s32 numRows = 1;
       const s32 numCols = this->xGridVector.get_size()*this->yGridVector.get_size();
@@ -204,7 +204,7 @@ namespace Anki
       return out;
     }
 
-    template<typename Type> Array<Type> Meshgrid<Type>::EvaluateX2(MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const
+    template<typename Type> Array<Type> Meshgrid<Type>::EvaluateX2(MemoryStack &memory, const Flags::Buffer flags) const
     {
       const s32 numRows = this->yGridVector.get_size();
       const s32 numCols = this->xGridVector.get_size();
@@ -216,7 +216,7 @@ namespace Anki
       return out;
     }
 
-    template<typename Type> Array<Type> Meshgrid<Type>::EvaluateY1(bool isOutColumnMajor, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const
+    template<typename Type> Array<Type> Meshgrid<Type>::EvaluateY1(bool isOutColumnMajor, MemoryStack &memory, const Flags::Buffer flags) const
     {
       const s32 numRows = 1;
       const s32 numCols = this->xGridVector.get_size()*this->yGridVector.get_size();
@@ -228,7 +228,7 @@ namespace Anki
       return out;
     }
 
-    template<typename Type> Array<Type> Meshgrid<Type>::EvaluateY2(MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const
+    template<typename Type> Array<Type> Meshgrid<Type>::EvaluateY2(MemoryStack &memory, const Flags::Buffer flags) const
     {
       const s32 numRows = this->yGridVector.get_size();
       const s32 numCols = this->xGridVector.get_size();

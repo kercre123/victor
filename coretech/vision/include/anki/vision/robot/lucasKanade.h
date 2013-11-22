@@ -61,7 +61,7 @@ namespace Anki
         // Allocated some permanant structures using memory, as well as some temporary structures. As a result, it should only be called once.
         Result InitializeTemplate(const Array<u8> &templateImage, const Rectangle<f32> templateRegion, MemoryStack &memory);
 
-        Result UpdateTrack(const Array<u8> &nextImage, MemoryStack &memory);
+        Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, MemoryStack memory);
 
         bool IsValid() const;
 
@@ -94,6 +94,8 @@ namespace Anki
 
         bool isValid;
         bool isInitialized;
+
+        Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, bool &converged, MemoryStack memory);
       };
     } // namespace TemplateTracker
   } // namespace Embedded

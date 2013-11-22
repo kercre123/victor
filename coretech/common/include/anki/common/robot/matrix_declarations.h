@@ -121,7 +121,7 @@ namespace Anki
         // TODO: if this is slow, make a unary version of ApplyOperation
         template<typename InType, typename IntermediateType, typename OutType> class Exp {
         public:
-          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(exp(static_cast<IntermediateType>(value1)));}
+          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(expf(static_cast<IntermediateType>(value1)));}
         };
 
         template<typename InType, typename Operator, typename OutType> Result ApplyOperation(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);

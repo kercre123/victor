@@ -31,7 +31,7 @@ namespace Anki
       {
       }
 
-      template<typename Type> static inline void Affine<Type>::Apply(const Type inX, const Type inY, Type &outX, Type &outY)
+      template<typename Type> inline void Affine<Type>::Apply(const Type inX, const Type inY, Type &outX, Type &outY)
       {
         outX = h00*inX + h01*inY + h02;
         outY = h10*inX + h11*inY + h12;
@@ -47,7 +47,7 @@ namespace Anki
           "Projective<Type>::Projective", "homography[2][2] should equal 1");
       }
 
-      template<typename Type> static inline void Projective<Type>::Apply(const Type inX, const Type inY, Type &outX, Type &outY)
+      template<typename Type> inline void Projective<Type>::Apply(const Type inX, const Type inY, Type &outX, Type &outY)
       {
         const Type normalization = h20*inX + h21*inY;
 

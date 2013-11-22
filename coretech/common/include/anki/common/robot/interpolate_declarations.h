@@ -25,7 +25,7 @@ namespace Anki
       public:
         Affine(const Array<Type> &homography);
 
-        static inline void Apply(const Type inX, const Type inY, Type &outX, Type &outY);
+        inline void Apply(const Type inX, const Type inY, Type &outX, Type &outY);
 
       protected:
         const Type h00, h01, h02, h10, h11, h12;
@@ -35,14 +35,14 @@ namespace Anki
       public:
         Projective(const Array<Type> &homography);
 
-        static inline void Apply(const Type inX, const Type inY, Type &outX, Type &outY);
+        inline void Apply(const Type inX, const Type inY, Type &outX, Type &outY);
 
       protected:
         const Type h00, h01, h02, h10, h11, h12, h20, h21; // h22 should be 1
       };
     }
 
-    typedef enum InterpolationType
+    enum InterpolationType
     {
       INTERPOLATE_BILINEAR
     };
