@@ -153,6 +153,11 @@ namespace Anki
         return Elementwise::ApplyOperation<InType, Elementwise::DotDivide<InType, IntermediateType, OutType>, OutType>(value1, in2, out);
       }
 
+      template<typename InType, typename IntermediateType, typename OutType> Result Exp(const ConstArraySliceExpression<InType> &in, ArraySlice<OutType> out)
+      {
+        return Elementwise::ApplyOperation<InType, Elementwise::Exp<InType, IntermediateType, OutType>, OutType>(in, in, out);
+      } // template<typename Type> Result Exp(const ConstArraySliceExpression<InType> &in, ArraySlice<OutType> out)
+
       template<typename InType, typename OutType> Result Multiply(const Array<InType> &in1, const Array<InType> &in2, Array<OutType> &out)
       {
         const s32 in1Height = in1.get_size(0);

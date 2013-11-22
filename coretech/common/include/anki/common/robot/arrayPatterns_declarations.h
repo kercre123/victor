@@ -32,7 +32,6 @@ namespace Anki
     template<typename Type> Result Eye(Array<Type> &out);
     template<typename Type> Array<Type> Eye(const s32 arrayHeight, const s32 arrayWidth, MemoryStack &memory);
 
-    template<typename Type> Result Exp(const Array<Type> &in, Array<Type> &out);
     template<typename Type> Array<Type> Exp(const Array<Type> &in, MemoryStack &memory);
   } // namespace Embedded
 } //namespace Anki

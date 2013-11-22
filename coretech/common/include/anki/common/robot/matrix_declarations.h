@@ -61,6 +61,9 @@ namespace Anki
       template<typename InType, typename IntermediateType, typename OutType> Result DotDivide(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out);
       template<typename InType, typename IntermediateType, typename OutType> Result DotDivide(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
 
+      // Elementwise exponential on an array
+      template<typename InType, typename IntermediateType, typename OutType> Result Exp(const ConstArraySliceExpression<InType> &in, ArraySlice<OutType> out);
+
       //
       // Standard matrix operations
       //
@@ -100,6 +103,13 @@ namespace Anki
         template<typename InType, typename IntermediateType, typename OutType> class DotDivide {
         public:
           static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(static_cast<IntermediateType>(value1) / static_cast<IntermediateType>(value2));}
+        };
+
+        // Technically a unary operator, but we ignore the second parameter
+        // TODO: if this is slow, make a unary version of ApplyOperation
+        template<typename InType, typename IntermediateType, typename OutType> class Exp {
+        public:
+          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(exp(static_cast<IntermediateType>(value1)));}
         };
 
         template<typename InType, typename Operator, typename OutType> Result ApplyOperation(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);

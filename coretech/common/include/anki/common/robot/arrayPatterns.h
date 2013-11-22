@@ -13,6 +13,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define _ANKICORETECHEMBEDDED_COMMON_ARRAY_PATTERNS_H_
 
 #include "anki/common/robot/arrayPatterns_declarations.h"
+#include "anki/common/robot/matrix.h"
 
 namespace Anki
 {
@@ -80,34 +81,34 @@ namespace Anki
       return out;
     }
 
-    template<typename Type> Result Exp(const Array<Type> &in, Array<Type> &out)
+    /*template<typename Type> Result Exp(const Array<Type> &in, Array<Type> &out)
     {
-      AnkiConditionalErrorAndReturnValue(in.IsValid(),
-        RESULT_FAIL, "Exp", "in is invalid");
+    AnkiConditionalErrorAndReturnValue(in.IsValid(),
+    RESULT_FAIL, "Exp", "in is invalid");
 
-      AnkiConditionalErrorAndReturnValue(out.IsValid(),
-        RESULT_FAIL, "Exp", "out is invalid");
+    AnkiConditionalErrorAndReturnValue(out.IsValid(),
+    RESULT_FAIL, "Exp", "out is invalid");
 
-      const s32 arrayHeight = out.get_size(0);
-      const s32 arrayWidth = out.get_size(1);
+    const s32 arrayHeight = out.get_size(0);
+    const s32 arrayWidth = out.get_size(1);
 
-      for(s32 y=0; y<arrayHeight; y++) {
-        const Type * const pIn = in.Pointer(y, 0);
-        Type * const pOut = out.Pointer(y, 0);
+    for(s32 y=0; y<arrayHeight; y++) {
+    const Type * const pIn = in.Pointer(y, 0);
+    Type * const pOut = out.Pointer(y, 0);
 
-        for(s32 x=0; x<arrayWidth; x++) {
-          pOut[x] = exp(pIn[x]);
-        }
-      }
-
-      return RESULT_OK;
+    for(s32 x=0; x<arrayWidth; x++) {
+    pOut[x] = exp(pIn[x]);
     }
+    }
+
+    return RESULT_OK;
+    }*/
 
     template<typename Type> Array<Type> Exp(const Array<Type> &in, MemoryStack &memory)
     {
       Array<Type> out(in.get_size(0), in.get_size(1), memory, Flags::Buffer(false, false));
 
-      Exp(in, out);
+      Matrix::Exp<Type,Type,Type>(in, out);
 
       return out;
     }
