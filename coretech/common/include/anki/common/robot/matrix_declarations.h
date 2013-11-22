@@ -37,6 +37,9 @@ namespace Anki
       // Return the sum of every element in the Array
       template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(const ConstArraySliceExpression<Array_Type> &mat);
 
+      // Return the mean of every element in the Array
+      template<typename Array_Type, typename Accumulator_Type> Array_Type Mean(const ConstArraySliceExpression<Array_Type> &mat);
+
       //
       // Elementwise matrix operations
       //
@@ -77,12 +80,12 @@ namespace Anki
       //
 
       // matlab equivalent: out = reshape(in, [M,N]);
-      template<typename Type> Result Reshape(const bool isColumnMajor, const Array<Type> &in, Array<Type> &out);
-      template<typename Type> Array<Type> Reshape(const bool isColumnMajor, const Array<Type> &in, const s32 newHeight, const s32 newWidth, MemoryStack &memory);
+      template<typename TypeIn, typename TypeOut> Result Reshape(const bool isColumnMajor, const Array<TypeIn> &in, Array<TypeOut> &out);
+      template<typename TypeIn, typename TypeOut> Array<TypeOut> Reshape(const bool isColumnMajor, const Array<TypeIn> &in, const s32 newHeight, const s32 newWidth, MemoryStack &memory);
 
       // matlab equivalent: out = in(:);
-      template<typename Type> Result Vectorize(const bool isColumnMajor, const Array<Type> &in, Array<Type> &out);
-      template<typename Type> Array<Type> Vectorize(const bool isColumnMajor, const Array<Type> &in, MemoryStack &memory);
+      template<typename TypeIn, typename TypeOut> Result Vectorize(const bool isColumnMajor, const Array<TypeIn> &in, Array<TypeOut> &out);
+      template<typename TypeIn, typename TypeOut> Array<TypeOut> Vectorize(const bool isColumnMajor, const Array<TypeIn> &in, MemoryStack &memory);
 
       //
       // Misc matrix operations

@@ -6,8 +6,8 @@ namespace Anki
   {
     template<> Result Interp2(const Array<u8> &reference, const Array<f32> &xCoordinates, const Array<f32> &yCoordinates, Array<u8> &out, const InterpolationType interpolationType, const u8 invalidValue)
     {
-      AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_BILINEAR,
-        RESULT_FAIL, "Interp2", "Only INTERPOLATE_BILINEAR is supported");
+      AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_LINEAR,
+        RESULT_FAIL, "Interp2", "Only INTERPOLATE_LINEAR is supported");
 
       AnkiConditionalErrorAndReturnValue(reference.IsValid(),
         RESULT_FAIL, "Interp2", "reference is not valid");

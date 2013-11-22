@@ -84,7 +84,7 @@ GTEST_TEST(CoreTech_Common, Reshape)
   {
     PUSH_MEMORY_STACK(ms);
 
-    Array<s32> out = Matrix::Reshape(true, in, 4, 1, ms);
+    Array<s32> out = Matrix::Reshape<s32,s32>(true, in, 4, 1, ms);
 
     ASSERT_TRUE(out[0][0] == 1);
     ASSERT_TRUE(out[1][0] == 3);
@@ -95,7 +95,7 @@ GTEST_TEST(CoreTech_Common, Reshape)
   {
     PUSH_MEMORY_STACK(ms);
 
-    Array<s32> out = Matrix::Reshape(false, in, 4, 1, ms);
+    Array<s32> out = Matrix::Reshape<s32,s32>(false, in, 4, 1, ms);
 
     ASSERT_TRUE(out[0][0] == 1);
     ASSERT_TRUE(out[1][0] == 2);
@@ -106,7 +106,7 @@ GTEST_TEST(CoreTech_Common, Reshape)
   {
     PUSH_MEMORY_STACK(ms);
 
-    Array<s32> out = Matrix::Reshape(true, in, 1, 4, ms);
+    Array<s32> out = Matrix::Reshape<s32,s32>(true, in, 1, 4, ms);
 
     ASSERT_TRUE(out[0][0] == 1);
     ASSERT_TRUE(out[0][1] == 3);
@@ -117,7 +117,7 @@ GTEST_TEST(CoreTech_Common, Reshape)
   {
     PUSH_MEMORY_STACK(ms);
 
-    Array<s32> out = Matrix::Reshape(false, in, 1, 4, ms);
+    Array<s32> out = Matrix::Reshape<s32,s32>(false, in, 1, 4, ms);
 
     ASSERT_TRUE(out[0][0] == 1);
     ASSERT_TRUE(out[0][1] == 2);

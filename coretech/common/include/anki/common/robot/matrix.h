@@ -93,6 +93,15 @@ namespace Anki
         return sum;
       } // template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(const Array<Array_Type> &image)
 
+      template<typename Array_Type, typename Accumulator_Type> Array_Type Mean(const ConstArraySliceExpression<Array_Type> &mat)
+      {
+        const Accumulator_Type sum = Sum<Array_Type,Accumulator_Type>(mat);
+        const Accumulator_Type numElements = static_cast<Accumulator_Type>(mat.get_ySlice().get_size() * mat.get_xSlice().get_size());
+        const Array_Type mean = static_cast<Array_Type>(sum / numElements);
+
+        return mean;
+      }
+
       template<typename InType, typename IntermediateType, typename OutType> Result Add(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
       {
         return Elementwise::ApplyOperation<InType, Elementwise::Add<InType, IntermediateType, OutType>, OutType>(in1, in2, out);
@@ -191,7 +200,7 @@ namespace Anki
         return RESULT_OK;
       } // template<typename InType, typename OutType> Result Multiply(const Array<InType> &in1, const Array<InType> &in2, Array<OutType> &out)
 
-      template<typename Type> Result Reshape(const bool isColumnMajor, const Array<Type> &in, Array<Type> &out)
+      template<typename TypeIn, typename TypeOut> Result Reshape(const bool isColumnMajor, const Array<TypeIn> &in, Array<TypeOut> &out)
       {
         const s32 inHeight = in.get_size(0);
         const s32 inWidth = in.get_size(1);
@@ -208,12 +217,12 @@ namespace Anki
         if(isColumnMajor) {
           for(s32 y = 0; y < outHeight; y++)
           {
-            Type * const pOut = out.Pointer(y,0);
+            TypeOut * const pOut = out.Pointer(y,0);
 
             for(s32 x = 0; x < outWidth; x++) {
-              const Type curIn = *in.Pointer(inIndexY,inIndexX);
+              const TypeIn curIn = *in.Pointer(inIndexY,inIndexX);
 
-              pOut[x] = curIn;
+              pOut[x] = static_cast<TypeOut>(curIn);
 
               inIndexY++;
               if(inIndexY >= inHeight) {
@@ -225,12 +234,12 @@ namespace Anki
         } else { // if(isColumnMajor)
           for(s32 y = 0; y < outHeight; y++)
           {
-            Type * const pOut = out.Pointer(y,0);
+            TypeOut * const pOut = out.Pointer(y,0);
 
             for(s32 x = 0; x < outWidth; x++) {
-              const Type curIn = *in.Pointer(inIndexY,inIndexX);
+              const TypeIn curIn = *in.Pointer(inIndexY,inIndexX);
 
-              pOut[x] = curIn;
+              pOut[x] = static_cast<TypeOut>(curIn);
 
               inIndexX++;
               if(inIndexX >= inWidth) {
@@ -244,31 +253,31 @@ namespace Anki
         return RESULT_OK;
       }
 
-      template<typename Type> Array<Type> Reshape(const bool isColumnMajor, const Array<Type> &in, const s32 newHeight, const s32 newWidth, MemoryStack &memory)
+      template<typename TypeIn, typename TypeOut> Array<TypeOut> Reshape(const bool isColumnMajor, const Array<TypeIn> &in, const s32 newHeight, const s32 newWidth, MemoryStack &memory)
       {
-        Array<Type> out(newHeight, newWidth, memory);
+        Array<TypeOut> out(newHeight, newWidth, memory);
 
-        Reshape(isColumnMajor, in, out);
+        Reshape<TypeIn, TypeOut>(isColumnMajor, in, out);
 
         return out;
       }
 
-      template<typename Type> Result Vectorize(const bool isColumnMajor, const Array<Type> &in, Array<Type> &out)
+      template<typename TypeIn, typename TypeOut> Result Vectorize(const bool isColumnMajor, const Array<TypeIn> &in, Array<TypeOut> &out)
       {
         AnkiConditionalErrorAndReturnValue(out.get_size(0) == 1,
           RESULT_FAIL, "Vectorize", "Output is not 1xN");
 
-        return Reshape(isColumnMajor, in, out);
+        return Reshape<TypeIn, TypeOut>(isColumnMajor, in, out);
       }
 
-      template<typename Type> Array<Type> Vectorize(const bool isColumnMajor, const Array<Type> &in, MemoryStack &memory)
+      template<typename TypeIn, typename TypeOut> Array<TypeOut> Vectorize(const bool isColumnMajor, const Array<TypeIn> &in, MemoryStack &memory)
       {
         const s32 inHeight = in.get_size(0);
         const s32 inWidth = in.get_size(1);
 
-        Array<Type> out(1, inHeight*inWidth, memory);
+        Array<TypeOut> out(1, inHeight*inWidth, memory);
 
-        Vectorize(isColumnMajor, in, out);
+        Vectorize<TypeIn, TypeOut>(isColumnMajor, in, out);
 
         return out;
       }

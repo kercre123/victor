@@ -65,10 +65,10 @@ namespace Anki
       return interpolatedPixel;
     }
 
-    template<typename DataType> Result Interp2(const Array<DataType> &reference, const Array<f32> &xCoordinates, const Array<f32> &yCoordinates, Array<DataType> &out, const InterpolationType interpolationType, const DataType invalidValue)
+    template<typename TypeIn, typename TypeOut> Result Interp2(const Array<TypeIn> &reference, const Array<f32> &xCoordinates, const Array<f32> &yCoordinates, Array<TypeOut> &out, const InterpolationType interpolationType, const TypeOut invalidValue)
     {
-      AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_BILINEAR,
-        RESULT_FAIL, "Interp2", "Only INTERPOLATE_BILINEAR is supported");
+      AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_LINEAR,
+        RESULT_FAIL, "Interp2", "Only INTERPOLATE_LINEAR is supported");
 
       AnkiConditionalErrorAndReturnValue(reference.IsValid(),
         RESULT_FAIL, "Interp2", "reference is not valid");
@@ -122,7 +122,7 @@ namespace Anki
         const f32 * restrict pXCoordinates = xCoordinates.Pointer(y,0);
         const f32 * restrict pYCoordinates = yCoordinates.Pointer(y,0);
 
-        DataType * restrict pOut = out.Pointer(y,0);
+        TypeOut * restrict pOut = out.Pointer(y,0);
 
         for(s32 x=0; x<xIterationMax; x++) {
           const f32 curX = pXCoordinates[x];
@@ -150,8 +150,8 @@ namespace Anki
           const s32 y1S32 = static_cast<s32>(Roundf(y1));
           const s32 x0S32 = static_cast<s32>(Roundf(x0));
 
-          const DataType * restrict pReference_y0 = reference.Pointer(y0S32, x0S32);
-          const DataType * restrict pReference_y1 = reference.Pointer(y1S32, x0S32);
+          const TypeIn * restrict pReference_y0 = reference.Pointer(y0S32, x0S32);
+          const TypeIn * restrict pReference_y1 = reference.Pointer(y1S32, x0S32);
 
           const f32 pixelTL = *pReference_y0;
           const f32 pixelTR = *(pReference_y0+1);
@@ -160,7 +160,7 @@ namespace Anki
 
           const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
 
-          const DataType interpolatedPixel = static_cast<DataType>(interpolatedPixelF32);
+          const TypeOut interpolatedPixel = static_cast<TypeOut>(interpolatedPixelF32);
 
           pOut[x] = interpolatedPixel;
         } // for(s32 x=0; x<xIterationMax; x++)
