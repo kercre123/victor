@@ -166,8 +166,8 @@ namespace Anki
           const f32 scale = powf(2.0f, fScale);
 
           templateCoordinates[iScale] = Meshgrid<f32>(
-            Linspace(-this->templateRegionWidth/2.0f, this->templateRegionWidth/2.0f, static_cast<s32>(Roundf(this->templateRegionWidth/scale))),
-            Linspace(-this->templateRegionHeight/2.0f, this->templateRegionHeight/2.0f, static_cast<s32>(Roundf(this->templateRegionHeight/scale))));
+            Linspace(-this->templateRegionWidth/2.0f, this->templateRegionWidth/2.0f, static_cast<s32>(floorf(this->templateRegionWidth/scale))),
+            Linspace(-this->templateRegionHeight/2.0f, this->templateRegionHeight/2.0f, static_cast<s32>(floorf(this->templateRegionHeight/scale))));
 
           const s32 numValidPoints = templateCoordinates[iScale].get_numElements();
 
@@ -287,10 +287,9 @@ namespace Anki
                 Matrix::Exp<f32,f32,f32>(GaussianTmp, GaussianTmp);
               }
 
-              // W_mask = interp2(double(targetMask), xi, yi, 'linear', 0);
-
               Array<f32> templateWeightsTmp(numPointsY, numPointsX, memory);
 
+              // W_mask = interp2(double(targetMask), xi, yi, 'linear', 0);
               if(Interp2(templateMask, xTransformed, yTransformed, templateWeightsTmp, INTERPOLATE_BILINEAR) != RESULT_OK)
                 return RESULT_FAIL;
 
@@ -317,6 +316,14 @@ namespace Anki
             } // PUSH_MEMORY_STACK(memory);
           } // for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++, fScale++)
         } // PUSH_MEMORY_STACK(memory);
+
+        return RESULT_OK;
+      }
+
+      Result LucasKanadeTracker_f32::UpdateTrack(const Array<u8> &nextImage, MemoryStack &memory)
+      {
+        for(s32 iScale=numPyramidLevels; iScale>=0; iScale--) {
+        }
 
         return RESULT_OK;
       }

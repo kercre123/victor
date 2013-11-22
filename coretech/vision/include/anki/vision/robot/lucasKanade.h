@@ -61,6 +61,8 @@ namespace Anki
         // Allocated some permanant structures using memory, as well as some temporary structures. As a result, it should only be called once.
         Result InitializeTemplate(const Array<u8> &templateImage, const Rectangle<f32> templateRegion, MemoryStack &memory);
 
+        Result UpdateTrack(const Array<u8> &nextImage, MemoryStack &memory);
+
         bool IsValid() const;
 
       protected:
