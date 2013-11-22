@@ -71,6 +71,63 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, Reshape)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<s32> in(2,2,ms);
+  in[0][0] = 1; in[0][1] = 2;
+  in[1][0] = 3; in[1][1] = 4;
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s32> out = Matrix::Reshape(true, in, 4, 1, ms);
+
+    ASSERT_TRUE(out[0][0] == 1);
+    ASSERT_TRUE(out[1][0] == 3);
+    ASSERT_TRUE(out[2][0] == 2);
+    ASSERT_TRUE(out[3][0] == 4);
+  }
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s32> out = Matrix::Reshape(false, in, 4, 1, ms);
+
+    ASSERT_TRUE(out[0][0] == 1);
+    ASSERT_TRUE(out[1][0] == 2);
+    ASSERT_TRUE(out[2][0] == 3);
+    ASSERT_TRUE(out[3][0] == 4);
+  }
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s32> out = Matrix::Reshape(true, in, 1, 4, ms);
+
+    ASSERT_TRUE(out[0][0] == 1);
+    ASSERT_TRUE(out[0][1] == 3);
+    ASSERT_TRUE(out[0][2] == 2);
+    ASSERT_TRUE(out[0][3] == 4);
+  }
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s32> out = Matrix::Reshape(false, in, 1, 4, ms);
+
+    ASSERT_TRUE(out[0][0] == 1);
+    ASSERT_TRUE(out[0][1] == 2);
+    ASSERT_TRUE(out[0][2] == 3);
+    ASSERT_TRUE(out[0][3] == 4);
+  }
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, ArrayPatterns)
 {
   ASSERT_TRUE(buffer != NULL);

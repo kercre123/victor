@@ -191,6 +191,88 @@ namespace Anki
         return RESULT_OK;
       } // template<typename InType, typename OutType> Result Multiply(const Array<InType> &in1, const Array<InType> &in2, Array<OutType> &out)
 
+      template<typename Type> Result Reshape(const bool isColumnMajor, const Array<Type> &in, Array<Type> &out)
+      {
+        const s32 inHeight = in.get_size(0);
+        const s32 inWidth = in.get_size(1);
+
+        const s32 outHeight = out.get_size(0);
+        const s32 outWidth = out.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue((inHeight*inWidth) == (outHeight*outWidth),
+          RESULT_FAIL, "Reshape", "Input and Output matrices are incompatible sizes");
+
+        s32 inIndexY = 0;
+        s32 inIndexX = 0;
+
+        if(isColumnMajor) {
+          for(s32 y = 0; y < outHeight; y++)
+          {
+            Type * const pOut = out.Pointer(y,0);
+
+            for(s32 x = 0; x < outWidth; x++) {
+              const Type curIn = *in.Pointer(inIndexY,inIndexX);
+
+              pOut[x] = curIn;
+
+              inIndexY++;
+              if(inIndexY >= inHeight) {
+                inIndexY = 0;
+                inIndexX++;
+              }
+            }
+          }
+        } else { // if(isColumnMajor)
+          for(s32 y = 0; y < outHeight; y++)
+          {
+            Type * const pOut = out.Pointer(y,0);
+
+            for(s32 x = 0; x < outWidth; x++) {
+              const Type curIn = *in.Pointer(inIndexY,inIndexX);
+
+              pOut[x] = curIn;
+
+              inIndexX++;
+              if(inIndexX >= inWidth) {
+                inIndexX = 0;
+                inIndexY++;
+              }
+            }
+          }
+        } // if(isColumnMajor) ... else
+
+        return RESULT_OK;
+      }
+
+      template<typename Type> Array<Type> Reshape(const bool isColumnMajor, const Array<Type> &in, const s32 newHeight, const s32 newWidth, MemoryStack &memory)
+      {
+        Array<Type> out(newHeight, newWidth, memory);
+
+        Reshape(isColumnMajor, in, out);
+
+        return out;
+      }
+
+      template<typename Type> Result Vectorize(const bool isColumnMajor, const Array<Type> &in, Array<Type> &out)
+      {
+        AnkiConditionalErrorAndReturnValue(out.get_size(0) == 1,
+          RESULT_FAIL, "Vectorize", "Output is not 1xN");
+
+        return Reshape(isColumnMajor, in, out);
+      }
+
+      template<typename Type> Array<Type> Vectorize(const bool isColumnMajor, const Array<Type> &in, MemoryStack &memory)
+      {
+        const s32 inHeight = in.get_size(0);
+        const s32 inWidth = in.get_size(1);
+
+        Array<Type> out(1, inHeight*inWidth, memory);
+
+        Vectorize(isColumnMajor, in, out);
+
+        return out;
+      }
+
       template<typename Type> Result MakeSymmetric(Type &arr, bool lowerToUpper)
       {
         AnkiConditionalErrorAndReturnValue(arr.get_size(0) == arr.get_size(1),

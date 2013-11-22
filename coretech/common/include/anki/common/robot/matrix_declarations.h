@@ -73,6 +73,18 @@ namespace Anki
       template<typename InType, typename OutType> Result Multiply(const Array<InType> &in1, const Array<InType> &in2, Array<OutType> &out);
 
       //
+      // Matrix structure operations
+      //
+
+      // matlab equivalent: out = reshape(in, [M,N]);
+      template<typename Type> Result Reshape(const bool isColumnMajor, const Array<Type> &in, Array<Type> &out);
+      template<typename Type> Array<Type> Reshape(const bool isColumnMajor, const Array<Type> &in, const s32 newHeight, const s32 newWidth, MemoryStack &memory);
+
+      // matlab equivalent: out = in(:);
+      template<typename Type> Result Vectorize(const bool isColumnMajor, const Array<Type> &in, Array<Type> &out);
+      template<typename Type> Array<Type> Vectorize(const bool isColumnMajor, const Array<Type> &in, MemoryStack &memory);
+
+      //
       // Misc matrix operations
       //
 
