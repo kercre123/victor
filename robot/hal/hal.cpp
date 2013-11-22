@@ -63,10 +63,17 @@ namespace Anki
         
         void SendMessage()
         {
-          SendHeader(0xDD);
-          
+
           // Send all the characters in the buffer as of right now
           const u32 endIndex = writeIndex; // make a copy of where we should stop
+          
+          // Nothing to send
+          if (endIndex == readIndex) {
+            return;
+          }
+          
+          SendHeader(0xDD);
+          
           while(readIndex != endIndex)
           {
             // Send the character and circularly increment the read index:
@@ -130,7 +137,7 @@ namespace Anki
       static u8 frameResolution = CAMERA_MODE_QQQVGA;
       
       
-      static void SendHeader(const u8 packetType)
+      void SendHeader(const u8 packetType)
       {
         USBPutChar(USB_PACKET_HEADER[0]);
         USBPutChar(USB_PACKET_HEADER[1]);
@@ -139,7 +146,7 @@ namespace Anki
         USBPutChar(packetType);
       }
       
-      static void SendFooter(const u8 packetType)
+      void SendFooter(const u8 packetType)
       {
         USBPutChar(USB_PACKET_FOOTER[0]);
         USBPutChar(USB_PACKET_FOOTER[1]);
@@ -384,29 +391,6 @@ int main()
 #ifdef SERIAL_IMAGING
     HAL::SendFrame();
     
-    {
-      using namespace HAL::USBprintBuffer;
-      // Send all the characters in the buffer as of right now
-      const u32 endIndex = writeIndex; // make a copy of where we should stop
-      
-      // Debug printout message header
-      if (readIndex != endIndex)
-      {
-        HAL::USBPutChar(0xbe);
-        HAL::USBPutChar(0xef);
-        HAL::USBPutChar(0xf0);
-        HAL::USBPutChar(0xff);
-        HAL::USBPutChar(0xdd);
-      }
-      
-      
-      while(readIndex != endIndex)
-      {
-        // Send the character and circularly increment the read index:
-        HAL::USBPutChar(buffer[readIndex]);
-        IncrementIndex(readIndex);
-      }
-    }
     HAL::USBprintBuffer::SendMessage();
 #endif
     
@@ -417,25 +401,25 @@ int main()
  
     switch(HAL::USBGetChar())
     {
-      case CAMERA_MODE_VGA_HEADER:
-        frameResolution = CAMERA_MODE_VGA;
+      case HAL::CAMERA_MODE_VGA_HEADER:
+        HAL::frameResolution = HAL::CAMERA_MODE_VGA;
         break;
         
-      case CAMERA_MODE_QVGA_HEADER:
-        frameResolution = CAMERA_MODE_QVGA;
+      case HAL::CAMERA_MODE_QVGA_HEADER:
+        HAL::frameResolution = HAL::CAMERA_MODE_QVGA;
         break;
         
-      case CAMERA_MODE_QQVGA_HEADER:
-        frameResolution = CAMERA_MODE_QQVGA;
+      case HAL::CAMERA_MODE_QQVGA_HEADER:
+        HAL::frameResolution = HAL::CAMERA_MODE_QQVGA;
         break;
         
-      case CAMERA_MODE_QQQQVGA_HEADER:
-        frameResolution = CAMERA_MODE_QQQQVGA;
+      case HAL::CAMERA_MODE_QQQQVGA_HEADER:
+        HAL::frameResolution = HAL::CAMERA_MODE_QQQQVGA;
         break;
 
-      case CAMERA_MODE_QQQVGA_HEADER:
+      case HAL::CAMERA_MODE_QQQVGA_HEADER:
       default:
-        frameResolution = CAMERA_MODE_QQQVGA;
+        HAL::frameResolution = HAL::CAMERA_MODE_QQQVGA;
     }
 
     
