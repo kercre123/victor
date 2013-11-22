@@ -22,6 +22,10 @@ function grabs = CameraCapture(varargin)
 %  'resolution' [640 480]
 %    The resolution of captured frames, [resX resY].  If saved files are
 %    being used, they will be resized to this resolution after reading.
+%
+%  'cropFactor' [1.0]
+%    If less than one, then only this fraction of the specified resolution,
+%    cropped around the center of the image will be used.
 % 
 %  'numFrames' [Inf]
 %    Total number of frames to capture before returning.  If Inf, the
@@ -69,6 +73,7 @@ processFcn = [];
 doContinuousProcessing = false;
 displayAxes = [];
 processAxes = [];
+cropFactor = 1;
 
 parseVarargin(varargin{:});
 
@@ -141,6 +146,19 @@ try
         getFrameFcn = @readFrameFromCamera;
     end
     
+    if cropFactor < 1
+        xcen = resolution(1)/2;
+        ycen = resolution(2)/2;
+        
+        xmin = xcen - cropFactor*xcen + 1;
+        ymin = ycen - cropFactor*ycen + 1;
+        xmax = xcen + cropFactor*xcen;
+        ymax = ycen + cropFactor*ycen;
+        cropRect = round([xmin ymin xmax-xmin+1 ymax-ymin+1]);
+        
+        frame = imcrop(frame, cropRect);
+    end
+    
     h_img = imagesc(frame, 'Parent', displayAxes);
     axis(displayAxes, 'image', 'off');
     if ~isempty(processFcn) && ~isempty(processAxes)
@@ -158,6 +176,10 @@ try
     while i_frame < numFrames && ~escapePressed
         t = tic;
         frame = getFrameFcn(i_frame);
+        
+        if cropFactor < 1
+           frame = imcrop(frame, cropRect); 
+        end
         
         set(h_img, 'CData', frame);
         if ~isempty(processFcn)
