@@ -13,7 +13,7 @@ namespace Anki
       const u8 RX_PIN = 70;
       const u32 RX_MODE = D_GPIO_MODE_1;
       static const u32 IRQ = IRQ_UART;
-      static const u32 IRQ_LEVEL = 1;
+      static const u32 IRQ_LEVEL = 5;
 
       static void UARTIRQ(u32 source);
 
@@ -49,6 +49,8 @@ namespace Anki
         DrvGpioMode(RX_PIN, RX_MODE);
         // Re-enable interrupts
         swcLeonEnableTraps();
+
+        printf("\n%08X %08X\n", mask, REG_WORD(UART_CTRL_ADR));
       }
 
       int USBPutChar(int c)
@@ -93,6 +95,7 @@ namespace Anki
 
       void UARTIRQ(u32 source)
       {
+        // Check if there's any data in the Rx FIFO (RCNT)
         while (REG_WORD(UART_STATUS_ADR) >> 26)
         {
           m_buffer[m_currentWrite] = REG_WORD(UART_DATA_ADR);

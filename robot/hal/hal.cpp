@@ -121,7 +121,7 @@ namespace Anki
 
       static void SetupMainExecution()
       {
-        const int PRIORITY = 10;
+        const int PRIORITY = 1;
 
         // TODO: Fix this and use instead of movi timer code
         /*const u32 timerConfig = (1 << 0) |  // D_TIMER_CFG_ENABLE
@@ -179,6 +179,10 @@ namespace Anki
         DrvL2CacheSetupPartition(PART128KB);
         DrvL2CacheAllocateSetPartitions();
         swcLeonFlushCaches();
+
+        // Acknowledge all interrupts
+        REG_WORD(ICB_CLEAR_0_ADR) = 0xFFFFffff;
+        REG_WORD(ICB_CLEAR_1_ADR) = 0xFFFFffff;
 
         UARTInit();
 
