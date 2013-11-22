@@ -37,6 +37,11 @@
 #include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
 
+// Define this if we are sending images over UART in order to buffer messages
+// created with printf and send them after each frame in long execution (so
+// we don't interrupt frames being sent)
+#define SERIAL_IMAGING
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -46,16 +51,24 @@ extern "C" {
 #endif
 #ifndef SIMULATOR
 #undef printf
-#define printf(...) _xprintf(Anki::Cozmo::HAL::USBPutChar, 0, __VA_ARGS__)
-//#define PRINT(...) _xprintf(Anki::Cozmo::HAL::UARTPutChar, 0, __VA_ARGS__)
-#define PRINT(...) explicitPrintf(0, __VA_ARGS__)
+
+#ifdef SERIAL_IMAGING
+// Buffer printf messages, to be sent by long execution
+#define PUTCHAR_FUNC Anki::Cozmo::HAL::USBBufferChar
+#else
+// Send printf messages directly over the USB connection
+#define PUTCHAR_FUNC Anki::Cozmo::HAL::USBPutChar
+#endif // ifdef SERIAL_IMAGING
+
+#define printf(...) _xprintf(PUTCHAR_FUNC, 0, __VA_ARGS__)
+#define PRINT(...) explicitPrintf(PUTCHAR_FUNC, 0, __VA_ARGS__)
 
 // Prints once every num_calls_between_prints times you call it
 #define PERIODIC_PRINT(num_calls_between_prints, ...)  \
 { \
   static u16 cnt = num_calls_between_prints; \
   if (cnt++ >= num_calls_between_prints) { \
-    explicitPrintf(0, __VA_ARGS__); \
+    explicitPrintf(PUTCHAR_FUNC, 0, __VA_ARGS__); \
     cnt = 0; \
   } \
 }
@@ -73,8 +86,6 @@ extern "C" {
 }
 
 #endif  // SIMULATOR
-
-#define STREAM_CAMERA_TO_UART 1
 
 #define REG_WORD(x) *(volatile u32*)(x)
 
@@ -188,6 +199,14 @@ namespace Anki
       // Prototype matches putc for printf.
       int USBPutChar(int c);
 
+      
+#ifdef SERIAL_IMAGING
+      // Put a byte into a send buffer to be sent by LongExecution()
+      // (Using same prototype as putc / USBPutChar for printf.)
+      int USBBufferChar(int c);
+#endif
+
+      
       // Motors
       enum MotorID
       {
