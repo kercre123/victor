@@ -240,7 +240,7 @@ classdef LucasKanadeTracker < handle
                         X = this.xgrid{i_scale}(:);
                         Y = this.ygrid{i_scale}(:);
                         this.A_full{i_scale} = [ ...
-                            X.*Ix(:) Y.*Iy(:) (-Y.*Ix(:) + X.*Iy(:))];
+                            Ix(:) Iy(:) (-Y.*Ix(:) + X.*Iy(:))];
                             
                     case 'affine'
                         % Full affine transformation (rotation, scale,

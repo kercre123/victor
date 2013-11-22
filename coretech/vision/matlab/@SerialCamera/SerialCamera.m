@@ -10,14 +10,27 @@
 classdef SerialCamera < handle
     
     properties(Constant = true)
-        % Default header (final 'BD' is for 80x60), converted from hex to a
-        % byte array.
+        % Default header and footer:
         BEEFFOFF = char(sscanf('BEEFF0FF', '%2x'))'; 
+        FFOFFEEB = char(sscanf('FF0FFEEB', '%2x'))';
+        
+        % Resolution bytes:
+        % (These should match what is defined in hal.h)
+        VGA_RESOLUTION = char(sscanf('BA', '%2x'));      % 640 x 480
+        QVGA_RESOLUTION = char(sscanf('BC', '%2x'));     % 320 x 240
+        QQVGA_RESOLUTION = char(sscanf('B8', '%2x'));    % 160 x 120
+        QQQVGA_RESOLUTION = char(sscanf('BD', '%2x'));   %  80 x  60
+        QQQQVGA_RESOLUTION = char(sscanf('B7', '%2x'));  %  40 x  30
+       
+        % Byte following header that indicates a message
+        MESSAGE_SUFFIX = char(sscanf('DD', '%2x'));
     end
     
     properties(SetAccess = 'protected')
         port;
         header;
+        footer;
+        formatSuffix; % image format to be looking for
         framesize;
         framelength;
         serialObj;
@@ -28,6 +41,8 @@ classdef SerialCamera < handle
         
         numFrames;
         numDropped;
+        
+        message;
     end
     
     
@@ -58,6 +73,10 @@ classdef SerialCamera < handle
                 delete(instrfind);
             end
             
+            this.header = SerialCamera.BEEFFOFF;
+            this.footer = SerialCamera.FFOFFEEB;
+            this.message = '';
+            
             this.serialObj = serial(this.port, 'BaudRate', BaudRate);
             fopen(this.serialObj);
                         
@@ -73,6 +92,7 @@ classdef SerialCamera < handle
         function img = getFrame(this)
             
             img = [];
+            this.message = '';
             
             bytesToRead = this.framelength*2-length(this.buffer);
             if bytesToRead > 0
@@ -97,41 +117,105 @@ classdef SerialCamera < handle
                 %end
                 
             end
+                        
+            headerIndex = strfind(this.buffer, this.header);
+            footerIndex = strfind(this.buffer, this.footer);
             
-            index = strfind(this.buffer, this.header);
-            
-            if isempty(index)
+            if isempty(headerIndex) || isempty(footerIndex) 
+                    
                 % Buffer is full of stuff we can't use. Just dump it
                 this.buffer = '';
-            else
-                % Get rid of stuff before the first index which we can't use
-                this.buffer(1:(index(1)-1)) = '';
                 
-                % Wait until we have two headers read
-                if length(index) >= 2
+            else
+                
+                % Find a header followed by a matching footer
+                foundHFpair = '';
+                i_header = 1;
+                while isempty(foundHFpair) && i_header <= length(headerIndex)
+                    headerType = this.buffer(headerIndex(i_header)+length(this.header));
+                    
+                    i_footer = 1;
+                    while isempty(foundHFpair) && i_footer <= length(footerIndex)
+                        % Footer must be after this header, but before next
+                        % header (if this isn't the last header)
+                        if footerIndex(i_footer) > headerIndex(i_header) && ...
+                                (i_header == length(headerIndex) || ...
+                                footerIndex(i_footer) < headerIndex(i_header+1))
+                            
+                            % Footer must have same type byte as header
+                            footerType = this.buffer(footerIndex(i_footer)+length(this.footer));
+                            if headerType == footerType
+                                foundHFpair = headerType;
+                            end
+                        end
+                        i_footer = i_footer + 1;
+                    end
+                    i_header = i_header + 1;
+                end
+                
+                if isempty(foundHFpair)
+                     
+                    if max(headerIndex) > max(footerIndex)
+                        % Header in the buffer is a header, so we may get
+                        % the rest of the message later.  So just dump
+                        % everything up to that last header (which
+                        % apparently was corrupted, since we found no
+                        % matching pairs)
+                        this.buffer(1:(headerIndex(end)-1)) = [];
+                    else
+                        % Nothing useful in the buffer, just dump it all
+                        % and start over.
+                        this.buffer = '';
+                    end
+                    
+                else
+                                    
+                    headerIndex = headerIndex(i_header);
+                    footerIndex = footerIndex(i_footer);
+
+                    % Get rid of stuff before the header which we can't use
+                    this.buffer(1:(headerIndex-1)) = '';
+                    
                     assert(strcmp(this.buffer(1:length(this.header)), this.header), ...
                         'Expecting the buffer to begin with the header at this point.');
                     
-                    % Read frame from index(1) to index(2)
-                    readLength = min(this.framelength, index(2)-index(1)-length(this.header));
+                    firstDataIndex = length(this.header)+1;
+                    readLength = footerIndex-headerIndex-firstDataIndex;
                     
-                    if readLength < this.framelength
-                        %set(h_axes, 'XColor', 'r', 'YColor', 'r');
-                        %set(h_img, 'CData', zeros(60,80));
-                        this.numDropped = this.numDropped + 1;
-                    else
-                        assert(readLength == this.framelength);
-                        img = uint8(this.buffer(length(this.header)+(1:readLength)));
-                        img = reshape(fliplr(img), this.framesize)';
-                        if this.doVerticalFlip
-                            img = flipud(img);
-                        end
-                        %set(h_img, 'CData', reshape(img, [80 60])');
-                        %set(h_axes, 'XColor', 'g', 'YColor', 'g');
-                        this.numFrames = this.numFrames + 1;
+                    switch(foundHFpair)
+                        case SerialCamera.MESSAGE_SUFFIX
+                            % Read and ASCII message data from index(1) to
+                            % index(2)
+                            this.message = this.buffer(firstDataIndex + (1:readLength));
+                                                       
+                        case this.formatSuffix
+                            % Read frame from index(1) to index(2)
+                            readLength = min(this.framelength, readLength);
+                            
+                            if readLength < this.framelength
+                                %set(h_axes, 'XColor', 'r', 'YColor', 'r');
+                                %set(h_img, 'CData', zeros(60,80));
+                                this.numDropped = this.numDropped + 1;
+                            else
+                                assert(readLength == this.framelength);
+                                img = uint8(this.buffer(firstDataIndex+(1:readLength)));
+                                img = reshape(fliplr(img), this.framesize)';
+                                if this.doVerticalFlip
+                                    img = flipud(img);
+                                end
+                                %set(h_img, 'CData', reshape(img, [80 60])');
+                                %set(h_axes, 'XColor', 'g', 'YColor', 'g');
+                                this.numFrames = this.numFrames + 1;
+                            end
+                            
+                        otherwise
+                            warning('Unrecognized header suffix found.');
                     end
-                    this.buffer(1:(readLength+length(this.header))) = [];
-                end % IF at least 2 indexes
+                        
+                    this.buffer(1:(readLength+firstDataIndex)) = [];
+                
+                end % IF / ELSE found a matching header/footer pair
+                
             end % IF / ELSE isempty(index)
             
         end % FUNCTION getFrame()
@@ -147,30 +231,48 @@ classdef SerialCamera < handle
             % Send magic command to change the resolution
             switch(newResolution)
                 case 'VGA' % [640 480]
-                    error('VGA unsupported.');
+                    this.framesize = [640 480]; 
+                    this.formatSuffix = SerialCamera.VGA_RESOLUTION;
+                    if nargin < 3
+                        frameRate = 1;
+                    end
+                    
                 case 'QVGA' % [320 240]
                     this.framesize = [320 240]; 
-                    serialCmd = 'X';
-                    formatSuffix = sscanf('B8', '%x');
+                    this.formatSuffix = SerialCamera.QVGA_RESOLUTION;
                     if nargin < 3
-                        frameRate = 10;
+                        frameRate = 5;
                     end
+                    
                 case 'QQVGA' % [160 120]
-                    error('QQVGA unsupported.');
+                    this.framesize = [160 120]; 
+                    this.formatSuffix = SerialCamera.QQVGA_RESOLUTION;
+                    if nargin < 3
+                        frameRate = 15;
+                    end
+                    
                 case 'QQQVGA' % [80 60]
                     this.framesize = [80 60];
-                    serialCmd = 'Z';
-                    formatSuffix = sscanf('BD', '%x');
+                    this.formatSuffix = SerialCamera.QQQVGA_RESOLUTION;
                     if nargin < 3
                         frameRate = 30;
                     end
+                    
+                case 'QQQQVGA' % [40 30]
+                    this.framesize = [40 30]; 
+                    this.formatSuffix = SerialCamera.QQQQVGA_RESOLUTION;
+                    if nargin < 3
+                        frameRate = 60;
+                    end
+                    
                 otherwise
                     error('Unrecognized resolution specified.');
+                    
             end % SWITCH(newResolution)
             
-            fwrite(this.serialObj, serialCmd, 'char');
+            fwrite(this.serialObj, this.formatSuffix, 'char');
             this.framelength = prod(this.framesize);
-            this.header = [SerialCamera.BEEFFOFF char(formatSuffix)];
+            %this.header = [SerialCamera.BEEFFOFF char(formatSuffix)];
             this.fps = frameRate;
             
             fclose(this.serialObj);

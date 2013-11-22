@@ -16,6 +16,7 @@ classdef CozmoDocker < handle
         h_leftRightError;
         h_img;
         h_target;
+        h_message;
         
         escapePressed;
         camera;
@@ -83,6 +84,9 @@ classdef CozmoDocker < handle
             % Set up display figure/axes:
             this.h_fig = namedFigure('Docking', 'CurrentCharacter', '~', ...
                 'KeyPressFcn', @(src,edata)this.keyPressCallback(src,edata));
+            
+            this.h_message = annotation('textbox', [.2 0 .6 .05]);
+            set(this.h_message, 'String', '<status>');
             
             this.h_axes = subplot(1,1,1, 'Parent', this.h_fig);
             this.h_pip = axes('Position', [0 .75 .2 .2], 'Parent', this.h_fig);
@@ -209,7 +213,11 @@ classdef CozmoDocker < handle
                 while ~this.escapePressed && (isempty(marker) || ~marker{1}.isValid)
                     t_detect = tic;
                     img = this.camera.getFrame();
-                    if ~isempty(img)
+                    if isempty(img)
+                        if ~isempty(this.camera.message)
+                            this.displayMessage(this.camera.message);
+                        end
+                    else
                         set(this.h_img, 'CData', img); drawnow;
                         marker = simpleDetector(img);
                     end
@@ -514,6 +522,11 @@ classdef CozmoDocker < handle
             
         end
         
+        function displayMessage(this, msg)
+            set(this.h_message, 'String', msg);
+            fprintf('RobotMessage: %s\n', msg);
+        end
+            
     end % methods
 
 end % classdef CozmoDocker
