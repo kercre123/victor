@@ -163,6 +163,9 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
   const Rectangle<f32> templateRegion(13, 33, 22, 43);
 
+  const s32 maxIterations = 25;
+  const f32 convergenceTolerance = static_cast<f32>(1e-3);
+
   InitializeBuffers();
 
   // TODO: add check that images were loaded correctly
@@ -188,7 +191,9 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
   ASSERT_TRUE(tracker.InitializeTemplate(image1, templateRegion, scratch1) == RESULT_OK);
 
-  //ASSERT_TRUE(tracker.IsValid());
+  ASSERT_TRUE(tracker.IsValid());
+
+  ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
 
 #endif // RUN_TRACKER_TESTS
 

@@ -11,6 +11,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/matlabInterface.h"
 #include "anki/common/robot/interpolate.h"
 #include "anki/common/robot/arrayPatterns.h"
+#include "anki/common/robot/find.h"
 
 namespace Anki
 {
@@ -159,8 +160,6 @@ namespace Anki
         this->center.x = (templateRegion.right + templateRegion.left) / 2;
 
         // Allocate all permanent memory
-        this->templateImagePyramid[0] = Array<u8>(templateImageHeight, templateImageWidth, memory);
-
         for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++) {
           const f32 scale = static_cast<f32>(1 << iScale);
 
@@ -209,14 +208,14 @@ namespace Anki
 
             const f32 scale = static_cast<f32>(1 << iScale);
 
-            Array<f32> xTransformed(numPointsY, numPointsX, memory);
-            Array<f32> yTransformed(numPointsY, numPointsX, memory);
-
             Array<f32> xIn = templateCoordinates[iScale].EvaluateX2(memory);
             Array<f32> yIn = templateCoordinates[iScale].EvaluateY2(memory);
 
             assert(xIn.get_size(0) == yIn.get_size(0));
             assert(xIn.get_size(1) == yIn.get_size(1));
+
+            Array<f32> xTransformed(numPointsY, numPointsX, memory);
+            Array<f32> yTransformed(numPointsY, numPointsX, memory);
 
             // Compute the warped coordinates (for later)
             if(transformation.TransformPoints(xIn, yIn, scale, this->center, xTransformed, yTransformed) != RESULT_OK)
@@ -225,7 +224,7 @@ namespace Anki
             Array<f32> templateDerivativeX(numPointsY, numPointsX, memory);
             Array<f32> templateDerivativeY(numPointsY, numPointsX, memory);
 
-            if(Interp2(templateImage, xTransformed, yTransformed, this->templateImagePyramid[iScale], INTERPOLATE_BILINEAR) != RESULT_OK)
+            if(Interp2(templateImage, xTransformed, yTransformed, this->templateImagePyramid[iScale], INTERPOLATE_LINEAR) != RESULT_OK)
               return RESULT_FAIL;
 
             // Ix = (image_right(targetBlur) - image_left(targetBlur))/2 * spacing;
@@ -288,7 +287,7 @@ namespace Anki
               Array<f32> templateWeightsTmp(numPointsY, numPointsX, memory);
 
               // W_mask = interp2(double(targetMask), xi, yi, 'linear', 0);
-              if(Interp2(templateMask, xTransformed, yTransformed, templateWeightsTmp, INTERPOLATE_BILINEAR) != RESULT_OK)
+              if(Interp2(templateMask, xTransformed, yTransformed, templateWeightsTmp, INTERPOLATE_LINEAR) != RESULT_OK)
                 return RESULT_FAIL;
 
               // W_ = W_mask .* GaussianTmp;
@@ -318,35 +317,126 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result LucasKanadeTracker_f32::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, MemoryStack memory)
+      Result LucasKanadeTracker_f32::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, MemoryStack memory)
       {
-        for(s32 iScale=numPyramidLevels; iScale>=0; iScale--) {
+        for(s32 iScale=numPyramidLevels-1; iScale>=0; iScale--) {
           bool converged = false;
 
-          if(IterativelyRefineTrack(nextImage, maxIterations, iScale, converged, memory) != RESULT_OK)
+          if(IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, converged, memory) != RESULT_OK)
             return RESULT_FAIL;
         } // for(s32 iScale=numPyramidLevels; iScale>=0; iScale--)
 
         return RESULT_OK;
       }
 
-      Result LucasKanadeTracker_f32::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, bool &converged, MemoryStack memory)
+      Result LucasKanadeTracker_f32::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack memory)
       {
+        AnkiConditionalErrorAndReturnValue(this->isInitialized == true,
+          RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "This object is not initialized");
+
+        AnkiConditionalErrorAndReturnValue(nextImage.IsValid(),
+          RESULT_FAIL, "LucasKanadeTracker_f32::IterativelyRefineTrack", "nextImage is not valid");
+
+        AnkiConditionalErrorAndReturnValue(maxIterations > 0 && maxIterations < 1000,
+          RESULT_FAIL, "LucasKanadeTracker_f32::IterativelyRefineTrack", "maxIterations must be greater than zero and less than 1000");
+
+        AnkiConditionalErrorAndReturnValue(whichScale >= 0 && whichScale < this->numPyramidLevels,
+          RESULT_FAIL, "LucasKanadeTracker_f32::IterativelyRefineTrack", "whichScale is invalid");
+
+        AnkiConditionalErrorAndReturnValue(convergenceTolerance > 0.0f,
+          RESULT_FAIL, "LucasKanadeTracker_f32::IterativelyRefineTrack", "convergenceTolerance must be greater than zero");
+
+        const s32 numPointsY = templateCoordinates[whichScale].get_yGridVector().get_size();
+        const s32 numPointsX = templateCoordinates[whichScale].get_xGridVector().get_size();
+
+        Array<f32> xPrevious(1, numPointsY*numPointsX, memory);
+        Array<f32> yPrevious(1, numPointsY*numPointsX, memory);
+
+        Array<f32> xIn(1, numPointsY*numPointsX, memory);
+        Array<f32> yIn(1, numPointsY*numPointsX, memory);
+
+        {
+          PUSH_MEMORY_STACK(memory);
+
+          Array<f32> xIn2d = templateCoordinates[whichScale].EvaluateX2(memory);
+          Array<f32> yIn2d = templateCoordinates[whichScale].EvaluateY2(memory);
+
+          Matrix::Vectorize(true, xIn2d, xIn);
+          Matrix::Vectorize(true, yIn2d, yIn);
+        } // PUSH_MEMORY_STACK(memory);
+
+        converged = false;
+
         for(s32 iteration=0; iteration<maxIterations; iteration++) {
-          const s32 numPointsY = templateCoordinates[whichScale].get_yGridVector().get_size();
-          const s32 numPointsX = templateCoordinates[whichScale].get_xGridVector().get_size();
+          PUSH_MEMORY_STACK(memory);
 
           const f32 scale = static_cast<f32>(1 << whichScale);
 
-          Array<f32> xTransformed(numPointsY, numPointsX, memory);
-          Array<f32> yTransformed(numPointsY, numPointsX, memory);
-
-          Array<f32> xIn = templateCoordinates[whichScale].EvaluateX2(memory);
-          Array<f32> yIn = templateCoordinates[whichScale].EvaluateY2(memory);
+          // [xi, yi] = this.getImagePoints(i_scale);
+          Array<f32> xTransformed(1, numPointsY*numPointsX, memory);
+          Array<f32> yTransformed(1, numPointsY*numPointsX, memory);
 
           if(transformation.TransformPoints(xIn, yIn, scale, this->center, xTransformed, yTransformed) != RESULT_OK)
             return RESULT_FAIL;
-        }
+
+          {
+            PUSH_MEMORY_STACK(memory);
+
+            Array<f32> tmp1(1, numPointsY*numPointsX, memory);
+            Array<f32> tmp2(1, numPointsY*numPointsX, memory);
+
+            // change = sqrt(mean((xPrev(:)-xi(:)).^2 + (yPrev(:)-yi(:)).^2));
+            Matrix::Subtract<f32,f32,f32>(xPrevious, xTransformed, tmp1);
+            Matrix::DotMultiply<f32,f32,f32>(tmp1, tmp1, tmp1);
+
+            Matrix::Subtract<f32,f32,f32>(yPrevious, yTransformed, tmp2);
+            Matrix::DotMultiply<f32,f32,f32>(tmp2, tmp2, tmp2);
+
+            Matrix::Add<f32,f32,f32>(tmp1, tmp2, tmp1);
+
+            const f32 change = sqrtf(Matrix::Mean<f32,f32>(tmp1));
+
+            if(change < convergenceTolerance*scale) {
+              converged = true;
+              return RESULT_OK;
+            }
+          } // PUSH_MEMORY_STACK(memory);
+
+          Array<f32> nextImageTransformed(1, numPointsY*numPointsX, memory);
+
+          // imgi = interp2(img, xi(:), yi(:), 'linear');
+          {
+            PUSH_MEMORY_STACK(memory);
+
+            Array<u8> nextImageTransformed2d(1, numPointsY*numPointsX, memory);
+
+            if(Interp2(nextImage, xTransformed, yTransformed, nextImageTransformed2d, INTERPOLATE_LINEAR) != RESULT_OK)
+              return RESULT_FAIL;
+
+            Matrix::Vectorize<u8,f32>(true, nextImageTransformed2d, nextImageTransformed);
+          } // PUSH_MEMORY_STACK(memory);
+
+          // inBounds = ~isnan(imgi);
+          // Warning: this is also treating real zeros as invalid, but this should not be a big problem
+          Find<f32, Comparison::NotEqual<f32,f32>, f32> inBounds(nextImageTransformed, 0.0f);
+
+          Array<f32> templateImage(1, numPointsY*numPointsX, memory);
+          Matrix::Vectorize(true, this->templateImagePyramid[whichScale], templateImage);
+
+          Array<f32> templateDerivativeT(1, numPointsY*numPointsX, memory);
+
+          // It = imgi - this.target{i_scale}(:);
+          Matrix::Subtract<f32,f32,f32>(nextImageTransformed, templateImage, templateDerivativeT);
+
+          {
+            Matlab matlab(false);
+
+            matlab.PutArray(nextImageTransformed, "nextImageTransformed");
+            matlab.PutArray(templateImage, "templateImage");
+            matlab.PutArray(templateDerivativeT, "templateDerivativeT");
+            matlab.PutArray(this->templateImagePyramid[whichScale], "templateImagePyramid_curScale");
+          }
+        } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
         return RESULT_OK;
       } // Result LucasKanadeTracker_f32::IterativelyRefineTrack()
