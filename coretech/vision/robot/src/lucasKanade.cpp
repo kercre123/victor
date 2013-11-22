@@ -10,6 +10,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/lucasKanade.h"
 #include "anki/common/robot/matlabInterface.h"
 #include "anki/common/robot/interpolate.h"
+#include "anki/common/robot/arrayPatterns.h"
 
 namespace Anki
 {
@@ -230,12 +231,33 @@ namespace Anki
             // Ix = (image_right(targetBlur) - image_left(targetBlur))/2 * spacing;
             // Iy = (image_down(targetBlur) - image_up(targetBlur))/2 * spacing;
             Matrix::Subtract<u8,f32,f32>(templateImagePyramid[iScale](1,-2,2,-1), templateImagePyramid[iScale](1,-2,0,-3), templateDerivativeX(1,-2,1,-2));
-            Matrix::Subtract<u8,f32,f32>(templateImagePyramid[iScale](2,-1,1,-2), templateImagePyramid[iScale](0,-3,1,-2), templateDerivativeY(1,-2,1,-2));
             Matrix::DotMultiply<f32,f32,f32>(templateDerivativeX, scale / 2.0f, templateDerivativeX);
+
+            Matrix::Subtract<u8,f32,f32>(templateImagePyramid[iScale](2,-1,1,-2), templateImagePyramid[iScale](0,-3,1,-2), templateDerivativeY(1,-2,1,-2));
             Matrix::DotMultiply<f32,f32,f32>(templateDerivativeY, scale / 2.0f, templateDerivativeY);
 
             {
               PUSH_MEMORY_STACK(memory);
+
+              Array<f32> GaussianTmp(numPointsY, numPointsX, memory);
+
+              // GaussianTmp = exp(-((this.xgrid{i_scale}).^2 + (this.ygrid{i_scale}).^2) / (2*(W_sigma)^2));
+              {
+                PUSH_MEMORY_STACK(memory);
+
+                // TODO: if recomputing this is slow, keep the old version
+                Array<f32> xIn = templateCoordinates[iScale].EvaluateX2(memory);
+                Array<f32> yIn = templateCoordinates[iScale].EvaluateY2(memory);
+
+                Array<f32> tmp(numPointsY, numPointsX, memory);
+
+                Matrix::DotMultiply<f32,f32,f32>(xIn, xIn, GaussianTmp);
+                Matrix::DotMultiply<f32,f32,f32>(yIn, yIn, tmp);
+                Matrix::Add<f32,f32,f32>(GaussianTmp, tmp, GaussianTmp);
+                Matrix::Subtract<f32,f32,f32>(0.0f, GaussianTmp, GaussianTmp);
+                Matrix::DotMultiply<f32,f32,f32>(GaussianTmp, 1.0f/(2.0f*templateWeightsSigma*templateWeightsSigma), GaussianTmp);
+                Matrix::Exp<f32,f32,f32>(GaussianTmp, GaussianTmp);
+              }
 
               // W_mask = interp2(double(targetMask), xi, yi, 'linear', 0);
 
@@ -244,11 +266,15 @@ namespace Anki
               if(Interp2(templateMask, xTransformed, yTransformed, templateWeightsTmp, INTERPOLATE_BILINEAR) != RESULT_OK)
                 return RESULT_FAIL;
 
+              // W_ = W_mask .* GaussianTmp;
+              Matrix::DotMultiply<f32,f32,f32>(templateWeightsTmp, GaussianTmp, templateWeightsTmp);
+
               {
                 Matlab matlab(false);
                 matlab.PutArray(this->templateImagePyramid[iScale], "templateImagePyramid0");
                 matlab.PutArray(templateDerivativeX, "templateDerivativeX");
                 matlab.PutArray(templateDerivativeY, "templateDerivativeY");
+                matlab.PutArray(GaussianTmp, "GaussianTmp");
                 matlab.PutArray(templateWeightsTmp, "templateWeightsTmp");
               }
             } // PUSH_MEMORY_STACK(memory);
