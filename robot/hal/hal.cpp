@@ -53,6 +53,25 @@ namespace Anki
           }
         }
         
+        void SendMessage()
+        {
+          // Send the header:
+          USBPutChar(0xBE);
+          USBPutChar(0xEF);
+          USBPutChar(0xF0);
+          USBPutChar(0xFF);
+          USBPutChar(0xDD); // byte indicating this is a message packet
+          
+          // Send all the characters in the buffer as of right now
+          const u32 endIndex = writeIndex; // make a copy of where we should stop
+          while(readIndex != endIndex)
+          {
+            // Send the character and circularly increment the read index:
+            HAL::USBPutChar(buffer[readIndex]);
+            IncrementIndex(readIndex);
+          }
+        }
+        
       } // namespace USBprintBuffer
       
       // Add a character to the ring buffer
@@ -62,6 +81,7 @@ namespace Anki
         buffer[writeIndex] = (char) c;
         IncrementIndex(writeIndex);
       }
+      
 #endif
       
       static const tyAuxClkDividerCfg m_auxClockConfig[] =
@@ -342,19 +362,9 @@ int main()
 
     HAL::SendFrame();
     
+    
 #ifdef SERIAL_IMAGING
-    {
-      using namespace USBprintBuffer;
-      
-      // Send all the characters in the buffer as of right now
-      const u32 endIndex = writeIndex; // make a copy of where we should stop
-      while(readIndex != endIndex)
-      {
-        // Send the character and circularly increment the read index:
-        HAL::USBPutChar(buffer[readIndex]);
-        IncrementIndex(readIndex);
-      }
-    }
+    HAL::USBprintBuffer::SendMessage();
 #endif
 
     u32 t2 = HAL::GetMicroCounter();
