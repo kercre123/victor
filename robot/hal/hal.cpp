@@ -106,7 +106,7 @@ namespace Anki
       void USBUpdate();
 
 
-      static u32 FRAME = 0;
+      static u32 frameResolution = CAMERA_MODE_QQQVGA;
 
       static void SendFrame()
       {
@@ -117,25 +117,63 @@ namespace Anki
         USBPutChar(0xF0);
         USBPutChar(0xFF);
 
-        u32 inc = FRAME == 0 ? 8 : 2;
-
-        USBPutChar(FRAME == 0 ? 0xBD : 0xB8);
-
-        for (int y = 0; y < 480; y += inc)
+        // Set window size for averaging when downsampling and send
+        // a byte representing the resolution
+        u32 inc = 1;
+        switch(frameResolution)
         {
-          for (int x = 0; x < 640; x += inc)
-          {
-            int sum = 0;
-            for (int y1 = y; y1 < y + inc; y1++)
-            {
-              for (int x1 = x; x1 < x + inc; x1++)
-              {
-                sum += image[(x1 + y1 * 640) ^ 3];
-              }
-            }
-            USBPutChar(sum / (inc * inc));
-          }
+          case CAMERA_MODE_QVGA:
+            inc = 2;
+            USBPutChar(CAMERA_MODE_QVGA_HEADER);
+            break;
+            
+          case CAMERA_MODE_QQVGA:
+            inc = 4;
+            USBPutChar(CAMERA_MODE_QQVGA_HEADER);
+            break;
+            
+          case CAMERA_MODE_QQQVGA:
+            inc = 8;
+            USBPutChar(CAMERA_MODE_QQQVGA_HEADER);
+            break;
+            
+          case CAMERA_MODE_QQQQVGA:
+            inc = 16;
+            USBPutChar(CAMERA_MODE_QQQQVGA_HEADER);
+            break;
+
+          case CAMERA_MODE_VGA:
+          default:
+            inc = 1;
+            USBPutChar(CAMERA_MODE_VGA_HEADER);
         }
+
+        if(inc==1)
+        {
+          // No averaging
+          for(int i=0; i < 640*480; i++)
+          {
+            USBPutChar(image[i]);
+          }
+          
+        } else {
+          // Average inc x inc windows
+          for (int y = 0; y < 480; y += inc)
+          {
+            for (int x = 0; x < 640; x += inc)
+            {
+              int sum = 0;
+              for (int y1 = y; y1 < y + inc; y1++)
+              {
+                for (int x1 = x; x1 < x + inc; x1++)
+                {
+                  sum += image[(x1 + y1 * 640) ^ 3];
+                }
+              }
+              USBPutChar(sum / (inc * inc));
+            }
+          }
+        } // IF / ELSE inc==1
       }
 
       static u32 MainExecutionIRQ(u32, u32)
@@ -323,11 +361,30 @@ int main()
     //printf("%i\n", (t2 - t));
     t = t2;
  
-    int c = HAL::USBGetChar();
-    if (c == 'X')
-      HAL::FRAME = 1;
-    else if (c == 'Z')
-      HAL::FRAME = 0;
+    switch(HAL::USBGetChar())
+    {
+      case CAMERA_MODE_VGA_HEADER:
+        frameResolution = CAMERA_MODE_VGA;
+        break;
+        
+      case CAMERA_MODE_QVGA_HEADER:
+        frameResolution = CAMERA_MODE_QVGA;
+        break;
+        
+      case CAMERA_MODE_QQVGA_HEADER:
+        frameResolution = CAMERA_MODE_QQVGA;
+        break;
+        
+      case CAMERA_MODE_QQQQVGA_HEADER:
+        frameResolution = CAMERA_MODE_QQQQVGA;
+        break;
+
+      case CAMERA_MODE_QQQVGA_HEADER:
+      default:
+        frameResolution = CAMERA_MODE_QQQVGA;
+    }
+
+    
 
     //HAL::USBUpdate();
 

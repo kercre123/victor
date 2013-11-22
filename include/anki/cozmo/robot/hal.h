@@ -244,11 +244,20 @@ namespace Anki
         CAMERA_MODE_VGA = 0,
         CAMERA_MODE_QVGA,
         CAMERA_MODE_QQVGA,
+        CAMERA_MODE_QQQVGA,
+        CAMERA_MODE_QQQQVGA,
         CAMERA_MODE_COUNT,
 
         CAMERA_MODE_NONE = CAMERA_MODE_COUNT
       };
-
+      
+      // Final byte in frame header to determine/specify resolution
+      const u32 CAMERA_MODE_VGA_HEADER     = 0xBA;
+      const u32 CAMERA_MODE_QVGA_HEADER    = 0xBC;
+      const u32 CAMERA_MODE_QQVGA_HEADER   = 0xB8;
+      const u32 CAMERA_MODE_QQQVGA_HEADER  = 0xBD;
+      const u32 CAMERA_MODE_QQQQVGA_HEADER = 0xB7;
+      
       enum CameraUpdateMode
       {
         CAMERA_UPDATE_CONTINUOUS = 0,
