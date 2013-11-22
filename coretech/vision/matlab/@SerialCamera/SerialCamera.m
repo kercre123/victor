@@ -10,9 +10,9 @@
 classdef SerialCamera < handle
     
     properties(Constant = true)
-        % Default header (final 'BD' is for 80x60), converted from hex to a
-        % byte array.
+        % Default header and footer:
         BEEFFOFF = char(sscanf('BEEFF0FF', '%2x'))'; 
+        FFOFFEEB = char(sscanf('FF0FFEEB', '%2x'))';
         
         % Byte following header that indicates a message
         MESSAGE_SUFFIX = char(sscanf('DD', '%2x'));
@@ -21,6 +21,7 @@ classdef SerialCamera < handle
     properties(SetAccess = 'protected')
         port;
         header;
+        footer;
         formatSuffix; % image format to be looking for
         framesize;
         framelength;
@@ -65,6 +66,7 @@ classdef SerialCamera < handle
             end
             
             this.header = SerialCamera.BEEFFOFF;
+            this.footer = SerialCamera.FFOFFEEB;
             this.message = '';
             
             this.serialObj = serial(this.port, 'BaudRate', BaudRate);
@@ -107,25 +109,72 @@ classdef SerialCamera < handle
                 %end
                 
             end
+                        
+            headerIndex = strfind(this.buffer, this.header);
+            footerIndex = strfind(this.buffer, this.footer);
             
-            index = strfind(this.buffer, this.header);
-            
-            if isempty(index)
+            if isempty(headerIndex) || isempty(footerIndex) 
+                    
                 % Buffer is full of stuff we can't use. Just dump it
                 this.buffer = '';
-            else
-                % Get rid of stuff before the first index which we can't use
-                this.buffer(1:(index(1)-1)) = '';
                 
-                % Wait until we have two headers read
-                if length(index) >= 2
+            else
+                
+                % Find a header followed by a matching footer
+                foundHFpair = '';
+                i_header = 1;
+                while isempty(foundHFpair) && i_header <= length(headerIndex)
+                    headerType = this.buffer(headerIndex(i_header)+length(this.header));
+                    
+                    i_footer = 1;
+                    while isempty(foundHFpair) && i_footer <= length(footerIndex)
+                        % Footer must be after this header, but before next
+                        % header (if this isn't the last header)
+                        if footerIndex(i_footer) > headerIndex(i_header) && ...
+                                (i_header == length(headerIndex) || ...
+                                footerIndex(i_footer) < headerIndex(i_header+1))
+                            
+                            % Footer must have same type byte as header
+                            footerType = this.buffer(footerIndex(i_footer)+length(this.footer));
+                            if headerType == footerType
+                                foundHFpair = headerType;
+                            end
+                        end
+                        i_footer = i_footer + 1;
+                    end
+                    i_header = i_header + 1;
+                end
+                
+                if isempty(foundHFpair)
+                     
+                    if max(headerIndex) > max(footerIndex)
+                        % Header in the buffer is a header, so we may get
+                        % the rest of the message later.  So just dump
+                        % everything up to that last header (which
+                        % apparently was corrupted, since we found no
+                        % matching pairs)
+                        this.buffer(1:(headerIndex(end)-1)) = [];
+                    else
+                        % Nothing useful in the buffer, just dump it all
+                        % and start over.
+                        this.buffer = '';
+                    end
+                    
+                else
+                                    
+                    headerIndex = headerIndex(i_header);
+                    footerIndex = footerIndex(i_footer);
+
+                    % Get rid of stuff before the header which we can't use
+                    this.buffer(1:(headerIndex-1)) = '';
+                    
                     assert(strcmp(this.buffer(1:length(this.header)), this.header), ...
                         'Expecting the buffer to begin with the header at this point.');
                     
                     firstDataIndex = length(this.header)+1;
-                    readLength = index(2)-index(1)-firstDataIndex;
+                    readLength = footerIndex-headerIndex-firstDataIndex;
                     
-                    switch(this.buffer(length(this.header)+1))
+                    switch(foundHFpair)
                         case SerialCamera.MESSAGE_SUFFIX
                             % Read and ASCII message data from index(1) to
                             % index(2)
@@ -156,8 +205,9 @@ classdef SerialCamera < handle
                     end
                         
                     this.buffer(1:(readLength+firstDataIndex)) = [];
-                   
-                end % IF at least 2 indexes
+                
+                end % IF / ELSE found a matching header/footer pair
+                
             end % IF / ELSE isempty(index)
             
         end % FUNCTION getFrame()
