@@ -37,6 +37,11 @@
 #include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
 
+// Define this if we are sending images over UART in order to buffer messages
+// created with printf and send them after each frame in long execution (so
+// we don't interrupt frames being sent)
+#define SERIAL_IMAGING
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -46,7 +51,13 @@ extern "C" {
 #endif
 #ifndef SIMULATOR
 #undef printf
+#ifdef SERIAL_IMAGING
+// Buffer printf messages, to be sent by long execution
+#define printf(...) _xprintf(Anki::Cozmo::HAL::USBBufferChar, 0, __VA_ARGS__)
+#else
+// Send printf messages directly over the USB connection
 #define printf(...) _xprintf(Anki::Cozmo::HAL::USBPutChar, 0, __VA_ARGS__)
+#endif
 //#define PRINT(...) _xprintf(Anki::Cozmo::HAL::UARTPutChar, 0, __VA_ARGS__)
 #define PRINT(...) explicitPrintf(0, __VA_ARGS__)
 
@@ -185,6 +196,12 @@ namespace Anki
       // Send a byte.
       // Prototype matches putc for printf.
       int USBPutChar(int c);
+      
+#ifdef SERIAL_IMAGING
+      // Put a byte into a send buffer to be sent by LongExecution()
+      // (Using same prototype as putc / USBPutChar for printf.)
+      int USBBufferChar(int c);
+#endif
 
       // Motors
       enum MotorID

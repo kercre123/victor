@@ -32,6 +32,38 @@ namespace Anki
       static const u32 D_TIMER_CFG_IRQ_PENDING  = (1 << 4);
       static const u32 D_TIMER_CFG_FORCE_RELOAD = (1 << 5);
 
+#ifdef SERIAL_IMAGING
+      namespace USBprintBuffer
+      {
+        // This is a (ring) buffer to store messages created using printf in main
+        // execution, until they can be picked up and actually sent over the USB
+        // UART by long execution when we are also using the UART to send image
+        // data and don't want to step on that data with frequent main execution
+        // messages.
+        static const u32  BUFFER_LENGTH = 512;
+        
+        static char  data[BUFFER_LENGTH];
+        static u32   readIndex = 0;
+        static u32   writeIndex = 0;
+        
+        void IncrementIndex(u32& index) {
+          ++index;
+          if(index == BUFFER_LENGTH) {
+            index = 0;
+          }
+        }
+        
+      } // namespace USBprintBuffer
+      
+      // Add a character to the ring buffer
+      int USBBufferChar(int c)
+      {
+        using namespace USBprintBuffer;
+        buffer[writeIndex] = (char) c;
+        IncrementIndex(writeIndex);
+      }
+#endif
+      
       static const tyAuxClkDividerCfg m_auxClockConfig[] =
       {
         {
@@ -271,6 +303,21 @@ int main()
     }
 
     HAL::SendFrame();
+    
+#ifdef SERIAL_IMAGING
+    {
+      using namespace USBprintBuffer;
+      
+      // Send all the characters in the buffer as of right now
+      const u32 endIndex = writeIndex; // make a copy of where we should stop
+      while(readIndex != endIndex)
+      {
+        // Send the character and circularly increment the read index:
+        HAL::USBPutChar(buffer[readIndex]);
+        IncrementIndex(readIndex);
+      }
+    }
+#endif
 
     u32 t2 = HAL::GetMicroCounter();
     //printf("%i\n", (t2 - t));
