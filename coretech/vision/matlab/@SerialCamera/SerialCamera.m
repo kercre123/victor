@@ -14,6 +14,14 @@ classdef SerialCamera < handle
         % byte array.
         BEEFFOFF = char(sscanf('BEEFF0FF', '%2x'))'; 
         
+        % Resolution bytes:
+        % (These should match what is defined in hal.h)
+        VGA_RESOLUTION = char(sscanf('BA', '%2x'));      % 640 x 480
+        QVGA_RESOLUTION = char(sscanf('BC', '%2x'));     % 320 x 240
+        QQVGA_RESOLUTION = char(sscanf('B8', '%2x'));    % 160 x 120
+        QQQVGA_RESOLUTION = char(sscanf('BD', '%2x'));   %  80 x  60
+        QQQQVGA_RESOLUTION = char(sscanf('B7', '%2x'));  %  40 x  30
+       
         % Byte following header that indicates a message
         MESSAGE_SUFFIX = char(sscanf('DD', '%2x'));
     end
@@ -173,25 +181,38 @@ classdef SerialCamera < handle
             % Send magic command to change the resolution
             switch(newResolution)
                 case 'VGA' % [640 480]
-                    error('VGA unsupported.');
+                    this.framesize = [640 480]; 
+                    this.formatSuffix = SerialCamera.VGA_RESOLUTION;
+                    if nargin < 3
+                        frameRate = 1;
+                    end
                     
                 case 'QVGA' % [320 240]
                     this.framesize = [320 240]; 
-                    serialCmd = 'X';
-                    this.formatSuffix = sscanf('B8', '%x');
+                    this.formatSuffix = SerialCamera.QVGA_RESOLUTION;
                     if nargin < 3
-                        frameRate = 10;
+                        frameRate = 5;
                     end
                     
                 case 'QQVGA' % [160 120]
-                    error('QQVGA unsupported.');
+                    this.framesize = [160 120]; 
+                    this.formatSuffix = SerialCamera.QQVGA_RESOLUTION;
+                    if nargin < 3
+                        frameRate = 15;
+                    end
                     
                 case 'QQQVGA' % [80 60]
                     this.framesize = [80 60];
-                    serialCmd = 'Z';
-                    this.formatSuffix = sscanf('BD', '%x');
+                    this.formatSuffix = SerialCamera.QQQVGA_RESOLUTION;
                     if nargin < 3
                         frameRate = 30;
+                    end
+                    
+                case 'QQQQVGA' % [40 30]
+                    this.framesize = [40 30]; 
+                    this.formatSuffix = SerialCamera.QQQQVGA_RESOLUTION;
+                    if nargin < 3
+                        frameRate = 60;
                     end
                     
                 otherwise
@@ -199,7 +220,7 @@ classdef SerialCamera < handle
                     
             end % SWITCH(newResolution)
             
-            fwrite(this.serialObj, serialCmd, 'char');
+            fwrite(this.serialObj, this.formatSuffix, 'char');
             this.framelength = prod(this.framesize);
             %this.header = [SerialCamera.BEEFFOFF char(formatSuffix)];
             this.fps = frameRate;
