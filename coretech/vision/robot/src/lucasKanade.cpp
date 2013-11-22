@@ -72,6 +72,11 @@ namespace Anki
         return RESULT_OK;
       }
 
+      TransformType PlaneTransformation_f32::get_transformType() const
+      {
+        return transformType;
+      }
+
       LucasKanadeTracker_f32::LucasKanadeTracker_f32(const s32 templateImageHeight, const s32 templateImageWidth, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory)
         : isValid(false), templateImageHeight(templateImageHeight), templateImageWidth(templateImageWidth), numPyramidLevels(numPyramidLevels), transformation(PlaneTransformation_f32(transformType)), ridgeWeight(ridgeWeight), isInitialized(false)
       {
@@ -140,6 +145,11 @@ namespace Anki
         // to leak memory with multiple calls to this object
         this->isInitialized = true;
 
+        s32 numTransformationParameters;
+        if(transformation.get_transformType() == TRANSFORM_TRANSLATION) {
+          numTransformationParameters = 2;
+        }
+
         this->templateRegionHeight = templateRegion.bottom - templateRegion.top + 1;
         this->templateRegionWidth = templateRegion.right - templateRegion.left + 1;
 
@@ -161,7 +171,7 @@ namespace Anki
 
           const s32 numValidPoints = templateCoordinates[iScale].get_numElements();
 
-          this->A_full[iScale] = Array<f32>(8, numValidPoints, memory);
+          this->A_full[iScale] = Array<f32>(numTransformationParameters, numValidPoints, memory);
           AnkiConditionalErrorAndReturnValue(this->A_full[iScale].IsValid(),
             RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "Could not allocate A_full[iScale]");
 
@@ -172,6 +182,11 @@ namespace Anki
 
           AnkiConditionalErrorAndReturnValue(this->templateImagePyramid[iScale].IsValid(),
             RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "Could not allocate templateImagePyramid[i]");
+
+          this->templateWeights[iScale] = Array<f32>(1, numPointsY*numPointsX, memory);
+
+          AnkiConditionalErrorAndReturnValue(this->templateWeights[iScale].IsValid(),
+            RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "Could not allocate templateWeights[i]");
 
           //templateImage.Show("templateImage", true);
         }
@@ -199,21 +214,49 @@ namespace Anki
             Array<f32> xTransformed(numPointsY, numPointsX, memory);
             Array<f32> yTransformed(numPointsY, numPointsX, memory);
 
-            {
-              PUSH_MEMORY_STACK(memory);
+            Array<f32> xIn = templateCoordinates[iScale].EvaluateX2(memory);
+            Array<f32> yIn = templateCoordinates[iScale].EvaluateY2(memory);
 
-              Array<f32> xIn = templateCoordinates[iScale].EvaluateX2(memory);
-              Array<f32> yIn = templateCoordinates[iScale].EvaluateY2(memory);
+            assert(xIn.get_size(0) == yIn.get_size(0));
+            assert(xIn.get_size(1) == yIn.get_size(1));
 
-              assert(xIn.get_size(0) == yIn.get_size(0));
-              assert(xIn.get_size(1) == yIn.get_size(1));
+            // Compute the warped coordinates (for later)
+            if(transformation.TransformPoints(xIn, yIn, scale, this->center, xTransformed, yTransformed) != RESULT_OK)
+              return RESULT_FAIL;
 
-              if(transformation.TransformPoints(xIn, yIn, scale, this->center, xTransformed, yTransformed) != RESULT_OK)
-                return RESULT_FAIL;
-            } // PUSH_MEMORY_STACK(memory);
+            Array<f32> templateDerivativeX(numPointsY, numPointsX, memory);
+            Array<f32> templateDerivativeY(numPointsY, numPointsX, memory);
 
             if(Interp2(templateImage, xTransformed, yTransformed, this->templateImagePyramid[iScale], INTERPOLATE_BILINEAR) != RESULT_OK)
               return RESULT_FAIL;
+
+            // Ix = (image_right(targetBlur) - image_left(targetBlur))/2 * spacing;
+            // Iy = (image_down(targetBlur) - image_up(targetBlur))/2 * spacing;
+            Matrix::Subtract<u8,f32,f32>(templateImagePyramid[iScale](1,-2,2,-1), templateImagePyramid[iScale](1,-2,0,-3), templateDerivativeX(1,-2,1,-2));
+            Matrix::DotMultiply<f32,f32,f32>(templateDerivativeX, scale / 2.0f, templateDerivativeX);
+
+            Matrix::Subtract<u8,f32,f32>(templateImagePyramid[iScale](2,-1,1,-2), templateImagePyramid[iScale](0,-3,1,-2), templateDerivativeY(1,-2,1,-2));
+            Matrix::DotMultiply<f32,f32,f32>(templateDerivativeY, scale / 2.0f, templateDerivativeY);
+
+            // Create the A matrix
+            if(transformation.get_transformType() == TRANSFORM_TRANSLATION) {
+              // this.A_trans{i_scale} = [Ix(:) Iy(:)];
+
+              Array<f32> tmp(1, numPointsY*numPointsX, memory);
+
+              Matrix::Vectorize(true, templateDerivativeX, tmp);
+              this->A_full[iScale](0,0,0,-1).Set(tmp);
+
+              Matrix::Vectorize(true, templateDerivativeY, tmp);
+              this->A_full[iScale](1,1,0,-1).Set(tmp);
+
+              {
+                Matlab matlab(false);
+                matlab.PutArray(templateDerivativeX, "templateDerivativeX");
+                matlab.PutArray(templateDerivativeY, "templateDerivativeY");
+                matlab.PutArray(this->A_full[iScale], "A_full0");
+              }
+            }
 
             //{
             //  Matlab matlab(false);
@@ -225,17 +268,6 @@ namespace Anki
             //  matlab.PutArray(templateImage, "templateImage");
             //}
 
-            Array<f32> templateDerivativeX(numPointsY, numPointsX, memory);
-            Array<f32> templateDerivativeY(numPointsY, numPointsX, memory);
-
-            // Ix = (image_right(targetBlur) - image_left(targetBlur))/2 * spacing;
-            // Iy = (image_down(targetBlur) - image_up(targetBlur))/2 * spacing;
-            Matrix::Subtract<u8,f32,f32>(templateImagePyramid[iScale](1,-2,2,-1), templateImagePyramid[iScale](1,-2,0,-3), templateDerivativeX(1,-2,1,-2));
-            Matrix::DotMultiply<f32,f32,f32>(templateDerivativeX, scale / 2.0f, templateDerivativeX);
-
-            Matrix::Subtract<u8,f32,f32>(templateImagePyramid[iScale](2,-1,1,-2), templateImagePyramid[iScale](0,-3,1,-2), templateDerivativeY(1,-2,1,-2));
-            Matrix::DotMultiply<f32,f32,f32>(templateDerivativeY, scale / 2.0f, templateDerivativeY);
-
             {
               PUSH_MEMORY_STACK(memory);
 
@@ -244,10 +276,6 @@ namespace Anki
               // GaussianTmp = exp(-((this.xgrid{i_scale}).^2 + (this.ygrid{i_scale}).^2) / (2*(W_sigma)^2));
               {
                 PUSH_MEMORY_STACK(memory);
-
-                // TODO: if recomputing this is slow, keep the old version
-                Array<f32> xIn = templateCoordinates[iScale].EvaluateX2(memory);
-                Array<f32> yIn = templateCoordinates[iScale].EvaluateY2(memory);
 
                 Array<f32> tmp(numPointsY, numPointsX, memory);
 
@@ -269,17 +297,24 @@ namespace Anki
               // W_ = W_mask .* GaussianTmp;
               Matrix::DotMultiply<f32,f32,f32>(templateWeightsTmp, GaussianTmp, templateWeightsTmp);
 
-              {
-                Matlab matlab(false);
-                matlab.PutArray(this->templateImagePyramid[iScale], "templateImagePyramid0");
-                matlab.PutArray(templateDerivativeX, "templateDerivativeX");
-                matlab.PutArray(templateDerivativeY, "templateDerivativeY");
-                matlab.PutArray(GaussianTmp, "GaussianTmp");
-                matlab.PutArray(templateWeightsTmp, "templateWeightsTmp");
-              }
-            } // PUSH_MEMORY_STACK(memory);
+              // Set the boundaries to zero, since these won't be correctly estimated
+              templateWeightsTmp(0,0,0,0).Set(0);
+              templateWeightsTmp(-1,-1,0,0).Set(0);
+              templateWeightsTmp(0,0,-1,-1).Set(0);
+              templateWeightsTmp(-1,-1,-1,-1).Set(0);
 
-            const s32 numValidPoints = templateCoordinates[iScale].get_numElements();
+              Matrix::Vectorize(true, templateWeightsTmp, templateWeights[iScale]);
+
+              //{
+              //  Matlab matlab(false);
+              //  matlab.PutArray(this->templateImagePyramid[iScale], "templateImagePyramid0");
+              //  matlab.PutArray(templateDerivativeX, "templateDerivativeX");
+              //  matlab.PutArray(templateDerivativeY, "templateDerivativeY");
+              //  matlab.PutArray(GaussianTmp, "GaussianTmp");
+              //  matlab.PutArray(templateWeightsTmp, "templateWeightsTmp");
+              //  matlab.PutArray(templateWeights[iScale], "templateWeights0");
+              //}
+            } // PUSH_MEMORY_STACK(memory);
           } // for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++, fScale++)
         } // PUSH_MEMORY_STACK(memory);
 

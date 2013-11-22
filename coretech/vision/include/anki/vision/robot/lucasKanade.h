@@ -44,6 +44,8 @@ namespace Anki
           const Point<f32> &centerOffset,
           Array<f32> &xOut, Array<f32> &yOut);
 
+        TransformType get_transformType() const;
+
       protected:
         TransformType transformType;
         f32 homography[3][3]; // All types of plane transformations are stored in a homography matrix, though some values may be zero (or ones for diagonals)
