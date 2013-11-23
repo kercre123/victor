@@ -21,7 +21,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define PRINTF_BUFFER_SIZE 1024
 int printfBuffer[PRINTF_BUFFER_SIZE];
 // int printfBuffer2[PRINTF_BUFFER_SIZE]; // For a single level of recusion
-void explicitPrintf(int reverseEachFourCharacters, const char *format, ...)
+void explicitPrintf(int (*writeChar)(int), int reverseEachFourCharacters, const char *format, ...)
 {
   /*va_list arguments;
   va_start(arguments, format);
@@ -32,6 +32,15 @@ void explicitPrintf(int reverseEachFourCharacters, const char *format, ...)
   int i;
   va_list arguments;
 
+  // If null, default to putchar
+  if (writeChar == 0) {
+#ifdef USING_MOVIDIUS_COMPILER
+    writeChar = IS_PLATFORM_VCS ? DrvApbUartVcsPutChar : DrvApbUartPutChar;
+#else
+    writeChar = putchar;
+#endif
+  }
+  
   // Count the number of characters
   numCharacters = 0;
   while(*format != 0x00)
@@ -81,21 +90,21 @@ void explicitPrintf(int reverseEachFourCharacters, const char *format, ...)
 
       if(percentChar == 'd') {
         const s32 value = va_arg(arguments, s32);
-        PrintInt(value);
+        PrintInt(writeChar, value);
         format++;
       } else if(percentChar == 'x') {
         const u32 value = va_arg(arguments, u32);
-        PrintHex(value);
+        PrintHex(writeChar, value);
         format++;
       } else if(percentChar == 'f') {
         // TODO: should this be double?
         const f64 value = va_arg(arguments, f64);
-        PrintFloat(value);
+        PrintFloat(writeChar, value);
         format++;
       } else if(percentChar == 's') {
         const char * stringArgument = va_arg(arguments, char*);
         while(*stringArgument != 0x00) {
-          putchar(*stringArgument);
+          writeChar(*stringArgument);
           stringArgument++;
         }
         //explicitPrintfWithExplicitprintfBuffer(reverseEachFourCharacters, &printfprintfBuffer2[0], stringArgument);
@@ -104,21 +113,21 @@ void explicitPrintf(int reverseEachFourCharacters, const char *format, ...)
         if(printfBuffer[i] == 0x00)
           break;
 
-        putchar('%');
-        putchar(printfBuffer[i]);
+        writeChar('%');
+        writeChar(printfBuffer[i]);
       }
     } else {
       if(printfBuffer[i] == 0x00)
         break;
 
-      putchar(printfBuffer[i]);
+      writeChar(printfBuffer[i]);
     }
   } // for(i=0; i<numCharacters; i++)
 
   va_end(arguments);
 }
 
-void PrintFloat(f64 value)
+void PrintFloat(int (*writeChar)(int), f64 value)
 {
   const s32 maxDecimalDigits = 6;
   f64 decimalPart;
@@ -126,8 +135,17 @@ void PrintFloat(f64 value)
   s32 digitIndex = -1;
   s32 numDecimalDigitsUsed = 0;
 
+  // If null, default to putchar
+  if (writeChar == 0) {
+#ifdef USING_MOVIDIUS_COMPILER
+    writeChar = IS_PLATFORM_VCS ? DrvApbUartVcsPutChar : DrvApbUartPutChar;
+#else
+    writeChar = putchar;
+#endif
+  }
+  
   if(value < 0.0) {
-    putchar('-');
+    writeChar('-');
     value = -value;
   }
 
@@ -137,30 +155,30 @@ void PrintFloat(f64 value)
 
   if(value > 10000000000.0) {
     const f64 topPart = (f64)value / 10000000000.0;
-    PrintInt((s32)floorf(topPart));
-    putchar('.');
-    putchar('.');
-    putchar('.');
+    PrintInt(writeChar, (s32)floorf(topPart));
+    writeChar('.');
+    writeChar('.');
+    writeChar('.');
     return;
   }
 
   // If value is close enough to the ceil value, just print the ceil value.
   if (FLT_NEAR(value, ceilf(value))) {
-    PrintInt((s32)ceilf(value));
-    putchar('.');
-    putchar('0');
+    PrintInt(writeChar, (s32)ceilf(value));
+    writeChar('.');
+    writeChar('0');
     return;
   }
 
-  PrintInt((s32)floorf(value));
+  PrintInt(writeChar, (s32)floorf(value));
 
   // The remainder of this function prints the part after the decimal digit
   value = decimalPart;
 
-  putchar('.');
+  writeChar('.');
 
   if(value < (1.0f / powf(10.0f, maxDecimalDigits-1))) {
-    putchar('0');
+    writeChar('0');
 
     return;
   }
@@ -175,7 +193,7 @@ void PrintFloat(f64 value)
     value *= 10.0f;
 
     if(value < (1.0f - FLOATING_POINT_COMPARISON_TOLERANCE)) {
-      putchar('0');
+      writeChar('0');
       continue;
     }
 
@@ -188,30 +206,30 @@ void PrintFloat(f64 value)
 
     // This if statement should nenver be true, but it sometimes is on the myriad1. This will output "BUG".
     if(value < 0.0f){
-      putchar('B');
-      putchar('U');
-      putchar('G');
-      putchar('4');
+      writeChar('B');
+      writeChar('U');
+      writeChar('G');
+      writeChar('4');
       return;
     }
 
     if(ABS(value) < 0.00000000001f){
-      putchar('B');
-      putchar('U');
-      putchar('G');
-      putchar('5');
+      writeChar('B');
+      writeChar('U');
+      writeChar('G');
+      writeChar('5');
       return;
     }
 
     if(curDigit < 0){
-      putchar('B');
-      putchar('U');
-      putchar('G');
-      putchar('6');
+      writeChar('B');
+      writeChar('U');
+      writeChar('G');
+      writeChar('6');
       return;
     }
 
-    putchar(curDigit + 48);
+    writeChar(curDigit + 48);
 
     value = value - (f32)curDigit;
   }
@@ -219,7 +237,7 @@ void PrintFloat(f64 value)
   return;
 } // void printFloat(f32 value)
 
-void PrintInt(s32 value)
+void PrintInt(int (*writeChar)(int), s32 value)
 {
   int digits[MAX_PRINTF_DIGITS];
 
@@ -228,14 +246,23 @@ void PrintInt(s32 value)
   for(digitIndex=0; digitIndex<MAX_PRINTF_DIGITS; digitIndex++) {
     digits[digitIndex] = 0;
   }
+  
+  // If null, default to putchar
+  if (writeChar == 0) {
+#ifdef USING_MOVIDIUS_COMPILER
+    writeChar = IS_PLATFORM_VCS ? DrvApbUartVcsPutChar : DrvApbUartPutChar;
+#else
+    writeChar = putchar;
+#endif
+  }
 
   if(value < 0) {
-    putchar('-');
+    writeChar('-');
     value = -value;
   }
 
   if(value == 0) {
-    putchar('0');
+    writeChar('0');
     return;
   }
 
@@ -279,13 +306,13 @@ void PrintInt(s32 value)
 
   digitIndex--;
   for( ; digitIndex>=0; digitIndex--) {
-    putchar(digits[digitIndex] + 48);
+    writeChar(digits[digitIndex] + 48);
   }
 
   return;
 } // void printInt(s32 value)
 
-void PrintHex(u32 value)
+void PrintHex(int (*writeChar)(int), u32 value)
 {
   int digits[MAX_PRINTF_DIGITS];
 
@@ -295,8 +322,17 @@ void PrintHex(u32 value)
     digits[digitIndex] = 0;
   }
 
+  // If null, default to putchar
+  if (writeChar == 0) {
+#ifdef USING_MOVIDIUS_COMPILER
+    writeChar = IS_PLATFORM_VCS ? DrvApbUartVcsPutChar : DrvApbUartPutChar;
+#else
+    writeChar = putchar;
+#endif
+  }
+  
   if(value == 0) {
-    putchar('0');
+    writeChar('0');
     return;
   }
 
@@ -342,9 +378,9 @@ void PrintHex(u32 value)
   for( ; digitIndex>=0; digitIndex--) {
     const s32 curDigit = digits[digitIndex];
     if(curDigit < 10) {
-      putchar(curDigit + 48);
+      writeChar(curDigit + 48);
     } else {
-      putchar(curDigit + 55);
+      writeChar(curDigit + 55);
     }
   }
 

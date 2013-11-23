@@ -88,6 +88,9 @@ namespace Anki {
           PRINT("Hardware Interface initialization failed!\n");
           return EXIT_FAILURE;
         }
+        
+        // TODO: Get VisionSystem to work on robot
+#ifdef SIMULATOR
         if(VisionSystem::Init(HAL::GetHeadCamInfo(),
                               HAL::GetMatCamInfo(),
                               &blockMarkerMailbox_,
@@ -96,6 +99,7 @@ namespace Anki {
           PRINT("Vision System initialization failed.");
           return EXIT_FAILURE;
         }
+#endif
         
         if(PathFollower::Init() == EXIT_FAILURE) {
           PRINT("PathFollower initialization failed.\n");
@@ -168,9 +172,9 @@ namespace Anki {
       
       ReturnCode step_MainExecution()
       {
-#if(DEBUG_ANY && defined(SIMULATOR))
-        PRINT("\n==== FRAME START (time = %d us) ====\n", HAL::GetMicroCounter() );
-#endif
+//#if(DEBUG_ANY && defined(SIMULATOR))
+//        PRINT("\n==== FRAME START (time = %d us) ====\n", HAL::GetMicroCounter() );
+//#endif
         
         // If the hardware interface needs to be advanced (as in the case of
         // a Webots simulation), do that first.
@@ -286,6 +290,8 @@ namespace Anki {
       ReturnCode step_LongExecution()
       {
         
+        // TODO: Get VisionSystem to work on robot
+#ifdef SIMULATOR
         if(VisionSystem::lookForBlocks() == EXIT_FAILURE) {
           PRINT("VisionSystem::lookForBLocks() failed.\n");
           return EXIT_FAILURE;
@@ -295,7 +301,7 @@ namespace Anki {
           PRINT("VisionSystem::localizeWithMat() failed.\n");
           return EXIT_FAILURE;
         }
-        
+#endif
         
         return EXIT_SUCCESS;
         

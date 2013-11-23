@@ -45,12 +45,12 @@ namespace Anki
       {
         // This is a (ring) buffer to store messages created using printf in main
         // execution, until they can be picked up and actually sent over the USB
-        // UART by long execution, when we are also using the UART to send image
+        // UART by long execution when we are also using the UART to send image
         // data and don't want to step on that data with frequent main execution
         // messages.
         static const u32  BUFFER_LENGTH = 512;
         
-        static char  data[BUFFER_LENGTH];
+        static char  buffer[BUFFER_LENGTH];
         static u32   readIndex = 0;
         static u32   writeIndex = 0;
         
@@ -63,10 +63,17 @@ namespace Anki
         
         void SendMessage()
         {
-          SendHeader(0xDD);
-          
+
           // Send all the characters in the buffer as of right now
           const u32 endIndex = writeIndex; // make a copy of where we should stop
+          
+          // Nothing to send
+          if (endIndex == readIndex) {
+            return;
+          }
+          
+          SendHeader(0xDD);
+          
           while(readIndex != endIndex)
           {
             // Send the character and circularly increment the read index:
@@ -90,6 +97,8 @@ namespace Anki
 #endif // SERIAL_IMAGING
       
       
+
+
       static const tyAuxClkDividerCfg m_auxClockConfig[] =
       {
         {
@@ -128,7 +137,7 @@ namespace Anki
       static u8 frameResolution = CAMERA_MODE_QQQVGA;
       
       
-      static void SendHeader(const u8 packetType)
+      void SendHeader(const u8 packetType)
       {
         USBPutChar(USB_PACKET_HEADER[0]);
         USBPutChar(USB_PACKET_HEADER[1]);
@@ -137,7 +146,7 @@ namespace Anki
         USBPutChar(packetType);
       }
       
-      static void SendFooter(const u8 packetType)
+      void SendFooter(const u8 packetType)
       {
         USBPutChar(USB_PACKET_FOOTER[0]);
         USBPutChar(USB_PACKET_FOOTER[1]);
@@ -379,38 +388,38 @@ int main()
     {
     }
 
+#ifdef SERIAL_IMAGING
     HAL::SendFrame();
     
-    
-#ifdef SERIAL_IMAGING
     HAL::USBprintBuffer::SendMessage();
 #endif
-
+    
+    
     u32 t2 = HAL::GetMicroCounter();
     //printf("%i\n", (t2 - t));
     t = t2;
  
     switch(HAL::USBGetChar())
     {
-      case CAMERA_MODE_VGA_HEADER:
-        frameResolution = CAMERA_MODE_VGA;
+      case HAL::CAMERA_MODE_VGA_HEADER:
+        HAL::frameResolution = HAL::CAMERA_MODE_VGA;
         break;
         
-      case CAMERA_MODE_QVGA_HEADER:
-        frameResolution = CAMERA_MODE_QVGA;
+      case HAL::CAMERA_MODE_QVGA_HEADER:
+        HAL::frameResolution = HAL::CAMERA_MODE_QVGA;
         break;
         
-      case CAMERA_MODE_QQVGA_HEADER:
-        frameResolution = CAMERA_MODE_QQVGA;
+      case HAL::CAMERA_MODE_QQVGA_HEADER:
+        HAL::frameResolution = HAL::CAMERA_MODE_QQVGA;
         break;
         
-      case CAMERA_MODE_QQQQVGA_HEADER:
-        frameResolution = CAMERA_MODE_QQQQVGA;
+      case HAL::CAMERA_MODE_QQQQVGA_HEADER:
+        HAL::frameResolution = HAL::CAMERA_MODE_QQQQVGA;
         break;
 
-      case CAMERA_MODE_QQQVGA_HEADER:
+      case HAL::CAMERA_MODE_QQQVGA_HEADER:
       default:
-        frameResolution = CAMERA_MODE_QQQVGA;
+        HAL::frameResolution = HAL::CAMERA_MODE_QQQVGA;
     }
 
     
