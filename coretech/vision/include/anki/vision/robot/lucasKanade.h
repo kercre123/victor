@@ -95,7 +95,7 @@ namespace Anki
         bool isValid;
         bool isInitialized;
 
-        Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack memory);
+        Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack memory);
       };
     } // namespace TemplateTracker
   } // namespace Embedded

@@ -322,14 +322,19 @@ namespace Anki
         for(s32 iScale=numPyramidLevels-1; iScale>=0; iScale--) {
           bool converged = false;
 
-          if(IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, converged, memory) != RESULT_OK)
+          if(IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, TRANSFORM_TRANSLATION, converged, memory) != RESULT_OK)
             return RESULT_FAIL;
+
+          if(this->transformation.get_transformType() != TRANSFORM_TRANSLATION) {
+            if(IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, this->transformation.get_transformType(), converged, memory) != RESULT_OK)
+              return RESULT_FAIL;
+          }
         } // for(s32 iScale=numPyramidLevels; iScale>=0; iScale--)
 
         return RESULT_OK;
       }
 
-      Result LucasKanadeTracker_f32::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack memory)
+      Result LucasKanadeTracker_f32::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack memory)
       {
         AnkiConditionalErrorAndReturnValue(this->isInitialized == true,
           RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "This object is not initialized");
@@ -348,6 +353,13 @@ namespace Anki
 
         const s32 numPointsY = templateCoordinates[whichScale].get_yGridVector().get_size();
         const s32 numPointsX = templateCoordinates[whichScale].get_xGridVector().get_size();
+
+        s32 numSystemParameters = -1;
+        if(curTransformType == TRANSFORM_TRANSLATION) {
+          numSystemParameters = 2;
+        } else {
+          assert(false);
+        }
 
         Array<f32> xPrevious(1, numPointsY*numPointsX, memory);
         Array<f32> yPrevious(1, numPointsY*numPointsX, memory);
@@ -408,34 +420,76 @@ namespace Anki
           {
             PUSH_MEMORY_STACK(memory);
 
-            Array<u8> nextImageTransformed2d(1, numPointsY*numPointsX, memory);
+            Array<f32> nextImageTransformed2d(1, numPointsY*numPointsX, memory);
 
-            if(Interp2(nextImage, xTransformed, yTransformed, nextImageTransformed2d, INTERPOLATE_LINEAR) != RESULT_OK)
+            if(Interp2(nextImage, xTransformed, yTransformed, nextImageTransformed2d, INTERPOLATE_LINEAR, -1.0f) != RESULT_OK)
               return RESULT_FAIL;
 
-            Matrix::Vectorize<u8,f32>(true, nextImageTransformed2d, nextImageTransformed);
+            Matrix::Vectorize<f32,f32>(true, nextImageTransformed2d, nextImageTransformed);
           } // PUSH_MEMORY_STACK(memory);
 
           // inBounds = ~isnan(imgi);
           // Warning: this is also treating real zeros as invalid, but this should not be a big problem
-          Find<f32, Comparison::NotEqual<f32,f32>, f32> inBounds(nextImageTransformed, 0.0f);
+          Find<f32, Comparison::GreaterThanOrEqual<f32,f32>, f32> inBounds(nextImageTransformed, 0.0f);
+          const s32 numInBounds = inBounds.get_numMatches();
 
           Array<f32> templateImage(1, numPointsY*numPointsX, memory);
           Matrix::Vectorize(true, this->templateImagePyramid[whichScale], templateImage);
 
-          Array<f32> templateDerivativeT(1, numPointsY*numPointsX, memory);
-
           // It = imgi - this.target{i_scale}(:);
-          Matrix::Subtract<f32,f32,f32>(nextImageTransformed, templateImage, templateDerivativeT);
+          Array<f32> templateDerivativeT(1, numInBounds, memory);
+          {
+            PUSH_MEMORY_STACK(memory);
+            Array<f32> templateDerivativeT_allPoints(1, numPointsY*numPointsX, memory);
+            Matrix::Subtract<f32,f32,f32>(nextImageTransformed, templateImage, templateDerivativeT_allPoints);
+            inBounds.SetArray(templateDerivativeT, templateDerivativeT_allPoints, 1);
+          }
+
+          /*{
+          Matlab matlab(false);
+
+          matlab.PutArray(nextImageTransformed, "nextImageTransformed");
+          matlab.PutArray(templateImage, "templateImage");
+          matlab.PutArray(templateDerivativeT, "templateDerivativeT");
+          matlab.PutArray(this->templateImagePyramid[whichScale], "templateImagePyramid_curScale");
+          }*/
+
+          Array<f32> AWAt(numSystemParameters, numSystemParameters, memory);
+
+          //  AtW = (A(inBounds,:).*this.W{i_scale}(inBounds,ones(1,size(A,2))))';
+
+          Array<f32> A;
+          if(inBounds.AllocateAndSetArray(A, A_full[whichScale], 1, memory) != RESULT_OK)
+            return RESULT_FAIL;
+
+          Array<f32> AW(A.get_size(0), A.get_size(1), memory);
+          AW(0,-1,0,-1).Set(A);
+          for(s32 y=0; y<numSystemParameters; y++) {
+            Matrix::DotMultiply<f32,f32,f32>(AW(y,y,0,-1), templateWeights[whichScale], AW(y,y,0,-1));
+          }
+
+          //  AtWA = AtW*A(inBounds,:) + diag(this.ridgeWeight*ones(1,size(A,2)));
+          Matrix::MultiplyTranspose(A, AW, AWAt);
+
+          Array<f32> ridgeWeightMatrix = Eye<f32>(numSystemParameters, numSystemParameters, memory);
+          Matrix::DotMultiply<f32,f32,f32>(ridgeWeightMatrix, ridgeWeight, ridgeWeightMatrix);
+
+          Matrix::Add<f32,f32,f32>(AWAt, ridgeWeightMatrix, AWAt);
+
+          //  b = AtW*It(inBounds);
+          Array<f32> b(1,2,memory);
+          Matrix::MultiplyTranspose(templateDerivativeT, AW, b);
 
           {
             Matlab matlab(false);
 
-            matlab.PutArray(nextImageTransformed, "nextImageTransformed");
-            matlab.PutArray(templateImage, "templateImage");
-            matlab.PutArray(templateDerivativeT, "templateDerivativeT");
-            matlab.PutArray(this->templateImagePyramid[whichScale], "templateImagePyramid_curScale");
+            matlab.PutArray(A, "A");
+            matlab.PutArray(AW, "AW");
+            matlab.PutArray(AWAt, "AWAt");
+            matlab.PutArray(b, "b");
           }
+
+          //  update = AtWA\b;
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
         return RESULT_OK;
