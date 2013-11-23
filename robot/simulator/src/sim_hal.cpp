@@ -736,6 +736,14 @@ namespace Anki {
       return false;
     }
     
+    
+    s32 HAL::USBGetChar(u32 timeout)
+    {
+      return -1;
+    }
+
+    
+    
     // Get the number of microseconds since boot
     u32 HAL::GetMicroCounter(void)
     {

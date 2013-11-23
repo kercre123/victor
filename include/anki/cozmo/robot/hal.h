@@ -273,6 +273,10 @@ namespace Anki
         CAMERA_UPDATE_SINGLE
       };
 
+      // Set the camera capture resolution with CAMERA_MODE_XXXXX_HEADER.
+      // Should only be used for off-robot vision processing.
+      void SetCameraMode(const u8 frameResHeader);
+      
       // Starts camera frame synchronization
       void CameraStartFrame(CameraID cameraID, u8* frame, CameraMode mode,
           CameraUpdateMode updateMode, u16 exposure, bool enableLight);

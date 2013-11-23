@@ -19,9 +19,72 @@ namespace Anki {
       namespace {
         
       }
-
       
-      void ProcessIncomingMessages()
+      bool USBGetFloat(f32 &val)
+      {
+        s32 c;
+        u32 res = 0;
+        for (u8 i=0; i<4; ++i) {
+          c = HAL::USBGetChar();
+          if (c < 0)
+            return false;
+          
+          res = res | (c << 8);
+        }
+        
+        memcpy(&val, &res, 4);
+        return true;
+      }
+      
+      void ProcessUARTMessages()
+      {
+        s32 c = HAL::USBGetChar();
+        
+        while (c >= 0) {
+          switch(c) {
+            case 0xCA:
+            {
+              // Set camera mode
+              c = HAL::USBGetChar();
+              if (c < 0) {
+                PRINT("Unknown camera resolution\n");
+                break;
+              }
+              HAL::SetCameraMode(c);
+              PRINT("Change res to %d\n", c);
+              break;
+            }
+            case 'E':
+            {
+        
+              f32 blockPos_x = FLT_MAX;
+              f32 blockPos_y = FLT_MAX;
+              f32 blockPos_rad = FLT_MAX;
+
+              if ( !USBGetFloat(blockPos_x) || !USBGetFloat(blockPos_y) || !USBGetFloat(blockPos_rad)) {
+                PRINT("ERROR (ProcessUARTMessages): Invalid block pose %f %f %f\n", blockPos_x, blockPos_y, blockPos_rad);
+                break;
+              }
+
+              // Just testing UART printout
+              PERIODIC_PRINT(60, "BlockPose: x = %f, y = %f, rad = %f\n", blockPos_x, blockPos_y, blockPos_rad);
+              
+              //DockingController::SetRelDockPose(blockPos_x, blockPos_y, blockPos_rad);
+              break;
+            }
+            default:
+              PRINT("WARN: (ProcessUARTMsgs): Unexpected char %d\n", c);
+              break;
+              
+          } // end switch
+          
+          c = HAL::USBGetChar();
+        } // end while
+        
+      }
+      
+      
+      void ProcessBTLEMessages()
       {
         // Process any messages from the basestation
         u8 dataBuffer[HAL::RADIO_BUFFER_SIZE];
@@ -142,6 +205,11 @@ namespace Anki {
           msgBuffer = &(dataBuffer[msgSize]);
         }
         
+      }
+      
+      void ProcessIncomingMessages() {
+        ProcessBTLEMessages();
+        ProcessUARTMessages();
       }
       
     } // namespace CommandHandler
