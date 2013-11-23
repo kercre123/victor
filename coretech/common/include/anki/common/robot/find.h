@@ -330,6 +330,9 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(this->numOutputDimensions == 1,
         RESULT_FAIL, "Find.SetArray", "One-dimensional SetArray only works with one-dimensional Array input");
 
+      AnkiConditionalErrorAndReturnValue(findWhichDimension == 0 || findWhichDimension == 1,
+        RESULT_FAIL, "Find.SetArray", "findWhichDimension must be zero or one");
+
       const s32 array1Height = array1.get_size(0);
       const s32 array1Width = array1.get_size(1);
 
