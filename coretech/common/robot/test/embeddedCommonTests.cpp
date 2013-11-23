@@ -71,6 +71,52 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, MatrixMultiplyTranspose)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<s32> in1(2,3,ms);
+  Array<s32> in2(2,3,ms);
+
+  in1[0][0] = 1; in1[0][1] = 2; in1[0][2] = 3;
+  in1[1][0] = 4; in1[1][1] = 5; in1[1][2] = 6;
+
+  in2[0][0] = 10; in2[0][1] = 11; in2[0][2] = 12;
+  in2[1][0] = 13; in2[1][1] = 14; in2[1][2] = 15;
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s32> out(2,2,ms);
+    const Result result = Matrix::MultiplyTranspose<s32,s32>(in1, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    //out.Print("out");
+
+    ASSERT_TRUE(out[0][0] == 68);
+    ASSERT_TRUE(out[0][1] == 86);
+    ASSERT_TRUE(out[1][0] == 167);
+    ASSERT_TRUE(out[1][1] == 212);
+  }
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s32> out(2,2,ms);
+    const Result result = Matrix::MultiplyTranspose<s32,s32>(in2, in1, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    ASSERT_TRUE(out[0][0] == 68);
+    ASSERT_TRUE(out[0][1] == 167);
+    ASSERT_TRUE(out[1][0] == 86);
+    ASSERT_TRUE(out[1][1] == 212);
+  }
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, Reshape)
 {
   ASSERT_TRUE(buffer != NULL);

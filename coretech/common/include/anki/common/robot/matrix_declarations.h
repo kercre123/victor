@@ -75,6 +75,10 @@ namespace Anki
       // Note that this is the naive O(n^3) Definition
       template<typename InType, typename OutType> Result Multiply(const Array<InType> &in1, const Array<InType> &in2, Array<OutType> &out);
 
+      // Perform the matrix multiplication "out = in1 * in2'"
+      // Note that this is the naive O(n^3) Definition
+      template<typename InType, typename OutType> Result MultiplyTranspose(const Array<InType> &in1, const Array<InType> &in2Transposed, Array<OutType> &out);
+
       //
       // Matrix structure operations
       //
@@ -130,7 +134,7 @@ namespace Anki
         template<typename InType, typename Operator, typename OutType> Result ApplyOperation(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
         template<typename InType, typename Operator, typename OutType> Result ApplyOperation(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out);
         template<typename InType, typename Operator, typename OutType> Result ApplyOperation(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
-      }
+      } // namespace Elementwise
     } // namespace Matrix
   } // namespace Embedded
 } // namespace Anki

@@ -200,6 +200,42 @@ namespace Anki
         return RESULT_OK;
       } // template<typename InType, typename OutType> Result Multiply(const Array<InType> &in1, const Array<InType> &in2, Array<OutType> &out)
 
+      template<typename InType, typename OutType> Result MultiplyTranspose(const Array<InType> &in1, const Array<InType> &in2Transposed, Array<OutType> &out)
+      {
+        const s32 in1Height = in1.get_size(0);
+        const s32 in1Width = in1.get_size(1);
+
+        const s32 in2TransposedHeight = in2Transposed.get_size(0);
+        const s32 in2TransposedWidth = in2Transposed.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue(in1Width == in2TransposedWidth,
+          RESULT_FAIL, "Multiply", "Input matrices are incompatible sizes");
+
+        AnkiConditionalErrorAndReturnValue(out.get_size(0) == in1Height,
+          RESULT_FAIL, "Multiply", "Input and Output matrices are incompatible sizes");
+
+        AnkiConditionalErrorAndReturnValue(out.get_size(1) == in2TransposedHeight,
+          RESULT_FAIL, "Multiply", "Input and Output matrices are incompatible sizes");
+
+        for(s32 y1=0; y1<in1Height; y1++)
+        {
+          const InType * restrict pMat1 = in1.Pointer(y1, 0);
+
+          for(s32 y2=0; y2<in2TransposedHeight; y2++) {
+            const InType * restrict pMat2 = in2Transposed.Pointer(y2, 0);
+            OutType * restrict pMatOut = out.Pointer(y1, y2);
+
+            *pMatOut = 0;
+
+            for(s32 x=0; x<in2TransposedWidth; x++) {
+              *pMatOut += pMat1[x] * pMat2[x];
+            }
+          }
+        }
+
+        return RESULT_OK;
+      } // template<typename InType, typename OutType> Result MultiplyTranspose(const Array<InType> &in1, const Array<InType> &in2Transposed, Array<OutType> &out)
+
       template<typename TypeIn, typename TypeOut> Result Reshape(const bool isColumnMajor, const Array<TypeIn> &in, Array<TypeOut> &out)
       {
         const s32 inHeight = in.get_size(0);
@@ -372,7 +408,7 @@ namespace Anki
           } //   if(limits.isSimpleIteration)  ... else
 
           return RESULT_OK;
-        }
+        } // template<typename InType, typename Operator, typename OutType> Result ApplyOperation(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
 
         template<typename InType, typename Operator, typename OutType> Result ApplyOperation(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out)
         {
@@ -433,7 +469,7 @@ namespace Anki
           } //   if(limits.isSimpleIteration)  ... else
 
           return RESULT_OK;
-        }
+        } // template<typename InType, typename Operator, typename OutType> Result ApplyOperation(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out)
 
         template<typename InType, typename Operator, typename OutType> Result ApplyOperation(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
         {
@@ -494,7 +530,7 @@ namespace Anki
           } //   if(limits.isSimpleIteration)  ... else
 
           return RESULT_OK;
-        }
+        } // template<typename InType, typename Operator, typename OutType> Result ApplyOperation(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out)
       } // namespace Elementwise
     } // namespace Matrix
   } // namespace Embedded
