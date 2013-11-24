@@ -14,6 +14,9 @@ namespace Anki
       const u32 RX_MODE = D_GPIO_MODE_1;
       static const u32 IRQ = IRQ_UART;
       static const u32 IRQ_LEVEL = 5;
+      
+      const u8 ADC_CS = 39;
+      const u8 FLASH_CS = 72;
 
       static void UARTIRQ(u32 source);
 
@@ -45,8 +48,40 @@ namespace Anki
         u32 scaler = (DrvCprGetSysClockKhz() * 1000) / (BAUDRATE << 3) - 1;
         SET_REG_WORD(UART_CTRL_ADR, mask);
         SET_REG_WORD(UART_SCALER_ADR, scaler);
+        
+        u32 pad = D_GPIO_PAD_NO_PULL |
+          D_GPIO_PAD_DRIVE_2mA |
+          D_GPIO_PAD_VOLT_2V5 |
+          D_GPIO_PAD_SLEW_SLOW |
+          D_GPIO_PAD_SCHMITT_ON |
+          D_GPIO_PAD_RECEIVER_ON |
+          D_GPIO_PAD_BIAS_2V5 |
+          D_GPIO_PAD_LOCALCTRL_OFF |
+          D_GPIO_PAD_LOCALDATA_LO |
+          D_GPIO_PAD_LOCAL_PIN_OUT;
+
+        GpioPadSet(TX_PIN, pad);
+        GpioPadSet(RX_PIN, pad);
+        
         DrvGpioMode(TX_PIN, TX_MODE);
-        DrvGpioMode(RX_PIN, RX_MODE);
+        DrvGpioMode(RX_PIN, RX_MODE | D_GPIO_DIR_IN);
+        
+        // XXX-NDM: Turn off SPI chip selects because the pin conflicts with receive
+        GpioPadSet(FLASH_CS, pad);
+        pad = D_GPIO_PAD_PULL_UP |
+          D_GPIO_PAD_DRIVE_2mA |
+          D_GPIO_PAD_VOLT_2V5 |
+          D_GPIO_PAD_SLEW_SLOW |
+          D_GPIO_PAD_SCHMITT_ON |
+          D_GPIO_PAD_RECEIVER_ON |
+          D_GPIO_PAD_BIAS_2V5 |
+          D_GPIO_PAD_LOCALCTRL_OFF |
+          D_GPIO_PAD_LOCALDATA_LO |
+          D_GPIO_PAD_LOCAL_PIN_OUT;
+        GpioPadSet(ADC_CS, pad);        
+        DrvGpioMode(FLASH_CS, D_GPIO_MODE_7 | D_GPIO_DIR_IN);
+        DrvGpioMode(ADC_CS, D_GPIO_MODE_7 | D_GPIO_DIR_IN);
+        
         // Re-enable interrupts
         swcLeonEnableTraps();
 
