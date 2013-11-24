@@ -21,6 +21,9 @@
 #define ENABLE_PATH_VIZ 1
 #endif
 
+// The number of tics desired in between debug prints
+#define DBG_PERIOD 200
+
 #if ENABLE_PATH_VIZ
 #include "sim_pathFollower.h"
 #endif
@@ -85,14 +88,19 @@ namespace Anki
         s16 numPathSegments_ = 0;
         s16 currPathSegment_ = -1;
         
-        
+        // Shortest distance to path
         f32 distToPath_m_ = 0;
+        
+        // Angular error with path
         f32 radToPath_ = 0;
         
         bool pointTurnStarted_ = false;
         
         bool visualizePath_ = TRUE;
         
+        // Whether or not the robot was within range of the
+        // current path segment in the previous tic.
+        bool wasInRange_ = false;
         
       } // Private Members
       
@@ -116,6 +124,7 @@ namespace Anki
       void ClearPath(void)
       {
         numPathSegments_ = 0;
+        currPathSegment_ = -1;
 #if(ENABLE_PATH_VIZ)
         Viz::ErasePath(0);
 #endif
@@ -144,7 +153,7 @@ namespace Anki
         
         // Pre-processed for convenience
         Path[numPathSegments_].def.line.m = (y_end_m - y_start_m) / (x_end_m - x_start_m);
-        Path[numPathSegments_].def.line.b = Path[numPathSegments_].def.line.m * y_start_m + x_start_m;
+        Path[numPathSegments_].def.line.b = y_start_m - Path[numPathSegments_].def.line.m * x_start_m;
         Path[numPathSegments_].def.line.dy_sign = ((y_end_m - y_start_m) >= 0) ? 1.0 : -1.0;
         Path[numPathSegments_].def.line.theta = atan2_fast(y_end_m - y_start_m, x_end_m - x_start_m);
         
@@ -221,7 +230,8 @@ namespace Anki
         // Set first path segment
         if (numPathSegments_ > 0) {
           currPathSegment_ = 0;
-          Robot::SetOperationMode(Robot::FOLLOW_PATH);
+          wasInRange_ = false;
+          //Robot::SetOperationMode(Robot::FOLLOW_PATH);
           SteeringController::SetPathFollowMode();
         }
         
@@ -254,9 +264,19 @@ namespace Anki
         Localization::GetCurrentMatPose(x, y, angle);
         
 #if(DEBUG_PATH_FOLLOWER)
-        PRINT("currPathSeg: %d, LINE (%f, %f, %f, %f)\n", currPathSegment_, currSeg->startPt.x, currSeg->startPt.y, currSeg->endPt.x, currSeg->endPt.y);
-        PRINT("x: %f, y: %f\n", x,y);
+        PERIODIC_PRINT(DBG_PERIOD, "currPathSeg: %d, LINE (%f, %f, %f, %f)\n", currPathSegment_, currSeg->startPt.x, currSeg->startPt.y, currSeg->endPt.x, currSeg->endPt.y);
+        PERIODIC_PRINT(DBG_PERIOD, "Robot Pose: x: %f, y: %f ang: %f\n", x,y,angle.ToFloat());
 #endif
+        
+        
+        // Distance to start point
+        f32 sqDistToStartPt = (currSeg->startPt.x - x) * (currSeg->startPt.x - x) +
+                              (currSeg->startPt.y - y) * (currSeg->startPt.y - y);
+        
+        // Distance to end point
+        f32 sqDistToEndPt = (currSeg->endPt.x - x) * (currSeg->endPt.x - x) +
+                            (currSeg->endPt.y - y) * (currSeg->endPt.y - y);
+        
         
         if (FLT_NEAR(currSeg->startPt.x, currSeg->endPt.x)) {
           // Special case: Vertical line
@@ -269,11 +289,30 @@ namespace Anki
           // Compute angle difference
           radDiff = (currSeg->theta - angle).ToFloat();
           
+          // If the point (x_intersect,y_intersect) is not between startPt and endPt,
+          // and the robot is closer to the end point than it is to the start point,
+          // then we've passed this segment and should go to next one
+          if ( SIGN(currSeg->startPt.y - y) == SIGN(currSeg->endPt.y - y)
+              && (sqDistToStartPt > sqDistToEndPt) ) {
+            return FALSE;
+          }
+
+        } else if (FLT_NEAR(currSeg->startPt.y, currSeg->endPt.y)) {
+          // Special case: Horizontal line
+          if (currSeg->endPt.x > currSeg->startPt.x) {
+            shortestDistanceToPath_m = y - currSeg->startPt.y;
+          } else {
+            shortestDistanceToPath_m = currSeg->startPt.y - y;
+          }
           
-          // Did we pass the current segment?
-          // If the point (x_intersect,y_intersect) is not between startPt and endPt, then we've passed this segment and should
-          // go to next one
-          if ( SIGN(currSeg->startPt.y - y) == SIGN(currSeg->endPt.y - y) ) {
+          // Compute angle difference
+          radDiff = (currSeg->theta - angle).ToFloat();
+
+          // If the point (x_intersect,y_intersect) is not between startPt and endPt,
+          // and the robot is closer to the end point than it is to the start point,
+          // then we've passed this segment and should go to next one
+          if ( SIGN(currSeg->startPt.x - x) == SIGN(currSeg->endPt.x - x)
+              && (sqDistToStartPt > sqDistToEndPt) ) {
             return FALSE;
           }
           
@@ -293,19 +332,16 @@ namespace Anki
           shortestDistanceToPath_m = sqrtf(dy*dy + dx*dx);
           
 #if(DEBUG_PATH_FOLLOWER)
-          PRINT("m: %f, b: %f\n",m,b);
-          PRINT("x_int: %f, y_int: %f, b_inv: %f\n", x_intersect, y_intersect, b_inv);
-          PRINT("dy: %f, dx: %f, dist: %f\n", dy, dx, shortestDistanceToPath_m);
-          PRINT("SIGN(dy): %d, dy_sign: %f\n", (SIGN(dy) ? 1 : -1), currSeg->dy_sign);
-          PRINT("lineTheta: %f\n", currSeg->theta.ToFloat());
+          PERIODIC_PRINT(DBG_PERIOD, "m: %f, b: %f\n",m,b);
+          PERIODIC_PRINT(DBG_PERIOD, "x_int: %f, y_int: %f, b_inv: %f\n", x_intersect, y_intersect, b_inv);
+          PERIODIC_PRINT(DBG_PERIOD, "dy: %f, dx: %f, dist: %f\n", dy, dx, shortestDistanceToPath_m);
+          PERIODIC_PRINT(DBG_PERIOD, "SIGN(dx): %d, dy_sign: %f\n", (SIGN(dx) ? 1 : -1), currSeg->dy_sign);
+          PERIODIC_PRINT(DBG_PERIOD, "lineTheta: %f\n", currSeg->theta.ToFloat());
           //PRINT("lineTheta: %f, robotTheta: %f\n", currSeg->theta.ToFloat(), currPose.get_angle().ToFloat());
 #endif
           
-          if (m >= 0) {
-            shortestDistanceToPath_m *= (SIGN(dy) ? 1 : -1) * currSeg->dy_sign;
-          } else {
-            shortestDistanceToPath_m *= (SIGN(dy) ? -1 : 1) * currSeg->dy_sign;
-          }
+          // Compute the sign of the error distance 
+          shortestDistanceToPath_m *= (SIGN(m) ? 1 : -1) * (SIGN(dy) ? 1 : -1) * currSeg->dy_sign;
           
           
           // Compute angle difference
@@ -313,10 +349,13 @@ namespace Anki
           
           
           // Did we pass the current segment?
-          // If the point (x_intersect,y_intersect) is not between startPt and endPt, then we've passed this segment and should
-          // go to next one
-          if ( (SIGN(currSeg->startPt.x - x_intersect) == SIGN(currSeg->endPt.x - x_intersect)) ||
-              (SIGN(currSeg->startPt.y - y_intersect) == SIGN(currSeg->endPt.y - y_intersect)) ) {
+          // If the point (x_intersect,y_intersect) is not between startPt and endPt,
+          // and the robot is closer to the end point than it is to the start point,
+          // then we've passed this segment and should go to next one
+          if ( (SIGN(currSeg->startPt.x - x_intersect) == SIGN(currSeg->endPt.x - x_intersect))
+              && (SIGN(currSeg->startPt.y - y_intersect) == SIGN(currSeg->endPt.y - y_intersect))
+              && (sqDistToStartPt > sqDistToEndPt)
+              ) {
             return FALSE;
           }
         }
@@ -501,8 +540,9 @@ namespace Anki
       
       ReturnCode Update()
       {
-       
-        static bool wasInRange = false;
+        if (currPathSegment_ < 0)
+          return EXIT_FAILURE;
+        
         bool inRange = false;
         
         switch (Path[currPathSegment_].type) {
@@ -521,11 +561,11 @@ namespace Anki
         }
         
 #if(DEBUG_PATH_FOLLOWER)
-        PRINT("PATH ERROR: %f m, %f deg\n", distToPath_m_, RAD_TO_DEG(radToPath_));
+        PERIODIC_PRINT(DBG_PERIOD,"PATH ERROR: %f m, %f deg\n", distToPath_m_, RAD_TO_DEG(radToPath_));
 #endif
         
         // Go to next path segment if no longer in range of the current one
-        if (!inRange && wasInRange) {
+        if (!inRange && wasInRange_) {
           if (++currPathSegment_ >= numPathSegments_) {
             // Path is complete
             PathComplete();
@@ -536,7 +576,7 @@ namespace Anki
 #endif
         }
         
-        wasInRange = inRange;
+        wasInRange_ = inRange;
         
         
         // Check that starting error is not too big
