@@ -31,6 +31,9 @@ namespace Anki {
       bool DidSucceed();
       ReturnCode Update();
 
+      // Set the desired
+      void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad);
+      
     } // namespace DockingController
   } // namespace Cozmo
 } // namespace Anki

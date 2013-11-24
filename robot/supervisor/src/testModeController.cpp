@@ -81,8 +81,15 @@ namespace Anki {
         
         
         //////// DockTest /////////
-        const f32 DOCK_APPROACH_SPEED_MMPS = 30;
-        const f32 DOCK_APPROACH_ACCEL_MMPS2 = 500;
+        enum {
+          DT_STOP,
+          DT_STRAIGHT,
+          DT_LEFT,
+          DT_STRAIGHT2,
+          DT_RIGHT
+        };
+        u8 dockPathState_ = DT_STOP;
+        const f32 DOCK_PATH_TOGGLE_TIME_S = 3.f;
         
         ////// End of DockTest ////
 
@@ -111,28 +118,45 @@ namespace Anki {
       ReturnCode DockTestInit()
       {
         PRINT("\n==== Starting DockTest =====\n");
-        pathStarted_ = false;
+        ticCnt_ = 0;
+        dockPathState_ = DT_STOP;
         return EXIT_SUCCESS;
       }
       
       ReturnCode DockTestUpdate()
       {
-        const u32 startDriveTime_us = 2000000;
-
-        if (!pathStarted_ && HAL::GetMicroCounter() > startDriveTime_us) {
-          
-          // Set speed and accel
-          SpeedController::SetUserCommandedAcceleration( DOCK_APPROACH_ACCEL_MMPS2 );
-          SpeedController::SetUserCommandedDesiredVehicleSpeed( DOCK_APPROACH_SPEED_MMPS );
-          PRINT("Speed commanded: %d mm/s\n", SpeedController::GetUserCommandedDesiredVehicleSpeed() );
-          
-          // Create a path and follow it
-          PathFollower::AppendPathSegment_Line(0, 0.0, 0.0, 0.3, 0.0);
-          
-          
-
-          PathFollower::StartPathTraversal();
-          pathStarted_ = true;
+        
+        // Toggle dock path state
+        if (ticCnt_++ >= DOCK_PATH_TOGGLE_TIME_S * ONE_OVER_CONTROL_DT ) {
+          if (dockPathState_ == DT_RIGHT) {
+            dockPathState_ = DT_STOP;
+          } else {
+            dockPathState_++;
+          }
+          PRINT("DOCKING TEST STATE: %d\n", dockPathState_);
+          ticCnt_ = 0;
+        }
+        
+        switch(dockPathState_)
+        {
+          case DT_STOP:
+            break;
+          case DT_STRAIGHT:
+            DockingController::SetRelDockPose(200, 0, 0);
+            break;
+          case DT_LEFT:
+            //DockingController::SetRelDockPose(200, 50, 0);
+            DockingController::SetRelDockPose(200, 0, -0.1);
+            break;
+          case DT_STRAIGHT2:
+            DockingController::SetRelDockPose(200, 0, 0);
+            break;
+          case DT_RIGHT:
+            //DockingController::SetRelDockPose(200, -50, 0);
+            DockingController::SetRelDockPose(200, 0, 0.1);
+            break;
+          default:
+            break;
         }
         
         return EXIT_SUCCESS;
