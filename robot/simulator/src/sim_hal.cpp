@@ -602,6 +602,9 @@ namespace Anki {
       return &(matCamInfo_);
     }
     
+    void HAL::SetCameraMode(const u8 frameResHeader)
+    {}
+    
     void CaptureHeadCamFrame()
     {
       /*
