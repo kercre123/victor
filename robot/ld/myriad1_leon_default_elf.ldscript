@@ -17,7 +17,9 @@ SECTIONS {
   .text : { *(.text*) }
   .sys.rodata : { *(.sys.rodata*) }
   .rodata : { *(.rodata*) }
-  .data : { *(.data*) }
+  .data : { *(.data*) 
+      . = ALIGN(4);   /* NDM - moviConvert can't handle sections not aligned at 4 bytes */
+  }
 
   .bss (NOLOAD) : { 
     . = ALIGN(8);
