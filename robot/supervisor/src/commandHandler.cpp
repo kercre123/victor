@@ -17,7 +17,14 @@ namespace Anki {
     
       // "Private Member Variables"
       namespace {
+        // Msg types and their sizes.
+        // TODO: Move this into protocol file?
+        #define SET_CAMERA_MODE_MSG 0xCA
+        #define SIZEOF_SET_CAMERA_MODE_MSG 2
         
+        #define BLOCK_POSE_MSG 'E'
+        #define SIZEOF_BLOCK_POSE_MSG 13
+
       }
       
       bool USBGetFloat(f32 &val)
@@ -29,34 +36,37 @@ namespace Anki {
           if (c < 0)
             return false;
           
-          res = res | (c << 8);
+          res = (res << 8) | c;
         }
-        
-        memcpy(&val, &res, 4);
+
+        val = *(f32*)(&res);
         return true;
       }
       
       void ProcessUARTMessages()
       {
-        s32 c = HAL::USBGetChar();
+        s32 c = HAL::USBPeekChar();
         
         while (c >= 0) {
           switch(c) {
-            case 0xCA:
+            case SET_CAMERA_MODE_MSG:
             {
+              if (HAL::USBGetNumBytesToRead() < SIZEOF_SET_CAMERA_MODE_MSG)
+                return;
+              HAL::USBGetChar(); // Clear msg type byte
+              
               // Set camera mode
               c = HAL::USBGetChar();
-              if (c < 0) {
-                PRINT("Unknown camera resolution\n");
-                break;
-              }
               HAL::SetCameraMode(c);
-              PRINT("Change res to %d\n", c);
+              PRINT("Change camera res to %d\n", c);
               break;
             }
-            case 'E':
+            case BLOCK_POSE_MSG:
             {
-        
+              if (HAL::USBGetNumBytesToRead() < SIZEOF_BLOCK_POSE_MSG)
+                return;
+              HAL::USBGetChar(); // Clear msg type byte
+ 
               f32 blockPos_x = FLT_MAX;
               f32 blockPos_y = FLT_MAX;
               f32 blockPos_rad = FLT_MAX;
@@ -74,11 +84,14 @@ namespace Anki {
             }
             default:
               PRINT("WARN: (ProcessUARTMsgs): Unexpected char %d\n", c);
+              c = HAL::USBGetChar();  // Pop unexpected char from receive buffer
               break;
               
           } // end switch
           
-          c = HAL::USBGetChar();
+          // Is there another message?
+          c = HAL::USBPeekChar();
+          
         } // end while
         
       }

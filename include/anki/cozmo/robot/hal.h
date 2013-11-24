@@ -195,11 +195,19 @@ namespace Anki
       // Send a variable length buffer
       void USBSendBuffer(u8* buffer, u32 size);
 
+      // Returns the number of bytes that are in the serial buffer
+      u32 USBGetNumBytesToRead();
+      
       // Get a character from the serial buffer.
       // Timeout is in microseconds.
       // Returns < 0 if no character available within timeout.
       s32 USBGetChar(u32 timeout = 0);
 
+      // Peek at next character in serial buffer
+      // in receive buffer.
+      // Returns < 0 if no character available
+      s32 USBPeekChar();
+      
       // Send a byte.
       // Prototype matches putc for printf.
       int USBPutChar(int c);

@@ -99,7 +99,8 @@ namespace Anki
         return c;
       }
 
-      s32 USBGetChar(u32 timeout)
+      
+      s32 USBGetChar(u32 timeout, bool peek)
       {
         u32 end = GetMicroCounter() + timeout;
         do
@@ -112,14 +113,30 @@ namespace Anki
           if (m_currentRead != m_currentWrite)
           {
             s32 c = m_buffer[m_currentRead] & 0xff;
-            m_currentRead = (m_currentRead + 1) & BUFFER_MASK;
+            if (!peek) {
+              m_currentRead = (m_currentRead + 1) & BUFFER_MASK;
+            }
             return c;
           }
         } while (GetMicroCounter() < end);
 
         return -1;
       }
+      
+      s32 USBGetChar(u32 timeout) {
+        USBGetChar(timeout, false);
+      }
 
+      s32 USBPeekChar()
+      {
+        USBGetChar(0, true);
+      }
+      
+      u32 USBGetNumBytesToRead()
+      {
+        return (m_currentWrite - m_currentRead) & BUFFER_MASK;
+      }
+      
       void USBSendBuffer(u8* buffer, u32 size)
       {
         for (int i = 0; i < size; i++)
