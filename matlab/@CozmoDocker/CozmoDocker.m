@@ -16,7 +16,7 @@ classdef CozmoDocker < handle
         h_leftRightError;
         h_img;
         h_target;
-        h_message;
+        h_txMsg, h_rxMsg;
         
         escapePressed;
         camera;
@@ -33,6 +33,8 @@ classdef CozmoDocker < handle
         marker3d;
         H_init;
         K; % calibration matrix
+        
+        frameCount;
         
         drawPose;
         h_cam;
@@ -85,10 +87,14 @@ classdef CozmoDocker < handle
             this.h_fig = namedFigure('Docking', 'CurrentCharacter', '~', ...
                 'KeyPressFcn', @(src,edata)this.keyPressCallback(src,edata));
             
-            this.h_message = annotation('textbox', [.2 0 .6 .05]);
-            set(this.h_message, 'String', '<status>');
+            clf(this.h_fig);
             
-            this.h_axes = subplot(1,1,1, 'Parent', this.h_fig);
+            this.h_rxMsg = annotation('textbox', [.2   0 .6 .05]);
+            this.h_txMsg = annotation('textbox', [.2 .05 .6 .05]);
+            set(this.h_rxMsg, 'String', '<RX message>', 'FontSize', 9);
+            set(this.h_txMsg, 'String', '<TX message>', 'FontSize', 9);
+            
+            this.h_axes = axes('Pos', [.15 .15 .7 .8], 'Parent', this.h_fig); % subplot(1,1,1, 'Parent', this.h_fig);
             this.h_pip = axes('Position', [0 .75 .2 .2], 'Parent', this.h_fig);
             title(this.h_pip, 'Target');
             
@@ -193,6 +199,7 @@ classdef CozmoDocker < handle
         
         function run(this)
             
+            this.frameCount = uint16(0);
             this.escapePressed = false;
             dockingDone = false;
             
@@ -213,11 +220,12 @@ classdef CozmoDocker < handle
                 while ~this.escapePressed && (isempty(marker) || ~marker{1}.isValid)
                     t_detect = tic;
                     img = this.camera.getFrame();
-                    if isempty(img)
-                        if ~isempty(this.camera.message)
-                            this.displayMessage(this.camera.message);
-                        end
-                    else
+                  
+                    if ~isempty(this.camera.message)
+                        this.displayMessage(this.camera.message);
+                    end
+                    
+                    if ~isempty(img)
                         set(this.h_img, 'CData', img); drawnow;
                         marker = simpleDetector(img);
                     end
@@ -279,6 +287,10 @@ classdef CozmoDocker < handle
                         t_track = tic;
                         
                         img = this.camera.getFrame();
+                        if ~isempty(this.camera.message)
+                            this.displayMessage(this.camera.message);
+                        end
+                        
                         if isempty(img)
                             numEmpty = numEmpty + 1;
                             
@@ -288,6 +300,8 @@ classdef CozmoDocker < handle
                                 this.camera.reset();
                             end
                         else
+                            this.frameCount = this.frameCount + 1;
+                            
                             numEmpty = 0;
                             set(this.h_img, 'CData', img);
                             converged = LKtracker.track(img, ...
@@ -324,7 +338,7 @@ classdef CozmoDocker < handle
        
         
         function sendError(this, LKtracker)
-            
+             
             % Compute the error signal according to the current tracking result
             switch(this.trackerType)
                 case 'affine'
@@ -410,11 +424,23 @@ classdef CozmoDocker < handle
             h = get(this.h_leftRightError, 'Parent');
             title(h, sprintf('LeftRightErr = %.1fmm', midPointErr), 'Back', 'w');
             
-            % TODO: send the error signals back over the serial connection
             dockErrorPacket = [uint8('E') ...
-                typecast(single([distError midPointErr angleError]), 'uint8')];
+                typecast(swapbytes(single([distError midPointErr angleError])), 'uint8')];
             assert(length(dockErrorPacket)==13, ...
                 'Expecting docking error packet to be 13 bytes long.');
+            
+            % Display the message we're sending:
+            %{ Print hex values for debugging
+            txMsg = sprintf('Dist=%.2f(0x%X%X%X%X), L/R=%.2f(0x%X%X%X%X), Rad=%.2f(0x%X%X%X%X)', ...
+                distError, typecast(swapbytes(single(distError)), 'uint8'), ...
+                midPointErr, typecast(swapbytes(single(midPointErr)), 'uint8'), ...
+                angleError, typecast(swapbytes(single(angleError)), 'uint8'));
+            %}
+            txMsg = sprintf('TX: Dist(x)=%.2fmm, L/R(y)=%.2fmm, Angle=%.3frad', ...
+                distError, midPointErr, angleError);
+            
+            set(this.h_txMsg, 'String', txMsg);
+            %fprintf('Message Sent: %s\n', txMsg);
             
             this.camera.sendMessage(dockErrorPacket);
             
@@ -523,8 +549,8 @@ classdef CozmoDocker < handle
         end
         
         function displayMessage(this, msg)
-            set(this.h_message, 'String', msg);
-            fprintf('RobotMessage: %s\n', msg);
+            set(this.h_rxMsg, 'String', ['RX: ' msg]);
+            fprintf('Message Received: %s\n', msg);
         end
             
     end % methods
