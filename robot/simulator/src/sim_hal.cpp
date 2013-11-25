@@ -602,6 +602,9 @@ namespace Anki {
       return &(matCamInfo_);
     }
     
+    void HAL::SetCameraMode(const u8 frameResHeader)
+    {}
+    
     void CaptureHeadCamFrame()
     {
       /*
@@ -735,6 +738,24 @@ namespace Anki {
       }
       return false;
     }
+    
+
+    s32 HAL::USBPeekChar()
+    {
+      return -1;
+    }
+    
+    s32 HAL::USBGetChar(u32 timeout)
+    {
+      return -1;
+    }
+
+    u32 HAL::USBGetNumBytesToRead()
+    {
+      return 0;
+    }
+    
+    
     
     // Get the number of microseconds since boot
     u32 HAL::GetMicroCounter(void)

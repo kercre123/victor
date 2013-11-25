@@ -120,13 +120,7 @@ namespace Anki {
     
     void SetUserCommandedAcceleration(s16 ucAccel)
     {
-      if (ucAccel < 0) {
-        ucAccel = -ucAccel;
-      }
-      
-      assert((float)(ucAccel) >= Anki::Cozmo::ONE_OVER_CONTROL_DT);
-      
-      userCommandedAcceleration_ = ucAccel;
+      userCommandedAcceleration_ = MAX(ABS(ucAccel), ceilf(Anki::Cozmo::ONE_OVER_CONTROL_DT));
     }
     
     s16 GetUserCommandedAcceleration(void)

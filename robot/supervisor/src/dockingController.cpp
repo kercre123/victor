@@ -1,3 +1,4 @@
+#include "anki/common/robot/config.h"
 #include "dockingController.h"
 #include "gripController.h"
 #include "headController.h"
@@ -5,7 +6,14 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/visionSystem.h"
+#include "anki/cozmo/robot/speedController.h"
 #include "anki/cozmo/robot/steeringController.h"
+#include "anki/cozmo/robot/pathFollower.h"
+
+// Use PathFollower to follow a path generated from the relative docking pose
+// specified by SetRelDockPose().
+#define DOCK_BY_PATH
+
 
 namespace Anki {
   namespace Cozmo {
@@ -16,17 +24,35 @@ namespace Anki {
         // Constants
         
         enum Mode {
+          IDLE,
           APPROACH,
           SET_LIFT,
           GRIP,
           DONE
         };
+
+        
+        // Distance between the robot origin and the distance along the robot's x-axis
+        // to the lift when it is in the low docking position.
+        const f32 ORIGIN_TO_LOW_LIFT_DIST_M = 0.02; // TODO: Measure this!
+        
+        u32 lastDockingErrorSignalRecvdTime_ = 0;
+        const u32 STOPPED_TRACKING_TIMEOUT_US = 100000;
+        
+        const u16 DOCK_APPROACH_SPEED_MMPS = 20;
+        const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 50;
+        const u16 DOCK_APPROACH_ACCEL_MMPS2 = 500;
+        
         
         // TODO: set error tolerances in mm and convert to pixels based on camera resolution?
         const f32 VERTICAL_TARGET_ERROR_TOLERANCE = 1.f;   // in pixels
         const f32 HORIZONTAL_TARGET_ERROR_TOLERANCE = 1.f; // in pixels
 
+#ifdef DOCK_BY_PATH
+        Mode mode_ = IDLE;
+#else
         Mode mode_ = DONE;
+#endif
         bool success_  = false;
         
         f32 liftDockHeight_ = -1.f;
@@ -151,6 +177,56 @@ namespace Anki {
       {
         ReturnCode retVal = EXIT_SUCCESS;
         
+#ifdef DOCK_BY_PATH
+        switch(mode_)
+        {
+          case IDLE:
+            success_ = false;
+            break;
+          case SET_LIFT:
+            GripController::DisengageGripper();
+            LiftController::SetDesiredHeight(LIFT_HEIGHT_LOW);
+            mode_ = APPROACH;
+            break;
+          case APPROACH:
+          {
+            // Stop if we haven't received error signal for a while
+            if (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_US) {
+              PathFollower::ClearPath();
+              SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
+              mode_ = IDLE;
+              PRINT("Too long without block pose\n");
+              break;
+            }
+            
+            // If finished traversing path
+            if (!PathFollower::IsTraversingPath()) {
+              GripController::EngageGripper();
+              mode_ = DONE;
+              break;
+            }
+            
+            break;
+          }
+          case DONE:
+            success_ = true;
+            
+            // Go to IDLE when we lose tracking of the block
+            if (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_US) {
+              success_ = false;
+              mode_ = IDLE;
+            }
+            break;
+          default:
+            mode_ = IDLE;
+            success_ = false;
+            PRINT("Reached default case in DockingController "
+                  "mode switch statement.(1)\n");
+            break;
+        }
+        
+        
+#else
         // Wait until head and lift are in position before proceeding
         if(HeadController::IsInPosition() &&
            LiftController::IsInPosition())
@@ -206,6 +282,8 @@ namespace Anki {
           
         } // if head and left are in position
         
+#endif // ifdef DOCK_BY_PATH
+        
         if(success_ == false)
         {
           retVal = EXIT_FAILURE;
@@ -215,6 +293,87 @@ namespace Anki {
         
       } // Update()
 
+      
+      
+      void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad)
+      {
+        lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
+        
+        // Set mode to approach if in idle
+        if (mode_ == IDLE) {
+          mode_ = SET_LIFT;
+        }
+        
+        // Ignore if we've already finished approach
+        if (mode_ == DONE) {
+          return;
+        }
+        
+        // Clear current path
+        PathFollower::ClearPath();
+        
+        // Create new path that is aligned with the normal of the block we want to dock to.
+        // End point: Where the robot origin should be by the time the robot has docked.
+        // Start point: Projected from end point at specified rad.
+        //              Just make length as long as distance to block.
+        //
+        //   ______
+        //   |     |
+        //   |     *  End ---------- Start              * == (rel_x, rel_y)
+        //   |_____|      \ ) rad
+        //    Block        \
+        //                  \
+        //                   \ Aligned with robot x axis (but opposite direction)
+        //
+        //
+        //               \ +ve x axis
+        //                \
+        //                / ROBOT
+        //               /
+        //              +ve y-axis
+        
+        
+        // Convert to m
+        rel_x *= 0.001;
+        rel_y *= 0.001;
+        
+        // Compute end point
+        f32 dx = ORIGIN_TO_LOW_LIFT_DIST_M * cosf(rel_rad);
+        f32 dy = ORIGIN_TO_LOW_LIFT_DIST_M * sinf(rel_rad);
+        
+        f32 x_end_m = rel_x - dx;
+        f32 y_end_m = rel_y - dy;
+        
+        
+        // Compute start point
+        f32 distToBlock = sqrtf(rel_x * rel_x + rel_y * rel_y);
+        dx *= distToBlock / ORIGIN_TO_LOW_LIFT_DIST_M;
+        dy *= distToBlock / ORIGIN_TO_LOW_LIFT_DIST_M;
+        f32 x_start_m = x_end_m - dx;
+        f32 y_start_m = y_end_m - dy;
+        
+        
+#if(DEBUG_DOCK_CONTROLLER)
+        PERIODIC_PRINT(200, "SEG: x %f, y %f, rad %f => (%f, %f) to (%f, %f), dist %f\n",
+                       rel_x, rel_y, rel_rad, x_start_m, y_start_m, x_end_m, y_end_m, distToBlock);
+#endif
+        
+        // Create path segment
+        PathFollower::AppendPathSegment_Line(0, x_start_m, y_start_m, x_end_m, y_end_m);
+        
+        // Set speed
+        if (distToBlock < 0.15) {
+          SpeedController::SetUserCommandedDesiredVehicleSpeed( DOCK_APPROACH_SPEED_MMPS );
+        } else {
+          SpeedController::SetUserCommandedDesiredVehicleSpeed( DOCK_FAR_APPROACH_SPEED_MMPS );
+        }
+        SpeedController::SetUserCommandedAcceleration( DOCK_APPROACH_ACCEL_MMPS2 );
+
+        
+        // Start following path
+        PathFollower::StartPathTraversal();
+        
+      }
       
 
       } // namespace DockingController

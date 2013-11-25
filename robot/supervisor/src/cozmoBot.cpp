@@ -221,6 +221,10 @@ namespace Anki {
         LiftController::Update();
         GripController::Update();
         
+        
+        PathFollower::Update();
+        DockingController::Update();
+        
         //////////////////////////////////////////////////////////////
         // State Machine
         //////////////////////////////////////////////////////////////
@@ -232,7 +236,7 @@ namespace Anki {
             MotorCalibrationUpdate();
             break;
           }
-            
+            /*
           case FOLLOW_PATH:
           {
             PathFollower::Update();
@@ -257,7 +261,7 @@ namespace Anki {
             
             break;
           }
-            
+            */
           case WAITING:
           {
             // Idle.  Nothing to do yet...

@@ -22,6 +22,8 @@ classdef SerialCamera < handle
         QQQVGA_RESOLUTION = char(sscanf('BD', '%2x'));   %  80 x  60
         QQQQVGA_RESOLUTION = char(sscanf('B7', '%2x'));  %  40 x  30
        
+        CHANGE_RES_CMD = char(sscanf('CA', '%2x')); 
+        
         % Byte following header that indicates a message
         MESSAGE_SUFFIX = char(sscanf('DD', '%2x'));
     end
@@ -170,8 +172,8 @@ classdef SerialCamera < handle
                     
                 else
                                     
-                    headerIndex = headerIndex(i_header);
-                    footerIndex = footerIndex(i_footer);
+                    headerIndex = headerIndex(i_header-1);
+                    footerIndex = footerIndex(i_footer-1);
 
                     % Get rid of stuff before the header which we can't use
                     this.buffer(1:(headerIndex-1)) = '';
@@ -190,9 +192,7 @@ classdef SerialCamera < handle
                                                        
                         case this.formatSuffix
                             % Read frame from index(1) to index(2)
-                            readLength = min(this.framelength, readLength);
-                            
-                            if readLength < this.framelength
+                            if readLength ~= this.framelength
                                 %set(h_axes, 'XColor', 'r', 'YColor', 'r');
                                 %set(h_img, 'CData', zeros(60,80));
                                 this.numDropped = this.numDropped + 1;
@@ -212,7 +212,7 @@ classdef SerialCamera < handle
                             warning('Unrecognized header suffix found.');
                     end
                         
-                    this.buffer(1:(readLength+firstDataIndex)) = [];
+                    this.buffer(1:(readLength+firstDataIndex+length(this.footer)+1)) = [];
                 
                 end % IF / ELSE found a matching header/footer pair
                 
@@ -270,7 +270,7 @@ classdef SerialCamera < handle
                     
             end % SWITCH(newResolution)
             
-            fwrite(this.serialObj, this.formatSuffix, 'char');
+            fwrite(this.serialObj, [SerialCamera.CHANGE_RES_CMD this.formatSuffix], 'char');
             this.framelength = prod(this.framesize);
             %this.header = [SerialCamera.BEEFFOFF char(formatSuffix)];
             this.fps = frameRate;

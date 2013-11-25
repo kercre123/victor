@@ -136,6 +136,34 @@ namespace Anki
 
       static u8 frameResolution = CAMERA_MODE_QQQVGA;
       
+      void SetCameraMode(const u8 frameResHeader) {
+        switch(frameResHeader)
+        {
+          case CAMERA_MODE_VGA_HEADER:
+            frameResolution = CAMERA_MODE_VGA;
+            break;
+            
+          case CAMERA_MODE_QVGA_HEADER:
+            frameResolution = CAMERA_MODE_QVGA;
+            break;
+            
+          case CAMERA_MODE_QQVGA_HEADER:
+            frameResolution = CAMERA_MODE_QQVGA;
+            break;
+            
+          case CAMERA_MODE_QQQQVGA_HEADER:
+            frameResolution = CAMERA_MODE_QQQQVGA;
+            break;
+            
+          case CAMERA_MODE_QQQVGA_HEADER:
+            frameResolution = CAMERA_MODE_QQQVGA;
+            break;
+            
+          default:
+            PRINT("ERROR(SetCameraMode): Unknown frame res: %d", frameResHeader);
+            break;
+        }
+      }
       
       void SendHeader(const u8 packetType)
       {
@@ -162,36 +190,36 @@ namespace Anki
         // Set window size for averaging when downsampling and send
         // a corresponding header
         u32 inc = 1;
-        u8  frameResolution = 0;
+        u8 frameResHeader;
         switch(frameResolution)
         {
           case CAMERA_MODE_QVGA:
             inc = 2;
-            frameResolution = CAMERA_MODE_QVGA_HEADER;
+            frameResHeader = CAMERA_MODE_QVGA_HEADER;
             break;
             
           case CAMERA_MODE_QQVGA:
             inc = 4;
-            frameResolution = CAMERA_MODE_QQVGA_HEADER;
+            frameResHeader = CAMERA_MODE_QQVGA_HEADER;
             break;
             
           case CAMERA_MODE_QQQVGA:
             inc = 8;
-            frameResolution = CAMERA_MODE_QQQVGA_HEADER;
+            frameResHeader = CAMERA_MODE_QQQVGA_HEADER;
             break;
             
           case CAMERA_MODE_QQQQVGA:
             inc = 16;
-            frameResolution = CAMERA_MODE_QQQQVGA_HEADER;
+            frameResHeader = CAMERA_MODE_QQQQVGA_HEADER;
             break;
 
           case CAMERA_MODE_VGA:
           default:
             inc = 1;
-            frameResolution = CAMERA_MODE_VGA_HEADER;
+            frameResHeader = CAMERA_MODE_VGA_HEADER;
         }
         
-        SendHeader(frameResolution);
+        SendHeader(frameResHeader);
 
         if(inc==1)
         {
@@ -220,7 +248,7 @@ namespace Anki
           }
         } // IF / ELSE inc==1
         
-        SendFooter(frameResolution);
+        SendFooter(frameResHeader);
         
       }
 
@@ -364,6 +392,9 @@ namespace Anki
   }
 }
 
+// Whether or not continuous capture has begun
+static bool continuousCaptureStarted_ = false;
+
 int main()
 {
   HAL::InitMemory();
@@ -381,8 +412,26 @@ int main()
 
     Robot::step_LongExecution();
 
-    CameraStartFrame(HAL::CAMERA_FRONT, frame, HAL::CAMERA_MODE_VGA,
-        HAL::CAMERA_UPDATE_SINGLE, 0, false);
+    // Only QQQVGA can be captured in SINGLE mode.
+    // Other modes must be captured in CONTINUOUS mode otherwise you get weird
+    // rolling sync effects.
+    // NB: CONTINUOUS mode contains tears that could affect vision algorithms
+    // if moving too fast.
+    if (HAL::frameResolution != HAL::CAMERA_MODE_QQQVGA) {
+      
+      if (!continuousCaptureStarted_) {
+        CameraStartFrame(HAL::CAMERA_FRONT, frame, HAL::CAMERA_MODE_VGA,
+                       HAL::CAMERA_UPDATE_CONTINUOUS, 0, false);
+        continuousCaptureStarted_ = true;
+      }
+
+    }
+    else {
+      CameraStartFrame(HAL::CAMERA_FRONT, frame, HAL::CAMERA_MODE_VGA,
+                       HAL::CAMERA_UPDATE_SINGLE, 0, false);
+      continuousCaptureStarted_ = false;
+    }
+    
 
     while (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT))
     {
@@ -399,29 +448,7 @@ int main()
     //printf("%i\n", (t2 - t));
     t = t2;
  
-    switch(HAL::USBGetChar())
-    {
-      case HAL::CAMERA_MODE_VGA_HEADER:
-        HAL::frameResolution = HAL::CAMERA_MODE_VGA;
-        break;
-        
-      case HAL::CAMERA_MODE_QVGA_HEADER:
-        HAL::frameResolution = HAL::CAMERA_MODE_QVGA;
-        break;
-        
-      case HAL::CAMERA_MODE_QQVGA_HEADER:
-        HAL::frameResolution = HAL::CAMERA_MODE_QQVGA;
-        break;
-        
-      case HAL::CAMERA_MODE_QQQQVGA_HEADER:
-        HAL::frameResolution = HAL::CAMERA_MODE_QQQQVGA;
-        break;
-
-      case HAL::CAMERA_MODE_QQQVGA_HEADER:
-      default:
-        HAL::frameResolution = HAL::CAMERA_MODE_QQQVGA;
-    }
-
+ 
     
 
     //HAL::USBUpdate();
