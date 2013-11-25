@@ -3,11 +3,13 @@ function converged = track(this, nextImg, varargin)
 
 MaxIterations = 25;
 ConvergenceTolerance = 1e-3;
+ErrorTolerance = [];
 
 parseVarargin(varargin{:});
 
 this.maxIterations = MaxIterations;
 this.convergenceTolerance = ConvergenceTolerance;
+this.errorTolerance = ErrorTolerance;
 
 nextImg = im2double(nextImg);
 if size(nextImg,3) > 1
@@ -59,6 +61,10 @@ end
 It = this.target{this.finestScale}(:) - imgi;
 
 this.err = mean(abs(It(inBounds)));
+
+if isnan(this.err) || (~isempty(this.errorTolerance) && this.err > this.errorTolerance)
+    converged = false;
+end
 
 
 if this.debugDisplay
