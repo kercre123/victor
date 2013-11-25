@@ -306,7 +306,8 @@ classdef CozmoDocker < handle
                             set(this.h_img, 'CData', img);
                             converged = LKtracker.track(img, ...
                                 'MaxIterations', 50, ...
-                                'ConvergenceTolerance', .25);
+                                'ConvergenceTolerance', .25,...
+                                'ErrorTolerance', 0.5);
                             
                             if converged
                                 lost = 0;
@@ -320,6 +321,7 @@ classdef CozmoDocker < handle
                                     'XData', corners([1 2 4 3 1],1), ...
                                     'YData', corners([1 2 4 3 1],2));
                                 title(this.h_pip, sprintf('TargetError = %.2f', LKtracker.err), 'Back', 'w');
+                            
                             else
                                 lost = lost + 1;
                             end
@@ -430,17 +432,20 @@ classdef CozmoDocker < handle
                 'Expecting docking error packet to be 13 bytes long.');
             
             % Display the message we're sending:
-            %{ Print hex values for debugging
+            %{ 
+            Print hex values for debugging
             txMsg = sprintf('Dist=%.2f(0x%X%X%X%X), L/R=%.2f(0x%X%X%X%X), Rad=%.2f(0x%X%X%X%X)', ...
                 distError, typecast(swapbytes(single(distError)), 'uint8'), ...
                 midPointErr, typecast(swapbytes(single(midPointErr)), 'uint8'), ...
                 angleError, typecast(swapbytes(single(angleError)), 'uint8'));
             %}
-            txMsg = sprintf('TX: Dist(x)=%.2fmm, L/R(y)=%.2fmm, Angle=%.3frad', ...
-                distError, midPointErr, angleError);
-            
-            set(this.h_txMsg, 'String', txMsg);
-            %fprintf('Message Sent: %s\n', txMsg);
+            if mod(this.frameCount, this.camera.fps)==0
+                txMsg = sprintf('TX: Dist(x)=%.2fmm, L/R(y)=%.2fmm, Angle=%.3frad', ...
+                    distError, midPointErr, angleError);
+                
+                set(this.h_txMsg, 'String', txMsg);
+                fprintf('Message Sent: %s\n', txMsg);
+            end
             
             this.camera.sendMessage(dockErrorPacket);
             
