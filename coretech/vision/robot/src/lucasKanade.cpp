@@ -445,15 +445,6 @@ namespace Anki
             inBounds.SetArray(templateDerivativeT, templateDerivativeT_allPoints, 1);
           }
 
-          /*{
-          Matlab matlab(false);
-
-          matlab.PutArray(nextImageTransformed, "nextImageTransformed");
-          matlab.PutArray(templateImage, "templateImage");
-          matlab.PutArray(templateDerivativeT, "templateDerivativeT");
-          matlab.PutArray(this->templateImagePyramid[whichScale], "templateImagePyramid_curScale");
-          }*/
-
           Array<f32> AWAt(numSystemParameters, numSystemParameters, memory);
 
           //  AtW = (A(inBounds,:).*this.W{i_scale}(inBounds,ones(1,size(A,2))))';
@@ -477,17 +468,24 @@ namespace Anki
           Matrix::Add<f32,f32,f32>(AWAt, ridgeWeightMatrix, AWAt);
 
           //  b = AtW*It(inBounds);
-          Array<f32> b(1,2,memory);
+          Array<f32> b(1,numSystemParameters,memory);
           Matrix::MultiplyTranspose(templateDerivativeT, AW, b);
 
-          {
-            Matlab matlab(false);
+          // update = AtWA\b;
+          Array<f32> update(1,numSystemParameters,memory);
 
-            matlab.PutArray(A, "A");
-            matlab.PutArray(AW, "AW");
-            matlab.PutArray(AWAt, "AWAt");
-            matlab.PutArray(b, "b");
-          }
+          if(Matrix::SolveLeastSquares_f32(AWAt, b, update, memory) != RESULT_OK)
+            return RESULT_FAIL;
+
+          //{
+          //  Matlab matlab(false);
+
+          //  matlab.PutArray(A, "A");
+          //  matlab.PutArray(AW, "AW");
+          //  matlab.PutArray(AWAt, "AWAt");
+          //  matlab.PutArray(b, "b");
+          //  matlab.PutArray(update, "update");
+          //}
 
           //  update = AtWA\b;
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
