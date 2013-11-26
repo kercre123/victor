@@ -210,6 +210,11 @@ if __name__ == '__main__':
       LEON_SOURCE += addSources('../coretech/common/robot/src/')
       LEON_SOURCE += addSources('../coretech/common/shared/src/')
       SHAVE_SOURCE += addSources('../coretech/common/robot/project/myriad1/unitTests/shave')
+    elif arg == 'make.py':
+      continue
+    else:
+      print('Invalid argument: ' + arg)
+      sys.exit(1)
 
   # TODO: Get supervisor directory building/linking
   if not isTest:
