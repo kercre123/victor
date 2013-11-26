@@ -6,12 +6,10 @@
 
 /*int strcasecmp(const char* buffer1, const char* buffer2)
 {
-  char* b1 = (char*)buffer1;
-  char* b2 = (char*)buffer2;
-  while(*b1 && *b2)
+  while(*buffer1 && *buffer2)
   {
-    char c1 = *b1;
-    char c2 = *b2;
+    u32 c1 = *buffer1;
+    u32 c2 = *buffer2;
     if (c1 >= 'A' && c1 <= 'Z')
       c1 = 'a' + c1 - 'A';
     if (c2 >= 'A' && c2 <= 'Z')
@@ -20,11 +18,11 @@
     {
       return 1;
     }
-    b1++;
-    b2++;
+    buffer1++;
+    buffer2++;
   }
   // Return 0 if they both match
-  return *b1 | *b2;
+  return *buffer1 | *buffer2;
 }*/
 
 namespace Anki
@@ -59,6 +57,27 @@ namespace Anki
           }
           c++;
         }
+
+        return c;
+      }
+
+      static int ParseInt(const char* str)
+      {
+        int mul = 1;
+        int val = 0;
+        while (*str)
+        {
+          if (*str == '-')
+          {
+            mul = -1;
+          } else if (*str >= '0' && *str <= '9') {
+            val = (val * 10) + (*str - '0');
+          }
+
+          str++;
+        }
+
+        return val * mul;
       }
 
       void Init()
@@ -103,8 +122,69 @@ namespace Anki
         }
       }
 
-      int SetMotors()
+      static int GetFrontImage()
       {
+        return 0;
+      }
+
+      static int GetMatImage()
+      {
+        return 0;
+      }
+
+      static int SetMotors()
+      {
+        float value;
+        char* arg = GetArgument(1);
+        if (!arg)
+          return 1;
+
+        value = ParseInt(arg) / 100.0f;
+
+        HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, value);
+
+        arg = GetArgument(2);
+        if (!arg)
+          return 1;
+
+        value = ParseInt(arg) / 100.0f;
+        HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, value);
+
+        arg = GetArgument(3);
+        if (!arg)
+          return 1;
+
+        value = ParseInt(arg) / 100.0f;
+        HAL::MotorSetPower(HAL::MOTOR_LIFT, value);
+
+        arg = GetArgument(4);
+        if (!arg)
+          return 1;
+
+        value = ParseInt(arg) / 100.0f;
+        HAL::MotorSetPower(HAL::MOTOR_GRIP, value);
+
+        arg = GetArgument(5);
+        if (!arg)
+          return 1;
+
+        value = ParseInt(arg) / 100.0f;
+        HAL::MotorSetPower(HAL::MOTOR_HEAD, value);
+
+        // Get the number of milliseconds to wait
+        arg = GetArgument(6);
+        if (!arg)
+          return 1;
+
+        value = ParseInt(arg);
+        HAL::MicroWait(value * 1000);
+
+        HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 0);
+        HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 0);
+        HAL::MotorSetPower(HAL::MOTOR_LIFT, 0);
+        HAL::MotorSetPower(HAL::MOTOR_GRIP, 0);
+        HAL::MotorSetPower(HAL::MOTOR_HEAD, 0);
+
         return 0;
       }
 
@@ -116,6 +196,8 @@ namespace Anki
 
       static const ConsoleCommand m_commands[] =
       {
+        {"GetFrontImage", GetFrontImage},
+        {"GetMatImage", GetMatImage},
         {"SetMotors", SetMotors},
       };
 
