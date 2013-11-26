@@ -19,12 +19,10 @@ namespace Anki
   {
     namespace TemplateTracker
     {
-      PlaneTransformation_f32::PlaneTransformation_f32(TransformType transformType)
+      PlaneTransformation_f32::PlaneTransformation_f32(TransformType transformType, MemoryStack &memory)
         : transformType(transformType)
       {
-        homography[0][0] = 1.0f; homography[0][1] = 0.0f; homography[0][2] = 0.0f;
-        homography[1][0] = 0.0f; homography[1][1] = 1.0f; homography[1][2] = 0.0f;
-        homography[2][0] = 0.0f; homography[2][1] = 0.0f; homography[2][2] = 1.0f;
+        homography = Eye<f32>(3, 3, memory);
       }
 
       Result PlaneTransformation_f32::TransformPoints(
@@ -73,13 +71,30 @@ namespace Anki
         return RESULT_OK;
       }
 
+      Result PlaneTransformation_f32::Update(const Array<f32> &update)
+      {
+        if(transformType == TRANSFORM_TRANSLATION) {
+          AnkiConditionalErrorAndReturnValue(update.get_size(0) == 1 && update.get_size(1) == 2,
+            RESULT_FAIL, "PlaneTransformation_f32::Update", "update is the incorrect size");
+
+          // this.tform(1:2,3) = this.tform(1:2,3) - update;
+          homography[0][2] -= update[0][0];
+          homography[1][2] -= update[0][1];
+        } else {
+          AnkiError("PlaneTransformation_f32::Update", "Unknown transformation type %d", transformType);
+          return RESULT_FAIL;
+        }
+
+        return RESULT_OK;
+      }
+
       TransformType PlaneTransformation_f32::get_transformType() const
       {
         return transformType;
       }
 
       LucasKanadeTracker_f32::LucasKanadeTracker_f32(const s32 templateImageHeight, const s32 templateImageWidth, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory)
-        : isValid(false), templateImageHeight(templateImageHeight), templateImageWidth(templateImageWidth), numPyramidLevels(numPyramidLevels), transformation(PlaneTransformation_f32(transformType)), ridgeWeight(ridgeWeight), isInitialized(false)
+        : isValid(false), templateImageHeight(templateImageHeight), templateImageWidth(templateImageWidth), numPyramidLevels(numPyramidLevels), transformation(PlaneTransformation_f32(transformType,memory)), ridgeWeight(ridgeWeight), isInitialized(false)
       {
         AnkiConditionalErrorAndReturn(templateImageHeight > 0 && templateImageWidth > 0,
           "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "template widths and heights must be greater than zero, and multiples of %d", ANKI_VISION_IMAGE_WIDTH_MULTIPLE);
@@ -246,24 +261,7 @@ namespace Anki
 
               Matrix::Vectorize(true, templateDerivativeY, tmp);
               this->A_full[iScale](1,1,0,-1).Set(tmp);
-
-              //{
-              //  Matlab matlab(false);
-              //  matlab.PutArray(templateDerivativeX, "templateDerivativeX");
-              //  matlab.PutArray(templateDerivativeY, "templateDerivativeY");
-              //  matlab.PutArray(this->A_full[iScale], "A_full0");
-              //}
             }
-
-            //{
-            //  Matlab matlab(false);
-            //  matlab.PutArray(xIn, "xIn");
-            //  matlab.PutArray(yIn, "yIn");
-            //  matlab.PutArray(xTransformed, "xTransformed");
-            //  matlab.PutArray(yTransformed, "yTransformed");
-            //  matlab.PutArray(this->templateImagePyramid[iScale], "templateImagePyramid0");
-            //  matlab.PutArray(templateImage, "templateImage");
-            //}
 
             {
               PUSH_MEMORY_STACK(memory);
@@ -300,16 +298,6 @@ namespace Anki
               templateWeightsTmp(-1,-1,-1,-1).Set(0);
 
               Matrix::Vectorize(true, templateWeightsTmp, templateWeights[iScale]);
-
-              //{
-              //  Matlab matlab(false);
-              //  matlab.PutArray(this->templateImagePyramid[iScale], "templateImagePyramid0");
-              //  matlab.PutArray(templateDerivativeX, "templateDerivativeX");
-              //  matlab.PutArray(templateDerivativeY, "templateDerivativeY");
-              //  matlab.PutArray(GaussianTmp, "GaussianTmp");
-              //  matlab.PutArray(templateWeightsTmp, "templateWeightsTmp");
-              //  matlab.PutArray(templateWeights[iScale], "templateWeights0");
-              //}
             } // PUSH_MEMORY_STACK(memory);
           } // for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++, fScale++)
         } // PUSH_MEMORY_STACK(memory);
@@ -485,7 +473,7 @@ namespace Anki
           //  matlab.PutArray(update, "update");
           //}
 
-          //  update = AtWA\b;
+          this->transformation.Update(update);
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
         return RESULT_OK;

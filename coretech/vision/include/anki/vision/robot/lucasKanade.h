@@ -32,7 +32,7 @@ namespace Anki
       class PlaneTransformation_f32
       {
       public:
-        PlaneTransformation_f32(TransformType transformType);
+        PlaneTransformation_f32(TransformType transformType, MemoryStack &memory);
 
         // Using the current transformation, warp the In points to the Out points.
         // xIn, yIn, xOut, and yOut must be 1xN.
@@ -44,11 +44,16 @@ namespace Anki
           const Point<f32> &centerOffset,
           Array<f32> &xOut, Array<f32> &yOut);
 
+        // Update the transformation. The format of the update should be as follows:
+        // TRANSFORM_TRANSLATION: [-dx, -dy]
+        Result Update(const Array<f32> &update);
+
         TransformType get_transformType() const;
 
       protected:
         TransformType transformType;
-        f32 homography[3][3]; // All types of plane transformations are stored in a homography matrix, though some values may be zero (or ones for diagonals)
+
+        Array<f32> homography; // All types of plane transformations are stored in a 3x3 homography matrix, though some values may be zero (or ones for diagonals)
       };
 
       class LucasKanadeTracker_f32
