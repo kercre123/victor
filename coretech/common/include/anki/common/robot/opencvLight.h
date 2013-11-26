@@ -24,7 +24,7 @@ namespace Anki
       Array<f32> &w,  //!< W array 1Xm
       Array<f32> &uT, //!< U-transpose array mXm
       Array<f32> &vT, //!< V-transpose array nXn
-      void * scratch //!< A scratch buffer, with at least "sizeof(float)*(n*2 + m)" bytes
+      void * scratch //!< A scratch buffer, with at least "sizeof(f32)*(n_stride*2 + m_stride)" bytes
       );
 
     /*! Performs an Singular Value Decomposition on the mXn, float64 input array. [u^t,w,v^t] = SVD(a); */
@@ -33,7 +33,7 @@ namespace Anki
       Array<f64> &w,  //!< W array 1xm
       Array<f64> &uT, //!< U-transpose array mXm
       Array<f64> &vT, //!< V-transpose array nXn
-      void * scratch //!< A scratch buffer, with at least "sizeof(f64)*(n*2 + m)" bytes
+      void * scratch //!< A scratch buffer, with at least "sizeof(f64)*(n_stride*2 + m_stride)" bytes
       );
 
     /*! Performs an Singular Value Decomposition on the mXn, float32 input array. [w,u^t,v^t] = SVD(a); */

@@ -98,7 +98,16 @@ namespace Anki
 {
   namespace Embedded
   {
-    inline void* cvAlignPtr( const void* ptr, int align=32 )
+    inline static void* cvAlignPtr( const void* ptr, int align=32 );
+    static void icvMatrAXPY3_32f( int m, int n, const float* x, int l, float* y, double h );
+    static void icvMatrAXPY3_64f( int m, int n, const double* x, int l, double* y, double h );
+    static double pythag( double a, double b );
+    static void icvMatrAXPY_32f( int m, int n, const float* x, int dx, const float* a, float* y, int dy );
+    static void icvMatrAXPY_64f( int m, int n, const double* x, int dx, const double* a, double* y, int dy );
+    static void icvSVBkSb_32f( int m, int n, const float* w, const float* uT, int lduT, const float* vT, int ldvT, const float* b, int ldb, int nb, float* x, int ldx, float* buffer );
+    static void icvSVBkSb_64f( int m, int n, const double* w, const double* uT, int lduT, const double* vT, int ldvT, const double* b, int ldb, int nb, double* x, int ldx, double* buffer );
+
+    inline static void* cvAlignPtr( const void* ptr, int align )
     {
       assert( (align & (align-1)) == 0 );
       return (void*)( ((size_t)ptr + align - 1) & ~(size_t)(align-1) );
@@ -1194,6 +1203,191 @@ namespace Anki
           if( uT )
             for( j = 0; j < m; j++ )
               CV_SWAP( uT[j + lduT*k], uT[j + lduT*i], t );
+        }
+      }
+    }
+
+    static void icvSVBkSb_32f( int m, int n, const float* w,
+      const float* uT, int lduT,
+      const float* vT, int ldvT,
+      const float* b, int ldb, int nb,
+      float* x, int ldx, float* buffer )
+    {
+      float threshold = 0.f;
+      int i, j, nm = MIN( m, n );
+
+      if( !b )
+        nb = m;
+
+      for( i = 0; i < n; i++ )
+        memset( x + i*ldx, 0, nb*sizeof(x[0]));
+
+      for( i = 0; i < nm; i++ )
+        threshold += w[i];
+      threshold *= 2*FLT_EPSILON;
+
+      /* vT * inv(w) * uT * b */
+      for( i = 0; i < nm; i++, uT += lduT, vT += ldvT )
+      {
+        double wi = w[i];
+
+        if( wi > threshold )
+        {
+          wi = 1./wi;
+
+          if( nb == 1 )
+          {
+            double s = 0;
+            if( b )
+            {
+              if( ldb == 1 )
+              {
+                for( j = 0; j <= m - 4; j += 4 )
+                  s += uT[j]*b[j] + uT[j+1]*b[j+1] + uT[j+2]*b[j+2] + uT[j+3]*b[j+3];
+                for( ; j < m; j++ )
+                  s += uT[j]*b[j];
+              }
+              else
+              {
+                for( j = 0; j < m; j++ )
+                  s += uT[j]*b[j*ldb];
+              }
+            }
+            else
+              s = uT[0];
+            s *= wi;
+
+            if( ldx == 1 )
+            {
+              for( j = 0; j <= n - 4; j += 4 )
+              {
+                double t0 = x[j] + s*vT[j];
+                double t1 = x[j+1] + s*vT[j+1];
+                x[j] = (float)t0;
+                x[j+1] = (float)t1;
+                t0 = x[j+2] + s*vT[j+2];
+                t1 = x[j+3] + s*vT[j+3];
+                x[j+2] = (float)t0;
+                x[j+3] = (float)t1;
+              }
+
+              for( ; j < n; j++ )
+                x[j] = (float)(x[j] + s*vT[j]);
+            }
+            else
+            {
+              for( j = 0; j < n; j++ )
+                x[j*ldx] = (float)(x[j*ldx] + s*vT[j]);
+            }
+          }
+          else
+          {
+            if( b )
+            {
+              memset( buffer, 0, nb*sizeof(buffer[0]));
+              icvMatrAXPY_32f( m, nb, b, ldb, uT, buffer, 0 );
+              for( j = 0; j < nb; j++ )
+                buffer[j] = (float)(buffer[j]*wi);
+            }
+            else
+            {
+              for( j = 0; j < nb; j++ )
+                buffer[j] = (float)(uT[j]*wi);
+            }
+            icvMatrAXPY_32f( n, nb, buffer, 0, vT, x, ldx );
+          }
+        }
+      }
+    }
+
+    static void icvSVBkSb_64f( int m, int n, const double* w,
+      const double* uT, int lduT,
+      const double* vT, int ldvT,
+      const double* b, int ldb, int nb,
+      double* x, int ldx, double* buffer )
+    {
+      double threshold = 0;
+      int i, j, nm = MIN( m, n );
+
+      if( !b )
+        nb = m;
+
+      for( i = 0; i < n; i++ )
+        memset( x + i*ldx, 0, nb*sizeof(x[0]));
+
+      for( i = 0; i < nm; i++ )
+        threshold += w[i];
+      threshold *= 2*DBL_EPSILON;
+
+      /* vT * inv(w) * uT * b */
+      for( i = 0; i < nm; i++, uT += lduT, vT += ldvT )
+      {
+        double wi = w[i];
+
+        if( wi > threshold )
+        {
+          wi = 1./wi;
+
+          if( nb == 1 )
+          {
+            double s = 0;
+            if( b )
+            {
+              if( ldb == 1 )
+              {
+                for( j = 0; j <= m - 4; j += 4 )
+                  s += uT[j]*b[j] + uT[j+1]*b[j+1] + uT[j+2]*b[j+2] + uT[j+3]*b[j+3];
+                for( ; j < m; j++ )
+                  s += uT[j]*b[j];
+              }
+              else
+              {
+                for( j = 0; j < m; j++ )
+                  s += uT[j]*b[j*ldb];
+              }
+            }
+            else
+              s = uT[0];
+            s *= wi;
+            if( ldx == 1 )
+            {
+              for( j = 0; j <= n - 4; j += 4 )
+              {
+                double t0 = x[j] + s*vT[j];
+                double t1 = x[j+1] + s*vT[j+1];
+                x[j] = t0;
+                x[j+1] = t1;
+                t0 = x[j+2] + s*vT[j+2];
+                t1 = x[j+3] + s*vT[j+3];
+                x[j+2] = t0;
+                x[j+3] = t1;
+              }
+
+              for( ; j < n; j++ )
+                x[j] += s*vT[j];
+            }
+            else
+            {
+              for( j = 0; j < n; j++ )
+                x[j*ldx] += s*vT[j];
+            }
+          }
+          else
+          {
+            if( b )
+            {
+              memset( buffer, 0, nb*sizeof(buffer[0]));
+              icvMatrAXPY_64f( m, nb, b, ldb, uT, buffer, 0 );
+              for( j = 0; j < nb; j++ )
+                buffer[j] *= wi;
+            }
+            else
+            {
+              for( j = 0; j < nb; j++ )
+                buffer[j] = uT[j]*wi;
+            }
+            icvMatrAXPY_64f( n, nb, buffer, 0, vT, x, ldx );
+          }
         }
       }
     }
