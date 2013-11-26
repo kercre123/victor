@@ -138,6 +138,10 @@ namespace Anki
       // Returns the number of values set
       s32 Set(const Type value);
 
+      s32 Set(const Array<Type> &in);
+
+      template<typename InType> s32 SetCast(const Array<InType> &in);
+
       // Copy values to this Array.
       // If the input array does not contain enough elements, the remainder of this Array will be filled with zeros.
       // Returns the number of values set (not counting extra zeros)

@@ -357,12 +357,44 @@ namespace Anki
     // Note: The myriad has many issues with static initialization of arrays, so this should not used with caution
     template<typename Type> s32 Array<Type>::Set(const Type value)
     {
-      AnkiConditionalError(this->IsValid(), "Array<Type>::Set", "Array<Type> is not valid");
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        0, "Array<Type>::Set", "Array<Type> is not valid");
 
       for(s32 y=0; y<size[0]; y++) {
         Type * restrict pThisData = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           pThisData[x] = value;
+        }
+      }
+
+      return size[0]*size[1];
+    }
+
+    template<typename Type> s32 Array<Type>::Set(const Array<Type> &in)
+    {
+      return this->SetCast<Type>(in);
+    }
+
+    template<typename Type> template<typename InType> s32 Array<Type>::SetCast(const Array<InType> &in)
+    {
+      const s32 inHeight = in.get_size(0);
+      const s32 inWidth = in.get_size(1);
+
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        0, "Array<Type>::Set", "this Array is not valid");
+
+      AnkiConditionalErrorAndReturnValue(in.IsValid(),
+        0, "Array<Type>::Set", "Array in is not valid");
+
+      AnkiConditionalErrorAndReturnValue(inHeight == this->size[0] && inWidth == this->size[1],
+        0, "Array<Type>::Set", "Array sizes don't match");
+
+      for(s32 y=0; y<size[0]; y++) {
+        const InType * restrict pIn = in.Pointer(y, 0);
+        Type * restrict pThisData = Pointer(y, 0);
+
+        for(s32 x=0; x<size[1]; x++) {
+          pThisData[x] = static_cast<Type>(pIn[x]);
         }
       }
 

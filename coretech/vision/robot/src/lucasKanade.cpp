@@ -19,13 +19,13 @@ namespace Anki
   {
     namespace TemplateTracker
     {
-      PlaneTransformation_f32::PlaneTransformation_f32(TransformType transformType, MemoryStack &memory)
+      PlanarTransformation_f32::PlanarTransformation_f32(TransformType transformType, MemoryStack &memory)
         : transformType(transformType)
       {
         homography = Eye<f32>(3, 3, memory);
       }
 
-      Result PlaneTransformation_f32::TransformPoints(
+      Result PlanarTransformation_f32::TransformPoints(
         const Array<f32> &xIn, const Array<f32> &yIn,
         const f32 scale,
         const Point<f32> &centerOffset,
@@ -34,15 +34,15 @@ namespace Anki
         //const s32 numPoints = xIn.get_size(1);
 
         AnkiConditionalErrorAndReturnValue(xIn.IsValid() && yIn.IsValid() && xOut.IsValid() && yOut.IsValid(),
-          RESULT_FAIL, "PlaneTransformation_f32::TransformPoints", "All inputs and outputs must be allocated and valid");
+          RESULT_FAIL, "PlanarTransformation_f32::TransformPoints", "All inputs and outputs must be allocated and valid");
 
         AnkiConditionalErrorAndReturnValue(xIn.get_rawDataPointer() != xOut.get_rawDataPointer() && yIn.get_rawDataPointer() != yOut.get_rawDataPointer(),
-          RESULT_FAIL, "PlaneTransformation_f32::TransformPoints", "In and Out arrays must be in different memory locations");
+          RESULT_FAIL, "PlanarTransformation_f32::TransformPoints", "In and Out arrays must be in different memory locations");
 
         AnkiConditionalErrorAndReturnValue(
           xIn.get_size(0) == yIn.get_size(0) && xIn.get_size(0) == xOut.get_size(0) && xIn.get_size(0) == yOut.get_size(0) &&
           xIn.get_size(1) == yIn.get_size(1) && xIn.get_size(1) == xOut.get_size(1) && xIn.get_size(1) == yOut.get_size(1),
-          RESULT_FAIL, "PlaneTransformation_f32::TransformPoints", "All inputs and outputs must be the same size");
+          RESULT_FAIL, "PlanarTransformation_f32::TransformPoints", "All inputs and outputs must be the same size");
 
         const s32 numPointsY = xIn.get_size(0);
         const s32 numPointsX = xIn.get_size(1);
@@ -71,30 +71,55 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result PlaneTransformation_f32::Update(const Array<f32> &update)
+      Result PlanarTransformation_f32::Update(const Array<f32> &update)
       {
         if(transformType == TRANSFORM_TRANSLATION) {
           AnkiConditionalErrorAndReturnValue(update.get_size(0) == 1 && update.get_size(1) == 2,
-            RESULT_FAIL, "PlaneTransformation_f32::Update", "update is the incorrect size");
+            RESULT_FAIL, "PlanarTransformation_f32::Update", "update is the incorrect size");
 
           // this.tform(1:2,3) = this.tform(1:2,3) - update;
           homography[0][2] -= update[0][0];
           homography[1][2] -= update[0][1];
         } else {
-          AnkiError("PlaneTransformation_f32::Update", "Unknown transformation type %d", transformType);
+          AnkiError("PlanarTransformation_f32::Update", "Unknown transformation type %d", transformType);
           return RESULT_FAIL;
         }
 
         return RESULT_OK;
       }
 
-      TransformType PlaneTransformation_f32::get_transformType() const
+      Result PlanarTransformation_f32::set_transformType(const TransformType transformType)
+      {
+        if(transformType == TRANSFORM_TRANSLATION) {
+          this->transformType = transformType;
+        } else {
+          AnkiError("PlanarTransformation_f32::set_transformType", "Unknown transformation type %d", transformType);
+          return RESULT_FAIL;
+        }
+
+        return RESULT_OK;
+      }
+
+      TransformType PlanarTransformation_f32::get_transformType() const
       {
         return transformType;
       }
 
+      Result PlanarTransformation_f32::set_homography(const Array<f32>& in)
+      {
+        if(this->homography.Set(in) != 9)
+          return RESULT_FAIL;
+
+        return RESULT_OK;
+      }
+
+      const Array<f32>& PlanarTransformation_f32::get_homography() const
+      {
+        return this->homography;
+      }
+
       LucasKanadeTracker_f32::LucasKanadeTracker_f32(const s32 templateImageHeight, const s32 templateImageWidth, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory)
-        : isValid(false), templateImageHeight(templateImageHeight), templateImageWidth(templateImageWidth), numPyramidLevels(numPyramidLevels), transformation(PlaneTransformation_f32(transformType,memory)), ridgeWeight(ridgeWeight), isInitialized(false)
+        : isValid(false), templateImageHeight(templateImageHeight), templateImageWidth(templateImageWidth), numPyramidLevels(numPyramidLevels), transformation(PlanarTransformation_f32(transformType,memory)), ridgeWeight(ridgeWeight), isInitialized(false)
       {
         AnkiConditionalErrorAndReturn(templateImageHeight > 0 && templateImageWidth > 0,
           "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "template widths and heights must be greater than zero, and multiples of %d", ANKI_VISION_IMAGE_WIDTH_MULTIPLE);
@@ -510,6 +535,28 @@ namespace Anki
         }
 
         return true;
+      }
+
+      Result LucasKanadeTracker_f32::set_transformation(const PlanarTransformation_f32 &transformation)
+      {
+        const TransformType originalType = this->transformation.get_transformType();
+
+        if(this->transformation.set_transformType(transformation.get_transformType()) != RESULT_OK) {
+          this->transformation.set_transformType(originalType);
+          return RESULT_FAIL;
+        }
+
+        if(this->transformation.set_homography(transformation.get_homography()) != RESULT_OK) {
+          this->transformation.set_transformType(originalType);
+          return RESULT_FAIL;
+        }
+
+        return RESULT_OK;
+      }
+
+      PlanarTransformation_f32 LucasKanadeTracker_f32::get_transformation() const
+      {
+        return transformation;
       }
     } // namespace TemplateTracker
   } // namespace Embedded

@@ -29,10 +29,10 @@ namespace Anki
         //TRANSFORM_PROJECTIVE // TODO: support projective
       };
 
-      class PlaneTransformation_f32
+      class PlanarTransformation_f32
       {
       public:
-        PlaneTransformation_f32(TransformType transformType, MemoryStack &memory);
+        PlanarTransformation_f32(TransformType transformType, MemoryStack &memory);
 
         // Using the current transformation, warp the In points to the Out points.
         // xIn, yIn, xOut, and yOut must be 1xN.
@@ -48,7 +48,13 @@ namespace Anki
         // TRANSFORM_TRANSLATION: [-dx, -dy]
         Result Update(const Array<f32> &update);
 
+        Result set_transformType(const TransformType transformType);
+
         TransformType get_transformType() const;
+
+        Result set_homography(const Array<f32>& in);
+
+        const Array<f32>& get_homography() const;
 
       protected:
         TransformType transformType;
@@ -70,6 +76,10 @@ namespace Anki
 
         bool IsValid() const;
 
+        Result set_transformation(const PlanarTransformation_f32 &transformation);
+
+        PlanarTransformation_f32 get_transformation() const;
+
       protected:
         // A_full is the list of derivative matrices for each level of the pyramid
         FixedLengthList<Array<f32>> A_full;
@@ -88,7 +98,7 @@ namespace Anki
         f32 templateRegionHeight;
         f32 templateRegionWidth;
 
-        PlaneTransformation_f32 transformation;
+        PlanarTransformation_f32 transformation;
 
         f32 ridgeWeight;
 

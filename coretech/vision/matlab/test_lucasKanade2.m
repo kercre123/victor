@@ -6,6 +6,21 @@
 % templateQuad = [20,22;35,29;28,44;13,37];
 % test_lucasKanade2(im1, im2, templateQuad)
 
+% im101 = rgb2gray(imresize(imread('C:\Anki\blockImages\blockImages00100.png'), [480,640]/8));
+% im102 = rgb2gray(imresize(imread('C:\Anki\blockImages\blockImages00101.png'), [480,640]/8));
+% templateQuad = [8.5213, 30.3085; 27.9255, 30.5638; 26.7766, 49.8404; 8.3936, 49.2021];
+% test_lucasKanade2(im101, im102, templateQuad)
+
+% im101 = rgb2gray(imresize(imread('C:\Anki\blockImages\blockImages00100.png'), [480,640]/2));
+% im102 = rgb2gray(imresize(imread('C:\Anki\blockImages\blockImages00101.png'), [480,640]/2));
+% templateQuad = [8.5213, 30.3085; 27.9255, 30.5638; 26.7766, 49.8404; 8.3936, 49.2021]*4;
+% test_lucasKanade2(im101, im102, templateQuad)
+
+% im315 = rgb2gray(imresize(imread('C:\Anki\blockImages\blockImages00315.png'), [480,640]/8));
+% im316 = rgb2gray(imresize(imread('C:\Anki\blockImages\blockImages00316.png'), [480,640]/8));
+% templateQuad = [52.0936, 115.3606; 85.7988, 122.2928; 79.5837, 156.9542; 45.1614, 150.2610]/4;
+% test_lucasKanade2(im315, im316, templateQuad)
+
 function test_lucasKanade2(im1, im2, templateQuad)
 
 % close all
@@ -15,21 +30,22 @@ x1 = max(templateQuad(:,2));
 y0 = min(templateQuad(:,1));
 y1 = max(templateQuad(:,1));
 
-templateRect = [x0,y0;x1,y0;x1,y1;x0,y1]
+templateRect = round([x0,y0;x1,y0;x1,y1;x0,y1]);
 
 % [im1, im2, templateRect] = drawExample([60,80], false);
 
 % imshows(im1, im2)
 
-mask1 = roipoly(im1, templateQuad(:,1), templateQuad(:,2));
+% mask1 = roipoly(im1, templateQuad(:,1), templateQuad(:,2));
+mask1 = roipoly(im1, templateRect(:,1), templateRect(:,2));
 
-numScales = 3;
+numScales = 2;
 
 figure(100); subplot(1,2,2); imshow(im1);
 
-% translation only 
-LKtracker = LucasKanadeTracker(im1, mask1, 'Type', 'translation', 'DebugDisplay', false, 'UseBlurring', false, 'UseNormalization', false, 'NumScales', numScales);
-converged = LKtracker.track(im2, 'MaxIterations', 50, 'ConvergenceTolerance', .25);
+% translation only
+LKtracker = LucasKanadeTracker(im1, mask1, 'Type', 'translation', 'DebugDisplay', true, 'UseBlurring', false, 'UseNormalization', true, 'NumScales', numScales);
+converged = LKtracker.track(im2, 'MaxIterations', 50, 'ConvergenceTolerance', .05);
 disp(LKtracker.tform);
 figure(101); plotResults(im1, im2, templateQuad, LKtracker.tform);
 

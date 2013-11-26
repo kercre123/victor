@@ -75,16 +75,16 @@ namespace Anki
     {
     }
 
-    template<typename Type> Result ArraySlice<Type>::Set(const ConstArraySliceExpression<Type> &input, bool automaticTranspose)
+    template<typename Type> s32 ArraySlice<Type>::Set(const ConstArraySliceExpression<Type> &input, bool automaticTranspose)
     {
       AnkiConditionalErrorAndReturnValue(this->get_array().IsValid(),
-        RESULT_FAIL, "ArraySlice<Type>::Set", "Invalid array");
+        0, "ArraySlice<Type>::Set", "Invalid array");
 
       AnkiConditionalErrorAndReturnValue(input.get_array().IsValid(),
-        RESULT_FAIL, "ArraySlice<Type>::Set", "Invalid array");
+        0, "ArraySlice<Type>::Set", "Invalid array");
 
       AnkiConditionalErrorAndReturnValue(this->get_array().get_rawDataPointer() != input.get_array().get_rawDataPointer(),
-        RESULT_FAIL, "ArraySlice<Type>::Set", "Arrays must be in different memory locations");
+        0, "ArraySlice<Type>::Set", "Arrays must be in different memory locations");
 
       ArraySliceLimits_in1_out1<s32> limits(
         input.get_ySlice(), input.get_xSlice(), input.get_isTransposed(),
@@ -97,11 +97,11 @@ namespace Anki
 
           if(!limits.isValid) {
             AnkiError("ArraySlice<Type>::Set", "Subscripted assignment dimension mismatch");
-            return RESULT_FAIL;
+            return 0;
           }
         } else {
           AnkiError("ArraySlice<Type>::Set", "Subscripted assignment dimension mismatch");
-          return RESULT_FAIL;
+          return 0;
         }
       }
 
@@ -145,25 +145,26 @@ namespace Anki
         }
       }
 
-      return RESULT_OK;
+      return limits.ySize*limits.xSize;
     }
 
-    template<typename Type> Result ArraySlice<Type>::Set(const LinearSequence<Type> &input)
+    template<typename Type> s32 ArraySlice<Type>::Set(const LinearSequence<Type> &input)
     {
-      return input.Evaluate(*this);
+      const Result result = input.Evaluate(*this);
+      return (result==RESULT_OK) ? input.get_size() : 0;
     }
 
-    template<typename Type> Result ArraySlice<Type>::Set(const Type value)
+    template<typename Type> s32 ArraySlice<Type>::Set(const Type value)
     {
       Array<Type> &array = this->get_array();
 
       AnkiConditionalErrorAndReturnValue(array.IsValid(),
-        RESULT_FAIL, "ArraySlice<Type>::Set", "Array<Type> is not valid");
+        0, "ArraySlice<Type>::Set", "Array<Type> is not valid");
 
       const ArraySliceLimits_in1_out0<s32> limits(this->get_ySlice(), this->get_xSlice());
 
       AnkiConditionalErrorAndReturnValue(limits.isValid,
-        RESULT_FAIL, "ArraySlice<Type>::Set", "Limits is not valid");
+        0, "ArraySlice<Type>::Set", "Limits is not valid");
 
       for(s32 y=limits.rawIn1Limits.yStart; y<=limits.rawIn1Limits.yEnd; y+=limits.rawIn1Limits.yIncrement) {
         Type * restrict pMat = array.Pointer(y, 0);
@@ -172,7 +173,7 @@ namespace Anki
         }
       }
 
-      return RESULT_OK;
+      return limits.rawIn1Limits.xSize*limits.rawIn1Limits.ySize;
     }
 
     template<typename Type> Array<Type>& ArraySlice<Type>::get_array()
