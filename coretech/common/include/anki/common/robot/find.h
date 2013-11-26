@@ -460,9 +460,11 @@ namespace Anki
       return RESULT_OK;
     }
 
-    template<typename Type1, typename Operator, typename Type2> template<typename ArrayType> Result Find<Type1,Operator,Type2>::AllocateAndSetArray(Array<ArrayType> &out, const Array<ArrayType> &in, const s32 findWhichDimension, MemoryStack &memory) const
+    template<typename Type1, typename Operator, typename Type2> template<typename ArrayType> Array<ArrayType> Find<Type1,Operator,Type2>::SetArray(const Array<ArrayType> &in, const s32 findWhichDimension, MemoryStack &memory) const
     {
       const s32 numMatches = this->get_numMatches();
+
+      Array<ArrayType> out;
 
       if(findWhichDimension == 0) {
         out = Array<ArrayType>(numMatches, in.get_size(1), memory);
@@ -470,7 +472,11 @@ namespace Anki
         out = Array<ArrayType>(in.get_size(0), numMatches, memory);
       }
 
-      return this->SetArray<ArrayType>(out, in, findWhichDimension);
+      if(this->SetArray<ArrayType>(out, in, findWhichDimension) != RESULT_OK) {
+        out.Resize(0,0,memory);
+      }
+
+      return out;
     }
 
     template<typename Type1, typename Operator, typename Type2> bool Find<Type1,Operator,Type2>::IsValid() const

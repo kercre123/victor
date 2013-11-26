@@ -522,9 +522,9 @@ GTEST_TEST(CoreTech_Common, Find_SetArray1)
   // Case 1-1
   {
     PUSH_MEMORY_STACK(ms);
-    Array<s16> outB;
 
-    ASSERT_TRUE(find.AllocateAndSetArray(outB, inB, 0, ms) == RESULT_OK);
+    Array<s16> outB = find.SetArray(inB, 0, ms);
+    ASSERT_TRUE(outB.IsValid());
 
     ASSERT_TRUE(outB.get_size(0) == 3);
     ASSERT_TRUE(outB.get_size(1) == 6);
@@ -539,9 +539,9 @@ GTEST_TEST(CoreTech_Common, Find_SetArray1)
   // Case 1-2
   {
     PUSH_MEMORY_STACK(ms);
-    Array<s16> outB;
 
-    ASSERT_TRUE(find.AllocateAndSetArray(outB, inB, 1, ms) == RESULT_OK);
+    Array<s16> outB = find.SetArray(inB, 1, ms);
+    ASSERT_TRUE(outB.IsValid());
 
     ASSERT_TRUE(outB.get_size(0) == 6);
     ASSERT_TRUE(outB.get_size(1) == 3);
@@ -594,9 +594,9 @@ GTEST_TEST(CoreTech_Common, Find_SetArray2)
   // Case 2-1
   {
     PUSH_MEMORY_STACK(ms);
-    Array<s16> outB;
 
-    ASSERT_TRUE(find.AllocateAndSetArray(outB, inB, 0, ms) == RESULT_OK);
+    Array<s16> outB = find.SetArray(inB, 0, ms);
+    ASSERT_TRUE(outB.IsValid());
 
     ASSERT_TRUE(outB.get_size(0) == 3);
     ASSERT_TRUE(outB.get_size(1) == 6);
@@ -611,9 +611,9 @@ GTEST_TEST(CoreTech_Common, Find_SetArray2)
   // Case 2-2
   {
     PUSH_MEMORY_STACK(ms);
-    Array<s16> outB;
 
-    ASSERT_TRUE(find.AllocateAndSetArray(outB, inB, 1, ms) == RESULT_OK);
+    Array<s16> outB = find.SetArray(inB, 1, ms);
+    ASSERT_TRUE(outB.IsValid());
 
     ASSERT_TRUE(outB.get_size(0) == 6);
     ASSERT_TRUE(outB.get_size(1) == 3);

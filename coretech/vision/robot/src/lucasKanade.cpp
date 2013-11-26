@@ -449,9 +449,7 @@ namespace Anki
 
           //  AtW = (A(inBounds,:).*this.W{i_scale}(inBounds,ones(1,size(A,2))))';
 
-          Array<f32> A;
-          if(inBounds.AllocateAndSetArray(A, A_full[whichScale], 1, memory) != RESULT_OK)
-            return RESULT_FAIL;
+          Array<f32> A = inBounds.SetArray(A_full[whichScale], 1, memory);
 
           Array<f32> AW(A.get_size(0), A.get_size(1), memory);
           AW(0,-1,0,-1).Set(A);
