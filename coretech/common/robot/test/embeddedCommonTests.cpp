@@ -71,6 +71,70 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, LinearLeastSquares32)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<f32> At(2,3,ms);
+  Array<f32> bt(1,3,ms);
+  Array<f32> xt(1,2,ms);
+
+  At[0][0] = 0.814723686393179f; At[1][0] = 0.913375856139019f;
+  At[0][1] = 0.905791937075619f; At[1][1] = 0.632359246225410f;
+  At[0][2] = 0.126986816293506f; At[1][2] = 0.0975404049994095f;
+
+  bt[0][0] = 0.278498218867048f;
+  bt[0][1] = 0.546881519204984f;
+  bt[0][2] = 0.957506835434298f;
+
+  ASSERT_TRUE(Matrix::SolveLeastSquares_f32(At, bt, xt, ms) == RESULT_OK);
+
+  Array<f32> xt_groundTruth(1,2,ms);
+  xt_groundTruth[0][0] = 1.28959732768902f;
+  xt_groundTruth[0][1] = -0.820726191726098f;
+
+  xt.Print("xt");
+  xt_groundTruth.Print("xt_groundTruth");
+
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(xt, xt_groundTruth, .001, .0001));
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, LinearLeastSquares64)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<f64> At(2,3,ms);
+  Array<f64> bt(1,3,ms);
+  Array<f64> xt(1,2,ms);
+
+  At[0][0] = 0.814723686393179; At[1][0] = 0.913375856139019;
+  At[0][1] = 0.905791937075619; At[1][1] = 0.632359246225410;
+  At[0][2] = 0.126986816293506; At[1][2] = 0.0975404049994095;
+
+  bt[0][0] = 0.278498218867048;
+  bt[0][1] = 0.546881519204984;
+  bt[0][2] = 0.957506835434298;
+
+  ASSERT_TRUE(Matrix::SolveLeastSquares_f64(At, bt, xt, ms) == RESULT_OK);
+
+  Array<f64> xt_groundTruth(1,2,ms);
+  xt_groundTruth[0][0] = 1.28959732768902;
+  xt_groundTruth[0][1] = -0.820726191726098;
+
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(xt, xt_groundTruth, .001, .0001));
+
+  xt.Print("xt");
+  xt_groundTruth.Print("xt_groundTruth");
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, MatrixMultiplyTranspose)
 {
   ASSERT_TRUE(buffer != NULL);

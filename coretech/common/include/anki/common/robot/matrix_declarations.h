@@ -77,7 +77,18 @@ namespace Anki
 
       // Perform the matrix multiplication "out = in1 * in2'"
       // Note that this is the naive O(n^3) Definition
+      // MultiplyTranspose has better access patterns than Multiply for certain types of arrays, so could be a lot faster (and easier to accelerate)
       template<typename InType, typename OutType> Result MultiplyTranspose(const Array<InType> &in1, const Array<InType> &in2Transposed, Array<OutType> &out);
+
+      //
+      // Linear Solvers
+      //
+
+      // Solves Ax = b
+      // Specifically, it uses SVD to minimize ||Ax - b||
+      // Note that the A, b, and x matrices are transposed (this is because for large numbers of samples, transposed inputs are liable to be faster)
+      Result SolveLeastSquares_f32(const Array<f32> &At, const Array<f32> &bt, Array<f32> &xt, MemoryStack scratch);
+      Result SolveLeastSquares_f64(const Array<f64> &At, const Array<f64> &bt, Array<f64> &xt, MemoryStack scratch);
 
       //
       // Matrix structure operations

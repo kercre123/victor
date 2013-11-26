@@ -104,8 +104,6 @@ namespace Anki
     static double pythag( double a, double b );
     static void icvMatrAXPY_32f( int m, int n, const float* x, int dx, const float* a, float* y, int dy );
     static void icvMatrAXPY_64f( int m, int n, const double* x, int dx, const double* a, double* y, int dy );
-    static void icvSVBkSb_32f( int m, int n, const float* w, const float* uT, int lduT, const float* vT, int ldvT, const float* b, int ldb, int nb, float* x, int ldx, float* buffer );
-    static void icvSVBkSb_64f( int m, int n, const double* w, const double* uT, int lduT, const double* vT, int ldvT, const double* b, int ldb, int nb, double* x, int ldx, double* buffer );
 
     inline static void* cvAlignPtr( const void* ptr, int align )
     {
@@ -1207,11 +1205,21 @@ namespace Anki
       }
     }
 
-    static void icvSVBkSb_32f( int m, int n, const float* w,
-      const float* uT, int lduT,
-      const float* vT, int ldvT,
-      const float* b, int ldb, int nb,
-      float* x, int ldx, float* buffer )
+    void icvSVBkSb_32f(
+      s32 m,         //!< Number of rows in u
+      s32 n,         //!< Number of rows in v
+      const f32* w,  //!< Pointer to start of the W vector
+      const f32* uT, //!< Pointer to the upper-left of the U-transpose array
+      s32 lduT,      //!< U_stride_in_bytes / sizeof(f32)
+      const f32* vT, //!< Pointer to the upper-left of the V-transpose array
+      s32 ldvT,      //!< V_stride_in_bytes / sizeof(f32)
+      const f32* b,  //!< Pointer to the upper-left of the b array
+      s32 ldb,       //!< b_stride_in_bytes / sizeof(f32)
+      s32 nb,        //!< Number of columns in B
+      f32* x,        //!< Pointer to the start of the x vector (I think x must always be Sx1, for S either m or n?)
+      s32 ldx,       //!< x_stride_in_bytes / sizeof(f32)
+      f32* buffer    //!< A scratch buffer, with at least "sizeof(f32)*b_stride" bytes
+      )
     {
       float threshold = 0.f;
       int i, j, nm = MIN( m, n );
@@ -1300,11 +1308,21 @@ namespace Anki
       }
     }
 
-    static void icvSVBkSb_64f( int m, int n, const double* w,
-      const double* uT, int lduT,
-      const double* vT, int ldvT,
-      const double* b, int ldb, int nb,
-      double* x, int ldx, double* buffer )
+    void icvSVBkSb_64f(
+      s32 m,         //!< Number of rows in u
+      s32 n,         //!< Number of rows in v
+      const f64* w,  //!< Pointer to start of the W vector
+      const f64* uT, //!< Pointer to the upper-left of the U-transpose array
+      s32 lduT,      //!< U_stride_in_bytes / sizeof(f32)
+      const f64* vT, //!< Pointer to the upper-left of the V-transpose array
+      s32 ldvT,      //!< V_stride_in_bytes / sizeof(f32)
+      const f64* b,  //!< Pointer to the upper-left of the b array
+      s32 ldb,       //!< b_stride_in_bytes / sizeof(f32)
+      s32 nb,        //!< Number of columns in B
+      f64* x,        //!< Pointer to the start of the x vector (I think x must always be Sx1, for S either m or n?)
+      s32 ldx,       //!< x_stride_in_bytes / sizeof(f32)
+      f64* buffer    //!< A scratch buffer, with at least "sizeof(f32)*b_stride" bytes
+      )
     {
       double threshold = 0;
       int i, j, nm = MIN( m, n );
@@ -1390,6 +1408,134 @@ namespace Anki
           }
         }
       }
+    }
+
+    /*! Performs Singular Value Back Substitution (solves A*X = B) */
+    Result svdBackSubstitute_f32(
+      const Array<f32> &w, //!< w-vector 1Xm
+      const Array<f32> &Ut,//!< U-array mXm
+      const Array<f32> &Vt,//!< V-array nXn
+      Array<f32> &b,       //!< b-vector 1Xm
+      Array<f32> &x,       //!< x-vector 1Xn
+      void * scratch       //!< A scratch buffer, with at least "sizeof(f32) * (MAX(m_stride, n_stride) + o_stride)" bytes
+      )
+    {
+      const s32 m = Ut.get_size(0);
+      const s32 n = Vt.get_size(0);
+
+      AnkiConditionalErrorAndReturnValue(w.IsValid(),
+        RESULT_FAIL, "svdBackSubstitute_f32", "w is not valid");
+
+      AnkiConditionalErrorAndReturnValue(Ut.IsValid(),
+        RESULT_FAIL, "svdBackSubstitute_f32", "Ut is not valid");
+
+      AnkiConditionalErrorAndReturnValue(Vt.IsValid(),
+        RESULT_FAIL, "svdBackSubstitute_f32", "Vt is not valid");
+
+      AnkiConditionalErrorAndReturnValue(b.IsValid(),
+        RESULT_FAIL, "svdBackSubstitute_f32", "b is not valid");
+
+      AnkiConditionalErrorAndReturnValue(x.IsValid(),
+        RESULT_FAIL, "svdBackSubstitute_f32", "x is not valid");
+
+      AnkiConditionalErrorAndReturnValue(scratch,
+        RESULT_FAIL, "svdBackSubstitute_f32", "scratch is null");
+
+      AnkiConditionalErrorAndReturnValue(w.get_size(0) == 1 && w.get_size(1) == m,
+        RESULT_FAIL, "svdBackSubstitute_f32", "w is not 1Xm");
+
+      AnkiConditionalErrorAndReturnValue(Ut.get_size(0) == m && Ut.get_size(1) == m,
+        RESULT_FAIL, "svdBackSubstitute_f32", "Ut is not mXm");
+
+      AnkiConditionalErrorAndReturnValue(Vt.get_size(0) == n && Vt.get_size(1) == n,
+        RESULT_FAIL, "svdBackSubstitute_f32", "Vt is not nXn");
+
+      AnkiConditionalErrorAndReturnValue(b.get_size(0) == 1 && b.get_size(1) == m,
+        RESULT_FAIL, "svdBackSubstitute_f32", "b is not 1Xm");
+
+      AnkiConditionalErrorAndReturnValue(x.get_size(0) == 1 && x.get_size(1) == n,
+        RESULT_FAIL, "svdBackSubstitute_f32", "x is not 1Xn");
+
+      icvSVBkSb_32f(
+        m,
+        n,
+        w.Pointer(0,0),
+        Ut.Pointer(0,0),
+        Ut.get_stride() / sizeof(f32),
+        Vt.Pointer(0,0),
+        Vt.get_stride() / sizeof(f32),
+        b.Pointer(0,0),
+        1,
+        1,
+        x.Pointer(0,0),
+        1,
+        reinterpret_cast<f32*>(scratch));
+
+      return RESULT_OK;
+    }
+
+    /*! Performs Singular Value Back Substitution (solves A*X = B) */
+    Result svdBackSubstitute_f64(
+      const Array<f64> &w, //!< w-vector 1Xm
+      const Array<f64> &Ut,//!< U-array mXm
+      const Array<f64> &Vt,//!< V-array nXn
+      Array<f64> &b,       //!< b-vector 1Xm
+      Array<f64> &x,       //!< x-vector 1Xn
+      void * scratch       //!< A scratch buffer, with at least "sizeof(f64) * (MAX(m_stride, n_stride) + o_stride)" bytes
+      )
+    {
+      const s32 m = Ut.get_size(0);
+      const s32 n = Vt.get_size(0);
+
+      AnkiConditionalErrorAndReturnValue(w.IsValid(),
+        RESULT_FAIL, "svdBackSubstitute_f64", "w is not valid");
+
+      AnkiConditionalErrorAndReturnValue(Ut.IsValid(),
+        RESULT_FAIL, "svdBackSubstitute_f64", "Ut is not valid");
+
+      AnkiConditionalErrorAndReturnValue(Vt.IsValid(),
+        RESULT_FAIL, "svdBackSubstitute_f64", "Vt is not valid");
+
+      AnkiConditionalErrorAndReturnValue(b.IsValid(),
+        RESULT_FAIL, "svdBackSubstitute_f64", "b is not valid");
+
+      AnkiConditionalErrorAndReturnValue(x.IsValid(),
+        RESULT_FAIL, "svdBackSubstitute_f64", "x is not valid");
+
+      AnkiConditionalErrorAndReturnValue(scratch,
+        RESULT_FAIL, "svdBackSubstitute_f64", "scratch is null");
+
+      AnkiConditionalErrorAndReturnValue(w.get_size(0) == 1 && w.get_size(1) == m,
+        RESULT_FAIL, "svdBackSubstitute_f64", "w is not 1Xm");
+
+      AnkiConditionalErrorAndReturnValue(Ut.get_size(0) == m && Ut.get_size(1) == m,
+        RESULT_FAIL, "svdBackSubstitute_f64", "Ut is not mXm");
+
+      AnkiConditionalErrorAndReturnValue(Vt.get_size(0) == n && Vt.get_size(1) == n,
+        RESULT_FAIL, "svdBackSubstitute_f64", "Vt is not nXn");
+
+      AnkiConditionalErrorAndReturnValue(b.get_size(0) == 1 && b.get_size(1) == m,
+        RESULT_FAIL, "svdBackSubstitute_f64", "b is not 1Xm");
+
+      AnkiConditionalErrorAndReturnValue(x.get_size(0) == 1 && x.get_size(1) == n,
+        RESULT_FAIL, "svdBackSubstitute_f64", "x is not 1Xn");
+
+      icvSVBkSb_64f(
+        m,
+        n,
+        w.Pointer(0,0),
+        Ut.Pointer(0,0),
+        Ut.get_stride() / sizeof(f64),
+        Vt.Pointer(0,0),
+        Vt.get_stride() / sizeof(f64),
+        b.Pointer(0,0),
+        1,
+        1,
+        x.Pointer(0,0),
+        1,
+        reinterpret_cast<f64*>(scratch));
+
+      return RESULT_OK;
     }
 
     /*! Compute the homography such that "transformedPoints = homography * originalPoints" */
