@@ -46,8 +46,8 @@ Matlab matlab(false);
 
 //#define RUN_MAIN_BIG_MEMORY_TESTS
 //#define RUN_ALL_BIG_MEMORY_TESTS
-//#define RUN_LOW_MEMORY_IMAGE_TESTS
-#define RUN_TRACKER_TESTS
+#define RUN_LOW_MEMORY_IMAGE_TESTS
+//#define RUN_TRACKER_TESTS
 
 //#ifdef RUN_MAIN_BIG_MEMORY_TESTS
 #include "../../blockImages/blockImage50.h"
@@ -151,7 +151,7 @@ void InitializeBuffers()
 GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 {
 #ifndef RUN_TRACKER_TESTS
-  ASSERT_TRUE(false);
+  //ASSERT_TRUE(false);
 #else
 
   const s32 imageHeight = 60;
