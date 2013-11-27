@@ -15,11 +15,21 @@ namespace Anki
 
       u32 GetMicroCounter()
       {
+        swcLeonDisableTraps();
         u32 tick = *(volatile u32*)TIM_FREE_CNT_ADR;
-        m_microSeconds += (tick - m_lastTick)/ FREQUENCY;
-        m_lastTick = tick;
+        u32 increment = (tick - m_lastTick) / FREQUENCY;
+        m_microSeconds += increment;
+        m_lastTick += increment * FREQUENCY;
+        swcLeonEnableTraps();
 
         return m_microSeconds;
+      }
+
+      void MicroWait(u32 microseconds)
+      {
+        u32 now = GetMicroCounter();
+        while ((GetMicroCounter() - now) < microseconds)
+          ;
       }
     }
   }

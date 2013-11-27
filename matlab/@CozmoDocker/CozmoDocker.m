@@ -5,6 +5,9 @@ classdef CozmoDocker < handle
         HEAD_CAM_ROTATION   = [0 0 1; -1 0 0; 0 -1 0]; % (rodrigues(-pi/2*[0 1 0])*rodrigues(pi/2*[1 0 0]))'
         HEAD_CAM_POSITION   = [ 20  0  -10]; % relative to neck joint
         LIFT_DISTANCE       = 34;  % forward from robot origin
+        
+        PLACE_BLOCKTYPE = 50; % Orange block with black sticky corners
+        DOCK_BLOCKTYPE  = 60; % Yellow block with no sticky corners
     end
     
     properties
@@ -16,7 +19,7 @@ classdef CozmoDocker < handle
         h_leftRightError;
         h_img;
         h_target;
-        h_message;
+        h_txMsg, h_rxMsg;
         
         escapePressed;
         camera;
@@ -26,6 +29,7 @@ classdef CozmoDocker < handle
         trackingResolution;
         
         trackerType;
+        mode; 
         
         dockingDistance; % in mm, from camera
         
@@ -33,6 +37,8 @@ classdef CozmoDocker < handle
         marker3d;
         H_init;
         K; % calibration matrix
+        
+        frameCount;
         
         drawPose;
         h_cam;
@@ -74,6 +80,8 @@ classdef CozmoDocker < handle
             this.dockingDistance     = DockDistanceMM;
             this.drawPose            = DrawPose;
             
+            this.mode = 'DOCK';
+            
             % Set up Robot head camera geometry
             this.robotPose = Pose();
             this.neckPose = Pose([0 0 0], CozmoDocker.NECK_JOINT_POSITION);
@@ -85,10 +93,14 @@ classdef CozmoDocker < handle
             this.h_fig = namedFigure('Docking', 'CurrentCharacter', '~', ...
                 'KeyPressFcn', @(src,edata)this.keyPressCallback(src,edata));
             
-            this.h_message = annotation('textbox', [.2 0 .6 .05]);
-            set(this.h_message, 'String', '<status>');
+            clf(this.h_fig);
             
-            this.h_axes = subplot(1,1,1, 'Parent', this.h_fig);
+            this.h_rxMsg = annotation('textbox', [.2   0 .6 .05]);
+            this.h_txMsg = annotation('textbox', [.2 .05 .6 .05]);
+            set(this.h_rxMsg, 'String', '<RX message>', 'FontSize', 9);
+            set(this.h_txMsg, 'String', '<TX message>', 'FontSize', 9);
+            
+            this.h_axes = axes('Pos', [.15 .15 .7 .8], 'Parent', this.h_fig); % subplot(1,1,1, 'Parent', this.h_fig);
             this.h_pip = axes('Position', [0 .75 .2 .2], 'Parent', this.h_fig);
             title(this.h_pip, 'Target');
             
@@ -193,6 +205,7 @@ classdef CozmoDocker < handle
         
         function run(this)
             
+            this.frameCount = uint16(0);
             this.escapePressed = false;
             dockingDone = false;
             
@@ -210,17 +223,42 @@ classdef CozmoDocker < handle
                 % TODO: wait until we get the marker for the block we want
                 % to pick up!
                 marker = [];
-                while ~this.escapePressed && (isempty(marker) || ~marker{1}.isValid)
+                while ~this.escapePressed && isempty(marker)
                     t_detect = tic;
                     img = this.camera.getFrame();
-                    if isempty(img)
-                        if ~isempty(this.camera.message)
-                            this.displayMessage(this.camera.message);
-                        end
-                    else
+                  
+                    if ~isempty(this.camera.message)
+                        this.displayMessage(this.camera.message);
+                    end
+                    
+                    if ~isempty(img)
                         set(this.h_img, 'CData', img); drawnow;
                         marker = simpleDetector(img);
+                        
+                        for i_marker = 1:length(marker)
+                            if marker{i_marker}.isValid 
+                                switch(this.mode)
+                                    case 'DOCK'
+                                        if marker{i_marker}.blockType ~= CozmoDocker.DOCK_BLOCKTYPE
+                                            marker{i_marker} = [];
+                                        end
+                                    case 'PLACE'
+                                        if marker{i_marker}.blockType ~= CozmoDocker.PLACE_BLOCKTYPE
+                                            marker{i_marker} = [];
+                                        end
+                                    otherwise
+                                        error('Unrecognized mode "%s".', this.mode);
+                                end
+                            else
+                                marker{i_marker} = [];
+                            end
+                        
+                        end
+                        
+                        marker(cellfun(@isempty, marker)) = [];
+                        
                     end
+                    
                     title(this.h_axes, sprintf('Detecting: %.1f FPS', 1/toc(t_detect)));
                     drawnow
                 end
@@ -279,6 +317,11 @@ classdef CozmoDocker < handle
                         t_track = tic;
                         
                         img = this.camera.getFrame();
+                        if ~isempty(this.camera.message)
+                            this.displayMessage(this.camera.message);
+                            
+                        end
+                        
                         if isempty(img)
                             numEmpty = numEmpty + 1;
                             
@@ -288,11 +331,14 @@ classdef CozmoDocker < handle
                                 this.camera.reset();
                             end
                         else
+                            this.frameCount = this.frameCount + 1;
+                            
                             numEmpty = 0;
                             set(this.h_img, 'CData', img);
                             converged = LKtracker.track(img, ...
                                 'MaxIterations', 50, ...
-                                'ConvergenceTolerance', .25);
+                                'ConvergenceTolerance', .25,...
+                                'ErrorTolerance', 0.5);
                             
                             if converged
                                 lost = 0;
@@ -306,6 +352,7 @@ classdef CozmoDocker < handle
                                     'XData', corners([1 2 4 3 1],1), ...
                                     'YData', corners([1 2 4 3 1],2));
                                 title(this.h_pip, sprintf('TargetError = %.2f', LKtracker.err), 'Back', 'w');
+                            
                             else
                                 lost = lost + 1;
                             end
@@ -324,7 +371,7 @@ classdef CozmoDocker < handle
        
         
         function sendError(this, LKtracker)
-            
+             
             % Compute the error signal according to the current tracking result
             switch(this.trackerType)
                 case 'affine'
@@ -354,15 +401,15 @@ classdef CozmoDocker < handle
                     
                     % Get the angle from vertical of the top bar of the
                     % marker we're tracking
-                    L = sqrt(sum(upperRight-upperLeft).^2);
-                    angleError = asin( (upperRight(2)-upperLeft(2)) / L);
+                    L = sqrt(sum( (upperRight-upperLeft).^2) );
+                    angleError = -asin( (upperRight(2)-upperLeft(2)) / L);
                     
                     currentDistance = BlockMarker3D.ReferenceWidth * this.calibration.fc(1) / L;
-                    distError = currentDistance - this.dockingDistance;
+                    distError = currentDistance - CozmoDocker.LIFT_DISTANCE;
                     
                     % TODO: should i be comparing to ncols/2 or calibration center?
-                    midPointErr = (upperRight(1)+upperLeft(1))/2 - ...
-                        this.trackingResolution(1)/2;
+                    midPointErr = -( (upperRight(1)+upperLeft(1))/2 - ...
+                        this.trackingResolution(1)/2 );
                     midPointErr = midPointErr * currentDistance / this.calibration.fc(1);
                     
                 case 'homography'
@@ -410,11 +457,26 @@ classdef CozmoDocker < handle
             h = get(this.h_leftRightError, 'Parent');
             title(h, sprintf('LeftRightErr = %.1fmm', midPointErr), 'Back', 'w');
             
-            % TODO: send the error signals back over the serial connection
             dockErrorPacket = [uint8('E') ...
-                typecast(single([distError midPointErr angleError]), 'uint8')];
+                typecast(swapbytes(single([distError midPointErr angleError])), 'uint8')];
             assert(length(dockErrorPacket)==13, ...
                 'Expecting docking error packet to be 13 bytes long.');
+            
+            % Display the message we're sending:
+            %{ 
+            Print hex values for debugging
+            txMsg = sprintf('Dist=%.2f(0x%X%X%X%X), L/R=%.2f(0x%X%X%X%X), Rad=%.2f(0x%X%X%X%X)', ...
+                distError, typecast(swapbytes(single(distError)), 'uint8'), ...
+                midPointErr, typecast(swapbytes(single(midPointErr)), 'uint8'), ...
+                angleError, typecast(swapbytes(single(angleError)), 'uint8'));
+            %}
+            if mod(this.frameCount, this.camera.fps)==0
+                txMsg = sprintf('TX: Dist(x)=%.2fmm, L/R(y)=%.2fmm, Angle=%.3frad', ...
+                    distError, midPointErr, angleError);
+                
+                set(this.h_txMsg, 'String', txMsg);
+                fprintf('Message Sent: %s\n', txMsg);
+            end
             
             this.camera.sendMessage(dockErrorPacket);
             
@@ -523,8 +585,14 @@ classdef CozmoDocker < handle
         end
         
         function displayMessage(this, msg)
-            set(this.h_message, 'String', msg);
-            fprintf('RobotMessage: %s\n', msg);
+            set(this.h_rxMsg, 'String', ['RX: ' msg]);
+            fprintf('Message Received: %s\n', msg);
+            
+            if ~isempty(strfind(msg, 'GRIPPING'))
+                this.mode = 'PLACE';
+            elseif ~isempty(strfind(msg, 'IDLE'))
+                this.mode = 'DOCK';
+            end
         end
             
     end % methods
