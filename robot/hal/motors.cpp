@@ -30,16 +30,16 @@ namespace Anki
       static const u8 LIFT_DOWN_MODE              = 5;
       static const u8 LIFT_PWM                    = 5;
 
-      static const u8 GRIPPER_UP_PIN              = 83;
-      static const u8 GRIPPER_UP_MODE             = 1;
-      static const u8 GRIPPER_DOWN_PIN            = 80;
-      static const u8 GRIPPER_DOWN_MODE           = 5;
+      static const u8 GRIPPER_UP_PIN              = 80;
+      static const u8 GRIPPER_UP_MODE             = 5;
+      static const u8 GRIPPER_DOWN_PIN            = 83;
+      static const u8 GRIPPER_DOWN_MODE           = 1;
       static const u8 GRIPPER_PWM                 = 3;
 
-      static const u8 HEAD_UP_PIN                 = 17;
-      static const u8 HEAD_UP_MODE                = 4;
-      static const u8 HEAD_DOWN_PIN               = 45;
-      static const u8 HEAD_DOWN_MODE              = 1;
+      static const u8 HEAD_UP_PIN                 = 45;
+      static const u8 HEAD_UP_MODE                = 1;
+      static const u8 HEAD_DOWN_PIN               = 17;
+      static const u8 HEAD_DOWN_MODE              = 4;
       static const u8 HEAD_PWM                    = 1;
 
       struct MotorInfo
@@ -56,7 +56,7 @@ namespace Anki
         f32 position;
         u32 lastTick;
         u32 delta;
-        f32 constant;
+        f32 unitsPerTick;
         u8 pin;
       };
 
@@ -153,7 +153,7 @@ namespace Anki
             {
               motorPosition->delta = ticks - motorPosition->lastTick;
               motorPosition->lastTick = ticks;
-              motorPosition->position += motorPosition->constant;
+              motorPosition->position += motorPosition->unitsPerTick;
             }
 
             DrvGpioMode(motorPosition->pin, mode ^ D_GPIO_DATA_INV_ON);
@@ -216,13 +216,13 @@ namespace Anki
           DrvGpioMode(motorInfo->backwardDownPin, DISCONNECTED_MODE);
           DrvGpioSetPinHi(motorInfo->backwardDownPin);
           DrvGpioMode(motorInfo->forwardUpPin, motorInfo->forwardUpMode);
-          motorPosition->constant = fabs(motorPosition->constant);
+          motorPosition->unitsPerTick = fabs(motorPosition->unitsPerTick);
         } else if (power < 0) {
           // Disable the opposite direction from incluencing the motor driver
           DrvGpioMode(motorInfo->forwardUpPin, DISCONNECTED_MODE);
           DrvGpioSetPinHi(motorInfo->forwardUpPin);
           DrvGpioMode(motorInfo->backwardDownPin, motorInfo->backwardDownMode);
-          motorPosition->constant = -fabs(motorPosition->constant);
+          motorPosition->unitsPerTick = -fabs(motorPosition->unitsPerTick);
         } else {
           DrvGpioMode(motorInfo->forwardUpPin, DISCONNECTED_MODE);
           DrvGpioMode(motorInfo->backwardDownPin, DISCONNECTED_MODE);
@@ -253,7 +253,7 @@ namespace Anki
           return 0;
         }
 
-        return (motorPosition->constant * 1000000.0f) / motorPosition->delta;
+        return (motorPosition->unitsPerTick * 1000000.0f) / motorPosition->delta;
       }
 
       f32 MotorGetPosition(MotorID motor)

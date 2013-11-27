@@ -84,8 +84,6 @@ namespace Anki
         
         // Re-enable interrupts
         swcLeonEnableTraps();
-
-        printf("\n%08X %08X\n", mask, REG_WORD(UART_CTRL_ADR));
       }
 
       int USBPutChar(int c)

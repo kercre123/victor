@@ -189,6 +189,8 @@ def compileLEON(src):
 
 if __name__ == '__main__':
   isTest = False
+  isRun = False
+  isFlash = False
 
   for arg in sys.argv:
     if arg == 'clean':
@@ -210,10 +212,14 @@ if __name__ == '__main__':
       LEON_SOURCE += addSources('../coretech/common/robot/src/')
       LEON_SOURCE += addSources('../coretech/common/shared/src/')
       SHAVE_SOURCE += addSources('../coretech/common/robot/project/myriad1/unitTests/shave')
+    elif arg == 'run':
+      isRun = True
+    elif arg == 'flash':
+      isFlash = True
     elif arg == 'make.py':
-      continue
+      pass
     else:
-      print('Invalid argument: ' + arg)
+      print 'Invalid argument: ' + arg
       sys.exit(1)
 
   # TODO: Get supervisor directory building/linking
@@ -254,5 +260,12 @@ if __name__ == '__main__':
     f.write('set 0x48000000 ' + str(size) + '\n')
     f.write('load 0x48000004 bbe ' + TARGET + '.mvcmd\n')
     f.write('runw\n')
+
+  # Output the debug script
+  with open(OUTPUT + TARGET + 'DEBUG.scr', 'w+') as f:
+    f.write('breset\nl ' + OUTPUT + TARGET + '.elf\nrun\n')
+
+  if isRun:
+    os.system('moviDebug -b:' + OUTPUT + TARGET + 'DEBUG.scr')
 
 

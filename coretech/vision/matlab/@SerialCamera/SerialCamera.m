@@ -14,13 +14,14 @@ classdef SerialCamera < handle
         BEEFFOFF = char(sscanf('BEEFF0FF', '%2x'))'; 
         FFOFFEEB = char(sscanf('FF0FFEEB', '%2x'))';
         
-        % Resolution bytes:
-        % (These should match what is defined in hal.h)
-        VGA_RESOLUTION = char(sscanf('BA', '%2x'));      % 640 x 480
-        QVGA_RESOLUTION = char(sscanf('BC', '%2x'));     % 320 x 240
-        QQVGA_RESOLUTION = char(sscanf('B8', '%2x'));    % 160 x 120
-        QQQVGA_RESOLUTION = char(sscanf('BD', '%2x'));   %  80 x  60
-        QQQQVGA_RESOLUTION = char(sscanf('B7', '%2x'));  %  40 x  30
+        % Store the frame size, header format byte, and default frame rate
+        % for each resolution.
+        RESOLUTION_INFO = struct( ...
+            'VGA',     struct('frameSize', [640 480], 'frameRate',  1, 'fmtSuffix', char(sscanf('BA', '%2x'))), ...
+            'QVGA',    struct('frameSize', [320 240], 'frameRate',  5, 'fmtSuffix', char(sscanf('BC', '%2x'))), ...
+            'QQVGA',   struct('frameSize', [160 120], 'frameRate', 15, 'fmtSuffix', char(sscanf('B8', '%2x'))), ...
+            'QQQVGA',  struct('frameSize', [ 80  60], 'frameRate', 30, 'fmtSuffix', char(sscanf('BD', '%2x'))), ...
+            'QQQQVGA', struct('frameSize', [ 40  30], 'frameRate', 60, 'fmtSuffix', char(sscanf('B7', '%2x'))));
        
         CHANGE_RES_CMD = char(sscanf('CA', '%2x')); 
         
@@ -96,9 +97,13 @@ classdef SerialCamera < handle
             img = [];
             this.message = '';
             
+            % Read enough bytes to fill the buffer with two frames worth of
+            % data
             bytesToRead = this.framelength*2-length(this.buffer);
             if bytesToRead > 0
                 
+                % If the serial object doesn't have enough bytes available,
+                % what until it does.
                 t = tic;
                 while this.serialObj.BytesAvailable < bytesToRead
                     pause(1/this.fps);
@@ -118,8 +123,9 @@ classdef SerialCamera < handle
                 %    keyboard
                 %end
                 
-            end
-                        
+            end % IF bytesToRead > 0
+                
+            % Find all the header and footer bytes
             headerIndex = strfind(this.buffer, this.header);
             footerIndex = strfind(this.buffer, this.footer);
             
@@ -131,6 +137,7 @@ classdef SerialCamera < handle
             else
                 
                 % Find a header followed by a matching footer
+                % (There's probably a prettier way to do this)
                 foundHFpair = '';
                 i_header = 1;
                 while isempty(foundHFpair) && i_header <= length(headerIndex)
@@ -156,9 +163,10 @@ classdef SerialCamera < handle
                 end
                 
                 if isempty(foundHFpair)
+                    % No header/footer pair found
                      
                     if max(headerIndex) > max(footerIndex)
-                        % Header in the buffer is a header, so we may get
+                        % Last index in the buffer is a header, so we may get
                         % the rest of the message later.  So just dump
                         % everything up to that last header (which
                         % apparently was corrupted, since we found no
@@ -171,11 +179,14 @@ classdef SerialCamera < handle
                     end
                     
                 else
-                                    
+                    % Get the selected header/footer pair
                     headerIndex = headerIndex(i_header-1);
                     footerIndex = footerIndex(i_footer-1);
 
-                    % Get rid of stuff before the header which we can't use
+                    assert(headerIndex < footerIndex, ...
+                        'Header index should be before footer index.');
+                    
+                    % We can't really use anything before the header
                     this.buffer(1:(headerIndex-1)) = '';
                     
                     assert(strcmp(this.buffer(1:length(this.header)), this.header), ...
@@ -186,18 +197,19 @@ classdef SerialCamera < handle
                     
                     switch(foundHFpair)
                         case SerialCamera.MESSAGE_SUFFIX
-                            % Read and ASCII message data from index(1) to
-                            % index(2)
+                            % Read an ASCII message data from the data
+                            % between header and footer
                             this.message = this.buffer(firstDataIndex + (1:readLength));
                                                        
                         case this.formatSuffix
-                            % Read frame from index(1) to index(2)
+                            % Read frame data from buffer between header
+                            % and footer
                             if readLength ~= this.framelength
                                 %set(h_axes, 'XColor', 'r', 'YColor', 'r');
                                 %set(h_img, 'CData', zeros(60,80));
                                 this.numDropped = this.numDropped + 1;
                             else
-                                assert(readLength == this.framelength);
+                                %assert(readLength == this.framelength);
                                 img = uint8(this.buffer(firstDataIndex+(1:readLength)));
                                 img = reshape(fliplr(img), this.framesize)';
                                 if this.doVerticalFlip
@@ -211,7 +223,10 @@ classdef SerialCamera < handle
                         otherwise
                             warning('Unrecognized header suffix found.');
                     end
-                        
+                       
+                    % Remove everything we just read (header, format byte,
+                    % message/image data, footer, and format byte) from the
+                    % buffer
                     this.buffer(1:(readLength+firstDataIndex+length(this.footer)+1)) = [];
                 
                 end % IF / ELSE found a matching header/footer pair
@@ -227,61 +242,36 @@ classdef SerialCamera < handle
             this.buffer = '';
         end % reset()
         
-        function changeResolution(this, newResolution, frameRate)
-            % Send magic command to change the resolution
-            switch(newResolution)
-                case 'VGA' % [640 480]
-                    this.framesize = [640 480]; 
-                    this.formatSuffix = SerialCamera.VGA_RESOLUTION;
-                    if nargin < 3
-                        frameRate = 1;
-                    end
-                    
-                case 'QVGA' % [320 240]
-                    this.framesize = [320 240]; 
-                    this.formatSuffix = SerialCamera.QVGA_RESOLUTION;
-                    if nargin < 3
-                        frameRate = 5;
-                    end
-                    
-                case 'QQVGA' % [160 120]
-                    this.framesize = [160 120]; 
-                    this.formatSuffix = SerialCamera.QQVGA_RESOLUTION;
-                    if nargin < 3
-                        frameRate = 15;
-                    end
-                    
-                case 'QQQVGA' % [80 60]
-                    this.framesize = [80 60];
-                    this.formatSuffix = SerialCamera.QQQVGA_RESOLUTION;
-                    if nargin < 3
-                        frameRate = 30;
-                    end
-                    
-                case 'QQQQVGA' % [40 30]
-                    this.framesize = [40 30]; 
-                    this.formatSuffix = SerialCamera.QQQQVGA_RESOLUTION;
-                    if nargin < 3
-                        frameRate = 60;
-                    end
-                    
-                otherwise
-                    error('Unrecognized resolution specified.');
-                    
-            end % SWITCH(newResolution)
+        function changeResolution(this, newResolution, newFrameRate)
             
-            fwrite(this.serialObj, [SerialCamera.CHANGE_RES_CMD this.formatSuffix], 'char');
+            if ~isfield(SerialCamera.RESOLUTION_INFO, newResolution)
+                error('Unrecognized resolution.');
+            end
+              
+            % Get the settings for the specified resolution
+            resInfo = SerialCamera.RESOLUTION_INFO.(newResolution);
+            
+            this.formatSuffix = resInfo.fmtSuffix;
+            this.framesize = resInfo.frameSize;
+            if nargin < 3
+                this.fps = resInfo.frameRate;
+            else
+                this.fps = newFrameRate;
+            end
+            
+            % Send the change-resolution command over the serial line
+            fwrite(this.serialObj, [SerialCamera.CHANGE_RES_CMD ...
+                resInfo.fmtSuffix], 'char');
+            
             this.framelength = prod(this.framesize);
-            %this.header = [SerialCamera.BEEFFOFF char(formatSuffix)];
-            this.fps = frameRate;
-            
+                        
             fclose(this.serialObj);
             this.serialObj.InputBufferSize = 4*this.framelength;
             fopen(this.serialObj);
             
-            while ~strcmp(this.serialObj.Status, 'open')
-                pause(.01);
-            end
+            %while ~strcmp(this.serialObj.Status, 'open')
+            %    pause(.01);
+            %end
             
             % clear the serial input buffer?
             if this.serialObj.BytesAvailable > 0

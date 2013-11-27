@@ -43,6 +43,7 @@ classdef LucasKanadeTracker < handle
         minSize;
         numScales;
         convergenceTolerance;
+        errorTolerance;
         maxIterations;
         
         debugDisplay;
@@ -65,12 +66,14 @@ classdef LucasKanadeTracker < handle
             UseNormalization = false;
             RidgeWeight = 0;
             TrackingResolution = [size(firstImg,2), size(firstImg,1)];
+            ErrorTolerance = [];
             
             parseVarargin(varargin{:});
             
             this.minSize = MinSize;
             this.useNormalization = UseNormalization;
             this.ridgeWeight = RidgeWeight;
+            this.errorTolerance = ErrorTolerance;
             
             this.debugDisplay = DebugDisplay;
             this.tformType = Type;
