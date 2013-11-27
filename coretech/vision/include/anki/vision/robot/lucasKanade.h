@@ -25,8 +25,8 @@ namespace Anki
       enum TransformType
       {
         TRANSFORM_TRANSLATION,
+        TRANSFORM_PROJECTIVE
         //TRANSFORM_AFFINE, // TODO: support affine
-        //TRANSFORM_PROJECTIVE // TODO: support projective
       };
 
       class PlanarTransformation_f32
@@ -46,7 +46,7 @@ namespace Anki
 
         // Update the transformation. The format of the update should be as follows:
         // TRANSFORM_TRANSLATION: [-dx, -dy]
-        Result Update(const Array<f32> &update);
+        Result Update(const Array<f32> &update, MemoryStack scratch);
 
         Result set_transformType(const TransformType transformType);
 

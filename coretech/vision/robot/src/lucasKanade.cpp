@@ -22,6 +22,9 @@ namespace Anki
       PlanarTransformation_f32::PlanarTransformation_f32(TransformType transformType, MemoryStack &memory)
         : transformType(transformType)
       {
+        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_PROJECTIVE,
+          "PlanarTransformation_f32::PlanarTransformation_f32", "Invalid transformType %d", transformType);
+
         homography = Eye<f32>(3, 3, memory);
       }
 
@@ -31,7 +34,8 @@ namespace Anki
         const Point<f32> &centerOffset,
         Array<f32> &xOut, Array<f32> &yOut)
       {
-        //const s32 numPoints = xIn.get_size(1);
+        AnkiConditionalErrorAndReturnValue(homography.IsValid(),
+          RESULT_FAIL, "PlanarTransformation_f32::TransformPoints", "homography is not valid");
 
         AnkiConditionalErrorAndReturnValue(xIn.IsValid() && yIn.IsValid() && xOut.IsValid() && yOut.IsValid(),
           RESULT_FAIL, "PlanarTransformation_f32::TransformPoints", "All inputs and outputs must be allocated and valid");
@@ -62,6 +66,29 @@ namespace Anki
               pYOut[x] = pYIn[x] + dy + centerOffset.y;
             }
           }
+        } else if(transformType == TRANSFORM_PROJECTIVE) {
+          const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
+          const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+          const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
+
+          assert(FLT_NEAR(homography[2][2], 1.0f));
+
+          for(s32 y=0; y<numPointsY; y++) {
+            const f32 * restrict pXIn = xIn.Pointer(y,0);
+            const f32 * restrict pYIn = yIn.Pointer(y,0);
+            f32 * restrict pXOut = xOut.Pointer(y,0);
+            f32 * restrict pYOut = yOut.Pointer(y,0);
+
+            for(s32 x=0; x<numPointsX; x++) {
+              const f32 wpi = 1.0f / (h20*pXIn[x] + h21*pYIn[x] + h22);
+
+              const f32 xp = (h00*pXIn[x] + h01*pYIn[x] + h02) * wpi;
+              const f32 yp = (h10*pXIn[x] + h11*pYIn[x] + h12) * wpi;
+
+              pXOut[x] = xp + centerOffset.x;
+              pYOut[x] = yp + centerOffset.y;
+            }
+          }
         } else {
           // Should be checked earlier
           assert(false);
@@ -71,26 +98,58 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result PlanarTransformation_f32::Update(const Array<f32> &update)
+      Result PlanarTransformation_f32::Update(const Array<f32> &update, MemoryStack scratch)
       {
+        AnkiConditionalErrorAndReturnValue(update.IsValid(),
+          RESULT_FAIL, "PlanarTransformation_f32::Update", "update is not valid");
+
+        AnkiConditionalErrorAndReturnValue(update.get_size(0) == 1,
+          RESULT_FAIL, "PlanarTransformation_f32::Update", "update is the incorrect size");
+
+        const f32 * pUpdate = update[0];
+
         if(transformType == TRANSFORM_TRANSLATION) {
-          AnkiConditionalErrorAndReturnValue(update.get_size(0) == 1 && update.get_size(1) == 2,
+          AnkiConditionalErrorAndReturnValue(update.get_size(1) == 2,
             RESULT_FAIL, "PlanarTransformation_f32::Update", "update is the incorrect size");
 
           // this.tform(1:2,3) = this.tform(1:2,3) - update;
-          homography[0][2] -= update[0][0];
-          homography[1][2] -= update[0][1];
-        } else {
-          AnkiError("PlanarTransformation_f32::Update", "Unknown transformation type %d", transformType);
-          return RESULT_FAIL;
-        }
+          homography[0][2] -= pUpdate[0];
+          homography[1][2] -= pUpdate[1];
+        } else { // if(transformType == TRANSFORM_TRANSLATION)
+          Array<f32> updateArray(3,3,scratch);
+
+          if(transformType == TRANSFORM_PROJECTIVE) {
+            AnkiConditionalErrorAndReturnValue(update.get_size(1) == 8,
+              RESULT_FAIL, "PlanarTransformation_f32::Update", "update is the incorrect size");
+
+            // tformUpdate = eye(3) + [update(1:3)'; update(4:6)'; update(7:8)' 0];
+            updateArray[0][0] = 1.0f + pUpdate[0]; updateArray[0][1] = pUpdate[1];        updateArray[0][2] = pUpdate[2];
+            updateArray[1][0] = pUpdate[3];        updateArray[1][1] = 1.0f + pUpdate[4]; updateArray[1][2] = pUpdate[5];
+            updateArray[2][0] = pUpdate[6];        updateArray[2][1] = pUpdate[7];        updateArray[2][2] = 1.0f;
+          } else {
+            AnkiError("PlanarTransformation_f32::Update", "Unknown transformation type %d", transformType);
+            return RESULT_FAIL;
+          }
+
+          // this.tform = this.tform*inv(tformUpdate);
+          Invert3x3(
+            updateArray[0][0], updateArray[0][1], updateArray[2][2],
+            updateArray[1][0], updateArray[1][1], updateArray[1][2],
+            updateArray[2][0], updateArray[2][1], updateArray[0][2]);
+
+          Array<f32> newHomography(3,3,scratch);
+
+          Matrix::Multiply(this->homography, updateArray, newHomography);
+
+          this->homography.Set(newHomography);
+        } // if(transformType == TRANSFORM_TRANSLATION) ... else
 
         return RESULT_OK;
       }
 
       Result PlanarTransformation_f32::set_transformType(const TransformType transformType)
       {
-        if(transformType == TRANSFORM_TRANSLATION) {
+        if(transformType == TRANSFORM_TRANSLATION || transformType == TRANSFORM_PROJECTIVE) {
           this->transformType = transformType;
         } else {
           AnkiError("PlanarTransformation_f32::set_transformType", "Unknown transformation type %d", transformType);
@@ -498,7 +557,7 @@ namespace Anki
           //  matlab.PutArray(update, "update");
           //}
 
-          this->transformation.Update(update);
+          this->transformation.Update(update, memory);
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
         return RESULT_OK;

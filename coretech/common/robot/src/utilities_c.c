@@ -40,7 +40,7 @@ void explicitPrintf(int (*writeChar)(int), int reverseEachFourCharacters, const 
     writeChar = putchar;
 #endif
   }
-  
+
   // Count the number of characters
   numCharacters = 0;
   while(*format != 0x00)
@@ -143,7 +143,7 @@ void PrintFloat(int (*writeChar)(int), f64 value)
     writeChar = putchar;
 #endif
   }
-  
+
   if(value < 0.0) {
     writeChar('-');
     value = -value;
@@ -246,7 +246,7 @@ void PrintInt(int (*writeChar)(int), s32 value)
   for(digitIndex=0; digitIndex<MAX_PRINTF_DIGITS; digitIndex++) {
     digits[digitIndex] = 0;
   }
-  
+
   // If null, default to putchar
   if (writeChar == 0) {
 #ifdef USING_MOVIDIUS_COMPILER
@@ -330,7 +330,7 @@ void PrintHex(int (*writeChar)(int), u32 value)
     writeChar = putchar;
 #endif
   }
-  
+
   if(value == 0) {
     writeChar('0');
     return;
@@ -436,22 +436,17 @@ s32 IsPowerOfTwo(u32 x)
 
 s32 IsOdd(const s32 x)
 {
-//#if defined(USING_MOVIDIUS_GCC_COMPILER)
+  //#if defined(USING_MOVIDIUS_GCC_COMPILER)
   if(((x>>1)<<1) == x)
     return 0;
   else
     return 1;
-//#else
-//  if(x | 1)
-//    return 1;
-//  else
-//    return 0;
-//#endif
-}
-
-s32 Determinant2x2(const s32 a, const s32 b, const s32 c, const s32 d)
-{
-  return a*d - b*c;
+  //#else
+  //  if(x | 1)
+  //    return 1;
+  //  else
+  //    return 0;
+  //#endif
 }
 
 u32 Log2u32(u32 x)

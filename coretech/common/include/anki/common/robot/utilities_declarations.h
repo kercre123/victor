@@ -34,6 +34,24 @@ namespace Anki
 
     template<typename Type> u32 BinaryStringToUnsignedNumber(const FixedLengthList<Type> &bits, bool firstBitIsLow = false);
 
+    // Simple matrix operations
+    // |a b|
+    // |c d|
+    // return a*d - b*c;
+    template<typename Type> Type Determinant2x2(const Type a, const Type b, const Type c, const Type d);
+
+    // |a b c|
+    // |d e f|
+    // |g h i|
+    // return (aei + bfg + cfh) - (ceg + bdi + afh)
+    template<typename Type> Type Determinant3x3(const Type a, const Type b, const Type c, const Type d, const Type e, const Type f, const Type g, const Type h, const Type i);
+
+    // Invert:
+    // [a b c]
+    // [d e f]
+    // [g h i]
+    template<typename Type> void Invert3x3(Type &a, Type &b, Type &c, Type &d, Type &e, Type &f, Type &g, Type &h, Type &i);
+
     // Movidius doesn't have floating point printf (no %f option), so do it with %d
     void PrintfOneArray_f32(const Array<f32> &array, const char * variableName);
     void PrintfOneArray_f64(const Array<f64> &array, const char * variableName);
