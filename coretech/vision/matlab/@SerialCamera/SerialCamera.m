@@ -269,9 +269,9 @@ classdef SerialCamera < handle
             this.serialObj.InputBufferSize = 4*this.framelength;
             fopen(this.serialObj);
             
-            while ~strcmp(this.serialObj.Status, 'open')
-                pause(.01);
-            end
+            %while ~strcmp(this.serialObj.Status, 'open')
+            %    pause(.01);
+            %end
             
             % clear the serial input buffer?
             if this.serialObj.BytesAvailable > 0
