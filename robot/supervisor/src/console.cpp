@@ -132,6 +132,55 @@ namespace Anki
         return 0;
       }
 
+      static int ShakeHead()
+      {
+        u32 up, down, pause, count;
+        float power;
+        char* arg = GetArgument(1);
+        if (!arg)
+          return 1;
+
+        up = ParseInt(arg);
+
+        arg = GetArgument(2);
+        if (!arg)
+          return 1;
+
+        down = ParseInt(arg);
+
+        arg = GetArgument(3);
+        if (!arg)
+          return 1;
+
+        pause = ParseInt(arg);
+
+        arg = GetArgument(4);
+        if (!arg)
+          return 1;
+
+        count = ParseInt(arg);
+
+        arg = GetArgument(5);
+        if (!arg)
+          return 1;
+
+        power = ParseInt(arg) / 100.0f;
+
+        for (int i = 0; i < count; i++)
+        {
+          HAL::MotorSetPower(HAL::MOTOR_HEAD, power);
+          HAL::MicroWait(up * 1000);
+          HAL::MotorSetPower(HAL::MOTOR_HEAD, 0);
+          HAL::MicroWait(pause * 1000);
+          HAL::MotorSetPower(HAL::MOTOR_HEAD, -power);
+          HAL::MicroWait(down * 1000);
+          HAL::MotorSetPower(HAL::MOTOR_HEAD, 0);
+          HAL::MicroWait(pause * 1000);
+        }
+
+        return 0;
+      }
+
       static int SetMotors()
       {
         float value;
@@ -176,8 +225,7 @@ namespace Anki
         if (!arg)
           return 1;
 
-        value = ParseInt(arg);
-        HAL::MicroWait(value * 1000);
+        HAL::MicroWait(ParseInt(arg) * 1000);
 
         HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 0);
         HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 0);
@@ -199,6 +247,7 @@ namespace Anki
         {"GetFrontImage", GetFrontImage},
         {"GetMatImage", GetMatImage},
         {"SetMotors", SetMotors},
+        {"ShakeHead", ShakeHead},
       };
 
       static void ParseCommand()
