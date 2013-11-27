@@ -147,6 +147,11 @@ namespace Anki
         return RESULT_OK;
       }
 
+      Result PlanarTransformation_f32::Print(const char * const variableName)
+      {
+        return this->homography.Print(variableName);
+      }
+
       Result PlanarTransformation_f32::set_transformType(const TransformType transformType)
       {
         if(transformType == TRANSFORM_TRANSLATION || transformType == TRANSFORM_PROJECTIVE) {

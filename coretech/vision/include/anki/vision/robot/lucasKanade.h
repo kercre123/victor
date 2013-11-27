@@ -48,6 +48,8 @@ namespace Anki
         // TRANSFORM_TRANSLATION: [-dx, -dy]
         Result Update(const Array<f32> &update, MemoryStack scratch);
 
+        Result Print(const char * const variableName = "Transformation");
+
         Result set_transformType(const TransformType transformType);
 
         TransformType get_transformType() const;

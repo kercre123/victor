@@ -46,8 +46,8 @@ Matlab matlab(false);
 
 //#define RUN_MAIN_BIG_MEMORY_TESTS
 //#define RUN_ALL_BIG_MEMORY_TESTS
-#define RUN_LOW_MEMORY_IMAGE_TESTS
-//#define RUN_TRACKER_TESTS
+//#define RUN_LOW_MEMORY_IMAGE_TESTS
+#define RUN_TRACKER_TESTS
 
 //#ifdef RUN_MAIN_BIG_MEMORY_TESTS
 #include "../../blockImages/blockImage50.h"
@@ -157,7 +157,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
   const s32 imageHeight = 60;
   const s32 imageWidth = 80;
 
-  const s32 numPyramidLevels = 3;
+  const s32 numPyramidLevels = 2;
 
   const f32 ridgeWeight = 0.0f;
 
@@ -194,6 +194,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
   ASSERT_TRUE(tracker.IsValid());
 
   ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
+
+  tracker.get_transformation().Print();
 
 #endif // RUN_TRACKER_TESTS
 
