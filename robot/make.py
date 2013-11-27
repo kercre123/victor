@@ -71,7 +71,6 @@ CCOPT = (
   '-I' + LIBC + 'include '
   '-I' + CIF_GENERIC + ' '
   '-Os -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 '
-  '-DMOVI_TOOLS '
 )
 
 CXXOPT = (
