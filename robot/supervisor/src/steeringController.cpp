@@ -295,8 +295,11 @@ namespace Anki {
         RunLineFollowControllerNL( fidx, pathRadErr );
         
       } else {
-        // No steering intention -- pass through speed to each wheel to drive straight while in normal mode
+        // No steering intention -- unless desired speed is 0
         // we'll continue to use the previously commanded fidx
+        if (SpeedController::GetUserCommandedDesiredVehicleSpeed() == 0) {
+          RunLineFollowControllerNL( 0, 0);
+        }
       }
     }
 

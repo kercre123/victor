@@ -521,7 +521,6 @@ namespace Anki
 #if(ENABLE_PATH_VIZ)
         Viz::ErasePath(0);
 #endif
-        Robot::SetOperationMode(Robot::WAITING);
       }
       
       
@@ -540,8 +539,10 @@ namespace Anki
       
       ReturnCode Update()
       {
-        if (currPathSegment_ < 0)
+        if (currPathSegment_ < 0) {
+          SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
           return EXIT_FAILURE;
+        }
         
         bool inRange = false;
         
