@@ -198,6 +198,9 @@ namespace Anki
       {
         //ASSERT(motor < MOTOR_COUNT);
 
+        if (motor == MOTOR_LIFT)
+          power *= -1;
+        
         if (power > 1.0f)
           power = 1.0f;
         else if (power < -1.0f)

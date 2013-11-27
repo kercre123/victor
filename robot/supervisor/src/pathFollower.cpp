@@ -1,5 +1,6 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/debug.h"
+#include "dockingController.h"
 #include "anki/cozmo/robot/pathFollower.h"
 #include "anki/cozmo/robot/localization.h"
 #include "anki/cozmo/robot/steeringController.h"
@@ -136,6 +137,16 @@ namespace Anki
         visualizePath_ = on;
       }
       
+
+      void PrintPathSegment(u8 segment) {
+        // Assuming line for now
+        PRINT("Last path: (%f, %f) to (%f, %f)",
+          Path[segment].def.line.startPt.x,
+          Path[segment].def.line.startPt.y,
+          Path[segment].def.line.endPt.x,
+          Path[segment].def.line.endPt.y);
+
+      }
       
       // Add path segment
       // tODO: Change units to meters
@@ -579,15 +590,16 @@ namespace Anki
         
         wasInRange_ = inRange;
         
-        
-        // Check that starting error is not too big
-        // TODO: Check for excessive heading error as well?
-        if (distToPath_m_ > 0.05) {
-          currPathSegment_ = -1;
-#if(DEBUG_PATH_FOLLOWER)
-          PRINT("PATH STARTING ERROR TOO LARGE %f\n", distToPath_m_);
-#endif
-          return EXIT_FAILURE;
+        if (!DockingController::IsDockingOrPlacing()) {
+          // Check that starting error is not too big
+          // TODO: Check for excessive heading error as well?
+          if (distToPath_m_ > 0.05) {
+            currPathSegment_ = -1;
+  #if(DEBUG_PATH_FOLLOWER)
+            PRINT("PATH STARTING ERROR TOO LARGE %f\n", distToPath_m_);
+  #endif
+            return EXIT_FAILURE;
+          }
         }
         
         return EXIT_SUCCESS;

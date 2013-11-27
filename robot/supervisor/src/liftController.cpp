@@ -142,7 +142,7 @@ namespace Anki {
             case LCS_WAIT_FOR_STOP:
               // Check for when lift stops moving for 0.2 seconds
               if (NEAR_ZERO(HAL::MotorGetSpeed(HAL::MOTOR_LIFT))) {
-                if (HAL::GetMicroCounter() - lastLiftMovedTime_us > 200000) {
+                if (HAL::GetMicroCounter() - lastLiftMovedTime_us > 6000000/*200000*/) {
                   // Turn off motor
                   HAL::MotorSetPower(HAL::MOTOR_LIFT, 0.0);
                   
