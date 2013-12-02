@@ -9,6 +9,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/utilities.h"
 #include "anki/common/robot/benchmarking_c.h"
+#include "anki/common/robot/interpolate.h"
 
 #include "anki/vision/robot/miscVisionKernels.h"
 #include "anki/vision/robot/integralImage.h"
@@ -226,9 +227,9 @@ namespace Anki
                   const s32 alphaXinverse = maxAlpha - alphaX;
 
                   // DoG = uint32( interpolate2d(DoG_00, DoG_01, DoG_10, DoG_11, alphaY, alphaYinverse, alphaX, alphaXinverse) / (maxAlpha^2/(2^16)) ); % SQ?.? -> UQ16.16
-                  const u32 dog = static_cast<u32>(Interpolate2d(dog_00, dog_01, dog_10, dog_11, alphaY, alphaYinverse, alphaX, alphaXinverse) >> (maxAlphaSquaredShift - 16)); // SQ?.? -> UQ16.16
+                  const u32 dog = static_cast<u32>(InterpolateBilinear2d(dog_00, dog_01, dog_10, dog_11, alphaY, alphaYinverse, alphaX, alphaXinverse) >> (maxAlphaSquaredShift - 16)); // SQ?.? -> UQ16.16
 
-                  //printf("(%d,%d) %d %d %d %d %d %d\n", largeY, largeX, dog_00, dog_01, dog_10, dog_11, Interpolate2d(dog_00, dog_01, dog_10, dog_11, alphaY, alphaYinverse, alphaX, alphaXinverse), dog);
+                  //printf("(%d,%d) %d %d %d %d %d %d\n", largeY, largeX, dog_00, dog_01, dog_10, dog_11, InterpolateBilinear2d(dog_00, dog_01, dog_10, dog_11, alphaY, alphaYinverse, alphaX, alphaXinverse), dog);
 
                   //    largeDoG(largeY,largeX) = DoG;
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
@@ -241,7 +242,7 @@ namespace Anki
                     //        curPyramidLevelInterpolated = uint32( interpolate2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse) / (maxAlpha^2/(2^16)) );  % SQ?.? -> UQ16.16
                     //        scaleImage(largeY,largeX) = curPyramidLevelInterpolated;
                     pDogMax[largeX] = dog;
-                    const s32 interpolatedUnscaled = Interpolate2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse);
+                    const s32 interpolatedUnscaled = InterpolateBilinear2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse);
                     const u32 curPyramidLevelInterpolated = static_cast<u32>(interpolatedUnscaled >> (maxAlphaSquaredShift - 16)); // SQ?.? -> UQ16.16
                     pScaleImage[largeX] = curPyramidLevelInterpolated;
                   }
@@ -311,7 +312,7 @@ namespace Anki
                   const s64 alphaX = alphas[iAlphaX];
                   const s64 alphaXinverse = maxAlpha - alphaX;
 
-                  const u32 dog = static_cast<u32>(Interpolate2d(dog_00, dog_01, dog_10, dog_11, alphaY, alphaYinverse, alphaX, alphaXinverse) >> (maxAlphaSquaredShift - 16)); // SQ?.? -> UQ16.16
+                  const u32 dog = static_cast<u32>(InterpolateBilinear2d(dog_00, dog_01, dog_10, dog_11, alphaY, alphaYinverse, alphaX, alphaXinverse) >> (maxAlphaSquaredShift - 16)); // SQ?.? -> UQ16.16
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
                   pLargeDog[largeX] = dog;
@@ -322,8 +323,8 @@ namespace Anki
                   }*/
                   if(dog > pDogMax[largeX]) {
                     pDogMax[largeX] = dog;
-                    const s64 interpolatedUnscaled = Interpolate2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse);
-                    //const u32 curPyramidLevelInterpolated = static_cast<u32>(Interpolate2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse) >> (maxAlphaSquaredShift + 16)); // SQ?.? -> UQ16.16
+                    const s64 interpolatedUnscaled = InterpolateBilinear2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse);
+                    //const u32 curPyramidLevelInterpolated = static_cast<u32>(InterpolateBilinear2d(curPyramidLevel_00, curPyramidLevel_01, curPyramidLevel_10, curPyramidLevel_11, alphaY, alphaYinverse, alphaX, alphaXinverse) >> (maxAlphaSquaredShift + 16)); // SQ?.? -> UQ16.16
                     const u32 curPyramidLevelInterpolated = static_cast<u32>(interpolatedUnscaled >> (maxAlphaSquaredShift - 16)); // SQ?.? -> UQ16.16
                     pScaleImage[largeX] = curPyramidLevelInterpolated;
                     //pScaleImage[largeX] = 10000;

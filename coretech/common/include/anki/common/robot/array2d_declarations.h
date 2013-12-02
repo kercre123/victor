@@ -62,9 +62,6 @@ namespace Anki
       // All memory in the array is zeroed out once it is allocated
       Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false));
 
-      // Immediate evaluation of a LinearSequence, into this Array
-      Array(const LinearSequence<Type> &sequence, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false));
-
       // Pointer to the data, at a given (y,x) location
       //
       // NOTE:
@@ -140,6 +137,10 @@ namespace Anki
       // Set every element in the Array to this value
       // Returns the number of values set
       s32 Set(const Type value);
+
+      s32 Set(const Array<Type> &in);
+
+      template<typename InType> s32 SetCast(const Array<InType> &in);
 
       // Copy values to this Array.
       // If the input array does not contain enough elements, the remainder of this Array will be filled with zeros.

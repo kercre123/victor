@@ -106,6 +106,10 @@ namespace Anki
 
       static u32 MainExecutionIRQ(u32, u32)
       {
+        // GetMicroCounter() must be called every second. This ensures it gets
+        // called often enough.
+        GetMicroCounter();
+
         // Check neck potentiometer here, until radio implements it
         // ...
 
@@ -255,9 +259,6 @@ int main()
 
   HAL::SetupMainExecution();
 
-
-  u32 t = HAL::GetMicroCounter();
-
   while (true)
   {
     //Console::Update();
@@ -290,27 +291,22 @@ int main()
     Robot::step_LongExecution();
     
     
-    u32 t2 = HAL::GetMicroCounter();
-    //printf("%i\n", (t2 - t));
-    t = t2;
- 
- 
-    
-
     //HAL::USBUpdate();
 
     //printf("%X\n", *(volatile u32*)TIM1_CNT_VAL_ADR);
 
-    //HAL::MotorSetPower(HAL::MOTOR_LIFT, 1.0);
-    //SleepMs(1000);
-    //HAL::MotorSetPower(HAL::MOTOR_LIFT, -1.0);
-    //SleepMs(1000);
+/*    HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 0.5);
+    HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 0.5);
+    SleepMs(1000);
+    HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, -0.5);
+    HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, -0.5);
+    SleepMs(1000);*/
 
-//    HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 1.00f);
-//    HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 1.00f);
+//    HAL::MotorSetPower(HAL::MOTOR_HEAD, 0.50f);
 //    HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 1.00f);
 //    SleepMs(1000);
-//    HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, -1.00f);
+//    HAL::MotorSetPower(HAL::MOTOR_HEAD, -0.50f);
+//    HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, -1.00f);
 //    SleepMs(1000);
 
 /*    printf("%d %d %d\n",

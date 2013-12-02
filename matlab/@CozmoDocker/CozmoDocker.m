@@ -5,6 +5,9 @@ classdef CozmoDocker < handle
         HEAD_CAM_ROTATION   = [0 0 1; -1 0 0; 0 -1 0]; % (rodrigues(-pi/2*[0 1 0])*rodrigues(pi/2*[1 0 0]))'
         HEAD_CAM_POSITION   = [ 20  0  -10]; % relative to neck joint
         LIFT_DISTANCE       = 34;  % forward from robot origin
+        
+        PLACE_BLOCKTYPE = 50; % Orange block with black sticky corners
+        DOCK_BLOCKTYPE  = 60; % Yellow block with no sticky corners
     end
     
     properties
@@ -26,6 +29,7 @@ classdef CozmoDocker < handle
         trackingResolution;
         
         trackerType;
+        mode; 
         
         dockingDistance; % in mm, from camera
         
@@ -75,6 +79,8 @@ classdef CozmoDocker < handle
             
             this.dockingDistance     = DockDistanceMM;
             this.drawPose            = DrawPose;
+            
+            this.mode = 'DOCK';
             
             % Set up Robot head camera geometry
             this.robotPose = Pose();
@@ -217,7 +223,7 @@ classdef CozmoDocker < handle
                 % TODO: wait until we get the marker for the block we want
                 % to pick up!
                 marker = [];
-                while ~this.escapePressed && (isempty(marker) || ~marker{1}.isValid)
+                while ~this.escapePressed && isempty(marker)
                     t_detect = tic;
                     img = this.camera.getFrame();
                   
@@ -228,7 +234,31 @@ classdef CozmoDocker < handle
                     if ~isempty(img)
                         set(this.h_img, 'CData', img); drawnow;
                         marker = simpleDetector(img);
+                        
+                        for i_marker = 1:length(marker)
+                            if marker{i_marker}.isValid 
+                                switch(this.mode)
+                                    case 'DOCK'
+                                        if marker{i_marker}.blockType ~= CozmoDocker.DOCK_BLOCKTYPE
+                                            marker{i_marker} = [];
+                                        end
+                                    case 'PLACE'
+                                        if marker{i_marker}.blockType ~= CozmoDocker.PLACE_BLOCKTYPE
+                                            marker{i_marker} = [];
+                                        end
+                                    otherwise
+                                        error('Unrecognized mode "%s".', this.mode);
+                                end
+                            else
+                                marker{i_marker} = [];
+                            end
+                        
+                        end
+                        
+                        marker(cellfun(@isempty, marker)) = [];
+                        
                     end
+                    
                     title(this.h_axes, sprintf('Detecting: %.1f FPS', 1/toc(t_detect)));
                     drawnow
                 end
@@ -289,6 +319,7 @@ classdef CozmoDocker < handle
                         img = this.camera.getFrame();
                         if ~isempty(this.camera.message)
                             this.displayMessage(this.camera.message);
+                            
                         end
                         
                         if isempty(img)
@@ -370,15 +401,15 @@ classdef CozmoDocker < handle
                     
                     % Get the angle from vertical of the top bar of the
                     % marker we're tracking
-                    L = sqrt(sum(upperRight-upperLeft).^2);
-                    angleError = asin( (upperRight(2)-upperLeft(2)) / L);
+                    L = sqrt(sum( (upperRight-upperLeft).^2) );
+                    angleError = -asin( (upperRight(2)-upperLeft(2)) / L);
                     
                     currentDistance = BlockMarker3D.ReferenceWidth * this.calibration.fc(1) / L;
-                    distError = currentDistance - this.dockingDistance;
+                    distError = currentDistance - CozmoDocker.LIFT_DISTANCE;
                     
                     % TODO: should i be comparing to ncols/2 or calibration center?
-                    midPointErr = (upperRight(1)+upperLeft(1))/2 - ...
-                        this.trackingResolution(1)/2;
+                    midPointErr = -( (upperRight(1)+upperLeft(1))/2 - ...
+                        this.trackingResolution(1)/2 );
                     midPointErr = midPointErr * currentDistance / this.calibration.fc(1);
                     
                 case 'homography'
@@ -556,6 +587,12 @@ classdef CozmoDocker < handle
         function displayMessage(this, msg)
             set(this.h_rxMsg, 'String', ['RX: ' msg]);
             fprintf('Message Received: %s\n', msg);
+            
+            if ~isempty(strfind(msg, 'GRIPPING'))
+                this.mode = 'PLACE';
+            elseif ~isempty(strfind(msg, 'IDLE'))
+                this.mode = 'DOCK';
+            end
         end
             
     end % methods

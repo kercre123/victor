@@ -65,7 +65,7 @@ classdef LucasKanadeTracker < handle
             UseBlurring = true;
             UseNormalization = false;
             RidgeWeight = 0;
-            TrackingResolution = size(firstImg(:,:,1));
+            TrackingResolution = [size(firstImg,2), size(firstImg,1)];
             ErrorTolerance = [];
             
             parseVarargin(varargin{:});
@@ -157,10 +157,10 @@ classdef LucasKanadeTracker < handle
                 
                 % FIgure ou the finest scale we need to use to track at the
                 % specified resolution
-                this.finestScale = floor(log2(min(nrows,ncols)/min(TrackingResolution)));
+                this.finestScale = max(1, floor(log2(min(nrows,ncols)/min(TrackingResolution))));
                 
             end % IF TrackingResolution not empty
-            
+                        
             this.xcen = (xmax + xmin)/2;
             this.ycen = (ymax + ymin)/2;
             
@@ -264,7 +264,7 @@ classdef LucasKanadeTracker < handle
                         this.A_full{i_scale} = [ ...
                             X.*Ix(:) Y.*Ix(:) Ix(:) ...
                             X.*Iy(:) Y.*Iy(:) Iy(:) ...
-                            -X.^2.*Ix(:)-X.*Y.*Ix(:) -X.*Y.*Ix(:)-Y.^2.*Iy(:)];
+                            -X.^2.*Ix(:)-X.*Y.*Iy(:) -X.*Y.*Ix(:)-Y.^2.*Iy(:)];
                         
                     otherwise
                         error('Unecognized transformation type "%s".', ...

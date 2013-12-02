@@ -21,6 +21,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/comparisons.h"
 #include "anki/common/robot/arraySlices.h"
 #include "anki/common/robot/find.h"
+#include "anki/common/robot/interpolate.h"
+#include "anki/common/robot/arrayPatterns.h"
 
 using namespace Anki::Embedded;
 
@@ -69,7 +71,428 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
-GTEST_TEST(CoreTech_Common, Find_SetArray)
+GTEST_TEST(CoreTech_Common, LinearLeastSquares32)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<f32> At(2,3,ms);
+  Array<f32> bt(1,3,ms);
+  Array<f32> xt(1,2,ms);
+
+  At[0][0] = 0.814723686393179f; At[1][0] = 0.913375856139019f;
+  At[0][1] = 0.905791937075619f; At[1][1] = 0.632359246225410f;
+  At[0][2] = 0.126986816293506f; At[1][2] = 0.0975404049994095f;
+
+  bt[0][0] = 0.278498218867048f;
+  bt[0][1] = 0.546881519204984f;
+  bt[0][2] = 0.957506835434298f;
+
+  ASSERT_TRUE(Matrix::SolveLeastSquares_f32(At, bt, xt, ms) == RESULT_OK);
+
+  Array<f32> xt_groundTruth(1,2,ms);
+  xt_groundTruth[0][0] = 1.28959732768902f;
+  xt_groundTruth[0][1] = -0.820726191726098f;
+
+  xt.Print("xt");
+  xt_groundTruth.Print("xt_groundTruth");
+
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(xt, xt_groundTruth, .001, .0001));
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, LinearLeastSquares64)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<f64> At(2,3,ms);
+  Array<f64> bt(1,3,ms);
+  Array<f64> xt(1,2,ms);
+
+  At[0][0] = 0.814723686393179; At[1][0] = 0.913375856139019;
+  At[0][1] = 0.905791937075619; At[1][1] = 0.632359246225410;
+  At[0][2] = 0.126986816293506; At[1][2] = 0.0975404049994095;
+
+  bt[0][0] = 0.278498218867048;
+  bt[0][1] = 0.546881519204984;
+  bt[0][2] = 0.957506835434298;
+
+  ASSERT_TRUE(Matrix::SolveLeastSquares_f64(At, bt, xt, ms) == RESULT_OK);
+
+  Array<f64> xt_groundTruth(1,2,ms);
+  xt_groundTruth[0][0] = 1.28959732768902;
+  xt_groundTruth[0][1] = -0.820726191726098;
+
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(xt, xt_groundTruth, .001, .0001));
+
+  xt.Print("xt");
+  xt_groundTruth.Print("xt_groundTruth");
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, MatrixMultiplyTranspose)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<s32> in1(2,3,ms);
+  Array<s32> in2(2,3,ms);
+
+  in1[0][0] = 1; in1[0][1] = 2; in1[0][2] = 3;
+  in1[1][0] = 4; in1[1][1] = 5; in1[1][2] = 6;
+
+  in2[0][0] = 10; in2[0][1] = 11; in2[0][2] = 12;
+  in2[1][0] = 13; in2[1][1] = 14; in2[1][2] = 15;
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s32> out(2,2,ms);
+    const Result result = Matrix::MultiplyTranspose<s32,s32>(in1, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    //out.Print("out");
+
+    ASSERT_TRUE(out[0][0] == 68);
+    ASSERT_TRUE(out[0][1] == 86);
+    ASSERT_TRUE(out[1][0] == 167);
+    ASSERT_TRUE(out[1][1] == 212);
+  }
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s32> out(2,2,ms);
+    const Result result = Matrix::MultiplyTranspose<s32,s32>(in2, in1, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    ASSERT_TRUE(out[0][0] == 68);
+    ASSERT_TRUE(out[0][1] == 167);
+    ASSERT_TRUE(out[1][0] == 86);
+    ASSERT_TRUE(out[1][1] == 212);
+  }
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, Reshape)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<s32> in(2,2,ms);
+  in[0][0] = 1; in[0][1] = 2;
+  in[1][0] = 3; in[1][1] = 4;
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s32> out = Matrix::Reshape<s32,s32>(true, in, 4, 1, ms);
+
+    ASSERT_TRUE(out[0][0] == 1);
+    ASSERT_TRUE(out[1][0] == 3);
+    ASSERT_TRUE(out[2][0] == 2);
+    ASSERT_TRUE(out[3][0] == 4);
+  }
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s32> out = Matrix::Reshape<s32,s32>(false, in, 4, 1, ms);
+
+    ASSERT_TRUE(out[0][0] == 1);
+    ASSERT_TRUE(out[1][0] == 2);
+    ASSERT_TRUE(out[2][0] == 3);
+    ASSERT_TRUE(out[3][0] == 4);
+  }
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s32> out = Matrix::Reshape<s32,s32>(true, in, 1, 4, ms);
+
+    ASSERT_TRUE(out[0][0] == 1);
+    ASSERT_TRUE(out[0][1] == 3);
+    ASSERT_TRUE(out[0][2] == 2);
+    ASSERT_TRUE(out[0][3] == 4);
+  }
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s32> out = Matrix::Reshape<s32,s32>(false, in, 1, 4, ms);
+
+    ASSERT_TRUE(out[0][0] == 1);
+    ASSERT_TRUE(out[0][1] == 2);
+    ASSERT_TRUE(out[0][2] == 3);
+    ASSERT_TRUE(out[0][3] == 4);
+  }
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, ArrayPatterns)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  const s32 arrayHeight = 3;
+  const s32 arrayWidth = 2;
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s16> out = Zeros<s16>(arrayHeight, arrayWidth, ms);
+
+    for(s32 y=0; y<arrayHeight; y++) {
+      const s16 * const pOut = out.Pointer(y, 0);
+
+      for(s32 x=0; x<arrayWidth; x++) {
+        ASSERT_TRUE(pOut[x] == 0);
+      }
+    }
+  }
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<u8> out = Ones<u8>(arrayHeight, arrayWidth, ms);
+
+    for(s32 y=0; y<arrayHeight; y++) {
+      const u8 * const pOut = out.Pointer(y, 0);
+
+      for(s32 x=0; x<arrayWidth; x++) {
+        ASSERT_TRUE(pOut[x] == 1);
+      }
+    }
+  }
+
+  {
+    PUSH_MEMORY_STACK(ms);
+    Array<f64> out = Eye<f64>(arrayHeight, arrayWidth, ms);
+
+    for(s32 y=0; y<arrayHeight; y++) {
+      const f64 * const pOut = out.Pointer(y, 0);
+
+      for(s32 x=0; x<arrayWidth; x++) {
+        if(x==y) {
+          ASSERT_TRUE(FLT_NEAR(pOut[x], 1.0));
+        } else {
+          ASSERT_TRUE(FLT_NEAR(pOut[x], 0.0));
+        }
+      }
+    }
+  }
+
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    // [logspace(-3,1,5), 3.14159]
+    const f32 inData[6] = {0.001f, 0.01f, 0.1f, 1.0f, 10.0f, 3.14159f};
+
+    Array<f32> expIn(arrayHeight, arrayWidth, ms);
+    expIn.Set_unsafe(inData, 6);
+
+    Array<f32> out = Exp<f32>(expIn, ms);
+
+    const f32 out_groundTruthData[6] = {1.00100050016671f, 1.01005016708417f, 1.10517091807565f, 2.71828182845905f, 22026.4657948067f, 23.1406312269550f};
+
+    Array<f32> out_groundTruth = Array<f32>(3,2,ms);
+    out_groundTruth.Set_unsafe(out_groundTruthData, 6);
+
+    //out.Print("out");
+    //out_groundTruth.Print("out_groundTruth");
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(out, out_groundTruth, .05, .001));
+  }
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, Interp2_twoDimensional)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u8> reference(3,5,ms);
+
+  // reference = [1:5; 11:15; 21:25];
+  reference(0,0,0,-1).Set(LinearSequence<u8>(1,5));
+  reference(1,1,0,-1).Set(LinearSequence<u8>(11,15));
+  reference(2,2,0,-1).Set(LinearSequence<u8>(21,25));
+
+  // [xGridVector, yGridVector] = meshgrid(1+(-0.9:0.9:6), 1+(-1:1:4));
+  Meshgrid<f32> mesh(LinearSequence<f32>(-0.9f,0.9f,6.0f), LinearSequence<f32>(-1.0f,1.0f,4.0f));
+  Array<f32> xGridMatrix = mesh.EvaluateX2(ms);
+  Array<f32> yGridMatrix = mesh.EvaluateY2(ms);
+
+  // result = round(interp2(reference, xGridVector, yGridVector)); result(isnan(result)) = 0
+  Array<u8> result(xGridMatrix.get_size(0), xGridMatrix.get_size(1), ms);
+  ASSERT_TRUE(Interp2(reference, xGridMatrix, yGridMatrix, result) == RESULT_OK);
+
+  const u8 result_groundTruth[6][8] = {
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 1, 2, 3, 4, 5, 0, 0},
+    {0, 11, 12, 13, 14, 15, 0, 0},
+    {0, 21, 22, 23, 24, 25, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0}};
+
+  //result.Print("result");
+
+  for(s32 y=0; y<6; y++) {
+    for(s32 x=0; x<8; x++) {
+      ASSERT_TRUE(result[y][x] == result_groundTruth[y][x]);
+    }
+  }
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, Interp2_oneDimensional)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u8> reference(3,5,ms);
+
+  // reference = [1:5; 11:15; 21:25];
+  reference(0,0,0,-1).Set(LinearSequence<u8>(1,5));
+  reference(1,1,0,-1).Set(LinearSequence<u8>(11,15));
+  reference(2,2,0,-1).Set(LinearSequence<u8>(21,25));
+
+  // [xGridVector, yGridVector] = meshgrid(1+(-0.9:0.9:6), 1+(-1:1:4));
+  Meshgrid<f32> mesh(LinearSequence<f32>(-0.9f,0.9f,6.0f), LinearSequence<f32>(-1.0f,1.0f,4.0f));
+  Array<f32> xGridVector = mesh.EvaluateX1(true, ms);
+  Array<f32> yGridVector = mesh.EvaluateY1(true, ms);
+
+  // result = round(interp2(reference, xGridVector(:), yGridVector(:)))
+  Array<u8> result(1, xGridVector.get_size(1), ms);
+  ASSERT_TRUE(Interp2(reference, xGridVector, yGridVector, result) == RESULT_OK);
+
+  const u8 result_groundTruth[48] = {0, 0, 0, 0, 0, 0, 0, 1, 11, 21, 0, 0, 0, 2, 12, 22, 0, 0, 0, 3, 13, 23, 0, 0, 0, 4, 14, 24, 0, 0, 0, 5, 15, 25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+  //result.Print("result");
+
+  for(s32 i=0; i<48; i++) {
+    ASSERT_TRUE(result[0][i] == result_groundTruth[i]);
+  }
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, Meshgrid_twoDimensional)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  // [x,y] = meshgrid(1:5,1:3)
+  Meshgrid<s32> mesh(LinearSequence<s32>(1,5), LinearSequence<s32>(1,3));
+
+  Array<s32> out(20,20,ms);
+  ASSERT_TRUE(out.IsValid());
+
+  {
+    ASSERT_TRUE(mesh.EvaluateX2(out(3,5,2,6)) == RESULT_OK);
+    const s32 out_groundTruth[3][5] = {{1, 2, 3, 4, 5}, {1, 2, 3, 4, 5}, {1, 2, 3, 4, 5}};
+    for(s32 y=0; y<3; y++) {
+      for(s32 x=0; x<5; x++) {
+        ASSERT_TRUE(out[y+3][x+2] == out_groundTruth[y][x]);
+      }
+    }
+  }
+
+  {
+    ASSERT_TRUE(mesh.EvaluateY2(out(3,5,2,6)) == RESULT_OK);
+    const s32 out_groundTruth[3][5] = {{1, 1, 1, 1, 1}, {2, 2, 2, 2, 2}, {3, 3, 3, 3, 3}};
+    for(s32 y=0; y<3; y++) {
+      for(s32 x=0; x<5; x++) {
+        ASSERT_TRUE(out[y+3][x+2] == out_groundTruth[y][x]);
+      }
+    }
+  }
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, Meshgrid_oneDimensional)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  // [x,y] = meshgrid(1:5,1:3)
+  Meshgrid<s32> mesh(LinearSequence<s32>(1,5), LinearSequence<s32>(1,3));
+
+  Array<s32> out(20,20,ms);
+  ASSERT_TRUE(out.IsValid());
+
+  {
+    ASSERT_TRUE(mesh.EvaluateX1(true, out(3,3,2,16)) == RESULT_OK);
+    const s32 out_groundTruth[15] = {1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5};
+    for(s32 x=0; x<15; x++) {
+      ASSERT_TRUE(out[3][x+2] == out_groundTruth[x]);
+    }
+  }
+
+  {
+    ASSERT_TRUE(mesh.EvaluateX1(false, out(3,3,2,16)) == RESULT_OK);
+    const s32 out_groundTruth[15] = {1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5};
+    for(s32 x=0; x<15; x++) {
+      ASSERT_TRUE(out[3][x+2] == out_groundTruth[x]);
+    }
+  }
+
+  {
+    ASSERT_TRUE(mesh.EvaluateY1(true, out(3,3,2,16)) == RESULT_OK);
+    const s32 out_groundTruth[15] = {1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3};
+    for(s32 x=0; x<15; x++) {
+      ASSERT_TRUE(out[3][x+2] == out_groundTruth[x]);
+    }
+  }
+
+  {
+    ASSERT_TRUE(mesh.EvaluateY1(false, out(3,3,2,16)) == RESULT_OK);
+    const s32 out_groundTruth[15] = {1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3};
+    for(s32 x=0; x<15; x++) {
+      ASSERT_TRUE(out[3][x+2] == out_groundTruth[x]);
+    }
+  }
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, Linspace)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  LinearSequence<f32> sequence1 = Linspace<f32>(0,9,10);
+  LinearSequence<f32> sequence2 = Linspace<f32>(0,9,1<<29);
+  LinearSequence<s32> sequence3 = Linspace<s32>(0,9,10);
+  LinearSequence<s32> sequence4 = Linspace<s32>(0,9,9);
+
+  ASSERT_TRUE(sequence1.get_size() == 10);
+  ASSERT_TRUE(sequence2.get_size() == 536870912);
+  ASSERT_TRUE(sequence3.get_size() == 10);
+  ASSERT_TRUE(sequence4.get_size() == 10);
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, Find_SetArray1)
 {
   ASSERT_TRUE(buffer != NULL);
   MemoryStack ms(buffer, MAX_BYTES);
@@ -96,12 +519,12 @@ GTEST_TEST(CoreTech_Common, Find_SetArray)
     }
   }
 
-  // Case 1-1-1
+  // Case 1-1
   {
     PUSH_MEMORY_STACK(ms);
-    Array<s16> outB;
 
-    ASSERT_TRUE(find.AllocateAndSetArray(outB, inB, 0, ms) == RESULT_OK);
+    Array<s16> outB = find.SetArray(inB, 0, ms);
+    ASSERT_TRUE(outB.IsValid());
 
     ASSERT_TRUE(outB.get_size(0) == 3);
     ASSERT_TRUE(outB.get_size(1) == 6);
@@ -113,12 +536,84 @@ GTEST_TEST(CoreTech_Common, Find_SetArray)
     }
   } // PUSH_MEMORY_STACK(memory);
 
-  // Case 1-1-2
+  // Case 1-2
   {
     PUSH_MEMORY_STACK(ms);
-    Array<s16> outB;
 
-    ASSERT_TRUE(find.AllocateAndSetArray(outB, inB, 1, ms) == RESULT_OK);
+    Array<s16> outB = find.SetArray(inB, 1, ms);
+    ASSERT_TRUE(outB.IsValid());
+
+    ASSERT_TRUE(outB.get_size(0) == 6);
+    ASSERT_TRUE(outB.get_size(1) == 3);
+
+    for(s32 y=0; y<6; y++) {
+      for(s32 x=0; x<3; x++) {
+        ASSERT_TRUE(outB[y][x] == inB[y][x+3]);
+      }
+    }
+  } // PUSH_MEMORY_STACK(memory);
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, Find_SetArray2)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<f32> in1(1,6,ms);
+  Array<f32> in2(1,6,ms);
+
+  ASSERT_TRUE(in1.IsValid());
+  ASSERT_TRUE(in2.IsValid());
+
+  for(s32 x=0; x<6; x++) {
+    in1[0][x] = float(x) + 0.1f;
+    in2[0][x] = float(x)*100.0f;
+  }
+
+  in2(0,0,0,2).Set(0.0f);
+
+  in1.Print("in1");
+  in2.Print("in2");
+
+  Find<f32,Comparison::LessThanOrEqual<f32,f32>,f32> find(in1, in2);
+
+  Array<s16> inB(6,6,ms);
+
+  {
+    s16 i1 = 0;
+    for(s32 y=0; y<6; y++) {
+      for(s32 x=0; x<6; x++) {
+        inB[y][x] = i1++;
+      }
+    }
+  }
+
+  // Case 2-1
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s16> outB = find.SetArray(inB, 0, ms);
+    ASSERT_TRUE(outB.IsValid());
+
+    ASSERT_TRUE(outB.get_size(0) == 3);
+    ASSERT_TRUE(outB.get_size(1) == 6);
+
+    for(s32 y=0; y<3; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE(outB[y][x] == inB[y+3][x]);
+      }
+    }
+  } // PUSH_MEMORY_STACK(memory);
+
+  // Case 2-2
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s16> outB = find.SetArray(inB, 1, ms);
+    ASSERT_TRUE(outB.IsValid());
 
     ASSERT_TRUE(outB.get_size(0) == 6);
     ASSERT_TRUE(outB.get_size(1) == 3);
@@ -338,18 +833,7 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
 
     Array<s32> indexes;
 
-    ASSERT_TRUE(findB.Evaluate(indexes, ms) == RESULT_OK);
-
-    ASSERT_TRUE(indexes.get_size(0) == 1);
-    ASSERT_TRUE(indexes.get_size(1) == 3);
-
-    //indexes.Print("indexes");
-
-    const s32 indexes_groundTruth[3] = {3, 4, 5};
-
-    for(s32 i=0; i<3; i++) {
-      ASSERT_TRUE(indexes[0][i] == indexes_groundTruth[i]);
-    }
+    ASSERT_TRUE(findB.Evaluate(indexes, ms) == RESULT_FAIL);
   } // PUSH_MEMORY_STACK(ms)
 
   GTEST_RETURN_HERE;
@@ -474,7 +958,7 @@ GTEST_TEST(CoreTech_Common, Find_NumMatchesAndBoundingRectangle)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, MatrixAdd)
+GTEST_TEST(CoreTech_Common, MatrixElementwise)
 {
   ASSERT_TRUE(buffer != NULL);
   MemoryStack ms(buffer, MAX_BYTES);
@@ -493,7 +977,7 @@ GTEST_TEST(CoreTech_Common, MatrixAdd)
   for(s32 y=0; y<5; y++) {
     for(s32 x=0; x<6; x++) {
       in1[y][x] = i1++;
-      in2[y][x] = i2*100;
+      in2[y][x] = i2*100 + 1;
       i2++;
     }
   }
@@ -501,12 +985,8 @@ GTEST_TEST(CoreTech_Common, MatrixAdd)
   // Test normal elementwise addition
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::Add<s32,s32>(in1, in2, out);
+    const Result result = Matrix::Add<s32,s32,s32>(in1, in2, out);
     ASSERT_TRUE(result == RESULT_OK);
-
-    //in1.Print("in1");
-    //in2.Print("in2");
-    //out.Print("out");
 
     for(s32 y=0; y<5; y++) {
       for(s32 x=0; x<6; x++) {
@@ -515,10 +995,153 @@ GTEST_TEST(CoreTech_Common, MatrixAdd)
     }
   }
 
+  // Test normal elementwise addition with a scalar as parameter 1
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::Add<s32,s32,s32>(in1, 5, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(in1[y][x] + 5));
+      }
+    }
+  }
+
+  // Test normal elementwise addition with a scalar as parameter 2
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::Add<s32,s32,s32>(-4, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(-4 + in2[y][x]));
+      }
+    }
+  }
+
+  // Test normal elementwise subtraction
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::Subtract<s32,s32,s32>(in1, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(in1[y][x] - in2[y][x]));
+      }
+    }
+  }
+
+  // Test normal elementwise subtraction with a scalar as parameter 1
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::Subtract<s32,s32,s32>(100, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(100 - in2[y][x]));
+      }
+    }
+  }
+
+  // Test normal elementwise subtraction with a scalar as parameter 2
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::Subtract<s32,s32,s32>(in1, 1, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(in1[y][x] - 1));
+      }
+    }
+  }
+
+  // Test normal elementwise multiplication
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::DotMultiply<s32,s32,s32>(in1, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(in1[y][x] * in2[y][x]));
+      }
+    }
+  }
+
+  // Test normal elementwise multiplication with a scalar as parameter 1
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::DotMultiply<s32,s32,s32>(in1, 2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(in1[y][x] * 2));
+      }
+    }
+  }
+
+  // Test normal elementwise multiplication with a scalar as parameter 2
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::DotMultiply<s32,s32,s32>(-2, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)((-2) * in2[y][x]));
+      }
+    }
+  }
+
+  // Test normal elementwise division
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::DotDivide<s32,s32,s32>(in1, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(in1[y][x] / in2[y][x]));
+      }
+    }
+  }
+
+  // Test normal elementwise division with a scalar as parameter 1
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::DotDivide<s32,s32,s32>(in1, 2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(in1[y][x] / 2));
+      }
+    }
+  }
+
+  // Test normal elementwise division with a scalar as parameter 2
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::DotDivide<s32,s32,s32>(10, in2, out);
+    ASSERT_TRUE(result == RESULT_OK);
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        ASSERT_TRUE((s32)out[y][x] == (s32)(10 / in2[y][x]));
+      }
+    }
+  }
+
   // Test slice transpose in1 elementwise addition
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::Add<s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,1,0,0,2,4), out(0,1,0,0,2,4));
+    const Result result = Matrix::Add<s32,s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,1,0,0,2,4), out(0,1,0,0,2,4));
     ASSERT_TRUE(result == RESULT_OK);
 
     ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] + in2[0][0]));
@@ -537,7 +1160,7 @@ GTEST_TEST(CoreTech_Common, MatrixAdd)
   // Test slice transpose in2 elementwise addition
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::Add<s32,s32>(in1(0,1,0,0,2,4), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
+    const Result result = Matrix::Add<s32,s32,s32>(in1(0,1,0,0,2,4), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
     ASSERT_TRUE(result == RESULT_OK);
 
     ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] + in2[0][0]));
@@ -556,16 +1179,69 @@ GTEST_TEST(CoreTech_Common, MatrixAdd)
   // Test slice transpose in1 and in2 elementwise addition
   {
     ASSERT_TRUE(out.SetZero() != 0);
-    const Result result = Matrix::Add<s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
+    const Result result = Matrix::Add<s32,s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
     ASSERT_TRUE(result == RESULT_OK);
-
-    //in1.Print("in1");
-    //in2.Print("in2");
-    //out.Print("out");
 
     ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] + in2[0][0]));
     ASSERT_TRUE((s32)out[0][2] == (s32)(in1[2][0] + in2[2][0]));
     ASSERT_TRUE((s32)out[0][4] == (s32)(in1[4][0] + in2[4][0]));
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        if(!(y==0 && (x==0 || x==2 || x==4))) {
+          ASSERT_TRUE(out[y][x] == 0);
+        }
+      }
+    }
+  }
+
+  // Test slice transpose in1 and in2 elementwise subtraction
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::Subtract<s32,s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
+    ASSERT_TRUE(result == RESULT_OK);
+
+    ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] - in2[0][0]));
+    ASSERT_TRUE((s32)out[0][2] == (s32)(in1[2][0] - in2[2][0]));
+    ASSERT_TRUE((s32)out[0][4] == (s32)(in1[4][0] - in2[4][0]));
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        if(!(y==0 && (x==0 || x==2 || x==4))) {
+          ASSERT_TRUE(out[y][x] == 0);
+        }
+      }
+    }
+  }
+
+  // Test slice transpose in1 and in2 elementwise multiply
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::DotMultiply<s32,s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
+    ASSERT_TRUE(result == RESULT_OK);
+
+    ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] * in2[0][0]));
+    ASSERT_TRUE((s32)out[0][2] == (s32)(in1[2][0] * in2[2][0]));
+    ASSERT_TRUE((s32)out[0][4] == (s32)(in1[4][0] * in2[4][0]));
+
+    for(s32 y=0; y<5; y++) {
+      for(s32 x=0; x<6; x++) {
+        if(!(y==0 && (x==0 || x==2 || x==4))) {
+          ASSERT_TRUE(out[y][x] == 0);
+        }
+      }
+    }
+  }
+
+  // Test slice transpose in1 and in2 elementwise division
+  {
+    ASSERT_TRUE(out.SetZero() != 0);
+    const Result result = Matrix::DotDivide<s32,s32,s32>(in1(0,2,4,0,2,0).Transpose(), in2(0,2,4,0,2,0).Transpose(), out(0,1,0,0,2,4));
+    ASSERT_TRUE(result == RESULT_OK);
+
+    ASSERT_TRUE((s32)out[0][0] == (s32)(in1[0][0] / in2[0][0]));
+    ASSERT_TRUE((s32)out[0][2] == (s32)(in1[2][0] / in2[2][0]));
+    ASSERT_TRUE((s32)out[0][4] == (s32)(in1[4][0] / in2[4][0]));
 
     for(s32 y=0; y<5; y++) {
       for(s32 x=0; x<6; x++) {
@@ -600,7 +1276,7 @@ GTEST_TEST(CoreTech_Common, SliceArrayAssignment)
 
   // Test the non-transposed Set()
   ASSERT_TRUE(array1.SetZero() != 0);
-  ASSERT_TRUE(array1(0,2,0,3).Set(array2(1,3,1,4)) == RESULT_OK);
+  ASSERT_TRUE(array1(0,2,0,3).Set(array2(1,3,1,4)) == 12);
 
   //array1.Print("array1");
   //array2.Print("array2");
@@ -621,7 +1297,7 @@ GTEST_TEST(CoreTech_Common, SliceArrayAssignment)
 
   // Test the automatically transposed Set()
   ASSERT_TRUE(array1.SetZero() != 0);
-  ASSERT_TRUE(array1(0,-1,0,2).Set(array2(1,3,0,4)) == RESULT_OK);
+  ASSERT_TRUE(array1(0,-1,0,2).Set(array2(1,3,0,4)) == 15);
 
   //array1.Print("array1");
   //array2.Print("array2");
@@ -637,11 +1313,11 @@ GTEST_TEST(CoreTech_Common, SliceArrayAssignment)
 
   // Test for a failure in the manually transposed Set()
   ASSERT_TRUE(array1.SetZero() != 0);
-  ASSERT_TRUE(array1(0,-1,0,2).Set(array2(1,3,0,4), false) == RESULT_FAIL);
+  ASSERT_TRUE(array1(0,-1,0,2).Set(array2(1,3,0,4), false) == 0);
 
   // Test the manually transposed Set()
   ASSERT_TRUE(array1.SetZero() != 0);
-  ASSERT_TRUE(array1(0,-1,0,2).Set(array2(1,3,0,4).Transpose(), false) == RESULT_OK);
+  ASSERT_TRUE(array1(0,-1,0,2).Set(array2(1,3,0,4).Transpose(), false) == 15);
 
   //array1.Print("array1");
   //array2.Print("array2");
@@ -821,15 +1497,56 @@ GTEST_TEST(CoreTech_Common, LinearSequence)
   // Test sequence assignment to an Array
   const LinearSequence<s32> sequence(-4,2,4);
 
-  Array<s32> sequenceArray(sequence, ms);
-  const s32 sequenceArray_groundTruth[5] = {-4, -2, 0, 2, 4};
+  // Test a normal Array
+  {
+    PUSH_MEMORY_STACK(ms);
+    Array<s32> sequenceArray = sequence.Evaluate(ms);
 
-  ASSERT_TRUE(sequenceArray.get_size(0) == 1);
-  ASSERT_TRUE(sequenceArray.get_size(1) == 5);
+    ASSERT_TRUE(sequenceArray.IsValid());
 
-  for(s32 i=0; i<5; i++) {
-    ASSERT_TRUE(sequenceArray[0][i] == sequenceArray_groundTruth[i]);
-  }
+    const s32 sequenceArray_groundTruth[5] = {-4, -2, 0, 2, 4};
+
+    ASSERT_TRUE(sequenceArray.get_size(0) == 1);
+    ASSERT_TRUE(sequenceArray.get_size(1) == 5);
+
+    for(s32 i=0; i<5; i++) {
+      ASSERT_TRUE(sequenceArray[0][i] == sequenceArray_groundTruth[i]);
+    }
+  } // PUSH_MEMORY_STACK(ms)
+
+  // Test an ArraySlice
+  {
+    PUSH_MEMORY_STACK(ms);
+
+    Array<s32> sequenceArray(4,100,ms);
+
+    ASSERT_TRUE(sequenceArray.IsValid());
+
+    ASSERT_TRUE(sequence.Evaluate(sequenceArray(2,2,4,8)) == RESULT_OK);
+
+    const s32 sequenceArray_groundTruth[5] = {-4, -2, 0, 2, 4};
+
+    for(s32 i=0; i<=3; i++) {
+      ASSERT_TRUE(sequenceArray[2][i] == 0);
+    }
+
+    for(s32 i=4; i<=8; i++) {
+      ASSERT_TRUE(sequenceArray[2][i] == sequenceArray_groundTruth[i-4]);
+    }
+
+    for(s32 i=9; i<100; i++) {
+      ASSERT_TRUE(sequenceArray[2][i] == 0);
+    }
+
+    for(s32 x=0; x<100; x++) {
+      for(s32 y=0; y<=1; y++) {
+        ASSERT_TRUE(sequenceArray[y][x] == 0);
+      }
+      for(s32 y=3; y<=3; y++) {
+        ASSERT_TRUE(sequenceArray[y][x] == 0);
+      }
+    }
+  } // PUSH_MEMORY_STACK(ms)
 
   GTEST_RETURN_HERE;
 }
