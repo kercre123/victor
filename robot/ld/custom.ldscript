@@ -1,3 +1,5 @@
+INCLUDE objects.ldscript
+
 SECTIONS {
   . = 0xA0010000;
 
