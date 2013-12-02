@@ -11,7 +11,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 //#define USING_MOVIDIUS_COMPILER
 
-#ifndef MOVI_TOOLS
+#ifndef ROBOT_HARDWARE
+
 #if ANKICORETECH_EMBEDDED_USE_GTEST
 #include "gtest/gtest.h"
 #endif

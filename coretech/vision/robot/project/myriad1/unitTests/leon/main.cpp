@@ -30,7 +30,7 @@ namespace Anki
 {
   namespace Cozmo
   {
-    namespace HAL
+    namespace Robot
     {
       performanceStruct perfStr;
 
@@ -60,11 +60,11 @@ namespace Anki
         printf("Finished unit tests \n");
       }
 
-      void MainExecution()
+      void step_MainExecution()
       {
       }
 
-      void LongExecution()
+      void step_LongExecution()
       {
       }
     }

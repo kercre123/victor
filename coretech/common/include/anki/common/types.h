@@ -23,7 +23,7 @@
 #define ANKICORETECH_COMMON_TYPES_H_
 
 // Typedefs in mv_types.h conflict with stdint.h types (which doesn't even exist in the movidius toolchain).
-#ifndef SIMULATOR
+#ifdef ROBOT_HARDWARE
 #include "mv_types.h"
 #else
 #include <stdint.h>
