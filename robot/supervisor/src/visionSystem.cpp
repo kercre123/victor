@@ -15,6 +15,7 @@ defined(USE_MATLAB_FOR_MAT_CAMERA))
 #include "engine.h"
 #include "anki/common/robot/matlabInterface.h"
 #define DISPLAY_MATLAB_IMAGES 0
+extern Engine *matlabEngine_;
 #endif
 
 namespace Anki {
@@ -54,10 +55,6 @@ namespace Anki {
       s16 dockTargetWinY_ = -1;
       s16 dockTargetWinW_ = -1;
       s16 dockTargetWinH_ = -1;
-      
-#if USING_MATLAB_VISION
-      Engine *matlabEngine_;
-#endif
       
     } // private namespace VisionSystem
     
@@ -118,9 +115,8 @@ namespace Anki {
       
 #if USING_MATLAB_VISION
       
-      matlabEngine_ = NULL;
-      if (!(matlabEngine_ = engOpen(""))) {
-        PRINT("\nCan't start MATLAB engine!\n");
+      if(matlabEngine_ == NULL) {
+        PRINT("Expecting Matlab engine to already be open.\n");
         return EXIT_FAILURE;
       }
       
