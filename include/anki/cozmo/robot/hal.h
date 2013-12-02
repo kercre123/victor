@@ -214,9 +214,17 @@ namespace Anki
 
       
 #ifdef SERIAL_IMAGING
+      const u8 USB_MESSAGE_HEADER = 0xDD;
+      
       // Put a byte into a send buffer to be sent by LongExecution()
       // (Using same prototype as putc / USBPutChar for printf.)
       int USBBufferChar(int c);
+      
+      // Send a frame. (Currently just from the head camera.)
+      void USBSendFrame(void);
+
+      // Send the contents of the USB message buffer.
+      void USBSendMessage(void);
 #endif
 
       
