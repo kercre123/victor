@@ -294,6 +294,13 @@ namespace Anki {
       ReturnCode step_LongExecution()
       {
         
+#if defined(SERIAL_IMAGING)
+        HAL::SendFrame();
+        HAL::USBprintBuffer::SendMessage();
+#elseif defined(SIMULATOR)
+        
+#endif
+        
         // TODO: Get VisionSystem to work on robot
 #ifdef SIMULATOR
         if(VisionSystem::lookForBlocks() == EXIT_FAILURE) {
