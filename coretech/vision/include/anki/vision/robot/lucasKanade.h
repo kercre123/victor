@@ -24,6 +24,7 @@ namespace Anki
     {
       enum TransformType
       {
+        TRANSFORM_UNKNOWN,
         TRANSFORM_TRANSLATION,
         TRANSFORM_PROJECTIVE
         //TRANSFORM_AFFINE, // TODO: support affine
@@ -46,7 +47,7 @@ namespace Anki
 
         // Update the transformation. The format of the update should be as follows:
         // TRANSFORM_TRANSLATION: [-dx, -dy]
-        Result Update(const Array<f32> &update, MemoryStack scratch);
+        Result Update(const Array<f32> &update, MemoryStack scratch, TransformType updateType=TRANSFORM_UNKNOWN);
 
         Result Print(const char * const variableName = "Transformation");
 

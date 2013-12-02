@@ -98,7 +98,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result PlanarTransformation_f32::Update(const Array<f32> &update, MemoryStack scratch)
+      Result PlanarTransformation_f32::Update(const Array<f32> &update, MemoryStack scratch, TransformType updateType)
       {
         AnkiConditionalErrorAndReturnValue(update.IsValid(),
           RESULT_FAIL, "PlanarTransformation_f32::Update", "update is not valid");
@@ -106,19 +106,33 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(update.get_size(0) == 1,
           RESULT_FAIL, "PlanarTransformation_f32::Update", "update is the incorrect size");
 
+        if(updateType == TRANSFORM_UNKNOWN) {
+          updateType = this->transformType;
+        }
+
+        if(this->transformType == TRANSFORM_TRANSLATION) {
+          AnkiConditionalErrorAndReturnValue(updateType == TRANSFORM_TRANSLATION,
+            RESULT_FAIL, "PlanarTransformation_f32::Update", "cannot update this transform with the update type %d", updateType);
+        } else if(this->transformType == TRANSFORM_PROJECTIVE) {
+          AnkiConditionalErrorAndReturnValue(updateType == TRANSFORM_TRANSLATION || updateType == TRANSFORM_PROJECTIVE,
+            RESULT_FAIL, "PlanarTransformation_f32::Update", "cannot update this transform with the update type %d", updateType);
+        } else {
+          assert(false);
+        }
+
         const f32 * pUpdate = update[0];
 
-        if(transformType == TRANSFORM_TRANSLATION) {
+        if(updateType == TRANSFORM_TRANSLATION) {
           AnkiConditionalErrorAndReturnValue(update.get_size(1) == 2,
             RESULT_FAIL, "PlanarTransformation_f32::Update", "update is the incorrect size");
 
           // this.tform(1:2,3) = this.tform(1:2,3) - update;
           homography[0][2] -= pUpdate[0];
           homography[1][2] -= pUpdate[1];
-        } else { // if(transformType == TRANSFORM_TRANSLATION)
+        } else { // if(updateType == TRANSFORM_TRANSLATION)
           Array<f32> updateArray(3,3,scratch);
 
-          if(transformType == TRANSFORM_PROJECTIVE) {
+          if(updateType == TRANSFORM_PROJECTIVE) {
             AnkiConditionalErrorAndReturnValue(update.get_size(1) == 8,
               RESULT_FAIL, "PlanarTransformation_f32::Update", "update is the incorrect size");
 
@@ -127,7 +141,7 @@ namespace Anki
             updateArray[1][0] = pUpdate[3];        updateArray[1][1] = 1.0f + pUpdate[4]; updateArray[1][2] = pUpdate[5];
             updateArray[2][0] = pUpdate[6];        updateArray[2][1] = pUpdate[7];        updateArray[2][2] = 1.0f;
           } else {
-            AnkiError("PlanarTransformation_f32::Update", "Unknown transformation type %d", transformType);
+            AnkiError("PlanarTransformation_f32::Update", "Unknown transformation type %d", updateType);
             return RESULT_FAIL;
           }
 
@@ -146,7 +160,7 @@ namespace Anki
           }
 
           this->homography.Set(newHomography);
-        } // if(transformType == TRANSFORM_TRANSLATION) ... else
+        } // if(updateType == TRANSFORM_TRANSLATION) ... else
 
         return RESULT_OK;
       }
@@ -377,7 +391,7 @@ namespace Anki
               // X.*Iy(:)
               // Y.*Iy(:)
               // Iy(:)
-              // -X.^2.*Ix(:)-X.*Y.*Ix(:)
+              // -X.^2.*Ix(:)-X.*Y.*Iy(:)
               // -X.*Y.*Ix(:)-Y.^2.*Iy(:) ];
 
               Array<f32> tmp1(1, numPointsY*numPointsX, memory);
@@ -411,15 +425,15 @@ namespace Anki
               Matrix::Vectorize(isOutColumnMajor, templateDerivativeY, tmp1);
               this->A_full[iScale](5,5,0,-1).Set(tmp1);
 
-              // -X.^2.*Ix(:) - X.*Y.*Ix(:)
+              // -X.^2.*Ix(:) - X.*Y.*Iy(:)
               Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp1); // Ix(:)
               Matrix::DotMultiply<f32,f32,f32>(tmp1, xInV, tmp1); // Ix(:).*X
               Matrix::DotMultiply<f32,f32,f32>(tmp1, xInV, tmp1); // Ix(:).*X.^2
               Matrix::Subtract<f32,f32,f32>(0.0f, tmp1, tmp1); // -Ix(:).*X.^2
 
-              Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp2); // Ix(:)
-              Matrix::DotMultiply<f32,f32,f32>(tmp2, xInV, tmp2); // Ix(:).*X
-              Matrix::DotMultiply<f32,f32,f32>(tmp2, yInV, tmp2); // Ix(:).*X.*Y
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeY, tmp2); // Iy(:)
+              Matrix::DotMultiply<f32,f32,f32>(tmp2, xInV, tmp2); // Iy(:).*X
+              Matrix::DotMultiply<f32,f32,f32>(tmp2, yInV, tmp2); // Iy(:).*X.*Y
 
               Matrix::Subtract<f32,f32,f32>(tmp1,tmp2,tmp1);
 
@@ -439,6 +453,15 @@ namespace Anki
               Matrix::Subtract<f32,f32,f32>(tmp1,tmp2,tmp1);
 
               this->A_full[iScale](7,7,0,-1).Set(tmp1);
+
+              //{
+              //  Matlab matlab(false);
+              //  matlab.PutArray(this->A_full[iScale], "A_full_iScale");
+              //  matlab.PutArray(templateDerivativeX, "templateDerivativeX");
+              //  matlab.PutArray(templateDerivativeY, "templateDerivativeY");
+              //  matlab.PutArray(templateImage, "templateImage");
+              //  //matlab.PutArray(, "");
+              //}
             }
 
             {
@@ -493,9 +516,13 @@ namespace Anki
           if(IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, TRANSFORM_TRANSLATION, converged, memory) != RESULT_OK)
             return RESULT_FAIL;
 
+          this->get_transformation().Print("Translation");
+
           if(this->transformation.get_transformType() != TRANSFORM_TRANSLATION) {
             if(IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, this->transformation.get_transformType(), converged, memory) != RESULT_OK)
               return RESULT_FAIL;
+
+            this->get_transformation().Print("Other");
           }
         } // for(s32 iScale=numPyramidLevels; iScale>=0; iScale--)
 
@@ -522,15 +549,25 @@ namespace Anki
         const s32 numPointsY = templateCoordinates[whichScale].get_yGridVector().get_size();
         const s32 numPointsX = templateCoordinates[whichScale].get_xGridVector().get_size();
 
-        Array<f32> *A_part;
+        Array<f32> A_part;
 
         s32 numSystemParameters = -1;
         if(curTransformType == TRANSFORM_TRANSLATION) {
           numSystemParameters = 2;
 
           // Translation-only can be performed by grabbing a few rows of the A_full matrix
+          if(this->get_transformation().get_transformType() == TRANSFORM_PROJECTIVE) {
+            A_part = Array<f32>(2, this->A_full[whichScale].get_size(1), memory);
+            A_part(0,-1,0,-1).Set(this->A_full[whichScale](2,3,5,0,1,-1)); // grab the 2nd and 5th rows
+          } else if(this->get_transformation().get_transformType() == TRANSFORM_TRANSLATION) {
+            A_part = this->A_full[whichScale];
+          } else {
+            assert(false);
+          }
         } else if(curTransformType == TRANSFORM_PROJECTIVE) {
           numSystemParameters = 8;
+
+          A_part = this->A_full[whichScale];
         } else {
           assert(false);
         }
@@ -623,7 +660,7 @@ namespace Anki
 
           //  AtW = (A(inBounds,:).*this.W{i_scale}(inBounds,ones(1,size(A,2))))';
 
-          Array<f32> A = inBounds.SetArray(A_full[whichScale], 1, memory);
+          Array<f32> A = inBounds.SetArray(A_part, 1, memory);
 
           Array<f32> AW(A.get_size(0), A.get_size(1), memory);
           AW(0,-1,0,-1).Set(A);
@@ -649,17 +686,17 @@ namespace Anki
           if(Matrix::SolveLeastSquares_f32(AWAt, b, update, memory) != RESULT_OK)
             return RESULT_FAIL;
 
-          //{
-          //  Matlab matlab(false);
+          {
+            Matlab matlab(false);
 
-          //  matlab.PutArray(A, "A");
-          //  matlab.PutArray(AW, "AW");
-          //  matlab.PutArray(AWAt, "AWAt");
-          //  matlab.PutArray(b, "b");
-          //  matlab.PutArray(update, "update");
-          //}
+            matlab.PutArray(A, "A");
+            matlab.PutArray(AW, "AW");
+            matlab.PutArray(AWAt, "AWAt");
+            matlab.PutArray(b, "b");
+            matlab.PutArray(update, "update");
+          }
 
-          this->transformation.Update(update, memory);
+          this->transformation.Update(update, memory, curTransformType);
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
         return RESULT_OK;

@@ -37,14 +37,14 @@ templateRect = round([x0,y0;x1,y0;x1,y1;x0,y1]);
 % imshows(im1, im2)
 
 % mask1 = roipoly(im1, templateQuad(:,1), templateQuad(:,2));
-mask1 = roipoly(im1, templateRect(:,1), templateRect(:,2));
+mask1 = roipoly(im1, templateRect(:,2), templateRect(:,1));
 
 numScales = 2;
 
 figure(100); subplot(1,2,2); imshow(im1);
 
 % translation only
-LKtracker = LucasKanadeTracker(im1, mask1, 'Type', 'translation', 'DebugDisplay', true, 'UseBlurring', false, 'UseNormalization', true, 'NumScales', numScales);
+LKtracker = LucasKanadeTracker(im1, mask1, 'Type', 'translation', 'DebugDisplay', true, 'UseBlurring', false, 'UseNormalization', false, 'NumScales', numScales);
 converged = LKtracker.track(im2, 'MaxIterations', 50, 'ConvergenceTolerance', .05);
 disp(LKtracker.tform);
 figure(101); plotResults(im1, im2, templateQuad, LKtracker.tform);
