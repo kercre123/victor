@@ -1,4 +1,4 @@
-#ifdef _MSC_VER
+#ifndef ROBOT_HARDWARE
 
 #include "embeddedVisionBenchmarks.h"
 
