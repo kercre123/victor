@@ -2,6 +2,8 @@
 #include <cmath>
 #include <cstdlib>
 
+#include <queue>
+
 // Our Includes
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
@@ -14,6 +16,19 @@
 #include <webots/Robot.hpp>
 #include <webots/Supervisor.hpp>
 
+#ifndef SIMULATOR
+#error SIMULATOR should be defined by any target using sim_hal.cpp
+#endif
+
+#if defined(SERIAL_IMAGING) && !ANKICORETECH_USE_MATLAB
+#error ANKICORETECH_USE_MATLAB must be 1 when using simulator with serial imaging enabled.
+#endif
+
+#if ANKICORETECH_USE_MATLAB
+#include "engine.h"
+#include "anki/common/robot/matlabInterface.h"
+Engine *matlabEngine_ = NULL; // global matlab engine pointer
+#endif
 
 namespace Anki {
   namespace Cozmo {
@@ -81,6 +96,10 @@ namespace Anki {
       bool isConnected_;
       unsigned char recvBuf_[RECV_BUFFER_SIZE];
       s32 recvBufSize_;
+      
+#ifdef SERIAL_IMAGING
+      std::vector<char> USBprintBuffer_;
+#endif
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -346,6 +365,26 @@ namespace Anki {
       rx_->setChannel(robotID_);
       tx_->setChannel(robotID_);
       recvBufSize_ = 0;
+      
+#ifdef SERIAL_IMAGING
+      // A character buffer for messages
+      USBprintBuffer_.reserve(512);
+      
+      // Initialize the print buffer with the header bytes for the next message
+      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_HEADER[0]));
+      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_HEADER[1]));
+      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_HEADER[2]));
+      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_HEADER[3]));
+      USBprintBuffer_.push_back(static_cast<char>(USB_MESSAGE_HEADER));
+#endif
+      
+#if ANKICORETECH_USE_MATLAB
+      matlabEngine_ = NULL;
+      if (!(matlabEngine_ = engOpen(""))) {
+        PRINT("\nCan't start MATLAB engine!\n");
+        return EXIT_FAILURE;
+      }
+#endif
       
       isInitialized = true;
       return EXIT_SUCCESS;
@@ -755,6 +794,53 @@ namespace Anki {
       return 0;
     }
     
+    
+#ifdef SERIAL_IMAGING
+    int HAL::USBBufferChar(int c)
+    {
+      USBprintBuffer_.push_back(static_cast<char>(c));
+      return 0;
+    }
+    
+    // Send a frame. (Currently just from the head camera.)
+    void HAL::USBSendFrame(void)
+    {
+      // Send header
+      // Copy image to matlab
+      // Send footer
+    }
+    
+    // "Send" the contents of the USB message buffer.
+    void HAL::USBSendMessage(void)
+    {
+      // Append the footer
+      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_FOOTER[0]));
+      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_FOOTER[1]));
+      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_FOOTER[2]));
+      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_FOOTER[3]));
+      USBprintBuffer_.push_back(static_cast<char>(USB_MESSAGE_HEADER));
+      
+      USBprintBuffer_.push_back('\0'); // null-terminate the message (?)
+      
+
+      mxArray *mxMessage = mxCreateString(&(USBprintBuffer_[0]));
+      engPutVariable(matlabEngine_, "newMessage", mxMessage);
+      engEvalString(matlabEngine_,
+                    "serialBuffer.addToBuffer(newMessage); "
+                    "clear newMessage;");
+      
+      USBprintBuffer_.clear();
+      
+      // Initialize the print buffer with the header bytes for the next message
+      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_HEADER[0]));
+      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_HEADER[1]));
+      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_HEADER[2]));
+      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_HEADER[3]));
+      USBprintBuffer_.push_back(static_cast<char>(USB_MESSAGE_HEADER));
+                                
+      mxDestroyArray(mxMessage);
+    }
+#endif
     
     
     // Get the number of microseconds since boot
