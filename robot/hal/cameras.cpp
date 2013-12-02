@@ -309,7 +309,10 @@ namespace Anki
         cam->isWaitingForFrame = true;
         IRQEnable();
 
-        // TODO: Set new framebuffer address here
+        // Set new framebuffer address
+        u32 cif = cam->MXI_CAMX_BASE_ADR;
+        REG_WORD(cif + CIF_DMA0_START_ADR_OFFSET) = (u32)frame;
+        REG_WORD(cif + CIF_DMA0_START_SHADOW_OFFSET) = (u32)frame;
 
         // Setup continuous mode here to start running
         u32 address = cam->CIFX_DMA0_CFG_ADR;

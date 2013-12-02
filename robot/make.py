@@ -71,7 +71,6 @@ CCOPT = (
   '-I' + LIBC + 'include '
   '-I' + CIF_GENERIC + ' '
   '-Os -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 '
-  '-DMOVI_TOOLS '
 )
 
 CXXOPT = (
@@ -98,7 +97,7 @@ CXX = GCC_DIR + 'bin/sparc-elf-g++ '
 LD =  GCC_DIR + 'bin/sparc-elf-ld '
 MVCONV = PLATFORM + 'bin/moviConvert'
 
-LINKER_SCRIPT = 'ld/custom.ldscript' #'ld/' + MV_SOC_PLATFORM + '_default_memory_map.ldscript'
+LINKER_SCRIPT = 'ld/custom.ldscript'
 LDOPT = (
   '-O9 -t --gc-sections -M -warn-common -L ld -T ' + LINKER_SCRIPT + ' '
 )
@@ -222,9 +221,8 @@ if __name__ == '__main__':
       print 'Invalid argument: ' + arg
       sys.exit(1)
 
-  # TODO: Get supervisor directory building/linking
   if not isTest:
-    LEON_SOURCE += addSources('./supervisor/src')
+    LEON_SOURCE += addSources('supervisor/src')
     pass
   
   for src in (LEON_SOURCE):
@@ -233,11 +231,14 @@ if __name__ == '__main__':
   objects = ''
   for key in srcToObj.keys():
     objects += ' ' + srcToObj[key]
+
+  with open('ld/objects.ldscript', 'w+') as f:
+    f.write('INPUT(' + objects + ' )\n')
   
   print 'Linking ' + TARGET + '.elf'
   file = OUTPUT + TARGET + '.elf'
-  s = LD + ' ' + LDOPT + ' -o ' + file + ' ' + objects + ' > ' + OUTPUT + TARGET + '.map'
-  
+  s = LD + ' ' + LDOPT + ' -o ' + file + ' > ' + OUTPUT + TARGET + '.map'
+
   # Write command line out to file and execute from there
   # so that we don't exceed the command line limit of os.system()  
   ldCmdFile = 'ldCmd.bat'
