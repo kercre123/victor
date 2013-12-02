@@ -71,3 +71,4 @@ movidiusTests/shaveTests2/output
 robot/evmMake/output
 movidiusTests/dmaTests/output
 ims.mat
+robot/ld/objects.ldscript
