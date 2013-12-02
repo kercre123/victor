@@ -36,7 +36,7 @@ templateRect = templateRect / scale;
 corners = templateQuad;
 
 % Test original tracker
-LKtracker = LucasKanadeTracker(im1Small, mask1Small, 'EstimateAffine', false, 'EstimateScale', false, 'DebugDisplay', false, 'UseBlurring', false, 'UseNormalization', false, 'NumScales', numScales);
+LKtracker = LucasKanadeTracker(im1Small, mask1Small, 'Type', 'homography', 'DebugDisplay', false, 'UseBlurring', false, 'UseNormalization', false, 'NumScales', numScales);
 converged = LKtracker.track(im2Small, 'MaxIterations', 50, 'ConvergenceTolerance', .25);
 disp(LKtracker.tform);
 

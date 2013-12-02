@@ -18,6 +18,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/miscVisionKernels.h"
 #include "anki/vision/robot/integralImage.h"
 #include "anki/vision/robot/draw_vision.h"
+#include "anki/vision/robot/lucasKanade.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,39 +44,15 @@ Matlab matlab(false);
 #include "gtest/gtest.h"
 #endif
 
-////#define BUFFER_IN_DDR_WITH_L2
-//#define BUFFER_IN_CMX
-//
-//#if defined(BUFFER_IN_DDR_WITH_L2) && defined(BUFFER_IN_CMX)
-//You cannot use both CMX and L2 Cache;
-//#endif
-//
-//#define MAX_BYTES 70000
-//
-//#ifdef _MSC_VER
-//static char buffer[MAX_BYTES];
-//#else
-//
-//#ifdef BUFFER_IN_CMX
-//static char buffer[MAX_BYTES] __attribute__((section(".cmx.bss,CMX")));
-//#else // #ifdef BUFFER_IN_CMX
-//
-//#ifdef BUFFER_IN_DDR_WITH_L2
-//static char buffer[MAX_BYTES] __attribute__((section(".ddr.bss,DDR"))); // With L2 cache
-//#else
-//static char buffer[MAX_BYTES] __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))); // No L2 cache
-//#endif
-//
-//#endif // #ifdef BUFFER_IN_CMX ... #else
-//
-//#endif // #ifdef USING_MOVIDIUS_COMPILER
-
 //#define RUN_MAIN_BIG_MEMORY_TESTS
 //#define RUN_ALL_BIG_MEMORY_TESTS
-#define RUN_LOW_MEMORY_12345
+#define RUN_LOW_MEMORY_IMAGE_TESTS
+//#define RUN_TRACKER_TESTS
 
 //#ifdef RUN_MAIN_BIG_MEMORY_TESTS
 #include "../../blockImages/blockImage50.h"
+#include "../../blockImages/blockImages00189_80x60.h"
+#include "../../blockImages/blockImages00190_80x60.h"
 //#endif
 
 #ifdef RUN_ALL_BIG_MEMORY_TESTS
@@ -85,7 +62,12 @@ Matlab matlab(false);
 
 #define USE_STATIC_BUFFERS
 
-#if defined(RUN_LOW_MEMORY_12345) && !defined(RUN_MAIN_BIG_MEMORY_TESTS) && !defined(RUN_ALL_BIG_MEMORY_TESTS)
+#if defined(RUN_TRACKER_TESTS) && defined(RUN_LOW_MEMORY_IMAGE_TESTS)
+Cannot run tracker and low memory tests at the same teim
+#endif
+
+#if defined(RUN_LOW_MEMORY_IMAGE_TESTS) && !defined(RUN_MAIN_BIG_MEMORY_TESTS) && !defined(RUN_ALL_BIG_MEMORY_TESTS)
+
 #define BIG_BUFFER_SIZE0 320000
 #define BIG_BUFFER_SIZE1 300000
 #define BIG_BUFFER_SIZE2 300000
@@ -98,7 +80,24 @@ Matlab matlab(false);
 #define BIG_BUFFER1_LOCATION
 #define BIG_BUFFER2_LOCATION
 #endif
+
+#elif defined(RUN_TRACKER_TESTS) && !defined(RUN_MAIN_BIG_MEMORY_TESTS) && !defined(RUN_ALL_BIG_MEMORY_TESTS)
+
+#define BIG_BUFFER_SIZE0 320000
+#define BIG_BUFFER_SIZE1 600000
+#define BIG_BUFFER_SIZE2 16
+#if defined(USING_MOVIDIUS_COMPILER)
+#define BIG_IMAGE_BUFFER_LOCATION __attribute__((section(".bigBuffers")))
+#define BIG_BUFFER1_LOCATION __attribute__((section(".smallBuffers1")))
+#define BIG_BUFFER2_LOCATION __attribute__((section(".smallBuffers2")))
 #else
+#define BIG_IMAGE_BUFFER_LOCATION
+#define BIG_BUFFER1_LOCATION
+#define BIG_BUFFER2_LOCATION
+#endif
+
+#else
+
 #define BIG_BUFFER_SIZE0 4000000
 #define BIG_BUFFER_SIZE1 4000000
 #define BIG_BUFFER_SIZE2 4000000
@@ -111,14 +110,15 @@ Matlab matlab(false);
 #define BIG_BUFFER1_LOCATION
 #define BIG_BUFFER2_LOCATION
 #endif
+
 #endif
 
 #ifdef USE_STATIC_BUFFERS
-BIG_IMAGE_BUFFER_LOCATION char bigBuffer0[BIG_BUFFER_SIZE0];
+  BIG_IMAGE_BUFFER_LOCATION char bigBuffer0[BIG_BUFFER_SIZE0];
 BIG_BUFFER1_LOCATION char bigBuffer1[BIG_BUFFER_SIZE1];
 BIG_BUFFER2_LOCATION char bigBuffer2[BIG_BUFFER_SIZE2];
 #else // #ifdef USE_STATIC_BUFFERS
-char *bigBuffer0 = NULL;
+  char *bigBuffer0 = NULL;
 char *bigBuffer1 = NULL;
 char *bigBuffer2 = NULL;
 #endif // #ifdef USE_STATIC_BUFFERS ... else ...
@@ -146,6 +146,58 @@ void InitializeBuffers()
     bigBuffer2 = (char*)malloc(BIG_BUFFER_SIZE2);
 #endif // #if defined(USING_MOVIDIUS_COMPILER) ... else ...
 #endif // #ifndef USE_STATIC_BUFFERS
+}
+
+GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
+{
+#ifndef RUN_TRACKER_TESTS
+  //ASSERT_TRUE(false);
+#else
+
+  const s32 imageHeight = 60;
+  const s32 imageWidth = 80;
+
+  const s32 numPyramidLevels = 3;
+
+  const f32 ridgeWeight = 0.0f;
+
+  const Rectangle<f32> templateRegion(13, 33, 22, 43);
+
+  const s32 maxIterations = 25;
+  const f32 convergenceTolerance = static_cast<f32>(1e-3);
+
+  InitializeBuffers();
+
+  // TODO: add check that images were loaded correctly
+
+  MemoryStack scratch0(&bigBuffer0[0], 80*60*2 + 256);
+  MemoryStack scratch1(&bigBuffer1[0], 600000);
+
+  ASSERT_TRUE(scratch0.IsValid());
+  ASSERT_TRUE(scratch1.IsValid());
+
+  ASSERT_TRUE(blockImages00189_80x60_HEIGHT == imageHeight && blockImages00190_80x60_HEIGHT == imageHeight);
+  ASSERT_TRUE(blockImages00189_80x60_WIDTH == imageWidth && blockImages00190_80x60_WIDTH == imageWidth);
+
+  Array<u8> image1(imageHeight, imageWidth, scratch0);
+  image1.Set_unsafe(blockImages00189_80x60, imageWidth*imageHeight);
+
+  Array<u8> image2(imageHeight, imageWidth, scratch0);
+  image2.Set_unsafe(blockImages00190_80x60, imageWidth*imageHeight);
+
+  TemplateTracker::LucasKanadeTracker_f32 tracker(imageHeight, imageWidth, numPyramidLevels, TemplateTracker::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
+
+  ASSERT_TRUE(tracker.IsValid());
+
+  ASSERT_TRUE(tracker.InitializeTemplate(image1, templateRegion, scratch1) == RESULT_OK);
+
+  ASSERT_TRUE(tracker.IsValid());
+
+  ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
+
+#endif // RUN_TRACKER_TESTS
+
+  GTEST_RETURN_HERE;
 }
 
 //GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScaleAndBinarize)
@@ -323,88 +375,6 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C_emulateShave)
       ASSERT_TRUE(filteredOutput[0][i] == 81);
     }
   }
-
-  ////
-  //// Test with border of 1
-  ////
-
-  //// imBig2 = [1,1,2,3,3;1,1,2,3,3;9,9,9,9,9;0,0,0,1,1;0,0,0,1,1];
-  //const s32 border1_groundTruthRows[5][5] = {
-  //  {1, 2, 4, 7, 10},
-  //  {2, 4, 8, 14, 20},
-  //  {11, 22, 35, 50, 65},
-  //  {11, 22, 35, 51, 67},
-  //  {11, 22, 35, 52, 69}};
-
-  //ScrollingIntegralImage_u8_s32 ii_border1(4, 3, 1, ms);
-
-  //ASSERT_TRUE(ii_border1.ScrollDown(image, 4, ms) == RESULT_OK);
-
-  //{
-  //  Rectangle<s16> filter_testBorder1_0(0, 0, 0, 2);
-  //  const s32 imageRow_testBorder1_0 = 0;
-  //  const s32 filteredOutput_groundTruth_testBorder1_0[] = {10, 11, 13};
-  //  ASSERT_TRUE(ii_border1.FilterRow(acceleration, filter_testBorder1_0, imageRow_testBorder1_0, filteredOutput) == RESULT_OK);
-
-  //  for(s32 i=0; i<3; i++) {
-  //    ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder1_0[i]);
-  //  }
-  //}
-
-  //ASSERT_TRUE(ii_border1.ScrollDown(image, 1, ms) == RESULT_OK);
-
-  //{
-  //  Rectangle<s16> filter_testBorder1_1(0, 1, 0, 2);
-  //  const s32 imageRow_testBorder1_1 = 1;
-  //  const s32 filteredOutput_groundTruth_testBorder1_1[] = {18, 20, 22};
-  //  ASSERT_TRUE(ii_border1.FilterRow(acceleration, filter_testBorder1_1, imageRow_testBorder1_1, filteredOutput) == RESULT_OK);
-
-  //  for(s32 i=0; i<3; i++) {
-  //    ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder1_1[i]);
-  //  }
-  //}
-
-  ////
-  //// Test with border of 0
-  ////
-
-  //const s32 border0_groundTruthRows[4][3] = {
-  //  {1,  3,  6},
-  //  {10, 21, 33},
-  //  {10, 21, 34},
-  //  {15, 31, 49}};
-
-  //ScrollingIntegralImage_u8_s32 ii_border0(3, 3, 0, ms);
-
-  //ASSERT_TRUE(ii_border0.get_rowOffset() == 0);
-
-  //ASSERT_TRUE(ii_border0.ScrollDown(image2, 3, ms) == RESULT_OK);
-
-  //{
-  //  Rectangle<s16> filter_testBorder2_0(-1, 0, 0, 0);
-  //  const s32 imageRow_testBorder2_0 = 1;
-  //  const s32 filteredOutput_groundTruth_testBorder2_0[] = {0, 0, 18};
-  //  ASSERT_TRUE(ii_border0.FilterRow(acceleration, filter_testBorder2_0, imageRow_testBorder2_0, filteredOutput) == RESULT_OK);
-
-  //  //filteredOutput.Print("filteredOutput");
-
-  //  for(s32 i=0; i<3; i++) {
-  //    ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder2_0[i]);
-  //  }
-  //}
-
-  //ASSERT_TRUE(ii_border0.ScrollDown(image2, 1, ms) == RESULT_OK);
-
-  //{
-  //  Rectangle<s16> filter_testBorder2_1(0, 1, 0, 0);
-  //  const s32 imageRow_testBorder2_1 = 2;
-  //  const s32 filteredOutput_groundTruth_testBorder2_1[] = {0, 1, 0};
-  //  ASSERT_TRUE(ii_border0.FilterRow(acceleration, filter_testBorder2_1, imageRow_testBorder2_1, filteredOutput) == RESULT_OK);
-
-  //  for(s32 i=0; i<3; i++) {
-  //    ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder2_1[i]);
-  //  }
-  //}
 
   GTEST_RETURN_HERE;
 }
@@ -979,7 +949,7 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
 
 GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
 {
-#ifndef RUN_LOW_MEMORY_12345
+#ifndef RUN_LOW_MEMORY_IMAGE_TESTS
   ASSERT_TRUE(false);
 #else
 
@@ -1099,7 +1069,7 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
   ASSERT_TRUE(markers[0].corners[2] == Point<s16>(282,265));
   ASSERT_TRUE(markers[0].corners[3] == Point<s16>(279,339));
 
-#endif // RUN_LOW_MEMORY_12345
+#endif // RUN_LOW_MEMORY_IMAGE_TESTS
 
   GTEST_RETURN_HERE;
 }

@@ -65,7 +65,7 @@ classdef LucasKanadeTracker < handle
             UseBlurring = true;
             UseNormalization = false;
             RidgeWeight = 0;
-            TrackingResolution = size(firstImg(:,:,1));
+            TrackingResolution = [size(firstImg,2), size(firstImg,1)];
             ErrorTolerance = [];
             
             parseVarargin(varargin{:});
@@ -157,10 +157,10 @@ classdef LucasKanadeTracker < handle
                 
                 % FIgure ou the finest scale we need to use to track at the
                 % specified resolution
-                this.finestScale = floor(log2(min(nrows,ncols)/min(TrackingResolution)));
+                this.finestScale = max(1, floor(log2(min(nrows,ncols)/min(TrackingResolution))));
                 
             end % IF TrackingResolution not empty
-            
+                        
             this.xcen = (xmax + xmin)/2;
             this.ycen = (ymax + ymin)/2;
             

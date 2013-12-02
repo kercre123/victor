@@ -112,35 +112,6 @@ namespace Anki
         flags);
     }
 
-    // Immediate evaluation of a LinearSequence, into this Array
-    template<typename Type> Array<Type>::Array(const LinearSequence<Type> &sequence, MemoryStack &memory, const Flags::Buffer flags)
-    {
-      const s32 numRows = 1;
-      const s32 numCols = sequence.get_size();
-
-      AnkiConditionalError(numCols >= 0 && numRows >= 0,
-        "Array<Type>::Array", "Invalid size");
-
-      s32 numBytesAllocated = 0;
-
-      void * const allocatedBuffer = AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, flags), memory, numBytesAllocated, flags, false);
-
-      InitializeBuffer(numRows,
-        numCols,
-        reinterpret_cast<Type*>(allocatedBuffer),
-        numBytesAllocated,
-        flags);
-
-      const Type startValue = sequence.get_start();
-      const Type increment = sequence.get_increment();
-
-      Type curValue = startValue;
-      for(s32 x=0; x<numCols; x++) {
-        this->data[x] = curValue;
-        curValue += increment;
-      }
-    }
-
     template<typename Type> const Type* Array<Type>::Pointer(const s32 index0, const s32 index1) const
     {
       AnkiConditionalWarnAndReturnValue(index0 >= 0 && index1 >= 0 && index0 < size[0] && index1 < size[1],
@@ -149,8 +120,7 @@ namespace Anki
       AnkiConditionalWarnAndReturnValue(this->IsValid(),
         0, "Array<Type>::Pointer", "Array<Type> is not valid");
 
-      return reinterpret_cast<const Type*>( reinterpret_cast<const char*>(this->data) +
-        index1*sizeof(Type) + index0*stride );
+      return reinterpret_cast<const Type*>( reinterpret_cast<const char*>(this->data) + index0*stride ) + index1;
     }
 
     template<typename Type> Type* Array<Type>::Pointer(const s32 index0, const s32 index1)
@@ -161,18 +131,17 @@ namespace Anki
       AnkiConditionalWarnAndReturnValue(this->IsValid(),
         0, "Array<Type>::Pointer", "Array<Type> is not valid");
 
-      return reinterpret_cast<Type*>( reinterpret_cast<char*>(this->data) +
-        index1*sizeof(Type) + index0*stride );
+      return reinterpret_cast<Type*>( reinterpret_cast<char*>(this->data) + index0*stride ) + index1;
     }
 
     template<typename Type> inline const Type * Array<Type>::operator[](const s32 index0) const
     {
-      return Pointer(index0, 0);
+      return reinterpret_cast<const Type*>( reinterpret_cast<const char*>(this->data) + index0*stride );
     }
 
     template<typename Type> inline Type * Array<Type>::operator[](const s32 index0)
     {
-      return Pointer(index0, 0);
+      return reinterpret_cast<Type*>( reinterpret_cast<char*>(this->data) + index0*stride );
     }
 
     template<typename Type> const Type* Array<Type>::Pointer(const Point<s16> &point) const
@@ -201,8 +170,8 @@ namespace Anki
 
     template<typename Type> ArraySlice<Type> Array<Type>::operator() (s32 minY, s32 maxY, s32 minX, s32 maxX)
     {
-      LinearSequence<s32> ySlice = IndexSequence(minY, 1, maxY, this->size[0]);
-      LinearSequence<s32> xSlice = IndexSequence(minX, 1, maxX, this->size[1]);
+      LinearSequence<s32> ySlice = IndexSequence<s32>(minY, 1, maxY, this->size[0]);
+      LinearSequence<s32> xSlice = IndexSequence<s32>(minX, 1, maxX, this->size[1]);
 
       ArraySlice<Type> slice(*this, ySlice, xSlice);
 
@@ -388,12 +357,44 @@ namespace Anki
     // Note: The myriad has many issues with static initialization of arrays, so this should not used with caution
     template<typename Type> s32 Array<Type>::Set(const Type value)
     {
-      AnkiConditionalError(this->IsValid(), "Array<Type>::Set", "Array<Type> is not valid");
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        0, "Array<Type>::Set", "Array<Type> is not valid");
 
       for(s32 y=0; y<size[0]; y++) {
         Type * restrict pThisData = Pointer(y, 0);
         for(s32 x=0; x<size[1]; x++) {
           pThisData[x] = value;
+        }
+      }
+
+      return size[0]*size[1];
+    }
+
+    template<typename Type> s32 Array<Type>::Set(const Array<Type> &in)
+    {
+      return this->SetCast<Type>(in);
+    }
+
+    template<typename Type> template<typename InType> s32 Array<Type>::SetCast(const Array<InType> &in)
+    {
+      const s32 inHeight = in.get_size(0);
+      const s32 inWidth = in.get_size(1);
+
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        0, "Array<Type>::Set", "this Array is not valid");
+
+      AnkiConditionalErrorAndReturnValue(in.IsValid(),
+        0, "Array<Type>::Set", "Array in is not valid");
+
+      AnkiConditionalErrorAndReturnValue(inHeight == this->size[0] && inWidth == this->size[1],
+        0, "Array<Type>::Set", "Array sizes don't match");
+
+      for(s32 y=0; y<size[0]; y++) {
+        const InType * restrict pIn = in.Pointer(y, 0);
+        Type * restrict pThisData = Pointer(y, 0);
+
+        for(s32 x=0; x<size[1]; x++) {
+          pThisData[x] = static_cast<Type>(pIn[x]);
         }
       }
 

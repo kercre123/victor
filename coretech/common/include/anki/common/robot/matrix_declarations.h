@@ -37,21 +37,35 @@ namespace Anki
       // Return the sum of every element in the Array
       template<typename Array_Type, typename Accumulator_Type> Accumulator_Type Sum(const ConstArraySliceExpression<Array_Type> &mat);
 
+      // Return the mean of every element in the Array
+      template<typename Array_Type, typename Accumulator_Type> Array_Type Mean(const ConstArraySliceExpression<Array_Type> &mat);
+
       //
       // Elementwise matrix operations
       //
 
       // Elementwise add two arrays. in1, in2, and out can be the same array
-      template<typename InType, typename OutType> Result Add(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result Add(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result Add(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result Add(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
 
-      //// Elementwise subtract two arrays. in1, in2, and out can be the same array
-      //template<typename InType, typename OutType> Result Subtract(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      // Elementwise subtract two arrays. in1, in2, and out can be the same array
+      template<typename InType, typename IntermediateType, typename OutType> Result Subtract(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result Subtract(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result Subtract(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
 
-      //// Elementwise multiply two arrays. in1, in2, and out can be the same array
-      //template<typename InType, typename OutType> Result DotMultiply(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<OutType> &in2, ArraySlice<OutType> out);
+      // Elementwise multiply two arrays. in1, in2, and out can be the same array
+      template<typename InType, typename IntermediateType, typename OutType> Result DotMultiply(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result DotMultiply(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result DotMultiply(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
 
-      //// Elementwise divide two arrays. in1, in2, and out can be the same array
-      //template<typename InType, typename OutType> Result DotDivide(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      // Elementwise divide two arrays. in1, in2, and out can be the same array
+      template<typename InType, typename IntermediateType, typename OutType> Result DotDivide(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result DotDivide(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out);
+      template<typename InType, typename IntermediateType, typename OutType> Result DotDivide(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+
+      // Elementwise exponential on an array
+      template<typename InType, typename IntermediateType, typename OutType> Result Exp(const ConstArraySliceExpression<InType> &in, ArraySlice<OutType> out);
 
       //
       // Standard matrix operations
@@ -60,6 +74,33 @@ namespace Anki
       // Perform the matrix multiplication "out = in1 * in2"
       // Note that this is the naive O(n^3) Definition
       template<typename InType, typename OutType> Result Multiply(const Array<InType> &in1, const Array<InType> &in2, Array<OutType> &out);
+
+      // Perform the matrix multiplication "out = in1 * in2'"
+      // Note that this is the naive O(n^3) Definition
+      // MultiplyTranspose has better access patterns than Multiply for certain types of arrays, so could be a lot faster (and easier to accelerate)
+      template<typename InType, typename OutType> Result MultiplyTranspose(const Array<InType> &in1, const Array<InType> &in2Transposed, Array<OutType> &out);
+
+      //
+      // Linear Solvers
+      //
+
+      // Solves Ax = b
+      // Specifically, it uses SVD to minimize ||Ax - b||
+      // Note that the A, b, and x matrices are transposed (this is because for large numbers of samples, transposed inputs are liable to be faster)
+      Result SolveLeastSquares_f32(const Array<f32> &At, const Array<f32> &bt, Array<f32> &xt, MemoryStack scratch);
+      Result SolveLeastSquares_f64(const Array<f64> &At, const Array<f64> &bt, Array<f64> &xt, MemoryStack scratch);
+
+      //
+      // Matrix structure operations
+      //
+
+      // matlab equivalent: out = reshape(in, [M,N]);
+      template<typename TypeIn, typename TypeOut> Result Reshape(const bool isColumnMajor, const Array<TypeIn> &in, Array<TypeOut> &out);
+      template<typename TypeIn, typename TypeOut> Array<TypeOut> Reshape(const bool isColumnMajor, const Array<TypeIn> &in, const s32 newHeight, const s32 newWidth, MemoryStack &memory);
+
+      // matlab equivalent: out = in(:);
+      template<typename TypeIn, typename TypeOut> Result Vectorize(const bool isColumnMajor, const Array<TypeIn> &in, Array<TypeOut> &out);
+      template<typename TypeIn, typename TypeOut> Array<TypeOut> Vectorize(const bool isColumnMajor, const Array<TypeIn> &in, MemoryStack &memory);
 
       //
       // Misc matrix operations
@@ -70,6 +111,41 @@ namespace Anki
       // 2. When lowerToUpper==false, copies the upper (right) triangle to the lower (left)  triangle
       // Functionally the same as OpenCV completeSymm()
       template<typename Type> Result MakeSymmetric(Type &arr, bool lowerToUpper = false);
+
+      // There's probably no need to use these directly. Instead, use the normal Matrix:: operations, like Matrix::Add
+      namespace Elementwise
+      {
+        template<typename InType, typename IntermediateType, typename OutType> class Add {
+        public:
+          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(static_cast<IntermediateType>(value1) + static_cast<IntermediateType>(value2));}
+        };
+
+        template<typename InType, typename IntermediateType, typename OutType> class Subtract {
+        public:
+          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(static_cast<IntermediateType>(value1) - static_cast<IntermediateType>(value2));}
+        };
+
+        template<typename InType, typename IntermediateType, typename OutType> class DotMultiply {
+        public:
+          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(static_cast<IntermediateType>(value1) * static_cast<IntermediateType>(value2));}
+        };
+
+        template<typename InType, typename IntermediateType, typename OutType> class DotDivide {
+        public:
+          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(static_cast<IntermediateType>(value1) / static_cast<IntermediateType>(value2));}
+        };
+
+        // Technically a unary operator, but we ignore the second parameter
+        // TODO: if this is slow, make a unary version of ApplyOperation
+        template<typename InType, typename IntermediateType, typename OutType> class Exp {
+        public:
+          static inline OutType BinaryElementwiseOperation(const InType value1, const InType value2) {return static_cast<OutType>(expf(static_cast<IntermediateType>(value1)));}
+        };
+
+        template<typename InType, typename Operator, typename OutType> Result ApplyOperation(const ConstArraySliceExpression<InType> &in1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+        template<typename InType, typename Operator, typename OutType> Result ApplyOperation(const ConstArraySliceExpression<InType> &in1, const InType value2, ArraySlice<OutType> out);
+        template<typename InType, typename Operator, typename OutType> Result ApplyOperation(const InType value1, const ConstArraySliceExpression<InType> &in2, ArraySlice<OutType> out);
+      } // namespace Elementwise
     } // namespace Matrix
   } // namespace Embedded
 } // namespace Anki

@@ -67,11 +67,6 @@ extern "C" {
   // Returns 1 if it is odd, zero otherwise
   s32 IsOdd(const s32 x);
 
-  // [a b]
-  // [c d]
-  // return a*d - b*c;
-  s32 Determinant2x2(const s32 a, const s32 b, const s32 c, const s32 d);
-
   // Get the current system time. Currently only implemented for MSVC and generic linux
   double GetTime();
 

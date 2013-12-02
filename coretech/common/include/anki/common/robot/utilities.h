@@ -90,6 +90,41 @@ namespace Anki
 
       return number;
     }
+
+    template<typename Type> Type Determinant2x2(const Type a, const Type b, const Type c, const Type d)
+    {
+      return a*d - b*c;
+    }
+
+    template<typename Type> Type Determinant3x3(const Type a, const Type b, const Type c, const Type d, const Type e, const Type f, const Type g, const Type h, const Type i)
+    {
+      return a*(e*i - f*h) - b*(d*i - f*g) + c*(d*h - e*g);
+    }
+
+    template<typename Type> void Invert3x3(Type &a, Type &b, Type &c, Type &d, Type &e, Type &f, Type &g, Type &h, Type &i)
+    {
+      const Type determinantInverse = static_cast<Type>(1) / Determinant3x3(a,b,c,d,e,f,g,h,i);
+
+      const Type A =  (e*i - f*h);
+      const Type B = -(d*i - f*g);
+      const Type C =  (d*h - e*g);
+      const Type D = -(b*i - c*h);
+      const Type E =  (a*i - c*g);
+      const Type F = -(a*h - b*g);
+      const Type G =  (b*f - c*e);
+      const Type H = -(a*f - c*d);
+      const Type I =  (a*e - b*d);
+
+      a = A * determinantInverse;
+      b = D * determinantInverse;
+      c = G * determinantInverse;
+      d = B * determinantInverse;
+      e = E * determinantInverse;
+      f = H * determinantInverse;
+      g = C * determinantInverse;
+      h = F * determinantInverse;
+      i = I * determinantInverse;
+    }
   } // namespace Embedded
 } // namespace Anki
 

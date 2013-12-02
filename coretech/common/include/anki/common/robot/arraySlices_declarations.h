@@ -72,9 +72,11 @@ namespace Anki
 
       // If automaticTranspose==true, then you can set a MxN slice with a NxM input
       // Matlab allows this for vectors, though this will also work for arbitrary-sized arrays
-      Result Set(const ConstArraySliceExpression<Type> &input, bool automaticTranspose=true);
+      s32 Set(const ConstArraySliceExpression<Type> &input, bool automaticTranspose=true);
 
-      Result Set(const Type value);
+      s32 Set(const LinearSequence<Type> &input);
+
+      s32 Set(const Type value);
 
       Array<Type>& get_array();
     }; // template<typename Type> class ArraySlice
