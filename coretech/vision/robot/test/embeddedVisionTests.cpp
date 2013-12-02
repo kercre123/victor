@@ -14,6 +14,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/gtestLight.h"
 #include "anki/common/robot/matlabInterface.h"
 #include "anki/common/robot/benchmarking_c.h"
+#include "anki/common/robot/comparisons.h"
+#include "anki/common/robot/arrayPatterns.h"
 
 #include "anki/vision/robot/miscVisionKernels.h"
 #include "anki/vision/robot/integralImage.h"
@@ -185,17 +187,52 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
   Array<u8> image2(imageHeight, imageWidth, scratch0);
   image2.Set_unsafe(blockImages00190_80x60, imageWidth*imageHeight);
 
-  TemplateTracker::LucasKanadeTracker_f32 tracker(imageHeight, imageWidth, numPyramidLevels, TemplateTracker::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
+  // Translation-only LK
+  {
+    PUSH_MEMORY_STACK(scratch1);
 
-  ASSERT_TRUE(tracker.IsValid());
+    TemplateTracker::LucasKanadeTracker_f32 tracker(imageHeight, imageWidth, numPyramidLevels, TemplateTracker::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
 
-  ASSERT_TRUE(tracker.InitializeTemplate(image1, templateRegion, scratch1) == RESULT_OK);
+    ASSERT_TRUE(tracker.IsValid());
 
-  ASSERT_TRUE(tracker.IsValid());
+    ASSERT_TRUE(tracker.InitializeTemplate(image1, templateRegion, scratch1) == RESULT_OK);
 
-  ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
+    ASSERT_TRUE(tracker.IsValid());
 
-  tracker.get_transformation().Print();
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
+
+    //tracker.get_transformation().Print();
+
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    transform_groundTruth[0][2] = -0.336588f;
+    transform_groundTruth[1][2] = -0.234671f;
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .001, .0001));
+  }
+
+  // Projective LK
+  {
+    PUSH_MEMORY_STACK(scratch1);
+
+    TemplateTracker::LucasKanadeTracker_f32 tracker(imageHeight, imageWidth, numPyramidLevels, TemplateTracker::TRANSFORM_PROJECTIVE, ridgeWeight, scratch1);
+
+    ASSERT_TRUE(tracker.IsValid());
+
+    ASSERT_TRUE(tracker.InitializeTemplate(image1, templateRegion, scratch1) == RESULT_OK);
+
+    ASSERT_TRUE(tracker.IsValid());
+
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
+
+    tracker.get_transformation().Print();
+
+    /*Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    transform_groundTruth[0][0] = f; transform_groundTruth[0][1] = f; transform_groundTruth[0][2] = f;
+    transform_groundTruth[1][0] = f; transform_groundTruth[1][1] = f; transform_groundTruth[1][2] = f;
+    transform_groundTruth[2][0] = f; transform_groundTruth[2][1] = f;
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .001, .0001));*/
+  }
 
 #endif // RUN_TRACKER_TESTS
 

@@ -141,6 +141,10 @@ namespace Anki
 
           Matrix::Multiply(this->homography, updateArray, newHomography);
 
+          if(!FLT_NEAR(newHomography[2][2], 1.0f)) {
+            Matrix::DotDivide<f32,f32,f32>(newHomography, newHomography[2][2], newHomography);
+          }
+
           this->homography.Set(newHomography);
         } // if(transformType == TRANSFORM_TRANSLATION) ... else
 
@@ -174,6 +178,8 @@ namespace Anki
         if(this->homography.Set(in) != 9)
           return RESULT_FAIL;
 
+        assert(FLT_NEAR(in[2][2], 1.0f));
+
         return RESULT_OK;
       }
 
@@ -191,8 +197,8 @@ namespace Anki
         AnkiConditionalErrorAndReturn(numPyramidLevels > 0,
           "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "numPyramidLevels must be greater than zero");
 
-        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION,
-          "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Only TRANSFORM_TRANSLATION is supported");
+        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_PROJECTIVE,
+          "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Only TRANSFORM_TRANSLATION and TRANSFORM_PROJECTIVE are supported");
 
         AnkiConditionalErrorAndReturn(ridgeWeight >= 0.0f,
           "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "ridgeWeight must be greater or equal to zero");
@@ -240,6 +246,9 @@ namespace Anki
       {
         const bool isOutColumnMajor = true; // TODO: change to false, which will probably be faster
 
+        AnkiConditionalErrorAndReturnValue(this->isValid,
+          RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "This object's constructor failed, so it cannot be initialized");
+
         AnkiConditionalErrorAndReturnValue(this->isInitialized == false,
           RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "This object has already been initialized");
 
@@ -249,10 +258,13 @@ namespace Anki
         // We do this early, before any memory is allocated This way, an early return won't be able
         // to leak memory with multiple calls to this object
         this->isInitialized = true;
+        this->isValid = false;
 
         s32 numTransformationParameters;
         if(transformation.get_transformType() == TRANSFORM_TRANSLATION) {
           numTransformationParameters = 2;
+        } else if(transformation.get_transformType() == TRANSFORM_PROJECTIVE) {
+          numTransformationParameters = 8;
         }
 
         this->templateRegionHeight = templateRegion.bottom - templateRegion.top + 1;
@@ -345,11 +357,88 @@ namespace Anki
 
               Array<f32> tmp(1, numPointsY*numPointsX, memory);
 
-              Matrix::Vectorize(true, templateDerivativeX, tmp);
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp);
               this->A_full[iScale](0,0,0,-1).Set(tmp);
 
-              Matrix::Vectorize(true, templateDerivativeY, tmp);
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeY, tmp);
               this->A_full[iScale](1,1,0,-1).Set(tmp);
+            } else if(transformation.get_transformType() == TRANSFORM_PROJECTIVE) {
+              // X = this.xgrid{i_scale}(:);
+              // Y = this.ygrid{i_scale}(:);
+              Array<f32> xInV(1, numPointsY*numPointsX, memory);
+              Array<f32> yInV(1, numPointsY*numPointsX, memory);
+              Matrix::Vectorize(isOutColumnMajor, xIn, xInV);
+              Matrix::Vectorize(isOutColumnMajor, yIn, yInV);
+
+              // this.A_full{i_scale} = [ ...
+              // X.*Ix(:)
+              // Y.*Ix(:)
+              // Ix(:)
+              // X.*Iy(:)
+              // Y.*Iy(:)
+              // Iy(:)
+              // -X.^2.*Ix(:)-X.*Y.*Ix(:)
+              // -X.*Y.*Ix(:)-Y.^2.*Iy(:) ];
+
+              Array<f32> tmp1(1, numPointsY*numPointsX, memory);
+              Array<f32> tmp2(1, numPointsY*numPointsX, memory);
+
+              // X.*Ix(:)
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp1);
+              Matrix::DotMultiply<f32,f32,f32>(tmp1, xInV, tmp1);
+              this->A_full[iScale](0,0,0,-1).Set(tmp1);
+
+              // Y.*Ix(:)
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp1);
+              Matrix::DotMultiply<f32,f32,f32>(tmp1, yInV, tmp1);
+              this->A_full[iScale](1,1,0,-1).Set(tmp1);
+
+              // Ix(:)
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp1);
+              this->A_full[iScale](2,2,0,-1).Set(tmp1);
+
+              // X.*Iy(:)
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeY, tmp1);
+              Matrix::DotMultiply<f32,f32,f32>(tmp1, xInV, tmp1);
+              this->A_full[iScale](3,3,0,-1).Set(tmp1);
+
+              // Y.*Iy(:)
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeY, tmp1);
+              Matrix::DotMultiply<f32,f32,f32>(tmp1, yInV, tmp1);
+              this->A_full[iScale](4,4,0,-1).Set(tmp1);
+
+              // Iy(:)
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeY, tmp1);
+              this->A_full[iScale](5,5,0,-1).Set(tmp1);
+
+              // -X.^2.*Ix(:) - X.*Y.*Ix(:)
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp1); // Ix(:)
+              Matrix::DotMultiply<f32,f32,f32>(tmp1, xInV, tmp1); // Ix(:).*X
+              Matrix::DotMultiply<f32,f32,f32>(tmp1, xInV, tmp1); // Ix(:).*X.^2
+              Matrix::Subtract<f32,f32,f32>(0.0f, tmp1, tmp1); // -Ix(:).*X.^2
+
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp2); // Ix(:)
+              Matrix::DotMultiply<f32,f32,f32>(tmp2, xInV, tmp2); // Ix(:).*X
+              Matrix::DotMultiply<f32,f32,f32>(tmp2, yInV, tmp2); // Ix(:).*X.*Y
+
+              Matrix::Subtract<f32,f32,f32>(tmp1,tmp2,tmp1);
+
+              this->A_full[iScale](6,6,0,-1).Set(tmp1);
+
+              // TODO: this equation is probably wrong
+              // -X.*Y.*Ix(:) - Y.^2.*Iy(:)
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp1); // Ix(:)
+              Matrix::DotMultiply<f32,f32,f32>(tmp1, xInV, tmp1); // Ix(:).*X
+              Matrix::DotMultiply<f32,f32,f32>(tmp1, yInV, tmp1); // Ix(:).*X.*Y
+              Matrix::Subtract<f32,f32,f32>(0.0f, tmp1, tmp1); // -Ix(:).*X.*Y
+
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeY, tmp2); // Iy(:)
+              Matrix::DotMultiply<f32,f32,f32>(tmp2, yInV, tmp2); // Iy(:).*Y
+              Matrix::DotMultiply<f32,f32,f32>(tmp2, yInV, tmp2); // Iy(:).*Y.^2
+
+              Matrix::Subtract<f32,f32,f32>(tmp1,tmp2,tmp1);
+
+              this->A_full[iScale](7,7,0,-1).Set(tmp1);
             }
 
             {
@@ -391,6 +480,8 @@ namespace Anki
           } // for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++, fScale++)
         } // PUSH_MEMORY_STACK(memory);
 
+        this->isValid = true;
+
         return RESULT_OK;
       }
 
@@ -431,9 +522,15 @@ namespace Anki
         const s32 numPointsY = templateCoordinates[whichScale].get_yGridVector().get_size();
         const s32 numPointsX = templateCoordinates[whichScale].get_xGridVector().get_size();
 
+        Array<f32> *A_part;
+
         s32 numSystemParameters = -1;
         if(curTransformType == TRANSFORM_TRANSLATION) {
           numSystemParameters = 2;
+
+          // Translation-only can be performed by grabbing a few rows of the A_full matrix
+        } else if(curTransformType == TRANSFORM_PROJECTIVE) {
+          numSystemParameters = 8;
         } else {
           assert(false);
         }
@@ -499,7 +596,7 @@ namespace Anki
 
             Array<f32> nextImageTransformed2d(1, numPointsY*numPointsX, memory);
 
-            if(Interp2(nextImage, xTransformed, yTransformed, nextImageTransformed2d, INTERPOLATE_LINEAR, -1.0f) != RESULT_OK)
+            if(Interp2<u8,f32>(nextImage, xTransformed, yTransformed, nextImageTransformed2d, INTERPOLATE_LINEAR, -1.0f) != RESULT_OK)
               return RESULT_FAIL;
 
             Matrix::Vectorize<f32,f32>(true, nextImageTransformed2d, nextImageTransformed);
