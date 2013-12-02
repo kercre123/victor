@@ -14,10 +14,14 @@
 
 
 // If enabled, will use Matlab as the vision system for processing images
-#ifdef SIMULATOR
+#if defined(SIMULATOR) && ANKICORETECH_USE_MATLAB
 #define USE_MATLAB_FOR_HEAD_CAMERA
 #define USE_MATLAB_FOR_MAT_CAMERA
 #endif
+
+// If enabled, frames will be sent out over the serial line for processing
+// by Matlab.
+#define SERIAL_IMAGING
 
 namespace Anki {
   namespace Cozmo {
