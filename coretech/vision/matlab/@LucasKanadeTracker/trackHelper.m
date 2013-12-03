@@ -78,7 +78,7 @@ while iteration < this.maxIterations
     
     b = AtW*It(inBounds);
     
-    update = AtWA\b
+    update = AtWA\b;
     %update = least_squares_norm(AtWA, b);
     %update = robust_least_squares(AtWA, b);
     

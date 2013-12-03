@@ -87,8 +87,8 @@ namespace Anki
       // Solves Ax = b
       // Specifically, it uses SVD to minimize ||Ax - b||
       // Note that the A, b, and x matrices are transposed (this is because for large numbers of samples, transposed inputs are liable to be faster)
-      Result SolveLeastSquares_f32(const Array<f32> &At, const Array<f32> &bt, Array<f32> &xt, MemoryStack scratch);
-      Result SolveLeastSquares_f64(const Array<f64> &At, const Array<f64> &bt, Array<f64> &xt, MemoryStack scratch);
+      Result SolveLeastSquares_f32(Array<f32> &At, const Array<f32> &bt, Array<f32> &xt, MemoryStack scratch);
+      Result SolveLeastSquares_f64(Array<f64> &At, const Array<f64> &bt, Array<f64> &xt, MemoryStack scratch);
 
       //
       // Matrix structure operations

@@ -103,7 +103,8 @@ namespace Anki
 
     template<typename Type> void Invert3x3(Type &a, Type &b, Type &c, Type &d, Type &e, Type &f, Type &g, Type &h, Type &i)
     {
-      const Type determinantInverse = static_cast<Type>(1) / Determinant3x3(a,b,c,d,e,f,g,h,i);
+      const Type determinant = Determinant3x3(a,b,c,d,e,f,g,h,i);
+      const Type determinantInverse = static_cast<Type>(1) / determinant;
 
       const Type A =  (e*i - f*h);
       const Type B = -(d*i - f*g);

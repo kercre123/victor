@@ -145,19 +145,39 @@ namespace Anki
             return RESULT_FAIL;
           }
 
+          //{
+          //  Matlab matlab(false);
+
+          //  matlab.PutArray(updateArray, "updateArray");
+          //}
+
           // this.tform = this.tform*inv(tformUpdate);
           Invert3x3(
-            updateArray[0][0], updateArray[0][1], updateArray[2][2],
+            updateArray[0][0], updateArray[0][1], updateArray[0][2],
             updateArray[1][0], updateArray[1][1], updateArray[1][2],
-            updateArray[2][0], updateArray[2][1], updateArray[0][2]);
+            updateArray[2][0], updateArray[2][1], updateArray[2][2]);
 
           Array<f32> newHomography(3,3,scratch);
 
           Matrix::Multiply(this->homography, updateArray, newHomography);
 
+          //{
+          //  Matlab matlab(false);
+          //  matlab.PutArray(this->homography, "homography");
+          //  matlab.PutArray(newHomography, "newHomography");
+          //  matlab.PutArray(updateArray, "updateArrayInv");
+          //  matlab.PutArray(update, "update");
+          //}
+
           if(!FLT_NEAR(newHomography[2][2], 1.0f)) {
             Matrix::DotDivide<f32,f32,f32>(newHomography, newHomography[2][2], newHomography);
           }
+
+          //{
+          //  Matlab matlab(false);
+
+          //  matlab.PutArray(newHomography, "newHomographyNorm");
+          //}
 
           this->homography.Set(newHomography);
         } // if(updateType == TRANSFORM_TRANSLATION) ... else
@@ -360,10 +380,12 @@ namespace Anki
             // Ix = (image_right(targetBlur) - image_left(targetBlur))/2 * spacing;
             // Iy = (image_down(targetBlur) - image_up(targetBlur))/2 * spacing;
             Matrix::Subtract<u8,f32,f32>(templateImagePyramid[iScale](1,-2,2,-1), templateImagePyramid[iScale](1,-2,0,-3), templateDerivativeX(1,-2,1,-2));
-            Matrix::DotMultiply<f32,f32,f32>(templateDerivativeX, scale / 2.0f, templateDerivativeX);
+            //Matrix::DotMultiply<f32,f32,f32>(templateDerivativeX, scale / 2.0f, templateDerivativeX);
+            Matrix::DotMultiply<f32,f32,f32>(templateDerivativeX, scale / (2.0f*255.0f), templateDerivativeX);
 
             Matrix::Subtract<u8,f32,f32>(templateImagePyramid[iScale](2,-1,1,-2), templateImagePyramid[iScale](0,-3,1,-2), templateDerivativeY(1,-2,1,-2));
-            Matrix::DotMultiply<f32,f32,f32>(templateDerivativeY, scale / 2.0f, templateDerivativeY);
+            //Matrix::DotMultiply<f32,f32,f32>(templateDerivativeY, scale / 2.0f, templateDerivativeY);
+            Matrix::DotMultiply<f32,f32,f32>(templateDerivativeY, scale / (2.0f*255.0f), templateDerivativeY);
 
             // Create the A matrix
             if(transformation.get_transformType() == TRANSFORM_TRANSLATION) {
@@ -518,6 +540,12 @@ namespace Anki
           this->get_transformation().Print("Translation");
 
           if(this->transformation.get_transformType() != TRANSFORM_TRANSLATION) {
+            // TODO: remove
+            //Array<f32> newH = Eye<f32>(3,3,memory);
+            //newH[0][2] = -0.0490;
+            //newH[1][2] = -0.1352;
+            //this->transformation.set_homography(newH);
+
             if(IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, this->transformation.get_transformType(), converged, memory) != RESULT_OK)
               return RESULT_FAIL;
 
@@ -531,7 +559,7 @@ namespace Anki
       Result LucasKanadeTracker_f32::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack memory)
       {
         AnkiConditionalErrorAndReturnValue(this->isInitialized == true,
-          RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "This object is not initialized");
+          RESULT_FAIL, "LucasKanadeTracker_f32::IterativelyRefineTrack", "This object is not initialized");
 
         AnkiConditionalErrorAndReturnValue(nextImage.IsValid(),
           RESULT_FAIL, "LucasKanadeTracker_f32::IterativelyRefineTrack", "nextImage is not valid");
@@ -644,7 +672,7 @@ namespace Anki
           const s32 numInBounds = inBounds.get_numMatches();
 
           if(numInBounds < 16) {
-            //AnkiWarn('Template drifted too far out of image.');
+            AnkiWarn("LucasKanadeTracker_f32::IterativelyRefineTrack", "Template drifted too far out of image.");
             break;
           }
 
@@ -658,11 +686,12 @@ namespace Anki
             Array<f32> templateDerivativeT_allPoints(1, numPointsY*numPointsX, memory);
             Matrix::Subtract<f32,f32,f32>(nextImageTransformed, templateImage, templateDerivativeT_allPoints);
             inBounds.SetArray(templateDerivativeT, templateDerivativeT_allPoints, 1);
+            Matrix::DotMultiply<f32,f32,f32>(templateDerivativeT, 1.0f/255.0f, templateDerivativeT);
           }
 
           Array<f32> AWAt(numSystemParameters, numSystemParameters, memory);
 
-          //  AtW = (A(inBounds,:).*this.W{i_scale}(inBounds,ones(1,size(A,2))))';
+          // AtW = (A(inBounds,:).*this.W{i_scale}(inBounds,ones(1,size(A,2))))';
 
           Array<f32> A = inBounds.SetArray(A_part, 1, memory);
 
@@ -678,17 +707,33 @@ namespace Anki
             }
           } // PUSH_MEMORY_STACK(memory);
 
-          //  AtWA = AtW*A(inBounds,:) + diag(this.ridgeWeight*ones(1,size(A,2)));
+          // AtWA = AtW*A(inBounds,:) + diag(this.ridgeWeight*ones(1,size(A,2)));
           Matrix::MultiplyTranspose(A, AW, AWAt);
+
+          {
+            Matlab matlab(false);
+
+            matlab.PutArray(A, "A");
+            matlab.PutArray(AW, "AW");
+            matlab.PutArray(AWAt, "AWAt");
+          }
 
           Array<f32> ridgeWeightMatrix = Eye<f32>(numSystemParameters, numSystemParameters, memory);
           Matrix::DotMultiply<f32,f32,f32>(ridgeWeightMatrix, ridgeWeight, ridgeWeightMatrix);
 
           Matrix::Add<f32,f32,f32>(AWAt, ridgeWeightMatrix, AWAt);
 
-          //  b = AtW*It(inBounds);
+          // b = AtW*It(inBounds);
           Array<f32> b(1,numSystemParameters,memory);
           Matrix::MultiplyTranspose(templateDerivativeT, AW, b);
+
+          {
+            Matlab matlab(false);
+
+            matlab.PutArray(b, "b");
+            matlab.PutArray(templateDerivativeT, "templateDerivativeT");
+            matlab.PutArray(ridgeWeightMatrix, "ridgeWeightMatrix");
+          }
 
           // update = AtWA\b;
           Array<f32> update(1,numSystemParameters,memory);
@@ -699,14 +744,12 @@ namespace Anki
           {
             Matlab matlab(false);
 
-            matlab.PutArray(A, "A");
-            matlab.PutArray(AW, "AW");
-            matlab.PutArray(AWAt, "AWAt");
-            matlab.PutArray(b, "b");
             matlab.PutArray(update, "update");
           }
 
+          //this->transformation.Print("t1");
           this->transformation.Update(update, memory, curTransformType);
+          //this->transformation.Print("t2");
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
         return RESULT_OK;

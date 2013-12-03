@@ -18,7 +18,7 @@ namespace Anki
   {
     namespace Matrix
     {
-      Result SolveLeastSquares_f32(const Array<f32> &At, const Array<f32> &bt, Array<f32> &xt, MemoryStack scratch)
+      Result SolveLeastSquares_f32(Array<f32> &At, const Array<f32> &bt, Array<f32> &xt, MemoryStack scratch)
       {
         const s32 AWidth = At.get_size(0);
 
@@ -82,7 +82,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result SolveLeastSquares_f64(const Array<f64> &At, const Array<f64> &bt, Array<f64> &xt, MemoryStack scratch)
+      Result SolveLeastSquares_f64(Array<f64> &At, const Array<f64> &bt, Array<f64> &xt, MemoryStack scratch)
       {
         const s32 AWidth = At.get_size(0);
 
