@@ -71,8 +71,10 @@ namespace Anki {
       webots::Camera* headCam_;
       HAL::CameraInfo headCamInfo_;
       HAL::CameraInfo matCamInfo_;
-      u8* headCamBuffer_;
-      u8* matCamBuffer_;
+      HAL::CameraMode headCamMode_;
+      // HAL::CameraMode matCamMode_;
+      //u8* headCamBuffer_;
+      //u8* matCamBuffer_;
       u32 headCamCaptureTime_;
       u32 matCamCaptureTime_;
       u32 headCamStartCaptureTime_ = 0;
@@ -96,10 +98,6 @@ namespace Anki {
       bool isConnected_;
       unsigned char recvBuf_[RECV_BUFFER_SIZE];
       s32 recvBufSize_;
-      
-#ifdef SERIAL_IMAGING
-      std::vector<char> USBprintBuffer_;
-#endif
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -366,18 +364,6 @@ namespace Anki {
       tx_->setChannel(robotID_);
       recvBufSize_ = 0;
       
-#ifdef SERIAL_IMAGING
-      // A character buffer for messages
-      USBprintBuffer_.reserve(512);
-      
-      // Initialize the print buffer with the header bytes for the next message
-      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_HEADER[0]));
-      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_HEADER[1]));
-      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_HEADER[2]));
-      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_HEADER[3]));
-      USBprintBuffer_.push_back(static_cast<char>(USB_MESSAGE_HEADER));
-#endif
-      
 #if ANKICORETECH_USE_MATLAB
       matlabEngine_ = NULL;
       if (!(matlabEngine_ = engOpen(""))) {
@@ -641,47 +627,60 @@ namespace Anki {
       return &(matCamInfo_);
     }
     
-    void HAL::SetCameraMode(const u8 frameResHeader)
-    {}
-    
-    void CaptureHeadCamFrame()
+    HAL::CameraMode HAL::GetHeadCamMode(void)
     {
-      /*
-      // Acquire grey image
-      // (Closest thing to Y channel?)
-      const u8* image = headCam_->getImage();
-      u16 pixel = 0;
-      for (int y=0; y< headCam_->getHeight(); y++ ) {
-        for (int x=0; x< headCam_->getWidth(); x++ ) {
-          headCamBuffer_[pixel++] = webots::Camera::imageGetGrey(image, headCam_->getWidth(), x, y);
-        }
-      }
-      */
-      
-      memcpy(headCamBuffer_, headCam_->getImage(), headCam_->getHeight() * headCam_->getWidth() * 4);
+      return headCamMode_;
     }
     
-    void CaptureMatCamFrame()
+    void HAL::SetHeadCamMode(const u8 frameResHeader)
     {
-      /*
+      switch(frameResHeader)
+      {
+        case CAMERA_MODE_VGA_HEADER:
+          headCamMode_ = CAMERA_MODE_VGA;
+          break;
+          
+        case CAMERA_MODE_QVGA_HEADER:
+          headCamMode_ = CAMERA_MODE_QVGA;
+          break;
+          
+        case CAMERA_MODE_QQVGA_HEADER:
+          headCamMode_ = CAMERA_MODE_QQVGA;
+          break;
+          
+        case CAMERA_MODE_QQQQVGA_HEADER:
+          headCamMode_ = CAMERA_MODE_QQQQVGA;
+          break;
+          
+        case CAMERA_MODE_QQQVGA_HEADER:
+          headCamMode_ = CAMERA_MODE_QQQVGA;
+          break;
+          
+        default:
+          PRINT("ERROR(SetCameraMode): Unknown frame res: %d", frameResHeader);
+          break;
+      }
+      
+    } //SetHeadCamMode()
+    
+    void GetGrayscaleFrameHelper(webots::Camera* cam, u8* buffer)
+    {
       // Acquire grey image
       // (Closest thing to Y channel?)
-      const u8* image = matCam_->getImage();
+      const u8* image = cam->getImage();
       u16 pixel = 0;
-      for (int y=0; y< matCam_->getHeight(); y++ ) {
-        for (int x=0; x< matCam_->getWidth(); x++ ) {
-          matCamBuffer_[pixel++] = webots::Camera::imageGetGrey(image, matCam_->getWidth(), x, y);
+      for (int y=0; y < cam->getHeight(); y++ ) {
+        for (int x=0; x < cam->getWidth(); x++ ) {
+          buffer[pixel++] = webots::Camera::imageGetGrey(image, cam->getWidth(), x, y);
         }
       }
-      */
-      
-       memcpy(matCamBuffer_, matCam_->getImage(), matCam_->getHeight() * matCam_->getWidth() * 4);
-    }
+    } // GetGrayscaleFrameHelper()
     
     
     // Starts camera frame synchronization
-    void HAL::CameraStartFrame(CameraID cameraID, u8* frame, CameraMode mode,
-                          CameraUpdateMode updateMode, u16 exposure, bool enableLight)
+    void HAL::CameraStartFrame(CameraID cameraID, u8* frameBuffer,
+                               CameraMode mode, CameraUpdateMode updateMode,
+                               u16 exposure, bool enableLight)
     {
       // TODO: exposure? enableLight?
       
@@ -696,9 +695,8 @@ namespace Anki {
           headCamUpdateMode_ = updateMode;
           headCamCaptureTime_ = headCamUpdateMode_ == CAMERA_UPDATE_SINGLE ? CAMERA_SINGLE_CAPTURE_TIME_US : CAMERA_CONTINUOUS_CAPTURE_TIME_US;
           headCamStartCaptureTime_ = GetMicroCounter();
-          headCamBuffer_ = frame;
           
-          CaptureHeadCamFrame();
+          GetGrayscaleFrameHelper(headCam_, frameBuffer);
 
           break;
         }
@@ -713,9 +711,8 @@ namespace Anki {
           matCamUpdateMode_ = updateMode;
           matCamCaptureTime_ = matCamUpdateMode_ == CAMERA_UPDATE_SINGLE ? CAMERA_SINGLE_CAPTURE_TIME_US : CAMERA_CONTINUOUS_CAPTURE_TIME_US;
           matCamStartCaptureTime_ = GetMicroCounter();
-          matCamBuffer_ = frame;
-          
-          CaptureMatCamFrame();
+
+          GetGrayscaleFrameHelper(matCam_, frameBuffer);
           
           break;
         }
@@ -750,7 +747,7 @@ namespace Anki {
           if (headCamStartCaptureTime_ != 0 && GetMicroCounter() - headCamStartCaptureTime_ > headCamCaptureTime_) {
             if (headCamUpdateMode_ == CAMERA_UPDATE_CONTINUOUS) {
               headCamStartCaptureTime_ = GetMicroCounter();
-              CaptureHeadCamFrame();
+              //CaptureHeadCamFrame();
             } else { // Single mode
               headCamStartCaptureTime_ = 0;
             }
@@ -763,7 +760,7 @@ namespace Anki {
           if (matCamStartCaptureTime_ != 0 && GetMicroCounter() - matCamStartCaptureTime_ > matCamCaptureTime_) {
             if (matCamUpdateMode_ == CAMERA_UPDATE_CONTINUOUS) {
               matCamStartCaptureTime_ = GetMicroCounter();
-              CaptureMatCamFrame();
+              //CaptureMatCamFrame();
             } else { // Single mode
               matCamStartCaptureTime_ = 0;
             }
@@ -777,70 +774,6 @@ namespace Anki {
       }
       return false;
     }
-    
-
-    s32 HAL::USBPeekChar()
-    {
-      return -1;
-    }
-    
-    s32 HAL::USBGetChar(u32 timeout)
-    {
-      return -1;
-    }
-
-    u32 HAL::USBGetNumBytesToRead()
-    {
-      return 0;
-    }
-    
-    
-#ifdef SERIAL_IMAGING
-    int HAL::USBBufferChar(int c)
-    {
-      USBprintBuffer_.push_back(static_cast<char>(c));
-      return 0;
-    }
-    
-    // Send a frame. (Currently just from the head camera.)
-    void HAL::USBSendFrame(void)
-    {
-      // Send header
-      // Copy image to matlab
-      // Send footer
-    }
-    
-    // "Send" the contents of the USB message buffer.
-    void HAL::USBSendMessage(void)
-    {
-      // Append the footer
-      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_FOOTER[0]));
-      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_FOOTER[1]));
-      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_FOOTER[2]));
-      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_FOOTER[3]));
-      USBprintBuffer_.push_back(static_cast<char>(USB_MESSAGE_HEADER));
-      
-      USBprintBuffer_.push_back('\0'); // null-terminate the message (?)
-      
-
-      mxArray *mxMessage = mxCreateString(&(USBprintBuffer_[0]));
-      engPutVariable(matlabEngine_, "newMessage", mxMessage);
-      engEvalString(matlabEngine_,
-                    "serialBuffer.addToBuffer(newMessage); "
-                    "clear newMessage;");
-      
-      USBprintBuffer_.clear();
-      
-      // Initialize the print buffer with the header bytes for the next message
-      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_HEADER[0]));
-      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_HEADER[1]));
-      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_HEADER[2]));
-      USBprintBuffer_.push_back(static_cast<char>(USB_PACKET_HEADER[3]));
-      USBprintBuffer_.push_back(static_cast<char>(USB_MESSAGE_HEADER));
-                                
-      mxDestroyArray(mxMessage);
-    }
-#endif
     
     
     // Get the number of microseconds since boot

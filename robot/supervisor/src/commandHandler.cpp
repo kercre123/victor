@@ -14,18 +14,6 @@
 namespace Anki {
   namespace Cozmo {
     namespace CommandHandler {
-    
-      // "Private Member Variables"
-      namespace {
-        // Msg types and their sizes.
-        // TODO: Move this into protocol file?
-        #define SET_CAMERA_MODE_MSG 0xCA
-        #define SIZEOF_SET_CAMERA_MODE_MSG 2
-        
-        #define BLOCK_POSE_MSG 'E'
-        #define SIZEOF_BLOCK_POSE_MSG 13
-
-      }
       
       bool USBGetFloat(f32 &val)
       {
@@ -48,22 +36,23 @@ namespace Anki {
         s32 c = HAL::USBPeekChar();
         
         while (c >= 0) {
-          switch(c) {
-            case SET_CAMERA_MODE_MSG:
+          switch(static_cast<u8>(c)) {
+#ifdef SERIAL_IMAGING
+            case HAL::USB_SET_CAMERA_MODE_MSG:
             {
-              if (HAL::USBGetNumBytesToRead() < SIZEOF_SET_CAMERA_MODE_MSG)
+              if (HAL::USBGetNumBytesToRead() < HAL::SIZEOF_USB_SET_CAMERA_MODE_MSG)
                 return;
               HAL::USBGetChar(); // Clear msg type byte
               
               // Set camera mode
               c = HAL::USBGetChar();
-              HAL::SetCameraMode(c);
+              HAL::SetHeadCamMode(c);
               PRINT("Change camera res to %d\n", c);
               break;
             }
-            case BLOCK_POSE_MSG:
+            case HAL::USB_BLOCK_POSE_MSG:
             {
-              if (HAL::USBGetNumBytesToRead() < SIZEOF_BLOCK_POSE_MSG)
+              if (HAL::USBGetNumBytesToRead() < HAL::SIZEOF_USB_BLOCK_POSE_MSG)
                 return;
               HAL::USBGetChar(); // Clear msg type byte
  
@@ -71,7 +60,10 @@ namespace Anki {
               f32 blockPos_y = FLT_MAX;
               f32 blockPos_rad = FLT_MAX;
 
-              if ( !USBGetFloat(blockPos_x) || !USBGetFloat(blockPos_y) || !USBGetFloat(blockPos_rad)) {
+              if ( !USBGetFloat(blockPos_x) ||
+                   !USBGetFloat(blockPos_y) ||
+                   !USBGetFloat(blockPos_rad))
+              {
                 PRINT("ERROR (ProcessUARTMessages): Invalid block pose %f %f %f\n", blockPos_x, blockPos_y, blockPos_rad);
                 break;
               }
@@ -79,9 +71,10 @@ namespace Anki {
               // Just testing UART printout
               PERIODIC_PRINT(60, "BlockPose: x = %f, y = %f, rad = %f\n", blockPos_x, blockPos_y, blockPos_rad);
               
-              //DockingController::SetRelDockPose(blockPos_x, blockPos_y, blockPos_rad);
+              DockingController::SetRelDockPose(blockPos_x, blockPos_y, blockPos_rad);
               break;
             }
+#endif // SERIAL_IMAGING
             default:
               PRINT("WARN: (ProcessUARTMsgs): Unexpected char %d\n", c);
               c = HAL::USBGetChar();  // Pop unexpected char from receive buffer

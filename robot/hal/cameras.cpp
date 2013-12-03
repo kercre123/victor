@@ -11,6 +11,11 @@ namespace Anki
   {
     namespace HAL
     {
+      // "Private member variables"
+      namespace {
+        CameraMode headCamMode_;
+      }
+      
       typedef struct
       {
         const u32 MXI_CAMX_BASE_ADR;
@@ -67,6 +72,42 @@ namespace Anki
         {160, 120}   // QQVGA
       };
 
+      CameraMode GetHeadCamMode(void)
+      {
+        return headCamMode_;
+      }
+      
+      void SetHeadCamMode(const u8 frameResHeader)
+      {
+        switch(frameResHeader)
+        {
+          case CAMERA_MODE_VGA_HEADER:
+            headCamMode_ = CAMERA_MODE_VGA;
+            break;
+            
+          case CAMERA_MODE_QVGA_HEADER:
+            headCamMode_ = CAMERA_MODE_QVGA;
+            break;
+            
+          case CAMERA_MODE_QQVGA_HEADER:
+            headCamMode_ = CAMERA_MODE_QQVGA;
+            break;
+            
+          case CAMERA_MODE_QQQQVGA_HEADER:
+            headCamMode_ = CAMERA_MODE_QQQQVGA;
+            break;
+            
+          case CAMERA_MODE_QQQVGA_HEADER:
+            headCamMode_ = CAMERA_MODE_QQQVGA;
+            break;
+            
+          default:
+            PRINT("ERROR(SetCameraMode): Unknown frame res: %d", frameResHeader);
+            break;
+        }
+        
+      } //SetHeadCamMode()
+      
       static CameraHandle* m_handles[CAMERA_COUNT] = {NULL, NULL};
 
       static void CameraIRQ(u32 source);

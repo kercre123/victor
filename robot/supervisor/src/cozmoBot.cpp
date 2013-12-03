@@ -27,7 +27,21 @@
 #include "anki/embeddedCommon/matlabConverters.h"
 #endif
 
+#define DOCKING_TEST 1
+
 ///////// END TESTING //////
+
+// Frame buffers, for now.
+static const u32 FRAMEBUFFER_WIDTH  = 640;
+static const u32 FRAMEBUFFER_HEIGHT = 480;
+static const u32 FRAMEBUFFER_SIZE   = FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT;
+
+#ifdef SIMULATOR
+static u8 frameBuffer[FRAMEBUFFER_SIZE];
+#else
+#define DDR_BUFFER    __attribute__((section(".ddr.text")))
+static DDR_BUFFER u8 frameBuffer[FRAME_SIZE];
+#endif
 
 namespace Anki {
   namespace Cozmo {
@@ -48,6 +62,10 @@ namespace Anki {
         VisionSystem::MatMarkerMailbox   matMarkerMailbox_;
         
         Robot::OperationMode mode_ = INITIALIZING;
+        
+        bool continuousCaptureStarted_ = false;
+        
+        bool isCarryingBlock_ = false;
         
       } // Robot private namespace
       
@@ -210,8 +228,29 @@ namespace Anki {
         while( blockMarkerMailbox_.hasMail() )
         {
           const CozmoMsg_ObservedBlockMarker blockMsg = blockMarkerMailbox_.getMessage();
+          
           HAL::RadioToBase((u8*)(&blockMsg), sizeof(CozmoMsg_ObservedBlockMarker));
-        }
+    
+#if DOCKING_TEST
+          if(isCarryingBlock_)
+          {
+            // We are already carrying a block.  If we see BlockType YY,
+            // then switch (back) to docking mode and start tracking it so we can
+            // put the one we're carrying on top of it
+            if(blockMsg.blockType == 60) {
+              mode_ = DOCK;
+            }
+          }
+          else {
+            // We aren't yet carrying a block.  If we see a BlockType XX,
+            // switch to docking mode and start tracking it so we can go
+            // pick it up.
+            if(blockMsg.blockType == 65) {
+              mode_ = DOCK;
+            }
+          } // if/else carrying block
+#endif
+        } // while blockMarkerMailbox has mail
         
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates
@@ -223,7 +262,7 @@ namespace Anki {
         
         
         PathFollower::Update();
-        DockingController::Update();
+        //DockingController::Update();
         
         //////////////////////////////////////////////////////////////
         // State Machine
@@ -242,7 +281,7 @@ namespace Anki {
             PathFollower::Update();
             break;
           }
-            
+           */
           case DOCK:
           {
             DockingController::Update();
@@ -261,7 +300,7 @@ namespace Anki {
             
             break;
           }
-            */
+            
           case WAITING:
           {
             // Idle.  Nothing to do yet...
@@ -293,13 +332,48 @@ namespace Anki {
       // will be slower
       ReturnCode step_LongExecution()
       {
+        // Only QQQVGA can be captured in SINGLE mode.
+        // Other modes must be captured in CONTINUOUS mode otherwise you get weird
+        // rolling sync effects.
+        // NB: CONTINUOUS mode contains tears that could affect vision algorithms
+        // if moving too fast.
+        // NOTE: we are currently always capturing at 640x480.  The camera mode
+        //       is just affecting how much we downsample before sending the
+        //       frame out over UART.
+        if (HAL::GetHeadCamMode() != HAL::CAMERA_MODE_QQQVGA) {
+          
+          if (!continuousCaptureStarted_) {
+            CameraStartFrame(HAL::CAMERA_FRONT, frameBuffer, HAL::CAMERA_MODE_VGA,
+                             HAL::CAMERA_UPDATE_CONTINUOUS, 0, false);
+            continuousCaptureStarted_ = true;
+          }
+          
+        }
+        else {
+          CameraStartFrame(HAL::CAMERA_FRONT, frameBuffer, HAL::CAMERA_MODE_VGA,
+                           HAL::CAMERA_UPDATE_SINGLE, 0, false);
+          continuousCaptureStarted_ = false;
+        }
+        
+        
+        while (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT))
+        {
+        }
         
 #if defined(SERIAL_IMAGING)
-        HAL::SendFrame();
-        HAL::USBprintBuffer::SendMessage();
-#elseif defined(SIMULATOR)
-        
+        HAL::USBSendFrame(frameBuffer, FRAMEBUFFER_HEIGHT, FRAMEBUFFER_WIDTH);
+        HAL::USBSendMessage();
 #endif
+        
+        switch(mode_)
+        {
+          case DOCK:
+          {
+            
+            break;
+          }
+            
+        } // SWITCH(mode_)
         
         // TODO: Get VisionSystem to work on robot
 #ifdef SIMULATOR

@@ -2,22 +2,11 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "movidius.h"
 
-#define DDR_BUFFER    __attribute__((section(".ddr.text")))
-
 #define CMX_CONFIG      (0x66666666)
 #define L2CACHE_CONFIG  (L2CACHE_NORMAL_MODE)
 
-      static const u32 FRAME_WIDTH = 640;
-      static const u32 FRAME_HEIGHT = 480;
-      static const u32 FRAME_SIZE = FRAME_WIDTH * FRAME_HEIGHT;
-
-      static DDR_BUFFER u8 frame[FRAME_SIZE];
-
-
 u32 __cmx_config __attribute__((section(".cmx.ctrl"))) = CMX_CONFIG;
 u32 __l2_config  __attribute__((section(".l2.mode")))  = L2CACHE_CONFIG;
-
-using namespace Anki::Cozmo;
 
 namespace Anki
 {
@@ -33,7 +22,6 @@ namespace Anki
       static const u32 D_TIMER_CFG_FORCE_RELOAD = (1 << 5);
 
       // Forward declarations
-      void UARTInit();
       void MotorInit();
       void USBInit();
       void USBUpdate();
@@ -72,36 +60,10 @@ namespace Anki
         },
         m_auxClockConfig
       };
-
-      static u8 frameResolution = CAMERA_MODE_QQQVGA;
       
-      void SetCameraMode(const u8 frameResHeader) {
-        switch(frameResHeader)
-        {
-          case CAMERA_MODE_VGA_HEADER:
-            frameResolution = CAMERA_MODE_VGA;
-            break;
-            
-          case CAMERA_MODE_QVGA_HEADER:
-            frameResolution = CAMERA_MODE_QVGA;
-            break;
-            
-          case CAMERA_MODE_QQVGA_HEADER:
-            frameResolution = CAMERA_MODE_QQVGA;
-            break;
-            
-          case CAMERA_MODE_QQQQVGA_HEADER:
-            frameResolution = CAMERA_MODE_QQQQVGA;
-            break;
-            
-          case CAMERA_MODE_QQQVGA_HEADER:
-            frameResolution = CAMERA_MODE_QQQVGA;
-            break;
-            
-          default:
-            PRINT("ERROR(SetCameraMode): Unknown frame res: %d", frameResHeader);
-            break;
-        }
+      const u8* GetHeadCamFrameBuffer()
+      {
+        return frame;
       }
 
       static u32 MainExecutionIRQ(u32, u32)
@@ -263,31 +225,6 @@ int main()
   {
     //Console::Update();
 
-    // Only QQQVGA can be captured in SINGLE mode.
-    // Other modes must be captured in CONTINUOUS mode otherwise you get weird
-    // rolling sync effects.
-    // NB: CONTINUOUS mode contains tears that could affect vision algorithms
-    // if moving too fast.
-    if (HAL::frameResolution != HAL::CAMERA_MODE_QQQVGA) {
-      
-      if (!continuousCaptureStarted_) {
-        CameraStartFrame(HAL::CAMERA_FRONT, frame, HAL::CAMERA_MODE_VGA,
-                       HAL::CAMERA_UPDATE_CONTINUOUS, 0, false);
-        continuousCaptureStarted_ = true;
-      }
-
-    }
-    else {
-      CameraStartFrame(HAL::CAMERA_FRONT, frame, HAL::CAMERA_MODE_VGA,
-                       HAL::CAMERA_UPDATE_SINGLE, 0, false);
-      continuousCaptureStarted_ = false;
-    }
-    
-
-    while (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT))
-    {
-    }
-    
     Robot::step_LongExecution();
     
     

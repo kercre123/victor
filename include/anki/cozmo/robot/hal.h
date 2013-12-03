@@ -145,14 +145,6 @@ namespace Anki
       // Gripper control
       bool IsGripperEngaged();
       
-      // Cameras
-      // TODO: Add functions for adjusting ROI of cameras?
-      void MatCameraInit();
-      void FrontCameraInit();
-
-      const CameraInfo* GetHeadCamInfo();
-      const CameraInfo* GetMatCamInfo() ;
-      
       // Communications
       bool IsConnected();
       
@@ -212,20 +204,34 @@ namespace Anki
       // Prototype matches putc for printf.
       int USBPutChar(int c);
 
+      void UARTInit();
       
 #ifdef SERIAL_IMAGING
+      // TODO: Move these to messageProtocol.h?
+      const u8 USB_SET_CAMERA_MODE_MSG = 0xCA;
+      const u8 SIZEOF_USB_SET_CAMERA_MODE_MSG = 2;
+      
+      const u8 USB_BLOCK_POSE_MSG = static_cast<u8>('E');
+      const u8 SIZEOF_USB_BLOCK_POSE_MSG = 13;
+      
       const u8 USB_MESSAGE_HEADER = 0xDD;
       
       // Put a byte into a send buffer to be sent by LongExecution()
       // (Using same prototype as putc / USBPutChar for printf.)
       int USBBufferChar(int c);
       
-      // Send a frame. (Currently just from the head camera.)
-      void USBSendFrame(void);
+      // Send a frame at the current frame resolution (last set by
+      // a call to SetUSBFrameResolution)
+      void USBSendFrame(const u8* image, const s32 nrows, const s32 ncols);
 
       // Send the contents of the USB message buffer.
       void USBSendMessage(void);
+      
+#if SIMULATOR
+      void USBFlush(void);
 #endif
+      
+#endif // ifdef SERIAL_IMAGING
 
       
       // Motors
@@ -289,9 +295,17 @@ namespace Anki
         CAMERA_UPDATE_SINGLE
       };
 
+      // Cameras
+      // TODO: Add functions for adjusting ROI of cameras?
+      void MatCameraInit();
+      void FrontCameraInit();
+      
+      const CameraInfo* GetHeadCamInfo();
+      const CameraInfo* GetMatCamInfo() ;
+      
       // Set the camera capture resolution with CAMERA_MODE_XXXXX_HEADER.
-      // Should only be used for off-robot vision processing.
-      void SetCameraMode(const u8 frameResHeader);
+      void       SetHeadCamMode(const u8 frameResHeader);
+      CameraMode GetHeadCamMode(void);
       
       // Starts camera frame synchronization
       void CameraStartFrame(CameraID cameraID, u8* frame, CameraMode mode,

@@ -4,8 +4,15 @@ namespace Anki
 {
   namespace Cozmo
   {
+    
+    namespace {
+      // The resolution at which images will be sent over the serial connection
+      u8 frameResolution_ = HAL::CAMERA_MODE_QQQVGA;
+    }
+    
     void SendHeader(const u8 packetType)
     {
+      using namespace HAL;
       USBPutChar(USB_PACKET_HEADER[0]);
       USBPutChar(USB_PACKET_HEADER[1]);
       USBPutChar(USB_PACKET_HEADER[2]);
@@ -15,11 +22,17 @@ namespace Anki
     
     void SendFooter(const u8 packetType)
     {
+      using namespace HAL;
       USBPutChar(USB_PACKET_FOOTER[0]);
       USBPutChar(USB_PACKET_FOOTER[1]);
       USBPutChar(USB_PACKET_FOOTER[2]);
       USBPutChar(USB_PACKET_FOOTER[3]);
       USBPutChar(packetType);
+      
+#if SIMULATOR
+      // Flush the buffer to make sure everything gets sent to Matlab
+      USBFlush();
+#endif
     }
     
     namespace USBprintBuffer
@@ -75,18 +88,17 @@ namespace Anki
       using namespace USBprintBuffer;
       buffer[writeIndex] = (char) c;
       IncrementIndex(writeIndex);
+      return c;
     }
     
-    // ANS: This was declared static. Is that necessary?
-    void HAL::USBSendFrame()
+  
+    void HAL::USBSendFrame(const u8 *image, const s32 nrows, const s32 ncols)
     {
-      const u8* image = frame;
-      
       // Set window size for averaging when downsampling and send
       // a corresponding header
       u32 inc = 1;
       u8 frameResHeader;
-      switch(frameResolution)
+      switch(frameResolution_)
       {
         case CAMERA_MODE_QVGA:
           inc = 2;
@@ -112,6 +124,7 @@ namespace Anki
         default:
           inc = 1;
           frameResHeader = CAMERA_MODE_VGA_HEADER;
+          break;
           
       } // SWITCH(frameResolution)
       
@@ -120,23 +133,23 @@ namespace Anki
       if(inc==1)
       {
         // No averaging
-        for(int i=0; i < 640*480; i++)
+        for(int i=0; i < nrows*ncols; i++)
         {
           USBPutChar(image[i]);
         }
         
       } else {
         // Average inc x inc windows
-        for (int y = 0; y < 480; y += inc)
+        for (int y = 0; y < nrows; y += inc)
         {
-          for (int x = 0; x < 640; x += inc)
+          for (int x = 0; x < ncols; x += inc)
           {
             int sum = 0;
             for (int y1 = y; y1 < y + inc; y1++)
             {
               for (int x1 = x; x1 < x + inc; x1++)
               {
-                sum += image[(x1 + y1 * 640) ^ 3];
+                sum += image[(x1 + y1 * ncols) ^ 3];
               }
             }
             USBPutChar(sum / (inc * inc));

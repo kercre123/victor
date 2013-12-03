@@ -21,8 +21,6 @@
 
 #include "keyboardController.h"
 
-#include "anki/cozmo/robot/hal.h"
-
 
 /*
  * This is the main program.

@@ -296,10 +296,12 @@ namespace Anki {
       
 #else  // NOT defined(USE_MATLAB_FOR_HEAD_CAMERA)
       
+      /*
       // TODO: Hook this up to Pete's vision code
       PRINT("Robot::processHeadImage(): embedded vision "
               "processing not hooked up yet.\n");
       return EXIT_FAILURE;
+      */
       
 #endif // defined(USE_MATLAB_FOR_HEAD_CAMERA)
       
@@ -410,12 +412,12 @@ namespace Anki {
       }
       
 #else  // NOT defined(USE_MATLAB_FOR_MAT_CAMERA)
-      
+     /*
       // TODO: Hook this up to Pete's vision code
       PRINT("Robot::processMatImage(): embedded vision "
               "processing not hooked up yet.\n");
       retVal = -1;
-      
+      */
 #endif // defined(USE_MATLAB_FOR_MAT_CAMERA)
       
       return retVal;
