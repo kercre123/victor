@@ -3,7 +3,7 @@ File: fixedLengthList.h
 Author: Peter Barnum
 Created: 2013
 
-A FixedLengthList is like a std::vector, but has a fixed maximum size. This maximum is allocated at contruction.
+Definitions of fixedLenghtList_declarations.h
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.

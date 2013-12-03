@@ -3,7 +3,7 @@ File: arraySlices.h
 Author: Peter Barnum
 Created: 2013
 
-An array slice is a sub-array of an Array object.
+Definitions of arraySlices_declarations.h
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.

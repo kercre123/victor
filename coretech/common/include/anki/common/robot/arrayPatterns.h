@@ -3,7 +3,7 @@ File: arrayPatterns.h
 Author: Peter Barnum
 Created: 2013
 
-Various common array patterns, such as zeros(), ones(), or exp() for gaussians
+Definitions of arrayPatterns_declarations.h
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.

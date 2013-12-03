@@ -3,7 +3,7 @@ File: geometry.h
 Author: Peter Barnum
 Created: 2013
 
-Simply geometry classes for points, rectangles, etc.
+Definitions of geometry_declarations.h
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
