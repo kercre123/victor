@@ -710,13 +710,13 @@ namespace Anki
           // AtWA = AtW*A(inBounds,:) + diag(this.ridgeWeight*ones(1,size(A,2)));
           Matrix::MultiplyTranspose(A, AW, AWAt);
 
-          {
-            Matlab matlab(false);
+          //{
+          //  Matlab matlab(false);
 
-            matlab.PutArray(A, "A");
-            matlab.PutArray(AW, "AW");
-            matlab.PutArray(AWAt, "AWAt");
-          }
+          //  matlab.PutArray(A, "A");
+          //  matlab.PutArray(AW, "AW");
+          //  matlab.PutArray(AWAt, "AWAt");
+          //}
 
           Array<f32> ridgeWeightMatrix = Eye<f32>(numSystemParameters, numSystemParameters, memory);
           Matrix::DotMultiply<f32,f32,f32>(ridgeWeightMatrix, ridgeWeight, ridgeWeightMatrix);
@@ -727,13 +727,13 @@ namespace Anki
           Array<f32> b(1,numSystemParameters,memory);
           Matrix::MultiplyTranspose(templateDerivativeT, AW, b);
 
-          {
-            Matlab matlab(false);
+          //{
+          //  Matlab matlab(false);
 
-            matlab.PutArray(b, "b");
-            matlab.PutArray(templateDerivativeT, "templateDerivativeT");
-            matlab.PutArray(ridgeWeightMatrix, "ridgeWeightMatrix");
-          }
+          //  matlab.PutArray(b, "b");
+          //  matlab.PutArray(templateDerivativeT, "templateDerivativeT");
+          //  matlab.PutArray(ridgeWeightMatrix, "ridgeWeightMatrix");
+          //}
 
           // update = AtWA\b;
           Array<f32> update(1,numSystemParameters,memory);
@@ -741,11 +741,11 @@ namespace Anki
           if(Matrix::SolveLeastSquares_f32(AWAt, b, update, memory) != RESULT_OK)
             return RESULT_FAIL;
 
-          {
-            Matlab matlab(false);
+          //{
+          //  Matlab matlab(false);
 
-            matlab.PutArray(update, "update");
-          }
+          //  matlab.PutArray(update, "update");
+          //}
 
           //this->transformation.Print("t1");
           this->transformation.Update(update, memory, curTransformType);
