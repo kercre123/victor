@@ -11,8 +11,6 @@
 
 using namespace Anki::Embedded;
 
-#define ConditionalErrorAndReturn(expression, eventName, eventValue) if(!(expression)) { printf("%s - %s\n", (eventName), (eventValue)); return;}
-
 BoundaryDirection stringToBoundaryDirection(const std::string direction)
 {
   if(_strcmpi(direction.data(), "n") == 0) {
@@ -38,19 +36,19 @@ BoundaryDirection stringToBoundaryDirection(const std::string direction)
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-  ConditionalErrorAndReturn(nrhs == 3 && nlhs == 1, "mexTraceBoundary", "Call this function as following: boundary = mexTraceBoundary(uint8(binaryImg), double(startPoint), char(initialDirection));");
+  AnkiConditionalErrorAndReturn(nrhs == 3 && nlhs == 1, "mexTraceBoundary", "Call this function as following: boundary = mexTraceBoundary(uint8(binaryImg), double(startPoint), char(initialDirection));");
 
   Array<u8> binaryImg = mxArrayToArray<u8>(prhs[0]);
   Array<f64> startPointMatrix = mxArrayToArray<f64>(prhs[1]);
   char * initialDirectionString = mxArrayToString(prhs[2]);
 
   //printf("%f %f %s\n", *startPoint.Pointer(0,0), *startPoint.Pointer(0,1), initialDirection.data());
-  ConditionalErrorAndReturn(binaryImg.get_rawDataPointer() != 0, "mexTraceBoundary", "Could not allocate Matrix binaryImg");
-  ConditionalErrorAndReturn(startPointMatrix.get_rawDataPointer() != 0, "mexTraceBoundary", "Could not allocate Matrix startPointMatrix");
+  AnkiConditionalErrorAndReturn(binaryImg.get_rawDataPointer() != 0, "mexTraceBoundary", "Could not allocate Matrix binaryImg");
+  AnkiConditionalErrorAndReturn(startPointMatrix.get_rawDataPointer() != 0, "mexTraceBoundary", "Could not allocate Matrix startPointMatrix");
 
   FixedLengthList<Point<s16> > boundary = AllocateFixedLengthListFromHeap<Point<s16> >(MAX_BOUNDARY_LENGTH);
-  ConditionalErrorAndReturn(boundary.get_array().get_rawDataPointer() != 0, "mexTraceBoundary", "Could not allocate FixedLengthList boundary");
-  ConditionalErrorAndReturn(initialDirectionString != 0, "mexTraceBoundary", "Could not read initialDirectionString");
+  AnkiConditionalErrorAndReturn(boundary.get_array().get_rawDataPointer() != 0, "mexTraceBoundary", "Could not allocate FixedLengthList boundary");
+  AnkiConditionalErrorAndReturn(initialDirectionString != 0, "mexTraceBoundary", "Could not read initialDirectionString");
 
   Point<s16> startPoint(static_cast<s16>(*startPointMatrix.Pointer(0,1)-1), static_cast<s16>(*startPointMatrix.Pointer(0,0)-1));
   const BoundaryDirection initialDirection = stringToBoundaryDirection(initialDirectionString);

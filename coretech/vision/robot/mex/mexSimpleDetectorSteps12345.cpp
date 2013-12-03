@@ -11,8 +11,6 @@
 
 using namespace Anki::Embedded;
 
-#define ConditionalErrorAndReturn(expression, eventName, eventValue) if(!(expression)) { printf("%s - %s\n", (eventName), (eventValue)); return;}
-
 // image = drawExampleSquaresImage();
 // imageSize = size(image);
 
@@ -41,7 +39,7 @@ using namespace Anki::Embedded;
 // [quads, blockTypes, faceTypes, orientations] = mexSimpleDetectorSteps12345(image, scaleImage_numPyramidLevels, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio);
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-  ConditionalErrorAndReturn(nrhs == 16 && nlhs == 4, "mexSimpleDetectorSteps12345", "Call this function as following: [quads, blockTypes, faceTypes, orientations] = mexSimpleDetectorSteps12345(uint8(image), scaleImage_useWhichAlgorithm, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio);");
+  AnkiConditionalErrorAndReturn(nrhs == 16 && nlhs == 4, "mexSimpleDetectorSteps12345", "Call this function as following: [quads, blockTypes, faceTypes, orientations] = mexSimpleDetectorSteps12345(uint8(image), scaleImage_useWhichAlgorithm, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio);");
 
   Array<u8> image = mxArrayToArray<u8>(prhs[0]);
   const CharacteristicScaleAlgorithm scaleImage_useWhichAlgorithm = static_cast<CharacteristicScaleAlgorithm>(static_cast<s32>(mxGetScalar(prhs[1])));
@@ -60,19 +58,19 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const s32 quads_minDistanceFromImageEdge = static_cast<s32>(mxGetScalar(prhs[14]));
   const f32 decode_minContrastRatio = static_cast<f32>(mxGetScalar(prhs[15]));
 
-  ConditionalErrorAndReturn(image.IsValid(), "mexSimpleDetectorSteps12345", "Could not allocate image");
+  AnkiConditionalErrorAndReturn(image.IsValid(), "mexSimpleDetectorSteps12345", "Could not allocate image");
 
   const u32 numBytes0 = 10000000;
   MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
-  ConditionalErrorAndReturn(scratch0.IsValid(), "mexSimpleDetectorSteps12345", "Scratch0 could not be allocated");
+  AnkiConditionalErrorAndReturn(scratch0.IsValid(), "mexSimpleDetectorSteps12345", "Scratch0 could not be allocated");
 
   const u32 numBytes1 = 10000000;
   MemoryStack scratch1(calloc(numBytes1,1), numBytes0);
-  ConditionalErrorAndReturn(scratch1.IsValid(), "mexSimpleDetectorSteps12345", "Scratch1 could not be allocated");
+  AnkiConditionalErrorAndReturn(scratch1.IsValid(), "mexSimpleDetectorSteps12345", "Scratch1 could not be allocated");
 
   const u32 numBytes2 = 10000000;
   MemoryStack scratch2(calloc(numBytes2,1), numBytes2);
-  ConditionalErrorAndReturn(scratch2.IsValid(), "mexSimpleDetectorSteps12345", "Scratch2 could not be allocated");
+  AnkiConditionalErrorAndReturn(scratch2.IsValid(), "mexSimpleDetectorSteps12345", "Scratch2 could not be allocated");
 
   const s32 maxMarkers = 100;
   FixedLengthList<BlockMarker> markers(maxMarkers, scratch0);
@@ -102,7 +100,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       scratch1,
       scratch2);
 
-    ConditionalErrorAndReturn(result == RESULT_OK, "mexSimpleDetectorSteps12345", "SimpleDetector_Steps12345 Failed");
+    AnkiConditionalErrorAndReturn(result == RESULT_OK, "mexSimpleDetectorSteps12345", "SimpleDetector_Steps12345 Failed");
   }
 
   const s32 numMarkers = markers.get_size();
