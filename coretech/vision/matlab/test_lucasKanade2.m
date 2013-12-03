@@ -44,13 +44,13 @@ numScales = 2;
 figure(100); subplot(1,2,2); imshow(im1);
 
 % translation only
-LKtracker = LucasKanadeTracker(im1, mask1, 'Type', 'translation', 'DebugDisplay', true, 'UseBlurring', false, 'UseNormalization', false, 'NumScales', numScales);
+LKtracker = LucasKanadeTracker(im1, mask1, 'Type', 'translation', 'DebugDisplay', true, 'UseBlurring', false, 'UseNormalization', false, 'NumScales', numScales, 'ApproximateGradientMargins', false);
 converged = LKtracker.track(im2, 'MaxIterations', 50, 'ConvergenceTolerance', .05);
 disp(LKtracker.tform);
 figure(101); plotResults(im1, im2, templateQuad, LKtracker.tform);
 
 % projective
-LKtracker = LucasKanadeTracker(im1, mask1, 'Type', 'homography', 'DebugDisplay', false, 'UseBlurring', false, 'UseNormalization', false, 'NumScales', numScales);
+LKtracker = LucasKanadeTracker(im1, mask1, 'Type', 'homography', 'DebugDisplay', false, 'UseBlurring', false, 'UseNormalization', false, 'NumScales', numScales, 'ApproximateGradientMargins', false);
 converged = LKtracker.track(im2, 'MaxIterations', 50, 'ConvergenceTolerance', .25);
 disp(LKtracker.tform);
 figure(102); plotResults(im1, im2, templateQuad, LKtracker.tform);
