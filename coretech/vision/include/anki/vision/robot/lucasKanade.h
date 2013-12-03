@@ -24,9 +24,9 @@ namespace Anki
     {
       enum TransformType
       {
-        TRANSFORM_UNKNOWN,
-        TRANSFORM_TRANSLATION,
-        TRANSFORM_PROJECTIVE
+        TRANSFORM_UNKNOWN = 0,
+        TRANSFORM_TRANSLATION = 1,
+        TRANSFORM_PROJECTIVE = 2
         //TRANSFORM_AFFINE, // TODO: support affine
       };
 

@@ -57,7 +57,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     static_cast<f32>(templateRegionRectangle_array[0][3]));
 
   if(tracker.InitializeTemplate(templateImage, templateRegion, scratch0) != RESULT_OK) {
-    printf("Error: mexTrackLucasKanade.InitializeTemplate\n");
+    AnkiError("mexTrackLucasKanade", "InitializeTemplate");
     return;
   }
 
@@ -69,12 +69,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   initialTransform.set_homography(homography);
 
   if(tracker.set_transformation(initialTransform) != RESULT_OK) {
-    printf("Error: mexTrackLucasKanade.set_transformation\n");
+    AnkiError("mexTrackLucasKanade", "set_transformation");
     return;
   }
 
   if(tracker.UpdateTrack(nextImage, maxIterations, convergenceTolerance, scratch0) != RESULT_OK) {
-    printf("Error: mexTrackLucasKanade.UpdateTrack\n");
+    AnkiError("mexTrackLucasKanade", "UpdateTrack");
     return;
   }
 
