@@ -23,6 +23,7 @@ MV_TOOLS_VERSION = '00.50.37.0'
 
 LEON_SOURCE = []
 LEON_SOURCE += addSources('./hal')
+LEON_SOURCE += addSources('./hal/asm')
 LEON_SOURCE += addSources('./vision')
 #LEON_SOURCE += addSources('./supervisor/src')
 LEON_SOURCE += addSources('../coretech/vision/robot/src')
@@ -51,7 +52,6 @@ LEON_SOURCE += addSources(SWCOMMON_PLATFORM + 'src');
 LEON_SOURCE += addSources(SWCOMMON + 'src');
 LEON_SOURCE += addSources(DRIVERS + 'socDrivers');
 LEON_SOURCE += addSources(CIF_GENERIC);
-LEON_SOURCE += addSources(DRIVERS + 'system/asm');
 LEON_SOURCE += addSources(LIBC + 'src');
 LEON_SOURCE += addSources(LIBC + 'src/asm');
 
@@ -239,16 +239,8 @@ if __name__ == '__main__':
   print 'Linking ' + TARGET + '.elf'
   file = OUTPUT + TARGET + '.elf'
   s = LD + ' ' + LDOPT + ' -o ' + file + ' > ' + OUTPUT + TARGET + '.map'
-
-  # Write command line out to file and execute from there
-  # so that we don't exceed the command line limit of os.system()  
-  ldCmdFile = 'ldCmd.bat'
-  with open(ldCmdFile, 'w+') as f:
-    f.write(s)
-  if os.system(ldCmdFile) != 0:
-    os.remove(ldCmdFile)
+  if os.system(s) != 0:
     sys.exit(1)
-  os.remove(ldCmdFile)
   
   s = MVCONV + ' -elfInput ' + file + ' -mvcmd:' + OUTPUT + TARGET + '.mvcmd'
   if os.system(s) != 0:
