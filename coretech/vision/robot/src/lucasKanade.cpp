@@ -439,7 +439,6 @@ namespace Anki
 
               this->A_full[iScale](6,6,0,-1).Set(tmp1);
 
-              // TODO: this equation is probably wrong
               // -X.*Y.*Ix(:) - Y.^2.*Iy(:)
               Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp1); // Ix(:)
               Matrix::DotMultiply<f32,f32,f32>(tmp1, xInV, tmp1); // Ix(:).*X
@@ -644,6 +643,11 @@ namespace Anki
           Find<f32, Comparison::GreaterThanOrEqual<f32,f32>, f32> inBounds(nextImageTransformed, 0.0f);
           const s32 numInBounds = inBounds.get_numMatches();
 
+          if(numInBounds < 16) {
+            //AnkiWarn('Template drifted too far out of image.');
+            break;
+          }
+
           Array<f32> templateImage(1, numPointsY*numPointsX, memory);
           Matrix::Vectorize(true, this->templateImagePyramid[whichScale], templateImage);
 
@@ -664,9 +668,15 @@ namespace Anki
 
           Array<f32> AW(A.get_size(0), A.get_size(1), memory);
           AW(0,-1,0,-1).Set(A);
-          for(s32 y=0; y<numSystemParameters; y++) {
-            Matrix::DotMultiply<f32,f32,f32>(AW(y,y,0,-1), templateWeights[whichScale], AW(y,y,0,-1));
-          }
+
+          {
+            PUSH_MEMORY_STACK(memory);
+            Array<f32> validTemplateWeights = inBounds.SetArray(templateWeights[whichScale], 1, memory);
+
+            for(s32 y=0; y<numSystemParameters; y++) {
+              Matrix::DotMultiply<f32,f32,f32>(AW(y,y,0,-1), validTemplateWeights, AW(y,y,0,-1));
+            }
+          } // PUSH_MEMORY_STACK(memory);
 
           //  AtWA = AtW*A(inBounds,:) + diag(this.ridgeWeight*ones(1,size(A,2)));
           Matrix::MultiplyTranspose(A, AW, AWAt);
