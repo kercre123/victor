@@ -537,7 +537,7 @@ namespace Anki
           if(IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, TRANSFORM_TRANSLATION, converged, memory) != RESULT_OK)
             return RESULT_FAIL;
 
-          this->get_transformation().Print("Translation");
+          //this->get_transformation().Print("Translation");
 
           if(this->transformation.get_transformType() != TRANSFORM_TRANSLATION) {
             // TODO: remove
@@ -549,7 +549,7 @@ namespace Anki
             if(IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, this->transformation.get_transformType(), converged, memory) != RESULT_OK)
               return RESULT_FAIL;
 
-            this->get_transformation().Print("Other");
+            //this->get_transformation().Print("Other");
           }
         } // for(s32 iScale=numPyramidLevels; iScale>=0; iScale--)
 
