@@ -7,30 +7,33 @@ classdef SimulatedSerial < handle
     end
     
     properties(SetAccess = 'protected', Dependent = true)
-        BytesAvailable;
+        BytesAvailable; % in the read buffer
+        TxBytesAvailable;
     end
     
     properties(GetAccess = 'protected', SetAccess = 'protected')
-        buffer;
-        locked;
+        tx_buffer;
+        rx_buffer;
+        %locked;
     end
     
     methods
         function this = SimulatedSerial()
-            this.locked = false;
-            this.buffer = [];
+            %this.locked = false;
+            this.tx_buffer = [];
+            this.rx_buffer = [];
         end
         
         function data = fread(this, dims, precision)
-
+            % Read out of the RX buffer
             numBytes = prod(dims);
             if this.BytesAvailable < numBytes
                 data = [];
             else
-                this.locked = true;
+                %this.locked = true;
                 data = reshape(this.buffer(1:numBytes), dims);
-                this.buffer(1:numBytes) = [];
-                this.locked = false;
+                this.rx_buffer(1:numBytes) = [];
+                %this.locked = false;
                 
                 precisionFcn = str2func(precision);
                 data = precisionFcn(data);
@@ -39,18 +42,22 @@ classdef SimulatedSerial < handle
         end
         
         function fwrite(this, data, precision)
+            % Write to the TX buffer
             precisionFcn = str2func(precision);
-            this.locked = true;
-            this.buffer = [this.buffer row(precisionFcn(data))];
-            this.locked = false;
+            this.tx_buffer = [this.tx_buffer row(precisionFcn(data))];
         end
         
         function N = get.BytesAvailable(this)
-            N = length(this.buffer);
+            N = length(this.rx_buffer);
         end
         
-        function c = getChar(this, peek)
-            % Get the first element of the buffer. 
+        function N = get.TxBytesAvailable(this)
+            N = length(this.tx_buffer);
+        end
+        
+        function c = getCharFrom(this, peek)
+            % Get a char sent by this object, i.e. get the first element 
+            % of the TX buffer. 
             % If peek is true, the element is also removed from the buffer.  
             % Otherwise (default), the element remains in the buffer.
             
@@ -58,15 +65,16 @@ classdef SimulatedSerial < handle
                 peek = false;
             end
             
-            c = this.buffer(1);
+            c = this.tx_buffer(1);
             if ~peek
-               this.buffer = this.buffer(2:end); 
+               this.tx_buffer = this.tx_buffer(2:end); 
             end
         end
         
-        function putChar(this, data)
-            % Append data to buffer
-            this.buffer = [this.buffer row(char(data))];
+        function sendCharTo(this, data)
+            % Send a char to this object, i.e. append a char to its RX
+            % buffer
+            this.rx_buffer = [this.rx_buffer row(char(data))];
         end
         
         function fopen(~)
