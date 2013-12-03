@@ -30,7 +30,8 @@ void closeHelper(void) {
 enum Command {
   OPEN  = 0,
   GRAB  = 1,
-  CLOSE = 2
+  CLOSE = 2, 
+  CHANGE_RESOLUION = 3
 };
 
 // A Simple Camera Capture Framework
@@ -130,8 +131,36 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       break;
     }
 
-  default:
-    mexErrMsgTxt("Unknown command.");
+    case CHANGE_RESOLUTION:
+    {
+      if(nrhs < 4) {
+         mexErrMsgTxt("You must supply device and resolution arguments "
+                 "with the CHANGE_RESOLUTION command.");
+      }
+      
+      device = (int) mxGetScalar(prhs[1]);
+      if(device < 0 || device >= capture.size()) {
+          mexErrMsgTxt("Invalid device specified.");
+      }
+      
+      double width  = mxGetScalar(prhs[2]);
+      double height = mxGetScalar(prhs[3]);
+
+      if(not capture[device]->set(CV_CAP_PROP_FRAME_WIDTH, width) ||
+         not capture[device]->set(CV_CAP_PROP_FRAME_HEIGHT, height))
+      {
+        mexErrMsgTxt("Failed to adjust capture dimensions.");
+      }
+
+      DEBUG_MSG(0, "Set camera to capture at %.0fx%.0f\n",
+          width, height);
+      }
+      break;
+    }
+    
+    default:
+      mexErrMsgTxt("Unknown command.");
+      
   } // SWITCH(cmd)
 
   if(cmd == GRAB)

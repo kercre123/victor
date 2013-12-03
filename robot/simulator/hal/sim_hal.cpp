@@ -2,8 +2,6 @@
 #include <cmath>
 #include <cstdlib>
 
-#include <queue>
-
 // Our Includes
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoConfig.h"

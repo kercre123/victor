@@ -519,6 +519,16 @@ typedef struct {
 } CozmoMsg_ObservedMatMarker;
 const u8 SIZE_MSG_V2B_CORE_MAT_MARKER_OBSERVED = sizeof(CozmoMsg_ObservedMatMarker);
 
+// MSG_V2B_CORE_DOCKING_ERROR_SIGNAL
+typedef struct {
+  u8 size;
+  u8 msgID;
+  f32 x_distErr;
+  f32 y_horErr;
+  f32 angleErr; // in radians
+} CozmoMsg_DockingErrorSignal;
+const u8 MSG_V2B_CORE_DOCKING_ERROR_SIGNAL = sizeof(CozmoMsg_DockingErrorSignal);
+
 // MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE
 typedef struct {
   u8 size;

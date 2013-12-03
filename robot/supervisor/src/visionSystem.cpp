@@ -134,6 +134,8 @@ namespace Anki {
       engPutVariable(matlabEngine_, "pixPerMM",
                      mxCreateDoubleScalar(matCamPixPerMM_));
       
+      engEvalString(matlabEngine_, "simSerialCam = SimulatedSerialCamera;");
+      
 #if DISPLAY_MATLAB_IMAGES
       char cmd[256];
       snprintf(cmd, 255, "h_imgFig = figure; "
@@ -173,6 +175,33 @@ namespace Anki {
       }
 #endif
     }
+    
+    
+#if USING_MATLAB_VISION
+    s32 HAL::USBPutChar(int c)
+    {
+      engPutVariable(matlabEngine_, "usbChar",
+                     mxCreateDoubleScalar((double)c));
+      engEvalString(matlabEngine_,
+                    "simSerialCam.fwrite(usbChar, 'uint8');");
+      return 0;
+    }
+
+    s32 HAL::USBGetChar(u32 timeout)
+    {
+      engEvalString(matlabEngine_,
+                    "usbChar = simSerialCam.fread([1 1], 'char');");
+      char retVal = char(mxGetScalar(engGetVariable(matlabEngine_, "usbChar")));
+      return s32(retVal);
+    }
+    
+    u32 HAL::USBGetNumBytesToRead()
+    {
+      engEvalString(matlabEngine_,
+                    "bytesAvailable = simSerialCam.BytesAvailable;");
+      return u32(mxGetScalar(engGetVariable(matlabEngine_, "bytesAvailable")));
+    }
+#endif // USING_MATLAB_VISION
     
     
     ReturnCode VisionSystem::lookForBlocks()
@@ -423,6 +452,107 @@ namespace Anki {
       return retVal;
       
     } // localizeWithMat()
+    
+    
+    
+    ReturnCode VisionSystem::trackDockingTarget()
+    {
+      ReturnCode retVal = EXIT_SUCCESS;
+      
+#if defined(USE_MATLAB_FOR_HEAD_CAMERA)
+      
+      // Start image capture
+      if (!acquiringHeadCamImage_) {
+        HAL::CameraStartFrame(HAL::CAMERA_FRONT, headCamImage_, HAL::CAMERA_MODE_VGA, HAL::CAMERA_UPDATE_SINGLE, 100, true);
+        acquiringHeadCamImage_ = true;
+      }
+      
+      // Wait until frame is ready
+      if (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT)) {
+        return EXIT_SUCCESS;
+      }
+      acquiringHeadCamImage_ = false;
+      
+      
+      const s32 nrows = headCamInfo_->nrows;
+      const s32 ncols = headCamInfo_->ncols;
+      
+      mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(headCamImage_, nrows, ncols, 4);
+      
+      if(mxImg != NULL) {
+        // Send the image to matlab
+        engPutVariable(matlabEngine_, "headCamImage", mxImg);
+        
+        // Convert from GBRA format to Grayscale:
+        engEvalString(matlabEngine_,
+                      "headCamImage = mean(im2double(headCamImage(:,:,1:3)),3);");
+        
+#if DISPLAY_MATLAB_IMAGES
+        // Display (optional)
+        engEvalString(matlabEngine_, "set(h_headImg, 'CData', headCamImage);");
+#endif
+        
+        switch(dockState_)
+        {
+          case DOCK_INIT:
+          {
+            /*
+          % Set the camera's resolution for detection.
+          this.camera.changeResolution(this.detectionResolution);
+          dims = this.camera.framesize;
+          set(this.h_axes, 'XLim', [.5 dims(1)+.5], 'YLim', [.5 dims(2)+.5]);
+          set(this.h_img, 'CData', zeros(dims(2),dims(1)));
+          set(this.h_target, 'XData', nan, 'YData', nan);
+          drawnow
+             */
+            
+            dockState_ = DOCK_DETECT;
+            break;
+          }
+            
+          case DOCK_DETECT:
+          {
+            // Detect BlockMarkers
+            engEvalString(matlabEngine_,
+                          "blockMarkers = simpleDetector(headCamImage); "
+                          "if ~isempty(blockMarkers) && blockMarkers{1}.isValid, "
+                          "  markerCorners = blockMarkers{1}.corners; "
+                          "else, "
+                          "  markerCorners = []; "
+                          "end");
+            
+
+            break;
+          }
+            
+          case DOCK_TRACK:
+          {
+            
+            break;
+          }
+        
+          default:
+          {
+            PRINT("VisionSystem::trackDockingTarget(): unrecognized dock state.\n");
+          }
+            
+        } // SWITCH(dockState_)
+        
+        
+      } // if mxImg not NULL
+      
+#else // NOT using matlab for head camera
+        
+        // TODO: Hook this up to Pete's vision code
+        PRINT("VisionSystem::trackDockingTarget(): embedded vision "
+              "processing not hooked up yet.\n");
+        retVal = EXIT_FAILURE;
+        
+#endif // defined(USE_MATLAB_FOR_HEAD_CAMERA)
+      
+      return retVal;
+    } // trackDockingTarget()
+    
     
     ReturnCode VisionSystem::setDockingWindow(const s16 xLeft, const s16 yTop,
                                               const s16 width, const s16 height)

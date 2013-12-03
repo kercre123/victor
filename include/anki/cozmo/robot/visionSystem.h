@@ -9,6 +9,8 @@
 
 #include "anki/common/types.h"
 
+#include "anki/common/robot/geometry_declarations.h"
+
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/MessageProtocol.h"
 
@@ -28,9 +30,19 @@ namespace Anki {
     
     namespace VisionSystem {
       
+      typedef struct {
+        u16 width;
+        u16 height;
+      } ImageSize;
+    
+      
       const u8 MAX_BLOCK_MARKER_MESSAGES = 32;
       const u8 MAX_MAT_MARKER_MESSAGES   = 1;
+      const u8 MAX_DOCKING_MESSAGES      = 1;
       
+      // VisionSystem "Mailboxes" are used for leaving messages from slower
+      // vision processing in LongExecution to be retrieved and acted upon
+      // by the faster MainExecution.
       template<typename MsgType, u8 NumMessages>
       class Mailbox
       {
@@ -58,6 +70,8 @@ namespace Anki {
       
       typedef Mailbox<CozmoMsg_ObservedMatMarker, MAX_MAT_MARKER_MESSAGES> MatMarkerMailbox;
       
+      typedef Mailbox<CozmoMsg_DockingErrorSignal, MAX_DOCKING_MESSAGES> DockingMailbox;
+      
       
       ReturnCode Init(const HAL::CameraInfo*  headCamInfo,
                       const HAL::CameraInfo*  matCamInfo,
@@ -71,6 +85,50 @@ namespace Anki {
       ReturnCode localizeWithMat();
       ReturnCode setDockingWindow(const s16 xLeft, const s16 yTop,
                                   const s16 width, const s16 height);
+      ReturnCode trackDockingTarget();
+      
+      
+      // Visual-servoing Docker "class"
+      namespace Docker {
+        
+        const ImageSize DETECTION_RESOLUTION = {.width = 320, .height = 240};
+        const ImageSize TRACKING_RESOLUTION  = {.width =  80, .height =  60};
+        
+        
+        void InitDetection();
+        
+        
+      } // namespace Docker
+      
+      // LK Tracker "class":
+      // TODO: move this generic implementation to coretech-vision?
+      namespace LKtracker {
+        
+        
+        // 3x3 linear transformation matrix
+        typedef f32[3][3] TForm;
+        
+        //typedef Embedded::Point<f32> Corner;
+        typedef Embedded::Quadrilateral<f32> Corners_t;
+        
+        // Start a new tracker with an image and the corners of the template in
+        // that image to be tracked -- both at DETECTION_RESOLUTION.
+        void Init(const u8* img, const Corners &corners);
+        
+        // Track current template into the next image.  This will update
+        // the current transform and corner locations
+        bool Track(const u8* img);
+        
+        // Get the current transformation matrix
+        const TForm& GetTransform();
+        
+        // Get the current corner locations (at TRACKING_RESOLUTION)
+        const Corner& GetCorner_UpperLeft();
+        const Corner& GetCorner_LowerLeft();
+        const Corner& GetCorner_UpperRight();
+        const Corner& GetCorner_LowerRight();
+        
+      } // namespace LKtracker
       
       bool IsInitialized();
       

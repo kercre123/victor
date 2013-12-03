@@ -39,6 +39,8 @@ classdef CozmoDocker < handle
         K; % calibration matrix
         
         frameCount;
+        numEmpty;
+        numLost;
         
         drawPose;
         h_cam;
@@ -210,16 +212,10 @@ classdef CozmoDocker < handle
             dockingDone = false;
             
             while ~this.escapePressed && ~dockingDone
-               
-                % Set the camera's resolution for detection.
-                this.camera.changeResolution(this.detectionResolution);
-                dims = this.camera.framesize;
-                set(this.h_axes, 'XLim', [.5 dims(1)+.5], 'YLim', [.5 dims(2)+.5]);
-                set(this.h_img, 'CData', zeros(dims(2),dims(1)));
-                set(this.h_target, 'XData', nan, 'YData', nan);
-                drawnow
+                         
+                this.initDetection();
                 
-                % Wait until we get a valid marker\
+                % Wait until we get a valid marker
                 % TODO: wait until we get the marker for the block we want
                 % to pick up!
                 marker = [];
@@ -264,103 +260,25 @@ classdef CozmoDocker < handle
                 end
                 
                 if ~this.escapePressed
-                    this.camera.changeResolution(this.trackingResolution);
+                    LKtracker = this.initTracker(marker);
                     
-                    % Initialize the tracker with the full resolution first
-                    % image, but tell it we're going to do tracking at
-                    % QQQVGA.
-                    LKtracker = LucasKanadeTracker(img, marker{1}.unorderedCorners([3 1 4 2],:), ...
-                        'Type', this.trackerType, 'RidgeWeight', 1e-3, ...
-                        'DebugDisplay', false, 'UseBlurring', false, ...
-                        'UseNormalization', true, ...
-                        'TrackingResolution', this.camera.framesize);
-                    
-                    if strcmp(this.trackerType, 'homography') && ...
-                            ~isempty(this.calibration)
+                    this.numLost  = 0;
+                    this.numEmpty = 0;
+                    while this.numLost < 5 && ~this.escapePressed
+                        this.track(LKtracker);
                         
-                        % Compute the planar homography:
-                        %{
-                        Kfull = this.K * 4;
-                        this.H_init = compute_homography( ...
-                            Kfull\[marker{1}.corners';ones(1,4)], ...
-                            this.marker3d(:,1:2)');
-                        this.H_init = .25 * this.H_init;
-                        %}
-                        
-                        this.H_init = compute_homography( ...
-                            this.K\[LKtracker.corners';ones(1,4)], ...
-                            this.marker3d(:,1:2)');
-                        
-                        this.updateBlockPose(this.H_init);
-                        
-                        %[Rmat, T] = this.getCameraPose(LKtracker.corners, this.marker3d);
-                        if this.drawPose
-                            this.drawCamera();
+                        if this.numLost==0 && ~isempty(this.calibration)
+                            [distError, midPointErr, angleError] = this.computeError(LKtracker);
+                            
+                            % Send out the error packet over the serial
+                            % camera line:
+                            dockErrorPacket = [uint8('E') ...
+                                typecast(swapbytes(single([distError midPointErr angleError])), 'uint8')];
+                            assert(length(dockErrorPacket)==13, ...
+                                'Expecting docking error packet to be 13 bytes long.');
+                            
+                            this.camera.sendMessage(dockErrorPacket);
                         end
-                    end
-                    
-                    % Show the target we'll be tracking
-                    imagesc(LKtracker.target{LKtracker.finestScale}, 'Parent', this.h_pip);
-                    axis(this.h_pip, 'image', 'off');
-                    
-                    set(this.h_axes, ...
-                        'XLim', [.5 this.camera.framesize(1)+.5], ...
-                        'YLim', [.5 this.camera.framesize(2)+.5]);
-                    %set(this.h_img, 'CData', imresize(img, [60 80], 'nearest'));
-                    %set(this.h_target, 'XData', corners([1 2 4 3 1],1), ...
-                    %    'YData', corners([1 2 4 3 1],2));
-                    %drawnow;
-                    
-                    lost = 0;
-                    numEmpty = 0;
-                    while lost < 5 && ~this.escapePressed
-                        t_track = tic;
-                        
-                        img = this.camera.getFrame();
-                        if ~isempty(this.camera.message)
-                            this.displayMessage(this.camera.message);
-                            
-                        end
-                        
-                        if isempty(img)
-                            numEmpty = numEmpty + 1;
-                            
-                            if numEmpty > 5
-                                % Too many empty frames in a row
-                                warning('Too many empty frames received. Resetting camera.');
-                                this.camera.reset();
-                            end
-                        else
-                            this.frameCount = this.frameCount + 1;
-                            
-                            numEmpty = 0;
-                            set(this.h_img, 'CData', img);
-                            converged = LKtracker.track(img, ...
-                                'MaxIterations', 50, ...
-                                'ConvergenceTolerance', .25,...
-                                'ErrorTolerance', 0.5);
-                            
-                            if converged
-                                lost = 0;
-                                corners = LKtracker.corners;
-                                
-                                if ~isempty(this.calibration)
-                                    this.sendError(LKtracker);
-                                end
-                                
-                                set(this.h_target, ...
-                                    'XData', corners([1 2 4 3 1],1), ...
-                                    'YData', corners([1 2 4 3 1],2));
-                                title(this.h_pip, sprintf('TargetError = %.2f', LKtracker.err), 'Back', 'w');
-                            
-                            else
-                                lost = lost + 1;
-                            end
-                            
-                             title(this.h_axes, sprintf('Tracking: %.1f FPS', 1/toc(t_track)));
-                             drawnow
-                        end % IF / ELSE image is empty
-                        
                     end % WHILE not lost
                     
                 end % IF escape not pressed
@@ -369,8 +287,129 @@ classdef CozmoDocker < handle
             
         end % FUNCTION run()
        
+        function initDetection(this)
+            % Set the camera's resolution for detection.
+            this.camera.changeResolution(this.detectionResolution);
+            dims = this.camera.framesize;
+            set(this.h_axes, 'XLim', [.5 dims(1)+.5], 'YLim', [.5 dims(2)+.5]);
+            set(this.h_img, 'CData', zeros(dims(2),dims(1)));
+            set(this.h_target, 'XData', nan, 'YData', nan);
+            drawnow
+            
+        end
         
-        function sendError(this, LKtracker)
+        function marker = findMarker(this)
+            
+            img = this.camera.getFrame();
+            
+            if ~isempty(this.camera.message)
+                this.displayMessage(this.camera.message);
+            end
+            
+            if ~isempty(img)
+                set(this.h_img, 'CData', img); drawnow;
+                marker = simpleDetector(img);
+            end
+            title(this.h_axes, sprintf('Detecting: %.1f FPS', 1/toc(t_detect)));
+            drawnow
+        end
+        
+        function LKtracker = initTracking(this, marker)
+            this.camera.changeResolution(this.trackingResolution);
+            
+            % Initialize the tracker with the full resolution first
+            % image, but tell it we're going to do tracking at
+            % QQQVGA.
+            LKtracker = LucasKanadeTracker(img, marker{1}.unorderedCorners([3 1 4 2],:), ...
+                'Type', this.trackerType, 'RidgeWeight', 1e-3, ...
+                'DebugDisplay', false, 'UseBlurring', false, ...
+                'UseNormalization', true, ...
+                'TrackingResolution', this.camera.framesize);
+            
+            if strcmp(this.trackerType, 'homography') && ...
+                    ~isempty(this.calibration)
+                
+                % Compute the planar homography:
+                %{
+                        Kfull = this.K * 4;
+                        this.H_init = compute_homography( ...
+                            Kfull\[marker{1}.corners';ones(1,4)], ...
+                            this.marker3d(:,1:2)');
+                        this.H_init = .25 * this.H_init;
+                %}
+                
+                this.H_init = compute_homography( ...
+                    this.K\[LKtracker.corners';ones(1,4)], ...
+                    this.marker3d(:,1:2)');
+                
+                this.updateBlockPose(this.H_init);
+                
+                %[Rmat, T] = this.getCameraPose(LKtracker.corners, this.marker3d);
+                if this.drawPose
+                    this.drawCamera();
+                end
+            end
+            
+            % Show the target we'll be tracking
+            imagesc(LKtracker.target{LKtracker.finestScale}, 'Parent', this.h_pip);
+            axis(this.h_pip, 'image', 'off');
+            
+            set(this.h_axes, ...
+                'XLim', [.5 this.camera.framesize(1)+.5], ...
+                'YLim', [.5 this.camera.framesize(2)+.5]);
+            %set(this.h_img, 'CData', imresize(img, [60 80], 'nearest'));
+            %set(this.h_target, 'XData', corners([1 2 4 3 1],1), ...
+            %    'YData', corners([1 2 4 3 1],2));
+            %drawnow;
+            
+        end % FUNCTION initTracking()
+        
+        function [lost, numEmpty] = track(this, lost, numEmpty)
+            t_track = tic;
+            
+            img = this.camera.getFrame();
+            if ~isempty(this.camera.message)
+                this.displayMessage(this.camera.message);
+            end
+            
+            if isempty(img)
+                this.numEmpty = this.numEmpty + 1;
+                
+                if numEmpty > 5
+                    % Too many empty frames in a row
+                    warning('Too many empty frames received. Resetting camera.');
+                    this.camera.reset();
+                end
+            else
+                this.frameCount = this.frameCount + 1;
+                
+                this.numEmpty = 0;
+                set(this.h_img, 'CData', img);
+                converged = LKtracker.track(img, ...
+                    'MaxIterations', 50, ...
+                    'ConvergenceTolerance', .25,...
+                    'ErrorTolerance', 0.5);
+                
+                if converged
+                    this.numLost = 0;
+                    corners = LKtracker.corners;
+                    
+                    set(this.h_target, ...
+                        'XData', corners([1 2 4 3 1],1), ...
+                        'YData', corners([1 2 4 3 1],2));
+                    title(this.h_pip, sprintf('TargetError = %.2f', LKtracker.err), 'Back', 'w');
+                    
+                else
+                    this.numLost = this.numLost + 1;
+                end
+                
+                title(this.h_axes, sprintf('Tracking: %.1f FPS', 1/toc(t_track)));
+                drawnow
+            end % IF / ELSE image is empty
+            
+        end % FUNCTION track()
+       
+        function [distError, midPointErr, angleError] = computeError(this, LKtracker)
              
             % Compute the error signal according to the current tracking result
             switch(this.trackerType)
@@ -457,11 +496,6 @@ classdef CozmoDocker < handle
             h = get(this.h_leftRightError, 'Parent');
             title(h, sprintf('LeftRightErr = %.1fmm', midPointErr), 'Back', 'w');
             
-            dockErrorPacket = [uint8('E') ...
-                typecast(swapbytes(single([distError midPointErr angleError])), 'uint8')];
-            assert(length(dockErrorPacket)==13, ...
-                'Expecting docking error packet to be 13 bytes long.');
-            
             % Display the message we're sending:
             %{ 
             Print hex values for debugging
@@ -478,9 +512,8 @@ classdef CozmoDocker < handle
                 fprintf('Message Sent: %s\n', txMsg);
             end
             
-            this.camera.sendMessage(dockErrorPacket);
             
-        end % FUNCTION sendError()
+        end % FUNCTION computeError()
         
         function keyPressCallback(this, ~,edata)
             if isempty(edata.Modifier)

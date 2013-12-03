@@ -60,6 +60,7 @@ namespace Anki {
         // to be relayed up to the Basestation.
         VisionSystem::BlockMarkerMailbox blockMarkerMailbox_;
         VisionSystem::MatMarkerMailbox   matMarkerMailbox_;
+        VisionSystem::DockingMailbox     dockErrSignalMailbox_;
         
         Robot::OperationMode mode_ = INITIALIZING;
         
@@ -218,7 +219,7 @@ namespace Anki {
         CommandHandler::ProcessIncomingMessages();
         
         // Check for any messages from the vision system and pass them along to
-        // the basestation
+        // the basestation, update the docking controller, etc.
         while( matMarkerMailbox_.hasMail() )
         {
           const CozmoMsg_ObservedMatMarker matMsg = matMarkerMailbox_.getMessage();
@@ -228,7 +229,6 @@ namespace Anki {
         while( blockMarkerMailbox_.hasMail() )
         {
           const CozmoMsg_ObservedBlockMarker blockMsg = blockMarkerMailbox_.getMessage();
-          
           HAL::RadioToBase((u8*)(&blockMsg), sizeof(CozmoMsg_ObservedBlockMarker));
     
 #if DOCKING_TEST
@@ -272,7 +272,7 @@ namespace Anki {
         {
           case INITIALIZING:
           {
-            MotorCalibrationUpdate();
+            MotorCalibrationUpdate(); // switches mode_ to WAITING
             break;
           }
             /*
@@ -281,22 +281,29 @@ namespace Anki {
             PathFollower::Update();
             break;
           }
-           */
+            */
           case DOCK:
           {
+            // Get any docking error signal available from the vision system
+            // and update our path accordingly.
+            while( dockErrSignalMailbox_.hasMail() )
+            {
+              const CozmoMsg_DockingErrorSignal dockMsg = dockErrSignalMailbox_.getMessage();
+              DockingController::SetRelDockPose(dockMsg.x_distErr,
+                                                dockMsg.y_horErr,
+                                                dockMsg.angleErr);
+            }
+            
             DockingController::Update();
             
             if(DockingController::IsDone())
             {
-              mode_ = WAITING;
-              
               if(DockingController::DidSucceed())
               {
                 // TODO: send a message to basestation that we are carrying a block?
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHT);
               }
-              
-            } // if head and left are in position
+            }
             
             break;
           }
@@ -384,6 +391,11 @@ namespace Anki {
         
         if(VisionSystem::localizeWithMat() == EXIT_FAILURE) {
           PRINT("VisionSystem::localizeWithMat() failed.\n");
+          return EXIT_FAILURE;
+        }
+        
+        if(VisionSystem::trackDockingTarget() == EXIT_FAILURE) {
+          PRINT("VisionSystem::trackDockingTarget() failed.\n");
           return EXIT_FAILURE;
         }
 #endif

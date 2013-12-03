@@ -181,8 +181,8 @@ namespace Anki
       // USB / UART
       
       // Packet header/footer:
-      const u8 USB_PACKET_HEADER[4] = {0xBE, 0xEF, 0xF0, 0xFF};
-      const u8 USB_PACKET_FOOTER[4] = {0xFF, 0x0F, 0xFE, 0xEB};
+      const u8 USB_PACKET_HEADER[4] = {0xBE, 0xEF, 0xF0, 0xFF}; // BEEFF0FF
+      const u8 USB_PACKET_FOOTER[4] = {0xFF, 0x0F, 0xFE, 0xEB}; // FF0FFEEB
       
       // Send a variable length buffer
       void USBSendBuffer(u8* buffer, u32 size);

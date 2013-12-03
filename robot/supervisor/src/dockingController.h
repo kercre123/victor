@@ -26,10 +26,10 @@ namespace Anki {
       // TODO: Add if/when needed?
       // ReturnCode Init();
       
-      ReturnCode SetGoals(const CozmoMsg_InitiateDock* msg);
-      bool IsDone(); // whether or not it was successful
-      bool DidSucceed();
-      ReturnCode Update();
+      ReturnCode  SetGoals(const CozmoMsg_InitiateDock* msg);
+      bool        IsDone(); // whether or not it was successful
+      bool        DidSucceed();
+      ReturnCode  Update();
 
       // Set the desired
       void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad);
