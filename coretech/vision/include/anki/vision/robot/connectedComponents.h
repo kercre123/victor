@@ -3,7 +3,7 @@ File: connectedComponents.h
 Author: Peter Barnum
 Created: 2013
 
-Compute the connected components from a binary image.
+Definitions of connectedComponents_declarations.h
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
