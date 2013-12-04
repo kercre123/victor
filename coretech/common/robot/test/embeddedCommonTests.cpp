@@ -2524,9 +2524,9 @@ int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_call);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1);
-  CALL_GTEST_TEST(CoreTech_Common, SimpleMatlabTest1);
-  CALL_GTEST_TEST(CoreTech_Common, SimpleMatlabTest2);
-  CALL_GTEST_TEST(CoreTech_Common, SimpleOpenCVTest);
+  //CALL_GTEST_TEST(CoreTech_Common, SimpleMatlabTest1);
+  //CALL_GTEST_TEST(CoreTech_Common, SimpleMatlabTest2);
+  //CALL_GTEST_TEST(CoreTech_Common, SimpleOpenCVTest);
   CALL_GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest);
   CALL_GTEST_TEST(CoreTech_Common, ArraySpecifiedClass);
   CALL_GTEST_TEST(CoreTech_Common, ArrayAlignment1);
