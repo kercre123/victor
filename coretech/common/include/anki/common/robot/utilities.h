@@ -126,6 +126,12 @@ namespace Anki
       h = F * determinantInverse;
       i = I * determinantInverse;
     }
+
+    template<typename Type> void Cart2Pol(const Type x, const Type y, Type &rho, Type &theta)
+    {
+      theta = atan2(y, x);
+      rho = sqrtf(x*x + y*y);
+    }
   } // namespace Embedded
 } // namespace Anki
 

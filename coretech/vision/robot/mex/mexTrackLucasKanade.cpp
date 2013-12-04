@@ -46,20 +46,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
   AnkiConditionalErrorAndReturn(scratch0.IsValid(), "mexTrackLucasKanade", "Scratch0 could not be allocated");
 
-  TemplateTracker::LucasKanadeTracker_f32 tracker(templateImage.get_size(0), templateImage.get_size(1), numPyramidLevels, transformType, ridgeWeight, scratch0);
-
-  AnkiConditionalErrorAndReturn(tracker.IsValid(), "mexTrackLucasKanade", "Could not construct tracker");
-
   Rectangle<f32> templateRegion(
     static_cast<f32>(templateRegionRectangle_array[0][0]),
     static_cast<f32>(templateRegionRectangle_array[0][1]),
     static_cast<f32>(templateRegionRectangle_array[0][2]),
     static_cast<f32>(templateRegionRectangle_array[0][3]));
 
-  if(tracker.InitializeTemplate(templateImage, templateRegion, scratch0) != RESULT_OK) {
-    AnkiError("mexTrackLucasKanade", "InitializeTemplate");
-    return;
-  }
+  TemplateTracker::LucasKanadeTracker_f32 tracker(templateImage, templateRegion, numPyramidLevels, transformType, ridgeWeight, scratch0);
+
+  AnkiConditionalErrorAndReturn(tracker.IsValid(), "mexTrackLucasKanade", "Could not construct tracker");
 
   TemplateTracker::PlanarTransformation_f32 initialTransform(transformType, scratch0);
 

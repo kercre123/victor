@@ -19,105 +19,51 @@ namespace Anki
   {
     namespace TemplateTracker
     {
-      PlanarTransformation_f32::PlanarTransformation_f32(TransformType transformType, MemoryStack &memory)
+      PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, MemoryStack &memory)
+        : transformType(transformType), initialCorners(initialCorners)
+      {
+        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
+          "PlanarTransformation_f32::PlanarTransformation_f32", "Invalid transformType %d", transformType);
+
+        this->homography = Eye<f32>(3, 3, memory);
+
+        if(initialHomography.IsValid()) {
+          this->homography.Set(initialHomography);
+        }
+      }
+
+      PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, MemoryStack &memory)
+        : transformType(transformType), initialCorners(initialCorners)
+      {
+        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
+          "PlanarTransformation_f32::PlanarTransformation_f32", "Invalid transformType %d", transformType);
+
+        this->homography = Eye<f32>(3, 3, memory);
+      }
+
+      PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, MemoryStack &memory)
         : transformType(transformType)
       {
         AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
           "PlanarTransformation_f32::PlanarTransformation_f32", "Invalid transformType %d", transformType);
 
-        homography = Eye<f32>(3, 3, memory);
+        initialCorners = Quadrilateral<f32>(Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f));
+
+        this->homography = Eye<f32>(3, 3, memory);
+      }
+
+      PlanarTransformation_f32::PlanarTransformation_f32()
+      {
+        initialCorners = Quadrilateral<f32>(Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f));
       }
 
       Result PlanarTransformation_f32::TransformPoints(
         const Array<f32> &xIn, const Array<f32> &yIn,
         const f32 scale,
         const Point<f32> &centerOffset,
-        Array<f32> &xOut, Array<f32> &yOut)
+        Array<f32> &xOut, Array<f32> &yOut) const
       {
-        AnkiConditionalErrorAndReturnValue(homography.IsValid(),
-          RESULT_FAIL, "PlanarTransformation_f32::TransformPoints", "homography is not valid");
-
-        AnkiConditionalErrorAndReturnValue(xIn.IsValid() && yIn.IsValid() && xOut.IsValid() && yOut.IsValid(),
-          RESULT_FAIL, "PlanarTransformation_f32::TransformPoints", "All inputs and outputs must be allocated and valid");
-
-        AnkiConditionalErrorAndReturnValue(xIn.get_rawDataPointer() != xOut.get_rawDataPointer() && yIn.get_rawDataPointer() != yOut.get_rawDataPointer(),
-          RESULT_FAIL, "PlanarTransformation_f32::TransformPoints", "In and Out arrays must be in different memory locations");
-
-        AnkiConditionalErrorAndReturnValue(
-          xIn.get_size(0) == yIn.get_size(0) && xIn.get_size(0) == xOut.get_size(0) && xIn.get_size(0) == yOut.get_size(0) &&
-          xIn.get_size(1) == yIn.get_size(1) && xIn.get_size(1) == xOut.get_size(1) && xIn.get_size(1) == yOut.get_size(1),
-          RESULT_FAIL, "PlanarTransformation_f32::TransformPoints", "All inputs and outputs must be the same size");
-
-        const s32 numPointsY = xIn.get_size(0);
-        const s32 numPointsX = xIn.get_size(1);
-
-        if(transformType == TRANSFORM_TRANSLATION) {
-          const f32 dx = homography[0][2];
-          const f32 dy = homography[1][2];
-
-          for(s32 y=0; y<numPointsY; y++) {
-            const f32 * restrict pXIn = xIn.Pointer(y,0);
-            const f32 * restrict pYIn = yIn.Pointer(y,0);
-            f32 * restrict pXOut = xOut.Pointer(y,0);
-            f32 * restrict pYOut = yOut.Pointer(y,0);
-
-            for(s32 x=0; x<numPointsX; x++) {
-              pXOut[x] = pXIn[x] + dx + centerOffset.x;
-              pYOut[x] = pYIn[x] + dy + centerOffset.y;
-            }
-          }
-        } else if(transformType == TRANSFORM_AFFINE) {
-          const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
-          const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
-
-          assert(FLT_NEAR(homography[2][0], 0.0f));
-          assert(FLT_NEAR(homography[2][1], 0.0f));
-          assert(FLT_NEAR(homography[2][2], 1.0f));
-
-          for(s32 y=0; y<numPointsY; y++) {
-            const f32 * restrict pXIn = xIn.Pointer(y,0);
-            const f32 * restrict pYIn = yIn.Pointer(y,0);
-            f32 * restrict pXOut = xOut.Pointer(y,0);
-            f32 * restrict pYOut = yOut.Pointer(y,0);
-
-            for(s32 x=0; x<numPointsX; x++) {
-              const f32 xp = (h00*pXIn[x] + h01*pYIn[x] + h02);
-              const f32 yp = (h10*pXIn[x] + h11*pYIn[x] + h12);
-
-              pXOut[x] = xp + centerOffset.x;
-              pYOut[x] = yp + centerOffset.y;
-            }
-          }
-        } else if(transformType == TRANSFORM_PROJECTIVE) {
-          const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
-          const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
-          const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
-
-          assert(FLT_NEAR(homography[2][2], 1.0f));
-
-          for(s32 y=0; y<numPointsY; y++) {
-            const f32 * restrict pXIn = xIn.Pointer(y,0);
-            const f32 * restrict pYIn = yIn.Pointer(y,0);
-            f32 * restrict pXOut = xOut.Pointer(y,0);
-            f32 * restrict pYOut = yOut.Pointer(y,0);
-
-            for(s32 x=0; x<numPointsX; x++) {
-              const f32 wpi = 1.0f / (h20*pXIn[x] + h21*pYIn[x] + h22);
-
-              const f32 xp = (h00*pXIn[x] + h01*pYIn[x] + h02) * wpi;
-              const f32 yp = (h10*pXIn[x] + h11*pYIn[x] + h12) * wpi;
-
-              pXOut[x] = xp + centerOffset.x;
-              pYOut[x] = yp + centerOffset.y;
-            }
-          }
-        } else {
-          // Should be checked earlier
-          assert(false);
-          return RESULT_FAIL;
-        }
-
-        return RESULT_OK;
+        return TransformPointsStatic(xIn, yIn, scale, centerOffset, xOut, yOut, this->get_transformType(), this->get_homography());
       }
 
       Result PlanarTransformation_f32::Update(const Array<f32> &update, MemoryStack scratch, TransformType updateType)
@@ -223,6 +169,39 @@ namespace Anki
         return this->homography.Print(variableName);
       }
 
+      Quadrilateral<f32> PlanarTransformation_f32::TransformQuadrilateral(const Quadrilateral<f32> &in, const f32 scale) const
+      {
+        // TODO: if this uses too much stack, rethink it
+        const s32 dataSize = 4*sizeof(f32) + 2*MEMORY_ALIGNMENT;
+        char xInData[dataSize];
+        char yInData[dataSize];
+        char xOutData[dataSize];
+        char yOutData[dataSize];
+
+        Array<f32> xIn(1,4,&xInData[0],dataSize);
+        Array<f32> yIn(1,4,&yInData[0],dataSize);
+        Array<f32> xOut(1,4,&xOutData[0],dataSize);
+        Array<f32> yOut(1,4,&yOutData[0],dataSize);
+
+        for(s32 i=0; i<4; i++) {
+          xIn[0][i] = in.corners[i].x;
+          yIn[0][i] = in.corners[i].y;
+        }
+
+        Point<f32> centerOffset(0.0f, 0.0f);
+
+        TransformPoints(xIn, yIn, scale, centerOffset, xOut, yOut);
+
+        Quadrilateral<f32> out;
+
+        for(s32 i=0; i<4; i++) {
+          out.corners[i].x = xOut[0][i];
+          out.corners[i].y = yOut[0][i];
+        }
+
+        return out;
+      }
+
       Result PlanarTransformation_f32::set_transformType(const TransformType transformType)
       {
         if(transformType == TRANSFORM_TRANSLATION || transformType == TRANSFORM_AFFINE || transformType == TRANSFORM_PROJECTIVE) {
@@ -255,8 +234,119 @@ namespace Anki
         return this->homography;
       }
 
-      LucasKanadeTracker_f32::LucasKanadeTracker_f32(const s32 templateImageHeight, const s32 templateImageWidth, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory)
-        : isValid(false), templateImageHeight(templateImageHeight), templateImageWidth(templateImageWidth), numPyramidLevels(numPyramidLevels), transformation(PlanarTransformation_f32(transformType,memory)), ridgeWeight(ridgeWeight), isInitialized(false)
+      Result PlanarTransformation_f32::set_initialCorners(const Quadrilateral<f32> &initialCorners)
+      {
+        this->initialCorners = initialCorners;
+
+        return RESULT_OK;
+      }
+
+      const Quadrilateral<f32>& PlanarTransformation_f32::get_initialCorners() const
+      {
+        return this->initialCorners;
+      }
+
+      Quadrilateral<f32> PlanarTransformation_f32::get_transformedCorners() const
+      {
+        return this->TransformQuadrilateral(this->get_initialCorners());
+      }
+
+      Result PlanarTransformation_f32::TransformPointsStatic(
+        const Array<f32> &xIn, const Array<f32> &yIn,
+        const f32 scale,
+        const Point<f32> &centerOffset,
+        Array<f32> &xOut, Array<f32> &yOut,
+        const TransformType transformType,
+        const Array<f32> &homography)
+      {
+        AnkiConditionalErrorAndReturnValue(homography.IsValid(),
+          RESULT_FAIL, "PlanarTransformation_f32::TransformPoints", "homography is not valid");
+
+        AnkiConditionalErrorAndReturnValue(xIn.IsValid() && yIn.IsValid() && xOut.IsValid() && yOut.IsValid(),
+          RESULT_FAIL, "PlanarTransformation_f32::TransformPoints", "All inputs and outputs must be allocated and valid");
+
+        AnkiConditionalErrorAndReturnValue(xIn.get_rawDataPointer() != xOut.get_rawDataPointer() && yIn.get_rawDataPointer() != yOut.get_rawDataPointer(),
+          RESULT_FAIL, "PlanarTransformation_f32::TransformPoints", "In and Out arrays must be in different memory locations");
+
+        AnkiConditionalErrorAndReturnValue(
+          xIn.get_size(0) == yIn.get_size(0) && xIn.get_size(0) == xOut.get_size(0) && xIn.get_size(0) == yOut.get_size(0) &&
+          xIn.get_size(1) == yIn.get_size(1) && xIn.get_size(1) == xOut.get_size(1) && xIn.get_size(1) == yOut.get_size(1),
+          RESULT_FAIL, "PlanarTransformation_f32::TransformPoints", "All inputs and outputs must be the same size");
+
+        const s32 numPointsY = xIn.get_size(0);
+        const s32 numPointsX = xIn.get_size(1);
+
+        if(transformType == TRANSFORM_TRANSLATION) {
+          const f32 dx = homography[0][2];
+          const f32 dy = homography[1][2];
+
+          for(s32 y=0; y<numPointsY; y++) {
+            const f32 * restrict pXIn = xIn.Pointer(y,0);
+            const f32 * restrict pYIn = yIn.Pointer(y,0);
+            f32 * restrict pXOut = xOut.Pointer(y,0);
+            f32 * restrict pYOut = yOut.Pointer(y,0);
+
+            for(s32 x=0; x<numPointsX; x++) {
+              pXOut[x] = pXIn[x] + dx + centerOffset.x;
+              pYOut[x] = pYIn[x] + dy + centerOffset.y;
+            }
+          }
+        } else if(transformType == TRANSFORM_AFFINE) {
+          const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
+          const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+
+          assert(FLT_NEAR(homography[2][0], 0.0f));
+          assert(FLT_NEAR(homography[2][1], 0.0f));
+          assert(FLT_NEAR(homography[2][2], 1.0f));
+
+          for(s32 y=0; y<numPointsY; y++) {
+            const f32 * restrict pXIn = xIn.Pointer(y,0);
+            const f32 * restrict pYIn = yIn.Pointer(y,0);
+            f32 * restrict pXOut = xOut.Pointer(y,0);
+            f32 * restrict pYOut = yOut.Pointer(y,0);
+
+            for(s32 x=0; x<numPointsX; x++) {
+              const f32 xp = (h00*pXIn[x] + h01*pYIn[x] + h02);
+              const f32 yp = (h10*pXIn[x] + h11*pYIn[x] + h12);
+
+              pXOut[x] = xp + centerOffset.x;
+              pYOut[x] = yp + centerOffset.y;
+            }
+          }
+        } else if(transformType == TRANSFORM_PROJECTIVE) {
+          const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
+          const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+          const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
+
+          assert(FLT_NEAR(homography[2][2], 1.0f));
+
+          for(s32 y=0; y<numPointsY; y++) {
+            const f32 * restrict pXIn = xIn.Pointer(y,0);
+            const f32 * restrict pYIn = yIn.Pointer(y,0);
+            f32 * restrict pXOut = xOut.Pointer(y,0);
+            f32 * restrict pYOut = yOut.Pointer(y,0);
+
+            for(s32 x=0; x<numPointsX; x++) {
+              const f32 wpi = 1.0f / (h20*pXIn[x] + h21*pYIn[x] + h22);
+
+              const f32 xp = (h00*pXIn[x] + h01*pYIn[x] + h02) * wpi;
+              const f32 yp = (h10*pXIn[x] + h11*pYIn[x] + h12) * wpi;
+
+              pXOut[x] = xp + centerOffset.x;
+              pYOut[x] = yp + centerOffset.y;
+            }
+          }
+        } else {
+          // Should be checked earlier
+          assert(false);
+          return RESULT_FAIL;
+        }
+
+        return RESULT_OK;
+      }
+
+      LucasKanadeTracker_f32::LucasKanadeTracker_f32(const Array<u8> &templateImage, const Rectangle<f32> &templateRegion, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory)
+        : isValid(false), templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), numPyramidLevels(numPyramidLevels), ridgeWeight(ridgeWeight), isInitialized(false), templateRegion(templateRegion)
       {
         AnkiConditionalErrorAndReturn(templateImageHeight > 0 && templateImageWidth > 0,
           "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "template widths and heights must be greater than zero, and multiples of %d", ANKI_VISION_IMAGE_WIDTH_MULTIPLE);
@@ -306,10 +396,22 @@ namespace Anki
 
         templateWeights.set_size(numPyramidLevels);
 
+        Quadrilateral<f32> initialCorners(
+          Point<f32>(templateRegion.left,templateRegion.top),
+          Point<f32>(templateRegion.right,templateRegion.top),
+          Point<f32>(templateRegion.right,templateRegion.bottom),
+          Point<f32>(templateRegion.left,templateRegion.bottom));
+
+        this->transformation = PlanarTransformation_f32(transformType, initialCorners, memory);
+
         this->isValid = true;
+
+        if(LucasKanadeTracker_f32::InitializeTemplate(templateImage, memory) != RESULT_OK) {
+          this->isValid = false;
+        }
       }
 
-      Result LucasKanadeTracker_f32::InitializeTemplate(const Array<u8> &templateImage, const Rectangle<f32> templateRegion, MemoryStack &memory)
+      Result LucasKanadeTracker_f32::InitializeTemplate(const Array<u8> &templateImage, MemoryStack &memory)
       {
         const bool isOutColumnMajor = true; // TODO: change to false, which will probably be faster
 

@@ -191,11 +191,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
   {
     PUSH_MEMORY_STACK(scratch1);
 
-    TemplateTracker::LucasKanadeTracker_f32 tracker(imageHeight, imageWidth, numPyramidLevels, TemplateTracker::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
-
-    ASSERT_TRUE(tracker.IsValid());
-
-    ASSERT_TRUE(tracker.InitializeTemplate(image1, templateRegion, scratch1) == RESULT_OK);
+    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -215,11 +211,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
   {
     PUSH_MEMORY_STACK(scratch1);
 
-    TemplateTracker::LucasKanadeTracker_f32 tracker(imageHeight, imageWidth, numPyramidLevels, TemplateTracker::TRANSFORM_AFFINE, ridgeWeight, scratch1);
-
-    ASSERT_TRUE(tracker.IsValid());
-
-    ASSERT_TRUE(tracker.InitializeTemplate(image1, templateRegion, scratch1) == RESULT_OK);
+    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_AFFINE, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -240,11 +232,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
   {
     PUSH_MEMORY_STACK(scratch1);
 
-    TemplateTracker::LucasKanadeTracker_f32 tracker(imageHeight, imageWidth, numPyramidLevels, TemplateTracker::TRANSFORM_PROJECTIVE, ridgeWeight, scratch1);
-
-    ASSERT_TRUE(tracker.IsValid());
-
-    ASSERT_TRUE(tracker.InitializeTemplate(image1, templateRegion, scratch1) == RESULT_OK);
+    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_PROJECTIVE, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
