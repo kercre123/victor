@@ -59,6 +59,8 @@ namespace Anki
 //  explicitPrintf(1, "\nLeon executed %d cycles in %d micro seconds ([%d ms])\n",(s32)(perfStr.perfCounterTimer), (s32)(DrvTimerTicksToMs(perfStr.perfCounterTimer)*1000), (s32)(DrvTimerTicksToMs(perfStr.perfCounterTimer)));
 
         printf("Finished unit tests \n");
+        while(1)
+          ;     // Because we don't trust hal.cpp
       }
 	  
 	  void step_MainExecution()

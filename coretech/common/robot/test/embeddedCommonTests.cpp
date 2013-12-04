@@ -58,7 +58,7 @@ static char buffer[MAX_BYTES];
 #else
 
 #ifdef BUFFER_IN_CMX
-__attribute__((section(".cmx.bss,CMX"))) static char buffer[MAX_BYTES];
+static char buffer[MAX_BYTES];    // CMX is default
 #else // #ifdef BUFFER_IN_CMX
 
 #ifdef BUFFER_IN_DDR_WITH_L2
