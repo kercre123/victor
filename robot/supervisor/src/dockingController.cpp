@@ -5,10 +5,11 @@
 #include "liftController.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
-#include "anki/cozmo/robot/visionSystem.h"
+#include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/speedController.h"
 #include "anki/cozmo/robot/steeringController.h"
 #include "anki/cozmo/robot/pathFollower.h"
+#include "anki/cozmo/robot/visionSystem.h"
 
 // Use PathFollower to follow a path generated from the relative docking pose
 // specified by SetRelDockPose().
@@ -55,8 +56,7 @@ namespace Anki {
 #endif
         bool success_  = false;
         
-        f32 liftDockHeight_ = -1.f;
-        VisionSystem::DockingTarget goalDockTarget_, obsDockTarget_;
+        f32 liftDockHeight_ = LIFT_HEIGHT_LOWDOCK;
         
       } // "private" namespace
       
@@ -65,35 +65,8 @@ namespace Anki {
         mode_ = APPROACH;
         success_ = false;
       }
-      
-      ReturnCode SetGoals(const CozmoMsg_InitiateDock* msg)
-      {
-        Reset();
-        
-        // Move the head to the position computed by the basestation
-        HeadController::SetDesiredAngle(msg->headAngle);
-        
-        // Store the lift dock height the basestation computed, and drop
-        // the lift all the way down, out of the way of the vision system.
-        // We will raise it once APPROACH mode is complete and we are in
-        // position.
-        LiftController::SetDesiredHeight(LIFT_HEIGHT_LOW);
-        liftDockHeight_ = msg->liftHeight;
-        
-        for(u8 i=0; i<4; ++i) {
-          goalDockTarget_.dotX[i] = msg->dotX[i];
-          goalDockTarget_.dotY[i] = msg->dotY[i];
-        }
-        
-        // Use where the message says to start looking for the
-        // target in the image
-        VisionSystem::setDockingWindow(msg->winX, msg->winY,
-                                       msg->winWidth, msg->winHeight);
-        
-        return EXIT_SUCCESS;
-        
-      } // SetGoals()
-     
+ 
+#if 0
       // TODO: Use a real controller
       // Compute the wheel velocities from the difference between
       // the observed target and the goal target
@@ -162,7 +135,8 @@ namespace Anki {
         SteeringController::ExecuteDirectDrive(leftMotorVelocity, leftMotorVelocity);
         
       } // ApproachBlock()
-      
+#endif
+
       bool IsDone()
       {
         return mode_ == DONE;
@@ -185,7 +159,7 @@ namespace Anki {
             break;
           case SET_LIFT:
             GripController::DisengageGripper();
-            LiftController::SetDesiredHeight(LIFT_HEIGHT_LOW);
+            LiftController::SetDesiredHeight(liftDockHeight_);
             mode_ = APPROACH;
             break;
           case APPROACH:

@@ -1,11 +1,13 @@
-#include "anki/common/robot/config.h"
-#include "anki/cozmo/robot/visionSystem.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
-#include "anki/cozmo/robot/cozmoBot.h"
 
-#include "anki/cozmo/messageProtocol.h"
+#include "anki/common/robot/config.h"
 #include "anki/common/shared/radians.h"
 
+#include "anki/cozmo/robot/cozmoBot.h"
+#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/visionSystem.h"
+
+#include "anki/cozmo/messageProtocol.h"
 
 #define USING_MATLAB_VISION (defined(USE_MATLAB_FOR_HEAD_CAMERA) || \
 defined(USE_MATLAB_FOR_MAT_CAMERA))
@@ -20,292 +22,505 @@ extern Engine *matlabEngine_;
 
 namespace Anki {
   namespace Cozmo {
-    
+    namespace VisionSystem {
 #pragma mark --- VisionSystem "Private Member Variables" ---
-    
-    // Private "Members" of the VisionSystem:
-    namespace {
       
-      bool isInitialized_ = false;
+      typedef enum {
+        LOOKING_FOR_BLOCKS,
+        DOCKING,
+        MAT_LOCALIZATION,
+        VISUAL_ODOMETRY
+      } Mode;
       
-      const HAL::CameraInfo* headCamInfo_ = NULL;
-      const HAL::CameraInfo* matCamInfo_  = NULL;
+      // Private "Members" of the VisionSystem:
+      namespace {
+        
+        bool isInitialized_ = false;
+        
+        Mode mode_ = LOOKING_FOR_BLOCKS;
+        
+        const CameraInfo* headCamInfo_ = NULL;
+        const CameraInfo* matCamInfo_  = NULL;
+        
+        // TODO: need one of these for both mat and head cameras?
+        bool continuousCaptureStarted_ = false;
+        
+        // Whether or not we're in the process of waiting for an image to be acquired
+        bool acquiringHeadCamImage_ = false;
+        bool acquiringMatCamImage_ = false;
+        
+        u16  dockingBlock_ = 0;
+        bool isDockingBlockFound_ = false;
+        
+        bool isTemplateInitialized_ = false;
+        
+        // Pointers to "Mailboxes" for communicating information back to
+        // mainExecution()
+        BlockMarkerMailbox* blockMarkerMailbox_ = NULL;
+        MatMarkerMailbox*   matMarkerMailbox_   = NULL;
+        DockingMailbox*     dockingMailbox_     = NULL;
+        
+        u8 msgBuffer_[256];
+        
+        f32 matCamPixPerMM_ = 1.f;
+        
+      } // private namespace VisionSystem
       
-      // Image buffers (Only used when using MATLAB)
-#ifdef USE_MATLAB_FOR_HEAD_CAMERA
-      u8 headCamImage_[640*480*4];
-#endif
-#ifdef USE_MATLAB_FOR_MAT_CAMERA
-      u8 matCamImage_[640*480*4];
-#endif
       
-      // Whether or not we're in the process of waiting for an image to be acquired
-      bool acquiringHeadCamImage_ = false;
-      bool acquiringMatCamImage_ = false;
-    
-      
-      VisionSystem::BlockMarkerMailbox* blockMarkerMailbox_ = NULL;
-      VisionSystem::MatMarkerMailbox*   matMarkerMailbox_   = NULL;
-      
-      f32 matCamPixPerMM_ = 1.f;
-      
-      // Window within which to search for docking target, specified by
-      // upper left corner + width and height
-      s16 dockTargetWinX_ = -1;
-      s16 dockTargetWinY_ = -1;
-      s16 dockTargetWinW_ = -1;
-      s16 dockTargetWinH_ = -1;
-      
-    } // private namespace VisionSystem
-    
-    
 #pragma mark --- VisionSystem::Mailbox Implementations ---
-    
-    /*
-     //TODO: Was having trouble getting this to compile on robot.
-     //      Default logic should still work when commenting this out.
-    template<>
-    void VisionSystem::MatMarkerMailbox::advanceIndex(u8 &index)
-    {
-      return;
-    }
-     */
-    
-    
+      
+      /*
+       //TODO: Was having trouble getting this to compile on robot.
+       //      Default logic should still work when commenting this out.
+       template<>
+       void VisionSystem::MatMarkerMailbox::advanceIndex(u8 &index)
+       {
+       return;
+       }
+       */
+      
+      
 #pragma mark --- VisionSystem Method Implementations ---
-    
-    
-    ReturnCode VisionSystem::Init(const HAL::CameraInfo* headCamInfo,
-                                  const HAL::CameraInfo* matCamInfo,
-                                  BlockMarkerMailbox*    blockMarkerMailbox,
-                                  MatMarkerMailbox*      matMarkerMailbox)
-    {
-      isInitialized_ = false;
-
-      if(headCamInfo == NULL) {
-        PRINT("VisionSystem::Init() - HeadCam Info pointer is NULL!\n");
-        return EXIT_FAILURE;
-      }
-      headCamInfo_ = headCamInfo;
-      
-      if(matCamInfo == NULL) {
-        PRINT("VisionSystem::Init() - MatCam Info pointer is NULL!\n");
-        return EXIT_FAILURE;
-      }
-      matCamInfo_  = matCamInfo;
-      
-      if(blockMarkerMailbox == NULL) {
-        PRINT("VisionSystem::Init() - BlockMarkerMailbox pointer is NULL!\n");
-        return EXIT_FAILURE;
-      }
-      blockMarkerMailbox_ = blockMarkerMailbox;
-      
-      if(matMarkerMailbox == NULL) {
-        PRINT("VisionSystem::Init() - MatMarkerMailbox pointer is NULL!\n");
-        return EXIT_FAILURE;
-      }
-      matMarkerMailbox_ = matMarkerMailbox;
-      
-      // Compute the resolution of the mat camera from its FOV and height
-      // off the mat:
-      f32 matCamHeightInPix = ((static_cast<f32>(matCamInfo_->nrows)*.5f) /
-                               tanf(matCamInfo_->fov_ver * .5f));
-      matCamPixPerMM_ = matCamHeightInPix / MAT_CAM_HEIGHT_FROM_GROUND_MM;
       
       
+      ReturnCode Init(const VisionSystem::CameraInfo*  headCamInfo,
+                      const VisionSystem::CameraInfo*  matCamInfo,
+                      BlockMarkerMailbox*              blockMarkerMailbox,
+                      MatMarkerMailbox*                matMarkerMailbox,
+                      DockingMailbox*                  dockingMailbox)
+      {
+        isInitialized_ = false;
+        
+        if(headCamInfo == NULL) {
+          PRINT("VisionSystem::Init() - HeadCam Info pointer is NULL!\n");
+          return EXIT_FAILURE;
+        }
+        headCamInfo_ = headCamInfo;
+        
+        if(matCamInfo == NULL) {
+          PRINT("VisionSystem::Init() - MatCam Info pointer is NULL!\n");
+          return EXIT_FAILURE;
+        }
+        matCamInfo_  = matCamInfo;
+        
+        if(blockMarkerMailbox == NULL) {
+          PRINT("VisionSystem::Init() - BlockMarkerMailbox pointer is NULL!\n");
+          return EXIT_FAILURE;
+        }
+        blockMarkerMailbox_ = blockMarkerMailbox;
+        
+        if(matMarkerMailbox == NULL) {
+          PRINT("VisionSystem::Init() - MatMarkerMailbox pointer is NULL!\n");
+          return EXIT_FAILURE;
+        }
+        matMarkerMailbox_ = matMarkerMailbox;
+        
+        if(dockingMailbox == NULL) {
+          PRINT("VisionSystem::Init() - DockingMailbox pointer is NULL!\n");
+          return EXIT_FAILURE;
+        }
+        dockingMailbox_ = dockingMailbox;
+        
+        // Compute the resolution of the mat camera from its FOV and height
+        // off the mat:
+        f32 matCamHeightInPix = ((static_cast<f32>(matCamInfo_->nrows)*.5f) /
+                                 tanf(matCamInfo_->fov_ver * .5f));
+        matCamPixPerMM_ = matCamHeightInPix / MAT_CAM_HEIGHT_FROM_GROUND_MM;
+        
+        
 #if USING_MATLAB_VISION
-      
-      if(matlabEngine_ == NULL) {
-        PRINT("Expecting Matlab engine to already be open.\n");
-        return EXIT_FAILURE;
-      }
-      
-      // Initialize Matlab
-      engEvalString(matlabEngine_, "run('../../../../matlab/initCozmoPath.m');");
-      
-      engEvalString(matlabEngine_, "usingOutsideSquare = BlockMarker2D.UseOutsideOfSquare;");
-      mxArray *mxUseOutsideOfSquare = engGetVariable(matlabEngine_, "usingOutsideSquare");
-      if(mxIsLogicalScalarTrue(mxUseOutsideOfSquare) != BLOCKMARKER3D_USE_OUTSIDE_SQUARE) {
-        PRINT("UseOutsideOfSquare settings between Matlab and C++ don't match!\n");
-        return EXIT_FAILURE;
-      }
-      
-      // Store computed pixPerMM in Matlab for use by MatLocalization()
-      engPutVariable(matlabEngine_, "pixPerMM",
-                     mxCreateDoubleScalar(matCamPixPerMM_));
-      
-      engEvalString(matlabEngine_, "simSerialCam = SimulatedSerialCamera;");
-      
+        
+        if(matlabEngine_ == NULL) {
+          PRINT("Expecting Matlab engine to already be open.\n");
+          return EXIT_FAILURE;
+        }
+        
+        // Initialize Matlab
+        engEvalString(matlabEngine_, "run('../../../../matlab/initCozmoPath.m');");
+        
+        engEvalString(matlabEngine_, "usingOutsideSquare = BlockMarker2D.UseOutsideOfSquare;");
+        mxArray *mxUseOutsideOfSquare = engGetVariable(matlabEngine_, "usingOutsideSquare");
+        if(mxIsLogicalScalarTrue(mxUseOutsideOfSquare) != BLOCKMARKER3D_USE_OUTSIDE_SQUARE) {
+          PRINT("UseOutsideOfSquare settings between Matlab and C++ don't match!\n");
+          return EXIT_FAILURE;
+        }
+        
+        // Store computed pixPerMM in Matlab for use by MatLocalization()
+        engPutVariable(matlabEngine_, "pixPerMM",
+                       mxCreateDoubleScalar(matCamPixPerMM_));
+        
+        engEvalString(matlabEngine_, "simSerialCam = SimulatedSerialCamera;");
+        
 #if DISPLAY_MATLAB_IMAGES
-      char cmd[256];
-      snprintf(cmd, 255, "h_imgFig = figure; "
-               "subplot(121); "
-               "h_headImg = imshow(zeros(%d,%d)); "
-               "hold('on'); "
-               "h_dockTargetWin = plot(nan, nan, 'r'); "
-               "title('Head Camera'); "
-               "subplot(122); "
-               "h_matImg = imshow(zeros(%d,%d)); "
-               "title(sprintf('Mat Camera (pixPerMM=%%.1f)', pixPerMM));",
-               headCamInfo->nrows,
-               headCamInfo->ncols,
-               matCamInfo->nrows,
-               matCamInfo->ncols);
-      
-      engEvalString(matlabEngine_, cmd);
+        char cmd[256];
+        snprintf(cmd, 255, "h_imgFig = figure; "
+                 "subplot(121); "
+                 "h_headImg = imshow(zeros(%d,%d)); "
+                 "hold('on'); "
+                 "h_dockTargetWin = plot(nan, nan, 'r'); "
+                 "title('Head Camera'); "
+                 "subplot(122); "
+                 "h_matImg = imshow(zeros(%d,%d)); "
+                 "title(sprintf('Mat Camera (pixPerMM=%%.1f)', pixPerMM));",
+                 headCamInfo->nrows,
+                 headCamInfo->ncols,
+                 matCamInfo->nrows,
+                 matCamInfo->ncols);
+        
+        engEvalString(matlabEngine_, cmd);
 #endif // DISPLAY_MATLAB_IMAGES
-      
+        
 #endif // USING_MATLAB_VISION
-      
-      isInitialized_ = true;
-      return EXIT_SUCCESS;
-    }
-    
-    
-    bool VisionSystem::IsInitialized()
-    {
-      return isInitialized_;
-    }
-    
-    void VisionSystem::Destroy()
-    {
-#if USING_MATLAB_VISION
-      if(matlabEngine_ != NULL) {
-        engClose(matlabEngine_);
-      }
-#endif
-    }
-    
-    
-#if USING_MATLAB_VISION
-    s32 HAL::USBPutChar(int c)
-    {
-      engPutVariable(matlabEngine_, "usbChar",
-                     mxCreateDoubleScalar((double)c));
-      engEvalString(matlabEngine_,
-                    "simSerialCam.fwrite(usbChar, 'uint8');");
-      return 0;
-    }
-
-    s32 HAL::USBGetChar(u32 timeout)
-    {
-      engEvalString(matlabEngine_,
-                    "usbChar = simSerialCam.fread([1 1], 'char');");
-      char retVal = char(mxGetScalar(engGetVariable(matlabEngine_, "usbChar")));
-      return s32(retVal);
-    }
-    
-    u32 HAL::USBGetNumBytesToRead()
-    {
-      engEvalString(matlabEngine_,
-                    "bytesAvailable = simSerialCam.BytesAvailable;");
-      return u32(mxGetScalar(engGetVariable(matlabEngine_, "bytesAvailable")));
-    }
-#endif // USING_MATLAB_VISION
-    
-    
-    ReturnCode VisionSystem::lookForBlocks()
-    {
-#if defined(USE_MATLAB_FOR_HEAD_CAMERA)
-      u32 numBlocks = 0;
-      
-      // Start image capture
-      if (!acquiringHeadCamImage_) {
-        HAL::CameraStartFrame(HAL::CAMERA_FRONT, headCamImage_, HAL::CAMERA_MODE_VGA, HAL::CAMERA_UPDATE_SINGLE, 100, true);
-        acquiringHeadCamImage_ = true;
-      }
-      
-      // Wait until frame is ready
-      if (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT)) {
+        
+        isInitialized_ = true;
         return EXIT_SUCCESS;
       }
-      acquiringHeadCamImage_ = false;
       
       
-      const s32 nrows = headCamInfo_->nrows;
-      const s32 ncols = headCamInfo_->ncols;
+      bool IsInitialized()
+      {
+        return isInitialized_;
+      }
       
-      mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(headCamImage_, nrows, ncols, 4);
-      
-      if(mxImg != NULL) {
-        // Send the image to matlab
-        engPutVariable(matlabEngine_, "headCamImage", mxImg);
-        
-        // Convert from GBRA format to RGB:
-        engEvalString(matlabEngine_, "headCamImage = headCamImage(:,:,[3 2 1]);");
-        
-#if DISPLAY_MATLAB_IMAGES
-        // Display (optional)
-        engEvalString(matlabEngine_, "set(h_headImg, 'CData', headCamImage);");
+      void Destroy()
+      {
+#if USING_MATLAB_VISION
+        if(matlabEngine_ != NULL) {
+          engClose(matlabEngine_);
+        }
 #endif
+      }
+      
+      ReturnCode Update(u8* memoryBuffer)
+      {
+        ReturnCode retVal = EXIT_SUCCESS;
         
-        // Detect BlockMarkers
-        engEvalString(matlabEngine_, "blockMarkers = simpleDetector(headCamImage); "
-                      "numMarkers = length(blockMarkers);");
+        switch(mode_)
+        {
+          case LOOKING_FOR_BLOCKS:
+          {
+            FrameBuffer frame = {
+              .data   = memoryBuffer,
+              .width  = DETECTION_RESOLUTION.width,
+              .height = DETECTION_RESOLUTION.height
+            };
+            
+            CaptureHeadFrame(frame);
+            
+            retVal = LookForBlocks(frame);
+            
+            if(isDockingBlockFound_) {
+              if(InitTemplate(frame) == EXIT_SUCCESS) {
+                // If we successfully initialize a tracking template,
+                // switch to docking mode.  Otherwise, we'll keep looking
+                // for the block and try again
+                mode_ = DOCKING;
+              }
+            }
+            break;
+          }
+            
+          case DOCKING:
+          {
+            if(not isTemplateInitialized_) {
+              PRINT("VisionSystem::Update(): Reached DOCKING mode without template initialized.\n");
+              retVal = EXIT_FAILURE;
+            }
+            else {
+              VisionSystem::FrameBuffer frame = {
+                .data   = memoryBuffer,
+                .width  = TRACKING_RESOLUTION.width,
+                .height = TRACKING_RESOLUTION.height
+              };
+              
+              CaptureHeadFrame(frame);
+              
+              if(TrackTemplate(frame) == EXIT_FAILURE) {
+                // Lost track.  Reset and go back to trying to find the
+                // block we want to dock with.
+                isDockingBlockFound_ = false;
+                isTemplateInitialized_ = false;
+                mode_ = LOOKING_FOR_BLOCKS;
+              }
+            }
+            break;
+          }
+            
+          case MAT_LOCALIZATION:
+          {
+            VisionSystem::FrameBuffer frame = {
+              .data   = memoryBuffer,
+              .width  = MAT_LOCALIZATION_RESOLUTION.width,
+              .height = MAT_LOCALIZATION_RESOLUTION.height
+            };
+            
+            CaptureMatFrame(frame);
+            LocalizeWithMat(frame);
+            
+            break;
+          }
+            
+          case VISUAL_ODOMETRY:
+          {
+            VisionSystem::FrameBuffer frame = {
+              .data   = memoryBuffer,
+              .width  = MAT_ODOMETRY_RESOLUTION.width,
+              .height = MAT_ODOMETRY_RESOLUTION.height
+            };
+            
+            CaptureMatFrame(frame);
+            GetRelativeOdometry(frame);
+            
+            break;
+          }
+            
+          default:
+            PRINT("VisionSystem::Update(): reached default case in switch statement.");
+            retVal = EXIT_FAILURE;
+            break;
+        } // SWITCH(mode_)
         
-        int numMarkers = static_cast<int>(mxGetScalar(engGetVariable(matlabEngine_, "numMarkers")));
+        return retVal;
         
-        PRINT("Found %d block markers.\n", numMarkers);
+      } // Update()
+      
+      ReturnCode CaptureHeadFrame(FrameBuffer &frame)
+      {
+        // Only QQQVGA can be captured in SINGLE mode.
+        // Other modes must be captured in CONTINUOUS mode otherwise you get weird
+        // rolling sync effects.
+        // NB: CONTINUOUS mode contains tears that could affect vision algorithms
+        // if moving too fast.
+        // NOTE: we are currently always capturing at 640x480.  The camera mode
+        //       is just affecting how much we downsample before sending the
+        //       frame out over UART.
+        if (HAL::GetHeadCamMode() != HAL::CAMERA_MODE_QQQVGA) {
+          
+          if (!continuousCaptureStarted_) {
+            CameraStartFrame(HAL::CAMERA_FRONT, frame.data, HAL::CAMERA_MODE_VGA,
+                             HAL::CAMERA_UPDATE_CONTINUOUS, 0, false);
+            acquiringHeadCamImage_ = true;
+          }
+          
+        }
+        else {
+          CameraStartFrame(HAL::CAMERA_FRONT, frame.data, HAL::CAMERA_MODE_VGA,
+                           HAL::CAMERA_UPDATE_SINGLE, 0, false);
+          acquiringHeadCamImage_ = false;
+        }
         
-        // Can't get the blockMarkers directly because they are Matlab objects
-        // which are not happy with engGetVariable.
-        //mxArray *mxBlockMarkers = engGetVariable(matlabEngine_, "blockMarkers");
-        for(int i_marker=0; i_marker<numMarkers; ++i_marker) {
+        
+        while (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT))
+        {
+        }
+        
+        return EXIT_SUCCESS;
+        
+      } // CaptureHeadFrame()
+      
+      
+      inline void ProcessMessage(const CozmoMsg_ObservedBlockMarker& msg)
+      {
+        VisionSystem::blockMarkerMailbox_->putMessage(msg);
+        
+        // If we have a block to dock with set, see if this was it
+        if(dockingBlock_ > 0 && dockingBlock_ == msg.blockType)
+        {
+          // This will just start docking with the first block we see
+          // that matches the block type.
+          // TODO: Something smarter about seeing the block in the expected place?
+          isDockingBlockFound_ = true;
           
-          // Get the pieces of each block marker we need individually
-          char cmd[256];
-          snprintf(cmd, 255,
-                   "currentMarker = blockMarkers{%d}; "
-                   "blockType = currentMarker.blockType; "
-                   "faceType  = currentMarker.faceType; "
-                   "corners   = currentMarker.corners; "
-                   "upDir     = currentMarker.upDirection;", i_marker+1);
+        }
+      }
+      
+      inline void ProcessMessage(const CozmoMsg_TemplateInitialized& msg)
+      {
+        if(msg.success) {
+          isTemplateInitialized_ = true;
+        }
+        else {
+          isTemplateInitialized_ = false;
+        }
+      }
+      
+      inline void ProcessMessage(const CozmoMsg_DockingErrorSignal& msg)
+      {
+        // Just pass the docking error signal along to the mainExecution to
+        // deal with. Note that if the message indicates tracking failed,
+        // the mainExecution thread should handle it, and put the vision
+        // system back in LOOKING_FOR_BLOCKS mode.
+        VisionSystem::dockingMailbox_->putMessage(msg);
+      }
+      
+      u8 ProcessMessage(const u8* msgBuffer)
+      {
+        if(msgBuffer[0] < 2) {
+          PRINT("ProcessMessage: message size < 2!\n");
+          return 0;
+        }
+        
+        const u8 msgID = msgBuffer[1];
+        
+        // Put the packet in the corresponding Mailbox to be picked up
+        // and processed by mainExecution()
+        switch(msgID)
+        {
+          case MSG_V2B_CORE_BLOCK_MARKER_OBSERVED:
+          {
+            ProcessMessage(*reinterpret_cast<const CozmoMsg_ObservedBlockMarker*>(msgBuffer));
+            break;
+          }
+            
+          case MSG_OFFBOARD_VISION_TEMPLATE_INITIALIZED:
+          {
+            ProcessMessage(*reinterpret_cast<const CozmoMsg_TemplateInitialized*>(msgBuffer));
+            break;
+          }
+            
+          case MSG_V2B_CORE_DOCKING_ERROR_SIGNAL:
+          {
+            ProcessMessage(*reinterpret_cast<const CozmoMsg_DockingErrorSignal*>(msgBuffer));
+            break;
+          }
+            
+          default:
+            PRINT("USBProcessNextPacket(): unexpected msgID received, "
+                  "reached default case!\n");
+        } // switch(msgID)
+        
+        return msgID;
+        
+      } // ProcessMessage()
+
+      // Waits until a message with specified msgID is received or until
+      // timeOut time has passed. Processes all messages in the mean time.
+      ReturnCode WaitForProcessingResult(const u8 msgID, const u32 timeOut)
+      {
+        ReturnCode retVal = EXIT_SUCCESS;
+        
+        bool resultReceived = false;
+        u32 startTime = HAL::GetMicroCounter();
+        while(not resultReceived &&
+              HAL::GetMicroCounter() - startTime < timeOut)
+        {
+          if(HAL::USBGetNextPacket(msgBuffer_) == EXIT_SUCCESS)
+          {
+            if(ProcessMessage(msgBuffer_) == msgID) {
+              resultReceived = true;
+            }
+          }
+        }
+        
+        if(not resultReceived) {
+          retVal = EXIT_FAILURE;
+        }
+        
+        return retVal;
+      }
+      
+      
+      ReturnCode LookForBlocks(FrameBuffer &frame)
+      {
+        ReturnCode retVal = EXIT_SUCCESS;
+        
+#if USE_OFFBOARD_VISION
+        
+        // TODO: move this elsewhere?
+        const u32 LOOKING_FOR_BLOCKS_TIMEOUT = 100000; // in microseconds
+        
+        // Send the offboard vision processor the frame, with the command
+        // to look for blocks in it
+        HAL::USBSendFrame(frame, HAL::USB_VISION_COMMAND_DETECTBLOCKS);
+        
+        // Wait until we get the result or timeout in the process.
+        // (This will also process any other commands we get in the meant time.)
+        retVal = WaitForProcessingResult(MSG_OFFBOARD_VISION_TOTAL_BLOCKS_FOUND,
+                                         LOOKING_FOR_BLOCKS_TIMEOUT);
+        
+        
+/*
+        mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(frame.data, nrows, ncols, 4);
+        
+        if(mxImg != NULL) {
+          // Send the image to matlab
+          engPutVariable(matlabEngine_, "headCamImage", mxImg);
           
-          engEvalString(matlabEngine_, cmd);
+          // Convert from GBRA format to RGB:
+          engEvalString(matlabEngine_, "headCamImage = headCamImage(:,:,[3 2 1]);");
           
+#if DISPLAY_MATLAB_IMAGES
+          // Display (optional)
+          engEvalString(matlabEngine_, "set(h_headImg, 'CData', headCamImage);");
+#endif
           
-          // Create a message from those pieces
+          // Detect BlockMarkers
+          engEvalString(matlabEngine_, "blockMarkers = simpleDetector(headCamImage); "
+                        "numMarkers = length(blockMarkers);");
           
-          CozmoMsg_ObservedBlockMarker msg;
+          int numMarkers = static_cast<int>(mxGetScalar(engGetVariable(matlabEngine_, "numMarkers")));
           
-          // TODO: Can these be filled in automatically by a constructor??
-          msg.size  = sizeof(CozmoMsg_ObservedBlockMarker) - 1; // -1 for the size byte
-          msg.msgID = MSG_V2B_CORE_BLOCK_MARKER_OBSERVED;
+          PRINT("Found %d block markers.\n", numMarkers);
           
-          mxArray *mxBlockType = engGetVariable(matlabEngine_, "blockType");
-          msg.blockType = static_cast<u16>(mxGetScalar(mxBlockType));
-          
-          mxArray *mxFaceType = engGetVariable(matlabEngine_, "faceType");
-          msg.faceType = static_cast<u8>(mxGetScalar(mxFaceType));
-          
-          mxArray *mxCorners = engGetVariable(matlabEngine_, "corners");
-          
-          mxAssert(mxGetM(mxCorners)==4 && mxGetN(mxCorners)==2,
-                   "BlockMarker's corners should be 4x2 in size.");
-          
-          double *corners_x = mxGetPr(mxCorners);
-          double *corners_y = corners_x + 4;
-          
-          msg.x_imgUpperLeft  = static_cast<f32>(corners_x[0]);
-          msg.y_imgUpperLeft  = static_cast<f32>(corners_y[0]);
-          
-          msg.x_imgLowerLeft  = static_cast<f32>(corners_x[1]);
-          msg.y_imgLowerLeft  = static_cast<f32>(corners_y[1]);
-          
-          msg.x_imgUpperRight = static_cast<f32>(corners_x[2]);
-          msg.y_imgUpperRight = static_cast<f32>(corners_y[2]);
-          
-          msg.x_imgLowerRight = static_cast<f32>(corners_x[3]);
-          msg.y_imgLowerRight = static_cast<f32>(corners_y[3]);
-          
-          mxArray *mxUpDir = engGetVariable(matlabEngine_, "upDir");
-          msg.upDirection = static_cast<u8>(mxGetScalar(mxUpDir)) - 1; // Note the -1 for C vs. Matlab indexing
-          
-          msg.headAngle = HAL::MotorGetPosition(HAL::MOTOR_HEAD);
-   //       // NOTE the negation here!
-   //       msg.headAngle = -HAL::GetHeadAngle();
-          
-          PRINT("Sending ObservedBlockMarker message: Block %d, Face %d "
+          // Can't get the blockMarkers directly because they are Matlab objects
+          // which are not happy with engGetVariable.
+          //mxArray *mxBlockMarkers = engGetVariable(matlabEngine_, "blockMarkers");
+          for(int i_marker=0; i_marker<numMarkers; ++i_marker) {
+            
+            // Get the pieces of each block marker we need individually
+            char cmd[256];
+            snprintf(cmd, 255,
+                     "currentMarker = blockMarkers{%d}; "
+                     "blockType = currentMarker.blockType; "
+                     "faceType  = currentMarker.faceType; "
+                     "corners   = currentMarker.corners; "
+                     "upDir     = currentMarker.upDirection;", i_marker+1);
+            
+            engEvalString(matlabEngine_, cmd);
+            
+            
+            // Create a message from those pieces
+            
+            CozmoMsg_ObservedBlockMarker msg;
+            
+            // TODO: Can these be filled in automatically by a constructor??
+            msg.size  = sizeof(CozmoMsg_ObservedBlockMarker) - 1; // -1 for the size byte
+            msg.msgID = MSG_V2B_CORE_BLOCK_MARKER_OBSERVED;
+            
+            mxArray *mxBlockType = engGetVariable(matlabEngine_, "blockType");
+            msg.blockType = static_cast<u16>(mxGetScalar(mxBlockType));
+            
+            mxArray *mxFaceType = engGetVariable(matlabEngine_, "faceType");
+            msg.faceType = static_cast<u8>(mxGetScalar(mxFaceType));
+            
+            mxArray *mxCorners = engGetVariable(matlabEngine_, "corners");
+            
+            mxAssert(mxGetM(mxCorners)==4 && mxGetN(mxCorners)==2,
+                     "BlockMarker's corners should be 4x2 in size.");
+            
+            double *corners_x = mxGetPr(mxCorners);
+            double *corners_y = corners_x + 4;
+            
+            msg.x_imgUpperLeft  = static_cast<f32>(corners_x[0]);
+            msg.y_imgUpperLeft  = static_cast<f32>(corners_y[0]);
+            
+            msg.x_imgLowerLeft  = static_cast<f32>(corners_x[1]);
+            msg.y_imgLowerLeft  = static_cast<f32>(corners_y[1]);
+            
+            msg.x_imgUpperRight = static_cast<f32>(corners_x[2]);
+            msg.y_imgUpperRight = static_cast<f32>(corners_y[2]);
+            
+            msg.x_imgLowerRight = static_cast<f32>(corners_x[3]);
+            msg.y_imgLowerRight = static_cast<f32>(corners_y[3]);
+            
+            mxArray *mxUpDir = engGetVariable(matlabEngine_, "upDir");
+            msg.upDirection = static_cast<u8>(mxGetScalar(mxUpDir)) - 1; // Note the -1 for C vs. Matlab indexing
+            
+            msg.headAngle = HAL::MotorGetPosition(HAL::MOTOR_HEAD);
+            //       // NOTE the negation here!
+            //       msg.headAngle = -HAL::GetHeadAngle();
+            
+            PRINT("Sending ObservedBlockMarker message: Block %d, Face %d "
                   "at [(%.1f,%.1f) (%.1f,%.1f) (%.1f,%.1f) (%.1f,%.1f)] with "
                   "upDirection=%d, headAngle=%.1fdeg\n",
                   msg.blockType, msg.faceType,
@@ -314,409 +529,200 @@ namespace Anki {
                   msg.x_imgUpperRight, msg.y_imgUpperRight,
                   msg.x_imgLowerRight, msg.y_imgLowerRight,
                   msg.upDirection, msg.headAngle * 180.f/PI);
+            
+            blockMarkerMailbox_->putMessage(msg);
+            
+            // If the docker is looking for blocks, let it see this one and check
+            // to see if it's the one it wants (otherwise, this will just be a
+            // no-op)
+            Docker::CheckBlockMarker(msg);
+            
+            ++numBlocks;
+            
+          } // FOR each block Marker
           
-          blockMarkerMailbox_->putMessage(msg);
-          
-          ++numBlocks;
-          
-        } // FOR each block Marker
+        } // IF any blockMarkers found
+*/
         
-      } // IF any blockMarkers found
-      
 #else  // NOT defined(USE_MATLAB_FOR_HEAD_CAMERA)
-      
-      /*
-      // TODO: Hook this up to Pete's vision code
-      PRINT("Robot::processHeadImage(): embedded vision "
-              "processing not hooked up yet.\n");
-      return EXIT_FAILURE;
-      */
-      
+        
+        // TODO: Call embedded vision block detector
+        // For each block that's found, create a CozmoMsg_ObservedBlockMarkerMsg
+        // and process it.
+        
+        // for( each marker) {
+        //   CozmoMsg_ObservedBlockMarkerMsg msg;
+        //   ProcessMessage(msg);
+        // }
+        
 #endif // defined(USE_MATLAB_FOR_HEAD_CAMERA)
-      
-      return EXIT_SUCCESS;
-      
-    } // lookForBlocks()
-    
-    
-    ReturnCode VisionSystem::localizeWithMat()
-    {
-      ReturnCode retVal = -1;
-      
-#if defined(USE_MATLAB_FOR_MAT_CAMERA)
-      
-      // Start image capture
-      if (!acquiringMatCamImage_) {
-        HAL::CameraStartFrame(HAL::CAMERA_MAT, matCamImage_, HAL::CAMERA_MODE_VGA, HAL::CAMERA_UPDATE_SINGLE, 100, true);
-        acquiringMatCamImage_ = true;
-      }
-      
-      // Wait until frame is ready
-      if (!HAL::CameraIsEndOfFrame(HAL::CAMERA_MAT)) {
+        
         return EXIT_SUCCESS;
-      }
-      acquiringMatCamImage_ = false;
-
-      const int nrows = matCamInfo_->nrows;
-      const int ncols = matCamInfo_->ncols;
+        
+      } // lookForBlocks()
       
-      mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(matCamImage_, nrows, ncols, 4);
       
-      if(mxImg != NULL) {
-        // Display Mat Image in Matlab
-        engPutVariable(matlabEngine_, "matCamImage", mxImg);
-        engEvalString(matlabEngine_, "matCamImage = matCamImage(:,:,[3 2 1]);");
+      ReturnCode LocalizeWithMat(const FrameBuffer &frame)
+      {
+        ReturnCode retVal = -1;
+        
+        const s32 nrows = static_cast<s32>(frame.height);
+        const s32 ncols = static_cast<s32>(frame.width);
+        
+#if defined(USE_MATLAB_FOR_MAT_CAMERA)
+        mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(frame.data, nrows, ncols, 4);
+        
+        if(mxImg != NULL) {
+          // Display Mat Image in Matlab
+          engPutVariable(matlabEngine_, "matCamImage", mxImg);
+          engEvalString(matlabEngine_, "matCamImage = matCamImage(:,:,[3 2 1]);");
 #if DISPLAY_MATLAB_IMAGES
-        engEvalString(matlabEngine_, "set(h_matImg, 'CData', matCamImage);");
+          engEvalString(matlabEngine_, "set(h_matImg, 'CData', matCamImage);");
 #endif
-        
-        // Detect MatMarker
-        /*
-         [xMat, yMat, orient] = matLocalization(this.matImage, ...
-         'pixPerMM', pixPerMM, 'camera', this.robot.matCamera, ...
-         'matSize', world.matSize, 'zDirection', world.zDirection, ...
-         'embeddedConversions', this.robot.embeddedConversions);
-         
-         % Set the pose based on the result of the matLocalization
-         this.pose = Pose(orient*[0 0 -1], ...
-         [xMat yMat this.robot.appearance.WheelRadius]);
-         this.pose.name = 'ObservationPose';
-         */
-        
-        engEvalString(matlabEngine_,
-                      "matMarker = matLocalization(matCamImage, "
-                      "   'pixPerMM', pixPerMM, 'returnMarkerOnly', true); "
-                      "matOrient = matMarker.upAngle; "
-                      "isMatMarkerValid = matMarker.isValid; "
-                      "xMatSquare = matMarker.X; "
-                      "yMatSquare = matMarker.Y; "
-                      "centroid = matMarker.centroid; "
-                      "xImgCen = centroid(1); yImgCen = centroid(2); "
-                      "matUpDir = matMarker.upDirection;");
-        
-        mxArray *mx_isValid = engGetVariable(matlabEngine_, "isMatMarkerValid");
-        const bool matMarkerIsValid = mxIsLogicalScalarTrue(mx_isValid);
-        
-        if(matMarkerIsValid)
-        {
-          CozmoMsg_ObservedMatMarker msg;
-          msg.size = sizeof(CozmoMsg_ObservedMatMarker);
-          msg.msgID = MSG_V2B_CORE_MAT_MARKER_OBSERVED;
           
-          mxArray *mx_xMatSquare = engGetVariable(matlabEngine_, "xMatSquare");
-          mxArray *mx_yMatSquare = engGetVariable(matlabEngine_, "yMatSquare");
+          // Detect MatMarker
+          /*
+           [xMat, yMat, orient] = matLocalization(this.matImage, ...
+           'pixPerMM', pixPerMM, 'camera', this.robot.matCamera, ...
+           'matSize', world.matSize, 'zDirection', world.zDirection, ...
+           'embeddedConversions', this.robot.embeddedConversions);
+           
+           % Set the pose based on the result of the matLocalization
+           this.pose = Pose(orient*[0 0 -1], ...
+           [xMat yMat this.robot.appearance.WheelRadius]);
+           this.pose.name = 'ObservationPose';
+           */
           
-          msg.x_MatSquare = static_cast<u16>(mxGetScalar(mx_xMatSquare));
-          msg.y_MatSquare = static_cast<u16>(mxGetScalar(mx_yMatSquare));
+          engEvalString(matlabEngine_,
+                        "matMarker = matLocalization(matCamImage, "
+                        "   'pixPerMM', pixPerMM, 'returnMarkerOnly', true); "
+                        "matOrient = matMarker.upAngle; "
+                        "isMatMarkerValid = matMarker.isValid; "
+                        "xMatSquare = matMarker.X; "
+                        "yMatSquare = matMarker.Y; "
+                        "centroid = matMarker.centroid; "
+                        "xImgCen = centroid(1); yImgCen = centroid(2); "
+                        "matUpDir = matMarker.upDirection;");
           
-          mxArray *mx_xImgCen = engGetVariable(matlabEngine_, "xImgCen");
-          mxArray *mx_yImgCen = engGetVariable(matlabEngine_, "yImgCen");
+          mxArray *mx_isValid = engGetVariable(matlabEngine_, "isMatMarkerValid");
+          const bool matMarkerIsValid = mxIsLogicalScalarTrue(mx_isValid);
           
-          msg.x_imgCenter = static_cast<f32>(mxGetScalar(mx_xImgCen));
-          msg.y_imgCenter = static_cast<f32>(mxGetScalar(mx_yImgCen));
-          
-          mxArray *mx_upDir = engGetVariable(matlabEngine_, "matUpDir");
-          msg.upDirection = static_cast<u8>(mxGetScalar(mx_upDir)) - 1; // Note the -1 for C vs. Matlab indexing
-          
-          mxArray *mx_matAngle = engGetVariable(matlabEngine_, "matOrient");
-          msg.angle = static_cast<f32>(mxGetScalar(mx_matAngle));
-          
-          PRINT("Sending ObservedMatMarker message: Square (%d,%d) "
+          if(matMarkerIsValid)
+          {
+            CozmoMsg_ObservedMatMarker msg;
+            msg.size = sizeof(CozmoMsg_ObservedMatMarker);
+            msg.msgID = MSG_V2B_CORE_MAT_MARKER_OBSERVED;
+            
+            mxArray *mx_xMatSquare = engGetVariable(matlabEngine_, "xMatSquare");
+            mxArray *mx_yMatSquare = engGetVariable(matlabEngine_, "yMatSquare");
+            
+            msg.x_MatSquare = static_cast<u16>(mxGetScalar(mx_xMatSquare));
+            msg.y_MatSquare = static_cast<u16>(mxGetScalar(mx_yMatSquare));
+            
+            mxArray *mx_xImgCen = engGetVariable(matlabEngine_, "xImgCen");
+            mxArray *mx_yImgCen = engGetVariable(matlabEngine_, "yImgCen");
+            
+            msg.x_imgCenter = static_cast<f32>(mxGetScalar(mx_xImgCen));
+            msg.y_imgCenter = static_cast<f32>(mxGetScalar(mx_yImgCen));
+            
+            mxArray *mx_upDir = engGetVariable(matlabEngine_, "matUpDir");
+            msg.upDirection = static_cast<u8>(mxGetScalar(mx_upDir)) - 1; // Note the -1 for C vs. Matlab indexing
+            
+            mxArray *mx_matAngle = engGetVariable(matlabEngine_, "matOrient");
+            msg.angle = static_cast<f32>(mxGetScalar(mx_matAngle));
+            
+            PRINT("Sending ObservedMatMarker message: Square (%d,%d) "
                   "at (%.1f,%.1f) with orientation %.1f degrees and upDirection=%d\n",
                   msg.x_MatSquare, msg.y_MatSquare,
                   msg.x_imgCenter, msg.y_imgCenter,
                   msg.angle * (180.f/M_PI), msg.upDirection);
+            
+            matMarkerMailbox_->putMessage(msg);
+            
+          } else {
+            PRINT("No valid MatMarker found!\n");
+            
+          } // if marker is valid
           
-          matMarkerMailbox_->putMessage(msg);
+          retVal = EXIT_SUCCESS;
           
         } else {
-          PRINT("No valid MatMarker found!\n");
-          
-        } // if marker is valid
+          PRINT("Robot::processHeadImage(): could not convert image to mxArray.");
+        }
         
-        retVal = EXIT_SUCCESS;
-        
-      } else {
-        PRINT("Robot::processHeadImage(): could not convert image to mxArray.");
-      }
-      
 #else  // NOT defined(USE_MATLAB_FOR_MAT_CAMERA)
-     /*
-      // TODO: Hook this up to Pete's vision code
-      PRINT("Robot::processMatImage(): embedded vision "
-              "processing not hooked up yet.\n");
-      retVal = -1;
-      */
+        /*
+         // TODO: Hook this up to Pete's vision code
+         PRINT("Robot::processMatImage(): embedded vision "
+         "processing not hooked up yet.\n");
+         retVal = -1;
+         */
 #endif // defined(USE_MATLAB_FOR_MAT_CAMERA)
-      
-      return retVal;
-      
-    } // localizeWithMat()
-    
-    
-    
-    ReturnCode VisionSystem::trackDockingTarget()
-    {
-      ReturnCode retVal = EXIT_SUCCESS;
-      
-#if defined(USE_MATLAB_FOR_HEAD_CAMERA)
-      
-      // Start image capture
-      if (!acquiringHeadCamImage_) {
-        HAL::CameraStartFrame(HAL::CAMERA_FRONT, headCamImage_, HAL::CAMERA_MODE_VGA, HAL::CAMERA_UPDATE_SINGLE, 100, true);
-        acquiringHeadCamImage_ = true;
-      }
-      
-      // Wait until frame is ready
-      if (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT)) {
-        return EXIT_SUCCESS;
-      }
-      acquiringHeadCamImage_ = false;
-      
-      
-      const s32 nrows = headCamInfo_->nrows;
-      const s32 ncols = headCamInfo_->ncols;
-      
-      mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(headCamImage_, nrows, ncols, 4);
-      
-      if(mxImg != NULL) {
-        // Send the image to matlab
-        engPutVariable(matlabEngine_, "headCamImage", mxImg);
         
-        // Convert from GBRA format to Grayscale:
-        engEvalString(matlabEngine_,
-                      "headCamImage = mean(im2double(headCamImage(:,:,1:3)),3);");
+        return retVal;
         
-#if DISPLAY_MATLAB_IMAGES
-        // Display (optional)
-        engEvalString(matlabEngine_, "set(h_headImg, 'CData', headCamImage);");
-#endif
-        
-        switch(dockState_)
-        {
-          case DOCK_INIT:
-          {
-            /*
-          % Set the camera's resolution for detection.
-          this.camera.changeResolution(this.detectionResolution);
-          dims = this.camera.framesize;
-          set(this.h_axes, 'XLim', [.5 dims(1)+.5], 'YLim', [.5 dims(2)+.5]);
-          set(this.h_img, 'CData', zeros(dims(2),dims(1)));
-          set(this.h_target, 'XData', nan, 'YData', nan);
-          drawnow
-             */
-            
-            dockState_ = DOCK_DETECT;
-            break;
-          }
-            
-          case DOCK_DETECT:
-          {
-            // Detect BlockMarkers
-            engEvalString(matlabEngine_,
-                          "blockMarkers = simpleDetector(headCamImage); "
-                          "if ~isempty(blockMarkers) && blockMarkers{1}.isValid, "
-                          "  markerCorners = blockMarkers{1}.corners; "
-                          "else, "
-                          "  markerCorners = []; "
-                          "end");
-            
-
-            break;
-          }
-            
-          case DOCK_TRACK:
-          {
-            
-            break;
-          }
-        
-          default:
-          {
-            PRINT("VisionSystem::trackDockingTarget(): unrecognized dock state.\n");
-          }
-            
-        } // SWITCH(dockState_)
-        
-        
-      } // if mxImg not NULL
+      } // localizeWithMat()
       
-#else // NOT using matlab for head camera
+      
+      ReturnCode InitTemplate(const FrameBuffer &frame)
+      {
+        ReturnCode retVal = EXIT_SUCCESS;
+        
+#if USE_OFFBOARD_VISION
+        
+        // TODO: move this elsewhere?
+        const u32 INIT_TEMPLATE_TIMEOUT = 100000; // in microseconds
+        
+        // Send the offboard vision processor the frame, with the command
+        // to look for blocks in it
+        HAL::USBSendFrame(frame, HAL::USB_VISION_COMMAND_INITTRACK);
+        
+        // Wait until we get the result or timeout in the process.
+        // (This will also process the result and any other commands we get in
+        //  the meantime.)
+        retVal = WaitForProcessingResult(MSG_OFFBOARD_VISION_TEMPLATE_INITIALIZED,
+                                         INIT_TEMPLATE_TIMEOUT);
+        
+#else
+        // TODO: Call embedded vision template initalization
+        //       If successful, mark isTemplateInitialized to true
+        
+        isTemplateInitialized_ = false;
+        
+#endif // USE_OFFBOARD_VISION
+        
+        return retVal;
+        
+      } // InitTemplate()
+      
+      
+      ReturnCode TrackTemplate(const FrameBuffer &frame)
+      {
+        ReturnCode retVal = EXIT_SUCCESS;
+        
+#if USE_OFFBOARD_VISION
+        
+        const u32 TRACKING_TIMEOUT = 100000;
+        
+        // Send the message out for tracking
+        HAL::USBSendFrame(frame, HAL::USB_VISION_COMMAND_TRACK);
+        
+        retVal = WaitForProcessingResult(MSG_V2B_CORE_DOCKING_ERROR_SIGNAL,
+                                         TRACKING_TIMEOUT);
+        
+#else // ONBOARD VISION
         
         // TODO: Hook this up to Pete's vision code
-        PRINT("VisionSystem::trackDockingTarget(): embedded vision "
+        PRINT("VisionSystem::TrackTemplate(): embedded vision "
               "processing not hooked up yet.\n");
         retVal = EXIT_FAILURE;
         
 #endif // defined(USE_MATLAB_FOR_HEAD_CAMERA)
-      
-      return retVal;
-    } // trackDockingTarget()
-    
-    
-    ReturnCode VisionSystem::setDockingWindow(const s16 xLeft, const s16 yTop,
-                                              const s16 width, const s16 height)
-    {
-      ReturnCode retVal = EXIT_SUCCESS;
-      
-      if(xLeft >= 0 && yTop >= 0 &&
-         (xLeft + width)<headCamInfo_->ncols &&
-         (yTop + height)<headCamInfo_->nrows)
-      {
-        dockTargetWinX_ = xLeft;
-        dockTargetWinY_ = yTop;
-        dockTargetWinW_ = width;
-        dockTargetWinH_ = height;
-      } else {
-        retVal = EXIT_FAILURE;
-      }
-      
-      return retVal;
-      
-    } // setDockingWindow
-    
-    ReturnCode VisionSystem::findDockingTarget(DockingTarget& target)
-    {
-      ReturnCode retVal = EXIT_SUCCESS;
-
-#if defined(USE_MATLAB_FOR_HEAD_CAMERA)
-      
-      // Start image capture
-      if (!acquiringHeadCamImage_) {
-        HAL::CameraStartFrame(HAL::CAMERA_FRONT, headCamImage_, HAL::CAMERA_MODE_VGA, HAL::CAMERA_UPDATE_SINGLE, 100, true);
-        acquiringHeadCamImage_ = true;
-      }
-      
-      // Wait until frame is ready
-      if (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT)) {
-        return EXIT_SUCCESS;
-      }
-      acquiringHeadCamImage_ = false;
-
-      const u16 nrows = matCamInfo_->nrows;
-      const u16 ncols = matCamInfo_->ncols;
-      
-      if(dockTargetWinX_ < 0 || dockTargetWinY_ < 0 ||
-         dockTargetWinW_ < 0 || dockTargetWinH_ < 0)
-      {
-        PRINT("No docking window set for call to findDockingTarget().\n");
-        retVal = EXIT_FAILURE;
-      }
-      else {
-
-        mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(headCamImage_, nrows, ncols, 4);
         
-        if(mxImg != NULL) {
-          
-          engPutVariable(matlabEngine_, "headCamImage", mxImg);
-          engEvalString(matlabEngine_, "headCamImage = headCamImage(:,:,[3 2 1]);");
-          
-          mxArray *mxMask = mxCreateDoubleMatrix(1,4,mxREAL);
-          double *mxMaskData = mxGetPr(mxMask);
-          mxMaskData[0] = static_cast<double>(dockTargetWinX_+1);
-          mxMaskData[1] = static_cast<double>(dockTargetWinY_+1);
-          mxMaskData[2] = static_cast<double>(dockTargetWinW_);
-          mxMaskData[3] = static_cast<double>(dockTargetWinH_);
-          engPutVariable(matlabEngine_, "dockTargetMaskRect", mxMask);
-          
-          engEvalString(matlabEngine_,
-                        "uMask = dockTargetMaskRect(1)+dockTargetMaskRect(3)*[0 0 1 1]; "
-                        "vMask = dockTargetMaskRect(2)+dockTargetMaskRect(4)*[0 1 0 1]; "
-                        "errMsg = ''; "
-                        "try, "
-                        "[xDock, yDock] = findFourDotTarget(headCamImage, "
-                        "   'uMask', uMask, 'vMask', vMask, "
-                        "   'squareDiagonal', sqrt(sum(dockTargetMaskRect(3:4).^2)), "
-                        "   'TrueSquareWidth', BlockMarker3D.CodeSquareWidth, "
-                        "   'TrueDotWidth', BlockMarker3D.DockingDotWidth, "
-                        "   'TrueDotSpacing', BlockMarker3D.DockingDotSpacing); "
-                        "catch E, "
-                        "  xDock = []; yDock = []; "
-                        "  errMsg = E.message; "
-                        "end");
-          
-#if DISPLAY_MATLAB_IMAGES
-          engEvalString(matlabEngine_,
-                        "set(h_headImg, 'CData', headCamImage); "
-                        "set(h_dockTargetWin, 'XData', uMask([1 2 4 3 1]), "
-                        "                     'YData', vMask([1 2 4 3 1]));");
-#endif
-          
-          mxArray *mx_xDock = engGetVariable(matlabEngine_, "xDock");
-          mxArray *mx_yDock = engGetVariable(matlabEngine_, "yDock");
-          mxArray *mx_errMsg = engGetVariable(matlabEngine_, "errMsg");
-          
-          if(not mxIsEmpty(mx_errMsg)) {
-            char errStr[1024];
-            mxGetString(mx_errMsg, errStr, 1023);
-            PRINT("Error detected running findFourDotTarget: %s\n",
-                    errStr);
-            retVal = EXIT_FAILURE;
-          }
-          else if(mxGetNumberOfElements(mx_xDock) != 4 ||
-             mxGetNumberOfElements(mx_yDock) != 4)
-          {
-            PRINT("xDock and yDock were not 4 elements long.\n");
-            retVal = EXIT_FAILURE;
-          }
-          else
-          {
-            double *mx_xDockData = mxGetPr(mx_xDock);
-            double *mx_yDockData = mxGetPr(mx_yDock);
-            
-            // Fill in the output target with what we got from Matlab
-            for(int i=0; i<4; ++i) {
-              target.dotX[i] = static_cast<f32>(mx_xDockData[i]);
-              target.dotY[i] = static_cast<f32>(mx_yDockData[i]);
-            }
-          } // if mx_xDock or mx_yDock is empty
+        return retVal;
         
-          
-        } else {
-          
-          PRINT("Robot::findDockingTarget() could not get headCamImage "
-                  "for processing in Matlab.\n");
-          retVal = EXIT_FAILURE;
-          
-        } // if mxImg != NULL
-      } // if docking window set
-        
-
-      if(retVal == EXIT_SUCCESS) {
-        // Update the search window based on the target we found
-        f32 xcen = 0.25f*(target.dotX[0] + target.dotX[1] +
-                          target.dotX[2] + target.dotX[3]);
-        f32 ycen = 0.25f*(target.dotY[0] + target.dotY[1] +
-                          target.dotY[2] + target.dotY[3]);
-        
-        f32 width = 2.f*(target.dotX[3] - target.dotX[0]);
-        f32 height = 2.f*(target.dotY[3] - target.dotY[0]);
-        
-        if(width <= 0.f || height <= 0.f) {
-          PRINT("Width/height of docking target <= 0\n");
-          retVal = EXIT_FAILURE;
-        } else {
-          dockTargetWinX_ = xcen - 0.5f*width;
-          dockTargetWinY_ = ycen - 0.5f*height;
-          dockTargetWinW_ = width;
-          dockTargetWinH_ = height;
-        }
-        
-      }
-      return retVal;
-
-#else  // NOT defined(USE_MATLAB_FOR_HEAD_CAMERA)
+      } // TrackTemplate()
       
-      // TODO: Hook this up to Pete's vision code
-      PRINT("Robot::findDockingTarget(): embedded vision "
-            "processing not hooked up yet.\n");
-      
-      return EXIT_FAILURE;
-
-#endif
-      
-    } // findDockingTarget()
-
-    
+    } // namespace VisionSystem
   } // namespace Cozmo
 } // namespace Anki

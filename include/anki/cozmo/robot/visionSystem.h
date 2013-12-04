@@ -11,7 +11,6 @@
 
 #include "anki/common/robot/geometry_declarations.h"
 
-#include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/MessageProtocol.h"
 
 
@@ -23,112 +22,148 @@
 
 // If enabled, frames will be sent out over the serial line for processing
 // by Matlab.
-#define SERIAL_IMAGING
+#define USE_OFFBOARD_VISION 1
 
 namespace Anki {
   namespace Cozmo {
-    
+   
     namespace VisionSystem {
+
+      //
+      // Typedefs
+      //
+      
+      // A struct for holding intrinsic camera calibration parameters
+      const u8  NUM_RADIAL_DISTORTION_COEFFS = 5;
+      typedef struct {
+        f32 focalLength_x, focalLength_y, fov_ver;
+        f32 center_x, center_y;
+        f32 skew;
+        u16 nrows, ncols;
+        f32 distortionCoeffs[NUM_RADIAL_DISTORTION_COEFFS];
+      } CameraInfo;
       
       typedef struct {
         u16 width;
         u16 height;
       } ImageSize;
-    
       
-      const u8 MAX_BLOCK_MARKER_MESSAGES = 32;
+      typedef struct {
+        u8* data;
+        u16 width;
+        u16 height;
+      } FrameBuffer;
+      
+      
+      //
+      // Parameters / Constants:
+      //
+      
+      const ImageSize DETECTION_RESOLUTION = {.width = 320, .height = 240};
+      const ImageSize TRACKING_RESOLUTION  = {.width =  80, .height =  60};
+      
+      const ImageSize MAT_LOCALIZATION_RESOLUTION = {.width = 320, .height = 240};
+      const ImageSize MAT_ODOMETRY_RESOLUTION     = {.width =  40, .height =  30};
+      
+      const u8 MAX_BLOCK_MARKER_MESSAGES = 32; // max blocks we can see in one image
       const u8 MAX_MAT_MARKER_MESSAGES   = 1;
       const u8 MAX_DOCKING_MESSAGES      = 1;
       
-      // VisionSystem "Mailboxes" are used for leaving messages from slower
-      // vision processing in LongExecution to be retrieved and acted upon
-      // by the faster MainExecution.
+      
+      //
+      // Mailboxes
+      //
+      //   VisionSystem "Mailboxes" are used for leaving messages from slower
+      //   vision processing in LongExecution to be retrieved and acted upon
+      //   by the faster MainExecution.
+      //
+      
       template<typename MsgType, u8 NumMessages>
       class Mailbox
       {
       public:
         Mailbox();
         
+        // True if there are unread messages left in the mailbox
         bool hasMail(void) const;
+        
+        // Add a message to the mailbox
         void putMessage(const MsgType newMsg);
+        
+        // Take a message out of the mailbox
         MsgType getMessage();
+        
+        // API for looking at messages without removing them from the mailbox
+        // or marking them as read
+        u8 getFirstUnread();
+        const MsgType& peekMessage(const u8 index) const;
+        bool isRead(const u8 index) const;
         
       protected:
         MsgType messages[NumMessages];
         bool    beenRead[NumMessages];
-        u8 readIndex, writeIndex;
+        u8 readIndex, writeIndex, peekIndex;
+        bool isLocked;
         
+        void lock();
+        void unlock();
         void advanceIndex(u8 &index);
       };
       
-      typedef struct {
-        f32 dotX[4];
-        f32 dotY[4];
-      } DockingTarget;
-      
+      // Typedefs for mailboxes to hold different types of messages:
       typedef Mailbox<CozmoMsg_ObservedBlockMarker, MAX_BLOCK_MARKER_MESSAGES> BlockMarkerMailbox;
       
       typedef Mailbox<CozmoMsg_ObservedMatMarker, MAX_MAT_MARKER_MESSAGES> MatMarkerMailbox;
       
       typedef Mailbox<CozmoMsg_DockingErrorSignal, MAX_DOCKING_MESSAGES> DockingMailbox;
+  
       
+      //
+      // Methods
+      //
       
-      ReturnCode Init(const HAL::CameraInfo*  headCamInfo,
-                      const HAL::CameraInfo*  matCamInfo,
+      ReturnCode Init(const CameraInfo*       headCamInfo,
+                      const CameraInfo*       matCamInfo,
                       BlockMarkerMailbox*     blockMarkerMailbox,
-                      MatMarkerMailbox*       matMarkerMailbox);
+                      MatMarkerMailbox*       matMarkerMailbox,
+                      DockingMailbox*         dockingMailbox);
       
       void Destroy();
       
-      ReturnCode lookForBlocks();
-      ReturnCode findDockingTarget(DockingTarget& target);
-      ReturnCode localizeWithMat();
-      ReturnCode setDockingWindow(const s16 xLeft, const s16 yTop,
+      ReturnCode Update(u8* memoryBuffer);
+      
+      // Capture an entire frame using HAL commands and put it in the given
+      // frame buffer
+      ReturnCode CaptureHeadFrame(FrameBuffer &frame);
+      ReturnCode CaptureMatFrame(FrameBuffer &frame);
+      
+      ReturnCode LookForBlocks(const FrameBuffer &frame);
+      ReturnCode LocalizeWithMat(const FrameBuffer &frame);
+      
+      ReturnCode InitTemplate(const FrameBuffer &frame);
+      ReturnCode TrackTemplate(const FrameBuffer &frame);
+      
+      ReturnCode GetRelativeOdometry(const FrameBuffer &frame);
+      
+      // Docking/tracking:
+      ReturnCode SetDockingWindow(const s16 xLeft, const s16 yTop,
                                   const s16 width, const s16 height);
-      ReturnCode trackDockingTarget();
       
-      
-      // Visual-servoing Docker "class"
+      // Visual-servoing Docker "class", internally uses LK template tracking
       namespace Docker {
         
-        const ImageSize DETECTION_RESOLUTION = {.width = 320, .height = 240};
-        const ImageSize TRACKING_RESOLUTION  = {.width =  80, .height =  60};
         
-        
-        void InitDetection();
-        
+        // Tell the docker to look for a particularly block type nearest
+        // the specified location in the image.  Thus this function initializes
+        // the docker and can be called once.  Subsequently, just call the
+        // Update() function in a loop.
+        ReturnCode LookForBlock(CozmoMsg_ObservedBlockMarker msg);
+        ReturnCode LookForBlock(void); // go back to looking for last block
+        ReturnCode CheckBlockMarker(const CozmoMsg_ObservedBlockMarker& msg);
+        void Update();
+        void Stop();
         
       } // namespace Docker
-      
-      // LK Tracker "class":
-      // TODO: move this generic implementation to coretech-vision?
-      namespace LKtracker {
-        
-        
-        // 3x3 linear transformation matrix
-        typedef f32[3][3] TForm;
-        
-        //typedef Embedded::Point<f32> Corner;
-        typedef Embedded::Quadrilateral<f32> Corners_t;
-        
-        // Start a new tracker with an image and the corners of the template in
-        // that image to be tracked -- both at DETECTION_RESOLUTION.
-        void Init(const u8* img, const Corners &corners);
-        
-        // Track current template into the next image.  This will update
-        // the current transform and corner locations
-        bool Track(const u8* img);
-        
-        // Get the current transformation matrix
-        const TForm& GetTransform();
-        
-        // Get the current corner locations (at TRACKING_RESOLUTION)
-        const Corner& GetCorner_UpperLeft();
-        const Corner& GetCorner_LowerLeft();
-        const Corner& GetCorner_UpperRight();
-        const Corner& GetCorner_LowerRight();
-        
-      } // namespace LKtracker
       
       bool IsInitialized();
       
@@ -138,7 +173,7 @@ namespace Anki {
     #pragma mark --- VisionSystem::Mailbox Template Implementations ---
     
     template<typename MsgType, u8 NumMessages>
-    VisionSystem::Mailbox<MsgType,NumMessages>::Mailbox()
+    VisionSystem::Mailbox<MsgType,NumMessages>::Mailbox() : isLocked(false)
     {
       for(u8 i=0; i<NumMessages; ++i) {
         this->beenRead[i] = false;
@@ -146,12 +181,29 @@ namespace Anki {
     }
     
     template<typename MsgType, u8 NumMessages>
+    void VisionSystem::Mailbox<MsgType,NumMessages>::lock()
+    {
+      this->isLocked = true;
+    }
+    
+    template<typename MsgType, u8 NumMessages>
+    void VisionSystem::Mailbox<MsgType,NumMessages>::unlock()
+    {
+      this->isLocked = false;
+    }
+    
+    template<typename MsgType, u8 NumMessages>
     bool VisionSystem::Mailbox<MsgType,NumMessages>::hasMail() const
     {
-      if(not beenRead[readIndex]) {
-        return true;
-      } else {
+      if(isLocked) {
         return false;
+      }
+      else {
+        if(not beenRead[readIndex]) {
+          return true;
+        } else {
+          return false;
+        }
       }
     }
     
@@ -166,23 +218,55 @@ namespace Anki {
     template<typename MsgType, u8 NumMessages>
     MsgType VisionSystem::Mailbox<MsgType,NumMessages>::getMessage()
     {
-      u8 toReturn = readIndex;
-      
-      advanceIndex(readIndex);
-      
-      this->beenRead[toReturn] = true;
-      return this->messages[toReturn];
+      if(this->isLocked) {
+        // Is this the right thing to do if locked?
+        return this->messages[readIndex];
+      }
+      else {
+        u8 toReturn = readIndex;
+        
+        advanceIndex(readIndex);
+        advanceIndex(peekIndex);
+        
+        this->beenRead[toReturn] = true;
+        return this->messages[toReturn];
+      }
     }
     
     template<typename MsgType, u8 NumMessages>
     void VisionSystem::Mailbox<MsgType,NumMessages>::advanceIndex(u8 &index)
     {
-      ++index;
-      if(index == NumMessages) {
+      if(NumMessages==1) {
+        // special case
         index = 0;
+      }
+      else {
+        ++index;
+        if(index == NumMessages) {
+          index = 0;
+        }
       }
     }
     
+    template<typename MsgType, u8 NumMessages>
+    u8 VisionSystem::Mailbox<MsgType,NumMessages>::getFirstUnread()
+    {
+      return readIndex;
+    }
+    
+    template<typename MsgType, u8 NumMessages>
+    const MsgType& VisionSystem::Mailbox<MsgType,NumMessages>::peekMessage(const u8 index) const
+    {
+      // Assumes index < NumMessages
+      return this->messages[index];
+    }
+    
+    template<typename MsgType, u8 NumMessages>
+    bool VisionSystem::Mailbox<MsgType,NumMessages>::isRead(const u8 index) const
+    {
+      // Assumes index < NumMessages
+      return this->beenRead[index];
+    }
     
   } // namespace Cozmo
 } // namespace Anki

@@ -18,16 +18,6 @@
 #error SIMULATOR should be defined by any target using sim_hal.cpp
 #endif
 
-#if defined(SERIAL_IMAGING) && !ANKICORETECH_USE_MATLAB
-#error ANKICORETECH_USE_MATLAB must be 1 when using simulator with serial imaging enabled.
-#endif
-
-#if ANKICORETECH_USE_MATLAB
-#include "engine.h"
-#include "anki/common/robot/matlabInterface.h"
-Engine *matlabEngine_ = NULL; // global matlab engine pointer
-#endif
-
 namespace Anki {
   namespace Cozmo {
     
@@ -67,8 +57,8 @@ namespace Anki {
       // Cameras / Vision Processing
       webots::Camera* matCam_;
       webots::Camera* headCam_;
-      HAL::CameraInfo headCamInfo_;
-      HAL::CameraInfo matCamInfo_;
+      VisionSystem::CameraInfo headCamInfo_;
+      VisionSystem::CameraInfo matCamInfo_;
       HAL::CameraMode headCamMode_;
       // HAL::CameraMode matCamMode_;
       //u8* headCamBuffer_;
@@ -247,7 +237,7 @@ namespace Anki {
 
     // Helper function to create a CameraInfo struct from Webots camera properties:
     void FillCameraInfo(const webots::Camera *camera,
-                        HAL::CameraInfo &info)
+                        VisionSystem::CameraInfo &info)
     {
       
       u16 nrows  = static_cast<u16>(camera->getHeight());
@@ -270,7 +260,7 @@ namespace Anki {
       info.nrows         = nrows;
       info.ncols         = ncols;
       
-      for(u8 i=0; i<HAL::NUM_RADIAL_DISTORTION_COEFFS; ++i) {
+      for(u8 i=0; i<VisionSystem::NUM_RADIAL_DISTORTION_COEFFS; ++i) {
         info.distortionCoeffs[i] = 0.f;
       }
       
@@ -361,14 +351,6 @@ namespace Anki {
       rx_->setChannel(robotID_);
       tx_->setChannel(robotID_);
       recvBufSize_ = 0;
-      
-#if ANKICORETECH_USE_MATLAB
-      matlabEngine_ = NULL;
-      if (!(matlabEngine_ = engOpen(""))) {
-        PRINT("\nCan't start MATLAB engine!\n");
-        return EXIT_FAILURE;
-      }
-#endif
       
       isInitialized = true;
       return EXIT_SUCCESS;
@@ -615,12 +597,12 @@ namespace Anki {
       return NULL;
     } // RecvMessage()
 
-    const HAL::CameraInfo* HAL::GetHeadCamInfo(void)
+    const VisionSystem::CameraInfo* HAL::GetHeadCamInfo(void)
     {
       return &(headCamInfo_);
     }
     
-    const HAL::CameraInfo* HAL::GetMatCamInfo(void)
+    const VisionSystem::CameraInfo* HAL::GetMatCamInfo(void)
     {
       return &(matCamInfo_);
     }

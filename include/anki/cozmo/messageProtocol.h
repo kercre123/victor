@@ -210,6 +210,13 @@ typedef enum {
   // Docking
   MSG_B2V_CORE_INITIATE_DOCK,
 
+  
+  // ** Offboard Vision Process Commands **
+  
+  // Template for LK template tracker was or was not successfully initialized
+  MSG_OFFBOARD_VISION_TOTAL_BLOCKS_FOUND,
+  MSG_OFFBOARD_VISION_TEMPLATE_INITIALIZED,
+  
   // ** Playback system related commands
 /*
   // Clear existing playback sequence definitions on vehicle
@@ -521,8 +528,10 @@ const u8 SIZE_MSG_V2B_CORE_MAT_MARKER_OBSERVED = sizeof(CozmoMsg_ObservedMatMark
 
 // MSG_V2B_CORE_DOCKING_ERROR_SIGNAL
 typedef struct {
-  u8 size;
-  u8 msgID;
+  u8  size;
+  u8  msgID;
+  
+  u8  didTrackingSucceed;
   f32 x_distErr;
   f32 y_horErr;
   f32 angleErr; // in radians
@@ -574,25 +583,21 @@ typedef struct {
   // Other stuff?
 } CozmoMsg_RobotAdded;
 
-// MSG_B2V_CORE_INITIATE_DOCK
+// MSG_OFFBOARD_VISION_TEMPLATE_INITIALIZED
 typedef struct {
   u8 size;
-  u8 msgID;        // MSG_B2V_CORE_INITIATE_DOCK
-  
-  // Desired head angle so that dots will be in view
-  f32 headAngle;
-  
-  // Desired lift height so that we can dock with the block
-  f32 liftHeight;
-  
-  // Desired docking dot locations in the image
-  f32 dotX[4], dotY[4];
-  
-  // Initial window within which to search for the target
-  s16 winX, winY, winWidth, winHeight;
-  
-} CozmoMsg_InitiateDock;
+  u8 msgID;
+  u8 success;
+} CozmoMsg_TemplateInitialized;
+const u8 SIZE_MSG_OFFBOARD_VISION_TEMPLATE_INITIALIZED = sizeof(CozmoMsg_TemplateInitialized);
 
+// MSG_OFFBOARD_VISION_TOTAL_BLOCKS_FOUND
+typedef struct {
+  u8 size;
+  u8 msgID;
+  u8 numBlocks;
+} CozmoMsg_TotalBlocksDetected;
+const u8 SIZE_MSG_OFFBOARD_VISION_TOTAL_BLOCKS_FOUND = sizeof(CozmoMsg_TotalBlocksDetected);
 
 #endif  // #ifndef COZMO_MSG_PROTOCOL
 

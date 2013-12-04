@@ -31,17 +31,20 @@
 
 ///////// END TESTING //////
 
+
 // Frame buffers, for now.
+// TODO: A smarter memory management system to provide frame buffers on demand?
 static const u32 FRAMEBUFFER_WIDTH  = 640;
 static const u32 FRAMEBUFFER_HEIGHT = 480;
 static const u32 FRAMEBUFFER_SIZE   = FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT;
 
 #ifdef SIMULATOR
-static u8 frameBuffer[FRAMEBUFFER_SIZE];
+static u8 memoryBuffer_[FRAMEBUFFER_SIZE];
 #else
 #define DDR_BUFFER    __attribute__((section(".ddr.text")))
-static DDR_BUFFER u8 frameBuffer[FRAME_SIZE];
+static DDR_BUFFER u8 memoryBuffer_[FRAMEBUFFER_SIZE];
 #endif
+
 
 namespace Anki {
   namespace Cozmo {
@@ -63,8 +66,6 @@ namespace Anki {
         VisionSystem::DockingMailbox     dockErrSignalMailbox_;
         
         Robot::OperationMode mode_ = INITIALIZING;
-        
-        bool continuousCaptureStarted_ = false;
         
         bool isCarryingBlock_ = false;
         
@@ -113,7 +114,8 @@ namespace Anki {
         if(VisionSystem::Init(HAL::GetHeadCamInfo(),
                               HAL::GetMatCamInfo(),
                               &blockMarkerMailbox_,
-                              &matMarkerMailbox_) == EXIT_FAILURE)
+                              &matMarkerMailbox_,
+                              &dockErrSignalMailbox_) == EXIT_FAILURE)
         {
           PRINT("Vision System initialization failed.");
           return EXIT_FAILURE;
@@ -232,13 +234,17 @@ namespace Anki {
           HAL::RadioToBase((u8*)(&blockMsg), sizeof(CozmoMsg_ObservedBlockMarker));
     
 #if DOCKING_TEST
+          // TODO: Eventually we'll get a message from basestation telling us
+          //       to pick up or put down a block.
+          
           if(isCarryingBlock_)
           {
             // We are already carrying a block.  If we see BlockType YY,
-            // then switch (back) to docking mode and start tracking it so we can
-            // put the one we're carrying on top of it
+            // then switch (back) to docking mode and start tracking it so
+            // we can put the one we're carrying on top of it
             if(blockMsg.blockType == 60) {
-              mode_ = DOCK;
+              VisionSystem::Docker::LookForBlock(blockMsg);
+              mode_ = PUT_DOWN_BLOCK;
             }
           }
           else {
@@ -246,11 +252,23 @@ namespace Anki {
             // switch to docking mode and start tracking it so we can go
             // pick it up.
             if(blockMsg.blockType == 65) {
-              mode_ = DOCK;
+              VisionSystem::Docker::LookForBlock(blockMsg);
+              mode_ = PICK_UP_BLOCK;
             }
           } // if/else carrying block
 #endif
         } // while blockMarkerMailbox has mail
+        
+        // Get any docking error signal available from the vision system
+        // and update our path accordingly.
+        while( dockErrSignalMailbox_.hasMail() )
+        {
+          const CozmoMsg_DockingErrorSignal dockMsg = dockErrSignalMailbox_.getMessage();
+          DockingController::SetRelDockPose(dockMsg.x_distErr,
+                                            dockMsg.y_horErr,
+                                            dockMsg.angleErr);
+        } // while dockErrSignalMailbox has mail
+        
         
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates
@@ -259,10 +277,9 @@ namespace Anki {
         HeadController::Update();
         LiftController::Update();
         GripController::Update();
-        
-        
+                
         PathFollower::Update();
-        //DockingController::Update();
+        DockingController::Update();
         
         //////////////////////////////////////////////////////////////
         // State Machine
@@ -282,29 +299,42 @@ namespace Anki {
             break;
           }
             */
-          case DOCK:
+            
+          case PICK_UP_BLOCK:
           {
-            // Get any docking error signal available from the vision system
-            // and update our path accordingly.
-            while( dockErrSignalMailbox_.hasMail() )
-            {
-              const CozmoMsg_DockingErrorSignal dockMsg = dockErrSignalMailbox_.getMessage();
-              DockingController::SetRelDockPose(dockMsg.x_distErr,
-                                                dockMsg.y_horErr,
-                                                dockMsg.angleErr);
-            }
-            
-            DockingController::Update();
-            
+            // Wait for docking controller to finish, then pick up the block
             if(DockingController::IsDone())
             {
               if(DockingController::DidSucceed())
               {
                 // TODO: send a message to basestation that we are carrying a block?
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHT);
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                isCarryingBlock_ = true;
+                mode_ = WAITING;
+              } else {
+                // TODO: Back up and try again? Send failure msg to basestation?
+                VisionSystem::Docker::LookForBlock();
               }
             }
+            break;
+          }
             
+          case PUT_DOWN_BLOCK:
+          {
+            // Wait for docking controller to finish, then put down the block
+            if(DockingController::IsDone())
+            {
+              if(DockingController::DidSucceed())
+              {
+                // TODO: switch b/w putting the block down on the ground vs. on another block
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
+                isCarryingBlock_ = false;
+                mode_ = WAITING;
+              } else {
+                // TODO: Back up and try again? Send failure msg to basestation?
+                VisionSystem::Docker::LookForBlock();
+              }
+            }
             break;
           }
             
@@ -313,16 +343,18 @@ namespace Anki {
             // Idle.  Nothing to do yet...
             break;
           }
+            
           default:
             PRINT("Unrecognized CozmoBot mode.\n");
             
         } // switch(mode_)
         
-
         // Manage the various motion controllers:
         SpeedController::Manage();
         SteeringController::Manage();
         WheelController::Manage();
+        
+        
         //////////////////////////////////////////////////////////////
         // Feedback / Display
         //////////////////////////////////////////////////////////////
@@ -335,72 +367,19 @@ namespace Anki {
       } // Robot::step_MainExecution()
       
       
-      // For the "long executation" thread, i.e. the vision code, which
+      // For the "long execution" thread, i.e. the vision code, which
       // will be slower
       ReturnCode step_LongExecution()
       {
-        // Only QQQVGA can be captured in SINGLE mode.
-        // Other modes must be captured in CONTINUOUS mode otherwise you get weird
-        // rolling sync effects.
-        // NB: CONTINUOUS mode contains tears that could affect vision algorithms
-        // if moving too fast.
-        // NOTE: we are currently always capturing at 640x480.  The camera mode
-        //       is just affecting how much we downsample before sending the
-        //       frame out over UART.
-        if (HAL::GetHeadCamMode() != HAL::CAMERA_MODE_QQQVGA) {
-          
-          if (!continuousCaptureStarted_) {
-            CameraStartFrame(HAL::CAMERA_FRONT, frameBuffer, HAL::CAMERA_MODE_VGA,
-                             HAL::CAMERA_UPDATE_CONTINUOUS, 0, false);
-            continuousCaptureStarted_ = true;
-          }
-          
-        }
-        else {
-          CameraStartFrame(HAL::CAMERA_FRONT, frameBuffer, HAL::CAMERA_MODE_VGA,
-                           HAL::CAMERA_UPDATE_SINGLE, 0, false);
-          continuousCaptureStarted_ = false;
-        }
+        ReturnCode retVal = EXIT_SUCCESS;
         
+        retVal = VisionSystem::Update(memoryBuffer_);
         
-        while (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT))
-        {
-        }
-        
-#if defined(SERIAL_IMAGING)
-        HAL::USBSendFrame(frameBuffer, FRAMEBUFFER_HEIGHT, FRAMEBUFFER_WIDTH);
+#if USE_OFFBOARD_VISION
         HAL::USBSendMessage();
 #endif
         
-        switch(mode_)
-        {
-          case DOCK:
-          {
-            
-            break;
-          }
-            
-        } // SWITCH(mode_)
-        
-        // TODO: Get VisionSystem to work on robot
-#ifdef SIMULATOR
-        if(VisionSystem::lookForBlocks() == EXIT_FAILURE) {
-          PRINT("VisionSystem::lookForBLocks() failed.\n");
-          return EXIT_FAILURE;
-        }
-        
-        if(VisionSystem::localizeWithMat() == EXIT_FAILURE) {
-          PRINT("VisionSystem::localizeWithMat() failed.\n");
-          return EXIT_FAILURE;
-        }
-        
-        if(VisionSystem::trackDockingTarget() == EXIT_FAILURE) {
-          PRINT("VisionSystem::trackDockingTarget() failed.\n");
-          return EXIT_FAILURE;
-        }
-#endif
-        
-        return EXIT_SUCCESS;
+        return retVal;
         
       } // Robot::step_longExecution()
       

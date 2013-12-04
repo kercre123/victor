@@ -85,10 +85,9 @@ namespace Anki {
       ReturnCode Init()
       {
         // Init consts
-        LIFT_ANGLE_LOW = Height2Rad(LIFT_HEIGHT_LOW);
+        LIFT_ANGLE_LOW = Height2Rad(LIFT_HEIGHT_LOWDOCK);
         return EXIT_SUCCESS;
       }
-      
       
       
       void Enable()

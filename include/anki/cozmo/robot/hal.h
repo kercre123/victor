@@ -37,10 +37,7 @@
 #include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
 
-// Define this if we are sending images over UART in order to buffer messages
-// created with printf and send them after each frame in long execution (so
-// we don't interrupt frames being sent)
-#define SERIAL_IMAGING
+#include "anki/cozmo/robot/visionSystem.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,13 +49,13 @@ extern "C" {
 #ifndef SIMULATOR
 #undef printf
 
-#ifdef SERIAL_IMAGING
+#if USE_OFFBOARD_VISION
 // Buffer printf messages, to be sent by long execution
 #define PUTCHAR_FUNC Anki::Cozmo::HAL::USBBufferChar
 #else
 // Send printf messages directly over the USB connection
 #define PUTCHAR_FUNC Anki::Cozmo::HAL::USBPutChar
-#endif // ifdef SERIAL_IMAGING
+#endif // if USE_OFFBOARD_VISION
 
 #define printf(...) _xprintf(PUTCHAR_FUNC, 0, __VA_ARGS__)
 #define PRINT(...) explicitPrintf(PUTCHAR_FUNC, 0, __VA_ARGS__)
@@ -99,7 +96,6 @@ namespace Anki
       //
       // Parameters / Constants
       //
-      const u8  NUM_RADIAL_DISTORTION_COEFFS = 5;
       const f32 MOTOR_PWM_MAXVAL = 2400.f;
       const f32 MOTOR_MAX_POWER = 1.0f;
       
@@ -126,14 +122,6 @@ namespace Anki
       //   img = fcn();
       typedef const u8* (*FrameGrabber)(void);
       
-      // A struct for holding camera parameters
-      typedef struct {
-        f32 focalLength_x, focalLength_y, fov_ver;
-        f32 center_x, center_y;
-        f32 skew;
-        u16 nrows, ncols;
-        f32 distortionCoeffs[NUM_RADIAL_DISTORTION_COEFFS];
-      } CameraInfo;
       
       //
       // Hardware Interface Methods:
@@ -206,7 +194,8 @@ namespace Anki
 
       void UARTInit();
       
-#ifdef SERIAL_IMAGING
+#if USE_OFFBOARD_VISION
+      
       // TODO: Move these to messageProtocol.h?
       const u8 USB_SET_CAMERA_MODE_MSG = 0xCA;
       const u8 SIZEOF_USB_SET_CAMERA_MODE_MSG = 2;
@@ -216,23 +205,32 @@ namespace Anki
       
       const u8 USB_MESSAGE_HEADER = 0xDD;
       
+      // Bytes to add to USB frame header to tell the offboard processor
+      // what to do with the frame
+      const u8 USB_VISION_COMMAND_DETECTBLOCKS = 0xAB;
+      const u8 USB_VISION_COMMAND_INITTRACK    = 0xBC;
+      const u8 USB_VISION_COMMAND_TRACK        = 0xCD;
+      const u8 USB_VISION_COMMAND_MATODOMETRY  = 0xDE;
+      
       // Put a byte into a send buffer to be sent by LongExecution()
       // (Using same prototype as putc / USBPutChar for printf.)
       int USBBufferChar(int c);
       
       // Send a frame at the current frame resolution (last set by
       // a call to SetUSBFrameResolution)
-      void USBSendFrame(const u8* image, const s32 nrows, const s32 ncols);
+      void USBSendFrame(const VisionSystem::FrameBuffer &frame,
+                        const u8 commandByte);
 
       // Send the contents of the USB message buffer.
       void USBSendMessage(void);
       
-#if SIMULATOR
-      void USBFlush(void);
-#endif
+      // Returns an entire message packet in buffer, if one is available.
+      // Until a valid packet header is found and the entire packet is
+      // available, EXIT_FAILURE will be returned.  Once a valid header
+      // is found and returned, EXIT_SUCCESS is returned.
+      ReturnCode USBGetNextPacket(u8 *buffer);
       
-#endif // ifdef SERIAL_IMAGING
-
+#endif // if USE_OFFBOARD_VISION
       
       // Motors
       enum MotorID
@@ -300,8 +298,8 @@ namespace Anki
       void MatCameraInit();
       void FrontCameraInit();
       
-      const CameraInfo* GetHeadCamInfo();
-      const CameraInfo* GetMatCamInfo() ;
+      const VisionSystem::CameraInfo* GetHeadCamInfo();
+      const VisionSystem::CameraInfo* GetMatCamInfo() ;
       
       // Set the camera capture resolution with CAMERA_MODE_XXXXX_HEADER.
       void       SetHeadCamMode(const u8 frameResHeader);

@@ -23,17 +23,18 @@ namespace Anki {
     // TODO: Currently set to Webots specs
     const f32 LIFT_JOINT_HEIGHT = 27.f + (0.5f*WHEEL_DIAMETER_MM);
     const f32 LIFT_LENGTH = 97.5f;
-    const f32 LIFT_HEIGHT_LOW = 5.f;
-    const f32 LIFT_HEIGHT_HIGHT = 95.f;
+    const f32 LIFT_HEIGHT_LOWDOCK  = 5.f;
+    const f32 LIFT_HEIGHT_HIGHDOCK = 90.f;
+    const f32 LIFT_HEIGHT_CARRY    = 95.f;
 #else
     // Control loop on robot is 500Hz.
     const s32 TIME_STEP = 2;
     
     const f32 LIFT_JOINT_HEIGHT = 45.f;
     const f32 LIFT_LENGTH = 91.f;
-    const f32 LIFT_HEIGHT_LOW = 22.f;
-    const f32 LIFT_HEIGHT_HIGHT = 70.f;
-
+    const f32 LIFT_HEIGHT_LOWDOCK  = 22.f;
+    const f32 LIFT_HEIGHT_HIGHDOCK = 65.f;
+    const f32 LIFT_HEIGHT_CARRY    = 70.f;
 #endif
     
     const f32 CONTROL_DT = TIME_STEP*0.001f;

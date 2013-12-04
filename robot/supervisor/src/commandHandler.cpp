@@ -37,7 +37,7 @@ namespace Anki {
         
         while (c >= 0) {
           switch(static_cast<u8>(c)) {
-#ifdef SERIAL_IMAGING
+#ifdef USE_OFFBOARD_VISION
             case HAL::USB_SET_CAMERA_MODE_MSG:
             {
               if (HAL::USBGetNumBytesToRead() < HAL::SIZEOF_USB_SET_CAMERA_MODE_MSG)
@@ -74,7 +74,7 @@ namespace Anki {
               DockingController::SetRelDockPose(blockPos_x, blockPos_y, blockPos_rad);
               break;
             }
-#endif // SERIAL_IMAGING
+#endif // USE_OFFBOARD_VISION
             default:
               PRINT("WARN: (ProcessUARTMsgs): Unexpected char %d\n", c);
               c = HAL::USBGetChar();  // Pop unexpected char from receive buffer
@@ -118,8 +118,8 @@ namespace Anki {
               
               PRINT("Robot received handshake from basestation, "
                       "sending camera calibration.\n");
-              const HAL::CameraInfo *matCamInfo  = HAL::GetMatCamInfo();
-              const HAL::CameraInfo *headCamInfo = HAL::GetHeadCamInfo();
+              const VisionSystem::CameraInfo *matCamInfo  = HAL::GetMatCamInfo();
+              const VisionSystem::CameraInfo *headCamInfo = HAL::GetHeadCamInfo();
               
               CozmoMsg_CameraCalibration calibMsg;
               calibMsg.size = sizeof(CozmoMsg_CameraCalibration);
@@ -183,23 +183,7 @@ namespace Anki {
   #endif
               break;
             }
-            case MSG_B2V_CORE_INITIATE_DOCK:
-            {
-              const CozmoMsg_InitiateDock *msg = reinterpret_cast<const CozmoMsg_InitiateDock*>(msgBuffer);
-              
-              if(DockingController::SetGoals(msg) == EXIT_SUCCESS) {
-                
-                PRINT("Robot received Initiate Dock message, now in DOCK mode.\n");
-                
-                Robot::SetOperationMode(Robot::DOCK);
-              }
-              else {
-                PRINT("Initiate Dock message received, failed to set docking goals.\n");
-              }
-              
-              break;
-            }
-
+            
             default:
               PRINT("Unrecognized command in received message.\n");
               

@@ -26,7 +26,6 @@ namespace Anki {
       // TODO: Add if/when needed?
       // ReturnCode Init();
       
-      ReturnCode  SetGoals(const CozmoMsg_InitiateDock* msg);
       bool        IsDone(); // whether or not it was successful
       bool        DidSucceed();
       ReturnCode  Update();
