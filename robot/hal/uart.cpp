@@ -98,7 +98,7 @@ namespace Anki
       }
 
       
-      s32 USBGetChar(u32 timeout, bool peek)
+      s32 USBGetChar(u32 timeout)
       {
         u32 end = GetMicroCounter() + timeout;
         do
@@ -111,9 +111,7 @@ namespace Anki
           if (m_currentRead != m_currentWrite)
           {
             s32 c = m_buffer[m_currentRead] & 0xff;
-            if (!peek) {
-              m_currentRead = (m_currentRead + 1) & BUFFER_MASK;
-            }
+            m_currentRead = (m_currentRead + 1) & BUFFER_MASK;
             return c;
           }
         } while (GetMicroCounter() < end);
@@ -121,13 +119,20 @@ namespace Anki
         return -1;
       }
       
-      s32 USBGetChar(u32 timeout) {
-        USBGetChar(timeout, false);
-      }
 
-      s32 USBPeekChar()
+      s32 USBPeekChar(u32 offset)
       {
-        USBGetChar(0, true);
+        // If trying to peek further than there are characters in the buffer
+        // exit now.
+        if (USBGetNumBytesToRead() <= offset) {
+          return -1;
+        }
+        
+        // Set the read index with offset
+        u32 currReadWithOffset = (m_currentRead + offset) & BUFFER_MASK;
+
+        s32 c = m_buffer[currReadWithOffset] & 0xff;
+        return c;
       }
       
       u32 USBGetNumBytesToRead()
