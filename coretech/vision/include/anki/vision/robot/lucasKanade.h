@@ -22,12 +22,16 @@ namespace Anki
   {
     namespace TemplateTracker
     {
+      // The type of transformation.
+      //
+      // The first byte is the degrees of freedom of the transformation, so if it bit-shifted right
+      // by 8, it is equal to the number of parameters
       enum TransformType
       {
-        TRANSFORM_UNKNOWN = 0,
-        TRANSFORM_TRANSLATION = 1,
-        TRANSFORM_PROJECTIVE = 2
-        //TRANSFORM_AFFINE, // TODO: support affine
+        TRANSFORM_UNKNOWN     = 0x0000,
+        TRANSFORM_TRANSLATION = 0x0200,
+        TRANSFORM_AFFINE      = 0x0600,
+        TRANSFORM_PROJECTIVE  = 0x0800
       };
 
       class PlanarTransformation_f32

@@ -211,6 +211,31 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .001, .0001));
   }
 
+  // Affine LK
+  {
+    PUSH_MEMORY_STACK(scratch1);
+
+    TemplateTracker::LucasKanadeTracker_f32 tracker(imageHeight, imageWidth, numPyramidLevels, TemplateTracker::TRANSFORM_AFFINE, ridgeWeight, scratch1);
+
+    ASSERT_TRUE(tracker.IsValid());
+
+    ASSERT_TRUE(tracker.InitializeTemplate(image1, templateRegion, scratch1) == RESULT_OK);
+
+    ASSERT_TRUE(tracker.IsValid());
+
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
+
+    tracker.get_transformation().Print("Affine LK");
+
+    // This ground truth is from the PC c++ version
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    transform_groundTruth[0][0] = 1.005281f; transform_groundTruth[0][1] = 0.027271f; transform_groundTruth[0][2] = -0.314762f;
+    transform_groundTruth[1][0] = -0.033396f; transform_groundTruth[1][1] = 0.992506f; transform_groundTruth[1][2] = -0.229912f;
+    transform_groundTruth[2][0] = 0.0f; transform_groundTruth[2][1] = 0.0f; transform_groundTruth[2][2] = 1.0f;
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .001, .0001));
+  }
+
   // Projective LK
   {
     PUSH_MEMORY_STACK(scratch1);

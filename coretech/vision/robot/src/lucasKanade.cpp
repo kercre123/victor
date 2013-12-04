@@ -22,7 +22,7 @@ namespace Anki
       PlanarTransformation_f32::PlanarTransformation_f32(TransformType transformType, MemoryStack &memory)
         : transformType(transformType)
       {
-        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_PROJECTIVE,
+        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
           "PlanarTransformation_f32::PlanarTransformation_f32", "Invalid transformType %d", transformType);
 
         homography = Eye<f32>(3, 3, memory);
@@ -64,6 +64,28 @@ namespace Anki
             for(s32 x=0; x<numPointsX; x++) {
               pXOut[x] = pXIn[x] + dx + centerOffset.x;
               pYOut[x] = pYIn[x] + dy + centerOffset.y;
+            }
+          }
+        } else if(transformType == TRANSFORM_AFFINE) {
+          const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
+          const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+
+          assert(FLT_NEAR(homography[2][0], 0.0f));
+          assert(FLT_NEAR(homography[2][1], 0.0f));
+          assert(FLT_NEAR(homography[2][2], 1.0f));
+
+          for(s32 y=0; y<numPointsY; y++) {
+            const f32 * restrict pXIn = xIn.Pointer(y,0);
+            const f32 * restrict pYIn = yIn.Pointer(y,0);
+            f32 * restrict pXOut = xOut.Pointer(y,0);
+            f32 * restrict pYOut = yOut.Pointer(y,0);
+
+            for(s32 x=0; x<numPointsX; x++) {
+              const f32 xp = (h00*pXIn[x] + h01*pYIn[x] + h02);
+              const f32 yp = (h10*pXIn[x] + h11*pYIn[x] + h12);
+
+              pXOut[x] = xp + centerOffset.x;
+              pYOut[x] = yp + centerOffset.y;
             }
           }
         } else if(transformType == TRANSFORM_PROJECTIVE) {
@@ -110,11 +132,15 @@ namespace Anki
           updateType = this->transformType;
         }
 
+        // An Object of a given transformation type can only be updated with a simpler transformation
         if(this->transformType == TRANSFORM_TRANSLATION) {
           AnkiConditionalErrorAndReturnValue(updateType == TRANSFORM_TRANSLATION,
             RESULT_FAIL, "PlanarTransformation_f32::Update", "cannot update this transform with the update type %d", updateType);
+        } else if(this->transformType == TRANSFORM_AFFINE) {
+          AnkiConditionalErrorAndReturnValue(updateType == TRANSFORM_TRANSLATION || updateType == TRANSFORM_AFFINE,
+            RESULT_FAIL, "PlanarTransformation_f32::Update", "cannot update this transform with the update type %d", updateType);
         } else if(this->transformType == TRANSFORM_PROJECTIVE) {
-          AnkiConditionalErrorAndReturnValue(updateType == TRANSFORM_TRANSLATION || updateType == TRANSFORM_PROJECTIVE,
+          AnkiConditionalErrorAndReturnValue(updateType == TRANSFORM_TRANSLATION|| updateType == TRANSFORM_AFFINE || updateType == TRANSFORM_PROJECTIVE,
             RESULT_FAIL, "PlanarTransformation_f32::Update", "cannot update this transform with the update type %d", updateType);
         } else {
           assert(false);
@@ -123,7 +149,7 @@ namespace Anki
         const f32 * pUpdate = update[0];
 
         if(updateType == TRANSFORM_TRANSLATION) {
-          AnkiConditionalErrorAndReturnValue(update.get_size(1) == 2,
+          AnkiConditionalErrorAndReturnValue(update.get_size(1) == TRANSFORM_TRANSLATION>>8,
             RESULT_FAIL, "PlanarTransformation_f32::Update", "update is the incorrect size");
 
           // this.tform(1:2,3) = this.tform(1:2,3) - update;
@@ -132,8 +158,15 @@ namespace Anki
         } else { // if(updateType == TRANSFORM_TRANSLATION)
           Array<f32> updateArray(3,3,scratch);
 
-          if(updateType == TRANSFORM_PROJECTIVE) {
-            AnkiConditionalErrorAndReturnValue(update.get_size(1) == 8,
+          if(updateType == TRANSFORM_AFFINE) {
+            AnkiConditionalErrorAndReturnValue(update.get_size(1) == TRANSFORM_AFFINE>>8,
+              RESULT_FAIL, "PlanarTransformation_f32::Update", "update is the incorrect size");
+
+            updateArray[0][0] = 1.0f + pUpdate[0]; updateArray[0][1] = pUpdate[1];        updateArray[0][2] = pUpdate[2];
+            updateArray[1][0] = pUpdate[3];        updateArray[1][1] = 1.0f + pUpdate[4]; updateArray[1][2] = pUpdate[5];
+            updateArray[2][0] = 0.0f;              updateArray[2][1] = 0.0f;              updateArray[2][2] = 1.0f;
+          } else if(updateType == TRANSFORM_PROJECTIVE) {
+            AnkiConditionalErrorAndReturnValue(update.get_size(1) == TRANSFORM_PROJECTIVE>>8,
               RESULT_FAIL, "PlanarTransformation_f32::Update", "update is the incorrect size");
 
             // tformUpdate = eye(3) + [update(1:3)'; update(4:6)'; update(7:8)' 0];
@@ -192,7 +225,7 @@ namespace Anki
 
       Result PlanarTransformation_f32::set_transformType(const TransformType transformType)
       {
-        if(transformType == TRANSFORM_TRANSLATION || transformType == TRANSFORM_PROJECTIVE) {
+        if(transformType == TRANSFORM_TRANSLATION || transformType == TRANSFORM_AFFINE || transformType == TRANSFORM_PROJECTIVE) {
           this->transformType = transformType;
         } else {
           AnkiError("PlanarTransformation_f32::set_transformType", "Unknown transformation type %d", transformType);
@@ -231,8 +264,8 @@ namespace Anki
         AnkiConditionalErrorAndReturn(numPyramidLevels > 0,
           "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "numPyramidLevels must be greater than zero");
 
-        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_PROJECTIVE,
-          "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Only TRANSFORM_TRANSLATION and TRANSFORM_PROJECTIVE are supported");
+        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType == TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
+          "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Only TRANSFORM_TRANSLATION, TRANSFORM_AFFINE, and TRANSFORM_PROJECTIVE are supported");
 
         AnkiConditionalErrorAndReturn(ridgeWeight >= 0.0f,
           "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "ridgeWeight must be greater or equal to zero");
@@ -298,12 +331,7 @@ namespace Anki
         this->isInitialized = true;
         this->isValid = false;
 
-        s32 numTransformationParameters;
-        if(transformation.get_transformType() == TRANSFORM_TRANSLATION) {
-          numTransformationParameters = 2;
-        } else if(transformation.get_transformType() == TRANSFORM_PROJECTIVE) {
-          numTransformationParameters = 8;
-        }
+        const s32 numTransformationParameters = transformation.get_transformType() >> 8;
 
         this->templateRegionHeight = templateRegion.bottom - templateRegion.top + 1;
         this->templateRegionWidth = templateRegion.right - templateRegion.left + 1;
@@ -393,8 +421,6 @@ namespace Anki
 
             // Create the A matrix
             if(transformation.get_transformType() == TRANSFORM_TRANSLATION) {
-              // this.A_trans{i_scale} = [Ix(:) Iy(:)];
-
               Array<f32> tmp(1, numPointsY*numPointsX, memory);
 
               Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp);
@@ -402,26 +428,15 @@ namespace Anki
 
               Matrix::Vectorize(isOutColumnMajor, templateDerivativeY, tmp);
               this->A_full[iScale](1,1,0,-1).Set(tmp);
-            } else if(transformation.get_transformType() == TRANSFORM_PROJECTIVE) {
-              // X = this.xgrid{i_scale}(:);
-              // Y = this.ygrid{i_scale}(:);
+            } else if(transformation.get_transformType() == TRANSFORM_AFFINE || transformation.get_transformType() == TRANSFORM_PROJECTIVE) {
+              // The first six terms of affine and projective are the same
+
               Array<f32> xInV(1, numPointsY*numPointsX, memory);
               Array<f32> yInV(1, numPointsY*numPointsX, memory);
               Matrix::Vectorize(isOutColumnMajor, xIn, xInV);
               Matrix::Vectorize(isOutColumnMajor, yIn, yInV);
 
-              // this.A_full{i_scale} = [ ...
-              // X.*Ix(:)
-              // Y.*Ix(:)
-              // Ix(:)
-              // X.*Iy(:)
-              // Y.*Iy(:)
-              // Iy(:)
-              // -X.^2.*Ix(:)-X.*Y.*Iy(:)
-              // -X.*Y.*Ix(:)-Y.^2.*Iy(:) ];
-
               Array<f32> tmp1(1, numPointsY*numPointsX, memory);
-              Array<f32> tmp2(1, numPointsY*numPointsX, memory);
 
               // X.*Ix(:)
               Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp1);
@@ -451,34 +466,37 @@ namespace Anki
               Matrix::Vectorize(isOutColumnMajor, templateDerivativeY, tmp1);
               this->A_full[iScale](5,5,0,-1).Set(tmp1);
 
-              // -X.^2.*Ix(:) - X.*Y.*Iy(:)
-              Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp1); // Ix(:)
-              Matrix::DotMultiply<f32,f32,f32>(tmp1, xInV, tmp1); // Ix(:).*X
-              Matrix::DotMultiply<f32,f32,f32>(tmp1, xInV, tmp1); // Ix(:).*X.^2
-              Matrix::Subtract<f32,f32,f32>(0.0f, tmp1, tmp1); // -Ix(:).*X.^2
+              if(transformation.get_transformType() == TRANSFORM_PROJECTIVE) {
+                //The seventh and eights terms are for projective only, not for affine
 
-              Matrix::Vectorize(isOutColumnMajor, templateDerivativeY, tmp2); // Iy(:)
-              Matrix::DotMultiply<f32,f32,f32>(tmp2, xInV, tmp2); // Iy(:).*X
-              Matrix::DotMultiply<f32,f32,f32>(tmp2, yInV, tmp2); // Iy(:).*X.*Y
+                Array<f32> tmp2(1, numPointsY*numPointsX, memory);
 
-              Matrix::Subtract<f32,f32,f32>(tmp1,tmp2,tmp1);
+                // -X.^2.*Ix(:) - X.*Y.*Iy(:)
+                Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp1); // Ix(:)
+                Matrix::DotMultiply<f32,f32,f32>(tmp1, xInV, tmp1); // Ix(:).*X
+                Matrix::DotMultiply<f32,f32,f32>(tmp1, xInV, tmp1); // Ix(:).*X.^2
+                Matrix::Subtract<f32,f32,f32>(0.0f, tmp1, tmp1); // -Ix(:).*X.^2
 
-              this->A_full[iScale](6,6,0,-1).Set(tmp1);
+                Matrix::Vectorize(isOutColumnMajor, templateDerivativeY, tmp2); // Iy(:)
+                Matrix::DotMultiply<f32,f32,f32>(tmp2, xInV, tmp2); // Iy(:).*X
+                Matrix::DotMultiply<f32,f32,f32>(tmp2, yInV, tmp2); // Iy(:).*X.*Y
 
-              // -X.*Y.*Ix(:) - Y.^2.*Iy(:)
-              Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp1); // Ix(:)
-              Matrix::DotMultiply<f32,f32,f32>(tmp1, xInV, tmp1); // Ix(:).*X
-              Matrix::DotMultiply<f32,f32,f32>(tmp1, yInV, tmp1); // Ix(:).*X.*Y
-              Matrix::Subtract<f32,f32,f32>(0.0f, tmp1, tmp1); // -Ix(:).*X.*Y
+                Matrix::Subtract<f32,f32,f32>(tmp1,tmp2,tmp1);
+                this->A_full[iScale](6,6,0,-1).Set(tmp1);
 
-              Matrix::Vectorize(isOutColumnMajor, templateDerivativeY, tmp2); // Iy(:)
-              Matrix::DotMultiply<f32,f32,f32>(tmp2, yInV, tmp2); // Iy(:).*Y
-              Matrix::DotMultiply<f32,f32,f32>(tmp2, yInV, tmp2); // Iy(:).*Y.^2
+                // -X.*Y.*Ix(:) - Y.^2.*Iy(:)
+                Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp1); // Ix(:)
+                Matrix::DotMultiply<f32,f32,f32>(tmp1, xInV, tmp1); // Ix(:).*X
+                Matrix::DotMultiply<f32,f32,f32>(tmp1, yInV, tmp1); // Ix(:).*X.*Y
+                Matrix::Subtract<f32,f32,f32>(0.0f, tmp1, tmp1); // -Ix(:).*X.*Y
 
-              Matrix::Subtract<f32,f32,f32>(tmp1,tmp2,tmp1);
+                Matrix::Vectorize(isOutColumnMajor, templateDerivativeY, tmp2); // Iy(:)
+                Matrix::DotMultiply<f32,f32,f32>(tmp2, yInV, tmp2); // Iy(:).*Y
+                Matrix::DotMultiply<f32,f32,f32>(tmp2, yInV, tmp2); // Iy(:).*Y.^2
 
-              this->A_full[iScale](7,7,0,-1).Set(tmp1);
-
+                Matrix::Subtract<f32,f32,f32>(tmp1,tmp2,tmp1);
+                this->A_full[iScale](7,7,0,-1).Set(tmp1);
+              } // if(transformation.get_transformType() == TRANSFORM_PROJECTIVE)
               //{
               //  Matlab matlab(false);
               //  matlab.PutArray(this->A_full[iScale], "A_full_iScale");
@@ -487,7 +505,7 @@ namespace Anki
               //  matlab.PutArray(templateImage, "templateImage");
               //  //matlab.PutArray(, "");
               //}
-            }
+            } // else if(transformation.get_transformType() == TRANSFORM_AFFINE || transformation.get_transformType() == TRANSFORM_PROJECTIVE)
 
             {
               PUSH_MEMORY_STACK(memory);
@@ -582,22 +600,19 @@ namespace Anki
 
         Array<f32> A_part;
 
-        s32 numSystemParameters = -1;
+        const s32 numSystemParameters = curTransformType >> 8;
         if(curTransformType == TRANSFORM_TRANSLATION) {
-          numSystemParameters = 2;
-
           // Translation-only can be performed by grabbing a few rows of the A_full matrix
-          if(this->get_transformation().get_transformType() == TRANSFORM_PROJECTIVE) {
-            A_part = Array<f32>(2, this->A_full[whichScale].get_size(1), memory);
-            A_part(0,-1,0,-1).Set(this->A_full[whichScale](2,3,5,0,1,-1)); // grab the 2nd and 5th rows
+          if(this->get_transformation().get_transformType() == TRANSFORM_AFFINE ||
+            this->get_transformation().get_transformType() == TRANSFORM_PROJECTIVE) {
+              A_part = Array<f32>(2, this->A_full[whichScale].get_size(1), memory);
+              A_part(0,-1,0,-1).Set(this->A_full[whichScale](2,3,5,0,1,-1)); // grab the 2nd and 5th rows
           } else if(this->get_transformation().get_transformType() == TRANSFORM_TRANSLATION) {
             A_part = this->A_full[whichScale];
           } else {
             assert(false);
           }
-        } else if(curTransformType == TRANSFORM_PROJECTIVE) {
-          numSystemParameters = 8;
-
+        } else if(curTransformType == TRANSFORM_AFFINE || curTransformType == TRANSFORM_PROJECTIVE) {
           A_part = this->A_full[whichScale];
         } else {
           assert(false);
