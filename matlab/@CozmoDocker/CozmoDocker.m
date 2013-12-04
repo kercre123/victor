@@ -273,7 +273,8 @@ classdef CozmoDocker < handle
                         'Type', this.trackerType, 'RidgeWeight', 1e-3, ...
                         'DebugDisplay', false, 'UseBlurring', false, ...
                         'UseNormalization', true, ...
-                        'TrackingResolution', this.camera.framesize);
+                        'TrackingResolution', this.camera.framesize, ...
+                        'MinSize', 4);
                     
                     if strcmp(this.trackerType, 'homography') && ...
                             ~isempty(this.calibration)
@@ -337,7 +338,7 @@ classdef CozmoDocker < handle
                             set(this.h_img, 'CData', img);
                             converged = LKtracker.track(img, ...
                                 'MaxIterations', 50, ...
-                                'ConvergenceTolerance', .25,...
+                                'ConvergenceTolerance', .05,...
                                 'ErrorTolerance', 0.5);
                             
                             if converged
@@ -490,6 +491,12 @@ classdef CozmoDocker < handle
                         
                     case 'escape'
                         this.escapePressed = true;
+                        
+                    case 'd'
+                        this.mode = 'DOCK';
+                        
+                    case 'p'
+                        this.mode = 'PLACE';
                 end
             end
         end % keyPressCallback()
@@ -588,9 +595,9 @@ classdef CozmoDocker < handle
             set(this.h_rxMsg, 'String', ['RX: ' msg]);
             fprintf('Message Received: %s\n', msg);
             
-            if ~isempty(strfind(msg, 'GRIPPING'))
+            if ~isempty(strfind(msg, 'DONE DOCKING'))
                 this.mode = 'PLACE';
-            elseif ~isempty(strfind(msg, 'IDLE'))
+            elseif ~isempty(strfind(msg, 'DONE PLACEMENT'))
                 this.mode = 'DOCK';
             end
         end
