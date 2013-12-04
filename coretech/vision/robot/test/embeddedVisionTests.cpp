@@ -87,8 +87,11 @@ Cannot run tracker and low memory tests at the same teim
 
 #elif defined(RUN_TRACKER_TESTS) && !defined(RUN_MAIN_BIG_MEMORY_TESTS) && !defined(RUN_ALL_BIG_MEMORY_TESTS)
 
-#define BIG_BUFFER_SIZE0 320000
-#define BIG_BUFFER_SIZE1 600000
+//#define BIG_BUFFER_SIZE0 320000
+//#define BIG_BUFFER_SIZE1 600000
+//#define BIG_BUFFER_SIZE2 16
+#define BIG_BUFFER_SIZE0 32000
+#define BIG_BUFFER_SIZE1 60000
 #define BIG_BUFFER_SIZE2 16
 #if defined(USING_MOVIDIUS_COMPILER)
 #define BIG_IMAGE_BUFFER_LOCATION __attribute__((section(".bigBss")))

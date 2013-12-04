@@ -36,6 +36,17 @@ SECTIONS {
   .imageData : {
     *(.imageData*)
   }
+  
+  /* These are used by vision-tests */
+  .bigBss (NOLOAD) : {
+    *(.bigBss*)
+  }  
+  .smallBss1 (NOLOAD) : {
+    *(.smallBss1*)
+  }
+  .smallBss2 (NOLOAD) : {
+    *(.smallBss2*)
+  }
 
   __EMPTY_RAM = ALIGN(4);
   .init_text : {
@@ -68,18 +79,6 @@ SECTIONS {
     *(.bss.printfBuffer*)
   }
 
-  .bigBss (NOLOAD) : {
-    *(.bigBss*)
-  }
-  
-  .smallBss1 (NOLOAD) : {
-    *(.smallBss1*)
-  }
-
-  .smallBss2 (NOLOAD) : {
-    *(.smallBss2*)
-  }
-  
   /* 
    * locate the special sections in correct place  
    * These sections are required to ensure Myriad is initialized correctly and must be loaded first   
