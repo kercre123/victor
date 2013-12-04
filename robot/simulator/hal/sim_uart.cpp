@@ -74,23 +74,9 @@ namespace Anki
         }
       }
       
-      // When lookAhead < 0, do a normal getChar()
-      // When lookAhead >= 0, do a peek that many bytes ahead
-      s32 USBGetChar(u32 timeout, s32 lookAhead)
+      s32 USBGetChar(u32 timeout)
       {
-        // Determine if we're peeking (lookAhead>=0) or not (lookAhead<0)
-        bool peek = true;
-        if(lookAhead < 0) {
-          peek = false;
-          lookAhead = 0;
-        }
-        else if(getCharIndex_+lookAhead >= USBrecvBuffer_.size())
-        {
-          // We are peeking (possibly ahead), but there isn't enough data left
-          return -1;
-        }
-
-        if(getCharIndex_+lookAhead == USBrecvBuffer_.size())
+        if(getCharIndex_ == USBrecvBuffer_.size())
         {
           // We've returned all of the last packet we got, so clear the buffer
           // and start again with the next packet
@@ -113,23 +99,24 @@ namespace Anki
         }
         
         // Get the next character in the packet
-        s32 retVal = static_cast<s32>(USBrecvBuffer_[getCharIndex_ + lookAhead]);
+        s32 retVal = static_cast<s32>(USBrecvBuffer_[getCharIndex_]);
         
-        if(not peek) {
-          ++getCharIndex_;
-        }
+        ++getCharIndex_;
         
         return retVal;
-      }
+        
+      } // USBGetChar()
       
-      s32 USBGetChar(u32 timeout)
+      s32 USBPeekChar(u32 lookAhead)
       {
-        return USBGetChar(timeout, -1);
-      }
-      
-      s32 USBPeekChar(s32 lookAhead)
-      {
-        return USBGetChar(0, lookAhead);
+        // If trying to peek further than there are characters in the buffer
+        // exit now.
+        if(USBGetNumBytesToRead() <= lookAhead) {
+          return -1;
+        }
+        
+        // Get the next character in the packet
+        return static_cast<s32>(USBrecvBuffer_[getCharIndex_ + lookAhead]);
       }
     
       void USBSendBuffer(u8* buffer, u32 size)
@@ -139,14 +126,8 @@ namespace Anki
       
       u32 USBGetNumBytesToRead(void)
       {
-        // NOTE: this is just returning number of bytes to read *in the next packet*
-        u32 retVal = 0;
-        
-        if(usbRX_->getQueueLength() > 0) {
-          retVal = usbRX_->getDataSize();
-        }
-        
-        return retVal;
+        // NOTE: this is just returning number of bytes to read *in the current packet*
+        return USBrecvBuffer_.size() - getCharIndex_;
       }
       
       
