@@ -113,6 +113,12 @@ namespace Anki
       printf("(%d,%d)->(%d,%d) ", this->left, this->top, this->right, this->bottom);
     }
 
+    template<typename Type> Point<Type> Rectangle<Type>::ComputeCenter() const
+    {
+      Point<Type> center((this->left+this->right)/2, (this->top+this->bottom)/2);
+      return center;
+    }
+
     template<typename Type> bool Rectangle<Type>::operator== (const Rectangle<Type> &rectangle2) const
     {
       if(this->left == rectangle2.left && this->top == rectangle2.top && this->right == rectangle2.right && this->bottom == rectangle2.bottom)
@@ -192,6 +198,21 @@ namespace Anki
         this->corners[1].x, this->corners[1].y,
         this->corners[2].x, this->corners[2].y,
         this->corners[3].x, this->corners[3].y);
+    }
+
+    template<typename Type> Point<Type> Quadrilateral<Type>::ComputeCenter() const
+    {
+      Point<Type> center(0, 0);
+
+      for(s32 i=0; i<4; i++) {
+        center.x += this->corners[i].x;
+        center.y += this->corners[i].y;
+      }
+
+      center.x /= 4;
+      center.y /= 4;
+
+      return center;
     }
 
     template<typename Type> bool Quadrilateral<Type>::operator== (const Quadrilateral<Type> &quad2) const
