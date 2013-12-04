@@ -71,6 +71,74 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, MatrixSort)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  const s32 arr_data[15] = {81, 10, 16, 91, 28, 97, 13, 55, 96, 91, 96, 49, 63, 96, 80};
+  Array<s32> arr(5,3,ms);
+  Array<s32> sortedArr_groundTruth(5,3,ms);
+
+  ASSERT_TRUE(arr.IsValid());
+  ASSERT_TRUE(sortedArr_groundTruth.IsValid());
+
+  // sortWhichDimension==0 sortAscending==false
+  {
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::Sort(arr, 0, false) == RESULT_OK);
+
+    arr.Print("sortWhichDimension==0 sortAscending==false");
+
+    const s32 sortedArr_groundTruthData[15] = {91, 96, 97, 91, 96, 96, 81, 55, 80, 63, 28, 49, 13, 10, 16};
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+  }
+
+  // sortWhichDimension==0 sortAscending==true
+  {
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::Sort(arr, 0, true) == RESULT_OK);
+
+    arr.Print("sortWhichDimension==0 sortAscending==true");
+
+    const s32 sortedArr_groundTruthData[15] = {13, 10, 16, 63, 28, 49, 81, 55, 80, 91, 96, 96, 91, 96, 97};
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+  }
+
+  // sortWhichDimension==1 sortAscending==false
+  {
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::Sort(arr, 1, false) == RESULT_OK);
+
+    arr.Print("sortWhichDimension==1 sortAscending==false");
+
+    const s32 sortedArr_groundTruthData[15] = {81, 16, 10, 97, 91, 28, 96, 55, 13, 96, 91, 49, 96, 80, 63};
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+  }
+
+  // sortWhichDimension==1 sortAscending==true
+  {
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::Sort(arr, 1, true) == RESULT_OK);
+
+    arr.Print("sortWhichDimension==1 sortAscending==true");
+
+    const s32 sortedArr_groundTruthData[15] = {10, 16, 81, 28, 91, 97, 13, 55, 96, 49, 91, 96, 63, 80, 96};
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+  }
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, LinearLeastSquares32)
 {
   ASSERT_TRUE(buffer != NULL);

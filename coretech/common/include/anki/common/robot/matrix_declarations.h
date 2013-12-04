@@ -106,6 +106,11 @@ namespace Anki
       // Misc matrix operations
       //
 
+      // Works the same as the Matlab sort() for matrices.
+      // Sort(X) sorts each column of X in ascending order.
+      // NOTE: this currently uses insertion sort, so may be slow for large, badly-unsorted arrays
+      template<typename Type> Result Sort(Array<Type> &arr, const s32 sortWhichDimension=0, const bool sortAscending=true);
+
       // For a square array, either:
       // 1. When lowerToUpper==true,  copies the lower (left)  triangle to the upper (right) triangle
       // 2. When lowerToUpper==false, copies the upper (right) triangle to the lower (left)  triangle

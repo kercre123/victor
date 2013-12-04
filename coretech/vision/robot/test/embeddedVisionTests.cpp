@@ -67,7 +67,7 @@ Matlab matlab(false);
 #define USE_STATIC_BUFFERS
 
 #if defined(RUN_TRACKER_TESTS) && defined(RUN_LOW_MEMORY_IMAGE_TESTS)
-Cannot run tracker and low memory tests at the same teim
+Cannot run tracker and low memory tests at the same time
 #endif
 
 #if defined(RUN_LOW_MEMORY_IMAGE_TESTS) && !defined(RUN_MAIN_BIG_MEMORY_TESTS) && !defined(RUN_ALL_BIG_MEMORY_TESTS)
