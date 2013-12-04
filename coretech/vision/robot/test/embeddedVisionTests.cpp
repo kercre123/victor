@@ -49,9 +49,9 @@ Matlab matlab(false);
 //#define RUN_MAIN_BIG_MEMORY_TESTS
 //#define RUN_ALL_BIG_MEMORY_TESTS
 //#define RUN_LOW_MEMORY_IMAGE_TESTS
-#define RUN_TRACKER_TESTS
+//#define RUN_TRACKER_TESTS // equivalent to RUN_BROKEN_KANADE_TESTS
 
-#ifdef RUN_BROKEN_KANADE_TESTS   // This prevents the .elf from loading
+#ifdef RUN_TRACKER_TESTS   // This prevents the .elf from loading
 //#ifdef RUN_MAIN_BIG_MEMORY_TESTS
 #include "../../blockImages/blockImage50.h"
 #include "../../blockImages/blockImages00189_80x60.h"
@@ -155,12 +155,11 @@ void InitializeBuffers()
 #endif // #ifndef USE_STATIC_BUFFERS
 }
 
-#ifdef RUN_BROKEN_KANADE_TESTS   // This prevents the .elf from loading
 GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 {
 #ifndef RUN_TRACKER_TESTS
-  //ASSERT_TRUE(false);
-#else
+  ASSERT_TRUE(false);
+#else // This prevents the .elf from loading
 
   const s32 imageHeight = 60;
   const s32 imageWidth = 80;
@@ -259,7 +258,6 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
   GTEST_RETURN_HERE;
 }
-#endif
 
 //GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScaleAndBinarize)
 //{
@@ -2594,45 +2592,49 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
-  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory);
-  //CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScaleAndBinarize);
+  CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C_emulateShave);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImage);
+
+#ifdef RUN_LOW_MEMORY_IMAGE_TESTS
+  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory);
+#endif
 
 #ifdef RUN_MAIN_BIG_MEMORY_TESTS
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage);
 #endif
 
 #ifdef RUN_ALL_BIG_MEMORY_TESTS
-
-  CALL_GTEST_TEST(CoreTech_Vision, FiducialMarker);
-  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123);
-  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage);
-  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage);
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage);
+  CALL_GTEST_TEST(CoreTech_Vision, FiducialMarker);
+  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage);
+  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage);
+  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123);
 #endif
 
-  CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);
-  CALL_GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary);
-  CALL_GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary);
-  CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
-  CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
   CALL_GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput);
   CALL_GTEST_TEST(CoreTech_Vision, LaplacianPeaks);
   CALL_GTEST_TEST(CoreTech_Vision, Correlate1d);
+  CALL_GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids);
+
   CALL_GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents);
   CALL_GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents);
   CALL_GTEST_TEST(CoreTech_Vision, CompressComponentIds);
   CALL_GTEST_TEST(CoreTech_Vision, ComponentsSize);
   CALL_GTEST_TEST(CoreTech_Vision, SortComponents);
   CALL_GTEST_TEST(CoreTech_Vision, SortComponentsById);
+  CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d);
+  CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
+  CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);
+  CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2);
+  CALL_GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary);
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 

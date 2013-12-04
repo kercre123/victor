@@ -2485,18 +2485,48 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, MatrixSort);
+  CALL_GTEST_TEST(CoreTech_Common, LinearLeastSquares32);
+  CALL_GTEST_TEST(CoreTech_Common, LinearLeastSquares64);
+  CALL_GTEST_TEST(CoreTech_Common, MatrixMultiplyTranspose);
+  CALL_GTEST_TEST(CoreTech_Common, Reshape);
+  CALL_GTEST_TEST(CoreTech_Common, ArrayPatterns);
+  CALL_GTEST_TEST(CoreTech_Common, Interp2_twoDimensional);
+  CALL_GTEST_TEST(CoreTech_Common, Interp2_oneDimensional);
+  CALL_GTEST_TEST(CoreTech_Common, Meshgrid_twoDimensional);
+  CALL_GTEST_TEST(CoreTech_Common, Meshgrid_oneDimensional);
+  CALL_GTEST_TEST(CoreTech_Common, Linspace);
+  CALL_GTEST_TEST(CoreTech_Common, Find_SetArray1);
+  CALL_GTEST_TEST(CoreTech_Common, Find_SetArray2);
+  CALL_GTEST_TEST(CoreTech_Common, Find_SetValue);
+  CALL_GTEST_TEST(CoreTech_Common, ZeroSizedArray);
+  CALL_GTEST_TEST(CoreTech_Common, Find_Evaluate1D);
+  CALL_GTEST_TEST(CoreTech_Common, Find_Evaluate2D);
+  CALL_GTEST_TEST(CoreTech_Common, Find_NumMatchesAndBoundingRectangle);
+  CALL_GTEST_TEST(CoreTech_Common, MatrixElementwise);
+  CALL_GTEST_TEST(CoreTech_Common, SliceArrayAssignment);
+  CALL_GTEST_TEST(CoreTech_Common, SliceArrayCompileTest);
+  CALL_GTEST_TEST(CoreTech_Common, MatrixMinAndMaxAndSum);
+  CALL_GTEST_TEST(CoreTech_Common, ReallocateArray);
+  CALL_GTEST_TEST(CoreTech_Common, ReallocateMemoryStack);
+  CALL_GTEST_TEST(CoreTech_Common, LinearSequence);
+
 #ifdef TEST_BENCHMARKING
   CALL_GTEST_TEST(CoreTech_Common, Benchmarking);
 #endif
 
+  CALL_GTEST_TEST(CoreTech_Common, MemoryStackId);
   CALL_GTEST_TEST(CoreTech_Common, ApproximateExp);
-  CALL_GTEST_TEST(CoreTech_Common, SVD32);
-  CALL_GTEST_TEST(CoreTech_Common, SVD64);
   CALL_GTEST_TEST(CoreTech_Common, MatrixMultiply);
   CALL_GTEST_TEST(CoreTech_Common, ComputeHomography);
+  CALL_GTEST_TEST(CoreTech_Common, SVD32);
+  CALL_GTEST_TEST(CoreTech_Common, SVD64);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_call);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1);
+  CALL_GTEST_TEST(CoreTech_Common, SimpleMatlabTest1);
+  CALL_GTEST_TEST(CoreTech_Common, SimpleMatlabTest2);
+  CALL_GTEST_TEST(CoreTech_Common, SimpleOpenCVTest);
   CALL_GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest);
   CALL_GTEST_TEST(CoreTech_Common, ArraySpecifiedClass);
   CALL_GTEST_TEST(CoreTech_Common, ArrayAlignment1);
