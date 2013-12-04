@@ -44,13 +44,6 @@ namespace Anki
             return RESULT_FAIL;
         }
 
-        //{
-        //  Matlab matlab(false);
-
-        //  matlab.PutArray(APrime, "lsq_APrime");
-        //  matlab.PutArray(bPrime, "lsq_bPrime");
-        //}
-
         const s32 AMinStride = RoundUp<s32>(AWidth, MEMORY_ALIGNMENT);
 
         {
@@ -58,14 +51,6 @@ namespace Anki
           void * svdScratch = scratch.Allocate(sizeof(f32)*(AMinStride*3) + 64);
           if(svd_f32(APrime, w, U, V, svdScratch)  != RESULT_OK)
             return RESULT_FAIL;
-
-          //{
-          //  Matlab matlab(false);
-
-          //  matlab.PutArray(w, "lsq_w");
-          //  matlab.PutArray(U, "lsq_U");
-          //  matlab.PutArray(V, "lsq_V");
-          //}
         } // PUSH_MEMORY_STACK(scratch);
 
         {
@@ -91,14 +76,6 @@ namespace Anki
         Array<f64> w(1, AWidth, scratch);
         Array<f64> U(AWidth, AWidth, scratch);
         Array<f64> V(AWidth, AWidth, scratch);
-
-        // A' * A = A'A
-        if(MultiplyTranspose<f64,f64>(At, At, APrime) != RESULT_OK)
-          return RESULT_FAIL;
-
-        // A' * b = A'b
-        if(MultiplyTranspose<f64,f64>(At, bt, bPrime) != RESULT_OK)
-          return RESULT_FAIL;
 
         if(At.get_size(0) == At.get_size(1)) {
           APrime = At;

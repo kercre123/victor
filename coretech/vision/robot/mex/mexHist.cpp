@@ -1,8 +1,6 @@
 #include <mex.h>
 #include <cmath>
 
-#define ConditionalErrorAndReturn(expression, eventName, eventValue) if(!(expression)) { printf("%s - %s\n", (eventName), (eventValue)); return;}
-
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   // ASSUMES data is scaled between 0 and 1

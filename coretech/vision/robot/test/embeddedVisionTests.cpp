@@ -49,9 +49,9 @@ Matlab matlab(false);
 //#define RUN_MAIN_BIG_MEMORY_TESTS
 //#define RUN_ALL_BIG_MEMORY_TESTS
 //#define RUN_LOW_MEMORY_IMAGE_TESTS
-#define RUN_TRACKER_TESTS
+//#define RUN_TRACKER_TESTS // equivalent to RUN_BROKEN_KANADE_TESTS
 
-#ifdef RUN_BROKEN_KANADE_TESTS   // This prevents the .elf from loading
+#ifdef RUN_TRACKER_TESTS   // This prevents the .elf from loading
 //#ifdef RUN_MAIN_BIG_MEMORY_TESTS
 #include "../../blockImages/blockImage50.h"
 #include "../../blockImages/blockImages00189_80x60.h"
@@ -67,7 +67,7 @@ Matlab matlab(false);
 #define USE_STATIC_BUFFERS
 
 #if defined(RUN_TRACKER_TESTS) && defined(RUN_LOW_MEMORY_IMAGE_TESTS)
-Cannot run tracker and low memory tests at the same teim
+Cannot run tracker and low memory tests at the same time
 #endif
 
 #if defined(RUN_LOW_MEMORY_IMAGE_TESTS) && !defined(RUN_MAIN_BIG_MEMORY_TESTS) && !defined(RUN_ALL_BIG_MEMORY_TESTS)
@@ -87,8 +87,11 @@ Cannot run tracker and low memory tests at the same teim
 
 #elif defined(RUN_TRACKER_TESTS) && !defined(RUN_MAIN_BIG_MEMORY_TESTS) && !defined(RUN_ALL_BIG_MEMORY_TESTS)
 
-#define BIG_BUFFER_SIZE0 320000
-#define BIG_BUFFER_SIZE1 600000
+  //#define BIG_BUFFER_SIZE0 320000
+  //#define BIG_BUFFER_SIZE1 600000
+  //#define BIG_BUFFER_SIZE2 16
+#define BIG_BUFFER_SIZE0 32000
+#define BIG_BUFFER_SIZE1 60000
 #define BIG_BUFFER_SIZE2 16
 #if defined(USING_MOVIDIUS_COMPILER)
 #define BIG_IMAGE_BUFFER_LOCATION __attribute__((section(".bigBss")))
@@ -118,7 +121,7 @@ Cannot run tracker and low memory tests at the same teim
 #endif
 
 #ifdef USE_STATIC_BUFFERS
-BIG_IMAGE_BUFFER_LOCATION char bigBuffer0[BIG_BUFFER_SIZE0];
+  BIG_IMAGE_BUFFER_LOCATION char bigBuffer0[BIG_BUFFER_SIZE0];
 BIG_BUFFER1_LOCATION char bigBuffer1[BIG_BUFFER_SIZE1];
 BIG_BUFFER2_LOCATION char bigBuffer2[BIG_BUFFER_SIZE2];
 #else // #ifdef USE_STATIC_BUFFERS
@@ -152,12 +155,11 @@ void InitializeBuffers()
 #endif // #ifndef USE_STATIC_BUFFERS
 }
 
-#ifdef RUN_BROKEN_KANADE_TESTS   // This prevents the .elf from loading
 GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 {
 #ifndef RUN_TRACKER_TESTS
-  //ASSERT_TRUE(false);
-#else
+  ASSERT_TRUE(false);
+#else // This prevents the .elf from loading
 
   const s32 imageHeight = 60;
   const s32 imageWidth = 80;
@@ -194,11 +196,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
   {
     PUSH_MEMORY_STACK(scratch1);
 
-    TemplateTracker::LucasKanadeTracker_f32 tracker(imageHeight, imageWidth, numPyramidLevels, TemplateTracker::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
-
-    ASSERT_TRUE(tracker.IsValid());
-
-    ASSERT_TRUE(tracker.InitializeTemplate(image1, templateRegion, scratch1) == RESULT_OK);
+    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -214,15 +212,32 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .001, .0001));
   }
 
+  // Affine LK
+  {
+    PUSH_MEMORY_STACK(scratch1);
+
+    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_AFFINE, ridgeWeight, scratch1);
+
+    ASSERT_TRUE(tracker.IsValid());
+
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
+
+    tracker.get_transformation().Print("Affine LK");
+
+    // This ground truth is from the PC c++ version
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    transform_groundTruth[0][0] = 1.005281f; transform_groundTruth[0][1] = 0.027271f; transform_groundTruth[0][2] = -0.314762f;
+    transform_groundTruth[1][0] = -0.033396f; transform_groundTruth[1][1] = 0.992506f; transform_groundTruth[1][2] = -0.229912f;
+    transform_groundTruth[2][0] = 0.0f; transform_groundTruth[2][1] = 0.0f; transform_groundTruth[2][2] = 1.0f;
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .001, .0001));
+  }
+
   // Projective LK
   {
     PUSH_MEMORY_STACK(scratch1);
 
-    TemplateTracker::LucasKanadeTracker_f32 tracker(imageHeight, imageWidth, numPyramidLevels, TemplateTracker::TRANSFORM_PROJECTIVE, ridgeWeight, scratch1);
-
-    ASSERT_TRUE(tracker.IsValid());
-
-    ASSERT_TRUE(tracker.InitializeTemplate(image1, templateRegion, scratch1) == RESULT_OK);
+    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_PROJECTIVE, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
@@ -243,7 +258,6 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
   GTEST_RETURN_HERE;
 }
-#endif
 
 //GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScaleAndBinarize)
 //{
@@ -2578,45 +2592,48 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
-  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory);
-  //CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScaleAndBinarize);
+  CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C_emulateShave);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImage);
+
+#ifdef RUN_LOW_MEMORY_IMAGE_TESTS
+  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory);
+#endif
 
 #ifdef RUN_MAIN_BIG_MEMORY_TESTS
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage);
 #endif
 
 #ifdef RUN_ALL_BIG_MEMORY_TESTS
-
-  CALL_GTEST_TEST(CoreTech_Vision, FiducialMarker);
-  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123);
-  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage);
-  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage);
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage);
+  CALL_GTEST_TEST(CoreTech_Vision, FiducialMarker);
+  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage);
+  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage);
+  CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123);
 #endif
 
-  CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);
-  CALL_GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary);
-  CALL_GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary);
-  CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
-  CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
   CALL_GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput);
   CALL_GTEST_TEST(CoreTech_Vision, LaplacianPeaks);
   CALL_GTEST_TEST(CoreTech_Vision, Correlate1d);
+  CALL_GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids);
+
   CALL_GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents);
   CALL_GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents);
   CALL_GTEST_TEST(CoreTech_Vision, CompressComponentIds);
   CALL_GTEST_TEST(CoreTech_Vision, ComponentsSize);
   CALL_GTEST_TEST(CoreTech_Vision, SortComponents);
   CALL_GTEST_TEST(CoreTech_Vision, SortComponentsById);
+  CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d);
   CALL_GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d);
+  CALL_GTEST_TEST(CoreTech_Vision, BinomialFilter);
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
+  CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);
+  CALL_GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary);
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 

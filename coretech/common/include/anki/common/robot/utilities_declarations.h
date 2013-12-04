@@ -52,6 +52,9 @@ namespace Anki
     // [g h i]
     template<typename Type> void Invert3x3(Type &a, Type &b, Type &c, Type &d, Type &e, Type &f, Type &g, Type &h, Type &i);
 
+    // Cartesian coordinates to Polar coordinates
+    template<typename Type> void Cart2Pol(const Type x, const Type y, Type &rho, Type &theta);
+
     // Movidius doesn't have floating point printf (no %f option), so do it with %d
     void PrintfOneArray_f32(const Array<f32> &array, const char * variableName);
     void PrintfOneArray_f64(const Array<f64> &array, const char * variableName);

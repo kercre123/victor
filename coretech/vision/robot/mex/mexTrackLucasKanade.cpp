@@ -11,13 +11,11 @@
 
 using namespace Anki::Embedded;
 
-#define ConditionalErrorAndReturn(expression, eventName, eventValue) if(!(expression)) { printf("%s - %s\n", (eventName), (eventValue)); return;}
-
 // templateImage = uint8(rgb2gray(imresize(imread('C:\Anki\blockImages\blockImages00315.png'), [480,640]/8)));
 // nextImage = uint8(rgb2gray(imresize(imread('C:\Anki\blockImages\blockImages00316.png'), [480,640]/8)));
 // templateRegionRectangle = [29,39,11,21];
 // numPyramidLevels = 2;
-// transformType = 0;
+// transformType = 1;
 // ridgeWeight = 1e-3;
 // maxIterations = 50;
 // convergenceTolerance = 0.05;
@@ -27,7 +25,7 @@ using namespace Anki::Embedded;
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 {
-  ConditionalErrorAndReturn(nrhs == 9 && nlhs == 1, "mexTrackLucasKanade", "Call this function as following: newHomography = mexTrackLucasKanade(uint8(templateImage), double(templateRegionRectangle), double(numPyramidLevels), double(transformType), double(ridgeWeight), uint8(nextImage), double(maxIterations), double(convergenceTolerance), double(homography));");
+  AnkiConditionalErrorAndReturn(nrhs == 9 && nlhs == 1, "mexTrackLucasKanade", "Call this function as following: newHomography = mexTrackLucasKanade(uint8(templateImage), double(templateRegionRectangle), double(numPyramidLevels), double(transformType), double(ridgeWeight), uint8(nextImage), double(maxIterations), double(convergenceTolerance), double(homography));");
 
   Array<u8> templateImage = mxArrayToArray<u8>(prhs[0]);
   Array<f64> templateRegionRectangle_array = mxArrayToArray<f64>(prhs[1]);
@@ -39,18 +37,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const f32 convergenceTolerance = static_cast<f32>(mxGetScalar(prhs[7]));
   Array<f64> homography_f64 = mxArrayToArray<f64>(prhs[8]);
 
-  ConditionalErrorAndReturn(templateImage.IsValid(), "mexTrackLucasKanade", "Could not allocate templateImage");
-  ConditionalErrorAndReturn(templateRegionRectangle_array.IsValid(), "mexTrackLucasKanade", "Could not allocate templateRegionRectangle_array");
-  ConditionalErrorAndReturn(nextImage.IsValid(), "mexTrackLucasKanade", "Could not allocate nextImage");
-  ConditionalErrorAndReturn(homography_f64.IsValid(), "mexTrackLucasKanade", "Could not allocate homography_f64");
+  AnkiConditionalErrorAndReturn(templateImage.IsValid(), "mexTrackLucasKanade", "Could not allocate templateImage");
+  AnkiConditionalErrorAndReturn(templateRegionRectangle_array.IsValid(), "mexTrackLucasKanade", "Could not allocate templateRegionRectangle_array");
+  AnkiConditionalErrorAndReturn(nextImage.IsValid(), "mexTrackLucasKanade", "Could not allocate nextImage");
+  AnkiConditionalErrorAndReturn(homography_f64.IsValid(), "mexTrackLucasKanade", "Could not allocate homography_f64");
 
   const u32 numBytes0 = 10000000;
   MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
-  ConditionalErrorAndReturn(scratch0.IsValid(), "mexTrackLucasKanade", "Scratch0 could not be allocated");
-
-  TemplateTracker::LucasKanadeTracker_f32 tracker(templateImage.get_size(0), templateImage.get_size(1), numPyramidLevels, transformType, ridgeWeight, scratch0);
-
-  ConditionalErrorAndReturn(tracker.IsValid(), "mexTrackLucasKanade", "Could not construct tracker");
+  AnkiConditionalErrorAndReturn(scratch0.IsValid(), "mexTrackLucasKanade", "Scratch0 could not be allocated");
 
   Rectangle<f32> templateRegion(
     static_cast<f32>(templateRegionRectangle_array[0][0]),
@@ -58,10 +52,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     static_cast<f32>(templateRegionRectangle_array[0][2]),
     static_cast<f32>(templateRegionRectangle_array[0][3]));
 
-  if(tracker.InitializeTemplate(templateImage, templateRegion, scratch0) != RESULT_OK) {
-    printf("Error: mexTrackLucasKanade.InitializeTemplate\n");
-    return;
-  }
+  TemplateTracker::LucasKanadeTracker_f32 tracker(templateImage, templateRegion, numPyramidLevels, transformType, ridgeWeight, scratch0);
+
+  AnkiConditionalErrorAndReturn(tracker.IsValid(), "mexTrackLucasKanade", "Could not construct tracker");
 
   TemplateTracker::PlanarTransformation_f32 initialTransform(transformType, scratch0);
 
@@ -71,12 +64,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   initialTransform.set_homography(homography);
 
   if(tracker.set_transformation(initialTransform) != RESULT_OK) {
-    printf("Error: mexTrackLucasKanade.set_transformation\n");
+    AnkiError("mexTrackLucasKanade", "set_transformation");
     return;
   }
 
   if(tracker.UpdateTrack(nextImage, maxIterations, convergenceTolerance, scratch0) != RESULT_OK) {
-    printf("Error: mexTrackLucasKanade.UpdateTrack\n");
+    AnkiError("mexTrackLucasKanade", "UpdateTrack");
     return;
   }
 
