@@ -79,7 +79,7 @@ namespace Anki {
               // Just testing UART printout
               PERIODIC_PRINT(60, "BlockPose: x = %f, y = %f, rad = %f\n", blockPos_x, blockPos_y, blockPos_rad);
               
-              //DockingController::SetRelDockPose(blockPos_x, blockPos_y, blockPos_rad);
+              DockingController::SetRelDockPose(blockPos_x, blockPos_y, blockPos_rad);
               break;
             }
             default:

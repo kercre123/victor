@@ -740,7 +740,7 @@ namespace Anki {
     }
     
 
-    s32 HAL::USBPeekChar()
+    s32 HAL::USBPeekChar(u32 offset)
     {
       return -1;
     }

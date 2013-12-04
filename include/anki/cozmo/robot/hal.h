@@ -203,10 +203,10 @@ namespace Anki
       // Returns < 0 if no character available within timeout.
       s32 USBGetChar(u32 timeout = 0);
 
-      // Peek at next character in serial buffer
-      // in receive buffer.
-      // Returns < 0 if no character available
-      s32 USBPeekChar();
+      // Peeks at the offset'th character in serial receive buffer.
+      // (The next character available is at an offset of 0.)
+      // Returns < 0 if no character available.
+      s32 USBPeekChar(u32 offset = 0);
       
       // Send a byte.
       // Prototype matches putc for printf.

@@ -25,9 +25,15 @@ namespace Anki {
         
         enum Mode {
           IDLE,
-          APPROACH,
-          SET_LIFT,
+          APPROACH_FOR_DOCK,
+          SET_LOW_LIFT,
           GRIP,
+          DONE_DOCKING,
+          SET_CARRY_LIFT_HEIGHT,
+          APPROACH_FOR_PLACEMENT,
+          SET_PLACEMENT_LIFT_HEIGHT,
+          BACKOUT,
+          LOWER_LIFT,
           DONE
         };
 
@@ -35,13 +41,22 @@ namespace Anki {
         // Distance between the robot origin and the distance along the robot's x-axis
         // to the lift when it is in the low docking position.
         const f32 ORIGIN_TO_LOW_LIFT_DIST_M = 0.02; // TODO: Measure this!
+        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_M = 0.017; // TODO: Measure this!
         
         u32 lastDockingErrorSignalRecvdTime_ = 0;
-        const u32 STOPPED_TRACKING_TIMEOUT_US = 100000;
+        const u32 STOPPED_TRACKING_TIMEOUT_US = 200000;
         
         const u16 DOCK_APPROACH_SPEED_MMPS = 20;
         const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 50;
         const u16 DOCK_APPROACH_ACCEL_MMPS2 = 500;
+
+        // HACK: Only using these because lift controller encoders not working.
+        const u32 PRE_PLACEMENT_WAIT_TIME_US = 2000000;
+        const u32 LIFT_MOTION_TIME_US = 7000000;
+        const u32 LIFT_PLACEMENT_ADJUST_TIME_US = 150000;
+        bool liftIsUp_ = true;
+        const u32 BACKOUT_TIME = 3000000;
+        
         
         
         // TODO: set error tolerances in mm and convert to pixels based on camera resolution?
@@ -55,14 +70,25 @@ namespace Anki {
 #endif
         bool success_  = false;
         
+        // Whether or not the robot has a block in its grip
+        bool isDocked_ = false;
+        
+        // When to transition to the next state. Only some states use this.
+        u32 transitionTime_ = 0;
+
+        
         f32 liftDockHeight_ = -1.f;
         VisionSystem::DockingTarget goalDockTarget_, obsDockTarget_;
         
       } // "private" namespace
       
+      
+      void StartPlacement();
+      
+      
       void Reset()
       {
-        mode_ = APPROACH;
+        mode_ = APPROACH_FOR_DOCK;
         success_ = false;
       }
       
@@ -147,7 +173,7 @@ namespace Anki {
         {
           // We have reached the block. Stop moving and set mode to
           // lift gripper to desired docking height
-          mode_ = SET_LIFT;
+          mode_ = SET_LOW_LIFT;
           leftMotorVelocity = 0.f;
           rightMotorVelocity = 0.f;
         }
@@ -163,9 +189,14 @@ namespace Anki {
         
       } // ApproachBlock()
       
-      bool IsDone()
+      bool IsDocked()
       {
-        return mode_ == DONE;
+        return isDocked_;
+      }
+      
+    bool IsDockingOrPlacing()
+      {
+        return (mode_ != IDLE && mode_ != DONE_DOCKING && mode_ != DONE);
       }
       
       bool DidSucceed()
@@ -183,12 +214,15 @@ namespace Anki {
           case IDLE:
             success_ = false;
             break;
-          case SET_LIFT:
-            GripController::DisengageGripper();
-            LiftController::SetDesiredHeight(LIFT_HEIGHT_LOW);
-            mode_ = APPROACH;
+          case SET_LOW_LIFT:
+            if (HAL::GetMicroCounter() > transitionTime_) {
+              GripController::DisengageGripper();
+              //LiftController::SetDesiredHeight(LIFT_HEIGHT_LOW);
+              HAL::MotorSetPower(HAL::MOTOR_LIFT,0);
+              mode_ = APPROACH_FOR_DOCK;
+            }
             break;
-          case APPROACH:
+          case APPROACH_FOR_DOCK:
           {
             // Stop if we haven't received error signal for a while
             if (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_US) {
@@ -201,20 +235,102 @@ namespace Anki {
             
             // If finished traversing path
             if (!PathFollower::IsTraversingPath()) {
+              PRINT("GRIPPING\n");
+              PathFollower::PrintPathSegment(0);
               GripController::EngageGripper();
-              mode_ = DONE;
+              
+              transitionTime_ = HAL::GetMicroCounter() + PRE_PLACEMENT_WAIT_TIME_US;
+              mode_ = DONE_DOCKING;
               break;
             }
             
             break;
           }
-          case DONE:
+          case DONE_DOCKING:
             success_ = true;
+            isDocked_ = true;
+            
+            
+            if (HAL::GetMicroCounter() > transitionTime_) {
+              StartPlacement();
+              PRINT("DONE DOCKING\n");
+            }
             
             // Go to IDLE when we lose tracking of the block
             if (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_US) {
               success_ = false;
+              isDocked_ = false;
               mode_ = IDLE;
+            }
+            break;
+          case SET_CARRY_LIFT_HEIGHT:
+            if (HAL::GetMicroCounter() > transitionTime_) {
+              HAL::MotorSetPower(HAL::MOTOR_LIFT,0);
+              mode_ = APPROACH_FOR_PLACEMENT;
+            }
+            break;
+            
+          case APPROACH_FOR_PLACEMENT:
+          {
+            // Stop if we haven't received error signal for a while
+            if (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_US) {
+              PathFollower::ClearPath();
+              SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
+              mode_ = IDLE;
+              PRINT("Too long without block pose\n");
+              break;
+            }
+            
+            // If finished traversing path
+            if (!PathFollower::IsTraversingPath()) {
+              PRINT("PLACING\n");
+              PathFollower::PrintPathSegment(0);
+              GripController::DisengageGripper();
+              
+              transitionTime_ = HAL::GetMicroCounter() + LIFT_PLACEMENT_ADJUST_TIME_US;
+              HAL::MotorSetPower(HAL::MOTOR_LIFT, -0.3);
+              mode_ = SET_PLACEMENT_LIFT_HEIGHT;
+              
+              break;
+            }
+            
+            break;
+          }
+            
+          case SET_PLACEMENT_LIFT_HEIGHT:
+            if (HAL::GetMicroCounter() > transitionTime_) {
+              HAL::MotorSetPower(HAL::MOTOR_LIFT,0);
+              SteeringController::ExecuteDirectDrive(-30, -30);
+              transitionTime_ = HAL::GetMicroCounter() + BACKOUT_TIME;
+              mode_ = BACKOUT;
+              isDocked_ = false;
+              PRINT("DONE PLACEMENT\n");
+            }
+            break;
+          case BACKOUT:
+            if (HAL::GetMicroCounter() > transitionTime_) {
+              SteeringController::ExecuteDirectDrive(0,0);
+              
+              HAL::MotorSetPower(HAL::MOTOR_LIFT, -0.3);
+              transitionTime_ = HAL::GetMicroCounter() + LIFT_MOTION_TIME_US;
+              
+              mode_ = LOWER_LIFT;
+              PRINT("DONE BACKOUT\n");
+            }
+            break;
+          case LOWER_LIFT:
+            if (HAL::GetMicroCounter() > transitionTime_) {
+              HAL::MotorSetPower(HAL::MOTOR_LIFT, 0);
+              PRINT("DONE LOWER LIFT\n");
+              mode_ = DONE;
+            }
+            break;
+          case DONE:
+            if (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_US) {
+              PathFollower::ClearPath();
+              SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
+              mode_ = IDLE;
+              PRINT("IDLE\n");
             }
             break;
           default:
@@ -233,7 +349,7 @@ namespace Anki {
         {
           switch(mode_)
           {
-            case APPROACH:
+            case APPROACH_FOR_DOCK:
             {
               // Find the docking target and put it in obsTarget_
               if(VisionSystem::findDockingTarget(obsDockTarget_) == EXIT_SUCCESS)
@@ -251,7 +367,7 @@ namespace Anki {
               break;
             } // case APPROACH
             
-            case SET_LIFT:
+            case SET_LOW_LIFT:
             {
               // This will switch us to GRIP mode once it's done
               LiftController::SetDesiredHeight(liftDockHeight_);
@@ -263,7 +379,7 @@ namespace Anki {
               GripController::EngageGripper();
               
               if(GripController::IsGripperEngaged()) {
-                mode_ = DONE;
+              mode_ = DONE;
                 success_ = true;
               }
               
@@ -294,6 +410,20 @@ namespace Anki {
       } // Update()
 
       
+      // HACK
+      void StartPlacement()
+      {
+        if (mode_ == DONE_DOCKING || (mode_ == IDLE && isDocked_)) {
+          PRINT("STARTING APPROACH FOR PLACEMENT\n");
+          mode_ = SET_CARRY_LIFT_HEIGHT;
+          if (!liftIsUp_) {
+            HAL::MotorSetPower(HAL::MOTOR_LIFT, 0.5);
+            transitionTime_ = HAL::GetMicroCounter() + LIFT_MOTION_TIME_US;
+            liftIsUp_ = true;
+          }
+        }
+      }
+      
       
       void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad)
       {
@@ -301,11 +431,22 @@ namespace Anki {
         
         // Set mode to approach if in idle
         if (mode_ == IDLE) {
-          mode_ = SET_LIFT;
+
+          if (isDocked_) {
+            StartPlacement();
+          } else {
+            PRINT("STARTING APPROACH FOR DOCK\n");
+            mode_ = SET_LOW_LIFT;
+            if (liftIsUp_) {
+              HAL::MotorSetPower(HAL::MOTOR_LIFT, -0.3);
+              transitionTime_ = HAL::GetMicroCounter() + LIFT_MOTION_TIME_US;
+              liftIsUp_ = false;
+            }
+          }
         }
         
         // Ignore if we've already finished approach
-        if (mode_ == DONE) {
+        if (mode_ == DONE_DOCKING || mode_ == SET_PLACEMENT_LIFT_HEIGHT || mode_ == BACKOUT || mode_ == LOWER_LIFT || mode_ == DONE) {
           return;
         }
         
@@ -337,9 +478,15 @@ namespace Anki {
         rel_x *= 0.001;
         rel_y *= 0.001;
         
+        // Set docking distance
+        f32 dockOffsetDist = ORIGIN_TO_LOW_LIFT_DIST_M;
+        if (mode_ == APPROACH_FOR_PLACEMENT) {
+          dockOffsetDist = ORIGIN_TO_HIGH_PLACEMENT_DIST_M;
+        }
+        
         // Compute end point
-        f32 dx = ORIGIN_TO_LOW_LIFT_DIST_M * cosf(rel_rad);
-        f32 dy = ORIGIN_TO_LOW_LIFT_DIST_M * sinf(rel_rad);
+        f32 dx = dockOffsetDist * cosf(rel_rad);
+        f32 dy = dockOffsetDist * sinf(rel_rad);
         
         f32 x_end_m = rel_x - dx;
         f32 y_end_m = rel_y - dy;
@@ -347,14 +494,30 @@ namespace Anki {
         
         // Compute start point
         f32 distToBlock = sqrtf(rel_x * rel_x + rel_y * rel_y);
-        dx *= distToBlock / ORIGIN_TO_LOW_LIFT_DIST_M;
-        dy *= distToBlock / ORIGIN_TO_LOW_LIFT_DIST_M;
+        dx *= distToBlock / dockOffsetDist;
+        dy *= distToBlock / dockOffsetDist;
         f32 x_start_m = x_end_m - dx;
         f32 y_start_m = y_end_m - dy;
         
         
+        // TRICK: If distToBlock is > 0.15, then just have it follow
+        // path from robot origin to block
+        if (distToBlock > 0.15) {
+          x_start_m = -0.05;
+          y_start_m = 0;
+          x_end_m = rel_x;
+          y_end_m = rel_y;
+          //PERIODIC_PRINT(250, "B-line path: (%f, %f) to (%f, %f)\n", x_start_m, y_start_m, x_end_m, y_end_m);
+        }
+        
+        if (rel_x <= -0.0f) {
+          //PRINT("DOCK POSE REACHED\n");
+          return;
+        }
+        
+        
 #if(DEBUG_DOCK_CONTROLLER)
-        PERIODIC_PRINT(200, "SEG: x %f, y %f, rad %f => (%f, %f) to (%f, %f), dist %f\n",
+        PERIODIC_PRINT(250, "SEG: x %f, y %f, rad %f => (%f, %f) to (%f, %f), dist %f\n",
                        rel_x, rel_y, rel_rad, x_start_m, y_start_m, x_end_m, y_end_m, distToBlock);
 #endif
         

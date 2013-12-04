@@ -119,7 +119,7 @@ namespace Anki {
       {
         currentAngle_ = LIFT_ANGLE_LOW;
         HAL::MotorResetPosition(HAL::MOTOR_LIFT);
-        prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_LIFT) * 0.003; //TODO: scalar because HAL returnig crap now
+        prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_LIFT);
         doCalib_ = false;
         isCalibrated_ = true;
       }
@@ -142,7 +142,7 @@ namespace Anki {
             case LCS_WAIT_FOR_STOP:
               // Check for when lift stops moving for 0.2 seconds
               if (NEAR_ZERO(HAL::MotorGetSpeed(HAL::MOTOR_LIFT))) {
-                if (HAL::GetMicroCounter() - lastLiftMovedTime_us > 200000) {
+                if (HAL::GetMicroCounter() - lastLiftMovedTime_us > 6000000/*200000*/) {
                   // Turn off motor
                   HAL::MotorSetPower(HAL::MOTOR_LIFT, 0.0);
                   
@@ -219,8 +219,14 @@ namespace Anki {
                      (radSpeed_ * SPEED_FILTERING_COEFF));
         
         // Update position
-        currentAngle_ += dir * (HAL::MotorGetPosition(HAL::MOTOR_LIFT) - prevHalPos_) * 0.003; //TODO: scalar because HAL returnig crap now
+        currentAngle_ += dir * (HAL::MotorGetPosition(HAL::MOTOR_LIFT) - prevHalPos_);
         prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_LIFT);
+        
+#if(DEBUG_LIFT_CONTROLLER)
+        PERIODIC_PRINT(100, "LIFT FILT: speed %f, speedFilt %f, currentAngle %f, prevPos %f\n",
+              measuredSpeed, radSpeed_, currentAngle_.ToFloat(), prevHalPos_);
+#endif
+        
       }
       
       
