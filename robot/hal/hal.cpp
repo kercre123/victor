@@ -2,8 +2,6 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "movidius.h"
 
-#define DDR_BUFFER    __attribute__((section(".ddr.text")))
-
 #define CMX_CONFIG      (0x66666666)
 #define L2CACHE_CONFIG  (L2CACHE_NORMAL_MODE)
 
@@ -11,7 +9,7 @@
       static const u32 FRAME_HEIGHT = 480;
       static const u32 FRAME_SIZE = FRAME_WIDTH * FRAME_HEIGHT;
 
-      static DDR_BUFFER u8 frame[FRAME_SIZE];
+      static u8 frame[FRAME_SIZE];
 
 
 u32 __cmx_config __attribute__((section(".cmx.ctrl"))) = CMX_CONFIG;

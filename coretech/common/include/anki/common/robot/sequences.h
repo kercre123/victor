@@ -3,7 +3,7 @@ File: sequences.h
 Author: Peter Barnum
 Created: 2013
 
-A Sequence is a mathematically-defined, ordered list. The sequence classes allow for operations on sequences, without requiring them to be explicitly evaluated.
+Definitions of sequences_declarations.h
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
@@ -13,6 +13,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define _ANKICORETECHEMBEDDED_COMMON_SEQUENCES_H_
 
 #include "anki/common/robot/sequences_declarations.h"
+#include "anki/common/robot/arraySlices.h"
 
 namespace Anki
 {
@@ -40,6 +41,48 @@ namespace Anki
       this->end = this->start + (this->size-1) * this->increment;
     }
 
+    template<typename Type> Array<Type> LinearSequence<Type>::Evaluate(MemoryStack &memory, const Flags::Buffer flags) const
+    {
+      const s32 numRows = 1;
+      const s32 numCols = this->get_size();
+
+      Array<Type> out(numRows, numCols, memory, flags);
+
+      this->Evaluate(out);
+
+      return out;
+    }
+
+    template<typename Type> Result LinearSequence<Type>::Evaluate(ArraySlice<Type> out) const
+    {
+      const s32 size = this->get_size();
+      Array<Type> &outArray = out.get_array();
+
+      AnkiConditionalErrorAndReturnValue(outArray.IsValid(),
+        RESULT_FAIL, "LinearSequence<Type>::Evaluate", "Invalid array");
+
+      AnkiConditionalErrorAndReturnValue(out.get_ySlice().get_size()==1 && out.get_xSlice().get_size()==size,
+        RESULT_FAIL, "LinearSequence<Type>::Evaluate", "Invalid array");
+
+      const Type sequenceStartValue = this->get_start();
+      const Type sequenceIncrement = this->get_increment();
+
+      const s32 yStart = out.get_ySlice().get_start();
+
+      const s32 xStart = out.get_xSlice().get_start();
+      const s32 xIncrement = out.get_xSlice().get_increment();
+      const s32 xEnd = out.get_xSlice().get_end();
+
+      Type * pOut = outArray.Pointer(yStart,0);
+      Type curSequenceValue = sequenceStartValue;
+      for(s32 x=xStart; x<=xEnd; x+=xIncrement) {
+        pOut[x] = curSequenceValue;
+        curSequenceValue += sequenceIncrement;
+      }
+
+      return RESULT_OK;
+    }
+
     template<typename Type> Type LinearSequence<Type>::get_start() const
     {
       return start;
@@ -60,7 +103,6 @@ namespace Anki
       return size;
     }
 
-    // TODO: instantiate for float
     template<typename Type> s32 LinearSequence<Type>::computeSize(const Type start, const Type increment, const Type end)
     {
       assert(increment != static_cast<Type>(0));
@@ -105,6 +147,335 @@ namespace Anki
       LinearSequence<Type> sequence(start, increment, end);
 
       return sequence;
+    }
+
+    template<typename Type> LinearSequence<Type> Linspace(const Type start, const Type end, const s32 size)
+    {
+      const Type increment = (end-start) / (size-1);
+      LinearSequence<Type> sequence(start, increment, end);
+
+      // If Type is not a float, and the sequence is the wrong size, just give up
+      if((sequence.get_size() != size) && static_cast<Type>(1e-5)==0) {
+        AnkiError("Linspace", "Size is incorrect, probably because the Type is an integer type");
+        return sequence;
+      }
+
+      // The size of the generated sequence may be incorrect, due to numerical precision. If so, try
+      // to tweak it.
+      // TODO: check if this actually can happen
+      if(sequence.get_size() < size) {
+        for(s32 i=0; i<128; i++) {
+          const Type offset = static_cast<Type>(1e-15) * static_cast<Type>(1 << (i+1));
+          sequence = LinearSequence<Type>(start, increment + offset, end);
+
+          if(sequence.get_size() >= size)
+            break;
+        }
+      } else if(sequence.get_size() > size) {
+        for(s32 i=0; i<128; i++) {
+          const Type offset = static_cast<Type>(1e-15) * static_cast<Type>(1 << (i+1));
+          sequence = LinearSequence<Type>(start, increment - offset, end);
+
+          if(sequence.get_size() <= size)
+            break;
+        }
+      }
+
+      AnkiConditionalErrorAndReturnValue(sequence.get_size() == size,
+        sequence, "Linspace", "Could not set sequence to have the correct size.");
+
+      return sequence;
+    }
+
+    template<typename Type> Meshgrid<Type>::Meshgrid(const LinearSequence<Type> xGridVector, const LinearSequence<Type> yGridVector)
+      : xGridVector(xGridVector), yGridVector(yGridVector)
+    {
+    }
+
+    template<typename Type> Array<Type> Meshgrid<Type>::EvaluateX1(bool isOutColumnMajor, MemoryStack &memory, const Flags::Buffer flags) const
+    {
+      const s32 numRows = 1;
+      const s32 numCols = this->xGridVector.get_size()*this->yGridVector.get_size();
+
+      Array<Type> out(numRows, numCols, memory, flags);
+
+      this->EvaluateX1(isOutColumnMajor, out);
+
+      return out;
+    }
+
+    template<typename Type> Array<Type> Meshgrid<Type>::EvaluateX2(MemoryStack &memory, const Flags::Buffer flags) const
+    {
+      const s32 numRows = this->yGridVector.get_size();
+      const s32 numCols = this->xGridVector.get_size();
+
+      Array<Type> out(numRows, numCols, memory, flags);
+
+      this->EvaluateX2(out);
+
+      return out;
+    }
+
+    template<typename Type> Array<Type> Meshgrid<Type>::EvaluateY1(bool isOutColumnMajor, MemoryStack &memory, const Flags::Buffer flags) const
+    {
+      const s32 numRows = 1;
+      const s32 numCols = this->xGridVector.get_size()*this->yGridVector.get_size();
+
+      Array<Type> out(numRows, numCols, memory, flags);
+
+      this->EvaluateY1(isOutColumnMajor, out);
+
+      return out;
+    }
+
+    template<typename Type> Array<Type> Meshgrid<Type>::EvaluateY2(MemoryStack &memory, const Flags::Buffer flags) const
+    {
+      const s32 numRows = this->yGridVector.get_size();
+      const s32 numCols = this->xGridVector.get_size();
+
+      Array<Type> out(numRows, numCols, memory, flags);
+
+      this->EvaluateY2(out);
+
+      return out;
+    }
+
+    template<typename Type> Result Meshgrid<Type>::EvaluateX1(bool isOutColumnMajor, ArraySlice<Type> out) const
+    {
+      const s32 xGridSize = this->xGridVector.get_size();
+      const s32 yGridSize = this->yGridVector.get_size();
+      const s32 numElements = xGridSize * yGridSize;
+
+      Array<Type> &outArray = out.get_array();
+
+      AnkiConditionalErrorAndReturnValue(outArray.IsValid(),
+        RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Invalid array");
+
+      AnkiConditionalErrorAndReturnValue(out.get_ySlice().get_size()==1 && out.get_xSlice().get_size()==numElements,
+        RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Array out is not the correct size");
+
+      const s32 outXStart = out.get_xSlice().get_start();
+      const s32 outYStart = out.get_ySlice().get_start();
+
+      const s32 outXIncrement = out.get_xSlice().get_increment();
+      const s32 outYIncrement = out.get_ySlice().get_increment();
+
+      // Matlab equivalent: [x,y] = meshgrid(1:N,1:M)
+
+      const Type sequenceStartValue = this->xGridVector.get_start();
+      const Type sequenceIncrement = this->xGridVector.get_increment();
+
+      if(isOutColumnMajor) {
+        // Matlab equivalent: x(:)
+
+        Type * pOut = outArray.Pointer(outYStart,0);
+        s32 curOutX = out.get_xSlice().get_start();
+        Type curSequenceValue = sequenceStartValue;
+
+        for(s32 x=0; x<xGridSize; x++) {
+          for(s32 y=0; y<yGridSize; y++) {
+            pOut[curOutX] = curSequenceValue;
+
+            curOutX += outXIncrement;
+          }
+
+          curSequenceValue += sequenceIncrement;
+        }
+      } else { // if(isOutColumnMajor)
+        // Matlab equivalent: x=x'; x(:)
+
+        Type * pOut = outArray.Pointer(outYStart,0);
+        s32 curOutX = out.get_xSlice().get_start();
+
+        for(s32 y=0; y<yGridSize; y++) {
+          Type curSequenceValue = sequenceStartValue;
+
+          for(s32 x=0; x<xGridSize; x++) {
+            pOut[curOutX] = curSequenceValue;
+
+            curOutX += outXIncrement;
+            curSequenceValue += sequenceIncrement;
+          }
+        }
+      } // if(isOutColumnMajor) ... else
+
+      return RESULT_OK;
+    }
+
+    template<typename Type> Result Meshgrid<Type>::EvaluateX2(ArraySlice<Type> out) const
+    {
+      const s32 xGridSize = this->xGridVector.get_size();
+      const s32 yGridSize = this->yGridVector.get_size();
+      const s32 numElements = xGridSize * yGridSize;
+
+      Array<Type> &outArray = out.get_array();
+
+      AnkiConditionalErrorAndReturnValue(outArray.IsValid(),
+        RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Invalid array");
+
+      AnkiConditionalErrorAndReturnValue(out.get_ySlice().get_size()==yGridSize && out.get_xSlice().get_size()==xGridSize,
+        RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Array out is not the correct size");
+
+      const s32 outXStart = out.get_xSlice().get_start();
+      const s32 outYStart = out.get_ySlice().get_start();
+
+      const s32 outXIncrement = out.get_xSlice().get_increment();
+      const s32 outYIncrement = out.get_ySlice().get_increment();
+
+      // Matlab equivalent: [x,y] = meshgrid(1:N,1:M)
+
+      const Type sequenceStartValue = this->xGridVector.get_start();
+      const Type sequenceIncrement = this->xGridVector.get_increment();
+
+      // Repeat the numbers in the vertical direction
+
+      s32 curOutY = outYStart;
+
+      for(s32 y=0; y<yGridSize; y++) {
+        Type * pOut = outArray.Pointer(curOutY,0);
+        s32 curOutX = outXStart;
+        Type curSequenceValue = sequenceStartValue;
+
+        for(s32 x=0; x<xGridSize; x++) {
+          pOut[curOutX] = curSequenceValue;
+
+          curOutX += outXIncrement;
+          curSequenceValue += sequenceIncrement;
+        } // for(s32 x=0; x<xGridSize; x++)
+
+        curOutY += outYIncrement;
+      } // for(s32 y=0; y<yGridSize; y++)
+
+      return RESULT_OK;
+    }
+
+    template<typename Type> Result Meshgrid<Type>::EvaluateY1(bool isOutColumnMajor, ArraySlice<Type> out) const
+    {
+      const s32 xGridSize = this->xGridVector.get_size();
+      const s32 yGridSize = this->yGridVector.get_size();
+      const s32 numElements = xGridSize * yGridSize;
+
+      Array<Type> &outArray = out.get_array();
+
+      AnkiConditionalErrorAndReturnValue(outArray.IsValid(),
+        RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Invalid array");
+
+      AnkiConditionalErrorAndReturnValue(out.get_ySlice().get_size()==1 && out.get_xSlice().get_size()==numElements,
+        RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Array out is not the correct size");
+
+      const s32 outXStart = out.get_xSlice().get_start();
+      const s32 outYStart = out.get_ySlice().get_start();
+
+      const s32 outXIncrement = out.get_xSlice().get_increment();
+      const s32 outYIncrement = out.get_ySlice().get_increment();
+
+      Type * pOut = outArray.Pointer(outYStart,0);
+
+      // Matlab equivalent: [x,y] = meshgrid(1:N,1:M)
+
+      const Type sequenceStartValue = this->yGridVector.get_start();
+      const Type sequenceIncrement = this->yGridVector.get_increment();
+
+      if(isOutColumnMajor) {
+        // Matlab equivalent: y(:)
+
+        Type * pOut = outArray.Pointer(outYStart,0);
+        s32 curOutX = out.get_xSlice().get_start();
+
+        for(s32 x=0; x<xGridSize; x++) {
+          Type curSequenceValue = sequenceStartValue;
+
+          for(s32 y=0; y<yGridSize; y++) {
+            pOut[curOutX] = curSequenceValue;
+
+            curOutX += outXIncrement;
+            curSequenceValue += sequenceIncrement;
+          }
+        }
+      } else { // if(isOutColumnMajor)
+        // Matlab equivalent: y=y'; y(:)
+
+        Type * pOut = outArray.Pointer(outYStart,0);
+        s32 curOutX = out.get_xSlice().get_start();
+        Type curSequenceValue = sequenceStartValue;
+
+        for(s32 y=0; y<yGridSize; y++) {
+          for(s32 x=0; x<xGridSize; x++) {
+            pOut[curOutX] = curSequenceValue;
+
+            curOutX += outXIncrement;
+          }
+
+          curSequenceValue += sequenceIncrement;
+        }
+      } // if(isOutColumnMajor) ... else
+
+      return RESULT_OK;
+    }
+
+    template<typename Type> Result Meshgrid<Type>::EvaluateY2(ArraySlice<Type> out) const
+    {
+      const s32 xGridSize = this->xGridVector.get_size();
+      const s32 yGridSize = this->yGridVector.get_size();
+      const s32 numElements = xGridSize * yGridSize;
+
+      Array<Type> &outArray = out.get_array();
+
+      AnkiConditionalErrorAndReturnValue(outArray.IsValid(),
+        RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Invalid array");
+
+      AnkiConditionalErrorAndReturnValue(out.get_ySlice().get_size()==yGridSize && out.get_xSlice().get_size()==xGridSize,
+        RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Array out is not the correct size");
+
+      const s32 outXStart = out.get_xSlice().get_start();
+      const s32 outYStart = out.get_ySlice().get_start();
+
+      const s32 outXIncrement = out.get_xSlice().get_increment();
+      const s32 outYIncrement = out.get_ySlice().get_increment();
+
+      Type * pOut = outArray.Pointer(outYStart,0);
+
+      // Matlab equivalent: [x,y] = meshgrid(1:N,1:M)
+
+      const Type sequenceStartValue = this->yGridVector.get_start();
+      const Type sequenceIncrement = this->yGridVector.get_increment();
+
+      // Repeat the numbers in the horizontal direction
+
+      s32 curOutY = outYStart;
+      Type curSequenceValue = sequenceStartValue;
+
+      for(s32 y=0; y<yGridSize; y++) {
+        Type * pOut = outArray.Pointer(curOutY,0);
+        s32 curOutX = outXStart;
+
+        for(s32 x=0; x<xGridSize; x++) {
+          pOut[curOutX] = curSequenceValue;
+
+          curOutX += outXIncrement;
+        } // for(s32 x=0; x<xGridSize; x++)
+
+        curOutY += outYIncrement;
+        curSequenceValue += sequenceIncrement;
+      } // for(s32 y=0; y<yGridSize; y++)
+
+      return RESULT_OK;
+    }
+
+    template<typename Type> s32 Meshgrid<Type>::get_numElements() const
+    {
+      const s32 numElements = xGridVector.get_size() * yGridVector.get_size();
+      return numElements;
+    }
+
+    template<typename Type> inline const LinearSequence<Type>& Meshgrid<Type>::get_xGridVector() const
+    {
+      return xGridVector;
+    }
+
+    template<typename Type> inline const LinearSequence<Type>& Meshgrid<Type>::get_yGridVector() const
+    {
+      return yGridVector;
     }
 
 #pragma mark --- Specializations ---

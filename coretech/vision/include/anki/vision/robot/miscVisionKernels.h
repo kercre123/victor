@@ -149,19 +149,6 @@ namespace Anki
 
     // Compute the homography from the input quad. The input quad point should be ordered in the non-rotated, corner-opposite format
     Result ComputeHomographyFromQuad(const Quadrilateral<s16> &quad, Array<f64> &homography, MemoryStack scratch);
-
-    template<typename T> inline T Interpolate2d(const T pixel00, const T pixel01, const T pixel10, const T pixel11, const T alphaY, const T alphaYinverse, const T alphaX, const T alphaXinverse);
-
-#pragma mark --- Implementations ---
-
-    template<typename T> inline T Interpolate2d(const T pixel00, const T pixel01, const T pixel10, const T pixel11, const T alphaY, const T alphaYinverse, const T alphaX, const T alphaXinverse)
-    {
-      const T interpolatedTop = alphaXinverse*pixel00 + alphaX*pixel01;
-      const T interpolatedBottom = alphaXinverse*pixel10 + alphaX*pixel11;
-      const T interpolatedPixel = alphaYinverse*interpolatedTop + alphaY*interpolatedBottom;
-
-      return interpolatedPixel;
-    }
   } // namespace Embedded
 } // namespace Anki
 

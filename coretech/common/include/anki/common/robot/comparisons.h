@@ -3,7 +3,7 @@ File: comparisons.h
 Author: Peter Barnum
 Created: 2013
 
-Various elementwise tests, to ensure that the data of two Arrays is equal.
+Definitions of comparisons_declarations.h
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.

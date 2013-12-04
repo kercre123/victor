@@ -3,7 +3,7 @@ File: arraySlices_declarations.h
 Author: Peter Barnum
 Created: 2013
 
-Declarations for arraySlices.h
+An array slice is a sub-array of an Array object.
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
@@ -72,9 +72,11 @@ namespace Anki
 
       // If automaticTranspose==true, then you can set a MxN slice with a NxM input
       // Matlab allows this for vectors, though this will also work for arbitrary-sized arrays
-      Result Set(const ConstArraySliceExpression<Type> &input, bool automaticTranspose=true);
+      s32 Set(const ConstArraySliceExpression<Type> &input, bool automaticTranspose=true);
 
-      Result Set(const Type value);
+      s32 Set(const LinearSequence<Type> &input);
+
+      s32 Set(const Type value);
 
       Array<Type>& get_array();
     }; // template<typename Type> class ArraySlice

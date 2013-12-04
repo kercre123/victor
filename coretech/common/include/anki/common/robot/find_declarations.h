@@ -3,7 +3,7 @@ File: find_declarations.h
 Author: Peter Barnum
 Created: 2013
 
-Declarations for find.h
+Find is used similarly to the Matlab function, and allows for easy prototyping, with low memory overhead.
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
@@ -82,7 +82,7 @@ namespace Anki
       template<typename ArrayType> Result SetArray(Array<ArrayType> &out, const ArrayType value, const s32 findWhichDimension) const;
 
       // Same as SetArray above, but also allocates the memory for out from MemoryStack memory
-      template<typename ArrayType> Result AllocateAndSetArray(Array<ArrayType> &out, const Array<ArrayType> &in, const s32 findWhichDimension, MemoryStack &memory) const;
+      template<typename ArrayType> Array<ArrayType> SetArray(const Array<ArrayType> &in, const s32 findWhichDimension, MemoryStack &memory) const;
 
       //template<typename ArrayType> Result SetArray(Array<ArrayType> &out, const Array<ArrayType> &input, s32 findWhichDimension, bool useFindForInput=false) const;
 
@@ -105,7 +105,7 @@ namespace Anki
       const Array<Type2> &array2;
       const Type2 value;
 
-      s32 outputDimensions;
+      s32 numOutputDimensions;
 
       bool isValid;
 

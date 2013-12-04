@@ -52,6 +52,8 @@ classdef LucasKanadeTracker < handle
         
         useBlurring;
         useNormalization;
+        
+        approximateGradientMargins;
     end
     
     methods % public methods
@@ -65,8 +67,9 @@ classdef LucasKanadeTracker < handle
             UseBlurring = true;
             UseNormalization = false;
             RidgeWeight = 0;
-            TrackingResolution = size(firstImg(:,:,1));
+            TrackingResolution = [size(firstImg,2), size(firstImg,1)];
             ErrorTolerance = [];
+            ApproximateGradientMargins = true;
             
             parseVarargin(varargin{:});
             
@@ -79,6 +82,8 @@ classdef LucasKanadeTracker < handle
             this.tformType = Type;
             
             this.useBlurring = UseBlurring;
+            
+            this.approximateGradientMargins = ApproximateGradientMargins;
             
             this.target = cell(1, this.numScales);
             
@@ -155,12 +160,12 @@ classdef LucasKanadeTracker < handle
                     Downsample = mean([ncols nrows]./TrackingResolution);
                 end
                 
-                % FIgure ou the finest scale we need to use to track at the
+                % Figure out the finest scale we need to use to track at the
                 % specified resolution
-                this.finestScale = floor(log2(min(nrows,ncols)/min(TrackingResolution)));
+                this.finestScale = max(1, floor(log2(min(nrows,ncols)/min(TrackingResolution))));
                 
             end % IF TrackingResolution not empty
-            
+                        
             this.xcen = (xmax + xmin)/2;
             this.ycen = (ymax + ymin)/2;
             
@@ -204,13 +209,22 @@ classdef LucasKanadeTracker < handle
                 %targetBlur = separable_filter(this.target{i_scale}, gaussian_kernel(i_scale));
                 targetBlur = this.target{i_scale};
                 
-                % Using centered differences instead of forward differences
-                % for the derivatives seems to make a big difference in
-                % performance!
-                %Ix = (image_right(targetBlur) - targetBlur) * spacing;
-                %Iy = (image_down(targetBlur) - targetBlur) * spacing;
-                Ix = (image_right(targetBlur) - image_left(targetBlur))/2 * spacing;
-                Iy = (image_down(targetBlur) - image_up(targetBlur))/2 * spacing;
+                if this.approximateGradientMargins
+                    % Using centered differences instead of forward differences
+                    % for the derivatives seems to make a big difference in
+                    % performance!
+                
+                    %Ix = (image_right(targetBlur) - targetBlur) * spacing;
+                    %Iy = (image_down(targetBlur) - targetBlur) * spacing;
+                    Ix = (image_right(targetBlur) - image_left(targetBlur))/2 * spacing;
+                    Iy = (image_down(targetBlur) - image_up(targetBlur))/2 * spacing;
+                else 
+                    Ix = zeros(size(targetBlur));
+                    Ix(2:(end-1), 2:(end-1)) = (targetBlur(2:(end-1), 3:end) - targetBlur(2:(end-1), 1:(end-2)))/2 * spacing;
+                    
+                    Iy = zeros(size(targetBlur));
+                    Iy(2:(end-1), 2:(end-1)) = (targetBlur(3:end, 2:(end-1)) - targetBlur(1:(end-2), 2:(end-1)))/2 * spacing;
+                end
             
                 W_mask = interp2(double(targetMask), xi, yi, 'linear', 0);
                 
@@ -264,7 +278,7 @@ classdef LucasKanadeTracker < handle
                         this.A_full{i_scale} = [ ...
                             X.*Ix(:) Y.*Ix(:) Ix(:) ...
                             X.*Iy(:) Y.*Iy(:) Iy(:) ...
-                            -X.^2.*Ix(:)-X.*Y.*Ix(:) -X.*Y.*Ix(:)-Y.^2.*Iy(:)];
+                            -X.^2.*Ix(:)-X.*Y.*Iy(:) -X.*Y.*Ix(:)-Y.^2.*Iy(:)];
                         
                     otherwise
                         error('Unecognized transformation type "%s".', ...

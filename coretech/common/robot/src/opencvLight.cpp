@@ -98,7 +98,14 @@ namespace Anki
 {
   namespace Embedded
   {
-    inline void* cvAlignPtr( const void* ptr, int align=32 )
+    inline static void* cvAlignPtr( const void* ptr, int align=32 );
+    static void icvMatrAXPY3_32f( int m, int n, const float* x, int l, float* y, double h );
+    static void icvMatrAXPY3_64f( int m, int n, const double* x, int l, double* y, double h );
+    static double pythag( double a, double b );
+    static void icvMatrAXPY_32f( int m, int n, const float* x, int dx, const float* a, float* y, int dy );
+    static void icvMatrAXPY_64f( int m, int n, const double* x, int dx, const double* a, double* y, int dy );
+
+    inline static void* cvAlignPtr( const void* ptr, int align )
     {
       assert( (align & (align-1)) == 0 );
       return (void*)( ((size_t)ptr + align - 1) & ~(size_t)(align-1) );
@@ -1196,6 +1203,339 @@ namespace Anki
               CV_SWAP( uT[j + lduT*k], uT[j + lduT*i], t );
         }
       }
+    }
+
+    void icvSVBkSb_32f(
+      s32 m,         //!< Number of rows in u
+      s32 n,         //!< Number of rows in v
+      const f32* w,  //!< Pointer to start of the W vector
+      const f32* uT, //!< Pointer to the upper-left of the U-transpose array
+      s32 lduT,      //!< U_stride_in_bytes / sizeof(f32)
+      const f32* vT, //!< Pointer to the upper-left of the V-transpose array
+      s32 ldvT,      //!< V_stride_in_bytes / sizeof(f32)
+      const f32* b,  //!< Pointer to the upper-left of the b array
+      s32 ldb,       //!< b_stride_in_bytes / sizeof(f32)
+      s32 nb,        //!< Number of columns in B
+      f32* x,        //!< Pointer to the start of the x vector (I think x must always be Sx1, for S either m or n?)
+      s32 ldx,       //!< x_stride_in_bytes / sizeof(f32)
+      f32* buffer    //!< A scratch buffer, with at least "sizeof(f32)*b_stride" bytes
+      )
+    {
+      float threshold = 0.f;
+      int i, j, nm = MIN( m, n );
+
+      if( !b )
+        nb = m;
+
+      for( i = 0; i < n; i++ )
+        memset( x + i*ldx, 0, nb*sizeof(x[0]));
+
+      for( i = 0; i < nm; i++ )
+        threshold += w[i];
+      threshold *= 2*FLT_EPSILON;
+
+      /* vT * inv(w) * uT * b */
+      for( i = 0; i < nm; i++, uT += lduT, vT += ldvT )
+      {
+        double wi = w[i];
+
+        if( wi > threshold )
+        {
+          wi = 1./wi;
+
+          if( nb == 1 )
+          {
+            double s = 0;
+            if( b )
+            {
+              if( ldb == 1 )
+              {
+                for( j = 0; j <= m - 4; j += 4 )
+                  s += uT[j]*b[j] + uT[j+1]*b[j+1] + uT[j+2]*b[j+2] + uT[j+3]*b[j+3];
+                for( ; j < m; j++ )
+                  s += uT[j]*b[j];
+              }
+              else
+              {
+                for( j = 0; j < m; j++ )
+                  s += uT[j]*b[j*ldb];
+              }
+            }
+            else
+              s = uT[0];
+            s *= wi;
+
+            if( ldx == 1 )
+            {
+              for( j = 0; j <= n - 4; j += 4 )
+              {
+                double t0 = x[j] + s*vT[j];
+                double t1 = x[j+1] + s*vT[j+1];
+                x[j] = (float)t0;
+                x[j+1] = (float)t1;
+                t0 = x[j+2] + s*vT[j+2];
+                t1 = x[j+3] + s*vT[j+3];
+                x[j+2] = (float)t0;
+                x[j+3] = (float)t1;
+              }
+
+              for( ; j < n; j++ )
+                x[j] = (float)(x[j] + s*vT[j]);
+            }
+            else
+            {
+              for( j = 0; j < n; j++ )
+                x[j*ldx] = (float)(x[j*ldx] + s*vT[j]);
+            }
+          }
+          else
+          {
+            if( b )
+            {
+              memset( buffer, 0, nb*sizeof(buffer[0]));
+              icvMatrAXPY_32f( m, nb, b, ldb, uT, buffer, 0 );
+              for( j = 0; j < nb; j++ )
+                buffer[j] = (float)(buffer[j]*wi);
+            }
+            else
+            {
+              for( j = 0; j < nb; j++ )
+                buffer[j] = (float)(uT[j]*wi);
+            }
+            icvMatrAXPY_32f( n, nb, buffer, 0, vT, x, ldx );
+          }
+        }
+      }
+    }
+
+    void icvSVBkSb_64f(
+      s32 m,         //!< Number of rows in u
+      s32 n,         //!< Number of rows in v
+      const f64* w,  //!< Pointer to start of the W vector
+      const f64* uT, //!< Pointer to the upper-left of the U-transpose array
+      s32 lduT,      //!< U_stride_in_bytes / sizeof(f32)
+      const f64* vT, //!< Pointer to the upper-left of the V-transpose array
+      s32 ldvT,      //!< V_stride_in_bytes / sizeof(f32)
+      const f64* b,  //!< Pointer to the upper-left of the b array
+      s32 ldb,       //!< b_stride_in_bytes / sizeof(f32)
+      s32 nb,        //!< Number of columns in B
+      f64* x,        //!< Pointer to the start of the x vector (I think x must always be Sx1, for S either m or n?)
+      s32 ldx,       //!< x_stride_in_bytes / sizeof(f32)
+      f64* buffer    //!< A scratch buffer, with at least "sizeof(f32)*b_stride" bytes
+      )
+    {
+      double threshold = 0;
+      int i, j, nm = MIN( m, n );
+
+      if( !b )
+        nb = m;
+
+      for( i = 0; i < n; i++ )
+        memset( x + i*ldx, 0, nb*sizeof(x[0]));
+
+      for( i = 0; i < nm; i++ )
+        threshold += w[i];
+      threshold *= 2*DBL_EPSILON;
+
+      /* vT * inv(w) * uT * b */
+      for( i = 0; i < nm; i++, uT += lduT, vT += ldvT )
+      {
+        double wi = w[i];
+
+        if( wi > threshold )
+        {
+          wi = 1./wi;
+
+          if( nb == 1 )
+          {
+            double s = 0;
+            if( b )
+            {
+              if( ldb == 1 )
+              {
+                for( j = 0; j <= m - 4; j += 4 )
+                  s += uT[j]*b[j] + uT[j+1]*b[j+1] + uT[j+2]*b[j+2] + uT[j+3]*b[j+3];
+                for( ; j < m; j++ )
+                  s += uT[j]*b[j];
+              }
+              else
+              {
+                for( j = 0; j < m; j++ )
+                  s += uT[j]*b[j*ldb];
+              }
+            }
+            else
+              s = uT[0];
+            s *= wi;
+            if( ldx == 1 )
+            {
+              for( j = 0; j <= n - 4; j += 4 )
+              {
+                double t0 = x[j] + s*vT[j];
+                double t1 = x[j+1] + s*vT[j+1];
+                x[j] = t0;
+                x[j+1] = t1;
+                t0 = x[j+2] + s*vT[j+2];
+                t1 = x[j+3] + s*vT[j+3];
+                x[j+2] = t0;
+                x[j+3] = t1;
+              }
+
+              for( ; j < n; j++ )
+                x[j] += s*vT[j];
+            }
+            else
+            {
+              for( j = 0; j < n; j++ )
+                x[j*ldx] += s*vT[j];
+            }
+          }
+          else
+          {
+            if( b )
+            {
+              memset( buffer, 0, nb*sizeof(buffer[0]));
+              icvMatrAXPY_64f( m, nb, b, ldb, uT, buffer, 0 );
+              for( j = 0; j < nb; j++ )
+                buffer[j] *= wi;
+            }
+            else
+            {
+              for( j = 0; j < nb; j++ )
+                buffer[j] = uT[j]*wi;
+            }
+            icvMatrAXPY_64f( n, nb, buffer, 0, vT, x, ldx );
+          }
+        }
+      }
+    }
+
+    /*! Performs Singular Value Back Substitution (solves A*X = B) */
+    Result svdBackSubstitute_f32(
+      const Array<f32> &w, //!< w-vector 1Xm
+      const Array<f32> &Ut,//!< U-array mXm
+      const Array<f32> &Vt,//!< V-array nXn
+      Array<f32> &b,       //!< b-vector 1Xm
+      Array<f32> &x,       //!< x-vector 1Xn
+      void * scratch       //!< A scratch buffer, with at least "sizeof(f32) * (MAX(m_stride, n_stride) + o_stride)" bytes
+      )
+    {
+      const s32 m = Ut.get_size(0);
+      const s32 n = Vt.get_size(0);
+
+      AnkiConditionalErrorAndReturnValue(w.IsValid(),
+        RESULT_FAIL, "svdBackSubstitute_f32", "w is not valid");
+
+      AnkiConditionalErrorAndReturnValue(Ut.IsValid(),
+        RESULT_FAIL, "svdBackSubstitute_f32", "Ut is not valid");
+
+      AnkiConditionalErrorAndReturnValue(Vt.IsValid(),
+        RESULT_FAIL, "svdBackSubstitute_f32", "Vt is not valid");
+
+      AnkiConditionalErrorAndReturnValue(b.IsValid(),
+        RESULT_FAIL, "svdBackSubstitute_f32", "b is not valid");
+
+      AnkiConditionalErrorAndReturnValue(x.IsValid(),
+        RESULT_FAIL, "svdBackSubstitute_f32", "x is not valid");
+
+      AnkiConditionalErrorAndReturnValue(scratch,
+        RESULT_FAIL, "svdBackSubstitute_f32", "scratch is null");
+
+      AnkiConditionalErrorAndReturnValue(w.get_size(0) == 1 && w.get_size(1) == m,
+        RESULT_FAIL, "svdBackSubstitute_f32", "w is not 1Xm");
+
+      AnkiConditionalErrorAndReturnValue(Ut.get_size(0) == m && Ut.get_size(1) == m,
+        RESULT_FAIL, "svdBackSubstitute_f32", "Ut is not mXm");
+
+      AnkiConditionalErrorAndReturnValue(Vt.get_size(0) == n && Vt.get_size(1) == n,
+        RESULT_FAIL, "svdBackSubstitute_f32", "Vt is not nXn");
+
+      AnkiConditionalErrorAndReturnValue(b.get_size(0) == 1 && b.get_size(1) == m,
+        RESULT_FAIL, "svdBackSubstitute_f32", "b is not 1Xm");
+
+      AnkiConditionalErrorAndReturnValue(x.get_size(0) == 1 && x.get_size(1) == n,
+        RESULT_FAIL, "svdBackSubstitute_f32", "x is not 1Xn");
+
+      icvSVBkSb_32f(
+        m,
+        n,
+        w.Pointer(0,0),
+        Ut.Pointer(0,0),
+        Ut.get_stride() / sizeof(f32),
+        Vt.Pointer(0,0),
+        Vt.get_stride() / sizeof(f32),
+        b.Pointer(0,0),
+        1,
+        1,
+        x.Pointer(0,0),
+        1,
+        reinterpret_cast<f32*>(scratch));
+
+      return RESULT_OK;
+    }
+
+    /*! Performs Singular Value Back Substitution (solves A*X = B) */
+    Result svdBackSubstitute_f64(
+      const Array<f64> &w, //!< w-vector 1Xm
+      const Array<f64> &Ut,//!< U-array mXm
+      const Array<f64> &Vt,//!< V-array nXn
+      Array<f64> &b,       //!< b-vector 1Xm
+      Array<f64> &x,       //!< x-vector 1Xn
+      void * scratch       //!< A scratch buffer, with at least "sizeof(f64) * (MAX(m_stride, n_stride) + o_stride)" bytes
+      )
+    {
+      const s32 m = Ut.get_size(0);
+      const s32 n = Vt.get_size(0);
+
+      AnkiConditionalErrorAndReturnValue(w.IsValid(),
+        RESULT_FAIL, "svdBackSubstitute_f64", "w is not valid");
+
+      AnkiConditionalErrorAndReturnValue(Ut.IsValid(),
+        RESULT_FAIL, "svdBackSubstitute_f64", "Ut is not valid");
+
+      AnkiConditionalErrorAndReturnValue(Vt.IsValid(),
+        RESULT_FAIL, "svdBackSubstitute_f64", "Vt is not valid");
+
+      AnkiConditionalErrorAndReturnValue(b.IsValid(),
+        RESULT_FAIL, "svdBackSubstitute_f64", "b is not valid");
+
+      AnkiConditionalErrorAndReturnValue(x.IsValid(),
+        RESULT_FAIL, "svdBackSubstitute_f64", "x is not valid");
+
+      AnkiConditionalErrorAndReturnValue(scratch,
+        RESULT_FAIL, "svdBackSubstitute_f64", "scratch is null");
+
+      AnkiConditionalErrorAndReturnValue(w.get_size(0) == 1 && w.get_size(1) == m,
+        RESULT_FAIL, "svdBackSubstitute_f64", "w is not 1Xm");
+
+      AnkiConditionalErrorAndReturnValue(Ut.get_size(0) == m && Ut.get_size(1) == m,
+        RESULT_FAIL, "svdBackSubstitute_f64", "Ut is not mXm");
+
+      AnkiConditionalErrorAndReturnValue(Vt.get_size(0) == n && Vt.get_size(1) == n,
+        RESULT_FAIL, "svdBackSubstitute_f64", "Vt is not nXn");
+
+      AnkiConditionalErrorAndReturnValue(b.get_size(0) == 1 && b.get_size(1) == m,
+        RESULT_FAIL, "svdBackSubstitute_f64", "b is not 1Xm");
+
+      AnkiConditionalErrorAndReturnValue(x.get_size(0) == 1 && x.get_size(1) == n,
+        RESULT_FAIL, "svdBackSubstitute_f64", "x is not 1Xn");
+
+      icvSVBkSb_64f(
+        m,
+        n,
+        w.Pointer(0,0),
+        Ut.Pointer(0,0),
+        Ut.get_stride() / sizeof(f64),
+        Vt.Pointer(0,0),
+        Vt.get_stride() / sizeof(f64),
+        b.Pointer(0,0),
+        1,
+        1,
+        x.Pointer(0,0),
+        1,
+        reinterpret_cast<f64*>(scratch));
+
+      return RESULT_OK;
     }
 
     /*! Compute the homography such that "transformedPoints = homography * originalPoints" */
