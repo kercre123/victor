@@ -304,12 +304,18 @@ namespace Anki
       FixedPointArray<s32> boundaryXFiltered(1, boundary.get_size(), numSigmaFractionalBits, scratch); // SQ23.8
       FixedPointArray<s32> boundaryYFiltered(1, boundary.get_size(), numSigmaFractionalBits, scratch); // SQ23.8
 
+      if(!boundaryYFiltered.IsValid())
+        return RESULT_FAIL;
+
       //differenceOfGaussian.Print("differenceOfGaussian");
 
       //r_smooth = imfilter(boundary, dg2(:), 'circular');
       {
         PUSH_MEMORY_STACK(scratch);
         FixedPointArray<s32> boundaryX(1, boundary.get_size(), 0, scratch); // SQ31.0
+
+        if(!boundaryX.IsValid())
+          return RESULT_FAIL;
 
         const Point<s16> * restrict pConstBoundary = boundary.Pointer(0);
         s32 * restrict pBoundaryX = boundaryX.Pointer(0,0);
@@ -329,6 +335,9 @@ namespace Anki
       {
         PUSH_MEMORY_STACK(scratch);
         FixedPointArray<s32> boundaryY(1, boundary.get_size(), 0, scratch); // SQ31.0
+
+        if(!boundaryY.IsValid())
+          return RESULT_FAIL;
 
         const Point<s16> * restrict pConstBoundary = boundary.Pointer(0);
         s32 * restrict pBoundaryY = boundaryY.Pointer(0,0);
