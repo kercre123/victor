@@ -37,6 +37,8 @@ extern volatile int shaveTests7_whichAlgorithm;
 extern volatile int shaveTests7_integralImage[IMAGE_WIDTH];
 extern volatile int shaveTests7_outputLine[IMAGE_WIDTH];
 
+extern volatile int shaveTests7_pOut[NUM_COORDINATES];
+
 // Leon Entry point
 int __attribute__((section(".sys.text.start"))) main(void)
 {
@@ -50,7 +52,7 @@ int __attribute__((section(".sys.text.start"))) main(void)
   //    DrvL2CacheAllocateSetPartitions();
   //    SET_REG_WORD(L2C_MXITID_ADR, 0x0);
 
-  shaveTests7_whichAlgorithm = 2;
+  shaveTests7_whichAlgorithm = 3;
 
   // Start the Shave but do not wait for stop
   printf("Start Shave at addr:0x%X \n", (unsigned int)&shaveTests7_main);
@@ -96,7 +98,9 @@ int __attribute__((section(".sys.text.start"))) main(void)
             //break;
           }
         }
-      } // else if(shaveTests7_whichAlgorithm == 2)
+      } else if(shaveTests7_whichAlgorithm == 3) {
+        // TODO: fill in correct answers
+      }
 
       if (test_pass)
         printf("\n\nShaveHelloWorld Executed Successfully\n\n");

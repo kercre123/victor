@@ -88,6 +88,17 @@ __attribute__ ((aligned (16))) int integralImage[IMAGE_HEIGHT*IMAGE_WIDTH] = {
   233, 637, 1212, 1947, 2852, 3939, 5181, 6588, 8171, 9920, 11834, 13913, 16162, 18582, 21173, 23924, 26845, 29948, 33206, 36629, 40228, 43993, 47923, 52018, 56283, 60719, 65326, 70093, 75030, 80149, 85423, 90862, 96477, 102258, 108204, 114315, 120596, 127048, 133671, 140454, 147407, 154542, 161832, 169287, 176918, 184715, 192677, 200804, 209098, 217553, 226162, 234909, 243799, 252836, 261992, 271271, 280678, 290200, 299833, 309573, 319421, 329373, 339426, 349569,
   239, 655, 1247, 2004, 2937, 4057, 5337, 6788, 8420, 10223, 12197, 14341, 16660, 19156, 21828, 24665, 27678, 30878, 34238, 37769, 41481, 45364, 49418, 53642, 58041, 62617, 67369, 72286, 77379, 82659, 88099, 93710, 99502, 105465, 111599, 117903, 124382, 131038, 137870, 144867, 152040, 159400, 166920, 174611, 182483, 190526, 198740, 207122, 215671, 224381, 233245, 242247, 251392, 260684, 270095, 279629, 289291, 299068, 308956, 318951, 329054, 339261, 349569, 359967};
 
+__attribute__ ((aligned (16))) unsigned char interpolationReferenceImage[IMAGE_HEIGHT*IMAGE_WIDTH];
+
+__attribute__ ((aligned (16))) float pXCoordinates[NUM_COORDINATES];
+__attribute__ ((aligned (16))) float pYCoordinates[NUM_COORDINATES];
+__attribute__ ((aligned (16))) float pOut[NUM_COORDINATES];
+
+int xIterationMax = NUM_COORDINATES;
+int referenceStride = IMAGE_WIDTH << 2;
+float xReferenceMax = (float)IMAGE_WIDTH;
+float yReferenceMax = (float)IMAGE_HEIGHT;
+
 int main( void )
 {
   if(whichAlgorithm == 1) {
@@ -100,6 +111,42 @@ int main( void )
     }
 
     testIntegralImageGeneration();
+  } else if(whichAlgorithm == 3) {
+    int i;
+
+    {
+      unsigned char curReferenceValue = 0;
+      for(i=0; i<IMAGE_HEIGHT*IMAGE_WIDTH; i++) {
+        interpolationReferenceImage[i] = curReferenceValue;
+        curReferenceValue++; // will overflow many times
+      }
+    }
+
+    {
+      float curValue1 = -10.0f;
+      float curValue2 = -5.0f;
+      for(i=0; i<NUM_COORDINATES; i++) {
+        pXCoordinates[i] = curValue1;
+        pYCoordinates[i] = curValue2;
+        pOut[i] = -1.0f;
+
+        curValue1 += 5.9f;
+        if(curValue1 > 55.5f) {
+          curValue1 = -10.0f;
+        }
+
+        curValue2 += 7.5f;
+        if(curValue2 > 88.8f) {
+          curValue2 = -5.0f;
+        }
+      }
+    }
+
+    for(i=0; i<NUM_COORDINATES; i++) {
+      printf("pOut[%d] = %f\n", i);
+    }
+
+    //testInterp2_reference();
   }
 
   return 0;
