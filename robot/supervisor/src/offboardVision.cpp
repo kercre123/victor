@@ -8,13 +8,7 @@ namespace Anki
 {
   namespace Cozmo
   {
-    
-    namespace {
-      // The resolution at which images will be sent over the serial connection
-      u8 frameResolution_ = HAL::CAMERA_MODE_QQQVGA;
-      u8 msgBuffer_[256];
-    }
-    
+        
     void SendHeader(const u8 packetType)
     {
       using namespace HAL;
