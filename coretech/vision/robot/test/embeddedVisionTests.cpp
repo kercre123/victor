@@ -21,6 +21,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/integralImage.h"
 #include "anki/vision/robot/draw_vision.h"
 #include "anki/vision/robot/lucasKanade.h"
+#include "anki/vision/robot/docking_vision.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -153,6 +154,35 @@ void InitializeBuffers()
     bigBuffer2 = (char*)malloc(BIG_BUFFER_SIZE2);
 #endif // #if defined(USING_MOVIDIUS_COMPILER) ... else ...
 #endif // #ifndef USE_STATIC_BUFFERS
+}
+
+GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
+{
+  // TODO: make these the real values
+  const s32 horizontalTrackingResolution = 80;
+  const f32 blockMarkerWidthInMM = 50.0f;
+  const f32 horizontalFocalLengthInMM = 5.0f;
+  const f32 cozmoLiftDistanceInMM = 20.0f;
+
+  MemoryStack ms(&bigBuffer1[0], BIG_BUFFER_SIZE1);
+  ASSERT_TRUE(ms.IsValid());
+
+  const Quadrilateral<f32> initialCorners(Point<f32>(5.0f,5.0f), Point<f32>(100.0f,100.0f), Point<f32>(50.0f,20.0f), Point<f32>(10.0f,0.0f));
+  const TemplateTracker::PlanarTransformation_f32 transform(TemplateTracker::TRANSFORM_AFFINE, initialCorners, ms);
+
+  f32 rel_x, rel_y, rel_rad;
+  ASSERT_TRUE(Docking::ComputeDockingErrorSignal(transform,
+    horizontalTrackingResolution, blockMarkerWidthInMM, horizontalFocalLengthInMM, cozmoLiftDistanceInMM,
+    rel_x, rel_y, rel_rad) == RESULT_OK);
+
+  //printf("%f %f %f\n", rel_x, rel_y, rel_rad);
+
+  // TODO: manually compute the correct output
+  ASSERT_TRUE(FLT_NEAR(rel_x,15.355339f));
+  ASSERT_TRUE(FLT_NEAR(rel_y,229.809707f));
+  ASSERT_TRUE(FLT_NEAR(rel_rad,0.785398f));
+
+  GTEST_RETURN_HERE;
 }
 
 GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
@@ -2592,6 +2622,7 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine);
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C_emulateShave);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C);
