@@ -110,7 +110,6 @@ namespace Anki {
         }
         
         // TODO: Get VisionSystem to work on robot
-#ifdef SIMULATOR
         if(VisionSystem::Init(HAL::GetHeadCamInfo(),
                               HAL::GetMatCamInfo(),
                               &blockMarkerMailbox_,
@@ -120,7 +119,6 @@ namespace Anki {
           PRINT("Vision System initialization failed.");
           return EXIT_FAILURE;
         }
-#endif
         
         if(PathFollower::Init() == EXIT_FAILURE) {
           PRINT("PathFollower initialization failed.\n");
@@ -193,6 +191,8 @@ namespace Anki {
       
       ReturnCode step_MainExecution()
       {
+
+
 //#if(DEBUG_ANY && defined(SIMULATOR))
 //        PRINT("\n==== FRAME START (time = %d us) ====\n", HAL::GetMicroCounter() );
 //#endif
@@ -233,30 +233,6 @@ namespace Anki {
           const CozmoMsg_ObservedBlockMarker blockMsg = blockMarkerMailbox_.getMessage();
           HAL::RadioToBase((u8*)(&blockMsg), sizeof(CozmoMsg_ObservedBlockMarker));
     
-#if DOCKING_TEST
-          // TODO: Eventually we'll get a message from basestation telling us
-          //       to pick up or put down a block.
-          
-          if(isCarryingBlock_)
-          {
-            // We are already carrying a block.  If we see BlockType YY,
-            // then switch (back) to docking mode and start tracking it so
-            // we can put the one we're carrying on top of it
-            if(blockMsg.blockType == 60) {
-              VisionSystem::Docker::LookForBlock(blockMsg);
-              mode_ = PUT_DOWN_BLOCK;
-            }
-          }
-          else {
-            // We aren't yet carrying a block.  If we see a BlockType XX,
-            // switch to docking mode and start tracking it so we can go
-            // pick it up.
-            if(blockMsg.blockType == 65) {
-              VisionSystem::Docker::LookForBlock(blockMsg);
-              mode_ = PICK_UP_BLOCK;
-            }
-          } // if/else carrying block
-#endif
         } // while blockMarkerMailbox has mail
         
         // Get any docking error signal available from the vision system
@@ -292,13 +268,6 @@ namespace Anki {
             MotorCalibrationUpdate(); // switches mode_ to WAITING
             break;
           }
-            /*
-          case FOLLOW_PATH:
-          {
-            PathFollower::Update();
-            break;
-          }
-            */
             
           case PICK_UP_BLOCK:
           {
@@ -313,7 +282,7 @@ namespace Anki {
                 mode_ = WAITING;
               } else {
                 // TODO: Back up and try again? Send failure msg to basestation?
-                VisionSystem::Docker::LookForBlock();
+
               }
             }
             break;
@@ -332,7 +301,7 @@ namespace Anki {
                 mode_ = WAITING;
               } else {
                 // TODO: Back up and try again? Send failure msg to basestation?
-                VisionSystem::Docker::LookForBlock();
+
               }
             }
             break;
@@ -340,7 +309,28 @@ namespace Anki {
             
           case WAITING:
           {
+            
+#if DOCKING_TEST
+            // TODO: Eventually we'll get a message from basestation telling us
+            //       to pick up or put down a block.
+            
+            const u16 BLOCK_TO_PICK_UP = 60;
+            const u16 BLOCK_TO_PLACE_ON = 65;
+            
+            // If we aren't yet carrying a block, be on the lookout for this one
+            // to pick up.  Otherwise, be on the lookout for the block to place
+            // it on.
+            if(not isCarryingBlock_) {
+              VisionSystem::SetDockingBlock(BLOCK_TO_PICK_UP);
+              mode_ = PICK_UP_BLOCK;
+            }
+            else {
+              VisionSystem::SetDockingBlock(BLOCK_TO_PLACE_ON);
+              mode_ = PUT_DOWN_BLOCK;
+            }
+#endif
             // Idle.  Nothing to do yet...
+            
             break;
           }
             

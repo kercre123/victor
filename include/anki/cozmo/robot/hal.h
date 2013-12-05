@@ -186,7 +186,7 @@ namespace Anki
       // Peek at next character in serial buffer
       // in receive buffer.
       // Returns < 0 if no character available
-      s32 USBPeekChar();
+      s32 USBPeekChar(s32 lookAhead = 0);
       
       // Send a byte.
       // Prototype matches putc for printf.
@@ -207,10 +207,11 @@ namespace Anki
       
       // Bytes to add to USB frame header to tell the offboard processor
       // what to do with the frame
-      const u8 USB_VISION_COMMAND_DETECTBLOCKS = 0xAB;
-      const u8 USB_VISION_COMMAND_INITTRACK    = 0xBC;
-      const u8 USB_VISION_COMMAND_TRACK        = 0xCD;
-      const u8 USB_VISION_COMMAND_MATODOMETRY  = 0xDE;
+      const u8 USB_VISION_COMMAND_DETECTBLOCKS    = 0xAB;
+      const u8 USB_VISION_COMMAND_INITTRACK       = 0xBC;
+      const u8 USB_VISION_COMMAND_TRACK           = 0xCD;
+      const u8 USB_VISION_COMMAND_MATODOMETRY     = 0xDE;
+      const u8 USB_VISION_COMMAND_MATLOCALIZATION = 0xEF;
       
       // Put a byte into a send buffer to be sent by LongExecution()
       // (Using same prototype as putc / USBPutChar for printf.)
@@ -229,6 +230,10 @@ namespace Anki
       // available, EXIT_FAILURE will be returned.  Once a valid header
       // is found and returned, EXIT_SUCCESS is returned.
       ReturnCode USBGetNextPacket(u8 *buffer);
+      
+      // Called by SendFooter() to terminate a message when in simulation,
+      // otherwise a no-op.
+      void USBFlush();
       
 #endif // if USE_OFFBOARD_VISION
       

@@ -131,40 +131,10 @@ namespace Anki {
       void Destroy();
       
       ReturnCode Update(u8* memoryBuffer);
-      
-      // Capture an entire frame using HAL commands and put it in the given
-      // frame buffer
-      ReturnCode CaptureHeadFrame(FrameBuffer &frame);
-      ReturnCode CaptureMatFrame(FrameBuffer &frame);
-      
-      ReturnCode LookForBlocks(const FrameBuffer &frame);
-      ReturnCode LocalizeWithMat(const FrameBuffer &frame);
-      
-      ReturnCode InitTemplate(const FrameBuffer &frame);
-      ReturnCode TrackTemplate(const FrameBuffer &frame);
-      
-      ReturnCode GetRelativeOdometry(const FrameBuffer &frame);
-      
-      // Docking/tracking:
-      ReturnCode SetDockingWindow(const s16 xLeft, const s16 yTop,
-                                  const s16 width, const s16 height);
-      
-      // Visual-servoing Docker "class", internally uses LK template tracking
-      namespace Docker {
-        
-        
-        // Tell the docker to look for a particularly block type nearest
-        // the specified location in the image.  Thus this function initializes
-        // the docker and can be called once.  Subsequently, just call the
-        // Update() function in a loop.
-        ReturnCode LookForBlock(CozmoMsg_ObservedBlockMarker msg);
-        ReturnCode LookForBlock(void); // go back to looking for last block
-        ReturnCode CheckBlockMarker(const CozmoMsg_ObservedBlockMarker& msg);
-        void Update();
-        void Stop();
-        
-      } // namespace Docker
-      
+
+      // Select a block type to look for to dock with.  Use 0 to disable.
+      ReturnCode SetDockingBlock(const u16 blockTypeToDockWith = 0);
+            
       bool IsInitialized();
       
     } // namespace VisionSystem

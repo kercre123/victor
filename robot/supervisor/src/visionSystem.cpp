@@ -41,13 +41,10 @@ namespace Anki {
         
         const CameraInfo* headCamInfo_ = NULL;
         const CameraInfo* matCamInfo_  = NULL;
-        
+
+        // Whether or not we're in the process of waiting for an image to be acquired
         // TODO: need one of these for both mat and head cameras?
         bool continuousCaptureStarted_ = false;
-        
-        // Whether or not we're in the process of waiting for an image to be acquired
-        bool acquiringHeadCamImage_ = false;
-        bool acquiringMatCamImage_ = false;
         
         u16  dockingBlock_ = 0;
         bool isDockingBlockFound_ = false;
@@ -65,6 +62,23 @@ namespace Anki {
         f32 matCamPixPerMM_ = 1.f;
         
       } // private namespace VisionSystem
+      
+      //
+      // Forward declarations:
+      //
+      
+      // Capture an entire frame using HAL commands and put it in the given
+      // frame buffer
+      ReturnCode CaptureHeadFrame(FrameBuffer &frame);
+      ReturnCode CaptureMatFrame(FrameBuffer &frame);
+      
+      ReturnCode LookForBlocks(const FrameBuffer &frame);
+      ReturnCode LocalizeWithMat(const FrameBuffer &frame);
+      
+      ReturnCode InitTemplate(const FrameBuffer &frame);
+      ReturnCode TrackTemplate(const FrameBuffer &frame);
+      
+      ReturnCode GetRelativeOdometry(const FrameBuffer &frame);
       
       
 #pragma mark --- VisionSystem::Mailbox Implementations ---
@@ -127,51 +141,6 @@ namespace Anki {
                                  tanf(matCamInfo_->fov_ver * .5f));
         matCamPixPerMM_ = matCamHeightInPix / MAT_CAM_HEIGHT_FROM_GROUND_MM;
         
-        
-#if USING_MATLAB_VISION
-        
-        if(matlabEngine_ == NULL) {
-          PRINT("Expecting Matlab engine to already be open.\n");
-          return EXIT_FAILURE;
-        }
-        
-        // Initialize Matlab
-        engEvalString(matlabEngine_, "run('../../../../matlab/initCozmoPath.m');");
-        
-        engEvalString(matlabEngine_, "usingOutsideSquare = BlockMarker2D.UseOutsideOfSquare;");
-        mxArray *mxUseOutsideOfSquare = engGetVariable(matlabEngine_, "usingOutsideSquare");
-        if(mxIsLogicalScalarTrue(mxUseOutsideOfSquare) != BLOCKMARKER3D_USE_OUTSIDE_SQUARE) {
-          PRINT("UseOutsideOfSquare settings between Matlab and C++ don't match!\n");
-          return EXIT_FAILURE;
-        }
-        
-        // Store computed pixPerMM in Matlab for use by MatLocalization()
-        engPutVariable(matlabEngine_, "pixPerMM",
-                       mxCreateDoubleScalar(matCamPixPerMM_));
-        
-        engEvalString(matlabEngine_, "simSerialCam = SimulatedSerialCamera;");
-        
-#if DISPLAY_MATLAB_IMAGES
-        char cmd[256];
-        snprintf(cmd, 255, "h_imgFig = figure; "
-                 "subplot(121); "
-                 "h_headImg = imshow(zeros(%d,%d)); "
-                 "hold('on'); "
-                 "h_dockTargetWin = plot(nan, nan, 'r'); "
-                 "title('Head Camera'); "
-                 "subplot(122); "
-                 "h_matImg = imshow(zeros(%d,%d)); "
-                 "title(sprintf('Mat Camera (pixPerMM=%%.1f)', pixPerMM));",
-                 headCamInfo->nrows,
-                 headCamInfo->ncols,
-                 matCamInfo->nrows,
-                 matCamInfo->ncols);
-        
-        engEvalString(matlabEngine_, cmd);
-#endif // DISPLAY_MATLAB_IMAGES
-        
-#endif // USING_MATLAB_VISION
-        
         isInitialized_ = true;
         return EXIT_SUCCESS;
       }
@@ -184,11 +153,15 @@ namespace Anki {
       
       void Destroy()
       {
-#if USING_MATLAB_VISION
-        if(matlabEngine_ != NULL) {
-          engClose(matlabEngine_);
-        }
-#endif
+
+      }
+      
+      
+      ReturnCode SetDockingBlock(const u16 blockTypeToDockWith)
+      {
+        dockingBlock_ = blockTypeToDockWith;
+        mode_ = LOOKING_FOR_BLOCKS;
+        return EXIT_SUCCESS;
       }
       
       ReturnCode Update(u8* memoryBuffer)
@@ -245,7 +218,7 @@ namespace Anki {
             }
             break;
           }
-            
+/*
           case MAT_LOCALIZATION:
           {
             VisionSystem::FrameBuffer frame = {
@@ -273,7 +246,7 @@ namespace Anki {
             
             break;
           }
-            
+ */
           default:
             PRINT("VisionSystem::Update(): reached default case in switch statement.");
             retVal = EXIT_FAILURE;
@@ -299,14 +272,14 @@ namespace Anki {
           if (!continuousCaptureStarted_) {
             CameraStartFrame(HAL::CAMERA_FRONT, frame.data, HAL::CAMERA_MODE_VGA,
                              HAL::CAMERA_UPDATE_CONTINUOUS, 0, false);
-            acquiringHeadCamImage_ = true;
+            continuousCaptureStarted_ = true;
           }
           
         }
         else {
           CameraStartFrame(HAL::CAMERA_FRONT, frame.data, HAL::CAMERA_MODE_VGA,
                            HAL::CAMERA_UPDATE_SINGLE, 0, false);
-          acquiringHeadCamImage_ = false;
+          continuousCaptureStarted_ = false;
         }
         
         
@@ -317,6 +290,12 @@ namespace Anki {
         return EXIT_SUCCESS;
         
       } // CaptureHeadFrame()
+      
+      ReturnCode CaptureMatFrame(FrameBuffer &frame)
+      {
+        PRINT("CaptureMatFrame(): mat camera available yet.\n");
+        return EXIT_FAILURE;
+      }
       
       
       inline void ProcessMessage(const CozmoMsg_ObservedBlockMarker& msg)
@@ -420,7 +399,7 @@ namespace Anki {
       }
       
       
-      ReturnCode LookForBlocks(FrameBuffer &frame)
+      ReturnCode LookForBlocks(const FrameBuffer &frame)
       {
         ReturnCode retVal = EXIT_SUCCESS;
         
@@ -566,6 +545,20 @@ namespace Anki {
       {
         ReturnCode retVal = -1;
         
+#if USE_OFFBOARD_VISION
+        
+        // TODO: move this elsewhere?
+        const u32 MAT_LOCALIZATION_TIMEOUT = 100000; // in microseconds
+        
+        // Send the offboard vision processor the frame, with the command
+        // to look for blocks in it
+        HAL::USBSendFrame(frame, HAL::USB_VISION_COMMAND_MATLOCALIZATION);
+        
+        // Wait until we get the result or timeout in the process.
+        // (This will also process any other commands we get in the meant time.)
+        retVal = WaitForProcessingResult(MSG_V2B_CORE_MAT_MARKER_OBSERVED,
+                                         MAT_LOCALIZATION_TIMEOUT);
+/*
         const s32 nrows = static_cast<s32>(frame.height);
         const s32 ncols = static_cast<s32>(frame.width);
         
@@ -581,18 +574,17 @@ namespace Anki {
 #endif
           
           // Detect MatMarker
-          /*
-           [xMat, yMat, orient] = matLocalization(this.matImage, ...
-           'pixPerMM', pixPerMM, 'camera', this.robot.matCamera, ...
-           'matSize', world.matSize, 'zDirection', world.zDirection, ...
-           'embeddedConversions', this.robot.embeddedConversions);
+ 
+          // [xMat, yMat, orient] = matLocalization(this.matImage, ...
+          //   'pixPerMM', pixPerMM, 'camera', this.robot.matCamera, ...
+          //   'matSize', world.matSize, 'zDirection', world.zDirection, ...
+          //   'embeddedConversions', this.robot.embeddedConversions);
            
-           % Set the pose based on the result of the matLocalization
-           this.pose = Pose(orient*[0 0 -1], ...
-           [xMat yMat this.robot.appearance.WheelRadius]);
-           this.pose.name = 'ObservationPose';
-           */
-          
+          // % Set the pose based on the result of the matLocalization
+          // this.pose = Pose(orient*[0 0 -1], ...
+          // [xMat yMat this.robot.appearance.WheelRadius]);
+          //    this.pose.name = 'ObservationPose';
+ 
           engEvalString(matlabEngine_,
                         "matMarker = matLocalization(matCamImage, "
                         "   'pixPerMM', pixPerMM, 'returnMarkerOnly', true); "
@@ -649,8 +641,8 @@ namespace Anki {
         } else {
           PRINT("Robot::processHeadImage(): could not convert image to mxArray.");
         }
-        
-#else  // NOT defined(USE_MATLAB_FOR_MAT_CAMERA)
+*/
+#else  // if USE_OFFBOARD_VISION
         /*
          // TODO: Hook this up to Pete's vision code
          PRINT("Robot::processMatImage(): embedded vision "

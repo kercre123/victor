@@ -155,6 +155,12 @@ namespace Anki
         // Clear the interrupt
         DrvIcbIrqClear(IRQ);
       }
+      
+      // Dummy placeholder for function only needed in simulation
+      void USBFlush(void)
+      {
+        
+      }
     }
   }
 }

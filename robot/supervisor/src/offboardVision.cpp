@@ -29,6 +29,8 @@ namespace Anki
       USBPutChar(USB_PACKET_FOOTER[2]);
       USBPutChar(USB_PACKET_FOOTER[3]);
       USBPutChar(packetType);
+      
+      USBFlush();
     }
     
     namespace USBprintBuffer
