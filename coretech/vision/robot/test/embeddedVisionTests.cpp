@@ -51,6 +51,7 @@ Matlab matlab(false);
 //#define RUN_ALL_BIG_MEMORY_TESTS
 //#define RUN_LOW_MEMORY_IMAGE_TESTS
 #define RUN_TRACKER_TESTS // equivalent to RUN_BROKEN_KANADE_TESTS
+//#define BENCHMARK_AFFINE
 
 #ifdef RUN_TRACKER_TESTS   // This prevents the .elf from loading
 //#ifdef RUN_MAIN_BIG_MEMORY_TESTS
@@ -185,6 +186,7 @@ GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
   GTEST_RETURN_HERE;
 }
 
+#ifdef BENCHMARK_AFFINE
 GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_BenchmarkAffine)
   // Benchmark Affine LK
 {
@@ -238,6 +240,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_BenchmarkAffine)
 
   GTEST_RETURN_HERE;
 }
+#endif // BENCHMARK_AFFINE
 
 GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 {
@@ -2676,9 +2679,10 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
-  // uncomment to benchmark
+#ifdef BENCHMARK_AFFINE
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_BenchmarkAffine);
   return 0;
+#endif
 
   CALL_GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine);
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker);
