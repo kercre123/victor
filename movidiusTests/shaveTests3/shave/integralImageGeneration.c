@@ -2,7 +2,7 @@
 #include <math.h>
 #include <moviVectorUtils.h>
 #include <mv_types.h>
-#include "shaveShared.h"
+#include "shaveKernels.h"
 
 #define INNER_LOOP_VERSION 5
 

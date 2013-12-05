@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <moviVectorUtils.h>
-#include "shaveShared.h"
+#include "shaveKernels.h"
 #include "shaveData.h"
 
 s32 xIterationMax = NUM_COORDINATES;

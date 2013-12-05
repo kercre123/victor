@@ -1,5 +1,5 @@
-#ifndef _SHAVE_SHARED_H_
-#define _SHAVE_SHARED_H_
+#ifndef _SHAVE_KERNELS_H_
+#define _SHAVE_KERNELS_H_
 
 #include "mv_types.h"
 
@@ -15,4 +15,4 @@ void ScrollingIntegralImage_u8_s32_FilterRow_shaveInnerLoop(const s32 * restrict
 
 void ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow_nthRow(const u8 * restrict paddedImage_currentRow, const s32 * restrict integralImage_previousRow, s32 * restrict integralImage_currentRow, const s32 integralImageWidth);
 
-#endif // _SHAVE_SHARED_H_
+#endif // #ifndef _SHAVE_KERNELS_H_
