@@ -1,5 +1,9 @@
 #include "anki/cozmo/robot/hal.h"
 
+#if !defined(USE_OFFBOARD_VISION) || !USE_OFFBOARD_VISION
+#warning offboardVision.cpp should only be included with USE_OFFBOARD_VISION=1
+#endif
+
 namespace Anki
 {
   namespace Cozmo
@@ -90,69 +94,49 @@ namespace Anki
     }
     
   
-    void HAL::USBSendFrame(const VisionSystem::FrameBuffer &frame,
+    // TODO: pull the downsampling out of this function
+    void HAL::USBSendFrame(const u8* frame,
+                           const CameraMode inputResolution,
+                           const CameraMode sendResolution,
                            const u8 commandByte)
     {
-      // Set window size for averaging when downsampling and send
-      // a corresponding header
-      u32 inc = 1;
-      u8 frameResHeader;
-      switch(frameResolution_)
-      {
-        case CAMERA_MODE_QVGA:
-          inc = 2;
-          frameResHeader = CAMERA_MODE_QVGA_HEADER;
-          break;
-          
-        case CAMERA_MODE_QQVGA:
-          inc = 4;
-          frameResHeader = CAMERA_MODE_QQVGA_HEADER;
-          break;
-          
-        case CAMERA_MODE_QQQVGA:
-          inc = 8;
-          frameResHeader = CAMERA_MODE_QQQVGA_HEADER;
-          break;
-          
-        case CAMERA_MODE_QQQQVGA:
-          inc = 16;
-          frameResHeader = CAMERA_MODE_QQQQVGA_HEADER;
-          break;
-          
-        case CAMERA_MODE_VGA:
-        default:
-          inc = 1;
-          frameResHeader = CAMERA_MODE_VGA_HEADER;
-          break;
-          
-      } // SWITCH(frameResolution)
+      // Set window size for averaging when downsampling
+      const u8 inc = CameraModeInfo[sendResolution].downsampleInc[inputResolution];
+      if(inc == 0) {
+        PRINT("USBSendFrame(): send/input resolutions not compatible.\n");
+        return;
+      }
       
       // Tell the receiver the resolution of the frame we're sending
+      const u8 frameResHeader = CameraModeInfo[sendResolution].header;
       SendHeader(frameResHeader);
       
       // Tell the receiver what to do with the image once it gets it
       USBPutChar(commandByte);
       
+      const u16 nrows = CameraModeInfo[inputResolution].height;
+      const u16 ncols = CameraModeInfo[inputResolution].width;
+      
       if(inc==1)
       {
         // No averaging
-        for(int i=0; i < frame.height*frame.width; i++)
+        for(int i=0; i < nrows*ncols; i++)
         {
-          USBPutChar(frame.data[i]);
+          USBPutChar(frame[i]);
         }
         
       } else {
         // Average inc x inc windows
-        for (int y = 0; y < frame.height; y += inc)
+        for (int y = 0; y < nrows; y += inc)
         {
-          for (int x = 0; x < frame.width; x += inc)
+          for (int x = 0; x < ncols; x += inc)
           {
             int sum = 0;
             for (int y1 = y; y1 < y + inc; y1++)
             {
               for (int x1 = x; x1 < x + inc; x1++)
               {
-                sum += frame.data[(x1 + y1 * frame.width) ^ 3];
+                sum += frame[(x1 + y1 * ncols) ^ 3];
               }
             }
             USBPutChar(sum / (inc * inc));

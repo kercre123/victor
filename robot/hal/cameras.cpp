@@ -1,4 +1,5 @@
 #include "cameras.h"
+#include "anki/cozmo/robot/cozmoConfig.h" // for calibration parameters
 
 // Unchanged interrupt level from Movidius
 #define CIF_INTERRUPT_LEVEL 3
@@ -14,7 +15,49 @@ namespace Anki
       // "Private member variables"
       namespace {
         CameraMode headCamMode_;
+        
+        // Intrinsic calibration parameters for each camera:
+        CameraInfo headCamInfo_;
+        CameraInfo matCamInfo_;
       }
+      
+      inline f32 ComputeVerticalFOV(const u16 height, const f32 fy)
+      {
+        return 2.f * atan(static_cast<f32>(height) / (2.f * fy));
+      }
+      
+      const HAL::CameraInfo* HAL::GetHeadCamInfo(void)
+      {
+        headCamInfo_ = {
+          .nrows         = HEAD_CAM_CALIBRATION_HEIGHT,
+          .ncols         = HEAD_CAM_CALIBRATION_WIDTH,
+          .focalLength_x = HEAD_CAM_CALIBRATION_FOCAL_LENGTH_X,
+          .focalLength_y = HEAD_CAM_CALIBRATION_FOCAL_LENGTH_Y,
+          .center_x      = HEAD_CAM_CALIBRATION_CENTER_X,
+          .center_y      = HEAD_CAM_CALIBRATION_CENTER_Y,
+          .skew          = 0.f,
+          .fov_ver       = ComputeVerticalFOV(HEAD_CAM_CALIBRATION_HEIGHT,
+                                              HEAD_CAM_CALIBRATION_FOCAL_LENGTH_Y);
+        };
+        
+        return &headCamInfo_;
+      }
+      
+      const HAL::CameraInfo* HAL::GetMatCamInfo(void)
+      {
+        matCamInfo_ = {
+          .nrows         = MAT_CAM_CALIBRATION_HEIGHT,
+          .ncols         = MAT_CAM_CALIBRATION_WIDTH,
+          .focalLength_x = MAT_CAM_CALIBRATION_FOCAL_LENGTH_X,
+          .focalLength_y = MAT_CAM_CALIBRATION_FOCAL_LENGTH_Y,
+          .center_x      = MAT_CAM_CALIBRATION_CENTER_X,
+          .center_y      = MAT_CAM_CALIBRATION_CENTER_Y,
+          .skew          = 0.f,
+          .fov_ver       = ComputeVerticalFOV(MAT_CAM_CALIBRATION_HEIGHT,
+                                              MAT_CAM_CALIBRATION_FOCAL_LENGTH_Y);
+        };
+      }
+      
       
       typedef struct
       {
@@ -59,53 +102,27 @@ namespace Anki
         }
       };
 
-      typedef struct
-      {
-        u32 width;
-        u32 height;
-      } CameraDimensions;
-
-      static const CameraDimensions m_dimensions[CAMERA_MODE_COUNT] =
-      {
-        {640, 480},  // VGA
-        {320, 240},  // QVGA
-        {160, 120}   // QQVGA
-      };
-
       CameraMode GetHeadCamMode(void)
       {
         return headCamMode_;
       }
       
-      void SetHeadCamMode(const u8 frameResHeader)
+      // TODO: there is a copy of this in sim_hal.cpp -- consolidate into one location.
+      void HAL::SetHeadCamMode(const u8 frameResHeader)
       {
-        switch(frameResHeader)
+        bool found = false;
+        for(CameraMode mode = CAMERA_MODE_VGA;
+            not found && mode != CAMERA_MODE_COUNT; ++mode)
         {
-          case CAMERA_MODE_VGA_HEADER:
-            headCamMode_ = CAMERA_MODE_VGA;
-            break;
-            
-          case CAMERA_MODE_QVGA_HEADER:
-            headCamMode_ = CAMERA_MODE_QVGA;
-            break;
-            
-          case CAMERA_MODE_QQVGA_HEADER:
-            headCamMode_ = CAMERA_MODE_QQVGA;
-            break;
-            
-          case CAMERA_MODE_QQQQVGA_HEADER:
-            headCamMode_ = CAMERA_MODE_QQQQVGA;
-            break;
-            
-          case CAMERA_MODE_QQQVGA_HEADER:
-            headCamMode_ = CAMERA_MODE_QQQVGA;
-            break;
-            
-          default:
-            PRINT("ERROR(SetCameraMode): Unknown frame res: %d", frameResHeader);
-            break;
+          if(frameResHeader == CameraModeInfo[mode].header) {
+            headCamMode_ = mode;
+            found = true;
+          }
         }
         
+        if(not found) {
+          PRINT("ERROR(SetCameraMode): Unknown frame res: %d", frameResHeader);
+        }
       } //SetHeadCamMode()
       
       static CameraHandle* m_handles[CAMERA_COUNT] = {NULL, NULL};
@@ -167,10 +184,8 @@ namespace Anki
             break;
         }
 
-        const CameraDimensions* dim = &m_dimensions[mode];
-
         //CIF Timing config
-        DrvCifTimingCfg (cifBase, dim->width, dim->height, 0, 0, 0, 0);
+        DrvCifTimingCfg (cifBase, CameraModeInfo[mode].width, CameraModeInfo[mode].height, 0, 0, 0, 0);
 
         DrvCifInOutCfg (cifBase, inputFormat, 0x0000, outCfg, 0);
 
@@ -378,6 +393,7 @@ namespace Anki
       {
         return m_cams[cameraID].isEOF;
       }
+      
     }
   }
 }

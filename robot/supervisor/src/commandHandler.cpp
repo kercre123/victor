@@ -118,8 +118,8 @@ namespace Anki {
               
               PRINT("Robot received handshake from basestation, "
                       "sending camera calibration.\n");
-              const VisionSystem::CameraInfo *matCamInfo  = HAL::GetMatCamInfo();
-              const VisionSystem::CameraInfo *headCamInfo = HAL::GetHeadCamInfo();
+              const HAL::CameraInfo *matCamInfo  = HAL::GetMatCamInfo();
+              const HAL::CameraInfo *headCamInfo = HAL::GetHeadCamInfo();
               
               CozmoMsg_CameraCalibration calibMsg;
               calibMsg.size = sizeof(CozmoMsg_CameraCalibration);

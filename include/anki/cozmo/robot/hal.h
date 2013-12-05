@@ -37,7 +37,9 @@
 #include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
 
-#include "anki/cozmo/robot/visionSystem.h"
+#include "anki/cozmo/robot/cozmoConfig.h"
+
+#define USE_OFFBOARD_VISION 1
 
 #ifdef __cplusplus
 extern "C" {
@@ -194,49 +196,6 @@ namespace Anki
 
       void UARTInit();
       
-#if USE_OFFBOARD_VISION
-      
-      // TODO: Move these to messageProtocol.h?
-      const u8 USB_SET_CAMERA_MODE_MSG = 0xCA;
-      const u8 SIZEOF_USB_SET_CAMERA_MODE_MSG = 2;
-      
-      const u8 USB_BLOCK_POSE_MSG = static_cast<u8>('E');
-      const u8 SIZEOF_USB_BLOCK_POSE_MSG = 13;
-      
-      const u8 USB_MESSAGE_HEADER = 0xDD;
-      
-      // Bytes to add to USB frame header to tell the offboard processor
-      // what to do with the frame
-      const u8 USB_VISION_COMMAND_DETECTBLOCKS    = 0xAB;
-      const u8 USB_VISION_COMMAND_INITTRACK       = 0xBC;
-      const u8 USB_VISION_COMMAND_TRACK           = 0xCD;
-      const u8 USB_VISION_COMMAND_MATODOMETRY     = 0xDE;
-      const u8 USB_VISION_COMMAND_MATLOCALIZATION = 0xEF;
-      
-      // Put a byte into a send buffer to be sent by LongExecution()
-      // (Using same prototype as putc / USBPutChar for printf.)
-      int USBBufferChar(int c);
-      
-      // Send a frame at the current frame resolution (last set by
-      // a call to SetUSBFrameResolution)
-      void USBSendFrame(const VisionSystem::FrameBuffer &frame,
-                        const u8 commandByte);
-
-      // Send the contents of the USB message buffer.
-      void USBSendMessage(void);
-      
-      // Returns an entire message packet in buffer, if one is available.
-      // Until a valid packet header is found and the entire packet is
-      // available, EXIT_FAILURE will be returned.  Once a valid header
-      // is found and returned, EXIT_SUCCESS is returned.
-      ReturnCode USBGetNextPacket(u8 *buffer);
-      
-      // Called by SendFooter() to terminate a message when in simulation,
-      // otherwise a no-op.
-      void USBFlush();
-      
-#endif // if USE_OFFBOARD_VISION
-      
       // Motors
       enum MotorID
       {
@@ -273,6 +232,7 @@ namespace Anki
         CAMERA_COUNT
       };
 
+      
       enum CameraMode
       {
         CAMERA_MODE_VGA = 0,
@@ -285,12 +245,40 @@ namespace Anki
         CAMERA_MODE_NONE = CAMERA_MODE_COUNT
       };
       
-      // Final byte in frame header to determine/specify resolution
-      const u8 CAMERA_MODE_VGA_HEADER     = 0xBA;
-      const u8 CAMERA_MODE_QVGA_HEADER    = 0xBC;
-      const u8 CAMERA_MODE_QQVGA_HEADER   = 0xB8;
-      const u8 CAMERA_MODE_QQQVGA_HEADER  = 0xBD;
-      const u8 CAMERA_MODE_QQQQVGA_HEADER = 0xB7;
+      typedef struct {
+        u8 header; // used to specify a frame's resolution in a packet
+        u16 width, height;
+        u8 downsampleInc[CAMERA_MODE_COUNT];
+      } CameraModeInfo_t;
+      
+      const CameraModeInfo_t CameraModeInfo[CAMERA_MODE_COUNT] =
+      {
+        // VGA
+        {
+          .header = 0xBA, .width = 640, .height = 480,
+          .downsampleInc = {1, 0, 0, 0, 0}
+        },
+        // QVGA
+        {
+          .header = 0xBC, .width = 320, .height = 240,
+          .downsampleInc = {2, 1, 0, 0, 0}
+        },
+        // QQVGA
+        {
+          .header = 0xB8, .width = 160, .height = 120,
+          .downsampleInc = {4, 2, 1, 0, 0}
+        },
+        // QQQVGA
+        {
+          .header = 0xBD, .width =  80, .height =  60,
+          .downsampleInc = {8, 4, 2, 1, 0}
+        },
+        // QQQQVGA
+        {
+          .header = 0xB7, .width =  40, .height =  30,
+          .downsampleInc = {16, 8, 4, 2, 1}
+        }
+      };
       
       enum CameraUpdateMode
       {
@@ -303,8 +291,18 @@ namespace Anki
       void MatCameraInit();
       void FrontCameraInit();
       
-      const VisionSystem::CameraInfo* GetHeadCamInfo();
-      const VisionSystem::CameraInfo* GetMatCamInfo() ;
+      // Intrinsic calibration:
+      // A struct for holding intrinsic camera calibration parameters
+      typedef struct {
+        f32 focalLength_x, focalLength_y, fov_ver;
+        f32 center_x, center_y;
+        f32 skew;
+        u16 nrows, ncols;
+        f32 distortionCoeffs[NUM_RADIAL_DISTORTION_COEFFS];
+      } CameraInfo;
+      
+      const CameraInfo* GetHeadCamInfo();
+      const CameraInfo* GetMatCamInfo() ;
       
       // Set the camera capture resolution with CAMERA_MODE_XXXXX_HEADER.
       void       SetHeadCamMode(const u8 frameResHeader);
@@ -384,6 +382,52 @@ namespace Anki
       void IRQDisable();
       void IRQEnable();
 
+#if USE_OFFBOARD_VISION
+      
+      // TODO: Move these to messageProtocol.h?
+      const u8 USB_SET_CAMERA_MODE_MSG = 0xCA;
+      const u8 SIZEOF_USB_SET_CAMERA_MODE_MSG = 2;
+      
+      const u8 USB_BLOCK_POSE_MSG = static_cast<u8>('E');
+      const u8 SIZEOF_USB_BLOCK_POSE_MSG = 13;
+      
+      const u8 USB_MESSAGE_HEADER = 0xDD;
+      
+      // Bytes to add to USB frame header to tell the offboard processor
+      // what to do with the frame
+      const u8 USB_VISION_COMMAND_DETECTBLOCKS    = 0xAB;
+      const u8 USB_VISION_COMMAND_INITTRACK       = 0xBC;
+      const u8 USB_VISION_COMMAND_TRACK           = 0xCD;
+      const u8 USB_VISION_COMMAND_MATODOMETRY     = 0xDE;
+      const u8 USB_VISION_COMMAND_MATLOCALIZATION = 0xEF;
+      
+      // Put a byte into a send buffer to be sent by LongExecution()
+      // (Using same prototype as putc / USBPutChar for printf.)
+      int USBBufferChar(int c);
+      
+      // Send a frame at the current frame resolution (last set by
+      // a call to SetUSBFrameResolution)
+      void USBSendFrame(const u8 *frame,
+                        const CameraMode inputResolution,
+                        const CameraMode sendResolution,
+                        const u8 commandByte);
+      
+      // Send the contents of the USB message buffer.
+      void USBSendMessage(void);
+      
+      // Returns an entire message packet in buffer, if one is available.
+      // Until a valid packet header is found and the entire packet is
+      // available, EXIT_FAILURE will be returned.  Once a valid header
+      // is found and returned, EXIT_SUCCESS is returned.
+      ReturnCode USBGetNextPacket(u8 *buffer);
+      
+      // Called by SendFooter() to terminate a message when in simulation,
+      // otherwise a no-op.
+      void USBFlush();
+      
+#endif // if USE_OFFBOARD_VISION
+      
+      
     } // namespace HAL
   } // namespace Cozmo
 } // namespace Anki

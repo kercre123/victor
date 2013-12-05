@@ -181,10 +181,6 @@ namespace Anki
       // Gripper control
       bool IsGripperEngaged() {return false;}
       
-      // Cameras
-      const CameraInfo* GetHeadCamInfo() {CameraInfo* junk; return junk;}
-      const CameraInfo* GetMatCamInfo() {CameraInfo* junk; return junk;}
-      
       // Communications
       //bool IsConnected() {return false;}
       u32 RadioFromBase(u8 buffer[RADIO_BUFFER_SIZE]) {return 0;}

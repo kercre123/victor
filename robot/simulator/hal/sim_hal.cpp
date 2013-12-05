@@ -57,8 +57,8 @@ namespace Anki {
       // Cameras / Vision Processing
       webots::Camera* matCam_;
       webots::Camera* headCam_;
-      VisionSystem::CameraInfo headCamInfo_;
-      VisionSystem::CameraInfo matCamInfo_;
+      HAL::CameraInfo headCamInfo_;
+      HAL::CameraInfo matCamInfo_;
       HAL::CameraMode headCamMode_;
       // HAL::CameraMode matCamMode_;
       //u8* headCamBuffer_;
@@ -234,37 +234,6 @@ namespace Anki {
     }
     
 #pragma mark --- Simulated Hardware Method Implementations ---
-
-    // Helper function to create a CameraInfo struct from Webots camera properties:
-    void FillCameraInfo(const webots::Camera *camera,
-                        VisionSystem::CameraInfo &info)
-    {
-      
-      u16 nrows  = static_cast<u16>(camera->getHeight());
-      u16 ncols  = static_cast<u16>(camera->getWidth());
-      f32 width  = static_cast<f32>(ncols);
-      f32 height = static_cast<f32>(nrows);
-      f32 aspect = width/height;
-      
-      f32 fov_hor = camera->getFov();
-      f32 fov_ver = fov_hor / aspect;
- 
-      f32 fy = height / (2.f * std::tan(0.5f*fov_ver));
-   
-      info.focalLength_x = fy;
-      info.focalLength_y = fy;
-      info.fov_ver       = fov_ver;
-      info.center_x      = 0.5f*width;
-      info.center_y      = 0.5f*height;
-      info.skew          = 0.f;
-      info.nrows         = nrows;
-      info.ncols         = ncols;
-      
-      for(u8 i=0; i<VisionSystem::NUM_RADIAL_DISTORTION_COEFFS; ++i) {
-        info.distortionCoeffs[i] = 0.f;
-      }
-      
-    } // FillCameraInfo
     
     ReturnCode HAL::Init()
     {
@@ -284,9 +253,6 @@ namespace Anki {
       matCam_->enable(TIME_STEP);
       headCam_->enable(TIME_STEP);
       
-      FillCameraInfo(headCam_, headCamInfo_);
-      FillCameraInfo(matCam_,  matCamInfo_);
-        
       leftWheelGyro_  = webotRobot_.getGyro("wheel_gyro_fl");
       rightWheelGyro_ = webotRobot_.getGyro("wheel_gyro_fr");
       
@@ -597,14 +563,59 @@ namespace Anki {
       return NULL;
     } // RecvMessage()
 
-    const VisionSystem::CameraInfo* HAL::GetHeadCamInfo(void)
+    // Helper function to create a CameraInfo struct from Webots camera properties:
+    void FillCameraInfo(const webots::Camera *camera,
+                        HAL::CameraInfo &info)
     {
-      return &(headCamInfo_);
+      
+      u16 nrows  = static_cast<u16>(camera->getHeight());
+      u16 ncols  = static_cast<u16>(camera->getWidth());
+      f32 width  = static_cast<f32>(ncols);
+      f32 height = static_cast<f32>(nrows);
+      f32 aspect = width/height;
+      
+      f32 fov_hor = camera->getFov();
+      f32 fov_ver = fov_hor / aspect;
+      
+      f32 fy = height / (2.f * std::tan(0.5f*fov_ver));
+      
+      info.focalLength_x = fy;
+      info.focalLength_y = fy;
+      info.fov_ver       = fov_ver;
+      info.center_x      = 0.5f*width;
+      info.center_y      = 0.5f*height;
+      info.skew          = 0.f;
+      info.nrows         = nrows;
+      info.ncols         = ncols;
+      
+      for(u8 i=0; i<NUM_RADIAL_DISTORTION_COEFFS; ++i) {
+        info.distortionCoeffs[i] = 0.f;
+      }
+      
+    } // FillCameraInfo
+    
+    const HAL::CameraInfo* HAL::GetHeadCamInfo(void)
+    {
+      if(isInitialized) {
+        FillCameraInfo(headCam_, headCamInfo_);
+        return &headCamInfo_;
+      }
+      else {
+        PRINT("HeadCam calibration requested before HAL initialized.\n");
+        return NULL;
+      }
     }
     
-    const VisionSystem::CameraInfo* HAL::GetMatCamInfo(void)
+    const HAL::CameraInfo* HAL::GetMatCamInfo(void)
     {
-      return &(matCamInfo_);
+      if(isInitialized) {
+        FillCameraInfo(matCam_, matCamInfo_);
+        return &matCamInfo_;
+      }
+      else {
+        PRINT("MatCam calibration requested before HAL initialized.\n");
+        return NULL;
+      }
     }
     
     HAL::CameraMode HAL::GetHeadCamMode(void)
@@ -612,35 +623,22 @@ namespace Anki {
       return headCamMode_;
     }
     
+    // TODO: there is a copy of this in hal.cpp -- consolidate into one location.
     void HAL::SetHeadCamMode(const u8 frameResHeader)
     {
-      switch(frameResHeader)
+      bool found = false;
+      for(CameraMode mode = CAMERA_MODE_VGA;
+          not found && mode != CAMERA_MODE_COUNT; ++mode)
       {
-        case CAMERA_MODE_VGA_HEADER:
-          headCamMode_ = CAMERA_MODE_VGA;
-          break;
-          
-        case CAMERA_MODE_QVGA_HEADER:
-          headCamMode_ = CAMERA_MODE_QVGA;
-          break;
-          
-        case CAMERA_MODE_QQVGA_HEADER:
-          headCamMode_ = CAMERA_MODE_QQVGA;
-          break;
-          
-        case CAMERA_MODE_QQQQVGA_HEADER:
-          headCamMode_ = CAMERA_MODE_QQQQVGA;
-          break;
-          
-        case CAMERA_MODE_QQQVGA_HEADER:
-          headCamMode_ = CAMERA_MODE_QQQVGA;
-          break;
-          
-        default:
-          PRINT("ERROR(SetCameraMode): Unknown frame res: %d", frameResHeader);
-          break;
+        if(frameResHeader == CameraModeInfo[mode].header) {
+          headCamMode_ = mode;
+          found = true;
+        }
       }
       
+      if(not found) {
+        PRINT("ERROR(SetCameraMode): Unknown frame res: %d", frameResHeader);
+      }
     } //SetHeadCamMode()
     
     void GetGrayscaleFrameHelper(webots::Camera* cam, u8* buffer)

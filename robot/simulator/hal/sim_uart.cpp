@@ -1,6 +1,8 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 
+#include <vector>
+
 #ifndef SIMULATOR
 #warning If building with sim_uart.cpp, SIMULATOR should be 1.
 #endif

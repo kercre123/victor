@@ -39,8 +39,8 @@ namespace Anki {
         
         Mode mode_ = LOOKING_FOR_BLOCKS;
         
-        const CameraInfo* headCamInfo_ = NULL;
-        const CameraInfo* matCamInfo_  = NULL;
+        const HAL::CameraInfo* headCamInfo_ = NULL;
+        const HAL::CameraInfo* matCamInfo_  = NULL;
 
         // Whether or not we're in the process of waiting for an image to be acquired
         // TODO: need one of these for both mat and head cameras?
@@ -69,6 +69,11 @@ namespace Anki {
       
       // Capture an entire frame using HAL commands and put it in the given
       // frame buffer
+      typedef struct {
+        u8* data;
+        HAL::CameraMode resolution;
+      } FrameBuffer;
+      
       ReturnCode CaptureHeadFrame(FrameBuffer &frame);
       ReturnCode CaptureMatFrame(FrameBuffer &frame);
       
@@ -97,25 +102,23 @@ namespace Anki {
 #pragma mark --- VisionSystem Method Implementations ---
       
       
-      ReturnCode Init(const VisionSystem::CameraInfo*  headCamInfo,
-                      const VisionSystem::CameraInfo*  matCamInfo,
-                      BlockMarkerMailbox*              blockMarkerMailbox,
-                      MatMarkerMailbox*                matMarkerMailbox,
-                      DockingMailbox*                  dockingMailbox)
+      ReturnCode Init(BlockMarkerMailbox*     blockMarkerMailbox,
+                      MatMarkerMailbox*       matMarkerMailbox,
+                      DockingMailbox*         dockingMailbox)
       {
         isInitialized_ = false;
         
-        if(headCamInfo == NULL) {
+        headCamInfo_ = HAL::GetHeadCamInfo();
+        if(headCamInfo_ == NULL) {
           PRINT("VisionSystem::Init() - HeadCam Info pointer is NULL!\n");
           return EXIT_FAILURE;
         }
-        headCamInfo_ = headCamInfo;
         
-        if(matCamInfo == NULL) {
+        matCamInfo_  = HAL::GetMatCamInfo();
+        if(matCamInfo_ == NULL) {
           PRINT("VisionSystem::Init() - MatCam Info pointer is NULL!\n");
           return EXIT_FAILURE;
         }
-        matCamInfo_  = matCamInfo;
         
         if(blockMarkerMailbox == NULL) {
           PRINT("VisionSystem::Init() - BlockMarkerMailbox pointer is NULL!\n");
@@ -168,14 +171,19 @@ namespace Anki {
       {
         ReturnCode retVal = EXIT_SUCCESS;
         
+        // NOTE: for now, we are always capturing at full resolution and
+        //       then downsampling as we send the frame out for offboard
+        //       processing.  Once the hardware camera supports it, we should
+        //       capture at the correct resolution directly and pass that in
+        //       (and remove the downsampling from USBSendFrame()
+        
         switch(mode_)
         {
           case LOOKING_FOR_BLOCKS:
           {
             FrameBuffer frame = {
-              .data   = memoryBuffer,
-              .width  = DETECTION_RESOLUTION.width,
-              .height = DETECTION_RESOLUTION.height
+              .data       = memoryBuffer,
+              .resolution = HAL::CAMERA_MODE_VGA
             };
             
             CaptureHeadFrame(frame);
@@ -201,9 +209,8 @@ namespace Anki {
             }
             else {
               VisionSystem::FrameBuffer frame = {
-                .data   = memoryBuffer,
-                .width  = TRACKING_RESOLUTION.width,
-                .height = TRACKING_RESOLUTION.height
+                .data       = memoryBuffer,
+                .resolution = HAL::CAMERA_MODE_VGA
               };
               
               CaptureHeadFrame(frame);
@@ -222,9 +229,8 @@ namespace Anki {
           case MAT_LOCALIZATION:
           {
             VisionSystem::FrameBuffer frame = {
-              .data   = memoryBuffer,
-              .width  = MAT_LOCALIZATION_RESOLUTION.width,
-              .height = MAT_LOCALIZATION_RESOLUTION.height
+              .data       = memoryBuffer,
+              .resolution = MAT_LOCALIZATION_RESOLUTION
             };
             
             CaptureMatFrame(frame);
@@ -236,9 +242,8 @@ namespace Anki {
           case VISUAL_ODOMETRY:
           {
             VisionSystem::FrameBuffer frame = {
-              .data   = memoryBuffer,
-              .width  = MAT_ODOMETRY_RESOLUTION.width,
-              .height = MAT_ODOMETRY_RESOLUTION.height
+              .data       = memoryBuffer,
+              .resolution = MAT_ODOMETRY_RESOLUTION
             };
             
             CaptureMatFrame(frame);
@@ -270,14 +275,14 @@ namespace Anki {
         if (HAL::GetHeadCamMode() != HAL::CAMERA_MODE_QQQVGA) {
           
           if (!continuousCaptureStarted_) {
-            CameraStartFrame(HAL::CAMERA_FRONT, frame.data, HAL::CAMERA_MODE_VGA,
+            CameraStartFrame(HAL::CAMERA_FRONT, frame.data, frame.resolution,
                              HAL::CAMERA_UPDATE_CONTINUOUS, 0, false);
             continuousCaptureStarted_ = true;
           }
           
         }
         else {
-          CameraStartFrame(HAL::CAMERA_FRONT, frame.data, HAL::CAMERA_MODE_VGA,
+          CameraStartFrame(HAL::CAMERA_FRONT, frame.data, frame.resolution,
                            HAL::CAMERA_UPDATE_SINGLE, 0, false);
           continuousCaptureStarted_ = false;
         }
@@ -410,7 +415,8 @@ namespace Anki {
         
         // Send the offboard vision processor the frame, with the command
         // to look for blocks in it
-        HAL::USBSendFrame(frame, HAL::USB_VISION_COMMAND_DETECTBLOCKS);
+        HAL::USBSendFrame(frame.data, frame.resolution, DETECTION_RESOLUTION,
+                          HAL::USB_VISION_COMMAND_DETECTBLOCKS);
         
         // Wait until we get the result or timeout in the process.
         // (This will also process any other commands we get in the meant time.)
@@ -552,7 +558,8 @@ namespace Anki {
         
         // Send the offboard vision processor the frame, with the command
         // to look for blocks in it
-        HAL::USBSendFrame(frame, HAL::USB_VISION_COMMAND_MATLOCALIZATION);
+        HAL::USBSendFrame(frame.data, frame.resolution, TRACKING_RESOLUTION,
+                          HAL::USB_VISION_COMMAND_MATLOCALIZATION);
         
         // Wait until we get the result or timeout in the process.
         // (This will also process any other commands we get in the meant time.)
@@ -667,7 +674,8 @@ namespace Anki {
         
         // Send the offboard vision processor the frame, with the command
         // to look for blocks in it
-        HAL::USBSendFrame(frame, HAL::USB_VISION_COMMAND_INITTRACK);
+        HAL::USBSendFrame(frame.data, frame.resolution, DETECTION_RESOLUTION,
+                          HAL::USB_VISION_COMMAND_INITTRACK);
         
         // Wait until we get the result or timeout in the process.
         // (This will also process the result and any other commands we get in
@@ -697,7 +705,8 @@ namespace Anki {
         const u32 TRACKING_TIMEOUT = 100000;
         
         // Send the message out for tracking
-        HAL::USBSendFrame(frame, HAL::USB_VISION_COMMAND_TRACK);
+        HAL::USBSendFrame(frame.data, frame.resolution, TRACKING_RESOLUTION,
+                          HAL::USB_VISION_COMMAND_TRACK);
         
         retVal = WaitForProcessingResult(MSG_V2B_CORE_DOCKING_ERROR_SIGNAL,
                                          TRACKING_TIMEOUT);

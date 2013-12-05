@@ -110,9 +110,7 @@ namespace Anki {
         }
         
         // TODO: Get VisionSystem to work on robot
-        if(VisionSystem::Init(HAL::GetHeadCamInfo(),
-                              HAL::GetMatCamInfo(),
-                              &blockMarkerMailbox_,
+        if(VisionSystem::Init(&blockMarkerMailbox_,
                               &matMarkerMailbox_,
                               &dockErrSignalMailbox_) == EXIT_FAILURE)
         {

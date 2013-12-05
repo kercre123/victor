@@ -13,16 +13,13 @@
 
 #include "anki/cozmo/MessageProtocol.h"
 
+#include "anki/cozmo/robot/hal.h"
 
 // If enabled, will use Matlab as the vision system for processing images
 #if defined(SIMULATOR) && ANKICORETECH_USE_MATLAB
 #define USE_MATLAB_FOR_HEAD_CAMERA
 #define USE_MATLAB_FOR_MAT_CAMERA
 #endif
-
-// If enabled, frames will be sent out over the serial line for processing
-// by Matlab.
-#define USE_OFFBOARD_VISION 1
 
 namespace Anki {
   namespace Cozmo {
@@ -33,37 +30,16 @@ namespace Anki {
       // Typedefs
       //
       
-      // A struct for holding intrinsic camera calibration parameters
-      const u8  NUM_RADIAL_DISTORTION_COEFFS = 5;
-      typedef struct {
-        f32 focalLength_x, focalLength_y, fov_ver;
-        f32 center_x, center_y;
-        f32 skew;
-        u16 nrows, ncols;
-        f32 distortionCoeffs[NUM_RADIAL_DISTORTION_COEFFS];
-      } CameraInfo;
-      
-      typedef struct {
-        u16 width;
-        u16 height;
-      } ImageSize;
-      
-      typedef struct {
-        u8* data;
-        u16 width;
-        u16 height;
-      } FrameBuffer;
-      
-      
+     
       //
       // Parameters / Constants:
       //
       
-      const ImageSize DETECTION_RESOLUTION = {.width = 320, .height = 240};
-      const ImageSize TRACKING_RESOLUTION  = {.width =  80, .height =  60};
+      const HAL::CameraMode DETECTION_RESOLUTION = HAL::CAMERA_MODE_QVGA;
+      const HAL::CameraMode TRACKING_RESOLUTION  = HAL::CAMERA_MODE_QQQVGA;
       
-      const ImageSize MAT_LOCALIZATION_RESOLUTION = {.width = 320, .height = 240};
-      const ImageSize MAT_ODOMETRY_RESOLUTION     = {.width =  40, .height =  30};
+      const HAL::CameraMode MAT_LOCALIZATION_RESOLUTION = HAL::CAMERA_MODE_QVGA;
+      const HAL::CameraMode MAT_ODOMETRY_RESOLUTION     = HAL::CAMERA_MODE_QQQQVGA;
       
       const u8 MAX_BLOCK_MARKER_MESSAGES = 32; // max blocks we can see in one image
       const u8 MAX_MAT_MARKER_MESSAGES   = 1;
@@ -122,9 +98,7 @@ namespace Anki {
       // Methods
       //
       
-      ReturnCode Init(const CameraInfo*       headCamInfo,
-                      const CameraInfo*       matCamInfo,
-                      BlockMarkerMailbox*     blockMarkerMailbox,
+      ReturnCode Init(BlockMarkerMailbox*     blockMarkerMailbox,
                       MatMarkerMailbox*       matMarkerMailbox,
                       DockingMailbox*         dockingMailbox);
       
