@@ -50,7 +50,7 @@ Matlab matlab(false);
 //#define RUN_MAIN_BIG_MEMORY_TESTS
 //#define RUN_ALL_BIG_MEMORY_TESTS
 //#define RUN_LOW_MEMORY_IMAGE_TESTS
-//#define RUN_TRACKER_TESTS // equivalent to RUN_BROKEN_KANADE_TESTS
+#define RUN_TRACKER_TESTS // equivalent to RUN_BROKEN_KANADE_TESTS
 
 #ifdef RUN_TRACKER_TESTS   // This prevents the .elf from loading
 //#ifdef RUN_MAIN_BIG_MEMORY_TESTS
@@ -181,6 +181,60 @@ GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
   ASSERT_TRUE(FLT_NEAR(rel_x,15.355339f));
   ASSERT_TRUE(FLT_NEAR(rel_y,229.809707f));
   ASSERT_TRUE(FLT_NEAR(rel_rad,0.785398f));
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_BenchmarkAffine)
+  // Benchmark Affine LK
+{
+#ifndef RUN_TRACKER_TESTS
+  ASSERT_TRUE(false);
+#else // This prevents the .elf from loading
+  const s32 imageHeight = 60;
+  const s32 imageWidth = 80;
+
+  const s32 numPyramidLevels = 2;
+
+  const f32 ridgeWeight = 0.0f;
+
+  const Rectangle<f32> templateRegion(13, 34, 22, 43);
+
+  const s32 maxIterations = 25;
+  const f32 convergenceTolerance = static_cast<f32>(1e-3);
+
+  InitializeBuffers();
+
+  // TODO: add check that images were loaded correctly
+
+  MemoryStack scratch0(&bigBuffer0[0], 80*60*2 + 256);
+  MemoryStack scratch1(&bigBuffer1[0], 600000);
+
+  ASSERT_TRUE(scratch0.IsValid());
+  ASSERT_TRUE(scratch1.IsValid());
+
+  ASSERT_TRUE(blockImages00189_80x60_HEIGHT == imageHeight && blockImages00190_80x60_HEIGHT == imageHeight);
+  ASSERT_TRUE(blockImages00189_80x60_WIDTH == imageWidth && blockImages00190_80x60_WIDTH == imageWidth);
+
+  Array<u8> image1(imageHeight, imageWidth, scratch0);
+  image1.Set_unsafe(blockImages00189_80x60, imageWidth*imageHeight);
+
+  Array<u8> image2(imageHeight, imageWidth, scratch0);
+  image2.Set_unsafe(blockImages00190_80x60, imageWidth*imageHeight);
+
+  // Affine LK
+  for(s32 i=0; i<10000; i++)
+  {
+    PUSH_MEMORY_STACK(scratch1);
+
+    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_AFFINE, ridgeWeight, scratch1);
+
+    ASSERT_TRUE(tracker.IsValid());
+
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
+  }
+
+#endif // RUN_TRACKER_TESTS
 
   GTEST_RETURN_HERE;
 }
@@ -2621,6 +2675,10 @@ int RUN_ALL_TESTS()
 {
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
+
+  // uncomment to benchmark
+  CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_BenchmarkAffine);
+  return 0;
 
   CALL_GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine);
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker);

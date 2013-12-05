@@ -17,6 +17,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define ANKICORETECHEMBEDDED_VERSION_MINOR 1
 #define ANKICORETECHEMBEDDED_VERSION_REVISION 0
 
+#undef ANKICORETECH_EMBEDDED_USE_MATLAB
+#undef ANKICORETECH_EMBEDDED_USE_OPENCV
+#undef ANKICORETECH_EMBEDDED_USE_GTEST
+
 #if defined(__MOVICOMPILE__)
 #warning Using MoviCompile
 #define USING_MOVIDIUS_SHAVE_COMPILER
