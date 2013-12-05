@@ -22,14 +22,16 @@ __attribute__ ((aligned (16))) extern s32 outputLine[IMAGE_WIDTH];
 
 __attribute__ ((aligned (16))) extern s32 integralImage[IMAGE_HEIGHT*IMAGE_WIDTH];
 
-__attribute__ ((aligned (16))) extern const s32 expectedFilterOutput[IMAGE_WIDTH];
+__attribute__ ((aligned (16))) extern const s32 filterOutput_groundTruth[IMAGE_WIDTH];
 
-__attribute__ ((aligned (16))) extern const s32 expectedIntegralImage[IMAGE_WIDTH];
+__attribute__ ((aligned (16))) extern const s32 integralImage_groundTruth[IMAGE_WIDTH];
 
 __attribute__ ((aligned (16))) extern u8 interpolationReferenceImage[IMAGE_HEIGHT*IMAGE_WIDTH];
 
 __attribute__ ((aligned (16))) extern f32 pXCoordinates[NUM_COORDINATES];
 __attribute__ ((aligned (16))) extern f32 pYCoordinates[NUM_COORDINATES];
+
 __attribute__ ((aligned (16))) extern f32 pOut[NUM_COORDINATES];
+__attribute__ ((aligned (16))) extern f32 pOut_groundTruth[NUM_COORDINATES];
 
 #endif // #ifndef _SHAVE_DATA_H_
