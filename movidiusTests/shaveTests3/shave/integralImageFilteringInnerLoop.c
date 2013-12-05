@@ -5,21 +5,21 @@
 
 #define INNER_LOOP_VERSION 2
 
-void ScrollingIntegralImage_u8_s32_FilterRow_shaveInnerLoop(const int * restrict integralImage_00, const int * restrict integralImage_01, const int * restrict integralImage_10, const int * restrict integralImage_11, const int numPixelsToProcess, int * restrict output)
+void ScrollingIntegralImage_u8_s32_FilterRow_shaveInnerLoop(const s32 * restrict integralImage_00, const s32 * restrict integralImage_01, const s32 * restrict integralImage_10, const s32 * restrict integralImage_11, const s32 numPixelsToProcess, s32 * restrict output)
 {
-  int x;
+  s32 x;
 
-  const int4 * restrict integralImageX4_00  = &(integralImage_00[0]);
+  const int4 * restrict integralImageX4_00  = (const int4 *) &(integralImage_00[0]);
 
-  const int4 * restrict integralImageX4_10  = &(integralImage_10[0]);
+  const int4 * restrict integralImageX4_10  = (const int4 *) &(integralImage_10[0]);
 
-  const int4 * restrict integralImageX4_01a = &(integralImage_01[-1]);
-  const int4 * restrict integralImageX4_01b = &(integralImage_01[3]);
+  const int4 * restrict integralImageX4_01a = (const int4 *) &(integralImage_01[-1]);
+  const int4 * restrict integralImageX4_01b = (const int4 *) &(integralImage_01[3]);
 
-  const int4 * restrict integralImageX4_11a = &(integralImage_11[-1]);
-  const int4 * restrict integralImageX4_11b = &(integralImage_11[3]);
+  const int4 * restrict integralImageX4_11a = (const int4 *) &(integralImage_11[-1]);
+  const int4 * restrict integralImageX4_11b = (const int4 *) &(integralImage_11[3]);
 
-  int4 * restrict outputX4 = &(output[0]);
+  int4 * restrict outputX4 = (const int4 *) &(output[0]);
 
   __asm(
   ".set integralImage_00_address i20 \n"

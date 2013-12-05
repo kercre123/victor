@@ -52,7 +52,7 @@ int __attribute__((section(".sys.text.start"))) main(void)
   //    DrvL2CacheAllocateSetPartitions();
   //    SET_REG_WORD(L2C_MXITID_ADR, 0x0);
 
-  shaveTests7_whichAlgorithm = 3;
+  shaveTests7_whichAlgorithm = 2;
 
   // Start the Shave but do not wait for stop
   printf("Start Shave at addr:0x%X \n", (unsigned int)&shaveTests7_main);

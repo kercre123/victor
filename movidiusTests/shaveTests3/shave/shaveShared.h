@@ -1,25 +1,18 @@
 #ifndef _SHAVE_SHARED_H_
 #define _SHAVE_SHARED_H_
 
-#define IMAGE_HEIGHT 64
-#define IMAGE_WIDTH 64
+#include "mv_types.h"
 
-#define NUM_COORDINATES 12
+#ifndef f32
+#define f32 float
+#endif
 
-__attribute__ ((aligned (16))) extern volatile int outputLine[IMAGE_WIDTH];
-__attribute__ ((aligned (16))) extern volatile unsigned char paddedImageRow[IMAGE_WIDTH];
-__attribute__ ((aligned (16))) extern int integralImage[IMAGE_HEIGHT*IMAGE_WIDTH];
+#ifndef f64
+#define f64 double
+#endif
 
-__attribute__ ((aligned (16))) extern unsigned char interpolationReferenceImage[IMAGE_HEIGHT*IMAGE_WIDTH];
-__attribute__ ((aligned (16))) extern float pXCoordinates[NUM_COORDINATES];
-__attribute__ ((aligned (16))) extern float pYCoordinates[NUM_COORDINATES];
-__attribute__ ((aligned (16))) extern float pOut[NUM_COORDINATES];
+void ScrollingIntegralImage_u8_s32_FilterRow_shaveInnerLoop(const s32 * restrict integralImage_00, const s32 * restrict integralImage_01, const s32 * restrict integralImage_10, const s32 * restrict integralImage_11, const s32 numPixelsToProcess, s32 * restrict output);
 
-void testIntegralImageFiltering();
-
-void testIntegralImageGeneration();
-
-void testInterp2_reference();
-void testInterp2_shave();
+void ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow_nthRow(const u8 * restrict paddedImage_currentRow, const s32 * restrict integralImage_previousRow, s32 * restrict integralImage_currentRow, const s32 integralImageWidth);
 
 #endif // _SHAVE_SHARED_H_

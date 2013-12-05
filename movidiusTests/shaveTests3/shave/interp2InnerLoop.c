@@ -6,11 +6,11 @@
 #define INNER_LOOP_VERSION 1
 
 void interp2_shaveInnerLoop(
-  const float * restrict pXCoordinates, const float * restrict pYCoordinates,
-  const float bufferWidth,
-  const float * restrict reference, const int referenceStride,
-  const float xReferenceMax, const float yReferenceMax,
-  float * restrict pOut)
+  const f32 * restrict pXCoordinates, const f32 * restrict pYCoordinates,
+  const f32 bufferWidth,
+  const f32 * restrict reference, const int referenceStride,
+  const f32 xReferenceMax, const f32 yReferenceMax,
+  f32 * restrict pOut)
 {
   __asm(
   ""
@@ -20,7 +20,7 @@ void interp2_shaveInnerLoop(
   );
 
 #if INNER_LOOP_VERSION == 1
-  int x;
+  s32 x;
   for(x=0; x<bufferWidth; x++) {
     __asm(
     ""
