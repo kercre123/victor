@@ -103,12 +103,13 @@ namespace Anki
         return;
       }
       
+      // Tell the receiver what to do with the image once it gets it (and the
+      // fact that this is an image packet at all)
+      SendHeader(commandByte);
+      
       // Tell the receiver the resolution of the frame we're sending
       const u8 frameResHeader = CameraModeInfo[sendResolution].header;
-      SendHeader(frameResHeader);
-      
-      // Tell the receiver what to do with the image once it gets it
-      USBPutChar(commandByte);
+      USBPutChar(frameResHeader);
       
       const u16 nrows = CameraModeInfo[inputResolution].height;
       const u16 ncols = CameraModeInfo[inputResolution].width;
@@ -140,7 +141,13 @@ namespace Anki
         }
       } // IF / ELSE inc==1
       
-      SendFooter(frameResHeader);
+      SendFooter(commandByte);
+      
+      PRINT("USBSendFrame(): sent %dx%d frame downsampled to %dx%d.\n",
+            CameraModeInfo[inputResolution].width,
+            CameraModeInfo[inputResolution].height,
+            CameraModeInfo[sendResolution].width,
+            CameraModeInfo[sendResolution].height);
       
     } // USBSendFrame()
     
