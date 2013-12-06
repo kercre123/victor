@@ -37,14 +37,14 @@ namespace Anki
       {
         assert(Sim::CozmoBot != NULL);
         
-        usbTX_ = Sim::CozmoBot->getEmitter("USB_TX");
+        usbTX_ = Sim::CozmoBot->getEmitter("usb_tx");
         if(usbTX_ == NULL) {
-          PRINT("Emitter 'USB_TX' not found.\n");
+          PRINT("Emitter 'usb_tx' not found.\n");
         }
         
-        usbRX_ = Sim::CozmoBot->getReceiver("USB_RX");
+        usbRX_ = Sim::CozmoBot->getReceiver("usb_rx");
         if(usbRX_ == NULL) {
-          PRINT("Receiver 'USB_RX' not found.\n");
+          PRINT("Receiver 'usb_rx' not found.\n");
         }
         if(usbRX_->getChannel() != SIMULATED_USB_CHANNEL)
         {
@@ -69,7 +69,16 @@ namespace Anki
       void USBFlush(void)
       {
         if(not USBsendBuffer_.empty()) {
-          usbTX_->send(&(USBsendBuffer_[0]), USBsendBuffer_.size());
+          if(usbTX_->send(&(USBsendBuffer_[0]),
+                          USBsendBuffer_.size()*sizeof(u8)) == 0)
+          {
+            PRINT("USBFlush(): send failed, queue was full.\n");
+          }
+          else {
+            PRINT("USBFlush(): Sent %lu bytes on channel %d.\n",
+                  USBsendBuffer_.size()*sizeof(u8),
+                  usbTX_->getChannel());
+          }
           USBsendBuffer_.clear();
         }
       }
@@ -121,7 +130,9 @@ namespace Anki
     
       void USBSendBuffer(u8* buffer, u32 size)
       {
-        usbTX_->send(buffer, size*sizeof(u8));
+        if(usbTX_->send(buffer, size*sizeof(u8)) == 0) {
+          PRINT("USBSendBuffer(): Failed to send, queue is full.\n");
+        }
       }
       
       u32 USBGetNumBytesToRead(void)
