@@ -51,6 +51,10 @@ namespace Anki {
         
         bool isTemplateInitialized_ = false;
         
+#if USE_OFFBOARD_VISION
+        u8 waitingForProcessingResult_ = 0;
+#endif
+        
         // Pointers to "Mailboxes" for communicating information back to
         // mainExecution()
         BlockMarkerMailbox* blockMarkerMailbox_ = NULL;
@@ -167,6 +171,81 @@ namespace Anki {
         return EXIT_SUCCESS;
       }
       
+      inline void ProcessMessage(const CozmoMsg_ObservedBlockMarker& msg)
+      {
+        VisionSystem::blockMarkerMailbox_->putMessage(msg);
+        
+        // If we have a block to dock with set, see if this was it
+        if(dockingBlock_ > 0 && dockingBlock_ == msg.blockType)
+        {
+          // This will just start docking with the first block we see
+          // that matches the block type.
+          // TODO: Something smarter about seeing the block in the expected place?
+          isDockingBlockFound_ = true;
+          
+        }
+      }
+      
+      inline void ProcessMessage(const CozmoMsg_TemplateInitialized& msg)
+      {
+        if(msg.success) {
+          isTemplateInitialized_ = true;
+        }
+        else {
+          isTemplateInitialized_ = false;
+        }
+      }
+      
+      inline void ProcessMessage(const CozmoMsg_DockingErrorSignal& msg)
+      {
+        // Just pass the docking error signal along to the mainExecution to
+        // deal with. Note that if the message indicates tracking failed,
+        // the mainExecution thread should handle it, and put the vision
+        // system back in LOOKING_FOR_BLOCKS mode.
+        VisionSystem::dockingMailbox_->putMessage(msg);
+      }
+      
+      u8 ProcessMessage(const u8* msgBuffer)
+      {
+        if(msgBuffer[0] < 2) {
+          PRINT("ProcessMessage: message size < 2!\n");
+          return 0;
+        }
+        
+        const u8 msgID = msgBuffer[1];
+        
+        // Put the packet in the corresponding Mailbox to be picked up
+        // and processed by mainExecution()
+        switch(msgID)
+        {
+          case MSG_V2B_CORE_BLOCK_MARKER_OBSERVED:
+          {
+            ProcessMessage(*reinterpret_cast<const CozmoMsg_ObservedBlockMarker*>(msgBuffer));
+            break;
+          }
+            
+          case MSG_OFFBOARD_VISION_TEMPLATE_INITIALIZED:
+          {
+            ProcessMessage(*reinterpret_cast<const CozmoMsg_TemplateInitialized*>(msgBuffer));
+            break;
+          }
+            
+          case MSG_V2B_CORE_DOCKING_ERROR_SIGNAL:
+          {
+            ProcessMessage(*reinterpret_cast<const CozmoMsg_DockingErrorSignal*>(msgBuffer));
+            break;
+          }
+            
+          default:
+            PRINT("USBProcessNextPacket(): unexpected msgID received, "
+                  "reached default case!\n");
+        } // switch(msgID)
+        
+        return msgID;
+        
+      } // ProcessMessage()
+
+      
       ReturnCode Update(u8* memoryBuffer)
       {
         ReturnCode retVal = EXIT_SUCCESS;
@@ -177,6 +256,23 @@ namespace Anki {
         //       capture at the correct resolution directly and pass that in
         //       (and remove the downsampling from USBSendFrame()
         
+        if(waitingForProcessingResult_ > 0)
+        {
+          PRINT("VisionSystem::Update(): waiting for processing result.\n");
+
+          if(HAL::USBGetNextPacket(msgBuffer_) == EXIT_SUCCESS &&
+             ProcessMessage(msgBuffer_) == waitingForProcessingResult_)
+          {
+              // Got the result message we were looking for, go back to
+              // processing
+              waitingForProcessingResult_ = 0;
+          }
+          else {
+            // Still waiting, skip further vision processing below.
+            return EXIT_SUCCESS;
+          }
+        }
+
         switch(mode_)
         {
           case LOOKING_FOR_BLOCKS:
@@ -303,126 +399,18 @@ namespace Anki {
       }
       
       
-      inline void ProcessMessage(const CozmoMsg_ObservedBlockMarker& msg)
-      {
-        VisionSystem::blockMarkerMailbox_->putMessage(msg);
-        
-        // If we have a block to dock with set, see if this was it
-        if(dockingBlock_ > 0 && dockingBlock_ == msg.blockType)
-        {
-          // This will just start docking with the first block we see
-          // that matches the block type.
-          // TODO: Something smarter about seeing the block in the expected place?
-          isDockingBlockFound_ = true;
-          
-        }
-      }
-      
-      inline void ProcessMessage(const CozmoMsg_TemplateInitialized& msg)
-      {
-        if(msg.success) {
-          isTemplateInitialized_ = true;
-        }
-        else {
-          isTemplateInitialized_ = false;
-        }
-      }
-      
-      inline void ProcessMessage(const CozmoMsg_DockingErrorSignal& msg)
-      {
-        // Just pass the docking error signal along to the mainExecution to
-        // deal with. Note that if the message indicates tracking failed,
-        // the mainExecution thread should handle it, and put the vision
-        // system back in LOOKING_FOR_BLOCKS mode.
-        VisionSystem::dockingMailbox_->putMessage(msg);
-      }
-      
-      u8 ProcessMessage(const u8* msgBuffer)
-      {
-        if(msgBuffer[0] < 2) {
-          PRINT("ProcessMessage: message size < 2!\n");
-          return 0;
-        }
-        
-        const u8 msgID = msgBuffer[1];
-        
-        // Put the packet in the corresponding Mailbox to be picked up
-        // and processed by mainExecution()
-        switch(msgID)
-        {
-          case MSG_V2B_CORE_BLOCK_MARKER_OBSERVED:
-          {
-            ProcessMessage(*reinterpret_cast<const CozmoMsg_ObservedBlockMarker*>(msgBuffer));
-            break;
-          }
-            
-          case MSG_OFFBOARD_VISION_TEMPLATE_INITIALIZED:
-          {
-            ProcessMessage(*reinterpret_cast<const CozmoMsg_TemplateInitialized*>(msgBuffer));
-            break;
-          }
-            
-          case MSG_V2B_CORE_DOCKING_ERROR_SIGNAL:
-          {
-            ProcessMessage(*reinterpret_cast<const CozmoMsg_DockingErrorSignal*>(msgBuffer));
-            break;
-          }
-            
-          default:
-            PRINT("USBProcessNextPacket(): unexpected msgID received, "
-                  "reached default case!\n");
-        } // switch(msgID)
-        
-        return msgID;
-        
-      } // ProcessMessage()
-
-      // Waits until a message with specified msgID is received or until
-      // timeOut time has passed. Processes all messages in the mean time.
-      ReturnCode WaitForProcessingResult(const u8 msgID, const u32 timeOut)
-      {
-        ReturnCode retVal = EXIT_SUCCESS;
-        
-        bool resultReceived = false;
-        u32 startTime = HAL::GetMicroCounter();
-        while(not resultReceived &&
-              HAL::GetMicroCounter() - startTime < timeOut)
-        {
-          if(HAL::USBGetNextPacket(msgBuffer_) == EXIT_SUCCESS)
-          {
-            if(ProcessMessage(msgBuffer_) == msgID) {
-              resultReceived = true;
-            }
-          }
-        }
-        
-        if(not resultReceived) {
-          retVal = EXIT_FAILURE;
-        }
-        
-        return retVal;
-      }
-      
-      
       ReturnCode LookForBlocks(const FrameBuffer &frame)
       {
         ReturnCode retVal = EXIT_SUCCESS;
         
 #if USE_OFFBOARD_VISION
-        
-        // TODO: move this elsewhere?
-        const u32 LOOKING_FOR_BLOCKS_TIMEOUT = 100000; // in microseconds
-        
+       
         // Send the offboard vision processor the frame, with the command
         // to look for blocks in it
         HAL::USBSendFrame(frame.data, frame.resolution, DETECTION_RESOLUTION,
                           HAL::USB_VISION_COMMAND_DETECTBLOCKS);
         
-        // Wait until we get the result or timeout in the process.
-        // (This will also process any other commands we get in the meant time.)
-        retVal = WaitForProcessingResult(MSG_OFFBOARD_VISION_TOTAL_BLOCKS_FOUND,
-                                         LOOKING_FOR_BLOCKS_TIMEOUT);
-        
+        waitingForProcessingResult_ = MSG_OFFBOARD_VISION_TOTAL_BLOCKS_FOUND;
         
 /*
         mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(frame.data, nrows, ncols, 4);
@@ -542,7 +530,7 @@ namespace Anki {
         
 #endif // defined(USE_MATLAB_FOR_HEAD_CAMERA)
         
-        return EXIT_SUCCESS;
+        return retVal;
         
       } // lookForBlocks()
       
@@ -553,18 +541,13 @@ namespace Anki {
         
 #if USE_OFFBOARD_VISION
         
-        // TODO: move this elsewhere?
-        const u32 MAT_LOCALIZATION_TIMEOUT = 100000; // in microseconds
-        
         // Send the offboard vision processor the frame, with the command
         // to look for blocks in it
         HAL::USBSendFrame(frame.data, frame.resolution, TRACKING_RESOLUTION,
                           HAL::USB_VISION_COMMAND_MATLOCALIZATION);
         
-        // Wait until we get the result or timeout in the process.
-        // (This will also process any other commands we get in the meant time.)
-        retVal = WaitForProcessingResult(MSG_V2B_CORE_MAT_MARKER_OBSERVED,
-                                         MAT_LOCALIZATION_TIMEOUT);
+        waitingForProcessingResult_ = MSG_V2B_CORE_MAT_MARKER_OBSERVED;
+        
 /*
         const s32 nrows = static_cast<s32>(frame.height);
         const s32 ncols = static_cast<s32>(frame.width);
@@ -669,19 +652,12 @@ namespace Anki {
         
 #if USE_OFFBOARD_VISION
         
-        // TODO: move this elsewhere?
-        const u32 INIT_TEMPLATE_TIMEOUT = 100000; // in microseconds
-        
         // Send the offboard vision processor the frame, with the command
         // to look for blocks in it
         HAL::USBSendFrame(frame.data, frame.resolution, DETECTION_RESOLUTION,
                           HAL::USB_VISION_COMMAND_INITTRACK);
         
-        // Wait until we get the result or timeout in the process.
-        // (This will also process the result and any other commands we get in
-        //  the meantime.)
-        retVal = WaitForProcessingResult(MSG_OFFBOARD_VISION_TEMPLATE_INITIALIZED,
-                                         INIT_TEMPLATE_TIMEOUT);
+        waitingForProcessingResult_ = MSG_OFFBOARD_VISION_TEMPLATE_INITIALIZED;
         
 #else
         // TODO: Call embedded vision template initalization
@@ -702,14 +678,11 @@ namespace Anki {
         
 #if USE_OFFBOARD_VISION
         
-        const u32 TRACKING_TIMEOUT = 100000;
-        
         // Send the message out for tracking
         HAL::USBSendFrame(frame.data, frame.resolution, TRACKING_RESOLUTION,
                           HAL::USB_VISION_COMMAND_TRACK);
         
-        retVal = WaitForProcessingResult(MSG_V2B_CORE_DOCKING_ERROR_SIGNAL,
-                                         TRACKING_TIMEOUT);
+        waitingForProcessingResult_ = MSG_V2B_CORE_DOCKING_ERROR_SIGNAL;
         
 #else // ONBOARD VISION
         
