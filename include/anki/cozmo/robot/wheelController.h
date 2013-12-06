@@ -43,8 +43,7 @@ namespace Anki {
     const float WHEEL_SPEED_COMMAND_STOPPED_MM_S = 2.0;
     
     //How fast (in mm/sec) can a wheel spin at max
-    const float MAX_WHEEL_SPEED_MM_S = 1000; // TODO: float or int?
-    const float MIN_WHEEL_SPEED_MM_S = 0;    // TODO: float or int?
+    const f32 MAX_WHEEL_SPEED_MM_S = 1.0 / HIGH_OPEN_LOOP_GAIN;
     
     //If we drive slower than this, the vehicle is stopped
     const float WHEEL_SPEED_CONSIDER_STOPPED_MM_S = 2; // TODO: float or int?

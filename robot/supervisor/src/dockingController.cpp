@@ -256,12 +256,6 @@ namespace Anki {
               PRINT("DONE DOCKING\n");
             }
             
-            // Go to IDLE when we lose tracking of the block
-            if (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_US) {
-              success_ = false;
-              isDocked_ = false;
-              mode_ = IDLE;
-            }
             break;
           case SET_CARRY_LIFT_HEIGHT:
             if (HAL::GetMicroCounter() > transitionTime_) {

@@ -8,6 +8,7 @@
 #include <math.h>
 
 #include "anki/cozmo/robot/cozmoConfig.h"
+#include "dockingController.h"
 #include "anki/cozmo/robot/localization.h"
 #include "anki/cozmo/robot/pathFollower.h"
 #include "anki/cozmo/robot/speedController.h"
@@ -59,7 +60,7 @@ namespace Anki {
     
     // Private function declarations
     //Non linear version of the steering controller (For SM_PATH_FOLLOW)
-    void RunLineFollowControllerNL(s16 location_pix, float headingError_rad);
+    void RunLineFollowControllerNL(f32 location_pix, float headingError_rad);
     void ManagePathFollow();
     void ManagePointTurn();
     void ManageDirectDrive();
@@ -127,7 +128,7 @@ namespace Anki {
      * @param wleft
      * @param wright
      */
-    void RunLineFollowControllerNL(s16 location_pix, float headingError_rad)
+    void RunLineFollowControllerNL(f32 location_pix, float headingError_rad)
     {
       
       //We only steer in certain cases, for example if the car is supposed to move
@@ -189,10 +190,10 @@ namespace Anki {
       
       if (steering_active == TRUE)
       {
-        //const float speed_to_pwm = 588.f; // Estimate from specs as well as value from polyFunctions.c at 1.07 m/s
         //convert speed to meters per second
-        float speedmps = currspeed * 0.001f;
-        float attitude = asin_fast(xtrack_speed / speedmps);
+        float speedmps = currspeed * M_PER_MM;
+        //float attitude = asin_fast(xtrack_speed / speedmps);
+        float attitude = -headingError_rad;
         curvature = -K1_ * (atan_fast(K2_ * xtrack_error / (speedmps + 0.2f)) + attitude);
         //We should allow this to go somewhat negative I think... but not too much
         
@@ -202,24 +203,6 @@ namespace Anki {
         Tracefloat(TRACE_VAR_SPEEDMPS, speedmps, TRACE_MASK_MOTOR_CONTROLLER);
         Tracefloat(TRACE_VAR_CURVATURE, curvature, TRACE_MASK_MOTOR_CONTROLLER);
         
-        
-        /*
-         PROFILE_START(profRunLineFollow1);
-         //float atanVal = atan(K2 * xtrack_error / speedmps);
-         float atanVal = atan_fast(K2 * xtrack_error / speedmps);
-         PROFILE_END(profRunLineFollow1);
-         
-         PROFILE_START(profRunLineFollow2);
-         //float asinVal = asin(CLIP(xtrack_speed / speedmps, -1, 1));
-         float asinVal = asin_fast(xtrack_speed / speedmps);
-         PROFILE_END(profRunLineFollow2);
-         
-         curvature = -K1 * (atanVal + asinVal);
-         
-         Tracefloat("xtrack_error", xtrack_error, TRACE_MASK_PROFILING);
-         Tracefloat("xtrack_speed", xtrack_speed, TRACE_MASK_PROFILING);
-         Tracefloat("speedmps", speedmps, TRACE_MASK_PROFILING);
-         */
       } else {
 
         curvature = 0;
@@ -236,16 +219,61 @@ namespace Anki {
         curvature = 0;
       }
       
+#if(DEBUG_STEERING_CONTROLLER)
+      PRINT(" STEERING: headingErr: %f, headingRad: %f, currSpeed: %d\n", location_pix, headingError_rad, currspeed);
+      PRINT(" STEERING: xtrack_err: %f, xtrack_speed: %f, attitude: %f, curvature: %f\n", xtrack_error, xtrack_speed, asin_fast(xtrack_speed / ((f32)currspeed * 0.001f)), curvature);
+#endif
+      
+      
       //We are moving along a circle, so let's compute the speed for the single wheels
       //Let's interpret the delta_speed as a curvature:
       //Curvature is 1/radius
       // Commanded speeds to wheels are desired speed + offsets for curvature
       
       //if delta speed is positive, the left wheel is supposed to turn slower, it becomes the INNER wheel
-      float leftspeed =  (float)desspeed - WHEEL_DIST_HALF_MM * curvature * currspeed;
+      float leftspeed =  (float)desspeed - WHEEL_DIST_HALF_MM * curvature * desspeed;
       
       //if delta speed is positive, the right wheel is supposed to turn faster, it becomes the OUTER wheel
-      float rightspeed = (float)desspeed + WHEEL_DIST_HALF_MM * curvature * currspeed;
+      float rightspeed = (float)desspeed + WHEEL_DIST_HALF_MM * curvature * desspeed;
+      
+      
+      // Do any of the speeds exceed max?
+      // If so, then shift both speeds to be within range by the same amount
+      // so that desired curvature is still achieved.
+      // If we're in path following mode, maintaining proper curvature
+      // is probably more important than maintaining speed.
+      f32 *lowerWheelSpeed = &leftspeed;
+      f32 *higherWheelSpeed = &rightspeed;
+      if (leftspeed > rightspeed) {
+        lowerWheelSpeed = &rightspeed;
+        higherWheelSpeed = &leftspeed;
+      }
+      
+      f32 wheelSpeedDiff = *higherWheelSpeed - *lowerWheelSpeed;
+      f32 avgSpeed = (*higherWheelSpeed + *lowerWheelSpeed) * 0.5;
+      
+      // Center speeds on 0 if wheelSpeedDiff exceeds maximum achievable wheel speed
+      if (wheelSpeedDiff > 2*WheelController::MAX_WHEEL_SPEED_MM_S) {
+        *higherWheelSpeed -= avgSpeed;
+        *lowerWheelSpeed -= avgSpeed;
+      }
+      
+      // If higherWheelSpeed exceeds max, decrease both wheel speeds
+      if (*higherWheelSpeed > WheelController::MAX_WHEEL_SPEED_MM_S) {
+        *lowerWheelSpeed -= *higherWheelSpeed - WheelController::MAX_WHEEL_SPEED_MM_S;
+        *higherWheelSpeed -= *higherWheelSpeed - WheelController::MAX_WHEEL_SPEED_MM_S;
+      }
+      
+      // If lowerWheelSpeed is faster than negative max, increase both wheel speeds
+      if (*lowerWheelSpeed < -WheelController::MAX_WHEEL_SPEED_MM_S) {
+        *higherWheelSpeed -= *lowerWheelSpeed + WheelController::MAX_WHEEL_SPEED_MM_S;
+        *lowerWheelSpeed -= *lowerWheelSpeed + WheelController::MAX_WHEEL_SPEED_MM_S;
+      }
+      
+      // TODO: Should we also make sure that neither the left or right wheel is
+      // driving at a speed that is less than the minimum wheel speed?
+      // What's the point of commanding unreachable desired speeds?
+      // ...
       
       s16 wleft = (s16)CLIP(leftspeed,s16_MIN,s16_MAX);
       s16 wright = (s16)CLIP(rightspeed,s16_MIN,s16_MAX);
@@ -268,7 +296,7 @@ namespace Anki {
     void ManagePathFollow()
     {
       f32 pathDistErr = 0, pathRadErr = 0;
-      s16 fidx = INVALID_IDEAL_FOLLOW_LINE_IDX;
+      f32 fidx = INVALID_IDEAL_FOLLOW_LINE_IDX;
       if (PathFollower::IsTraversingPath()) {
         bool gotError = PathFollower::GetPathError(pathDistErr, pathRadErr);
         
@@ -276,14 +304,19 @@ namespace Anki {
           fidx = pathDistErr*1000.f; // Convert to mm
           
           // HACK!
-          fidx = CLIP(fidx, -4, 4);  // TODO: Loosen this up the closer we get to the block?????
+          //SetGains(DEFAULT_STEERING_K1, DEFAULT_STEERING_K2);
+          if (DockingController::IsDockingOrPlacing()) {
+            //SetGains(DEFAULT_STEERING_K1, 5.f);
+            fidx = CLIP(fidx, -4, 4);  // TODO: Loosen this up the closer we get to the block?????
+            pathRadErr = CLIP(pathRadErr, -0.2, 0.2);
+          }
           
-          PERIODIC_PRINT(1000,"fidx: %d, distErr %f, radErr %f\n", fidx, pathDistErr, pathRadErr);
-          //PRINT("fidx: %d, distErr %f, radErr %f\n", fidx, pathDistErr, pathRadErr);
+          PERIODIC_PRINT(1000,"fidx: %f, distErr %f, radErr %f\n", fidx, pathDistErr, pathRadErr);
+          //PRINT("fidx: %f, distErr %f, radErr %f\n", fidx, pathDistErr, pathRadErr);
 #if(DEBUG_MAIN_EXECUTION)
           {
             using namespace Sim::OverlayDisplay;
-            SetText(PATH_ERROR, "PathError: %.4f m, %.1f deg  => fidx: %d",
+            SetText(PATH_ERROR, "PathError: %.4f m, %.1f deg  => fidx: %f",
                     pathDistErr, pathRadErr * (180.f/M_PI),
                     fidx);
           }
