@@ -9,22 +9,9 @@
 #include <cstdio>
 #include <queue>
 
-// Set to zero to use the regular C interface, which we may need to avoid
-// difficulties linking against our libraries which C++11 standard libs, unlike
-// the webots CppController lib, which appears to be linked against an older
-// version of the standard libs.
-#define USE_WEBOTS_CPP_INTERFACE 1
 
 //#include "CozmoWorldComms.h"
-
-#if USE_WEBOTS_CPP_INTERFACE
 #include <webots/Supervisor.hpp>
-#else
-#include <webots/emitter.h>
-#include <webots/receiver.h>
-#include <webots/robot.h>
-#include <webots/supervisor.h>
-#endif
 
 #include "anki/common/basestation/math/pose.h"
 
@@ -36,14 +23,12 @@
 
 #include "anki/cozmo/messageProtocol.h"
 
-#if(USE_WEBOTS_CPP_INTERFACE)
 webots::Supervisor commsController;
-#endif
 
 class SimBlock
 {
 public:
-#if(USE_WEBOTS_CPP_INTERFACE)
+
   SimBlock(webots::Node* nodeIn, Anki::Cozmo::BlockType typeIn)
   : node(nodeIn), type(typeIn), selected(false), bwBlock(NULL)
   {
@@ -51,16 +36,7 @@ public:
     rotField = node->getField("obsRotation");
     translationField = node->getField("obsTranslation");
     colorField = node->getField("obsColor");
-#else
-  SimBlock(WbNodeRef nodeIn, Anki::Cozmo::BlockType typeIn)
-  : node(nodeIn), type(typeIn), selected(false), bwBlock(NULL)
-  {
-    transparencyField = wb_supervisor_node_get_field(node, "obsTransparency");
-    rotField = wb_supervisor_node_get_field(node, "obsRotation");
-    translationField = wb_supervisor_node_get_field(node, "obsTranslation");
-    colorField = wb_supervisor_node_get_field(node, "obsColor");
-    
-#endif
+
     if(transparencyField == NULL) {
       fprintf(stdout, "Could not find 'obsTransparency' field for Webot block.");
       CORETECH_ASSERT(false);
@@ -105,11 +81,7 @@ public:
       rotAngle.ToDouble()
     };
     
-#if(USE_WEBOTS_CPP_INTERFACE)
     rotField->setSFRotation(webotRotation);
-#else
-    wb_supervisor_field_set_sf_rotation(rotField, webotRotation);
-#endif
     
     Anki::Vec3f translation(obsPose.get_translation());
     translation *= 1.f/1000.f; // convert from mm to meters
@@ -119,17 +91,12 @@ public:
       static_cast<double>(translation.y())
     };
     
-#if(USE_WEBOTS_CPP_INTERFACE)
     translationField->setSFVec3f(webotTranslation);
-#else
-    wb_supervisor_field_set_sf_vec3f(translationField, webotTranslation);
-#endif
     
   } // updatePose()
   
   void draw(void) const
   {
-#if(USE_WEBOTS_CPP_INTERFACE)
     if(bwBlock != NULL) {
       transparencyField->setSFFloat(0.f);
       
@@ -144,29 +111,10 @@ public:
       // Don't display
       transparencyField->setSFFloat(1.f);
     }
-#else
-    if(bwBlock != NULL) {
-      wb_supervisor_field_set_sf_float(transparencyField, 0.);
-      
-      if(selected) {
-        const double selectedColor[3] = {1., 1., 1.};
-        wb_supervisor_field_set_sf_color(colorField, selectedColor);
-      } else {
-        const double UNselectedColor[3] = {1., 1., 0.};
-        wb_supervisor_field_set_sf_color(colorField, UNselectedColor);
-      }
-    } else {
-      // Don't display
-      wb_supervisor_field_set_sf_float(transparencyField, 1.);
-    }
-#endif
   } // draw()
   
-#if(USE_WEBOTS_CPP_INTERFACE)
-    webots::Node* node;
-#else
-  WbNodeRef node;
-#endif
+  webots::Node* node;
+
   Anki::Cozmo::BlockType type;
   bool      selected;
   
@@ -174,17 +122,10 @@ public:
   
 private:
   
-#if(USE_WEBOTS_CPP_INTERFACE)
   webots::Field* transparencyField;
   webots::Field* rotField;
   webots::Field* translationField;
   webots::Field* colorField;
-#else
-  WbFieldRef transparencyField;
-  WbFieldRef rotField;
-  WbFieldRef translationField;
-  WbFieldRef colorField;
-#endif
 };
 
 //
@@ -192,21 +133,13 @@ private:
 //
 
 // Populate lists of block/robot nodes for later use
-#if(USE_WEBOTS_CPP_INTERFACE)
-  void initWorldNodes(std::map<std::string, webots::Node*>&  nameToNodeLUT,
-                      std::vector<SimBlock>&             simBlocks,
-                      std::vector<webots::Node*>&            robotNodes);
-  
-  Anki::Pose3d getNodePose(webots::Node* node);
-  
-#else
-void initWorldNodes(std::map<std::string, WbNodeRef>&  nameToNodeLUT,
+void initWorldNodes(std::map<std::string, webots::Node*>&  nameToNodeLUT,
                     std::vector<SimBlock>&             simBlocks,
-                    std::vector<WbNodeRef>&            robotNodes);
+                    std::vector<webots::Node*>&            robotNodes);
 
-Anki::Pose3d getNodePose(WbNodeRef node);
-#endif
+Anki::Pose3d getNodePose(webots::Node* node);
   
+
 void ProcessKeystroke(Anki::Cozmo::BlockWorld& blockWorld,
                       std::vector<SimBlock>&   blockNodes);
 
@@ -229,30 +162,17 @@ int main(int argc, char **argv)
   
   const int MAX_ROBOTS = Anki::Cozmo::BlockWorld::MaxRobots;
   
-#if USE_WEBOTS_CPP_INTERFACE
   webots::Receiver* rx[MAX_ROBOTS];
   webots::Emitter*  tx[MAX_ROBOTS];
   commsController.keyboardEnable(Anki::Cozmo::TIME_STEP);
-#else
-  wb_robot_init();
-  wb_robot_keyboard_enable(Anki::Cozmo::TIME_STEP);
-  
-  WbDeviceTag rx[MAX_ROBOTS];
-  WbDeviceTag tx[MAX_ROBOTS];
-#endif
-  
+ 
   
   //
   // Initialize the node lists for the world this controller lives in
   //  (this needs to happen after wb_robot_init!)
   //
-#if(USE_WEBOTS_CPP_INTERFACE)
   std::map<std::string, webots::Node*>  nameToNodeLUT;
   std::vector<webots::Node*>            robotNodes;
-#else
-  std::map<std::string, WbNodeRef>  nameToNodeLUT;
-  std::vector<WbNodeRef>            robotNodes;
-#endif
   std::vector<SimBlock>             simBlocks;
   initWorldNodes(nameToNodeLUT, simBlocks, robotNodes);
   
@@ -270,25 +190,15 @@ int main(int argc, char **argv)
     snprintf(rxRadioName, 11, "radio_rx_%d", i+1);
     snprintf(txRadioName, 11, "radio_tx_%d", i+1);
     
-#if USE_WEBOTS_CPP_INTERFACE
     tx[i] = commsController.getEmitter(txRadioName);
     rx[i] = commsController.getReceiver(rxRadioName);
     rx[i]->enable(Anki::Cozmo::TIME_STEP);
-#else
-    tx[i] = wb_robot_get_device(txRadioName);
-    rx[i] = wb_robot_get_device(rxRadioName);
-    wb_receiver_enable(rx[i], Anki::Cozmo::TIME_STEP);
-#endif
   }
  
   //
   // Main Execution loop: step the world forward forever
   //
-#if USE_WEBOTS_CPP_INTERFACE
   while (commsController.step(Anki::Cozmo::TIME_STEP) != -1)
-#else
-  while(wb_robot_step(Anki::Cozmo::TIME_STEP) != -1)
-#endif
   {
     //
     // Check for any incoming messages from each physical robot:
@@ -300,7 +210,6 @@ int main(int argc, char **argv)
       
       // Read receiver for as long as it is not empty.
       // Put its bytes into a byte queue.
-#if USE_WEBOTS_CPP_INTERFACE
       while (rx[i]->getQueueLength() > 0)
       {
         // Get head packet
@@ -312,20 +221,6 @@ int main(int argc, char **argv)
         rx[i]->nextPacket();
         
       } // while receiver queue not empty
-#else
-      while(wb_receiver_get_queue_length(rx[i]) > 0)
-      {
-        // Get head packet
-        data = (unsigned char *)wb_receiver_get_data(rx[i]);
-        dataSize = wb_receiver_get_data_size(rx[i]);
-        
-        processPacket(data, dataSize, blockWorld, i);
-        
-        wb_receiver_next_packet(rx[i]);
-        
-      } // while receiver queue not empty
-      
-#endif // USE_WEBOTS_CPP_INTERFACE
       
     } // for each receiver
     
@@ -345,11 +240,7 @@ int main(int argc, char **argv)
         
         robot.getOutgoingMessage(msgData, msgSize);
         if(msgSize > 0) {
-#if(USE_WEBOTS_CPP_INTERFACE)
           tx[i]->send(msgData, msgSize);
-#else
-          wb_emitter_send(tx[i], msgData, msgSize);
-#endif
         }
         
       } // while robot i still has outgoing messages to send
@@ -401,10 +292,6 @@ int main(int argc, char **argv)
   } // while still stepping
 
   //delete msgInterface;
-  
-#if !USE_WEBOTS_CPP_INTERFACE
-  wb_robot_cleanup();
-#endif
   
   return 0;
 }
@@ -508,11 +395,7 @@ void ProcessKeystroke(Anki::Cozmo::BlockWorld&  blockWorld,
   const s32 CKEY_SELECT_PREV_BLOCK = static_cast<s32>('[');
   const s32 CKEY_SELECT_NEXT_BLOCK = static_cast<s32>(']');
   
-#if(USE_WEBOTS_CPP_INTERFACE)
   const s32 key = commsController.keyboardGetKey();
-#else
-  const s32 key = wb_robot_keyboard_get_key();
-#endif
   
   switch (key)
   {
@@ -598,53 +481,28 @@ void ProcessKeystroke(Anki::Cozmo::BlockWorld&  blockWorld,
   
 } // ProcessKeyStroke()
 
-#if(USE_WEBOTS_CPP_INTERFACE)
 void initWorldNodes(std::map<std::string, webots::Node*>&  nameToNodeLUT,
                     std::vector<SimBlock>&                 simBlocks,
                     std::vector<webots::Node*>&            robotNodes)
-#else
-void initWorldNodes(std::map<std::string, WbNodeRef>&  nameToNodeLUT,
-                    std::vector<SimBlock>&             simBlocks,
-                    std::vector<WbNodeRef>&            robotNodes)
-#endif
 {
   
-#if(USE_WEBOTS_CPP_INTERFACE)
   webots::Node* rootNode = commsController.getRoot();
-#else
-  WbNodeRef rootNode = wb_supervisor_node_get_root();
-#endif
   
   if(rootNode == NULL) {
     fprintf(stdout, "Root node not found -- is the supervisor node initialized?\n");
     CORETECH_ASSERT(false);
   }
   
-#if(USE_WEBOTS_CPP_INTERFACE)
   webots::Field* sceneNodes = rootNode->getField("children");
   int numSceneNodes = sceneNodes->getCount();
-#else
-  WbFieldRef sceneNodes = wb_supervisor_node_get_field(rootNode, "children");
-  int numSceneNodes = wb_supervisor_field_get_count(sceneNodes);
-#endif
-
   
   for(int i_node = 0; i_node < numSceneNodes; ++i_node)
   {
-#if(USE_WEBOTS_CPP_INTERFACE)
     webots::Node* sceneObject = sceneNodes->getMFNode(i_node);
     webots::Field* nameField = sceneObject->getField("name");
-#else
-    WbNodeRef sceneObject = wb_supervisor_field_get_mf_node(sceneNodes, i_node);
-    WbFieldRef nameField = wb_supervisor_node_get_field(sceneObject, "name");
-#endif
     
     if(nameField != NULL) {
-#if(USE_WEBOTS_CPP_INTERFACE)
       const char *objName = nameField->getSFString().c_str();
-#else
-      const char *objName = wb_supervisor_field_get_sf_string(nameField);
-#endif
       
       if(objName != NULL) {
         
@@ -683,7 +541,6 @@ void initWorldNodes(std::map<std::string, WbNodeRef>&  nameToNodeLUT,
   
 } // initWorldNodes()
 
-#if(USE_WEBOTS_CPP_INTERFACE)
 Anki::Pose3d getNodePose(webots::Node* node)
 {
   if(node == NULL) {
@@ -705,29 +562,6 @@ Anki::Pose3d getNodePose(webots::Node* node)
   }
   const double *translation = transField->getSFVec3f();
   
-#else
-Anki::Pose3d getNodePose(WbNodeRef node)
-{
-  
-  if(node == NULL) {
-    fprintf(stdout, "Cannot GetNodePose for an empty name/node.");
-    CORETECH_ASSERT(false);
-  }
-  
-  WbFieldRef rotField = wb_supervisor_node_get_field(node, "rotation");
-  if(rotField == NULL) {
-    fprintf(stdout, "Could not find 'rotation' field for node.\n");
-    CORETECH_ASSERT(false);
-  }
-  const double *rotation = wb_supervisor_field_get_sf_rotation(rotField);
-  
-  WbFieldRef transField = wb_supervisor_node_get_field(node, "translation");
-  if(transField == NULL) {
-    fprintf(stdout, "Could not find 'translation' field for node.\n");
-    CORETECH_ASSERT(false);
-  }
-  const double *translation = wb_supervisor_field_get_sf_vec3f(transField);
-#endif
   // Note the coordinate change here: Webot has y pointing up,
   // while Matlab has z pointing up.  That swap induces a
   // right-hand to left-hand coordinate change (I think).  Also,
