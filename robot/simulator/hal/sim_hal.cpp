@@ -237,6 +237,9 @@ namespace Anki {
     
     ReturnCode HAL::Init()
     {
+      // TODO: need to check return code?
+      UARTInit();
+      
       leftWheelMotor_  = webotRobot_.getMotor("wheel_fl");
       rightWheelMotor_ = webotRobot_.getMotor("wheel_fr");
       
