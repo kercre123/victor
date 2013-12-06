@@ -237,6 +237,10 @@ DEF Cozmo CozmoBot {
   controller "cozmo_docking_controller_test"
 }
 
+USBConnection {
+ 
+}
+
 #DEF CozmoBotPose Robot {
 #
 #}

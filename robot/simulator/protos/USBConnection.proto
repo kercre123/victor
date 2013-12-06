@@ -1,0 +1,30 @@
+#VRML_SIM V7.3.0 utf8
+
+PROTO USBConnection [ 
+  field SFString name "USBConnection"
+  field SFInt32 usbChannel 88
+]
+{
+Supervisor {
+  
+  children [
+
+    Receiver {
+      name "USB_RX"
+      type "radio"
+      channel IS usbChannel
+    }
+
+    Emitter {
+      name "USB_TX"
+      type "radio"
+      bufferSize 100000
+      channel IS usbChannel
+    }
+  ]
+
+  name IS name
+  controller "offboard_vision_processor"
+} # Supervisor
+
+} # PROTO
