@@ -123,7 +123,7 @@ s32 testsInterp2()
 int main( void )
 {
   s32 testPassed;
-  const s32 whichAlgorithm = 3;
+  const s32 whichAlgorithm = 4;
 
   if(whichAlgorithm == 1) {
     testPassed = testIntegralImageFiltering();
@@ -131,6 +131,9 @@ int main( void )
     testPassed = testIntegralImageGeneration();
   } else if (whichAlgorithm == 3) {
     testPassed = testsInterp2();
+  } else if (whichAlgorithm == 4) {
+    predicateTests();
+    testPassed = 1;
   }
 
   if(testPassed)
