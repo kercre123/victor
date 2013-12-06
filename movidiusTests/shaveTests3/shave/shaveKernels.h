@@ -29,7 +29,7 @@ void interp2_shaveInnerLoop(
   const f32 * restrict pXCoordinates, const f32 * restrict pYCoordinates,
   const s32 numCoordinates,
   const u8 * restrict pReference, const int referenceStride,
-  const s32 xReferenceMax, const s32 yReferenceMax,
+  const f32 xReferenceMax, const f32 yReferenceMax,
   f32 * restrict pOut);
 
 void predicateTests();

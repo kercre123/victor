@@ -32,7 +32,7 @@ s32 testIntegralImageFiltering()
   for(i=0; i<59; i++) {
     if(outputLine[i] != filterOutput_groundTruth[i]) {
       testPassed = 0;
-      printf("Fail at %d\n", (int)i);
+      printf("Fail at %d (%d != %d)\n", (int)i, (int)outputLine[i], (int)filterOutput_groundTruth[i]);
       //break;
     }
   }
@@ -41,7 +41,7 @@ s32 testIntegralImageFiltering()
   for(i=59; i<60; i++) {
     if(outputLine[i] == filterOutput_groundTruth[i]) {
       testPassed = 0;
-      printf("Fail at %d\n", (int)i);
+      printf("Fail at %d (%d != %d)\n", (int)i, (int)outputLine[i], (int)filterOutput_groundTruth[i]);
       //break;
     }
   }
@@ -70,7 +70,7 @@ int testIntegralImageGeneration()
   for(i=0; i<61; i++) {
     if(integralImage[i+IMAGE_WIDTH] != integralImage_groundTruth[i]) {
       testPassed = 0;
-      printf("Fail at %d\n", (int)i);
+      printf("Fail at %d (%d != %d)\n", (int)i, (int)integralImage[i+IMAGE_WIDTH], (int)integralImage_groundTruth[i]);
       //break;
     }
   }
@@ -107,7 +107,7 @@ s32 testsInterp2()
   for(i=0; i<NUM_COORDINATES; i++) {
     if(fabs(pOut_groundTruth[i]-pOut[i]) > 1e-3) {
       testPassed = 0;
-      printf("Fail at %d\n", (int)i);
+      printf("Fail at %d (%f != %f)\n", (int)i, pOut_groundTruth[i], pOut[i]);
       //break;
     }
   }
@@ -123,7 +123,7 @@ s32 testsInterp2()
 int main( void )
 {
   s32 testPassed;
-  const s32 whichAlgorithm = 4;
+  const s32 whichAlgorithm = 3;
 
   if(whichAlgorithm == 1) {
     testPassed = testIntegralImageFiltering();
