@@ -420,10 +420,14 @@ namespace Anki
       // available, EXIT_FAILURE will be returned.  Once a valid header
       // is found and returned, EXIT_SUCCESS is returned.
       ReturnCode USBGetNextPacket(u8 *buffer);
-      
+
+#ifdef SIMULATOR
       // Called by SendFooter() to terminate a message when in simulation,
       // otherwise a no-op.
       void USBFlush();
+#endif
+
+      
       
 #endif // if USE_OFFBOARD_VISION
       
