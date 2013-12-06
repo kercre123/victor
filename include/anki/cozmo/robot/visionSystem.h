@@ -69,16 +69,10 @@ namespace Anki {
         // Take a message out of the mailbox
         MsgType getMessage();
         
-        // API for looking at messages without removing them from the mailbox
-        // or marking them as read
-        u8 getFirstUnread();
-        const MsgType& peekMessage(const u8 index) const;
-        bool isRead(const u8 index) const;
-        
       protected:
         MsgType messages[NumMessages];
         bool    beenRead[NumMessages];
-        u8 readIndex, writeIndex, peekIndex;
+        u8 readIndex, writeIndex;
         bool isLocked;
         
         void lock();
@@ -120,7 +114,7 @@ namespace Anki {
     VisionSystem::Mailbox<MsgType,NumMessages>::Mailbox() : isLocked(false)
     {
       for(u8 i=0; i<NumMessages; ++i) {
-        this->beenRead[i] = false;
+        this->beenRead[i] = true;
       }
     }
     
@@ -170,7 +164,6 @@ namespace Anki {
         u8 toReturn = readIndex;
         
         advanceIndex(readIndex);
-        advanceIndex(peekIndex);
         
         this->beenRead[toReturn] = true;
         return this->messages[toReturn];
@@ -190,26 +183,6 @@ namespace Anki {
           index = 0;
         }
       }
-    }
-    
-    template<typename MsgType, u8 NumMessages>
-    u8 VisionSystem::Mailbox<MsgType,NumMessages>::getFirstUnread()
-    {
-      return readIndex;
-    }
-    
-    template<typename MsgType, u8 NumMessages>
-    const MsgType& VisionSystem::Mailbox<MsgType,NumMessages>::peekMessage(const u8 index) const
-    {
-      // Assumes index < NumMessages
-      return this->messages[index];
-    }
-    
-    template<typename MsgType, u8 NumMessages>
-    bool VisionSystem::Mailbox<MsgType,NumMessages>::isRead(const u8 index) const
-    {
-      // Assumes index < NumMessages
-      return this->beenRead[index];
     }
     
   } // namespace Cozmo
