@@ -36,7 +36,7 @@ namespace Anki {
 #pragma mark --- Simulated HardwareInterface "Member Variables" ---
       
       bool isInitialized = false;
-        
+      
       webots::Supervisor webotRobot_;
       
       s32 robotID_ = -1;
@@ -674,8 +674,10 @@ namespace Anki {
           }
           
           headCamUpdateMode_ = updateMode;
+          /* Not trying to simulate capture time, so don't need this...
           headCamCaptureTime_ = headCamUpdateMode_ == CAMERA_UPDATE_SINGLE ? CAMERA_SINGLE_CAPTURE_TIME_US : CAMERA_CONTINUOUS_CAPTURE_TIME_US;
           headCamStartCaptureTime_ = GetMicroCounter();
+          */
           
           GetGrayscaleFrameHelper(headCam_, frameBuffer);
 
@@ -690,8 +692,10 @@ namespace Anki {
           }
           
           matCamUpdateMode_ = updateMode;
+          /* Not trying to simulate capture time, so don't need this...
           matCamCaptureTime_ = matCamUpdateMode_ == CAMERA_UPDATE_SINGLE ? CAMERA_SINGLE_CAPTURE_TIME_US : CAMERA_CONTINUOUS_CAPTURE_TIME_US;
           matCamStartCaptureTime_ = GetMicroCounter();
+           */
 
           GetGrayscaleFrameHelper(matCam_, frameBuffer);
           
@@ -722,6 +726,10 @@ namespace Anki {
     // Returns whether or not the specfied camera has received a full frame
     bool HAL::CameraIsEndOfFrame(CameraID cameraID)
     {
+      // Simulated cameras return frames instantaneously. Yay.
+      return true;
+      
+      /* Don't try to be so fancy.
       switch(cameraID) {
         case CAMERA_FRONT:
         
@@ -754,6 +762,7 @@ namespace Anki {
           break;
       }
       return false;
+       */
     }
     
     
