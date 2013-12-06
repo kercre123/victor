@@ -30,7 +30,7 @@ classdef SimulatedSerial < handle
             RX = [];
             TX = [];
             TIME_STEP = 64;
-            Port = 88;
+            Port = [];
             BaudRate = -1; %#ok<PROP>
                         
             parseVarargin(varargin{:});
@@ -42,7 +42,14 @@ classdef SimulatedSerial < handle
             this.rxDevice = RX;
             this.txDevice = TX;
             
-            this.Port = Port;
+            if ~isempty(Port)
+                this.Port = Port;
+            else 
+                assert(wb_receiver_get_channel(this.rxDevice) == ...
+                    wb_emitter_get_channel(this.txDevice), ...
+                    'Expecint receiver and emitter to be set to same channel.');
+            end
+            
             this.BaudRate = BaudRate; %#ok<PROP>
             this.timeStep = TIME_STEP;
             
