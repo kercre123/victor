@@ -53,6 +53,7 @@ Supervisor {
     Receiver {
        name "usb_rx"
        type "radio"
+       bufferSize 500000
        channel IS usbChannel
     }
     

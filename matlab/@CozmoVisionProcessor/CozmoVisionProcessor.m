@@ -15,6 +15,16 @@ classdef CozmoVisionProcessor < handle
             char(sscanf('B7', '%2x'))}, ...
             {[640 480], [320 240], [160 120], [80 60], [40 30]});        
         
+        % Processing Commands
+        % (These should match the USB_VISION_COMMANDs defined in hal.h)
+        MESSAGE_COMMAND          = char(sscanf('DD', '%2x'));
+        DETECT_COMMAND           = char(sscanf('AB', '%2x'));
+        INIT_TRACK_COMMAND       = char(sscanf('BC', '%2x'));
+        TRACK_COMMAND            = char(sscanf('CD', '%2x'));
+        MAT_ODOMETRY_COMMAND     = char(sscanf('DE', '%2x'));
+        MAT_LOCALIZATION_COMMAND = char(sscanf('EF', '%2x'));
+                    
+                    
     end % Constant Properties
     
     properties
@@ -24,6 +34,7 @@ classdef CozmoVisionProcessor < handle
         h_fig;
         h_img;
         h_axes;
+        h_title;
     end
     
     methods
@@ -42,18 +53,26 @@ classdef CozmoVisionProcessor < handle
             this.h_fig = namedFigure('CozmoVisionProcessor');
             this.h_axes = subplot(1,1,1, 'Parent', this.h_fig);
             this.h_img = imagesc(zeros(320,240), 'Parent', this.h_axes);
+            this.h_title = title(this.h_axes, 'Initialized');
+            
+            hold(this.h_axes, 'on');
+            colormap(this.h_fig, 'gray');
             
         end % Constructor: CozmoVisionProcessor()
        
         function Update(this)
             
             % Read whatever is available in the serial port:
-            this.serialBuffer = [this.serialBuffer row(uint8(fread(this.serialDevice)))];
+            newData = row(uint8(fread(this.serialDevice)));
             
-            if ~isempty(this.serialBuffer)
-            desktop
-            keyboard
+            if isempty(newData)
+                return;
             end
+            
+            this.serialBuffer = [this.serialBuffer newData];
+           
+            fprintf('Received %d bytes. Buffer now %d bytes long.\n', ...
+                length(newData), length(this.serialBuffer));
             
             % Find the headers and footers
             headerIndex = strfind(this.serialBuffer, this.HEADER);
@@ -91,6 +110,8 @@ classdef CozmoVisionProcessor < handle
                         
                     end
                 end
+                
+                i_header = i_header + 1;
             end % FOR each header
             
             % Kill what's in the buffer, whether we processed it above or
@@ -117,9 +138,11 @@ classdef CozmoVisionProcessor < handle
                     fprintf('MessagePacket: %s\n', packet);
                     
                 case this.DETECT_COMMAND
-                    img = PacketToImage(packet);
+                    delete(findobj(this.h_axes, 'Tag', 'BlockMarker2D'));
+                    
+                    img = CozmoVisionProcessor.PacketToImage(packet);
                     if ~isempty(img)
-                        set(h_title, 'String', 'Detection');
+                        set(this.h_title, 'String', 'Detection');
                         
                         markers = simpleDetector(img);
                         
@@ -134,16 +157,16 @@ classdef CozmoVisionProcessor < handle
                     end
                     
                 case this.INIT_TRACK_COMMAND
-                    img = PacketToImage(packet);
+                    img = CozmoVisionProcessor.PacketToImage(packet);
                     if ~isempty(img)
-                        set(h_title, 'String', 'Tracking Initialization');
+                        set(this.h_title, 'String', 'Tracking Initialization');
                         
                     end
                     
                 case this.TRACK_COMMAND
-                    img = PacketToImage(packet);
+                    img = CozmoVisionProcessor.PacketToImage(packet);
                     if ~isempty(img)
-                        set(h_title, 'String', 'Tracking');
+                        set(this.h_title, 'String', 'Tracking');
                         
                     end
                     
@@ -152,6 +175,9 @@ classdef CozmoVisionProcessor < handle
                 
             end % SWITCH(command)
               
+            if isempty(img)
+                img = 0;
+            end
             set(this.h_img, 'CData', img);
             set(this.h_axes, ...
                 'XLim', [.5 size(img,2)+.5], ...
@@ -170,11 +196,11 @@ classdef CozmoVisionProcessor < handle
         function img = PacketToImage(packet) 
             img = [];
             
-            if ~CozmoVisionProcess.RESOLUTION_LUT.isKey(char(packet(1)))
+            if ~CozmoVisionProcessor.RESOLUTION_LUT.isKey(char(packet(1)))
                 warning('Unrecognized resolution byte!');
             else
-                resolution = CozmoVisionProcess.RESOLUTION_LUT(char(packet(1)));
-                
+                resolution = CozmoVisionProcessor.RESOLUTION_LUT(char(packet(1)));
+                                
                 if length(packet)-1 ~= prod(resolution)
                     warning(['Image packet length did not match its ' ...
                         'specified resolution!']);

@@ -2,7 +2,9 @@
 
 PROTO USBConnection [ 
   field SFString name "USBConnection"
+  field SFString controller "offboard_vision_processor"
   field SFInt32 usbChannel 88
+  field SFInt32 bufferSize 500000
 ]
 {
 Supervisor {
@@ -12,19 +14,20 @@ Supervisor {
     Receiver {
       name "USB_RX"
       type "radio"
+      bufferSize IS bufferSize
       channel IS usbChannel
     }
 
     Emitter {
       name "USB_TX"
       type "radio"
-      bufferSize 100000
+      bufferSize IS bufferSize
       channel IS usbChannel
     }
   ]
 
   name IS name
-  controller "offboard_vision_processor"
+  controller IS controller
 } # Supervisor
 
 } # PROTO

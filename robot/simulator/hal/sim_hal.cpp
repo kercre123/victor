@@ -649,10 +649,15 @@ namespace Anki {
       // Acquire grey image
       // (Closest thing to Y channel?)
       const u8* image = cam->getImage();
-      u16 pixel = 0;
-      for (int y=0; y < cam->getHeight(); y++ ) {
-        for (int x=0; x < cam->getWidth(); x++ ) {
-          buffer[pixel++] = webots::Camera::imageGetGrey(image, cam->getWidth(), x, y);
+      if(image == NULL) {
+        PRINT("GetGrayscaleFrameHelper(): no image captured!");
+      }
+      else {
+        u32 pixel = 0;
+        for (int y=0; y < cam->getHeight(); y++ ) {
+          for (int x=0; x < cam->getWidth(); x++ ) {
+            buffer[pixel++] = webots::Camera::imageGetGrey(image, cam->getWidth(), x, y);
+          }
         }
       }
     } // GetGrayscaleFrameHelper()

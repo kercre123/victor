@@ -21,7 +21,7 @@ namespace Anki
     namespace HAL
     {
       namespace {
-        const s32 SIMULATED_USB_CHANNEL = 88;
+        //const s32 SIMULATED_USB_CHANNEL = 88;
         
         webots::Receiver* usbRX_ = NULL;
         webots::Emitter*  usbTX_ = NULL;
@@ -46,38 +46,42 @@ namespace Anki
         if(usbRX_ == NULL) {
           PRINT("Receiver 'usb_rx' not found.\n");
         }
-        if(usbRX_->getChannel() != SIMULATED_USB_CHANNEL)
-        {
-          PRINT("USB Receiver is set to the wrong channel (expecting %d)\n",
-                SIMULATED_USB_CHANNEL);
+        PRINT("USB Receiver operating on channel %d.\n", usbRX_->getChannel());
+        if(usbTX_->getChannel() != usbRX_->getChannel()) {
+          PRINT("USB Receiver and Emitter not on the same channel!\n");
         }
         
-        usbTX_->setChannel(SIMULATED_USB_CHANNEL);
+        //usbTX_->setChannel(SIMULATED_USB_CHANNEL);
         usbRX_->enable(TIME_STEP);
+        
+        PRINT("Robot's USB TX buffer size is %d bytes.\n",
+              usbTX_->getBufferSize());
         
         USBsendBuffer_.reserve(640*480);
         USBrecvBuffer_.reserve(1024);
+        
       }
       
       int USBPutChar(int c)
       {
         // This just buffers chars until we call USBFlush()
         USBsendBuffer_.push_back(static_cast<u8>(c));
+        
         return c;
       }
       
       void USBFlush(void)
       {
-        if(not USBsendBuffer_.empty()) {
-          if(usbTX_->send(&(USBsendBuffer_[0]),
-                          USBsendBuffer_.size()*sizeof(u8)) == 0)
+        if(not USBsendBuffer_.empty())
+        {
+          const u32 sendSize = USBsendBuffer_.size()*sizeof(u8);
+          if(usbTX_->send(&(USBsendBuffer_[0]), sendSize) == 0)
           {
-            PRINT("USBFlush(): send failed, queue was full.\n");
+            PRINT("USBFlush(): Send buffer full!\n");
           }
           else {
-            PRINT("USBFlush(): Sent %lu bytes on channel %d.\n",
-                  USBsendBuffer_.size()*sizeof(u8),
-                  usbTX_->getChannel());
+            PRINT("USBFlush(): Sent %d bytes on channel %d.\n",
+                  sendSize, usbTX_->getChannel());
           }
           USBsendBuffer_.clear();
         }
@@ -130,8 +134,8 @@ namespace Anki
     
       void USBSendBuffer(u8* buffer, u32 size)
       {
-        if(usbTX_->send(buffer, size*sizeof(u8)) == 0) {
-          PRINT("USBSendBuffer(): Failed to send, queue is full.\n");
+        for(u32 i=0; i<size; ++i) {
+          USBPutChar(static_cast<s32>(buffer[i]));
         }
       }
       
