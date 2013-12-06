@@ -32,13 +32,14 @@ add_definitions(-DSIMULATOR)
 # Source files
 set(SOURCE_FILES
 	cozmo_c_controller.cpp
+  
+  # this is where the Supervisor object lives, it must be early in the compile list?!?
+  ${SIMULATOR_HAL_DIR}/sim_hal.cpp
+  ${SIMULATOR_HAL_DIR}/sim_uart.cpp
 
   ${SIMULATOR_SRC_DIR}/keyboardController.cpp
   ${SIMULATOR_SRC_DIR}/sim_pathFollower.cpp
   ${SIMULATOR_SRC_DIR}/sim_overlayDisplay.cpp
-  
-  ${SIMULATOR_HAL_DIR}/sim_hal.cpp
-	${SIMULATOR_HAL_DIR}/sim_uart.cpp
 
   ${ROBOT_SRC_DIR}/cozmoBot.cpp
   ${ROBOT_SRC_DIR}/dockingController.cpp
@@ -47,6 +48,7 @@ set(SOURCE_FILES
   ${ROBOT_SRC_DIR}/headController.cpp
   ${ROBOT_SRC_DIR}/liftController.cpp
   ${ROBOT_SRC_DIR}/localization.cpp
+  ${ROBOT_SRC_DIR}/offboardVision.cpp
   ${ROBOT_SRC_DIR}/pathFollower.cpp
   ${ROBOT_SRC_DIR}/steeringController.cpp
   ${ROBOT_SRC_DIR}/speedController.cpp
