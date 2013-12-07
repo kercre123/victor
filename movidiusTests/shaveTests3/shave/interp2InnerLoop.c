@@ -131,14 +131,16 @@ void interp2_shaveInnerLoop(
     ".set yCoordinates_f32x4 v6 \n"
     ".set x0_i32x4 v7 ; (x0,y0) is the upper-left pixel, (x1,y1) is the lower-right pixel \n"
     ".set y0_i32x4 v8 \n"
-    ".set x1_i32x4 v9 \n"
-    ".set y1_i32x4 v10 \n"
-    ".set ones_f32x4 v11 \n"
-    ".set xReferenceMax_i32x4 v12 \n"
-    ".set yReferenceMax_i32x4 v13 \n"
-    ".set out_f32x4 v14 \n"
-    ".set alphaX_f32x4 v15 \n"
-    ".set alphaY_f32x4 v16 \n"
+    ".set ones_f32x4 v9 \n"
+    ".set xReferenceMax_i32x4 v10 \n"
+    ".set yReferenceMax_i32x4 v11 \n"
+    ".set out_f32x4 v12 \n"
+    ".set alphaX_f32x4 v13 \n"
+    ".set alphaY_f32x4 v14 \n"
+    ".set pixelTL_f32x4 v15 \n"
+    ".set pixelTR_f32x4 v16 \n"
+    ".set pixelBL_f32x4 v17 \n"
+    ".set pixelBR_f32x4 v18 \n"
     " \n"
     " \n"
     "\n"
@@ -173,33 +175,71 @@ void interp2_shaveInnerLoop(
     "__mainLoop: \n"
     "lsu0.ldxvi xCoordinates_f32x4 xCoordinates_address addressIncrement || lsu1.ldxvi yCoordinates_f32x4 yCoordinates_address addressIncrement \n"
     "nop 6 \n"
-    "lsu0.stxvi ones_f32x4 pOut_address addressIncrement \n"
-    //"cmu.cpvv.f32.i32s x0_i32x4 xCoordinates_f32x4 \n"
-    //"cmu.cpvv.f32.i32s y0_i32x4 yCoordinates_f32x4 \n"
-    //"vau.add.i32s x1_i32x4 x0_i32x4 ones_i32x4 \n"
-    //"vau.add.i32s y1_i32x4 y0_i32x4 ones_i32x4 \n"
+    "cmu.cpvv.f32.i32s x0_i32x4 xCoordinates_f32x4 \n"
+    "cmu.cpvv.f32.i32s y0_i32x4 yCoordinates_f32x4 \n"
 
-    //"\n"
-    //"; Compute the addresses in the reference image \n"
-    //";[ \n"
-    //"  ; Naive approach: \n"
-    //"  ; const f32 top = (1-x)*pTL + x*pTR; \n"
-    //"  ; const f32 bot = (1-x)*pBL + x*pBR; \n"
-    //"  ; out = (1-y)*top + y*bot; \n"
-    //"\n"
-    //"  ; Accumulator approach (just multiply out and substitute all terms): \n"
-    //"  ; out = pTL - x*pTL + x*pTR - y*pTL - y*x*pTL + y*x*pTR + y*pBL-y*x*pBL + y*x*pBR \n"
-    //"\n"
-    //"  .set interpolatedTop_f32x4 vTmp0 \n"
-    //"  .set interpolatedBottom_f32x4 vTmp1 \n"
-    //"   \n"
-    //"   \n"
-    //"   \n"
-    //"   \n"
-    //"   \n"
-    //"  .unset interpolatedTop_f32x4 \n"
-    //"  .unset interpolatedBottom_f32x4 \n"
-    //";] \n"
+    "vau.frac.f32 alphaX_f32x4 xCoordinates_f32x4 \n"
+    "vau.frac.f32 alphaY_f32x4 yCoordinates_f32x4 \n"
+
+    //"lsu0.stxvi alphaX_f32x4 pOut_address addressIncrement \n"
+
+    "\n"
+    "; Compute the addresses in the reference image \n"
+    ";[ \n"
+    "  ; Naive approach: \n"
+    "  ; const f32 top = (1-x)*pTL + x*pTR; \n"
+    "  ; const f32 bot = (1-x)*pBL + x*pBR; \n"
+    "  ; out = (1-y)*top + y*bot; \n"
+    "\n"
+    "  ; Accumulator approach (just multiply out and substitute all terms): \n"
+    "  ; out = pTL - x*pTL + x*pTR - y*pTL - y*x*pTL + y*x*pTR + y*pBL - y*x*pBL + y*x*pBR \n"
+    "\n"
+    "  .set alphaXY_f32x4 vTmp0 \n"
+    "\n"
+
+    "  vau.mul.f32 alphaXY_f32x4 alphaX_f32x4 alphaY_f32x4"
+    "  vau.macpz.f32 ones_f32x4    pixelTL_f32x4 ; pTL \n"
+    "  vau.macn.f32  alphaX_f32x4  pixelTL_f32x4 ; -x*pTL \n"
+    "  vau.macp.f32  alphaX_f32x4  pixelTR_f32x4 ; x*pTR \n"
+    "  vau.macn.f32  alphaY_f32x4  pixelTL_f32x4 ; -y*pTL \n"
+    "  vau.macn.f32  alphaXY_f32x4 pixelTL_f32x4 ; -y*x*pTL \n"
+    "  vau.macp.f32  alphaXY_f32x4 pixelTR_f32x4 ; y*x*pTR \n"
+    "  vau.macp.f32  alphaY_f32x4  pixel_BLf32x4 ; y*pBL \n"
+    "  vau.macn.f32  alphaXY_f32x4 pixel_BLf32x4 ; -y*x*pBL \n"
+    "  vau.macpw.f32 alphaXY_f32x4 pixel_BRf32x4 ; y*x*pBR \n"
+    "  .unset alphaXY_f32x4 \n"
+    ";] \n" pixel_f32x4
+    //".set pixelTL_f32x4 v15 \n"
+    //".set pixelTR_f32x4 v16 \n"
+    //".set pixelBL_f32x4 v17 \n"
+    //".set pixelBR_f32x4 v18 \n"
+    //CMU.CPVI.x32 iTMP0, v0.0                                                                                           || VAU.MUL.u16s cxcy, cx, cy
+    //CMU.CPVI.x32 iTMP1, v0.1 || IAU.ADD iTMP2, iTMP0, in_stride                                                        || VAU.MACNZ.i16 _S0, vOne
+    //CMU.CPVI.x32 iTMP0, v0.2 || IAU.ADD iTMP3, iTMP1, in_stride || LSU0.LD16r vTMP3, iTMP0  || LSU1.LD16r vTMP7, iTMP2 || VAU.MACN.i16 cx, _S0
+    //CMU.CPVI.x32 iTMP1, v0.3 || IAU.ADD iTMP2, iTMP0, in_stride || LSU0.LD16r vTMP2, iTMP1  || LSU1.LD16r vTMP6, iTMP3 || VAU.MACN.i16 cy, _S0
+    //CMU.CPVI.x32 iTMP0, v4.0 || IAU.ADD iTMP3, iTMP1, in_stride || LSU0.LD16r vTMP1, iTMP0  || LSU1.LD16r vTMP5, iTMP2 || VAU.MACP.i16 cxcy, _S0
+    //CMU.CPVI.x32 iTMP1, v4.1 || IAU.ADD iTMP2, iTMP0, in_stride || LSU0.LD16r vTMP0, iTMP1  || LSU1.LD16r vTMP4, iTMP3 || VAU.MACP.i16 cy, _S2
+    //CMU.CPVI.x32 iTMP0, v4.2 || IAU.ADD iTMP3, iTMP1, in_stride || LSU0.LD16r vTMP11, iTMP0 || LSU1.LD16r _S0, iTMP2   || VAU.MACN.i16 cxcy, _S2
+    //CMU.CPVI.x32 iTMP1, v4.3 || IAU.ADD iTMP2, iTMP0, in_stride || LSU0.LD16r vTMP10, iTMP1 || LSU1.LD16r _S1, iTMP3   || VAU.MACP.i16 cx, _S1
+    //                            IAU.ADD iTMP3, iTMP1, in_stride || LSU0.LD16r vTMP9, iTMP0  || LSU1.LD16r _S2, iTMP2   || VAU.MACN.i16 cxcy, _S1
+    //                                                               LSU0.LD16r vTMP8, iTMP1  || LSU1.LD16r _S3, iTMP3   || VAU.MACPW.i16 dest, cxcy, _S3
+
+    //pTL - x*pTL + x*pTR - y*pTL + y*x*pTL - y*x*pTR + y*pBL - y*x*pBL + y*x*pBR; \n"
+
+    //pTL - x*pTL + x*pTR - y*pTL - y*x*pTL + y*x*pTR + y*pBL - y*x*pBL + y*x*pBR \n"
+
+    // out = x*pTL + pTR - x*pTR - y*x*pTL - y*pTR + y*x*pTR + y*pBL + y*pBR - y*x*pBR
+
+    //pTL - x*pTL + x*pTR - y*pTL + y*x*pTL - y*x*pTR + y*pBL - y*x*pBL + y*x*pBR; \n"
+    //VAU.MACNZ.i16 pTL, vOne
+    //CMU.CPVI.x32 iTMP0, v0.2 || IAU.ADD iTMP3, iTMP1, in_stride || LSU0.LD16r vTMP3, iTMP0  || LSU1.LD16r vTMP7, iTMP2 || VAU.MACN.i16 cx, pTL
+    //CMU.CPVI.x32 iTMP1, v0.3 || IAU.ADD iTMP2, iTMP0, in_stride || LSU0.LD16r vTMP2, iTMP1  || LSU1.LD16r vTMP6, iTMP3 || VAU.MACN.i16 cy, pTL
+    //CMU.CPVI.x32 iTMP0, v4.0 || IAU.ADD iTMP3, iTMP1, in_stride || LSU0.LD16r vTMP1, iTMP0  || LSU1.LD16r vTMP5, iTMP2 || VAU.MACP.i16 cxcy, pTL
+    //CMU.CPVI.x32 iTMP1, v4.1 || IAU.ADD iTMP2, iTMP0, in_stride || LSU0.LD16r vTMP0, iTMP1  || LSU1.LD16r vTMP4, iTMP3 || VAU.MACP.i16 cy, _pBL
+    //CMU.CPVI.x32 iTMP0, v4.2 || IAU.ADD iTMP3, iTMP1, in_stride || LSU0.LD16r vTMP11, iTMP0 || LSU1.LD16r pTL, iTMP2   || VAU.MACN.i16 cxcy, _pBL
+    //CMU.CPVI.x32 iTMP1, v4.3 || IAU.ADD iTMP2, iTMP0, in_stride || LSU0.LD16r vTMP10, iTMP1 || LSU1.LD16r pTR, iTMP3   || VAU.MACP.i16 cx, pTR
+    //                            IAU.ADD iTMP3, iTMP1, in_stride || LSU0.LD16r vTMP9, iTMP0  || LSU1.LD16r _pBL, iTMP2   || VAU.MACN.i16 cxcy, pTR
+    //                                                               LSU0.LD16r vTMP8, iTMP1  || LSU1.LD16r _pBR, iTMP3   || VAU.MACPW.i16 dest, cxcy, _pBR
 
     //"\n"
     //"; if((x0 <= 0) && (y0 <= 0) && (xReferenceMax <= x1) && (yReferenceMax <= y1) ) then the coordinate is out-of-bounds \n"
