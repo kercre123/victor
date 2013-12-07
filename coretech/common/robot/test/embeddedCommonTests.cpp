@@ -98,12 +98,16 @@ GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
     arrIndexes.Print("Indexes: sortWhichDimension==0 sortAscending==false");
 
     const s32 sortedArr_groundTruthData[15] = {91, 96, 97, 91, 96, 96, 81, 55, 80, 63, 28, 49, 13, 10, 16};
+
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+    ASSERT_TRUE(sortedArr_groundTruth[0][0] == 91);
 
     const s32 sortedArrIndexes_groundTruthData[15] = {2, 4, 2, 4, 5, 3, 1, 3, 5, 5, 2, 4, 3, 1, 1};
     ASSERT_TRUE(sortedArrIndexes_groundTruth.Set(sortedArrIndexes_groundTruthData, 15) == 15);
+
     Matrix::Subtract<s32,s32,s32>(sortedArrIndexes_groundTruth, 1, sortedArrIndexes_groundTruth); // Matlab -> C indexing
     sortedArrIndexes_groundTruth.Print("sortedArrIndexes_groundTruth");
+    printf("sortedArrIndexes_groundTruth[0][0] = %d \n", sortedArrIndexes_groundTruth[0][0]);
 
     ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
     ASSERT_TRUE(AreElementwiseEqual(arrIndexes, sortedArrIndexes_groundTruth));

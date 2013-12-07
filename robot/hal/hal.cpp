@@ -5,8 +5,8 @@
 #define CMX_CONFIG      (0x66666666)
 #define L2CACHE_CONFIG  (L2CACHE_NORMAL_MODE)
 
-      static const u32 FRAME_WIDTH = 640;
-      static const u32 FRAME_HEIGHT = 480;
+      static const u32 FRAME_WIDTH = 1;	// NOCOMMIT - TODO
+      static const u32 FRAME_HEIGHT = 1;
       static const u32 FRAME_SIZE = FRAME_WIDTH * FRAME_HEIGHT;
 
       static u8 frame[FRAME_SIZE];

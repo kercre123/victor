@@ -28,6 +28,8 @@ namespace Anki
 
       void UARTInit()
       {
+	  //TODO: remove
+	  return ;
         DrvCprSysDeviceAction(ENABLE_CLKS, DEV_UART);
 
         // Setup the interrupt trigger
