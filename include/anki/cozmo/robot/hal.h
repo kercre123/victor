@@ -421,6 +421,11 @@ namespace Anki
       // is found and returned, EXIT_SUCCESS is returned.
       ReturnCode USBGetNextPacket(u8 *buffer);
 
+      // Registur a message name with its ID (e.g. for Matlab, which doesn't
+      // read messageProtocol.h directly)
+      const u8 USB_DEFINE_MESSAGE_ID = 0xD0;
+      void SendMessageID(const char* name, const u8 msgID);
+      
 #ifdef SIMULATOR
       // Called by SendFooter() to terminate a message when in simulation,
       // otherwise a no-op.

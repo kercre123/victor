@@ -89,26 +89,8 @@ namespace Anki
       
       s32 USBGetChar(u32 timeout)
       {
-        if(getCharIndex_ == USBrecvBuffer_.size())
-        {
-          // We've returned all of the last packet we got, so clear the buffer
-          // and start again with the next packet
-          USBrecvBuffer_.clear();
-          getCharIndex_ = 0;
-          
-          if(usbRX_->getQueueLength() > 0) {
-            // If another packet is waiting, read it into the buffer
-            const u8* packet = static_cast<const u8*>(usbRX_->getData());
-            const s32 packetLength = usbRX_->getDataSize();
-            for(s32 i=0; i<packetLength; ++i) {
-              USBrecvBuffer_.push_back(packet[i]);
-            }
-            usbRX_->nextPacket();
-          }
-          else {
-            // There is not currently another packet waitig
-            return -1;
-          }
+        if(USBGetNumBytesToRead() == 0) {
+          return -1;
         }
         
         // Get the next character in the packet
@@ -141,6 +123,16 @@ namespace Anki
       
       u32 USBGetNumBytesToRead(void)
       {
+        if(usbRX_->getQueueLength() > 0) {
+          // If another packet is waiting, read it into the buffer
+          const u8* packet = static_cast<const u8*>(usbRX_->getData());
+          const s32 packetLength = usbRX_->getDataSize();
+          for(s32 i=0; i<packetLength; ++i) {
+            USBrecvBuffer_.push_back(packet[i]);
+          }
+          usbRX_->nextPacket();
+        }
+        
         // NOTE: this is just returning number of bytes to read *in the current packet*
         return USBrecvBuffer_.size() - getCharIndex_;
       }

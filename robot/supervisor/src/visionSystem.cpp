@@ -148,6 +148,23 @@ namespace Anki {
                                  tanf(matCamInfo_->fov_ver * .5f));
         matCamPixPerMM_ = matCamHeightInPix / MAT_CAM_HEIGHT_FROM_GROUND_MM;
         
+#if USE_OFFBOARD_VISION
+        PRINT("VisionSystem::Init(): Registering message IDs for offboard processing.\n");
+        
+        // Register all the message IDs we need with Matlab:
+        HAL::SendMessageID("CozmoMsg_ObservedBlockMarker",
+                           MSG_V2B_CORE_BLOCK_MARKER_OBSERVED);
+        
+        HAL::SendMessageID("CozmoMsg_TemplateInitialized",
+                           MSG_OFFBOARD_VISION_TEMPLATE_INITIALIZED);
+        
+        HAL::SendMessageID("CozmoMsg_TotalBlocksDetected",
+                           MSG_OFFBOARD_VISION_TOTAL_BLOCKS_FOUND);
+        
+        HAL::SendMessageID("CozmoMsg_DockingErrorSignal",
+                           MSG_V2B_CORE_DOCKING_ERROR_SIGNAL);
+#endif
+        
         isInitialized_ = true;
         return EXIT_SUCCESS;
       }
@@ -186,6 +203,12 @@ namespace Anki {
         }
       }
       
+      inline void ProcessMessage(const CozmoMsg_TotalBlocksDetected& msg)
+      {
+        PRINT("Saw %d block markers.\n", msg.numBlocks);
+        mode_ = LOOKING_FOR_BLOCKS;
+      }
+      
       inline void ProcessMessage(const CozmoMsg_TemplateInitialized& msg)
       {
         if(msg.success) {
@@ -205,6 +228,8 @@ namespace Anki {
         VisionSystem::dockingMailbox_->putMessage(msg);
       }
       
+      
+      
       u8 ProcessMessage(const u8* msgBuffer)
       {
         if(msgBuffer[0] < 2) {
@@ -222,6 +247,12 @@ namespace Anki {
           {
             ProcessMessage(*reinterpret_cast<const CozmoMsg_ObservedBlockMarker*>(msgBuffer));
             break;
+          }
+            
+          case MSG_OFFBOARD_VISION_TOTAL_BLOCKS_FOUND:
+          {
+            ProcessMessage(*reinterpret_cast<const CozmoMsg_TotalBlocksDetected*>(msgBuffer));
+                           break;
           }
             
           case MSG_OFFBOARD_VISION_TEMPLATE_INITIALIZED:
@@ -360,6 +391,18 @@ namespace Anki {
       
       ReturnCode CaptureHeadFrame(FrameBuffer &frame)
       {
+        if (HAL::GetHeadCamMode() != HAL::CAMERA_MODE_QQQVGA)
+        {
+          CameraStartFrame(HAL::CAMERA_FRONT, frame.data, frame.resolution,
+                           HAL::CAMERA_UPDATE_CONTINUOUS, 0, false);
+        }
+        else {
+          CameraStartFrame(HAL::CAMERA_FRONT, frame.data, frame.resolution,
+                           HAL::CAMERA_UPDATE_SINGLE, 0, false);
+        }
+
+        
+        /*
         // Only QQQVGA can be captured in SINGLE mode.
         // Other modes must be captured in CONTINUOUS mode otherwise you get weird
         // rolling sync effects.
@@ -382,7 +425,7 @@ namespace Anki {
                            HAL::CAMERA_UPDATE_SINGLE, 0, false);
           continuousCaptureStarted_ = false;
         }
-        
+        */
         
         while (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT))
         {
@@ -411,111 +454,6 @@ namespace Anki {
                           HAL::USB_VISION_COMMAND_DETECTBLOCKS);
         
         waitingForProcessingResult_ = MSG_OFFBOARD_VISION_TOTAL_BLOCKS_FOUND;
-        
-/*
-        mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(frame.data, nrows, ncols, 4);
-        
-        if(mxImg != NULL) {
-          // Send the image to matlab
-          engPutVariable(matlabEngine_, "headCamImage", mxImg);
-          
-          // Convert from GBRA format to RGB:
-          engEvalString(matlabEngine_, "headCamImage = headCamImage(:,:,[3 2 1]);");
-          
-#if DISPLAY_MATLAB_IMAGES
-          // Display (optional)
-          engEvalString(matlabEngine_, "set(h_headImg, 'CData', headCamImage);");
-#endif
-          
-          // Detect BlockMarkers
-          engEvalString(matlabEngine_, "blockMarkers = simpleDetector(headCamImage); "
-                        "numMarkers = length(blockMarkers);");
-          
-          int numMarkers = static_cast<int>(mxGetScalar(engGetVariable(matlabEngine_, "numMarkers")));
-          
-          PRINT("Found %d block markers.\n", numMarkers);
-          
-          // Can't get the blockMarkers directly because they are Matlab objects
-          // which are not happy with engGetVariable.
-          //mxArray *mxBlockMarkers = engGetVariable(matlabEngine_, "blockMarkers");
-          for(int i_marker=0; i_marker<numMarkers; ++i_marker) {
-            
-            // Get the pieces of each block marker we need individually
-            char cmd[256];
-            snprintf(cmd, 255,
-                     "currentMarker = blockMarkers{%d}; "
-                     "blockType = currentMarker.blockType; "
-                     "faceType  = currentMarker.faceType; "
-                     "corners   = currentMarker.corners; "
-                     "upDir     = currentMarker.upDirection;", i_marker+1);
-            
-            engEvalString(matlabEngine_, cmd);
-            
-            
-            // Create a message from those pieces
-            
-            CozmoMsg_ObservedBlockMarker msg;
-            
-            // TODO: Can these be filled in automatically by a constructor??
-            msg.size  = sizeof(CozmoMsg_ObservedBlockMarker) - 1; // -1 for the size byte
-            msg.msgID = MSG_V2B_CORE_BLOCK_MARKER_OBSERVED;
-            
-            mxArray *mxBlockType = engGetVariable(matlabEngine_, "blockType");
-            msg.blockType = static_cast<u16>(mxGetScalar(mxBlockType));
-            
-            mxArray *mxFaceType = engGetVariable(matlabEngine_, "faceType");
-            msg.faceType = static_cast<u8>(mxGetScalar(mxFaceType));
-            
-            mxArray *mxCorners = engGetVariable(matlabEngine_, "corners");
-            
-            mxAssert(mxGetM(mxCorners)==4 && mxGetN(mxCorners)==2,
-                     "BlockMarker's corners should be 4x2 in size.");
-            
-            double *corners_x = mxGetPr(mxCorners);
-            double *corners_y = corners_x + 4;
-            
-            msg.x_imgUpperLeft  = static_cast<f32>(corners_x[0]);
-            msg.y_imgUpperLeft  = static_cast<f32>(corners_y[0]);
-            
-            msg.x_imgLowerLeft  = static_cast<f32>(corners_x[1]);
-            msg.y_imgLowerLeft  = static_cast<f32>(corners_y[1]);
-            
-            msg.x_imgUpperRight = static_cast<f32>(corners_x[2]);
-            msg.y_imgUpperRight = static_cast<f32>(corners_y[2]);
-            
-            msg.x_imgLowerRight = static_cast<f32>(corners_x[3]);
-            msg.y_imgLowerRight = static_cast<f32>(corners_y[3]);
-            
-            mxArray *mxUpDir = engGetVariable(matlabEngine_, "upDir");
-            msg.upDirection = static_cast<u8>(mxGetScalar(mxUpDir)) - 1; // Note the -1 for C vs. Matlab indexing
-            
-            msg.headAngle = HAL::MotorGetPosition(HAL::MOTOR_HEAD);
-            //       // NOTE the negation here!
-            //       msg.headAngle = -HAL::GetHeadAngle();
-            
-            PRINT("Sending ObservedBlockMarker message: Block %d, Face %d "
-                  "at [(%.1f,%.1f) (%.1f,%.1f) (%.1f,%.1f) (%.1f,%.1f)] with "
-                  "upDirection=%d, headAngle=%.1fdeg\n",
-                  msg.blockType, msg.faceType,
-                  msg.x_imgUpperLeft,  msg.y_imgUpperLeft,
-                  msg.x_imgLowerLeft,  msg.y_imgLowerLeft,
-                  msg.x_imgUpperRight, msg.y_imgUpperRight,
-                  msg.x_imgLowerRight, msg.y_imgLowerRight,
-                  msg.upDirection, msg.headAngle * 180.f/PI);
-            
-            blockMarkerMailbox_->putMessage(msg);
-            
-            // If the docker is looking for blocks, let it see this one and check
-            // to see if it's the one it wants (otherwise, this will just be a
-            // no-op)
-            Docker::CheckBlockMarker(msg);
-            
-            ++numBlocks;
-            
-          } // FOR each block Marker
-          
-        } // IF any blockMarkers found
-*/
         
 #else  // NOT defined(USE_MATLAB_FOR_HEAD_CAMERA)
         

@@ -8,6 +8,7 @@ namespace Anki
 {
   namespace Cozmo
   {
+    
         
     void SendHeader(const u8 packetType)
     {
@@ -54,6 +55,19 @@ namespace Anki
       }
       
     } // namespace USBprintBuffer
+    
+    void HAL::SendMessageID(const char* name, const u8 msgID)
+    {
+      SendHeader(USB_DEFINE_MESSAGE_ID);
+      
+      USBPutChar(msgID);
+      for(u8 i=0; i<strlen(name); ++i) {
+        USBPutChar(static_cast<int>(name[i]));
+      }
+      
+      SendFooter(USB_DEFINE_MESSAGE_ID);
+    }
+    
     
     void HAL::USBSendMessage()
     {
@@ -133,7 +147,12 @@ namespace Anki
             {
               for (int x1 = x; x1 < x + inc; x1++)
               {
-                sum += frame[(x1 + y1 * ncols) ^ 3];
+                const int index = x1 + y1 * ncols;
+#ifndef SIMULATOR
+                // Endian issue when running on the movidius
+                index ^= 3;
+#endif
+                sum += frame[index];
               }
             }
             USBPutChar(sum / (inc * inc));
@@ -154,8 +173,14 @@ namespace Anki
     
     ReturnCode HAL::USBGetNextPacket(u8 *buffer)
     {
+      // Note that this is looking for a packet that starts with a 4-byte
+      // header plus a size byte and a message ID byte.  Unlike the packets
+      // we are sending out with USBSendFrame and USBSendMessage, there is no
+      // footer.
       
       ReturnCode retVal = EXIT_FAILURE;
+      
+      PRINT("USBGetNextPacket(): %d bytes available to read.\n", USBGetNumBytesToRead());
       
       // We need there to be at least 6 bytes: 4 for the header, 1 for the
       // size byte and one for the msgID

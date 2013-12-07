@@ -18,18 +18,20 @@ classdef CozmoVisionProcessor < handle
         % Processing Commands
         % (These should match the USB_VISION_COMMANDs defined in hal.h)
         MESSAGE_COMMAND          = char(sscanf('DD', '%2x'));
+        MESSAGE_ID_DEFINITION    = char(sscanf('D0', '%2x'));
         DETECT_COMMAND           = char(sscanf('AB', '%2x'));
         INIT_TRACK_COMMAND       = char(sscanf('BC', '%2x'));
         TRACK_COMMAND            = char(sscanf('CD', '%2x'));
         MAT_ODOMETRY_COMMAND     = char(sscanf('DE', '%2x'));
         MAT_LOCALIZATION_COMMAND = char(sscanf('EF', '%2x'));
                     
-                    
     end % Constant Properties
     
     properties
         serialDevice;
         serialBuffer;
+        
+        messageIDs;
         
         h_fig;
         h_img;
@@ -134,25 +136,59 @@ classdef CozmoVisionProcessor < handle
             
             switch(command)
                 case this.MESSAGE_COMMAND
-                    img = [];
                     fprintf('MessagePacket: %s\n', packet);
+                    return;
+                    
+                case this.MESSAGE_ID_DEFINITION
+                    msgID = packet(1);
+                    name  = char(packet(2:end));
+                    this.messageIDs.(name) = msgID;
+                    fprintf('Registered "%s" as msgID=%d.\n', ...
+                        name, msgID);
+                    return;
                     
                 case this.DETECT_COMMAND
                     delete(findobj(this.h_axes, 'Tag', 'BlockMarker2D'));
                     
                     img = CozmoVisionProcessor.PacketToImage(packet);
                     if ~isempty(img)
-                        set(this.h_title, 'String', 'Detection');
                         
                         markers = simpleDetector(img);
                         
                         % Send a message about each marker we found
                         for i = 1:length(markers)
                             markers{i}.draw('where', this.h_axes);
+                            
+                            msgStruct = struct( ...
+                                'msgID', uint8(this.messageIDs.CozmoMsg_ObservedBlockMarker), ...
+                                'blockType', uint16(markers{i}.blockType), ...
+                                'faceType', uint8(markers{i}.faceType), ...
+                                'upDirection', uint8(markers{i}.upDirection), ...
+                                'headAngle', single(0), ... ???
+                                'x_imgUpperLeft', single(markers{i}.corners(1,1)), ...
+                                'y_imgUpperLeft', single(markers{i}.corners(1,2)), ...
+                                'x_imgLowerLeft', single(markers{i}.corners(2,1)), ...
+                                'y_imgLowerLeft', single(markers{i}.corners(2,2)), ...
+                                'x_imgUpperRight', single(markers{i}.corners(3,1)), ...
+                                'y_imgUpperRight', single(markers{i}.corners(3,2)), ...
+                                'x_imgLowerRight', single(markers{i}.corners(4,1)), ...
+                                'y_imgLowerRight', single(markers{i}.corners(4,2)) );
+                            
+                            packet = CozmoVisionProcessor.SerializeMessageStruct(msgStruct);
+                            this.SendPacket(packet);
                         end
+                        
+                        set(this.h_title, 'String', ...
+                            sprintf('Detected %d Markers', length(markers)));
                         
                         % Send a message indicating there are no more block
                         % marker messages coming
+                        msgStruct = struct( ...
+                            'msgID', uint8(this.messageIDs.CozmoMsg_TotalBlocksDetected), ...
+                            'numBlocks', uint8(length(markers)) );
+                        
+                        packet = CozmoVisionProcessor.SerializeMessageStruct(msgStruct);
+                        this.SendPacket(packet);
                         
                     end
                     
@@ -186,9 +222,15 @@ classdef CozmoVisionProcessor < handle
          
         end % FUNCTION ProcessPacket()
         
-        function SendPacket(this, packetType, packet)
+        function SendPacket(this, packet)
+            assert(isa(packet, 'uint8'), 'Expecting UINT8 packet.');
             
+            assert(packet(1) == length(packet), ...
+                'Expecting first byte of packet to be its size.');
+            
+            fwrite(this.serialDevice, [uint8(this.HEADER) row(packet)]);
         end
+        
     end % Methods
     
     methods(Static = true)
@@ -209,6 +251,18 @@ classdef CozmoVisionProcessor < handle
                 end
             end
         end % FUNCTION PacketToImage()
+        
+            function packet = SerializeMessageStruct(msgStruct)
+                names = fieldnames(msgStruct);
+                packet = cell(1, length(names));
+                for i = 1:length(names)
+                    packet{i} = typecast(swapbytes(msgStruct.(names{i})), 'uint8');
+                end
+                packet = [packet{:}];
+                
+                % Add a size byte to the beginnging:
+                packet = [uint8(length(packet)+1) packet];
+            end
         
     end % Static Methods
     

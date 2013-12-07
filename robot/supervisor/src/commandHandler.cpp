@@ -199,7 +199,10 @@ namespace Anki {
       
       void ProcessIncomingMessages() {
         ProcessBTLEMessages();
+#if !USE_OFFBOARD_VISION
+        // If using offboard vision, that will handle processing UART messages
         ProcessUARTMessages();
+#endif
       }
       
     } // namespace CommandHandler
