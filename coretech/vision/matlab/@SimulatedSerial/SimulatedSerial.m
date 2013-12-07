@@ -100,8 +100,11 @@ classdef SimulatedSerial < handle
             end
             
             % Write to the TX buffer
-            precisionFcn = str2func(precision);
-            wb_emitter_send(this.txDevice, precisionFcn(data));
+            if nargin > 2 && ~isempty(precision)
+                precisionFcn = str2func(precision);
+                data = precisionFcn(data);
+            end
+            wb_emitter_send(this.txDevice, data);
         end
         
         function N = get.BytesAvailable(this)
