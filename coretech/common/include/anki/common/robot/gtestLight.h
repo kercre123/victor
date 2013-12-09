@@ -25,7 +25,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define GTEST_RETURN_HERE {printf(""); return 0; }
 
 // Same usage as the Gtest macro
-#define GTEST_TEST(test_case_name, test_name) s32 test_case_name ## test_name()
+#define GTEST_TEST(test_case_name, test_name) s32 test_case_name ## __ ## test_name()
 
 // Same usage as the Gtest macro
 #define ASSERT_TRUE(condition)\
@@ -45,11 +45,11 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 // Call a GTEST_TEST, and increment the variable numPassedTests if the test passed, and  the variable numFailedTests if the test failed.
 #define CALL_GTEST_TEST(test_case_name, test_name)\
-  if(test_case_name ## test_name() == 0) {\
-  printf("\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nPASSED:" #test_case_name # test_name "\n" "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n");\
+  if(test_case_name ## __ ## test_name() == 0) {\
+  printf("\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nPASSED:" # test_case_name "__" # test_name "\n" "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n");\
   numPassedTests++;\
   } else {\
-  printf("\n\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\nFAILED:" #test_case_name # test_name "\n" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n\n"); numFailedTests++; };
+  printf("\n\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\nFAILED:" # test_case_name "__" # test_name "\n" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n\n"); numFailedTests++; };
 
 #endif // ANKICORETECH_EMBEDDED_USE_GTEST
 
