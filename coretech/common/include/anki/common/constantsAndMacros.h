@@ -187,6 +187,8 @@
 #define ABS(a)    (((a) >= 0) ? (a) : -(a))
 #endif
 
+#define FLT_FLOOR(x) floorf((x) + (f32)FLOATING_POINT_COMPARISON_TOLERANCE)
+
 // Square of a number
 #define SQUARE(x) ((x) * (x))
 

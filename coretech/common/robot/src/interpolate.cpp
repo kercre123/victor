@@ -67,10 +67,10 @@ namespace Anki
           const f32 curX = pXCoordinates[x];
           const f32 curY = pYCoordinates[x];
 
-          const f32 x0 = floorf(curX);
+          const f32 x0 = FLT_FLOOR(curX);
           const f32 x1 = ceilf(curX); // x0 + 1.0f;
 
-          const f32 y0 = floorf(curY);
+          const f32 y0 = FLT_FLOOR(curY);
           const f32 y1 = ceilf(curY); // y0 + 1.0f;
 
           // If out of bounds, set as invalid and continue

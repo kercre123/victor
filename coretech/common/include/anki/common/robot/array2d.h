@@ -664,17 +664,23 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
 
+      const s32 realMinX = MAX(0,minX);
+      const s32 realMaxX = MIN(maxX+1,size[1]);
+      const s32 realMinY = MAX(0,minY);
+      const s32 realMaxY = MIN(maxY+1,size[0]);
+
       printf(variableName);
-      printf(":\n");
-      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
+      printf("(%d:%d, %d:%d) type(int:%d,signed:%d,float:%d,sizeof:%d):\n", realMinY, realMaxY-1, realMinX, realMaxX-1, Flags::TypeCharacteristics<Type>::isInteger, Flags::TypeCharacteristics<Type>::isSigned, Flags::TypeCharacteristics<Type>::isFloat, sizeof(Type));
+
+      for(s32 y=realMinY; y<realMaxY; y++) {
         const Type * const pThisData = this->Pointer(y, 0);
-        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
+        for(s32 x=realMinX; x<realMaxX; x++) {
           if(Flags::TypeCharacteristics<Type>::isBasicType) {
             if(Flags::TypeCharacteristics<Type>::isInteger) {
-              if(Flags::TypeCharacteristics<Type>::isSigned) {
-                printf("%d ", static_cast<s64>(pThisData[x]));
+              if(sizeof(Type) == 1) {
+                printf("%d ", static_cast<s32>(pThisData[x]));
               } else {
-                printf("%d ", static_cast<u64>(pThisData[x]));
+                printf("%d ", pThisData[x]);
               }
             } else {
               printf("%f ", pThisData[x]);
