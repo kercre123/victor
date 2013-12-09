@@ -33,8 +33,6 @@ extern "C" {
 
 using namespace Anki::Embedded;
 
-// #define RUN_MATLAB_IMAGE_TEST
-
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include "opencv2/core/core.hpp"
 #endif
@@ -47,18 +45,24 @@ Matlab matlab(false);
 #include "gtest/gtest.h"
 #endif
 
+// #define RUN_MATLAB_IMAGE_TEST
 //#define RUN_MAIN_BIG_MEMORY_TESTS
 //#define RUN_ALL_BIG_MEMORY_TESTS
 //#define RUN_LOW_MEMORY_IMAGE_TESTS
-//#define RUN_TRACKER_TESTS // equivalent to RUN_BROKEN_KANADE_TESTS
+#define RUN_TRACKER_TESTS // equivalent to RUN_BROKEN_KANADE_TESTS
 //#define BENCHMARK_AFFINE
 
-#ifdef RUN_TRACKER_TESTS   // This prevents the .elf from loading
-//#ifdef RUN_MAIN_BIG_MEMORY_TESTS
+#if defined(RUN_TRACKER_TESTS) && defined(RUN_LOW_MEMORY_IMAGE_TESTS)
+Cannot run tracker and low memory tests at the same time
+#endif
+
+#ifdef RUN_MAIN_BIG_MEMORY_TESTS
 #include "../../blockImages/blockImage50.h"
+#endif
+
+#ifdef RUN_TRACKER_TESTS   // This prevents the .elf from loading
 #include "../../blockImages/blockImages00189_80x60.h"
 #include "../../blockImages/blockImages00190_80x60.h"
-//#endif
 #endif
 
 #ifdef RUN_ALL_BIG_MEMORY_TESTS
@@ -66,96 +70,33 @@ Matlab matlab(false);
 #include "../src/fiducialMarkerDefinitionType0.h"
 #endif
 
-#define USE_STATIC_BUFFERS
-
-#if defined(RUN_TRACKER_TESTS) && defined(RUN_LOW_MEMORY_IMAGE_TESTS)
-Cannot run tracker and low memory tests at the same time
+#if defined(USING_MOVIDIUS_COMPILER)
+#define BIG_BUFFER_LOCATION __attribute__((section(".bigBss")))
+#define SMALL_BUFFER_1_LOCATION __attribute__((section(".smallBss1")))
+#define SMALL_BUFFER_2_LOCATION __attribute__((section(".smallBss2")))
+#else
+#define BIG_BUFFER_LOCATION
+#define SMALL_BUFFER_1_LOCATION
+#define SMALL_BUFFER_2_LOCATION
 #endif
 
 #if defined(RUN_LOW_MEMORY_IMAGE_TESTS) && !defined(RUN_MAIN_BIG_MEMORY_TESTS) && !defined(RUN_ALL_BIG_MEMORY_TESTS)
-
 #define BIG_BUFFER_SIZE 320000
 #define SMALL_BUFFER_1_SIZE 300000
 #define SMALL_BUFFER_2_SIZE 300000
-#if defined(USING_MOVIDIUS_COMPILER)
-#define BIG_BUFFER_LOCATION __attribute__((section(".bigBuffers")))
-#define SMALL_BUFFER_1_LOCATION __attribute__((section(".smallBss1")))
-#define SMALL_BUFFER_2_LOCATION __attribute__((section(".smallBss2")))
-#else
-#define BIG_BUFFER_LOCATION
-#define SMALL_BUFFER_1_LOCATION
-#define SMALL_BUFFER_2_LOCATION
-#endif
-
 #elif defined(RUN_TRACKER_TESTS) && !defined(RUN_MAIN_BIG_MEMORY_TESTS) && !defined(RUN_ALL_BIG_MEMORY_TESTS)
-
 #define BIG_BUFFER_SIZE 320000
 #define SMALL_BUFFER_1_SIZE 600000
 #define SMALL_BUFFER_2_SIZE 16
-  //#define BIG_BUFFER_SIZE 32000
-  //#define SMALL_BUFFER_1_SIZE 60000
-  //#define SMALL_BUFFER_2_SIZE 16
-#if defined(USING_MOVIDIUS_COMPILER)
-#define BIG_BUFFER_LOCATION __attribute__((section(".bigBss")))
-#define SMALL_BUFFER_1_LOCATION __attribute__((section(".smallBss1")))
-#define SMALL_BUFFER_2_LOCATION __attribute__((section(".smallBss2")))
 #else
-#define BIG_BUFFER_LOCATION
-#define SMALL_BUFFER_1_LOCATION
-#define SMALL_BUFFER_2_LOCATION
-#endif
-
-#else
-
 #define BIG_BUFFER_SIZE 400000
 #define SMALL_BUFFER_1_SIZE 600000
 #define SMALL_BUFFER_2_SIZE 16
-#if defined(USING_MOVIDIUS_COMPILER)
-#define BIG_BUFFER_LOCATION __attribute__((section(".bigBss")))
-#define SMALL_BUFFER_1_LOCATION __attribute__((section(".smallBss1")))
-#define SMALL_BUFFER_2_LOCATION __attribute__((section(".smallBss2")))
-#else
-#define BIG_BUFFER_LOCATION
-#define SMALL_BUFFER_1_LOCATION
-#define SMALL_BUFFER_2_LOCATION
 #endif
 
-#endif
-
-#ifdef USE_STATIC_BUFFERS
   BIG_BUFFER_LOCATION char bigBuffer0[BIG_BUFFER_SIZE];
 SMALL_BUFFER_1_LOCATION char smallBuffer1[SMALL_BUFFER_1_SIZE];
 SMALL_BUFFER_2_LOCATION char smallBuffer2[SMALL_BUFFER_2_SIZE];
-#else // #ifdef USE_STATIC_BUFFERS
-  char *bigBuffer0 = NULL;
-char *smallBuffer1 = NULL;
-char *smallBuffer2 = NULL;
-#endif // #ifdef USE_STATIC_BUFFERS ... else ...
-
-void InitializeBuffers()
-{
-#ifndef USE_STATIC_BUFFERS
-#if defined(USING_MOVIDIUS_COMPILER)
-  if(!bigBuffer0)
-    bigBuffer0 = (char*)0x48100000;
-
-  if(!smallBuffer1)
-    smallBuffer1 = (char*)0x48100000 + BIG_BUFFER_SIZE + 128;
-
-  if(!smallBuffer2)
-    smallBuffer2 = (char*)0x48100000 + BIG_BUFFER_SIZE + SMALL_BUFFER_1_SIZE + 256;
-#else // #if defined(USING_MOVIDIUS_COMPILER)
-  if(!bigBuffer0)
-    bigBuffer0 = (char*)malloc(BIG_BUFFER_SIZE);
-
-  if(!smallBuffer1)
-    smallBuffer1 = (char*)malloc(SMALL_BUFFER_1_SIZE);
-
-  if(!smallBuffer2)
-    smallBuffer2 = (char*)malloc(SMALL_BUFFER_2_SIZE);
-#endif // #if defined(USING_MOVIDIUS_COMPILER) ... else ...
-#endif // #ifndef USE_STATIC_BUFFERS
-}
 
 GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
 {
@@ -205,7 +146,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_BenchmarkAffine)
   const s32 maxIterations = 25;
   const f32 convergenceTolerance = static_cast<f32>(1e-3);
 
-  InitializeBuffers();
+  // InitializeBuffers();
 
   // TODO: add check that images were loaded correctly
 
@@ -260,7 +201,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
   const s32 maxIterations = 25;
   const f32 convergenceTolerance = static_cast<f32>(1e-3);
 
-  InitializeBuffers();
+  // InitializeBuffers();
 
   // TODO: add check that images were loaded correctly
 
@@ -348,7 +289,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
 //GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScaleAndBinarize)
 //{
-//  InitializeBuffers();
+//  // InitializeBuffers();
 //
 //  // Check that the image loaded correctly
 //  ASSERT_TRUE(blockImage50[0] == 155);
@@ -982,7 +923,7 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
 
   //printf("steps12345: %d %d %d %d\n", blockImage50[0], blockImage50[640*240], blockImage50[640*480 - 1], combined);
 
-  InitializeBuffers();
+  // InitializeBuffers();
 
   // Check that the image loaded correctly
   ASSERT_TRUE(blockImage50[0] == 155);
@@ -1101,7 +1042,7 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
   ASSERT_TRUE(true);
 #else
 
-  InitializeBuffers();
+  // InitializeBuffers();
 
   printf("%d %d %d %d %d %d %d\n", blockImage50[0], blockImage50[1], blockImage50[2], blockImage50[3], blockImage50[1000], blockImage50[640*240]);
   printf("0x%x 0x%x 0x%x\n", blockImage50[0], blockImage50[1000], blockImage50[640*240]);
@@ -1250,7 +1191,7 @@ static Result DrawExampleProbesImage(Array<u8> &image, Quadrilateral<s16> &quad,
 #ifdef RUN_ALL_BIG_MEMORY_TESTS
 GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
 {
-  InitializeBuffers();
+  // InitializeBuffers();
 
   const CharacteristicScaleAlgorithm scaleImage_useWhichAlgorithm = CHARACTERISTIC_SCALE_ORIGINAL; // CHARACTERISTIC_SCALE_ORIGINAL, CHARACTERISTIC_SCALE_MEDIUM_MEMORY
   const s32 scaleImage_thresholdMultiplier = 49152; // .75 * (2^16) = 49152
@@ -1342,7 +1283,7 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
 // The test is if it can run without crashing
 GTEST_TEST(CoreTech_Vision, FiducialMarker)
 {
-  InitializeBuffers();
+  // InitializeBuffers();
 
   const s32 imageWidth = fiducial105_6_WIDTH;
   const s32 imageHeight = fiducial105_6_HEIGHT;
@@ -1391,7 +1332,7 @@ GTEST_TEST(CoreTech_Vision, FiducialMarker)
 // The test is if it can run without crashing
 GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
 {
-  InitializeBuffers();
+  // InitializeBuffers();
 
   const CharacteristicScaleAlgorithm scaleImage_useWhichAlgorithm = CHARACTERISTIC_SCALE_MEDIUM_MEMORY; // CHARACTERISTIC_SCALE_ORIGINAL, CHARACTERISTIC_SCALE_MEDIUM_MEMORY
   const s32 scaleImage_thresholdMultiplier = 49152; // .75 * (2^16) = 49152
@@ -1743,7 +1684,7 @@ GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   //#define DRAW_TraceNextExteriorBoundary
 #ifdef DRAW_TraceNextExteriorBoundary
   {
-    InitializeBuffers();
+    // InitializeBuffers();
     MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE);
     ASSERT_TRUE(scratch0.IsValid());
 
@@ -1868,7 +1809,7 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
 // The test is if it can run without crashing
 GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
 {
-  InitializeBuffers();
+  // InitializeBuffers();
 
   const CharacteristicScaleAlgorithm scaleImage_useWhichAlgorithm = CHARACTERISTIC_SCALE_MEDIUM_MEMORY; // CHARACTERISTIC_SCALE_ORIGINAL, CHARACTERISTIC_SCALE_MEDIUM_MEMORY
   const s32 scaleImage_thresholdMultiplier = 49152; // .75 * (2^16) = 49152
@@ -1936,7 +1877,7 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
 // The test is if it can run without crashing
 GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
 {
-  InitializeBuffers();
+  // InitializeBuffers();
 
   const s32 imageWidth = 640;
   const s32 imageHeight = 480;
@@ -2577,7 +2518,7 @@ GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
 #if ANKICORETECH_EMBEDDED_USE_MATLAB && defined(RUN_MATLAB_IMAGE_TEST)
 GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 {
-  InitializeBuffers();
+  // InitializeBuffers();
 
   const s32 imageWidth = 640;
   const s32 imageHeight = 480;
