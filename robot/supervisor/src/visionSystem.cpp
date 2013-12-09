@@ -44,12 +44,17 @@ namespace Anki {
 
         // Whether or not we're in the process of waiting for an image to be acquired
         // TODO: need one of these for both mat and head cameras?
-        bool continuousCaptureStarted_ = false;
+        //bool continuousCaptureStarted_ = false;
         
         u16  dockingBlock_ = 0;
         bool isDockingBlockFound_ = false;
         
         bool isTemplateInitialized_ = false;
+        
+        // The tracker can fail to converge this many times before we give up
+        // and reset the docker
+        const u8 MAX_TRACKING_FAILURES = 5;
+        u8 numTrackFailures_ = 0;
         
 #if USE_OFFBOARD_VISION
         u8 waitingForProcessingResult_ = 0;
@@ -161,8 +166,20 @@ namespace Anki {
         HAL::SendMessageID("CozmoMsg_TotalBlocksDetected",
                            MSG_OFFBOARD_VISION_TOTAL_BLOCKS_FOUND);
         
+        HAL::SendMessageID("CozmoMsg_TemplateTrackResult_Affine",
+                           MSG_OFFBOARD_VISION_TRACKING_AFFINE);
+        
+        HAL::SendMessageID("CozmoMsg_TemplateTrackResult_Homography",
+                           MSG_OFFBOARD_VISION_TRACKING_HOMOGRAPHY);
+        
         HAL::SendMessageID("CozmoMsg_DockingErrorSignal",
                            MSG_V2B_CORE_DOCKING_ERROR_SIGNAL);
+        
+        // TODO: Update this to send mat and head cam calibration separately
+        PRINT("VisionSystem::Init(): Sending head camera calibration to "
+              "offoard vision processor.\n");
+        HAL::USBSendPacket(HAL::USB_VISION_COMMAND_CALIBRATION,
+                           HAL::GetHeadCamInfo(), sizeof(HAL::CameraInfo));
 #endif
         
         isInitialized_ = true;
@@ -183,8 +200,21 @@ namespace Anki {
       
       ReturnCode SetDockingBlock(const u16 blockTypeToDockWith)
       {
-        dockingBlock_ = blockTypeToDockWith;
+        dockingBlock_          = blockTypeToDockWith;
+        isDockingBlockFound_   = false;
+        isTemplateInitialized_ = false;
+        numTrackFailures_      = 0;
+        
         mode_ = LOOKING_FOR_BLOCKS;
+        
+#if USE_OFFBOARD_VISION
+        // Let the offboard vision processor know that it should be looking for
+        // this block type as well, so it can do template initialization on the
+        // same frame where it sees the block, instead of needing a second
+        // USBSendFrame call.
+        HAL::USBSendPacket(HAL::USB_VISION_COMMAND_SETDOCKBLOCK,
+                           &dockingBlock_, sizeof(dockingBlock_));
+#endif
         return EXIT_SUCCESS;
       }
       
@@ -206,21 +236,40 @@ namespace Anki {
       inline void ProcessMessage(const CozmoMsg_TotalBlocksDetected& msg)
       {
         PRINT("Saw %d block markers.\n", msg.numBlocks);
-        mode_ = LOOKING_FOR_BLOCKS;
       }
       
       inline void ProcessMessage(const CozmoMsg_TemplateInitialized& msg)
       {
         if(msg.success) {
+          PRINT("Tracking template initialized, switching to DOCKING mode.\n");
           isTemplateInitialized_ = true;
+          isDockingBlockFound_   = true;
+          
+          // If we successfully initialized a tracking template,
+          // switch to docking mode.  Otherwise, we'll keep looking
+          // for the block and try again
+          mode_ = DOCKING;
         }
         else {
           isTemplateInitialized_ = false;
+          isDockingBlockFound_   = false;
         }
       }
       
       inline void ProcessMessage(const CozmoMsg_DockingErrorSignal& msg)
       {
+        if(msg.didTrackingSucceed) {
+          // Reset the failure counter
+          numTrackFailures_ = 0;
+        }
+        else {
+          ++numTrackFailures_;
+          if(numTrackFailures_ == MAX_TRACKING_FAILURES) {
+            // This resets docking, puttings us back in LOOKING_FOR_BLOCKS mode
+            SetDockingBlock(dockingBlock_);
+          }
+        }
+      
         // Just pass the docking error signal along to the mainExecution to
         // deal with. Note that if the message indicates tracking failed,
         // the mainExecution thread should handle it, and put the vision
@@ -287,6 +336,7 @@ namespace Anki {
         //       capture at the correct resolution directly and pass that in
         //       (and remove the downsampling from USBSendFrame()
         
+#if USE_OFFBOARD_VISION
         if(waitingForProcessingResult_ > 0)
         {
           PRINT("VisionSystem::Update(): waiting for processing result.\n");
@@ -303,6 +353,7 @@ namespace Anki {
             return EXIT_SUCCESS;
           }
         }
+#endif
 
         switch(mode_)
         {
@@ -317,6 +368,10 @@ namespace Anki {
             
             retVal = LookForBlocks(frame);
             
+#ifndef USE_OFFBOARD_VISION
+            // In offboard vision mode, this gets handled via processing of
+            // template-initalization messages received from the offboard
+            // vision processor
             if(isDockingBlockFound_) {
               if(InitTemplate(frame) == EXIT_SUCCESS) {
                 // If we successfully initialize a tracking template,
@@ -325,6 +380,7 @@ namespace Anki {
                 mode_ = DOCKING;
               }
             }
+#endif
             break;
           }
             
@@ -345,8 +401,7 @@ namespace Anki {
               if(TrackTemplate(frame) == EXIT_FAILURE) {
                 // Lost track.  Reset and go back to trying to find the
                 // block we want to dock with.
-                isDockingBlockFound_ = false;
-                isTemplateInitialized_ = false;
+                SetDockingBlock(dockingBlock_);
                 mode_ = LOOKING_FOR_BLOCKS;
               }
             }
@@ -449,7 +504,9 @@ namespace Anki {
 #if USE_OFFBOARD_VISION
        
         // Send the offboard vision processor the frame, with the command
-        // to look for blocks in it
+        // to look for blocks in it. Note that if we previsouly sent the
+        // offboard processor a message to set the docking block type, it will
+        // also initialize a template tracker once that block type is seen
         HAL::USBSendFrame(frame.data, frame.resolution, DETECTION_RESOLUTION,
                           HAL::USB_VISION_COMMAND_DETECTBLOCKS);
         
@@ -464,6 +521,8 @@ namespace Anki {
         // for( each marker) {
         //   CozmoMsg_ObservedBlockMarkerMsg msg;
         //   ProcessMessage(msg);
+        //   If docking block set, check to see if this is it and
+        //      init tracking template if so
         // }
         
 #endif // defined(USE_MATLAB_FOR_HEAD_CAMERA)
@@ -480,8 +539,8 @@ namespace Anki {
 #if USE_OFFBOARD_VISION
         
         // Send the offboard vision processor the frame, with the command
-        // to look for blocks in it
-        HAL::USBSendFrame(frame.data, frame.resolution, TRACKING_RESOLUTION,
+        // to do mat localization 
+        HAL::USBSendFrame(frame.data, frame.resolution, MAT_LOCALIZATION_RESOLUTION,
                           HAL::USB_VISION_COMMAND_MATLOCALIZATION);
         
         waitingForProcessingResult_ = MSG_V2B_CORE_MAT_MARKER_OBSERVED;
@@ -590,12 +649,11 @@ namespace Anki {
         
 #if USE_OFFBOARD_VISION
         
-        // Send the offboard vision processor the frame, with the command
-        // to look for blocks in it
-        HAL::USBSendFrame(frame.data, frame.resolution, DETECTION_RESOLUTION,
-                          HAL::USB_VISION_COMMAND_INITTRACK);
-        
-        waitingForProcessingResult_ = MSG_OFFBOARD_VISION_TEMPLATE_INITIALIZED;
+        // When using offboard vision processing, template initialization is
+        // rolled into looking for blocks, to ensure that the same frame in
+        // which a desired docking block was detected is also used to
+        // initialize the tracking template (without re-sending the frame
+        // over USB).
         
 #else
         // TODO: Call embedded vision template initalization

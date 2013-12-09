@@ -396,10 +396,12 @@ namespace Anki
       // Bytes to add to USB frame header to tell the offboard processor
       // what to do with the frame
       const u8 USB_VISION_COMMAND_DETECTBLOCKS    = 0xAB;
-      const u8 USB_VISION_COMMAND_INITTRACK       = 0xBC;
+      const u8 USB_VISION_COMMAND_SETDOCKBLOCK    = 0xBC;
       const u8 USB_VISION_COMMAND_TRACK           = 0xCD;
       const u8 USB_VISION_COMMAND_MATODOMETRY     = 0xDE;
       const u8 USB_VISION_COMMAND_MATLOCALIZATION = 0xEF;
+      
+      const u8 USB_VISION_COMMAND_CALIBRATION     = 0xCC;
       
       // Put a byte into a send buffer to be sent by LongExecution()
       // (Using same prototype as putc / USBPutChar for printf.)
@@ -414,6 +416,9 @@ namespace Anki
       
       // Send the contents of the USB message buffer.
       void USBSendMessage(void);
+      
+      // Send an arbitrary packet of data
+      void USBSendPacket(const u8 packetType, const void* data, const u32 numBytes);
       
       // Returns an entire message packet in buffer, if one is available.
       // Until a valid packet header is found and the entire packet is

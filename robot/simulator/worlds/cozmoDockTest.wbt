@@ -204,28 +204,28 @@ DEF WALL_4 Solid {
   ]
   boundingObject USE WALL_SHAPE
 }
-Block2x1 {
-  name "Block075_1"
+Block1x1 {
+  name "Block060_1"
   translation 4.89512e-10 0.0298305 0.2
   rotation -0.0026561 0.999996 0.00129937 2.04586e-07
   blockColor 0.5 0.1 0.75
   facemarker1 [
-    "textures/Block075_Face01.png"
+    "textures/Block060_Face01.png"
   ]
   facemarker2 [
-    "textures/Block075_Face02.png"
+    "textures/Block060_Face02.png"
   ]
   facemarker3 [
-    "textures/Block075_Face03.png"
+    "textures/Block060_Face03.png"
   ]
   facemarker4 [
-    "textures/Block075_Face04.png"
+    "textures/Block060_Face04.png"
   ]
   facemarker5 [
-    "textures/Block075_Face05.png"
+    "textures/Block060_Face05.png"
   ]
   facemarker6 [
-    "textures/Block075_Face06.png"
+    "textures/Block060_Face06.png"
   ]
 }
 DEF Cozmo CozmoBot {

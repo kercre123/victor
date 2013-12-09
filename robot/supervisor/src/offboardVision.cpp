@@ -103,6 +103,19 @@ namespace Anki
       return c;
     }
     
+    
+    void HAL::USBSendPacket(const u8 packetType, const void* data, const u32 numBytes)
+    {
+      SendHeader(packetType);
+      
+      const u8* u8data = reinterpret_cast<const u8*>(data);
+      for(u32 i=0; i<numBytes; ++i) {
+        USBPutChar(u8data[i]);
+      }
+      
+      SendFooter(packetType);
+    }
+    
   
     // TODO: pull the downsampling out of this function
     void HAL::USBSendFrame(const u8* frame,
@@ -148,7 +161,7 @@ namespace Anki
               for (int x1 = x; x1 < x + inc; x1++)
               {
                 const int index = x1 + y1 * ncols;
-#ifndef SIMULATOR
+#ifdef USING_MOVIDIUS_COMPILER
                 // Endian issue when running on the movidius
                 index ^= 3;
 #endif

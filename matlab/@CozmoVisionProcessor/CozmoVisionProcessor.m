@@ -13,36 +13,55 @@ classdef CozmoVisionProcessor < handle
             char(sscanf('B8', '%2x')), ...
             char(sscanf('BD', '%2x')), ... 
             char(sscanf('B7', '%2x'))}, ...
-            {[640 480], [320 240], [160 120], [80 60], [40 30]});        
+            {[640 480], [320 240], [160 120], [80 60], [40 30]});    
         
         % Processing Commands
         % (These should match the USB_VISION_COMMANDs defined in hal.h)
         MESSAGE_COMMAND          = char(sscanf('DD', '%2x'));
         MESSAGE_ID_DEFINITION    = char(sscanf('D0', '%2x'));
+        CALIBRATION              = char(sscanf('CC', '%2x'));
         DETECT_COMMAND           = char(sscanf('AB', '%2x'));
-        INIT_TRACK_COMMAND       = char(sscanf('BC', '%2x'));
+        SET_DOCKING_BLOCK        = char(sscanf('BC', '%2x'));
         TRACK_COMMAND            = char(sscanf('CD', '%2x'));
         MAT_ODOMETRY_COMMAND     = char(sscanf('DE', '%2x'));
         MAT_LOCALIZATION_COMMAND = char(sscanf('EF', '%2x'));
                     
+        LIFT_DISTANCE = 34;  % in mm, forward from robot origin
+        
     end % Constant Properties
     
     properties
         serialDevice;
         serialBuffer;
         
+        % LUT for enumerated message ID values 
         messageIDs;
         
+        dockingBlock;
+        
+        calibrationMatrix;
+        
+        % For tracking
+        LKtracker;
+        trackerType;
+        trackingResolution;
+        
+        % Display handles
         h_fig;
         h_img;
         h_axes;
         h_title;
+        h_templateAxes;
+        h_template;
+        h_track;
     end
     
     methods
         
         function this = CozmoVisionProcessor(varargin)
             SerialDevice = [];
+            TrackerType = 'affine';
+            TrackingResolution = [80 60];
             
             parseVarargin(varargin{:});
             
@@ -52,10 +71,25 @@ classdef CozmoVisionProcessor < handle
             this.serialDevice = SerialDevice;
             fopen(this.serialDevice);
             
+            this.LKtracker = [];
+            this.trackerType = TrackerType;
+            this.trackingResolution = TrackingResolution;
+            
+            this.dockingBlock = 0;
+            
             this.h_fig = namedFigure('CozmoVisionProcessor');
             this.h_axes = subplot(1,1,1, 'Parent', this.h_fig);
             this.h_img = imagesc(zeros(320,240), 'Parent', this.h_axes);
             this.h_title = title(this.h_axes, 'Initialized');
+            
+            this.h_templateAxes = axes('Position', [0 .8 .15 .15], ...
+                'Parent', this.h_fig, 'Visible', 'off');
+            this.h_template = imagesc(zeros(1), 'Parent', this.h_templateAxes);
+            
+            hold(this.h_axes, 'on');
+            this.h_track = plot(nan, nan, 'r', 'LineWidth', 3, ...
+                'Parent', this.h_axes);
+            hold(this.h_axes, 'off');
             
             hold(this.h_axes, 'on');
             colormap(this.h_fig, 'gray');
@@ -136,19 +170,70 @@ classdef CozmoVisionProcessor < handle
             
             switch(command)
                 case this.MESSAGE_COMMAND
+                    % Just display a text message
                     fprintf('MessagePacket: %s\n', packet);
                     return;
                     
                 case this.MESSAGE_ID_DEFINITION
+                    % Add an entry to the LUT
                     msgID = packet(1);
                     name  = char(packet(2:end));
-                    this.messageIDs.(name) = msgID;
+                    this.messageIDs.(name) = uint8(msgID);
                     fprintf('Registered "%s" as msgID=%d.\n', ...
                         name, msgID);
                     return;
                     
+                case this.CALIBRATION
+                    % Expecting:
+                    % struct {
+                    %   f32 focalLength_x, focalLength_y, fov_ver;
+                    %   f32 center_x, center_y;
+                    %   f32 skew;
+                    %   u16 nrows, ncols;
+                    %   f32 distortionCoeffs[NUM_RADIAL_DISTORTION_COEFFS];
+                    % } CameraInfo;
+                    %
+                    
+                    f = typecast(packet(1:8), 'single');
+                    c = typecast(packet(13:20), 'single');
+                    dims = typecast(packet(25:28), 'uint16');
+                    
+                    assert(length(f) == 2, ...
+                        'Expecting two single precision floats for focal lengths.');
+                    
+                    assert(length(c) == 2, ...
+                        'Expecting two single precision floats for camera center.');
+                    
+                    assert(length(dims) == 2, ...
+                        'Expecting two 16-bit integers for calibration dimensions.');
+                    
+                    this.calibrationMatrix = double([f(1) 0 c(1); 0 f(2) c(2); 0 0 1]);
+                                         
+                    % Compare the calibration resolution to the tracking
+                    % resolution and since it will only be used on data at
+                    % tracking resolution, adjust it accordingly
+                    adjFactor = this.trackingResolution ./ double([dims(2) dims(1)]);
+                    assert(adjFactor(1) == adjFactor(2), ...
+                        'Expecting calibration scaling factor to match for X and Y.');
+                    this.calibrationMatrix = this.calibrationMatrix * adjFactor(1);
+                    
+                    fprintf('Camera calibration set (scaled by %.1f): \n', adjFactor(1));
+                    disp(this.calibrationMatrix);
+                    
+                    return
+                    
+                case this.SET_DOCKING_BLOCK
+                    this.dockingBlock = typecast(packet, 'uint16');
+                    fprintf('Setting docking block to %d.\n', ...
+                        this.dockingBlock);
+                    return;
+                    
                 case this.DETECT_COMMAND
+                    % Detect block markers
+                    
                     delete(findobj(this.h_axes, 'Tag', 'BlockMarker2D'));
+                    set(this.h_templateAxes, 'Visible', 'off');
+                    set(this.h_track, 'XData', nan, 'YData', nan);
                     
                     img = CozmoVisionProcessor.PacketToImage(packet);
                     if ~isempty(img)
@@ -160,7 +245,7 @@ classdef CozmoVisionProcessor < handle
                             markers{i}.draw('where', this.h_axes);
                             
                             msgStruct = struct( ...
-                                'msgID', uint8(this.messageIDs.CozmoMsg_ObservedBlockMarker), ...
+                                'msgID', this.messageIDs.CozmoMsg_ObservedBlockMarker, ...
                                 'blockType', uint16(markers{i}.blockType), ...
                                 'faceType', uint8(markers{i}.faceType), ...
                                 'upDirection', uint8(markers{i}.upDirection), ...
@@ -176,6 +261,36 @@ classdef CozmoVisionProcessor < handle
                             
                             packet = CozmoVisionProcessor.SerializeMessageStruct(msgStruct);
                             this.SendPacket(packet);
+                            
+                            if ~isempty(this.dockingBlock) && ...
+                                    this.dockingBlock > 0 && ...
+                                    markers{i}.blockType == this.dockingBlock
+                                
+                               % Initialize the tracker 
+                               this.LKtracker = LucasKanadeTracker(img, ...
+                                   markers{i}.unorderedCorners([3 1 4 2],:), ...
+                                   'Type', this.trackerType, 'RidgeWeight', 1e-3, ...
+                                   'DebugDisplay', false, 'UseBlurring', false, ...
+                                   'UseNormalization', true, ...
+                                   'TrackingResolution', this.trackingResolution);
+                               
+                               % Let the robot know we've initialized the
+                               % tracker
+                               msgStruct = struct( ...
+                                   'msgID', this.messageIDs.CozmoMsg_TemplateInitialized, ...
+                                   'success', uint8(true));
+                               
+                               packet = CozmoVisionProcessor.SerializeMessageStruct(msgStruct);
+                               this.SendPacket(packet);
+                               
+                               % Show the tracking template
+                               template = this.LKtracker.target{this.LKtracker.finestScale};
+                               set(this.h_template, 'CData', template);
+                               set(this.h_templateAxes, 'Visible', 'on', ...
+                                   'XLim', [0.5 size(template,2)+.5], ...
+                                   'YLim', [0.5 size(template,1)+.5]);
+                    
+                            end
                         end
                         
                         set(this.h_title, 'String', ...
@@ -184,7 +299,7 @@ classdef CozmoVisionProcessor < handle
                         % Send a message indicating there are no more block
                         % marker messages coming
                         msgStruct = struct( ...
-                            'msgID', uint8(this.messageIDs.CozmoMsg_TotalBlocksDetected), ...
+                            'msgID', this.messageIDs.CozmoMsg_TotalBlocksDetected, ...
                             'numBlocks', uint8(length(markers)) );
                         
                         packet = CozmoVisionProcessor.SerializeMessageStruct(msgStruct);
@@ -192,19 +307,48 @@ classdef CozmoVisionProcessor < handle
                         
                     end
                     
-                case this.INIT_TRACK_COMMAND
-                    img = CozmoVisionProcessor.PacketToImage(packet);
-                    if ~isempty(img)
-                        set(this.h_title, 'String', 'Tracking Initialization');
-                        
-                    end
-                    
                 case this.TRACK_COMMAND
+                    assert(~isempty(this.calibrationMatrix), ...
+                        'Must receive calibration message before tracking.');
+                    
                     img = CozmoVisionProcessor.PacketToImage(packet);
                     if ~isempty(img)
                         set(this.h_title, 'String', 'Tracking');
                         
-                    end
+                        % Update the tracker with this frame
+                        converged = this.LKtracker.track(img, ...
+                            'MaxIterations', 50, ...
+                            'ConvergenceTolerance', .25,...
+                            'ErrorTolerance', 0.5);
+                        
+                        if converged
+                            corners = this.LKtracker.corners;
+                            
+                            set(this.h_track, ...
+                                'XData', corners([1 2 4 3 1],1), ...
+                                'YData', corners([1 2 4 3 1],2));
+                                                        
+                            [distError, midPointErr, angleError] = computeError(this);
+                            msgStruct = struct( ...
+                                'msgID', this.messageIDs.CozmoMsg_DockingErrorSignal, ...
+                                'didTrackingSucceed', uint8(true), ...
+                                'x_distErr', single(distError), ...
+                                'y_horErr', single(midPointErr), ...
+                                'angleErr', single(angleError));
+                            
+                        else
+                            msgStruct = struct( ...
+                                'msgID', this.messageIDs.CozmoMsg_DockingErrorSignal, ...
+                                'didTrackingSucceed', uint8(false), ...
+                                'x_distErr', single(0), ...
+                                'y_horErr', single(0), ...
+                                'angleErr', single(0));
+                        end
+                
+                        packet = CozmoVisionProcessor.SerializeMessageStruct(msgStruct);
+                        this.SendPacket(packet);
+                        
+                    end % IF img not empty
                     
                 otherwise
                     warning('Unknown command %d for packet. Skipping.');
@@ -229,7 +373,96 @@ classdef CozmoVisionProcessor < handle
                 'Expecting first byte of packet to be its size.');
             
             fwrite(this.serialDevice, [uint8(this.HEADER) row(packet)]);
-        end
+        end % FUNCTION: SendPacket()
+        
+        function [distError, midPointErr, angleError] = computeError(this)
+             
+            % Compute the error signal according to the current tracking result
+            switch(this.trackerType)
+                case 'affine'
+                    corners = this.LKtracker.corners;
+                    
+                    % TODO: why do i still need this rotation fix code? I'm
+                    % using the unordered marker corners above and i
+                    % thought that would fix it...
+                    %
+                    % Block may be rotated with top side of marker not
+                    % facing up, so reorient to make sure we got top
+                    % corners
+                    [th,~] = cart2pol(corners(:,1)-mean(corners(:,1)), ...
+                        corners(:,2)-mean(corners(:,2)));
+                    [~,sortIndex] = sort(th);
+                    
+                    upperLeft = corners(sortIndex(1),:);
+                    upperRight = corners(sortIndex(2),:);
+                    
+                    assert(upperRight(1) > upperLeft(1), ...
+                        ['UpperRight corner should be to the right ' ...
+                        'of the UpperLeft corner.']);
+                    
+                    % Get the angle from vertical of the top bar of the
+                    % marker we're tracking
+                    L = sqrt(sum( (upperRight-upperLeft).^2) );
+                    angleError = -asin( (upperRight(2)-upperLeft(2)) / L);
+                    
+                    currentDistance = BlockMarker3D.ReferenceWidth * this.calibrationMatrix(1,1) / L;
+                    distError = currentDistance - CozmoVisionProcessor.LIFT_DISTANCE;
+                    
+                    % TODO: should i be comparing to ncols/2 or calibration center?
+                    midPointErr = -( (upperRight(1)+upperLeft(1))/2 - ...
+                        this.trackingResolution(1)/2 );
+                    midPointErr = midPointErr * currentDistance / this.calibrationMatrix(1,1);
+                    
+                case 'homography'
+                    
+                    error('ComputeError() for homography not fully implemented yet.');
+                    
+                    % Note that LKtracker internally does recentering -- we
+                    % need to factor that in here as well. Thus the C term.
+                    C = [1 0 -this.LKtracker.xcen; 0 1 -this.LKtracker.ycen; 0 0 1];
+                    H = this.calibrationMatrix\(C\this.LKtracker.tform*C*this.calibrationMatrix*this.H_init);
+                    
+                    % This computes the equivalent H, but is more expensive
+                    % since it involves an SVD internally to compute the
+                    % homography instead of just chaining together the
+                    % initial homography with the current one already found
+                    % by the tracker, as above.
+                    %H = compute_homography(this.K\[LKtracker.corners';ones(1,4)], ...
+                    %        this.marker3d(:,1:2)');
+                    
+                    this.updateBlockPose(H);
+                    
+                    if this.drawPose
+                        this.drawCamera();
+                        this.drawRobot();
+                    end
+                    
+                    blockWRTrobot = this.blockPose.getWithRespectTo(this.robotPose);
+                    distError     = blockWRTrobot.T(1) - CozmoDocker.LIFT_DISTANCE;
+                    midPointErr   = blockWRTrobot.T(2);
+                    angleError    = atan2(blockWRTrobot.Rmat(2,1), blockWRTrobot.Rmat(1,1)) + pi/2;
+                    
+                otherwise
+                    error(['Not sure how to compute an error signal ' ...
+                        'when using a %s tracker.'], this.trackerType);
+            end % SWITCH(trackerType)
+             
+            %{
+            % Update the error displays
+            set(this.h_angleError, 'XData', [0 angleError*180/pi]);
+            h = get(this.h_angleError, 'Parent');
+            title(h, sprintf('AngleErr = %.1fdeg', angleError*180/pi), 'Back', 'w');
+            
+            set(this.h_distError, 'YData', [0 distError]);
+            h = get(this.h_distError, 'Parent');
+            title(h, sprintf('DistToGo = %.1fmm', distError), 'Back', 'w');
+            
+            set(this.h_leftRightError, 'XData', [0 midPointErr]);
+            h = get(this.h_leftRightError, 'Parent');
+            title(h, sprintf('LeftRightErr = %.1fmm', midPointErr), 'Back', 'w');
+            %}
+            
+        end % FUNCTION computeError()
         
     end % Methods
     
@@ -253,6 +486,7 @@ classdef CozmoVisionProcessor < handle
         end % FUNCTION PacketToImage()
         
             function packet = SerializeMessageStruct(msgStruct)
+                assert(isstruct(msgStruct), 'Expecting a message STRUCT as input.');
                 names = fieldnames(msgStruct);
                 packet = cell(1, length(names));
                 for i = 1:length(names)
@@ -260,7 +494,7 @@ classdef CozmoVisionProcessor < handle
                 end
                 packet = [packet{:}];
                 
-                % Add a size byte to the beginnging:
+                % Add a size byte to the beginning:
                 packet = [uint8(length(packet)+1) packet];
             end
         

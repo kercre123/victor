@@ -237,9 +237,17 @@ namespace Anki {
         while( dockErrSignalMailbox_.hasMail() )
         {
           const CozmoMsg_DockingErrorSignal dockMsg = dockErrSignalMailbox_.getMessage();
-          DockingController::SetRelDockPose(dockMsg.x_distErr,
-                                            dockMsg.y_horErr,
-                                            dockMsg.angleErr);
+          
+          if(dockMsg.didTrackingSucceed) {
+            PRINT("Received docking error signal: x_distErr=%.3f, y_horErr=%.3f, "
+                  "angleErr=%.1fdeg\n", dockMsg.x_distErr, dockMsg.y_horErr,
+                  RAD_TO_DEG_F32(dockMsg.angleErr));
+            
+            DockingController::SetRelDockPose(dockMsg.x_distErr,
+                                              dockMsg.y_horErr,
+                                              dockMsg.angleErr);
+          } // IF tracking succeeded
+          
         } // while dockErrSignalMailbox has mail
         
         
