@@ -193,7 +193,7 @@ namespace Anki
       
       ReturnCode retVal = EXIT_FAILURE;
       
-      PRINT("USBGetNextPacket(): %d bytes available to read.\n", USBGetNumBytesToRead());
+      //PRINT("USBGetNextPacket(): %d bytes available to read.\n", USBGetNumBytesToRead());
       
       // We need there to be at least 6 bytes: 4 for the header, 1 for the
       // size byte and one for the msgID

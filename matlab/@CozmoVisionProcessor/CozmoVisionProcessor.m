@@ -34,6 +34,8 @@ classdef CozmoVisionProcessor < handle
         serialDevice;
         serialBuffer;
         
+        verbosity;
+        
         % LUT for enumerated message ID values 
         messageIDs;
         
@@ -62,6 +64,7 @@ classdef CozmoVisionProcessor < handle
             SerialDevice = [];
             TrackerType = 'affine';
             TrackingResolution = [80 60];
+            Verbosity = 1;
             
             parseVarargin(varargin{:});
             
@@ -70,6 +73,8 @@ classdef CozmoVisionProcessor < handle
                 'SerialDevice must be a serial or SimulatedSerial object.');
             this.serialDevice = SerialDevice;
             fopen(this.serialDevice);
+            
+            this.verbosity = Verbosity;
             
             this.LKtracker = [];
             this.trackerType = TrackerType;
@@ -107,7 +112,7 @@ classdef CozmoVisionProcessor < handle
             
             this.serialBuffer = [this.serialBuffer newData];
            
-            fprintf('Received %d bytes. Buffer now %d bytes long.\n', ...
+            this.StatusMessage(3, 'Received %d bytes. Buffer now %d bytes long.\n', ...
                 length(newData), length(this.serialBuffer));
             
             % Find the headers and footers
@@ -217,7 +222,7 @@ classdef CozmoVisionProcessor < handle
                         'Expecting calibration scaling factor to match for X and Y.');
                     this.calibrationMatrix = this.calibrationMatrix * adjFactor(1);
                     
-                    fprintf('Camera calibration set (scaled by %.1f): \n', adjFactor(1));
+                    this.StatusMessage(1, 'Camera calibration set (scaled by %.1f): \n', adjFactor(1));
                     disp(this.calibrationMatrix);
                     
                     return
@@ -464,6 +469,12 @@ classdef CozmoVisionProcessor < handle
             
         end % FUNCTION computeError()
         
+        function StatusMessage(this, verbosityLevel, varargin)
+            if this.verbosity >= verbosityLevel
+                fprintf(varargin{:});
+            end
+        end
+           
     end % Methods
     
     methods(Static = true)

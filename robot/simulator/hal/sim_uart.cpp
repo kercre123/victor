@@ -79,10 +79,12 @@ namespace Anki
           {
             PRINT("USBFlush(): Send buffer full!\n");
           }
+          /*
           else {
             PRINT("USBFlush(): Sent %d bytes on channel %d.\n",
                   sendSize, usbTX_->getChannel());
           }
+           */
           USBsendBuffer_.clear();
         }
       }
