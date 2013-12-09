@@ -116,8 +116,8 @@ classdef SimulatedSerial < handle
             end
             N = length(this.rxBuffer);
             
-            fprintf('%d bytes available on channel %d\n', N, ...
-                wb_receiver_get_channel(this.rxDevice));
+            % fprintf('%d bytes available on channel %d\n', N, ...
+            %    wb_receiver_get_channel(this.rxDevice));
             
         end
                 
