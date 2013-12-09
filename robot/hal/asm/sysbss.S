@@ -9,7 +9,12 @@
 		.section ".sys.rodata.4", "", @progbits
 		.global __fsr_default
 		.type __fsr_default, #object
-__fsr_default: .word FSR_RD_ZERO | FSR_NF
+
+!; The Movidius default floating point processing is to round to zero and inexact mode (perhaps it is faster?)
+!; __fsr_default: .word FSR_RD_ZERO | FSR_NF
+
+!; Putting the floating point processing in standard IEEE754 compliant mode (same as Visual Studio)
+__fsr_default: .word 0
 		.size __fsr_default, 4
 
 !;-----------------------------------------------------------------------------
