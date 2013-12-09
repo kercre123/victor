@@ -215,8 +215,6 @@ typedef enum {
   
   MSG_OFFBOARD_VISION_TOTAL_BLOCKS_FOUND,
   MSG_OFFBOARD_VISION_TEMPLATE_INITIALIZED,
-  MSG_OFFBOARD_VISION_TRACKING_AFFINE,
-  MSG_OFFBOARD_VISION_TRACKING_HOMOGRAPHY,
   
   // ** Playback system related commands
 /*
@@ -591,25 +589,6 @@ typedef struct {
   u8 success;
 } CozmoMsg_TemplateInitialized;
 const u8 SIZE_MSG_OFFBOARD_VISION_TEMPLATE_INITIALIZED = sizeof(CozmoMsg_TemplateInitialized);
-
-// MSG_OFFBOARD_VISION_TRACKING_AFFINE
-typedef struct {
-  u8 size;
-  u8 msgID;
-  u8 converged;
-  u8 tform[6];
-} CozmoMsg_TemplateTrackResult_Affine;
-const u8 SIZE_MSG_OFFBOARD_VISION_TRACKING_AFFINE = sizeof(CozmoMsg_TemplateTrackResult_Affine);
-
-// MSG_OFFBOARD_VISION_TRACKING_HOMOGRAPHY
-typedef struct {
-  u8 size;
-  u8 msgID;
-  u8 converged;
-  u8 tform[8];
-} CozmoMsg_TemplateTrackResult_Homography;
-const u8 SIZE_MSG_OFFBOARD_VISION_TRACKING_HOMOGRAPHY = sizeof(CozmoMsg_TemplateTrackResult_Homography);
-
 
 // MSG_OFFBOARD_VISION_TOTAL_BLOCKS_FOUND
 typedef struct {

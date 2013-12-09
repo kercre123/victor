@@ -165,13 +165,7 @@ namespace Anki {
         
         HAL::SendMessageID("CozmoMsg_TotalBlocksDetected",
                            MSG_OFFBOARD_VISION_TOTAL_BLOCKS_FOUND);
-        
-        HAL::SendMessageID("CozmoMsg_TemplateTrackResult_Affine",
-                           MSG_OFFBOARD_VISION_TRACKING_AFFINE);
-        
-        HAL::SendMessageID("CozmoMsg_TemplateTrackResult_Homography",
-                           MSG_OFFBOARD_VISION_TRACKING_HOMOGRAPHY);
-        
+               
         HAL::SendMessageID("CozmoMsg_DockingErrorSignal",
                            MSG_V2B_CORE_DOCKING_ERROR_SIGNAL);
         
