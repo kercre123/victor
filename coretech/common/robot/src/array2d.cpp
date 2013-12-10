@@ -20,57 +20,67 @@ namespace Anki
   {
     template<> Result Array<bool>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
     template<> Result Array<u8>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
     template<> Result Array<s8>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
     template<> Result Array<u16>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
     template<> Result Array<s16>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
     template<> Result Array<u32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
     template<> Result Array<s32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
     template<> Result Array<u64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
     template<> Result Array<s64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
     template<> Result Array<f32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
     template<> Result Array<f64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
+    }
+
+    template<> Result Array<f32>::PrintAlternate(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    {
+      return PrintBasicType(variableName, version, minY, maxY, minX, maxX);
+    }
+
+    template<> Result Array<f64>::PrintAlternate(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    {
+      return PrintBasicType(variableName, version, minY, maxY, minX, maxX);
     }
 
     C_Array_s32 get_C_Array_s32(Array<s32> &array)
