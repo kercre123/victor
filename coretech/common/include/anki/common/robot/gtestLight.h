@@ -31,7 +31,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define ASSERT_TRUE(condition)\
   if(!(condition)) { \
   _Anki_Logf(ANKI_LOG_LEVEL_ERROR,\
-  "\n-----------------------------------------------------------------------\nUnitTestAssert(" #condition ") is false\nUnit Test Assert Failure\n-----------------------------------------------------------------------",\
+  "\n----------------------------------------------------------------------\nUnitTestAssert(" #condition ") is false\nUnit Test Assert Failure\n---------------------------------------------------------------------",\
   "", __FILE__, __PRETTY_FUNCTION__, __LINE__); \
   return -1;\
   }
