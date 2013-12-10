@@ -1968,7 +1968,7 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
 
   homography.Print("homography");
 
-  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(homography, homography_groundTruth, .01, .001));
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(homography, homography_groundTruth, .01, .01));
 
   GTEST_RETURN_HERE;
 }
@@ -2612,7 +2612,6 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
-  CALL_GTEST_TEST(CoreTech_Common, SVD64);
   CALL_GTEST_TEST(CoreTech_Common, ExplicitPrintf);
   CALL_GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes);
   CALL_GTEST_TEST(CoreTech_Common, MatrixSort);
@@ -2650,7 +2649,7 @@ int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Common, MatrixMultiply);
   CALL_GTEST_TEST(CoreTech_Common, ComputeHomography);
   CALL_GTEST_TEST(CoreTech_Common, SVD32);
-
+  CALL_GTEST_TEST(CoreTech_Common, SVD64);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_call);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1);
