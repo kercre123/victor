@@ -720,8 +720,11 @@ namespace Anki
           assert(false);
         }
 
-        Array<f32> xPrevious(1, numPointsY*numPointsX, memory);
-        Array<f32> yPrevious(1, numPointsY*numPointsX, memory);
+        //Array<f32> xPrevious(1, numPointsY*numPointsX, memory);
+        //Array<f32> yPrevious(1, numPointsY*numPointsX, memory);
+
+        // Initialize with some very extreme coordinates
+        Quadrilateral<f32> previousCorners(Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f));
 
         Array<f32> xIn(1, numPointsY*numPointsX, memory);
         Array<f32> yIn(1, numPointsY*numPointsX, memory);
@@ -750,28 +753,28 @@ namespace Anki
           if(transformation.TransformPoints(xIn, yIn, scale, this->center, xTransformed, yTransformed) != RESULT_OK)
             return RESULT_FAIL;
 
-          {
-            PUSH_MEMORY_STACK(memory);
+          //{
+          //  PUSH_MEMORY_STACK(memory);
 
-            Array<f32> tmp1(1, numPointsY*numPointsX, memory);
-            Array<f32> tmp2(1, numPointsY*numPointsX, memory);
+          //  Array<f32> tmp1(1, numPointsY*numPointsX, memory);
+          //  Array<f32> tmp2(1, numPointsY*numPointsX, memory);
 
-            // change = sqrt(mean((xPrev(:)-xi(:)).^2 + (yPrev(:)-yi(:)).^2));
-            Matrix::Subtract<f32,f32,f32>(xPrevious, xTransformed, tmp1);
-            Matrix::DotMultiply<f32,f32,f32>(tmp1, tmp1, tmp1);
+          //  // change = sqrt(mean((xPrev(:)-xi(:)).^2 + (yPrev(:)-yi(:)).^2));
+          //  Matrix::Subtract<f32,f32,f32>(xPrevious, xTransformed, tmp1);
+          //  Matrix::DotMultiply<f32,f32,f32>(tmp1, tmp1, tmp1);
 
-            Matrix::Subtract<f32,f32,f32>(yPrevious, yTransformed, tmp2);
-            Matrix::DotMultiply<f32,f32,f32>(tmp2, tmp2, tmp2);
+          //  Matrix::Subtract<f32,f32,f32>(yPrevious, yTransformed, tmp2);
+          //  Matrix::DotMultiply<f32,f32,f32>(tmp2, tmp2, tmp2);
 
-            Matrix::Add<f32,f32,f32>(tmp1, tmp2, tmp1);
+          //  Matrix::Add<f32,f32,f32>(tmp1, tmp2, tmp1);
 
-            const f32 change = sqrtf(Matrix::Mean<f32,f32>(tmp1));
+          //  const f32 change = sqrtf(Matrix::Mean<f32,f32>(tmp1));
 
-            if(change < convergenceTolerance*scale) {
-              converged = true;
-              return RESULT_OK;
-            }
-          } // PUSH_MEMORY_STACK(memory);
+          //  if(change < convergenceTolerance*scale) {
+          //    converged = true;
+          //    return RESULT_OK;
+          //  }
+          //} // PUSH_MEMORY_STACK(memory);
 
           Array<f32> nextImageTransformed(1, numPointsY*numPointsX, memory);
 
@@ -862,6 +865,12 @@ namespace Anki
           if(Matrix::SolveLeastSquares_f32(AWAt, b, update, memory) != RESULT_OK)
             return RESULT_FAIL;
 
+          //if(update.get_size(1) > 2) {
+          //  //AWAt.Print("AWAt");
+          //  //b.Print("b");
+          //  update.PrintAlternate("update", 2);
+          //}
+
           //{
           //  Matlab matlab(false);
 
@@ -871,6 +880,39 @@ namespace Anki
           //this->transformation.Print("t1");
           this->transformation.Update(update, memory, curTransformType);
           //this->transformation.Print("t2");
+
+          // TODO: check if we're done with iterations
+          {
+            PUSH_MEMORY_STACK(memory);
+
+            Quadrilateral<f32> in(
+              Point<f32>(0.0f,0.0f),
+              Point<f32>(static_cast<f32>(nextImage.get_size(1)),0.0f),
+              Point<f32>(static_cast<f32>(nextImage.get_size(0)),static_cast<f32>(nextImage.get_size(1))),
+              Point<f32>(0.0f,static_cast<f32>(nextImage.get_size(1))));
+
+            Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, scale);
+
+            //const f32 change = sqrtf(Matrix::Mean<f32,f32>(tmp1));
+            f32 change = 0.0f;
+            for(s32 i=0; i<4; i++) {
+              const f32 dx = previousCorners[i].x - newCorners[i].x;
+              const f32 dy = previousCorners[i].y - newCorners[i].y;
+              change += sqrtf(dx*dx + dy*dy);
+            }
+            change /= 4;
+
+            //printf("newCorners");
+            //newCorners.Print();
+            //printf("change: %f\n", change);
+
+            if(change < convergenceTolerance*scale) {
+              converged = true;
+              return RESULT_OK;
+            }
+
+            previousCorners = newCorners;
+          } // PUSH_MEMORY_STACK(memory);
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
         return RESULT_OK;
