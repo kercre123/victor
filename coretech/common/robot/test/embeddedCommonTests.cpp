@@ -71,6 +71,27 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, ExplicitPrintf)
+{
+  const u32 hex1 = 0x40000000;
+  const u32 hex2 = 0x3FF80000;
+  const u32 hex3 = 0x3FFD5555;
+  const u32 hex4 = 0x40C4507F;
+
+  const f32 *float1 = (f32*)&hex1;
+  const f32 *float2 = (f32*)&hex2;
+  const f32 *float3 = (f32*)&hex3;
+  const f32 *float4 = (f32*)&hex4;
+
+  explicitPrintf(0, EXPLICIT_PRINTF_FLIP_CHARACTERS, "The following two lines should be the same:\n");
+  explicitPrintf(0, EXPLICIT_PRINTF_FLIP_CHARACTERS, "%x %x %x %x\n", hex1, hex2, hex3, hex4);
+  explicitPrintf(0, EXPLICIT_PRINTF_FLIP_CHARACTERS, "%x %x %x %x\n", *((u32*) float1), *((u32*) float2), *((u32*) float3), *((u32*)float4));
+
+  //explicitPrintf(0, EXPLICIT_PRINTF_FLIP_CHARACTERS, "%f %f %f %f\n", *float1, *float2, *float3, *float4);
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
 {
   ASSERT_TRUE(buffer != NULL);
@@ -94,8 +115,8 @@ GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
     ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
     ASSERT_TRUE(Matrix::Sort(arr, arrIndexes, 0, false) == RESULT_OK);
 
-    arr.Print("sortWhichDimension==0 sortAscending==false");
-    arrIndexes.Print("Indexes: sortWhichDimension==0 sortAscending==false");
+    //arr.Print("sortWhichDimension==0 sortAscending==false");
+    //arrIndexes.Print("Indexes: sortWhichDimension==0 sortAscending==false");
 
     const s32 sortedArr_groundTruthData[15] = {91, 96, 97, 91, 96, 96, 81, 55, 80, 63, 28, 49, 13, 10, 16};
 
@@ -106,8 +127,7 @@ GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
     ASSERT_TRUE(sortedArrIndexes_groundTruth.Set(sortedArrIndexes_groundTruthData, 15) == 15);
 
     Matrix::Subtract<s32,s32,s32>(sortedArrIndexes_groundTruth, 1, sortedArrIndexes_groundTruth); // Matlab -> C indexing
-    sortedArrIndexes_groundTruth.Print("sortedArrIndexes_groundTruth");
-    printf("sortedArrIndexes_groundTruth[0][0] = %d \n", sortedArrIndexes_groundTruth[0][0]);
+    //sortedArrIndexes_groundTruth.Print("sortedArrIndexes_groundTruth");
 
     ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
     ASSERT_TRUE(AreElementwiseEqual(arrIndexes, sortedArrIndexes_groundTruth));
@@ -118,8 +138,8 @@ GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
     ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
     ASSERT_TRUE(Matrix::Sort(arr, arrIndexes, 0, true) == RESULT_OK);
 
-    arr.Print("Values: sortWhichDimension==0 sortAscending==true");
-    arrIndexes.Print("Indexes: sortWhichDimension==0 sortAscending==true");
+    //arr.Print("Values: sortWhichDimension==0 sortAscending==true");
+    //arrIndexes.Print("Indexes: sortWhichDimension==0 sortAscending==true");
 
     const s32 sortedArr_groundTruthData[15] = {13, 10, 16, 63, 28, 49, 81, 55, 80, 91, 96, 96, 91, 96, 97};
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
@@ -137,8 +157,8 @@ GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
     ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
     ASSERT_TRUE(Matrix::Sort(arr, arrIndexes, 1, false) == RESULT_OK);
 
-    arr.Print("sortWhichDimension==1 sortAscending==false");
-    arrIndexes.Print("Indexes: sortWhichDimension==1 sortAscending==false");
+    //arr.Print("sortWhichDimension==1 sortAscending==false");
+    //arrIndexes.Print("Indexes: sortWhichDimension==1 sortAscending==false");
 
     const s32 sortedArr_groundTruthData[15] = {81, 16, 10, 97, 91, 28, 96, 55, 13, 96, 91, 49, 96, 80, 63};
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
@@ -156,8 +176,8 @@ GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
     ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
     ASSERT_TRUE(Matrix::Sort(arr, arrIndexes, 1, true) == RESULT_OK);
 
-    arr.Print("sortWhichDimension==1 sortAscending==true");
-    arrIndexes.Print("Indexes: sortWhichDimension==1 sortAscending==true");
+    //arr.Print("sortWhichDimension==1 sortAscending==true");
+    //arrIndexes.Print("Indexes: sortWhichDimension==1 sortAscending==true");
 
     const s32 sortedArr_groundTruthData[15] = {10, 16, 81, 28, 91, 97, 13, 55, 96, 49, 91, 96, 63, 80, 96};
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
@@ -191,7 +211,7 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
     ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
     ASSERT_TRUE(Matrix::Sort(arr, 0, false) == RESULT_OK);
 
-    arr.Print("sortWhichDimension==0 sortAscending==false");
+    //arr.Print("sortWhichDimension==0 sortAscending==false");
 
     const s32 sortedArr_groundTruthData[15] = {91, 96, 97, 91, 96, 96, 81, 55, 80, 63, 28, 49, 13, 10, 16};
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
@@ -204,7 +224,7 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
     ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
     ASSERT_TRUE(Matrix::Sort(arr, 0, true) == RESULT_OK);
 
-    arr.Print("sortWhichDimension==0 sortAscending==true");
+    //arr.Print("sortWhichDimension==0 sortAscending==true");
 
     const s32 sortedArr_groundTruthData[15] = {13, 10, 16, 63, 28, 49, 81, 55, 80, 91, 96, 96, 91, 96, 97};
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
@@ -217,7 +237,7 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
     ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
     ASSERT_TRUE(Matrix::Sort(arr, 1, false) == RESULT_OK);
 
-    arr.Print("sortWhichDimension==1 sortAscending==false");
+    //arr.Print("sortWhichDimension==1 sortAscending==false");
 
     const s32 sortedArr_groundTruthData[15] = {81, 16, 10, 97, 91, 28, 96, 55, 13, 96, 91, 49, 96, 80, 63};
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
@@ -230,7 +250,7 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
     ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
     ASSERT_TRUE(Matrix::Sort(arr, 1, true) == RESULT_OK);
 
-    arr.Print("sortWhichDimension==1 sortAscending==true");
+    //arr.Print("sortWhichDimension==1 sortAscending==true");
 
     const s32 sortedArr_groundTruthData[15] = {10, 16, 81, 28, 91, 97, 13, 55, 96, 49, 91, 96, 63, 80, 96};
     ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
@@ -1646,6 +1666,7 @@ GTEST_TEST(CoreTech_Common, LinearSequence)
 
   for(s32 i=0; i<15; i++) {
     LinearSequence<s32> sequence(sequenceLimits1[i][0], sequenceLimits1[i][1], sequenceLimits1[i][2]);
+    //printf("A %d) %d %d\n", i, sequence.get_size(), length1_groundTruth[i]);
     ASSERT_TRUE(sequence.get_size() == length1_groundTruth[i]);
   }
 
@@ -1661,6 +1682,7 @@ GTEST_TEST(CoreTech_Common, LinearSequence)
 
   for(s32 i=0; i<25; i++) {
     LinearSequence<f32> sequence(sequenceLimits2[i][0], sequenceLimits2[i][1], sequenceLimits2[i][2]);
+    //printf("B %d) %d %d\n", i, sequence.get_size(), length2_groundTruth[i]);
     ASSERT_TRUE(sequence.get_size() == length2_groundTruth[i]);
   }
 
@@ -2008,6 +2030,7 @@ GTEST_TEST(CoreTech_Common, SVD32)
   ASSERT_TRUE(vT_groundTruth.IsValid());
 
   void * scratch = ms.Allocate(sizeof(float)*(2*n + 2*m + 64));
+  //void * scratch = ms.Allocate(2*32 + 2*32 + 64);
   ASSERT_TRUE(scratch != NULL);
 
   //swcLeonFlushDcache();
@@ -2028,6 +2051,8 @@ GTEST_TEST(CoreTech_Common, SVD32)
   const Result result = svd_f32(a, w, uT, vT, scratch);
 
   ASSERT_TRUE(result == RESULT_OK);
+
+  ASSERT_TRUE(ms.IsValid());
 
   //PrintfOneArray_f32(a, "a");
 
@@ -2587,6 +2612,8 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, SVD64);
+  CALL_GTEST_TEST(CoreTech_Common, ExplicitPrintf);
   CALL_GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes);
   CALL_GTEST_TEST(CoreTech_Common, MatrixSort);
   CALL_GTEST_TEST(CoreTech_Common, LinearLeastSquares32);
@@ -2610,9 +2637,9 @@ int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Common, SliceArrayAssignment);
   CALL_GTEST_TEST(CoreTech_Common, SliceArrayCompileTest);
   CALL_GTEST_TEST(CoreTech_Common, MatrixMinAndMaxAndSum);
+  CALL_GTEST_TEST(CoreTech_Common, LinearSequence);
   CALL_GTEST_TEST(CoreTech_Common, ReallocateArray);
   CALL_GTEST_TEST(CoreTech_Common, ReallocateMemoryStack);
-  CALL_GTEST_TEST(CoreTech_Common, LinearSequence);
 
 #ifdef TEST_BENCHMARKING
   CALL_GTEST_TEST(CoreTech_Common, Benchmarking);
@@ -2623,7 +2650,7 @@ int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Common, MatrixMultiply);
   CALL_GTEST_TEST(CoreTech_Common, ComputeHomography);
   CALL_GTEST_TEST(CoreTech_Common, SVD32);
-  CALL_GTEST_TEST(CoreTech_Common, SVD64);
+
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_call);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1);
