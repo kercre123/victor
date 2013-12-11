@@ -102,49 +102,45 @@ namespace Anki
       }
       
       
+      void SetPathForViz() {
+#if(ENABLE_PATH_VIZ)
+        for (u8 i=0; i<path_.GetNumSegments(); ++i) {
+          switch(path_[i].type) {
+            case PST_LINE:
+              Viz::AppendPathSegmentLine(0,
+                                         path_[i].def.line.startPt_x,
+                                         path_[i].def.line.startPt_y,
+                                         path_[i].def.line.endPt_x,
+                                         path_[i].def.line.endPt_y);
+              break;
+            case PST_ARC:
+              Viz::AppendPathSegmentArc(0,
+                                        path_[i].def.arc.centerPt_x,
+                                        path_[i].def.arc.centerPt_y,
+                                        path_[i].def.arc.radius,
+                                        path_[i].def.arc.startRad,
+                                        path_[i].def.arc.sweepRad);
+              break;
+            default:
+              break;
+          }
+        }
+#endif
+      }
+      
+      
       
       // Add path segment
       // tODO: Change units to meters
       bool AppendPathSegment_Line(u32 matID, f32 x_start_m, f32 y_start_m, f32 x_end_m, f32 y_end_m)
       {
-        if (!path_.AppendLine(matID, x_start_m, y_start_m, x_end_m, y_end_m)) {
-          return false;
-        }
-        
-#if(ENABLE_PATH_VIZ)
-        u8 segId = path_.GetNumSegments() - 1;
-        Viz::AppendPathSegmentLine(0,
-                                   path_[segId].def.line.startPt_x,
-                                   path_[segId].def.line.startPt_y,
-                                   path_[segId].def.line.endPt_x,
-                                   path_[segId].def.line.endPt_y);
-#endif
-        
-        return true;
+        return path_.AppendLine(matID, x_start_m, y_start_m, x_end_m, y_end_m);
       }
       
       
       bool AppendPathSegment_Arc(u32 matID, f32 x_center_m, f32 y_center_m, f32 radius_m, f32 startRad, f32 sweepRad)
       {
-        u8 numSegsBefore = path_.GetNumSegments();
-        if (!path_.AppendArc(matID, x_center_m, y_center_m, radius_m, startRad, sweepRad)) {
-          return false;
-        }
-        
-        
-#if(ENABLE_PATH_VIZ)
-        u8 numSegsAfter = path_.GetNumSegments();
-        for (u8 i=numSegsBefore; i<numSegsAfter; ++i) {
-          Viz::AppendPathSegmentArc(0,
-                                    path_[i].def.arc.centerPt_x,
-                                    path_[i].def.arc.centerPt_y,
-                                    path_[i].def.arc.radius,
-                                    path_[i].def.arc.startRad,
-                                    path_[i].def.arc.sweepRad);
-        }
-#endif
-        
-        return true;
+        return path_.AppendArc(matID, x_center_m, y_center_m, radius_m, startRad, sweepRad);
       }
       
       
@@ -196,6 +192,7 @@ namespace Anki
         }
         
         // Visualize path
+        SetPathForViz();
         if (visualizePath_) {
 #if(ENABLE_PATH_VIZ)
           Viz::ShowPath(0, true);

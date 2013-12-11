@@ -12,7 +12,7 @@ namespace Anki
   namespace Cozmo
   {
     
-    enum {
+    typedef enum {
       LSL = 0,
       LSR,
       RSL,
@@ -65,11 +65,11 @@ namespace Anki
     {
     public:
       PathSegment(){};
-      ~PathSegment(){};
       
       Anki::Embedded::Point2f GetStartPoint() const;
       Anki::Embedded::Point2f GetEndPoint() const;
       
+      void Print() const;
       
       PathSegmentType type;
       PathSegmentDef def;
@@ -84,11 +84,10 @@ namespace Anki
     {
 
     public:
-      Path(){Clear();}
-      ~Path(){};
+      Path();
       
-      void Clear(void) {numPathSegments_ = 0;}
-      int GetNumSegments(void) const {return numPathSegments_;}
+      void Clear(void);
+      int GetNumSegments(void) const;
       
       void PrintPath() const;
       void PrintSegment(u8 segment) const;
@@ -116,11 +115,14 @@ namespace Anki
     private:
       
       PathSegment path_[MAX_NUM_PATH_SEGMENTS];
-      s16 numPathSegments_ = 0;
+      s16 numPathSegments_;
 
       bool CheckSegmentContinuity(u8 pathSegmentIdx) const;
       
       void AddArc(f32 x_center_m, f32 y_center_m, f32 radius_m, f32 startRad, f32 sweepRad);
+
+      // Returns angle between two points on a circle
+      f32 GetArcAngle(f32 start_x, f32 start_y, f32 end_x, f32 end_y, f32 center_x, f32 center_y, bool CCW);
     };
     
    
