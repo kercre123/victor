@@ -1,5 +1,6 @@
 #include "cameras.h"
 #include "anki/cozmo/robot/cozmoConfig.h" // for calibration parameters
+#include "anki/common/robot/trig_fast.h"
 
 // Unchanged interrupt level from Movidius
 #define CIF_INTERRUPT_LEVEL 3
@@ -23,7 +24,7 @@ namespace Anki
       
       inline f32 ComputeVerticalFOV(const u16 height, const f32 fy)
       {
-        return 2.f * atan(static_cast<f32>(height) / (2.f * fy));
+        return 2.f * atan_fast(static_cast<f32>(height) / (2.f * fy));
       }
       
       const HAL::CameraInfo* HAL::GetHeadCamInfo(void)
