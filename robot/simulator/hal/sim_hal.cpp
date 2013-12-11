@@ -634,6 +634,13 @@ namespace Anki {
     }
     
     // TODO: there is a copy of this in hal.cpp -- consolidate into one location.
+    // TODO: perhaps we'd rather have this be a switch statement
+    //       (However, if the header is stored as a member of the CameraModeInfo
+    //        struct, we can't use it as a case in the switch statement b/c
+    //        the compiler doesn't think it's a constant expression.  We can
+    //        get around this using "constexpr" when declaring CameraModeInfo,
+    //        but that's a C++11 thing and not likely supported on the Movidius
+    //        compiler)
     void HAL::SetHeadCamMode(const u8 frameResHeader)
     {
       bool found = false;
