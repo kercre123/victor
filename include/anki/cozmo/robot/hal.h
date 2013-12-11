@@ -227,15 +227,14 @@ namespace Anki
       s32 MotorGetLoad();
 
       // Cameras
-      enum CameraID
+      typedef enum
       {
         CAMERA_FRONT = 0,
         CAMERA_MAT,
         CAMERA_COUNT
-      };
+      } CameraID;
 
-      
-      enum CameraMode
+      typedef enum
       {
         CAMERA_MODE_VGA = 0,
         CAMERA_MODE_QVGA,
@@ -245,7 +244,7 @@ namespace Anki
         CAMERA_MODE_COUNT,
 
         CAMERA_MODE_NONE = CAMERA_MODE_COUNT
-      };
+      } CameraMode;
       
       typedef struct {
         u8 header; // used to specify a frame's resolution in a packet
@@ -253,6 +252,21 @@ namespace Anki
         u8 downsampleInc[CAMERA_MODE_COUNT];
       } CameraModeInfo_t;
       
+      const CameraModeInfo_t CameraModeInfo[CAMERA_MODE_COUNT] =
+      {
+        // VGA
+        { 0xBA, 640, 480, {1, 0, 0, 0, 0} },
+        // QVGA
+        { 0xBC, 320, 240, {2, 1, 0, 0, 0} },
+        // QQVGA
+        { 0xB8, 160, 120, {4, 2, 1, 0, 0} },
+        // QQQVGA
+        { 0xBD,  80,  60, {8, 4, 2, 1, 0} },
+        // QQQQVGA
+        { 0xB7,  40,  30, {16, 8, 4, 2, 1} }
+      };
+      
+      /* Prettier initialization, not supported by Movidius compiler?
       const CameraModeInfo_t CameraModeInfo[CAMERA_MODE_COUNT] =
       {
         // VGA
@@ -281,6 +295,7 @@ namespace Anki
           .downsampleInc = {16, 8, 4, 2, 1}
         }
       };
+       */
       
       enum CameraUpdateMode
       {

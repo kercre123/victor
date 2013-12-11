@@ -56,9 +56,9 @@ typedef struct {
 #elif MESSAGE_DEFINITION_MODE == MESSAGE_TABLE_DEFINITION_MODE
 // Define entry in MessageTable
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-{.priority = __PRIORITY__, .size =
+{__PRIORITY__,
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) sizeof(__TYPE__) +
-#define END_MESSAGE_DEFINITION(__MSG_TYPE__) + 0, .dispatchFcn = Anki::Cozmo::CommandHandler::GET_DISPATCH_FCN_NAME(__MSG_TYPE__)},
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__) + 0, Anki::Cozmo::CommandHandler::GET_DISPATCH_FCN_NAME(__MSG_TYPE__)},
 
 
 #elif MESSAGE_DEFINITION_MODE == MESSAGE_ENUM_DEFINITION_MODE

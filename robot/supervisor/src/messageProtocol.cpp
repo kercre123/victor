@@ -7,5 +7,5 @@ MessageTableEntry MessageTable[256] = {
 #undef  MESSAGE_DEFINITION_MODE
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
 #include "anki/cozmo/MessageDefinitions.h"
-  {.size = 0, .priority = 0, .dispatchFcn = 0} // Final dummy entry without comma at end
+  {0, 0, 0} // Final dummy entry without comma at end
 };

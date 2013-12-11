@@ -181,14 +181,14 @@ namespace Anki {
         // Create a camera calibration message and send it to the offboard
         // vision processor
         CozmoMsg_HeadCameraCalibration msg = {
-          .focalLength_x = headCamInfo_->focalLength_x,
-          .focalLength_y = headCamInfo_->focalLength_y,
-          .fov           = headCamInfo_->fov_ver,
-          .center_x      = headCamInfo_->center_x,
-          .center_y      = headCamInfo_->center_y,
-          .skew          = headCamInfo_->skew,
-          .nrows         = headCamInfo_->nrows,
-          .ncols         = headCamInfo_->ncols
+          headCamInfo_->focalLength_x,
+          headCamInfo_->focalLength_y,
+          headCamInfo_->fov_ver,
+          headCamInfo_->center_x,
+          headCamInfo_->center_y,
+          headCamInfo_->skew,
+          headCamInfo_->nrows,
+          headCamInfo_->ncols
         };
         
         //HAL::USBSendMessage(&msg, GET_MESSAGE_ID(HeadCameraCalibration));

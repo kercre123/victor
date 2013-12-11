@@ -75,8 +75,8 @@ typedef enum {
 // 4. Fill in the message information lookup table:
 // <This happens in messageProtocol.cpp>
 typedef struct {
-  u8 size;
   u8 priority;
+  u8 size;
   void (*dispatchFcn)(const u8* buffer);
 } MessageTableEntry;
 
