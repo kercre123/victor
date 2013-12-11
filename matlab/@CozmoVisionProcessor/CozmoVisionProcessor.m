@@ -1,6 +1,7 @@
 classdef CozmoVisionProcessor < handle
     
     properties(Constant = true)
+        TIME_STEP = 64;
         
         % Default header and footer:
         HEADER = char(sscanf('BEEFF0FF', '%2x'))'; 
@@ -59,6 +60,10 @@ classdef CozmoVisionProcessor < handle
         h_track;
     end
     
+    properties(SetAccess = 'protected', Dependent = true)
+        isDone;
+    end
+        
     methods
         
         function castedData = Cast(this, data, outputType)
@@ -114,8 +119,16 @@ classdef CozmoVisionProcessor < handle
             
         end % Constructor: CozmoVisionProcessor()
        
-        function Update(this)
+        function done = get.isDone(this)
+            if isa(this.serialDevice, 'SimulatedSerial')
+                done = wb_robot_step(this.TIME_STEP) == -1;
+            else
+                done = false;
+            end
+        end
             
+        function Update(this)
+                        
             % Read whatever is available in the serial port:
             newData = row(uint8(fread(this.serialDevice)));
             
@@ -183,6 +196,13 @@ classdef CozmoVisionProcessor < handle
             end
             
         end % FUNCTION: Update()
+        
+        function Run(this)
+           while ~this.isDone
+               this.Update();
+           end
+           
+        end % FUNCTION Run()
         
         function ProcessPacket(this, command, packet)
             

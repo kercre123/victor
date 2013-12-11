@@ -13,8 +13,4 @@ simSerial = SimulatedSerial('RX', usbRX, 'TX', usbTX);
 
 proc = CozmoVisionProcessor('SerialDevice', simSerial, 'DoEndianSwap', false);
 
-while wb_robot_step(TIME_STEP) ~= -1
-
-    proc.Update();
-        
-end
+proc.Run();
