@@ -56,9 +56,10 @@ typedef struct {
 #elif MESSAGE_DEFINITION_MODE == MESSAGE_TABLE_DEFINITION_MODE
 // Define entry in MessageTable
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-{.size = sizeof(GET_STRUCT_TYPENAME(__MSG_TYPE__)), .priority = __PRIORITY__, .dispatchFcn = Anki::Cozmo::CommandHandler::GET_DISPATCH_FCN_NAME(__MSG_TYPE__)},
-#define END_MESSAGE_DEFINITION(__MSG_TYPE__)
-#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__)
+{.priority = __PRIORITY__, .size =
+#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) sizeof(__TYPE__) +
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__) + 0, .dispatchFcn = Anki::Cozmo::CommandHandler::GET_DISPATCH_FCN_NAME(__MSG_TYPE__)},
+
 
 #elif MESSAGE_DEFINITION_MODE == MESSAGE_ENUM_DEFINITION_MODE
 // Define enumerated message ID
@@ -130,7 +131,6 @@ END_MESSAGE_DEFINITION(SetPathSegmentArc)
 START_MESSAGE_DEFINITION(BlockMarkerObserved, 1)
   // TODO: u16 frameNum; // for putting together two halves of a BlockMarker packet
 ADD_MESSAGE_MEMBER(f32, headAngle)  // TODO: should this be it's own message, only when changed?
-
 // TODO: these need to be fixed-point, probably 16bits
 ADD_MESSAGE_MEMBER(f32, x_imgUpperLeft)
 ADD_MESSAGE_MEMBER(f32, y_imgUpperLeft)
