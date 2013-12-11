@@ -25,6 +25,7 @@ namespace Anki {
   namespace Cozmo {
     
     typedef enum {
+      IDLE,
       LOOKING_FOR_BLOCKS,
       DOCKING,
       MAT_LOCALIZATION,
@@ -36,7 +37,7 @@ namespace Anki {
       
       bool isInitialized_ = false;
       
-      Mode mode_ = LOOKING_FOR_BLOCKS;
+      Mode mode_ = IDLE;
       
       const HAL::CameraInfo* headCamInfo_ = NULL;
       const HAL::CameraInfo* matCamInfo_  = NULL;
@@ -56,7 +57,9 @@ namespace Anki {
       u8 numTrackFailures_ = 0;
       
 #if USE_OFFBOARD_VISION
-      u8 waitingForProcessingResult_ = 0;
+      const u32 PROCESSING_TIMEOUT = 1000000; // in microseconds
+      u8  waitingForProcessingResult_ = 0;
+      u32 waitingForProcessingStartTime_ = 0;
 #endif
       
       // Pointers to "Mailboxes" for communicating information back to
@@ -255,6 +258,13 @@ namespace Anki {
               // processing
               waitingForProcessingResult_ = 0;
           }
+          else if (HAL::GetMicroCounter() - waitingForProcessingStartTime_ > PROCESSING_TIMEOUT)
+          {
+            PRINT("Timed out waiting for processing result %d. Resetting.\n",
+                  waitingForProcessingResult_);
+            
+            waitingForProcessingResult_ = 0;
+          }
           else {
             // Still waiting, skip further vision processing below.
             return EXIT_SUCCESS;
@@ -264,6 +274,10 @@ namespace Anki {
 
         switch(mode_)
         {
+          case IDLE:
+            // Nothing to do!
+            break;
+            
           case LOOKING_FOR_BLOCKS:
           {
             FrameBuffer frame = {
@@ -418,6 +432,7 @@ namespace Anki {
                           HAL::USB_VISION_COMMAND_DETECTBLOCKS);
         
         waitingForProcessingResult_ = GET_MESSAGE_ID(TotalBlocksDetected);
+        waitingForProcessingStartTime_ = HAL::GetMicroCounter();
         
 #else  // NOT defined(USE_MATLAB_FOR_HEAD_CAMERA)
         
@@ -451,6 +466,7 @@ namespace Anki {
                           HAL::USB_VISION_COMMAND_MATLOCALIZATION);
         
         waitingForProcessingResult_ = GET_MESSAGE_ID(MatMarkerObserved);
+        waitingForProcessingStartTime_ = HAL::GetMicroCounter();
         
 /*
         const s32 nrows = static_cast<s32>(frame.height);
@@ -586,6 +602,7 @@ namespace Anki {
                           HAL::USB_VISION_COMMAND_TRACK);
         
         waitingForProcessingResult_ = GET_MESSAGE_ID(DockingErrorSignal);
+        waitingForProcessingStartTime_ = HAL::GetMicroCounter();
         
 #else // ONBOARD VISION
         
