@@ -27,36 +27,38 @@ namespace Anki
         return 2.f * atan_fast(static_cast<f32>(height) / (2.f * fy));
       }
       
-      const HAL::CameraInfo* HAL::GetHeadCamInfo(void)
+      const CameraInfo* GetHeadCamInfo(void)
       {
         headCamInfo_ = {
-          HEAD_CAM_CALIBRATION_FOCAL_LENGTH_X,
-          HEAD_CAM_CALIBRATION_FOCAL_LENGTH_Y,
-          ComputeVerticalFOV(HEAD_CAM_CALIBRATION_HEIGHT,
-                             HEAD_CAM_CALIBRATION_FOCAL_LENGTH_Y),
-          HEAD_CAM_CALIBRATION_CENTER_X,
-          HEAD_CAM_CALIBRATION_CENTER_Y,
+          HEAD_CAM_CALIB_FOCAL_LENGTH_X,
+          HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+          ComputeVerticalFOV(HEAD_CAM_CALIB_HEIGHT,
+                             HEAD_CAM_CALIB_FOCAL_LENGTH_Y),
+          HEAD_CAM_CALIB_CENTER_X,
+          HEAD_CAM_CALIB_CENTER_Y,
           0.f,
-          HEAD_CAM_CALIBRATION_HEIGHT,
-          HEAD_CAM_CALIBRATION_WIDTH
+          HEAD_CAM_CALIB_HEIGHT,
+          HEAD_CAM_CALIB_WIDTH
         };
         
         return &headCamInfo_;
       }
       
-      const HAL::CameraInfo* HAL::GetMatCamInfo(void)
+      const CameraInfo* GetMatCamInfo(void)
       {
         matCamInfo_ = {
-          MAT_CAM_CALIBRATION_FOCAL_LENGTH_X,
-          MAT_CAM_CALIBRATION_FOCAL_LENGTH_Y,
-          ComputeVerticalFOV(MAT_CAM_CALIBRATION_HEIGHT,
-                             MAT_CAM_CALIBRATION_FOCAL_LENGTH_Y),
-          MAT_CAM_CALIBRATION_CENTER_X,
-          MAT_CAM_CALIBRATION_CENTER_Y,
+          MAT_CAM_CALIB_FOCAL_LENGTH_X,
+          MAT_CAM_CALIB_FOCAL_LENGTH_Y,
+          ComputeVerticalFOV(MAT_CAM_CALIB_HEIGHT,
+                             MAT_CAM_CALIB_FOCAL_LENGTH_Y),
+          MAT_CAM_CALIB_CENTER_X,
+          MAT_CAM_CALIB_CENTER_Y,
           0.f,
-          MAT_CAM_CALIBRATION_HEIGHT,
-          MAT_CAM_CALIBRATION_WIDTH
+          MAT_CAM_CALIB_HEIGHT,
+          MAT_CAM_CALIB_WIDTH
         };
+        
+        return &matCamInfo_;
       }
       
       
@@ -109,11 +111,11 @@ namespace Anki
       }
       
       // TODO: there is a copy of this in sim_hal.cpp -- consolidate into one location.
-      void HAL::SetHeadCamMode(const u8 frameResHeader)
+      void SetHeadCamMode(const u8 frameResHeader)
       {
         bool found = false;
         for(CameraMode mode = CAMERA_MODE_VGA;
-            not found && mode != CAMERA_MODE_COUNT; ++mode)
+            not found && mode != CAMERA_MODE_COUNT; mode = (CameraMode)(mode + 1))
         {
           if(frameResHeader == CameraModeInfo[mode].header) {
             headCamMode_ = mode;
@@ -201,8 +203,8 @@ namespace Anki
             DrvCifDma0CfgPP(cifBase,
                       (u32)frameBuffer,
                       (u32)frameBuffer,
-                      dim->width,
-                      dim->height,
+                      CameraModeInfo[mode].width,
+                      CameraModeInfo[mode].height,
                       camSpec->bytesPP,
                       D_CIF_DMA_AXI_BURST_16,
                       0);
@@ -219,8 +221,8 @@ namespace Anki
             DrvCifDma0CfgPP(cifBase,
                     (u32)frameBuffer,
                     (u32)frameBuffer,
-                    dim->width,
-                    dim->height,
+                     CameraModeInfo[mode].width,
+                     CameraModeInfo[mode].height,
                     camSpec->bytesPP,
                     D_CIF_DMA_AXI_BURST_8,
                     0);
@@ -249,7 +251,7 @@ namespace Anki
             break;
         }
 
-        DrvCifCtrlCfg (cifBase, dim->width, dim->height, control);
+        DrvCifCtrlCfg (cifBase, CameraModeInfo[mode].width, CameraModeInfo[mode].height, control);
      }
 
       void CameraInit(CameraHandle* handle, CameraID cameraID,

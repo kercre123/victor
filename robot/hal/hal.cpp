@@ -60,11 +60,6 @@ namespace Anki
         },
         m_auxClockConfig
       };
-      
-      const u8* GetHeadCamFrameBuffer()
-      {
-        return frame;
-      }
 
       static u32 MainExecutionIRQ(u32, u32)
       {
@@ -183,8 +178,8 @@ namespace Anki
       
       // Communications
       //bool IsConnected() {return false;}
-      u32 RadioFromBase(u8 buffer[RADIO_BUFFER_SIZE]) {return 0;}
-      bool RadioToBase(u8* buffer, u32 size) {return true;}
+      u8 RadioFromBase(u8 buffer[RADIO_BUFFER_SIZE]) {return 0;}
+      bool RadioToBase(const void *message, const CozmoMessageID msgID) {return true;}
       
       
       // Misc
@@ -211,6 +206,7 @@ static bool continuousCaptureStarted_ = false;
 
 int main()
 {
+  using namespace Anki::Cozmo;
   HAL::InitMemory();
 
   Robot::Init();

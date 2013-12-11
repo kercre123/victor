@@ -119,13 +119,14 @@ namespace Anki {
         //
         //   TODO: do we send x or y focal length, or both?
         CozmoMsg_MatCameraCalibration matCalibMsg = {
-          .focalLength_x = matCamInfo->focalLength_x,
-          .focalLength_y = matCamInfo->focalLength_y,
-          .fov           = matCamInfo->fov_ver,
-          .nrows         = matCamInfo->nrows,
-          .ncols         = matCamInfo->ncols,
-          .center_x      = matCamInfo->center_x,
-          .center_y      = matCamInfo->center_y};
+          matCamInfo->focalLength_x,
+          matCamInfo->focalLength_y,
+          matCamInfo->fov_ver,
+          matCamInfo->center_x,
+          matCamInfo->center_y,
+          matCamInfo->skew,
+          matCamInfo->nrows,
+          matCamInfo->ncols};
         
         HAL::RadioToBase(&matCalibMsg, GET_MESSAGE_ID(MatCameraCalibration));
         
@@ -134,14 +135,15 @@ namespace Anki {
         //
         //   TODO: do we send x or y focal length, or both?
         CozmoMsg_HeadCameraCalibration headCalibMsg = {
-          .focalLength_x = headCamInfo->focalLength_x,
-          .focalLength_y = headCamInfo->focalLength_y,
-          .fov           = headCamInfo->fov_ver,
-          .nrows         = headCamInfo->nrows,
-          .ncols         = headCamInfo->ncols,
-          .center_x      = headCamInfo->center_x,
-          .center_y      = headCamInfo->center_y};
-        
+          headCamInfo->focalLength_x,
+          headCamInfo->focalLength_y,
+          headCamInfo->fov_ver,
+          headCamInfo->center_x,
+          headCamInfo->center_y,
+          headCamInfo->skew,
+          headCamInfo->nrows,
+          headCamInfo->ncols};
+          
         HAL::RadioToBase(&headCalibMsg, GET_MESSAGE_ID(HeadCameraCalibration));
         
       } // ProcessRobotAddedMessage()

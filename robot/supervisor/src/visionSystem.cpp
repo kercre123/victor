@@ -281,8 +281,8 @@ namespace Anki {
           case LOOKING_FOR_BLOCKS:
           {
             FrameBuffer frame = {
-              .data       = memoryBuffer,
-              .resolution = HAL::CAMERA_MODE_VGA
+              memoryBuffer,
+              HAL::CAMERA_MODE_VGA
             };
             
             CaptureHeadFrame(frame);
@@ -313,8 +313,8 @@ namespace Anki {
             }
             else {
               VisionSystem::FrameBuffer frame = {
-                .data       = memoryBuffer,
-                .resolution = HAL::CAMERA_MODE_VGA
+                memoryBuffer,
+                HAL::CAMERA_MODE_VGA
               };
               
               CaptureHeadFrame(frame);
@@ -332,8 +332,8 @@ namespace Anki {
           case MAT_LOCALIZATION:
           {
             VisionSystem::FrameBuffer frame = {
-              .data       = memoryBuffer,
-              .resolution = MAT_LOCALIZATION_RESOLUTION
+              memoryBuffer,
+              MAT_LOCALIZATION_RESOLUTION
             };
             
             CaptureMatFrame(frame);
@@ -345,8 +345,8 @@ namespace Anki {
           case VISUAL_ODOMETRY:
           {
             VisionSystem::FrameBuffer frame = {
-              .data       = memoryBuffer,
-              .resolution = MAT_ODOMETRY_RESOLUTION
+              memoryBuffer,
+              MAT_ODOMETRY_RESOLUTION
             };
             
             CaptureMatFrame(frame);

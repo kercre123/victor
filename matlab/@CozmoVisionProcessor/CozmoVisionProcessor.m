@@ -58,6 +58,7 @@ classdef CozmoVisionProcessor < handle
         h_templateAxes;
         h_template;
         h_track;
+        escapePressed;
     end
     
     properties(SetAccess = 'protected', Dependent = true)
@@ -68,11 +69,15 @@ classdef CozmoVisionProcessor < handle
         
         function castedData = Cast(this, data, outputType)
          
-            if this.doEndianSwap
+            if ~isa(data, 'uint8') && this.doEndianSwap
                data = swapbytes(data); 
             end
                 
             castedData = typecast(data, outputType);
+            
+            if ~strcmp(outputType, 'uint8') && this.doEndianSwap
+                castedData = swapbytes(castedData);
+            end
         end
         
         function this = CozmoVisionProcessor(varargin)
@@ -88,6 +93,7 @@ classdef CozmoVisionProcessor < handle
                 isa(SerialDevice, 'SimulatedSerial'), ...
                 'SerialDevice must be a serial or SimulatedSerial object.');
             this.serialDevice = SerialDevice;
+            fclose(this.serialDevice);
             fopen(this.serialDevice);
             
             this.doEndianSwap = DoEndianSwap;
@@ -100,7 +106,8 @@ classdef CozmoVisionProcessor < handle
             
             this.dockingBlock = 0;
             
-            this.h_fig = namedFigure('CozmoVisionProcessor');
+            this.h_fig = namedFigure('CozmoVisionProcessor', ...
+                'KeypressFcn', @(src,edata)this.keyPressCallback(src,edata));
             this.h_axes = subplot(1,1,1, 'Parent', this.h_fig);
             this.h_img = imagesc(zeros(320,240), 'Parent', this.h_axes);
             this.h_title = title(this.h_axes, 'Initialized');
@@ -121,10 +128,11 @@ classdef CozmoVisionProcessor < handle
        
         function done = get.isDone(this)
             if isa(this.serialDevice, 'SimulatedSerial')
-                done = wb_robot_step(this.TIME_STEP) == -1;
+                done = this.escapePressed || wb_robot_step(this.TIME_STEP) == -1;
             else
-                done = false;
+                done = this.escapePressed;
             end
+           
         end
             
         function Update(this)
@@ -148,17 +156,19 @@ classdef CozmoVisionProcessor < handle
             % Process all the packets in the serial buffer
             i_footer = 1;
             i_header = 1;
-            while i_header <= length(headerIndex) && i_footer <= length(footerIndex)
+            while i_header <= length(headerIndex) && i_footer <= length(footerIndex) && ...
+                    length(this.serialBuffer) >= headerIndex(i_header) + length(this.HEADER)
+                
                 headerSuffix = this.serialBuffer(headerIndex(i_header) + length(this.HEADER));
                 
                 % Find the next footer that is after this header
-                while footerIndex(i_footer) < headerIndex(i_header) && ...
-                        i_footer <= length(footerIndex)
+                while i_footer <= length(footerIndex) && ...
+                    footerIndex(i_footer) < headerIndex(i_header)
                     
                     i_footer = i_footer + 1;
                 end
                 
-                if i_footer <= length(footerIndex)
+                if i_footer <= length(footerIndex) && length(this.serialBuffer) >= footerIndex(i_footer)+length(this.FOOTER)
 
                     footerSuffix = this.serialBuffer(footerIndex(i_footer) + length(this.FOOTER));
                     if headerSuffix == footerSuffix
@@ -198,10 +208,14 @@ classdef CozmoVisionProcessor < handle
         end % FUNCTION: Update()
         
         function Run(this)
-           while ~this.isDone
-               this.Update();
-           end
-           
+            
+            this.serialBuffer = [];
+            this.escapePressed = false;
+            
+            while ~this.isDone
+                this.Update();
+            end
+
         end % FUNCTION Run()
         
         function ProcessPacket(this, command, packet)
@@ -516,6 +530,17 @@ classdef CozmoVisionProcessor < handle
                        
         end % FUNCTION SerializeMessageStruct()
         
+        function keyPressCallback(this, ~,edata)
+            if isempty(edata.Modifier)
+                switch(edata.Key)
+                    case 'space'
+                        this.Run();
+                        
+                    case 'escape'
+                        this.escapePressed = true;
+                end
+            end
+        end % keyPressCallback()
            
     end % Methods
     

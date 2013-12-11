@@ -175,7 +175,7 @@ namespace Anki
             {
               for (int x1 = x; x1 < x + inc; x1++)
               {
-                const int index = x1 + y1 * ncols;
+                int index = x1 + y1 * ncols;
 #ifdef USING_MOVIDIUS_COMPILER
                 // Endian issue when running on the movidius
                 index ^= 3;
