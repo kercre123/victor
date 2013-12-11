@@ -11,7 +11,7 @@ usbRX = wb_robot_get_device('USB_RX');
 usbTX = wb_robot_get_device('USB_TX');
 simSerial = SimulatedSerial('RX', usbRX, 'TX', usbTX);
 
-proc = CozmoVisionProcessor('SerialDevice', simSerial);
+proc = CozmoVisionProcessor('SerialDevice', simSerial, 'DoEndianSwap', false);
 
 while wb_robot_step(TIME_STEP) ~= -1
 

@@ -33,6 +33,7 @@ classdef CozmoVisionProcessor < handle
     properties
         serialDevice;
         serialBuffer;
+        doEndianSwap;
         
         verbosity;
         
@@ -60,11 +61,21 @@ classdef CozmoVisionProcessor < handle
     
     methods
         
+        function castedData = Cast(this, data, outputType)
+         
+            if this.doEndianSwap
+               data = swapbytes(data); 
+            end
+                
+            castedData = typecast(data, outputType);
+        end
+        
         function this = CozmoVisionProcessor(varargin)
             SerialDevice = [];
             TrackerType = 'affine';
             TrackingResolution = [80 60];
             Verbosity = 1;
+            DoEndianSwap = false; % false for simulator, true with Movidius
             
             parseVarargin(varargin{:});
             
@@ -73,6 +84,8 @@ classdef CozmoVisionProcessor < handle
                 'SerialDevice must be a serial or SimulatedSerial object.');
             this.serialDevice = SerialDevice;
             fopen(this.serialDevice);
+            
+            this.doEndianSwap = DoEndianSwap;
             
             this.verbosity = Verbosity;
             
@@ -199,9 +212,10 @@ classdef CozmoVisionProcessor < handle
                     % } CameraInfo;
                     %
                     
-                    f = typecast(packet(1:8), 'single');
-                    c = typecast(packet(13:20), 'single');
-                    dims = typecast(packet(25:28), 'uint16');
+                    f = this.Cast(packet(1:8),      'single');
+                    f = this.Cast(packet(1:8),      'single');
+                    c = this.Cast(packet(13:20),    'single');
+                    dims = this.Cast(packet(25:28), 'uint16');
                     
                     assert(length(f) == 2, ...
                         'Expecting two single precision floats for focal lengths.');
@@ -228,8 +242,8 @@ classdef CozmoVisionProcessor < handle
                     return
                     
                 case this.SET_DOCKING_BLOCK
-                    this.dockingBlock = typecast(packet, 'uint16');
-                    fprintf('Setting docking block to %d.\n', ...
+                    this.dockingBlock = this.Cast(packet, 'uint16');
+                    this.StatusMessage(1, 'Setting docking block to %d.\n', ...
                         this.dockingBlock);
                     return;
                     
@@ -264,7 +278,7 @@ classdef CozmoVisionProcessor < handle
                                 'x_imgLowerRight', single(markers{i}.corners(4,1)), ...
                                 'y_imgLowerRight', single(markers{i}.corners(4,2)) );
                             
-                            packet = CozmoVisionProcessor.SerializeMessageStruct(msgStruct);
+                            packet = this.SerializeMessageStruct(msgStruct);
                             this.SendPacket(packet);
                             
                             if ~isempty(this.dockingBlock) && ...
@@ -285,7 +299,7 @@ classdef CozmoVisionProcessor < handle
                                    'msgID', this.messageIDs.CozmoMsg_TemplateInitialized, ...
                                    'success', uint8(true));
                                
-                               packet = CozmoVisionProcessor.SerializeMessageStruct(msgStruct);
+                               packet = this.SerializeMessageStruct(msgStruct);
                                this.SendPacket(packet);
                                
                                % Show the tracking template
@@ -307,7 +321,7 @@ classdef CozmoVisionProcessor < handle
                             'msgID', this.messageIDs.CozmoMsg_TotalBlocksDetected, ...
                             'numBlocks', uint8(length(markers)) );
                         
-                        packet = CozmoVisionProcessor.SerializeMessageStruct(msgStruct);
+                        packet = this.SerializeMessageStruct(msgStruct);
                         this.SendPacket(packet);
                         
                     end
@@ -337,6 +351,7 @@ classdef CozmoVisionProcessor < handle
                             msgStruct = struct( ...
                                 'msgID', this.messageIDs.CozmoMsg_DockingErrorSignal, ...
                                 'didTrackingSucceed', uint8(true), ...
+                                'dummy', uint8(0), ...
                                 'x_distErr', single(distError), ...
                                 'y_horErr', single(midPointErr), ...
                                 'angleErr', single(angleError));
@@ -350,7 +365,7 @@ classdef CozmoVisionProcessor < handle
                                 'angleErr', single(0));
                         end
                 
-                        packet = CozmoVisionProcessor.SerializeMessageStruct(msgStruct);
+                        packet = this.SerializeMessageStruct(msgStruct);
                         this.SendPacket(packet);
                         
                     end % IF img not empty
@@ -417,7 +432,7 @@ classdef CozmoVisionProcessor < handle
                     midPointErr = -( (upperRight(1)+upperLeft(1))/2 - ...
                         this.trackingResolution(1)/2 );
                     midPointErr = midPointErr * currentDistance / this.calibrationMatrix(1,1);
-                    
+                                        
                 case 'homography'
                     
                     error('ComputeError() for homography not fully implemented yet.');
@@ -474,19 +489,38 @@ classdef CozmoVisionProcessor < handle
                 fprintf(varargin{:});
             end
         end
+        
+                
+        function packet = SerializeMessageStruct(this, msgStruct)
+            assert(isstruct(msgStruct), 'Expecting a message STRUCT as input.');
+            names = fieldnames(msgStruct);
+            packet = cell(1, length(names));
+            for i = 1:length(names)
+                packet{i} = this.Cast(msgStruct.(names{i}), 'uint8');
+            end
+            packet = [packet{:}];
+            
+            desktop
+            keyboard
+            
+            % Add a size byte to the beginning:
+            packet = [uint8(length(packet)+1) packet];
+            
+        end % FUNCTION SerializeMessageStruct()
+        
            
     end % Methods
     
     methods(Static = true)
         
-        function img = PacketToImage(packet) 
+        function img = PacketToImage(packet)
             img = [];
             
             if ~CozmoVisionProcessor.RESOLUTION_LUT.isKey(char(packet(1)))
                 warning('Unrecognized resolution byte!');
             else
                 resolution = CozmoVisionProcessor.RESOLUTION_LUT(char(packet(1)));
-                                
+                
                 if length(packet)-1 ~= prod(resolution)
                     warning(['Image packet length did not match its ' ...
                         'specified resolution!']);
@@ -495,19 +529,6 @@ classdef CozmoVisionProcessor < handle
                 end
             end
         end % FUNCTION PacketToImage()
-        
-            function packet = SerializeMessageStruct(msgStruct)
-                assert(isstruct(msgStruct), 'Expecting a message STRUCT as input.');
-                names = fieldnames(msgStruct);
-                packet = cell(1, length(names));
-                for i = 1:length(names)
-                    packet{i} = typecast(swapbytes(msgStruct.(names{i})), 'uint8');
-                end
-                packet = [packet{:}];
-                
-                % Add a size byte to the beginning:
-                packet = [uint8(length(packet)+1) packet];
-            end
         
     end % Static Methods
     
