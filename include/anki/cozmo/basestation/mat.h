@@ -4,7 +4,7 @@
 #include "anki/cozmo/messageProtocol.h"
 
 #include "anki/common/basestation/math/pose.h"
-//#include "anki/vision/basestation/marker2d.h"
+#include "anki/vision/basestation/marker2d.h"
 
 namespace Anki {
   

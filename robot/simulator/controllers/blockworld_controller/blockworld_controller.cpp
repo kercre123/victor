@@ -309,9 +309,12 @@ int processPacket(const unsigned char *data, const int dataSize,
     {
       //fprintf(stdout, "Valid 0xBEEF message header from robot %d received.\n", i_robot+1);
       
+      // First byte in the msgBuffer should be the type of message
+      CozmoMessageID msgID = static_cast<CozmoMessageID>(data[3]);
+      
       // The next byte should be the first byte of the message struct that
       // was sent and will contain the size of the message.
-      const u8 msgSize = data[3];
+      const u8 msgSize = MessageTable[msgID].size;
       
       if(dataSize < msgSize) {
         fprintf(stdout, "Valid header, but less data than expected in packet.\n");
@@ -323,12 +326,10 @@ int processPacket(const unsigned char *data, const int dataSize,
       }
       else {
         
-        // First byte in the msgBuffer should be the type of message
-        CozmoMsg_Command cmd = static_cast<CozmoMsg_Command>(data[4]);
-        
-        switch(cmd)
+        // TODO: Update this to use dispatch functions instead of switch statement
+        switch(msgID)
         {
-          case MSG_V2B_CORE_ROBOT_AVAILABLE:
+          case RobotAvailable_ID:
           {
             //const CozmoMsg_RobotAvailable* msgIn = reinterpret_cast<const CozmoMsg_RobotAvailable*>(data+3);
             
@@ -338,10 +339,10 @@ int processPacket(const unsigned char *data, const int dataSize,
             break;
           }
             
-          case MSG_V2B_CORE_BLOCK_MARKER_OBSERVED:
-          case MSG_V2B_CORE_MAT_MARKER_OBSERVED:
-          case MSG_V2B_CORE_HEAD_CAMERA_CALIBRATION:
-          case MSG_V2B_CORE_MAT_CAMERA_CALIBRATION:
+          case BlockMarkerObserved_ID:
+          case MatMarkerObserved_ID:
+          case HeadCameraCalibration_ID:
+          case MatCameraCalibration_ID:
           {
             fprintf(stdout, "Passing block/mat/calib message to robot.\n");
             
@@ -353,7 +354,7 @@ int processPacket(const unsigned char *data, const int dataSize,
           
           default:
           {
-            fprintf(stdout, "Unknown message type received: %d\n", cmd);
+            fprintf(stdout, "Unknown message type received: %d\n", msgID);
             return EXIT_FAILURE;
           }
         } // switch(cmd)
@@ -579,3 +580,32 @@ Anki::Pose3d getNodePose(webots::Node* node)
   return Anki::Pose3d(rotAngle, rotAxis, transVec);
   
 } // GetNodePose()
+
+// TODO: Define these elsewhere and then actually use them in handling messages above
+void Anki::Cozmo::CommandHandler::ProcessClearPathMessage(unsigned char const*) {}
+
+void Anki::Cozmo::CommandHandler::ProcessSetMotionMessage(unsigned char const*) {}
+
+void Anki::Cozmo::CommandHandler::ProcessRobotAvailableMessage(unsigned char const*) {}
+
+void Anki::Cozmo::CommandHandler::ProcessMatMarkerObservedMessage(unsigned char const*) {}
+
+void Anki::Cozmo::CommandHandler::ProcessRobotAddedToWorldMessage(unsigned char const*) {}
+
+void Anki::Cozmo::CommandHandler::ProcessSetPathSegmentArcMessage(unsigned char const*) {}
+
+void Anki::Cozmo::CommandHandler::ProcessDockingErrorSignalMessage(unsigned char const*) {}
+
+void Anki::Cozmo::CommandHandler::ProcessSetPathSegmentLineMessage(unsigned char const*) {}
+
+void Anki::Cozmo::CommandHandler::ProcessBlockMarkerObservedMessage(unsigned char const*) {}
+
+void Anki::Cozmo::CommandHandler::ProcessTemplateInitializedMessage(unsigned char const*) {}
+
+void Anki::Cozmo::CommandHandler::ProcessTotalBlocksDetectedMessage(unsigned char const*) {}
+
+void Anki::Cozmo::CommandHandler::ProcessMatCameraCalibrationMessage(unsigned char const*) {}
+
+void Anki::Cozmo::CommandHandler::ProcessAbsLocalizationUpdateMessage(unsigned char const*) {}
+
+void Anki::Cozmo::CommandHandler::ProcessHeadCameraCalibrationMessage(unsigned char const*) {}

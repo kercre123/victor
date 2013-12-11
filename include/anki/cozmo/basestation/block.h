@@ -29,6 +29,7 @@ namespace Anki {
     typedef u16 BlockType;
     typedef u8  FaceType;
 
+    
     //
     // BlockMarker2d Class
     //
