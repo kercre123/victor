@@ -54,6 +54,9 @@ namespace Anki
       void operator*= (const Type value);
 
       inline Point<Type>& operator= (const Point<Type> &point2);
+      
+      float Dist(const Point<Type> &point2) const;
+      
     }; // class Point<Type>
 
 #pragma mark --- Rectangle Class Declaration ---

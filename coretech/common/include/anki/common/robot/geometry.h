@@ -87,6 +87,11 @@ namespace Anki
       return *this;
     }
 
+    template<typename Type> float Point<Type>::Dist(const Point<Type> &point2) const
+    {
+      return (float)sqrt((this->x - point2.x)*(this->x - point2.x) + (this->y - point2.y)*(this->y - point2.y));
+    }
+    
 #pragma mark --- Point Specializations ---
     template<> void Point<f32>::Print() const;
     template<> void Point<f64>::Print() const;
