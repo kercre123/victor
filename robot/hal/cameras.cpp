@@ -29,15 +29,15 @@ namespace Anki
       const HAL::CameraInfo* HAL::GetHeadCamInfo(void)
       {
         headCamInfo_ = {
-          .nrows         = HEAD_CAM_CALIBRATION_HEIGHT,
-          .ncols         = HEAD_CAM_CALIBRATION_WIDTH,
-          .focalLength_x = HEAD_CAM_CALIBRATION_FOCAL_LENGTH_X,
-          .focalLength_y = HEAD_CAM_CALIBRATION_FOCAL_LENGTH_Y,
-          .center_x      = HEAD_CAM_CALIBRATION_CENTER_X,
-          .center_y      = HEAD_CAM_CALIBRATION_CENTER_Y,
-          .skew          = 0.f,
-          .fov_ver       = ComputeVerticalFOV(HEAD_CAM_CALIBRATION_HEIGHT,
-                                              HEAD_CAM_CALIBRATION_FOCAL_LENGTH_Y);
+          HEAD_CAM_CALIBRATION_FOCAL_LENGTH_X,
+          HEAD_CAM_CALIBRATION_FOCAL_LENGTH_Y,
+          ComputeVerticalFOV(HEAD_CAM_CALIBRATION_HEIGHT,
+                             HEAD_CAM_CALIBRATION_FOCAL_LENGTH_Y),
+          HEAD_CAM_CALIBRATION_CENTER_X,
+          HEAD_CAM_CALIBRATION_CENTER_Y,
+          0.f,
+          HEAD_CAM_CALIBRATION_HEIGHT,
+          HEAD_CAM_CALIBRATION_WIDTH
         };
         
         return &headCamInfo_;
@@ -46,15 +46,15 @@ namespace Anki
       const HAL::CameraInfo* HAL::GetMatCamInfo(void)
       {
         matCamInfo_ = {
-          .nrows         = MAT_CAM_CALIBRATION_HEIGHT,
-          .ncols         = MAT_CAM_CALIBRATION_WIDTH,
-          .focalLength_x = MAT_CAM_CALIBRATION_FOCAL_LENGTH_X,
-          .focalLength_y = MAT_CAM_CALIBRATION_FOCAL_LENGTH_Y,
-          .center_x      = MAT_CAM_CALIBRATION_CENTER_X,
-          .center_y      = MAT_CAM_CALIBRATION_CENTER_Y,
-          .skew          = 0.f,
-          .fov_ver       = ComputeVerticalFOV(MAT_CAM_CALIBRATION_HEIGHT,
-                                              MAT_CAM_CALIBRATION_FOCAL_LENGTH_Y);
+          MAT_CAM_CALIBRATION_FOCAL_LENGTH_X,
+          MAT_CAM_CALIBRATION_FOCAL_LENGTH_Y,
+          ComputeVerticalFOV(MAT_CAM_CALIBRATION_HEIGHT,
+                             MAT_CAM_CALIBRATION_FOCAL_LENGTH_Y),
+          MAT_CAM_CALIBRATION_CENTER_X,
+          MAT_CAM_CALIBRATION_CENTER_Y,
+          0.f,
+          MAT_CAM_CALIBRATION_HEIGHT,
+          MAT_CAM_CALIBRATION_WIDTH
         };
       }
       
