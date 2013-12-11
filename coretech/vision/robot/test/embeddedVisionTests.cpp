@@ -251,11 +251,22 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
   {
     PUSH_MEMORY_STACK(scratch1);
 
+    InitBenchmarking();
+
+    const f64 time0 = GetTime();
+
     TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
+    const f64 time1 = GetTime();
+
     ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
+
+    const f64 time2 = GetTime();
+
+    printf("Translation-only LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
+    PrintBenchmarkResults();
 
     tracker.get_transformation().Print("Translation-only LK");
 
@@ -271,11 +282,22 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
   {
     PUSH_MEMORY_STACK(scratch1);
 
+    InitBenchmarking();
+
+    const f64 time0 = GetTime();
+
     TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_AFFINE, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
+    const f64 time1 = GetTime();
+
     ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
+
+    const f64 time2 = GetTime();
+
+    printf("Affine LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
+    PrintBenchmarkResults();
 
     tracker.get_transformation().Print("Affine LK");
 
@@ -292,11 +314,22 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
   {
     PUSH_MEMORY_STACK(scratch1);
 
+    InitBenchmarking();
+
+    const f64 time0 = GetTime();
+
     TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_PROJECTIVE, ridgeWeight, scratch1);
 
     ASSERT_TRUE(tracker.IsValid());
 
+    const f64 time1 = GetTime();
+
     ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
+
+    const f64 time2 = GetTime();
+
+    printf("Projective LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
+    PrintBenchmarkResults();
 
     tracker.get_transformation().Print("Projective LK");
 
