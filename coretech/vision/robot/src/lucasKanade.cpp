@@ -12,6 +12,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/interpolate.h"
 #include "anki/common/robot/arrayPatterns.h"
 #include "anki/common/robot/find.h"
+#include "anki/common/robot/benchmarking_c.h"
 
 namespace Anki
 {
@@ -348,6 +349,8 @@ namespace Anki
       LucasKanadeTracker_f32::LucasKanadeTracker_f32(const Array<u8> &templateImage, const Rectangle<f32> &templateRegion, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory)
         : isValid(false), templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), numPyramidLevels(numPyramidLevels), ridgeWeight(ridgeWeight), isInitialized(false), templateRegion(templateRegion)
       {
+        BeginBenchmark("LucasKanadeTracker_f32");
+
         AnkiConditionalErrorAndReturn(templateImageHeight > 0 && templateImageWidth > 0,
           "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "template widths and heights must be greater than zero, and multiples of %d", ANKI_VISION_IMAGE_WIDTH_MULTIPLE);
 
@@ -406,9 +409,13 @@ namespace Anki
 
         this->isValid = true;
 
+        BeginBenchmark("InitializeTemplate");
         if(LucasKanadeTracker_f32::InitializeTemplate(templateImage, memory) != RESULT_OK) {
           this->isValid = false;
         }
+        EndBenchmark("InitializeTemplate");
+
+        EndBenchmark("LucasKanadeTracker_f32");
       }
 
       Result LucasKanadeTracker_f32::InitializeTemplate(const Array<u8> &templateImage, MemoryStack &memory)
@@ -444,6 +451,7 @@ namespace Anki
         this->center.x = (templateRegion.right + templateRegion.left) / 2;
 
         // Allocate all permanent memory
+        BeginBenchmark("InitializeTemplate.allocate");
         for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++) {
           const f32 scale = static_cast<f32>(1 << iScale);
 
@@ -472,10 +480,14 @@ namespace Anki
 
           //templateImage.Show("templateImage", true);
         }
+        EndBenchmark("InitializeTemplate.allocate");
 
+        BeginBenchmark("InitializeTemplate.initA");
         // Everything below here is temporary
         {
           PUSH_MEMORY_STACK(memory);
+
+          BeginBenchmark("InitializeTemplate.setTemplateMask");
           Array<f32> templateMask = Array<f32>(templateImageHeight, templateImageWidth, memory);
           templateMask.SetZero();
           templateMask(
@@ -483,6 +495,7 @@ namespace Anki
             static_cast<s32>(Roundf(templateRegion.bottom)),
             static_cast<s32>(Roundf(templateRegion.left)),
             static_cast<s32>(Roundf(templateRegion.right))).Set(1.0f);
+          EndBenchmark("InitializeTemplate.setTemplateMask");
 
           for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++) {
             PUSH_MEMORY_STACK(memory);
@@ -492,8 +505,10 @@ namespace Anki
 
             const f32 scale = static_cast<f32>(1 << iScale);
 
+            BeginBenchmark("InitializeTemplate.evaluateMeshgrid");
             Array<f32> xIn = templateCoordinates[iScale].EvaluateX2(memory);
             Array<f32> yIn = templateCoordinates[iScale].EvaluateY2(memory);
+            EndBenchmark("InitializeTemplate.evaluateMeshgrid");
 
             assert(xIn.get_size(0) == yIn.get_size(0));
             assert(xIn.get_size(1) == yIn.get_size(1));
@@ -501,16 +516,21 @@ namespace Anki
             Array<f32> xTransformed(numPointsY, numPointsX, memory);
             Array<f32> yTransformed(numPointsY, numPointsX, memory);
 
+            BeginBenchmark("InitializeTemplate.transformPoints");
             // Compute the warped coordinates (for later)
             if(transformation.TransformPoints(xIn, yIn, scale, this->center, xTransformed, yTransformed) != RESULT_OK)
               return RESULT_FAIL;
+            EndBenchmark("InitializeTemplate.transformPoints");
 
             Array<f32> templateDerivativeX(numPointsY, numPointsX, memory);
             Array<f32> templateDerivativeY(numPointsY, numPointsX, memory);
 
+            BeginBenchmark("InitializeTemplate.image.interp2");
             if(Interp2(templateImage, xTransformed, yTransformed, this->templateImagePyramid[iScale], INTERPOLATE_LINEAR) != RESULT_OK)
               return RESULT_FAIL;
+            EndBenchmark("InitializeTemplate.image.interp2");
 
+            BeginBenchmark("InitializeTemplate.ComputeImageGradients");
             // Ix = (image_right(targetBlur) - image_left(targetBlur))/2 * spacing;
             // Iy = (image_down(targetBlur) - image_up(targetBlur))/2 * spacing;
             Matrix::Subtract<u8,f32,f32>(templateImagePyramid[iScale](1,-2,2,-1), templateImagePyramid[iScale](1,-2,0,-3), templateDerivativeX(1,-2,1,-2));
@@ -520,8 +540,10 @@ namespace Anki
             Matrix::Subtract<u8,f32,f32>(templateImagePyramid[iScale](2,-1,1,-2), templateImagePyramid[iScale](0,-3,1,-2), templateDerivativeY(1,-2,1,-2));
             //Matrix::DotMultiply<f32,f32,f32>(templateDerivativeY, scale / 2.0f, templateDerivativeY);
             Matrix::DotMultiply<f32,f32,f32>(templateDerivativeY, scale / (2.0f*255.0f), templateDerivativeY);
+            EndBenchmark("InitializeTemplate.ComputeImageGradients");
 
             // Create the A matrix
+            BeginBenchmark("InitializeTemplate.ComputeA");
             if(transformation.get_transformType() == TRANSFORM_TRANSLATION) {
               Array<f32> tmp(1, numPointsY*numPointsX, memory);
 
@@ -608,12 +630,14 @@ namespace Anki
               //  //matlab.PutArray(, "");
               //}
             } // else if(transformation.get_transformType() == TRANSFORM_AFFINE || transformation.get_transformType() == TRANSFORM_PROJECTIVE)
+            EndBenchmark("InitializeTemplate.ComputeA");
 
             {
               PUSH_MEMORY_STACK(memory);
 
               Array<f32> GaussianTmp(numPointsY, numPointsX, memory);
 
+              BeginBenchmark("InitializeTemplate.weights.compute");
               // GaussianTmp = exp(-((this.xgrid{i_scale}).^2 + (this.ygrid{i_scale}).^2) / (2*(W_sigma)^2));
               {
                 PUSH_MEMORY_STACK(memory);
@@ -627,13 +651,17 @@ namespace Anki
                 Matrix::DotMultiply<f32,f32,f32>(GaussianTmp, 1.0f/(2.0f*templateWeightsSigma*templateWeightsSigma), GaussianTmp);
                 Matrix::Exp<f32,f32,f32>(GaussianTmp, GaussianTmp);
               }
+              EndBenchmark("InitializeTemplate.weights.compute");
 
               Array<f32> templateWeightsTmp(numPointsY, numPointsX, memory);
 
+              BeginBenchmark("InitializeTemplate.weights.interp2");
               // W_mask = interp2(double(targetMask), xi, yi, 'linear', 0);
               if(Interp2(templateMask, xTransformed, yTransformed, templateWeightsTmp, INTERPOLATE_LINEAR) != RESULT_OK)
                 return RESULT_FAIL;
+              EndBenchmark("InitializeTemplate.weights.interp2");
 
+              BeginBenchmark("InitializeTemplate.weights.vectorize");
               // W_ = W_mask .* GaussianTmp;
               Matrix::DotMultiply<f32,f32,f32>(templateWeightsTmp, GaussianTmp, templateWeightsTmp);
 
@@ -644,9 +672,11 @@ namespace Anki
               templateWeightsTmp(-1,-1,-1,-1).Set(0);
 
               Matrix::Vectorize(true, templateWeightsTmp, templateWeights[iScale]);
+              EndBenchmark("InitializeTemplate.weights.vectorize");
             } // PUSH_MEMORY_STACK(memory);
           } // for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++, fScale++)
         } // PUSH_MEMORY_STACK(memory);
+        EndBenchmark("InitializeTemplate.initA");
 
         this->isValid = true;
 
@@ -658,8 +688,10 @@ namespace Anki
         for(s32 iScale=numPyramidLevels-1; iScale>=0; iScale--) {
           bool converged = false;
 
+          BeginBenchmark("UpdateTrack.refineTranslation");
           if(IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, TRANSFORM_TRANSLATION, converged, memory) != RESULT_OK)
             return RESULT_FAIL;
+          EndBenchmark("UpdateTrack.refineTranslation");
 
           //this->get_transformation().Print("Translation");
 
@@ -670,8 +702,10 @@ namespace Anki
             //newH[1][2] = -0.1352;
             //this->transformation.set_homography(newH);
 
+            BeginBenchmark("UpdateTrack.refineOther");
             if(IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, this->transformation.get_transformType(), converged, memory) != RESULT_OK)
               return RESULT_FAIL;
+            EndBenchmark("UpdateTrack.refineOther");
 
             //this->get_transformation().Print("Other");
           }
@@ -702,6 +736,7 @@ namespace Anki
 
         Array<f32> A_part;
 
+        BeginBenchmark("IterativelyRefineTrack.extractAPart");
         const s32 numSystemParameters = curTransformType >> 8;
         if(curTransformType == TRANSFORM_TRANSLATION) {
           // Translation-only can be performed by grabbing a few rows of the A_full matrix
@@ -719,6 +754,7 @@ namespace Anki
         } else {
           assert(false);
         }
+        EndBenchmark("IterativelyRefineTrack.extractAPart");
 
         //Array<f32> xPrevious(1, numPointsY*numPointsX, memory);
         //Array<f32> yPrevious(1, numPointsY*numPointsX, memory);
@@ -729,6 +765,7 @@ namespace Anki
         Array<f32> xIn(1, numPointsY*numPointsX, memory);
         Array<f32> yIn(1, numPointsY*numPointsX, memory);
 
+        BeginBenchmark("IterativelyRefineTrack.vectorizeXin");
         {
           PUSH_MEMORY_STACK(memory);
 
@@ -738,6 +775,7 @@ namespace Anki
           Matrix::Vectorize(true, xIn2d, xIn);
           Matrix::Vectorize(true, yIn2d, yIn);
         } // PUSH_MEMORY_STACK(memory);
+        EndBenchmark("IterativelyRefineTrack.vectorizeXin");
 
         converged = false;
 
@@ -750,8 +788,10 @@ namespace Anki
           Array<f32> xTransformed(1, numPointsY*numPointsX, memory);
           Array<f32> yTransformed(1, numPointsY*numPointsX, memory);
 
+          BeginBenchmark("IterativelyRefineTrack.transformPoints");
           if(transformation.TransformPoints(xIn, yIn, scale, this->center, xTransformed, yTransformed) != RESULT_OK)
             return RESULT_FAIL;
+          EndBenchmark("IterativelyRefineTrack.transformPoints");
 
           //{
           //  PUSH_MEMORY_STACK(memory);
@@ -778,6 +818,7 @@ namespace Anki
 
           Array<f32> nextImageTransformed(1, numPointsY*numPointsX, memory);
 
+          BeginBenchmark("IterativelyRefineTrack.interpTransformedCoords");
           // imgi = interp2(img, xi(:), yi(:), 'linear');
           {
             PUSH_MEMORY_STACK(memory);
@@ -789,7 +830,9 @@ namespace Anki
 
             Matrix::Vectorize<f32,f32>(true, nextImageTransformed2d, nextImageTransformed);
           } // PUSH_MEMORY_STACK(memory);
+          EndBenchmark("IterativelyRefineTrack.interpTransformedCoords");
 
+          BeginBenchmark("IterativelyRefineTrack.getNumMatches");
           // inBounds = ~isnan(imgi);
           // Warning: this is also treating real zeros as invalid, but this should not be a big problem
           Find<f32, Comparison::GreaterThanOrEqual<f32,f32>, f32> inBounds(nextImageTransformed, 0.0f);
@@ -799,10 +842,12 @@ namespace Anki
             AnkiWarn("LucasKanadeTracker_f32::IterativelyRefineTrack", "Template drifted too far out of image.");
             break;
           }
+          EndBenchmark("IterativelyRefineTrack.getNumMatches");
 
           Array<f32> templateImage(1, numPointsY*numPointsX, memory);
           Matrix::Vectorize(true, this->templateImagePyramid[whichScale], templateImage);
 
+          BeginBenchmark("IterativelyRefineTrack.templateDerivative");
           // It = imgi - this.target{i_scale}(:);
           Array<f32> templateDerivativeT(1, numInBounds, memory);
           {
@@ -812,16 +857,22 @@ namespace Anki
             inBounds.SetArray(templateDerivativeT, templateDerivativeT_allPoints, 1);
             Matrix::DotMultiply<f32,f32,f32>(templateDerivativeT, 1.0f/255.0f, templateDerivativeT);
           }
+          EndBenchmark("IterativelyRefineTrack.templateDerivative");
 
           Array<f32> AWAt(numSystemParameters, numSystemParameters, memory);
 
           // AtW = (A(inBounds,:).*this.W{i_scale}(inBounds,ones(1,size(A,2))))';
 
+          BeginBenchmark("IterativelyRefineTrack.extractApartRows");
           Array<f32> A = inBounds.SetArray(A_part, 1, memory);
+          EndBenchmark("IterativelyRefineTrack.extractApartRows");
 
+          BeginBenchmark("IterativelyRefineTrack.setAw");
           Array<f32> AW(A.get_size(0), A.get_size(1), memory);
           AW(0,-1,0,-1).Set(A);
+          EndBenchmark("IterativelyRefineTrack.setAw");
 
+          BeginBenchmark("IterativelyRefineTrack.dotMultiplyWeights");
           {
             PUSH_MEMORY_STACK(memory);
             Array<f32> validTemplateWeights = inBounds.SetArray(templateWeights[whichScale], 1, memory);
@@ -830,9 +881,12 @@ namespace Anki
               Matrix::DotMultiply<f32,f32,f32>(AW(y,y,0,-1), validTemplateWeights, AW(y,y,0,-1));
             }
           } // PUSH_MEMORY_STACK(memory);
+          EndBenchmark("IterativelyRefineTrack.dotMultiplyWeights");
 
+          BeginBenchmark("IterativelyRefineTrack.computeAWAt");
           // AtWA = AtW*A(inBounds,:) + diag(this.ridgeWeight*ones(1,size(A,2)));
           Matrix::MultiplyTranspose(A, AW, AWAt);
+          EndBenchmark("IterativelyRefineTrack.computeAWAt");
 
           //{
           //  Matlab matlab(false);
@@ -847,9 +901,11 @@ namespace Anki
 
           Matrix::Add<f32,f32,f32>(AWAt, ridgeWeightMatrix, AWAt);
 
+          BeginBenchmark("IterativelyRefineTrack.computeb");
           // b = AtW*It(inBounds);
           Array<f32> b(1,numSystemParameters,memory);
           Matrix::MultiplyTranspose(templateDerivativeT, AW, b);
+          EndBenchmark("IterativelyRefineTrack.computeb");
 
           //{
           //  Matlab matlab(false);
@@ -862,8 +918,10 @@ namespace Anki
           // update = AtWA\b;
           Array<f32> update(1,numSystemParameters,memory);
 
+          BeginBenchmark("IterativelyRefineTrack.solveForUpdate");
           if(Matrix::SolveLeastSquares_f32(AWAt, b, update, memory) != RESULT_OK)
             return RESULT_FAIL;
+          EndBenchmark("IterativelyRefineTrack.solveForUpdate");
 
           //if(update.get_size(1) > 2) {
           //  //AWAt.Print("AWAt");
@@ -877,10 +935,13 @@ namespace Anki
           //  matlab.PutArray(update, "update");
           //}
 
+          BeginBenchmark("IterativelyRefineTrack.updateTransformation");
           //this->transformation.Print("t1");
           this->transformation.Update(update, memory, curTransformType);
           //this->transformation.Print("t2");
+          EndBenchmark("IterativelyRefineTrack.updateTransformation");
 
+          BeginBenchmark("IterativelyRefineTrack.checkForCompletion");
           // TODO: check if we're done with iterations
           {
             PUSH_MEMORY_STACK(memory);
@@ -913,6 +974,7 @@ namespace Anki
 
             previousCorners = newCorners;
           } // PUSH_MEMORY_STACK(memory);
+          EndBenchmark("IterativelyRefineTrack.checkForCompletion");
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
         return RESULT_OK;
