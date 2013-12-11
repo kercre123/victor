@@ -166,11 +166,8 @@ namespace Anki {
         // is ready to go
         PRINT("Robot broadcasting availability message.\n");
         CozmoMsg_RobotAvailable msg;
-        msg.size = sizeof(CozmoMsg_RobotAvailable);
-        msg.msgID = MSG_V2B_CORE_ROBOT_AVAILABLE;
         msg.robotID = HAL::GetRobotID();
-        HAL::RadioToBase(reinterpret_cast<u8 *>(&msg), msg.size);
-        
+        HAL::RadioToBase(&msg, GET_MESSAGE_ID(RobotAvailable));
         
         mode_ = INITIALIZING;
 
@@ -221,14 +218,14 @@ namespace Anki {
         // the basestation, update the docking controller, etc.
         while( matMarkerMailbox_.hasMail() )
         {
-          const CozmoMsg_ObservedMatMarker matMsg = matMarkerMailbox_.getMessage();
-          HAL::RadioToBase((u8*)(&matMsg), sizeof(CozmoMsg_ObservedMatMarker));
+          const CozmoMsg_MatMarkerObserved matMsg = matMarkerMailbox_.getMessage();
+          HAL::RadioToBase(&matMsg, GET_MESSAGE_ID(MatMarkerObserved));
         }
         
         while( blockMarkerMailbox_.hasMail() )
         {
-          const CozmoMsg_ObservedBlockMarker blockMsg = blockMarkerMailbox_.getMessage();
-          HAL::RadioToBase((u8*)(&blockMsg), sizeof(CozmoMsg_ObservedBlockMarker));
+          const CozmoMsg_BlockMarkerObserved blockMsg = blockMarkerMailbox_.getMessage();
+          HAL::RadioToBase(&blockMsg, GET_MESSAGE_ID(BlockMarkerObserved));
     
         } // while blockMarkerMailbox has mail
         
@@ -371,7 +368,7 @@ namespace Anki {
         retVal = VisionSystem::Update(memoryBuffer_);
         
 #if USE_OFFBOARD_VISION
-        HAL::USBSendMessage();
+        HAL::USBSendPrintBuffer();
 #endif
         
         return retVal;

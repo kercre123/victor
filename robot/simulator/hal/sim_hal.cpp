@@ -521,50 +521,57 @@ namespace Anki {
       
     } // step()
     
-    
-    
-    
-    bool HAL::RadioToBase(u8* buffer, u32 size)
+    bool HAL::RadioToBase(const void *buffer, const CozmoMessageID msgID)
     {
-      // Prefix data with message header (0xBEEF + robotID)
-      u8 msg[1024] = {COZMO_WORLD_MSG_HEADER_BYTE_1,
-        COZMO_WORLD_MSG_HEADER_BYTE_2, static_cast<u8>(robotID_)};
+      // Prefix data with message header (0xBEEF + robotID + msgID)
+      const u8 HEADER_LENGTH = 4;
+      u8 msg[256 + HEADER_LENGTH] = {
+        COZMO_WORLD_MSG_HEADER_BYTE_1,
+        COZMO_WORLD_MSG_HEADER_BYTE_2,
+        static_cast<u8>(robotID_),
+        static_cast<u8>(msgID)};
       
-      if(size+3 > 1024) {
+      const u8 size = MessageTable[msgID].size;
+      
+      if(size+HEADER_LENGTH > 256) {
         PRINT("Data too large to send with prepended header!\n");
       } else {
-        memcpy(msg+3, buffer, size);
-        tx_->send(msg, size+3);
+        memcpy(msg+HEADER_LENGTH, buffer, size);
+        tx_->send(msg, size+HEADER_LENGTH);
       }
+      
       return true;
-    } // SendMessage()
+    } // RadioToBase()
     
-    u32 HAL::RadioFromBase(u8 buffer[RADIO_BUFFER_SIZE])
+    u8 HAL::RadioFromBase(u8 buffer[RADIO_BUFFER_SIZE])
     {
       ManageRecvBuffer();
       
-      // TODO: check for and remove 0xBEEF?
+      // TODO: check for and remove 0xBEEF and robotID?
       
       // Is there any data in the receive buffer?
       if (recvBufSize_ > 0) {
         // Is there a complete message in the receive buffer?
-        // The first byte should contain the size of the first message
-        int firstMsgSize = recvBuf_[0];
-        if (recvBufSize_ >= firstMsgSize) {
+        // The first byte is the message ID, from which we can determine the size.
+        const CozmoMessageID msgID = static_cast<CozmoMessageID>(recvBuf_[0]);
+        
+        const u8 size = MessageTable[msgID].size;
+
+        if (recvBufSize_ >= size) {
           
           // Copy to passed in buffer
-          memcpy(buffer, recvBuf_, firstMsgSize);
+          memcpy(buffer, recvBuf_, size);
           
           // Shift data down
-          recvBufSize_ -= firstMsgSize;
-          memmove(recvBuf_, &(recvBuf_[firstMsgSize]), recvBufSize_);
+          recvBufSize_ -= size;
+          memmove(recvBuf_, &(recvBuf_[size]), recvBufSize_);
           
-          return firstMsgSize;
+          return size;
         }
       }
       
-      return NULL;
-    } // RecvMessage()
+      return 0;
+    } // RadioFromBase()
 
     // Helper function to create a CameraInfo struct from Webots camera properties:
     void FillCameraInfo(const webots::Camera *camera,

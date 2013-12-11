@@ -37,6 +37,8 @@
 #include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
 
+#include "anki/cozmo/messageProtocol.h"
+
 #include "anki/cozmo/robot/cozmoConfig.h"
 
 #define USE_OFFBOARD_VISION 1
@@ -344,10 +346,10 @@ namespace Anki
       const u32 RADIO_BUFFER_SIZE = 100;
       
       // Returns number of bytes received from the basestation
-      u32 RadioFromBase(u8 buffer[RADIO_BUFFER_SIZE]);
+      u8 RadioFromBase(u8 buffer[RADIO_BUFFER_SIZE]);
      
-      // Returns true if the buffer has been sent to the basestation
-      bool RadioToBase(u8* buffer, u32 size);
+      // Returns true if the message has been sent to the basestation
+      bool RadioToBase(const void *message, const CozmoMessageID msgID);
 
       // Power management
       enum PowerState
@@ -407,6 +409,10 @@ namespace Anki
       // (Using same prototype as putc / USBPutChar for printf.)
       int USBBufferChar(int c);
       
+      // Send a command message (from messageProtocol.h)
+      // The msgID will determine the size
+      void USBSendMessage(const u8* msgBuffer, const CozmoMessageID msgID);
+      
       // Send a frame at the current frame resolution (last set by
       // a call to SetUSBFrameResolution)
       void USBSendFrame(const u8 *frame,
@@ -415,7 +421,7 @@ namespace Anki
                         const u8 commandByte);
       
       // Send the contents of the USB message buffer.
-      void USBSendMessage(void);
+      void USBSendPrintBuffer(void);
       
       // Send an arbitrary packet of data
       void USBSendPacket(const u8 packetType, const void* data, const u32 numBytes);

@@ -90,6 +90,89 @@ namespace Anki {
       }
       
       
+      CozmoMessageID ProcessMessage(const u8* buffer)
+      {
+        CozmoMessageID msgID = static_cast<CozmoMessageID>(buffer[0]);
+        
+        (*MessageTable[msgID].dispatchFcn)(buffer+1);
+        
+        return msgID;
+      }
+      
+      void ProcessRobotAddedToWorldMessage(const u8* buffer)
+      {
+        const CozmoMsg_RobotAddedToWorld* msg = reinterpret_cast<const CozmoMsg_RobotAddedToWorld*>(buffer);
+        
+        if(msg->robotID != HAL::GetRobotID()) {
+          PRINT("Robot received ADDED_TO_WORLD handshake with "
+                " wrong robotID (%d instead of %d).\n",
+                msg->robotID, HAL::GetRobotID());
+        }
+        
+        PRINT("Robot received handshake from basestation, "
+              "sending camera calibration.\n");
+        const HAL::CameraInfo *matCamInfo  = HAL::GetMatCamInfo();
+        const HAL::CameraInfo *headCamInfo = HAL::GetHeadCamInfo();
+
+        //
+        // Send mat camera calibration
+        //
+        //   TODO: do we send x or y focal length, or both?
+        CozmoMsg_MatCameraCalibration matCalibMsg = {
+          .focalLength_x = matCamInfo->focalLength_x,
+          .focalLength_y = matCamInfo->focalLength_y,
+          .fov           = matCamInfo->fov_ver,
+          .nrows         = matCamInfo->nrows,
+          .ncols         = matCamInfo->ncols,
+          .center_x      = matCamInfo->center_x,
+          .center_y      = matCamInfo->center_y};
+        
+        HAL::RadioToBase(&matCalibMsg, GET_MESSAGE_ID(MatCameraCalibration));
+        
+        //
+        // Send head camera calibration
+        //
+        //   TODO: do we send x or y focal length, or both?
+        CozmoMsg_HeadCameraCalibration headCalibMsg = {
+          .focalLength_x = headCamInfo->focalLength_x,
+          .focalLength_y = headCamInfo->focalLength_y,
+          .fov           = headCamInfo->fov_ver,
+          .nrows         = headCamInfo->nrows,
+          .ncols         = headCamInfo->ncols,
+          .center_x      = headCamInfo->center_x,
+          .center_y      = headCamInfo->center_y};
+        
+        HAL::RadioToBase(&headCalibMsg, GET_MESSAGE_ID(HeadCameraCalibration));
+        
+      } // ProcessRobotAddedMessage()
+      
+      
+      void ProcessAbsLocalizationUpdateMessage(const u8* buffer)
+      {
+        // TODO: Double-check that size matches expected size?
+        
+        const CozmoMsg_AbsLocalizationUpdate *msg = reinterpret_cast<const CozmoMsg_AbsLocalizationUpdate*>(buffer);
+        
+        f32 currentMatX       = msg->xPosition * .001f; // store in meters
+        f32 currentMatY       = msg->yPosition * .001f; //     "
+        Radians currentMatHeading = msg->headingAngle;
+        Localization::SetCurrentMatPose(currentMatX, currentMatY, currentMatHeading);
+        
+        PRINT("Robot received localization update from "
+              "basestation: (%.3f,%.3f) at %.1f degrees\n",
+              currentMatX, currentMatY,
+              currentMatHeading.getDegrees());
+#if(USE_OVERLAY_DISPLAY)
+        {
+          using namespace Sim::OverlayDisplay;
+          SetText(CURR_POSE, "Pose: (x,y)=(%.4f,%.4f) at angle=%.1f\n",
+                  currentMatX, currentMatY,
+                  currentMatHeading.getDegrees());
+        }
+#endif
+
+      } // ProcessAbsLocalizationUpdateMessage()
+      
       void ProcessBTLEMessages()
       {
         // Process any messages from the basestation
@@ -102,100 +185,15 @@ namespace Anki {
         
         while(dataSize > 0)
         {
-          msgSize = msgBuffer[0];
-          CozmoMsg_Command cmd = static_cast<CozmoMsg_Command>(msgBuffer[1]);
-          switch(cmd)
-          {
-            case MSG_B2V_CORE_ROBOT_ADDED_TO_WORLD:
-            {
-              const CozmoMsg_RobotAdded* msg = reinterpret_cast<const CozmoMsg_RobotAdded*>(msgBuffer);
-              
-              if(msg->robotID != HAL::GetRobotID()) {
-                PRINT("Robot received ADDED_TO_WORLD handshake with "
-                        " wrong robotID (%d instead of %d).\n",
-                        msg->robotID, HAL::GetRobotID());
-              }
-              
-              PRINT("Robot received handshake from basestation, "
-                      "sending camera calibration.\n");
-              const HAL::CameraInfo *matCamInfo  = HAL::GetMatCamInfo();
-              const HAL::CameraInfo *headCamInfo = HAL::GetHeadCamInfo();
-              
-              CozmoMsg_CameraCalibration calibMsg;
-              calibMsg.size = sizeof(CozmoMsg_CameraCalibration);
-              
-              //
-              // Send mat camera calibration
-              //
-              calibMsg.msgID = MSG_V2B_CORE_MAT_CAMERA_CALIBRATION;
-              // TODO: do we send x or y focal length, or both?
-              calibMsg.focalLength_x = matCamInfo->focalLength_x;
-              calibMsg.focalLength_y = matCamInfo->focalLength_y;
-              calibMsg.fov           = matCamInfo->fov_ver;
-              calibMsg.nrows         = matCamInfo->nrows;
-              calibMsg.ncols         = matCamInfo->ncols;
-              calibMsg.center_x      = matCamInfo->center_x;
-              calibMsg.center_y      = matCamInfo->center_y;
-              
-              HAL::RadioToBase(reinterpret_cast<u8*>(&calibMsg),
-                               calibMsg.size);
-              //
-              // Send head camera calibration
-              //
-              calibMsg.msgID = MSG_V2B_CORE_HEAD_CAMERA_CALIBRATION;
-              // TODO: do we send x or y focal length, or both?
-              calibMsg.focalLength_x = headCamInfo->focalLength_x;
-              calibMsg.focalLength_y = headCamInfo->focalLength_y;
-              calibMsg.fov           = headCamInfo->fov_ver;
-              calibMsg.nrows         = headCamInfo->nrows;
-              calibMsg.ncols         = headCamInfo->ncols;
-              calibMsg.center_x      = headCamInfo->center_x;
-              calibMsg.center_y      = headCamInfo->center_y;
-              
-              HAL::RadioToBase(reinterpret_cast<u8*>(&calibMsg),
-                               calibMsg.size);
-              
-              break;
-            }
-              
-            case MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE:
-            {
-              // TODO: Double-check that size matches expected size?
-              
-              const CozmoMsg_AbsLocalizationUpdate *msg = reinterpret_cast<const CozmoMsg_AbsLocalizationUpdate*>(msgBuffer);
-              
-              f32 currentMatX       = msg->xPosition * .001f; // store in meters
-              f32 currentMatY       = msg->yPosition * .001f; //     "
-              Radians currentMatHeading = msg->headingAngle;
-              Localization::SetCurrentMatPose(currentMatX, currentMatY, currentMatHeading);
-              
-              PRINT("Robot received localization update from "
-                      "basestation: (%.3f,%.3f) at %.1f degrees\n",
-                      currentMatX, currentMatY,
-                      currentMatHeading.getDegrees());
-  #if(USE_OVERLAY_DISPLAY)
-              {
-                using namespace Sim::OverlayDisplay;
-                SetText(CURR_POSE, "Pose: (x,y)=(%.4f,%.4f) at angle=%.1f\n",
-                        currentMatX, currentMatY,
-                        currentMatHeading.getDegrees());
-              }
-  #endif
-              break;
-            }
-            
-            default:
-              PRINT("Unrecognized command in received message.\n");
-              
-          } // switch(cmd)
-          
+          CozmoMessageID msgID = ProcessMessage(msgBuffer);
           
           // Point to next message in buffer
+          msgSize = MessageTable[msgID].size;
           dataSize -= msgSize;
           msgBuffer = &(dataBuffer[msgSize]);
         }
         
-      }
+      } // ProcessBTLEMessages()
       
       void ProcessIncomingMessages() {
         ProcessBTLEMessages();
@@ -204,6 +202,42 @@ namespace Anki {
         ProcessUARTMessages();
 #endif
       }
+      
+      // TODO: Fill these in once they are needed/used:
+      void ProcessClearPathMessage(const u8* buffer) {
+        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
+      }
+      
+      void ProcessSetMotionMessage(const u8* buffer) {
+        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
+      }
+
+      void ProcessRobotAvailableMessage(const u8* buffer) {
+        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
+      }
+      
+      void ProcessMatMarkerObservedMessage(const u8* buffer) {
+        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
+      }
+      
+      void ProcessSetPathSegmentArcMessage(const u8* buffer) {
+        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
+      }
+      
+      void ProcessSetPathSegmentLineMessage(const u8* buffer) {
+        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
+      }
+      
+      // These need implementations to avoid linker errors, but we don't expect
+      // to _receive_ these message types, only to send them.
+      void ProcessMatCameraCalibrationMessage(const u8* buffer) {
+        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
+      }
+
+      void ProcessHeadCameraCalibrationMessage(const u8* buffer) {
+        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
+      }
+
       
     } // namespace CommandHandler
   } // namespace Cozmo

@@ -2,7 +2,7 @@
 #define COMMAND_HANDLER_H
 
 #include "anki/common/types.h"
-
+#include "anki/cozmo/messageProtocol.h"
 
 namespace Anki {
   
@@ -11,6 +11,8 @@ namespace Anki {
     namespace CommandHandler {
       
       void ProcessIncomingMessages();
+      
+      CozmoMessageID ProcessMessage(const u8* buffer);
       
     } // namespace CommandHandler
     

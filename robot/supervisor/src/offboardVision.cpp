@@ -68,8 +68,21 @@ namespace Anki
       SendFooter(USB_DEFINE_MESSAGE_ID);
     }
     
+    void HAL::USBSendMessage(const u8* msgBuffer, const CozmoMessageID msgID)
+    {
+      SendHeader(USB_MESSAGE_HEADER);
+      
+      USBPutChar(msgID);
+      const u8 size = MessageTable[msgID].size;
+      for(u8 i=0; i<size; ++i) {
+        USBPutChar(static_cast<int>(msgBuffer[i]));
+      }
+      
+      SendFooter(USB_MESSAGE_HEADER);
+    }
+   
     
-    void HAL::USBSendMessage()
+    void HAL::USBSendPrintBuffer()
     {
       using namespace USBprintBuffer;
       
@@ -92,7 +105,7 @@ namespace Anki
       
       SendFooter(USB_MESSAGE_HEADER);
       
-    } // USBSendMessage()
+    } // USBSendPrintBuffer()
     
     // Add a character to the ring buffer
     int HAL::USBBufferChar(int c)

@@ -81,9 +81,9 @@ namespace Anki {
       };
       
       // Typedefs for mailboxes to hold different types of messages:
-      typedef Mailbox<CozmoMsg_ObservedBlockMarker, MAX_BLOCK_MARKER_MESSAGES> BlockMarkerMailbox;
+      typedef Mailbox<CozmoMsg_BlockMarkerObserved, MAX_BLOCK_MARKER_MESSAGES> BlockMarkerMailbox;
       
-      typedef Mailbox<CozmoMsg_ObservedMatMarker, MAX_MAT_MARKER_MESSAGES> MatMarkerMailbox;
+      typedef Mailbox<CozmoMsg_MatMarkerObserved, MAX_MAT_MARKER_MESSAGES> MatMarkerMailbox;
       
       typedef Mailbox<CozmoMsg_DockingErrorSignal, MAX_DOCKING_MESSAGES> DockingMailbox;
   
