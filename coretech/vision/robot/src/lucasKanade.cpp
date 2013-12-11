@@ -671,7 +671,7 @@ namespace Anki
               templateWeightsTmp(0,0,-1,-1).Set(0);
               templateWeightsTmp(-1,-1,-1,-1).Set(0);
 
-              Matrix::Vectorize(true, templateWeightsTmp, templateWeights[iScale]);
+              Matrix::Vectorize(isOutColumnMajor, templateWeightsTmp, templateWeights[iScale]);
               EndBenchmark("InitializeTemplate.weights.vectorize");
             } // PUSH_MEMORY_STACK(memory);
           } // for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++, fScale++)
@@ -716,6 +716,8 @@ namespace Anki
 
       Result LucasKanadeTracker_f32::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack memory)
       {
+        const bool isOutColumnMajor = true; // TODO: change to false, which will probably be faster
+
         AnkiConditionalErrorAndReturnValue(this->isInitialized == true,
           RESULT_FAIL, "LucasKanadeTracker_f32::IterativelyRefineTrack", "This object is not initialized");
 
@@ -772,8 +774,8 @@ namespace Anki
           Array<f32> xIn2d = templateCoordinates[whichScale].EvaluateX2(memory);
           Array<f32> yIn2d = templateCoordinates[whichScale].EvaluateY2(memory);
 
-          Matrix::Vectorize(true, xIn2d, xIn);
-          Matrix::Vectorize(true, yIn2d, yIn);
+          Matrix::Vectorize(isOutColumnMajor, xIn2d, xIn);
+          Matrix::Vectorize(isOutColumnMajor, yIn2d, yIn);
         } // PUSH_MEMORY_STACK(memory);
         EndBenchmark("IterativelyRefineTrack.vectorizeXin");
 
@@ -828,7 +830,7 @@ namespace Anki
             if(Interp2<u8,f32>(nextImage, xTransformed, yTransformed, nextImageTransformed2d, INTERPOLATE_LINEAR, -1.0f) != RESULT_OK)
               return RESULT_FAIL;
 
-            Matrix::Vectorize<f32,f32>(true, nextImageTransformed2d, nextImageTransformed);
+            Matrix::Vectorize<f32,f32>(isOutColumnMajor, nextImageTransformed2d, nextImageTransformed);
           } // PUSH_MEMORY_STACK(memory);
           EndBenchmark("IterativelyRefineTrack.interpTransformedCoords");
 
@@ -845,7 +847,7 @@ namespace Anki
           EndBenchmark("IterativelyRefineTrack.getNumMatches");
 
           Array<f32> templateImage(1, numPointsY*numPointsX, memory);
-          Matrix::Vectorize(true, this->templateImagePyramid[whichScale], templateImage);
+          Matrix::Vectorize(isOutColumnMajor, this->templateImagePyramid[whichScale], templateImage);
 
           BeginBenchmark("IterativelyRefineTrack.templateDerivative");
           // It = imgi - this.target{i_scale}(:);
