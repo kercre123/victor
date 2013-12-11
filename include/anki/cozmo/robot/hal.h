@@ -411,7 +411,7 @@ namespace Anki
       
       // Send a command message (from messageProtocol.h)
       // The msgID will determine the size
-      void USBSendMessage(const u8* msgBuffer, const CozmoMessageID msgID);
+      void USBSendMessage(const void* msg, const CozmoMessageID msgID);
       
       // Send a frame at the current frame resolution (last set by
       // a call to SetUSBFrameResolution)

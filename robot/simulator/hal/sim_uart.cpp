@@ -135,7 +135,6 @@ namespace Anki
           usbRX_->nextPacket();
         }
         
-        // NOTE: this is just returning number of bytes to read *in the current packet*
         return USBrecvBuffer_.size() - getCharIndex_;
       }
       

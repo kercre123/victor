@@ -171,11 +171,30 @@ namespace Anki {
         HAL::SendMessageID("CozmoMsg_DockingErrorSignal",
                            GET_MESSAGE_ID(DockingErrorSignal));
         
+        //HAL::SendMessageID("CozmoMsg_HeadCameraCalibration",
+        //                   GET_MESSAGE_ID(HeadCameraCalibration));
+        
         // TODO: Update this to send mat and head cam calibration separately
         PRINT("VisionSystem::Init(): Sending head camera calibration to "
               "offoard vision processor.\n");
+        
+        // Create a camera calibration message and send it to the offboard
+        // vision processor
+        CozmoMsg_HeadCameraCalibration msg = {
+          .focalLength_x = headCamInfo_->focalLength_x,
+          .focalLength_y = headCamInfo_->focalLength_y,
+          .fov           = headCamInfo_->fov_ver,
+          .center_x      = headCamInfo_->center_x,
+          .center_y      = headCamInfo_->center_y,
+          .skew          = headCamInfo_->skew,
+          .nrows         = headCamInfo_->nrows,
+          .ncols         = headCamInfo_->ncols
+        };
+        
+        //HAL::USBSendMessage(&msg, GET_MESSAGE_ID(HeadCameraCalibration));
         HAL::USBSendPacket(HAL::USB_VISION_COMMAND_CALIBRATION,
-                           HAL::GetHeadCamInfo(), sizeof(HAL::CameraInfo));
+                           &msg, sizeof(CozmoMsg_HeadCameraCalibration));
+        
 #endif
         
         isInitialized_ = true;

@@ -208,13 +208,11 @@ classdef CozmoVisionProcessor < handle
                     %   f32 center_x, center_y;
                     %   f32 skew;
                     %   u16 nrows, ncols;
-                    %   f32 distortionCoeffs[NUM_RADIAL_DISTORTION_COEFFS];
-                    % } CameraInfo;
+                    % }
                     %
                     
-                    f = this.Cast(packet(1:8),      'single');
-                    f = this.Cast(packet(1:8),      'single');
-                    c = this.Cast(packet(13:20),    'single');
+                    f    = this.Cast(packet(1:8),   'single');
+                    c    = this.Cast(packet(13:20), 'single');
                     dims = this.Cast(packet(25:28), 'uint16');
                     
                     assert(length(f) == 2, ...
@@ -264,22 +262,21 @@ classdef CozmoVisionProcessor < handle
                             markers{i}.draw('where', this.h_axes);
                             
                             msgStruct = struct( ...
-                                'msgID', this.messageIDs.CozmoMsg_ObservedBlockMarker, ...
-                                'blockType', uint16(markers{i}.blockType), ...
-                                'faceType', uint8(markers{i}.faceType), ...
-                                'upDirection', uint8(markers{i}.upDirection), ...
                                 'headAngle', single(0), ... ???
-                                'x_imgUpperLeft', single(markers{i}.corners(1,1)), ...
-                                'y_imgUpperLeft', single(markers{i}.corners(1,2)), ...
-                                'x_imgLowerLeft', single(markers{i}.corners(2,1)), ...
-                                'y_imgLowerLeft', single(markers{i}.corners(2,2)), ...
+                                'x_imgUpperLeft',  single(markers{i}.corners(1,1)), ...
+                                'y_imgUpperLeft',  single(markers{i}.corners(1,2)), ...
+                                'x_imgLowerLeft',  single(markers{i}.corners(2,1)), ...
+                                'y_imgLowerLeft',  single(markers{i}.corners(2,2)), ...
                                 'x_imgUpperRight', single(markers{i}.corners(3,1)), ...
                                 'y_imgUpperRight', single(markers{i}.corners(3,2)), ...
                                 'x_imgLowerRight', single(markers{i}.corners(4,1)), ...
-                                'y_imgLowerRight', single(markers{i}.corners(4,2)) );
+                                'y_imgLowerRight', single(markers{i}.corners(4,2)), ...
+                                'blockType',       uint16(markers{i}.blockType), ...
+                                'faceType',        uint8(markers{i}.faceType), ...
+                                'upDirection',     uint8(markers{i}.upDirection));
                             
                             packet = this.SerializeMessageStruct(msgStruct);
-                            this.SendPacket(packet);
+                            this.SendPacket('CozmoMsg_BlockMarkerObserved', packet);
                             
                             if ~isempty(this.dockingBlock) && ...
                                     this.dockingBlock > 0 && ...
@@ -295,12 +292,10 @@ classdef CozmoVisionProcessor < handle
                                
                                % Let the robot know we've initialized the
                                % tracker
-                               msgStruct = struct( ...
-                                   'msgID', this.messageIDs.CozmoMsg_TemplateInitialized, ...
-                                   'success', uint8(true));
+                               msgStruct = struct('success', uint8(true));
                                
                                packet = this.SerializeMessageStruct(msgStruct);
-                               this.SendPacket(packet);
+                               this.SendPacket('CozmoMsg_TemplateInitialized', packet);
                                
                                % Show the tracking template
                                template = this.LKtracker.target{this.LKtracker.finestScale};
@@ -317,12 +312,10 @@ classdef CozmoVisionProcessor < handle
                         
                         % Send a message indicating there are no more block
                         % marker messages coming
-                        msgStruct = struct( ...
-                            'msgID', this.messageIDs.CozmoMsg_TotalBlocksDetected, ...
-                            'numBlocks', uint8(length(markers)) );
+                        msgStruct = struct('numBlocks', uint8(length(markers)) );
                         
                         packet = this.SerializeMessageStruct(msgStruct);
-                        this.SendPacket(packet);
+                        this.SendPacket('CozmoMsg_TotalBlocksDetected', packet);
                         
                     end
                     
@@ -332,8 +325,7 @@ classdef CozmoVisionProcessor < handle
                     
                     img = CozmoVisionProcessor.PacketToImage(packet);
                     if ~isempty(img)
-                        set(this.h_title, 'String', 'Tracking');
-                        
+                                                      
                         % Update the tracker with this frame
                         converged = this.LKtracker.track(img, ...
                             'MaxIterations', 50, ...
@@ -341,6 +333,8 @@ classdef CozmoVisionProcessor < handle
                             'ErrorTolerance', 0.5);
                         
                         if converged
+                            set(this.h_title, 'String', 'Tracking Converged');
+                            
                             corners = this.LKtracker.corners;
                             
                             set(this.h_track, ...
@@ -349,24 +343,22 @@ classdef CozmoVisionProcessor < handle
                                                         
                             [distError, midPointErr, angleError] = computeError(this);
                             msgStruct = struct( ...
-                                'msgID', this.messageIDs.CozmoMsg_DockingErrorSignal, ...
-                                'didTrackingSucceed', uint8(true), ...
-                                'dummy', uint8(0), ...
                                 'x_distErr', single(distError), ...
-                                'y_horErr', single(midPointErr), ...
-                                'angleErr', single(angleError));
+                                'y_horErr',  single(midPointErr), ...
+                                'angleErr',  single(angleError), ...
+                                'didTrackingSucceed', uint8(true));
                             
                         else
+                            set(this.h_title, 'String', 'Tracking Failed');
                             msgStruct = struct( ...
-                                'msgID', this.messageIDs.CozmoMsg_DockingErrorSignal, ...
-                                'didTrackingSucceed', uint8(false), ...
                                 'x_distErr', single(0), ...
-                                'y_horErr', single(0), ...
-                                'angleErr', single(0));
+                                'y_horErr',  single(0), ...
+                                'angleErr',  single(0), ...
+                                'didTrackingSucceed', uint8(false));
                         end
-                
+                              
                         packet = this.SerializeMessageStruct(msgStruct);
-                        this.SendPacket(packet);
+                        this.SendPacket('CozmoMsg_DockingErrorSignal', packet);
                         
                     end % IF img not empty
                     
@@ -386,13 +378,15 @@ classdef CozmoVisionProcessor < handle
          
         end % FUNCTION ProcessPacket()
         
-        function SendPacket(this, packet)
+        function SendPacket(this, messageName, packet)
             assert(isa(packet, 'uint8'), 'Expecting UINT8 packet.');
+            assert(isfield(this.messageIDs, messageName), ...
+                'Unknown message ID for "%s".', messageName);           
             
-            assert(packet(1) == length(packet), ...
-                'Expecting first byte of packet to be its size.');
-            
-            fwrite(this.serialDevice, [uint8(this.HEADER) row(packet)]);
+            % Send the header, followed by message ID, followed by the
+            % actual message data
+            msgID = this.messageIDs.(messageName);
+            fwrite(this.serialDevice, [uint8(this.HEADER) msgID row(packet)]);
         end % FUNCTION: SendPacket()
         
         function [distError, midPointErr, angleError] = computeError(this)
@@ -499,13 +493,7 @@ classdef CozmoVisionProcessor < handle
                 packet{i} = this.Cast(msgStruct.(names{i}), 'uint8');
             end
             packet = [packet{:}];
-            
-            desktop
-            keyboard
-            
-            % Add a size byte to the beginning:
-            packet = [uint8(length(packet)+1) packet];
-            
+                       
         end % FUNCTION SerializeMessageStruct()
         
            
