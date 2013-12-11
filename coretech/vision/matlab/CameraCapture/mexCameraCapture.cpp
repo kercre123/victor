@@ -31,7 +31,7 @@ enum Command {
   OPEN  = 0,
   GRAB  = 1,
   CLOSE = 2, 
-  CHANGE_RESOLUION = 3
+  CHANGE_RESOLUTION = 3
 };
 
 // A Simple Camera Capture Framework
@@ -45,48 +45,48 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   Command   cmd    = static_cast<Command>(static_cast<int>(floor(mxGetScalar(prhs[0])+0.5)));
   int       device = -1;
-
+  
   switch(cmd)
   {
-  case OPEN:
+    case OPEN:
     {
       if(nrhs < 2) {
         mexErrMsgTxt("You must specify a device with the OPEN command.");
       }
-
+      
       device = (int) mxGetScalar(prhs[1]);
-
+      
       if(device >= capture.size()) {
         // Make room for new capture device:
         capture.resize(device+1, NULL);
       }
-
+      
       // Close device (if necessary) before reopening it:
       closeHelper(device);
-
+      
       DEBUG_MSG(0, "Opening capture device %d.\n", device);
       capture[device] = new cv::VideoCapture(device);
-
+      
       if(nrhs >= 3) {
         double width  = mxGetScalar(prhs[2]);
         double height = mxGetScalar(prhs[3]);
-
+        
         capture[device]->set(CV_CAP_PROP_CONVERT_RGB, 0.);
-
+        
         if(not capture[device]->set(CV_CAP_PROP_FRAME_WIDTH, width) ||
-          not capture[device]->set(CV_CAP_PROP_FRAME_HEIGHT, height))
+           not capture[device]->set(CV_CAP_PROP_FRAME_HEIGHT, height))
         {
           mexErrMsgTxt("Failed to adjust capture dimensions.");
         }
-
+        
         DEBUG_MSG(0, "Set camera to capture at %.0fx%.0f\n",
-          width, height);
+                  width, height);
       }
-
+      
       DEBUG_MSG(1, "Initialization pause...");
       mexEvalString("pause(2)");
       DEBUG_MSG(1, "Done.\n");
-
+      
       if(nlhs>0) {
         // If an output was requested with an OPEN command, trigger
         // a grab to happen below
@@ -94,8 +94,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       }
       break;
     }
-
-  case CLOSE:
+      
+    case CLOSE:
     {
       if(nrhs > 1) {
         device = (int) mxGetScalar(prhs[1]);
@@ -116,8 +116,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       }
       break;
     }
-
-  case GRAB:
+      
+    case GRAB:
     {
       if(nrhs < 2) {
         mexErrMsgTxt("You must specify a device with the GRAB command.");
@@ -130,34 +130,33 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       }
       break;
     }
-
+      
     case CHANGE_RESOLUTION:
     {
       if(nrhs < 4) {
-         mexErrMsgTxt("You must supply device and resolution arguments "
-                 "with the CHANGE_RESOLUTION command.");
+        mexErrMsgTxt("You must supply device and resolution arguments "
+                     "with the CHANGE_RESOLUTION command.");
       }
       
       device = (int) mxGetScalar(prhs[1]);
       if(device < 0 || device >= capture.size()) {
-          mexErrMsgTxt("Invalid device specified.");
+        mexErrMsgTxt("Invalid device specified.");
       }
       
       double width  = mxGetScalar(prhs[2]);
       double height = mxGetScalar(prhs[3]);
-
+      
       if(not capture[device]->set(CV_CAP_PROP_FRAME_WIDTH, width) ||
          not capture[device]->set(CV_CAP_PROP_FRAME_HEIGHT, height))
       {
         mexErrMsgTxt("Failed to adjust capture dimensions.");
       }
-
+      
       DEBUG_MSG(0, "Set camera to capture at %.0fx%.0f\n",
-          width, height);
-      }
+                width, height);
       break;
     }
-    
+  
     default:
       mexErrMsgTxt("Unknown command.");
       
