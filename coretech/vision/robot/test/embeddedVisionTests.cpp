@@ -535,6 +535,8 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
   image[1][0] = 9; image[1][1] = 9; image[1][2] = 9;
   image[2][0] = 0; image[2][1] = 0; image[2][2] = 1;
 
+  //image.Print("image");
+
   Array<u8> image2(4,16,ms);
   ASSERT_TRUE(image2.IsValid());
 
@@ -542,6 +544,8 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
   image2[1][0] = 9; image2[1][1] = 9; image2[1][2] = 9;
   image2[2][0] = 0; image2[2][1] = 0; image2[2][2] = 1;
   image2[3][0] = 5; image2[3][1] = 5; image2[3][2] = 5;
+
+  //image2.Print("image2");
 
   Array<s32> filteredOutput(1, 16, ms);
 
@@ -558,6 +562,9 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     const s32 filteredOutput_groundTruth_testBorder2_0[] = {35, 39, 28};
     ASSERT_TRUE(ii_border2.FilterRow(acceleration, filter_testBorder2_0, imageRow_testBorder2_0, filteredOutput) == RESULT_OK);
 
+    //ii_border2.Print("ii_border2");
+    //filteredOutput.Print("filteredOutput1");
+
     for(s32 i=0; i<3; i++) {
       ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder2_0[i]);
     }
@@ -570,6 +577,8 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     const s32 imageRow_testBorder2_1 = 2;
     const s32 filteredOutput_groundTruth_testBorder2_1[] = {27, 29, 20};
     ASSERT_TRUE(ii_border2.FilterRow(acceleration, filter_testBorder2_1, imageRow_testBorder2_1, filteredOutput) == RESULT_OK);
+
+    //filteredOutput.Print("filteredOutput2");
 
     for(s32 i=0; i<3; i++) {
       ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder2_1[i]);
@@ -592,6 +601,8 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     const s32 filteredOutput_groundTruth_testBorder1_0[] = {10, 11, 13};
     ASSERT_TRUE(ii_border1.FilterRow(acceleration, filter_testBorder1_0, imageRow_testBorder1_0, filteredOutput) == RESULT_OK);
 
+    //filteredOutput.Print("filteredOutput3");
+
     for(s32 i=0; i<3; i++) {
       ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder1_0[i]);
     }
@@ -604,6 +615,8 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     const s32 imageRow_testBorder1_1 = 1;
     const s32 filteredOutput_groundTruth_testBorder1_1[] = {18, 20, 11};
     ASSERT_TRUE(ii_border1.FilterRow(acceleration, filter_testBorder1_1, imageRow_testBorder1_1, filteredOutput) == RESULT_OK);
+
+    //filteredOutput.Print("filteredOutput4");
 
     for(s32 i=0; i<3; i++) {
       ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder1_1[i]);
@@ -626,6 +639,8 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     const s32 filteredOutput_groundTruth_testBorder2_0[] = {0, 0, 18};
     ASSERT_TRUE(ii_border0.FilterRow(acceleration, filter_testBorder2_0, imageRow_testBorder2_0, filteredOutput) == RESULT_OK);
 
+    //filteredOutput.Print("filteredOutput5");
+
     for(s32 i=0; i<3; i++) {
       ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder2_0[i]);
     }
@@ -638,6 +653,8 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     const s32 imageRow_testBorder2_1 = 2;
     const s32 filteredOutput_groundTruth_testBorder2_1[] = {0, 1, 1};
     ASSERT_TRUE(ii_border0.FilterRow(acceleration, filter_testBorder2_1, imageRow_testBorder2_1, filteredOutput) == RESULT_OK);
+
+    //filteredOutput.Print("filteredOutput5");
 
     for(s32 i=0; i<3; i++) {
       ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder2_1[i]);
@@ -998,6 +1015,8 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
 
   Array<u8> image(blockImage50_320x240_HEIGHT, blockImage50_320x240_WIDTH, scratch0);
   image.Set(blockImage50_320x240, blockImage50_320x240_WIDTH*blockImage50_320x240_HEIGHT);
+
+  //image.Print("image", 0, 0, 0, 50);
 
   ASSERT_TRUE(IsBlockImage50_320x240Valid(image.Pointer(0,0), false));
 
@@ -2141,7 +2160,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
   ASSERT_TRUE(ms.IsValid());
 
 #define ApproximateConnectedComponents2d_binaryImageDataLength (18*5)
-  const u8 binaryImageData[128] = {
+  const s32 binaryImageData[] = {
     0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0,
     0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0,
@@ -2153,27 +2172,32 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
   //#define UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d
 #define SORTED_BY_ID_GROUND_TRUTH_ApproximateConnectedComponents2d
 #ifdef UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d
-  const s32 xStart_groundTruth[128] = {4,  3, 10, 13, 5, 9,  13, 6, 12, 16, 7, 11, 14};
-  const s32 xEnd_groundTruth[128]   = {11, 5, 11, 15, 6, 11, 14, 9, 14, 17, 8, 12, 16};
-  const s32 y_groundTruth[128]      = {0,  1, 1,  1,  2, 2,  2,  3, 3,  3,  4, 4,  4};
-  const s32 id_groundTruth[128]     = {1,  1, 1,  2,  1, 1,  2,  1, 2,  2,  1, 2,  2};
+  const s32 xStart_groundTruth[] = {4,  3, 10, 13, 5, 9,  13, 6, 12, 16, 7, 11, 14};
+  const s32 xEnd_groundTruth[]   = {11, 5, 11, 15, 6, 11, 14, 9, 14, 17, 8, 12, 16};
+  const s32 y_groundTruth[]      = {0,  1, 1,  1,  2, 2,  2,  3, 3,  3,  4, 4,  4};
+  const s32 id_groundTruth[]     = {1,  1, 1,  2,  1, 1,  2,  1, 2,  2,  1, 2,  2};
 #else // #ifdef UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d
 #ifdef SORTED_BY_ID_GROUND_TRUTH_ApproximateConnectedComponents2d
-  const s32 xStart_groundTruth[128] = {4,  3, 10, 5, 9,  6, 7, 13, 13, 12, 16, 11, 14};
-  const s32 xEnd_groundTruth[128]   = {11, 5, 11, 6, 11, 9, 8, 15, 14, 14, 17, 12, 16};
-  const s32 y_groundTruth[128]      = {0,  1, 1,  2, 2,  3, 4, 1,  2,  3,  3,  4,  4};
-  const s32 id_groundTruth[128]     = {1,  1, 1,  1, 1,  1, 1, 2,  2,  2,  2,  2,  2};
+  const s32 xStart_groundTruth[] = {4,  3, 10, 5, 9,  6, 7, 13, 13, 12, 16, 11, 14};
+  const s32 xEnd_groundTruth[]   = {11, 5, 11, 6, 11, 9, 8, 15, 14, 14, 17, 12, 16};
+  const s32 y_groundTruth[]      = {0,  1, 1,  2, 2,  3, 4, 1,  2,  3,  3,  4,  4};
+  const s32 id_groundTruth[]     = {1,  1, 1,  1, 1,  1, 1, 2,  2,  2,  2,  2,  2};
 #else // Sorted by id, y, and xStart
-  const s32 xStart_groundTruth[128] = {4,  3, 10, 5, 9,  6, 7, 13, 13, 12, 16, 11, 14};
-  const s32 xEnd_groundTruth[128]   = {11, 5, 11, 6, 11, 9, 8, 15, 14, 14, 17, 12, 16};
-  const s32 y_groundTruth[128]      = {0,  1, 1,  2, 2,  3, 4, 1,  2,  3,  3,  4,  4};
-  const s32 id_groundTruth[128]     = {1,  1, 1,  1, 1,  1, 1, 2,  2,  2,  2,  2,  2};
+  const s32 xStart_groundTruth[] = {4,  3, 10, 5, 9,  6, 7, 13, 13, 12, 16, 11, 14};
+  const s32 xEnd_groundTruth[]   = {11, 5, 11, 6, 11, 9, 8, 15, 14, 14, 17, 12, 16};
+  const s32 y_groundTruth[]      = {0,  1, 1,  2, 2,  3, 4, 1,  2,  3,  3,  4,  4};
+  const s32 id_groundTruth[]     = {1,  1, 1,  1, 1,  1, 1, 2,  2,  2,  2,  2,  2};
 #endif // #ifdef SORTED_BY_ID_GROUND_TRUTH_ApproximateConnectedComponents2d
 #endif // #ifdef UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d ... #else
 
   Array<u8> binaryImage(imageHeight, imageWidth, ms);
   ASSERT_TRUE(binaryImage.IsValid());
-  ASSERT_TRUE(binaryImage.Set(binaryImageData, ApproximateConnectedComponents2d_binaryImageDataLength) == imageWidth*imageHeight);
+
+  //binaryImage.Print("binaryImage");
+
+  ASSERT_TRUE(binaryImage.SetCast<s32>(binaryImageData, ApproximateConnectedComponents2d_binaryImageDataLength) == imageWidth*imageHeight);
+
+  //binaryImage.Print("binaryImage");
 
   //FixedLengthList<ConnectedComponentSegment> extractedComponents(maxComponentSegments, ms);
   ConnectedComponents components(maxComponentSegments, imageWidth, ms);

@@ -2486,12 +2486,12 @@ GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
   Array<u8> simpleArray(3, 3, ms);
 
 #define ArraySpecifiedClass_imgDataLength 9
-  const u8 imgData[ArraySpecifiedClass_imgDataLength] = {
+  const s32 imgData[ArraySpecifiedClass_imgDataLength] = {
     1, 1, 1,
     1, 1, 1,
     1, 1, 1};
 
-  simpleArray.Set(imgData, ArraySpecifiedClass_imgDataLength);
+  simpleArray.SetCast<s32>(imgData, ArraySpecifiedClass_imgDataLength);
 
   printf("*simpleArray.Pointer(0,0) = %d\n", *simpleArray.Pointer(0,0));
 

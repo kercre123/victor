@@ -26,8 +26,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "opencv2/highgui/highgui.hpp"
 #endif
 
-#define ANKI_ARRAY_USE_ARRAY_SET
-
 namespace Anki
 {
   namespace Embedded
@@ -147,7 +145,9 @@ namespace Anki
       //s32 Set(const s32 * const values, const s32 numValues);
       //s32 Set(const f64 * const values, const s32 numValues);
 
+      // Read in the input, then cast it to this object's type
       template<typename InType> s32 SetCast(const Array<InType> &in);
+      template<typename InType> s32 SetCast(const InType * const values, const s32 numValues);
 
       // TODO: implement all these
       //template<typename FindType1, typename FindType2> s32 Set(const Find<FindType1, FindType2> &find, const Type value);

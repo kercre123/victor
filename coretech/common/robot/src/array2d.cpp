@@ -83,6 +83,33 @@ namespace Anki
       return PrintBasicType(variableName, version, minY, maxY, minX, maxX);
     }
 
+    template<> template<> s32 Array<u8>::SetCast(const s32 * const values, const s32 numValues)
+    {
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        0, "Array<Type>::SetCast", "Array<Type> is not valid");
+
+      s32 numValuesSet = 0;
+
+      for(s32 y=0; y<size[0]; y++) {
+        u8 * restrict pThisData = Pointer(y, 0);
+
+        const s32 numValuesThisRow = MAX(0, MIN(numValues - y*size[1], size[1]));
+
+        if(numValuesThisRow > 0) {
+          for(s32 x=0; x<numValuesThisRow; x++) {
+            pThisData[x] = static_cast<u8>( (values+y*size[1])[x] );
+          }
+          numValuesSet += numValuesThisRow;
+        }
+
+        if(numValuesThisRow < size[1]) {
+          memset(pThisData+numValuesThisRow*sizeof(u8), 0, (size[1]-numValuesThisRow)*sizeof(u8));
+        }
+      }
+
+      return numValuesSet;
+    }
+
     C_Array_s32 get_C_Array_s32(Array<s32> &array)
     {
       C_Array_s32 cVersion;

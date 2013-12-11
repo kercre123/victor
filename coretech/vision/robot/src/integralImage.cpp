@@ -323,14 +323,13 @@ namespace Anki
 
       u8 * restrict paddedRow_u8rowPointer = paddedRow.Pointer(0, 0);
 
-#ifdef BIG_ENDIAN_IMAGES
-      const u8 firstPixel = (image_u32rowPointer[0] & 0xFF000000) >> 24;
-      const u8 lastPixel = image_u32rowPointer[imageWidth4-1] & 0xFF;
-#else
-
+      //#ifdef BIG_ENDIAN_IMAGES
+      //      const u8 firstPixel = (image_u32rowPointer[0] & 0xFF000000) >> 24;
+      //      const u8 lastPixel = image_u32rowPointer[imageWidth4-1] & 0xFF;
+      //#else
       const u8 firstPixel = image_u8rowPointer[0];
       const u8 lastPixel = image_u8rowPointer[imageWidth-1];
-#endif
+      //#endif
 
       s32 xPad = 0;
 
@@ -341,11 +340,11 @@ namespace Anki
       // First, load everything to the beginning of the buffer (SPARC doesn't have unaligned store)
       u32 * restrict paddedRow_u32rowPointerPxpad = reinterpret_cast<u32*>(paddedRow_u8rowPointer);
       for(s32 xImage = 0; xImage<imageWidth4; xImage++) {
-#ifdef BIG_ENDIAN_IMAGES
-        paddedRow_u32rowPointerPxpad[xImage] = SwapEndianU32(image_u32rowPointer[xImage]);
-#else
+        //#ifdef BIG_ENDIAN_IMAGES
+        //        paddedRow_u32rowPointerPxpad[xImage] = SwapEndianU32(image_u32rowPointer[xImage]);
+        //#else
         paddedRow_u32rowPointerPxpad[xImage] = image_u32rowPointer[xImage];
-#endif
+        //#endif
       }
 
       // Second, move the image data to the unaligned location
