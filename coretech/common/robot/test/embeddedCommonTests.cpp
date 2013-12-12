@@ -82,32 +82,45 @@ GTEST_TEST(CoreTech_Common, CholeskyDecomposition)
     1.8859f, 2.2340f, 2.0461f,
     2.0785f, 2.0461f, 2.7591f};
 
-  Array<f32> A(3,3,ms);
-  Array<f32> L(3,3,ms);
-  Array<f32> bt(1,3,ms);
-  Array<f32> xt(1,3,ms);
+  const f32 B_data[6] = {
+    1.0f, 3.0f, 5.0f,
+    2.0f, 4.0f, 6.0f};
 
-  ASSERT_TRUE(A.IsValid());
-  ASSERT_TRUE(L.IsValid());
+  Array<f32> A_L(3,3,ms);
+  Array<f32> Bt_Xt(2,3,ms);
 
-  A.Set(A_data, 9);
+  ASSERT_TRUE(A_L.IsValid());
+  ASSERT_TRUE(Bt_Xt.IsValid());
 
-  const Result result = Matrix::SolveLeastSquaresWithCholesky<f32,f32,f32>(A, bt, L, xt, false);
+  A_L.Set(A_data, 9);
+  Bt_Xt.Set(B_data, 9);
+
+  A_L.Print("A");
+  Bt_Xt.Print("Bt");
+
+  const Result result = Matrix::SolveLeastSquaresWithCholesky(A_L, Bt_Xt, true);
   ASSERT_TRUE(result == RESULT_OK);
 
-  A.Print("A");
-  L.Print("L");
+  A_L.Print("L");
+  Bt_Xt.Print("Xt");
 
   const f32 L_groundTruth_data[9] = {
     1.6536f, 0.0f, 0.0f,
     1.1405f, 0.9661f, 0.0f,
     1.2569f, 0.6341f, 0.8815f};
 
+  const f32 Xt_groundTruth_data[9] = {
+    -2.4188f, 0.1750f, 3.5046f,
+    -2.2968f, 0.4769f, 3.5512f};
+
   Array<f32> L_groundTruth(3,3,ms);
+  Array<f32> Xt_groundTruth(2,3,ms);
 
   L_groundTruth.Set(L_groundTruth_data, 9);
+  Xt_groundTruth.Set(Xt_groundTruth_data, 6);
 
-  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(L, L_groundTruth, .01, .001));
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(A_L, L_groundTruth, .01, .001));
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(Bt_Xt, Xt_groundTruth, .01, .001));
 
   GTEST_RETURN_HERE;
 }

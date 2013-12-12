@@ -85,12 +85,10 @@ namespace Anki
       //
 
       // Compute the Cholesky-Banachiewicz decomposition, to return a lower-triangular matrix L such that A=L*L'
-      template<typename InType, typename IntermediateType, typename OutType> Result SolveLeastSquaresWithCholesky(
-        const Array<InType> &A,     //!< Input A Matrix
-        const Array<InType> &Bt,    //!< Input B-transpose matrix
-        Array<IntermediateType> &L, //!< Output lower-triangular L matrix
-        Array<OutType> &Xt,         //!< Output X-transpose solution
-        bool invertDiagonals=true   //!< A real Cholesky is invertDiagonals==false, but true is faster
+      template<typename Type> Result SolveLeastSquaresWithCholesky(
+        Array<Type> &A_L,       //!< Input A Matrix and Output lower-triangular L matrix
+        Array<Type> &Bt_Xt,     //!< Input B-transpose matrix and Output X-transpose solution
+        bool realCholesky=false //!< A real Cholesky is slower to compute, and not required if only the X solution is required
         );
 
       //template<typename InType, typename IntermediateType, typename OutType> Result CholeskyDecomposition(

@@ -236,145 +236,114 @@ namespace Anki
         return RESULT_OK;
       } // template<typename InType, typename OutType> Result MultiplyTranspose(const Array<InType> &in1, const Array<InType> &in2Transposed, Array<OutType> &out)
 
-      template<typename InType, typename IntermediateType, typename OutType> Result SolveLeastSquaresWithCholesky(
-        const Array<InType> &A,     //!< Input A Matrix
-        const Array<InType> &Bt,    //!< Input B-transpose matrix
-        Array<IntermediateType> &L, //!< Output lower-triangular L matrix
-        Array<OutType> &Xt,         //!< Output X-transpose solution
-        bool invertDiagonals        //!< A real Cholesky is invertDiagonals==false, but true is faster
+      template<typename Type> Result SolveLeastSquaresWithCholesky(
+        Array<Type> &A_L,       //!< Input A Matrix and Output lower-triangular L matrix
+        Array<Type> &Bt_Xt,     //!< Input B-transpose matrix and Output X-transpose solution
+        bool realCholesky       //!< A real Cholesky is slower to compute, and not required if only the X solution is required
         )
       {
-        const s32 matrixHeight = A.get_size(0);
+        const s32 matrixHeight = A_L.get_size(0);
+        const s32 numSamples = Bt_Xt.get_size(0);
 
-        AnkiConditionalErrorAndReturnValue(A.IsValid(),
-          RESULT_FAIL, "CholeskyDecomposition", "A is not valid");
+        AnkiConditionalErrorAndReturnValue(A_L.IsValid(),
+          RESULT_FAIL, "CholeskyDecomposition", "A_L is not valid");
 
-        AnkiConditionalErrorAndReturnValue(Bt.IsValid(),
-          RESULT_FAIL, "CholeskyDecomposition", "Bt is not valid");
+        AnkiConditionalErrorAndReturnValue(Bt_Xt.IsValid(),
+          RESULT_FAIL, "CholeskyDecomposition", "Bt_Xt is not valid");
 
-        AnkiConditionalErrorAndReturnValue(L.IsValid(),
-          RESULT_FAIL, "CholeskyDecomposition", "L is not valid");
+        AnkiConditionalErrorAndReturnValue(matrixHeight == A_L.get_size(1),
+          RESULT_FAIL, "CholeskyDecomposition", "A_L is not square");
 
-        AnkiConditionalErrorAndReturnValue(Xt.IsValid(),
-          RESULT_FAIL, "CholeskyDecomposition", "Xt is not valid");
-
-        AnkiConditionalErrorAndReturnValue(matrixHeight == A.get_size(1),
-          RESULT_FAIL, "CholeskyDecomposition", "A is not square");
-
-        AnkiConditionalErrorAndReturnValue(L.get_size(0) == matrixHeight && L.get_size(1) == matrixHeight,
-          RESULT_FAIL, "CholeskyDecomposition", "A and L are not the same size");
-
-        AnkiConditionalErrorAndReturnValue(A.Pointer(0,0) != L.Pointer(0,0),
-          RESULT_FAIL, "CholeskyDecomposition", "A and L must be different matrices");
+        AnkiConditionalErrorAndReturnValue(Bt_Xt.get_size(1) == matrixHeight,
+          RESULT_FAIL, "CholeskyDecomposition", "Xt and Bt are the wrong sizes");
 
         // TODO: check if symmetric and positive-definite
 
-        const IntermediateType minStableValue = Anki::Embedded::Flags::numeric_limits<IntermediateType>::epsilon();
-
-        //// Store the real (non-inverse) values of the diagaonal of L
-        //Array<IntermediateType> diagonalValues(1, imageHeight, scratch);
-        //IntermediateType * restrict pDiagonalInverses = diagonalInverses.Pointer(0,0);
+        const Type minStableValue = Anki::Embedded::Flags::numeric_limits<Type>::epsilon();
 
         for(s32 i = 0; i < matrixHeight; i++) {
           // First, compute the non-diagonal values
           // This uses the results from the diagonal inverse computation from previous iterations of i
-          const InType * restrict pA_yi = A.Pointer(i, 0);
-          IntermediateType * restrict pL_yi = L.Pointer(i, 0);
+          Type * restrict pAL_yi = A_L.Pointer(i, 0);
 
           for(s32 j = 0; j < i; j++) {
-            IntermediateType * restrict pL_yj = L.Pointer(j, 0);
+            Type * restrict pAL_yj = A_L.Pointer(j, 0);
 
-            IntermediateType sum = pA_yi[j];
+            Type sum = pAL_yi[j];
             for(s32 k = 0; k < j; k++) {
-              const IntermediateType value1 = pL_yi[k];
-              const IntermediateType value2 = pL_yj[k];
+              const Type value1 = pAL_yi[k];
+              const Type value2 = pAL_yj[k];
               sum -= value1*value2;
             }
 
-            pL_yi[j] = sum*pL_yj[j];
+            pAL_yi[j] = sum*pAL_yj[j];
           } // for(s32 j = 0; j < i; j++)
 
-          // Second, compute the diagonal and its inverse
+          // Second, compute the inverse of the diagonal
           {
-            IntermediateType sum = pA_yi[i];
+            Type sum = pAL_yi[i];
             for(s32 k = 0; k < i; k++) {
-              const IntermediateType value = pL_yi[k];
+              const Type value = pAL_yi[k];
               sum -= value*value;
             }
 
             if(sum < minStableValue)
               return RESULT_FAIL_NUMERICAL;
 
-            // TODO: change this f32 square root to f64 if IntermediateType==f64
-            const IntermediateType sumRoot = static_cast<IntermediateType>(sqrtf(static_cast<f32>(sum)));
-            //pL_yi[i] = static_cast<OutType>(sumRoot);
-            /*pDiagonalInverses[i] = static_cast<IntermediateType>(1) / sumRoot;*/
-            pL_yi[i] = static_cast<IntermediateType>(1) / sumRoot;
+            // TODO: change this f32 square root to f64 if Type==f64
+            const Type sumRoot = static_cast<Type>(sqrtf(static_cast<f32>(sum)));
+            pAL_yi[i] = static_cast<Type>(1) / sumRoot;
           }
         } // for(s32 i = 0; i < m; i++)
 
-#ifdef USE_OPENCV_COMPLIENT_VERSION_OF_CHOLESKY
-        // 1. The openCV version of Cholesky is not correct, because the diagonal values are the inverses of a real Cholesky decomposition
-        // 2. It uses 64-bit intermediate values
+        // Solve L*y = b via forward substitution
         for(s32 i = 0; i < matrixHeight; i++) {
-          const Type * restrict pA_yi = A.Pointer(i, 0);
-          Type * restrict pL_yi = L.Pointer(i, 0);
+          const Type * restrict pAL_yi = A_L.Pointer(i, 0);
+          Type * restrict pBX_yi = Bt_Xt.Pointer(i, 0);
 
-          for(s32 j = 0; j < i; j++) {
-            Type * restrict pL_yj = L.Pointer(j, 0);
+          for(s32 j = 0; j < numSamples; j++) {
+            Type * restrict pBX_yj = Bt_Xt.Pointer(j, 0);
 
-            f64 s = pA_yi[j];
-            for(s32 k = 0; k < j; k++) {
-              s -= pL_yi[k]*pL_yj[k];
+            Type sum = pBX_yj[i];
+            for(s32 k = 0; k < i; k++) {
+              const Type value1 = pAL_yi[k];
+              const Type value2 = pBX_yj[k];
+              sum -= value1*value2;
             }
 
-            pL_yi[j] = (Type)(s*pL_yj[j]);
+            pBX_yj[i] = sum*pAL_yi[i];
           }
-
-          f64 s = pA_yi[i];
-          for(s32 k = 0; k < i; k++) {
-            double t = pL_yi[k];
-            s -= t*t;
-          }
-
-          if( s < std::numeric_limits<Type>::epsilon() )
-            return RESULT_FAIL_NUMERICAL;
-
-          pL_yi[i] = (Type)(1./std::sqrt(s));
         }
-#endif // USE_OPENCV_COMPLIENT_VERSION_OF_CHOLESKY
 
-        //// Solve L*y = b via forward substitution
-        //for(s32 i = 0; i < m; i++)
-        //{
-        //  for(s32 j = 0; j < n; j++)
-        //  {
-        //    s = b[i*bstep + j];
-        //    for(s32 k = 0; k < i; k++) {
-        //      s -= L[i*astep + k]*b[k*bstep + j];
-        //    }
+        // Solve L'*X = Y via back substitution
+        for(s32 i = matrixHeight-1; i >= 0; i--) {
+          const Type * restrict pAL_yi = A_L.Pointer(i, 0);
+          Type * restrict pBX_yi = Bt_Xt.Pointer(i, 0);
 
-        //    b[i*bstep + j] = (_Tp)(s*L[i*astep + i]);
-        //  }
-        //}
+          for(s32 j = 0; j < numSamples; j++) {
+            Type * restrict pBX_yj = Bt_Xt.Pointer(j, 0);
 
-        //// Solve L'*X = Y via back substitution
-        //for(s32 i = m-1; i >= 0; i--) {
-        //  for(s32 j = 0; j < n; j++) {
-        //    s = b[i*bstep + j];
-        //    for(s32 k = m-1; k > i; k-- ) {
-        //      s -= L[k*astep + i]*b[k*bstep + j];
-        //    }
+            Type sum = pBX_yj[i];
+            for(s32 k = matrixHeight-1; k > i; k-- ) {
+              const Type value1 = A_L[k][i];
+              const Type value2 = pBX_yj[k];
+              sum -= value1*value2;
+            }
 
-        //    b[i*bstep + j] = (_Tp)(s*L[i*astep + i]);
-        //  }
-        //}
+            pBX_yj[i] = sum*pAL_yi[i];
+          }
+        }
 
-        if(!invertDiagonals) {
-          // Invert the diagonal values of L
+        if(realCholesky) {
+          // Invert the diagonal values of L, and set upper triangular to zero
           for(s32 i = 0; i < matrixHeight; i++) {
-            IntermediateType * restrict pL_yi = L.Pointer(i, 0);
-            pL_yi[i] = static_cast<IntermediateType>(1) / pL_yi[i];
+            Type * restrict pAL_yi = A_L.Pointer(i, 0);
+
+            pAL_yi[i] = static_cast<Type>(1) / pAL_yi[i];
+
+            for(s32 j = i+1; j < matrixHeight; j++) {
+              pAL_yi[j] = 0;
+            }
           }
         }
 
