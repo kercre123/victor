@@ -17,8 +17,6 @@ namespace Anki
       LSR,
       RSL,
       RSR,
-      LRL,
-      RLR,
       NUM_DUBINS_PATHS
     } DubinsPathType;
     
@@ -123,6 +121,13 @@ namespace Anki
 
       // Returns angle between two points on a circle
       f32 GetArcAngle(f32 start_x, f32 start_y, f32 end_x, f32 end_y, f32 center_x, f32 center_y, bool CCW);
+      
+      // Generates a CSC Dubins curve if one exists.
+      // Returns the number of segments in the path.
+      u8 GenerateCSCCurve(f32 startPt_x, f32 startPt_y, f32 startPt_theta,
+                          f32 endPt_x, f32 endPt_y, f32 endPt_theta,
+                          f32 start_radius, f32 end_radius,
+                          DubinsPathType pathType, PathSegment path[], f32 &path_length);
     };
     
    

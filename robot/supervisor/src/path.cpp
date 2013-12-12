@@ -152,54 +152,19 @@ namespace Anki
       return theta;
     }
     
-  
-    // Generates the Dubins path between a start and end pose with a constraint
-    // on the minimum radius of the curved sections.
-    // Returns the number of segments in the path, which should be 3.
-    // Returns 0 if fails.
-    //
-    // NOTE: This is a very simple version which only works when
-    // the difference between start_theta and end_theta is < pi/2
-    // and also when the end pose is in front of the start pose.
-    // Fails automatically
-    u8 Path::GenerateDubinsPath(f32 start_x, f32 start_y, f32 start_theta,
-                            f32 end_x, f32 end_y, f32 end_theta,
-                            f32 start_radius, f32 end_radius)
+    
+    
+    u8 Path::GenerateCSCCurve(f32 startPt_x, f32 startPt_y, f32 startPt_theta,
+                               f32 endPt_x, f32 endPt_y, f32 endPt_theta,
+                               f32 start_radius, f32 end_radius,
+                              DubinsPathType pathType, PathSegment path[], f32 &path_length)
     {
-
-      f32 startPt_x, startPt_y, startPt_theta;
-      f32 endPt_x, endPt_y, endPt_theta;
-      
-      startPt_x = start_x;
-      startPt_y = start_y;
-      startPt_theta = start_theta;
-      endPt_x = end_x;
-      endPt_y = end_y;
-      endPt_theta = end_theta;
-      
-      /*
-      // Find transform between start and end pose
-      
-      // Rotate end point about start point by start_theta to get endPt, which is the end point in the frame of the start pose.
-      f32 dx = end_x - start_x;
-      f32 dy = end_y - start_y;
-      
-      endPt_x = cosf(-start_theta) * dx - sinf(-start_theta) * dy;
-      endPt_y = sinf(-start_theta) * dx + cosf(-start_theta) * dy;
-      endPt_theta = end_theta - start_theta;
-      
-      startPt_x = 0;
-      startPt_y = 0;
-      startPt_theta = 0;
-      
-*/
-      PRINT("DUBINS: startPt %f %f %f, endPt %f %f %f, start_radius %f, end_radius %f\n",
-            startPt_x, startPt_y, startPt_theta, endPt_x, endPt_y, endPt_theta, start_radius, end_radius);
-  
+     
+      assert(pathType != NUM_DUBINS_PATHS);
       
       // Compute LSL, LSR, RSR, RSL paths
       // http://gieseanw.wordpress.com/2012/10/21/a-comprehensive-step-by-step-tutorial-to-computing-dubins-paths/
-
+      
       // p_c1: Center of circle 1 (for start pose) which has radius r1.
       // p_c2: Center of circle 2 (for end pose) which has radius r2
       // V1: Vector from p_c1 to p_c2
@@ -229,41 +194,82 @@ namespace Anki
       // Follow n by r1 from p_c1 to get p_t1.
       // Follow n by r2 from p_c2 to get p_t2.
       
-
       
-      PathSegment csc_path[NUM_DUBINS_PATHS][3];
-      f32 r1 = start_radius;
-      f32 r2 = end_radius;
+      f32 r1 = ABS(start_radius);
+      f32 r2 = ABS(end_radius);
       f32 p_c1_x, p_c1_y;    // Center point of circle 1
       f32 p_c2_x, p_c2_y;    // Center point of circle 2
       f32 p_t1_x, p_t1_y;    // Tangent point on circle 1
       f32 p_t2_x, p_t2_y;    // Tangent point on circle 2
       f32 V1_x, V1_y;        // Vector from p_c1 to p_t1
-      //f32 V2_x, V2_y;        // Vector from p_c2 to p_t2
       f32 n_x, n_y;          // Orthogonal vector to tangent line
       f32 v1_x, v1_y;        // Unit vector of V1
       f32 V1_mag;            // Magnitude of V1
       f32 cosTanPtAngle, sinTanPtAngle, tanPtAngle;
+      f32 segment_length;
+      u8 num_segments = 0;
+      PathSegment* ps;
+      
+      path_length = FLT_MAX;
+      
+      PRINT("DUBINS: startPt %f %f %f, endPt %f %f %f, start_radius %f, end_radius %f\n",
+            startPt_x, startPt_y, startPt_theta, endPt_x, endPt_y, endPt_theta, start_radius, end_radius);
       
       
-      // ==== RSR ====
-      p_c1_x = startPt_x + r1 * sinf(startPt_theta);
-      p_c1_y = startPt_y - r1 * cosf(startPt_theta);
       
-      // Compute p_c2
-      p_c2_x = endPt_x + r2 * sinf(endPt_theta);
-      p_c2_y = endPt_y - r2 * cosf(endPt_theta);
+      f32 sign1;
+      f32 sign2;
+      f32 minCircleDist;
+      switch(pathType) {
+        case RSR:
+          sign1 = 1.0;
+          sign2 = 1.0;
+          minCircleDist = ABS(r1 - r2);
+          break;
+        case LSL:
+          sign1 = -1.0;
+          sign2 = -1.0;
+          minCircleDist = ABS(r1 - r2);
+          break;
+        case RSL:
+          sign1 = 1.0;
+          sign2 = -1.0;
+          minCircleDist = r1 + r2;
+          break;
+        case LSR:
+          sign1 = -1.0;
+          sign2 = 1.0;
+          minCircleDist = r1 + r2;
+          break;
+        default:
+          return 0;
+      }
+      
+      
+      // Compute center of circle 1
+      p_c1_x = startPt_x + sign1 * r1 * sinf(startPt_theta);
+      p_c1_y = startPt_y - sign1 * r1 * cosf(startPt_theta);
+      
+      // Compute center of circle 2
+      p_c2_x = endPt_x + sign2 * r2 * sinf(endPt_theta);
+      p_c2_y = endPt_y - sign2 * r2 * cosf(endPt_theta);
       
       // Compute V1
       V1_x = p_c2_x - p_c1_x;
       V1_y = p_c2_y - p_c1_y;
       V1_mag = sqrtf(V1_x * V1_x + V1_y * V1_y);
 
+      // Check if circle centers are too close together
+      PRINT("V1_mag %f, minCircleDist %f\n", V1_mag, minCircleDist);
+      if (V1_mag <= minCircleDist) {
+        return 0;
+      }
+      
       v1_x = V1_x / V1_mag;
       v1_y = V1_y / V1_mag;
       
       // Compute cosTanPtAngle (aka c) and sinTanPtAngle
-      cosTanPtAngle = (r1 - r2) / V1_mag;
+      cosTanPtAngle = (sign1 * r1 - sign2 * r2) / V1_mag;
       sinTanPtAngle = sqrtf(1-cosTanPtAngle*cosTanPtAngle);
       
       // Compute n
@@ -273,64 +279,116 @@ namespace Anki
       tanPtAngle = atan2_acc(n_y, n_x);
       
       // Compute tangent points
-      p_t1_x = p_c1_x + n_x * r1;
-      p_t1_y = p_c1_y + n_y * r1;
+      p_t1_x = p_c1_x + n_x * r1 * sign1;
+      p_t1_y = p_c1_y + n_y * r1 * sign1;
       
-      p_t2_x = p_c2_x + n_x * r2;
-      p_t2_y = p_c2_y + n_y * r2;
+      p_t2_x = p_c2_x + n_x * r2 * sign2;
+      p_t2_y = p_c2_y + n_y * r2 * sign2;
       
       
       
-      PRINT("Dubins RSR: \n"
-            " p_c1 (%f, %f)\n"
-            " p_c2 (%f, %f)\n"
-            " V1 (%f %f)\n"
-            " n (%f %f)\n"
-            " p_t1 (%f, %f)\n"
-            " p_t2 (%f, %f)\n",
-            p_c1_x, p_c1_y,
-            p_c2_x, p_c2_y,
-            V1_x, V1_y,
-            n_x, n_y,
-            p_t1_x, p_t1_y,
-            p_t2_x, p_t2_y
-            );
+       PRINT("Dubins %d: \n"
+       " p_c1 (%f, %f)\n"
+       " p_c2 (%f, %f)\n"
+       " V1 (%f %f)\n"
+       " n (%f %f)\n"
+       " p_t1 (%f, %f)\n"
+       " p_t2 (%f, %f)\n",
+       pathType,
+       p_c1_x, p_c1_y,
+       p_c2_x, p_c2_y,
+       V1_x, V1_y,
+       n_x, n_y,
+       p_t1_x, p_t1_y,
+       p_t2_x, p_t2_y
+       );
+      
       
       
       // Generate path segment definitions
-      // Arc1
-      PathSegment* ps = &csc_path[RSR][0];
+      path_length = 0;
+      ps = &path[num_segments];
       ps->type = PST_ARC;
       ps->def.arc.centerPt_x = p_c1_x;
       ps->def.arc.centerPt_y = p_c1_y;
       ps->def.arc.radius = start_radius;
       ps->def.arc.startRad = atan2_acc(startPt_y - p_c1_y, startPt_x - p_c1_x);
-      ps->def.arc.sweepRad = GetArcAngle(startPt_x, startPt_y, p_t1_x, p_t1_y, p_c1_x, p_c1_y, false);
-
-      ps = &csc_path[RSR][1];
+      ps->def.arc.sweepRad = GetArcAngle(startPt_x, startPt_y, p_t1_x, p_t1_y, p_c1_x, p_c1_y, sign1 < 0);
+      segment_length = ABS(ps->def.arc.sweepRad) * start_radius;
+      
+      if(segment_length > 0) {
+        path_length += segment_length;
+        ++num_segments;
+      }
+      
+      ps = &path[num_segments];
       ps->type = PST_LINE;
       ps->def.line.startPt_x = p_t1_x;
       ps->def.line.startPt_y = p_t1_y;
       ps->def.line.endPt_x = p_t2_x;
       ps->def.line.endPt_y = p_t2_y;
+      segment_length = sqrtf((p_t2_x - p_t1_x)*(p_t2_x - p_t1_x) + (p_t2_y - p_t1_y)*(p_t2_y - p_t1_y));
+
+      if(segment_length > 0) {
+        path_length += segment_length;
+        ++num_segments;
+      }
       
-      ps = &csc_path[RSR][2];
+      ps = &path[num_segments];
       ps->type = PST_ARC;
       ps->def.arc.centerPt_x = p_c2_x;
       ps->def.arc.centerPt_y = p_c2_y;
       ps->def.arc.radius = end_radius;
       ps->def.arc.startRad = atan2_acc(p_t2_y - p_c2_y, p_t2_x - p_c2_x);
-      ps->def.arc.sweepRad = GetArcAngle(p_t2_x, p_t2_y, endPt_x, endPt_y, p_c2_x, p_c2_y, false);
+      ps->def.arc.sweepRad = GetArcAngle(p_t2_x, p_t2_y, endPt_x, endPt_y, p_c2_x, p_c2_y, sign2 < 0);
+      segment_length = ABS(ps->def.arc.sweepRad) * end_radius;
       
+      if(segment_length > 0) {
+        path_length += segment_length;
+        ++num_segments;
+      }
       
+      return num_segments;
+    }
+    
+  
+    // Generates the Dubins path between a start and end pose with a constraint
+    // on the minimum radius of the curved sections.
+    // Returns the number of segments in the path, which should be 3.
+    // Returns 0 if fails.
+    //
+    // NOTE: This is a very simple version which only works when
+    // the difference between start_theta and end_theta is < pi/2
+    // and also when the end pose is in front of the start pose.
+    // Fails automatically
+    u8 Path::GenerateDubinsPath(f32 start_x, f32 start_y, f32 start_theta,
+                            f32 end_x, f32 end_y, f32 end_theta,
+                            f32 start_radius, f32 end_radius)
+    {
+      PathSegment csc_path[NUM_DUBINS_PATHS][3];
       
-      // DEBUG
-      path_[0] = csc_path[RSR][0];
-      path_[1] = csc_path[RSR][1];
-      path_[2] = csc_path[RSR][2];
-      numPathSegments_ = 3;
+      u32 shortestNumSegments = 0;
+      f32 shortestPathLength = FLT_MAX;
+      DubinsPathType shortestPathType;
+      u32 numSegments;
+      f32 pathLength;
+      for (DubinsPathType i = LSL; i != NUM_DUBINS_PATHS; i = (DubinsPathType)(i+1)) {
+
+        numSegments = GenerateCSCCurve(start_x, start_y, start_theta, end_x, end_y, end_theta, start_radius, end_radius, i, csc_path[i], pathLength);
+        PRINT("Dubins path %d: numSegments %d, length %f m\n", i, numSegments, pathLength);
+        if (pathLength < shortestPathLength) {
+          shortestNumSegments = numSegments;
+          shortestPathLength = pathLength;
+          shortestPathType = i;
+        }
+      }
       
-      // TODO: Compute LRL and RLR?
+      PRINT("Dubins: Shortest path %d, length %f\n", shortestPathType, shortestPathLength);
+      
+      numPathSegments_ = shortestNumSegments;
+      for (u32 j = 0; j < numPathSegments_; ++j) {
+        path_[j] = csc_path[shortestPathType][j];
+      }
       
       return 0;
     }
