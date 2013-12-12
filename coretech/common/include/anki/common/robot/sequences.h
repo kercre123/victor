@@ -59,10 +59,10 @@ namespace Anki
       Array<Type> &outArray = out.get_array();
 
       AnkiConditionalErrorAndReturnValue(outArray.IsValid(),
-        RESULT_FAIL, "LinearSequence<Type>::Evaluate", "Invalid array");
+        RESULT_FAIL_INVALID_ARRAY, "LinearSequence<Type>::Evaluate", "Invalid array");
 
       AnkiConditionalErrorAndReturnValue(out.get_ySlice().get_size()==1 && out.get_xSlice().get_size()==size,
-        RESULT_FAIL, "LinearSequence<Type>::Evaluate", "Invalid array");
+        RESULT_FAIL_INVALID_ARRAY, "LinearSequence<Type>::Evaluate", "Invalid array");
 
       const Type sequenceStartValue = this->get_start();
       const Type sequenceIncrement = this->get_increment();
@@ -249,10 +249,10 @@ namespace Anki
       Array<Type> &outArray = out.get_array();
 
       AnkiConditionalErrorAndReturnValue(outArray.IsValid(),
-        RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Invalid array");
+        RESULT_FAIL_INVALID_ARRAY, "Meshgrid<Type>::Evaluate", "Invalid array");
 
       AnkiConditionalErrorAndReturnValue(out.get_ySlice().get_size()==1 && out.get_xSlice().get_size()==numElements,
-        RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Array out is not the correct size");
+        RESULT_FAIL_INVALID_SIZE, "Meshgrid<Type>::Evaluate", "Array out is not the correct size");
 
       const s32 outXStart = out.get_xSlice().get_start();
       const s32 outYStart = out.get_ySlice().get_start();
@@ -311,10 +311,10 @@ namespace Anki
       Array<Type> &outArray = out.get_array();
 
       AnkiConditionalErrorAndReturnValue(outArray.IsValid(),
-        RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Invalid array");
+        RESULT_FAIL_INVALID_ARRAY, "Meshgrid<Type>::Evaluate", "Invalid array");
 
       AnkiConditionalErrorAndReturnValue(out.get_ySlice().get_size()==yGridSize && out.get_xSlice().get_size()==xGridSize,
-        RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Array out is not the correct size");
+        RESULT_FAIL_INVALID_SIZE, "Meshgrid<Type>::Evaluate", "Array out is not the correct size");
 
       const s32 outXStart = out.get_xSlice().get_start();
       const s32 outYStart = out.get_ySlice().get_start();
@@ -358,10 +358,10 @@ namespace Anki
       Array<Type> &outArray = out.get_array();
 
       AnkiConditionalErrorAndReturnValue(outArray.IsValid(),
-        RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Invalid array");
+        RESULT_FAIL_INVALID_ARRAY, "Meshgrid<Type>::Evaluate", "Invalid array");
 
       AnkiConditionalErrorAndReturnValue(out.get_ySlice().get_size()==1 && out.get_xSlice().get_size()==numElements,
-        RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Array out is not the correct size");
+        RESULT_FAIL_INVALID_SIZE, "Meshgrid<Type>::Evaluate", "Array out is not the correct size");
 
       const s32 outXStart = out.get_xSlice().get_start();
       const s32 outYStart = out.get_ySlice().get_start();
@@ -422,10 +422,10 @@ namespace Anki
       Array<Type> &outArray = out.get_array();
 
       AnkiConditionalErrorAndReturnValue(outArray.IsValid(),
-        RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Invalid array");
+        RESULT_FAIL_INVALID_ARRAY, "Meshgrid<Type>::Evaluate", "Invalid array");
 
       AnkiConditionalErrorAndReturnValue(out.get_ySlice().get_size()==yGridSize && out.get_xSlice().get_size()==xGridSize,
-        RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Array out is not the correct size");
+        RESULT_FAIL_INVALID_SIZE, "Meshgrid<Type>::Evaluate", "Array out is not the correct size");
 
       const s32 outXStart = out.get_xSlice().get_start();
       const s32 outYStart = out.get_ySlice().get_start();

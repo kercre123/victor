@@ -13,6 +13,8 @@ namespace Anki
 {
   namespace Embedded
   {
+    static Result lastResult;
+
     ConnectedComponentSegment::ConnectedComponentSegment()
       : xStart(-1), xEnd(-1), y(-1), id(0)
     {
@@ -170,7 +172,7 @@ namespace Anki
 
                 const Result result = components.PushBack(newComponent);
 
-                AnkiConditionalErrorAndReturnValue(result == RESULT_OK, RESULT_FAIL, "extract2dComponents", "Extracted maximum number of 2d components");
+                AnkiConditionalErrorAndReturnValue(result == RESULT_OK, result, "extract2dComponents", "Extracted maximum number of 2d components");
 
                 pNewPreviousComponents1d[iCurrent] = newComponent;
               } else { // if(!foundMatch)
@@ -202,7 +204,7 @@ namespace Anki
 
           const Result result = components.PushBack(newComponent);
 
-          AnkiConditionalWarnAndReturnValue(result == RESULT_OK, RESULT_FAIL, "extract2dComponents", "Extracted maximum number of 2d components");
+          AnkiConditionalWarnAndReturnValue(result == RESULT_OK, result, "extract2dComponents", "Extracted maximum number of 2d components");
         } // if(!foundMatch)
       } // for(s32 iCurrent=0; iCurrent<numCurrentComponents1d; iCurrent++)
 
@@ -273,18 +275,18 @@ namespace Anki
       const s32 imageHeight = binaryImage.get_size(0);
       const s32 imageWidth = binaryImage.get_size(1);
 
-      if(Extract2dComponents_PerRow_Initialize() != RESULT_OK)
-        return RESULT_FAIL;
+      if((lastResult = Extract2dComponents_PerRow_Initialize()) != RESULT_OK)
+        return lastResult;
 
       for(s32 y=0; y<imageHeight; y++) {
         const u8 * restrict pBinaryImage = binaryImage.Pointer(y,0);
 
-        if(Extract2dComponents_PerRow_NextRow(pBinaryImage, imageWidth, y, minComponentWidth, maxSkipDistance) != RESULT_OK)
-          return RESULT_FAIL;
+        if((lastResult = Extract2dComponents_PerRow_NextRow(pBinaryImage, imageWidth, y, minComponentWidth, maxSkipDistance)) != RESULT_OK)
+          return lastResult;
       } // for(s32 y=0; y<imageHeight; y++)
 
-      if(Extract2dComponents_PerRow_Finalize() != RESULT_OK)
-        return RESULT_FAIL;
+      if((lastResult = Extract2dComponents_PerRow_Finalize()) != RESULT_OK)
+        return lastResult;
 
       return RESULT_OK;
     }
@@ -356,7 +358,7 @@ namespace Anki
 
       // Could fail if we don't have enough scratch space
       if(!componentsTmp.IsValid())
-        return RESULT_FAIL;
+        return RESULT_FAIL_INVALID_ARRAY;
 
       // Convert the absolute count to a cumulative count (ignoring id == zero)
       u16 totalCount = 0;
@@ -410,8 +412,8 @@ namespace Anki
     // Note: this is probably inefficient, compared with interlacing the loops in a kernel
     Result ConnectedComponents::ComputeComponentSizes(FixedLengthList<s32> &componentSizes)
     {
-      AnkiConditionalErrorAndReturnValue(componentSizes.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "componentSizes is not valid");
-      AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "components is not valid");
+      AnkiConditionalErrorAndReturnValue(componentSizes.IsValid(), RESULT_FAIL_INVALID_ARRAY, "ComputeComponentSizes", "componentSizes is not valid");
+      AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL_INVALID_ARRAY, "ComputeComponentSizes", "components is not valid");
 
       componentSizes.SetZero();
       componentSizes.set_size(maximumId+1);
@@ -442,8 +444,8 @@ namespace Anki
     // 12n + 12 bytes of scratch.
     Result ConnectedComponents::ComputeComponentCentroids(FixedLengthList<Point<s16> > &componentCentroids, MemoryStack scratch)
     {
-      AnkiConditionalErrorAndReturnValue(componentCentroids.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "componentCentroids is not valid");
-      AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "components is not valid");
+      AnkiConditionalErrorAndReturnValue(componentCentroids.IsValid(), RESULT_FAIL_INVALID_ARRAY, "ComputeComponentSizes", "componentCentroids is not valid");
+      AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL_INVALID_ARRAY, "ComputeComponentSizes", "components is not valid");
 
       componentCentroids.SetZero();
       componentCentroids.set_size(maximumId+1);
@@ -454,8 +456,8 @@ namespace Anki
 
       FixedLengthList<s32> componentSizes(maximumId+1, scratch);
 
-      if(ComputeComponentSizes(componentSizes) != RESULT_OK)
-        return RESULT_FAIL;
+      if((lastResult = ComputeComponentSizes(componentSizes)) != RESULT_OK)
+        return lastResult;
 
       const ConnectedComponentSegment * restrict pConstComponents = components.Pointer(0);
 
@@ -497,8 +499,8 @@ namespace Anki
     // Note: this is probably inefficient, compared with interlacing the loops in a kernel
     Result ConnectedComponents::ComputeComponentBoundingBoxes(FixedLengthList<Rectangle<s16> > &componentBoundingBoxes)
     {
-      AnkiConditionalErrorAndReturnValue(componentBoundingBoxes.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "componentBoundingBoxes is not valid");
-      AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "components is not valid");
+      AnkiConditionalErrorAndReturnValue(componentBoundingBoxes.IsValid(), RESULT_FAIL_INVALID_ARRAY, "ComputeComponentSizes", "componentBoundingBoxes is not valid");
+      AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL_INVALID_ARRAY, "ComputeComponentSizes", "components is not valid");
 
       componentBoundingBoxes.set_size(maximumId+1);
 
@@ -535,8 +537,8 @@ namespace Anki
     // Note: this is probably inefficient, compared with interlacing the loops in a kernel
     Result ConnectedComponents::ComputeNumComponentSegmentsForEachId(FixedLengthList<s32> &numComponentSegments)
     {
-      AnkiConditionalErrorAndReturnValue(numComponentSegments.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "numComponentSegments is not valid");
-      AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL, "ComputeComponentSizes", "components is not valid");
+      AnkiConditionalErrorAndReturnValue(numComponentSegments.IsValid(), RESULT_FAIL_INVALID_ARRAY, "ComputeComponentSizes", "numComponentSegments is not valid");
+      AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL_INVALID_ARRAY, "ComputeComponentSizes", "components is not valid");
 
       numComponentSegments.SetZero();
       numComponentSegments.set_size(maximumId+1);
@@ -573,8 +575,8 @@ namespace Anki
       u8 *usedIds = reinterpret_cast<u8*>(scratch.Allocate(maximumId+1));
       u16 *idLookupTable = reinterpret_cast<u16*>(scratch.Allocate( sizeof(u16)*(maximumId+1) ));
 
-      AnkiConditionalErrorAndReturnValue(usedIds, RESULT_FAIL, "CompressConnectedComponentSegmentIds", "Couldn't allocate usedIds");
-      AnkiConditionalErrorAndReturnValue(idLookupTable, RESULT_FAIL, "CompressConnectedComponentSegmentIds", "Couldn't allocate idLookupTable");
+      AnkiConditionalErrorAndReturnValue(usedIds, RESULT_FAIL_OUT_OF_MEMORY, "CompressConnectedComponentSegmentIds", "Couldn't allocate usedIds");
+      AnkiConditionalErrorAndReturnValue(idLookupTable, RESULT_FAIL_OUT_OF_MEMORY, "CompressConnectedComponentSegmentIds", "Couldn't allocate idLookupTable");
 
       memset(usedIds, 0, sizeof(usedIds[0])*(maximumId+1));
 
@@ -624,7 +626,7 @@ namespace Anki
 
       const s32 numComponents = components.get_size();
 
-      AnkiConditionalErrorAndReturnValue(componentSizes, RESULT_FAIL, "InvalidateSmallOrLargeComponents", "Couldn't allocate componentSizes");
+      AnkiConditionalErrorAndReturnValue(componentSizes, RESULT_FAIL_OUT_OF_MEMORY, "InvalidateSmallOrLargeComponents", "Couldn't allocate componentSizes");
 
       memset(componentSizes, 0, sizeof(componentSizes[0])*(maximumId+1));
 
@@ -685,7 +687,7 @@ namespace Anki
       s32 *componentSizes = reinterpret_cast<s32*>(scratch.Allocate( sizeof(s32)*(maximumId+1) ));
 
       AnkiConditionalErrorAndReturnValue(minX && maxX && minY && maxY && componentSizes,
-        RESULT_FAIL, "InvalidateSolidOrSparseComponents", "Couldn't allocate minX, maxX, minY, maxY, or componentSizes");
+        RESULT_FAIL_OUT_OF_MEMORY, "InvalidateSolidOrSparseComponents", "Couldn't allocate minX, maxX, minY, maxY, or componentSizes");
 
       memset(componentSizes, 0, sizeof(componentSizes[0])*(maximumId+1));
 
@@ -767,8 +769,8 @@ namespace Anki
 
       FixedLengthList<Rectangle<s16> > componentBoundingBoxes(maximumId+1, scratch);
 
-      if(ComputeComponentBoundingBoxes(componentBoundingBoxes) != RESULT_OK)
-        return RESULT_FAIL;
+      if((lastResult = ComputeComponentBoundingBoxes(componentBoundingBoxes)) != RESULT_OK)
+        return lastResult;
 
       // Reduce the size of the bounding box, based on percentHorizontal and percentVertical.
       // This reduced-size box is the area that must be clear

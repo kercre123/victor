@@ -31,10 +31,10 @@ namespace Anki
       const s32 imageWidth = image.get_size(1);
 
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
-        RESULT_FAIL, "BinomialFilter", "image is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "BinomialFilter", "image is not valid");
 
       AnkiConditionalErrorAndReturnValue(imageFiltered.IsValid(),
-        RESULT_FAIL, "BinomialFilter", "imageFiltered is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "BinomialFilter", "imageFiltered is not valid");
 
       AnkiConditionalWarnAndReturnValue(16 == (kernel[0] + kernel[1] + kernel[2] + kernel[3] + kernel[4]),
         RESULT_FAIL, "BinomialFilter", "Kernel count is wrong");
@@ -43,15 +43,15 @@ namespace Anki
         RESULT_FAIL, "BinomialFilter", "Kernel count is wrong");
 
       AnkiConditionalErrorAndReturnValue(imageHeight == imageFiltered.get_size(0) && imageWidth == imageFiltered.get_size(1),
-        RESULT_FAIL, "BinomialFilter", "size(image) != size(imageFiltered) (%dx%d != %dx%d)", imageHeight, imageWidth, imageHeight, imageWidth);
+        RESULT_FAIL_INVALID_SIZE, "BinomialFilter", "size(image) != size(imageFiltered) (%dx%d != %dx%d)", imageHeight, imageWidth, imageHeight, imageWidth);
 
       AnkiConditionalErrorAndReturnValue(image.get_rawDataPointer() != imageFiltered.get_rawDataPointer(),
-        RESULT_FAIL, "BinomialFilter", "image and imageFiltered must be different");
+        RESULT_FAIL_ALIASED_MEMORY, "BinomialFilter", "image and imageFiltered must be different");
 
       const s32 requiredScratch = imageHeight * RoundUp<s32>(imageWidth*sizeof(u32), MEMORY_ALIGNMENT);
 
       AnkiConditionalErrorAndReturnValue(scratch.ComputeLargestPossibleAllocation() >= requiredScratch,
-        RESULT_FAIL, "BinomialFilter", "Insufficient scratch memory");
+        RESULT_FAIL_OUT_OF_MEMORY, "BinomialFilter", "Insufficient scratch memory");
 
       //imageFilteredTmp = zeros(size(image), 'uint32');
       Array<u32> imageFilteredTmp(imageHeight, imageWidth, scratch);

@@ -176,13 +176,13 @@ namespace Anki
         const s32 in2Width = in2.get_size(1);
 
         AnkiConditionalErrorAndReturnValue(in1Width == in2Height,
-          RESULT_FAIL, "Multiply", "Input matrices are incompatible sizes");
+          RESULT_FAIL_INVALID_SIZE, "Multiply", "Input matrices are incompatible sizes");
 
         AnkiConditionalErrorAndReturnValue(out.get_size(0) == in1Height,
-          RESULT_FAIL, "Multiply", "Input and Output matrices are incompatible sizes");
+          RESULT_FAIL_INVALID_SIZE, "Multiply", "Input and Output matrices are incompatible sizes");
 
         AnkiConditionalErrorAndReturnValue(out.get_size(1) == in2Width,
-          RESULT_FAIL, "Multiply", "Input and Output matrices are incompatible sizes");
+          RESULT_FAIL_INVALID_SIZE, "Multiply", "Input and Output matrices are incompatible sizes");
 
         for(s32 y1=0; y1<in1Height; y1++) {
           const InType * restrict pMat1 = in1.Pointer(y1, 0);
@@ -209,13 +209,13 @@ namespace Anki
         const s32 in2TransposedWidth = in2Transposed.get_size(1);
 
         AnkiConditionalErrorAndReturnValue(in1Width == in2TransposedWidth,
-          RESULT_FAIL, "Multiply", "Input matrices are incompatible sizes");
+          RESULT_FAIL_INVALID_SIZE, "Multiply", "Input matrices are incompatible sizes");
 
         AnkiConditionalErrorAndReturnValue(out.get_size(0) == in1Height,
-          RESULT_FAIL, "Multiply", "Input and Output matrices are incompatible sizes");
+          RESULT_FAIL_INVALID_SIZE, "Multiply", "Input and Output matrices are incompatible sizes");
 
         AnkiConditionalErrorAndReturnValue(out.get_size(1) == in2TransposedHeight,
-          RESULT_FAIL, "Multiply", "Input and Output matrices are incompatible sizes");
+          RESULT_FAIL_INVALID_SIZE, "Multiply", "Input and Output matrices are incompatible sizes");
 
         for(s32 y1=0; y1<in1Height; y1++)
         {
@@ -246,16 +246,16 @@ namespace Anki
         const s32 numSamples = Bt_Xt.get_size(0);
 
         AnkiConditionalErrorAndReturnValue(A_L.IsValid(),
-          RESULT_FAIL, "CholeskyDecomposition", "A_L is not valid");
+          RESULT_FAIL_INVALID_ARRAY, "CholeskyDecomposition", "A_L is not valid");
 
         AnkiConditionalErrorAndReturnValue(Bt_Xt.IsValid(),
-          RESULT_FAIL, "CholeskyDecomposition", "Bt_Xt is not valid");
+          RESULT_FAIL_INVALID_ARRAY, "CholeskyDecomposition", "Bt_Xt is not valid");
 
         AnkiConditionalErrorAndReturnValue(matrixHeight == A_L.get_size(1),
-          RESULT_FAIL, "CholeskyDecomposition", "A_L is not square");
+          RESULT_FAIL_INVALID_SIZE, "CholeskyDecomposition", "A_L is not square");
 
         AnkiConditionalErrorAndReturnValue(Bt_Xt.get_size(1) == matrixHeight,
-          RESULT_FAIL, "CholeskyDecomposition", "Xt and Bt are the wrong sizes");
+          RESULT_FAIL_INVALID_SIZE, "CholeskyDecomposition", "Xt and Bt are the wrong sizes");
 
         // TODO: check if symmetric and positive-definite
 
@@ -359,7 +359,7 @@ namespace Anki
         const s32 outWidth = out.get_size(1);
 
         AnkiConditionalErrorAndReturnValue((inHeight*inWidth) == (outHeight*outWidth),
-          RESULT_FAIL, "Reshape", "Input and Output matrices are incompatible sizes");
+          RESULT_FAIL_INVALID_SIZE, "Reshape", "Input and Output matrices are incompatible sizes");
 
         s32 inIndexY = 0;
         s32 inIndexX = 0;
@@ -415,7 +415,7 @@ namespace Anki
       template<typename TypeIn, typename TypeOut> Result Vectorize(const bool isColumnMajor, const Array<TypeIn> &in, Array<TypeOut> &out)
       {
         AnkiConditionalErrorAndReturnValue(out.get_size(0) == 1,
-          RESULT_FAIL, "Vectorize", "Output is not 1xN");
+          RESULT_FAIL_INVALID_SIZE, "Vectorize", "Output is not 1xN");
 
         return Reshape<TypeIn, TypeOut>(isColumnMajor, in, out);
       }
@@ -438,10 +438,10 @@ namespace Anki
         const s32 arrWidth = arr.get_size(1);
 
         AnkiConditionalErrorAndReturnValue(arr.IsValid(),
-          RESULT_FAIL, "Sort", "Input array is invalid");
+          RESULT_FAIL_INVALID_ARRAY, "Sort", "Input array is invalid");
 
         AnkiConditionalErrorAndReturnValue(sortWhichDimension==0 || sortWhichDimension==1,
-          RESULT_FAIL, "Sort", "sortWhichDimension must be zero or one");
+          RESULT_FAIL_INVALID_PARAMETERS, "Sort", "sortWhichDimension must be zero or one");
 
         if(sortWhichDimension == 0) {
           // TODO: This columnwise sorting could be sped up, with smarter array indexing.
@@ -523,16 +523,16 @@ namespace Anki
         const s32 arrWidth = arr.get_size(1);
 
         AnkiConditionalErrorAndReturnValue(arr.IsValid(),
-          RESULT_FAIL, "Sort", "Input array is invalid");
+          RESULT_FAIL_INVALID_ARRAY, "Sort", "Input array is invalid");
 
         AnkiConditionalErrorAndReturnValue(indexes.IsValid(),
-          RESULT_FAIL, "Sort", "indexes array is invalid");
+          RESULT_FAIL_INVALID_ARRAY, "Sort", "indexes array is invalid");
 
         AnkiConditionalErrorAndReturnValue(sortWhichDimension==0 || sortWhichDimension==1,
-          RESULT_FAIL, "Sort", "sortWhichDimension must be zero or one");
+          RESULT_FAIL_INVALID_PARAMETERS, "Sort", "sortWhichDimension must be zero or one");
 
         AnkiConditionalErrorAndReturnValue(indexes.get_size(0) == arrHeight && indexes.get_size(1) == arrWidth,
-          RESULT_FAIL, "Sort", "indexes must be the same size as arr");
+          RESULT_FAIL_INVALID_SIZE, "Sort", "indexes must be the same size as arr");
 
         if(sortWhichDimension == 0) {
           // TODO: This columnwise sorting could be sped up, with smarter array indexing.
@@ -629,7 +629,7 @@ namespace Anki
       template<typename Type> Result MakeSymmetric(Type &arr, bool lowerToUpper)
       {
         AnkiConditionalErrorAndReturnValue(arr.get_size(0) == arr.get_size(1),
-          RESULT_FAIL, "MakeSymmetric", "Input array must be square");
+          RESULT_FAIL_INVALID_SIZE, "MakeSymmetric", "Input array must be square");
 
         const s32 arrHeight = arr.get_size(0);
         for(s32 y = 0; y < arrHeight; y++)
@@ -654,13 +654,13 @@ namespace Anki
           Array<OutType> &out1Array = out.get_array();
 
           AnkiConditionalErrorAndReturnValue(in1Array.IsValid(),
-            RESULT_FAIL, "Matrix::Elementwise::ApplyOperation", "Invalid array in1");
+            RESULT_FAIL_INVALID_ARRAY, "Matrix::Elementwise::ApplyOperation", "Invalid array in1");
 
           AnkiConditionalErrorAndReturnValue(in2Array.IsValid(),
-            RESULT_FAIL, "Matrix::Elementwise::ApplyOperation", "Invalid array in2");
+            RESULT_FAIL_INVALID_ARRAY, "Matrix::Elementwise::ApplyOperation", "Invalid array in2");
 
           AnkiConditionalErrorAndReturnValue(out1Array.IsValid(),
-            RESULT_FAIL, "Matrix::Elementwise::ApplyOperation", "Invalid array out");
+            RESULT_FAIL_INVALID_ARRAY, "Matrix::Elementwise::ApplyOperation", "Invalid array out");
 
           ArraySliceLimits_in2_out1<s32> limits(
             in1.get_ySlice(), in1.get_xSlice(), in1.get_isTransposed(),
@@ -668,7 +668,7 @@ namespace Anki
             out.get_ySlice(), out.get_xSlice());
 
           AnkiConditionalErrorAndReturnValue(limits.isValid,
-            RESULT_FAIL, "Matrix::Elementwise::ApplyOperation", "Limits is not valid");
+            RESULT_FAIL_INVALID_ARRAY, "Matrix::Elementwise::ApplyOperation", "Limits is not valid");
 
           if(limits.isSimpleIteration) {
             // If the input isn't transposed, we will do the maximally efficient loop iteration
@@ -724,17 +724,17 @@ namespace Anki
           Array<OutType> &out1Array = out.get_array();
 
           AnkiConditionalErrorAndReturnValue(in1Array.IsValid(),
-            RESULT_FAIL, "Matrix::Elementwise::ApplyOperation", "Invalid array in1");
+            RESULT_FAIL_INVALID_ARRAY, "Matrix::Elementwise::ApplyOperation", "Invalid array in1");
 
           AnkiConditionalErrorAndReturnValue(out1Array.IsValid(),
-            RESULT_FAIL, "Matrix::Elementwise::ApplyOperation", "Invalid array out");
+            RESULT_FAIL_INVALID_ARRAY, "Matrix::Elementwise::ApplyOperation", "Invalid array out");
 
           ArraySliceLimits_in1_out1<s32> limits(
             in1.get_ySlice(), in1.get_xSlice(), in1.get_isTransposed(),
             out.get_ySlice(), out.get_xSlice());
 
           AnkiConditionalErrorAndReturnValue(limits.isValid,
-            RESULT_FAIL, "Matrix::Elementwise::ApplyOperation", "Limits is not valid");
+            RESULT_FAIL_INVALID_ARRAY, "Matrix::Elementwise::ApplyOperation", "Limits is not valid");
 
           if(limits.isSimpleIteration) {
             // If the input isn't transposed, we will do the maximally efficient loop iteration
@@ -785,17 +785,17 @@ namespace Anki
           Array<OutType> &out1Array = out.get_array();
 
           AnkiConditionalErrorAndReturnValue(in2Array.IsValid(),
-            RESULT_FAIL, "Matrix::Elementwise::ApplyOperation", "Invalid array in2");
+            RESULT_FAIL_INVALID_ARRAY, "Matrix::Elementwise::ApplyOperation", "Invalid array in2");
 
           AnkiConditionalErrorAndReturnValue(out1Array.IsValid(),
-            RESULT_FAIL, "Matrix::Elementwise::ApplyOperation", "Invalid array out");
+            RESULT_FAIL_INVALID_ARRAY, "Matrix::Elementwise::ApplyOperation", "Invalid array out");
 
           ArraySliceLimits_in1_out1<s32> limits(
             in2.get_ySlice(), in2.get_xSlice(), in2.get_isTransposed(),
             out.get_ySlice(), out.get_xSlice());
 
           AnkiConditionalErrorAndReturnValue(limits.isValid,
-            RESULT_FAIL, "Matrix::Elementwise::ApplyOperation", "Limits is not valid");
+            RESULT_FAIL_INVALID_ARRAY, "Matrix::Elementwise::ApplyOperation", "Limits is not valid");
 
           if(limits.isSimpleIteration) {
             // If the input isn't transposed, we will do the maximally efficient loop iteration

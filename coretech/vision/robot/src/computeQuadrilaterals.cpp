@@ -13,6 +13,8 @@ namespace Anki
 {
   namespace Embedded
   {
+    static Result lastResult;
+
     // This function checks if the input quad is valid
     // If the input is valid, the output quad has the corner-opposite order of the points, and in the non-rotated and corner-opposite format, and adds +1, so it matches the Matlab
     // Assumes that the quad pointer are in either clockwise or counter-clockwise order
@@ -111,7 +113,7 @@ namespace Anki
       const s32 MAX_BOUNDARY_LENTH = 10000; // Probably significantly longer than would ever be needed
 
       AnkiConditionalErrorAndReturnValue(components.IsValid(),
-        RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "components is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "ComputeQuadrilateralsFromConnectedComponents", "components is not valid");
 
       AnkiConditionalErrorAndReturnValue(components.get_isSortedInId(),
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "components must be sorted in id");
@@ -128,14 +130,14 @@ namespace Anki
 
         // For each component (the list must be sorted):
         // 1. Trace the exterior boundary
-        if(TraceNextExteriorBoundary(components, startComponentIndex, extractedBoundary, endComponentIndex, scratch) != RESULT_OK)
-          return RESULT_FAIL;
+        if((lastResult = TraceNextExteriorBoundary(components, startComponentIndex, extractedBoundary, endComponentIndex, scratch)) != RESULT_OK)
+          return lastResult;
 
         startComponentIndex = endComponentIndex + 1;
 
         // 2. Compute the Laplacian peaks
-        if(ExtractLaplacianPeaks(extractedBoundary, peaks, scratch) != RESULT_OK)
-          return RESULT_FAIL;
+        if((lastResult = ExtractLaplacianPeaks(extractedBoundary, peaks, scratch)) != RESULT_OK)
+          return lastResult;
 
         if(peaks.get_size() != 4)
           continue;

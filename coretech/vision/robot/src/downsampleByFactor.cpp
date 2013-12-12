@@ -19,19 +19,19 @@ namespace Anki
       const s32 imageWidth = image.get_size(1);
 
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
-        RESULT_FAIL, "DownsampleByFactor", "image is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "DownsampleByFactor", "image is not valid");
 
       AnkiConditionalErrorAndReturnValue(imageDownsampled.IsValid(),
-        RESULT_FAIL, "DownsampleByFactor", "imageDownsampled is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "DownsampleByFactor", "imageDownsampled is not valid");
 
       AnkiConditionalErrorAndReturnValue(downsampleFactor == 2,
-        RESULT_FAIL, "DownsampleByFactor", "Currently, only downsampleFactor==2 is supported");
+        RESULT_FAIL_INVALID_PARAMETERS, "DownsampleByFactor", "Currently, only downsampleFactor==2 is supported");
 
       AnkiConditionalErrorAndReturnValue(IsPowerOfTwo(downsampleFactor),
-        RESULT_FAIL, "DownsampleByFactor", "downsampleFactor must be a power of 2");
+        RESULT_FAIL_INVALID_PARAMETERS, "DownsampleByFactor", "downsampleFactor must be a power of 2");
 
       AnkiConditionalErrorAndReturnValue(imageDownsampled.get_size(0) == (imageHeight / downsampleFactor) && imageDownsampled.get_size(1) == (imageWidth / downsampleFactor),
-        RESULT_FAIL, "DownsampleByFactor", "size(imageDownsampled) is not equal to size(image) >> downsampleFactor");
+        RESULT_FAIL_INVALID_SIZE, "DownsampleByFactor", "size(imageDownsampled) is not equal to size(image) >> downsampleFactor");
 
       const s32 maxY = downsampleFactor * imageDownsampled.get_size(0);
       const s32 maxX = downsampleFactor * imageDownsampled.get_size(1);

@@ -265,28 +265,28 @@ namespace Anki
       const s32 n = a.get_size(1); // n
 
       AnkiConditionalErrorAndReturnValue(a.IsValid(),
-        RESULT_FAIL, "svd_f32", "a is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svd_f32", "a is not valid");
 
       AnkiConditionalErrorAndReturnValue(w.IsValid(),
-        RESULT_FAIL, "svd_f32", "w is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svd_f32", "w is not valid");
 
       AnkiConditionalErrorAndReturnValue(uT.IsValid(),
-        RESULT_FAIL, "svd_f32", "uT is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svd_f32", "uT is not valid");
 
       AnkiConditionalErrorAndReturnValue(vT.IsValid(),
-        RESULT_FAIL, "svd_f32", "vT is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svd_f32", "vT is not valid");
 
       AnkiConditionalErrorAndReturnValue(scratch,
-        RESULT_FAIL, "svd_f32", "scratch is null");
+        RESULT_FAIL_UNINITIALIZED_MEMORY, "svd_f32", "scratch is null");
 
       AnkiConditionalErrorAndReturnValue(w.get_size(0) == 1 && w.get_size(1) == n,
-        RESULT_FAIL, "svd_f32", "w is not mXn");
+        RESULT_FAIL_INVALID_SIZE, "svd_f32", "w is not mXn");
 
       AnkiConditionalErrorAndReturnValue(uT.get_size(0) == m && uT.get_size(1) == m,
-        RESULT_FAIL, "svd_f32", "uT is not mXm");
+        RESULT_FAIL_INVALID_SIZE, "svd_f32", "uT is not mXm");
 
       AnkiConditionalErrorAndReturnValue(vT.get_size(0) == n && vT.get_size(1) == n,
-        RESULT_FAIL, "svd_f32", "vT is not nXn");
+        RESULT_FAIL_INVALID_SIZE, "svd_f32", "vT is not nXn");
 
       icvLightSVD_32f(
         a.Pointer(0,0),
@@ -302,16 +302,16 @@ namespace Anki
         reinterpret_cast<f32*>(scratch));
 
       AnkiConditionalErrorAndReturnValue(a.IsValid(),
-        RESULT_FAIL, "svd_f32", "After call: a is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svd_f32", "After call: a is not valid");
 
       AnkiConditionalErrorAndReturnValue(w.IsValid(),
-        RESULT_FAIL, "svd_f32", "After call: w is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svd_f32", "After call: w is not valid");
 
       AnkiConditionalErrorAndReturnValue(uT.IsValid(),
-        RESULT_FAIL, "svd_f32", "After call: uT is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svd_f32", "After call: uT is not valid");
 
       AnkiConditionalErrorAndReturnValue(vT.IsValid(),
-        RESULT_FAIL, "svd_f32", "After call: vT is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svd_f32", "After call: vT is not valid");
 
       return RESULT_OK;
     }
@@ -329,28 +329,28 @@ namespace Anki
       const s32 n = a.get_size(1); // n
 
       AnkiConditionalErrorAndReturnValue(a.IsValid(),
-        RESULT_FAIL, "svd_f64", "a is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svd_f64", "a is not valid");
 
       AnkiConditionalErrorAndReturnValue(w.IsValid(),
-        RESULT_FAIL, "svd_f64", "w is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svd_f64", "w is not valid");
 
       AnkiConditionalErrorAndReturnValue(uT.IsValid(),
-        RESULT_FAIL, "svd_f64", "uT is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svd_f64", "uT is not valid");
 
       AnkiConditionalErrorAndReturnValue(vT.IsValid(),
-        RESULT_FAIL, "svd_f64", "vT is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svd_f64", "vT is not valid");
 
       AnkiConditionalErrorAndReturnValue(scratch,
-        RESULT_FAIL, "svd_f64", "scratch is null");
+        RESULT_FAIL_UNINITIALIZED_MEMORY, "svd_f64", "scratch is null");
 
       AnkiConditionalErrorAndReturnValue(w.get_size(0) == 1 && w.get_size(1) == n,
-        RESULT_FAIL, "svd_f64", "w is not mXn");
+        RESULT_FAIL_INVALID_SIZE, "svd_f64", "w is not mXn");
 
       AnkiConditionalErrorAndReturnValue(uT.get_size(0) == m && uT.get_size(1) == m,
-        RESULT_FAIL, "svd_f64", "uT is not mXm");
+        RESULT_FAIL_INVALID_SIZE, "svd_f64", "uT is not mXm");
 
       AnkiConditionalErrorAndReturnValue(vT.get_size(0) == n && vT.get_size(1) == n,
-        RESULT_FAIL, "svd_f64", "vT is not nXn");
+        RESULT_FAIL_INVALID_SIZE, "svd_f64", "vT is not nXn");
 
       icvLightSVD_64f(
         a.Pointer(0,0),
@@ -366,16 +366,16 @@ namespace Anki
         reinterpret_cast<f64*>(scratch));
 
       AnkiConditionalErrorAndReturnValue(a.IsValid(),
-        RESULT_FAIL, "svd_f64", "After call: a is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svd_f64", "After call: a is not valid");
 
       AnkiConditionalErrorAndReturnValue(w.IsValid(),
-        RESULT_FAIL, "svd_f64", "After call: w is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svd_f64", "After call: w is not valid");
 
       AnkiConditionalErrorAndReturnValue(uT.IsValid(),
-        RESULT_FAIL, "svd_f64", "After call: uT is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svd_f64", "After call: uT is not valid");
 
       AnkiConditionalErrorAndReturnValue(vT.IsValid(),
-        RESULT_FAIL, "svd_f64", "After call: vT is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svd_f64", "After call: vT is not valid");
 
       return RESULT_OK;
     }
@@ -1425,37 +1425,37 @@ namespace Anki
       const s32 n = Vt.get_size(0);
 
       AnkiConditionalErrorAndReturnValue(w.IsValid(),
-        RESULT_FAIL, "svdBackSubstitute_f32", "w is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svdBackSubstitute_f32", "w is not valid");
 
       AnkiConditionalErrorAndReturnValue(Ut.IsValid(),
-        RESULT_FAIL, "svdBackSubstitute_f32", "Ut is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svdBackSubstitute_f32", "Ut is not valid");
 
       AnkiConditionalErrorAndReturnValue(Vt.IsValid(),
-        RESULT_FAIL, "svdBackSubstitute_f32", "Vt is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svdBackSubstitute_f32", "Vt is not valid");
 
       AnkiConditionalErrorAndReturnValue(b.IsValid(),
-        RESULT_FAIL, "svdBackSubstitute_f32", "b is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svdBackSubstitute_f32", "b is not valid");
 
       AnkiConditionalErrorAndReturnValue(x.IsValid(),
-        RESULT_FAIL, "svdBackSubstitute_f32", "x is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svdBackSubstitute_f32", "x is not valid");
 
       AnkiConditionalErrorAndReturnValue(scratch,
-        RESULT_FAIL, "svdBackSubstitute_f32", "scratch is null");
+        RESULT_FAIL_UNINITIALIZED_MEMORY, "svdBackSubstitute_f32", "scratch is null");
 
       AnkiConditionalErrorAndReturnValue(w.get_size(0) == 1 && w.get_size(1) == m,
-        RESULT_FAIL, "svdBackSubstitute_f32", "w is not 1Xm");
+        RESULT_FAIL_INVALID_SIZE, "svdBackSubstitute_f32", "w is not 1Xm");
 
       AnkiConditionalErrorAndReturnValue(Ut.get_size(0) == m && Ut.get_size(1) == m,
-        RESULT_FAIL, "svdBackSubstitute_f32", "Ut is not mXm");
+        RESULT_FAIL_INVALID_SIZE, "svdBackSubstitute_f32", "Ut is not mXm");
 
       AnkiConditionalErrorAndReturnValue(Vt.get_size(0) == n && Vt.get_size(1) == n,
-        RESULT_FAIL, "svdBackSubstitute_f32", "Vt is not nXn");
+        RESULT_FAIL_INVALID_SIZE, "svdBackSubstitute_f32", "Vt is not nXn");
 
       AnkiConditionalErrorAndReturnValue(b.get_size(0) == 1 && b.get_size(1) == m,
-        RESULT_FAIL, "svdBackSubstitute_f32", "b is not 1Xm");
+        RESULT_FAIL_INVALID_SIZE, "svdBackSubstitute_f32", "b is not 1Xm");
 
       AnkiConditionalErrorAndReturnValue(x.get_size(0) == 1 && x.get_size(1) == n,
-        RESULT_FAIL, "svdBackSubstitute_f32", "x is not 1Xn");
+        RESULT_FAIL_INVALID_SIZE, "svdBackSubstitute_f32", "x is not 1Xn");
 
       icvSVBkSb_32f(
         m,
@@ -1489,37 +1489,37 @@ namespace Anki
       const s32 n = Vt.get_size(0);
 
       AnkiConditionalErrorAndReturnValue(w.IsValid(),
-        RESULT_FAIL, "svdBackSubstitute_f64", "w is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svdBackSubstitute_f64", "w is not valid");
 
       AnkiConditionalErrorAndReturnValue(Ut.IsValid(),
-        RESULT_FAIL, "svdBackSubstitute_f64", "Ut is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svdBackSubstitute_f64", "Ut is not valid");
 
       AnkiConditionalErrorAndReturnValue(Vt.IsValid(),
-        RESULT_FAIL, "svdBackSubstitute_f64", "Vt is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svdBackSubstitute_f64", "Vt is not valid");
 
       AnkiConditionalErrorAndReturnValue(b.IsValid(),
-        RESULT_FAIL, "svdBackSubstitute_f64", "b is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svdBackSubstitute_f64", "b is not valid");
 
       AnkiConditionalErrorAndReturnValue(x.IsValid(),
-        RESULT_FAIL, "svdBackSubstitute_f64", "x is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "svdBackSubstitute_f64", "x is not valid");
 
       AnkiConditionalErrorAndReturnValue(scratch,
-        RESULT_FAIL, "svdBackSubstitute_f64", "scratch is null");
+        RESULT_FAIL_UNINITIALIZED_MEMORY, "svdBackSubstitute_f64", "scratch is null");
 
       AnkiConditionalErrorAndReturnValue(w.get_size(0) == 1 && w.get_size(1) == m,
-        RESULT_FAIL, "svdBackSubstitute_f64", "w is not 1Xm");
+        RESULT_FAIL_INVALID_SIZE, "svdBackSubstitute_f64", "w is not 1Xm");
 
       AnkiConditionalErrorAndReturnValue(Ut.get_size(0) == m && Ut.get_size(1) == m,
-        RESULT_FAIL, "svdBackSubstitute_f64", "Ut is not mXm");
+        RESULT_FAIL_INVALID_SIZE, "svdBackSubstitute_f64", "Ut is not mXm");
 
       AnkiConditionalErrorAndReturnValue(Vt.get_size(0) == n && Vt.get_size(1) == n,
-        RESULT_FAIL, "svdBackSubstitute_f64", "Vt is not nXn");
+        RESULT_FAIL_INVALID_SIZE, "svdBackSubstitute_f64", "Vt is not nXn");
 
       AnkiConditionalErrorAndReturnValue(b.get_size(0) == 1 && b.get_size(1) == m,
-        RESULT_FAIL, "svdBackSubstitute_f64", "b is not 1Xm");
+        RESULT_FAIL_INVALID_SIZE, "svdBackSubstitute_f64", "b is not 1Xm");
 
       AnkiConditionalErrorAndReturnValue(x.get_size(0) == 1 && x.get_size(1) == n,
-        RESULT_FAIL, "svdBackSubstitute_f64", "x is not 1Xn");
+        RESULT_FAIL_INVALID_SIZE, "svdBackSubstitute_f64", "x is not 1Xn");
 
       icvSVBkSb_64f(
         m,
@@ -1575,7 +1575,7 @@ namespace Anki
       }
 
       if( fabs(sm.x) < DBL_EPSILON || fabs(sm.y) < DBL_EPSILON || fabs(sM.x) < DBL_EPSILON || fabs(sM.y) < DBL_EPSILON )
-        return RESULT_FAIL;
+        return RESULT_FAIL_NUMERICAL;
 
       sm.x = count/sm.x; sm.y = count/sm.y;
       sM.x = count/sM.x; sM.y = count/sM.y;
@@ -1623,7 +1623,7 @@ namespace Anki
         result = svd_f64(_LtL, _W, uT, _V, svdScratchBuffer);
 
         AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
-          RESULT_FAIL, "EstimateHomography", "After call: scratch is not valid");
+          RESULT_FAIL_INVALID_ARRAY, "EstimateHomography", "After call: scratch is not valid");
       }
 
       AnkiConditionalErrorAndReturnValue(result == RESULT_OK,

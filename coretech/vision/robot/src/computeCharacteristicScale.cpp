@@ -22,6 +22,9 @@ namespace Anki
   {
 #define MAX_PYRAMID_LEVELS 8
 #define MAX_ALPHAS 128
+
+    static Result lastResult;
+
     // //function scaleImage = computeCharacteristicScaleImage_loopsAndFixedPoint(image, numPyramidLevels, computeDogAtFullSize, filterWithMex)
     Result ComputeCharacteristicScaleImage(const Array<u8> &image, const s32 numPyramidLevels, FixedPointArray<u32> &scaleImage, MemoryStack scratch)
     {
@@ -36,16 +39,16 @@ namespace Anki
       const s32 fullSizeWidth = imageWidth;
 
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
-        RESULT_FAIL, "ComputeCharacteristicScaleImage", "image is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "ComputeCharacteristicScaleImage", "image is not valid");
 
       AnkiConditionalErrorAndReturnValue(scaleImage.IsValid(),
-        RESULT_FAIL, "ComputeCharacteristicScaleImage", "scaleImage is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "ComputeCharacteristicScaleImage", "scaleImage is not valid");
 
       AnkiConditionalErrorAndReturnValue(numPyramidLevels <= MAX_PYRAMID_LEVELS,
-        RESULT_FAIL, "ComputeCharacteristicScaleImage", "numPyramidLevels must be less than %d", MAX_PYRAMID_LEVELS+1);
+        RESULT_FAIL_INVALID_PARAMETERS, "ComputeCharacteristicScaleImage", "numPyramidLevels must be less than %d", MAX_PYRAMID_LEVELS+1);
 
       AnkiConditionalErrorAndReturnValue(imageHeight == scaleImage.get_size(0) && imageWidth == scaleImage.get_size(1),
-        RESULT_FAIL, "ComputeCharacteristicScaleImage", "image and scaleImage must be the same size");
+        RESULT_FAIL_INVALID_SIZE, "ComputeCharacteristicScaleImage", "image and scaleImage must be the same size");
 
       AnkiConditionalErrorAndReturnValue(scaleImage.get_numFractionalBits() == 16,
         RESULT_FAIL, "ComputeCharacteristicScaleImage", "scaleImage must be UQ16.16");
@@ -76,7 +79,7 @@ namespace Anki
       const Result binomialFilterResult = BinomialFilter(image, imagePyramid[0], scratch);
 
       AnkiConditionalErrorAndReturnValue(binomialFilterResult == RESULT_OK,
-        RESULT_FAIL, "ComputeCharacteristicScaleImage", "BinomialFilter failed");
+        binomialFilterResult, "ComputeCharacteristicScaleImage", "BinomialFilter failed");
 
       /*{
       Matlab matlab(false);
@@ -109,7 +112,7 @@ namespace Anki
         const Result binomialFilterResult = BinomialFilter(curPyramidLevel, curPyramidLevelBlurred, scratch);
 
         AnkiConditionalErrorAndReturnValue(binomialFilterResult == RESULT_OK,
-          RESULT_FAIL, "ComputeCharacteristicScaleImage", "In-loop BinomialFilter failed");
+          binomialFilterResult, "ComputeCharacteristicScaleImage", "In-loop BinomialFilter failed");
 
         //    largeDoG = zeros([fullSizeHeight,fullSizeWidth],'uint32'); % UQ16.16
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
@@ -351,7 +354,7 @@ namespace Anki
 
         const Result downsampleByFactorResult = DownsampleByFactor(curPyramidLevelBlurred, 2, imagePyramid[pyramidLevel]);
         AnkiConditionalErrorAndReturnValue(downsampleByFactorResult == RESULT_OK,
-          RESULT_FAIL, "ComputeCharacteristicScaleImage", "In-loop DownsampleByFactor failed");
+          downsampleByFactorResult, "ComputeCharacteristicScaleImage", "In-loop DownsampleByFactor failed");
       } // for(s32 pyramidLevel=1; pyramidLevel<=numPyramidLevels; pyramidLevel++) {
       //times[19] = GetTime();
 
@@ -385,25 +388,25 @@ namespace Anki
       acceleration.version = 1;
 
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
-        RESULT_FAIL, "ComputeCharacteristicScaleImageAndBinarize", "image is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "ComputeCharacteristicScaleImageAndBinarize", "image is not valid");
 
       AnkiConditionalErrorAndReturnValue(binaryImage.IsValid(),
-        RESULT_FAIL, "ComputeCharacteristicScaleImageAndBinarize", "binaryImage is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "ComputeCharacteristicScaleImageAndBinarize", "binaryImage is not valid");
 
       AnkiConditionalErrorAndReturnValue(numPyramidLevels <= 4 && numPyramidLevels > 0,
-        RESULT_FAIL, "ComputeCharacteristicScaleImageAndBinarize", "numPyramidLevels must be less than %d", 4+1);
+        RESULT_FAIL_INVALID_PARAMETERS, "ComputeCharacteristicScaleImageAndBinarize", "numPyramidLevels must be less than %d", 4+1);
 
       // TODO: support numPyramidLevels==5 ?
       /*AnkiConditionalWarn(numPyramidLevels <= 4,
       "ComputeCharacteristicScaleImageAndBinarize", "If numPyramidLevels is greater than 4, and mean value of any large rectangle is above 252, then this function will overflow.");*/
 
       AnkiConditionalErrorAndReturnValue(imageHeight == binaryImage.get_size(0) && imageWidth == binaryImage.get_size(1),
-        RESULT_FAIL, "ComputeCharacteristicScaleImageAndBinarize", "image and binaryImage must be the same size");
+        RESULT_FAIL_INVALID_SIZE, "ComputeCharacteristicScaleImageAndBinarize", "image and binaryImage must be the same size");
 
       // Initialize the first integralImageHeight rows of the integralImage
       ScrollingIntegralImage_u8_s32 integralImage(integralImageHeight, imageWidth, numBorderPixels, scratch);
-      if(integralImage.ScrollDown(image, integralImageHeight, scratch) != RESULT_OK)
-        return RESULT_FAIL;
+      if((lastResult = integralImage.ScrollDown(image, integralImageHeight, scratch)) != RESULT_OK)
+        return lastResult;
 
       // Prepare the memory for the filtered rows for each level of the pyramid
       Array<s32> filteredRows[5];
@@ -462,8 +465,8 @@ namespace Anki
 
         //% If we've reached the bottom of this integral image, scroll it up
         if(integralImage.get_maxRow(maxFilterHalfWidth) < imageY) {
-          if(integralImage.ScrollDown(image, numRowsToScroll, scratch) != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = integralImage.ScrollDown(image, numRowsToScroll, scratch)) != RESULT_OK)
+            return lastResult;
         }
       } // while(imageY < size(image,1)) {
       return RESULT_OK;
@@ -500,15 +503,15 @@ namespace Anki
       acceleration.version = 1;
 
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
-        RESULT_FAIL, "ComputeCharacteristicScaleImageAndBinarize", "image is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "ComputeCharacteristicScaleImageAndBinarize", "image is not valid");
 
       AnkiConditionalErrorAndReturnValue(scaleImage_numPyramidLevels <= 4 && scaleImage_numPyramidLevels > 0,
-        RESULT_FAIL, "ComputeCharacteristicScaleImageAndBinarize", "scaleImage_numPyramidLevels must be less than %d", 4+1);
+        RESULT_FAIL_INVALID_PARAMETERS, "ComputeCharacteristicScaleImageAndBinarize", "scaleImage_numPyramidLevels must be less than %d", 4+1);
 
       // Initialize the first integralImageHeight rows of the integralImage
       ScrollingIntegralImage_u8_s32 integralImage(integralImageHeight, imageWidth, numBorderPixels, scratch);
-      if(integralImage.ScrollDown(image, integralImageHeight, scratch) != RESULT_OK)
-        return RESULT_FAIL;
+      if((lastResult = integralImage.ScrollDown(image, integralImageHeight, scratch)) != RESULT_OK)
+        return lastResult;
 
       // Prepare the memory for the filtered rows for each level of the pyramid
       Array<s32> filteredRows[5];
@@ -519,8 +522,8 @@ namespace Anki
       Array<u8> binaryImageRow(1, imageWidth, scratch);
       u8 * restrict pBinaryImageRow = binaryImageRow[0];
 
-      if(components.Extract2dComponents_PerRow_Initialize() != RESULT_OK)
-        return RESULT_FAIL;
+      if((lastResult = components.Extract2dComponents_PerRow_Initialize()) != RESULT_OK)
+        return lastResult;
 
       s32 imageY = 0;
 
@@ -583,8 +586,8 @@ namespace Anki
         BeginBenchmark("ccsiabaec_extractNextRowOfComponents");
 
         // Extract the next line of connected components
-        if(components.Extract2dComponents_PerRow_NextRow(pBinaryImageRow, imageWidth, imageY, component1d_minComponentWidth, component1d_maxSkipDistance) != RESULT_OK)
-          return RESULT_FAIL;
+        if((lastResult = components.Extract2dComponents_PerRow_NextRow(pBinaryImageRow, imageWidth, imageY, component1d_minComponentWidth, component1d_maxSkipDistance)) != RESULT_OK)
+          return lastResult;
 
         EndBenchmark("ccsiabaec_extractNextRowOfComponents");
 
@@ -594,8 +597,8 @@ namespace Anki
 
         //% If we've reached the bottom of this integral image, scroll it up
         if(integralImage.get_maxRow(maxFilterHalfWidth) < imageY) {
-          if(integralImage.ScrollDown(image, numRowsToScroll, scratch) != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = integralImage.ScrollDown(image, numRowsToScroll, scratch)) != RESULT_OK)
+            return lastResult;
         }
 
         EndBenchmark("ccsiabaec_scrollIntegralImage");
@@ -604,8 +607,8 @@ namespace Anki
       EndBenchmark("ccsiabaec_mainLoop");
 
       BeginBenchmark("ccsiabaec_finalize");
-      if(components.Extract2dComponents_PerRow_Finalize() != RESULT_OK)
-        return RESULT_FAIL;
+      if((lastResult = components.Extract2dComponents_PerRow_Finalize()) != RESULT_OK)
+        return lastResult;
       EndBenchmark("ccsiabaec_finalize");
 
       return RESULT_OK;

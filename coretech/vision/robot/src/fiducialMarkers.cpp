@@ -23,6 +23,8 @@ namespace Anki
 {
   namespace Embedded
   {
+    static Result lastResult;
+
     BlockMarker::BlockMarker()
     {
     } // BlockMarker::BlockMarker()
@@ -243,8 +245,8 @@ namespace Anki
 #endif
 
       for(s32 bit=0; bit<numBits; bit++) {
-        if(bits[bit].ExtractMeanValue(image, quad, homography, meanValues[bit]) != RESULT_OK)
-          return RESULT_FAIL;
+        if((lastResult = bits[bit].ExtractMeanValue(image, quad, homography, meanValues[bit])) != RESULT_OK)
+          return lastResult;
       }
 
 #ifdef SEND_PROBE_LOCATIONS
@@ -265,8 +267,8 @@ namespace Anki
       FixedLengthList<u8> binarizedBits(MAX_FIDUCIAL_MARKER_BITS, scratch);
 
       // [this, binaryString] = orientAndThreshold(this, this.means);
-      if(FiducialMarkerParser::DetermineOrientationAndBinarizeAndReorderCorners(meanValues, minContrastRatio, marker, binarizedBits, scratch) != RESULT_OK)
-        return RESULT_FAIL;
+      if((lastResult = FiducialMarkerParser::DetermineOrientationAndBinarizeAndReorderCorners(meanValues, minContrastRatio, marker, binarizedBits, scratch)) != RESULT_OK)
+        return lastResult;
 
       // meanValues.Print("meanValues");
 
@@ -274,8 +276,8 @@ namespace Anki
         return RESULT_OK; // It couldn't be parsed, but this is not a code failure
 
       // this = decodeIDs(this, binaryString);
-      if(DecodeId(binarizedBits, marker.blockType, marker.faceType, scratch) != RESULT_OK)
-        return RESULT_FAIL;
+      if((lastResult = DecodeId(binarizedBits, marker.blockType, marker.faceType, scratch)) != RESULT_OK)
+        return lastResult;
 
       return RESULT_OK;
     }
@@ -324,10 +326,10 @@ namespace Anki
     Result FiducialMarkerParser::DetermineOrientationAndBinarizeAndReorderCorners(const FixedLengthList<s16> &meanValues, const f32 minContrastRatio, BlockMarker &marker, FixedLengthList<u8> &binarizedBits, MemoryStack scratch) const
     {
       AnkiConditionalErrorAndReturnValue(meanValues.IsValid(),
-        RESULT_FAIL, "FiducialMarkerParser::DetermineOrientation", "meanValues is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "FiducialMarkerParser::DetermineOrientation", "meanValues is not valid");
 
       AnkiConditionalErrorAndReturnValue(binarizedBits.IsValid(),
-        RESULT_FAIL, "FiducialMarkerParser::DetermineOrientation", "binarizedBits is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "FiducialMarkerParser::DetermineOrientation", "binarizedBits is not valid");
 
       binarizedBits.Clear();
 

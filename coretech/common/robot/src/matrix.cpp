@@ -18,6 +18,8 @@ namespace Anki
   {
     namespace Matrix
     {
+      static Result lastResult;
+
       Result SolveLeastSquaresWithSVD_f32(Array<f32> &At, const Array<f32> &bt, Array<f32> &xt, MemoryStack scratch)
       {
         const s32 AWidth = At.get_size(0);
@@ -36,12 +38,12 @@ namespace Anki
           bPrime = Array<f32>(AWidth, 1, scratch);
 
           // A' * A = A'A
-          if(MultiplyTranspose<f32,f32>(At, At, APrime) != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = MultiplyTranspose<f32,f32>(At, At, APrime)) != RESULT_OK)
+            return lastResult;
 
           // A' * b = A'b
-          if(MultiplyTranspose<f32,f32>(At, bt, bPrime) != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = MultiplyTranspose<f32,f32>(At, bt, bPrime)) != RESULT_OK)
+            return lastResult;
         }
 
         const s32 AMinStride = RoundUp<s32>(AWidth, MEMORY_ALIGNMENT);
@@ -49,8 +51,8 @@ namespace Anki
         {
           PUSH_MEMORY_STACK(scratch);
           void * svdScratch = scratch.Allocate(sizeof(f32)*(AMinStride*3) + 64);
-          if(svd_f32(APrime, w, U, V, svdScratch)  != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = svd_f32(APrime, w, U, V, svdScratch))  != RESULT_OK)
+            return lastResult;
         } // PUSH_MEMORY_STACK(scratch);
 
         {
@@ -60,8 +62,8 @@ namespace Anki
           Array<f32> bPrimeTransposed(1, AWidth, scratch);
           Reshape(true, bPrime, bPrimeTransposed);
 
-          if(svdBackSubstitute_f32(w, V, V, bPrimeTransposed, xt, svdScratch)  != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = svdBackSubstitute_f32(w, V, V, bPrimeTransposed, xt, svdScratch))  != RESULT_OK)
+            return lastResult;
         } // PUSH_MEMORY_STACK(scratch);
 
         return RESULT_OK;
@@ -85,12 +87,12 @@ namespace Anki
           bPrime = Array<f64>(AWidth, 1, scratch);
 
           // A' * A = A'A
-          if(MultiplyTranspose<f64,f64>(At, At, APrime) != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = MultiplyTranspose<f64,f64>(At, At, APrime)) != RESULT_OK)
+            return lastResult;
 
           // A' * b = A'b
-          if(MultiplyTranspose<f64,f64>(At, bt, bPrime) != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = MultiplyTranspose<f64,f64>(At, bt, bPrime)) != RESULT_OK)
+            return lastResult;
         }
 
         const s32 AMinStride = RoundUp<s32>(AWidth, MEMORY_ALIGNMENT);
@@ -98,8 +100,8 @@ namespace Anki
         {
           PUSH_MEMORY_STACK(scratch);
           void * svdScratch = scratch.Allocate(sizeof(f64)*(AMinStride*3) + 64);
-          if(svd_f64(APrime, w, U, V, svdScratch)  != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = svd_f64(APrime, w, U, V, svdScratch))  != RESULT_OK)
+            return lastResult;
         } // PUSH_MEMORY_STACK(scratch);
 
         {
@@ -109,8 +111,8 @@ namespace Anki
           Array<f64> bPrimeTransposed(1, AWidth, scratch);
           Reshape(true, bPrime, bPrimeTransposed);
 
-          if(svdBackSubstitute_f64(w, V, V, bPrimeTransposed, xt, svdScratch)  != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = svdBackSubstitute_f64(w, V, V, bPrimeTransposed, xt, svdScratch))  != RESULT_OK)
+            return lastResult;
         } // PUSH_MEMORY_STACK(scratch);
 
         return RESULT_OK;

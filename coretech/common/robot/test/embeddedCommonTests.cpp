@@ -1077,7 +1077,7 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate1D)
 
     Array<s32> indexes;
 
-    ASSERT_TRUE(findB.Evaluate(indexes, ms) == RESULT_FAIL);
+    ASSERT_TRUE(findB.Evaluate(indexes, ms) == RESULT_FAIL_INVALID_PARAMETERS);
   } // PUSH_MEMORY_STACK(ms)
 
   GTEST_RETURN_HERE;
@@ -1128,7 +1128,7 @@ GTEST_TEST(CoreTech_Common, Find_Evaluate2D)
   Array<s32> yIndexes;
   Array<s32> xIndexes;
 
-  ASSERT_TRUE(find.Evaluate(yIndexes, ms) == RESULT_FAIL);
+  ASSERT_TRUE(find.Evaluate(yIndexes, ms) == RESULT_FAIL_INVALID_PARAMETERS);
   ASSERT_TRUE(find.Evaluate(yIndexes, xIndexes, ms) == RESULT_OK);
 
   ASSERT_TRUE(yIndexes.get_size(0) == 1);
@@ -1665,7 +1665,7 @@ GTEST_TEST(CoreTech_Common, ReallocateArray)
   ASSERT_TRUE(array3.IsValid());
 
   ASSERT_TRUE(array1.IsValid());
-  ASSERT_TRUE(array1.Resize(20,15,ms) == RESULT_FAIL);
+  ASSERT_TRUE(array1.Resize(20,15,ms) == RESULT_FAIL_UNINITIALIZED_MEMORY);
   ASSERT_TRUE(!array1.IsValid());
 
   ASSERT_TRUE(array3.IsValid());
@@ -1673,7 +1673,7 @@ GTEST_TEST(CoreTech_Common, ReallocateArray)
   ASSERT_TRUE(array3.IsValid());
 
   ASSERT_TRUE(array2.IsValid());
-  ASSERT_TRUE(array2.Resize(20,15,ms) == RESULT_FAIL);
+  ASSERT_TRUE(array2.Resize(20,15,ms) == RESULT_FAIL_UNINITIALIZED_MEMORY);
   ASSERT_TRUE(!array2.IsValid());
 
   GTEST_RETURN_HERE;

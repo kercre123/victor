@@ -266,7 +266,7 @@ namespace Anki
     template<typename Type> Result Array<Type>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
-        RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "Array<Type>::Print", "Array<Type> is not valid");
 
       printf(variableName);
       printf(":\n");
@@ -320,7 +320,7 @@ namespace Anki
     template<typename Type> Result Array<Type>::Resize(const s32 numRows, const s32 numCols, MemoryStack &memory)
     {
       AnkiConditionalErrorAndReturnValue(numCols > 0 && numRows > 0,
-        RESULT_FAIL, "Array<Type>::Resize", "Invalid size");
+        RESULT_FAIL_INVALID_SIZE, "Array<Type>::Resize", "Invalid size");
 
       s32 numBytesAllocated = 0;
 
@@ -525,7 +525,7 @@ namespace Anki
     template<typename Type> Result Array<Type>::InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const Flags::Buffer flags)
     {
       AnkiConditionalErrorAndReturnValue(numCols >= 0 && numRows >= 0 && dataLength >= 0,
-        RESULT_FAIL, "Array<Type>::InitializeBuffer", "Negative dimension");
+        RESULT_FAIL_INVALID_SIZE, "Array<Type>::InitializeBuffer", "Negative dimension");
 
       this->flags = flags;
       this->size[0] = numRows;
@@ -544,7 +544,7 @@ namespace Anki
       if(!rawData) {
         AnkiError("Anki.Array2d.initialize", "input data buffer is NULL");
         InvalidateArray();
-        return RESULT_FAIL;
+        return RESULT_FAIL_UNINITIALIZED_MEMORY;
       }
 
       this->rawDataPointer = rawData;
@@ -556,7 +556,7 @@ namespace Anki
       if(requiredBytes > dataLength) {
         AnkiError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
         InvalidateArray();
-        return RESULT_FAIL;
+        return RESULT_FAIL_OUT_OF_MEMORY;
       }
 
       if(flags.get_useBoundaryFillPatterns()) {
@@ -601,7 +601,7 @@ namespace Anki
     template<typename Type> Result Array<Type>::PrintBasicType(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX)  const
     {
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
-        RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
+        RESULT_FAIL_INVALID_ARRAY, "Array<Type>::Print", "Array<Type> is not valid");
 
       const s32 realMinX = MAX(0,minX);
       const s32 realMaxX = MIN(maxX+1,size[1]);
