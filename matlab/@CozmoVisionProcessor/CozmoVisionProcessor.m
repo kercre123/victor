@@ -93,6 +93,8 @@ classdef CozmoVisionProcessor < handle
                 isa(SerialDevice, 'SimulatedSerial'), ...
                 'SerialDevice must be a serial or SimulatedSerial object.');
             this.serialDevice = SerialDevice;
+            this.serialDevice.InputBufferSize = 640*480;
+            
             fclose(this.serialDevice);
             fopen(this.serialDevice);
             
