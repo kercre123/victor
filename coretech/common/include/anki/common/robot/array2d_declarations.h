@@ -179,8 +179,8 @@ namespace Anki
     protected:
       // Bit-inverse of MemoryStack patterns. The pattern will be put twice at
       // the beginning and end of each line.
-      static const u32 FILL_PATTERN_START = 0X5432EF76;
-      static const u32 FILL_PATTERN_END = 0X7610FE76;
+      static const u32 FILL_PATTERN_START = 0XFF05FF06;
+      static const u32 FILL_PATTERN_END = 0X07FF08FF;
 
       static const s32 HEADER_LENGTH = 8;
       static const s32 FOOTER_LENGTH = 8;
