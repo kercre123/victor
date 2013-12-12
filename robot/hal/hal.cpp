@@ -201,9 +201,6 @@ namespace Anki
   }
 }
 
-// Whether or not continuous capture has begun
-static bool continuousCaptureStarted_ = false;
-
 int main()
 {
   using namespace Anki::Cozmo;

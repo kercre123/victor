@@ -249,7 +249,7 @@ namespace Anki {
 #if USE_OFFBOARD_VISION
         if(waitingForProcessingResult_ > 0)
         {
-          PRINT("VisionSystem::Update(): waiting for processing result.\n");
+          //PRINT("VisionSystem::Update(): waiting for processing result.\n");
 
           if(HAL::USBGetNextPacket(msgBuffer_) == EXIT_SUCCESS &&
              CommandHandler::ProcessMessage(msgBuffer_) == waitingForProcessingResult_)
@@ -365,43 +365,20 @@ namespace Anki {
         
       } // Update()
       
+          
       ReturnCode CaptureHeadFrame(FrameBuffer &frame)
       {
-        if (HAL::GetHeadCamMode() != HAL::CAMERA_MODE_QQQVGA)
-        {
-          CameraStartFrame(HAL::CAMERA_FRONT, frame.data, frame.resolution,
-                           HAL::CAMERA_UPDATE_CONTINUOUS, 0, false);
-        }
-        else {
-          CameraStartFrame(HAL::CAMERA_FRONT, frame.data, frame.resolution,
-                           HAL::CAMERA_UPDATE_SINGLE, 0, false);
-        }
-
-        
-        /*
         // Only QQQVGA can be captured in SINGLE mode.
         // Other modes must be captured in CONTINUOUS mode otherwise you get weird
         // rolling sync effects.
         // NB: CONTINUOUS mode contains tears that could affect vision algorithms
         // if moving too fast.
-        // NOTE: we are currently always capturing at 640x480.  The camera mode
-        //       is just affecting how much we downsample before sending the
-        //       frame out over UART.
-        if (HAL::GetHeadCamMode() != HAL::CAMERA_MODE_QQQVGA) {
-          
-          if (!continuousCaptureStarted_) {
-            CameraStartFrame(HAL::CAMERA_FRONT, frame.data, frame.resolution,
-                             HAL::CAMERA_UPDATE_CONTINUOUS, 0, false);
-            continuousCaptureStarted_ = true;
-          }
-          
-        }
-        else {
-          CameraStartFrame(HAL::CAMERA_FRONT, frame.data, frame.resolution,
-                           HAL::CAMERA_UPDATE_SINGLE, 0, false);
-          continuousCaptureStarted_ = false;
-        }
-        */
+        const HAL::CameraUpdateMode updateMode = (HAL::GetHeadCamMode() == HAL::CAMERA_MODE_QQQVGA ?
+                                                  HAL::CAMERA_UPDATE_SINGLE :
+                                                  HAL::CAMERA_UPDATE_CONTINUOUS);
+        
+        CameraStartFrame(HAL::CAMERA_FRONT, frame.data, frame.resolution,
+                         updateMode, 0, false);
         
         while (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT))
         {

@@ -17,6 +17,9 @@ namespace Anki
       namespace {
         CameraMode headCamMode_;
         
+        // Whether we've already started continuous mode
+        bool m_continuousModeStarted = false;
+        
         // Intrinsic calibration parameters for each camera:
         CameraInfo headCamInfo_;
         CameraInfo matCamInfo_;
@@ -352,6 +355,15 @@ namespace Anki
       void CameraStartFrame(CameraID cameraID, u8* frame, CameraMode mode,
           CameraUpdateMode updateMode, u16 exposure, bool enableLight)
       {
+        if(cam->lastMode == mode &&
+           cam->updateMode == updateMode &&
+           updateMode == CAMERA_UPDATE_CONTINUOUS &&
+           m_continuousModeStarted)
+        {
+          // Everything is already set up the way we want.  Nothing to do.
+          return;
+        }
+        
         CamHWRegs* cam = &m_cams[cameraID];
 
         CameraHandle* handle = m_handles[cameraID];
@@ -361,6 +373,7 @@ namespace Anki
         {
           CameraConfigure(handle, cam->MXI_CAMX_BASE_ADR, mode, frame);
           cam->lastMode = mode;
+          m_continuousModeStarted = false;
         }
 
         IRQDisable();
@@ -372,17 +385,23 @@ namespace Anki
 
         // Setup continuous mode here to start running
         u32 address = cam->CIFX_DMA0_CFG_ADR;
-        if (updateMode == CAMERA_UPDATE_CONTINUOUS)
+        if (updateMode == CAMERA_UPDATE_CONTINUOUS &&
+            not m_continuousModeStarted)
         {
           REG_WORD(address) |=
             D_CIF_DMA_ENABLE |
             D_CIF_DMA_AUTO_RESTART_CONTINUOUS;
+          
+          m_continuousModeStarted = true;
+          
         } else {
           // Otherwise, run a single frame
           REG_WORD(address) &= ~D_CIF_DMA_AUTO_RESTART_CONTINUOUS;
           REG_WORD(address) |=
             D_CIF_DMA_ENABLE |
             D_CIF_DMA_AUTO_RESTART_ONCE_SHADOW;
+          
+          m_continuousModeStarted = false;
         }
       }
 

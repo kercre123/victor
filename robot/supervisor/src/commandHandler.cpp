@@ -37,44 +37,6 @@ namespace Anki {
         
         while (c >= 0) {
           switch(static_cast<u8>(c)) {
-#ifdef USE_OFFBOARD_VISION
-            case HAL::USB_SET_CAMERA_MODE_MSG:
-            {
-              if (HAL::USBGetNumBytesToRead() < HAL::SIZEOF_USB_SET_CAMERA_MODE_MSG)
-                return;
-              HAL::USBGetChar(); // Clear msg type byte
-              
-              // Set camera mode
-              c = HAL::USBGetChar();
-              HAL::SetHeadCamMode(c);
-              PRINT("Change camera res to %d\n", c);
-              break;
-            }
-            case HAL::USB_BLOCK_POSE_MSG:
-            {
-              if (HAL::USBGetNumBytesToRead() < HAL::SIZEOF_USB_BLOCK_POSE_MSG)
-                return;
-              HAL::USBGetChar(); // Clear msg type byte
- 
-              f32 blockPos_x = FLT_MAX;
-              f32 blockPos_y = FLT_MAX;
-              f32 blockPos_rad = FLT_MAX;
-
-              if ( !USBGetFloat(blockPos_x) ||
-                   !USBGetFloat(blockPos_y) ||
-                   !USBGetFloat(blockPos_rad))
-              {
-                PRINT("ERROR (ProcessUARTMessages): Invalid block pose %f %f %f\n", blockPos_x, blockPos_y, blockPos_rad);
-                break;
-              }
-
-              // Just testing UART printout
-              PERIODIC_PRINT(60, "BlockPose: x = %f, y = %f, rad = %f\n", blockPos_x, blockPos_y, blockPos_rad);
-              
-              DockingController::SetRelDockPose(blockPos_x, blockPos_y, blockPos_rad);
-              break;
-            }
-#endif // USE_OFFBOARD_VISION
             default:
               PRINT("WARN: (ProcessUARTMsgs): Unexpected char %d\n", c);
               c = HAL::USBGetChar();  // Pop unexpected char from receive buffer
@@ -95,6 +57,8 @@ namespace Anki {
         CozmoMessageID msgID = static_cast<CozmoMessageID>(buffer[0]);
         
         (*MessageTable[msgID].dispatchFcn)(buffer+1);
+        
+        PRINT("ProcessMessage(): Dispatching message with ID=%d.\n", msgID);
         
         return msgID;
       }
