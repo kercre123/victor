@@ -19,7 +19,7 @@ TARGET = 'cozmo'
 
 MV_SOC_PLATFORM = 'myriad1'
 GCC_VERSION = '4.4.2'
-MV_TOOLS_VERSION = '00.50.37.0'
+MV_TOOLS_VERSION = '00.50.39.2'
 
 LEON_SOURCE = []
 LEON_SOURCE += addSources('./hal')
@@ -89,7 +89,7 @@ else:
   DETECTED_PLATFORM = 'win32'
   SPARC_DIR = 'sparc-elf-' + GCC_VERSION + '-mingw/'
 
-PLATFORM = MV_TOOLS_DIR + '/' + MV_TOOLS_VERSION + '/' + DETECTED_PLATFORM + '/'
+PLATFORM = MV_TOOLS_DIR + MV_TOOLS_VERSION + '/' + DETECTED_PLATFORM + '/'
 
 GCC_DIR = PLATFORM + SPARC_DIR
 
@@ -192,6 +192,11 @@ if __name__ == '__main__':
   isRun = False
   isFlash = False
 
+  # Check if the Movidius tools can be found
+  if any((os.path.isfile(file.strip()) or os.path.isfile(file.strip()+'.exe') for file in [CC, CXX, LD, MVCONV])) == False:
+    print('Error: Could not locate all of the Movidius Tools')
+    sys.exit(1);
+    
   for arg in sys.argv:
     if arg == 'clean':
       print 'Cleaning...'
