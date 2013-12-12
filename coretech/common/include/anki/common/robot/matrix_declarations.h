@@ -85,16 +85,26 @@ namespace Anki
       //
 
       // Compute the Cholesky-Banachiewicz decomposition, to return a lower-triangular matrix L such that A=L*L'
-      template<typename InType, typename IntermediateType, typename OutType> Result CholeskyDecomposition(
-        const Array<InType> &A, //!< Input A Matrix
-        Array<OutType> &L,       //!< Output lower-triangular L matrix
-        MemoryStack scratch   //!< Requires at least sizeof(IntermediateType)*A.get_size(0) bytes
+      template<typename InType, typename IntermediateType, typename OutType> Result SolveLeastSquaresWithCholesky(
+        const Array<InType> &A,     //!< Input A Matrix
+        const Array<InType> &Bt,    //!< Input B-transpose matrix
+        Array<IntermediateType> &L, //!< Output lower-triangular L matrix
+        Array<OutType> &Xt,         //!< Output X-transpose solution
+        bool invertDiagonals=true   //!< A real Cholesky is invertDiagonals==false, but true is faster
         );
 
-      template<typename Type> Result SolveWithUpperTriangular(
-        const Array<Type> &L, //!< Input lower-triangular L matrix (such as computed by CholeskyDecomposition)
-        Array<Type> &bx       //!< Input b matrix and output x solution
-        );
+      //template<typename InType, typename IntermediateType, typename OutType> Result CholeskyDecomposition(
+      //  const Array<InType> &A,                    //!< Input A Matrix
+      //  Array<IntermediateType> &diagonalInverses, //!< Vector of the inverses of the diagonals of L
+      //  Array<OutType> &L                          //!< Output lower-triangular L matrix
+      //  );
+
+      //template<typename InType, typename IntermediateType, typename OutType> Result SolveWithLowerTriangular(
+      //  const Array<InType> &L,                          //!< Input lower-triangular L matrix (such as computed by CholeskyDecomposition)
+      //  const Array<InType> &b,                          //!< Input b matrix
+      //  const Array<IntermediateType> &diagonalInverses, //!< Vector of the inverses of the diagonals of L
+      //  Array<OutType> &x                                //!< Output x solution
+      //  );
 
       // Solves Ax = b
       // Specifically, it uses SVD to minimize ||Ax - b||

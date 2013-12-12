@@ -236,10 +236,12 @@ namespace Anki
         return RESULT_OK;
       } // template<typename InType, typename OutType> Result MultiplyTranspose(const Array<InType> &in1, const Array<InType> &in2Transposed, Array<OutType> &out)
 
-      template<typename InType, typename IntermediateType, typename OutType> Result CholeskyDecomposition(
-        const Array<InType> &A, //!< Input A Matrix
-        Array<OutType> &L,       //!< Output upper-diagonal L matrix
-        MemoryStack scratch   //!< Requires at least sizeof(f64)*A.get_size(0) bytes
+      template<typename InType, typename IntermediateType, typename OutType> Result SolveLeastSquaresWithCholesky(
+        const Array<InType> &A,     //!< Input A Matrix
+        const Array<InType> &Bt,    //!< Input B-transpose matrix
+        Array<IntermediateType> &L, //!< Output lower-triangular L matrix
+        Array<OutType> &Xt,         //!< Output X-transpose solution
+        bool invertDiagonals        //!< A real Cholesky is invertDiagonals==false, but true is faster
         )
       {
         const s32 matrixHeight = A.get_size(0);
@@ -247,8 +249,14 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(A.IsValid(),
           RESULT_FAIL, "CholeskyDecomposition", "A is not valid");
 
+        AnkiConditionalErrorAndReturnValue(Bt.IsValid(),
+          RESULT_FAIL, "CholeskyDecomposition", "Bt is not valid");
+
         AnkiConditionalErrorAndReturnValue(L.IsValid(),
           RESULT_FAIL, "CholeskyDecomposition", "L is not valid");
+
+        AnkiConditionalErrorAndReturnValue(Xt.IsValid(),
+          RESULT_FAIL, "CholeskyDecomposition", "Xt is not valid");
 
         AnkiConditionalErrorAndReturnValue(matrixHeight == A.get_size(1),
           RESULT_FAIL, "CholeskyDecomposition", "A is not square");
@@ -261,37 +269,36 @@ namespace Anki
 
         // TODO: check if symmetric and positive-definite
 
-        // TODO: This function always uses f64 as an intermediate, but if it's stable enough, this
-        //       could later be shifted to Type (or f32)
-
         const IntermediateType minStableValue = Anki::Embedded::Flags::numeric_limits<IntermediateType>::epsilon();
 
-        IntermediateType * restrict diagonalInverses = reinterpret_cast<IntermediateType*>(scratch.Allocate(sizeof(IntermediateType)*matrixHeight));
+        //// Store the real (non-inverse) values of the diagaonal of L
+        //Array<IntermediateType> diagonalValues(1, imageHeight, scratch);
+        //IntermediateType * restrict pDiagonalInverses = diagonalInverses.Pointer(0,0);
 
         for(s32 i = 0; i < matrixHeight; i++) {
           // First, compute the non-diagonal values
           // This uses the results from the diagonal inverse computation from previous iterations of i
           const InType * restrict pA_yi = A.Pointer(i, 0);
-          OutType * restrict pL_yi = L.Pointer(i, 0);
+          IntermediateType * restrict pL_yi = L.Pointer(i, 0);
 
           for(s32 j = 0; j < i; j++) {
-            OutType * restrict pL_yj = L.Pointer(j, 0);
+            IntermediateType * restrict pL_yj = L.Pointer(j, 0);
 
             IntermediateType sum = pA_yi[j];
             for(s32 k = 0; k < j; k++) {
-              const IntermediateType value1 = static_cast<IntermediateType>(pL_yi[k]);
-              const IntermediateType value2 = static_cast<IntermediateType>(pL_yj[k]);
+              const IntermediateType value1 = pL_yi[k];
+              const IntermediateType value2 = pL_yj[k];
               sum -= value1*value2;
             }
 
-            pL_yi[j] = static_cast<OutType>(sum*diagonalInverses[j]);
+            pL_yi[j] = sum*pL_yj[j];
           } // for(s32 j = 0; j < i; j++)
 
           // Second, compute the diagonal and its inverse
           {
             IntermediateType sum = pA_yi[i];
             for(s32 k = 0; k < i; k++) {
-              const IntermediateType value = static_cast<IntermediateType>(pL_yi[k]);
+              const IntermediateType value = pL_yi[k];
               sum -= value*value;
             }
 
@@ -300,8 +307,9 @@ namespace Anki
 
             // TODO: change this f32 square root to f64 if IntermediateType==f64
             const IntermediateType sumRoot = static_cast<IntermediateType>(sqrtf(static_cast<f32>(sum)));
-            pL_yi[i] = static_cast<OutType>(sumRoot);
-            diagonalInverses[i] = static_cast<IntermediateType>(1) / sumRoot;
+            //pL_yi[i] = static_cast<OutType>(sumRoot);
+            /*pDiagonalInverses[i] = static_cast<IntermediateType>(1) / sumRoot;*/
+            pL_yi[i] = static_cast<IntermediateType>(1) / sumRoot;
           }
         } // for(s32 i = 0; i < m; i++)
 
@@ -336,53 +344,42 @@ namespace Anki
         }
 #endif // USE_OPENCV_COMPLIENT_VERSION_OF_CHOLESKY
 
+        //// Solve L*y = b via forward substitution
+        //for(s32 i = 0; i < m; i++)
+        //{
+        //  for(s32 j = 0; j < n; j++)
+        //  {
+        //    s = b[i*bstep + j];
+        //    for(s32 k = 0; k < i; k++) {
+        //      s -= L[i*astep + k]*b[k*bstep + j];
+        //    }
+
+        //    b[i*bstep + j] = (_Tp)(s*L[i*astep + i]);
+        //  }
+        //}
+
+        //// Solve L'*X = Y via back substitution
+        //for(s32 i = m-1; i >= 0; i--) {
+        //  for(s32 j = 0; j < n; j++) {
+        //    s = b[i*bstep + j];
+        //    for(s32 k = m-1; k > i; k-- ) {
+        //      s -= L[k*astep + i]*b[k*bstep + j];
+        //    }
+
+        //    b[i*bstep + j] = (_Tp)(s*L[i*astep + i]);
+        //  }
+        //}
+
+        if(!invertDiagonals) {
+          // Invert the diagonal values of L
+          for(s32 i = 0; i < matrixHeight; i++) {
+            IntermediateType * restrict pL_yi = L.Pointer(i, 0);
+            pL_yi[i] = static_cast<IntermediateType>(1) / pL_yi[i];
+          }
+        }
+
         return RESULT_OK;
       }
-
-      //template<typename Type> Result SolveWithCholesky(
-      //  const Array<Type> &L, //!< Input upper-diagonal L matrix (such as computed by CholeskyDecomposition)
-      //  Array<Type> &bx       //!< Input b matrix and output x solution
-      //  )
-      //{
-      //  //template<typename Type> static inline bool CholImpl(Type* A, size_t astep, int m, Type* b, size_t bstep, int n)
-      //  // LLt x = b
-      //  // 1: L y = b
-      //  // 2. Lt x = y
-
-      //  //[ L00             ]  y0   b0
-      //  //[ L10 L11         ]  y1 = b1
-      //  //[ L20 L21 L22     ]  y2   b2
-      //  //[ L30 L31 L32 L33 ]  y3   b3
-
-      //  //[ L00 L10 L20 L30 ]  x0   y0
-      //  //[     L11 L21 L31 ]  x1 = y1
-      //  //[         L22 L32 ]  x2   y2
-      //  //[             L33 ]  x3   y3
-
-      //  for( i = 0; i < m; i++ )
-      //  {
-      //    for( j = 0; j < n; j++ )
-      //    {
-      //      s = b[i*bstep + j];
-      //      for( k = 0; k < i; k++ )
-      //        s -= pL_yi[k]*b[k*bstep + j];
-      //      b[i*bstep + j] = (Type)(s*pL_yi[i]);
-      //    }
-      //  }
-
-      //  for( i = m-1; i >= 0; i-- )
-      //  {
-      //    for( j = 0; j < n; j++ )
-      //    {
-      //      s = b[i*bstep + j];
-      //      for( k = m-1; k > i; k-- )
-      //        s -= L[k*astep + i]*b[k*bstep + j];
-      //      b[i*bstep + j] = (Type)(s*pL_yi[i]);
-      //    }
-      //  }
-
-      //  return true;
-      //}
 
       template<typename TypeIn, typename TypeOut> Result Reshape(const bool isColumnMajor, const Array<TypeIn> &in, Array<TypeOut> &out)
       {

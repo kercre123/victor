@@ -84,13 +84,15 @@ GTEST_TEST(CoreTech_Common, CholeskyDecomposition)
 
   Array<f32> A(3,3,ms);
   Array<f32> L(3,3,ms);
+  Array<f32> bt(1,3,ms);
+  Array<f32> xt(1,3,ms);
 
   ASSERT_TRUE(A.IsValid());
   ASSERT_TRUE(L.IsValid());
 
   A.Set(A_data, 9);
 
-  const Result result = Matrix::CholeskyDecomposition<f32,f32,f32>(A, L, ms);
+  const Result result = Matrix::SolveLeastSquaresWithCholesky<f32,f32,f32>(A, bt, L, xt, false);
   ASSERT_TRUE(result == RESULT_OK);
 
   A.Print("A");
