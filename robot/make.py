@@ -71,7 +71,7 @@ CCOPT = (
   '-I' + MV_COMMON_BASE + 'libc/leon/include '
   '-I' + LIBC + 'include '
   '-I' + CIF_GENERIC + ' '
-  '-Os -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 '
+  '-O2 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 '
 )
 
 CXXOPT = (
