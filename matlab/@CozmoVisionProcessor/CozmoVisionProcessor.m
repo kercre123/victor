@@ -416,8 +416,11 @@ classdef CozmoVisionProcessor < handle
         
         function SendPacket(this, messageName, packet)
             assert(isa(packet, 'uint8'), 'Expecting UINT8 packet.');
-            assert(isfield(this.messageIDs, messageName), ...
-                'Unknown message ID for "%s".', messageName);           
+            
+            if ~isfield(this.messageIDs, messageName)
+                warning('Unknown message ID for "%s". Not sending.', messageName);
+                return;
+            end
             
             % Send the header, followed by message ID, followed by the
             % actual message data
