@@ -2666,6 +2666,7 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, CholeskyDecomposition);
   CALL_GTEST_TEST(CoreTech_Common, ExplicitPrintf);
   CALL_GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes);
   CALL_GTEST_TEST(CoreTech_Common, MatrixSort);
