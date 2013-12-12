@@ -355,6 +355,7 @@ namespace Anki
       void CameraStartFrame(CameraID cameraID, u8* frame, CameraMode mode,
           CameraUpdateMode updateMode, u16 exposure, bool enableLight)
       {
+        CamHWRegs* cam = &m_cams[cameraID];
         if(cam->lastMode == mode &&
            cam->updateMode == updateMode &&
            updateMode == CAMERA_UPDATE_CONTINUOUS &&
@@ -363,8 +364,7 @@ namespace Anki
           // Everything is already set up the way we want.  Nothing to do.
           return;
         }
-        
-        CamHWRegs* cam = &m_cams[cameraID];
+
 
         CameraHandle* handle = m_handles[cameraID];
 
