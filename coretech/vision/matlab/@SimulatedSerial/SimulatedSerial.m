@@ -3,6 +3,7 @@ classdef SimulatedSerial < handle
     % Unused properties to make this look like a Serial object.
     properties
         BaudRate;
+        InputBufferSize;
     end
     
     properties(SetAccess = 'protected')
