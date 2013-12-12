@@ -84,15 +84,15 @@ namespace Anki
       // Linear Algebra and Linear Solvers
       //
 
-      // Compute the Cholesky-Banachiewicz decomposition, to return a lower-diagonal matrix L such that A=L*L'
-      template<typename Type> Result CholeskyDecomposition(
-        const Array<Type> &A, //!< Input A Matrix
-        Array<Type> &L,       //!< Output upper-diagonal L matrix
-        MemoryStack scratch   //!< Requires at least sizeof(f64)*A.get_size(0) bytes
+      // Compute the Cholesky-Banachiewicz decomposition, to return a lower-triangular matrix L such that A=L*L'
+      template<typename InType, typename IntermediateType, typename OutType> Result CholeskyDecomposition(
+        const Array<InType> &A, //!< Input A Matrix
+        Array<OutType> &L,       //!< Output lower-triangular L matrix
+        MemoryStack scratch   //!< Requires at least sizeof(IntermediateType)*A.get_size(0) bytes
         );
 
       template<typename Type> Result SolveWithUpperTriangular(
-        const Array<Type> &L, //!< Input upper-diagonal L matrix (such as computed by CholeskyDecomposition)
+        const Array<Type> &L, //!< Input lower-triangular L matrix (such as computed by CholeskyDecomposition)
         Array<Type> &bx       //!< Input b matrix and output x solution
         );
 

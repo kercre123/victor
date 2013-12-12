@@ -77,7 +77,7 @@ GTEST_TEST(CoreTech_Common, CholeskyDecomposition)
   MemoryStack ms(buffer, MAX_BYTES);
   ASSERT_TRUE(ms.IsValid());
 
-  const f32 A_data[15] = {
+  const f32 A_data[9] = {
     2.7345f, 1.8859f, 2.0785f,
     1.8859f, 2.2340f, 2.0461f,
     2.0785f, 2.0461f, 2.7591f};
@@ -90,10 +90,22 @@ GTEST_TEST(CoreTech_Common, CholeskyDecomposition)
 
   A.Set(A_data, 9);
 
-  ASSERT_TRUE(Matrix::CholeskyDecomposition(A, L, ms) == RESULT_OK);
+  const Result result = Matrix::CholeskyDecomposition<f32,f32,f32>(A, L, ms);
+  ASSERT_TRUE(result == RESULT_OK);
 
   A.Print("A");
   L.Print("L");
+
+  const f32 L_groundTruth_data[9] = {
+    1.6536f, 0.0f, 0.0f,
+    1.1405f, 0.9661f, 0.0f,
+    1.2569f, 0.6341f, 0.8815f};
+
+  Array<f32> L_groundTruth(3,3,ms);
+
+  L_groundTruth.Set(L_groundTruth_data, 9);
+
+  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(L, L_groundTruth, .01, .001));
 
   GTEST_RETURN_HERE;
 }

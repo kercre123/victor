@@ -236,9 +236,9 @@ namespace Anki
         return RESULT_OK;
       } // template<typename InType, typename OutType> Result MultiplyTranspose(const Array<InType> &in1, const Array<InType> &in2Transposed, Array<OutType> &out)
 
-      template<typename Type> Result CholeskyDecomposition(
-        const Array<Type> &A, //!< Input A Matrix
-        Array<Type> &L,       //!< Output upper-diagonal L matrix
+      template<typename InType, typename IntermediateType, typename OutType> Result CholeskyDecomposition(
+        const Array<InType> &A, //!< Input A Matrix
+        Array<OutType> &L,       //!< Output upper-diagonal L matrix
         MemoryStack scratch   //!< Requires at least sizeof(f64)*A.get_size(0) bytes
         )
       {
@@ -264,81 +264,77 @@ namespace Anki
         // TODO: This function always uses f64 as an intermediate, but if it's stable enough, this
         //       could later be shifted to Type (or f32)
 
-        //const f32 minStableValue = Anki::Embedded::Flags::numeric_limits<f32>::epsilon();
+        const IntermediateType minStableValue = Anki::Embedded::Flags::numeric_limits<IntermediateType>::epsilon();
 
-        ////f64 * restrict diagonalInverses = reinterpret_cast<f64*>(scratch.Allocate(sizeof(f64)*matrixHeight));
-        //Type * restrict diagonalInverses = reinterpret_cast<Type*>(scratch.Allocate(sizeof(Type)*matrixHeight));
-
-        //// First, compute the diagonals and their inverses
-        //for(s32 i = 0; i < matrixHeight; i++) {
-        //  const Type * restrict pA_yi = A.Pointer(i, 0);
-        //  Type * restrict pL_yi = L.Pointer(i, 0);
-
-        //  //f64 sum = pA_yi[i];
-        //  Type sum = pA_yi[i];
-        //  for(s32 k = 0; k < i; k++) {
-        //    const Type value = pL_yi[k];
-        //    sum -= value*value;
-        //  }
-
-        //  /*const f64 sumRoot = sqrt(sum);
-        //  pL_yi[i] = static_cast<Type>(sumRoot);
-        //  diagonalInverses[i] = 1.0 / sumRoot;*/
-        //  const Type sumRoot = sqrtf(sum);
-        //  pL_yi[i] = sumRoot;
-        //  diagonalInverses[i] = static_cast<Type>(1.0) / sumRoot;
-        //} // for(s32 i = 0; i < matrixHeight; i++)
-
-        //// Second, compute the non-diagonal values
-        //for(s32 i = 1; i < matrixHeight; i++) {
-        //  const Type * restrict pA_yi = A.Pointer(i, 0);
-        //  Type * restrict pL_yi = L.Pointer(i, 0);
-
-        //  for(s32 j = 0; j < i; j++) {
-        //    Type * restrict pL_yj = L.Pointer(j, 0);
-
-        //    f64 sum = pA_yi[j];
-        //    for(s32 k = 0; k < j; k++) {
-        //      sum -= pL_yi[k]*pL_yj[k];
-        //    }
-
-        //    pL_yi[j] = static_cast<Type>(sum*diagonalInverses[j]);
-        //  } // for(s32 j = 0; j < i; j++)
-        //} // for(s32 i = 0; i < m; i++)
-
-        const f32 minStableValue = Anki::Embedded::Flags::numeric_limits<f32>::epsilon();
-
-        f64 * restrict diagonalInverses = reinterpret_cast<f64*>(scratch.Allocate(sizeof(f64)*matrixHeight));
+        IntermediateType * restrict diagonalInverses = reinterpret_cast<IntermediateType*>(scratch.Allocate(sizeof(IntermediateType)*matrixHeight));
 
         for(s32 i = 0; i < matrixHeight; i++) {
           // First, compute the non-diagonal values
+          // This uses the results from the diagonal inverse computation from previous iterations of i
+          const InType * restrict pA_yi = A.Pointer(i, 0);
+          OutType * restrict pL_yi = L.Pointer(i, 0);
+
+          for(s32 j = 0; j < i; j++) {
+            OutType * restrict pL_yj = L.Pointer(j, 0);
+
+            IntermediateType sum = pA_yi[j];
+            for(s32 k = 0; k < j; k++) {
+              const IntermediateType value1 = static_cast<IntermediateType>(pL_yi[k]);
+              const IntermediateType value2 = static_cast<IntermediateType>(pL_yj[k]);
+              sum -= value1*value2;
+            }
+
+            pL_yi[j] = static_cast<OutType>(sum*diagonalInverses[j]);
+          } // for(s32 j = 0; j < i; j++)
+
+          // Second, compute the diagonal and its inverse
+          {
+            IntermediateType sum = pA_yi[i];
+            for(s32 k = 0; k < i; k++) {
+              const IntermediateType value = static_cast<IntermediateType>(pL_yi[k]);
+              sum -= value*value;
+            }
+
+            if(sum < minStableValue)
+              return RESULT_FAIL_NUMERICAL;
+
+            // TODO: change this f32 square root to f64 if IntermediateType==f64
+            const IntermediateType sumRoot = static_cast<IntermediateType>(sqrtf(static_cast<f32>(sum)));
+            pL_yi[i] = static_cast<OutType>(sumRoot);
+            diagonalInverses[i] = static_cast<IntermediateType>(1) / sumRoot;
+          }
+        } // for(s32 i = 0; i < m; i++)
+
+#ifdef USE_OPENCV_COMPLIENT_VERSION_OF_CHOLESKY
+        // 1. The openCV version of Cholesky is not correct, because the diagonal values are the inverses of a real Cholesky decomposition
+        // 2. It uses 64-bit intermediate values
+        for(s32 i = 0; i < matrixHeight; i++) {
           const Type * restrict pA_yi = A.Pointer(i, 0);
           Type * restrict pL_yi = L.Pointer(i, 0);
 
           for(s32 j = 0; j < i; j++) {
             Type * restrict pL_yj = L.Pointer(j, 0);
 
-            f64 sum = pA_yi[j];
+            f64 s = pA_yi[j];
             for(s32 k = 0; k < j; k++) {
-              sum -= pL_yi[k]*pL_yj[k];
+              s -= pL_yi[k]*pL_yj[k];
             }
 
-            pL_yi[j] = static_cast<Type>(sum*diagonalInverses[j]);
-          } // for(s32 j = 0; j < i; j++)
-
-          // Second, compute the diagonal and its inverse
-          {
-            f64 sum = pA_yi[i];
-            for(s32 k = 0; k < i; k++) {
-              const Type value = pL_yi[k];
-              sum -= value*value;
-            }
-
-            const f64 sumRoot = sqrt(sum);
-            pL_yi[i] = static_cast<Type>(sumRoot);
-            diagonalInverses[i] = 1.0 / sumRoot;
+            pL_yi[j] = (Type)(s*pL_yj[j]);
           }
-        } // for(s32 i = 0; i < m; i++)
+
+          f64 s = pA_yi[i];
+          for(s32 k = 0; k < i; k++) {
+            double t = pL_yi[k];
+            s -= t*t;
+          }
+
+          if( s < std::numeric_limits<Type>::epsilon() )
+            return RESULT_FAIL_NUMERICAL;
+
+          pL_yi[i] = (Type)(1./std::sqrt(s));
+        }
+#endif // USE_OPENCV_COMPLIENT_VERSION_OF_CHOLESKY
 
         return RESULT_OK;
       }
