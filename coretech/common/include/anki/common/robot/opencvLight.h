@@ -5,6 +5,7 @@
 
 #include "anki/common/robot/array2d.h"
 #include "anki/common/robot/fixedLengthList.h"
+#include "anki/common/robot/flags_declarations.h"
 
 namespace Anki
 {

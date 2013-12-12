@@ -81,14 +81,26 @@ namespace Anki
       template<typename InType, typename OutType> Result MultiplyTranspose(const Array<InType> &in1, const Array<InType> &in2Transposed, Array<OutType> &out);
 
       //
-      // Linear Solvers
+      // Linear Algebra and Linear Solvers
       //
+
+      // Compute the Cholesky-Banachiewicz decomposition, to return a lower-diagonal matrix L such that A=L*L'
+      template<typename Type> Result CholeskyDecomposition(
+        const Array<Type> &A, //!< Input A Matrix
+        Array<Type> &L,       //!< Output upper-diagonal L matrix
+        MemoryStack scratch   //!< Requires at least sizeof(f64)*A.get_size(0) bytes
+        );
+
+      template<typename Type> Result SolveWithUpperTriangular(
+        const Array<Type> &L, //!< Input upper-diagonal L matrix (such as computed by CholeskyDecomposition)
+        Array<Type> &bx       //!< Input b matrix and output x solution
+        );
 
       // Solves Ax = b
       // Specifically, it uses SVD to minimize ||Ax - b||
       // Note that the A, b, and x matrices are transposed (this is because for large numbers of samples, transposed inputs are liable to be faster)
-      Result SolveLeastSquares_f32(Array<f32> &At, const Array<f32> &bt, Array<f32> &xt, MemoryStack scratch);
-      Result SolveLeastSquares_f64(Array<f64> &At, const Array<f64> &bt, Array<f64> &xt, MemoryStack scratch);
+      Result SolveLeastSquaresWithSVD_f32(Array<f32> &At, const Array<f32> &bt, Array<f32> &xt, MemoryStack scratch);
+      Result SolveLeastSquaresWithSVD_f64(Array<f64> &At, const Array<f64> &bt, Array<f64> &xt, MemoryStack scratch);
 
       //
       // Matrix structure operations

@@ -71,6 +71,33 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, CholeskyDecomposition)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  const f32 A_data[15] = {
+    2.7345f, 1.8859f, 2.0785f,
+    1.8859f, 2.2340f, 2.0461f,
+    2.0785f, 2.0461f, 2.7591f};
+
+  Array<f32> A(3,3,ms);
+  Array<f32> L(3,3,ms);
+
+  ASSERT_TRUE(A.IsValid());
+  ASSERT_TRUE(L.IsValid());
+
+  A.Set(A_data, 9);
+
+  ASSERT_TRUE(Matrix::CholeskyDecomposition(A, L, ms) == RESULT_OK);
+
+  A.Print("A");
+  L.Print("L");
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, ExplicitPrintf)
 {
   const u32 hex1 = 0x40000000;
@@ -279,7 +306,7 @@ GTEST_TEST(CoreTech_Common, LinearLeastSquares32)
   bt[0][1] = 0.546881519204984f;
   bt[0][2] = 0.957506835434298f;
 
-  ASSERT_TRUE(Matrix::SolveLeastSquares_f32(At, bt, xt, ms) == RESULT_OK);
+  ASSERT_TRUE(Matrix::SolveLeastSquaresWithSVD_f32(At, bt, xt, ms) == RESULT_OK);
 
   Array<f32> xt_groundTruth(1,2,ms);
   xt_groundTruth[0][0] = 1.28959732768902f;
@@ -311,7 +338,7 @@ GTEST_TEST(CoreTech_Common, LinearLeastSquares64)
   bt[0][1] = 0.546881519204984;
   bt[0][2] = 0.957506835434298;
 
-  ASSERT_TRUE(Matrix::SolveLeastSquares_f64(At, bt, xt, ms) == RESULT_OK);
+  ASSERT_TRUE(Matrix::SolveLeastSquaresWithSVD_f64(At, bt, xt, ms) == RESULT_OK);
 
   Array<f64> xt_groundTruth(1,2,ms);
   xt_groundTruth[0][0] = 1.28959732768902;

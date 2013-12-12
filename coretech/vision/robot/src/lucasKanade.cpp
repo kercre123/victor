@@ -921,7 +921,7 @@ namespace Anki
           Array<f32> update(1,numSystemParameters,memory);
 
           BeginBenchmark("IterativelyRefineTrack.solveForUpdate");
-          if(Matrix::SolveLeastSquares_f32(AWAt, b, update, memory) != RESULT_OK)
+          if(Matrix::SolveLeastSquaresWithSVD_f32(AWAt, b, update, memory) != RESULT_OK)
             return RESULT_FAIL;
           EndBenchmark("IterativelyRefineTrack.solveForUpdate");
 

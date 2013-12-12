@@ -236,6 +236,158 @@ namespace Anki
         return RESULT_OK;
       } // template<typename InType, typename OutType> Result MultiplyTranspose(const Array<InType> &in1, const Array<InType> &in2Transposed, Array<OutType> &out)
 
+      template<typename Type> Result CholeskyDecomposition(
+        const Array<Type> &A, //!< Input A Matrix
+        Array<Type> &L,       //!< Output upper-diagonal L matrix
+        MemoryStack scratch   //!< Requires at least sizeof(f64)*A.get_size(0) bytes
+        )
+      {
+        const s32 matrixHeight = A.get_size(0);
+
+        AnkiConditionalErrorAndReturnValue(A.IsValid(),
+          RESULT_FAIL, "CholeskyDecomposition", "A is not valid");
+
+        AnkiConditionalErrorAndReturnValue(L.IsValid(),
+          RESULT_FAIL, "CholeskyDecomposition", "L is not valid");
+
+        AnkiConditionalErrorAndReturnValue(matrixHeight == A.get_size(1),
+          RESULT_FAIL, "CholeskyDecomposition", "A is not square");
+
+        AnkiConditionalErrorAndReturnValue(L.get_size(0) == matrixHeight && L.get_size(1) == matrixHeight,
+          RESULT_FAIL, "CholeskyDecomposition", "A and L are not the same size");
+
+        AnkiConditionalErrorAndReturnValue(A.Pointer(0,0) != L.Pointer(0,0),
+          RESULT_FAIL, "CholeskyDecomposition", "A and L must be different matrices");
+
+        // TODO: check if symmetric and positive-definite
+
+        // TODO: This function always uses f64 as an intermediate, but if it's stable enough, this
+        //       could later be shifted to Type (or f32)
+
+        //const f32 minStableValue = Anki::Embedded::Flags::numeric_limits<f32>::epsilon();
+
+        ////f64 * restrict diagonalInverses = reinterpret_cast<f64*>(scratch.Allocate(sizeof(f64)*matrixHeight));
+        //Type * restrict diagonalInverses = reinterpret_cast<Type*>(scratch.Allocate(sizeof(Type)*matrixHeight));
+
+        //// First, compute the diagonals and their inverses
+        //for(s32 i = 0; i < matrixHeight; i++) {
+        //  const Type * restrict pA_yi = A.Pointer(i, 0);
+        //  Type * restrict pL_yi = L.Pointer(i, 0);
+
+        //  //f64 sum = pA_yi[i];
+        //  Type sum = pA_yi[i];
+        //  for(s32 k = 0; k < i; k++) {
+        //    const Type value = pL_yi[k];
+        //    sum -= value*value;
+        //  }
+
+        //  /*const f64 sumRoot = sqrt(sum);
+        //  pL_yi[i] = static_cast<Type>(sumRoot);
+        //  diagonalInverses[i] = 1.0 / sumRoot;*/
+        //  const Type sumRoot = sqrtf(sum);
+        //  pL_yi[i] = sumRoot;
+        //  diagonalInverses[i] = static_cast<Type>(1.0) / sumRoot;
+        //} // for(s32 i = 0; i < matrixHeight; i++)
+
+        //// Second, compute the non-diagonal values
+        //for(s32 i = 1; i < matrixHeight; i++) {
+        //  const Type * restrict pA_yi = A.Pointer(i, 0);
+        //  Type * restrict pL_yi = L.Pointer(i, 0);
+
+        //  for(s32 j = 0; j < i; j++) {
+        //    Type * restrict pL_yj = L.Pointer(j, 0);
+
+        //    f64 sum = pA_yi[j];
+        //    for(s32 k = 0; k < j; k++) {
+        //      sum -= pL_yi[k]*pL_yj[k];
+        //    }
+
+        //    pL_yi[j] = static_cast<Type>(sum*diagonalInverses[j]);
+        //  } // for(s32 j = 0; j < i; j++)
+        //} // for(s32 i = 0; i < m; i++)
+
+        const f32 minStableValue = Anki::Embedded::Flags::numeric_limits<f32>::epsilon();
+
+        f64 * restrict diagonalInverses = reinterpret_cast<f64*>(scratch.Allocate(sizeof(f64)*matrixHeight));
+
+        for(s32 i = 0; i < matrixHeight; i++) {
+          // First, compute the non-diagonal values
+          const Type * restrict pA_yi = A.Pointer(i, 0);
+          Type * restrict pL_yi = L.Pointer(i, 0);
+
+          for(s32 j = 0; j < i; j++) {
+            Type * restrict pL_yj = L.Pointer(j, 0);
+
+            f64 sum = pA_yi[j];
+            for(s32 k = 0; k < j; k++) {
+              sum -= pL_yi[k]*pL_yj[k];
+            }
+
+            pL_yi[j] = static_cast<Type>(sum*diagonalInverses[j]);
+          } // for(s32 j = 0; j < i; j++)
+
+          // Second, compute the diagonal and its inverse
+          {
+            f64 sum = pA_yi[i];
+            for(s32 k = 0; k < i; k++) {
+              const Type value = pL_yi[k];
+              sum -= value*value;
+            }
+
+            const f64 sumRoot = sqrt(sum);
+            pL_yi[i] = static_cast<Type>(sumRoot);
+            diagonalInverses[i] = 1.0 / sumRoot;
+          }
+        } // for(s32 i = 0; i < m; i++)
+
+        return RESULT_OK;
+      }
+
+      //template<typename Type> Result SolveWithCholesky(
+      //  const Array<Type> &L, //!< Input upper-diagonal L matrix (such as computed by CholeskyDecomposition)
+      //  Array<Type> &bx       //!< Input b matrix and output x solution
+      //  )
+      //{
+      //  //template<typename Type> static inline bool CholImpl(Type* A, size_t astep, int m, Type* b, size_t bstep, int n)
+      //  // LLt x = b
+      //  // 1: L y = b
+      //  // 2. Lt x = y
+
+      //  //[ L00             ]  y0   b0
+      //  //[ L10 L11         ]  y1 = b1
+      //  //[ L20 L21 L22     ]  y2   b2
+      //  //[ L30 L31 L32 L33 ]  y3   b3
+
+      //  //[ L00 L10 L20 L30 ]  x0   y0
+      //  //[     L11 L21 L31 ]  x1 = y1
+      //  //[         L22 L32 ]  x2   y2
+      //  //[             L33 ]  x3   y3
+
+      //  for( i = 0; i < m; i++ )
+      //  {
+      //    for( j = 0; j < n; j++ )
+      //    {
+      //      s = b[i*bstep + j];
+      //      for( k = 0; k < i; k++ )
+      //        s -= pL_yi[k]*b[k*bstep + j];
+      //      b[i*bstep + j] = (Type)(s*pL_yi[i]);
+      //    }
+      //  }
+
+      //  for( i = m-1; i >= 0; i-- )
+      //  {
+      //    for( j = 0; j < n; j++ )
+      //    {
+      //      s = b[i*bstep + j];
+      //      for( k = m-1; k > i; k-- )
+      //        s -= L[k*astep + i]*b[k*bstep + j];
+      //      b[i*bstep + j] = (Type)(s*pL_yi[i]);
+      //    }
+      //  }
+
+      //  return true;
+      //}
+
       template<typename TypeIn, typename TypeOut> Result Reshape(const bool isColumnMajor, const Array<TypeIn> &in, Array<TypeOut> &out)
       {
         const s32 inHeight = in.get_size(0);
