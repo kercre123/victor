@@ -140,13 +140,15 @@ classdef CozmoVisionProcessor < handle
         function Update(this)
                         
             % Read whatever is available in the serial port:
-            newData = row(uint8(fread(this.serialDevice)));
-            
-            if isempty(newData)
+            numBytes = this.serialDevice.BytesAvailable; 
+            if numBytes < 80*60
+                pause(.01)
                 return;
             end
             
-            this.serialBuffer = [this.serialBuffer newData];
+            newData = row(fread(this.serialDevice, [1 numBytes], 'uint8'));
+            
+            this.serialBuffer = [this.serialBuffer uint8(newData)];
            
             this.StatusMessage(3, 'Received %d bytes. Buffer now %d bytes long.\n', ...
                 length(newData), length(this.serialBuffer));
@@ -203,8 +205,6 @@ classdef CozmoVisionProcessor < handle
                 % buffer, to hopefully have its remainder appended on the 
                 % next Update.
                 this.serialBuffer(1:(headerIndex(end)-1)) = [];
-            else
-                this.serialBuffer = [];
             end
             
         end % FUNCTION: Update()
@@ -426,6 +426,8 @@ classdef CozmoVisionProcessor < handle
             % actual message data
             msgID = this.messageIDs.(messageName);
             fwrite(this.serialDevice, [uint8(this.HEADER) msgID row(packet)]);
+            fprintf('Sent "%s" packet with msgID=%d and %d bytes.\n', ...
+                messageName, msgID, length(packet));
         end % FUNCTION: SendPacket()
         
         function [distError, midPointErr, angleError] = computeError(this)
