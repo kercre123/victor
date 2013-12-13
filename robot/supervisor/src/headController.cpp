@@ -19,7 +19,8 @@ namespace Anki {
       Radians angleError_   = 1e9f;
       bool inPosition_  = true;
      
-      f32 radSpeed_ = 0.f;
+      // TODO: Unused, remove?
+      //f32 radSpeed_ = 0.f;
       
       bool enable_ = true;
       

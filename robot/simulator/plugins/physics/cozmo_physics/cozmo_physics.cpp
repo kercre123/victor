@@ -195,7 +195,7 @@ void webots_physics_draw(int pass, const char *view) {
     RobotPathMap_t::iterator robotPathMapIt;
     for (robotPathMapIt = robotPathMap.begin(); robotPathMapIt != robotPathMap.end(); robotPathMapIt++) {
       PathMap_t::iterator pathMapIt;
-      int robotID = robotPathMapIt->first;
+      //int robotID = robotPathMapIt->first;
       for (pathMapIt = robotPathMapIt->second.begin(); pathMapIt != robotPathMapIt->second.end(); pathMapIt++) {
         Path_t::iterator pathIt;
         int pathID = pathMapIt->first;
