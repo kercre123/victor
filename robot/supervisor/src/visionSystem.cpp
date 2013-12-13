@@ -56,18 +56,6 @@ namespace Anki {
       const u8 MAX_TRACKING_FAILURES = 5;
       u8 numTrackFailures_ = 0;
       
-#if USE_OFFBOARD_VISION
-      const u32 PROCESSING_TIMEOUT = 1000000; // in microseconds
-      u8  waitingForProcessingResult_ = 0;
-      u32 waitingForProcessingStartTime_ = 0;
-#endif
-      
-      // Pointers to "Mailboxes" for communicating information back to
-      // mainExecution()
-      VisionSystem::BlockMarkerMailbox* blockMarkerMailbox_ = NULL;
-      VisionSystem::MatMarkerMailbox*   matMarkerMailbox_   = NULL;
-      VisionSystem::DockingMailbox*     dockingMailbox_     = NULL;
-      
       u8 msgBuffer_[256];
       
       f32 matCamPixPerMM_ = 1.f;
@@ -116,9 +104,7 @@ namespace Anki {
 #pragma mark --- VisionSystem Method Implementations ---
       
       
-      ReturnCode Init(BlockMarkerMailbox*     blockMarkerMailbox,
-                      MatMarkerMailbox*       matMarkerMailbox,
-                      DockingMailbox*         dockingMailbox)
+      ReturnCode Init(void)
       {
         isInitialized_ = false;
         
@@ -134,24 +120,6 @@ namespace Anki {
           return EXIT_FAILURE;
         }
         
-        if(blockMarkerMailbox == NULL) {
-          PRINT("VisionSystem::Init() - BlockMarkerMailbox pointer is NULL!\n");
-          return EXIT_FAILURE;
-        }
-        blockMarkerMailbox_ = blockMarkerMailbox;
-        
-        if(matMarkerMailbox == NULL) {
-          PRINT("VisionSystem::Init() - MatMarkerMailbox pointer is NULL!\n");
-          return EXIT_FAILURE;
-        }
-        matMarkerMailbox_ = matMarkerMailbox;
-        
-        if(dockingMailbox == NULL) {
-          PRINT("VisionSystem::Init() - DockingMailbox pointer is NULL!\n");
-          return EXIT_FAILURE;
-        }
-        dockingMailbox_ = dockingMailbox;
-        
         // Compute the resolution of the mat camera from its FOV and height
         // off the mat:
         f32 matCamHeightInPix = ((static_cast<f32>(matCamInfo_->nrows)*.5f) /
@@ -163,19 +131,19 @@ namespace Anki {
         
         // Register all the message IDs we need with Matlab:
         HAL::SendMessageID("CozmoMsg_BlockMarkerObserved",
-                           GET_MESSAGE_ID(BlockMarkerObserved));
+                           GET_MESSAGE_ID(Messages::BlockMarkerObserved));
         
         HAL::SendMessageID("CozmoMsg_TemplateInitialized",
-                           GET_MESSAGE_ID(TemplateInitialized));
+                           GET_MESSAGE_ID(Messages::TemplateInitialized));
         
         HAL::SendMessageID("CozmoMsg_TotalBlocksDetected",
-                           GET_MESSAGE_ID(TotalBlocksDetected));
+                           GET_MESSAGE_ID(Messages::TotalBlocksDetected));
                
         HAL::SendMessageID("CozmoMsg_DockingErrorSignal",
-                           GET_MESSAGE_ID(DockingErrorSignal));
+                           GET_MESSAGE_ID(Messages::DockingErrorSignal));
         
         //HAL::SendMessageID("CozmoMsg_HeadCameraCalibration",
-        //                   GET_MESSAGE_ID(HeadCameraCalibration));
+        //                   GET_MESSAGE_ID(Messages::HeadCameraCalibration));
         
         // TODO: Update this to send mat and head cam calibration separately
         PRINT("VisionSystem::Init(): Sending head camera calibration to "
@@ -183,7 +151,7 @@ namespace Anki {
         
         // Create a camera calibration message and send it to the offboard
         // vision processor
-        CozmoMsg_HeadCameraCalibration msg = {
+        Messages::HeadCameraCalibration msg = {
           headCamInfo_->focalLength_x,
           headCamInfo_->focalLength_y,
           headCamInfo_->fov_ver,
@@ -196,7 +164,7 @@ namespace Anki {
         
         //HAL::USBSendMessage(&msg, GET_MESSAGE_ID(HeadCameraCalibration));
         HAL::USBSendPacket(HAL::USB_VISION_COMMAND_CALIBRATION,
-                           &msg, sizeof(CozmoMsg_HeadCameraCalibration));
+                           &msg, sizeof(Messages::HeadCameraCalibration));
         
 #endif
         
@@ -236,6 +204,55 @@ namespace Anki {
         return EXIT_SUCCESS;
       }
       
+      void CheckForDockingBlock(const u16 blockType)
+      {
+        // If we have a block to dock with set, see if this was it
+        if(dockingBlock_ > 0 && dockingBlock_ == blockType)
+        {
+          // This will just start docking with the first block we see
+          // that matches the block type.
+          // TODO: Something smarter about seeing the block in the expected place?
+          isDockingBlockFound_ = true;
+          
+        }
+      }
+      
+      void SetDockingMode(const bool isTemplateInitalized)
+      {
+        if(isTemplateInitalized)
+        {
+          PRINT("Tracking template initialized, switching to DOCKING mode.\n");
+          isTemplateInitialized_ = true;
+          isDockingBlockFound_   = true;
+          
+          // If we successfully initialized a tracking template,
+          // switch to docking mode.  Otherwise, we'll keep looking
+          // for the block and try again
+          mode_ = DOCKING;
+        }
+        else {
+          isTemplateInitialized_ = false;
+          isDockingBlockFound_   = false;
+        }
+      }
+      
+      void UpdateTrackingStatus(const bool didTrackingSucceed)
+      {
+        if(didTrackingSucceed) {
+          // Reset the failure counter
+          numTrackFailures_ = 0;
+        }
+        else {
+          ++numTrackFailures_;
+          if(numTrackFailures_ == MAX_TRACKING_FAILURES) {
+            
+            // This resets docking, puttings us back in LOOKING_FOR_BLOCKS mode
+            SetDockingBlock(dockingBlock_);
+          }
+        }
+      } // UpdateTrackingStatus()
+      
+      
       ReturnCode Update(u8* memoryBuffer)
       {
         ReturnCode retVal = EXIT_SUCCESS;
@@ -247,28 +264,15 @@ namespace Anki {
         //       (and remove the downsampling from USBSendFrame()
         
 #if USE_OFFBOARD_VISION
-        if(waitingForProcessingResult_ > 0)
+        
+        //PRINT("VisionSystem::Update(): waiting for processing result.\n");
+        
+        Messages::ProcessUARTMessages();
+        
+        if(Messages::StillLookingForID())
         {
-          //PRINT("VisionSystem::Update(): waiting for processing result.\n");
-
-          if(HAL::USBGetNextPacket(msgBuffer_) == EXIT_SUCCESS &&
-             CommandHandler::ProcessMessage(msgBuffer_) == waitingForProcessingResult_)
-          {
-              // Got the result message we were looking for, go back to
-              // processing
-              waitingForProcessingResult_ = 0;
-          }
-          else if (HAL::GetMicroCounter() - waitingForProcessingStartTime_ > PROCESSING_TIMEOUT)
-          {
-            PRINT("Timed out waiting for processing result %d. Resetting.\n",
-                  waitingForProcessingResult_);
-            
-            waitingForProcessingResult_ = 0;
-          }
-          else {
-            // Still waiting, skip further vision processing below.
-            return EXIT_SUCCESS;
-          }
+          // Still waiting, skip further vision processing below.
+          return EXIT_SUCCESS;
         }
 #endif
 
@@ -287,28 +291,19 @@ namespace Anki {
             
             CaptureHeadFrame(frame);
             
+            // Note that if a docking block was specified and we see it while
+            // looking for blocks, a tracking template will be initialized and,
+            // if that's successful, we will switch to DOCKING mode.
             retVal = LookForBlocks(frame);
             
-#ifndef USE_OFFBOARD_VISION
-            // In offboard vision mode, template initialization is part of the
-            // looking-for-blocks (i.e. detection) process and is handled by the
-            // message sent back over USB.
-            if(isDockingBlockFound_) {
-              if(InitTemplate(frame) == EXIT_SUCCESS) {
-                // If we successfully initialize a tracking template,
-                // switch to docking mode.  Otherwise, we'll keep looking
-                // for the block and try again
-                mode_ = DOCKING;
-              }
-            }
-#endif
             break;
           }
             
           case DOCKING:
           {
             if(not isTemplateInitialized_) {
-              PRINT("VisionSystem::Update(): Reached DOCKING mode without template initialized.\n");
+              PRINT("VisionSystem::Update(): Reached DOCKING mode without "
+                    "template initialized.\n");
               retVal = EXIT_FAILURE;
             }
             else {
@@ -319,11 +314,16 @@ namespace Anki {
               
               CaptureHeadFrame(frame);
               
+              // If tracking fails [enough times in a row], we will go back to
+              // looking for the block we wanted to dock with.
+              // This failure can be indicated either by an EXIT_FAILURE return
+              // code, or by a flag in a message returned over USB by the
+              // offboard vision processor.  If the latter, the
+              // UpdateTrackingStatus() call will be made by the message
+              // processing system.  (In offboard vision mode, TrackTemplate
+              // generally always return EXIT_SUCCESS.)
               if(TrackTemplate(frame) == EXIT_FAILURE) {
-                // Lost track.  Reset and go back to trying to find the
-                // block we want to dock with.
-                SetDockingBlock(dockingBlock_);
-                mode_ = LOOKING_FOR_BLOCKS;
+                UpdateTrackingStatus(false);
               }
             }
             break;
@@ -408,8 +408,7 @@ namespace Anki {
         HAL::USBSendFrame(frame.data, frame.resolution, DETECTION_RESOLUTION,
                           HAL::USB_VISION_COMMAND_DETECTBLOCKS);
         
-        waitingForProcessingResult_ = GET_MESSAGE_ID(TotalBlocksDetected);
-        waitingForProcessingStartTime_ = HAL::GetMicroCounter();
+        Messages::LookForID( GET_MESSAGE_ID(Messages::TotalBlocksDetected) );
         
 #else  // NOT defined(USE_MATLAB_FOR_HEAD_CAMERA)
         
@@ -417,12 +416,18 @@ namespace Anki {
         // For each block that's found, create a CozmoMsg_ObservedBlockMarkerMsg
         // and process it.
         
-        // for( each marker) {
-        //   CozmoMsg_ObservedBlockMarkerMsg msg;
-        //   ProcessMessage(msg);
-        //   If docking block set, check to see if this is it and
-        //      init tracking template if so
-        // }
+        // for( each marker)
+        {
+          CozmoMsg_BlockMarkerObserved msg;
+          ProcessBlockMarkerObservedMessage(msg);
+          
+          // Processing the message could have set isDockingBlockFound to true
+          if(isDockingBlockFound_) {
+            if(InitTemplate(frame) == EXIT_SUCCESS) {
+              SetDockingMode(static_cast<bool>(msg->success));
+            }
+          }
+        }
         
 #endif // defined(USE_MATLAB_FOR_HEAD_CAMERA)
         
@@ -442,8 +447,7 @@ namespace Anki {
         HAL::USBSendFrame(frame.data, frame.resolution, MAT_LOCALIZATION_RESOLUTION,
                           HAL::USB_VISION_COMMAND_MATLOCALIZATION);
         
-        waitingForProcessingResult_ = GET_MESSAGE_ID(MatMarkerObserved);
-        waitingForProcessingStartTime_ = HAL::GetMicroCounter();
+        Messages::LookForID( GET_MESSAGE_ID(Messages::MatMarkerObserved) );
         
 /*
         const s32 nrows = static_cast<s32>(frame.height);
@@ -578,8 +582,7 @@ namespace Anki {
         HAL::USBSendFrame(frame.data, frame.resolution, TRACKING_RESOLUTION,
                           HAL::USB_VISION_COMMAND_TRACK);
         
-        waitingForProcessingResult_ = GET_MESSAGE_ID(DockingErrorSignal);
-        waitingForProcessingStartTime_ = HAL::GetMicroCounter();
+        Messages::LookForID( GET_MESSAGE_ID(Messages::DockingErrorSignal) );
         
 #else // ONBOARD VISION
         
@@ -595,76 +598,6 @@ namespace Anki {
       } // TrackTemplate()
       
     } // namespace VisionSystem
-    
-    namespace CommandHandler {
-      void ProcessBlockMarkerObservedMessage(const u8* buffer)
-      {
-        const CozmoMsg_BlockMarkerObserved* msg = reinterpret_cast<const CozmoMsg_BlockMarkerObserved*>(buffer);
-        
-        blockMarkerMailbox_->putMessage(*msg);
-        
-        // If we have a block to dock with set, see if this was it
-        if(dockingBlock_ > 0 && dockingBlock_ == msg->blockType)
-        {
-          // This will just start docking with the first block we see
-          // that matches the block type.
-          // TODO: Something smarter about seeing the block in the expected place?
-          isDockingBlockFound_ = true;
-          
-        }
-      }
-      
-      void ProcessTotalBlocksDetectedMessage(const u8* buffer)
-      {
-        const CozmoMsg_TotalBlocksDetected* msg = reinterpret_cast<const CozmoMsg_TotalBlocksDetected*>(buffer);
-        
-        PRINT("Saw %d block markers.\n", msg->numBlocks);
-      }
-      
-      void ProcessTemplateInitializedMessage(const u8* buffer)
-      {
-        const CozmoMsg_TemplateInitialized* msg = reinterpret_cast<const CozmoMsg_TemplateInitialized*>(buffer);
-        
-        if(msg->success) {
-          PRINT("Tracking template initialized, switching to DOCKING mode.\n");
-          isTemplateInitialized_ = true;
-          isDockingBlockFound_   = true;
-          
-          // If we successfully initialized a tracking template,
-          // switch to docking mode.  Otherwise, we'll keep looking
-          // for the block and try again
-          mode_ = DOCKING;
-        }
-        else {
-          isTemplateInitialized_ = false;
-          isDockingBlockFound_   = false;
-        }
-      }
-      
-      void ProcessDockingErrorSignalMessage(const u8* buffer)
-      {
-        const CozmoMsg_DockingErrorSignal* msg = reinterpret_cast<const CozmoMsg_DockingErrorSignal*>(buffer);
-        
-        if(msg->didTrackingSucceed) {
-          // Reset the failure counter
-          numTrackFailures_ = 0;
-        }
-        else {
-          ++numTrackFailures_;
-          if(numTrackFailures_ == MAX_TRACKING_FAILURES) {
-            // This resets docking, puttings us back in LOOKING_FOR_BLOCKS mode
-            VisionSystem::SetDockingBlock(dockingBlock_);
-          }
-        }
-        
-        // Just pass the docking error signal along to the mainExecution to
-        // deal with. Note that if the message indicates tracking failed,
-        // the mainExecution thread should handle it, and put the vision
-        // system back in LOOKING_FOR_BLOCKS mode.
-        dockingMailbox_->putMessage(*msg);
-      }
-    } // namespace CommandHandler
-    
     
   } // namespace Cozmo
 } // namespace Anki

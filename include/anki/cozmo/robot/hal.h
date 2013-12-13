@@ -94,6 +94,7 @@ namespace Anki
 {
   namespace Cozmo
   {
+    
     namespace HAL
     {
 
@@ -137,9 +138,6 @@ namespace Anki
       // Gripper control
       bool IsGripperEngaged();
       
-      // Communications
-      bool IsConnected();
-      
       // Misc
       bool IsInitialized();
       void UpdateDisplay();
@@ -158,23 +156,35 @@ namespace Anki
 
       // .....................
 
-
-      // Audio
+#pragma mark --- Audio ---
+      /////////////////////////////////////////////////////////////////////
+      // AUDIO
+      //
+      
       const u32 AUDIO_SAMPLE_SIZE = 480;
 
       // Play an audio sample at 24 kHz. Returns true if it was played.
       bool AudioPlay(s16 buffer[AUDIO_SAMPLE_SIZE]);
 
-      // Flash memory
+#pragma mark --- Flash Memory ---
+      /////////////////////////////////////////////////////////////////////
+      // FLASH MEMORY
+      //
+      
       const u32 FLASH_PAGE_SIZE = 4 * 1024;
       void FlashWrite(u32 page, u8 data[FLASH_PAGE_SIZE]);
       void FlashRead(u32 page, u8 data[FLASH_PAGE_SIZE]);
 
+#pragma mark --- USB / UART ---
+      /////////////////////////////////////////////////////////////////////
       // USB / UART
+      //
       
       // Packet header/footer:
       const u8 USB_PACKET_HEADER[4] = {0xBE, 0xEF, 0xF0, 0xFF}; // BEEFF0FF
       const u8 USB_PACKET_FOOTER[4] = {0xFF, 0x0F, 0xFE, 0xEB}; // FF0FFEEB
+      
+      void UARTInit();
       
       // Send a variable length buffer
       void USBSendBuffer(u8* buffer, u32 size);
@@ -185,20 +195,29 @@ namespace Anki
       // Get a character from the serial buffer.
       // Timeout is in microseconds.
       // Returns < 0 if no character available within timeout.
-      s32 USBGetChar(u32 timeout = 0);
+      s32 USBGetChar(void);
+      s32 USBGetChar(u32 timeout);
 
       // Peeks at the offset'th character in serial receive buffer.
       // (The next character available is at an offset of 0.)
       // Returns < 0 if no character available.
       s32 USBPeekChar(u32 offset = 0);
       
+      // Returns an entire message packet in buffer, if one is available.
+      // Until a valid packet header is found and the entire packet is
+      // available, NO_MESSAGE_ID will be returned.  Once a valid header
+      // is found and returned, its MessageID is returned.
+      Messages::ID USBGetNextMessage(u8 *buffer);
+      
       // Send a byte.
       // Prototype matches putc for printf.
       int USBPutChar(int c);
 
-      void UARTInit();
+#pragma mark --- Motors ---
+      /////////////////////////////////////////////////////////////////////
+      // MOTORS
+      //
       
-      // Motors
       enum MotorID
       {
         MOTOR_LEFT_WHEEL = 0,
@@ -226,14 +245,19 @@ namespace Anki
       // Measures the unitless load on all motors
       s32 MotorGetLoad();
 
-      // Cameras
+#pragma mark --- Cameras ---
+      /////////////////////////////////////////////////////////////////////
+      // CAMERAS
+      // TODO: Add functions for adjusting ROI of cameras?
+      //
+
       typedef enum
       {
         CAMERA_FRONT = 0,
         CAMERA_MAT,
         CAMERA_COUNT
       } CameraID;
-
+      
       typedef enum
       {
         CAMERA_MODE_VGA = 0,
@@ -242,7 +266,7 @@ namespace Anki
         CAMERA_MODE_QQQVGA,
         CAMERA_MODE_QQQQVGA,
         CAMERA_MODE_COUNT,
-
+        
         CAMERA_MODE_NONE = CAMERA_MODE_COUNT
       } CameraMode;
       
@@ -266,45 +290,12 @@ namespace Anki
         { 0xB7,  40,  30, {16, 8, 4, 2, 1} }
       };
       
-      /* Prettier initialization, not supported by Movidius compiler?
-      const CameraModeInfo_t CameraModeInfo[CAMERA_MODE_COUNT] =
-      {
-        // VGA
-        {
-          .header = 0xBA, .width = 640, .height = 480,
-          .downsampleInc = {1, 0, 0, 0, 0}
-        },
-        // QVGA
-        {
-          .header = 0xBC, .width = 320, .height = 240,
-          .downsampleInc = {2, 1, 0, 0, 0}
-        },
-        // QQVGA
-        {
-          .header = 0xB8, .width = 160, .height = 120,
-          .downsampleInc = {4, 2, 1, 0, 0}
-        },
-        // QQQVGA
-        {
-          .header = 0xBD, .width =  80, .height =  60,
-          .downsampleInc = {8, 4, 2, 1, 0}
-        },
-        // QQQQVGA
-        {
-          .header = 0xB7, .width =  40, .height =  30,
-          .downsampleInc = {16, 8, 4, 2, 1}
-        }
-      };
-       */
-      
       enum CameraUpdateMode
       {
         CAMERA_UPDATE_CONTINUOUS = 0,
         CAMERA_UPDATE_SINGLE
       };
 
-      // Cameras
-      // TODO: Add functions for adjusting ROI of cameras?
       void MatCameraInit();
       void FrontCameraInit();
       
@@ -335,7 +326,11 @@ namespace Anki
       // Returns whether or not the specfied camera has received a full frame
       bool CameraIsEndOfFrame(CameraID cameraID);
 
-      // Battery
+#pragma mark --- Battery ---
+      /////////////////////////////////////////////////////////////////////
+      // BATTERY
+      //
+      
       // Get the battery percent between [0, 100]
       u8 BatteryGetPercent();
 
@@ -344,14 +339,24 @@ namespace Anki
 
       // Return whether or not the robot is connected to a charger
       bool BatteryIsOnCharger();
-
+      
+#pragma mark --- UI LEDS ---
+      /////////////////////////////////////////////////////////////////////
       // UI LEDs
+      //
+      
       const u32 LED_CHANNEL_COUNT = 8;
 
       // Set the intensity for each LED channel in the range [0, 255]
       void LEDSet(u8 leds[LED_CHANNEL_COUNT]);
 
-      // Radio
+#pragma mark --- Radio ---
+      /////////////////////////////////////////////////////////////////////
+      // RADIO
+      //
+
+      const u8 RADIO_PACKET_HEADER[2] = {0xBE, 0xEF};
+      
       enum RadioState
       {
         RADIO_STATE_ADVERTISING = 0,
@@ -360,13 +365,19 @@ namespace Anki
 
       const u32 RADIO_BUFFER_SIZE = 100;
       
-      // Returns number of bytes received from the basestation
-      u8 RadioFromBase(u8 buffer[RADIO_BUFFER_SIZE]);
+      bool RadioIsConnected();
+      
+      u32 RadioGetNumBytesAvailable(void);
+      
+      Messages::ID RadioGetNextMessage(u8* buffer);
      
       // Returns true if the message has been sent to the basestation
-      bool RadioToBase(const void *message, const CozmoMessageID msgID);
+      bool RadioSendMessage(const Messages::ID msgID, const void *buffer);
 
-      // Power management
+      /////////////////////////////////////////////////////////////////////
+      // POWER MANAGEMENT
+      //
+      
       enum PowerState
       {
         POWER_STATE_OFF = 0,
@@ -401,13 +412,6 @@ namespace Anki
 
 #if USE_OFFBOARD_VISION
       
-      // TODO: Move these to messageProtocol.h?
-      const u8 USB_SET_CAMERA_MODE_MSG = 0xCA;
-      const u8 SIZEOF_USB_SET_CAMERA_MODE_MSG = 2;
-      
-      const u8 USB_BLOCK_POSE_MSG = static_cast<u8>('E');
-      const u8 SIZEOF_USB_BLOCK_POSE_MSG = 13;
-      
       const u8 USB_MESSAGE_HEADER = 0xDD;
       
       // Bytes to add to USB frame header to tell the offboard processor
@@ -426,7 +430,7 @@ namespace Anki
       
       // Send a command message (from messageProtocol.h)
       // The msgID will determine the size
-      void USBSendMessage(const void* msg, const CozmoMessageID msgID);
+      void USBSendMessage(const void* msg, const Messages::ID msgID);
       
       // Send a frame at the current frame resolution (last set by
       // a call to SetUSBFrameResolution)
@@ -441,12 +445,6 @@ namespace Anki
       // Send an arbitrary packet of data
       void USBSendPacket(const u8 packetType, const void* data, const u32 numBytes);
       
-      // Returns an entire message packet in buffer, if one is available.
-      // Until a valid packet header is found and the entire packet is
-      // available, EXIT_FAILURE will be returned.  Once a valid header
-      // is found and returned, EXIT_SUCCESS is returned.
-      ReturnCode USBGetNextPacket(u8 *buffer);
-
       // Registur a message name with its ID (e.g. for Matlab, which doesn't
       // read messageProtocol.h directly)
       const u8 USB_DEFINE_MESSAGE_ID = 0xD0;

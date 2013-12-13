@@ -310,7 +310,7 @@ int processPacket(const unsigned char *data, const int dataSize,
       //fprintf(stdout, "Valid 0xBEEF message header from robot %d received.\n", i_robot+1);
       
       // First byte in the msgBuffer should be the type of message
-      CozmoMessageID msgID = static_cast<CozmoMessageID>(data[3]);
+      Messages::ID msgID = static_cast<Messages::ID>(data[3]);
       
       // The next byte should be the first byte of the message struct that
       // was sent and will contain the size of the message.

@@ -25,7 +25,7 @@ namespace Anki {
       
       namespace {
         // private members
-        Anki::Embedded::Pose2d currMatPose;
+        ::Anki::Embedded::Pose2d currMatPose;
         
         
         // Localization:

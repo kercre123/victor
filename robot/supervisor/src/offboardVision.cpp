@@ -68,14 +68,14 @@ namespace Anki
       SendFooter(USB_DEFINE_MESSAGE_ID);
     }
     
-    void HAL::USBSendMessage(const void* buffer, const CozmoMessageID msgID)
+    void HAL::USBSendMessage(const void* buffer, const Messages::ID msgID)
     {
       SendHeader(USB_MESSAGE_HEADER);
       
       const u8* msgData = reinterpret_cast<const u8*>(buffer);
       
       USBPutChar(msgID);
-      const u8 size = MessageTable[msgID].size;
+      const u8 size = Messages::LookupTable[msgID].size;
       for(u8 i=0; i<size; ++i) {
         USBPutChar(static_cast<int>(msgData[i]));
       }
@@ -199,20 +199,20 @@ namespace Anki
     } // USBSendFrame()
     
     
-    ReturnCode HAL::USBGetNextPacket(u8 *buffer)
+
+    Messages::ID HAL::USBGetNextMessage(u8 *buffer)
     {
       // Note that this is looking for a packet that starts with a 4-byte
-      // header plus a size byte and a message ID byte.  Unlike the packets
-      // we are sending out with USBSendFrame and USBSendMessage, there is no
-      // footer.
+      // header plus a message ID byte.  Unlike the packets we are sending
+      // out with USBSendFrame and USBSendMessage, there is no footer.
       
-      ReturnCode retVal = EXIT_FAILURE;
+      Messages::ID retVal = Messages::NO_MESSAGE_ID;
       
       //PRINT("USBGetNextPacket(): %d bytes available to read.\n", USBGetNumBytesToRead());
       
-      // We need there to be at least 6 bytes: 4 for the header, 1 for the
-      // size byte and one for the msgID
-      if(USBGetNumBytesToRead() > 4)
+      // We need there to be at least 5 bytes: 4 for the USB packet header, and
+      // 1 for the msgID
+      if(USBGetNumBytesToRead() > 5)
       {
         // Peek at the next four bytes to see if we have a header waiting
         if(USBPeekChar(0) == USB_PACKET_HEADER[0] &&
@@ -220,43 +220,40 @@ namespace Anki
            USBPeekChar(2) == USB_PACKET_HEADER[2] &&
            USBPeekChar(3) == USB_PACKET_HEADER[3])
         {
-          // Peek at the next byte to see what kind of message this is so we can
-          // check how large it will be
-          int nextByte = USBPeekChar(4);
+          // We have a header, so next byte (which we know is availale since
+          // we had 5 bytes to read above) will be the message ID.  We can
+          // then look up the size of the incoming message to see if we have it
+          // all available.
+          Messages::ID msgID = static_cast<Messages::ID>(USBPeekChar(4));
+          const u8 size = Messages::LookupTable[msgID].size;
           
-          if(nextByte >= 0) {
-            // Lookup the expected message size for this message ID.
-            // Add 1 for the msgID byte itself
-            CozmoMessageID msgID = static_cast<CozmoMessageID>(nextByte);
-            const u8 size = MessageTable[msgID].size + 1;
+          // Check to see if we have the whole message (plus ID) available
+          // (note that GetNumBytesToRead() will be including the header, so
+          //  we have to add 5 to size, which only includes the message
+          //  itself, not the header bytes or ID byte)
+          if(USBGetNumBytesToRead() >= (size + 5) )
+          {
+            // If we got here, we're going to read out the whole message into
+            // the return buffer.  First, though, get rid of the header
+            // bytes.
             
-            // Check to see if we have the whole message available
-            // (note that GetNumBytesToRead() will be including the header, so
-            //  we have to add 4 to size, which only includes the message
-            //  itself)
-            if(USBGetNumBytesToRead() >= (size + 4) )
-            {
-              // If got here, we're going to read out the whole message into
-              // the return buffer.  First, though, get rid of the header
-              // bytes.
-              
-              // Toss the 4 header bytes
-              USBGetChar();
-              USBGetChar();
-              USBGetChar();
-              USBGetChar();
-              
-              // Read out the message (including the message ID byte)
-              for(u8 i=0; i<size; ++i) {
-                buffer[i] = USBGetChar();
-              }
-              
-              // Now that we've gotten a whole packet out, return success
-              retVal = EXIT_SUCCESS;
-              
-            } // if enough bytes available
-          } // if nextByte available
-        }
+            // Toss the 4 header bytes and 1 msgID byte
+            USBGetChar(); // BE
+            USBGetChar(); // EF
+            USBGetChar(); // F0
+            USBGetChar(); // FF
+            USBGetChar(); // msgID
+            
+            // Read out the message
+            for(u8 i=0; i<size; ++i) {
+              buffer[i] = USBGetChar();
+            }
+            
+            // Now that we've gotten a whole packet out, return the msg ID
+            retVal = msgID;
+            
+          } // if enough bytes available
+        } // if valid header
         else {
           // If we got here, we've got at least 4 bytes available, but they
           // are not a valid header, so toss the first one as garbage, so we
@@ -266,11 +263,11 @@ namespace Anki
           //  0xXX byte, so that the next time around we will get 0xBEEFF0FF)
           USBGetChar();
         }
-      } // if at least 4 bytes available
+      } // if at least 5 bytes available
       
       return retVal;
       
-    } // USBGetNextPacket()
+    } // USBGetNextMessage()
     
   } // namespace Cozmo
 } // namespace Anki

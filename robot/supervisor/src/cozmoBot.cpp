@@ -58,13 +58,6 @@ namespace Anki {
         // TESTING
         const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_NONE;
         
-        
-        // Create Mailboxes for holding messages from the VisionSystem,
-        // to be relayed up to the Basestation.
-        VisionSystem::BlockMarkerMailbox blockMarkerMailbox_;
-        VisionSystem::MatMarkerMailbox   matMarkerMailbox_;
-        VisionSystem::DockingMailbox     dockErrSignalMailbox_;
-        
         Robot::OperationMode mode_ = INITIALIZING;
         
         bool isCarryingBlock_ = false;
@@ -110,9 +103,7 @@ namespace Anki {
         }
         
         // TODO: Get VisionSystem to work on robot
-        if(VisionSystem::Init(&blockMarkerMailbox_,
-                              &matMarkerMailbox_,
-                              &dockErrSignalMailbox_) == EXIT_FAILURE)
+        if(VisionSystem::Init() == EXIT_FAILURE)
         {
           PRINT("Vision System initialization failed.");
           return EXIT_FAILURE;
@@ -165,9 +156,9 @@ namespace Anki {
         // Once initialization is done, broadcast a message that this robot
         // is ready to go
         PRINT("Robot broadcasting availability message.\n");
-        CozmoMsg_RobotAvailable msg;
+        Messages::RobotAvailable msg;
         msg.robotID = HAL::GetRobotID();
-        HAL::RadioToBase(&msg, GET_MESSAGE_ID(RobotAvailable));
+        HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotAvailable), &msg);
         
         mode_ = INITIALIZING;
 
@@ -212,29 +203,33 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
 
         // Process any messages from the basestation
-        CommandHandler::ProcessIncomingMessages();
+        Messages::ProcessBTLEMessages();
+#ifndef USE_OFFBOARD_VISION
+        // UART messages are handled during longExecution() when using
+        // offboard vision processing.
+        Messages::ProcessUARTMessages();
+#endif
         
         // Check for any messages from the vision system and pass them along to
         // the basestation, update the docking controller, etc.
-        while( matMarkerMailbox_.hasMail() )
+        Messages::MatMarkerObserved matMsg;
+        while( Messages::CheckMailbox(matMsg) )
         {
-          const CozmoMsg_MatMarkerObserved matMsg = matMarkerMailbox_.getMessage();
-          HAL::RadioToBase(&matMsg, GET_MESSAGE_ID(MatMarkerObserved));
+          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::MatMarkerObserved), &matMsg);
         }
         
-        while( blockMarkerMailbox_.hasMail() )
+        Messages::BlockMarkerObserved blockMsg;
+        while( Messages::CheckMailbox(blockMsg) )
         {
-          const CozmoMsg_BlockMarkerObserved blockMsg = blockMarkerMailbox_.getMessage();
-          HAL::RadioToBase(&blockMsg, GET_MESSAGE_ID(BlockMarkerObserved));
-    
+          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BlockMarkerObserved), &blockMsg);
+          
         } // while blockMarkerMailbox has mail
         
         // Get any docking error signal available from the vision system
         // and update our path accordingly.
-        while( dockErrSignalMailbox_.hasMail() )
+        Messages::DockingErrorSignal dockMsg;
+        while( Messages::CheckMailbox(dockMsg) )
         {
-          const CozmoMsg_DockingErrorSignal dockMsg = dockErrSignalMailbox_.getMessage();
-          
           if(dockMsg.didTrackingSucceed) {
             PRINT("Received docking error signal: x_distErr=%.3f, y_horErr=%.3f, "
                   "angleErr=%.1fdeg\n", dockMsg.x_distErr, dockMsg.y_horErr,

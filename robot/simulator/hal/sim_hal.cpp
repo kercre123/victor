@@ -25,7 +25,6 @@ namespace Anki {
 
       // Const paramters / settings
       // TODO: some of these should be defined elsewhere (e.g. comms)
-      const u16 RECV_BUFFER_SIZE = 1024;
       const s32 UNLOCK_HYSTERESIS = 50;
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();
       
@@ -80,12 +79,7 @@ namespace Anki {
       webots::Gyro *leftWheelGyro_;
       webots::Gyro *rightWheelGyro_;
       
-      // For communications with basestation
-      webots::Emitter *tx_;
-      webots::Receiver *rx_;
-      bool isConnected_;
-      unsigned char recvBuf_[RECV_BUFFER_SIZE];
-      s32 recvBufSize_;
+
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -194,35 +188,7 @@ namespace Anki {
           //printf("UNLOCKED!\n");
         }
       }
-      
-      /////////// Comms /////////////
-      void ManageRecvBuffer()
-      {
-        // Check for incoming data.
-        // Add it to receive buffer.
-        // Check for special "radio-level" messages (i.e. pings, connection requests)
-        // and respond accordingly.
-        
-        int dataSize;
-        const void* data;
-        
-        // Read receiver for as long as it is not empty.
-        while (rx_->getQueueLength() > 0) {
-          
-          // Get head packet
-          data = rx_->getData();
-          dataSize = rx_->getDataSize();
-          
-          // Copy data to receive buffer
-          memcpy(&recvBuf_[recvBufSize_], data, dataSize);
-          recvBufSize_ += dataSize;
-          
-          // Delete processed packet from queue
-          rx_->nextPacket();
-        }
-      } // ManageRecvBuffer()
 
-      
     } // "private" namespace
     
     namespace Sim {
@@ -234,6 +200,9 @@ namespace Anki {
     }
     
 #pragma mark --- Simulated Hardware Method Implementations ---
+    
+    // Forward Declaration.  This is implemented in sim_radio.cpp
+    ReturnCode InitSimRadio(webots::Robot& webotRobot, s32 robotID);
     
     ReturnCode HAL::Init()
     {
@@ -258,10 +227,6 @@ namespace Anki {
       
       leftWheelGyro_  = webotRobot_.getGyro("wheel_gyro_fl");
       rightWheelGyro_ = webotRobot_.getGyro("wheel_gyro_fr");
-      
-      tx_ = webotRobot_.getEmitter("radio_tx");
-      rx_ = webotRobot_.getReceiver("radio_rx");
-      
       
       // Set ID
       // Expected format of name is <SomeName>_<robotID>
@@ -315,11 +280,10 @@ namespace Anki {
       leftWheelGyro_->enable(TIME_STEP);
       rightWheelGyro_->enable(TIME_STEP);
       
-      // Setup comms
-      rx_->enable(TIME_STEP);
-      rx_->setChannel(robotID_);
-      tx_->setChannel(robotID_);
-      recvBufSize_ = 0;
+      if(InitSimRadio(webotRobot_, robotID_) == EXIT_FAILURE) {
+        PRINT("Failed to initialize Simulated Radio.\n");
+        return EXIT_FAILURE;
+      }
       
       isInitialized = true;
       return EXIT_SUCCESS;
@@ -338,18 +302,14 @@ namespace Anki {
       leftWheelGyro_->disable();
       rightWheelGyro_->disable();
       
-      rx_->disable();
+      // Do we care about actually disabling this?  It lives in sim_radio.cpp now...
+      //rx_->disable();
 
     } // Destroy()
     
     bool HAL::IsInitialized(void)
     {
       return isInitialized;
-    }
-    
-    bool HAL::IsConnected(void)
-    {
-      return isConnected_;
     }
     
     
@@ -521,58 +481,7 @@ namespace Anki {
       
     } // step()
     
-    bool HAL::RadioToBase(const void *buffer, const CozmoMessageID msgID)
-    {
-      // Prefix data with message header (0xBEEF + robotID + msgID)
-      const u8 HEADER_LENGTH = 4;
-      u8 msg[256 + HEADER_LENGTH] = {
-        COZMO_WORLD_MSG_HEADER_BYTE_1,
-        COZMO_WORLD_MSG_HEADER_BYTE_2,
-        static_cast<u8>(robotID_),
-        static_cast<u8>(msgID)};
-      
-      const u8 size = MessageTable[msgID].size;
-      
-      if(size+HEADER_LENGTH > 256) {
-        PRINT("Data too large to send with prepended header!\n");
-      } else {
-        memcpy(msg+HEADER_LENGTH, buffer, size);
-        tx_->send(msg, size+HEADER_LENGTH);
-      }
-      
-      return true;
-    } // RadioToBase()
     
-    u8 HAL::RadioFromBase(u8 buffer[RADIO_BUFFER_SIZE])
-    {
-      ManageRecvBuffer();
-      
-      // TODO: check for and remove 0xBEEF and robotID?
-      
-      // Is there any data in the receive buffer?
-      if (recvBufSize_ > 0) {
-        // Is there a complete message in the receive buffer?
-        // The first byte is the message ID, from which we can determine the size.
-        const CozmoMessageID msgID = static_cast<CozmoMessageID>(recvBuf_[0]);
-        
-        const u8 size = MessageTable[msgID].size;
-
-        if (recvBufSize_ >= size) {
-          
-          // Copy to passed in buffer
-          memcpy(buffer, recvBuf_, size);
-          
-          // Shift data down
-          recvBufSize_ -= size;
-          memmove(recvBuf_, &(recvBuf_[size]), recvBufSize_);
-          
-          return size;
-        }
-      }
-      
-      return 0;
-    } // RadioFromBase()
-
     // Helper function to create a CameraInfo struct from Webots camera properties:
     void FillCameraInfo(const webots::Camera *camera,
                         HAL::CameraInfo &info)

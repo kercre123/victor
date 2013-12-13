@@ -196,15 +196,21 @@ classdef CozmoVisionProcessor < handle
             end % FOR each header
             
             % Kill what's in the buffer, whether we processed it above or
-            % ignored it as garbage.  
-            if ~isempty(headerIndex) && ~isempty(footerIndex) && ...
-                    headerIndex(end) > footerIndex(end)
+            % ignored it as garbage.
+            if ~isempty(headerIndex) && ~isempty(footerIndex)
                 
-                % If we've got a final header that had no footer after it, 
-                % we potentially have a partial message.  Keep that in the 
-                % buffer, to hopefully have its remainder appended on the 
-                % next Update.
-                this.serialBuffer(1:(headerIndex(end)-1)) = [];
+                if headerIndex(end) > footerIndex(end)
+                    
+                    % If we've got a final header that had no footer after it,
+                    % we potentially have a partial message.  Keep that in the
+                    % buffer, to hopefully have its remainder appended on the
+                    % next Update.
+                    this.serialBuffer(1:(headerIndex(end)-1)) = [];
+                else
+                    % Get rid of everythign up to the last footer, which we
+                    % presumably processed above
+                    this.serialBuffer(1:footerIndex(end)+length(this.FOOTER)) = [];
+                end
             end
             
         end % FUNCTION: Update()

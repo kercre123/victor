@@ -224,7 +224,7 @@ namespace Anki {
         MessageType& msg = messagesIn.front();
         
         //const u8 msgSize = msg[0];
-        const CozmoMessageID msgID = static_cast<CozmoMessageID>(msg[0]);
+        const Messages::ID msgID = static_cast<Messages::ID>(msg[0]);
         
         // TODO: Update to use dispatch functions instead of a switch
         switch(msgID)

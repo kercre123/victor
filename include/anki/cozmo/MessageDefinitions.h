@@ -39,15 +39,13 @@
 #undef ADD_MESSAGE_MEMBER
 
 #define GET_DISPATCH_FCN_NAME(__MSG_TYPE__) Process##__MSG_TYPE__##Message
-#define GET_STRUCT_TYPENAME(__MSG_TYPE__) CozmoMsg_##__MSG_TYPE__
+#define GET_STRUCT_TYPENAME(__MSG_TYPE__) __MSG_TYPE__
 #define GET_MESSAGE_ID(__MSG_TYPE__) __MSG_TYPE__##_ID
 
 #if MESSAGE_DEFINITION_MODE == MESSAGE_STRUCT_DEFINITION_MODE
 // Define typedef'd struct
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-namespace Anki { namespace Cozmo { namespace CommandHandler { \
 void GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(const u8* buffer); \
-} } } \
 typedef struct {
 
 #define END_MESSAGE_DEFINITION(__MSG_TYPE__) } GET_STRUCT_TYPENAME(__MSG_TYPE__);
@@ -58,7 +56,7 @@ typedef struct {
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
 {__PRIORITY__,
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) sizeof(__TYPE__) +
-#define END_MESSAGE_DEFINITION(__MSG_TYPE__) + 0, Anki::Cozmo::CommandHandler::GET_DISPATCH_FCN_NAME(__MSG_TYPE__)},
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__) + 0, GET_DISPATCH_FCN_NAME(__MSG_TYPE__)},
 
 
 #elif MESSAGE_DEFINITION_MODE == MESSAGE_ENUM_DEFINITION_MODE

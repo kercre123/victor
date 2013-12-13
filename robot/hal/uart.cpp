@@ -97,6 +97,7 @@ namespace Anki
         return c;
       }
 
+      s32 USBGetChar(void) { return USBGetChar(0); }
       
       s32 USBGetChar(u32 timeout)
       {

@@ -10,9 +10,6 @@ namespace Anki {
     
     namespace CommandHandler {
       
-      void ProcessIncomingMessages();
-      
-      CozmoMessageID ProcessMessage(const u8* buffer);
       
     } // namespace CommandHandler
     

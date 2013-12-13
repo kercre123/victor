@@ -35,6 +35,7 @@ set(SOURCE_FILES
   
   # this is where the Supervisor object lives, it must be early in the compile list?!?
   ${SIMULATOR_HAL_DIR}/sim_hal.cpp
+  ${SIMULATOR_HAL_DIR}/sim_radio.cpp
   ${SIMULATOR_HAL_DIR}/sim_uart.cpp
 
   ${SIMULATOR_SRC_DIR}/keyboardController.cpp
