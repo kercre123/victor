@@ -45,45 +45,46 @@ namespace Anki {
         //
         
         const u8 MAX_BLOCK_MARKER_MESSAGES = 32; // max blocks we can see in one image
-        const u8 MAX_MAT_MARKER_MESSAGES   = 1;
-        const u8 MAX_DOCKING_MESSAGES      = 1;
         
-        template<typename MsgType, u8 NumMessages>
+        // Single-message Mailbox Class
+        template<typename MsgType>
         class Mailbox
         {
         public:
+          
           Mailbox();
           
-          // True if there are unread messages left in the mailbox
-          bool hasMail(void) const;
-          
-          // Add a message to the mailbox
-          void putMessage(const MsgType newMsg);
-          
-          // Take a message out of the mailbox
-          MsgType getMessage();
+          bool putMessage(const MsgType newMsg);
+          bool getMessage(MsgType& msgOut);
           
         protected:
-          MsgType messages[NumMessages];
-          bool    beenRead[NumMessages];
-          u8 readIndex, writeIndex;
-          bool isLocked;
+          MsgType message_;
+          bool    beenRead_;
+          bool    isLocked_;
+        };
+        
+        // Multiple-message Mailbox Class
+        template<typename MSG_TYPE, u8 NUM_BOXES>
+        class MultiMailbox
+        {
+        public:
+        
+          bool putMessage(const MSG_TYPE newMsg);
+          bool getMessage(MSG_TYPE& msg);
+        
+        protected:
+          Mailbox<MSG_TYPE> mailboxes_[NUM_BOXES];
+          u8 readIndex_, writeIndex_;
           
-          void lock();
-          void unlock();
           void advanceIndex(u8 &index);
         };
         
-        // Typedefs for mailboxes to hold different types of messages:
-        typedef Mailbox<Messages::BlockMarkerObserved, MAX_BLOCK_MARKER_MESSAGES> BlockMarkerMailbox;
         
-        typedef Mailbox<Messages::MatMarkerObserved, MAX_MAT_MARKER_MESSAGES> MatMarkerMailbox;
-        
-        typedef Mailbox<Messages::DockingErrorSignal, MAX_DOCKING_MESSAGES> DockingMailbox;
-        
-        BlockMarkerMailbox blockMarkerMailbox_;
-        MatMarkerMailbox   matMarkerMailbox_;
-        DockingMailbox     dockingMailbox_;
+        // Mailboxes for different types of messages that the vision
+        // system communicates to main execution:
+        MultiMailbox<Messages::BlockMarkerObserved, MAX_BLOCK_MARKER_MESSAGES> blockMarkerMailbox_;
+        Mailbox<Messages::MatMarkerObserved>    matMarkerMailbox_;
+        Mailbox<Messages::DockingErrorSignal>   dockingMailbox_;
         
       } // private namespace
       
@@ -309,112 +310,94 @@ namespace Anki {
       
       bool CheckMailbox(BlockMarkerObserved& msg)
       {
-        bool retVal = false;
-        if(blockMarkerMailbox_.hasMail()) {
-          retVal = true;
-          msg = blockMarkerMailbox_.getMessage();
-        }
-        
-        return retVal;
+        return blockMarkerMailbox_.getMessage(msg);
       }
       
       bool CheckMailbox(MatMarkerObserved&   msg)
       {
-        bool retVal = false;
-        if(matMarkerMailbox_.hasMail()) {
-          retVal = true;
-          msg = matMarkerMailbox_.getMessage();
-        }
-        
-        return retVal;
+        return matMarkerMailbox_.getMessage(msg);
       }
       
       bool CheckMailbox(DockingErrorSignal&  msg)
       {
-        bool retVal = false;
-        if(dockingMailbox_.hasMail()) {
-          retVal = true;
-          msg = dockingMailbox_.getMessage();
-        }
-        
-        return retVal;
+        return dockingMailbox_.getMessage(msg);
       }
       
-      
-      template<typename MsgType, u8 NumMessages>
-      Mailbox<MsgType,NumMessages>::Mailbox() : isLocked(false)
+      //
+      // Templated Mailbox Implementations
+      //
+      template<typename MSG_TYPE>
+      Mailbox<MSG_TYPE>::Mailbox()
+      : beenRead_(true)
       {
-        for(u8 i=0; i<NumMessages; ++i) {
-          this->beenRead[i] = true;
-        }
+      
       }
       
-      template<typename MsgType, u8 NumMessages>
-      void Mailbox<MsgType,NumMessages>::lock()
-      {
-        this->isLocked = true;
-      }
-      
-      template<typename MsgType, u8 NumMessages>
-      void Mailbox<MsgType,NumMessages>::unlock()
-      {
-        this->isLocked = false;
-      }
-      
-      template<typename MsgType, u8 NumMessages>
-      bool Mailbox<MsgType,NumMessages>::hasMail() const
-      {
-        if(isLocked) {
+      template<typename MSG_TYPE>
+      bool Mailbox<MSG_TYPE>::putMessage(const MSG_TYPE newMsg) {
+        if(isLocked_) {
           return false;
         }
         else {
-          if(not beenRead[readIndex]) {
-            return true;
-          } else {
-            return false;
-          }
+          isLocked_ = true;    // Lock
+          message_  = newMsg;
+          beenRead_ = false;
+          isLocked_ = false;   // Unlock
+          return true;
         }
       }
       
-      template<typename MsgType, u8 NumMessages>
-      void Mailbox<MsgType,NumMessages>::putMessage(const MsgType newMsg)
-      {
-        messages[writeIndex] = newMsg;
-        beenRead[writeIndex] = false;
-        advanceIndex(writeIndex);
-      }
-      
-      template<typename MsgType, u8 NumMessages>
-      MsgType Mailbox<MsgType,NumMessages>::getMessage()
-      {
-        if(this->isLocked) {
-          // Is this the right thing to do if locked?
-          return this->messages[readIndex];
+      template<typename MSG_TYPE>
+      bool Mailbox<MSG_TYPE>::getMessage(MSG_TYPE& msgOut) {
+        if(isLocked_ || beenRead_) {
+          return false;
         }
         else {
-          u8 toReturn = readIndex;
-          
-          advanceIndex(readIndex);
-          
-          this->beenRead[toReturn] = true;
-          return this->messages[toReturn];
+          isLocked_ = true;   // Lock
+          msgOut = message_;
+          beenRead_ = true;
+          isLocked_ = false;  // Unlock
+          return true;
         }
       }
       
-      template<typename MsgType, u8 NumMessages>
-      void Mailbox<MsgType,NumMessages>::advanceIndex(u8 &index)
-      {
-        if(NumMessages==1) {
-          // special case
+      
+      //
+      // Templated MultiMailbox Implementations
+      //
+      
+      template<typename MSG_TYPE, u8 NUM_BOXES>
+      bool MultiMailbox<MSG_TYPE,NUM_BOXES>::putMessage(const MSG_TYPE newMsg) {
+        if(mailboxes_[writeIndex_].putMessage(newMsg) == true) {
+          advanceIndex(writeIndex_);
+          return true;
+        }
+        else {
+          return false;
+        }
+      }
+      
+      template<typename MSG_TYPE, u8 NUM_BOXES>
+      bool MultiMailbox<MSG_TYPE,NUM_BOXES>::getMessage(MSG_TYPE& msg) {
+        if(mailboxes_[readIndex_].getMessage(msg) == true) {
+          // we got a message out of the mailbox (it wasn't locked and there
+          // was something in it), so move to the next mailbox
+          advanceIndex(readIndex_);
+          return true;
+        }
+        else {
+          return false;
+        }
+      }
+   
+      template<typename MSG_TYPE, u8 NUM_BOXES>
+      void MultiMailbox<MSG_TYPE,NUM_BOXES>::advanceIndex(u8 &index) {
+        ++index;
+        if(index == NUM_BOXES) {
           index = 0;
         }
-        else {
-          ++index;
-          if(index == NumMessages) {
-            index = 0;
-          }
-        }
       }
+
       
     } // namespace Messages
   } // namespace Cozmo
