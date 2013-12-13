@@ -21,7 +21,7 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 
-#include "anki/cozmo/messageProtocol.h"
+#include "anki/cozmo/messages.h"
 
 webots::Supervisor commsController;
 
@@ -300,11 +300,12 @@ int main(int argc, char **argv)
 int processPacket(const unsigned char *data, const int dataSize,
                   Anki::Cozmo::BlockWorld& blockWorld, int i_robot)
 {
+  using namespace Anki::Cozmo;
   
   if(dataSize > 4) {
     
-    if(data[0] == COZMO_WORLD_MSG_HEADER_BYTE_1 &&
-       data[1] == COZMO_WORLD_MSG_HEADER_BYTE_2 &&
+    if(data[0] == Messages::RADIO_PACKET_HEADER[0] &&
+       data[1] == Messages::RADIO_PACKET_HEADER[1] &&
        data[2] == i_robot+1)
     {
       //fprintf(stdout, "Valid 0xBEEF message header from robot %d received.\n", i_robot+1);
@@ -314,7 +315,7 @@ int processPacket(const unsigned char *data, const int dataSize,
       
       // The next byte should be the first byte of the message struct that
       // was sent and will contain the size of the message.
-      const u8 msgSize = MessageTable[msgID].size;
+      const u8 msgSize = Messages::LookupTable[msgID].size;
       
       if(dataSize < msgSize) {
         fprintf(stdout, "Valid header, but less data than expected in packet.\n");
@@ -329,7 +330,7 @@ int processPacket(const unsigned char *data, const int dataSize,
         // TODO: Update this to use dispatch functions instead of switch statement
         switch(msgID)
         {
-          case RobotAvailable_ID:
+          case Messages::RobotAvailable_ID:
           {
             //const CozmoMsg_RobotAvailable* msgIn = reinterpret_cast<const CozmoMsg_RobotAvailable*>(data+3);
             
@@ -339,10 +340,10 @@ int processPacket(const unsigned char *data, const int dataSize,
             break;
           }
             
-          case BlockMarkerObserved_ID:
-          case MatMarkerObserved_ID:
-          case HeadCameraCalibration_ID:
-          case MatCameraCalibration_ID:
+          case Messages::BlockMarkerObserved_ID:
+          case Messages::MatMarkerObserved_ID:
+          case Messages::HeadCameraCalibration_ID:
+          case Messages::MatCameraCalibration_ID:
           {
             fprintf(stdout, "Passing block/mat/calib message to robot.\n");
             
@@ -581,31 +582,3 @@ Anki::Pose3d getNodePose(webots::Node* node)
   
 } // GetNodePose()
 
-// TODO: Define these elsewhere and then actually use them in handling messages above
-void Anki::Cozmo::CommandHandler::ProcessClearPathMessage(unsigned char const*) {}
-
-void Anki::Cozmo::CommandHandler::ProcessSetMotionMessage(unsigned char const*) {}
-
-void Anki::Cozmo::CommandHandler::ProcessRobotAvailableMessage(unsigned char const*) {}
-
-void Anki::Cozmo::CommandHandler::ProcessMatMarkerObservedMessage(unsigned char const*) {}
-
-void Anki::Cozmo::CommandHandler::ProcessRobotAddedToWorldMessage(unsigned char const*) {}
-
-void Anki::Cozmo::CommandHandler::ProcessSetPathSegmentArcMessage(unsigned char const*) {}
-
-void Anki::Cozmo::CommandHandler::ProcessDockingErrorSignalMessage(unsigned char const*) {}
-
-void Anki::Cozmo::CommandHandler::ProcessSetPathSegmentLineMessage(unsigned char const*) {}
-
-void Anki::Cozmo::CommandHandler::ProcessBlockMarkerObservedMessage(unsigned char const*) {}
-
-void Anki::Cozmo::CommandHandler::ProcessTemplateInitializedMessage(unsigned char const*) {}
-
-void Anki::Cozmo::CommandHandler::ProcessTotalBlocksDetectedMessage(unsigned char const*) {}
-
-void Anki::Cozmo::CommandHandler::ProcessMatCameraCalibrationMessage(unsigned char const*) {}
-
-void Anki::Cozmo::CommandHandler::ProcessAbsLocalizationUpdateMessage(unsigned char const*) {}
-
-void Anki::Cozmo::CommandHandler::ProcessHeadCameraCalibrationMessage(unsigned char const*) {}

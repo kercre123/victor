@@ -1,4 +1,4 @@
-#include "anki/cozmo/messageProtocol.h"
+#include "anki/cozmo/messages.h"
 
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/localization.h"

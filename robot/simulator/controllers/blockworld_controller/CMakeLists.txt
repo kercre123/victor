@@ -19,11 +19,9 @@ link_directories( ${WEBOTS_LIB_DIR} )
 set(SOURCE_FILES
 #	CozmoWorldComms.cpp
 	blockworld_controller.cpp
-  
-  # TODO: There should probably be a basestation version of this:
-  #       (For now I need this file to get the MessageTable still used by
-  #        the basestation)
-  ${PROJECT_SOURCE_DIR}/robot/supervisor/src/messageProtocol.cpp
+
+  ${PROJECT_SOURCE_DIR}/basestation/src/messages.cpp
+
 #	${PROJECT_SOURCE_DIR}/coretech/messaging/robot/TcpSocket/TcpServer.cpp
 )
 

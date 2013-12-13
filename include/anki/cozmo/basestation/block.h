@@ -9,7 +9,7 @@
 #ifndef __Products_Cozmo__block__
 #define __Products_Cozmo__block__
 
-#include "anki/cozmo/messageProtocol.h"
+#include "anki/cozmo/messages.h"
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/quad.h"

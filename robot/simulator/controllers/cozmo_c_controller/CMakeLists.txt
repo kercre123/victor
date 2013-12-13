@@ -44,12 +44,11 @@ set(SOURCE_FILES
 
   ${ROBOT_SRC_DIR}/cozmoBot.cpp
   ${ROBOT_SRC_DIR}/dockingController.cpp
-  ${ROBOT_SRC_DIR}/commandHandler.cpp
   ${ROBOT_SRC_DIR}/gripController.cpp
   ${ROBOT_SRC_DIR}/headController.cpp
   ${ROBOT_SRC_DIR}/liftController.cpp
   ${ROBOT_SRC_DIR}/localization.cpp
-  ${ROBOT_SRC_DIR}/messageProtocol.cpp
+  ${ROBOT_SRC_DIR}/messages.cpp
   ${ROBOT_SRC_DIR}/offboardVision.cpp
   ${ROBOT_SRC_DIR}/pathFollower.cpp
   ${ROBOT_SRC_DIR}/steeringController.cpp

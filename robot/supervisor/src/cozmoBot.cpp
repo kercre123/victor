@@ -1,5 +1,5 @@
 
-#include "anki/cozmo/messageProtocol.h"
+#include "anki/cozmo/messages.h"
 
 // TODO: move more of these include files to "src"
 #include "anki/cozmo/robot/cozmoBot.h"
@@ -10,7 +10,6 @@
 #include "headController.h"
 #include "liftController.h"
 #include "testModeController.h"
-#include "anki/cozmo/robot/commandHandler.h"
 #include "anki/cozmo/robot/debug.h"
 #include "anki/cozmo/robot/localization.h"
 #include "anki/cozmo/robot/pathFollower.h"

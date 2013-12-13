@@ -1,25 +1,8 @@
 #ifndef ANKI_COZMO_ROBOT_VISIONSYSTEM_H
 #define ANKI_COZMO_ROBOT_VISIONSYSTEM_H
 
-/*
- class VisionSystem
- {
- public:
- */
-
 #include "anki/common/types.h"
 
-#include "anki/common/robot/geometry_declarations.h"
-
-#include "anki/cozmo/MessageProtocol.h"
-
-#include "anki/cozmo/robot/hal.h"
-
-// If enabled, will use Matlab as the vision system for processing images
-#if defined(SIMULATOR) && ANKICORETECH_USE_MATLAB
-#define USE_MATLAB_FOR_HEAD_CAMERA
-#define USE_MATLAB_FOR_MAT_CAMERA
-#endif
 
 namespace Anki {
   namespace Cozmo {

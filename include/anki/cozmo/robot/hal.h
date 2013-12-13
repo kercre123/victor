@@ -37,7 +37,7 @@
 #include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
 
-#include "anki/cozmo/messageProtocol.h"
+#include "anki/cozmo/messages.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 
@@ -179,10 +179,6 @@ namespace Anki
       /////////////////////////////////////////////////////////////////////
       // USB / UART
       //
-      
-      // Packet header/footer:
-      const u8 USB_PACKET_HEADER[4] = {0xBE, 0xEF, 0xF0, 0xFF}; // BEEFF0FF
-      const u8 USB_PACKET_FOOTER[4] = {0xFF, 0x0F, 0xFE, 0xEB}; // FF0FFEEB
       
       void UARTInit();
       
@@ -353,10 +349,7 @@ namespace Anki
 #pragma mark --- Radio ---
       /////////////////////////////////////////////////////////////////////
       // RADIO
-      //
-
-      const u8 RADIO_PACKET_HEADER[2] = {0xBE, 0xEF};
-      
+      //      
       enum RadioState
       {
         RADIO_STATE_ADVERTISING = 0,

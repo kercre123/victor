@@ -17,7 +17,7 @@
 
 #include "anki/common/types.h"
 
-#include "anki/cozmo/messageProtocol.h"
+#include "anki/cozmo/messages.h"
 
 namespace Anki {
   namespace Cozmo {

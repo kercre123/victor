@@ -2,24 +2,12 @@
 #include "anki/common/robot/config.h"
 #include "anki/common/shared/radians.h"
 
-#include "anki/cozmo/robot/commandHandler.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/visionSystem.h"
 
-#include "anki/cozmo/messageProtocol.h"
-
-#define USING_MATLAB_VISION (defined(USE_MATLAB_FOR_HEAD_CAMERA) || \
-defined(USE_MATLAB_FOR_MAT_CAMERA))
-
-#if USING_MATLAB_VISION
-// If using Matlab for any vision processing, enable the Matlab engine
-#include "engine.h"
-#include "anki/common/robot/matlabInterface.h"
-#define DISPLAY_MATLAB_IMAGES 0
-extern Engine *matlabEngine_;
-#endif
+#include "anki/cozmo/messages.h"
 
 namespace Anki {
   namespace Cozmo {

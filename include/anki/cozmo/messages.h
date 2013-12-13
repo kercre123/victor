@@ -50,6 +50,15 @@
 namespace Anki {
   namespace Cozmo {
     namespace Messages {
+
+      // Packet headers/footers:
+      
+      const u8 RADIO_PACKET_HEADER[2] = {0xBE, 0xEF};
+
+      const u8 USB_PACKET_HEADER[4] = {0xBE, 0xEF, 0xF0, 0xFF}; // BEEFF0FF
+      const u8 USB_PACKET_FOOTER[4] = {0xFF, 0x0F, 0xFE, 0xEB}; // FF0FFEEB
+      
+      
       // 1. Initial include just defines the definition modes for use below
 #include "anki/cozmo/MessageDefinitions.h"
       

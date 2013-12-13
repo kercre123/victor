@@ -14,7 +14,7 @@
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/robot/cozmoConfig.h"
 
-#include "anki/cozmo/messageProtocol.h"
+#include "anki/cozmo/messages.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -45,7 +45,7 @@ namespace Anki {
     {
       this->ID = withID;
       
-      CozmoMsg_RobotAddedToWorld msg;
+      Messages::RobotAddedToWorld msg;
       msg.robotID = this->ID;
       
       const u8 *msgData = (const u8 *) &msg;
@@ -173,7 +173,7 @@ namespace Anki {
       if(poseUpdated)
       {
         // Send our updated pose to the physical robot:
-        CozmoMsg_AbsLocalizationUpdate msg;
+        Messages::AbsLocalizationUpdate msg;
         msg.xPosition = pose.get_translation().x();
         msg.yPosition = pose.get_translation().y();
         
@@ -229,9 +229,9 @@ namespace Anki {
         // TODO: Update to use dispatch functions instead of a switch
         switch(msgID)
         {
-          case HeadCameraCalibration_ID:
+          case Messages::HeadCameraCalibration_ID:
           {
-            const CozmoMsg_HeadCameraCalibration *calibMsg = reinterpret_cast<const CozmoMsg_HeadCameraCalibration*>(&(msg[0]));
+            const Messages::HeadCameraCalibration *calibMsg = reinterpret_cast<const Messages::HeadCameraCalibration*>(&(msg[0]));
             
             Anki::CameraCalibration calib(calibMsg->nrows,
                                           calibMsg->ncols,
@@ -248,9 +248,9 @@ namespace Anki {
 
             break;
           }
-          case MatCameraCalibration_ID:
+          case Messages::MatCameraCalibration_ID:
           {
-            const CozmoMsg_MatCameraCalibration *calibMsg = reinterpret_cast<const CozmoMsg_MatCameraCalibration*>(&(msg[0]));
+            const Messages::MatCameraCalibration *calibMsg = reinterpret_cast<const Messages::MatCameraCalibration*>(&(msg[0]));
             
             Anki::CameraCalibration calib(calibMsg->nrows,
                                           calibMsg->ncols,
@@ -277,12 +277,12 @@ namespace Anki {
             break;
           } // camera calibration case
             
-          case BlockMarkerObserved_ID:
+          case Messages::BlockMarkerObserved_ID:
           {
             // TODO: store observations from the same frame together
             
             // Translate the raw message into a BlockMarker2d object:
-            const CozmoMsg_BlockMarkerObserved* blockMsg = reinterpret_cast<const CozmoMsg_BlockMarkerObserved*>(&(msg[0]));
+            const Messages::BlockMarkerObserved* blockMsg = reinterpret_cast<const Messages::BlockMarkerObserved*>(&(msg[0]));
             
             fprintf(stdout,
                     "Basestation Robot received ObservedBlockMarker message: "
@@ -321,10 +321,10 @@ namespace Anki {
             
             break;
           }
-          case MatMarkerObserved_ID:
+          case Messages::MatMarkerObserved_ID:
           {
             // Translate the raw message into a MatMarker2d object:
-            const CozmoMsg_MatMarkerObserved* matMsg = reinterpret_cast<const CozmoMsg_MatMarkerObserved*>(&(msg[0]));
+            const Messages::MatMarkerObserved* matMsg = reinterpret_cast<const Messages::MatMarkerObserved*>(&(msg[0]));
             
             fprintf(stdout,
                     "Basestation robot received ObservedMatMarker message: "

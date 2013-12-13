@@ -5,7 +5,7 @@
 // Our Includes
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
-#include "anki/cozmo/messageProtocol.h"
+#include "anki/cozmo/messages.h"
 #include "cozmo_physics.h"
 
 #include "sim_overlayDisplay.h"
