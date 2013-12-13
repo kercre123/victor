@@ -274,7 +274,12 @@ namespace Anki {
         
         if (gotError) {
           fidx = pathDistErr*1000.f; // Convert to mm
-          PRINT("fidx: %d\n", fidx);
+          
+          // HACK!
+          fidx = CLIP(fidx, -4, 4);  // TODO: Loosen this up the closer we get to the block?????
+          
+          PERIODIC_PRINT(1000,"fidx: %d, distErr %f, radErr %f\n", fidx, pathDistErr, pathRadErr);
+          //PRINT("fidx: %d, distErr %f, radErr %f\n", fidx, pathDistErr, pathRadErr);
 #if(DEBUG_MAIN_EXECUTION)
           {
             using namespace Sim::OverlayDisplay;
@@ -295,8 +300,11 @@ namespace Anki {
         RunLineFollowControllerNL( fidx, pathRadErr );
         
       } else {
-        // No steering intention -- pass through speed to each wheel to drive straight while in normal mode
+        // No steering intention -- unless desired speed is 0
         // we'll continue to use the previously commanded fidx
+        if (SpeedController::GetUserCommandedDesiredVehicleSpeed() == 0) {
+          RunLineFollowControllerNL( 0, 0);
+        }
       }
     }
 

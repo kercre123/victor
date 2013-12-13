@@ -62,10 +62,7 @@ namespace Anki {
       // HAL::CameraMode matCamMode_;
       //u8* headCamBuffer_;
       //u8* matCamBuffer_;
-      u32 headCamCaptureTime_;
-      u32 matCamCaptureTime_;
-      u32 headCamStartCaptureTime_ = 0;
-      u32 matCamStartCaptureTime_ = 0;
+      
       HAL::CameraUpdateMode headCamUpdateMode_;
       HAL::CameraUpdateMode matCamUpdateMode_;
       

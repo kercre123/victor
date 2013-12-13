@@ -44,8 +44,6 @@ namespace Anki {
       const u8 MAX_TRACKING_FAILURES = 5;
       u8 numTrackFailures_ = 0;
       
-      u8 msgBuffer_[256];
-      
       f32 matCamPixPerMM_ = 1.f;
       
     } // private namespace

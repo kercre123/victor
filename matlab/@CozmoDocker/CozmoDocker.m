@@ -523,6 +523,12 @@ classdef CozmoDocker < handle
                         
                     case 'escape'
                         this.escapePressed = true;
+                        
+                    case 'd'
+                        this.mode = 'DOCK';
+                        
+                    case 'p'
+                        this.mode = 'PLACE';
                 end
             end
         end % keyPressCallback()
@@ -621,9 +627,9 @@ classdef CozmoDocker < handle
             set(this.h_rxMsg, 'String', ['RX: ' msg]);
             fprintf('Message Received: %s\n', msg);
             
-            if ~isempty(strfind(msg, 'GRIPPING'))
+            if ~isempty(strfind(msg, 'DONE DOCKING'))
                 this.mode = 'PLACE';
-            elseif ~isempty(strfind(msg, 'IDLE'))
+            elseif ~isempty(strfind(msg, 'DONE PLACEMENT'))
                 this.mode = 'DOCK';
             end
         end

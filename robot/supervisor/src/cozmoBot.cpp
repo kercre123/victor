@@ -268,7 +268,7 @@ namespace Anki {
           case PICK_UP_BLOCK:
           {
             // Wait for docking controller to finish, then pick up the block
-            if(DockingController::IsDone())
+            if(DockingController::IsDocked())
             {
               if(DockingController::DidSucceed())
               {
@@ -287,7 +287,7 @@ namespace Anki {
           case PUT_DOWN_BLOCK:
           {
             // Wait for docking controller to finish, then put down the block
-            if(DockingController::IsDone())
+            if(DockingController::IsDocked())
             {
               if(DockingController::DidSucceed())
               {

@@ -71,4 +71,5 @@ movidiusTests/shaveTests2/output
 robot/evmMake/output
 movidiusTests/dmaTests/output
 ims.mat
+robot/ld/objects.ldscript
 cozmo_docking_controller_test

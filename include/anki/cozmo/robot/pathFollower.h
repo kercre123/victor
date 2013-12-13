@@ -30,6 +30,7 @@ namespace Anki
       bool StartPathTraversal(void);
       bool IsTraversingPath(void);
       
+      void PrintPathSegment(u8 segment);
       
       // Simulation debug
       void EnablePathVisualization(bool on);
