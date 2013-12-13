@@ -3,7 +3,7 @@ File: sequences.h
 Author: Peter Barnum
 Created: 2013
 
-A Sequence is a mathematically-defined, ordered list. The sequence classes allow for operations on sequences, without requiring them to be explicitly evaluated.
+Definitions of sequences_declarations.h
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
@@ -254,11 +254,11 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(out.get_ySlice().get_size()==1 && out.get_xSlice().get_size()==numElements,
         RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Array out is not the correct size");
 
-      const s32 outXStart = out.get_xSlice().get_start();
+      //const s32 outXStart = out.get_xSlice().get_start();
       const s32 outYStart = out.get_ySlice().get_start();
 
       const s32 outXIncrement = out.get_xSlice().get_increment();
-      const s32 outYIncrement = out.get_ySlice().get_increment();
+      //const s32 outYIncrement = out.get_ySlice().get_increment();
 
       // Matlab equivalent: [x,y] = meshgrid(1:N,1:M)
 
@@ -306,7 +306,7 @@ namespace Anki
     {
       const s32 xGridSize = this->xGridVector.get_size();
       const s32 yGridSize = this->yGridVector.get_size();
-      const s32 numElements = xGridSize * yGridSize;
+      //const s32 numElements = xGridSize * yGridSize;
 
       Array<Type> &outArray = out.get_array();
 
@@ -363,13 +363,13 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(out.get_ySlice().get_size()==1 && out.get_xSlice().get_size()==numElements,
         RESULT_FAIL, "Meshgrid<Type>::Evaluate", "Array out is not the correct size");
 
-      const s32 outXStart = out.get_xSlice().get_start();
+      //const s32 outXStart = out.get_xSlice().get_start();
       const s32 outYStart = out.get_ySlice().get_start();
 
       const s32 outXIncrement = out.get_xSlice().get_increment();
-      const s32 outYIncrement = out.get_ySlice().get_increment();
+      //const s32 outYIncrement = out.get_ySlice().get_increment();
 
-      Type * pOut = outArray.Pointer(outYStart,0);
+      //Type * pOut = outArray.Pointer(outYStart,0);
 
       // Matlab equivalent: [x,y] = meshgrid(1:N,1:M)
 
@@ -417,7 +417,7 @@ namespace Anki
     {
       const s32 xGridSize = this->xGridVector.get_size();
       const s32 yGridSize = this->yGridVector.get_size();
-      const s32 numElements = xGridSize * yGridSize;
+      //const s32 numElements = xGridSize * yGridSize;
 
       Array<Type> &outArray = out.get_array();
 
@@ -433,7 +433,7 @@ namespace Anki
       const s32 outXIncrement = out.get_xSlice().get_increment();
       const s32 outYIncrement = out.get_ySlice().get_increment();
 
-      Type * pOut = outArray.Pointer(outYStart,0);
+      //Type * pOut = outArray.Pointer(outYStart,0);
 
       // Matlab equivalent: [x,y] = meshgrid(1:N,1:M)
 

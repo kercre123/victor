@@ -3,7 +3,7 @@ File: matrix.h
 Author: Peter Barnum
 Created: 2013
 
-Various Matrix operations, such as matrix multiply and addition.
+Definitions of matrix_declarations.h
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
@@ -318,10 +318,204 @@ namespace Anki
         return out;
       }
 
+      template<typename Type> Result Sort(Array<Type> &arr, const s32 sortWhichDimension, const bool sortAscending)
+      {
+        const s32 arrHeight = arr.get_size(0);
+        const s32 arrWidth = arr.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue(arr.IsValid(),
+          RESULT_FAIL, "Sort", "Input array is invalid");
+
+        AnkiConditionalErrorAndReturnValue(sortWhichDimension==0 || sortWhichDimension==1,
+          RESULT_FAIL, "Sort", "sortWhichDimension must be zero or one");
+
+        if(sortWhichDimension == 0) {
+          // TODO: This columnwise sorting could be sped up, with smarter array indexing.
+          if(sortAscending) {
+            for(s32 x=0; x<arrWidth; x++) {
+              for(s32 y=1; y<arrHeight; y++) {
+                const Type valueToInsert = arr[y][x];
+
+                s32 holePosition = y;
+
+                while(holePosition > 0 && valueToInsert < arr[holePosition-1][x]) {
+                  arr[holePosition][x] = arr[holePosition-1][x];
+                  holePosition--;
+                }
+
+                arr[holePosition][x] = valueToInsert;
+              }
+            } // for(s32 x=0; x<arrWidth; x++)
+          } else { // if(sortAscending)
+            for(s32 x=0; x<arrWidth; x++) {
+              for(s32 y=1; y<arrHeight; y++) {
+                const Type valueToInsert = arr[y][x];
+
+                s32 holePosition = y;
+
+                while(holePosition > 0 && valueToInsert > arr[holePosition-1][x]) {
+                  arr[holePosition][x] = arr[holePosition-1][x];
+                  holePosition--;
+                }
+
+                arr[holePosition][x] = valueToInsert;
+              }
+            } // for(s32 x=0; x<arrWidth; x++)
+          } // if(sortAscending) ... else
+        } else { // sortWhichDimension == 1
+          if(sortAscending) {
+            for(s32 y=0; y<arrHeight; y++) {
+              Type * const pArr = arr[y];
+
+              for(s32 x=1; x<arrWidth; x++) {
+                const Type valueToInsert = pArr[x];
+
+                s32 holePosition = x;
+
+                while(holePosition > 0 && valueToInsert < pArr[holePosition-1]) {
+                  pArr[holePosition] = pArr[holePosition-1];
+                  holePosition--;
+                }
+
+                pArr[holePosition] = valueToInsert;
+              }
+            } // for(s32 x=0; x<arrWidth; x++)
+          } else { // if(sortAscending)
+            for(s32 y=0; y<arrHeight; y++) {
+              Type * const pArr = arr[y];
+
+              for(s32 x=1; x<arrWidth; x++) {
+                const Type valueToInsert = pArr[x];
+
+                s32 holePosition = x;
+
+                while(holePosition > 0 && valueToInsert > pArr[holePosition-1]) {
+                  pArr[holePosition] = pArr[holePosition-1];
+                  holePosition--;
+                }
+
+                pArr[holePosition] = valueToInsert;
+              }
+            } // for(s32 x=0; x<arrWidth; x++)
+          } // if(sortAscending) ... else
+        } // if(sortWhichDimension == 0) ... else
+
+        return RESULT_OK;
+      }
+
+      template<typename Type> Result Sort(Array<Type> &arr, Array<s32> &indexes, const s32 sortWhichDimension, const bool sortAscending)
+      {
+        const s32 arrHeight = arr.get_size(0);
+        const s32 arrWidth = arr.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue(arr.IsValid(),
+          RESULT_FAIL, "Sort", "Input array is invalid");
+
+        AnkiConditionalErrorAndReturnValue(indexes.IsValid(),
+          RESULT_FAIL, "Sort", "indexes array is invalid");
+
+        AnkiConditionalErrorAndReturnValue(sortWhichDimension==0 || sortWhichDimension==1,
+          RESULT_FAIL, "Sort", "sortWhichDimension must be zero or one");
+
+        AnkiConditionalErrorAndReturnValue(indexes.get_size(0) == arrHeight && indexes.get_size(1) == arrWidth,
+          RESULT_FAIL, "Sort", "indexes must be the same size as arr");
+
+        if(sortWhichDimension == 0) {
+          // TODO: This columnwise sorting could be sped up, with smarter array indexing.
+          if(sortAscending) {
+            for(s32 x=0; x<arrWidth; x++) {
+              indexes[0][x] = 0;
+
+              for(s32 y=1; y<arrHeight; y++) {
+                const Type valueToInsert = arr[y][x];
+
+                s32 holePosition = y;
+
+                while(holePosition > 0 && valueToInsert < arr[holePosition-1][x]) {
+                  arr[holePosition][x] = arr[holePosition-1][x];
+                  indexes[holePosition][x] = indexes[holePosition-1][x];
+                  holePosition--;
+                }
+
+                arr[holePosition][x] = valueToInsert;
+                indexes[holePosition][x] = y;
+              }
+            } // for(s32 x=0; x<arrWidth; x++)
+          } else { // if(sortAscending)
+            for(s32 x=0; x<arrWidth; x++) {
+              indexes[0][x] = 0;
+
+              for(s32 y=1; y<arrHeight; y++) {
+                const Type valueToInsert = arr[y][x];
+
+                s32 holePosition = y;
+
+                while(holePosition > 0 && valueToInsert > arr[holePosition-1][x]) {
+                  arr[holePosition][x] = arr[holePosition-1][x];
+                  indexes[holePosition][x] = indexes[holePosition-1][x];
+                  holePosition--;
+                }
+
+                arr[holePosition][x] = valueToInsert;
+                indexes[holePosition][x] = y;
+              }
+            } // for(s32 x=0; x<arrWidth; x++)
+          } // if(sortAscending) ... else
+        } else { // sortWhichDimension == 1
+          if(sortAscending) {
+            for(s32 y=0; y<arrHeight; y++) {
+              Type * const pArr = arr[y];
+              s32 * const pIndexes = indexes[y];
+
+              pIndexes[0] = 0;
+
+              for(s32 x=1; x<arrWidth; x++) {
+                const Type valueToInsert = pArr[x];
+
+                s32 holePosition = x;
+
+                while(holePosition > 0 && valueToInsert < pArr[holePosition-1]) {
+                  pArr[holePosition] = pArr[holePosition-1];
+                  pIndexes[holePosition] = pIndexes[holePosition-1];
+                  holePosition--;
+                }
+
+                pArr[holePosition] = valueToInsert;
+                pIndexes[holePosition] = x;
+              }
+            } // for(s32 x=0; x<arrWidth; x++)
+          } else { // if(sortAscending)
+            for(s32 y=0; y<arrHeight; y++) {
+              Type * const pArr = arr[y];
+              s32 * const pIndexes = indexes[y];
+
+              pIndexes[0] = 0;
+
+              for(s32 x=1; x<arrWidth; x++) {
+                const Type valueToInsert = pArr[x];
+
+                s32 holePosition = x;
+
+                while(holePosition > 0 && valueToInsert > pArr[holePosition-1]) {
+                  pArr[holePosition] = pArr[holePosition-1];
+                  pIndexes[holePosition] = pIndexes[holePosition-1];
+                  holePosition--;
+                }
+
+                pArr[holePosition] = valueToInsert;
+                pIndexes[holePosition] = x;
+              }
+            } // for(s32 x=0; x<arrWidth; x++)
+          } // if(sortAscending) ... else
+        } // if(sortWhichDimension == 0) ... else
+
+        return RESULT_OK;
+      }
+
       template<typename Type> Result MakeSymmetric(Type &arr, bool lowerToUpper)
       {
         AnkiConditionalErrorAndReturnValue(arr.get_size(0) == arr.get_size(1),
-          RESULT_FAIL, "copyHalfArray", "Input array must be square");
+          RESULT_FAIL, "MakeSymmetric", "Input array must be square");
 
         const s32 arrHeight = arr.get_size(0);
         for(s32 y = 0; y < arrHeight; y++)

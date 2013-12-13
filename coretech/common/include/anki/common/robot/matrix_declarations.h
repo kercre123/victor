@@ -3,7 +3,7 @@ File: matrix_declarations.h
 Author: Peter Barnum
 Created: 2013
 
-Declarations of matrix.h
+Various Matrix operations, such as matrix multiply and addition.
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
@@ -87,8 +87,8 @@ namespace Anki
       // Solves Ax = b
       // Specifically, it uses SVD to minimize ||Ax - b||
       // Note that the A, b, and x matrices are transposed (this is because for large numbers of samples, transposed inputs are liable to be faster)
-      Result SolveLeastSquares_f32(const Array<f32> &At, const Array<f32> &bt, Array<f32> &xt, MemoryStack scratch);
-      Result SolveLeastSquares_f64(const Array<f64> &At, const Array<f64> &bt, Array<f64> &xt, MemoryStack scratch);
+      Result SolveLeastSquares_f32(Array<f32> &At, const Array<f32> &bt, Array<f32> &xt, MemoryStack scratch);
+      Result SolveLeastSquares_f64(Array<f64> &At, const Array<f64> &bt, Array<f64> &xt, MemoryStack scratch);
 
       //
       // Matrix structure operations
@@ -105,6 +105,14 @@ namespace Anki
       //
       // Misc matrix operations
       //
+
+      // Works the same as the Matlab sort() for matrices.
+      // Sort(X) sorts each column of X in ascending order.
+      // NOTE: this currently uses insertion sort, so may be slow for large, badly-unsorted arrays
+      template<typename Type> Result Sort(Array<Type> &arr, const s32 sortWhichDimension=0, const bool sortAscending=true);
+
+      // indexes must be allocated, but will be overwritten by Sort()
+      template<typename Type> Result Sort(Array<Type> &arr, Array<s32> &indexes, const s32 sortWhichDimension=0, const bool sortAscending=true);
 
       // For a square array, either:
       // 1. When lowerToUpper==true,  copies the lower (left)  triangle to the upper (right) triangle

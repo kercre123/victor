@@ -113,11 +113,13 @@ xythetaEnvironment::xythetaEnvironment()
 xythetaEnvironment::xythetaEnvironment(const char* mprimFilename, const char* mapFile)
 {
   // TODO:(bn) replace this with less horrible code!
+  /* unused variables, remove?
   char sTemp[1024], sExpected[1024];
   float fTemp;
   int dTemp;
   int totalNumofActions = 0;
-
+  */
+  
   FILE* fMotPrims = fopen(mprimFilename, "r");
   ReadMotionPrimitives(fMotPrims);
   fclose(fMotPrims);

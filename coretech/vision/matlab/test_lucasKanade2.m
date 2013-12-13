@@ -30,30 +30,45 @@ x1 = max(templateQuad(:,2));
 y0 = min(templateQuad(:,1));
 y1 = max(templateQuad(:,1));
 
-templateRect = round([x0,y0;x1,y0;x1,y1;x0,y1]);
+templateRect = round([x0,y0;x1,y0;x1,y1;x0,y1])
+templateRect_cFormat = [x0,x1+1,y0,y1+1];
 
 % [im1, im2, templateRect] = drawExample([60,80], false);
 
 % imshows(im1, im2)
 
 % mask1 = roipoly(im1, templateQuad(:,1), templateQuad(:,2));
-mask1 = roipoly(im1, templateRect(:,1), templateRect(:,2));
+mask1 = roipoly(im1, templateRect(:,2), templateRect(:,1));
 
 numScales = 2;
+maxIterations = 50;
+ridgeWeight = 1e-3;
 
 figure(100); subplot(1,2,2); imshow(im1);
 
 % translation only
-LKtracker = LucasKanadeTracker(im1, mask1, 'Type', 'translation', 'DebugDisplay', true, 'UseBlurring', false, 'UseNormalization', true, 'NumScales', numScales);
-converged = LKtracker.track(im2, 'MaxIterations', 50, 'ConvergenceTolerance', .05);
+LKtracker = LucasKanadeTracker(im1, mask1, 'Type', 'translation', 'DebugDisplay', true, 'UseBlurring', false, 'UseNormalization', false, 'NumScales', numScales, 'ApproximateGradientMargins', false);
+converged = LKtracker.track(im2, 'MaxIterations', maxIterations, 'ConvergenceTolerance', .05);
+disp('Matlab LK translation-only:');
 disp(LKtracker.tform);
 figure(101); plotResults(im1, im2, templateQuad, LKtracker.tform);
 
+homography_translate = mexTrackLucasKanade(uint8(im1), double(templateRect_cFormat), double(numScales), double(1), double(ridgeWeight), uint8(im2), double(maxIterations), double(0.05), double(eye(3,3)));
+disp('C++ LK translation-only:');
+disp(homography_translate);
+figure(102); plotResults(im1, im2, templateQuad, homography_translate);
+
 % projective
-LKtracker = LucasKanadeTracker(im1, mask1, 'Type', 'homography', 'DebugDisplay', false, 'UseBlurring', false, 'UseNormalization', false, 'NumScales', numScales);
-converged = LKtracker.track(im2, 'MaxIterations', 50, 'ConvergenceTolerance', .25);
+LKtracker = LucasKanadeTracker(im1, mask1, 'Type', 'homography', 'DebugDisplay', false, 'UseBlurring', false, 'UseNormalization', false, 'NumScales', numScales, 'ApproximateGradientMargins', false);
+converged = LKtracker.track(im2, 'MaxIterations', maxIterations, 'ConvergenceTolerance', .25);
+disp('Matlab LK projective:');
 disp(LKtracker.tform);
-figure(102); plotResults(im1, im2, templateQuad, LKtracker.tform);
+figure(201); plotResults(im1, im2, templateQuad, LKtracker.tform);
+
+homography_projective = mexTrackLucasKanade(uint8(im1), double(templateRect_cFormat), double(numScales), double(2), double(ridgeWeight), uint8(im2), double(maxIterations), double(0.05), double(eye(3,3)));
+disp('C++ LK projective:');
+disp(homography_projective);
+figure(202); plotResults(im1, im2, templateQuad, homography_projective);
 
 end % function test_lucasKanade()
 

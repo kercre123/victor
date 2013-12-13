@@ -3,7 +3,7 @@ File: interpolate.h
 Author: Peter Barnum
 Created: 2013
 
-Utilities for interpolation
+Definitions of interpolate_declarations.h
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
@@ -113,7 +113,7 @@ namespace Anki
       const f32 xReferenceMax = static_cast<f32>(referenceWidth) - 1.0f;
       const f32 yReferenceMax = static_cast<f32>(referenceHeight) - 1.0f;
 
-      const s32 numValues = xCoordinates.get_size(1);
+      //const s32 numValues = xCoordinates.get_size(1);
 
       const s32 yIterationMax = isOutputOneDimensional ? 1                    : outHeight;
       const s32 xIterationMax = isOutputOneDimensional ? (outHeight*outWidth) : outWidth;

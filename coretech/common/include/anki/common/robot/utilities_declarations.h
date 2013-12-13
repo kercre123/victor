@@ -3,7 +3,7 @@ File: utilities_declarations.h
 Author: Peter Barnum
 Created: 2013
 
-Declarations of utilities.h
+Various simple macros and utilities.
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
@@ -51,6 +51,9 @@ namespace Anki
     // [d e f]
     // [g h i]
     template<typename Type> void Invert3x3(Type &a, Type &b, Type &c, Type &d, Type &e, Type &f, Type &g, Type &h, Type &i);
+
+    // Cartesian coordinates to Polar coordinates
+    template<typename Type> void Cart2Pol(const Type x, const Type y, Type &rho, Type &theta);
 
     // Movidius doesn't have floating point printf (no %f option), so do it with %d
     void PrintfOneArray_f32(const Array<f32> &array, const char * variableName);

@@ -3,7 +3,7 @@ File: interpolate_declarations.h
 Author: Peter Barnum
 Created: 2013
 
-Declarations for interpolate.h
+Utilities for interpolation
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.

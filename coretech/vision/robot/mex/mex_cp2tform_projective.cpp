@@ -2,27 +2,30 @@
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/calib3d/calib3d.hpp"
+
 #include "anki/common/matlab/mexWrappers.h"
+#include "anki/common/robot/matlabInterface.h"
 
 #define VERBOSITY 0
 
 using namespace cv;
-
-#define ConditionalErrorAndReturn(expression, eventName, eventValue) if(!(expression)) { printf("%s - %s\n", (eventName), (eventValue)); return;}
+using namespace Anki::Embedded;
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+  // TODO: Remove these if they aren't needed
+  /* Unused
   const mwSize array0_numDimensions = mxGetNumberOfDimensions(prhs[0]);
   const mwSize *array0_dimensions = mxGetDimensions(prhs[0]);
   const mwSize array1_numDimensions = mxGetNumberOfDimensions(prhs[1]);
   const mwSize *array1_dimensions = mxGetDimensions(prhs[1]);
-
+  */
   std::vector<cv::Point_<double> > input_points = mxArray2CvPointVector<double>(prhs[0]);
   std::vector<cv::Point_<double> > base_points = mxArray2CvPointVector<double>(prhs[1]);
 
-  ConditionalErrorAndReturn(input_points.size()!=0 || base_points.size()!=0, "mex_cp2tform_projective", "input points or base points couldn't be parsed");
+  AnkiConditionalErrorAndReturn(input_points.size()!=0 || base_points.size()!=0, "mex_cp2tform_projective", "input points or base points couldn't be parsed");
 
-  ConditionalErrorAndReturn(input_points.size() == base_points.size(), "mex_cp2tform_projective", "Point lists are of different sizes");
+  AnkiConditionalErrorAndReturn(input_points.size() == base_points.size(), "mex_cp2tform_projective", "Point lists are of different sizes");
 
   //  std::cout << "input_points: " << input_points << "\n";
   //  std::cout << "base_points: " << base_points << "\n";

@@ -3,7 +3,7 @@ File: sequences_declarations.h
 Author: Peter Barnum
 Created: 2013
 
-Declarations of sequences.h
+A Sequence is a mathematically-defined, ordered list. The sequence classes allow for operations on sequences, without requiring them to be explicitly evaluated.
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.

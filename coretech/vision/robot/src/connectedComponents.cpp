@@ -26,7 +26,7 @@ namespace Anki
     void ConnectedComponentSegment::Print() const
     {
       //printf("[%d: (%d->%d, %d)] ", static_cast<s32>(this->id), static_cast<s32>(this->xStart), static_cast<s32>(this->xEnd), static_cast<s32>(this->y));
-      printf("[%u: (%d->%d, %d)] ", this->id, this->xStart, this->xEnd, this->y);
+      printf("[%d: (%d->%d, %d)] ", this->id, this->xStart, this->xEnd, this->y);
     } // void ConnectedComponentSegment::Print() const
 
     bool ConnectedComponentSegment::operator== (const ConnectedComponentSegment &component2) const
@@ -201,7 +201,8 @@ namespace Anki
           pNewPreviousComponents1d[iCurrent] = newComponent;
 
           const Result result = components.PushBack(newComponent);
-
+#pragma unused(result)
+          
           AnkiConditionalWarnAndReturnValue(result == RESULT_OK, RESULT_FAIL, "extract2dComponents", "Extracted maximum number of 2d components");
         } // if(!foundMatch)
       } // for(s32 iCurrent=0; iCurrent<numCurrentComponents1d; iCurrent++)
@@ -775,11 +776,13 @@ namespace Anki
       {
         Rectangle<s16> * restrict pComponentBoundingBoxes = componentBoundingBoxes.Pointer(0);
         for(s32 iComponent=0; iComponent<=maximumId; iComponent++) {
+          // TODO: these appear to be unused.  Remove?
+          /*
           const s16 left = pComponentBoundingBoxes[iComponent].left;
           const s16 right = pComponentBoundingBoxes[iComponent].right;
           const s16 top = pComponentBoundingBoxes[iComponent].top;
           const s16 bottom = pComponentBoundingBoxes[iComponent].bottom;
-
+           */
           const s16 boxWidth = pComponentBoundingBoxes[iComponent].get_width();
           const s16 boxHeight = pComponentBoundingBoxes[iComponent].get_height();
 

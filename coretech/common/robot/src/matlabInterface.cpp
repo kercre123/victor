@@ -15,6 +15,8 @@ namespace Anki
   namespace Embedded
   {
 #if ANKICORETECH_EMBEDDED_USE_MATLAB
+    char tmpMexBuffer1[1024];
+    char tmpMexBuffer2[1024];
 
 #define TEXT_BUFFER_SIZE 1024
 

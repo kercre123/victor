@@ -3,7 +3,7 @@ File: arraySlices.h
 Author: Peter Barnum
 Created: 2013
 
-An array slice is a sub-array of an Array object.
+Definitions of arraySlices_declarations.h
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
@@ -21,17 +21,17 @@ namespace Anki
   {
 #pragma mark --- Definitions ---
     template<typename Type> ConstArraySlice<Type>::ConstArraySlice()
-      : array(Array<Type>()), ySlice(LinearSequence<s32>()), xSlice(LinearSequence<s32>())
+      : ySlice(LinearSequence<s32>()), xSlice(LinearSequence<s32>()), array(Array<Type>())
     {
     }
 
     template<typename Type> ConstArraySlice<Type>::ConstArraySlice(const Array<Type> &array)
-      : array(array), ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1))
+      : ySlice(LinearSequence<s32>(0,array.get_size(0)-1)), xSlice(LinearSequence<s32>(0,array.get_size(1)-1)), array(array)
     {
     }
 
     template<typename Type> ConstArraySlice<Type>::ConstArraySlice(const Array<Type> &array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice)
-      : array(array), ySlice(ySlice), xSlice(xSlice)
+      : ySlice(ySlice), xSlice(xSlice), array(array)
     {
     }
 
@@ -225,9 +225,9 @@ namespace Anki
     } // ArraySliceLimits_in1_out0
 
     template<typename Type> ArraySliceLimits_in1_out1<Type>::ArraySliceLimits_in1_out1(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice, bool in1_isTransposed, const LinearSequence<Type> &out1_ySlice, const LinearSequence<Type> &out1_xSlice)
-      :  rawIn1Limits(in1_ySlice, in1_xSlice), in1_isTransposed(in1_isTransposed),
+    : ySize(out1_ySlice.get_size()), xSize(out1_xSlice.get_size()),
       rawOut1Limits(out1_ySlice, out1_xSlice),
-      ySize(out1_ySlice.get_size()), xSize(out1_xSlice.get_size())
+      rawIn1Limits(in1_ySlice, in1_xSlice), in1_isTransposed(in1_isTransposed)
     {
       isValid = false;
 
@@ -288,10 +288,10 @@ namespace Anki
     } // ArraySliceLimits_in1_out1<Type>::OuterIncrementBottom()
 
     template<typename Type> ArraySliceLimits_in2_out1<Type>::ArraySliceLimits_in2_out1(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice, bool in1_isTransposed, const LinearSequence<Type> &in2_ySlice, const LinearSequence<Type> &in2_xSlice, bool in2_isTransposed, const LinearSequence<Type> &out1_ySlice, const LinearSequence<Type> &out1_xSlice)
-      : rawIn1Limits(in1_ySlice, in1_xSlice), in1_isTransposed(in1_isTransposed),
-      rawIn2Limits(in2_ySlice, in2_xSlice), in2_isTransposed(in2_isTransposed),
+    : ySize(out1_ySlice.get_size()), xSize(out1_xSlice.get_size()),
       rawOut1Limits(out1_ySlice, out1_xSlice),
-      ySize(out1_ySlice.get_size()), xSize(out1_xSlice.get_size())
+      rawIn1Limits(in1_ySlice, in1_xSlice), in1_isTransposed(in1_isTransposed),
+      rawIn2Limits(in2_ySlice, in2_xSlice), in2_isTransposed(in2_isTransposed)
     {
       isValid = false;
 

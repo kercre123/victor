@@ -11,8 +11,6 @@
 
 using namespace Anki::Embedded;
 
-#define ConditionalErrorAndReturn(expression, eventName, eventValue) if(!(expression)) { printf("%s - %s\n", (eventName), (eventValue)); return;}
-
 // image = drawExampleSquaresImage();
 // scaleImage_useWhichAlgorithm = 1;
 // scaleImage_numPyramidLevels = 4;
@@ -38,7 +36,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   //       MemoryStack scratch1,
   //       MemoryStack scratch2)
 
-  ConditionalErrorAndReturn(nrhs == 10 && nlhs == 1, "mexSimpleDetectorSteps123", "Call this function as following: components2d = mexSimpleDetectorSteps123(uint8(image), scaleImage_useWhichAlgorithm, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold);");
+  AnkiConditionalErrorAndReturn(nrhs == 10 && nlhs == 1, "mexSimpleDetectorSteps123", "Call this function as following: components2d = mexSimpleDetectorSteps123(uint8(image), scaleImage_useWhichAlgorithm, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold);");
 
   Array<u8> image = mxArrayToArray<u8>(prhs[0]);
   const CharacteristicScaleAlgorithm scaleImage_useWhichAlgorithm = static_cast<CharacteristicScaleAlgorithm>(static_cast<s32>(mxGetScalar(prhs[1])));
@@ -51,19 +49,19 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const s32 component_sparseMultiplyThreshold = static_cast<s32>(Round(pow(2,5)*mxGetScalar(prhs[8]))); // Convert from double to SQ26.5
   const s32 component_solidMultiplyThreshold = static_cast<s32>(Round(pow(2,5)*mxGetScalar(prhs[9]))); // Convert from double to SQ26.5
 
-  ConditionalErrorAndReturn(image.IsValid(), "mexSimpleDetectorSteps123", "Could not allocate image");
+  AnkiConditionalErrorAndReturn(image.IsValid(), "mexSimpleDetectorSteps123", "Could not allocate image");
 
   const u32 numBytes0 = 10000000;
   MemoryStack scratch0(calloc(numBytes0,1), numBytes0);
-  ConditionalErrorAndReturn(scratch0.IsValid(), "mexSimpleDetectorSteps123", "Scratch0 could not be allocated");
+  AnkiConditionalErrorAndReturn(scratch0.IsValid(), "mexSimpleDetectorSteps123", "Scratch0 could not be allocated");
 
   const u32 numBytes1 = 10000000;
   MemoryStack scratch1(calloc(numBytes1,1), numBytes0);
-  ConditionalErrorAndReturn(scratch1.IsValid(), "mexSimpleDetectorSteps123", "Scratch1 could not be allocated");
+  AnkiConditionalErrorAndReturn(scratch1.IsValid(), "mexSimpleDetectorSteps123", "Scratch1 could not be allocated");
 
   const u32 numBytes2 = 10000000;
   MemoryStack scratch2(calloc(numBytes2,1), numBytes2);
-  ConditionalErrorAndReturn(scratch2.IsValid(), "mexSimpleDetectorSteps123", "Scratch2 could not be allocated");
+  AnkiConditionalErrorAndReturn(scratch2.IsValid(), "mexSimpleDetectorSteps123", "Scratch2 could not be allocated");
 
   const s32 maxConnectedComponentSegments = u16_MAX;
   ConnectedComponents extractedComponents(maxConnectedComponentSegments, image.get_size(1), scratch0);
@@ -80,7 +78,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       scratch1,
       scratch2);
 
-    ConditionalErrorAndReturn(result == RESULT_OK, "mexSimpleDetectorSteps123", "SimpleDetector_Steps123 Failed");
+    AnkiConditionalErrorAndReturn(result == RESULT_OK, "mexSimpleDetectorSteps123", "SimpleDetector_Steps123 Failed");
   }
 
   const u16 numComponents = extractedComponents.get_maximumId();
@@ -89,7 +87,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   {
     const Result result = extractedComponents.ComputeNumComponentSegmentsForEachId(numComponentSegments);
 
-    ConditionalErrorAndReturn(result == RESULT_OK, "mexSimpleDetectorSteps123", "ComputeComponentSizes Failed");
+    AnkiConditionalErrorAndReturn(result == RESULT_OK, "mexSimpleDetectorSteps123", "ComputeComponentSizes Failed");
   }
 
   std::vector<Array<f64> > components2d;

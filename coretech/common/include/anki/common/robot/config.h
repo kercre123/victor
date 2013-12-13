@@ -24,7 +24,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #endif
 
 #if !defined(__APPLE_CC__) && defined(__GNUC__) && __GNUC__==4 && __GNUC_MINOR__==4 && __GNUC_PATCHLEVEL__==2 //hack to detect the movidius compiler
-#warning Using GNUC 4.4.2
+//#warning Using GNUC 4.4.2
 #define USING_MOVIDIUS_GCC_COMPILER
 #define USING_MOVIDIUS_COMPILER
 #endif
@@ -77,7 +77,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #endif // #if defined(__APPLE_CC__)
 
 #if defined(USING_MOVIDIUS_COMPILER) // If using any movidius compiler
-#warning USING MOVIDIUS COMPILER!!
+//#warning USING MOVIDIUS COMPILER!!
 #undef ANKICORETECH_EMBEDDED_USE_MATLAB
 #undef ANKICORETECH_EMBEDDED_USE_OPENCV
 #undef ANKICORETECH_EMBEDDED_USE_GTEST

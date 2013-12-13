@@ -58,7 +58,7 @@ static char buffer[MAX_BYTES];
 #else
 
 #ifdef BUFFER_IN_CMX
-__attribute__((section(".cmx.bss,CMX"))) static char buffer[MAX_BYTES];
+static char buffer[MAX_BYTES];    // CMX is default
 #else // #ifdef BUFFER_IN_CMX
 
 #ifdef BUFFER_IN_DDR_WITH_L2
@@ -70,6 +70,172 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 #endif // #ifdef BUFFER_IN_CMX ... #else
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
+
+GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  const s32 arr_data[15] = {81, 10, 16, 91, 28, 97, 13, 55, 96, 91, 96, 49, 63, 96, 80};
+
+  Array<s32> arr(5,3,ms);
+  Array<s32> arrIndexes(5,3,ms);
+
+  Array<s32> sortedArr_groundTruth(5,3,ms);
+  Array<s32> sortedArrIndexes_groundTruth(5,3,ms);
+
+  ASSERT_TRUE(arr.IsValid());
+  ASSERT_TRUE(sortedArr_groundTruth.IsValid());
+  ASSERT_TRUE(sortedArrIndexes_groundTruth.IsValid());
+
+  // sortWhichDimension==0 sortAscending==false
+  {
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::Sort(arr, arrIndexes, 0, false) == RESULT_OK);
+
+    arr.Print("sortWhichDimension==0 sortAscending==false");
+    arrIndexes.Print("Indexes: sortWhichDimension==0 sortAscending==false");
+
+    const s32 sortedArr_groundTruthData[15] = {91, 96, 97, 91, 96, 96, 81, 55, 80, 63, 28, 49, 13, 10, 16};
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+
+    const s32 sortedArrIndexes_groundTruthData[15] = {2, 4, 2, 4, 5, 3, 1, 3, 5, 5, 2, 4, 3, 1, 1};
+    ASSERT_TRUE(sortedArrIndexes_groundTruth.Set(sortedArrIndexes_groundTruthData, 15) == 15);
+    Matrix::Subtract<s32,s32,s32>(sortedArrIndexes_groundTruth, 1, sortedArrIndexes_groundTruth); // Matlab -> C indexing
+    sortedArrIndexes_groundTruth.Print("sortedArrIndexes_groundTruth");
+
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+    ASSERT_TRUE(AreElementwiseEqual(arrIndexes, sortedArrIndexes_groundTruth));
+  }
+
+  // sortWhichDimension==0 sortAscending==true
+  {
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::Sort(arr, arrIndexes, 0, true) == RESULT_OK);
+
+    arr.Print("Values: sortWhichDimension==0 sortAscending==true");
+    arrIndexes.Print("Indexes: sortWhichDimension==0 sortAscending==true");
+
+    const s32 sortedArr_groundTruthData[15] = {13, 10, 16, 63, 28, 49, 81, 55, 80, 91, 96, 96, 91, 96, 97};
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+
+    const s32 sortedArrIndexes_groundTruthData[15] = {3, 1, 1, 5, 2, 4, 1, 3, 5, 2, 4, 3, 4, 5, 2};
+    ASSERT_TRUE(sortedArrIndexes_groundTruth.Set(sortedArrIndexes_groundTruthData, 15) == 15);
+    Matrix::Subtract<s32,s32,s32>(sortedArrIndexes_groundTruth, 1, sortedArrIndexes_groundTruth); // Matlab -> C indexing
+
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+    ASSERT_TRUE(AreElementwiseEqual(arrIndexes, sortedArrIndexes_groundTruth));
+  }
+
+  // sortWhichDimension==1 sortAscending==false
+  {
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::Sort(arr, arrIndexes, 1, false) == RESULT_OK);
+
+    arr.Print("sortWhichDimension==1 sortAscending==false");
+    arrIndexes.Print("Indexes: sortWhichDimension==1 sortAscending==false");
+
+    const s32 sortedArr_groundTruthData[15] = {81, 16, 10, 97, 91, 28, 96, 55, 13, 96, 91, 49, 96, 80, 63};
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+
+    const s32 sortedArrIndexes_groundTruthData[15] = {1, 3, 2, 3, 1, 2, 3, 2, 1, 2, 1, 3, 2, 3, 1};
+    ASSERT_TRUE(sortedArrIndexes_groundTruth.Set(sortedArrIndexes_groundTruthData, 15) == 15);
+    Matrix::Subtract<s32,s32,s32>(sortedArrIndexes_groundTruth, 1, sortedArrIndexes_groundTruth); // Matlab -> C indexing
+
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+    ASSERT_TRUE(AreElementwiseEqual(arrIndexes, sortedArrIndexes_groundTruth));
+  }
+
+  // sortWhichDimension==1 sortAscending==true
+  {
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::Sort(arr, arrIndexes, 1, true) == RESULT_OK);
+
+    arr.Print("sortWhichDimension==1 sortAscending==true");
+    arrIndexes.Print("Indexes: sortWhichDimension==1 sortAscending==true");
+
+    const s32 sortedArr_groundTruthData[15] = {10, 16, 81, 28, 91, 97, 13, 55, 96, 49, 91, 96, 63, 80, 96};
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+
+    const s32 sortedArrIndexes_groundTruthData[15] = {2, 3, 1, 2, 1, 3, 1, 2, 3, 3, 1, 2, 1, 3, 2};
+    ASSERT_TRUE(sortedArrIndexes_groundTruth.Set(sortedArrIndexes_groundTruthData, 15) == 15);
+    Matrix::Subtract<s32,s32,s32>(sortedArrIndexes_groundTruth, 1, sortedArrIndexes_groundTruth); // Matlab -> C indexing
+
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+    ASSERT_TRUE(AreElementwiseEqual(arrIndexes, sortedArrIndexes_groundTruth));
+  }
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, MatrixSort)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  const s32 arr_data[15] = {81, 10, 16, 91, 28, 97, 13, 55, 96, 91, 96, 49, 63, 96, 80};
+  Array<s32> arr(5,3,ms);
+  Array<s32> sortedArr_groundTruth(5,3,ms);
+
+  ASSERT_TRUE(arr.IsValid());
+  ASSERT_TRUE(sortedArr_groundTruth.IsValid());
+
+  // sortWhichDimension==0 sortAscending==false
+  {
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::Sort(arr, 0, false) == RESULT_OK);
+
+    arr.Print("sortWhichDimension==0 sortAscending==false");
+
+    const s32 sortedArr_groundTruthData[15] = {91, 96, 97, 91, 96, 96, 81, 55, 80, 63, 28, 49, 13, 10, 16};
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+  }
+
+  // sortWhichDimension==0 sortAscending==true
+  {
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::Sort(arr, 0, true) == RESULT_OK);
+
+    arr.Print("sortWhichDimension==0 sortAscending==true");
+
+    const s32 sortedArr_groundTruthData[15] = {13, 10, 16, 63, 28, 49, 81, 55, 80, 91, 96, 96, 91, 96, 97};
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+  }
+
+  // sortWhichDimension==1 sortAscending==false
+  {
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::Sort(arr, 1, false) == RESULT_OK);
+
+    arr.Print("sortWhichDimension==1 sortAscending==false");
+
+    const s32 sortedArr_groundTruthData[15] = {81, 16, 10, 97, 91, 28, 96, 55, 13, 96, 91, 49, 96, 80, 63};
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+  }
+
+  // sortWhichDimension==1 sortAscending==true
+  {
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::Sort(arr, 1, true) == RESULT_OK);
+
+    arr.Print("sortWhichDimension==1 sortAscending==true");
+
+    const s32 sortedArr_groundTruthData[15] = {10, 16, 81, 28, 91, 97, 13, 55, 96, 49, 91, 96, 63, 80, 96};
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+  }
+
+  GTEST_RETURN_HERE;
+}
 
 GTEST_TEST(CoreTech_Common, LinearLeastSquares32)
 {
@@ -2417,18 +2583,49 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes);
+  CALL_GTEST_TEST(CoreTech_Common, MatrixSort);
+  CALL_GTEST_TEST(CoreTech_Common, LinearLeastSquares32);
+  CALL_GTEST_TEST(CoreTech_Common, LinearLeastSquares64);
+  CALL_GTEST_TEST(CoreTech_Common, MatrixMultiplyTranspose);
+  CALL_GTEST_TEST(CoreTech_Common, Reshape);
+  CALL_GTEST_TEST(CoreTech_Common, ArrayPatterns);
+  CALL_GTEST_TEST(CoreTech_Common, Interp2_twoDimensional);
+  CALL_GTEST_TEST(CoreTech_Common, Interp2_oneDimensional);
+  CALL_GTEST_TEST(CoreTech_Common, Meshgrid_twoDimensional);
+  CALL_GTEST_TEST(CoreTech_Common, Meshgrid_oneDimensional);
+  CALL_GTEST_TEST(CoreTech_Common, Linspace);
+  CALL_GTEST_TEST(CoreTech_Common, Find_SetArray1);
+  CALL_GTEST_TEST(CoreTech_Common, Find_SetArray2);
+  CALL_GTEST_TEST(CoreTech_Common, Find_SetValue);
+  CALL_GTEST_TEST(CoreTech_Common, ZeroSizedArray);
+  CALL_GTEST_TEST(CoreTech_Common, Find_Evaluate1D);
+  CALL_GTEST_TEST(CoreTech_Common, Find_Evaluate2D);
+  CALL_GTEST_TEST(CoreTech_Common, Find_NumMatchesAndBoundingRectangle);
+  CALL_GTEST_TEST(CoreTech_Common, MatrixElementwise);
+  CALL_GTEST_TEST(CoreTech_Common, SliceArrayAssignment);
+  CALL_GTEST_TEST(CoreTech_Common, SliceArrayCompileTest);
+  CALL_GTEST_TEST(CoreTech_Common, MatrixMinAndMaxAndSum);
+  CALL_GTEST_TEST(CoreTech_Common, ReallocateArray);
+  CALL_GTEST_TEST(CoreTech_Common, ReallocateMemoryStack);
+  CALL_GTEST_TEST(CoreTech_Common, LinearSequence);
+
 #ifdef TEST_BENCHMARKING
   CALL_GTEST_TEST(CoreTech_Common, Benchmarking);
 #endif
 
+  CALL_GTEST_TEST(CoreTech_Common, MemoryStackId);
   CALL_GTEST_TEST(CoreTech_Common, ApproximateExp);
-  CALL_GTEST_TEST(CoreTech_Common, SVD32);
-  CALL_GTEST_TEST(CoreTech_Common, SVD64);
   CALL_GTEST_TEST(CoreTech_Common, MatrixMultiply);
   CALL_GTEST_TEST(CoreTech_Common, ComputeHomography);
+  CALL_GTEST_TEST(CoreTech_Common, SVD32);
+  CALL_GTEST_TEST(CoreTech_Common, SVD64);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_call);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1);
+  //CALL_GTEST_TEST(CoreTech_Common, SimpleMatlabTest1);
+  //CALL_GTEST_TEST(CoreTech_Common, SimpleMatlabTest2);
+  //CALL_GTEST_TEST(CoreTech_Common, SimpleOpenCVTest);
   CALL_GTEST_TEST(CoreTech_Common, SimpleCoreTech_CommonTest);
   CALL_GTEST_TEST(CoreTech_Common, ArraySpecifiedClass);
   CALL_GTEST_TEST(CoreTech_Common, ArrayAlignment1);

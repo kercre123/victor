@@ -15,6 +15,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/array2d.h"
 #include "anki/common/robot/matlabConverters.h"
+#include "anki/common/robot/errorHandling.h"
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB
 
@@ -30,6 +31,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "engine.h"
 #include "matrix.h"
 
+// This ignores the "Format string is not a string literal" warning caused by
+// AnkiMatlab_Logf macro below.
+#pragma GCC diagnostic ignored "-Wformat-security"
+
 namespace Anki
 {
   namespace Embedded
@@ -39,6 +44,50 @@ namespace Anki
     // Converts from typeid names to Matlab types
     // mxClassID ConvertToMatlabType(const char *typeName, size_t byteDepth); // TODO: Remove
     std::string ConvertToMatlabTypeString(const char *typeName, size_t byteDepth);
+
+    //These mex-only functions and #defines output to the Matlab command line, in a similar way to the AnkiError #defines
+#ifdef ANKI_MEX_BUILD
+    extern char tmpMexBuffer1[1024];
+    extern char tmpMexBuffer2[1024];
+
+#define _AnkiMatlab_Logf(logLevel, eventName, eventValue, file, funct, line, ...)\
+    {\
+    snprintf(tmpMexBuffer1, 1024, "LOG[%d] - %s - %s\n", logLevel, eventName, eventValue);\
+    snprintf(tmpMexBuffer2, 1024, tmpMexBuffer1, ##__VA_ARGS__);\
+    mexPrintf(tmpMexBuffer2);\
+    }
+
+#undef AnkiWarn
+#define AnkiWarn(eventName, eventValue_format, ...) \
+    { _AnkiMatlab_Logf(ANKI_LOG_LEVEL_WARN, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); }
+
+#undef AnkiConditionalWarn
+#define AnkiConditionalWarn(expression, eventName, eventValue_format, ...) \
+  if(!(expression)) { _AnkiMatlab_Logf(ANKI_LOG_LEVEL_WARN, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); }
+
+#undef AnkiConditionalWarnAndReturn
+#define AnkiConditionalWarnAndReturn(expression, eventName, eventValue_format, ...) \
+  if(!(expression)) {\
+  _AnkiMatlab_Logf(ANKI_LOG_LEVEL_WARN, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
+  return;\
+  }
+
+#undef AnkiError
+#define AnkiError(eventName, eventValue_format, ...) _AnkiMatlab_Logf(ANKI_LOG_LEVEL_ERROR, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+
+#undef AnkiConditionalError
+#define AnkiConditionalError(expression, eventName, eventValue_format, ...) \
+  if(!(expression)) { \
+  _AnkiMatlab_Logf(ANKI_LOG_LEVEL_ERROR, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
+  }
+
+#undef AnkiConditionalErrorAndReturn
+#define AnkiConditionalErrorAndReturn(expression, eventName, eventValue_format, ...) \
+  if(!(expression)) {\
+  _AnkiMatlab_Logf(ANKI_LOG_LEVEL_ERROR, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
+  return;\
+  }
+#endif // #ifdef ANKI_MEX_BUILD
 
     class Matlab {
     public:

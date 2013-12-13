@@ -36,7 +36,8 @@ namespace Anki
     //function newDirection = findNewDirection(image, curPoint, curDirection, value)
     static BoundaryDirection FindNewDirection(const Array<u8> &binaryImage, const Point<s16> &curPoint, const BoundaryDirection curDirection, const u8 value)
     {
-      BoundaryDirection newDirection = BOUNDARY_UNKNOWN;
+      // TODO: This appears to be unused. Remove?
+      //BoundaryDirection newDirection = BOUNDARY_UNKNOWN;
 
       s32 directionList1Limits[2];
       s32 directionList2Limits[2];

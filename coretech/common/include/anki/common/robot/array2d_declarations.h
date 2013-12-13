@@ -3,7 +3,7 @@ File: array2d_declarations.h
 Author: Peter Barnum
 Created: 2013
 
-Declarations of array2d.h
+An Array is the basic large data structure for embedded work. It is designed for easy acceleration of algorithms on embedded hardware.
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.

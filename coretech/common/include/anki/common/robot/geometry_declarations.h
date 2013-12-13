@@ -3,7 +3,7 @@ File: geometry_declarations.h
 Author: Peter Barnum
 Created: 2013
 
-Declarations for geometry.h
+Simply geometry classes for points, rectangles, etc.
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
@@ -74,6 +74,8 @@ namespace Anki
 
       void Print() const;
 
+      Point<Type> ComputeCenter() const;
+
       bool operator== (const Rectangle<Type> &rect2) const;
 
       Rectangle<Type> operator+ (const Rectangle<Type> &rect2) const;
@@ -101,6 +103,8 @@ namespace Anki
       Quadrilateral(const Quadrilateral<Type>& quad);
 
       void Print() const;
+
+      Point<Type> ComputeCenter() const;
 
       bool operator== (const Quadrilateral<Type> &quad2) const;
 

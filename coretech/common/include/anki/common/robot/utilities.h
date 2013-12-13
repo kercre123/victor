@@ -3,7 +3,7 @@ File: utilities.h
 Author: Peter Barnum
 Created: 2013
 
-Various simple macros and utilities.
+Definitions of utilities_declarations.h
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
@@ -15,6 +15,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/utilities_declarations.h"
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/utilities_c.h"
+#include "anki/common/robot/trig_fast.h"
 
 namespace Anki
 {
@@ -103,7 +104,8 @@ namespace Anki
 
     template<typename Type> void Invert3x3(Type &a, Type &b, Type &c, Type &d, Type &e, Type &f, Type &g, Type &h, Type &i)
     {
-      const Type determinantInverse = static_cast<Type>(1) / Determinant3x3(a,b,c,d,e,f,g,h,i);
+      const Type determinant = Determinant3x3(a,b,c,d,e,f,g,h,i);
+      const Type determinantInverse = static_cast<Type>(1) / determinant;
 
       const Type A =  (e*i - f*h);
       const Type B = -(d*i - f*g);
@@ -124,6 +126,12 @@ namespace Anki
       g = C * determinantInverse;
       h = F * determinantInverse;
       i = I * determinantInverse;
+    }
+
+    template<typename Type> void Cart2Pol(const Type x, const Type y, Type &rho, Type &theta)
+    {
+      theta = atan2_fast(y, x);
+      rho = sqrtf(x*x + y*y);
     }
   } // namespace Embedded
 } // namespace Anki

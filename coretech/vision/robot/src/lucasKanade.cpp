@@ -1,4 +1,4 @@
-﻿/**
+/**
 File: lucaseKanade.cpp
 Author: Peter Barnum
 Created: 2013
@@ -19,20 +19,245 @@ namespace Anki
   {
     namespace TemplateTracker
     {
-      PlanarTransformation_f32::PlanarTransformation_f32(TransformType transformType, MemoryStack &memory)
-        : transformType(transformType)
+      PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, MemoryStack &memory)
+        : transformType(transformType), initialCorners(initialCorners)
       {
-        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_PROJECTIVE,
+        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
           "PlanarTransformation_f32::PlanarTransformation_f32", "Invalid transformType %d", transformType);
 
-        homography = Eye<f32>(3, 3, memory);
+        this->homography = Eye<f32>(3, 3, memory);
+
+        if(initialHomography.IsValid()) {
+          this->homography.Set(initialHomography);
+        }
+      }
+
+      PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, MemoryStack &memory)
+        : transformType(transformType), initialCorners(initialCorners)
+      {
+        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
+          "PlanarTransformation_f32::PlanarTransformation_f32", "Invalid transformType %d", transformType);
+
+        this->homography = Eye<f32>(3, 3, memory);
+      }
+
+      PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, MemoryStack &memory)
+        : transformType(transformType)
+      {
+        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
+          "PlanarTransformation_f32::PlanarTransformation_f32", "Invalid transformType %d", transformType);
+
+        initialCorners = Quadrilateral<f32>(Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f));
+
+        this->homography = Eye<f32>(3, 3, memory);
+      }
+
+      PlanarTransformation_f32::PlanarTransformation_f32()
+      {
+        initialCorners = Quadrilateral<f32>(Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f));
       }
 
       Result PlanarTransformation_f32::TransformPoints(
         const Array<f32> &xIn, const Array<f32> &yIn,
         const f32 scale,
         const Point<f32> &centerOffset,
-        Array<f32> &xOut, Array<f32> &yOut)
+        Array<f32> &xOut, Array<f32> &yOut) const
+      {
+        return TransformPointsStatic(xIn, yIn, scale, centerOffset, xOut, yOut, this->get_transformType(), this->get_homography());
+      }
+
+      Result PlanarTransformation_f32::Update(const Array<f32> &update, MemoryStack scratch, TransformType updateType)
+      {
+        AnkiConditionalErrorAndReturnValue(update.IsValid(),
+          RESULT_FAIL, "PlanarTransformation_f32::Update", "update is not valid");
+
+        AnkiConditionalErrorAndReturnValue(update.get_size(0) == 1,
+          RESULT_FAIL, "PlanarTransformation_f32::Update", "update is the incorrect size");
+
+        if(updateType == TRANSFORM_UNKNOWN) {
+          updateType = this->transformType;
+        }
+
+        // An Object of a given transformation type can only be updated with a simpler transformation
+        if(this->transformType == TRANSFORM_TRANSLATION) {
+          AnkiConditionalErrorAndReturnValue(updateType == TRANSFORM_TRANSLATION,
+            RESULT_FAIL, "PlanarTransformation_f32::Update", "cannot update this transform with the update type %d", updateType);
+        } else if(this->transformType == TRANSFORM_AFFINE) {
+          AnkiConditionalErrorAndReturnValue(updateType == TRANSFORM_TRANSLATION || updateType == TRANSFORM_AFFINE,
+            RESULT_FAIL, "PlanarTransformation_f32::Update", "cannot update this transform with the update type %d", updateType);
+        } else if(this->transformType == TRANSFORM_PROJECTIVE) {
+          AnkiConditionalErrorAndReturnValue(updateType == TRANSFORM_TRANSLATION|| updateType == TRANSFORM_AFFINE || updateType == TRANSFORM_PROJECTIVE,
+            RESULT_FAIL, "PlanarTransformation_f32::Update", "cannot update this transform with the update type %d", updateType);
+        } else {
+          assert(false);
+        }
+
+        const f32 * pUpdate = update[0];
+
+        if(updateType == TRANSFORM_TRANSLATION) {
+          AnkiConditionalErrorAndReturnValue(update.get_size(1) == TRANSFORM_TRANSLATION>>8,
+            RESULT_FAIL, "PlanarTransformation_f32::Update", "update is the incorrect size");
+
+          // this.tform(1:2,3) = this.tform(1:2,3) - update;
+          homography[0][2] -= pUpdate[0];
+          homography[1][2] -= pUpdate[1];
+        } else { // if(updateType == TRANSFORM_TRANSLATION)
+          Array<f32> updateArray(3,3,scratch);
+
+          if(updateType == TRANSFORM_AFFINE) {
+            AnkiConditionalErrorAndReturnValue(update.get_size(1) == TRANSFORM_AFFINE>>8,
+              RESULT_FAIL, "PlanarTransformation_f32::Update", "update is the incorrect size");
+
+            updateArray[0][0] = 1.0f + pUpdate[0]; updateArray[0][1] = pUpdate[1];        updateArray[0][2] = pUpdate[2];
+            updateArray[1][0] = pUpdate[3];        updateArray[1][1] = 1.0f + pUpdate[4]; updateArray[1][2] = pUpdate[5];
+            updateArray[2][0] = 0.0f;              updateArray[2][1] = 0.0f;              updateArray[2][2] = 1.0f;
+          } else if(updateType == TRANSFORM_PROJECTIVE) {
+            AnkiConditionalErrorAndReturnValue(update.get_size(1) == TRANSFORM_PROJECTIVE>>8,
+              RESULT_FAIL, "PlanarTransformation_f32::Update", "update is the incorrect size");
+
+            // tformUpdate = eye(3) + [update(1:3)'; update(4:6)'; update(7:8)' 0];
+            updateArray[0][0] = 1.0f + pUpdate[0]; updateArray[0][1] = pUpdate[1];        updateArray[0][2] = pUpdate[2];
+            updateArray[1][0] = pUpdate[3];        updateArray[1][1] = 1.0f + pUpdate[4]; updateArray[1][2] = pUpdate[5];
+            updateArray[2][0] = pUpdate[6];        updateArray[2][1] = pUpdate[7];        updateArray[2][2] = 1.0f;
+          } else {
+            AnkiError("PlanarTransformation_f32::Update", "Unknown transformation type %d", updateType);
+            return RESULT_FAIL;
+          }
+
+          //{
+          //  Matlab matlab(false);
+
+          //  matlab.PutArray(updateArray, "updateArray");
+          //}
+
+          // this.tform = this.tform*inv(tformUpdate);
+          Invert3x3(
+            updateArray[0][0], updateArray[0][1], updateArray[0][2],
+            updateArray[1][0], updateArray[1][1], updateArray[1][2],
+            updateArray[2][0], updateArray[2][1], updateArray[2][2]);
+
+          Array<f32> newHomography(3,3,scratch);
+
+          Matrix::Multiply(this->homography, updateArray, newHomography);
+
+          //{
+          //  Matlab matlab(false);
+          //  matlab.PutArray(this->homography, "homography");
+          //  matlab.PutArray(newHomography, "newHomography");
+          //  matlab.PutArray(updateArray, "updateArrayInv");
+          //  matlab.PutArray(update, "update");
+          //}
+
+          if(!FLT_NEAR(newHomography[2][2], 1.0f)) {
+            Matrix::DotDivide<f32,f32,f32>(newHomography, newHomography[2][2], newHomography);
+          }
+
+          //{
+          //  Matlab matlab(false);
+
+          //  matlab.PutArray(newHomography, "newHomographyNorm");
+          //}
+
+          this->homography.Set(newHomography);
+        } // if(updateType == TRANSFORM_TRANSLATION) ... else
+
+        return RESULT_OK;
+      }
+
+      Result PlanarTransformation_f32::Print(const char * const variableName)
+      {
+        return this->homography.Print(variableName);
+      }
+
+      Quadrilateral<f32> PlanarTransformation_f32::TransformQuadrilateral(const Quadrilateral<f32> &in, const f32 scale) const
+      {
+        // TODO: if this uses too much stack, rethink it
+        const s32 dataSize = 4*sizeof(f32) + 2*MEMORY_ALIGNMENT;
+        char xInData[dataSize];
+        char yInData[dataSize];
+        char xOutData[dataSize];
+        char yOutData[dataSize];
+
+        Array<f32> xIn(1,4,&xInData[0],dataSize);
+        Array<f32> yIn(1,4,&yInData[0],dataSize);
+        Array<f32> xOut(1,4,&xOutData[0],dataSize);
+        Array<f32> yOut(1,4,&yOutData[0],dataSize);
+
+        for(s32 i=0; i<4; i++) {
+          xIn[0][i] = in.corners[i].x;
+          yIn[0][i] = in.corners[i].y;
+        }
+
+        Point<f32> centerOffset(0.0f, 0.0f);
+
+        TransformPoints(xIn, yIn, scale, centerOffset, xOut, yOut);
+
+        Quadrilateral<f32> out;
+
+        for(s32 i=0; i<4; i++) {
+          out.corners[i].x = xOut[0][i];
+          out.corners[i].y = yOut[0][i];
+        }
+
+        return out;
+      }
+
+      Result PlanarTransformation_f32::set_transformType(const TransformType transformType)
+      {
+        if(transformType == TRANSFORM_TRANSLATION || transformType == TRANSFORM_AFFINE || transformType == TRANSFORM_PROJECTIVE) {
+          this->transformType = transformType;
+        } else {
+          AnkiError("PlanarTransformation_f32::set_transformType", "Unknown transformation type %d", transformType);
+          return RESULT_FAIL;
+        }
+
+        return RESULT_OK;
+      }
+
+      TransformType PlanarTransformation_f32::get_transformType() const
+      {
+        return transformType;
+      }
+
+      Result PlanarTransformation_f32::set_homography(const Array<f32>& in)
+      {
+        if(this->homography.Set(in) != 9)
+          return RESULT_FAIL;
+
+        assert(FLT_NEAR(in[2][2], 1.0f));
+
+        return RESULT_OK;
+      }
+
+      const Array<f32>& PlanarTransformation_f32::get_homography() const
+      {
+        return this->homography;
+      }
+
+      Result PlanarTransformation_f32::set_initialCorners(const Quadrilateral<f32> &initialCorners)
+      {
+        this->initialCorners = initialCorners;
+
+        return RESULT_OK;
+      }
+
+      const Quadrilateral<f32>& PlanarTransformation_f32::get_initialCorners() const
+      {
+        return this->initialCorners;
+      }
+
+      Quadrilateral<f32> PlanarTransformation_f32::get_transformedCorners() const
+      {
+        return this->TransformQuadrilateral(this->get_initialCorners());
+      }
+
+      Result PlanarTransformation_f32::TransformPointsStatic(
+        const Array<f32> &xIn, const Array<f32> &yIn,
+        const f32 scale,
+        const Point<f32> &centerOffset,
+        Array<f32> &xOut, Array<f32> &yOut,
+        const TransformType transformType,
+        const Array<f32> &homography)
       {
         AnkiConditionalErrorAndReturnValue(homography.IsValid(),
           RESULT_FAIL, "PlanarTransformation_f32::TransformPoints", "homography is not valid");
@@ -64,6 +289,28 @@ namespace Anki
             for(s32 x=0; x<numPointsX; x++) {
               pXOut[x] = pXIn[x] + dx + centerOffset.x;
               pYOut[x] = pYIn[x] + dy + centerOffset.y;
+            }
+          }
+        } else if(transformType == TRANSFORM_AFFINE) {
+          const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
+          const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+
+          assert(FLT_NEAR(homography[2][0], 0.0f));
+          assert(FLT_NEAR(homography[2][1], 0.0f));
+          assert(FLT_NEAR(homography[2][2], 1.0f));
+
+          for(s32 y=0; y<numPointsY; y++) {
+            const f32 * restrict pXIn = xIn.Pointer(y,0);
+            const f32 * restrict pYIn = yIn.Pointer(y,0);
+            f32 * restrict pXOut = xOut.Pointer(y,0);
+            f32 * restrict pYOut = yOut.Pointer(y,0);
+
+            for(s32 x=0; x<numPointsX; x++) {
+              const f32 xp = (h00*pXIn[x] + h01*pYIn[x] + h02);
+              const f32 yp = (h10*pXIn[x] + h11*pYIn[x] + h12);
+
+              pXOut[x] = xp + centerOffset.x;
+              pYOut[x] = yp + centerOffset.y;
             }
           }
         } else if(transformType == TRANSFORM_PROJECTIVE) {
@@ -98,87 +345,8 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result PlanarTransformation_f32::Update(const Array<f32> &update, MemoryStack scratch)
-      {
-        AnkiConditionalErrorAndReturnValue(update.IsValid(),
-          RESULT_FAIL, "PlanarTransformation_f32::Update", "update is not valid");
-
-        AnkiConditionalErrorAndReturnValue(update.get_size(0) == 1,
-          RESULT_FAIL, "PlanarTransformation_f32::Update", "update is the incorrect size");
-
-        const f32 * pUpdate = update[0];
-
-        if(transformType == TRANSFORM_TRANSLATION) {
-          AnkiConditionalErrorAndReturnValue(update.get_size(1) == 2,
-            RESULT_FAIL, "PlanarTransformation_f32::Update", "update is the incorrect size");
-
-          // this.tform(1:2,3) = this.tform(1:2,3) - update;
-          homography[0][2] -= pUpdate[0];
-          homography[1][2] -= pUpdate[1];
-        } else { // if(transformType == TRANSFORM_TRANSLATION)
-          Array<f32> updateArray(3,3,scratch);
-
-          if(transformType == TRANSFORM_PROJECTIVE) {
-            AnkiConditionalErrorAndReturnValue(update.get_size(1) == 8,
-              RESULT_FAIL, "PlanarTransformation_f32::Update", "update is the incorrect size");
-
-            // tformUpdate = eye(3) + [update(1:3)'; update(4:6)'; update(7:8)' 0];
-            updateArray[0][0] = 1.0f + pUpdate[0]; updateArray[0][1] = pUpdate[1];        updateArray[0][2] = pUpdate[2];
-            updateArray[1][0] = pUpdate[3];        updateArray[1][1] = 1.0f + pUpdate[4]; updateArray[1][2] = pUpdate[5];
-            updateArray[2][0] = pUpdate[6];        updateArray[2][1] = pUpdate[7];        updateArray[2][2] = 1.0f;
-          } else {
-            AnkiError("PlanarTransformation_f32::Update", "Unknown transformation type %d", transformType);
-            return RESULT_FAIL;
-          }
-
-          // this.tform = this.tform*inv(tformUpdate);
-          Invert3x3(
-            updateArray[0][0], updateArray[0][1], updateArray[2][2],
-            updateArray[1][0], updateArray[1][1], updateArray[1][2],
-            updateArray[2][0], updateArray[2][1], updateArray[0][2]);
-
-          Array<f32> newHomography(3,3,scratch);
-
-          Matrix::Multiply(this->homography, updateArray, newHomography);
-
-          this->homography.Set(newHomography);
-        } // if(transformType == TRANSFORM_TRANSLATION) ... else
-
-        return RESULT_OK;
-      }
-
-      Result PlanarTransformation_f32::set_transformType(const TransformType transformType)
-      {
-        if(transformType == TRANSFORM_TRANSLATION || transformType == TRANSFORM_PROJECTIVE) {
-          this->transformType = transformType;
-        } else {
-          AnkiError("PlanarTransformation_f32::set_transformType", "Unknown transformation type %d", transformType);
-          return RESULT_FAIL;
-        }
-
-        return RESULT_OK;
-      }
-
-      TransformType PlanarTransformation_f32::get_transformType() const
-      {
-        return transformType;
-      }
-
-      Result PlanarTransformation_f32::set_homography(const Array<f32>& in)
-      {
-        if(this->homography.Set(in) != 9)
-          return RESULT_FAIL;
-
-        return RESULT_OK;
-      }
-
-      const Array<f32>& PlanarTransformation_f32::get_homography() const
-      {
-        return this->homography;
-      }
-
-      LucasKanadeTracker_f32::LucasKanadeTracker_f32(const s32 templateImageHeight, const s32 templateImageWidth, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory)
-        : isValid(false), templateImageHeight(templateImageHeight), templateImageWidth(templateImageWidth), numPyramidLevels(numPyramidLevels), transformation(PlanarTransformation_f32(transformType,memory)), ridgeWeight(ridgeWeight), isInitialized(false)
+      LucasKanadeTracker_f32::LucasKanadeTracker_f32(const Array<u8> &templateImage, const Rectangle<f32> &templateRegion, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory)
+      : templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), numPyramidLevels(numPyramidLevels), ridgeWeight(ridgeWeight), templateRegion(templateRegion), isValid(false), isInitialized(false)
       {
         AnkiConditionalErrorAndReturn(templateImageHeight > 0 && templateImageWidth > 0,
           "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "template widths and heights must be greater than zero, and multiples of %d", ANKI_VISION_IMAGE_WIDTH_MULTIPLE);
@@ -186,8 +354,8 @@ namespace Anki
         AnkiConditionalErrorAndReturn(numPyramidLevels > 0,
           "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "numPyramidLevels must be greater than zero");
 
-        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION,
-          "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Only TRANSFORM_TRANSLATION is supported");
+        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType == TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
+          "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "Only TRANSFORM_TRANSLATION, TRANSFORM_AFFINE, and TRANSFORM_PROJECTIVE are supported");
 
         AnkiConditionalErrorAndReturn(ridgeWeight >= 0.0f,
           "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "ridgeWeight must be greater or equal to zero");
@@ -228,12 +396,27 @@ namespace Anki
 
         templateWeights.set_size(numPyramidLevels);
 
+        Quadrilateral<f32> initialCorners(
+          Point<f32>(templateRegion.left,templateRegion.top),
+          Point<f32>(templateRegion.right,templateRegion.top),
+          Point<f32>(templateRegion.right,templateRegion.bottom),
+          Point<f32>(templateRegion.left,templateRegion.bottom));
+
+        this->transformation = PlanarTransformation_f32(transformType, initialCorners, memory);
+
         this->isValid = true;
+
+        if(LucasKanadeTracker_f32::InitializeTemplate(templateImage, memory) != RESULT_OK) {
+          this->isValid = false;
+        }
       }
 
-      Result LucasKanadeTracker_f32::InitializeTemplate(const Array<u8> &templateImage, const Rectangle<f32> templateRegion, MemoryStack &memory)
+      Result LucasKanadeTracker_f32::InitializeTemplate(const Array<u8> &templateImage, MemoryStack &memory)
       {
         const bool isOutColumnMajor = true; // TODO: change to false, which will probably be faster
+
+        AnkiConditionalErrorAndReturnValue(this->isValid,
+          RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "This object's constructor failed, so it cannot be initialized");
 
         AnkiConditionalErrorAndReturnValue(this->isInitialized == false,
           RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "This object has already been initialized");
@@ -241,14 +424,16 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(templateImageHeight == templateImage.get_size(0) && templateImageWidth == templateImage.get_size(1),
           RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "template size doesn't match constructor");
 
+        AnkiConditionalErrorAndReturnValue(templateRegion.left < templateRegion.right && templateRegion.left >=0 && templateRegion.right < templateImage.get_size(1) &&
+          templateRegion.top < templateRegion.bottom && templateRegion.top >=0 && templateRegion.bottom < templateImage.get_size(0),
+          RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "template rectangle is invalid or out of bounds");
+
         // We do this early, before any memory is allocated This way, an early return won't be able
         // to leak memory with multiple calls to this object
         this->isInitialized = true;
+        this->isValid = false;
 
-        s32 numTransformationParameters;
-        if(transformation.get_transformType() == TRANSFORM_TRANSLATION) {
-          numTransformationParameters = 2;
-        }
+        const s32 numTransformationParameters = transformation.get_transformType() >> 8;
 
         this->templateRegionHeight = templateRegion.bottom - templateRegion.top + 1;
         this->templateRegionWidth = templateRegion.right - templateRegion.left + 1;
@@ -329,23 +514,100 @@ namespace Anki
             // Ix = (image_right(targetBlur) - image_left(targetBlur))/2 * spacing;
             // Iy = (image_down(targetBlur) - image_up(targetBlur))/2 * spacing;
             Matrix::Subtract<u8,f32,f32>(templateImagePyramid[iScale](1,-2,2,-1), templateImagePyramid[iScale](1,-2,0,-3), templateDerivativeX(1,-2,1,-2));
-            Matrix::DotMultiply<f32,f32,f32>(templateDerivativeX, scale / 2.0f, templateDerivativeX);
+            //Matrix::DotMultiply<f32,f32,f32>(templateDerivativeX, scale / 2.0f, templateDerivativeX);
+            Matrix::DotMultiply<f32,f32,f32>(templateDerivativeX, scale / (2.0f*255.0f), templateDerivativeX);
 
             Matrix::Subtract<u8,f32,f32>(templateImagePyramid[iScale](2,-1,1,-2), templateImagePyramid[iScale](0,-3,1,-2), templateDerivativeY(1,-2,1,-2));
-            Matrix::DotMultiply<f32,f32,f32>(templateDerivativeY, scale / 2.0f, templateDerivativeY);
+            //Matrix::DotMultiply<f32,f32,f32>(templateDerivativeY, scale / 2.0f, templateDerivativeY);
+            Matrix::DotMultiply<f32,f32,f32>(templateDerivativeY, scale / (2.0f*255.0f), templateDerivativeY);
 
             // Create the A matrix
             if(transformation.get_transformType() == TRANSFORM_TRANSLATION) {
-              // this.A_trans{i_scale} = [Ix(:) Iy(:)];
-
               Array<f32> tmp(1, numPointsY*numPointsX, memory);
 
-              Matrix::Vectorize(true, templateDerivativeX, tmp);
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp);
               this->A_full[iScale](0,0,0,-1).Set(tmp);
 
-              Matrix::Vectorize(true, templateDerivativeY, tmp);
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeY, tmp);
               this->A_full[iScale](1,1,0,-1).Set(tmp);
-            }
+            } else if(transformation.get_transformType() == TRANSFORM_AFFINE || transformation.get_transformType() == TRANSFORM_PROJECTIVE) {
+              // The first six terms of affine and projective are the same
+
+              Array<f32> xInV(1, numPointsY*numPointsX, memory);
+              Array<f32> yInV(1, numPointsY*numPointsX, memory);
+              Matrix::Vectorize(isOutColumnMajor, xIn, xInV);
+              Matrix::Vectorize(isOutColumnMajor, yIn, yInV);
+
+              Array<f32> tmp1(1, numPointsY*numPointsX, memory);
+
+              // X.*Ix(:)
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp1);
+              Matrix::DotMultiply<f32,f32,f32>(tmp1, xInV, tmp1);
+              this->A_full[iScale](0,0,0,-1).Set(tmp1);
+
+              // Y.*Ix(:)
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp1);
+              Matrix::DotMultiply<f32,f32,f32>(tmp1, yInV, tmp1);
+              this->A_full[iScale](1,1,0,-1).Set(tmp1);
+
+              // Ix(:)
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp1);
+              this->A_full[iScale](2,2,0,-1).Set(tmp1);
+
+              // X.*Iy(:)
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeY, tmp1);
+              Matrix::DotMultiply<f32,f32,f32>(tmp1, xInV, tmp1);
+              this->A_full[iScale](3,3,0,-1).Set(tmp1);
+
+              // Y.*Iy(:)
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeY, tmp1);
+              Matrix::DotMultiply<f32,f32,f32>(tmp1, yInV, tmp1);
+              this->A_full[iScale](4,4,0,-1).Set(tmp1);
+
+              // Iy(:)
+              Matrix::Vectorize(isOutColumnMajor, templateDerivativeY, tmp1);
+              this->A_full[iScale](5,5,0,-1).Set(tmp1);
+
+              if(transformation.get_transformType() == TRANSFORM_PROJECTIVE) {
+                //The seventh and eights terms are for projective only, not for affine
+
+                Array<f32> tmp2(1, numPointsY*numPointsX, memory);
+
+                // -X.^2.*Ix(:) - X.*Y.*Iy(:)
+                Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp1); // Ix(:)
+                Matrix::DotMultiply<f32,f32,f32>(tmp1, xInV, tmp1); // Ix(:).*X
+                Matrix::DotMultiply<f32,f32,f32>(tmp1, xInV, tmp1); // Ix(:).*X.^2
+                Matrix::Subtract<f32,f32,f32>(0.0f, tmp1, tmp1); // -Ix(:).*X.^2
+
+                Matrix::Vectorize(isOutColumnMajor, templateDerivativeY, tmp2); // Iy(:)
+                Matrix::DotMultiply<f32,f32,f32>(tmp2, xInV, tmp2); // Iy(:).*X
+                Matrix::DotMultiply<f32,f32,f32>(tmp2, yInV, tmp2); // Iy(:).*X.*Y
+
+                Matrix::Subtract<f32,f32,f32>(tmp1,tmp2,tmp1);
+                this->A_full[iScale](6,6,0,-1).Set(tmp1);
+
+                // -X.*Y.*Ix(:) - Y.^2.*Iy(:)
+                Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp1); // Ix(:)
+                Matrix::DotMultiply<f32,f32,f32>(tmp1, xInV, tmp1); // Ix(:).*X
+                Matrix::DotMultiply<f32,f32,f32>(tmp1, yInV, tmp1); // Ix(:).*X.*Y
+                Matrix::Subtract<f32,f32,f32>(0.0f, tmp1, tmp1); // -Ix(:).*X.*Y
+
+                Matrix::Vectorize(isOutColumnMajor, templateDerivativeY, tmp2); // Iy(:)
+                Matrix::DotMultiply<f32,f32,f32>(tmp2, yInV, tmp2); // Iy(:).*Y
+                Matrix::DotMultiply<f32,f32,f32>(tmp2, yInV, tmp2); // Iy(:).*Y.^2
+
+                Matrix::Subtract<f32,f32,f32>(tmp1,tmp2,tmp1);
+                this->A_full[iScale](7,7,0,-1).Set(tmp1);
+              } // if(transformation.get_transformType() == TRANSFORM_PROJECTIVE)
+              //{
+              //  Matlab matlab(false);
+              //  matlab.PutArray(this->A_full[iScale], "A_full_iScale");
+              //  matlab.PutArray(templateDerivativeX, "templateDerivativeX");
+              //  matlab.PutArray(templateDerivativeY, "templateDerivativeY");
+              //  matlab.PutArray(templateImage, "templateImage");
+              //  //matlab.PutArray(, "");
+              //}
+            } // else if(transformation.get_transformType() == TRANSFORM_AFFINE || transformation.get_transformType() == TRANSFORM_PROJECTIVE)
 
             {
               PUSH_MEMORY_STACK(memory);
@@ -386,6 +648,8 @@ namespace Anki
           } // for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++, fScale++)
         } // PUSH_MEMORY_STACK(memory);
 
+        this->isValid = true;
+
         return RESULT_OK;
       }
 
@@ -397,9 +661,19 @@ namespace Anki
           if(IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, TRANSFORM_TRANSLATION, converged, memory) != RESULT_OK)
             return RESULT_FAIL;
 
+          //this->get_transformation().Print("Translation");
+
           if(this->transformation.get_transformType() != TRANSFORM_TRANSLATION) {
+            // TODO: remove
+            //Array<f32> newH = Eye<f32>(3,3,memory);
+            //newH[0][2] = -0.0490;
+            //newH[1][2] = -0.1352;
+            //this->transformation.set_homography(newH);
+
             if(IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, this->transformation.get_transformType(), converged, memory) != RESULT_OK)
               return RESULT_FAIL;
+
+            //this->get_transformation().Print("Other");
           }
         } // for(s32 iScale=numPyramidLevels; iScale>=0; iScale--)
 
@@ -409,7 +683,7 @@ namespace Anki
       Result LucasKanadeTracker_f32::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack memory)
       {
         AnkiConditionalErrorAndReturnValue(this->isInitialized == true,
-          RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "This object is not initialized");
+          RESULT_FAIL, "LucasKanadeTracker_f32::IterativelyRefineTrack", "This object is not initialized");
 
         AnkiConditionalErrorAndReturnValue(nextImage.IsValid(),
           RESULT_FAIL, "LucasKanadeTracker_f32::IterativelyRefineTrack", "nextImage is not valid");
@@ -426,9 +700,22 @@ namespace Anki
         const s32 numPointsY = templateCoordinates[whichScale].get_yGridVector().get_size();
         const s32 numPointsX = templateCoordinates[whichScale].get_xGridVector().get_size();
 
-        s32 numSystemParameters = -1;
+        Array<f32> A_part;
+
+        const s32 numSystemParameters = curTransformType >> 8;
         if(curTransformType == TRANSFORM_TRANSLATION) {
-          numSystemParameters = 2;
+          // Translation-only can be performed by grabbing a few rows of the A_full matrix
+          if(this->get_transformation().get_transformType() == TRANSFORM_AFFINE ||
+            this->get_transformation().get_transformType() == TRANSFORM_PROJECTIVE) {
+              A_part = Array<f32>(2, this->A_full[whichScale].get_size(1), memory);
+              A_part(0,-1,0,-1).Set(this->A_full[whichScale](2,3,5,0,1,-1)); // grab the 2nd and 5th rows
+          } else if(this->get_transformation().get_transformType() == TRANSFORM_TRANSLATION) {
+            A_part = this->A_full[whichScale];
+          } else {
+            assert(false);
+          }
+        } else if(curTransformType == TRANSFORM_AFFINE || curTransformType == TRANSFORM_PROJECTIVE) {
+          A_part = this->A_full[whichScale];
         } else {
           assert(false);
         }
@@ -494,7 +781,7 @@ namespace Anki
 
             Array<f32> nextImageTransformed2d(1, numPointsY*numPointsX, memory);
 
-            if(Interp2(nextImage, xTransformed, yTransformed, nextImageTransformed2d, INTERPOLATE_LINEAR, -1.0f) != RESULT_OK)
+            if(Interp2<u8,f32>(nextImage, xTransformed, yTransformed, nextImageTransformed2d, INTERPOLATE_LINEAR, -1.0f) != RESULT_OK)
               return RESULT_FAIL;
 
             Matrix::Vectorize<f32,f32>(true, nextImageTransformed2d, nextImageTransformed);
@@ -504,6 +791,11 @@ namespace Anki
           // Warning: this is also treating real zeros as invalid, but this should not be a big problem
           Find<f32, Comparison::GreaterThanOrEqual<f32,f32>, f32> inBounds(nextImageTransformed, 0.0f);
           const s32 numInBounds = inBounds.get_numMatches();
+
+          if(numInBounds < 16) {
+            AnkiWarn("LucasKanadeTracker_f32::IterativelyRefineTrack", "Template drifted too far out of image.");
+            break;
+          }
 
           Array<f32> templateImage(1, numPointsY*numPointsX, memory);
           Matrix::Vectorize(true, this->templateImagePyramid[whichScale], templateImage);
@@ -515,31 +807,54 @@ namespace Anki
             Array<f32> templateDerivativeT_allPoints(1, numPointsY*numPointsX, memory);
             Matrix::Subtract<f32,f32,f32>(nextImageTransformed, templateImage, templateDerivativeT_allPoints);
             inBounds.SetArray(templateDerivativeT, templateDerivativeT_allPoints, 1);
+            Matrix::DotMultiply<f32,f32,f32>(templateDerivativeT, 1.0f/255.0f, templateDerivativeT);
           }
 
           Array<f32> AWAt(numSystemParameters, numSystemParameters, memory);
 
-          //  AtW = (A(inBounds,:).*this.W{i_scale}(inBounds,ones(1,size(A,2))))';
+          // AtW = (A(inBounds,:).*this.W{i_scale}(inBounds,ones(1,size(A,2))))';
 
-          Array<f32> A = inBounds.SetArray(A_full[whichScale], 1, memory);
+          Array<f32> A = inBounds.SetArray(A_part, 1, memory);
 
           Array<f32> AW(A.get_size(0), A.get_size(1), memory);
           AW(0,-1,0,-1).Set(A);
-          for(s32 y=0; y<numSystemParameters; y++) {
-            Matrix::DotMultiply<f32,f32,f32>(AW(y,y,0,-1), templateWeights[whichScale], AW(y,y,0,-1));
-          }
 
-          //  AtWA = AtW*A(inBounds,:) + diag(this.ridgeWeight*ones(1,size(A,2)));
+          {
+            PUSH_MEMORY_STACK(memory);
+            Array<f32> validTemplateWeights = inBounds.SetArray(templateWeights[whichScale], 1, memory);
+
+            for(s32 y=0; y<numSystemParameters; y++) {
+              Matrix::DotMultiply<f32,f32,f32>(AW(y,y,0,-1), validTemplateWeights, AW(y,y,0,-1));
+            }
+          } // PUSH_MEMORY_STACK(memory);
+
+          // AtWA = AtW*A(inBounds,:) + diag(this.ridgeWeight*ones(1,size(A,2)));
           Matrix::MultiplyTranspose(A, AW, AWAt);
+
+          //{
+          //  Matlab matlab(false);
+
+          //  matlab.PutArray(A, "A");
+          //  matlab.PutArray(AW, "AW");
+          //  matlab.PutArray(AWAt, "AWAt");
+          //}
 
           Array<f32> ridgeWeightMatrix = Eye<f32>(numSystemParameters, numSystemParameters, memory);
           Matrix::DotMultiply<f32,f32,f32>(ridgeWeightMatrix, ridgeWeight, ridgeWeightMatrix);
 
           Matrix::Add<f32,f32,f32>(AWAt, ridgeWeightMatrix, AWAt);
 
-          //  b = AtW*It(inBounds);
+          // b = AtW*It(inBounds);
           Array<f32> b(1,numSystemParameters,memory);
           Matrix::MultiplyTranspose(templateDerivativeT, AW, b);
+
+          //{
+          //  Matlab matlab(false);
+
+          //  matlab.PutArray(b, "b");
+          //  matlab.PutArray(templateDerivativeT, "templateDerivativeT");
+          //  matlab.PutArray(ridgeWeightMatrix, "ridgeWeightMatrix");
+          //}
 
           // update = AtWA\b;
           Array<f32> update(1,numSystemParameters,memory);
@@ -550,14 +865,12 @@ namespace Anki
           //{
           //  Matlab matlab(false);
 
-          //  matlab.PutArray(A, "A");
-          //  matlab.PutArray(AW, "AW");
-          //  matlab.PutArray(AWAt, "AWAt");
-          //  matlab.PutArray(b, "b");
           //  matlab.PutArray(update, "update");
           //}
 
-          this->transformation.Update(update, memory);
+          //this->transformation.Print("t1");
+          this->transformation.Update(update, memory, curTransformType);
+          //this->transformation.Print("t2");
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
         return RESULT_OK;

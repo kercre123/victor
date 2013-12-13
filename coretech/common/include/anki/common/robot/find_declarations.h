@@ -3,7 +3,7 @@ File: find_declarations.h
 Author: Peter Barnum
 Created: 2013
 
-Declarations for find.h
+Find is used similarly to the Matlab function, and allows for easy prototyping, with low memory overhead.
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
