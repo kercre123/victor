@@ -26,7 +26,7 @@ namespace Anki
     void ConnectedComponentSegment::Print() const
     {
       //printf("[%d: (%d->%d, %d)] ", static_cast<s32>(this->id), static_cast<s32>(this->xStart), static_cast<s32>(this->xEnd), static_cast<s32>(this->y));
-      printf("[%u: (%d->%d, %d)] ", this->id, this->xStart, this->xEnd, this->y);
+      printf("[%d: (%d->%d, %d)] ", this->id, this->xStart, this->xEnd, this->y);
     } // void ConnectedComponentSegment::Print() const
 
     bool ConnectedComponentSegment::operator== (const ConnectedComponentSegment &component2) const
@@ -200,9 +200,10 @@ namespace Anki
 
           pNewPreviousComponents1d[iCurrent] = newComponent;
 
-          //const Result result = components.PushBack(newComponent);
-
-          AnkiConditionalWarnAndReturnValue(components.PushBack(newComponent) == RESULT_OK, RESULT_FAIL, "extract2dComponents", "Extracted maximum number of 2d components");
+          const Result result = components.PushBack(newComponent);
+#pragma unused(result)
+          
+          AnkiConditionalWarnAndReturnValue(result == RESULT_OK, RESULT_FAIL, "extract2dComponents", "Extracted maximum number of 2d components");
         } // if(!foundMatch)
       } // for(s32 iCurrent=0; iCurrent<numCurrentComponents1d; iCurrent++)
 
