@@ -44,6 +44,7 @@
 
 #if MESSAGE_DEFINITION_MODE == MESSAGE_STRUCT_DEFINITION_MODE
 // Define typedef'd struct
+// TODO: Is it possible, using a macro, to verify the type sizes are correctly ordered?
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
 void GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(const u8* buffer); \
 typedef struct {

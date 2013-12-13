@@ -1,13 +1,20 @@
 /**
- * File: cozmoMsgProtocol.h
+ * File: messages.h  (was messageProtocol.h)
  * 
- * Author: Kevin Yoon 
+ * Author: Kevin Yoon
  * Created: 9/24/2013 
  *
- * Description: The file contains all the low level structs that
- *              define the messaging protocol. This is only a
- *              header file that is shared between the robot and
- *              the basestation.
+ * Major overhaul to use macros for generating message defintions
+ * Author: Andrew Stein
+ * Date:   10/13/2013
+ *
+ * Description: This files uses the information and macros in the
+ *              MessageDefinitions.h to create the typedef'd message
+ *              structs passed via USB / BTLE and between main and 
+ *              long execution "threads".  It also creates the enumerated
+ *              list of message IDs.  Everything in this file is independent
+ *              of specific message definitions -- those are defined in
+ *              MessageDefinitions.h.
  *
  * Copyright: Anki, Inc. 2013
  **/
@@ -53,6 +60,7 @@ namespace Anki {
 
       // Packet headers/footers:
       
+      // TODO: Do we need this?  Only used in simulation I think? (Add #ifdef SIMULATOR?)
       const u8 RADIO_PACKET_HEADER[2] = {0xBE, 0xEF};
 
       const u8 USB_PACKET_HEADER[4] = {0xBE, 0xEF, 0xF0, 0xFF}; // BEEFF0FF
