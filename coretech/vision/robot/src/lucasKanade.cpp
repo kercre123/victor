@@ -1,4 +1,4 @@
-﻿/**
+/**
 File: lucaseKanade.cpp
 Author: Peter Barnum
 Created: 2013
@@ -413,7 +413,8 @@ namespace Anki
 
       Result LucasKanadeTracker_f32::InitializeTemplate(const Array<u8> &templateImage, MemoryStack &memory)
       {
-        const bool isOutColumnMajor = true; // TODO: change to false, which will probably be faster
+        // TODO: this appears to be unused.  Remove?
+        // const bool isOutColumnMajor = true; // TODO: change to false, which will probably be faster
 
         AnkiConditionalErrorAndReturnValue(this->isValid,
           RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "This object's constructor failed, so it cannot be initialized");
