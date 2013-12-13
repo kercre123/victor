@@ -65,7 +65,7 @@ namespace Anki {
       tx_->send(header, HEADER_LENGTH);
       
       // Send the actual message
-      const u8 size = Messages::LookupTable[msgID].size;
+      const u8 size = Messages::GetSize(msgID);
       tx_->send(buffer, size);
       
       return true;
@@ -143,7 +143,7 @@ namespace Anki {
           // TODO: Not sure what to do here. Toss everything in the buffer? Advance one byte?
         }
         else {
-          const u8 size = Messages::LookupTable[msgID].size;
+          const u8 size = Messages::GetSize(msgID);
           
           // Check to see if we have the whole message (plus ID) available
           if(bytesAvailable >= size + 1)

@@ -315,7 +315,7 @@ int processPacket(const unsigned char *data, const int dataSize,
       
       // The next byte should be the first byte of the message struct that
       // was sent and will contain the size of the message.
-      const u8 msgSize = Messages::LookupTable[msgID].size;
+      const u8 msgSize = Messages::GetSize(msgID);
       
       if(dataSize < msgSize) {
         fprintf(stdout, "Valid header, but less data than expected in packet.\n");

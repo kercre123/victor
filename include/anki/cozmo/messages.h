@@ -75,16 +75,8 @@ namespace Anki {
         NUM_MSG_IDS // Final entry without comma at end
       } ID;
       
-      // 4. Fill in the message information lookup table:
-      // <This table is actually instantiated/implemented in messages.cpp>
-      typedef struct {
-        u8 priority;
-        u8 size;
-        void (*dispatchFcn)(const u8* buffer);
-      } TableEntry;
-      
-      // Global table of message information
-      extern TableEntry LookupTable[256];
+      // Return the size of a message, given its ID
+      u8 GetSize(const ID msgID);
       
       void ProcessBTLEMessages();
       void ProcessUARTMessages();

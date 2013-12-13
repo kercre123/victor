@@ -12,6 +12,23 @@ namespace Anki {
       
       namespace {
         
+        // 4. Fill in the message information lookup table:
+        typedef struct {
+          u8 priority;
+          u8 size;
+          void (*dispatchFcn)(const u8* buffer);
+        } TableEntry;
+        
+        // TODO: Would be nice to use NUM_MSG_IDS instead of hard-coded 256 here.
+        TableEntry LookupTable_[256] = {
+          {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
+#undef  MESSAGE_DEFINITION_MODE
+#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
+#include "anki/cozmo/MessageDefinitions.h"
+          {0, 0, 0} // Final dummy entry without comma at end
+        };
+        
+
         u8 msgBuffer_[256];
         
         // For waiting for a particular message ID
@@ -70,22 +87,19 @@ namespace Anki {
         
       } // private namespace
       
-      // 4. Fill in the message information lookup table:
+
+#pragma mark --- Messages Method Implementations ---
       
-      // TODO: Would be nice to use NUM_MSG_IDS instead of hard-coded 256 here.
-      TableEntry LookupTable[256] = {
-        {0,0,0}, // Empty entry for NO_MESSAGE_ID
-#undef  MESSAGE_DEFINITION_MODE
-#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
-#include "anki/cozmo/MessageDefinitions.h"
-        {0, 0, 0} // Final dummy entry without comma at end
-      };
+      u8 GetSize(const ID msgID)
+      {
+        return LookupTable_[msgID].size;
+      }
       
       void ProcessMessage(const ID msgID, const u8* buffer)
       {
-        if(LookupTable[msgID].dispatchFcn != NULL) {
+        if(LookupTable_[msgID].dispatchFcn != NULL) {
           
-          (*LookupTable[msgID].dispatchFcn)(buffer);
+          (*LookupTable_[msgID].dispatchFcn)(buffer);
           
           PRINT("ProcessMessage(): Dispatching message with ID=%d.\n", msgID);
         }
@@ -111,6 +125,9 @@ namespace Anki {
       bool StillLookingForID(void) {
         return lookForID_ != NO_MESSAGE_ID;
       }
+      
+      
+#pragma --- Message Dispatch Functions ---
       
       void ProcessRobotAddedToWorldMessage(const u8* buffer)
       {

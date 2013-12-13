@@ -75,7 +75,7 @@ namespace Anki
       const u8* msgData = reinterpret_cast<const u8*>(buffer);
       
       USBPutChar(msgID);
-      const u8 size = Messages::LookupTable[msgID].size;
+      const u8 size = Messages::GetSize(msgID);
       for(u8 i=0; i<size; ++i) {
         USBPutChar(static_cast<int>(msgData[i]));
       }
@@ -225,7 +225,7 @@ namespace Anki
           // then look up the size of the incoming message to see if we have it
           // all available.
           Messages::ID msgID = static_cast<Messages::ID>(USBPeekChar(4));
-          const u8 size = Messages::LookupTable[msgID].size;
+          const u8 size = Messages::GetSize(msgID);
           
           // Check to see if we have the whole message (plus ID) available
           // (note that GetNumBytesToRead() will be including the header, so
