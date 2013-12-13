@@ -179,7 +179,8 @@ namespace Anki
       // Communications
       //bool IsConnected() {return false;}
       u8 RadioFromBase(u8 buffer[RADIO_BUFFER_SIZE]) {return 0;}
-      bool RadioToBase(const void *message, const CozmoMessageID msgID) {return true;}
+      bool RadioSendMessage(const Messages::ID msgID, const void *message) {return true;}
+      Messages::ID RadioGetNextMessage(u8* buffer) {return Messages::NO_MESSAGE_ID;}
       
       
       // Misc
