@@ -13,11 +13,13 @@ using namespace Anki::Embedded;
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+  // TODO: Remove these if they aren't needed
+  /* Unused
   const mwSize array0_numDimensions = mxGetNumberOfDimensions(prhs[0]);
   const mwSize *array0_dimensions = mxGetDimensions(prhs[0]);
   const mwSize array1_numDimensions = mxGetNumberOfDimensions(prhs[1]);
   const mwSize *array1_dimensions = mxGetDimensions(prhs[1]);
-
+  */
   std::vector<cv::Point_<double> > input_points = mxArray2CvPointVector<double>(prhs[0]);
   std::vector<cv::Point_<double> > base_points = mxArray2CvPointVector<double>(prhs[1]);
 

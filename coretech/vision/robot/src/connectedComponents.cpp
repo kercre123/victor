@@ -203,6 +203,7 @@ namespace Anki
           pNewPreviousComponents1d[iCurrent] = newComponent;
 
           const Result result = components.PushBack(newComponent);
+#pragma unused(result)
 
           AnkiConditionalWarnAndReturnValue(result == RESULT_OK, result, "extract2dComponents", "Extracted maximum number of 2d components");
         } // if(!foundMatch)
@@ -777,11 +778,13 @@ namespace Anki
       {
         Rectangle<s16> * restrict pComponentBoundingBoxes = componentBoundingBoxes.Pointer(0);
         for(s32 iComponent=0; iComponent<=maximumId; iComponent++) {
+          // TODO: these appear to be unused.  Remove?
+          /*
           const s16 left = pComponentBoundingBoxes[iComponent].left;
           const s16 right = pComponentBoundingBoxes[iComponent].right;
           const s16 top = pComponentBoundingBoxes[iComponent].top;
           const s16 bottom = pComponentBoundingBoxes[iComponent].bottom;
-
+          */
           const s16 boxWidth = pComponentBoundingBoxes[iComponent].get_width();
           const s16 boxHeight = pComponentBoundingBoxes[iComponent].get_height();
 

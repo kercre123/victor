@@ -263,7 +263,7 @@ namespace Anki
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
         PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
 
-        BlockMarker &currentMarker = markers[iQuad];
+        //BlockMarker &currentMarker = markers[iQuad];
         Array<f64> &currentHomography = homographies[iQuad];
 
         if((lastResult = ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, scratch2)) != RESULT_OK)

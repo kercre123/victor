@@ -1,4 +1,4 @@
-﻿/**
+/**
 File: lucaseKanade.cpp
 Author: Peter Barnum
 Created: 2013
