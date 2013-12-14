@@ -53,7 +53,7 @@ namespace Anki
     template<typename Type1, typename Operator, typename Type2> Result Find<Type1,Operator,Type2>::Evaluate(Array<s32> &indexes, MemoryStack &memory) const
     {
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "Find.Evaluate", "This Find object is invalid");
+        RESULT_FAIL_INVALID_OBJECT, "Find.Evaluate", "This Find object is invalid");
 
       AnkiConditionalErrorAndReturnValue(this->numOutputDimensions == 1,
         RESULT_FAIL_INVALID_PARAMETERS, "Find.Evaluate", "One-dimensional Evaluate only works with one-dimensional Array input");
@@ -102,7 +102,7 @@ namespace Anki
     template<typename Type1, typename Operator, typename Type2> Result Find<Type1,Operator,Type2>::Evaluate(Array<s32> &yIndexes, Array<s32> &xIndexes, MemoryStack &memory) const
     {
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "Find.Evaluate", "This Find object is invalid");
+        RESULT_FAIL_INVALID_OBJECT, "Find.Evaluate", "This Find object is invalid");
 
       const s32 arrayHeight = array1.get_size(0);
       const s32 arrayWidth = array1.get_size(1);
@@ -274,10 +274,10 @@ namespace Anki
       const s32 arrayWidth = array1.get_size(1);
 
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "Find.SetArray", "This Find object is invalid");
+        RESULT_FAIL_INVALID_OBJECT, "Find.SetArray", "This Find object is invalid");
 
       AnkiConditionalErrorAndReturnValue(out.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "Find.SetArray", "out is invalid");
+        RESULT_FAIL_INVALID_OBJECT, "Find.SetArray", "out is invalid");
 
       AnkiConditionalErrorAndReturnValue(out.get_size(0) == arrayHeight && out.get_size(1) == arrayWidth,
         RESULT_FAIL_INVALID_SIZE, "Find.SetArray", "out is not the same size as the input(s)");
@@ -319,13 +319,13 @@ namespace Anki
     template<typename Type1, typename Operator, typename Type2> template<typename ArrayType> Result Find<Type1,Operator,Type2>::SetArray(Array<ArrayType> &out, const Array<ArrayType> &in, const s32 findWhichDimension) const
     {
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "Find.SetArray", "This Find object is invalid");
+        RESULT_FAIL_INVALID_OBJECT, "Find.SetArray", "This Find object is invalid");
 
       AnkiConditionalErrorAndReturnValue(in.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "Find.SetArray", "in is invalid");
+        RESULT_FAIL_INVALID_OBJECT, "Find.SetArray", "in is invalid");
 
       AnkiConditionalErrorAndReturnValue(out.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "Find.SetArray", "out is invalid");
+        RESULT_FAIL_INVALID_OBJECT, "Find.SetArray", "out is invalid");
 
       AnkiConditionalErrorAndReturnValue(this->numOutputDimensions == 1,
         RESULT_FAIL_INVALID_SIZE, "Find.SetArray", "One-dimensional SetArray only works with one-dimensional Array input");

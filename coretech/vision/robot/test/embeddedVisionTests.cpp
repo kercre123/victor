@@ -96,6 +96,7 @@ static const bool imagesAreEndianSwapped = true;
 static const bool imagesAreEndianSwapped = false;
 #endif
 
+#if defined(RUN_MAIN_BIG_MEMORY_TESTS) || defined(RUN_LOW_MEMORY_IMAGE_TESTS)
 bool IsBlockImage50_320x240Valid(const u8 * const imageBuffer, const bool isBigEndian)
 {
   //printf("%d %d %d %d\n", imageBuffer[0], imageBuffer[1000], imageBuffer[320*120], imageBuffer[320*240-1]);
@@ -124,6 +125,7 @@ bool IsBlockImage50_320x240Valid(const u8 * const imageBuffer, const bool isBigE
 
   return true;
 } // bool IsBlockImage50_320x240Valid()
+#endif // #if defined(RUN_MAIN_BIG_MEMORY_TESTS) || defined(RUN_LOW_MEMORY_IMAGE_TESTS)
 
 GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
 {
@@ -2243,7 +2245,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 
   ASSERT_TRUE(components.get_size() == 13);
 
-  // components.Print();
+  //components.Print();
 
   for(s32 i=0; i<numComponents_groundTruth; i++) {
     ASSERT_TRUE(components.Pointer(i)->xStart == xStart_groundTruth[i]);

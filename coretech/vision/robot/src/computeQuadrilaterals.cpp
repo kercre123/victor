@@ -113,7 +113,7 @@ namespace Anki
       const s32 MAX_BOUNDARY_LENTH = 10000; // Probably significantly longer than would ever be needed
 
       AnkiConditionalErrorAndReturnValue(components.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "ComputeQuadrilateralsFromConnectedComponents", "components is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "components is not valid");
 
       AnkiConditionalErrorAndReturnValue(components.get_isSortedInId(),
         RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "components must be sorted in id");

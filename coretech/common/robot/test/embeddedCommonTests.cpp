@@ -71,6 +71,42 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, MatrixTranspose)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  const s32 in_data[12] = {
+    1, 2, 3, 4,
+    5, 6, 7, 8,
+    9, 10, 11, 12};
+
+  Array<s32> in(3,4,ms);
+  Array<s16> out(4,3,ms);
+
+  in.Set(in_data, 12);
+
+  Matrix::Transpose(in, out);
+
+  const s32 out_groundTruth_data[12] = {
+    1, 5, 9,
+    2, 6, 10,
+    3, 7, 11,
+    4, 8, 12};
+
+  Array<s16> out_groundTruth(4,3,ms);
+
+  out_groundTruth.SetCast<s32>(out_groundTruth_data, 12);
+
+  ASSERT_TRUE(AreElementwiseEqual<s16>(out, out_groundTruth));
+
+  //in.Print("in");
+  //out.Print("out");
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, CholeskyDecomposition)
 {
   ASSERT_TRUE(buffer != NULL);
@@ -311,70 +347,6 @@ GTEST_TEST(CoreTech_Common, MatrixSort)
 
     ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
   }
-
-  GTEST_RETURN_HERE;
-}
-
-GTEST_TEST(CoreTech_Common, LinearLeastSquares32)
-{
-  ASSERT_TRUE(buffer != NULL);
-  MemoryStack ms(buffer, MAX_BYTES);
-  ASSERT_TRUE(ms.IsValid());
-
-  Array<f32> At(2,3,ms);
-  Array<f32> bt(1,3,ms);
-  Array<f32> xt(1,2,ms);
-
-  At[0][0] = 0.814723686393179f; At[1][0] = 0.913375856139019f;
-  At[0][1] = 0.905791937075619f; At[1][1] = 0.632359246225410f;
-  At[0][2] = 0.126986816293506f; At[1][2] = 0.0975404049994095f;
-
-  bt[0][0] = 0.278498218867048f;
-  bt[0][1] = 0.546881519204984f;
-  bt[0][2] = 0.957506835434298f;
-
-  ASSERT_TRUE(Matrix::SolveLeastSquaresWithSVD_f32(At, bt, xt, ms) == RESULT_OK);
-
-  Array<f32> xt_groundTruth(1,2,ms);
-  xt_groundTruth[0][0] = 1.28959732768902f;
-  xt_groundTruth[0][1] = -0.820726191726098f;
-
-  xt.Print("xt");
-  xt_groundTruth.Print("xt_groundTruth");
-
-  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(xt, xt_groundTruth, .001, .0001));
-
-  GTEST_RETURN_HERE;
-}
-
-GTEST_TEST(CoreTech_Common, LinearLeastSquares64)
-{
-  ASSERT_TRUE(buffer != NULL);
-  MemoryStack ms(buffer, MAX_BYTES);
-  ASSERT_TRUE(ms.IsValid());
-
-  Array<f64> At(2,3,ms);
-  Array<f64> bt(1,3,ms);
-  Array<f64> xt(1,2,ms);
-
-  At[0][0] = 0.814723686393179; At[1][0] = 0.913375856139019;
-  At[0][1] = 0.905791937075619; At[1][1] = 0.632359246225410;
-  At[0][2] = 0.126986816293506; At[1][2] = 0.0975404049994095;
-
-  bt[0][0] = 0.278498218867048;
-  bt[0][1] = 0.546881519204984;
-  bt[0][2] = 0.957506835434298;
-
-  ASSERT_TRUE(Matrix::SolveLeastSquaresWithSVD_f64(At, bt, xt, ms) == RESULT_OK);
-
-  Array<f64> xt_groundTruth(1,2,ms);
-  xt_groundTruth[0][0] = 1.28959732768902;
-  xt_groundTruth[0][1] = -0.820726191726098;
-
-  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(xt, xt_groundTruth, .001, .0001));
-
-  xt.Print("xt");
-  xt_groundTruth.Print("xt_groundTruth");
 
   GTEST_RETURN_HERE;
 }
@@ -2016,200 +1988,13 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
   originalPointsList.Print("originalPointsList");
   transformedPointsList.Print("transformedPointsList");
 
-  const Result result = EstimateHomography(originalPointsList, transformedPointsList, homography, ms);
+  const Result result = Matrix::EstimateHomography(originalPointsList, transformedPointsList, homography, ms);
 
   ASSERT_TRUE(result == RESULT_OK);
 
   homography.Print("homography");
 
   ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(homography, homography_groundTruth, .01, .01));
-
-  GTEST_RETURN_HERE;
-}
-
-GTEST_TEST(CoreTech_Common, SVD32)
-{
-  const s32 numBytes = MIN(MAX_BYTES, 5000);
-  ASSERT_TRUE(buffer != NULL);
-  MemoryStack ms(buffer, numBytes);
-  ASSERT_TRUE(ms.IsValid());
-
-#define SVD32_aDataLength 16
-#define SVD32_uTGroundTruthDataLength 4
-#define SVD32_wGroundTruthDataLength 8
-#define SVD32_vTGroundTruthDataLength 64
-
-  const f32 uTGroundTruthData[] = {
-    -0.237504316543999f,  -0.971386483137875f,
-    0.971386483137874f,  -0.237504316543999f};
-
-  // This is not always initializing correctly on Leon. Why?
-  const f32 aData[] = {
-    1.0f, 2.0f, 3.0f, 5.0f, 7.0f, 11.0f, 13.0f, 17.0f,
-    19.0f, 23.0f, 29.0f, 31.0f, 37.0f, 41.0f, 43.0f, 47.0f};
-
-  const f32 wGroundTruthData[] = {
-    101.885662808124f, 9.29040979446927f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-
-  const f32 vTGroundTruthData[] = {
-    -0.183478685625953f, -0.223946108965585f, -0.283481700610061f, -0.307212042374800f, -0.369078720749224f, -0.416539404278702f, -0.440269746043441f, -0.487730429572919f,
-    0.381166774075590f, 0.378866636898153f, 0.427695421221120f, 0.269708382365037f, 0.213979186509760f, -0.101994891202405f, -0.259981930058488f, -0.575956007770654f,
-    -0.227185052857744f, -0.469620636740071f, 0.828412170627898f, -0.133259849703043f, -0.130174916014859f, -0.0535189566767408f, -0.0151909770076815f, 0.0614649823304370f,
-    -0.262651399482480f, -0.301123351378262f, -0.120288604832971f, 0.894501576357598f, -0.112627300393190f, -0.0830469380120526f, -0.0682567568214837f, -0.0386763944403458f,
-    -0.324884751171929f, -0.243759383675343f, -0.107225790475501f, -0.104644995857761f, 0.880843955313500f, -0.113994455451022f, -0.111413660833282f, -0.106252071597804f,
-    -0.395817444421400f, 0.0932351870482750f, -0.00462734139723796f, -0.0491221437364792f, -0.0840608134431630f, 0.826949581878355f, -0.217545220460887f, -0.306534825139369f,
-    -0.431283791046136f, 0.261732472410084f, 0.0466718831418935f, -0.0213607176758380f, -0.0665131978214941f, -0.202578399456957f, 0.729388999725311f, -0.406676201910152f,
-    -0.502216484295607f, 0.598727043133703f, 0.149270332220156f, 0.0341621344454443f, -0.0314179665781565f, -0.261634362127581f, -0.376742559902293f, 0.393041044548282f};
-
-  const s32 m = 2, n = 8;
-
-#ifdef USING_MOVIDIUS_GCC_COMPILER
-  swcLeonFlushCaches();
-#endif
-
-  Array<f32> a(m, n, ms);
-  Array<f32> w(1, n, ms);
-  Array<f32> uT(m, m, ms);
-  Array<f32> vT(n, n, ms);
-  Array<f32> w_groundTruth(1, n, ms);
-  Array<f32> uT_groundTruth(m, m, ms);
-  Array<f32> vT_groundTruth(n, n, ms);
-
-  ASSERT_TRUE(a.IsValid());
-  ASSERT_TRUE(w.IsValid());
-  ASSERT_TRUE(uT.IsValid());
-  ASSERT_TRUE(vT.IsValid());
-  ASSERT_TRUE(w_groundTruth.IsValid());
-  ASSERT_TRUE(uT_groundTruth.IsValid());
-  ASSERT_TRUE(vT_groundTruth.IsValid());
-
-  void * scratch = ms.Allocate(sizeof(float)*(2*n + 2*m + 64));
-  //void * scratch = ms.Allocate(2*32 + 2*32 + 64);
-  ASSERT_TRUE(scratch != NULL);
-
-  //swcLeonFlushDcache();
-  //swcLeonDisableCaches();
-  /*swcLeonFlushCaches();
-  while(swcLeonIsCacheFlushPending()) { printf("a");}*/
-
-  a.Set(&aData[0], SVD32_aDataLength);
-
-  w_groundTruth.Set(&wGroundTruthData[0], SVD32_uTGroundTruthDataLength);
-
-  uT_groundTruth.Set(&uTGroundTruthData[0], SVD32_wGroundTruthDataLength);
-  vT_groundTruth.Set(&vTGroundTruthData[0], SVD32_vTGroundTruthDataLength);
-
-  /*a[0][0] = 1.0f; a[0][1] = 2.0f; a[0][2] = 3.0f; a[0][3] = 5.0f; a[0][4] = 7.0f; a[0][5] = 11.0f; a[0][6] = 13.0f; a[0][7] = 17.0f;
-  a[1][0] = 19.0f; a[1][1] = 23.0f; a[1][2] = 29.0f; a[1][3] = 31.0f; a[1][4] = 37.0f; a[1][5] = 41.0f; a[1][6] = 43.0f; a[1][7] = 47.0f;*/
-
-  const Result result = svd_f32(a, w, uT, vT, scratch);
-
-  ASSERT_TRUE(result == RESULT_OK);
-
-  ASSERT_TRUE(ms.IsValid());
-
-  //PrintfOneArray_f32(a, "a");
-
-  //PrintfOneArray_f32(w, "w   ");
-  //PrintfOneArray_f32(w_groundTruth, "w_groundTruth");
-
-  PrintfOneArray_f32(uT, "uT");
-  PrintfOneArray_f32(uT_groundTruth, "uT_groundTruth");
-
-  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(w, w_groundTruth, .05, .001));
-  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(uT, uT_groundTruth, .05, .001));
-
-  // I don't know why, but the v-transpose for this SVD doesn't match Matlab's. Probably this version is more efficient, in either memory or computation.
-  //ASSERT_TRUE(vT.IsElementwiseEqual_PercentThreshold(vT_groundTruth, .05, .001));
-
-  GTEST_RETURN_HERE;
-}
-
-GTEST_TEST(CoreTech_Common, SVD64)
-{
-  const s32 numBytes = MIN(MAX_BYTES, 5000);
-  ASSERT_TRUE(buffer != NULL);
-  MemoryStack ms(buffer, numBytes);
-  ASSERT_TRUE(ms.IsValid());
-
-#define SVD64_aDataLength 16
-#define SVD64_uTGroundTruthDataLength 4
-#define SVD64_wGroundTruthDataLength 8
-#define SVD64_vTGroundTruthDataLength 64
-
-  // This is not initializing correctly on Leon. Why?
-  //const f64 aData[SVD64_aDataLength] = {
-  //  1, 2, 3, 5, 7, 11, 13, 17,
-  //  19, 23, 29, 31, 37, 41, 43, 47};
-
-  const f64 uTGroundTruthData[] = {
-    -0.237504316543999,  -0.971386483137875,
-    0.971386483137874,  -0.237504316543999};
-
-  const f64 wGroundTruthData[] = {
-    101.885662808124, 9.29040979446927, 0, 0, 0, 0, 0, 0};
-
-  const f64 vTGroundTruthData[] = {
-    -0.183478685625953, -0.223946108965585, -0.283481700610061, -0.307212042374800, -0.369078720749224, -0.416539404278702, -0.440269746043441, -0.487730429572919,
-    0.381166774075590, 0.378866636898153, 0.427695421221120, 0.269708382365037, 0.213979186509760, -0.101994891202405, -0.259981930058488, -0.575956007770654,
-    -0.227185052857744, -0.469620636740071, 0.828412170627898, -0.133259849703043, -0.130174916014859, -0.0535189566767408, -0.0151909770076815, 0.0614649823304370,
-    -0.262651399482480, -0.301123351378262, -0.120288604832971, 0.894501576357598, -0.112627300393190, -0.0830469380120526, -0.0682567568214837, -0.0386763944403458,
-    -0.324884751171929, -0.243759383675343, -0.107225790475501, -0.104644995857761, 0.880843955313500, -0.113994455451022, -0.111413660833282, -0.106252071597804,
-    -0.395817444421400, 0.0932351870482750, -0.00462734139723796, -0.0491221437364792, -0.0840608134431630, 0.826949581878355, -0.217545220460887, -0.306534825139369,
-    -0.431283791046136, 0.261732472410084, 0.0466718831418935, -0.0213607176758380, -0.0665131978214941, -0.202578399456957, 0.729388999725311, -0.406676201910152,
-    -0.502216484295607, 0.598727043133703, 0.149270332220156, 0.0341621344454443, -0.0314179665781565, -0.261634362127581, -0.376742559902293, 0.393041044548282};
-
-  const s32 m = 2, n = 8;
-
-  Array<f64> a(m, n, ms);
-  Array<f64> w(1, n, ms);
-  Array<f64> uT(m, m, ms);
-  Array<f64> vT(n, n, ms);
-  Array<f64> w_groundTruth(1, n, ms);
-  Array<f64> uT_groundTruth(m, m, ms);
-  Array<f64> vT_groundTruth(n, n, ms);
-
-  ASSERT_TRUE(a.IsValid());
-  ASSERT_TRUE(w.IsValid());
-  ASSERT_TRUE(uT.IsValid());
-  ASSERT_TRUE(vT.IsValid());
-  ASSERT_TRUE(w_groundTruth.IsValid());
-  ASSERT_TRUE(uT_groundTruth.IsValid());
-  ASSERT_TRUE(vT_groundTruth.IsValid());
-
-  void * scratch = ms.Allocate(sizeof(float)*(2*n + 2*m + 64));
-  ASSERT_TRUE(scratch != NULL);
-
-  a[0][0] = 1.0f; a[0][1] = 2.0f; a[0][2] = 3.0f; a[0][3] = 5.0f; a[0][4] = 7.0f; a[0][5] = 11.0f; a[0][6] = 13.0f; a[0][7] = 17.0f;
-  a[1][0] = 19.0f; a[1][1] = 23.0f; a[1][2] = 29.0f; a[1][3] = 31.0f; a[1][4] = 37.0f; a[1][5] = 41.0f; a[1][6] = 43.0f; a[1][7] = 47.0f;
-
-  //a.Set(aData, SVD64_aDataLength);
-  w_groundTruth.Set(wGroundTruthData, SVD64_uTGroundTruthDataLength);
-  uT_groundTruth.Set(uTGroundTruthData, SVD64_wGroundTruthDataLength);
-  vT_groundTruth.Set(vTGroundTruthData, SVD64_vTGroundTruthDataLength);
-
-  const Result result = svd_f64(a, w, uT, vT, scratch);
-
-  ASSERT_TRUE(result == RESULT_OK);
-
-  //  w.Print("w");
-  //  w_groundTruth.Print("w_groundTruth");
-  //PrintfOneArray_f64(w, "w");
-  //PrintfOneArray_f64(w_groundTruth, "w_groundTruth");
-
-  //  uT.Print("uT");
-  //  uT_groundTruth.Print("uT_groundTruth");
-  PrintfOneArray_f64(uT, "uT");
-  PrintfOneArray_f64(uT_groundTruth, "uT_groundTruth");
-
-  //  vT.Print("vT");
-  //  vT_groundTruth.Print("vT_groundTruth");
-
-  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(w, w_groundTruth, .05, .001));
-  ASSERT_TRUE(AreElementwiseEqual_PercentThreshold(uT, uT_groundTruth, .05, .001));
-
-  // I don't know why, but the v-transpose for this SVD doesn't match Matlab's. Probably this version's is more efficient, in either memory or computation.
-  //ASSERT_TRUE(vT.IsElementwiseEqual_PercentThreshold(vT_groundTruth, .05, .001));
 
   GTEST_RETURN_HERE;
 }

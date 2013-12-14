@@ -326,10 +326,10 @@ namespace Anki
     Result FiducialMarkerParser::DetermineOrientationAndBinarizeAndReorderCorners(const FixedLengthList<s16> &meanValues, const f32 minContrastRatio, BlockMarker &marker, FixedLengthList<u8> &binarizedBits, MemoryStack scratch) const
     {
       AnkiConditionalErrorAndReturnValue(meanValues.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "FiducialMarkerParser::DetermineOrientation", "meanValues is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "FiducialMarkerParser::DetermineOrientation", "meanValues is not valid");
 
       AnkiConditionalErrorAndReturnValue(binarizedBits.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "FiducialMarkerParser::DetermineOrientation", "binarizedBits is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "FiducialMarkerParser::DetermineOrientation", "binarizedBits is not valid");
 
       binarizedBits.Clear();
 

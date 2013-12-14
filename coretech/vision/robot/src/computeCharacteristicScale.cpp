@@ -39,10 +39,10 @@ namespace Anki
       const s32 fullSizeWidth = imageWidth;
 
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "ComputeCharacteristicScaleImage", "image is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeCharacteristicScaleImage", "image is not valid");
 
       AnkiConditionalErrorAndReturnValue(scaleImage.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "ComputeCharacteristicScaleImage", "scaleImage is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeCharacteristicScaleImage", "scaleImage is not valid");
 
       AnkiConditionalErrorAndReturnValue(numPyramidLevels <= MAX_PYRAMID_LEVELS,
         RESULT_FAIL_INVALID_PARAMETERS, "ComputeCharacteristicScaleImage", "numPyramidLevels must be less than %d", MAX_PYRAMID_LEVELS+1);
@@ -388,10 +388,10 @@ namespace Anki
       acceleration.version = 1;
 
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "ComputeCharacteristicScaleImageAndBinarize", "image is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeCharacteristicScaleImageAndBinarize", "image is not valid");
 
       AnkiConditionalErrorAndReturnValue(binaryImage.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "ComputeCharacteristicScaleImageAndBinarize", "binaryImage is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeCharacteristicScaleImageAndBinarize", "binaryImage is not valid");
 
       AnkiConditionalErrorAndReturnValue(numPyramidLevels <= 4 && numPyramidLevels > 0,
         RESULT_FAIL_INVALID_PARAMETERS, "ComputeCharacteristicScaleImageAndBinarize", "numPyramidLevels must be less than %d", 4+1);
@@ -503,7 +503,7 @@ namespace Anki
       acceleration.version = 1;
 
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "ComputeCharacteristicScaleImageAndBinarize", "image is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeCharacteristicScaleImageAndBinarize", "image is not valid");
 
       AnkiConditionalErrorAndReturnValue(scaleImage_numPyramidLevels <= 4 && scaleImage_numPyramidLevels > 0,
         RESULT_FAIL_INVALID_PARAMETERS, "ComputeCharacteristicScaleImageAndBinarize", "scaleImage_numPyramidLevels must be less than %d", 4+1);

@@ -31,10 +31,10 @@ namespace Anki
       const s32 imageWidth = image.get_size(1);
 
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "BinomialFilter", "image is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "BinomialFilter", "image is not valid");
 
       AnkiConditionalErrorAndReturnValue(imageFiltered.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "BinomialFilter", "imageFiltered is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "BinomialFilter", "imageFiltered is not valid");
 
       AnkiConditionalWarnAndReturnValue(16 == (kernel[0] + kernel[1] + kernel[2] + kernel[3] + kernel[4]),
         RESULT_FAIL, "BinomialFilter", "Kernel count is wrong");

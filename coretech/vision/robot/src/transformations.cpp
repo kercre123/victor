@@ -19,10 +19,10 @@ namespace Anki
     Result ComputeHomographyFromQuad(const Quadrilateral<s16> &quad, Array<f64> &homography, MemoryStack scratch)
     {
       AnkiConditionalErrorAndReturnValue(homography.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "ComputeHomographyFromQuad", "homography is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeHomographyFromQuad", "homography is not valid");
 
       AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "ComputeHomographyFromQuad", "scratch is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeHomographyFromQuad", "scratch is not valid");
 
       FixedLengthList<Point<f64> > originalPoints(4, scratch);
       FixedLengthList<Point<f64> > transformedPoints(4, scratch);
@@ -37,7 +37,7 @@ namespace Anki
       transformedPoints.PushBack(Point<f64>(quad[2].x, quad[2].y));
       transformedPoints.PushBack(Point<f64>(quad[3].x, quad[3].y));
 
-      if((lastResult = EstimateHomography(originalPoints, transformedPoints, homography, scratch)) != RESULT_OK)
+      if((lastResult = Matrix::EstimateHomography(originalPoints, transformedPoints, homography, scratch)) != RESULT_OK)
         return lastResult;
 
       return RESULT_OK;

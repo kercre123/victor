@@ -28,10 +28,10 @@ namespace Anki
     template<typename Type> Result DrawComponents(Array<Type> &image, ConnectedComponents &components, Type minValue, Type maxValue)
     {
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "DrawComponents", "image is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "DrawComponents", "image is not valid");
 
       AnkiConditionalErrorAndReturnValue(components.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "DrawComponents", "components is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "DrawComponents", "components is not valid");
 
       const f64 numComponents = components.get_maximumId();
       const f64 minValueD = static_cast<f64>(minValue);

@@ -246,10 +246,10 @@ namespace Anki
         const s32 numSamples = Bt_Xt.get_size(0);
 
         AnkiConditionalErrorAndReturnValue(A_L.IsValid(),
-          RESULT_FAIL_INVALID_ARRAY, "CholeskyDecomposition", "A_L is not valid");
+          RESULT_FAIL_INVALID_OBJECT, "CholeskyDecomposition", "A_L is not valid");
 
         AnkiConditionalErrorAndReturnValue(Bt_Xt.IsValid(),
-          RESULT_FAIL_INVALID_ARRAY, "CholeskyDecomposition", "Bt_Xt is not valid");
+          RESULT_FAIL_INVALID_OBJECT, "CholeskyDecomposition", "Bt_Xt is not valid");
 
         AnkiConditionalErrorAndReturnValue(matrixHeight == A_L.get_size(1),
           RESULT_FAIL_INVALID_SIZE, "CholeskyDecomposition", "A_L is not square");
@@ -350,6 +350,86 @@ namespace Anki
         return RESULT_OK;
       }
 
+      template<typename Type> Result EstimateHomography(
+        const FixedLengthList<Point<Type> > &originalPoints,    //!< Four points in the original coordinate system
+        const FixedLengthList<Point<Type> > &transformedPoints, //!< Four points in the transformed coordinate system
+        Array<Type> &homography, //!< A 3x3 transformation matrix
+        MemoryStack scratch //!< Scratch memory
+        )
+      {
+        const s32 numPoints = originalPoints.get_size();
+
+        AnkiConditionalErrorAndReturnValue(originalPoints.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "EstimateHomography", "originalPoints is not valid");
+
+        AnkiConditionalErrorAndReturnValue(transformedPoints.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "EstimateHomography", "transformedPoints is not valid");
+
+        AnkiConditionalErrorAndReturnValue(homography.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "EstimateHomography", "homography is not valid");
+
+        AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "EstimateHomography", "scratch is not valid");
+
+        AnkiConditionalErrorAndReturnValue(transformedPoints.get_size() == numPoints && numPoints >= 4,
+          RESULT_FAIL_INVALID_SIZE, "EstimateHomography", "originalPoints and transformedPoints must be the same size, and have at least four points apiece.");
+
+        AnkiConditionalErrorAndReturnValue(homography.get_size(0) == 3 && homography.get_size(1) == 3,
+          RESULT_FAIL_INVALID_SIZE, "EstimateHomography", "homography must be 3x3");
+
+        Array<Type> A(8, 2*numPoints, scratch);
+        Array<Type> bt(1, 2*numPoints, scratch);
+
+        const Point<Type> * const pOriginalPoints = originalPoints.Pointer(0);
+        const Point<Type> * const pTransformedPoints = transformedPoints.Pointer(0);
+
+        Type * restrict pBt = bt.Pointer(0,0);
+
+        for(s32 i=0; i<numPoints; i++) {
+          Type * restrict A_y1 = A.Pointer(2*i, 0);
+          Type * restrict A_y2 = A.Pointer(2*i + 1, 0);
+
+          const Type xi = pOriginalPoints[i].x;
+          const Type yi = pOriginalPoints[i].y;
+
+          const Type xp = pTransformedPoints[i].x;
+          const Type yp = pTransformedPoints[i].y;
+
+          A_y1[0] = 0;  A_y1[1] = 0;  A_y1[2] = 0; A_y1[3] = -xi; A_y1[4] = -yi; A_y1[5] = -1; A_y1[6] = xi*yp;  A_y1[7] = yi*yp;
+          A_y2[0] = xi; A_y2[1] = yi; A_y2[2] = 1; A_y2[3] = 0;   A_y2[4] = 0;   A_y2[5] = 0;  A_y2[6] = -xi*xp; A_y2[7] = -yi*xp;
+
+          pBt[2*i] = -yp;
+          pBt[2*i + 1] = xp;
+        }
+
+        Array<Type> At(2*numPoints, 8, scratch);
+
+        Matrix::Transpose(A, At);
+
+        Array<Type> AtA(8, 8, scratch);
+        Array<Type> Atb(8, 1, scratch);
+
+        Matrix::Multiply(At, A, AtA);
+        Matrix::MultiplyTranspose(At, bt, Atb);
+
+        Array<Type> Atbt(1, 8, scratch);
+
+        Matrix::Transpose(Atb, Atbt);
+
+        const Result choleskyResult = SolveLeastSquaresWithCholesky(AtA, Atbt, false);
+
+        AnkiConditionalErrorAndReturnValue(choleskyResult == RESULT_OK,
+          choleskyResult, "EstimateHomography", "SolveLeastSquaresWithCholesky failed");
+
+        Type * restrict pAtbt = Atbt.Pointer(0,0);
+
+        homography[0][0] = pAtbt[0]; homography[0][1] = pAtbt[1]; homography[0][2] = pAtbt[2];
+        homography[1][0] = pAtbt[3]; homography[1][1] = pAtbt[4]; homography[1][2] = pAtbt[5];
+        homography[2][0] = pAtbt[6]; homography[2][1] = pAtbt[7]; homography[2][2] = static_cast<Type>(1);
+
+        return RESULT_OK;
+      }
+
       template<typename TypeIn, typename TypeOut> Result Reshape(const bool isColumnMajor, const Array<TypeIn> &in, Array<TypeOut> &out)
       {
         const s32 inHeight = in.get_size(0);
@@ -432,13 +512,40 @@ namespace Anki
         return out;
       }
 
+      template<typename TypeIn, typename TypeOut> Result Transpose(const Array<TypeIn> &in, Array<TypeOut> &out)
+      {
+        const s32 inHeight = in.get_size(0);
+        const s32 inWidth = in.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue(in.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Transpose", "in is not valid");
+
+        AnkiConditionalErrorAndReturnValue(out.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "Transpose", "out is not valid");
+
+        AnkiConditionalErrorAndReturnValue(out.get_size(0) == inWidth && out.get_size(1) == inHeight,
+          RESULT_FAIL_INVALID_SIZE, "Transpose", "Output is not the correct size");
+
+        AnkiConditionalErrorAndReturnValue(in.get_rawDataPointer() != out.get_rawDataPointer(),
+          RESULT_FAIL_ALIASED_MEMORY, "Transpose", "in and out cannot be the same array");
+
+        for(s32 yIn=0; yIn<inHeight; yIn++) {
+          const TypeIn * restrict pIn = in.Pointer(yIn, 0);
+          for(s32 xIn=0; xIn<inWidth; xIn++) {
+            out[xIn][yIn] = static_cast<TypeOut>(pIn[xIn]);
+          }
+        }
+
+        return RESULT_OK;
+      }
+
       template<typename Type> Result Sort(Array<Type> &arr, const s32 sortWhichDimension, const bool sortAscending)
       {
         const s32 arrHeight = arr.get_size(0);
         const s32 arrWidth = arr.get_size(1);
 
         AnkiConditionalErrorAndReturnValue(arr.IsValid(),
-          RESULT_FAIL_INVALID_ARRAY, "Sort", "Input array is invalid");
+          RESULT_FAIL_INVALID_OBJECT, "Sort", "Input array is invalid");
 
         AnkiConditionalErrorAndReturnValue(sortWhichDimension==0 || sortWhichDimension==1,
           RESULT_FAIL_INVALID_PARAMETERS, "Sort", "sortWhichDimension must be zero or one");
@@ -523,10 +630,10 @@ namespace Anki
         const s32 arrWidth = arr.get_size(1);
 
         AnkiConditionalErrorAndReturnValue(arr.IsValid(),
-          RESULT_FAIL_INVALID_ARRAY, "Sort", "Input array is invalid");
+          RESULT_FAIL_INVALID_OBJECT, "Sort", "Input array is invalid");
 
         AnkiConditionalErrorAndReturnValue(indexes.IsValid(),
-          RESULT_FAIL_INVALID_ARRAY, "Sort", "indexes array is invalid");
+          RESULT_FAIL_INVALID_OBJECT, "Sort", "indexes array is invalid");
 
         AnkiConditionalErrorAndReturnValue(sortWhichDimension==0 || sortWhichDimension==1,
           RESULT_FAIL_INVALID_PARAMETERS, "Sort", "sortWhichDimension must be zero or one");
@@ -654,13 +761,13 @@ namespace Anki
           Array<OutType> &out1Array = out.get_array();
 
           AnkiConditionalErrorAndReturnValue(in1Array.IsValid(),
-            RESULT_FAIL_INVALID_ARRAY, "Matrix::Elementwise::ApplyOperation", "Invalid array in1");
+            RESULT_FAIL_INVALID_OBJECT, "Matrix::Elementwise::ApplyOperation", "Invalid array in1");
 
           AnkiConditionalErrorAndReturnValue(in2Array.IsValid(),
-            RESULT_FAIL_INVALID_ARRAY, "Matrix::Elementwise::ApplyOperation", "Invalid array in2");
+            RESULT_FAIL_INVALID_OBJECT, "Matrix::Elementwise::ApplyOperation", "Invalid array in2");
 
           AnkiConditionalErrorAndReturnValue(out1Array.IsValid(),
-            RESULT_FAIL_INVALID_ARRAY, "Matrix::Elementwise::ApplyOperation", "Invalid array out");
+            RESULT_FAIL_INVALID_OBJECT, "Matrix::Elementwise::ApplyOperation", "Invalid array out");
 
           ArraySliceLimits_in2_out1<s32> limits(
             in1.get_ySlice(), in1.get_xSlice(), in1.get_isTransposed(),
@@ -668,7 +775,7 @@ namespace Anki
             out.get_ySlice(), out.get_xSlice());
 
           AnkiConditionalErrorAndReturnValue(limits.isValid,
-            RESULT_FAIL_INVALID_ARRAY, "Matrix::Elementwise::ApplyOperation", "Limits is not valid");
+            RESULT_FAIL_INVALID_OBJECT, "Matrix::Elementwise::ApplyOperation", "Limits is not valid");
 
           if(limits.isSimpleIteration) {
             // If the input isn't transposed, we will do the maximally efficient loop iteration
@@ -724,17 +831,17 @@ namespace Anki
           Array<OutType> &out1Array = out.get_array();
 
           AnkiConditionalErrorAndReturnValue(in1Array.IsValid(),
-            RESULT_FAIL_INVALID_ARRAY, "Matrix::Elementwise::ApplyOperation", "Invalid array in1");
+            RESULT_FAIL_INVALID_OBJECT, "Matrix::Elementwise::ApplyOperation", "Invalid array in1");
 
           AnkiConditionalErrorAndReturnValue(out1Array.IsValid(),
-            RESULT_FAIL_INVALID_ARRAY, "Matrix::Elementwise::ApplyOperation", "Invalid array out");
+            RESULT_FAIL_INVALID_OBJECT, "Matrix::Elementwise::ApplyOperation", "Invalid array out");
 
           ArraySliceLimits_in1_out1<s32> limits(
             in1.get_ySlice(), in1.get_xSlice(), in1.get_isTransposed(),
             out.get_ySlice(), out.get_xSlice());
 
           AnkiConditionalErrorAndReturnValue(limits.isValid,
-            RESULT_FAIL_INVALID_ARRAY, "Matrix::Elementwise::ApplyOperation", "Limits is not valid");
+            RESULT_FAIL_INVALID_OBJECT, "Matrix::Elementwise::ApplyOperation", "Limits is not valid");
 
           if(limits.isSimpleIteration) {
             // If the input isn't transposed, we will do the maximally efficient loop iteration
@@ -785,17 +892,17 @@ namespace Anki
           Array<OutType> &out1Array = out.get_array();
 
           AnkiConditionalErrorAndReturnValue(in2Array.IsValid(),
-            RESULT_FAIL_INVALID_ARRAY, "Matrix::Elementwise::ApplyOperation", "Invalid array in2");
+            RESULT_FAIL_INVALID_OBJECT, "Matrix::Elementwise::ApplyOperation", "Invalid array in2");
 
           AnkiConditionalErrorAndReturnValue(out1Array.IsValid(),
-            RESULT_FAIL_INVALID_ARRAY, "Matrix::Elementwise::ApplyOperation", "Invalid array out");
+            RESULT_FAIL_INVALID_OBJECT, "Matrix::Elementwise::ApplyOperation", "Invalid array out");
 
           ArraySliceLimits_in1_out1<s32> limits(
             in2.get_ySlice(), in2.get_xSlice(), in2.get_isTransposed(),
             out.get_ySlice(), out.get_xSlice());
 
           AnkiConditionalErrorAndReturnValue(limits.isValid,
-            RESULT_FAIL_INVALID_ARRAY, "Matrix::Elementwise::ApplyOperation", "Limits is not valid");
+            RESULT_FAIL_INVALID_OBJECT, "Matrix::Elementwise::ApplyOperation", "Limits is not valid");
 
           if(limits.isSimpleIteration) {
             // If the input isn't transposed, we will do the maximally efficient loop iteration

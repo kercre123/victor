@@ -10,16 +10,16 @@ namespace Anki
         RESULT_FAIL_INVALID_PARAMETERS, "Interp2", "Only INTERPOLATE_LINEAR is supported");
 
       AnkiConditionalErrorAndReturnValue(reference.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "Interp2", "reference is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "Interp2", "reference is not valid");
 
       AnkiConditionalErrorAndReturnValue(xCoordinates.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "Interp2", "xCoordinates is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "Interp2", "xCoordinates is not valid");
 
       AnkiConditionalErrorAndReturnValue(yCoordinates.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "Interp2", "yCoordinates is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "Interp2", "yCoordinates is not valid");
 
       AnkiConditionalErrorAndReturnValue(out.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "Interp2", "out is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "Interp2", "out is not valid");
 
       const s32 referenceHeight = reference.get_size(0);
       const s32 referenceWidth = reference.get_size(1);

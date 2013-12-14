@@ -266,7 +266,7 @@ namespace Anki
     template<typename Type> Result Array<Type>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "Array<Type>::Print", "Array<Type> is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "Array<Type>::Print", "Array<Type> is not valid");
 
       printf(variableName);
       printf(":\n");
@@ -601,7 +601,7 @@ namespace Anki
     template<typename Type> Result Array<Type>::PrintBasicType(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX)  const
     {
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "Array<Type>::Print", "Array<Type> is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "Array<Type>::Print", "Array<Type> is not valid");
 
       const s32 realMinX = MAX(0,minX);
       const s32 realMaxX = MIN(maxX+1,size[1]);
@@ -680,6 +680,7 @@ namespace Anki
     template<> Result Array<f64>::PrintAlternate(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
 
     template<> template<> s32 Array<u8>::SetCast(const s32 * const values, const s32 numValues);
+    template<> template<> s32 Array<s16>::SetCast(const s32 * const values, const s32 numValues);
 
 #pragma mark --- C Conversions ---
     C_Array_s32 get_C_Array_s32(Array<s32> &array);

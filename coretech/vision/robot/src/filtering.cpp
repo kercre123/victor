@@ -86,13 +86,13 @@ namespace Anki
       const s32 outputLength = in1.get_size(1) + in2.get_size(1) - 1;
 
       AnkiConditionalErrorAndReturnValue(in1.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "ComputeQuadrilateralsFromConnectedComponents", "in1 is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "in1 is not valid");
 
       AnkiConditionalErrorAndReturnValue(in2.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "ComputeQuadrilateralsFromConnectedComponents", "in2 is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "in2 is not valid");
 
       AnkiConditionalErrorAndReturnValue(out.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "ComputeQuadrilateralsFromConnectedComponents", "out is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "out is not valid");
 
       AnkiConditionalErrorAndReturnValue(in1.get_size(0)==1 && in2.get_size(0)==1 && out.get_size(0)==1,
         RESULT_FAIL_INVALID_SIZE, "ComputeQuadrilateralsFromConnectedComponents", "Arrays must be 1d and horizontal");
@@ -200,13 +200,13 @@ namespace Anki
       const s32 filterWidth = filter.get_size(1);
 
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "ComputeQuadrilateralsFromConnectedComponents", "image is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "image is not valid");
 
       AnkiConditionalErrorAndReturnValue(filter.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "ComputeQuadrilateralsFromConnectedComponents", "filter is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "filter is not valid");
 
       AnkiConditionalErrorAndReturnValue(out.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "ComputeQuadrilateralsFromConnectedComponents", "out is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "out is not valid");
 
       AnkiConditionalErrorAndReturnValue(imageHeight==1 && filterHeight==1 && out.get_size(0)==1,
         RESULT_FAIL_INVALID_SIZE, "ComputeQuadrilateralsFromConnectedComponents", "Arrays must be 1d and horizontal");
@@ -264,13 +264,13 @@ namespace Anki
     Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16> > &boundary, FixedLengthList<Point<s16> > &peaks, MemoryStack scratch)
     {
       AnkiConditionalErrorAndReturnValue(boundary.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "ComputeQuadrilateralsFromConnectedComponents", "boundary is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "boundary is not valid");
 
       AnkiConditionalErrorAndReturnValue(peaks.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "ComputeQuadrilateralsFromConnectedComponents", "peaks is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "peaks is not valid");
 
       AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "ComputeQuadrilateralsFromConnectedComponents", "scratch is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "scratch is not valid");
 
       AnkiConditionalErrorAndReturnValue(peaks.get_maximumSize() == 4,
         RESULT_FAIL_INVALID_PARAMETERS, "ComputeQuadrilateralsFromConnectedComponents", "Currently only four peaks supported");
@@ -307,7 +307,7 @@ namespace Anki
       FixedPointArray<s32> boundaryYFiltered(1, boundary.get_size(), numSigmaFractionalBits, scratch); // SQ23.8
 
       if(!boundaryYFiltered.IsValid())
-        return RESULT_FAIL_INVALID_ARRAY;
+        return RESULT_FAIL_INVALID_OBJECT;
 
       //differenceOfGaussian.Print("differenceOfGaussian");
 
@@ -317,7 +317,7 @@ namespace Anki
         FixedPointArray<s32> boundaryX(1, boundary.get_size(), 0, scratch); // SQ31.0
 
         if(!boundaryX.IsValid())
-          return RESULT_FAIL_INVALID_ARRAY;
+          return RESULT_FAIL_INVALID_OBJECT;
 
         const Point<s16> * restrict pConstBoundary = boundary.Pointer(0);
         s32 * restrict pBoundaryX = boundaryX.Pointer(0,0);
@@ -339,7 +339,7 @@ namespace Anki
         FixedPointArray<s32> boundaryY(1, boundary.get_size(), 0, scratch); // SQ31.0
 
         if(!boundaryY.IsValid())
-          return RESULT_FAIL_INVALID_ARRAY;
+          return RESULT_FAIL_INVALID_OBJECT;
 
         const Point<s16> * restrict pConstBoundary = boundary.Pointer(0);
         s32 * restrict pBoundaryY = boundaryY.Pointer(0,0);

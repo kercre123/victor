@@ -28,7 +28,7 @@ namespace Anki
     void ConnectedComponentSegment::Print() const
     {
       //printf("[%d: (%d->%d, %d)] ", static_cast<s32>(this->id), static_cast<s32>(this->xStart), static_cast<s32>(this->xEnd), static_cast<s32>(this->y));
-      printf("[%u: (%d->%d, %d)] ", this->id, this->xStart, this->xEnd, this->y);
+      printf("[%d: (%d->%d, %d)] ", this->id, this->xStart, this->xEnd, this->y);
     } // void ConnectedComponentSegment::Print() const
 
     bool ConnectedComponentSegment::operator== (const ConnectedComponentSegment &component2) const
@@ -358,7 +358,7 @@ namespace Anki
 
       // Could fail if we don't have enough scratch space
       if(!componentsTmp.IsValid())
-        return RESULT_FAIL_INVALID_ARRAY;
+        return RESULT_FAIL_INVALID_OBJECT;
 
       // Convert the absolute count to a cumulative count (ignoring id == zero)
       u16 totalCount = 0;
@@ -412,8 +412,8 @@ namespace Anki
     // Note: this is probably inefficient, compared with interlacing the loops in a kernel
     Result ConnectedComponents::ComputeComponentSizes(FixedLengthList<s32> &componentSizes)
     {
-      AnkiConditionalErrorAndReturnValue(componentSizes.IsValid(), RESULT_FAIL_INVALID_ARRAY, "ComputeComponentSizes", "componentSizes is not valid");
-      AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL_INVALID_ARRAY, "ComputeComponentSizes", "components is not valid");
+      AnkiConditionalErrorAndReturnValue(componentSizes.IsValid(), RESULT_FAIL_INVALID_OBJECT, "ComputeComponentSizes", "componentSizes is not valid");
+      AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL_INVALID_OBJECT, "ComputeComponentSizes", "components is not valid");
 
       componentSizes.SetZero();
       componentSizes.set_size(maximumId+1);
@@ -444,8 +444,8 @@ namespace Anki
     // 12n + 12 bytes of scratch.
     Result ConnectedComponents::ComputeComponentCentroids(FixedLengthList<Point<s16> > &componentCentroids, MemoryStack scratch)
     {
-      AnkiConditionalErrorAndReturnValue(componentCentroids.IsValid(), RESULT_FAIL_INVALID_ARRAY, "ComputeComponentSizes", "componentCentroids is not valid");
-      AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL_INVALID_ARRAY, "ComputeComponentSizes", "components is not valid");
+      AnkiConditionalErrorAndReturnValue(componentCentroids.IsValid(), RESULT_FAIL_INVALID_OBJECT, "ComputeComponentSizes", "componentCentroids is not valid");
+      AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL_INVALID_OBJECT, "ComputeComponentSizes", "components is not valid");
 
       componentCentroids.SetZero();
       componentCentroids.set_size(maximumId+1);
@@ -499,8 +499,8 @@ namespace Anki
     // Note: this is probably inefficient, compared with interlacing the loops in a kernel
     Result ConnectedComponents::ComputeComponentBoundingBoxes(FixedLengthList<Rectangle<s16> > &componentBoundingBoxes)
     {
-      AnkiConditionalErrorAndReturnValue(componentBoundingBoxes.IsValid(), RESULT_FAIL_INVALID_ARRAY, "ComputeComponentSizes", "componentBoundingBoxes is not valid");
-      AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL_INVALID_ARRAY, "ComputeComponentSizes", "components is not valid");
+      AnkiConditionalErrorAndReturnValue(componentBoundingBoxes.IsValid(), RESULT_FAIL_INVALID_OBJECT, "ComputeComponentSizes", "componentBoundingBoxes is not valid");
+      AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL_INVALID_OBJECT, "ComputeComponentSizes", "components is not valid");
 
       componentBoundingBoxes.set_size(maximumId+1);
 
@@ -537,8 +537,8 @@ namespace Anki
     // Note: this is probably inefficient, compared with interlacing the loops in a kernel
     Result ConnectedComponents::ComputeNumComponentSegmentsForEachId(FixedLengthList<s32> &numComponentSegments)
     {
-      AnkiConditionalErrorAndReturnValue(numComponentSegments.IsValid(), RESULT_FAIL_INVALID_ARRAY, "ComputeComponentSizes", "numComponentSegments is not valid");
-      AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL_INVALID_ARRAY, "ComputeComponentSizes", "components is not valid");
+      AnkiConditionalErrorAndReturnValue(numComponentSegments.IsValid(), RESULT_FAIL_INVALID_OBJECT, "ComputeComponentSizes", "numComponentSegments is not valid");
+      AnkiConditionalErrorAndReturnValue(components.IsValid(), RESULT_FAIL_INVALID_OBJECT, "ComputeComponentSizes", "components is not valid");
 
       numComponentSegments.SetZero();
       numComponentSegments.set_size(maximumId+1);

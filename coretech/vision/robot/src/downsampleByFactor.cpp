@@ -19,10 +19,10 @@ namespace Anki
       const s32 imageWidth = image.get_size(1);
 
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "DownsampleByFactor", "image is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "DownsampleByFactor", "image is not valid");
 
       AnkiConditionalErrorAndReturnValue(imageDownsampled.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "DownsampleByFactor", "imageDownsampled is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "DownsampleByFactor", "imageDownsampled is not valid");
 
       AnkiConditionalErrorAndReturnValue(downsampleFactor == 2,
         RESULT_FAIL_INVALID_PARAMETERS, "DownsampleByFactor", "Currently, only downsampleFactor==2 is supported");

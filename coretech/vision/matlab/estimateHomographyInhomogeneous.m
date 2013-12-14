@@ -26,10 +26,20 @@ for i = 1:numPoints
     b(2*(i-1) + 2) = xp;
 end
 
+% The direct solution
+% homography = A \ b;
 
-homography = A \ b;
+% The cholesky solution
+AtA = A'*A;
+Atb = A'*b;
+
+L = chol(AtA);
+
+homography = L \ (L' \ Atb);
 homography(9) = 1;
 
 homography = reshape(homography, [3,3])';
+
+
 
 % keyboard

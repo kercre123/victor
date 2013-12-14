@@ -74,10 +74,10 @@ namespace Anki
     Result TraceInteriorBoundary(const Array<u8> &binaryImage, const Point<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point<s16> > &boundary)
     {
       AnkiConditionalErrorAndReturnValue(binaryImage.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "TraceInteriorBoundary", "binaryImage is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "TraceInteriorBoundary", "binaryImage is not valid");
 
       AnkiConditionalErrorAndReturnValue(boundary.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "TraceInteriorBoundary", "boundary is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "TraceInteriorBoundary", "boundary is not valid");
 
       // Is the start point inside the inner pixel of the image?
       AnkiConditionalErrorAndReturnValue(
@@ -191,13 +191,13 @@ namespace Anki
       const s32 numComponents = components.get_size();
 
       AnkiConditionalErrorAndReturnValue(components.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "ComputeQuadrilateralsFromConnectedComponents", "components is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "components is not valid");
 
       AnkiConditionalErrorAndReturnValue(extractedBoundary.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "ComputeQuadrilateralsFromConnectedComponents", "extractedBoundary is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "extractedBoundary is not valid");
 
       AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
-        RESULT_FAIL_INVALID_ARRAY, "ComputeQuadrilateralsFromConnectedComponents", "scratch is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "scratch is not valid");
 
       AnkiConditionalErrorAndReturnValue(components.get_isSortedInId(),
         RESULT_FAIL_INVALID_PARAMETERS, "ComputeQuadrilateralsFromConnectedComponents", "components must be sorted in id");

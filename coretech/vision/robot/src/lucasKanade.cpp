@@ -72,7 +72,7 @@ namespace Anki
       Result PlanarTransformation_f32::Update(const Array<f32> &update, MemoryStack scratch, TransformType updateType)
       {
         AnkiConditionalErrorAndReturnValue(update.IsValid(),
-          RESULT_FAIL_INVALID_ARRAY, "PlanarTransformation_f32::Update", "update is not valid");
+          RESULT_FAIL_INVALID_OBJECT, "PlanarTransformation_f32::Update", "update is not valid");
 
         AnkiConditionalErrorAndReturnValue(update.get_size(0) == 1,
           RESULT_FAIL_INVALID_SIZE, "PlanarTransformation_f32::Update", "update is the incorrect size");
@@ -263,10 +263,10 @@ namespace Anki
         const Array<f32> &homography)
       {
         AnkiConditionalErrorAndReturnValue(homography.IsValid(),
-          RESULT_FAIL_INVALID_ARRAY, "PlanarTransformation_f32::TransformPoints", "homography is not valid");
+          RESULT_FAIL_INVALID_OBJECT, "PlanarTransformation_f32::TransformPoints", "homography is not valid");
 
         AnkiConditionalErrorAndReturnValue(xIn.IsValid() && yIn.IsValid() && xOut.IsValid() && yOut.IsValid(),
-          RESULT_FAIL_INVALID_ARRAY, "PlanarTransformation_f32::TransformPoints", "All inputs and outputs must be allocated and valid");
+          RESULT_FAIL_INVALID_OBJECT, "PlanarTransformation_f32::TransformPoints", "All inputs and outputs must be allocated and valid");
 
         AnkiConditionalErrorAndReturnValue(xIn.get_rawDataPointer() != xOut.get_rawDataPointer() && yIn.get_rawDataPointer() != yOut.get_rawDataPointer(),
           RESULT_FAIL_ALIASED_MEMORY, "PlanarTransformation_f32::TransformPoints", "In and Out arrays must be in different memory locations");
@@ -425,7 +425,7 @@ namespace Anki
         const bool isOutColumnMajor = true; // TODO: change to false, which will probably be faster
 
         AnkiConditionalErrorAndReturnValue(this->isValid,
-          RESULT_FAIL_INVALID_ARRAY, "LucasKanadeTracker_f32::InitializeTemplate", "This object's constructor failed, so it cannot be initialized");
+          RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_f32::InitializeTemplate", "This object's constructor failed, so it cannot be initialized");
 
         AnkiConditionalErrorAndReturnValue(this->isInitialized == false,
           RESULT_FAIL, "LucasKanadeTracker_f32::InitializeTemplate", "This object has already been initialized");
@@ -465,7 +465,7 @@ namespace Anki
 
           this->A_full[iScale] = Array<f32>(numTransformationParameters, numValidPoints, memory);
           AnkiConditionalErrorAndReturnValue(this->A_full[iScale].IsValid(),
-            RESULT_FAIL_INVALID_ARRAY, "LucasKanadeTracker_f32::InitializeTemplate", "Could not allocate A_full[iScale]");
+            RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_f32::InitializeTemplate", "Could not allocate A_full[iScale]");
 
           const s32 numPointsY = templateCoordinates[iScale].get_yGridVector().get_size();
           const s32 numPointsX = templateCoordinates[iScale].get_xGridVector().get_size();
@@ -473,12 +473,12 @@ namespace Anki
           this->templateImagePyramid[iScale] = Array<u8>(numPointsY, numPointsX, memory);
 
           AnkiConditionalErrorAndReturnValue(this->templateImagePyramid[iScale].IsValid(),
-            RESULT_FAIL_INVALID_ARRAY, "LucasKanadeTracker_f32::InitializeTemplate", "Could not allocate templateImagePyramid[i]");
+            RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_f32::InitializeTemplate", "Could not allocate templateImagePyramid[i]");
 
           this->templateWeights[iScale] = Array<f32>(1, numPointsY*numPointsX, memory);
 
           AnkiConditionalErrorAndReturnValue(this->templateWeights[iScale].IsValid(),
-            RESULT_FAIL_INVALID_ARRAY, "LucasKanadeTracker_f32::InitializeTemplate", "Could not allocate templateWeights[i]");
+            RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_f32::InitializeTemplate", "Could not allocate templateWeights[i]");
 
           //templateImage.Show("templateImage", true);
         }
@@ -724,7 +724,7 @@ namespace Anki
           RESULT_FAIL, "LucasKanadeTracker_f32::IterativelyRefineTrack", "This object is not initialized");
 
         AnkiConditionalErrorAndReturnValue(nextImage.IsValid(),
-          RESULT_FAIL_INVALID_ARRAY, "LucasKanadeTracker_f32::IterativelyRefineTrack", "nextImage is not valid");
+          RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_f32::IterativelyRefineTrack", "nextImage is not valid");
 
         AnkiConditionalErrorAndReturnValue(maxIterations > 0 && maxIterations < 1000,
           RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTracker_f32::IterativelyRefineTrack", "maxIterations must be greater than zero and less than 1000");
@@ -920,10 +920,9 @@ namespace Anki
           //}
 
           // update = AtWA\b;
-          Array<f32> update(1,numSystemParameters,memory);
 
           BeginBenchmark("IterativelyRefineTrack.solveForUpdate");
-          if((lastResult = Matrix::SolveLeastSquaresWithSVD_f32(AWAt, b, update, memory)) != RESULT_OK)
+          if((lastResult = Matrix::SolveLeastSquaresWithCholesky(AWAt, b, false)) != RESULT_OK)
             return lastResult;
           EndBenchmark("IterativelyRefineTrack.solveForUpdate");
 
@@ -941,7 +940,7 @@ namespace Anki
 
           BeginBenchmark("IterativelyRefineTrack.updateTransformation");
           //this->transformation.Print("t1");
-          this->transformation.Update(update, memory, curTransformType);
+          this->transformation.Update(b, memory, curTransformType);
           //this->transformation.Print("t2");
           EndBenchmark("IterativelyRefineTrack.updateTransformation");
 
