@@ -2451,12 +2451,11 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, MatrixTranspose);
   CALL_GTEST_TEST(CoreTech_Common, CholeskyDecomposition);
   CALL_GTEST_TEST(CoreTech_Common, ExplicitPrintf);
   CALL_GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes);
   CALL_GTEST_TEST(CoreTech_Common, MatrixSort);
-  CALL_GTEST_TEST(CoreTech_Common, LinearLeastSquares32);
-  CALL_GTEST_TEST(CoreTech_Common, LinearLeastSquares64);
   CALL_GTEST_TEST(CoreTech_Common, MatrixMultiplyTranspose);
   CALL_GTEST_TEST(CoreTech_Common, Reshape);
   CALL_GTEST_TEST(CoreTech_Common, ArrayPatterns);
@@ -2488,8 +2487,6 @@ int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Common, ApproximateExp);
   CALL_GTEST_TEST(CoreTech_Common, MatrixMultiply);
   CALL_GTEST_TEST(CoreTech_Common, ComputeHomography);
-  CALL_GTEST_TEST(CoreTech_Common, SVD32);
-  CALL_GTEST_TEST(CoreTech_Common, SVD64);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_call);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStack_largestPossibleAllocation1);
