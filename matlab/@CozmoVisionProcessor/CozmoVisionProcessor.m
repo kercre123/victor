@@ -121,9 +121,10 @@ classdef CozmoVisionProcessor < handle
             hold(this.h_axes, 'on');
             this.h_track = plot(nan, nan, 'r', 'LineWidth', 3, ...
                 'Parent', this.h_axes);
-            hold(this.h_axes, 'off');
+         
+            axis(this.h_axes, 'image')
+            axis(this.h_templateAxes, 'image')
             
-            hold(this.h_axes, 'on');
             colormap(this.h_fig, 'gray');
             
         end % Constructor: CozmoVisionProcessor()
@@ -294,8 +295,8 @@ classdef CozmoVisionProcessor < handle
                     set(this.h_templateAxes, 'Visible', 'off');
                     set(this.h_track, 'XData', nan, 'YData', nan);
                     
-                    img = CozmoVisionProcessor.PacketToImage(packet);
-                    if ~isempty(img)
+                    [img, valid] = CozmoVisionProcessor.PacketToImage(packet);
+                    if true
                         
                         markers = simpleDetector(img);
                         
@@ -358,15 +359,16 @@ classdef CozmoVisionProcessor < handle
                         
                         packet = this.SerializeMessageStruct(msgStruct);
                         this.SendPacket('CozmoMsg_TotalBlocksDetected', packet);
-                        
+                    else
+                        set(this.h_title, 'String', 'Invalid Image');
                     end
                     
                 case this.TRACK_COMMAND
                     assert(~isempty(this.calibrationMatrix), ...
                         'Must receive calibration message before tracking.');
                     
-                    img = CozmoVisionProcessor.PacketToImage(packet);
-                    if ~isempty(img)
+                    [img, valid] = CozmoVisionProcessor.PacketToImage(packet);
+                    if valid
                                                       
                         % Update the tracker with this frame
                         converged = this.LKtracker.track(img, ...
@@ -402,6 +404,8 @@ classdef CozmoVisionProcessor < handle
                         packet = this.SerializeMessageStruct(msgStruct);
                         this.SendPacket('CozmoMsg_DockingErrorSignal', packet);
                         
+                    else
+                        set(this.h_title, 'String', 'Invalid Image');
                     end % IF img not empty
                     
                 otherwise
@@ -416,6 +420,7 @@ classdef CozmoVisionProcessor < handle
             set(this.h_axes, ...
                 'XLim', [.5 size(img,2)+.5], ...
                 'YLim', [.5 size(img,1)+.5]);
+            %axis(this.h_axes, 'image');
             drawnow
          
         end % FUNCTION ProcessPacket()
@@ -559,19 +564,28 @@ classdef CozmoVisionProcessor < handle
     
     methods(Static = true)
         
-        function img = PacketToImage(packet)
+        function [img, valid] = PacketToImage(packet)
+            valid = false;
             img = [];
             
             if ~CozmoVisionProcessor.RESOLUTION_LUT.isKey(char(packet(1)))
                 warning('Unrecognized resolution byte!');
+                
             else
                 resolution = CozmoVisionProcessor.RESOLUTION_LUT(char(packet(1)));
                 
                 if length(packet)-1 ~= prod(resolution)
                     warning(['Image packet length did not match its ' ...
                         'specified resolution!']);
+                    img = zeros(resolution);
+                    if length(packet)-1 < prod(resolution)
+                        img(1:length(packet)-1) = fliplr(packet(2:end));
+                    end
+                    img = img';
+                    
                 else
-                    img = reshape(packet(2:end), resolution)';
+                    img = reshape(fliplr(packet(2:end)), resolution)';
+                    valid = true;
                 end
             end
         end % FUNCTION PacketToImage()
