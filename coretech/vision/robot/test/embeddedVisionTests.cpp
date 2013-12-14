@@ -268,7 +268,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
     const f64 time2 = GetTime();
 
     printf("Translation-only LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
-    PrintBenchmarkResults();
+    PrintBenchmarkResults(BENCHMARK_PRINT_TOTALS);
 
     tracker.get_transformation().Print("Translation-only LK");
 
@@ -299,7 +299,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
     const f64 time2 = GetTime();
 
     printf("Affine LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
-    PrintBenchmarkResults();
+    PrintBenchmarkResults(BENCHMARK_PRINT_TOTALS);
 
     tracker.get_transformation().Print("Affine LK");
 
@@ -331,7 +331,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
     const f64 time2 = GetTime();
 
     printf("Projective LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
-    PrintBenchmarkResults();
+    PrintBenchmarkResults(BENCHMARK_PRINT_TOTALS);
 
     tracker.get_transformation().Print("Projective LK");
 
@@ -1087,7 +1087,7 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
 
     printf("totalTime: %f\n", time1-time0);
 
-    PrintBenchmarkResults();
+    PrintBenchmarkResults(BENCHMARK_PRINT_TOTALS);
 
     ASSERT_TRUE(result == RESULT_OK);
   }

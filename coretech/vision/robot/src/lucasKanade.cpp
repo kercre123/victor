@@ -873,7 +873,7 @@ namespace Anki
 
           BeginBenchmark("IterativelyRefineTrack.setAw");
           Array<f32> AW(A.get_size(0), A.get_size(1), memory);
-          AW(0,-1,0,-1).Set(A);
+          AW.Set(A);
           EndBenchmark("IterativelyRefineTrack.setAw");
 
           BeginBenchmark("IterativelyRefineTrack.dotMultiplyWeights");

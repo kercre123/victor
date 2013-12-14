@@ -113,7 +113,7 @@ unsigned int AddName(const char * const name)
   }
 }
 
-void PrintBenchmarkResults()
+void PrintBenchmarkResults(const BenchmarkPrintType printType)
 {
   int i;
 
@@ -175,7 +175,12 @@ void PrintBenchmarkResults()
   for(i=0; i<numEventNames; i++) {
     printf("Event ");
     printf(eventNames[i]);
-    printf(": Mean:%fs Min:%fs Max:%fs Total:%fs NumEvents:%d\n",
-      totalTimes[i]/(double)numEvents[i], minTimes[i], maxTimes[i], totalTimes[i], numEvents[i]);
+    if(printType == BENCHMARK_PRINT_ALL) {
+      printf(": Mean:%fs Min:%fs Max:%fs Total:%fs NumEvents:%d\n",
+        totalTimes[i]/(double)numEvents[i], minTimes[i], maxTimes[i], totalTimes[i], numEvents[i]);
+    } else if (printType == BENCHMARK_PRINT_TOTALS) {
+      printf(": Total:%fs\n",
+        totalTimes[i]);
+    }
   } // for(i=0; i<numEventNames; i++)
 } // void PrintBenchmarkResults()
