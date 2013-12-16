@@ -60,6 +60,7 @@ namespace Anki {
       typedef struct {
         u8* data;
         HAL::CameraMode resolution;
+        HAL::TimeStamp  timeStamp;
       } FrameBuffer;
       
       ReturnCode CaptureHeadFrame(FrameBuffer &frame);
@@ -72,19 +73,6 @@ namespace Anki {
       ReturnCode TrackTemplate(const FrameBuffer &frame);
       
       ReturnCode GetRelativeOdometry(const FrameBuffer &frame);
-      
-      
-#pragma mark --- VisionSystem::Mailbox Implementations ---
-      
-      /*
-       //TODO: Was having trouble getting this to compile on robot.
-       //      Default logic should still work when commenting this out.
-       template<>
-       void VisionSystem::MatMarkerMailbox::advanceIndex(u8 &index)
-       {
-       return;
-       }
-       */
       
       
 #pragma mark --- VisionSystem Method Implementations ---
@@ -195,11 +183,7 @@ namespace Anki {
         // If we have a block to dock with set, see if this was it
         if(dockingBlock_ > 0 && dockingBlock_ == blockType)
         {
-          // This will just start docking with the first block we see
-          // that matches the block type.
-          // TODO: Something smarter about seeing the block in the expected place?
           isDockingBlockFound_ = true;
-          
         }
       }
       
@@ -435,90 +419,6 @@ namespace Anki {
         
         Messages::LookForID( GET_MESSAGE_ID(Messages::MatMarkerObserved) );
         
-/*
-        const s32 nrows = static_cast<s32>(frame.height);
-        const s32 ncols = static_cast<s32>(frame.width);
-        
-#if defined(USE_MATLAB_FOR_MAT_CAMERA)
-        mxArray *mxImg = Anki::Embedded::imageArrayToMxArray(frame.data, nrows, ncols, 4);
-        
-        if(mxImg != NULL) {
-          // Display Mat Image in Matlab
-          engPutVariable(matlabEngine_, "matCamImage", mxImg);
-          engEvalString(matlabEngine_, "matCamImage = matCamImage(:,:,[3 2 1]);");
-#if DISPLAY_MATLAB_IMAGES
-          engEvalString(matlabEngine_, "set(h_matImg, 'CData', matCamImage);");
-#endif
-          
-          // Detect MatMarker
- 
-          // [xMat, yMat, orient] = matLocalization(this.matImage, ...
-          //   'pixPerMM', pixPerMM, 'camera', this.robot.matCamera, ...
-          //   'matSize', world.matSize, 'zDirection', world.zDirection, ...
-          //   'embeddedConversions', this.robot.embeddedConversions);
-           
-          // % Set the pose based on the result of the matLocalization
-          // this.pose = Pose(orient*[0 0 -1], ...
-          // [xMat yMat this.robot.appearance.WheelRadius]);
-          //    this.pose.name = 'ObservationPose';
- 
-          engEvalString(matlabEngine_,
-                        "matMarker = matLocalization(matCamImage, "
-                        "   'pixPerMM', pixPerMM, 'returnMarkerOnly', true); "
-                        "matOrient = matMarker.upAngle; "
-                        "isMatMarkerValid = matMarker.isValid; "
-                        "xMatSquare = matMarker.X; "
-                        "yMatSquare = matMarker.Y; "
-                        "centroid = matMarker.centroid; "
-                        "xImgCen = centroid(1); yImgCen = centroid(2); "
-                        "matUpDir = matMarker.upDirection;");
-          
-          mxArray *mx_isValid = engGetVariable(matlabEngine_, "isMatMarkerValid");
-          const bool matMarkerIsValid = mxIsLogicalScalarTrue(mx_isValid);
-          
-          if(matMarkerIsValid)
-          {
-            CozmoMsg_ObservedMatMarker msg;
-            msg.size = sizeof(CozmoMsg_ObservedMatMarker);
-            msg.msgID = MSG_V2B_CORE_MAT_MARKER_OBSERVED;
-            
-            mxArray *mx_xMatSquare = engGetVariable(matlabEngine_, "xMatSquare");
-            mxArray *mx_yMatSquare = engGetVariable(matlabEngine_, "yMatSquare");
-            
-            msg.x_MatSquare = static_cast<u16>(mxGetScalar(mx_xMatSquare));
-            msg.y_MatSquare = static_cast<u16>(mxGetScalar(mx_yMatSquare));
-            
-            mxArray *mx_xImgCen = engGetVariable(matlabEngine_, "xImgCen");
-            mxArray *mx_yImgCen = engGetVariable(matlabEngine_, "yImgCen");
-            
-            msg.x_imgCenter = static_cast<f32>(mxGetScalar(mx_xImgCen));
-            msg.y_imgCenter = static_cast<f32>(mxGetScalar(mx_yImgCen));
-            
-            mxArray *mx_upDir = engGetVariable(matlabEngine_, "matUpDir");
-            msg.upDirection = static_cast<u8>(mxGetScalar(mx_upDir)) - 1; // Note the -1 for C vs. Matlab indexing
-            
-            mxArray *mx_matAngle = engGetVariable(matlabEngine_, "matOrient");
-            msg.angle = static_cast<f32>(mxGetScalar(mx_matAngle));
-            
-            PRINT("Sending ObservedMatMarker message: Square (%d,%d) "
-                  "at (%.1f,%.1f) with orientation %.1f degrees and upDirection=%d\n",
-                  msg.x_MatSquare, msg.y_MatSquare,
-                  msg.x_imgCenter, msg.y_imgCenter,
-                  msg.angle * (180.f/M_PI), msg.upDirection);
-            
-            matMarkerMailbox_->putMessage(msg);
-            
-          } else {
-            PRINT("No valid MatMarker found!\n");
-            
-          } // if marker is valid
-          
-          retVal = EXIT_SUCCESS;
-          
-        } else {
-          PRINT("Robot::processHeadImage(): could not convert image to mxArray.");
-        }
-*/
 #else  // if USE_OFFBOARD_VISION
         /*
          // TODO: Hook this up to Pete's vision code

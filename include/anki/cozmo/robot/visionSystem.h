@@ -25,28 +25,32 @@ namespace Anki {
       //
       
       ReturnCode Init(void);
+      bool IsInitialized();
       
       void Destroy();
       
       ReturnCode Update(u8* memoryBuffer);
 
       // Select a block type to look for to dock with.  Use 0 to disable.
+      // Next time the vision system sees a block of this type while looking
+      // for blocks, it will initialize a template tracker and switch to
+      // docking mode.
+      // TODO: Something smarter about seeing the block in the expected place as well?
       ReturnCode SetDockingBlock(const u16 blockTypeToDockWith = 0);
       
-      // Check to see if this is blockType the vision system is looking for
-      // (Note this is public API b/c messaging system may call it.)
+      // NOTE: the following are provided as public API because they messaging
+      //       system may call them.
+      
+      // Check to see if this is the blockType the vision system is looking for,
+      // i.e., the one set by a prior call to SetDockingBlock() above.
       void CheckForDockingBlock(const u16 blockType);
       
       // Switch to docking mode if isTemplateInitialized is true, otherwise
       // stay in current mode.
-      // (Note this is public API b/c messaging system may call it.)
       void SetDockingMode(const bool isTemplateInitalized);
       
       // Update internal state based on whether tracking succeeded
-      // (Note this is public API b/c messaging system may call it.)
       void UpdateTrackingStatus(const bool didTrackingSucceed);
-      
-      bool IsInitialized();
       
     } // namespace VisionSystem
   } // namespace Cozmo
