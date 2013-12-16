@@ -21,9 +21,23 @@ namespace Anki
   {
     namespace ImageProcessing
     {
+#define BINOMIAL_FILTER_KERNEL_SIZE 5
+
+      //
+      // Simple filtering
+      //
+
       // Compute the [-1, 0, 1] gradient
       template<typename InType, typename IntermediateType, typename OutType> Result ComputeXGradient(const Array<InType> &in, Array<OutType> &out);
       template<typename InType, typename IntermediateType, typename OutType> Result ComputeYGradient(const Array<InType> &in, Array<OutType> &out);
+
+      // Filter with a horizontal and vertical [1, 4, 6, 4, 1] filter
+      // Handles edges by replicating the border pixel
+      template<typename InType, typename IntermediateType, typename OutType> Result BinomialFilter(const Array<InType> &image, Array<OutType> &imageFiltered, MemoryStack scratch);
+
+      //
+      // Image resizing
+      //
     } // namespace ImageProcessing
   } // namespace Embedded
 } //namespace Anki

@@ -22,6 +22,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/draw_vision.h"
 #include "anki/vision/robot/lucasKanade.h"
 #include "anki/vision/robot/docking_vision.h"
+#include "anki/vision/robot/imageProcessing.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -2319,7 +2320,7 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
     *image.Pointer(2,x) = static_cast<u8>(x);
   }
 
-  const Result result = BinomialFilter(image, imageFiltered, ms);
+  const Result result = ImageProcessing::BinomialFilter<u8,u32,u8>(image, imageFiltered, ms);
 
   //printf("image:\n");
   //image.Print();

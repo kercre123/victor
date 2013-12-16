@@ -96,8 +96,6 @@ namespace Anki
 
     //Result DetectFiducialMarkers(const Array<u8> &image, FixedLengthList<BlockMarker> &markers, MemoryStack scratch);
 
-    Result BinomialFilter(const Array<u8> &image, Array<u8> &imageFiltered, MemoryStack scratch);
-
     Result DownsampleByFactor(const Array<u8> &image, const s32 downsampleFactor, Array<u8> &imageDownsampled);
 
     // Compute the characteristic scale using the binomial filter and a LOT of scratch memory

@@ -13,6 +13,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/miscVisionKernels.h"
 #include "anki/vision/robot/integralImage.h"
+#include "anki/vision/robot/imageProcessing.h"
 
 //#define HAVE_64_BIT_ARITHMETIC
 
@@ -76,7 +77,7 @@ namespace Anki
       }
 
       //imagePyramid{1} = mexBinomialFilter(image);
-      const Result binomialFilterResult = BinomialFilter(image, imagePyramid[0], scratch);
+      const Result binomialFilterResult = ImageProcessing::BinomialFilter<u8,u32,u8>(image, imagePyramid[0], scratch);
 
       AnkiConditionalErrorAndReturnValue(binomialFilterResult == RESULT_OK,
         binomialFilterResult, "ComputeCharacteristicScaleImage", "BinomialFilter failed");
@@ -109,7 +110,7 @@ namespace Anki
         //    end
         Array<u8> curPyramidLevelBlurred(curLevelHeight, curLevelWidth, scratch);
 
-        const Result binomialFilterResult = BinomialFilter(curPyramidLevel, curPyramidLevelBlurred, scratch);
+        const Result binomialFilterResult = ImageProcessing::BinomialFilter<u8,u32,u8>(curPyramidLevel, curPyramidLevelBlurred, scratch);
 
         AnkiConditionalErrorAndReturnValue(binomialFilterResult == RESULT_OK,
           binomialFilterResult, "ComputeCharacteristicScaleImage", "In-loop BinomialFilter failed");
