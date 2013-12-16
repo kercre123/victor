@@ -23,65 +23,12 @@
 //                  or casts later.)
 //
 
+// This file is not specific to robot or basestation, as it defines the common
+// message protocol between them.  However, the macros used to generate actual
+// code based on the definitions below *is* specific to the two platforms.
+// Define those macros elsewhere:
+#include "messageDefMacros.h"
 
-//
-// Yucky macros.  Just quietly ignore and skip down to the
-// actual message definition section.
-//
-// TODO: Move these macro definitions to a different file to hide them...
-
-#ifndef MESSAGE_DEFINITION_MODE
-
-#define MESSAGE_STRUCT_DEFINITION_MODE 0
-#define MESSAGE_TABLE_DEFINITION_MODE 1
-#define MESSAGE_ENUM_DEFINITION_MODE 2
-
-#else
-
-#undef START_MESSAGE_DEFINITION
-#undef START_TIMESTAMPED_MESSAGE_DEFINITION
-#undef END_MESSAGE_DEFINITION
-#undef ADD_MESSAGE_MEMBER
-
-#define GET_DISPATCH_FCN_NAME(__MSG_TYPE__) Process##__MSG_TYPE__##Message
-#define GET_STRUCT_TYPENAME(__MSG_TYPE__) __MSG_TYPE__
-#define GET_MESSAGE_ID(__MSG_TYPE__) __MSG_TYPE__##_ID
-
-#define START_TIMESTAMPED_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-ADD_MESSAGE_MEMBER(TimeStamp, timestamp)
-
-#if MESSAGE_DEFINITION_MODE == MESSAGE_STRUCT_DEFINITION_MODE
-// Define typedef'd struct
-// TODO: Is it possible, using a macro, to verify the type sizes are correctly ordered?
-#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-void GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(const u8* buffer); \
-typedef struct {
-
-#define END_MESSAGE_DEFINITION(__MSG_TYPE__) } GET_STRUCT_TYPENAME(__MSG_TYPE__);
-#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) __TYPE__ __NAME__;
-
-#elif MESSAGE_DEFINITION_MODE == MESSAGE_TABLE_DEFINITION_MODE
-// Define entry in MessageTable
-#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-{__PRIORITY__,
-#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) sizeof(__TYPE__) +
-#define END_MESSAGE_DEFINITION(__MSG_TYPE__) + 0, GET_DISPATCH_FCN_NAME(__MSG_TYPE__)},
-
-
-#elif MESSAGE_DEFINITION_MODE == MESSAGE_ENUM_DEFINITION_MODE
-// Define enumerated message ID
-#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) GET_MESSAGE_ID(__MSG_TYPE__),
-#define END_MESSAGE_DEFINITION(__MSG_TYPE__)
-#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__)
-
-#else
-#error Invalid value for MESSAGE_DEFINITION_MODE
-#endif
-
-//
-// Actual Message Definitions
-//
 
 #if 0 // EXAMPLE
 // Foo message
@@ -226,7 +173,7 @@ ADD_MESSAGE_MEMBER(u8, numBlocks)
 END_MESSAGE_DEFINITION(TotalBlocksDetected)
 
 
-#endif
+
 
 
 

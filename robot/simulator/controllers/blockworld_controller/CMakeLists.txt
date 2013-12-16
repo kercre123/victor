@@ -4,9 +4,7 @@
   include_directories(
 #  ${WEBOTS_C_INCLUDE_DIR}
   ${WEBOTS_CPP_INCLUDE_DIR}
-#  ${PROJECT_SOURCE_DIR}/coretech/messaging/include
-  ${PROJECT_SOURCE_DIR}/include
-#  ${PROJECT_SOURCE_DIR}/coretech/
+  ${PROJECT_SOURCE_DIR}/basestation/src
 )
 
 
