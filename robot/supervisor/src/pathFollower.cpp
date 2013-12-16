@@ -104,6 +104,7 @@ namespace Anki
       
       void SetPathForViz() {
 #if(ENABLE_PATH_VIZ)
+        Viz::ErasePath(0);
         for (u8 i=0; i<path_.GetNumSegments(); ++i) {
           switch(path_[i].type) {
             case PST_LINE:
@@ -147,6 +148,19 @@ namespace Anki
       bool AppendPathSegment_PointTurn(u32 matID, f32 x, f32 y, f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel)
       {
         return path_.AppendPointTurn(matID, x, y, targetAngle, maxAngularVel, angularAccel, angularDecel);
+      }
+      
+      u8 GenerateDubinsPath(f32 start_x, f32 start_y, f32 start_theta,
+                            f32 end_x, f32 end_y, f32 end_theta,
+                            f32 start_radius, f32 end_radius,
+                            f32 final_straight_approach_length,
+                            f32 *path_length)
+      {
+        return path_.GenerateDubinsPath(start_x, start_y, start_theta,
+                                        end_x, end_y, end_theta,
+                                        start_radius, end_radius,
+                                        final_straight_approach_length,
+                                        path_length);
       }
       
       

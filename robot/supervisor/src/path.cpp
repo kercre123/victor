@@ -1,4 +1,5 @@
 #include "anki/cozmo/robot/path.h"
+#include "anki/cozmo/robot/debug.h"
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/robot/trig_fast.h"
 #include "anki/cozmo/robot/hal.h"
@@ -211,11 +212,7 @@ namespace Anki
       PathSegment* ps;
       
       path_length = FLT_MAX;
-      
-      PRINT("DUBINS: startPt %f %f %f, endPt %f %f %f, start_radius %f, end_radius %f\n",
-            startPt_x, startPt_y, startPt_theta, endPt_x, endPt_y, endPt_theta, start_radius, end_radius);
-      
-      
+
       
       f32 sign1;
       f32 sign2;
@@ -260,7 +257,6 @@ namespace Anki
       V1_mag = sqrtf(V1_x * V1_x + V1_y * V1_y);
 
       // Check if circle centers are too close together
-      PRINT("V1_mag %f, minCircleDist %f\n", V1_mag, minCircleDist);
       if (V1_mag <= minCircleDist) {
         return 0;
       }
@@ -286,7 +282,7 @@ namespace Anki
       p_t2_y = p_c2_y + n_y * r2 * sign2;
       
       
-      
+#if(DEBUG_PATH)
        PRINT("Dubins %d: \n"
        " p_c1 (%f, %f)\n"
        " p_c2 (%f, %f)\n"
@@ -302,7 +298,7 @@ namespace Anki
        p_t1_x, p_t1_y,
        p_t2_x, p_t2_y
        );
-      
+#endif
       
       
       // Generate path segment definitions
@@ -363,34 +359,64 @@ namespace Anki
     // Fails automatically
     u8 Path::GenerateDubinsPath(f32 start_x, f32 start_y, f32 start_theta,
                             f32 end_x, f32 end_y, f32 end_theta,
-                            f32 start_radius, f32 end_radius)
+                            f32 start_radius, f32 end_radius,
+                            f32 final_straight_approach_length,
+                            f32 *path_length)
     {
       PathSegment csc_path[NUM_DUBINS_PATHS][3];
       
       u32 shortestNumSegments = 0;
       f32 shortestPathLength = FLT_MAX;
-      DubinsPathType shortestPathType;
+      DubinsPathType shortestPathType = NUM_DUBINS_PATHS;
       u32 numSegments;
       f32 pathLength;
+      
+      
+      // Compute end point before the final straight segment
+      // and then append the straight segment after the Dubins path is generated
+      f32 preStraightApproach_x = end_x - final_straight_approach_length * cosf(end_theta);
+      f32 preStraightApproach_y = end_y - final_straight_approach_length * sinf(end_theta);
+      
+      
+#if(DEBUG_PATH)
+      PRINT("DUBINS: startPt %f %f %f, preEnd %f %f, endPt %f %f %f, start_radius %f, end_radius %f\n",
+            start_x, start_y, start_theta, preStraightApproach_x, preStraightApproach_y end_x, end_y, end_theta, start_radius, end_radius);
+#endif
+
       for (DubinsPathType i = LSL; i != NUM_DUBINS_PATHS; i = (DubinsPathType)(i+1)) {
 
-        numSegments = GenerateCSCCurve(start_x, start_y, start_theta, end_x, end_y, end_theta, start_radius, end_radius, i, csc_path[i], pathLength);
+        numSegments = GenerateCSCCurve(start_x, start_y, start_theta, preStraightApproach_x, preStraightApproach_y, end_theta, start_radius, end_radius, i, csc_path[i], pathLength);
+#if(DEBUG_PATH)
         PRINT("Dubins path %d: numSegments %d, length %f m\n", i, numSegments, pathLength);
+#endif
         if (pathLength < shortestPathLength) {
           shortestNumSegments = numSegments;
           shortestPathLength = pathLength;
           shortestPathType = i;
         }
       }
-      
-      PRINT("Dubins: Shortest path %d, length %f\n", shortestPathType, shortestPathLength);
-      
-      numPathSegments_ = shortestNumSegments;
-      for (u32 j = 0; j < numPathSegments_; ++j) {
-        path_[j] = csc_path[shortestPathType][j];
+
+      // If a path was found, copy it to the path_ and tack on the final straight segment.
+      if (shortestPathType != NUM_DUBINS_PATHS) {
+        
+        numPathSegments_ = shortestNumSegments;
+        for (u32 j = 0; j < numPathSegments_; ++j) {
+          path_[j] = csc_path[shortestPathType][j];
+        }
+        AppendLine(0, preStraightApproach_x, preStraightApproach_y, end_x, end_y);
+        
+        shortestPathLength += final_straight_approach_length;
+        
+        if (path_length) {
+          *path_length = shortestPathLength;
+        }
       }
       
-      return 0;
+#if(DEBUG_PATH)
+      PRINT("Dubins: Shortest path %d, length %f\n", shortestPathType, shortestPathLength);
+#endif
+      
+      return numPathSegments_;
     }
   
 

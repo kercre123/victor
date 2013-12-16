@@ -96,10 +96,21 @@ namespace Anki
       bool AppendArc(u32 matID, f32 x_center_m, f32 y_center_m, f32 radius_m, f32 startRad, f32 sweepRad);
       bool AppendPointTurn(u32 matID, f32 x, f32 y, f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel);
       
-      // Generate Dubins path
+      // Generate a curve-straight-curve Dubins path from start pose to end pose
+      // with the specified radii as parameters for the curved segments.
+      //
+      // final_straight_approach_length: Length of straight line segment to
+      // append to the path. Useful for docking where alignment at the end
+      // of the path is important.
+      //
+      // path_length: Length of shortest Dubins path generated.
+      //
+      // Returns number of segments in the path.
       u8 GenerateDubinsPath(f32 start_x, f32 start_y, f32 start_theta,
                             f32 end_x, f32 end_y, f32 end_theta,
-                            f32 start_radius, f32 end_radius);
+                            f32 start_radius, f32 end_radius,
+                            f32 final_straight_approach_length = 0,
+                            f32 *path_length = NULL);
 
       // Accessor for PathSegment at specified index
       const PathSegment& operator[](const u8 idx) {return path_[idx];}
