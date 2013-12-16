@@ -125,7 +125,7 @@ namespace Anki {
         
         // Create a camera calibration message and send it to the offboard
         // vision processor
-        Messages::HeadCameraCalibration msg = {
+        Messages::HeadCameraCalibration headCalibMsg = {
           headCamInfo_->focalLength_x,
           headCamInfo_->focalLength_y,
           headCamInfo_->fov_ver,
@@ -137,9 +137,28 @@ namespace Anki {
         };
         
         //HAL::USBSendMessage(&msg, GET_MESSAGE_ID(HeadCameraCalibration));
-        HAL::USBSendPacket(HAL::USB_VISION_COMMAND_CALIBRATION,
-                           &msg, sizeof(Messages::HeadCameraCalibration));
+        HAL::USBSendPacket(HAL::USB_VISION_COMMAND_HEAD_CALIBRATION,
+                           &headCalibMsg, sizeof(Messages::HeadCameraCalibration));
+
+        /* Don't need entire calibration, just pixPerMM
+         
+        Messages::MatCameraCalibration matCalibMsg = {
+          matCamInfo_->focalLength_x,
+          matCamInfo_->focalLength_y,
+          matCamInfo_->fov_ver,
+          matCamInfo_->center_x,
+          matCamInfo_->center_y,
+          matCamInfo_->skew,
+          matCamInfo_->nrows,
+          matCamInfo_->ncols
+        };
         
+        HAL::USBSendPacket(HAL::USB_VISION_COMMAND_MAT_CALIBRATION,
+                           &matCalibMsg, sizeof(Messages::MatCameraCalibration));
+         */
+        HAL::USBSendPacket(HAL::USB_VISION_COMMAND_MAT_CALIBRATION,
+                           &matCamPixPerMM_, sizeof(matCamPixPerMM_));
+
 #endif
         
         isInitialized_ = true;

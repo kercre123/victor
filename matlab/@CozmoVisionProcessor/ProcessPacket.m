@@ -17,9 +17,19 @@ switch(command)
             name, msgID);
         return;
         
-    case this.CALIBRATION
+    case this.HEAD_CALIBRATION
         
-        this.SetCalibration(packet);
+        this.SetCalibration(packet, 'headCalibrationMatrix', this.trackingResolution);
+        return
+        
+    case this.MAT_CALIBRATION
+        
+        %this.SetCalibration(packet, 'matCalibrationMatrix', this.matLocalizationResolution);
+        assert(length(packet)==4, ...
+            'Expecting matCamPixPerMM packet to contain 4 bytes.');
+        
+        this.matCamPixPerMM = double(this.Cast(packet(1:4), 'single'));
+        
         return
         
     case this.SET_DOCKING_BLOCK
@@ -42,7 +52,7 @@ switch(command)
         end
         
     case this.TRACK_COMMAND
-        assert(~isempty(this.calibrationMatrix), ...
+        assert(~isempty(this.headCalibrationMatrix), ...
             'Must receive calibration message before tracking.');
         
         [img, timestamp, valid] = CozmoVisionProcessor.PacketToImage(packet);
@@ -53,6 +63,10 @@ switch(command)
         end % IF valid
         
     case this.MAT_LOCALIZATION_COMMAND
+        
+        assert(~isempty(this.matCamPixPerMM), ...
+            ['Must receive mat camera calibration (matCamPixPerMM) ' ...
+            'using mat localization.']);
         
         [img, timestamp, valid] = CozmoVisionProcessor.PacketToImage(packet);
         if valid

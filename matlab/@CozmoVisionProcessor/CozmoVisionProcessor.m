@@ -22,7 +22,8 @@ classdef CozmoVisionProcessor < handle
         % (These should match the USB_VISION_COMMANDs defined in hal.h)
         MESSAGE_COMMAND          = char(sscanf('DD', '%2x'));
         MESSAGE_ID_DEFINITION    = char(sscanf('D0', '%2x'));
-        CALIBRATION              = char(sscanf('CC', '%2x'));
+        HEAD_CALIBRATION         = char(sscanf('C1', '%2x'));
+        MAT_CALIBRATION          = char(sscanf('C2', '%2x'));
         DETECT_COMMAND           = char(sscanf('AB', '%2x'));
         SET_DOCKING_BLOCK        = char(sscanf('BC', '%2x'));
         TRACK_COMMAND            = char(sscanf('CD', '%2x'));
@@ -45,12 +46,18 @@ classdef CozmoVisionProcessor < handle
         
         dockingBlock;
         
-        calibrationMatrix;
+        % Camera calibration information:
+        headCalibrationMatrix;
+        %matCalibrationMatrix;
+        matCamPixePerMM;
         
         % For tracking
         LKtracker;
         trackerType;
         trackingResolution;
+        
+        % For mat localization
+        matLocalizationResolution;
         
         % Display handles
         h_fig;
@@ -86,6 +93,7 @@ classdef CozmoVisionProcessor < handle
             SerialDevice = [];
             TrackerType = 'affine';
             TrackingResolution = [80 60];
+            MatLocalizationResolution = [320 240];
             Verbosity = 1;
             DoEndianSwap = false; % false for simulator, true with Movidius
             
@@ -108,6 +116,7 @@ classdef CozmoVisionProcessor < handle
             this.trackerType = TrackerType;
             this.trackingResolution = TrackingResolution;
             
+            this.matLocalizationResolution = MatLocalizationResolution;
             this.dockingBlock = 0;
             
             this.h_fig = namedFigure('CozmoVisionProcessor', ...

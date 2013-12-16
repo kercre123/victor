@@ -418,7 +418,8 @@ namespace Anki
       const u8 USB_VISION_COMMAND_MATODOMETRY     = 0xDE;
       const u8 USB_VISION_COMMAND_MATLOCALIZATION = 0xEF;
       
-      const u8 USB_VISION_COMMAND_CALIBRATION     = 0xCC;
+      const u8 USB_VISION_COMMAND_HEAD_CALIBRATION = 0xC1;
+      const u8 USB_VISION_COMMAND_MAT_CALIBRATION  = 0xC2;
       
       // Put a byte into a send buffer to be sent by LongExecution()
       // (Using same prototype as putc / USBPutChar for printf.)

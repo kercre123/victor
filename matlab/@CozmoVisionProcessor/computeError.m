@@ -28,13 +28,14 @@ switch(this.trackerType)
         L = sqrt(sum( (upperRight-upperLeft).^2) );
         angleError = -asin( (upperRight(2)-upperLeft(2)) / L);
         
-        currentDistance = BlockMarker3D.ReferenceWidth * this.calibrationMatrix(1,1) / L;
+        fx = this.headCalibrationMatrix(1,1);
+        currentDistance = BlockMarker3D.ReferenceWidth * fx / L;
         distError = currentDistance - CozmoVisionProcessor.LIFT_DISTANCE;
         
         % TODO: should i be comparing to ncols/2 or calibration center?
         midPointErr = -( (upperRight(1)+upperLeft(1))/2 - ...
             this.trackingResolution(1)/2 );
-        midPointErr = midPointErr * currentDistance / this.calibrationMatrix(1,1);
+        midPointErr = midPointErr * currentDistance / fx;
         
     case 'homography'
         
