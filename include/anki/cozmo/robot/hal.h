@@ -145,6 +145,9 @@ namespace Anki
       // Get the number of microseconds since boot
       u32 GetMicroCounter(void);
       void MicroWait(u32 microseconds);
+      
+      // Get a sync'd timestamp (e.g. for messages), in milliseconds
+      TimeStamp GetTimeStamp(void);
 
       s32 GetRobotID(void);
 
@@ -183,7 +186,7 @@ namespace Anki
       void UARTInit();
       
       // Send a variable length buffer
-      void USBSendBuffer(u8* buffer, u32 size);
+      void USBSendBuffer(const u8* buffer, const u32 size);
 
       // Returns the number of bytes that are in the serial buffer
       u32 USBGetNumBytesToRead();
@@ -427,10 +430,11 @@ namespace Anki
       
       // Send a frame at the current frame resolution (last set by
       // a call to SetUSBFrameResolution)
-      void USBSendFrame(const u8 *frame,
+      void USBSendFrame(const u8*        frame,
+                        const TimeStamp  timestamp,
                         const CameraMode inputResolution,
                         const CameraMode sendResolution,
-                        const u8 commandByte);
+                        const u8         commandByte);
       
       // Send the contents of the USB message buffer.
       void USBSendPrintBuffer(void);

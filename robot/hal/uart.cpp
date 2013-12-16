@@ -141,9 +141,9 @@ namespace Anki
         return (m_currentWrite - m_currentRead) & BUFFER_MASK;
       }
       
-      void USBSendBuffer(u8* buffer, u32 size)
+      void USBSendBuffer(const u8* buffer, const u32 size)
       {
-        for (int i = 0; i < size; i++)
+        for (u32 i = 0; i < size; i++)
         {
           USBPutChar(buffer[i]);
         }

@@ -207,9 +207,10 @@ classdef CozmoVisionProcessor < handle
     
     methods(Static = true)
         
-        function [img, valid] = PacketToImage(packet)
+        function [img, timestamp, valid] = PacketToImage(packet)
             valid = false;
             img = [];
+            timestamp = uint32(0);
             
             if ~CozmoVisionProcessor.RESOLUTION_LUT.isKey(char(packet(1)))
                 warning('Unrecognized resolution byte!');
@@ -217,18 +218,25 @@ classdef CozmoVisionProcessor < handle
             else
                 resolution = CozmoVisionProcessor.RESOLUTION_LUT(char(packet(1)));
                 
-                if length(packet)-1 ~= prod(resolution)
-                    warning(['Image packet length did not match its ' ...
-                        'specified resolution!']);
-                    img = zeros(resolution);
-                    if length(packet)-1 < prod(resolution)
-                        img(1:length(packet)-1) = fliplr(packet(2:end));
-                    end
-                    img = img';
+                imgPacketLength = length(packet)-5;
+                
+                if imgPacketLength > 0
+                    % Read the timestamp
+                    timestamp = this.Cast(packet(2:5), 'uint32');
                     
-                else
-                    img = reshape(fliplr(packet(2:end)), resolution)';
-                    valid = true;
+                    if imgPacketLength ~= prod(resolution)
+                        warning(['Image packet length did not match its ' ...
+                            'specified resolution!']);
+                        img = zeros(resolution);
+                        if imgPacketLength < prod(resolution)
+                            img(1:imgPacketLength) = fliplr(packet(6:end));
+                        end
+                        img = img';
+                        
+                    else
+                        img = reshape(fliplr(packet(6:end)), resolution)';
+                        valid = true;
+                    end
                 end
             end
         end % FUNCTION PacketToImage()

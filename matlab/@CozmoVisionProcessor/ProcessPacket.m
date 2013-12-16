@@ -35,28 +35,28 @@ switch(command)
         set(this.h_templateAxes, 'Visible', 'off');
         set(this.h_track, 'XData', nan, 'YData', nan);
         
-        [img, valid] = CozmoVisionProcessor.PacketToImage(packet);
+        [img, timestamp, valid] = CozmoVisionProcessor.PacketToImage(packet);
         if ~isempty(img)
             % Detect block markers
-            this.DetectBlocks(img);
+            this.DetectBlocks(img, timestamp);
         end
         
     case this.TRACK_COMMAND
         assert(~isempty(this.calibrationMatrix), ...
             'Must receive calibration message before tracking.');
         
-        [img, valid] = CozmoVisionProcessor.PacketToImage(packet);
+        [img, timestamp, valid] = CozmoVisionProcessor.PacketToImage(packet);
         if valid
-            this.Track(img);
+            this.Track(img, timestamp);
         else
             set(this.h_title, 'String', 'Invalid Image');
         end % IF valid
         
     case this.MAT_LOCALIZATION_COMMAND
         
-        [img, valid] = CozmoVisionProcessor.PacketToImage(packet);
+        [img, timestamp, valid] = CozmoVisionProcessor.PacketToImage(packet);
         if valid
-            this.MatLocalize(img);
+            this.MatLocalize(img, timestamp);
         else
            set(this.h_title, 'String', 'Invalid Image'); 
         end

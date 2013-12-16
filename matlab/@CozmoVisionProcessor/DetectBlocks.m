@@ -1,4 +1,4 @@
-function DetectBlocks(this, img)
+function DetectBlocks(this, img, timestamp)
 
 markers = simpleDetector(img);
 
@@ -7,6 +7,7 @@ for i = 1:length(markers)
     markers{i}.draw('where', this.h_axes);
     
     msgStruct = struct( ...
+        'timestamp', timestamp, ...
         'headAngle', single(0), ... ???
         'x_imgUpperLeft',  single(markers{i}.corners(1,1)), ...
         'y_imgUpperLeft',  single(markers{i}.corners(1,2)), ...

@@ -697,6 +697,11 @@ namespace Anki {
       return static_cast<u32>(webotRobot_.getTime() * 1000000.0);
     }
     
+    TimeStamp HAL::GetTimeStamp(void)
+    {
+      return static_cast<TimeStamp>(webotRobot_.getTime() * 1000.0);
+    }
+    
     s32 HAL::GetRobotID(void)
     {
       return robotID_;

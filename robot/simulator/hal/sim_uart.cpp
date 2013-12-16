@@ -118,7 +118,7 @@ namespace Anki
         return static_cast<s32>(USBrecvBuffer_[getCharIndex_ + lookAhead]);
       }
     
-      void USBSendBuffer(u8* buffer, u32 size)
+      void USBSendBuffer(const u8* buffer, const u32 size)
       {
         for(u32 i=0; i<size; ++i) {
           USBPutChar(static_cast<s32>(buffer[i]));

@@ -14,6 +14,10 @@
 //   ADD_MESSAGE_MEMBER(u8,  fooMember3)
 //   END_MESSAGE_DEFINITION(CozmoMsg_Foo)
 //
+// To add a timestamp member, use the START_TIMESTAMPED_MESSAGE_DEFINITION
+// command, which will add a member "timestamp" to the struct, with type
+// "TimeStamp".
+//
 // IMPORTANT NOTE: You should always add members from largest to smallest type!
 //                 (This prevents memory alignment badness when doing memcopies
 //                  or casts later.)
@@ -35,12 +39,17 @@
 #else
 
 #undef START_MESSAGE_DEFINITION
+#undef START_TIMESTAMPED_MESSAGE_DEFINITION
 #undef END_MESSAGE_DEFINITION
 #undef ADD_MESSAGE_MEMBER
 
 #define GET_DISPATCH_FCN_NAME(__MSG_TYPE__) Process##__MSG_TYPE__##Message
 #define GET_STRUCT_TYPENAME(__MSG_TYPE__) __MSG_TYPE__
 #define GET_MESSAGE_ID(__MSG_TYPE__) __MSG_TYPE__##_ID
+
+#define START_TIMESTAMPED_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
+START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
+ADD_MESSAGE_MEMBER(TimeStamp, timestamp)
 
 #if MESSAGE_DEFINITION_MODE == MESSAGE_STRUCT_DEFINITION_MODE
 // Define typedef'd struct
@@ -114,7 +123,7 @@ ADD_MESSAGE_MEMBER(f32, y_end_m)
 ADD_COMMON_PATH_SEGMENT_MEMBERS
 END_MESSAGE_DEFINITION(SetPathSegmentLine)
 
-// MSG_B2V_CORE_SET_PATH_SEGMENT_ARC
+// SetPathSegmentArc
 START_MESSAGE_DEFINITION(SetPathSegmentArc, 1)
 ADD_MESSAGE_MEMBER(f32, x_center_m)
 ADD_MESSAGE_MEMBER(f32, y_center_m)
@@ -127,7 +136,8 @@ END_MESSAGE_DEFINITION(SetPathSegmentArc)
 
 // BlockMarkerObserved
 // TODO: this has to be split into two packets for BTLE (size > 20 bytes)
-START_MESSAGE_DEFINITION(BlockMarkerObserved, 1)
+START_TIMESTAMPED_MESSAGE_DEFINITION(BlockMarkerObserved, 1)
+
   // TODO: u16 frameNum; // for putting together two halves of a BlockMarker packet
 ADD_MESSAGE_MEMBER(f32, headAngle)  // TODO: should this be it's own message, only when changed?
 // TODO: these need to be fixed-point, probably 16bits
@@ -139,14 +149,13 @@ ADD_MESSAGE_MEMBER(f32, x_imgUpperRight)
 ADD_MESSAGE_MEMBER(f32, y_imgUpperRight)
 ADD_MESSAGE_MEMBER(f32, x_imgLowerRight)
 ADD_MESSAGE_MEMBER(f32, y_imgLowerRight)
-
 ADD_MESSAGE_MEMBER(u16, blockType)
 ADD_MESSAGE_MEMBER(u8,  faceType)
 ADD_MESSAGE_MEMBER(u8,  upDirection)
 END_MESSAGE_DEFINITION(BlockMarkerObserved)
 
 // MatMarkerObserved
-START_MESSAGE_DEFINITION(MatMarkerObserved, 1)
+START_TIMESTAMPED_MESSAGE_DEFINITION(MatMarkerObserved, 1)
 ADD_MESSAGE_MEMBER(f32, x_imgCenter)   // Where in the image we saw it
 ADD_MESSAGE_MEMBER(f32, y_imgCenter)   //    "
 ADD_MESSAGE_MEMBER(f32, angle)         // What angle in the image we saw it
@@ -156,7 +165,7 @@ ADD_MESSAGE_MEMBER(u8,  upDirection)
 END_MESSAGE_DEFINITION(MatMarkerObserved)
 
 // DockingErrorSignal
-START_MESSAGE_DEFINITION(DockingErrorSignal, 1)
+START_TIMESTAMPED_MESSAGE_DEFINITION(DockingErrorSignal, 1)
 ADD_MESSAGE_MEMBER(f32, x_distErr)
 ADD_MESSAGE_MEMBER(f32, y_horErr)
 ADD_MESSAGE_MEMBER(f32, angleErr) // in radians
@@ -164,7 +173,7 @@ ADD_MESSAGE_MEMBER(u8,  didTrackingSucceed)
 END_MESSAGE_DEFINITION(DockingErrorSignal)
 
 // AbsLocalizationUpdate
-START_MESSAGE_DEFINITION(AbsLocalizationUpdate, 1)
+START_TIMESTAMPED_MESSAGE_DEFINITION(AbsLocalizationUpdate, 1)
 ADD_MESSAGE_MEMBER(f32, xPosition)
 ADD_MESSAGE_MEMBER(f32, yPosition)
 ADD_MESSAGE_MEMBER(f32, headingAngle)

@@ -60,7 +60,7 @@ namespace Anki {
       typedef struct {
         u8* data;
         HAL::CameraMode resolution;
-        HAL::TimeStamp  timeStamp;
+        TimeStamp  timestamp;
       } FrameBuffer;
       
       ReturnCode CaptureHeadFrame(FrameBuffer &frame);
@@ -354,6 +354,8 @@ namespace Anki {
         {
         }
         
+        frame.timestamp = HAL::GetTimeStamp();
+        
         return EXIT_SUCCESS;
         
       } // CaptureHeadFrame()
@@ -375,7 +377,8 @@ namespace Anki {
         // to look for blocks in it. Note that if we previsouly sent the
         // offboard processor a message to set the docking block type, it will
         // also initialize a template tracker once that block type is seen
-        HAL::USBSendFrame(frame.data, frame.resolution, DETECTION_RESOLUTION,
+        HAL::USBSendFrame(frame.data, frame.timestamp,
+                          frame.resolution, DETECTION_RESOLUTION,
                           HAL::USB_VISION_COMMAND_DETECTBLOCKS);
         
         Messages::LookForID( GET_MESSAGE_ID(Messages::TotalBlocksDetected) );
@@ -414,7 +417,8 @@ namespace Anki {
         
         // Send the offboard vision processor the frame, with the command
         // to do mat localization 
-        HAL::USBSendFrame(frame.data, frame.resolution, MAT_LOCALIZATION_RESOLUTION,
+        HAL::USBSendFrame(frame.data, frame.timestamp,
+                          frame.resolution, MAT_LOCALIZATION_RESOLUTION,
                           HAL::USB_VISION_COMMAND_MATLOCALIZATION);
         
         Messages::LookForID( GET_MESSAGE_ID(Messages::MatMarkerObserved) );
@@ -465,7 +469,8 @@ namespace Anki {
 #if USE_OFFBOARD_VISION
         
         // Send the message out for tracking
-        HAL::USBSendFrame(frame.data, frame.resolution, TRACKING_RESOLUTION,
+        HAL::USBSendFrame(frame.data, frame.timestamp,
+                          frame.resolution, TRACKING_RESOLUTION,
                           HAL::USB_VISION_COMMAND_TRACK);
         
         Messages::LookForID( GET_MESSAGE_ID(Messages::DockingErrorSignal) );
