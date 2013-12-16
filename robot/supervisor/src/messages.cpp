@@ -111,10 +111,6 @@ namespace Anki {
           if(msgID == lookForID_) {
             lookForID_ = NO_MESSAGE_ID;
           }
-          else if(HAL::GetMicroCounter() - lookingStartTime_ > LOOK_FOR_MESSAGE_TIMEOUT) {
-            PRINT("Timed out waiting for message ID %d.\n", lookForID_);
-            lookForID_ = NO_MESSAGE_ID;
-          }
         }
       } // ProcessMessage()
       
@@ -124,7 +120,18 @@ namespace Anki {
       }
       
       bool StillLookingForID(void) {
-        return lookForID_ != NO_MESSAGE_ID;
+        if(lookForID_ == NO_MESSAGE_ID) {
+          return false;
+        }
+        else if(HAL::GetMicroCounter() - lookingStartTime_ > LOOK_FOR_MESSAGE_TIMEOUT) {
+            PRINT("Timed out waiting for message ID %d.\n", lookForID_);
+            lookForID_ = NO_MESSAGE_ID;
+          
+          return false;
+        }
+        
+        return true;
+        
       }
       
       

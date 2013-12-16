@@ -234,6 +234,7 @@ namespace Anki {
             
             // This resets docking, puttings us back in LOOKING_FOR_BLOCKS mode
             SetDockingBlock(dockingBlock_);
+            numTrackFailures_ = 0;
           }
         }
       } // UpdateTrackingStatus()
@@ -359,7 +360,7 @@ namespace Anki {
         // rolling sync effects.
         // NB: CONTINUOUS mode contains tears that could affect vision algorithms
         // if moving too fast.
-        const HAL::CameraUpdateMode updateMode = (HAL::GetHeadCamMode() == HAL::CAMERA_MODE_QQQVGA ?
+        const HAL::CameraUpdateMode updateMode = (frame.resolution == HAL::CAMERA_MODE_QQQVGA ?
                                                   HAL::CAMERA_UPDATE_SINGLE :
                                                   HAL::CAMERA_UPDATE_CONTINUOUS);
         
