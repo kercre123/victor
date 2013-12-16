@@ -230,8 +230,8 @@ namespace Anki {
         while( Messages::CheckMailbox(dockMsg) )
         {
           if(dockMsg.didTrackingSucceed) {
-            PRINT("Received docking error signal: x_distErr=%.3f, y_horErr=%.3f, "
-                  "angleErr=%.1fdeg\n", dockMsg.x_distErr, dockMsg.y_horErr,
+            PRINT("Received docking error signal: x_distErr=%f, y_horErr=%f, "
+                  "angleErr=%fdeg\n", dockMsg.x_distErr, dockMsg.y_horErr,
                   RAD_TO_DEG_F32(dockMsg.angleErr));
             
             DockingController::SetRelDockPose(dockMsg.x_distErr,
