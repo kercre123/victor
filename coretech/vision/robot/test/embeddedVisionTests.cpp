@@ -2346,7 +2346,6 @@ GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
 {
   const s32 imageWidth = 10;
   const s32 imageHeight = 4;
-  const s32 downsampleFactor = 2;
 
   // Allocate memory from the heap, for the memory allocator
   const s32 numBytes = MIN(SMALL_BUFFER_SIZE, 1000);
@@ -2356,7 +2355,7 @@ GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
   ASSERT_TRUE(ms.IsValid());
 
   Array<u8> image(imageHeight, imageWidth, ms);
-  Array<u8> imageDownsampled(imageHeight/downsampleFactor, imageWidth/downsampleFactor, ms);
+  Array<u8> imageDownsampled(imageHeight/2, imageWidth/2, ms);
 
   ASSERT_TRUE(image.get_rawDataPointer()!= NULL);
   ASSERT_TRUE(imageDownsampled.get_rawDataPointer()!= NULL);
@@ -2365,7 +2364,7 @@ GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
     *image.Pointer(2,x) = static_cast<u8>(x);
   }
 
-  Result result = DownsampleByFactor(image, downsampleFactor, imageDownsampled);
+  Result result = ImageProcessing::DownsampleByTwo<u8,u32,u8>(image, imageDownsampled);
 
   ASSERT_TRUE(result == RESULT_OK);
 

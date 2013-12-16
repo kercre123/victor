@@ -38,6 +38,8 @@ namespace Anki
       //
       // Image resizing
       //
+
+      template<typename InType, typename IntermediateType, typename OutType> Result DownsampleByTwo(const Array<InType> &image, Array<OutType> &imageDownsampled);
     } // namespace ImageProcessing
   } // namespace Embedded
 } //namespace Anki

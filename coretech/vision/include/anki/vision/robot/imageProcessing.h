@@ -185,6 +185,43 @@ namespace Anki
 
         return RESULT_OK;
       }
+
+      template<typename InType, typename IntermediateType, typename OutType> Result DownsampleByTwo(const Array<InType> &image, Array<OutType> &imageDownsampled)
+      {
+        const s32 imageHeight = image.get_size(0);
+        const s32 imageWidth = image.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue(image.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "DownsampleByFactor", "image is not valid");
+
+        AnkiConditionalErrorAndReturnValue(imageDownsampled.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "DownsampleByFactor", "imageDownsampled is not valid");
+
+        AnkiConditionalErrorAndReturnValue(imageDownsampled.get_size(0) == (imageHeight / 2) && imageDownsampled.get_size(1) == (imageWidth / 2),
+          RESULT_FAIL_INVALID_SIZE, "DownsampleByFactor", "size(imageDownsampled) is not equal to size(image) >> downsampleFactor");
+
+        const s32 maxY = 2 * imageDownsampled.get_size(0);
+        const s32 maxX = 2 * imageDownsampled.get_size(1);
+
+        for(s32 y=0, ySmall=0; y<maxY; y+=2, ySmall++) {
+          const InType * restrict pImageY0 = image.Pointer(y, 0);
+          const InType * restrict pImageY1 = image.Pointer(y+1, 0);
+
+          OutType * restrict pImageDownsampled = imageDownsampled.Pointer(ySmall, 0);
+
+          for(s32 x=0, xSmall=0; x<maxX; x+=2, xSmall++) {
+            const u32 imageSum =
+              static_cast<IntermediateType>(pImageY0[x]) +
+              static_cast<IntermediateType>(pImageY0[x+1]) +
+              static_cast<IntermediateType>(pImageY1[x]) +
+              static_cast<IntermediateType>(pImageY1[x+1]);
+
+            pImageDownsampled[xSmall] = static_cast<OutType>(imageSum >> 2);
+          }
+        }
+
+        return RESULT_OK;
+      }
     } // namespace ImageProcessing
   } // namespace Embedded
 } //namespace Anki

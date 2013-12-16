@@ -353,7 +353,7 @@ namespace Anki
 
         //    imagePyramid{pyramidLevel} = uint8(downsampleByFactor(curPyramidLevelBlurred, 2));
 
-        const Result downsampleByFactorResult = DownsampleByFactor(curPyramidLevelBlurred, 2, imagePyramid[pyramidLevel]);
+        const Result downsampleByFactorResult = ImageProcessing::DownsampleByTwo<u8,u32,u8>(curPyramidLevelBlurred, imagePyramid[pyramidLevel]);
         AnkiConditionalErrorAndReturnValue(downsampleByFactorResult == RESULT_OK,
           downsampleByFactorResult, "ComputeCharacteristicScaleImage", "In-loop DownsampleByFactor failed");
       } // for(s32 pyramidLevel=1; pyramidLevel<=numPyramidLevels; pyramidLevel++) {
