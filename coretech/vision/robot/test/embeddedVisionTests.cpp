@@ -211,6 +211,111 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_BenchmarkAffine)
 }
 #endif // BENCHMARK_AFFINE
 
+GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
+{
+#ifndef RUN_TRACKER_TESTS
+  ASSERT_TRUE(false);
+#else
+  const s32 imageHeight = 60;
+  const s32 imageWidth = 80;
+
+  const s32 numPyramidLevels = 2;
+
+  const f32 ridgeWeight = 0.0f;
+
+  const Rectangle<f32> templateRegion(13, 34, 22, 43);
+
+  const s32 maxIterations = 25;
+  const f32 convergenceTolerance = .05f;
+
+  // TODO: add check that images were loaded correctly
+
+  MemoryStack scratch1(&smallBuffer[0], 600000);
+
+  ASSERT_TRUE(scratch1.IsValid());
+
+  ASSERT_TRUE(blockImages00189_80x60_HEIGHT == imageHeight && blockImages00190_80x60_HEIGHT == imageHeight);
+  ASSERT_TRUE(blockImages00189_80x60_WIDTH == imageWidth && blockImages00190_80x60_WIDTH == imageWidth);
+
+  Array<u8> image1(imageHeight, imageWidth, scratch1);
+  image1.Set(blockImages00189_80x60, imageWidth*imageHeight);
+
+  Array<u8> image2(imageHeight, imageWidth, scratch1);
+  image2.Set(blockImages00190_80x60, imageWidth*imageHeight);
+
+  ASSERT_TRUE(*image1.Pointer(0,0) == 45);
+  //printf("%d %d %d %d\n", *image1.Pointer(0,0), *image1.Pointer(0,1), *image1.Pointer(0,2), *image1.Pointer(0,3));
+  /*image1.Print("image1");
+  image2.Print("image2");*/
+
+  // Translation-only LK
+  {
+    PUSH_MEMORY_STACK(scratch1);
+
+    InitBenchmarking();
+
+    const f64 time0 = GetTime();
+
+    TemplateTracker::LucasKanadeTrackerFast tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
+
+    ASSERT_TRUE(tracker.IsValid());
+
+    const f64 time1 = GetTime();
+
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
+
+    const f64 time2 = GetTime();
+
+    printf("Translation-only LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
+    PrintBenchmarkResults(BENCHMARK_PRINT_TOTALS);
+
+    tracker.get_transformation().Print("Translation-only Fast LK");
+
+    // This ground truth is from the PC c++ version
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    transform_groundTruth[0][2] = -0.334f;
+    transform_groundTruth[1][2] = -0.240f;
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .001));
+  }
+
+  // Affine LK
+  {
+    PUSH_MEMORY_STACK(scratch1);
+
+    InitBenchmarking();
+
+    const f64 time0 = GetTime();
+
+    TemplateTracker::LucasKanadeTrackerFast tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_AFFINE, ridgeWeight, scratch1);
+
+    ASSERT_TRUE(tracker.IsValid());
+
+    const f64 time1 = GetTime();
+
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
+
+    const f64 time2 = GetTime();
+
+    printf("Affine LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
+    PrintBenchmarkResults(BENCHMARK_PRINT_TOTALS);
+
+    tracker.get_transformation().Print("Affine Fast LK");
+
+    // This ground truth is from the PC c++ version
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    transform_groundTruth[0][0] = 1.005f; transform_groundTruth[0][1] = 0.027f; transform_groundTruth[0][2] = -0.315f;
+    transform_groundTruth[1][0] = -0.033f; transform_groundTruth[1][1] = 0.993f; transform_groundTruth[1][2] = -0.230f;
+    transform_groundTruth[2][0] = 0.0f; transform_groundTruth[2][1] = 0.0f; transform_groundTruth[2][2] = 1.0f;
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+  }
+
+#endif // RUN_TRACKER_TESTS
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 {
 #ifndef RUN_TRACKER_TESTS
@@ -2561,6 +2666,7 @@ int RUN_ALL_TESTS()
 #endif
 
   CALL_GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine);
+  CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast);
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C_emulateShave);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C);

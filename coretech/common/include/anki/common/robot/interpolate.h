@@ -169,9 +169,90 @@ namespace Anki
       return RESULT_OK;
     }
 
+    template<typename TypeIn, typename TypeOut> Result Interp2_Affine(const Array<TypeIn> &reference, const Array<f32> &homography, Array<TypeOut> &out, const InterpolationType interpolationType, const TypeOut invalidValue)
+    {
+      AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_LINEAR,
+        RESULT_FAIL_INVALID_PARAMETERS, "Interp2_Affine", "Only INTERPOLATE_LINEAR is supported");
+
+      AnkiConditionalErrorAndReturnValue(reference.IsValid(),
+        RESULT_FAIL_INVALID_OBJECT, "Interp2_Affine", "reference is not valid");
+
+      AnkiConditionalErrorAndReturnValue(out.IsValid(),
+        RESULT_FAIL_INVALID_OBJECT, "Interp2_Affine", "out is not valid");
+
+      const s32 referenceHeight = reference.get_size(0);
+      const s32 referenceWidth = reference.get_size(1);
+
+      const s32 outHeight = out.get_size(0);
+      const s32 outWidth = out.get_size(1);
+
+      AnkiConditionalErrorAndReturnValue(reference.get_rawDataPointer() != out.get_rawDataPointer(),
+        RESULT_FAIL_ALIASED_MEMORY, "Interp2_Affine", "out and reference cannot be the same as out");
+
+      const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
+      const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+
+      const f32 xyReferenceMin = 0.0f;
+      const f32 xReferenceMax = static_cast<f32>(referenceWidth) - 1.0f;
+      const f32 yReferenceMax = static_cast<f32>(referenceHeight) - 1.0f;
+
+      for(s32 y=0; y<outHeight; y++) {
+        TypeOut * restrict pOut = out.Pointer(y,0);
+
+        f32 xTransformed = h00*(0.5f) + h01*(static_cast<f32>(y)+0.5f) + h02 - 0.5f;
+        f32 yTransformed = h10*(0.5f) + h11*(static_cast<f32>(y)+0.5f) + h12 - 0.5f;
+
+        for(s32 x=0; x<outWidth; x++) {
+          const f32 x0 = FLT_FLOOR(xTransformed);
+          const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
+
+          const f32 y0 = FLT_FLOOR(yTransformed);
+          const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
+
+          // If out of bounds, set as invalid and continue
+          if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
+            pOut[x] = invalidValue;
+            continue;
+          }
+
+          const f32 alphaX = xTransformed - x0;
+          const f32 alphaXinverse = 1 - alphaX;
+
+          const f32 alphaY = yTransformed - y0;
+          const f32 alphaYinverse = 1.0f - alphaY;
+
+          const s32 y0S32 = static_cast<s32>(Roundf(y0));
+          const s32 y1S32 = static_cast<s32>(Roundf(y1));
+          const s32 x0S32 = static_cast<s32>(Roundf(x0));
+
+          const TypeIn * restrict pReference_y0 = reference.Pointer(y0S32, x0S32);
+          const TypeIn * restrict pReference_y1 = reference.Pointer(y1S32, x0S32);
+
+          const f32 pixelTL = *pReference_y0;
+          const f32 pixelTR = *(pReference_y0+1);
+          const f32 pixelBL = *pReference_y1;
+          const f32 pixelBR = *(pReference_y1+1);
+
+          const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
+
+          const TypeOut interpolatedPixel = static_cast<TypeOut>(interpolatedPixelF32);
+
+          pOut[x] = interpolatedPixel;
+
+          // strength reduction for the affine transformation along this horizontal line
+          xTransformed += h00;
+          yTransformed += h10;
+        } // for(s32 x=0; x<xIterationMax; x++)
+      } // for(s32 y=0; y<yIterationMax; y++)
+
+      return RESULT_OK;
+    }
+
 #pragma mark --- Specializations ---
 
     template<> Result Interp2(const Array<u8> &reference, const Array<f32> &xCoordinates, const Array<f32> &yCoordinates, Array<u8> &out, const InterpolationType interpolationType, const u8 invalidValue);
+
+    template<> Result Interp2_Affine(const Array<u8> &reference, const Array<f32> &homography, Array<u8> &out, const InterpolationType interpolationType, const u8 invalidValue);
   } // namespace Embedded
 } // namespace Anki
 
