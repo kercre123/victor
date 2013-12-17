@@ -90,8 +90,8 @@ namespace Anki
       Flags::Buffer get_flags() const;
 
     protected:
-      static const u32 FILL_PATTERN_START = 0xABCD1089;
-      static const u32 FILL_PATTERN_END = 0x89EF0189;
+      static const u32 FILL_PATTERN_START = 0xFF01FF02;
+      static const u32 FILL_PATTERN_END = 0x03FF04FF;
 
       static const s32 HEADER_LENGTH = 8;
       static const s32 FOOTER_LENGTH = 4;

@@ -22,6 +22,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/draw_vision.h"
 #include "anki/vision/robot/lucasKanade.h"
 #include "anki/vision/robot/docking_vision.h"
+#include "anki/vision/robot/imageProcessing.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,8 +33,6 @@ extern "C" {
 #endif
 
 using namespace Anki::Embedded;
-
-// #define RUN_MATLAB_IMAGE_TEST
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include "opencv2/core/core.hpp"
@@ -47,17 +46,24 @@ Matlab matlab(false);
 #include "gtest/gtest.h"
 #endif
 
+// #define RUN_MATLAB_IMAGE_TEST
 //#define RUN_MAIN_BIG_MEMORY_TESTS
 //#define RUN_ALL_BIG_MEMORY_TESTS
-//#define RUN_LOW_MEMORY_IMAGE_TESTS
-//#define RUN_TRACKER_TESTS // equivalent to RUN_BROKEN_KANADE_TESTS
+#define RUN_LOW_MEMORY_IMAGE_TESTS
+#define RUN_TRACKER_TESTS // equivalent to RUN_BROKEN_KANADE_TESTS
+//#define BENCHMARK_AFFINE
+
+//#if defined(RUN_TRACKER_TESTS) && defined(RUN_LOW_MEMORY_IMAGE_TESTS)
+//Cannot run tracker and low memory tests at the same time
+//#endif
+
+#if defined(RUN_MAIN_BIG_MEMORY_TESTS) || defined(RUN_LOW_MEMORY_IMAGE_TESTS)
+#include "../../blockImages/blockImage50_320x240.h"
+#endif
 
 #ifdef RUN_TRACKER_TESTS   // This prevents the .elf from loading
-//#ifdef RUN_MAIN_BIG_MEMORY_TESTS
-#include "../../blockImages/blockImage50.h"
 #include "../../blockImages/blockImages00189_80x60.h"
 #include "../../blockImages/blockImages00190_80x60.h"
-//#endif
 #endif
 
 #ifdef RUN_ALL_BIG_MEMORY_TESTS
@@ -65,96 +71,62 @@ Matlab matlab(false);
 #include "../src/fiducialMarkerDefinitionType0.h"
 #endif
 
-#define USE_STATIC_BUFFERS
-
-#if defined(RUN_TRACKER_TESTS) && defined(RUN_LOW_MEMORY_IMAGE_TESTS)
-Cannot run tracker and low memory tests at the same time
-#endif
-
-#if defined(RUN_LOW_MEMORY_IMAGE_TESTS) && !defined(RUN_MAIN_BIG_MEMORY_TESTS) && !defined(RUN_ALL_BIG_MEMORY_TESTS)
-
-#define BIG_BUFFER_SIZE0 320000
-#define BIG_BUFFER_SIZE1 300000
-#define BIG_BUFFER_SIZE2 300000
 #if defined(USING_MOVIDIUS_COMPILER)
-#define BIG_IMAGE_BUFFER_LOCATION __attribute__((section(".bigBuffers")))
-#define BIG_BUFFER1_LOCATION __attribute__((section(".smallBss1")))
-#define BIG_BUFFER2_LOCATION __attribute__((section(".smallBss2")))
+#define BIG_BUFFER_LOCATION __attribute__((section(".bigBss")))
+#define SMALL_BUFFER_LOCATION __attribute__((section(".smallBss1")))
 #else
-#define BIG_IMAGE_BUFFER_LOCATION
-#define BIG_BUFFER1_LOCATION
-#define BIG_BUFFER2_LOCATION
+#define BIG_BUFFER_LOCATION
+#define SMALL_BUFFER_LOCATION
 #endif
 
-#elif defined(RUN_TRACKER_TESTS) && !defined(RUN_MAIN_BIG_MEMORY_TESTS) && !defined(RUN_ALL_BIG_MEMORY_TESTS)
-
-  //#define BIG_BUFFER_SIZE0 320000
-  //#define BIG_BUFFER_SIZE1 600000
-  //#define BIG_BUFFER_SIZE2 16
-#define BIG_BUFFER_SIZE0 32000
-#define BIG_BUFFER_SIZE1 60000
-#define BIG_BUFFER_SIZE2 16
-#if defined(USING_MOVIDIUS_COMPILER)
-#define BIG_IMAGE_BUFFER_LOCATION __attribute__((section(".bigBss")))
-#define BIG_BUFFER1_LOCATION __attribute__((section(".smallBss1")))
-#define BIG_BUFFER2_LOCATION __attribute__((section(".smallBss2")))
+#if (defined(RUN_LOW_MEMORY_IMAGE_TESTS) || defined(RUN_TRACKER_TESTS)) &&\
+  !defined(RUN_MAIN_BIG_MEMORY_TESTS) && !defined(RUN_ALL_BIG_MEMORY_TESTS)
+#define BIG_BUFFER_SIZE 320000
+#define SMALL_BUFFER_SIZE 600000
 #else
-#define BIG_IMAGE_BUFFER_LOCATION
-#define BIG_BUFFER1_LOCATION
-#define BIG_BUFFER2_LOCATION
+#define BIG_BUFFER_SIZE 4000000
+#define SMALL_BUFFER_SIZE 6000000
 #endif
 
-#else
+BIG_BUFFER_LOCATION char bigBuffer[BIG_BUFFER_SIZE];
+SMALL_BUFFER_LOCATION char smallBuffer[SMALL_BUFFER_SIZE];
 
-#define BIG_BUFFER_SIZE0 4000000
-#define BIG_BUFFER_SIZE1 4000000
-#define BIG_BUFFER_SIZE2 4000000
-#if defined(USING_MOVIDIUS_COMPILER)
-#define BIG_IMAGE_BUFFER_LOCATION __attribute__((section(".bigBss")))
-#define BIG_BUFFER1_LOCATION __attribute__((section(".bigBss")))
-#define BIG_BUFFER2_LOCATION __attribute__((section(".bigBss")))
+#if defined(BIG_ENDIAN_IMAGES)
+static const bool imagesAreEndianSwapped = true;
 #else
-#define BIG_IMAGE_BUFFER_LOCATION
-#define BIG_BUFFER1_LOCATION
-#define BIG_BUFFER2_LOCATION
+static const bool imagesAreEndianSwapped = false;
 #endif
 
-#endif
-
-#ifdef USE_STATIC_BUFFERS
-  BIG_IMAGE_BUFFER_LOCATION char bigBuffer0[BIG_BUFFER_SIZE0];
-BIG_BUFFER1_LOCATION char bigBuffer1[BIG_BUFFER_SIZE1];
-BIG_BUFFER2_LOCATION char bigBuffer2[BIG_BUFFER_SIZE2];
-#else // #ifdef USE_STATIC_BUFFERS
-  char *bigBuffer0 = NULL;
-char *bigBuffer1 = NULL;
-char *bigBuffer2 = NULL;
-#endif // #ifdef USE_STATIC_BUFFERS ... else ...
-
-void InitializeBuffers()
+#if defined(RUN_MAIN_BIG_MEMORY_TESTS) || defined(RUN_LOW_MEMORY_IMAGE_TESTS)
+bool IsBlockImage50_320x240Valid(const u8 * const imageBuffer, const bool isBigEndian)
 {
-#ifndef USE_STATIC_BUFFERS
-#if defined(USING_MOVIDIUS_COMPILER)
-  if(!bigBuffer0)
-    bigBuffer0 = (char*)0x48100000;
+  //printf("%d %d %d %d\n", imageBuffer[0], imageBuffer[1000], imageBuffer[320*120], imageBuffer[320*240-1]);
 
-  if(!bigBuffer1)
-    bigBuffer1 = (char*)0x48100000 + BIG_BUFFER_SIZE0 + 128;
+  if(isBigEndian) {
+    const u8 pixel1 = ((((int*)(&blockImage50_320x240[0]))[0]) & 0xFF000000)>>24;
+    const u8 pixel2 = ((((int*)(&blockImage50_320x240[0]))[1000>>2]) & 0xFF000000)>>24;
+    const u8 pixel3 = ((((int*)(&blockImage50_320x240[0]))[(320*120)>>2]) & 0xFF000000)>>24;
+    const u8 pixel4 = ((((int*)(&blockImage50_320x240[0]))[((320*240)>>2)-1]) & 0xFF);
 
-  if(!bigBuffer2)
-    bigBuffer2 = (char*)0x48100000 + BIG_BUFFER_SIZE0 + BIG_BUFFER_SIZE1 + 256;
-#else // #if defined(USING_MOVIDIUS_COMPILER)
-  if(!bigBuffer0)
-    bigBuffer0 = (char*)malloc(BIG_BUFFER_SIZE0);
+    if(pixel1 != 157) return false;
+    if(pixel2 != 153) return false;
+    if(pixel3 != 157) return false;
+    if(pixel4 != 130) return false;
+  } else {
+    const u8 pixel1 = imageBuffer[0];
+    const u8 pixel2 = imageBuffer[1000];
+    const u8 pixel3 = imageBuffer[320*120];
+    const u8 pixel4 = imageBuffer[320*240-1];
 
-  if(!bigBuffer1)
-    bigBuffer1 = (char*)malloc(BIG_BUFFER_SIZE1);
+    if(pixel1 != 157) return false;
+    if(pixel2 != 153) return false;
+    if(pixel3 != 157) return false;
+    if(pixel4 != 130) return false;
+  }
 
-  if(!bigBuffer2)
-    bigBuffer2 = (char*)malloc(BIG_BUFFER_SIZE2);
-#endif // #if defined(USING_MOVIDIUS_COMPILER) ... else ...
-#endif // #ifndef USE_STATIC_BUFFERS
-}
+  return true;
+} // bool IsBlockImage50_320x240Valid()
+#endif // #if defined(RUN_MAIN_BIG_MEMORY_TESTS) || defined(RUN_LOW_MEMORY_IMAGE_TESTS)
 
 GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
 {
@@ -164,7 +136,7 @@ GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
   const f32 horizontalFocalLengthInMM = 5.0f;
   const f32 cozmoLiftDistanceInMM = 20.0f;
 
-  MemoryStack ms(&bigBuffer1[0], BIG_BUFFER_SIZE1);
+  MemoryStack ms(&smallBuffer[0], SMALL_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   const Quadrilateral<f32> initialCorners(Point<f32>(5.0f,5.0f), Point<f32>(100.0f,100.0f), Point<f32>(50.0f,20.0f), Point<f32>(10.0f,0.0f));
@@ -179,18 +151,19 @@ GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
 
   // TODO: manually compute the correct output
   ASSERT_TRUE(FLT_NEAR(rel_x,15.355339f));
-  ASSERT_TRUE(FLT_NEAR(rel_y,229.809707f));
+  ASSERT_TRUE(NEAR(rel_y,229.809707f, 0.1f)); // The Myriad inexact floating point mode is imprecise here
   ASSERT_TRUE(FLT_NEAR(rel_rad,0.785398f));
 
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
+#ifdef BENCHMARK_AFFINE
+GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_BenchmarkAffine)
+  // Benchmark Affine LK
 {
 #ifndef RUN_TRACKER_TESTS
   ASSERT_TRUE(false);
 #else // This prevents the .elf from loading
-
   const s32 imageHeight = 60;
   const s32 imageWidth = 80;
 
@@ -203,46 +176,25 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
   const s32 maxIterations = 25;
   const f32 convergenceTolerance = static_cast<f32>(1e-3);
 
-  InitializeBuffers();
-
   // TODO: add check that images were loaded correctly
 
-  MemoryStack scratch0(&bigBuffer0[0], 80*60*2 + 256);
-  MemoryStack scratch1(&bigBuffer1[0], 600000);
+  //MemoryStack scratch0(&bigBuffer[0], 80*60*2 + 256);
+  MemoryStack scratch1(&smallBuffer[0], 600000);
 
-  ASSERT_TRUE(scratch0.IsValid());
+  //ASSERT_TRUE(scratch0.IsValid());
   ASSERT_TRUE(scratch1.IsValid());
 
   ASSERT_TRUE(blockImages00189_80x60_HEIGHT == imageHeight && blockImages00190_80x60_HEIGHT == imageHeight);
   ASSERT_TRUE(blockImages00189_80x60_WIDTH == imageWidth && blockImages00190_80x60_WIDTH == imageWidth);
 
-  Array<u8> image1(imageHeight, imageWidth, scratch0);
-  image1.Set_unsafe(blockImages00189_80x60, imageWidth*imageHeight);
+  Array<u8> image1(imageHeight, imageWidth, scratch1);
+  image1.Set(blockImages00189_80x60, imageWidth*imageHeight);
 
-  Array<u8> image2(imageHeight, imageWidth, scratch0);
-  image2.Set_unsafe(blockImages00190_80x60, imageWidth*imageHeight);
-
-  // Translation-only LK
-  {
-    PUSH_MEMORY_STACK(scratch1);
-
-    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
-
-    ASSERT_TRUE(tracker.IsValid());
-
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
-
-    tracker.get_transformation().Print("Translation-only LK");
-
-    // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][2] = -0.341725f;
-    transform_groundTruth[1][2] = -0.244789f;
-
-    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .001, .0001));
-  }
+  Array<u8> image2(imageHeight, imageWidth, scratch1);
+  image2.Set(blockImages00190_80x60, imageWidth*imageHeight);
 
   // Affine LK
+  for(s32 i=0; i<10000; i++)
   {
     PUSH_MEMORY_STACK(scratch1);
 
@@ -251,145 +203,152 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
     ASSERT_TRUE(tracker.IsValid());
 
     ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
-
-    tracker.get_transformation().Print("Affine LK");
-
-    // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][0] = 1.005281f; transform_groundTruth[0][1] = 0.027271f; transform_groundTruth[0][2] = -0.314762f;
-    transform_groundTruth[1][0] = -0.033396f; transform_groundTruth[1][1] = 0.992506f; transform_groundTruth[1][2] = -0.229912f;
-    transform_groundTruth[2][0] = 0.0f; transform_groundTruth[2][1] = 0.0f; transform_groundTruth[2][2] = 1.0f;
-
-    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .001, .0001));
-  }
-
-  // Projective LK
-  {
-    PUSH_MEMORY_STACK(scratch1);
-
-    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_PROJECTIVE, ridgeWeight, scratch1);
-
-    ASSERT_TRUE(tracker.IsValid());
-
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
-
-    tracker.get_transformation().Print("Projective LK");
-
-    // This ground truth is from the PC c++ version
-    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
-    transform_groundTruth[0][0] = 1.007632f; transform_groundTruth[0][1] = 0.027075f; transform_groundTruth[0][2] = -0.359518f;
-    transform_groundTruth[1][0] = -0.033566f; transform_groundTruth[1][1] = 0.991994f; transform_groundTruth[1][2] = -0.270154f;
-    transform_groundTruth[2][0] = -0.000840f; transform_groundTruth[2][1] = -0.000855f; transform_groundTruth[2][2] = 1.0f;
-
-    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .001, .0001));
   }
 
 #endif // RUN_TRACKER_TESTS
 
   GTEST_RETURN_HERE;
 }
+#endif // BENCHMARK_AFFINE
 
-//GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScaleAndBinarize)
-//{
-//  InitializeBuffers();
-//
-//  // Check that the image loaded correctly
-//  ASSERT_TRUE(blockImage50[0] == 155);
-//  ASSERT_TRUE(blockImage50[1000] == 147);
-//  ASSERT_TRUE(blockImage50[640*240] == 155);
-//  ASSERT_TRUE(blockImage50[640*480-1] == 133);
-//
-//  const s32 numPyramidLevels = 4;
-//  const s32 thresholdMultiplier = 49152; // .75 * (2^16) = 49152
-//
-//  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE0);
-//  ASSERT_TRUE(scratch0.IsValid());
-//
-//  Array<u8> image(blockImage50_HEIGHT, blockImage50_WIDTH, scratch0);
-//  ASSERT_TRUE(image.IsValid());
-//  image.Set_unsafe(blockImage50, blockImage50_WIDTH*blockImage50_HEIGHT);
-//
-//  Array<u8> binaryImage(blockImage50_HEIGHT, blockImage50_WIDTH, scratch0);
-//  ASSERT_TRUE(binaryImage.IsValid());
-//
-//  ASSERT_TRUE(ComputeCharacteristicScaleImageAndBinarize(image, numPyramidLevels, binaryImage, thresholdMultiplier, scratch0) == RESULT_OK);
-//
-//  binaryImage.Show("binaryImage", true);
-//
-//  ASSERT_TRUE(false);
-//
-//  // TODO:
-//#if 0
-//  const s32 imageWidth = 16;
-//  const s32 imageHeight = 16;
-//  const s32 numPyramidLevels = 3;
-//
-//#define ComputeCharacteristicScaleAndBinarize_imageDataLength (16*16)
-//  const s32 imageData[ComputeCharacteristicScaleAndBinarize_imageDataLength + 16] = {
-//    0, 0, 0, 107, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 160, 89,
-//    0, 255, 0, 251, 255, 0, 0, 255, 0, 255, 255, 255, 255, 0, 197, 38,
-//    0, 0, 0, 77, 255, 0, 0, 255, 0, 255, 255, 255, 255, 0, 238, 149,
-//    18, 34, 27, 179, 255, 255, 255, 255, 0, 255, 255, 255, 255, 0, 248, 67,
-//    226, 220, 173, 170, 40, 210, 108, 255, 0, 255, 255, 255, 255, 0, 49, 11,
-//    25, 100, 51, 137, 218, 251, 24, 255, 0, 0, 0, 0, 0, 0, 35, 193,
-//    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 49, 162, 65, 133, 178, 62,
-//    255, 0, 0, 0, 0, 0, 0, 0, 0, 255, 188, 241, 156, 253, 24, 113,
-//    255, 0, 0, 0, 0, 0, 0, 0, 0, 255, 62, 53, 148, 56, 134, 175,
-//    255, 0, 0, 0, 0, 0, 0, 0, 0, 255, 234, 181, 138, 27, 135, 92,
-//    255, 0, 0, 0, 0, 0, 0, 0, 0, 255, 69, 60, 222, 28, 220, 188,
-//    255, 0, 0, 0, 0, 0, 0, 0, 0, 255, 195, 30, 68, 16, 124, 101,
-//    255, 0, 0, 0, 0, 0, 0, 0, 0, 255, 48, 155, 81, 103, 100, 174,
-//    255, 0, 0, 0, 0, 0, 0, 0, 0, 255, 73, 115, 30, 114, 171, 180,
-//    255, 0, 0, 0, 0, 0, 0, 0, 0, 255, 23, 117, 240, 93, 189, 113,
-//    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 147, 169, 165, 195, 133, 5};
-//
-//  const u32 correctResults[16 + 16][16 + 16] = {
-//    {983040, 2097152, 4390912, 8585216, 12124160, 12976128, 12386304, 10158080, 6488064, 4587520, 4849664, 4849664, 4259840, 4784128, 6225920, 6422528},
-//    {1638400, 4063232, 6029312, 8847360, 9580544, 10285056, 9109504, 9519104, 8896512, 8667136, 10747904, 10747904, 7880704, 7344128, 6959104, 7012352},
-//    {2293760, 4947968, 6814720, 7451648, 8088576, 8725504, 9028608, 8997888, 8967168, 10043392, 14680064, 14680064, 11599872, 8269824, 7995392, 7471104},
-//    {4587520, 6164480, 7009280, 7478272, 9654272, 10133504, 8670208, 8709120, 8748032, 10444800, 14680064, 14680064, 9486336, 8364032, 7331840, 6488064},
-//    {7536640, 7712768, 8425472, 9195520, 10022912, 10346496, 10166272, 9998336, 8528896, 8637440, 10084352, 9650176, 8568832, 6094848, 5373952, 5570560},
-//    {9699328, 8581120, 8605696, 8863744, 9355264, 9543680, 11403264, 9338880, 8309760, 8192000, 8060928, 7602176, 6356992, 5308416, 5439488, 6160384},
-//    {11468800, 8769536, 7925760, 9109504, 9764864, 9764864, 9306112, 9109504, 7880704, 8159232, 8222720, 7536640, 7077888, 7393280, 7073792, 7012352},
-//    {12255232, 8323072, 5242880, 6555648, 6420480, 6285312, 6422528, 6832128, 7241728, 9699328, 9961472, 8458240, 8716288, 8192000, 7426048, 7536640},
-//    {11796480, 7241728, 1966080, 3457024, 2965504, 2945024, 3395584, 1966080, 6602752, 9371648, 10420224, 8630272, 8097792, 7743488, 7794688, 8257536},
-//    {11468800, 6520832, 3735552, 2019328, 1372160, 1335296, 1908736, 3289088, 5963776, 9043968, 10223616, 8482816, 7983104, 7208960, 7979008, 8847360},
-//    {11468800, 6160384, 3244032, 1437696, 741376, 696320, 1302528, 2756608, 5795840, 8912896, 9633792, 8015872, 7565312, 6750208, 7979008, 9109504},
-//    {11468800, 6205440, 3280896, 1470464, 774144, 724992, 1323008, 2744320, 6098944, 8585216, 8978432, 7766016, 5963776, 6291456, 8036352, 9109504},
-//    {11468800, 6656000, 3846144, 2117632, 1470464, 1421312, 1970176, 3252224, 6402048, 8126464, 8454144, 6815744, 5963776, 6553600, 8151040, 9502720},
-//    {11796480, 5898240, 1966080, 3846144, 3280896, 3231744, 3698688, 1966080, 6365184, 7270400, 7620608, 7274496, 7974912, 7974912, 8847360, 9437184},
-//    {13107200, 9793536, 5898240, 6656000, 6205440, 6156288, 6508544, 7217152, 8282112, 8904704, 9084928, 9056256, 8818688, 9306112, 8781824, 7667712},
-//    {15073280, 13107200, 11796480, 11468800, 11468800, 11468800, 11468800, 11796480, 12517376, 12255232, 10813440, 10158080, 10551296, 10158080, 7929856, 5046272}};
-//
-//  // Allocate memory from the heap, for the memory allocator
-//  const s32 numBytes = MIN(BIG_BUFFER_SIZE1, 10000);
-//
-//  MemoryStack ms(&bigBuffer1[0], numBytes);
-//
-//  ASSERT_TRUE(ms.IsValid());
-//
-//  Array<u8> image(imageHeight, imageWidth, ms);
-//  ASSERT_TRUE(image.IsValid());
-//  ASSERT_TRUE(image.Set(imageData, ComputeCharacteristicScaleAndBinarize_imageDataLength) == imageWidth*imageHeight);
-//
-//  FixedPointArray<u32> scaleImage(imageHeight, imageWidth, 16, ms);
-//  ASSERT_TRUE(scaleImage.IsValid());
-//
-//  ASSERT_TRUE(ComputeCharacteristicScaleAndBinarizeImage(image, numPyramidLevels, scaleImage, ms) == RESULT_OK);
-//
-//  // TODO: manually compute results, and check
-//  //scaleImage.Print();
-//
-//  for(s32 y=0; y<imageHeight; y++) {
-//    for(s32 x=0; x<imageWidth; x++) {
-//      //printf("(%d,%d) expected:%d actual:%d\n", y, x, correctResults[y][x], *(imageDownsampled.Pointer(y,x)));
-//      ASSERT_TRUE(correctResults[y][x] == *scaleImage.Pointer(y,x));
-//    }
-//  }
-//#endif
-//
-//  GTEST_RETURN_HERE;
-//} // GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScaleAndBinarize)
+GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
+{
+#ifndef RUN_TRACKER_TESTS
+  ASSERT_TRUE(false);
+#else
+  const s32 imageHeight = 60;
+  const s32 imageWidth = 80;
+
+  const s32 numPyramidLevels = 2;
+
+  const f32 ridgeWeight = 0.0f;
+
+  const Rectangle<f32> templateRegion(13, 34, 22, 43);
+
+  const s32 maxIterations = 25;
+  const f32 convergenceTolerance = .05f;
+
+  // TODO: add check that images were loaded correctly
+
+  //MemoryStack scratch0(&bigBuffer[0], 80*60*2 + 256);
+  MemoryStack scratch1(&smallBuffer[0], 600000);
+
+  //ASSERT_TRUE(scratch0.IsValid());
+  ASSERT_TRUE(scratch1.IsValid());
+
+  ASSERT_TRUE(blockImages00189_80x60_HEIGHT == imageHeight && blockImages00190_80x60_HEIGHT == imageHeight);
+  ASSERT_TRUE(blockImages00189_80x60_WIDTH == imageWidth && blockImages00190_80x60_WIDTH == imageWidth);
+
+  Array<u8> image1(imageHeight, imageWidth, scratch1);
+  image1.Set(blockImages00189_80x60, imageWidth*imageHeight);
+
+  Array<u8> image2(imageHeight, imageWidth, scratch1);
+  image2.Set(blockImages00190_80x60, imageWidth*imageHeight);
+
+  ASSERT_TRUE(*image1.Pointer(0,0) == 45);
+  //printf("%d %d %d %d\n", *image1.Pointer(0,0), *image1.Pointer(0,1), *image1.Pointer(0,2), *image1.Pointer(0,3));
+  /*image1.Print("image1");
+  image2.Print("image2");*/
+
+  // Translation-only LK
+  {
+    PUSH_MEMORY_STACK(scratch1);
+
+    InitBenchmarking();
+
+    const f64 time0 = GetTime();
+
+    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_TRANSLATION, ridgeWeight, scratch1);
+
+    ASSERT_TRUE(tracker.IsValid());
+
+    const f64 time1 = GetTime();
+
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
+
+    const f64 time2 = GetTime();
+
+    printf("Translation-only LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
+    PrintBenchmarkResults(BENCHMARK_PRINT_TOTALS);
+
+    tracker.get_transformation().Print("Translation-only LK");
+
+    // This ground truth is from the PC c++ version
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    transform_groundTruth[0][2] = -0.334f;
+    transform_groundTruth[1][2] = -0.240f;
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .001));
+  }
+
+  // Affine LK
+  {
+    PUSH_MEMORY_STACK(scratch1);
+
+    InitBenchmarking();
+
+    const f64 time0 = GetTime();
+
+    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_AFFINE, ridgeWeight, scratch1);
+
+    ASSERT_TRUE(tracker.IsValid());
+
+    const f64 time1 = GetTime();
+
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
+
+    const f64 time2 = GetTime();
+
+    printf("Affine LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
+    PrintBenchmarkResults(BENCHMARK_PRINT_TOTALS);
+
+    tracker.get_transformation().Print("Affine LK");
+
+    // This ground truth is from the PC c++ version
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    transform_groundTruth[0][0] = 1.005f; transform_groundTruth[0][1] = 0.027f; transform_groundTruth[0][2] = -0.315f;
+    transform_groundTruth[1][0] = -0.033f; transform_groundTruth[1][1] = 0.993f; transform_groundTruth[1][2] = -0.230f;
+    transform_groundTruth[2][0] = 0.0f; transform_groundTruth[2][1] = 0.0f; transform_groundTruth[2][2] = 1.0f;
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+  }
+
+  // Projective LK
+  {
+    PUSH_MEMORY_STACK(scratch1);
+
+    InitBenchmarking();
+
+    const f64 time0 = GetTime();
+
+    TemplateTracker::LucasKanadeTracker_f32 tracker(image1, templateRegion, numPyramidLevels, TemplateTracker::TRANSFORM_PROJECTIVE, ridgeWeight, scratch1);
+
+    ASSERT_TRUE(tracker.IsValid());
+
+    const f64 time1 = GetTime();
+
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
+
+    const f64 time2 = GetTime();
+
+    printf("Projective LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
+    PrintBenchmarkResults(BENCHMARK_PRINT_TOTALS);
+
+    tracker.get_transformation().Print("Projective LK");
+
+    // This ground truth is from the PC c++ version
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch1);
+    transform_groundTruth[0][0] = 1.008f; transform_groundTruth[0][1] = 0.027f; transform_groundTruth[0][2] = -0.360f;
+    transform_groundTruth[1][0] = -0.034f; transform_groundTruth[1][1] = 0.992f; transform_groundTruth[1][2] = -0.270f;
+    transform_groundTruth[2][0] = -0.001f; transform_groundTruth[2][1] = -0.001f; transform_groundTruth[2][2] = 1.0f;
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+  }
+
+#endif // RUN_TRACKER_TESTS
+
+  GTEST_RETURN_HERE;
+}
 
 GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C_emulateShave)
 {
@@ -401,7 +360,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C_emulateShave)
 
   const s32 imageWidth = 32;
 
-  MemoryStack ms(&bigBuffer1[0], BIG_BUFFER_SIZE1);
+  MemoryStack ms(&smallBuffer[0], SMALL_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<u8> image(4,imageWidth,ms);
@@ -474,7 +433,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C)
   acceleration.type = C_ACCELERATION_NATURAL_C;
   acceleration.version = 1;
 
-  MemoryStack ms(&bigBuffer1[0], BIG_BUFFER_SIZE1);
+  MemoryStack ms(&smallBuffer[0], SMALL_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<u8> image(3,16,ms);
@@ -602,7 +561,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
   acceleration.type = C_ACCELERATION_NATURAL_CPP;
   acceleration.version = 1;
 
-  MemoryStack ms(&bigBuffer1[0], BIG_BUFFER_SIZE1);
+  MemoryStack ms(&smallBuffer[0], SMALL_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<u8> image(3,16,ms);
@@ -612,6 +571,8 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
   image[1][0] = 9; image[1][1] = 9; image[1][2] = 9;
   image[2][0] = 0; image[2][1] = 0; image[2][2] = 1;
 
+  //image.Print("image");
+
   Array<u8> image2(4,16,ms);
   ASSERT_TRUE(image2.IsValid());
 
@@ -619,6 +580,8 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
   image2[1][0] = 9; image2[1][1] = 9; image2[1][2] = 9;
   image2[2][0] = 0; image2[2][1] = 0; image2[2][2] = 1;
   image2[3][0] = 5; image2[3][1] = 5; image2[3][2] = 5;
+
+  //image2.Print("image2");
 
   Array<s32> filteredOutput(1, 16, ms);
 
@@ -635,6 +598,9 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     const s32 filteredOutput_groundTruth_testBorder2_0[] = {35, 39, 28};
     ASSERT_TRUE(ii_border2.FilterRow(acceleration, filter_testBorder2_0, imageRow_testBorder2_0, filteredOutput) == RESULT_OK);
 
+    //ii_border2.Print("ii_border2");
+    //filteredOutput.Print("filteredOutput1");
+
     for(s32 i=0; i<3; i++) {
       ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder2_0[i]);
     }
@@ -647,6 +613,8 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     const s32 imageRow_testBorder2_1 = 2;
     const s32 filteredOutput_groundTruth_testBorder2_1[] = {27, 29, 20};
     ASSERT_TRUE(ii_border2.FilterRow(acceleration, filter_testBorder2_1, imageRow_testBorder2_1, filteredOutput) == RESULT_OK);
+
+    //filteredOutput.Print("filteredOutput2");
 
     for(s32 i=0; i<3; i++) {
       ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder2_1[i]);
@@ -669,6 +637,8 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     const s32 filteredOutput_groundTruth_testBorder1_0[] = {10, 11, 13};
     ASSERT_TRUE(ii_border1.FilterRow(acceleration, filter_testBorder1_0, imageRow_testBorder1_0, filteredOutput) == RESULT_OK);
 
+    //filteredOutput.Print("filteredOutput3");
+
     for(s32 i=0; i<3; i++) {
       ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder1_0[i]);
     }
@@ -681,6 +651,8 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     const s32 imageRow_testBorder1_1 = 1;
     const s32 filteredOutput_groundTruth_testBorder1_1[] = {18, 20, 11};
     ASSERT_TRUE(ii_border1.FilterRow(acceleration, filter_testBorder1_1, imageRow_testBorder1_1, filteredOutput) == RESULT_OK);
+
+    //filteredOutput.Print("filteredOutput4");
 
     for(s32 i=0; i<3; i++) {
       ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder1_1[i]);
@@ -703,6 +675,8 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     const s32 filteredOutput_groundTruth_testBorder2_0[] = {0, 0, 18};
     ASSERT_TRUE(ii_border0.FilterRow(acceleration, filter_testBorder2_0, imageRow_testBorder2_0, filteredOutput) == RESULT_OK);
 
+    //filteredOutput.Print("filteredOutput5");
+
     for(s32 i=0; i<3; i++) {
       ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder2_0[i]);
     }
@@ -716,6 +690,8 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     const s32 filteredOutput_groundTruth_testBorder2_1[] = {0, 1, 1};
     ASSERT_TRUE(ii_border0.FilterRow(acceleration, filter_testBorder2_1, imageRow_testBorder2_1, filteredOutput) == RESULT_OK);
 
+    //filteredOutput.Print("filteredOutput5");
+
     for(s32 i=0; i<3; i++) {
       ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder2_1[i]);
     }
@@ -726,7 +702,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
 
 GTEST_TEST(CoreTech_Vision, ScrollingIntegralImage)
 {
-  MemoryStack ms(&bigBuffer1[0], BIG_BUFFER_SIZE1);
+  MemoryStack ms(&smallBuffer[0], SMALL_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   Array<u8> image(3,16,ms);
@@ -919,19 +895,8 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImage)
 #ifdef RUN_MAIN_BIG_MEMORY_TESTS
 GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
 {
-  //s32 combined = 0;
-  //for(s32 i=0; i<640*480; i++)
-  //  combined += blockImage50[i];
-
-  //printf("steps12345: %d %d %d %d\n", blockImage50[0], blockImage50[640*240], blockImage50[640*480 - 1], combined);
-
-  InitializeBuffers();
-
   // Check that the image loaded correctly
-  ASSERT_TRUE(blockImage50[0] == 155);
-  ASSERT_TRUE(blockImage50[1000] == 147);
-  ASSERT_TRUE(blockImage50[640*240] == 155);
-  ASSERT_TRUE(blockImage50[640*480-1] == 133);
+  ASSERT_TRUE(IsBlockImage50_320x240Valid(&blockImage50_320x240[0], imagesAreEndianSwapped));
 
   const CharacteristicScaleAlgorithm scaleImage_useWhichAlgorithm = CHARACTERISTIC_SCALE_MEDIUM_MEMORY; // CHARACTERISTIC_SCALE_ORIGINAL, CHARACTERISTIC_SCALE_MEDIUM_MEMORY
   const s32 scaleImage_thresholdMultiplier = 49152; // .75 * (2^16) = 49152
@@ -940,8 +905,8 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
   const s32 component1d_minComponentWidth = 0;
   const s32 component1d_maxSkipDistance = 0;
 
-  const f32 minSideLength = 0.03f*MAX(blockImage50_HEIGHT,blockImage50_WIDTH);
-  const f32 maxSideLength = 0.97f*MIN(blockImage50_HEIGHT,blockImage50_WIDTH);
+  const f32 minSideLength = 0.03f*MAX(blockImage50_320x240_HEIGHT,blockImage50_320x240_WIDTH);
+  const f32 maxSideLength = 0.97f*MIN(blockImage50_320x240_HEIGHT,blockImage50_320x240_WIDTH);
 
   const s32 component_minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
   const s32 component_maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
@@ -960,19 +925,21 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage)
 
   const s32 maxMarkers = 100;
 
-  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE0);
-  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE1);
-  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE2);
+  MemoryStack scratch0(&bigBuffer[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch1(&smallBuffer[0], SMALL_BUFFER_SIZE/2);
+  MemoryStack scratch2(&smallBuffer[0] + SMALL_BUFFER_SIZE/2, SMALL_BUFFER_SIZE/2);
 
   ASSERT_TRUE(scratch0.IsValid());
   ASSERT_TRUE(scratch1.IsValid());
   ASSERT_TRUE(scratch2.IsValid());
 
   const s32 maxConnectedComponentSegments = u16_MAX;
-  ConnectedComponents extractedComponents(maxConnectedComponentSegments, blockImage50_WIDTH, scratch0);
+  ConnectedComponents extractedComponents(maxConnectedComponentSegments, blockImage50_320x240_WIDTH, scratch0);
 
-  Array<u8> image(blockImage50_HEIGHT, blockImage50_WIDTH, scratch0);
-  image.Set_unsafe(blockImage50, blockImage50_WIDTH*blockImage50_HEIGHT);
+  Array<u8> image(blockImage50_320x240_HEIGHT, blockImage50_320x240_WIDTH, scratch0);
+  image.Set(blockImage50, blockImage50_320x240_WIDTH*blockImage50_320x240_HEIGHT);
+
+  ASSERT_TRUE(IsBlockImage50_320x240Valid(image.Pointer(0,0), false);
 
   FixedLengthList<BlockMarker> markers(maxMarkers, scratch0);
   FixedLengthList<Array<f64> > homographies(maxMarkers, scratch0);
@@ -1044,42 +1011,17 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
   ASSERT_TRUE(true);
 #else
 
-  InitializeBuffers();
-
-  printf("%d %d %d %d %d %d %d\n", blockImage50[0], blockImage50[1], blockImage50[2], blockImage50[3], blockImage50[1000], blockImage50[640*240]);
-  printf("0x%x 0x%x 0x%x\n", blockImage50[0], blockImage50[1000], blockImage50[640*240]);
-  printf("0x%x 0x%x 0x%x\n", ((int*)(&blockImage50[0]))[0], ((int*)(&blockImage50[0]))[1000/4], ((int*)(&blockImage50[0]))[640*240/4]);
-
-  printf("0x%x 0x%x 0x%x 0x%x\n", (((int*)(&blockImage50[0]))[0]) & 0xFF, (((int*)(&blockImage50[0]))[0]) & 0xFF00, (((int*)(&blockImage50[0]))[0]) & 0xFF0000, (((int*)(&blockImage50[0]))[0]) & 0xFF000000);
-
-  printf("%d %d %d %d\n", (((int*)(&blockImage50[0]))[0]) & 0xFF, ((((int*)(&blockImage50[0]))[0]) & 0xFF00)>>8, ((((int*)(&blockImage50[0]))[0]) & 0xFF0000)>>16, ((((int*)(&blockImage50[0]))[0]) & 0xFF000000)>>24);
-
   // Check that the image loaded correctly
-#ifdef BIG_ENDIAN_IMAGES
-  const u8 pixel1 = ((((int*)(&blockImage50[0]))[0]) & 0xFF000000)>>24;
-  const u8 pixel2 = ((((int*)(&blockImage50[0]))[1000>>2]) & 0xFF000000)>>24;
-  const u8 pixel3 = ((((int*)(&blockImage50[0]))[(640*240)>>2]) & 0xFF000000)>>24;
-  const u8 pixel4 = ((((int*)(&blockImage50[0]))[((640*480)>>2)-1]) & 0xFF);
-#else
-  const u8 pixel1 = blockImage50[0];
-  const u8 pixel2 = blockImage50[1000];
-  const u8 pixel3 = blockImage50[640*240];
-  const u8 pixel4 = blockImage50[640*480-1];
-#endif
-
-  ASSERT_TRUE(pixel1 == 155);
-  ASSERT_TRUE(pixel2 == 147);
-  ASSERT_TRUE(pixel3 == 155);
-  ASSERT_TRUE(pixel4 == 133);
+  ASSERT_TRUE(IsBlockImage50_320x240Valid(&blockImage50_320x240[0], imagesAreEndianSwapped));
 
   const s32 scaleImage_thresholdMultiplier = 49152; // .75 * (2^16) = 49152
-  const s32 scaleImage_numPyramidLevels = 4;
+  const s32 scaleImage_numPyramidLevels = 3;
 
   const s32 component1d_minComponentWidth = 0;
   const s32 component1d_maxSkipDistance = 0;
 
-  const f32 minSideLength = 0.03f*MAX(blockImage50_HEIGHT,blockImage50_WIDTH);
-  const f32 maxSideLength = 0.97f*MIN(blockImage50_HEIGHT,blockImage50_WIDTH);
+  const f32 minSideLength = 0.03f*MAX(blockImage50_320x240_HEIGHT,blockImage50_320x240_WIDTH);
+  const f32 maxSideLength = 0.97f*MIN(blockImage50_320x240_HEIGHT,blockImage50_320x240_WIDTH);
 
   const s32 component_minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
   const s32 component_maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
@@ -1089,26 +1031,30 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
   const s32 component_percentHorizontal = 1 << 7; // 0.5, in SQ 23.8
   const s32 component_percentVertical = 1 << 7; // 0.5, in SQ 23.8
 
-  const s32 maxExtractedQuads = 1000;
-  const s32 quads_minQuadArea = 100;
+  const s32 maxExtractedQuads = 1000/2;
+  const s32 quads_minQuadArea = 100/4;
   const s32 quads_quadSymmetryThreshold = 384;
   const s32 quads_minDistanceFromImageEdge = 2;
 
   const f32 decode_minContrastRatio = 1.25;
 
   const s32 maxMarkers = 100;
-  const s32 maxConnectedComponentSegments = 25000;
+  const s32 maxConnectedComponentSegments = 25000/2;
 
-  MemoryStack scratch0(&bigBuffer0[0], blockImage50_HEIGHT*blockImage50_WIDTH + 256);
-  MemoryStack scratch1(&bigBuffer1[0], 300000);
-  MemoryStack scratch2(&bigBuffer2[0], 300000);
+  MemoryStack scratch0(&bigBuffer[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch1(&smallBuffer[0], SMALL_BUFFER_SIZE/2);
+  MemoryStack scratch2(&smallBuffer[0] + SMALL_BUFFER_SIZE/2, SMALL_BUFFER_SIZE/2);
 
   ASSERT_TRUE(scratch0.IsValid());
   ASSERT_TRUE(scratch1.IsValid());
   ASSERT_TRUE(scratch2.IsValid());
 
-  Array<u8> image(blockImage50_HEIGHT, blockImage50_WIDTH, scratch0);
-  image.Set_unsafe(blockImage50, blockImage50_WIDTH*blockImage50_HEIGHT);
+  Array<u8> image(blockImage50_320x240_HEIGHT, blockImage50_320x240_WIDTH, scratch0);
+  image.Set(blockImage50_320x240, blockImage50_320x240_WIDTH*blockImage50_320x240_HEIGHT);
+
+  //image.Print("image", 0, 0, 0, 50);
+
+  ASSERT_TRUE(IsBlockImage50_320x240Valid(image.Pointer(0,0), false));
 
   FixedLengthList<BlockMarker> markers(maxMarkers, scratch2);
   FixedLengthList<Array<f64> > homographies(maxMarkers, scratch2);
@@ -1142,7 +1088,7 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
 
     printf("totalTime: %f\n", time1-time0);
 
-    PrintBenchmarkResults();
+    PrintBenchmarkResults(BENCHMARK_PRINT_TOTALS);
 
     ASSERT_TRUE(result == RESULT_OK);
   }
@@ -1155,10 +1101,10 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory)
   ASSERT_TRUE(markers[0].faceType == 5);
   ASSERT_TRUE(markers[0].orientation == BlockMarker::ORIENTATION_LEFT);
 
-  ASSERT_TRUE(markers[0].corners[0] == Point<s16>(209,261));
-  ASSERT_TRUE(markers[0].corners[1] == Point<s16>(205,334));
-  ASSERT_TRUE(markers[0].corners[2] == Point<s16>(282,265));
-  ASSERT_TRUE(markers[0].corners[3] == Point<s16>(279,339));
+  ASSERT_TRUE(markers[0].corners[0] == Point<s16>(105,132));
+  ASSERT_TRUE(markers[0].corners[1] == Point<s16>(103,167));
+  ASSERT_TRUE(markers[0].corners[2] == Point<s16>(140,133));
+  ASSERT_TRUE(markers[0].corners[3] == Point<s16>(139,169));
 
 #endif // RUN_LOW_MEMORY_IMAGE_TESTS
 
@@ -1193,8 +1139,6 @@ static Result DrawExampleProbesImage(Array<u8> &image, Quadrilateral<s16> &quad,
 #ifdef RUN_ALL_BIG_MEMORY_TESTS
 GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
 {
-  InitializeBuffers();
-
   const CharacteristicScaleAlgorithm scaleImage_useWhichAlgorithm = CHARACTERISTIC_SCALE_ORIGINAL; // CHARACTERISTIC_SCALE_ORIGINAL, CHARACTERISTIC_SCALE_MEDIUM_MEMORY
   const s32 scaleImage_thresholdMultiplier = 49152; // .75 * (2^16) = 49152
   const s32 scaleImage_numPyramidLevels = 4;
@@ -1222,20 +1166,19 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
 
   const s32 maxMarkers = 100;
 
-  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE0);
+  MemoryStack scratch0(&bigBuffer[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch1(&smallBuffer[0], SMALL_BUFFER_SIZE/2);
+  MemoryStack scratch2(&smallBuffer[0] + SMALL_BUFFER_SIZE/2, SMALL_BUFFER_SIZE/2);
+
   ASSERT_TRUE(scratch0.IsValid());
-
-  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE1);
   ASSERT_TRUE(scratch1.IsValid());
-
-  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE2);
   ASSERT_TRUE(scratch2.IsValid());
 
   const s32 maxConnectedComponentSegments = u16_MAX;
   ConnectedComponents extractedComponents(maxConnectedComponentSegments, fiducial105_6_WIDTH, scratch0);
 
   Array<u8> image(fiducial105_6_HEIGHT, fiducial105_6_WIDTH, scratch0);
-  image.Set_unsafe(fiducial105_6, fiducial105_6_WIDTH*fiducial105_6_HEIGHT);
+  image.Set(fiducial105_6, fiducial105_6_WIDTH*fiducial105_6_HEIGHT);
 
   FixedLengthList<BlockMarker> markers(maxMarkers, scratch0);
   FixedLengthList<Array<f64> > homographies(maxMarkers, scratch0);
@@ -1285,13 +1228,11 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_fiducialImage)
 // The test is if it can run without crashing
 GTEST_TEST(CoreTech_Vision, FiducialMarker)
 {
-  InitializeBuffers();
-
   const s32 imageWidth = fiducial105_6_WIDTH;
   const s32 imageHeight = fiducial105_6_HEIGHT;
   const f32 minContrastRatio = 1.25f;
 
-  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE0);
+  MemoryStack scratch0(&bigBuffer[0], BIG_BUFFER_SIZE);
   ASSERT_TRUE(scratch0.IsValid());
 
   FiducialMarkerParser parser = FiducialMarkerParser();
@@ -1309,7 +1250,7 @@ GTEST_TEST(CoreTech_Vision, FiducialMarker)
   homography[1][0] = 0;   homography[1][1] = 214; homography[1][2] = 21;
   homography[2][0] = 0;   homography[2][1] = 0;   homography[2][2] = 1;
 
-  image.Set_unsafe(fiducial105_6, fiducial105_6_WIDTH*fiducial105_6_HEIGHT);
+  image.Set(fiducial105_6, fiducial105_6_WIDTH*fiducial105_6_HEIGHT);
 
   BlockMarker marker;
 
@@ -1334,8 +1275,6 @@ GTEST_TEST(CoreTech_Vision, FiducialMarker)
 // The test is if it can run without crashing
 GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
 {
-  InitializeBuffers();
-
   const CharacteristicScaleAlgorithm scaleImage_useWhichAlgorithm = CHARACTERISTIC_SCALE_MEDIUM_MEMORY; // CHARACTERISTIC_SCALE_ORIGINAL, CHARACTERISTIC_SCALE_MEDIUM_MEMORY
   const s32 scaleImage_thresholdMultiplier = 49152; // .75 * (2^16) = 49152
   const s32 scaleImage_numPyramidLevels = 4;
@@ -1343,8 +1282,8 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
   const s32 component1d_minComponentWidth = 0;
   const s32 component1d_maxSkipDistance = 0;
 
-  const f32 minSideLength = 0.03f*MAX(blockImage50_HEIGHT,blockImage50_WIDTH);
-  const f32 maxSideLength = 0.97f*MIN(blockImage50_HEIGHT,blockImage50_WIDTH);
+  const f32 minSideLength = 0.03f*MAX(blockImage50_320x240_HEIGHT,blockImage50_320x240_WIDTH);
+  const f32 maxSideLength = 0.97f*MIN(blockImage50_320x240_HEIGHT,blockImage50_320x240_WIDTH);
 
   const s32 component_minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
   const s32 component_maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
@@ -1361,20 +1300,19 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps1234_realImage)
 
   const s32 maxMarkers = 100;
 
-  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE0);
+  MemoryStack scratch0(&bigBuffer[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch1(&smallBuffer[0], SMALL_BUFFER_SIZE/2);
+  MemoryStack scratch2(&smallBuffer[0] + SMALL_BUFFER_SIZE/2, SMALL_BUFFER_SIZE/2);
+
   ASSERT_TRUE(scratch0.IsValid());
-
-  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE1);
   ASSERT_TRUE(scratch1.IsValid());
-
-  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE2);
   ASSERT_TRUE(scratch2.IsValid());
 
   const s32 maxConnectedComponentSegments = u16_MAX;
-  ConnectedComponents extractedComponents(maxConnectedComponentSegments, blockImage50_WIDTH, scratch0);
+  ConnectedComponents extractedComponents(maxConnectedComponentSegments, blockImage50_320x240_WIDTH, scratch0);
 
-  Array<u8> image(blockImage50_HEIGHT, blockImage50_WIDTH, scratch0);
-  image.Set_unsafe(&blockImage50[0], blockImage50_HEIGHT*blockImage50_WIDTH);
+  Array<u8> image(blockImage50_320x240_HEIGHT, blockImage50_320x240_WIDTH, scratch0);
+  image.Set(&blockImage50_320x240[0], blockImage50_320x240_HEIGHT*blockImage50_320x240_WIDTH);
 
   FixedLengthList<BlockMarker> markers(maxMarkers, scratch0);
   FixedLengthList<Array<f64> > homographies(maxMarkers, scratch0);
@@ -1420,7 +1358,7 @@ GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
   const s32 imageWidth = 640;
   const s32 minDistanceFromImageEdge = 2;
 
-  MemoryStack ms(&bigBuffer1[0], BIG_BUFFER_SIZE1);
+  MemoryStack ms(&smallBuffer[0], SMALL_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   FixedLengthList<BlockMarker> markers(50, ms);
@@ -1471,8 +1409,8 @@ GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
 
 GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 {
-  const s32 numBytes = MIN(BIG_BUFFER_SIZE1, 5000);
-  MemoryStack ms(&bigBuffer1[0], numBytes);
+  const s32 numBytes = MIN(SMALL_BUFFER_SIZE, 5000);
+  MemoryStack ms(&smallBuffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
   FixedPointArray<s32> image(1,15,2,ms);
@@ -1489,7 +1427,7 @@ GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 
   const s32 out_groundTruth[] = {140, 110, 110, 140, 170, 200, 230, 260, 290, 320, 350, 380, 410, 290, 200};
 
-  const Result result = Correlate1dCircularAndSameSizeOutput(image, filter, out);
+  const Result result = ImageProcessing::Correlate1dCircularAndSameSizeOutput(image, filter, out);
   ASSERT_TRUE(result == RESULT_OK);
 
   for(s32 i=0; i<out.get_size(1); i++) {
@@ -1502,9 +1440,9 @@ GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
 {
 #define LaplacianPeaks_BOUNDARY_LENGTH 65
-  const s32 numBytes = MIN(BIG_BUFFER_SIZE1, 5000);
+  const s32 numBytes = MIN(SMALL_BUFFER_SIZE, 5000);
 
-  MemoryStack ms(&bigBuffer1[0], numBytes);
+  MemoryStack ms(&smallBuffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
   FixedLengthList<Point<s16> > boundary(LaplacianPeaks_BOUNDARY_LENGTH, ms);
@@ -1544,8 +1482,8 @@ GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
 
 GTEST_TEST(CoreTech_Vision, Correlate1d)
 {
-  const s32 numBytes = MIN(BIG_BUFFER_SIZE1, 5000);
-  MemoryStack ms(&bigBuffer1[0], numBytes);
+  const s32 numBytes = MIN(SMALL_BUFFER_SIZE, 5000);
+  MemoryStack ms(&smallBuffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
   {
@@ -1565,7 +1503,7 @@ GTEST_TEST(CoreTech_Vision, Correlate1d)
 
     const s32 out_groundTruth[] = {2, 4, 6, 8};
 
-    const Result result = Correlate1d(in1, in2, out);
+    const Result result = ImageProcessing::Correlate1d(in1, in2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
     //out.Print();
@@ -1592,7 +1530,7 @@ GTEST_TEST(CoreTech_Vision, Correlate1d)
 
     const s32 out_groundTruth[] = {0, 2, 3, 5, 6, 8, 4, 1};
 
-    const Result result = Correlate1d(in1, in2, out);
+    const Result result = ImageProcessing::Correlate1d(in1, in2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
     //out.Print();
@@ -1619,7 +1557,7 @@ GTEST_TEST(CoreTech_Vision, Correlate1d)
 
     const s32 out_groundTruth[] = {4, 11, 20, 30, 20, 11, 4};
 
-    const Result result = Correlate1d(in1, in2, out);
+    const Result result = ImageProcessing::Correlate1d(in1, in2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
     //out.Print();
@@ -1646,7 +1584,7 @@ GTEST_TEST(CoreTech_Vision, Correlate1d)
 
     const s32 out_groundTruth[] = {32, 88, 160, 240, 320, 208, 112, 40};
 
-    const Result result = Correlate1d(in1, in2, out);
+    const Result result = ImageProcessing::Correlate1d(in1, in2, out);
     ASSERT_TRUE(result == RESULT_OK);
 
     //out.Print();
@@ -1665,7 +1603,7 @@ GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   const s32 boundaryLength = 65;
   const s32 startComponentIndex = 0;
 
-  MemoryStack ms(&bigBuffer1[0], BIG_BUFFER_SIZE1);
+  MemoryStack ms(&smallBuffer[0], SMALL_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -1686,8 +1624,7 @@ GTEST_TEST(CoreTech_Vision, TraceNextExteriorBoundary)
   //#define DRAW_TraceNextExteriorBoundary
 #ifdef DRAW_TraceNextExteriorBoundary
   {
-    InitializeBuffers();
-    MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE0);
+    MemoryStack scratch0(&bigBuffer[0], BIG_BUFFER_SIZE);
     ASSERT_TRUE(scratch0.IsValid());
 
     Array<u8> drawnComponents(480, 640, scratch0);
@@ -1719,7 +1656,7 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentBoundingBoxes)
 {
   const s32 numComponents = 10;
 
-  MemoryStack ms(&bigBuffer1[0], BIG_BUFFER_SIZE1);
+  MemoryStack ms(&smallBuffer[0], SMALL_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -1765,7 +1702,7 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
 {
   const s32 numComponents = 10;
 
-  MemoryStack ms(&bigBuffer1[0], BIG_BUFFER_SIZE1);
+  MemoryStack ms(&smallBuffer[0], SMALL_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -1811,8 +1748,6 @@ GTEST_TEST(CoreTech_Vision, ComputeComponentCentroids)
 // The test is if it can run without crashing
 GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
 {
-  InitializeBuffers();
-
   const CharacteristicScaleAlgorithm scaleImage_useWhichAlgorithm = CHARACTERISTIC_SCALE_MEDIUM_MEMORY; // CHARACTERISTIC_SCALE_ORIGINAL, CHARACTERISTIC_SCALE_MEDIUM_MEMORY
   const s32 scaleImage_thresholdMultiplier = 49152; // .75 * (2^16) = 49152
   const s32 scaleImage_numPyramidLevels = 4;
@@ -1820,8 +1755,8 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
   const s32 component1d_minComponentWidth = 0;
   const s32 component1d_maxSkipDistance = 0;
 
-  const f32 minSideLength = 0.03f*MAX(blockImage50_HEIGHT,blockImage50_WIDTH);
-  const f32 maxSideLength = 0.97f*MIN(blockImage50_HEIGHT,blockImage50_WIDTH);
+  const f32 minSideLength = 0.03f*MAX(blockImage50_320x240_HEIGHT,blockImage50_320x240_WIDTH);
+  const f32 maxSideLength = 0.97f*MIN(blockImage50_320x240_HEIGHT,blockImage50_320x240_WIDTH);
 
   const s32 component_minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
   const s32 component_maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
@@ -1831,20 +1766,19 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
   const s32 component_percentHorizontal = 1 << 7; // 0.5, in SQ 23.8
   const s32 component_percentVertical = 1 << 7; // 0.5, in SQ 23.8
 
-  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE0);
+  MemoryStack scratch0(&bigBuffer[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch1(&smallBuffer[0], SMALL_BUFFER_SIZE/2);
+  MemoryStack scratch2(&smallBuffer[0] + SMALL_BUFFER_SIZE/2, SMALL_BUFFER_SIZE/2);
+
   ASSERT_TRUE(scratch0.IsValid());
-
-  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE1);
   ASSERT_TRUE(scratch1.IsValid());
-
-  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE2);
   ASSERT_TRUE(scratch2.IsValid());
 
   const s32 maxConnectedComponentSegments = u16_MAX;
-  ConnectedComponents extractedComponents(maxConnectedComponentSegments, blockImage50_WIDTH, scratch0);
+  ConnectedComponents extractedComponents(maxConnectedComponentSegments, blockImage50_320x240_WIDTH, scratch0);
 
-  Array<u8> image(blockImage50_HEIGHT, blockImage50_WIDTH, scratch0);
-  image.Set_unsafe(&blockImage50[0], blockImage50_HEIGHT*blockImage50_WIDTH);
+  Array<u8> image(blockImage50_320x240_HEIGHT, blockImage50_320x240_WIDTH, scratch0);
+  image.Set(&blockImage50_320x240[0], blockImage50_320x240_HEIGHT*blockImage50_320x240_WIDTH);
 
   const Result result = SimpleDetector_Steps123(
     image,
@@ -1859,7 +1793,7 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
 
   ASSERT_TRUE(result == RESULT_OK);
 
-  Array<u8> drawnComponents(blockImage50_HEIGHT, blockImage50_WIDTH, scratch0);
+  Array<u8> drawnComponents(blockImage50_320x240_HEIGHT, blockImage50_320x240_WIDTH, scratch0);
   DrawComponents<u8>(drawnComponents, extractedComponents, 64, 255);
 
   //matlab.PutArray(drawnComponents, "drawnComponents0");
@@ -1879,8 +1813,6 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123_realImage)
 // The test is if it can run without crashing
 GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
 {
-  InitializeBuffers();
-
   const s32 imageWidth = 640;
   const s32 imageHeight = 480;
 
@@ -1899,13 +1831,12 @@ GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123)
   const s32 component_sparseMultiplyThreshold = 1000 << 5;
   const s32 component_solidMultiplyThreshold = 2 << 5;
 
-  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE0);
+  MemoryStack scratch0(&bigBuffer[0], BIG_BUFFER_SIZE);
+  MemoryStack scratch1(&smallBuffer[0], SMALL_BUFFER_SIZE/2);
+  MemoryStack scratch2(&smallBuffer[0] + SMALL_BUFFER_SIZE/2, SMALL_BUFFER_SIZE/2);
+
   ASSERT_TRUE(scratch0.IsValid());
-
-  MemoryStack scratch1(&bigBuffer1[0], BIG_BUFFER_SIZE1);
   ASSERT_TRUE(scratch1.IsValid());
-
-  MemoryStack scratch2(&bigBuffer2[0], BIG_BUFFER_SIZE2);
   ASSERT_TRUE(scratch2.IsValid());
 
   const s32 maxConnectedComponentSegments = u16_MAX;
@@ -1947,7 +1878,7 @@ GTEST_TEST(CoreTech_Vision, InvalidateSolidOrSparseComponents)
   const s32 sparseMultiplyThreshold = 10 << 5;
   const s32 solidMultiplyThreshold = 2 << 5;
 
-  MemoryStack ms(&bigBuffer1[0], BIG_BUFFER_SIZE1);
+  MemoryStack ms(&smallBuffer[0], SMALL_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -1999,7 +1930,7 @@ GTEST_TEST(CoreTech_Vision, InvalidateSmallOrLargeComponents)
   const s32 minimumNumPixels = 6;
   const s32 maximumNumPixels = 1000;
 
-  MemoryStack ms(&bigBuffer1[0], BIG_BUFFER_SIZE1);
+  MemoryStack ms(&smallBuffer[0], SMALL_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -2068,7 +1999,7 @@ GTEST_TEST(CoreTech_Vision, CompressComponentIds)
 {
   const s32 numComponents = 10;
 
-  MemoryStack ms(&bigBuffer1[0], BIG_BUFFER_SIZE1);
+  MemoryStack ms(&smallBuffer[0], SMALL_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -2121,9 +2052,9 @@ GTEST_TEST(CoreTech_Vision, CompressComponentIds)
 GTEST_TEST(CoreTech_Vision, ComponentsSize)
 {
   const s32 numComponents = 500;
-  const s32 numBytes = MIN(BIG_BUFFER_SIZE1, 10000);
+  const s32 numBytes = MIN(SMALL_BUFFER_SIZE, 10000);
 
-  MemoryStack ms(&bigBuffer1[0], numBytes);
+  MemoryStack ms(&smallBuffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
   const s32 usedBytes0 = ms.get_usedBytes();
@@ -2158,7 +2089,7 @@ GTEST_TEST(CoreTech_Vision, SortComponents)
 {
   const s32 numComponents = 10;
 
-  MemoryStack ms(&bigBuffer1[0], BIG_BUFFER_SIZE1);
+  MemoryStack ms(&smallBuffer[0], SMALL_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -2206,7 +2137,7 @@ GTEST_TEST(CoreTech_Vision, SortComponentsById)
 {
   const s32 numComponents = 10;
 
-  MemoryStack ms(&bigBuffer1[0], BIG_BUFFER_SIZE1);
+  MemoryStack ms(&smallBuffer[0], SMALL_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
   ConnectedComponents components(numComponents, 640, ms);
@@ -2261,11 +2192,11 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
   const s32 maxComponentSegments = 100;
 
   // Allocate memory from the heap, for the memory allocator
-  MemoryStack ms(&bigBuffer1[0], BIG_BUFFER_SIZE1);
+  MemoryStack ms(&smallBuffer[0], SMALL_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
 #define ApproximateConnectedComponents2d_binaryImageDataLength (18*5)
-  const s32 binaryImageData[128] = {
+  const s32 binaryImageData[] = {
     0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0,
     0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0,
@@ -2277,27 +2208,32 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
   //#define UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d
 #define SORTED_BY_ID_GROUND_TRUTH_ApproximateConnectedComponents2d
 #ifdef UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d
-  const s32 xStart_groundTruth[128] = {4,  3, 10, 13, 5, 9,  13, 6, 12, 16, 7, 11, 14};
-  const s32 xEnd_groundTruth[128]   = {11, 5, 11, 15, 6, 11, 14, 9, 14, 17, 8, 12, 16};
-  const s32 y_groundTruth[128]      = {0,  1, 1,  1,  2, 2,  2,  3, 3,  3,  4, 4,  4};
-  const s32 id_groundTruth[128]     = {1,  1, 1,  2,  1, 1,  2,  1, 2,  2,  1, 2,  2};
+  const s32 xStart_groundTruth[] = {4,  3, 10, 13, 5, 9,  13, 6, 12, 16, 7, 11, 14};
+  const s32 xEnd_groundTruth[]   = {11, 5, 11, 15, 6, 11, 14, 9, 14, 17, 8, 12, 16};
+  const s32 y_groundTruth[]      = {0,  1, 1,  1,  2, 2,  2,  3, 3,  3,  4, 4,  4};
+  const s32 id_groundTruth[]     = {1,  1, 1,  2,  1, 1,  2,  1, 2,  2,  1, 2,  2};
 #else // #ifdef UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d
 #ifdef SORTED_BY_ID_GROUND_TRUTH_ApproximateConnectedComponents2d
-  const s32 xStart_groundTruth[128] = {4,  3, 10, 5, 9,  6, 7, 13, 13, 12, 16, 11, 14};
-  const s32 xEnd_groundTruth[128]   = {11, 5, 11, 6, 11, 9, 8, 15, 14, 14, 17, 12, 16};
-  const s32 y_groundTruth[128]      = {0,  1, 1,  2, 2,  3, 4, 1,  2,  3,  3,  4,  4};
-  const s32 id_groundTruth[128]     = {1,  1, 1,  1, 1,  1, 1, 2,  2,  2,  2,  2,  2};
+  const s32 xStart_groundTruth[] = {4,  3, 10, 5, 9,  6, 7, 13, 13, 12, 16, 11, 14};
+  const s32 xEnd_groundTruth[]   = {11, 5, 11, 6, 11, 9, 8, 15, 14, 14, 17, 12, 16};
+  const s32 y_groundTruth[]      = {0,  1, 1,  2, 2,  3, 4, 1,  2,  3,  3,  4,  4};
+  const s32 id_groundTruth[]     = {1,  1, 1,  1, 1,  1, 1, 2,  2,  2,  2,  2,  2};
 #else // Sorted by id, y, and xStart
-  const s32 xStart_groundTruth[128] = {4,  3, 10, 5, 9,  6, 7, 13, 13, 12, 16, 11, 14};
-  const s32 xEnd_groundTruth[128]   = {11, 5, 11, 6, 11, 9, 8, 15, 14, 14, 17, 12, 16};
-  const s32 y_groundTruth[128]      = {0,  1, 1,  2, 2,  3, 4, 1,  2,  3,  3,  4,  4};
-  const s32 id_groundTruth[128]     = {1,  1, 1,  1, 1,  1, 1, 2,  2,  2,  2,  2,  2};
+  const s32 xStart_groundTruth[] = {4,  3, 10, 5, 9,  6, 7, 13, 13, 12, 16, 11, 14};
+  const s32 xEnd_groundTruth[]   = {11, 5, 11, 6, 11, 9, 8, 15, 14, 14, 17, 12, 16};
+  const s32 y_groundTruth[]      = {0,  1, 1,  2, 2,  3, 4, 1,  2,  3,  3,  4,  4};
+  const s32 id_groundTruth[]     = {1,  1, 1,  1, 1,  1, 1, 2,  2,  2,  2,  2,  2};
 #endif // #ifdef SORTED_BY_ID_GROUND_TRUTH_ApproximateConnectedComponents2d
 #endif // #ifdef UNSORTED_GROUND_TRUTH_ApproximateConnectedComponents2d ... #else
 
   Array<u8> binaryImage(imageHeight, imageWidth, ms);
   ASSERT_TRUE(binaryImage.IsValid());
-  ASSERT_TRUE(binaryImage.Set(binaryImageData, ApproximateConnectedComponents2d_binaryImageDataLength) == imageWidth*imageHeight);
+
+  //binaryImage.Print("binaryImage");
+
+  ASSERT_TRUE(binaryImage.SetCast<s32>(binaryImageData, ApproximateConnectedComponents2d_binaryImageDataLength) == imageWidth*imageHeight);
+
+  //binaryImage.Print("binaryImage");
 
   //FixedLengthList<ConnectedComponentSegment> extractedComponents(maxComponentSegments, ms);
   ConnectedComponents components(maxComponentSegments, imageWidth, ms);
@@ -2310,7 +2246,7 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 
   ASSERT_TRUE(components.get_size() == 13);
 
-  // components.Print();
+  //components.Print();
 
   for(s32 i=0; i<numComponents_groundTruth; i++) {
     ASSERT_TRUE(components.Pointer(i)->xStart == xStart_groundTruth[i]);
@@ -2325,14 +2261,14 @@ GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents2d)
 GTEST_TEST(CoreTech_Vision, ApproximateConnectedComponents1d)
 {
   const s32 imageWidth = 50;
-  const s32 numBytes = MIN(BIG_BUFFER_SIZE1, 5000);
+  const s32 numBytes = MIN(SMALL_BUFFER_SIZE, 5000);
 
   const s32 minComponentWidth = 3;
   const s32 maxComponents = 10;
   const s32 maxSkipDistance = 1;
 
   // Allocate memory from the heap, for the memory allocator
-  MemoryStack ms(&bigBuffer1[0], numBytes);
+  MemoryStack ms(&smallBuffer[0], numBytes);
   ASSERT_TRUE(ms.IsValid());
 
   u8 * binaryImageRow = reinterpret_cast<u8*>(ms.Allocate(imageWidth));
@@ -2365,10 +2301,10 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
 {
   const s32 imageWidth = 10;
   const s32 imageHeight = 5;
-  const s32 numBytes = MIN(BIG_BUFFER_SIZE1, 5000);
+  const s32 numBytes = MIN(SMALL_BUFFER_SIZE, 5000);
 
   // Allocate memory from the heap, for the memory allocator
-  MemoryStack ms(&bigBuffer1[0], numBytes);
+  MemoryStack ms(&smallBuffer[0], numBytes);
 
   ASSERT_TRUE(ms.IsValid());
 
@@ -2384,7 +2320,7 @@ GTEST_TEST(CoreTech_Vision, BinomialFilter)
     *image.Pointer(2,x) = static_cast<u8>(x);
   }
 
-  const Result result = BinomialFilter(image, imageFiltered, ms);
+  const Result result = ImageProcessing::BinomialFilter<u8,u32,u8>(image, imageFiltered, ms);
 
   //printf("image:\n");
   //image.Print();
@@ -2410,17 +2346,16 @@ GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
 {
   const s32 imageWidth = 10;
   const s32 imageHeight = 4;
-  const s32 downsampleFactor = 2;
 
   // Allocate memory from the heap, for the memory allocator
-  const s32 numBytes = MIN(BIG_BUFFER_SIZE1, 1000);
+  const s32 numBytes = MIN(SMALL_BUFFER_SIZE, 1000);
 
-  MemoryStack ms(&bigBuffer1[0], numBytes);
+  MemoryStack ms(&smallBuffer[0], numBytes);
 
   ASSERT_TRUE(ms.IsValid());
 
   Array<u8> image(imageHeight, imageWidth, ms);
-  Array<u8> imageDownsampled(imageHeight/downsampleFactor, imageWidth/downsampleFactor, ms);
+  Array<u8> imageDownsampled(imageHeight/2, imageWidth/2, ms);
 
   ASSERT_TRUE(image.get_rawDataPointer()!= NULL);
   ASSERT_TRUE(imageDownsampled.get_rawDataPointer()!= NULL);
@@ -2429,7 +2364,7 @@ GTEST_TEST(CoreTech_Vision, DownsampleByFactor)
     *image.Pointer(2,x) = static_cast<u8>(x);
   }
 
-  Result result = DownsampleByFactor(image, downsampleFactor, imageDownsampled);
+  Result result = ImageProcessing::DownsampleByTwo<u8,u32,u8>(image, imageDownsampled);
 
   ASSERT_TRUE(result == RESULT_OK);
 
@@ -2452,7 +2387,7 @@ GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
   const s32 numPyramidLevels = 3;
 
 #define ComputeCharacteristicScale_imageDataLength (16*16)
-  const s32 imageData[ComputeCharacteristicScale_imageDataLength + 16] = {
+  const u8 imageData[ComputeCharacteristicScale_imageDataLength] = {
     0, 0, 0, 107, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 160, 89,
     0, 255, 0, 251, 255, 0, 0, 255, 0, 255, 255, 255, 255, 0, 197, 38,
     0, 0, 0, 77, 255, 0, 0, 255, 0, 255, 255, 255, 255, 0, 238, 149,
@@ -2489,9 +2424,9 @@ GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
     {15073280, 13107200, 11796480, 11468800, 11468800, 11468800, 11468800, 11796480, 12517376, 12255232, 10813440, 10158080, 10551296, 10158080, 7929856, 5046272}};
 
   // Allocate memory from the heap, for the memory allocator
-  const s32 numBytes = MIN(BIG_BUFFER_SIZE1, 10000);
+  const s32 numBytes = MIN(SMALL_BUFFER_SIZE, 10000);
 
-  MemoryStack ms(&bigBuffer1[0], numBytes);
+  MemoryStack ms(&smallBuffer[0], numBytes);
 
   ASSERT_TRUE(ms.IsValid());
 
@@ -2520,8 +2455,6 @@ GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale)
 #if ANKICORETECH_EMBEDDED_USE_MATLAB && defined(RUN_MATLAB_IMAGE_TEST)
 GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
 {
-  InitializeBuffers();
-
   const s32 imageWidth = 640;
   const s32 imageHeight = 480;
   const s32 numPyramidLevels = 6;
@@ -2530,7 +2463,7 @@ GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale2)
   const s32 imageHeight = 240;
   const s32 numPyramidLevels = 5;*/
 
-  MemoryStack scratch0(&bigBuffer0[0], BIG_BUFFER_SIZE0);
+  MemoryStack scratch0(&bigBuffer[0], BIG_BUFFER_SIZE);
   ASSERT_TRUE(scratch0.IsValid());
 
   Matlab matlab(false);
@@ -2557,7 +2490,7 @@ GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
   const s32 imageHeight = 16;
 
 #define TraceInteriorBoundary_imageDataLength (16*16)
-  const s32 imageData[TraceInteriorBoundary_imageDataLength+ 16] = {
+  const u8 imageData[TraceInteriorBoundary_imageDataLength] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
@@ -2589,9 +2522,9 @@ GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary)
   groundTruth[8] = Point<s16>(9,6);
 
   // Allocate memory from the heap, for the memory allocator
-  const s32 numBytes = MIN(BIG_BUFFER_SIZE1, 10000);
+  const s32 numBytes = MIN(SMALL_BUFFER_SIZE, 10000);
 
-  MemoryStack ms(&bigBuffer1[0], numBytes);
+  MemoryStack ms(&smallBuffer[0], numBytes);
 
   ASSERT_TRUE(ms.IsValid());
 
@@ -2621,6 +2554,11 @@ int RUN_ALL_TESTS()
 {
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
+
+#ifdef BENCHMARK_AFFINE
+  CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_BenchmarkAffine);
+  return 0;
+#endif
 
   CALL_GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine);
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker);

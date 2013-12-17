@@ -101,6 +101,11 @@ void explicitPrintf(int (*writeChar)(int), int reverseEachFourCharacters, const 
         const f64 value = va_arg(arguments, f64);
         PrintFloat(writeChar, value);
         format++;
+      } else if(percentChar == 'e') {
+        // TODO: should this be double?
+        const f64 value = va_arg(arguments, f64);
+        PrintFloatWithExponent(writeChar, value);
+        format++;
       } else if(percentChar == 's') {
         const char * stringArgument = va_arg(arguments, char*);
         while(*stringArgument != 0x00) {
@@ -233,6 +238,32 @@ void PrintFloat(int (*writeChar)(int), f64 value)
 
     value = value - (f32)curDigit;
   }
+
+  return;
+} // void printFloat(f32 value)
+
+void PrintFloatWithExponent(int (*writeChar)(int), f64 value)
+{
+  double significand;
+  int exponent;
+
+  // If null, default to putchar
+  if (writeChar == 0) {
+#ifdef USING_MOVIDIUS_COMPILER
+    writeChar = IS_PLATFORM_VCS ? DrvApbUartVcsPutChar : DrvApbUartPutChar;
+#else
+    writeChar = putchar;
+#endif
+  }
+
+  significand = frexpf(value, &exponent);
+
+  PrintFloat(writeChar, significand);
+  writeChar('*');
+  writeChar('2');
+  writeChar('^');
+
+  PrintInt(writeChar, exponent);
 
   return;
 } // void printFloat(f32 value)
@@ -471,18 +502,18 @@ u64 Log2u64(u64 x)
   return powerCount;
 }
 
-#if defined(USING_MOVIDIUS_GCC_COMPILER)
-void* explicitMemset(void * dst, int value, size_t size)
-{
-  size_t i;
-  for(i=0; i<size; i++)
-  {
-    ((char*)dst)[i] = value;
-  }
-
-  return dst;
-}
-#endif // #if defined(USING_MOVIDIUS_GCC_COMPILER)
+//#if defined(USING_MOVIDIUS_GCC_COMPILER)
+//void* explicitMemset(void * dst, int value, size_t size)
+//{
+//  size_t i;
+//  for(i=0; i<size; i++)
+//  {
+//    ((char*)dst)[i] = value;
+//  }
+//
+//  return dst;
+//}
+//#endif // #if defined(USING_MOVIDIUS_GCC_COMPILER)
 
 #if defined(USING_MOVIDIUS_GCC_COMPILER)
 f32 powF32S32(const f32 x, const s32 y)

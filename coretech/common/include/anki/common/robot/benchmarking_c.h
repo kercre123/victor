@@ -26,11 +26,18 @@ extern "C" {
     BENCHMARK_EVENT_END
   } BenchmarkEventType;
 
-  typedef struct {
+  typedef struct
+  {
     const char * name; // Warning: name must be in globally available memory
     unsigned long long time;
     BenchmarkEventType type;
   } BenchmarkEvent;
+
+  typedef enum
+  {
+    BENCHMARK_PRINT_ALL,
+    BENCHMARK_PRINT_TOTALS,
+  } BenchmarkPrintType;
 
   extern BenchmarkEvent benchmarkEvents[];
   extern int currentBenchmarkEvent;
@@ -46,7 +53,7 @@ extern "C" {
   void EndBenchmark(const char *name);
   void AddBenchmarkEvent(const char *name, unsigned long long time, BenchmarkEventType type);
 
-  void PrintBenchmarkResults();
+  void PrintBenchmarkResults(const BenchmarkPrintType printType);
 
 #pragma mark --- Implementations ---
 

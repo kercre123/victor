@@ -255,6 +255,9 @@ for i_region = 1:numRegions
                         elseif strcmp(embeddedConversions.homographyEstimationType, 'c_float64')
                             tformInit = mexEstimateHomography(corners, [0 0; 0 1; 1 0; 1 1]);
                             tformIsInitialized = true;
+                        elseif strcmp(embeddedConversions.homographyEstimationType, 'matlab_inhomogeneous')
+                            tformInit = estimateHomographyInhomogeneous(corners, [0 0; 0 1; 1 0; 1 1]);
+                            tformIsInitialized = true;
                         end
 
                         % Test comparing the matlab and openCV versions
@@ -324,7 +327,7 @@ for i_region = 1:numRegions
                         
                         if ~isempty(tform)
                             %if strcmp(quadRefinementMethod, 'ICP') && (strcmp(embeddedConversions.homographyEstimationType, 'opencv_cp2tform') || strcmp(embeddedConversions.homographyEstimationType, 'c_float64'))
-                            if (strcmp(embeddedConversions.homographyEstimationType, 'opencv_cp2tform') || strcmp(embeddedConversions.homographyEstimationType, 'c_float64'))
+                            if ~strcmp(embeddedConversions.homographyEstimationType, 'matlab_original')
                                 
 %                                 [x,y] = tforminv(tform, [0 0 1 1]', [0 1 0 1]');
                                 tformInv = inv(tform);
@@ -357,7 +360,7 @@ for i_region = 1:numRegions
 %                                 x = xy(1,:)';
 %                                 y = xy(2,:)';
                             end
-                            
+                                                        
 %                             disp([x,y])
 %                             
 %                             keyboard

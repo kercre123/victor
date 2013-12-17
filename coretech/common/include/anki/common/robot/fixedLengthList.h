@@ -88,7 +88,7 @@ namespace Anki
       const s32 curSize = this->get_size();
 
       if(curSize >= this->get_maximumSize()) {
-        return RESULT_FAIL;
+        return RESULT_FAIL_OUT_OF_MEMORY;
       }
 
       *this->Pointer(curSize) = value;

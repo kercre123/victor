@@ -7,19 +7,19 @@ namespace Anki
     template<> Result Interp2(const Array<u8> &reference, const Array<f32> &xCoordinates, const Array<f32> &yCoordinates, Array<u8> &out, const InterpolationType interpolationType, const u8 invalidValue)
     {
       AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_LINEAR,
-        RESULT_FAIL, "Interp2", "Only INTERPOLATE_LINEAR is supported");
+        RESULT_FAIL_INVALID_PARAMETERS, "Interp2", "Only INTERPOLATE_LINEAR is supported");
 
       AnkiConditionalErrorAndReturnValue(reference.IsValid(),
-        RESULT_FAIL, "Interp2", "reference is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "Interp2", "reference is not valid");
 
       AnkiConditionalErrorAndReturnValue(xCoordinates.IsValid(),
-        RESULT_FAIL, "Interp2", "xCoordinates is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "Interp2", "xCoordinates is not valid");
 
       AnkiConditionalErrorAndReturnValue(yCoordinates.IsValid(),
-        RESULT_FAIL, "Interp2", "yCoordinates is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "Interp2", "yCoordinates is not valid");
 
       AnkiConditionalErrorAndReturnValue(out.IsValid(),
-        RESULT_FAIL, "Interp2", "out is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "Interp2", "out is not valid");
 
       const s32 referenceHeight = reference.get_size(0);
       const s32 referenceWidth = reference.get_size(1);
@@ -35,18 +35,18 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(
           out.get_size(1) == numOutputElements && xCoordinates.get_size(1) == numOutputElements && yCoordinates.get_size(1) == numOutputElements &&
           xCoordinates.get_size(0) == 1 && yCoordinates.get_size(0) == 1,
-          RESULT_FAIL, "Interp2", "If out is a row vector, then out, xCoordinates, and yCoordinates must all be 1xN");
+          RESULT_FAIL_INVALID_SIZE, "Interp2", "If out is a row vector, then out, xCoordinates, and yCoordinates must all be 1xN");
       } else {
         AnkiConditionalErrorAndReturnValue(
           xCoordinates.get_size(0) == outHeight && xCoordinates.get_size(1) == outWidth &&
           yCoordinates.get_size(0) == outHeight && yCoordinates.get_size(1) == outWidth,
-          RESULT_FAIL, "Interp2", "If the out is not 1 dimensional, then xCoordinates, yCoordinates, and out must all be the same sizes");
+          RESULT_FAIL_INVALID_SIZE, "Interp2", "If the out is not 1 dimensional, then xCoordinates, yCoordinates, and out must all be the same sizes");
       }
 
       AnkiConditionalErrorAndReturnValue(xCoordinates.get_rawDataPointer() != out.get_rawDataPointer() &&
         yCoordinates.get_rawDataPointer() != out.get_rawDataPointer() &&
         reference.get_rawDataPointer() != out.get_rawDataPointer(),
-        RESULT_FAIL, "Interp2", "xCoordinates, yCoordinates, and reference cannot be the same as out");
+        RESULT_FAIL_INVALID_SIZE, "Interp2", "xCoordinates, yCoordinates, and reference cannot be the same as out");
 
       const f32 xyReferenceMin = 0.0f;
       const f32 xReferenceMax = static_cast<f32>(referenceWidth) - 1.0f;
@@ -67,10 +67,10 @@ namespace Anki
           const f32 curX = pXCoordinates[x];
           const f32 curY = pYCoordinates[x];
 
-          const f32 x0 = floorf(curX);
+          const f32 x0 = FLT_FLOOR(curX);
           const f32 x1 = ceilf(curX); // x0 + 1.0f;
 
-          const f32 y0 = floorf(curY);
+          const f32 y0 = FLT_FLOOR(curY);
           const f32 y1 = ceilf(curY); // y0 + 1.0f;
 
           // If out of bounds, set as invalid and continue
