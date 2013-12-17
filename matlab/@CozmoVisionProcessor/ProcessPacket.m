@@ -45,7 +45,7 @@ switch(command)
         set(this.h_templateAxes, 'Visible', 'off');
         set(this.h_track, 'XData', nan, 'YData', nan);
         
-        [img, timestamp, valid] = this.PacketToImage(packet);
+        [img, timestamp, valid] = CozmoVisionProcessor.PacketToImage(packet);
         if ~isempty(img)
             % Detect block markers
             this.DetectBlocks(img, timestamp);
@@ -55,7 +55,7 @@ switch(command)
         assert(~isempty(this.headCalibrationMatrix), ...
             'Must receive calibration message before tracking.');
         
-        [img, timestamp, valid] = this.PacketToImage(packet);
+        [img, timestamp, valid] = CozmoVisionProcessor.PacketToImage(packet);
         if valid
             this.Track(img, timestamp);
         else
@@ -68,7 +68,7 @@ switch(command)
             ['Must receive mat camera calibration (matCamPixPerMM) ' ...
             'using mat localization.']);
         
-        [img, timestamp, valid] = this.PacketToImage(packet);
+        [img, timestamp, valid] = CozmoVisionProcessor.PacketToImage(packet);
         if valid
             this.MatLocalize(img, timestamp);
         else
@@ -76,8 +76,7 @@ switch(command)
         end
         
     otherwise
-        warning('Unknown command %d for packet. Skipping.', command);
-        return;
+        warning('Unknown command %d for packet. Skipping.');
         
 end % SWITCH(command)
 

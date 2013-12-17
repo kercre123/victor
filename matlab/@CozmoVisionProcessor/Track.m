@@ -30,10 +30,6 @@ else
         'y_horErr',  single(0), ...
         'angleErr',  single(0), ...
         'didTrackingSucceed', uint8(false));
-    
-    % We are expecting to start receiving detection images again, now that
-    % tracking has failed
-    this.desiredBufferSize = this.computeDesiredBufferLength(this.detectionResolution);
 end
 
 packet = this.SerializeMessageStruct(msgStruct);
