@@ -2,8 +2,7 @@ function Update(this)
 
 % Read whatever is available in the serial port:
 numBytes = this.serialDevice.BytesAvailable;
-if numBytes < this.MIN_SERIAL_READ_SIZE
-    pause(.01)
+if numBytes <= 0
     return;
 end
 
@@ -58,20 +57,16 @@ end % FOR each header
 
 % Kill what's in the buffer, whether we processed it above or
 % ignored it as garbage.
-if ~isempty(headerIndex) && ~isempty(footerIndex)
+if isempty(headerIndex)
+    this.serialBuffer = [];
     
-    if headerIndex(end) > footerIndex(end)
-        
-        % If we've got a final header that had no footer after it,
-        % we potentially have a partial message.  Keep that in the
-        % buffer, to hopefully have its remainder appended on the
-        % next Update.
+else
+    if isempty(footerIndex) || footerIndex(end) < headerIndex(end)
         this.serialBuffer(1:(headerIndex(end)-1)) = [];
+        
     else
-        % Get rid of everythign up to the last footer, which we
-        % presumably processed above
-        this.serialBuffer(1:footerIndex(end)+length(this.FOOTER)) = [];
+        this.serialBuffer = [];
     end
 end
-
+        
 end % FUNCTION: Update()

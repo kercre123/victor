@@ -23,14 +23,20 @@ if converged
         'angleErr',  single(angleError), ...
         'didTrackingSucceed', uint8(true));
     
+    if msgStruct.x_distErr == 0 && msgStruct.y_horErr == 0 && msgStruct.angleErr == 0
+       error('Sending all zero error signal with didTrackingSucceed=true.') 
+    end
+    
 else
     set(this.h_title, 'String', 'Tracking Failed');
     msgStruct = struct( ...
+        'timestamp', timestamp, ...
         'x_distErr', single(0), ...
         'y_horErr',  single(0), ...
         'angleErr',  single(0), ...
         'didTrackingSucceed', uint8(false));
 end
+
 
 packet = this.SerializeMessageStruct(msgStruct);
 this.SendPacket('CozmoMsg_DockingErrorSignal', packet);

@@ -49,7 +49,7 @@ classdef CozmoVisionProcessor < handle
         % Camera calibration information:
         headCalibrationMatrix;
         %matCalibrationMatrix;
-        matCamPixePerMM;
+        matCamPixPerMM;
         
         % For tracking
         LKtracker;
@@ -153,6 +153,8 @@ classdef CozmoVisionProcessor < handle
         
         function Run(this)
             
+            fread(this.serialDevice, [1 this.serialDevice.BytesAvailable]);
+            
             this.serialBuffer = [];
             this.escapePressed = false;
             
@@ -212,11 +214,7 @@ classdef CozmoVisionProcessor < handle
             end
         end % keyPressCallback()
            
-    end % Methods
-    
-    methods(Static = true)
-        
-        function [img, timestamp, valid] = PacketToImage(packet)
+        function [img, timestamp, valid] = PacketToImage(this, packet)
             valid = false;
             img = [];
             timestamp = uint32(0);
@@ -250,6 +248,6 @@ classdef CozmoVisionProcessor < handle
             end
         end % FUNCTION PacketToImage()
         
-    end % Static Methods
+     end % Methods
     
 end % CLASSDEF CozmoVisionProcessor
