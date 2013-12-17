@@ -28,10 +28,10 @@ namespace Anki
         const s32 imageWidth = in.get_size(1);
 
         AnkiConditionalErrorAndReturnValue(in.IsValid() && out.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTrackerAffine::ComputeXGradient", "An input is not valid");
+          RESULT_FAIL_INVALID_OBJECT, "ComputeXGradient", "An input is not valid");
 
         AnkiConditionalErrorAndReturnValue(out.get_size(0) == imageHeight && out.get_size(1) == imageWidth,
-          RESULT_FAIL_INVALID_SIZE, "LucasKanadeTrackerAffine::ComputeXGradient", "Image sizes don't match");
+          RESULT_FAIL_INVALID_SIZE, "ComputeXGradient", "Image sizes don't match");
 
         for(s32 y=1; y<imageHeight-1; y++) {
           const InType * restrict pIn = in.Pointer(y,0);
@@ -52,10 +52,10 @@ namespace Anki
         const s32 imageWidth = in.get_size(1);
 
         AnkiConditionalErrorAndReturnValue(in.IsValid() && out.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTrackerAffine::ComputeYGradient", "An input is not valid");
+          RESULT_FAIL_INVALID_OBJECT, "ComputeYGradient", "An input is not valid");
 
         AnkiConditionalErrorAndReturnValue(out.get_size(0) == imageHeight && out.get_size(1) == imageWidth,
-          RESULT_FAIL_INVALID_SIZE, "LucasKanadeTrackerAffine::ComputeYGradient", "Image sizes don't match");
+          RESULT_FAIL_INVALID_SIZE, "ComputeYGradient", "Image sizes don't match");
 
         for(s32 y=1; y<imageHeight-1; y++) {
           const InType * restrict pIn_ym1 = in.Pointer(y-1,0);
