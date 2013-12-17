@@ -107,5 +107,142 @@ namespace Anki
 
       return RESULT_OK;
     }
+
+    template<> Result Interp2_Affine(const Array<u8> &reference, const Meshgrid<f32> &originalCoordinates, const Array<f32> &homography, const Point<f32> &centerOffset, Array<u8> &out, const InterpolationType interpolationType, const u8 invalidValue)
+    {
+      AnkiConditionalErrorAndReturnValue(interpolationType == INTERPOLATE_LINEAR,
+        RESULT_FAIL_INVALID_PARAMETERS, "Interp2", "Only INTERPOLATE_LINEAR is supported");
+
+      AnkiConditionalErrorAndReturnValue(reference.IsValid(),
+        RESULT_FAIL_INVALID_OBJECT, "Interp2", "reference is not valid");
+
+      AnkiConditionalErrorAndReturnValue(out.IsValid(),
+        RESULT_FAIL_INVALID_OBJECT, "Interp2", "out is not valid");
+
+      AnkiConditionalErrorAndReturnValue(reference.get_rawDataPointer() != out.get_rawDataPointer(),
+        RESULT_FAIL_ALIASED_MEMORY, "Interp2", "reference cannot be the same as out");
+
+      const s32 referenceHeight = reference.get_size(0);
+      const s32 referenceWidth = reference.get_size(1);
+
+      const s32 outHeight = out.get_size(0);
+      const s32 outWidth = out.get_size(1);
+
+      const bool isOutputOneDimensional = (out.get_size(0) == 1);
+
+      const f32 xyReferenceMin = 0.0f;
+      const f32 xReferenceMax = static_cast<f32>(referenceWidth) - 1.0f;
+      const f32 yReferenceMax = static_cast<f32>(referenceHeight) - 1.0f;
+
+      const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
+      const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+
+      const LinearSequence<f32> &yGridVector = originalCoordinates.get_yGridVector();
+      const LinearSequence<f32> &xGridVector = originalCoordinates.get_xGridVector();
+
+      const f32 yGridStart = yGridVector.get_start();
+      const f32 xGridStart = xGridVector.get_start();
+
+      const f32 yGridDelta = yGridVector.get_increment();
+      const f32 xGridDelta = xGridVector.get_increment();
+
+      const s32 yIterationMax = yGridVector.get_size();
+      const s32 xIterationMax = xGridVector.get_size();
+
+      const f32 yTransformedDelta = h10 * yGridDelta;
+      const f32 xTransformedDelta = h00 * xGridDelta;
+
+      // One last check, to see if the sizes match
+      if(isOutputOneDimensional) {
+        const s32 numOutputElements = outHeight * outWidth;
+        const s32 numOriginalCoordinates = xGridVector.get_size() * yGridVector.get_size();
+
+        AnkiConditionalErrorAndReturnValue(
+          outWidth == numOutputElements &&
+          numOriginalCoordinates == numOutputElements,
+          RESULT_FAIL_INVALID_SIZE, "Interp2", "originalCoordinates is the wrong size");
+      } else {
+        AnkiConditionalErrorAndReturnValue(
+          yGridVector.get_size() == outHeight &&
+          xGridVector.get_size() == outWidth,
+          RESULT_FAIL_INVALID_SIZE, "Interp2", "originalCoordinates is the wrong size");
+      }
+
+      u8 * restrict pOut = out.Pointer(0,0);
+
+      if(isOutputOneDimensional) {
+        // pOut is incremented at the top of the loop, so decrement it here
+        pOut -= xIterationMax;
+      }
+
+      f32 yOriginal = yGridStart;
+      for(s32 y=0; y<yIterationMax; y++) {
+        if(isOutputOneDimensional) {
+          // If the output is one dimensional, then we will do the next set of x iterations later on
+          // the same output row
+          pOut += xIterationMax;
+        } else {
+          pOut = out.Pointer(y,0);
+        }
+
+        const f32 xOriginal = xGridStart;
+
+        // TODO: This could be strength-reduced further, but it wouldn't be much faster
+        f32 xTransformed = h00*xOriginal + h01*yOriginal + h02 + centerOffset.x;
+        f32 yTransformed = h10*xOriginal + h11*yOriginal + h12 + centerOffset.y;
+
+        for(s32 x=0; x<xIterationMax; x++) {
+          const f32 x0 = FLT_FLOOR(xTransformed);
+          const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
+
+          const f32 y0 = FLT_FLOOR(yTransformed);
+          const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
+
+          //printf("A (%d,%d) = (%f,%f)\n", x, y, xTransformed, yTransformed);
+
+          // If out of bounds, set as invalid and continue
+          if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
+            // strength reduction for the affine transformation along this horizontal line
+            xTransformed += xTransformedDelta;
+            yTransformed += yTransformedDelta;
+
+            pOut[x] = invalidValue;
+            continue;
+          }
+
+          const f32 alphaX = xTransformed - x0;
+          const f32 alphaXinverse = 1 - alphaX;
+
+          const f32 alphaY = yTransformed - y0;
+          const f32 alphaYinverse = 1.0f - alphaY;
+
+          const s32 y0S32 = static_cast<s32>(Roundf(y0));
+          const s32 y1S32 = static_cast<s32>(Roundf(y1));
+          const s32 x0S32 = static_cast<s32>(Roundf(x0));
+
+          const u8 * restrict pReference_y0 = reference.Pointer(y0S32, x0S32);
+          const u8 * restrict pReference_y1 = reference.Pointer(y1S32, x0S32);
+
+          const f32 pixelTL = *pReference_y0;
+          const f32 pixelTR = *(pReference_y0+1);
+          const f32 pixelBL = *pReference_y1;
+          const f32 pixelBR = *(pReference_y1+1);
+
+          const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
+
+          const u8 interpolatedPixel = static_cast<u8>(Roundf(interpolatedPixelF32));
+
+          pOut[x] = interpolatedPixel;
+
+          // strength reduction for the affine transformation along this horizontal line
+          xTransformed += xTransformedDelta;
+          yTransformed += yTransformedDelta;
+        } // for(s32 x=0; x<xIterationMax; x++)
+
+        yOriginal += yGridDelta;
+      } // for(s32 y=0; y<yIterationMax; y++)
+
+      return RESULT_OK;
+    }
   } // namespace Embedded
 } // namespace Anki
