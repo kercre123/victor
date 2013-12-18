@@ -58,6 +58,7 @@ LEON_SOURCE += addSources(LIBC + 'src/asm');
 CCOPT = (
   '-DROBOT_HARDWARE '
   '-I ../include '
+  '-I supervisor/src '
   '-I ../coretech/common/include '
   '-I ../coretech/messaging/include '
   '-I ../coretech/vision/include '
