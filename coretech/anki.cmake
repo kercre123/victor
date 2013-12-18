@@ -161,7 +161,7 @@ endif(MATLAB_FOUND)
 # We will now use them to add -D compile switches.
 foreach(PKG ${PKG_OPTIONS})
         add_definitions(-DANKICORETECH_${PKG}=${ANKICORETECH_${PKG}})
-        #message(STATUS "adding definitions -DANKICORETECH_${PKG}=${ANKICORETECH_${PKG}}")
+        message(STATUS "adding definitions -DANKICORETECH_${PKG}=${ANKICORETECH_${PKG}}")
 endforeach()
 	
 	

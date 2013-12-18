@@ -430,7 +430,7 @@ namespace Anki
 
           //memcpy(pThisData, values + y*size[1], numValuesThisRow*sizeof(Type));
           for(s32 x=0; x<wordsToCopy; x++) {
-            assert(reinterpret_cast<s32>(values+y*size[1]) % 4 == 0);
+            assert(reinterpret_cast<size_t>(values+y*size[1]) % 4 == 0);
             pThisData[x] = reinterpret_cast<const u32*>(values+y*size[1])[x];
           }
           numValuesSet += numValuesThisRow;
