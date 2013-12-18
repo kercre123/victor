@@ -91,9 +91,6 @@ namespace Anki {
       // For communications with basestation
       webots::Emitter *tx_;
       webots::Receiver *rx_;
-      bool isConnected_;
-      unsigned char recvBuf_[RECV_BUFFER_SIZE];
-
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
