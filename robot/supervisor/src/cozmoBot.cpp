@@ -30,21 +30,6 @@
 
 ///////// END TESTING //////
 
-
-// Frame buffers, for now.
-// TODO: A smarter memory management system to provide frame buffers on demand?
-static const u32 FRAMEBUFFER_WIDTH  = 640;
-static const u32 FRAMEBUFFER_HEIGHT = 480;
-static const u32 FRAMEBUFFER_SIZE   = FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT;
-
-#ifdef SIMULATOR
-static u8 memoryBuffer_[FRAMEBUFFER_SIZE];
-#else
-#define DDR_BUFFER    __attribute__((section(".ddr.text")))
-static DDR_BUFFER u8 memoryBuffer_[FRAMEBUFFER_SIZE];
-#endif
-
-
 namespace Anki {
   namespace Cozmo {
     namespace Robot {
@@ -359,7 +344,7 @@ namespace Anki {
       {
         ReturnCode retVal = EXIT_SUCCESS;
         
-        retVal = VisionSystem::Update(memoryBuffer_);
+        retVal = VisionSystem::Update();
         
 #if USE_OFFBOARD_VISION
         HAL::USBSendPrintBuffer();
