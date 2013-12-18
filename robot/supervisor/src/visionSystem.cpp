@@ -694,6 +694,8 @@ namespace Anki {
                                   trackerScratch_) == Embedded::RESULT_OK)
           {
             retVal = EXIT_SUCCESS;
+            
+            // TODO: Create docking error signal message
           }
           
         } // if trackerScratch is valid
