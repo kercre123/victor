@@ -88,8 +88,6 @@ namespace Anki {
         // When to transition to the next state. Only some states use this.
         u32 transitionTime_ = 0;
         
-        //f32 liftDockHeight_ = -1.f;
-        VisionSystem::DockingTarget goalDockTarget_, obsDockTarget_;
         
         // The pose of the robot at the start of docking.
         // While block tracking is maintained the robot follows
@@ -525,8 +523,8 @@ namespace Anki {
         // Adjust approachStartPose to compensate for lack of localization
         f32 cosTheta = cosf(approachPath_dtheta);
         f32 sinTheta = sinf(approachPath_dtheta);
-        approachStartPose.x() = blockPose_.x() * cosTheta - blockPose_.y() * sinTheta + approachPath_dx;
-        approachStartPose.y() = blockPose_.x() * sinTheta + blockPose_.y() * cosTheta + approachPath_dy;
+        approachStartPose_.x() = blockPose_.x() * cosTheta - blockPose_.y() * sinTheta + approachPath_dx;
+        approachStartPose_.y() = blockPose_.x() * sinTheta + blockPose_.y() * cosTheta + approachPath_dy;
         approachStartPose_.angle = blockPose_.angle - approachPath_dOrientation;
 #endif
 
