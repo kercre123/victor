@@ -1,5 +1,5 @@
 
-#include "anki/cozmo/messageProtocol.h"
+#include "anki/cozmo/messages.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"

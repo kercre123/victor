@@ -71,6 +71,104 @@ __attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BY
 
 #endif // #ifdef USING_MOVIDIUS_COMPILER
 
+GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  const s32 arr_data[15] = {81, 10, 16, 91, 28, 97, 13, 55, 96, 91, 96, 49, 63, 96, 80};
+
+  Array<s32> arr(5,3,ms);
+  Array<s32> arrIndexes(5,3,ms);
+
+  Array<s32> sortedArr_groundTruth(5,3,ms);
+  Array<s32> sortedArrIndexes_groundTruth(5,3,ms);
+
+  ASSERT_TRUE(arr.IsValid());
+  ASSERT_TRUE(sortedArr_groundTruth.IsValid());
+  ASSERT_TRUE(sortedArrIndexes_groundTruth.IsValid());
+
+  // sortWhichDimension==0 sortAscending==false
+  {
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::Sort(arr, arrIndexes, 0, false) == RESULT_OK);
+
+    arr.Print("sortWhichDimension==0 sortAscending==false");
+    arrIndexes.Print("Indexes: sortWhichDimension==0 sortAscending==false");
+
+    const s32 sortedArr_groundTruthData[15] = {91, 96, 97, 91, 96, 96, 81, 55, 80, 63, 28, 49, 13, 10, 16};
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+
+    const s32 sortedArrIndexes_groundTruthData[15] = {2, 4, 2, 4, 5, 3, 1, 3, 5, 5, 2, 4, 3, 1, 1};
+    ASSERT_TRUE(sortedArrIndexes_groundTruth.Set(sortedArrIndexes_groundTruthData, 15) == 15);
+    Matrix::Subtract<s32,s32,s32>(sortedArrIndexes_groundTruth, 1, sortedArrIndexes_groundTruth); // Matlab -> C indexing
+    sortedArrIndexes_groundTruth.Print("sortedArrIndexes_groundTruth");
+
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+    ASSERT_TRUE(AreElementwiseEqual(arrIndexes, sortedArrIndexes_groundTruth));
+  }
+
+  // sortWhichDimension==0 sortAscending==true
+  {
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::Sort(arr, arrIndexes, 0, true) == RESULT_OK);
+
+    arr.Print("Values: sortWhichDimension==0 sortAscending==true");
+    arrIndexes.Print("Indexes: sortWhichDimension==0 sortAscending==true");
+
+    const s32 sortedArr_groundTruthData[15] = {13, 10, 16, 63, 28, 49, 81, 55, 80, 91, 96, 96, 91, 96, 97};
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+
+    const s32 sortedArrIndexes_groundTruthData[15] = {3, 1, 1, 5, 2, 4, 1, 3, 5, 2, 4, 3, 4, 5, 2};
+    ASSERT_TRUE(sortedArrIndexes_groundTruth.Set(sortedArrIndexes_groundTruthData, 15) == 15);
+    Matrix::Subtract<s32,s32,s32>(sortedArrIndexes_groundTruth, 1, sortedArrIndexes_groundTruth); // Matlab -> C indexing
+
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+    ASSERT_TRUE(AreElementwiseEqual(arrIndexes, sortedArrIndexes_groundTruth));
+  }
+
+  // sortWhichDimension==1 sortAscending==false
+  {
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::Sort(arr, arrIndexes, 1, false) == RESULT_OK);
+
+    arr.Print("sortWhichDimension==1 sortAscending==false");
+    arrIndexes.Print("Indexes: sortWhichDimension==1 sortAscending==false");
+
+    const s32 sortedArr_groundTruthData[15] = {81, 16, 10, 97, 91, 28, 96, 55, 13, 96, 91, 49, 96, 80, 63};
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+
+    const s32 sortedArrIndexes_groundTruthData[15] = {1, 3, 2, 3, 1, 2, 3, 2, 1, 2, 1, 3, 2, 3, 1};
+    ASSERT_TRUE(sortedArrIndexes_groundTruth.Set(sortedArrIndexes_groundTruthData, 15) == 15);
+    Matrix::Subtract<s32,s32,s32>(sortedArrIndexes_groundTruth, 1, sortedArrIndexes_groundTruth); // Matlab -> C indexing
+
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+    ASSERT_TRUE(AreElementwiseEqual(arrIndexes, sortedArrIndexes_groundTruth));
+  }
+
+  // sortWhichDimension==1 sortAscending==true
+  {
+    ASSERT_TRUE(arr.Set(arr_data, 15) == 15);
+    ASSERT_TRUE(Matrix::Sort(arr, arrIndexes, 1, true) == RESULT_OK);
+
+    arr.Print("sortWhichDimension==1 sortAscending==true");
+    arrIndexes.Print("Indexes: sortWhichDimension==1 sortAscending==true");
+
+    const s32 sortedArr_groundTruthData[15] = {10, 16, 81, 28, 91, 97, 13, 55, 96, 49, 91, 96, 63, 80, 96};
+    ASSERT_TRUE(sortedArr_groundTruth.Set(sortedArr_groundTruthData, 15) == 15);
+
+    const s32 sortedArrIndexes_groundTruthData[15] = {2, 3, 1, 2, 1, 3, 1, 2, 3, 3, 1, 2, 1, 3, 2};
+    ASSERT_TRUE(sortedArrIndexes_groundTruth.Set(sortedArrIndexes_groundTruthData, 15) == 15);
+    Matrix::Subtract<s32,s32,s32>(sortedArrIndexes_groundTruth, 1, sortedArrIndexes_groundTruth); // Matlab -> C indexing
+
+    ASSERT_TRUE(AreElementwiseEqual(arr, sortedArr_groundTruth));
+    ASSERT_TRUE(AreElementwiseEqual(arrIndexes, sortedArrIndexes_groundTruth));
+  }
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, MatrixSort)
 {
   ASSERT_TRUE(buffer != NULL);
@@ -2485,6 +2583,7 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, MatrixSortWithIndexes);
   CALL_GTEST_TEST(CoreTech_Common, MatrixSort);
   CALL_GTEST_TEST(CoreTech_Common, LinearLeastSquares32);
   CALL_GTEST_TEST(CoreTech_Common, LinearLeastSquares64);

@@ -317,11 +317,13 @@ namespace Anki {
         
         // Print speed
         if (ticCnt2_++ >= 200 / TIME_STEP) {
+          // TODO: Unused. Remove?
+          /*
           f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
           f32 lSpeed_filt = LiftController::GetAngularVelocity();
           f32 lPos = LiftController::GetAngleRad(); // HAL::MotorGetPosition(HAL::MOTOR_LIFT);
           f32 lHeight = LiftController::GetHeightMM();
-          
+          */
           //f32 lSpeed_filt;
           //          WheelController::GetFilteredWheelSpeeds(&lSpeed_filt,&rSpeed_filt);
           //PRINT("Lift speed %f rad/s, filt_speed %f rad/s, position %f rad, %f mm\n", lSpeed, lSpeed_filt, lPos, lHeight);

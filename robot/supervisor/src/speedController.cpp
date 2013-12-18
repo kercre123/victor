@@ -120,7 +120,7 @@ namespace Anki {
     
     void SetUserCommandedAcceleration(s16 ucAccel)
     {
-      userCommandedAcceleration_ = MAX(ABS(ucAccel), ceilf(Anki::Cozmo::ONE_OVER_CONTROL_DT));
+      userCommandedAcceleration_ = MAX(ABS(ucAccel), ceilf(ONE_OVER_CONTROL_DT));
     }
     
     s16 GetUserCommandedAcceleration(void)

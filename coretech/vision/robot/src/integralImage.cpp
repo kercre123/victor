@@ -25,7 +25,7 @@ namespace Anki
     }
 
     ScrollingIntegralImage_u8_s32::ScrollingIntegralImage_u8_s32(const s32 bufferHeight, const s32 imageWidth, const s32 numBorderPixels, MemoryStack &memory, const Flags::Buffer flags)
-      : Array<s32>(bufferHeight, imageWidth+2*numBorderPixels, memory, flags), imageWidth(imageWidth), numBorderPixels(numBorderPixels), maxRow(-1), rowOffset(-numBorderPixels)
+    : Array<s32>(bufferHeight, imageWidth+2*numBorderPixels, memory, flags), imageWidth(imageWidth), maxRow(-1), rowOffset(-numBorderPixels), numBorderPixels(numBorderPixels)
     {
       assert(imageWidth%ANKI_VISION_IMAGE_WIDTH_SHIFT == 0);
 

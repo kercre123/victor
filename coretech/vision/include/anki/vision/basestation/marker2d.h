@@ -11,6 +11,15 @@
 
 namespace Anki {
 
+  // If this is all we have in this file, maybe we can put it elsewhere?
+  typedef enum {
+    MARKER_TOP,
+    MARKER_LEFT,
+    MARKER_RIGHT,
+    MARKER_BOTTOM
+  } MarkerUpDirection;
+  
+  /*
   // Abstract Marker2d class for encoding and decoding our 2D barcodes.
   // TODO: Fill this in like the Matlab class
   class Marker2d
@@ -21,6 +30,7 @@ namespace Anki {
     
     
   }; // class Marker2d
+   */
   
 } // namespace Anki
 

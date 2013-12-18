@@ -65,9 +65,11 @@ namespace Anki
 
         //    imageFilteredTmp(y,1) = sum(image(y,1:3) .* kernelU32(3:end)) + image(y,1)*sum(kernelU32(1:2));
         //    imageFilteredTmp(y,2) = sum(image(y,1:4) .* kernelU32(2:end)) + image(y,1)*kernelU32(1);
-        pImageFilteredTmp[x++] = static_cast<u32>(pImage[x])*kernel[2]   + static_cast<u32>(pImage[x+1])*kernel[3] + static_cast<u32>(pImage[x+2])*kernel[4] + static_cast<u32>(pImage[x])*(kernel[0]+kernel[1]);
-        pImageFilteredTmp[x++] = static_cast<u32>(pImage[x-1])*kernel[1] + static_cast<u32>(pImage[x])*kernel[2]   + static_cast<u32>(pImage[x+1])*kernel[3] + static_cast<u32>(pImage[x+2])*kernel[4] + static_cast<u32>(pImage[x-1])*kernel[0];
-
+        pImageFilteredTmp[x] = static_cast<u32>(pImage[x])*kernel[2]   + static_cast<u32>(pImage[x+1])*kernel[3] + static_cast<u32>(pImage[x+2])*kernel[4] + static_cast<u32>(pImage[x])*(kernel[0]+kernel[1]);
+        x++;
+        pImageFilteredTmp[x] = static_cast<u32>(pImage[x-1])*kernel[1] + static_cast<u32>(pImage[x])*kernel[2]   + static_cast<u32>(pImage[x+1])*kernel[3] + static_cast<u32>(pImage[x+2])*kernel[4] + static_cast<u32>(pImage[x-1])*kernel[0];
+        x++;
+        
         // for x = 3:(size(image,2)-2)
         for(; x<(imageWidth-2); x++) {
           // imageFilteredTmp(y,x) = sum(image(y,(x-2):(x+2)) .* kernelU32);
@@ -76,8 +78,10 @@ namespace Anki
 
         //    imageFilteredTmp(y,size(image,2)-1) = sum(image(y,(size(image,2)-3):size(image,2)) .* kernelU32(1:(end-1))) + image(y,size(image,2))*kernelU32(end);
         //    imageFilteredTmp(y,size(image,2))   = sum(image(y,(size(image,2)-2):size(image,2)) .* kernelU32(1:(end-2))) + image(y,size(image,2))*sum(kernelU32((end-1):end));
-        pImageFilteredTmp[x++] = static_cast<u32>(pImage[x-2])*kernel[0] + static_cast<u32>(pImage[x-1])*kernel[1] + static_cast<u32>(pImage[x])*kernel[2] + static_cast<u32>(pImage[x+1])*kernel[3] + static_cast<u32>(pImage[x+1])*kernel[4];
-        pImageFilteredTmp[x++] = static_cast<u32>(pImage[x-2])*kernel[0] + static_cast<u32>(pImage[x-1])*kernel[1] + static_cast<u32>(pImage[x])*kernel[2] + static_cast<u32>(pImage[x])*(kernel[3]+kernel[4]);
+        pImageFilteredTmp[x] = static_cast<u32>(pImage[x-2])*kernel[0] + static_cast<u32>(pImage[x-1])*kernel[1] + static_cast<u32>(pImage[x])*kernel[2] + static_cast<u32>(pImage[x+1])*kernel[3] + static_cast<u32>(pImage[x+1])*kernel[4];
+        x++;
+        pImageFilteredTmp[x] = static_cast<u32>(pImage[x-2])*kernel[0] + static_cast<u32>(pImage[x-1])*kernel[1] + static_cast<u32>(pImage[x])*kernel[2] + static_cast<u32>(pImage[x])*(kernel[3]+kernel[4]);
+        x++;
       }
 
       // std::cout << "imageFilteredTmp:\n";

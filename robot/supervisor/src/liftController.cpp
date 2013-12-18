@@ -85,10 +85,9 @@ namespace Anki {
       ReturnCode Init()
       {
         // Init consts
-        LIFT_ANGLE_LOW = Height2Rad(LIFT_HEIGHT_LOW);
+        LIFT_ANGLE_LOW = Height2Rad(LIFT_HEIGHT_LOWDOCK);
         return EXIT_SUCCESS;
       }
-      
       
       
       void Enable()
@@ -142,7 +141,12 @@ namespace Anki {
             case LCS_WAIT_FOR_STOP:
               // Check for when lift stops moving for 0.2 seconds
               if (NEAR_ZERO(HAL::MotorGetSpeed(HAL::MOTOR_LIFT))) {
-                if (HAL::GetMicroCounter() - lastLiftMovedTime_us > 6000000/*200000*/) {
+#ifdef SIMULATOR
+                const u32 LIFT_STOP_TIME = 200000;
+#else
+                const u32 LIFT_STOP_TIME = 6000000;
+#endif
+                if (HAL::GetMicroCounter() - lastLiftMovedTime_us > LIFT_STOP_TIME) {
                   // Turn off motor
                   HAL::MotorSetPower(HAL::MOTOR_LIFT, 0.0);
                   

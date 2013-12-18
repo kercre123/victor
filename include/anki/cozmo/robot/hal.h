@@ -37,10 +37,11 @@
 #include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
 
-// Define this if we are sending images over UART in order to buffer messages
-// created with printf and send them after each frame in long execution (so
-// we don't interrupt frames being sent)
-#define SERIAL_IMAGING
+#include "anki/cozmo/messages.h"
+
+#include "anki/cozmo/robot/cozmoConfig.h"
+
+#define USE_OFFBOARD_VISION 1
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,13 +53,13 @@ extern "C" {
 #ifndef SIMULATOR
 #undef printf
 
-#ifdef SERIAL_IMAGING
+#if USE_OFFBOARD_VISION
 // Buffer printf messages, to be sent by long execution
 #define PUTCHAR_FUNC Anki::Cozmo::HAL::USBBufferChar
 #else
 // Send printf messages directly over the USB connection
 #define PUTCHAR_FUNC Anki::Cozmo::HAL::USBPutChar
-#endif // ifdef SERIAL_IMAGING
+#endif // if USE_OFFBOARD_VISION
 
 #define printf(...) _xprintf(PUTCHAR_FUNC, 0, __VA_ARGS__)
 #define PRINT(...) explicitPrintf(PUTCHAR_FUNC, 0, __VA_ARGS__)
@@ -93,13 +94,13 @@ namespace Anki
 {
   namespace Cozmo
   {
+    
     namespace HAL
     {
 
       //
       // Parameters / Constants
       //
-      const u8  NUM_RADIAL_DISTORTION_COEFFS = 5;
       const f32 MOTOR_PWM_MAXVAL = 2400.f;
       const f32 MOTOR_MAX_POWER = 1.0f;
       
@@ -125,14 +126,6 @@ namespace Anki
       //   img = fcn();
       typedef const u8* (*FrameGrabber)(void);
       
-      // A struct for holding camera parameters
-      typedef struct {
-        f32 focalLength_x, focalLength_y, fov_ver;
-        f32 center_x, center_y;
-        f32 skew;
-        u16 nrows, ncols;
-        f32 distortionCoeffs[NUM_RADIAL_DISTORTION_COEFFS];
-      } CameraInfo;
       
       //
       // Hardware Interface Methods:
@@ -144,17 +137,6 @@ namespace Anki
       // Gripper control
       bool IsGripperEngaged();
       
-      // Cameras
-      // TODO: Add functions for adjusting ROI of cameras?
-      void MatCameraInit();
-      void FrontCameraInit();
-
-      const CameraInfo* GetHeadCamInfo();
-      const CameraInfo* GetMatCamInfo() ;
-      
-      // Communications
-      bool IsConnected();
-      
       // Misc
       bool IsInitialized();
       void UpdateDisplay();
@@ -162,6 +144,9 @@ namespace Anki
       // Get the number of microseconds since boot
       u32 GetMicroCounter(void);
       void MicroWait(u32 microseconds);
+      
+      // Get a sync'd timestamp (e.g. for messages), in milliseconds
+      TimeStamp GetTimeStamp(void);
 
       s32 GetRobotID(void);
 
@@ -173,26 +158,34 @@ namespace Anki
 
       // .....................
 
-
-      // Audio
+#pragma mark --- Audio ---
+      /////////////////////////////////////////////////////////////////////
+      // AUDIO
+      //
+      
       const u32 AUDIO_SAMPLE_SIZE = 480;
 
       // Play an audio sample at 24 kHz. Returns true if it was played.
       bool AudioPlay(s16 buffer[AUDIO_SAMPLE_SIZE]);
 
-      // Flash memory
+#pragma mark --- Flash Memory ---
+      /////////////////////////////////////////////////////////////////////
+      // FLASH MEMORY
+      //
+      
       const u32 FLASH_PAGE_SIZE = 4 * 1024;
       void FlashWrite(u32 page, u8 data[FLASH_PAGE_SIZE]);
       void FlashRead(u32 page, u8 data[FLASH_PAGE_SIZE]);
 
+#pragma mark --- USB / UART ---
+      /////////////////////////////////////////////////////////////////////
       // USB / UART
+      //
       
-      // Packet header/footer:
-      const u8 USB_PACKET_HEADER[4] = {0xBE, 0xEF, 0xF0, 0xFF};
-      const u8 USB_PACKET_FOOTER[4] = {0xFF, 0x0F, 0xFE, 0xEB};
+      void UARTInit();
       
       // Send a variable length buffer
-      void USBSendBuffer(u8* buffer, u32 size);
+      void USBSendBuffer(const u8* buffer, const u32 size);
 
       // Returns the number of bytes that are in the serial buffer
       u32 USBGetNumBytesToRead();
@@ -200,26 +193,29 @@ namespace Anki
       // Get a character from the serial buffer.
       // Timeout is in microseconds.
       // Returns < 0 if no character available within timeout.
-      s32 USBGetChar(u32 timeout = 0);
+      s32 USBGetChar(void);
+      s32 USBGetChar(u32 timeout);
 
       // Peeks at the offset'th character in serial receive buffer.
       // (The next character available is at an offset of 0.)
       // Returns < 0 if no character available.
       s32 USBPeekChar(u32 offset = 0);
       
+      // Returns an entire message packet in buffer, if one is available.
+      // Until a valid packet header is found and the entire packet is
+      // available, NO_MESSAGE_ID will be returned.  Once a valid header
+      // is found and returned, its MessageID is returned.
+      Messages::ID USBGetNextMessage(u8 *buffer);
+      
       // Send a byte.
       // Prototype matches putc for printf.
       int USBPutChar(int c);
 
+#pragma mark --- Motors ---
+      /////////////////////////////////////////////////////////////////////
+      // MOTORS
+      //
       
-#ifdef SERIAL_IMAGING
-      // Put a byte into a send buffer to be sent by LongExecution()
-      // (Using same prototype as putc / USBPutChar for printf.)
-      int USBBufferChar(int c);
-#endif
-
-      
-      // Motors
       enum MotorID
       {
         MOTOR_LEFT_WHEEL = 0,
@@ -247,15 +243,20 @@ namespace Anki
       // Measures the unitless load on all motors
       s32 MotorGetLoad();
 
-      // Cameras
-      enum CameraID
+#pragma mark --- Cameras ---
+      /////////////////////////////////////////////////////////////////////
+      // CAMERAS
+      // TODO: Add functions for adjusting ROI of cameras?
+      //
+
+      typedef enum
       {
         CAMERA_FRONT = 0,
         CAMERA_MAT,
         CAMERA_COUNT
-      };
-
-      enum CameraMode
+      } CameraID;
+      
+      typedef enum
       {
         CAMERA_MODE_VGA = 0,
         CAMERA_MODE_QVGA,
@@ -263,16 +264,29 @@ namespace Anki
         CAMERA_MODE_QQQVGA,
         CAMERA_MODE_QQQQVGA,
         CAMERA_MODE_COUNT,
-
+        
         CAMERA_MODE_NONE = CAMERA_MODE_COUNT
-      };
+      } CameraMode;
       
-      // Final byte in frame header to determine/specify resolution
-      const u8 CAMERA_MODE_VGA_HEADER     = 0xBA;
-      const u8 CAMERA_MODE_QVGA_HEADER    = 0xBC;
-      const u8 CAMERA_MODE_QQVGA_HEADER   = 0xB8;
-      const u8 CAMERA_MODE_QQQVGA_HEADER  = 0xBD;
-      const u8 CAMERA_MODE_QQQQVGA_HEADER = 0xB7;
+      typedef struct {
+        u8 header; // used to specify a frame's resolution in a packet
+        u16 width, height;
+        u8 downsampleInc[CAMERA_MODE_COUNT];
+      } CameraModeInfo_t;
+      
+      const CameraModeInfo_t CameraModeInfo[CAMERA_MODE_COUNT] =
+      {
+        // VGA
+        { 0xBA, 640, 480, {1, 0, 0, 0, 0} },
+        // QVGA
+        { 0xBC, 320, 240, {2, 1, 0, 0, 0} },
+        // QQVGA
+        { 0xB8, 160, 120, {4, 2, 1, 0, 0} },
+        // QQQVGA
+        { 0xBD,  80,  60, {8, 4, 2, 1, 0} },
+        // QQQQVGA
+        { 0xB7,  40,  30, {16, 8, 4, 2, 1} }
+      };
       
       enum CameraUpdateMode
       {
@@ -280,9 +294,25 @@ namespace Anki
         CAMERA_UPDATE_SINGLE
       };
 
+      void MatCameraInit();
+      void FrontCameraInit();
+      
+      // Intrinsic calibration:
+      // A struct for holding intrinsic camera calibration parameters
+      typedef struct {
+        f32 focalLength_x, focalLength_y, fov_ver;
+        f32 center_x, center_y;
+        f32 skew;
+        u16 nrows, ncols;
+        f32 distortionCoeffs[NUM_RADIAL_DISTORTION_COEFFS];
+      } CameraInfo;
+      
+      const CameraInfo* GetHeadCamInfo();
+      const CameraInfo* GetMatCamInfo() ;
+      
       // Set the camera capture resolution with CAMERA_MODE_XXXXX_HEADER.
-      // Should only be used for off-robot vision processing.
-      void SetCameraMode(const u8 frameResHeader);
+      void       SetHeadCamMode(const u8 frameResHeader);
+      CameraMode GetHeadCamMode(void);
       
       // Starts camera frame synchronization
       void CameraStartFrame(CameraID cameraID, u8* frame, CameraMode mode,
@@ -294,7 +324,11 @@ namespace Anki
       // Returns whether or not the specfied camera has received a full frame
       bool CameraIsEndOfFrame(CameraID cameraID);
 
-      // Battery
+#pragma mark --- Battery ---
+      /////////////////////////////////////////////////////////////////////
+      // BATTERY
+      //
+      
       // Get the battery percent between [0, 100]
       u8 BatteryGetPercent();
 
@@ -303,14 +337,21 @@ namespace Anki
 
       // Return whether or not the robot is connected to a charger
       bool BatteryIsOnCharger();
-
+      
+#pragma mark --- UI LEDS ---
+      /////////////////////////////////////////////////////////////////////
       // UI LEDs
+      //
+      
       const u32 LED_CHANNEL_COUNT = 8;
 
       // Set the intensity for each LED channel in the range [0, 255]
       void LEDSet(u8 leds[LED_CHANNEL_COUNT]);
 
-      // Radio
+#pragma mark --- Radio ---
+      /////////////////////////////////////////////////////////////////////
+      // RADIO
+      //      
       enum RadioState
       {
         RADIO_STATE_ADVERTISING = 0,
@@ -319,13 +360,19 @@ namespace Anki
 
       const u32 RADIO_BUFFER_SIZE = 100;
       
-      // Returns number of bytes received from the basestation
-      u32 RadioFromBase(u8 buffer[RADIO_BUFFER_SIZE]);
+      bool RadioIsConnected();
+      
+      u32 RadioGetNumBytesAvailable(void);
+      
+      Messages::ID RadioGetNextMessage(u8* buffer);
      
-      // Returns true if the buffer has been sent to the basestation
-      bool RadioToBase(u8* buffer, u32 size);
+      // Returns true if the message has been sent to the basestation
+      bool RadioSendMessage(const Messages::ID msgID, const void *buffer);
 
-      // Power management
+      /////////////////////////////////////////////////////////////////////
+      // POWER MANAGEMENT
+      //
+      
       enum PowerState
       {
         POWER_STATE_OFF = 0,
@@ -358,6 +405,59 @@ namespace Anki
       void IRQDisable();
       void IRQEnable();
 
+#if USE_OFFBOARD_VISION
+      
+      const u8 USB_MESSAGE_HEADER = 0xDD;
+      
+      // Bytes to add to USB frame header to tell the offboard processor
+      // what to do with the frame
+      const u8 USB_VISION_COMMAND_DETECTBLOCKS    = 0xAB;
+      const u8 USB_VISION_COMMAND_SETDOCKBLOCK    = 0xBC;
+      const u8 USB_VISION_COMMAND_TRACK           = 0xCD;
+      const u8 USB_VISION_COMMAND_MATODOMETRY     = 0xDE;
+      const u8 USB_VISION_COMMAND_MATLOCALIZATION = 0xEF;
+      
+      const u8 USB_VISION_COMMAND_HEAD_CALIBRATION = 0xC1;
+      const u8 USB_VISION_COMMAND_MAT_CALIBRATION  = 0xC2;
+      
+      // Put a byte into a send buffer to be sent by LongExecution()
+      // (Using same prototype as putc / USBPutChar for printf.)
+      int USBBufferChar(int c);
+      
+      // Send a command message (from messageProtocol.h)
+      // The msgID will determine the size
+      void USBSendMessage(const void* msg, const Messages::ID msgID);
+      
+      // Send a frame at the current frame resolution (last set by
+      // a call to SetUSBFrameResolution)
+      void USBSendFrame(const u8*        frame,
+                        const TimeStamp  timestamp,
+                        const CameraMode inputResolution,
+                        const CameraMode sendResolution,
+                        const u8         commandByte);
+      
+      // Send the contents of the USB message buffer.
+      void USBSendPrintBuffer(void);
+      
+      // Send an arbitrary packet of data
+      void USBSendPacket(const u8 packetType, const void* data, const u32 numBytes);
+      
+      // Registur a message name with its ID (e.g. for Matlab, which doesn't
+      // read messageProtocol.h directly)
+      const u8 USB_DEFINE_MESSAGE_ID = 0xD0;
+      void SendMessageID(const char* name, const u8 msgID);
+      
+#ifdef SIMULATOR
+      // Called by SendFooter() to terminate a message when in simulation,
+      // otherwise a no-op.
+      void USBFlush();
+#endif
+
+      
+      
+#endif // if USE_OFFBOARD_VISION
+      
+      
     } // namespace HAL
   } // namespace Cozmo
 } // namespace Anki

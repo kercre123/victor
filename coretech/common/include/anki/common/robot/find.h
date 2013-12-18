@@ -23,7 +23,7 @@ namespace Anki
 #pragma mark --- Definitions ---
 
     template<typename Type1, typename Operator, typename Type2> Find<Type1,Operator,Type2>::Find(const Array<Type1> &array1, const Array<Type2> &array2)
-      : array1(array1), array2(array2), compareWithValue(false), value(static_cast<Type2>(0)), numOutputDimensions(0)
+      : array1(array1), compareWithValue(false), array2(array2), value(static_cast<Type2>(0)), numOutputDimensions(0)
     {
       if(!array1.IsValid() ||
         !array2.IsValid() ||
@@ -38,7 +38,7 @@ namespace Anki
     }
 
     template<typename Type1, typename Operator, typename Type2> Find<Type1,Operator,Type2>::Find(const Array<Type1> &array, const Type2 &value)
-      : array1(array), array2(array), compareWithValue(true), value(value), numOutputDimensions(0)
+      : array1(array), compareWithValue(true), array2(array), value(value), numOutputDimensions(0)
       // array2 is initialized to array, but this is just because it has to point to something, though it should not be accessed
     {
       if(!array1.IsValid()) {

@@ -111,6 +111,9 @@ namespace Anki
       // NOTE: this currently uses insertion sort, so may be slow for large, badly-unsorted arrays
       template<typename Type> Result Sort(Array<Type> &arr, const s32 sortWhichDimension=0, const bool sortAscending=true);
 
+      // indexes must be allocated, but will be overwritten by Sort()
+      template<typename Type> Result Sort(Array<Type> &arr, Array<s32> &indexes, const s32 sortWhichDimension=0, const bool sortAscending=true);
+
       // For a square array, either:
       // 1. When lowerToUpper==true,  copies the lower (left)  triangle to the upper (right) triangle
       // 2. When lowerToUpper==false, copies the upper (right) triangle to the lower (left)  triangle

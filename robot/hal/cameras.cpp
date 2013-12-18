@@ -1,4 +1,6 @@
 #include "cameras.h"
+#include "anki/cozmo/robot/cozmoConfig.h" // for calibration parameters
+#include "anki/common/robot/trig_fast.h"
 
 // Unchanged interrupt level from Movidius
 #define CIF_INTERRUPT_LEVEL 3
@@ -11,6 +13,58 @@ namespace Anki
   {
     namespace HAL
     {
+      // "Private member variables"
+      namespace {
+        CameraMode headCamMode_;
+        
+        // Whether we've already started continuous mode
+        bool m_continuousModeStarted = false;
+        
+        // Intrinsic calibration parameters for each camera:
+        CameraInfo headCamInfo_;
+        CameraInfo matCamInfo_;
+      }
+      
+      inline f32 ComputeVerticalFOV(const u16 height, const f32 fy)
+      {
+        return 2.f * atan_fast(static_cast<f32>(height) / (2.f * fy));
+      }
+      
+      const CameraInfo* GetHeadCamInfo(void)
+      {
+        headCamInfo_ = {
+          HEAD_CAM_CALIB_FOCAL_LENGTH_X,
+          HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+          ComputeVerticalFOV(HEAD_CAM_CALIB_HEIGHT,
+                             HEAD_CAM_CALIB_FOCAL_LENGTH_Y),
+          HEAD_CAM_CALIB_CENTER_X,
+          HEAD_CAM_CALIB_CENTER_Y,
+          0.f,
+          HEAD_CAM_CALIB_HEIGHT,
+          HEAD_CAM_CALIB_WIDTH
+        };
+        
+        return &headCamInfo_;
+      }
+      
+      const CameraInfo* GetMatCamInfo(void)
+      {
+        matCamInfo_ = {
+          MAT_CAM_CALIB_FOCAL_LENGTH_X,
+          MAT_CAM_CALIB_FOCAL_LENGTH_Y,
+          ComputeVerticalFOV(MAT_CAM_CALIB_HEIGHT,
+                             MAT_CAM_CALIB_FOCAL_LENGTH_Y),
+          MAT_CAM_CALIB_CENTER_X,
+          MAT_CAM_CALIB_CENTER_Y,
+          0.f,
+          MAT_CAM_CALIB_HEIGHT,
+          MAT_CAM_CALIB_WIDTH
+        };
+        
+        return &matCamInfo_;
+      }
+      
+      
       typedef struct
       {
         const u32 MXI_CAMX_BASE_ADR;
@@ -54,19 +108,29 @@ namespace Anki
         }
       };
 
-      typedef struct
+      CameraMode GetHeadCamMode(void)
       {
-        u32 width;
-        u32 height;
-      } CameraDimensions;
-
-      static const CameraDimensions m_dimensions[CAMERA_MODE_COUNT] =
+        return headCamMode_;
+      }
+      
+      // TODO: there is a copy of this in sim_hal.cpp -- consolidate into one location.
+      void SetHeadCamMode(const u8 frameResHeader)
       {
-        {640, 480},  // VGA
-        {320, 240},  // QVGA
-        {160, 120}   // QQVGA
-      };
-
+        bool found = false;
+        for(CameraMode mode = CAMERA_MODE_VGA;
+            not found && mode != CAMERA_MODE_COUNT; mode = (CameraMode)(mode + 1))
+        {
+          if(frameResHeader == CameraModeInfo[mode].header) {
+            headCamMode_ = mode;
+            found = true;
+          }
+        }
+        
+        if(not found) {
+          PRINT("ERROR(SetCameraMode): Unknown frame res: %d", frameResHeader);
+        }
+      } //SetHeadCamMode()
+      
       static CameraHandle* m_handles[CAMERA_COUNT] = {NULL, NULL};
 
       static void CameraIRQ(u32 source);
@@ -126,10 +190,8 @@ namespace Anki
             break;
         }
 
-        const CameraDimensions* dim = &m_dimensions[mode];
-
         //CIF Timing config
-        DrvCifTimingCfg (cifBase, dim->width, dim->height, 0, 0, 0, 0);
+        DrvCifTimingCfg (cifBase, CameraModeInfo[mode].width, CameraModeInfo[mode].height, 0, 0, 0, 0);
 
         DrvCifInOutCfg (cifBase, inputFormat, 0x0000, outCfg, 0);
 
@@ -144,8 +206,8 @@ namespace Anki
             DrvCifDma0CfgPP(cifBase,
                       (u32)frameBuffer,
                       (u32)frameBuffer,
-                      dim->width,
-                      dim->height,
+                      CameraModeInfo[mode].width,
+                      CameraModeInfo[mode].height,
                       camSpec->bytesPP,
                       D_CIF_DMA_AXI_BURST_16,
                       0);
@@ -162,8 +224,8 @@ namespace Anki
             DrvCifDma0CfgPP(cifBase,
                     (u32)frameBuffer,
                     (u32)frameBuffer,
-                    dim->width,
-                    dim->height,
+                     CameraModeInfo[mode].width,
+                     CameraModeInfo[mode].height,
                     camSpec->bytesPP,
                     D_CIF_DMA_AXI_BURST_8,
                     0);
@@ -192,7 +254,7 @@ namespace Anki
             break;
         }
 
-        DrvCifCtrlCfg (cifBase, dim->width, dim->height, control);
+        DrvCifCtrlCfg (cifBase, CameraModeInfo[mode].width, CameraModeInfo[mode].height, control);
      }
 
       void CameraInit(CameraHandle* handle, CameraID cameraID,
@@ -294,6 +356,15 @@ namespace Anki
           CameraUpdateMode updateMode, u16 exposure, bool enableLight)
       {
         CamHWRegs* cam = &m_cams[cameraID];
+        if(cam->lastMode == mode &&
+           cam->updateMode == updateMode &&
+           updateMode == CAMERA_UPDATE_CONTINUOUS &&
+           m_continuousModeStarted)
+        {
+          // Everything is already set up the way we want.  Nothing to do.
+          return;
+        }
+
 
         CameraHandle* handle = m_handles[cameraID];
 
@@ -302,6 +373,7 @@ namespace Anki
         {
           CameraConfigure(handle, cam->MXI_CAMX_BASE_ADR, mode, frame);
           cam->lastMode = mode;
+          m_continuousModeStarted = false;
         }
 
         IRQDisable();
@@ -316,17 +388,23 @@ namespace Anki
 
         // Setup continuous mode here to start running
         u32 address = cam->CIFX_DMA0_CFG_ADR;
-        if (updateMode == CAMERA_UPDATE_CONTINUOUS)
+        if (updateMode == CAMERA_UPDATE_CONTINUOUS &&
+            not m_continuousModeStarted)
         {
           REG_WORD(address) |=
             D_CIF_DMA_ENABLE |
             D_CIF_DMA_AUTO_RESTART_CONTINUOUS;
+          
+          m_continuousModeStarted = true;
+          
         } else {
           // Otherwise, run a single frame
           REG_WORD(address) &= ~D_CIF_DMA_AUTO_RESTART_CONTINUOUS;
           REG_WORD(address) |=
             D_CIF_DMA_ENABLE |
             D_CIF_DMA_AUTO_RESTART_ONCE_SHADOW;
+          
+          m_continuousModeStarted = false;
         }
       }
 
@@ -340,6 +418,7 @@ namespace Anki
       {
         return m_cams[cameraID].isEOF;
       }
+      
     }
   }
 }

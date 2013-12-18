@@ -77,6 +77,8 @@ namespace Anki
 
       void Print() const;
 
+      Point<Type> ComputeCenter() const;
+
       bool operator== (const Rectangle<Type> &rect2) const;
 
       Rectangle<Type> operator+ (const Rectangle<Type> &rect2) const;
@@ -104,6 +106,8 @@ namespace Anki
       Quadrilateral(const Quadrilateral<Type>& quad);
 
       void Print() const;
+
+      Point<Type> ComputeCenter() const;
 
       bool operator== (const Quadrilateral<Type> &quad2) const;
 

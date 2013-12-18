@@ -108,10 +108,6 @@ namespace Anki
 
     bool MemoryStack::IsValid() const
     {
-      const size_t LOOP_MAX = 1000000;
-      const char * const bufferCharStar = reinterpret_cast<const char*>(buffer);
-      const size_t bufferSizeT = reinterpret_cast<size_t>(buffer);
-
       AnkiConditionalErrorAndReturnValue(buffer != NULL, false, "Anki.MemoryStack.IsValid", "buffer is not allocated");
 
       AnkiConditionalWarnAndReturnValue(usedBytes <= totalBytes, false, "Anki.MemoryStack.IsValid", "usedBytes is greater than totalBytes");
@@ -121,6 +117,9 @@ namespace Anki
         return true;
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS
+      const size_t LOOP_MAX = 1000000;
+      const char * const bufferCharStar = reinterpret_cast<const char*>(buffer);
+      const size_t bufferSizeT = reinterpret_cast<size_t>(buffer);
 
       s32 index = static_cast<s32>( RoundUp<size_t>(bufferSizeT+HEADER_LENGTH, MEMORY_ALIGNMENT) - HEADER_LENGTH - bufferSizeT );
 

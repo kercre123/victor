@@ -15,7 +15,7 @@ using namespace Anki::Embedded;
 // nextImage = uint8(rgb2gray(imresize(imread('C:\Anki\blockImages\blockImages00316.png'), [480,640]/8)));
 // templateRegionRectangle = [29,39,11,21];
 // numPyramidLevels = 2;
-// transformType = 1;
+// transformType = bitshift(2,8);
 // ridgeWeight = 1e-3;
 // maxIterations = 50;
 // convergenceTolerance = 0.05;

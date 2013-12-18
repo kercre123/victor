@@ -15,6 +15,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/utilities_declarations.h"
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/utilities_c.h"
+#include "anki/common/robot/trig_fast.h"
 
 namespace Anki
 {
@@ -129,7 +130,7 @@ namespace Anki
 
     template<typename Type> void Cart2Pol(const Type x, const Type y, Type &rho, Type &theta)
     {
-      theta = atan2(y, x);
+      theta = atan2_fast(y, x);
       rho = sqrtf(x*x + y*y);
     }
   } // namespace Embedded

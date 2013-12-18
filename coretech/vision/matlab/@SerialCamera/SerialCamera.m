@@ -80,9 +80,14 @@ classdef SerialCamera < handle
             this.footer = SerialCamera.FFOFFEEB;
             this.message = '';
             
-            this.serialObj = serial(this.port, 'BaudRate', BaudRate);
+            if isa(this.port, 'SimulatedSerialCamera') || ...
+                    isa(this.port, 'serial')
+                this.serialObj = this.port;
+            else
+                this.serialObj = serial(this.port, 'BaudRate', BaudRate);
+            end
+            
             fopen(this.serialObj);
-                        
             this.changeResolution(Resolution);
             
         end % Constructor: SerialCamera()
