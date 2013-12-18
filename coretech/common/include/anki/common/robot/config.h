@@ -21,9 +21,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #warning Using MoviCompile
 #define USING_MOVIDIUS_SHAVE_COMPILER
 #define USING_MOVIDIUS_COMPILER
-#endif
 
-#if !defined(__APPLE_CC__) && defined(__GNUC__) && __GNUC__==4 && __GNUC_MINOR__==4 && __GNUC_PATCHLEVEL__==2 //hack to detect the movidius compiler
+#elif defined(ROBOT_HARDWARE)
 //#warning Using GNUC 4.4.2
 #define USING_MOVIDIUS_GCC_COMPILER
 #define USING_MOVIDIUS_COMPILER
