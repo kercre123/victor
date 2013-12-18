@@ -33,10 +33,12 @@ LEON_SOURCE += addSources('../coretech/common/shared/src')
 
 SHAVE_SOURCE = []
 
-MV_TOOLS_DIR = str.replace(os.environ.get('MV_TOOLS_DIR'), '\\', '/')
+MV_TOOLS_DIR = os.environ.get('MV_TOOLS_DIR')
 if MV_TOOLS_DIR is None:
-  print 'ERROR: MV_TOOLS_DIR has not been set in the environment!'
-  sys.exit(1)
+  print 'WARNING: MV_TOOLS_DIR has not been set in the environment!'
+  print 'Using default c:../../movidius-tools/tools'
+  MV_TOOLS_DIR = 'c:../../movidius-tools/tools'
+MV_TOOLS_DIR = str.replace(MV_TOOLS_DIR, '\\', '/')
 MV_TOOLS_DIR += '/'
 MV_COMMON_BASE = MV_TOOLS_DIR + '../mdk/common/'
 COMPONENTS = MV_COMMON_BASE + 'components/'
@@ -82,17 +84,24 @@ CXXOPT = (
 OUTPUT = 'build/'
 
 # Determine the path to sparc-elf-gcc
-UNAME = subprocess.check_output("uname", shell=True)
-if 'Linux' in UNAME:
-  DETECTED_PLATFORM = 'linux32'
-  SPARC_DIR = 'sparc-elf-' + GCC_VERSION + '/'
-else:
+try:
+  UNAME = subprocess.check_output("uname", shell=True)
+  if 'Linux' in UNAME:
+    DETECTED_PLATFORM = 'linux32'
+    SPARC_DIR = 'sparc-elf-' + GCC_VERSION + '/'
+  else:
+    DETECTED_PLATFORM = 'win32'
+    SPARC_DIR = 'sparc-elf-' + GCC_VERSION + '-mingw/'
+except:
+  print 'WARNING: No uname installed, assuming win32'
   DETECTED_PLATFORM = 'win32'
   SPARC_DIR = 'sparc-elf-' + GCC_VERSION + '-mingw/'
-
+    
 PLATFORM = MV_TOOLS_DIR + '/' + MV_TOOLS_VERSION + '/' + DETECTED_PLATFORM + '/'
 
 GCC_DIR = PLATFORM + SPARC_DIR
+CCOPT += ' -I ' + GCC_DIR + 'lib/gcc/sparc-elf/4.4.2/include/'
+CCOPT += ' -I ' + GCC_DIR + 'lib/gcc/sparc-elf/4.4.2/include-fixed/'
 
 CC = GCC_DIR + 'bin/sparc-elf-gcc '
 CXX = GCC_DIR + 'bin/sparc-elf-g++ '
@@ -176,27 +185,39 @@ def compileLEON(src):
   if needsCompile:
     print 'Compiling:', src[(src.rfind('/') + 1):]
     if src.endswith('.S'):
-      if os.system(CC + ' -c ' + CCOPT + ' -DASM ' + src + ' -o ' + obj) != 0:
-        sys.exit(1)
-      os.system(CC + ' ' + CCOPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src)
+      stage1 = CC + ' -c ' + CCOPT + ' -DASM ' + src + ' -o ' + obj
+      stage2 = CC + ' ' + CCOPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src
     elif src.endswith('.c'):
-      if os.system(CC + ' -c ' + CCOPT + ' ' + src + ' -o ' + obj) != 0:
-        sys.exit(1)
-      os.system(CC + ' ' + CCOPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src)
+      stage1 = CC + ' -c ' + CCOPT + ' ' + src + ' -o ' + obj
+      stage2 = CC + ' ' + CCOPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src
     elif src.endswith('.cpp') or src.endswith('.cc'):
-      if os.system(CXX + ' -c ' + CCOPT + ' ' + CXXOPT + ' ' + src + ' -o ' + obj) != 0:
-        sys.exit(1)
-      os.system(CXX + ' ' + CCOPT + ' ' + CXXOPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src)
-
+      stage1 = CXX + ' -c ' + CCOPT + ' ' + CXXOPT + ' ' + src + ' -o ' + obj
+      stage2 = CXX + ' ' + CCOPT + ' ' + CXXOPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src
+    else:
+      print 'ERROR: Weird file extension: ', src
+      sys.exit(1)
+    
+    if isNoisy:
+      print stage1
+      print stage2
+    if os.system(stage1) != 0:
+      sys.exit(1)
+    if os.system(stage2) != 0:
+      sys.exit(1)
+      
 if __name__ == '__main__':
   isTest = False
   isRun = False
   isFlash = False
+  isNoisy = False
 
   for arg in sys.argv:
     if arg == 'clean':
       print 'Cleaning...'
-      os.system('rm -rf ' + OUTPUT + '*')
+      if DETECTED_PLATFORM == 'win32':
+        os.system('rmdir /s/q build')
+      else:
+        os.system('rm -rf ' + OUTPUT + '*')
       sys.exit(0)
     elif arg == 'vision-tests':
       isTest = True
@@ -219,6 +240,8 @@ if __name__ == '__main__':
       isFlash = True
     elif arg == 'make.py':
       pass
+    elif arg == 'noisy':
+      isNoisy = True
     else:
       print 'Invalid argument: ' + arg
       sys.exit(1)
