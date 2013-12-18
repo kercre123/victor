@@ -172,6 +172,8 @@ classdef CozmoVisionProcessor < handle
         
         function Run(this)
             
+            fread(this.serialDevice, [1 this.serialDevice.BytesAvailable]);
+            
             this.serialBuffer = [];
             this.escapePressed = false;
             

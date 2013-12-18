@@ -76,6 +76,10 @@ namespace Anki {
         if (LiftController::IsCalibrated()) {
           PRINT("Motors calibrated\n");
           mode_ = WAITING;
+          
+          PRINT("Starting docking\n");
+          DockingController::ResetDocker();
+          DockingController::StartPicking();  // Kick off image streaming
         }
       }
       
@@ -222,6 +226,9 @@ namespace Anki {
             DockingController::SetRelDockPose(dockMsg.x_distErr,
                                               dockMsg.y_horErr,
                                               dockMsg.angleErr);
+          } else {
+            DockingController::ResetDocker();
+           
           } // IF tracking succeeded
           
         } // while dockErrSignalMailbox has mail
@@ -249,7 +256,7 @@ namespace Anki {
             MotorCalibrationUpdate(); // switches mode_ to WAITING
             break;
           }
-            
+            /*
           case PICK_UP_BLOCK:
           {
             // Wait for docking controller to finish, then pick up the block
@@ -287,29 +294,9 @@ namespace Anki {
             }
             break;
           }
-            
+            */
           case WAITING:
           {
-            
-#if DOCKING_TEST
-            // TODO: Eventually we'll get a message from basestation telling us
-            //       to pick up or put down a block.
-            
-            const u16 BLOCK_TO_PICK_UP = 60;
-            const u16 BLOCK_TO_PLACE_ON = 65;
-            
-            // If we aren't yet carrying a block, be on the lookout for this one
-            // to pick up.  Otherwise, be on the lookout for the block to place
-            // it on.
-            if(not isCarryingBlock_) {
-              VisionSystem::SetDockingBlock(BLOCK_TO_PICK_UP);
-              mode_ = PICK_UP_BLOCK;
-            }
-            else {
-              VisionSystem::SetDockingBlock(BLOCK_TO_PLACE_ON);
-              mode_ = PUT_DOWN_BLOCK;
-            }
-#endif
             // Idle.  Nothing to do yet...
             
             break;

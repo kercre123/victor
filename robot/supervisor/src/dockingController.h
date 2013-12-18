@@ -34,6 +34,14 @@ namespace Anki {
       // Set the desired
       void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad);
       
+      // Resets state machine and configures VisionSystem to track
+      // appropriate block
+      void ResetDocker();
+      
+      // Sets up VisionSystem to track the block to pickup.
+      // This effectively kicks off image "streaming".
+      void StartPicking();
+      
     } // namespace DockingController
   } // namespace Cozmo
 } // namespace Anki

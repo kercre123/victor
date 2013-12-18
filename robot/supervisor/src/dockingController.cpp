@@ -54,11 +54,12 @@ namespace Anki {
         // HACK: Only using these because lift controller encoders not working.
         const u32 PRE_PLACEMENT_WAIT_TIME_US = 2000000;
         const u32 LIFT_MOTION_TIME_US = 7000000;
-        const u32 LIFT_PLACEMENT_ADJUST_TIME_US = 150000;
+        const u32 LIFT_PLACEMENT_ADJUST_TIME_US = 200000;
         bool liftIsUp_ = true;
         const u32 BACKOUT_TIME = 3000000;
         
-        
+        const u16 BLOCK_TO_PICK_UP = 60;
+        const u16 BLOCK_TO_PLACE_ON = 50;
         
         // TODO: set error tolerances in mm and convert to pixels based on camera resolution?
         const f32 VERTICAL_TARGET_ERROR_TOLERANCE = 1.f;   // in pixels
@@ -202,7 +203,7 @@ namespace Anki {
               PathFollower::ClearPath();
               SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
               mode_ = IDLE;
-              PRINT("Too long without block pose\n");
+              PRINT("Too long without block pose (currTime %d, lastErrSignal %d)\n", HAL::GetMicroCounter(), lastDockingErrorSignalRecvdTime_);
               break;
             }
             
@@ -225,8 +226,9 @@ namespace Anki {
             
             
             if (HAL::GetMicroCounter() > transitionTime_) {
-              StartPlacement();
               PRINT("DONE DOCKING\n");
+              VisionSystem::SetDockingBlock(BLOCK_TO_PLACE_ON);
+              StartPlacement();
             }
             
             // Go to IDLE when we lose tracking of the block
@@ -250,7 +252,7 @@ namespace Anki {
               PathFollower::ClearPath();
               SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
               mode_ = IDLE;
-              PRINT("Too long without block pose\n");
+              PRINT("Too long without block pose (currTime %d, lastErrSignal %d)\n", HAL::GetMicroCounter(), lastDockingErrorSignalRecvdTime_);
               break;
             }
             
@@ -261,7 +263,7 @@ namespace Anki {
               GripController::DisengageGripper();
               
               transitionTime_ = HAL::GetMicroCounter() + LIFT_PLACEMENT_ADJUST_TIME_US;
-              HAL::MotorSetPower(HAL::MOTOR_LIFT, -0.3);
+              HAL::MotorSetPower(HAL::MOTOR_LIFT, -0.4);
               mode_ = SET_PLACEMENT_LIFT_HEIGHT;
               
               break;
@@ -386,40 +388,53 @@ namespace Anki {
       // HACK
       void StartPlacement()
       {
-        if (mode_ == DONE_DOCKING || (mode_ == IDLE && isDocked_)) {
-          PRINT("STARTING APPROACH FOR PLACEMENT\n");
-          mode_ = SET_CARRY_LIFT_HEIGHT;
-          if (!liftIsUp_) {
-            HAL::MotorSetPower(HAL::MOTOR_LIFT, 0.5);
-            transitionTime_ = HAL::GetMicroCounter() + LIFT_MOTION_TIME_US;
-            liftIsUp_ = true;
-          }
+        PRINT("STARTING APPROACH FOR PLACEMENT (currTime: %d)\n", HAL::GetMicroCounter());
+        mode_ = SET_CARRY_LIFT_HEIGHT;
+        
+        if (!liftIsUp_) {
+          HAL::MotorSetPower(HAL::MOTOR_LIFT, 0.5);
+          transitionTime_ = HAL::GetMicroCounter() + LIFT_MOTION_TIME_US;
+          liftIsUp_ = true;
         }
       }
+      
+
+      // Set mode to approach if in idle
+      void StartPicking() {
+        PRINT("STARTING APPROACH FOR DOCK\n");
+        isDocked_ = false;
+        mode_ = SET_LOW_LIFT;
+        
+        if (liftIsUp_) {
+          HAL::MotorSetPower(HAL::MOTOR_LIFT, -0.3);
+          transitionTime_ = HAL::GetMicroCounter() + LIFT_MOTION_TIME_US;
+          liftIsUp_ = false;
+        }
+      }
+
       
       
       void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad)
       {
         lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
         
-        // Set mode to approach if in idle
         if (mode_ == IDLE) {
-
           if (isDocked_) {
             StartPlacement();
           } else {
-            PRINT("STARTING APPROACH FOR DOCK\n");
-            mode_ = SET_LOW_LIFT;
-            if (liftIsUp_) {
-              HAL::MotorSetPower(HAL::MOTOR_LIFT, -0.3);
-              transitionTime_ = HAL::GetMicroCounter() + LIFT_MOTION_TIME_US;
-              liftIsUp_ = false;
-            }
+            StartPicking();
           }
+          return;
         }
         
-        // Ignore if we've already finished approach
-        if (mode_ == DONE_DOCKING || mode_ == SET_PLACEMENT_LIFT_HEIGHT || mode_ == BACKOUT || mode_ == LOWER_LIFT || mode_ == DONE) {
+        
+        // Return early if we've already finished approach or we're moving the lift in which case
+        // we shouldn't drive just yet.
+        if (mode_ == DONE_DOCKING
+            || mode_ == SET_PLACEMENT_LIFT_HEIGHT
+            || mode_ == BACKOUT
+            || mode_ == LOWER_LIFT
+            || mode_ == DONE) {
           return;
         }
         
@@ -508,6 +523,30 @@ namespace Anki {
         
         // Start following path
         PathFollower::StartPathTraversal();
+        
+      }
+      
+
+
+      void ResetDocker() {
+        
+        // Don't interrupt backing out when it's done placingexit.
+        // TODO: This should move to higher level controller.
+        if (mode_ != SET_PLACEMENT_LIFT_HEIGHT &&
+            mode_ != LOWER_LIFT &&
+            mode_ != BACKOUT) {
+          SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
+          //PathFollower::ClearPath();
+          SteeringController::ExecuteDirectDrive(0,0);
+          mode_ = IDLE;
+        }
+        
+        if (isDocked_) {
+          VisionSystem::SetDockingBlock(BLOCK_TO_PLACE_ON);
+        } else {
+          VisionSystem::SetDockingBlock(BLOCK_TO_PICK_UP);
+        }
+
         
       }
       
