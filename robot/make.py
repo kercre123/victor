@@ -19,7 +19,7 @@ TARGET = 'cozmo'
 
 MV_SOC_PLATFORM = 'myriad1'
 GCC_VERSION = '4.4.2'
-MV_TOOLS_VERSION = '00.50.37.0'
+MV_TOOLS_VERSION = '00.50.39.2'
 
 LEON_SOURCE = []
 LEON_SOURCE += addSources('./hal')
