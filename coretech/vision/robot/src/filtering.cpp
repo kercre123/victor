@@ -9,7 +9,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/miscVisionKernels.h"
 
-using namespace std;
+//using namespace std;
 
 namespace Anki
 {
@@ -17,7 +17,7 @@ namespace Anki
   {
     namespace ImageProcessing
     {
-      static Result lastResult;
+      //static Result lastResult;
 
       typedef enum
       {

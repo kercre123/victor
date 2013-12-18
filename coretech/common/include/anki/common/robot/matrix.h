@@ -299,7 +299,7 @@ namespace Anki
         // Solve L*y = b via forward substitution
         for(s32 i = 0; i < matrixHeight; i++) {
           const Type * restrict pAL_yi = A_L.Pointer(i, 0);
-          Type * restrict pBX_yi = Bt_Xt.Pointer(i, 0);
+          //Type * restrict pBX_yi = Bt_Xt.Pointer(i, 0);
 
           for(s32 j = 0; j < numSamples; j++) {
             Type * restrict pBX_yj = Bt_Xt.Pointer(j, 0);
@@ -318,7 +318,7 @@ namespace Anki
         // Solve L'*X = Y via back substitution
         for(s32 i = matrixHeight-1; i >= 0; i--) {
           const Type * restrict pAL_yi = A_L.Pointer(i, 0);
-          Type * restrict pBX_yi = Bt_Xt.Pointer(i, 0);
+          //Type * restrict pBX_yi = Bt_Xt.Pointer(i, 0);
 
           for(s32 j = 0; j < numSamples; j++) {
             Type * restrict pBX_yj = Bt_Xt.Pointer(j, 0);
