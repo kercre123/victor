@@ -4,7 +4,7 @@
 #include <webots/Supervisor.hpp>
 
 #include "anki/common/types.h"
-#include "anki/cozmo/messageProtocol.h"
+#include "anki/cozmo/messages.h"
 
 #define DEBUG_COZMO_WORLD_COMMS 1
 

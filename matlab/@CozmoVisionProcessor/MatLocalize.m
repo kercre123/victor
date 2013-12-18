@@ -1,0 +1,26 @@
+function MatLocalize(this, img, timestamp)
+
+matMarker = matLocalization(img, ...
+   'pixPerMM', this.pixPerMM, 'returnMarkerOnly', true); 
+
+if matMarker.isValid
+    
+    centroid = matMarker.centroid;
+    
+    msgStruct = struct( ...
+        'timestamp',   timestamp, ...
+        'x_imgCenter', single(centroid(1)), ...
+        'y_imgCenter', single(centroid(2)), ...
+        'angle',       single(matMarker.upAngle), ...
+        'x_MatSquare', uint16(matMarker.X), ...
+        'y_MatSquare', uint16(matMarker.Y), ...
+        'upDirection', uint8(matMarker.upDirection));
+    
+    packet = this.SerializeMessageStruct(msgStruct);
+    this.SendPacket('CozmoMsg_MatMarkerObserfved', packet);
+    
+else
+    disp('Invalid mat marker, not sending anything.');
+end
+
+end % FUNCTION MatLocalize()

@@ -31,6 +31,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "engine.h"
 #include "matrix.h"
 
+// This ignores the "Format string is not a string literal" warning caused by
+// AnkiMatlab_Logf macro below.
+#pragma GCC diagnostic ignored "-Wformat-security"
+
 namespace Anki
 {
   namespace Embedded

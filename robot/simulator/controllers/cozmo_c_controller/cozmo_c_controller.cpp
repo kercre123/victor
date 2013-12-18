@@ -20,6 +20,7 @@
 #include "anki/cozmo/robot/localization.h"
 
 #include "keyboardController.h"
+#include "sim_overlayDisplay.h"
 
 #include "anki/cozmo/robot/hal.h"
 
@@ -37,8 +38,9 @@ int main(int argc, char **argv)
     fprintf(stdout, "Failed to initialize Cozmo::Robot!\n");
     return -1;
   }
-  
+    
   //Sim::KeyboardController::Enable();
+  Sim::OverlayDisplay::Init();
   
   while(Robot::step_MainExecution() == EXIT_SUCCESS)
   {

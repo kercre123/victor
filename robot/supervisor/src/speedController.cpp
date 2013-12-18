@@ -58,7 +58,7 @@ namespace Anki {
       
       // The absolute value (max value) acceleration/deceleration the user commanded to the car [mm/sec^2]
       const s16 DEFAULT_ACCEL_MMPS = 1000;
-      s16 userCommandedAcceleration_ = MAX(Anki::Cozmo::ONE_OVER_CONTROL_DT, DEFAULT_ACCEL_MMPS);
+      s16 userCommandedAcceleration_ = MAX(ONE_OVER_CONTROL_DT, DEFAULT_ACCEL_MMPS);
       
       // The controller needs to regulate the speed of the car "around" the user commanded speed [mm/sec]
       s16 controllerCommandedVehicleSpeed_ = 0;
@@ -120,7 +120,7 @@ namespace Anki {
     
     void SetUserCommandedAcceleration(s16 ucAccel)
     {
-      userCommandedAcceleration_ = MAX(ABS(ucAccel), ceilf(Anki::Cozmo::ONE_OVER_CONTROL_DT));
+      userCommandedAcceleration_ = MAX(ABS(ucAccel), ceilf(ONE_OVER_CONTROL_DT));
     }
     
     s16 GetUserCommandedAcceleration(void)

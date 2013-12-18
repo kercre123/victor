@@ -1,5 +1,5 @@
 
-#include "anki/cozmo/messageProtocol.h"
+#include "anki/cozmo/messages.h"
 
 // TODO: move more of these include files to "src"
 #include "anki/cozmo/robot/cozmoBot.h"
@@ -10,7 +10,6 @@
 #include "headController.h"
 #include "liftController.h"
 #include "testModeController.h"
-#include "anki/cozmo/robot/commandHandler.h"
 #include "anki/cozmo/robot/debug.h"
 #include "anki/cozmo/robot/localization.h"
 #include "anki/cozmo/robot/pathFollower.h"
@@ -27,7 +26,24 @@
 #include "anki/embeddedCommon/matlabConverters.h"
 #endif
 
+#define DOCKING_TEST 1
+
 ///////// END TESTING //////
+
+
+// Frame buffers, for now.
+// TODO: A smarter memory management system to provide frame buffers on demand?
+static const u32 FRAMEBUFFER_WIDTH  = 640;
+static const u32 FRAMEBUFFER_HEIGHT = 480;
+static const u32 FRAMEBUFFER_SIZE   = FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT;
+
+#ifdef SIMULATOR
+static u8 memoryBuffer_[FRAMEBUFFER_SIZE];
+#else
+#define DDR_BUFFER    __attribute__((section(".ddr.text")))
+static DDR_BUFFER u8 memoryBuffer_[FRAMEBUFFER_SIZE];
+#endif
+
 
 namespace Anki {
   namespace Cozmo {
@@ -41,13 +57,9 @@ namespace Anki {
         // TESTING
         const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_NONE;
         
-        
-        // Create Mailboxes for holding messages from the VisionSystem,
-        // to be relayed up to the Basestation.
-        VisionSystem::BlockMarkerMailbox blockMarkerMailbox_;
-        VisionSystem::MatMarkerMailbox   matMarkerMailbox_;
-        
         Robot::OperationMode mode_ = INITIALIZING;
+        
+        bool isCarryingBlock_ = false;
         
       } // Robot private namespace
       
@@ -79,6 +91,10 @@ namespace Anki {
         if (LiftController::IsCalibrated()) {
           PRINT("Motors calibrated\n");
           mode_ = WAITING;
+          
+          PRINT("Starting docking\n");
+          DockingController::ResetDocker();
+          DockingController::StartPicking();  // Kick off image streaming
         }
       }
       
@@ -90,16 +106,11 @@ namespace Anki {
         }
         
         // TODO: Get VisionSystem to work on robot
-#ifdef SIMULATOR
-        if(VisionSystem::Init(HAL::GetHeadCamInfo(),
-                              HAL::GetMatCamInfo(),
-                              &blockMarkerMailbox_,
-                              &matMarkerMailbox_) == EXIT_FAILURE)
+        if(VisionSystem::Init() == EXIT_FAILURE)
         {
           PRINT("Vision System initialization failed.");
           return EXIT_FAILURE;
         }
-#endif
         
         if(PathFollower::Init() == EXIT_FAILURE) {
           PRINT("PathFollower initialization failed.\n");
@@ -148,12 +159,9 @@ namespace Anki {
         // Once initialization is done, broadcast a message that this robot
         // is ready to go
         PRINT("Robot broadcasting availability message.\n");
-        CozmoMsg_RobotAvailable msg;
-        msg.size = sizeof(CozmoMsg_RobotAvailable);
-        msg.msgID = MSG_V2B_CORE_ROBOT_AVAILABLE;
+        Messages::RobotAvailable msg;
         msg.robotID = HAL::GetRobotID();
-        HAL::RadioToBase(reinterpret_cast<u8 *>(&msg), msg.size);
-        
+        HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotAvailable), &msg);
         
         mode_ = INITIALIZING;
 
@@ -172,10 +180,11 @@ namespace Anki {
       
       ReturnCode step_MainExecution()
       {
+
+
 //#if(DEBUG_ANY && defined(SIMULATOR))
 //        PRINT("\n==== FRAME START (time = %d us) ====\n", HAL::GetMicroCounter() );
 //#endif
-        
         // If the hardware interface needs to be advanced (as in the case of
         // a Webots simulation), do that first.
         HAL::Step();
@@ -197,21 +206,48 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
 
         // Process any messages from the basestation
-        CommandHandler::ProcessIncomingMessages();
+        Messages::ProcessBTLEMessages();
+#ifndef USE_OFFBOARD_VISION
+        // UART messages are handled during longExecution() when using
+        // offboard vision processing.
+        Messages::ProcessUARTMessages();
+#endif
         
         // Check for any messages from the vision system and pass them along to
-        // the basestation
-        while( matMarkerMailbox_.hasMail() )
+        // the basestation, update the docking controller, etc.
+        Messages::MatMarkerObserved matMsg;
+        while( Messages::CheckMailbox(matMsg) )
         {
-          const CozmoMsg_ObservedMatMarker matMsg = matMarkerMailbox_.getMessage();
-          HAL::RadioToBase((u8*)(&matMsg), sizeof(CozmoMsg_ObservedMatMarker));
+          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::MatMarkerObserved), &matMsg);
         }
         
-        while( blockMarkerMailbox_.hasMail() )
+        Messages::BlockMarkerObserved blockMsg;
+        while( Messages::CheckMailbox(blockMsg) )
         {
-          const CozmoMsg_ObservedBlockMarker blockMsg = blockMarkerMailbox_.getMessage();
-          HAL::RadioToBase((u8*)(&blockMsg), sizeof(CozmoMsg_ObservedBlockMarker));
-        }
+          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BlockMarkerObserved), &blockMsg);
+          
+        } // while blockMarkerMailbox has mail
+        
+        // Get any docking error signal available from the vision system
+        // and update our path accordingly.
+        Messages::DockingErrorSignal dockMsg;
+        while( Messages::CheckMailbox(dockMsg) )
+        {
+          if(dockMsg.didTrackingSucceed) {
+            PRINT("Received docking error signal: x_distErr=%f, y_horErr=%f, "
+                  "angleErr=%fdeg\n", dockMsg.x_distErr, dockMsg.y_horErr,
+                  RAD_TO_DEG_F32(dockMsg.angleErr));
+            
+            DockingController::SetRelDockPose(dockMsg.x_distErr,
+                                              dockMsg.y_horErr,
+                                              dockMsg.angleErr);
+          } else {
+            DockingController::ResetDocker();
+           
+          } // IF tracking succeeded
+          
+        } // while dockErrSignalMailbox has mail
+        
         
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates
@@ -220,8 +256,7 @@ namespace Anki {
         HeadController::Update();
         LiftController::Update();
         GripController::Update();
-        
-        
+                
         PathFollower::Update();
         DockingController::Update();
         
@@ -233,50 +268,66 @@ namespace Anki {
         {
           case INITIALIZING:
           {
-            MotorCalibrationUpdate();
+            MotorCalibrationUpdate(); // switches mode_ to WAITING
             break;
           }
             /*
-          case FOLLOW_PATH:
+          case PICK_UP_BLOCK:
           {
-            PathFollower::Update();
-            break;
-          }
-            
-          case DOCK:
-          {
-            DockingController::Update();
-            
-            if(DockingController::IsDone())
+            // Wait for docking controller to finish, then pick up the block
+            if(DockingController::IsDocked())
             {
-              mode_ = WAITING;
-              
               if(DockingController::DidSucceed())
               {
                 // TODO: send a message to basestation that we are carrying a block?
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHT);
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                isCarryingBlock_ = true;
+                mode_ = WAITING;
+              } else {
+                // TODO: Back up and try again? Send failure msg to basestation?
+
               }
-              
-            } // if head and left are in position
+            }
+            break;
+          }
             
+          case PUT_DOWN_BLOCK:
+          {
+            // Wait for docking controller to finish, then put down the block
+            if(DockingController::IsDocked())
+            {
+              if(DockingController::DidSucceed())
+              {
+                // TODO: switch b/w putting the block down on the ground vs. on another block
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
+                isCarryingBlock_ = false;
+                mode_ = WAITING;
+              } else {
+                // TODO: Back up and try again? Send failure msg to basestation?
+
+              }
+            }
             break;
           }
             */
           case WAITING:
           {
             // Idle.  Nothing to do yet...
+            
             break;
           }
+            
           default:
             PRINT("Unrecognized CozmoBot mode.\n");
             
         } // switch(mode_)
         
-
         // Manage the various motion controllers:
         SpeedController::Manage();
         SteeringController::Manage();
         WheelController::Manage();
+        
+        
         //////////////////////////////////////////////////////////////
         // Feedback / Display
         //////////////////////////////////////////////////////////////
@@ -289,25 +340,19 @@ namespace Anki {
       } // Robot::step_MainExecution()
       
       
-      // For the "long executation" thread, i.e. the vision code, which
+      // For the "long execution" thread, i.e. the vision code, which
       // will be slower
       ReturnCode step_LongExecution()
       {
+        ReturnCode retVal = EXIT_SUCCESS;
         
-        // TODO: Get VisionSystem to work on robot
-#ifdef SIMULATOR
-        if(VisionSystem::lookForBlocks() == EXIT_FAILURE) {
-          PRINT("VisionSystem::lookForBLocks() failed.\n");
-          return EXIT_FAILURE;
-        }
+        retVal = VisionSystem::Update(memoryBuffer_);
         
-        if(VisionSystem::localizeWithMat() == EXIT_FAILURE) {
-          PRINT("VisionSystem::localizeWithMat() failed.\n");
-          return EXIT_FAILURE;
-        }
+#if USE_OFFBOARD_VISION
+        HAL::USBSendPrintBuffer();
 #endif
         
-        return EXIT_SUCCESS;
+        return retVal;
         
       } // Robot::step_longExecution()
       

@@ -197,9 +197,6 @@ namespace Anki
       void MotorSetPower(MotorID motor, f32 power)
       {
         //ASSERT(motor < MOTOR_COUNT);
-
-        if (motor == MOTOR_LIFT)
-          power *= -1;
         
         if (power > 1.0f)
           power = 1.0f;

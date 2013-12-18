@@ -4,6 +4,8 @@ file(GLOB SOURCE_FILES "*.cpp")
 file(GLOB PRIVATE_HEADER_FILES "*.h")
 file(GLOB PUBLIC_HEADER_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/basestation/*.h")
 
+include_directories(${PROJECT_SOURCE_DIR}/basestation/src)
+
 add_library(Cozmo_Basestation 
 	${SOURCE_FILES} 
 	${PRIVATE_HEADER_FILES}

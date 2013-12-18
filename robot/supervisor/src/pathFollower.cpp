@@ -149,7 +149,7 @@ namespace Anki
       }
       
       // Add path segment
-      // tODO: Change units to meters
+      // TODO: Change units to meters
       bool AppendPathSegment_Line(u32 matID, f32 x_start_m, f32 y_start_m, f32 x_end_m, f32 y_end_m)
       {
         if (numPathSegments_ >= MAX_NUM_PATH_SEGMENTS) {
