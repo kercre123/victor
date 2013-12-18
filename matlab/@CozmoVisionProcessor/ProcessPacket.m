@@ -76,8 +76,7 @@ switch(command)
         end
         
     otherwise
-        warning('Unknown command %d for packet. Skipping.', command);
-        return;
+        warning('Unknown command %d for packet. Skipping.');
         
 end % SWITCH(command)
 

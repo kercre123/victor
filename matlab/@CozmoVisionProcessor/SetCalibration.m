@@ -33,8 +33,7 @@ assert(adjFactor(1) == adjFactor(2), ...
     'Expecting calibration scaling factor to match for X and Y.');
 this.(whichCalibration) = calibrationMatrix * adjFactor(1);
 
-this.StatusMessage(1, 'Camera calibration "%s" set (scaled by %.1f): \n', ...
-    whichCalibration, adjFactor(1));
+this.StatusMessage(1, 'Camera calibration "%s" set (scaled by %.1f): \n', whichCalibration, adjFactor(1));
 disp(this.(whichCalibration));
 
 end % SetCalibration()
