@@ -94,7 +94,6 @@ namespace Anki {
           
           PRINT("Starting docking\n");
           DockingController::ResetDocker();
-          DockingController::StartPicking();  // Kick off image streaming
         }
       }
       
