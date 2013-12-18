@@ -32,7 +32,7 @@ namespace Anki
 
         assert(false);
 
-        return RESULT_FAIL;
+        return RESULT_FAIL_INVALID_PARAMETERS;
       }
 
       static Result ComputeDockingErrorSignal_Affine(const Array<f32> &homography, const Quadrilateral<f32> &templateRegion, const s32 horizontalTrackingResolution, const f32 blockMarkerWidthInMM, const f32 horizontalFocalLengthInMM, const f32 cozmoLiftDistanceInMM, f32 &rel_x, f32 &rel_y, f32 &rel_rad)

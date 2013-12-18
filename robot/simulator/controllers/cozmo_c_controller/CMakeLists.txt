@@ -10,6 +10,11 @@ set(PHYSICS_PLUGIN_DIR ${SIMULATOR_DIR}/plugins/physics/cozmo_physics)
 
 set(ROBOT_SRC_DIR ${PROJECT_SOURCE_DIR}/robot/supervisor/src)
 
+file(GLOB CORETECH_ROBOT_VISION_SRC "${PROJECT_SOURCE_DIR}/coretech/vision/robot/src/*.c*")
+
+file(GLOB CORETECH_ROBOT_COMMON_SRC "${PROJECT_SOURCE_DIR}/coretech/common/robot/src/*.c*")
+
+file(GLOB COZMO_ROBOT_SUPERVISOR_SRC "${ROBOT_SRC_DIR}/*.cpp")
 
 file(GLOB COZMO_ROBOT_HEADER_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/robot/*.h")
 
@@ -42,20 +47,11 @@ set(SOURCE_FILES
   ${SIMULATOR_SRC_DIR}/sim_pathFollower.cpp
   ${SIMULATOR_SRC_DIR}/sim_overlayDisplay.cpp
 
-  ${ROBOT_SRC_DIR}/cozmoBot.cpp
-  ${ROBOT_SRC_DIR}/dockingController.cpp
-  ${ROBOT_SRC_DIR}/gripController.cpp
-  ${ROBOT_SRC_DIR}/headController.cpp
-  ${ROBOT_SRC_DIR}/liftController.cpp
-  ${ROBOT_SRC_DIR}/localization.cpp
-  ${ROBOT_SRC_DIR}/messages.cpp
-  ${ROBOT_SRC_DIR}/offboardVision.cpp
-  ${ROBOT_SRC_DIR}/pathFollower.cpp
-  ${ROBOT_SRC_DIR}/steeringController.cpp
-  ${ROBOT_SRC_DIR}/speedController.cpp
-	${ROBOT_SRC_DIR}/wheelController.cpp
-	${ROBOT_SRC_DIR}/visionSystem.cpp
-	${ROBOT_SRC_DIR}/testModeController.cpp
+  ${COZMO_ROBOT_SUPERVISOR_SRC}
+  
+  ${CORETECH_ROBOT_VISION_SRC}
+  
+  ${CORETECH_ROBOT_COMMON_SRC}
 
 	${PROJECT_SOURCE_DIR}/coretech/messaging/robot/utilMessaging.c
 

@@ -13,6 +13,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #ifndef ROBOT_HARDWARE
 
+#include "anki/common/robot/config.h"
+
 #if ANKICORETECH_EMBEDDED_USE_GTEST
 #include "gtest/gtest.h"
 #endif

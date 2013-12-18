@@ -81,14 +81,46 @@ namespace Anki
       template<typename InType, typename OutType> Result MultiplyTranspose(const Array<InType> &in1, const Array<InType> &in2Transposed, Array<OutType> &out);
 
       //
-      // Linear Solvers
+      // Linear Algebra and Linear Solvers
       //
+
+      // Compute the Cholesky-Banachiewicz decomposition, to return a lower-triangular matrix L such that A=L*L'
+      template<typename Type> Result SolveLeastSquaresWithCholesky(
+        Array<Type> &A_L,       //!< Input A Matrix and Output lower-triangular L matrix
+        Array<Type> &Bt_Xt,     //!< Input B-transpose matrix and Output X-transpose solution
+        bool realCholesky=false //!< A real Cholesky is slower to compute, and not required if only the X solution is required
+        );
+
+      // Compute the homography such that "transformedPoints = homography * originalPoints"
+      //
+      // Warning: This uses the inhomogeneous solution and the Cholesky decomposition, therefore it
+      //          will be incorrect if H_33 is zero, which happens in certain cases of lines at
+      //          inifinty. For more details, see Multiple View Geometry 2nd Edition, Example 4.1
+      template<typename Type> Result EstimateHomography(
+        const FixedLengthList<Point<Type> > &originalPoints,    //!< Four points in the original coordinate system
+        const FixedLengthList<Point<Type> > &transformedPoints, //!< Four points in the transformed coordinate system
+        Array<Type> &homography, //!< A 3x3 transformation matrix
+        MemoryStack scratch //!< Scratch memory
+        );
+
+      //template<typename InType, typename IntermediateType, typename OutType> Result CholeskyDecomposition(
+      //  const Array<InType> &A,                    //!< Input A Matrix
+      //  Array<IntermediateType> &diagonalInverses, //!< Vector of the inverses of the diagonals of L
+      //  Array<OutType> &L                          //!< Output lower-triangular L matrix
+      //  );
+
+      //template<typename InType, typename IntermediateType, typename OutType> Result SolveWithLowerTriangular(
+      //  const Array<InType> &L,                          //!< Input lower-triangular L matrix (such as computed by CholeskyDecomposition)
+      //  const Array<InType> &b,                          //!< Input b matrix
+      //  const Array<IntermediateType> &diagonalInverses, //!< Vector of the inverses of the diagonals of L
+      //  Array<OutType> &x                                //!< Output x solution
+      //  );
 
       // Solves Ax = b
       // Specifically, it uses SVD to minimize ||Ax - b||
       // Note that the A, b, and x matrices are transposed (this is because for large numbers of samples, transposed inputs are liable to be faster)
-      Result SolveLeastSquares_f32(Array<f32> &At, const Array<f32> &bt, Array<f32> &xt, MemoryStack scratch);
-      Result SolveLeastSquares_f64(Array<f64> &At, const Array<f64> &bt, Array<f64> &xt, MemoryStack scratch);
+      //Result SolveLeastSquaresWithSVD_f32(Array<f32> &At, const Array<f32> &bt, Array<f32> &xt, MemoryStack scratch);
+      //Result SolveLeastSquaresWithSVD_f64(Array<f64> &At, const Array<f64> &bt, Array<f64> &xt, MemoryStack scratch);
 
       //
       // Matrix structure operations
@@ -101,6 +133,9 @@ namespace Anki
       // matlab equivalent: out = in(:);
       template<typename TypeIn, typename TypeOut> Result Vectorize(const bool isColumnMajor, const Array<TypeIn> &in, Array<TypeOut> &out);
       template<typename TypeIn, typename TypeOut> Array<TypeOut> Vectorize(const bool isColumnMajor, const Array<TypeIn> &in, MemoryStack &memory);
+
+      // Perform an immediate matrix transpose (unlike the lazy transpose of ArraySlice)
+      template<typename TypeIn, typename TypeOut> Result Transpose(const Array<TypeIn> &in, Array<TypeOut> &out);
 
       //
       // Misc matrix operations

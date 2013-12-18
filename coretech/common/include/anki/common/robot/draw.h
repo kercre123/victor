@@ -27,7 +27,7 @@ namespace Anki
       const s32 imageWidth = image.get_size(1);
 
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
-        RESULT_FAIL, "DrawRectangle", "image is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "DrawRectangle", "image is not valid");
 
       // Make point1 the upper left, and point2 the lower right
       if(point1.x > point2.x) Swap(point1.x, point2.x);

@@ -697,6 +697,13 @@ namespace Anki {
       return static_cast<u32>(webotRobot_.getTime() * 1000000.0);
     }
     
+    void HAL::MicroWait(u32 microseconds)
+    {
+      u32 now = GetMicroCounter();
+      while ((GetMicroCounter() - now) < microseconds)
+        ;
+    }
+    
     TimeStamp HAL::GetTimeStamp(void)
     {
       return static_cast<TimeStamp>(webotRobot_.getTime() * 1000.0);

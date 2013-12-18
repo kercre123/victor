@@ -21,22 +21,22 @@ For internal use only. No part of this code may be used without a signed non-dis
 #endif
 
 #ifdef USING_MOVIDIUS_GCC_COMPILER
-#define VARIABLE_IN_DDR __attribute__((section(".ddr_direct.bss,DDR_DIRECT")))
+#define BENCHMARK_EVENTS_LOCATION __attribute__((section(".bigBss")))
 #else
-#define VARIABLE_IN_DDR
+#define BENCHMARK_EVENTS_LOCATION
 #endif
 
-VARIABLE_IN_DDR BenchmarkEvent benchmarkEvents[NUM_BENCHMARK_EVENTS];
+BENCHMARK_EVENTS_LOCATION BenchmarkEvent benchmarkEvents[NUM_BENCHMARK_EVENTS];
 int currentBenchmarkEvent;
 
-VARIABLE_IN_DDR static const char * eventNames[NUM_BENCHMARK_EVENTS];
+BENCHMARK_EVENTS_LOCATION static const char * eventNames[NUM_BENCHMARK_EVENTS];
 static volatile int numEventNames;
 
-VARIABLE_IN_DDR static double totalTimes[NUM_BENCHMARK_EVENTS];
-VARIABLE_IN_DDR static double minTimes[NUM_BENCHMARK_EVENTS];
-VARIABLE_IN_DDR static double maxTimes[NUM_BENCHMARK_EVENTS];
-VARIABLE_IN_DDR static unsigned int numEvents[NUM_BENCHMARK_EVENTS];
-VARIABLE_IN_DDR static int lastBeginIndex[NUM_BENCHMARK_EVENTS];
+BENCHMARK_EVENTS_LOCATION static double totalTimes[NUM_BENCHMARK_EVENTS];
+BENCHMARK_EVENTS_LOCATION static double minTimes[NUM_BENCHMARK_EVENTS];
+BENCHMARK_EVENTS_LOCATION static double maxTimes[NUM_BENCHMARK_EVENTS];
+BENCHMARK_EVENTS_LOCATION static unsigned int numEvents[NUM_BENCHMARK_EVENTS];
+BENCHMARK_EVENTS_LOCATION static int lastBeginIndex[NUM_BENCHMARK_EVENTS];
 
 void InitBenchmarking()
 {
@@ -113,7 +113,7 @@ unsigned int AddName(const char * const name)
   }
 }
 
-void PrintBenchmarkResults()
+void PrintBenchmarkResults(const BenchmarkPrintType printType)
 {
   int i;
 
@@ -175,7 +175,12 @@ void PrintBenchmarkResults()
   for(i=0; i<numEventNames; i++) {
     printf("Event ");
     printf(eventNames[i]);
-    printf(": Mean:%fs Min:%fs Max:%fs Total:%fs NumEvents:%d\n",
-      totalTimes[i]/(double)numEvents[i], minTimes[i], maxTimes[i], totalTimes[i], numEvents[i]);
+    if(printType == BENCHMARK_PRINT_ALL) {
+      printf(": Mean:%fs Min:%fs Max:%fs Total:%fs NumEvents:%d\n",
+        totalTimes[i]/(double)numEvents[i], minTimes[i], maxTimes[i], totalTimes[i], numEvents[i]);
+    } else if (printType == BENCHMARK_PRINT_TOTALS) {
+      printf(": Total:%fs\n",
+        totalTimes[i]);
+    }
   } // for(i=0; i<numEventNames; i++)
 } // void PrintBenchmarkResults()

@@ -23,10 +23,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/sequences.h"
 #include "anki/common/robot/matrix.h"
 
-// #define ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
-
-#define ANKI_ARRAY_USE_ARRAY_SET
-
 namespace Anki
 {
   namespace Embedded
@@ -270,7 +266,7 @@ namespace Anki
     template<typename Type> Result Array<Type>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
-        RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "Array<Type>::Print", "Array<Type> is not valid");
 
       printf(variableName);
       printf(":\n");
@@ -284,6 +280,11 @@ namespace Anki
       printf("\n");
 
       return RESULT_OK;
+    }
+
+    template<typename Type> Result Array<Type>::PrintAlternate(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    {
+      return this->Print(variableName, minY, maxY, minX, maxX);
     }
 
     template<typename Type> bool Array<Type>::IsValid() const
@@ -319,7 +320,7 @@ namespace Anki
     template<typename Type> Result Array<Type>::Resize(const s32 numRows, const s32 numCols, MemoryStack &memory)
     {
       AnkiConditionalErrorAndReturnValue(numCols > 0 && numRows > 0,
-        RESULT_FAIL, "Array<Type>::Resize", "Invalid size");
+        RESULT_FAIL_INVALID_SIZE, "Array<Type>::Resize", "Invalid size");
 
       s32 numBytesAllocated = 0;
 
@@ -354,7 +355,6 @@ namespace Anki
       return strideWithoutFillPatterns*size[0];
     }
 
-    // Note: The myriad has many issues with static initialization of arrays, so this should not used with caution
     template<typename Type> s32 Array<Type>::Set(const Type value)
     {
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
@@ -401,8 +401,17 @@ namespace Anki
       return size[0]*size[1];
     }
 
-#ifdef ANKI_ARRAY_USE_ARRAY_SET
-    template<typename Type> s32 Array<Type>::Set_unsafe(const Type * const values, const s32 numValues)
+    template<typename InType> s32 SetCast(const InType * const values, const s32 numValues)
+    {
+      // This is a little tough to write a general case for, so this method should be specialized
+      // for each relevant case
+      assert(false);
+
+      AnkiConditionalErrorAndReturnValue(false,
+        0, "Array<Type>::Set", "SetCast must be specialized");
+    }
+
+    template<typename Type> s32 Array<Type>::Set(const Type * const values, const s32 numValues)
     {
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
         0, "Array<Type>::Set", "Array<Type> is not valid");
@@ -410,100 +419,30 @@ namespace Anki
       s32 numValuesSet = 0;
 
       for(s32 y=0; y<size[0]; y++) {
-        Type * restrict pThisData = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
-          if(numValuesSet < numValues)
-          {
-            const Type value = static_cast<Type>(values[numValuesSet++]);
-            pThisData[x] = value;
-          } else {
-            pThisData[x] = 0;
+        u32 * restrict pThisData = reinterpret_cast<u32*>(Pointer(y, 0));
+
+        const s32 numValuesThisRow = MAX(0, MIN(numValues - y*size[1], size[1]));
+
+        if(numValuesThisRow > 0) {
+          // For small data types, this may be too many bytes, but the stride padding should make
+          // the writing okay (I think)
+          const s32 wordsToCopy = (sizeof(Type)*numValuesThisRow + 3) / 4;
+
+          //memcpy(pThisData, values + y*size[1], numValuesThisRow*sizeof(Type));
+          for(s32 x=0; x<wordsToCopy; x++) {
+            assert(reinterpret_cast<size_t>(values+y*size[1]) % 4 == 0);
+            pThisData[x] = reinterpret_cast<const u32*>(values+y*size[1])[x];
           }
+          numValuesSet += numValuesThisRow;
+        }
+
+        if(numValuesThisRow < size[1]) {
+          memset(pThisData+numValuesThisRow*sizeof(Type), 0, (size[1]-numValuesThisRow)*sizeof(Type));
         }
       }
 
       return numValuesSet;
     }
-#endif // ANKI_ARRAY_USE_ARRAY_SET
-
-#ifdef ANKI_ARRAY_USE_ARRAY_SET
-    template<typename Type> s32 Array<Type>::Set(const s32 * const values, const s32 numValues)
-    {
-      AnkiConditionalErrorAndReturnValue(this->IsValid(),
-        0, "Array<Type>::Set", "Array<Type> is not valid");
-
-      s32 numValuesSet = 0;
-
-      for(s32 y=0; y<size[0]; y++) {
-        Type * restrict pThisData = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
-          if(numValuesSet < numValues)
-          {
-            const Type value = static_cast<Type>(values[numValuesSet++]);
-            pThisData[x] = value;
-          } else {
-            pThisData[x] = 0;
-          }
-        }
-      }
-
-      return numValuesSet;
-    }
-#endif // ANKI_ARRAY_USE_ARRAY_SET
-
-#ifdef ANKI_ARRAY_USE_ARRAY_SET
-    template<typename Type> s32 Array<Type>::Set(const f64 * const values, const s32 numValues)
-    {
-      AnkiConditionalErrorAndReturnValue(this->IsValid(),
-        0, "Array<Type>::Set", "Array<Type> is not valid");
-
-      s32 numValuesSet = 0;
-
-      for(s32 y=0; y<size[0]; y++) {
-        Type * restrict pThisData = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
-          if(numValuesSet < numValues)
-          {
-            const Type value = static_cast<Type>(values[numValuesSet++]);
-            pThisData[x] = value;
-          } else {
-            pThisData[x] = 0;
-          }
-        }
-      }
-
-      return numValuesSet;
-    }
-#endif // ANKI_ARRAY_USE_ARRAY_SET
-
-#ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
-    template<typename Type> s32 Array<Type>::Set(const char * const values)
-    {
-      AnkiConditionalErrorAndReturnValue(this->IsValid(),
-        0, "Array<Type>::Set", "Array<Type> is not valid");
-
-      s32 numValuesSet = 0;
-
-      const char * startPointer = values;
-      char * endPointer = NULL;
-
-      for(s32 y=0; y<size[0]; y++) {
-        Type * restrict pThisData = Pointer(y, 0);
-        for(s32 x=0; x<size[1]; x++) {
-          const Type value = static_cast<Type>(strtol(startPointer, &endPointer, 10));
-          if(startPointer != endPointer) {
-            pThisData[x] = value;
-            numValuesSet++;
-          } else {
-            pThisData[x] = 0;
-          }
-          startPointer = endPointer;
-        }
-      }
-
-      return numValuesSet;
-    }
-#endif // #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
 
     template<typename Type> Array<Type>& Array<Type>::operator= (const Array<Type> & rightHandSide)
     {
@@ -586,7 +525,7 @@ namespace Anki
     template<typename Type> Result Array<Type>::InitializeBuffer(const s32 numRows, const s32 numCols, void * const rawData, const s32 dataLength, const Flags::Buffer flags)
     {
       AnkiConditionalErrorAndReturnValue(numCols >= 0 && numRows >= 0 && dataLength >= 0,
-        RESULT_FAIL, "Array<Type>::InitializeBuffer", "Negative dimension");
+        RESULT_FAIL_INVALID_SIZE, "Array<Type>::InitializeBuffer", "Negative dimension");
 
       this->flags = flags;
       this->size[0] = numRows;
@@ -605,7 +544,7 @@ namespace Anki
       if(!rawData) {
         AnkiError("Anki.Array2d.initialize", "input data buffer is NULL");
         InvalidateArray();
-        return RESULT_FAIL;
+        return RESULT_FAIL_UNINITIALIZED_MEMORY;
       }
 
       this->rawDataPointer = rawData;
@@ -617,7 +556,7 @@ namespace Anki
       if(requiredBytes > dataLength) {
         AnkiError("Anki.Array2d.initialize", "Input data buffer is not large enough. %d bytes is required.", requiredBytes);
         InvalidateArray();
-        return RESULT_FAIL;
+        return RESULT_FAIL_OUT_OF_MEMORY;
       }
 
       if(flags.get_useBoundaryFillPatterns()) {
@@ -659,25 +598,34 @@ namespace Anki
       this->rawDataPointer = NULL;
     } // void Array<Type>::InvalidateArray()
 
-    template<typename Type> Result Array<Type>::PrintBasicType(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX)  const
+    template<typename Type> Result Array<Type>::PrintBasicType(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX)  const
     {
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
-        RESULT_FAIL, "Array<Type>::Print", "Array<Type> is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "Array<Type>::Print", "Array<Type> is not valid");
 
-      printf(variableName);
-      printf(":\n");
-      for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
+      const s32 realMinX = MAX(0,minX);
+      const s32 realMaxX = MIN(maxX+1,size[1]);
+      const s32 realMinY = MAX(0,minY);
+      const s32 realMaxY = MIN(maxY+1,size[0]);
+
+      printf("%s type(int:%d,signed:%d,float:%d,sizeof:%d):\n", variableName, Flags::TypeCharacteristics<Type>::isInteger, Flags::TypeCharacteristics<Type>::isSigned, Flags::TypeCharacteristics<Type>::isFloat, sizeof(Type));
+
+      for(s32 y=realMinY; y<realMaxY; y++) {
         const Type * const pThisData = this->Pointer(y, 0);
-        for(s32 x=MAX(0,minX); x<MIN(maxX+1,size[1]); x++) {
+        for(s32 x=realMinX; x<realMaxX; x++) {
           if(Flags::TypeCharacteristics<Type>::isBasicType) {
             if(Flags::TypeCharacteristics<Type>::isInteger) {
-              if(Flags::TypeCharacteristics<Type>::isSigned) {
-                printf("%d ", static_cast<s64>(pThisData[x]));
+              if(sizeof(Type) == 1) {
+                printf("%d ", static_cast<s32>(pThisData[x]));
               } else {
-                printf("%d ", static_cast<u64>(pThisData[x]));
+                printf("%d ", pThisData[x]);
               }
             } else {
-              printf("%f ", pThisData[x]);
+              if(version==1) {
+                printf("%f ", pThisData[x]);
+              } else {
+                printf("%e ", pThisData[x]);
+              }
             }
           } else {
             printf("! ");
@@ -728,10 +676,11 @@ namespace Anki
     template<> Result Array<f32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     template<> Result Array<f64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
 
-#ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
-    template<> s32 Array<f32>::Set(const char * const values);
-    template<> s32 Array<f64>::Set(const char * const values);
-#endif // #ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
+    template<> Result Array<f32>::PrintAlternate(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+    template<> Result Array<f64>::PrintAlternate(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+
+    template<> template<> s32 Array<u8>::SetCast(const s32 * const values, const s32 numValues);
+    template<> template<> s32 Array<s16>::SetCast(const s32 * const values, const s32 numValues);
 
 #pragma mark --- C Conversions ---
     C_Array_s32 get_C_Array_s32(Array<s32> &array);
