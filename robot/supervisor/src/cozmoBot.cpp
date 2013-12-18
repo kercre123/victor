@@ -44,7 +44,7 @@ namespace Anki {
         
         Robot::OperationMode mode_ = INITIALIZING;
         
-        bool isCarryingBlock_ = false;
+        //bool isCarryingBlock_ = false;
         
       } // Robot private namespace
       
