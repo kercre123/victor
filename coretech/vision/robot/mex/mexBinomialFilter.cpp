@@ -5,6 +5,7 @@
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/matlabInterface.h"
 
+#include "anki/vision/robot/imageProcessing.h"
 #include "anki/vision/robot/miscVisionKernels.h"
 
 #define VERBOSITY 0
@@ -25,7 +26,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const u32 numBytes = img.get_size(0) * img.get_stride() + 1000;
   MemoryStack scratch(calloc(numBytes,1), numBytes);
 
-  if(BinomialFilter(img, imgFiltered, scratch) != RESULT_OK) {
+  if(ImageProcessing::BinomialFilter<u8,u32,u8>(img, imgFiltered, scratch) != RESULT_OK) {
     printf("Error: mexBinomialFilter\n");
   }
 

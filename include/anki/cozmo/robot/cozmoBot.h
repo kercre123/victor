@@ -21,7 +21,7 @@ namespace Anki {
       //    (like motor control and sensor updates)
       //
       // 2. The slower functions which take longer and will be run "as quickly
-      //    as possible (like the vision system for finding block markers)
+      //    as possible" (like the vision system for finding block markers)
       //
       ReturnCode step_MainExecution();
       ReturnCode step_LongExecution();
@@ -32,7 +32,8 @@ namespace Anki {
       enum OperationMode {
         INITIALIZING,
         WAITING,
-        DOCK,
+        PICK_UP_BLOCK,
+        PUT_DOWN_BLOCK,
         FOLLOW_PATH
       };
       

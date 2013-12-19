@@ -156,7 +156,7 @@ namespace Anki {
             default:
             {
               //if(not PathFollower::IsTraversingPath()) {
-              if(Robot::GetOperationMode() == Robot::WAITING) {
+              //if(Robot::GetOperationMode() == Robot::WAITING) {
                 // Don't stop the motors if they are being controlled
                 // by other processes
                 if (SteeringController::GetMode() == SteeringController::SM_DIRECT_DRIVE)
@@ -168,7 +168,7 @@ namespace Anki {
                 if(HeadController::IsInPosition()) {
                   HeadController::SetAngularVelocity(0.f);
                 }
-              }
+              //}
             }
               
           } // switch(key)

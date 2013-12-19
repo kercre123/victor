@@ -24,6 +24,13 @@ namespace Anki
 
         return m_microSeconds;
       }
+      
+      TimeStamp GetTimeStamp()
+      {
+        // Currently just returning the microcounter/1000
+        // TODO: Update to actually return real timestamp
+        return GetMicroCounter() / 1000;
+      }
 
       void MicroWait(u32 microseconds)
       {

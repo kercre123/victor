@@ -5,10 +5,16 @@
 # Include paths
 set(SIMULATOR_DIR ${PROJECT_SOURCE_DIR}/robot/simulator)
 set(SIMULATOR_SRC_DIR ${SIMULATOR_DIR}/src)
+set(SIMULATOR_HAL_DIR ${SIMULATOR_DIR}/hal)
 set(PHYSICS_PLUGIN_DIR ${SIMULATOR_DIR}/plugins/physics/cozmo_physics)
 
 set(ROBOT_SRC_DIR ${PROJECT_SOURCE_DIR}/robot/supervisor/src)
 
+file(GLOB CORETECH_ROBOT_VISION_SRC "${PROJECT_SOURCE_DIR}/coretech/vision/robot/src/*.c*")
+
+file(GLOB CORETECH_ROBOT_COMMON_SRC "${PROJECT_SOURCE_DIR}/coretech/common/robot/src/*.c*")
+
+file(GLOB COZMO_ROBOT_SUPERVISOR_SRC "${ROBOT_SRC_DIR}/*.cpp")
 
 file(GLOB COZMO_ROBOT_HEADER_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/robot/*.h")
 
@@ -31,25 +37,21 @@ add_definitions(-DSIMULATOR)
 # Source files
 set(SOURCE_FILES
 	cozmo_c_controller.cpp
+  
+  # this is where the Supervisor object lives, it must be early in the compile list?!?
+  ${SIMULATOR_HAL_DIR}/sim_hal.cpp
+  ${SIMULATOR_HAL_DIR}/sim_radio.cpp
+  ${SIMULATOR_HAL_DIR}/sim_uart.cpp
 
   ${SIMULATOR_SRC_DIR}/keyboardController.cpp
-  ${SIMULATOR_SRC_DIR}/sim_hal.cpp
   ${SIMULATOR_SRC_DIR}/sim_pathFollower.cpp
   ${SIMULATOR_SRC_DIR}/sim_overlayDisplay.cpp
-	
-  ${ROBOT_SRC_DIR}/cozmoBot.cpp
-  ${ROBOT_SRC_DIR}/dockingController.cpp
-  ${ROBOT_SRC_DIR}/commandHandler.cpp
-  ${ROBOT_SRC_DIR}/gripController.cpp
- ${ROBOT_SRC_DIR}/headController.cpp
- ${ROBOT_SRC_DIR}/liftController.cpp
-  ${ROBOT_SRC_DIR}/localization.cpp
-  ${ROBOT_SRC_DIR}/pathFollower.cpp
-  ${ROBOT_SRC_DIR}/steeringController.cpp
-  ${ROBOT_SRC_DIR}/speedController.cpp
-	${ROBOT_SRC_DIR}/wheelController.cpp
-	${ROBOT_SRC_DIR}/visionSystem.cpp
-	${ROBOT_SRC_DIR}/testModeController.cpp
+
+  ${COZMO_ROBOT_SUPERVISOR_SRC}
+  
+  ${CORETECH_ROBOT_VISION_SRC}
+  
+  ${CORETECH_ROBOT_COMMON_SRC}
 
 	${PROJECT_SOURCE_DIR}/coretech/messaging/robot/utilMessaging.c
 

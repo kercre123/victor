@@ -10,7 +10,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/miscVisionKernels.h"
 #include "anki/vision/robot/imageProcessing.h"
 
-using namespace std;
+//using namespace std;
 
 namespace Anki
 {

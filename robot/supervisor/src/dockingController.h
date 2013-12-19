@@ -17,7 +17,7 @@
 
 #include "anki/common/types.h"
 
-#include "anki/cozmo/messageProtocol.h"
+#include "anki/cozmo/messages.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -26,7 +26,6 @@ namespace Anki {
       // TODO: Add if/when needed?
       // ReturnCode Init();
       
-      ReturnCode SetGoals(const CozmoMsg_InitiateDock* msg);
       bool IsDocked(); // whether or not it was successful
       bool IsDockingOrPlacing();
       bool DidSucceed();
@@ -34,6 +33,14 @@ namespace Anki {
 
       // Set the desired
       void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad);
+      
+      // Resets state machine and configures VisionSystem to track
+      // appropriate block
+      void ResetDocker();
+      
+      // Sets up VisionSystem to track the block to pickup.
+      // This effectively kicks off image "streaming".
+      void StartPicking();
       
     } // namespace DockingController
   } // namespace Cozmo

@@ -17,6 +17,8 @@ namespace Anki {
           DEBUG_MSG
         } TextID;
         
+        void Init(void);
+        
         void SetText(TextID id, const char *formatStr, ...);
         
         void UpdateEstimatedPose(const f32 x, const f32 y, const f32 angle);

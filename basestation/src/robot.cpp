@@ -14,7 +14,7 @@
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/robot/cozmoConfig.h"
 
-#include "anki/cozmo/messageProtocol.h"
+#include "anki/cozmo/messages.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -23,14 +23,14 @@ namespace Anki {
     : addedToWorld(false),
       pose(0.f, Z_AXIS_3D, {{0.f, 0.f, WHEEL_RAD_TO_MM}}),
       camDownCalibSet(false), camHeadCalibSet(false),
-      neckPose(0.f,Y_AXIS_3D, NECK_JOINT_POSITION, &pose),
+    neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &pose),
       headCamPose(2.094395102393196, // Rotate -90deg around Y, then 90deg around Z
                   {{sqrtf(3.f)/3.f, -sqrtf(3.f)/3.f, sqrtf(3.f)/3.f}},
-                  HEAD_CAM_POSITION, &neckPose),
-      liftBasePose(0.f, Y_AXIS_3D, LIFT_BASE_POSITION, &pose),
+                  {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &neckPose),
+    liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &pose),
       matCamPose(M_PI, // Rotate 180deg around Y, then 90deg around Z
                  {{sqrtf(2.f)/2.f, -sqrtf(2.f)/2.f, 0.f}},
-                 MAT_CAM_POSITION, &pose),
+                 {{MAT_CAM_POSITION[0], MAT_CAM_POSITION[1], MAT_CAM_POSITION[2]}}, &pose),
       currentHeadAngle(0.f),
       isCarryingBlock(false),
       matMarker(NULL)
@@ -45,9 +45,7 @@ namespace Anki {
     {
       this->ID = withID;
       
-      CozmoMsg_RobotAdded msg;
-      msg.size = sizeof(CozmoMsg_RobotAdded);
-      msg.msgID = MSG_B2V_CORE_ROBOT_ADDED_TO_WORLD;
+      Messages::RobotAddedToWorld msg;
       msg.robotID = this->ID;
       
       const u8 *msgData = (const u8 *) &msg;
@@ -175,9 +173,7 @@ namespace Anki {
       if(poseUpdated)
       {
         // Send our updated pose to the physical robot:
-        CozmoMsg_AbsLocalizationUpdate msg;
-        msg.size = SIZE_MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE;
-        msg.msgID = MSG_B2V_CORE_ABS_LOCALIZATION_UPDATE;
+        Messages::AbsLocalizationUpdate msg;
         msg.xPosition = pose.get_translation().x();
         msg.yPosition = pose.get_translation().y();
         
@@ -228,14 +224,14 @@ namespace Anki {
         MessageType& msg = messagesIn.front();
         
         //const u8 msgSize = msg[0];
-        const CozmoMsg_Command msgType = static_cast<CozmoMsg_Command>(msg[1]);
+        const Messages::ID msgID = static_cast<Messages::ID>(msg[0]);
         
-        switch(msgType)
+        // TODO: Update to use dispatch functions instead of a switch
+        switch(msgID)
         {
-          case MSG_V2B_CORE_HEAD_CAMERA_CALIBRATION:
-          case MSG_V2B_CORE_MAT_CAMERA_CALIBRATION:
+          case Messages::HeadCameraCalibration_ID:
           {
-            const CozmoMsg_CameraCalibration *calibMsg = reinterpret_cast<const CozmoMsg_CameraCalibration*>(&(msg[0]));
+            const Messages::HeadCameraCalibration *calibMsg = reinterpret_cast<const Messages::HeadCameraCalibration*>(&(msg[0]));
             
             Anki::CameraCalibration calib(calibMsg->nrows,
                                           calibMsg->ncols,
@@ -244,45 +240,49 @@ namespace Anki {
                                           calibMsg->center_x,
                                           calibMsg->center_y,
                                           calibMsg->skew);
-            switch(msgType)
-            {
-              case MSG_V2B_CORE_HEAD_CAMERA_CALIBRATION:
-              {
-                fprintf(stdout,
-                        "Basestation robot received head camera calibration.\n");
-                this->camHead.set_calibration(calib);
-                this->camHeadCalibSet = true;
-                break;
-              }
-              case MSG_V2B_CORE_MAT_CAMERA_CALIBRATION:
-              {
-                fprintf(stdout,
-                        "Basestation robot received mat camera calibration.\n");
-                this->camDown.set_calibration(calib);
-                this->camDownCalibSet = true;
-                
-                // Compute the resolution of the mat camera from its FOV and height
-                // off the mat:
-                f32 matCamHeightInPix = ((static_cast<f32>(calibMsg->nrows)*.5f) /
-                                         tanf(calibMsg->fov * .5f));
-                this->downCamPixPerMM = matCamHeightInPix / MAT_CAM_HEIGHT_FROM_GROUND_MM;
-                fprintf(stdout, "Computed mat cam's pixPerMM = %.1f\n",
-                        this->downCamPixPerMM);
-                
-                break;
-              }
-              default:
-                CORETECH_THROW("Unexpectedly reached switch default.");
-            }
+            
+            fprintf(stdout,
+                    "Basestation robot received head camera calibration.\n");
+            this->camHead.set_calibration(calib);
+            this->camHeadCalibSet = true;
+
+            break;
+          }
+          case Messages::MatCameraCalibration_ID:
+          {
+            const Messages::MatCameraCalibration *calibMsg = reinterpret_cast<const Messages::MatCameraCalibration*>(&(msg[0]));
+            
+            Anki::CameraCalibration calib(calibMsg->nrows,
+                                          calibMsg->ncols,
+                                          calibMsg->focalLength_x,
+                                          calibMsg->focalLength_y,
+                                          calibMsg->center_x,
+                                          calibMsg->center_y,
+                                          calibMsg->skew);
+            
+            fprintf(stdout,
+                    "Basestation robot received mat camera calibration.\n");
+            this->camDown.set_calibration(calib);
+            this->camDownCalibSet = true;
+            
+            // Compute the resolution of the mat camera from its FOV and height
+            // off the mat:
+            f32 matCamHeightInPix = ((static_cast<f32>(calibMsg->nrows)*.5f) /
+                                     tanf(calibMsg->fov * .5f));
+            this->downCamPixPerMM = matCamHeightInPix / MAT_CAM_HEIGHT_FROM_GROUND_MM;
+            fprintf(stdout, "Computed mat cam's pixPerMM = %.1f\n",
+                    this->downCamPixPerMM);
+            
+            
             break;
           } // camera calibration case
             
-          case MSG_V2B_CORE_BLOCK_MARKER_OBSERVED:
+          case Messages::BlockMarkerObserved_ID:
           {
             // TODO: store observations from the same frame together
             
             // Translate the raw message into a BlockMarker2d object:
-            const CozmoMsg_ObservedBlockMarker* blockMsg = reinterpret_cast<const CozmoMsg_ObservedBlockMarker*>(&(msg[0]));
+            const Messages::BlockMarkerObserved* blockMsg = reinterpret_cast<const Messages::BlockMarkerObserved*>(&(msg[0]));
             
             fprintf(stdout,
                     "Basestation Robot received ObservedBlockMarker message: "
@@ -321,10 +321,10 @@ namespace Anki {
             
             break;
           }
-          case MSG_V2B_CORE_MAT_MARKER_OBSERVED:
+          case Messages::MatMarkerObserved_ID:
           {
             // Translate the raw message into a MatMarker2d object:
-            const CozmoMsg_ObservedMatMarker* matMsg = reinterpret_cast<const CozmoMsg_ObservedMatMarker*>(&(msg[0]));
+            const Messages::MatMarkerObserved* matMsg = reinterpret_cast<const Messages::MatMarkerObserved*>(&(msg[0]));
             
             fprintf(stdout,
                     "Basestation robot received ObservedMatMarker message: "
@@ -592,7 +592,9 @@ namespace Anki {
         this->camHead.project3dPoints(searchWin3D, searchWin2D);
         
       } // if carrying a block
-      
+
+      // TODO: Update this
+#if 0
       // Create a dock initiation message
       CozmoMsg_InitiateDock msg;
       msg.size = sizeof(CozmoMsg_InitiateDock);
@@ -623,6 +625,7 @@ namespace Anki {
       // Queue the message for sending to the robot
       const u8 *msgData = (const u8 *) &msg;
       messagesOut.emplace(msgData, msgData+sizeof(msg));
+#endif
       
     } // dockWithBlock()
     

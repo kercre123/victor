@@ -15,6 +15,7 @@ namespace Anki {
     
     const f32 MAT_CAM_HEIGHT_FROM_GROUND_MM = (0.5f*WHEEL_DIAMETER_MM) - 3.f;
 
+    const u8 NUM_RADIAL_DISTORTION_COEFFS = 4;
     
 #ifdef SIMULATOR
     // Cozmo control loop is 100Hz on simulator. (That's as fast as it goes!)
@@ -23,16 +24,37 @@ namespace Anki {
     // TODO: Currently set to Webots specs
     const f32 LIFT_JOINT_HEIGHT = 27.f + (0.5f*WHEEL_DIAMETER_MM);
     const f32 LIFT_LENGTH = 97.5f;
-    const f32 LIFT_HEIGHT_LOW = 5.f;
-    const f32 LIFT_HEIGHT_HIGHT = 95.f;
+    const f32 LIFT_HEIGHT_LOWDOCK  = 5.f;
+    const f32 LIFT_HEIGHT_HIGHDOCK = 90.f;
+    const f32 LIFT_HEIGHT_CARRY    = 95.f;
 #else
     // Control loop on robot is 500Hz.
     const s32 TIME_STEP = 2;
     
     const f32 LIFT_JOINT_HEIGHT = 45.f;
     const f32 LIFT_LENGTH = 91.f;
-    const f32 LIFT_HEIGHT_LOW = 22.f;
-    const f32 LIFT_HEIGHT_HIGHT = 70.f;
+    const f32 LIFT_HEIGHT_LOWDOCK  = 22.f;
+    const f32 LIFT_HEIGHT_HIGHDOCK = 65.f;
+    const f32 LIFT_HEIGHT_CARRY    = 70.f;
+    
+    // TODO: Get these from calibration somehow
+    const u16 HEAD_CAM_CALIB_WIDTH  = 320;
+    const u16 HEAD_CAM_CALIB_HEIGHT = 240;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 315.6995f;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 316.8701f;
+    const f32 HEAD_CAM_CALIB_CENTER_X = 169.6225f;
+    const f32 HEAD_CAM_CALIB_CENTER_Y = 119.5692f;
+    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] =
+    {0.0265995f, -0.1683574f, -0.0009116f, 0.0061439f};
+    
+    // TODO: Get real mat camera calibration params: (currently just copies of head cam's)
+    const u16 MAT_CAM_CALIB_WIDTH  = 320;
+    const u16 MAT_CAM_CALIB_HEIGHT = 240;
+    const f32 MAT_CAM_CALIB_FOCAL_LENGTH_X = 315.6995f;
+    const f32 MAT_CAM_CALIB_FOCAL_LENGTH_Y = 316.8701f;
+    const f32 MAT_CAM_CALIB_CENTER_X = 169.6225f;
+    const f32 MAT_CAM_CALIB_CENTER_Y = 119.5692f;
+    const f32 MAT_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {0.f, 0.f, 0.f, 0.f};
 
 #endif
     
@@ -44,11 +66,10 @@ namespace Anki {
     const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);
     const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 30.f);
     
-    // TODO: make these 3-element f32 arrays. Currently, can't instantiate with those.
-#define NECK_JOINT_POSITION {{-15.5f, 0.f, 25.f}} // relative to robot origin
-#define HEAD_CAM_POSITION   {{ 25.0f, 0.f, 15.f}} // relative to neck joint
-#define LIFT_BASE_POSITION  {{-60.0f, 0.f, 27.f}} // relative to robot origin
-#define MAT_CAM_POSITION    {{-25.0f, 0.f, -3.f}} // relative to robot origin
+    const f32 NECK_JOINT_POSITION[3] = {-15.5f, 0.f, 25.f}; // relative to robot origin
+    const f32 HEAD_CAM_POSITION[3]   = { 25.0f, 0.f, 15.f}; // relative to neck joint
+    const f32 LIFT_BASE_POSITION[3]  = {-60.0f, 0.f, 27.f}; // relative to robot origin
+    const f32 MAT_CAM_POSITION[3]   =  {-25.0f, 0.f, -3.f}; // relative to robot origin
     
 #define BLOCKMARKER3D_USE_OUTSIDE_SQUARE false
     

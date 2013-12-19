@@ -1666,6 +1666,8 @@ GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
   // This is okay
   ArraySlice<u8> slice1 = array1(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
 
+  ASSERT_TRUE(slice1.get_array().IsValid());
+  
   const Array<u8> array2(20,30,ms);
 
   // Will not compile
@@ -1673,9 +1675,13 @@ GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
 
   // This is okay
   ConstArraySlice<u8> slice1b = array1(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
+  
+  ASSERT_TRUE(slice1b.get_array().IsValid());
 
   // This is okay
   ConstArraySlice<u8> slice2 = array2(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
+  
+  ASSERT_TRUE(slice2.get_array().IsValid());
 
   //printf("%d %d %d\n", slice1.get_xSlice().get_start(), slice1.get_xSlice().get_end(), *slice1.get_array().Pointer(0,0));
   //printf("%d %d %d\n", slice1b.get_xSlice().get_start(), slice1b.get_xSlice().get_end(), *slice1b.get_array().Pointer(0,0));

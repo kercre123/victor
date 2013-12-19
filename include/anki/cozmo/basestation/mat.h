@@ -1,10 +1,10 @@
 #ifndef __Products_Cozmo__Mat__
 #define __Products_Cozmo__Mat__
 
-#include "anki/cozmo/messageProtocol.h"
+#include "anki/cozmo/messages.h"
 
 #include "anki/common/basestation/math/pose.h"
-//#include "anki/vision/basestation/marker2d.h"
+#include "anki/vision/basestation/marker2d.h"
 
 namespace Anki {
   

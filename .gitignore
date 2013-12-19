@@ -74,3 +74,4 @@ ims.mat
 robot/ld/objects.ldscript
 movidiusTests/shaveTests3/output
 interp2InnerLoop.asmgen-1155e305
+cozmo_docking_controller_test

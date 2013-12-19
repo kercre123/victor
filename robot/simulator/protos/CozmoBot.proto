@@ -3,11 +3,12 @@ PROTO CozmoBot [
   field SFRotation rotation 0 1 0 0
   field SFString name "Cozmo"
   field SFFloat fieldOfViewDown 1.57
-  field SFFloat fieldOfViewHead 1.57
+  field SFFloat fieldOfViewHead 0.7854
   field SFBool useSphericalHeadCamera FALSE
   field SFFloat headAngle 0 
   field SFFloat liftAngle 0
   field SFInt32 commsChannel 1
+  field SFInt32 usbChannel 88
   field SFString controller "cozmo_c_controller"
   
   #field SFVec3f spotLightTranslation 0 .03 -.03
@@ -40,7 +41,23 @@ Supervisor {
       type "radio"
       channel IS commsChannel
     }
-          
+    
+    # For simulated USB connection to do "offboard" vision
+    # processing
+    Emitter {
+       name "usb_tx"
+       type "radio"
+       bufferSize 500000
+       channel IS usbChannel
+    }
+    Receiver {
+       name "usb_rx"
+       type "radio"
+       bufferSize 500000
+       channel IS usbChannel
+    }
+    
+    
     Solid {
       translation -0.06 0.027 0
       children [

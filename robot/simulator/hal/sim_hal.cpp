@@ -5,7 +5,7 @@
 // Our Includes
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
-#include "anki/cozmo/messageProtocol.h"
+#include "anki/cozmo/messages.h"
 #include "cozmo_physics.h"
 
 #include "sim_overlayDisplay.h"
@@ -14,6 +14,9 @@
 #include <webots/Robot.hpp>
 #include <webots/Supervisor.hpp>
 
+#ifndef SIMULATOR
+#error SIMULATOR should be defined by any target using sim_hal.cpp
+#endif
 
 namespace Anki {
   namespace Cozmo {
@@ -22,7 +25,6 @@ namespace Anki {
 
       // Const paramters / settings
       // TODO: some of these should be defined elsewhere (e.g. comms)
-      const u16 RECV_BUFFER_SIZE = 1024;
       const s32 UNLOCK_HYSTERESIS = 50;
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();
       
@@ -33,7 +35,7 @@ namespace Anki {
 #pragma mark --- Simulated HardwareInterface "Member Variables" ---
       
       bool isInitialized = false;
-        
+      
       webots::Supervisor webotRobot_;
       
       s32 robotID_ = -1;
@@ -56,12 +58,11 @@ namespace Anki {
       webots::Camera* headCam_;
       HAL::CameraInfo headCamInfo_;
       HAL::CameraInfo matCamInfo_;
-      u8* headCamBuffer_;
-      u8* matCamBuffer_;
-      u32 headCamCaptureTime_;
-      u32 matCamCaptureTime_;
-      u32 headCamStartCaptureTime_ = 0;
-      u32 matCamStartCaptureTime_ = 0;
+      HAL::CameraMode headCamMode_;
+      // HAL::CameraMode matCamMode_;
+      //u8* headCamBuffer_;
+      //u8* matCamBuffer_;
+      
       HAL::CameraUpdateMode headCamUpdateMode_;
       HAL::CameraUpdateMode matCamUpdateMode_;
       
@@ -75,12 +76,7 @@ namespace Anki {
       webots::Gyro *leftWheelGyro_;
       webots::Gyro *rightWheelGyro_;
       
-      // For communications with basestation
-      webots::Emitter *tx_;
-      webots::Receiver *rx_;
-      bool isConnected_;
-      unsigned char recvBuf_[RECV_BUFFER_SIZE];
-      s32 recvBufSize_;
+
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -189,35 +185,7 @@ namespace Anki {
           //printf("UNLOCKED!\n");
         }
       }
-      
-      /////////// Comms /////////////
-      void ManageRecvBuffer()
-      {
-        // Check for incoming data.
-        // Add it to receive buffer.
-        // Check for special "radio-level" messages (i.e. pings, connection requests)
-        // and respond accordingly.
-        
-        int dataSize;
-        const void* data;
-        
-        // Read receiver for as long as it is not empty.
-        while (rx_->getQueueLength() > 0) {
-          
-          // Get head packet
-          data = rx_->getData();
-          dataSize = rx_->getDataSize();
-          
-          // Copy data to receive buffer
-          memcpy(&recvBuf_[recvBufSize_], data, dataSize);
-          recvBufSize_ += dataSize;
-          
-          // Delete processed packet from queue
-          rx_->nextPacket();
-        }
-      } // ManageRecvBuffer()
 
-      
     } // "private" namespace
     
     namespace Sim {
@@ -229,40 +197,15 @@ namespace Anki {
     }
     
 #pragma mark --- Simulated Hardware Method Implementations ---
-
-    // Helper function to create a CameraInfo struct from Webots camera properties:
-    void FillCameraInfo(const webots::Camera *camera,
-                        HAL::CameraInfo &info)
-    {
-      
-      u16 nrows  = static_cast<u16>(camera->getHeight());
-      u16 ncols  = static_cast<u16>(camera->getWidth());
-      f32 width  = static_cast<f32>(ncols);
-      f32 height = static_cast<f32>(nrows);
-      f32 aspect = width/height;
-      
-      f32 fov_hor = camera->getFov();
-      f32 fov_ver = fov_hor / aspect;
- 
-      f32 fy = height / (2.f * std::tan(0.5f*fov_ver));
-   
-      info.focalLength_x = fy;
-      info.focalLength_y = fy;
-      info.fov_ver       = fov_ver;
-      info.center_x      = 0.5f*width;
-      info.center_y      = 0.5f*height;
-      info.skew          = 0.f;
-      info.nrows         = nrows;
-      info.ncols         = ncols;
-      
-      for(u8 i=0; i<HAL::NUM_RADIAL_DISTORTION_COEFFS; ++i) {
-        info.distortionCoeffs[i] = 0.f;
-      }
-      
-    } // FillCameraInfo
+    
+    // Forward Declaration.  This is implemented in sim_radio.cpp
+    ReturnCode InitSimRadio(webots::Robot& webotRobot, s32 robotID);
     
     ReturnCode HAL::Init()
     {
+      // TODO: need to check return code?
+      UARTInit();
+      
       leftWheelMotor_  = webotRobot_.getMotor("wheel_fl");
       rightWheelMotor_ = webotRobot_.getMotor("wheel_fr");
       
@@ -279,15 +222,8 @@ namespace Anki {
       matCam_->enable(TIME_STEP);
       headCam_->enable(TIME_STEP);
       
-      FillCameraInfo(headCam_, headCamInfo_);
-      FillCameraInfo(matCam_,  matCamInfo_);
-        
       leftWheelGyro_  = webotRobot_.getGyro("wheel_gyro_fl");
       rightWheelGyro_ = webotRobot_.getGyro("wheel_gyro_fr");
-      
-      tx_ = webotRobot_.getEmitter("radio_tx");
-      rx_ = webotRobot_.getReceiver("radio_rx");
-      
       
       // Set ID
       // Expected format of name is <SomeName>_<robotID>
@@ -341,11 +277,10 @@ namespace Anki {
       leftWheelGyro_->enable(TIME_STEP);
       rightWheelGyro_->enable(TIME_STEP);
       
-      // Setup comms
-      rx_->enable(TIME_STEP);
-      rx_->setChannel(robotID_);
-      tx_->setChannel(robotID_);
-      recvBufSize_ = 0;
+      if(InitSimRadio(webotRobot_, robotID_) == EXIT_FAILURE) {
+        PRINT("Failed to initialize Simulated Radio.\n");
+        return EXIT_FAILURE;
+      }
       
       isInitialized = true;
       return EXIT_SUCCESS;
@@ -364,18 +299,14 @@ namespace Anki {
       leftWheelGyro_->disable();
       rightWheelGyro_->disable();
       
-      rx_->disable();
+      // Do we care about actually disabling this?  It lives in sim_radio.cpp now...
+      //rx_->disable();
 
     } // Destroy()
     
     bool HAL::IsInitialized(void)
     {
       return isInitialized;
-    }
-    
-    bool HAL::IsConnected(void)
-    {
-      return isConnected_;
     }
     
     
@@ -548,101 +479,114 @@ namespace Anki {
     } // step()
     
     
-    
-    
-    bool HAL::RadioToBase(u8* buffer, u32 size)
+    // Helper function to create a CameraInfo struct from Webots camera properties:
+    void FillCameraInfo(const webots::Camera *camera,
+                        HAL::CameraInfo &info)
     {
-      // Prefix data with message header (0xBEEF + robotID)
-      u8 msg[1024] = {COZMO_WORLD_MSG_HEADER_BYTE_1,
-        COZMO_WORLD_MSG_HEADER_BYTE_2, static_cast<u8>(robotID_)};
       
-      if(size+3 > 1024) {
-        PRINT("Data too large to send with prepended header!\n");
-      } else {
-        memcpy(msg+3, buffer, size);
-        tx_->send(msg, size+3);
-      }
-      return true;
-    } // SendMessage()
-    
-    u32 HAL::RadioFromBase(u8 buffer[RADIO_BUFFER_SIZE])
-    {
-      ManageRecvBuffer();
+      u16 nrows  = static_cast<u16>(camera->getHeight());
+      u16 ncols  = static_cast<u16>(camera->getWidth());
+      f32 width  = static_cast<f32>(ncols);
+      f32 height = static_cast<f32>(nrows);
+      f32 aspect = width/height;
       
-      // TODO: check for and remove 0xBEEF?
+      f32 fov_hor = camera->getFov();
+      f32 fov_ver = fov_hor / aspect;
       
-      // Is there any data in the receive buffer?
-      if (recvBufSize_ > 0) {
-        // Is there a complete message in the receive buffer?
-        // The first byte should contain the size of the first message
-        int firstMsgSize = recvBuf_[0];
-        if (recvBufSize_ >= firstMsgSize) {
-          
-          // Copy to passed in buffer
-          memcpy(buffer, recvBuf_, firstMsgSize);
-          
-          // Shift data down
-          recvBufSize_ -= firstMsgSize;
-          memmove(recvBuf_, &(recvBuf_[firstMsgSize]), recvBufSize_);
-          
-          return firstMsgSize;
-        }
+      f32 fy = height / (2.f * std::tan(0.5f*fov_ver));
+      
+      info.focalLength_x = fy;
+      info.focalLength_y = fy;
+      info.fov_ver       = fov_ver;
+      info.center_x      = 0.5f*width;
+      info.center_y      = 0.5f*height;
+      info.skew          = 0.f;
+      info.nrows         = nrows;
+      info.ncols         = ncols;
+      
+      for(u8 i=0; i<NUM_RADIAL_DISTORTION_COEFFS; ++i) {
+        info.distortionCoeffs[i] = 0.f;
       }
       
-      return NULL;
-    } // RecvMessage()
-
+    } // FillCameraInfo
+    
     const HAL::CameraInfo* HAL::GetHeadCamInfo(void)
     {
-      return &(headCamInfo_);
+      if(isInitialized) {
+        FillCameraInfo(headCam_, headCamInfo_);
+        return &headCamInfo_;
+      }
+      else {
+        PRINT("HeadCam calibration requested before HAL initialized.\n");
+        return NULL;
+      }
     }
     
     const HAL::CameraInfo* HAL::GetMatCamInfo(void)
     {
-      return &(matCamInfo_);
+      if(isInitialized) {
+        FillCameraInfo(matCam_, matCamInfo_);
+        return &matCamInfo_;
+      }
+      else {
+        PRINT("MatCam calibration requested before HAL initialized.\n");
+        return NULL;
+      }
     }
     
-    void HAL::SetCameraMode(const u8 frameResHeader)
-    {}
-    
-    void CaptureHeadCamFrame()
+    HAL::CameraMode HAL::GetHeadCamMode(void)
     {
-      /*
-      // Acquire grey image
-      // (Closest thing to Y channel?)
-      const u8* image = headCam_->getImage();
-      u16 pixel = 0;
-      for (int y=0; y< headCam_->getHeight(); y++ ) {
-        for (int x=0; x< headCam_->getWidth(); x++ ) {
-          headCamBuffer_[pixel++] = webots::Camera::imageGetGrey(image, headCam_->getWidth(), x, y);
+      return headCamMode_;
+    }
+    
+    // TODO: there is a copy of this in hal.cpp -- consolidate into one location.
+    // TODO: perhaps we'd rather have this be a switch statement
+    //       (However, if the header is stored as a member of the CameraModeInfo
+    //        struct, we can't use it as a case in the switch statement b/c
+    //        the compiler doesn't think it's a constant expression.  We can
+    //        get around this using "constexpr" when declaring CameraModeInfo,
+    //        but that's a C++11 thing and not likely supported on the Movidius
+    //        compiler)
+    void HAL::SetHeadCamMode(const u8 frameResHeader)
+    {
+      bool found = false;
+      for(CameraMode mode = CAMERA_MODE_VGA;
+          not found && mode != CAMERA_MODE_COUNT; ++mode)
+      {
+        if(frameResHeader == CameraModeInfo[mode].header) {
+          headCamMode_ = mode;
+          found = true;
         }
       }
-      */
       
-      memcpy(headCamBuffer_, headCam_->getImage(), headCam_->getHeight() * headCam_->getWidth() * 4);
-    }
+      if(not found) {
+        PRINT("ERROR(SetCameraMode): Unknown frame res: %d", frameResHeader);
+      }
+    } //SetHeadCamMode()
     
-    void CaptureMatCamFrame()
+    void GetGrayscaleFrameHelper(webots::Camera* cam, u8* buffer)
     {
-      /*
       // Acquire grey image
       // (Closest thing to Y channel?)
-      const u8* image = matCam_->getImage();
-      u16 pixel = 0;
-      for (int y=0; y< matCam_->getHeight(); y++ ) {
-        for (int x=0; x< matCam_->getWidth(); x++ ) {
-          matCamBuffer_[pixel++] = webots::Camera::imageGetGrey(image, matCam_->getWidth(), x, y);
+      const u8* image = cam->getImage();
+      if(image == NULL) {
+        PRINT("GetGrayscaleFrameHelper(): no image captured!");
+      }
+      else {
+        u32 pixel = 0;
+        for (int y=0; y < cam->getHeight(); y++ ) {
+          for (int x=0; x < cam->getWidth(); x++ ) {
+            buffer[pixel++] = webots::Camera::imageGetGrey(image, cam->getWidth(), x, y);
+          }
         }
       }
-      */
-      
-       memcpy(matCamBuffer_, matCam_->getImage(), matCam_->getHeight() * matCam_->getWidth() * 4);
-    }
+    } // GetGrayscaleFrameHelper()
     
     
     // Starts camera frame synchronization
-    void HAL::CameraStartFrame(CameraID cameraID, u8* frame, CameraMode mode,
-                          CameraUpdateMode updateMode, u16 exposure, bool enableLight)
+    void HAL::CameraStartFrame(CameraID cameraID, u8* frameBuffer,
+                               CameraMode mode, CameraUpdateMode updateMode,
+                               u16 exposure, bool enableLight)
     {
       // TODO: exposure? enableLight?
       
@@ -655,11 +599,12 @@ namespace Anki {
           }
           
           headCamUpdateMode_ = updateMode;
+          /* Not trying to simulate capture time, so don't need this...
           headCamCaptureTime_ = headCamUpdateMode_ == CAMERA_UPDATE_SINGLE ? CAMERA_SINGLE_CAPTURE_TIME_US : CAMERA_CONTINUOUS_CAPTURE_TIME_US;
           headCamStartCaptureTime_ = GetMicroCounter();
-          headCamBuffer_ = frame;
+          */
           
-          CaptureHeadCamFrame();
+          GetGrayscaleFrameHelper(headCam_, frameBuffer);
 
           break;
         }
@@ -672,11 +617,12 @@ namespace Anki {
           }
           
           matCamUpdateMode_ = updateMode;
+          /* Not trying to simulate capture time, so don't need this...
           matCamCaptureTime_ = matCamUpdateMode_ == CAMERA_UPDATE_SINGLE ? CAMERA_SINGLE_CAPTURE_TIME_US : CAMERA_CONTINUOUS_CAPTURE_TIME_US;
           matCamStartCaptureTime_ = GetMicroCounter();
-          matCamBuffer_ = frame;
-          
-          CaptureMatCamFrame();
+           */
+
+          GetGrayscaleFrameHelper(matCam_, frameBuffer);
           
           break;
         }
@@ -705,13 +651,17 @@ namespace Anki {
     // Returns whether or not the specfied camera has received a full frame
     bool HAL::CameraIsEndOfFrame(CameraID cameraID)
     {
+      // Simulated cameras return frames instantaneously. Yay.
+      return true;
+      
+      /* Don't try to be so fancy.
       switch(cameraID) {
         case CAMERA_FRONT:
         
           if (headCamStartCaptureTime_ != 0 && GetMicroCounter() - headCamStartCaptureTime_ > headCamCaptureTime_) {
             if (headCamUpdateMode_ == CAMERA_UPDATE_CONTINUOUS) {
               headCamStartCaptureTime_ = GetMicroCounter();
-              CaptureHeadCamFrame();
+              //CaptureHeadCamFrame();
             } else { // Single mode
               headCamStartCaptureTime_ = 0;
             }
@@ -724,7 +674,7 @@ namespace Anki {
           if (matCamStartCaptureTime_ != 0 && GetMicroCounter() - matCamStartCaptureTime_ > matCamCaptureTime_) {
             if (matCamUpdateMode_ == CAMERA_UPDATE_CONTINUOUS) {
               matCamStartCaptureTime_ = GetMicroCounter();
-              CaptureMatCamFrame();
+              //CaptureMatCamFrame();
             } else { // Single mode
               matCamStartCaptureTime_ = 0;
             }
@@ -737,30 +687,26 @@ namespace Anki {
           break;
       }
       return false;
+       */
     }
-    
-
-    s32 HAL::USBPeekChar(u32 offset)
-    {
-      return -1;
-    }
-    
-    s32 HAL::USBGetChar(u32 timeout)
-    {
-      return -1;
-    }
-
-    u32 HAL::USBGetNumBytesToRead()
-    {
-      return 0;
-    }
-    
     
     
     // Get the number of microseconds since boot
     u32 HAL::GetMicroCounter(void)
     {
       return static_cast<u32>(webotRobot_.getTime() * 1000000.0);
+    }
+    
+    void HAL::MicroWait(u32 microseconds)
+    {
+      u32 now = GetMicroCounter();
+      while ((GetMicroCounter() - now) < microseconds)
+        ;
+    }
+    
+    TimeStamp HAL::GetTimeStamp(void)
+    {
+      return static_cast<TimeStamp>(webotRobot_.getTime() * 1000.0);
     }
     
     s32 HAL::GetRobotID(void)

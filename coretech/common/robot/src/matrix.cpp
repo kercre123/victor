@@ -18,7 +18,7 @@ namespace Anki
   {
     namespace Matrix
     {
-      static Result lastResult;
+      
     } // namespace Matrix
   } // namespace Embedded
 } // namespace Anki
