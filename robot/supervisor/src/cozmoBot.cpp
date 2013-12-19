@@ -1,4 +1,4 @@
-
+#include "anki/common/robot/config.h"
 #include "anki/cozmo/messages.h"
 
 // TODO: move more of these include files to "src"
