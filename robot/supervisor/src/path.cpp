@@ -380,7 +380,7 @@ namespace Anki
       
 #if(DEBUG_PATH)
       PRINT("DUBINS: startPt %f %f %f, preEnd %f %f, endPt %f %f %f, start_radius %f, end_radius %f\n",
-            start_x, start_y, start_theta, preStraightApproach_x, preStraightApproach_y end_x, end_y, end_theta, start_radius, end_radius);
+            start_x, start_y, start_theta, preStraightApproach_x, preStraightApproach_y, end_x, end_y, end_theta, start_radius, end_radius);
 #endif
 
       for (DubinsPathType i = LSL; i != NUM_DUBINS_PATHS; i = (DubinsPathType)(i+1)) {

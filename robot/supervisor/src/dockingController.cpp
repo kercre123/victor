@@ -42,12 +42,12 @@ namespace Anki {
         };
 
         // Turning radius of docking path
-        f32 DOCK_PATH_START_RADIUS_M = 0.05;
-        f32 DOCK_PATH_END_RADIUS_M = 0.05;
+        const f32 DOCK_PATH_START_RADIUS_M = 0.05;
+        const f32 DOCK_PATH_END_RADIUS_M = 0.05;
         
         // The length of the straight tail end of the dock path.
         // Should be roughly the length of the forks on the lift.
-        f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_M = 0.03;
+        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_M = 0.03;
         
         // Distance between the robot origin and the distance along the robot's x-axis
         // to the lift when it is in the low docking position.
@@ -88,6 +88,8 @@ namespace Anki {
         // When to transition to the next state. Only some states use this.
         u32 transitionTime_ = 0;
         
+        // Whether or not we're already following the block surface normal as a path
+        bool followingBlockNormalPath_ = false;
         
         // The pose of the robot at the start of docking.
         // While block tracking is maintained the robot follows
@@ -242,7 +244,6 @@ namespace Anki {
             // If finished traversing path
             if (!PathFollower::IsTraversingPath()) {
               PRINT("GRIPPING\n");
-              PathFollower::PrintPathSegment(0);
               GripController::EngageGripper();
               
               transitionTime_ = HAL::GetMicroCounter() + PRE_PLACEMENT_WAIT_TIME_US;
@@ -285,7 +286,6 @@ namespace Anki {
             // If finished traversing path
             if (!PathFollower::IsTraversingPath()) {
               PRINT("PLACING\n");
-              PathFollower::PrintPathSegment(0);
               GripController::DisengageGripper();
               
               transitionTime_ = HAL::GetMicroCounter() + LIFT_PLACEMENT_ADJUST_TIME_US;
@@ -466,6 +466,8 @@ namespace Anki {
           approachPath_dtheta = atan2_acc(rel_y, rel_x);
           approachPath_dOrientation = rel_rad;
 #endif
+          
+          followingBlockNormalPath_ = false;
         }
         
         
@@ -516,7 +518,7 @@ namespace Anki {
         f32 rel_angle_to_block = atan2_acc(rel_y, rel_x);
         blockPose_.x() = currPose.x() + distToBlock * cosf(rel_angle_to_block + currPose.angle.ToFloat());
         blockPose_.y() = currPose.y() + distToBlock * sinf(rel_angle_to_block + currPose.angle.ToFloat());
-        blockPose_.angle = currPose.angle + distToBlock + rel_rad;
+        blockPose_.angle = currPose.angle + rel_rad;
         
         
 #ifndef SIMULATOR
@@ -557,7 +559,7 @@ namespace Anki {
         // No reasonable Dubins path exists.
         // Either try again with smaller radii or just let the controller
         // attempt to get on to a straight line normal path.
-        if (numPathSegments == 0 || path_length > 2 * distToBlock) {
+        if (numPathSegments == 0 || path_length > 2 * distToBlock || followingBlockNormalPath_) {
           
           // Compute new starting point for path
           // HACK: Feeling lazy, just multiplying path by some scalar so that it's likely to be behind the current robot pose.
@@ -566,6 +568,8 @@ namespace Anki {
           
           PathFollower::ClearPath();
           PathFollower::AppendPathSegment_Line(0, x_start_m, y_start_m, dockPose_.x(), dockPose_.y());
+          
+          followingBlockNormalPath_ = true;
         }
 
         
