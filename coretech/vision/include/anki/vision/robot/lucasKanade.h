@@ -146,7 +146,7 @@ namespace Anki
         f32 templateWeightsSigma;
 
         Rectangle<f32> templateRegion;
-        Point<f32> center;
+        Point<f32> centerOffset;
 
         bool isValid;
         bool isInitialized;
@@ -176,6 +176,7 @@ namespace Anki
         PlanarTransformation_f32 get_transformation() const;
 
       protected:
+        FixedLengthList<Meshgrid<f32>> templateCoordinates;
         FixedLengthList<Array<u8>> templateImagePyramid;
         FixedLengthList<Array<s16>> templateImageXGradientPyramid;
         FixedLengthList<Array<s16>> templateImageYGradientPyramid;
@@ -196,10 +197,14 @@ namespace Anki
         f32 ridgeWeight;
 
         Rectangle<f32> templateRegion;
+        Point<f32> centerOffset;
 
         bool isValid;
 
         Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack memory);
+
+        Result IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack memory);
+        Result IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack memory);
       };
     } // namespace TemplateTracker
   } // namespace Embedded
