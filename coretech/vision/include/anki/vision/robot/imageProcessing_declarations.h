@@ -47,7 +47,13 @@ namespace Anki
       // Image resizing
       //
 
-      template<typename InType, typename IntermediateType, typename OutType> Result DownsampleByTwo(const Array<InType> &image, Array<OutType> &imageDownsampled);
+      template<typename InType, typename IntermediateType, typename OutType> Result DownsampleByTwo(const Array<InType> &in, Array<OutType> &out);
+
+      // Downsample the image by 2^downsamplePower.
+      // For example, if downsampleFactor==2, then a 640x480 image will be converted to a 160x120 image
+      // This function is safe if Array "in" is in DDR (I think)
+      // Same output as Matlab's imresize, with 'Method'=='box'
+      template<typename InType, typename IntermediateType, typename OutType> Result DownsampleByPowerOfTwo(const Array<InType> &in, const s32 downsamplePower, Array<OutType> &out, MemoryStack scratch);
     } // namespace ImageProcessing
   } // namespace Embedded
 } //namespace Anki
