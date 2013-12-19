@@ -62,12 +62,12 @@ void SuccessorIterator::Next()
 
     // collision checking
     size_t endObs = obstacles_.size();
-    int endPoints = prim->intermediatePositions.size();
+    long endPoints = prim->intermediatePositions.size();
     bool collision = false;
 
     // iterate first through action, starting at the end because this
     // is more likely to be a collision
-    for(int pointIdx = endPoints-1; pointIdx >= 0 && !collision; --pointIdx) {
+    for(long pointIdx = endPoints-1; pointIdx >= 0 && !collision; --pointIdx) {
       for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
         float x,y;
         x = start_c_.x_cm + prim->intermediatePositions[pointIdx].x_cm;
