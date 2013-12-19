@@ -4,67 +4,56 @@
 
 #define USB_WORD(x) *(volatile u32*)(USB_BASE_ADDR + (x))
 
-#define DQH_CAPABILITIES            0
-#define DQH_CURRENT_DTD_POINTER     1
-#define DQH_NEXT_DTD_POINTER        2
-#define DQH_TOKEN                   3
-#define DQH_BUFFER_POINTER_0        4
-#define DQH_BUFFER_POINTER_1        5
-#define DQH_BUFFER_POINTER_2        6
-#define DQH_BUFFER_POINTER_3        7
-#define DQH_BUFFER_POINTER_4        8
-#define DQH_RESERVED                9
-#define DQH_SETUP_BUFFER_0          10
-#define DQH_SETUP_BUFFER_1          11
-// Reserved data used as temporary storage
-#define DQH_CUSTOM_BUFFER           12
-#define DQH_CUSTOM_LENGTH           13
+#define ALIGNED(x) __attribute__((aligned((x))))
+#define USB_INDEX(x) ((((x) & 0x0f) << 1) + (((x) >> 7) & 1))
+#define ENDPTCTRL(x) (REG_ENDPTCTRL0 + ((x) << 2))
 
-#define DTD_TERMINATE               1
+#define DTD_TERMINATE                 1
+#define DTD_TOKEN_LENGTH(x)           ((x) << 16)
+#define DTD_STATUS_ACTIVE             (1 << 7)
+#define DTD_STATUS_HALTED             (1 << 6)
+#define DTD_STATUS_DATA_BUFFER_ERROR  (1 << 5)
+#define DTD_STATUS_TRANSACTION_ERROR  (1 << 3)
 
-#define DTD_NEXT_DTD_POINTER        0
-#define DTD_TOKEN                   1
-#define DTD_BUFFER_POINTER_0        2
-#define DTD_BUFFER_POINTER_1        3
-#define DTD_BUFFER_POINTER_2        4
-#define DTD_BUFFER_POINTER_3        5
-#define DTD_BUFFER_POINTER_4        6
+#define ENDPOINTCTRL_TXE              (1 << 23)
+#define ENDPOINTCTRL_TXR              (1 << 22)
+#define ENDPOINTCTRL_TXT_SHIFT        (18)
+#define ENDPOINTCTRL_TXS              (1 << 16)
+#define ENDPOINTCTRL_RXE              (1 << 7)
+#define ENDPOINTCTRL_RXR              (1 << 6)
+#define ENDPOINTCTRL_RXT_SHIFT        (2)
+#define ENDPOINTCTRL_RXS              (1)
 
 // Request Type Definitions
-#define RT_DIRECTION_SHIFT          7
-#define RT_DIRECTION_MASK           1
-#define RT_DIRECTION_HOST_TO_DEVICE 0
-#define RT_DIRECTION_DEVICE_TO_HOST 1
+#define RT_DIRECTION_SHIFT            7
+#define RT_DIRECTION_MASK             1
+#define RT_DIRECTION_HOST_TO_DEVICE   0
+#define RT_DIRECTION_DEVICE_TO_HOST   1
 
-#define RT_TYPE_SHIFT               5
-#define RT_TYPE_MASK                3
-#define RT_TYPE_STANDARD            0
-#define RT_TYPE_CLASS               1
-#define RT_TYPE_VENDOR              2
-#define RT_TYPE_RESERVED            3
+#define RT_TYPE_SHIFT                 5
+#define RT_TYPE_MASK                  3
+#define RT_TYPE_STANDARD              0
+#define RT_TYPE_CLASS                 1
+#define RT_TYPE_VENDOR                2
+#define RT_TYPE_RESERVED              3
 
-#define RT_RECIPIENT_SHIFT          0
-#define RT_RECIPIENT_MASK           0x1f
-#define RT_RECIPIENT_DEVICE         0
-#define RT_RECIPIENT_INTERFACE      1
-#define RT_RECIPIENT_ENDPOINT       2
-#define RT_RECIPIENT_OTHER          3
+#define RT_RECIPIENT_SHIFT            0
+#define RT_RECIPIENT_MASK             0x1f
+#define RT_RECIPIENT_DEVICE           0
+#define RT_RECIPIENT_INTERFACE        1
+#define RT_RECIPIENT_ENDPOINT         2
+#define RT_RECIPIENT_OTHER            3
 
 // We can safely transmit 64 bytes per packet
-#define MAX_PACKET_SIZE             64
-#define MAX_PACKET_HI               ((MAX_PACKET_SIZE >> 8) & 0xFF)
-#define MAX_PACKET_LO               (MAX_PACKET_SIZE & 0xFF)
-#define MAX_PACKET_EP0              0x40
+#define MAX_PACKET_SIZE               64
+#define MAX_PACKET_HI                 ((MAX_PACKET_SIZE >> 8) & 0xFF)
+#define MAX_PACKET_LO                 (MAX_PACKET_SIZE & 0xFF)
+#define MAX_PACKET_EP0                0x40
 
-#define BSWAP32(x)                  ((((x) >> 24) & 0xFF) | \
-                                      (((x) & 0xFF) << 24) | \
-                                      (((x) >> 8) & 0xFF00) | \
-                                      (((x) & 0xFF00) << 8))
-
-#define S4(a, b, c, d)              (d), (c), (b), (a)
-#define S3(a, b, c)                 S4(a, b, c, 0)
-#define S2(a, b)                    S3(a, b, 0)
-#define S1(a)                       S2(a, 0)
+#define S4(a, b, c, d)                (d), (c), (b), (a)
+#define S3(a, b, c)                   S4(a, b, c, 0)
+#define S2(a, b)                      S3(a, b, 0)
+#define S1(a)                         S2(a, 0)
 
 namespace Anki
 {
@@ -72,70 +61,101 @@ namespace Anki
   {
     namespace HAL
     {
-      static volatile u8 __attribute__((aligned(4))) m_USBStatus[2] = { 0x01, 0x00 };  // Self-Powered, No Remote Wakeup
-      static volatile u8 __attribute__((aligned(4))) m_interface = 0;
-      static volatile u32 __attribute__((aligned(4))) m_deviceStatus = 0;
-      static volatile u32 __attribute__((aligned(4))) m_deviceClock = 0;
-      //  static volatile unsigned int __attribute__((aligned(64)))    m_dTD_IN[32];
-      //  static volatile unsigned int __attribute__((aligned(64)))    m_dTD_OUT[32];
-      //  static volatile unsigned int __attribute__((aligned(64)))    m_dTD_DIO[32];
-      static volatile u32 __attribute__((aligned(1024)))  m_dTD[32][8];
-      static volatile u32 __attribute__((aligned(2048)))  m_dQH[64][16];
-
-      volatile u8 __attribute__((aligned(4096))) m_endpointBuffer[1024];
-      volatile u8 __attribute__((aligned(4096))) m_IN[1024];
-
-      const endpoint_desc_t __attribute__((aligned(64))) usb_control_out_endpoint =
+      struct USBQueueHead
       {
-          sizeof(endpoint_desc_t),
-          ENDPOINT,
-          0x00,  // OUT
-          (EP_TT_CONTROL | EP_ST_NO_SYNC | EP_UT_DATA),
-          MAX_PACKET_EP0,
-          0x01,
+        u32 capabilities;
+        u32 currentDTDPointer;
+        u32 nextDTDPointer;
+        u32 token;
+        u32 bufferPointer[5];
+        u32 reserved0;
+        u32 setupBuffer0;
+        u32 setupBuffer1;
+        u32 reserved1[4];
       };
 
-      const endpoint_desc_t __attribute__((aligned(64))) usb_control_in_endpoint =
+      struct USBTransferDescriptor
       {
-          sizeof(endpoint_desc_t),
-          ENDPOINT,
-          0x80,  // IN
-          (EP_TT_CONTROL | EP_ST_NO_SYNC | EP_UT_DATA),
-          MAX_PACKET_EP0,
-          0x01,
+        u32 nextDTDPointer;
+        u32 token;
+        u32 bufferPointer[5];
+        u32 reserved0;
+      };
+
+      struct USBEndpoint
+      {
+        u32 address;
+        u32 type;
+        u32 maxPacketSize;
+        USBTransferDescriptor* descriptor;
+      };
+
+      // Self-Powered, No Remote Wakeup
+      static u8 ALIGNED(4) m_USBStatus[] = { S2(0x01, 0x00) };
+      static u32 ALIGNED(4) m_configuration = 0;
+      static u32 m_interface = 0;
+      static volatile USBQueueHead ALIGNED(2048)  m_dQH[32];
+
+      static u32 m_wasBulkPrimed = 0;
+      static u32 m_bulkOutHead = 0;
+      static u32 m_bulkOutTail = 0;
+      static u32 m_bulkOutLength = 0;
+
+      static u32 m_bulkInHead = 0;
+      static u32 m_bulkInTail = 0;
+
+      static u8 ALIGNED(4096) m_receiveBuffer[16 * 1024];
+      static u8 ALIGNED(4096) m_transmitBuffer[16 * 1024];
+
+      volatile USBTransferDescriptor m_descriptor_ep0_out;
+      volatile USBTransferDescriptor m_descriptor_ep0_in;
+      volatile USBTransferDescriptor m_descriptor_ep1_out;
+      volatile USBTransferDescriptor m_descriptor_ep2_in;
+      volatile USBTransferDescriptor m_descriptor_ep3_in;
+
+      // Control endpoints
+      static USBEndpoint m_ep0_out =
+      {
+        0x00,
+        EP_TT_CONTROL,
+        MAX_PACKET_EP0,
+        &m_descriptor_ep0_out
+      };
+
+      static USBEndpoint m_ep0_in =
+      {
+        0x80,
+        EP_TT_CONTROL,
+        MAX_PACKET_EP0,
+        &m_descriptor_ep0_in
       };
 
       // Serial endpoints
-      const endpoint_desc_t __attribute__((aligned(64))) usb_ep3_in =
+      static USBEndpoint m_ep1_out =
       {
-        sizeof(endpoint_desc_t),
-        ENDPOINT,
-        0x83,  // IN
-        (EP_TT_INTERRUPT | EP_ST_ASYNC | EP_UT_DATA),
+        0x01,
+        EP_TT_BULK,
+        MAX_PACKET_SIZE,
+        &m_descriptor_ep1_out
+      };
+
+      static USBEndpoint m_ep2_in =
+      {
+        0x82,
+        EP_TT_BULK,
+        MAX_PACKET_SIZE,
+        &m_descriptor_ep2_in
+      };
+
+      static USBEndpoint m_ep3_in =
+      {
+        0x83,
+        EP_TT_INTERRUPT,
         MAX_PACKET_EP0,
-        0x01,
+        &m_descriptor_ep3_in
       };
 
-      const endpoint_desc_t __attribute__((aligned(64))) usb_ep2_in =
-      {
-        sizeof(endpoint_desc_t),
-        ENDPOINT,
-        0x82,  // IN
-        (EP_TT_BULK | EP_ST_ASYNC | EP_UT_DATA),
-        MAX_PACKET_SIZE,
-        0x01,
-      };
-
-      const endpoint_desc_t __attribute__((aligned(64))) usb_ep1_out =
-      {
-        sizeof(endpoint_desc_t),
-        ENDPOINT,
-        0x01,  // OUT
-        (EP_TT_BULK | EP_ST_ASYNC | EP_UT_DATA),
-        MAX_PACKET_SIZE,
-        0x01,
-      };
-
+      // Descriptors and data
       static u8 m_lineCoding[] =
       {
      S4(0x80, 0x25, 0x00, 0x00), // DTERate == 9600
@@ -190,7 +210,7 @@ namespace Anki
         'o', 0x00)
       };
 
-      // TODO: Maybe get this from flash?
+      // TODO: Make a constant serial for all robots
       const u8 m_stringDescriptorSerialNumber[] =
       {
      S4(0x10,             // bLength
@@ -317,131 +337,110 @@ namespace Anki
       };
 
       static void Reset();
+      static void HandleTransfers();
       static void HandleSetupMessage();
-      static void EPSetup(u32 index);
-      static bool Setup(u32 index, u32 bmRequestType, u32 bRequest, u32 wValue, u32 wIndex, u32 wLength);
-      static bool StandardRequestHandler(u32 index, u32 bmRequestType, u32 bRequest, u32 wValue, u32 wIndex, u32 wLength);
-      static bool ClassRequestHandler(u32 index, u32 bmRequestType, u32 bRequest, u32 wValue, u32 wIndex, u32 wLength);
-      static bool VendorRequestHandler(u32 index, u32 bmRequestType, u32 bRequest, u32 wValue, u32 wIndex, u32 wLength);
-      static void SetupTransfer(u32 index, u32 addressOUT, u32 lengthOUT, u32 addressIN, u32 lengthIN);
+      static bool Setup(u32 bmRequestType, u32 bRequest, u32 wValue,
+          u32 wIndex, u32 wLength);
+      static bool StandardRequestHandler(u32 bmRequestType, u32 bRequest,
+          u32 wValue, u32 wIndex, u32 wLength);
+      static bool ClassRequestHandler(u32 bmRequestType, u32 bRequest,
+          u32 wValue, u32 wIndex, u32 wLength);
+      static bool VendorRequestHandler(u32 bmRequestType, u32 bRequest,
+          u32 wValue, u32 wIndex, u32 wLength);
 
-      static void EPStart(const endpoint_desc_t* ep)
+      static void StartEndpoint(USBEndpoint* ep)
       {
-        unsigned int index, cap, type, ctrl;
-        bool isIN = false;
+        u32 index, cap, ctrl;
 
-        printf("starting ep: %02X\n", ep->bEndpointAddress);
-
-        // Get the address for ENDPTCTRL[index]
-        index = ep->bEndpointAddress & 0x0F;
-        ctrl = REG_ENDPTCTRL0 + (index << 2); 
-
-        // Note: even indices in dQH are for OUT endpoints and odd indices are
-        // for IN endpoints
-        index <<= 1;
-        if (ep->bEndpointAddress & 0x80)
-        {
-          isIN = true;
-          index++;
-        }
-
-        type = ep->bmAttributes & 0x03;
+        index = USB_INDEX(ep->address);
+        ctrl = ENDPTCTRL(ep->address & 0x0f);
 
         // Add Zero Length Termination select
         cap = 0;
         //cap |= 0x20000000;
 
-        // Add Mult (number of packets executed per transaction)
-        if (type == EP_TT_ISOCHRONOUS)
-          cap |= ((ep->wMaxPacketSize >> 11) + 1) << 30;
-
         // Add maximum packet length
-        cap |= (ep->wMaxPacketSize & 0x7FF) << 16;
+        cap |= (ep->maxPacketSize & 0x7ff) << 16;
 
         // Add IOS (Interrupt On Setup)
         //if (type == EP_TT_CONTROL)
         //  cap |= 0x8000;
 
-        volatile u32* dQH = m_dQH[index];
-        volatile u32* dTD = m_dTD[index];
+        volatile USBQueueHead* dQH = &m_dQH[index];
+        USBTransferDescriptor* dTD = ep->descriptor;
 
         // Write capabilities
-        dQH[DQH_CAPABILITIES] = cap;
+        dQH->capabilities = cap;
         // Write current dTD pointer
-        dQH[DQH_CURRENT_DTD_POINTER] = 0;
+        dQH->currentDTDPointer = 0;
         // Write next dTD pointer
-        dQH[DQH_NEXT_DTD_POINTER] = DTD_TERMINATE;
-        dQH[DQH_TOKEN] = 0;
-        dQH[DQH_BUFFER_POINTER_0] = 0;
-        dQH[DQH_BUFFER_POINTER_1] = 0;
-        dQH[DQH_BUFFER_POINTER_2] = 0;
-        dQH[DQH_BUFFER_POINTER_3] = 0;
-        dQH[DQH_BUFFER_POINTER_4] = 0;
+        dQH->nextDTDPointer = DTD_TERMINATE;
+        dQH->token = 0;
+        dQH->bufferPointer[0] = 0;
+        dQH->bufferPointer[1] = 0;
+        dQH->bufferPointer[2] = 0;
+        dQH->bufferPointer[3] = 0;
+        dQH->bufferPointer[4] = 0;
 
-        // Clear transfer descriptor
-        dTD[DTD_NEXT_DTD_POINTER] = DTD_TERMINATE;
-        dTD[DTD_TOKEN] = 0;
+        // Clear the transfer descriptor
+        dTD->nextDTDPointer = DTD_TERMINATE;
+        dTD->token = 0;
 
         // Set the endpoint control
-        //cap |= type << 2;
-        if (isIN)
+        if (ep->address & 0x80)  // IN-endpoint?
         {
           // TX Endpoint Reset and Enable
-          USB_WORD(ctrl) |= (type << 18) | (1 << 22) | (1 << 23);
+          USB_WORD(ctrl) =
+            (ep->type << ENDPOINTCTRL_TXT_SHIFT) |
+            ENDPOINTCTRL_TXR |
+            ENDPOINTCTRL_TXE;
         } else {
           // RX Endpoint Reset and Enable
-          USB_WORD(ctrl) |= (type << 2) | (1 << 6) | (1 << 7);
+          USB_WORD(ctrl) =
+            (ep->type << ENDPOINTCTRL_RXT_SHIFT) |
+            ENDPOINTCTRL_RXR |
+            ENDPOINTCTRL_RXE;
         }
-
-        printf("%08X: %08X\n", ctrl, USB_WORD(ctrl));
       }
 
-      static void EPSetup(u32 index)
+      static void PrimeEndpoint(USBEndpoint* ep, const void* address,
+          u32 bufferLength, u32 offset, u32 transferLength)
       {
-        u32 cap, type, mult, address, length;
+        u32 index = USB_INDEX(ep->address);
 
-        volatile u32* dQH = m_dQH[index];
-        volatile u32* dTD = m_dTD[index];
+        volatile USBQueueHead* dQH = &m_dQH[index];
+        USBTransferDescriptor* dTD = ep->descriptor;
 
-        cap = dQH[DQH_CAPABILITIES];
-        address = dQH[DQH_CUSTOM_BUFFER];
-        length = dQH[DQH_CUSTOM_LENGTH];
-        mult = cap >> 30;
-        cap = (cap >> 16) & 0x7ff;
+        // Write next dTD pointer as invalid
+        dTD->nextDTDPointer = DTD_TERMINATE;
+        // Write the active status bit and packet length
+        dTD->token = DTD_STATUS_ACTIVE | DTD_TOKEN_LENGTH(transferLength);
+        // Write buffer pointers in 4KB chunks
+        u32 addressAligned = (u32)address & 0xFFFFf000;
+        u32 bufferEnd = (u32)address + bufferLength;
+        dTD->bufferPointer[0] = (u32)address + offset;
 
-        if (!mult)
+        u32 nextAddress = addressAligned;
+        for (int i = 1; i <= 4; i++)
         {
-          type = 0x0080;
-        } else {
-          type = 0x0480;
-          if (length > cap)
-            type = 0x0880;
-          cap <<= 1;
+          // Increment 4KB and wrap around if it goes past the buffer
+          nextAddress += 0x1000;
+          if (addressAligned > bufferEnd)
+          {
+            nextAddress = addressAligned;
+          }
 
-          if (length > cap)
-            type = 0x0c80;
+          dTD->bufferPointer[i] = nextAddress;
         }
 
-        // Add transfer length
-        type |= (length << 16);
-        // Write next dTD pointer as invalid
-        dTD[DTD_NEXT_DTD_POINTER] = DTD_TERMINATE;
-        // Write transfer control
-        dTD[DTD_TOKEN] = type;
-        // Write buffer pointers in 4KB chunks
-        dTD[DTD_BUFFER_POINTER_0] = address;
-        dTD[DTD_BUFFER_POINTER_1] = (address + 0x1000) & 0xFFFFf000;
-        dTD[DTD_BUFFER_POINTER_2] = (address + 0x2000) & 0xFFFFf000;
-        dTD[DTD_BUFFER_POINTER_3] = (address + 0x3000) & 0xFFFFf000;
-        dTD[DTD_BUFFER_POINTER_4] = (address + 0x4000) & 0xFFFFf000;
-
         // Write dQH next pointer
-        dQH[DQH_NEXT_DTD_POINTER] = (u32)dTD;
-        dQH[DQH_TOKEN] &= ~((1 << 7) | (1 << 6));  // Clear Active | Halted
+        dQH->nextDTDPointer = (u32)dTD;
+        // Clear the active and halted status bits
+        dQH->token &= ~(DTD_STATUS_ACTIVE | DTD_STATUS_HALTED);
 
         // Prime the endpoint
         u32 prime = 1 << (index >> 1);
-        if (index & 1)  // IN endpoint?
+        if (ep->address & 0x80)  // IN endpoint?
           prime <<= 16;
 
         // TODO: Verify this is correct in case of other pending setups
@@ -462,37 +461,22 @@ namespace Anki
       {
         u32 index;
 
-         // Setup serial/cdcacm endpoints
-        EPStart(&usb_ep1_out);
-        EPStart(&usb_ep2_in);
-        EPStart(&usb_ep3_in);
+         // Start the serial/cdcacm endpoints
+        StartEndpoint(&m_ep1_out);
+        StartEndpoint(&m_ep2_in);
+        StartEndpoint(&m_ep3_in);
 
-        // Setup the OUT endpoint
-        index = (1 << 1);
-        SetupTransfer(index,
-            (u32)m_endpointBuffer, MAX_PACKET_SIZE, //sizeof(m_endpointBuffer) >> 1,
-            (u32)m_endpointBuffer, 0);
-        EPSetup(index);
+        // Prime the OUT endpoint
+        PrimeEndpoint(&m_ep1_out,
+            m_receiveBuffer, sizeof(m_receiveBuffer),
+            0, MAX_PACKET_SIZE);
+        m_bulkOutLength = MAX_PACKET_SIZE;
 
-        m_IN[0] = 'H';
-        m_IN[1] = 'e';
-        m_IN[2] = 'l';
-        m_IN[3] = 'l';
-        m_IN[4] = 'o';
-        m_IN[5] = '\n';
- 
-        // Setup the IN endpoints
-        index = (2 << 1);
-        SetupTransfer(index,
-            (u32)m_IN, 0,
-            (u32)m_IN, 0);
-        EPSetup(index + 1);
+        // Prime the IN endpoints
+        PrimeEndpoint(&m_ep2_in, NULL, 0, 0, 0);
+        PrimeEndpoint(&m_ep3_in, NULL, 0, 0, 0);
 
-        index = (3 << 1);
-        SetupTransfer(index,
-            (u32)m_endpointBuffer, 0,
-            (u32)m_endpointBuffer, 0);
-        EPSetup(index + 1);
+        m_wasBulkPrimed = 1;  // TODO: Boolean when MYRIAD2 exists?
       }
 
       static void InitDeviceController()
@@ -509,8 +493,8 @@ namespace Anki
         // Wait for bit to clear
         while (USB_WORD(REG_USBCMD) & USB_USBCMD_RST)
           ;
-        // Transceiver enable (force full-speed connect)
-        USB_WORD(REG_PORTSC1) = (/*USB_PORTSCX_PFSC | */ USB_PORTSCX_PE);
+        // Transceiver enable (can force full-speed connect here)
+        USB_WORD(REG_PORTSC1) = USB_PORTSCX_PE;
         // Set USB address to 0
         USB_WORD(REG_DEVICE_ADDR) = 0;
         // Set the maximum burst length (in 32-bit words)
@@ -522,11 +506,9 @@ namespace Anki
         // Configure the endpoint-list address
         USB_WORD(REG_ENDPOINTLISTADDR) = (u32)&m_dQH;
 
-        // Setup control endpoints
-        EPStart(&usb_control_out_endpoint);
-        EPStart(&usb_control_in_endpoint);
-
-        //InitEndpoints();
+        // Start control endpoints
+        StartEndpoint(&m_ep0_out);
+        StartEndpoint(&m_ep0_in);
 
         // Set the run bit
         USB_WORD(REG_USBCMD) = USB_USBCMD_RS;
@@ -564,9 +546,68 @@ namespace Anki
         // occurs, otherwise a hardware reset of the device controller is
         // recommended (rare).
 
+        // AKA do a hardware reset for the peripheral
+
         //printf("port: %08X\n", USB_WORD(REG_PORTSC1));
 
         USB_WORD(REG_DEVICE_ADDR) = 0;
+      }
+
+      static void HandleTransfers()
+      {
+        // Check the bulk OUT transfer descriptor for data
+        u32 length;
+        if (!m_wasBulkPrimed)
+        {
+          return;
+        }
+
+        USBTransferDescriptor* dTD = m_ep1_out.descriptor;
+        if (!(dTD->token & DTD_STATUS_ACTIVE))
+        {
+          u32 dataLeft = (dTD->token >> 16) & 0x7ff;
+          length = m_bulkOutLength - dataLeft;
+          m_bulkOutHead = (m_bulkOutHead + length) % sizeof(m_receiveBuffer);
+
+          // Reprime the endpoint, but don't let it overflow the buffer. Allow
+          // enough data to go up to the tail pointer.
+          if (m_bulkOutTail > m_bulkOutHead)
+          {
+            length = m_bulkOutTail - m_bulkOutHead - 1;
+          } else {
+            // Receive until the end of the buffer
+            length = sizeof(m_receiveBuffer) - m_bulkOutHead;
+          }
+
+          m_bulkOutLength = length;
+
+          if (length)
+          {
+            PrimeEndpoint(&m_ep1_out,
+                m_receiveBuffer, sizeof(m_receiveBuffer),
+                m_bulkOutHead, length);
+          }
+        }
+
+        dTD = m_ep2_in.descriptor;
+        if (!(dTD->token & DTD_STATUS_ACTIVE))
+        {
+          if (m_bulkInTail > m_bulkInHead)
+          {
+            length = sizeof(m_transmitBuffer) - m_bulkInTail;
+          } else {
+            length = m_bulkInHead - m_bulkInTail;
+          }
+
+          if (length)
+          {
+            PrimeEndpoint(&m_ep2_in,
+                m_transmitBuffer, sizeof(m_transmitBuffer),
+                m_bulkInTail, length);
+          }
+
+          m_bulkInTail = (m_bulkInTail + length) % sizeof(m_transmitBuffer);
+        }
       }
 
       void USBInit()
@@ -583,15 +624,6 @@ namespace Anki
 
         // XXX: Not including the setup for interrupts...
         //USB_WORD(REG_USBINTR) |= USB_USBINTR_UE;
-
-        // TODO: Add IN-addresses?
-      //    m_dTD_IN[0] = (unsigned int)&m_dTD_IN[8];
-      //    m_dTD_IN[8] = (unsigned int)&m_dTD_IN[16];
-      //    m_dTD_IN[16] = (unsigned int)&m_dTD_IN[24];
-      //    m_dTD_IN[24] = (unsigned int)&m_dTD_IN[0];
-
-        m_deviceStatus =
-          (m_deviceStatus & 0xFFFF) | (USB_WORD(REG_FRINDEX) << 16);
       }
 
       void USBSend(u8* buffer, u32 length)
@@ -635,28 +667,9 @@ namespace Anki
 
           //SET_USB_WORD(ICB_INT_CLEAR, (1 << IRQ_USB));
 
-          // Increment the clock counter
-          m_deviceClock++;
-
           HandleSetupMessage();
 
-          // Update the frame index
-          m_deviceStatus =
-            (m_deviceStatus & 0xFFFF) | (USB_WORD(REG_FRINDEX) << 16);
-
-          static u32 old = 0;
-          if ((HAL::GetMicroCounter() - old) >= 250000)
-          {
-            old = HAL::GetMicroCounter();
-            printf("buff: %02X %02X %02X %02X\n", 
-                m_endpointBuffer[0],
-                m_endpointBuffer[1],
-                m_endpointBuffer[2],
-                m_endpointBuffer[3]);
-            printf("data: %08X\n", m_dQH[2][3]);
-          }
-
-          static volatile u8 sendBUFFER = 0;
+/*          static volatile u8 sendBUFFER = 0;
           if (!sendBUFFER && (m_endpointBuffer[3] == 'a'))
           {
             printf("sending... %02X\n", sendBUFFER);
@@ -670,57 +683,7 @@ namespace Anki
             printf("SetupTransfer == %02X\n", sendBUFFER);
             EPSetup(index + 1);
             printf("EPSetup == %02X\n", sendBUFFER);
-          }
-
-/*          static u8 a = 0, b = 0, c = 0;
-
-          u8 a1 = m_dQH[2][2] & 0x7F;
-          u8 b1 = m_dQH[5][2] & 0x7F;
-          u8 c1 = m_dQH[7][2] & 0x7F;
-
-          if (a1)
-          {
-            USB_WORD(REG_ENDPTFLUSH) |= 1 << 1;
-          }
-          if (b1)
-          {
-            USB_WORD(REG_ENDPTFLUSH) |= 1 << (16 + 2);
-          }
-          if (c1)
-          {
-            USB_WORD(REG_ENDPTFLUSH) |= 1 << (16 + 3);
-          }
-
-          if (a1 != a || b1 != b || c1 != c)
-          {
-            a = a1;
-            b = b1;
-            c = c1;
-            printf("%02X %02X %02X\n", a1, b1, c1);
-          }
-
-          while (USB_WORD(REG_ENDPTFLUSH))
-            ;
-
-          // .........
-          if (a1)
-          {
-            SetupTransfer(3, (u32)m_endpointBuffer, 0x10,
-                (u32)m_endpointBuffer, 0);
-            EPSetup(3);
-          }
-          if (b1)
-          {
-            SetupTransfer(5, (u32)m_endpointBuffer, 0,
-                (u32)m_endpointBuffer, 0);
-            EPSetup(5);
-          }
-          if (c1)
-          {
-            SetupTransfer(7, (u32)m_endpointBuffer, 0,
-                (u32)m_endpointBuffer, 0);
-            EPSetup(7);
-          } */
+          }*/
 
         }
 
@@ -733,51 +696,18 @@ namespace Anki
           //HandleSetupMessage();
         }
 
-        // TODO: Implement the rest
-        // ...
-
-
-        static u32 err = 0;
-        if ((m_dQH[1][1] & 0x68) && err != m_dQH[1][1])
-        {
-          err = m_dQH[1][1];
-          printf("dQH == %08X\n", m_dQH[1][1]);
-        }
-
-        //wasActive = (m_dQH[1][1] & 0x80) != 0;
-
-
-
-
-      }
-
-      bool isFull()
-      {
-        return true;
+        HandleTransfers();
       }
 
       static void HandleSetupMessage()
       {
-        u32 setupStatus, index, ctrl;
         bool setupStall;
 
-        setupStatus = USB_WORD(REG_ENDPTSETUPSTAT);
-
-        u32 bit = 1;
-        for (u32 i = 0; i < 16; i++, bit <<= 1)
+        // Only accept setup on endpoint 0
+        if (USB_WORD(REG_ENDPTSETUPSTAT) & 1)
         {
-          if (!(setupStatus & bit))
-          {
-            continue;
-          }
-
-          printf("found: %d\n", i);
-
           // Clear the setup status
-          USB_WORD(REG_ENDPTSETUPSTAT) = bit;
-
-          // Get the queue head index offset (two per endpoint)
-          index = i << 1;
+          USB_WORD(REG_ENDPTSETUPSTAT) = 1;
 
           // Setup tripwire for reading the setup bytes
           do
@@ -786,19 +716,18 @@ namespace Anki
           } while (!(USB_WORD(REG_USBCMD) & USB_USBCMD_SUTW));
 
           // Read out data from the setup buffer
-          unsigned int data03 = (unsigned int)m_dQH[index][DQH_SETUP_BUFFER_0];
-          unsigned int data47 = (unsigned int)m_dQH[index][DQH_SETUP_BUFFER_1];
-          unsigned int bmRequestType = data03 & 0xFF;
-          unsigned int bRequest = (data03 >> 8) & 0xFF;
-          unsigned int wValue = (data03 >> 16) & 0xFFFF;
-          unsigned int wIndex = data47 & 0xFFFF;
-          unsigned int wLength = (data47 >> 16) & 0xFFFF;
+          u32 data03 = m_dQH[0].setupBuffer0;
+          u32 data47 = m_dQH[0].setupBuffer1;
+          u32 bmRequestType = data03 & 0xFF;
+          u32 bRequest = (data03 >> 8) & 0xFF;
+          u32 wValue = (data03 >> 16) & 0xFFFF;
+          u32 wIndex = data47 & 0xFFFF;
+          u32 wLength = (data47 >> 16) & 0xFFFF;
 
-          printf("bmRequestType: %02X, bRequest: %02X, wValue: %04X, wIndex: %04X, wLength: %04X\n",
-              bmRequestType, bRequest, wValue, wIndex, wLength);
+//          printf("%02X %02X %04X %04X %04X\n", 
+//              bmRequestType, bRequest, wValue, wIndex, wLength);
 
-          setupStall = Setup(index, bmRequestType, bRequest, wValue, wIndex,
-              wLength);
+          setupStall = Setup(bmRequestType, bRequest, wValue, wIndex, wLength);
 
           // Clear tripwire
           USB_WORD(REG_USBCMD) &= ~USB_USBCMD_SUTW;
@@ -806,56 +735,45 @@ namespace Anki
           if (setupStall)
           {
             // Stall the endpoint
-            USB_WORD(REG_ENDPTCTRL0 + (i << 2)) = 0x00010001;
-          } else {
-            // Configure a data transfer
-            if (m_dQH[index + 0][DQH_CUSTOM_BUFFER])
-            {
-              EPSetup(index + 0);
-            }
-            if (m_dQH[index + 1][DQH_CUSTOM_BUFFER])
-            {
-              EPSetup(index + 1);
-            }
+            USB_WORD(REG_ENDPTCTRL0) =
+              ENDPOINTCTRL_TXS |
+              ENDPOINTCTRL_RXS;
           }
         }
       }
 
-      static bool Setup(u32 index, u32 bmRequestType, u32 bRequest, u32 wValue,
-          u32 wIndex, u32 wLength)
+      static bool Setup(u32 bmRequestType, u32 bRequest, u32 wValue, u32 wIndex,
+          u32 wLength)
       {
         bool setupStall = true;
 
         switch ((bmRequestType >> RT_TYPE_SHIFT) & RT_TYPE_MASK)
         {
           case RT_TYPE_STANDARD:
-            printf("STANDARD\n");
-            setupStall = StandardRequestHandler(index, bmRequestType, bRequest,
+            setupStall = StandardRequestHandler(bmRequestType, bRequest,
                 wValue, wIndex, wLength);
             break;
 
           case RT_TYPE_CLASS:
-            printf("CLASS\n");
-            setupStall = ClassRequestHandler(index, bmRequestType, bRequest,
+            setupStall = ClassRequestHandler(bmRequestType, bRequest,
                 wValue, wIndex, wLength);
             break;
 
           case RT_TYPE_VENDOR:
-            printf("VENDOR\n");
-            setupStall = VendorRequestHandler(index, bmRequestType, bRequest,
+            setupStall = VendorRequestHandler(bmRequestType, bRequest,
                 wValue, wIndex, wLength);
             break;
 
           default:
-            printf("[ERROR] Unknown USB bmRequestType\n");
+            // TODO: Assert?
             break;
         }
 
         return setupStall;
       }
 
-      static bool StandardRequestHandler(u32 index, u32 bmRequestType,
-          u32 bRequest, u32 wValue, u32 wIndex, u32 wLength)
+      static bool StandardRequestHandler(u32 bmRequestType, u32 bRequest,
+          u32 wValue, u32 wIndex, u32 wLength)
       {
         bool setupStall = false;
 
@@ -863,22 +781,23 @@ namespace Anki
         {
           case GET_STATUS:
           {
-            if (wLength > sizeof(m_USBStatus))
-              wLength = sizeof(m_USBStatus);
-            SetupTransfer(index,
-                (u32)m_USBStatus, 0,
-                (u32)m_USBStatus, wLength);
+            // XXX: FIX FOR MYRIAD1 BSWAP
+            if (wLength > sizeof(m_USBStatus) - 2)
+              wLength = sizeof(m_USBStatus) - 2;
+            PrimeEndpoint(&m_ep0_in, 
+                &m_USBStatus, sizeof(m_USBStatus),
+                0, wLength);
+            //PrimeEndpoint(&m_ep0_out, NULL, 0);
             break;
           }
 
           case SET_ADDRESS:
           {
+            // Device address is the high 7 bits. The +1 is from Movidius...
             USB_WORD(REG_DEVICE_ADDR) = ((wValue << 1) + 1) << 24;
-            m_deviceStatus = (m_deviceStatus & 0xFFFF00FF) | (wValue << 8);
-            // Following Movidius. Pointer to new address and 0 length.
-            SetupTransfer(index,
-                (u32)&m_deviceStatus, 0,
-                (u32)&m_deviceStatus, 0);
+            // Acknowledge the packet
+            PrimeEndpoint(&m_ep0_in, NULL, 0, 0, 0);
+            PrimeEndpoint(&m_ep0_out, NULL, 0, 0, 0);
             break;
           }
 
@@ -890,29 +809,35 @@ namespace Anki
               {
                 if (wLength > (sizeof(m_deviceDescriptor) - 2))
                   wLength = sizeof(m_deviceDescriptor) - 2;
-                SetupTransfer(index,
-                    (u32)m_deviceDescriptor, 0,
-                    (u32)m_deviceDescriptor, wLength);
+                PrimeEndpoint(&m_ep0_in,
+                    m_deviceDescriptor, sizeof(m_deviceDescriptor),
+                    0, wLength);
+                PrimeEndpoint(&m_ep0_out, NULL, 0, 0, 0);
                 break;
               }
 
               case CONFIGURATION:
               {
-                if (wLength > (sizeof(m_configurationDescriptor) - 1))  // XXX: FIX FOR MYRIAD1 BSWAP
+                // XXX: FIX FOR MYRIAD1 BSWAP
+                if (wLength > (sizeof(m_configurationDescriptor) - 1))  
                   wLength = sizeof(m_configurationDescriptor) - 1;
-                SetupTransfer(index,
-                    (u32)m_configurationDescriptor, 0,
-                    (u32)m_configurationDescriptor, wLength);
+                PrimeEndpoint(&m_ep0_in,
+                    m_configurationDescriptor,
+                    sizeof(m_configurationDescriptor),
+                    0, wLength);
+                PrimeEndpoint(&m_ep0_out, NULL, 0, 0, 0);
                 break;
               }
 
               case DEVICE_QUALIFIER:
               {
+                // XXX: FIX FOR MYRIAD1 BSWAP
                 if (wLength > (sizeof(m_deviceQualifier) - 2))
                   wLength = sizeof(m_deviceQualifier) - 2;
-                SetupTransfer(index,
-                    (u32)m_deviceQualifier, 0,
-                    (u32)m_deviceQualifier, wLength);
+                PrimeEndpoint(&m_ep0_in,
+                    m_deviceQualifier, sizeof(m_deviceQualifier),
+                    0, wLength);
+                PrimeEndpoint(&m_ep0_out, NULL, 0, 0, 0);
                 break;
               }
 
@@ -922,11 +847,15 @@ namespace Anki
                 if (stringIndex < sizeof(m_stringDescriptors) / sizeof(u8*))
                 {
                   const u8* descriptor = m_stringDescriptors[stringIndex];
-                  if (wLength > descriptor[3])  // First element is bLength  XXX: FIX FOR MYRIAD1 BSWAP
+                  // XXX: FIX FOR MYRIAD1 BSWAP
+                  if (wLength > descriptor[3])  // First element is bLength
                     wLength = descriptor[3];
-                  SetupTransfer(index,
-                      (u32)descriptor, 0,
-                      (u32)descriptor, wLength);
+                  PrimeEndpoint(&m_ep0_in,
+                      descriptor, wLength,
+                      0, wLength);
+                  PrimeEndpoint(&m_ep0_out, NULL, 0, 0, 0);
+                } else {
+                  setupStall = true;
                 }
                 break;
               }
@@ -942,52 +871,53 @@ namespace Anki
 
           case GET_CONFIGURATION:
           {
-            if (wLength > sizeof(m_deviceStatus))
-              wLength = sizeof(m_deviceStatus);
-            SetupTransfer(index,
-                (u32)&m_deviceStatus, 0,
-                (u32)&m_deviceStatus, wLength);
+            // XXX: Endian problem... Must send 1 byte representing config
+            if (wLength > sizeof(m_configuration) - 3)
+              wLength = sizeof(m_configuration) - 3;
+            PrimeEndpoint(&m_ep0_in,
+                &m_configuration, sizeof(m_configuration),
+                0, wLength);
+            PrimeEndpoint(&m_ep0_out, NULL, 0, 0, 0);
             break;
           }
 
           case SET_CONFIGURATION:
           {
-            printf("SET_CONFIGURATION: %02X\n", wValue);
-
-            if (wValue >= 2)  // TODO: Get rid of modem/AT config/interface
+            // We only have 1 configuration for CDC ACM
+            if (wValue > 1)
             {
               setupStall = true;
             } else {
-              // Initialize the cdc acm endpoints
+              // Initialize the CDC ACM endpoints
               if (wValue == 1)
               {
                 InitEndpoints();
               }
 
-              m_deviceStatus = (m_deviceStatus &~ 0xFF) | wValue;
-              SetupTransfer(index,
-                  0, 0,
-                  (u32)&m_deviceStatus, 0);
+              m_configuration = wValue;
+              PrimeEndpoint(&m_ep0_in, NULL, 0, 0, 0);
+              PrimeEndpoint(&m_ep0_out, NULL, 0, 0, 0);
             }
             break;
           }
 
           case GET_INTERFACE:
           {
+            // XXX: Endian problem... Must send 1 byte
             if (wLength > sizeof(m_interface))
               wLength = m_interface;
-            SetupTransfer(index,
-                (u32)&m_interface, 0,
-                (u32)&m_interface, wLength);
+            PrimeEndpoint(&m_ep0_in,
+                &m_interface, sizeof(m_interface),
+                0, wLength);
+            PrimeEndpoint(&m_ep0_out, NULL, 0, 0, 0);
             break;
           }
 
           case SET_INTERFACE:
           {
             m_interface = wIndex;
-            SetupTransfer(index,
-                0, 0,
-                (u32)&m_interface, 0);
+            // The interface comes from wIndex, so just ackknowledge it here
+            PrimeEndpoint(&m_ep0_in, NULL, 0, 0, 0);
             break;
           }
 
@@ -1001,8 +931,8 @@ namespace Anki
         return setupStall;
       }
 
-      static bool ClassRequestHandler(u32 index, u32 bmRequestType,
-          u32 bRequest, u32 wValue, u32 wIndex, u32 wLength)
+      static bool ClassRequestHandler(u32 bmRequestType, u32 bRequest,
+          u32 wValue, u32 wIndex, u32 wLength)
       {
         bool setupStall = false;
 
@@ -1022,33 +952,35 @@ namespace Anki
 
           case 0x20:  // SET_LINE_CODING
           {
-            SetupTransfer(index,
-                (u32)m_lineCoding, sizeof(m_lineCoding) - 1,  // XXX: FIX FOR MYRIAD1 BSWAP
-                (u32)m_lineCoding, 0);
+            // XXX: FIX FOR MYRIAD1 BSWAP
+            PrimeEndpoint(&m_ep0_out, 
+                m_lineCoding, sizeof(m_lineCoding),
+                0, sizeof(m_lineCoding) - 1);
+            PrimeEndpoint(&m_ep0_in, NULL, 0, 0, 0);
             break;
           }
 
           case 0x21:  // GET_LINE_CODING
           {
-            SetupTransfer(index,
-                (u32)m_lineCoding, 0,
-                (u32)m_lineCoding, sizeof(m_lineCoding) - 1);  // XXX: FIX FOR MYRIAD1 BSWAP
+             // XXX: FIX FOR MYRIAD1 BSWAP
+            PrimeEndpoint(&m_ep0_in,
+                m_lineCoding, sizeof(m_lineCoding),
+                0, sizeof(m_lineCoding) - 1);
+            PrimeEndpoint(&m_ep0_out, NULL, 0, 0, 0);
             break;
           }
 
           case 0x22:  // SET_CONTROL_LINE_STATE
           {
-            SetupTransfer(index,
-                (u32)&m_lineCoding, 0,
-                (u32)&m_lineCoding, 0);
+            PrimeEndpoint(&m_ep0_out, NULL, 0, 0, 0);
+            PrimeEndpoint(&m_ep0_in, NULL, 0, 0, 0);
             break;
           }
 
           case 0x23:  // SEND_BREAK
           {
-            SetupTransfer(index,
-                (u32)&m_lineCoding, 0,
-                (u32)&m_lineCoding, 0);
+            PrimeEndpoint(&m_ep0_out, NULL, 0, 0, 0);
+            PrimeEndpoint(&m_ep0_in, NULL, 0, 0, 0);
             break;
           }
 
@@ -1062,8 +994,8 @@ namespace Anki
         return setupStall;
       }
 
-      static bool VendorRequestHandler(u32 index, u32 bmRequestType,
-          u32 bRequest, u32 wValue, u32 wIndex, u32 wLength)
+      static bool VendorRequestHandler(u32 bmRequestType, u32 bRequest,
+          u32 wValue, u32 wIndex, u32 wLength)
       {
         // TODO: Implement
 
@@ -1071,14 +1003,38 @@ namespace Anki
         return setupStall;
       }
 
-      static void SetupTransfer(u32 index, u32 addressOUT, u32 lengthOUT,
-          u32 addressIN, u32 lengthIN)
+      void USBSendBuffer(u8* buffer, u32 size)
       {
-        printf("index == %i\n", index);
-        m_dQH[index + 0][DQH_CUSTOM_BUFFER] = addressOUT;
-        m_dQH[index + 0][DQH_CUSTOM_LENGTH] = lengthOUT;
-        m_dQH[index + 1][DQH_CUSTOM_BUFFER] = addressIN;
-        m_dQH[index + 1][DQH_CUSTOM_LENGTH] = lengthIN;
+        for (int i = 0; i < size; i++)
+        {
+          USBPutChar(buffer[i]);
+        }
+      }
+
+      s32 USBGetChar(u32 timeout)
+      {
+        if (m_bulkOutHead == m_bulkOutTail)
+          return -1;
+
+        s32 c = m_receiveBuffer[m_bulkOutTail ^ 3] & 0xFF;
+        m_bulkOutTail = (m_bulkOutTail + 1) % sizeof(m_receiveBuffer);
+
+        return c;
+      }
+
+      s32 USBPeekChar()
+      {
+        if (m_bulkOutHead == m_bulkOutTail)
+          return -1;
+        
+        return m_receiveBuffer[m_bulkOutTail ^ 3];
+      }
+
+      int USBPutChar(int c)
+      {
+        m_transmitBuffer[m_bulkInHead] = c;
+        m_bulkInHead = (m_bulkInHead + 1) % sizeof(m_transmitBuffer);
+        return c;
       }
     }
   }
