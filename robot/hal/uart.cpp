@@ -86,7 +86,7 @@ namespace Anki
         swcLeonEnableTraps();
       }
 
-      int USBPutChar(int c)
+      int UARTPutChar(int c)
       {
         // Wait for TX FIFO to not be full
         while (REG_WORD(UART_STATUS_ADR) & 0x200)
@@ -97,9 +97,9 @@ namespace Anki
         return c;
       }
 
-      s32 USBGetChar(void) { return USBGetChar(0); }
+      s32 UARTGetChar(void) { return USBGetChar(0); }
       
-      s32 USBGetChar(u32 timeout)
+      s32 UARTGetChar(u32 timeout)
       {
         u32 end = GetMicroCounter() + timeout;
         do
@@ -120,8 +120,7 @@ namespace Anki
         return -1;
       }
       
-
-      s32 USBPeekChar(u32 offset)
+      s32 UARTPeekChar(u32 offset)
       {
         // If trying to peek further than there are characters in the buffer
         // exit now.
@@ -136,16 +135,16 @@ namespace Anki
         return c;
       }
       
-      u32 USBGetNumBytesToRead()
+      u32 UARTGetNumBytesToRead()
       {
         return (m_currentWrite - m_currentRead) & BUFFER_MASK;
       }
       
-      void USBSendBuffer(const u8* buffer, const u32 size)
+      void UARTSendBuffer(const u8* buffer, const u32 size)
       {
         for (u32 i = 0; i < size; i++)
         {
-          USBPutChar(buffer[i]);
+          UARTPutChar(buffer[i]);
         }
       }
 
@@ -161,7 +160,6 @@ namespace Anki
         // Clear the interrupt
         DrvIcbIrqClear(IRQ);
       }
-
     }
   }
 }
