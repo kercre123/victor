@@ -14,7 +14,7 @@ for i=1:length(varargin)
            subplot(1,length(curIms),j); imshow(curIms{j}); 
         end
     else
-        imshow(curIms);
+        imshow(curIms, 'Border', 'tight');
     end
     impixelinfo;
 end

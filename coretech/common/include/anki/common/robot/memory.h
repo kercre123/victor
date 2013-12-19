@@ -43,7 +43,7 @@ namespace Anki
     class MemoryStack
     {
     public:
-
+      MemoryStack(void) : buffer(NULL) { }
       MemoryStack(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(true,true));
       MemoryStack(const MemoryStack &ms); // This is a safe way to remove const by making a copy, rather than using const_cast()
 
@@ -90,8 +90,8 @@ namespace Anki
       Flags::Buffer get_flags() const;
 
     protected:
-      static const u32 FILL_PATTERN_START = 0xABCD1089;
-      static const u32 FILL_PATTERN_END = 0x89EF0189;
+      static const u32 FILL_PATTERN_START = 0xFF01FF02;
+      static const u32 FILL_PATTERN_END = 0x03FF04FF;
 
       static const s32 HEADER_LENGTH = 8;
       static const s32 FOOTER_LENGTH = 4;

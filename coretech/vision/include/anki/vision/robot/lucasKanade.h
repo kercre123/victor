@@ -37,6 +37,11 @@ namespace Anki
 
       class PlanarTransformation_f32
       {
+        // A PlanarTransformation object can do the following:
+        // 1. Hold the current planar transformation, and optionally the initial extents of the plane segment quadrilateral
+        // 2. Update the planar transformation with an update delta
+        // 3. Transform a set of points or a quadrilateral to the new coordinate frame
+
       public:
 
         PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, MemoryStack &memory);
@@ -66,7 +71,7 @@ namespace Anki
 
         Result Print(const char * const variableName = "Transformation");
 
-        Quadrilateral<f32> TransformQuadrilateral(const Quadrilateral<f32> &in, const f32 scale=1.0f) const;
+        Quadrilateral<f32> TransformQuadrilateral(const Quadrilateral<f32> &in, MemoryStack scratch, const f32 scale=1.0f) const;
 
         Result set_transformType(const TransformType transformType);
 
@@ -80,7 +85,7 @@ namespace Anki
 
         const Quadrilateral<f32>& get_initialCorners() const;
 
-        Quadrilateral<f32> get_transformedCorners() const;
+        Quadrilateral<f32> get_transformedCorners(MemoryStack scratch) const;
 
       protected:
         TransformType transformType;
@@ -100,7 +105,13 @@ namespace Anki
 
       class LucasKanadeTracker_f32
       {
+        // The generic LucasKanadeTracker class can track a template with the Lucas-Kanade method,
+        // either with translation-only, affine, or projective updates. The two main steps are
+        // initialization and update. Note that this class uses a lot of memory (on the order of
+        // 600kb for an 80x60 input).
+
       public:
+        LucasKanadeTracker_f32(void) : isValid(false), isInitialized(false) { }
         LucasKanadeTracker_f32(const Array<u8> &templateImage, const Rectangle<f32> &templateRegion, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory);
 
         Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, MemoryStack memory);
@@ -118,11 +129,11 @@ namespace Anki
         FixedLengthList<Meshgrid<f32>> templateCoordinates;
         FixedLengthList<Array<f32>> templateWeights;
 
+        s32 numPyramidLevels;
+
         // The templateImage sizes are the sizes of the image that contains the template
         s32 templateImageHeight;
         s32 templateImageWidth;
-
-        s32 numPyramidLevels;
 
         // The templateRegion sizes are the sizes of the part of the template image that will
         // actually be tracked, so must be smaller or equal to the templateImage sizes
@@ -136,7 +147,7 @@ namespace Anki
         f32 templateWeightsSigma;
 
         Rectangle<f32> templateRegion;
-        Point<f32> center;
+        Point<f32> centerOffset;
 
         bool isValid;
         bool isInitialized;
@@ -147,6 +158,54 @@ namespace Anki
         Result InitializeTemplate(const Array<u8> &templateImage, MemoryStack &memory);
 
         Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack memory);
+      };
+
+      class LucasKanadeTrackerFast
+      {
+        // An Translation-only or Affine-plus-translation LucasKanadeTracker. Unlike the general
+        // LucasKanadeTracker, this version uses much less memory, and will eventually be better optimized.
+
+      public:
+        LucasKanadeTrackerFast(const Array<u8> &templateImage, const Rectangle<f32> &templateRegion, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory);
+
+        Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, MemoryStack memory);
+
+        bool IsValid() const;
+
+        Result set_transformation(const PlanarTransformation_f32 &transformation);
+
+        PlanarTransformation_f32 get_transformation() const;
+
+      protected:
+        FixedLengthList<Meshgrid<f32>> templateCoordinates;
+        FixedLengthList<Array<u8>> templateImagePyramid;
+        FixedLengthList<Array<s16>> templateImageXGradientPyramid;
+        FixedLengthList<Array<s16>> templateImageYGradientPyramid;
+
+        s32 numPyramidLevels;
+
+        // The templateImage sizes are the sizes of the image that contains the template
+        s32 templateImageHeight;
+        s32 templateImageWidth;
+
+        // The templateRegion sizes are the sizes of the part of the template image that will
+        // actually be tracked, so must be smaller or equal to the templateImage sizes
+        f32 templateRegionHeight;
+        f32 templateRegionWidth;
+
+        PlanarTransformation_f32 transformation;
+
+        f32 ridgeWeight;
+
+        Rectangle<f32> templateRegion;
+        Point<f32> centerOffset;
+
+        bool isValid;
+
+        Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack memory);
+
+        Result IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack memory);
+        Result IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack memory);
       };
     } // namespace TemplateTracker
   } // namespace Embedded

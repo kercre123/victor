@@ -30,7 +30,7 @@ switch(this.trackerType)
         
         fx = this.headCalibrationMatrix(1,1);
         currentDistance = BlockMarker3D.ReferenceWidth * fx / L;
-        distError = currentDistance - CozmoVisionProcessor.LIFT_DISTANCE;
+        distError = currentDistance; % - CozmoVisionProcessor.LIFT_DISTANCE;
         
         % TODO: should i be comparing to ncols/2 or calibration center?
         midPointErr = -( (upperRight(1)+upperLeft(1))/2 - ...

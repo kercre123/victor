@@ -136,14 +136,12 @@ namespace Anki {
       
 #pragma --- Message Dispatch Functions ---
       
-      void ProcessRobotAddedToWorldMessage(const u8* buffer)
+      void ProcessRobotAddedToWorldMessage(const RobotAddedToWorld& msg)
       {
-        const RobotAddedToWorld* msg = reinterpret_cast<const RobotAddedToWorld*>(buffer);
-        
-        if(msg->robotID != HAL::GetRobotID()) {
+        if(msg.robotID != HAL::GetRobotID()) {
           PRINT("Robot received ADDED_TO_WORLD handshake with "
                 " wrong robotID (%d instead of %d).\n",
-                msg->robotID, HAL::GetRobotID());
+                msg.robotID, HAL::GetRobotID());
         }
         
         PRINT("Robot received handshake from basestation, "
@@ -186,15 +184,13 @@ namespace Anki {
       } // ProcessRobotAddedMessage()
       
       
-      void ProcessAbsLocalizationUpdateMessage(const u8* buffer)
+      void ProcessAbsLocalizationUpdateMessage(const AbsLocalizationUpdate& msg)
       {
         // TODO: Double-check that size matches expected size?
         
-        const AbsLocalizationUpdate *msg = reinterpret_cast<const AbsLocalizationUpdate*>(buffer);
-        
-        f32 currentMatX       = msg->xPosition * .001f; // store in meters
-        f32 currentMatY       = msg->yPosition * .001f; //     "
-        Radians currentMatHeading = msg->headingAngle;
+        f32 currentMatX       = msg.xPosition * .001f; // store in meters
+        f32 currentMatY       = msg.yPosition * .001f; //     "
+        Radians currentMatHeading = msg.headingAngle;
         Localization::SetCurrentMatPose(currentMatX, currentMatY, currentMatHeading);
         
         PRINT("Robot received localization update from "
@@ -213,43 +209,34 @@ namespace Anki {
       } // ProcessAbsLocalizationUpdateMessage()
       
       
-      void ProcessBlockMarkerObservedMessage(const u8* buffer)
+      void ProcessBlockMarkerObservedMessage(const BlockMarkerObserved& msg)
       {
         PRINT("Processing BlockMarker message\n");
         
-        const BlockMarkerObserved* msg = reinterpret_cast<const BlockMarkerObserved*>(buffer);
+        blockMarkerMailbox_.putMessage(msg);
         
-        blockMarkerMailbox_.putMessage(*msg);
-        
-        VisionSystem::CheckForDockingBlock(msg->blockType);
+        VisionSystem::CheckForDockingBlock(msg.blockType);
       }
       
-      void ProcessTotalBlocksDetectedMessage(const u8* buffer)
+      void ProcessTotalBlocksDetectedMessage(const TotalBlocksDetected& msg)
       {
-        const TotalBlocksDetected* msg = reinterpret_cast<const TotalBlocksDetected*>(buffer);
-        
-        PRINT("Saw %d block markers.\n", msg->numBlocks);
+        PRINT("Saw %d block markers.\n", msg.numBlocks);
       }
       
-      void ProcessTemplateInitializedMessage(const u8* buffer)
+      void ProcessTemplateInitializedMessage(const TemplateInitialized& msg)
       {
-        const TemplateInitialized* msg = reinterpret_cast<const TemplateInitialized*>(buffer);
-        
-        VisionSystem::SetDockingMode(static_cast<bool>(msg->success));
-        
+        VisionSystem::SetDockingMode(static_cast<bool>(msg.success));
       }
       
-      void ProcessDockingErrorSignalMessage(const u8* buffer)
+      void ProcessDockingErrorSignalMessage(const DockingErrorSignal& msg)
       {
-        const DockingErrorSignal* msg = reinterpret_cast<const DockingErrorSignal*>(buffer);
-        
-        //VisionSystem::UpdateTrackingStatus(msg->didTrackingSucceed);
+        VisionSystem::UpdateTrackingStatus(msg.didTrackingSucceed);
         
         // Just pass the docking error signal along to the mainExecution to
         // deal with. Note that if the message indicates tracking failed,
         // the mainExecution thread should handle it, and put the vision
         // system back in LOOKING_FOR_BLOCKS mode.
-        dockingMailbox_.putMessage(*msg);
+        dockingMailbox_.putMessage(msg);
       }
       
       void ProcessBTLEMessages()
@@ -276,37 +263,37 @@ namespace Anki {
       
       
       // TODO: Fill these in once they are needed/used:
-      void ProcessClearPathMessage(const u8* buffer) {
+      void ProcessClearPathMessage(const ClearPath& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
-      void ProcessSetMotionMessage(const u8* buffer) {
+      void ProcessSetMotionMessage(const SetMotion& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
-      void ProcessRobotAvailableMessage(const u8* buffer) {
+      void ProcessRobotAvailableMessage(const RobotAvailable& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
-      void ProcessMatMarkerObservedMessage(const u8* buffer) {
+      void ProcessMatMarkerObservedMessage(const MatMarkerObserved& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
-      void ProcessSetPathSegmentArcMessage(const u8* buffer) {
+      void ProcessSetPathSegmentArcMessage(const SetPathSegmentArc& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
-      void ProcessSetPathSegmentLineMessage(const u8* buffer) {
+      void ProcessSetPathSegmentLineMessage(const SetPathSegmentLine& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
       // These need implementations to avoid linker errors, but we don't expect
       // to _receive_ these message types, only to send them.
-      void ProcessMatCameraCalibrationMessage(const u8* buffer) {
+      void ProcessMatCameraCalibrationMessage(const MatCameraCalibration& msg) {
         PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
       }
       
-      void ProcessHeadCameraCalibrationMessage(const u8* buffer) {
+      void ProcessHeadCameraCalibrationMessage(const HeadCameraCalibration& msg) {
         PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
       }
       

@@ -19,6 +19,8 @@ namespace Anki
 {
   namespace Embedded
   {
+    static Result lastResult;
+
     ScrollingIntegralImage_u8_s32::ScrollingIntegralImage_u8_s32()
       : Array<s32>(), imageWidth(-1), maxRow(-1), rowOffset(-1), numBorderPixels(-1)
     {
@@ -48,7 +50,7 @@ namespace Anki
       assert(imageWidth == imageWidth);
 
       AnkiConditionalErrorAndReturnValue(numRowsToScroll > 0 && numRowsToScroll <= integralImageHeight,
-        RESULT_FAIL, "ScrollingIntegralImage_u8_s32::ScrollDown", "numRowsToScroll is to high or low");
+        RESULT_FAIL_INVALID_PARAMETERS, "ScrollingIntegralImage_u8_s32::ScrollDown", "numRowsToScroll is to high or low");
 
       Array<u8> paddedRow(1, integralImageWidth, scratch);
       u8 * restrict pPaddedRow = paddedRow.Pointer(0, 0);
@@ -59,8 +61,8 @@ namespace Anki
       // If we are asked to scroll all rows, we won't keep track of any of the previous data, so
       // we'll start by initializing the first rows
       if(numRowsToScroll == integralImageHeight) {
-        if(PadImageRow(image, 0, paddedRow) != RESULT_OK)
-          return RESULT_FAIL;
+        if((lastResult = PadImageRow(image, 0, paddedRow)) != RESULT_OK)
+          return lastResult;
 
         curIntegralImageY = 0;
 
@@ -108,8 +110,8 @@ namespace Anki
             break;
           }
 
-          if(PadImageRow(image, curImageY, paddedRow) != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = PadImageRow(image, curImageY, paddedRow)) != RESULT_OK)
+            return lastResult;
 
           ComputeIntegralImageRow(pPaddedRow, this->Pointer(curIntegralImageY-1, 0), this->Pointer(curIntegralImageY, 0), integralImageWidth);
 
@@ -126,8 +128,8 @@ namespace Anki
       // If we're at the bottom of the image, compute the extra bottom padded rows
       if(numRowsToScroll > 0) {
         //paddedImageRow = padImageRow(image, curImageY, numBorderPixels);
-        if(PadImageRow(image, curImageY, paddedRow) != RESULT_OK)
-          return RESULT_FAIL;
+        if((lastResult = PadImageRow(image, curImageY, paddedRow)) != RESULT_OK)
+          return lastResult;
 
         //for iy = (iy+1):numRowsToScroll
         while(numRowsToScroll > 0) {
@@ -323,14 +325,13 @@ namespace Anki
 
       u8 * restrict paddedRow_u8rowPointer = paddedRow.Pointer(0, 0);
 
-#ifdef BIG_ENDIAN_IMAGES
-      const u8 firstPixel = (image_u32rowPointer[0] & 0xFF000000) >> 24;
-      const u8 lastPixel = image_u32rowPointer[imageWidth4-1] & 0xFF;
-#else
-
+      //#ifdef BIG_ENDIAN_IMAGES
+      //      const u8 firstPixel = (image_u32rowPointer[0] & 0xFF000000) >> 24;
+      //      const u8 lastPixel = image_u32rowPointer[imageWidth4-1] & 0xFF;
+      //#else
       const u8 firstPixel = image_u8rowPointer[0];
       const u8 lastPixel = image_u8rowPointer[imageWidth-1];
-#endif
+      //#endif
 
       s32 xPad = 0;
 
@@ -341,11 +342,11 @@ namespace Anki
       // First, load everything to the beginning of the buffer (SPARC doesn't have unaligned store)
       u32 * restrict paddedRow_u32rowPointerPxpad = reinterpret_cast<u32*>(paddedRow_u8rowPointer);
       for(s32 xImage = 0; xImage<imageWidth4; xImage++) {
-#ifdef BIG_ENDIAN_IMAGES
-        paddedRow_u32rowPointerPxpad[xImage] = SwapEndianU32(image_u32rowPointer[xImage]);
-#else
+        //#ifdef BIG_ENDIAN_IMAGES
+        //        paddedRow_u32rowPointerPxpad[xImage] = SwapEndianU32(image_u32rowPointer[xImage]);
+        //#else
         paddedRow_u32rowPointerPxpad[xImage] = image_u32rowPointer[xImage];
-#endif
+        //#endif
       }
 
       // Second, move the image data to the unaligned location

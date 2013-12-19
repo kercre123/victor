@@ -21,9 +21,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #warning Using MoviCompile
 #define USING_MOVIDIUS_SHAVE_COMPILER
 #define USING_MOVIDIUS_COMPILER
-#endif
 
-#if !defined(__APPLE_CC__) && defined(__GNUC__) && __GNUC__==4 && __GNUC_MINOR__==4 && __GNUC_PATCHLEVEL__==2 //hack to detect the movidius compiler
+#elif defined(ROBOT_HARDWARE)
 //#warning Using GNUC 4.4.2
 #define USING_MOVIDIUS_GCC_COMPILER
 #define USING_MOVIDIUS_COMPILER
@@ -157,7 +156,9 @@ extern "C" {
 
 #include "anki/common/constantsAndMacros.h"
 
-#define MEMORY_ALIGNMENT ( (size_t)(16) ) // To support 128-bit SIMD loads and stores
+// To support 128-bit SIMD loads and stores
+#define MEMORY_ALIGNMENT_RAW 16 // Sometimes the preprocesor can't handle the safer version MEMORY_ALIGNMENT
+#define MEMORY_ALIGNMENT ( (size_t)(MEMORY_ALIGNMENT_RAW) )
 
 // To make processing faster, some kernels require image widths that are a multiple of ANKI_VISION_IMAGE_WIDTH_MULTIPLE
 #define ANKI_VISION_IMAGE_WIDTH_SHIFT 4

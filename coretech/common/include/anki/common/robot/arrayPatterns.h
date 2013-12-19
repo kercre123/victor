@@ -22,7 +22,7 @@ namespace Anki
     template<typename Type> Result Zeros(Array<Type> &out)
     {
       AnkiConditionalErrorAndReturnValue(out.IsValid(),
-        RESULT_FAIL, "Zeros", "out is invalid");
+        RESULT_FAIL_INVALID_OBJECT, "Zeros", "out is invalid");
 
       out.SetZero();
 
@@ -39,7 +39,7 @@ namespace Anki
     template<typename Type> Result Ones(Array<Type> &out)
     {
       AnkiConditionalErrorAndReturnValue(out.IsValid(),
-        RESULT_FAIL, "Ones", "out is invalid");
+        RESULT_FAIL_INVALID_OBJECT, "Ones", "out is invalid");
 
       out.Set(static_cast<Type>(1));
 
@@ -58,7 +58,7 @@ namespace Anki
     template<typename Type> Result Eye(Array<Type> &out)
     {
       AnkiConditionalErrorAndReturnValue(out.IsValid(),
-        RESULT_FAIL, "Eye", "out is invalid");
+        RESULT_FAIL_INVALID_OBJECT, "Eye", "out is invalid");
 
       const s32 arrayHeight = out.get_size(0);
 
@@ -84,10 +84,10 @@ namespace Anki
     /*template<typename Type> Result Exp(const Array<Type> &in, Array<Type> &out)
     {
     AnkiConditionalErrorAndReturnValue(in.IsValid(),
-    RESULT_FAIL, "Exp", "in is invalid");
+    RESULT_FAIL_INVALID_OBJECT, "Exp", "in is invalid");
 
     AnkiConditionalErrorAndReturnValue(out.IsValid(),
-    RESULT_FAIL, "Exp", "out is invalid");
+    RESULT_FAIL_INVALID_OBJECT, "Exp", "out is invalid");
 
     const s32 arrayHeight = out.get_size(0);
     const s32 arrayWidth = out.get_size(1);

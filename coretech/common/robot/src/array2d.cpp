@@ -20,57 +20,121 @@ namespace Anki
   {
     template<> Result Array<bool>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
     template<> Result Array<u8>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
     template<> Result Array<s8>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
     template<> Result Array<u16>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
     template<> Result Array<s16>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
     template<> Result Array<u32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
     template<> Result Array<s32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
     template<> Result Array<u64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
     template<> Result Array<s64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
     template<> Result Array<f32>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
     }
 
     template<> Result Array<f64>::Print(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
     {
-      return PrintBasicType(variableName, minY, maxY, minX, maxX);
+      return PrintBasicType(variableName, 1, minY, maxY, minX, maxX);
+    }
+
+    template<> Result Array<f32>::PrintAlternate(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    {
+      return PrintBasicType(variableName, version, minY, maxY, minX, maxX);
+    }
+
+    template<> Result Array<f64>::PrintAlternate(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const
+    {
+      return PrintBasicType(variableName, version, minY, maxY, minX, maxX);
+    }
+
+    template<> template<> s32 Array<u8>::SetCast(const s32 * const values, const s32 numValues)
+    {
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        0, "Array<Type>::SetCast", "Array<Type> is not valid");
+
+      s32 numValuesSet = 0;
+
+      for(s32 y=0; y<size[0]; y++) {
+        u8 * restrict pThisData = Pointer(y, 0);
+
+        const s32 numValuesThisRow = MAX(0, MIN(numValues - y*size[1], size[1]));
+
+        if(numValuesThisRow > 0) {
+          for(s32 x=0; x<numValuesThisRow; x++) {
+            pThisData[x] = static_cast<u8>( (values+y*size[1])[x] );
+          }
+          numValuesSet += numValuesThisRow;
+        }
+
+        if(numValuesThisRow < size[1]) {
+          memset(pThisData+numValuesThisRow*sizeof(u8), 0, (size[1]-numValuesThisRow)*sizeof(u8));
+        }
+      }
+
+      return numValuesSet;
+    }
+
+    template<> template<> s32 Array<s16>::SetCast(const s32 * const values, const s32 numValues)
+    {
+      AnkiConditionalErrorAndReturnValue(this->IsValid(),
+        0, "Array<Type>::SetCast", "Array<Type> is not valid");
+
+      s32 numValuesSet = 0;
+
+      for(s32 y=0; y<size[0]; y++) {
+        s16 * restrict pThisData = Pointer(y, 0);
+
+        const s32 numValuesThisRow = MAX(0, MIN(numValues - y*size[1], size[1]));
+
+        if(numValuesThisRow > 0) {
+          for(s32 x=0; x<numValuesThisRow; x++) {
+            pThisData[x] = static_cast<s16>( (values+y*size[1])[x] );
+          }
+          numValuesSet += numValuesThisRow;
+        }
+
+        if(numValuesThisRow < size[1]) {
+          memset(pThisData+numValuesThisRow*sizeof(u8), 0, (size[1]-numValuesThisRow)*sizeof(u8));
+        }
+      }
+
+      return numValuesSet;
     }
 
     C_Array_s32 get_C_Array_s32(Array<s32> &array)

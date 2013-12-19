@@ -126,7 +126,7 @@ namespace Anki {
         return Array<Type>();
       }
 
-      Array<Type> array = AllocateArrayFromHeap<Type>(dimensions[0], dimensions[1]);
+      Array<Type> array = AllocateArrayFromHeap<Type>(static_cast<s32>(dimensions[0]), static_cast<s32>(dimensions[1]));
 
       for(mwSize y=0; y<dimensions[0]; ++y) {
         Type * const pArray = array.Pointer(static_cast<s32>(y), 0);

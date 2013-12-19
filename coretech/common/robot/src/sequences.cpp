@@ -36,7 +36,11 @@ namespace Anki
       const f32 incrementMagnitude = ABS(increment);
 
       const f32 validRange = maxLimit - minLimit;
-      const s32 size = static_cast<s32>(floorf((validRange+incrementMagnitude)/incrementMagnitude));
+
+      const f32 diff = (validRange+incrementMagnitude)/incrementMagnitude;
+      const s32 size = static_cast<s32>(FLT_FLOOR(diff));
+
+      //printf("(%f-%f)=%f %f %f %d %f %f 0x%x\n", maxLimit, minLimit, validRange, incrementMagnitude, incrementMagnitude, size, (validRange+incrementMagnitude)/incrementMagnitude, diff, *((int*)(&diff)));
 
       AnkiConditionalErrorAndReturnValue(size >= 0,
         0, "LinearSequence<f32>::computeSize", "size estimation failed");
@@ -66,7 +70,7 @@ namespace Anki
       const f64 incrementMagnitude = ABS(increment);
 
       const f64 validRange = maxLimit - minLimit;
-      const s32 size = static_cast<s32>(floorf(static_cast<f32>((validRange+incrementMagnitude)/incrementMagnitude)));
+      const s32 size = static_cast<s32>(FLT_FLOOR(static_cast<f32>((validRange+incrementMagnitude)/incrementMagnitude)));
 
       AnkiConditionalErrorAndReturnValue(size >= 0,
         0, "LinearSequence<f32>::computeSize", "size estimation failed");

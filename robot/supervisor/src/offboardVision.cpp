@@ -1,14 +1,15 @@
 #include "anki/cozmo/robot/hal.h"
 
-#if !defined(USE_OFFBOARD_VISION) || !USE_OFFBOARD_VISION
-#warning offboardVision.cpp should only be included with USE_OFFBOARD_VISION=1
-#endif
+
 
 namespace Anki
 {
   namespace Cozmo
   {
     
+    // Stuff we don't need unless we are in offboard vision mode
+    
+    #if defined(USE_OFFBOARD_VISION) && USE_OFFBOARD_VISION
         
     void SendHeader(const u8 packetType)
     {
@@ -205,8 +206,12 @@ namespace Anki
       
     } // USBSendFrame()
     
-    
+#endif // if USE_OFFBOARD_VISION defined and true
 
+    
+    // TODO: this should probably be elsewhere, since it is not specific to offboard vision.
+    // Can't be in uart.cpp or sim_uart.cpp though since it is not specific to
+    // hardware vs. simulator either.
     Messages::ID HAL::USBGetNextMessage(u8 *buffer)
     {
       // Note that this is looking for a packet that starts with a 4-byte
@@ -278,3 +283,5 @@ namespace Anki
     
   } // namespace Cozmo
 } // namespace Anki
+
+

@@ -57,7 +57,7 @@ unsigned int mxArray2simpleArray<double>(const mxArray *array, double* &outputAr
     mexErrMsgTxt("Input mxArray must be of class DOUBLE.");
   }
 
-  const unsigned int N = mxGetNumberOfElements(array);
+  const unsigned int N = static_cast<unsigned int>(mxGetNumberOfElements(array));
 
   const double *arrayData = mxGetPr(array);
 
@@ -86,43 +86,43 @@ mxArray* cvMat2mxArray(const cv::Mat &mat)
   case CV_8U:
     {
       outputArray = mxCreateNumericArray(3,outputDims,mxUINT8_CLASS,mxREAL);
-      mapCvMat2mxArray<uchar>(mat,nbands,outputArray);
+      mapCvMat2mxArray<uchar>(mat,static_cast<int>(nbands),outputArray);
       break;
     }
   case CV_8S:
     {
       outputArray = mxCreateNumericArray(3,outputDims,mxINT8_CLASS,mxREAL);
-      mapCvMat2mxArray<char>(mat,nbands,outputArray);
+      mapCvMat2mxArray<char>(mat,static_cast<int>(nbands),outputArray);
       break;
     }
   case CV_16U:
     {
       outputArray = mxCreateNumericArray(3,outputDims,mxUINT16_CLASS,mxREAL);
-      mapCvMat2mxArray<unsigned short>(mat,nbands,outputArray);
+      mapCvMat2mxArray<unsigned short>(mat,static_cast<int>(nbands),outputArray);
       break;
     }
   case CV_16S:
     {
       outputArray = mxCreateNumericArray(3,outputDims,mxINT16_CLASS,mxREAL);
-      mapCvMat2mxArray<short>(mat,nbands,outputArray);
+      mapCvMat2mxArray<short>(mat,static_cast<int>(nbands),outputArray);
       break;
     }
   case CV_32S:
     {
       outputArray = mxCreateNumericArray(3,outputDims,mxINT32_CLASS,mxREAL);
-      mapCvMat2mxArray<int>(mat,nbands,outputArray);
+      mapCvMat2mxArray<int>(mat,static_cast<int>(nbands),outputArray);
       break;
     }
   case CV_32F:
     {
       outputArray = mxCreateNumericArray(3,outputDims,mxSINGLE_CLASS,mxREAL);
-      mapCvMat2mxArray<float>(mat,nbands,outputArray);
+      mapCvMat2mxArray<float>(mat,static_cast<int>(nbands),outputArray);
       break;
     }
   case CV_64F:
     {
       outputArray = mxCreateNumericArray(3,outputDims,mxDOUBLE_CLASS,mxREAL);
-      mapCvMat2mxArray<double>(mat,nbands,outputArray);
+      mapCvMat2mxArray<double>(mat,static_cast<int>(nbands),outputArray);
       break;
     }
   default:
@@ -146,13 +146,13 @@ void mxArray2cvMat(const mxArray *array, cv::Mat &mat)
   {
   case 2:
     numChannels = 1;
-    nrows = mxGetM(array);
-    ncols = mxGetN(array);
+    nrows = static_cast<int>(mxGetM(array));
+    ncols = static_cast<int>(mxGetN(array));
     break;
   case 3:
-    nrows       = mxGetDimensions(array)[0];
-    ncols       = mxGetDimensions(array)[1];
-    numChannels = mxGetDimensions(array)[2];
+    nrows       = static_cast<int>(mxGetDimensions(array)[0]);
+    ncols       = static_cast<int>(mxGetDimensions(array)[1]);
+    numChannels = static_cast<int>(mxGetDimensions(array)[2]);
     break;
   default:
     mexErrMsgTxt("Image must be scalar or vector valued.");

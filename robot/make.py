@@ -33,7 +33,7 @@ LEON_SOURCE += addSources('../coretech/common/shared/src')
 
 SHAVE_SOURCE = []
 
-MV_TOOLS_DIR = os.environ.get('MV_TOOLS_DIR')
+MV_TOOLS_DIR = str.replace(os.environ.get('MV_TOOLS_DIR'), '\\', '/')
 if MV_TOOLS_DIR is None:
   print 'WARNING: MV_TOOLS_DIR has not been set in the environment!'
   print 'Using default c:../../movidius-tools/tools'
@@ -74,7 +74,7 @@ CCOPT = (
   '-I' + MV_COMMON_BASE + 'libc/leon/include '
   '-I' + LIBC + 'include '
   '-I' + CIF_GENERIC + ' '
-  '-Os -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 '
+  '-O2 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 '
 )
 
 CXXOPT = (
@@ -96,8 +96,8 @@ except:
   print 'WARNING: No uname installed, assuming win32'
   DETECTED_PLATFORM = 'win32'
   SPARC_DIR = 'sparc-elf-' + GCC_VERSION + '-mingw/'
-    
-PLATFORM = MV_TOOLS_DIR + '/' + MV_TOOLS_VERSION + '/' + DETECTED_PLATFORM + '/'
+
+PLATFORM = MV_TOOLS_DIR + MV_TOOLS_VERSION + '/' + DETECTED_PLATFORM + '/'
 
 GCC_DIR = PLATFORM + SPARC_DIR
 CCOPT += ' -I ' + GCC_DIR + 'lib/gcc/sparc-elf/4.4.2/include/'
@@ -211,6 +211,11 @@ if __name__ == '__main__':
   isFlash = False
   isNoisy = False
 
+  # Check if the Movidius tools can be found
+  if any((os.path.isfile(file.strip()) or os.path.isfile(file.strip()+'.exe') for file in [CC, CXX, LD, MVCONV])) == False:
+    print('Error: Could not locate all of the Movidius Tools')
+    sys.exit(1);
+    
   for arg in sys.argv:
     if arg == 'clean':
       print 'Cleaning...'
