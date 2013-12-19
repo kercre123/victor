@@ -47,15 +47,19 @@ namespace Anki
 
       Array();
 
-      // Constructor for a Array, pointing to user-allocated data. If the pointer to *data is not
-      // aligned to MEMORY_ALIGNMENT, this Array will start at the next aligned location.
-      // Unfortunately, this is more restrictive than most matrix libraries, and as an example,
-      // it may make it hard to convert from OpenCV to Array, though the reverse is trivial.
-      // All memory in the array is zeroed out once it is allocated
-      Array(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const Flags::Buffer flags=Flags::Buffer(true,false));
+      // Constructor for a Array, pointing to user-allocated data. This is more restrictive than
+      // most matrix libraries, and as an example, it may make it hard to convert from OpenCV to
+      // Array, though the reverse is trivial.
+      //
+      // If following are true, then the contents of data will not be modified, and it will work as
+      // a normal buffer without extra zeros as stride padding:
+      // 1. (numCols*sizeof(Type)) % MEMORY_ALIGNMENT == 0
+      // 2. reinterpret_cast<size_t>(data) % MEMORY_ALIGNMENT == 0
+      // 3. flags.get_useBoundaryFillPatterns == false
+      // 4. numRows*numCols*sizeof(Type) <= dataLength
+      Array(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const Flags::Buffer flags=Flags::Buffer(false,false));
 
       // Constructor for a Array, pointing to user-allocated MemoryStack
-      // All memory in the array is zeroed out once it is allocated
       Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false));
 
       // Pointer to the data, at a given (y,x) location

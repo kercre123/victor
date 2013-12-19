@@ -28,10 +28,10 @@ namespace Anki
         const s32 imageWidth = in.get_size(1);
 
         AnkiConditionalErrorAndReturnValue(in.IsValid() && out.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTrackerAffine::ComputeXGradient", "An input is not valid");
+          RESULT_FAIL_INVALID_OBJECT, "ComputeXGradient", "An input is not valid");
 
         AnkiConditionalErrorAndReturnValue(out.get_size(0) == imageHeight && out.get_size(1) == imageWidth,
-          RESULT_FAIL_INVALID_SIZE, "LucasKanadeTrackerAffine::ComputeXGradient", "Image sizes don't match");
+          RESULT_FAIL_INVALID_SIZE, "ComputeXGradient", "Image sizes don't match");
 
         for(s32 y=1; y<imageHeight-1; y++) {
           const InType * restrict pIn = in.Pointer(y,0);
@@ -52,10 +52,10 @@ namespace Anki
         const s32 imageWidth = in.get_size(1);
 
         AnkiConditionalErrorAndReturnValue(in.IsValid() && out.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTrackerAffine::ComputeYGradient", "An input is not valid");
+          RESULT_FAIL_INVALID_OBJECT, "ComputeYGradient", "An input is not valid");
 
         AnkiConditionalErrorAndReturnValue(out.get_size(0) == imageHeight && out.get_size(1) == imageWidth,
-          RESULT_FAIL_INVALID_SIZE, "LucasKanadeTrackerAffine::ComputeYGradient", "Image sizes don't match");
+          RESULT_FAIL_INVALID_SIZE, "ComputeYGradient", "Image sizes don't match");
 
         for(s32 y=1; y<imageHeight-1; y++) {
           const InType * restrict pIn_ym1 = in.Pointer(y-1,0);
@@ -186,39 +186,110 @@ namespace Anki
         return RESULT_OK;
       }
 
-      template<typename InType, typename IntermediateType, typename OutType> Result DownsampleByTwo(const Array<InType> &image, Array<OutType> &imageDownsampled)
+      template<typename InType, typename IntermediateType, typename OutType> Result DownsampleByTwo(const Array<InType> &in, Array<OutType> &out)
       {
-        const s32 imageHeight = image.get_size(0);
-        const s32 imageWidth = image.get_size(1);
+        const s32 inHeight = in.get_size(0);
+        const s32 inWidth = in.get_size(1);
 
-        AnkiConditionalErrorAndReturnValue(image.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "DownsampleByFactor", "image is not valid");
+        AnkiConditionalErrorAndReturnValue(in.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "DownsampleByFactor", "in is not valid");
 
-        AnkiConditionalErrorAndReturnValue(imageDownsampled.IsValid(),
-          RESULT_FAIL_INVALID_OBJECT, "DownsampleByFactor", "imageDownsampled is not valid");
+        AnkiConditionalErrorAndReturnValue(out.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "DownsampleByFactor", "out is not valid");
 
-        AnkiConditionalErrorAndReturnValue(imageDownsampled.get_size(0) == (imageHeight / 2) && imageDownsampled.get_size(1) == (imageWidth / 2),
-          RESULT_FAIL_INVALID_SIZE, "DownsampleByFactor", "size(imageDownsampled) is not equal to size(image) >> downsampleFactor");
+        AnkiConditionalErrorAndReturnValue(out.get_size(0) == (inHeight / 2) && out.get_size(1) == (inWidth / 2),
+          RESULT_FAIL_INVALID_SIZE, "DownsampleByFactor", "size(out) is not equal to size(in) >> downsampleFactor");
 
-        const s32 maxY = 2 * imageDownsampled.get_size(0);
-        const s32 maxX = 2 * imageDownsampled.get_size(1);
+        const s32 maxY = 2 * out.get_size(0);
+        const s32 maxX = 2 * out.get_size(1);
 
         for(s32 y=0, ySmall=0; y<maxY; y+=2, ySmall++) {
-          const InType * restrict pImageY0 = image.Pointer(y, 0);
-          const InType * restrict pImageY1 = image.Pointer(y+1, 0);
+          const InType * restrict pImageY0 = in.Pointer(y, 0);
+          const InType * restrict pImageY1 = in.Pointer(y+1, 0);
 
-          OutType * restrict pImageDownsampled = imageDownsampled.Pointer(ySmall, 0);
+          OutType * restrict pImageDownsampled = out.Pointer(ySmall, 0);
 
           for(s32 x=0, xSmall=0; x<maxX; x+=2, xSmall++) {
-            const u32 imageSum =
+            const u32 inSum =
               static_cast<IntermediateType>(pImageY0[x]) +
               static_cast<IntermediateType>(pImageY0[x+1]) +
               static_cast<IntermediateType>(pImageY1[x]) +
               static_cast<IntermediateType>(pImageY1[x+1]);
 
-            pImageDownsampled[xSmall] = static_cast<OutType>(imageSum >> 2);
+            pImageDownsampled[xSmall] = static_cast<OutType>(inSum >> 2);
           }
         }
+
+        return RESULT_OK;
+      }
+
+      template<typename InType, typename IntermediateType, typename OutType> Result DownsampleByPowerOfTwo(const Array<InType> &in, const s32 downsamplePower, Array<OutType> &out, MemoryStack scratch)
+      {
+        const s32 largeHeight = in.get_size(0);
+        const s32 largeWidth = in.get_size(1);
+
+        const s32 smallHeight = largeHeight >> downsamplePower;
+        const s32 smallWidth = largeWidth >> downsamplePower;
+
+        const s32 downsampleFactor = 1 << downsamplePower;
+
+        AnkiConditionalErrorAndReturnValue(in.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "DownsampleByFactor", "in is not valid");
+
+        AnkiConditionalErrorAndReturnValue(out.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "DownsampleByFactor", "out is not valid");
+
+        AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "DownsampleByFactor", "scratch is not valid");
+
+        AnkiConditionalErrorAndReturnValue(out.get_size(0) == smallHeight && out.get_size(1) == smallWidth,
+          RESULT_FAIL_INVALID_SIZE, "DownsampleByFactor", "size(out) is not equal to size(in) >> downsampleFactor");
+
+        AnkiConditionalErrorAndReturnValue(largeWidth % 4 == 0,
+          RESULT_FAIL_INVALID_SIZE, "DownsampleByFactor", "The width of the in Array must be a multiple of four");
+
+        Array<InType> inRow(1, largeWidth, scratch);
+        Array<IntermediateType> accumulator(1, largeWidth >> downsamplePower, scratch);
+
+        InType * restrict pInRow = inRow.Pointer(0,0);
+        IntermediateType * restrict pAccumulator = accumulator.Pointer(0,0);
+
+        const s32 numWordsToCopy = (sizeof(InType)*largeWidth) >> 2; // If the input in stride is not a multiple of four, this will be too small
+
+        const s32 normalizationShift = 2*downsamplePower;
+
+        for(s32 ySmall=0; ySmall<smallHeight; ySmall++) {
+          accumulator.SetZero();
+
+          // Accumulate a block of "largeWidth X downsampleFactor" pixels into a "smallWidth X 1" buffer
+          for(s32 yp=0; yp<downsampleFactor; yp++) {
+            const s32 yLarge = (ySmall << downsamplePower) + yp; // The actual row of the input image
+
+            const InType * restrict pIn = in.Pointer(yLarge, 0);
+
+            // First, copy a row from in to the temporary buffer
+            // TODO: DMA may be faster
+            for(s32 i=0; i<numWordsToCopy; i++) {
+              assert(reinterpret_cast<size_t>(pIn) % 4 == 0);
+              reinterpret_cast<u32*>(pInRow)[i] = reinterpret_cast<const u32*>(pIn)[i];
+            }
+
+            // Next, accumulate into the accumulator
+            for(s32 xSmall=0; xSmall<smallWidth; xSmall++) {
+              for(s32 xp=0; xp<downsampleFactor; xp++) {
+                const s32 xLarge = (xSmall << downsamplePower) + xp; // The actual column of the input image
+
+                pAccumulator[xSmall] += static_cast<IntermediateType>(pInRow[xLarge]);
+              } // for(s32 xp=0; xp<downsampleFactor; xp++)
+            } // for(s32 xSmall=0; xSmall<smallWidth; xSmall++)
+          } // for(s32 yp=0; yp<downsampleFactor; yp++)
+
+          // Convert the sums to averages
+          OutType * restrict pOut = out.Pointer(ySmall, 0);
+          for(s32 xSmall=0; xSmall<smallWidth; xSmall++) {
+            pOut[xSmall] = static_cast<OutType>(pAccumulator[xSmall] >> normalizationShift);
+          } // for(s32 xSmall=0; xSmall<smallWidth; xSmall++)
+        } // for(s32 ySmall=0; ySmall<smallHeight; ySmall++)
 
         return RESULT_OK;
       }

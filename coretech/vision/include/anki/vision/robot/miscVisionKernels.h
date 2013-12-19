@@ -91,6 +91,8 @@ namespace Anki
       const s32 component_percentHorizontal, const s32 component_percentVertical,
       const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       const f32 decode_minContrastRatio,
+      const s32 maxConnectedComponentSegments,
+      const s32 maxExtractedQuads,
       MemoryStack scratch1,
       MemoryStack scratch2);
 

@@ -533,6 +533,110 @@ GTEST_TEST(CoreTech_Common, ArrayPatterns)
   GTEST_RETURN_HERE;
 }
 
+GTEST_TEST(CoreTech_Common, Interp2_Affine_twoDimensional)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u8> reference(3,5,ms);
+
+  // reference = [1:5; 11:15; 21:25];
+  reference(0,0,0,-1).Set(LinearSequence<u8>(1,5));
+  reference(1,1,0,-1).Set(LinearSequence<u8>(11,15));
+  reference(2,2,0,-1).Set(LinearSequence<u8>(21,25));
+
+  // [xGridVector, yGridVector] = meshgrid((-0.9:0.9:6), (-1:1:4));
+  Meshgrid<f32> mesh(LinearSequence<f32>(-0.9f,0.9f,6.0f), LinearSequence<f32>(-1.0f,1.0f,4.0f));
+
+  Array<f32> homography = Eye<f32>(3,3,ms);
+  homography[0][0] = 1.5f;
+  homography[1][2] = 1.0f;
+  // homography = [1.5, 0, 0.0; 0.0, 1.0, 1.0; 0.0, 0.0, 1.0];
+
+  // points = [xGridVector(:), yGridVector(:), ones(48,1)]';
+  // warpedPoints = homography*points;
+  // warpedPoints = warpedPoints ./ repmat(warpedPoints(3,:), [3,1]);
+  // warpedPoints = warpedPoints(1:2, :);
+
+  // warpedXGridVector = reshape(warpedPoints(1,:), [6,8]);
+  // warpedYGridVector = reshape(warpedPoints(2,:), [6,8]);
+
+  const Point<f32> centerOffset(0.0f, 0.0f);
+
+  // result = round(interp2(reference, 1+warpedXGridVector, 1+warpedYGridVector)); result(isnan(result)) = 0
+  Array<u8> result(mesh.get_yGridVector().get_size(), mesh.get_xGridVector().get_size(), ms);
+  const Result lastResult = Interp2_Affine<u8,u8>(reference, mesh, homography, centerOffset, result);
+  ASSERT_TRUE(lastResult == RESULT_OK);
+
+  const u8 result_groundTruth[6][8] = {
+    {0,  1,  2,  4, 0, 0, 0, 0},
+    {0, 11, 12, 14, 0, 0, 0, 0},
+    {0, 21, 22, 24, 0, 0, 0, 0},
+    {0,  0,  0,  0, 0, 0, 0, 0},
+    {0,  0,  0,  0, 0, 0, 0, 0},
+    {0,  0,  0,  0, 0, 0, 0, 0}};
+
+  //result.Print("result");
+
+  for(s32 y=0; y<6; y++) {
+    for(s32 x=0; x<8; x++) {
+      ASSERT_TRUE(result[y][x] == result_groundTruth[y][x]);
+    }
+  }
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, Interp2_Affine_oneDimensional)
+{
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<u8> reference(3,5,ms);
+
+  // reference = [1:5; 11:15; 21:25];
+  reference(0,0,0,-1).Set(LinearSequence<u8>(1,5));
+  reference(1,1,0,-1).Set(LinearSequence<u8>(11,15));
+  reference(2,2,0,-1).Set(LinearSequence<u8>(21,25));
+
+  // [xGridVector, yGridVector] = meshgrid((-0.9:0.9:6), (-1:1:4));
+  Meshgrid<f32> mesh(LinearSequence<f32>(-0.9f,0.9f,6.0f), LinearSequence<f32>(-1.0f,1.0f,4.0f));
+
+  Array<f32> homography = Eye<f32>(3,3,ms);
+  homography[0][0] = 1.5f;
+  homography[1][2] = 1.0f;
+  // homography = [1.5, 0, 0.0; 0.0, 1.0, 1.0; 0.0, 0.0, 1.0];
+
+  // points = [xGridVector(:), yGridVector(:), ones(48,1)]';
+  // warpedPoints = homography*points;
+  // warpedPoints = warpedPoints ./ repmat(warpedPoints(3,:), [3,1]);
+  // warpedPoints = warpedPoints(1:2, :);
+
+  // warpedXGridVector = reshape(warpedPoints(1,:), [6,8]);
+  // warpedYGridVector = reshape(warpedPoints(2,:), [6,8]);
+
+  const Point<f32> centerOffset(0.0f, 0.0f);
+
+  // result = round(interp2(reference, 1+warpedXGridVector, 1+warpedYGridVector)); result(isnan(result)) = 0;
+  // r = result'; r(:)'
+  const s32 numElements = mesh.get_yGridVector().get_size() * mesh.get_xGridVector().get_size();
+  Array<u8> result(1, numElements, ms);
+  const Result lastResult = Interp2_Affine<u8,u8>(reference, mesh, homography, centerOffset, result);
+  ASSERT_TRUE(lastResult == RESULT_OK);
+
+  const u8 result_groundTruth[48] = {0, 1, 2, 4, 0, 0, 0, 0, 0, 11, 12, 14, 0, 0, 0, 0, 0, 21, 22, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+  //result.Print("result");
+
+  for(s32 i=0; i<48; i++) {
+    ASSERT_TRUE(result[0][i] == result_groundTruth[i]);
+  }
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, Interp2_twoDimensional)
 {
   ASSERT_TRUE(buffer != NULL);
@@ -2178,8 +2282,11 @@ GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
 #if ANKICORETECH_EMBEDDED_USE_MATLAB
 GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
 {
+  MemoryStack ms(calloc(1000000,1), 1000000);
+  ASSERT_TRUE(ms.IsValid());
+
   matlab.EvalStringEcho("simpleArray = int16([1,2,3,4,5;6,7,8,9,10]);");
-  Array<s16> simpleArray = matlab.GetArray<s16>("simpleArray");
+  Array<s16> simpleArray = matlab.GetArray<s16>("simpleArray", ms);
   printf("simple matrix:\n");
   simpleArray.Print();
 
@@ -2194,7 +2301,7 @@ GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
   ASSERT_EQ(9, *simpleArray.Pointer(1,3));
   ASSERT_EQ(10, *simpleArray.Pointer(1,4));
 
-  free(simpleArray.get_rawDataPointer());
+  free(ms.get_buffer());
 
   GTEST_RETURN_HERE;
 }
@@ -2349,20 +2456,23 @@ GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 
 GTEST_TEST(CoreTech_Common, ArrayAlignment1)
 {
-  const s32 numBytes = MIN(MAX_BYTES, 1000);
   ASSERT_TRUE(buffer != NULL);
 
   void *alignedBuffer = reinterpret_cast<void*>( RoundUp(reinterpret_cast<size_t>(buffer), MEMORY_ALIGNMENT) );
 
   // Check all offsets
-  for(s32 offset=0; offset<8; offset++) {
+  for(s32 offset=0; offset<=16; offset++) {
     void * const alignedBufferAndOffset = reinterpret_cast<char*>(alignedBuffer) + offset;
-    Array<s16> simpleArray(10, 6, alignedBufferAndOffset, numBytes-offset-8);
+    Array<s16> simpleArray(10, 8, alignedBufferAndOffset, MAX_BYTES-offset-8);
 
-    const size_t trueLocation = reinterpret_cast<size_t>(simpleArray.Pointer(0,0));
-    const size_t expectedLocation = RoundUp(reinterpret_cast<size_t>(alignedBufferAndOffset), MEMORY_ALIGNMENT);;
-
-    ASSERT_TRUE(trueLocation ==  expectedLocation);
+    if(offset%MEMORY_ALIGNMENT == 0) {
+      ASSERT_TRUE(simpleArray.IsValid());
+      const size_t trueLocation = reinterpret_cast<size_t>(simpleArray.Pointer(0,0));
+      const size_t expectedLocation = RoundUp(reinterpret_cast<size_t>(alignedBufferAndOffset), MEMORY_ALIGNMENT);;
+      ASSERT_TRUE(trueLocation ==  expectedLocation);
+    } else {
+      ASSERT_FALSE(simpleArray.IsValid());
+    }
   }
 
   GTEST_RETURN_HERE;

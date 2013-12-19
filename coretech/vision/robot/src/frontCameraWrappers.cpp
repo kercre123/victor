@@ -500,7 +500,7 @@ namespace Anki
       // EndBenchmark("ComputeHomographyFromQuad");
 
       // 5. Decode fiducial markers from the candidate quadrilaterals
-      const FiducialMarkerParser parser = FiducialMarkerParser();
+      const FiducialMarkerParser parser = FiducialMarkerParser(scratch2);
 
       // BeginBenchmark("ExtractBlockMarker");
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
@@ -543,13 +543,12 @@ namespace Anki
       const s32 component_percentHorizontal, const s32 component_percentVertical,
       const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       const f32 decode_minContrastRatio,
+      const s32 maxConnectedComponentSegments,
+      const s32 maxExtractedQuads,
       MemoryStack scratch1,
       MemoryStack scratch2)
     {
       BeginBenchmark("SimpleDetector_Steps12345_lowMemory");
-
-      const s32 maxConnectedComponentSegments = 25000; // u16_MAX
-      const s32 maxExtractedQuads = 1000;
 
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
@@ -636,7 +635,7 @@ namespace Anki
       EndBenchmark("ComputeHomographyFromQuad");
 
       // 5. Decode fiducial markers from the candidate quadrilaterals
-      const FiducialMarkerParser parser = FiducialMarkerParser();
+      const FiducialMarkerParser parser = FiducialMarkerParser(scratch2);
 
       BeginBenchmark("ExtractBlockMarker");
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
