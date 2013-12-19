@@ -175,10 +175,10 @@ namespace Anki {
         
         //Sum the error (integrate it). But ONLY, if we are not commading max output already
         //This should prevent the integral term to become to huge
-        if (ABS(outl) < Cozmo::HAL::MOTOR_PWM_MAXVAL) {
+        if (ABS(power_l_) < Cozmo::HAL::MOTOR_MAX_POWER) {
           error_sumL_ = CLIP(error_sumL_ + errorL, -MAX_ERROR_SUM,MAX_ERROR_SUM);
         }
-        if (ABS(outr) < Cozmo::HAL::MOTOR_PWM_MAXVAL) {
+        if (ABS(power_r_) < Cozmo::HAL::MOTOR_MAX_POWER) {
           error_sumR_ = CLIP(error_sumR_ + errorR, -MAX_ERROR_SUM,MAX_ERROR_SUM);
         }
       } else {

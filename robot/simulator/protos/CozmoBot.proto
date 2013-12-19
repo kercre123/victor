@@ -6,7 +6,11 @@ PROTO CozmoBot [
   field SFFloat fieldOfViewHead 0.7854
   field SFBool useSphericalHeadCamera FALSE
   field SFFloat headAngle 0 
+  field SFFloat headAngle_lowLimit -0.4363 # 25 degrees down
+  field SFFloat headAngle_highLimit 0.6109 # 35 degrees up
   field SFFloat liftAngle 0
+  field SFFloat liftAngle_lowLimit -0.2618 # 15 degrees down
+  field SFFloat liftAngle_highLimit 1.047  # 60 degrees up
   field SFInt32 commsChannel 1
   field SFInt32 usbChannel 88
   field SFString controller "cozmo_c_controller"
@@ -71,17 +75,22 @@ Supervisor {
             HingeJoint {
               jointParameters HingeJointParameters {
                 position IS liftAngle
+                minStop IS liftAngle_lowLimit
+                maxStop IS liftAngle_highLimit
                 axis 0 0 1
               }
               device RotationalMotor {
                 name "lift_motor"
               }
-              endPoint Solid {
+              endPoint Gyro {
+                name "lift_gyro"
                 translation 0.045 0 0
                 children [
                   HingeJoint {
                     jointParameters HingeJointParameters {
                       anchor 0.045 0 0
+                      minStop IS liftAngle_lowLimit
+                      maxStop IS liftAngle_highLimit
                       axis   0 0 1
                     }
                     device RotationalMotor {
@@ -330,14 +339,15 @@ Supervisor {
       jointParameters HingeJointParameters {
         anchor   -0.0155 0.025 0
         axis     0 0 1
-        maxStop  0.6109 # 35 degrees up
-        minStop -0.4363 # 25 degrees down
+        maxStop IS headAngle_highLimit
+        minStop IS headAngle_lowLimit
         position IS headAngle	
       }
       device RotationalMotor {
         name "motor_head_pitch"
       }
-      endPoint Solid {
+      endPoint Gyro {
+        name "head_gyro"
         rotation 0 1 0 0
         children [
           DEF CAM_HEAD Camera {

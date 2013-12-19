@@ -1,4 +1,4 @@
-
+#include "anki/common/robot/config.h"
 #include "anki/cozmo/messages.h"
 
 // TODO: move more of these include files to "src"
@@ -79,7 +79,6 @@ namespace Anki {
           
           PRINT("Starting docking\n");
           DockingController::ResetDocker();
-          DockingController::StartPicking();  // Kick off image streaming
         }
       }
       

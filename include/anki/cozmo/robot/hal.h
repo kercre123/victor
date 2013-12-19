@@ -115,7 +115,6 @@ namespace Anki
       // The max angular speed the head can move when max power is commanded.
       const f32 MAX_LIFT_SPEED = PI/2; // rad/s
       
-      const f32 MAX_WHEEL_SPEED = 300; //mm/s
       //////////////////////
       
       

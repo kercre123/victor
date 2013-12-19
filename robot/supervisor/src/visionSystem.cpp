@@ -489,7 +489,7 @@ namespace Anki {
         const s32 component_percentHorizontal = 1 << 7; // 0.5, in SQ 23.8
         const s32 component_percentVertical = 1 << 7; // 0.5, in SQ 23.8
         
-        // Unused? const s32 maxExtractedQuads = 1000/2;
+        const s32 maxExtractedQuads = 1000/2;
         const s32 quads_minQuadArea = 100/4;
         const s32 quads_quadSymmetryThreshold = 384;
         const s32 quads_minDistanceFromImageEdge = 2;
@@ -497,7 +497,7 @@ namespace Anki {
         const f32 decode_minContrastRatio = 1.25;
         
         const s32 maxMarkers = 100;
-        // Unused? const s32 maxConnectedComponentSegments = 25000/2;
+        const s32 maxConnectedComponentSegments = 25000/2;
         
         // TODO: Add downsampling here
         
@@ -528,6 +528,8 @@ namespace Anki {
                                                                             quads_quadSymmetryThreshold,
                                                                             quads_minDistanceFromImageEdge,
                                                                             decode_minContrastRatio,
+                                                                            maxExtractedQuads,
+                                                                            maxConnectedComponentSegments,
                                                                             detectorScratch1_,
                                                                             detectorScratch2_);
         

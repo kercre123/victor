@@ -255,7 +255,7 @@ classdef CozmoVisionProcessor < handle
                     timestamp = this.Cast(packet(2:5), 'uint32');
                     
                     if this.flipImage
-                        this.packet(6:end) = fliplr(this.packet(6:end));
+                        packet(6:end) = fliplr(packet(6:end));
                     end
                     
                     if imgPacketLength ~= prod(resolution)

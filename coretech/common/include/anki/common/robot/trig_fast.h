@@ -29,4 +29,10 @@ float asin_fast(float x);
 // Arctangent function which uses atan_fast
 float atan2_fast(float y, float x);
 
+// Arctangent function which uses asin from math.h
+// Useful on embedded systems that don't include atan2 in math.h
+// More accurate than atan2_fast.
+// Nothing particularly fast about this implementation.
+float atan2_acc(float y, float x);
+
 #endif

@@ -21,7 +21,14 @@ endif(NOT PROJECT_NAME MATCHES "CoreTech")
 cmake_policy(SET CMP0015 NEW)
 
 # If user provided flags from the command line for using Matlab/OpenCV/Gtest,
-# use those.  Otherwise, set them all to on by default.
+# use those.  Otherwise, set them all to the defaults defined below
+set(DEFAULT_USE_MATLAB 1)
+set(DEFAULT_EMBEDDED_USE_MATLAB 1)
+set(DEFAULT_USE_OPENCV 1)
+set(DEFAULT_EMBEDDED_USE_OPENCV 0)
+set(DEFAULT_USE_GTEST 1)
+set(DEFAULT_EMBEDDED_USE_GTEST 1)
+
 set(PKG_OPTIONS 
 	USE_MATLAB USE_GTEST USE_OPENCV 
 	EMBEDDED_USE_MATLAB EMBEDDED_USE_GTEST EMBEDDED_USE_OPENCV
@@ -31,7 +38,7 @@ foreach(PKG ${PKG_OPTIONS})
 	    # message(STATUS "${PKG} was user-defined.")
 		set(ANKICORETECH_${PKG} ${${PKG}})
 	else()
-		set(ANKICORETECH_${PKG} 1)
+		set(ANKICORETECH_${PKG} ${DEFAULT_${PKG}})
 	endif(DEFINED ${PKG})
 	# message(STATUS "Setting ${PKG} = ${ANKICORETECH_${PKG}}")
 endforeach()

@@ -47,7 +47,7 @@ int main(int argc, char **argv)
       }
     }
       
-    if(Sim::KeyboardController::IsEnabled()) {
+    if(Sim::KeyboardController::IsEnabled() && Robot::GetOperationMode() != Robot::INITIALIZING) {
       Sim::KeyboardController::ProcessKeystroke();
     }      
   }
