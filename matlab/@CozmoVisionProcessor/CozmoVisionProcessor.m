@@ -27,6 +27,7 @@ classdef CozmoVisionProcessor < handle
         TRACK_COMMAND            = char(sscanf('CD', '%2x'));
         MAT_ODOMETRY_COMMAND     = char(sscanf('DE', '%2x'));
         MAT_LOCALIZATION_COMMAND = char(sscanf('EF', '%2x'));
+        DISPLAY_IMAGE_COMMAND    = char(sscanf('F0', '%2x'));
                     
         LIFT_DISTANCE = 34;  % in mm, forward from robot origin
         
