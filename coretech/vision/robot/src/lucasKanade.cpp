@@ -175,19 +175,12 @@ namespace Anki
         return this->homography.Print(variableName);
       }
 
-      Quadrilateral<f32> PlanarTransformation_f32::TransformQuadrilateral(const Quadrilateral<f32> &in, const f32 scale) const
+      Quadrilateral<f32> PlanarTransformation_f32::TransformQuadrilateral(const Quadrilateral<f32> &in, MemoryStack scratch, const f32 scale) const
       {
-        // TODO: if this uses too much stack, rethink it
-        const s32 dataSize = 4*sizeof(f32) + 2*MEMORY_ALIGNMENT;
-        char xInData[dataSize];
-        char yInData[dataSize];
-        char xOutData[dataSize];
-        char yOutData[dataSize];
-
-        Array<f32> xIn(1,4,&xInData[0],dataSize);
-        Array<f32> yIn(1,4,&yInData[0],dataSize);
-        Array<f32> xOut(1,4,&xOutData[0],dataSize);
-        Array<f32> yOut(1,4,&yOutData[0],dataSize);
+        Array<f32> xIn(1,4,scratch);
+        Array<f32> yIn(1,4,scratch);
+        Array<f32> xOut(1,4,scratch);
+        Array<f32> yOut(1,4,scratch);
 
         for(s32 i=0; i<4; i++) {
           xIn[0][i] = in.corners[i].x;
@@ -252,9 +245,9 @@ namespace Anki
         return this->initialCorners;
       }
 
-      Quadrilateral<f32> PlanarTransformation_f32::get_transformedCorners() const
+      Quadrilateral<f32> PlanarTransformation_f32::get_transformedCorners(MemoryStack scratch) const
       {
-        return this->TransformQuadrilateral(this->get_initialCorners());
+        return this->TransformQuadrilateral(this->get_initialCorners(), scratch);
       }
 
       Result PlanarTransformation_f32::TransformPointsStatic(
@@ -1020,7 +1013,7 @@ namespace Anki
               Point<f32>(static_cast<f32>(nextImage.get_size(0)),static_cast<f32>(nextImage.get_size(1))),
               Point<f32>(0.0f,static_cast<f32>(nextImage.get_size(1))));
 
-            Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, scale);
+            Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, memory, scale);
 
             //const f32 change = sqrtf(Matrix::Mean<f32,f32>(tmp1));
             f32 change = 0.0f;

@@ -80,10 +80,22 @@ namespace Anki
     }
 
     template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const Flags::Buffer flags)
-      : stride(ComputeRequiredStride(numCols, flags))
     {
-      AnkiConditionalError(numCols >= 0 && numRows >= 0 && dataLength >= 0,
+      InvalidateArray();
+
+      this->stride = ComputeRequiredStride(numCols, flags);
+
+      AnkiConditionalErrorAndReturn(numCols >= 0 && numRows >= 0 && dataLength >= numRows*this->stride && this->stride == (numCols*sizeof(Type)),
         "Array<Type>::Array", "Invalid size");
+
+      AnkiConditionalErrorAndReturn((numCols*sizeof(Type)) % MEMORY_ALIGNMENT == 0,
+        "Array<Type>::Array", "(numCols*sizeof(Type)) mod MEMORY_ALIGNMENT must equal zero");
+
+      AnkiConditionalErrorAndReturn(reinterpret_cast<size_t>(data) % MEMORY_ALIGNMENT == 0,
+        "Array<Type>::Array", "reinterpret_cast<size_t>(data) mod MEMORY_ALIGNMENT must equal zero");
+
+      AnkiConditionalErrorAndReturn(flags.get_useBoundaryFillPatterns() == false,
+        "Array<Type>::Array", "flags.get_useBoundaryFillPatterns must be false");
 
       InitializeBuffer(numRows,
         numCols,
@@ -94,7 +106,9 @@ namespace Anki
 
     template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const Flags::Buffer flags)
     {
-      AnkiConditionalError(numCols >= 0 && numRows >= 0,
+      InvalidateArray();
+
+      AnkiConditionalErrorAndReturn(numCols >= 0 && numRows >= 0,
         "Array<Type>::Array", "Invalid size");
 
       s32 numBytesAllocated = 0;
@@ -426,11 +440,11 @@ namespace Anki
         if(numValuesThisRow > 0) {
           // For small data types, this may be too many bytes, but the stride padding should make
           // the writing okay (I think)
-          const s32 wordsToCopy = (sizeof(Type)*numValuesThisRow + 3) / 4;
+          const s32 numWordsToCopy = (sizeof(Type)*numValuesThisRow + 3) / 4;
 
           //memcpy(pThisData, values + y*size[1], numValuesThisRow*sizeof(Type));
-          for(s32 x=0; x<wordsToCopy; x++) {
-            assert(reinterpret_cast<s32>(values+y*size[1]) % 4 == 0);
+          for(s32 x=0; x<numWordsToCopy; x++) {
+            assert(reinterpret_cast<size_t>(values+y*size[1]) % 4 == 0);
             pThisData[x] = reinterpret_cast<const u32*>(values+y*size[1])[x];
           }
           numValuesSet += numValuesThisRow;

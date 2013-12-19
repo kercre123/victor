@@ -71,7 +71,7 @@ namespace Anki
 
         Result Print(const char * const variableName = "Transformation");
 
-        Quadrilateral<f32> TransformQuadrilateral(const Quadrilateral<f32> &in, const f32 scale=1.0f) const;
+        Quadrilateral<f32> TransformQuadrilateral(const Quadrilateral<f32> &in, MemoryStack scratch, const f32 scale=1.0f) const;
 
         Result set_transformType(const TransformType transformType);
 
@@ -85,7 +85,7 @@ namespace Anki
 
         const Quadrilateral<f32>& get_initialCorners() const;
 
-        Quadrilateral<f32> get_transformedCorners() const;
+        Quadrilateral<f32> get_transformedCorners(MemoryStack scratch) const;
 
       protected:
         TransformType transformType;

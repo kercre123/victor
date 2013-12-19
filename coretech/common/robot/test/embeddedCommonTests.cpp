@@ -2276,8 +2276,11 @@ GTEST_TEST(CoreTech_Common, SimpleMatlabTest1)
 #if ANKICORETECH_EMBEDDED_USE_MATLAB
 GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
 {
+  MemoryStack ms(calloc(1000000,1), 1000000);
+  ASSERT_TRUE(ms.IsValid());
+
   matlab.EvalStringEcho("simpleArray = int16([1,2,3,4,5;6,7,8,9,10]);");
-  Array<s16> simpleArray = matlab.GetArray<s16>("simpleArray");
+  Array<s16> simpleArray = matlab.GetArray<s16>("simpleArray", ms);
   printf("simple matrix:\n");
   simpleArray.Print();
 
@@ -2292,7 +2295,7 @@ GTEST_TEST(CoreTech_Common, SimpleMatlabTest2)
   ASSERT_EQ(9, *simpleArray.Pointer(1,3));
   ASSERT_EQ(10, *simpleArray.Pointer(1,4));
 
-  free(simpleArray.get_rawDataPointer());
+  free(ms.get_buffer());
 
   GTEST_RETURN_HERE;
 }
@@ -2447,20 +2450,23 @@ GTEST_TEST(CoreTech_Common, ArraySpecifiedClass)
 
 GTEST_TEST(CoreTech_Common, ArrayAlignment1)
 {
-  const s32 numBytes = MIN(MAX_BYTES, 1000);
   ASSERT_TRUE(buffer != NULL);
 
   void *alignedBuffer = reinterpret_cast<void*>( RoundUp(reinterpret_cast<size_t>(buffer), MEMORY_ALIGNMENT) );
 
   // Check all offsets
-  for(s32 offset=0; offset<8; offset++) {
+  for(s32 offset=0; offset<=16; offset++) {
     void * const alignedBufferAndOffset = reinterpret_cast<char*>(alignedBuffer) + offset;
-    Array<s16> simpleArray(10, 6, alignedBufferAndOffset, numBytes-offset-8);
+    Array<s16> simpleArray(10, 8, alignedBufferAndOffset, MAX_BYTES-offset-8);
 
-    const size_t trueLocation = reinterpret_cast<size_t>(simpleArray.Pointer(0,0));
-    const size_t expectedLocation = RoundUp(reinterpret_cast<size_t>(alignedBufferAndOffset), MEMORY_ALIGNMENT);;
-
-    ASSERT_TRUE(trueLocation ==  expectedLocation);
+    if(offset%MEMORY_ALIGNMENT == 0) {
+      ASSERT_TRUE(simpleArray.IsValid());
+      const size_t trueLocation = reinterpret_cast<size_t>(simpleArray.Pointer(0,0));
+      const size_t expectedLocation = RoundUp(reinterpret_cast<size_t>(alignedBufferAndOffset), MEMORY_ALIGNMENT);;
+      ASSERT_TRUE(trueLocation ==  expectedLocation);
+    } else {
+      ASSERT_FALSE(simpleArray.IsValid());
+    }
   }
 
   GTEST_RETURN_HERE;

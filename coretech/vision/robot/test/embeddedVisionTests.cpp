@@ -145,7 +145,7 @@ GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
   f32 rel_x, rel_y, rel_rad;
   ASSERT_TRUE(Docking::ComputeDockingErrorSignal(transform,
     horizontalTrackingResolution, blockMarkerWidthInMM, horizontalFocalLengthInMM, cozmoLiftDistanceInMM,
-    rel_x, rel_y, rel_rad) == RESULT_OK);
+    rel_x, rel_y, rel_rad, ms) == RESULT_OK);
 
   //printf("%f %f %f\n", rel_x, rel_y, rel_rad);
 

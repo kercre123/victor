@@ -118,7 +118,7 @@ namespace Anki
 
       template<typename Type> Result PutArray(const Array<Type> &matrix, const std::string name);
 
-      template<typename Type> Array<Type> GetArray(const std::string name);
+      template<typename Type> Array<Type> GetArray(const std::string name, MemoryStack &memory);
 
       template<typename Type> Result Put(const Type * values, s32 nValues, const std::string name);
 
@@ -149,7 +149,7 @@ namespace Anki
       return RESULT_OK;
     } // template<typename Type> Result Matlab::PutArray(const Array<Type> &matrix, const std::string name)
 
-    template<typename Type> Array<Type> Matlab::GetArray(const std::string name)
+    template<typename Type> Array<Type> Matlab::GetArray(const std::string name, MemoryStack &memory)
     {
       AnkiConditionalErrorAndReturnValue(ep, Array<Type>(0, 0, NULL, 0), "Anki.GetArray<Type>", "Matlab engine is not started/connected");
 
@@ -166,7 +166,7 @@ namespace Anki
       const size_t numRows = mxGetN(arrayTmp);
       const s32 stride = Array<Type>::ComputeRequiredStride(static_cast<s32>(numCols), Flags::Buffer(true,false));
 
-      Array<Type> ankiArray(static_cast<s32>(numRows), static_cast<s32>(numCols), reinterpret_cast<Type*>(calloc(stride*numCols,1)), stride*static_cast<s32>(numCols));
+      Array<Type> ankiArray(static_cast<s32>(numRows), static_cast<s32>(numCols), memory);
 
       Type *matlabArrayTmp = reinterpret_cast<Type*>(mxGetPr(arrayTmp));
       s32 matlabIndex = 0;

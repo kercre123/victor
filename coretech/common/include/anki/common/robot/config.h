@@ -157,7 +157,9 @@ extern "C" {
 
 #include "anki/common/constantsAndMacros.h"
 
-#define MEMORY_ALIGNMENT ( (size_t)(16) ) // To support 128-bit SIMD loads and stores
+// To support 128-bit SIMD loads and stores
+#define MEMORY_ALIGNMENT_RAW 16 // Sometimes the preprocesor can't handle the safer version MEMORY_ALIGNMENT
+#define MEMORY_ALIGNMENT ( (size_t)(MEMORY_ALIGNMENT_RAW) )
 
 // To make processing faster, some kernels require image widths that are a multiple of ANKI_VISION_IMAGE_WIDTH_MULTIPLE
 #define ANKI_VISION_IMAGE_WIDTH_SHIFT 4

@@ -67,13 +67,12 @@ namespace Anki
         FIDUCIAL_BIT_CHECKSUM = 8
       } Type;
 
-      FiducialMarkerParserBit();
+      FiducialMarkerParserBit(MemoryStack &memory);
 
-      // All data from other is copied into this instance's local memory
       FiducialMarkerParserBit(const FiducialMarkerParserBit& bit2);
 
       // All data from probeLocations is copied into this instance's local memory
-      FiducialMarkerParserBit(const s16 * const probesX, const s16 * const probesY, const s16 * const probeWeights, const s32 numProbes, const FiducialMarkerParserBit::Type type, const s32 numFractionalBits);
+      FiducialMarkerParserBit(const s16 * const probesX, const s16 * const probesY, const s16 * const probeWeights, const s32 numProbes, const FiducialMarkerParserBit::Type type, const s32 numFractionalBits, MemoryStack &memory);
 
       Result ExtractMeanValue(const Array<u8> &image, const Quadrilateral<s16> &quad, const Array<f64> &homography, s16 &meanValue) const;
 
@@ -96,10 +95,10 @@ namespace Anki
       // The static data buffer for this object's probeLocations and probeWeights. Modifying this will change the values in probeLocations and probeWeights.
       //Point<s16> probeLocationsBuffer[MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS];
       //s16 probeWeightsBuffer[MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS];
-      char probeLocationsBuffer[NUM_BYTES_probeLocationsBuffer];
-      char probeWeightsBuffer[NUM_BYTES_probeWeightsBuffer];
+      //char probeLocationsBuffer[NUM_BYTES_probeLocationsBuffer];
+      //char probeWeightsBuffer[NUM_BYTES_probeWeightsBuffer];
 
-      void PrepareBuffers();
+      //void PrepareBuffers();
     }; // class FiducialMarkerParserBit
 
     class FiducialMarkerParser
@@ -107,7 +106,7 @@ namespace Anki
     public:
 
       // Initialize with the default grid type, converted from Matlab
-      FiducialMarkerParser();
+      FiducialMarkerParser(MemoryStack &memory);
 
       FiducialMarkerParser(const FiducialMarkerParser& marker2);
 
@@ -125,13 +124,11 @@ namespace Anki
       s32 rightBitIndex;
 
       //FiducialMarkerParserBit bitsBuffer[MAX_FIDUCIAL_MARKER_BITS];
-      char bitsBuffer[NUM_BYTES_bitsBuffer];
+      //char bitsBuffer[NUM_BYTES_bitsBuffer];
 
       static bool IsChecksumValid(const FixedLengthList<u8> &checksumBits, const FixedLengthList<u8> &blockBits, const FixedLengthList<u8> &faceBits);
 
-      void PrepareBuffers();
-
-      Result InitializeAsDefaultParser();
+      Result InitializeAsDefaultParser(MemoryStack &memory);
 
       Result DetermineOrientationAndBinarizeAndReorderCorners(const FixedLengthList<s16> &meanValues, const f32 minContrastRatio, BlockMarker &marker, FixedLengthList<u8> &binarizedBits, MemoryStack scratch) const;
 

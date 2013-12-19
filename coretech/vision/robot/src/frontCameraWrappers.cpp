@@ -500,7 +500,7 @@ namespace Anki
       // EndBenchmark("ComputeHomographyFromQuad");
 
       // 5. Decode fiducial markers from the candidate quadrilaterals
-      const FiducialMarkerParser parser = FiducialMarkerParser();
+      const FiducialMarkerParser parser = FiducialMarkerParser(scratch2);
 
       // BeginBenchmark("ExtractBlockMarker");
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
@@ -636,7 +636,7 @@ namespace Anki
       EndBenchmark("ComputeHomographyFromQuad");
 
       // 5. Decode fiducial markers from the candidate quadrilaterals
-      const FiducialMarkerParser parser = FiducialMarkerParser();
+      const FiducialMarkerParser parser = FiducialMarkerParser(scratch2);
 
       BeginBenchmark("ExtractBlockMarker");
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
