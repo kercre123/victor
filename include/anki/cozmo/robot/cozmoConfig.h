@@ -16,10 +16,16 @@ namespace Anki {
     const f32 MAT_CAM_HEIGHT_FROM_GROUND_MM = (0.5f*WHEEL_DIAMETER_MM) - 3.f;
 
     const u8 NUM_RADIAL_DISTORTION_COEFFS = 4;
+
+    // Cozmo control loop is 500Hz.
+    const s32 TIME_STEP = 2;
     
 #ifdef SIMULATOR
-    // Cozmo control loop is 100Hz on simulator. (That's as fast as it goes!)
-    const s32 TIME_STEP = 10;
+    // Should be less than the timestep of offboard_vision_processing,
+    // and roughly reflect image capture time.  If it's larger than or equal
+    // to offboard_vision_processing timestep then we may send the same image
+    // multiple times.
+    const s32 VISION_TIME_STEP = 20;
     
     // TODO: Currently set to Webots specs
     const f32 LIFT_JOINT_HEIGHT = 27.f + (0.5f*WHEEL_DIAMETER_MM);
@@ -28,8 +34,6 @@ namespace Anki {
     const f32 LIFT_HEIGHT_HIGHDOCK = 90.f;
     const f32 LIFT_HEIGHT_CARRY    = 95.f;
 #else
-    // Control loop on robot is 500Hz.
-    const s32 TIME_STEP = 2;
     
     const f32 LIFT_JOINT_HEIGHT = 45.f;
     const f32 LIFT_LENGTH = 91.f;

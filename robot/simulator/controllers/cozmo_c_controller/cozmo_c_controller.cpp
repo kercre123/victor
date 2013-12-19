@@ -44,11 +44,9 @@ int main(int argc, char **argv)
   
   while(Robot::step_MainExecution() == EXIT_SUCCESS)
   {
-    if( (HAL::GetMicroCounter() % 100000) == 0 ) {
-      if( Robot::step_LongExecution() == EXIT_FAILURE ) {
-        fprintf(stdout, "step_LongExecution failed.\n");
-        break;
-      }
+    if( Robot::step_LongExecution() == EXIT_FAILURE ) {
+      fprintf(stdout, "step_LongExecution failed.\n");
+      break;
     }
       
     if(Sim::KeyboardController::IsEnabled() && Robot::GetOperationMode() != Robot::INITIALIZING) {

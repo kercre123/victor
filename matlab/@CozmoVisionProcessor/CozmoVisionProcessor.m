@@ -1,7 +1,6 @@
 classdef CozmoVisionProcessor < handle
     
     properties(Constant = true)
-        TIME_STEP = 10;
         
         % Default header and footer:
         HEADER = char(sscanf('BEEFF0FF', '%2x'))'; 
@@ -34,6 +33,7 @@ classdef CozmoVisionProcessor < handle
     end % Constant Properties
     
     properties
+        TIME_STEP;
         serialDevice;
         serialBuffer;
         doEndianSwap;
@@ -111,7 +111,8 @@ classdef CozmoVisionProcessor < handle
             DetectionResolution = [320 240];
             Verbosity = 1;
             DoEndianSwap = false; % false for simulator, true with Movidius
-            
+            TIME_STEP = 30;
+
             parseVarargin(varargin{:});
             
             assert(isa(SerialDevice, 'serial') || ...
@@ -128,6 +129,7 @@ classdef CozmoVisionProcessor < handle
             this.flipImage = FlipImage;
             
             this.verbosity = Verbosity;
+            this.TIME_STEP = TIME_STEP;
             
             this.LKtracker = [];
             this.trackerType = TrackerType;
@@ -182,8 +184,8 @@ classdef CozmoVisionProcessor < handle
                 t = tic;
                 
                 this.Update();
-                
-                pause(max(0, this.TIME_STEP/1000 - toc(t)));
+
+                % pause(max(0, this.TIME_STEP/1000 - toc(t)));
             end
 
         end % FUNCTION Run()
@@ -202,8 +204,8 @@ classdef CozmoVisionProcessor < handle
             % actual message data
             msgID = this.messageIDs.(messageName);
             fwrite(this.serialDevice, [uint8(this.HEADER) msgID row(packet)]);
-            fprintf('Sent "%s" packet with msgID=%d and %d bytes.\n', ...
-                messageName, msgID, length(packet));
+            fprintf('Sent "%s" packet with msgID=%d and %d bytes (time=%f).\n', ...
+		    messageName, msgID, length(packet), wb_robot_get_time());
         end % FUNCTION: SendPacket()
         
         

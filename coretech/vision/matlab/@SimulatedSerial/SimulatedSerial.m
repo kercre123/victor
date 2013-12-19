@@ -30,7 +30,7 @@ classdef SimulatedSerial < handle
         function this = SimulatedSerial(varargin)
             RX = [];
             TX = [];
-            TIME_STEP = 64;
+            TIME_STEP = 30;
             Port = [];
             BaudRate = -1; %#ok<PROP>
                         
