@@ -41,7 +41,7 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 
-#define USE_OFFBOARD_VISION 0
+#define USE_OFFBOARD_VISION 1
 
 #ifdef __cplusplus
 extern "C" {

@@ -188,6 +188,8 @@ namespace Anki {
     
     ReturnCode HAL::Init()
     {
+      assert(TIME_STEP >= webotRobot_.getBasicTimeStep());
+      
       // TODO: need to check return code?
       UARTInit();
       
@@ -204,8 +206,8 @@ namespace Anki {
       matCam_ = webotRobot_.getCamera("cam_down");
       headCam_ = webotRobot_.getCamera("cam_head");
       
-      matCam_->enable(TIME_STEP);
-      headCam_->enable(TIME_STEP);
+      matCam_->enable(VISION_TIME_STEP);
+      headCam_->enable(VISION_TIME_STEP);
       
       leftWheelGyro_  = webotRobot_.getGyro("wheel_gyro_fl");
       rightWheelGyro_ = webotRobot_.getGyro("wheel_gyro_fr");
