@@ -961,13 +961,13 @@ namespace Anki
           Matrix::MultiplyTranspose(A, AW, AWAt);
           EndBenchmark("IterativelyRefineTrack.computeAWAt");
 
-          {
+	  /*          {
             Matlab matlab(false);
 
             matlab.PutArray(A, "A");
             matlab.PutArray(AW, "AW");
             matlab.PutArray(AWAt, "AWAt");
-          }
+	    }*/
 
           Array<f32> ridgeWeightMatrix = Eye<f32>(numSystemParameters, numSystemParameters, memory);
           Matrix::DotMultiply<f32,f32,f32>(ridgeWeightMatrix, ridgeWeight, ridgeWeightMatrix);
@@ -980,13 +980,13 @@ namespace Anki
           Matrix::MultiplyTranspose(templateDerivativeT, AW, b);
           EndBenchmark("IterativelyRefineTrack.computeb");
 
-          {
+          /*{
             Matlab matlab(false);
 
             matlab.PutArray(b, "b");
             matlab.PutArray(templateDerivativeT, "templateDerivativeT");
             matlab.PutArray(ridgeWeightMatrix, "ridgeWeightMatrix");
-          }
+	    }*/
 
           // update = AtWA\b;
 

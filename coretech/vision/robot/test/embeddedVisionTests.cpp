@@ -2944,8 +2944,12 @@ int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo);
   CALL_GTEST_TEST(CoreTech_Vision, EndianCopying);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine);
+#ifdef RUN_FAST_LK_AND_NOT_NORMAL_LK
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast);
+#else
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker);
+#endif
+
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C_emulateShave);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering);
