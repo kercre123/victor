@@ -129,14 +129,14 @@ void mxArray2image(const mxArray *array, T *img)
     _nbands = 1;
   }
   else if(mxGetNumberOfDimensions(array) == 3) {
-    _nbands = mxGetDimensions(array)[2];
+    _nbands = static_cast<int>(mxGetDimensions(array)[2]);
   }
   else {
     mexErrMsgTxt("Input mxArray must have 2 or 3 dimensions.");
   }
 
-  const int nrows  = (int) mxGetDimensions(array)[0];
-  const int ncols  = (int) mxGetDimensions(array)[1];
+  const int nrows  = static_cast<int>(mxGetDimensions(array)[0]);
+  const int ncols  = static_cast<int>(mxGetDimensions(array)[1]);
   const int nbands = _nbands;
 
   // Copy the data out of the Matlab array into a cv::Mat, transposing
@@ -403,7 +403,7 @@ unsigned int mxArray2simpleArray(const mxArray *array, T* &outputArray)
     mexErrMsgTxt("Input mxArray must be of class DOUBLE.");
   }
 
-  const unsigned int N = mxGetNumberOfElements(array);
+  const unsigned int N = static_cast<unsigned int>(mxGetNumberOfElements(array));
 
   const double *arrayData = mxGetPr(array);
 
@@ -441,7 +441,7 @@ void mxArray2stdVector(const mxArray *array, std::vector<T> &vec)
     mexErrMsgTxt("Input mxArray must be of class DOUBLE.");
   }
 
-  const unsigned int N = mxGetNumberOfElements(array);
+  const unsigned int N = static_cast<unsigned int>(mxGetNumberOfElements(array));
 
   vec.resize(N);
 

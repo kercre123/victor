@@ -7,7 +7,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const double *y1 = x1 + N1;
 
   const double *x2 = mxGetPr(prhs[1]);
-  const int     N2 = mxGetM(prhs[1]);
+  const int     N2 = static_cast<int>(mxGetM(prhs[1]));
   const double *y2 = x2 + N2;
 
   plhs[0] = mxCreateNumericMatrix(N1,1, mxINT32_CLASS, mxREAL);

@@ -10,7 +10,7 @@
 
 std::vector<cv::VideoCapture *> capture;
 
-void closeHelper(int device) {
+void closeHelper(size_t device) {
   if(capture[device] != NULL) {
     //mexPrintf("Closing VideoCapture camera.\n");
     capture[device]->release();
@@ -20,8 +20,8 @@ void closeHelper(int device) {
 }
 
 void closeHelper(void) {
-  int numDevices = capture.size();
-  for(int i=0; i<numDevices; ++i)
+  size_t numDevices = capture.size();
+  for(size_t i=0; i<numDevices; ++i)
   {
     closeHelper(i);
   }
