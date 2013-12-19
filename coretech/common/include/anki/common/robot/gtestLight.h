@@ -17,7 +17,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #if ANKICORETECH_EMBEDDED_USE_GTEST
 
 // To prevent a warning (or error) about a function not returning a value, include this macro at the end of any GTEST_TEST. Also, this lets you set a breakpoint at the end.
-#define GTEST_RETURN_HERE {printf("");}
+#define GTEST_RETURN_HERE {printf(""); return;}
 
 #else
 
