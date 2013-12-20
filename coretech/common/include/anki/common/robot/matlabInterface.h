@@ -123,6 +123,8 @@ namespace Anki
       template<typename Type> Result PutArray(const Array<Type> &matrix, const std::string name);
 
       template<typename Type> Array<Type> GetArray(const std::string name, MemoryStack &memory);
+      
+      template<typename Type> Result PutQuad(const Quadrilateral<Type> &quad, const std::string name);
 
       template<typename Type> Result Put(const Type * values, s32 nValues, const std::string name);
 
@@ -153,6 +155,25 @@ namespace Anki
       return RESULT_OK;
     } // template<typename Type> Result Matlab::PutArray(const Array<Type> &matrix, const std::string name)
 
+    template<typename Type> Result Matlab::PutQuad(const Quadrilateral<Type> &quad, const std::string name)
+    {
+      AnkiConditionalErrorAndReturnValue(ep, RESULT_FAIL, "Anki.PutQuad<Type>", "Matlab engine is not started/connected");
+      
+      // Initially just put a 8-element array into Matlab
+      Type tempArray[8] = {
+        quad[0].x, quad[1].x, quad[2].x, quad[3].x,
+        quad[0].y, quad[1].y, quad[2].y, quad[3].y
+      };
+      
+      Put<Type>(tempArray, 8, name);
+
+      // Reshape the array to be 4x2 -- [x(:) y(:)]
+      EvalStringEcho("%s = reshape(%s, [4 2]);", name.data(), name.data());
+      
+      return RESULT_OK;
+    } // template<typename Type> Result Matlab::PutQuad(const Quadrilateral<Type> &quad, const std::string name)
+    
+    
     template<typename Type> Array<Type> Matlab::GetArray(const std::string name, MemoryStack &memory)
     {
       AnkiConditionalErrorAndReturnValue(ep, Array<Type>(0, 0, NULL, 0), "Anki.GetArray<Type>", "Matlab engine is not started/connected");
