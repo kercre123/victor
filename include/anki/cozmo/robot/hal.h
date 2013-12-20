@@ -41,7 +41,7 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 
-#define USE_OFFBOARD_VISION 1
+#define USE_OFFBOARD_VISION 0
 
 #ifdef __cplusplus
 extern "C" {
@@ -271,21 +271,21 @@ namespace Anki
       typedef struct {
         u8 header; // used to specify a frame's resolution in a packet
         u16 width, height;
-        u8 downsampleInc[CAMERA_MODE_COUNT];
+        u8 downsamplePower[CAMERA_MODE_COUNT];
       } CameraModeInfo_t;
       
       const CameraModeInfo_t CameraModeInfo[CAMERA_MODE_COUNT] =
       {
         // VGA
-        { 0xBA, 640, 480, {1, 0, 0, 0, 0} },
+        { 0xBA, 640, 480, {0, 0, 0, 0, 0} },
         // QVGA
-        { 0xBC, 320, 240, {2, 1, 0, 0, 0} },
+        { 0xBC, 320, 240, {1, 0, 0, 0, 0} },
         // QQVGA
-        { 0xB8, 160, 120, {4, 2, 1, 0, 0} },
+        { 0xB8, 160, 120, {2, 1, 0, 0, 0} },
         // QQQVGA
-        { 0xBD,  80,  60, {8, 4, 2, 1, 0} },
+        { 0xBD,  80,  60, {3, 2, 1, 0, 0} },
         // QQQQVGA
-        { 0xB7,  40,  30, {16, 8, 4, 2, 1} }
+        { 0xB7,  40,  30, {4, 3, 2, 1, 0} }
       };
       
       enum CameraUpdateMode

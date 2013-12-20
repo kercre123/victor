@@ -141,12 +141,8 @@ namespace Anki
                            const u8         commandByte)
     {
       // Set window size for averaging when downsampling
-      const u8 inc = CameraModeInfo[sendResolution].downsampleInc[inputResolution];
-      if(inc == 0) {
-        PRINT("USBSendFrame(): send/input resolutions not compatible.\n");
-        return;
-      }
-      
+      const u8 inc = 1 << CameraModeInfo[sendResolution].downsamplePower[inputResolution];
+            
       // Tell the receiver what to do with the image once it gets it (and the
       // fact that this is an image packet at all)
       SendHeader(commandByte);
