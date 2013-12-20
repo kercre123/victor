@@ -14,6 +14,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/miscVisionKernels.h"
 #include "anki/vision/robot/draw_vision.h"
 
+
+#include "anki/vision/robot/draw_vision.h"
+#include "anki/common/robot/matlabInterface.h"
+
 //#define SEND_DRAWN_COMPONENTS
 //#define SEND_COMPONENT_USAGE
 //#define PRINTF_INTERMEDIATES
@@ -532,6 +536,7 @@ namespace Anki
       return RESULT_OK;
     } //  SimpleDetector_Steps12345()
 
+    
     Result SimpleDetector_Steps12345_lowMemory(
       const Array<u8> &image,
       FixedLengthList<BlockMarker> &markers,
@@ -567,8 +572,17 @@ namespace Anki
           component1d_minComponentWidth, component1d_maxSkipDistance,
           extractedComponents,
           scratch1)) != RESULT_OK)
-
+        {
+          /* DEBUG: drop a display of extracted components into matlab
+          Embedded::Matlab matlab(false);
+          matlab.PutArray(image, "image");
+          Array<u8> empty(image.get_size(0), image.get_size(1), scratch1);
+          Embedded::DrawComponents<u8>(empty, extractedComponents, 64, 255);
+          matlab.PutArray(empty, "empty");
+          matlab.EvalStringEcho("desktop; keyboard");
+           */
           return lastResult;
+        }
       }
       EndBenchmark("ComputeCharacteristicScaleImageAndBinarizeAndExtractComponents");
 
