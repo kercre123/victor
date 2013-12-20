@@ -419,7 +419,7 @@ namespace Anki
     {
       // This is a little tough to write a general case for, so this method should be specialized
       // for each relevant case
-      assert(false);
+      AnkiAssert(false);
 
       AnkiConditionalErrorAndReturnValue(false,
         0, "Array<Type>::Set", "SetCast must be specialized");
@@ -444,7 +444,7 @@ namespace Anki
 
           //memcpy(pThisData, values + y*size[1], numValuesThisRow*sizeof(Type));
           for(s32 x=0; x<numWordsToCopy; x++) {
-            assert(reinterpret_cast<size_t>(values+y*size[1]) % 4 == 0);
+            AnkiAssert(reinterpret_cast<size_t>(values+y*size[1]) % 4 == 0);
             pThisData[x] = reinterpret_cast<const u32*>(values+y*size[1])[x];
           }
           numValuesSet += numValuesThisRow;

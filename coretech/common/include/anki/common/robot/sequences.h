@@ -105,7 +105,7 @@ namespace Anki
 
     template<typename Type> s32 LinearSequence<Type>::computeSize(const Type start, const Type increment, const Type end)
     {
-      assert(increment != static_cast<Type>(0));
+      AnkiAssert(increment != static_cast<Type>(0));
 
       // 10:-1:12
       if(increment < 0 && start < end) {
@@ -137,12 +137,12 @@ namespace Anki
       if(start < 0)
         start += arraySize;
 
-      assert(start >=0 && start < arraySize);
+      AnkiAssert(start >=0 && start < arraySize);
 
       if(end < 0)
         end += arraySize;
 
-      assert(end >=0 && end < arraySize);
+      AnkiAssert(end >=0 && end < arraySize);
 
       LinearSequence<Type> sequence(start, increment, end);
 

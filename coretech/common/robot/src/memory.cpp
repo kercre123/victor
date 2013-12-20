@@ -18,7 +18,7 @@ namespace Anki
     MemoryStack::MemoryStack(void *buffer, s32 bufferLength, Flags::Buffer flags)
       : buffer(buffer), totalBytes(bufferLength), usedBytes(0), usedBytesBeforeLastAllocation(0), lastAllocatedMemory(NULL), flags(flags)
     {
-      assert(flags.get_useBoundaryFillPatterns());
+      AnkiAssert(flags.get_useBoundaryFillPatterns());
 
       static s32 maxId = 0;
 

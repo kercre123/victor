@@ -30,7 +30,7 @@ namespace Anki
           return ComputeDockingErrorSignal_Affine(transform.get_homography(), transform.get_transformedCorners(scratch), horizontalTrackingResolution, blockMarkerWidthInMM, horizontalFocalLengthInMM, rel_x, rel_y, rel_rad, scratch);
         }
 
-        assert(false);
+        AnkiAssert(false);
 
         return RESULT_FAIL_INVALID_PARAMETERS;
       }
@@ -62,18 +62,11 @@ namespace Anki
         const Point<f32> upperLeft = templateRegion[indexes[0][0]];
         const Point<f32> upperRight = templateRegion[indexes[0][1]];
 
-        //assert(upperRight(1) > upperLeft(1), ...%if upperRight(1) < upperLeft(1)
+        //AnkiAssert(upperRight(1) > upperLeft(1), ...%if upperRight(1) < upperLeft(1)
         //  ['UpperRight corner should be to the right ' ...
         //  'of the UpperLeft corner.']);
 
-        //assert(upperRight.x > upperLeft.x);
-        if(upperRight.x < upperLeft.x) {
-          int x = 1;
-          x++;
-
-          assert(false);
-        }
-      
+        AnkiAssert(upperRight.x > upperLeft.x);
 
         // Get the angle from vertical of the top bar of the marker we're tracking
 

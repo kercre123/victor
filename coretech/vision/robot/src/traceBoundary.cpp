@@ -275,7 +275,7 @@ namespace Anki
         currentSegment.xStart -= boundingBox.left;
         currentSegment.y -= boundingBox.top;
 
-        assert(currentSegment.xStart >= 0);
+        AnkiAssert(currentSegment.xStart >= 0);
         for(s32 x=currentSegment.xStart; x<=currentSegment.xEnd; x++) {
           //edge_top(xStart:xEnd) = min(edge_top(xStart:xEnd), y);
           //edge_bottom(xStart:xEnd) = max(edge_top(xStart:xEnd), y);

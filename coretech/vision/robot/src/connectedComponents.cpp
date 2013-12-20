@@ -135,7 +135,7 @@ namespace Anki
 
     Result ConnectedComponents::Extract2dComponents_PerRow_NextRow(const u8 * restrict binaryImageRow, const s32 imageWidth, const s16 whichRow, const s16 minComponentWidth, const s16 maxSkipDistance)
     {
-      assert(imageWidth <= maxImageWidth);
+      AnkiAssert(imageWidth <= maxImageWidth);
 
       //for(s32 y=0; y<imageHeight; y++) {
       const ConnectedComponentSegment * restrict pCurrentComponents1d = currentComponents1d.Pointer(0);

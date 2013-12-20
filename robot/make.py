@@ -33,11 +33,15 @@ LEON_SOURCE += addSources('../coretech/common/shared/src')
 
 SHAVE_SOURCE = []
 
-MV_TOOLS_DIR = str.replace(os.environ.get('MV_TOOLS_DIR'), '\\', '/')
-if MV_TOOLS_DIR is None:
-  print 'WARNING: MV_TOOLS_DIR has not been set in the environment!'
-  print 'Using default c:../../movidius-tools/tools'
-  MV_TOOLS_DIR = 'c:../../movidius-tools/tools'
+MV_TOOLS_DIR = os.environ.get('MV_TOOLS_DIR')
+
+if os.environ.get('MV_TOOLS_DIR') is None:
+  print('WARNING: MV_TOOLS_DIR has not been set in the environment!')
+  print('In Linux, add the following to your ".bashrc" file: export MV_TOOLS_DIR={full path of movidius-tools/tools}')
+  print('In Windows 7, add it to Control Panel->System->Advanced System Settings->Advanced->Environment Variables')
+  print('Using default ../../movidius-tools/tools')
+  MV_TOOLS_DIR = '../../movidius-tools/tools'
+
 MV_TOOLS_DIR = str.replace(MV_TOOLS_DIR, '\\', '/')
 MV_TOOLS_DIR += '/'
 MV_COMMON_BASE = MV_TOOLS_DIR + '../mdk/common/'
@@ -214,7 +218,7 @@ if __name__ == '__main__':
   # Check if the Movidius tools can be found
   if any((os.path.isfile(file.strip()) or os.path.isfile(file.strip()+'.exe') for file in [CC, CXX, LD, MVCONV])) == False:
     print('Error: Could not locate all of the Movidius Tools')
-    sys.exit(1);
+    sys.exit(1)
     
   for arg in sys.argv:
     if arg == 'clean':
