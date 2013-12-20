@@ -225,7 +225,7 @@ namespace Anki
     } // ArraySliceLimits_in1_out0
 
     template<typename Type> ArraySliceLimits_in1_out1<Type>::ArraySliceLimits_in1_out1(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice, bool in1_isTransposed, const LinearSequence<Type> &out1_ySlice, const LinearSequence<Type> &out1_xSlice)
-    : ySize(out1_ySlice.get_size()), xSize(out1_xSlice.get_size()),
+      : ySize(out1_ySlice.get_size()), xSize(out1_xSlice.get_size()),
       rawOut1Limits(out1_ySlice, out1_xSlice),
       rawIn1Limits(in1_ySlice, in1_xSlice), in1_isTransposed(in1_isTransposed)
     {
@@ -288,7 +288,7 @@ namespace Anki
     } // ArraySliceLimits_in1_out1<Type>::OuterIncrementBottom()
 
     template<typename Type> ArraySliceLimits_in2_out1<Type>::ArraySliceLimits_in2_out1(const LinearSequence<Type> &in1_ySlice, const LinearSequence<Type> &in1_xSlice, bool in1_isTransposed, const LinearSequence<Type> &in2_ySlice, const LinearSequence<Type> &in2_xSlice, bool in2_isTransposed, const LinearSequence<Type> &out1_ySlice, const LinearSequence<Type> &out1_xSlice)
-    : ySize(out1_ySlice.get_size()), xSize(out1_xSlice.get_size()),
+      : ySize(out1_ySlice.get_size()), xSize(out1_xSlice.get_size()),
       rawOut1Limits(out1_ySlice, out1_xSlice),
       rawIn1Limits(in1_ySlice, in1_xSlice), in1_isTransposed(in1_isTransposed),
       rawIn2Limits(in2_ySlice, in2_xSlice), in2_isTransposed(in2_isTransposed)
@@ -333,7 +333,7 @@ namespace Anki
           this->in1_xInnerIncrement = this->rawIn1Limits.xIncrement;
           this->in2_yInnerIncrement = this->rawIn2Limits.yIncrement;
         } else {
-          assert(false); // should not be possible
+          AnkiAssert(false); // should not be possible
         }
 
         if(!sizesMatch) {

@@ -63,7 +63,23 @@ extern "C" {
 #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
     va_list argList;
     va_start(argList, line);
-    printf("LOG[%d] - %s - ", logLevel, eventName);
+
+    // Don't print all the path of the file
+    s32 lastSlashIndex = -1;
+    for(s32 i=0; i<10000; i++) {
+      if(file[i] == '\\' ||
+        file[i] == '/') {
+          lastSlashIndex = i;
+      } else if(!file[i]) {
+        break;
+      }
+    }
+
+    if(lastSlashIndex >= 0) {
+      file += lastSlashIndex + 1;
+    }
+
+    printf("LOG[%d] - %s@%d - %s - ", logLevel, file, line, eventName);
     vprintf(eventValue, argList);
     printf("\n");
     va_end(argList);

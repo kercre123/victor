@@ -95,7 +95,7 @@ namespace Anki
           AnkiConditionalErrorAndReturnValue(updateType == TRANSFORM_TRANSLATION|| updateType == TRANSFORM_AFFINE || updateType == TRANSFORM_PROJECTIVE,
             RESULT_FAIL_INVALID_PARAMETERS, "PlanarTransformation_f32::Update", "cannot update this transform with the update type %d", updateType);
         } else {
-          assert(false);
+          AnkiAssert(false);
         }
 
         const f32 * pUpdate = update[0];
@@ -223,7 +223,7 @@ namespace Anki
         if(this->homography.Set(in) != 9)
           return RESULT_FAIL_INVALID_SIZE;
 
-        assert(FLT_NEAR(in[2][2], 1.0f));
+        AnkiAssert(FLT_NEAR(in[2][2], 1.0f));
 
         return RESULT_OK;
       }
@@ -294,9 +294,9 @@ namespace Anki
           const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
           const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
 
-          assert(FLT_NEAR(homography[2][0], 0.0f));
-          assert(FLT_NEAR(homography[2][1], 0.0f));
-          assert(FLT_NEAR(homography[2][2], 1.0f));
+          AnkiAssert(FLT_NEAR(homography[2][0], 0.0f));
+          AnkiAssert(FLT_NEAR(homography[2][1], 0.0f));
+          AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
 
           for(s32 y=0; y<numPointsY; y++) {
             const f32 * restrict pXIn = xIn.Pointer(y,0);
@@ -317,7 +317,7 @@ namespace Anki
           const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
           const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
 
-          assert(FLT_NEAR(homography[2][2], 1.0f));
+          AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
 
           for(s32 y=0; y<numPointsY; y++) {
             const f32 * restrict pXIn = xIn.Pointer(y,0);
@@ -337,7 +337,7 @@ namespace Anki
           }
         } else {
           // Should be checked earlier
-          assert(false);
+          AnkiAssert(false);
           return RESULT_FAIL;
         }
 
@@ -513,8 +513,8 @@ namespace Anki
             Array<f32> yIn = templateCoordinates[iScale].EvaluateY2(memory);
             EndBenchmark("InitializeTemplate.evaluateMeshgrid");
 
-            assert(xIn.get_size(0) == yIn.get_size(0));
-            assert(xIn.get_size(1) == yIn.get_size(1));
+            AnkiAssert(xIn.get_size(0) == yIn.get_size(0));
+            AnkiAssert(xIn.get_size(1) == yIn.get_size(1));
 
             Array<f32> xTransformed(numPointsY, numPointsX, memory);
             Array<f32> yTransformed(numPointsY, numPointsX, memory);
@@ -760,12 +760,12 @@ namespace Anki
           } else if(this->get_transformation().get_transformType() == TRANSFORM_TRANSLATION) {
             A_part = this->A_full[whichScale];
           } else {
-            assert(false);
+            AnkiAssert(false);
           }
         } else if(curTransformType == TRANSFORM_AFFINE || curTransformType == TRANSFORM_PROJECTIVE) {
           A_part = this->A_full[whichScale];
         } else {
-          assert(false);
+          AnkiAssert(false);
         }
         EndBenchmark("IterativelyRefineTrack.extractAPart");
 
@@ -961,13 +961,13 @@ namespace Anki
           Matrix::MultiplyTranspose(A, AW, AWAt);
           EndBenchmark("IterativelyRefineTrack.computeAWAt");
 
-	  /*          {
-            Matlab matlab(false);
+          /*          {
+          Matlab matlab(false);
 
-            matlab.PutArray(A, "A");
-            matlab.PutArray(AW, "AW");
-            matlab.PutArray(AWAt, "AWAt");
-	    }*/
+          matlab.PutArray(A, "A");
+          matlab.PutArray(AW, "AW");
+          matlab.PutArray(AWAt, "AWAt");
+          }*/
 
           Array<f32> ridgeWeightMatrix = Eye<f32>(numSystemParameters, numSystemParameters, memory);
           Matrix::DotMultiply<f32,f32,f32>(ridgeWeightMatrix, ridgeWeight, ridgeWeightMatrix);
@@ -981,12 +981,12 @@ namespace Anki
           EndBenchmark("IterativelyRefineTrack.computeb");
 
           /*{
-            Matlab matlab(false);
+          Matlab matlab(false);
 
-            matlab.PutArray(b, "b");
-            matlab.PutArray(templateDerivativeT, "templateDerivativeT");
-            matlab.PutArray(ridgeWeightMatrix, "ridgeWeightMatrix");
-	    }*/
+          matlab.PutArray(b, "b");
+          matlab.PutArray(templateDerivativeT, "templateDerivativeT");
+          matlab.PutArray(ridgeWeightMatrix, "ridgeWeightMatrix");
+          }*/
 
           // update = AtWA\b;
 
