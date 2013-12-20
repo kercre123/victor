@@ -518,6 +518,43 @@ namespace Anki
       
       ReturnCode Update()
       {
+        
+#if(FREE_DRIVE_DUBINS_TEST)
+        // Test code to visualize Dubins path online
+        f32 start_x,start_y;
+        Radians start_theta;
+        Localization::GetCurrentMatPose(start_x,start_y,start_theta);
+        path_.Clear();
+        
+        const f32 end_x = 0.0;
+        const f32 end_y = 0.25;
+        const f32 end_theta = 0.5*PI;
+        const f32 start_radius = 0.05;
+        const f32 end_radius = 0.05;
+        const f32 final_straight_approach_length = 0.1;
+        f32 path_length;
+        u8 numSegments = path_.GenerateDubinsPath(start_x, start_y, start_theta.ToFloat(),
+                                                  end_x, end_y, end_theta,
+                                                  start_radius, end_radius,
+                                                  final_straight_approach_length,
+                                                  &path_length);
+        const f32 distToTarget = sqrtf((start_x - end_x)*(start_x - end_x) + (start_y - end_y)*(start_y - end_y));
+        PERIODIC_PRINT(500, "Dubins Test: pathLength %f, distToTarget %f\n", path_length, distToTarget);
+        
+        // Test threshold for whether to use Dubins path or not)
+        
+        if (path_length > 2 * distToTarget) {
+          PRINT(" Dubins path exceeds 2x dist to target (%f %f)\n", path_length, distToTarget);
+        }
+        
+        //path_.PrintPath();
+#if(ENABLE_PATH_VIZ)
+        SetPathForViz();
+        Viz::ShowPath(0, true);
+#endif
+#endif
+        
+        
         if (currPathSegment_ < 0) {
           SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
           return EXIT_FAILURE;
