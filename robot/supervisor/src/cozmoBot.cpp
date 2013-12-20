@@ -67,6 +67,12 @@ namespace Anki {
         LiftController::StartCalibrationRoutine();
         GripController::DisengageGripper();
         SteeringController::ExecuteDirectDrive(0,0);
+
+#ifdef SIMULATOR
+        // Convenient for docking to set head angle at -15 degrees.
+        // TODO: Move this somewhere else.
+        HeadController::SetDesiredAngle(-0.26);
+#endif
       }
       
       

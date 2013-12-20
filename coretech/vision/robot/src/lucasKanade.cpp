@@ -95,7 +95,7 @@ namespace Anki
           AnkiConditionalErrorAndReturnValue(updateType == TRANSFORM_TRANSLATION|| updateType == TRANSFORM_AFFINE || updateType == TRANSFORM_PROJECTIVE,
             RESULT_FAIL_INVALID_PARAMETERS, "PlanarTransformation_f32::Update", "cannot update this transform with the update type %d", updateType);
         } else {
-          AnkiAssert(false);
+          assert(false);
         }
 
         const f32 * pUpdate = update[0];
@@ -223,7 +223,7 @@ namespace Anki
         if(this->homography.Set(in) != 9)
           return RESULT_FAIL_INVALID_SIZE;
 
-        AnkiAssert(FLT_NEAR(in[2][2], 1.0f));
+        assert(FLT_NEAR(in[2][2], 1.0f));
 
         return RESULT_OK;
       }
@@ -294,9 +294,9 @@ namespace Anki
           const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
           const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
 
-          AnkiAssert(FLT_NEAR(homography[2][0], 0.0f));
-          AnkiAssert(FLT_NEAR(homography[2][1], 0.0f));
-          AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
+          assert(FLT_NEAR(homography[2][0], 0.0f));
+          assert(FLT_NEAR(homography[2][1], 0.0f));
+          assert(FLT_NEAR(homography[2][2], 1.0f));
 
           for(s32 y=0; y<numPointsY; y++) {
             const f32 * restrict pXIn = xIn.Pointer(y,0);
@@ -317,7 +317,7 @@ namespace Anki
           const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
           const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
 
-          AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
+          assert(FLT_NEAR(homography[2][2], 1.0f));
 
           for(s32 y=0; y<numPointsY; y++) {
             const f32 * restrict pXIn = xIn.Pointer(y,0);
@@ -337,7 +337,7 @@ namespace Anki
           }
         } else {
           // Should be checked earlier
-          AnkiAssert(false);
+          assert(false);
           return RESULT_FAIL;
         }
 
@@ -345,7 +345,7 @@ namespace Anki
       }
 
       LucasKanadeTracker_f32::LucasKanadeTracker_f32(const Array<u8> &templateImage, const Rectangle<f32> &templateRegion, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory)
-        : templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), numPyramidLevels(numPyramidLevels), ridgeWeight(ridgeWeight), templateRegion(templateRegion), isValid(false), isInitialized(false)
+      : numPyramidLevels(numPyramidLevels), templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), ridgeWeight(ridgeWeight), templateRegion(templateRegion), isValid(false), isInitialized(false)
       {
         BeginBenchmark("LucasKanadeTracker_f32");
 
@@ -418,7 +418,7 @@ namespace Anki
 
       Result LucasKanadeTracker_f32::InitializeTemplate(const Array<u8> &templateImage, MemoryStack &memory)
       {
-        const bool isOutColumnMajor = false; // TODO: change to false, which will probably be faster
+        const bool isOutColumnMajor = true; // TODO: change to false, which will probably be faster
 
         AnkiConditionalErrorAndReturnValue(this->isValid,
           RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_f32::InitializeTemplate", "This object's constructor failed, so it cannot be initialized");
@@ -513,8 +513,8 @@ namespace Anki
             Array<f32> yIn = templateCoordinates[iScale].EvaluateY2(memory);
             EndBenchmark("InitializeTemplate.evaluateMeshgrid");
 
-            AnkiAssert(xIn.get_size(0) == yIn.get_size(0));
-            AnkiAssert(xIn.get_size(1) == yIn.get_size(1));
+            assert(xIn.get_size(0) == yIn.get_size(0));
+            assert(xIn.get_size(1) == yIn.get_size(1));
 
             Array<f32> xTransformed(numPointsY, numPointsX, memory);
             Array<f32> yTransformed(numPointsY, numPointsX, memory);
@@ -570,8 +570,6 @@ namespace Anki
               Matrix::Vectorize(isOutColumnMajor, yIn, yInV);
 
               Array<f32> tmp1(1, numPointsY*numPointsX, memory);
-
-              //xInV.Print("xInV");
 
               // X.*Ix(:)
               Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp1);
@@ -694,7 +692,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result LucasKanadeTracker_f32::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, MemoryStack memory)
+      Result LucasKanadeTracker_f32::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, MemoryStack memory)
       {
         for(s32 iScale=numPyramidLevels-1; iScale>=0; iScale--) {
           // TODO: remove
@@ -702,7 +700,7 @@ namespace Anki
           bool converged = false;
 
           BeginBenchmark("UpdateTrack.refineTranslation");
-          if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, TRANSFORM_TRANSLATION, useWeights, converged, memory)) != RESULT_OK)
+          if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, TRANSFORM_TRANSLATION, converged, memory)) != RESULT_OK)
             return lastResult;
           EndBenchmark("UpdateTrack.refineTranslation");
 
@@ -716,7 +714,7 @@ namespace Anki
             //this->transformation.set_homography(newH);
 
             BeginBenchmark("UpdateTrack.refineOther");
-            if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, this->transformation.get_transformType(), useWeights, converged, memory)) != RESULT_OK)
+            if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, this->transformation.get_transformType(), converged, memory)) != RESULT_OK)
               return lastResult;
             EndBenchmark("UpdateTrack.refineOther");
 
@@ -727,9 +725,9 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result LucasKanadeTracker_f32::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, const bool useWeights, bool &converged, MemoryStack memory)
+      Result LucasKanadeTracker_f32::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack memory)
       {
-        const bool isOutColumnMajor = false; // TODO: change to false, which will probably be faster
+        const bool isOutColumnMajor = true; // TODO: change to false, which will probably be faster
 
         AnkiConditionalErrorAndReturnValue(this->isInitialized == true,
           RESULT_FAIL, "LucasKanadeTracker_f32::IterativelyRefineTrack", "This object is not initialized");
@@ -762,12 +760,12 @@ namespace Anki
           } else if(this->get_transformation().get_transformType() == TRANSFORM_TRANSLATION) {
             A_part = this->A_full[whichScale];
           } else {
-            AnkiAssert(false);
+            assert(false);
           }
         } else if(curTransformType == TRANSFORM_AFFINE || curTransformType == TRANSFORM_PROJECTIVE) {
           A_part = this->A_full[whichScale];
         } else {
-          AnkiAssert(false);
+          assert(false);
         }
         EndBenchmark("IterativelyRefineTrack.extractAPart");
 
@@ -948,14 +946,14 @@ namespace Anki
           EndBenchmark("IterativelyRefineTrack.setAw");
 
           BeginBenchmark("IterativelyRefineTrack.dotMultiplyWeights");
-          if(useWeights) {
+          {
             PUSH_MEMORY_STACK(memory);
             Array<f32> validTemplateWeights = inBounds.SetArray(templateWeights[whichScale], 1, memory);
 
             for(s32 y=0; y<numSystemParameters; y++) {
               Matrix::DotMultiply<f32,f32,f32>(AW(y,y,0,-1), validTemplateWeights, AW(y,y,0,-1));
             }
-          } // if(useWeights)
+          } // PUSH_MEMORY_STACK(memory);
           EndBenchmark("IterativelyRefineTrack.dotMultiplyWeights");
 
           BeginBenchmark("IterativelyRefineTrack.computeAWAt");
@@ -963,14 +961,13 @@ namespace Anki
           Matrix::MultiplyTranspose(A, AW, AWAt);
           EndBenchmark("IterativelyRefineTrack.computeAWAt");
 
-          if(curTransformType == TRANSFORM_AFFINE) {
-            Matlab matlab(false);
+          //{
+          //  Matlab matlab(false);
 
-            matlab.PutArray(A, "A");
-            matlab.PutArray(AW, "AW");
-            matlab.PutArray(AWAt, "AWAt");
-            printf("");
-          }
+          //  matlab.PutArray(A, "A");
+          //  matlab.PutArray(AW, "AW");
+          //  matlab.PutArray(AWAt, "AWAt");
+          //}
 
           Array<f32> ridgeWeightMatrix = Eye<f32>(numSystemParameters, numSystemParameters, memory);
           Matrix::DotMultiply<f32,f32,f32>(ridgeWeightMatrix, ridgeWeight, ridgeWeightMatrix);
@@ -983,26 +980,20 @@ namespace Anki
           Matrix::MultiplyTranspose(templateDerivativeT, AW, b);
           EndBenchmark("IterativelyRefineTrack.computeb");
 
-          if(curTransformType == TRANSFORM_AFFINE) {
-          Matlab matlab(false);
-          
-          matlab.PutArray(b, "b");
-          matlab.PutArray(templateDerivativeT, "templateDerivativeT");
-          matlab.PutArray(ridgeWeightMatrix, "ridgeWeightMatrix");
-          printf("");
-          }
+          //{
+          //  Matlab matlab(false);
+
+          //  matlab.PutArray(b, "b");
+          //  matlab.PutArray(templateDerivativeT, "templateDerivativeT");
+          //  matlab.PutArray(ridgeWeightMatrix, "ridgeWeightMatrix");
+          //}
 
           // update = AtWA\b;
-          //AW.Print("AW");
-          //AWAt.Print("Orig AWAt");
-          //b.Print("Orig b");
 
           BeginBenchmark("IterativelyRefineTrack.solveForUpdate");
           if((lastResult = Matrix::SolveLeastSquaresWithCholesky(AWAt, b, false)) != RESULT_OK)
             return lastResult;
           EndBenchmark("IterativelyRefineTrack.solveForUpdate");
-
-          //b.Print("Orig update");
 
           //if(update.get_size(1) > 2) {
           //  //AWAt.Print("AWAt");
@@ -1023,7 +1014,7 @@ namespace Anki
           EndBenchmark("IterativelyRefineTrack.updateTransformation");
 
           BeginBenchmark("IterativelyRefineTrack.checkForCompletion");
-          // Check if we're done with iterations
+          // TODO: check if we're done with iterations
           {
             PUSH_MEMORY_STACK(memory);
 
@@ -1116,8 +1107,8 @@ namespace Anki
         return transformation;
       }
 
-      LucasKanadeTrackerFast::LucasKanadeTrackerFast(const Array<u8> &templateImage, const Rectangle<f32> &templateRegion, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &scratch)
-        : isValid(false), templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), numPyramidLevels(numPyramidLevels), ridgeWeight(ridgeWeight), templateRegion(templateRegion)
+      LucasKanadeTrackerFast::LucasKanadeTrackerFast(const Array<u8> &templateImage, const Rectangle<f32> &templateRegion, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory)
+        : numPyramidLevels(numPyramidLevels), templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), ridgeWeight(ridgeWeight), templateRegion(templateRegion), isValid(false)
       {
         BeginBenchmark("LucasKanadeTrackerFast");
 
@@ -1154,13 +1145,13 @@ namespace Anki
         this->centerOffset.y = (templateRegion.bottom + templateRegion.top) / 2;
         this->centerOffset.x = (templateRegion.right + templateRegion.left) / 2;
 
-        this->transformation = PlanarTransformation_f32(transformType, initialCorners, scratch);
+        this->transformation = PlanarTransformation_f32(transformType, initialCorners, memory);
 
-        // Allocate the scratch for the pyramid lists
-        templateCoordinates = FixedLengthList<Meshgrid<f32>>(numPyramidLevels, scratch);
-        templateImagePyramid = FixedLengthList<Array<u8>>(numPyramidLevels, scratch);
-        templateImageXGradientPyramid = FixedLengthList<Array<s16>>(numPyramidLevels, scratch);
-        templateImageYGradientPyramid = FixedLengthList<Array<s16>>(numPyramidLevels, scratch);
+        // Allocate the memory for the pyramid lists
+        templateCoordinates = FixedLengthList<Meshgrid<f32>>(numPyramidLevels, memory);
+        templateImagePyramid = FixedLengthList<Array<u8>>(numPyramidLevels, memory);
+        templateImageXGradientPyramid = FixedLengthList<Array<s16>>(numPyramidLevels, memory);
+        templateImageYGradientPyramid = FixedLengthList<Array<s16>>(numPyramidLevels, memory);
 
         templateCoordinates.set_size(numPyramidLevels);
         templateImagePyramid.set_size(numPyramidLevels);
@@ -1170,7 +1161,7 @@ namespace Anki
         AnkiConditionalErrorAndReturn(templateImagePyramid.IsValid() && templateImageXGradientPyramid.IsValid() && templateImageYGradientPyramid.IsValid() && templateCoordinates.IsValid(),
           "LucasKanadeTrackerFast::LucasKanadeTrackerFast", "Could not allocate pyramid lists");
 
-        // Allocate the scratch for all the images
+        // Allocate the memory for all the images
         for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
           const f32 scale = static_cast<f32>(1 << iScale);
 
@@ -1184,9 +1175,9 @@ namespace Anki
           const s32 numPointsY = templateCoordinates[iScale].get_yGridVector().get_size();
           const s32 numPointsX = templateCoordinates[iScale].get_xGridVector().get_size();
 
-          templateImagePyramid[iScale] = Array<u8>(numPointsY, numPointsX, scratch);
-          templateImageXGradientPyramid[iScale] = Array<s16>(numPointsY, numPointsX, scratch);
-          templateImageYGradientPyramid[iScale] = Array<s16>(numPointsY, numPointsX, scratch);
+          templateImagePyramid[iScale] = Array<u8>(numPointsY, numPointsX, memory);
+          templateImageXGradientPyramid[iScale] = Array<s16>(numPointsY, numPointsX, memory);
+          templateImageYGradientPyramid[iScale] = Array<s16>(numPointsY, numPointsX, memory);
 
           AnkiConditionalErrorAndReturn(templateImagePyramid[iScale].IsValid() && templateImageXGradientPyramid[iScale].IsValid() && templateImageYGradientPyramid[iScale].IsValid(),
             "LucasKanadeTrackerFast::LucasKanadeTrackerFast", "Could not allocate pyramid images");
@@ -1231,19 +1222,19 @@ namespace Anki
         EndBenchmark("LucasKanadeTrackerFast");
       }
 
-      Result LucasKanadeTrackerFast::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, MemoryStack scratch)
+      Result LucasKanadeTrackerFast::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, MemoryStack memory)
       {
         for(s32 iScale=numPyramidLevels-1; iScale>=0; iScale--) {
           bool converged = false;
 
           BeginBenchmark("UpdateTrack.refineTranslation");
-          if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, TRANSFORM_TRANSLATION, converged, scratch)) != RESULT_OK)
+          if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, TRANSFORM_TRANSLATION, converged, memory)) != RESULT_OK)
             return lastResult;
           EndBenchmark("UpdateTrack.refineTranslation");
 
           if(this->transformation.get_transformType() != TRANSFORM_TRANSLATION) {
             BeginBenchmark("UpdateTrack.refineOther");
-            if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, this->transformation.get_transformType(), converged, scratch)) != RESULT_OK)
+            if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, this->transformation.get_transformType(), converged, memory)) != RESULT_OK)
               return lastResult;
             EndBenchmark("UpdateTrack.refineOther");
           }
@@ -1252,9 +1243,9 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result LucasKanadeTrackerFast::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack scratch)
+      Result LucasKanadeTrackerFast::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack memory)
       {
-        const bool isOutColumnMajor = false; // TODO: change to false, which will probably be faster
+        const bool isOutColumnMajor = true; // TODO: change to false, which will probably be faster
 
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
@@ -1284,32 +1275,23 @@ namespace Anki
         //  static_cast<s32>(Round(this->templateRegion.bottom / powf(2.0f,static_cast<f32>(whichScale)))));
 
         if(curTransformType == TRANSFORM_TRANSLATION) {
-          return IterativelyRefineTrack_Translation(nextImage, maxIterations, whichScale, convergenceTolerance, converged, scratch);
+          return IterativelyRefineTrack_Translation(nextImage, maxIterations, whichScale, convergenceTolerance, converged, memory);
         } else if(curTransformType == TRANSFORM_AFFINE) {
-          return IterativelyRefineTrack_Affine(nextImage, maxIterations, whichScale, convergenceTolerance, converged, scratch);
+          //return IterativelyRefineTrack_Affine(nextImage, maxIterations, whichScale, convergenceTolerance, converged, memory);
         }
 
         return RESULT_FAIL;
-      } // Result LucasKanadeTrackerFast::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack scratch)
+      } // Result LucasKanadeTrackerFast::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack memory)
 
-      Result LucasKanadeTrackerFast::IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch)
+      Result LucasKanadeTrackerFast::IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack memory)
       {
         // This method is heavily based on Interp2_Affine
         // The call would be like: Interp2_Affine<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
 
-        Array<f32> AWAt(2, 2, scratch);
-        Array<f32> b(1, 2, scratch);
-
-        f32 &AWAt00 = AWAt[0][0]; f32 &AWAt01 = AWAt[0][1];
-        f32 &AWAt10 = AWAt[1][0]; f32 &AWAt11 = AWAt[1][1];
-
-        f32 &b0 = b[0][0];
-        f32 &b1 = b[0][1];
+        Array<f32> AWAt(2, 2, memory);
+        Array<f32> b(1, 2, memory);
 
         converged = false;
-
-        const s32 nextImageHeight = nextImage.get_size(0);
-        const s32 nextImageWidth = nextImage.get_size(1);
 
         const f32 scale = static_cast<f32>(1 << whichScale);
 
@@ -1327,8 +1309,8 @@ namespace Anki
         const s32 outWidth = originalCoordinates.get_xGridVector().get_size();
 
         const f32 xyReferenceMin = 0.0f;
-        const f32 xReferenceMax = static_cast<f32>(nextImageWidth) - 1.0f;
-        const f32 yReferenceMax = static_cast<f32>(nextImageHeight) - 1.0f;
+        const f32 xReferenceMax = static_cast<f32>(this->templateRegionWidth) - 1.0f;
+        const f32 yReferenceMax = static_cast<f32>(this->templateRegionHeight) - 1.0f;
 
         const LinearSequence<f32> &yGridVector = originalCoordinates.get_yGridVector();
         const LinearSequence<f32> &xGridVector = originalCoordinates.get_xGridVector();
@@ -1418,14 +1400,7 @@ namespace Anki
 
                 const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
 
-                //AWAt
-                //  b
-                AWAt00 += xGradientValue * xGradientValue;
-                AWAt01 += xGradientValue * yGradientValue;
-                AWAt11 += yGradientValue * yGradientValue;
-
-                b0 += xGradientValue * tGradientValue;
-                b1 += yGradientValue * tGradientValue;
+                // TODO: put the rest of the logic here
               }
 
               // strength reduction for the affine transformation along this horizontal line
@@ -1441,284 +1416,10 @@ namespace Anki
             AnkiWarn("LucasKanadeTrackerFast::IterativelyRefineTrack_Translation", "Template drifted too far out of image.");
             return RESULT_OK;
           }
-
-          Matrix::MakeSymmetric(AWAt, false);
-
-          //AWAt.Print("New AWAt");
-          //b.Print("New b");
-
-          if((lastResult = Matrix::SolveLeastSquaresWithCholesky(AWAt, b, false)) != RESULT_OK)
-            return lastResult;
-
-          //b.Print("New update");
-
-          this->transformation.Update(b, scratch, TRANSFORM_TRANSLATION);
-
-          // Check if we're done with iterations
-          {
-            PUSH_MEMORY_STACK(scratch);
-
-            Quadrilateral<f32> in(
-              Point<f32>(0.0f,0.0f),
-              Point<f32>(static_cast<f32>(nextImage.get_size(1)),0.0f),
-              Point<f32>(static_cast<f32>(nextImage.get_size(0)),static_cast<f32>(nextImage.get_size(1))),
-              Point<f32>(0.0f,static_cast<f32>(nextImage.get_size(1))));
-
-            Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, scratch, scale);
-
-            //const f32 change = sqrtf(Matrix::Mean<f32,f32>(tmp1));
-            f32 change = 0.0f;
-            for(s32 i=0; i<4; i++) {
-              const f32 dx = previousCorners[i].x - newCorners[i].x;
-              const f32 dy = previousCorners[i].y - newCorners[i].y;
-              change += sqrtf(dx*dx + dy*dy);
-            }
-            change /= 4;
-
-            //printf("newCorners");
-            //newCorners.Print();
-            //printf("change: %f\n", change);
-
-            if(change < convergenceTolerance*scale) {
-              converged = true;
-              return RESULT_OK;
-            }
-
-            previousCorners = newCorners;
-          } // PUSH_MEMORY_STACK(scratch);
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
         return RESULT_OK;
-      } // Result LucasKanadeTrackerFast::IterativelyRefineTrack_Translation()
-
-      Result LucasKanadeTrackerFast::IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch)
-      {
-        // This method is heavily based on Interp2_Affine
-        // The call would be like: Interp2_Affine<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
-
-        Array<f32> AWAt(6, 6, scratch);
-        Array<f32> b(1, 6, scratch);
-
-        //f32 * restrict AWAt0 = AWAt[0];
-        //f32 * restrict AWAt1 = AWAt[1];
-        //f32 * restrict AWAt2 = AWAt[2];
-        //f32 * restrict AWAt3 = AWAt[3];
-        //f32 * restrict AWAt4 = AWAt[4];
-        //f32 * restrict AWAt5 = AWAt[5];
-
-        //f32 * restrict b = b[0];
-
-        // These addresses should be known at compile time, so should be faster
-        f32 AWAt_raw[6][6];
-        f32 b_raw[6];
-
-        for(s32 ia=0; ia<6; ia++) {
-          for(s32 ja=0; ja<6; ja++) {
-            AWAt_raw[ia][ja] = 0;
-          }
-          b_raw[ia] = 0;
-        }
-
-        converged = false;
-
-        const s32 nextImageHeight = nextImage.get_size(0);
-        const s32 nextImageWidth = nextImage.get_size(1);
-
-        const f32 scale = static_cast<f32>(1 << whichScale);
-
-        const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
-        const f32 scaleOverFiveTen = scale / (2.0f*255.0f);
-
-        // Initialize with some very extreme coordinates
-        Quadrilateral<f32> previousCorners(Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f));
-
-        Meshgrid<f32> originalCoordinates(
-          Linspace(-this->templateRegionWidth/2.0f, this->templateRegionWidth/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionWidth/scale))),
-          Linspace(-this->templateRegionHeight/2.0f, this->templateRegionHeight/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionHeight/scale))));
-
-        const s32 outHeight = originalCoordinates.get_yGridVector().get_size();
-        const s32 outWidth = originalCoordinates.get_xGridVector().get_size();
-
-        const f32 xyReferenceMin = 0.0f;
-        const f32 xReferenceMax = static_cast<f32>(nextImageWidth) - 1.0f;
-        const f32 yReferenceMax = static_cast<f32>(nextImageHeight) - 1.0f;
-
-        const LinearSequence<f32> &yGridVector = originalCoordinates.get_yGridVector();
-        const LinearSequence<f32> &xGridVector = originalCoordinates.get_xGridVector();
-
-        const f32 yGridStart = yGridVector.get_start();
-        const f32 xGridStart = xGridVector.get_start();
-
-        const f32 yGridDelta = yGridVector.get_increment();
-        const f32 xGridDelta = xGridVector.get_increment();
-
-        const s32 yIterationMax = yGridVector.get_size();
-        const s32 xIterationMax = xGridVector.get_size();
-
-        for(s32 iteration=0; iteration<maxIterations; iteration++) {
-          const Array<f32> &homography = this->transformation.get_homography();
-          const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
-          const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
-
-          const f32 yTransformedDelta = h10 * yGridDelta;
-          const f32 xTransformedDelta = h00 * xGridDelta;
-
-          AWAt.SetZero();
-          b.SetZero();
-
-          s32 numInBounds = 0;
-
-          // TODO: make the x and y limits from 1 to end-2
-
-          f32 yOriginal = yGridStart;
-          for(s32 y=0; y<yIterationMax; y++) {
-            const u8 * restrict pTemplateImage = this->templateImagePyramid[whichScale].Pointer(y, 0);
-
-            const s16 * restrict pTemplateImageXGradient = this->templateImageXGradientPyramid[whichScale].Pointer(y, 0);
-            const s16 * restrict pTemplateImageYGradient = this->templateImageYGradientPyramid[whichScale].Pointer(y, 0);
-
-            f32 xOriginal = xGridStart;
-
-            // TODO: This could be strength-reduced further, but it wouldn't be much faster
-            f32 xTransformed = h00*xOriginal + h01*yOriginal + h02 + centerOffset.x;
-            f32 yTransformed = h10*xOriginal + h11*yOriginal + h12 + centerOffset.y;
-
-            for(s32 x=0; x<xIterationMax; x++) {
-              const f32 x0 = FLT_FLOOR(xTransformed);
-              const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
-
-              const f32 y0 = FLT_FLOOR(yTransformed);
-              const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
-
-              // If out of bounds, continue
-              if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
-                // strength reduction for the affine transformation along this horizontal line
-                xTransformed += xTransformedDelta;
-                yTransformed += yTransformedDelta;
-                xOriginal += xGridDelta;
-                continue;
-              }
-
-              numInBounds++;
-
-              const f32 alphaX = xTransformed - x0;
-              const f32 alphaXinverse = 1 - alphaX;
-
-              const f32 alphaY = yTransformed - y0;
-              const f32 alphaYinverse = 1.0f - alphaY;
-
-              const s32 y0S32 = static_cast<s32>(Roundf(y0));
-              const s32 y1S32 = static_cast<s32>(Roundf(y1));
-              const s32 x0S32 = static_cast<s32>(Roundf(x0));
-
-              const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
-              const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
-
-              const f32 pixelTL = *pReference_y0;
-              const f32 pixelTR = *(pReference_y0+1);
-              const f32 pixelBL = *pReference_y1;
-              const f32 pixelBR = *(pReference_y1+1);
-
-              const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
-
-              //const u8 interpolatedPixel = static_cast<u8>(Roundf(interpolatedPixelF32));
-
-              // This block is the non-interpolation part of the per-sample algorithm
-              {
-                const f32 templatePixelValue = static_cast<f32>(pTemplateImage[x]);
-                const f32 xGradientValue = scaleOverFiveTen * static_cast<f32>(pTemplateImageXGradient[x]);
-                const f32 yGradientValue = scaleOverFiveTen * static_cast<f32>(pTemplateImageYGradient[x]);
-
-                const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
-
-                //printf("%f ", xOriginal);
-                const f32 values[6] = {
-                  xOriginal * xGradientValue,
-                  yOriginal * xGradientValue,
-                  xGradientValue,
-                  xOriginal * yGradientValue,
-                  yOriginal * yGradientValue,
-                  yGradientValue};
-
-                //f32 AWAt_raw[6][6];
-                //f32 b_raw[6];
-                for(s32 ia=0; ia<6; ia++) {
-                  for(s32 ja=ia; ja<6; ja++) {
-                    AWAt_raw[ia][ja] += values[ia] * values[ja];
-                  }
-                  b_raw[ia] += values[ia] * tGradientValue;
-                }
-              }
-
-              // strength reduction for the affine transformation along this horizontal line
-              xTransformed += xTransformedDelta;
-              yTransformed += yTransformedDelta;
-              xOriginal += xGridDelta;
-            } // for(s32 x=0; x<xIterationMax; x++)
-
-            yOriginal += yGridDelta;
-          } // for(s32 y=0; y<yIterationMax; y++)
-
-          if(numInBounds < 16) {
-            AnkiWarn("LucasKanadeTrackerFast::IterativelyRefineTrack_Translation", "Template drifted too far out of image.");
-            return RESULT_OK;
-          }
-
-          for(s32 ia=0; ia<6; ia++) {
-            for(s32 ja=ia; ja<6; ja++) {
-              AWAt[ia][ja] = AWAt_raw[ia][ja];
-            }
-            b[0][ia] = b_raw[ia];
-          }
-
-          Matrix::MakeSymmetric(AWAt, false);
-
-          AWAt.Print("New AWAt");
-          b.Print("New b");
-
-          if((lastResult = Matrix::SolveLeastSquaresWithCholesky(AWAt, b, false)) != RESULT_OK)
-            return lastResult;
-
-          //b.Print("New update");
-
-          this->transformation.Update(b, scratch, TRANSFORM_AFFINE);
-
-          // Check if we're done with iterations
-          {
-            PUSH_MEMORY_STACK(scratch);
-
-            Quadrilateral<f32> in(
-              Point<f32>(0.0f,0.0f),
-              Point<f32>(static_cast<f32>(nextImage.get_size(1)),0.0f),
-              Point<f32>(static_cast<f32>(nextImage.get_size(0)),static_cast<f32>(nextImage.get_size(1))),
-              Point<f32>(0.0f,static_cast<f32>(nextImage.get_size(1))));
-
-            Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, scratch, scale);
-
-            //const f32 change = sqrtf(Matrix::Mean<f32,f32>(tmp1));
-            f32 change = 0.0f;
-            for(s32 i=0; i<4; i++) {
-              const f32 dx = previousCorners[i].x - newCorners[i].x;
-              const f32 dy = previousCorners[i].y - newCorners[i].y;
-              change += sqrtf(dx*dx + dy*dy);
-            }
-            change /= 4;
-
-            //printf("newCorners");
-            //newCorners.Print();
-            //printf("change: %f\n", change);
-
-            if(change < convergenceTolerance*scale) {
-              converged = true;
-              return RESULT_OK;
-            }
-
-            previousCorners = newCorners;
-          } // PUSH_MEMORY_STACK(scratch);
-        } // for(s32 iteration=0; iteration<maxIterations; iteration++)
-
-        return RESULT_OK;
-      } // Result LucasKanadeTrackerFast::IterativelyRefineTrack_Affine()
+      } // Result LucasKanadeTrackerFast::IterativelyRefineTrack()
 
       bool LucasKanadeTrackerFast::IsValid() const
       {

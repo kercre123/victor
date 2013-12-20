@@ -41,7 +41,7 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 
-#define USE_OFFBOARD_VISION 0
+#define USE_OFFBOARD_VISION 1
 
 #ifdef __cplusplus
 extern "C" {
@@ -416,6 +416,7 @@ namespace Anki
       const u8 USB_VISION_COMMAND_TRACK           = 0xCD;
       const u8 USB_VISION_COMMAND_MATODOMETRY     = 0xDE;
       const u8 USB_VISION_COMMAND_MATLOCALIZATION = 0xEF;
+      const u8 USB_VISION_COMMAND_DISPLAY_IMAGE   = 0xF0;
       
       const u8 USB_VISION_COMMAND_HEAD_CALIBRATION = 0xC1;
       const u8 USB_VISION_COMMAND_MAT_CALIBRATION  = 0xC2;
