@@ -989,11 +989,15 @@ namespace Anki
           }*/
 
           // update = AtWA\b;
+          AWAt.Print("Orig AWAt");
+          b.Print("Orig b");
 
           BeginBenchmark("IterativelyRefineTrack.solveForUpdate");
           if((lastResult = Matrix::SolveLeastSquaresWithCholesky(AWAt, b, false)) != RESULT_OK)
             return lastResult;
           EndBenchmark("IterativelyRefineTrack.solveForUpdate");
+
+          b.Print("Orig update");
 
           //if(update.get_size(1) > 2) {
           //  //AWAt.Print("AWAt");
@@ -1014,7 +1018,7 @@ namespace Anki
           EndBenchmark("IterativelyRefineTrack.updateTransformation");
 
           BeginBenchmark("IterativelyRefineTrack.checkForCompletion");
-          // TODO: check if we're done with iterations
+          // Check if we're done with iterations
           {
             PUSH_MEMORY_STACK(memory);
 
@@ -1107,7 +1111,7 @@ namespace Anki
         return transformation;
       }
 
-      LucasKanadeTrackerFast::LucasKanadeTrackerFast(const Array<u8> &templateImage, const Rectangle<f32> &templateRegion, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory)
+      LucasKanadeTrackerFast::LucasKanadeTrackerFast(const Array<u8> &templateImage, const Rectangle<f32> &templateRegion, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &scratch)
         : isValid(false), templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), numPyramidLevels(numPyramidLevels), ridgeWeight(ridgeWeight), templateRegion(templateRegion)
       {
         BeginBenchmark("LucasKanadeTrackerFast");
@@ -1145,13 +1149,13 @@ namespace Anki
         this->centerOffset.y = (templateRegion.bottom + templateRegion.top) / 2;
         this->centerOffset.x = (templateRegion.right + templateRegion.left) / 2;
 
-        this->transformation = PlanarTransformation_f32(transformType, initialCorners, memory);
+        this->transformation = PlanarTransformation_f32(transformType, initialCorners, scratch);
 
-        // Allocate the memory for the pyramid lists
-        templateCoordinates = FixedLengthList<Meshgrid<f32>>(numPyramidLevels, memory);
-        templateImagePyramid = FixedLengthList<Array<u8>>(numPyramidLevels, memory);
-        templateImageXGradientPyramid = FixedLengthList<Array<s16>>(numPyramidLevels, memory);
-        templateImageYGradientPyramid = FixedLengthList<Array<s16>>(numPyramidLevels, memory);
+        // Allocate the scratch for the pyramid lists
+        templateCoordinates = FixedLengthList<Meshgrid<f32>>(numPyramidLevels, scratch);
+        templateImagePyramid = FixedLengthList<Array<u8>>(numPyramidLevels, scratch);
+        templateImageXGradientPyramid = FixedLengthList<Array<s16>>(numPyramidLevels, scratch);
+        templateImageYGradientPyramid = FixedLengthList<Array<s16>>(numPyramidLevels, scratch);
 
         templateCoordinates.set_size(numPyramidLevels);
         templateImagePyramid.set_size(numPyramidLevels);
@@ -1161,7 +1165,7 @@ namespace Anki
         AnkiConditionalErrorAndReturn(templateImagePyramid.IsValid() && templateImageXGradientPyramid.IsValid() && templateImageYGradientPyramid.IsValid() && templateCoordinates.IsValid(),
           "LucasKanadeTrackerFast::LucasKanadeTrackerFast", "Could not allocate pyramid lists");
 
-        // Allocate the memory for all the images
+        // Allocate the scratch for all the images
         for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
           const f32 scale = static_cast<f32>(1 << iScale);
 
@@ -1175,9 +1179,9 @@ namespace Anki
           const s32 numPointsY = templateCoordinates[iScale].get_yGridVector().get_size();
           const s32 numPointsX = templateCoordinates[iScale].get_xGridVector().get_size();
 
-          templateImagePyramid[iScale] = Array<u8>(numPointsY, numPointsX, memory);
-          templateImageXGradientPyramid[iScale] = Array<s16>(numPointsY, numPointsX, memory);
-          templateImageYGradientPyramid[iScale] = Array<s16>(numPointsY, numPointsX, memory);
+          templateImagePyramid[iScale] = Array<u8>(numPointsY, numPointsX, scratch);
+          templateImageXGradientPyramid[iScale] = Array<s16>(numPointsY, numPointsX, scratch);
+          templateImageYGradientPyramid[iScale] = Array<s16>(numPointsY, numPointsX, scratch);
 
           AnkiConditionalErrorAndReturn(templateImagePyramid[iScale].IsValid() && templateImageXGradientPyramid[iScale].IsValid() && templateImageYGradientPyramid[iScale].IsValid(),
             "LucasKanadeTrackerFast::LucasKanadeTrackerFast", "Could not allocate pyramid images");
@@ -1222,19 +1226,19 @@ namespace Anki
         EndBenchmark("LucasKanadeTrackerFast");
       }
 
-      Result LucasKanadeTrackerFast::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, MemoryStack memory)
+      Result LucasKanadeTrackerFast::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, MemoryStack scratch)
       {
         for(s32 iScale=numPyramidLevels-1; iScale>=0; iScale--) {
           bool converged = false;
 
           BeginBenchmark("UpdateTrack.refineTranslation");
-          if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, TRANSFORM_TRANSLATION, converged, memory)) != RESULT_OK)
+          if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, TRANSFORM_TRANSLATION, converged, scratch)) != RESULT_OK)
             return lastResult;
           EndBenchmark("UpdateTrack.refineTranslation");
 
           if(this->transformation.get_transformType() != TRANSFORM_TRANSLATION) {
             BeginBenchmark("UpdateTrack.refineOther");
-            if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, this->transformation.get_transformType(), converged, memory)) != RESULT_OK)
+            if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, this->transformation.get_transformType(), converged, scratch)) != RESULT_OK)
               return lastResult;
             EndBenchmark("UpdateTrack.refineOther");
           }
@@ -1243,7 +1247,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result LucasKanadeTrackerFast::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack memory)
+      Result LucasKanadeTrackerFast::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack scratch)
       {
         const bool isOutColumnMajor = true; // TODO: change to false, which will probably be faster
 
@@ -1275,21 +1279,21 @@ namespace Anki
         //  static_cast<s32>(Round(this->templateRegion.bottom / powf(2.0f,static_cast<f32>(whichScale)))));
 
         if(curTransformType == TRANSFORM_TRANSLATION) {
-          return IterativelyRefineTrack_Translation(nextImage, maxIterations, whichScale, convergenceTolerance, converged, memory);
+          return IterativelyRefineTrack_Translation(nextImage, maxIterations, whichScale, convergenceTolerance, converged, scratch);
         } else if(curTransformType == TRANSFORM_AFFINE) {
-          //return IterativelyRefineTrack_Affine(nextImage, maxIterations, whichScale, convergenceTolerance, converged, memory);
+          //return IterativelyRefineTrack_Affine(nextImage, maxIterations, whichScale, convergenceTolerance, converged, scratch);
         }
 
         return RESULT_FAIL;
-      } // Result LucasKanadeTrackerFast::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack memory)
+      } // Result LucasKanadeTrackerFast::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack scratch)
 
-      Result LucasKanadeTrackerFast::IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack memory)
+      Result LucasKanadeTrackerFast::IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch)
       {
         // This method is heavily based on Interp2_Affine
         // The call would be like: Interp2_Affine<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
 
-        Array<f32> AWAt(2, 2, memory);
-        Array<f32> b(1, 2, memory);
+        Array<f32> AWAt(2, 2, scratch);
+        Array<f32> b(1, 2, scratch);
 
         f32 &AWAt00 = AWAt[0][0]; f32 &AWAt01 = AWAt[0][1];
         f32 &AWAt10 = AWAt[1][0]; f32 &AWAt11 = AWAt[1][1];
@@ -1411,9 +1415,12 @@ namespace Anki
 
                 //AWAt
                 //  b
+                AWAt00 += xGradientValue * xGradientValue;
+                AWAt01 += xGradientValue * yGradientValue;
+                AWAt11 += yGradientValue * yGradientValue;
 
-                // TODO: put the rest of the logic here
-                const s32 dog = 5;
+                b0 += xGradientValue * tGradientValue;
+                b1 += yGradientValue * tGradientValue;
               }
 
               // strength reduction for the affine transformation along this horizontal line
@@ -1429,6 +1436,51 @@ namespace Anki
             AnkiWarn("LucasKanadeTrackerFast::IterativelyRefineTrack_Translation", "Template drifted too far out of image.");
             return RESULT_OK;
           }
+
+          Matrix::MakeSymmetric(AWAt, false);
+
+          AWAt.Print("New AWAt");
+          b.Print("New b");
+
+          if((lastResult = Matrix::SolveLeastSquaresWithCholesky(AWAt, b, false)) != RESULT_OK)
+            return lastResult;
+
+          b.Print("New update");
+
+          this->transformation.Update(b, scratch, TRANSFORM_TRANSLATION);
+
+          // Check if we're done with iterations
+          {
+            PUSH_MEMORY_STACK(scratch);
+
+            Quadrilateral<f32> in(
+              Point<f32>(0.0f,0.0f),
+              Point<f32>(static_cast<f32>(nextImage.get_size(1)),0.0f),
+              Point<f32>(static_cast<f32>(nextImage.get_size(0)),static_cast<f32>(nextImage.get_size(1))),
+              Point<f32>(0.0f,static_cast<f32>(nextImage.get_size(1))));
+
+            Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, scratch, scale);
+
+            //const f32 change = sqrtf(Matrix::Mean<f32,f32>(tmp1));
+            f32 change = 0.0f;
+            for(s32 i=0; i<4; i++) {
+              const f32 dx = previousCorners[i].x - newCorners[i].x;
+              const f32 dy = previousCorners[i].y - newCorners[i].y;
+              change += sqrtf(dx*dx + dy*dy);
+            }
+            change /= 4;
+
+            //printf("newCorners");
+            //newCorners.Print();
+            //printf("change: %f\n", change);
+
+            if(change < convergenceTolerance*scale) {
+              converged = true;
+              return RESULT_OK;
+            }
+
+            previousCorners = newCorners;
+          } // PUSH_MEMORY_STACK(scratch);
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
         return RESULT_OK;

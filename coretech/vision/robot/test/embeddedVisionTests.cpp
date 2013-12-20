@@ -54,7 +54,7 @@ Matlab matlab(false);
 //#define BENCHMARK_AFFINE
 
 // TODO: remove
-#define RUN_FAST_LK_AND_NOT_NORMAL_LK
+//#define RUN_FAST_LK_AND_NOT_NORMAL_LK
 
 //#if defined(RUN_TRACKER_TESTS) && defined(RUN_LOW_MEMORY_IMAGE_TESTS)
 //Cannot run tracker and low memory tests at the same time
