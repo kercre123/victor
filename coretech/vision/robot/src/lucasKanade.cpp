@@ -808,95 +808,12 @@ namespace Anki
             return lastResult;
           EndBenchmark("IterativelyRefineTrack.transformPoints");
 
-          //{
-          //  PUSH_MEMORY_STACK(memory);
-
-          //  Array<f32> tmp1(1, numPointsY*numPointsX, memory);
-          //  Array<f32> tmp2(1, numPointsY*numPointsX, memory);
-
-          //  // change = sqrt(mean((xPrev(:)-xi(:)).^2 + (yPrev(:)-yi(:)).^2));
-          //  Matrix::Subtract<f32,f32,f32>(xPrevious, xTransformed, tmp1);
-          //  Matrix::DotMultiply<f32,f32,f32>(tmp1, tmp1, tmp1);
-
-          //  Matrix::Subtract<f32,f32,f32>(yPrevious, yTransformed, tmp2);
-          //  Matrix::DotMultiply<f32,f32,f32>(tmp2, tmp2, tmp2);
-
-          //  Matrix::Add<f32,f32,f32>(tmp1, tmp2, tmp1);
-
-          //  const f32 change = sqrtf(Matrix::Mean<f32,f32>(tmp1));
-
-          //  if(change < convergenceTolerance*scale) {
-          //    converged = true;
-          //    return RESULT_OK;
-          //  }
-          //} // PUSH_MEMORY_STACK(memory);
-
           Array<f32> nextImageTransformed(1, numPointsY*numPointsX, memory);
 
           BeginBenchmark("IterativelyRefineTrack.interpTransformedCoords");
           // imgi = interp2(img, xi(:), yi(:), 'linear');
           {
             PUSH_MEMORY_STACK(memory);
-
-            //// TODO: remove
-            //{
-            //  PUSH_MEMORY_STACK(memory);
-
-            //  Array<u8> simpleInterp(4,4,memory);
-            //  simpleInterp[0][0] = 10; simpleInterp[0][1] = 20; simpleInterp[0][2] = 30; simpleInterp[0][3] = 40;
-            //  simpleInterp[1][0] = 50; simpleInterp[1][1] = 60; simpleInterp[1][2] = 70; simpleInterp[1][3] = 80;
-            //  simpleInterp[2][0] = 90; simpleInterp[2][1] = 100; simpleInterp[2][2] = 110; simpleInterp[2][3] = 120;
-            //  simpleInterp[3][0] = 130; simpleInterp[3][1] = 140; simpleInterp[3][2] = 150; simpleInterp[3][3] = 160;
-
-            //  Array<f32> simpleInterpOut(4,4,memory);
-
-            //  Array<f32> hSimple = Eye<f32>(3,3,memory);
-            //  hSimple[0][0] = 2;
-            //  hSimple[0][2] = 0.5f;
-            //  if((lastResult = Interp2_Affine<u8,f32>(simpleInterp, hSimple, simpleInterpOut, INTERPOLATE_LINEAR, -1.0f)) != RESULT_OK)
-            //    return lastResult;
-
-            //  Array<f32> xIn = templateCoordinates[whichScale].EvaluateX2(memory);
-            //  Array<f32> yIn = templateCoordinates[whichScale].EvaluateY2(memory);
-
-            //  xIn.Print("xIn");
-            //  yIn.Print("yIn");
-
-            //  Array<f32> xTransformed(numPointsY, numPointsX, memory);
-            //  Array<f32> yTransformed(numPointsY, numPointsX, memory);
-            //  if((lastResult = transformation.TransformPoints(xIn, yIn, scale, this->centerOffset, xTransformed, yTransformed)) != RESULT_OK)
-            //    return lastResult;
-
-            //  xTransformed.Print("xTransformed");
-            //  yTransformed.Print("yTransformed");
-
-            //  Array<f32> nextImageTransformed2d(numPointsY, numPointsX, memory);
-            //  if((lastResult = Interp2<u8,f32>(nextImage, xTransformed, yTransformed, nextImageTransformed2d, INTERPOLATE_LINEAR, -1.0f)) != RESULT_OK)
-            //    return lastResult;
-
-            //  Array<f32> hPrime(3, 3, memory);
-            //  hPrime.Set(this->get_transformation().get_homography());
-            //  //hPrime[0][0] *= scale; hPrime[0][1] *= scale; hPrime[0][2] += 12.5;
-            //  //hPrime[1][0] *= scale; hPrime[1][1] *= scale; hPrime[1][2] += 21.5;
-            //  hPrime[0][0] *= scale; hPrime[0][1] *= scale; hPrime[0][2] += this->centerOffset.x + xIn[0][0];
-            //  hPrime[1][0] *= scale; hPrime[1][1] *= scale; hPrime[1][2] += this->centerOffset.y + yIn[0][0];
-
-            //  Array<f32> nextImageTransformed2d_alternate(numPointsY, numPointsX, memory);
-            //  if((lastResult = Interp2_Affine<u8,f32>(nextImage, hPrime, nextImageTransformed2d_alternate, INTERPOLATE_LINEAR, -1.0f)) != RESULT_OK)
-            //    return lastResult;
-
-            //  Matlab matlab(false);
-            //  matlab.PutArray(hPrime, "hPrime");
-            //  matlab.PutArray(nextImageTransformed2d, "nextImageTransformed2d");
-            //  matlab.PutArray(nextImageTransformed2d_alternate, "nextImageTransformed2d_alternate");
-            //  matlab.PutArray(nextImage, "nextImage");
-
-            //  matlab.PutArray(hSimple, "hSimple");
-            //  matlab.PutArray(simpleInterp, "simpleInterp");
-            //  matlab.PutArray(simpleInterpOut, "simpleInterpOut");
-
-            //  printf("done\n");
-            //}
 
             Array<f32> nextImageTransformed2d(1, numPointsY*numPointsX, memory);
 
@@ -963,14 +880,14 @@ namespace Anki
           Matrix::MultiplyTranspose(A, AW, AWAt);
           EndBenchmark("IterativelyRefineTrack.computeAWAt");
 
-          if(curTransformType == TRANSFORM_AFFINE) {
-            Matlab matlab(false);
+          //if(curTransformType == TRANSFORM_AFFINE) {
+          //  Matlab matlab(false);
 
-            matlab.PutArray(A, "A");
-            matlab.PutArray(AW, "AW");
-            matlab.PutArray(AWAt, "AWAt");
-            printf("");
-          }
+          //  matlab.PutArray(A, "A");
+          //  matlab.PutArray(AW, "AW");
+          //  matlab.PutArray(AWAt, "AWAt");
+          //  printf("");
+          //}
 
           Array<f32> ridgeWeightMatrix = Eye<f32>(numSystemParameters, numSystemParameters, memory);
           Matrix::DotMultiply<f32,f32,f32>(ridgeWeightMatrix, ridgeWeight, ridgeWeightMatrix);
@@ -983,14 +900,14 @@ namespace Anki
           Matrix::MultiplyTranspose(templateDerivativeT, AW, b);
           EndBenchmark("IterativelyRefineTrack.computeb");
 
-          if(curTransformType == TRANSFORM_AFFINE) {
-          Matlab matlab(false);
-          
-          matlab.PutArray(b, "b");
-          matlab.PutArray(templateDerivativeT, "templateDerivativeT");
-          matlab.PutArray(ridgeWeightMatrix, "ridgeWeightMatrix");
-          printf("");
-          }
+          //if(curTransformType == TRANSFORM_AFFINE) {
+          //  Matlab matlab(false);
+
+          //  matlab.PutArray(b, "b");
+          //  matlab.PutArray(templateDerivativeT, "templateDerivativeT");
+          //  matlab.PutArray(ridgeWeightMatrix, "ridgeWeightMatrix");
+          //  printf("");
+          //}
 
           // update = AtWA\b;
           //AW.Print("AW");
@@ -1004,16 +921,10 @@ namespace Anki
 
           //b.Print("Orig update");
 
-          //if(update.get_size(1) > 2) {
-          //  //AWAt.Print("AWAt");
-          //  //b.Print("b");
-          //  update.PrintAlternate("update", 2);
-          //}
-
           //{
           //  Matlab matlab(false);
 
-          //  matlab.PutArray(update, "update");
+          //  matlab.PutArray(b, "update");
           //}
 
           BeginBenchmark("IterativelyRefineTrack.updateTransformation");
@@ -1673,8 +1584,8 @@ namespace Anki
 
           Matrix::MakeSymmetric(AWAt, false);
 
-          AWAt.Print("New AWAt");
-          b.Print("New b");
+          //AWAt.Print("New AWAt");
+          //b.Print("New b");
 
           if((lastResult = Matrix::SolveLeastSquaresWithCholesky(AWAt, b, false)) != RESULT_OK)
             return lastResult;
