@@ -130,12 +130,6 @@ namespace Anki
             return RESULT_FAIL_INVALID_PARAMETERS;
           }
 
-          //{
-          //  Matlab matlab(false);
-
-          //  matlab.PutArray(updateArray, "updateArray");
-          //}
-
           // this.tform = this.tform*inv(tformUpdate);
           Invert3x3(
             updateArray[0][0], updateArray[0][1], updateArray[0][2],
@@ -146,23 +140,9 @@ namespace Anki
 
           Matrix::Multiply(this->homography, updateArray, newHomography);
 
-          //{
-          //  Matlab matlab(false);
-          //  matlab.PutArray(this->homography, "homography");
-          //  matlab.PutArray(newHomography, "newHomography");
-          //  matlab.PutArray(updateArray, "updateArrayInv");
-          //  matlab.PutArray(update, "update");
-          //}
-
           if(!FLT_NEAR(newHomography[2][2], 1.0f)) {
             Matrix::DotDivide<f32,f32,f32>(newHomography, newHomography[2][2], newHomography);
           }
-
-          //{
-          //  Matlab matlab(false);
-
-          //  matlab.PutArray(newHomography, "newHomographyNorm");
-          //}
 
           this->homography.Set(newHomography);
         } // if(updateType == TRANSFORM_TRANSLATION) ... else
@@ -495,11 +475,6 @@ namespace Anki
             static_cast<s32>(Roundf(templateRegion.right))).Set(1.0f);
           EndBenchmark("InitializeTemplate.setTemplateMask");
 
-          //{
-          //  Matlab matlab(false);
-          //  matlab.EvalStringEcho("templatePyramid_Original = cell(%d,1);", numPyramidLevels);
-          //}
-
           for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++) {
             PUSH_MEMORY_STACK(memory);
 
@@ -532,12 +507,6 @@ namespace Anki
             if((lastResult = Interp2<u8,u8>(templateImage, xTransformed, yTransformed, this->templateImagePyramid[iScale], INTERPOLATE_LINEAR)) != RESULT_OK)
               return lastResult;
             EndBenchmark("InitializeTemplate.image.interp2");
-
-            //{
-            //  Matlab matlab(false);
-            //  matlab.PutArray(this->templateImagePyramid[iScale], "tmp_templateImagePyramid");
-            //  matlab.EvalStringEcho("templatePyramid_Original{%d} = tmp_templateImagePyramid;", iScale+1);
-            //}
 
             BeginBenchmark("InitializeTemplate.ComputeImageGradients");
             // Ix = (image_right(targetBlur) - image_left(targetBlur))/2 * spacing;
@@ -632,14 +601,6 @@ namespace Anki
                 Matrix::Subtract<f32,f32,f32>(tmp1,tmp2,tmp1);
                 this->A_full[iScale](7,7,0,-1).Set(tmp1);
               } // if(transformation.get_transformType() == TRANSFORM_PROJECTIVE)
-              //{
-              //  Matlab matlab(false);
-              //  matlab.PutArray(this->A_full[iScale], "A_full_iScale");
-              //  matlab.PutArray(templateDerivativeX, "templateDerivativeX");
-              //  matlab.PutArray(templateDerivativeY, "templateDerivativeY");
-              //  matlab.PutArray(templateImage, "templateImage");
-              //  //matlab.PutArray(, "");
-              //}
             } // else if(transformation.get_transformType() == TRANSFORM_AFFINE || transformation.get_transformType() == TRANSFORM_PROJECTIVE)
             EndBenchmark("InitializeTemplate.ComputeA");
 
@@ -883,9 +844,11 @@ namespace Anki
           //if(curTransformType == TRANSFORM_AFFINE) {
           //  Matlab matlab(false);
 
-          //  matlab.PutArray(A, "A");
-          //  matlab.PutArray(AW, "AW");
-          //  matlab.PutArray(AWAt, "AWAt");
+          //  matlab.PutArray(A, "A_tmp");
+          //  matlab.PutArray(AW, "AW_tmp");
+          //  matlab.PutArray(AWAt, "AWAt_tmp");
+          //  matlab.EvalStringEcho("if ~exist('A', 'var') A=cell(0); AW=cell(0); AWAt=cell(0); end;");
+          //  matlab.EvalStringEcho("A{end+1}=A_tmp; AW{end+1}=AW_tmp; AWAt{end+1}=AWAt_tmp;");
           //  printf("");
           //}
 
@@ -903,9 +866,11 @@ namespace Anki
           //if(curTransformType == TRANSFORM_AFFINE) {
           //  Matlab matlab(false);
 
-          //  matlab.PutArray(b, "b");
-          //  matlab.PutArray(templateDerivativeT, "templateDerivativeT");
-          //  matlab.PutArray(ridgeWeightMatrix, "ridgeWeightMatrix");
+          //  matlab.PutArray(b, "b_tmp");
+          //  //matlab.PutArray(templateDerivativeT, "templateDerivativeT");
+          //  //matlab.PutArray(ridgeWeightMatrix, "ridgeWeightMatrix");
+          //  matlab.EvalStringEcho("if ~exist('b', 'var') b=cell(0); end;");
+          //  matlab.EvalStringEcho("b{end+1}=b_tmp;");
           //  printf("");
           //}
 
@@ -921,17 +886,22 @@ namespace Anki
 
           //b.Print("Orig update");
 
-          //{
-          //  Matlab matlab(false);
-
-          //  matlab.PutArray(b, "update");
-          //}
-
           BeginBenchmark("IterativelyRefineTrack.updateTransformation");
           //this->transformation.Print("t1");
           this->transformation.Update(b, memory, curTransformType);
           //this->transformation.Print("t2");
           EndBenchmark("IterativelyRefineTrack.updateTransformation");
+
+          //if(curTransformType == TRANSFORM_AFFINE) {
+          //  Matlab matlab(false);
+
+          //  matlab.PutArray(b, "update_tmp");
+          //  matlab.PutArray(this->transformation.get_homography(), "homography_tmp");
+
+          //  matlab.EvalStringEcho("if ~exist('update', 'var') update=cell(0); homography=cell(0); end;");
+          //  matlab.EvalStringEcho("update{end+1}=update_tmp; homography{end+1}=homography_tmp;");
+          //  printf("");
+          //}
 
           BeginBenchmark("IterativelyRefineTrack.checkForCompletion");
           // Check if we're done with iterations
@@ -1103,24 +1073,12 @@ namespace Anki
             "LucasKanadeTrackerFast::LucasKanadeTrackerFast", "Could not allocate pyramid images");
         }
 
-        //{
-        //  Matlab matlab(false);
-        //  matlab.EvalStringEcho("templatePyramid_Affine = cell(%d,1);", numPyramidLevels);
-        //  matlab.PutArray(templateImage, "templateImage");
-        //}
-
         // Sample all levels of the pyramid images
         for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
           if((lastResult = Interp2_Affine<u8,u8>(templateImage, templateCoordinates[iScale], transformation.get_homography(), this->centerOffset, this->templateImagePyramid[iScale], INTERPOLATE_LINEAR)) != RESULT_OK) {
             AnkiError("LucasKanadeTrackerFast::LucasKanadeTrackerFast", "Interp2_Affine failed with code 0x%x", lastResult);
             return;
           }
-
-          //{
-          //  Matlab matlab(false);
-          //  matlab.PutArray(this->templateImagePyramid[iScale], "tmp_templateImagePyramid");
-          //  matlab.EvalStringEcho("templatePyramid_Affine{%d} = tmp_templateImagePyramid;", iScale+1);
-          //}
         }
 
         // Compute the spatial derivatives
@@ -1423,13 +1381,6 @@ namespace Anki
         f32 AWAt_raw[6][6];
         f32 b_raw[6];
 
-        for(s32 ia=0; ia<6; ia++) {
-          for(s32 ja=0; ja<6; ja++) {
-            AWAt_raw[ia][ja] = 0;
-          }
-          b_raw[ia] = 0;
-        }
-
         converged = false;
 
         const s32 nextImageHeight = nextImage.get_size(0);
@@ -1474,8 +1425,15 @@ namespace Anki
           const f32 yTransformedDelta = h10 * yGridDelta;
           const f32 xTransformedDelta = h00 * xGridDelta;
 
-          AWAt.SetZero();
-          b.SetZero();
+          //AWAt.SetZero();
+          //b.SetZero();
+
+          for(s32 ia=0; ia<6; ia++) {
+            for(s32 ja=0; ja<6; ja++) {
+              AWAt_raw[ia][ja] = 0;
+            }
+            b_raw[ia] = 0;
+          }
 
           s32 numInBounds = 0;
 
@@ -1551,6 +1509,11 @@ namespace Anki
                   yOriginal * yGradientValue,
                   yGradientValue};
 
+                //for(s32 ia=0; ia<6; ia++) {
+                //  printf("%f ", values[ia]);
+                //}
+                //printf("\n");
+
                 //f32 AWAt_raw[6][6];
                 //f32 b_raw[6];
                 for(s32 ia=0; ia<6; ia++) {
@@ -1593,6 +1556,8 @@ namespace Anki
           //b.Print("New update");
 
           this->transformation.Update(b, scratch, TRANSFORM_AFFINE);
+
+          //this->transformation.get_homography().Print("new transformation");
 
           // Check if we're done with iterations
           {

@@ -53,9 +53,6 @@ Matlab matlab(false);
 #define RUN_TRACKER_TESTS // equivalent to RUN_BROKEN_KANADE_TESTS
 //#define BENCHMARK_AFFINE
 
-// TODO: remove
-//#define RUN_FAST_LK_AND_NOT_NORMAL_LK
-
 //#if defined(RUN_TRACKER_TESTS) && defined(RUN_LOW_MEMORY_IMAGE_TESTS)
 //Cannot run tracker and low memory tests at the same time
 //#endif
@@ -474,7 +471,6 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_BenchmarkAffine)
 }
 #endif // BENCHMARK_AFFINE
 
-#ifdef RUN_FAST_LK_AND_NOT_NORMAL_LK
 GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
 {
 #ifndef RUN_TRACKER_TESTS
@@ -579,9 +575,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
 
   GTEST_RETURN_HERE;
 }
-#endif // #ifdef RUN_FAST_LK_AND_NOT_NORMAL_LK
 
-#ifndef RUN_FAST_LK_AND_NOT_NORMAL_LK
 GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 {
 #ifndef RUN_TRACKER_TESTS
@@ -720,7 +714,6 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
   GTEST_RETURN_HERE;
 }
-#endif // #ifndef RUN_FAST_LK_AND_NOT_NORMAL_LK
 
 GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C_emulateShave)
 {
