@@ -989,15 +989,15 @@ namespace Anki
           }*/
 
           // update = AtWA\b;
-          AWAt.Print("Orig AWAt");
-          b.Print("Orig b");
+          //AWAt.Print("Orig AWAt");
+          //b.Print("Orig b");
 
           BeginBenchmark("IterativelyRefineTrack.solveForUpdate");
           if((lastResult = Matrix::SolveLeastSquaresWithCholesky(AWAt, b, false)) != RESULT_OK)
             return lastResult;
           EndBenchmark("IterativelyRefineTrack.solveForUpdate");
 
-          b.Print("Orig update");
+          //b.Print("Orig update");
 
           //if(update.get_size(1) > 2) {
           //  //AWAt.Print("AWAt");
@@ -1439,13 +1439,13 @@ namespace Anki
 
           Matrix::MakeSymmetric(AWAt, false);
 
-          AWAt.Print("New AWAt");
-          b.Print("New b");
+          //AWAt.Print("New AWAt");
+          //b.Print("New b");
 
           if((lastResult = Matrix::SolveLeastSquaresWithCholesky(AWAt, b, false)) != RESULT_OK)
             return lastResult;
 
-          b.Print("New update");
+          //b.Print("New update");
 
           this->transformation.Update(b, scratch, TRANSFORM_TRANSLATION);
 
