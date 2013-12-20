@@ -20,9 +20,21 @@ namespace Anki
       
       // Add path segment
       // TODO: Replace these with a setPath() function
-      bool AppendPathSegment_Line(u32 matID, f32 x_start_m, f32 y_start_m, f32 x_end_m, f32 y_end_m);
-      bool AppendPathSegment_Arc(u32 matID, f32 x_center_m, f32 y_center_m, f32 radius_m, f32 startRad, f32 sweepRad);
-      bool AppendPathSegment_PointTurn(u32 matID, f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel);
+      bool AppendPathSegment_Line(u32 matID,
+                                  f32 x_start_m, f32 y_start_m,
+                                  f32 x_end_m, f32 y_end_m);
+      
+      bool AppendPathSegment_Arc(u32 matID,
+                                 f32 x_center_m, f32 y_center_m,
+                                 f32 radius_m, f32 startRad, f32 sweepRad);
+      
+      bool AppendPathSegment_PointTurn(u32 matID,
+                                       f32 x_m, f32 y_m,
+                                       f32 targetAngle,
+                                       f32 maxAngularVel,
+                                       f32 angularAccel,
+                                       f32 angularDecel);
+      
       u8 GenerateDubinsPath(f32 start_x, f32 start_y, f32 start_theta,
                             f32 end_x, f32 end_y, f32 end_theta,
                             f32 start_radius, f32 end_radius,

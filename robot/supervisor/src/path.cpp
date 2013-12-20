@@ -84,7 +84,9 @@ namespace Anki
                 def.arc.sweepRad);
           break;
         case PST_POINT_TURN:
-          PRINT("ptTurn: targetAngle %f, maxAngularVel %f, angularAccel %f, angularDecel %f\n",
+          PRINT("ptTurn: x %f, y %f, targetAngle %f, maxAngularVel %f, angularAccel %f, angularDecel %f\n",
+                def.turn.x,
+                def.turn.y,
                 def.turn.targetAngle,
                 def.turn.maxAngularVel,
                 def.turn.angularAccel,
@@ -438,6 +440,10 @@ namespace Anki
         return true;
       }
   
+      PRINT("Continuity fail: Segment %d start point (%f, %f), Segment %d end point (%f, %f)\n",
+            pathSegmentIdx, path_[pathSegmentIdx].GetStartPoint().x, path_[pathSegmentIdx].GetStartPoint().y,
+            pathSegmentIdx-1, path_[pathSegmentIdx-1].GetEndPoint().x, path_[pathSegmentIdx-1].GetEndPoint().y
+            );
       return false;
     }
   
@@ -568,7 +574,7 @@ namespace Anki
       
       path_[numPathSegments_].type = PST_POINT_TURN;
       path_[numPathSegments_].def.turn.x = x;
-      path_[numPathSegments_].def.turn.x = y;
+      path_[numPathSegments_].def.turn.y = y;
       path_[numPathSegments_].def.turn.targetAngle = targetAngle;
       path_[numPathSegments_].def.turn.maxAngularVel = maxAngularVel;
       path_[numPathSegments_].def.turn.angularAccel = angularAccel;
