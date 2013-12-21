@@ -76,6 +76,7 @@ SECTIONS {
   }
 
   .ddr.bss (NOLOAD) : {
+    *(.ddr.bss*)
     *(.bss.printfBuffer*)
   }
 

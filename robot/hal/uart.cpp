@@ -1,6 +1,8 @@
 #include "anki/cozmo/robot/hal.h"
 #include "movidius.h"
 
+#if 1 //ndef USE_USB
+
 namespace Anki
 {
   namespace Cozmo
@@ -97,8 +99,6 @@ namespace Anki
         return c;
       }
 
-      s32 UARTGetChar(void) { return USBGetChar(0); }
-      
       s32 UARTGetChar(u32 timeout)
       {
         u32 end = GetMicroCounter() + timeout;
@@ -124,7 +124,7 @@ namespace Anki
       {
         // If trying to peek further than there are characters in the buffer
         // exit now.
-        if (USBGetNumBytesToRead() <= offset) {
+        if (UARTGetNumBytesToRead() <= offset) {
           return -1;
         }
         
@@ -163,4 +163,6 @@ namespace Anki
     }
   }
 }
+
+#endif  // ifndef USE_USB
 

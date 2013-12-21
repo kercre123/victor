@@ -52,7 +52,9 @@ namespace Anki
 
         {
           DEFAULT_CORE_BUS_CLOCKS |
+          DEV_USB                 |
           DEV_CIF1                |
+          DEV_CIF2                |
           DEV_IIC1                |
           DEV_SVU0,
 
@@ -70,11 +72,14 @@ namespace Anki
         // Check neck potentiometer here, until radio implements it
         // ...
 
-        Robot::step_MainExecution();
+        //Robot::step_MainExecution();
+
+        static u32 now = 0;
+        //if ((HAL::GetMicroCounter() - now) > 5000000)
+        //  USBPutChar('.');
 
         // Pet the watchdog
         // Other HAL tasks?
-
         return 0;
       }
 
@@ -143,13 +148,16 @@ namespace Anki
         REG_WORD(ICB_CLEAR_0_ADR) = 0xFFFFffff;
         REG_WORD(ICB_CLEAR_1_ADR) = 0xFFFFffff;
 
+//#ifdef USE_USB
+        USBInit();
+//#else
         UARTInit();
+//#endif
 
         FrontCameraInit();
-
-        //USBInit();
-
+#ifndef USE_USB  // Maybe ifndef BOX instead?
         MotorInit();
+#endif
       }
 
       // Called from Robot::Init(), but not actually used here.
@@ -207,57 +215,18 @@ int main()
   using namespace Anki::Cozmo;
   HAL::InitMemory();
 
-  Robot::Init();
+  //Robot::Init();
 
   HAL::SetupMainExecution();
 
   while (true)
   {
-    //Console::Update();
+    //Robot::step_LongExecution();
+#ifdef USE_USB
+        HAL::USBUpdate();
+#endif
 
-    Robot::step_LongExecution();
-    
-    
-    //HAL::USBUpdate();
 
-    //printf("%X\n", *(volatile u32*)TIM1_CNT_VAL_ADR);
-
-/*    HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 0.5);
-    HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 0.5);
-    SleepMs(1000);
-    HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, -0.5);
-    HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, -0.5);
-    SleepMs(1000);*/
-
-//    HAL::MotorSetPower(HAL::MOTOR_HEAD, 0.50f);
-//    HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 1.00f);
-//    SleepMs(1000);
-//    HAL::MotorSetPower(HAL::MOTOR_HEAD, -0.50f);
-//    HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, -1.00f);
-//    SleepMs(1000);
-
-/*    printf("%d %d %d\n",
-        DrvGpioGetPin(106),
-        DrvGpioGetPin(32),
-        DrvGpioGetPin(35));*/
-
-/*    printf("%d %d %d\n",
-        DrvGpioGetPin(106),
-        DrvGpioGetPin(32),
-        DrvGpioGetPin(35)); */
-
-/*      if ((REG_WORD(GPIO_PWM_DEC0_VLD_ADR) & 0x3F) == 0x3F)
-      {
-        u32 dec = REG_WORD(GPIO_PWM_DEC_0_N1_ADR);
-        printf("%d %d\n",
-          dec >> 16,
-          dec & 0xFFFF);
-
-        SET_REG_WORD(GPIO_PWM_CLR_ADR, 0xFF);
-      } */
-
-//    HAL::MotorSetPower(HAL::MOTOR_GRIP, -1.0f);
-//    SleepMs(1000);
   }
 
   return 0;

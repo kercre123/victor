@@ -2,6 +2,8 @@
 #include "movidius.h"
 #include "usbDefines.h"
 
+#ifdef USE_USB
+
 #define USB_WORD(x) *(volatile u32*)(USB_BASE_ADDR + (x))
 
 #define CACHE_FLUSH asm("flush")
@@ -66,7 +68,7 @@ namespace Anki
       struct USBQueueHead
       {
         u32 capabilities;
-        u32 currentDTDPointer;
+u32 currentDTDPointer;
         u32 nextDTDPointer;
         u32 token;
         u32 bufferPointer[5];
@@ -434,6 +436,8 @@ namespace Anki
             nextAddress = (u32)address;
           }
 
+          printf("next add: %08X\n", nextAddress);
+
           dTD->bufferPointer[i] = nextAddress;
         }
 
@@ -454,6 +458,7 @@ namespace Anki
         while (USB_WORD(REG_ENDPTSETUPSTAT))
           ;
 
+        printf("prime: %08X\n", prime);
         USB_WORD(REG_ENDPTPRIME) = prime;
 
         while (USB_WORD(REG_ENDPTPRIME) & prime)
@@ -643,7 +648,6 @@ namespace Anki
         // Check for USB Reset
         if (status & USB_USBSTS_URI)
         {
-          //printf("RESET\n");
           // Clear USB Reset Received
           USB_WORD(REG_USBSTS) = USB_USBSTS_URI;
           Reset();
@@ -651,21 +655,17 @@ namespace Anki
         // Check for Port Change
         if (status & USB_USBSTS_PCI)
         {
-          //printf("PORT CHANGE\n");
           // TODO: Anything else required here?
           //USB_WORD(REG_USBSTS) = USB_USBSTS_PCI;
         }
         // Check for suspended state
         if (status & USB_USBSTS_SLI)
         {
-          //printf("SLI\n");
           //USB_WORD(REG_USBSTS) = USB_USBSTS_SLI;
         }
         // Check for SOF (Start Of Frame)
         if (status & USB_USBSTS_SRI)
         {
-          //printf("USBSTS: %08X\n", USB_WORD(REG_USBSTS));
-
           // Clear SOF
           USB_WORD(REG_USBSTS) = USB_USBSTS_SRI;
           while (USB_WORD(REG_USBSTS) & USB_USBSTS_SRI)
@@ -674,35 +674,17 @@ namespace Anki
           //SET_USB_WORD(ICB_INT_CLEAR, (1 << IRQ_USB));
 
           HandleSetupMessage();
-
-/*          static volatile u8 sendBUFFER = 0;
-          if (!sendBUFFER && (m_endpointBuffer[3] == 'a'))
-          {
-            printf("sending... %02X\n", sendBUFFER);
-            sendBUFFER = 1;
-            printf("true == %02X\n", sendBUFFER);
-
-            u32 index = (2 << 1);
-            SetupTransfer(index,
-                (u32)m_IN, 0,
-                (u32)m_IN, 6);
-            printf("SetupTransfer == %02X\n", sendBUFFER);
-            EPSetup(index + 1);
-            printf("EPSetup == %02X\n", sendBUFFER);
-          }*/
-
         }
 
         // Check for USB Interrupt
         if (status & USB_USBSTS_UI)
         {
-          //printf("USB-I\n");
           //USB_WORD(REG_USBSTS) = USB_USBSTS_UI;
           // Handle USB control messages
           //HandleSetupMessage();
         }
 
-        HandleTransfers();
+        //HandleTransfers();
       }
 
       static void HandleSetupMessage()
@@ -732,8 +714,8 @@ namespace Anki
           u32 wIndex = data47 & 0xFFFF;
           u32 wLength = (data47 >> 16) & 0xFFFF;
 
-//          printf("%02X %02X %04X %04X %04X\n", 
-//              bmRequestType, bRequest, wValue, wIndex, wLength);
+          printf("%02X %02X %04X %04X %04X\n", 
+              bmRequestType, bRequest, wValue, wIndex, wLength);
 
           setupStall = Setup(bmRequestType, bRequest, wValue, wIndex, wLength);
 
@@ -1024,6 +1006,7 @@ namespace Anki
         if (m_bulkOutHead == m_bulkOutTail)
           return -1;
 
+        // Endianness fix with xor 3
         s32 c = m_receiveBuffer[m_bulkOutTail ^ 3] & 0xFF;
         m_bulkOutTail = (m_bulkOutTail + 1) % sizeof(m_receiveBuffer);
 
@@ -1037,6 +1020,7 @@ namespace Anki
 
         offset = (offset + m_bulkOutTail) % sizeof(m_receiveBuffer);
         
+        // Endianness fix with xor 3
         return m_receiveBuffer[offset ^ 3];
       }
 
@@ -1059,4 +1043,6 @@ namespace Anki
     }
   }
 }
+
+#endif  // USE_USB
 
