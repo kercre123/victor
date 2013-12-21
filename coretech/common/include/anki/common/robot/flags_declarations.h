@@ -55,6 +55,13 @@ namespace Anki
         const static bool isFloat = false;
       };
 
+      // Similar to limits.h, which Myriad doesn't have
+      template<typename Type> class numeric_limits
+      {
+      public:
+        static inline Type epsilon() { return 0; }
+      };
+
 #pragma mark --- Declaration Specializations ---
       template<> class TypeCharacteristics<bool>
       {
@@ -153,6 +160,18 @@ namespace Anki
         const static bool isInteger = false;
         const static bool isSigned = true;
         const static bool isFloat = true;
+      };
+
+      template<> class numeric_limits<f32>
+      {
+      public:
+        static inline f32 epsilon() { return FLT_EPSILON; }
+      };
+
+      template<> class numeric_limits<f64>
+      {
+      public:
+        static inline f64 epsilon() { return DBL_EPSILON; }
       };
     } // namespace Flags
   } // namespace Embedded

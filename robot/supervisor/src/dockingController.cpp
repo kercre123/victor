@@ -1,19 +1,18 @@
 #include "anki/common/robot/config.h"
+#include "anki/common/robot/trig_fast.h"
 #include "dockingController.h"
 #include "gripController.h"
 #include "headController.h"
 #include "liftController.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/robot/cozmoTypes.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/localization.h"
+#include "anki/cozmo/robot/visionSystem.h"
 #include "anki/cozmo/robot/speedController.h"
 #include "anki/cozmo/robot/steeringController.h"
 #include "anki/cozmo/robot/pathFollower.h"
-#include "anki/cozmo/robot/visionSystem.h"
-
-// Use PathFollower to follow a path generated from the relative docking pose
-// specified by SetRelDockPose().
-#define DOCK_BY_PATH
 
 
 namespace Anki {
@@ -38,6 +37,13 @@ namespace Anki {
           DONE
         };
 
+        // Turning radius of docking path
+        const f32 DOCK_PATH_START_RADIUS_M = 0.05;
+        const f32 DOCK_PATH_END_RADIUS_M = 0.05;
+        
+        // The length of the straight tail end of the dock path.
+        // Should be roughly the length of the forks on the lift.
+        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_M = 0.03;
         
         // Distance between the robot origin and the distance along the robot's x-axis
         // to the lift when it is in the low docking position.
@@ -65,11 +71,8 @@ namespace Anki {
         const f32 VERTICAL_TARGET_ERROR_TOLERANCE = 1.f;   // in pixels
         const f32 HORIZONTAL_TARGET_ERROR_TOLERANCE = 1.f; // in pixels
 
-#ifdef DOCK_BY_PATH
+
         Mode mode_ = IDLE;
-#else
-        Mode mode_ = DONE;
-#endif
         bool success_  = false;
         
         // Whether or not the robot has a block in its grip
@@ -78,7 +81,31 @@ namespace Anki {
         // When to transition to the next state. Only some states use this.
         u32 transitionTime_ = 0;
         
-        //f32 liftDockHeight_ = -1.f;
+        // Whether or not we're already following the block surface normal as a path
+        bool followingBlockNormalPath_ = false;
+        
+        // The pose of the robot at the start of docking.
+        // While block tracking is maintained the robot follows
+        // a path from this initial pose to the docking pose.
+        Anki::Embedded::Pose2d approachStartPose_;
+
+        // The pose of the block as we're docking
+        Anki::Embedded::Pose2d blockPose_;
+
+        // The docking pose
+        Anki::Embedded::Pose2d dockPose_;
+        
+#ifndef SIMULATOR
+        // Since the physical robot currently does not localize,
+        // we need to store the transform from docking pose
+        // to the approachStartPose, which we then use to compute
+        // a new approachStartPose with every block pose update.
+        // We're faking a different approachStartPose because without
+        // localization it looks like the block is moving and not the robot.
+
+        f32 approachPath_dx, approachPath_dy, approachPath_dtheta, approachPath_dOrientation;
+#endif
+        
         
       } // "private" namespace
       
@@ -91,77 +118,6 @@ namespace Anki {
         mode_ = APPROACH_FOR_DOCK;
         success_ = false;
       }
- 
-#if 0
-      // TODO: Use a real controller
-      // Compute the wheel velocities from the difference between
-      // the observed target and the goal target
-      void ApproachBlock()
-      {
-        
-        /*
-         % High-level:
-         % - If the observed target is to the right of the goal location for that
-         %   target, we need to turn left, meaning we need the right motor to rotate
-         %   forwards and the left motor to rotate backwards.
-         % - If the observed target is above the goal location for that target, we
-         %   need to back up, so we need to rotate both motors backwards.
-         */
-        
-        // TODO: incorporate heading error?
-        
-        const f32 K_turn  = 0.03;
-        const f32 K_dist  = 0.05;
-        const f32 maxSpeed = 8;
-        
-        // Note that we're only comparing the centroid of the targets!
-        f32 obsMeanX  = 0.25f*(obsDockTarget_.dotX[0] + obsDockTarget_.dotX[1] +
-                               obsDockTarget_.dotX[2] + obsDockTarget_.dotX[3]);
-        f32 obsMeanY  = 0.25f*(obsDockTarget_.dotY[0] + obsDockTarget_.dotY[1] +
-                               obsDockTarget_.dotY[2] + obsDockTarget_.dotY[3]);
-        
-        f32 goalMeanX = 0.25f*(goalDockTarget_.dotX[0] + goalDockTarget_.dotX[1] +
-                               goalDockTarget_.dotX[2] + goalDockTarget_.dotX[3]);
-        f32 goalMeanY = 0.25f*(goalDockTarget_.dotY[0] + goalDockTarget_.dotY[1] +
-                               goalDockTarget_.dotY[2] + goalDockTarget_.dotY[3]);
-        
-        f32 verticalError = 0.f;
-        f32 horizontalError = obsMeanX - goalMeanX;
-        f32 turnVelocityLeft  = K_turn*horizontalError;
-        f32 turnVelocityRight = -turnVelocityLeft;
-        
-        // HACK: Only update distance if our heading is decent. I.e., turn towards
-        // the target and _then_ start driving to it.
-        f32 distanceVelocity = 0;
-        if(fabs(horizontalError) < 10.f) {
-          verticalError = obsMeanY - goalMeanY;
-          distanceVelocity = -K_dist*verticalError;
-        }
-        
-        f32 leftMotorVelocity  = 0.f;
-        f32 rightMotorVelocity = 0.f;
-        
-        if(fabs(verticalError)   < VERTICAL_TARGET_ERROR_TOLERANCE &&
-           fabs(horizontalError) < HORIZONTAL_TARGET_ERROR_TOLERANCE)
-        {
-          // We have reached the block. Stop moving and set mode to
-          // lift gripper to desired docking height
-          mode_ = SET_LOW_LIFT;
-          leftMotorVelocity = 0.f;
-          rightMotorVelocity = 0.f;
-        }
-        else {
-          leftMotorVelocity  = MAX(-maxSpeed, MIN(maxSpeed, turnVelocityLeft  + distanceVelocity));
-          rightMotorVelocity = MAX(-maxSpeed, MIN(maxSpeed, turnVelocityRight + distanceVelocity));
-        }
-        
-        // Command the speeds
-        // TODO: Replacing obsolete SetWheelAngularVelocity(). This probably breaks everything since inputs are now in mm/s
-        //       and the underlying controller is different.
-        SteeringController::ExecuteDirectDrive(leftMotorVelocity, leftMotorVelocity);
-        
-      } // ApproachBlock()
-#endif
       
       bool IsDocked()
       {
@@ -182,7 +138,6 @@ namespace Anki {
       {
         ReturnCode retVal = EXIT_SUCCESS;
         
-#ifdef DOCK_BY_PATH
         switch(mode_)
         {
           case IDLE:
@@ -210,7 +165,6 @@ namespace Anki {
             // If finished traversing path
             if (!PathFollower::IsTraversingPath()) {
               PRINT("GRIPPING\n");
-              PathFollower::PrintPathSegment(0);
               GripController::EngageGripper();
               
               transitionTime_ = HAL::GetMicroCounter() + PRE_PLACEMENT_WAIT_TIME_US;
@@ -231,12 +185,6 @@ namespace Anki {
               StartPlacement();
             }
             
-            // Go to IDLE when we lose tracking of the block
-            if (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_US) {
-              success_ = false;
-              isDocked_ = false;
-              mode_ = IDLE;
-            }
             break;
           case SET_CARRY_LIFT_HEIGHT:
             if (HAL::GetMicroCounter() > transitionTime_) {
@@ -259,7 +207,6 @@ namespace Anki {
             // If finished traversing path
             if (!PathFollower::IsTraversingPath()) {
               PRINT("PLACING\n");
-              PathFollower::PrintPathSegment(0);
               GripController::DisengageGripper();
               
               transitionTime_ = HAL::GetMicroCounter() + LIFT_PLACEMENT_ADJUST_TIME_US;
@@ -316,65 +263,7 @@ namespace Anki {
             break;
         }
         
-        
-#else
-        // Wait until head and lift are in position before proceeding
-        if(HeadController::IsInPosition() &&
-           LiftController::IsInPosition())
-        {
-          switch(mode_)
-          {
-            case APPROACH_FOR_DOCK:
-            {
-              // Find the docking target and put it in obsTarget_
-              if(VisionSystem::findDockingTarget(obsDockTarget_) == EXIT_SUCCESS)
-              {
-                // This will switch us to SET_LIFT mode when it's done
-                ApproachBlock();
-                
-              } else {
-                PRINT("Failed to find docking target.\n");
-                mode_ = DONE;
-                success_ = false;
-                
-              } // if found docking target
-              
-              break;
-            } // case APPROACH
-            
-            case SET_LOW_LIFT:
-            {
-              // This will switch us to GRIP mode once it's done
-              LiftController::SetDesiredHeight(liftDockHeight_);
-            } // case SET_LIFT
-              
-            case GRIP:
-            {
-              
-              GripController::EngageGripper();
-              
-              if(GripController::IsGripperEngaged()) {
-              mode_ = DONE;
-                success_ = true;
-              }
-              
-              break;
-            } // case GRIP
-            
-            default:
-            {
-              mode_ = DONE;
-              success_ = false;
-              PRINT("Reached default case in DockingController "
-                      "mode switch statement.\n");
-            } // default case
-              
-          } // switch(mode)
-          
-        } // if head and left are in position
-        
-#endif // ifdef DOCK_BY_PATH
-        
+
         if(success_ == false)
         {
           retVal = EXIT_FAILURE;
@@ -418,13 +307,30 @@ namespace Anki {
       {
         lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
         
+        // Convert to m
+        rel_x *= 0.001;
+        rel_y *= 0.001;
+        
+        
+        // Set mode to approach if in idle
         if (mode_ == IDLE) {
           if (isDocked_) {
             StartPlacement();
           } else {
             StartPicking();
           }
-          return;
+          
+          
+          // Set approach start pose
+          Localization::GetCurrentMatPose(approachStartPose_.x(), approachStartPose_.y(), approachStartPose_.angle);
+#ifndef SIMULATOR
+          approachPath_dx = rel_x;
+          approachPath_dx = rel_y;
+          approachPath_dtheta = atan2_acc(rel_y, rel_x);
+          approachPath_dOrientation = rel_rad;
+#endif
+          
+          followingBlockNormalPath_ = false;
         }
         
         
@@ -462,9 +368,32 @@ namespace Anki {
         //              +ve y-axis
         
         
-        // Convert to m
-        rel_x *= 0.001;
-        rel_y *= 0.001;
+        if (rel_x <= -0.0f) {
+          //PRINT("DOCK POSE REACHED\n");
+          return;
+        }
+        
+        Anki::Embedded::Pose2d currPose;
+        Localization::GetCurrentMatPose(currPose.x(), currPose.y(), currPose.angle);
+        
+        // Compute absolute block pose
+        f32 distToBlock = sqrtf((rel_x * rel_x) + (rel_y * rel_y));
+        f32 rel_angle_to_block = atan2_acc(rel_y, rel_x);
+        blockPose_.x() = currPose.x() + distToBlock * cosf(rel_angle_to_block + currPose.angle.ToFloat());
+        blockPose_.y() = currPose.y() + distToBlock * sinf(rel_angle_to_block + currPose.angle.ToFloat());
+        blockPose_.angle = currPose.angle + rel_rad;
+        
+        
+#ifndef SIMULATOR
+        // Adjust approachStartPose to compensate for lack of localization
+        f32 cosTheta = cosf(approachPath_dtheta);
+        f32 sinTheta = sinf(approachPath_dtheta);
+        approachStartPose_.x() = blockPose_.x() * cosTheta - blockPose_.y() * sinTheta + approachPath_dx;
+        approachStartPose_.y() = blockPose_.x() * sinTheta + blockPose_.y() * cosTheta + approachPath_dy;
+        approachStartPose_.angle = blockPose_.angle - approachPath_dOrientation;
+#endif
+
+        
         
         // Set docking distance
         f32 dockOffsetDist = ORIGIN_TO_LOW_LIFT_DIST_M;
@@ -472,47 +401,43 @@ namespace Anki {
           dockOffsetDist = ORIGIN_TO_HIGH_PLACEMENT_DIST_M;
         }
         
-        // Compute end point
-        f32 dx = dockOffsetDist * cosf(rel_rad);
-        f32 dy = dockOffsetDist * sinf(rel_rad);
-        
-        f32 x_end_m = rel_x - dx;
-        f32 y_end_m = rel_y - dy;
+        // Compute dock pose
+        dockPose_.x() = blockPose_.x() - dockOffsetDist * cosf(blockPose_.angle.ToFloat());
+        dockPose_.y() = blockPose_.y() - dockOffsetDist * sinf(blockPose_.angle.ToFloat());
+        dockPose_.angle = blockPose_.angle;
         
         
-        // Compute start point
-        f32 distToBlock = sqrtf(rel_x * rel_x + rel_y * rel_y);
-        dx *= distToBlock / dockOffsetDist;
-        dy *= distToBlock / dockOffsetDist;
-        f32 x_start_m = x_end_m - dx;
-        f32 y_start_m = y_end_m - dy;
+        f32 path_length;
+        u8 numPathSegments = PathFollower::GenerateDubinsPath(approachStartPose_.x(),
+                                                              approachStartPose_.y(),
+                                                              approachStartPose_.angle.ToFloat(),
+                                                              dockPose_.x(),
+                                                              dockPose_.y(),
+                                                              dockPose_.angle.ToFloat(),
+                                                              DOCK_PATH_START_RADIUS_M,
+                                                              DOCK_PATH_END_RADIUS_M,
+                                                              FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_M,
+                                                              &path_length);
         
-        
-        // TRICK: If distToBlock is > 0.15, then just have it follow
-        // path from robot origin to block
-        if (distToBlock > 0.15) {
-          x_start_m = -0.05;
-          y_start_m = 0;
-          x_end_m = rel_x;
-          y_end_m = rel_y;
-          //PERIODIC_PRINT(250, "B-line path: (%f, %f) to (%f, %f)\n", x_start_m, y_start_m, x_end_m, y_end_m);
+        // No reasonable Dubins path exists.
+        // Either try again with smaller radii or just let the controller
+        // attempt to get on to a straight line normal path.
+        if (numPathSegments == 0 || path_length > 2 * distToBlock || followingBlockNormalPath_) {
+          
+          // Compute new starting point for path
+          // HACK: Feeling lazy, just multiplying path by some scalar so that it's likely to be behind the current robot pose.
+          f32 x_start_m = dockPose_.x() - 5 * distToBlock * cosf(dockPose_.angle.ToFloat());
+          f32 y_start_m = dockPose_.y() - 5 * distToBlock * sinf(dockPose_.angle.ToFloat());
+          
+          PathFollower::ClearPath();
+          PathFollower::AppendPathSegment_Line(0, x_start_m, y_start_m, dockPose_.x(), dockPose_.y());
+          
+          followingBlockNormalPath_ = true;
         }
-        
-        if (rel_x <= -0.0f) {
-          //PRINT("DOCK POSE REACHED\n");
-          return;
-        }
-        
-        
-#if(DEBUG_DOCK_CONTROLLER)
-        PERIODIC_PRINT(250, "SEG: x %f, y %f, rad %f => (%f, %f) to (%f, %f), dist %f\n",
-                       rel_x, rel_y, rel_rad, x_start_m, y_start_m, x_end_m, y_end_m, distToBlock);
-#endif
-        
-        // Create path segment
-        PathFollower::AppendPathSegment_Line(0, x_start_m, y_start_m, x_end_m, y_end_m);
+
         
         // Set speed
+        // TODO: Add hysteresis
         if (distToBlock < 0.15) {
           SpeedController::SetUserCommandedDesiredVehicleSpeed( DOCK_APPROACH_SPEED_MMPS );
         } else {

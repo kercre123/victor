@@ -6,6 +6,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/messages.h"
+#include "anki/cozmo/robot/wheelController.h"
 #include "cozmo_physics.h"
 
 #include "sim_overlayDisplay.h"
@@ -31,6 +32,8 @@ namespace Anki {
       
       const u32 CAMERA_SINGLE_CAPTURE_TIME_US = 1000000 / 15;  // 15Hz, VGA
       const u32 CAMERA_CONTINUOUS_CAPTURE_TIME_US = 1000000 / 30;  // 30Hz, VGA
+
+      const f32 MIN_WHEEL_POWER_FOR_MOTION = 0.2;
       
 #pragma mark --- Simulated HardwareInterface "Member Variables" ---
       
@@ -47,6 +50,9 @@ namespace Anki {
       webots::Motor* headMotor_;
       webots::Motor* liftMotor_;
       webots::Motor* liftMotor2_;
+      
+      webots::Motor* motors_[HAL::MOTOR_COUNT];
+      
       
       // Gripper
       webots::Connector* con_;
@@ -72,84 +78,63 @@ namespace Anki {
       webots::Node* estPose_;
       //char locStr[MAX_TEXT_DISPLAY_LENGTH];
       
-      // For measuring wheel speed
+      // For measuring motor speeds
       webots::Gyro *leftWheelGyro_;
       webots::Gyro *rightWheelGyro_;
+      webots::Gyro *liftGyro_;
+      webots::Gyro *headGyro_;
       
-
+      // For tracking wheel distance travelled
+      f32 motorPositions_[HAL::MOTOR_COUNT];
+      f32 motorPrevPositions_[HAL::MOTOR_COUNT];
+      
+      // For communications with basestation
+      webots::Emitter *tx_;
+      webots::Receiver *rx_;
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
       //void GetGlobalPose(f32 &x, f32 &y, f32& rad);
       
 
-      float GetHeadAngle()
+      // Approximate open-loop conversion of wheel power to angular wheel speed
+      float WheelPowerToAngSpeed(float power)
       {
-        return headMotor_->getPosition();
+        float speed_mm_per_s = 0;
+        
+        // A minimum amount of power is required to actually move the wheels
+        if (power < MIN_WHEEL_POWER_FOR_MOTION) {
+          return 0;
+        }
+        
+        // Convert power to mm/s
+        if (ABS(power) < WheelController::TRANSITION_POWER) {
+          speed_mm_per_s = power / WheelController::LOW_OPEN_LOOP_GAIN;
+        } else {
+          speed_mm_per_s = CLIP(power, -1.0, 1.0) / WheelController::HIGH_OPEN_LOOP_GAIN;
+        }
+        
+        // Convert mm/s to rad/s
+        return -speed_mm_per_s / WHEEL_RAD_TO_MM;
       }
       
-      float GetLiftAngle()
+      void MotorUpdate()
       {
-        return liftMotor_->getPosition();
-      }
-
-      float GetLeftWheelSpeed()
-      {
-        const double* axesSpeeds_rad_per_s = leftWheelGyro_->getValues();
-        //float mm_per_s = -axesSpeeds_rad_per_s[1] * WHEEL_RAD_TO_MM;   // true speed
-        float mm_per_s = ABS(axesSpeeds_rad_per_s[1] * WHEEL_RAD_TO_MM); // non-quadrature encoder speed (i.e. always +ve)
-        //PRINT("LEFT: %f rad/s, %f mm/s\n", -axesSpeeds_rad_per_s[1], mm_per_s);
-        return mm_per_s;
-      }
-      
-      float GetRightWheelSpeed()
-      {
-        const double* axesSpeeds_rad_per_s = rightWheelGyro_->getValues();
-        //float mm_per_s = -axesSpeeds_rad_per_s[1] * WHEEL_RAD_TO_MM;   // true speed
-        float mm_per_s = ABS(axesSpeeds_rad_per_s[1] * WHEEL_RAD_TO_MM); // non-quadrature encoder speed (i.e. always +ve)
-        //PRINT("RIGHT: %f rad/s, %f mm/s\n", -axesSpeeds_rad_per_s[1], mm_per_s);
-        return mm_per_s;
-      }
-
-      
-      void SetLeftWheelSpeed(f32 mm_per_s)
-      {
-        f32 rad_per_s = -mm_per_s / WHEEL_RAD_TO_MM;
-        leftWheelMotor_->setVelocity(rad_per_s);
-      }
-      
-      void SetRightWheelSpeed(f32 mm_per_s)
-      {
-        f32 rad_per_s = -mm_per_s / WHEEL_RAD_TO_MM;
-        rightWheelMotor_->setVelocity(rad_per_s);
-      }
-      
-      float GetLeftWheelPosition()
-      {
-        return leftWheelMotor_->getPosition();
-      }
-      
-      float GetRightWheelPosition()
-      {
-        return rightWheelMotor_->getPosition();
+        // Update position info
+        for(int i = 0; i < HAL::MOTOR_COUNT; i++)
+        {
+          if (motors_[i]) {
+            f32 pos = motors_[i]->getPosition();
+            motorPositions_[i] += pos - motorPrevPositions_[i];
+            motorPrevPositions_[i] = pos;
+          }
+        }
       }
       
       
       void SetHeadAngularVelocity(const f32 rad_per_sec)
       {
-        // Only tilt if we are within limits
-        // (Webots MaxStop and MinStop don't seem to be working: perhaps
-        //  because the motors are in velocity control mode?)
-        const f32 currentHeadAngle = GetHeadAngle();
-        if(currentHeadAngle >= MIN_HEAD_ANGLE &&
-           currentHeadAngle <= MAX_HEAD_ANGLE)
-        {
-          headMotor_->setVelocity(rad_per_sec);
-        } else {
-          PRINT("Head at angular limit, refusing to tilt.\n");
-          headMotor_->setVelocity(0.0);
-          // TODO: return a failure?
-        }
+        headMotor_->setVelocity(rad_per_sec);
       }
       
       
@@ -203,6 +188,8 @@ namespace Anki {
     
     ReturnCode HAL::Init()
     {
+      assert(TIME_STEP >= webotRobot_.getBasicTimeStep());
+      
       // TODO: need to check return code?
       UARTInit();
       
@@ -219,11 +206,17 @@ namespace Anki {
       matCam_ = webotRobot_.getCamera("cam_down");
       headCam_ = webotRobot_.getCamera("cam_head");
       
-      matCam_->enable(TIME_STEP);
-      headCam_->enable(TIME_STEP);
+      matCam_->enable(VISION_TIME_STEP);
+      headCam_->enable(VISION_TIME_STEP);
       
       leftWheelGyro_  = webotRobot_.getGyro("wheel_gyro_fl");
       rightWheelGyro_ = webotRobot_.getGyro("wheel_gyro_fr");
+      liftGyro_ = webotRobot_.getGyro("lift_gyro");
+      headGyro_ = webotRobot_.getGyro("head_gyro");
+      
+      tx_ = webotRobot_.getEmitter("radio_tx");
+      rx_ = webotRobot_.getReceiver("radio_rx");
+      
       
       // Set ID
       // Expected format of name is <SomeName>_<robotID>
@@ -247,6 +240,19 @@ namespace Anki {
       liftMotor2_->setPosition(WEBOTS_INFINITY);
       leftWheelMotor_->setPosition(WEBOTS_INFINITY);
       rightWheelMotor_->setPosition(WEBOTS_INFINITY);
+      
+      // Load motor array
+      motors_[MOTOR_LEFT_WHEEL] = leftWheelMotor_;
+      motors_[MOTOR_RIGHT_WHEEL] = rightWheelMotor_;
+      motors_[MOTOR_HEAD] = headMotor_;
+      motors_[MOTOR_LIFT] = liftMotor_;
+      motors_[MOTOR_GRIP] = NULL;
+      
+      // Initialize motor positions
+      for (int i=0; i < MOTOR_COUNT; ++i) {
+        motorPositions_[i] = 0;
+        motorPrevPositions_[i] = 0;
+      }
       
       // Enable position measurements on head, lift, and wheel motors
       leftWheelMotor_->enablePosition(TIME_STEP);
@@ -273,9 +279,11 @@ namespace Anki {
       compass_->enable(TIME_STEP);
       estPose_ = webotRobot_.getFromDef("CozmoBotPose");
       
-      // Get wheel speed sensors
+      // Get speed sensors
       leftWheelGyro_->enable(TIME_STEP);
       rightWheelGyro_->enable(TIME_STEP);
+      liftGyro_->enable(TIME_STEP);
+      headGyro_->enable(TIME_STEP);
       
       if(InitSimRadio(webotRobot_, robotID_) == EXIT_FAILURE) {
         PRINT("Failed to initialize Simulated Radio.\n");
@@ -327,21 +335,6 @@ namespace Anki {
       
     } // GetGroundTruthPose()
     
-    /* Won't be able to do this on real robot, can only command power/speed
-    void HAL::SetHeadPitch(float pitch_rad)
-    {
-      headMotor_->setPosition(pitch_rad);
-    }
-     */
-    
-    /* Won't be able to command angular position directly on real robot, can 
-     only set power/speed
-    void HAL::SetLiftPitch(float pitch_rad)
-    {
-      liftMotor_->setPosition(pitch_rad);
-      liftMotor2_->setPosition(-pitch_rad);
-    }
-     */
     
     bool HAL::IsGripperEngaged() {
       return gripperEngaged_;
@@ -367,12 +360,10 @@ namespace Anki {
     {
       switch(motor) {
         case MOTOR_LEFT_WHEEL:
-          // TODO: Assuming linear relationship, but it's not!
-          SetLeftWheelSpeed(power * MAX_WHEEL_SPEED);
+          leftWheelMotor_->setVelocity(WheelPowerToAngSpeed(power));
           break;
         case MOTOR_RIGHT_WHEEL:
-          // TODO: Assuming linear relationship, but it's not!
-          SetRightWheelSpeed(power * MAX_WHEEL_SPEED);
+          rightWheelMotor_->setVelocity(WheelPowerToAngSpeed(power));
           break;
         case MOTOR_LIFT:
           // TODO: Assuming linear relationship, but it's not!
@@ -398,22 +389,13 @@ namespace Anki {
     // Reset the internal position of the specified motor to 0
     void HAL::MotorResetPosition(MotorID motor)
     {
-      // TODO
-      switch(motor) {
-        case MOTOR_LEFT_WHEEL:
-          break;
-        case MOTOR_RIGHT_WHEEL:
-          break;
-        case MOTOR_LIFT:
-          break;
-        case MOTOR_GRIP:
-          break;
-        case MOTOR_HEAD:
-          break;
-        default:
-          PRINT("ERROR (HAL::MotorResetPosition) - Undefined motor type %d\n", motor);
-          return;
+      if (motor >= MOTOR_COUNT) {
+        PRINT("ERROR (HAL::MotorResetPosition) - Undefined motor type %d\n", motor);
+        return;
       }
+      
+      motorPositions_[motor] = 0;
+      motorPrevPositions_[motor] = 0;
     }
     
     // Returns units based on the specified motor type:
@@ -422,18 +404,37 @@ namespace Anki {
     {
       switch(motor) {
         case MOTOR_LEFT_WHEEL:
-          return GetLeftWheelSpeed();
+        {
+          const double* axesSpeeds_rad_per_s = leftWheelGyro_->getValues();
+          float mm_per_s = -axesSpeeds_rad_per_s[1] * WHEEL_RAD_TO_MM;   // true speed
+          //PRINT("LEFT: %f rad/s, %f mm/s\n", -axesSpeeds_rad_per_s[1], mm_per_s);
+          return mm_per_s;
+        }
+
         case MOTOR_RIGHT_WHEEL:
-          return GetRightWheelSpeed();
+        {
+          const double* axesSpeeds_rad_per_s = rightWheelGyro_->getValues();
+          float mm_per_s = -axesSpeeds_rad_per_s[1] * WHEEL_RAD_TO_MM;   // true speed
+          //PRINT("RIGHT: %f rad/s, %f mm/s\n", -axesSpeeds_rad_per_s[1], mm_per_s);
+          return mm_per_s;
+        }
+
         case MOTOR_LIFT:
-          // TODO: add gyros
-          break;
+        {
+          const double* axesSpeeds_rad_per_s = liftGyro_->getValues();
+          return axesSpeeds_rad_per_s[2];
+        }
+          
         case MOTOR_GRIP:
           // TODO
           break;
+          
         case MOTOR_HEAD:
-          // TODO
-          break;
+        {
+          const double* axesSpeeds_rad_per_s = headGyro_->getValues();
+          return axesSpeeds_rad_per_s[1];
+        }
+          
         default:
           PRINT("ERROR (HAL::MotorGetSpeed) - Undefined motor type %d\n", motor);
           break;
@@ -446,22 +447,19 @@ namespace Anki {
     f32 HAL::MotorGetPosition(MotorID motor)
     {
       switch(motor) {
-        case MOTOR_LEFT_WHEEL:
-          return GetLeftWheelPosition();
         case MOTOR_RIGHT_WHEEL:
-          return GetRightWheelPosition(); // TODO: Change to mm/s!
+        case MOTOR_LEFT_WHEEL:
+          return -motorPositions_[motor];
         case MOTOR_LIFT:
-          return GetLiftAngle();
-        case MOTOR_GRIP:
-          // TODO
-          break;
         case MOTOR_HEAD:
-          return GetHeadAngle();
+          return motorPositions_[motor];
+          break;
         default:
           PRINT("ERROR (HAL::MotorGetPosition) - Undefined motor type %d\n", motor);
-          break;
+          return 0;
       }
-      return 0;
+      
+      return motorPositions_[motor];
     }
     
     
@@ -472,6 +470,7 @@ namespace Anki {
       if(webotRobot_.step(Cozmo::TIME_STEP) == -1) {
         return EXIT_FAILURE;
       } else {
+        MotorUpdate();
         return EXIT_SUCCESS;
       }
       
@@ -695,6 +694,13 @@ namespace Anki {
     u32 HAL::GetMicroCounter(void)
     {
       return static_cast<u32>(webotRobot_.getTime() * 1000000.0);
+    }
+    
+    void HAL::MicroWait(u32 microseconds)
+    {
+      u32 now = GetMicroCounter();
+      while ((GetMicroCounter() - now) < microseconds)
+        ;
     }
     
     TimeStamp HAL::GetTimeStamp(void)

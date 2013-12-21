@@ -10,7 +10,7 @@ INCLUDE objects.ldscript
 
 SECTIONS {
   /* Start past second shave (leaving 768KB) */
-  . = 0xA0040000;
+  . = 0xA0000000;
   
   .sys.traps ALIGN(0x1000) : {
     *(.sys.text.traps)
@@ -32,15 +32,10 @@ SECTIONS {
     . = ALIGN(8);
     __bss_end = . ;
   }
-  
-  .imageData : {
-    *(.imageData*)
-  }
+ 
   
   /* These are used by vision-tests */
-  .bigBss (NOLOAD) : {
-    *(.bigBss*)
-  }  
+  
   .smallBss1 (NOLOAD) : {
     *(.smallBss1*)
   }
@@ -78,6 +73,14 @@ SECTIONS {
   .ddr.bss (NOLOAD) : {
     *(.bss.printfBuffer*)
   }
+   
+  .imageData : {
+    *(.imageData*)
+  }
+  
+  .bigBss (NOLOAD) : {
+    *(.bigBss*)
+  }  
 
   /* 
    * locate the special sections in correct place  

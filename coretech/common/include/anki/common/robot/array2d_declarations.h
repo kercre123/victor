@@ -26,10 +26,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "opencv2/highgui/highgui.hpp"
 #endif
 
-// #define ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
-
-#define ANKI_ARRAY_USE_ARRAY_SET
-
 namespace Anki
 {
   namespace Embedded
@@ -51,15 +47,19 @@ namespace Anki
 
       Array();
 
-      // Constructor for a Array, pointing to user-allocated data. If the pointer to *data is not
-      // aligned to MEMORY_ALIGNMENT, this Array will start at the next aligned location.
-      // Unfortunately, this is more restrictive than most matrix libraries, and as an example,
-      // it may make it hard to convert from OpenCV to Array, though the reverse is trivial.
-      // All memory in the array is zeroed out once it is allocated
-      Array(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const Flags::Buffer flags=Flags::Buffer(true,false));
+      // Constructor for a Array, pointing to user-allocated data. This is more restrictive than
+      // most matrix libraries, and as an example, it may make it hard to convert from OpenCV to
+      // Array, though the reverse is trivial.
+      //
+      // If following are true, then the contents of data will not be modified, and it will work as
+      // a normal buffer without extra zeros as stride padding:
+      // 1. (numCols*sizeof(Type)) % MEMORY_ALIGNMENT == 0
+      // 2. reinterpret_cast<size_t>(data) % MEMORY_ALIGNMENT == 0
+      // 3. flags.get_useBoundaryFillPatterns == false
+      // 4. numRows*numCols*sizeof(Type) <= dataLength
+      Array(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const Flags::Buffer flags=Flags::Buffer(false,false));
 
       // Constructor for a Array, pointing to user-allocated MemoryStack
-      // All memory in the array is zeroed out once it is allocated
       Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false));
 
       // Pointer to the data, at a given (y,x) location
@@ -116,6 +116,7 @@ namespace Anki
 
       // Print out the contents of this Array
       Result Print(const char * const variableName = "Array", const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
+      Result PrintAlternate(const char * const variableName = "Array", const s32 version=2, const s32 minY = 0, const s32 maxY = 0x7FFFFFE, const s32 minX = 0, const s32 maxX = 0x7FFFFFE) const;
 
       // Checks the basic parameters of this Array.
       // If the Array was constructed with flags |= Flags::Buffer::USE_BOUNDARY_FILL_PATTERNS, then
@@ -140,24 +141,17 @@ namespace Anki
 
       s32 Set(const Array<Type> &in);
 
-      template<typename InType> s32 SetCast(const Array<InType> &in);
-
       // Copy values to this Array.
       // If the input array does not contain enough elements, the remainder of this Array will be filled with zeros.
       // Returns the number of values set (not counting extra zeros)
-      // Note: The myriad has many issues with static initialization of arrays, so this should be used with caution
-#ifdef ANKI_ARRAY_USE_ARRAY_SET
-      s32 Set_unsafe(const Type * const values, const s32 numValues);
-      s32 Set(const s32 * const values, const s32 numValues);
-      s32 Set(const f64 * const values, const s32 numValues);
-#endif
 
-      // Parse a space-seperated string, and copy values to this Array.
-      // If the string does not contain enough elements, the remainder of the Array will be filled with zeros.
-      // Returns the number of values set (not counting extra zeros)
-#ifdef ANKICORETECHEMBEDDED_ARRAY_STRING_INPUT
-      s32 Set(const char * const values);
-#endif
+      s32 Set(const Type * const values, const s32 numValues);
+      //s32 Set(const s32 * const values, const s32 numValues);
+      //s32 Set(const f64 * const values, const s32 numValues);
+
+      // Read in the input, then cast it to this object's type
+      template<typename InType> s32 SetCast(const Array<InType> &in);
+      template<typename InType> s32 SetCast(const InType * const values, const s32 numValues);
 
       // TODO: implement all these
       //template<typename FindType1, typename FindType2> s32 Set(const Find<FindType1, FindType2> &find, const Type value);
@@ -189,8 +183,8 @@ namespace Anki
     protected:
       // Bit-inverse of MemoryStack patterns. The pattern will be put twice at
       // the beginning and end of each line.
-      static const u32 FILL_PATTERN_START = 0X5432EF76;
-      static const u32 FILL_PATTERN_END = 0X7610FE76;
+      static const u32 FILL_PATTERN_START = 0XFF05FF06;
+      static const u32 FILL_PATTERN_END = 0X07FF08FF;
 
       static const s32 HEADER_LENGTH = 8;
       static const s32 FOOTER_LENGTH = 8;
@@ -216,7 +210,7 @@ namespace Anki
 
       void InvalidateArray(); // Set all the buffers and sizes to zero, to signal an invalid array
 
-      Result PrintBasicType(const char * const variableName, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
+      Result PrintBasicType(const char * const variableName, const s32 version, const s32 minY, const s32 maxY, const s32 minX, const s32 maxX) const;
     }; // class Array
 
 #pragma mark --- FixedPointArray Class Declaration ---

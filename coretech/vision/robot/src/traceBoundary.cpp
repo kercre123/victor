@@ -75,10 +75,10 @@ namespace Anki
     Result TraceInteriorBoundary(const Array<u8> &binaryImage, const Point<s16> &startPoint, BoundaryDirection initialDirection, FixedLengthList<Point<s16> > &boundary)
     {
       AnkiConditionalErrorAndReturnValue(binaryImage.IsValid(),
-        RESULT_FAIL, "TraceInteriorBoundary", "binaryImage is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "TraceInteriorBoundary", "binaryImage is not valid");
 
       AnkiConditionalErrorAndReturnValue(boundary.IsValid(),
-        RESULT_FAIL, "TraceInteriorBoundary", "boundary is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "TraceInteriorBoundary", "boundary is not valid");
 
       // Is the start point inside the inner pixel of the image?
       AnkiConditionalErrorAndReturnValue(
@@ -86,10 +86,10 @@ namespace Anki
         startPoint.y > 0 &&
         static_cast<s32>(startPoint.x) < (binaryImage.get_size(1)-1) &&
         static_cast<s32>(startPoint.y) < (binaryImage.get_size(0)-1),
-        RESULT_FAIL, "TraceInteriorBoundary", "startPoint is out of bounds");
+        RESULT_FAIL_INVALID_PARAMETERS, "TraceInteriorBoundary", "startPoint is out of bounds");
 
       AnkiConditionalErrorAndReturnValue(boundary.get_maximumSize() == MAX_BOUNDARY_LENGTH,
-        RESULT_FAIL, "TraceInteriorBoundary", "boundary must be have a maximum size of MAX_BOUNDARY_LENGTH");
+        RESULT_FAIL_INVALID_SIZE, "TraceInteriorBoundary", "boundary must be have a maximum size of MAX_BOUNDARY_LENGTH");
 
       InitializeGlobaloOffsets();
 
@@ -111,7 +111,7 @@ namespace Anki
       Point<s16> curPoint(startPoint);
 
       AnkiConditionalErrorAndReturnValue(*(binaryImage.Pointer(curPoint)) != 0,
-        RESULT_FAIL, "TraceInteriorBoundary", "startPoint must be on a non-zero pixel of binaryImage");
+        RESULT_FAIL_INVALID_PARAMETERS, "TraceInteriorBoundary", "startPoint must be on a non-zero pixel of binaryImage");
 
       // printf("0) %d %d\n", curPoint.y+1, curPoint.x+1);
 
@@ -192,19 +192,19 @@ namespace Anki
       const s32 numComponents = components.get_size();
 
       AnkiConditionalErrorAndReturnValue(components.IsValid(),
-        RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "components is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "components is not valid");
 
       AnkiConditionalErrorAndReturnValue(extractedBoundary.IsValid(),
-        RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "extractedBoundary is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "extractedBoundary is not valid");
 
       AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
-        RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "scratch is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "scratch is not valid");
 
       AnkiConditionalErrorAndReturnValue(components.get_isSortedInId(),
-        RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "components must be sorted in id");
+        RESULT_FAIL_INVALID_PARAMETERS, "ComputeQuadrilateralsFromConnectedComponents", "components must be sorted in id");
 
       AnkiConditionalErrorAndReturnValue(startComponentIndex >= 0 && startComponentIndex < numComponents,
-        RESULT_FAIL, "ComputeQuadrilateralsFromConnectedComponents", "startComponentIndex is not in range");
+        RESULT_FAIL_INVALID_PARAMETERS, "ComputeQuadrilateralsFromConnectedComponents", "startComponentIndex is not in range");
 
       const u16 componentId = components[startComponentIndex].id;
 
@@ -275,7 +275,7 @@ namespace Anki
         currentSegment.xStart -= boundingBox.left;
         currentSegment.y -= boundingBox.top;
 
-        assert(currentSegment.xStart >= 0);
+        AnkiAssert(currentSegment.xStart >= 0);
         for(s32 x=currentSegment.xStart; x<=currentSegment.xEnd; x++) {
           //edge_top(xStart:xEnd) = min(edge_top(xStart:xEnd), y);
           //edge_bottom(xStart:xEnd) = max(edge_top(xStart:xEnd), y);

@@ -38,7 +38,7 @@ namespace Anki
 
     template<typename Type> Type approximateExp(const Type exponent, const s32 numTerms)
     {
-      assert(numTerms > 2);
+      AnkiAssert(numTerms > 2);
 
       const Type exponentAbs = ABS(exponent);
 

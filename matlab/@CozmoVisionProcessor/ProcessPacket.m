@@ -39,6 +39,10 @@ switch(command)
             this.dockingBlock);
         return;
         
+    case this.DISPLAY_IMAGE_COMMAND
+        
+        img = this.PacketToImage(packet);
+        
     case this.DETECT_COMMAND
         
         delete(findobj(this.h_axes, 'Tag', 'BlockMarker2D'));
@@ -76,7 +80,8 @@ switch(command)
         end
         
     otherwise
-        warning('Unknown command %d for packet. Skipping.');
+        warning('Unknown command %d for packet. Skipping.', command);
+        return;
         
 end % SWITCH(command)
 

@@ -47,15 +47,18 @@ START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
 ADD_MESSAGE_MEMBER(TimeStamp, timestamp)
 
 //
-// First Mode: Define typedef'd struct
+// First Mode: Define typedef'd struct and ProcessMessage dispatch function(s)
 //
 #if MESSAGE_DEFINITION_MODE == MESSAGE_STRUCT_DEFINITION_MODE
 // TODO: Is it possible, using a macro, to verify the type sizes are correctly ordered?
-#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-void GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(const u8* buffer); \
-typedef struct {
+#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) typedef struct {
 
-#define END_MESSAGE_DEFINITION(__MSG_TYPE__) } GET_STRUCT_TYPENAME(__MSG_TYPE__);
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__) } GET_STRUCT_TYPENAME(__MSG_TYPE__); \
+void GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(const __MSG_TYPE__& msg); \
+inline void GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(const u8* buffer) { \
+GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(*reinterpret_cast<const GET_STRUCT_TYPENAME(__MSG_TYPE__)*>(buffer)); \
+}
+
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) __TYPE__ __NAME__;
 
 

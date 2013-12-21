@@ -61,7 +61,7 @@ enum AppendArcParams {
   ,ARC_CENTER_Y
   ,ARC_RADIUS
   ,ARC_START_RAD
-  ,ARC_END_RAD
+  ,ARC_SWEEP_RAD
   ,ARC_MSG_SIZE
 };
 

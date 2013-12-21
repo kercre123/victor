@@ -12,6 +12,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 //#define USING_MOVIDIUS_COMPILER
 
 #ifndef ROBOT_HARDWARE
+
+#include "anki/common/robot/config.h"
+
 #if ANKICORETECH_EMBEDDED_USE_GTEST
 #include "gtest/gtest.h"
 #endif

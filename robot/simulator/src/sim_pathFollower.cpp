@@ -57,7 +57,7 @@ namespace Anki {
           physicsComms_->send(msg, sizeof(msg));
         }
         
-        void AppendPathSegmentArc(s32 path_id, f32 x_center_m, f32 y_center_m, f32 radius_m, f32 startRad, f32 endRad)
+        void AppendPathSegmentArc(s32 path_id, f32 x_center_m, f32 y_center_m, f32 radius_m, f32 startRad, f32 sweepRad)
         {
           f32 msg[ARC_MSG_SIZE];
           msg[0] = PLUGIN_MSG_APPEND_ARC;
@@ -67,7 +67,7 @@ namespace Anki {
           msg[ARC_CENTER_Y] = y_center_m;
           msg[ARC_RADIUS] = radius_m;
           msg[ARC_START_RAD] = startRad;
-          msg[ARC_END_RAD] = endRad;
+          msg[ARC_SWEEP_RAD] = sweepRad;
           
           physicsComms_->send(msg, sizeof(msg));
         }

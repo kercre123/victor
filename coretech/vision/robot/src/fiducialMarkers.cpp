@@ -23,6 +23,8 @@ namespace Anki
 {
   namespace Embedded
   {
+    static Result lastResult;
+
     BlockMarker::BlockMarker()
     {
     } // BlockMarker::BlockMarker()
@@ -32,17 +34,20 @@ namespace Anki
       printf("[%d,%d: (%d,%d) (%d,%d) (%d,%d) (%d,%d)] ", blockType, faceType, corners[0].x, corners[0].y, corners[1].x, corners[1].y, corners[2].x, corners[2].y, corners[3].x, corners[3].y);
     }
 
-    FiducialMarkerParserBit::FiducialMarkerParserBit()
+    FiducialMarkerParserBit::FiducialMarkerParserBit(MemoryStack &memory)
     {
-      PrepareBuffers();
+      this->type = FIDUCIAL_BIT_UNINITIALIZED;
+
+      this->probeLocations = FixedLengthList<Point<s16> >(MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS, memory);
+      this->probeWeights = FixedLengthList<s16>(MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS, memory);
     }
 
-    // All data from other is copied into this instance's local memory
     FiducialMarkerParserBit::FiducialMarkerParserBit(const FiducialMarkerParserBit& bit2)
     {
-      PrepareBuffers();
+      this->probeLocations = bit2.probeLocations;
+      this->probeWeights = bit2.probeWeights;
 
-      assert(bit2.probeLocations.get_size() == bit2.probeWeights.get_size());
+      AnkiAssert(bit2.probeLocations.get_size() == bit2.probeWeights.get_size());
 
       this->probeLocations.set_size(bit2.probeLocations.get_size());
       this->probeWeights.set_size(bit2.probeWeights.get_size());
@@ -56,11 +61,14 @@ namespace Anki
       }
     } // FiducialMarkerParserBit::FiducialMarkerParserBit(const FiducialMarkerParserBit& bit2)
 
-    FiducialMarkerParserBit::FiducialMarkerParserBit(const s16 * const probesX, const s16 * const probesY, const s16 * const probeWeights, const s32 numProbes, const FiducialMarkerParserBit::Type type, const s32 numFractionalBits)
+    FiducialMarkerParserBit::FiducialMarkerParserBit(const s16 * const probesX, const s16 * const probesY, const s16 * const probeWeights, const s32 numProbes, const FiducialMarkerParserBit::Type type, const s32 numFractionalBits, MemoryStack &memory)
     {
-      PrepareBuffers();
+      AnkiAssert(numProbes <= MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS);
 
-      assert(numProbes <= MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS);
+      this->type = FIDUCIAL_BIT_UNINITIALIZED;
+
+      this->probeLocations = FixedLengthList<Point<s16> >(MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS, memory);
+      this->probeWeights = FixedLengthList<s16>(MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS, memory);
 
       this->probeLocations.set_size(numProbes);
       this->probeWeights.set_size(numProbes);
@@ -77,9 +85,10 @@ namespace Anki
 
     FiducialMarkerParserBit& FiducialMarkerParserBit::operator= (const FiducialMarkerParserBit& bit2)
     {
-      PrepareBuffers();
+      AnkiAssert(bit2.probeLocations.get_size() == bit2.probeWeights.get_size());
 
-      assert(bit2.probeLocations.get_size() == bit2.probeWeights.get_size());
+      this->probeLocations = bit2.probeLocations;
+      this->probeWeights = bit2.probeWeights;
 
       this->probeLocations.set_size(bit2.probeLocations.get_size());
       this->probeWeights.set_size(bit2.probeWeights.get_size());
@@ -143,7 +152,7 @@ namespace Anki
         // 2. Sample the image
 
         // This should only fail if there's a bug in the quad extraction
-        assert(warpedY >= 0  && warpedX >= 0 && warpedY < imageHeight && warpedX < imageWidth);
+        AnkiAssert(warpedY >= 0  && warpedX >= 0 && warpedY < imageHeight && warpedX < imageWidth);
 
         // This is the direct way to access a pixel. It doesn't work when there's an endian conflict
         //const s16 imageValue = static_cast<s16>(*image.Pointer(warpedY, warpedX));
@@ -152,12 +161,7 @@ namespace Anki
         const u32 * restrict pImageY = reinterpret_cast<const u32*>(image.Pointer(warpedY,0));
         const s32 xWord = warpedX >> 2;
 
-        // TODO: Verify that the big endian version is working
-#ifdef BIG_ENDIAN_IMAGES
-        const s32 xByte = 3 - (warpedX - (xWord << 2));
-#else
         const s32 xByte = warpedX - (xWord << 2);
-#endif
 
         const u32 curPixelWord = pImageY[xWord];
         const u8 curPixel = (curPixelWord & (0xFF << (8*xByte))) >> (8*xByte);
@@ -191,28 +195,20 @@ namespace Anki
       return this->numFractionalBits;
     }
 
-    void FiducialMarkerParserBit::PrepareBuffers()
+    /*void FiducialMarkerParserBit::PrepareBuffers()
     {
-      this->type = FIDUCIAL_BIT_UNINITIALIZED;
-
-      this->probeLocations = FixedLengthList<Point<s16> >(MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS, &probeLocationsBuffer[0], NUM_BYTES_probeLocationsBuffer);
-      this->probeWeights = FixedLengthList<s16>(MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS, &probeWeightsBuffer[0], NUM_BYTES_probeWeightsBuffer);
-    }
+    }*/
 
     // Initialize with the default grid type, converted from Matlab
-    FiducialMarkerParser::FiducialMarkerParser()
+    FiducialMarkerParser::FiducialMarkerParser(MemoryStack &memory)
     {
-      PrepareBuffers();
-      InitializeAsDefaultParser();
+      this->bits = FixedLengthList<FiducialMarkerParserBit>(MAX_FIDUCIAL_MARKER_BITS, memory);
+      InitializeAsDefaultParser(memory);
     }
 
     FiducialMarkerParser::FiducialMarkerParser(const FiducialMarkerParser& marker2)
     {
-      PrepareBuffers();
-
-      memcpy(this->bitsBuffer, marker2.bitsBuffer, NUM_BYTES_bitsBuffer);
-
-      this->bits.set_size(marker2.bits.get_size());
+      this->bits = marker2.bits;
     }
 
     // quad must have corners in the following order:
@@ -243,8 +239,8 @@ namespace Anki
 #endif
 
       for(s32 bit=0; bit<numBits; bit++) {
-        if(bits[bit].ExtractMeanValue(image, quad, homography, meanValues[bit]) != RESULT_OK)
-          return RESULT_FAIL;
+        if((lastResult = bits[bit].ExtractMeanValue(image, quad, homography, meanValues[bit])) != RESULT_OK)
+          return lastResult;
       }
 
 #ifdef SEND_PROBE_LOCATIONS
@@ -265,8 +261,8 @@ namespace Anki
       FixedLengthList<u8> binarizedBits(MAX_FIDUCIAL_MARKER_BITS, scratch);
 
       // [this, binaryString] = orientAndThreshold(this, this.means);
-      if(FiducialMarkerParser::DetermineOrientationAndBinarizeAndReorderCorners(meanValues, minContrastRatio, marker, binarizedBits, scratch) != RESULT_OK)
-        return RESULT_FAIL;
+      if((lastResult = FiducialMarkerParser::DetermineOrientationAndBinarizeAndReorderCorners(meanValues, minContrastRatio, marker, binarizedBits, scratch)) != RESULT_OK)
+        return lastResult;
 
       // meanValues.Print("meanValues");
 
@@ -274,39 +270,29 @@ namespace Anki
         return RESULT_OK; // It couldn't be parsed, but this is not a code failure
 
       // this = decodeIDs(this, binaryString);
-      if(DecodeId(binarizedBits, marker.blockType, marker.faceType, scratch) != RESULT_OK)
-        return RESULT_FAIL;
+      if((lastResult = DecodeId(binarizedBits, marker.blockType, marker.faceType, scratch)) != RESULT_OK)
+        return lastResult;
 
       return RESULT_OK;
     }
 
     FiducialMarkerParser& FiducialMarkerParser::operator= (const FiducialMarkerParser& marker2)
     {
-      PrepareBuffers();
-
-      memcpy(this->bitsBuffer, marker2.bitsBuffer, NUM_BYTES_bitsBuffer);
-
-      this->bits.set_size(marker2.bits.get_size());
+      this->bits = marker2.bits;
 
       return *this;
     }
 
-    void FiducialMarkerParser::PrepareBuffers()
-    {
-      this->bits = FixedLengthList<FiducialMarkerParserBit>(MAX_FIDUCIAL_MARKER_BITS, &bitsBuffer[0], NUM_BYTES_bitsBuffer);
-      this->bits.IsValid();
-    }
-
-    Result FiducialMarkerParser::InitializeAsDefaultParser()
+    Result FiducialMarkerParser::InitializeAsDefaultParser(MemoryStack &memory)
     {
       if(INITIALIZE_WITH_DEFINITION_TYPE == 0) {
-        assert(NUM_BITS_TYPE_0 <= MAX_FIDUCIAL_MARKER_BITS);
-        assert(NUM_PROBES_PER_BIT_TYPE_0 <= MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS);
+        AnkiAssert(NUM_BITS_TYPE_0 <= MAX_FIDUCIAL_MARKER_BITS);
+        AnkiAssert(NUM_PROBES_PER_BIT_TYPE_0 <= MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS);
 
         this->bits.Clear();
 
         for(s32 i=0; i<NUM_BITS_TYPE_0; i++) {
-          this->bits.PushBack(FiducialMarkerParserBit(probesX_type0[i], probesY_type0[i], probeWeights_type0[i], NUM_PROBES_PER_BIT_TYPE_0, bitTypes_type0[i], NUM_FRACTIONAL_BITS_TYPE_0));
+          this->bits.PushBack(FiducialMarkerParserBit(probesX_type0[i], probesY_type0[i], probeWeights_type0[i], NUM_PROBES_PER_BIT_TYPE_0, bitTypes_type0[i], NUM_FRACTIONAL_BITS_TYPE_0, memory));
         }
       } // if(INITIALIZE_WITH_DEFINITION_TYPE == 0)
 
@@ -316,7 +302,7 @@ namespace Anki
       rightBitIndex = FindFirstBitOfType(FiducialMarkerParserBit::FIDUCIAL_BIT_ORIENTATION_RIGHT, 0);
 
       // This should only fail if there was an issue with the FiducialMarkerParser creation
-      assert(upBitIndex >= 0 && downBitIndex >= 0 && leftBitIndex >= 0 && rightBitIndex >= 0);
+      AnkiAssert(upBitIndex >= 0 && downBitIndex >= 0 && leftBitIndex >= 0 && rightBitIndex >= 0);
 
       return RESULT_OK;
     }
@@ -324,10 +310,10 @@ namespace Anki
     Result FiducialMarkerParser::DetermineOrientationAndBinarizeAndReorderCorners(const FixedLengthList<s16> &meanValues, const f32 minContrastRatio, BlockMarker &marker, FixedLengthList<u8> &binarizedBits, MemoryStack scratch) const
     {
       AnkiConditionalErrorAndReturnValue(meanValues.IsValid(),
-        RESULT_FAIL, "FiducialMarkerParser::DetermineOrientation", "meanValues is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "FiducialMarkerParser::DetermineOrientation", "meanValues is not valid");
 
       AnkiConditionalErrorAndReturnValue(binarizedBits.IsValid(),
-        RESULT_FAIL, "FiducialMarkerParser::DetermineOrientation", "binarizedBits is not valid");
+        RESULT_FAIL_INVALID_OBJECT, "FiducialMarkerParser::DetermineOrientation", "binarizedBits is not valid");
 
       binarizedBits.Clear();
 
@@ -340,7 +326,7 @@ namespace Anki
       const s16 brightValue = maxValue;
       s16 darkValue;
 
-      assert(meanValues.get_size() == NUM_BITS);
+      AnkiAssert(meanValues.get_size() == NUM_BITS);
 
       FixedLengthList<u8> bitReadingOrder(meanValues.get_size(), scratch);
       bitReadingOrder.set_size(meanValues.get_size());

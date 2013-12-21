@@ -15,11 +15,11 @@ namespace Anki
   {
     namespace Docking
     {
-      static Result ComputeDockingErrorSignal_Affine(const Array<f32> &homography, const Quadrilateral<f32> &templateRegion, const s32 horizontalTrackingResolution, const f32 blockMarkerWidthInMM, const f32 horizontalFocalLengthInMM, const f32 cozmoLiftDistanceInMM, f32 &rel_x, f32 &rel_y, f32 &rel_rad);
+      static Result ComputeDockingErrorSignal_Affine(const Array<f32> &homography, const Quadrilateral<f32> &templateRegion, const s32 horizontalTrackingResolution, const f32 blockMarkerWidthInMM, const f32 horizontalFocalLengthInMM, const f32 cozmoLiftDistanceInMM, f32 &rel_x, f32 &rel_y, f32 &rel_rad, MemoryStack scratch);
 
       //currentDistance = BlockMarker3D.ReferenceWidth * this.calibration.fc(1) / L;
 
-      Result ComputeDockingErrorSignal(const TemplateTracker::PlanarTransformation_f32 &transform, const s32 horizontalTrackingResolution, const f32 blockMarkerWidthInMM, const f32 horizontalFocalLengthInMM, const f32 cozmoLiftDistanceInMM, f32 &rel_x, f32 &rel_y, f32 &rel_rad)
+      Result ComputeDockingErrorSignal(const TemplateTracker::PlanarTransformation_f32 &transform, const s32 horizontalTrackingResolution, const f32 blockMarkerWidthInMM, const f32 horizontalFocalLengthInMM, const f32 cozmoLiftDistanceInMM, f32 &rel_x, f32 &rel_y, f32 &rel_rad, MemoryStack scratch)
       {
         // Set these now, so if there is an error, the robot will start driving in a circle
         rel_x = -1.0;
@@ -27,27 +27,23 @@ namespace Anki
         rel_rad = -1.0f;
 
         if(transform.get_transformType() == TemplateTracker::TRANSFORM_AFFINE) {
-          return ComputeDockingErrorSignal_Affine(transform.get_homography(), transform.get_transformedCorners(), horizontalTrackingResolution, blockMarkerWidthInMM, horizontalFocalLengthInMM, cozmoLiftDistanceInMM, rel_x, rel_y, rel_rad);
+          return ComputeDockingErrorSignal_Affine(transform.get_homography(), transform.get_transformedCorners(scratch), horizontalTrackingResolution, blockMarkerWidthInMM, horizontalFocalLengthInMM, cozmoLiftDistanceInMM, rel_x, rel_y, rel_rad, scratch);
         }
 
-        assert(false);
+        AnkiAssert(false);
 
-        return RESULT_FAIL;
+        return RESULT_FAIL_INVALID_PARAMETERS;
       }
 
-      static Result ComputeDockingErrorSignal_Affine(const Array<f32> &homography, const Quadrilateral<f32> &templateRegion, const s32 horizontalTrackingResolution, const f32 blockMarkerWidthInMM, const f32 horizontalFocalLengthInMM, const f32 cozmoLiftDistanceInMM, f32 &rel_x, f32 &rel_y, f32 &rel_rad)
+      static Result ComputeDockingErrorSignal_Affine(const Array<f32> &homography, const Quadrilateral<f32> &templateRegion, const s32 horizontalTrackingResolution, const f32 blockMarkerWidthInMM, const f32 horizontalFocalLengthInMM, const f32 cozmoLiftDistanceInMM, f32 &rel_x, f32 &rel_y, f32 &rel_rad, MemoryStack scratch)
       {
-        const s32 dataSize = 4*sizeof(f32) + 2*MEMORY_ALIGNMENT;
-        char cornersData[dataSize];
-        char indexesData[dataSize];
-
         // Block may be rotated with top side of marker not facing up, so reorient to make sure we
         // got top corners
         //[th,~] = cart2pol(corners(:,1)-mean(corners(:,1)), corners(:,2)-mean(corners(:,2)));
         //[~,sortIndex] = sort(th);
 
-        Array<f32> thetas(1,4,cornersData,dataSize);
-        Array<s32> indexes(1,4,indexesData,dataSize);
+        Array<f32> thetas(1,4,scratch);
+        Array<s32> indexes(1,4,scratch);
         Point<f32> center = templateRegion.ComputeCenter();
 
         for(s32 i=0; i<4; i++) {
@@ -66,11 +62,11 @@ namespace Anki
         const Point<f32> upperLeft = templateRegion[indexes[0][0]];
         const Point<f32> upperRight = templateRegion[indexes[0][1]];
 
-        //assert(upperRight(1) > upperLeft(1), ...%if upperRight(1) < upperLeft(1)
+        //AnkiAssert(upperRight(1) > upperLeft(1), ...%if upperRight(1) < upperLeft(1)
         //  ['UpperRight corner should be to the right ' ...
         //  'of the UpperLeft corner.']);
 
-        assert(upperRight.x > upperLeft.x);
+        AnkiAssert(upperRight.x > upperLeft.x);
 
         // Get the angle from vertical of the top bar of the marker we're tracking
 

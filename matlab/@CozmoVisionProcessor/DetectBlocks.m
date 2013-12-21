@@ -49,7 +49,10 @@ for i = 1:length(markers)
         set(this.h_templateAxes, 'Visible', 'on', ...
             'XLim', [0.5 size(template,2)+.5], ...
             'YLim', [0.5 size(template,1)+.5]);
-        
+       
+        % We are about to switch to tracking mode, so reduce the desired
+        % buffer read size
+        this.desiredBufferSize = this.computeDesiredBufferLength(this.trackingResolution);
     end
 end
 

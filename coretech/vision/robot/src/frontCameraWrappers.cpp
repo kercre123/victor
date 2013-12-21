@@ -22,6 +22,8 @@ namespace Anki
 {
   namespace Embedded
   {
+    static Result lastResult;
+
     // Replaces the matlab code for the first three steps of SimpleDetector
     Result SimpleDetector_Steps123(
       const Array<u8> &image,
@@ -48,19 +50,19 @@ namespace Anki
 
         FixedPointArray<u32> scaleImage(imageHeight, imageWidth, 16, scratch1);
 
-        if(ComputeCharacteristicScaleImage(image, scaleImage_numPyramidLevels, scaleImage, scratch2) != RESULT_OK) {
-          return RESULT_FAIL;
+        if((lastResult = ComputeCharacteristicScaleImage(image, scaleImage_numPyramidLevels, scaleImage, scratch2)) != RESULT_OK) {
+          return lastResult;
         }
 
-        if(BinarizeScaleImage(image, scaleImage, binaryImage) != RESULT_OK) {
-          return RESULT_FAIL;
+        if((lastResult = BinarizeScaleImage(image, scaleImage, binaryImage)) != RESULT_OK) {
+          return lastResult;
         }
 
         // image.Show("image", false, false);
         // binaryImage.Show("binaryImage", true, true);
       } else if(scaleAlgorithm == CHARACTERISTIC_SCALE_MEDIUM_MEMORY) {
-        if(ComputeCharacteristicScaleImageAndBinarize(image, scaleImage_numPyramidLevels, binaryImage, scaleImage_thresholdMultiplier, scratch1) != RESULT_OK)
-          return RESULT_FAIL;
+        if((lastResult = ComputeCharacteristicScaleImageAndBinarize(image, scaleImage_numPyramidLevels, binaryImage, scaleImage_thresholdMultiplier, scratch1)) != RESULT_OK)
+          return lastResult;
       }
 
       // 3. Compute connected components from the binary image (use local scratch2, store in outer scratch1)
@@ -68,8 +70,8 @@ namespace Anki
       {
         PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
 
-        if(extractedComponents.Extract2dComponents_FullImage(binaryImage, component1d_minComponentWidth, component1d_maxSkipDistance) != RESULT_OK) {
-          return RESULT_FAIL;
+        if((lastResult = extractedComponents.Extract2dComponents_FullImage(binaryImage, component1d_minComponentWidth, component1d_maxSkipDistance)) != RESULT_OK) {
+          return lastResult;
         }
 
         //{
@@ -88,8 +90,8 @@ namespace Anki
         //  drawnComponents.Show("drawnComponents1", false);
         //}
 
-        if(extractedComponents.InvalidateSmallOrLargeComponents(component_minimumNumPixels, component_maximumNumPixels, scratch2) != RESULT_OK) {
-          return RESULT_FAIL;
+        if((lastResult = extractedComponents.InvalidateSmallOrLargeComponents(component_minimumNumPixels, component_maximumNumPixels, scratch2)) != RESULT_OK) {
+          return lastResult;
         }
 
         //{
@@ -108,8 +110,8 @@ namespace Anki
         //  drawnComponents.Show("drawnComponents3", false);
         //}
 
-        if(extractedComponents.InvalidateSolidOrSparseComponents(component_sparseMultiplyThreshold, component_solidMultiplyThreshold, scratch2) != RESULT_OK) {
-          return RESULT_FAIL;
+        if((lastResult = extractedComponents.InvalidateSolidOrSparseComponents(component_sparseMultiplyThreshold, component_solidMultiplyThreshold, scratch2)) != RESULT_OK) {
+          return lastResult;
         }
 
         //{
@@ -169,19 +171,19 @@ namespace Anki
 
           FixedPointArray<u32> scaleImage(imageHeight, imageWidth, 16, scratch1);
 
-          if(ComputeCharacteristicScaleImage(image, scaleImage_numPyramidLevels, scaleImage, scratch2) != RESULT_OK) {
-            return RESULT_FAIL;
+          if((lastResult = ComputeCharacteristicScaleImage(image, scaleImage_numPyramidLevels, scaleImage, scratch2)) != RESULT_OK) {
+            return lastResult;
           }
 
-          if(BinarizeScaleImage(image, scaleImage, binaryImage) != RESULT_OK) {
-            return RESULT_FAIL;
+          if((lastResult = BinarizeScaleImage(image, scaleImage, binaryImage)) != RESULT_OK) {
+            return lastResult;
           }
 
           // image.Show("image", false, false);
           // binaryImage.Show("binaryImage", true, true);
         } else if(scaleAlgorithm == CHARACTERISTIC_SCALE_MEDIUM_MEMORY) {
-          if(ComputeCharacteristicScaleImageAndBinarize(image, scaleImage_numPyramidLevels, binaryImage, scaleImage_thresholdMultiplier, scratch1) != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = ComputeCharacteristicScaleImageAndBinarize(image, scaleImage_numPyramidLevels, binaryImage, scaleImage_thresholdMultiplier, scratch1)) != RESULT_OK)
+            return lastResult;
         }
 
         // 3. Compute connected components from the binary image (use local scratch2, store in outer scratch1)
@@ -189,8 +191,8 @@ namespace Anki
         {
           PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
 
-          if(extractedComponents.Extract2dComponents_FullImage(binaryImage, component1d_minComponentWidth, component1d_maxSkipDistance) != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = extractedComponents.Extract2dComponents_FullImage(binaryImage, component1d_minComponentWidth, component1d_maxSkipDistance)) != RESULT_OK)
+            return lastResult;
 
 #ifdef SEND_DRAWN_COMPONENTS
           {
@@ -205,13 +207,13 @@ namespace Anki
 
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
-          if(extractedComponents.InvalidateSmallOrLargeComponents(component_minimumNumPixels, component_maximumNumPixels, scratch2) != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = extractedComponents.InvalidateSmallOrLargeComponents(component_minimumNumPixels, component_maximumNumPixels, scratch2)) != RESULT_OK)
+            return lastResult;
 
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
-          if(extractedComponents.InvalidateSolidOrSparseComponents(component_sparseMultiplyThreshold, component_solidMultiplyThreshold, scratch2) != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = extractedComponents.InvalidateSolidOrSparseComponents(component_sparseMultiplyThreshold, component_solidMultiplyThreshold, scratch2)) != RESULT_OK)
+            return lastResult;
 
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
@@ -227,8 +229,8 @@ namespace Anki
 #endif
 
           // TODO: invalidate filled center components
-          if(extractedComponents.InvalidateFilledCenterComponents(component_percentHorizontal, component_percentVertical, scratch2) != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = extractedComponents.InvalidateFilledCenterComponents(component_percentHorizontal, component_percentVertical, scratch2)) != RESULT_OK)
+            return lastResult;
 
           extractedComponents.CompressConnectedComponentSegmentIds(scratch2);
 
@@ -252,8 +254,8 @@ namespace Anki
       {
         PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
 
-        if(ComputeQuadrilateralsFromConnectedComponents(extractedComponents, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, imageHeight, imageWidth, extractedQuads, scratch2) != RESULT_OK)
-          return RESULT_FAIL;
+        if((lastResult = ComputeQuadrilateralsFromConnectedComponents(extractedComponents, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, imageHeight, imageWidth, extractedQuads, scratch2)) != RESULT_OK)
+          return lastResult;
       } // PUSH_MEMORY_STACK(scratch2);
 
       // 4b. Compute a homography for each extracted quadrilateral
@@ -264,8 +266,8 @@ namespace Anki
         //BlockMarker &currentMarker = markers[iQuad];
         Array<f64> &currentHomography = homographies[iQuad];
 
-        if(ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, scratch2) != RESULT_OK)
-          return RESULT_FAIL;
+        if((lastResult = ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, scratch2)) != RESULT_OK)
+          return lastResult;
 
         markers[iQuad].blockType = -1;
         markers[iQuad].faceType = -1;
@@ -318,19 +320,19 @@ namespace Anki
 
           FixedPointArray<u32> scaleImage(imageHeight, imageWidth, 16, scratch1);
 
-          if(ComputeCharacteristicScaleImage(image, scaleImage_numPyramidLevels, scaleImage, scratch2) != RESULT_OK) {
-            return RESULT_FAIL;
+          if((lastResult = ComputeCharacteristicScaleImage(image, scaleImage_numPyramidLevels, scaleImage, scratch2)) != RESULT_OK) {
+            return lastResult;
           }
 
-          if(BinarizeScaleImage(image, scaleImage, binaryImage) != RESULT_OK) {
-            return RESULT_FAIL;
+          if((lastResult = BinarizeScaleImage(image, scaleImage, binaryImage)) != RESULT_OK) {
+            return lastResult;
           }
 
           // image.Show("image", false, false);
           // binaryImage.Show("binaryImage", true, true);
         } else if(scaleAlgorithm == CHARACTERISTIC_SCALE_MEDIUM_MEMORY) {
-          if(ComputeCharacteristicScaleImageAndBinarize(image, scaleImage_numPyramidLevels, binaryImage, scaleImage_thresholdMultiplier, scratch1) != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = ComputeCharacteristicScaleImageAndBinarize(image, scaleImage_numPyramidLevels, binaryImage, scaleImage_thresholdMultiplier, scratch1)) != RESULT_OK)
+            return lastResult;
         }
 
         //{
@@ -351,8 +353,8 @@ namespace Anki
           PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
 
           // BeginBenchmark("Extract2dComponents");
-          if(extractedComponents.Extract2dComponents_FullImage(binaryImage, component1d_minComponentWidth, component1d_maxSkipDistance) != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = extractedComponents.Extract2dComponents_FullImage(binaryImage, component1d_minComponentWidth, component1d_maxSkipDistance)) != RESULT_OK)
+            return lastResult;
           // EndBenchmark("Extract2dComponents");
 
 #ifdef SEND_COMPONENT_USAGE
@@ -386,8 +388,8 @@ namespace Anki
 #endif
 
           // BeginBenchmark("InvalidateSmallOrLargeComponents");
-          if(extractedComponents.InvalidateSmallOrLargeComponents(component_minimumNumPixels, component_maximumNumPixels, scratch2) != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = extractedComponents.InvalidateSmallOrLargeComponents(component_minimumNumPixels, component_maximumNumPixels, scratch2)) != RESULT_OK)
+            return lastResult;
           // EndBenchmark("InvalidateSmallOrLargeComponents");
 
 #ifdef PRINTF_INTERMEDIATES
@@ -403,8 +405,8 @@ namespace Anki
 #endif
 
           // BeginBenchmark("InvalidateSolidOrSparseComponents");
-          if(extractedComponents.InvalidateSolidOrSparseComponents(component_sparseMultiplyThreshold, component_solidMultiplyThreshold, scratch2) != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = extractedComponents.InvalidateSolidOrSparseComponents(component_sparseMultiplyThreshold, component_solidMultiplyThreshold, scratch2)) != RESULT_OK)
+            return lastResult;
           // EndBenchmark("InvalidateSolidOrSparseComponents");
 
 #ifdef PRINTF_INTERMEDIATES
@@ -431,8 +433,8 @@ namespace Anki
 #endif
 
           // BeginBenchmark("InvalidateFilledCenterComponents");
-          if(extractedComponents.InvalidateFilledCenterComponents(component_percentHorizontal, component_percentVertical, scratch2) != RESULT_OK)
-            return RESULT_FAIL;
+          if((lastResult = extractedComponents.InvalidateFilledCenterComponents(component_percentHorizontal, component_percentVertical, scratch2)) != RESULT_OK)
+            return lastResult;
           // EndBenchmark("InvalidateFilledCenterComponents");
 
 #ifdef PRINTF_INTERMEDIATES
@@ -470,8 +472,8 @@ namespace Anki
       {
         PUSH_MEMORY_STACK(scratch2); // Push the current state of the scratch buffer onto the system stack
 
-        if(ComputeQuadrilateralsFromConnectedComponents(extractedComponents, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, imageHeight, imageWidth, extractedQuads, scratch2) != RESULT_OK)
-          return RESULT_FAIL;
+        if((lastResult = ComputeQuadrilateralsFromConnectedComponents(extractedComponents, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, imageHeight, imageWidth, extractedQuads, scratch2)) != RESULT_OK)
+          return lastResult;
       } // PUSH_MEMORY_STACK(scratch2);
       // EndBenchmark("ComputeQuadrilateralsFromConnectedComponents");
 
@@ -487,8 +489,8 @@ namespace Anki
 
         Array<f64> &currentHomography = homographies[iQuad];
 
-        if(ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, scratch2) != RESULT_OK)
-          return RESULT_FAIL;
+        if((lastResult = ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, scratch2)) != RESULT_OK)
+          return lastResult;
 
 #ifdef PRINTF_INTERMEDIATES
         PrintfOneArray_f64(currentHomography, "currentHomography");
@@ -498,7 +500,7 @@ namespace Anki
       // EndBenchmark("ComputeHomographyFromQuad");
 
       // 5. Decode fiducial markers from the candidate quadrilaterals
-      const FiducialMarkerParser parser = FiducialMarkerParser();
+      const FiducialMarkerParser parser = FiducialMarkerParser(scratch2);
 
       // BeginBenchmark("ExtractBlockMarker");
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
@@ -506,8 +508,8 @@ namespace Anki
         const Quadrilateral<s16> &currentQuad = extractedQuads[iQuad];
         BlockMarker &currentMarker = markers[iQuad];
 
-        if(parser.ExtractBlockMarker(image, currentQuad, currentHomography, decode_minContrastRatio, currentMarker, scratch2) != RESULT_OK)
-          return RESULT_FAIL;
+        if((lastResult = parser.ExtractBlockMarker(image, currentQuad, currentHomography, decode_minContrastRatio, currentMarker, scratch2)) != RESULT_OK)
+          return lastResult;
       }
 
       // Remove invalid markers from the list
@@ -541,13 +543,12 @@ namespace Anki
       const s32 component_percentHorizontal, const s32 component_percentVertical,
       const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       const f32 decode_minContrastRatio,
+      const s32 maxConnectedComponentSegments,
+      const s32 maxExtractedQuads,
       MemoryStack scratch1,
       MemoryStack scratch2)
     {
       BeginBenchmark("SimpleDetector_Steps12345_lowMemory");
-
-      const s32 maxConnectedComponentSegments = 25000; // u16_MAX
-      const s32 maxExtractedQuads = 1000;
 
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
@@ -560,14 +561,14 @@ namespace Anki
         // 1. Compute the Scale image (use local scratch1)
         // 2. Binarize the Scale image (store in outer scratch2)
         // 3. Compute connected components from the binary image (use local scratch2, store in outer scratch1)
-        if(ComputeCharacteristicScaleImageAndBinarizeAndExtractComponents(
+        if((lastResult = ComputeCharacteristicScaleImageAndBinarizeAndExtractComponents(
           image,
           scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
           component1d_minComponentWidth, component1d_maxSkipDistance,
           extractedComponents,
-          scratch1) != RESULT_OK)
+          scratch1)) != RESULT_OK)
 
-          return RESULT_FAIL;
+          return lastResult;
       }
       EndBenchmark("ComputeCharacteristicScaleImageAndBinarizeAndExtractComponents");
 
@@ -580,8 +581,8 @@ namespace Anki
         EndBenchmark("CompressConnectedComponentSegmentIds1");
 
         BeginBenchmark("InvalidateSmallOrLargeComponents");
-        if(extractedComponents.InvalidateSmallOrLargeComponents(component_minimumNumPixels, component_maximumNumPixels, scratch1) != RESULT_OK)
-          return RESULT_FAIL;
+        if((lastResult = extractedComponents.InvalidateSmallOrLargeComponents(component_minimumNumPixels, component_maximumNumPixels, scratch1)) != RESULT_OK)
+          return lastResult;
         EndBenchmark("InvalidateSmallOrLargeComponents");
 
         BeginBenchmark("CompressConnectedComponentSegmentIds2");
@@ -589,8 +590,8 @@ namespace Anki
         EndBenchmark("CompressConnectedComponentSegmentIds2");
 
         BeginBenchmark("InvalidateSolidOrSparseComponents");
-        if(extractedComponents.InvalidateSolidOrSparseComponents(component_sparseMultiplyThreshold, component_solidMultiplyThreshold, scratch1) != RESULT_OK)
-          return RESULT_FAIL;
+        if((lastResult = extractedComponents.InvalidateSolidOrSparseComponents(component_sparseMultiplyThreshold, component_solidMultiplyThreshold, scratch1)) != RESULT_OK)
+          return lastResult;
         EndBenchmark("InvalidateSolidOrSparseComponents");
 
         BeginBenchmark("CompressConnectedComponentSegmentIds3");
@@ -598,8 +599,8 @@ namespace Anki
         EndBenchmark("CompressConnectedComponentSegmentIds3");
 
         BeginBenchmark("InvalidateFilledCenterComponents");
-        if(extractedComponents.InvalidateFilledCenterComponents(component_percentHorizontal, component_percentVertical, scratch1) != RESULT_OK)
-          return RESULT_FAIL;
+        if((lastResult = extractedComponents.InvalidateFilledCenterComponents(component_percentHorizontal, component_percentVertical, scratch1)) != RESULT_OK)
+          return lastResult;
         EndBenchmark("InvalidateFilledCenterComponents");
 
         BeginBenchmark("CompressConnectedComponentSegmentIds4");
@@ -615,8 +616,8 @@ namespace Anki
       BeginBenchmark("ComputeQuadrilateralsFromConnectedComponents");
       FixedLengthList<Quadrilateral<s16> > extractedQuads(maxExtractedQuads, scratch1);
 
-      if(ComputeQuadrilateralsFromConnectedComponents(extractedComponents, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, imageHeight, imageWidth, extractedQuads, scratch1) != RESULT_OK)
-        return RESULT_FAIL;
+      if((lastResult = ComputeQuadrilateralsFromConnectedComponents(extractedComponents, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, imageHeight, imageWidth, extractedQuads, scratch1)) != RESULT_OK)
+        return lastResult;
 
       EndBenchmark("ComputeQuadrilateralsFromConnectedComponents");
 
@@ -626,15 +627,15 @@ namespace Anki
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
         Array<f64> &currentHomography = homographies[iQuad];
 
-        if(ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, scratch1) != RESULT_OK)
-          return RESULT_FAIL;
+        if((lastResult = ComputeHomographyFromQuad(extractedQuads[iQuad], currentHomography, scratch1)) != RESULT_OK)
+          return lastResult;
 
         //currentHomography.Print("currentHomography");
       } // for(iQuad=0; iQuad<; iQuad++)
       EndBenchmark("ComputeHomographyFromQuad");
 
       // 5. Decode fiducial markers from the candidate quadrilaterals
-      const FiducialMarkerParser parser = FiducialMarkerParser();
+      const FiducialMarkerParser parser = FiducialMarkerParser(scratch2);
 
       BeginBenchmark("ExtractBlockMarker");
       for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
@@ -642,8 +643,8 @@ namespace Anki
         const Quadrilateral<s16> &currentQuad = extractedQuads[iQuad];
         BlockMarker &currentMarker = markers[iQuad];
 
-        if(parser.ExtractBlockMarker(image, currentQuad, currentHomography, decode_minContrastRatio, currentMarker, scratch1) != RESULT_OK)
-          return RESULT_FAIL;
+        if((lastResult = parser.ExtractBlockMarker(image, currentQuad, currentHomography, decode_minContrastRatio, currentMarker, scratch1)) != RESULT_OK)
+          return lastResult;
       }
 
       // Remove invalid markers from the list

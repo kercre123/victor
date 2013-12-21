@@ -37,6 +37,8 @@ static float heightOffset_ = 0.1;
 // Default angular resolution of arc path segments (radians)
 static float arcRes_rad = 0.2;
 
+const float PI = 3.14159265f;
+
 const int SIZEOF_FLOAT = sizeof(float);
 
 /*
@@ -129,30 +131,46 @@ void webots_physics_step() {
 
           float radius = msg[ARC_RADIUS];
           float startRad = msg[ARC_START_RAD];
-          float endRad = msg[ARC_END_RAD];
+          float sweepRad = msg[ARC_SWEEP_RAD];
+          float endRad = startRad + sweepRad;
 
-          if (endRad < startRad) {
-            // Arc sweeps CW
-            // Swap start and end so that we can draw it the same way
-            float tempRad = endRad;
-            endRad = startRad;
-            startRad = tempRad;
-          } 
-
+          float dir = (sweepRad > 0 ? 1 : -1);
+          
+          // Make endRad be between -PI and PI
+          while (endRad > PI) {
+            endRad -= 2*PI;
+          }
+          while (endRad < -PI) {
+            endRad += 2*PI;
+          }
+          
+         
+          if (dir == 1) {
+            // Make startRad < endRad
+            while (startRad > endRad) {
+              startRad -= 2*PI;
+            }
+          } else {
+            // Make startRad > endRad
+            while (startRad < endRad) {
+              startRad += 2*PI;
+            }
+          }
+          
           // Add points along arc from startRad to endRad at arcRes_rad resolution
           float currRad = startRad;
           float dx,dy,cosCurrRad;
           //dWebotsConsolePrintf("***** ARC rad %f (%f to %f), radius %f\n", currRad, startRad, endRad, radius);
 
-          while (currRad < endRad) {
+          while (currRad*dir < endRad*dir) {
             cosCurrRad = cos(currRad);
-            dx = cosCurrRad * radius;
-            dy = sqrt(radius*radius - dx*dx) * (currRad > 0 ? 1 : -1);
+            dx = cos(currRad) * radius;
+            dy = sin(currRad) * radius;
             pt[0] = center_x + dx;
             pt[1] = center_y + dy;
             pt[2] = center_z;
             robotPathMap[robotID][pathID].push_back(pt);
-            currRad += arcRes_rad;
+            currRad += dir * arcRes_rad;
           }
            
           msgOffset += ARC_MSG_SIZE;

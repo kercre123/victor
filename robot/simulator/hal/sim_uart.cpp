@@ -74,7 +74,7 @@ namespace Anki
       {
         if(not USBsendBuffer_.empty())
         {
-          const u32 sendSize = USBsendBuffer_.size()*sizeof(u8);
+          const u32 sendSize = static_cast<u32>(USBsendBuffer_.size()*sizeof(u8));
           if(usbTX_->send(&(USBsendBuffer_[0]), sendSize) == 0)
           {
             PRINT("USBFlush(): Send buffer full!\n");
@@ -137,7 +137,7 @@ namespace Anki
           usbRX_->nextPacket();
         }
         
-        return USBrecvBuffer_.size() - getCharIndex_;
+        return static_cast<u32>(USBrecvBuffer_.size() - getCharIndex_);
       }
       
       

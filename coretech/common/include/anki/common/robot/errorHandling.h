@@ -30,11 +30,48 @@ namespace Anki
       ANKI_LOG_LEVEL_INFO = 1,
       ANKI_LOG_LEVEL_EVENT = 2,
       ANKI_LOG_LEVEL_WARN = 3,
-      ANKI_LOG_LEVEL_ERROR = 4,
-      ANKI_LOG_LEVEL_NUMLEVELS = 5
+      ANKI_LOG_LEVEL_ASSERT = 4,
+      ANKI_LOG_LEVEL_ERROR = 5,
+      ANKI_LOG_LEVEL_NUMLEVELS = 6
     } LogLevel;
   } // namespace Embedded
 } //namespace Anki
+
+//
+// Error checking
+//
+
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS
+#define AnkiError(eventName, eventValue_format, ...) _Anki_Logf(ANKI_LOG_LEVEL_ERROR, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+
+#define AnkiConditionalError(expression, eventName, eventValue_format, ...) \
+  if(!(expression)) { \
+  _Anki_Logf(ANKI_LOG_LEVEL_ERROR, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
+  }
+
+#define AnkiConditionalErrorAndReturn(expression, eventName, eventValue_format, ...) \
+  if(!(expression)) {\
+  _Anki_Logf(ANKI_LOG_LEVEL_ERROR, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
+  return;\
+  }
+
+#define AnkiConditionalErrorAndReturnValue(expression, returnValue, eventName, eventValue_format, ...) \
+  if(!(expression)) { \
+  _Anki_Logf(ANKI_LOG_LEVEL_ERROR, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
+  return returnValue;\
+  }
+#else
+
+#define AnkiError(eventName, eventValue_format, ...)
+#define AnkiConditionalError(expression, eventName, eventValue_format, ...)
+#define AnkiConditionalErrorAndReturn(expression, eventName, eventValue_format, ...)
+#define AnkiConditionalErrorAndReturnValue(expression, returnValue, eventName, eventValue_format, ...)
+
+#endif
+
+//
+// Warn checking
+//
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS
 
@@ -45,7 +82,7 @@ namespace Anki
   if(!(expression)) { _Anki_Logf(ANKI_LOG_LEVEL_WARN, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); }
 
 #define AnkiConditionalWarnAndReturn(expression, eventName, eventValue_format, ...) \
-  if(!(expression)) {\
+  if(!(expression)) { \
   _Anki_Logf(ANKI_LOG_LEVEL_WARN, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
   return;\
   }
@@ -56,71 +93,30 @@ namespace Anki
   return returnValue;\
   }
 
-#define AnkiError(eventName, eventValue_format, ...) _Anki_Logf(ANKI_LOG_LEVEL_ERROR, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
-
-#define AnkiConditionalError(expression, eventName, eventValue_format, ...) \
-  if(!(expression)) { \
-  _Anki_Logf(ANKI_LOG_LEVEL_ERROR, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
-  }
-
-#define AnkiConditionalErrorAndReturn(expression, eventName, eventValue_format, ...) \
-  if(!(expression)) {\
-  _Anki_Logf(ANKI_LOG_LEVEL_ERROR, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
-  return;\
-  }
-
-#define AnkiConditionalErrorAndReturnValue(expression, returnValue, eventName, eventValue_format, ...) \
-  if(!(expression)) { \
-  _Anki_Logf(ANKI_LOG_LEVEL_ERROR, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
-  return returnValue;\
-  }
-
-#elif ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS
+#else
 
 #define AnkiWarn(eventName, eventValue_format, ...)
-
 #define AnkiConditionalWarn(expression, eventName, eventValue_format, ...)
-
 #define AnkiConditionalWarnAndReturn(expression, eventName, eventValue_format, ...)
-
 #define AnkiConditionalWarnAndReturnValue(expression, returnValue, eventName, eventValue_format, ...)
 
-#define AnkiError(eventName, eventValue_format, ...) _Anki_Logf(ANKI_LOG_LEVEL_ERROR, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+#endif
 
-#define AnkiConditionalError(expression, eventName, eventValue_format, ...) \
-  if(!(expression)) {\
-  _Anki_Logf(ANKI_LOG_LEVEL_ERROR, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
-  }
+//
+// Assert checking
+//
 
-#define AnkiConditionalErrorAndReturn(expression, eventName, eventValue_format, ...) \
-  if(!(expression)) {\
-  _Anki_Logf(ANKI_LOG_LEVEL_ERROR, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
-  return;\
-  }
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
 
-#define AnkiConditionalErrorAndReturnValue(expression, returnValue, eventName, eventValue_format, ...) \
+#define AnkiAssert(expression) \
   if(!(expression)) { \
-  _Anki_Logf(ANKI_LOG_LEVEL_ERROR, eventName, (eventValue_format), __FILE__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
-  return returnValue;\
+  _Anki_Logf(ANKI_LOG_LEVEL_ASSERT, "Assert failure", "", __FILE__, __PRETTY_FUNCTION__, __LINE__); \
+  assert(false); \
   }
 
-#elif ANKI_DEBUG_LEVEL >= ANKI_DEBUG_MINIMAL
+#else
 
-#define AnkiWarn(eventName, eventValue_format, ...)
-
-#define AnkiConditionalWarn(expression, eventName, eventValue_format, ...)
-
-#define AnkiConditionalWarnAndReturn(expression, eventName, eventValue_format, ...)
-
-#define AnkiConditionalWarnAndReturnValue(expression, returnValue, eventName, eventValue_format, ...)
-
-#define AnkiError(eventName, eventValue_format, ...)
-
-#define AnkiConditionalError(expression, eventName, eventValue_format, ...)
-
-#define AnkiConditionalErrorAndReturn(expression, eventName, eventValue_format, ...)
-
-#define AnkiConditionalErrorAndReturnValue(expression, returnValue, eventName, eventValue_format, ...)
+#define AnkiAssert(expression)
 
 #endif
 

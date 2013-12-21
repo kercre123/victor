@@ -76,14 +76,15 @@ extern "C" {
   void PrintInt(int (*writeChar)(int), s32 value); // Print a single number
   void PrintHex(int (*writeChar)(int), u32 value); // Print a single unsigned int in hex format 0xabcd0123
   void PrintFloat(int (*writeChar)(int), f64 value); // Print a single float
+  void PrintFloatWithExponent(int (*writeChar)(int), f64 value); // Print a single float in format "significand * 2^exponent"
 
 #if defined(USING_MOVIDIUS_GCC_COMPILER)
 
-#define memset explicitMemset
+  //#define memset explicitMemset
 #define powf powF32S32
 #define pow powF64S32
 
-  void* explicitMemset(void * dst, int value, size_t size);
+  //void* explicitMemset(void * dst, int value, size_t size);
   f32 powF32S32(const f32 x, const s32 y);
   f64 powF64S32(const f64 x, const s32 y);
 #endif

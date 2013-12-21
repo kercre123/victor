@@ -1,13 +1,10 @@
 classdef CozmoVisionProcessor < handle
     
     properties(Constant = true)
-        TIME_STEP = 64;
         
         % Default header and footer:
         HEADER = char(sscanf('BEEFF0FF', '%2x'))'; 
         FOOTER = char(sscanf('FF0FFEEB', '%2x'))';
-
-        MIN_SERIAL_READ_SIZE = 80*60;
         
         % LUT for converting image format byte to resolution
         RESOLUTION_LUT = containers.Map( ...
@@ -29,15 +26,18 @@ classdef CozmoVisionProcessor < handle
         TRACK_COMMAND            = char(sscanf('CD', '%2x'));
         MAT_ODOMETRY_COMMAND     = char(sscanf('DE', '%2x'));
         MAT_LOCALIZATION_COMMAND = char(sscanf('EF', '%2x'));
+        DISPLAY_IMAGE_COMMAND    = char(sscanf('F0', '%2x'));
                     
         LIFT_DISTANCE = 34;  % in mm, forward from robot origin
         
     end % Constant Properties
     
     properties
+        TIME_STEP;
         serialDevice;
         serialBuffer;
         doEndianSwap;
+        desiredBufferSize;
         
         verbosity;
         
@@ -51,10 +51,15 @@ classdef CozmoVisionProcessor < handle
         %matCalibrationMatrix;
         matCamPixPerMM;
         
+        % On simulator, no need to flip.  On robot, need to flip
+        flipImage;
+        
         % For tracking
         LKtracker;
         trackerType;
         trackingResolution;
+        
+        detectionResolution;
         
         % For mat localization
         matLocalizationResolution;
@@ -89,14 +94,25 @@ classdef CozmoVisionProcessor < handle
             end
         end
         
+        function L = computeDesiredBufferLength(this, expectedResolution)
+           L = prod(expectedResolution) + ... actual image data 
+               length(this.HEADER) + 1 + ... header bytes + command byte
+               length(this.FOOTER) + 1 + ... footer bytes + command byte
+               1 + ... resolution byte
+               4; % timestamp bytes
+        end
+        
         function this = CozmoVisionProcessor(varargin)
             SerialDevice = [];
+            FlipImage = true;
             TrackerType = 'affine';
             TrackingResolution = [80 60];
             MatLocalizationResolution = [320 240];
+            DetectionResolution = [320 240];
             Verbosity = 1;
             DoEndianSwap = false; % false for simulator, true with Movidius
-            
+            TIME_STEP = 30;
+
             parseVarargin(varargin{:});
             
             assert(isa(SerialDevice, 'serial') || ...
@@ -109,12 +125,18 @@ classdef CozmoVisionProcessor < handle
             fopen(this.serialDevice);
             
             this.doEndianSwap = DoEndianSwap;
+                        
+            this.flipImage = FlipImage;
             
             this.verbosity = Verbosity;
+            this.TIME_STEP = TIME_STEP;
             
             this.LKtracker = [];
             this.trackerType = TrackerType;
             this.trackingResolution = TrackingResolution;
+            this.detectionResolution = DetectionResolution;
+            
+            this.desiredBufferSize = this.computeDesiredBufferLength(this.detectionResolution);
             
             this.matLocalizationResolution = MatLocalizationResolution;
             this.dockingBlock = 0;
@@ -159,7 +181,11 @@ classdef CozmoVisionProcessor < handle
             this.escapePressed = false;
             
             while ~this.isDone
+                t = tic;
+                
                 this.Update();
+
+                % pause(max(0, this.TIME_STEP/1000 - toc(t)));
             end
 
         end % FUNCTION Run()
@@ -178,8 +204,8 @@ classdef CozmoVisionProcessor < handle
             % actual message data
             msgID = this.messageIDs.(messageName);
             fwrite(this.serialDevice, [uint8(this.HEADER) msgID row(packet)]);
-            fprintf('Sent "%s" packet with msgID=%d and %d bytes.\n', ...
-                messageName, msgID, length(packet));
+            fprintf('Sent "%s" packet with msgID=%d and %d bytes (time=%f).\n', ...
+		    messageName, msgID, length(packet), wb_robot_get_time());
         end % FUNCTION: SendPacket()
         
         
@@ -213,7 +239,7 @@ classdef CozmoVisionProcessor < handle
                 end
             end
         end % keyPressCallback()
-           
+                   
         function [img, timestamp, valid] = PacketToImage(this, packet)
             valid = false;
             img = [];
@@ -231,23 +257,27 @@ classdef CozmoVisionProcessor < handle
                     % Read the timestamp
                     timestamp = this.Cast(packet(2:5), 'uint32');
                     
+                    if this.flipImage
+                        packet(6:end) = fliplr(packet(6:end));
+                    end
+                    
                     if imgPacketLength ~= prod(resolution)
                         warning(['Image packet length did not match its ' ...
                             'specified resolution!']);
                         img = zeros(resolution);
                         if imgPacketLength < prod(resolution)
-                            img(1:imgPacketLength) = fliplr(packet(6:end));
+                            img(1:imgPacketLength) = packet(6:end);
                         end
                         img = img';
                         
                     else
-                        img = reshape(fliplr(packet(6:end)), resolution)';
+                        img = reshape(packet(6:end), resolution)';
                         valid = true;
                     end
                 end
             end
         end % FUNCTION PacketToImage()
-        
-     end % Methods
+    
+    end % public methods
     
 end % CLASSDEF CozmoVisionProcessor

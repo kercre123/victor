@@ -115,7 +115,6 @@ namespace Anki
       // The max angular speed the head can move when max power is commanded.
       const f32 MAX_LIFT_SPEED = PI/2; // rad/s
       
-      const f32 MAX_WHEEL_SPEED = 300; //mm/s
       //////////////////////
       
       
@@ -417,6 +416,7 @@ namespace Anki
       const u8 USB_VISION_COMMAND_TRACK           = 0xCD;
       const u8 USB_VISION_COMMAND_MATODOMETRY     = 0xDE;
       const u8 USB_VISION_COMMAND_MATLOCALIZATION = 0xEF;
+      const u8 USB_VISION_COMMAND_DISPLAY_IMAGE   = 0xF0;
       
       const u8 USB_VISION_COMMAND_HEAD_CALIBRATION = 0xC1;
       const u8 USB_VISION_COMMAND_MAT_CALIBRATION  = 0xC2;
