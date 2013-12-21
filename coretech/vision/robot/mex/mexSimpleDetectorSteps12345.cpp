@@ -41,7 +41,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   AnkiConditionalErrorAndReturn(nrhs == 16 && nlhs == 4, "mexSimpleDetectorSteps12345", "Call this function as following: [quads, blockTypes, faceTypes, orientations] = mexSimpleDetectorSteps12345(uint8(image), scaleImage_useWhichAlgorithm, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_percentHorizontal, component_percentVertical, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio);");
 
-  Array<u8> image = mxArrayToArray<u8>(prhs[0]);
+  const s32 bufferSize = 10000000;
+  MemoryStack memory(malloc(bufferSize), bufferSize);
+  AnkiConditionalErrorAndReturn(memory.IsValid(), "mexSimpleDetectorSteps12345", "Memory could not be allocated");
+
+  Array<u8> image = mxArrayToArray<u8>(prhs[0], memory);
   const CharacteristicScaleAlgorithm scaleImage_useWhichAlgorithm = static_cast<CharacteristicScaleAlgorithm>(static_cast<s32>(mxGetScalar(prhs[1])));
   const s32 scaleImage_numPyramidLevels = static_cast<s32>(mxGetScalar(prhs[2]));
   const s32 scaleImage_thresholdMultiplier = static_cast<s32>(Round(pow(2,16)*mxGetScalar(prhs[3]))); // Convert from double to SQ15.16
@@ -167,6 +171,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     plhs[3] = orientationsMatlab;
   } // if(numMarkers != 0) ... else
 
+  free(memory.get_buffer());
   free(scratch0.get_buffer());
   free(scratch1.get_buffer());
   free(scratch2.get_buffer());
