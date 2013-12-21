@@ -13,7 +13,7 @@ using namespace Anki::Embedded;
 
 // templateImage = uint8(rgb2gray(imresize(imread('C:\Anki\blockImages\blockImages00315.png'), [480,640]/8)));
 // nextImage = uint8(rgb2gray(imresize(imread('C:\Anki\blockImages\blockImages00316.png'), [480,640]/8)));
-// templateRegionRectangle = [29,39,11,21];
+// templateRegionRectangle = [29,39,11,21]; % [left, right, top, bottom]
 // numPyramidLevels = 2;
 // transformType = bitshift(2,8);
 // ridgeWeight = 1e-3;
