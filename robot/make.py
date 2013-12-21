@@ -61,7 +61,7 @@ LEON_SOURCE += addSources(LIBC + 'src');
 LEON_SOURCE += addSources(LIBC + 'src/asm');
 
 CCOPT = (
-  '-DDISABLE_LEON_DCACHE -DDISABLE_LEON_CACHE '
+#  '-DDISABLE_LEON_DCACHE -DDISABLE_LEON_CACHE '
   '-DROBOT_HARDWARE '
   '-I ../include '
   '-I supervisor/src '
