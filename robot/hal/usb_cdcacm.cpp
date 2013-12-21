@@ -410,8 +410,6 @@ u32 currentDTDPointer;
       static void PrimeEndpoint(USBEndpoint* ep, const void* address,
           u32 bufferLength, u32 offset, u32 transferLength)
       {
-        printf("%x: %08X, %08X, %08X, %08X\n",
-            ep->address, address, bufferLength, offset, transferLength);
         u32 index = USB_INDEX(ep->address);
 
         volatile USBQueueHead* dQH = &m_dQH[index];
@@ -436,8 +434,6 @@ u32 currentDTDPointer;
             nextAddress = (u32)address;
           }
 
-          printf("next add: %08X\n", nextAddress);
-
           dTD->bufferPointer[i] = nextAddress;
         }
 
@@ -458,7 +454,6 @@ u32 currentDTDPointer;
         while (USB_WORD(REG_ENDPTSETUPSTAT))
           ;
 
-        printf("prime: %08X\n", prime);
         USB_WORD(REG_ENDPTPRIME) = prime;
 
         while (USB_WORD(REG_ENDPTPRIME) & prime)
@@ -594,8 +589,6 @@ u32 currentDTDPointer;
 
           m_bulkOutLength = length;
 
-          printf("%d, %d\n", m_bulkOutHead, m_bulkOutTail);
-
           if (length)
           {
             PrimeEndpoint(&m_ep1_out,
@@ -640,6 +633,8 @@ u32 currentDTDPointer;
 
         // XXX: Not including the setup for interrupts...
         //USB_WORD(REG_USBINTR) |= USB_USBINTR_UE;
+
+        printf("reg = %08X\n", USB_WORD(REG_OTGSC));
       }
 
       void USBUpdate()
@@ -668,12 +663,11 @@ u32 currentDTDPointer;
         {
           // Clear SOF
           USB_WORD(REG_USBSTS) = USB_USBSTS_SRI;
-          while (USB_WORD(REG_USBSTS) & USB_USBSTS_SRI)
-            ;
+          //while (USB_WORD(REG_USBSTS) & USB_USBSTS_SRI)
+          //  ;
 
           //SET_USB_WORD(ICB_INT_CLEAR, (1 << IRQ_USB));
 
-          HandleSetupMessage();
         }
 
         // Check for USB Interrupt
@@ -684,7 +678,8 @@ u32 currentDTDPointer;
           //HandleSetupMessage();
         }
 
-        //HandleTransfers();
+        HandleSetupMessage();
+        HandleTransfers();
       }
 
       static void HandleSetupMessage()

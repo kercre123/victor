@@ -44,7 +44,7 @@
 #define USE_OFFBOARD_VISION 1
 
 // Uncomment to use USB instead of UART
-#define USE_USB
+//#define USE_USB
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,10 +58,10 @@ extern "C" {
 
 #if USE_OFFBOARD_VISION
 // Buffer printf messages, to be sent by long execution
-#define PUTCHAR_FUNC Anki::Cozmo::HAL::UARTPutChar //USBBufferChar
+#define PUTCHAR_FUNC Anki::Cozmo::HAL::USBBufferChar
 #else
 // Send printf messages directly over the USB connection
-#define PUTCHAR_FUNC Anki::Cozmo::HAL::UARTPutChar
+#define PUTCHAR_FUNC Anki::Cozmo::HAL::USBPutChar
 #endif // if USE_OFFBOARD_VISION
 
 #define printf(...) _xprintf(PUTCHAR_FUNC, 0, __VA_ARGS__)
@@ -193,13 +193,11 @@ namespace Anki
 
       // Returns the number of bytes that are in the serial buffer
       u32 USBGetNumBytesToRead();
-      u32 UARTGetNumBytesToRead();
       
       // Get a character from the serial buffer.
       // Timeout is in microseconds.
       // Returns < 0 if no character available within timeout.
-      s32 USBGetChar(void);
-      s32 USBGetChar(u32 timeout);
+      s32 USBGetChar(u32 timeout = 0);
 
       // Peeks at the offset'th character in serial receive buffer.
       // (The next character available is at an offset of 0.)
@@ -215,7 +213,6 @@ namespace Anki
       // Send a byte.
       // Prototype matches putc for printf.
       int USBPutChar(int c);
-      int UARTPutChar(int c);
 
 #pragma mark --- Motors ---
       /////////////////////////////////////////////////////////////////////

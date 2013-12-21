@@ -72,7 +72,7 @@ namespace Anki
         // Check neck potentiometer here, until radio implements it
         // ...
 
-        //Robot::step_MainExecution();
+        Robot::step_MainExecution();
 
         static u32 now = 0;
         //if ((HAL::GetMicroCounter() - now) > 5000000)
@@ -80,6 +80,10 @@ namespace Anki
 
         // Pet the watchdog
         // Other HAL tasks?
+#ifdef USE_USB
+        HAL::USBUpdate();
+#endif
+
         return 0;
       }
 
@@ -148,16 +152,13 @@ namespace Anki
         REG_WORD(ICB_CLEAR_0_ADR) = 0xFFFFffff;
         REG_WORD(ICB_CLEAR_1_ADR) = 0xFFFFffff;
 
-//#ifdef USE_USB
-        USBInit();
-//#else
         UARTInit();
-//#endif
+#ifdef USE_USB
+        USBInit();
+#endif
 
         FrontCameraInit();
-#ifndef USE_USB  // Maybe ifndef BOX instead?
         MotorInit();
-#endif
       }
 
       // Called from Robot::Init(), but not actually used here.
@@ -215,18 +216,13 @@ int main()
   using namespace Anki::Cozmo;
   HAL::InitMemory();
 
-  //Robot::Init();
+  Robot::Init();
 
   HAL::SetupMainExecution();
 
   while (true)
   {
-    //Robot::step_LongExecution();
-#ifdef USE_USB
-        HAL::USBUpdate();
-#endif
-
-
+    Robot::step_LongExecution();
   }
 
   return 0;
