@@ -25,7 +25,6 @@ LEON_SOURCE = []
 LEON_SOURCE += addSources('./hal')
 LEON_SOURCE += addSources('./hal/asm')
 LEON_SOURCE += addSources('./vision')
-#LEON_SOURCE += addSources('./supervisor/src')
 LEON_SOURCE += addSources('../coretech/vision/robot/src')
 LEON_SOURCE += addSources('../coretech/messaging/robot/src')
 LEON_SOURCE += addSources('../coretech/common/robot/src')
@@ -62,6 +61,7 @@ LEON_SOURCE += addSources(LIBC + 'src');
 LEON_SOURCE += addSources(LIBC + 'src/asm');
 
 CCOPT = (
+  '-DDISABLE_LEON_DCACHE -DDISABLE_LEON_CACHE '
   '-DROBOT_HARDWARE '
   '-I ../include '
   '-I supervisor/src '
