@@ -49,6 +49,7 @@ namespace Anki
         f32 arc_angTraversed_;
         // ===== End of pre-processed path segment info ===
         
+        const f32 LOOK_AHEAD_DIST_M = 0.01f;
 
         Path path_;
         s16 currPathSegment_ = -1;
@@ -62,10 +63,6 @@ namespace Anki
         bool pointTurnStarted_ = false;
         
         bool visualizePath_ = TRUE;
-        
-        // Whether or not the robot was within range of the
-        // current path segment in the previous tic.
-        bool wasInRange_ = false;
         
       } // Private Members
       
@@ -184,6 +181,32 @@ namespace Anki
             break;
         }
       }
+
+
+      u8 GetClosestSegment(const f32 x, const f32 y, const f32 angle)
+      {
+        assert(path_.GetNumSegments() > 0);
+        
+        SegmentRangeStatus res;
+        f32 distToSegment, angError;
+        
+        u8 closestSegId = 0;
+        SegmentRangeStatus closestSegmentRangeStatus = OOR_NEAR_END;
+        f32 distToClosestSegment = FLT_MAX;
+        
+        for (u8 i=0; i<path_.GetNumSegments(); ++i) {
+          res = path_[i].GetDistToSegment(x,y,angle,distToSegment,angError);
+          PRINT("PathDist: %f  (res=%d)\n", distToSegment, res);
+          if (ABS(distToSegment) < distToClosestSegment && (res == IN_SEGMENT_RANGE || res == OOR_NEAR_START)) {
+            closestSegId = i;
+            distToClosestSegment = ABS(distToSegment);
+            closestSegmentRangeStatus = res;
+            PRINT(" New closest seg: %d, distToSegment %f (res=%d)\n", i, distToSegment, res);
+          }
+        }
+        
+        return closestSegId;
+      }
       
       
       bool StartPathTraversal()
@@ -198,9 +221,18 @@ namespace Anki
             return false;
           }
           
-          currPathSegment_ = 0;
+          
+          // Get current robot pose
+          f32 x, y;
+          Radians angle;
+          Localization::GetCurrentMatPose(x, y, angle);
+          
+          //currPathSegment_ = 0;
+          currPathSegment_ = GetClosestSegment(x,y,angle.ToFloat());
+          
+          
           PreProcessPathSegment(path_[currPathSegment_]);
-          wasInRange_ = false;
+
           //Robot::SetOperationMode(Robot::FOLLOW_PATH);
           SteeringController::SetPathFollowMode();
         }
@@ -223,241 +255,27 @@ namespace Anki
       }
       
       
-      bool ProcessPathSegmentLine(f32 &shortestDistanceToPath_m, f32 &radDiff)
+      SegmentRangeStatus ProcessPathSegment(f32 &shortestDistanceToPath_m, f32 &radDiff)
       {
-        const PathSegmentDef::s_line* currSeg = &(path_[currPathSegment_].def.line);
-        
-        // Find shortest path to current segment.
-        // Shortest path is along a line with inverse negative slope (i.e. -1/m).
-        // Point of intersection is solution to mx + b == (-1/m)*x + b_inv where b_inv = y-(-1/m)*x
-        
         // Get current robot pose
         f32 x, y;
         Radians angle;
         Localization::GetCurrentMatPose(x, y, angle);
         
-        
-#if(DEBUG_PATH_FOLLOWER)
-        PERIODIC_PRINT(DBG_PERIOD, "currPathSeg: %d, LINE (%f, %f, %f, %f)\n", currPathSegment_, currSeg->startPt_x, currSeg->startPt_y, currSeg->endPt_x, currSeg->endPt_y);
-        PERIODIC_PRINT(DBG_PERIOD, "Robot Pose: x: %f, y: %f ang: %f\n", x,y,angle.ToFloat());
-#endif
-        
-        
-        // Distance to start point
-        f32 sqDistToStartPt = (currSeg->startPt_x - x) * (currSeg->startPt_x - x) +
-                              (currSeg->startPt_y - y) * (currSeg->startPt_y - y);
-        
-        // Distance to end point
-        f32 sqDistToEndPt = (currSeg->endPt_x - x) * (currSeg->endPt_x - x) +
-                            (currSeg->endPt_y - y) * (currSeg->endPt_y - y);
-        
-        
-        if (FLT_NEAR(currSeg->startPt_x, currSeg->endPt_x)) {
-          // Special case: Vertical line
-          if (currSeg->endPt_y > currSeg->startPt_y) {
-            shortestDistanceToPath_m = currSeg->startPt_x - x;
-          } else {
-            shortestDistanceToPath_m = x - currSeg->startPt_x;
-          }
-          
-          // Compute angle difference
-          radDiff = (line_theta_ - angle).ToFloat();
-          
-          // If the point (x_intersect,y_intersect) is not between startPt and endPt,
-          // and the robot is closer to the end point than it is to the start point,
-          // then we've passed this segment and should go to next one
-          if ( SIGN(currSeg->startPt_y - y) == SIGN(currSeg->endPt_y - y)
-              && (sqDistToStartPt > sqDistToEndPt) ) {
-            return FALSE;
-          }
 
-        } else if (FLT_NEAR(currSeg->startPt_y, currSeg->endPt_y)) {
-          // Special case: Horizontal line
-          if (currSeg->endPt_x > currSeg->startPt_x) {
-            shortestDistanceToPath_m = y - currSeg->startPt_y;
-          } else {
-            shortestDistanceToPath_m = currSeg->startPt_y - y;
-          }
-          
-          // Compute angle difference
-          radDiff = (line_theta_ - angle).ToFloat();
-
-          // If the point (x_intersect,y_intersect) is not between startPt and endPt,
-          // and the robot is closer to the end point than it is to the start point,
-          // then we've passed this segment and should go to next one
-          if ( SIGN(currSeg->startPt_x - x) == SIGN(currSeg->endPt_x - x)
-              && (sqDistToStartPt > sqDistToEndPt) ) {
-            return FALSE;
-          }
-          
-        } else {
-          
-          f32 b_inv = y + x/line_m_;
-          
-          f32 x_intersect = line_m_ * (b_inv - line_b_) / (line_m_*line_m_ + 1);
-          f32 y_intersect = - (x_intersect / line_m_) + b_inv;
-          
-          f32 dy = y - y_intersect;
-          f32 dx = x - x_intersect;
-          
-          shortestDistanceToPath_m = sqrtf(dy*dy + dx*dx);
-          
-#if(DEBUG_PATH_FOLLOWER)
-          PERIODIC_PRINT(DBG_PERIOD, "m: %f, b: %f\n",line_m_,line_b_);
-          PERIODIC_PRINT(DBG_PERIOD, "x_int: %f, y_int: %f, b_inv: %f\n", x_intersect, y_intersect, b_inv);
-          PERIODIC_PRINT(DBG_PERIOD, "dy: %f, dx: %f, dist: %f\n", dy, dx, shortestDistanceToPath_m);
-          PERIODIC_PRINT(DBG_PERIOD, "SIGN(dx): %d, dy_sign: %f\n", (SIGN(dx) ? 1 : -1), line_dy_sign_);
-          PERIODIC_PRINT(DBG_PERIOD, "lineTheta: %f\n", line_theta_.ToFloat());
-          //PRINT("lineTheta: %f, robotTheta: %f\n", currSeg->theta.ToFloat(), currPose.get_angle().ToFloat());
-#endif
-          
-          // Compute the sign of the error distance 
-          shortestDistanceToPath_m *= (SIGN(line_m_) ? 1 : -1) * (SIGN(dy) ? 1 : -1) * line_dy_sign_;
-          
-          
-          // Compute angle difference
-          radDiff = (line_theta_ - angle).ToFloat();
-          
-          
-          // Did we pass the current segment?
-          // If the point (x_intersect,y_intersect) is not between startPt and endPt,
-          // and the robot is closer to the end point than it is to the start point,
-          // then we've passed this segment and should go to next one
-          if ( (SIGN(currSeg->startPt_x - x_intersect) == SIGN(currSeg->endPt_x - x_intersect))
-              && (SIGN(currSeg->startPt_y - y_intersect) == SIGN(currSeg->endPt_y - y_intersect))
-              && (sqDistToStartPt > sqDistToEndPt)
-              ) {
-            return FALSE;
-          }
+        // Compute lookahead position
+        if (LOOK_AHEAD_DIST_M != 0) {
+          x += LOOK_AHEAD_DIST_M * cosf(angle.ToFloat());
+          y += LOOK_AHEAD_DIST_M * sinf(angle.ToFloat());
         }
         
-        return TRUE;
+      
+        return path_[currPathSegment_].GetDistToSegment(x,y,angle.ToFloat(),shortestDistanceToPath_m,radDiff);
       }
       
       
-      bool ProcessPathSegmentArc(f32 &shortestDistanceToPath_m, f32 &radDiff)
-      {
-        const PathSegmentDef::s_arc* currSeg = &(path_[currPathSegment_].def.arc);
-        
-#if(DEBUG_PATH_FOLLOWER)
-        PRINT("currPathSeg: %d, ARC (%f, %f), startRad: %f, sweepRad: %f, radius: %f\n",
-               currPathSegment_, currSeg->centerPt_x, currSeg->centerPt_y, currSeg->startRad, currSeg->sweepRad, currSeg->radius);
-#endif
-        
-        // Get current robot pose
-        f32 x, y;
-        Radians angle;
-        Localization::GetCurrentMatPose(x, y, angle);
-        
-        
-        // Assuming arc is broken up so that it is a true function
-        
-        // Arc paramters
-        f32 x_center = currSeg->centerPt_x;
-        f32 y_center = currSeg->centerPt_y;
-        f32 r = currSeg->radius;
-        Anki::Radians startRad = currSeg->startRad;
-        
-        // Line formed by circle center and robot pose
-        f32 dy = y - y_center;
-        f32 dx = x - x_center;
-        f32 m = dy / dx;
-        f32 b = y - m*x;
-        
-        
-        // Find heading error
-        bool movingCCW = currSeg->sweepRad >= 0;
-        Anki::Radians theta_line = atan2_fast(dy,dx); // angle of line from circle center to robot
-        Anki::Radians theta_tangent = theta_line + Anki::Radians((movingCCW ? 1 : -1 ) * PIDIV2);
-        
-        radDiff = (theta_tangent - angle).ToFloat();
-        
-        // If the line is nearly vertical (within 0.5deg), approximate it
-        // with true vertical so we don't take sqrts of -ve numbers.
-        f32 x_intersect, y_intersect;
-        if (NEAR(ABS(theta_line.ToFloat()), PIDIV2, 0.01)) {
-          shortestDistanceToPath_m = ABS(dy) - r;
-          x_intersect = x_center;
-          y_intersect = y_center + r * (dx > 0 ? 1 : -1);
-          
-        } else {
-          
-          // Where does circle (x - x_center)^2 + (y - y_center)^2 = r^2 and y=mx+b intersect where y=mx+b represents
-          // the line between the circle center and the robot?
-          // (y - y_center)^2 == r^2 - (x - x_center)^2
-          // y = sqrt(r^2 - (x - x_center)^2) + y_center
-          //   = mx + b
-          // (mx + b - y_center)^2 == r^2 - (x - x_center)^2
-          // m^2*x^2 + 2*m*(b - y_center)*x + (b - y_center)^2 == r^2 - x^2 + 2*x_center*x - x_center^2
-          // (m^2+1) * x^2 + (2*m*(b - y_center) - 2*x_center) * x + (b - y_center)^2 - r^2 + x_center^2 == 0
-          //
-          // Use quadratic formula to solve
-          
-          // Quadratic formula coefficients
-          f32 A = m*m + 1;
-          f32 B = 2*m*(b-y_center) - 2*x_center;
-          f32 C = (b - y_center)*(b - y_center) - r*r + x_center*x_center;
-          f32 sqrtPart = sqrtf(B*B - 4*A*C);
-          
-          f32 x_intersect_1 = (-B + sqrtPart) / (2*A);
-          f32 x_intersect_2 = (-B - sqrtPart) / (2*A);
-          
-          
-          // Now we have 2 roots.
-          // Select the one that's on the same side of the circle center as the robot is.
-          x_intersect = x_intersect_2;
-          if (SIGN(dx) == SIGN(x_intersect_1 - x_center)) {
-            x_intersect = x_intersect_1;
-          }
-          
-          // Find y value of intersection
-          y_intersect = y_center + (dy > 0 ? 1 : -1) * sqrtf(r*r - (x_intersect - x_center) * (x_intersect - x_center));
-          
-          // Compute distance to intersection point (i.e. shortest distance to arc)
-          shortestDistanceToPath_m = sqrtf((x - x_intersect) * (x - x_intersect) + (y - y_intersect) * (y - y_intersect));
 
-#if(DEBUG_PATH_FOLLOWER)
-          PRINT("A: %f, B: %f, C: %f, sqrt: %f\n", A, B, C, sqrtPart);
-          PRINT("x_intersects: (%f %f)\n", x_intersect_1, x_intersect_2);
-#endif
-
-          
-        }
-        
-        // Figure out sign of distance according to robot orientation and whether it's inside or outside the circle.
-        bool robotInsideCircle = ABS(dx) < ABS(x_intersect - x_center);
-        if ((robotInsideCircle && !movingCCW) || (!robotInsideCircle && movingCCW)) {
-          shortestDistanceToPath_m *= -1;
-        }
-        
-        
-
-        
-#if(DEBUG_PATH_FOLLOWER)
-        PRINT("x: %f, y: %f, m: %f, b: %f\n", x,y,m,b);
-        PRINT("x_center: %f, y_center: %f\n", x_center, y_center);
-        PRINT("x_int: %f, y_int: %f\n", x_intersect, y_intersect);
-        PRINT("dy: %f, dx: %f, dist: %f, radDiff: %f\n", dy, dx, shortestDistanceToPath_m, radDiff);
-        PRINT("insideCircle: %d\n", robotInsideCircle);
-        PRINT("theta_line: %f, theta_tangent: %f\n", theta_line.ToFloat(), theta_tangent.ToFloat());
-#endif
-        
-        // Did we pass the current segment?
-        // Check if the angDiff exceeds the sweep angle.
-        // Also check for transitions between -PI and +PI by checking if angDiff
-        // ever exceeds a conservative half the distance if PI was approached from the opposite direction.
-        f32 angDiff = (theta_line - startRad).ToFloat();
-        if ( (movingCCW && (angDiff > currSeg->sweepRad || angDiff < -0.5*(2*PI-currSeg->sweepRad))) ||
-            (!movingCCW && (angDiff < currSeg->sweepRad || angDiff >  0.5*(2*PI+currSeg->sweepRad))) ){
-          return FALSE;
-        }
-        
-        
-        return TRUE;
-      }
-      
-
-      bool ProcessPathSegmentPointTurn(f32 &shortestDistanceToPath_m, f32 &radDiff)
+      SegmentRangeStatus ProcessPathSegmentPointTurn(f32 &shortestDistanceToPath_m, f32 &radDiff)
       {
         const PathSegmentDef::s_turn* currSeg = &(path_[currPathSegment_].def.turn);
         
@@ -481,12 +299,12 @@ namespace Anki
         } else {
           if (SteeringController::GetMode() != SteeringController::SM_POINT_TURN) {
             pointTurnStarted_ = false;
-            return false;
+            return OOR_NEAR_END;
           }
         }
 
         
-        return true;
+        return IN_SEGMENT_RANGE;
       }
       
       // Post-path completion cleanup
@@ -560,17 +378,14 @@ namespace Anki
           return EXIT_FAILURE;
         }
         
-        bool inRange = false;
-        
+        SegmentRangeStatus segRes = OOR_NEAR_END;
         switch (path_[currPathSegment_].type) {
           case PST_LINE:
-            inRange = ProcessPathSegmentLine(distToPath_m_, radToPath_);
-            break;
           case PST_ARC:
-            inRange = ProcessPathSegmentArc(distToPath_m_, radToPath_);
+            segRes = ProcessPathSegment(distToPath_m_, radToPath_);
             break;
           case PST_POINT_TURN:
-            inRange = ProcessPathSegmentPointTurn(distToPath_m_, radToPath_);
+            segRes = ProcessPathSegmentPointTurn(distToPath_m_, radToPath_);
             break;
           default:
             // TODO: Error?
@@ -582,7 +397,7 @@ namespace Anki
 #endif
         
         // Go to next path segment if no longer in range of the current one
-        if (!inRange && wasInRange_) {
+        if (segRes == OOR_NEAR_END) {
           if (++currPathSegment_ >= path_.GetNumSegments()) {
             // Path is complete
             PathComplete();
@@ -596,8 +411,6 @@ namespace Anki
           PRINT("PATH SEGMENT %d\n", currPathSegment_);
 #endif
         }
-        
-        wasInRange_ = inRange;
         
         if (!DockingController::IsDockingOrPlacing()) {
           // Check that starting error is not too big
