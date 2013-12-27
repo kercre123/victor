@@ -58,7 +58,7 @@ namespace Anki {
 
       // DEBUG: reinitializing tracker at each step, need to store original image
       const u32 CMX_BUFFER_SIZE = 650000;
-      Embedded::MemoryStack templateImageScratch_;
+      Embedded::MemoryStack trackerInitScratch_;
       
       //const u32 CMX_BUFFER_SIZE = 600000;
 #ifdef SIMULATOR
@@ -111,6 +111,7 @@ namespace Anki {
       
       Embedded::TemplateTracker::LucasKanadeTracker_f32 tracker_;
       Embedded::Quadrilateral<f32> trackingQuad_;
+      Embedded::TemplateTracker::PlanarTransformation_f32 trackerTransform_;
       Embedded::Array<u8> templateImage_;
       Embedded::Rectangle<f32> templateRegion_;
 #if USE_MATLAB_VISUALIZATION
@@ -740,14 +741,14 @@ namespace Anki {
         retVal = EXIT_SUCCESS;
         
 #else
-        trackerScratch_ = Embedded::MemoryStack(cmxBuffer_, TRACKER_SCRATCH_SIZE);
+        //trackerScratch_ = Embedded::MemoryStack(cmxBuffer_, TRACKER_SCRATCH_SIZE);
         
         // DEBUG: Reinitializing tracker at each step, need a place to store template image
-        templateImageScratch_ = Embedded::MemoryStack(cmxBuffer_ + TRACKER_SCRATCH_SIZE, 50000);
+        trackerInitScratch_ = Embedded::MemoryStack(cmxBuffer_ + TRACKER_SCRATCH_SIZE, 50000);
         
         detectorScratchInitialized_ = false;
         
-        if(trackerScratch_.IsValid()) {
+        if(trackerInitScratch_.IsValid()) {
           
           using namespace Embedded::TemplateTracker;
           
@@ -758,8 +759,8 @@ namespace Anki {
           const u16 trackHeight = HAL::CameraModeInfo[TRACKING_RESOLUTION].height;
           const u16 trackWidth  = HAL::CameraModeInfo[TRACKING_RESOLUTION].width;
           
-          templateImage_ = Embedded::Array<u8>(trackHeight, trackWidth, templateImageScratch_);
-          DownsampleHelper(frame, templateImage_, TRACKING_RESOLUTION, trackerScratch_);
+          templateImage_ = Embedded::Array<u8>(trackHeight, trackWidth, trackerInitScratch_);
+          DownsampleHelper(frame, templateImage_, TRACKING_RESOLUTION, trackerInitScratch_);
           
           // Note that the templateRegion and the trackingQuad are both at
           // DETECTION_RESOLUTION, not necessarily the resolution of the frame.
@@ -788,6 +789,17 @@ namespace Anki {
             retVal = EXIT_SUCCESS;
           }
           */
+          
+          // Initialize the tracker's transformaion matrix to the identity
+          Embedded::Array<f32> H(3,3,trackerInitScratch_);
+          H.SetZero();
+          H[0][0] = 1.f;
+          H[1][1] = 1.f;
+          H[2][2] = 1.f;
+          
+          trackerTransform_ = Embedded::TemplateTracker::PlanarTransformation_f32(TRANSFORM_AFFINE, trackerInitScratch_);
+          trackerTransform_.set_homography(H);
+          
           retVal = EXIT_SUCCESS;
           
         } // if trackerScratch is valid
@@ -831,7 +843,11 @@ namespace Anki {
                                             NUM_TRACKING_PYRAMID_LEVELS,
                                             TRANSFORM_AFFINE,
                                             TRACKING_RIDGE_WEIGHT, trackerScratch_);
-          assert(tracker_.IsValid());
+          AnkiAssert(tracker_.IsValid());
+          
+          // Pick up where we left off in the previous iteration by initializing
+          // the tracker with the previous transform
+          tracker_.set_transformation(trackerTransform_);
           
           const u16 trackWidth  = HAL::CameraModeInfo[TRACKING_RESOLUTION].width;
           const u16 trackHeight = HAL::CameraModeInfo[TRACKING_RESOLUTION].height;
@@ -841,8 +857,6 @@ namespace Anki {
           
           Messages::DockingErrorSignal dockErrMsg;
           dockErrMsg.timestamp = frame.timestamp;
-          
-          PlanarTransformation_f32 transform;
           
           bool converged;
           if(tracker_.UpdateTrack(image, TRACKING_MAX_ITERATIONS,
@@ -855,9 +869,9 @@ namespace Anki {
             if(converged)
             {
               // Tracking succeeded:
-              transform = tracker_.get_transformation();
+              trackerTransform_ = tracker_.get_transformation();
               
-              transform.set_initialCorners(trackingQuad_);
+              trackerTransform_.set_initialCorners(trackingQuad_);
               
               using namespace Embedded;
               
@@ -865,7 +879,7 @@ namespace Anki {
               const f32 fxAdj = (static_cast<f32>(headCamInfo_->ncols) /
                                  static_cast<f32>(HAL::CameraModeInfo[TRACKING_RESOLUTION].width));
               
-              Docking::ComputeDockingErrorSignal(transform,
+              Docking::ComputeDockingErrorSignal(trackerTransform_,
                                                  HAL::CameraModeInfo[TRACKING_RESOLUTION].width,
                                                  BLOCK_MARKER_WIDTH_MM,
                                                  headCamInfo_->focalLength_x / fxAdj,
@@ -887,13 +901,15 @@ namespace Anki {
             
             if(dockErrMsg.didTrackingSucceed)
             {
-              Embedded::Array<f32> H = transform.get_homography();
+              Embedded::Array<f32> H = trackerTransform_.get_homography();
               matlabViz_.PutArray(H, "H");
               //matlabViz_.PutQuad(transform.get_transformedCorners(trackerScratch_), "trackedQuad");
               matlabViz_.PutQuad(trackingQuad_, "initQuad");
               
-              matlabViz_.EvalStringEcho("x = H(1,1)*initQuad(:,1) + H(1,2)*initQuad(:,2) + H(1,3); "
-                                        "y = H(2,1)*initQuad(:,1) + H(2,2)*initQuad(:,2) + H(2,3); "
+              matlabViz_.EvalStringEcho("cen = mean(initQuad,1); "
+                                        "initQuad = initQuad - cen(ones(4,1),:); "
+                                        "x = H(1,1)*initQuad(:,1) + H(1,2)*initQuad(:,2) + H(1,3) + cen(1); "
+                                        "y = H(2,1)*initQuad(:,1) + H(2,2)*initQuad(:,2) + H(2,3) + cen(2); "
                                         "set(h_trackedQuad, 'Visible', 'on', "
                                         "    'XData', x([1 2 4 3 1])+1, "
                                         "    'YData', y([1 2 4 3 1])+1); "
