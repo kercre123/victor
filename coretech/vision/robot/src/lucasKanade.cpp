@@ -692,12 +692,12 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result LucasKanadeTracker_f32::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, MemoryStack memory)
+      Result LucasKanadeTracker_f32::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, bool& converged, MemoryStack memory)
       {
         for(s32 iScale=numPyramidLevels-1; iScale>=0; iScale--) {
           // TODO: remove
           //for(s32 iScale=0; iScale>=0; iScale--) {
-          bool converged = false;
+          converged = false;
 
           BeginBenchmark("UpdateTrack.refineTranslation");
           if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, TRANSFORM_TRANSLATION, useWeights, converged, memory)) != RESULT_OK)
