@@ -134,6 +134,35 @@ namespace Anki
       return std::string("unknown");
     } // std::string convertToMatlabTypeString(const char *typeName, size_t byteDepth)
 
+    
+    template<> mxClassID Matlab::GetMatlabClassID<u8>() {
+      return mxUINT8_CLASS;
+    }
+    
+    template<> mxClassID Matlab::GetMatlabClassID<u16>() {
+      return mxUINT16_CLASS;
+    }
+    
+    template<> mxClassID Matlab::GetMatlabClassID<s16>() {
+      return mxINT16_CLASS;
+    }
+    
+    template<> mxClassID Matlab::GetMatlabClassID<s32>() {
+      return mxINT32_CLASS;
+    }
+    
+    template<> mxClassID Matlab::GetMatlabClassID<u32>() {
+      return mxUINT32_CLASS;
+    }
+    
+    template<> mxClassID Matlab::GetMatlabClassID<f32>() {
+      return mxSINGLE_CLASS;
+    }
+    
+    template<> mxClassID Matlab::GetMatlabClassID<f64>() {
+      return mxDOUBLE_CLASS;
+    }
+    
     Matlab::Matlab(bool clearWorkspace)
     {
       // Multithreading under Windows requires this command

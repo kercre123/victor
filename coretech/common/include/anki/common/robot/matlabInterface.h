@@ -108,6 +108,8 @@ namespace Anki
       std::string EvalStringExplicitEcho(const char * buffer);
 
       MatlabVariableType GetType(const std::string name);
+      
+      template<typename Type>  mxClassID GetMatlabClassID();
 
       //Check if the variable exists on the workspace
       bool DoesVariableExist(const std::string name);
@@ -133,13 +135,38 @@ namespace Anki
 
 #pragma mark --- Implementations ---
 
+    template<typename Type>
+    mxClassID Matlab::GetMatlabClassID()
+    {
+      return mxUNKNOWN_CLASS;
+    }
+    
     template<typename Type> Result Matlab::PutArray(const Array<Type> &matrix, const std::string name)
     {
-      const s32 matrixHeight = matrix.get_size(0);
-      const s32 matrixWidth = matrix.get_size(1);
+      const mwSize matrixHeight = static_cast<mwSize>(matrix.get_size(0));
+      const mwSize matrixWidth  = static_cast<mwSize>(matrix.get_size(1));
 
       AnkiConditionalErrorAndReturnValue(ep, RESULT_FAIL, "Anki.PutArray<Type>", "Matlab engine is not started/connected");
+      
+      const mxClassID whichClass = GetMatlabClassID<Type>();
+      AnkiConditionalErrorAndReturn(whichClass != mxUNKNOWN_CLASS, RESULT_FAIL, "Anki.PutArray<Type>", "Unknown type to convert to a mxClassID");
+      
+      // Create the transpose:
+      const mwSize dims[2] = {matrixWidth, matrixHeight};
+      mxArray* mxMatrix = mxCreateNumericArray(2, dims, whichClass, mxREAL);
+      Type *data = static_cast<Type*>(mxGetData(mxMatrix));
+      
+      for(mwSize y=0; y<matrixHeight; y++) {
+        memcpy(data, matrix.Pointer(y,0), matrixWidth*sizeof(Type));
+        data += matrixWidth;
+      }
 
+      engPutVariable(ep, name.data(), mxMatrix);
+      
+      // Transpose to what we actually want over in matlab
+      EvalString("%s = %s';", name.data(), name.data());
+      
+      /*
       const std::string tmpName = name + std::string("_AnkiTMP");
       const std::string matlabTypeName = Anki::Embedded::ConvertToMatlabTypeString(typeid(Type).name(), sizeof(Type));
 
@@ -151,7 +178,7 @@ namespace Anki
       }
 
       EvalString("clear %s;", tmpName.data());
-
+       */
       return RESULT_OK;
     } // template<typename Type> Result Matlab::PutArray(const Array<Type> &matrix, const std::string name)
 
