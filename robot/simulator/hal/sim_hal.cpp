@@ -103,7 +103,7 @@ namespace Anki {
         float speed_mm_per_s = 0;
         
         // A minimum amount of power is required to actually move the wheels
-        if (power < MIN_WHEEL_POWER_FOR_MOTION) {
+        if (ABS(power) < MIN_WHEEL_POWER_FOR_MOTION) {
           return 0;
         }
         
