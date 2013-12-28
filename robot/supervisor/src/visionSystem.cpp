@@ -18,7 +18,7 @@
 
 #include "headController.h"
 
-#if 0 && defined(SIMULATOR) && ANKICORETECH_EMBEDDED_USE_MATLAB
+#if defined(SIMULATOR) && ANKICORETECH_EMBEDDED_USE_MATLAB
 #define USE_MATLAB_VISUALIZATION 1
 #else
 #define USE_MATLAB_VISUALIZATION 0
@@ -136,7 +136,7 @@ namespace Anki {
       ReturnCode LocalizeWithMat(const FrameBuffer &frame);
       
       ReturnCode InitTemplate(const FrameBuffer &frame,
-                              const Embedded::Rectangle<f32>& templateRegion);
+                              Embedded::Quadrilateral<f32>& templateRegion);
       
       ReturnCode TrackTemplate(const FrameBuffer &frame);
       
@@ -646,21 +646,6 @@ namespace Anki {
             {
               using namespace Embedded;
               
-              // TODO: Convert from internal fixed point to floating point here?
-              f32 left   = crntMarker.corners[0].x;
-              f32 right  = crntMarker.corners[0].x;
-              f32 top    = crntMarker.corners[0].y;
-              f32 bottom = crntMarker.corners[0].y;
-              
-              for(u8 i_corner=1; i_corner<4; ++i_corner) {
-                left   = MIN(left,   crntMarker.corners[i_corner].x);
-                right  = MAX(right,  crntMarker.corners[i_corner].x);
-                top    = MIN(top,    crntMarker.corners[i_corner].y);
-                bottom = MAX(bottom, crntMarker.corners[i_corner].y);
-              }
-              
-              Rectangle<f32> templateRegion(left, right, top, bottom);
-            
               // I'd rather only initialize trackingQuad_ if InitTemplate()
               // succeeds, but InitTemplate downsamples it for the time being,
               // since we're still doing template initialization at tracking
@@ -671,7 +656,7 @@ namespace Anki {
                                                  Point<f32>(crntMarker.corners[2].x, crntMarker.corners[2].y),
                                                  Point<f32>(crntMarker.corners[3].x, crntMarker.corners[3].y));
               
-              if(InitTemplate(frame, templateRegion) == EXIT_SUCCESS)
+              if(InitTemplate(frame, trackingQuad_) == EXIT_SUCCESS)
               {
                 SetDockingMode(static_cast<bool>(true));
               }
@@ -718,8 +703,8 @@ namespace Anki {
       } // localizeWithMat()
       
       
-      ReturnCode InitTemplate(const FrameBuffer              &frame,
-                              const Embedded::Rectangle<f32> &templateRegion)
+      ReturnCode InitTemplate(const FrameBuffer            &frame,
+                              Embedded::Quadrilateral<f32> &templateQuad)
       {
         ReturnCode retVal = EXIT_FAILURE;
         isTemplateInitialized_ = false;
@@ -758,19 +743,13 @@ namespace Anki {
           // DETECTION_RESOLUTION, not necessarily the resolution of the frame.
           const s32 downsamplePower = static_cast<s32>(HAL::CameraModeInfo[TRACKING_RESOLUTION].downsamplePower[DETECTION_RESOLUTION]);
           const f32 downsampleFactor = static_cast<f32>(1 << downsamplePower);
-          Embedded::Rectangle<f32> templateRegionDownSampled(templateRegion);
-          templateRegionDownSampled.left   /= downsampleFactor;
-          templateRegionDownSampled.right  /= downsampleFactor;
-          templateRegionDownSampled.top    /= downsampleFactor;
-          templateRegionDownSampled.bottom /= downsampleFactor;
           
-
           for(u8 i=0; i<4; ++i) {
-            trackingQuad_[i].x /= downsampleFactor;
-            trackingQuad_[i].y /= downsampleFactor;
+            templateQuad[i].x /= downsampleFactor;
+            templateQuad[i].y /= downsampleFactor;
           }
           
-          tracker_ = LucasKanadeTracker_f32(image, templateRegionDownSampled,
+          tracker_ = LucasKanadeTracker_f32(image, templateQuad,
                                             NUM_TRACKING_PYRAMID_LEVELS,
                                             TRANSFORM_AFFINE,
                                             TRACKING_RIDGE_WEIGHT,
@@ -838,18 +817,13 @@ namespace Anki {
             dockErrMsg.didTrackingSucceed = static_cast<u8>(converged);
             if(converged)
             {
-              // Tracking succeeded:
-              transform = tracker_.get_transformation();
-              
-              transform.set_initialCorners(trackingQuad_);
-              
               using namespace Embedded;
               
               // TODO: Add CameraMode resolution to CameraInfo
               const f32 fxAdj = (static_cast<f32>(headCamInfo_->ncols) /
                                  static_cast<f32>(HAL::CameraModeInfo[TRACKING_RESOLUTION].width));
               
-              Docking::ComputeDockingErrorSignal(transform,
+              Docking::ComputeDockingErrorSignal(tracker_,
                                                  HAL::CameraModeInfo[TRACKING_RESOLUTION].width,
                                                  BLOCK_MARKER_WIDTH_MM,
                                                  headCamInfo_->focalLength_x / fxAdj,
@@ -872,9 +846,9 @@ namespace Anki {
             
             if(dockErrMsg.didTrackingSucceed)
             {
-              Embedded::Array<f32> H = transform.get_homography();
+              /*
+               Embedded::Array<f32> H = transform.get_homography();
               matlabViz_.PutArray(H, "H");
-              //matlabViz_.PutQuad(transform.get_transformedCorners(trackerScratch_), "trackedQuad");
               matlabViz_.PutQuad(trackingQuad_, "initQuad");
               
               matlabViz_.EvalStringEcho("cen = mean(initQuad,1); "
@@ -884,6 +858,12 @@ namespace Anki {
                                         "set(h_trackedQuad, 'Visible', 'on', "
                                         "    'XData', x([1 2 4 3 1])+1, "
                                         "    'YData', y([1 2 4 3 1])+1); "
+                                        "title(h_axes, 'Tracking Succeeded');");
+               */
+              matlabViz_.PutQuad(tracker_.get_transformedTemplateQuad(trackerScratch2_), "transformedQuad");
+              matlabViz_.EvalStringEcho("set(h_trackedQuad, 'Visible', 'on', "
+                                        "    'XData', transformedQuad([1 2 4 3 1],1)+1, "
+                                        "    'YData', transformedQuad([1 2 4 3 1],2)+1); "
                                         "title(h_axes, 'Tracking Succeeded');");
             }
             else
