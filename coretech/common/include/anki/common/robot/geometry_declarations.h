@@ -51,7 +51,9 @@ namespace Anki
 
       Point<Type> operator- (const Point<Type> &point2) const;
 
-      void operator*= (const Type value);
+      Point<Type>& operator*= (const Type value);
+      Point<Type>& operator-= (const Type value);
+      Point<Type>& operator-= (const Point<Type> &point2);
 
       inline Point<Type>& operator= (const Point<Type> &point2);
       

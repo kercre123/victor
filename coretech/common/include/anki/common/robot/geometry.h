@@ -73,10 +73,25 @@ namespace Anki
       return Point<Type>(this->x-point2.x, this->y-point2.y);
     }
 
-    template<typename Type> void Point<Type>::operator*= (const Type value)
+    template<typename Type> Point<Type>& Point<Type>::operator*= (const Type value)
     {
       this->x *= value;
       this->y *= value;
+      return *this;
+    }
+    
+    template<typename Type> Point<Type>& Point<Type>::operator-= (const Type value)
+    {
+      this->x -= value;
+      this->y -= value;
+      return *this;
+    }
+    
+    template<typename Type> Point<Type>& Point<Type>::operator-= (const Point<Type> &point2)
+    {
+      this->x -= point2.x;
+      this->y -= point2.y;
+      return *this;
     }
 
     template<typename Type> inline Point<Type>& Point<Type>::operator= (const Point<Type> &point2)
