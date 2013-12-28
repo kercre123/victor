@@ -71,7 +71,7 @@ namespace Anki
 
         Result Print(const char * const variableName = "Transformation");
 
-        Quadrilateral<f32> TransformQuadrilateral(const Quadrilateral<f32> &in, MemoryStack scratch, const f32 scale=1.0f) const;
+        Quadrilateral<f32> TransformQuadrilateral(const Quadrilateral<f32> &in, MemoryStack scratch, const f32 scale=1.0f, const Point<f32> centerOffset = Point<f32>(0.f,0.f)) const;
 
         Result set_transformType(const TransformType transformType);
 
@@ -112,7 +112,7 @@ namespace Anki
 
       public:
         LucasKanadeTracker_f32(void) : isValid(false), isInitialized(false) { }
-        LucasKanadeTracker_f32(const Array<u8> &templateImage, const Rectangle<f32> &templateRegion, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory);
+        LucasKanadeTracker_f32(const Array<u8> &templateImage, const Quadrilateral<f32> &templateRegion, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory);
 
         Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, bool& converged, MemoryStack memory);
 
@@ -121,6 +121,8 @@ namespace Anki
         Result set_transformation(const PlanarTransformation_f32 &transformation);
 
         PlanarTransformation_f32 get_transformation() const;
+        
+        Quadrilateral<f32> get_transformedTemplateQuad(MemoryStack scratch) const;
 
       protected:
         // A_full is the list of derivative matrices for each level of the pyramid
@@ -146,7 +148,8 @@ namespace Anki
 
         f32 templateWeightsSigma;
 
-        Rectangle<f32> templateRegion;
+        Rectangle<f32> templateRectangle;
+        Quadrilateral<f32> templateQuad;
         Point<f32> centerOffset;
 
         bool isValid;
