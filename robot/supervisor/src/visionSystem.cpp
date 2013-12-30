@@ -805,8 +805,6 @@ namespace Anki {
           Messages::DockingErrorSignal dockErrMsg;
           dockErrMsg.timestamp = frame.timestamp;
           
-          PlanarTransformation_f32 transform;
-          
           bool converged;
           if(tracker_.UpdateTrack(image, TRACKING_MAX_ITERATIONS,
                                   TRACKING_CONVERGENCE_TOLERANCE,
@@ -823,7 +821,7 @@ namespace Anki {
               const f32 fxAdj = (static_cast<f32>(headCamInfo_->ncols) /
                                  static_cast<f32>(HAL::CameraModeInfo[TRACKING_RESOLUTION].width));
               
-              Docking::ComputeDockingErrorSignal(tracker_,
+              Docking::ComputeDockingErrorSignal(tracker_.get_transformation(),
                                                  HAL::CameraModeInfo[TRACKING_RESOLUTION].width,
                                                  BLOCK_MARKER_WIDTH_MM,
                                                  headCamInfo_->focalLength_x / fxAdj,
@@ -860,7 +858,7 @@ namespace Anki {
                                         "    'YData', y([1 2 4 3 1])+1); "
                                         "title(h_axes, 'Tracking Succeeded');");
                */
-              matlabViz_.PutQuad(tracker_.get_transformedTemplateQuad(trackerScratch2_), "transformedQuad");
+              matlabViz_.PutQuad(tracker_.get_transformation().get_transformedCorners(trackerScratch2_), "transformedQuad");
               matlabViz_.EvalStringEcho("set(h_trackedQuad, 'Visible', 'on', "
                                         "    'XData', transformedQuad([1 2 4 3 1],1)+1, "
                                         "    'YData', transformedQuad([1 2 4 3 1],2)+1); "
@@ -873,9 +871,8 @@ namespace Anki {
             }
             
             matlabViz_.EvalString("drawnow");
-#endif
             
-            
+#endif // #if USE_MATLAB_VISUALIZATION
             
             Messages::ProcessDockingErrorSignalMessage(dockErrMsg);
           }
@@ -889,7 +886,7 @@ namespace Anki {
           retVal = EXIT_FAILURE;
         } // if/else trackerScratch is valid
         
-#endif // defined(USE_MATLAB_FOR_HEAD_CAMERA)
+#endif // #if USE_OFFBOARD_VISION
         
         return retVal;
         
