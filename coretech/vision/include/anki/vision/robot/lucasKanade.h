@@ -84,6 +84,8 @@ namespace Anki
         Result set_initialCorners(const Quadrilateral<f32> &initialCorners);
 
         const Quadrilateral<f32>& get_initialCorners() const;
+        
+        const Point<f32>& get_centerOffset() const;
 
         Quadrilateral<f32> get_transformedCorners(MemoryStack scratch) const;
 
@@ -148,8 +150,7 @@ namespace Anki
 
         f32 templateWeightsSigma;
 
-        Rectangle<f32> templateRectangle;
-        Quadrilateral<f32> templateQuad;
+        Rectangle<f32> templateRegion;
 
         bool isValid;
         bool isInitialized;
@@ -160,7 +161,8 @@ namespace Anki
         Result InitializeTemplate(const Array<u8> &templateImage, MemoryStack &memory);
 
         Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, const bool useWeights, bool &converged, MemoryStack memory);
-      };
+        
+      }; // class LucasKanadeTracker_f32
 
       class LucasKanadeTrackerFast
       {
@@ -168,9 +170,11 @@ namespace Anki
         // LucasKanadeTracker, this version uses much less memory, and will eventually be better optimized.
 
       public:
-        LucasKanadeTrackerFast(const Array<u8> &templateImage, const Rectangle<f32> &templateRegion, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory);
+        LucasKanadeTrackerFast(void) : isValid(false) { }
 
-        Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, MemoryStack memory);
+        LucasKanadeTrackerFast(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory);
+
+        Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, bool& converged, MemoryStack memory);
 
         bool IsValid() const;
 
@@ -200,7 +204,6 @@ namespace Anki
         f32 ridgeWeight;
 
         Rectangle<f32> templateRegion;
-        Point<f32> centerOffset;
 
         bool isValid;
 
@@ -208,7 +211,9 @@ namespace Anki
 
         Result IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
         Result IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
-      };
+        
+      }; // class LucasKanadeTrackerFast
+      
     } // namespace TemplateTracker
   } // namespace Embedded
 } //namespace Anki
