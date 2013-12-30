@@ -58,13 +58,13 @@ static char buffer[MAX_BYTES];
 #else
 
 #ifdef BUFFER_IN_CMX
-static char buffer[MAX_BYTES];    // CMX is default
+__attribute__((section(".cmx.bss"))) static char buffer[MAX_BYTES];    // CMX is default
 #else // #ifdef BUFFER_IN_CMX
 
 #ifdef BUFFER_IN_DDR_WITH_L2
-__attribute__((section(".ddr.bss,DDR"))) static char buffer[MAX_BYTES]; // With L2 cache
+__attribute__((section(".ddr.bss"))) static char buffer[MAX_BYTES]; // With L2 cache
 #else
-__attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BYTES]; // No L2 cache
+__attribute__((section(".ddr_direct.bss"))) static char buffer[MAX_BYTES]; // No L2 cache
 #endif
 
 #endif // #ifdef BUFFER_IN_CMX ... #else
@@ -1667,7 +1667,7 @@ GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
   ArraySlice<u8> slice1 = array1(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
 
   ASSERT_TRUE(slice1.get_array().IsValid());
-  
+
   const Array<u8> array2(20,30,ms);
 
   // Will not compile
@@ -1675,12 +1675,12 @@ GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
 
   // This is okay
   ConstArraySlice<u8> slice1b = array1(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
-  
+
   ASSERT_TRUE(slice1b.get_array().IsValid());
 
   // This is okay
   ConstArraySlice<u8> slice2 = array2(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
-  
+
   ASSERT_TRUE(slice2.get_array().IsValid());
 
   //printf("%d %d %d\n", slice1.get_xSlice().get_start(), slice1.get_xSlice().get_end(), *slice1.get_array().Pointer(0,0));
