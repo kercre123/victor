@@ -234,6 +234,25 @@ namespace Anki
 
       return center;
     }
+    
+    template<typename Type> Rectangle<Type> Quadrilateral<Type>::ComputeBoundingRectangle() const
+    {
+      Rectangle<Type> boundingBox(this->corners[0].x,
+                                  this->corners[0].x,
+                                  this->corners[0].y,
+                                  this->corners[0].y);
+
+      // Initialize the template rectangle to the bounding box of the given
+      // quadrilateral
+      for(s32 i=1; i<4; ++i) {
+        boundingBox.left   = MIN(boundingBox.left,   this->corners[i].x);
+        boundingBox.right  = MAX(boundingBox.right,  this->corners[i].x);
+        boundingBox.top    = MIN(boundingBox.top,    this->corners[i].y);
+        boundingBox.bottom = MAX(boundingBox.bottom, this->corners[i].y);
+      }
+      
+      return boundingBox;
+    }
 
     template<typename Type> bool Quadrilateral<Type>::operator== (const Quadrilateral<Type> &quad2) const
     {

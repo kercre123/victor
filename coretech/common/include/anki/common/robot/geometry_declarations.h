@@ -110,6 +110,7 @@ namespace Anki
       void Print() const;
 
       Point<Type> ComputeCenter() const;
+      Rectangle<Type> ComputeBoundingRectangle() const;
 
       bool operator== (const Quadrilateral<Type> &quad2) const;
 
