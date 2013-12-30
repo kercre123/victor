@@ -18,6 +18,9 @@
 
 #include "headController.h"
 
+// Set to 1 to use LucasKanadeTrackerFast, 0 for LucasKanadeTracker_f32
+#define USE_FAST_LK 1
+
 #if defined(SIMULATOR) && ANKICORETECH_EMBEDDED_USE_MATLAB
 #define USE_MATLAB_VISUALIZATION 1
 #else
@@ -105,7 +108,12 @@ namespace Anki {
       
       f32 matCamPixPerMM_ = 1.f;
       
+#if USE_FAST_LK
+      Embedded::TemplateTracker::LucasKanadeTrackerFast tracker_;
+#else
       Embedded::TemplateTracker::LucasKanadeTracker_f32 tracker_;
+#endif
+      
       Embedded::Quadrilateral<f32> trackingQuad_;
 
 #if USE_MATLAB_VISUALIZATION
@@ -749,11 +757,19 @@ namespace Anki {
             templateQuad[i].y /= downsampleFactor;
           }
           
+#if USE_FAST_LK
+          tracker_ = LucasKanadeTrackerFast(image, templateQuad,
+                                            NUM_TRACKING_PYRAMID_LEVELS,
+                                            TRANSFORM_AFFINE,
+                                            TRACKING_RIDGE_WEIGHT,
+                                            trackerScratch1_);
+#else
           tracker_ = LucasKanadeTracker_f32(image, templateQuad,
                                             NUM_TRACKING_PYRAMID_LEVELS,
                                             TRANSFORM_AFFINE,
                                             TRACKING_RIDGE_WEIGHT,
                                             trackerScratch1_);
+#endif
           
           if(tracker_.IsValid()) {
             retVal = EXIT_SUCCESS;
@@ -806,11 +822,18 @@ namespace Anki {
           dockErrMsg.timestamp = frame.timestamp;
           
           bool converged;
+#if USE_FAST_LK
+          if(tracker_.UpdateTrack(image, TRACKING_MAX_ITERATIONS,
+                                  TRACKING_CONVERGENCE_TOLERANCE,
+                                  converged,
+                                  trackerScratch2_) == Embedded::RESULT_OK)
+#else
           if(tracker_.UpdateTrack(image, TRACKING_MAX_ITERATIONS,
                                   TRACKING_CONVERGENCE_TOLERANCE,
                                   TRACKING_USE_WEIGHTS,
                                   converged,
                                   trackerScratch2_) == Embedded::RESULT_OK)
+#endif
           {
             dockErrMsg.didTrackingSucceed = static_cast<u8>(converged);
             if(converged)
