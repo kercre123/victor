@@ -27,7 +27,7 @@ namespace Anki
 
       //currentDistance = BlockMarker3D.ReferenceWidth * this.calibration.fc(1) / L;
 
-      Result ComputeDockingErrorSignal(const TemplateTracker::LucasKanadeTracker_f32 &tracker,
+      Result ComputeDockingErrorSignal(const TemplateTracker::PlanarTransformation_f32 &transform,
                                        const s32 horizontalTrackingResolution,
                                        const f32 blockMarkerWidthInMM,
                                        const f32 horizontalFocalLengthInMM,
@@ -39,9 +39,9 @@ namespace Anki
         rel_y = -1.0f;
         rel_rad = -1.0f;
         
-        if(tracker.get_transformation().get_transformType() == TemplateTracker::TRANSFORM_AFFINE)
+        if(transform.get_transformType() == TemplateTracker::TRANSFORM_AFFINE)
         {
-          Quadrilateral<f32> transformedQuad = tracker.get_transformedTemplateQuad(scratch);
+          Quadrilateral<f32> transformedQuad = transform.get_transformedCorners(scratch);
           return ComputeDockingErrorSignal_Affine(transformedQuad,
                                                   horizontalTrackingResolution,
                                                   blockMarkerWidthInMM,

@@ -61,9 +61,7 @@ namespace Anki
         // Requires at least N*sizeof(f32) bytes of scratch
         Result TransformPoints(
           const Array<f32> &xIn, const Array<f32> &yIn,
-          const f32 scale,
-          const Point<f32> &centerOffset,
-          Array<f32> &xOut, Array<f32> &yOut) const;
+          const f32 scale, Array<f32> &xOut, Array<f32> &yOut) const;
 
         // Update the transformation. The format of the update should be as follows:
         // TRANSFORM_TRANSLATION: [-dx, -dy]
@@ -71,7 +69,9 @@ namespace Anki
 
         Result Print(const char * const variableName = "Transformation");
 
-        Quadrilateral<f32> TransformQuadrilateral(const Quadrilateral<f32> &in, MemoryStack scratch, const f32 scale=1.0f, const Point<f32> centerOffset = Point<f32>(0.f,0.f)) const;
+        Quadrilateral<f32> TransformQuadrilateral(const Quadrilateral<f32> &in,
+                                                  MemoryStack scratch,
+                                                  const f32 scale=1.0f) const;
 
         Result set_transformType(const TransformType transformType);
 
@@ -94,10 +94,12 @@ namespace Anki
 
         Quadrilateral<f32> initialCorners; // The initial corners of the valid region
 
+        Point<f32> centerOffset;
+        
         static Result TransformPointsStatic(
           const Array<f32> &xIn, const Array<f32> &yIn,
           const f32 scale,
-          const Point<f32> &centerOffset,
+          const Point<f32>& centerOffset,
           Array<f32> &xOut, Array<f32> &yOut,
           const TransformType transformType,
           const Array<f32> &homography);
@@ -122,8 +124,6 @@ namespace Anki
 
         PlanarTransformation_f32 get_transformation() const;
         
-        Quadrilateral<f32> get_transformedTemplateQuad(MemoryStack scratch) const;
-
       protected:
         // A_full is the list of derivative matrices for each level of the pyramid
         FixedLengthList<Array<f32>> A_full;
@@ -150,7 +150,6 @@ namespace Anki
 
         Rectangle<f32> templateRectangle;
         Quadrilateral<f32> templateQuad;
-        Point<f32> centerOffset;
 
         bool isValid;
         bool isInitialized;

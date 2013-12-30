@@ -26,11 +26,18 @@ namespace Anki
       static Result lastResult;
 
       PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, MemoryStack &memory)
-        : transformType(transformType), initialCorners(initialCorners)
+        : transformType(transformType), initialCorners(initialCorners),
+          centerOffset(initialCorners.ComputeCenter())
       {
         AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
           "PlanarTransformation_f32::PlanarTransformation_f32", "Invalid transformType %d", transformType);
 
+        // Store the initial quad recentered around the centerOffset.
+        // get_transformedCorners() will add it back
+        for(s32 i_pt=0; i_pt<4; ++i_pt) {
+          this->initialCorners[i_pt] -= this->centerOffset;
+        }
+        
         this->homography = Eye<f32>(3, 3, memory);
 
         if(initialHomography.IsValid()) {
@@ -39,37 +46,39 @@ namespace Anki
       }
 
       PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, MemoryStack &memory)
-        : transformType(transformType), initialCorners(initialCorners)
+        : transformType(transformType), initialCorners(initialCorners),
+          centerOffset(initialCorners.ComputeCenter())
       {
         AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
           "PlanarTransformation_f32::PlanarTransformation_f32", "Invalid transformType %d", transformType);
 
+        // Store the initial quad recentered around the centerOffset.
+        // get_transformedCorners() will add it back
+        for(s32 i_pt=0; i_pt<4; ++i_pt) {
+          this->initialCorners[i_pt] -= this->centerOffset;
+        }
+        
         this->homography = Eye<f32>(3, 3, memory);
       }
 
       PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, MemoryStack &memory)
-        : transformType(transformType)
+        : PlanarTransformation_f32(transformType, Quadrilateral<f32>(Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f)),memory)
       {
-        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
-          "PlanarTransformation_f32::PlanarTransformation_f32", "Invalid transformType %d", transformType);
-
-        initialCorners = Quadrilateral<f32>(Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f));
-
-        this->homography = Eye<f32>(3, 3, memory);
+        
       }
 
       PlanarTransformation_f32::PlanarTransformation_f32()
       {
         initialCorners = Quadrilateral<f32>(Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f));
+        centerOffset = initialCorners.ComputeCenter();
       }
 
       Result PlanarTransformation_f32::TransformPoints(
         const Array<f32> &xIn, const Array<f32> &yIn,
         const f32 scale,
-        const Point<f32> &centerOffset,
         Array<f32> &xOut, Array<f32> &yOut) const
       {
-        return TransformPointsStatic(xIn, yIn, scale, centerOffset, xOut, yOut, this->get_transformType(), this->get_homography());
+        return TransformPointsStatic(xIn, yIn, scale, this->centerOffset, xOut, yOut, this->get_transformType(), this->get_homography());
       }
 
       Result PlanarTransformation_f32::Update(const Array<f32> &update, MemoryStack scratch, TransformType updateType)
@@ -155,7 +164,7 @@ namespace Anki
         return this->homography.Print(variableName);
       }
 
-      Quadrilateral<f32> PlanarTransformation_f32::TransformQuadrilateral(const Quadrilateral<f32> &in, MemoryStack scratch, const f32 scale, const Point<f32> centerOffset) const
+      Quadrilateral<f32> PlanarTransformation_f32::TransformQuadrilateral(const Quadrilateral<f32> &in, MemoryStack scratch, const f32 scale) const
       {
         Array<f32> xIn(1,4,scratch);
         Array<f32> yIn(1,4,scratch);
@@ -167,7 +176,7 @@ namespace Anki
           yIn[0][i] = in.corners[i].y;
         }
 
-        TransformPoints(xIn, yIn, scale, centerOffset, xOut, yOut);
+        TransformPoints(xIn, yIn, scale, xOut, yOut);
 
         Quadrilateral<f32> out;
 
@@ -439,17 +448,7 @@ namespace Anki
         this->templateRegionWidth = templateRectangle.right - templateRectangle.left + 1;
 
         this->templateWeightsSigma = sqrtf(this->templateRegionWidth*this->templateRegionWidth + this->templateRegionHeight*this->templateRegionHeight) / 2.0f;
-
-        this->centerOffset.y = (templateRectangle.bottom + templateRectangle.top) / 2;
-        this->centerOffset.x = (templateRectangle.right + templateRectangle.left) / 2;
-
-        // Store the template quad recentered around the centerOffset.
-        // get_transformedTemplateQuad() calls TransformPoints, which will add
-        // the center offset back.
-        for(s32 i_pt=0; i_pt<4; ++i_pt) {
-          this->templateQuad.corners[i_pt] -= this->centerOffset;
-        }
-          
+        
         // Allocate all permanent memory
         BeginBenchmark("InitializeTemplate.allocate");
         for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++) {
@@ -518,7 +517,7 @@ namespace Anki
 
             BeginBenchmark("InitializeTemplate.transformPoints");
             // Compute the warped coordinates (for later)
-            if((lastResult = transformation.TransformPoints(xIn, yIn, scale, this->centerOffset, xTransformed, yTransformed)) != RESULT_OK)
+            if((lastResult = transformation.TransformPoints(xIn, yIn, scale, xTransformed, yTransformed)) != RESULT_OK)
               return lastResult;
             EndBenchmark("InitializeTemplate.transformPoints");
 
@@ -787,7 +786,7 @@ namespace Anki
           Array<f32> yTransformed(1, numPointsY*numPointsX, memory);
 
           BeginBenchmark("IterativelyRefineTrack.transformPoints");
-          if((lastResult = transformation.TransformPoints(xIn, yIn, scale, this->centerOffset, xTransformed, yTransformed)) != RESULT_OK)
+          if((lastResult = transformation.TransformPoints(xIn, yIn, scale, xTransformed, yTransformed)) != RESULT_OK)
             return lastResult;
           EndBenchmark("IterativelyRefineTrack.transformPoints");
 
@@ -1017,12 +1016,6 @@ namespace Anki
       PlanarTransformation_f32 LucasKanadeTracker_f32::get_transformation() const
       {
         return transformation;
-      }
-
-      Quadrilateral<f32> LucasKanadeTracker_f32::get_transformedTemplateQuad(MemoryStack scratch) const
-      {
-        return this->transformation.TransformQuadrilateral(this->templateQuad, scratch, 1.f,
-                                                           this->centerOffset);
       }
       
       LucasKanadeTrackerFast::LucasKanadeTrackerFast(const Array<u8> &templateImage, const Rectangle<f32> &templateRegion, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &scratch)

@@ -32,7 +32,7 @@ namespace Anki
       // The input is a tracker, the outputs are error signal terms for the controller.
       // rel_ is one of {related-to-, relative-, real-}
       // rad means radians
-      Result ComputeDockingErrorSignal(const TemplateTracker::LucasKanadeTracker_f32 &tracker,
+      Result ComputeDockingErrorSignal(const TemplateTracker::PlanarTransformation_f32 &transform,
                                        const s32 horizontalTrackingResolution,
                                        const f32 blockMarkerWidthInMM,
                                        const f32 horizontalFocalLengthInMM,
