@@ -21,7 +21,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #endif
 
 #ifdef USING_MOVIDIUS_GCC_COMPILER
-#define BENCHMARK_EVENTS_LOCATION __attribute__((section(".bigBss")))
+#define BENCHMARK_EVENTS_LOCATION __attribute__((section(".ddr.bss")))
 #else
 #define BENCHMARK_EVENTS_LOCATION
 #endif

@@ -43,6 +43,9 @@
 
 #define USE_OFFBOARD_VISION 0
 
+// Uncomment to use USB instead of UART
+//#define USE_USB
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -193,8 +196,7 @@ namespace Anki
       // Get a character from the serial buffer.
       // Timeout is in microseconds.
       // Returns < 0 if no character available within timeout.
-      s32 USBGetChar(void);
-      s32 USBGetChar(u32 timeout);
+      s32 USBGetChar(u32 timeout = 0);
 
       // Peeks at the offset'th character in serial receive buffer.
       // (The next character available is at an offset of 0.)

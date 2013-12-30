@@ -130,12 +130,6 @@ namespace Anki
             return RESULT_FAIL_INVALID_PARAMETERS;
           }
 
-          //{
-          //  Matlab matlab(false);
-
-          //  matlab.PutArray(updateArray, "updateArray");
-          //}
-
           // this.tform = this.tform*inv(tformUpdate);
           Invert3x3(
             updateArray[0][0], updateArray[0][1], updateArray[0][2],
@@ -146,23 +140,9 @@ namespace Anki
 
           Matrix::Multiply(this->homography, updateArray, newHomography);
 
-          //{
-          //  Matlab matlab(false);
-          //  matlab.PutArray(this->homography, "homography");
-          //  matlab.PutArray(newHomography, "newHomography");
-          //  matlab.PutArray(updateArray, "updateArrayInv");
-          //  matlab.PutArray(update, "update");
-          //}
-
           if(!FLT_NEAR(newHomography[2][2], 1.0f)) {
             Matrix::DotDivide<f32,f32,f32>(newHomography, newHomography[2][2], newHomography);
           }
-
-          //{
-          //  Matlab matlab(false);
-
-          //  matlab.PutArray(newHomography, "newHomographyNorm");
-          //}
 
           this->homography.Set(newHomography);
         } // if(updateType == TRANSFORM_TRANSLATION) ... else
@@ -433,7 +413,7 @@ namespace Anki
 
       Result LucasKanadeTracker_f32::InitializeTemplate(const Array<u8> &templateImage, MemoryStack &memory)
       {
-        const bool isOutColumnMajor = true; // TODO: change to false, which will probably be faster
+        const bool isOutColumnMajor = false; // TODO: change to false, which will probably be faster
 
         AnkiConditionalErrorAndReturnValue(this->isValid,
           RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTracker_f32::InitializeTemplate", "This object's constructor failed, so it cannot be initialized");
@@ -517,11 +497,6 @@ namespace Anki
             static_cast<s32>(Roundf(templateRectangle.right))).Set(1.0f);
           EndBenchmark("InitializeTemplate.setTemplateMask");
 
-          //{
-          //  Matlab matlab(false);
-          //  matlab.EvalStringEcho("templatePyramid_Original = cell(%d,1);", numPyramidLevels);
-          //}
-
           for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++) {
             PUSH_MEMORY_STACK(memory);
 
@@ -555,12 +530,6 @@ namespace Anki
               return lastResult;
             EndBenchmark("InitializeTemplate.image.interp2");
 
-            //{
-            //  Matlab matlab(false);
-            //  matlab.PutArray(this->templateImagePyramid[iScale], "tmp_templateImagePyramid");
-            //  matlab.EvalStringEcho("templatePyramid_Original{%d} = tmp_templateImagePyramid;", iScale+1);
-            //}
-
             BeginBenchmark("InitializeTemplate.ComputeImageGradients");
             // Ix = (image_right(targetBlur) - image_left(targetBlur))/2 * spacing;
             // Iy = (image_down(targetBlur) - image_up(targetBlur))/2 * spacing;
@@ -592,6 +561,8 @@ namespace Anki
               Matrix::Vectorize(isOutColumnMajor, yIn, yInV);
 
               Array<f32> tmp1(1, numPointsY*numPointsX, memory);
+
+              //xInV.Print("xInV");
 
               // X.*Ix(:)
               Matrix::Vectorize(isOutColumnMajor, templateDerivativeX, tmp1);
@@ -652,14 +623,6 @@ namespace Anki
                 Matrix::Subtract<f32,f32,f32>(tmp1,tmp2,tmp1);
                 this->A_full[iScale](7,7,0,-1).Set(tmp1);
               } // if(transformation.get_transformType() == TRANSFORM_PROJECTIVE)
-              //{
-              //  Matlab matlab(false);
-              //  matlab.PutArray(this->A_full[iScale], "A_full_iScale");
-              //  matlab.PutArray(templateDerivativeX, "templateDerivativeX");
-              //  matlab.PutArray(templateDerivativeY, "templateDerivativeY");
-              //  matlab.PutArray(templateImage, "templateImage");
-              //  //matlab.PutArray(, "");
-              //}
             } // else if(transformation.get_transformType() == TRANSFORM_AFFINE || transformation.get_transformType() == TRANSFORM_PROJECTIVE)
             EndBenchmark("InitializeTemplate.ComputeA");
 
@@ -749,7 +712,7 @@ namespace Anki
 
       Result LucasKanadeTracker_f32::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, const bool useWeights, bool &converged, MemoryStack memory)
       {
-        const bool isOutColumnMajor = true; // TODO: change to false, which will probably be faster
+        const bool isOutColumnMajor = false; // TODO: change to false, which will probably be faster
 
         AnkiConditionalErrorAndReturnValue(this->isInitialized == true,
           RESULT_FAIL, "LucasKanadeTracker_f32::IterativelyRefineTrack", "This object is not initialized");
@@ -828,95 +791,12 @@ namespace Anki
             return lastResult;
           EndBenchmark("IterativelyRefineTrack.transformPoints");
 
-          //{
-          //  PUSH_MEMORY_STACK(memory);
-
-          //  Array<f32> tmp1(1, numPointsY*numPointsX, memory);
-          //  Array<f32> tmp2(1, numPointsY*numPointsX, memory);
-
-          //  // change = sqrt(mean((xPrev(:)-xi(:)).^2 + (yPrev(:)-yi(:)).^2));
-          //  Matrix::Subtract<f32,f32,f32>(xPrevious, xTransformed, tmp1);
-          //  Matrix::DotMultiply<f32,f32,f32>(tmp1, tmp1, tmp1);
-
-          //  Matrix::Subtract<f32,f32,f32>(yPrevious, yTransformed, tmp2);
-          //  Matrix::DotMultiply<f32,f32,f32>(tmp2, tmp2, tmp2);
-
-          //  Matrix::Add<f32,f32,f32>(tmp1, tmp2, tmp1);
-
-          //  const f32 change = sqrtf(Matrix::Mean<f32,f32>(tmp1));
-
-          //  if(change < convergenceTolerance*scale) {
-          //    converged = true;
-          //    return RESULT_OK;
-          //  }
-          //} // PUSH_MEMORY_STACK(memory);
-
           Array<f32> nextImageTransformed(1, numPointsY*numPointsX, memory);
 
           BeginBenchmark("IterativelyRefineTrack.interpTransformedCoords");
           // imgi = interp2(img, xi(:), yi(:), 'linear');
           {
             PUSH_MEMORY_STACK(memory);
-
-            //// TODO: remove
-            //{
-            //  PUSH_MEMORY_STACK(memory);
-
-            //  Array<u8> simpleInterp(4,4,memory);
-            //  simpleInterp[0][0] = 10; simpleInterp[0][1] = 20; simpleInterp[0][2] = 30; simpleInterp[0][3] = 40;
-            //  simpleInterp[1][0] = 50; simpleInterp[1][1] = 60; simpleInterp[1][2] = 70; simpleInterp[1][3] = 80;
-            //  simpleInterp[2][0] = 90; simpleInterp[2][1] = 100; simpleInterp[2][2] = 110; simpleInterp[2][3] = 120;
-            //  simpleInterp[3][0] = 130; simpleInterp[3][1] = 140; simpleInterp[3][2] = 150; simpleInterp[3][3] = 160;
-
-            //  Array<f32> simpleInterpOut(4,4,memory);
-
-            //  Array<f32> hSimple = Eye<f32>(3,3,memory);
-            //  hSimple[0][0] = 2;
-            //  hSimple[0][2] = 0.5f;
-            //  if((lastResult = Interp2_Affine<u8,f32>(simpleInterp, hSimple, simpleInterpOut, INTERPOLATE_LINEAR, -1.0f)) != RESULT_OK)
-            //    return lastResult;
-
-            //  Array<f32> xIn = templateCoordinates[whichScale].EvaluateX2(memory);
-            //  Array<f32> yIn = templateCoordinates[whichScale].EvaluateY2(memory);
-
-            //  xIn.Print("xIn");
-            //  yIn.Print("yIn");
-
-            //  Array<f32> xTransformed(numPointsY, numPointsX, memory);
-            //  Array<f32> yTransformed(numPointsY, numPointsX, memory);
-            //  if((lastResult = transformation.TransformPoints(xIn, yIn, scale, this->centerOffset, xTransformed, yTransformed)) != RESULT_OK)
-            //    return lastResult;
-
-            //  xTransformed.Print("xTransformed");
-            //  yTransformed.Print("yTransformed");
-
-            //  Array<f32> nextImageTransformed2d(numPointsY, numPointsX, memory);
-            //  if((lastResult = Interp2<u8,f32>(nextImage, xTransformed, yTransformed, nextImageTransformed2d, INTERPOLATE_LINEAR, -1.0f)) != RESULT_OK)
-            //    return lastResult;
-
-            //  Array<f32> hPrime(3, 3, memory);
-            //  hPrime.Set(this->get_transformation().get_homography());
-            //  //hPrime[0][0] *= scale; hPrime[0][1] *= scale; hPrime[0][2] += 12.5;
-            //  //hPrime[1][0] *= scale; hPrime[1][1] *= scale; hPrime[1][2] += 21.5;
-            //  hPrime[0][0] *= scale; hPrime[0][1] *= scale; hPrime[0][2] += this->centerOffset.x + xIn[0][0];
-            //  hPrime[1][0] *= scale; hPrime[1][1] *= scale; hPrime[1][2] += this->centerOffset.y + yIn[0][0];
-
-            //  Array<f32> nextImageTransformed2d_alternate(numPointsY, numPointsX, memory);
-            //  if((lastResult = Interp2_Affine<u8,f32>(nextImage, hPrime, nextImageTransformed2d_alternate, INTERPOLATE_LINEAR, -1.0f)) != RESULT_OK)
-            //    return lastResult;
-
-            //  Matlab matlab(false);
-            //  matlab.PutArray(hPrime, "hPrime");
-            //  matlab.PutArray(nextImageTransformed2d, "nextImageTransformed2d");
-            //  matlab.PutArray(nextImageTransformed2d_alternate, "nextImageTransformed2d_alternate");
-            //  matlab.PutArray(nextImage, "nextImage");
-
-            //  matlab.PutArray(hSimple, "hSimple");
-            //  matlab.PutArray(simpleInterp, "simpleInterp");
-            //  matlab.PutArray(simpleInterpOut, "simpleInterpOut");
-
-            //  printf("done\n");
-            //}
 
             Array<f32> nextImageTransformed2d(1, numPointsY*numPointsX, memory);
 
@@ -983,13 +863,16 @@ namespace Anki
           Matrix::MultiplyTranspose(A, AW, AWAt);
           EndBenchmark("IterativelyRefineTrack.computeAWAt");
 
-          /*          {
-          Matlab matlab(false);
+          //if(curTransformType == TRANSFORM_AFFINE) {
+          //  Matlab matlab(false);
 
-          matlab.PutArray(A, "A");
-          matlab.PutArray(AW, "AW");
-          matlab.PutArray(AWAt, "AWAt");
-          }*/
+          //  matlab.PutArray(A, "A_tmp");
+          //  matlab.PutArray(AW, "AW_tmp");
+          //  matlab.PutArray(AWAt, "AWAt_tmp");
+          //  matlab.EvalStringEcho("if ~exist('A', 'var') A=cell(0); AW=cell(0); AWAt=cell(0); end;");
+          //  matlab.EvalStringEcho("A{end+1}=A_tmp; AW{end+1}=AW_tmp; AWAt{end+1}=AWAt_tmp;");
+          //  printf("");
+          //}
 
           Array<f32> ridgeWeightMatrix = Eye<f32>(numSystemParameters, numSystemParameters, memory);
           Matrix::DotMultiply<f32,f32,f32>(ridgeWeightMatrix, ridgeWeight, ridgeWeightMatrix);
@@ -1002,15 +885,19 @@ namespace Anki
           Matrix::MultiplyTranspose(templateDerivativeT, AW, b);
           EndBenchmark("IterativelyRefineTrack.computeb");
 
-          /*{
-          Matlab matlab(false);
+          //if(curTransformType == TRANSFORM_AFFINE) {
+          //  Matlab matlab(false);
 
-          matlab.PutArray(b, "b");
-          matlab.PutArray(templateDerivativeT, "templateDerivativeT");
-          matlab.PutArray(ridgeWeightMatrix, "ridgeWeightMatrix");
-          }*/
+          //  matlab.PutArray(b, "b_tmp");
+          //  //matlab.PutArray(templateDerivativeT, "templateDerivativeT");
+          //  //matlab.PutArray(ridgeWeightMatrix, "ridgeWeightMatrix");
+          //  matlab.EvalStringEcho("if ~exist('b', 'var') b=cell(0); end;");
+          //  matlab.EvalStringEcho("b{end+1}=b_tmp;");
+          //  printf("");
+          //}
 
           // update = AtWA\b;
+          //AW.Print("AW");
           //AWAt.Print("Orig AWAt");
           //b.Print("Orig b");
 
@@ -1021,23 +908,22 @@ namespace Anki
 
           //b.Print("Orig update");
 
-          //if(update.get_size(1) > 2) {
-          //  //AWAt.Print("AWAt");
-          //  //b.Print("b");
-          //  update.PrintAlternate("update", 2);
-          //}
-
-          //{
-          //  Matlab matlab(false);
-
-          //  matlab.PutArray(update, "update");
-          //}
-
           BeginBenchmark("IterativelyRefineTrack.updateTransformation");
           //this->transformation.Print("t1");
           this->transformation.Update(b, memory, curTransformType);
           //this->transformation.Print("t2");
           EndBenchmark("IterativelyRefineTrack.updateTransformation");
+
+          //if(curTransformType == TRANSFORM_AFFINE) {
+          //  Matlab matlab(false);
+
+          //  matlab.PutArray(b, "update_tmp");
+          //  matlab.PutArray(this->transformation.get_homography(), "homography_tmp");
+
+          //  matlab.EvalStringEcho("if ~exist('update', 'var') update=cell(0); homography=cell(0); end;");
+          //  matlab.EvalStringEcho("update{end+1}=update_tmp; homography{end+1}=homography_tmp;");
+          //  printf("");
+          //}
 
           BeginBenchmark("IterativelyRefineTrack.checkForCompletion");
           // Check if we're done with iterations
@@ -1215,24 +1101,12 @@ namespace Anki
             "LucasKanadeTrackerFast::LucasKanadeTrackerFast", "Could not allocate pyramid images");
         }
 
-        //{
-        //  Matlab matlab(false);
-        //  matlab.EvalStringEcho("templatePyramid_Affine = cell(%d,1);", numPyramidLevels);
-        //  matlab.PutArray(templateImage, "templateImage");
-        //}
-
         // Sample all levels of the pyramid images
         for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
           if((lastResult = Interp2_Affine<u8,u8>(templateImage, templateCoordinates[iScale], transformation.get_homography(), this->centerOffset, this->templateImagePyramid[iScale], INTERPOLATE_LINEAR)) != RESULT_OK) {
             AnkiError("LucasKanadeTrackerFast::LucasKanadeTrackerFast", "Interp2_Affine failed with code 0x%x", lastResult);
             return;
           }
-
-          //{
-          //  Matlab matlab(false);
-          //  matlab.PutArray(this->templateImagePyramid[iScale], "tmp_templateImagePyramid");
-          //  matlab.EvalStringEcho("templatePyramid_Affine{%d} = tmp_templateImagePyramid;", iScale+1);
-          //}
         }
 
         // Compute the spatial derivatives
@@ -1277,7 +1151,7 @@ namespace Anki
 
       Result LucasKanadeTrackerFast::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack scratch)
       {
-        const bool isOutColumnMajor = true; // TODO: change to false, which will probably be faster
+        const bool isOutColumnMajor = false; // TODO: change to false, which will probably be faster
 
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
@@ -1309,7 +1183,7 @@ namespace Anki
         if(curTransformType == TRANSFORM_TRANSLATION) {
           return IterativelyRefineTrack_Translation(nextImage, maxIterations, whichScale, convergenceTolerance, converged, scratch);
         } else if(curTransformType == TRANSFORM_AFFINE) {
-          //return IterativelyRefineTrack_Affine(nextImage, maxIterations, whichScale, convergenceTolerance, converged, scratch);
+          return IterativelyRefineTrack_Affine(nextImage, maxIterations, whichScale, convergenceTolerance, converged, scratch);
         }
 
         return RESULT_FAIL;
@@ -1512,7 +1386,243 @@ namespace Anki
         } // for(s32 iteration=0; iteration<maxIterations; iteration++)
 
         return RESULT_OK;
-      } // Result LucasKanadeTrackerFast::IterativelyRefineTrack()
+      } // Result LucasKanadeTrackerFast::IterativelyRefineTrack_Translation()
+
+      Result LucasKanadeTrackerFast::IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch)
+      {
+        // This method is heavily based on Interp2_Affine
+        // The call would be like: Interp2_Affine<u8,u8>(nextImage, originalCoordinates, interpolationHomography, centerOffset, nextImageTransformed2d, INTERPOLATE_LINEAR, 0);
+
+        Array<f32> AWAt(6, 6, scratch);
+        Array<f32> b(1, 6, scratch);
+
+        //f32 * restrict AWAt0 = AWAt[0];
+        //f32 * restrict AWAt1 = AWAt[1];
+        //f32 * restrict AWAt2 = AWAt[2];
+        //f32 * restrict AWAt3 = AWAt[3];
+        //f32 * restrict AWAt4 = AWAt[4];
+        //f32 * restrict AWAt5 = AWAt[5];
+
+        //f32 * restrict b = b[0];
+
+        // These addresses should be known at compile time, so should be faster
+        f32 AWAt_raw[6][6];
+        f32 b_raw[6];
+
+        converged = false;
+
+        const s32 nextImageHeight = nextImage.get_size(0);
+        const s32 nextImageWidth = nextImage.get_size(1);
+
+        const f32 scale = static_cast<f32>(1 << whichScale);
+
+        const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
+        const f32 scaleOverFiveTen = scale / (2.0f*255.0f);
+
+        // Initialize with some very extreme coordinates
+        Quadrilateral<f32> previousCorners(Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f));
+
+        Meshgrid<f32> originalCoordinates(
+          Linspace(-this->templateRegionWidth/2.0f, this->templateRegionWidth/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionWidth/scale))),
+          Linspace(-this->templateRegionHeight/2.0f, this->templateRegionHeight/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionHeight/scale))));
+
+        const s32 outHeight = originalCoordinates.get_yGridVector().get_size();
+        const s32 outWidth = originalCoordinates.get_xGridVector().get_size();
+
+        const f32 xyReferenceMin = 0.0f;
+        const f32 xReferenceMax = static_cast<f32>(nextImageWidth) - 1.0f;
+        const f32 yReferenceMax = static_cast<f32>(nextImageHeight) - 1.0f;
+
+        const LinearSequence<f32> &yGridVector = originalCoordinates.get_yGridVector();
+        const LinearSequence<f32> &xGridVector = originalCoordinates.get_xGridVector();
+
+        const f32 yGridStart = yGridVector.get_start();
+        const f32 xGridStart = xGridVector.get_start();
+
+        const f32 yGridDelta = yGridVector.get_increment();
+        const f32 xGridDelta = xGridVector.get_increment();
+
+        const s32 yIterationMax = yGridVector.get_size();
+        const s32 xIterationMax = xGridVector.get_size();
+
+        for(s32 iteration=0; iteration<maxIterations; iteration++) {
+          const Array<f32> &homography = this->transformation.get_homography();
+          const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
+          const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+
+          const f32 yTransformedDelta = h10 * yGridDelta;
+          const f32 xTransformedDelta = h00 * xGridDelta;
+
+          //AWAt.SetZero();
+          //b.SetZero();
+
+          for(s32 ia=0; ia<6; ia++) {
+            for(s32 ja=0; ja<6; ja++) {
+              AWAt_raw[ia][ja] = 0;
+            }
+            b_raw[ia] = 0;
+          }
+
+          s32 numInBounds = 0;
+
+          // TODO: make the x and y limits from 1 to end-2
+
+          f32 yOriginal = yGridStart;
+          for(s32 y=0; y<yIterationMax; y++) {
+            const u8 * restrict pTemplateImage = this->templateImagePyramid[whichScale].Pointer(y, 0);
+
+            const s16 * restrict pTemplateImageXGradient = this->templateImageXGradientPyramid[whichScale].Pointer(y, 0);
+            const s16 * restrict pTemplateImageYGradient = this->templateImageYGradientPyramid[whichScale].Pointer(y, 0);
+
+            f32 xOriginal = xGridStart;
+
+            // TODO: This could be strength-reduced further, but it wouldn't be much faster
+            f32 xTransformed = h00*xOriginal + h01*yOriginal + h02 + centerOffset.x;
+            f32 yTransformed = h10*xOriginal + h11*yOriginal + h12 + centerOffset.y;
+
+            for(s32 x=0; x<xIterationMax; x++) {
+              const f32 x0 = FLT_FLOOR(xTransformed);
+              const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
+
+              const f32 y0 = FLT_FLOOR(yTransformed);
+              const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
+
+              // If out of bounds, continue
+              if(x0 < xyReferenceMin || x1 > xReferenceMax || y0 < xyReferenceMin || y1 > yReferenceMax) {
+                // strength reduction for the affine transformation along this horizontal line
+                xTransformed += xTransformedDelta;
+                yTransformed += yTransformedDelta;
+                xOriginal += xGridDelta;
+                continue;
+              }
+
+              numInBounds++;
+
+              const f32 alphaX = xTransformed - x0;
+              const f32 alphaXinverse = 1 - alphaX;
+
+              const f32 alphaY = yTransformed - y0;
+              const f32 alphaYinverse = 1.0f - alphaY;
+
+              const s32 y0S32 = static_cast<s32>(Roundf(y0));
+              const s32 y1S32 = static_cast<s32>(Roundf(y1));
+              const s32 x0S32 = static_cast<s32>(Roundf(x0));
+
+              const u8 * restrict pReference_y0 = nextImage.Pointer(y0S32, x0S32);
+              const u8 * restrict pReference_y1 = nextImage.Pointer(y1S32, x0S32);
+
+              const f32 pixelTL = *pReference_y0;
+              const f32 pixelTR = *(pReference_y0+1);
+              const f32 pixelBL = *pReference_y1;
+              const f32 pixelBR = *(pReference_y1+1);
+
+              const f32 interpolatedPixelF32 = InterpolateBilinear2d<f32>(pixelTL, pixelTR, pixelBL, pixelBR, alphaY, alphaYinverse, alphaX, alphaXinverse);
+
+              //const u8 interpolatedPixel = static_cast<u8>(Roundf(interpolatedPixelF32));
+
+              // This block is the non-interpolation part of the per-sample algorithm
+              {
+                const f32 templatePixelValue = static_cast<f32>(pTemplateImage[x]);
+                const f32 xGradientValue = scaleOverFiveTen * static_cast<f32>(pTemplateImageXGradient[x]);
+                const f32 yGradientValue = scaleOverFiveTen * static_cast<f32>(pTemplateImageYGradient[x]);
+
+                const f32 tGradientValue = oneOverTwoFiftyFive * (interpolatedPixelF32 - templatePixelValue);
+
+                //printf("%f ", xOriginal);
+                const f32 values[6] = {
+                  xOriginal * xGradientValue,
+                  yOriginal * xGradientValue,
+                  xGradientValue,
+                  xOriginal * yGradientValue,
+                  yOriginal * yGradientValue,
+                  yGradientValue};
+
+                //for(s32 ia=0; ia<6; ia++) {
+                //  printf("%f ", values[ia]);
+                //}
+                //printf("\n");
+
+                //f32 AWAt_raw[6][6];
+                //f32 b_raw[6];
+                for(s32 ia=0; ia<6; ia++) {
+                  for(s32 ja=ia; ja<6; ja++) {
+                    AWAt_raw[ia][ja] += values[ia] * values[ja];
+                  }
+                  b_raw[ia] += values[ia] * tGradientValue;
+                }
+              }
+
+              // strength reduction for the affine transformation along this horizontal line
+              xTransformed += xTransformedDelta;
+              yTransformed += yTransformedDelta;
+              xOriginal += xGridDelta;
+            } // for(s32 x=0; x<xIterationMax; x++)
+
+            yOriginal += yGridDelta;
+          } // for(s32 y=0; y<yIterationMax; y++)
+
+          if(numInBounds < 16) {
+            AnkiWarn("LucasKanadeTrackerFast::IterativelyRefineTrack_Translation", "Template drifted too far out of image.");
+            return RESULT_OK;
+          }
+
+          for(s32 ia=0; ia<6; ia++) {
+            for(s32 ja=ia; ja<6; ja++) {
+              AWAt[ia][ja] = AWAt_raw[ia][ja];
+            }
+            b[0][ia] = b_raw[ia];
+          }
+
+          Matrix::MakeSymmetric(AWAt, false);
+
+          //AWAt.Print("New AWAt");
+          //b.Print("New b");
+
+          if((lastResult = Matrix::SolveLeastSquaresWithCholesky(AWAt, b, false)) != RESULT_OK)
+            return lastResult;
+
+          //b.Print("New update");
+
+          this->transformation.Update(b, scratch, TRANSFORM_AFFINE);
+
+          //this->transformation.get_homography().Print("new transformation");
+
+          // Check if we're done with iterations
+          {
+            PUSH_MEMORY_STACK(scratch);
+
+            Quadrilateral<f32> in(
+              Point<f32>(0.0f,0.0f),
+              Point<f32>(static_cast<f32>(nextImage.get_size(1)),0.0f),
+              Point<f32>(static_cast<f32>(nextImage.get_size(0)),static_cast<f32>(nextImage.get_size(1))),
+              Point<f32>(0.0f,static_cast<f32>(nextImage.get_size(1))));
+
+            Quadrilateral<f32> newCorners = transformation.TransformQuadrilateral(in, scratch, scale);
+
+            //const f32 change = sqrtf(Matrix::Mean<f32,f32>(tmp1));
+            f32 change = 0.0f;
+            for(s32 i=0; i<4; i++) {
+              const f32 dx = previousCorners[i].x - newCorners[i].x;
+              const f32 dy = previousCorners[i].y - newCorners[i].y;
+              change += sqrtf(dx*dx + dy*dy);
+            }
+            change /= 4;
+
+            //printf("newCorners");
+            //newCorners.Print();
+            //printf("change: %f\n", change);
+
+            if(change < convergenceTolerance*scale) {
+              converged = true;
+              return RESULT_OK;
+            }
+
+            previousCorners = newCorners;
+          } // PUSH_MEMORY_STACK(scratch);
+        } // for(s32 iteration=0; iteration<maxIterations; iteration++)
+
+        return RESULT_OK;
+      } // Result LucasKanadeTrackerFast::IterativelyRefineTrack_Affine()
 
       bool LucasKanadeTrackerFast::IsValid() const
       {

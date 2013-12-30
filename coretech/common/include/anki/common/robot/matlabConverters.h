@@ -42,7 +42,7 @@ namespace Anki {
     template<typename Type> void mxArrayToArray(const mxArray * const array, Array<Type> &mat);
 
     // Convert a Matlab mxArray to an Anki::Array. Allocate and return the Anki::Array
-    template<typename Type> Array<Type> mxArrayToArray(const mxArray * const matlabArray);
+    template<typename Type> Array<Type> mxArrayToArray(const mxArray * const matlabArray, MemoryStack &memory);
 
     // Convert an Anki::Array to a Matlab mxArray. Allocate and return the mxArray
     template<typename Type> mxArray* arrayToMxArray(const Array<Type> &array);
@@ -106,7 +106,7 @@ namespace Anki {
       }
     } // template<typename Type> void mxArrayToArray(const mxArray * const array, Array<Type> &mat)
 
-    template<typename Type> Array<Type> mxArrayToArray(const mxArray * const matlabArray)
+    template<typename Type> Array<Type> mxArrayToArray(const mxArray * const matlabArray, MemoryStack &memory)
     {
       const Type * const matlabMatrixStartPointer = reinterpret_cast<const Type *>( mxGetData(matlabArray) );
 
@@ -126,7 +126,13 @@ namespace Anki {
         return Array<Type>();
       }
 
-      Array<Type> array = AllocateArrayFromHeap<Type>(static_cast<s32>(dimensions[0]), static_cast<s32>(dimensions[1]));
+      //Array<Type> array = AllocateArrayFromHeap<Type>(static_cast<s32>(dimensions[0]), static_cast<s32>(dimensions[1]));
+      Array<Type> array(static_cast<s32>(dimensions[0]), static_cast<s32>(dimensions[1]), memory);
+
+      if(!array.IsValid()) {
+        AnkiError("mxArrayToArray", "mxArrayToArray<Type> - Could not allocate array\n");
+        return Array<Type>();
+      }
 
       for(mwSize y=0; y<dimensions[0]; ++y) {
         Type * const pArray = array.Pointer(static_cast<s32>(y), 0);
