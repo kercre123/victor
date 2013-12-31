@@ -9,8 +9,8 @@
 INCLUDE objects.ldscript
 
 SECTIONS {
-  /* Start past second shave (leaving 768KB) */
-  . = 0xA0000000;
+  /* Start past first shave (leaving 896KB) */
+  . = 0xA0020000;
   
   .sys.traps ALIGN(0x1000) : {
     *(.sys.text.traps)
@@ -36,11 +36,8 @@ SECTIONS {
   
   /* These are used by vision-tests */
   
-  .smallBss1 (NOLOAD) : {
-    *(.smallBss1*)
-  }
-  .smallBss2 (NOLOAD) : {
-    *(.smallBss2*)
+  .cmx.bss (NOLOAD) : {
+    *(.cmx.bss*)
   }
 
   __EMPTY_RAM = ALIGN(4);
@@ -71,6 +68,7 @@ SECTIONS {
   }
 
   .ddr.bss (NOLOAD) : {
+    *(.ddr.bss*)
     *(.bss.printfBuffer*)
   }
    
@@ -78,10 +76,6 @@ SECTIONS {
     *(.imageData*)
   }
   
-  .bigBss (NOLOAD) : {
-    *(.bigBss*)
-  }  
-
   /* 
    * locate the special sections in correct place  
    * These sections are required to ensure Myriad is initialized correctly and must be loaded first   

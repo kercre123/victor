@@ -52,6 +52,7 @@ Matlab matlab(false);
 #define RUN_LOW_MEMORY_IMAGE_TESTS
 #define RUN_TRACKER_TESTS // equivalent to RUN_BROKEN_KANADE_TESTS
 //#define BENCHMARK_AFFINE
+//#define RUN_LITTLE_TESTS
 
 //#if defined(RUN_TRACKER_TESTS) && defined(RUN_LOW_MEMORY_IMAGE_TESTS)
 //Cannot run tracker and low memory tests at the same time
@@ -72,8 +73,8 @@ Matlab matlab(false);
 #endif
 
 #if defined(USING_MOVIDIUS_COMPILER)
-#define BIG_BUFFER_LOCATION __attribute__((section(".bigBss")))
-#define SMALL_BUFFER_LOCATION __attribute__((section(".smallBss1")))
+#define BIG_BUFFER_LOCATION __attribute__((section(".ddr.bss")))
+#define SMALL_BUFFER_LOCATION __attribute__((section(".cmx.bss")))
 #else
 #define BIG_BUFFER_LOCATION
 #define SMALL_BUFFER_LOCATION
@@ -2958,6 +2959,7 @@ int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123);
 #endif
 
+#ifdef RUN_LITTLE_TESTS
   CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
   CALL_GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput);
   CALL_GTEST_TEST(CoreTech_Vision, LaplacianPeaks);
@@ -2978,6 +2980,7 @@ int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);
   CALL_GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary);
+#endif // #ifdef RUN_LITTLE_TESTS
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 
