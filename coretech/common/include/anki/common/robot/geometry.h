@@ -210,6 +210,14 @@ namespace Anki
         this->corners[i] = quad2.corners[i];
       }
     }
+    
+    template<typename Type> Quadrilateral<Type>::Quadrilateral(const Rectangle<Type>& rect)
+    {
+      this->corners[0].x = rect.left;   this->corners[0].y = rect.top;
+      this->corners[1].x = rect.right;  this->corners[1].y = rect.top;
+      this->corners[2].x = rect.left;   this->corners[2].y = rect.bottom;
+      this->corners[3].x = rect.right;  this->corners[3].y = rect.bottom;
+    }
 
     template<typename Type> void Quadrilateral<Type>::Print() const
     {

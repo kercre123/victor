@@ -106,6 +106,8 @@ namespace Anki
       Quadrilateral(const Point<Type> &corner1, const Point<Type> &corner2, const Point<Type> &corner3, const Point<Type> &corner4);
 
       Quadrilateral(const Quadrilateral<Type>& quad);
+      
+      Quadrilateral(const Rectangle<Type>& rect);
 
       void Print() const;
 
