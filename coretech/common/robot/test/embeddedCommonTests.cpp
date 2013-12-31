@@ -53,7 +53,7 @@ You cannot use both CMX and L2 Cache;
 
 #define MAX_BYTES 5000
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__APPLE__)
 static char buffer[MAX_BYTES];
 #else
 
