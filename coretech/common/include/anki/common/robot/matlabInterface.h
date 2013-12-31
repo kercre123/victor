@@ -149,7 +149,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(ep, RESULT_FAIL, "Anki.PutArray<Type>", "Matlab engine is not started/connected");
       
       const mxClassID whichClass = GetMatlabClassID<Type>();
-      AnkiConditionalErrorAndReturn(whichClass != mxUNKNOWN_CLASS, RESULT_FAIL, "Anki.PutArray<Type>", "Unknown type to convert to a mxClassID");
+      AnkiConditionalErrorAndReturnValue(whichClass != mxUNKNOWN_CLASS, RESULT_FAIL, "Anki.PutArray<Type>", "Unknown type to convert to a mxClassID");
       
       // Create the transpose:
       const mwSize dims[2] = {matrixWidth, matrixHeight};

@@ -100,7 +100,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define _strcmpi strcasecmp
 #endif
 
-#define ANKI_OUTPUT_DEBUG_LEVEL ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
+#define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
 
 #endif // #if defined(__APPLE_CC__)
 
