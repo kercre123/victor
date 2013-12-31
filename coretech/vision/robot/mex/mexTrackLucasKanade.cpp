@@ -68,10 +68,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     return;
   }
 
-  if(tracker.UpdateTrack(nextImage, maxIterations, convergenceTolerance, true, memory) != RESULT_OK) {
+  bool converged = false;
+  if(tracker.UpdateTrack(nextImage, maxIterations, convergenceTolerance, true, converged, memory) != RESULT_OK) {
     AnkiError("mexTrackLucasKanade", "UpdateTrack");
     return;
   }
+  
+  // TODO: Return convergence flag?
 
   const Array<f32> &newHomography = tracker.get_transformation().get_homography();
 

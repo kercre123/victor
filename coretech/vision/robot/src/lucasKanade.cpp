@@ -1064,8 +1064,9 @@ namespace Anki
         for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
           const f32 scale = static_cast<f32>(1 << iScale);
 
-          const s32 curTemplateHeight = templateImageHeight >> iScale;
-          const s32 curTemplateWidth = templateImageWidth >> iScale;
+          // Unused, remove?
+          //const s32 curTemplateHeight = templateImageHeight >> iScale;
+          //const s32 curTemplateWidth = templateImageWidth >> iScale;
 
           templateCoordinates[iScale] = Meshgrid<f32>(
             Linspace(-this->templateRegionWidth/2.0f, this->templateRegionWidth/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionWidth/scale))),
@@ -1132,7 +1133,8 @@ namespace Anki
 
       Result LucasKanadeTrackerFast::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack scratch)
       {
-        const bool isOutColumnMajor = false; // TODO: change to false, which will probably be faster
+        // Unused, remove?
+        //const bool isOutColumnMajor = false; // TODO: change to false, which will probably be faster
 
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
@@ -1178,8 +1180,10 @@ namespace Anki
         Array<f32> AWAt(2, 2, scratch);
         Array<f32> b(1, 2, scratch);
 
-        f32 &AWAt00 = AWAt[0][0]; f32 &AWAt01 = AWAt[0][1];
-        f32 &AWAt10 = AWAt[1][0]; f32 &AWAt11 = AWAt[1][1];
+        f32 &AWAt00 = AWAt[0][0];
+        f32 &AWAt01 = AWAt[0][1];
+        // Unused, remove?  f32 &AWAt10 = AWAt[1][0];
+        f32 &AWAt11 = AWAt[1][1];
 
         f32 &b0 = b[0][0];
         f32 &b1 = b[0][1];
@@ -1203,8 +1207,9 @@ namespace Anki
           Linspace(-this->templateRegionWidth/2.0f, this->templateRegionWidth/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionWidth/scale))),
           Linspace(-this->templateRegionHeight/2.0f, this->templateRegionHeight/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionHeight/scale))));
 
-        const s32 outHeight = originalCoordinates.get_yGridVector().get_size();
-        const s32 outWidth = originalCoordinates.get_xGridVector().get_size();
+        // Unused, remove?
+        //const s32 outHeight = originalCoordinates.get_yGridVector().get_size();
+        //const s32 outWidth = originalCoordinates.get_xGridVector().get_size();
 
         const f32 xyReferenceMin = 0.0f;
         const f32 xReferenceMax = static_cast<f32>(nextImageWidth) - 1.0f;
@@ -1411,8 +1416,9 @@ namespace Anki
           Linspace(-this->templateRegionWidth/2.0f, this->templateRegionWidth/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionWidth/scale))),
           Linspace(-this->templateRegionHeight/2.0f, this->templateRegionHeight/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionHeight/scale))));
 
-        const s32 outHeight = originalCoordinates.get_yGridVector().get_size();
-        const s32 outWidth = originalCoordinates.get_xGridVector().get_size();
+        // Unused, remove?
+        //const s32 outHeight = originalCoordinates.get_yGridVector().get_size();
+        //const s32 outWidth = originalCoordinates.get_xGridVector().get_size();
 
         const f32 xyReferenceMin = 0.0f;
         const f32 xReferenceMax = static_cast<f32>(nextImageWidth) - 1.0f;
