@@ -1,3 +1,0 @@
-SECTIONS {
-  . = ALIGN( 8 ); .sectData.hdmiTxIteFull                : { *(.sectData.hdmiTxIteFull) *(.sectData.hdmiTxIteFull.var*) }
-}  

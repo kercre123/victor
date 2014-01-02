@@ -1,4 +1,0 @@
-SECTIONS {
-  . = ALIGN( 8 ); .sectData.osdText                  : { *(.sectData.osdText) *(.sectData.osdText.var*) }
-  . = ALIGN( 8 ); .sectData.osdText1                  : { *(.sectData.osdText1) *(.sectData.osdText1.var*) }
-}  

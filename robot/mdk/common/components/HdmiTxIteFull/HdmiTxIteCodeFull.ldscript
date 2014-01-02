@@ -1,3 +1,0 @@
-SECTIONS {
-  . = ALIGN( 8 ); .sectCode.hdmiTxIteFull                  : { *(.sectCode.hdmiTxIteFull) *(.sectCode.hdmiTxIteFull.fct*) }
-}  

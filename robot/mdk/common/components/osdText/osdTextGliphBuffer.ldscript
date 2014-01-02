@@ -1,3 +1,0 @@
-SECTIONS {
-  .osdTextGlyph.data ALIGN(8) : { *(.osdTextGlyph.data) }
-}
