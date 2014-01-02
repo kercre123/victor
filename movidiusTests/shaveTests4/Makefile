@@ -5,7 +5,12 @@
 
 # ------------------------------[ Build overrides ]--------------------------------#
 # overrides that need to be set before including generic.mk
-MV_SOC_PLATFORM = myriad2
+MV_SOC_PLATFORM = myriad1
+
+MDK_DIRECTORY?=../../../movidius-tools/mdk
+
+MYRIAD_BUILDFILE_DIRECTORY?=.
+
 # ------------------------------[ Components used ]--------------------------------#
 #ComponentList = 
 #No components used by 001_HelloWorldShave
@@ -19,17 +24,19 @@ SHAVE_COMPONENTS = no
 #Choosing C sources the helloShave application on shave
 HelloShaveApp = shave/helloShave
 SHAVE_C_SOURCES_helloShave = $(wildcard $(DirAppRoot)/shave/*.c)
+
 #Choosing ASM sources for the shave helloShave app on shave
-#no asm files
 #SHAVE_ASM_SOURCES_helloShave =
 
 #Generating list of required generated assembly files for the helloShave app on shave
 SHAVE_GENASMS_helloShave = $(patsubst %.c,%.asmgen,$(SHAVE_C_SOURCES_helloShave))
+
 #Generating required objects list from sources
 SHAVE_helloShave_OBJS = $(patsubst %.asmgen,%_shave.o,$(SHAVE_GENASMS_helloShave))
 
 #update clean rules with our generated files
 PROJECTCLEAN += $(SHAVE_GENASMS_helloShave) $(SHAVE_helloShave_OBJS)
+
 #Uncomment below to reject generated shave as intermediary files (consider them secondary)
 PROJECTINTERM += $(SHAVE_GENASMS_helloShave)
 
@@ -45,7 +52,7 @@ SHAVE0_APPS = $(HelloShaveApp).shv0lib
 #ECHO=
 
 # Set MV_COMMON_BASE relative to mdk directory location (but allow user to override in environment)
-MV_COMMON_BASE  ?= ../../../../common
+MV_COMMON_BASE ?= $(MDK_DIRECTORY)/common
 
 # Include the generic Makefile
 include $(MV_COMMON_BASE)/generic.mk
