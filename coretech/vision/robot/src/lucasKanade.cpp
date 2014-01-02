@@ -62,9 +62,24 @@ namespace Anki
       }
 
       PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, MemoryStack &memory)
-        : PlanarTransformation_f32(transformType, Quadrilateral<f32>(Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f)),memory)
       {
+        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
+                                      "PlanarTransformation_f32::PlanarTransformation_f32", "Invalid transformType %d", transformType);
+       
+        this->transformType = transformType;
+        initialCorners = Quadrilateral<f32>(Point<f32>(0.0f,0.0f),
+                                            Point<f32>(0.0f,0.0f),
+                                            Point<f32>(0.0f,0.0f),
+                                            Point<f32>(0.0f,0.0f));
+        centerOffset = initialCorners.ComputeCenter();
         
+        // Store the initial quad recentered around the centerOffset.
+        // get_transformedCorners() will add it back
+        for(s32 i_pt=0; i_pt<4; ++i_pt) {
+          this->initialCorners[i_pt] -= this->centerOffset;
+        }
+        
+        this->homography = Eye<f32>(3, 3, memory);
       }
 
       PlanarTransformation_f32::PlanarTransformation_f32()
