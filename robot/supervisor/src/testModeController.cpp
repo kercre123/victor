@@ -112,6 +112,12 @@ namespace Anki {
         
       } // private namespace
       
+
+      TestMode GetMode()
+      {
+        return testMode_;
+      }
+      
       
       
       // Commands a path and executes it
@@ -555,8 +561,11 @@ namespace Anki {
       
       ReturnCode Update()
       {
-        if (updateFunc) {
-          return updateFunc();
+        // Don't run Update until robot is finished initializing
+        if (Robot::GetOperationMode() != Robot::INITIALIZING) {
+          if (updateFunc) {
+            return updateFunc();
+          }
         }
         return EXIT_SUCCESS;
       }
