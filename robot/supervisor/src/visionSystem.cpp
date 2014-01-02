@@ -58,13 +58,9 @@ namespace Anki {
       //
       // Memory
       //
-
+      
+      // CMX buffer
       const u32 CMX_BUFFER_SIZE = 600000;
-#ifdef SIMULATOR
-      char cmxBuffer_[CMX_BUFFER_SIZE];
-#else
-      __attribute__((section(".smallBss1"))) char cmxBuffer_[CMX_BUFFER_SIZE];
-#endif
       
       // DDR buffer (for captured frames at the moment)
       const u32 FRAMEBUFFER_WIDTH  = 640;
@@ -72,11 +68,12 @@ namespace Anki {
       const u32 DDR_BUFFER_SIZE   = FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT;
       
 #ifdef SIMULATOR
-      u8 ddrBuffer_[DDR_BUFFER_SIZE]
+      char cmxBuffer_[CMX_BUFFER_SIZE];
+      u8   ddrBuffer_[DDR_BUFFER_SIZE] ALIGNVARIABLE;
 #else
-      __attribute__((section(".bigBss"))) u8 ddrBuffer_[DDR_BUFFER_SIZE]
+      __attribute__((section(".smallBss1"))) char cmxBuffer_[CMX_BUFFER_SIZE];
+      __attribute__((section(".bigBss")))    u8   ddrBuffer_[DDR_BUFFER_SIZE] ALIGNVARIABLE;
 #endif
-      __attribute__ ((aligned (MEMORY_ALIGNMENT_RAW)));
       
       const u32 TRACKER_SCRATCH_SIZE   = 600000;
       const u32 DETECTOR_SCRATCH1_SIZE = 300000;
