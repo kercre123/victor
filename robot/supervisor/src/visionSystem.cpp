@@ -21,7 +21,7 @@
 // Set to 1 to use LucasKanadeTrackerFast, 0 for LucasKanadeTracker_f32
 #define USE_FAST_LK 1
 
-#if 1 && defined(SIMULATOR) && ANKICORETECH_EMBEDDED_USE_MATLAB
+#if defined(SIMULATOR) && ANKICORETECH_EMBEDDED_USE_MATLAB && (!defined(USE_OFFBOARD_VISION) || !USE_OFFBOARD_VISION)
 #define USE_MATLAB_VISUALIZATION 1
 #else
 #define USE_MATLAB_VISUALIZATION 0
