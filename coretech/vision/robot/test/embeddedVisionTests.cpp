@@ -395,7 +395,6 @@ GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
   const s32 horizontalTrackingResolution = 80;
   const f32 blockMarkerWidthInMM = 50.0f;
   const f32 horizontalFocalLengthInMM = 5.0f;
-  const f32 cozmoLiftDistanceInMM = 20.0f;
 
   MemoryStack ms(&smallBuffer[0], SMALL_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
@@ -405,13 +404,13 @@ GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
 
   f32 rel_x, rel_y, rel_rad;
   ASSERT_TRUE(Docking::ComputeDockingErrorSignal(transform,
-    horizontalTrackingResolution, blockMarkerWidthInMM, horizontalFocalLengthInMM, cozmoLiftDistanceInMM,
+    horizontalTrackingResolution, blockMarkerWidthInMM, horizontalFocalLengthInMM,
     rel_x, rel_y, rel_rad, ms) == RESULT_OK);
 
   //printf("%f %f %f\n", rel_x, rel_y, rel_rad);
 
   // TODO: manually compute the correct output
-  ASSERT_TRUE(FLT_NEAR(rel_x,15.355339f));
+  ASSERT_TRUE(FLT_NEAR(rel_x,35.355339f));
   ASSERT_TRUE(NEAR(rel_y,229.809707f, 0.1f)); // The Myriad inexact floating point mode is imprecise here
   ASSERT_TRUE(FLT_NEAR(rel_rad,0.785398f));
 
@@ -485,7 +484,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
   const f32 ridgeWeight = 0.0f;
 
   const Rectangle<f32> templateRegion(13, 34, 22, 43);
-
+  const Quadrilateral<f32> templateQuad(templateRegion);
+  
   const s32 maxIterations = 25;
   const f32 convergenceTolerance = .05f;
 
@@ -523,7 +523,9 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
 
     const f64 time1 = GetTime();
 
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
+    bool converged = false;
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, converged, scratch1) == RESULT_OK);
+    ASSERT_TRUE(converged == true);
 
     const f64 time2 = GetTime();
 
@@ -554,8 +556,11 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
 
     const f64 time1 = GetTime();
 
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, scratch1) == RESULT_OK);
+    bool converged = false;
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, converged, scratch1) == RESULT_OK);
 
+    ASSERT_TRUE(converged);
+    
     const f64 time2 = GetTime();
 
     printf("Affine LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
@@ -630,8 +635,11 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
     const f64 time1 = GetTime();
 
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, scratch1) == RESULT_OK);
+    bool converged = false;
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, converged, scratch1) == RESULT_OK);
 
+    ASSERT_TRUE(converged == true);
+    
     const f64 time2 = GetTime();
 
     printf("Translation-only LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
@@ -661,7 +669,9 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
     const f64 time1 = GetTime();
 
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, scratch1) == RESULT_OK);
+    bool converged = false;
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, converged, scratch1) == RESULT_OK);
+    ASSERT_TRUE(converged == true);
 
     const f64 time2 = GetTime();
 
@@ -693,8 +703,11 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
 
     const f64 time1 = GetTime();
 
-    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, true, scratch1) == RESULT_OK);
+    bool converged = false;
+    ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, true, converged, scratch1) == RESULT_OK);
 
+    ASSERT_TRUE(converged == true);
+    
     const f64 time2 = GetTime();
 
     printf("Projective LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);

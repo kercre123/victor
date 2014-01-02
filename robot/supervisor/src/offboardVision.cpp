@@ -6,12 +6,14 @@ namespace Anki
 {
   namespace Cozmo
   {
-    
+   
+    //
     // Stuff we don't need unless we are in offboard vision mode
+    //
     
-    #if defined(USE_OFFBOARD_VISION) && USE_OFFBOARD_VISION
-        
-    void SendHeader(const u8 packetType)
+#if defined(USE_OFFBOARD_VISION) && USE_OFFBOARD_VISION
+    
+    void HAL::USBSendHeader(const u8 packetType)
     {
       using namespace HAL;
       USBPutChar(Messages::USB_PACKET_HEADER[0]);
@@ -21,7 +23,7 @@ namespace Anki
       USBPutChar(packetType);
     }
     
-    void SendFooter(const u8 packetType)
+    void HAL::USBSendFooter(const u8 packetType)
     {
       using namespace HAL;
       USBPutChar(Messages::USB_PACKET_FOOTER[0]);
@@ -35,43 +37,34 @@ namespace Anki
 #endif
     }
     
-    namespace USBprintBuffer
+    
+    void HAL::USBSendPacket(const u8 packetType, const void* data, const u32 numBytes)
     {
-      // This is a (ring) buffer to store messages created using printf in main
-      // execution, until they can be picked up and actually sent over the USB
-      // UART by long execution when we are also using the UART to send image
-      // data and don't want to step on that data with frequent main execution
-      // messages.
-      static const u32  BUFFER_LENGTH = 512;
+      USBSendHeader(packetType);
       
-      static char  buffer[BUFFER_LENGTH];
-      static u32   readIndex = 0;
-      static u32   writeIndex = 0;
-      
-      void IncrementIndex(u32& index) {
-        ++index;
-        if(index == BUFFER_LENGTH) {
-          index = 0;
-        }
+      const u8* u8data = reinterpret_cast<const u8*>(data);
+      for(u32 i=0; i<numBytes; ++i) {
+        USBPutChar(u8data[i]);
       }
       
-    } // namespace USBprintBuffer
+      USBSendFooter(packetType);
+    }
     
     void HAL::SendMessageID(const char* name, const u8 msgID)
     {
-      SendHeader(USB_DEFINE_MESSAGE_ID);
+      USBSendHeader(USB_DEFINE_MESSAGE_ID);
       
       USBPutChar(msgID);
       for(u8 i=0; i<strlen(name); ++i) {
         USBPutChar(static_cast<int>(name[i]));
       }
       
-      SendFooter(USB_DEFINE_MESSAGE_ID);
+      USBSendFooter(USB_DEFINE_MESSAGE_ID);
     }
     
     void HAL::USBSendMessage(const void* buffer, const Messages::ID msgID)
     {
-      SendHeader(USB_MESSAGE_HEADER);
+      USBSendHeader(USB_MESSAGE_HEADER);
       
       const u8* msgData = reinterpret_cast<const u8*>(buffer);
       
@@ -81,58 +74,10 @@ namespace Anki
         USBPutChar(static_cast<int>(msgData[i]));
       }
       
-      SendFooter(USB_MESSAGE_HEADER);
-    }
-   
-    
-    void HAL::USBSendPrintBuffer()
-    {
-      using namespace USBprintBuffer;
-      
-      // Send all the characters in the buffer as of right now
-      const u32 endIndex = writeIndex; // make a copy of where we should stop
-      
-      // Nothing to send
-      if (endIndex == readIndex) {
-        return;
-      }
-      
-      SendHeader(USB_MESSAGE_HEADER);
-      
-      while(readIndex != endIndex)
-      {
-        // Send the character and circularly increment the read index:
-        HAL::USBPutChar(buffer[readIndex]);
-        IncrementIndex(readIndex);
-      }
-      
-      SendFooter(USB_MESSAGE_HEADER);
-      
-    } // USBSendPrintBuffer()
-    
-    // Add a character to the ring buffer
-    int HAL::USBBufferChar(int c)
-    {
-      using namespace USBprintBuffer;
-      buffer[writeIndex] = (char) c;
-      IncrementIndex(writeIndex);
-      return c;
+      USBSendFooter(USB_MESSAGE_HEADER);
     }
     
     
-    void HAL::USBSendPacket(const u8 packetType, const void* data, const u32 numBytes)
-    {
-      SendHeader(packetType);
-      
-      const u8* u8data = reinterpret_cast<const u8*>(data);
-      for(u32 i=0; i<numBytes; ++i) {
-        USBPutChar(u8data[i]);
-      }
-      
-      SendFooter(packetType);
-    }
-    
-  
     // TODO: pull the downsampling out of this function
     void HAL::USBSendFrame(const u8*        frame,
                            const TimeStamp  timestamp,
@@ -141,15 +86,11 @@ namespace Anki
                            const u8         commandByte)
     {
       // Set window size for averaging when downsampling
-      const u8 inc = CameraModeInfo[sendResolution].downsampleInc[inputResolution];
-      if(inc == 0) {
-        PRINT("USBSendFrame(): send/input resolutions not compatible.\n");
-        return;
-      }
+      const u8 inc = 1 << CameraModeInfo[sendResolution].downsamplePower[inputResolution];
       
       // Tell the receiver what to do with the image once it gets it (and the
       // fact that this is an image packet at all)
-      SendHeader(commandByte);
+      USBSendHeader(commandByte);
       
       // Tell the receiver the resolution of the frame we're sending
       const u8 frameResHeader = CameraModeInfo[sendResolution].header;
@@ -196,7 +137,7 @@ namespace Anki
         }
       } // IF / ELSE inc==1
       
-      SendFooter(commandByte);
+      USBSendFooter(commandByte);
       
       PRINT("USBSendFrame(): sent %dx%d frame downsampled to %dx%d.\n",
             CameraModeInfo[inputResolution].width,
@@ -207,7 +148,8 @@ namespace Anki
     } // USBSendFrame()
     
 #endif // if USE_OFFBOARD_VISION defined and true
-
+    
+    
     
     // TODO: this should probably be elsewhere, since it is not specific to offboard vision.
     // Can't be in uart.cpp or sim_uart.cpp though since it is not specific to
@@ -280,6 +222,7 @@ namespace Anki
       return retVal;
       
     } // USBGetNextMessage()
+    
     
   } // namespace Cozmo
 } // namespace Anki

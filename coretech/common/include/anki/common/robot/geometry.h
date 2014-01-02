@@ -73,10 +73,25 @@ namespace Anki
       return Point<Type>(this->x-point2.x, this->y-point2.y);
     }
 
-    template<typename Type> void Point<Type>::operator*= (const Type value)
+    template<typename Type> Point<Type>& Point<Type>::operator*= (const Type value)
     {
       this->x *= value;
       this->y *= value;
+      return *this;
+    }
+    
+    template<typename Type> Point<Type>& Point<Type>::operator-= (const Type value)
+    {
+      this->x -= value;
+      this->y -= value;
+      return *this;
+    }
+    
+    template<typename Type> Point<Type>& Point<Type>::operator-= (const Point<Type> &point2)
+    {
+      this->x -= point2.x;
+      this->y -= point2.y;
+      return *this;
     }
 
     template<typename Type> inline Point<Type>& Point<Type>::operator= (const Point<Type> &point2)
@@ -195,6 +210,14 @@ namespace Anki
         this->corners[i] = quad2.corners[i];
       }
     }
+    
+    template<typename Type> Quadrilateral<Type>::Quadrilateral(const Rectangle<Type>& rect)
+    {
+      this->corners[0].x = rect.left;   this->corners[0].y = rect.top;
+      this->corners[1].x = rect.right;  this->corners[1].y = rect.top;
+      this->corners[2].x = rect.left;   this->corners[2].y = rect.bottom;
+      this->corners[3].x = rect.right;  this->corners[3].y = rect.bottom;
+    }
 
     template<typename Type> void Quadrilateral<Type>::Print() const
     {
@@ -218,6 +241,25 @@ namespace Anki
       center.y /= 4;
 
       return center;
+    }
+    
+    template<typename Type> Rectangle<Type> Quadrilateral<Type>::ComputeBoundingRectangle() const
+    {
+      Rectangle<Type> boundingBox(this->corners[0].x,
+                                  this->corners[0].x,
+                                  this->corners[0].y,
+                                  this->corners[0].y);
+
+      // Initialize the template rectangle to the bounding box of the given
+      // quadrilateral
+      for(s32 i=1; i<4; ++i) {
+        boundingBox.left   = MIN(boundingBox.left,   this->corners[i].x);
+        boundingBox.right  = MAX(boundingBox.right,  this->corners[i].x);
+        boundingBox.top    = MIN(boundingBox.top,    this->corners[i].y);
+        boundingBox.bottom = MAX(boundingBox.bottom, this->corners[i].y);
+      }
+      
+      return boundingBox;
     }
 
     template<typename Type> bool Quadrilateral<Type>::operator== (const Quadrilateral<Type> &quad2) const

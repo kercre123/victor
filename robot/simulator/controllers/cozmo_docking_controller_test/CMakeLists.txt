@@ -82,7 +82,7 @@ add_executable(cozmo_docking_controller_test ${SOURCE_FILES} ${HEADER_FILES})
 target_link_libraries(cozmo_docking_controller_test 
 	CppController
 	CoreTech_Common_Robot
-	CoreTech_Common_Basestation # needed?
+  CoreTech_Vision_Robot
 	mx 
 	eng
 )

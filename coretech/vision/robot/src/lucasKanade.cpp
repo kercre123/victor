@@ -26,11 +26,18 @@ namespace Anki
       static Result lastResult;
 
       PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, MemoryStack &memory)
-        : transformType(transformType), initialCorners(initialCorners)
+        : transformType(transformType), initialCorners(initialCorners),
+          centerOffset(initialCorners.ComputeCenter())
       {
         AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
           "PlanarTransformation_f32::PlanarTransformation_f32", "Invalid transformType %d", transformType);
 
+        // Store the initial quad recentered around the centerOffset.
+        // get_transformedCorners() will add it back
+        for(s32 i_pt=0; i_pt<4; ++i_pt) {
+          this->initialCorners[i_pt] -= this->centerOffset;
+        }
+        
         this->homography = Eye<f32>(3, 3, memory);
 
         if(initialHomography.IsValid()) {
@@ -39,37 +46,39 @@ namespace Anki
       }
 
       PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, MemoryStack &memory)
-        : transformType(transformType), initialCorners(initialCorners)
+        : transformType(transformType), initialCorners(initialCorners),
+          centerOffset(initialCorners.ComputeCenter())
       {
         AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
           "PlanarTransformation_f32::PlanarTransformation_f32", "Invalid transformType %d", transformType);
 
+        // Store the initial quad recentered around the centerOffset.
+        // get_transformedCorners() will add it back
+        for(s32 i_pt=0; i_pt<4; ++i_pt) {
+          this->initialCorners[i_pt] -= this->centerOffset;
+        }
+        
         this->homography = Eye<f32>(3, 3, memory);
       }
 
       PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, MemoryStack &memory)
-        : transformType(transformType)
+        : PlanarTransformation_f32(transformType, Quadrilateral<f32>(Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f)),memory)
       {
-        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
-          "PlanarTransformation_f32::PlanarTransformation_f32", "Invalid transformType %d", transformType);
-
-        initialCorners = Quadrilateral<f32>(Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f));
-
-        this->homography = Eye<f32>(3, 3, memory);
+        
       }
 
       PlanarTransformation_f32::PlanarTransformation_f32()
       {
         initialCorners = Quadrilateral<f32>(Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f));
+        centerOffset = initialCorners.ComputeCenter();
       }
 
       Result PlanarTransformation_f32::TransformPoints(
         const Array<f32> &xIn, const Array<f32> &yIn,
         const f32 scale,
-        const Point<f32> &centerOffset,
         Array<f32> &xOut, Array<f32> &yOut) const
       {
-        return TransformPointsStatic(xIn, yIn, scale, centerOffset, xOut, yOut, this->get_transformType(), this->get_homography());
+        return TransformPointsStatic(xIn, yIn, scale, this->centerOffset, xOut, yOut, this->get_transformType(), this->get_homography());
       }
 
       Result PlanarTransformation_f32::Update(const Array<f32> &update, MemoryStack scratch, TransformType updateType)
@@ -167,9 +176,7 @@ namespace Anki
           yIn[0][i] = in.corners[i].y;
         }
 
-        Point<f32> centerOffset(0.0f, 0.0f);
-
-        TransformPoints(xIn, yIn, scale, centerOffset, xOut, yOut);
+        TransformPoints(xIn, yIn, scale, xOut, yOut);
 
         Quadrilateral<f32> out;
 
@@ -225,6 +232,12 @@ namespace Anki
         return this->initialCorners;
       }
 
+      const Point<f32>& PlanarTransformation_f32::get_centerOffset() const
+      {
+        return this->centerOffset;
+      }
+
+      
       Quadrilateral<f32> PlanarTransformation_f32::get_transformedCorners(MemoryStack scratch) const
       {
         return this->TransformQuadrilateral(this->get_initialCorners(), scratch);
@@ -285,9 +298,14 @@ namespace Anki
             f32 * restrict pYOut = yOut.Pointer(y,0);
 
             for(s32 x=0; x<numPointsX; x++) {
+              //// Remove center offset
+              //const f32 xc = pXIn[x] - centerOffset.x;
+              //const f32 yc = pYIn[x] - centerOffset.y;
+              
               const f32 xp = (h00*pXIn[x] + h01*pYIn[x] + h02);
               const f32 yp = (h10*pXIn[x] + h11*pYIn[x] + h12);
 
+              // Restore center offset
               pXOut[x] = xp + centerOffset.x;
               pYOut[x] = yp + centerOffset.y;
             }
@@ -308,9 +326,14 @@ namespace Anki
             for(s32 x=0; x<numPointsX; x++) {
               const f32 wpi = 1.0f / (h20*pXIn[x] + h21*pYIn[x] + h22);
 
+              //// Remove center offset
+              //const f32 xc = pXIn[x] - centerOffset.x;
+              //const f32 yc = pYIn[x] - centerOffset.y;
+              
               const f32 xp = (h00*pXIn[x] + h01*pYIn[x] + h02) * wpi;
               const f32 yp = (h10*pXIn[x] + h11*pYIn[x] + h12) * wpi;
 
+              // Restore center offset
               pXOut[x] = xp + centerOffset.x;
               pYOut[x] = yp + centerOffset.y;
             }
@@ -324,8 +347,8 @@ namespace Anki
         return RESULT_OK;
       }
 
-      LucasKanadeTracker_f32::LucasKanadeTracker_f32(const Array<u8> &templateImage, const Rectangle<f32> &templateRegion, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory)
-        : templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), numPyramidLevels(numPyramidLevels), ridgeWeight(ridgeWeight), templateRegion(templateRegion), isValid(false), isInitialized(false)
+      LucasKanadeTracker_f32::LucasKanadeTracker_f32(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory)
+        : numPyramidLevels(numPyramidLevels), templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), ridgeWeight(ridgeWeight), isValid(false), isInitialized(false)
       {
         BeginBenchmark("LucasKanadeTracker_f32");
 
@@ -341,6 +364,8 @@ namespace Anki
         AnkiConditionalErrorAndReturn(ridgeWeight >= 0.0f,
           "LucasKanadeTracker_f32::LucasKanadeTracker_f32", "ridgeWeight must be greater or equal to zero");
 
+        templateRegion = templateQuad.ComputeBoundingRectangle();
+                
         for(s32 i=1; i<(numPyramidLevels-1); i++) {
           const s32 curTemplateHeight = templateImageHeight >> i;
           const s32 curTemplateWidth = templateImageWidth >> i;
@@ -377,13 +402,7 @@ namespace Anki
 
         templateWeights.set_size(numPyramidLevels);
 
-        Quadrilateral<f32> initialCorners(
-          Point<f32>(templateRegion.left,templateRegion.top),
-          Point<f32>(templateRegion.right,templateRegion.top),
-          Point<f32>(templateRegion.right,templateRegion.bottom),
-          Point<f32>(templateRegion.left,templateRegion.bottom));
-
-        this->transformation = PlanarTransformation_f32(transformType, initialCorners, memory);
+        this->transformation = PlanarTransformation_f32(transformType, templateQuad, memory);
 
         this->isValid = true;
 
@@ -420,14 +439,11 @@ namespace Anki
 
         const s32 numTransformationParameters = transformation.get_transformType() >> 8;
 
-        this->templateRegionHeight = templateRegion.bottom - templateRegion.top + 1;
-        this->templateRegionWidth = templateRegion.right - templateRegion.left + 1;
+        this->templateRegionHeight = templateRegion.bottom - templateRegion.top  + 1;
+        this->templateRegionWidth  = templateRegion.right  - templateRegion.left + 1;
 
         this->templateWeightsSigma = sqrtf(this->templateRegionWidth*this->templateRegionWidth + this->templateRegionHeight*this->templateRegionHeight) / 2.0f;
-
-        this->centerOffset.y = (templateRegion.bottom + templateRegion.top) / 2;
-        this->centerOffset.x = (templateRegion.right + templateRegion.left) / 2;
-
+        
         // Allocate all permanent memory
         BeginBenchmark("InitializeTemplate.allocate");
         for(s32 iScale=0; iScale<this->numPyramidLevels; iScale++) {
@@ -496,7 +512,7 @@ namespace Anki
 
             BeginBenchmark("InitializeTemplate.transformPoints");
             // Compute the warped coordinates (for later)
-            if((lastResult = transformation.TransformPoints(xIn, yIn, scale, this->centerOffset, xTransformed, yTransformed)) != RESULT_OK)
+            if((lastResult = transformation.TransformPoints(xIn, yIn, scale, xTransformed, yTransformed)) != RESULT_OK)
               return lastResult;
             EndBenchmark("InitializeTemplate.transformPoints");
 
@@ -655,12 +671,12 @@ namespace Anki
         return RESULT_OK;
       }
 
-      Result LucasKanadeTracker_f32::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, MemoryStack memory)
+      Result LucasKanadeTracker_f32::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, bool& converged, MemoryStack memory)
       {
         for(s32 iScale=numPyramidLevels-1; iScale>=0; iScale--) {
           // TODO: remove
           //for(s32 iScale=0; iScale>=0; iScale--) {
-          bool converged = false;
+          converged = false;
 
           BeginBenchmark("UpdateTrack.refineTranslation");
           if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, TRANSFORM_TRANSLATION, useWeights, converged, memory)) != RESULT_OK)
@@ -765,7 +781,7 @@ namespace Anki
           Array<f32> yTransformed(1, numPointsY*numPointsX, memory);
 
           BeginBenchmark("IterativelyRefineTrack.transformPoints");
-          if((lastResult = transformation.TransformPoints(xIn, yIn, scale, this->centerOffset, xTransformed, yTransformed)) != RESULT_OK)
+          if((lastResult = transformation.TransformPoints(xIn, yIn, scale, xTransformed, yTransformed)) != RESULT_OK)
             return lastResult;
           EndBenchmark("IterativelyRefineTrack.transformPoints");
 
@@ -996,9 +1012,9 @@ namespace Anki
       {
         return transformation;
       }
-
-      LucasKanadeTrackerFast::LucasKanadeTrackerFast(const Array<u8> &templateImage, const Rectangle<f32> &templateRegion, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &scratch)
-        : isValid(false), templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), numPyramidLevels(numPyramidLevels), ridgeWeight(ridgeWeight), templateRegion(templateRegion)
+      
+      LucasKanadeTrackerFast::LucasKanadeTrackerFast(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &scratch)
+        : numPyramidLevels(numPyramidLevels), templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), ridgeWeight(ridgeWeight), isValid(false)
       {
         BeginBenchmark("LucasKanadeTrackerFast");
 
@@ -1014,6 +1030,8 @@ namespace Anki
         AnkiConditionalErrorAndReturn(ridgeWeight >= 0.0f,
           "LucasKanadeTrackerFast::LucasKanadeTrackerFast", "ridgeWeight must be greater or equal to zero");
 
+        templateRegion = templateQuad.ComputeBoundingRectangle();
+        
         // All pyramid width except the last one must be divisible by two
         for(s32 i=0; i<(numPyramidLevels-1); i++) {
           const s32 curTemplateHeight = templateImageHeight >> i;
@@ -1023,19 +1041,10 @@ namespace Anki
             "LucasKanadeTrackerFast::LucasKanadeTrackerFast", "Template widths and height must divisible by 2^numPyramidLevels");
         }
 
-        Quadrilateral<f32> initialCorners(
-          Point<f32>(templateRegion.left,templateRegion.top),
-          Point<f32>(templateRegion.right,templateRegion.top),
-          Point<f32>(templateRegion.right,templateRegion.bottom),
-          Point<f32>(templateRegion.left,templateRegion.bottom));
-
         this->templateRegionHeight = templateRegion.bottom - templateRegion.top + 1.0f;
         this->templateRegionWidth = templateRegion.right - templateRegion.left + 1.0f;
 
-        this->centerOffset.y = (templateRegion.bottom + templateRegion.top) / 2;
-        this->centerOffset.x = (templateRegion.right + templateRegion.left) / 2;
-
-        this->transformation = PlanarTransformation_f32(transformType, initialCorners, scratch);
+        this->transformation = PlanarTransformation_f32(transformType, templateQuad, scratch);
 
         // Allocate the scratch for the pyramid lists
         templateCoordinates = FixedLengthList<Meshgrid<f32>>(numPyramidLevels, scratch);
@@ -1055,8 +1064,9 @@ namespace Anki
         for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
           const f32 scale = static_cast<f32>(1 << iScale);
 
-          const s32 curTemplateHeight = templateImageHeight >> iScale;
-          const s32 curTemplateWidth = templateImageWidth >> iScale;
+          // Unused, remove?
+          //const s32 curTemplateHeight = templateImageHeight >> iScale;
+          //const s32 curTemplateWidth = templateImageWidth >> iScale;
 
           templateCoordinates[iScale] = Meshgrid<f32>(
             Linspace(-this->templateRegionWidth/2.0f, this->templateRegionWidth/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionWidth/scale))),
@@ -1075,7 +1085,7 @@ namespace Anki
 
         // Sample all levels of the pyramid images
         for(s32 iScale=0; iScale<numPyramidLevels; iScale++) {
-          if((lastResult = Interp2_Affine<u8,u8>(templateImage, templateCoordinates[iScale], transformation.get_homography(), this->centerOffset, this->templateImagePyramid[iScale], INTERPOLATE_LINEAR)) != RESULT_OK) {
+          if((lastResult = Interp2_Affine<u8,u8>(templateImage, templateCoordinates[iScale], transformation.get_homography(), this->transformation.get_centerOffset(), this->templateImagePyramid[iScale], INTERPOLATE_LINEAR)) != RESULT_OK) {
             AnkiError("LucasKanadeTrackerFast::LucasKanadeTrackerFast", "Interp2_Affine failed with code 0x%x", lastResult);
             return;
           }
@@ -1100,10 +1110,10 @@ namespace Anki
         EndBenchmark("LucasKanadeTrackerFast");
       }
 
-      Result LucasKanadeTrackerFast::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, MemoryStack scratch)
+      Result LucasKanadeTrackerFast::UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, bool& converged, MemoryStack scratch)
       {
         for(s32 iScale=numPyramidLevels-1; iScale>=0; iScale--) {
-          bool converged = false;
+          converged = false;
 
           BeginBenchmark("UpdateTrack.refineTranslation");
           if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance, TRANSFORM_TRANSLATION, converged, scratch)) != RESULT_OK)
@@ -1123,7 +1133,8 @@ namespace Anki
 
       Result LucasKanadeTrackerFast::IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, bool &converged, MemoryStack scratch)
       {
-        const bool isOutColumnMajor = false; // TODO: change to false, which will probably be faster
+        // Unused, remove?
+        //const bool isOutColumnMajor = false; // TODO: change to false, which will probably be faster
 
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
@@ -1169,8 +1180,10 @@ namespace Anki
         Array<f32> AWAt(2, 2, scratch);
         Array<f32> b(1, 2, scratch);
 
-        f32 &AWAt00 = AWAt[0][0]; f32 &AWAt01 = AWAt[0][1];
-        f32 &AWAt10 = AWAt[1][0]; f32 &AWAt11 = AWAt[1][1];
+        f32 &AWAt00 = AWAt[0][0];
+        f32 &AWAt01 = AWAt[0][1];
+        // Unused, remove?  f32 &AWAt10 = AWAt[1][0];
+        f32 &AWAt11 = AWAt[1][1];
 
         f32 &b0 = b[0][0];
         f32 &b1 = b[0][1];
@@ -1184,6 +1197,8 @@ namespace Anki
 
         const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
         const f32 scaleOverFiveTen = scale / (2.0f*255.0f);
+        
+        const Point<f32>& centerOffset = this->transformation.get_centerOffset();
 
         // Initialize with some very extreme coordinates
         Quadrilateral<f32> previousCorners(Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f));
@@ -1192,8 +1207,9 @@ namespace Anki
           Linspace(-this->templateRegionWidth/2.0f, this->templateRegionWidth/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionWidth/scale))),
           Linspace(-this->templateRegionHeight/2.0f, this->templateRegionHeight/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionHeight/scale))));
 
-        const s32 outHeight = originalCoordinates.get_yGridVector().get_size();
-        const s32 outWidth = originalCoordinates.get_xGridVector().get_size();
+        // Unused, remove?
+        //const s32 outHeight = originalCoordinates.get_yGridVector().get_size();
+        //const s32 outWidth = originalCoordinates.get_xGridVector().get_size();
 
         const f32 xyReferenceMin = 0.0f;
         const f32 xReferenceMax = static_cast<f32>(nextImageWidth) - 1.0f;
@@ -1391,6 +1407,8 @@ namespace Anki
         const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
         const f32 scaleOverFiveTen = scale / (2.0f*255.0f);
 
+        const Point<f32>& centerOffset = this->transformation.get_centerOffset();
+        
         // Initialize with some very extreme coordinates
         Quadrilateral<f32> previousCorners(Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f), Point<f32>(-1e10f,-1e10f));
 
@@ -1398,8 +1416,9 @@ namespace Anki
           Linspace(-this->templateRegionWidth/2.0f, this->templateRegionWidth/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionWidth/scale))),
           Linspace(-this->templateRegionHeight/2.0f, this->templateRegionHeight/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionHeight/scale))));
 
-        const s32 outHeight = originalCoordinates.get_yGridVector().get_size();
-        const s32 outWidth = originalCoordinates.get_xGridVector().get_size();
+        // Unused, remove?
+        //const s32 outHeight = originalCoordinates.get_yGridVector().get_size();
+        //const s32 outWidth = originalCoordinates.get_xGridVector().get_size();
 
         const f32 xyReferenceMin = 0.0f;
         const f32 xReferenceMax = static_cast<f32>(nextImageWidth) - 1.0f;

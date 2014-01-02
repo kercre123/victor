@@ -41,7 +41,7 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 
-#define USE_OFFBOARD_VISION 1
+#define USE_OFFBOARD_VISION 0
 
 // Uncomment to use USB instead of UART
 //#define USE_USB
@@ -56,13 +56,8 @@ extern "C" {
 #ifndef SIMULATOR
 #undef printf
 
-#if USE_OFFBOARD_VISION
-// Buffer printf messages, to be sent by long execution
+// PRINT will actually buffer messages, to be sent by long execution "thread"
 #define PUTCHAR_FUNC Anki::Cozmo::HAL::USBBufferChar
-#else
-// Send printf messages directly over the USB connection
-#define PUTCHAR_FUNC Anki::Cozmo::HAL::USBPutChar
-#endif // if USE_OFFBOARD_VISION
 
 #define printf(...) _xprintf(PUTCHAR_FUNC, 0, __VA_ARGS__)
 #define PRINT(...) explicitPrintf(PUTCHAR_FUNC, 0, __VA_ARGS__)
@@ -273,21 +268,21 @@ namespace Anki
       typedef struct {
         u8 header; // used to specify a frame's resolution in a packet
         u16 width, height;
-        u8 downsampleInc[CAMERA_MODE_COUNT];
+        u8 downsamplePower[CAMERA_MODE_COUNT];
       } CameraModeInfo_t;
       
       const CameraModeInfo_t CameraModeInfo[CAMERA_MODE_COUNT] =
       {
         // VGA
-        { 0xBA, 640, 480, {1, 0, 0, 0, 0} },
+        { 0xBA, 640, 480, {0, 0, 0, 0, 0} },
         // QVGA
-        { 0xBC, 320, 240, {2, 1, 0, 0, 0} },
+        { 0xBC, 320, 240, {1, 0, 0, 0, 0} },
         // QQVGA
-        { 0xB8, 160, 120, {4, 2, 1, 0, 0} },
+        { 0xB8, 160, 120, {2, 1, 0, 0, 0} },
         // QQQVGA
-        { 0xBD,  80,  60, {8, 4, 2, 1, 0} },
+        { 0xBD,  80,  60, {3, 2, 1, 0, 0} },
         // QQQQVGA
-        { 0xB7,  40,  30, {16, 8, 4, 2, 1} }
+        { 0xB7,  40,  30, {4, 3, 2, 1, 0} }
       };
       
       enum CameraUpdateMode
@@ -406,9 +401,21 @@ namespace Anki
       // Interrupts
       void IRQDisable();
       void IRQEnable();
-
-#if USE_OFFBOARD_VISION
       
+      // Put a byte into a send buffer to be sent by LongExecution()
+      // (Using same prototype as putc / USBPutChar for printf.)
+      int USBBufferChar(int c);
+      
+      // Send the contents of the USB message buffer.
+      void USBSendPrintBuffer(void);
+      
+#ifdef SIMULATOR
+      // Called by SendFooter() to terminate a message when in simulation,
+      // otherwise a no-op.
+      void USBFlush();
+#endif
+      
+#if USE_OFFBOARD_VISION
       const u8 USB_MESSAGE_HEADER = 0xDD;
       
       // Bytes to add to USB frame header to tell the offboard processor
@@ -423,14 +430,14 @@ namespace Anki
       const u8 USB_VISION_COMMAND_HEAD_CALIBRATION = 0xC1;
       const u8 USB_VISION_COMMAND_MAT_CALIBRATION  = 0xC2;
       
-      // Put a byte into a send buffer to be sent by LongExecution()
-      // (Using same prototype as putc / USBPutChar for printf.)
-      int USBBufferChar(int c);
+      // Send header/footer around each message/packet/image
+      void USBSendHeader(const u8 command);
+      void USBSendFooter(const u8 command);
       
       // Send a command message (from messageProtocol.h)
       // The msgID will determine the size
       void USBSendMessage(const void* msg, const Messages::ID msgID);
-      
+
       // Send a frame at the current frame resolution (last set by
       // a call to SetUSBFrameResolution)
       void USBSendFrame(const u8*        frame,
@@ -439,9 +446,6 @@ namespace Anki
                         const CameraMode sendResolution,
                         const u8         commandByte);
       
-      // Send the contents of the USB message buffer.
-      void USBSendPrintBuffer(void);
-      
       // Send an arbitrary packet of data
       void USBSendPacket(const u8 packetType, const void* data, const u32 numBytes);
       
@@ -449,14 +453,6 @@ namespace Anki
       // read messageProtocol.h directly)
       const u8 USB_DEFINE_MESSAGE_ID = 0xD0;
       void SendMessageID(const char* name, const u8 msgID);
-      
-#ifdef SIMULATOR
-      // Called by SendFooter() to terminate a message when in simulation,
-      // otherwise a no-op.
-      void USBFlush();
-#endif
-
-      
       
 #endif // if USE_OFFBOARD_VISION
       

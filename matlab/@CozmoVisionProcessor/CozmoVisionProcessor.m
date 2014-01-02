@@ -30,6 +30,11 @@ classdef CozmoVisionProcessor < handle
                     
         LIFT_DISTANCE = 34;  % in mm, forward from robot origin
         
+        % Robot Geometry
+        NECK_JOINT_POSITION = [-15  0   45]; % relative to robot origin
+        HEAD_CAM_ROTATION   = [0 0 1; -1 0 0; 0 -1 0]; % (rodrigues(-pi/2*[0 1 0])*rodrigues(pi/2*[1 0 0]))'
+        HEAD_CAM_POSITION   = [ 20  0  -10]; % relative to neck joint
+        
     end % Constant Properties
     
     properties
@@ -50,6 +55,13 @@ classdef CozmoVisionProcessor < handle
         headCalibrationMatrix;
         %matCalibrationMatrix;
         matCamPixPerMM;
+        
+        blockPose;
+        headCamPose;
+        robotPose;
+        neckPose;
+        marker3d;
+        H_init;
         
         % On simulator, no need to flip.  On robot, need to flip
         flipImage;
@@ -111,7 +123,7 @@ classdef CozmoVisionProcessor < handle
             DetectionResolution = [320 240];
             Verbosity = 1;
             DoEndianSwap = false; % false for simulator, true with Movidius
-            TIME_STEP = 30;
+            TIME_STEP = 30; %#ok<PROP>
 
             parseVarargin(varargin{:});
             
@@ -129,7 +141,7 @@ classdef CozmoVisionProcessor < handle
             this.flipImage = FlipImage;
             
             this.verbosity = Verbosity;
-            this.TIME_STEP = TIME_STEP;
+            this.TIME_STEP = TIME_STEP; %#ok<PROP>
             
             this.LKtracker = [];
             this.trackerType = TrackerType;
@@ -140,6 +152,16 @@ classdef CozmoVisionProcessor < handle
             
             this.matLocalizationResolution = MatLocalizationResolution;
             this.dockingBlock = 0;
+            
+            % Set up Robot head camera geometry
+            this.robotPose = Pose();
+            this.neckPose = Pose([0 0 0], this.NECK_JOINT_POSITION);
+            this.neckPose.parent = this.robotPose;
+            
+            WIDTH = BlockMarker3D.ReferenceWidth;
+            this.marker3d = WIDTH/2 * [-1 -1 0; -1 1 0; 1 -1 0; 1 1 0];
+                
+            this.setHeadAngle(-.26);
             
             this.h_fig = namedFigure('CozmoVisionProcessor', ...
                 'KeypressFcn', @(src,edata)this.keyPressCallback(src,edata));
@@ -278,6 +300,44 @@ classdef CozmoVisionProcessor < handle
             end
         end % FUNCTION PacketToImage()
     
+        
+        function updateBlockPose(this, H)
+            
+            % Compute pose of block w.r.t. camera
+            % De-embed the initial 3D pose from the homography:
+            scale = mean([norm(H(:,1));norm(H(:,2))]);
+            %scale = H(3,3);
+            H = H/scale;
+            
+            u1 = H(:,1);
+            u1 = u1 / norm(u1);
+            u2 = H(:,2) - dot(u1,H(:,2)) * u1;
+            u2 = u2 / norm(u2);
+            u3 = cross(u1,u2);
+            R = [u1 u2 u3];
+            %Rvec = rodrigues(Rmat);
+            T    = H(:,3);
+            
+            % Now switch to block with respect to robot, instead of camera
+            this.blockPose = Pose(R,T);
+            this.blockPose.parent = this.headCamPose;
+            this.blockPose = this.blockPose.getWithRespectTo(this.robotPose);
+            
+        end % updateBlockPose()
+
+        function setHeadAngle(this, newHeadAngle)
+            
+            % Get rotation matrix for the current head pitch, rotating
+            % around the Y axis (which points to robot's LEFT!)
+            Rpitch = rodrigues(-newHeadAngle*[0 1 0]);
+                        
+            this.headCamPose = Pose( ...
+                Rpitch * this.HEAD_CAM_ROTATION,  ...
+                Rpitch * this.HEAD_CAM_POSITION(:));
+            this.headCamPose.parent = this.neckPose;
+            
+        end
+        
     end % public methods
     
 end % CLASSDEF CozmoVisionProcessor

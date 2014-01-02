@@ -75,7 +75,10 @@ namespace Anki {
     const f32 LIFT_BASE_POSITION[3]  = {-60.0f, 0.f, 27.f}; // relative to robot origin
     const f32 MAT_CAM_POSITION[3]   =  {-25.0f, 0.f, -3.f}; // relative to robot origin
     
-#define BLOCKMARKER3D_USE_OUTSIDE_SQUARE false
+    // This is the width of the *outside* of the square fiducial!
+    // Note that these don't affect Matlab, meaning offboard vision!
+    #define BLOCKMARKER3D_USE_OUTSIDE_SQUARE true
+    const f32 BLOCK_MARKER_WIDTH_MM = 32.f;
     
   } // namespace Cozmo
 } // namespace Anki
