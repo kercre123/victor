@@ -31,7 +31,8 @@ calibrationMatrix = double([f(1) 0 c(1); 0 f(2) c(2); 0 0 1]);
 adjFactor = atResolution ./ double([dims(2) dims(1)]);
 assert(adjFactor(1) == adjFactor(2), ...
     'Expecting calibration scaling factor to match for X and Y.');
-this.(whichCalibration) = calibrationMatrix * adjFactor(1);
+calibrationMatrix(1:2,:) = calibrationMatrix(1:2,:) * adjFactor(1);
+this.(whichCalibration) = calibrationMatrix;
 
 this.StatusMessage(1, 'Camera calibration "%s" set (scaled by %.1f): \n', ...
     whichCalibration, adjFactor(1));

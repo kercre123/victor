@@ -64,20 +64,20 @@ switch(this.trackerType)
             'when using a %s tracker.'], this.trackerType);
 end % SWITCH(trackerType)
 
-%{
-            % Update the error displays
-            set(this.h_angleError, 'XData', [0 angleError*180/pi]);
-            h = get(this.h_angleError, 'Parent');
-            title(h, sprintf('AngleErr = %.1fdeg', angleError*180/pi), 'Back', 'w');
-            
-            set(this.h_distError, 'YData', [0 distError]);
-            h = get(this.h_distError, 'Parent');
-            title(h, sprintf('DistToGo = %.1fmm', distError), 'Back', 'w');
-            
-            set(this.h_leftRightError, 'XData', [0 midPointErr]);
-            h = get(this.h_leftRightError, 'Parent');
-            title(h, sprintf('LeftRightErr = %.1fmm', midPointErr), 'Back', 'w');
-%}
+
+% Update the error displays
+set(this.h_angleError, 'XData', [0 angleError*180/pi]);
+h = get(this.h_angleError, 'Parent');
+title(h, sprintf('AngleErr = %.1fdeg', angleError*180/pi), 'Back', 'w');
+
+set(this.h_distError, 'YData', [0 distError]);
+h = get(this.h_distError, 'Parent');
+title(h, sprintf('DistToGo = %.1fmm', distError), 'Back', 'w');
+
+set(this.h_leftRightError, 'XData', [0 midPointErr]);
+h = get(this.h_leftRightError, 'Parent');
+title(h, sprintf('LeftRightErr = %.1fmm', midPointErr), 'Back', 'w');
+
 
 end % FUNCTION computeError()
 
