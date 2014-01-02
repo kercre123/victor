@@ -3,7 +3,7 @@
 #include <moviVectorUtils.h>
 #include "shaveKernels.h"
 
-#define INNER_LOOP_VERSION 2
+#define INNER_LOOP_VERSION 1
 
 __asm(
 ".data .rodata.vOnes_f32x4 \n"
