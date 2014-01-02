@@ -11,6 +11,8 @@ MDK_DIRECTORY?=../../../movidius-tools/mdk
 
 MYRIAD_BUILDFILE_DIRECTORY?=.
 
+#VERBOSE?=yes
+
 # ------------------------------[ Components used ]--------------------------------#
 #ComponentList = 
 #No components used by 001_HelloWorldShave
