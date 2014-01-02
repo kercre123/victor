@@ -1,0 +1,414 @@
+; ///
+; /// @file
+; /// @copyright All code copyright Movidius Ltd 2013, all rights reserved.
+; ///            For License Warranty see: common/license.txt
+; ///
+; /// @brief   
+; ///
+
+.version 00.51.05
+;-------------------------------------------------------------------------------
+.data .rodata.sumOfAbsDiff11x11
+.salign 16
+
+	___clampVal:
+		.short 255
+	
+.code .text.sumOfAbsDiff11x11
+;void sumOfAbsDiff11x11(u8** in1(i18), u8** in2(i17), u8** out(i16), u32 width(i15))
+sumOfAbsDiff11x11_asm:
+	LSU0.LDIL i0, ___clampVal 		|| LSU1.LDIH i0, ___clampVal
+	
+	IAU.SUB i19 i19 4	|| LSU1.LD16r v23, i0 
+	LSU0.ST32 i20  i19  || IAU.SUB i19 i19 4
+	LSU0.ST32 i21  i19  || IAU.SUB i19 i19 4
+	LSU0.ST32 i22  i19  || IAU.SUB i19 i19 4
+	LSU0.ST32 i23  i19  || IAU.SUB i19 i19 4
+	LSU0.ST32 i24  i19  || IAU.SUB i19 i19 4
+	LSU0.ST32 i25  i19  || IAU.SUB i19 i19 4
+	LSU0.ST32 i26  i19  || IAU.SUB i19 i19 4
+	LSU0.ST32 i27  i19  || IAU.SUB i19 i19 4
+	LSU0.ST32 i28  i19  || LSU1.LD32 i16 i16 
+	
+	LSU0.LDIL i27, ___loop || LSU1.LDIH i27, ___loop || IAU.SHR.u32 i28 i15 3
+	
+	LSU0.LD32 i0  i18	|| IAU.ADD i18 i18 4                  
+	LSU0.LD32 i1  i18	|| IAU.ADD i18 i18 4              
+	LSU0.LD32 i2  i18	|| IAU.ADD i18 i18 4   
+	LSU0.LD32 i3  i18	|| IAU.ADD i18 i18 4   
+	LSU0.LD32 i4  i18	|| IAU.ADD i18 i18 4   
+	LSU0.LD32 i5  i18	|| IAU.ADD i18 i18 4 
+	LSU0.LD32 i6  i18	|| IAU.ADD i18 i18 4	|| SAU.SUB.i32 i0  i0  8
+	LSU0.LD32 i7  i18	|| IAU.ADD i18 i18 4	|| SAU.SUB.i32 i1  i1  8
+	LSU0.LD32 i8  i18	|| IAU.ADD i18 i18 4	|| SAU.SUB.i32 i2  i2  8
+	LSU0.LD32 i9  i18	|| IAU.ADD i18 i18 4	|| SAU.SUB.i32 i3  i3  8
+	LSU0.LD32 i10 i18	|| IAU.ADD i18 i18 4	|| SAU.SUB.i32 i4  i4  8
+                                                                       
+	LSU0.LD32 i11 i17 	|| IAU.ADD i17 i17 4	|| SAU.SUB.i32 i5  i5  8				
+	LSU0.LD32 i12 i17 	|| IAU.ADD i17 i17 4	|| SAU.SUB.i32 i6  i6  8				
+	LSU0.LD32 i13 i17 	|| IAU.ADD i17 i17 4	|| SAU.SUB.i32 i7  i7  8
+	LSU0.LD32 i14 i17 	|| IAU.ADD i17 i17 4	|| SAU.SUB.i32 i8  i8  8
+	LSU0.LD32 i20 i17	|| IAU.ADD i17 i17 4	|| SAU.SUB.i32 i9  i9  8
+	LSU0.LD32 i21 i17 	|| IAU.ADD i17 i17 4	|| SAU.SUB.i32 i10 i10 8
+	LSU0.LD32 i22 i17 	|| IAU.ADD i17 i17 4	|| SAU.SUB.i32 i11 i11 8
+	LSU0.LD32 i23 i17 	|| IAU.ADD i17 i17 4	|| SAU.SUB.i32 i12 i12 8
+    LSU0.LD32 i24 i17 	|| IAU.ADD i17 i17 4	|| SAU.SUB.i32 i13 i13 8
+	LSU0.LD32 i25 i17 	|| IAU.ADD i17 i17 4	|| SAU.SUB.i32 i14 i14 8
+	LSU0.LD32 i26 i17 	|| IAU.ADD i17 i17 4	|| SAU.SUB.i32 i20 i20 8
+		
+	LSU0.LDi128.u8.u16 v0 i0 	||	LSU1.LDi128.u8.u16 v3 i11  || IAU.SUB i21 i21 8
+    LSU0.LDi128.u8.u16 v1 i0	||  LSU1.LDi128.u8.u16 v4 i11  || IAU.SUB i22 i22 8
+	LSU0.LD128.u8.u16  v2 i0	||  LSU1.LD128.u8.u16  v5 i11  || IAU.SUB i23 i23 8
+	IAU.SUB i0  i0  8	|| SAU.SUB.i32 i24 i24 8
+	IAU.SUB i11 i11 8	|| SAU.SUB.i32 i25 i25 8
+	IAU.SUB i26 i26 8
+	VAU.ADIFF.u16 v0 v0 v3 	
+	VAU.ADIFF.u16 v1 v1 v4		
+	VAU.ADIFF.u16 v2 v2 v5	
+	NOP
+	;############################################ loop begin ##############################################################
+	;step1	
+	
+	VAU.ALIGNVEC v3  v0 v1 6	|| BRU.RPL i27 i28
+	VAU.ALIGNVEC v4  v0 v1 8
+	VAU.ALIGNVEC v5  v0 v1 10
+	VAU.ALIGNVEC v6  v0 v1 12
+	VAU.ALIGNVEC v7  v0 v1 14	
+	VAU.ALIGNVEC v8  v1 v2 2
+	VAU.ALIGNVEC v9  v1 v2 4
+	VAU.ALIGNVEC v10 v1 v2 6
+	VAU.ALIGNVEC v11 v1 v2 8
+	VAU.ALIGNVEC v12 v1 v2 10
+	
+	VAU.ACCPZ.u16 v1
+	VAU.ACCP.u16  v3
+	VAU.ACCP.u16  v4
+	VAU.ACCP.u16  v5
+	VAU.ACCP.u16  v6	|| LSU0.LDi128.u8.u16 v0 i1		|| LSU1.LDi128.u8.u16 v3 i12
+	VAU.ACCP.u16  v7	|| LSU0.LDi128.u8.u16 v1 i1		|| LSU1.LDi128.u8.u16 v4 i12
+	VAU.ACCP.u16  v8	|| LSU0.LD128.u8.u16  v2 i1		|| LSU1.LD128.u8.u16  v5 i12
+	VAU.ACCP.u16  v9	|| IAU.SUB i1  i1  8
+	VAU.ACCP.u16  v10   || IAU.SUB i12 i12 8
+	VAU.ACCP.u16  v11
+	VAU.ACCPW.u16 v13 v12
+	
+	
+	
+	;line2:	                                                             
+	VAU.ADIFF.u16 v0 v0 v3
+	VAU.ADIFF.u16 v1 v1 v4
+	VAU.ADIFF.u16 v2 v2 v5
+	VAU.ACCPZ.u16 v13
+	VAU.ALIGNVEC v3  v0 v1 6
+	VAU.ALIGNVEC v4  v0 v1 8
+	VAU.ALIGNVEC v5  v0 v1 10
+	VAU.ALIGNVEC v6  v0 v1 12
+	VAU.ALIGNVEC v7  v0 v1 14	
+	VAU.ALIGNVEC v8  v1 v2 2
+	VAU.ALIGNVEC v9  v1 v2 4
+	VAU.ALIGNVEC v10 v1 v2 6
+	VAU.ALIGNVEC v11 v1 v2 8
+	VAU.ALIGNVEC v12 v1 v2 10
+	
+	
+	VAU.ACCP.u16  v1
+	VAU.ACCP.u16  v3
+	VAU.ACCP.u16  v4
+	VAU.ACCP.u16  v5	|| LSU0.LDi128.u8.u16 v0 i2 	|| LSU1.LDi128.u8.u16 v3 i13
+	VAU.ACCP.u16  v6	|| LSU0.LDi128.u8.u16 v1 i2		|| LSU1.LDi128.u8.u16 v4 i13
+	VAU.ACCP.u16  v7	|| LSU0.LD128.u8.u16  v2 i2		|| LSU1.LD128.u8.u16  v5 i13
+	VAU.ACCP.u16  v8	|| IAU.SUB i2  i2  8
+	VAU.ACCP.u16  v9	|| IAU.SUB i13 i13 8
+	VAU.ACCP.u16  v10
+	VAU.ACCP.u16  v11
+	VAU.ACCPW.u16 v13 v12
+	
+	;line 3:		
+	VAU.ADIFF.u16 v0 v0 v3
+	VAU.ADIFF.u16 v1 v1 v4
+	VAU.ADIFF.u16 v2 v2 v5
+	VAU.ACCPZ.u16 v13
+	VAU.ALIGNVEC v3  v0 v1 6
+	VAU.ALIGNVEC v4  v0 v1 8
+	VAU.ALIGNVEC v5  v0 v1 10
+	VAU.ALIGNVEC v6  v0 v1 12
+	VAU.ALIGNVEC v7  v0 v1 14	
+	VAU.ALIGNVEC v8  v1 v2 2
+	VAU.ALIGNVEC v9  v1 v2 4
+	VAU.ALIGNVEC v10 v1 v2 6
+	VAU.ALIGNVEC v11 v1 v2 8
+	VAU.ALIGNVEC v12 v1 v2 10
+	
+	VAU.ACCP.u16  v1
+	VAU.ACCP.u16  v3
+	VAU.ACCP.u16  v4
+	VAU.ACCP.u16  v5	|| LSU0.LDi128.u8.u16 v0 i3 	|| LSU1.LDi128.u8.u16 v3 i14
+	VAU.ACCP.u16  v6	|| LSU0.LDi128.u8.u16 v1 i3		|| LSU1.LDi128.u8.u16 v4 i14
+	VAU.ACCP.u16  v7	|| LSU0.LD128.u8.u16  v2 i3		|| LSU1.LD128.u8.u16  v5 i14
+	VAU.ACCP.u16  v8	|| IAU.SUB i3  i3  8
+	VAU.ACCP.u16  v9	|| IAU.SUB i14 i14 8
+	VAU.ACCP.u16  v10
+	VAU.ACCP.u16  v11
+	VAU.ACCPW.u16 v13 v12
+	
+	
+	;line4:	
+	VAU.ADIFF.u16 v0 v0 v3
+	VAU.ADIFF.u16 v1 v1 v4
+	VAU.ADIFF.u16 v2 v2 v5
+	VAU.ACCPZ.u16 v13
+	VAU.ALIGNVEC v3  v0 v1 6
+	VAU.ALIGNVEC v4  v0 v1 8
+	VAU.ALIGNVEC v5  v0 v1 10
+	VAU.ALIGNVEC v6  v0 v1 12
+	VAU.ALIGNVEC v7  v0 v1 14	
+	VAU.ALIGNVEC v8  v1 v2 2
+	VAU.ALIGNVEC v9  v1 v2 4
+	VAU.ALIGNVEC v10 v1 v2 6
+	VAU.ALIGNVEC v11 v1 v2 8
+	VAU.ALIGNVEC v12 v1 v2 10
+	
+	
+	VAU.ACCP.u16  v1
+	VAU.ACCP.u16  v3
+	VAU.ACCP.u16  v4
+	VAU.ACCP.u16  v5	|| LSU0.LDi128.u8.u16 v0 i4 	|| LSU1.LDi128.u8.u16 v3 i20
+	VAU.ACCP.u16  v6	|| LSU0.LDi128.u8.u16 v1 i4		|| LSU1.LDi128.u8.u16 v4 i20
+	VAU.ACCP.u16  v7	|| LSU0.LD128.u8.u16  v2 i4		|| LSU1.LD128.u8.u16  v5 i20
+	VAU.ACCP.u16  v8	|| IAU.SUB i4  i4  8
+	VAU.ACCP.u16  v9	|| IAU.SUB i20 i20 8
+	VAU.ACCP.u16  v10
+	VAU.ACCP.u16  v11
+	VAU.ACCPW.u16 v13 v12
+	
+	;line5:		
+	VAU.ADIFF.u16 v0 v0 v3
+	VAU.ADIFF.u16 v1 v1 v4
+	VAU.ADIFF.u16 v2 v2 v5
+	VAU.ACCPZ.u16 v13
+	VAU.ALIGNVEC v3  v0 v1 6
+	VAU.ALIGNVEC v4  v0 v1 8
+	VAU.ALIGNVEC v5  v0 v1 10
+	VAU.ALIGNVEC v6  v0 v1 12
+	VAU.ALIGNVEC v7  v0 v1 14	
+	VAU.ALIGNVEC v8  v1 v2 2
+	VAU.ALIGNVEC v9  v1 v2 4
+	VAU.ALIGNVEC v10 v1 v2 6
+	VAU.ALIGNVEC v11 v1 v2 8
+	VAU.ALIGNVEC v12 v1 v2 10
+	
+	
+	VAU.ACCP.u16  v1
+	VAU.ACCP.u16  v3
+	VAU.ACCP.u16  v4
+	VAU.ACCP.u16  v5	|| LSU0.LDi128.u8.u16 v0 i5 	|| LSU1.LDi128.u8.u16 v3 i21
+	VAU.ACCP.u16  v6	|| LSU0.LDi128.u8.u16 v1 i5		|| LSU1.LDi128.u8.u16 v4 i21
+	VAU.ACCP.u16  v7	|| LSU0.LD128.u8.u16  v2 i5		|| LSU1.LD128.u8.u16  v5 i21
+	VAU.ACCP.u16  v8	|| IAU.SUB i5  i5  8
+	VAU.ACCP.u16  v9	|| IAU.SUB i21 i21 8
+	VAU.ACCP.u16  v10
+	VAU.ACCP.u16  v11
+	VAU.ACCPW.u16 v13 v12
+	
+	;line6:	
+	VAU.ADIFF.u16 v0 v0 v3
+	VAU.ADIFF.u16 v1 v1 v4
+	VAU.ADIFF.u16 v2 v2 v5
+	VAU.ACCPZ.u16 v13
+	VAU.ALIGNVEC v3  v0 v1 6
+	VAU.ALIGNVEC v4  v0 v1 8
+	VAU.ALIGNVEC v5  v0 v1 10
+	VAU.ALIGNVEC v6  v0 v1 12
+	VAU.ALIGNVEC v7  v0 v1 14	
+	VAU.ALIGNVEC v8  v1 v2 2
+	VAU.ALIGNVEC v9  v1 v2 4
+	VAU.ALIGNVEC v10 v1 v2 6
+	VAU.ALIGNVEC v11 v1 v2 8
+	VAU.ALIGNVEC v12 v1 v2 10
+	
+	
+	VAU.ACCP.u16  v1
+	VAU.ACCP.u16  v3
+	VAU.ACCP.u16  v4
+	VAU.ACCP.u16  v5	|| LSU0.LDi128.u8.u16 v0 i6 	|| LSU1.LDi128.u8.u16 v3 i22
+	VAU.ACCP.u16  v6	|| LSU0.LDi128.u8.u16 v1 i6		|| LSU1.LDi128.u8.u16 v4 i22
+	VAU.ACCP.u16  v7	|| LSU0.LD128.u8.u16  v2 i6		|| LSU1.LD128.u8.u16  v5 i22
+	VAU.ACCP.u16  v8	|| IAU.SUB i6  i6  8
+	VAU.ACCP.u16  v9	|| IAU.SUB i22 i22 8
+	VAU.ACCP.u16  v10
+	VAU.ACCP.u16  v11
+	VAU.ACCPW.u16 v13 v12
+	
+	
+	;line7:		
+	VAU.ADIFF.u16 v0 v0 v3
+	VAU.ADIFF.u16 v1 v1 v4
+	VAU.ADIFF.u16 v2 v2 v5
+	VAU.ACCPZ.u16 v13
+	VAU.ALIGNVEC v3  v0 v1 6
+	VAU.ALIGNVEC v4  v0 v1 8
+	VAU.ALIGNVEC v5  v0 v1 10
+	VAU.ALIGNVEC v6  v0 v1 12
+	VAU.ALIGNVEC v7  v0 v1 14	
+	VAU.ALIGNVEC v8  v1 v2 2
+	VAU.ALIGNVEC v9  v1 v2 4
+	VAU.ALIGNVEC v10 v1 v2 6
+	VAU.ALIGNVEC v11 v1 v2 8
+	VAU.ALIGNVEC v12 v1 v2 10
+	
+	
+	VAU.ACCP.u16  v1
+	VAU.ACCP.u16  v3
+	VAU.ACCP.u16  v4
+	VAU.ACCP.u16  v5	|| LSU0.LDi128.u8.u16 v0 i7 	|| LSU1.LDi128.u8.u16 v3 i23
+	VAU.ACCP.u16  v6	|| LSU0.LDi128.u8.u16 v1 i7		|| LSU1.LDi128.u8.u16 v4 i23
+	VAU.ACCP.u16  v7	|| LSU0.LD128.u8.u16  v2 i7		|| LSU1.LD128.u8.u16  v5 i23
+	VAU.ACCP.u16  v8	|| IAU.SUB i7  i7  8
+	VAU.ACCP.u16  v9	|| IAU.SUB i23 i23 8
+	VAU.ACCP.u16  v10
+	VAU.ACCP.u16  v11
+	VAU.ACCPW.u16 v13 v12
+	
+	
+	;line8:	
+	VAU.ADIFF.u16 v0 v0 v3
+	VAU.ADIFF.u16 v1 v1 v4
+	VAU.ADIFF.u16 v2 v2 v5
+	VAU.ACCPZ.u16 v13
+	VAU.ALIGNVEC v3  v0 v1 6
+	VAU.ALIGNVEC v4  v0 v1 8
+	VAU.ALIGNVEC v5  v0 v1 10
+	VAU.ALIGNVEC v6  v0 v1 12
+	VAU.ALIGNVEC v7  v0 v1 14	
+	VAU.ALIGNVEC v8  v1 v2 2
+	VAU.ALIGNVEC v9  v1 v2 4
+	VAU.ALIGNVEC v10 v1 v2 6
+	VAU.ALIGNVEC v11 v1 v2 8
+	VAU.ALIGNVEC v12 v1 v2 10
+	
+	
+	VAU.ACCP.u16  v1
+	VAU.ACCP.u16  v3
+	VAU.ACCP.u16  v4
+	VAU.ACCP.u16  v5	|| LSU0.LDi128.u8.u16 v0 i8 	|| LSU1.LDi128.u8.u16 v3 i24
+	VAU.ACCP.u16  v6	|| LSU0.LDi128.u8.u16 v1 i8		|| LSU1.LDi128.u8.u16 v4 i24
+	VAU.ACCP.u16  v7	|| LSU0.LD128.u8.u16  v2 i8		|| LSU1.LD128.u8.u16  v5 i24
+	VAU.ACCP.u16  v8	|| IAU.SUB i8  i8  8
+	VAU.ACCP.u16  v9	|| IAU.SUB i24 i24 8
+	VAU.ACCP.u16  v10
+	VAU.ACCP.u16  v11
+	VAU.ACCPW.u16 v13 v12
+	
+	;line9:
+	VAU.ADIFF.u16 v0 v0 v3
+	VAU.ADIFF.u16 v1 v1 v4
+	VAU.ADIFF.u16 v2 v2 v5
+	VAU.ACCPZ.u16 v13
+	VAU.ALIGNVEC v3  v0 v1 6
+	VAU.ALIGNVEC v4  v0 v1 8
+	VAU.ALIGNVEC v5  v0 v1 10
+	VAU.ALIGNVEC v6  v0 v1 12
+	VAU.ALIGNVEC v7  v0 v1 14	
+	VAU.ALIGNVEC v8  v1 v2 2
+	VAU.ALIGNVEC v9  v1 v2 4
+	VAU.ALIGNVEC v10 v1 v2 6
+	VAU.ALIGNVEC v11 v1 v2 8
+	VAU.ALIGNVEC v12 v1 v2 10
+	
+	
+	VAU.ACCP.u16  v1
+	VAU.ACCP.u16  v3
+	VAU.ACCP.u16  v4
+	VAU.ACCP.u16  v5	|| LSU0.LDi128.u8.u16 v0 i9 	|| LSU1.LDi128.u8.u16 v3 i25
+	VAU.ACCP.u16  v6	|| LSU0.LDi128.u8.u16 v1 i9		|| LSU1.LDi128.u8.u16 v4 i25
+	VAU.ACCP.u16  v7	|| LSU0.LD128.u8.u16  v2 i9		|| LSU1.LD128.u8.u16  v5 i25
+	VAU.ACCP.u16  v8	|| IAU.SUB i9  i9  8
+	VAU.ACCP.u16  v9	|| IAU.SUB i25 i25 8
+	VAU.ACCP.u16  v10
+	VAU.ACCP.u16  v11
+	VAU.ACCPW.u16 v13 v12
+	
+	;line10:	
+	VAU.ADIFF.u16 v0 v0 v3
+	VAU.ADIFF.u16 v1 v1 v4
+	VAU.ADIFF.u16 v2 v2 v5
+	VAU.ACCPZ.u16 v13
+	VAU.ALIGNVEC v3  v0 v1 6
+	VAU.ALIGNVEC v4  v0 v1 8
+	VAU.ALIGNVEC v5  v0 v1 10
+	VAU.ALIGNVEC v6  v0 v1 12
+	VAU.ALIGNVEC v7  v0 v1 14	
+	VAU.ALIGNVEC v8  v1 v2 2
+	VAU.ALIGNVEC v9  v1 v2 4
+	VAU.ALIGNVEC v10 v1 v2 6
+	VAU.ALIGNVEC v11 v1 v2 8
+	VAU.ALIGNVEC v12 v1 v2 10
+	
+	
+	VAU.ACCP.u16  v1
+	VAU.ACCP.u16  v3
+	VAU.ACCP.u16  v4
+	VAU.ACCP.u16  v5	|| LSU0.LDi128.u8.u16 v0 i10 	|| LSU1.LDi128.u8.u16 v3 i26
+	VAU.ACCP.u16  v6	|| LSU0.LDi128.u8.u16 v1 i10	|| LSU1.LDi128.u8.u16 v4 i26
+	VAU.ACCP.u16  v7	|| LSU0.LD128.u8.u16 v2 i10		|| LSU1.LD128.u8.u16 v5 i26
+	VAU.ACCP.u16  v8	|| IAU.SUB i10 i10 8
+	VAU.ACCP.u16  v9	|| IAU.SUB i26 i26 8
+	VAU.ACCP.u16  v10
+	VAU.ACCP.u16  v11
+	VAU.ACCPW.u16 v13 v12
+	
+	;line11:	
+	VAU.ADIFF.u16 v0 v0 v3
+	VAU.ADIFF.u16 v1 v1 v4
+	VAU.ADIFF.u16 v2 v2 v5
+	VAU.ACCPZ.u16 v13
+	VAU.ALIGNVEC v3  v0 v1 6
+	VAU.ALIGNVEC v4  v0 v1 8
+	VAU.ALIGNVEC v5  v0 v1 10
+	VAU.ALIGNVEC v6  v0 v1 12
+	VAU.ALIGNVEC v7  v0 v1 14	
+	VAU.ALIGNVEC v8  v1 v2 2
+	VAU.ALIGNVEC v9  v1 v2 4
+	VAU.ALIGNVEC v10 v1 v2 6
+	VAU.ALIGNVEC v11 v1 v2 8
+	VAU.ALIGNVEC v12 v1 v2 10
+	
+	
+	VAU.ACCP.u16  v1	
+	VAU.ACCP.u16  v3	
+	VAU.ACCP.u16  v4	
+	VAU.ACCP.u16  v5	|| LSU0.LDi128.u8.u16 v0 i0 	|| LSU1.LDi128.u8.u16 v3 i11
+	VAU.ACCP.u16  v6	|| LSU0.LDi128.u8.u16 v1 i0		|| LSU1.LDi128.u8.u16 v4 i11
+	VAU.ACCP.u16  v7	|| LSU0.LD128.u8.u16  v2 i0		|| LSU1.LD128.u8.u16  v5 i11
+	VAU.ACCP.u16  v8	|| IAU.SUB i0  i0  8
+	VAU.ACCP.u16  v9	|| IAU.SUB i11 i11 8
+	VAU.ACCP.u16  v10
+	VAU.ACCP.u16  v11
+	VAU.ACCPW.u16 v13 v12	
+	
+	___loop:	         
+	NOP
+	VAU.XOR v14 v14 v14 
+	VAU.ADIFF.u16 v0 v0 v3
+	CMU.CLAMPAB.u16 v13 v14 v23 || VAU.ADIFF.u16 v2 v2 v5
+	VAU.ADIFF.u16 v1 v1 v4 
+	LSU0.STi128.u16.u8 v13 i16	
+	 	
+			
+	
+	;############################################ loop end ##############################################################
+	
+	LSU0.LD32 i28 i19	|| IAU.ADD i19 i19 4
+	LSU0.LD32 i27 i19	|| IAU.ADD i19 i19 4
+	LSU0.LD32 i26 i19	|| IAU.ADD i19 i19 4
+	LSU0.LD32 i25 i19	|| IAU.ADD i19 i19 4
+	LSU0.LD32 i24 i19	|| IAU.ADD i19 i19 4
+	LSU0.LD32 i23 i19	|| IAU.ADD i19 i19 4
+	LSU0.LD32 i22 i19	|| IAU.ADD i19 i19 4
+	LSU0.LD32 i21 i19	|| IAU.ADD i19 i19 4
+	LSU0.LD32 i20 i19	|| IAU.ADD i19 i19 4
+	NOP 5	
+	
+	BRU.jmp i30
+	nop 5
+.end

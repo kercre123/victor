@@ -1,0 +1,4 @@
+SECTIONS {
+  . = ALIGN( 8 ); .sectCode.osdText                  : { *(.sectCode.osdText) *(.sectCode.osdText.fct*) }
+  . = ALIGN( 8 ); .sectCode.osdText1                  : { *(.sectCode.osdText1) *(.sectCode.osdText1.fct*) }
+}  

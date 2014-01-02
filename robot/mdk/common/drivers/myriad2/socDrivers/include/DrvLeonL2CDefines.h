@@ -1,0 +1,100 @@
+#ifndef DRV_LEON_L2_CACHE_DEFINES_H
+#define DRV_LEON_L2_CACHE_DEFINES_H
+
+#include <mv_types.h>
+#include <assert.h>
+#include <registersMyriad2.h>
+#include <DrvRegUtilsDefines.h>
+#include <swcWhoAmI.h>
+
+#define LL2C_CTRL_EN (1 << 31)
+//#define LL2C_CTRL_EDAC (1 << 30)
+// EDAC is disabled on fragrak
+#define LL2C_CTRL_REPL__LRU                  (0 << 28)
+#define LL2C_CTRL_REPL__PSEUDO_RANDOM        (1 << 28)
+#define LL2C_CTRL_REPL__MASTER_INDEX_REPLACE (2 << 28)
+#define LL2C_CTRL_REPL__MASTER_INDEX_MODULUS (3 << 28)
+//27:16 = reserved
+#define LL2C_CTRL_WAY_TO_REPLACE(way) (((way) & 0xf) << 12)
+#define LL2C_CTRL_NR_LOCKED_WAYS(number) (((number) & 0xf) << 8)
+// 7:6 = reserved
+#define LL2C_CTRL_BYPASS_CACHE_ON_NON_CACHEABLE_NON_BUFFERABLE (1 << 5)
+#define LL2C_CTRL_WHEN_HPROT_ALL_BUFFERABLE (1 << 4)
+#define LL2C_CTRL_BUS_USAGE_STATUS_SHIFTING (1 << 3)
+#define LL2C_CTRL_BUS_USAGE_STATUS_WRAPPING (0 << 3
+#define LL2C_CTRL_HIT_RATE_STATUS_SHIFTING (1 << 2)
+#define LL2C_CTRL_HIT_RATE_STATUS_WRAPPING (0 << 2)
+#define LL2C_CTRL_WRITE_POLICY_WRITE_THROUGH (1 << 1)
+#define LL2C_CTRL_WRITE_POLICY_COPY_BACK (0 << 1)
+#define LL2C_CTRL_USE_HPROT (1 << 0)
+
+// 31:25 = reserved
+#define LL2C_STATUS_LINE_SIZE_BYTES(bits) ((((bits)==64)?1:0)<<24)
+#define LL2C_STATUS_PROTECTION_TIMING_SIMULATED (1 << 23)
+#define LL2C_STATUS_MEMORY_PROTECTION_IMPLEMENTED (1 << 22)
+#define LL2C_STATUS_NUMBER_OF_MTRR_REGS(number) ((number) << 16)
+#define LL2C_STATUS_BACKEND_BUS_WIDTH_BITS(bits) (((128/(bits)) & 7) << 13)
+#define LL2C_STATUS_SET_SIZE_KiB(kilobytes) (((kilobytes)&0x7ff) << 2)
+#define LL2C_STATUS_MULTI_WAY_CONFIGURATION(conf) (((conf) & 3) << 0)
+#define LL2C_STATUS_NUMBER_OF_WAYS(ways) LL2C_STATUS_MULTI_WAY_CONFIGURATION((ways) - 1)
+
+#define LL2C_STATUS_LEON_OS ( LL2C_STATUS_LINE_SIZE_BYTES(64) \
+                            | LL2C_STATUS_NUMBER_OF_MTRR_REGS(8) \
+                            | LL2C_STATUS_BACKEND_BUS_WIDTH_BITS(128) \
+                            | LL2C_STATUS_SET_SIZE_KiB(256/4) \
+                            | LL2C_STATUS_NUMBER_OF_WAYS(4))
+
+#define LL2C_STATUS_LEON_RT ( LL2C_STATUS_LINE_SIZE_BYTES(64) \
+                            | LL2C_STATUS_NUMBER_OF_MTRR_REGS(8) \
+                            | LL2C_STATUS_BACKEND_BUS_WIDTH_BITS(128) \
+                            | LL2C_STATUS_SET_SIZE_KiB(32/4) \
+                            | LL2C_STATUS_NUMBER_OF_WAYS(4))
+
+enum DevLL2COperation {
+    LL2C_OPERATION_INVALIDATE = 1,
+    LL2C_OPERATION_WRITE_BACK = 2,
+    LL2C_OPERATION_INVALIDATE_AND_WRITE_BACK = 3,
+};
+
+enum DevLL2CWayAndTagOperation {
+    LL2C_OPERATION_WAY_AND_TAG_UPDATE_VALID_DIRTY_BITS = 1,
+    LL2C_OPERATION_WAY_AND_TAG_WRITE_BACK = 2,
+    LL2C_OPERATION_WAY_AND_TAG_UPDATE_VALID_DIRTY_BITS_AND_WRITE_BACK = 3,
+};
+
+enum LL2CMTRRAccessMode {
+    LL2C_UNCACHED = 0,
+    LL2C_DEMOTE_TO_UNCACHED = 0,
+    LL2C_WRITE_THROUGH = 1,
+    LL2C_DEMOTE_TO_WRITE_THROUGH = 1,
+    LL2C_ACCESS_RESERVED_2,
+    LL2C_ACCESS_RESERVED_3,
+};
+
+struct LL2CMemoryRange
+{
+    u32 address;
+    u32 mask;
+    enum LL2CMTRRAccessMode access_mode;
+    int write_protected;
+};
+
+#define LL2C_MTRR_MSB_ADDRESS_BITS_MATCHED 14
+#define LL2C_MTRR_MINIMUM_SIZE (1 << (32 - LL2C_MTRR_MSB_ADDRESS_BITS_MATCHED))
+#define LL2C_MTRR_UNMATCHED_MASK (LL2C_MTRR_MINIMUM_SIZE - 1)
+#define LL2C_MTRR_MATCHED_MASK (0xFFFFFFFF ^ LL2C_MTRR_UNMATCHED_MASK)
+#define LL2C_MTRR_HIGHEST_RESOLUTION_MASK LL2C_MTRR_MATCHED_MASK
+
+enum LL2CErrorType {
+    LL2C_ERROR_NO_ERROR = -1,
+    LL2C_ERROR_CACHE_READ = 0,
+    LL2C_ERROR_CACHE_WRITE = 1,
+    LL2C_ERROR_MEMORY_FETCH = 2,
+    LL2C_ERROR_MEMORY_WRITE = 3,
+    LL2C_ERROR_WRITE_PROTECT_HIT = 4,
+    LL2C_ERROR_BACKEND_AHB_READ = 5,
+    LL2C_ERROR_BACKEND_AHB_WRITE = 6,
+};
+
+
+#endif

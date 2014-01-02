@@ -1,0 +1,35 @@
+.version 00.40.00
+
+;=============================================
+; Defines
+;=============================================
+
+;------------------------------------------------------------------
+;Luma special Huff codes: 16ZerosRun, EOB
+ .set Y_M16zeros_code 0xff20
+ .set Y_M16zeros_len  0x000b
+ .set Y_EOB_code      0xa000
+ .set Y_EOB_len       0x0004
+
+;------------------------------------------------------------------
+;Chroma special Huff codes: 16ZerosRun, EOB
+ .set C_M16zeros_code 0xfe80
+ .set C_M16zeros_len  0x000a
+ .set C_EOB_code      0x0000
+ .set C_EOB_len       0x0002
+ 
+;------------------------------------------------------------------
+;CMU-flags
+ .set LT   0x4
+ .set GT   0x2
+ .set GTE  0x3
+ .set EQ   0x1
+ .set NEQ  0x6
+ 
+;------------------------------------------------------------------
+;DCT FP constants:
+ .set DCT_CT1   0x3F3504F3 ; 0.707106781f
+ .set DCT_CT2   0x3EC3EF15 ; 0.382683433f
+ .set DCT_CT3   0x3F0A8BD4 ; 0.541196100f
+ .set DCT_CT4   0x3FA73D75 ; 1.306562965f
+ .set CT_FP_128 0x43000000 ; 128.0f

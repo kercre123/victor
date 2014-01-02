@@ -1,0 +1,30 @@
+#include <sipp.h>
+
+//These get allocated PER SHAVE
+SippPipeline *sipp_pl;     //The global Pipeline structure shared by Shaves and Leon.
+
+//#############################################################################
+//#############################################################################
+//#############################################################################
+int SHAVE_MAIN(void)
+{
+    UInt32      cur_svu    = 0;
+    UInt32      numFilters = sipp_pl->nFiltersSvu;
+    SippFilter  **filters  = sipp_pl->filtersSvu;
+    UInt32      runMask    = sipp_pl->schedInfo[sipp_pl->iteration].shaveMask;
+        
+    SippFilter *fptr;
+    UInt32      i;
+
+
+    for(i=0; i<numFilters; i++)
+    {
+        if(runMask & (1<<i))
+        {
+            fptr = filters[i];
+            fptr->funcSvuRun(fptr, cur_svu, fptr->exeNo);
+        }
+    }
+ 
+    return 0;
+} 

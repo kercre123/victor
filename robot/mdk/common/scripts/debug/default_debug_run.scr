@@ -1,0 +1,10 @@
+breset
+start a
+echo load $elf ..
+load $elf
+echo target $default_target
+target $default_target
+echo $run_opt
+$run_opt
+echo $exit_opt
+$exit_opt

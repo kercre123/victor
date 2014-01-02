@@ -1,0 +1,38 @@
+//andreil: Automatically generated file. Do NOT modify !
+//         contains float values !!!                    
+
+unsigned int fft_tables_costbl_6[] = {
+  0x3f800000,
+  0x3f7ec46d,
+  0x3f7b14be,
+  0x3f74fa0b,
+  0x3f6c835e,
+  0x3f61c598,
+  0x3f54db31,
+  0x3f45e404,
+  0x3f3504f3,
+  0x3f226799,
+  0x3f0e39da,
+  0x3ef15aeb,
+  0x3ec3ef15,
+  0x3e94a030,
+  0x3e47c5c4,
+  0x3dc8bd35,
+  0xb33bbd2e,
+  0xbdc8bd31,
+  0xbe47c5c2,
+  0xbe94a033,
+  0xbec3ef14,
+  0xbef15ae6,
+  0xbf0e39d9,
+  0xbf226799,
+  0xbf3504f3,
+  0xbf45e404,
+  0xbf54db32,
+  0xbf61c597,
+  0xbf6c835e,
+  0xbf74fa0b,
+  0xbf7b14bf,
+  0xbf7ec46d,
+
+};

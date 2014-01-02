@@ -1,0 +1,409 @@
+; ///
+; /// @file
+; /// @copyright All code copyright Movidius Ltd 2012, all rights reserved.
+; ///            For License Warranty see: common/license.txt
+; ///
+; /// @brief
+; ///
+
+.version 00.51.04
+
+.ifndef SVU_COMMON_DEFINITIONS
+.set SVU_COMMON_DEFINITIONS
+
+;/* DMA reg addresses  */
+
+.set DMA_EN             0x1 ;
+.set DMA_EN_STRIDE_TX   0x5 ;
+.set DMA_EN_STRIDE_RX   0x3 ;
+
+.set START_DMA_0        0x0
+.set START_DMA_0_1      0x1
+.set START_DMA_0_1_2    0x2
+.set START_DMA_0_1_2_3  0x3
+
+;//DMA channel configuration
+.set DMA_ENABLE            0x01
+.set DMA_SRC_USE_STRIDE    0x02
+.set DMA_DST_USE_STRIDE    0x04
+.set DMA_TX_FIFO_ADDR    0x08
+.set DMA_RX_FIFO_ADDR    0x10
+.set DMA_FORCE_SRC_AXI    0x20
+
+.set DMA_BUSY_MASK     0x0008
+.set DMA_TASK_REQ      0x4004
+.set DMA_TASK_STAT     0x4008
+
+.set DMA0_CFG          0x4100
+.set DMA1_CFG          0x4200
+.set DMA2_CFG          0x4300
+.set DMA3_CFG          0x4400
+
+.set DMA0_SRC_ADDR     0x4104
+.set DMA1_SRC_ADDR     0x4204
+.set DMA2_SRC_ADDR     0x4304
+.set DMA3_SRC_ADDR     0x4404
+
+.set DMA0_DST_ADDR     0x4108
+.set DMA1_DST_ADDR     0x4208
+.set DMA2_DST_ADDR     0x4308
+.set DMA3_DST_ADDR     0x4408
+
+.set DMA0_SIZE         0x410C
+.set DMA1_SIZE         0x420C
+.set DMA2_SIZE         0x430C
+.set DMA3_SIZE         0x440C
+
+.set DMA0_LINE_WIDTH   0x4110
+.set DMA0_LINE_STRIDE  0x4114
+
+.set DMA1_LINE_WIDTH   0x4210
+.set DMA1_LINE_STRIDE  0x4214
+
+.set DMA2_LINE_WIDTH   0x4310
+.set DMA2_LINE_STRIDE  0x4314
+
+.set DMA3_LINE_WIDTH   0x4410
+.set DMA3_LINE_STRIDE  0x4414
+
+;/* MUTEX  */
+;......................
+.set    MUTEX_GRAND_MASK    0X0020
+
+.set MUTEX_CTRL_ADDR  0x3000
+;...............
+.set MUTEX_REQUEST_0     0x0100
+.set MUTEX_REQUEST_1     0x0101
+.set MUTEX_REQUEST_2     0x0102
+.set MUTEX_REQUEST_3     0x0103
+.set MUTEX_REQUEST_4     0x0104
+.set MUTEX_REQUEST_5     0x0105
+.set MUTEX_REQUEST_6     0x0106
+.set MUTEX_REQUEST_7     0x0107
+.set MUTEX_REQUEST_8     0x0108
+.set MUTEX_REQUEST_9     0x0109
+.set MUTEX_REQUEST_10    0x010A
+.set MUTEX_REQUEST_11    0x010B
+.set MUTEX_REQUEST_12    0x010C
+.set MUTEX_REQUEST_13    0x010D
+.set MUTEX_REQUEST_14    0x010E
+.set MUTEX_REQUEST_15    0x010F
+.set MUTEX_REQUEST_16    0x0110
+.set MUTEX_REQUEST_17    0x0111
+.set MUTEX_REQUEST_18    0x0112
+.set MUTEX_REQUEST_19    0x0113
+.set MUTEX_REQUEST_20    0x0114
+.set MUTEX_REQUEST_21    0x0115
+.set MUTEX_REQUEST_22    0x0116
+.set MUTEX_REQUEST_23    0x0117
+.set MUTEX_REQUEST_24    0x0118
+.set MUTEX_REQUEST_25    0x0119
+.set MUTEX_REQUEST_26    0x011A
+.set MUTEX_REQUEST_27    0x011B
+.set MUTEX_REQUEST_28    0x011C
+.set MUTEX_REQUEST_29    0x011D
+.set MUTEX_REQUEST_30    0x011E
+.set MUTEX_REQUEST_31    0x011F
+
+;...............
+.set MUTEX_RELEASE_0     0x0200
+.set MUTEX_RELEASE_1     0x0201
+.set MUTEX_RELEASE_2     0x0202
+.set MUTEX_RELEASE_3     0x0203
+.set MUTEX_RELEASE_4     0x0204
+.set MUTEX_RELEASE_5     0x0205
+.set MUTEX_RELEASE_6     0x0206
+.set MUTEX_RELEASE_7     0x0207
+.set MUTEX_RELEASE_8     0x0208
+.set MUTEX_RELEASE_9     0x0209
+.set MUTEX_RELEASE_10    0x020A
+.set MUTEX_RELEASE_11    0x020B
+.set MUTEX_RELEASE_12    0x020C
+.set MUTEX_RELEASE_13    0x020D
+.set MUTEX_RELEASE_14    0x020E
+.set MUTEX_RELEASE_15    0x020F
+.set MUTEX_RELEASE_16    0x0210
+.set MUTEX_RELEASE_17    0x0211
+.set MUTEX_RELEASE_18    0x0212
+.set MUTEX_RELEASE_19    0x0213
+.set MUTEX_RELEASE_20    0x0214
+.set MUTEX_RELEASE_21    0x0215
+.set MUTEX_RELEASE_22    0x0216
+.set MUTEX_RELEASE_23    0x0217
+.set MUTEX_RELEASE_24    0x0218
+.set MUTEX_RELEASE_25    0x0219
+.set MUTEX_RELEASE_26    0x021A
+.set MUTEX_RELEASE_27    0x021B
+.set MUTEX_RELEASE_28    0x021C
+.set MUTEX_RELEASE_29    0x021D
+.set MUTEX_RELEASE_30    0x021E
+.set MUTEX_RELEASE_31    0x021F
+
+;...............
+.set MUTEX_CLEAR_0     0x0400
+.set MUTEX_CLEAR_1     0x0401
+.set MUTEX_CLEAR_2     0x0402
+.set MUTEX_CLEAR_3     0x0403
+.set MUTEX_CLEAR_4     0x0404
+.set MUTEX_CLEAR_5     0x0405
+.set MUTEX_CLEAR_6     0x0406
+.set MUTEX_CLEAR_7     0x0407
+.set MUTEX_CLEAR_8     0x0408
+.set MUTEX_CLEAR_9     0x0409
+.set MUTEX_CLEAR_10    0x040A
+.set MUTEX_CLEAR_11    0x040B
+.set MUTEX_CLEAR_12    0x040C
+.set MUTEX_CLEAR_13    0x040D
+.set MUTEX_CLEAR_14    0x040E
+.set MUTEX_CLEAR_15    0x040F
+.set MUTEX_CLEAR_16    0x0410
+.set MUTEX_CLEAR_17    0x0411
+.set MUTEX_CLEAR_18    0x0412
+.set MUTEX_CLEAR_19    0x0413
+.set MUTEX_CLEAR_20    0x0414
+.set MUTEX_CLEAR_21    0x0415
+.set MUTEX_CLEAR_22    0x0416
+.set MUTEX_CLEAR_23    0x0417
+.set MUTEX_CLEAR_24    0x0418
+.set MUTEX_CLEAR_25    0x0419
+.set MUTEX_CLEAR_26    0x041A
+.set MUTEX_CLEAR_27    0x041B
+.set MUTEX_CLEAR_28    0x041C
+.set MUTEX_CLEAR_29    0x041D
+.set MUTEX_CLEAR_30    0x041E
+.set MUTEX_CLEAR_31    0x041F
+
+;-------------------------------------
+;-------FIFO ASM USEFUL REGISTERS-----
+.set    FIFO_FULL_MASK (0x02)
+.set    FIFO_EMPTY_MASK (0x01)
+.set    PFIFO_FIFO0_ADR     0x78803000
+.set    PFIFO_FIFO1_ADR     0x78803008
+.set    PFIFO_FIFO2_ADR     0x78803010
+.set    PFIFO_FIFO3_ADR     0x78803018
+.set    PFIFO_FIFO4_ADR     0x78803020
+.set    PFIFO_FIFO5_ADR     0x78803028
+.set    PFIFO_FIFO6_ADR     0x78803030
+.set    PFIFO_FIFO7_ADR     0x78803038
+.set    PFIFO_FIFO8_ADR     0x78803040
+.set    PFIFO_FIFO9_ADR     0x78803048
+.set    PFIFO_FIFO10_ADR    0x78803050
+.set    PFIFO_FIFO11_ADR    0x78803058
+
+
+;-------------------------------------
+;-------SHAVE INTERRUPTS USEFUL REGISTERS-----
+.set   RT_HP_IRQ_MASK      0x200
+.set   RT_LP_IRQ_MASK      0x100
+.set   OS_HP_IRQ_MASK      0x80
+.set   OS_LP_IRQ_MASK      0x40
+
+;/* TRF regs */
+.set P_GPR             0x1F
+.set P_GPI             0x1E
+.set P_SVID            0x1C
+.set P_CFG             0x1B
+.set G_GALOIS          0x15
+.set B_SREPS           0x14
+.set C_CMU1            0x13
+.set C_CMU0            0x12
+.set C_CSI             0x11
+.set F_AE              0x10
+.set I_AE              0x0F
+.set L_ENDIAN          0x0E
+.set V_ACC3            0x0D
+.set V_ACC2            0x0C
+.set V_ACC1            0x0B
+.set V_ACC0            0x0A
+.set S_ACC             0x09
+.set V_STATE           0x08
+.set S_STATE           0x07
+.set I_STATE           0x06
+.set B_RFB             0x05
+.set B_STATE           0x04
+.set B_MREPS           0x03
+.set B_LEND            0x02
+.set B_LBEG            0x01
+.set B_IP              0x00
+
+;TMU defines
+.set TMU_CFG        0x6000
+.set TMU_STATUS        0x6004
+
+.set TMU_PX_FLAGS    0x6010
+.set TMU_PX_CUBE_FACE    0x6014
+
+.set TMU_PX0_LOD    0x6020
+.set TMU_PX1_LOD    0x6024
+.set TMU_PX2_LOD    0x6028
+.set TMU_PX3_LOD    0x602c
+
+.set TMU_PX0_S        0x6030
+.set TMU_PX0_T        0x6034
+.set TMU_PX1_S        0x6038
+.set TMU_PX1_T        0x603c
+.set TMU_PX2_S        0x6040
+.set TMU_PX2_T        0x6044
+.set TMU_PX3_S        0x6048
+.set TMU_PX3_T        0x604c
+
+.set TMU_PX0_S_SHADOW    0x6050
+.set TMU_PX1_S_SHADOW    0x6054
+.set TMU_PX2_S_SHADOW    0x6058
+.set TMU_PX3_S_SHADOW    0x605c
+.set TMU_PX0_T_SHADOW    0x6060
+.set TMU_PX1_T_SHADOW    0x6064
+.set TMU_PX2_T_SHADOW    0x6068
+.set TMU_PX3_T_SHADOW    0x606c
+
+.set TMU_TX0_ADDR    0x6080
+.set TMU_TX0_F_PARAMS    0x6084
+.set TMU_TX0_O_PARAMS    0x6088
+.set TMU_TX0_S_PARAMS    0x608c
+
+.set TMU_TX1_ADDR    0x6090
+.set TMU_TX1_F_PARAMS    0x6094
+.set TMU_TX1_O_PARAMS    0x6098
+.set TMU_TX1_S_PARAMS    0x609c
+
+.set TMU_TX2_ADDR    0x60a0
+.set TMU_TX2_F_PARAMS    0x60a4
+.set TMU_TX2_O_PARAMS    0x60a8
+.set TMU_TX2_S_PARAMS    0x60ac
+
+.set TMU_TX3_ADDR    0x60b0
+.set TMU_TX3_F_PARAMS    0x60b4
+.set TMU_TX3_O_PARAMS    0x60b8
+.set TMU_TX3_S_PARAMS    0x60bc
+
+.set TMU_TX4_ADDR    0x60c0
+.set TMU_TX4_F_PARAMS    0x60c4
+.set TMU_TX4_O_PARAMS    0x60c8
+.set TMU_TX4_S_PARAMS    0x60cc
+
+.set TMU_TX5_ADDR    0x60d0
+.set TMU_TX5_F_PARAMS    0x60d4
+.set TMU_TX5_O_PARAMS    0x60d8
+.set TMU_TX5_S_PARAMS    0x60dc
+
+.set TMU_TX6_ADDR    0x60e0
+.set TMU_TX6_F_PARAMS    0x60e4
+.set TMU_TX6_O_PARAMS    0x60e8
+.set TMU_TX6_S_PARAMS    0x60ec
+
+.set TMU_TX7_ADDR    0x60f0
+.set TMU_TX7_F_PARAMS    0x60f4
+.set TMU_TX7_O_PARAMS    0x60f8
+.set TMU_TX7_S_PARAMS    0x60fc
+
+.set TMU_OP_ADDR    0x6100
+.set TMU_OP_ADDR_UPD    0x6104
+.set TMU_OP_FORMAT    0x6108
+.set TMU_OP_STATUS    0x610C
+.set TMU_OP_BK_COLOR_0    0x6110
+.set TMU_OP_BK_COLOR_1    0x6114
+
+
+
+;****************************************************++++PARAMETERS++++**************************************************
+.set TMU_OUTPUT_MODE_NONE        0
+.set TMU_OUTPUT_MODE_BILINEAR    1
+.set TMU_OUTPUT_MODE_TRILINEAR    2
+
+;.set PXFLAGS_TX_IDX(idx)    ((idx) & 0xf)
+.set PXFLAGS_PIX_EN_0    (1<<8)
+.set PXFLAGS_PIX_EN_1    (1<<9)
+.set PXFLAGS_PIX_EN_2    (1<<10)
+.set PXFLAGS_PIX_EN_3    (1<<11)
+.set PXFLAGS_CALC_LOD    (1<<18)
+.set PXFLAGS_IS_LAST        (1<<19)
+.set PXFLAGS_PREFETCH_L1    (1<<20)
+.set PXFLAGS_PREFETCH_L2    (2<<20)
+.set PXFLAGS_IS_SINGLE    (1<<22)
+
+;.set TX_F_PARAM_STRIDE(stride)    ((stride) & 0x3ffff)
+.set TX_F_PARAM_COORD_NORM        (1<<18)
+.set TX_F_PARAM_IS_CUBE        (1<<19)
+.set TX_F_PARAM_LOD_F16        (1<<20)
+.set TX_F_PARAM_LOD_IS_ABS        (1<<21)
+.set TX_F_PARAM_LOD_VALID        (1<<22)
+;.set TX_F_PARAM_LOD_C128(lod)    ((lod & 0xf)<<24)
+;.set TX_F_PARAM_LOD_42(lod)        ((lod & 0xf)<<28)
+
+.set TX_O_PARAM_FILTER_NONE                (0<<0)
+.set TX_O_PARAM_FILTER_U8                (1<<0)
+.set TX_O_PARAM_FILTER_I8                (2<<0)
+.set TX_O_PARAM_FILTER_FP16                (3<<0)
+.set TX_O_PARAM_OC_BITS_8                (0<<3)
+.set TX_O_PARAM_OC_BITS_16                (1<<3)
+.set TX_O_PARAM_OC_BITS_32                (2<<3)
+.set TX_O_PARAM_BK_COLOR_SEL            (1<<5)
+.set TX_O_PARAM_OC_NUM_1                (0<<6)
+.set TX_O_PARAM_OC_NUM_2                (1<<6)
+.set TX_O_PARAM_OC_NUM_4                (2<<6)
+.set TX_O_PARAM_OC0_MAP_CH0                (0<<8)
+.set TX_O_PARAM_OC0_MAP_CH1                (1<<8)
+.set TX_O_PARAM_OC0_MAP_CH2                (2<<8)
+.set TX_O_PARAM_OC0_MAP_CH3                (3<<8)
+.set TX_O_PARAM_OC0_MAP_0                (4<<8)
+.set TX_O_PARAM_OC0_MAP_1                (5<<8)
+.set TX_O_PARAM_OC1_MAP_CH0                (0<<11)
+.set TX_O_PARAM_OC1_MAP_CH1                (1<<11)
+.set TX_O_PARAM_OC1_MAP_CH2                (2<<11)
+.set TX_O_PARAM_OC1_MAP_CH3                (3<<11)
+.set TX_O_PARAM_OC1_MAP_0                (4<<11)
+.set TX_O_PARAM_OC1_MAP_1                (5<<11)
+.set TX_O_PARAM_OC2_MAP_CH0                (0<<14)
+.set TX_O_PARAM_OC2_MAP_CH1                (1<<14)
+.set TX_O_PARAM_OC2_MAP_CH2                (2<<14)
+.set TX_O_PARAM_OC2_MAP_CH3                (3<<14)
+.set TX_O_PARAM_OC2_MAP_0                (4<<14)
+.set TX_O_PARAM_OC2_MAP_1                (5<<14)
+.set TX_O_PARAM_OC3_MAP_CH0                (0<<17)
+.set TX_O_PARAM_OC3_MAP_CH1                (1<<17)
+.set TX_O_PARAM_OC3_MAP_CH2                (2<<17)
+.set TX_O_PARAM_OC3_MAP_CH3                (3<<17)
+.set TX_O_PARAM_OC3_MAP_0                (4<<17)
+.set TX_O_PARAM_OC3_MAP_1                (5<<17)
+.set TX_O_PARAM_EXPAND_1CH                (0<<20)
+.set TX_O_PARAM_EXPAND_2CH                (1<<20)
+.set TX_O_PARAM_EXPAND_4CH                (3<<20)
+.set TX_O_PARAM_EXPAND_565                (8<<20)
+.set TX_O_PARAM_EXPAND_5551                (9<<20)
+.set TX_O_PARAM_EXPAND_1555                (0xa<<20)
+.set TX_O_PARAM_EXPAND_4444                (0xb<<20)
+.set TX_O_PARAM_EXPAND_2101010            (0xc<<20)
+.set TX_O_PARAM_EXPAND_ETC1                (0xd<<20)
+.set TX_O_PARAM_MAG_FILT_NEAREST            (0<<24)
+.set TX_O_PARAM_MAG_FILT_LINEAR            (1<<24)
+.set TX_O_PARAM_MIN_FILT_NEAREST            (0<<25)
+.set TX_O_PARAM_MIN_FILT_LINEAR            (1<<25)
+.set TX_O_PARAM_MIN_FILT_NEAREST_MIPMAP_NEAREST    (2<<25)
+.set TX_O_PARAM_MIN_FILT_NEAREST_MIPMAP_LINEAR    (3<<25)
+.set TX_O_PARAM_MIN_FILT_LINEAR_MIPMAP_NEAREST    (4<<25)
+.set TX_O_PARAM_MIN_FILT_LINEAR_MIPMAP_LINEAR    (5<<25)
+.set TX_O_PARAM_WRAP_T_REPEAT            (0<<28)
+.set TX_O_PARAM_WRAP_T_MIRRORED_REPEAT        (1<<28)
+.set TX_O_PARAM_WRAP_T_CLAMP_EDGE            (2<<28)
+.set TX_O_PARAM_WRAP_T_CLAMP_BORDER            (3<<28)
+.set TX_O_PARAM_WRAP_S_REPEAT            (0<<30)
+.set TX_O_PARAM_WRAP_S_MIRRORED_REPEAT        (1<<30)
+.set TX_O_PARAM_WRAP_S_CLAMP_EDGE            (2<<30)
+.set TX_O_PARAM_WRAP_S_CLAMP_BORDER            (3<<30)
+
+;.set TX_S_PARAM_HEIGHT(height)            ((height) & 0xfff)
+;.set TX_S_PARAM_WIDTH(width)                (((width) & 0xfff)<<12)
+.set TX_S_PARAM_BPP_4                (0<<24)
+.set TX_S_PARAM_BPP_8                (1<<24)
+.set TX_S_PARAM_BPP_16                (2<<24)
+.set TX_S_PARAM_BPP_32                (3<<24)
+.set TX_S_PARAM_BPP_64                (4<<24)
+.set TX_S_PARAM_BPP_128                (5<<24)
+;.set TX_S_PARAM_MAX_LOD(lod)                (((lod) & 0xf)<<27)
+.set TX_S_PARAM_MORTON                (1<<31)
+
+
+.set StackPtr i19
+.set CallPtr i30
+
+.endif

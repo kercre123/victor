@@ -1,0 +1,9 @@
+/*  This is a Leon Default Linker script 
+ *  Should be used as an included linker script in top level scripts 
+ *
+ *  Addresses defined in common/drivers/system/config/memmap.S
+ */
+ 
+INCLUDE myriad1_leon_default_elf.ldscript
+INCLUDE myriad1_shave_slices.ldscript
+INCLUDE myriad1_default_general_purpose_sections.ldscript

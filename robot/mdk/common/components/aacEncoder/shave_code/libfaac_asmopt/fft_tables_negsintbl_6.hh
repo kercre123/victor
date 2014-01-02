@@ -1,0 +1,38 @@
+//andreil: Automatically generated file. Do NOT modify !
+//         contains float values !!!                    
+
+unsigned int fft_tables_negsintbl_6[] = {
+  0x80000000,
+  0xbdc8bd36,
+  0xbe47c5c2,
+  0xbe94a031,
+  0xbec3ef16,
+  0xbef15ae9,
+  0xbf0e39da,
+  0xbf226799,
+  0xbf3504f3,
+  0xbf45e403,
+  0xbf54db31,
+  0xbf61c597,
+  0xbf6c835e,
+  0xbf74fa0b,
+  0xbf7b14be,
+  0xbf7ec46d,
+  0xbf800000,
+  0xbf7ec46d,
+  0xbf7b14be,
+  0xbf74fa0a,
+  0xbf6c835f,
+  0xbf61c598,
+  0xbf54db32,
+  0xbf45e404,
+  0xbf3504f3,
+  0xbf226799,
+  0xbf0e39d9,
+  0xbef15aed,
+  0xbec3ef17,
+  0xbe94a033,
+  0xbe47c5c1,
+  0xbdc8bd30,
+
+};

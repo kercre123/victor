@@ -1,0 +1,16 @@
+breset
+
+;Need to start all shaves
+start a
+
+;load application mof
+load XX_TARGET_MOF_XX
+verify XX_TARGET_MOF_XX
+
+;Target the Leon
+target los
+
+;Run the Leon and wait
+run
+  
+;exit
