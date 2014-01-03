@@ -18,7 +18,7 @@ def addSources(dir):
 TARGET = 'cozmo'
 
 MV_SOC_PLATFORM = 'myriad1'
-GCC_VERSION = '4.4.2'
+GCC_VERSION = '4.4.2-LE'
 MV_TOOLS_VERSION = '00.50.39.2'
 
 LEON_SOURCE = []
@@ -53,6 +53,9 @@ BOARD = COMPONENTS + 'Board/leon_code/'
 LIBC = MV_COMMON_BASE + 'libc/leon/'
 CIF_GENERIC = COMPONENTS + 'CifGeneric/leon_code/'
 
+MOVICOMPILE_LIBRARY_PATH = MV_TOOLS_DIR + MV_TOOLS_VERSION + '/common/moviCompile/libraries/' + MV_SOC_PLATFORM + '/'
+MOVICOMPILE_LIBRARIES = [MOVICOMPILE_LIBRARY_PATH + file for file in ['mlibcxx.a', 'mlibVecUtils.a', 'mlibc.a', 'compiler-rt.a']]
+
 LEON_SOURCE += addSources(BOARD);
 LEON_SOURCE += addSources(SWCOMMON_PLATFORM + 'src');
 LEON_SOURCE += addSources(SWCOMMON + 'src');
@@ -64,7 +67,8 @@ LEON_SOURCE += addSources(LIBC + 'src/asm');
 SHAVE_SOURCE += addSources(SWCOMMON + 'shave_code/' + MV_SOC_PLATFORM + '/myriad1/asm')
 SHAVE_SOURCE += addSources(SWCOMMON + 'shave_code/' + MV_SOC_PLATFORM + '/myriad1/src')
 
-LEON_CCOPT = (
+
+LEON_ASM_C_CXX_OPT = (
 #  '-DDISABLE_LEON_DCACHE -DDISABLE_LEON_CACHE '
   '-DROBOT_HARDWARE '
   '-I ../include '
@@ -83,9 +87,15 @@ LEON_CCOPT = (
   '-I' + LIBC + 'include '
   '-I' + CIF_GENERIC + ' '
   '-O2 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 '
+  # TODO: Maybe remove some of these later
+  '-Wextra -fno-inline-small-functions -mbig-endian --sysroot=. -fno-inline-functions-called-once -DDRAM_SIZE_MB=64 '
 )
 
-LEON_CXXOPT = (
+LEON_C_OR_ASM_ONLY_OPT = (
+  '-Werror-implicit-function-declaration '
+)
+
+LEON_CXX_ONLY_OPT = (
   '-std=c++0x '
 )
 
@@ -114,36 +124,36 @@ SHAVE_MOVIASM_OPT = (
   '-elf '
 )
 
-SHAVE_LD_OPT = (
-  # TODO: Why does this have the big-endian -EB flag?
+SHAVE_MVLIB_LD_OPT = (
   '-r -EB '
 )
 
 OUTPUT = 'build/'
 
+
+SPARC_DIR = 'sparc-elf-' + GCC_VERSION + '/'
+
 # Determine the path to sparc-elf-gcc
 try:
   UNAME = subprocess.check_output("uname", shell=True)
   if 'Linux' in UNAME:
-    DETECTED_PLATFORM = 'linux32'
-    SPARC_DIR = 'sparc-elf-' + GCC_VERSION + '/'
+    DETECTED_PLATFORM = 'linux32'    
   else:
     DETECTED_PLATFORM = 'win32'
-    SPARC_DIR = 'sparc-elf-' + GCC_VERSION + '-mingw/'
 except:
-  print 'WARNING: No uname installed, assuming win32'
+  print('WARNING: No uname installed, assuming win32')
   DETECTED_PLATFORM = 'win32'
-  SPARC_DIR = 'sparc-elf-' + GCC_VERSION + '-mingw/'
 
 PLATFORM = MV_TOOLS_DIR + MV_TOOLS_VERSION + '/' + DETECTED_PLATFORM + '/'
 
 GCC_DIR = PLATFORM + SPARC_DIR
-LEON_CCOPT += ' -I ' + GCC_DIR + 'lib/gcc/sparc-elf/4.4.2/include/'
-LEON_CCOPT += ' -I ' + GCC_DIR + 'lib/gcc/sparc-elf/4.4.2/include-fixed/'
+LEON_ASM_C_CXX_OPT += ' -I ' + GCC_DIR + 'lib/gcc/sparc-elf/4.4.2/include/'
+LEON_ASM_C_CXX_OPT += ' -I ' + GCC_DIR + 'lib/gcc/sparc-elf/4.4.2/include-fixed/'
 
 CC = GCC_DIR + 'bin/sparc-elf-gcc '
 CXX = GCC_DIR + 'bin/sparc-elf-g++ '
-LD =  GCC_DIR + 'bin/sparc-elf-ld '
+LD = GCC_DIR + 'bin/sparc-elf-ld '
+OBJCOPY = GCC_DIR + 'bin/sparc-elf-objcopy '
 
 MVASM = PLATFORM + 'bin/moviAsm'
 MVCOMPILE = PLATFORM + 'bin/moviCompile'
@@ -152,8 +162,7 @@ MVCONV = PLATFORM + 'bin/moviConvert'
 
 LINKER_SCRIPT = 'ld/custom.ldscript'
 LDOPT = (
-  # TODO: Why doesn't this have the big-endian -EB flag?
-  '-O9 -t --gc-sections -M -warn-common -L ld -T ' + LINKER_SCRIPT + ' '
+  '-EB -O9 -t --gc-sections -M -warn-common -L ld -T ' + LINKER_SCRIPT + ' '
 )
 
 leonSrcToObj = { }
@@ -225,17 +234,22 @@ def compileLEON(src):
     if srcStat.st_mtime <= objStat.st_mtime and areDependenciesCurrent(src, obj, objStat.st_mtime):
       needsCompile = False
 
+      
+      
+ 
+
+      
   if needsCompile:
     print 'Compiling Leon:', src[(src.rfind('/') + 1):]
     if src.endswith('.S'):
-      stage1 = CC + ' -c ' + LEON_CCOPT + ' -DASM ' + src + ' -o ' + obj
-      stage2 = CC + ' ' + LEON_CCOPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src
+      stage1 = CC + ' -c ' + LEON_ASM_C_CXX_OPT + ' ' + LEON_C_OR_ASM_ONLY_OPT + ' -DASM ' + src + ' -o ' + obj
+      stage2 = CC + ' ' + LEON_ASM_C_CXX_OPT + ' ' + LEON_C_OR_ASM_ONLY_OPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src
     elif src.endswith('.c'):
-      stage1 = CC + ' -c ' + LEON_CCOPT + ' ' + src + ' -o ' + obj
-      stage2 = CC + ' ' + LEON_CCOPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src
+      stage1 = CC + ' -c ' + LEON_ASM_C_CXX_OPT + ' ' + LEON_C_OR_ASM_ONLY_OPT + ' ' + src + ' -o ' + obj
+      stage2 = CC + ' ' + LEON_ASM_C_CXX_OPT + ' ' + LEON_C_OR_ASM_ONLY_OPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src
     elif src.endswith('.cpp') or src.endswith('.cc'):
-      stage1 = CXX + ' -c ' + LEON_CCOPT + ' ' + LEON_CXXOPT + ' ' + src + ' -o ' + obj
-      stage2 = CXX + ' ' + LEON_CCOPT + ' ' + LEON_CXXOPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src
+      stage1 = CXX + ' -c ' + LEON_ASM_C_CXX_OPT + ' ' + LEON_CXX_ONLY_OPT + ' ' + src + ' -o ' + obj
+      stage2 = CXX + ' ' + LEON_ASM_C_CXX_OPT + ' ' + LEON_CXX_ONLY_OPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src
     else:
       print 'ERROR: Weird file extension: ', src
       sys.exit(1)
@@ -293,40 +307,44 @@ def compileSHAVE(src):
       if os.system(stage2) != 0:
         sys.exit(1)
 
-def linkSHAVEMvlib(outputLibraryFilename):
+def linkSHAVEMvlib(mvlibFilename):
   print('Linking Shave Mvlib library')
-  file = OUTPUT + TARGET + '.mvlib'
-  
-  compiledObjects = ' '.join(shaveSrcToObj.values())
-  moviLibraryPath = MV_TOOLS_DIR + MV_TOOLS_VERSION + '/common/moviCompile/libraries/' + MV_SOC_PLATFORM + '/'
-  moviLibraries = [moviLibraryPath + file for file in ['mlibcxx.a', 'mlibVecUtils.a', 'mlibc.a', 'compiler-rt.a']]
 
-  systemString = LD + ' ' + SHAVE_LD_OPT + compiledObjects + ' ' + moviLibraries + ' -o ' + outputLibraryFilename
+  compiledObjectsString = ' '.join(shaveSrcToObj.values())
+  moviCompileLibrariesString = ' '.join(MOVICOMPILE_LIBRARIES)
+
+  # NOTE: The Myriad makefile creates an intermediate libray "swCommon.mvlib",
+  #       but this command compiles our shave code and all the Myriad components together as .o files,
+  systemString = LD + ' ' + SHAVE_MVLIB_LD_OPT + compiledObjectsString + ' ' + moviCompileLibrariesString + ' -o ' + mvlibFilename
+  #       and the closed-source moviCompile libraries as .a files
+
+  if isNoisy:
+    print(systemString)
 
   if os.system(systemString) != 0:
     sys.exit(1)
 
-def linkSHAVEShvlib(inputMvlibFilename, outputShvlibFilename, shaveNumber):
+def linkSHAVEShvlib(mvlibFilename, shvlibFilename, shaveNumber, prefixSymbolsString):
   print('Linking Shave Shvlib library')
-  file = OUTPUT + TARGET + '.mvlib'
 
-  compiledObjects = ' '.join(shaveSrcToObj.values())
-  moviLibraries =
+  mustEndWith = '.shv' + str(shaveNumber) + 'lib'
+  if not shvlibFilename.endswith(mustEndWith):
+    print('Error: shvlibFilename must end with ' + mustEndWith)
+    sys.exit(1)
 
-  systemString = LD + ' ' + SHAVE_LD_OPT + compiledObjects + ' ' + moviLibraries + ' -o ' +
+  systemString = OBJCOPY + ' ' + '--prefix-alloc-sections=.shv' + str(shaveNumber) + '. --prefix-symbols=' + prefixSymbolsString + str(shaveNumber) + '_' + ' ' + mvlibFilename + ' ' + shvlibFilename
 
-  /cygdrive/c/Anki/movidius-tools/tools/00.50.39.2/common/moviCompile/libraries/myriad1/mlibcxx.a /cygdrive/c/Anki/movidius-tools/tools/00.50.39.2/common/moviCompile/libraries/myriad1/mlibVecUtils.a /cygdrive/c/Anki/movidius-tools/tools/00.50.39.2/common/moviCompile/libraries/myriad1/mlibc.a /cygdrive/c/Anki/movidius-tools/tools/00.50.39.2/common/moviCompile/libraries/myriad1/compiler-rt.a
+  if isNoisy:
+    print(systemString)
 
-  -o shave/helloShave.mvlib
-
-  #if os.system(s) != 0:
-  #  sys.exit(1)
+  if os.system(systemString) != 0:
+    sys.exit(1)
 
 if __name__ == '__main__':
   isTest = False
   isRun = False
   isFlash = False
-  isNoisy = True
+  isNoisy = False
 
   # Check if the Movidius tools can be found
   if any((os.path.isfile(file.strip()) or os.path.isfile(file.strip()+'.exe') for file in [CC, CXX, LD, MVCONV])) == False:
@@ -366,6 +384,9 @@ if __name__ == '__main__':
       print 'Invalid argument: ' + arg
       sys.exit(1)
 
+  if DETECTED_PLATFORM == 'win32':
+    os.environ['CYGWIN'] = 'nodosfilewarning'
+      
   if not isTest:
     LEON_SOURCE += addSources('supervisor/src')
     pass
@@ -376,14 +397,20 @@ if __name__ == '__main__':
   for src in SHAVE_SOURCE:
     compileSHAVE(src)
 
-  shave0file = OUTPUT + TARGET + '.elf'
-  linkSHAVE(shave0file, 0)
+  shaveMvlibFilename = OUTPUT + TARGET + '.mvlib'
+  print(shaveMvlibFilename)
+  linkSHAVEMvlib(shaveMvlibFilename)
 
   objects = ''
+
+  shavesToUse = [0]
+  shaveShvlibFilenames = [OUTPUT + TARGET + '.shv' + str(number) + 'lib' for number in shavesToUse]
+  for (shaveNumber, shvlibFilename) in zip(shavesToUse, shaveShvlibFilenames):
+    linkSHAVEShvlib(shaveMvlibFilename, shvlibFilename, shaveNumber, 'shave')
+    objects += ' ' + shvlibFilename
+
   for key in leonSrcToObj.keys():
     objects += ' ' + leonSrcToObj[key]
-
-  objects += ' ' + shave0file
 
   with open('ld/objects.ldscript', 'w+') as f:
     f.write('INPUT(' + objects + ' )\n')
