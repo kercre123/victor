@@ -92,6 +92,10 @@ Matlab matlab(false);
 BIG_BUFFER_LOCATION char bigBuffer[BIG_BUFFER_SIZE];
 SMALL_BUFFER_LOCATION char smallBuffer[SMALL_BUFFER_SIZE];
 
+GTEST_TEST(CoreTech_Vision, SimpleShaveTest)
+{
+}
+
 GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo)
 {
   MemoryStack scratch_CMX(&smallBuffer[0], SMALL_BUFFER_SIZE);

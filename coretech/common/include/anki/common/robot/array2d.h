@@ -104,7 +104,7 @@ namespace Anki
 
       this->stride = ComputeRequiredStride(numCols, flags);
 
-      AnkiConditionalErrorAndReturn(numCols >= 0 && numRows >= 0 && dataLength >= numRows*this->stride && this->stride == (numCols*sizeof(Type)),
+      AnkiConditionalErrorAndReturn(numCols >= 0 && numRows >= 0 && dataLength >= numRows*this->stride && this->stride == (numCols*static_cast<s32>(sizeof(Type))),
         "Array<Type>::Array", "Invalid size");
 
       AnkiConditionalErrorAndReturn((numCols*sizeof(Type)) % MEMORY_ALIGNMENT == 0,

@@ -67,7 +67,6 @@ LEON_SOURCE += addSources(LIBC + 'src/asm');
 SHAVE_SOURCE += addSources(SWCOMMON + 'shave_code/' + MV_SOC_PLATFORM + '/myriad1/asm')
 SHAVE_SOURCE += addSources(SWCOMMON + 'shave_code/' + MV_SOC_PLATFORM + '/myriad1/src')
 
-
 LEON_ASM_C_CXX_OPT = (
 #  '-DDISABLE_LEON_DCACHE -DDISABLE_LEON_CACHE '
   '-DROBOT_HARDWARE '
@@ -129,7 +128,6 @@ SHAVE_MVLIB_LD_OPT = (
 )
 
 OUTPUT = 'build/'
-
 
 SPARC_DIR = 'sparc-elf-' + GCC_VERSION + '/'
 
@@ -398,7 +396,6 @@ if __name__ == '__main__':
     compileSHAVE(src)
 
   shaveMvlibFilename = OUTPUT + TARGET + '.mvlib'
-  print(shaveMvlibFilename)
   linkSHAVEMvlib(shaveMvlibFilename)
 
   objects = ''

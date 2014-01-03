@@ -108,7 +108,7 @@ namespace Anki
       std::string EvalStringExplicitEcho(const char * buffer);
 
       MatlabVariableType GetType(const std::string name);
-      
+
       template<typename Type>  mxClassID GetMatlabClassID();
 
       //Check if the variable exists on the workspace
@@ -125,7 +125,7 @@ namespace Anki
       template<typename Type> Result PutArray(const Array<Type> &matrix, const std::string name);
 
       template<typename Type> Array<Type> GetArray(const std::string name, MemoryStack &memory);
-      
+
       template<typename Type> Result PutQuad(const Quadrilateral<Type> &quad, const std::string name);
 
       template<typename Type> Result Put(const Type * values, s32 nValues, const std::string name);
@@ -140,32 +140,32 @@ namespace Anki
     {
       return mxUNKNOWN_CLASS;
     }
-    
+
     template<typename Type> Result Matlab::PutArray(const Array<Type> &matrix, const std::string name)
     {
       const mwSize matrixHeight = static_cast<mwSize>(matrix.get_size(0));
       const mwSize matrixWidth  = static_cast<mwSize>(matrix.get_size(1));
 
       AnkiConditionalErrorAndReturnValue(ep, RESULT_FAIL, "Anki.PutArray<Type>", "Matlab engine is not started/connected");
-      
+
       const mxClassID whichClass = GetMatlabClassID<Type>();
       AnkiConditionalErrorAndReturnValue(whichClass != mxUNKNOWN_CLASS, RESULT_FAIL, "Anki.PutArray<Type>", "Unknown type to convert to a mxClassID");
-      
+
       // Create the transpose:
       const mwSize dims[2] = {matrixWidth, matrixHeight};
       mxArray* mxMatrix = mxCreateNumericArray(2, dims, whichClass, mxREAL);
       Type *data = static_cast<Type*>(mxGetData(mxMatrix));
-      
+
       for(mwSize y=0; y<matrixHeight; y++) {
         memcpy(data, matrix.Pointer(y,0), matrixWidth*sizeof(Type));
         data += matrixWidth;
       }
 
       engPutVariable(ep, name.data(), mxMatrix);
-      
+
       // Transpose to what we actually want over in matlab
       EvalString("%s = %s';", name.data(), name.data());
-      
+
       /*
       const std::string tmpName = name + std::string("_AnkiTMP");
       const std::string matlabTypeName = Anki::Embedded::ConvertToMatlabTypeString(typeid(Type).name(), sizeof(Type));
@@ -173,34 +173,33 @@ namespace Anki
       EvalStringEcho("%s=zeros([%d,%d],'%s');", name.data(), matrixHeight, matrixWidth, matlabTypeName.data());
 
       for(s32 y=0; y<matrixHeight; y++) {
-        Put<Type>(matrix.Pointer(y,0), matrixWidth, tmpName);
-        EvalStringEcho("%s(%d,:)=%s;", name.data(), y+1, tmpName.data());
+      Put<Type>(matrix.Pointer(y,0), matrixWidth, tmpName);
+      EvalStringEcho("%s(%d,:)=%s;", name.data(), y+1, tmpName.data());
       }
 
       EvalString("clear %s;", tmpName.data());
-       */
+      */
       return RESULT_OK;
     } // template<typename Type> Result Matlab::PutArray(const Array<Type> &matrix, const std::string name)
 
     template<typename Type> Result Matlab::PutQuad(const Quadrilateral<Type> &quad, const std::string name)
     {
       AnkiConditionalErrorAndReturnValue(ep, RESULT_FAIL, "Anki.PutQuad<Type>", "Matlab engine is not started/connected");
-      
+
       // Initially just put a 8-element array into Matlab
       Type tempArray[8] = {
         quad[0].x, quad[1].x, quad[2].x, quad[3].x,
         quad[0].y, quad[1].y, quad[2].y, quad[3].y
       };
-      
+
       Put<Type>(tempArray, 8, name);
 
       // Reshape the array to be 4x2 -- [x(:) y(:)]
       EvalStringEcho("%s = reshape(%s, [4 2]);", name.data(), name.data());
-      
+
       return RESULT_OK;
     } // template<typename Type> Result Matlab::PutQuad(const Quadrilateral<Type> &quad, const std::string name)
-    
-    
+
     template<typename Type> Array<Type> Matlab::GetArray(const std::string name, MemoryStack &memory)
     {
       AnkiConditionalErrorAndReturnValue(ep, Array<Type>(0, 0, NULL, 0), "Anki.GetArray<Type>", "Matlab engine is not started/connected");
@@ -282,6 +281,15 @@ namespace Anki
     } // template<typename Type> T* Matlab::Get(const std::string name)
 
     template<> Result Matlab::Put<Point<s16> >(const Point<s16> * values, s32 nValues, const std::string name);
+
+#pragma mark --- Specializations ---
+    template<> mxClassID Matlab::GetMatlabClassID<u8>();
+    template<> mxClassID Matlab::GetMatlabClassID<u16>();
+    template<> mxClassID Matlab::GetMatlabClassID<s16>();
+    template<> mxClassID Matlab::GetMatlabClassID<s32>();
+    template<> mxClassID Matlab::GetMatlabClassID<u32>();
+    template<> mxClassID Matlab::GetMatlabClassID<f32>();
+    template<> mxClassID Matlab::GetMatlabClassID<f64>();
   } // namespace Embedded
 } // namespace Anki
 
