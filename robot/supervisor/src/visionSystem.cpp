@@ -71,8 +71,8 @@ namespace Anki {
       char cmxBuffer_[CMX_BUFFER_SIZE];
       u8   ddrBuffer_[DDR_BUFFER_SIZE] ALIGNVARIABLE;
 #else
-      __attribute__((section(".smallBss1"))) char cmxBuffer_[CMX_BUFFER_SIZE];
-      __attribute__((section(".bigBss")))    u8   ddrBuffer_[DDR_BUFFER_SIZE] ALIGNVARIABLE;
+      __attribute__((section(".cmx.bss"))) char cmxBuffer_[CMX_BUFFER_SIZE];
+      __attribute__((section(".ddr.bss"))) u8   ddrBuffer_[DDR_BUFFER_SIZE] ALIGNVARIABLE;
 #endif
       
       const u32 TRACKER_SCRATCH_SIZE   = 600000;

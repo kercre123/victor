@@ -220,11 +220,14 @@ int main()
 
   HAL::SetupMainExecution();
 
-  while (true)
+  while (Robot::step_LongExecution() == EXIT_SUCCESS)
   {
-    Robot::step_LongExecution();
+    
   }
 
+  PRINT("MAIN DIED\n");
+  HAL::USBSendPrintBuffer();
+  
   return 0;
 }
 
