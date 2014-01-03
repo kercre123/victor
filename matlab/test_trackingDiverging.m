@@ -1,22 +1,26 @@
 
-function testTrackingDiverging()
+function test_trackingDiverging(varargin)
 
+%imagePath = '~/temp/trackingDiverging/';
+imagePath = 'C:/Anki/blockImages/trackingDiverging/';
 resaveImages = false;
 
+parseVarargin(varargin{:});
+
 if resaveImages
-    frames = cell(0);
+    frames = {};
     for i = 1:120
         try 
-            filename = sprintf('C:/Anki/blockImages/trackingDiverging/trackingImage%03d.png', i);
+            filename = fullfile(imagePath, sprintf('trackingImage%03d.png', i));
             im = imread(filename);
             frames{end+1} = im;
         catch
         end   
     end
 
-    save C:/Anki/blockImages/trackingDiverging/allFrames.mat frames
+    save(fullfile(imagePath, 'allFrames.mat'), 'frames');
 else 
-    load C:/Anki/blockImages/trackingDiverging/allFrames.mat frames
+    load(fullfile(imagePath, 'allFrames.mat'), 'frames');
 end
 
 templateRegionRectangle = [31, 50, 10, 30];
