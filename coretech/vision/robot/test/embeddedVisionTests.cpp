@@ -485,7 +485,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
 
   const Rectangle<f32> templateRegion(13, 34, 22, 43);
   const Quadrilateral<f32> templateQuad(templateRegion);
-  
+
   const s32 maxIterations = 25;
   const f32 convergenceTolerance = .05f;
 
@@ -560,7 +560,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
     ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, converged, scratch1) == RESULT_OK);
 
     ASSERT_TRUE(converged);
-    
+
     const f64 time2 = GetTime();
 
     printf("Affine LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
@@ -639,7 +639,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
     ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, converged, scratch1) == RESULT_OK);
 
     ASSERT_TRUE(converged == true);
-    
+
     const f64 time2 = GetTime();
 
     printf("Translation-only LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
@@ -707,7 +707,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
     ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, true, converged, scratch1) == RESULT_OK);
 
     ASSERT_TRUE(converged == true);
-    
+
     const f64 time2 = GetTime();
 
     printf("Projective LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
@@ -2972,7 +2972,7 @@ int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123);
 #endif
 
-#ifdef RUN_LITTLE_TESTS
+  //#ifdef RUN_LITTLE_TESTS
   CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
   CALL_GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput);
   CALL_GTEST_TEST(CoreTech_Vision, LaplacianPeaks);
@@ -2993,7 +2993,7 @@ int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);
   CALL_GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary);
-#endif // #ifdef RUN_LITTLE_TESTS
+  //#endif // #ifdef RUN_LITTLE_TESTS
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 

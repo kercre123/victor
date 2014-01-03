@@ -225,8 +225,12 @@ int main()
     
   }
 
-  PRINT("MAIN DIED\n");
-  HAL::USBSendPrintBuffer();
+  // TODO: Fix PRINT
+  #warning PRINT broken
+  #if 0
+    PRINT("MAIN DIED\n");
+    HAL::USBSendPrintBuffer();
+  #endif
   
   return 0;
 }

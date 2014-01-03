@@ -10,7 +10,7 @@ INCLUDE objects.ldscript
 
 SECTIONS {
   /* Start past first shave (leaving 896KB) */
-  . = 0xA0020000;
+  . = 0xA0010000;
   
   .sys.traps ALIGN(0x1000) : {
     *(.sys.text.traps)
