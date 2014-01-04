@@ -9,8 +9,7 @@ Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
-//#define USING_MOVIDIUS_COMPILER
-
+#include "anki/common/robot/config.h"
 #include "anki/common/robot/array2d.h"
 #include "anki/common/robot/benchmarking_c.h"
 #include "anki/common/robot/fixedLengthList.h"
@@ -23,6 +22,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/find.h"
 #include "anki/common/robot/interpolate.h"
 #include "anki/common/robot/arrayPatterns.h"
+
+#include "shave/run_shave_embeddedCommonTests.h"
 
 using namespace Anki::Embedded;
 
@@ -40,36 +41,77 @@ Matlab matlab(false);
 #include "gtest/gtest.h"
 #endif
 
-#ifdef USING_MOVIDIUS_GCC_COMPILER
-#include "swcLeonUtils.h"
-#endif
+//#ifdef USING_MOVIDIUS_GCC_COMPILER
+//#include "swcLeonUtils.h"
+//#endif
 
-//#define BUFFER_IN_DDR_WITH_L2
-#define BUFFER_IN_CMX
+#define MAX_BYTES 50000
 
-#if defined(BUFFER_IN_DDR_WITH_L2) && defined(BUFFER_IN_CMX)
-You cannot use both CMX and L2 Cache;
-#endif
-
-#define MAX_BYTES 5000
-
-#if defined(_MSC_VER) || defined(__APPLE__)
-static char buffer[MAX_BYTES];
+#if defined(USING_MOVIDIUS_COMPILER)
+#define BUFFER_LOCATION __attribute__((section(".cmx.bss")))
 #else
-
-#ifdef BUFFER_IN_CMX
-__attribute__((section(".cmx.bss"))) static char buffer[MAX_BYTES];    // CMX is default
-#else // #ifdef BUFFER_IN_CMX
-
-#ifdef BUFFER_IN_DDR_WITH_L2
-__attribute__((section(".ddr.bss"))) static char buffer[MAX_BYTES]; // With L2 cache
-#else
-__attribute__((section(".ddr_direct.bss"))) static char buffer[MAX_BYTES]; // No L2 cache
+#define BUFFER_LOCATION
 #endif
 
-#endif // #ifdef BUFFER_IN_CMX ... #else
+BUFFER_LOCATION static char buffer[MAX_BYTES];
 
-#endif // #ifdef USING_MOVIDIUS_COMPILER
+//GTEST_TEST(CoreTech_Common, ShaveAddTest)
+//{
+//  const s32 numElements = 1000;
+//
+//  ASSERT_TRUE(buffer != NULL);
+//  MemoryStack ms(buffer, MAX_BYTES);
+//  ASSERT_TRUE(ms.IsValid());
+//
+//  Array<s32> in1(1, numElements, ms);
+//  Array<s32> in2(1, numElements, ms);
+//  Array<s32> out(1, numElements, ms);
+//
+//  s32 * restrict pIn1 = in1.Pointer(0,0);
+//  s32 * restrict pIn2 = in2.Pointer(0,0);
+//  s32 * restrict pOut = out.Pointer(0,0);
+//
+//  for(s32 i=0; i<numElements; i++) {
+//    pIn1[i] = i + 1;
+//    pIn2[i] = 2*i + 10;
+//  }
+//
+//#if defined(USING_MOVIDIUS_COMPILER)
+//  swcResetShave(0);
+//  swcSetAbsoluteDefaultStack(0);
+//
+//  swcStartShave(0,(u32)&helloShave0_main);
+//  swcWaitShave(SHAVE_USED);
+//#else
+//  for(s32 i=0; i<numElements; i++) {
+//    pOut[i] = pIn1[i] + pIn2[i];
+//  }
+//#endif
+//
+//  for(s32 i=0; i<numElements; i++) {
+//    ASSERT_TRUE(pOut[i] == (3*i + 11));
+//  }
+//
+//  GTEST_RETURN_HERE;
+//}
+
+GTEST_TEST(CoreTech_Common, ShavePrintfTest)
+{
+#if defined(USING_MOVIDIUS_COMPILER)
+
+  swcResetShave(0);
+  swcSetAbsoluteDefaultStack(0);
+
+  shave0_whichTest = 5;
+
+  swcStartShave(0,(u32)&shave0_main);
+  swcWaitShave(0);
+#endif
+
+  printf("If on the Myriad, the previous line should read: \"Shave Test 0 passed\"");
+
+  GTEST_RETURN_HERE;
+}
 
 GTEST_TEST(CoreTech_Common, MatrixTranspose)
 {
@@ -2567,6 +2609,7 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, ShavePrintfTest);
   CALL_GTEST_TEST(CoreTech_Common, MatrixTranspose);
   CALL_GTEST_TEST(CoreTech_Common, CholeskyDecomposition);
   CALL_GTEST_TEST(CoreTech_Common, ExplicitPrintf);

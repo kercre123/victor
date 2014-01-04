@@ -31,6 +31,7 @@ LEON_SOURCE += addSources('../coretech/common/robot/src')
 LEON_SOURCE += addSources('../coretech/common/shared/src')
 
 SHAVE_SOURCE = []
+SHAVE_SOURCE += addSources('../coretech/common/robot/src/shave')
 SHAVE_SOURCE += addSources('../coretech/vision/robot/src/shave')
 
 MV_TOOLS_DIR = os.environ.get('MV_TOOLS_DIR')
@@ -370,6 +371,7 @@ if __name__ == '__main__':
       LEON_SOURCE += addSources('../coretech/common/robot/test')
       LEON_SOURCE += addSources('../coretech/common/robot/src/')
       LEON_SOURCE += addSources('../coretech/common/shared/src/')
+      SHAVE_SOURCE += addSources('../coretech/common/robot/test/shave')
     elif arg == 'run':
       isRun = True
     elif arg == 'flash':
@@ -381,7 +383,7 @@ if __name__ == '__main__':
     else:
       print 'Invalid argument: ' + arg
       sys.exit(1)
-
+      
   if DETECTED_PLATFORM == 'win32':
     os.environ['CYGWIN'] = 'nodosfilewarning'
       
@@ -400,14 +402,14 @@ if __name__ == '__main__':
 
   objects = ''
 
+  for key in leonSrcToObj.keys():
+    objects += ' ' + leonSrcToObj[key]
+  
   shavesToUse = [0]
   shaveShvlibFilenames = [OUTPUT + TARGET + '.shv' + str(number) + 'lib' for number in shavesToUse]
   for (shaveNumber, shvlibFilename) in zip(shavesToUse, shaveShvlibFilenames):
     linkSHAVEShvlib(shaveMvlibFilename, shvlibFilename, shaveNumber, 'shave')
     objects += ' ' + shvlibFilename
-
-  for key in leonSrcToObj.keys():
-    objects += ' ' + leonSrcToObj[key]
 
   with open('ld/objects.ldscript', 'w+') as f:
     f.write('INPUT(' + objects + ' )\n')

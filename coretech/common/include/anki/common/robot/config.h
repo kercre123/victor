@@ -18,7 +18,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define ANKICORETECHEMBEDDED_VERSION_REVISION 0
 
 #if defined(__MOVICOMPILE__)
-#warning Using MoviCompile
+//#warning Using MoviCompile
 #define USING_MOVIDIUS_SHAVE_COMPILER
 #define USING_MOVIDIUS_COMPILER
 
@@ -127,17 +127,28 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/types.h"
 
-#ifdef USING_MOVIDIUS_GCC_COMPILER // If using the movidius gcc compiler for Leon
+//#ifdef USING_MOVIDIUS_GCC_COMPILER // If using the movidius gcc compiler for Leon
+#ifdef USING_MOVIDIUS_COMPILER // If using the movidius compiler for Leon or Shave
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include "mv_types.h"
+
+#define CHECK_ANKI_ASSERTS 0
+
+#ifdef USING_MOVIDIUS_GCC_COMPILER // If using the movidius gcc compiler for Leon
+
+#define EXPLICIT_PRINTF_FLIP_CHARACTERS 0
+
 #include "DrvUart.h"
 #include "swcTestUtils.h"
 #include "swcLeonUtils.h"
 #include "DrvL2Cache.h"
+#include <registersMyriad.h>
+#include <DrvSvu.h>
+#include <swcShaveLoader.h>
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
@@ -146,14 +157,20 @@ extern "C" {
 #include <float.h>
 #include <stdarg.h>
 
-#define EXPLICIT_PRINTF_FLIP_CHARACTERS 0
-#define CHECK_ANKI_ASSERTS 0
-
 #undef printf
 #define printf(...) explicitPrintf(0, EXPLICIT_PRINTF_FLIP_CHARACTERS, __VA_ARGS__)
 
   //#define printf(...) (_xprintf(SYSTEM_PUTCHAR_FUNCTION , 0, __VA_ARGS__ ) )
 #define xprintf(...) (_xprintf(SYSTEM_PUTCHAR_FUNCTION , 0, __VA_ARGS__ ) )
+#else // If using the movidius gcc compiler for Shave
+#include <stdio.h>
+#include <math.h>
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
+#include <float.h>
+#include <stdarg.h>
+#endif
 
 #ifdef __cplusplus
 }

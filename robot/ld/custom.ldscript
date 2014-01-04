@@ -2,7 +2,7 @@
  *  To avoid accidental memory aliasing, all the myriad .ld files are collapsed into this one file
  *
  *  NOTE: LRAM is reserved for stack right now (at 0x90107f00) and trap table in traps.s
- * 
+ *
  *  Addresses defined in common/drivers/system/config/memmap.S
  */
 
@@ -11,31 +11,31 @@ INCLUDE objects.ldscript
 SECTIONS {
   /* Start past first shave (leaving 896KB) */
   . = 0xA0010000;
-  
+
   .sys.traps ALIGN(0x1000) : {
     *(.sys.text.traps)
   }
-  .sys.text : { 
+  .sys.text : {
     *(.sys.text.start)
   }
   .text : { *(.text*) }
   .sys.rodata : { *(.sys.rodata*) }
   .rodata : { *(.rodata*) }
-  .data : { *(.data*) 
+  .data : { *(.data*)
       . = ALIGN(4);   /* NDM - moviConvert can't handle sections not aligned at 4 bytes */
   }
 
-  .bss (NOLOAD) : { 
+  .bss (NOLOAD) : {
     . = ALIGN(8);
     __bss_start = . ;
     *(.bss*) *(COMMON)
     . = ALIGN(8);
     __bss_end = . ;
   }
- 
-  
+
+
   /* These are used by vision-tests */
-  
+
   .cmx.bss (NOLOAD) : {
     *(.cmx.bss*)
   }
@@ -45,15 +45,15 @@ SECTIONS {
     *(.init_text*)
     __init_text_end = ALIGN(4);
   }
-  
+
   ASSERT( . < 0xA0100000 , "CMX content overflows limits (Shaves + code + data)" )
 
   /* Trap table is in LRAM, just past top of stack */
   . = __LRAM + 0x8000 - 0xc0;
-  .sys.bss (NOLOAD) : { 
+  .sys.bss (NOLOAD) : {
     . = ALIGN(8);
     __sys_bss_start = . ;
-    *(.sys.bss*) 
+    *(.sys.bss*)
     . = ALIGN(8);
     __sys_bss_end = . ;
   }
@@ -63,7 +63,7 @@ SECTIONS {
 
   .ddr.text : {
     *(.ddr.text*)
-    *(.text._ZN*) 
+    *(.text._ZN*)
     *(.text.explicitPrintf)
   }
 
@@ -71,15 +71,15 @@ SECTIONS {
     *(.ddr.bss*)
     *(.bss.printfBuffer*)
   }
-   
+
   .imageData : {
     *(.imageData*)
   }
-  
-  /* 
-   * locate the special sections in correct place  
-   * These sections are required to ensure Myriad is initialized correctly and must be loaded first   
-   */	
+
+  /*
+   * locate the special sections in correct place
+   * These sections are required to ensure Myriad is initialized correctly and must be loaded first
+   */
   .l2.mode    0x800F0000 : { KEEP(*(.l2.mode)) }           /* L2 cache mode                */
   .cmx.ctrl   0xAE000020 : { KEEP(*(.cmx.ctrl)) }          /* CMX default layout           */
   .winregs.S0 0x80140010 : { KEEP(*(.winregs.S0)) }       /* Window registers for Shave 0 */
@@ -89,46 +89,47 @@ SECTIONS {
   .winregs.S4 0x80180010 : { KEEP(*(.winregs.S4)) }       /* Window registers for Shave 4 */
   .winregs.S5 0x80190010 : { KEEP(*(.winregs.S5)) }       /* Window registers for Shave 5 */
   .winregs.S6 0x801A0010 : { KEEP(*(.winregs.S6)) }       /* Window registers for Shave 6 */
-  .winregs.S7 0x801B0010 : { KEEP(*(.winregs.S7)) }       /* Window registers for Shave 7 */  
+  .winregs.S7 0x801B0010 : { KEEP(*(.winregs.S7)) }       /* Window registers for Shave 7 */
 }
 
 ENTRY( start );
 
-SECTIONS {  
+SECTIONS {
   /*Setting up shave slices memory with absolute addresses*/
   . = 0x10000000;
-  S.shv0.cmx.text : { 
+  S.shv0.cmx.text : {
         *(.shv0.S.text*)
         *(.shv0.S.__TEXT__sect)
-        *(.shv0.S.__MAIN__sect) 
+        *(.shv0.S.__MAIN__sect)
+        *(.shv0.S.init*)
   }
-  . = 0x10008000; 
-  S.shv0.cmx.data : { 
+  . = 0x10008000;
+  S.shv0.cmx.data : {
         *(.shv0.S.data*)
+        *(.shv0.S.rodata*)
         *(.shv0.S.__DATA__sect*)
         *(.shv0.S.__STACK__sect*)
         *(.shv0.S.__static_data*)
         *(.shv0.S.__HEAP__sect*)
+        *(.shv0.S.__T__*)
   }
-  
-  . = 0x10020000;
-  S.shv1.cmx.text : { 
-        *(.shv1.S.text*)
-        *(.shv1.S.__TEXT__sect)
-        *(.shv1.S.__MAIN__sect) 
+}
+
+/*The following are empty sections but we just need to make sure their symbols get pulled in*/
+SECTIONS {
+  . = 0x1D000000;
+  S.shvdynamic.text : {
+        *(.dyn.text*)
   }
-  . = 0x10028000; 
-  S.shv1.cmx.data : { 
-        *(.shv1.S.data*)
-        *(.shv1.S.__DATA__sect*)
-        *(.shv1.S.__STACK__sect*)
-        *(.shv1.S.__static_data*)
-        *(.shv1.S.__HEAP__sect*)
-  }  
+
+  . = 0x1C000000;
+  S.shvdynamic.data : {
+        *(.dyn.data*)
+  }
 }
 
 SECTIONS {
-  /* Define linker symbols with desired location for windows C,D,E,F on each shave */  
+  /* Define linker symbols with desired location for windows C,D,E,F on each shave */
   __WinRegShave0_winC = DEFINED( __WinRegShave0_winC ) ? __WinRegShave0_winC : ABSOLUTE(0x10008000);    /* Default absolute address  */
   __WinRegShave0_winD = DEFINED( __WinRegShave0_winD ) ? __WinRegShave0_winD : ABSOLUTE(0x10000000);    /* Default absolute address  */
   __WinRegShave0_winE = DEFINED( __WinRegShave0_winE ) ? __WinRegShave0_winE : ABSOLUTE(0x00000000);    /* not used                  */
@@ -138,7 +139,7 @@ SECTIONS {
   __WinRegShave1_winD = DEFINED( __WinRegShave1_winD ) ? __WinRegShave1_winD : ABSOLUTE(0x10020000);    /* Default absolute address  */
   __WinRegShave1_winE = DEFINED( __WinRegShave1_winE ) ? __WinRegShave1_winE : ABSOLUTE(0x00000000);    /* not used                  */
   __WinRegShave1_winF = DEFINED( __WinRegShave1_winF ) ? __WinRegShave1_winF : ABSOLUTE(0x40000000);    /* not used                  */
-  
+
   __WinRegShave2_winC = DEFINED( __WinRegShave2_winC ) ? __WinRegShave2_winC : ABSOLUTE(0x10048000);    /* Default absolute address  */
   __WinRegShave2_winD = DEFINED( __WinRegShave2_winD ) ? __WinRegShave2_winD : ABSOLUTE(0x10040000);    /* Default absolute address  */
   __WinRegShave2_winE = DEFINED( __WinRegShave2_winE ) ? __WinRegShave2_winE : ABSOLUTE(0x00000000);    /* not used                  */
@@ -148,7 +149,7 @@ SECTIONS {
   __WinRegShave3_winD = DEFINED( __WinRegShave3_winD ) ? __WinRegShave3_winD : ABSOLUTE(0x10060000);    /* Default absolute address  */
   __WinRegShave3_winE = DEFINED( __WinRegShave3_winE ) ? __WinRegShave3_winE : ABSOLUTE(0x00000000);    /* not used                  */
   __WinRegShave3_winF = DEFINED( __WinRegShave3_winF ) ? __WinRegShave3_winF : ABSOLUTE(0x40000000);    /* not used                  */
-                                                 
+
   __WinRegShave4_winC = DEFINED( __WinRegShave4_winC ) ? __WinRegShave4_winC : ABSOLUTE(0x10088000);    /* Default absolute address  */
   __WinRegShave4_winD = DEFINED( __WinRegShave4_winD ) ? __WinRegShave4_winD : ABSOLUTE(0x10080000);    /* Default absolute address  */
   __WinRegShave4_winE = DEFINED( __WinRegShave4_winE ) ? __WinRegShave4_winE : ABSOLUTE(0x00000000);    /* not used                  */
@@ -158,17 +159,17 @@ SECTIONS {
   __WinRegShave5_winD = DEFINED( __WinRegShave5_winD ) ? __WinRegShave5_winD : ABSOLUTE(0x100A0000);    /* Default absolute address  */
   __WinRegShave5_winE = DEFINED( __WinRegShave5_winE ) ? __WinRegShave5_winE : ABSOLUTE(0x00000000);    /* not used                  */
   __WinRegShave5_winF = DEFINED( __WinRegShave5_winF ) ? __WinRegShave5_winF : ABSOLUTE(0x40000000);    /* not used                  */
-                                                 
+
   __WinRegShave6_winC = DEFINED( __WinRegShave6_winC ) ? __WinRegShave6_winC : ABSOLUTE(0x100C8000);    /* Default absolute address  */
   __WinRegShave6_winD = DEFINED( __WinRegShave6_winD ) ? __WinRegShave6_winD : ABSOLUTE(0x100C0000);    /* Default absolute address  */
   __WinRegShave6_winE = DEFINED( __WinRegShave6_winE ) ? __WinRegShave6_winE : ABSOLUTE(0x00000000);    /* not used                  */
   __WinRegShave6_winF = DEFINED( __WinRegShave6_winF ) ? __WinRegShave6_winF : ABSOLUTE(0x40000000);    /* not used                  */
-                                                 
+
   __WinRegShave7_winC = DEFINED( __WinRegShave7_winC ) ? __WinRegShave7_winC : ABSOLUTE(0x100E8000);    /* Default absolute address  */
   __WinRegShave7_winD = DEFINED( __WinRegShave7_winD ) ? __WinRegShave7_winD : ABSOLUTE(0x100E0000);    /* Default absolute address  */
   __WinRegShave7_winE = DEFINED( __WinRegShave7_winE ) ? __WinRegShave7_winE : ABSOLUTE(0x00000000);    /* not used                  */
   __WinRegShave7_winF = DEFINED( __WinRegShave7_winF ) ? __WinRegShave7_winF : ABSOLUTE(0x40000000);    /* not used                  */
-  
+
   /* DWARF debug sections.
      Symbols in the DWARF debugging sections are relative to the beginning
      of the section so we begin them at 0.  */

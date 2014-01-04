@@ -23,6 +23,10 @@ void addVectors(
   )
 {
 #if INNER_LOOP_VERSION == 1
+  s32 i;
+  for(i=0; i<numElements; i++) {
+    out[i] = in1[i] + in2[i];
+  }
 
 #elif INNER_LOOP_VERSION == 2
 
