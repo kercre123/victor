@@ -162,7 +162,9 @@ extern "C" {
 
   //#define printf(...) (_xprintf(SYSTEM_PUTCHAR_FUNCTION , 0, __VA_ARGS__ ) )
 #define xprintf(...) (_xprintf(SYSTEM_PUTCHAR_FUNCTION , 0, __VA_ARGS__ ) )
-#else // If using the movidius gcc compiler for Shave
+
+#else // If using the movidius moviCompile for Shave
+
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
@@ -170,7 +172,8 @@ extern "C" {
 #include <stdlib.h>
 #include <float.h>
 #include <stdarg.h>
-#endif
+
+#endif // #ifdef USING_MOVIDIUS_GCC_COMPILER ... #else
 
 #ifdef __cplusplus
 }

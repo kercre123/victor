@@ -102,7 +102,7 @@ GTEST_TEST(CoreTech_Common, ShavePrintfTest)
   swcResetShave(0);
   swcSetAbsoluteDefaultStack(0);
 
-  shave0_whichTest = 5;
+  shave0_whichTest = 0;
 
   swcStartShave(0,(u32)&shave0_main);
   swcWaitShave(0);
