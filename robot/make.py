@@ -361,13 +361,12 @@ if __name__ == '__main__':
     elif arg == 'vision-tests':
       isTest = True
       TARGET = 'vision-tests'
-      LEON_SOURCE += addSources('../coretech/vision/robot/project/myriad1/unitTests/leon')
       LEON_SOURCE += addSources('../coretech/vision/robot/src')
       LEON_SOURCE += addSources('../coretech/vision/robot/test')
+      SHAVE_SOURCE += addSources('../coretech/common/robot/test/shave')
     elif arg == 'common-tests':
       isTest = True
       TARGET = 'common-tests'
-      LEON_SOURCE += addSources('../coretech/common/robot/project/myriad1/unitTests/leon')
       LEON_SOURCE += addSources('../coretech/common/robot/test')
       LEON_SOURCE += addSources('../coretech/common/robot/src/')
       LEON_SOURCE += addSources('../coretech/common/shared/src/')

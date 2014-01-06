@@ -2972,7 +2972,7 @@ int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps123);
 #endif
 
-  //#ifdef RUN_LITTLE_TESTS
+#ifdef RUN_LITTLE_TESTS
   CALL_GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents);
   CALL_GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput);
   CALL_GTEST_TEST(CoreTech_Vision, LaplacianPeaks);
@@ -2993,7 +2993,7 @@ int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByFactor);
   CALL_GTEST_TEST(CoreTech_Vision, ComputeCharacteristicScale);
   CALL_GTEST_TEST(CoreTech_Vision, TraceInteriorBoundary);
-  //#endif // #ifdef RUN_LITTLE_TESTS
+#endif // #ifdef RUN_LITTLE_TESTS
 
   printf("\n========================================================================\nUNIT TEST RESULTS:\nNumber Passed:%d\nNumber Failed:%d\n========================================================================\n", numPassedTests, numFailedTests);
 
