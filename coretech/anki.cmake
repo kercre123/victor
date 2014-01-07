@@ -202,7 +202,8 @@ endif(NOT DEFINED EXTERNAL_DIR)
 set(OPENCV_MODULES_DIR ${EXTERNAL_DIR}/${OPENCV_DIR}/modules)
 include_directories(
 	${EXTERNAL_DIR}/${OPENCV_DIR}/include 
-	${EXTERNAL_DIR}/${GTEST_DIR}/include
+        ${EXTERNAL_DIR}/${GTEST_DIR}/include
+        ${EXTERNAL_DIR}/jsoncpp
 	${MATLAB_INCLUDE_DIR}
 )
 

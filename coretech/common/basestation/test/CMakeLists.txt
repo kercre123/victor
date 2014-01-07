@@ -5,11 +5,8 @@ add_executable(run_coreTechCommonTests
 	run_coreTechCommonTests.cpp 
 	testMatrix.cpp
 	testPoint.cpp
-	testRotation.cpp)
+	testRotation.cpp
+        testConfigTreeJsonCpp.cpp)
 	
 target_link_libraries(run_coreTechCommonTests 
-	CoreTech_Common_Basestation ${OPENCV_LIBS} gtest)
-
-
-
-
+	CoreTech_Common_Basestation ${OPENCV_LIBS} gtest jsoncpp)
