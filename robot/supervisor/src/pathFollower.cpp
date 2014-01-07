@@ -196,12 +196,16 @@ namespace Anki
         
         for (u8 i=0; i<path_.GetNumSegments(); ++i) {
           res = path_[i].GetDistToSegment(x,y,angle,distToSegment,angError);
+#if(DEBUG_PATH_FOLLOWER)
           PRINT("PathDist: %f  (res=%d)\n", distToSegment, res);
+#endif
           if (ABS(distToSegment) < distToClosestSegment && (res == IN_SEGMENT_RANGE || res == OOR_NEAR_START)) {
             closestSegId = i;
             distToClosestSegment = ABS(distToSegment);
             closestSegmentRangeStatus = res;
+#if(DEBUG_PATH_FOLLOWER)
             PRINT(" New closest seg: %d, distToSegment %f (res=%d)\n", i, distToSegment, res);
+#endif
           }
         }
         
