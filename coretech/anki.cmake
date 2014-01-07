@@ -56,7 +56,7 @@ endif(WIN32)
 
 # So long as we're using full version names in our external libraries,
 # lets not have to hardcode them all over the place:
-set(OPENCV_DIR opencv-2.4.6.1)
+set(OPENCV_DIR opencv-2.4.8)
 set(GTEST_DIR gtest-1.7.0)
 
 # I would love to figure out how to get find_package(OpenCV) to work,
