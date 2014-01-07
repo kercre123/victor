@@ -172,6 +172,7 @@ extern "C" {
 #include <stdlib.h>
 #include <float.h>
 #include <stdarg.h>
+#include <moviVectorUtils.h>
 
 #endif // #ifdef USING_MOVIDIUS_GCC_COMPILER ... #else
 
@@ -184,6 +185,10 @@ extern "C" {
 
 #else // If not using the movidius gcc compiler for Leon
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdio.h>
 #include <math.h>
@@ -192,6 +197,10 @@ extern "C" {
 #include <stdlib.h>
 #include <float.h>
 #include <stdarg.h>
+
+#ifdef __cplusplus
+}
+#endif
 
 // If we're not building mex (which will replace printf w/ mexPrintf),
 // then we want to swap printf for explicitPrintf

@@ -62,10 +62,12 @@ int main(int argc, char *argv[])
       cout<<"> ";
       cin>>choice;
 
-      plan.Push(actions[choice]);
-      writePath("path.txt", env, plan);
+      if(choice >= 0) {
+        plan.Push(actions[choice]);
+        writePath("path.txt", env, plan);
 
-      curr = State(results[choice]);
+        curr = State(results[choice]);
+      }
     }
   }
 
