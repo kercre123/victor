@@ -9,18 +9,29 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/config.h"
 
-//#include <stdio.h>
-//#include <math.h>
-//#include <moviVectorUtils.h>
-//#include <mv_types.h>
+#define INNER_LOOP_VERSION 1 // Change this to another number as desired (only makes a difference for Shave)
+#define FASTEST_VERSION 5 // The version of the loop that runs the fastest
 
-#ifdef USING_MOVIDIUS_SHAVE_COMPILER
-#define INNER_LOOP_VERSION 1 // Change this to another number as desired
+#if INNER_LOOP_VERSION != FASTEST_VERSION
+#ifdef _MSC_VER
+#pragma message ("Warning: Current inner loop version is not the fastest version")
 #else
-#define INNER_LOOP_VERSION 1 // This must always be 1 on the PC or Leon
+#warning Current inner loop version is not the fastest version
+#endif
 #endif
 
-void ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow(const u8 * restrict paddedImage_currentRow, const s32 * restrict integralImage_previousRow, s32 * restrict integralImage_currentRow, const s32 integralImageWidth)
+// INNER_LOOP_VERSION must always be 1 on the PC or Leon
+#ifndef USING_MOVIDIUS_SHAVE_COMPILER
+#undef INNER_LOOP_VERSION
+#define INNER_LOOP_VERSION 1
+#endif // #ifndef USING_MOVIDIUS_SHAVE_COMPILER
+
+void ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow(
+  const u8 * restrict paddedImage_currentRow,
+  const s32 * restrict integralImage_previousRow,
+  s32 * restrict integralImage_currentRow,
+  const s32 integralImageWidth
+  )
 {
 #if INNER_LOOP_VERSION == 1
   s32 x;

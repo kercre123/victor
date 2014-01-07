@@ -34,6 +34,8 @@ SHAVE_SOURCE = []
 SHAVE_SOURCE += addSources('../coretech/common/robot/src/shave')
 SHAVE_SOURCE += addSources('../coretech/vision/robot/src/shave')
 
+SHAVES_TO_USE = [0] # Can be any set of numbers from 0-7 for myriad1
+
 MV_TOOLS_DIR = os.environ.get('MV_TOOLS_DIR')
 
 if os.environ.get('MV_TOOLS_DIR') is None:
@@ -146,8 +148,8 @@ except:
 PLATFORM = MV_TOOLS_DIR + MV_TOOLS_VERSION + '/' + DETECTED_PLATFORM + '/'
 
 GCC_DIR = PLATFORM + SPARC_DIR
-LEON_ASM_C_CXX_OPT += ' -I ' + GCC_DIR + 'lib/gcc/sparc-elf/4.4.2/include/'
-LEON_ASM_C_CXX_OPT += ' -I ' + GCC_DIR + 'lib/gcc/sparc-elf/4.4.2/include-fixed/'
+LEON_ASM_C_CXX_OPT += ' -I ' + GCC_DIR + 'lib/gcc/sparc-elf/4.4.2/include/ '
+LEON_ASM_C_CXX_OPT += ' -I ' + GCC_DIR + 'lib/gcc/sparc-elf/4.4.2/include-fixed/ '
 
 CC = GCC_DIR + 'bin/sparc-elf-gcc '
 CXX = GCC_DIR + 'bin/sparc-elf-g++ '
@@ -363,14 +365,12 @@ if __name__ == '__main__':
       TARGET = 'vision-tests'
       LEON_SOURCE += addSources('../coretech/vision/robot/src')
       LEON_SOURCE += addSources('../coretech/vision/robot/test')
-      SHAVE_SOURCE += addSources('../coretech/common/robot/test/shave')
     elif arg == 'common-tests':
       isTest = True
       TARGET = 'common-tests'
       LEON_SOURCE += addSources('../coretech/common/robot/test')
       LEON_SOURCE += addSources('../coretech/common/robot/src/')
       LEON_SOURCE += addSources('../coretech/common/shared/src/')
-      SHAVE_SOURCE += addSources('../coretech/common/robot/test/shave')
     elif arg == 'run':
       isRun = True
     elif arg == 'flash':
@@ -389,7 +389,10 @@ if __name__ == '__main__':
   if not isTest:
     LEON_SOURCE += addSources('supervisor/src')
     pass
-
+  
+  for shaveNumber in SHAVES_TO_USE:
+    LEON_ASM_C_CXX_OPT += '-DUSE_SHAVE_' + str(shaveNumber) + ' '
+   
   for src in (LEON_SOURCE):
     compileLEON(src)
 
@@ -404,9 +407,9 @@ if __name__ == '__main__':
   for key in leonSrcToObj.keys():
     objects += ' ' + leonSrcToObj[key]
   
-  shavesToUse = [0]
-  shaveShvlibFilenames = [OUTPUT + TARGET + '.shv' + str(number) + 'lib' for number in shavesToUse]
-  for (shaveNumber, shvlibFilename) in zip(shavesToUse, shaveShvlibFilenames):
+    shaveShvlibFilenames = [OUTPUT + TARGET + '.shv' + str(number) + 'lib' for number in SHAVES_TO_USE]
+  for (shaveNumber, shvlibFilename) in zip(SHAVES_TO_USE, shaveShvlibFilenames):
+    
     linkSHAVEShvlib(shaveMvlibFilename, shvlibFilename, shaveNumber, 'shave')
     objects += ' ' + shvlibFilename
 

@@ -9,21 +9,22 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/config.h"
 
-#define FASTEST_VERSION 2
-
-#ifdef USING_MOVIDIUS_SHAVE_COMPILER
-
-#define INNER_LOOP_VERSION 2 // Change this to another number as desired
+#define INNER_LOOP_VERSION 2 // Change this to another number as desired (only makes a difference for Shave)
+#define FASTEST_VERSION 2 // The version of the loop that runs the fastest
 
 #if INNER_LOOP_VERSION != FASTEST_VERSION
+#ifdef _MSC_VER
+#pragma message ("Warning: Current inner loop version is not the fastest version")
+#else
 #warning Current inner loop version is not the fastest version
 #endif
+#endif
 
-#else // #ifdef USING_MOVIDIUS_SHAVE_COMPILER
-
-#define INNER_LOOP_VERSION 1 // This must always be 1 on the PC or Leon
-
-#endif // #ifdef USING_MOVIDIUS_SHAVE_COMPILER ... #else
+// INNER_LOOP_VERSION must always be 1 on the PC or Leon
+#ifndef USING_MOVIDIUS_SHAVE_COMPILER
+#undef INNER_LOOP_VERSION
+#define INNER_LOOP_VERSION 1
+#endif // #ifndef USING_MOVIDIUS_SHAVE_COMPILER
 
 void addVectors_s32x4(
   const s32 * restrict pIn1,

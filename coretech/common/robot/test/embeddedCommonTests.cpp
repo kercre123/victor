@@ -22,8 +22,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/find.h"
 #include "anki/common/robot/interpolate.h"
 #include "anki/common/robot/arrayPatterns.h"
-
-#include "shave/run_shave_embeddedCommonTests.h"
+#include "anki/common/robot/shaveKernels_c.h"
 
 using namespace Anki::Embedded;
 
@@ -64,7 +63,7 @@ GTEST_TEST(CoreTech_Common, ShaveAddTest)
   // On the Myriad, the buffer is local to the SHAVE we'll be using to process
   // On the PC, the buffer is just the normal buffer that is somewhere in CMX
 #if defined(USING_MOVIDIUS_COMPILER)
-  MemoryStack ms(shave0_buffer, MAX_SHAVE_BYTES);
+  MemoryStack ms(shave0_localBuffer, LOCAL_SHAVE_BUFFER_SIZE);
 #else
   ASSERT_TRUE(buffer != NULL);
   MemoryStack ms(buffer, MAX_BYTES);
@@ -91,18 +90,20 @@ GTEST_TEST(CoreTech_Common, ShaveAddTest)
   swcResetShave(0);
   swcSetAbsoluteDefaultStack(0);
 
-  shave0_whichTest = 1;
-  shave0_pIn1 = ConvertCMXAddressToShave(pIn1);
-  shave0_pIn2 = ConvertCMXAddressToShave(pIn2);
-  shave0_pOut = ConvertCMXAddressToShave(pOut);
-  shave0_numElements = numElements;
+  START_SHAVE(0, addVectors_s32x4,
+    "iiii",
+    ConvertCMXAddressToShave(pIn1),
+    ConvertCMXAddressToShave(pIn2),
+    ConvertCMXAddressToShave(pOut),
+    numElements);
 
-  swcStartShave(0,(u32)&shave0_main);
   swcWaitShave(0);
 #else // #if defined(USING_MOVIDIUS_COMPILER)
-  for(s32 i=0; i<numElements; i++) {
-    pOut[i] = pIn1[i] + pIn2[i];
-  }
+  addVectors_s32x4(
+    pIn1,
+    pIn2,
+    pOut,
+    numElements);
 #endif // #if defined(USING_MOVIDIUS_COMPILER) ... #else
   double t1 = GetTime();
 
@@ -118,22 +119,22 @@ GTEST_TEST(CoreTech_Common, ShaveAddTest)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Common, ShavePrintfTest)
-{
-#if defined(USING_MOVIDIUS_COMPILER)
-  swcResetShave(0);
-  swcSetAbsoluteDefaultStack(0);
-
-  shave0_whichTest = 0;
-
-  swcStartShave(0,(u32)&shave0_main);
-  swcWaitShave(0);
-#endif // #if defined(USING_MOVIDIUS_COMPILER)
-
-  printf("If on the Myriad, the previous line should read: \"Shave Test 0 passed\"");
-
-  GTEST_RETURN_HERE;
-}
+//GTEST_TEST(CoreTech_Common, ShavePrintfTest)
+//{
+//#if defined(USING_MOVIDIUS_COMPILER)
+//  swcResetShave(0);
+//  swcSetAbsoluteDefaultStack(0);
+//
+//  shave0_whichTest = 0;
+//
+//  swcStartShave(0,(u32)&shave0_main);
+//  swcWaitShave(0);
+//#endif // #if defined(USING_MOVIDIUS_COMPILER)
+//
+//  printf("If on the Myriad, the previous line should read: \"Shave Test 0 passed\"");
+//
+//  GTEST_RETURN_HERE;
+//}
 
 GTEST_TEST(CoreTech_Common, MatrixTranspose)
 {
@@ -2632,7 +2633,7 @@ int RUN_ALL_TESTS()
   s32 numFailedTests = 0;
 
   CALL_GTEST_TEST(CoreTech_Common, ShaveAddTest);
-  CALL_GTEST_TEST(CoreTech_Common, ShavePrintfTest);
+  //CALL_GTEST_TEST(CoreTech_Common, ShavePrintfTest);
   CALL_GTEST_TEST(CoreTech_Common, MatrixTranspose);
   CALL_GTEST_TEST(CoreTech_Common, CholeskyDecomposition);
   CALL_GTEST_TEST(CoreTech_Common, ExplicitPrintf);
