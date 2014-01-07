@@ -172,6 +172,7 @@ extern "C" {
 #include <stdlib.h>
 #include <float.h>
 #include <stdarg.h>
+#include <moviVectorUtils.h>
 
 #endif // #ifdef USING_MOVIDIUS_GCC_COMPILER ... #else
 

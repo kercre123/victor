@@ -55,50 +55,72 @@ Matlab matlab(false);
 
 BUFFER_LOCATION static char buffer[MAX_BYTES];
 
-//GTEST_TEST(CoreTech_Common, ShaveAddTest)
-//{
-//  const s32 numElements = 1000;
-//
-//  ASSERT_TRUE(buffer != NULL);
-//  MemoryStack ms(buffer, MAX_BYTES);
-//  ASSERT_TRUE(ms.IsValid());
-//
-//  Array<s32> in1(1, numElements, ms);
-//  Array<s32> in2(1, numElements, ms);
-//  Array<s32> out(1, numElements, ms);
-//
-//  s32 * restrict pIn1 = in1.Pointer(0,0);
-//  s32 * restrict pIn2 = in2.Pointer(0,0);
-//  s32 * restrict pOut = out.Pointer(0,0);
-//
-//  for(s32 i=0; i<numElements; i++) {
-//    pIn1[i] = i + 1;
-//    pIn2[i] = 2*i + 10;
-//  }
-//
-//#if defined(USING_MOVIDIUS_COMPILER)
-//  swcResetShave(0);
-//  swcSetAbsoluteDefaultStack(0);
-//
-//  swcStartShave(0,(u32)&helloShave0_main);
-//  swcWaitShave(SHAVE_USED);
-//#else
-//  for(s32 i=0; i<numElements; i++) {
-//    pOut[i] = pIn1[i] + pIn2[i];
-//  }
-//#endif
-//
-//  for(s32 i=0; i<numElements; i++) {
-//    ASSERT_TRUE(pOut[i] == (3*i + 11));
-//  }
-//
-//  GTEST_RETURN_HERE;
-//}
+GTEST_TEST(CoreTech_Common, ShaveAddTest)
+{
+  const s32 numElements = 3000;
+
+  AnkiAssert(numElements % 4 == 0);
+
+  // On the Myriad, the buffer is local to the SHAVE we'll be using to process
+  // On the PC, the buffer is just the normal buffer that is somewhere in CMX
+#if defined(USING_MOVIDIUS_COMPILER)
+  MemoryStack ms(shave0_buffer, MAX_SHAVE_BYTES);
+#else
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+#endif
+
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<s32> in1(1, numElements, ms);
+  Array<s32> in2(1, numElements, ms);
+  Array<s32> out(1, numElements, ms);
+
+  s32 * restrict pIn1 = in1.Pointer(0,0);
+  s32 * restrict pIn2 = in2.Pointer(0,0);
+  s32 * restrict pOut = out.Pointer(0,0);
+
+  for(s32 i=0; i<numElements; i++) {
+    pIn1[i] = i + 1;
+    pIn2[i] = 2*i + 10;
+  }
+
+  //printf("Leon: 0x%x=%d 0x%x=%d\n", &(pIn1[100]), pIn1[100], &(pIn2[303]), pIn2[303]);
+  double t0 = GetTime();
+#if defined(USING_MOVIDIUS_COMPILER)
+  swcResetShave(0);
+  swcSetAbsoluteDefaultStack(0);
+
+  shave0_whichTest = 1;
+  shave0_pIn1 = ConvertCMXAddressToShave(pIn1);
+  shave0_pIn2 = ConvertCMXAddressToShave(pIn2);
+  shave0_pOut = ConvertCMXAddressToShave(pOut);
+  shave0_numElements = numElements;
+
+  swcStartShave(0,(u32)&shave0_main);
+  swcWaitShave(0);
+#else // #if defined(USING_MOVIDIUS_COMPILER)
+  for(s32 i=0; i<numElements; i++) {
+    pOut[i] = pIn1[i] + pIn2[i];
+  }
+#endif // #if defined(USING_MOVIDIUS_COMPILER) ... #else
+  double t1 = GetTime();
+
+  printf("Completed in %f seconds\n", t1-t0);
+
+  for(s32 i=0; i<numElements; i++) {
+    if(pOut[i] != (3*i + 11)) {
+      printf("Error at %d: %d!=%d\n", i, pOut[i], (3*i + 11));
+    }
+    ASSERT_TRUE(pOut[i] == (3*i + 11));
+  }
+
+  GTEST_RETURN_HERE;
+}
 
 GTEST_TEST(CoreTech_Common, ShavePrintfTest)
 {
 #if defined(USING_MOVIDIUS_COMPILER)
-
   swcResetShave(0);
   swcSetAbsoluteDefaultStack(0);
 
@@ -106,7 +128,7 @@ GTEST_TEST(CoreTech_Common, ShavePrintfTest)
 
   swcStartShave(0,(u32)&shave0_main);
   swcWaitShave(0);
-#endif
+#endif // #if defined(USING_MOVIDIUS_COMPILER)
 
   printf("If on the Myriad, the previous line should read: \"Shave Test 0 passed\"");
 
@@ -2609,6 +2631,7 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, ShaveAddTest);
   CALL_GTEST_TEST(CoreTech_Common, ShavePrintfTest);
   CALL_GTEST_TEST(CoreTech_Common, MatrixTranspose);
   CALL_GTEST_TEST(CoreTech_Common, CholeskyDecomposition);

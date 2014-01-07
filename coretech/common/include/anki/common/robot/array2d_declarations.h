@@ -57,7 +57,7 @@ namespace Anki
       // 2. reinterpret_cast<size_t>(data) % MEMORY_ALIGNMENT == 0
       // 3. flags.get_useBoundaryFillPatterns == false
       // 4. numRows*numCols*sizeof(Type) <= dataLength
-      Array(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const Flags::Buffer flags=Flags::Buffer(false,false));
+      Array(const s32 numRows, const s32 numCols, void * data, const s32 dataLength, const Flags::Buffer flags=Flags::Buffer(false,false));
 
       // Constructor for a Array, pointing to user-allocated MemoryStack
       Array(const s32 numRows, const s32 numCols, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false));

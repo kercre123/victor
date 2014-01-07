@@ -18,10 +18,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 extern "C" {
 #endif
 
-  void addVectors(
-    const s32 * restrict in1,
-    const s32 * restrict in2,
-    s32 * restrict out,
+  void addVectors_s32x4(
+    const s32 * restrict pIn1,
+    const s32 * restrict pIn2,
+    s32 * restrict pOut,
     const s32 numElements
     );
 

@@ -314,8 +314,8 @@ def linkSHAVEMvlib(mvlibFilename):
 
   # NOTE: The Myriad makefile creates an intermediate libray "swCommon.mvlib",
   #       but this command compiles our shave code and all the Myriad components together as .o files,
-  systemString = LD + ' ' + SHAVE_MVLIB_LD_OPT + compiledObjectsString + ' ' + moviCompileLibrariesString + ' -o ' + mvlibFilename
   #       and the closed-source moviCompile libraries as .a files
+  systemString = LD + ' ' + SHAVE_MVLIB_LD_OPT + compiledObjectsString + ' ' + moviCompileLibrariesString + ' -o ' + mvlibFilename
 
   if isNoisy:
     print(systemString)
