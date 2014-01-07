@@ -8,6 +8,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 **/
 
 #include "anki/vision/robot/integralImage.h"
+#include "anki/vision/robot/shaveKernels_vision_c.h"
 
 #define SwapEndianU32(value) \
   ((((u32)((value) & 0x000000FF)) << 24) | \
@@ -148,7 +149,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result ScrollingIntegralImage_u8_s32::FilterRow(const C_Acceleration &acceleration, const Rectangle<s16> &filter, const s32 imageRow, Array<s32> &output)
+    Result ScrollingIntegralImage_u8_s32::FilterRow(const Rectangle<s16> &filter, const s32 imageRow, Array<s32> &output)
     {
       AnkiAssert(this->IsValid());
       AnkiAssert(output.IsValid());
@@ -177,52 +178,37 @@ namespace Anki
       const s32 leftOffset = filter.left - 1 + this->numBorderPixels;
       const s32 rightOffset = filter.right + this->numBorderPixels;
 
-      const s32 * restrict integralImage_00 = this->Pointer(topOffset, 0) + leftOffset;
-      const s32 * restrict integralImage_01 = this->Pointer(topOffset, 0) + rightOffset;
-      const s32 * restrict integralImage_10 = this->Pointer(bottomOffset, 0) + leftOffset;
-      const s32 * restrict integralImage_11 = this->Pointer(bottomOffset, 0) + rightOffset;
+      const s32 * restrict pIntegralImage_00 = this->Pointer(topOffset, 0) + leftOffset;
+      const s32 * restrict pIntegralImage_01 = this->Pointer(topOffset, 0) + rightOffset;
+      const s32 * restrict pIntegralImage_10 = this->Pointer(bottomOffset, 0) + leftOffset;
+      const s32 * restrict pIntegralImage_11 = this->Pointer(bottomOffset, 0) + rightOffset;
 
       s32 * restrict pOutput = output.Pointer(0,0);
 
-      if(acceleration.type == C_ACCELERATION_NATURAL_CPP) {
-        for(s32 x=0; x<minX; x++) {
-          pOutput[x] = 0;
-        }
+#ifdef USING_MOVIDIUS_GCC_COMPILER
 
-        for(s32 x=minX; x<=maxX; x++) {
-          pOutput[x] = integralImage_11[x] - integralImage_10[x] + integralImage_00[x] - integralImage_01[x];
-        }
+      swcResetShave(0);
+      swcSetAbsoluteDefaultStack(0);
 
-        for(s32 x=maxX+1; x<imageWidth; x++) {
-          pOutput[x] = 0;
-        }
-      } else if(acceleration.type == C_ACCELERATION_NATURAL_C) {
-        ScrollingIntegralImage_u8_s32_FilterRow_innerLoop(integralImage_00, integralImage_01, integralImage_10, integralImage_11, minX, maxX, this->imageWidth, pOutput);
-      } else if(acceleration.type == C_ACCELERATION_SHAVE_EMULATION_C) {
-        AnkiAssert(output.get_size(1) >= (this->imageWidth+4));
-        ScrollingIntegralImage_u8_s32_FilterRow_innerLoop_emulateShave(integralImage_00, integralImage_01, integralImage_10, integralImage_11, minX, maxX, this->imageWidth, pOutput);
-      } else {
-        AnkiAssert(false);
-      }
+      START_SHAVE(0, ScrollingIntegralImage_u8_s32_FilterRow,
+        "iiiiiiii",
+        ConvertCMXAddressToShave(pIntegralImage_00),
+        ConvertCMXAddressToShave(pIntegralImage_01),
+        ConvertCMXAddressToShave(pIntegralImage_10),
+        ConvertCMXAddressToShave(pIntegralImage_11),
+        minX,
+        maxX,
+        this->imageWidth,
+        ConvertCMXAddressToShave(pOutput));
+
+      swcWaitShave(0);
+
+#else
+      emulate_ScrollingIntegralImage_u8_s32_FilterRow(pIntegralImage_00, pIntegralImage_01, pIntegralImage_10, pIntegralImage_11, minX, maxX, this->imageWidth, pOutput);
+#endif
 
       return RESULT_OK;
     }
-
-    // This might be used later, but not yet
-#if 0
-    Result ScrollingIntegralImage_u8_s32::FilterRow_c(const C_Acceleration &acceleration, const Rectangle<s16> &filter, const s32 imageRow, Array<s32> &output)
-    {
-      // TODO: verify that this conversion overhead is low
-
-      const C_ScrollingIntegralImage_u8_s32 integralImage_c = this->get_cInterface();
-      const C_Rectangle_s16 filter_c = get_C_Rectangle_s16(filter);
-      C_Array_s32 output_c = get_C_Array_s32(output);
-
-      const s32 result = ScrollingIntegralImage_u8_s32_FilterRow(&integralImage_c, &filter_c, imageRow, &output_c);
-
-      return static_cast<Result>(result);
-    }
-#endif // #if 0
 
     // TODO: implement
     //s32 ScrollingIntegralImage_u8_s32::get_minRow(const s32 filterHalfHeight) const
@@ -385,25 +371,6 @@ namespace Anki
         horizontalSum += paddedImage_currentRow[x];
         integralImage_currentRow[x] = horizontalSum + integralImage_previousRow[x];
       }
-    }
-
-    C_ScrollingIntegralImage_u8_s32 ScrollingIntegralImage_u8_s32::get_cInterface()
-    {
-      C_ScrollingIntegralImage_u8_s32 cVersion;
-
-      cVersion.size0 = this->size[0];
-      cVersion.size1 = this->size[1];
-      cVersion.stride = this->stride;
-      cVersion.flags = this->get_flags().get_rawFlags();
-
-      cVersion.data = this->data;
-
-      cVersion.imageWidth = this->imageWidth;
-      cVersion.maxRow = this->maxRow;
-      cVersion.rowOffset = this->rowOffset;
-      cVersion.numBorderPixels = this->numBorderPixels;
-
-      return cVersion;
     }
   } // namespace Embedded
 } //namespace Anki
