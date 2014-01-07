@@ -345,9 +345,7 @@ namespace Anki {
         
         retVal = VisionSystem::Update();
         
-#if USE_OFFBOARD_VISION
         HAL::USBSendPrintBuffer();
-#endif
         
         return retVal;
         

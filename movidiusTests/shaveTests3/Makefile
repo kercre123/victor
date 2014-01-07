@@ -9,7 +9,7 @@ APPNAME=shaveTests2
 
 MDK_DIRECTORY?=../../../movidius-tools/mdk
 
-MYRIAD_BUILDFILE_DIRECTORY?=../../../coretech-common/project/myriad1/
+MYRIAD_BUILDFILE_DIRECTORY?=./
 
 MVCC_OPT_LEVEL ?= -O1
 LEON_C_OPTIMIZATION_LEVEL ?= -Os
@@ -44,6 +44,7 @@ include ./config/config_shaves.mk
 # ------------------------------[ Tools overrides ]--------------------------------#
 # Hardcode tool version here if needed, otherwise defaults to latest stable release
 #MV_TOOLS_VERSION =00.50.23.0
+MV_TOOLS_VERSION =00.50.39.2
 
 # Verbose or not, uncomment for more verbosity
 #ECHO=
@@ -59,6 +60,7 @@ include $(MYRIAD_BUILDFILE_DIRECTORY)/generic_custom.mk
 #Describe the rule for building the shaveTestsApp application. Simple rule specifying 
 #which objects build up the said application. The application will be built into a library
 $(ShaveTestsApp).mvlib : $(SHAVE_shaveTests_OBJS) $(PROJECT_SHAVE_LIBS)
+	@echo $(LD) -r $(SHAVE_shaveTests_OBJS) $(PROJECT_SHAVE_LIBS) -o $@
 	$(ECHO) $(LD) -r $(SHAVE_shaveTests_OBJS) $(PROJECT_SHAVE_LIBS) -o $@
 
 

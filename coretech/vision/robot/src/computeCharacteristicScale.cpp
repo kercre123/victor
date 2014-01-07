@@ -267,7 +267,7 @@ namespace Anki
           }*/
         } else {         //    else % if pyramidLevel == 2 ... elseif pyramidLevel <= 5
 #if !HAVE_64_BIT_ARITHMETIC
-          assert(false);
+          AnkiAssert(false);
 #else  // The movidius compiler is missing __ashrdi3, so this part won't compile
           const s32 largeIndexMin = scaleFactors[pyramidLevel-1] / 2; // SQ31.0
 
@@ -384,10 +384,6 @@ namespace Anki
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
 
-      C_Acceleration acceleration;
-      acceleration.type = C_ACCELERATION_NATURAL_CPP;
-      acceleration.version = 1;
-
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "ComputeCharacteristicScaleImageAndBinarize", "image is not valid");
 
@@ -424,7 +420,7 @@ namespace Anki
           const Rectangle<s16> filter(-filterHalfWidth, filterHalfWidth, -filterHalfWidth, filterHalfWidth);
 
           // Compute the sums using the integral image
-          integralImage.FilterRow(acceleration, filter, imageY, filteredRows[pyramidLevel]);
+          integralImage.FilterRow(filter, imageY, filteredRows[pyramidLevel]);
 
           // Normalize the sums
           s32 * restrict pFilteredRow = filteredRows[pyramidLevel][0];
@@ -499,10 +495,6 @@ namespace Anki
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
 
-      C_Acceleration acceleration;
-      acceleration.type = C_ACCELERATION_NATURAL_CPP;
-      acceleration.version = 1;
-
       AnkiConditionalErrorAndReturnValue(image.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "ComputeCharacteristicScaleImageAndBinarize", "image is not valid");
 
@@ -540,7 +532,7 @@ namespace Anki
           const Rectangle<s16> filter(-filterHalfWidth, filterHalfWidth, -filterHalfWidth, filterHalfWidth);
 
           // Compute the sums using the integral image
-          integralImage.FilterRow(acceleration, filter, imageY, filteredRows[pyramidLevel]);
+          integralImage.FilterRow(filter, imageY, filteredRows[pyramidLevel]);
 
           // Normalize the sums
           s32 * restrict pFilteredRow = filteredRows[pyramidLevel][0];

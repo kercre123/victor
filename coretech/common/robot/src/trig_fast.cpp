@@ -17,7 +17,6 @@
 #include "anki/common/constantsAndMacros.h"
 #include "anki/common/robot/trig_fast.h"
 
-
 // For larger input values to atan, use approximations
 // at fixed steps. (Essentially extends the LUT with courser
 // resolution at higher input values.)
@@ -265,25 +264,23 @@ float atan2_fast(float y, float x)
   return 0;
 }
 
-
-
 float atan2_acc(float y, float x)
 {
   assert(y != 0 || x != 0);
-  
+
   float arg = y/x;
   float atan_val = asinf( arg / sqrtf(arg*arg + 1));
-  
+
   if (x > 0) {
     return atan_val;
   } else if (y >= 0 && x < 0) {
-    return atan_val + PI;
+    return atan_val + PI_F;
   } else if (y < 0 && x < 0) {
-    return atan_val - PI;
+    return atan_val - PI_F;
   } else if (y > 0 && x == 0) {
-    return PIDIV2;
+    return PIDIV2_F;
   }
   //else if (y < 0 && x == 0) {
-  return -PIDIV2;
+  return -PIDIV2_F;
   //}
 }

@@ -38,7 +38,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   AnkiConditionalErrorAndReturn(nrhs == 10 && nlhs == 1, "mexSimpleDetectorSteps123", "Call this function as following: components2d = mexSimpleDetectorSteps123(uint8(image), scaleImage_useWhichAlgorithm, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold);");
 
-  Array<u8> image = mxArrayToArray<u8>(prhs[0]);
+  const s32 bufferSize = 10000000;
+  MemoryStack memory(malloc(bufferSize), bufferSize);
+  AnkiConditionalErrorAndReturn(memory.IsValid(), "mexSimpleDetectorSteps123", "Memory could not be allocated");
+
+  Array<u8> image = mxArrayToArray<u8>(prhs[0], memory);
   const CharacteristicScaleAlgorithm scaleImage_useWhichAlgorithm = static_cast<CharacteristicScaleAlgorithm>(static_cast<s32>(mxGetScalar(prhs[1])));
   const s32 scaleImage_numPyramidLevels = static_cast<s32>(mxGetScalar(prhs[2]));
   const s32 scaleImage_thresholdMultiplier = static_cast<s32>(Round(pow(2,16)*mxGetScalar(prhs[3]))); // Convert from double to SQ15.16
@@ -126,6 +130,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   plhs[0] = components2dMatlab;
 
+  free(memory.get_buffer());
   free(scratch0.get_buffer());
   free(scratch1.get_buffer());
   free(scratch2.get_buffer());

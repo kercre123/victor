@@ -14,25 +14,24 @@ using namespace Anki::Embedded;
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+  const s32 bufferSize = 10000000;
+  MemoryStack memory(malloc(bufferSize), bufferSize);
+  AnkiConditionalErrorAndReturn(memory.IsValid(), "mexBinomialFilter", "Memory could not be allocated");
+
   AnkiConditionalErrorAndReturn(nrhs == 1 && nlhs == 1, "mexBinomialFilter", "Call this function as following: imgFiltered = mexBinomialFilter(img);");
 
-  Array<u8> img = mxArrayToArray<u8>(prhs[0]);
+  Array<u8> img = mxArrayToArray<u8>(prhs[0], memory);
 
   AnkiConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Array<u8> img");
 
-  Array<u8> imgFiltered = AllocateArrayFromHeap<u8>(img.get_size(0), img.get_size(1));
+  Array<u8> imgFiltered(img.get_size(0), img.get_size(1), memory);
   AnkiConditionalErrorAndReturn(img.get_rawDataPointer() != 0, "mexBinomialFilter", "Could not allocate Array<u8> imgFiltered");
 
-  const u32 numBytes = img.get_size(0) * img.get_stride() + 1000;
-  MemoryStack scratch(calloc(numBytes,1), numBytes);
-
-  if(ImageProcessing::BinomialFilter<u8,u32,u8>(img, imgFiltered, scratch) != RESULT_OK) {
+  if(ImageProcessing::BinomialFilter<u8,u32,u8>(img, imgFiltered, memory) != RESULT_OK) {
     printf("Error: mexBinomialFilter\n");
   }
 
   plhs[0] = arrayToMxArray<u8>(imgFiltered);
 
-  free(img.get_rawDataPointer());
-  free(imgFiltered.get_rawDataPointer());
-  free(scratch.get_buffer());
+  free(memory.get_buffer());
 }

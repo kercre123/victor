@@ -38,23 +38,37 @@ namespace Anki
     // Factory method to create an Array from the heap. The data of the returned Array must be freed by the user.
     // This is separate from the normal constructor, as Array objects are not supposed to manage memory
 #ifndef USING_MOVIDIUS_COMPILER
-    template<typename Type> Array<Type> AllocateArrayFromHeap(const s32 numRows, const s32 numCols, const Flags::Buffer flags=Flags::Buffer(true,false))
-    {
-      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(numRows, numCols, flags); // The required memory, plus a bit more
+    //template<typename Type> Array<Type> AllocateArrayFromHeap(const s32 numRows, const s32 numCols, const Flags::Buffer flags=Flags::Buffer(true,false))
+    //{
+    //  const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(numRows, numCols, flags); // The required memory, plus a bit more
 
-      Array<Type> mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, flags);
+    //  Type * const rawDataPointer = reinterpret_cast<Type*>(calloc(requiredMemory, 1));
+    //  Type * const dataPointer = reinterpret_cast<Type*>(RoundUp<size_t>(reinterpret_cast<size_t>(rawDataPointer), MEMORY_ALIGNMENT));
 
-      return mat;
-    }
+    //  const s32 offsetAmount = static_cast<s32>(reinterpret_cast<size_t>(dataPointer) - reinterpret_cast<size_t>(rawDataPointer));
 
-    template<typename Type> FixedPointArray<Type> AllocateFixedPointArrayFromHeap(const s32 numRows, const s32 numCols, const s32 numFractionalBits, const Flags::Buffer flags=Flags::Buffer(true,false))
-    {
-      const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(numRows, numCols, flags); // The required memory, plus a bit more
+    //  Array<Type> mat(numRows, numCols, dataPointer, requiredMemory-offsetAmount, flags);
 
-      FixedPointArray<Type> mat(numRows, numCols, calloc(requiredMemory, 1), requiredMemory, numFractionalBits, flags);
+    //  mat.set_rawDataPointer(rawDataPointer);
 
-      return mat;
-    }
+    //  return mat;
+    //}
+
+    //template<typename Type> FixedPointArray<Type> AllocateFixedPointArrayFromHeap(const s32 numRows, const s32 numCols, const s32 numFractionalBits, const Flags::Buffer flags=Flags::Buffer(true,false))
+    //{
+    //  const s32 requiredMemory = 64 + 2*MEMORY_ALIGNMENT + Array<Type>::ComputeMinimumRequiredMemory(numRows, numCols, flags); // The required memory, plus a bit more
+
+    //  Type * const rawDataPointer = reinterpret_cast<Type*>(calloc(requiredMemory, 1));
+    //  Type * const dataPointer = reinterpret_cast<Type*>(RoundUp<size_t>(reinterpret_cast<size_t>(rawDataPointer), MEMORY_ALIGNMENT));
+
+    //  const s32 offsetAmount = static_cast<s32>(reinterpret_cast<size_t>(dataPointer) - reinterpret_cast<size_t>(rawDataPointer));
+
+    //  FixedPointArray<Type> mat(numRows, numCols, dataPointer, requiredMemory-offsetAmount, numFractionalBits, flags);
+
+    //  mat.set_rawDataPointer(rawDataPointer);
+
+    //  return mat;
+    //}
 #endif // #ifndef USING_MOVIDIUS_COMPILER
 
     template<typename Type> s32 Array<Type>::ComputeRequiredStride(const s32 numCols, const Flags::Buffer flags)
@@ -62,8 +76,13 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(numCols > 0,
         0, "Array<Type>::ComputeRequiredStride", "Invalid size");
 
+      const s32 bufferRequired = static_cast<s32>(RoundUp<size_t>(sizeof(Type)*numCols, MEMORY_ALIGNMENT));
+
       const s32 extraBoundaryPatternBytes = flags.get_useBoundaryFillPatterns() ? (HEADER_LENGTH+FOOTER_LENGTH) : 0;
-      return static_cast<s32>(RoundUp<size_t>(sizeof(Type)*numCols, MEMORY_ALIGNMENT)) + extraBoundaryPatternBytes;
+
+      const s32 totalRequired = bufferRequired + extraBoundaryPatternBytes;
+
+      return totalRequired;
     }
 
     template<typename Type> s32 Array<Type>::ComputeMinimumRequiredMemory(const s32 numRows, const s32 numCols, const Flags::Buffer flags)
@@ -79,13 +98,23 @@ namespace Anki
       InvalidateArray();
     }
 
-    template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const Flags::Buffer flags)
+    template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, void * data, const s32 dataLength, const Flags::Buffer flags)
     {
+#if defined(USING_MOVIDIUS_COMPILER)
+#if defined(USING_MOVIDIUS_GCC_COMPILER)
+      data = ConvertCMXAddressToLeon(data);
+#elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
+      data = ConvertCMXAddressToShave(data);
+#else
+#error Unknown Movidius compiler
+#endif
+#endif // #if defined(USING_MOVIDIUS_COMPILER)
+
       InvalidateArray();
 
       this->stride = ComputeRequiredStride(numCols, flags);
 
-      AnkiConditionalErrorAndReturn(numCols >= 0 && numRows >= 0 && dataLength >= numRows*this->stride && this->stride == (numCols*sizeof(Type)),
+      AnkiConditionalErrorAndReturn(numCols >= 0 && numRows >= 0 && dataLength >= numRows*this->stride && this->stride == (numCols*static_cast<s32>(sizeof(Type))),
         "Array<Type>::Array", "Invalid size");
 
       AnkiConditionalErrorAndReturn((numCols*sizeof(Type)) % MEMORY_ALIGNMENT == 0,
@@ -113,7 +142,17 @@ namespace Anki
 
       s32 numBytesAllocated = 0;
 
-      void * const allocatedBuffer = AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, flags), memory, numBytesAllocated, flags, false);
+      void * allocatedBuffer = AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, flags), memory, numBytesAllocated, flags, false);
+
+#if defined(USING_MOVIDIUS_COMPILER)
+#if defined(USING_MOVIDIUS_GCC_COMPILER)
+      allocatedBuffer = ConvertCMXAddressToLeon(allocatedBuffer);
+#elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
+      allocatedBuffer = ConvertCMXAddressToShave(allocatedBuffer);
+#else
+#error Unknown Movidius compiler
+#endif
+#endif // #if defined(USING_MOVIDIUS_COMPILER)
 
       InitializeBuffer(numRows,
         numCols,
@@ -419,7 +458,7 @@ namespace Anki
     {
       // This is a little tough to write a general case for, so this method should be specialized
       // for each relevant case
-      assert(false);
+      AnkiAssert(false);
 
       AnkiConditionalErrorAndReturnValue(false,
         0, "Array<Type>::Set", "SetCast must be specialized");
@@ -444,7 +483,7 @@ namespace Anki
 
           //memcpy(pThisData, values + y*size[1], numValuesThisRow*sizeof(Type));
           for(s32 x=0; x<numWordsToCopy; x++) {
-            assert(reinterpret_cast<size_t>(values+y*size[1]) % 4 == 0);
+            AnkiAssert(reinterpret_cast<size_t>(values+y*size[1]) % 4 == 0);
             pThisData[x] = reinterpret_cast<const u32*>(values+y*size[1])[x];
           }
           numValuesSet += numValuesThisRow;

@@ -270,7 +270,7 @@ namespace Anki
             // First, copy a row from in to the temporary buffer
             // TODO: DMA may be faster
             for(s32 i=0; i<numWordsToCopy; i++) {
-              assert(reinterpret_cast<size_t>(pIn) % 4 == 0);
+              AnkiAssert(reinterpret_cast<size_t>(pIn) % 4 == 0);
               reinterpret_cast<u32*>(pInRow)[i] = reinterpret_cast<const u32*>(pIn)[i];
             }
 

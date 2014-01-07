@@ -47,7 +47,7 @@ namespace Anki
       this->probeLocations = bit2.probeLocations;
       this->probeWeights = bit2.probeWeights;
 
-      assert(bit2.probeLocations.get_size() == bit2.probeWeights.get_size());
+      AnkiAssert(bit2.probeLocations.get_size() == bit2.probeWeights.get_size());
 
       this->probeLocations.set_size(bit2.probeLocations.get_size());
       this->probeWeights.set_size(bit2.probeWeights.get_size());
@@ -63,7 +63,7 @@ namespace Anki
 
     FiducialMarkerParserBit::FiducialMarkerParserBit(const s16 * const probesX, const s16 * const probesY, const s16 * const probeWeights, const s32 numProbes, const FiducialMarkerParserBit::Type type, const s32 numFractionalBits, MemoryStack &memory)
     {
-      assert(numProbes <= MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS);
+      AnkiAssert(numProbes <= MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS);
 
       this->type = FIDUCIAL_BIT_UNINITIALIZED;
 
@@ -85,7 +85,7 @@ namespace Anki
 
     FiducialMarkerParserBit& FiducialMarkerParserBit::operator= (const FiducialMarkerParserBit& bit2)
     {
-      assert(bit2.probeLocations.get_size() == bit2.probeWeights.get_size());
+      AnkiAssert(bit2.probeLocations.get_size() == bit2.probeWeights.get_size());
 
       this->probeLocations = bit2.probeLocations;
       this->probeWeights = bit2.probeWeights;
@@ -152,7 +152,7 @@ namespace Anki
         // 2. Sample the image
 
         // This should only fail if there's a bug in the quad extraction
-        assert(warpedY >= 0  && warpedX >= 0 && warpedY < imageHeight && warpedX < imageWidth);
+        AnkiAssert(warpedY >= 0  && warpedX >= 0 && warpedY < imageHeight && warpedX < imageWidth);
 
         // This is the direct way to access a pixel. It doesn't work when there's an endian conflict
         //const s16 imageValue = static_cast<s16>(*image.Pointer(warpedY, warpedX));
@@ -161,12 +161,7 @@ namespace Anki
         const u32 * restrict pImageY = reinterpret_cast<const u32*>(image.Pointer(warpedY,0));
         const s32 xWord = warpedX >> 2;
 
-        // TODO: Verify that the big endian version is working
-#ifdef BIG_ENDIAN_IMAGES
-        const s32 xByte = 3 - (warpedX - (xWord << 2));
-#else
         const s32 xByte = warpedX - (xWord << 2);
-#endif
 
         const u32 curPixelWord = pImageY[xWord];
         const u8 curPixel = (curPixelWord & (0xFF << (8*xByte))) >> (8*xByte);
@@ -291,8 +286,8 @@ namespace Anki
     Result FiducialMarkerParser::InitializeAsDefaultParser(MemoryStack &memory)
     {
       if(INITIALIZE_WITH_DEFINITION_TYPE == 0) {
-        assert(NUM_BITS_TYPE_0 <= MAX_FIDUCIAL_MARKER_BITS);
-        assert(NUM_PROBES_PER_BIT_TYPE_0 <= MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS);
+        AnkiAssert(NUM_BITS_TYPE_0 <= MAX_FIDUCIAL_MARKER_BITS);
+        AnkiAssert(NUM_PROBES_PER_BIT_TYPE_0 <= MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS);
 
         this->bits.Clear();
 
@@ -307,7 +302,7 @@ namespace Anki
       rightBitIndex = FindFirstBitOfType(FiducialMarkerParserBit::FIDUCIAL_BIT_ORIENTATION_RIGHT, 0);
 
       // This should only fail if there was an issue with the FiducialMarkerParser creation
-      assert(upBitIndex >= 0 && downBitIndex >= 0 && leftBitIndex >= 0 && rightBitIndex >= 0);
+      AnkiAssert(upBitIndex >= 0 && downBitIndex >= 0 && leftBitIndex >= 0 && rightBitIndex >= 0);
 
       return RESULT_OK;
     }
@@ -331,7 +326,7 @@ namespace Anki
       const s16 brightValue = maxValue;
       s16 darkValue;
 
-      assert(meanValues.get_size() == NUM_BITS);
+      AnkiAssert(meanValues.get_size() == NUM_BITS);
 
       FixedLengthList<u8> bitReadingOrder(meanValues.get_size(), scratch);
       bitReadingOrder.set_size(meanValues.get_size());

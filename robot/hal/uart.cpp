@@ -1,6 +1,8 @@
 #include "anki/cozmo/robot/hal.h"
 #include "movidius.h"
 
+#ifndef USE_USB
+
 namespace Anki
 {
   namespace Cozmo
@@ -97,8 +99,6 @@ namespace Anki
         return c;
       }
 
-      s32 USBGetChar(void) { return USBGetChar(0); }
-      
       s32 USBGetChar(u32 timeout)
       {
         u32 end = GetMicroCounter() + timeout;
@@ -120,7 +120,6 @@ namespace Anki
         return -1;
       }
       
-
       s32 USBPeekChar(u32 offset)
       {
         // If trying to peek further than there are characters in the buffer
@@ -161,8 +160,9 @@ namespace Anki
         // Clear the interrupt
         DrvIcbIrqClear(IRQ);
       }
-
     }
   }
 }
+
+#endif  // ifndef USE_USB
 

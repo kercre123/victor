@@ -9,8 +9,7 @@ Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
-//#define USING_MOVIDIUS_COMPILER
-
+#include "anki/common/robot/config.h"
 #include "anki/common/robot/array2d.h"
 #include "anki/common/robot/benchmarking_c.h"
 #include "anki/common/robot/fixedLengthList.h"
@@ -23,6 +22,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/find.h"
 #include "anki/common/robot/interpolate.h"
 #include "anki/common/robot/arrayPatterns.h"
+#include "anki/common/robot/shaveKernels_c.h"
 
 using namespace Anki::Embedded;
 
@@ -40,36 +40,101 @@ Matlab matlab(false);
 #include "gtest/gtest.h"
 #endif
 
-#ifdef USING_MOVIDIUS_GCC_COMPILER
-#include "swcLeonUtils.h"
-#endif
+//#ifdef USING_MOVIDIUS_GCC_COMPILER
+//#include "swcLeonUtils.h"
+//#endif
 
-//#define BUFFER_IN_DDR_WITH_L2
-#define BUFFER_IN_CMX
+#define MAX_BYTES 50000
 
-#if defined(BUFFER_IN_DDR_WITH_L2) && defined(BUFFER_IN_CMX)
-You cannot use both CMX and L2 Cache;
-#endif
-
-#define MAX_BYTES 5000
-
-#ifdef _MSC_VER
-static char buffer[MAX_BYTES];
+#if defined(USING_MOVIDIUS_COMPILER)
+#define BUFFER_LOCATION __attribute__((section(".cmx.bss")))
 #else
-
-#ifdef BUFFER_IN_CMX
-static char buffer[MAX_BYTES];    // CMX is default
-#else // #ifdef BUFFER_IN_CMX
-
-#ifdef BUFFER_IN_DDR_WITH_L2
-__attribute__((section(".ddr.bss,DDR"))) static char buffer[MAX_BYTES]; // With L2 cache
-#else
-__attribute__((section(".ddr_direct.bss,DDR_DIRECT"))) static char buffer[MAX_BYTES]; // No L2 cache
+#define BUFFER_LOCATION
 #endif
 
-#endif // #ifdef BUFFER_IN_CMX ... #else
+BUFFER_LOCATION static char buffer[MAX_BYTES];
 
-#endif // #ifdef USING_MOVIDIUS_COMPILER
+GTEST_TEST(CoreTech_Common, ShaveAddTest)
+{
+  const s32 numElements = 3000;
+
+  AnkiAssert(numElements % 4 == 0);
+
+  // On the Myriad, the buffer is local to the SHAVE we'll be using to process
+  // On the PC, the buffer is just the normal buffer that is somewhere in CMX
+#if defined(USING_MOVIDIUS_COMPILER)
+  MemoryStack ms(shave0_localBuffer, LOCAL_SHAVE_BUFFER_SIZE);
+#else
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+#endif
+
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<s32> in1(1, numElements, ms);
+  Array<s32> in2(1, numElements, ms);
+  Array<s32> out(1, numElements, ms);
+
+  s32 * restrict pIn1 = in1.Pointer(0,0);
+  s32 * restrict pIn2 = in2.Pointer(0,0);
+  s32 * restrict pOut = out.Pointer(0,0);
+
+  for(s32 i=0; i<numElements; i++) {
+    pIn1[i] = i + 1;
+    pIn2[i] = 2*i + 10;
+  }
+
+  //printf("Leon: 0x%x=%d 0x%x=%d\n", &(pIn1[100]), pIn1[100], &(pIn2[303]), pIn2[303]);
+  double t0 = GetTime();
+#if defined(USING_MOVIDIUS_COMPILER)
+  swcResetShave(0);
+  swcSetAbsoluteDefaultStack(0);
+
+  START_SHAVE(0, addVectors_s32x4,
+    "iiii",
+    ConvertCMXAddressToShave(pIn1),
+    ConvertCMXAddressToShave(pIn2),
+    ConvertCMXAddressToShave(pOut),
+    numElements);
+
+  swcWaitShave(0);
+#else // #if defined(USING_MOVIDIUS_COMPILER)
+  addVectors_s32x4(
+    pIn1,
+    pIn2,
+    pOut,
+    numElements);
+#endif // #if defined(USING_MOVIDIUS_COMPILER) ... #else
+  double t1 = GetTime();
+
+  printf("Completed in %f seconds\n", t1-t0);
+
+  for(s32 i=0; i<numElements; i++) {
+    if(pOut[i] != (3*i + 11)) {
+      printf("Error at %d: %d!=%d\n", i, pOut[i], (3*i + 11));
+    }
+    ASSERT_TRUE(pOut[i] == (3*i + 11));
+  }
+
+  GTEST_RETURN_HERE;
+}
+
+//GTEST_TEST(CoreTech_Common, ShavePrintfTest)
+//{
+//#if defined(USING_MOVIDIUS_COMPILER)
+//  swcResetShave(0);
+//  swcSetAbsoluteDefaultStack(0);
+//
+//  shave0_whichTest = 0;
+//
+//  swcStartShave(0,(u32)&shave0_main);
+//  swcWaitShave(0);
+//#endif // #if defined(USING_MOVIDIUS_COMPILER)
+//
+//  printf("If on the Myriad, the previous line should read: \"Shave Test 0 passed\"");
+//
+//  GTEST_RETURN_HERE;
+//}
 
 GTEST_TEST(CoreTech_Common, MatrixTranspose)
 {
@@ -1667,7 +1732,7 @@ GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
   ArraySlice<u8> slice1 = array1(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
 
   ASSERT_TRUE(slice1.get_array().IsValid());
-  
+
   const Array<u8> array2(20,30,ms);
 
   // Will not compile
@@ -1675,12 +1740,12 @@ GTEST_TEST(CoreTech_Common, SliceArrayCompileTest)
 
   // This is okay
   ConstArraySlice<u8> slice1b = array1(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
-  
+
   ASSERT_TRUE(slice1b.get_array().IsValid());
 
   // This is okay
   ConstArraySlice<u8> slice2 = array2(LinearSequence<s32>(1,5), LinearSequence<s32>(0,7,30));
-  
+
   ASSERT_TRUE(slice2.get_array().IsValid());
 
   //printf("%d %d %d\n", slice1.get_xSlice().get_start(), slice1.get_xSlice().get_end(), *slice1.get_array().Pointer(0,0));
@@ -2567,6 +2632,8 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, ShaveAddTest);
+  //CALL_GTEST_TEST(CoreTech_Common, ShavePrintfTest);
   CALL_GTEST_TEST(CoreTech_Common, MatrixTranspose);
   CALL_GTEST_TEST(CoreTech_Common, CholeskyDecomposition);
   CALL_GTEST_TEST(CoreTech_Common, ExplicitPrintf);

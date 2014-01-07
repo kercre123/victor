@@ -15,11 +15,49 @@ namespace Anki
   {
     namespace Docking
     {
-      static Result ComputeDockingErrorSignal_Affine(const Array<f32> &homography, const Quadrilateral<f32> &templateRegion, const s32 horizontalTrackingResolution, const f32 blockMarkerWidthInMM, const f32 horizontalFocalLengthInMM, const f32 cozmoLiftDistanceInMM, f32 &rel_x, f32 &rel_y, f32 &rel_rad, MemoryStack scratch);
+      /*
+      static Result ComputeDockingErrorSignal_Affine(const Array<f32> &homography, const Quadrilateral<f32> &templateRegion, const s32 horizontalTrackingResolution, const f32 blockMarkerWidthInMM, const f32 horizontalFocalLengthInMM, f32 &rel_x, f32 &rel_y, f32 &rel_rad, MemoryStack scratch);
+       */
+      static Result ComputeDockingErrorSignal_Affine(const Quadrilateral<f32> &templateRegion,
+                                                     const s32 horizontalTrackingResolution,
+                                                     const f32 blockMarkerWidthInMM,
+                                                     const f32 horizontalFocalLengthInMM,
+                                                     f32 &rel_x, f32 &rel_y, f32 &rel_rad,
+                                                     MemoryStack scratch);
 
       //currentDistance = BlockMarker3D.ReferenceWidth * this.calibration.fc(1) / L;
 
-      Result ComputeDockingErrorSignal(const TemplateTracker::PlanarTransformation_f32 &transform, const s32 horizontalTrackingResolution, const f32 blockMarkerWidthInMM, const f32 horizontalFocalLengthInMM, const f32 cozmoLiftDistanceInMM, f32 &rel_x, f32 &rel_y, f32 &rel_rad, MemoryStack scratch)
+      Result ComputeDockingErrorSignal(const TemplateTracker::PlanarTransformation_f32 &transform,
+                                       const s32 horizontalTrackingResolution,
+                                       const f32 blockMarkerWidthInMM,
+                                       const f32 horizontalFocalLengthInMM,
+                                       f32& rel_x, f32& rel_y, f32& rel_rad,
+                                       MemoryStack scratch)
+      {
+        // Set these now, so if there is an error, the robot will start driving in a circle
+        rel_x = -1.0;
+        rel_y = -1.0f;
+        rel_rad = -1.0f;
+        
+        if(transform.get_transformType() == TemplateTracker::TRANSFORM_AFFINE)
+        {
+          Quadrilateral<f32> transformedQuad = transform.get_transformedCorners(scratch);
+          return ComputeDockingErrorSignal_Affine(transformedQuad,
+                                                  horizontalTrackingResolution,
+                                                  blockMarkerWidthInMM,
+                                                  horizontalFocalLengthInMM,
+                                                  rel_x, rel_y, rel_rad,
+                                                  scratch);
+        }
+        
+        // TODO: Add code for computing error signal from homography-based or other trackers
+        AnkiAssert(false);
+        
+        return RESULT_FAIL_INVALID_PARAMETERS;
+      }
+      
+      /*
+      Result ComputeDockingErrorSignal(const TemplateTracker::PlanarTransformation_f32 &transform, const s32 horizontalTrackingResolution, const f32 blockMarkerWidthInMM, const f32 horizontalFocalLengthInMM, f32 &rel_x, f32 &rel_y, f32 &rel_rad, MemoryStack scratch)
       {
         // Set these now, so if there is an error, the robot will start driving in a circle
         rel_x = -1.0;
@@ -27,15 +65,23 @@ namespace Anki
         rel_rad = -1.0f;
 
         if(transform.get_transformType() == TemplateTracker::TRANSFORM_AFFINE) {
-          return ComputeDockingErrorSignal_Affine(transform.get_homography(), transform.get_transformedCorners(scratch), horizontalTrackingResolution, blockMarkerWidthInMM, horizontalFocalLengthInMM, cozmoLiftDistanceInMM, rel_x, rel_y, rel_rad, scratch);
+          Quadrilateral<f32> transformedCorners = transform.get_transformedCorners(scratch);
+          
+          return ComputeDockingErrorSignal_Affine(transform.get_homography(), transform.get_transformedCorners(scratch), horizontalTrackingResolution, blockMarkerWidthInMM, horizontalFocalLengthInMM, rel_x, rel_y, rel_rad, scratch);
         }
 
-        assert(false);
+        AnkiAssert(false);
 
         return RESULT_FAIL_INVALID_PARAMETERS;
       }
+       */
 
-      static Result ComputeDockingErrorSignal_Affine(const Array<f32> &homography, const Quadrilateral<f32> &templateRegion, const s32 horizontalTrackingResolution, const f32 blockMarkerWidthInMM, const f32 horizontalFocalLengthInMM, const f32 cozmoLiftDistanceInMM, f32 &rel_x, f32 &rel_y, f32 &rel_rad, MemoryStack scratch)
+      static Result ComputeDockingErrorSignal_Affine(const Quadrilateral<f32> &templateRegion,
+                                                     const s32 horizontalTrackingResolution,
+                                                     const f32 blockMarkerWidthInMM,
+                                                     const f32 horizontalFocalLengthInMM,
+                                                     f32 &rel_x, f32 &rel_y, f32 &rel_rad,
+                                                     MemoryStack scratch)
       {
         // Block may be rotated with top side of marker not facing up, so reorient to make sure we
         // got top corners
@@ -62,11 +108,11 @@ namespace Anki
         const Point<f32> upperLeft = templateRegion[indexes[0][0]];
         const Point<f32> upperRight = templateRegion[indexes[0][1]];
 
-        //assert(upperRight(1) > upperLeft(1), ...%if upperRight(1) < upperLeft(1)
+        //AnkiAssert(upperRight(1) > upperLeft(1), ...%if upperRight(1) < upperLeft(1)
         //  ['UpperRight corner should be to the right ' ...
         //  'of the UpperLeft corner.']);
 
-        assert(upperRight.x > upperLeft.x);
+        AnkiAssert(upperRight.x > upperLeft.x);
 
         // Get the angle from vertical of the top bar of the marker we're tracking
 
@@ -79,10 +125,11 @@ namespace Anki
         const f32 angleError = -asinf( (upperRight.y-upperLeft.y) / lineLength);
 
         //currentDistance = BlockMarker3D.ReferenceWidth * this.calibration.fc(1) / L;
-        const f32 currentDistance = blockMarkerWidthInMM * horizontalFocalLengthInMM / lineLength;
+        const f32 distanceError = blockMarkerWidthInMM * horizontalFocalLengthInMM / lineLength;
 
-        //distError = currentDistance - CozmoDocker.LIFT_DISTANCE;
-        const f32 distanceError = currentDistance - cozmoLiftDistanceInMM;
+        //ANS: now returning error in terms of camera. mainExecution converts to robot coords
+        // //distError = currentDistance - CozmoDocker.LIFT_DISTANCE;
+        // const f32 distanceError = currentDistance - cozmoLiftDistanceInMM;
 
         // TODO: should I be comparing to ncols/2 or calibration center?
 
@@ -90,7 +137,7 @@ namespace Anki
         f32 midpointError = -( (upperRight.x+upperLeft.x)/2 - horizontalTrackingResolution/2 );
 
         //midPointErr = midPointErr * currentDistance / this.calibration.fc(1);
-        midpointError *= currentDistance / horizontalFocalLengthInMM;
+        midpointError *= distanceError / horizontalFocalLengthInMM;
 
         // Convert the naming schemes
         rel_x = distanceError;

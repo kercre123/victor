@@ -39,12 +39,10 @@ switch(this.trackerType)
         
     case 'homography'
         
-        error('ComputeError() for homography not fully implemented yet.');
-        
         % Note that LKtracker internally does recentering -- we
         % need to factor that in here as well. Thus the C term.
         C = [1 0 -this.LKtracker.xcen; 0 1 -this.LKtracker.ycen; 0 0 1];
-        H = this.calibrationMatrix\(C\this.LKtracker.tform*C*this.calibrationMatrix*this.H_init);
+        H = this.headCalibrationMatrix\(C\this.LKtracker.tform*C*this.headCalibrationMatrix*this.H_init);
         
         % This computes the equivalent H, but is more expensive
         % since it involves an SVD internally to compute the
@@ -56,13 +54,8 @@ switch(this.trackerType)
         
         this.updateBlockPose(H);
         
-        if this.drawPose
-            this.drawCamera();
-            this.drawRobot();
-        end
-        
         blockWRTrobot = this.blockPose.getWithRespectTo(this.robotPose);
-        distError     = blockWRTrobot.T(1) - CozmoDocker.LIFT_DISTANCE;
+        distError     = blockWRTrobot.T(1);
         midPointErr   = blockWRTrobot.T(2);
         angleError    = atan2(blockWRTrobot.Rmat(2,1), blockWRTrobot.Rmat(1,1)) + pi/2;
         
@@ -71,19 +64,21 @@ switch(this.trackerType)
             'when using a %s tracker.'], this.trackerType);
 end % SWITCH(trackerType)
 
-%{
-            % Update the error displays
-            set(this.h_angleError, 'XData', [0 angleError*180/pi]);
-            h = get(this.h_angleError, 'Parent');
-            title(h, sprintf('AngleErr = %.1fdeg', angleError*180/pi), 'Back', 'w');
-            
-            set(this.h_distError, 'YData', [0 distError]);
-            h = get(this.h_distError, 'Parent');
-            title(h, sprintf('DistToGo = %.1fmm', distError), 'Back', 'w');
-            
-            set(this.h_leftRightError, 'XData', [0 midPointErr]);
-            h = get(this.h_leftRightError, 'Parent');
-            title(h, sprintf('LeftRightErr = %.1fmm', midPointErr), 'Back', 'w');
-%}
+
+% Update the error displays
+set(this.h_angleError, 'XData', [0 angleError*180/pi]);
+h = get(this.h_angleError, 'Parent');
+title(h, sprintf('AngleErr = %.1fdeg', angleError*180/pi), 'Back', 'w');
+
+set(this.h_distError, 'YData', [0 distError]);
+h = get(this.h_distError, 'Parent');
+title(h, sprintf('DistToGo = %.1fmm', distError), 'Back', 'w');
+
+set(this.h_leftRightError, 'XData', [0 midPointErr]);
+h = get(this.h_leftRightError, 'Parent');
+title(h, sprintf('LeftRightErr = %.1fmm', midPointErr), 'Back', 'w');
+
 
 end % FUNCTION computeError()
+
+

@@ -38,8 +38,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   AnkiConditionalErrorAndReturn(nrhs == 3 && nlhs == 1, "mexTraceBoundary", "Call this function as following: boundary = mexTraceBoundary(uint8(binaryImg), double(startPoint), char(initialDirection));");
 
-  Array<u8> binaryImg = mxArrayToArray<u8>(prhs[0]);
-  Array<f64> startPointMatrix = mxArrayToArray<f64>(prhs[1]);
+  const s32 bufferSize = 10000000;
+  MemoryStack memory(malloc(bufferSize), bufferSize);
+  AnkiConditionalErrorAndReturn(memory.IsValid(), "mexTraceBoundary", "Memory could not be allocated");
+
+  Array<u8> binaryImg = mxArrayToArray<u8>(prhs[0], memory);
+  Array<f64> startPointMatrix = mxArrayToArray<f64>(prhs[1], memory);
   char * initialDirectionString = mxArrayToString(prhs[2]);
 
   //printf("%f %f %s\n", *startPoint.Pointer(0,0), *startPoint.Pointer(0,1), initialDirection.data());
@@ -57,7 +61,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     printf("Error: mexTraceInteriorBoundary\n");
   }
 
-  Array<f64> boundaryMatrix = AllocateArrayFromHeap<f64>(boundary.get_size(), 2);
+  Array<f64> boundaryMatrix(boundary.get_size(), 2, memory);
 
   for(s32 i=0; i<boundary.get_size(); i++) {
     *boundaryMatrix.Pointer(i,1) = boundary.Pointer(i)->x + 1;
@@ -66,8 +70,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   plhs[0] = arrayToMxArray<f64>(boundaryMatrix);
 
-  free(binaryImg.get_rawDataPointer());
-  free(startPointMatrix.get_rawDataPointer());
-  free(boundaryMatrix.get_rawDataPointer());
+  free(memory.get_buffer());
   mxFree(initialDirectionString);
 }

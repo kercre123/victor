@@ -8,6 +8,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 **/
 
 #include "anki/vision/robot/integralImage.h"
+#include "anki/vision/robot/shaveKernels_vision_c.h"
 
 #define SwapEndianU32(value) \
   ((((u32)((value) & 0x000000FF)) << 24) | \
@@ -27,9 +28,9 @@ namespace Anki
     }
 
     ScrollingIntegralImage_u8_s32::ScrollingIntegralImage_u8_s32(const s32 bufferHeight, const s32 imageWidth, const s32 numBorderPixels, MemoryStack &memory, const Flags::Buffer flags)
-    : Array<s32>(bufferHeight, imageWidth+2*numBorderPixels, memory, flags), imageWidth(imageWidth), maxRow(-1), rowOffset(-numBorderPixels), numBorderPixels(numBorderPixels)
+      : Array<s32>(bufferHeight, imageWidth+2*numBorderPixels, memory, flags), imageWidth(imageWidth), maxRow(-1), rowOffset(-numBorderPixels), numBorderPixels(numBorderPixels)
     {
-      assert(imageWidth%ANKI_VISION_IMAGE_WIDTH_SHIFT == 0);
+      AnkiAssert(imageWidth%ANKI_VISION_IMAGE_WIDTH_SHIFT == 0);
 
       if(numBorderPixels < 0 || numBorderPixels > bufferHeight || numBorderPixels > imageWidth) {
         AnkiError("Anki.ScrollingIntegralImage_u8_s32.ScrollingIntegralImage_u8_s32", "numBorderPixels must be greater than or equal to zero, and less than the size of this ScrollingIntegralImage.");
@@ -46,8 +47,8 @@ namespace Anki
       const s32 integralImageHeight = this->get_size(0);
       const s32 integralImageWidth = this->get_size(1);
 
-      assert(imageWidth%ANKI_VISION_IMAGE_WIDTH_SHIFT == 0);
-      assert(imageWidth == imageWidth);
+      AnkiAssert(imageWidth%ANKI_VISION_IMAGE_WIDTH_SHIFT == 0);
+      AnkiAssert(imageWidth == imageWidth);
 
       AnkiConditionalErrorAndReturnValue(numRowsToScroll > 0 && numRowsToScroll <= integralImageHeight,
         RESULT_FAIL_INVALID_PARAMETERS, "ScrollingIntegralImage_u8_s32::ScrollDown", "numRowsToScroll is to high or low");
@@ -148,17 +149,17 @@ namespace Anki
       return RESULT_OK;
     }
 
-    Result ScrollingIntegralImage_u8_s32::FilterRow(const C_Acceleration &acceleration, const Rectangle<s16> &filter, const s32 imageRow, Array<s32> &output)
+    Result ScrollingIntegralImage_u8_s32::FilterRow(const Rectangle<s16> &filter, const s32 imageRow, Array<s32> &output)
     {
-      assert(this->IsValid());
-      assert(output.IsValid());
-      //assert(this->minRow >= 0);
+      AnkiAssert(this->IsValid());
+      AnkiAssert(output.IsValid());
+      //AnkiAssert(this->minRow >= 0);
 
       // TODO: support these
-      assert(filter.left <= 0);
-      assert(filter.top <= 0);
-      assert(filter.right >= 0);
-      assert(filter.bottom >= 0);
+      AnkiAssert(filter.left <= 0);
+      AnkiAssert(filter.top <= 0);
+      AnkiAssert(filter.right >= 0);
+      AnkiAssert(filter.bottom >= 0);
 
       const bool insufficientBorderPixels_left = (-filter.left+1) > this->numBorderPixels;
       const bool insufficientBorderPixels_right = (filter.right) > this->numBorderPixels;
@@ -177,57 +178,42 @@ namespace Anki
       const s32 leftOffset = filter.left - 1 + this->numBorderPixels;
       const s32 rightOffset = filter.right + this->numBorderPixels;
 
-      const s32 * restrict integralImage_00 = this->Pointer(topOffset, 0) + leftOffset;
-      const s32 * restrict integralImage_01 = this->Pointer(topOffset, 0) + rightOffset;
-      const s32 * restrict integralImage_10 = this->Pointer(bottomOffset, 0) + leftOffset;
-      const s32 * restrict integralImage_11 = this->Pointer(bottomOffset, 0) + rightOffset;
+      const s32 * restrict pIntegralImage_00 = this->Pointer(topOffset, 0) + leftOffset;
+      const s32 * restrict pIntegralImage_01 = this->Pointer(topOffset, 0) + rightOffset;
+      const s32 * restrict pIntegralImage_10 = this->Pointer(bottomOffset, 0) + leftOffset;
+      const s32 * restrict pIntegralImage_11 = this->Pointer(bottomOffset, 0) + rightOffset;
 
       s32 * restrict pOutput = output.Pointer(0,0);
 
-      if(acceleration.type == C_ACCELERATION_NATURAL_CPP) {
-        for(s32 x=0; x<minX; x++) {
-          pOutput[x] = 0;
-        }
+#ifdef USING_MOVIDIUS_GCC_COMPILER
 
-        for(s32 x=minX; x<=maxX; x++) {
-          pOutput[x] = integralImage_11[x] - integralImage_10[x] + integralImage_00[x] - integralImage_01[x];
-        }
+      swcResetShave(0);
+      swcSetAbsoluteDefaultStack(0);
 
-        for(s32 x=maxX+1; x<imageWidth; x++) {
-          pOutput[x] = 0;
-        }
-      } else if(acceleration.type == C_ACCELERATION_NATURAL_C) {
-        ScrollingIntegralImage_u8_s32_FilterRow_innerLoop(integralImage_00, integralImage_01, integralImage_10, integralImage_11, minX, maxX, this->imageWidth, pOutput);
-      } else if(acceleration.type == C_ACCELERATION_SHAVE_EMULATION_C) {
-        assert(output.get_size(1) >= (this->imageWidth+4));
-        ScrollingIntegralImage_u8_s32_FilterRow_innerLoop_emulateShave(integralImage_00, integralImage_01, integralImage_10, integralImage_11, minX, maxX, this->imageWidth, pOutput);
-      } else {
-        assert(false);
-      }
+      START_SHAVE(0, ScrollingIntegralImage_u8_s32_FilterRow,
+        "iiiiiiii",
+        ConvertCMXAddressToShave(pIntegralImage_00),
+        ConvertCMXAddressToShave(pIntegralImage_01),
+        ConvertCMXAddressToShave(pIntegralImage_10),
+        ConvertCMXAddressToShave(pIntegralImage_11),
+        minX,
+        maxX,
+        this->imageWidth,
+        ConvertCMXAddressToShave(pOutput));
+
+      swcWaitShave(0);
+
+#else
+      ScrollingIntegralImage_u8_s32_FilterRow(pIntegralImage_00, pIntegralImage_01, pIntegralImage_10, pIntegralImage_11, minX, maxX, this->imageWidth, pOutput);
+#endif
 
       return RESULT_OK;
     }
 
-    // This might be used later, but not yet
-#if 0
-    Result ScrollingIntegralImage_u8_s32::FilterRow_c(const C_Acceleration &acceleration, const Rectangle<s16> &filter, const s32 imageRow, Array<s32> &output)
-    {
-      // TODO: verify that this conversion overhead is low
-
-      const C_ScrollingIntegralImage_u8_s32 integralImage_c = this->get_cInterface();
-      const C_Rectangle_s16 filter_c = get_C_Rectangle_s16(filter);
-      C_Array_s32 output_c = get_C_Array_s32(output);
-
-      const s32 result = ScrollingIntegralImage_u8_s32_FilterRow(&integralImage_c, &filter_c, imageRow, &output_c);
-
-      return static_cast<Result>(result);
-    }
-#endif // #if 0
-
     // TODO: implement
     //s32 ScrollingIntegralImage_u8_s32::get_minRow(const s32 filterHalfHeight) const
     //{
-    //  assert(filterHalfHeight >= 0);
+    //  AnkiAssert(filterHalfHeight >= 0);
 
     //  //const s32 shiftedMinRow = minRow + filterHalfHeight + this->rowOffset + 1;
     //  const s32 shiftedMinRow = minRow + filterHalfHeight - 1;
@@ -237,7 +223,7 @@ namespace Anki
 
     s32 ScrollingIntegralImage_u8_s32::get_maxRow(const s32 filterHalfHeight) const
     {
-      assert(filterHalfHeight >= 0);
+      AnkiAssert(filterHalfHeight >= 0);
 
       // TODO: make cleaner ?
 
@@ -273,12 +259,12 @@ namespace Anki
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
 
-      assert(image.IsValid());
-      assert(paddedRow.IsValid());
-      assert(paddedRow.get_size(1) == (imageWidth+2*numBorderPixels));
-      assert(paddedRow.get_size(0) == 1);
-      assert(whichRow >= 0);
-      assert(whichRow < imageHeight);
+      AnkiAssert(image.IsValid());
+      AnkiAssert(paddedRow.IsValid());
+      AnkiAssert(paddedRow.get_size(1) == (imageWidth+2*numBorderPixels));
+      AnkiAssert(paddedRow.get_size(0) == 1);
+      AnkiAssert(whichRow >= 0);
+      AnkiAssert(whichRow < imageHeight);
 
       const u8 * restrict pImage = image.Pointer(whichRow, 0);
       u8 * restrict pPaddedRow = paddedRow.Pointer(0, 0);
@@ -313,25 +299,20 @@ namespace Anki
       const s32 imageWidth = image.get_size(1);
       const s32 imageWidth4 = imageWidth >> 2;
 
-      assert(image.IsValid());
-      assert(paddedRow.IsValid());
-      assert(paddedRow.get_size(1) == (imageWidth+2*numBorderPixels));
-      assert(paddedRow.get_size(0) == 1);
-      assert(whichRow >= 0);
-      assert(whichRow < imageHeight);
+      AnkiAssert(image.IsValid());
+      AnkiAssert(paddedRow.IsValid());
+      AnkiAssert(paddedRow.get_size(1) == (imageWidth+2*numBorderPixels));
+      AnkiAssert(paddedRow.get_size(0) == 1);
+      AnkiAssert(whichRow >= 0);
+      AnkiAssert(whichRow < imageHeight);
 
       const u32 * restrict image_u32rowPointer = reinterpret_cast<const u32*>(image.Pointer(whichRow, 0));
       const u8 * restrict image_u8rowPointer = image.Pointer(whichRow, 0);
 
       u8 * restrict paddedRow_u8rowPointer = paddedRow.Pointer(0, 0);
 
-      //#ifdef BIG_ENDIAN_IMAGES
-      //      const u8 firstPixel = (image_u32rowPointer[0] & 0xFF000000) >> 24;
-      //      const u8 lastPixel = image_u32rowPointer[imageWidth4-1] & 0xFF;
-      //#else
       const u8 firstPixel = image_u8rowPointer[0];
       const u8 lastPixel = image_u8rowPointer[imageWidth-1];
-      //#endif
 
       s32 xPad = 0;
 
@@ -342,11 +323,7 @@ namespace Anki
       // First, load everything to the beginning of the buffer (SPARC doesn't have unaligned store)
       u32 * restrict paddedRow_u32rowPointerPxpad = reinterpret_cast<u32*>(paddedRow_u8rowPointer);
       for(s32 xImage = 0; xImage<imageWidth4; xImage++) {
-        //#ifdef BIG_ENDIAN_IMAGES
-        //        paddedRow_u32rowPointerPxpad[xImage] = SwapEndianU32(image_u32rowPointer[xImage]);
-        //#else
         paddedRow_u32rowPointerPxpad[xImage] = image_u32rowPointer[xImage];
-        //#endif
       }
 
       // Second, move the image data to the unaligned location
@@ -394,25 +371,6 @@ namespace Anki
         horizontalSum += paddedImage_currentRow[x];
         integralImage_currentRow[x] = horizontalSum + integralImage_previousRow[x];
       }
-    }
-
-    C_ScrollingIntegralImage_u8_s32 ScrollingIntegralImage_u8_s32::get_cInterface()
-    {
-      C_ScrollingIntegralImage_u8_s32 cVersion;
-
-      cVersion.size0 = this->size[0];
-      cVersion.size1 = this->size[1];
-      cVersion.stride = this->stride;
-      cVersion.flags = this->get_flags().get_rawFlags();
-
-      cVersion.data = this->data;
-
-      cVersion.imageWidth = this->imageWidth;
-      cVersion.maxRow = this->maxRow;
-      cVersion.rowOffset = this->rowOffset;
-      cVersion.numBorderPixels = this->numBorderPixels;
-
-      return cVersion;
     }
   } // namespace Embedded
 } //namespace Anki

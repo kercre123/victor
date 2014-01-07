@@ -18,7 +18,7 @@ namespace Anki
     MemoryStack::MemoryStack(void *buffer, s32 bufferLength, Flags::Buffer flags)
       : buffer(buffer), totalBytes(bufferLength), usedBytes(0), usedBytesBeforeLastAllocation(0), lastAllocatedMemory(NULL), flags(flags)
     {
-      assert(flags.get_useBoundaryFillPatterns());
+      AnkiAssert(flags.get_useBoundaryFillPatterns());
 
       static s32 maxId = 0;
 
@@ -62,7 +62,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue((usedBytes+requestedBytes) <= totalBytes, NULL, "Anki.MemoryStack.Allocate", "Ran out of scratch space");
 
       // Is this possible?
-      AnkiConditionalErrorAndReturnValue(static_cast<s32>(reinterpret_cast<size_t>(segmentFooter) - reinterpret_cast<size_t>(segmentMemory)) == numBytesRequestedRounded,
+      AnkiConditionalErrorAndReturnValue(static_cast<u32>(reinterpret_cast<size_t>(segmentFooter) - reinterpret_cast<size_t>(segmentMemory)) == numBytesRequestedRounded,
         NULL, "Anki.MemoryStack.Allocate", "Odd error");
 
       // Next, add the header for this block

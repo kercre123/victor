@@ -2,6 +2,8 @@
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/memory.h"
 
+#include "anki/vision/robot/docking_vision.h"
+#include "anki/vision/robot/imageProcessing.h"
 #include "anki/vision/robot/lucasKanade.h"
 #include "anki/vision/robot/miscVisionKernels.h"
 
@@ -13,6 +15,21 @@
 #include "anki/cozmo/robot/visionSystem.h"
 
 #include "anki/cozmo/messages.h"
+
+#include "headController.h"
+
+// Set to 1 to use LucasKanadeTrackerFast, 0 for LucasKanadeTracker_f32
+#define USE_FAST_LK 1
+
+#if defined(SIMULATOR) && ANKICORETECH_EMBEDDED_USE_MATLAB && (!defined(USE_OFFBOARD_VISION) || !USE_OFFBOARD_VISION)
+#define USE_MATLAB_VISUALIZATION 1
+#else
+#define USE_MATLAB_VISUALIZATION 0
+#endif
+
+#if USE_MATLAB_VISUALIZATION
+#include "anki/common/robot/matlabInterface.h"
+#endif
 
 namespace Anki {
   namespace Cozmo {
@@ -34,19 +51,16 @@ namespace Anki {
       
       const s32 TRACKING_MAX_ITERATIONS = 25;
       const f32 TRACKING_CONVERGENCE_TOLERANCE = .05f;
+      const bool TRACKING_USE_WEIGHTS = true;
       
       bool isInitialized_ = false;
       
       //
       // Memory
       //
-
+      
+      // CMX buffer
       const u32 CMX_BUFFER_SIZE = 600000;
-#ifdef SIMULATOR
-      char cmxBuffer_[CMX_BUFFER_SIZE];
-#else
-      __attribute__((section(".smallBss1"))) char cmxBuffer_[CMX_BUFFER_SIZE];
-#endif
       
       // DDR buffer (for captured frames at the moment)
       const u32 FRAMEBUFFER_WIDTH  = 640;
@@ -54,9 +68,11 @@ namespace Anki {
       const u32 DDR_BUFFER_SIZE   = FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT;
       
 #ifdef SIMULATOR
-      u8 ddrBuffer_[DDR_BUFFER_SIZE];
+      char cmxBuffer_[CMX_BUFFER_SIZE];
+      u8   ddrBuffer_[DDR_BUFFER_SIZE] ALIGNVARIABLE;
 #else
-      __attribute__((section(".bigBss"))) u8 ddrBuffer_[DDR_BUFFER_SIZE];
+      __attribute__((section(".cmx.bss"))) char cmxBuffer_[CMX_BUFFER_SIZE];
+      __attribute__((section(".ddr.bss"))) u8   ddrBuffer_[DDR_BUFFER_SIZE] ALIGNVARIABLE;
 #endif
       
       const u32 TRACKER_SCRATCH_SIZE   = 600000;
@@ -64,8 +80,7 @@ namespace Anki {
       const u32 DETECTOR_SCRATCH2_SIZE = 300000;
       
       Embedded::MemoryStack trackerScratch_;
-      Embedded::MemoryStack detectorScratch1_;
-      Embedded::MemoryStack detectorScratch2_;
+      Embedded::MemoryStack detectorScratch1_, detectorScratch2_;
       bool detectorScratchInitialized_ = false;
       
       Mode mode_ = IDLE;
@@ -89,8 +104,17 @@ namespace Anki {
       
       f32 matCamPixPerMM_ = 1.f;
       
+#if USE_FAST_LK
+      Embedded::TemplateTracker::LucasKanadeTrackerFast tracker_;
+#else
       Embedded::TemplateTracker::LucasKanadeTracker_f32 tracker_;
+#endif
       
+      Embedded::Quadrilateral<f32> trackingQuad_;
+
+#if USE_MATLAB_VISUALIZATION
+      Embedded::Matlab matlabViz_(false);
+#endif
     } // private namespace
     
     namespace VisionSystem {
@@ -116,7 +140,7 @@ namespace Anki {
       ReturnCode LocalizeWithMat(const FrameBuffer &frame);
       
       ReturnCode InitTemplate(const FrameBuffer &frame,
-                              const Embedded::Rectangle<f32>& templateRegion);
+                              Embedded::Quadrilateral<f32>& templateRegion);
       
       ReturnCode TrackTemplate(const FrameBuffer &frame);
       
@@ -207,6 +231,18 @@ namespace Anki {
         HAL::USBSendPacket(HAL::USB_VISION_COMMAND_MAT_CALIBRATION,
                            &matCamPixPerMM_, sizeof(matCamPixPerMM_));
 
+#endif // USE_OFFBOARD_VISION
+        
+#if USE_MATLAB_VISUALIZATION
+        matlabViz_.EvalStringEcho("h_fig  = figure('Name', 'VisionSystem'); "
+                                  "h_axes = axes('Pos', [.1 .1 .8 .8], 'Parent', h_fig); "
+                                  "h_img  = imagesc(0, 'Parent', h_axes); "
+                                  "axis(h_axes, 'image', 'off'); "
+                                  "hold(h_axes, 'on'); "
+                                  "colormap(h_fig, gray); "
+                                  "h_trackedQuad = plot(nan, nan, 'b', 'LineWidth', 2, "
+                                  "                     'Parent', h_axes); "
+                                  "imageCtr = 0;");
 #endif
         
         isInitialized_ = true;
@@ -351,17 +387,10 @@ namespace Anki {
               };
               
               CaptureHeadFrame(frame);
-              
-              // If tracking fails [enough times in a row], we will go back to
-              // looking for the block we wanted to dock with.
-              // This failure can be indicated either by an EXIT_FAILURE return
-              // code, or by a flag in a message returned over USB by the
-              // offboard vision processor.  If the latter, the
-              // UpdateTrackingStatus() call will be made by the message
-              // processing system.  (In offboard vision mode, TrackTemplate
-              // generally always return EXIT_SUCCESS.)
+             
               if(TrackTemplate(frame) == EXIT_FAILURE) {
-                UpdateTrackingStatus(false);
+                PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
+                retVal = EXIT_FAILURE;
               }
             }
             break;
@@ -434,7 +463,46 @@ namespace Anki {
         return EXIT_FAILURE;
       }
       
-      
+      void DownsampleHelper(const FrameBuffer& frame, Embedded::Array<u8>& image,
+                            const HAL::CameraMode outputResolution,
+                            Embedded::MemoryStack scratch)
+      {
+        using namespace Embedded;
+        
+        const u16 outWidth  = HAL::CameraModeInfo[outputResolution].width;
+        const u16 outHeight = HAL::CameraModeInfo[outputResolution].height;
+        
+        AnkiAssert(image.get_size(0) == outHeight &&
+                   image.get_size(1) == outWidth);
+        //image = Array<u8>(outHeight, outWidth, scratch);
+        
+        const s32 downsamplePower = static_cast<s32>(HAL::CameraModeInfo[outputResolution].downsamplePower[frame.resolution]);
+        
+        if(downsamplePower > 0)
+        {
+          const u16 frameWidth   = HAL::CameraModeInfo[frame.resolution].width;
+          const u16 frameHeight  = HAL::CameraModeInfo[frame.resolution].height;
+          
+          PRINT("Downsampling [%d x %d] frame by %d.\n",
+                frameWidth, frameHeight, (1 << downsamplePower));
+          
+          Array<u8> fullRes(frameHeight, frameWidth,
+                            frame.data, frameHeight*frameWidth,
+                            Flags::Buffer(false,false));
+          
+          ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(fullRes,
+                                                             downsamplePower,
+                                                             image,
+                                                             scratch);
+        }
+        else {
+          // No need to downsample, but need to copy into CMX from DDR
+          // TODO: ask pete if this is correct
+          image.Set(frame.data, outHeight*outWidth);
+        }
+        
+      } // DownsampleHelper()
+    
       ReturnCode LookForBlocks(const FrameBuffer &frame)
       {
         ReturnCode retVal = EXIT_FAILURE;
@@ -461,120 +529,162 @@ namespace Anki {
         
         if(not detectorScratchInitialized_)
         {
+          PRINT("Initializing detector scratch memory.\n");
           detectorScratch1_ = Embedded::MemoryStack(cmxBuffer_, DETECTOR_SCRATCH1_SIZE);
           detectorScratch2_ = Embedded::MemoryStack(cmxBuffer_ + DETECTOR_SCRATCH1_SIZE,
                                                     DETECTOR_SCRATCH2_SIZE);
           detectorScratchInitialized_ = true;
         }
         
-        const u16 detectWidth  = HAL::CameraModeInfo[DETECTION_RESOLUTION].width;
-        const u16 detectHeight = HAL::CameraModeInfo[DETECTION_RESOLUTION].height;
-        
-        
-        // TOOD: move these parameters up above?
-        const s32 scaleImage_thresholdMultiplier = 49152; // .75 * (2^16) = 49152
-        const s32 scaleImage_numPyramidLevels = 3;
-        
-        const s32 component1d_minComponentWidth = 0;
-        const s32 component1d_maxSkipDistance = 0;
-        
-        const f32 minSideLength = 0.03f*static_cast<f32>(MAX(detectWidth,detectHeight));
-        const f32 maxSideLength = 0.97f*static_cast<f32>(MIN(detectWidth,detectHeight));
-        
-        const s32 component_minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
-        const s32 component_maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
-        const s32 component_sparseMultiplyThreshold = 1000 << 5;
-        const s32 component_solidMultiplyThreshold = 2 << 5;
-        
-        const s32 component_percentHorizontal = 1 << 7; // 0.5, in SQ 23.8
-        const s32 component_percentVertical = 1 << 7; // 0.5, in SQ 23.8
-        
-        const s32 maxExtractedQuads = 1000/2;
-        const s32 quads_minQuadArea = 100/4;
-        const s32 quads_quadSymmetryThreshold = 384;
-        const s32 quads_minDistanceFromImageEdge = 2;
-        
-        const f32 decode_minContrastRatio = 1.25;
-        
-        const s32 maxMarkers = 100;
-        const s32 maxConnectedComponentSegments = 25000/2;
-        
-        // TODO: Add downsampling here
-        
-        // Questin for Pete: is detectorScratch1_ the right memory stack to provide here?
-        Embedded::Array<u8> image(detectHeight, detectWidth, detectorScratch2_);
-        Embedded::FixedLengthList<Embedded::BlockMarker> markers(maxMarkers, detectorScratch2_);
-        Embedded::FixedLengthList<Embedded::Array<f64> > homographies(maxMarkers, detectorScratch2_);
-                
-        for(s32 i=0; i<maxMarkers; i++) {
-          Embedded::Array<f64> newArray(3, 3, detectorScratch2_);
-          homographies[i] = newArray;
-        } // for(s32 i=0; i<maximumSize; i++)
-        
-        const Embedded::Result result = SimpleDetector_Steps12345_lowMemory(image,
-                                                                            markers,
-                                                                            homographies,
-                                                                            scaleImage_numPyramidLevels,
-                                                                            scaleImage_thresholdMultiplier,
-                                                                            component1d_minComponentWidth,
-                                                                            component1d_maxSkipDistance,
-                                                                            component_minimumNumPixels,
-                                                                            component_maximumNumPixels,
-                                                                            component_sparseMultiplyThreshold,
-                                                                            component_solidMultiplyThreshold,
-                                                                            component_percentHorizontal,
-                                                                            component_percentVertical,
-                                                                            quads_minQuadArea,
-                                                                            quads_quadSymmetryThreshold,
-                                                                            quads_minDistanceFromImageEdge,
-                                                                            decode_minContrastRatio,
-                                                                            maxExtractedQuads,
-                                                                            maxConnectedComponentSegments,
-                                                                            detectorScratch1_,
-                                                                            detectorScratch2_);
-        
-        if(result == Embedded::RESULT_OK)
+        if(detectorScratch1_.IsValid() && detectorScratch2_.IsValid())
         {
-          for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker)
-          {
-            Messages::BlockMarkerObserved msg;
-            
-            // TODO: create the message
-            
-            Messages::ProcessBlockMarkerObservedMessage(msg);
-            
-            // Processing the message could have set isDockingBlockFound to true
-            // If it did, and we haven't already initialized the template tracker
-            // (thanks to a previous marker setting isDockingBlockFound to true),
-            // then initialize the template tracker now
-            const Embedded::BlockMarker& crntMarker = markers[i_marker];
-            if(isDockingBlockFound_ && not isTemplateInitialized_)
-            {
-              // TODO: Convert from internal fixed point to floating point here?
-              f32 left   = crntMarker.corners[0].x;
-              f32 right  = crntMarker.corners[0].x;
-              f32 top    = crntMarker.corners[0].y;
-              f32 bottom = crntMarker.corners[0].y;
-              
-              for(u8 i_corner=1; i_corner<4; ++i_corner) {
-                left   = MIN(left,   crntMarker.corners[i_corner].x);
-                right  = MAX(right,  crntMarker.corners[i_corner].x);
-                top    = MIN(top,    crntMarker.corners[i_corner].y);
-                bottom = MAX(bottom, crntMarker.corners[i_corner].y);
-              }
-              
-              Embedded::Rectangle<f32> templateRegion(left, right, top, bottom);
-            
-              if(InitTemplate(frame, templateRegion) == EXIT_SUCCESS) {
-                SetDockingMode(static_cast<bool>(true));
-              }
-            }
-          } // for( each marker)
+          // So that we don't leak memory allocating image, markers, and
+          // homographies below, we want to ensure that memory gets popped
+          // when this scope ends
+          PUSH_MEMORY_STACK(detectorScratch2_);
           
-          retVal = EXIT_SUCCESS;
-        }
+          const u16 detectWidth  = HAL::CameraModeInfo[DETECTION_RESOLUTION].width;
+          const u16 detectHeight = HAL::CameraModeInfo[DETECTION_RESOLUTION].height;
+          
+          Embedded::Array<u8> image(detectHeight, detectWidth, detectorScratch2_);
+          DownsampleHelper(frame, image, DETECTION_RESOLUTION, detectorScratch2_);
+          
+          // TOOD: move these parameters up above?
+          const s32 scaleImage_thresholdMultiplier = 49152; // .75 * (2^16) = 49152
+          const s32 scaleImage_numPyramidLevels = 3;
+          
+          const s32 component1d_minComponentWidth = 0;
+          const s32 component1d_maxSkipDistance = 0;
+          
+          const f32 minSideLength = 0.03f*static_cast<f32>(MAX(detectWidth,detectHeight));
+          const f32 maxSideLength = 0.97f*static_cast<f32>(MIN(detectWidth,detectHeight));
+          
+          const s32 component_minimumNumPixels = static_cast<s32>(Round(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength)));
+          const s32 component_maximumNumPixels = static_cast<s32>(Round(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength)));
+          const s32 component_sparseMultiplyThreshold = 1000 << 5;
+          const s32 component_solidMultiplyThreshold = 2 << 5;
+          
+          const s32 component_percentHorizontal = 1 << 7; // 0.5, in SQ 23.8
+          const s32 component_percentVertical = 1 << 7; // 0.5, in SQ 23.8
+          
+          const s32 maxExtractedQuads = 1000/2;
+          const s32 quads_minQuadArea = 100/4;
+          const s32 quads_quadSymmetryThreshold = 384;
+          const s32 quads_minDistanceFromImageEdge = 2;
+          
+          const f32 decode_minContrastRatio = 1.25;
+          
+          const s32 maxMarkers = 100;
+          const s32 maxConnectedComponentSegments = 25000/2;
+          
+          Embedded::FixedLengthList<Embedded::BlockMarker> markers(maxMarkers, detectorScratch2_);
+          Embedded::FixedLengthList<Embedded::Array<f64> > homographies(maxMarkers, detectorScratch2_);
+          
+          for(s32 i=0; i<maxMarkers; i++) {
+            Embedded::Array<f64> newArray(3, 3, detectorScratch2_);
+            homographies[i] = newArray;
+          } // for(s32 i=0; i<maximumSize; i++)
+          
+#if USE_MATLAB_VISUALIZATION
+          matlabViz_.EvalStringEcho("delete(findobj(h_axes, 'Tag', 'DetectedQuad'));");
+          matlabViz_.PutArray(image, "detectionImage");
+          matlabViz_.EvalStringEcho("set(h_img, 'CData', detectionImage); "
+                                    "set(h_axes, 'XLim', [.5 size(detectionImage,2)+.5], "
+                                    "            'YLim', [.5 size(detectionImage,1)+.5]);");
+#endif
+          
+          if(SimpleDetector_Steps12345_lowMemory(image,
+                                                 markers,
+                                                 homographies,
+                                                 scaleImage_numPyramidLevels,
+                                                 scaleImage_thresholdMultiplier,
+                                                 component1d_minComponentWidth,
+                                                 component1d_maxSkipDistance,
+                                                 component_minimumNumPixels,
+                                                 component_maximumNumPixels,
+                                                 component_sparseMultiplyThreshold,
+                                                 component_solidMultiplyThreshold,
+                                                 component_percentHorizontal,
+                                                 component_percentVertical,
+                                                 quads_minQuadArea,
+                                                 quads_quadSymmetryThreshold,
+                                                 quads_minDistanceFromImageEdge,
+                                                 decode_minContrastRatio,
+                                                 maxConnectedComponentSegments,
+                                                 maxExtractedQuads,
+                                                 detectorScratch1_,
+                                                 detectorScratch2_) == Embedded::RESULT_OK)
+          {
+            for(s32 i_marker = 0; i_marker < markers.get_size(); ++i_marker)
+            {
+              const Embedded::BlockMarker& crntMarker = markers[i_marker];
+              
+              // TODO: convert corners from shorts (fixed point?) to floats
+              Messages::BlockMarkerObserved msg = {
+                frame.timestamp,
+                HeadController::GetAngleRad(), // headAngle
+                static_cast<f32>(crntMarker.corners[0].x),
+                static_cast<f32>(crntMarker.corners[0].y),
+                static_cast<f32>(crntMarker.corners[1].x),
+                static_cast<f32>(crntMarker.corners[1].y),
+                static_cast<f32>(crntMarker.corners[2].x),
+                static_cast<f32>(crntMarker.corners[2].y),
+                static_cast<f32>(crntMarker.corners[3].x),
+                static_cast<f32>(crntMarker.corners[3].y),
+                static_cast<u16>(crntMarker.blockType),
+                static_cast<u8>(crntMarker.faceType),
+                static_cast<u8>(crntMarker.orientation)
+              };
+              
+              Messages::ProcessBlockMarkerObservedMessage(msg);
+              
+#if USE_MATLAB_VISUALIZATION
+              matlabViz_.PutQuad(crntMarker.corners, "detectedQuad");
+              matlabViz_.EvalStringEcho("plot(detectedQuad([1 2 4 3 1],1)+1, "
+                                        "     detectedQuad([1 2 4 3 1],2)+1, "
+                                        "     'r', 'LineWidth', 2, "
+                                        "     'Parent', h_axes, "
+                                        "     'Tag', 'DetectedQuad');");
+#endif
+              
+              // Processing the message could have set isDockingBlockFound to true
+              // If it did, and we haven't already initialized the template tracker
+              // (thanks to a previous marker setting isDockingBlockFound to true),
+              // then initialize the template tracker now
+              if(isDockingBlockFound_ && not isTemplateInitialized_)
+              {
+                using namespace Embedded;
+                
+                // I'd rather only initialize trackingQuad_ if InitTemplate()
+                // succeeds, but InitTemplate downsamples it for the time being,
+                // since we're still doing template initialization at tracking
+                // resolution instead of the eventual goal of doing it at full
+                // detection resolution.
+                trackingQuad_ = Quadrilateral<f32>(Point<f32>(crntMarker.corners[0].x,
+                                                              crntMarker.corners[0].y),
+                                                   Point<f32>(crntMarker.corners[1].x,
+                                                              crntMarker.corners[1].y),
+                                                   Point<f32>(crntMarker.corners[2].x,
+                                                              crntMarker.corners[2].y),
+                                                   Point<f32>(crntMarker.corners[3].x,
+                                                              crntMarker.corners[3].y));
+                
+                if(InitTemplate(frame, trackingQuad_) == EXIT_SUCCESS)
+                {
+                  SetDockingMode(static_cast<bool>(true));
+                }
+                
+              } // if(isDockingBlockFound_ && not isTemplateInitialized_)
+            } // for( each marker)
+#if USE_MATLAB_VISUALIZATION
+            matlabViz_.EvalString("drawnow");
+#endif
+            retVal = EXIT_SUCCESS;
+            
+          } // IF SimpleDetector_Steps12345_lowMemory() == RESULT_OK
+        } // IF detectorScratch1 and 2 are valid
         
-#endif // defined(USE_MATLAB_FOR_HEAD_CAMERA)
+#endif // USE_OFFBOARD_VISION
         
         return retVal;
         
@@ -609,8 +719,8 @@ namespace Anki {
       } // localizeWithMat()
       
       
-      ReturnCode InitTemplate(const FrameBuffer              &frame,
-                              const Embedded::Rectangle<f32> &templateRegion)
+      ReturnCode InitTemplate(const FrameBuffer            &frame,
+                              Embedded::Quadrilateral<f32> &templateQuad)
       {
         ReturnCode retVal = EXIT_FAILURE;
         isTemplateInitialized_ = false;
@@ -627,25 +737,46 @@ namespace Anki {
         
 #else
         trackerScratch_ = Embedded::MemoryStack(cmxBuffer_, TRACKER_SCRATCH_SIZE);
+
         detectorScratchInitialized_ = false;
         
         if(trackerScratch_.IsValid()) {
           
           using namespace Embedded::TemplateTracker;
           
-          const u16 frameWidth  = HAL::CameraModeInfo[frame.resolution].width;
-          const u16 frameHeight = HAL::CameraModeInfo[frame.resolution].height;
+          // TODO: At some point template initialization should happen at full detection resolution
+          //       but for now, we have to downsample to tracking resolution
+          const u16 trackHeight = HAL::CameraModeInfo[TRACKING_RESOLUTION].height;
+          const u16 trackWidth  = HAL::CameraModeInfo[TRACKING_RESOLUTION].width;
           
-          // TODO: add downsampling
-          // TODO: later, add stuff to init at higher res and downsample only to track
+          // NOTE: this image will sit in the MemoryStack until tracking fails
+          //       and we reconstruct the MemoryStack
+          Embedded::Array<u8> image(trackHeight, trackWidth, trackerScratch_);
+          DownsampleHelper(frame, image, TRACKING_RESOLUTION, trackerScratch_);
           
-          Embedded::Array<u8> image(frameHeight, frameWidth, trackerScratch_);
-          image.Set(frame.data, frameWidth*frameHeight);
+          // Note that the templateRegion and the trackingQuad are both at
+          // DETECTION_RESOLUTION, not necessarily the resolution of the frame.
+          const s32 downsamplePower = static_cast<s32>(HAL::CameraModeInfo[TRACKING_RESOLUTION].downsamplePower[DETECTION_RESOLUTION]);
+          const f32 downsampleFactor = static_cast<f32>(1 << downsamplePower);
           
-          tracker_ = LucasKanadeTracker_f32(image, templateRegion,
+          for(u8 i=0; i<4; ++i) {
+            templateQuad[i].x /= downsampleFactor;
+            templateQuad[i].y /= downsampleFactor;
+          }
+          
+#if USE_FAST_LK
+          tracker_ = LucasKanadeTrackerFast(image, templateQuad,
                                             NUM_TRACKING_PYRAMID_LEVELS,
-                                            TRANSFORM_TRANSLATION,
-                                            TRACKING_RIDGE_WEIGHT, trackerScratch_);
+                                            TRANSFORM_AFFINE,
+                                            TRACKING_RIDGE_WEIGHT,
+                                            trackerScratch_);
+#else
+          tracker_ = LucasKanadeTracker_f32(image, templateQuad,
+                                            NUM_TRACKING_PYRAMID_LEVELS,
+                                            TRANSFORM_AFFINE,
+                                            TRACKING_RIDGE_WEIGHT,
+                                            trackerScratch_);
+#endif
           
           if(tracker_.IsValid()) {
             retVal = EXIT_SUCCESS;
@@ -678,31 +809,103 @@ namespace Anki {
         Messages::LookForID( GET_MESSAGE_ID(Messages::DockingErrorSignal) );
         
 #else // ONBOARD VISION
+        
         if(trackerScratch_.IsValid())
         {
+          // So that we don't leak memory allocating image, etc, below,
+          // we want to ensure that memory gets popped when this scope ends
+          PUSH_MEMORY_STACK(trackerScratch_);
+          
+          //PRINT("TrackerScratch memory usage = %d of %d\n", trackerScratch_.get_usedBytes(), trackerScratch_.get_totalBytes());
+          
           using namespace Embedded::TemplateTracker;
           
-          // Create an embeddeed image array in CMX memory and copy the data
-          // from the DDR buffer into it
-          const u16 frameWidth  = HAL::CameraModeInfo[frame.resolution].width;
-          const u16 frameHeight = HAL::CameraModeInfo[frame.resolution].height;
+          AnkiAssert(tracker_.IsValid());
           
-          // TODO: insert downsampling here!
-          Embedded::Array<u8> image(frameHeight, frameWidth, trackerScratch_);
-          image.Set(frame.data, frameHeight*frameWidth);
+          const u16 trackWidth  = HAL::CameraModeInfo[TRACKING_RESOLUTION].width;
+          const u16 trackHeight = HAL::CameraModeInfo[TRACKING_RESOLUTION].height;
+
+          Embedded::Array<u8> image(trackHeight, trackWidth, trackerScratch_);
+          DownsampleHelper(frame, image, TRACKING_RESOLUTION, trackerScratch_);
           
+          Messages::DockingErrorSignal dockErrMsg;
+          dockErrMsg.timestamp = frame.timestamp;
+          
+          bool converged;
+#if USE_FAST_LK
           if(tracker_.UpdateTrack(image, TRACKING_MAX_ITERATIONS,
                                   TRACKING_CONVERGENCE_TOLERANCE,
+                                  converged,
                                   trackerScratch_) == Embedded::RESULT_OK)
+#else
+          if(tracker_.UpdateTrack(image, TRACKING_MAX_ITERATIONS,
+                                  TRACKING_CONVERGENCE_TOLERANCE,
+                                  TRACKING_USE_WEIGHTS,
+                                  converged,
+                                  trackerScratch_) == Embedded::RESULT_OK)
+#endif
           {
-            retVal = EXIT_SUCCESS;
+            dockErrMsg.didTrackingSucceed = static_cast<u8>(converged);
+            if(converged)
+            {
+              using namespace Embedded;
+              
+              // TODO: Add CameraMode resolution to CameraInfo
+              const f32 fxAdj = (static_cast<f32>(headCamInfo_->ncols) /
+                                 static_cast<f32>(HAL::CameraModeInfo[TRACKING_RESOLUTION].width));
+              
+              Docking::ComputeDockingErrorSignal(tracker_.get_transformation(),
+                                                 HAL::CameraModeInfo[TRACKING_RESOLUTION].width,
+                                                 BLOCK_MARKER_WIDTH_MM,
+                                                 headCamInfo_->focalLength_x / fxAdj,
+                                                 dockErrMsg.x_distErr,
+                                                 dockErrMsg.y_horErr,
+                                                 dockErrMsg.angleErr,
+                                                 trackerScratch_);
+              
+              
+            } // IF converged
             
-            // TODO: Create docking error signal message
+#if USE_MATLAB_VISUALIZATION
+            matlabViz_.PutArray(image, "trackingImage");
+//            matlabViz_.EvalStringExplicit("imwrite(trackingImage, "
+//                                          "sprintf('~/temp/trackingImage%.3d.png', imageCtr)); "
+//                                          "imageCtr = imageCtr + 1;");
+            matlabViz_.EvalStringEcho("set(h_img, 'CData', trackingImage); "
+                                      "set(h_axes, 'XLim', [.5 size(trackingImage,2)+.5], "
+                                      "            'YLim', [.5 size(trackingImage,1)+.5]);");
+            
+            if(dockErrMsg.didTrackingSucceed)
+            {
+              matlabViz_.PutQuad(tracker_.get_transformation().get_transformedCorners(trackerScratch_), "transformedQuad");
+              matlabViz_.EvalStringEcho("set(h_trackedQuad, 'Visible', 'on', "
+                                        "    'XData', transformedQuad([1 2 4 3 1],1)+1, "
+                                        "    'YData', transformedQuad([1 2 4 3 1],2)+1); "
+                                        "title(h_axes, 'Tracking Succeeded');");
+            }
+            else
+            {
+              matlabViz_.EvalStringEcho("set(h_trackedQuad, 'Visible', 'off'); "
+                                        "title(h_axes, 'Tracking Failed');");
+            }
+            
+            matlabViz_.EvalString("drawnow");
+            
+#endif // #if USE_MATLAB_VISUALIZATION
+            
+            Messages::ProcessDockingErrorSignalMessage(dockErrMsg);
           }
-          
-        } // if trackerScratch is valid
+          else {
+            PRINT("VisionSystem::TrackTemplate(): UpdateTrack() failed.\n");
+            retVal = EXIT_FAILURE;
+          } // IF UpdateTrack result was OK
+        }
+        else {
+          PRINT("VisionSystem::TrackTemplate(): tracker scratch memory is not valid.\n");
+          retVal = EXIT_FAILURE;
+        } // if/else trackerScratch is valid
         
-#endif // defined(USE_MATLAB_FOR_HEAD_CAMERA)
+#endif // #if USE_OFFBOARD_VISION
         
         return retVal;
         

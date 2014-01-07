@@ -20,8 +20,8 @@ namespace Anki
   namespace Embedded
   {
 #define PUSH_MEMORY_STACK(memoryStack) \
-  const MemoryStack memoryStack ## _pushedTmp(memoryStack);\
-  MemoryStack memoryStack(memoryStack ## _pushedTmp);
+    const ::Anki::Embedded::MemoryStack memoryStack ## _pushedTmp(memoryStack);\
+    ::Anki::Embedded::MemoryStack memoryStack(memoryStack ## _pushedTmp);
 
     // A MemoryStack keeps track of an external memory buffer, by using the system stack. It is not
     // thread safe. Data that is allocated with Allocate() will be MEMORY_ALIGNMENT bytes-aligned.

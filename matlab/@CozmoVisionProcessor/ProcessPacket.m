@@ -39,6 +39,10 @@ switch(command)
             this.dockingBlock);
         return;
         
+    case this.DISPLAY_IMAGE_COMMAND
+        
+        img = this.PacketToImage(packet);
+        
     case this.DETECT_COMMAND
         
         delete(findobj(this.h_axes, 'Tag', 'BlockMarker2D'));

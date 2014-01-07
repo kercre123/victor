@@ -36,6 +36,12 @@ for i = 1:length(markers)
             'UseNormalization', true, ...
             'TrackingResolution', this.trackingResolution);
         
+        if strcmp(this.trackerType, 'homography')
+            this.H_init = compute_homography( ...
+                this.headCalibrationMatrix\[this.LKtracker.corners';ones(1,4)], ...
+                this.marker3d(:,1:2)');
+        end
+                
         % Let the robot know we've initialized the
         % tracker
         msgStruct = struct('success', uint8(true));

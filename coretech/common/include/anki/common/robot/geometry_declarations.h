@@ -51,7 +51,9 @@ namespace Anki
 
       Point<Type> operator- (const Point<Type> &point2) const;
 
-      void operator*= (const Type value);
+      Point<Type>& operator*= (const Type value);
+      Point<Type>& operator-= (const Type value);
+      Point<Type>& operator-= (const Point<Type> &point2);
 
       inline Point<Type>& operator= (const Point<Type> &point2);
       
@@ -104,10 +106,13 @@ namespace Anki
       Quadrilateral(const Point<Type> &corner1, const Point<Type> &corner2, const Point<Type> &corner3, const Point<Type> &corner4);
 
       Quadrilateral(const Quadrilateral<Type>& quad);
+      
+      Quadrilateral(const Rectangle<Type>& rect);
 
       void Print() const;
 
       Point<Type> ComputeCenter() const;
+      Rectangle<Type> ComputeBoundingRectangle() const;
 
       bool operator== (const Quadrilateral<Type> &quad2) const;
 

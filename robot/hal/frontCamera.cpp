@@ -503,8 +503,9 @@ namespace Anki
       {
         if (i2cCommsError != I2CM_STAT_OK)
         {
-          printf("\nI2C Error (%d) Slave (%02X) Reg (%02X)",
-                i2cCommsError, slaveAddr, regAddr);
+		  // TODO: fix
+          // printf("\nI2C Error (%d) Slave (%02X) Reg (%02X)",
+          //     i2cCommsError, slaveAddr, regAddr);
         }
 
         return i2cCommsError;
@@ -518,7 +519,8 @@ namespace Anki
         // Initialize I2C
         if (DrvI2cMInitFromConfig(&m_i2c, &m_i2cConfig) != I2CM_STAT_OK)
         {
-          printf("\nI2C INIT ERROR\n");
+		  // TODO: fix
+          // printf("\nI2C INIT ERROR\n");
           while (1)
             ;
         }

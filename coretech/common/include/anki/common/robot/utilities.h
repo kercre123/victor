@@ -38,7 +38,7 @@ namespace Anki
 
     template<typename Type> Type approximateExp(const Type exponent, const s32 numTerms)
     {
-      assert(numTerms > 2);
+      AnkiAssert(numTerms > 2);
 
       const Type exponentAbs = ABS(exponent);
 
@@ -132,6 +132,54 @@ namespace Anki
     {
       theta = atan2_fast(y, x);
       rho = sqrtf(x*x + y*y);
+    }
+
+    template<typename Type> Type* ConvertCMXAddressToLeon(Type * pointer)
+    {
+      size_t pointer_t = reinterpret_cast<size_t>(pointer);
+
+      if((pointer_t & 0xFF000000) == 0x10000000) {
+        pointer_t &= 0x00FFFFFF;
+        pointer_t |= 0xA0000000;
+      }
+
+      return reinterpret_cast<Type*>(pointer_t);
+    }
+
+    template<typename Type> const Type* ConvertCMXAddressToLeon(const Type * pointer)
+    {
+      size_t pointer_t = reinterpret_cast<size_t>(pointer);
+
+      if((pointer_t & 0xFF000000) == 0x10000000) {
+        pointer_t &= 0x00FFFFFF;
+        pointer_t |= 0xA0000000;
+      }
+
+      return reinterpret_cast<Type*>(pointer_t);
+    }
+
+    template<typename Type> Type* ConvertCMXAddressToShave(Type * pointer)
+    {
+      size_t pointer_t = reinterpret_cast<size_t>(pointer);
+
+      if((pointer_t & 0xFF000000) == 0xA0000000) {
+        pointer_t &= 0x00FFFFFF;
+        pointer_t |= 0x10000000;
+      }
+
+      return reinterpret_cast<Type*>(pointer_t);
+    }
+
+    template<typename Type> const Type* ConvertCMXAddressToShave(const Type * pointer)
+    {
+      size_t pointer_t = reinterpret_cast<size_t>(pointer);
+
+      if((pointer_t & 0xFF000000) == 0xA0000000) {
+        pointer_t &= 0x00FFFFFF;
+        pointer_t |= 0x10000000;
+      }
+
+      return reinterpret_cast<Type*>(pointer_t);
     }
   } // namespace Embedded
 } // namespace Anki
