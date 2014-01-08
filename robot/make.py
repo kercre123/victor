@@ -409,22 +409,24 @@ if __name__ == '__main__':
   for src in (LEON_SOURCE):
     compileLEON(src)
 
-  for src in SHAVE_SOURCE:
-    compileSHAVE(src)
+  if not emulateShave:
+    for src in SHAVE_SOURCE:
+      compileSHAVE(src)
 
-  shaveMvlibFilename = OUTPUT + TARGET + '.mvlib'
-  linkSHAVEMvlib(shaveMvlibFilename)
+    shaveMvlibFilename = OUTPUT + TARGET + '.mvlib'
+    linkSHAVEMvlib(shaveMvlibFilename)
 
   objects = ''
 
   for key in leonSrcToObj.keys():
     objects += ' ' + leonSrcToObj[key]
   
+  if not emulateShave:
     shaveShvlibFilenames = [OUTPUT + TARGET + '.shv' + str(number) + 'lib' for number in SHAVES_TO_USE]
-  for (shaveNumber, shvlibFilename) in zip(SHAVES_TO_USE, shaveShvlibFilenames):
-    
-    linkSHAVEShvlib(shaveMvlibFilename, shvlibFilename, shaveNumber, 'shave')
-    objects += ' ' + shvlibFilename
+    for (shaveNumber, shvlibFilename) in zip(SHAVES_TO_USE, shaveShvlibFilenames):
+      
+      linkSHAVEShvlib(shaveMvlibFilename, shvlibFilename, shaveNumber, 'shave')
+      objects += ' ' + shvlibFilename
 
   with open('ld/objects.ldscript', 'w+') as f:
     f.write('INPUT(' + objects + ' )\n')
