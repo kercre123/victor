@@ -28,7 +28,7 @@ namespace Anki {
       namespace {
         // Constants for Webots:
         const f32 DRIVE_VELOCITY_SLOW = 100.0f; // mm/s
-        const f32 TURN_WHEEL_VELOCITY_SLOW = 50.0f;  //mm/s
+        const f32 TURN_WHEEL_VELOCITY_SLOW = 100.0f;  //mm/s
         const f32 TURN_VELOCITY_SLOW = 1.0f;
         const f32 LIFT_CENTER = -0.275;
         const f32 LIFT_UP = 0.635;

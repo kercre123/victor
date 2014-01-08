@@ -19,25 +19,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 extern "C" {
 #endif
 
-  typedef struct {
-    //
-    // Array members
-    //
-    s32 size0, size1;
-    s32 stride;
-    s32 flags;
-
-    s32 * restrict data;
-
-    //
-    // ScrollingIntegralImage members
-    //
-    s32 imageWidth; //< width of the original image
-    s32 maxRow;
-    s32 rowOffset; //< Row 0 of this integral image corresponds to which row of the original image (can be negative)
-    s32 numBorderPixels;
-  } C_ScrollingIntegralImage_u8_s32;
-
 #ifdef __cplusplus
 }
 #endif

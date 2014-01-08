@@ -1,7 +1,7 @@
 function Rout = plotRobot(x, y, theta, Rin)
 
-arrowLength = 0.1;
-arrowHeadLength = 0.025;
+arrowLength = 8;
+arrowHeadLength = 6;
 arrowAngle = 7*pi/8;
 
 if nargin == 4
@@ -9,7 +9,7 @@ if nargin == 4
   hx = Rin(1);
   ha = Rin(2);
 else
-  hx = plot(0, 0, 'rx');
+  hx = plot(0, 0, 'ro');
   ha = plot(0, 0, 'r-');
   Rout = [hx, ha];
 end

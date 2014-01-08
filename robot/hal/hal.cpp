@@ -220,11 +220,18 @@ int main()
 
   HAL::SetupMainExecution();
 
-  while (true)
+  while (Robot::step_LongExecution() == EXIT_SUCCESS)
   {
-    Robot::step_LongExecution();
+    
   }
 
+  // TODO: Fix PRINT
+  #warning PRINT broken
+  #if 0
+    PRINT("MAIN DIED\n");
+    HAL::USBSendPrintBuffer();
+  #endif
+  
   return 0;
 }
 

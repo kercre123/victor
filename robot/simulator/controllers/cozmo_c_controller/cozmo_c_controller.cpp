@@ -18,6 +18,7 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/localization.h"
+#include "anki/cozmo/robot/debug.h"
 
 #include "keyboardController.h"
 #include "sim_overlayDisplay.h"
@@ -38,8 +39,14 @@ int main(int argc, char **argv)
     fprintf(stdout, "Failed to initialize Cozmo::Robot!\n");
     return -1;
   }
-    
+  
+  
+#if(FREE_DRIVE_DUBINS_TEST)
+  Sim::KeyboardController::Enable();
+#else
   //Sim::KeyboardController::Enable();
+#endif
+  
   Sim::OverlayDisplay::Init();
   
   while(Robot::step_MainExecution() == EXIT_SUCCESS)

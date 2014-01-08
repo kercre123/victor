@@ -59,6 +59,8 @@ namespace Anki {
 
       ReturnCode Update();
       
+      TestMode GetMode();
+      
     } // namespace TestModeController
   } // namespcae Cozmo
 } // namespace Anki

@@ -18,7 +18,7 @@ def addSources(dir):
 TARGET = 'cozmo'
 
 MV_SOC_PLATFORM = 'myriad1'
-GCC_VERSION = '4.4.2'
+GCC_VERSION = '4.4.2-LE'
 MV_TOOLS_VERSION = '00.50.39.2'
 
 LEON_SOURCE = []
@@ -31,6 +31,10 @@ LEON_SOURCE += addSources('../coretech/common/robot/src')
 LEON_SOURCE += addSources('../coretech/common/shared/src')
 
 SHAVE_SOURCE = []
+SHAVE_SOURCE += addSources('../coretech/common/robot/src/shave')
+SHAVE_SOURCE += addSources('../coretech/vision/robot/src/shave')
+
+SHAVES_TO_USE = [0] # Can be any set of numbers from 0-7 for myriad1
 
 MV_TOOLS_DIR = os.environ.get('MV_TOOLS_DIR')
 
@@ -52,6 +56,9 @@ BOARD = COMPONENTS + 'Board/leon_code/'
 LIBC = MV_COMMON_BASE + 'libc/leon/'
 CIF_GENERIC = COMPONENTS + 'CifGeneric/leon_code/'
 
+MOVICOMPILE_LIBRARY_PATH = MV_TOOLS_DIR + MV_TOOLS_VERSION + '/common/moviCompile/libraries/' + MV_SOC_PLATFORM + '/'
+MOVICOMPILE_LIBRARIES = [MOVICOMPILE_LIBRARY_PATH + file for file in ['mlibcxx.a', 'mlibVecUtils.a', 'mlibc.a', 'compiler-rt.a']]
+
 LEON_SOURCE += addSources(BOARD);
 LEON_SOURCE += addSources(SWCOMMON_PLATFORM + 'src');
 LEON_SOURCE += addSources(SWCOMMON + 'src');
@@ -60,7 +67,10 @@ LEON_SOURCE += addSources(CIF_GENERIC);
 LEON_SOURCE += addSources(LIBC + 'src');
 LEON_SOURCE += addSources(LIBC + 'src/asm');
 
-CCOPT = (
+SHAVE_SOURCE += addSources(SWCOMMON + 'shave_code/' + MV_SOC_PLATFORM + '/myriad1/asm')
+SHAVE_SOURCE += addSources(SWCOMMON + 'shave_code/' + MV_SOC_PLATFORM + '/myriad1/src')
+
+LEON_ASM_C_CXX_OPT = (
 #  '-DDISABLE_LEON_DCACHE -DDISABLE_LEON_CACHE '
   '-DROBOT_HARDWARE '
   '-I ../include '
@@ -79,46 +89,85 @@ CCOPT = (
   '-I' + LIBC + 'include '
   '-I' + CIF_GENERIC + ' '
   '-O2 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 '
+  # TODO: Maybe remove some of these later
+  '-Wextra -fno-inline-small-functions -mbig-endian --sysroot=. -fno-inline-functions-called-once -DDRAM_SIZE_MB=64 '
 )
 
-CXXOPT = (
+LEON_C_OR_ASM_ONLY_OPT = (
+  '-Werror-implicit-function-declaration '
+)
+
+LEON_CXX_ONLY_OPT = (
   '-std=c++0x '
 )
 
+SHAVE_INCLUDES = (
+  '-I ../include '
+  '-I ../coretech/common/include '
+  '-I ../coretech/vision/include '
+  '-I ' + MV_TOOLS_DIR + MV_TOOLS_VERSION + '/common/moviCompile/include '
+  '-I ' + MV_COMMON_BASE + '/swCommon/shave_code/' + MV_SOC_PLATFORM + '/include '
+  '-I ' + MV_COMMON_BASE + '/shared/include '
+)
+
+SHAVE_MOVICOMPILE_OPT = (
+  '-target-cpu ' + MV_SOC_PLATFORM + ' '
+  '-S -O2 -ffunction-sections -globalstack -fno-inline-functions '
+  + SHAVE_INCLUDES +
+  '-D' + MV_SOC_PLATFORM.upper() + ' '
+  '-DROBOT_HARDWARE '
+)
+
+SHAVE_MOVIASM_OPT = (
+  '-cv:' + MV_SOC_PLATFORM + ' '
+  '-a '
+  + SHAVE_INCLUDES.replace('-I','-i:').replace('-i: ', '-i:') +
+  '-i:' + MV_COMMON_BASE + '/swCommon/shave_code/' + MV_SOC_PLATFORM + '/asm ' # TODO: Why is this line included?
+  '-elf '
+)
+
+SHAVE_MVLIB_LD_OPT = (
+  '-r -EB '
+)
+
 OUTPUT = 'build/'
+
+SPARC_DIR = 'sparc-elf-' + GCC_VERSION + '/'
 
 # Determine the path to sparc-elf-gcc
 try:
   UNAME = subprocess.check_output("uname", shell=True)
   if 'Linux' in UNAME:
-    DETECTED_PLATFORM = 'linux32'
-    SPARC_DIR = 'sparc-elf-' + GCC_VERSION + '/'
+    DETECTED_PLATFORM = 'linux32'    
   else:
     DETECTED_PLATFORM = 'win32'
-    SPARC_DIR = 'sparc-elf-' + GCC_VERSION + '-mingw/'
 except:
-  print 'WARNING: No uname installed, assuming win32'
+  print('WARNING: No uname installed, assuming win32')
   DETECTED_PLATFORM = 'win32'
-  SPARC_DIR = 'sparc-elf-' + GCC_VERSION + '-mingw/'
 
 PLATFORM = MV_TOOLS_DIR + MV_TOOLS_VERSION + '/' + DETECTED_PLATFORM + '/'
 
 GCC_DIR = PLATFORM + SPARC_DIR
-CCOPT += ' -I ' + GCC_DIR + 'lib/gcc/sparc-elf/4.4.2/include/'
-CCOPT += ' -I ' + GCC_DIR + 'lib/gcc/sparc-elf/4.4.2/include-fixed/'
+LEON_ASM_C_CXX_OPT += ' -I ' + GCC_DIR + 'lib/gcc/sparc-elf/4.4.2/include/ '
+LEON_ASM_C_CXX_OPT += ' -I ' + GCC_DIR + 'lib/gcc/sparc-elf/4.4.2/include-fixed/ '
 
 CC = GCC_DIR + 'bin/sparc-elf-gcc '
 CXX = GCC_DIR + 'bin/sparc-elf-g++ '
-LD =  GCC_DIR + 'bin/sparc-elf-ld '
+LD = GCC_DIR + 'bin/sparc-elf-ld '
+OBJCOPY = GCC_DIR + 'bin/sparc-elf-objcopy '
+
+MVASM = PLATFORM + 'bin/moviAsm'
+MVCOMPILE = PLATFORM + 'bin/moviCompile'
 MVCONV = PLATFORM + 'bin/moviConvert'
+#MVLINK = PLATFORM + 'bin/moviLink'
 
 LINKER_SCRIPT = 'ld/custom.ldscript'
 LDOPT = (
-  '-O9 -t --gc-sections -M -warn-common -L ld -T ' + LINKER_SCRIPT + ' '
+  '-EB -O9 -t --gc-sections -M -warn-common -L ld -T ' + LINKER_SCRIPT + ' '
 )
 
-
-srcToObj = { }
+leonSrcToObj = { }
+shaveSrcToObj = { }
 
 """Remove path separators in name"""
 def split(name):
@@ -150,7 +199,7 @@ def areDependenciesCurrent(src, obj, obj_time):
   dname = obj + '.d'
   if not os.path.isfile(dname):
     return False
-  
+
   str = ''
   with open(dname) as f:
     for line in f.readlines():
@@ -166,41 +215,46 @@ def areDependenciesCurrent(src, obj, obj_time):
       stat = os.stat(s)
       if stat.st_mtime >= obj_time:
         return False
-  
+
   return True
 
 """Invoke the LEON/sparc compiler for src and generate dependencies"""
 def compileLEON(src):
   if not src.endswith('.S') and not src.endswith('.c') and not src.endswith('.cpp') and not src.endswith('.cc'):
     return
-  
+
   obj = OUTPUT + split(src) + '.o'
-  srcToObj[src] = obj
+  leonSrcToObj[src] = obj
   dir = obj[0:obj.rfind('/')]
   createDir(dir)
-  
+
   needsCompile = True
   if os.path.isfile(obj):
     srcStat = os.stat(src)
     objStat = os.stat(obj)
     if srcStat.st_mtime <= objStat.st_mtime and areDependenciesCurrent(src, obj, objStat.st_mtime):
       needsCompile = False
-  
+
+      
+      
+ 
+
+      
   if needsCompile:
-    print 'Compiling:', src[(src.rfind('/') + 1):]
+    print 'Compiling Leon:', src[(src.rfind('/') + 1):]
     if src.endswith('.S'):
-      stage1 = CC + ' -c ' + CCOPT + ' -DASM ' + src + ' -o ' + obj
-      stage2 = CC + ' ' + CCOPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src
+      stage1 = CC + ' -c ' + LEON_ASM_C_CXX_OPT + ' ' + LEON_C_OR_ASM_ONLY_OPT + ' -DASM ' + src + ' -o ' + obj
+      stage2 = CC + ' ' + LEON_ASM_C_CXX_OPT + ' ' + LEON_C_OR_ASM_ONLY_OPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src
     elif src.endswith('.c'):
-      stage1 = CC + ' -c ' + CCOPT + ' ' + src + ' -o ' + obj
-      stage2 = CC + ' ' + CCOPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src
+      stage1 = CC + ' -c ' + LEON_ASM_C_CXX_OPT + ' ' + LEON_C_OR_ASM_ONLY_OPT + ' ' + src + ' -o ' + obj
+      stage2 = CC + ' ' + LEON_ASM_C_CXX_OPT + ' ' + LEON_C_OR_ASM_ONLY_OPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src
     elif src.endswith('.cpp') or src.endswith('.cc'):
-      stage1 = CXX + ' -c ' + CCOPT + ' ' + CXXOPT + ' ' + src + ' -o ' + obj
-      stage2 = CXX + ' ' + CCOPT + ' ' + CXXOPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src
+      stage1 = CXX + ' -c ' + LEON_ASM_C_CXX_OPT + ' ' + LEON_CXX_ONLY_OPT + ' ' + src + ' -o ' + obj
+      stage2 = CXX + ' ' + LEON_ASM_C_CXX_OPT + ' ' + LEON_CXX_ONLY_OPT + ' -MF"' + obj + '.d" -MG -MM -MP -MT"' + obj + '" -MT"' + src + '" ' + src
     else:
       print 'ERROR: Weird file extension: ', src
       sys.exit(1)
-    
+
     if isNoisy:
       print stage1
       print stage2
@@ -208,7 +262,85 @@ def compileLEON(src):
       sys.exit(1)
     if os.system(stage2) != 0:
       sys.exit(1)
-      
+
+"""Invoke the SHAVE compiler for src and generate dependencies"""
+def compileSHAVE(src):
+  if not src.endswith('.asm') and not src.endswith('.c'):
+    return
+
+  #validExtensions = ['.asm', '.c']
+  #if any((src.endswith(extension) for extension in validExtensions)) == True:
+  #  return
+
+  asmgen = OUTPUT + split(src) + '.asmgen'
+  obj = OUTPUT + split(src) + '.o'
+  shaveSrcToObj[src] = obj
+  dir = obj[0:obj.rfind('/')]
+  createDir(dir)
+
+  needsCompile = True # Yins think this needs compile, nat?
+  if os.path.isfile(obj):
+    srcStat = os.stat(src)
+    objStat = os.stat(obj)
+
+    if srcStat.st_mtime <= objStat.st_mtime and areDependenciesCurrent(src, obj, objStat.st_mtime):
+      needsCompile = False
+
+  if needsCompile:
+    print('Compiling Shave: ' + src[(src.rfind('/') + 1):])
+    if src.endswith('.asm'):
+      stage1 = MVASM + ' ' + SHAVE_MOVIASM_OPT + src + '-o:' + obj
+    elif src.endswith('.c'):
+      stage1 = MVCOMPILE + ' ' + SHAVE_MOVICOMPILE_OPT + ' ' + src + ' -o ' + asmgen
+      stage2 = MVASM + ' ' + SHAVE_MOVIASM_OPT + ' ' + asmgen + ' -o:' + obj
+    else:
+      print('ERROR: Weird file extension: ' + src)
+      sys.exit(1)
+
+    if isNoisy:
+      print(stage1)
+      print(stage2)
+
+    if os.system(stage1) != 0:
+      sys.exit(1)
+
+    if 'stage2' in locals():
+      if os.system(stage2) != 0:
+        sys.exit(1)
+
+def linkSHAVEMvlib(mvlibFilename):
+  print('Linking Shave Mvlib library')
+
+  compiledObjectsString = ' '.join(shaveSrcToObj.values())
+  moviCompileLibrariesString = ' '.join(MOVICOMPILE_LIBRARIES)
+
+  # NOTE: The Myriad makefile creates an intermediate libray "swCommon.mvlib",
+  #       but this command compiles our shave code and all the Myriad components together as .o files,
+  #       and the closed-source moviCompile libraries as .a files
+  systemString = LD + ' ' + SHAVE_MVLIB_LD_OPT + compiledObjectsString + ' ' + moviCompileLibrariesString + ' -o ' + mvlibFilename
+
+  if isNoisy:
+    print(systemString)
+
+  if os.system(systemString) != 0:
+    sys.exit(1)
+
+def linkSHAVEShvlib(mvlibFilename, shvlibFilename, shaveNumber, prefixSymbolsString):
+  print('Linking Shave Shvlib library')
+
+  mustEndWith = '.shv' + str(shaveNumber) + 'lib'
+  if not shvlibFilename.endswith(mustEndWith):
+    print('Error: shvlibFilename must end with ' + mustEndWith)
+    sys.exit(1)
+
+  systemString = OBJCOPY + ' ' + '--prefix-alloc-sections=.shv' + str(shaveNumber) + '. --prefix-symbols=' + prefixSymbolsString + str(shaveNumber) + '_' + ' ' + mvlibFilename + ' ' + shvlibFilename
+
+  if isNoisy:
+    print(systemString)
+
+  if os.system(systemString) != 0:
+    sys.exit(1)
+
 if __name__ == '__main__':
   isTest = False
   isRun = False
@@ -219,7 +351,7 @@ if __name__ == '__main__':
   if any((os.path.isfile(file.strip()) or os.path.isfile(file.strip()+'.exe') for file in [CC, CXX, LD, MVCONV])) == False:
     print('Error: Could not locate all of the Movidius Tools')
     sys.exit(1)
-    
+
   for arg in sys.argv:
     if arg == 'clean':
       print 'Cleaning...'
@@ -231,18 +363,14 @@ if __name__ == '__main__':
     elif arg == 'vision-tests':
       isTest = True
       TARGET = 'vision-tests'
-      LEON_SOURCE += addSources('../coretech/vision/robot/project/myriad1/unitTests/leon')
       LEON_SOURCE += addSources('../coretech/vision/robot/src')
       LEON_SOURCE += addSources('../coretech/vision/robot/test')
-      SHAVE_SOURCE += addSources('../coretech/vision/robot/project/myriad1/unitTests/shave')
     elif arg == 'common-tests':
       isTest = True
       TARGET = 'common-tests'
-      LEON_SOURCE += addSources('../coretech/common/robot/project/myriad1/unitTests/leon')
       LEON_SOURCE += addSources('../coretech/common/robot/test')
       LEON_SOURCE += addSources('../coretech/common/robot/src/')
       LEON_SOURCE += addSources('../coretech/common/shared/src/')
-      SHAVE_SOURCE += addSources('../coretech/common/robot/project/myriad1/unitTests/shave')
     elif arg == 'run':
       isRun = True
     elif arg == 'flash':
@@ -254,28 +382,55 @@ if __name__ == '__main__':
     else:
       print 'Invalid argument: ' + arg
       sys.exit(1)
-
+      
+  if DETECTED_PLATFORM == 'win32':
+    os.environ['CYGWIN'] = 'nodosfilewarning'
+      
   if not isTest:
     LEON_SOURCE += addSources('supervisor/src')
     pass
   
+  for shaveNumber in SHAVES_TO_USE:
+    LEON_ASM_C_CXX_OPT += '-DUSE_SHAVE_' + str(shaveNumber) + ' '
+   
   for src in (LEON_SOURCE):
     compileLEON(src)
-  
+
+  for src in SHAVE_SOURCE:
+    compileSHAVE(src)
+
+  shaveMvlibFilename = OUTPUT + TARGET + '.mvlib'
+  linkSHAVEMvlib(shaveMvlibFilename)
+
   objects = ''
-  for key in srcToObj.keys():
-    objects += ' ' + srcToObj[key]
+
+  for key in leonSrcToObj.keys():
+    objects += ' ' + leonSrcToObj[key]
+  
+    shaveShvlibFilenames = [OUTPUT + TARGET + '.shv' + str(number) + 'lib' for number in SHAVES_TO_USE]
+  for (shaveNumber, shvlibFilename) in zip(SHAVES_TO_USE, shaveShvlibFilenames):
+    
+    linkSHAVEShvlib(shaveMvlibFilename, shvlibFilename, shaveNumber, 'shave')
+    objects += ' ' + shvlibFilename
 
   with open('ld/objects.ldscript', 'w+') as f:
     f.write('INPUT(' + objects + ' )\n')
-  
-  print 'Linking ' + TARGET + '.elf'
+
+  print 'Linking final library ' + TARGET + '.elf'
   file = OUTPUT + TARGET + '.elf'
   s = LD + ' ' + LDOPT + ' -o ' + file + ' > ' + OUTPUT + TARGET + '.map'
+
+  if isNoisy:
+    print(s)
+
   if os.system(s) != 0:
     sys.exit(1)
-  
+
   s = MVCONV + ' -elfInput ' + file + ' -mvcmd:' + OUTPUT + TARGET + '.mvcmd'
+
+  if isNoisy:
+    print(s)
+
   if os.system(s) != 0:
     sys.exit(1)
 

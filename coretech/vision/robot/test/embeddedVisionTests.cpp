@@ -485,7 +485,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
 
   const Rectangle<f32> templateRegion(13, 34, 22, 43);
   const Quadrilateral<f32> templateQuad(templateRegion);
-  
+
   const s32 maxIterations = 25;
   const f32 convergenceTolerance = .05f;
 
@@ -560,7 +560,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerFast)
     ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, converged, scratch1) == RESULT_OK);
 
     ASSERT_TRUE(converged);
-    
+
     const f64 time2 = GetTime();
 
     printf("Affine LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
@@ -639,7 +639,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
     ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, false, converged, scratch1) == RESULT_OK);
 
     ASSERT_TRUE(converged == true);
-    
+
     const f64 time2 = GetTime();
 
     printf("Translation-only LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
@@ -707,7 +707,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
     ASSERT_TRUE(tracker.UpdateTrack(image2, maxIterations, convergenceTolerance, true, converged, scratch1) == RESULT_OK);
 
     ASSERT_TRUE(converged == true);
-    
+
     const f64 time2 = GetTime();
 
     printf("Projective LK totalTime:%f initTime:%f updateTrack:%f\n", time2-time0, time1-time0, time2-time1);
@@ -729,217 +729,8 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C_emulateShave)
-{
-  C_Acceleration acceleration_none, acceleration_shave;
-  acceleration_none.type = C_ACCELERATION_NATURAL_CPP;
-  acceleration_none.version = 1;
-  acceleration_shave.type = C_ACCELERATION_SHAVE_EMULATION_C;
-  acceleration_shave.version = 1;
-
-  const s32 imageWidth = 32;
-
-  MemoryStack ms(&smallBuffer[0], SMALL_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
-
-  Array<u8> image(4,imageWidth,ms);
-  ASSERT_TRUE(image.IsValid());
-  image.Set(1);
-
-  Array<s32> filteredOutput(1, imageWidth+4, ms);
-
-  //
-  // Test with border of 2
-  //
-
-  ScrollingIntegralImage_u8_s32 ii_border2(16, imageWidth, 5, ms);
-  ASSERT_TRUE(ii_border2.ScrollDown(image, 16, ms) == RESULT_OK);
-
-  //ii_border2.Print("ii_border2");
-
-  {
-    Rectangle<s16> filter_testBorder2_0(-4, 4, -4, 4);
-    const s32 imageRow_testBorder2_0 = 0;
-
-    filteredOutput.SetZero();
-
-    ASSERT_TRUE(ii_border2.FilterRow(acceleration_none, filter_testBorder2_0, imageRow_testBorder2_0, filteredOutput) == RESULT_OK);
-
-    //filteredOutput.Print("filteredOutput");
-
-    for(s32 i=0; i<imageWidth; i++) {
-      ASSERT_TRUE(filteredOutput[0][i] == 81);
-    }
-
-    filteredOutput.SetZero();
-
-    ASSERT_TRUE(ii_border2.FilterRow(acceleration_shave, filter_testBorder2_0, imageRow_testBorder2_0, filteredOutput) == RESULT_OK);
-
-    for(s32 i=0; i<imageWidth; i++) {
-      ASSERT_TRUE(filteredOutput[0][i] == 81);
-    }
-  }
-
-  ASSERT_TRUE(ii_border2.ScrollDown(image, 2, ms) == RESULT_OK);
-
-  {
-    Rectangle<s16> filter_testBorder2_0(-4, 4, -4, 4);
-    const s32 imageRow_testBorder2_0 = 2;
-
-    filteredOutput.SetZero();
-
-    ASSERT_TRUE(ii_border2.FilterRow(acceleration_none, filter_testBorder2_0, imageRow_testBorder2_0, filteredOutput) == RESULT_OK);
-
-    for(s32 i=0; i<imageWidth; i++) {
-      ASSERT_TRUE(filteredOutput[0][i] == 81);
-    }
-
-    filteredOutput.SetZero();
-
-    ASSERT_TRUE(ii_border2.FilterRow(acceleration_shave, filter_testBorder2_0, imageRow_testBorder2_0, filteredOutput) == RESULT_OK);
-
-    for(s32 i=0; i<imageWidth; i++) {
-      ASSERT_TRUE(filteredOutput[0][i] == 81);
-    }
-  }
-
-  GTEST_RETURN_HERE;
-}
-
-GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C)
-{
-  C_Acceleration acceleration;
-  acceleration.type = C_ACCELERATION_NATURAL_C;
-  acceleration.version = 1;
-
-  MemoryStack ms(&smallBuffer[0], SMALL_BUFFER_SIZE);
-  ASSERT_TRUE(ms.IsValid());
-
-  Array<u8> image(3,16,ms);
-  ASSERT_TRUE(image.IsValid());
-
-  image[0][0] = 1; image[0][1] = 2; image[0][2] = 3;
-  image[1][0] = 9; image[1][1] = 9; image[1][2] = 9;
-  image[2][0] = 0; image[2][1] = 0; image[2][2] = 1;
-
-  Array<u8> image2(4,16,ms);
-  ASSERT_TRUE(image2.IsValid());
-
-  image2[0][0] = 1; image2[0][1] = 2; image2[0][2] = 3;
-  image2[1][0] = 9; image2[1][1] = 9; image2[1][2] = 9;
-  image2[2][0] = 0; image2[2][1] = 0; image2[2][2] = 1;
-  image2[3][0] = 5; image2[3][1] = 5; image2[3][2] = 5;
-
-  Array<s32> filteredOutput(1, 16, ms);
-
-  //
-  // Test with border of 2
-  //
-
-  ScrollingIntegralImage_u8_s32 ii_border2(4, 16, 2, ms);
-  ASSERT_TRUE(ii_border2.ScrollDown(image, 4, ms) == RESULT_OK);
-
-  {
-    Rectangle<s16> filter_testBorder2_0(-1, 1, -1, 1);
-    const s32 imageRow_testBorder2_0 = 0;
-    const s32 filteredOutput_groundTruth_testBorder2_0[] = {35, 39, 28};
-    ASSERT_TRUE(ii_border2.FilterRow(acceleration, filter_testBorder2_0, imageRow_testBorder2_0, filteredOutput) == RESULT_OK);
-
-    for(s32 i=0; i<3; i++) {
-      ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder2_0[i]);
-    }
-  }
-
-  ASSERT_TRUE(ii_border2.ScrollDown(image, 2, ms) == RESULT_OK);
-
-  {
-    Rectangle<s16> filter_testBorder2_1(-1, 1, -1, 1);
-    const s32 imageRow_testBorder2_1 = 2;
-    const s32 filteredOutput_groundTruth_testBorder2_1[] = {27, 29, 20};
-    ASSERT_TRUE(ii_border2.FilterRow(acceleration, filter_testBorder2_1, imageRow_testBorder2_1, filteredOutput) == RESULT_OK);
-
-    for(s32 i=0; i<3; i++) {
-      ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder2_1[i]);
-    }
-  }
-
-  //
-  // Test with border of 1
-  //
-
-  // imBig2 = [1,1,2,3,3;1,1,2,3,3;9,9,9,9,9;0,0,0,1,1;0,0,0,1,1];
-
-  ScrollingIntegralImage_u8_s32 ii_border1(4, 16, 1, ms);
-
-  ASSERT_TRUE(ii_border1.ScrollDown(image, 4, ms) == RESULT_OK);
-
-  {
-    Rectangle<s16> filter_testBorder1_0(0, 0, 0, 2);
-    const s32 imageRow_testBorder1_0 = 0;
-    const s32 filteredOutput_groundTruth_testBorder1_0[] = {10, 11, 13};
-    ASSERT_TRUE(ii_border1.FilterRow(acceleration, filter_testBorder1_0, imageRow_testBorder1_0, filteredOutput) == RESULT_OK);
-
-    for(s32 i=0; i<3; i++) {
-      ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder1_0[i]);
-    }
-  }
-
-  ASSERT_TRUE(ii_border1.ScrollDown(image, 1, ms) == RESULT_OK);
-
-  {
-    Rectangle<s16> filter_testBorder1_1(0, 1, 0, 2);
-    const s32 imageRow_testBorder1_1 = 1;
-    const s32 filteredOutput_groundTruth_testBorder1_1[] = {18, 20, 11};
-    ASSERT_TRUE(ii_border1.FilterRow(acceleration, filter_testBorder1_1, imageRow_testBorder1_1, filteredOutput) == RESULT_OK);
-
-    for(s32 i=0; i<3; i++) {
-      ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder1_1[i]);
-    }
-  }
-
-  //
-  // Test with border of 0
-  //
-
-  ScrollingIntegralImage_u8_s32 ii_border0(3, 16, 0, ms);
-
-  ASSERT_TRUE(ii_border0.get_rowOffset() == 0);
-
-  ASSERT_TRUE(ii_border0.ScrollDown(image2, 3, ms) == RESULT_OK);
-
-  {
-    Rectangle<s16> filter_testBorder2_0(-1, 0, 0, 0);
-    const s32 imageRow_testBorder2_0 = 1;
-    const s32 filteredOutput_groundTruth_testBorder2_0[] = {0, 0, 18};
-    ASSERT_TRUE(ii_border0.FilterRow(acceleration, filter_testBorder2_0, imageRow_testBorder2_0, filteredOutput) == RESULT_OK);
-
-    for(s32 i=0; i<3; i++) {
-      ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder2_0[i]);
-    }
-  }
-
-  ASSERT_TRUE(ii_border0.ScrollDown(image2, 1, ms) == RESULT_OK);
-
-  {
-    Rectangle<s16> filter_testBorder2_1(0, 1, 0, 0);
-    const s32 imageRow_testBorder2_1 = 2;
-    const s32 filteredOutput_groundTruth_testBorder2_1[] = {0, 1, 1};
-    ASSERT_TRUE(ii_border0.FilterRow(acceleration, filter_testBorder2_1, imageRow_testBorder2_1, filteredOutput) == RESULT_OK);
-
-    for(s32 i=0; i<3; i++) {
-      ASSERT_TRUE(filteredOutput[0][i] == filteredOutput_groundTruth_testBorder2_1[i]);
-    }
-  }
-
-  GTEST_RETURN_HERE;
-}
-
 GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
 {
-  C_Acceleration acceleration;
-  acceleration.type = C_ACCELERATION_NATURAL_CPP;
-  acceleration.version = 1;
-
   MemoryStack ms(&smallBuffer[0], SMALL_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
@@ -975,7 +766,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     Rectangle<s16> filter_testBorder2_0(-1, 1, -1, 1);
     const s32 imageRow_testBorder2_0 = 0;
     const s32 filteredOutput_groundTruth_testBorder2_0[] = {35, 39, 28};
-    ASSERT_TRUE(ii_border2.FilterRow(acceleration, filter_testBorder2_0, imageRow_testBorder2_0, filteredOutput) == RESULT_OK);
+    ASSERT_TRUE(ii_border2.FilterRow(filter_testBorder2_0, imageRow_testBorder2_0, filteredOutput) == RESULT_OK);
 
     //ii_border2.Print("ii_border2");
     //filteredOutput.Print("filteredOutput1");
@@ -991,7 +782,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     Rectangle<s16> filter_testBorder2_1(-1, 1, -1, 1);
     const s32 imageRow_testBorder2_1 = 2;
     const s32 filteredOutput_groundTruth_testBorder2_1[] = {27, 29, 20};
-    ASSERT_TRUE(ii_border2.FilterRow(acceleration, filter_testBorder2_1, imageRow_testBorder2_1, filteredOutput) == RESULT_OK);
+    ASSERT_TRUE(ii_border2.FilterRow(filter_testBorder2_1, imageRow_testBorder2_1, filteredOutput) == RESULT_OK);
 
     //filteredOutput.Print("filteredOutput2");
 
@@ -1014,7 +805,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     Rectangle<s16> filter_testBorder1_0(0, 0, 0, 2);
     const s32 imageRow_testBorder1_0 = 0;
     const s32 filteredOutput_groundTruth_testBorder1_0[] = {10, 11, 13};
-    ASSERT_TRUE(ii_border1.FilterRow(acceleration, filter_testBorder1_0, imageRow_testBorder1_0, filteredOutput) == RESULT_OK);
+    ASSERT_TRUE(ii_border1.FilterRow(filter_testBorder1_0, imageRow_testBorder1_0, filteredOutput) == RESULT_OK);
 
     //filteredOutput.Print("filteredOutput3");
 
@@ -1029,7 +820,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     Rectangle<s16> filter_testBorder1_1(0, 1, 0, 2);
     const s32 imageRow_testBorder1_1 = 1;
     const s32 filteredOutput_groundTruth_testBorder1_1[] = {18, 20, 11};
-    ASSERT_TRUE(ii_border1.FilterRow(acceleration, filter_testBorder1_1, imageRow_testBorder1_1, filteredOutput) == RESULT_OK);
+    ASSERT_TRUE(ii_border1.FilterRow(filter_testBorder1_1, imageRow_testBorder1_1, filteredOutput) == RESULT_OK);
 
     //filteredOutput.Print("filteredOutput4");
 
@@ -1052,7 +843,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     Rectangle<s16> filter_testBorder2_0(-1, 0, 0, 0);
     const s32 imageRow_testBorder2_0 = 1;
     const s32 filteredOutput_groundTruth_testBorder2_0[] = {0, 0, 18};
-    ASSERT_TRUE(ii_border0.FilterRow(acceleration, filter_testBorder2_0, imageRow_testBorder2_0, filteredOutput) == RESULT_OK);
+    ASSERT_TRUE(ii_border0.FilterRow(filter_testBorder2_0, imageRow_testBorder2_0, filteredOutput) == RESULT_OK);
 
     //filteredOutput.Print("filteredOutput5");
 
@@ -1067,7 +858,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
     Rectangle<s16> filter_testBorder2_1(0, 1, 0, 0);
     const s32 imageRow_testBorder2_1 = 2;
     const s32 filteredOutput_groundTruth_testBorder2_1[] = {0, 1, 1};
-    ASSERT_TRUE(ii_border0.FilterRow(acceleration, filter_testBorder2_1, imageRow_testBorder2_1, filteredOutput) == RESULT_OK);
+    ASSERT_TRUE(ii_border0.FilterRow(filter_testBorder2_1, imageRow_testBorder2_1, filteredOutput) == RESULT_OK);
 
     //filteredOutput.Print("filteredOutput5");
 
@@ -1079,7 +870,7 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
   GTEST_RETURN_HERE;
 }
 
-GTEST_TEST(CoreTech_Vision, ScrollingIntegralImage)
+GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
 {
   MemoryStack ms(&smallBuffer[0], SMALL_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
@@ -2951,10 +2742,8 @@ int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker);
 #endif
 
-  CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C_emulateShave);
-  CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering_C);
   CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering);
-  CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImage);
+  CALL_GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration);
 
 #ifdef RUN_LOW_MEMORY_IMAGE_TESTS
   CALL_GTEST_TEST(CoreTech_Vision, SimpleDetector_Steps12345_realImage_lowMemory);

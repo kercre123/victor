@@ -62,7 +62,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue((usedBytes+requestedBytes) <= totalBytes, NULL, "Anki.MemoryStack.Allocate", "Ran out of scratch space");
 
       // Is this possible?
-      AnkiConditionalErrorAndReturnValue(static_cast<s32>(reinterpret_cast<size_t>(segmentFooter) - reinterpret_cast<size_t>(segmentMemory)) == numBytesRequestedRounded,
+      AnkiConditionalErrorAndReturnValue(static_cast<u32>(reinterpret_cast<size_t>(segmentFooter) - reinterpret_cast<size_t>(segmentMemory)) == numBytesRequestedRounded,
         NULL, "Anki.MemoryStack.Allocate", "Odd error");
 
       // Next, add the header for this block

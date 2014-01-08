@@ -17,6 +17,8 @@ namespace Anki {
         // Re-calibrates lift position whenever LIFT_HEIGHT_LOW is commanded.
         #define RECALIBRATE_AT_LOW_HEIGHT 1
         
+        const f32 MAX_LIFT_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001;
+        
         const f32 SPEED_FILTERING_COEFF = 0.9f;
         
         const f32 Kp_ = 0.5f; // proportional control constant
@@ -140,7 +142,7 @@ namespace Anki {
               
             case LCS_WAIT_FOR_STOP:
               // Check for when lift stops moving for 0.2 seconds
-              if (NEAR_ZERO(HAL::MotorGetSpeed(HAL::MOTOR_LIFT))) {
+              if (ABS(HAL::MotorGetSpeed(HAL::MOTOR_LIFT)) < MAX_LIFT_CONSIDERED_STOPPED_RAD_PER_SEC) {
 #ifdef SIMULATOR
                 const u32 LIFT_STOP_TIME = 200000;
 #else

@@ -15,7 +15,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/array2d.h"
 
-#include "anki/vision/robot/movidiusPrototyping.h"
 #include "anki/vision/robot/cInterfaces_vision_c.h"
 
 namespace Anki
@@ -64,10 +63,7 @@ namespace Anki
       //
       // If the filter is larger than this ScrollingIntegralImage's numBorderPixels, then the
       // borders will be zeros.
-      Result FilterRow(const C_Acceleration &acceleration, const Rectangle<s16> &filter, const s32 imageRow, Array<s32> &output);
-
-      // This might be used later, but not yet
-      // Result FilterRow_c(const C_Acceleration &acceleration, const Rectangle<s16> &filter, const s32 imageRow, Array<s32> &output);
+      Result FilterRow(const Rectangle<s16> &filter, const s32 imageRow, Array<s32> &output);
 
       // Get the current min and max rows that can be filtered with FilterRow(), for a give filter
       // that extends filterHalfHeight above or below its center.
@@ -84,8 +80,6 @@ namespace Anki
       s32 get_rowOffset() const;
 
       s32 get_numBorderPixels() const;
-
-      C_ScrollingIntegralImage_u8_s32 get_cInterface();
 
     protected:
       s32 imageWidth; //< width of the original image

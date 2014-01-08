@@ -83,8 +83,10 @@ namespace Anki {
           PRINT("Motors calibrated\n");
           mode_ = WAITING;
           
+#if(!FREE_DRIVE_DUBINS_TEST)
           PRINT("Starting docking\n");
           DockingController::ResetDocker();
+#endif
         }
       }
       
@@ -343,9 +345,7 @@ namespace Anki {
         
         retVal = VisionSystem::Update();
         
-#if USE_OFFBOARD_VISION
         HAL::USBSendPrintBuffer();
-#endif
         
         return retVal;
         

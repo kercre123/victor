@@ -98,13 +98,23 @@ namespace Anki
       InvalidateArray();
     }
 
-    template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, void * const data, const s32 dataLength, const Flags::Buffer flags)
+    template<typename Type> Array<Type>::Array(const s32 numRows, const s32 numCols, void * data, const s32 dataLength, const Flags::Buffer flags)
     {
+#if defined(USING_MOVIDIUS_COMPILER)
+#if defined(USING_MOVIDIUS_GCC_COMPILER)
+      data = ConvertCMXAddressToLeon(data);
+#elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
+      data = ConvertCMXAddressToShave(data);
+#else
+#error Unknown Movidius compiler
+#endif
+#endif // #if defined(USING_MOVIDIUS_COMPILER)
+
       InvalidateArray();
 
       this->stride = ComputeRequiredStride(numCols, flags);
 
-      AnkiConditionalErrorAndReturn(numCols >= 0 && numRows >= 0 && dataLength >= numRows*this->stride && this->stride == (numCols*sizeof(Type)),
+      AnkiConditionalErrorAndReturn(numCols >= 0 && numRows >= 0 && dataLength >= numRows*this->stride && this->stride == (numCols*static_cast<s32>(sizeof(Type))),
         "Array<Type>::Array", "Invalid size");
 
       AnkiConditionalErrorAndReturn((numCols*sizeof(Type)) % MEMORY_ALIGNMENT == 0,
@@ -132,7 +142,17 @@ namespace Anki
 
       s32 numBytesAllocated = 0;
 
-      void * const allocatedBuffer = AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, flags), memory, numBytesAllocated, flags, false);
+      void * allocatedBuffer = AllocateBufferFromMemoryStack(numRows, ComputeRequiredStride(numCols, flags), memory, numBytesAllocated, flags, false);
+
+#if defined(USING_MOVIDIUS_COMPILER)
+#if defined(USING_MOVIDIUS_GCC_COMPILER)
+      allocatedBuffer = ConvertCMXAddressToLeon(allocatedBuffer);
+#elif defined(USING_MOVIDIUS_SHAVE_COMPILER)
+      allocatedBuffer = ConvertCMXAddressToShave(allocatedBuffer);
+#else
+#error Unknown Movidius compiler
+#endif
+#endif // #if defined(USING_MOVIDIUS_COMPILER)
 
       InitializeBuffer(numRows,
         numCols,
