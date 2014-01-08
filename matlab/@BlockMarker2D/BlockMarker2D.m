@@ -41,8 +41,8 @@ classdef BlockMarker2D < Marker2D
             BlockMarker2D.IdChars);
                 
         % Probe Setup
-        ProbeGap    = .2; 
-        ProbeRadius = 4; 
+        ProbeGap    = .33; 
+        ProbeRadius = 0.8; 
         ProbeSigma  = 1/6;
         UseOutsideOfSquare = true;
         CodePadding = BlockMarker2D.setCodePadding(BlockMarker2D.UseOutsideOfSquare);
