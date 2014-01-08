@@ -63,4 +63,10 @@ void AddVectors_s32x4(
   }
 
 #endif
+
+#ifdef USING_MOVIDIUS_SHAVE_COMPILER
+  __asm(
+  "BRU.SWIH 0"
+    );
+#endif
 }
