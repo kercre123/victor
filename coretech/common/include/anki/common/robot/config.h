@@ -114,6 +114,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 // Make it easy to detect usages of iostream
 #define iostream IOSTREAM_DOESNT_WORK
 
+//#ifdef EMULATE_SHAVE_ON_LEON
+//#warning Emulating the Shave using natural c code on the Leon
+//#endif
+
 #ifndef restrict
 #define restrict __restrict
 #endif

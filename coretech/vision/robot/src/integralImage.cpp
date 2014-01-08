@@ -185,7 +185,7 @@ namespace Anki
 
       s32 * restrict pOutput = output.Pointer(0,0);
 
-#ifdef USING_MOVIDIUS_GCC_COMPILER
+#if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
 
       swcResetShave(0);
       swcSetAbsoluteDefaultStack(0);

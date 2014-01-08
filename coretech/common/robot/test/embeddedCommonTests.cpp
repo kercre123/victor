@@ -62,7 +62,7 @@ GTEST_TEST(CoreTech_Common, ShaveAddTest)
 
   // On the Myriad, the buffer is local to the SHAVE we'll be using to process
   // On the PC, the buffer is just the normal buffer that is somewhere in CMX
-#if defined(USING_MOVIDIUS_COMPILER)
+#if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
   MemoryStack ms(shave0_localBuffer, LOCAL_SHAVE_BUFFER_SIZE);
 #else
   ASSERT_TRUE(buffer != NULL);
@@ -86,7 +86,7 @@ GTEST_TEST(CoreTech_Common, ShaveAddTest)
 
   //printf("Leon: 0x%x=%d 0x%x=%d\n", &(pIn1[100]), pIn1[100], &(pIn2[303]), pIn2[303]);
   double t0 = GetTime();
-#if defined(USING_MOVIDIUS_COMPILER)
+#if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
   swcResetShave(0);
   swcSetAbsoluteDefaultStack(0);
 
@@ -98,13 +98,13 @@ GTEST_TEST(CoreTech_Common, ShaveAddTest)
     numElements);
 
   swcWaitShave(0);
-#else // #if defined(USING_MOVIDIUS_COMPILER)
+#else // #if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
   emulate_AddVectors_s32x4(
     pIn1,
     pIn2,
     pOut,
     numElements);
-#endif // #if defined(USING_MOVIDIUS_COMPILER) ... #else
+#endif // #if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON) ... #else
   double t1 = GetTime();
 
   printf("Completed in %f seconds\n", t1-t0);
@@ -121,7 +121,7 @@ GTEST_TEST(CoreTech_Common, ShaveAddTest)
 
 GTEST_TEST(CoreTech_Common, ShavePrintfTest)
 {
-#if defined(USING_MOVIDIUS_COMPILER)
+#if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
   swcResetShave(0);
   swcSetAbsoluteDefaultStack(0);
 
@@ -130,7 +130,7 @@ GTEST_TEST(CoreTech_Common, ShavePrintfTest)
   swcWaitShave(0);
 #else
   emulate_PrintTest();
-#endif // #if defined(USING_MOVIDIUS_COMPILER)
+#endif // #if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
 
   printf("If on the Myriad, the previous line should read: \"Shave printf test passed\"\n");
 
