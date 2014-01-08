@@ -9,44 +9,41 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/config.h"
 
-#define INNER_LOOP_VERSION 1 // Change this to another number as desired (only makes a difference for Shave)
-#define FASTEST_VERSION 5 // The version of the loop that runs the fastest
-
-#if INNER_LOOP_VERSION != FASTEST_VERSION
-#ifdef _MSC_VER
-#pragma message ("Warning: Current inner loop version is not the fastest version")
-#else
-#warning Current inner loop version is not the fastest version
-#endif
-#endif
-
-// INNER_LOOP_VERSION must always be 1 on the PC or Leon
-#ifndef USING_MOVIDIUS_SHAVE_COMPILER
-#undef INNER_LOOP_VERSION
-#define INNER_LOOP_VERSION 1
-#endif // #ifndef USING_MOVIDIUS_SHAVE_COMPILER
-
-#ifdef USING_MOVIDIUS_SHAVE_COMPILER
-void ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow(
-#else
-void emulate_ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow(
-#endif
+staticInline void ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow_NaturalC(
   const u8 * restrict paddedImage_currentRow,
   const s32 * restrict integralImage_previousRow,
   s32 * restrict integralImage_currentRow,
   const s32 integralImageWidth
   )
 {
-#if INNER_LOOP_VERSION == 1
   s32 x;
   s32 horizontalSum = 0;
 
   for(x=0; x<integralImageWidth; x++) {
     horizontalSum += paddedImage_currentRow[x];
     integralImage_currentRow[x] = horizontalSum + integralImage_previousRow[x];
-    //integralImage_currentRow[x] = horizontalSum;
   } // for(x=0; x<integralImageWidth; x++)
-#elif INNER_LOOP_VERSION == 2
+}
+
+#ifdef USING_MOVIDIUS_SHAVE_COMPILER
+
+#define OPTIMIZATION_VERSION 1 // Change this to another number as desired
+#define FASTEST_VERSION 5 // The version of the loop that runs the fastest
+
+#if OPTIMIZATION_VERSION != FASTEST_VERSION
+#warning Current inner loop version is not the fastest version
+#endif
+
+void ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow(
+  const u8 * restrict paddedImage_currentRow,
+  const s32 * restrict integralImage_previousRow,
+  s32 * restrict integralImage_currentRow,
+  const s32 integralImageWidth
+  )
+{
+#if OPTIMIZATION_VERSION == 1
+  ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow_NaturalC(paddedImage_currentRow, integralImage_previousRow, integralImage_currentRow, integralImageWidth);
+#elif OPTIMIZATION_VERSION == 2
   s32 x;
 
   __asm(
@@ -82,7 +79,7 @@ void emulate_ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow(
     :"i20", "i21", "i22", "i23", "i24", "i25", "i26" //Clobbered registers
       );
   } // for(x=0; x<integralImageWidth; x++)
-#elif INNER_LOOP_VERSION == 3
+#elif OPTIMIZATION_VERSION == 3
   __asm(
   ".set x i10 \n"
     ".set paddedImage_currentRow_address i20 \n"
@@ -120,7 +117,7 @@ void emulate_ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow(
   :"i10", "i20", "i21", "i22", "i23", "i24", "i25", "i26" //Clobbered registers
     );
 
-#elif INNER_LOOP_VERSION == 4
+#elif OPTIMIZATION_VERSION == 4
   const s32 integralImageWidth4 = (integralImageWidth+3) >> 2; // ceil(integralImageWidth/4)
   //const s32 integralImageWidth4 = 2; // ceil(integralImageWidth/4)
 
@@ -177,7 +174,7 @@ void emulate_ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow(
     :"i10", "i20", "i21", "i22", "i23", "i24", "i25", "i26", "v0", "v1" //Clobbered registers
     );
 
-#elif INNER_LOOP_VERSION == 5
+#elif OPTIMIZATION_VERSION == 5
   const s32 integralImageWidth4 = (integralImageWidth+3) >> 2; // ceil(integralImageWidth/4)
   //const s32 integralImageWidth4 = 2; // ceil(integralImageWidth/4)
 
@@ -255,4 +252,20 @@ void emulate_ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow(
     );
 
 #endif
+
+  __asm("BRU.SWIH 0"); // We're finished, so tell the shave to halt
 }
+
+#else // #ifdef USING_MOVIDIUS_SHAVE_COMPILER
+
+void emulate_ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow(
+  const u8 * restrict paddedImage_currentRow,
+  const s32 * restrict integralImage_previousRow,
+  s32 * restrict integralImage_currentRow,
+  const s32 integralImageWidth
+  )
+{
+  ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow_NaturalC(paddedImage_currentRow, integralImage_previousRow, integralImage_currentRow, integralImageWidth);
+}
+
+#endif // #ifdef USING_MOVIDIUS_SHAVE_COMPILER ... #else

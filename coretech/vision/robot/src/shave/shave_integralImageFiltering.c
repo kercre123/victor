@@ -9,28 +9,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/config.h"
 
-#define INNER_LOOP_VERSION 1 // Change this to another number as desired (only makes a difference for Shave)
-#define FASTEST_VERSION 1 // The version of the loop that runs the fastest
-
-#if INNER_LOOP_VERSION != FASTEST_VERSION
-#ifdef _MSC_VER
-#pragma message ("Warning: Current inner loop version is not the fastest version")
-#else
-#warning Current inner loop version is not the fastest version
-#endif
-#endif
-
-// INNER_LOOP_VERSION must always be 1 on the PC or Leon
-#ifndef USING_MOVIDIUS_SHAVE_COMPILER
-#undef INNER_LOOP_VERSION
-#define INNER_LOOP_VERSION 1
-#endif // #ifndef USING_MOVIDIUS_SHAVE_COMPILER
-
-#ifdef USING_MOVIDIUS_SHAVE_COMPILER
-void ScrollingIntegralImage_u8_s32_FilterRow(
-#else
-void emulate_ScrollingIntegralImage_u8_s32_FilterRow(
-#endif
+staticInline void ScrollingIntegralImage_u8_s32_FilterRow_NaturalC(
   const s32 * restrict pIntegralImage_00,
   const s32 * restrict pIntegralImage_01,
   const s32 * restrict pIntegralImage_10,
@@ -41,7 +20,6 @@ void emulate_ScrollingIntegralImage_u8_s32_FilterRow(
   s32 * restrict pOutput
   )
 {
-#if INNER_LOOP_VERSION == 1
   s32 x;
 
   if(minX > 0)
@@ -61,10 +39,35 @@ void emulate_ScrollingIntegralImage_u8_s32_FilterRow(
   //for(s32 x=maxX+1; x<imageWidth; x++) {
   //  pOutput[x] = 0;
   //}
+}
 
-#endif // #if INNER_LOOP_VERSION == 1
+#ifdef USING_MOVIDIUS_SHAVE_COMPILER
 
-  //#if INNER_LOOP_VERSION != 1
+#define OPTIMIZATION_VERSION 1 // Change this to another number as desired (only makes a difference for Shave)
+#define FASTEST_VERSION 1 // The version of the loop that runs the fastest
+
+#if OPTIMIZATION_VERSION != FASTEST_VERSION
+#warning Current inner loop version is not the fastest version
+#endif
+
+void ScrollingIntegralImage_u8_s32_FilterRow(
+  const s32 * restrict pIntegralImage_00,
+  const s32 * restrict pIntegralImage_01,
+  const s32 * restrict pIntegralImage_10,
+  const s32 * restrict pIntegralImage_11,
+  const s32 minX,
+  const s32 maxX,
+  const s32 imageWidth,
+  s32 * restrict pOutput
+  )
+{
+#if OPTIMIZATION_VERSION == 1
+
+  ScrollingIntegralImage_u8_s32_FilterRow_NaturalC(pIntegralImage_00, pIntegralImage_01, pIntegralImage_10, pIntegralImage_11, minX, maxX, imageWidth, pOutput);
+
+#endif // #if OPTIMIZATION_VERSION == 1
+
+  //#if OPTIMIZATION_VERSION != 1
   //    s32 x;
   //
   //    const int4 * restrict integralImageX4_00  = (const int4 *) &(integralImage_00[0]);
@@ -99,9 +102,9 @@ void emulate_ScrollingIntegralImage_u8_s32_FilterRow(
   //    :"r"(&integralImageX4_00[0]), "r"(&integralImageX4_10[0]), "r"(&integralImageX4_01a[0]), "r"(&integralImageX4_01b[0]), "r"(&integralImageX4_11a[0]), "r"(&integralImageX4_11b[0]), "r"(&outputX4[0]) //Input registers
   //      :"i20", "i21", "i22", "i23", "i24", "i25", "i26" //Clobbered registers
   //      );
-  //#endif // #if INNER_LOOP_VERSION != 1
+  //#endif // #if OPTIMIZATION_VERSION != 1
   //
-  //#if INNER_LOOP_VERSION == 2
+  //#if OPTIMIZATION_VERSION == 2
   //    for(x=0; x<numPixelsToProcess; x+=4) {
   //      __asm(
   //      ".set integralImage_00 v0 \n"
@@ -142,7 +145,7 @@ void emulate_ScrollingIntegralImage_u8_s32_FilterRow(
   //      :"i20", "i21", "i22", "i23", "i24", "i25", "i26", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8" //Clobbered registers
   //        );
   //    }
-  //#elif INNER_LOOP_VERSION == 3
+  //#elif OPTIMIZATION_VERSION == 3
   //    //for(x=minXSimd; x<maxXSimd; x+=4) {
   //    // Warning: doesn't check if minXSimd > maxXSimd
   //    __asm(
@@ -220,5 +223,25 @@ void emulate_ScrollingIntegralImage_u8_s32_FilterRow(
   //    :"i0", "i10", "i20", "i21", "i22", "i23", "i24", "i25", "i26", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8" //Clobbered registers
   //      );
   //    //}
-  //#endif // INNER_LOOP_VERSION
+  //#endif // OPTIMIZATION_VERSION
+
+  __asm("BRU.SWIH 0"); // We're finished, so tell the shave to halt
 }
+
+#else // #ifdef USING_MOVIDIUS_SHAVE_COMPILER
+
+void emulate_ScrollingIntegralImage_u8_s32_FilterRow(
+  const s32 * restrict pIntegralImage_00,
+  const s32 * restrict pIntegralImage_01,
+  const s32 * restrict pIntegralImage_10,
+  const s32 * restrict pIntegralImage_11,
+  const s32 minX,
+  const s32 maxX,
+  const s32 imageWidth,
+  s32 * restrict pOutput
+  )
+{
+  ScrollingIntegralImage_u8_s32_FilterRow_NaturalC(pIntegralImage_00, pIntegralImage_01, pIntegralImage_10, pIntegralImage_11, minX, maxX, imageWidth, pOutput);
+}
+
+#endif // #ifdef USING_MOVIDIUS_SHAVE_COMPILER ... #else

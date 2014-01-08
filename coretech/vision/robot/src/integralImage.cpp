@@ -190,7 +190,7 @@ namespace Anki
       swcResetShave(0);
       swcSetAbsoluteDefaultStack(0);
 
-      START_SHAVE(0, ScrollingIntegralImage_u8_s32_FilterRow,
+      START_SHAVE_WITH_ARGUMENTS(0, ScrollingIntegralImage_u8_s32_FilterRow,
         "iiiiiiii",
         ConvertCMXAddressToShave(pIntegralImage_00),
         ConvertCMXAddressToShave(pIntegralImage_01),

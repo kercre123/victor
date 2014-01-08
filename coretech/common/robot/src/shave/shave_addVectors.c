@@ -9,37 +9,13 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/config.h"
 
-#define INNER_LOOP_VERSION 1 // Change this to another number as desired (only makes a difference for Shave)
-#define FASTEST_VERSION 2 // The version of the loop that runs the fastest
-
-#if INNER_LOOP_VERSION != FASTEST_VERSION
-#ifdef _MSC_VER
-#pragma message ("Warning: Current inner loop version is not the fastest version")
-#else
-#warning Current inner loop version is not the fastest version
-#endif
-#endif
-
-// INNER_LOOP_VERSION must always be 1 on the PC or Leon
-#ifndef USING_MOVIDIUS_SHAVE_COMPILER
-#undef INNER_LOOP_VERSION
-#define INNER_LOOP_VERSION 1
-#endif // #ifndef USING_MOVIDIUS_SHAVE_COMPILER
-
-//#ifdef USING_MOVIDIUS_SHAVE_COMPILER
-void AddVectors_s32x4(
-  //#else
-  //void emulate_AddVectors_s32x4(
-  //#endif
+staticInline void AddVectors_s32x4_NaturalC(
   const s32 * restrict pIn1,
   const s32 * restrict pIn2,
   s32 * restrict pOut,
   const s32 numElements
   )
 {
-#if INNER_LOOP_VERSION == 1
-  // Takes about .00020 seconds for 3000 elements
-
   s32 i;
   for(i=0; i<numElements-3; i+=4) {
     pOut[i]   = pIn1[i]   + pIn2[i];
@@ -47,8 +23,29 @@ void AddVectors_s32x4(
     pOut[i+2] = pIn1[i+2] + pIn2[i+2];
     pOut[i+3] = pIn1[i+3] + pIn2[i+3];
   }
+}
 
-#elif INNER_LOOP_VERSION == 2
+#ifdef USING_MOVIDIUS_SHAVE_COMPILER
+
+#define OPTIMIZATION_VERSION 1 // Change this to another number as desired
+#define FASTEST_VERSION 2 // The version of the loop that runs the fastest
+
+#if OPTIMIZATION_VERSION != FASTEST_VERSION
+#warning Current inner loop version is not the fastest version
+#endif
+
+void AddVectors_s32x4(
+  const s32 * restrict pIn1,
+  const s32 * restrict pIn2,
+  s32 * restrict pOut,
+  const s32 numElements
+  )
+{
+#if OPTIMIZATION_VERSION == 1
+  // Takes about .00020 seconds for 3000 elements
+  AddVectors_s32x4_NaturalC(pIn1, pIn2, pOut, numElements);
+
+#elif OPTIMIZATION_VERSION == 2
   // Takes about .00011 seconds for 3000 elements
 
   int4* pIn1x4 = (int4*)pIn1;
@@ -64,9 +61,19 @@ void AddVectors_s32x4(
 
 #endif
 
-#ifdef USING_MOVIDIUS_SHAVE_COMPILER
-  __asm(
-  "BRU.SWIH 0"
-    );
-#endif
+  __asm("BRU.SWIH 0"); // We're finished, so tell the shave to halt
 }
+
+#else // #ifdef USING_MOVIDIUS_SHAVE_COMPILER
+
+void emulate_AddVectors_s32x4(
+  const s32 * restrict pIn1,
+  const s32 * restrict pIn2,
+  s32 * restrict pOut,
+  const s32 numElements
+  )
+{
+  AddVectors_s32x4_NaturalC(pIn1, pIn2, pOut, numElements);
+}
+
+#endif // #ifdef USING_MOVIDIUS_SHAVE_COMPILER ... #else

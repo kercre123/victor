@@ -90,7 +90,7 @@ GTEST_TEST(CoreTech_Common, ShaveAddTest)
   swcResetShave(0);
   swcSetAbsoluteDefaultStack(0);
 
-  START_SHAVE(0, AddVectors_s32x4,
+  START_SHAVE_WITH_ARGUMENTS(0, AddVectors_s32x4,
     "iiii",
     ConvertCMXAddressToShave(pIn1),
     ConvertCMXAddressToShave(pIn2),
@@ -119,22 +119,23 @@ GTEST_TEST(CoreTech_Common, ShaveAddTest)
   GTEST_RETURN_HERE;
 }
 
-//GTEST_TEST(CoreTech_Common, ShavePrintfTest)
-//{
-//#if defined(USING_MOVIDIUS_COMPILER)
-//  swcResetShave(0);
-//  swcSetAbsoluteDefaultStack(0);
-//
-//  shave0_whichTest = 0;
-//
-//  swcStartShave(0,(u32)&shave0_main);
-//  swcWaitShave(0);
-//#endif // #if defined(USING_MOVIDIUS_COMPILER)
-//
-//  printf("If on the Myriad, the previous line should read: \"Shave Test 0 passed\"");
-//
-//  GTEST_RETURN_HERE;
-//}
+GTEST_TEST(CoreTech_Common, ShavePrintfTest)
+{
+#if defined(USING_MOVIDIUS_COMPILER)
+  swcResetShave(0);
+  swcSetAbsoluteDefaultStack(0);
+
+  START_SHAVE(0, PrintTest);
+
+  swcWaitShave(0);
+#else
+  emulate_PrintTest();
+#endif // #if defined(USING_MOVIDIUS_COMPILER)
+
+  printf("If on the Myriad, the previous line should read: \"Shave printf test passed\"\n");
+
+  GTEST_RETURN_HERE;
+}
 
 GTEST_TEST(CoreTech_Common, MatrixTranspose)
 {
@@ -2633,7 +2634,7 @@ int RUN_ALL_TESTS()
   s32 numFailedTests = 0;
 
   CALL_GTEST_TEST(CoreTech_Common, ShaveAddTest);
-  //CALL_GTEST_TEST(CoreTech_Common, ShavePrintfTest);
+  CALL_GTEST_TEST(CoreTech_Common, ShavePrintfTest);
   CALL_GTEST_TEST(CoreTech_Common, MatrixTranspose);
   CALL_GTEST_TEST(CoreTech_Common, CholeskyDecomposition);
   CALL_GTEST_TEST(CoreTech_Common, ExplicitPrintf);

@@ -57,6 +57,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #if defined(_MSC_VER) // We're using the MSVC compiler
 #pragma warning(disable: 4068) // Unknown pragma
 #pragma warning(disable: 4127) // Conditional expression is constant
+//#pragma warning(2: 4100) // Unused variable
 
 #ifndef __PRETTY_FUNCTION__
 #define __PRETTY_FUNCTION__ __FUNCSIG__
@@ -74,8 +75,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define vsnprintf vsprintf_s
 #endif
 
-#ifndef IN_DDR
-#define IN_DDR
+#ifndef staticInline
+#define staticInline static __inline
 #endif
 
 #ifdef _DEBUG
@@ -88,16 +89,16 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #if defined(__APPLE_CC__) // Apple Xcode
 
-#ifndef IN_DDR
-#define IN_DDR
-#endif
-
 #ifndef restrict
 #define restrict
 #endif
 
 #ifndef _strcmpi
 #define _strcmpi strcasecmp
+#endif
+
+#ifndef staticInline
+#define staticInline static inline
 #endif
 
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
@@ -117,8 +118,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define restrict __restrict
 #endif
 
-#ifndef IN_DDR
-#define IN_DDR __attribute__((section(".ddr_direct.text")))
+#ifndef staticInline
+#define staticInline static inline
 #endif
 
 #define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS

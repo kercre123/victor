@@ -88,7 +88,8 @@ extern char shave7_localBuffer[LOCAL_SHAVE_BUFFER_SIZE];
   DECLARE_SHAVE_7_FUNCTION(functionName, parameters)
 
 // Run the shave kernel functionName on a given shave number
-#define START_SHAVE(shaveNumber, functionName, ...) swcStartShaveCC(shaveNumber, (u32)&shave ## shaveNumber ## _ ## functionName, __VA_ARGS__)
+#define START_SHAVE(shaveNumber, functionName) swcStartShave(shaveNumber, (u32)&shave ## shaveNumber ## _ ## functionName)
+#define START_SHAVE_WITH_ARGUMENTS(shaveNumber, functionName, formatString, ...) swcStartShaveCC(shaveNumber, (u32)&shave ## shaveNumber ## _ ## functionName, formatString, __VA_ARGS__)
 
 #ifdef __cplusplus
 extern "C" {
@@ -100,6 +101,9 @@ extern "C" {
     s32 * restrict pOut,
     const s32 numElements
     ));
+
+  DECLARE_SHAVE_FUNCTION(PrintTest,
+  ());
 #ifdef __cplusplus
 }
 #endif
