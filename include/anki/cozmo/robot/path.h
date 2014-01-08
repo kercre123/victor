@@ -58,6 +58,12 @@ namespace Anki
       } turn;
     } PathSegmentDef;
     
+    typedef enum {
+      IN_SEGMENT_RANGE,
+      OOR_NEAR_START,
+      OOR_NEAR_END
+    } SegmentRangeStatus;
+    
     
     class PathSegment
     {
@@ -68,13 +74,25 @@ namespace Anki
       Anki::Embedded::Point2f GetEndPoint() const;
       
       void Print() const;
+
+      SegmentRangeStatus GetDistToSegment(const f32 x, const f32 y, const f32 angle,
+                                         f32 &shortestDistanceToPath_m, f32 &radDiff) const;
+      
       
       PathSegmentType type;
       PathSegmentDef def;
       
       s16 desiredSpeed_mmPerSec;  // Desired speed during segment
       s16 terminalSpeed_mmPerSec; // Desired speed by the time we reach the end of the segment
+
+    private:
+      SegmentRangeStatus GetDistToLineSegment(const f32 x, const f32 y, const f32 angle,
+                                             f32 &shortestDistanceToPath_m, f32 &radDiff) const;
       
+      SegmentRangeStatus GetDistToArcSegment(const f32 x, const f32 y, const f32 angle,
+                                            f32 &shortestDistanceToPath_m, f32 &radDiff) const;
+      
+
     };
 
     

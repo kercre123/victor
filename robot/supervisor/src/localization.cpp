@@ -56,6 +56,13 @@ namespace Anki {
        
 #endif
 
+#if(NO_LOCALIZATION)
+        currentMatX_ = 0;
+        currentMatY_ = 0;
+        currentMatHeading_ = 0;
+#endif
+        
+        
 #if(DEBUG_LOCALIZATION)
         PRINT("LOC: %f, %f, %f\n", currentMatX_, currentMatY_, currentMatHeading_.getDegrees());
 #endif

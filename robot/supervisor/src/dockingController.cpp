@@ -39,11 +39,11 @@ namespace Anki {
 
         // Turning radius of docking path
         const f32 DOCK_PATH_START_RADIUS_M = 0.05;
-        const f32 DOCK_PATH_END_RADIUS_M = 0.05;
+        const f32 DOCK_PATH_END_RADIUS_M = 0.1;
         
         // The length of the straight tail end of the dock path.
         // Should be roughly the length of the forks on the lift.
-        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_M = 0.03;
+        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_M = 0.06;
         
         // Distance between the robot origin and the distance along the robot's x-axis
         // to the lift when it is in the low docking position.
@@ -59,7 +59,7 @@ namespace Anki {
 
         // HACK: Only using these because lift controller encoders not working.
         const u32 PRE_PLACEMENT_WAIT_TIME_US = 2000000;
-        const u32 LIFT_MOTION_TIME_US = 7000000;
+        const u32 LIFT_MOTION_TIME_US = 5000000;
         const u32 LIFT_PLACEMENT_ADJUST_TIME_US = 200000;
         bool liftIsUp_ = true;
         const u32 BACKOUT_TIME = 3000000;
@@ -95,7 +95,7 @@ namespace Anki {
         // The docking pose
         Anki::Embedded::Pose2d dockPose_;
         
-#ifndef SIMULATOR
+#if(NO_LOCALIZATION)
         // Since the physical robot currently does not localize,
         // we need to store the transform from docking pose
         // to the approachStartPose, which we then use to compute
@@ -103,7 +103,7 @@ namespace Anki {
         // We're faking a different approachStartPose because without
         // localization it looks like the block is moving and not the robot.
 
-        f32 approachPath_dx, approachPath_dy, approachPath_dtheta, approachPath_dOrientation;
+        f32 approachPath_dist, approachPath_dtheta, approachPath_dOrientation;
 #endif
         
         
@@ -323,11 +323,17 @@ namespace Anki {
           
           // Set approach start pose
           Localization::GetCurrentMatPose(approachStartPose_.x(), approachStartPose_.y(), approachStartPose_.angle);
-#ifndef SIMULATOR
-          approachPath_dx = rel_x;
-          approachPath_dx = rel_y;
+          
+#if(NO_LOCALIZATION)
+          // If there is no localization (as is currently the case on the robot)
+          // we adjust the path's starting point as the robot progresses along
+          // the path so that the relative position of the starting point to the
+          // block is the same as it was when tracking first started.
+          approachPath_dist = sqrtf(rel_x*rel_x + rel_y*rel_y);
           approachPath_dtheta = atan2_acc(rel_y, rel_x);
           approachPath_dOrientation = rel_rad;
+          
+          //PRINT("Approach start delta: distToBlock: %f, angleToBlock: %f, blockAngleRelToRobot: %f\n", approachPath_dist,approachPath_dtheta, approachPath_dOrientation);
 #endif
           
           followingBlockNormalPath_ = false;
@@ -384,13 +390,22 @@ namespace Anki {
         blockPose_.angle = currPose.angle + rel_rad;
         
         
-#ifndef SIMULATOR
-        // Adjust approachStartPose to compensate for lack of localization
-        f32 cosTheta = cosf(approachPath_dtheta);
-        f32 sinTheta = sinf(approachPath_dtheta);
-        approachStartPose_.x() = blockPose_.x() * cosTheta - blockPose_.y() * sinTheta + approachPath_dx;
-        approachStartPose_.y() = blockPose_.x() * sinTheta + blockPose_.y() * cosTheta + approachPath_dy;
-        approachStartPose_.angle = blockPose_.angle - approachPath_dOrientation;
+#if(NO_LOCALIZATION)
+        // Rotate block so that it is parallel with approach start pose
+        f32 rel_blockAngle = rel_rad - approachPath_dOrientation;
+        
+        // Subtract dtheta so that angle points to where start pose is
+        rel_blockAngle += approachPath_dtheta;
+        
+        // Compute dx and dy from block pose in current robot frame
+        f32 dx = approachPath_dist * cosf(rel_blockAngle);
+        f32 dy = approachPath_dist * sinf(rel_blockAngle);
+
+        approachStartPose_.x() = blockPose_.x() - dx;
+        approachStartPose_.y() = blockPose_.y() - dy;
+        approachStartPose_.angle = rel_blockAngle - approachPath_dtheta;
+        
+        //PRINT("Approach start pose: x = %f, y = %f, angle = %f\n", approachStartPose_.x(), approachStartPose_.y(), approachStartPose_.angle.ToFloat());
 #endif
 
         
@@ -418,6 +433,10 @@ namespace Anki {
                                                               DOCK_PATH_END_RADIUS_M,
                                                               FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_M,
                                                               &path_length);
+
+        //PRINT("numPathSegments: %d, path_length: %f, distToBlock: %f, followBlockNormalPath: %d\n",
+        //      numPathSegments, path_length, distToBlock, followingBlockNormalPath_);
+
         
         // No reasonable Dubins path exists.
         // Either try again with smaller radii or just let the controller
@@ -426,13 +445,14 @@ namespace Anki {
           
           // Compute new starting point for path
           // HACK: Feeling lazy, just multiplying path by some scalar so that it's likely to be behind the current robot pose.
-          f32 x_start_m = dockPose_.x() - 5 * distToBlock * cosf(dockPose_.angle.ToFloat());
-          f32 y_start_m = dockPose_.y() - 5 * distToBlock * sinf(dockPose_.angle.ToFloat());
+          f32 x_start_m = dockPose_.x() - 3 * distToBlock * cosf(dockPose_.angle.ToFloat());
+          f32 y_start_m = dockPose_.y() - 3 * distToBlock * sinf(dockPose_.angle.ToFloat());
           
           PathFollower::ClearPath();
           PathFollower::AppendPathSegment_Line(0, x_start_m, y_start_m, dockPose_.x(), dockPose_.y());
           
           followingBlockNormalPath_ = true;
+          //PRINT("Computing straight line path (%f, %f) to (%f, %f)\n", x_start_m, y_start_m, dockPose_.x(), dockPose_.y());
         }
 
         
