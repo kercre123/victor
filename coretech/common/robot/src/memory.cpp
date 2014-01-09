@@ -211,12 +211,17 @@ namespace Anki
       return flags;
     }
 
-    // Not sure if these should be supported. But I'm leaving them here for the time being.
-    /*
-    void MemoryStack::Clear()
+    MemoryStackIterator::MemoryStackIterator(const MemoryStack &memory)
+      : index(0), memory(memory)
     {
-    usedBytes = 0;
     }
-    */
+
+    bool MemoryStackIterator::HasNext()
+    {
+    }
+
+    Result MemoryStackIterator::GetNext(void * segment, s32 &segmentLength)
+    {
+    }
   } // namespace Embedded
 } // namespace Anki
