@@ -82,8 +82,7 @@ Supervisor {
               device RotationalMotor {
                 name "lift_motor"
               }
-              endPoint Gyro {
-                name "lift_gyro"
+              endPoint Solid {
                 translation 0.045 0 0
                 children [
                   HingeJoint {
@@ -100,15 +99,6 @@ Supervisor {
                       translation 0.05 0 0
                       children [
                       
-                        #DEF CAM_LIFT Camera {
-                        #  translation 0 0 -0.001
-                        #  name "cam_lift"
-                        #  width 320
-                        #  height 240
-                        #  near 0.001
-                        #  windowPosition 0.45339 0.0923077
-                        #  pixelSize 0.5
-                        #}
                         Connector {
                           translation 0.0025 0 0
                           rotation 0 1 0 3.14159
@@ -134,24 +124,6 @@ Supervisor {
                       size 0.095 0.005 0.001
                     }
                   }
-                  #Solid {
-                    #translation -0.036 0 0
-                    #children [
-                      #DEF LIFTBAR Shape {
-                        #geometry Box {
-                          #size 0.001 0.005 0.09
-                        #}
-                      #}
-                    #]
-                    #boundingObject USE LIFTBAR
-                  #}
-                  #Solid {
-                    #translation 0.036 0 0
-                    #children [
-                      #USE LIFTBAR
-                    #]
-                    #boundingObject USE LIFTBAR
-                  #}
                 ]
                 boundingObject USE LBottom
                 physics Physics {
@@ -294,8 +266,7 @@ Supervisor {
         name "wheel_fr"
 	maxVelocity 30
       }
-      endPoint Gyro {
-        name "wheel_gyro_fr"
+      endPoint Solid {
         translation 0 0 0.03
         rotation 1 0 0 1.5708
         children [
@@ -318,8 +289,7 @@ Supervisor {
         name "wheel_fl"
 	maxVelocity 30
       }
-      endPoint Gyro {
-        name "wheel_gyro_fl"
+      endPoint Solid {
         translation 0 0 -0.03
         rotation 1 0 0 1.5708
         children [
@@ -346,8 +316,7 @@ Supervisor {
       device RotationalMotor {
         name "motor_head_pitch"
       }
-      endPoint Gyro {
-        name "head_gyro"
+      endPoint Solid {
         rotation 0 1 0 0
         children [
           DEF CAM_HEAD Camera {
