@@ -235,11 +235,6 @@ def compileLEON(src):
     if srcStat.st_mtime <= objStat.st_mtime and areDependenciesCurrent(src, obj, objStat.st_mtime):
       needsCompile = False
 
-      
-      
- 
-
-      
   if needsCompile:
     print 'Compiling Leon:', src[(src.rfind('/') + 1):]
     if src.endswith('.S'):
@@ -348,6 +343,7 @@ if __name__ == '__main__':
   isNoisy = False
   emulateShave = False
   quitDebuggerOnCompletion = False
+  isCaptureImages = False
 
   # Check if the Movidius tools can be found
   if any((os.path.isfile(file.strip()) or os.path.isfile(file.strip()+'.exe') for file in [CC, CXX, LD, MVCONV])) == False:
@@ -385,6 +381,10 @@ if __name__ == '__main__':
       emulateShave = True
     elif arg == 'quit':
       quitDebuggerOnCompletion = True
+    elif arg == 'capture-images':
+      isCaptureImages = True
+      target = 'capture-images'
+      LEON_ASM_C_CXX_OPT += '-DUSE_OFFBOARD_VISION=1'
     else:
       print 'Invalid argument: ' + arg
       sys.exit(1)

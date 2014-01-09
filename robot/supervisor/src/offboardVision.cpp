@@ -147,6 +147,36 @@ namespace Anki
       
     } // USBSendFrame()
     
+    void HAL::USBSendDataBuffer(const u8* buffer,
+                                const s32 bufferSize)
+    {
+      const u8 commandByte = USB_VISION_COMMAND_SAVE_BUFFERED_DATA;
+      
+      USBSendHeader(commandByte);
+      
+      u32 bufferLocation = 0;
+      
+      while(bufferLocation < bufferSize) {
+        const u32 dataType = reinterpret_cast<s32*>(&videoBuffer[bufferLocation])[0];
+        const u32 dataSize = reinterpret_cast<s32*>(&videoBuffer[bufferLocation+4])[0];
+        
+        for(u32 i=0; i<(8+dataSize); i++) {
+          USBPutChar(frame[bufferLocation + i]);
+        }
+        
+        bufferLocation += 8 + dataSize;
+      }
+          
+      USBSendFooter(commandByte);
+      
+      PRINT("USBSendBufferedVideo(): sent %dx%d frame downsampled to %dx%d.\n",
+            CameraModeInfo[inputResolution].width,
+            CameraModeInfo[inputResolution].height,
+            CameraModeInfo[sendResolution].width,
+            CameraModeInfo[sendResolution].height);
+      
+    } // USBSendFrame()
+    
 #endif // if USE_OFFBOARD_VISION defined and true
     
     

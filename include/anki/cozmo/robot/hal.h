@@ -41,7 +41,9 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 
+#ifndef USE_OFFBOARD_VISION
 #define USE_OFFBOARD_VISION 0
+#endif
 
 // Uncomment to use USB instead of UART
 //#define USE_USB
@@ -426,9 +428,16 @@ namespace Anki
       const u8 USB_VISION_COMMAND_MATODOMETRY     = 0xDE;
       const u8 USB_VISION_COMMAND_MATLOCALIZATION = 0xEF;
       const u8 USB_VISION_COMMAND_DISPLAY_IMAGE   = 0xF0;
+      const u8 USB_VISION_COMMAND_SAVE_BUFFERED_DATA = 0x01;
       
       const u8 USB_VISION_COMMAND_HEAD_CALIBRATION = 0xC1;
       const u8 USB_VISION_COMMAND_MAT_CALIBRATION  = 0xC2;
+      
+      enum BufferedDataType 
+      {
+        BUFFERED_DATA_MISC = 0,
+        BUFFERED_DATA_IMAGE = 1
+      };
       
       // Send header/footer around each message/packet/image
       void USBSendHeader(const u8 command);
