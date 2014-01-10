@@ -58,6 +58,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #pragma warning(disable: 4068) // Unknown pragma
 #pragma warning(disable: 4127) // Conditional expression is constant
 //#pragma warning(2: 4100) // Unused variable
+#pragma warning(disable: 4800) // 'BOOL' : forcing value to bool 'true' or 'false' (performance warning)
 
 #ifndef __PRETTY_FUNCTION__
 #define __PRETTY_FUNCTION__ __FUNCSIG__

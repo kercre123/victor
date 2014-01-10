@@ -43,7 +43,7 @@ namespace Anki
           NULL, "SerializedBuffer::PushBack", "data must be 4-byte aligned");
       }
 
-      dataLength = RoundUp(dataLength, 4);
+      dataLength = RoundUp<s32>(dataLength, 4);
 
       u32* segmentU32 = reinterpret_cast<u32*>( MemoryStack::Allocate(dataLength+headerLength+SERIALIZED_HEADER_LENGTH) );
 

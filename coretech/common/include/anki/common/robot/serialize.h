@@ -22,7 +22,7 @@ namespace Anki
   {
 #pragma mark --- Definitions ---
 
-    template<typename Type> static Result SerializedBuffer::EncodeBasicType(u32 &code)
+    template<typename Type> Result SerializedBuffer::EncodeBasicType(u32 &code)
     {
       code = 0;
 
@@ -51,7 +51,7 @@ namespace Anki
     {
       u32 code = 0;
 
-      if(SerializedBuffer::EncodeBasicType(code) != RESULT_OK)
+      if(SerializedBuffer::EncodeBasicType<Type>(code) != RESULT_OK)
         return RESULT_FAIL;
 
       void * segment = PushBack(NULL, 4+sizeof(Type));

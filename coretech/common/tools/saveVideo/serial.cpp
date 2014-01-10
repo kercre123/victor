@@ -1,0 +1,149 @@
+/**
+File: serial.cpp
+Author: Peter Barnum
+Created: 2013
+
+Simple serial connection routines
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
+
+#include "serial.h"
+#include "anki/common/robot/utilities.h"
+#include "anki/common/robot/errorHandling.h"
+
+#include <stdio.h>
+
+#define STRING_LENGTH 1024
+
+Serial::Serial()
+  : isOpen(false)
+{
+}
+
+Result Serial::Open(
+  s32 comPort,
+  s32 baudRate,
+  char parity,
+  s32 dataBits,
+  s32 stopBits
+  )
+{
+  AnkiConditionalErrorAndReturnValue(isOpen == false,
+    RESULT_FAIL, "Serial::Open", "Port is already open");
+
+  isOpen = true;
+
+  const DWORD dwEvtMask = EV_RXCHAR | EV_CTS;
+
+  char lpPortName[STRING_LENGTH];
+  char dcbInitString[STRING_LENGTH];
+
+  // TODO: safe version?
+  snprintf(lpPortName, STRING_LENGTH, "COM%d", comPort);
+
+  comPortHandle = CreateFile(
+    lpPortName,
+    GENERIC_READ | GENERIC_WRITE,
+    0,
+    NULL,
+    OPEN_EXISTING,
+    FILE_FLAG_OVERLAPPED,
+    0);
+
+  AnkiConditionalErrorAndReturnValue(comPortHandle != NULL,
+    RESULT_FAIL, "Serial::Open", "Could not open port");
+
+  memset(&this->readEventHandle, 0, sizeof(this->readEventHandle));
+  memset(&this->writeEventHandle, 0, sizeof(this->writeEventHandle));
+
+  readEventHandle.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+  writeEventHandle.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+  COMMTIMEOUTS commTimeOuts;
+  commTimeOuts.ReadIntervalTimeout = 0xFFFFFFFF;
+  commTimeOuts.ReadTotalTimeoutMultiplier = 0;
+  commTimeOuts.ReadTotalTimeoutConstant = 0;
+  commTimeOuts.WriteTotalTimeoutMultiplier = 0;
+  commTimeOuts.WriteTotalTimeoutConstant = 10000;
+
+  snprintf(dcbInitString, STRING_LENGTH, "baud=%d parity=%c data=%d stop=%d", baudRate, parity, dataBits, stopBits);
+
+  const bool areCommTimeoutsSet = SetCommTimeouts(comPortHandle, &commTimeOuts);
+  AnkiConditionalErrorAndReturnValue(areCommTimeoutsSet,
+    RESULT_FAIL, "Serial::Open", "Could not set comm timeouts");
+
+  const bool isCommMaskSet = SetCommMask(comPortHandle, dwEvtMask);
+  AnkiConditionalErrorAndReturnValue(isCommMaskSet,
+    RESULT_FAIL, "Serial::Open", "Could not set comm mask");
+
+  const bool gotCommState = GetCommState(comPortHandle, &dcb);
+  AnkiConditionalErrorAndReturnValue(gotCommState,
+    RESULT_FAIL, "Serial::Open", "Could not get comm state");
+
+  dcb.fRtsControl = RTS_CONTROL_ENABLE;
+
+  const bool builtCommDcb = BuildCommDCB(dcbInitString, &dcb);
+  AnkiConditionalErrorAndReturnValue(builtCommDcb,
+    RESULT_FAIL, "Serial::Open", "Could not build comm dcb");
+
+  const bool setCommState = SetCommState(comPortHandle, &dcb);
+  AnkiConditionalErrorAndReturnValue(setCommState,
+    RESULT_FAIL, "Serial::Open", "Could not set comm state");
+
+  const bool isPurged = PurgeComm(comPortHandle, PURGE_RXABORT|PURGE_TXABORT|PURGE_RXCLEAR|PURGE_TXCLEAR);
+  AnkiConditionalErrorAndReturnValue(isPurged,
+    RESULT_FAIL, "Serial::Open", "Could not purge comm");
+
+  const bool clearedErrors = ClearCommError(comPortHandle, NULL, NULL);
+  AnkiConditionalErrorAndReturnValue(isPurged,
+    RESULT_FAIL, "Serial::Open", "Could not clear errors");
+
+  printf("Com port opened");
+
+  return RESULT_OK;
+}
+
+Result Serial::Close()
+{
+  if(readEventHandle.hEvent != NULL)
+    CloseHandle(readEventHandle.hEvent);
+
+  if(writeEventHandle.hEvent != NULL)
+    CloseHandle(writeEventHandle.hEvent);
+
+  CloseHandle(comPortHandle);
+
+  isOpen = false;
+
+  return RESULT_OK;
+}
+
+Result Serial::Read(void * buffer, s32 bufferLength, DWORD &bytesRead)
+{
+  const s32 timeToWaitForRead = 50000;
+
+  bytesRead = 0;
+
+  AnkiConditionalErrorAndReturnValue(isOpen && comPortHandle!=NULL,
+    RESULT_FAIL, "Serial::Open", "Port is not open");
+
+  COMSTAT comStat;
+
+  ClearCommError(comPortHandle, NULL, &comStat);
+  if(comStat.cbInQue == 0)  {
+    return RESULT_OK;
+  }
+
+  bytesRead = comStat.cbInQue;
+  if(bufferLength < bytesRead)
+    bytesRead = bufferLength;
+
+  const bool fileRead = ReadFile(comPortHandle, buffer, bytesRead, &bytesRead, &readEventHandle);
+
+  AnkiConditionalErrorAndReturnValue(fileRead,
+    RESULT_FAIL, "Serial::Open", "Could not read from port");
+
+  return RESULT_OK;
+}
