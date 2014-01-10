@@ -254,13 +254,13 @@ endif(WIN32)
 endmacro(ankiProject)
 
 #
-# A helper macro (read: hack) for appending "246d" to the opencv library names.
+# A helper macro (read: hack) for appending "248d" to the opencv library names.
 # 
 function(fix_opencv_lib_names NAMES)
 
 if(WIN32)
 	foreach(NAME IN LISTS ${NAMES})
-		list(APPEND ${NAMES}_TMP ${NAME}246d)
+		list(APPEND ${NAMES}_TMP ${NAME}248d)
 	endforeach()
 
 	set(${NAMES} "${${NAMES}_TMP}" PARENT_SCOPE)
