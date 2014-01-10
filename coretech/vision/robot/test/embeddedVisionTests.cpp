@@ -92,6 +92,20 @@ Matlab matlab(false);
 DDR_BUFFER_LOCATION char ddrBuffer[DDR_BUFFER_SIZE];
 CMX_BUFFER_LOCATION char cmxBuffer[CMX_BUFFER_SIZE];
 
+GTEST_TEST(CoreTech_Vision, IsDDROkay)
+{
+  printf("Starting DDR test\n");
+
+  // This test may crash the board every other time
+  for(s32 i=0; i<DDR_BUFFER_SIZE; i++) {
+    ddrBuffer[i] = 0;
+  }
+
+  printf("DDR test didn't crash\n");
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo)
 {
   MemoryStack scratch_CMX(&cmxBuffer[0], CMX_BUFFER_SIZE);
@@ -2732,6 +2746,8 @@ int RUN_ALL_TESTS()
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_BenchmarkAffine);
   return 0;
 #endif
+
+  CALL_GTEST_TEST(CoreTech_Vision, IsDDROkay);
 
   CALL_GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo);
   CALL_GTEST_TEST(CoreTech_Vision, EndianCopying);
