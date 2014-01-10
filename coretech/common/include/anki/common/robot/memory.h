@@ -25,6 +25,7 @@ namespace Anki
 
     class MemoryStack;
     class MemoryStackIterator;
+    class MemoryStackConstIterator;
 
     // A MemoryStack keeps track of an external memory buffer, by using the system stack. It is not
     // thread safe. Data that is allocated with Allocate() will be MEMORY_ALIGNMENT bytes-aligned.
@@ -93,6 +94,8 @@ namespace Anki
       Flags::Buffer get_flags() const;
 
     protected:
+      friend class MemoryStackConstIterator;
+
       static const u32 FILL_PATTERN_START = 0xFF01FF02;
       static const u32 FILL_PATTERN_END = 0x03FF04FF;
 
@@ -117,18 +120,26 @@ namespace Anki
       //MemoryStack & operator= (const MemoryStack & rightHandSide); // Not allowed
     }; // class MemoryStack
 
-    class MemoryStackIterator
+    class MemoryStackConstIterator
     {
     public:
-      MemoryStackIterator(const MemoryStack &memory);
+      MemoryStackConstIterator(const MemoryStack &memory);
 
-      bool HasNext();
+      bool HasNext() const;
 
-      Result GetNext(void * segment, s32 &segmentLength);
+      const void * GetNext(s32 &segmentLength);
 
     protected:
       s32 index;
       const MemoryStack &memory;
+    }; // class MemoryStackConstIterator
+
+    class MemoryStackIterator : public MemoryStackConstIterator
+    {
+    public:
+      MemoryStackIterator(MemoryStack &memory);
+
+      void * GetNext(s32 &segmentLength);
     }; // class MemoryStackIterator
   } // namespace Embedded
 } // namespace Anki

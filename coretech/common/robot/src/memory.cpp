@@ -126,7 +126,7 @@ namespace Anki
       for(size_t i=0; (i<MIN(LOOP_MAX,totalBytes)) && (index<usedBytes); i++) {
         index = static_cast<s32>( RoundUp<size_t>(bufferSizeT+index+HEADER_LENGTH, MEMORY_ALIGNMENT) - HEADER_LENGTH - bufferSizeT );
 
-        // A segment's size should only be multiples of MEMORY_ALIGNMENT, but even on the off
+        // A segment's size should only be multiples of MEMORY_ALIGNMENT, but check to be sure
         const s32 segmentLength = reinterpret_cast<const u32*>(bufferCharStar+index)[0];
         const s32 roundedSegmentLength = RoundUp<s32>(segmentLength, MEMORY_ALIGNMENT);
         AnkiConditionalWarnAndReturnValue(segmentLength == roundedSegmentLength, false, "Anki.MemoryStack.IsValid", "The segmentLength is not a multiple of MEMORY_ALIGNMENT");
@@ -211,17 +211,72 @@ namespace Anki
       return flags;
     }
 
-    MemoryStackIterator::MemoryStackIterator(const MemoryStack &memory)
-      : index(0), memory(memory)
+    MemoryStackConstIterator::MemoryStackConstIterator(const MemoryStack &memory)
+      : memory(memory)
+    {
+      const size_t bufferSizeT = reinterpret_cast<size_t>(memory.buffer);
+
+      this->index = static_cast<s32>( RoundUp<size_t>(bufferSizeT+MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH - bufferSizeT );
+    }
+
+    bool MemoryStackConstIterator::HasNext() const
+    {
+      if(this->index < memory.get_usedBytes())
+        return true;
+      else
+        return false;
+    }
+
+    const void * MemoryStackConstIterator::GetNext(s32 &segmentLength)
+    {
+      segmentLength = 0;
+
+      if(!this->HasNext()) {
+        return NULL;
+      }
+
+      const char * const bufferCharStar = reinterpret_cast<const char*>(memory.buffer);
+      const size_t bufferSizeT = reinterpret_cast<size_t>(memory.buffer);
+
+      // Get the start of the next valid segment
+      this->index = static_cast<s32>( RoundUp<size_t>(bufferSizeT+this->index+MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH - bufferSizeT );
+
+      // A segment's size should only be multiples of MEMORY_ALIGNMENT, but check to be sure
+      segmentLength = reinterpret_cast<const u32*>(bufferCharStar+this->index)[0];
+      const s32 roundedSegmentLength = RoundUp<s32>(segmentLength, MEMORY_ALIGNMENT);
+
+      AnkiConditionalErrorAndReturnValue(segmentLength == roundedSegmentLength, NULL, "Anki.MemoryStackConstIterator.GetNext", "The segmentLength is not a multiple of MEMORY_ALIGNMENT");
+
+      // Check if the segment end is beyond the end of the buffer (NOTE: this is not conservative enough, though errors should be caught later)
+      AnkiConditionalErrorAndReturnValue(segmentLength <= (memory.usedBytes-this->index-MemoryStack::HEADER_LENGTH-MemoryStack::FOOTER_LENGTH), NULL, "Anki.MemoryStackConstIterator.GetNext", "The segment end is beyond the end of the buffer");
+
+      const u32 segmentHeader = reinterpret_cast<const u32*>(bufferCharStar+this->index)[1];
+
+      AnkiConditionalErrorAndReturnValue(segmentHeader == MemoryStack::FILL_PATTERN_START, NULL, "Anki.MemoryStackConstIterator.GetNext", "segmentHeader == FILL_PATTERN_START");
+
+      const u32 segmentFooter = reinterpret_cast<const u32*>(bufferCharStar+this->index+MemoryStack::HEADER_LENGTH+segmentLength)[0];
+
+      AnkiConditionalErrorAndReturnValue(segmentFooter == MemoryStack::FILL_PATTERN_END, NULL, "Anki.MemoryStackConstIterator.GetNext", "segmentFooter == FILL_PATTERN_END");
+
+      const void * segmentToReturn = reinterpret_cast<const void*>(bufferCharStar + this->index + MemoryStack::HEADER_LENGTH);
+
+      this->index += MemoryStack::HEADER_LENGTH + segmentLength + MemoryStack::FOOTER_LENGTH;
+
+      return segmentToReturn;
+    }
+
+    MemoryStackIterator::MemoryStackIterator(MemoryStack &memory)
+      : MemoryStackConstIterator(memory)
     {
     }
 
-    bool MemoryStackIterator::HasNext()
+    void * MemoryStackIterator::GetNext(s32 &segmentLength)
     {
-    }
+      // To avoid code duplication, we'll use the const version of GetNext(), though our MemoryStack is not const
 
-    Result MemoryStackIterator::GetNext(void * segment, s32 &segmentLength)
-    {
+      const void * segment = MemoryStackConstIterator::GetNext(segmentLength);
+
+      return const_cast<void*>(segment);
     }
   } // namespace Embedded
 } // namespace Anki

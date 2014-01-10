@@ -54,6 +54,50 @@ Matlab matlab(false);
 
 BUFFER_LOCATION static char buffer[MAX_BYTES];
 
+GTEST_TEST(CoreTech_Common, MemoryStackIterator)
+{
+  const s32 segment1Length = 32;
+  const s32 segment2Length = 64;
+  const s32 segment3Length = 128;
+
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  void * segment1 = ms.Allocate(segment1Length);
+  void * segment2 = ms.Allocate(segment2Length);
+  void * segment3 = ms.Allocate(segment3Length);
+
+  ASSERT_TRUE(segment1 != NULL);
+  ASSERT_TRUE(segment2 != NULL);
+  ASSERT_TRUE(segment3 != NULL);
+
+  MemoryStackIterator msi(ms);
+
+  s32 segment1bLength = -1;
+  s32 segment2bLength = -1;
+  s32 segment3bLength = -1;
+
+  ASSERT_TRUE(msi.HasNext());
+  const void * segment1b = msi.GetNext(segment1bLength);
+  ASSERT_TRUE(segment1 == segment1b);
+  ASSERT_TRUE(segment1Length == segment1bLength);
+
+  ASSERT_TRUE(msi.HasNext());
+  const void * segment2b = msi.GetNext(segment2bLength);
+  ASSERT_TRUE(segment2 == segment2b);
+  ASSERT_TRUE(segment2Length == segment2bLength);
+
+  ASSERT_TRUE(msi.HasNext());
+  const void * segment3b = msi.GetNext(segment3bLength);
+  ASSERT_TRUE(segment3 == segment3b);
+  ASSERT_TRUE(segment3Length == segment3bLength);
+
+  ASSERT_FALSE(msi.HasNext());
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, ShaveAddTest)
 {
   const s32 numElements = 3000;
