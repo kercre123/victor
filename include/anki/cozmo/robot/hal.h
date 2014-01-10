@@ -41,7 +41,7 @@
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 
-#define USE_OFFBOARD_VISION 0
+#define USE_OFFBOARD_VISION 1
 
 // Uncomment to use USB instead of UART
 //#define USE_USB
