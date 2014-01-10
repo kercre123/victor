@@ -26,8 +26,11 @@ namespace Anki {
       typedef enum {
         TM_NONE,
         
-        // Attempts to dock to a block that is placed in front of it
-        TM_DOCK,
+        // Attempts to dock to a block that is placed in front of it and then place it on a block behind it.
+        TM_PICK_AND_PLACE,
+        
+        // Follows a changing straight line path. Tests path following during docking.
+        TM_DOCK_PATH,
         
         // Follows an example path. Requires localization
         TM_PATH_FOLLOW,

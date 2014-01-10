@@ -1,6 +1,7 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
+#include "pickAndPlaceController.h"
 #include "dockingController.h"
 #include "gripController.h"
 #include "headController.h"
@@ -80,7 +81,7 @@ namespace Anki {
         //// End of HeadTest //////
         
         
-        //////// DockTest /////////
+        //////// DockPathTest /////////
         enum {
           DT_STOP,
           DT_STRAIGHT,
@@ -91,8 +92,22 @@ namespace Anki {
         u8 dockPathState_ = DT_STOP;
         const f32 DOCK_PATH_TOGGLE_TIME_S = 3.f;
         
-        ////// End of DockTest ////
+        ////// End of DockPathTest ////
 
+        
+        //////// PickAndPlaceTest /////////
+        enum {
+          PAP_WAITING_FOR_PICKUP_BLOCK,
+          PAP_WAITING_FOR_PLACEMENT_BLOCK,
+          PAP_DOCKING,
+          PAP_PLACING
+        };
+        u8 pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
+        
+        const u16 BLOCK_TO_PICK_UP = 60;
+        const u16 BLOCK_TO_PLACE_ON = 50;
+        ////// End of PickAndPlaceTest ////
+        
         
         //////// StopTest /////////
         bool ST_go;
@@ -118,18 +133,62 @@ namespace Anki {
         return testMode_;
       }
       
+
+      ReturnCode PickAndPlaceTestInit()
+      {
+        PRINT("\n==== Starting PickAndPlaceTest =====\n");
+        ticCnt_ = 0;
+        return EXIT_SUCCESS;
+      }
+      
+      ReturnCode PickAndPlaceTestUpdate()
+      {
+        switch(pickAndPlaceState_)
+        {
+          case PAP_WAITING_FOR_PICKUP_BLOCK:
+            PickAndPlaceController::PickUpBlock(BLOCK_TO_PICK_UP, 0);
+            pickAndPlaceState_ = PAP_DOCKING;
+            break;
+          case PAP_DOCKING:
+            if (!PickAndPlaceController::IsBusy()) {
+              if (PickAndPlaceController::DidLastActionSucceed()) {
+                PickAndPlaceController::PlaceOnBlock(BLOCK_TO_PLACE_ON, 0, 0);
+                pickAndPlaceState_ = PAP_PLACING;
+              } else {
+                pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
+              }
+            }
+            break;
+          case PAP_PLACING:
+            if (!PickAndPlaceController::IsBusy()) {
+              if (PickAndPlaceController::DidLastActionSucceed()) {
+                pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
+              } else {
+                PickAndPlaceController::PlaceOnBlock(BLOCK_TO_PLACE_ON, 0, 0);
+                pickAndPlaceState_ = PAP_PLACING;
+              }
+            }
+            break;
+          default:
+            PRINT("WTF?\n");
+            break;
+        }
+        return EXIT_SUCCESS;
+      }
+
+      
       
       
       // Commands a path and executes it
-      ReturnCode DockTestInit()
+      ReturnCode DockPathTestInit()
       {
-        PRINT("\n==== Starting DockTest =====\n");
+        PRINT("\n==== Starting DockPathTest =====\n");
         ticCnt_ = 0;
         dockPathState_ = DT_STOP;
         return EXIT_SUCCESS;
       }
       
-      ReturnCode DockTestUpdate()
+      ReturnCode DockPathTestUpdate()
       {
         
         // Toggle dock path state
@@ -516,9 +575,13 @@ namespace Anki {
           case TM_NONE:
             updateFunc = NULL;
             break;
-          case TM_DOCK:
-            ret = DockTestInit();
-            updateFunc = DockTestUpdate;
+          case TM_PICK_AND_PLACE:
+            ret = PickAndPlaceTestInit();
+            updateFunc = PickAndPlaceTestUpdate;
+            break;
+          case TM_DOCK_PATH:
+            ret = DockPathTestInit();
+            updateFunc = DockPathTestUpdate;
             break;
           case TM_PATH_FOLLOW:
             ret = PathFollowTestInit();

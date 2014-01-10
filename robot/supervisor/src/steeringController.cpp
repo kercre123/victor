@@ -305,7 +305,7 @@ namespace Anki {
           
           // HACK!
           //SetGains(DEFAULT_STEERING_K1, DEFAULT_STEERING_K2);
-          if (DockingController::IsDockingOrPlacing()) {
+          if (DockingController::IsBusy()) {
             //SetGains(DEFAULT_STEERING_K1, 5.f);
             fidx = CLIP(fidx, -4, 4);  // TODO: Loosen this up the closer we get to the block?????
             pathRadErr = CLIP(pathRadErr, -0.2, 0.2);

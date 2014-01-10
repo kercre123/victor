@@ -27,17 +27,35 @@ namespace Anki {
     // multiple times.
     const s32 VISION_TIME_STEP = 20;
     
-    // TODO: Currently set to Webots specs
-    const f32 LIFT_JOINT_HEIGHT = 27.f + (0.5f*WHEEL_DIAMETER_MM);
-    const f32 LIFT_LENGTH = 97.5f;
-    const f32 LIFT_HEIGHT_LOWDOCK  = 5.f;
-    const f32 LIFT_HEIGHT_HIGHDOCK = 90.f;
-    const f32 LIFT_HEIGHT_CARRY    = 95.f;
-#else
-    
+    // Height of main lift joint where the arm attaches to robot body
     const f32 LIFT_JOINT_HEIGHT = 45.f;
-    const f32 LIFT_LENGTH = 91.f;
-    const f32 LIFT_HEIGHT_LOWDOCK  = 22.f;
+    
+    // Distance between main lift joint and the joint where arm attaches to fork assembly
+    const f32 LIFT_ARM_LENGTH = 95.f;
+    
+    // Height of the actual fork relative to the joint where the lift arm attaches to the fork assembly
+    const f32 LIFT_FORK_HEIGHT_REL_TO_ARM_END = 0.f;
+    
+    // The height of the fork at various configurations
+    const f32 LIFT_HEIGHT_LOWDOCK  = 25.42f;  // Actual limit in proto is closer to 20.4mm, but there is a weird
+                                              // issue with moving the lift when it is at a limit. The lift arm
+                                              // flies off of the robot and comes back! So for now, we just don't
+                                              // drive the lift down that far. We also skip calibration in sim.
+    const f32 LIFT_HEIGHT_HIGHDOCK = 100.f;
+    const f32 LIFT_HEIGHT_CARRY    = 105.f;
+#else
+
+    // Height of main lift joint where the arm attaches to robot body
+    const f32 LIFT_JOINT_HEIGHT = 45.f;
+    
+    // Distance between main lift joint and the joint where arm attaches to fork assembly
+    const f32 LIFT_ARM_LENGTH = 91.f;
+    
+    // Height of the actual fork relative to the joint where the lift arm attaches to the fork assembly
+    const f32 LIFT_FORK_HEIGHT_REL_TO_ARM_END = -15.f;
+    
+    // The height of the fork at various configurations
+    const f32 LIFT_HEIGHT_LOWDOCK  = 8.f;
     const f32 LIFT_HEIGHT_HIGHDOCK = 65.f;
     const f32 LIFT_HEIGHT_CARRY    = 70.f;
     

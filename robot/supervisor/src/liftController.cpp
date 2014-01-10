@@ -15,7 +15,7 @@ namespace Anki {
       
       namespace {
         // Re-calibrates lift position whenever LIFT_HEIGHT_LOW is commanded.
-        #define RECALIBRATE_AT_LOW_HEIGHT 1
+        #define RECALIBRATE_AT_LOW_HEIGHT 0
         
         const f32 MAX_LIFT_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001;
         
@@ -33,6 +33,9 @@ namespace Anki {
         const f32 MIN_POWER = 0.3;
         f32 minPower_ = 0.f;
         
+        // Angle of the main lift arm.
+        // On the real robot, this is the angle between the lower lift joint on the robot body
+        // and the lower lift joint on the forklift assembly.
         Radians currentAngle_ = 0.f;
         Radians desiredAngle_ = 0.f;
         f32 currDesiredAngle_ = 0.f;
@@ -76,11 +79,11 @@ namespace Anki {
       } // "private" members
 
       f32 Height2Rad(f32 height_mm) {
-        return asinf((height_mm - LIFT_JOINT_HEIGHT)/LIFT_LENGTH);
+        return asinf((height_mm - LIFT_JOINT_HEIGHT - LIFT_FORK_HEIGHT_REL_TO_ARM_END)/LIFT_ARM_LENGTH);
       }
       
       f32 Rad2Height(f32 angle) {
-        return (sinf(angle) * LIFT_LENGTH) + LIFT_JOINT_HEIGHT;
+        return (sinf(angle) * LIFT_ARM_LENGTH) + LIFT_JOINT_HEIGHT + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
       }
       
       
@@ -106,8 +109,14 @@ namespace Anki {
       void StartCalibrationRoutine()
       {
         PRINT("Starting Lift calibration\n");
+#ifdef SIMULATOR
+        // Skipping actual calibration routine in sim due to weird lift behavior when attempting to move it when
+        // it's at the joint limit.  The arm flies off the robot!
+        isCalibrated_ = true;
+#else
         calState_ = LCS_LOWER_LIFT;
         isCalibrated_ = false;
+#endif
       }
       
       bool IsCalibrated()
@@ -135,7 +144,8 @@ namespace Anki {
               break;
               
             case LCS_LOWER_LIFT:
-              HAL::MotorSetPower(HAL::MOTOR_LIFT, -0.4);
+              power_ = -0.4;
+              HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
               lastLiftMovedTime_us = HAL::GetMicroCounter();
               calState_ = LCS_WAIT_FOR_STOP;
               break;
@@ -150,7 +160,8 @@ namespace Anki {
 #endif
                 if (HAL::GetMicroCounter() - lastLiftMovedTime_us > LIFT_STOP_TIME) {
                   // Turn off motor
-                  HAL::MotorSetPower(HAL::MOTOR_LIFT, 0.0);
+                  power_ = 0.0;
+                  HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
                   
                   // Set timestamp to be used in next state to wait for motor to "relax"
                   lastLiftMovedTime_us = HAL::GetMicroCounter();
@@ -210,29 +221,18 @@ namespace Anki {
         // Get encoder speed measurements
         f32 measuredSpeed = Cozmo::HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
         
-        // Direction of motion
-        f32 dir = 1;
-
-        // If -ve or no power is applied, assume lift is going down.
-        if (power_ < FLOATING_POINT_COMPARISON_TOLERANCE) {
-          dir = -1;
-        }
-        
-        // Filter speed
-        measuredSpeed *= dir;
         radSpeed_ = (measuredSpeed *
                      (1.0f - SPEED_FILTERING_COEFF) +
                      (radSpeed_ * SPEED_FILTERING_COEFF));
         
         // Update position
-        currentAngle_ += dir * (HAL::MotorGetPosition(HAL::MOTOR_LIFT) - prevHalPos_);
-        prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_LIFT);
+        currentAngle_ += (HAL::MotorGetPosition(HAL::MOTOR_LIFT) - prevHalPos_);
         
 #if(DEBUG_LIFT_CONTROLLER)
-        PERIODIC_PRINT(100, "LIFT FILT: speed %f, speedFilt %f, currentAngle %f, prevPos %f\n",
-              measuredSpeed, radSpeed_, currentAngle_.ToFloat(), prevHalPos_);
+        PRINT("LIFT FILT: speed %f, speedFilt %f, currentAngle %f, currHalPos %f, prevPos %f, pwr %f\n",
+              measuredSpeed, radSpeed_, currentAngle_.ToFloat(), HAL::MotorGetPosition(HAL::MOTOR_LIFT), prevHalPos_, power_);
 #endif
-        
+        prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_LIFT);
       }
       
       
@@ -254,6 +254,12 @@ namespace Anki {
         
         limitingDetected_ = false;
         inPosition_ = false;
+        
+        if (FLT_NEAR(angleError_,0.f)) {
+          inPosition_ = true;
+          PRINT("Lift: Already at desired position\n");
+          return;
+        }
 
         // Start profile of lift trajectory
         vpg_.StartProfile(radSpeed_, currentAngle_.ToFloat(),
@@ -288,7 +294,10 @@ namespace Anki {
           
           // Get the current desired lift angle
           vpg_.Step(currDesiredRadVel_, currDesiredAngle_);
-          
+#if(DEBUG_LIFT_CONTROLLER)
+          PRINT("LIFT desVel: %f, desAng: %f, currAng: %f\n",
+                currDesiredRadVel_, currDesiredAngle_, currentAngle_.ToFloat());
+#endif
           
           // Simple proportional control for now
           // TODO: better controller?
@@ -299,7 +308,7 @@ namespace Anki {
             angleErrorSum_ = 0.f;
             
             // If desired angle is low position, let it fall through to recalibration
-            if (!RECALIBRATE_AT_LOW_HEIGHT || desiredAngle_ != LIFT_ANGLE_LOW) {
+            if (!RECALIBRATE_AT_LOW_HEIGHT || desiredAngle_.ToFloat() != LIFT_ANGLE_LOW) {
               power_ = 0.f;
               
               if (desiredAngle_ == currDesiredAngle_) {
@@ -335,8 +344,8 @@ namespace Anki {
           // assume we've hit the limit and recalibrate.
           if (limitingDetected_ ||
               ((power_ < 0)
-              && (desiredAngle_ == LIFT_ANGLE_LOW)
-              && (desiredAngle_ == currDesiredAngle_)
+              && (desiredAngle_.ToFloat() == LIFT_ANGLE_LOW)
+              && (desiredAngle_.ToFloat() == currDesiredAngle_)
               && (ABS(angleError_) < 0.1)
               && NEAR_ZERO(HAL::MotorGetSpeed(HAL::MOTOR_LIFT)))) {
             

@@ -416,7 +416,7 @@ namespace Anki
 #endif
         }
         
-        if (!DockingController::IsDockingOrPlacing()) {
+        if (!DockingController::IsBusy()) {
           // Check that starting error is not too big
           // TODO: Check for excessive heading error as well?
           if (distToPath_m_ > 0.05) {

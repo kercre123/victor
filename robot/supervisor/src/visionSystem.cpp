@@ -260,6 +260,10 @@ namespace Anki {
 
       }
       
+      void StopTracking()
+      {
+        mode_ = IDLE;
+      }
       
       ReturnCode SetDockingBlock(const u16 blockTypeToDockWith)
       {
