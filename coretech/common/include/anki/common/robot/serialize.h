@@ -1,9 +1,9 @@
 /**
-File: sequences_declarations.h
+File: serialize.h
 Author: Peter Barnum
 Created: 2013
 
-A Sequence is a mathematically-defined, ordered list. The sequence classes allow for operations on sequences, without requiring them to be explicitly evaluated.
+Definitions for serialize_declarations.h
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
@@ -12,30 +12,56 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifndef _ANKICORETECHEMBEDDED_COMMON_SERIALIZE_H_
 #define _ANKICORETECHEMBEDDED_COMMON_SERIALIZE_H_
 
-#include "anki/common/robot/config.h"
+#include "anki/common/robot/serialize_declarations.h"
 #include "anki/common/robot/flags.h"
-#include "anki/common/robot/memory.h"
+#include "anki/common/robot/array2d.h"
 
 namespace Anki
 {
   namespace Embedded
   {
-    class SerializedBuffer
+#pragma mark --- Definitions ---
+
+    template<typename Type> static Result SerializedBuffer::EncodeBasicType(u32 &code)
     {
-    public:
-      SerializedBuffer() : buffer() { }
-      SerializedBuffer(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(true,true));
+      code = 0;
 
-    protected:
-      MemoryStack buffer;
-    }; // class SerializedBuffer
+      if(!Flags::TypeCharacteristics<Type>::isBasicType) {
+        return RESULT_FAIL;
+      }
 
-    class SerializedBufferIterator
+      if(Flags::TypeCharacteristics<Type>::isInteger) {
+        code |= 0xFF;
+      }
+
+      if(Flags::TypeCharacteristics<Type>::isSigned) {
+        code |= 0xFF00;
+      }
+
+      if(Flags::TypeCharacteristics<Type>::isFloat) {
+        code |= 0xFF0000;
+      }
+
+      code |= sizeof(Type) << 24;
+
+      return RESULT_OK;
+    }
+
+    template<typename Type> Result SerializedBuffer::PushBack(Type &value)
     {
-    public:
+      u32 code = 0;
 
-    protected:
-    }; // class SerializedBufferIterator
+      if(SerializedBuffer::EncodeBasicType(code) != RESULT_OK)
+        return RESULT_FAIL;
+
+      void * segment = PushBack(NULL, 4+sizeof(Type));
+    }
+
+    template<typename Type> Result SerializedBuffer::PushBack(Array<Type> &value)
+    {
+    }
+
+#pragma mark --- Specializations ---
   } // namespace Embedded
 } //namespace Anki
 
