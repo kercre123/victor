@@ -17,6 +17,7 @@
 
 #include "json/json-forwards.h"
 #include <string>
+#include <vector>
 
 namespace Anki
 {
@@ -62,6 +63,8 @@ public:
   // Number of children is 0 for a leaf, nonzero if there are children
   unsigned int GetNumberOfChildren() const;
 
+  // Returns a vector of keys at this node
+  std::vector<std::string> GetKeys() const;
 
 private:
   ConfigTree(Json::Value tree);

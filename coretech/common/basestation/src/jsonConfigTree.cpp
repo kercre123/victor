@@ -143,5 +143,10 @@ unsigned int ConfigTree::GetNumberOfChildren() const
   return tree_->size();
 }
 
+std::vector<std::string> ConfigTree::GetKeys() const
+{
+  return tree_->getMemberNames();
+}
+
 }
 

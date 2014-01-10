@@ -44,6 +44,13 @@ GTEST_TEST(TestConfigTreeJsonCpp, JsonCppWorks)
   EXPECT_EQ(list1[3].asInt(), 4);
 
   EXPECT_EQ(root["dict"]["list"][1]["bv"].asBool(), true);
+
+  Json::Value::Members members = root["dict"]["imporatantKeys"].getMemberNames();
+  ASSERT_EQ(members.size(), 2);
+  
+  EXPECT_TRUE(members[0] == "key1" || members[1] == "key1");
+  EXPECT_TRUE(members[0] == "key2" || members[1] == "key2");
+
 }
 
 GTEST_TEST(TestConfigTreeJsonCpp, ConfigTreeInterface)
@@ -73,6 +80,25 @@ GTEST_TEST(TestConfigTreeJsonCpp, ConfigTreeInterface)
   EXPECT_EQ(list1[3].AsInt(), 4);
 
   EXPECT_EQ((*tree)["dict"]["list"][1]["bv"].AsBool(), true);
+
+  vector<string> keys = (*tree)["dict"]["imporatantKeys"].GetKeys();
+  ASSERT_EQ(keys.size(), 2);
+
+  if(keys[0] == "key1") {
+    EXPECT_EQ((*tree)["dict"]["imporatantKeys"][keys[0]].AsInt(), 5678);
+
+    EXPECT_EQ(keys[1], "key2");
+    EXPECT_EQ((*tree)["dict"]["imporatantKeys"][keys[1]]["thing"].AsString(), "stuff");
+  }
+  else if(keys[0] == "key2") {
+    EXPECT_EQ((*tree)["dict"]["imporatantKeys"][keys[0]]["thing"].AsString(), "stuff");
+
+    EXPECT_EQ(keys[1], "key1");
+    EXPECT_EQ((*tree)["dict"]["imporatantKeys"][keys[1]].AsInt(), 5678);
+  }
+  else {
+    FAIL() << "key 0 was "<<keys[0];
+  }
 
   delete tree;
 }
