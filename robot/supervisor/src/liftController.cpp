@@ -14,6 +14,17 @@ namespace Anki {
       
       
       namespace {
+        
+        // HACK: For use on robots with no position sensors.
+        // Tuned for physical robot only, not simulation robot.
+        #define OPEN_LOOP_LIFT_CONTROL 1
+        
+#if(OPEN_LOOP_LIFT_CONTROL)
+        f32 currHeight_ = LIFT_HEIGHT_LOWDOCK;
+        f32 desiredHeight_;
+        u32 liftStopTimeUS_;
+#endif
+        
         // Re-calibrates lift position whenever LIFT_HEIGHT_LOW is commanded.
         #define RECALIBRATE_AT_LOW_HEIGHT 0
         
@@ -156,7 +167,7 @@ namespace Anki {
 #ifdef SIMULATOR
                 const u32 LIFT_STOP_TIME = 200000;
 #else
-                const u32 LIFT_STOP_TIME = 6000000;
+                const u32 LIFT_STOP_TIME = 2000000;
 #endif
                 if (HAL::GetMicroCounter() - lastLiftMovedTime_us > LIFT_STOP_TIME) {
                   // Turn off motor
@@ -238,6 +249,53 @@ namespace Anki {
       
       void SetDesiredHeight(const f32 height_mm)
       {
+        
+#if(OPEN_LOOP_LIFT_CONTROL)
+        desiredHeight_ = height_mm;
+        inPosition_ = false;
+        power_ = 0.f;
+        f32 liftMotionTime = 0;
+        
+        if (currHeight_ == LIFT_HEIGHT_LOWDOCK) {
+          if (desiredHeight_ == LIFT_HEIGHT_CARRY) {
+            liftMotionTime = 3.5;      // with block on lift
+            power_ = 0.5;
+          } else if (desiredHeight_ == LIFT_HEIGHT_HIGHDOCK) {
+            liftMotionTime = 3;
+            power_ = 0.5;
+          } else {
+            inPosition_ = true;
+          }
+        }
+        else if (currHeight_ == LIFT_HEIGHT_HIGHDOCK) {
+          if (desiredHeight_ == LIFT_HEIGHT_CARRY) {
+            liftMotionTime = 0.5; // with block on lift
+            power_ = 0.5;
+          } else if (desiredHeight_ == LIFT_HEIGHT_LOWDOCK) {
+            liftMotionTime = 2;
+            power_ = -0.3;
+          } else {
+            inPosition_ = true;
+          }
+        }
+        else if (currHeight_ == LIFT_HEIGHT_CARRY) {
+          if (desiredHeight_ == LIFT_HEIGHT_LOWDOCK) {
+            liftMotionTime = 3;
+            power_ = -0.3;
+          } else if (desiredHeight_ == LIFT_HEIGHT_HIGHDOCK) {
+            liftMotionTime = 0.2;  // with block on lift
+            power_ = -0.3;
+          } else {
+            inPosition_ = true;
+          }
+        }
+        
+        liftStopTimeUS_ = HAL::GetMicroCounter() + liftMotionTime * 1000000;
+        HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
+        PRINT("LIFT MOVING (POWER = %f, TIME = %f s)\n", power_, liftMotionTime);
+        return;
+#endif
+        
         // Convert desired height into the necessary angle:
 #if(DEBUG_LIFT_CONTROLLER)
         PRINT("LIFT DESIRED HEIGHT: %f mm (curr height %f mm)\n", height_mm, GetHeightMM());
@@ -291,6 +349,17 @@ namespace Anki {
         }
         
         if(not inPosition_) {
+          
+#if(OPEN_LOOP_LIFT_CONTROL)
+          if (HAL::GetMicroCounter() > liftStopTimeUS_) {
+            PRINT("STOPPING LIFT\n");
+            currHeight_ = desiredHeight_;
+            power_ = 0;
+            HAL::MotorSetPower(HAL::MOTOR_LIFT, 0);
+            inPosition_ = true;
+          }
+          return EXIT_SUCCESS;
+#endif
           
           // Get the current desired lift angle
           vpg_.Step(currDesiredRadVel_, currDesiredAngle_);

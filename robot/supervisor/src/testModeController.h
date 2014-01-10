@@ -41,6 +41,9 @@ namespace Anki {
         // Moves lift up and down
         TM_LIFT,
         
+        // Toggles between 3 main lift heights: low dock, carry, and high dock
+        TM_LIFT_TOGGLE,
+        
         // Tilts head up and down
         TM_HEAD,
         

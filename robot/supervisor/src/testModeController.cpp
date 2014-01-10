@@ -399,6 +399,39 @@ namespace Anki {
         return EXIT_SUCCESS;
       }
       
+      ReturnCode LiftToggleTestInit()
+      {
+        PRINT("\n==== Starting LiftToggleTest =====\n");
+        return EXIT_SUCCESS;
+      }
+      
+      
+      ReturnCode LiftToggleTestUpdate()
+      {
+
+        static f32 liftHeight = LIFT_HEIGHT_LOWDOCK;
+        static u32 inPositionCycles = 0;
+        
+        if (LiftController::IsInPosition()) {
+          if (inPositionCycles++ > 500) {
+            
+            if(liftHeight == LIFT_HEIGHT_LOWDOCK) {
+              liftHeight = LIFT_HEIGHT_CARRY;
+            } else if (liftHeight == LIFT_HEIGHT_CARRY) {
+              liftHeight = LIFT_HEIGHT_HIGHDOCK;
+            } else if (liftHeight == LIFT_HEIGHT_HIGHDOCK) {
+              liftHeight = LIFT_HEIGHT_LOWDOCK;
+            }
+          
+            PRINT("SET LIFT TO %f mm\n", liftHeight);
+            LiftController::SetDesiredHeight(liftHeight);
+            inPositionCycles = 0;
+          }
+        }
+        
+        return EXIT_SUCCESS;
+      }
+      
       
       ReturnCode HeadTestInit()
       {
@@ -594,6 +627,10 @@ namespace Anki {
           case TM_LIFT:
             ret = LiftTestInit();
             updateFunc = LiftTestUpdate;
+            break;
+          case TM_LIFT_TOGGLE:
+            ret = LiftToggleTestInit();
+            updateFunc = LiftToggleTestUpdate;
             break;
           case TM_HEAD:
             ret = HeadTestInit();
