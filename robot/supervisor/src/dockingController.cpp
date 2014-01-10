@@ -51,8 +51,8 @@ namespace Anki {
         const u32 GIVEUP_DOCKING_TIMEOUT_US = 1000000;
         
         const u16 DOCK_APPROACH_SPEED_MMPS = 20;
-        const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 50;
-        const u16 DOCK_APPROACH_ACCEL_MMPS2 = 500;
+        const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 30;
+        const u16 DOCK_APPROACH_ACCEL_MMPS2 = 200;
         
         // Last ID of block we tried to dock to
         u16 dockBlockId_ = 0;
@@ -66,6 +66,9 @@ namespace Anki {
         
         // Whether or not the last docking attempt succeeded
         bool success_  = false;
+        
+        // Whether or not a valid path was generated from the received error signal
+        bool createdValidPath_ = false;
         
         // Whether or not we're already following the block surface normal as a path
         bool followingBlockNormalPath_ = false;
@@ -164,7 +167,7 @@ namespace Anki {
             }
             
             // If finished traversing path
-            if (!PathFollower::IsTraversingPath()) {
+            if (createdValidPath_ && !PathFollower::IsTraversingPath()) {
               PRINT("*** DOCKING SUCCESS ***\n");
               ResetDocker();
               success_ = true;
@@ -339,7 +342,13 @@ namespace Anki {
 
         
         // Start following path
-        PathFollower::StartPathTraversal();
+        createdValidPath_ = PathFollower::StartPathTraversal();
+        
+        // Debug
+        if (!createdValidPath_) {
+          PRINT("ERROR DockingController: Failed to create path\n");
+          PathFollower::PrintPath();
+        }
         
       }
       

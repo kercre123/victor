@@ -17,7 +17,12 @@ namespace Anki {
         
         // HACK: For use on robots with no position sensors.
         // Tuned for physical robot only, not simulation robot.
+#ifdef SIMULATOR
+        #define OPEN_LOOP_LIFT_CONTROL 0
+#else
         #define OPEN_LOOP_LIFT_CONTROL 1
+#endif
+        
         
 #if(OPEN_LOOP_LIFT_CONTROL)
         f32 currHeight_ = LIFT_HEIGHT_LOWDOCK;
@@ -258,10 +263,10 @@ namespace Anki {
         
         if (currHeight_ == LIFT_HEIGHT_LOWDOCK) {
           if (desiredHeight_ == LIFT_HEIGHT_CARRY) {
-            liftMotionTime = 3.5;      // with block on lift
+            liftMotionTime = 2.8;      // with block on lift
             power_ = 0.5;
           } else if (desiredHeight_ == LIFT_HEIGHT_HIGHDOCK) {
-            liftMotionTime = 3;
+            liftMotionTime = 2.5;
             power_ = 0.5;
           } else {
             inPosition_ = true;
@@ -283,7 +288,7 @@ namespace Anki {
             liftMotionTime = 3;
             power_ = -0.3;
           } else if (desiredHeight_ == LIFT_HEIGHT_HIGHDOCK) {
-            liftMotionTime = 0.2;  // with block on lift
+            liftMotionTime = 0.33;  // with block on lift
             power_ = -0.3;
           } else {
             inPosition_ = true;

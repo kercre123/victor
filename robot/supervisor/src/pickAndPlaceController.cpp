@@ -33,8 +33,8 @@ namespace Anki {
         
         // Distance between the robot origin and the distance along the robot's x-axis
         // to the lift when it is in the low docking position.
-        const f32 ORIGIN_TO_LOW_LIFT_DIST_M = 0.04; //0.02; // TODO: Measure this!
-        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_M = 0.017; // TODO: Measure this!
+        const f32 ORIGIN_TO_LOW_LIFT_DIST_M = 0.035;
+        const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_M = 0.0;
 
         Mode mode_ = IDLE;
         Action action_ = DOCKING_LOW;

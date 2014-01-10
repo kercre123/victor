@@ -432,6 +432,11 @@ namespace Anki
       }
       
       
+      void PrintPath()
+      {
+        path_.PrintPath();
+      }
+      
       void PrintPathSegment(s16 segment)
       {
         path_.PrintSegment(segment);
