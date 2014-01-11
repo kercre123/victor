@@ -392,9 +392,10 @@ if __name__ == '__main__':
   if DETECTED_PLATFORM == 'win32':
     os.environ['CYGWIN'] = 'nodosfilewarning'
       
-  if not isTest:
+  if isTest:
+    LEON_ASM_C_CXX_OPT += '-DDEFAULT_BAUDRATE=1000000 '
+  else:
     LEON_SOURCE += addSources('supervisor/src')
-    pass
   
   if emulateShave:
     SHAVES_TO_USE = []

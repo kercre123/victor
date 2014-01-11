@@ -24,6 +24,22 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/arrayPatterns.h"
 #include "anki/common/robot/shaveKernels_c.h"
 
+#if defined(USING_MOVIDIUS_COMPILER)
+//#include "anki/cozmo/robot/hal.h"
+#endif
+
+namespace Anki
+{
+  namespace Cozmo
+  {
+    namespace HAL
+    {
+      void USBSendBuffer(const u8* buffer, const u32 size);
+      int USBPutChar(int c);
+    }
+  }
+}
+
 using namespace Anki::Embedded;
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
@@ -56,6 +72,21 @@ BUFFER_LOCATION static char buffer[MAX_BYTES];
 
 GTEST_TEST(CoreTech_Common, MemoryStackIterator)
 {
+  //u32 buffer[100];
+  //for(u32 i=0; i<100; i++) {
+  //  buffer[i] = i+1;
+  //}
+
+  ////Anki::Cozmo::HAL::USBPutChar('\n');
+  ////Anki::Cozmo::HAL::USBPutChar('\n');
+  ////Anki::Cozmo::HAL::USBPutChar('\n');
+  ////Anki::Cozmo::HAL::USBPutChar('\n');
+  ////printf("\n\n\n\n");
+
+  //Anki::Cozmo::HAL::USBSendBuffer(reinterpret_cast<u8*>(&buffer[0]), 100*sizeof(u32));
+
+  //while(1) {}
+
   const s32 segment1Length = 32;
   const s32 segment2Length = 64;
   const s32 segment3Length = 128;
@@ -2677,6 +2708,7 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, MemoryStackIterator);
   CALL_GTEST_TEST(CoreTech_Common, ShaveAddTest);
   CALL_GTEST_TEST(CoreTech_Common, ShavePrintfTest);
   CALL_GTEST_TEST(CoreTech_Common, MatrixTranspose);

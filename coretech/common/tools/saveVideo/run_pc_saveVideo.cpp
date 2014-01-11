@@ -19,22 +19,23 @@ _Check_return_opt_ _CRTIMP int __cdecl printf(_In_z_ _Printf_format_string_ cons
 
 using namespace std;
 
-class ThreadSafeStringBuffer
+template<typename Type> class ThreadSafeQueue
 {
 public:
-  ThreadSafeStringBuffer()
+  ThreadSafeQueue()
   {
     mutex = CreateMutex(NULL, FALSE, NULL);
-  } // ThreadSafeStringBuffer()
+    buffers = queue<Type>();
+  } // ThreadSafeQueue()
 
-  string Pop()
+  Type Pop()
   {
-    string value;
+    Type value;
 
     WaitForSingleObject(mutex, INFINITE);
 
     if(buffers.empty()) {
-      value = "";
+      value = static_cast<Type>(0);
     } else {
       value = buffers.front();
       buffers.pop();
@@ -45,7 +46,7 @@ public:
     return value;
   } // string Pop()
 
-  void Push(string newString)
+  void Push(Type newString)
   {
     WaitForSingleObject(mutex, INFINITE);
 
@@ -73,14 +74,14 @@ public:
 protected:
   HANDLE mutex;
 
-  queue<string> buffers;
-}; // class ThreadSafeStringBuffer
+  queue<Type> buffers;
+}; // class ThreadSafeQueue
 
 // Based off example at http://msdn.microsoft.com/en-us/library/windows/desktop/ms682516(v=vs.85).aspx
 DWORD WINAPI PrintfBuffers(LPVOID lpParam)
 {
   HANDLE hStdout;
-  ThreadSafeStringBuffer *buffers = (ThreadSafeStringBuffer*)lpParam;
+  ThreadSafeQueue<char*> *buffers = (ThreadSafeQueue<char*>*)lpParam;
 
   TCHAR msgBuf[PRINTF_BUFFER_SIZE];
   size_t cchStringSize;
@@ -91,9 +92,10 @@ DWORD WINAPI PrintfBuffers(LPVOID lpParam)
   while(true) {
     if(buffers->IsEmpty()) {
       Sleep(10);
+      continue;
     }
 
-    const string nextString = buffers->Pop();
+    char * nextString = buffers->Pop();
 
     // Make sure there is a console to receive output results.
     hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -101,9 +103,11 @@ DWORD WINAPI PrintfBuffers(LPVOID lpParam)
       return 1;
 
     // Print the parameter values using thread-safe functions.
-    StringCchPrintf(msgBuf, PRINTF_BUFFER_SIZE, nextString.data());
+    StringCchPrintf(msgBuf, PRINTF_BUFFER_SIZE, nextString);
     StringCchLength(msgBuf, PRINTF_BUFFER_SIZE, &cchStringSize);
     WriteConsole(hStdout, msgBuf, (DWORD)cchStringSize, &dwChars, NULL);
+
+    free(nextString); nextString = NULL;
   } // while(true)
 
   return 0;
@@ -111,12 +115,10 @@ DWORD WINAPI PrintfBuffers(LPVOID lpParam)
 
 int main(int argc, char ** argv)
 {
-  ThreadSafeStringBuffer buffers;
+  ThreadSafeQueue<char*> buffers = ThreadSafeQueue<char*>();
   Serial serial;
 
-  buffers = ThreadSafeStringBuffer();
-
-  if(serial.Open(8, 1500000) != RESULT_OK)
+  if(serial.Open(8, 1000000) != RESULT_OK)
     return -1;
 
   DWORD threadId;
@@ -128,18 +130,42 @@ int main(int argc, char ** argv)
     0,                      // use default creation flags
     &threadId);   // returns the thread identifier
 
-  const s32 bufferLength = 10000;
+  SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
+
+  const s32 bufferLength = 1024;
+
   void * buffer = malloc(bufferLength);
 
   while(true) {
+    if(!buffer)
+    {
+      printf("\n\nCould not allocate buffer\n\n");
+      return -4;
+      //continue;
+    }
+
     DWORD bytesRead = 0;
-    if(serial.Read(buffer, bufferLength-1, bytesRead) != RESULT_OK)
+    if(serial.Read(buffer, bufferLength-2, bytesRead) != RESULT_OK)
       return -3;
 
     if(bytesRead > 0) {
-      reinterpret_cast<char*>(buffer)[bytesRead+1] = '\0';
+      /*     for(u32 i=0; i<bytesRead; i+=4) {
+      u32 value = 0;
+      value = static_cast<u32>(reinterpret_cast<char*>(buffer)[i+3]) +
+      (static_cast<u32>(reinterpret_cast<char*>(buffer)[i+2])<<8) +
+      (static_cast<u32>(reinterpret_cast<char*>(buffer)[i+1])<<16) +
+      (static_cast<u32>(reinterpret_cast<char*>(buffer)[i])<<24);
+
+      printf("%d ", static_cast<s32>(value));
+      }
+
+      printf("\n");
+      */
+      reinterpret_cast<char*>(buffer)[bytesRead] = '\0';
 
       buffers.Push(reinterpret_cast<char*>(buffer));
+
+      buffer = malloc(bufferLength);
     }
   }
 
