@@ -42,6 +42,11 @@ classdef VisionMarkerLibrary < handle
         end % constructor VisionMarkerLibrary()
         
         function AddMarker(this, img, varargin)
+            
+            assert(~isempty(varargin) && mod(length(varargin),2)==0, ...
+                ['Expecting name value pairs to create a struct entry ' ...
+                'for this marker.']);
+            
             if ischar(img)
                 if ~exist(img, 'file')
                     error('Image file "%s" does not exist.', img);
@@ -50,16 +55,16 @@ classdef VisionMarkerLibrary < handle
             end
             
             marker = VisionMarker(img);
-            key = VisionMarkerLibrary.CodeToKey(marker.code);
+            key = VisionMarkerLibrary.MarkerToKey(marker);
             this.knownMarkers(key) = struct(varargin{:});
         end
         
         function markerProperties = IdentifyMarker(this, marker)
-            key = VisionMarkerLibrary.CodeToKey(marker.code);
+            key = VisionMarkerLibrary.MarkerToKey(marker);
             if this.knownMarkers.isKey(key)
                 markerProperties = this.knownMarkers(key); 
             else
-                warning('Unrecognized marker.');
+                %warning('Unrecognized marker.');
                 markerProperties = [];
             end
         end
@@ -72,9 +77,8 @@ classdef VisionMarkerLibrary < handle
     
     methods(Access = 'protected', Static = true)
         
-        function key = CodeToKey(code)
-            assert(islogical(code), 'Code should be LOGICAL.');
-            key = char(uint8(code));
+        function key = MarkerToKey(marker)
+            key = char(uint8([marker.code(:); marker.cornerCode(:)]));
         end
     end
     
