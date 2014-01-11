@@ -45,13 +45,15 @@ if ~isempty(quads)
             corners(3,:) - corners(1,:)];
         assert(abs(det(A)) >= minQuadArea, 'Area of quad too small.');
         
-        marker = BlockMarker2D(img, quads{i_quad}, quadTforms{i_quad});
-               
-        validQuads(i_quad) = marker.isValid;
-        if marker.isValid
-            markers{end+1} = marker; %#ok<AGROW>
-        end
+        %marker = BlockMarker2D(img, quads{i_quad}, quadTforms{i_quad});
+%                        
+%         validQuads(i_quad) = marker.isValid;
+%         if marker.isValid
+%             markers{end+1} = marker; %#ok<AGROW>
+%         end
         
+markers{end+1} = VisionMarker(img, corners); %#ok<AGROW>
+
         if DEBUG_DISPLAY
             if markers{end}.isValid
                 draw(markers{end}, 'where', h_quadAxes(2));
