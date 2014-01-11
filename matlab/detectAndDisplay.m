@@ -1,4 +1,8 @@
-function detectAndDisplay(img, h_axes, h_img)
+function detectAndDisplay(img, h_axes, h_img, markerLibrary)
+
+if nargin < 4
+    markerLibrary = [];
+end
 
 %persistent h_detections;
 
@@ -26,11 +30,33 @@ end
 if numDetections > 0
     hold(h_axes, 'on')
     for i = 1:numDetections
-        draw(detections{i}, 'where', h_axes, 'drawTextLabels', 'short');
+        if isempty(markerLibrary)
+            detections{i}.DrawProbes('Tag', 'BlockMarker2D', 'Parent', h_axes);
+        else
+            match = markerLibrary.IdentifyMarker(detections{i});
+            if isempty(match)
+                detections{i}.DrawProbes('Tag', 'BlockMarker2D', 'Parent', h_axes);
+            else
+                corners = detections{i}.corners;
+                plot(corners([1 2 4 3 1],1), corners([1 2 4 3 1],2), 'r', ...
+                    'LineWidth', 3, 'Parent', h_axes, 'Tag', 'BlockMarker2D');
+                cen = mean(corners,1);
+                %diagonal = sqrt(max(sum((corners(1,:)-corners(4,:)).^2), sum((corners(2,:)-corners(3,:)).^2)));
+                h_shadow = text(cen(1), cen(2), match.Name, 'Hor', 'c', 'Back', 'none', ...
+                    'Color', 'k', ...
+                    'Parent', h_axes, 'FontSize', 20, 'FontWeight', 'b', ...
+                    'FontName', 'DriveSans', 'Tag', 'BlockMarker2D');
+                h_text = copyobj(h_shadow, gca);
+                set(h_text, 'Color', 'y', 'Pos', [cen-1.5 0]);
+                
+            end
+        end
+        %draw(detections{i}, 'where', h_axes, 'drawTextLabels', 'short');
     end
     
     set(h_axes, 'XColor', 'g', 'YColor', 'g');
     hold(h_axes, 'off')
+    drawnow
 else
     set(h_axes, 'XColor', 'r', 'YColor', 'r');
 end
