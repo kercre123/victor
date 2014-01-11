@@ -62,6 +62,7 @@ classdef LucasKanadeTracker < handle
             
             MinSize = 8;
             NumScales = [];
+            Weights = [];
             DebugDisplay = false;
             Type = 'translation';
             UseBlurring = true;
@@ -229,8 +230,12 @@ classdef LucasKanadeTracker < handle
                 W_mask = interp2(double(targetMask), xi, yi, 'linear', 0);
                 
                 % Gaussian weighting function to give more weight to center of target
-                W_ = W_mask .* exp(-((this.xgrid{i_scale}).^2 + ...
-                    (this.ygrid{i_scale}).^2) / (2*(W_sigma)^2));
+                if isempty(Weights)
+                    W_ = W_mask .* exp(-((this.xgrid{i_scale}).^2 + ...
+                        (this.ygrid{i_scale}).^2) / (2*(W_sigma)^2));
+                else
+                    W_ = W_mask .* interp2(Weights, xi, yi, 'linear', 0);
+                end
                 this.W{i_scale} = W_(:);
                 
                 if Downsample ~= 1
@@ -313,6 +318,10 @@ classdef LucasKanadeTracker < handle
             c = [x y];
         end
         
+        function set_tform(this, tformIn)
+           assert(isequal(size(tformIn), [3 3]), 'Transformation must be 3x3.');
+           this.tform = tformIn;
+        end
     end % public methods
     
     methods(Access = 'protected')
