@@ -4,7 +4,7 @@
  * Author: Brad Neuman
  * Created: 2014-01-06
  *
- * Description: unit tests for parsing a json file using the Anki ConfigTree interface
+ * Description: unit tests for parsing a json file, just making sure the library works reasonably
  *
  * Copyright: Anki, Inc. 2014
  *
@@ -13,11 +13,9 @@
 #include <fstream>
 #include "gtest/gtest.h"
 
-#include "anki/common/basestation/configTree.h"
 #include "json/json.h"
 
 using namespace std;
-using namespace Anki;
 
 GTEST_TEST(TestConfigTreeJsonCpp, JsonCppWorks)
 {
@@ -51,54 +49,4 @@ GTEST_TEST(TestConfigTreeJsonCpp, JsonCppWorks)
   EXPECT_TRUE(members[0] == "key1" || members[1] == "key1");
   EXPECT_TRUE(members[0] == "key2" || members[1] == "key2");
 
-}
-
-GTEST_TEST(TestConfigTreeJsonCpp, ConfigTreeInterface)
-{
-  ConfigTree *tree = new ConfigTree;
-
-  EXPECT_TRUE(tree->ReadJson("../coretech/common/basestation/config/test.json"));
-
-  EXPECT_EQ(tree->GetNumberOfChildren(), 4);
-
-  string str;
-  EXPECT_TRUE(tree->GetValueOptional("key", str));
-  EXPECT_EQ(str, "value");
-
-  EXPECT_EQ((*tree)["key"].AsString(), "value");
-  EXPECT_EQ(tree->GetValue("key", "wrong"), "value");
-  EXPECT_EQ(tree->GetValue("missing", "missing"), "missing");
-
-  float num;
-  EXPECT_FLOAT_EQ((*tree)["floatKey"].AsFloat(), 3.1415);
-
-  ConfigTree list1 = (*tree)["list"];
-  EXPECT_EQ(list1.GetNumberOfChildren(), 4);
-  EXPECT_EQ(list1[0].AsInt(), 1);
-  EXPECT_EQ(list1[1].AsInt(), 2);
-  EXPECT_EQ(list1[2].AsInt(), 3);
-  EXPECT_EQ(list1[3].AsInt(), 4);
-
-  EXPECT_EQ((*tree)["dict"]["list"][1]["bv"].AsBool(), true);
-
-  vector<string> keys = (*tree)["dict"]["imporatantKeys"].GetKeys();
-  ASSERT_EQ(keys.size(), 2);
-
-  if(keys[0] == "key1") {
-    EXPECT_EQ((*tree)["dict"]["imporatantKeys"][keys[0]].AsInt(), 5678);
-
-    EXPECT_EQ(keys[1], "key2");
-    EXPECT_EQ((*tree)["dict"]["imporatantKeys"][keys[1]]["thing"].AsString(), "stuff");
-  }
-  else if(keys[0] == "key2") {
-    EXPECT_EQ((*tree)["dict"]["imporatantKeys"][keys[0]]["thing"].AsString(), "stuff");
-
-    EXPECT_EQ(keys[1], "key1");
-    EXPECT_EQ((*tree)["dict"]["imporatantKeys"][keys[1]].AsInt(), 5678);
-  }
-  else {
-    FAIL() << "key 0 was "<<keys[0];
-  }
-
-  delete tree;
 }
