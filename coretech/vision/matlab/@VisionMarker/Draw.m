@@ -62,6 +62,13 @@ else
 end
 
 if ~isempty(Image)
+    if ischar(Image)
+        if ~exist(Image, 'file')
+            error('Image file "%s" does not exist.');
+        end
+        Image = imread(Image);
+    end
+    
     assert(size(Image,1)==size(Image,2), 'Expecting square image.');
     pixelWidth = (1-(2+2*VisionMarker.FiducialPaddingFraction)*VisionMarker.SquareWidth)/size(Image,1);
     
