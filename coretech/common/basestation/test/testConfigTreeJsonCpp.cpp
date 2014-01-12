@@ -4,7 +4,7 @@
  * Author: Brad Neuman
  * Created: 2014-01-06
  *
- * Description: unit tests for parsing a json file, just making sure the library works reasonably
+ * Description: unit tests for parsing a json file and the tools in jsonTools.h
  *
  * Copyright: Anki, Inc. 2014
  *
@@ -14,6 +14,7 @@
 #include "gtest/gtest.h"
 
 #include "json/json.h"
+#include "anki/common/basestation/jsonTools.h"
 
 using namespace std;
 
@@ -48,5 +49,24 @@ GTEST_TEST(TestConfigTreeJsonCpp, JsonCppWorks)
   
   EXPECT_TRUE(members[0] == "key1" || members[1] == "key1");
   EXPECT_TRUE(members[0] == "key2" || members[1] == "key2");
+}
 
+GTEST_TEST(TestConfigTreeJsonCpp, OptionalValues)
+{
+  Json::Value root;   // will contains the root value after parsing.
+  Json::Reader reader;
+
+  ifstream configFileStream("../coretech/common/basestation/config/test.json");
+
+  ASSERT_TRUE(reader.parse(configFileStream, root))
+    << "Failed to parse configuration\n"
+    << reader.getFormattedErrorMessages();
+
+  using namespace Anki::JsonTools;
+
+  string sval;
+  EXPECT_TRUE(GetValueOptional(root, "key", sval));
+  EXPECT_EQ(sval, "value");
+
+  EXPECT_FALSE(GetValueOptional(root, "missingKey", sval));
 }

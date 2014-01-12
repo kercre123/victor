@@ -5,7 +5,8 @@ add_executable(run_coreTechPlanningStandalone
 	run_coreTechPlanningStandalone.cpp)
 
 target_link_libraries(run_coreTechPlanningStandalone
-	CoreTech_Planning_Basestation)
+	CoreTech_Planning_Basestation
+        jsoncpp)
 
 include_directories(../src)
 
