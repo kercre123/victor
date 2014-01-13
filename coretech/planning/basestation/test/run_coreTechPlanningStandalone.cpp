@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 
 #include "anki/planning/basestation/xythetaPlanner.h"
@@ -13,7 +14,7 @@ void writePath(string filename, const xythetaEnvironment& env, const xythetaPlan
   vector<State_c> plan_c;
   env.ConvertToXYPlan(plan, plan_c);
   for(size_t i=0; i<plan_c.size(); ++i)
-    outfile<<plan_c[i].x_cm<<' '<<plan_c[i].y_cm<<' '<<plan_c[i].theta<<endl;
+    outfile<<plan_c[i].x_mm<<' '<<plan_c[i].y_mm<<' '<<plan_c[i].theta<<endl;
 
   outfile.close();
 }
@@ -52,8 +53,19 @@ int main(int argc, char *argv[])
       vector<StateID> results;
 
       while(!it.Done()) {
-        cout<<"  "<<actions.size()<<": (id="<<(int)it.Front().actionID<<") "
-            <<State(it.Front().stateID)<<" cost = "<<(it.Front().g - g)<<endl;
+        MotionPrimitive prim;
+        string name;
+        if(!env.GetMotion(curr.theta, it.Front().actionID, prim)) {
+          printf("error: internal error! Could not get primitive id %d at theta %d!\n",
+                     it.Front().actionID,
+                     curr.theta);
+        }
+        name = prim.name;
+
+        cout<<"  "<<actions.size()<<": "<<left<<setw(22)<<name
+            <<" (id="<<(int)it.Front().actionID<<") "
+            <<State(it.Front().stateID)<<" cost = "
+            <<(it.Front().g - g)<<endl;
         actions.push_back(it.Front().actionID);
         results.push_back(it.Front().stateID);
         it.Next();

@@ -6,6 +6,7 @@ add_executable(run_coreTechPlanningStandalone
 
 target_link_libraries(run_coreTechPlanningStandalone
 	CoreTech_Planning_Basestation
+        CoreTech_Common_Basestation
         jsoncpp)
 
 include_directories(../src)
@@ -17,4 +18,6 @@ add_executable(run_coreTechPlanningTests
 
 target_link_libraries(run_coreTechPlanningTests
         CoreTech_Planning_Basestation
+        CoreTech_Common_Basestation
+        jsoncpp
         gtest)
