@@ -5,6 +5,8 @@
 #endif
 
 #include "serial.h"
+#include "threadSafeQueue.h"
+
 #include "anki\common\robot\utilities.h"
 
 #undef printf
@@ -18,64 +20,6 @@ _Check_return_opt_ _CRTIMP int __cdecl printf(_In_z_ _Printf_format_string_ cons
 #define PRINTF_BUFFER_SIZE 100000
 
 using namespace std;
-
-template<typename Type> class ThreadSafeQueue
-{
-public:
-  ThreadSafeQueue()
-  {
-    mutex = CreateMutex(NULL, FALSE, NULL);
-    buffers = queue<Type>();
-  } // ThreadSafeQueue()
-
-  Type Pop()
-  {
-    Type value;
-
-    WaitForSingleObject(mutex, INFINITE);
-
-    if(buffers.empty()) {
-      value = static_cast<Type>(0);
-    } else {
-      value = buffers.front();
-      buffers.pop();
-    }
-
-    ReleaseMutex(mutex);
-
-    return value;
-  } // string Pop()
-
-  void Push(Type newString)
-  {
-    WaitForSingleObject(mutex, INFINITE);
-
-    buffers.push(newString);
-
-    ReleaseMutex(mutex);
-  } // void Push(string newString)
-
-  bool IsEmpty()
-  {
-    bool isEmpty;
-
-    WaitForSingleObject(mutex, INFINITE);
-
-    if(buffers.empty()) {
-      isEmpty = true;
-    } else {
-      isEmpty = false;
-    }
-
-    ReleaseMutex(mutex);
-
-    return isEmpty;
-  }
-protected:
-  HANDLE mutex;
-
-  queue<Type> buffers;
-}; // class ThreadSafeQueue
 
 // Based off example at http://msdn.microsoft.com/en-us/library/windows/desktop/ms682516(v=vs.85).aspx
 DWORD WINAPI PrintfBuffers(LPVOID lpParam)

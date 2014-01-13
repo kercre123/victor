@@ -14,6 +14,7 @@ file(GLOB SOURCE_FILES_TERMINAL
 
 file(GLOB HEADER_FILES 
 	serial.h
+  threadSafeQueue.h
 )
 
 add_executable(run_pc_saveVideo 
