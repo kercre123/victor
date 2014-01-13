@@ -30,13 +30,8 @@ static const u32 crc32Table[CRC32_TABLE_LENGTH] = {0x0, 0x77073096, 0xEE0E612C, 
 #define MAX_PRINTF_DIGITS 50
 #define PRINTF_BUFFER_SIZE 1024
 int printfBuffer[PRINTF_BUFFER_SIZE];
-// int printfBuffer2[PRINTF_BUFFER_SIZE]; // For a single level of recusion
 void explicitPrintf(int (*writeChar)(int), int reverseEachFourCharacters, const char *format, ...)
 {
-  /*va_list arguments;
-  va_start(arguments, format);
-  explicitPrintfWithExplicitBuffer(reverseEachFourCharacters, &printfBuffer[0], format, arguments);
-  va_end(arguments);*/
   const char * const formatStart = format;
   int numCharacters;
   int i;
@@ -122,7 +117,6 @@ void explicitPrintf(int (*writeChar)(int), int reverseEachFourCharacters, const 
           writeChar(*stringArgument);
           stringArgument++;
         }
-        //explicitPrintfWithExplicitprintfBuffer(reverseEachFourCharacters, &printfprintfBuffer2[0], stringArgument);
       }
       else {
         if(printfBuffer[i] == 0x00)
@@ -220,29 +214,29 @@ void PrintF64(int (*writeChar)(int), f64 value)
     }
 
     // This if statement should nenver be true, but it sometimes is on the myriad1. This will output "BUG".
-    if(value < 0.0f){
-      writeChar('B');
-      writeChar('U');
-      writeChar('G');
-      writeChar('4');
-      return;
-    }
+    //if(value < 0.0f){
+    //  writeChar('B');
+    //  writeChar('U');
+    //  writeChar('G');
+    //  writeChar('4');
+    //  return;
+    //}
 
-    if(ABS(value) < 0.00000000001f){
-      writeChar('B');
-      writeChar('U');
-      writeChar('G');
-      writeChar('5');
-      return;
-    }
+    //if(ABS(value) < 0.00000000001f){
+    //  writeChar('B');
+    //  writeChar('U');
+    //  writeChar('G');
+    //  writeChar('5');
+    //  return;
+    //}
 
-    if(curDigit < 0){
-      writeChar('B');
-      writeChar('U');
-      writeChar('G');
-      writeChar('6');
-      return;
-    }
+    //if(curDigit < 0){
+    //  writeChar('B');
+    //  writeChar('U');
+    //  writeChar('G');
+    //  writeChar('6');
+    //  return;
+    //}
 
     writeChar(curDigit + 48);
 
@@ -313,32 +307,32 @@ void PrintS32(int (*writeChar)(int), s32 value)
     //const int curDigit = ABS(value) % 10;
 
     // This if statement should never be true, but it sometimes is on the myriad1. This will output "BUG".
-    if(value < 0){
-      // BUG1
-      digits[digitIndex++] = 1;
-      digits[digitIndex++] = 23;
-      digits[digitIndex++] = 37;
-      digits[digitIndex++] = 18;
-      break;
-    }
+    //if(value < 0){
+    //  // BUG1
+    //  digits[digitIndex++] = 1;
+    //  digits[digitIndex++] = 23;
+    //  digits[digitIndex++] = 37;
+    //  digits[digitIndex++] = 18;
+    //  break;
+    //}
 
-    if(value == 0){
-      // BUG2
-      digits[digitIndex++] = 2;
-      digits[digitIndex++] = 23;
-      digits[digitIndex++] = 37;
-      digits[digitIndex++] = 18;
-      break;
-    }
+    //if(value == 0){
+    //  // BUG2
+    //  digits[digitIndex++] = 2;
+    //  digits[digitIndex++] = 23;
+    //  digits[digitIndex++] = 37;
+    //  digits[digitIndex++] = 18;
+    //  break;
+    //}
 
-    if(curDigit < 0){
-      // BUG3
-      digits[digitIndex++] = 3;
-      digits[digitIndex++] = 23;
-      digits[digitIndex++] = 37;
-      digits[digitIndex++] = 18;
-      break;
-    }
+    //if(curDigit < 0){
+    //  // BUG3
+    //  digits[digitIndex++] = 3;
+    //  digits[digitIndex++] = 23;
+    //  digits[digitIndex++] = 37;
+    //  digits[digitIndex++] = 18;
+    //  break;
+    //}
 
     digits[digitIndex++] = curDigit;
 
@@ -383,32 +377,32 @@ void PrintU32Hex(int (*writeChar)(int), u32 value)
     //const int curDigit = ABS(value) % 10;
 
     // This if statement should never be true, but it sometimes is on the myriad1. This will output "BUG".
-    if(value < 0){
-      // BUG1
-      digits[digitIndex++] = 1;
-      digits[digitIndex++] = 23;
-      digits[digitIndex++] = 37;
-      digits[digitIndex++] = 18;
-      break;
-    }
+    //if(value < 0){
+    //  // BUG1
+    //  digits[digitIndex++] = 1;
+    //  digits[digitIndex++] = 23;
+    //  digits[digitIndex++] = 37;
+    //  digits[digitIndex++] = 18;
+    //  break;
+    //}
 
-    if(value == 0){
-      // BUG2
-      digits[digitIndex++] = 2;
-      digits[digitIndex++] = 23;
-      digits[digitIndex++] = 37;
-      digits[digitIndex++] = 18;
-      break;
-    }
+    //if(value == 0){
+    //  // BUG2
+    //  digits[digitIndex++] = 2;
+    //  digits[digitIndex++] = 23;
+    //  digits[digitIndex++] = 37;
+    //  digits[digitIndex++] = 18;
+    //  break;
+    //}
 
-    if(curDigit < 0){
-      // BUG3
-      digits[digitIndex++] = 3;
-      digits[digitIndex++] = 23;
-      digits[digitIndex++] = 37;
-      digits[digitIndex++] = 18;
-      break;
-    }
+    //if(curDigit < 0){
+    //  // BUG3
+    //  digits[digitIndex++] = 3;
+    //  digits[digitIndex++] = 23;
+    //  digits[digitIndex++] = 37;
+    //  digits[digitIndex++] = 18;
+    //  break;
+    //}
 
     digits[digitIndex++] = curDigit;
 
@@ -511,19 +505,6 @@ u64 Log2u64(u64 x)
 
   return powerCount;
 }
-
-//#if defined(USING_MOVIDIUS_GCC_COMPILER)
-//void* explicitMemset(void * dst, int value, size_t size)
-//{
-//  size_t i;
-//  for(i=0; i<size; i++)
-//  {
-//    ((char*)dst)[i] = value;
-//  }
-//
-//  return dst;
-//}
-//#endif // #if defined(USING_MOVIDIUS_GCC_COMPILER)
 
 #if defined(USING_MOVIDIUS_GCC_COMPILER)
 f32 powF32S32(const f32 x, const s32 y)
