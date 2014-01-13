@@ -1,0 +1,59 @@
+/**
+File: serialize_declarations.h
+Author: Peter Barnum
+Created: 2013
+
+Utilities for serializing data into a buffer
+
+Copyright Anki, Inc. 2013
+For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
+**/
+
+#ifndef _ANKICORETECHEMBEDDED_COMMON_SERIALIZE_DECLARATIONS_H_
+#define _ANKICORETECHEMBEDDED_COMMON_SERIALIZE_DECLARATIONS_H_
+
+#include "anki/common/robot/config.h"
+#include "anki/common/robot/flags_declarations.h"
+#include "anki/common/robot/memory.h"
+#include "anki/common/robot/array2d_declarations.h"
+
+namespace Anki
+{
+  namespace Embedded
+  {
+#pragma mark --- Declarations ---
+    // A SerializedBuffer is used to store data
+    // Use a MemoryStackIterator to read out the data
+    class SerializedBuffer : protected MemoryStack
+    {
+    public:
+      static const s32 SERIALIZED_HEADER_LENGTH = 8;
+
+      enum DataType
+      {
+        DATA_TYPE_UNKNOWN = 0,
+        DATA_TYPE_RAW = 1,
+        DATA_TYPE_BASIC_TYPE = 2,
+        DATA_TYPE_ARRAY = 3
+      };
+
+      template<typename Type> static Result EncodeBasicType(u32 &code);
+      static Result DecodeBasicType(const u32 code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat);
+
+      SerializedBuffer(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(false,true));
+
+      void* PushBack(void * data, s32 dataLength);
+
+      void* PushBack(void * header, s32 headerLength, void * data, s32 dataLength);
+
+      template<typename Type> Result PushBack(Type &value);
+
+      template<typename Type> Result PushBack(Array<Type> &value);
+
+    protected:
+      MemoryStack buffer;
+    }; // class SerializedBuffer
+  } // namespace Embedded
+} //namespace Anki
+
+#endif // #ifndef _ANKICORETECHEMBEDDED_COMMON_SERIALIZE_DECLARATIONS_H_

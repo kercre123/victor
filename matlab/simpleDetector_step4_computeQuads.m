@@ -69,27 +69,32 @@ for i_region = 1:numRegions
     %    stats(i_region).PixelIdxList(1));
     
     if strcmp(embeddedConversions.traceBoundaryType, 'matlab_original') || strcmp(embeddedConversions.traceBoundaryType, 'matlab_loops')
-        % Internal boundary
-        % Find starting pixel by walking from centroid outward until we hit a
-        % pixel in this region:
-        rowStart = round(centroid(i_region,2));
-        colStart = round(centroid(i_region,1));
-        if regionMap(rowStart,colStart) == i_region
-            continue;
-        end
-        while colStart > 1 && regionMap(rowStart,colStart) ~= i_region
-            colStart = colStart - 1;
-        end
-
-        if colStart == 1 && regionMap(rowStart,colStart) ~= i_region
-            continue
+        if BlockMarker2D.UseOutsideOfSquare
+            % External boundary
+            [rowStart, colStart] = find(regionMap == i_region, 1);
+        else
+            % Internal boundary
+            % Find starting pixel by walking from centroid outward until we hit a
+            % pixel in this region:
+            rowStart = round(centroid(i_region,2));
+            colStart = round(centroid(i_region,1));
+            if regionMap(rowStart,colStart) == i_region
+                continue;
+            end
+            while colStart > 1 && regionMap(rowStart,colStart) ~= i_region
+                colStart = colStart - 1;
+            end
+            
+            if colStart == 1 && regionMap(rowStart,colStart) ~= i_region
+                continue
+            end
         end
     end
     
     if strcmp(embeddedConversions.traceBoundaryType, 'matlab_original')
-        assert(~BlockMarker2D.UseOutsideOfSquare, ...
-                ['You need to set constant property ' ...
-                'BlockMarker2D.UseOutsideOfSquare = false to use this method.']);
+%         assert(~BlockMarker2D.UseOutsideOfSquare, ...
+%                 ['You need to set constant property ' ...
+%                 'BlockMarker2D.UseOutsideOfSquare = false to use this method.']);
             
         try
             boundary = bwtraceboundary(regionMap == i_region, ...
