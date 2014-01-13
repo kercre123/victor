@@ -3,13 +3,17 @@
 
 #ifndef USE_USB
 
+#ifndef DEFAULT_BAUDRATE
+#define DEFAULT_BAUDRATE 1500000
+#endif
+
 namespace Anki
 {
   namespace Cozmo
   {
     namespace HAL
     {
-      const u32 BAUDRATE = 1500000;
+      const u32 BAUDRATE = DEFAULT_BAUDRATE;
       const u8 TX_PIN = 69;
       const u32 TX_MODE = D_GPIO_MODE_1;
       const u8 RX_PIN = 70;
