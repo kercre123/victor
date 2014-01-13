@@ -346,6 +346,8 @@ if __name__ == '__main__':
   isRun = False
   isFlash = False
   isNoisy = False
+  emulateShave = False
+  quitDebuggerOnCompletion = False
 
   # Check if the Movidius tools can be found
   if any((os.path.isfile(file.strip()) or os.path.isfile(file.strip()+'.exe') for file in [CC, CXX, LD, MVCONV])) == False:
@@ -379,6 +381,10 @@ if __name__ == '__main__':
       pass
     elif arg == 'noisy':
       isNoisy = True
+    elif arg == 'emulateShave':
+      emulateShave = True
+    elif arg == 'quit':
+      quitDebuggerOnCompletion = True
     else:
       print 'Invalid argument: ' + arg
       sys.exit(1)
@@ -390,28 +396,37 @@ if __name__ == '__main__':
     LEON_SOURCE += addSources('supervisor/src')
     pass
   
+  if emulateShave:
+    SHAVES_TO_USE = []
+    LEON_ASM_C_CXX_OPT += '-DEMULATE_SHAVE_ON_LEON'
+    LEON_SOURCE += addSources('../coretech/common/robot/src/shave')
+    LEON_SOURCE += addSources('../coretech/vision/robot/src/shave')
+    SHAVE_SOURCE = []
+  
   for shaveNumber in SHAVES_TO_USE:
     LEON_ASM_C_CXX_OPT += '-DUSE_SHAVE_' + str(shaveNumber) + ' '
    
   for src in (LEON_SOURCE):
     compileLEON(src)
 
-  for src in SHAVE_SOURCE:
-    compileSHAVE(src)
+  if not emulateShave:
+    for src in SHAVE_SOURCE:
+      compileSHAVE(src)
 
-  shaveMvlibFilename = OUTPUT + TARGET + '.mvlib'
-  linkSHAVEMvlib(shaveMvlibFilename)
+    shaveMvlibFilename = OUTPUT + TARGET + '.mvlib'
+    linkSHAVEMvlib(shaveMvlibFilename)
 
   objects = ''
 
   for key in leonSrcToObj.keys():
     objects += ' ' + leonSrcToObj[key]
   
+  if not emulateShave:
     shaveShvlibFilenames = [OUTPUT + TARGET + '.shv' + str(number) + 'lib' for number in SHAVES_TO_USE]
-  for (shaveNumber, shvlibFilename) in zip(SHAVES_TO_USE, shaveShvlibFilenames):
-    
-    linkSHAVEShvlib(shaveMvlibFilename, shvlibFilename, shaveNumber, 'shave')
-    objects += ' ' + shvlibFilename
+    for (shaveNumber, shvlibFilename) in zip(SHAVES_TO_USE, shaveShvlibFilenames):
+      
+      linkSHAVEShvlib(shaveMvlibFilename, shvlibFilename, shaveNumber, 'shave')
+      objects += ' ' + shvlibFilename
 
   with open('ld/objects.ldscript', 'w+') as f:
     f.write('INPUT(' + objects + ' )\n')
@@ -446,6 +461,9 @@ if __name__ == '__main__':
   # Output the debug script
   with open(OUTPUT + TARGET + 'DEBUG.scr', 'w+') as f:
     f.write('breset\nl ' + OUTPUT + TARGET + '.elf\nrun\n')
+    
+    if quitDebuggerOnCompletion:
+      f.write('quit')
 
   if isRun:
     os.system('moviDebug -b:' + OUTPUT + TARGET + 'DEBUG.scr')
