@@ -21,12 +21,25 @@ For internal use only. No part of this code may be used without a signed non-dis
 extern "C" {
 #endif
 
-  void ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow(
+  DECLARE_SHAVE_FUNCTION(ScrollingIntegralImage_u8_s32_ComputeIntegralImageRow,
+  (
     const u8 * restrict paddedImage_currentRow,
     const s32 * restrict integralImage_previousRow,
     s32 * restrict integralImage_currentRow,
     const s32 integralImageWidth
-    );
+    ));
+
+  DECLARE_SHAVE_FUNCTION(ScrollingIntegralImage_u8_s32_FilterRow,
+  (
+    const s32 * restrict pIntegralImage_00,
+    const s32 * restrict pIntegralImage_01,
+    const s32 * restrict pIntegralImage_10,
+    const s32 * restrict pIntegralImage_11,
+    const s32 minX,
+    const s32 maxX,
+    const s32 imageWidth,
+    s32 * restrict pOutput
+    ));
 
   void ScrollingIntegralImage_u8_s32_FilterRow(
     const s32 * restrict pIntegralImage_00,
