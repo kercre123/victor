@@ -52,12 +52,13 @@ classdef CozmoVisionProcessor < handle
         dockingBlock;
         
         % Camera calibration information:
+        headCam;
         headCalibrationMatrix;
         %matCalibrationMatrix;
         matCamPixPerMM;
         
         blockPose;
-        headCamPose;
+        %headCamPose;
         robotPose;
         neckPose;
         marker3d;
@@ -72,6 +73,8 @@ classdef CozmoVisionProcessor < handle
         trackingResolution;
         
         detectionResolution;
+        
+        block;
         
         % For mat localization
         matLocalizationResolution;
@@ -156,7 +159,7 @@ classdef CozmoVisionProcessor < handle
             
             this.matLocalizationResolution = MatLocalizationResolution;
             this.dockingBlock = 0;
-            
+                        
             % Set up Robot head camera geometry
             this.robotPose = Pose();
             this.neckPose = Pose([0 0 0], this.NECK_JOINT_POSITION);
@@ -164,9 +167,7 @@ classdef CozmoVisionProcessor < handle
             
             WIDTH = BlockMarker3D.ReferenceWidth;
             this.marker3d = WIDTH/2 * [-1 -1 0; -1 1 0; 1 -1 0; 1 1 0];
-                
-            this.setHeadAngle(-.26);
-            
+                        
             this.h_fig = namedFigure('CozmoVisionProcessor', ...
                 'KeypressFcn', @(src,edata)this.keyPressCallback(src,edata));
             this.h_axes = subplot(1,1,1, 'Parent', this.h_fig);
@@ -348,10 +349,78 @@ classdef CozmoVisionProcessor < handle
             %Rvec = rodrigues(Rmat);
             T    = H(:,3);
             
+            this.block.pose = Pose(R,T);
+            this.block.pose.parent = this.headCam.pose;
+            
+            %{
+            desktop
+            keyboard
+                                    
+            % Draw the block reprojected in the camera
+            pos = getPosition(this.block);
+            
+            X = reshape(pos(:,1), 4, []);
+            Y = reshape(pos(:,2), 4, []);
+            Z = reshape(pos(:,3), 4, []);
+            
+            [u,v] = this.headCam.projectPoints(X, Y, Z);
+            
+            if any(u(:)>=1) || any(u(:)<=this.trackingResolution(1)) || ...
+                    any(v(:)>=1) || any(v(:)<=this.trackingResolution(2))
+                
+                w = zeros(size(u));
+                h_block = findobj(this.h_axes, 'Tag', 'Block');
+                if isempty(h_block)
+                    patch(u,v,w, this.block.color, 'FaceAlpha', 0.3, ...
+                        'LineWidth', 3, 'Parent', this.h_axes, 'Tag', 'Block');
+                else
+                    set(h_block, 'XData', u, 'YData', v, 'ZData', w);
+                end
+                
+                % Plot block origin:
+                h_origin = findobj(this.h_axes, 'Tag', 'BlockOrigin');
+                if isempty(h_origin)
+                    plot(u(1), v(1), 'o', 'MarkerSize', 12, ...
+                        'MarkerEdgeColor', 'k', 'MarkerFaceColor', this.block.color, ...
+                        'LineWidth', 2, ...
+                        'Parent', this.h_axes, 'Tag', 'BlockOrigin');
+                else
+                    set(h_origin, 'XData', u(1), 'YData', v(1));
+                end
+                
+            end
+            
+            % Draw the block's markers reprojected in the camera
+            for i_marker = 1:this.block.numMarkers
+                marker = this.block.markers{i_marker};
+                                
+                % Get the position of the marker w.r.t. the camera, ready for
+                % projection:
+                P = getPosition(marker, this.headCam.pose);
+                
+                [u,v] = this.headCam.projectPoints(P);
+                
+                if any(u(:)>=1) || any(u(:)<=this.trackingResolution(1)) || ...
+                        any(v(:)>=1) || any(v(:)<=this.trackingResolution(2))
+                    
+                    w = .01*ones(size(u)); % put slightly in front of blocks
+                    TagStr = sprintf('Marker%d', i_marker);
+                    h_marker = findobj(this.h_axes, 'Tag', TagStr);
+                    if isempty(h_marker)
+                        patch(u([1 3 4 2]),v([1 3 4 2]),w, 'w', ...
+                            'FaceColor', 'none', 'EdgeColor', 'w', ...
+                            'LineWidth', 3, 'Parent', this.h_axes, 'Tag', TagStr);
+                    else
+                        set(h_marker, 'XData', u([1 3 4 2]), ...
+                            'YData', v([1 3 4 2]), 'ZData', w)
+                    end
+                    
+                end
+            end % FOR each marker
+            %}
+            
             % Now switch to block with respect to robot, instead of camera
-            this.blockPose = Pose(R,T);
-            this.blockPose.parent = this.headCamPose;
-            this.blockPose = this.blockPose.getWithRespectTo(this.robotPose);
+            this.block.pose = this.block.pose.getWithRespectTo(this.robotPose);
             
         end % updateBlockPose()
 
@@ -361,10 +430,10 @@ classdef CozmoVisionProcessor < handle
             % around the Y axis (which points to robot's LEFT!)
             Rpitch = rodrigues(-newHeadAngle*[0 1 0]);
                         
-            this.headCamPose = Pose( ...
+            this.headCam.pose = Pose( ...
                 Rpitch * this.HEAD_CAM_ROTATION,  ...
                 Rpitch * this.HEAD_CAM_POSITION(:));
-            this.headCamPose.parent = this.neckPose;
+            this.headCam.pose.parent = this.neckPose;
             
         end
         

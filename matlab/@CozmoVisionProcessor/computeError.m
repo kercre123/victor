@@ -54,7 +54,7 @@ switch(this.trackerType)
         
         this.updateBlockPose(H);
         
-        blockWRTrobot = this.blockPose.getWithRespectTo(this.robotPose);
+        blockWRTrobot = this.block.pose.getWithRespectTo(this.robotPose);
         distError     = blockWRTrobot.T(1);
         midPointErr   = blockWRTrobot.T(2);
         angleError    = atan2(blockWRTrobot.Rmat(2,1), blockWRTrobot.Rmat(1,1)) + pi/2;
