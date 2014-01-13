@@ -27,7 +27,7 @@ switch(command)
             'kc', zeros(5,1), ...
             'alpha_c', 0));  
         
-        this.setHeadAngle(-.26);
+        this.setHeadAngle(-.251);
         
         return
         

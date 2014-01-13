@@ -166,7 +166,9 @@ classdef CozmoVisionProcessor < handle
             this.neckPose.parent = this.robotPose;
             
             WIDTH = BlockMarker3D.ReferenceWidth;
-            this.marker3d = WIDTH/2 * [-1 -1 0; -1 1 0; 1 -1 0; 1 1 0];
+            %this.marker3d = WIDTH/2 * [-1 -1 0; -1 1 0; 1 -1 0; 1 1 0];
+            this.marker3d = WIDTH/2 * [0 1 1; 0 1 -1; 0 -1 1; 0 -1 -1];
+            
                         
             this.h_fig = namedFigure('CozmoVisionProcessor', ...
                 'KeypressFcn', @(src,edata)this.keyPressCallback(src,edata));
@@ -334,6 +336,11 @@ classdef CozmoVisionProcessor < handle
         
         function updateBlockPose(this, H)
             
+            this.block.pose = this.headCam.computeExtrinsics(...
+                this.LKtracker.corners, this.marker3d);
+            this.block.pose.parent = this.headCam.pose;
+            
+            %{
             % Compute pose of block w.r.t. camera
             % De-embed the initial 3D pose from the homography:
             scale = mean([norm(H(:,1));norm(H(:,2))]);
@@ -351,7 +358,8 @@ classdef CozmoVisionProcessor < handle
             
             this.block.pose = Pose(R,T);
             this.block.pose.parent = this.headCam.pose;
-            
+            %} 
+
             %{
             desktop
             keyboard
@@ -418,6 +426,9 @@ classdef CozmoVisionProcessor < handle
                 end
             end % FOR each marker
             %}
+            
+            %desktop 
+            %keyboard
             
             % Now switch to block with respect to robot, instead of camera
             this.block.pose = this.block.pose.getWithRespectTo(this.robotPose);
