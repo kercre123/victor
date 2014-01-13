@@ -12,4 +12,4 @@ add_subdirectory(robot/test)
 
 add_subdirectory(matlab/mex)
 
-add_subdirectory(tools/saveVideo)
+add_subdirectory(tools/communication)

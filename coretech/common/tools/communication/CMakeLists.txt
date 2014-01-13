@@ -2,17 +2,22 @@
 
 # save buffered video
 
-file(GLOB SOURCE_FILES 
-  *.c 
-  *.cpp
+file(GLOB SOURCE_FILES_SAVE_VIDEO
+  run_pc_saveVideo.cpp
+  serial.cpp
+)
+
+file(GLOB SOURCE_FILES_TERMINAL
+  run_pc_terminal.cpp
+  serial.cpp
 )
 
 file(GLOB HEADER_FILES 
-	*.h 
+	serial.h
 )
 
 add_executable(run_pc_saveVideo 
-	${SOURCE_FILES} 
+	${SOURCE_FILES_SAVE_VIDEO} 
 	${HEADER_FILES})
 
 target_link_libraries(run_pc_saveVideo 
@@ -20,5 +25,11 @@ target_link_libraries(run_pc_saveVideo
 	gtest ${OPENCV_LIBS} 
 	${MATLAB_ENG_LIBRARY} ${MATLAB_MX_LIBRARY} ${ZLIB_LIBRARY})
 
+add_executable(run_pc_terminal 
+	${SOURCE_FILES_TERMINAL} 
+	${HEADER_FILES})
 
-
+target_link_libraries(run_pc_terminal 
+	CoreTech_Common_Robot 
+	gtest ${OPENCV_LIBS} 
+	${MATLAB_ENG_LIBRARY} ${MATLAB_MX_LIBRARY} ${ZLIB_LIBRARY})
