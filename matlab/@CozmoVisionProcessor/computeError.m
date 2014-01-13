@@ -54,10 +54,10 @@ switch(this.trackerType)
         
         this.updateBlockPose(H);
         
-        blockWRTrobot = this.blockPose.getWithRespectTo(this.robotPose);
+        blockWRTrobot = this.block.pose.getWithRespectTo(this.robotPose);
         distError     = blockWRTrobot.T(1);
         midPointErr   = blockWRTrobot.T(2);
-        angleError    = atan2(blockWRTrobot.Rmat(2,1), blockWRTrobot.Rmat(1,1)) + pi/2;
+        angleError    = atan2(blockWRTrobot.Rmat(2,1), blockWRTrobot.Rmat(1,1));
         
     otherwise
         error(['Not sure how to compute an error signal ' ...
@@ -74,7 +74,7 @@ set(this.h_distError, 'YData', [0 distError]);
 h = get(this.h_distError, 'Parent');
 title(h, sprintf('DistToGo = %.1fmm', distError), 'Back', 'w');
 
-set(this.h_leftRightError, 'XData', [0 midPointErr]);
+set(this.h_leftRightError, 'XData', [0 -midPointErr]); % sign flip b/c negative y direction is to the right
 h = get(this.h_leftRightError, 'Parent');
 title(h, sprintf('LeftRightErr = %.1fmm', midPointErr), 'Back', 'w');
 

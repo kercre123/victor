@@ -136,6 +136,7 @@ namespace Anki
 
         // Initialize DDR memory
         DrvDdrInitialise(DrvCprGetClockFreqKhz(AUX_CLK_DDR, NULL));
+        DrvDdrInitialise(DrvCprGetClockFreqKhz(AUX_CLK_DDR, NULL));
 
         // Turn off all GPIO-related IRQs
         DrvGpioIrqResetAll();

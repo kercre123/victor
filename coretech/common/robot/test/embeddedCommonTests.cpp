@@ -23,6 +23,23 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/interpolate.h"
 #include "anki/common/robot/arrayPatterns.h"
 #include "anki/common/robot/shaveKernels_c.h"
+#include "anki/common/robot/utilities.h"
+
+#if defined(USING_MOVIDIUS_COMPILER)
+//#include "anki/cozmo/robot/hal.h"
+#endif
+
+namespace Anki
+{
+  namespace Cozmo
+  {
+    namespace HAL
+    {
+      void USBSendBuffer(const u8* buffer, const u32 size);
+      int USBPutChar(int c);
+    }
+  }
+}
 
 using namespace Anki::Embedded;
 
@@ -54,6 +71,85 @@ Matlab matlab(false);
 
 BUFFER_LOCATION static char buffer[MAX_BYTES];
 
+GTEST_TEST(CoreTech_Common, CRC32Code)
+{
+  const s32 numDataBytes = 16;
+  const u32 data[] = {0x1234BEF2, 0xA342EE00, 0x00000000, 0xFFFFFFFF};
+
+#if defined(USING_MOVIDIUS_GCC_COMPILER)
+  const u32 crc = ComputeCRC32_bigEndian(&data[0], numDataBytes);
+#else
+  const u32 crc = ComputeCRC32_littleEndian(&data[0], numDataBytes);
+#endif
+
+  const u32 crc_groundTruth = 0xD6C600C;
+
+  printf("0x%x\n", crc);
+
+  ASSERT_TRUE(crc == crc_groundTruth);
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Common, MemoryStackIterator)
+{
+  //u32 buffer[100];
+  //for(u32 i=0; i<100; i++) {
+  //  buffer[i] = i+1;
+  //}
+
+  ////Anki::Cozmo::HAL::USBPutChar('\n');
+  ////Anki::Cozmo::HAL::USBPutChar('\n');
+  ////Anki::Cozmo::HAL::USBPutChar('\n');
+  ////Anki::Cozmo::HAL::USBPutChar('\n');
+  ////printf("\n\n\n\n");
+
+  //Anki::Cozmo::HAL::USBSendBuffer(reinterpret_cast<u8*>(&buffer[0]), 100*sizeof(u32));
+
+  //while(1) {}
+
+  const s32 segment1Length = 32;
+  const s32 segment2Length = 64;
+  const s32 segment3Length = 128;
+
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  void * segment1 = ms.Allocate(segment1Length);
+  void * segment2 = ms.Allocate(segment2Length);
+  void * segment3 = ms.Allocate(segment3Length);
+
+  ASSERT_TRUE(segment1 != NULL);
+  ASSERT_TRUE(segment2 != NULL);
+  ASSERT_TRUE(segment3 != NULL);
+
+  MemoryStackIterator msi(ms);
+
+  s32 segment1bLength = -1;
+  s32 segment2bLength = -1;
+  s32 segment3bLength = -1;
+
+  ASSERT_TRUE(msi.HasNext());
+  const void * segment1b = msi.GetNext(segment1bLength);
+  ASSERT_TRUE(segment1 == segment1b);
+  ASSERT_TRUE(segment1Length == segment1bLength);
+
+  ASSERT_TRUE(msi.HasNext());
+  const void * segment2b = msi.GetNext(segment2bLength);
+  ASSERT_TRUE(segment2 == segment2b);
+  ASSERT_TRUE(segment2Length == segment2bLength);
+
+  ASSERT_TRUE(msi.HasNext());
+  const void * segment3b = msi.GetNext(segment3bLength);
+  ASSERT_TRUE(segment3 == segment3b);
+  ASSERT_TRUE(segment3Length == segment3bLength);
+
+  ASSERT_FALSE(msi.HasNext());
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, ShaveAddTest)
 {
   const s32 numElements = 3000;
@@ -62,7 +158,7 @@ GTEST_TEST(CoreTech_Common, ShaveAddTest)
 
   // On the Myriad, the buffer is local to the SHAVE we'll be using to process
   // On the PC, the buffer is just the normal buffer that is somewhere in CMX
-#if defined(USING_MOVIDIUS_COMPILER)
+#if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
   MemoryStack ms(shave0_localBuffer, LOCAL_SHAVE_BUFFER_SIZE);
 #else
   ASSERT_TRUE(buffer != NULL);
@@ -86,11 +182,11 @@ GTEST_TEST(CoreTech_Common, ShaveAddTest)
 
   //printf("Leon: 0x%x=%d 0x%x=%d\n", &(pIn1[100]), pIn1[100], &(pIn2[303]), pIn2[303]);
   double t0 = GetTime();
-#if defined(USING_MOVIDIUS_COMPILER)
+#if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
   swcResetShave(0);
   swcSetAbsoluteDefaultStack(0);
 
-  START_SHAVE(0, addVectors_s32x4,
+  START_SHAVE_WITH_ARGUMENTS(0, AddVectors_s32x4,
     "iiii",
     ConvertCMXAddressToShave(pIn1),
     ConvertCMXAddressToShave(pIn2),
@@ -98,13 +194,13 @@ GTEST_TEST(CoreTech_Common, ShaveAddTest)
     numElements);
 
   swcWaitShave(0);
-#else // #if defined(USING_MOVIDIUS_COMPILER)
-  addVectors_s32x4(
+#else // #if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
+  emulate_AddVectors_s32x4(
     pIn1,
     pIn2,
     pOut,
     numElements);
-#endif // #if defined(USING_MOVIDIUS_COMPILER) ... #else
+#endif // #if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON) ... #else
   double t1 = GetTime();
 
   printf("Completed in %f seconds\n", t1-t0);
@@ -119,22 +215,23 @@ GTEST_TEST(CoreTech_Common, ShaveAddTest)
   GTEST_RETURN_HERE;
 }
 
-//GTEST_TEST(CoreTech_Common, ShavePrintfTest)
-//{
-//#if defined(USING_MOVIDIUS_COMPILER)
-//  swcResetShave(0);
-//  swcSetAbsoluteDefaultStack(0);
-//
-//  shave0_whichTest = 0;
-//
-//  swcStartShave(0,(u32)&shave0_main);
-//  swcWaitShave(0);
-//#endif // #if defined(USING_MOVIDIUS_COMPILER)
-//
-//  printf("If on the Myriad, the previous line should read: \"Shave Test 0 passed\"");
-//
-//  GTEST_RETURN_HERE;
-//}
+GTEST_TEST(CoreTech_Common, ShavePrintfTest)
+{
+#if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
+  swcResetShave(0);
+  swcSetAbsoluteDefaultStack(0);
+
+  START_SHAVE(0, PrintTest);
+
+  swcWaitShave(0);
+#else
+  emulate_PrintTest();
+#endif // #if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
+
+  printf("If on the Myriad, the previous line should read: \"Shave printf test passed\"\n");
+
+  GTEST_RETURN_HERE;
+}
 
 GTEST_TEST(CoreTech_Common, MatrixTranspose)
 {
@@ -2632,8 +2729,10 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, CRC32Code);
+  CALL_GTEST_TEST(CoreTech_Common, MemoryStackIterator);
   CALL_GTEST_TEST(CoreTech_Common, ShaveAddTest);
-  //CALL_GTEST_TEST(CoreTech_Common, ShavePrintfTest);
+  CALL_GTEST_TEST(CoreTech_Common, ShavePrintfTest);
   CALL_GTEST_TEST(CoreTech_Common, MatrixTranspose);
   CALL_GTEST_TEST(CoreTech_Common, CholeskyDecomposition);
   CALL_GTEST_TEST(CoreTech_Common, ExplicitPrintf);

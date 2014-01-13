@@ -20,6 +20,15 @@ switch(command)
     case this.HEAD_CALIBRATION
         
         this.SetCalibration(packet, 'headCalibrationMatrix', this.trackingResolution);
+        
+        this.headCam = Camera('resolution', this.trackingResolution, ...
+            'calibration', struct('fc', [this.headCalibrationMatrix(1,1) this.headCalibrationMatrix(2,2)], ...
+            'cc', [this.headCalibrationMatrix(1,3) this.headCalibrationMatrix(2,3)], ...
+            'kc', zeros(5,1), ...
+            'alpha_c', 0));  
+        
+        this.setHeadAngle(-.251);
+        
         return
         
     case this.MAT_CALIBRATION
@@ -37,6 +46,9 @@ switch(command)
         this.dockingBlock = this.Cast(packet, 'uint16');
         this.StatusMessage(1, 'Setting docking block to %d.\n', ...
             this.dockingBlock);
+        
+        this.block = Block(this.dockingBlock, 1);
+        
         return;
         
     case this.DISPLAY_IMAGE_COMMAND

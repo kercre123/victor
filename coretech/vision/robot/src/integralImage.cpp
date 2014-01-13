@@ -185,12 +185,12 @@ namespace Anki
 
       s32 * restrict pOutput = output.Pointer(0,0);
 
-#ifdef USING_MOVIDIUS_GCC_COMPILER
+#if defined(USING_MOVIDIUS_COMPILER) && !defined(EMULATE_SHAVE_ON_LEON)
 
       swcResetShave(0);
       swcSetAbsoluteDefaultStack(0);
 
-      START_SHAVE(0, ScrollingIntegralImage_u8_s32_FilterRow,
+      START_SHAVE_WITH_ARGUMENTS(0, ScrollingIntegralImage_u8_s32_FilterRow,
         "iiiiiiii",
         ConvertCMXAddressToShave(pIntegralImage_00),
         ConvertCMXAddressToShave(pIntegralImage_01),
@@ -204,7 +204,7 @@ namespace Anki
       swcWaitShave(0);
 
 #else
-      ScrollingIntegralImage_u8_s32_FilterRow(pIntegralImage_00, pIntegralImage_01, pIntegralImage_10, pIntegralImage_11, minX, maxX, this->imageWidth, pOutput);
+      emulate_ScrollingIntegralImage_u8_s32_FilterRow(pIntegralImage_00, pIntegralImage_01, pIntegralImage_10, pIntegralImage_11, minX, maxX, this->imageWidth, pOutput);
 #endif
 
       return RESULT_OK;
