@@ -57,12 +57,34 @@ DWORD WINAPI PrintfBuffers(LPVOID lpParam)
   return 0;
 } // DWORD WINAPI PrintfBuffers(LPVOID lpParam)
 
+void printUsage()
+{
+  printf(
+    "usage: terminal <comPort> <baudRate>\n"
+    "example: terminal 8 1000000\n");
+} // void printUsage()
+
 int main(int argc, char ** argv)
 {
   ThreadSafeQueue<char*> buffers = ThreadSafeQueue<char*>();
   Serial serial;
 
-  if(serial.Open(8, 1000000) != RESULT_OK)
+  s32 comPort = 8;
+  s32 baudRate = 1000000;
+
+  if(argc == 1) {
+    // just use defaults, but print the help anyway
+    printUsage();
+    printf("using defaults comPort=%d baudRate=%d\n", comPort, baudRate);
+  } else if(argc == 3) {
+    sscanf(argv[1], "%d", &comPort);
+    sscanf(argv[2], "%d", &baudRate);
+  } else {
+    printUsage();
+    return -1;
+  }
+
+  if(serial.Open(comPort, baudRate) != RESULT_OK)
     return -1;
 
   DWORD threadId;
@@ -74,7 +96,7 @@ int main(int argc, char ** argv)
     0,                      // use default creation flags
     &threadId);   // returns the thread identifier
 
-  SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
+  //SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
 
   const s32 bufferLength = 1024;
 

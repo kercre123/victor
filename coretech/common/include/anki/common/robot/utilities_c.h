@@ -73,10 +73,10 @@ extern "C" {
   void explicitPrintf(int (*writeChar)(int), int reverseEachFourCharacters, const char *format, ...);
   // void explicitPrintfWithExplicitBuffer(int reverseEachFourCharacters, int * buffer, const char *format, ...);
 
-  void PrintInt(int (*writeChar)(int), s32 value); // Print a single number
-  void PrintHex(int (*writeChar)(int), u32 value); // Print a single unsigned int in hex format 0xabcd0123
-  void PrintFloat(int (*writeChar)(int), f64 value); // Print a single float
-  void PrintFloatWithExponent(int (*writeChar)(int), f64 value); // Print a single float in format "significand * 2^exponent"
+  void PrintS32(int (*writeChar)(int), s32 value); // Print a single number
+  void PrintU32Hex(int (*writeChar)(int), u32 value); // Print a single unsigned int in hex format 0xabcd0123
+  void PrintF64(int (*writeChar)(int), f64 value); // Print a single float
+  void PrintF64WithExponent(int (*writeChar)(int), f64 value); // Print a single float in format "significand * 2^exponent"
 
 #if defined(USING_MOVIDIUS_GCC_COMPILER)
   //#define memset explicitMemset
@@ -87,6 +87,11 @@ extern "C" {
   f32 powF32S32(const f32 x, const s32 y);
   f64 powF64S32(const f64 x, const s32 y);
 #endif // #if defined(USING_MOVIDIUS_GCC_COMPILER)
+
+  // Data is the data to compute the CRC code of
+  // dataLength is the number of bytes of data
+  u32 ComputeCRC32_littleEndian(const void * data, const s32 dataLength);
+  u32 ComputeCRC32_bigEndian(const void * data, const s32 dataLength);
 
 #ifdef __cplusplus
 }

@@ -137,7 +137,7 @@ Result Serial::Read(void * buffer, s32 bufferLength, DWORD &bytesRead)
   }
 
   bytesRead = comStat.cbInQue;
-  if(bufferLength < bytesRead)
+  if(bufferLength < static_cast<s32>(bytesRead))
     bytesRead = bufferLength;
 
   const bool fileRead = ReadFile(comPortHandle, buffer, bytesRead, &bytesRead, &readEventHandle);

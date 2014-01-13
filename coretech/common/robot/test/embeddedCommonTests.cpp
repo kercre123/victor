@@ -23,6 +23,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/interpolate.h"
 #include "anki/common/robot/arrayPatterns.h"
 #include "anki/common/robot/shaveKernels_c.h"
+#include "anki/common/robot/utilities.h"
 
 #if defined(USING_MOVIDIUS_COMPILER)
 //#include "anki/cozmo/robot/hal.h"
@@ -69,6 +70,26 @@ Matlab matlab(false);
 #endif
 
 BUFFER_LOCATION static char buffer[MAX_BYTES];
+
+GTEST_TEST(CoreTech_Common, CRC32Code)
+{
+  const s32 numDataBytes = 16;
+  const u32 data[] = {0x1234BEF2, 0xA342EE00, 0x00000000, 0xFFFFFFFF};
+
+#if defined(USING_MOVIDIUS_GCC_COMPILER)
+  const u32 crc = ComputeCRC32_bigEndian(&data[0], numDataBytes);
+#else
+  const u32 crc = ComputeCRC32_littleEndian(&data[0], numDataBytes);
+#endif
+
+  const u32 crc_groundTruth = 0xD6C600C;
+
+  printf("0x%x\n", crc);
+
+  ASSERT_TRUE(crc == crc_groundTruth);
+
+  GTEST_RETURN_HERE;
+}
 
 GTEST_TEST(CoreTech_Common, MemoryStackIterator)
 {
@@ -2708,6 +2729,7 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, CRC32Code);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStackIterator);
   CALL_GTEST_TEST(CoreTech_Common, ShaveAddTest);
   CALL_GTEST_TEST(CoreTech_Common, ShavePrintfTest);
