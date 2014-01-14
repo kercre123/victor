@@ -15,8 +15,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/shaveKernels_c.h"
 
-#pragma mark --- Natural C declarations ---
-
 #ifdef __cplusplus
 extern "C" {
 #endif

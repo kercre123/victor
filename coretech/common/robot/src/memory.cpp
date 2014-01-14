@@ -39,10 +39,15 @@ namespace Anki
       AnkiConditionalWarn(ms.totalBytes >= ms.usedBytes, "Anki.MemoryStack.MemoryStack", "Buffer is using more bytes than it has. Try running IsValid() to test for memory corruption.");
     }
 
-    void* MemoryStack::Allocate(s32 numBytesRequested, s32 *numBytesAllocated)
+    void* MemoryStack::Allocate(const s32 numBytesRequested)
     {
-      if(numBytesAllocated)
-        *numBytesAllocated = 0;
+      s32 numBytesAllocated = -1;
+      return MemoryStack::Allocate(numBytesRequested, numBytesAllocated);
+    }
+
+    void* MemoryStack::Allocate(s32 numBytesRequested, s32 &numBytesAllocated)
+    {
+      numBytesAllocated = 0;
 
       AnkiConditionalErrorAndReturnValue(numBytesRequested > 0, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested > 0");
       AnkiConditionalErrorAndReturnValue(numBytesRequested <= 0x3FFFFFFF, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested <= 0x3FFFFFFF");
@@ -76,9 +81,7 @@ namespace Anki
 
       usedBytes += requestedBytes;
 
-      if(numBytesAllocated) {
-        *numBytesAllocated = numBytesRequestedRounded;
-      }
+      numBytesAllocated = numBytesRequestedRounded;
 
       if(flags.get_zeroAllocatedMemory())
         memset(segmentMemory, 0, numBytesRequestedRounded);
@@ -86,10 +89,15 @@ namespace Anki
       return segmentMemory;
     }
 
-    void* MemoryStack::Reallocate(void* memoryLocation, s32 numBytesRequested, s32 *numBytesAllocated)
+    void* MemoryStack::Reallocate(void* memoryLocation, s32 numBytesRequested)
     {
-      if(numBytesAllocated)
-        *numBytesAllocated = 0;
+      s32 numBytesAllocated = -1;
+      return MemoryStack::Reallocate(memoryLocation, numBytesRequested, numBytesAllocated);
+    }
+
+    void* MemoryStack::Reallocate(void* memoryLocation, s32 numBytesRequested, s32 &numBytesAllocated)
+    {
+      numBytesAllocated = 0;
 
       AnkiConditionalErrorAndReturnValue(memoryLocation == lastAllocatedMemory, NULL, "Anki.MemoryStack.Reallocate", "The requested memory is not at the end of the stack");
 
@@ -265,6 +273,11 @@ namespace Anki
       return segmentToReturn;
     }
 
+    const MemoryStack& MemoryStackConstIterator::get_memory() const
+    {
+      return memory;
+    }
+
     MemoryStackIterator::MemoryStackIterator(MemoryStack &memory)
       : MemoryStackConstIterator(memory)
     {
@@ -277,6 +290,11 @@ namespace Anki
       const void * segment = MemoryStackConstIterator::GetNext(segmentLength);
 
       return const_cast<void*>(segment);
+    }
+
+    MemoryStack& MemoryStackIterator::get_memory()
+    {
+      return const_cast<MemoryStack&>(memory);
     }
   } // namespace Embedded
 } // namespace Anki

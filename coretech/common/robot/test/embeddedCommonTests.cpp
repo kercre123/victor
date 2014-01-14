@@ -24,11 +24,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/arrayPatterns.h"
 #include "anki/common/robot/shaveKernels_c.h"
 #include "anki/common/robot/utilities.h"
+#include "anki/common/robot/serialize.h"
 
 #if defined(USING_MOVIDIUS_COMPILER)
-//#include "anki/cozmo/robot/hal.h"
-#endif
-
 namespace Anki
 {
   namespace Cozmo
@@ -40,6 +38,7 @@ namespace Anki
     }
   }
 }
+#endif
 
 using namespace Anki::Embedded;
 
@@ -71,15 +70,86 @@ Matlab matlab(false);
 
 BUFFER_LOCATION static char buffer[MAX_BYTES];
 
+GTEST_TEST(CoreTech_Common, SerializedBuffer)
+{
+  const s32 segment1Length = 32;
+  const s32 segment2Length = 64;
+  const s32 segment3Length = 128;
+
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, 5000);
+  ASSERT_TRUE(ms.IsValid());
+
+  void * segment1 = ms.Allocate(segment1Length);
+  void * segment2 = ms.Allocate(segment2Length);
+  void * segment3 = ms.Allocate(segment3Length);
+
+  ASSERT_TRUE(segment1 != NULL);
+  ASSERT_TRUE(segment2 != NULL);
+  ASSERT_TRUE(segment3 != NULL);
+
+  for(s32 i=0; i<segment1Length; i++) {
+    reinterpret_cast<u8*>(segment1)[i] = i + 1;
+  }
+
+  for(s32 i=0; i<segment2Length; i++) {
+    reinterpret_cast<u8*>(segment2)[i] = 2*i + 1;
+  }
+
+  for(s32 i=0; i<segment3Length; i++) {
+    reinterpret_cast<u8*>(segment3)[i] = 3*i + 1;
+  }
+
+  ASSERT_TRUE(buffer != NULL);
+  SerializedBuffer serialized(buffer+5000, 6000);
+  ASSERT_TRUE(serialized.IsValid());
+
+  void * segment1b = serialized.PushBack(segment1, segment1Length);
+  void * segment2b = serialized.PushBack(segment2, segment2Length);
+  void * segment3b = serialized.PushBack(segment3, segment3Length);
+
+  ASSERT_TRUE(segment1b != NULL);
+  ASSERT_TRUE(segment2b != NULL);
+  ASSERT_TRUE(segment3b != NULL);
+
+  {
+    SerializedBufferConstIterator iterator(serialized);
+
+    s32 segment1LengthB = -1;
+    s32 segment2LengthB = -1;
+    s32 segment3LengthB = -1;
+
+    ASSERT_TRUE(iterator.HasNext());
+    const void * segment1c = iterator.GetNext(segment1LengthB);
+    ASSERT_TRUE(segment1LengthB == segment1Length);
+    ASSERT_TRUE(segment1b == segment1c);
+
+    ASSERT_TRUE(iterator.HasNext());
+    const void * segment2c = iterator.GetNext(segment2LengthB);
+    ASSERT_TRUE(segment2LengthB == segment2Length);
+    ASSERT_TRUE(segment2b == segment2c);
+
+    ASSERT_TRUE(iterator.HasNext());
+    const void * segment3c = iterator.GetNext(segment3LengthB);
+    ASSERT_TRUE(segment3LengthB == segment3Length);
+    ASSERT_TRUE(segment3b == segment3c);
+
+    ASSERT_FALSE(iterator.HasNext());
+  }
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, CRC32Code)
 {
   const s32 numDataBytes = 16;
   const u32 data[] = {0x1234BEF2, 0xA342EE00, 0x00000000, 0xFFFFFFFF};
+  const u32 initialCRC = 0xFFFFFFFF;
 
 #if defined(USING_MOVIDIUS_GCC_COMPILER)
-  const u32 crc = ComputeCRC32_bigEndian(&data[0], numDataBytes);
+  const u32 crc = ComputeCRC32_bigEndian(&data[0], numDataBytes, initialCRC);
 #else
-  const u32 crc = ComputeCRC32_littleEndian(&data[0], numDataBytes);
+  const u32 crc = ComputeCRC32_littleEndian(&data[0], numDataBytes, initialCRC);
 #endif
 
   const u32 crc_groundTruth = 0xD6C600C;

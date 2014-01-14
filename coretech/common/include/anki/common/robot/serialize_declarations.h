@@ -24,10 +24,11 @@ namespace Anki
 #pragma mark --- Declarations ---
     // A SerializedBuffer is used to store data
     // Use a MemoryStackIterator to read out the data
-    class SerializedBuffer : protected MemoryStack
+    class SerializedBuffer
     {
     public:
       static const s32 SERIALIZED_HEADER_LENGTH = 8;
+      static const s32 SERIALIZED_FOOTER_LENGTH = 4;
 
       enum DataType
       {
@@ -50,9 +51,37 @@ namespace Anki
 
       template<typename Type> Result PushBack(Array<Type> &value);
 
+      bool IsValid() const;
+
+      const MemoryStack& get_memoryStack() const;
+
+      MemoryStack& get_memoryStack();
+
     protected:
-      MemoryStack buffer;
+      MemoryStack memoryStack;
     }; // class SerializedBuffer
+
+    class SerializedBufferConstIterator : public MemoryStackConstIterator
+    {
+    public:
+      SerializedBufferConstIterator(const SerializedBuffer &serializedBuffer);
+
+      // Same as the standard MemoryStackConstIterator::GetNext(), plus:
+      // 1. Checks the CRC code and returns NULL if it fails
+      // 2. segmentLength is the size without the CRC footer
+      const void * GetNext(s32 &segmentLength);
+    }; // class MemoryStackConstIterator
+
+    class SerializedBufferIterator : public SerializedBufferConstIterator
+    {
+    public:
+      SerializedBufferIterator(SerializedBuffer &serializedBuffer);
+
+      // Same as the standard MemoryStackIterator::GetNext(), plus:
+      // 1. Checks the CRC code and returns NULL if it fails
+      // 2. segmentLength is the size without the CRC footer
+      void * GetNext(s32 &segmentLength);
+    }; // class MemoryStackConstIterator
   } // namespace Embedded
 } //namespace Anki
 

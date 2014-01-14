@@ -59,7 +59,8 @@ namespace Anki
       // patterns.
       //
       // All memory in the array is zeroed out once it is allocated, making Allocate more like calloc() than malloc()
-      void* Allocate(const s32 numBytesRequested, s32 *numBytesAllocated=NULL);
+      void* Allocate(const s32 numBytesRequested);
+      void* Allocate(const s32 numBytesRequested, s32 &numBytesAllocated);
 
       // Reallocate will change the size of the last allocated memory segment. It only works on the
       // last segment. The return value is equal to memoryLocation, or NULL if there was an error.
@@ -67,7 +68,8 @@ namespace Anki
       //
       // WARNING: This will not update any references to the memory, you must update all references
       //          manually.
-      void* Reallocate(void* memoryLocation, s32 numBytesRequested, s32 *numBytesAllocated=NULL);
+      void* Reallocate(void* memoryLocation, s32 numBytesRequested);
+      void* Reallocate(void* memoryLocation, s32 numBytesRequested, s32 &numBytesAllocated);
 
       // Check if any Allocate() memory was written out of bounds (via fill patterns at the beginning and end)
       bool IsValid() const;
@@ -129,6 +131,8 @@ namespace Anki
 
       const void * GetNext(s32 &segmentLength);
 
+      const MemoryStack& get_memory() const;
+
     protected:
       s32 index;
       const MemoryStack &memory;
@@ -140,6 +144,8 @@ namespace Anki
       MemoryStackIterator(MemoryStack &memory);
 
       void * GetNext(s32 &segmentLength);
+
+      MemoryStack& get_memory();
     }; // class MemoryStackIterator
   } // namespace Embedded
 } // namespace Anki

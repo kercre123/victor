@@ -16,7 +16,7 @@ namespace Anki
   namespace Embedded
   {
     SerializedBuffer::SerializedBuffer(void *buffer, s32 bufferLength, Flags::Buffer flags)
-      : MemoryStack(buffer, bufferLength, flags)
+      : memoryStack(buffer, bufferLength, flags)
     {
     }
 
@@ -27,16 +27,16 @@ namespace Anki
 
     void* SerializedBuffer::PushBack(void * header, s32 headerLength, void * data, s32 dataLength)
     {
-      if(header != NULL) {
-        AnkiConditionalErrorAndReturnValue(reinterpret_cast<size_t>(header)%4 == 0,
-          NULL, "SerializedBuffer::PushBack", "header must be 4-byte aligned");
-      }
-
       AnkiConditionalErrorAndReturnValue(headerLength >= 0,
         NULL, "SerializedBuffer::PushBack", "headerLength must be >= 0");
 
       AnkiConditionalErrorAndReturnValue(headerLength%4 == 0,
         NULL, "SerializedBuffer::PushBack", "headerLength must be a multiple of 4");
+
+      if(header != NULL) {
+        AnkiConditionalErrorAndReturnValue(reinterpret_cast<size_t>(header)%4 == 0,
+          NULL, "SerializedBuffer::PushBack", "header must be 4-byte aligned");
+      }
 
       if(data != NULL) {
         AnkiConditionalErrorAndReturnValue(reinterpret_cast<size_t>(data)%4 == 0,
@@ -45,40 +45,122 @@ namespace Anki
 
       dataLength = RoundUp<s32>(dataLength, 4);
 
-      u32* segmentU32 = reinterpret_cast<u32*>( MemoryStack::Allocate(dataLength+headerLength+SERIALIZED_HEADER_LENGTH) );
+      s32 numBytesAllocated = -1;
+      u8 * const segmentStart = reinterpret_cast<u8*>( memoryStack.Allocate(dataLength+headerLength+SERIALIZED_HEADER_LENGTH+SERIALIZED_FOOTER_LENGTH, numBytesAllocated) );
+      u32 * segmentU32 = reinterpret_cast<u32*>(segmentStart);
 
       AnkiConditionalErrorAndReturnValue(segmentU32 != NULL,
         NULL, "SerializedBuffer::PushBack", "Could not add data");
 
+      u32 crc = 0xFFFFFFFF;
+
       segmentU32[0] = static_cast<u32>(dataLength);
       segmentU32[1] = static_cast<u32>(DATA_TYPE_RAW);
+
+      // TODO: decide if the CRC should be computed on the length (png doesn't do this)
+#ifdef USING_MOVIDIUS_GCC_COMPILER
+      crc =  ComputeCRC32_bigEndian(segmentU32, SERIALIZED_HEADER_LENGTH, crc);
+#else
+      crc =  ComputeCRC32_littleEndian(segmentU32, SERIALIZED_HEADER_LENGTH, crc);
+#endif
+
       segmentU32 += (SERIALIZED_HEADER_LENGTH>>2);
 
-      //
-      // Endian-safe copy (it may copy a little extra)
-      //
-
       if(header != NULL) {
+        // Endian-safe copy (it may copy a little extra)
+
         const s32 headerLength4 = headerLength >> 2;
         const u32 * headerU32 = reinterpret_cast<u32*>(header);
         for(s32 i=0; i<headerLength4; i++)
         {
           segmentU32[i] = headerU32[i];
         }
-      } // if(data != NULL)
+
+#ifdef USING_MOVIDIUS_GCC_COMPILER
+        crc =  ComputeCRC32_bigEndian(segmentU32, headerLength, crc);
+#else
+        crc =  ComputeCRC32_littleEndian(segmentU32, headerLength, crc);
+#endif
+      } // if(header != NULL)
 
       segmentU32 += (headerLength>>2);
 
       if(data != NULL) {
+        // Endian-safe copy (it may copy a little extra)
+
         const s32 dataLength4 = (dataLength + 3) >> 2;
         const u32 * dataU32 = reinterpret_cast<u32*>(data);
         for(s32 i=0; i<dataLength4; i++)
         {
           segmentU32[i] = dataU32[i];
         }
+
+#ifdef USING_MOVIDIUS_GCC_COMPILER
+        crc =  ComputeCRC32_bigEndian(segmentU32, dataLength, crc);
+#else
+        crc =  ComputeCRC32_littleEndian(segmentU32, dataLength, crc);
+#endif
+
+        // Add a CRC code computed from the header and data
+        const u32 crc2 =  ComputeCRC32_littleEndian(segmentStart, numBytesAllocated - SERIALIZED_FOOTER_LENGTH, 0xFFFFFFFF);
+        reinterpret_cast<u32*>(segmentStart + numBytesAllocated - SERIALIZED_FOOTER_LENGTH)[0] = crc;
       } // if(data != NULL)
 
-      return segmentU32;
+      return segmentStart;
+    }
+
+    bool SerializedBuffer::IsValid() const
+    {
+      return memoryStack.IsValid();
+    }
+
+    const MemoryStack& SerializedBuffer::get_memoryStack() const
+    {
+      return memoryStack;
+    }
+
+    MemoryStack& SerializedBuffer::get_memoryStack()
+    {
+      return memoryStack;
+    }
+
+    SerializedBufferConstIterator::SerializedBufferConstIterator(const SerializedBuffer &serializedBuffer)
+      : MemoryStackConstIterator(serializedBuffer.get_memoryStack())
+    {
+    }
+
+    const void * SerializedBufferConstIterator::GetNext(s32 &segmentLength)
+    {
+      const void * segmentToReturn = MemoryStackConstIterator::GetNext(segmentLength);
+
+      segmentLength -= SerializedBuffer::SERIALIZED_FOOTER_LENGTH;
+
+      const u32 expectedCRC = reinterpret_cast<const u32*>(reinterpret_cast<const u8*>(segmentToReturn)+segmentLength)[0];
+
+#ifdef USING_MOVIDIUS_GCC_COMPILER
+      const u32 computedCrc =  ComputeCRC32_bigEndian(segmentToReturn, segmentLength, 0xFFFFFFFF);
+#else
+      const u32 computedCrc =  ComputeCRC32_littleEndian(segmentToReturn, segmentLength, 0xFFFFFFFF);
+#endif
+
+      AnkiConditionalErrorAndReturnValue(expectedCRC == computedCrc,
+        NULL, "SerializedBufferConstIterator::GetNext", "CRCs don't match");
+
+      return segmentToReturn;
+    }
+
+    SerializedBufferIterator::SerializedBufferIterator(SerializedBuffer &serializedBuffer)
+      : SerializedBufferConstIterator(serializedBuffer)
+    {
+    }
+
+    void * SerializedBufferIterator::GetNext(s32 &segmentLength)
+    {
+      // To avoid code duplication, we'll use the const version of GetNext(), though our MemoryStack is not const
+
+      const void * segment = SerializedBufferConstIterator::GetNext(segmentLength);
+
+      return const_cast<void*>(segment);
     }
   } // namespace Embedded
 } // namespace Anki

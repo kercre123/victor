@@ -90,8 +90,9 @@ extern "C" {
 
   // Data is the data to compute the CRC code of
   // dataLength is the number of bytes of data
-  u32 ComputeCRC32_littleEndian(const void * data, const s32 dataLength);
-  u32 ComputeCRC32_bigEndian(const void * data, const s32 dataLength);
+  // Use initialCRC=0xFFFFFFFF for the first pass
+  u32 ComputeCRC32_littleEndian(const void * data, const s32 dataLength, const u32 initialCRC);
+  u32 ComputeCRC32_bigEndian(const void * data, const s32 dataLength, const u32 initialCRC);
 
 #ifdef __cplusplus
 }
