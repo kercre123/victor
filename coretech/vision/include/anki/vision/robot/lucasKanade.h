@@ -35,6 +35,8 @@ namespace Anki
         TRANSFORM_PROJECTIVE  = 0x0800
       };
 
+      const s32 NUM_PREVIOUS_QUADS_TO_COMPARE = 2;
+
       class PlanarTransformation_f32
       {
         // A PlanarTransformation object can do the following:
@@ -70,8 +72,8 @@ namespace Anki
         Result Print(const char * const variableName = "Transformation");
 
         Quadrilateral<f32> TransformQuadrilateral(const Quadrilateral<f32> &in,
-                                                  MemoryStack scratch,
-                                                  const f32 scale=1.0f) const;
+          MemoryStack scratch,
+          const f32 scale=1.0f) const;
 
         Result set_transformType(const TransformType transformType);
 
@@ -84,7 +86,7 @@ namespace Anki
         Result set_initialCorners(const Quadrilateral<f32> &initialCorners);
 
         const Quadrilateral<f32>& get_initialCorners() const;
-        
+
         const Point<f32>& get_centerOffset() const;
 
         Quadrilateral<f32> get_transformedCorners(MemoryStack scratch) const;
@@ -97,7 +99,7 @@ namespace Anki
         Quadrilateral<f32> initialCorners; // The initial corners of the valid region
 
         Point<f32> centerOffset;
-        
+
         static Result TransformPointsStatic(
           const Array<f32> &xIn, const Array<f32> &yIn,
           const f32 scale,
@@ -118,14 +120,14 @@ namespace Anki
         LucasKanadeTracker_f32(void) : isValid(false), isInitialized(false) { }
         LucasKanadeTracker_f32(const Array<u8> &templateImage, const Quadrilateral<f32> &templateRegion, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory);
 
-        Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, bool& converged, MemoryStack memory);
+        Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, bool& converged, MemoryStack scratch);
 
         bool IsValid() const;
 
         Result set_transformation(const PlanarTransformation_f32 &transformation);
 
         PlanarTransformation_f32 get_transformation() const;
-        
+
       protected:
         // A_full is the list of derivative matrices for each level of the pyramid
         FixedLengthList<Array<f32>> A_full;
@@ -160,8 +162,7 @@ namespace Anki
         // Allocated some permanant structures using memory, as well as some temporary structures. As a result, it should only be called once.
         Result InitializeTemplate(const Array<u8> &templateImage, MemoryStack &memory);
 
-        Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, const bool useWeights, bool &converged, MemoryStack memory);
-        
+        Result IterativelyRefineTrack(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, const TransformType curTransformType, const bool useWeights, bool &converged, MemoryStack scratch);
       }; // class LucasKanadeTracker_f32
 
       class LucasKanadeTrackerFast
@@ -174,7 +175,7 @@ namespace Anki
 
         LucasKanadeTrackerFast(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory);
 
-        Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, bool& converged, MemoryStack memory);
+        Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, bool& converged, MemoryStack scratch);
 
         bool IsValid() const;
 
@@ -211,9 +212,7 @@ namespace Anki
 
         Result IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
         Result IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
-        
       }; // class LucasKanadeTrackerFast
-      
     } // namespace TemplateTracker
   } // namespace Embedded
 } //namespace Anki
