@@ -15,6 +15,17 @@ classdef BlockMarker2D < Marker2D
                   'BBFCC';
                   'BFOCC'];
 
+              % % Testing higher-resolution code
+              % Layout = ['BBBBOFFFF';
+              %           'BBBBBFFFF';
+              %           'BBCBBFCFF';
+              %           'BBBBBFFFF';
+              %           'OBBB FFFO';
+              %           'BBCBBFFFF';
+              %           'BBBBBFFFF';
+              %           'BBBBBFFCC';
+              %           'BCBBOFFCC'];
+
         IdChars = {'B', 'F'}; % O and C are reserved!
         IdNames = {'Block', 'Face'};
         
@@ -33,7 +44,7 @@ classdef BlockMarker2D < Marker2D
         ProbeGap    = .2; 
         ProbeRadius = 4; 
         ProbeSigma  = 1/6;
-        UseOutsideOfSquare = false;
+        UseOutsideOfSquare = true;
         CodePadding = BlockMarker2D.setCodePadding(BlockMarker2D.UseOutsideOfSquare);
                 
         Xprobes = BlockMarker2D.createProbes('X', ...

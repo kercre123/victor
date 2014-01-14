@@ -4,7 +4,7 @@
  * Author: Brad Neuman
  * Created: 2014-01-06
  *
- * Description: unit tests for parsing a json file using the Anki ConfigTree interface
+ * Description: unit tests for parsing a json file and the tools in jsonTools.h
  *
  * Copyright: Anki, Inc. 2014
  *
@@ -13,11 +13,10 @@
 #include <fstream>
 #include "gtest/gtest.h"
 
-#include "anki/common/basestation/configTree.h"
 #include "json/json.h"
+#include "anki/common/basestation/jsonTools.h"
 
 using namespace std;
-using namespace Anki;
 
 GTEST_TEST(TestConfigTreeJsonCpp, JsonCppWorks)
 {
@@ -44,35 +43,30 @@ GTEST_TEST(TestConfigTreeJsonCpp, JsonCppWorks)
   EXPECT_EQ(list1[3].asInt(), 4);
 
   EXPECT_EQ(root["dict"]["list"][1]["bv"].asBool(), true);
+
+  Json::Value::Members members = root["dict"]["imporatantKeys"].getMemberNames();
+  ASSERT_EQ(members.size(), 2);
+  
+  EXPECT_TRUE(members[0] == "key1" || members[1] == "key1");
+  EXPECT_TRUE(members[0] == "key2" || members[1] == "key2");
 }
 
-GTEST_TEST(TestConfigTreeJsonCpp, ConfigTreeInterface)
+GTEST_TEST(TestConfigTreeJsonCpp, OptionalValues)
 {
-  ConfigTree *tree = new ConfigTree;
+  Json::Value root;   // will contains the root value after parsing.
+  Json::Reader reader;
 
-  EXPECT_TRUE(tree->ReadJson("../coretech/common/basestation/config/test.json"));
+  ifstream configFileStream("../coretech/common/basestation/config/test.json");
 
-  EXPECT_EQ(tree->GetNumberOfChildren(), 4);
+  ASSERT_TRUE(reader.parse(configFileStream, root))
+    << "Failed to parse configuration\n"
+    << reader.getFormattedErrorMessages();
 
-  string str;
-  EXPECT_TRUE(tree->GetValueOptional("key", str));
-  EXPECT_EQ(str, "value");
+  using namespace Anki::JsonTools;
 
-  EXPECT_EQ((*tree)["key"].AsString(), "value");
-  EXPECT_EQ(tree->GetValue("key", "wrong"), "value");
-  EXPECT_EQ(tree->GetValue("missing", "missing"), "missing");
+  string sval;
+  EXPECT_TRUE(GetValueOptional(root, "key", sval));
+  EXPECT_EQ(sval, "value");
 
-  float num;
-  EXPECT_FLOAT_EQ((*tree)["floatKey"].AsFloat(), 3.1415);
-
-  ConfigTree list1 = (*tree)["list"];
-  EXPECT_EQ(list1.GetNumberOfChildren(), 4);
-  EXPECT_EQ(list1[0].AsInt(), 1);
-  EXPECT_EQ(list1[1].AsInt(), 2);
-  EXPECT_EQ(list1[2].AsInt(), 3);
-  EXPECT_EQ(list1[3].AsInt(), 4);
-
-  EXPECT_EQ((*tree)["dict"]["list"][1]["bv"].AsBool(), true);
-
-  delete tree;
+  EXPECT_FALSE(GetValueOptional(root, "missingKey", sval));
 }

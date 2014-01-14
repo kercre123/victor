@@ -3,6 +3,7 @@
 
 
 #include <vector>
+#include "json/json-forwards.h"
 
 namespace Anki
 {
@@ -40,6 +41,9 @@ public:
   State(StateID sid);
   State(StateXY x, StateXY y, StateTheta theta) : x(x), y(y), theta(theta) {};
 
+  // returns true if successful
+  bool Import(Json::Value& config);
+
   bool operator==(const State& other) const;
 
   StateID GetStateID() const;
@@ -66,17 +70,25 @@ public:
 class State_c
 {
 public:
-  State_c() : x_cm(0), y_cm(0), theta(0) {};
-  State_c(float x, float y, float theta) : x_cm(x), y_cm(y), theta(theta) {};
+  State_c() : x_mm(0), y_mm(0), theta(0) {};
+  State_c(float x, float y, float theta) : x_mm(x), y_mm(y), theta(theta) {};
 
-  float x_cm;
-  float y_cm;
+  // returns true if successful
+  bool Import(Json::Value& config);
+
+  float x_mm;
+  float y_mm;
   float theta;
 };
 
 class MotionPrimitive
 {
 public:
+
+  MotionPrimitive() {}
+
+  // returns true if successful
+  bool Import(Json::Value& config, StateTheta startingAngle);
 
   // id of this action (unique per starting angle)
   ActionID id;
@@ -96,6 +108,9 @@ public:
   // vector containing continuous relative offsets for positions in
   // between (0,0,startTheta) and (end)
   std::vector<State_c> intermediatePositions;
+
+  // user-defined human readable name for the action (may be empty)
+  std::string name;
 };
 
 class Successor
@@ -162,6 +177,8 @@ public:
 
   ~xythetaEnvironment();
 
+  // Imports motion primitives from the given json file. Returns true if success
+  bool ReadMotionPrimitives(const char* mprimFilename);
 
   // Returns an iterator to the successors from state "start"
   SuccessorIterator GetSuccessors(StateID startID, Cost currG) const;
@@ -173,9 +190,13 @@ public:
   inline static float GetYFromStateID(StateID sid);
   inline static float GetThetaFromStateID(StateID sid);
 
-  inline float GetX_cm(StateXY x) const;
-  inline float GetY_cm(StateXY y) const;
+  inline float GetX_mm(StateXY x) const;
+  inline float GetY_mm(StateXY y) const;
   inline float GetTheta_c(StateTheta theta) const;
+
+  // Get a motion primitive. Returns true if the action is retrieved,
+  // false otherwise. Returns primitive in arguments
+  inline bool GetMotion(StateTheta theta, ActionID actionID, MotionPrimitive& prim) const;
 
   // This function fills up the given vector with (x,y,theta) coordinates of
   // following the plan
@@ -184,11 +205,10 @@ public:
 private:
 
   // returns true on success
-  bool ReadMotionPrimitives(FILE* fMotPrims);
-  bool ReadinMotionPrimitive(MotionPrimitive& prim, FILE* fMotPrims);
   bool ReadEnvironment(FILE* fEnv);
+  bool ParseMotionPrims(Json::Value& config);
 
-  float resolution_cm_;
+  float resolution_mm_;
 
   unsigned int numAngles_;
   float radiansPerAngle_;
@@ -201,15 +221,24 @@ private:
 
 };
 
+bool xythetaEnvironment::GetMotion(StateTheta theta, ActionID actionID, MotionPrimitive& prim) const
+{
+  if(theta < allMotionPrimitives_.size() && actionID < allMotionPrimitives_[theta].size()) {
+    prim = allMotionPrimitives_[theta][actionID];
+    return true;
+  }
+  return false;
+}
+
 // TODO:(bn) pull out into _inline.cpp
 State_c xythetaEnvironment::State2State_c(const State& c) const
 {
-  return State_c(GetX_cm(c.x), GetY_cm(c.y), GetTheta_c(c.theta));
+  return State_c(GetX_mm(c.x), GetY_mm(c.y), GetTheta_c(c.theta));
 }
 
 State_c xythetaEnvironment::StateID2State_c(StateID sid) const
 {
-  return State_c(GetX_cm(sid.x), GetY_cm(sid.y), GetTheta_c(sid.theta));
+  return State_c(GetX_mm(sid.x), GetY_mm(sid.y), GetTheta_c(sid.theta));
 }
 
 float xythetaEnvironment::GetXFromStateID(StateID sid)
@@ -227,14 +256,14 @@ float xythetaEnvironment::GetThetaFromStateID(StateID sid)
   return sid.theta; //sid >> (2*MAX_XY_BITS);
 }
 
-float xythetaEnvironment::GetX_cm(StateXY x) const
+float xythetaEnvironment::GetX_mm(StateXY x) const
 {
-  return resolution_cm_ * x;
+  return resolution_mm_ * x;
 }
 
-float xythetaEnvironment::GetY_cm(StateXY y) const
+float xythetaEnvironment::GetY_mm(StateXY y) const
 {
-  return resolution_cm_ * y;
+  return resolution_mm_ * y;
 }
 
 float xythetaEnvironment::GetTheta_c(StateTheta theta) const
