@@ -569,9 +569,9 @@ namespace Anki
       const s32 numBytesRequested = numRows * this->stride + extraBoundaryPatternBytes;
 
       if(reAllocate) {
-        return memory.Reallocate(this->rawDataPointer, numBytesRequested, &numBytesAllocated);
+        return memory.Reallocate(this->rawDataPointer, numBytesRequested, numBytesAllocated);
       } else {
-        return memory.Allocate(numBytesRequested, &numBytesAllocated);
+        return memory.Allocate(numBytesRequested, numBytesAllocated);
       }
     }
 

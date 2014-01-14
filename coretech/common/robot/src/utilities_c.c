@@ -571,10 +571,10 @@ void InitializeCRC32Table()
 #endif // #ifdef REINITIALZE_CRC32_TABLE
 
 // Based off Hacker's delight, 2nd edition
-u32 ComputeCRC32_littleEndian(const void * data, const s32 dataLength)
+u32 ComputeCRC32_littleEndian(const void * data, const s32 dataLength, const u32 initialCRC)
 {
   s32 i = 0;
-  u32 crc = 0xFFFFFFFF;
+  u32 crc = initialCRC;
 
   for(i=0; i<dataLength; i++) {
     const s32 index = i;
@@ -586,10 +586,10 @@ u32 ComputeCRC32_littleEndian(const void * data, const s32 dataLength)
   return ~crc;
 }
 
-u32 ComputeCRC32_bigEndian(const void * data, const s32 dataLength)
+u32 ComputeCRC32_bigEndian(const void * data, const s32 dataLength, const u32 initialCRC)
 {
   s32 i = 0;
-  u32 crc = 0xFFFFFFFF;
+  u32 crc = initialCRC;
 
   for(i=0; i<dataLength; i++) {
     const s32 index = i ^ 3;
