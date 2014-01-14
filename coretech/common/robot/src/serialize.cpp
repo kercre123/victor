@@ -95,14 +95,15 @@ namespace Anki
           segmentU32[i] = dataU32[i];
         }
 
+        const s32 numBytesToCrc = numBytesAllocated-headerLength-SERIALIZED_HEADER_LENGTH-SERIALIZED_FOOTER_LENGTH;
 #ifdef USING_MOVIDIUS_GCC_COMPILER
-        crc =  ComputeCRC32_bigEndian(segmentU32, dataLength, crc);
+        crc =  ComputeCRC32_bigEndian(segmentU32, numBytesToCrc, crc);
 #else
-        crc =  ComputeCRC32_littleEndian(segmentU32, dataLength, crc);
+        crc =  ComputeCRC32_littleEndian(segmentU32, numBytesToCrc, crc);
 #endif
 
         // Add a CRC code computed from the header and data
-        const u32 crc2 =  ComputeCRC32_littleEndian(segmentStart, numBytesAllocated - SERIALIZED_FOOTER_LENGTH, 0xFFFFFFFF);
+        //const u32 crc2 =  ComputeCRC32_littleEndian(segmentStart, numBytesAllocated - SERIALIZED_FOOTER_LENGTH, 0xFFFFFFFF);
         reinterpret_cast<u32*>(segmentStart + numBytesAllocated - SERIALIZED_FOOTER_LENGTH)[0] = crc;
       } // if(data != NULL)
 
@@ -129,8 +130,9 @@ namespace Anki
     {
     }
 
-    const void * SerializedBufferConstIterator::GetNext(s32 &segmentLength)
+    const void * SerializedBufferConstIterator::GetNext(s32 &dataLength)
     {
+      s32 segmentLength = -1;
       const void * segmentToReturn = MemoryStackConstIterator::GetNext(segmentLength);
 
       segmentLength -= SerializedBuffer::SERIALIZED_FOOTER_LENGTH;
@@ -146,6 +148,8 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(expectedCRC == computedCrc,
         NULL, "SerializedBufferConstIterator::GetNext", "CRCs don't match");
 
+      dataLength = reinterpret_cast<const u32*>(segmentToReturn)[0];
+
       return segmentToReturn;
     }
 
@@ -154,11 +158,11 @@ namespace Anki
     {
     }
 
-    void * SerializedBufferIterator::GetNext(s32 &segmentLength)
+    void * SerializedBufferIterator::GetNext(s32 &dataLength)
     {
       // To avoid code duplication, we'll use the const version of GetNext(), though our MemoryStack is not const
 
-      const void * segment = SerializedBufferConstIterator::GetNext(segmentLength);
+      const void * segment = SerializedBufferConstIterator::GetNext(dataLength);
 
       return const_cast<void*>(segment);
     }

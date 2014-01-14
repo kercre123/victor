@@ -112,6 +112,7 @@ GTEST_TEST(CoreTech_Common, SerializedBuffer)
   ASSERT_TRUE(segment2b != NULL);
   ASSERT_TRUE(segment3b != NULL);
 
+  // Test with uncorrupted data
   {
     SerializedBufferConstIterator iterator(serialized);
 
@@ -137,6 +138,80 @@ GTEST_TEST(CoreTech_Common, SerializedBuffer)
     ASSERT_FALSE(iterator.HasNext());
   }
 
+  // Corrupt piece 1
+  {
+    SerializedBufferConstIterator iterator(serialized);
+
+    s32 segment1LengthB = -1;
+    s32 segment2LengthB = -1;
+    s32 segment3LengthB = -1;
+
+    char * buffer = reinterpret_cast<char*>(serialized.get_memoryStack().get_buffer());
+
+    buffer[16]++;
+
+    ASSERT_TRUE(iterator.HasNext());
+    const void * segment1c = iterator.GetNext(segment1LengthB);
+    ASSERT_TRUE(segment1c == NULL);
+
+    buffer[16]--;
+  }
+
+  // Corrupt piece 2
+  {
+    SerializedBufferConstIterator iterator(serialized);
+
+    s32 segment1LengthB = -1;
+    s32 segment2LengthB = -1;
+    s32 segment3LengthB = -1;
+
+    char * buffer = reinterpret_cast<char*>(serialized.get_memoryStack().get_buffer());
+
+    buffer[80]++;
+
+    ASSERT_TRUE(iterator.HasNext());
+    const void * segment1c = iterator.GetNext(segment1LengthB);
+    ASSERT_TRUE(segment1LengthB == segment1Length);
+    ASSERT_TRUE(segment1b == segment1c);
+
+    ASSERT_TRUE(iterator.HasNext());
+    const void * segment2c = iterator.GetNext(segment2LengthB);
+    ASSERT_TRUE(segment2c == NULL);
+
+    buffer[80]--;
+  }
+
+  // Corrupt piece 3
+  {
+    SerializedBufferConstIterator iterator(serialized);
+
+    s32 segment1LengthB = -1;
+    s32 segment2LengthB = -1;
+    s32 segment3LengthB = -1;
+
+    char * buffer = reinterpret_cast<char*>(serialized.get_memoryStack().get_buffer());
+
+    buffer[200]++;
+
+    ASSERT_TRUE(iterator.HasNext());
+    const void * segment1c = iterator.GetNext(segment1LengthB);
+    ASSERT_TRUE(segment1LengthB == segment1Length);
+    ASSERT_TRUE(segment1b == segment1c);
+
+    ASSERT_TRUE(iterator.HasNext());
+    const void * segment2c = iterator.GetNext(segment2LengthB);
+    ASSERT_TRUE(segment2LengthB == segment2Length);
+    ASSERT_TRUE(segment2b == segment2c);
+
+    ASSERT_TRUE(iterator.HasNext());
+    const void * segment3c = iterator.GetNext(segment3LengthB);
+    ASSERT_TRUE(segment3c == NULL);
+
+    ASSERT_FALSE(iterator.HasNext());
+
+    buffer[200]--;
+  }
+
   GTEST_RETURN_HERE;
 }
 
@@ -152,9 +227,9 @@ GTEST_TEST(CoreTech_Common, CRC32Code)
   const u32 crc = ComputeCRC32_littleEndian(&data[0], numDataBytes, initialCRC);
 #endif
 
-  const u32 crc_groundTruth = 0xD6C600C;
+  const u32 crc_groundTruth = 0xF2939FF3;
 
-  printf("0x%x\n", crc);
+  printf("CRC code: 0x%x\n", crc);
 
   ASSERT_TRUE(crc == crc_groundTruth);
 

@@ -581,9 +581,11 @@ u32 ComputeCRC32_littleEndian(const void * data, const s32 dataLength, const u32
     const u32 byte = ((u8*)data)[index];
     //printf("%d\n", byte);
     crc = (crc >> 8) ^ crc32Table[(crc ^ byte) & 0xFF];
+    //printf("%d (%d) = 0x%x\n", i, byte, crc);
   }
 
-  return ~crc;
+  // Technically, this should return ~crc, but that would make it wierd to chain multiple calls of this function
+  return crc;
 }
 
 u32 ComputeCRC32_bigEndian(const void * data, const s32 dataLength, const u32 initialCRC)
@@ -598,5 +600,6 @@ u32 ComputeCRC32_bigEndian(const void * data, const s32 dataLength, const u32 in
     crc = (crc >> 8) ^ crc32Table[(crc ^ byte) & 0xFF];
   }
 
-  return ~crc;
+  // Technically, this should return ~crc, but that would make it wierd to chain multiple calls of this function
+  return crc;
 }

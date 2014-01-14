@@ -69,7 +69,7 @@ namespace Anki
       // Same as the standard MemoryStackConstIterator::GetNext(), plus:
       // 1. Checks the CRC code and returns NULL if it fails
       // 2. segmentLength is the size without the CRC footer
-      const void * GetNext(s32 &segmentLength);
+      const void * GetNext(s32 &dataLength);
     }; // class MemoryStackConstIterator
 
     class SerializedBufferIterator : public SerializedBufferConstIterator
@@ -80,7 +80,7 @@ namespace Anki
       // Same as the standard MemoryStackIterator::GetNext(), plus:
       // 1. Checks the CRC code and returns NULL if it fails
       // 2. segmentLength is the size without the CRC footer
-      void * GetNext(s32 &segmentLength);
+      void * GetNext(s32 &dataLength);
     }; // class MemoryStackConstIterator
   } // namespace Embedded
 } //namespace Anki
