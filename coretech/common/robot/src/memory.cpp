@@ -273,6 +273,11 @@ namespace Anki
       return segmentToReturn;
     }
 
+    const MemoryStack& MemoryStackConstIterator::get_memory() const
+    {
+      return memory;
+    }
+
     MemoryStackIterator::MemoryStackIterator(MemoryStack &memory)
       : MemoryStackConstIterator(memory)
     {
@@ -285,6 +290,11 @@ namespace Anki
       const void * segment = MemoryStackConstIterator::GetNext(segmentLength);
 
       return const_cast<void*>(segment);
+    }
+
+    MemoryStack& MemoryStackIterator::get_memory()
+    {
+      return const_cast<MemoryStack&>(memory);
     }
   } // namespace Embedded
 } // namespace Anki

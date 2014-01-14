@@ -131,6 +131,8 @@ namespace Anki
 
       const void * GetNext(s32 &segmentLength);
 
+      const MemoryStack& get_memory() const;
+
     protected:
       s32 index;
       const MemoryStack &memory;
@@ -142,6 +144,8 @@ namespace Anki
       MemoryStackIterator(MemoryStack &memory);
 
       void * GetNext(s32 &segmentLength);
+
+      MemoryStack& get_memory();
     }; // class MemoryStackIterator
   } // namespace Embedded
 } // namespace Anki
