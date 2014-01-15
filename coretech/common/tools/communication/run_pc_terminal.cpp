@@ -7,7 +7,7 @@
 #include "serial.h"
 #include "threadSafeQueue.h"
 
-#include "anki\common\robot\utilities.h"
+#include "anki/common/robot/utilities.h"
 
 #undef printf
 _Check_return_opt_ _CRTIMP int __cdecl printf(_In_z_ _Printf_format_string_ const char * _Format, ...);
@@ -89,12 +89,12 @@ int main(int argc, char ** argv)
 
   DWORD threadId;
   HANDLE threadHandle = CreateThread(
-    NULL,                   // default security attributes
-    0,                      // use default stack size
-    PrintfBuffers,       // thread function name
-    &buffers,          // argument to thread function
-    0,                      // use default creation flags
-    &threadId);   // returns the thread identifier
+    NULL,          // default security attributes
+    0,             // use default stack size
+    PrintfBuffers, // thread function name
+    &buffers,      // argument to thread function
+    0,             // use default creation flags
+    &threadId);    // returns the thread identifier
 
   //SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
 
@@ -103,8 +103,7 @@ int main(int argc, char ** argv)
   void * buffer = malloc(bufferLength);
 
   while(true) {
-    if(!buffer)
-    {
+    if(!buffer) {
       printf("\n\nCould not allocate buffer\n\n");
       return -4;
       //continue;

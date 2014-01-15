@@ -22,13 +22,26 @@ namespace Anki
   namespace Embedded
   {
 #pragma mark --- Declarations ---
+    // When transmitting a serialized buffer, the header and footer of the entire buffer are each 8 bytes
+    // These just contain a validation pattern, not data
+    static const s32 SERIALIZED_BUFFER_HEADER_LENGTH = 8;
+    static const s32 SERIALIZED_BUFFER_FOOTER_LENGTH = 8;
+
+    // This patterns are very unlikely to appear in an image
+    // In addition, all values are different, which makes parsing easier
+    static const u32 SERIALIZED_BUFFER_HEADER[SERIALIZED_BUFFER_HEADER_LENGTH] = {0xFF, 0x01, 0xFE, 0x02, 0xFD, 0x03, 0x04, 0xFC};
+    static const u32 SERIALIZED_BUFFER_FOOTER[SERIALIZED_BUFFER_FOOTER_LENGTH] = {0xFE, 0x01, 0xFD, 0x02, 0xFC, 0x03, 0x04, 0xFB};
+
     // A SerializedBuffer is used to store data
     // Use a MemoryStackIterator to read out the data
     class SerializedBuffer
     {
     public:
-      static const s32 SERIALIZED_HEADER_LENGTH = 8;
-      static const s32 SERIALIZED_FOOTER_LENGTH = 4;
+
+      // The header and footer for individual segments within a SerializedBuffer
+      // These only contain data and CRCs
+      static const s32 SERIALIZED_SEGEMENT_HEADER_LENGTH = 8;
+      static const s32 SERIALIZED_SEGMENT_FOOTER_LENGTH = 4;
 
       enum DataType
       {

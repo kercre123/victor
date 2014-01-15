@@ -100,7 +100,7 @@ Result Serial::Open(
   AnkiConditionalErrorAndReturnValue(isPurged,
     RESULT_FAIL, "Serial::Open", "Could not clear errors");
 
-  printf("Com port opened");
+  printf("Com port opened\n");
 
   return RESULT_OK;
 }

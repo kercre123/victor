@@ -52,7 +52,7 @@ namespace Anki
       dataLength = RoundUp<s32>(dataLength, 4);
 
       s32 numBytesAllocated = -1;
-      u8 * const segmentStart = reinterpret_cast<u8*>( memoryStack.Allocate(dataLength+headerLength+SERIALIZED_HEADER_LENGTH+SERIALIZED_FOOTER_LENGTH, numBytesAllocated) );
+      u8 * const segmentStart = reinterpret_cast<u8*>( memoryStack.Allocate(dataLength+headerLength+SERIALIZED_SEGEMENT_HEADER_LENGTH+SERIALIZED_SEGMENT_FOOTER_LENGTH, numBytesAllocated) );
       u32 * segmentU32 = reinterpret_cast<u32*>(segmentStart);
 
       AnkiConditionalErrorAndReturnValue(segmentU32 != NULL,
@@ -65,12 +65,12 @@ namespace Anki
 
       // TODO: decide if the CRC should be computed on the length (png doesn't do this)
 #ifdef USING_MOVIDIUS_GCC_COMPILER
-      crc =  ComputeCRC32_bigEndian(segmentU32, SERIALIZED_HEADER_LENGTH, crc);
+      crc =  ComputeCRC32_bigEndian(segmentU32, SERIALIZED_SEGEMENT_HEADER_LENGTH, crc);
 #else
-      crc =  ComputeCRC32_littleEndian(segmentU32, SERIALIZED_HEADER_LENGTH, crc);
+      crc =  ComputeCRC32_littleEndian(segmentU32, SERIALIZED_SEGEMENT_HEADER_LENGTH, crc);
 #endif
 
-      segmentU32 += (SERIALIZED_HEADER_LENGTH>>2);
+      segmentU32 += (SERIALIZED_SEGEMENT_HEADER_LENGTH>>2);
 
       if(header != NULL) {
         // Endian-safe copy (it may copy a little extra)
@@ -101,7 +101,7 @@ namespace Anki
           segmentU32[i] = dataU32[i];
         }
 
-        const s32 numBytesToCrc = numBytesAllocated-headerLength-SERIALIZED_HEADER_LENGTH-SERIALIZED_FOOTER_LENGTH;
+        const s32 numBytesToCrc = numBytesAllocated-headerLength-SERIALIZED_SEGEMENT_HEADER_LENGTH-SERIALIZED_SEGMENT_FOOTER_LENGTH;
 #ifdef USING_MOVIDIUS_GCC_COMPILER
         crc =  ComputeCRC32_bigEndian(segmentU32, numBytesToCrc, crc);
 #else
@@ -109,8 +109,8 @@ namespace Anki
 #endif
 
         // Add a CRC code computed from the header and data
-        //const u32 crc2 =  ComputeCRC32_littleEndian(segmentStart, numBytesAllocated - SERIALIZED_FOOTER_LENGTH, 0xFFFFFFFF);
-        reinterpret_cast<u32*>(segmentStart + numBytesAllocated - SERIALIZED_FOOTER_LENGTH)[0] = crc;
+        //const u32 crc2 =  ComputeCRC32_littleEndian(segmentStart, numBytesAllocated - SERIALIZED_SEGMENT_FOOTER_LENGTH, 0xFFFFFFFF);
+        reinterpret_cast<u32*>(segmentStart + numBytesAllocated - SERIALIZED_SEGMENT_FOOTER_LENGTH)[0] = crc;
       } // if(data != NULL)
 
       return segmentStart;
@@ -141,7 +141,7 @@ namespace Anki
       s32 segmentLength = -1;
       const void * segmentToReturn = MemoryStackConstIterator::GetNext(segmentLength);
 
-      segmentLength -= SerializedBuffer::SERIALIZED_FOOTER_LENGTH;
+      segmentLength -= SerializedBuffer::SERIALIZED_SEGMENT_FOOTER_LENGTH;
 
       const u32 expectedCRC = reinterpret_cast<const u32*>(reinterpret_cast<const u8*>(segmentToReturn)+segmentLength)[0];
 

@@ -7,7 +7,9 @@
 #include "serial.h"
 #include "threadSafeQueue.h"
 
-#include "anki\common\robot\utilities.h"
+#include "anki/common/robot/utilities.h"
+#include "anki/cozmo/messages.h"
+#include "anki/common/robot/serialize.h"
 
 #undef printf
 _Check_return_opt_ _CRTIMP int __cdecl printf(_In_z_ _Printf_format_string_ const char * _Format, ...);
@@ -17,41 +19,137 @@ _Check_return_opt_ _CRTIMP int __cdecl printf(_In_z_ _Printf_format_string_ cons
 #include <tchar.h>
 #include <strsafe.h>
 
-#define PRINTF_BUFFER_SIZE 100000
+#define BIG_BUFFER_SIZE 100000000
 
 using namespace std;
 
-// Based off example at http://msdn.microsoft.com/en-us/library/windows/desktop/ms682516(v=vs.85).aspx
-DWORD WINAPI PrintfBuffers(LPVOID lpParam)
-{
-  HANDLE hStdout;
-  ThreadSafeQueue<char*> *buffers = (ThreadSafeQueue<char*>*)lpParam;
+volatile double lastUpdateTime;
+volatile HANDLE lastUpdateTime_mutex;
 
-  TCHAR msgBuf[PRINTF_BUFFER_SIZE];
-  size_t cchStringSize;
-  DWORD dwChars;
+const double secondsToWaitBeforeSavingABuffer = 1.0;
+
+typedef struct {
+  void * data;
+  s32 dataLength;
+} RawBuffer;
+
+void ExtractUSBMessage(const void * rawBuffer, const s32 rawBufferLength, s32 &startIndex, s32 &endIndex)
+{
+  const u8 * rawBufferU8 = reinterpret_cast<const u8*>(rawBuffer);
+
+  s32 state = 0;
+  s32 index = 0;
+
+  startIndex = -1;
+  endIndex = -1;
+
+  // Look for the header
+  while(index < rawBufferLength) {
+    if(state == SERIALIZED_BUFFER_HEADER_LENGTH) {
+      startIndex = index;
+      break;
+    }
+
+    if(rawBufferU8[index] == SERIALIZED_BUFFER_HEADER[state]) {
+      state++;
+    } else if(rawBufferU8[index] == SERIALIZED_BUFFER_HEADER[0]) {
+      state = 1;
+    } else {
+      state = 0;
+    }
+
+    index++;
+  } // while(index < rawBufferLength)
+
+  // Look for the footer
+  state = 0;
+  while(index < rawBufferLength) {
+    if(state == SERIALIZED_BUFFER_FOOTER_LENGTH) {
+      endIndex = index-SERIALIZED_BUFFER_FOOTER_LENGTH-1;
+      break;
+    }
+
+    //printf("%d) %d %x %x\n", index, state, rawBufferU8[index], SERIALIZED_BUFFER_FOOTER[state]);
+
+    if(rawBufferU8[index] == SERIALIZED_BUFFER_FOOTER[state]) {
+      state++;
+    } else if(rawBufferU8[index] == SERIALIZED_BUFFER_FOOTER[0]) {
+      state = 1;
+    } else {
+      state = 0;
+    }
+
+    index++;
+  } // while(index < rawBufferLength)
+
+  if(state == SERIALIZED_BUFFER_FOOTER_LENGTH) {
+    endIndex = index-SERIALIZED_BUFFER_FOOTER_LENGTH-1;
+  }
+} // void ExtractUSBMessage(const void * rawBuffer, s32 &startIndex, s32 &endIndex)
+
+// Based off example at http://msdn.microsoft.com/en-us/library/windows/desktop/ms682516(v=vs.85).aspx
+DWORD WINAPI SaveBuffers(LPVOID lpParam)
+{
+  ThreadSafeQueue<RawBuffer> *buffers = (ThreadSafeQueue<RawBuffer>*)lpParam;
+
+  // The bigBuffer is a 16-bytes aligned version of bigBufferRaw
+  static u8 bigBufferRaw[BIG_BUFFER_SIZE];
+  static u8 * bigBuffer = reinterpret_cast<u8*>(RoundUp<size_t>(reinterpret_cast<size_t>(&bigBufferRaw[0]), MEMORY_ALIGNMENT));
+  s32 bigBufferIndex = 0;
 
   SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
 
   while(true) {
+    WaitForSingleObject(lastUpdateTime_mutex, INFINITE);
+    const double lastUpdateTime_local = lastUpdateTime;
+    ReleaseMutex(lastUpdateTime_mutex);
+
+    // If we've gone more than a little bit without getting more data, we've probably received the
+    // entire message
+    if((GetTime()-lastUpdateTime_local) >= secondsToWaitBeforeSavingABuffer) {
+      WaitForSingleObject(lastUpdateTime_mutex, INFINITE);
+      lastUpdateTime = GetTime() + 1e10;
+      ReleaseMutex(lastUpdateTime_mutex);
+
+      s32 startIndex;
+      s32 endIndex;
+      ExtractUSBMessage(bigBuffer, bigBufferIndex, startIndex, endIndex);
+
+      if(startIndex < 0 || endIndex < 0) {
+        printf("Error: USB header or footer is missing (%d,%d)\n", startIndex, endIndex);
+        bigBufferIndex = 0;
+        continue;
+      }
+
+      const s32 messageLength = endIndex-startIndex+1;
+
+      // Move this to a memory-aligned start (index 0 of bigBuffer)
+      memmove(bigBuffer, bigBuffer+startIndex, messageLength);
+
+      for(s32 i=0; i<messageLength; i++) {
+        printf("%x ", bigBuffer[i]);
+      }
+
+      bigBufferIndex = 0;
+    }
+
     if(buffers->IsEmpty()) {
       Sleep(10);
       continue;
     }
 
-    char * nextString = buffers->Pop();
+    RawBuffer nextPiece = buffers->Pop();
 
-    // Make sure there is a console to receive output results.
-    hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-    if( hStdout == INVALID_HANDLE_VALUE )
-      return 1;
+    if((bigBufferIndex+nextPiece.dataLength+2*MEMORY_ALIGNMENT) > BIG_BUFFER_SIZE) {
+      printf("Out of memory in bigBuffer\n");
+      Sleep(10);
+      continue;
+    }
 
-    // Print the parameter values using thread-safe functions.
-    StringCchPrintf(msgBuf, PRINTF_BUFFER_SIZE, nextString);
-    StringCchLength(msgBuf, PRINTF_BUFFER_SIZE, &cchStringSize);
-    WriteConsole(hStdout, msgBuf, (DWORD)cchStringSize, &dwChars, NULL);
+    memcpy(&bigBuffer[0] + bigBufferIndex, nextPiece.data, nextPiece.dataLength);
+    bigBufferIndex += nextPiece.dataLength;
 
-    free(nextString); nextString = NULL;
+    free(nextPiece.data); nextPiece.data = NULL;
   } // while(true)
 
   return 0;
@@ -59,20 +157,26 @@ DWORD WINAPI PrintfBuffers(LPVOID lpParam)
 
 int main(int argc, char ** argv)
 {
-  ThreadSafeQueue<char*> buffers = ThreadSafeQueue<char*>();
+  ThreadSafeQueue<RawBuffer> buffers = ThreadSafeQueue<RawBuffer>();
   Serial serial;
+
+  lastUpdateTime_mutex = CreateMutex(NULL, FALSE, NULL);
 
   if(serial.Open(8, 1000000) != RESULT_OK)
     return -1;
 
-  DWORD threadId;
+  WaitForSingleObject(lastUpdateTime_mutex, INFINITE);
+  lastUpdateTime = GetTime() + 10e10;
+  ReleaseMutex(lastUpdateTime_mutex);
+
+  DWORD threadId = -1;
   HANDLE threadHandle = CreateThread(
-    NULL,                   // default security attributes
-    0,                      // use default stack size
-    PrintfBuffers,       // thread function name
-    &buffers,          // argument to thread function
-    0,                      // use default creation flags
-    &threadId);   // returns the thread identifier
+    NULL,        // default security attributes
+    0,           // use default stack size
+    SaveBuffers, // thread function name
+    &buffers,    // argument to thread function
+    0,           // use default creation flags
+    &threadId);  // returns the thread identifier
 
   SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
 
@@ -81,11 +185,9 @@ int main(int argc, char ** argv)
   void * buffer = malloc(bufferLength);
 
   while(true) {
-    if(!buffer)
-    {
+    if(!buffer) {
       printf("\n\nCould not allocate buffer\n\n");
       return -4;
-      //continue;
     }
 
     DWORD bytesRead = 0;
@@ -93,21 +195,15 @@ int main(int argc, char ** argv)
       return -3;
 
     if(bytesRead > 0) {
-      /*     for(u32 i=0; i<bytesRead; i+=4) {
-      u32 value = 0;
-      value = static_cast<u32>(reinterpret_cast<char*>(buffer)[i+3]) +
-      (static_cast<u32>(reinterpret_cast<char*>(buffer)[i+2])<<8) +
-      (static_cast<u32>(reinterpret_cast<char*>(buffer)[i+1])<<16) +
-      (static_cast<u32>(reinterpret_cast<char*>(buffer)[i])<<24);
+      WaitForSingleObject(lastUpdateTime_mutex, INFINITE);
+      lastUpdateTime = GetTime();
+      ReleaseMutex(lastUpdateTime_mutex);
 
-      printf("%d ", static_cast<s32>(value));
-      }
+      RawBuffer newBuffer;
+      newBuffer.data = buffer;
+      newBuffer.dataLength = bytesRead;
 
-      printf("\n");
-      */
-      reinterpret_cast<char*>(buffer)[bytesRead] = '\0';
-
-      buffers.Push(reinterpret_cast<char*>(buffer));
+      buffers.Push(newBuffer);
 
       buffer = malloc(bufferLength);
     }

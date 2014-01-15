@@ -38,6 +38,7 @@ namespace Anki
     }
   }
 }
+#include "anki/cozmo/messages.h"
 #endif
 
 using namespace Anki::Embedded;
@@ -56,10 +57,6 @@ Matlab matlab(false);
 #include "gtest/gtest.h"
 #endif
 
-//#ifdef USING_MOVIDIUS_GCC_COMPILER
-//#include "swcLeonUtils.h"
-//#endif
-
 #define MAX_BYTES 50000
 
 #if defined(USING_MOVIDIUS_COMPILER)
@@ -69,6 +66,73 @@ Matlab matlab(false);
 #endif
 
 BUFFER_LOCATION static char buffer[MAX_BYTES];
+
+GTEST_TEST(CoreTech_Common, SendSerializedBufferOverUSB)
+{
+  const s32 segment1Length = 32;
+  const s32 segment2Length = 64;
+  const s32 segment3Length = 128;
+
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, 5000);
+  ASSERT_TRUE(ms.IsValid());
+
+  void * segment1 = ms.Allocate(segment1Length);
+  void * segment2 = ms.Allocate(segment2Length);
+  void * segment3 = ms.Allocate(segment3Length);
+
+  ASSERT_TRUE(segment1 != NULL);
+  ASSERT_TRUE(segment2 != NULL);
+  ASSERT_TRUE(segment3 != NULL);
+
+  for(s32 i=0; i<segment1Length; i++) {
+    reinterpret_cast<u8*>(segment1)[i] = i + 1;
+  }
+
+  for(s32 i=0; i<segment2Length; i++) {
+    reinterpret_cast<u8*>(segment2)[i] = 2*i + 1;
+  }
+
+  for(s32 i=0; i<segment3Length; i++) {
+    reinterpret_cast<u8*>(segment3)[i] = 3*i + 1;
+  }
+
+  ASSERT_TRUE(buffer != NULL);
+  SerializedBuffer serialized(buffer+5000, 6000);
+  ASSERT_TRUE(serialized.IsValid());
+
+  void * segment1b = serialized.PushBack(segment1, segment1Length);
+  void * segment2b = serialized.PushBack(segment2, segment2Length);
+  void * segment3b = serialized.PushBack(segment3, segment3Length);
+
+  ASSERT_TRUE(segment1b != NULL);
+  ASSERT_TRUE(segment2b != NULL);
+  ASSERT_TRUE(segment3b != NULL);
+
+#ifdef USING_MOVIDIUS_GCC_COMPILER
+  for(s32 i=0; i<10; i++) {
+    Anki::Cozmo::HAL::USBPutChar(13);
+  }
+
+  for(s32 i=0; i<SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
+    Anki::Cozmo::HAL::USBPutChar(SERIALIZED_BUFFER_HEADER[i]);
+  }
+
+  Anki::Cozmo::HAL::USBSendBuffer(reinterpret_cast<u8*>(serialized.get_memoryStack().get_buffer()), serialized.get_memoryStack().get_usedBytes());
+
+  for(s32 i=0; i<SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
+    Anki::Cozmo::HAL::USBPutChar(SERIALIZED_BUFFER_FOOTER[i]);
+  }
+
+  while(1) {}
+#else
+  u8 * rawBuffer = reinterpret_cast<u8*>(serialized.get_memoryStack().get_buffer());
+  const s32 rawBufferLength = serialized.get_memoryStack().get_usedBytes();
+  for(s32 i=0; i<rawBufferLength; i++) {
+    printf("%x ", rawBuffer[i]);
+  }
+#endif
+}
 
 GTEST_TEST(CoreTech_Common, SerializedBuffer)
 {
@@ -2874,6 +2938,8 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, SendSerializedBufferOverUSB);
+  CALL_GTEST_TEST(CoreTech_Common, SerializedBuffer);
   CALL_GTEST_TEST(CoreTech_Common, CRC32Code);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStackIterator);
   CALL_GTEST_TEST(CoreTech_Common, ShaveAddTest);
