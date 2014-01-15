@@ -33,7 +33,7 @@ typedef struct {
   s32 dataLength;
 } RawBuffer;
 
-void ExtractUSBMessage(const void * rawBuffer, const s32 rawBufferLength, s32 &startIndex, s32 &endIndex)
+void FindUSBMessage(const void * rawBuffer, const s32 rawBufferLength, s32 &startIndex, s32 &endIndex)
 {
   const u8 * rawBufferU8 = reinterpret_cast<const u8*>(rawBuffer);
 
@@ -85,17 +85,21 @@ void ExtractUSBMessage(const void * rawBuffer, const s32 rawBufferLength, s32 &s
   if(state == SERIALIZED_BUFFER_FOOTER_LENGTH) {
     endIndex = index-SERIALIZED_BUFFER_FOOTER_LENGTH-1;
   }
-} // void ExtractUSBMessage(const void * rawBuffer, s32 &startIndex, s32 &endIndex)
+} // void FindUSBMessage(const void * rawBuffer, s32 &startIndex, s32 &endIndex)
 
 // Based off example at http://msdn.microsoft.com/en-us/library/windows/desktop/ms682516(v=vs.85).aspx
 DWORD WINAPI SaveBuffers(LPVOID lpParam)
 {
+  const bool swapEndian = true;
+
   ThreadSafeQueue<RawBuffer> *buffers = (ThreadSafeQueue<RawBuffer>*)lpParam;
 
   // The bigBuffer is a 16-bytes aligned version of bigBufferRaw
   static u8 bigBufferRaw[BIG_BUFFER_SIZE];
   static u8 * bigBuffer = reinterpret_cast<u8*>(RoundUp<size_t>(reinterpret_cast<size_t>(&bigBufferRaw[0]), MEMORY_ALIGNMENT));
   s32 bigBufferIndex = 0;
+
+  memset(&bigBufferRaw[0], 0, BIG_BUFFER_SIZE);
 
   SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
 
@@ -111,26 +115,62 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
       lastUpdateTime = GetTime() + 1e10;
       ReleaseMutex(lastUpdateTime_mutex);
 
-      s32 startIndex;
-      s32 endIndex;
-      ExtractUSBMessage(bigBuffer, bigBufferIndex, startIndex, endIndex);
+      s32 usbMessageStartIndex;
+      s32 usbMessageEndIndex;
+      FindUSBMessage(bigBuffer, bigBufferIndex, usbMessageStartIndex, usbMessageEndIndex);
 
-      if(startIndex < 0 || endIndex < 0) {
-        printf("Error: USB header or footer is missing (%d,%d)\n", startIndex, endIndex);
+      if(usbMessageStartIndex < 0 || usbMessageEndIndex < 0) {
+        printf("Error: USB header or footer is missing (%d,%d)\n", usbMessageStartIndex, usbMessageEndIndex);
         bigBufferIndex = 0;
+        bigBuffer = reinterpret_cast<u8*>(RoundUp<size_t>(reinterpret_cast<size_t>(&bigBufferRaw[0]), MEMORY_ALIGNMENT));
         continue;
       }
 
-      const s32 messageLength = endIndex-startIndex+1;
+      printf("orig: ");
+      for(s32 i=0; i<bigBufferIndex; i++) {
+        printf("%x ", bigBuffer[i]);
+      }
+      printf("\n");
 
-      // Move this to a memory-aligned start (index 0 of bigBuffer)
-      memmove(bigBuffer, bigBuffer+startIndex, messageLength);
+      const s32 messageLength = usbMessageEndIndex-usbMessageStartIndex+1;
 
+      // Move this to a memory-aligned start (index 0 of bigBuffer), after the first MemoryStack::HEADER_LENGTH
+      const s32 bigBuffer_alignedStartIndex = MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH;
+      memmove(bigBuffer+bigBuffer_alignedStartIndex, bigBuffer+usbMessageStartIndex, messageLength);
+      bigBuffer += bigBuffer_alignedStartIndex;
+
+      if(swapEndian) {
+        for(s32 i=0; i<messageLength; i+=4) {
+          Swap(bigBuffer[i], bigBuffer[i^3]);
+          Swap(bigBuffer[(i+1)], bigBuffer[(i+1)^3]);
+        }
+      }
+
+      printf("shifted: ");
       for(s32 i=0; i<messageLength; i++) {
         printf("%x ", bigBuffer[i]);
       }
+      printf("\n");
+
+      SerializedBuffer serializedBuffer(bigBuffer, messageLength, Anki::Embedded::Flags::Buffer(false, true, true));
+
+      SerializedBufferIterator iterator(serializedBuffer);
+
+      printf("\n");
+      printf("\n");
+      while(iterator.HasNext()) {
+        s32 dataLength;
+        u8 * dataSegment = reinterpret_cast<u8*>(iterator.GetNext(dataLength));
+
+        printf("Next segment (%d): ", dataLength);
+        for(s32 i=0; i<dataLength; i++) {
+          printf("%x ", dataSegment[i]);
+        }
+        printf("\n");
+      }
 
       bigBufferIndex = 0;
+      bigBuffer = reinterpret_cast<u8*>(RoundUp<size_t>(reinterpret_cast<size_t>(&bigBufferRaw[0]), MEMORY_ALIGNMENT));
     }
 
     if(buffers->IsEmpty()) {

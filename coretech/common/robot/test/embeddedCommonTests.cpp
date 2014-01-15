@@ -109,6 +109,8 @@ GTEST_TEST(CoreTech_Common, SendSerializedBufferOverUSB)
   ASSERT_TRUE(segment2b != NULL);
   ASSERT_TRUE(segment3b != NULL);
 
+  //printf("0x%x 0x%x\n", serialized.get_memoryStack().get_buffer(), serialized.get_memoryStack().get_validBufferStart());
+
 #ifdef USING_MOVIDIUS_GCC_COMPILER
   for(s32 i=0; i<10; i++) {
     Anki::Cozmo::HAL::USBPutChar(13);
@@ -118,7 +120,7 @@ GTEST_TEST(CoreTech_Common, SendSerializedBufferOverUSB)
     Anki::Cozmo::HAL::USBPutChar(SERIALIZED_BUFFER_HEADER[i]);
   }
 
-  Anki::Cozmo::HAL::USBSendBuffer(reinterpret_cast<u8*>(serialized.get_memoryStack().get_buffer()), serialized.get_memoryStack().get_usedBytes());
+  Anki::Cozmo::HAL::USBSendBuffer(reinterpret_cast<u8*>(serialized.get_memoryStack().get_validBufferStart()), serialized.get_memoryStack().get_usedBytes());
 
   for(s32 i=0; i<SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
     Anki::Cozmo::HAL::USBPutChar(SERIALIZED_BUFFER_FOOTER[i]);
@@ -129,9 +131,11 @@ GTEST_TEST(CoreTech_Common, SendSerializedBufferOverUSB)
   u8 * rawBuffer = reinterpret_cast<u8*>(serialized.get_memoryStack().get_buffer());
   const s32 rawBufferLength = serialized.get_memoryStack().get_usedBytes();
   for(s32 i=0; i<rawBufferLength; i++) {
-    printf("%x ", rawBuffer[i]);
+    printf("%d ", rawBuffer[i]);
   }
 #endif
+
+  GTEST_RETURN_HERE;
 }
 
 GTEST_TEST(CoreTech_Common, SerializedBuffer)

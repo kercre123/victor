@@ -29,8 +29,8 @@ namespace Anki
 
     // This patterns are very unlikely to appear in an image
     // In addition, all values are different, which makes parsing easier
-    static const u32 SERIALIZED_BUFFER_HEADER[SERIALIZED_BUFFER_HEADER_LENGTH] = {0xFF, 0x01, 0xFE, 0x02, 0xFD, 0x03, 0x04, 0xFC};
-    static const u32 SERIALIZED_BUFFER_FOOTER[SERIALIZED_BUFFER_FOOTER_LENGTH] = {0xFE, 0x01, 0xFD, 0x02, 0xFC, 0x03, 0x04, 0xFB};
+    static const u32 SERIALIZED_BUFFER_HEADER[SERIALIZED_BUFFER_HEADER_LENGTH] = {0xFF, 0x00, 0xFE, 0x02, 0xFD, 0x03, 0x04, 0xFC};
+    static const u32 SERIALIZED_BUFFER_FOOTER[SERIALIZED_BUFFER_FOOTER_LENGTH] = {0xFE, 0x00, 0xFD, 0x02, 0xFC, 0x03, 0x04, 0xFB};
 
     // A SerializedBuffer is used to store data
     // Use a MemoryStackIterator to read out the data

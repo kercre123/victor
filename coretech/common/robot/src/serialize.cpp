@@ -19,8 +19,8 @@ namespace Anki
 
     {
       if(flags.get_isFullyAllocated()) {
-        AnkiConditionalErrorAndReturn(reinterpret_cast<size_t>(buffer)%MEMORY_ALIGNMENT == 0,
-          "SerializedBuffer::SerializedBuffer", "If fully allocated, buffer must be %d byte aligned", MEMORY_ALIGNMENT);
+        AnkiConditionalErrorAndReturn((reinterpret_cast<size_t>(buffer)+MemoryStack::HEADER_LENGTH)%MEMORY_ALIGNMENT == 0,
+          "SerializedBuffer::SerializedBuffer", "If fully allocated, the %dth byte of the buffer must be %d byte aligned", MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT);
       }
 
       this->memoryStack = MemoryStack(buffer, bufferLength, flags);
@@ -112,6 +112,9 @@ namespace Anki
         //const u32 crc2 =  ComputeCRC32_littleEndian(segmentStart, numBytesAllocated - SERIALIZED_SEGMENT_FOOTER_LENGTH, 0xFFFFFFFF);
         reinterpret_cast<u32*>(segmentStart + numBytesAllocated - SERIALIZED_SEGMENT_FOOTER_LENGTH)[0] = crc;
       } // if(data != NULL)
+
+      //printf("%d %d\n", reinterpret_cast<u32*>(segmentStart)[0], reinterpret_cast<u32*>(segmentStart)[1]);
+      //printf("%d %d %d %d %d %d %d %d\n", segmentStart[0], segmentStart[1], segmentStart[2], segmentStart[3], segmentStart[4], segmentStart[5], segmentStart[6], segmentStart[7]);
 
       return segmentStart;
     }
