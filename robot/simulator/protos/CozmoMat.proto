@@ -1,0 +1,176 @@
+#VRML_SIM V7.3.0 utf8
+
+PROTO CozmoMat [
+  
+]
+{
+Solid {
+  rotation 0 1 0 0
+  translation 0 -0.005 0
+  children [
+    Shape {
+      appearance Appearance {
+         material Material {
+		 
+         }
+#        texture ImageTexture {
+#          url [
+#            "mat.png"
+#          ]
+#        }
+      }
+      geometry Box {
+        size 1 0.005 1
+      }
+    }
+  
+    Solid {
+	  translation -.25 0.005 -.25
+	  rotation 0 1 0 -1.5708
+	  children [
+		Shape {
+		  appearance Appearance {
+			texture ImageTexture {
+			  url ["ankiMat1.png"]
+			}
+		  }
+		  geometry 	DEF MatMarkerGeometry Box {
+			  size .09 0.00001 .09
+  		  }
+		}
+	  ]
+	}
+
+	Solid {
+	  translation 0 0.005 -.25
+	  rotation 0 1 0 -3.1415
+	  children [
+		Shape {
+		  appearance Appearance {
+			texture ImageTexture {
+			  url ["ankiMat2.png"]
+			}
+		  }
+		  geometry USE MatMarkerGeometry
+		}
+	  ]
+	}
+	
+	Solid {
+	  translation .25 0.005 -.25
+	  rotation 0 1 0 -3.1415
+	  children [
+		Shape {
+		  appearance Appearance {
+			texture ImageTexture {
+			  url ["ankiMat3.png"]
+			}
+		  }
+		  geometry USE MatMarkerGeometry
+		}
+	  ]
+	}
+	
+	Solid {
+	  translation -.25 0.005 0
+	  rotation 0 1 0 -1.5708
+	  children [
+		Shape {
+		  appearance Appearance {
+			texture ImageTexture {
+			  url ["ankiMat4.png"]
+			}
+		  }
+		  geometry USE MatMarkerGeometry
+		}
+	  ]
+	}
+	
+	Solid {
+	  translation 0 0.005 0
+	  #rotation 0 1 0 0
+	  children [
+		Shape {
+		  appearance Appearance {
+			texture ImageTexture {
+			  url ["ankiMat5.png"]
+			}
+		  }
+		  geometry USE MatMarkerGeometry
+		}
+	  ]
+	}
+    
+    Solid {
+	  translation .25 0.005 0
+	  rotation 0 1 0 1.5708
+	  children [
+		Shape {
+		  appearance Appearance {
+			texture ImageTexture {
+			  url ["ankiMat6.png"]
+			}
+		  }
+		  geometry USE MatMarkerGeometry
+		}
+	  ]
+	}
+	
+	Solid {
+	  translation -.25 0.005 .25
+	  #rotation 0 1 0 0
+	  children [
+		Shape {
+		  appearance Appearance {
+			texture ImageTexture {
+			  url ["ankiMat7.png"]
+			}
+		  }
+		  geometry USE MatMarkerGeometry
+		}
+	  ]
+	}
+	
+	Solid {
+	  translation 0 0.005 .25
+	  #rotation 0 1 0 0
+	  children [
+		Shape {
+		  appearance Appearance {
+			texture ImageTexture {
+			  url ["ankiMat8.png"]
+			}
+		  }
+		  geometry USE MatMarkerGeometry
+		}
+	  ]
+	}
+	
+	Solid {
+	  translation .25 0.005 .25
+	  rotation 0 1 0 1.5708
+	  children [
+		Shape {
+		  appearance Appearance {
+			texture ImageTexture {
+			  url ["ankiMat9.png"]
+			}
+		  }
+		  geometry USE MatMarkerGeometry
+		}
+	  ]
+	}
+	
+  ]
+  contactMaterial "cmat_floor"
+  boundingObject Transform {
+    translation 0.5 0 0.5
+    children [
+      Plane {
+      }
+    ]
+  }
+} 
+
+}
+

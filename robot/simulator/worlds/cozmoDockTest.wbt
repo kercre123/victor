@@ -140,31 +140,10 @@ DEF COORD_AXES Transform {
   ]
 } # COORD_AXES Transform
 
-DEF FLOOR Solid {
-  rotation 0 1 0 3.1415
-  children [
-    Shape {
-      appearance Appearance {
-        texture ImageTexture {
-          url [
-            "mat.png"
-          ]
-        }
-      }
-      geometry Box {
-        size 1 0.001 1
-      }
-    }
-  ]
-  contactMaterial "cmat_floor"
-  boundingObject Transform {
-    translation 0.5 0 0.5
-    children [
-      Plane {
-      }
-    ]
-  }
+CozmoMat {
 }
+
+	
 DEF WALL_1 Solid {
   translation 0.51 0.025 0
   children [
