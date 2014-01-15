@@ -160,9 +160,10 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
       printf("\n");
       while(iterator.HasNext()) {
         s32 dataLength;
-        u8 * dataSegment = reinterpret_cast<u8*>(iterator.GetNext(dataLength));
+        SerializedBuffer::DataType type;
+        u8 * dataSegment = reinterpret_cast<u8*>(iterator.GetNext(swapEndian, dataLength, type));
 
-        printf("Next segment (%d): ", dataLength);
+        printf("Next segment (%d,%d): ", dataLength, type);
         for(s32 i=0; i<dataLength; i++) {
           printf("%x ", dataSegment[i]);
         }

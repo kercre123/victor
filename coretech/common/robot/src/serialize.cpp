@@ -139,7 +139,7 @@ namespace Anki
     {
     }
 
-    const void * SerializedBufferConstIterator::GetNext(s32 &dataLength)
+    const void * SerializedBufferConstIterator::GetNext(s32 &dataLength, SerializedBuffer::DataType &type)
     {
       s32 segmentLength = -1;
       const void * segmentToReturn = MemoryStackConstIterator::GetNext(segmentLength);
@@ -158,8 +158,9 @@ namespace Anki
         NULL, "SerializedBufferConstIterator::GetNext", "CRCs don't match");
 
       dataLength = reinterpret_cast<const u32*>(segmentToReturn)[0];
+      type = static_cast<SerializedBuffer::DataType>(reinterpret_cast<const u32*>(segmentToReturn)[1]);
 
-      return segmentToReturn;
+      return reinterpret_cast<const u8*>(segmentToReturn) + SerializedBuffer::SERIALIZED_SEGEMENT_HEADER_LENGTH;
     }
 
     SerializedBufferIterator::SerializedBufferIterator(SerializedBuffer &serializedBuffer)
@@ -167,13 +168,20 @@ namespace Anki
     {
     }
 
-    void * SerializedBufferIterator::GetNext(s32 &dataLength)
+    void * SerializedBufferIterator::GetNext(const bool swapEndian, s32 &dataLength, SerializedBuffer::DataType &type)
     {
       // To avoid code duplication, we'll use the const version of GetNext(), though our MemoryStack is not const
 
-      const void * segment = SerializedBufferConstIterator::GetNext(dataLength);
+      u8 * segment = reinterpret_cast<u8*>(const_cast<void*>(SerializedBufferConstIterator::GetNext(dataLength, type)));
 
-      return const_cast<void*>(segment);
+      if(swapEndian) {
+        for(s32 i=0; i<dataLength; i+=4) {
+          Swap(segment[i], segment[i^3]);
+          Swap(segment[(i+1)], segment[(i+1)^3]);
+        }
+      }
+
+      return reinterpret_cast<void*>(segment);
     }
   } // namespace Embedded
 } // namespace Anki
