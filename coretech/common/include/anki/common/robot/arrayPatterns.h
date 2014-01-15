@@ -31,7 +31,7 @@ namespace Anki
 
     template<typename Type> Array<Type> Zeros(const s32 arrayHeight, const s32 arrayWidth, MemoryStack &memory)
     {
-      Array<Type> out(arrayHeight, arrayWidth, memory, Flags::Buffer(true, false));
+      Array<Type> out(arrayHeight, arrayWidth, memory, Flags::Buffer(true, false, false));
 
       return out;
     }
@@ -48,7 +48,7 @@ namespace Anki
 
     template<typename Type> Array<Type> Ones(const s32 arrayHeight, const s32 arrayWidth, MemoryStack &memory)
     {
-      Array<Type> out(arrayHeight, arrayWidth, memory, Flags::Buffer(false, false));
+      Array<Type> out(arrayHeight, arrayWidth, memory, Flags::Buffer(false, false, false));
 
       Ones(out);
 
@@ -74,7 +74,7 @@ namespace Anki
 
     template<typename Type> Array<Type> Eye(const s32 arrayHeight, const s32 arrayWidth, MemoryStack &memory)
     {
-      Array<Type> out(arrayHeight, arrayWidth, memory, Flags::Buffer(false, false));
+      Array<Type> out(arrayHeight, arrayWidth, memory, Flags::Buffer(false, false, false));
 
       Eye(out);
 
@@ -106,7 +106,7 @@ namespace Anki
 
     template<typename Type> Array<Type> Exp(const Array<Type> &in, MemoryStack &memory)
     {
-      Array<Type> out(in.get_size(0), in.get_size(1), memory, Flags::Buffer(false, false));
+      Array<Type> out(in.get_size(0), in.get_size(1), memory, Flags::Buffer(false, false, false));
 
       Matrix::Exp<Type,Type,Type>(in, out);
 

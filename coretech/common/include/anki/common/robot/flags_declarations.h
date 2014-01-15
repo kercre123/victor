@@ -25,8 +25,11 @@ namespace Anki
       class Buffer
       {
       public:
+        // zeroAllocatedMemory - On initialization, set all values in the buffer to zero
+        // useBoundaryFillPatterns - Buffers can have fill patterns at the edges of each piece
+        // isFullyAllocated - If true, the input raw buffer is full of data, and the object should have usedSize == totalSize.
         Buffer();
-        Buffer(bool zeroAllocatedMemory, bool useBoundaryFillPatterns);
+        Buffer(bool zeroAllocatedMemory, bool useBoundaryFillPatterns, bool isFullyAllocated);
 
         void set_zeroAllocatedMemory(bool value);
         bool get_zeroAllocatedMemory() const;
@@ -34,13 +37,17 @@ namespace Anki
         void set_useBoundaryFillPatterns(bool value);
         bool get_useBoundaryFillPatterns() const;
 
+        void set_isFullyAllocated(bool value);
+        bool get_isFullyAllocated() const;
+
         u32 get_rawFlags() const;
 
       protected:
         enum Flags
         {
           USE_BOUNDARY_FILL_PATTERNS = 1,
-          ZERO_ALLOCATED_MEMORY = (1<<1)
+          ZERO_ALLOCATED_MEMORY = (1<<1),
+          IS_FULLY_ALLOCATED = (1<<2)
         };
 
         u32 flags;

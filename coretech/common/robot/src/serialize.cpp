@@ -16,8 +16,14 @@ namespace Anki
   namespace Embedded
   {
     SerializedBuffer::SerializedBuffer(void *buffer, s32 bufferLength, Flags::Buffer flags)
-      : memoryStack(buffer, bufferLength, flags)
+
     {
+      if(flags.get_isFullyAllocated()) {
+        AnkiConditionalErrorAndReturn(reinterpret_cast<size_t>(buffer)%MEMORY_ALIGNMENT == 0,
+          "SerializedBuffer::SerializedBuffer", "If fully allocated, buffer must be %d byte aligned", MEMORY_ALIGNMENT);
+      }
+
+      this->memoryStack = MemoryStack(buffer, bufferLength, flags);
     }
 
     void* SerializedBuffer::PushBack(void * data, const s32 dataLength)

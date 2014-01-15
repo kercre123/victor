@@ -41,7 +41,8 @@ namespace Anki
       template<typename Type> static Result EncodeBasicType(u32 &code);
       static Result DecodeBasicType(const u32 code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat);
 
-      SerializedBuffer(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(false,true));
+      // If the void* buffer is already allocated, use flags = Flags::Buffer(false,true,true)
+      SerializedBuffer(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(false,true,false));
 
       void* PushBack(void * data, s32 dataLength);
 

@@ -20,6 +20,11 @@ namespace Anki
     {
       AnkiAssert(flags.get_useBoundaryFillPatterns());
 
+      if(flags.get_isFullyAllocated()) {
+        AnkiConditionalErrorAndReturn(reinterpret_cast<size_t>(buffer)%MEMORY_ALIGNMENT == 0,
+          "MemoryStack::MemoryStack", "If fully allocated, buffer must be %d byte aligned", MEMORY_ALIGNMENT);
+      }
+
       static s32 maxId = 0;
 
       this->id = maxId;

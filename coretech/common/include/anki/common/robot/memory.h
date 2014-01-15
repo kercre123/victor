@@ -48,7 +48,7 @@ namespace Anki
     {
     public:
       MemoryStack(void) : buffer(NULL) { }
-      MemoryStack(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(true,true));
+      MemoryStack(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(true,true,false));
       MemoryStack(const MemoryStack &ms); // This is a safe way to remove const by making a copy, rather than using const_cast()
 
       // Allocate numBytes worth of memory, with the start byte-aligned to MEMORY_ALIGNMENT
