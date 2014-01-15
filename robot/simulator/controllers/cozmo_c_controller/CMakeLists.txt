@@ -80,7 +80,8 @@ add_executable(cozmo_c_controller ${SOURCE_FILES} ${HEADER_FILES})
 target_link_libraries(cozmo_c_controller 
 	CppController
 	CoreTech_Common_Robot
-	CoreTech_Common_Basestation # needed?
+	CoreTech_Vision_Robot
+	#CoreTech_Common_Basestation # needed?
 	mx 
 	eng
 )
