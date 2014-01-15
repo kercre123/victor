@@ -37,18 +37,7 @@ if numDetections > 0
             if isempty(match)
                 detections{i}.DrawProbes('Tag', 'BlockMarker2D', 'Parent', h_axes);
             else
-                corners = detections{i}.corners;
-                plot(corners([1 2 4 3 1],1), corners([1 2 4 3 1],2), 'r', ...
-                    'LineWidth', 3, 'Parent', h_axes, 'Tag', 'BlockMarker2D');
-                cen = mean(corners,1);
-                %diagonal = sqrt(max(sum((corners(1,:)-corners(4,:)).^2), sum((corners(2,:)-corners(3,:)).^2)));
-                h_shadow = text(cen(1), cen(2), match.Name, 'Hor', 'c', 'Back', 'none', ...
-                    'Color', 'k', ...
-                    'Parent', h_axes, 'FontSize', 20, 'FontWeight', 'b', ...
-                    'FontName', 'DriveSans', 'Tag', 'BlockMarker2D');
-                h_text = copyobj(h_shadow, gca);
-                set(h_text, 'Color', 'y', 'Pos', [cen-1.5 0]);
-                
+                detections{i}.Draw('Tag', 'BlockMarker2D', 'Parent', h_axes);
             end
         end
         %draw(detections{i}, 'where', h_axes, 'drawTextLabels', 'short');

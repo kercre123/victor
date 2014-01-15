@@ -78,6 +78,8 @@ classdef CozmoVisionProcessor < handle
         
         block;
         
+        markerLibrary;
+        
         % For mat localization
         matLocalizationResolution;
         
@@ -133,8 +135,18 @@ classdef CozmoVisionProcessor < handle
             Verbosity = 1;
             DoEndianSwap = false; % false for simulator, true with Movidius
             TIME_STEP = 30; %#ok<PROP>
-
+            MarkerLibraryFile = [];
+            
             parseVarargin(varargin{:});
+            
+            if ~isempty(MarkerLibraryFile)
+                temp = load(MarkerLibraryFile);
+                if ~isfield(temp, 'markerLibrary') || ~isa(temp.markerLibrary, 'VisionMarkerLibrary')
+                    error('No VisionMarkerLibrary found in the specified file.');
+                end 
+                this.markerLibrary = temp.markerLibrary;
+                clear temp
+            end
             
             assert(isa(SerialDevice, 'serial') || ...
                 isa(SerialDevice, 'SimulatedSerial'), ...
@@ -163,7 +175,7 @@ classdef CozmoVisionProcessor < handle
             this.dockingBlock = 0;
                         
             % Set up Robot head camera geometry
-            this.robotPose = Pose();
+            this.robotPose = Pose(eye(3), [0;0;CozmoVisionProcessor.WHEEL_RADIUS]);
             this.neckPose = Pose([0 0 0], this.NECK_JOINT_POSITION);
             this.neckPose.parent = this.robotPose;
             

@@ -569,7 +569,7 @@ namespace Anki {
           
           const s32 maxExtractedQuads = 1000/2;
           const s32 quads_minQuadArea = 100/4;
-          const s32 quads_quadSymmetryThreshold = 384;
+          const s32 quads_quadSymmetryThreshold = 512; // ANS: corresponds to 2.0, loosened from 384 (1.5), for large mat markers at extreme perspective distortion
           const s32 quads_minDistanceFromImageEdge = 2;
           
           const f32 decode_minContrastRatio = 1.25;
