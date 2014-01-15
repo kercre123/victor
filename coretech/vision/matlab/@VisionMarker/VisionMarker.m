@@ -14,6 +14,9 @@ classdef VisionMarker
         
         SquareWidth = 1 / (VisionMarker.ProbeParameters.Number + 2 + 2*VisionMarker.FiducialPaddingFraction);
         
+        FiducialInnerArea = (1-2*VisionMarker.SquareWidth)^2;
+        FiducialArea = 1 - VisionMarker.FiducialInnerArea;
+                
         XProbes = VisionMarker.CreateProbes('X');
         YProbes = VisionMarker.CreateProbes('Y');
         
@@ -21,7 +24,7 @@ classdef VisionMarker
     
     methods(Static = true)
         
-        img = Draw(varargin);
+        img = DrawFiducial(varargin);
         
     end % Static Methods
     
@@ -63,6 +66,17 @@ classdef VisionMarker
             
         end % Constructor VisionMarker()
        
+        h = Draw(this, varargin);
+        
+        % FOr backwards compatibility to lowercase "draw" in Marker2D
+        function h = draw(this, varargin)
+            where = [];
+            
+            DrawArgs = parseVarargin(varargin{:});
+            
+            h = Draw(this, 'Parent', where, DrawArgs{:});
+        end
+        
         function [h1, h0] = DrawProbes(this, varargin)
             H = cp2tform([0 0 1 1; 0 1 0 1]', this.corners, 'projective');
             

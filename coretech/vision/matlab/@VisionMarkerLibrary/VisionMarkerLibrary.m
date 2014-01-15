@@ -59,6 +59,15 @@ classdef VisionMarkerLibrary < handle
             this.knownMarkers(key) = struct(varargin{:});
         end
         
+        function RemoveMarker(this, marker)
+           key = VisionMarkerLibrary.MarkerToKey(marker);
+           if this.knownMarkers.isKey(key)
+               this.knownMarkers.remove(key);
+           else
+               warning('No matching marker found, nothing to remove.');
+           end
+        end
+        
         function markerProperties = IdentifyMarker(this, marker)
             key = VisionMarkerLibrary.MarkerToKey(marker);
             if this.knownMarkers.isKey(key)

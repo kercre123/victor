@@ -1,6 +1,8 @@
 function [code, corners, cornerCode, H] = ProbeImage(img, corners)
 % Static method for probing an image within given corners to produce code.
 
+assert(~isempty(img), 'Image is empty!');
+
 [nrows,ncols,nbands] = size(img);
 img = im2double(img);
 if nbands > 1
@@ -9,9 +11,10 @@ if nbands > 1
 end
 
 % No corners provided? Assume the borders of the image
+doRefinement = true;
 if nargin < 2 || isempty(corners)
     corners = [0 0 ncols ncols; 0 nrows 0 nrows]' + 0.5;
-    
+    doRefinement = false;
     %imgOffset = (1+VisionMarker.FiducialPaddingFraction)*VisionMarker.SquareWidth;
     %canonicalCorners = [imgOffset*[1 1] (1-imgOffset)*[1 1]; 
     %    imgOffset (1-imgOffset) imgOffset (1-imgOffset)]';
@@ -24,8 +27,12 @@ assert(isequal(size(corners), [4 2]), ...
 % into the image coordinates, according to the corner positions
 tform = cp2tform(corners, [0 0 1 1; 0 1 0 1]', 'projective');
 
-[corners, H] = LKrefineQuad(img, corners, tform.tdata.Tinv', ...
-    'MaxIterations', 10, 'DebugDisplay', false);
+if doRefinement
+    [corners, H] = LKrefineQuad(img, corners, tform.tdata.Tinv', ...
+        'MaxIterations', 10, 'DebugDisplay', false);
+else
+    H = tform.tdata.Tinv';
+end
 
 %[xi,yi] = tforminv(H, VisionMarker.XProbes, VisionMarker.YProbes);
 temp = H*[VisionMarker.XProbes(:) VisionMarker.YProbes(:) ones(numel(VisionMarker.XProbes),1)]';
