@@ -218,9 +218,9 @@ namespace Anki {
         VisionSystem::CheckForDockingBlock(msg.blockType);
       }
       
-      void ProcessTotalBlocksDetectedMessage(const TotalBlocksDetected& msg)
+      void ProcessTotalVisionMarkersSeenMessage(const TotalVisionMarkersSeen& msg)
       {
-        PRINT("Saw %d block markers.\n", msg.numBlocks);
+        PRINT("Saw %d vision markers.\n", msg.numMarkers);
       }
       
       void ProcessTemplateInitializedMessage(const TemplateInitialized& msg)
@@ -263,6 +263,11 @@ namespace Anki {
       
       
       // TODO: Fill these in once they are needed/used:
+      
+      void ProcessVisionMarkerMessage(const VisionMarker& msg) {
+        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
+      }
+      
       void ProcessClearPathMessage(const ClearPath& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }

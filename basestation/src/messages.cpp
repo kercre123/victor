@@ -36,33 +36,35 @@ namespace Anki {
       
       // THese are dummy placeholders to avoid linker errors for now
       
-void ProcessClearPathMessage(unsigned char const*) {}
-
-void ProcessSetMotionMessage(unsigned char const*) {}
-
-void ProcessRobotAvailableMessage(unsigned char const*) {}
-
-void ProcessMatMarkerObservedMessage(unsigned char const*) {}
-
-void ProcessRobotAddedToWorldMessage(unsigned char const*) {}
-
-void ProcessSetPathSegmentArcMessage(unsigned char const*) {}
-
-void ProcessDockingErrorSignalMessage(unsigned char const*) {}
-
-void ProcessSetPathSegmentLineMessage(unsigned char const*) {}
-
-void ProcessBlockMarkerObservedMessage(unsigned char const*) {}
-
-void ProcessTemplateInitializedMessage(unsigned char const*) {}
-
-void ProcessTotalBlocksDetectedMessage(unsigned char const*) {}
-
-void ProcessMatCameraCalibrationMessage(unsigned char const*) {}
-
-void ProcessAbsLocalizationUpdateMessage(unsigned char const*) {}
-
-void ProcessHeadCameraCalibrationMessage(unsigned char const*) {}
+      void ProcessClearPathMessage(unsigned char const*) {}
+      
+      void ProcessSetMotionMessage(unsigned char const*) {}
+      
+      void ProcessRobotAvailableMessage(unsigned char const*) {}
+      
+      void ProcessVisionMarkerMessage(unsigned char const *) {}
+      
+      void ProcessMatMarkerObservedMessage(unsigned char const*) {}
+      
+      void ProcessRobotAddedToWorldMessage(unsigned char const*) {}
+      
+      void ProcessSetPathSegmentArcMessage(unsigned char const*) {}
+      
+      void ProcessDockingErrorSignalMessage(unsigned char const*) {}
+      
+      void ProcessSetPathSegmentLineMessage(unsigned char const*) {}
+      
+      void ProcessBlockMarkerObservedMessage(unsigned char const*) {}
+      
+      void ProcessTemplateInitializedMessage(unsigned char const*) {}
+      
+      void ProcessTotalBlocksDetectedMessage(unsigned char const*) {}
+      
+      void ProcessMatCameraCalibrationMessage(unsigned char const*) {}
+      
+      void ProcessAbsLocalizationUpdateMessage(unsigned char const*) {}
+      
+      void ProcessHeadCameraCalibrationMessage(unsigned char const*) {}
 
       
     } // namespace Messages

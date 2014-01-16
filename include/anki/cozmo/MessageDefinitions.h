@@ -81,6 +81,22 @@ ADD_COMMON_PATH_SEGMENT_MEMBERS
 END_MESSAGE_DEFINITION(SetPathSegmentArc)
 
 
+// VisionMarker
+#define VISION_MARKER_CODE_LENGTH 11 // ceil( (9*9 + 4)/8 )
+
+START_TIMESTAMPED_MESSAGE_DEFINITION(VisionMarker, 1)
+// TODO: make the corner coordinates fixed point
+ADD_MESSAGE_MEMBER(f32, x_imgUpperLeft)
+ADD_MESSAGE_MEMBER(f32, y_imgUpperLeft)
+ADD_MESSAGE_MEMBER(f32, x_imgLowerLeft)
+ADD_MESSAGE_MEMBER(f32, y_imgLowerLeft)
+ADD_MESSAGE_MEMBER(f32, x_imgUpperRight)
+ADD_MESSAGE_MEMBER(f32, y_imgUpperRight)
+ADD_MESSAGE_MEMBER(f32, x_imgLowerRight)
+ADD_MESSAGE_MEMBER(f32, y_imgLowerRight)
+ADD_MESSAGE_MEMBER_ARRAY(u8, code, VISION_MARKER_CODE_LENGTH)
+END_MESSAGE_DEFINITION(VisionMarker)
+
 // BlockMarkerObserved
 // TODO: this has to be split into two packets for BTLE (size > 20 bytes)
 START_TIMESTAMPED_MESSAGE_DEFINITION(BlockMarkerObserved, 1)
@@ -168,9 +184,9 @@ ADD_MESSAGE_MEMBER(u8, success)
 END_MESSAGE_DEFINITION(TemplateInitialized)
 
 // TotalBlocksDetected
-START_MESSAGE_DEFINITION(TotalBlocksDetected, 1)
-ADD_MESSAGE_MEMBER(u8, numBlocks)
-END_MESSAGE_DEFINITION(TotalBlocksDetected)
+START_MESSAGE_DEFINITION(TotalVisionMarkersSeen, 1)
+ADD_MESSAGE_MEMBER(u8, numMarkers)
+END_MESSAGE_DEFINITION(TotalVisionMarkersSeen)
 
 
 
