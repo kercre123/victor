@@ -1,7 +1,8 @@
 #VRML_SIM V7.3.0 utf8
 
 PROTO CozmoMat [
-  
+  field SFColor Color 1 1 .7 # Light yellow
+  #field SFColor Color 0.4196 0.4196 0.4196 # Anki light gray
 ]
 {
 Solid {
@@ -11,7 +12,7 @@ Solid {
     Shape {
       appearance Appearance {
          material Material {
-		 
+		   diffuseColor IS Color
          }
 #        texture ImageTexture {
 #          url [
@@ -30,9 +31,8 @@ Solid {
 	  children [
 		Shape {
 		  appearance Appearance {
-			texture ImageTexture {
-			  url ["ankiMat1.png"]
-			}
+			texture ImageTexture { url ["ankiMat1.png"] }
+			material Material { diffuseColor 1 1 1 }
 		  }
 		  geometry 	DEF MatMarkerGeometry Box {
 			  size .09 0.00001 .09
@@ -47,9 +47,8 @@ Solid {
 	  children [
 		Shape {
 		  appearance Appearance {
-			texture ImageTexture {
-			  url ["ankiMat2.png"]
-			}
+			texture ImageTexture { url ["ankiMat2.png"] }
+			material Material { diffuseColor 1 1 1 }
 		  }
 		  geometry USE MatMarkerGeometry
 		}
@@ -62,9 +61,8 @@ Solid {
 	  children [
 		Shape {
 		  appearance Appearance {
-			texture ImageTexture {
-			  url ["ankiMat3.png"]
-			}
+			texture ImageTexture { url ["ankiMat3.png"] }
+			material Material { diffuseColor 1 1 1 }
 		  }
 		  geometry USE MatMarkerGeometry
 		}
@@ -77,9 +75,8 @@ Solid {
 	  children [
 		Shape {
 		  appearance Appearance {
-			texture ImageTexture {
-			  url ["ankiMat4.png"]
-			}
+			texture ImageTexture { url ["ankiMat4.png"]	}
+			material Material { diffuseColor 1 1 1 }
 		  }
 		  geometry USE MatMarkerGeometry
 		}
@@ -92,9 +89,8 @@ Solid {
 	  children [
 		Shape {
 		  appearance Appearance {
-			texture ImageTexture {
-			  url ["ankiMat5.png"]
-			}
+			texture ImageTexture { url ["ankiMat5.png"] }
+			material Material { diffuseColor 1 1 1 }
 		  }
 		  geometry USE MatMarkerGeometry
 		}
@@ -107,9 +103,8 @@ Solid {
 	  children [
 		Shape {
 		  appearance Appearance {
-			texture ImageTexture {
-			  url ["ankiMat6.png"]
-			}
+			texture ImageTexture { url ["ankiMat6.png"]	}
+			material Material { diffuseColor 1 1 1 }
 		  }
 		  geometry USE MatMarkerGeometry
 		}
@@ -122,9 +117,8 @@ Solid {
 	  children [
 		Shape {
 		  appearance Appearance {
-			texture ImageTexture {
-			  url ["ankiMat7.png"]
-			}
+			texture ImageTexture { url ["ankiMat7.png"]	}
+			material Material { diffuseColor 1 1 1 }
 		  }
 		  geometry USE MatMarkerGeometry
 		}
@@ -137,9 +131,8 @@ Solid {
 	  children [
 		Shape {
 		  appearance Appearance {
-			texture ImageTexture {
-			  url ["ankiMat8.png"]
-			}
+			texture ImageTexture { url ["ankiMat8.png"] }
+			material Material { diffuseColor 1 1 1 }
 		  }
 		  geometry USE MatMarkerGeometry
 		}
@@ -152,9 +145,8 @@ Solid {
 	  children [
 		Shape {
 		  appearance Appearance {
-			texture ImageTexture {
-			  url ["ankiMat9.png"]
-			}
+			texture ImageTexture { url ["ankiMat9.png"]	}
+			material Material { diffuseColor 1 1 1 }
 		  }
 		  geometry USE MatMarkerGeometry
 		}

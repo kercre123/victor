@@ -189,22 +189,28 @@ Block1x1 {
   rotation -0.0026561 0.999996 0.00129937 2.04586e-07
   blockColor 0.5 0.1 0.75
   facemarker1 [
-    "textures/Block060_Face01.png"
+    #"textures/Block060_Face01.png"
+    "textures/batteryMarker.png"
   ]
   facemarker2 [
-    "textures/Block060_Face02.png"
+    #"textures/Block060_Face02.png"
+    "textures/batteryMarker.png"
   ]
   facemarker3 [
-    "textures/Block060_Face03.png"
+    #"textures/Block060_Face03.png"
+    "textures/batteryMarker.png"
   ]
   facemarker4 [
-    "textures/Block060_Face04.png"
+    #"textures/Block060_Face04.png"
+    "textures/batteryMarker.png"
   ]
   facemarker5 [
-    "textures/Block060_Face05.png"
+    #"textures/Block060_Face05.png"
+    "textures/batteryMarker.png"
   ]
   facemarker6 [
-    "textures/Block060_Face06.png"
+    #"textures/Block060_Face06.png"
+    "textures/batteryMarker.png"
   ]
 }
 DEF Cozmo CozmoBot {
@@ -213,7 +219,7 @@ DEF Cozmo CozmoBot {
   usbChannel 10
   rotation 0 1 0 -1.5708
 #  controller "cozmo_matlab"
-#  controller "cozmo_c_controller"
+# controller "cozmo_c_controller"
   controller "cozmo_docking_controller_test"
 }
 
