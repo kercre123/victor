@@ -78,6 +78,10 @@ namespace Anki {
       webots::Node* estPose_;
       //char locStr[MAX_TEXT_DISPLAY_LENGTH];
       
+      // Gyro
+      webots::Gyro* gyro_;
+      f32 gyroValues_[3];
+      
       // For tracking wheel distance travelled
       f32 motorPositions_[HAL::MOTOR_COUNT];
       f32 motorPrevPositions_[HAL::MOTOR_COUNT];
@@ -280,6 +284,10 @@ namespace Anki {
       compass_->enable(TIME_STEP);
       estPose_ = webotRobot_.getFromDef("CozmoBotPose");
       
+      // Gyro
+      gyro_ = webotRobot_.getGyro("gyro");
+      gyro_->enable(TIME_STEP);
+      
       if(InitSimRadio(webotRobot_, robotID_) == EXIT_FAILURE) {
         PRINT("Failed to initialize Simulated Radio.\n");
         return EXIT_FAILURE;
@@ -345,6 +353,15 @@ namespace Anki {
        
     } // HAL::UpdateDisplay()
     
+    
+    
+    const f32* HAL::GyroGetSpeed()
+    {
+      gyroValues_[0] = (f32)(gyro_->getValues()[0]);
+      gyroValues_[1] = (f32)(gyro_->getValues()[1]);
+      gyroValues_[2] = (f32)(gyro_->getValues()[2]);
+      return gyroValues_;
+    }
     
     
     // Set the motor power in the unitless range [-1.0, 1.0]

@@ -209,6 +209,9 @@ namespace Anki
       // Send a byte.
       // Prototype matches putc for printf.
       int USBPutChar(int c);
+      
+#pragma mark --- Sensors ---
+      const f32* GyroGetSpeed();
 
 #pragma mark --- Motors ---
       /////////////////////////////////////////////////////////////////////

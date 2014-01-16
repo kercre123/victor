@@ -61,7 +61,10 @@ Supervisor {
        channel IS usbChannel
     }
     
-    
+    Gyro {
+      name "gyro"
+    }
+     
     Solid {
       translation -0.06 0.027 0
       children [
