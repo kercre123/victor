@@ -51,17 +51,19 @@ namespace Anki
         DATA_TYPE_ARRAY = 3
       };
 
-      typedef struct
+      class EncodedBasicTypeBuffer
       {
+	  public:
         const static s32 CODE_SIZE = 2;
-        u32 code[CODE_SIZE];
-      } EncodedBasicTypeBuffer;
+		u32 code[EncodedBasicTypeBuffer::CODE_SIZE];
+      };
 
-      typedef struct
+      class EncodedArray
       {
+		public:
         const static s32 CODE_SIZE = 5;
-        u32 code[CODE_SIZE];
-      } EncodedArray;
+		u32 code[EncodedArray::CODE_SIZE];
+      };
 
       template<typename Type> static Result EncodeBasicType(u32 &code);
       static Result DecodeBasicType(const u32 code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat);
