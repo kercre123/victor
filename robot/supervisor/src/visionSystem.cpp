@@ -487,8 +487,7 @@ namespace Anki {
                 frameWidth, frameHeight, (1 << downsamplePower));
           
           Array<u8> fullRes(frameHeight, frameWidth,
-                            frame.data, frameHeight*frameWidth,
-                            Flags::Buffer(false,false));
+                            frame.data, frameHeight*frameWidth);
           
           ImageProcessing::DownsampleByPowerOfTwo<u8,u32,u8>(fullRes,
                                                              downsamplePower,
