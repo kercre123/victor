@@ -10,6 +10,7 @@ function varargout = computeExtrinsics(this, p, P, varargin)
 %
 
 maxRefineIterations = 20;
+initialPose = [];
 initializeWithCurrentPose = false;
 changeThreshold = 1e-10;
 ridgeWeight = 1e-2;
@@ -19,13 +20,20 @@ parseVarargin(varargin{:});
 
 
 if initializeWithCurrentPose
-    invPose = inv(this.pose); %#ok<UNRCH>
-    Rvec = invPose.Rvec;
-    T    = invPose.T;
-else
+    warning(['Deprecated usage: "initializeWithCurrentPose" -- please ' ...
+        'use "''initialPose'', camera.pose" instead.']); %#ok<UNRCH>
+    
+    initialPose = inv(this.pose); 
+end
+
+if isempty(initialPose)
     % TODO: write my own version instead of using Bouguet's (or use openCV's)
     [Rvec,T] = compute_extrinsic_init(p', P', ...
        this.focalLength, this.center, this.distortionCoeffs, this.alpha);
+else
+    assert(isa(initialPose, 'Pose'), 'initialPose should be a Pose object.');
+    Rvec = initialPose.Rvec;
+    T    = initialPose.T;
 end
 
 if maxRefineIterations > 0
