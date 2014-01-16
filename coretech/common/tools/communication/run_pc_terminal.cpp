@@ -75,7 +75,6 @@ int main(int argc, char ** argv)
   if(argc == 1) {
     // just use defaults, but print the help anyway
     printUsage();
-    printf("using defaults comPort=%d baudRate=%d\n", comPort, baudRate);
   } else if(argc == 3) {
     sscanf(argv[1], "%d", &comPort);
     sscanf(argv[2], "%d", &baudRate);

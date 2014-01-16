@@ -253,6 +253,13 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
   return 0;
 } // DWORD WINAPI PrintfBuffers(LPVOID lpParam)
 
+void printUsage()
+{
+  printf(
+    "usage: saveVideo <comPort> <baudRate>\n"
+    "example: saveVideo 8 1000000\n");
+} // void printUsage()
+
 int main(int argc, char ** argv)
 {
   ThreadSafeQueue<RawBuffer> buffers = ThreadSafeQueue<RawBuffer>();
@@ -260,7 +267,21 @@ int main(int argc, char ** argv)
 
   lastUpdateTime_mutex = CreateMutex(NULL, FALSE, NULL);
 
-  if(serial.Open(8, 1000000) != RESULT_OK)
+  s32 comPort = 8;
+  s32 baudRate = 1000000;
+
+  if(argc == 1) {
+    // just use defaults, but print the help anyway
+    printUsage();
+  } else if(argc == 3) {
+    sscanf(argv[1], "%d", &comPort);
+    sscanf(argv[2], "%d", &baudRate);
+  } else {
+    printUsage();
+    return -1;
+  }
+
+  if(serial.Open(comPort, baudRate) != RESULT_OK)
     return -1;
 
   WaitForSingleObject(lastUpdateTime_mutex, INFINITE);
