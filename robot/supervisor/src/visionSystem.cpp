@@ -182,11 +182,14 @@ namespace Anki {
         HAL::SendMessageID("CozmoMsg_TemplateInitialized",
                            GET_MESSAGE_ID(Messages::TemplateInitialized));
         
-        HAL::SendMessageID("CozmoMsg_TotalBlocksDetected",
-                           GET_MESSAGE_ID(Messages::TotalBlocksDetected));
+        HAL::SendMessageID("CozmoMsg_TotalVisionMarkersSeen",
+                           GET_MESSAGE_ID(Messages::TotalVisionMarkersSeen));
                
         HAL::SendMessageID("CozmoMsg_DockingErrorSignal",
                            GET_MESSAGE_ID(Messages::DockingErrorSignal));
+        
+        HAL::SendMessageID("CozmoMsg_VisionMarker",
+                           GET_MESSAGE_ID(Messages::VisionMarker));
         
         //HAL::SendMessageID("CozmoMsg_HeadCameraCalibration",
         //                   GET_MESSAGE_ID(Messages::HeadCameraCalibration));
@@ -228,9 +231,10 @@ namespace Anki {
         HAL::USBSendPacket(HAL::USB_VISION_COMMAND_MAT_CALIBRATION,
                            &matCalibMsg, sizeof(Messages::MatCameraCalibration));
          */
+        /*
         HAL::USBSendPacket(HAL::USB_VISION_COMMAND_MAT_CALIBRATION,
                            &matCamPixPerMM_, sizeof(matCamPixPerMM_));
-
+         */
 #endif // USE_OFFBOARD_VISION
         
 #if USE_MATLAB_VISUALIZATION
@@ -517,7 +521,7 @@ namespace Anki {
                           frame.resolution, DETECTION_RESOLUTION,
                           HAL::USB_VISION_COMMAND_DETECTBLOCKS);
         
-        Messages::LookForID( GET_MESSAGE_ID(Messages::TotalBlocksDetected) );
+        Messages::LookForID( GET_MESSAGE_ID(Messages::TotalVisionMarkersSeen) );
         
         retVal = EXIT_SUCCESS;
         

@@ -19,25 +19,35 @@ switch(command)
         
     case this.HEAD_CALIBRATION
         
-        this.SetCalibration(packet, 'headCalibrationMatrix', this.trackingResolution);
+        %this.SetCalibration(packet, 'headCalibrationMatrix', this.trackingResolution);
         
-        this.headCam = Camera('resolution', this.trackingResolution, ...
-            'calibration', struct('fc', [this.headCalibrationMatrix(1,1) this.headCalibrationMatrix(2,2)], ...
-            'cc', [this.headCalibrationMatrix(1,3) this.headCalibrationMatrix(2,3)], ...
-            'kc', zeros(5,1), ...
-            'alpha_c', 0));  
+        % Expecting:
+        % struct {
+        %   f32 focalLength_x, focalLength_y, fov_ver;
+        %   f32 center_x, center_y;
+        %   f32 skew;
+        %   u16 nrows, ncols;
+        % }
+        %
+        
+        f    = this.Cast(packet(1:8),   'single');
+        c    = this.Cast(packet(13:20), 'single');
+        dims = this.Cast(packet(25:28), 'uint16');
+        
+        assert(length(f) == 2, ...
+            'Expecting two single precision floats for focal lengths.');
+        
+        assert(length(c) == 2, ...
+            'Expecting two single precision floats for camera center.');
+        
+        assert(length(dims) == 2, ...
+            'Expecting two 16-bit integers for calibration dimensions.');
+        
+        this.headCam = Camera('resolution', double(fliplr(dims)), ...
+            'calibration', struct('fc', double(f), 'cc', double(c), ...
+            'kc', zeros(5,1), 'alpha_c', 0));  
         
         this.setHeadAngle(-.251);
-        
-        return
-        
-    case this.MAT_CALIBRATION
-        
-        %this.SetCalibration(packet, 'matCalibrationMatrix', this.matLocalizationResolution);
-        assert(length(packet)==4, ...
-            'Expecting matCamPixPerMM packet to contain 4 bytes.');
-        
-        this.matCamPixPerMM = double(this.Cast(packet(1:4), 'single'));
         
         return
         
@@ -68,7 +78,7 @@ switch(command)
         end
         
     case this.TRACK_COMMAND
-        assert(~isempty(this.headCalibrationMatrix), ...
+        assert(~isempty(this.headCam), ...
             'Must receive calibration message before tracking.');
         
         [img, timestamp, valid] = this.PacketToImage(packet);
@@ -77,19 +87,6 @@ switch(command)
         else
             set(this.h_title, 'String', 'Invalid Image');
         end % IF valid
-        
-    case this.MAT_LOCALIZATION_COMMAND
-        
-        assert(~isempty(this.matCamPixPerMM), ...
-            ['Must receive mat camera calibration (matCamPixPerMM) ' ...
-            'using mat localization.']);
-        
-        [img, timestamp, valid] = this.PacketToImage(packet);
-        if valid
-            this.MatLocalize(img, timestamp);
-        else
-           set(this.h_title, 'String', 'Invalid Image'); 
-        end
         
     otherwise
         warning('Unknown command %d for packet. Skipping.', command);
