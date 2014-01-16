@@ -47,23 +47,47 @@ namespace Anki
       {
         DATA_TYPE_UNKNOWN = 0,
         DATA_TYPE_RAW = 1,
-        DATA_TYPE_BASIC_TYPE = 2,
+        DATA_TYPE_BASIC_TYPE_BUFFER = 2,
         DATA_TYPE_ARRAY = 3
       };
+
+      typedef struct
+      {
+        const static s32 CODE_SIZE = 2;
+        u32 code[CODE_SIZE];
+      } EncodedBasicTypeBuffer;
+
+      typedef struct
+      {
+        const static s32 CODE_SIZE = 5;
+        u32 code[CODE_SIZE];
+      } EncodedArray;
 
       template<typename Type> static Result EncodeBasicType(u32 &code);
       static Result DecodeBasicType(const u32 code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat);
 
+      template<typename Type> static Result EncodeBasicTypeBuffer(const s32 numElements, EncodedBasicTypeBuffer &code);
+      static Result DecodeBasicTypeBuffer(const bool swapEndian, const EncodedBasicTypeBuffer &code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements);
+
+      template<typename Type> static Result EncodeArrayType(const Array<Type> &in, EncodedArray &code);
+      static Result DecodeArrayType(const bool swapEndian, const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u8 &basicType_size, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat);
+
+      template<typename Type> static Result SerializeArray(const Array<Type> &in, void * data, const s32 dataLength);
+      template<typename Type> static Result DeserializeArray(const bool swapEndian, const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
+
       // If the void* buffer is already allocated, use flags = Flags::Buffer(false,true,true)
       SerializedBuffer(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(false,true,false));
 
-      void* PushBack(void * data, s32 dataLength);
+      void* PushBack(const void * data, s32 dataLength);
+      void* PushBack(const DataType type, const void * data, s32 dataLength);
+      void* PushBack(const void * header, s32 headerLength, const void * data, s32 dataLength);
+      void* PushBack(const DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength);
 
-      void* PushBack(void * header, s32 headerLength, void * data, s32 dataLength);
+      // Note that dataLength should be numel(data)*sizeof(Type)
+      // This is to make this call compatible with the standard void* PushBack()
+      template<typename Type> Type* PushBack(const Type *data, const s32 dataLength);
 
-      template<typename Type> Result PushBack(Type &value);
-
-      template<typename Type> Result PushBack(Array<Type> &value);
+      template<typename Type> void* PushBack(const Array<Type> &in);
 
       bool IsValid() const;
 

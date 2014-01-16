@@ -55,6 +55,12 @@ For internal use only. No part of this code may be used without a signed non-dis
 extern "C" {
 #endif
 
+#define SwapEndianU32(value) \
+  ((((u32)((value) & 0x000000FF)) << 24) | \
+  ( ((u32)((value) & 0x0000FF00)) <<  8) | \
+  ( ((u32)((value) & 0x00FF0000)) >>  8) | \
+  ( ((u32)((value) & 0xFF000000)) >> 24))
+
   f32 Roundf(const f32 number);
   f64 Round(const f64 number);
 

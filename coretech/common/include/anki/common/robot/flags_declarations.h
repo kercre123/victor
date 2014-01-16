@@ -40,6 +40,7 @@ namespace Anki
         void set_isFullyAllocated(bool value);
         bool get_isFullyAllocated() const;
 
+        void set_rawFlags(u32 rawFlags);
         u32 get_rawFlags() const;
 
       protected:

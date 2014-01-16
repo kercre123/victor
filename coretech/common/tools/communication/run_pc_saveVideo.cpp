@@ -96,6 +96,7 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
 
   // The bigBuffer is a 16-bytes aligned version of bigBufferRaw
   static u8 bigBufferRaw[BIG_BUFFER_SIZE];
+  static u8 bigBufferRaw2[BIG_BUFFER_SIZE];
   static u8 * bigBuffer = reinterpret_cast<u8*>(RoundUp<size_t>(reinterpret_cast<size_t>(&bigBufferRaw[0]), MEMORY_ALIGNMENT));
   s32 bigBufferIndex = 0;
 
@@ -114,6 +115,8 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
       WaitForSingleObject(lastUpdateTime_mutex, INFINITE);
       lastUpdateTime = GetTime() + 1e10;
       ReleaseMutex(lastUpdateTime_mutex);
+
+      MemoryStack memory(bigBufferRaw2, BIG_BUFFER_SIZE, Flags::Buffer(false, true, false));
 
       s32 usbMessageStartIndex;
       s32 usbMessageEndIndex;
@@ -161,12 +164,66 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
       while(iterator.HasNext()) {
         s32 dataLength;
         SerializedBuffer::DataType type;
-        u8 * dataSegment = reinterpret_cast<u8*>(iterator.GetNext(swapEndian, dataLength, type));
+        u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(swapEndian, dataLength, type));
+        u8 * dataSegment = dataSegmentStart;
 
-        printf("Next segment (%d,%d): ", dataLength, type);
-        for(s32 i=0; i<dataLength; i++) {
-          printf("%x ", dataSegment[i]);
+        printf("Next segment is (%d,%d)\n", dataLength, type);
+        if(type == SerializedBuffer::DATA_TYPE_RAW) {
+          printf("Raw segment: ");
+          for(s32 i=0; i<dataLength; i++) {
+            printf("%x ", dataSegment[i]);
+          }
+        } else if(type == SerializedBuffer::DATA_TYPE_BASIC_TYPE_BUFFER) {
+          SerializedBuffer::EncodedBasicTypeBuffer code;
+          for(s32 i=0; i<SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE; i++) {
+            code.code[i] = reinterpret_cast<const u32*>(dataSegment)[i];
+          }
+          dataSegment += SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE * sizeof(u32);
+          const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE * sizeof(u32);
+
+          u8 size;
+          bool isInteger;
+          bool isSigned;
+          bool isFloat;
+          s32 numElements;
+          SerializedBuffer::DecodeBasicTypeBuffer(swapEndian, code, size, isInteger, isSigned, isFloat, numElements);
+
+          printf("Basic type buffer segment (%d, %d, %d, %d, %d): ", size, isInteger, isSigned, isFloat, numElements);
+          for(s32 i=0; i<remainingDataLength; i++) {
+            printf("%x ", dataSegment[i]);
+          }
+        } else if(type == SerializedBuffer::DATA_TYPE_ARRAY) {
+          SerializedBuffer::EncodedArray code;
+          for(s32 i=0; i<SerializedBuffer::EncodedArray::CODE_SIZE; i++) {
+            code.code[i] = reinterpret_cast<const u32*>(dataSegment)[i];
+          }
+          dataSegment += SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
+          const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
+
+          s32 height;
+          s32 width;
+          s32 stride;
+          Flags::Buffer flags;
+          u8 basicType_size;
+          bool basicType_isInteger;
+          bool basicType_isSigned;
+          bool basicType_isFloat;
+          SerializedBuffer::DecodeArrayType(swapEndian, code, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
+
+          printf("Array: (%d, %d, %d, %d, %d, %d, %d, %d): ", height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
+          //template<typename Type> static Result DeserializeArray(const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
+          if(basicType_size==1 && basicType_isInteger==1 && basicType_isSigned==0 && basicType_isFloat==0) {
+            Array<u8> arr;
+            SerializedBuffer::DeserializeArray(swapEndian, dataSegmentStart, dataLength, arr, memory);
+            arr.Print("arr");
+          } else {
+            printf("Raw Array.data: ");
+            for(s32 i=0; i<remainingDataLength; i++) {
+              printf("%x ", dataSegment[i]);
+            }
+          }
         }
+
         printf("\n");
       }
 

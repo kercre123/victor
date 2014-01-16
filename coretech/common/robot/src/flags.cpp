@@ -67,6 +67,11 @@ namespace Anki
         return (this->flags & Buffer::IS_FULLY_ALLOCATED) != 0;
       }
 
+      void Buffer::set_rawFlags(u32 rawFlags)
+      {
+        this->flags = rawFlags;
+      }
+
       u32 Buffer::get_rawFlags() const
       {
         return this->flags;
