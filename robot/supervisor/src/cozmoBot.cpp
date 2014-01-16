@@ -40,12 +40,14 @@ namespace Anki {
         
         // Parameters / Constants:
         
-        // TESTING
+#if(FREE_DRIVE_DUBINS_TEST)
         const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_NONE;
-        
+#else
+        // TESTING
+        // Change this value to run different test modes
+        const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_NONE;
+#endif
         Robot::OperationMode mode_ = INITIALIZING;
-        
-        //bool isCarryingBlock_ = false;
         
       } // Robot private namespace
       
@@ -93,10 +95,15 @@ namespace Anki {
           return EXIT_FAILURE;
         }
         
+        if (Localization::Init() == EXIT_FAILURE) {
+          PRINT("Localization System init failed.\n");
+          return EXIT_FAILURE;
+        }
+        
         // TODO: Get VisionSystem to work on robot
         if(VisionSystem::Init() == EXIT_FAILURE)
         {
-          PRINT("Vision System initialization failed.");
+          PRINT("Vision System initialization failed.\n");
           return EXIT_FAILURE;
         }
         
