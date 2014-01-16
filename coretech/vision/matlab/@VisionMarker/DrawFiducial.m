@@ -12,6 +12,8 @@ Margin = [10 10]; % in mm
 Add = false;
 PageSize = [11 8.5] * 2.54;
 AddPadding = true;
+ForegroundColor = [0 0 0];
+BackgroundColor = [1 1 1];
 
 parseVarargin(varargin{:});
 
@@ -33,7 +35,7 @@ Origin = Origin/10 + Margin/10;
 
 if ~Add
     clf(Figure)
-    set(Figure, 'Color', 'w')
+    set(Figure, 'Color', BackgroundColor)
     Axes = [];
 else
     Axes = findobj(Figure, 'Tag', 'MarkerPageAxes');
@@ -48,11 +50,12 @@ if isempty(Axes)
         'Tag', 'MarkerPageAxes');
 end
 
-rectangle('Pos', [Origin Scale*[1 1]], 'FaceColor', 'k', 'Parent', Axes);
+rectangle('Pos', [Origin Scale*[1 1]], 'FaceColor', ForegroundColor, ...
+    'EdgeColor', 'none', 'Parent', Axes);
 hold(Axes, 'on')
 rectangle('Pos', [Origin+Scale*VisionMarker.SquareWidth*[1 1] ...
     Scale*(1-2*VisionMarker.SquareWidth)*[1 1]], ...
-    'FaceColor', 'w', 'Parent', Axes);
+    'FaceColor', BackgroundColor, 'EdgeColor', 'none', 'Parent', Axes);
 
 if AddPadding
     border = VisionMarker.FiducialPaddingFraction*VisionMarker.SquareWidth;
@@ -69,6 +72,15 @@ if ~isempty(Image)
         end
         Image = imread(Image);
     end
+    
+    [nrows,ncols,~] = size(Image);
+    fg = mean(im2double(Image),3) < 0.5; % 0 is "foreground"
+    Image = cell(1,3);
+    for i_band = 1:3
+        Image{i_band} = BackgroundColor(i_band)*ones(nrows,ncols);
+        Image{i_band}(fg) = ForegroundColor(i_band);
+    end
+    Image = cat(3, Image{:});
     
     assert(size(Image,1)==size(Image,2), 'Expecting square image.');
     pixelWidth = (1-(2+2*VisionMarker.FiducialPaddingFraction)*VisionMarker.SquareWidth)/size(Image,1);
@@ -98,30 +110,12 @@ if NumCorners > 2
     y_corners = [y_corners; y_tri];
 end
 
-if CornerOrientation ~= 0
-    angle = CornerOrientation*pi/180; % convert to radians
-    x_corners = x_corners - Scale*0.5;
-    y_corners = y_corners - Scale*0.5;
-    x_cornersFinal = x_corners*cos(angle) - y_corners*sin(angle) + Origin(1) + Scale*0.5;
-    y_cornersFinal = x_corners*sin(angle) + y_corners*cos(angle) + Origin(2) + Scale*0.5;
-else
-    x_cornersFinal = x_corners;
-    y_cornersFinal = y_corners;
+if NumCorners > 3
+    warning('Only creating a maximum of 3 corner markers.');
 end
 
-patch(x_cornersFinal', y_cornersFinal', 'k', 'Parent', Axes);
-
-% patch(Origin(1)+x_tri, Origin(2)+Scale-y_tri, 'k', 'Parent', Axes); % LowerLeft
-% 
-% if NumCorners > 1
-%     patch(Origin(1)+Scale-x_tri, Origin(2)+Scale-y_tri, 'k', 'Parent', Axes); % LowerRight
-% end
-% if NumCorners > 2
-%     patch(Origin(1)+x_tri, Origin(2)+y_tri, 'k', 'Parent', Axes); % UpperLeft
-% end
-% if NumCorners > 3
-%     warning('Only creating a maximum of 3 corner markers.');
-% end
+patch(x_corners', y_corners', ForegroundColor, 'Parent', Axes, ...
+    'EdgeColor', 'none');
 
 if ShowProbes
     plot(Origin(1)+Scale*VisionMarker.XProbes, ...
@@ -136,8 +130,6 @@ else
     set(Axes, 'XLim', [0 PageSize(1)], 'YLim', [0 PageSize(2)], 'Box', 'on');
 end
 
-colormap(Axes, 'gray')
-
 if nargout > 0
     try 
         outputImg = getframe(Axes);
@@ -148,7 +140,7 @@ if nargout > 0
         set(Figure, 'Pos', currentFigPos);
     end
         
-    outputImg = outputImg.cdata(:,:,1);
+    outputImg = outputImg.cdata;
 end
 
 end % Function Draw()
