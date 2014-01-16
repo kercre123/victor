@@ -217,7 +217,7 @@ Supervisor {
                   }
                 }
                 geometry Cylinder {
-                  height 0.02
+                  height 0.005
                   radius 0.02
                   subdivision 36
                 }
@@ -267,7 +267,7 @@ Supervisor {
 	maxVelocity 30
       }
       endPoint Solid {
-        translation 0 0 0.03
+        translation 0 0 0.0385
         rotation 1 0 0 1.5708
         children [
           USE WHEEL_BOX
@@ -290,7 +290,7 @@ Supervisor {
 	maxVelocity 30
       }
       endPoint Solid {
-        translation 0 0 -0.03
+        translation 0 0 -0.0385
         rotation 1 0 0 1.5708
         children [
           USE WHEEL_BOX
