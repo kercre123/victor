@@ -413,13 +413,9 @@ namespace Anki {
     {
       switch(motor) {
         case MOTOR_LEFT_WHEEL:
-        {
-          return -motorSpeeds_[MOTOR_LEFT_WHEEL] * WHEEL_RAD_TO_MM;
-        }
-
         case MOTOR_RIGHT_WHEEL:
         {
-          return -motorSpeeds_[MOTOR_RIGHT_WHEEL] * WHEEL_RAD_TO_MM;
+          return -motorSpeeds_[motor] * WHEEL_RAD_TO_MM;
         }
 
         case MOTOR_LIFT:
@@ -450,7 +446,7 @@ namespace Anki {
       switch(motor) {
         case MOTOR_RIGHT_WHEEL:
         case MOTOR_LEFT_WHEEL:
-          return -motorPositions_[motor];
+          return -motorPositions_[motor] * WHEEL_RAD_TO_MM;
         case MOTOR_LIFT:
         case MOTOR_HEAD:
           return motorPositions_[motor];
