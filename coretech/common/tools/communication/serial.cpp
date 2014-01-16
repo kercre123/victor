@@ -14,6 +14,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/errorHandling.h"
 
 #include <stdio.h>
+#include <iostream>
 
 #define STRING_LENGTH 1024
 
@@ -52,7 +53,9 @@ Result Serial::Open(
     FILE_FLAG_OVERLAPPED,
     0);
 
-  AnkiConditionalErrorAndReturnValue(comPortHandle != NULL,
+  std::cout << GetLastError() << "\n";
+
+  AnkiConditionalErrorAndReturnValue(comPortHandle != NULL && comPortHandle != INVALID_HANDLE_VALUE,
     RESULT_FAIL, "Serial::Open", "Could not open port");
 
   memset(&this->readEventHandle, 0, sizeof(this->readEventHandle));
