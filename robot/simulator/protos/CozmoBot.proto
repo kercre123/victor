@@ -353,20 +353,20 @@ Supervisor {
           DEF CAM_HEAD Camera {
             translation 0.0095 0.040 0
             rotation 0 1 0 -1.5708
-            children [
-              Transform {
-                translation 0 0 0 # IS spotLightTranslation #0 .03 -.03
-                rotation 1 0 0 0 # IS spotLightRotation #1 0 0 0
-                children [
-                  SpotLight {
-                    beamWidth 1 # IS spotLightBeamWidth #0.5
-                    cutOffAngle 1.2 # IS spotLightCutOffAngle #0.8
-                    direction 0 0 -1 # IS spotLightDirection #0 0 -1
-                    intensity 0.8
-                  }
-                ]
-              }
-            ]
+            #children [
+            #  Transform {
+            #     translation 0 0 0 # IS spotLightTranslation #0 .03 -.03
+            #    rotation 1 0 0 0 # IS spotLightRotation #1 0 0 0
+                #children [
+                #  SpotLight {
+                #    beamWidth 1 # IS spotLightBeamWidth #0.5
+                #    cutOffAngle 1.2 # IS spotLightCutOffAngle #0.8
+                #    direction 0 0 -1 # IS spotLightDirection #0 0 -1
+                #    intensity 0.8
+                #  }
+                #]
+             # }
+            #]
             name "cam_head"
             spherical IS useSphericalHeadCamera
             width 640
