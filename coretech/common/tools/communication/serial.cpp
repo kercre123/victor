@@ -14,7 +14,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/errorHandling.h"
 
 #include <stdio.h>
-#include <iostream>
 
 #define STRING_LENGTH 1024
 

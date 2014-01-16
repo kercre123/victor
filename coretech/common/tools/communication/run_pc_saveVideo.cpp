@@ -7,6 +7,7 @@
 #include "serial.h"
 #include "threadSafeQueue.h"
 
+#include "anki/common/robot/config.h"
 #include "anki/common/robot/utilities.h"
 #include "anki/cozmo/messages.h"
 #include "anki/common/robot/serialize.h"
@@ -18,6 +19,9 @@ _Check_return_opt_ _CRTIMP int __cdecl printf(_In_z_ _Printf_format_string_ cons
 
 #include <tchar.h>
 #include <strsafe.h>
+#include <ctime>
+
+#include "opencv/cv.h"
 
 #define BIG_BUFFER_SIZE 100000000
 
@@ -27,6 +31,9 @@ volatile double lastUpdateTime;
 volatile HANDLE lastUpdateTime_mutex;
 
 const double secondsToWaitBeforeSavingABuffer = 1.0;
+
+const s32 outputFilenamePatternLength = 1024;
+char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/cozmoShort/cozmo_%04d-%02d-%02d_%02d-%02d-%02d_%d.%s";
 
 typedef struct {
   void * data;
@@ -92,6 +99,9 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
 {
   const bool swapEndian = true;
 
+  const s32 outputFilenameLength = 1024;
+  char outputFilename[outputFilenameLength];
+
   ThreadSafeQueue<RawBuffer> *buffers = (ThreadSafeQueue<RawBuffer>*)lpParam;
 
   // The bigBuffer is a 16-bytes aligned version of bigBufferRaw
@@ -115,6 +125,11 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
       WaitForSingleObject(lastUpdateTime_mutex, INFINITE);
       lastUpdateTime = GetTime() + 1e10;
       ReleaseMutex(lastUpdateTime_mutex);
+
+      const time_t t = time(0);   // get time now
+      const struct tm * currentTime = localtime(&t);
+
+      s32 frameNumber = 0;
 
       MemoryStack memory(bigBufferRaw2, BIG_BUFFER_SIZE, Flags::Buffer(false, true, false));
 
@@ -210,17 +225,23 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
           bool basicType_isFloat;
           SerializedBuffer::DecodeArrayType(swapEndian, code, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
 
-          printf("Array: (%d, %d, %d, %d, %d, %d, %d, %d): ", height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
+          printf("Array: (%d, %d, %d, %d, %d, %d, %d, %d) ", height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
           //template<typename Type> static Result DeserializeArray(const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
           if(basicType_size==1 && basicType_isInteger==1 && basicType_isSigned==0 && basicType_isFloat==0) {
             Array<u8> arr;
             SerializedBuffer::DeserializeArray(swapEndian, dataSegmentStart, dataLength, arr, memory);
-            arr.Print("arr");
-          } else {
-            printf("Raw Array.data: ");
-            for(s32 i=0; i<remainingDataLength; i++) {
-              printf("%x ", dataSegment[i]);
-            }
+
+            snprintf(&outputFilename[0], outputFilenameLength, outputFilenamePattern,
+              currentTime->tm_year+1900, currentTime->tm_mon+1, currentTime->tm_mday,
+              currentTime->tm_hour, currentTime->tm_min, currentTime->tm_sec,
+              frameNumber,
+              "png");
+
+            frameNumber++;
+
+            printf("Saving to %s\n", outputFilename);
+            const cv::Mat_<u8> &mat = arr.get_CvMat_();
+            cv::imwrite(outputFilename, mat);
           }
         }
 
@@ -256,8 +277,8 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
 void printUsage()
 {
   printf(
-    "usage: saveVideo <comPort> <baudRate>\n"
-    "example: saveVideo 8 1000000\n");
+    "usage: saveVideo <comPort> <baudRate> <outputPatternString>\n"
+    "example: saveVideo 8 1000000 C:/datasets/cozmoShort/cozmo_%%04d-%%02d-%%02d_%%02d-%%02d-%%02d_%%d.%%s\n");
 } // void printUsage()
 
 int main(int argc, char ** argv)
@@ -273,9 +294,10 @@ int main(int argc, char ** argv)
   if(argc == 1) {
     // just use defaults, but print the help anyway
     printUsage();
-  } else if(argc == 3) {
+  } else if(argc == 4) {
     sscanf(argv[1], "%d", &comPort);
     sscanf(argv[2], "%d", &baudRate);
+    snprintf(outputFilenamePattern, outputFilenamePatternLength, "%s", argv[3]);
   } else {
     printUsage();
     return -1;
