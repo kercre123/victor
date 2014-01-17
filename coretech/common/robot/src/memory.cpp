@@ -20,6 +20,13 @@ namespace Anki
     {
       AnkiAssert(flags.get_useBoundaryFillPatterns());
 
+      if(flags.get_isFullyAllocated()) {
+        AnkiConditionalErrorAndReturn((reinterpret_cast<size_t>(buffer)+MemoryStack::HEADER_LENGTH)%MEMORY_ALIGNMENT == 0,
+          "MemoryStack::MemoryStack", "If fully allocated, the %dth byte of the buffer must be %d byte aligned", MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT);
+
+        this->usedBytes = this->totalBytes;
+      }
+
       static s32 maxId = 0;
 
       this->id = maxId;
@@ -209,6 +216,38 @@ namespace Anki
       return buffer;
     }
 
+    void* MemoryStack::get_validBufferStart()
+    {
+      s32 firstValidIndex;
+      return this->get_validBufferStart(firstValidIndex);
+    }
+
+    const void* MemoryStack::get_validBufferStart() const
+    {
+      s32 firstValidIndex;
+      return this->get_validBufferStart(firstValidIndex);
+    }
+
+    void* MemoryStack::get_validBufferStart(s32 &firstValidIndex)
+    {
+      const size_t bufferSizeT = reinterpret_cast<size_t>(this->buffer);
+      firstValidIndex = static_cast<s32>( RoundUp<size_t>(bufferSizeT+MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH - bufferSizeT );
+
+      void * validStart = reinterpret_cast<char*>(this->buffer) + firstValidIndex;
+
+      return validStart;
+    }
+
+    const void* MemoryStack::get_validBufferStart(s32 &firstValidIndex) const
+    {
+      const size_t bufferSizeT = reinterpret_cast<size_t>(this->buffer);
+      firstValidIndex = static_cast<s32>( RoundUp<size_t>(bufferSizeT+MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH - bufferSizeT );
+
+      const void * validStart = reinterpret_cast<const char*>(this->buffer) + firstValidIndex;
+
+      return validStart;
+    }
+
     s32 MemoryStack::get_id() const
     {
       return id;
@@ -229,7 +268,14 @@ namespace Anki
 
     bool MemoryStackConstIterator::HasNext() const
     {
-      if(this->index < memory.get_usedBytes())
+      // TODO: These extra bytes are a bit of a hack for the SerializedBuffer case.
+      // I think index should match the used bytes exactly, but seems to be a bit short.
+      s32 extraBytes = MEMORY_ALIGNMENT;
+      if(this->memory.get_flags().get_useBoundaryFillPatterns()) {
+        extraBytes += MemoryStack::HEADER_LENGTH + MemoryStack::FOOTER_LENGTH;
+      }
+
+      if((this->index + extraBytes) < memory.get_usedBytes())
         return true;
       else
         return false;

@@ -20,11 +20,12 @@ namespace Anki
       {
       }
 
-      Buffer::Buffer(bool zeroAllocatedMemory, bool useBoundaryFillPatterns)
+      Buffer::Buffer(bool zeroAllocatedMemory, bool useBoundaryFillPatterns, bool isFullyAllocated)
         : flags(0)
       {
         this->set_zeroAllocatedMemory(zeroAllocatedMemory);
         this->set_useBoundaryFillPatterns(useBoundaryFillPatterns);
+        this->set_isFullyAllocated(isFullyAllocated);
       }
 
       void Buffer::set_zeroAllocatedMemory(bool value)
@@ -51,6 +52,24 @@ namespace Anki
       bool Buffer::get_useBoundaryFillPatterns() const
       {
         return (this->flags & Buffer::USE_BOUNDARY_FILL_PATTERNS) != 0;
+      }
+
+      void Buffer::set_isFullyAllocated(bool value)
+      {
+        this->flags &= ~Buffer::IS_FULLY_ALLOCATED;
+
+        if(value)
+          this->flags |= Buffer::IS_FULLY_ALLOCATED;
+      }
+
+      bool Buffer::get_isFullyAllocated() const
+      {
+        return (this->flags & Buffer::IS_FULLY_ALLOCATED) != 0;
+      }
+
+      void Buffer::set_rawFlags(u32 rawFlags)
+      {
+        this->flags = rawFlags;
       }
 
       u32 Buffer::get_rawFlags() const

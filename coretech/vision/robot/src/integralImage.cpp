@@ -10,12 +10,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/integralImage.h"
 #include "anki/vision/robot/shaveKernels_vision_c.h"
 
-#define SwapEndianU32(value) \
-  ((((u32)((value) & 0x000000FF)) << 24) | \
-  ( ((u32)((value) & 0x0000FF00)) <<  8) | \
-  ( ((u32)((value) & 0x00FF0000)) >>  8) | \
-  ( ((u32)((value) & 0xFF000000)) >> 24))
-
 namespace Anki
 {
   namespace Embedded

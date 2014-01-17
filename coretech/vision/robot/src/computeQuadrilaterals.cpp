@@ -18,7 +18,7 @@ namespace Anki
     // This function checks if the input quad is valid
     // If the input is valid, the output quad has the corner-opposite order of the points, and in the non-rotated and corner-opposite format, and adds +1, so it matches the Matlab
     // Assumes that the quad pointer are in either clockwise or counter-clockwise order
-    // quadSymmetryThreshold is SQ23.8 . A reasonable value is (1.5*pow(2,8)) = 384
+    // quadSymmetryThreshold is SQ23.8 . A reasonable value is (2.0*pow(2,8)) = 512
     // A reasonable value for minQuadArea is 100
     static bool IsQuadrilateralValidAndUpdateOrdering(const Quadrilateral<s16> &quad, const s32 minQuadArea, const s32 quadSymmetryThreshold, const s32 minDistanceFromImageEdge, const s32 imageHeight, const s32 imageWidth, Quadrilateral<s16> &quadSwapped)
     {
@@ -104,7 +104,7 @@ namespace Anki
     // of any quadrilaterals Candidate quadrilaterals that are smaller than minQuadArea, or are not
     // symmetric enough relative to quadSymmetryThreshold are not returned
     //
-    // quadSymmetryThreshold is SQ23.8 . A reasonable value is (1.5*pow(2,8)) = 384
+    // quadSymmetryThreshold is SQ23.8 . A reasonable value is (2.0*pow(2,8)) = 512
     // A reasonable value for minQuadArea is 100
     //
     // Required ??? bytes of scratch

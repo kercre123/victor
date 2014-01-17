@@ -47,8 +47,14 @@ namespace Anki
     class MemoryStack
     {
     public:
+      static const u32 FILL_PATTERN_START = 0xFF01FF02;
+      static const u32 FILL_PATTERN_END = 0x03FF04FF;
+
+      static const s32 HEADER_LENGTH = 8;
+      static const s32 FOOTER_LENGTH = 4;
+
       MemoryStack(void) : buffer(NULL) { }
-      MemoryStack(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(true,true));
+      MemoryStack(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(true,true,false));
       MemoryStack(const MemoryStack &ms); // This is a safe way to remove const by making a copy, rather than using const_cast()
 
       // Allocate numBytes worth of memory, with the start byte-aligned to MEMORY_ALIGNMENT
@@ -87,6 +93,14 @@ namespace Anki
       void* get_buffer();
       const void* get_buffer() const;
 
+      // The first few bytes of a buffer may be garbage, due to memory alignment restrictions
+      // These functions return the first location on the buffer that is actually used
+      void* get_validBufferStart();
+      const void* get_validBufferStart() const;
+
+      void* get_validBufferStart(s32 &firstValidIndex);
+      const void* get_validBufferStart(s32 &firstValidIndex) const;
+
       // Each MemoryStack created by the MemoryStack(void *buffer, s32 bufferLength) constructor has
       // a unique id. This is used for debugging to keep track of things like its maximum memory
       // usage.
@@ -97,12 +111,6 @@ namespace Anki
 
     protected:
       friend class MemoryStackConstIterator;
-
-      static const u32 FILL_PATTERN_START = 0xFF01FF02;
-      static const u32 FILL_PATTERN_END = 0x03FF04FF;
-
-      static const s32 HEADER_LENGTH = 8;
-      static const s32 FOOTER_LENGTH = 4;
 
       void * buffer;
       s32 totalBytes;

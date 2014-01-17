@@ -112,6 +112,12 @@ namespace Anki
 
       InvalidateArray();
 
+      // I don't have a use case for a pointer passed for a non-fully allocated Array, so memory alignment is always checked
+      //if(flags.get_isFullyAllocated()) {
+      AnkiConditionalErrorAndReturn(reinterpret_cast<size_t>(data)%MEMORY_ALIGNMENT == 0,
+        "Array::Array", "If fully allocated, data must be %d byte aligned", MEMORY_ALIGNMENT);
+      //}
+
       this->stride = ComputeRequiredStride(numCols, flags);
 
       AnkiConditionalErrorAndReturn(numCols >= 0 && numRows >= 0 && dataLength >= numRows*this->stride && this->stride == (numCols*static_cast<s32>(sizeof(Type))),
