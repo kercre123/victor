@@ -37,4 +37,13 @@ for i = 1:9
     imwrite(imresize(ankiMat{i}, [512 512]), fullfile('~/Code/products-cozmo/robot/simulator/worlds', sprintf('ankiMat%d.png', i)));
 end
 
+%%
+markerLibrary = VisionMarkerLibrary();
 
+numCorners = [3 2 3; 2 1 2; 3 2 3];
+angles = [-90   -180   -180;    -90     0   90;    0     0   90];
+[xgrid, ygrid] = meshgrid([-250 0 250]);
+
+createWebotsMat(anki, numCorners', xgrid', ygrid', angles', 90, markerLibrary);
+
+save(fullfile(fileparts(mfilename('fullpath')), 'cozmoMarkerLibrary.mat'), 'markerLibrary');

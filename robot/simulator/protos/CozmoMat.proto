@@ -1,8 +1,7 @@
 #VRML_SIM V7.3.0 utf8
 
 PROTO CozmoMat [
-  field SFColor Color 1 1 .7 # Light yellow
-  #field SFColor Color 0.4196 0.4196 0.4196 # Anki light gray
+  field SFColor Color 1.0000 1.0000 0.7000
 ]
 {
 Solid {
@@ -14,146 +13,148 @@ Solid {
          material Material {
 		   diffuseColor IS Color
          }
-#        texture ImageTexture {
-#          url [
-#            "mat.png"
-#          ]
-#        }
       }
       geometry Box {
         size 1 0.005 1
       }
     }
-  
     Solid {
-	  translation -.25 0.005 -.25
-	  rotation 0 1 0 -1.5708
-	  children [
-		Shape {
-		  appearance Appearance {
-			texture ImageTexture { url ["ankiMat1.png"] }
-			material Material { diffuseColor 1 1 1 }
+	    translation -0.2500 0.005 -0.2500
+	    rotation 0 1 0 -1.570796
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat1.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.090000 0.00001 0.090000
+  		}
 		  }
-		  geometry 	DEF MatMarkerGeometry Box {
-			  size .09 0.00001 .09
-  		  }
-		}
-	  ]
-	}
+	    ]
+    }
+    Solid {
+	    translation 0.0000 0.005 -0.2500
+	    rotation 0 1 0 -3.141593
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat2.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.090000 0.00001 0.090000
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.2500 0.005 -0.2500
+	    rotation 0 1 0 -3.141593
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat3.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.090000 0.00001 0.090000
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.2500 0.005 0.0000
+	    rotation 0 1 0 -1.570796
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat4.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.090000 0.00001 0.090000
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.0000 0.005 0.0000
+	    rotation 0 1 0 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat5.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.090000 0.00001 0.090000
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.2500 0.005 0.0000
+	    rotation 0 1 0 1.570796
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat6.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.090000 0.00001 0.090000
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation -0.2500 0.005 0.2500
+	    rotation 0 1 0 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat7.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.090000 0.00001 0.090000
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.0000 0.005 0.2500
+	    rotation 0 1 0 0.000000
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat8.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.090000 0.00001 0.090000
+  		}
+		  }
+	    ]
+    }
+    Solid {
+	    translation 0.2500 0.005 0.2500
+	    rotation 0 1 0 1.570796
+	    children [
+		  Shape {
+		    appearance Appearance {
+			  texture ImageTexture { url ["ankiMat9.png"] }
+			  material Material { diffuseColor 1 1 1 }
+		    }
+		    geometry Box {
+            size 0.090000 0.00001 0.090000
+  		}
+		  }
+	    ]
+    }
+  ] # Solid children
 
-	Solid {
-	  translation 0 0.005 -.25
-	  rotation 0 1 0 -3.1415
-	  children [
-		Shape {
-		  appearance Appearance {
-			texture ImageTexture { url ["ankiMat2.png"] }
-			material Material { diffuseColor 1 1 1 }
-		  }
-		  geometry USE MatMarkerGeometry
-		}
-	  ]
-	}
-	
-	Solid {
-	  translation .25 0.005 -.25
-	  rotation 0 1 0 -3.1415
-	  children [
-		Shape {
-		  appearance Appearance {
-			texture ImageTexture { url ["ankiMat3.png"] }
-			material Material { diffuseColor 1 1 1 }
-		  }
-		  geometry USE MatMarkerGeometry
-		}
-	  ]
-	}
-	
-	Solid {
-	  translation -.25 0.005 0
-	  rotation 0 1 0 -1.5708
-	  children [
-		Shape {
-		  appearance Appearance {
-			texture ImageTexture { url ["ankiMat4.png"]	}
-			material Material { diffuseColor 1 1 1 }
-		  }
-		  geometry USE MatMarkerGeometry
-		}
-	  ]
-	}
-	
-	Solid {
-	  translation 0 0.005 0
-	  #rotation 0 1 0 0
-	  children [
-		Shape {
-		  appearance Appearance {
-			texture ImageTexture { url ["ankiMat5.png"] }
-			material Material { diffuseColor 1 1 1 }
-		  }
-		  geometry USE MatMarkerGeometry
-		}
-	  ]
-	}
-    
-    Solid {
-	  translation .25 0.005 0
-	  rotation 0 1 0 1.5708
-	  children [
-		Shape {
-		  appearance Appearance {
-			texture ImageTexture { url ["ankiMat6.png"]	}
-			material Material { diffuseColor 1 1 1 }
-		  }
-		  geometry USE MatMarkerGeometry
-		}
-	  ]
-	}
-	
-	Solid {
-	  translation -.25 0.005 .25
-	  #rotation 0 1 0 0
-	  children [
-		Shape {
-		  appearance Appearance {
-			texture ImageTexture { url ["ankiMat7.png"]	}
-			material Material { diffuseColor 1 1 1 }
-		  }
-		  geometry USE MatMarkerGeometry
-		}
-	  ]
-	}
-	
-	Solid {
-	  translation 0 0.005 .25
-	  #rotation 0 1 0 0
-	  children [
-		Shape {
-		  appearance Appearance {
-			texture ImageTexture { url ["ankiMat8.png"] }
-			material Material { diffuseColor 1 1 1 }
-		  }
-		  geometry USE MatMarkerGeometry
-		}
-	  ]
-	}
-	
-	Solid {
-	  translation .25 0.005 .25
-	  rotation 0 1 0 1.5708
-	  children [
-		Shape {
-		  appearance Appearance {
-			texture ImageTexture { url ["ankiMat9.png"]	}
-			material Material { diffuseColor 1 1 1 }
-		  }
-		  geometry USE MatMarkerGeometry
-		}
-	  ]
-	}
-	
-  ]
   contactMaterial "cmat_floor"
   boundingObject Transform {
     translation 0.5 0 0.5
@@ -162,7 +163,6 @@ Solid {
       }
     ]
   }
-} 
+} # Solid
 
-}
-
+} # Proto
