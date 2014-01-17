@@ -16,6 +16,12 @@
 #include "anki/cozmo/messages.h"
 
 
+// Resets localization pose to (0,0,0) every time a relative block pose update is received.
+// Recalculates the start pose of the path that is at the same position relative to the block
+// as it was when tracking was initiated. If encoder-based localization is reasonably accurate,
+// this probably won't be necessary.
+#define RESET_LOC_ON_BLOCK_UPDATE 0
+
 namespace Anki {
   namespace Cozmo {
     namespace DockingController {
@@ -84,7 +90,7 @@ namespace Anki {
         // The docking pose
         Anki::Embedded::Pose2d dockPose_;
         
-#if(NO_LOCALIZATION)
+#if(RESET_LOC_ON_BLOCK_UPDATE)
         // Since the physical robot currently does not localize,
         // we need to store the transform from docking pose
         // to the approachStartPose, which we then use to compute
@@ -209,6 +215,11 @@ namespace Anki {
           return;
         }
         
+#if(RESET_LOC_ON_BLOCK_UPDATE)
+        // Reset localization to zero buildup of localization error.
+        Localization::Init();
+#endif
+        
         // Set mode to approach if looking for a block
         if (mode_ == LOOKING_FOR_BLOCK) {
           
@@ -217,7 +228,7 @@ namespace Anki {
           // Set approach start pose
           Localization::GetCurrentMatPose(approachStartPose_.x(), approachStartPose_.y(), approachStartPose_.angle);
           
-#if(NO_LOCALIZATION)
+#if(RESET_LOC_ON_BLOCK_UPDATE)
           // If there is no localization (as is currently the case on the robot)
           // we adjust the path's starting point as the robot progresses along
           // the path so that the relative position of the starting point to the
@@ -272,7 +283,7 @@ namespace Anki {
         blockPose_.angle = currPose.angle + rel_rad;
         
         
-#if(NO_LOCALIZATION)
+#if(RESET_LOC_ON_BLOCK_UPDATE)
         // Rotate block so that it is parallel with approach start pose
         f32 rel_blockAngle = rel_rad - approachPath_dOrientation;
         
