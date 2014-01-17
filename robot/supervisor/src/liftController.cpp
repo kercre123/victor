@@ -105,7 +105,9 @@ namespace Anki {
       
       void StartCalibrationRoutine()
       {
+#ifndef USE_CAPTURE_IMAGES      
         PRINT("Starting Lift calibration\n");
+#endif        
         calState_ = LCS_LOWER_LIFT;
         isCalibrated_ = false;
       }
