@@ -70,6 +70,10 @@ namespace Anki {
 #ifdef SIMULATOR
       char cmxBuffer_[CMX_BUFFER_SIZE];
       u8   ddrBuffer_[DDR_BUFFER_SIZE] ALIGNVARIABLE;
+      
+      u32 frameRdyTimeUS_ = 0;
+      const u32 LOOK_FOR_BLOCK_PERIOD_US = 200000;
+      const u32 TRACK_BLOCK_PERIOD_US = 100000;
 #else
       __attribute__((section(".cmx.bss"))) char cmxBuffer_[CMX_BUFFER_SIZE];
       __attribute__((section(".ddr.bss"))) u8   ddrBuffer_[DDR_BUFFER_SIZE] ALIGNVARIABLE;
@@ -341,6 +345,13 @@ namespace Anki {
         //       capture at the correct resolution directly and pass that in
         //       (and remove the downsampling from USBSendFrame()
         
+#ifdef SIMULATOR
+        if (HAL::GetMicroCounter() < frameRdyTimeUS_) {
+          return retVal;
+        }
+#endif
+        
+        
 #if USE_OFFBOARD_VISION
         
         //PRINT("VisionSystem::Update(): waiting for processing result.\n");
@@ -373,7 +384,9 @@ namespace Anki {
             // looking for blocks, a tracking template will be initialized and,
             // if that's successful, we will switch to DOCKING mode.
             retVal = LookForBlocks(frame);
-            
+#ifdef SIMULATOR
+            frameRdyTimeUS_ = HAL::GetMicroCounter() + LOOK_FOR_BLOCK_PERIOD_US;
+#endif
             break;
           }
             
@@ -396,6 +409,10 @@ namespace Anki {
                 PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
                 retVal = EXIT_FAILURE;
               }
+              
+#ifdef SIMULATOR
+              frameRdyTimeUS_ = HAL::GetMicroCounter() + TRACK_BLOCK_PERIOD_US;
+#endif
             }
             break;
           }
