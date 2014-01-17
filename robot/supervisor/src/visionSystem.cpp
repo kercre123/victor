@@ -256,10 +256,8 @@ namespace Anki {
 #endif
 
 #ifdef USE_CAPTURE_IMAGES
-      //PRINT("o1\n");
       captureImagesBuffer_ = Embedded::SerializedBuffer(&captureImagesBufferRaw_[0], CAPTURE_IMAGES_BUFFER_SIZE);
       numCapturedImages = 0;
-      //PRINT("o2\n");
 #endif
 
         isInitialized_ = true;
@@ -425,45 +423,34 @@ namespace Anki {
             if(!isInitialized_) {
               Init();
             }
-            
+
             VisionSystem::FrameBuffer frame = {
               ddrBuffer_,
               HAL::CAMERA_MODE_VGA
             };
-            
+
             CaptureHeadFrame(frame);
-            
+
             if(numCapturedImages < MAX_IMAGES_TO_CAPTURE) {
 
               const s32 imageHeight = HAL::CameraModeInfo[HAL::CAMERA_MODE_VGA].height;
               const s32 imageWidth = HAL::CameraModeInfo[HAL::CAMERA_MODE_VGA].width;
-              //const s32 imageHeight = 480;
-              //const s32 imageWidth = 640;
               Embedded::Array<u8> image(imageHeight, imageWidth, ddrBuffer_, imageHeight*imageWidth);
-              //printf("a\n");
-              //Embedded::Array<u8> image(4, 3, ddrBuffer_, imageHeight*imageWidth, Embedded::Flags::Buffer(false,false,false));
-              //Embedded::Array<u8> image(1, 16, ddrBuffer_, imageHeight*imageWidth, Embedded::Flags::Buffer(false,false,false));
-              //printf("b\n");
-              
+
               captureImagesBuffer_.PushBack(image);
-              
-              //printf("c\n");
-              
+
               numCapturedImages++;
               if(numCapturedImages == MAX_IMAGES_TO_CAPTURE) {
-              //printf("d\n");
                 s32 startIndex;
                 const u8 * bufferStart = reinterpret_cast<const u8*>(captureImagesBuffer_.get_memoryStack().get_validBufferStart(startIndex));
                 const s32 validUsedBytes = captureImagesBuffer_.get_memoryStack().get_usedBytes() - startIndex;
-                
-                //PRINT("%d %d\n", bufferStart, validUsedBytes);
-                
+
                 for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
                   Anki::Cozmo::HAL::USBPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
                 }
-                
+
                 HAL::USBSendBuffer(bufferStart, validUsedBytes);
-                
+
                 for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
                   Anki::Cozmo::HAL::USBPutChar(Embedded::SERIALIZED_BUFFER_FOOTER[i]);
                 }

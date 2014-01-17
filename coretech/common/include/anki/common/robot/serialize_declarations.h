@@ -75,7 +75,7 @@ namespace Anki
       static Result DecodeArrayType(const bool swapEndian, const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u8 &basicType_size, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat);
 
       template<typename Type> static Result SerializeArray(const Array<Type> &in, void * data, const s32 dataLength);
-      template<typename Type> static Result DeserializeArray(const bool swapEndian, const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
+      template<typename Type> static Result DeserializeArray(const bool swapEndianForHeaders, const bool swapEndianForContents, const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
 
       SerializedBuffer();
 

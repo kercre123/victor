@@ -43,8 +43,8 @@ typedef struct {
 } RawBuffer;
 
 typedef struct {
-	ThreadSafeQueue<RawBuffer> *buffers;
-	string outputFilenamePattern;
+  ThreadSafeQueue<RawBuffer> *buffers;
+  string outputFilenamePattern;
 } ThreadParameters;
 
 void FindUSBMessage(const void * rawBuffer, const s32 rawBufferLength, s32 &startIndex, s32 &endIndex)
@@ -243,7 +243,7 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
           //template<typename Type> static Result DeserializeArray(const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
           if(basicType_size==1 && basicType_isInteger==1 && basicType_isSigned==0 && basicType_isFloat==0) {
             Array<u8> arr;
-            SerializedBuffer::DeserializeArray(swapEndianForHeaders, dataSegmentStart, dataLength, arr, memory);
+            SerializedBuffer::DeserializeArray(swapEndianForHeaders, swapEndianForContents, dataSegmentStart, dataLength, arr, memory);
 
             snprintf(&outputFilename[0], outputFilenameLength, params->outputFilenamePattern.data(),
               currentTime->tm_year+1900, currentTime->tm_mon+1, currentTime->tm_mday,
@@ -256,7 +256,7 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
             printf("Saving to %s\n", outputFilename);
             const cv::Mat_<u8> &mat = arr.get_CvMat_();
             cv::imwrite(outputFilename, mat);
-			//cv::imwrite("c:/tmp/tt.bmp", mat);
+            //cv::imwrite("c:/tmp/tt.bmp", mat);
           }
         }
 
@@ -312,7 +312,7 @@ int main(int argc, char ** argv)
   } else if(argc == 4) {
     sscanf(argv[1], "%d", &comPort);
     sscanf(argv[2], "%d", &baudRate);
-	strcpy(outputFilenamePattern, argv[3]);
+    strcpy(outputFilenamePattern, argv[3]);
     //snprintf(outputFilenamePattern, outputFilenamePatternLength, "%s", argv[3]);
   } else {
     printUsage();
