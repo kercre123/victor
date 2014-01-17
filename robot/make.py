@@ -354,7 +354,6 @@ if __name__ == '__main__':
   isNoisy = False
   emulateShave = True
   quitDebuggerOnCompletion = False
-  isCaptureImages = False
 
   # Check if the Movidius tools can be found
   if any((os.path.isfile(file.strip()) or os.path.isfile(file.strip()+'.exe') for file in [CC, CXX, LD, MVCONV])) == False:
@@ -399,9 +398,8 @@ if __name__ == '__main__':
     elif arg == 'quit':
       quitDebuggerOnCompletion = True
     elif arg == 'capture-images':
-      isCaptureImages = True
       target = 'capture-images'
-      LEON_ASM_C_CXX_OPT += '-DUSE_OFFBOARD_VISION=1'
+      LEON_ASM_C_CXX_OPT += '-DUSE_OFFBOARD_VISION=0 -DUSE_CAPTURE_IMAGES '
     else:
       print 'Invalid argument: ' + arg
       sys.exit(1)

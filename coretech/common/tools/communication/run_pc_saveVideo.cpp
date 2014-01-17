@@ -30,7 +30,7 @@ using namespace std;
 volatile double lastUpdateTime;
 volatile HANDLE lastUpdateTime_mutex;
 
-const double secondsToWaitBeforeSavingABuffer = 1.0;
+const double secondsToWaitBeforeSavingABuffer = 2.0;
 
 const s32 outputFilenamePatternLength = 1024;
 char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/cozmoShort/cozmo_%04d-%02d-%02d_%02d-%02d-%02d_%d.%s";
@@ -138,7 +138,7 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
       FindUSBMessage(bigBuffer, bigBufferIndex, usbMessageStartIndex, usbMessageEndIndex);
 
       if(usbMessageStartIndex < 0 || usbMessageEndIndex < 0) {
-        printf("Error: USB header or footer is missing (%d,%d)\n", usbMessageStartIndex, usbMessageEndIndex);
+        printf("Error: USB header or footer is missing (%d,%d) in message of size %d bytes\n", usbMessageStartIndex, usbMessageEndIndex, bigBufferIndex);
         bigBufferIndex = 0;
         bigBuffer = reinterpret_cast<u8*>(RoundUp<size_t>(reinterpret_cast<size_t>(&bigBufferRaw[0]), MEMORY_ALIGNMENT));
         continue;
@@ -289,7 +289,7 @@ int main(int argc, char ** argv)
   lastUpdateTime_mutex = CreateMutex(NULL, FALSE, NULL);
 
   s32 comPort = 8;
-  s32 baudRate = 1000000;
+  s32 baudRate = 1500000;
 
   if(argc == 1) {
     // just use defaults, but print the help anyway

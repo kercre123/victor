@@ -70,7 +70,7 @@ int main(int argc, char ** argv)
   Serial serial;
 
   s32 comPort = 8;
-  s32 baudRate = 1000000;
+  s32 baudRate = 1500000;
 
   if(argc == 1) {
     // just use defaults, but print the help anyway

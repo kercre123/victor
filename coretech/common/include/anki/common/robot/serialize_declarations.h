@@ -53,16 +53,16 @@ namespace Anki
 
       class EncodedBasicTypeBuffer
       {
-	  public:
+      public:
         const static s32 CODE_SIZE = 2;
-		u32 code[EncodedBasicTypeBuffer::CODE_SIZE];
+        u32 code[EncodedBasicTypeBuffer::CODE_SIZE];
       };
 
       class EncodedArray
       {
-		public:
+      public:
         const static s32 CODE_SIZE = 5;
-		u32 code[EncodedArray::CODE_SIZE];
+        u32 code[EncodedArray::CODE_SIZE];
       };
 
       template<typename Type> static Result EncodeBasicType(u32 &code);
@@ -76,6 +76,8 @@ namespace Anki
 
       template<typename Type> static Result SerializeArray(const Array<Type> &in, void * data, const s32 dataLength);
       template<typename Type> static Result DeserializeArray(const bool swapEndian, const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
+
+      SerializedBuffer();
 
       // If the void* buffer is already allocated, use flags = Flags::Buffer(false,true,true)
       SerializedBuffer(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(false,true,false));
