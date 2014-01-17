@@ -175,15 +175,13 @@ classdef CozmoVisionProcessor < handle
             this.dockingBlock = 0;
                         
             % Set up Robot head camera geometry
-            this.robotPose = Pose(eye(3), [0;0;CozmoVisionProcessor.WHEEL_RADIUS]);
+            this.robotPose = Pose(-pi/2*[0 0 1], [0;0;CozmoVisionProcessor.WHEEL_RADIUS]);
             this.neckPose = Pose([0 0 0], this.NECK_JOINT_POSITION);
             this.neckPose.parent = this.robotPose;
             
-            WIDTH = BlockMarker3D.ReferenceWidth;
+            %WIDTH = BlockMarker3D.ReferenceWidth;
             %this.marker3d = WIDTH/2 * [-1 -1 0; -1 1 0; 1 -1 0; 1 1 0];
-            this.marker3d = WIDTH/2 * [0 1 1; 0 1 -1; 0 -1 1; 0 -1 -1];
             
-                        
             this.h_fig = namedFigure('CozmoVisionProcessor', ...
                 'KeypressFcn', @(src,edata)this.keyPressCallback(src,edata));
             this.h_axes = subplot(1,1,1, 'Parent', this.h_fig);
@@ -377,7 +375,6 @@ classdef CozmoVisionProcessor < handle
         end % FUNCTION PacketToImage()
     
         
-        updateBlockPose(this, H);
 
         function setHeadAngle(this, newHeadAngle)
             

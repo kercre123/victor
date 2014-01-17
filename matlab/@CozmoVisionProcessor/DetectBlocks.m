@@ -56,23 +56,18 @@ for i = 1:length(markers)
                % degree
                this.setHeadAngle(-.251 + this.headAngleNoiseStdDev*randn*pi/180);
                
+               %{
                % Focal length / camera center noise
                errFrac = .005; % +/- 0.5% error
                fnoise = 1 + (2*errFrac*rand(1,2)-errFrac); 
                cnoise = 1 + (2*errFrac*rand(1,2)-errFrac); 
+               %}
                
-               % Head cam is currently calibrated at 80x60, so need to
-               % createa temporary camera calibrated at correct resolution
-               tempCam = Camera('resolution', [320 240], ...
-                   'calibration', struct(...
-                   'fc', 4*[this.headCalibrationMatrix(1,1) this.headCalibrationMatrix(2,2)].*fnoise, ...
-                   'cc', 4*[this.headCalibrationMatrix(1,3) this.headCalibrationMatrix(2,3)].*cnoise, ...
-                   'kc', zeros(5,1), ...
-                   'alpha_c', 0));
-               tempCam.pose = this.headCam.pose;
-
-               markerPose_wrt_camera = tempCam.computeExtrinsics( ...
-                   markers{i}.corners, markerCornersWorld);
+               % Note that we scale the corners to be at the resolution the
+               % camera calibration information was given at
+               scale = this.headCam.ncols / this.detectionResolution(1);
+               markerPose_wrt_camera = this.headCam.computeExtrinsics( ...
+                   scale*markers{i}.corners, markerCornersWorld);
                
                newPose = this.robotPose.getWithRespectTo(markerPose_wrt_camera);
                this.robotPose.update(newPose.Rmat, newPose.T + [0;0;CozmoVisionProcessor.WHEEL_RADIUS]);
@@ -113,6 +108,7 @@ for i = 1:length(markers)
                 packet = this.SerializeMessageStruct(msgStruct);
                 this.SendPacket('CozmoMsg_VisionMarker', packet);
                 
+                this.marker3d = match.Size/2 * [0 1 1; 0 1 -1; 0 -1 1; 0 -1 -1];
                 
                 % Initialize the tracker
                 this.LKtracker = LucasKanadeTracker(img, ...

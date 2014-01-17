@@ -1,28 +1,36 @@
 function updateBlockPose(this, H)
 
-% Compute pose of block w.r.t. camera
-% De-embed the initial 3D pose from the homography:
-scale = mean([norm(H(:,1));norm(H(:,2))]);
-%scale = H(3,3);
-H = H/scale;
+% Turning this on doesn't seem to be working well
+computeInitialPose = false;
 
-u1 = H(:,1);
-u1 = u1 / norm(u1);
-u2 = H(:,2) - dot(u1,H(:,2)) * u1;
-u2 = u2 / norm(u2);
-u3 = cross(u1,u2);
-R = [u1 u2 u3];
-%Rvec = rodrigues(Rmat);
-T    = H(:,3);
+if computeInitialPose
+    % Compute pose of block w.r.t. camera
+    % De-embed the initial 3D pose from the homography:
+    scale = mean([norm(H(:,1));norm(H(:,2))]);
+    %scale = H(3,3);
+    H = H/scale;
+    
+    u1 = H(:,1);
+    u1 = u1 / norm(u1);
+    u2 = H(:,2) - dot(u1,H(:,2)) * u1;
+    u2 = u2 / norm(u2);
+    u3 = cross(u1,u2);
+    R  = [u1 u2 u3];
+    %Rvec = rodrigues(Rmat);
+    T  = H(:,3);
+    
+    initialPose = Pose(R,T);
+else
+    initialPose = [];
+end
 
 % Now refine that initial estimate with some nonlinear
 % optimization (reprojection error) goodness...
 % (Need to work in camera resolution vs. tracker resolution)
 scale = this.headCam.ncols / this.trackingResolution(1);
-scaledCorners = scale*(this.LKtracker.corners-1) + 1;
 this.block.pose = this.headCam.computeExtrinsics(...
-    scaledCorners, this.marker3d, 'initialPose', Pose(R,T));
-
+    scale*this.LKtracker.corners, this.marker3d, ...
+    'initialPose', initialPose);
 
 %{
             this.block.pose = Pose(R,T);
@@ -99,7 +107,24 @@ this.block.pose = this.headCam.computeExtrinsics(...
     %desktop
     %keyboard
     
-    % Now switch to block with respect to robot, instead of camera
+    %{
+    % Now switch to block with respect to World, instead of camera
+    this.block.pose = this.block.pose.getWithRespectTo('World');
+    
+    blockNode = wb_supervisor_node_get_from_def('FuelBlock');
+    wb_supervisor_field_set_sf_vec3f( ...
+        wb_supervisor_node_get_field(blockNode, 'obsTranslation'), ...
+        [this.block.pose.T(1) -this.block.pose.T(3) this.block.pose.T(2)]/1000);
+    
+    Raxis = this.block.pose.axis;
+    Rangle = this.block.pose.angle;
+    wb_supervisor_field_set_sf_rotation( ...
+        wb_supervisor_node_get_field(blockNode, 'obsRotation'), ...
+        [Raxis(1) -Raxis(3) Raxis(2) Rangle]);
+    
+    wb_supervisor_field_set_sf_float( ...
+        wb_supervisor_node_get_field(blockNode, 'obsTransparency'), 0.0);
+    %}
     this.block.pose = this.block.pose.getWithRespectTo(this.robotPose);
     
 end % updateBlockPose()
