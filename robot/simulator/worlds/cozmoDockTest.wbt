@@ -183,7 +183,7 @@ DEF WALL_4 Solid {
   ]
   boundingObject USE WALL_SHAPE
 }
-Block1x1 {
+DEF FuelBlock Block1x1 {
   name "Block060_1"
   translation 4.89512e-10 0.0298305 0.2
   rotation -0.0026561 0.999996 0.00129937 2.04586e-07
