@@ -80,11 +80,15 @@ namespace Anki {
       void MotorCalibrationUpdate()
       {
         if (LiftController::IsCalibrated()) {
+#ifndef USE_CAPTURE_IMAGES
           PRINT("Motors calibrated\n");
+#endif
           mode_ = WAITING;
           
 #if(!FREE_DRIVE_DUBINS_TEST)
+#ifndef USE_CAPTURE_IMAGES
           PRINT("Starting docking\n");
+#endif
           DockingController::ResetDocker();
 #endif
         }
@@ -150,7 +154,9 @@ namespace Anki {
         
         // Once initialization is done, broadcast a message that this robot
         // is ready to go
+#ifndef USE_CAPTURE_IMAGES        
         PRINT("Robot broadcasting availability message.\n");
+#endif
         Messages::RobotAvailable msg;
         msg.robotID = HAL::GetRobotID();
         HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotAvailable), &msg);
