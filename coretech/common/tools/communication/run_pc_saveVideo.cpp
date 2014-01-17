@@ -23,6 +23,8 @@ _Check_return_opt_ _CRTIMP int __cdecl printf(_In_z_ _Printf_format_string_ cons
 
 #include "opencv/cv.h"
 
+//#define PRINTF_ALL_RECEIVED
+
 #define BIG_BUFFER_SIZE 100000000
 
 using namespace std;
@@ -30,7 +32,7 @@ using namespace std;
 volatile double lastUpdateTime;
 volatile HANDLE lastUpdateTime_mutex;
 
-const double secondsToWaitBeforeSavingABuffer = 2.0;
+const double secondsToWaitBeforeSavingABuffer = 1.0;
 
 const s32 outputFilenamePatternLength = 1024;
 char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/cozmoShort/cozmo_%04d-%02d-%02d_%02d-%02d-%02d_%d.%s";
@@ -39,6 +41,11 @@ typedef struct {
   void * data;
   s32 dataLength;
 } RawBuffer;
+
+typedef struct {
+	ThreadSafeQueue<RawBuffer> *buffers;
+	string outputFilenamePattern;
+} ThreadParameters;
 
 void FindUSBMessage(const void * rawBuffer, const s32 rawBufferLength, s32 &startIndex, s32 &endIndex)
 {
@@ -97,12 +104,15 @@ void FindUSBMessage(const void * rawBuffer, const s32 rawBufferLength, s32 &star
 // Based off example at http://msdn.microsoft.com/en-us/library/windows/desktop/ms682516(v=vs.85).aspx
 DWORD WINAPI SaveBuffers(LPVOID lpParam)
 {
-  const bool swapEndian = true;
+  const bool swapEndianForHeaders = true;
+  const bool swapEndianForContents = true;
 
   const s32 outputFilenameLength = 1024;
   char outputFilename[outputFilenameLength];
 
-  ThreadSafeQueue<RawBuffer> *buffers = (ThreadSafeQueue<RawBuffer>*)lpParam;
+  ThreadParameters *params = (ThreadParameters*)lpParam;
+  //ThreadSafeQueue<RawBuffer> *buffers = (ThreadSafeQueue<RawBuffer>*)lpParam;
+  ThreadSafeQueue<RawBuffer> *buffers = params->buffers;
 
   // The bigBuffer is a 16-bytes aligned version of bigBufferRaw
   static u8 bigBufferRaw[BIG_BUFFER_SIZE];
@@ -144,11 +154,13 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
         continue;
       }
 
+#ifdef PRINTF_ALL_RECEIVED
       printf("orig: ");
       for(s32 i=0; i<bigBufferIndex; i++) {
         printf("%x ", bigBuffer[i]);
       }
       printf("\n");
+#endif
 
       const s32 messageLength = usbMessageEndIndex-usbMessageStartIndex+1;
 
@@ -157,18 +169,20 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
       memmove(bigBuffer+bigBuffer_alignedStartIndex, bigBuffer+usbMessageStartIndex, messageLength);
       bigBuffer += bigBuffer_alignedStartIndex;
 
-      if(swapEndian) {
+      if(swapEndianForHeaders) {
         for(s32 i=0; i<messageLength; i+=4) {
           Swap(bigBuffer[i], bigBuffer[i^3]);
           Swap(bigBuffer[(i+1)], bigBuffer[(i+1)^3]);
         }
       }
 
+#ifdef PRINTF_ALL_RECEIVED
       printf("shifted: ");
       for(s32 i=0; i<messageLength; i++) {
         printf("%x ", bigBuffer[i]);
       }
       printf("\n");
+#endif
 
       SerializedBuffer serializedBuffer(bigBuffer, messageLength, Anki::Embedded::Flags::Buffer(false, true, true));
 
@@ -179,7 +193,7 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
       while(iterator.HasNext()) {
         s32 dataLength;
         SerializedBuffer::DataType type;
-        u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(swapEndian, dataLength, type));
+        u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(swapEndianForHeaders, dataLength, type));
         u8 * dataSegment = dataSegmentStart;
 
         printf("Next segment is (%d,%d)\n", dataLength, type);
@@ -201,7 +215,7 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
           bool isSigned;
           bool isFloat;
           s32 numElements;
-          SerializedBuffer::DecodeBasicTypeBuffer(swapEndian, code, size, isInteger, isSigned, isFloat, numElements);
+          SerializedBuffer::DecodeBasicTypeBuffer(swapEndianForHeaders, code, size, isInteger, isSigned, isFloat, numElements);
 
           printf("Basic type buffer segment (%d, %d, %d, %d, %d): ", size, isInteger, isSigned, isFloat, numElements);
           for(s32 i=0; i<remainingDataLength; i++) {
@@ -223,15 +237,15 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
           bool basicType_isInteger;
           bool basicType_isSigned;
           bool basicType_isFloat;
-          SerializedBuffer::DecodeArrayType(swapEndian, code, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
+          SerializedBuffer::DecodeArrayType(swapEndianForHeaders, code, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
 
           printf("Array: (%d, %d, %d, %d, %d, %d, %d, %d) ", height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
           //template<typename Type> static Result DeserializeArray(const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
           if(basicType_size==1 && basicType_isInteger==1 && basicType_isSigned==0 && basicType_isFloat==0) {
             Array<u8> arr;
-            SerializedBuffer::DeserializeArray(swapEndian, dataSegmentStart, dataLength, arr, memory);
+            SerializedBuffer::DeserializeArray(swapEndianForHeaders, dataSegmentStart, dataLength, arr, memory);
 
-            snprintf(&outputFilename[0], outputFilenameLength, outputFilenamePattern,
+            snprintf(&outputFilename[0], outputFilenameLength, params->outputFilenamePattern.data(),
               currentTime->tm_year+1900, currentTime->tm_mon+1, currentTime->tm_mday,
               currentTime->tm_hour, currentTime->tm_min, currentTime->tm_sec,
               frameNumber,
@@ -242,6 +256,7 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
             printf("Saving to %s\n", outputFilename);
             const cv::Mat_<u8> &mat = arr.get_CvMat_();
             cv::imwrite(outputFilename, mat);
+			//cv::imwrite("c:/tmp/tt.bmp", mat);
           }
         }
 
@@ -278,7 +293,7 @@ void printUsage()
 {
   printf(
     "usage: saveVideo <comPort> <baudRate> <outputPatternString>\n"
-    "example: saveVideo 8 1000000 C:/datasets/cozmoShort/cozmo_%%04d-%%02d-%%02d_%%02d-%%02d-%%02d_%%d.%%s\n");
+    "example: saveVideo 8 1500000 C:/datasets/cozmoShort/cozmo_%%04d-%%02d-%%02d_%%02d-%%02d-%%02d_%%d.%%s\n");
 } // void printUsage()
 
 int main(int argc, char ** argv)
@@ -288,7 +303,7 @@ int main(int argc, char ** argv)
 
   lastUpdateTime_mutex = CreateMutex(NULL, FALSE, NULL);
 
-  s32 comPort = 8;
+  s32 comPort = 10;
   s32 baudRate = 1500000;
 
   if(argc == 1) {
@@ -297,7 +312,8 @@ int main(int argc, char ** argv)
   } else if(argc == 4) {
     sscanf(argv[1], "%d", &comPort);
     sscanf(argv[2], "%d", &baudRate);
-    snprintf(outputFilenamePattern, outputFilenamePatternLength, "%s", argv[3]);
+	strcpy(outputFilenamePattern, argv[3]);
+    //snprintf(outputFilenamePattern, outputFilenamePatternLength, "%s", argv[3]);
   } else {
     printUsage();
     return -1;
@@ -310,12 +326,16 @@ int main(int argc, char ** argv)
   lastUpdateTime = GetTime() + 10e10;
   ReleaseMutex(lastUpdateTime_mutex);
 
+  ThreadParameters params;
+  params.buffers = &buffers;
+  params.outputFilenamePattern = string(outputFilenamePattern);
+
   DWORD threadId = -1;
   HANDLE threadHandle = CreateThread(
     NULL,        // default security attributes
     0,           // use default stack size
     SaveBuffers, // thread function name
-    &buffers,    // argument to thread function
+    &params,    // argument to thread function
     0,           // use default creation flags
     &threadId);  // returns the thread identifier
 
