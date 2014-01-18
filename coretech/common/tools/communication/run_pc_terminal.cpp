@@ -69,7 +69,7 @@ int main(int argc, char ** argv)
   ThreadSafeQueue<char*> buffers = ThreadSafeQueue<char*>();
   Serial serial;
 
-  s32 comPort = 8;
+  s32 comPort = 10;
   s32 baudRate = 1500000;
 
   if(argc == 1) {

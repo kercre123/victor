@@ -196,6 +196,10 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
         u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(swapEndianForHeaders, dataLength, type));
         u8 * dataSegment = dataSegmentStart;
 
+		if(!dataSegment) {
+			break;
+		}
+
         printf("Next segment is (%d,%d)\n", dataLength, type);
         if(type == SerializedBuffer::DATA_TYPE_RAW) {
           printf("Raw segment: ");
@@ -304,7 +308,7 @@ int main(int argc, char ** argv)
   lastUpdateTime_mutex = CreateMutex(NULL, FALSE, NULL);
 
   s32 comPort = 10;
-  s32 baudRate = 1500000;
+  s32 baudRate = 500000;
 
   if(argc == 1) {
     // just use defaults, but print the help anyway
