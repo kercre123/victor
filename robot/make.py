@@ -400,6 +400,7 @@ if __name__ == '__main__':
     elif arg == 'capture-images':
       target = 'capture-images'
       LEON_ASM_C_CXX_OPT += '-DUSE_OFFBOARD_VISION=0 -DUSE_CAPTURE_IMAGES '
+      LEON_ASM_C_CXX_OPT += '-DDEFAULT_BAUDRATE=500000 '
     else:
       print 'Invalid argument: ' + arg
       sys.exit(1)

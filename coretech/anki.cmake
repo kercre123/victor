@@ -259,6 +259,7 @@ link_directories(
 # above, so we'll add link directories for where it put its products)
 if(WIN32)
 	link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/lib/Debug)
+  link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/lib/Release)
 else()
 	link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/lib)
 endif(WIN32)
@@ -273,7 +274,8 @@ function(fix_opencv_lib_names NAMES)
 
 if(WIN32)
 	foreach(NAME IN LISTS ${NAMES})
-		list(APPEND ${NAMES}_TMP ${NAME}248d)
+		#list(APPEND ${NAMES}_TMP ${NAME}248d)
+    list(APPEND ${NAMES}_TMP ${NAME}248)
 	endforeach()
 
 	set(${NAMES} "${${NAMES}_TMP}" PARENT_SCOPE)
