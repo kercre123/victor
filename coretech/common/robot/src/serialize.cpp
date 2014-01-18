@@ -223,6 +223,9 @@ namespace Anki
       s32 segmentLength = -1;
       const void * segmentToReturn = MemoryStackConstIterator::GetNext(segmentLength);
 
+	  AnkiConditionalErrorAndReturnValue(segmentToReturn != NULL,
+		  NULL, "SerializedBufferConstIterator::GetNext", "segmentToReturn is NULL");
+
       segmentLength -= SerializedBuffer::SERIALIZED_SEGMENT_FOOTER_LENGTH;
 
       const u32 expectedCRC = reinterpret_cast<const u32*>(reinterpret_cast<const u8*>(segmentToReturn)+segmentLength)[0];
@@ -252,6 +255,9 @@ namespace Anki
       // To avoid code duplication, we'll use the const version of GetNext(), though our MemoryStack is not const
 
       u8 * segment = reinterpret_cast<u8*>(const_cast<void*>(SerializedBufferConstIterator::GetNext(dataLength, type)));
+
+      AnkiConditionalErrorAndReturnValue(segment != NULL,
+		  NULL, "SerializedBufferIterator::GetNext", "segment is NULL");
 
       if(swapEndian) {
         for(s32 i=0; i<dataLength; i+=4) {
