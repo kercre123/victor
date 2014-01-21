@@ -322,6 +322,10 @@ namespace Anki
 
       // Returns whether or not the specfied camera has received a full frame
       bool CameraIsEndOfFrame(CameraID cameraID);
+      
+      // TODO: At some point, isEOF should be set automatically by the HAL,
+      // but currently, the consumer has to set it
+      void CameraSetIsEndOfFrame(CameraID cameraID, bool isEOF);
 
 #pragma mark --- Battery ---
       /////////////////////////////////////////////////////////////////////

@@ -258,6 +258,21 @@ namespace Anki {
 #ifdef USE_CAPTURE_IMAGES
       captureImagesBuffer_ = Embedded::SerializedBuffer(&captureImagesBufferRaw_[0], CAPTURE_IMAGES_BUFFER_SIZE);
       numCapturedImages = 0;
+
+      {
+        FrameBuffer frame = {
+          ddrBuffer_,
+          HAL::CAMERA_MODE_VGA
+        };
+
+        const HAL::CameraUpdateMode updateMode = HAL::CAMERA_UPDATE_CONTINUOUS;
+
+        CameraStartFrame(HAL::CAMERA_FRONT, frame.data, frame.resolution,
+                         updateMode, 0, false);
+                         
+        CameraSetIsEndOfFrame(HAL::CAMERA_FRONT, false);
+      }
+
 #endif
 
         isInitialized_ = true;
@@ -429,14 +444,22 @@ namespace Anki {
               HAL::CAMERA_MODE_VGA
             };
 
-            CaptureHeadFrame(frame);
-
             if(numCapturedImages < MAX_IMAGES_TO_CAPTURE) {
 
               const s32 imageHeight = HAL::CameraModeInfo[HAL::CAMERA_MODE_VGA].height;
               const s32 imageWidth = HAL::CameraModeInfo[HAL::CAMERA_MODE_VGA].width;
               Embedded::Array<u8> image(imageHeight, imageWidth, ddrBuffer_, imageHeight*imageWidth);
 
+              // Wait for the capture of the current frame to finish
+              while (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT))
+              {
+              }
+              
+              // TODO: this will be set automatically at some point
+              CameraSetIsEndOfFrame(HAL::CAMERA_FRONT, false);
+
+              //frame.timestamp = HAL::GetTimeStamp();              
+            
               captureImagesBuffer_.PushBack(image);
 
               numCapturedImages++;
@@ -519,6 +542,9 @@ namespace Anki {
         while (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT))
         {
         }
+
+        // TODO: this will be set automatically at some point
+        CameraSetIsEndOfFrame(HAL::CAMERA_FRONT, false);
 
         frame.timestamp = HAL::GetTimeStamp();
 
