@@ -259,7 +259,7 @@ link_directories(
 # above, so we'll add link directories for where it put its products)
 if(WIN32)
 	link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/lib/Debug)
-  link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/lib/Release)
+  link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/lib/RelWithDebInfo)
 else()
 	link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/lib)
 endif(WIN32)
