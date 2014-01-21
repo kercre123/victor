@@ -73,10 +73,10 @@ if(NOT WIN32)
   target_link_libraries(cozmo_c_controller 
     CppController
     CoreTech_Common_Robot
-	CoreTech_Vision_Robot
-    CoreTech_Common_Basestation # needed?
+    CoreTech_Vision_Robot
     mx 
     eng
+    ${ALL_EMBEDDED_LIBRARIES}
   )
 
   set_target_properties(

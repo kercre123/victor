@@ -476,6 +476,7 @@ namespace Anki {
                 //PRINT("%d %d\n", bufferStart, validUsedBytes);
 #ifdef SIMULATOR
               frameRdyTimeUS_ = HAL::GetMicroCounter() + TRACK_BLOCK_PERIOD_US;
+#endif
                 
                 for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
                   Anki::Cozmo::HAL::USBPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);

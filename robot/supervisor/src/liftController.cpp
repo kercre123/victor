@@ -126,6 +126,7 @@ namespace Anki {
       {
 #ifndef USE_CAPTURE_IMAGES      
         PRINT("Starting Lift calibration\n");
+#endif
 #ifdef SIMULATOR
         // Skipping actual calibration routine in sim due to weird lift behavior when attempting to move it when
         // it's at the joint limit.  The arm flies off the robot!
