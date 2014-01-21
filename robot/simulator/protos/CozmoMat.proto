@@ -6,7 +6,7 @@ PROTO CozmoMat [
 {
 Solid {
   rotation 0 1 0 0
-  translation 0 -0.005 0
+  translation 0 -0.0025 0
   children [
     Shape {
       appearance Appearance {
@@ -19,7 +19,7 @@ Solid {
       }
     }
     Solid {
-	    translation -0.2500 0.005 -0.2500
+	    translation -0.2500 0.0025 -0.2500
 	    rotation 0 1 0 -1.570796
 	    children [
 		  Shape {
@@ -34,7 +34,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation 0.0000 0.005 -0.2500
+	    translation 0.0000 0.0025 -0.2500
 	    rotation 0 1 0 -3.141593
 	    children [
 		  Shape {
@@ -49,7 +49,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation 0.2500 0.005 -0.2500
+	    translation 0.2500 0.0025 -0.2500
 	    rotation 0 1 0 -3.141593
 	    children [
 		  Shape {
@@ -64,7 +64,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation -0.2500 0.005 0.0000
+	    translation -0.2500 0.0025 0.0000
 	    rotation 0 1 0 -1.570796
 	    children [
 		  Shape {
@@ -79,7 +79,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation 0.0000 0.005 0.0000
+	    translation 0.0000 0.0025 0.0000
 	    rotation 0 1 0 0.000000
 	    children [
 		  Shape {
@@ -94,7 +94,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation 0.2500 0.005 0.0000
+	    translation 0.2500 0.0025 0.0000
 	    rotation 0 1 0 1.570796
 	    children [
 		  Shape {
@@ -109,7 +109,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation -0.2500 0.005 0.2500
+	    translation -0.2500 0.0025 0.2500
 	    rotation 0 1 0 0.000000
 	    children [
 		  Shape {
@@ -124,7 +124,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation 0.0000 0.005 0.2500
+	    translation 0.0000 0.0025 0.2500
 	    rotation 0 1 0 0.000000
 	    children [
 		  Shape {
@@ -139,7 +139,7 @@ Solid {
 	    ]
     }
     Solid {
-	    translation 0.2500 0.005 0.2500
+	    translation 0.2500 0.0025 0.2500
 	    rotation 0 1 0 1.570796
 	    children [
 		  Shape {
