@@ -6,7 +6,7 @@ classdef VisionMarker
             'Number', 9, ...          % There will be a Number x Number 2D array of probes
             'WidthFraction', 1/3, ... % As a fraction of square width
             'NumAngles', 8, ...       % How many samples around ring to sample
-            'Method', 'mean');         % How to combine points in a probe
+            'Method', 'mean');        % How to combine points in a probe
                 
         MinContrastRatio = 1.25;  % bright/dark has to be at least this
         
@@ -32,7 +32,7 @@ classdef VisionMarker
         
         probes = CreateProbes(coord);
         
-        [code, corners, cornerCode, H] = ProbeImage(img, corners);
+        [code, corners, cornerCode, H] = ProbeImage(img, corners, doRefinement);
         
         function ShowHideAxesToggle(src, ~)
             if strcmp(get(src, 'SelectionType'), 'open')
@@ -55,20 +55,36 @@ classdef VisionMarker
         cornerCode;
         H;
         
+        name;
+        pose;
+        size;
+        
     end % Properties
-    
+            
     methods 
 
         function this = VisionMarker(img, varargin)
             
+            Corners = [];
+            Pose = [];
+            Name = '';
+            Size = 1;
+            RefineCorners = true;
+            
+            parseVarargin(varargin{:});
+            
             [this.code, this.corners, this.cornerCode, this.H] = ...
-                VisionMarker.ProbeImage(img, varargin{:});
+                VisionMarker.ProbeImage(img, Corners, RefineCorners);
+            
+            this.pose = Pose;
+            this.name = Name;
+            this.size = Size;
             
         end % Constructor VisionMarker()
        
         h = Draw(this, varargin);
         
-        % FOr backwards compatibility to lowercase "draw" in Marker2D
+        % For backwards compatibility to lowercase "draw" in Marker2D
         function h = draw(this, varargin)
             where = [];
             
@@ -91,6 +107,19 @@ classdef VisionMarker
             h0 = plot(x(~this.code,:), y(~this.code,:), 'b.', 'MarkerSize', 12, varargin{:});
         end
         
+        function pos3d = GetPosition(this, wrtPose)
+           
+            % A square with corners (+/- 1, +/- 1):
+            canonicalSquare = this.size/2 * [-1 0 1; -1 0 -1; 1 0 1; 1 0 -1];
+            if nargin < 2
+                P = this.pose;
+            else
+                P = this.pose.getWithRespectTo(wrtPose);
+            end
+            
+            pos3d = P.applyTo(canonicalSquare);
+            
+        end
     end % Public Methods
     
     

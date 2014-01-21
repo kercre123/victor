@@ -1,5 +1,9 @@
-function [code, corners, cornerCode, H] = ProbeImage(img, corners)
+function [code, corners, cornerCode, H] = ProbeImage(img, corners, doRefinement)
 % Static method for probing an image within given corners to produce code.
+
+if nargin < 3
+    doRefinement = true;
+end
 
 assert(~isempty(img), 'Image is empty!');
 
@@ -11,7 +15,6 @@ if nbands > 1
 end
 
 % No corners provided? Assume the borders of the image
-doRefinement = true;
 if nargin < 2 || isempty(corners)
     corners = [0 0 ncols ncols; 0 nrows 0 nrows]' + 0.5;
     doRefinement = false;
