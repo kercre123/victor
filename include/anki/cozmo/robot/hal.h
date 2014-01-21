@@ -55,8 +55,16 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+
 #ifndef SIMULATOR
 #undef printf
+
+#ifdef USE_CAPTURE_IMAGES
+#define printf(...)
+#define PRINT(...)
+#define PERIODIC_PRINT(num_calls_between_prints, ...)
+
+#else // USE_CAPTURE_IMAGES
 
 // PRINT will actually buffer messages, to be sent by long execution "thread"
 #define PUTCHAR_FUNC Anki::Cozmo::HAL::USBBufferChar
@@ -73,6 +81,7 @@ extern "C" {
     cnt = 0; \
   } \
 }
+#endif // USE_CAPTURE_IMAGES
 
 #elif defined(SIMULATOR)
 #define PRINT(...) fprintf(stdout, __VA_ARGS__)
