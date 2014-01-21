@@ -27,7 +27,7 @@ for i = 1:length(markers)
             if ~isempty(this.markerLibrary)
                 match = this.markerLibrary.IdentifyMarker(markers{i});
                 if ~isempty(match)
-                    matchName = match.Name;
+                    matchName = match.name;
                 end
             end
                 
@@ -39,18 +39,24 @@ for i = 1:length(markers)
                %keyboard
                
                % This is a Mat marker, figure out where we are relative to it
-               match.Origin(3) = -CozmoVisionProcessor.WHEEL_RADIUS;
+%                match.Origin(3) = -CozmoVisionProcessor.WHEEL_RADIUS;
                
-               if false
-                   markerCornersWorld = [-.5 -.5 0; -.5 .5 0; .5 -.5 0; .5 .5 0]*match.Size;
-               else
-                   % Needed when using simulator??
-                   match.Origin(2) = -match.Origin(2);
-                   markerCornersWorld = [-.5 .5 0; -.5 -.5 0; .5 .5 0; .5 -.5 0]*match.Size;
+%                if false
+%                    markerCornersWorld = [-.5 -.5 0; -.5 .5 0; .5 -.5 0; .5 .5 0]*match.Size;
+%                else
+%                    % Needed when using simulator??
+%                    match.Origin(2) = -match.Origin(2);
+%                    markerCornersWorld = [-.5 .5 0; -.5 -.5 0; .5 .5 0; .5 -.5 0]*match.Size;
+%                end
+               
+               %markerWorldPose = Pose(match.Angle*pi/180*[0 0 1], match.Origin);
+               %markerCornersWorld = markerWorldPose.applyTo(markerCornersWorld);
+               
+               markerCornersWorld = match.GetPosition('World');
+               
+               if true % in simulator
+                   markerCornersWorld(:,2) = -markerCornersWorld(:,2);
                end
-               
-               markerWorldPose = Pose(match.Angle*pi/180*[0 0 1], match.Origin);
-               markerCornersWorld = markerWorldPose.applyTo(markerCornersWorld);
                
                % Simulate noise on the head angle with std. dev. of 1
                % degree
@@ -108,7 +114,7 @@ for i = 1:length(markers)
                 packet = this.SerializeMessageStruct(msgStruct);
                 this.SendPacket('CozmoMsg_VisionMarker', packet);
                 
-                this.marker3d = match.Size/2 * [0 1 1; 0 1 -1; 0 -1 1; 0 -1 -1];
+                this.marker3d = match.size/2 * [0 1 1; 0 1 -1; 0 -1 1; 0 -1 -1];
                 
                 % Initialize the tracker
                 this.LKtracker = LucasKanadeTracker(img, ...
