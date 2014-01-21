@@ -15,6 +15,11 @@ namespace Anki
 {
   namespace Embedded
   {
+    SerializedBuffer::SerializedBuffer()
+    {
+      this->memoryStack = MemoryStack();
+    }
+
     SerializedBuffer::SerializedBuffer(void *buffer, s32 bufferLength, Flags::Buffer flags)
 
     {
@@ -184,7 +189,7 @@ namespace Anki
         // Add a CRC code computed from the header and data
         //const u32 crc2 =  ComputeCRC32_littleEndian(segmentStart, numBytesAllocated - SERIALIZED_SEGMENT_FOOTER_LENGTH, 0xFFFFFFFF);
         reinterpret_cast<u32*>(segmentStart + numBytesAllocated - SERIALIZED_SEGMENT_FOOTER_LENGTH)[0] = crc;
-        printf("crc: 0x%x\n", crc);
+        //printf("crc: 0x%x\n", crc);
       } // if(data != NULL)
 
       //printf("%d %d\n", reinterpret_cast<u32*>(segmentStart)[0], reinterpret_cast<u32*>(segmentStart)[1]);

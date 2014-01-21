@@ -28,20 +28,22 @@ set(HEADER_FILES
 #	${PROJECT_SOURCE_DIR}/coretech/messaging/include/anki/messaging/TcpServer.h
 )
 
-add_executable(blockworld_controller 
-  ${SOURCE_FILES} 
-  ${HEADER_FILES}
-)
+if(NOT WIN32)
+  add_executable(blockworld_controller 
+    ${SOURCE_FILES} 
+    ${HEADER_FILES}
+  )
 
-target_link_libraries(blockworld_controller 
-  Cozmo_Basestation
-  CoreTech_Common_Basestation
-  CoreTech_Vision_Basestation
-# Controller # Webots C Controller
-  CppController # Webots C++ Controller
-  ${OPENCV_LIBS}
-)
-
+  target_link_libraries(blockworld_controller 
+    Cozmo_Basestation
+    CoreTech_Common_Basestation
+    CoreTech_Vision_Basestation
+  # Controller # Webots C Controller
+    CppController # Webots C++ Controller
+    ${OPENCV_LIBS}
+  )
+endif()
+  
 #set_target_properties(blockworld_controller PROPERTIES
 #  COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
 #	XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"

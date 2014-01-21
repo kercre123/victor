@@ -16,11 +16,12 @@ link_directories( ${WEBOTS_LIB_DIR} )
 set(SOURCE_FILES
 	overlay_display_supervisor.c
 )
+if(NOT WIN32)
+  add_executable(overlay_display_supervisor ${SOURCE_FILES} )
 
-add_executable(overlay_display_supervisor ${SOURCE_FILES} )
-
-target_link_libraries(overlay_display_supervisor Controller)
-
+  target_link_libraries(overlay_display_supervisor Controller)
+endif()
+  
 # Make sure a copy of the target exists		 in cozmo_c_controller/
 # no matter where the target is	 actually built.
 add_custom_command(

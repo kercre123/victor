@@ -124,6 +124,7 @@ namespace Anki {
       
       void StartCalibrationRoutine()
       {
+#ifndef USE_CAPTURE_IMAGES      
         PRINT("Starting Lift calibration\n");
 #ifdef SIMULATOR
         // Skipping actual calibration routine in sim due to weird lift behavior when attempting to move it when
