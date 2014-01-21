@@ -20,7 +20,7 @@
 
 #include "anki/common/types.h"
 
-#include "anki/cozmo/messages.h"
+#include "anki/cozmo/robot/messages.h"
 
 namespace Anki {
   namespace Cozmo {

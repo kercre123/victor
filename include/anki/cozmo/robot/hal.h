@@ -37,7 +37,7 @@
 #include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
 
-#include "anki/cozmo/messages.h"
+#include "anki/cozmo/robot/messages.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 

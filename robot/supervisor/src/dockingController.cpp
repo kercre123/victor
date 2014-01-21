@@ -13,7 +13,7 @@
 #include "anki/cozmo/robot/speedController.h"
 #include "anki/cozmo/robot/steeringController.h"
 #include "anki/cozmo/robot/pathFollower.h"
-#include "anki/cozmo/messages.h"
+#include "anki/cozmo/robot/messages.h"
 
 
 // Resets localization pose to (0,0,0) every time a relative block pose update is received.

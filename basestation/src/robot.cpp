@@ -9,12 +9,13 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
+#include "anki/cozmo/basestation/messages.h"
 #include "anki/cozmo/basestation/robot.h"
 
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/robot/cozmoConfig.h"
 
-#include "anki/cozmo/messages.h"
+
 
 namespace Anki {
   namespace Cozmo {
