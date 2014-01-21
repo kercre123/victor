@@ -1,7 +1,12 @@
-function createModel(this, firstMarkerID)
+function createModel(this, varargin)
 % Block origin is lower left corner of the "front" face (the one with
 % lowest faceType value)
 % The marker origin is the upper left inside corner of the square fiducial.
+
+firstMarkerID = 1;
+faceImages = {};
+
+parseVarargin(varargin{:});
 
 % Scale is [width length height], in *world* coordinates
 %this.markers = containers.Map('KeyType', 'double', 'ValueType', 'any');
@@ -104,6 +109,9 @@ switch(this.blockType)
     case 75 % Webot Simulated Purple 2x1 Block
         makeWebotBlock(this, '2x1', [0.5 0.1 0.75], firstMarkerID);
         
+    case 'fuel' % Webots Simulated 1x1 block with battery markers on all sides
+        makeWebotBlock(this, '1x1', 'r', firstMarkerID, faceImages);
+        
     otherwise
         error('No model defined for block type %d.', this.blockType);
     
@@ -179,7 +187,7 @@ this.markers{index} = BlockMarker3D(this, faceType, pose, ...
 end % FUNCTION defineFaceHelper()
 
 
-function makeWebotBlock(this, shape, color, firstMarkerID)
+function makeWebotBlock(this, shape, color, firstMarkerID, faceImages)
 
 this.color = color;
 
@@ -249,9 +257,27 @@ for faceID = 1:6
     P = Pose(angle*axis, offset(:));
     P.name = sprintf('BlockMarkerPose_Face%d', faceID);
     P.parent = this.pose;
-    
-    this.markers{index} = BlockMarker3D(this, faceID, P, ...
-        firstMarkerID + index);
+         
+    if ischar(this.blockType)
+        assert(nargin >= 5, 'You must pass in faceImages for this block type.');
+        
+        % TODO: load the code directly instead of having to compute it 
+        % from an image each time
+        %img = imread(sprintf('~/Box Sync/Cozmo SE/VisionMarkers/blocks/%s/face%d.png', this.blockType, faceID));
+        img = faceImages{faceID};
+        
+        % Assume this was drawn with a gap around the outside
+        % TODO: Size should be probably be block-specific and passed in somehow
+        [nrows,ncols,~] = size(img);
+        corner = ncols*VisionMarker.FiducialPaddingFraction*VisionMarker.SquareWidth;
+        this.markers{index} = VisionMarker(img, ...
+            'Corners', [corner corner; corner nrows-corner; ncols-corner corner; ncols-corner nrows-corner], ...
+            'RefineCorners', false, ...
+            'Pose', P, 'Size', 32, 'Name', upper(this.blockType)); %sprintf('%s-FACE%d', upper(this.blockType), faceID));
+    else
+        this.markers{index} = BlockMarker3D(this, faceID, P, ...
+            firstMarkerID + index);
+    end
 end
 
 this.model = [X(:) Z(:) Y(:)];
