@@ -308,7 +308,7 @@ int main(int argc, char ** argv)
   lastUpdateTime_mutex = CreateMutex(NULL, FALSE, NULL);
 
   s32 comPort = 10;
-  s32 baudRate = 3000000;
+  s32 baudRate = 2000000;
 
   if(argc == 1) {
     // just use defaults, but print the help anyway
