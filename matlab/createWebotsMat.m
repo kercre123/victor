@@ -41,7 +41,7 @@ fprintf(fid, ']\n');
 fprintf(fid, '{\n');
 fprintf(fid, 'Solid {\n');
 fprintf(fid, '  rotation 0 1 0 0\n');
-fprintf(fid, '  translation 0 -0.005 0\n');
+fprintf(fid, '  translation 0 -0.0025 0\n');
 fprintf(fid, '  children [\n');
 fprintf(fid, '    Shape {\n');
 fprintf(fid, '      appearance Appearance {\n');
@@ -56,21 +56,30 @@ fprintf(fid, '    }\n');
 
 for i = 1:numel(images)
         
-    marker = VisionMarker.DrawFiducial( ...
+    markerImg = VisionMarker.DrawFiducial( ...
         'Image', imrotate(images{i}, -angles(i)), ...
         'NumCorners', numCorners(i), ...
         'AddPadding', false, ...
         'ForegroundColor', ForegroundColor, ...
         'BackgroundColor', BackgroundColor);
     
-    markerLibrary.AddMarker(marker, 'Name', sprintf('ANKI-MAT-%d', i), ...
-        'Size', sizes(i), 'Origin', [xgrid(i) ygrid(i) 0], 'Angle', angles(i));
+    % Need this initial rotation b/c canonical VisionMarker orientation is
+    % 3D is vertical, i.e. in the X-Z plane, for historical reasons.
+    R_to_flat = rodrigues(pi/2*[1 0 0]);
+    
+    pose = Pose(rodrigues(angles(i)*pi/180*[0 0 1])*R_to_flat, ...
+        [xgrid(i) ygrid(i) -CozmoVisionProcessor.WHEEL_RADIUS]');
+    
+    marker = VisionMarker(markerImg, 'Name', sprintf('ANKI-MAT-%d', i), ...
+        'Size', sizes(i), 'Pose', pose);
+        
+    markerLibrary.AddMarker(marker);
     
     filename = sprintf('ankiMat%d.png', i);
-    imwrite(imresize(marker, [512 512]), fullfile(WorldDir, filename));
+    imwrite(imresize(markerImg, [512 512]), fullfile(WorldDir, filename));
     
     fprintf(fid, '    Solid {\n');
-    fprintf(fid, '	    translation %.4f 0.005 %.4f\n', xgrid(i)/1000, ygrid(i)/1000);
+    fprintf(fid, '	    translation %.4f 0.0025 %.4f\n', xgrid(i)/1000, ygrid(i)/1000);
     fprintf(fid, '	    rotation 0 1 0 %f\n', angles(i)*pi/180);
     fprintf(fid, '	    children [\n');
     fprintf(fid, '		  Shape {\n');
