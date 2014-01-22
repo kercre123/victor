@@ -16,20 +16,20 @@ namespace Anki
     void HAL::USBSendHeader(const u8 packetType)
     {
       using namespace HAL;
-      USBPutChar(Messages::USB_PACKET_HEADER[0]);
-      USBPutChar(Messages::USB_PACKET_HEADER[1]);
-      USBPutChar(Messages::USB_PACKET_HEADER[2]);
-      USBPutChar(Messages::USB_PACKET_HEADER[3]);
+      USBPutChar(USB_PACKET_HEADER[0]);
+      USBPutChar(USB_PACKET_HEADER[1]);
+      USBPutChar(USB_PACKET_HEADER[2]);
+      USBPutChar(USB_PACKET_HEADER[3]);
       USBPutChar(packetType);
     }
     
     void HAL::USBSendFooter(const u8 packetType)
     {
       using namespace HAL;
-      USBPutChar(Messages::USB_PACKET_FOOTER[0]);
-      USBPutChar(Messages::USB_PACKET_FOOTER[1]);
-      USBPutChar(Messages::USB_PACKET_FOOTER[2]);
-      USBPutChar(Messages::USB_PACKET_FOOTER[3]);
+      USBPutChar(USB_PACKET_FOOTER[0]);
+      USBPutChar(USB_PACKET_FOOTER[1]);
+      USBPutChar(USB_PACKET_FOOTER[2]);
+      USBPutChar(USB_PACKET_FOOTER[3]);
       USBPutChar(packetType);
       
 #ifdef SIMULATOR
