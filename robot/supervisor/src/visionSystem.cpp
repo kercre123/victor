@@ -439,6 +439,10 @@ namespace Anki {
 
               CaptureHeadFrame(frame);
 
+#ifdef SIMULATOR
+              frameRdyTimeUS_ = HAL::GetMicroCounter() + TRACK_BLOCK_PERIOD_US;
+#endif
+              
               if(TrackTemplate(frame) == EXIT_FAILURE) {
                 PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
                 retVal = EXIT_FAILURE;
@@ -485,9 +489,6 @@ namespace Anki {
                 const s32 validUsedBytes = captureImagesBuffer_.get_memoryStack().get_usedBytes() - startIndex;
                 
                 //PRINT("%d %d\n", bufferStart, validUsedBytes);
-#ifdef SIMULATOR
-              frameRdyTimeUS_ = HAL::GetMicroCounter() + TRACK_BLOCK_PERIOD_US;
-#endif
                 
                 for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
                   Anki::Cozmo::HAL::USBPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
