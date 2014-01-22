@@ -3081,6 +3081,7 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Common, CompressArray);
   CALL_GTEST_TEST(CoreTech_Common, Heatshrink);
   //CALL_GTEST_TEST(CoreTech_Common, SendSerializedBufferOverUSB);
   CALL_GTEST_TEST(CoreTech_Common, SerializedBuffer);

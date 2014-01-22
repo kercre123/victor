@@ -10,6 +10,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/serialize.h"
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/utilities.h"
+#include "anki/common/robot/compress.h"
 
 namespace Anki
 {
@@ -96,20 +97,25 @@ namespace Anki
 
     void* SerializedBuffer::PushBack(const void * data, const s32 dataLength)
     {
-      return this->PushBack(DATA_TYPE_RAW, NULL, 0, data, dataLength);
+      return PushBack_Generic(DATA_TYPE_RAW, NULL, 0, data, dataLength);
     }
 
     void* SerializedBuffer::PushBack(const DataType type, const void * data, s32 dataLength)
     {
-      return this->PushBack(type, NULL, 0, data, dataLength);
+      return PushBack_Generic(type, NULL, 0, data, dataLength);
     }
 
     void* SerializedBuffer::PushBack(const void * header, s32 headerLength, const void * data, s32 dataLength)
     {
-      return this->PushBack(DATA_TYPE_RAW, header, headerLength, data, dataLength);
+      return PushBack_Generic(DATA_TYPE_RAW, header, headerLength, data, dataLength);
     }
 
     void* SerializedBuffer::PushBack(const DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength)
+    {
+      return PushBack_Generic(type, header, headerLength, data, dataLength);
+    }
+
+    void* SerializedBuffer::PushBack_Generic(const DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength)
     {
       AnkiConditionalErrorAndReturnValue(headerLength >= 0,
         NULL, "SerializedBuffer::PushBack", "headerLength must be >= 0");
@@ -129,8 +135,10 @@ namespace Anki
 
       const s32 totalLength = RoundUp<s32>(dataLength, 4) + headerLength;
 
+      const s32 bytesRequired = totalLength+SERIALIZED_SEGEMENT_HEADER_LENGTH+SERIALIZED_SEGMENT_FOOTER_LENGTH;
+
       s32 numBytesAllocated = -1;
-      u8 * const segmentStart = reinterpret_cast<u8*>( memoryStack.Allocate(totalLength+SERIALIZED_SEGEMENT_HEADER_LENGTH+SERIALIZED_SEGMENT_FOOTER_LENGTH, numBytesAllocated) );
+      u8 * const segmentStart = reinterpret_cast<u8*>( memoryStack.Allocate(bytesRequired, numBytesAllocated) );
       u32 * segmentU32 = reinterpret_cast<u32*>(segmentStart);
 
       AnkiConditionalErrorAndReturnValue(segmentU32 != NULL,
@@ -174,6 +182,7 @@ namespace Anki
 
         const s32 dataLength4 = (dataLength + 3) >> 2;
         const u32 * dataU32 = reinterpret_cast<const u32*>(data);
+
         for(s32 i=0; i<dataLength4; i++)
         {
           segmentU32[i] = dataU32[i];
@@ -196,7 +205,7 @@ namespace Anki
       //printf("%d %d %d %d %d %d %d %d\n", segmentStart[0], segmentStart[1], segmentStart[2], segmentStart[3], segmentStart[4], segmentStart[5], segmentStart[6], segmentStart[7]);
 
       return segmentStart;
-    }
+    } // static void* PushBack(const SerializedBuffer::DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength, MemoryStack *scratch)
 
     bool SerializedBuffer::IsValid() const
     {
@@ -223,8 +232,8 @@ namespace Anki
       s32 segmentLength = -1;
       const void * segmentToReturn = MemoryStackConstIterator::GetNext(segmentLength);
 
-	  AnkiConditionalErrorAndReturnValue(segmentToReturn != NULL,
-		  NULL, "SerializedBufferConstIterator::GetNext", "segmentToReturn is NULL");
+      AnkiConditionalErrorAndReturnValue(segmentToReturn != NULL,
+        NULL, "SerializedBufferConstIterator::GetNext", "segmentToReturn is NULL");
 
       segmentLength -= SerializedBuffer::SERIALIZED_SEGMENT_FOOTER_LENGTH;
 
@@ -257,7 +266,7 @@ namespace Anki
       u8 * segment = reinterpret_cast<u8*>(const_cast<void*>(SerializedBufferConstIterator::GetNext(dataLength, type)));
 
       AnkiConditionalErrorAndReturnValue(segment != NULL,
-		  NULL, "SerializedBufferIterator::GetNext", "segment is NULL");
+        NULL, "SerializedBufferIterator::GetNext", "segment is NULL");
 
       if(swapEndian) {
         for(s32 i=0; i<dataLength; i+=4) {

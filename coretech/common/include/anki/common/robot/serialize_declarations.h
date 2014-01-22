@@ -102,6 +102,9 @@ namespace Anki
 
     protected:
       MemoryStack memoryStack;
+
+      // if scratch != NULL, use compression
+      void* PushBack_Generic(const SerializedBuffer::DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength);
     }; // class SerializedBuffer
 
     class SerializedBufferConstIterator : public MemoryStackConstIterator
