@@ -12,20 +12,39 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifndef _ANKICORETECHEMBEDDED_COMMON_COMPRESS_H_
 #define _ANKICORETECHEMBEDDED_COMMON_COMPRESS_H_
 
-#include "anki/common/robot/config.h"
-#include "anki/common/robot/memory.h"
+#include "anki/common/robot/compress_declarations.h"
 
 namespace Anki
 {
   namespace Embedded
   {
-    // Compress the data "in" into "out"
-    // Requires sizeof(heatshrink_encoder) bytes of scratch
-    Result Compress(const u8 * in, const u32 inLength, u8 *out, const u32 outMaxLength, s32 &outCompressedLength, MemoryStack scratch);
+    template<typename Type> CompressedArray::CompressedArray()
+      : data()
+    {
+      this->size[0] = -1;
+      this->size[0] = -1;
+    }
 
-    // Decompress the data "in" into "out"
-    // Requires sizeof(heatshrink_decoder) bytes of scratch
-    Result Decompress(const u8 * in, const u32 inLength, u8 *out, const u32 outMaxLength, s32 &outUncompressedLength, MemoryStack scratch);
+    template<typename Type> CompressedArray::CompressedArray(const Array<Type> &in, MemoryStack &memory)
+    {
+      const s32 inSize = in.get_stride() * in.get_size(0);
+      const s32 bufferSize = inSize + inSize >> 1 + 4;
+
+      data = Array<Type>(1, bufferSize, memory);
+
+      s32 outCompressedLength;
+      Compress(in.Pointer(0,0), inSize, data.Pointer(0,0), bufferSize, outCompressedLength, memory);
+
+      // TODO: resize in to its exact size
+    }
+
+    template<typename Type> Array<Type> CompressedArray::Decompress(MemoryStack &memory) const
+    {
+    }
+
+    template<typename Type> s32 CompressedArray::get_size(s32 dimension) const
+    {
+    }
   } // namespace Embedded
 } //namespace Anki
 

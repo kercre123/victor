@@ -24,7 +24,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    Result Compress(const u8 * in, const u32 inLength, u8 *out, const u32 outMaxLength, s32 &outCompressedLength, MemoryStack scratch)
+    Result Compress(const void * in, const u32 inLength, void *out, const u32 outMaxLength, s32 &outCompressedLength, MemoryStack scratch)
     {
       heatshrink_encoder *hse = reinterpret_cast<heatshrink_encoder*>( scratch.Allocate(sizeof(heatshrink_encoder)) );
 
@@ -37,7 +37,7 @@ namespace Anki
       uint32_t sunk = 0;
       uint32_t polled = 0;
       while (sunk < inLength) {
-        const HSE_sink_res res = heatshrink_encoder_sink(hse, const_cast<u8*>(&in[sunk]), inLength - sunk, &count);
+        const HSE_sink_res res = heatshrink_encoder_sink(hse, const_cast<u8*>(&reinterpret_cast<const u8*>(in)[sunk]), inLength - sunk, &count);
 
         AnkiConditionalErrorAndReturnValue(res == HSER_SINK_OK,
           RESULT_FAIL, "Compress", "heatshrink_encoder_sink failed");
@@ -54,7 +54,7 @@ namespace Anki
         HSE_poll_res pres;
         //if(polled < inLength) {
         do { // "turn the crank"
-          pres = heatshrink_encoder_poll(hse, &out[polled], outMaxLength - polled, &count);
+          pres = heatshrink_encoder_poll(hse, &reinterpret_cast<u8*>(out)[polled], outMaxLength - polled, &count);
           polled += count;
         } while (pres == HSER_POLL_MORE);
         //}
@@ -78,7 +78,7 @@ namespace Anki
       return RESULT_OK;
     } // Result Compress()
 
-    Result Decompress(const u8 * in, const u32 inLength, u8 *out, const u32 outMaxLength, s32 &outUncompressedLength, MemoryStack scratch)
+    Result Decompress(const void * in, const u32 inLength, void *out, const u32 outMaxLength, s32 &outUncompressedLength, MemoryStack scratch)
     {
       heatshrink_decoder *hsd = reinterpret_cast<heatshrink_decoder*>( scratch.Allocate(sizeof(heatshrink_decoder)) );
 
@@ -91,7 +91,7 @@ namespace Anki
       size_t count = 0;
 
       while (sunk < inLength) {
-        const HSD_sink_res res = heatshrink_decoder_sink(hsd, const_cast<u8*>(&in[sunk]), inLength - sunk, &count);
+        const HSD_sink_res res = heatshrink_decoder_sink(hsd, const_cast<u8*>(&reinterpret_cast<const u8*>(in)[sunk]), inLength - sunk, &count);
 
         AnkiConditionalErrorAndReturnValue(res == HSER_SINK_OK,
           RESULT_FAIL, "Decompress", "heatshrink_decoder_sink failed");
@@ -107,7 +107,7 @@ namespace Anki
 
         HSD_poll_res pres;
         do {
-          pres = heatshrink_decoder_poll(hsd, &out[polled], outMaxLength - polled, &count);
+          pres = heatshrink_decoder_poll(hsd, &reinterpret_cast<u8*>(out)[polled], outMaxLength - polled, &count);
           polled += count;
         } while (pres == HSDR_POLL_MORE);
 
