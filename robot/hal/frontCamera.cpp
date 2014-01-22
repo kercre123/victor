@@ -69,9 +69,9 @@ namespace Anki
         { 0xa9, 0xb8 },
         { 0xaa, 0x92 },
         { 0xab, 0x0a },
-        { 0x8f, 0xdf },  // Digital BLC 
-        { 0x90, 0x00 },  // Digital BLC B chan offset 
-        { 0x91, 0x00 },  // Digital BLC R chan offset 
+        { 0x8f, 0xdf },  // Digital BLC
+        { 0x90, 0x00 },  // Digital BLC B chan offset
+        { 0x91, 0x00 },  // Digital BLC R chan offset
         { 0x9f, 0x00 },  // Digital BLC GB chan offset
         { 0xa0, 0x00 },
         { 0x14, 0x3a },  // Gain ceiling 16x
@@ -102,6 +102,14 @@ namespace Anki
         { 0x10, 0x20 },  // Set exposure to half of default (0x40)
       }; */
 
+#ifdef USE_QVGA_CAMERA
+      static const u16 m_OV7725_QVGA[] =
+      {
+        0x12,0x80,  // Reset
+
+        0x12,0x40,
+      };
+#else
       static const u16 m_OV7725_VGA[] =
       {
         0x12, 0x80,
@@ -171,6 +179,7 @@ namespace Anki
         0x8c, 0xe8,
         0x8d, 0x20,
       };
+#endif // #ifdef USE_QVGA_CAMERA ... #else
 
 /*      static CameraSpecification m_camSpecVGA = {
         BAYER_TO_Y,       // type
@@ -339,7 +348,7 @@ namespace Anki
           D_GPIO_PAD_LOCALDATA_LO   |
           D_GPIO_PAD_LOCAL_PIN_OUT
         },
-        
+
         {
           114, 114, ACTION_UPDATE_ALL,  // CAM1_MCLK
           PIN_LEVEL_LOW,
@@ -538,14 +547,26 @@ namespace Anki
         const u32 BYTES_PER_PIXEL = 1;
         const u32 REFERENCE_FREQUENCY_MHZ = 24;
         const u32 I2C_ADDRESS = (0x42 >> 1);
-        const u32 VGA_REG_COUNT = sizeof(m_OV7725_VGA) / (sizeof(short) * 2);
-        const u32 QVGA_REG_COUNT = 0;
         const u32 QQVGA_REG_COUNT = 0;
         const bool IS_ACTIVE_LOW = true;
+        
+#ifdef USE_QVGA_CAMERA
+        const u32 VGA_REG_COUNT = 0; //sizeof(m_OV7725_VGA) / (sizeof(short) * 2);
+        const u32 QVGA_REG_COUNT = sizeof(m_OV7725_QVGA) / (sizeof(short) * 2);
+        
+        CameraInit(&m_handle, CAMERA_FRONT, BAYER_TO_Y, BYTES_PER_PIXEL,
+            REFERENCE_FREQUENCY_MHZ, I2C_ADDRESS, &m_i2c, NULL,
+            VGA_REG_COUNT, m_OV7725_QVGA, QVGA_REG_COUNT, NULL,
+            QQVGA_REG_COUNT, RESET_PIN, IS_ACTIVE_LOW, m_camWriteProto);
+#else
+        const u32 VGA_REG_COUNT = sizeof(m_OV7725_VGA) / (sizeof(short) * 2);
+        const u32 QVGA_REG_COUNT = 0;
+        
         CameraInit(&m_handle, CAMERA_FRONT, BAYER_TO_Y, BYTES_PER_PIXEL,
             REFERENCE_FREQUENCY_MHZ, I2C_ADDRESS, &m_i2c, m_OV7725_VGA,
             VGA_REG_COUNT, NULL, QVGA_REG_COUNT, NULL, QQVGA_REG_COUNT,
             RESET_PIN, IS_ACTIVE_LOW, m_camWriteProto);
+#endif // #ifdef USE_QVGA_CAMERA ... #else
       }
     }
   }
