@@ -17,6 +17,16 @@ switch(command)
             name, msgID);
         return;
         
+                
+    case this.ROBOT_STATE_MESSAGE
+        % NOTE: packet(1:4) is the timestamp
+        newHeadAngle = this.Cast(packet(5:8), 'single');
+        this.setHeadAngle(newHeadAngle);
+        
+        this.StatusMessage(1, 'Updating head angle to: %.1f degrees\n', ...
+            newHeadAngle*180/pi);
+        return;
+        
     case this.HEAD_CALIBRATION
         
         %this.SetCalibration(packet, 'headCalibrationMatrix', this.trackingResolution);
@@ -47,17 +57,17 @@ switch(command)
             'calibration', struct('fc', double(f), 'cc', double(c), ...
             'kc', zeros(5,1), 'alpha_c', 0));  
         
-        this.setHeadAngle(-.251);
-        
         return
         
-    case this.SET_DOCKING_BLOCK
+    case this.SET_MARKER_TO_TRACK
         
-        this.dockingBlock = this.Cast(packet, 'uint16');
-        this.StatusMessage(1, 'Setting docking block to %d.\n', ...
-            this.dockingBlock);
+        this.markerToTrack = this.Cast(packet, 'uint8');
+        this.StatusMessage(1, 'Setting marker to track to block to: %s\n', ...
+            num2str(this.markerToTrack));
         
-        this.block = Block(this.dockingBlock, 1);
+        % TODO: instantiate block from markerToTrack? (really this should
+        % be on basestation)
+        this.block = Block(60);
         
         return;
         

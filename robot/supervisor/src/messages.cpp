@@ -306,6 +306,10 @@ namespace Anki {
         PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
       }
       
+      void ProcessRobotStateMessage(const RobotState& msg) {
+        PRINT("%s called unexpectedly on the Robot.\n", __PRETTY_FUNCTION__);
+      }
+      
       
       
 #pragma mark --- VisionSystem::Mailbox Template Implementations ---

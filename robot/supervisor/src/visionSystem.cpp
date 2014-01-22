@@ -301,7 +301,7 @@ namespace Anki {
         // this block type as well, so it can do template initialization on the
         // same frame where it sees the block, instead of needing a second
         // USBSendFrame call.
-        HAL::USBSendPacket(HAL::USB_VISION_COMMAND_SETDOCKBLOCK,
+        HAL::USBSendPacket(HAL::USB_VISION_COMMAND_SETTRACKMARKER,
                            trackingCode_.GetBits(),
                            MarkerCode::CODE_LENGTH_IN_BYTES);
 #endif
@@ -437,7 +437,8 @@ namespace Anki {
           // Still waiting, skip further vision processing below.
           return EXIT_SUCCESS;
         }
-#endif
+        
+#endif // USE_OFFBOARD_VISION
 
 #if USE_CAPTURE_IMAGES
         // TODO: assign in the proper place

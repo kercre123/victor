@@ -21,9 +21,9 @@ classdef CozmoVisionProcessor < handle
         MESSAGE_ID_DEFINITION    = char(sscanf('D0', '%2x'));
         HEAD_CALIBRATION         = char(sscanf('C1', '%2x'));
         DETECT_COMMAND           = char(sscanf('AB', '%2x'));
-        SET_DOCKING_BLOCK        = char(sscanf('BC', '%2x'));
+        SET_MARKER_TO_TRACK      = char(sscanf('BC', '%2x'));
         TRACK_COMMAND            = char(sscanf('CD', '%2x'));
-        MAT_ODOMETRY_COMMAND     = char(sscanf('DE', '%2x'));
+        ROBOT_STATE_MESSAGE      = char(sscanf('DE', '%2x'));
         DISPLAY_IMAGE_COMMAND    = char(sscanf('F0', '%2x'));
                     
         LIFT_DISTANCE = 34;  % in mm, forward from robot origin
@@ -49,7 +49,7 @@ classdef CozmoVisionProcessor < handle
         % LUT for enumerated message ID values 
         messageIDs;
         
-        dockingBlock;
+        markerToTrack;
         
         % Camera calibration information:
         headCam;
@@ -108,8 +108,12 @@ classdef CozmoVisionProcessor < handle
             if ~isa(data, 'uint8') && this.doEndianSwap
                data = swapbytes(data); 
             end
-                
+            try
             castedData = typecast(data, outputType);
+            catch
+                desktop
+                keyboard
+            end
             
             if ~strcmp(outputType, 'uint8') && this.doEndianSwap
                 castedData = swapbytes(castedData);
@@ -172,7 +176,7 @@ classdef CozmoVisionProcessor < handle
             
             this.desiredBufferSize = this.computeDesiredBufferLength(this.detectionResolution);
            
-            this.dockingBlock = 0;
+            this.markerToTrack = [];
                         
             % Set up Robot head camera geometry
             this.robotPose = Pose(-pi/2*[0 0 1], [0;0;CozmoVisionProcessor.WHEEL_RADIUS]);

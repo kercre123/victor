@@ -88,6 +88,19 @@ namespace Anki {
         if(ABS(angleError_) < ANGLE_TOLERANCE) {
           SetAngularVelocity(0.f);
           inPosition_ = true;
+          
+#if USE_OFFBOARD_VISION
+          // Keep offboard vision processor apprised of the current head angle for
+          // computing the docking error signal
+          {
+            Messages::RobotState stateMsg;
+            stateMsg.timestamp = HAL::GetTimeStamp();
+            stateMsg.headAngle = currentAngle_.ToFloat();
+            HAL::USBSendPacket(HAL::USB_VISION_COMMAND_ROBOTSTATE,
+                               &stateMsg, sizeof(Messages::RobotState));
+          }
+#endif
+          
         } else {
           SetAngularVelocity(Kp * angleError_.ToFloat());
           inPosition_ = false;

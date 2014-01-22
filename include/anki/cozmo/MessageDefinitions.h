@@ -38,6 +38,12 @@ ADD_MESSAGE_MEMBER(u8,  fooMember3)
 END_MESSAGE_DEFINITION(Foo)
 #endif 
 
+START_TIMESTAMPED_MESSAGE_DEFINITION(RobotState, 1)
+ADD_MESSAGE_MEMBER(f32, headAngle) // TODO: make fixed point
+// ADD_MESSAGE_MEMBER(f32, liftHeight) // TODO: make fixed point
+// wheel speeds? position estimate? ...
+END_MESSAGE_DEFINITION(RobotState)
+
 // SetMotion
 START_MESSAGE_DEFINITION(SetMotion, 1)
 ADD_MESSAGE_MEMBER(s16, speed_mmPerSec)      // Commanded speed in mm/sec

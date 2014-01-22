@@ -65,7 +65,8 @@ namespace Anki {
       void ProcessAbsLocalizationUpdateMessage(const AbsLocalizationUpdate&) {}
       
       void ProcessHeadCameraCalibrationMessage(const HeadCameraCalibration&) {}
-
+      
+      void ProcessRobotStateMessage(const RobotState& msg) {}
       
     } // namespace Messages
   } // namespace Cozmo
