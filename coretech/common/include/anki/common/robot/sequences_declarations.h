@@ -41,7 +41,7 @@ namespace Anki
       // Matlab equivalent: start:increment:end
       LinearSequence(const Type start, const Type increment, const Type end);
 
-      Array<Type> Evaluate(MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
+      Array<Type> Evaluate(MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false)) const;
       Result Evaluate(ArraySlice<Type> out) const;
 
       Type get_start() const;
@@ -92,11 +92,11 @@ namespace Anki
       // If xVector==true, evaluate xGridVector. If false, evaluate yGridVector
       // If isOutColumnMajor==true, then the output vector will be column-major(like Matlab)
       // The finax suffix 1 or 2 is for 1D or 2D output
-      Array<Type> EvaluateX1(bool isOutColumnMajor, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
-      Array<Type> EvaluateX2(MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
+      Array<Type> EvaluateX1(bool isOutColumnMajor, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false)) const;
+      Array<Type> EvaluateX2(MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false)) const;
 
-      Array<Type> EvaluateY1(bool isOutColumnMajor, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
-      Array<Type> EvaluateY2(MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false)) const;
+      Array<Type> EvaluateY1(bool isOutColumnMajor, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false)) const;
+      Array<Type> EvaluateY2(MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false)) const;
 
       Result EvaluateX1(bool isOutColumnMajor, ArraySlice<Type> out) const;
       Result EvaluateX2(ArraySlice<Type> out) const;

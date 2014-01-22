@@ -20,6 +20,13 @@ namespace Anki
     {
       AnkiAssert(flags.get_useBoundaryFillPatterns());
 
+      if(flags.get_isFullyAllocated()) {
+        AnkiConditionalErrorAndReturn((reinterpret_cast<size_t>(buffer)+MemoryStack::HEADER_LENGTH)%MEMORY_ALIGNMENT == 0,
+          "MemoryStack::MemoryStack", "If fully allocated, the %dth byte of the buffer must be %d byte aligned", MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT);
+
+        this->usedBytes = this->totalBytes;
+      }
+
       static s32 maxId = 0;
 
       this->id = maxId;
@@ -39,10 +46,15 @@ namespace Anki
       AnkiConditionalWarn(ms.totalBytes >= ms.usedBytes, "Anki.MemoryStack.MemoryStack", "Buffer is using more bytes than it has. Try running IsValid() to test for memory corruption.");
     }
 
-    void* MemoryStack::Allocate(s32 numBytesRequested, s32 *numBytesAllocated)
+    void* MemoryStack::Allocate(const s32 numBytesRequested)
     {
-      if(numBytesAllocated)
-        *numBytesAllocated = 0;
+      s32 numBytesAllocated = -1;
+      return MemoryStack::Allocate(numBytesRequested, numBytesAllocated);
+    }
+
+    void* MemoryStack::Allocate(s32 numBytesRequested, s32 &numBytesAllocated)
+    {
+      numBytesAllocated = 0;
 
       AnkiConditionalErrorAndReturnValue(numBytesRequested > 0, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested > 0");
       AnkiConditionalErrorAndReturnValue(numBytesRequested <= 0x3FFFFFFF, NULL, "Anki.MemoryStack.Allocate", "numBytesRequested <= 0x3FFFFFFF");
@@ -76,9 +88,7 @@ namespace Anki
 
       usedBytes += requestedBytes;
 
-      if(numBytesAllocated) {
-        *numBytesAllocated = numBytesRequestedRounded;
-      }
+      numBytesAllocated = numBytesRequestedRounded;
 
       if(flags.get_zeroAllocatedMemory())
         memset(segmentMemory, 0, numBytesRequestedRounded);
@@ -86,10 +96,15 @@ namespace Anki
       return segmentMemory;
     }
 
-    void* MemoryStack::Reallocate(void* memoryLocation, s32 numBytesRequested, s32 *numBytesAllocated)
+    void* MemoryStack::Reallocate(void* memoryLocation, s32 numBytesRequested)
     {
-      if(numBytesAllocated)
-        *numBytesAllocated = 0;
+      s32 numBytesAllocated = -1;
+      return MemoryStack::Reallocate(memoryLocation, numBytesRequested, numBytesAllocated);
+    }
+
+    void* MemoryStack::Reallocate(void* memoryLocation, s32 numBytesRequested, s32 &numBytesAllocated)
+    {
+      numBytesAllocated = 0;
 
       AnkiConditionalErrorAndReturnValue(memoryLocation == lastAllocatedMemory, NULL, "Anki.MemoryStack.Reallocate", "The requested memory is not at the end of the stack");
 
@@ -201,6 +216,38 @@ namespace Anki
       return buffer;
     }
 
+    void* MemoryStack::get_validBufferStart()
+    {
+      s32 firstValidIndex;
+      return this->get_validBufferStart(firstValidIndex);
+    }
+
+    const void* MemoryStack::get_validBufferStart() const
+    {
+      s32 firstValidIndex;
+      return this->get_validBufferStart(firstValidIndex);
+    }
+
+    void* MemoryStack::get_validBufferStart(s32 &firstValidIndex)
+    {
+      const size_t bufferSizeT = reinterpret_cast<size_t>(this->buffer);
+      firstValidIndex = static_cast<s32>( RoundUp<size_t>(bufferSizeT+MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH - bufferSizeT );
+
+      void * validStart = reinterpret_cast<char*>(this->buffer) + firstValidIndex;
+
+      return validStart;
+    }
+
+    const void* MemoryStack::get_validBufferStart(s32 &firstValidIndex) const
+    {
+      const size_t bufferSizeT = reinterpret_cast<size_t>(this->buffer);
+      firstValidIndex = static_cast<s32>( RoundUp<size_t>(bufferSizeT+MemoryStack::HEADER_LENGTH, MEMORY_ALIGNMENT) - MemoryStack::HEADER_LENGTH - bufferSizeT );
+
+      const void * validStart = reinterpret_cast<const char*>(this->buffer) + firstValidIndex;
+
+      return validStart;
+    }
+
     s32 MemoryStack::get_id() const
     {
       return id;
@@ -221,7 +268,14 @@ namespace Anki
 
     bool MemoryStackConstIterator::HasNext() const
     {
-      if(this->index < memory.get_usedBytes())
+      // TODO: These extra bytes are a bit of a hack for the SerializedBuffer case.
+      // I think index should match the used bytes exactly, but seems to be a bit short.
+      s32 extraBytes = MEMORY_ALIGNMENT;
+      if(this->memory.get_flags().get_useBoundaryFillPatterns()) {
+        extraBytes += MemoryStack::HEADER_LENGTH + MemoryStack::FOOTER_LENGTH;
+      }
+
+      if((this->index + extraBytes) < memory.get_usedBytes())
         return true;
       else
         return false;
@@ -265,6 +319,11 @@ namespace Anki
       return segmentToReturn;
     }
 
+    const MemoryStack& MemoryStackConstIterator::get_memory() const
+    {
+      return memory;
+    }
+
     MemoryStackIterator::MemoryStackIterator(MemoryStack &memory)
       : MemoryStackConstIterator(memory)
     {
@@ -277,6 +336,11 @@ namespace Anki
       const void * segment = MemoryStackConstIterator::GetNext(segmentLength);
 
       return const_cast<void*>(segment);
+    }
+
+    MemoryStack& MemoryStackIterator::get_memory()
+    {
+      return const_cast<MemoryStack&>(memory);
     }
   } // namespace Embedded
 } // namespace Anki

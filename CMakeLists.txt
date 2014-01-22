@@ -16,11 +16,8 @@ include_directories(
 	coretech/vision/include
 )
 
-add_subdirectory(basestation/src)
-
-#add_subdirectory(robot/supervisor/src)
-add_subdirectory(robot/simulator)
-#add_subdirectory(robot/hal)
+add_subdirectory(basestation)
+add_subdirectory(robot)
 
 #add_subdirectory(test)
 add_subdirectory(matlab/mex)

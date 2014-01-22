@@ -3,7 +3,7 @@ PROTO CozmoBot [
   field SFRotation rotation 0 1 0 0
   field SFString name "Cozmo"
   field SFFloat fieldOfViewDown 1.57
-  field SFFloat fieldOfViewHead 0.7854
+  field SFFloat fieldOfViewHead 0.92
   field SFBool useSphericalHeadCamera FALSE
   field SFFloat headAngle 0 
   field SFFloat headAngle_lowLimit -0.4363 # 25 degrees down
@@ -61,7 +61,10 @@ Supervisor {
        channel IS usbChannel
     }
     
-    
+    Gyro {
+      name "gyro"
+    }
+     
     Solid {
       translation -0.06 0.027 0
       children [
@@ -82,8 +85,7 @@ Supervisor {
               device RotationalMotor {
                 name "lift_motor"
               }
-              endPoint Gyro {
-                name "lift_gyro"
+              endPoint Solid {
                 translation 0.045 0 0
                 children [
                   HingeJoint {
@@ -100,15 +102,6 @@ Supervisor {
                       translation 0.05 0 0
                       children [
                       
-                        #DEF CAM_LIFT Camera {
-                        #  translation 0 0 -0.001
-                        #  name "cam_lift"
-                        #  width 320
-                        #  height 240
-                        #  near 0.001
-                        #  windowPosition 0.45339 0.0923077
-                        #  pixelSize 0.5
-                        #}
                         Connector {
                           translation 0.0025 0 0
                           rotation 0 1 0 3.14159
@@ -134,24 +127,6 @@ Supervisor {
                       size 0.095 0.005 0.001
                     }
                   }
-                  #Solid {
-                    #translation -0.036 0 0
-                    #children [
-                      #DEF LIFTBAR Shape {
-                        #geometry Box {
-                          #size 0.001 0.005 0.09
-                        #}
-                      #}
-                    #]
-                    #boundingObject USE LIFTBAR
-                  #}
-                  #Solid {
-                    #translation 0.036 0 0
-                    #children [
-                      #USE LIFTBAR
-                    #]
-                    #boundingObject USE LIFTBAR
-                  #}
                 ]
                 boundingObject USE LBottom
                 physics Physics {
@@ -245,7 +220,7 @@ Supervisor {
                   }
                 }
                 geometry Cylinder {
-                  height 0.02
+                  height 0.005
                   radius 0.02
                   subdivision 36
                 }
@@ -294,9 +269,8 @@ Supervisor {
         name "wheel_fr"
 	maxVelocity 30
       }
-      endPoint Gyro {
-        name "wheel_gyro_fr"
-        translation 0 0 0.03
+      endPoint Solid {
+        translation 0 0 0.0385
         rotation 1 0 0 1.5708
         children [
           USE WHEEL_BOX
@@ -318,9 +292,8 @@ Supervisor {
         name "wheel_fl"
 	maxVelocity 30
       }
-      endPoint Gyro {
-        name "wheel_gyro_fl"
-        translation 0 0 -0.03
+      endPoint Solid {
+        translation 0 0 -0.0385
         rotation 1 0 0 1.5708
         children [
           USE WHEEL_BOX
@@ -346,8 +319,7 @@ Supervisor {
       device RotationalMotor {
         name "motor_head_pitch"
       }
-      endPoint Gyro {
-        name "head_gyro"
+      endPoint Solid {
         rotation 0 1 0 0
         children [
           DEF CAM_HEAD Camera {

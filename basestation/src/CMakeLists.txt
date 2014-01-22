@@ -6,15 +6,17 @@ file(GLOB PUBLIC_HEADER_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/basestation/*.h")
 
 include_directories(${PROJECT_SOURCE_DIR}/basestation/src)
 
-add_library(Cozmo_Basestation 
-	${SOURCE_FILES} 
-	${PRIVATE_HEADER_FILES}
-	${PUBLIC_HEADER_FILES}
-	${COZMO_HEADER_FILES}
-)
+if(NOT WIN32)
+  add_library(Cozmo_Basestation 
+    ${SOURCE_FILES} 
+    ${PRIVATE_HEADER_FILES}
+    ${PUBLIC_HEADER_FILES}
+    ${COZMO_HEADER_FILES}
+  )
 
-target_link_libraries(Cozmo_Basestation 
-	CoreTech_Common_Basestation 
-	CoreTech_Vision_Basestation 
-	${ZLIB_LIBRARY}
-)
+  target_link_libraries(Cozmo_Basestation 
+    CoreTech_Common_Basestation 
+    CoreTech_Vision_Basestation 
+    ${ZLIB_LIBRARY}
+  )
+endif()

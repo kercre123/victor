@@ -1,4 +1,4 @@
-#include "anki/cozmo/messages.h"
+#include "anki/cozmo/basestation/messages.h"
 
 
 namespace Anki {
@@ -36,35 +36,35 @@ namespace Anki {
       
       // THese are dummy placeholders to avoid linker errors for now
       
-      void ProcessClearPathMessage(unsigned char const*) {}
+      void ProcessClearPathMessage(const ClearPath&) {}
       
-      void ProcessSetMotionMessage(unsigned char const*) {}
+      void ProcessSetMotionMessage(const SetMotion&) {}
       
-      void ProcessRobotAvailableMessage(unsigned char const*) {}
+      void ProcessRobotAvailableMessage(const RobotAvailable&) {}
       
-      void ProcessVisionMarkerMessage(unsigned char const *) {}
+      void ProcessVisionMarkerMessage(const VisionMarker&) {}
       
-      void ProcessMatMarkerObservedMessage(unsigned char const*) {}
+      void ProcessMatMarkerObservedMessage(const MatMarkerObserved&) {}
       
-      void ProcessRobotAddedToWorldMessage(unsigned char const*) {}
+      void ProcessRobotAddedToWorldMessage(const RobotAddedToWorld&) {}
       
-      void ProcessSetPathSegmentArcMessage(unsigned char const*) {}
+      void ProcessSetPathSegmentArcMessage(const SetPathSegmentArc&) {}
       
-      void ProcessDockingErrorSignalMessage(unsigned char const*) {}
+      void ProcessDockingErrorSignalMessage(const DockingErrorSignal&) {}
       
-      void ProcessSetPathSegmentLineMessage(unsigned char const*) {}
+      void ProcessSetPathSegmentLineMessage(const SetPathSegmentLine&) {}
       
-      void ProcessBlockMarkerObservedMessage(unsigned char const*) {}
+      void ProcessBlockMarkerObservedMessage(const BlockMarkerObserved&) {}
       
-      void ProcessTemplateInitializedMessage(unsigned char const*) {}
+      void ProcessTemplateInitializedMessage(const TemplateInitialized&) {}
       
-      void ProcessTotalBlocksDetectedMessage(unsigned char const*) {}
+      void ProcessTotalVisionMarkersSeenMessage(const TotalVisionMarkersSeen&) {}
       
-      void ProcessMatCameraCalibrationMessage(unsigned char const*) {}
+      void ProcessMatCameraCalibrationMessage(const MatCameraCalibration&) {}
       
-      void ProcessAbsLocalizationUpdateMessage(unsigned char const*) {}
+      void ProcessAbsLocalizationUpdateMessage(const AbsLocalizationUpdate&) {}
       
-      void ProcessHeadCameraCalibrationMessage(unsigned char const*) {}
+      void ProcessHeadCameraCalibrationMessage(const HeadCameraCalibration&) {}
 
       
     } // namespace Messages

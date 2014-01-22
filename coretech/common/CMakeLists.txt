@@ -12,4 +12,6 @@ add_subdirectory(robot/test)
 
 add_subdirectory(matlab/mex)
 
-add_subdirectory(tools/communication)
+if(WIN32)
+  add_subdirectory(tools/communication)
+endif()

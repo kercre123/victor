@@ -77,15 +77,18 @@ set(HEADER_FILES
 	${COZMO_INCLUDE_FILES}
 )
 
-add_executable(cozmo_docking_controller_test ${SOURCE_FILES} ${HEADER_FILES})
+if(NOT WIN32)
+  add_executable(cozmo_docking_controller_test ${SOURCE_FILES} ${HEADER_FILES})
 
-target_link_libraries(cozmo_docking_controller_test 
-	CppController
-	CoreTech_Common_Robot
-  CoreTech_Vision_Robot
-	mx 
-	eng
-)
+  target_link_libraries(cozmo_docking_controller_test 
+    CppController
+    CoreTech_Common_Robot
+    CoreTech_Vision_Robot
+    mx 
+    eng
+    ${ALL_EMBEDDED_LIBRARIES}
+  )
+endif()
 
 set_target_properties(
 	cozmo_docking_controller_test PROPERTIES

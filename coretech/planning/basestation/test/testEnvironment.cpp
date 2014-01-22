@@ -40,10 +40,7 @@ GTEST_TEST(TestEnvironment, LoadPrimFile)
 
   // TODO:(bn) open something saved in the test dir isntead, so we
   // know not to change or remove it
-  FILE* fin = fopen("../coretech/planning/matlab/unicycle_backonlystraight.mprim", "r");
-  EXPECT_TRUE(fin != NULL);
-  EXPECT_TRUE(env.ReadMotionPrimitives(fin));
-  fclose(fin);
+  EXPECT_TRUE(env.ReadMotionPrimitives("../coretech/planning/matlab/unicycle_backonlystraight_mprim.json"));
 
   EXPECT_FALSE(env.allMotionPrimitives_.empty());
   for(size_t i=0; i<env.allMotionPrimitives_.size(); ++i) {
@@ -57,10 +54,7 @@ GTEST_TEST(TestEnvironment, SuccessorsFromZero)
   // Assuming this is running from root/build......
   xythetaEnvironment env;
 
-  FILE* fin = fopen("../coretech/planning/matlab/unicycle_backonlystraight.mprim", "r");
-  EXPECT_TRUE(fin != NULL);
-  EXPECT_TRUE(env.ReadMotionPrimitives(fin));
-  fclose(fin);
+  EXPECT_TRUE(env.ReadMotionPrimitives("../coretech/planning/matlab/unicycle_backonlystraight_mprim.json"));
 
   State curr(0,0,0);
 
@@ -126,10 +120,7 @@ GTEST_TEST(TestEnvironment, SuccessorsFromNonzero)
   // Assuming this is running from root/build......
   xythetaEnvironment env;
 
-  FILE* fin = fopen("../coretech/planning/matlab/unicycle_backonlystraight.mprim", "r");
-  EXPECT_TRUE(fin != NULL);
-  EXPECT_TRUE(env.ReadMotionPrimitives(fin));
-  fclose(fin);
+  EXPECT_TRUE(env.ReadMotionPrimitives("../coretech/planning/matlab/unicycle_backonlystraight_mprim.json"));
 
   State curr(-14,107,15);
 

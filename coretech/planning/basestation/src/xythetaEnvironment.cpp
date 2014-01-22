@@ -1,5 +1,20 @@
+/**
+ * File: xythetaEnvironment.cpp
+ *
+ * Author: Brad Neuman
+ * Created: 2014-01-10
+ *
+ * Description: Environment for lattice planning in x,y,theta space
+ *
+ * Copyright: Anki, Inc. 2014
+ *
+ **/
+
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/planning/basestation/xythetaEnvironment.h"
+#include "json/json.h"
 #include "rectangle.h"
+#include <fstream>
 #include <iostream>
 #include <math.h>
 #include <stdio.h>
@@ -16,6 +31,19 @@ State::State(StateID sid)
   theta(xythetaEnvironment::GetThetaFromStateID(sid))
 {
 }
+
+bool State::Import(Json::Value& config)
+{
+  if(!JsonTools::GetValueOptional(config, "x", x) ||
+         !JsonTools::GetValueOptional(config, "y", y) ||
+         !JsonTools::GetValueOptional(config, "theta", theta)) {
+    printf("error: could not parse State\n");
+    JsonTools::PrintJson(config, 1);
+    return false;
+  }
+  return true;
+}
+
 
 StateID State::GetStateID() const
 {
@@ -36,6 +64,18 @@ bool State::operator==(const State& other) const
 std::ostream& operator<<(std::ostream& out, const State& state)
 {
   return out<<'('<<(int)state.x<<','<<(int)state.y<<','<<(int)state.theta<<')';
+}
+
+bool State_c::Import(Json::Value& config)
+{
+  if(!JsonTools::GetValueOptional(config, "x_mm", x_mm) ||
+         !JsonTools::GetValueOptional(config, "y_mm", y_mm) ||
+         !JsonTools::GetValueOptional(config, "theta_rad", theta)) {
+    printf("error: could not parse State_c\n");
+    JsonTools::PrintJson(config, 1);
+    return false;
+  }
+  return true;
 }
 
 
@@ -70,8 +110,8 @@ void SuccessorIterator::Next()
     for(long pointIdx = endPoints-1; pointIdx >= 0 && !collision; --pointIdx) {
       for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
         float x,y;
-        x = start_c_.x_cm + prim->intermediatePositions[pointIdx].x_cm;
-        y = start_c_.y_cm + prim->intermediatePositions[pointIdx].y_cm;
+        x = start_c_.x_mm + prim->intermediatePositions[pointIdx].x_mm;
+        y = start_c_.y_mm + prim->intermediatePositions[pointIdx].y_mm;
         if(obstacles_[obsIdx]->IsPointInside(x, y)) {
           collision = true;
           break;
@@ -119,188 +159,104 @@ xythetaEnvironment::xythetaEnvironment(const char* mprimFilename, const char* ma
   int dTemp;
   int totalNumofActions = 0;
   */
-  
-  FILE* fMotPrims = fopen(mprimFilename, "r");
-  ReadMotionPrimitives(fMotPrims);
-  fclose(fMotPrims);
 
-  if(mapFile != NULL) {
-    FILE* fMap = fopen(mapFile, "r");
-    ReadEnvironment(fMap);
-    fclose(fMap);
+  if(!ReadMotionPrimitives(mprimFilename)) {
+    if(mapFile != NULL) {
+      FILE* fMap = fopen(mapFile, "r");
+      ReadEnvironment(fMap);
+      fclose(fMap);
+    }
+
+    numAngles_ = 1<<THETA_BITS;
+    radiansPerAngle_ = 2*M_PI/numAngles_;
   }
-
-  numAngles_ = 1<<THETA_BITS;
-  radiansPerAngle_ = 2*M_PI/numAngles_;
+  else {
+    printf("error: could not parse motion primitives!\n");
+  }
 }
 
-bool xythetaEnvironment::ReadMotionPrimitives(FILE* fMotPrims)
+bool xythetaEnvironment::ReadMotionPrimitives(const char* mprimFilename)
 {
-  char sTemp[1024], sExpected[1024];
-  float fTemp;
-  int dTemp;
-  int totalNumofActions = 0;
+  Json::Reader reader;
+  Json::Value mprimTree;
 
-  printf("Reading in motion primitives...\n");
+  ifstream mprimStream(mprimFilename);
 
-  //read in the resolution
-  strcpy(sExpected, "resolution_m:");
-  if (fscanf(fMotPrims, "%s", sTemp) == 0) return false;
-  if (strcmp(sTemp, sExpected) != 0) {
-    printf("ERROR: expected %s but got %s\n", sExpected, sTemp);
-    return false;
+  if(!reader.parse(mprimStream, mprimTree)) {
+    cout<<"error: could not parse json form file '"<<mprimFilename
+        <<"'\n" << reader.getFormattedErrorMessages()<<endl;
   }
-  if (fscanf(fMotPrims, "%f", &fTemp) == 0) return false;
-  resolution_cm_ = fTemp;
-  // if (fabs(fTemp - EnvNAVXYTHETALATCfg.cellsize_m) > ERR_EPS) {
-  //   printf("ERROR: invalid resolution %f (instead of %f) in the dynamics file\n", fTemp,
-  //                  EnvNAVXYTHETALATCfg.cellsize_m);
-  //   return false;
-  // }
+  
+  return ParseMotionPrims(mprimTree);
+}
 
-  //read in the angular resolution
-  strcpy(sExpected, "numberofangles:");
-  if (fscanf(fMotPrims, "%s", sTemp) == 0) return false;
-  if (strcmp(sTemp, sExpected) != 0) {
-    printf("ERROR: expected %s but got %s\n", sExpected, sTemp);
-    return false;
-  }
-  if (fscanf(fMotPrims, "%d", &dTemp) == 0) return false;
-  // if (dTemp != EnvNAVXYTHETALATCfg.NumThetaDirs) {
-  //   printf("ERROR: invalid angular resolution %d angles (instead of %d angles) in the motion primitives file\n",
-  //                  dTemp, EnvNAVXYTHETALATCfg.NumThetaDirs);
-  //   return false;
-  // }
-
-  //read in the total number of actions
-  strcpy(sExpected, "totalnumberofprimitives:");
-  if (fscanf(fMotPrims, "%s", sTemp) == 0) return false;
-  if (strcmp(sTemp, sExpected) != 0) {
-    printf("ERROR: expected %s but got %s\n", sExpected, sTemp);
-    return false;
-  }
-  if (fscanf(fMotPrims, "%d", &totalNumofActions) == 0) {
+bool xythetaEnvironment::ParseMotionPrims(Json::Value& config)
+{
+  if(!JsonTools::GetValueOptional(config, "resolution_mm", resolution_mm_) ||
+         !JsonTools::GetValueOptional(config, "num_angles", numAngles_)) {
+    printf("error: could not find key 'resolution_mm' or 'num_angles' in motion primitives\n");
+    JsonTools::PrintJson(config, 1);
     return false;
   }
 
-  for (int i = 0; i < totalNumofActions; i++) {
-    MotionPrimitive motprim;
-
-    if (ReadinMotionPrimitive(motprim, fMotPrims) == false) return false;
-
-    // TODO:(bn) pre-allocate
-    if(allMotionPrimitives_.size() <= motprim.startTheta)
-      allMotionPrimitives_.resize(motprim.startTheta+1);
-
-    if(allMotionPrimitives_[motprim.startTheta].size() <= motprim.id)
-      allMotionPrimitives_[motprim.startTheta].resize(motprim.id+1);
-
-    allMotionPrimitives_[motprim.startTheta][motprim.id] = motprim;
+  // parse through each starting angle
+  if(config["angles"].size() != numAngles_) {
+    printf("error: could not find key 'angles' in motion primitives\n");
+    JsonTools::PrintJson(config, 1);
+    return false;
   }
 
-  // TODO:(bn) yeah
-  printf("done! have %lu angles and first one has %lu prims\n", allMotionPrimitives_.size(), allMotionPrimitives_[0].size());
+  allMotionPrimitives_.resize(numAngles_);
+
+  unsigned int numPrims = 0;
+
+  for(unsigned int angle = 0; angle < numAngles_; ++angle) {
+    Json::Value prims = config["angles"][angle]["prims"];
+    for(unsigned int i = 0; i < prims.size(); ++i) {
+      MotionPrimitive p;
+      if(!p.Import(prims[i], angle)) {
+        printf("error: failed to import motion primitive\n");
+        return false;
+      }
+      allMotionPrimitives_[angle].push_back(p);
+      numPrims++;
+    }
+  }
+
+  printf("adeded %d motion primitives\n", numPrims);
 
   return true;
 }
 
-bool xythetaEnvironment::ReadinMotionPrimitive(MotionPrimitive& prim, FILE* fIn)
+bool MotionPrimitive::Import(Json::Value& config, StateTheta startingAngle)
 {
-  char sTemp[1024];
-  int dTemp;
-  char sExpected[1024];
-  int numofIntermPoses;
+  startTheta = startingAngle;
 
-  //read in actionID
-  strcpy(sExpected, "primID:");
-  if (fscanf(fIn, "%s", sTemp) == 0) return false;
-  if (strcmp(sTemp, sExpected) != 0) {
-    printf("ERROR: expected %s but got %s\n", sExpected, sTemp);
-    return false;
-  }
-  if (fscanf(fIn, "%d", &prim.id) != 1) return false;
-
-  //read in start angle
-  strcpy(sExpected, "startangle_c:");
-  if (fscanf(fIn, "%s", sTemp) == 0) return false;
-  if (strcmp(sTemp, sExpected) != 0) {
-    printf("ERROR: expected %s but got %s\n", sExpected, sTemp);
-    return false;
-  }
-  if (fscanf(fIn, "%d", &dTemp) == 0) {
-    printf("ERROR reading startangle\n");
-    return false;
-  }
-  prim.startTheta = dTemp;
-
-  //read in end pose
-  strcpy(sExpected, "endpose_c:");
-  if (fscanf(fIn, "%s", sTemp) == 0) return false;
-  if (strcmp(sTemp, sExpected) != 0) {
-    printf("ERROR: expected %s but got %s\n", sExpected, sTemp);
+  if(!JsonTools::GetValueOptional(config, "prim_id", id)) {
+    printf("error: missing key 'prim_id'\n");
+    JsonTools::PrintJson(config, 1);
     return false;
   }
 
-  int x, y, theta;
-  if (fscanf(fIn, "%d %d %d", &x, &y, &theta) != 3) {
-    printf("ERROR: failed to read in endsearchpose\n");
+  if(!endStateOffset.Import(config["end_pose"])) {
+    printf("error: could not read 'end_pose'\n");
     return false;
   }
-  prim.endStateOffset.x = x;
-  prim.endStateOffset.y = y;
-  prim.endStateOffset.theta = theta;
 
-  //read in action cost
-  strcpy(sExpected, "additionalactioncostmult:");
-  if (fscanf(fIn, "%s", sTemp) == 0) return false;
-  if (strcmp(sTemp, sExpected) != 0) {
-    printf("ERROR: expected %s but got %s\n", sExpected, sTemp);
-    return false;
-  }
-  if (fscanf(fIn, "%d", &dTemp) != 1) return false;
-  prim.cost = dTemp;
+  name = config.get("name", "").asString();
 
-  //read in intermediate poses
-  strcpy(sExpected, "intermediateposes:");
-  if (fscanf(fIn, "%s", sTemp) == 0) return false;
-  if (strcmp(sTemp, sExpected) != 0) {
-    printf("ERROR: expected %s but got %s\n", sExpected, sTemp);
-    return false;
-  }
-  if (fscanf(fIn, "%d", &numofIntermPoses) != 1) return false;
-  //all intermposes should be with respect to 0,0 as starting pose since it will be added later and should be done
-  //after the action is rotated by initial orientation
-  for (int i = 0; i < numofIntermPoses; i++) {
-    State_c pose;
-    if(fscanf(fIn, "%f %f %f", &pose.x_cm, &pose.y_cm, &pose.theta) != 3) {
-      printf("ERROR: failed to read in intermediate poses\n");
-      return false;
+  Cost costFactor = config.get("extra_cost_factor", 1.0f).asFloat();
+  cost = 1.0 * costFactor;  // TODO:(bn) cost!
+
+  unsigned int numIntermediatePoses = config["intermediate_poses"].size();
+  for(unsigned int i=0; i<numIntermediatePoses; ++i) {
+    State_c s;
+    if(!s.Import(config["intermediate_poses"][i])) {
+      printf("error: could not read 'intermediate_poses'[%d]\n", i);
+        return false;
     }
-    prim.intermediatePositions.push_back(pose);
+    intermediatePositions.push_back(s);
   }
-
-  // //check that the last pose corresponds correctly to the last pose
-  // sbpl_xy_theta_pt_t sourcepose;
-  // sourcepose.x = DISCXY2CONT(0, EnvNAVXYTHETALATCfg.cellsize_m);
-  // sourcepose.y = DISCXY2CONT(0, EnvNAVXYTHETALATCfg.cellsize_m);
-  // sourcepose.theta = DiscTheta2Cont(pMotPrim->starttheta_c, EnvNAVXYTHETALATCfg.NumThetaDirs);
-  // double mp_endx_m = sourcepose.x + pMotPrim->intermptV[pMotPrim->intermptV.size() - 1].x;
-  // double mp_endy_m = sourcepose.y + pMotPrim->intermptV[pMotPrim->intermptV.size() - 1].y;
-  // double mp_endtheta_rad = pMotPrim->intermptV[pMotPrim->intermptV.size() - 1].theta;
-  // int endx_c = CONTXY2DISC(mp_endx_m, EnvNAVXYTHETALATCfg.cellsize_m);
-  // int endy_c = CONTXY2DISC(mp_endy_m, EnvNAVXYTHETALATCfg.cellsize_m);
-  // int endtheta_c = ContTheta2Disc(mp_endtheta_rad, EnvNAVXYTHETALATCfg.NumThetaDirs);
-  // if (endx_c != pMotPrim->endcell.x || endy_c != pMotPrim->endcell.y || endtheta_c != pMotPrim->endcell.theta) {
-  //   printf( "ERROR: incorrect primitive %d with startangle=%d "
-  //                   "last interm point %f %f %f does not match end pose %d %d %d\n",
-  //                   pMotPrim->motprimID, pMotPrim->starttheta_c,
-  //                   pMotPrim->intermptV[pMotPrim->intermptV.size() - 1].x,
-  //                   pMotPrim->intermptV[pMotPrim->intermptV.size() - 1].y,
-  //                   pMotPrim->intermptV[pMotPrim->intermptV.size() - 1].theta,
-  //                   pMotPrim->endcell.x, pMotPrim->endcell.y,
-  //                   pMotPrim->endcell.theta);
-  //   return false;
-  // }
 
   return true;
 }
@@ -332,7 +288,7 @@ void xythetaEnvironment::ConvertToXYPlan(const xythetaPlan& plan, std::vector<St
   // TODO:(bn) replace theta with radians? maybe just cast it here
 
   for(size_t i=0; i<plan.actions_.size(); ++i) {
-    // printf("curr = (%f, %f, %f [%d])\n", curr_c.x_cm, curr_c.y_cm, curr_c.theta, currTheta);
+    // printf("curr = (%f, %f, %f [%d])\n", curr_c.x_mm, curr_c.y_mm, curr_c.theta, currTheta);
 
     if(currTheta >= allMotionPrimitives_.size() || plan.actions_[i] >= allMotionPrimitives_[currTheta].size()) {
       printf("ERROR: can't look up prim for angle %d and action id %d\n", currTheta, plan.actions_[i]);
@@ -342,13 +298,13 @@ void xythetaEnvironment::ConvertToXYPlan(const xythetaPlan& plan, std::vector<St
 
       const MotionPrimitive* prim = &allMotionPrimitives_[currTheta][plan.actions_[i]];
       for(size_t j=0; j<prim->intermediatePositions.size(); ++j) {
-        float x = curr_c.x_cm + prim->intermediatePositions[j].x_cm;
-        float y = curr_c.y_cm + prim->intermediatePositions[j].y_cm;
+        float x = curr_c.x_mm + prim->intermediatePositions[j].x_mm;
+        float y = curr_c.y_mm + prim->intermediatePositions[j].y_mm;
         float theta = prim->intermediatePositions[j].theta;
 
         // printf("  (%+5f, %+5f, %+5f) -> (%+5f, %+5f, %+5f)\n",
-        //            prim->intermediatePositions[j].x_cm,
-        //            prim->intermediatePositions[j].y_cm,
+        //            prim->intermediatePositions[j].x_mm,
+        //            prim->intermediatePositions[j].y_mm,
         //            prim->intermediatePositions[j].theta,
         //            x,
         //            y,

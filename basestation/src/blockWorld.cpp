@@ -1,8 +1,8 @@
 
-#include "anki/cozmo/messages.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
+#include "anki/cozmo/basestation/messages.h"
 #include "anki/cozmo/basestation/robot.h"
 
 namespace Anki

@@ -16,9 +16,14 @@ def addSources(dir):
   return sources
 
 TARGET = 'cozmo'
+USE_LE_COMPILER_TOOLS = False
 
 MV_SOC_PLATFORM = 'myriad1'
-GCC_VERSION = '4.4.2-LE'
+if USE_LE_COMPILER_TOOLS:
+  GCC_VERSION = '4.4.2-LE'
+else:
+  GCC_VERSION = '4.4.2-mingw'
+  
 MV_TOOLS_VERSION = '00.50.39.2'
 
 LEON_SOURCE = []
@@ -30,11 +35,10 @@ LEON_SOURCE += addSources('../coretech/messaging/robot/src')
 LEON_SOURCE += addSources('../coretech/common/robot/src')
 LEON_SOURCE += addSources('../coretech/common/shared/src')
 
+SHAVES_TO_USE = [0] # Can be any set of numbers from 0-7 for myriad1
 SHAVE_SOURCE = []
 SHAVE_SOURCE += addSources('../coretech/common/robot/src/shave')
 SHAVE_SOURCE += addSources('../coretech/vision/robot/src/shave')
-
-SHAVES_TO_USE = [0] # Can be any set of numbers from 0-7 for myriad1
 
 MV_TOOLS_DIR = os.environ.get('MV_TOOLS_DIR')
 
@@ -88,47 +92,51 @@ LEON_ASM_C_CXX_OPT = (
   '-I' + MV_COMMON_BASE + 'libc/leon/include '
   '-I' + LIBC + 'include '
   '-I' + CIF_GENERIC + ' '
-  '-O2 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 '
-  # TODO: Maybe remove some of these later
-  '-Wextra -fno-inline-small-functions -mbig-endian --sysroot=. -fno-inline-functions-called-once -DDRAM_SIZE_MB=64 '
+  '-O2 -mcpu=v8 -ffunction-sections -fno-common -fdata-sections -fno-builtin-isinff -gdwarf-2 -g3 '  
 )
 
-LEON_C_OR_ASM_ONLY_OPT = (
-  '-Werror-implicit-function-declaration '
-)
+LEON_C_OR_ASM_ONLY_OPT = (' ')
+
+if USE_LE_COMPILER_TOOLS:
+  # TODO: Maybe remove some of these later
+  LEON_ASM_C_CXX_OPT.append('-Wextra -fno-inline-small-functions -mbig-endian --sysroot=. -fno-inline-functions-called-once -DDRAM_SIZE_MB=64 ')
+  LEON_C_OR_ASM_ONLY_OPT = (
+    '-Werror-implicit-function-declaration '
+  )
 
 LEON_CXX_ONLY_OPT = (
   '-std=c++0x '
 )
 
-SHAVE_INCLUDES = (
-  '-I ../include '
-  '-I ../coretech/common/include '
-  '-I ../coretech/vision/include '
-  '-I ' + MV_TOOLS_DIR + MV_TOOLS_VERSION + '/common/moviCompile/include '
-  '-I ' + MV_COMMON_BASE + '/swCommon/shave_code/' + MV_SOC_PLATFORM + '/include '
-  '-I ' + MV_COMMON_BASE + '/shared/include '
-)
+if USE_LE_COMPILER_TOOLS:
+  SHAVE_INCLUDES = (
+    '-I ../include '
+    '-I ../coretech/common/include '
+    '-I ../coretech/vision/include '
+    '-I ' + MV_TOOLS_DIR + MV_TOOLS_VERSION + '/common/moviCompile/include '
+    '-I ' + MV_COMMON_BASE + '/swCommon/shave_code/' + MV_SOC_PLATFORM + '/include '
+    '-I ' + MV_COMMON_BASE + '/shared/include '
+  )
 
-SHAVE_MOVICOMPILE_OPT = (
-  '-target-cpu ' + MV_SOC_PLATFORM + ' '
-  '-S -O2 -ffunction-sections -globalstack -fno-inline-functions '
-  + SHAVE_INCLUDES +
-  '-D' + MV_SOC_PLATFORM.upper() + ' '
-  '-DROBOT_HARDWARE '
-)
+  SHAVE_MOVICOMPILE_OPT = (
+    '-target-cpu ' + MV_SOC_PLATFORM + ' '
+    '-S -O2 -ffunction-sections -globalstack -fno-inline-functions '
+    + SHAVE_INCLUDES +
+    '-D' + MV_SOC_PLATFORM.upper() + ' '
+    '-DROBOT_HARDWARE '
+  )
 
-SHAVE_MOVIASM_OPT = (
-  '-cv:' + MV_SOC_PLATFORM + ' '
-  '-a '
-  + SHAVE_INCLUDES.replace('-I','-i:').replace('-i: ', '-i:') +
-  '-i:' + MV_COMMON_BASE + '/swCommon/shave_code/' + MV_SOC_PLATFORM + '/asm ' # TODO: Why is this line included?
-  '-elf '
-)
+  SHAVE_MOVIASM_OPT = (
+    '-cv:' + MV_SOC_PLATFORM + ' '
+    '-a '
+    + SHAVE_INCLUDES.replace('-I','-i:').replace('-i: ', '-i:') +
+    '-i:' + MV_COMMON_BASE + '/swCommon/shave_code/' + MV_SOC_PLATFORM + '/asm ' # TODO: Why is this line included?
+    '-elf '
+  )
 
-SHAVE_MVLIB_LD_OPT = (
-  '-r -EB '
-)
+  SHAVE_MVLIB_LD_OPT = (
+    '-r -EB '
+  )
 
 OUTPUT = 'build/'
 
@@ -163,8 +171,11 @@ MVCONV = PLATFORM + 'bin/moviConvert'
 
 LINKER_SCRIPT = 'ld/custom.ldscript'
 LDOPT = (
-  '-EB -O9 -t --gc-sections -M -warn-common -L ld -T ' + LINKER_SCRIPT + ' '
+  '-O9 -t --gc-sections -M -warn-common -L ld -T ' + LINKER_SCRIPT + ' '
 )
+
+if USE_LE_COMPILER_TOOLS:
+  LDOPT.append('-EB ')
 
 leonSrcToObj = { }
 shaveSrcToObj = { }
@@ -341,9 +352,8 @@ if __name__ == '__main__':
   isRun = False
   isFlash = False
   isNoisy = False
-  emulateShave = False
+  emulateShave = True
   quitDebuggerOnCompletion = False
-  isCaptureImages = False
 
   # Check if the Movidius tools can be found
   if any((os.path.isfile(file.strip()) or os.path.isfile(file.strip()+'.exe') for file in [CC, CXX, LD, MVCONV])) == False:
@@ -379,12 +389,17 @@ if __name__ == '__main__':
       isNoisy = True
     elif arg == 'emulateShave':
       emulateShave = True
+    elif arg == 'realShave':
+      if USE_LE_COMPILER_TOOLS:
+        print('Cannot use SHAVE with the non-little-endian compiler tools')
+        sys.exit(-1);
+        
+      emulateShave = False
     elif arg == 'quit':
       quitDebuggerOnCompletion = True
     elif arg == 'capture-images':
-      isCaptureImages = True
       target = 'capture-images'
-      LEON_ASM_C_CXX_OPT += '-DUSE_OFFBOARD_VISION=1'
+      LEON_ASM_C_CXX_OPT += '-DUSE_OFFBOARD_VISION=0 -DUSE_CAPTURE_IMAGES '
     else:
       print 'Invalid argument: ' + arg
       sys.exit(1)

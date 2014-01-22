@@ -12,25 +12,24 @@ file(GLOB SOURCE_FILES_TERMINAL
   serial.cpp
 )
 
-file(GLOB HEADER_FILES 
+file(GLOB HEADER_FILES
 	serial.h
   threadSafeQueue.h
+  C:/Anki/products-cozmo/basestation/src/messageDefMacros.h
 )
 
-add_executable(run_pc_saveVideo 
-	${SOURCE_FILES_SAVE_VIDEO} 
+add_executable(run_pc_saveVideo
+	${SOURCE_FILES_SAVE_VIDEO}
 	${HEADER_FILES})
 
-target_link_libraries(run_pc_saveVideo 
-	CoreTech_Common_Robot 
-	gtest ${OPENCV_LIBS} 
-	${MATLAB_ENG_LIBRARY} ${MATLAB_MX_LIBRARY} ${ZLIB_LIBRARY})
+target_link_libraries(run_pc_saveVideo
+	CoreTech_Common_Robot
+	${ALL_EMBEDDED_LIBRARIES})
 
-add_executable(run_pc_terminal 
-	${SOURCE_FILES_TERMINAL} 
+add_executable(run_pc_terminal
+	${SOURCE_FILES_TERMINAL}
 	${HEADER_FILES})
 
-target_link_libraries(run_pc_terminal 
-	CoreTech_Common_Robot 
-	gtest ${OPENCV_LIBS} 
-	${MATLAB_ENG_LIBRARY} ${MATLAB_MX_LIBRARY} ${ZLIB_LIBRARY})
+target_link_libraries(run_pc_terminal
+	CoreTech_Common_Robot
+	${ALL_EMBEDDED_LIBRARIES})

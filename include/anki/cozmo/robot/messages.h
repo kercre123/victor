@@ -19,53 +19,14 @@
  * Copyright: Anki, Inc. 2013
  **/
 
-#ifndef COZMO_MSG_PROTOCOL_H
-#define COZMO_MSG_PROTOCOL_H
+#ifndef COZMO_MESSAGE_ROBOT_H
+#define COZMO_MESSAGE_ROBOT_H
 
 #include "anki/common/types.h"
-
-
-// Basestation defines
-#define MSG_FIRST_DATA_BYTE_IDX_BASESTATION 2
-
-// Expected message receive latency
-// It is assumed that this value does not fluctuate greatly.
-// The more inaccurate this value is, the more invalid our
-// handling of messages will be.
-#define MSG_RECEIVE_LATENCY_SEC 0.03
-
-// The effective latency of vehicle messages for basestation modelling purposes
-// This is twice the MSG_RECEIVE_LATENCY_SEC so that the basestation maintains a model
-// of the system one message cycle latency in the future. This way, commanded actions are applied
-// at the time they are expected in the physical world.
-#define BASESTATION_MODEL_LATENCY_SEC (2*MSG_RECEIVE_LATENCY_SEC)
-
-
-////////// Simulator comms //////////
-
-// TODO: are all these still used and should they be defined elsewhere?
-
-// Channel number used by CozmoWorldComm Webots receiver
-// for robot messages bound for the basestation.
-#define BASESTATION_SIM_COMM_CHANNEL 100
-
-// Port on which CozmoWorldComms is listening for a connection from basestation.
-#define COZMO_WORLD_LISTEN_PORT "5555"
-
-////////// End Simulator comms //////////
 
 namespace Anki {
   namespace Cozmo {
     namespace Messages {
-
-      // Packet headers/footers:
-      
-      // TODO: Do we need this?  Only used in simulation I think? (Add #ifdef SIMULATOR?)
-      const u8 RADIO_PACKET_HEADER[2] = {0xBE, 0xEF};
-
-      const u8 USB_PACKET_HEADER[4] = {0xBE, 0xEF, 0xF0, 0xFF}; // BEEFF0FF
-      const u8 USB_PACKET_FOOTER[4] = {0xFF, 0x0F, 0xFE, 0xEB}; // FF0FFEEB
-      
       
       // 1. Initial include just defines the definition modes for use below
 #include "anki/cozmo/MessageDefinitions.h"
@@ -108,5 +69,5 @@ namespace Anki {
 } // namespace Anki
 
 
-#endif  // #ifndef COZMO_MSG_PROTOCOL
+#endif  // #ifndef COZMO_MESSAGE_ROBOT_H
 

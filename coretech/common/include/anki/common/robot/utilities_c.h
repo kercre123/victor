@@ -55,6 +55,12 @@ For internal use only. No part of this code may be used without a signed non-dis
 extern "C" {
 #endif
 
+#define SwapEndianU32(value) \
+  ((((u32)((value) & 0x000000FF)) << 24) | \
+  ( ((u32)((value) & 0x0000FF00)) <<  8) | \
+  ( ((u32)((value) & 0x00FF0000)) >>  8) | \
+  ( ((u32)((value) & 0xFF000000)) >> 24))
+
   f32 Roundf(const f32 number);
   f64 Round(const f64 number);
 
@@ -90,8 +96,9 @@ extern "C" {
 
   // Data is the data to compute the CRC code of
   // dataLength is the number of bytes of data
-  u32 ComputeCRC32_littleEndian(const void * data, const s32 dataLength);
-  u32 ComputeCRC32_bigEndian(const void * data, const s32 dataLength);
+  // Use initialCRC=0xFFFFFFFF for the first pass
+  u32 ComputeCRC32_littleEndian(const void * data, const s32 dataLength, const u32 initialCRC);
+  u32 ComputeCRC32_bigEndian(const void * data, const s32 dataLength, const u32 initialCRC);
 
 #ifdef __cplusplus
 }

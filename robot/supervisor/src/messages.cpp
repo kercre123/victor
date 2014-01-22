@@ -1,4 +1,4 @@
-#include "anki/cozmo/messages.h"
+#include "anki/cozmo/robot/messages.h"
 
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/localization.h"
@@ -268,6 +268,10 @@ namespace Anki {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
+      void ProcessMatMarkerObservedMessage(const MatMarkerObserved& msg) {
+        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
+      }
+      
       void ProcessClearPathMessage(const ClearPath& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
@@ -277,10 +281,6 @@ namespace Anki {
       }
       
       void ProcessRobotAvailableMessage(const RobotAvailable& msg) {
-        PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
-      }
-      
-      void ProcessMatMarkerObservedMessage(const MatMarkerObserved& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       

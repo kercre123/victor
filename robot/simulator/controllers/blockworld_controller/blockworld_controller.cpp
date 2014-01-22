@@ -16,12 +16,11 @@
 #include "anki/common/basestation/math/pose.h"
 
 #include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/messages.h"
 #include "anki/cozmo/basestation/robot.h"
 //#include "anki/messaging/basestation/messagingInterface.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
-
-#include "anki/cozmo/messages.h"
 
 webots::Supervisor commsController;
 
@@ -304,8 +303,8 @@ int processPacket(const unsigned char *data, const int dataSize,
   
   if(dataSize > 4) {
     
-    if(data[0] == Messages::RADIO_PACKET_HEADER[0] &&
-       data[1] == Messages::RADIO_PACKET_HEADER[1] &&
+    if(data[0] == RADIO_PACKET_HEADER[0] &&
+       data[1] == RADIO_PACKET_HEADER[1] &&
        data[2] == i_robot+1)
     {
       //fprintf(stdout, "Valid 0xBEEF message header from robot %d received.\n", i_robot+1);

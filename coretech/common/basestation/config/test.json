@@ -18,6 +18,12 @@
     ],
     "otherDict": {
       "val": "the value is this string"
+    },
+    "imporatantKeys": {
+      "key1": 5678,
+      "key2": {
+        "thing": "stuff"
+      }
     }
   }
 }

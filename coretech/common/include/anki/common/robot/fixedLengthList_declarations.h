@@ -26,10 +26,10 @@ namespace Anki
       FixedLengthList();
 
       // Constructor for a FixedLengthList, pointing to user-allocated data.
-      FixedLengthList(s32 maximumSize, void * data, s32 dataLength, const Flags::Buffer flags=Flags::Buffer(true,false));
+      FixedLengthList(s32 maximumSize, void * data, s32 dataLength, const Flags::Buffer flags=Flags::Buffer(true,false,false));
 
       // Constructor for a FixedLengthList, pointing to user-allocated MemoryStack
-      FixedLengthList(s32 maximumSize, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false));
+      FixedLengthList(s32 maximumSize, MemoryStack &memory, const Flags::Buffer flags=Flags::Buffer(true,false,false));
 
       bool IsValid() const;
 

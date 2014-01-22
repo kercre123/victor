@@ -571,25 +571,27 @@ void InitializeCRC32Table()
 #endif // #ifdef REINITIALZE_CRC32_TABLE
 
 // Based off Hacker's delight, 2nd edition
-u32 ComputeCRC32_littleEndian(const void * data, const s32 dataLength)
+u32 ComputeCRC32_littleEndian(const void * data, const s32 dataLength, const u32 initialCRC)
 {
   s32 i = 0;
-  u32 crc = 0xFFFFFFFF;
+  u32 crc = initialCRC;
 
   for(i=0; i<dataLength; i++) {
     const s32 index = i;
     const u32 byte = ((u8*)data)[index];
     //printf("%d\n", byte);
     crc = (crc >> 8) ^ crc32Table[(crc ^ byte) & 0xFF];
+    //printf("%d (%d) = 0x%x\n", i, byte, crc);
   }
 
-  return ~crc;
+  // Technically, this should return ~crc, but that would make it wierd to chain multiple calls of this function
+  return crc;
 }
 
-u32 ComputeCRC32_bigEndian(const void * data, const s32 dataLength)
+u32 ComputeCRC32_bigEndian(const void * data, const s32 dataLength, const u32 initialCRC)
 {
   s32 i = 0;
-  u32 crc = 0xFFFFFFFF;
+  u32 crc = initialCRC;
 
   for(i=0; i<dataLength; i++) {
     const s32 index = i ^ 3;
@@ -598,5 +600,6 @@ u32 ComputeCRC32_bigEndian(const void * data, const s32 dataLength)
     crc = (crc >> 8) ^ crc32Table[(crc ^ byte) & 0xFF];
   }
 
-  return ~crc;
+  // Technically, this should return ~crc, but that would make it wierd to chain multiple calls of this function
+  return crc;
 }

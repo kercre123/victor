@@ -47,8 +47,14 @@ namespace Anki
     class MemoryStack
     {
     public:
+      static const u32 FILL_PATTERN_START = 0xFF01FF02;
+      static const u32 FILL_PATTERN_END = 0x03FF04FF;
+
+      static const s32 HEADER_LENGTH = 8;
+      static const s32 FOOTER_LENGTH = 4;
+
       MemoryStack(void) : buffer(NULL) { }
-      MemoryStack(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(true,true));
+      MemoryStack(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(true,true,false));
       MemoryStack(const MemoryStack &ms); // This is a safe way to remove const by making a copy, rather than using const_cast()
 
       // Allocate numBytes worth of memory, with the start byte-aligned to MEMORY_ALIGNMENT
@@ -59,7 +65,8 @@ namespace Anki
       // patterns.
       //
       // All memory in the array is zeroed out once it is allocated, making Allocate more like calloc() than malloc()
-      void* Allocate(const s32 numBytesRequested, s32 *numBytesAllocated=NULL);
+      void* Allocate(const s32 numBytesRequested);
+      void* Allocate(const s32 numBytesRequested, s32 &numBytesAllocated);
 
       // Reallocate will change the size of the last allocated memory segment. It only works on the
       // last segment. The return value is equal to memoryLocation, or NULL if there was an error.
@@ -67,7 +74,8 @@ namespace Anki
       //
       // WARNING: This will not update any references to the memory, you must update all references
       //          manually.
-      void* Reallocate(void* memoryLocation, s32 numBytesRequested, s32 *numBytesAllocated=NULL);
+      void* Reallocate(void* memoryLocation, s32 numBytesRequested);
+      void* Reallocate(void* memoryLocation, s32 numBytesRequested, s32 &numBytesAllocated);
 
       // Check if any Allocate() memory was written out of bounds (via fill patterns at the beginning and end)
       bool IsValid() const;
@@ -85,6 +93,14 @@ namespace Anki
       void* get_buffer();
       const void* get_buffer() const;
 
+      // The first few bytes of a buffer may be garbage, due to memory alignment restrictions
+      // These functions return the first location on the buffer that is actually used
+      void* get_validBufferStart();
+      const void* get_validBufferStart() const;
+
+      void* get_validBufferStart(s32 &firstValidIndex);
+      const void* get_validBufferStart(s32 &firstValidIndex) const;
+
       // Each MemoryStack created by the MemoryStack(void *buffer, s32 bufferLength) constructor has
       // a unique id. This is used for debugging to keep track of things like its maximum memory
       // usage.
@@ -95,12 +111,6 @@ namespace Anki
 
     protected:
       friend class MemoryStackConstIterator;
-
-      static const u32 FILL_PATTERN_START = 0xFF01FF02;
-      static const u32 FILL_PATTERN_END = 0x03FF04FF;
-
-      static const s32 HEADER_LENGTH = 8;
-      static const s32 FOOTER_LENGTH = 4;
 
       void * buffer;
       s32 totalBytes;
@@ -129,6 +139,8 @@ namespace Anki
 
       const void * GetNext(s32 &segmentLength);
 
+      const MemoryStack& get_memory() const;
+
     protected:
       s32 index;
       const MemoryStack &memory;
@@ -140,6 +152,8 @@ namespace Anki
       MemoryStackIterator(MemoryStack &memory);
 
       void * GetNext(s32 &segmentLength);
+
+      MemoryStack& get_memory();
     }; // class MemoryStackIterator
   } // namespace Embedded
 } // namespace Anki

@@ -22,37 +22,108 @@ namespace Anki
   namespace Embedded
   {
 #pragma mark --- Declarations ---
+    // When transmitting a serialized buffer, the header and footer of the entire buffer are each 8 bytes
+    // These just contain a validation pattern, not data
+    static const s32 SERIALIZED_BUFFER_HEADER_LENGTH = 8;
+    static const s32 SERIALIZED_BUFFER_FOOTER_LENGTH = 8;
+
+    // This patterns are very unlikely to appear in an image
+    // In addition, all values are different, which makes parsing easier
+    static const u32 SERIALIZED_BUFFER_HEADER[SERIALIZED_BUFFER_HEADER_LENGTH] = {0xFF, 0x00, 0xFE, 0x02, 0xFD, 0x03, 0x04, 0xFC};
+    static const u32 SERIALIZED_BUFFER_FOOTER[SERIALIZED_BUFFER_FOOTER_LENGTH] = {0xFE, 0x00, 0xFD, 0x02, 0xFC, 0x03, 0x04, 0xFB};
+
     // A SerializedBuffer is used to store data
     // Use a MemoryStackIterator to read out the data
-    class SerializedBuffer : protected MemoryStack
+    class SerializedBuffer
     {
     public:
-      static const s32 SERIALIZED_HEADER_LENGTH = 8;
+
+      // The header and footer for individual segments within a SerializedBuffer
+      // These only contain data and CRCs
+      static const s32 SERIALIZED_SEGEMENT_HEADER_LENGTH = 8;
+      static const s32 SERIALIZED_SEGMENT_FOOTER_LENGTH = 4;
 
       enum DataType
       {
         DATA_TYPE_UNKNOWN = 0,
         DATA_TYPE_RAW = 1,
-        DATA_TYPE_BASIC_TYPE = 2,
+        DATA_TYPE_BASIC_TYPE_BUFFER = 2,
         DATA_TYPE_ARRAY = 3
+      };
+
+      class EncodedBasicTypeBuffer
+      {
+      public:
+        const static s32 CODE_SIZE = 2;
+        u32 code[EncodedBasicTypeBuffer::CODE_SIZE];
+      };
+
+      class EncodedArray
+      {
+      public:
+        const static s32 CODE_SIZE = 5;
+        u32 code[EncodedArray::CODE_SIZE];
       };
 
       template<typename Type> static Result EncodeBasicType(u32 &code);
       static Result DecodeBasicType(const u32 code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat);
 
-      SerializedBuffer(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(false,true));
+      template<typename Type> static Result EncodeBasicTypeBuffer(const s32 numElements, EncodedBasicTypeBuffer &code);
+      static Result DecodeBasicTypeBuffer(const bool swapEndian, const EncodedBasicTypeBuffer &code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements);
 
-      void* PushBack(void * data, s32 dataLength);
+      template<typename Type> static Result EncodeArrayType(const Array<Type> &in, EncodedArray &code);
+      static Result DecodeArrayType(const bool swapEndian, const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u8 &basicType_size, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat);
 
-      void* PushBack(void * header, s32 headerLength, void * data, s32 dataLength);
+      template<typename Type> static Result SerializeArray(const Array<Type> &in, void * data, const s32 dataLength);
+      template<typename Type> static Result DeserializeArray(const bool swapEndian, const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
 
-      template<typename Type> Result PushBack(Type &value);
+      SerializedBuffer();
 
-      template<typename Type> Result PushBack(Array<Type> &value);
+      // If the void* buffer is already allocated, use flags = Flags::Buffer(false,true,true)
+      SerializedBuffer(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(false,true,false));
+
+      void* PushBack(const void * data, s32 dataLength);
+      void* PushBack(const DataType type, const void * data, s32 dataLength);
+      void* PushBack(const void * header, s32 headerLength, const void * data, s32 dataLength);
+      void* PushBack(const DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength);
+
+      // Note that dataLength should be numel(data)*sizeof(Type)
+      // This is to make this call compatible with the standard void* PushBack()
+      template<typename Type> Type* PushBack(const Type *data, const s32 dataLength);
+
+      template<typename Type> void* PushBack(const Array<Type> &in);
+
+      bool IsValid() const;
+
+      const MemoryStack& get_memoryStack() const;
+
+      MemoryStack& get_memoryStack();
 
     protected:
-      MemoryStack buffer;
+      MemoryStack memoryStack;
     }; // class SerializedBuffer
+
+    class SerializedBufferConstIterator : public MemoryStackConstIterator
+    {
+    public:
+      SerializedBufferConstIterator(const SerializedBuffer &serializedBuffer);
+
+      // Same as the standard MemoryStackConstIterator::GetNext(), plus:
+      // 1. Checks the CRC code and returns NULL if it fails
+      // 2. dataLength is the number of bytes of the returned buffer
+      const void * GetNext(s32 &dataLength, SerializedBuffer::DataType &type);
+    }; // class MemoryStackConstIterator
+
+    class SerializedBufferIterator : public SerializedBufferConstIterator
+    {
+    public:
+      SerializedBufferIterator(SerializedBuffer &serializedBuffer);
+
+      // Same as the standard MemoryStackIterator::GetNext(), plus:
+      // 1. Checks the CRC code and returns NULL if it fails
+      // 2. dataLength is the number of bytes of the returned buffer
+      void * GetNext(const bool swapEndian, s32 &dataLength, SerializedBuffer::DataType &type);
+    }; // class MemoryStackConstIterator
   } // namespace Embedded
 } //namespace Anki
 

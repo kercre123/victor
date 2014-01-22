@@ -7,7 +7,7 @@
 # Andrew Stein
 # Created: 9/12/2013
 
-# 
+#
 # Use this effectively as a replacement for cmake's "project" command
 # (which this macro calls for you)
 #
@@ -25,12 +25,12 @@ cmake_policy(SET CMP0015 NEW)
 set(DEFAULT_USE_MATLAB 1)
 set(DEFAULT_EMBEDDED_USE_MATLAB 1)
 set(DEFAULT_USE_OPENCV 1)
-set(DEFAULT_EMBEDDED_USE_OPENCV 0)
+set(DEFAULT_EMBEDDED_USE_OPENCV 1)
 set(DEFAULT_USE_GTEST 1)
 set(DEFAULT_EMBEDDED_USE_GTEST 1)
 
-set(PKG_OPTIONS 
-	USE_MATLAB USE_GTEST USE_OPENCV 
+set(PKG_OPTIONS
+	USE_MATLAB USE_GTEST USE_OPENCV
 	EMBEDDED_USE_MATLAB EMBEDDED_USE_GTEST EMBEDDED_USE_OPENCV
 )
 foreach(PKG ${PKG_OPTIONS})
@@ -64,9 +64,9 @@ set(GTEST_DIR gtest-1.7.0)
 #set(OpenCV_DIR "../coretech-external/build/Xcode/opencv-2.4.6.1")
 #find_package(OpenCV REQUIRED)
 
-# Specify which OpenCV libraries we're using here.  All of them.  
+# Specify which OpenCV libraries we're using here.  All of them.
 # Everything will just get linked against them all the time, even
-# if it doesn't need them. Is this overkill? Yes. But does it 
+# if it doesn't need them. Is this overkill? Yes. But does it
 # majorly simplify dealing with Cmake elsewhere? Absolutely.
 set(OPENCV_LIBS
 	opencv_core
@@ -136,14 +136,14 @@ if(NOT MATLAB_FOUND)
 		set(MATLAB_MX_LIBRARY mx)
 		set(MATLAB_MEX_LIBRARY mex)
 #		set(ANKI_LIBRARIES CoreTech_Common CoreTech_Common_Embedded)
-		set(CMD_COMMAND)		
+		set(CMD_COMMAND)
 		set(ZLIB_LIBRARY z)
 		set(CMD_COMMAND)
 	endif(WIN32)
 
 if(IS_DIRECTORY ${MATLAB_ROOT})
 	set(MATLAB_FOUND 1)
-endif(IS_DIRECTORY ${MATLAB_ROOT})	
+endif(IS_DIRECTORY ${MATLAB_ROOT})
 endif(NOT MATLAB_FOUND)
 
 if(MATLAB_FOUND)
@@ -170,19 +170,33 @@ foreach(PKG ${PKG_OPTIONS})
         add_definitions(-DANKICORETECH_${PKG}=${ANKICORETECH_${PKG}})
         message(STATUS "adding definitions -DANKICORETECH_${PKG}=${ANKICORETECH_${PKG}}")
 endforeach()
-	
-	
+
+# Add all required external embedded libraries to the list for the linker
+set(ALL_EMBEDDED_LIBRARIES ${ZLIB_LIBRARY})
+
+if(${ANKICORETECH_EMBEDDED_USE_MATLAB})
+set(ALL_EMBEDDED_LIBRARIES ${ALL_EMBEDDED_LIBRARIES} ${MATLAB_ENG_LIBRARY} ${MATLAB_MX_LIBRARY})
+endif()
+
+if(${ANKICORETECH_EMBEDDED_USE_OPENCV})
+set(ALL_EMBEDDED_LIBRARIES ${ALL_EMBEDDED_LIBRARIES} ${OPENCV_LIBS})
+endif()
+
+if(${ANKICORETECH_EMBEDDED_USE_GTEST})
+set(ALL_EMBEDDED_LIBRARIES ${ALL_EMBEDDED_LIBRARIES} gtest)
+endif()
+
 project(${PROJECT_NAME})
 
 # This is a hack, to get around some new cmake requirements
 if(WIN32)
-	STRING(REPLACE "INCREMENTAL" "INCREMENTAL:NO" replacementFlags ${CMAKE_EXE_LINKER_FLAGS_DEBUG}) 
+	STRING(REPLACE "INCREMENTAL" "INCREMENTAL:NO" replacementFlags ${CMAKE_EXE_LINKER_FLAGS_DEBUG})
 	SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "/INCREMENTAL:NO ${replacementFlags}" )
 
 	STRING(REPLACE "INCREMENTAL" "INCREMENTAL:NO" replacementFlags3 ${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO})
 	SET(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "/INCREMENTAL:NO ${replacementFlags3}" )
 endif()
-	
+
 # Stuff after this requires project() to have been called (I think)
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to 'Debug' as none was specified.")
@@ -201,7 +215,7 @@ endif(NOT DEFINED EXTERNAL_DIR)
 
 set(OPENCV_MODULES_DIR ${EXTERNAL_DIR}/${OPENCV_DIR}/modules)
 include_directories(
-	${EXTERNAL_DIR}/${OPENCV_DIR}/include 
+	${EXTERNAL_DIR}/${OPENCV_DIR}/include
         ${EXTERNAL_DIR}/${GTEST_DIR}/include
         ${EXTERNAL_DIR}/jsoncpp
 	${MATLAB_INCLUDE_DIR}
@@ -216,15 +230,15 @@ foreach(OPENCV_MODULE ${OPENCV_MODULES})
 endforeach()
 
 # If we don't do this, we won't get our binaries in Debug/Release
-# subdirectories.  That's not necessarily a bad thing, but it's the 
+# subdirectories.  That's not necessarily a bad thing, but it's the
 # way Xcode (and MSVC?) do it, and it seems easier to make the Makefile
-# generator mimic that behavior as follows than to keep those IDEs from 
+# generator mimic that behavior as follows than to keep those IDEs from
 # doing what they wanna do.
 if(CMAKE_GENERATOR MATCHES "Unix Makefiles")
 	message(STATUS "Appending ${CMAKE_BUILD_TYPE} to output directories since Unix Makefiles are being used.")
 	set(BUILD_TYPE_DIR ${CMAKE_BUILD_TYPE})
 else()
-	set(BUILD_TYPE_DIR ./)	
+	set(BUILD_TYPE_DIR ./)
 endif()
 
 # Store our libraries in, e.g., coretech-vision/build/Xcode/lib/Debug
@@ -233,29 +247,28 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/${CMAKE_GENERATOR}/lib/${BUI
 # Store our executables such as tests in, e.g., coretech-vision/build/Xcode/bin/Debug
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/${CMAKE_GENERATOR}/bin/${BUILD_TYPE_DIR})
 
-
 link_directories(
 	${LIBRARY_OUTPUT_PATH}
-	${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/lib/${BUILD_TYPE_DIR} 
-	${MATLAB_MEX_LIBRARY_PATH} 
-	${MATLAB_MX_LIBRARY_PATH} 
+	${EXTERNAL_DIR}/build/${CMAKE_GENERATOR}/lib/${BUILD_TYPE_DIR}
+	${MATLAB_MEX_LIBRARY_PATH}
+	${MATLAB_MX_LIBRARY_PATH}
 	${MATLAB_ENG_LIBRARY_PATH}
 )
 
-# Of course, OpenCV is special... (it won't (?) obey the OUTPUT_PATHs specified 
+# Of course, OpenCV is special... (it won't (?) obey the OUTPUT_PATHs specified
 # above, so we'll add link directories for where it put its products)
 if(WIN32)
 	link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/lib/Debug)
 else()
 	link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/lib)
 endif(WIN32)
-	
+
 
 endmacro(ankiProject)
 
 #
 # A helper macro (read: hack) for appending "248d" to the opencv library names.
-# 
+#
 function(fix_opencv_lib_names NAMES)
 
 if(WIN32)
@@ -273,7 +286,7 @@ endfunction(fix_opencv_lib_names)
 # "standard" set of libraries, namely:
 #	 opencv_core, CoreTech_Common, and CoreTech_Common_Embedded.
 #
-# You can link against others by setting the variable "MEX_LINK_LIBRARIES" 
+# You can link against others by setting the variable "MEX_LINK_LIBRARIES"
 # before calling this macro, e.g.:
 #	set(MEX_LINK_LIBRARIES opencv_highgui CoreTech_Vision)
 #
@@ -290,7 +303,7 @@ if( MATLAB_FOUND AND (ANKICORETECH_USE_MATLAB OR ANKICORETECHEMBEDDED_USE_MATLAB
 	set(CXX ${MEX_COMPILER})
 	unset(CMAKE_CXX_FLAGS)
 	unset(CMAKE_C_FLAGS)
-	
+
 	# If not told otherwise, store our mex binaries in, e.g., coretech-vision/build/mex
 	if(NOT DEFINED MEX_OUTPUT_PATH)
 		set(MEX_OUTPUT_PATH ${PROJECT_BINARY_DIR}/mex)
@@ -298,16 +311,16 @@ if( MATLAB_FOUND AND (ANKICORETECH_USE_MATLAB OR ANKICORETECHEMBEDDED_USE_MATLAB
 
 	get_filename_component(OUTPUT_NAME ${MEX_FILE} NAME_WE)
 
-	add_library(${OUTPUT_NAME} SHARED 
-		${MEX_FILE} 
+	add_library(${OUTPUT_NAME} SHARED
+		${MEX_FILE}
 		${CORETECH_ROOT_DIR}/common/matlab/mex/mexWrappers.cpp
 		${CORETECH_ROOT_DIR}/common/matlab/mex/mexFunction.def
 	)
-	
+
 	# Put mex binaries in MEX_OUTPUT_PATH
 	foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
 		string( TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG )
-	
+
 		# First for the generic no-config case (e.g. with mingw)
 		set_target_properties( ${OUTPUT_NAME} PROPERTIES
 			RUNTIME_OUTPUT_DIRECTORY ${MEX_OUTPUT_PATH} )
@@ -329,7 +342,7 @@ if( MATLAB_FOUND AND (ANKICORETECH_USE_MATLAB OR ANKICORETECHEMBEDDED_USE_MATLAB
 	# Prevent mex outputs from ending up in Debug/Release subdirectories, by
 	# moving them up one directory.
 	# (NOTE: it would e better to use the approach commented out in the loop
-	#  above, which just sets the final build directory directly for each 
+	#  above, which just sets the final build directory directly for each
 	#  configuration type, but that is creating crazy/distracting
 	#  Xcode warnings -- even though it does actually work.)
 	add_custom_command(TARGET ${OUTPUT_NAME} POST_BUILD
@@ -339,18 +352,18 @@ if( MATLAB_FOUND AND (ANKICORETECH_USE_MATLAB OR ANKICORETECHEMBEDDED_USE_MATLAB
 
 	if(DEFINED MEX_LINK_LIBRARIES)
 		foreach(LIB ${MEX_LINK_LIBRARIES})
-			  target_link_libraries(${OUTPUT_NAME} ${LIB})		
+			  target_link_libraries(${OUTPUT_NAME} ${LIB})
 		endforeach()
 	endif()
 
-	target_link_libraries(${OUTPUT_NAME} 
-		${MATLAB_MEX_LIBRARY} 
-		${MATLAB_MX_LIBRARY} 
+	target_link_libraries(${OUTPUT_NAME}
+		${MATLAB_MEX_LIBRARY}
+		${MATLAB_MX_LIBRARY}
 		${MATLAB_ENG_LIBRARY}
-	#	${OPENCV_LIBS} 
-	#	${ANKI_LIBRARIES} 
+	#	${OPENCV_LIBS}
+	#	${ANKI_LIBRARIES}
 		${ZLIB_LIBRARY}
-	)	
+	)
 
 	#message(STATUS "For MEX file ${OUTPUT_NAME}, linking against ${MEX_LINK_LIBRARIES}")
 
@@ -361,6 +374,6 @@ if( MATLAB_FOUND AND (ANKICORETECH_USE_MATLAB OR ANKICORETECHEMBEDDED_USE_MATLAB
 		SUFFIX ".${MATLAB_MEXEXT}"
 	)
 
-endif()	
+endif()
 
 endmacro(build_mex)
