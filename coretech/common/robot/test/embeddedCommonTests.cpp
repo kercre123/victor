@@ -9,6 +9,10 @@ Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
+#ifndef COZMO_ROBOT
+#define COZMO_ROBOT
+#endif
+
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/array2d.h"
 #include "anki/common/robot/benchmarking_c.h"
@@ -38,7 +42,9 @@ namespace Anki
     }
   }
 }
-#include "anki/cozmo/messages.h"
+#include "anki/cozmo/robot/messages.h"
+#else
+#include "anki/cozmo/basestation/messages.h"
 #endif
 
 using namespace Anki::Embedded;

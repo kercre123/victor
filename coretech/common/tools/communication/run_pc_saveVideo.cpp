@@ -4,12 +4,14 @@
 #error Currently, only visual c++ is supported
 #endif
 
+#define COZMO_ROBOT
+
 #include "serial.h"
 #include "threadSafeQueue.h"
 
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/utilities.h"
-#include "anki/cozmo/messages.h"
+#include "anki/cozmo/robot/messages.h"
 #include "anki/common/robot/serialize.h"
 
 #undef printf

@@ -4,6 +4,8 @@
 #error Currently, only visual c++ is supported
 #endif
 
+#define COZMO_ROBOT
+
 #include "serial.h"
 #include "threadSafeQueue.h"
 
