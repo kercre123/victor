@@ -56,6 +56,7 @@ namespace Anki
 
     // Decompress the data "in" into "out"
     // Requires sizeof(heatshrink_decoder) bytes of scratch
+    // outMaxLength should be at least originalSize*(3/2)+4 bytes
     Result Decompress(
       const void * in, const u32 inLength,
       void *out, const u32 outMaxLength, s32 &outUncompressedLength,
@@ -85,7 +86,7 @@ namespace Anki
       CompressedArray();
 
       // compressedBuffer must be allocated with at least compressedBufferMaxLength bytes
-      // if compressedBuffer doesn't contains data, compressedBufferUsedLength is zero
+      // if compressedBuffer doesn't already contain compressed data, compressedBufferUsedLength should be zero
       CompressedArray(
         void * compressedBuffer, const s32 compressedBufferMaxLength, const s32 compressedBufferUsedLength,
         const s32 arrayHeight, const s32 arrayWidth, const Flags::Buffer &arrayFlags);

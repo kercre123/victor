@@ -93,7 +93,7 @@ namespace Anki
       while (sunk < inLength) {
         const HSD_sink_res res = heatshrink_decoder_sink(hsd, const_cast<u8*>(&reinterpret_cast<const u8*>(in)[sunk]), inLength - sunk, &count);
 
-        AnkiConditionalErrorAndReturnValue(res == HSER_SINK_OK,
+        AnkiConditionalErrorAndReturnValue(res == HSDR_SINK_OK,
           RESULT_FAIL, "Decompress", "heatshrink_decoder_sink failed");
 
         sunk += count;
@@ -117,7 +117,7 @@ namespace Anki
         if (sunk == inLength) {
           const HSD_finish_res fres = heatshrink_decoder_finish(hsd);
 
-          AnkiConditionalErrorAndReturnValue(res == HSDR_FINISH_DONE,
+          AnkiConditionalErrorAndReturnValue(fres == HSDR_FINISH_DONE,
             RESULT_FAIL, "Decompress", "heatshrink_decoder_finish failed");
         }
       } // while (sunk < inLength)

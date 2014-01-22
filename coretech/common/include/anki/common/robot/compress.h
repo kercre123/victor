@@ -104,7 +104,7 @@ namespace Anki
     }
 
     template<typename Type> CompressedArray<Type>::CompressedArray()
-      : compressedBuffer(NULL), compressedBufferLength(-1)
+      : compressedBuffer(NULL), compressedBufferMaxLength(-1), compressedBufferUsedLength(-1)
     {
       this->size[0] = -1;
       this->size[0] = -1;
