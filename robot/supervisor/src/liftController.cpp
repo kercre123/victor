@@ -130,6 +130,7 @@ namespace Anki {
         // Skipping actual calibration routine in sim due to weird lift behavior when attempting to move it when
         // it's at the joint limit.  The arm flies off the robot!
         isCalibrated_ = true;
+        SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
 #else
         calState_ = LCS_LOWER_LIFT;
         isCalibrated_ = false;
