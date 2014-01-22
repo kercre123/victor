@@ -209,6 +209,8 @@ namespace Anki
 
     void* SerializedBuffer::PushBackString(const char * format, ...)
     {
+      // After switching to a better board, this will work
+#if 0
       const s32 outputStringLength = 1024;
       static char outputString[outputStringLength];
 
@@ -230,6 +232,22 @@ namespace Anki
       }
 
       return PushBack(DATA_TYPE_STRING, &outputString[0], usedLength);
+#else
+      // Temporary hack
+
+      s32 usedLength = -1;
+      for(s32 i=0; i<1024; i++) {
+        if(format[i] == '\0') {
+          usedLength = i;
+          break;
+        }
+      }
+
+      if(usedLength == -1)
+        return NULL;
+
+      return PushBack(DATA_TYPE_STRING, format, usedLength);
+#endif
     }
 
     bool SerializedBuffer::IsValid() const

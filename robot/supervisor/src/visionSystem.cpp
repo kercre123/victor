@@ -74,6 +74,7 @@ namespace Anki {
       Embedded::SerializedBuffer captureImagesBuffer_;
       s32 numCapturedImages = -1;
       const s32 MAX_IMAGES_TO_CAPTURE = 5;
+      bool sentStartingMessage = false;
 #endif
 
 #ifdef SIMULATOR
@@ -458,9 +459,14 @@ namespace Anki {
             // Do no robot control, just capture a buffer of images and send it to the PC over USB
             if(!isInitialized_) {             
               Init();
+            }
+            
+            if(!sentStartingMessage) {
+              sentStartingMessage = true;
               
               captureImagesBuffer_.PushBackString("Starting image capture\n");
-              
+            
+              s32 startIndex;
               const u8 * bufferStart = reinterpret_cast<const u8*>(captureImagesBuffer_.get_memoryStack().get_validBufferStart(startIndex));
               const s32 validUsedBytes = captureImagesBuffer_.get_memoryStack().get_usedBytes() - startIndex;
               
@@ -475,8 +481,8 @@ namespace Anki {
               }
               
               captureImagesBuffer_ = Embedded::SerializedBuffer(&captureImagesBufferRaw_[0], CAPTURE_IMAGES_BUFFER_SIZE);
-            }
-
+            } // if(!sentStartingMessage)
+            
             VisionSystem::FrameBuffer frame = {
               ddrBuffer_,
               HAL::CAMERA_MODE_VGA

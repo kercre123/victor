@@ -202,7 +202,7 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
           break;
         }
 
-        printf("Next segment is (%d,%d)\n", dataLength, type);
+        printf("Next segment is (%d,%d): ", dataLength, type);
         if(type == SerializedBuffer::DATA_TYPE_RAW) {
           printf("Raw segment: ");
           for(s32 i=0; i<dataLength; i++) {
