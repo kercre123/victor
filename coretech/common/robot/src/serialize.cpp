@@ -207,6 +207,31 @@ namespace Anki
       return segmentStart;
     } // static void* PushBack(const SerializedBuffer::DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength, MemoryStack *scratch)
 
+    void* SerializedBuffer::PushBackString(const char * format, ...)
+    {
+      const s32 outputStringLength = 1024;
+      static char outputString[outputStringLength];
+
+      va_list arguments;
+      va_start(arguments, format);
+      snprintf(outputString, outputStringLength, format, arguments);
+      va_end(arguments);
+
+      s32 usedLength = outputStringLength;
+      for(s32 i=0; i<outputStringLength; i++) {
+        if(outputString[i] == '\0') {
+          usedLength = i;
+          break;
+        }
+      }
+
+      if(usedLength == outputStringLength) {
+        outputString[outputStringLength-1] = '\0';
+      }
+
+      return PushBack(DATA_TYPE_STRING, &outputString[0], usedLength);
+    }
+
     bool SerializedBuffer::IsValid() const
     {
       return memoryStack.IsValid();

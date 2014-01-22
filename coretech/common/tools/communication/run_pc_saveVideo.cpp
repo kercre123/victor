@@ -34,7 +34,7 @@ using namespace std;
 volatile double lastUpdateTime;
 volatile HANDLE lastUpdateTime_mutex;
 
-const double secondsToWaitBeforeSavingABuffer = 1.0;
+const double secondsToWaitBeforeSavingABuffer = 0.1;
 
 const s32 outputFilenamePatternLength = 1024;
 char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/cozmoShort/cozmo_%04d-%02d-%02d_%02d-%02d-%02d_%d.%s";
@@ -264,6 +264,8 @@ DWORD WINAPI SaveBuffers(LPVOID lpParam)
             cv::imwrite(outputFilename, mat);
             //cv::imwrite("c:/tmp/tt.bmp", mat);
           }
+        } else if(type == SerializedBuffer::DATA_TYPE_STRING) {
+          printf("Board>> %s", dataSegment);
         }
 
         printf("\n");

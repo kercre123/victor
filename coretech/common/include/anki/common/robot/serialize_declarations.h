@@ -88,6 +88,8 @@ namespace Anki
       void* PushBack(const void * header, s32 headerLength, const void * data, s32 dataLength);
       void* PushBack(const DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength);
 
+      void* PushBackString(const char * format, ...);
+
       // Note that dataLength should be numel(data)*sizeof(Type)
       // This is to make this call compatible with the standard void* PushBack()
       template<typename Type> Type* PushBack(const Type *data, const s32 dataLength);

@@ -87,8 +87,11 @@ GTEST_TEST(CoreTech_Common, CompressArray)
 
   Array<s16> original(arrayHeight, arrayWidth, ms);
 
+  original.SetZero();
+
   const s32 compressedBufferLength = 1000;
   void * compressedBuffer = ms.Allocate(compressedBufferLength);
+  memset(compressedBuffer, 0, compressedBufferLength);
 
   CompressedArray<s16> compressed(compressedBuffer, compressedBufferLength, 0,
     arrayHeight, arrayWidth, Flags::Buffer());

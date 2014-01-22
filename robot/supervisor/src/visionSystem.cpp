@@ -159,7 +159,10 @@ namespace Anki {
 
       ReturnCode GetRelativeOdometry(const FrameBuffer &frame);
 
-
+      void DownsampleHelper(const FrameBuffer& frame, Embedded::Array<u8>& image,
+                            const HAL::CameraMode outputResolution,
+                            Embedded::MemoryStack scratch);
+      
 #pragma mark --- VisionSystem Method Implementations ---
 
 
@@ -450,9 +453,28 @@ namespace Anki {
           case CAPTURE_IMAGES:
           {
 #ifdef USE_CAPTURE_IMAGES
+            //Embedded::MemoryStack scratch = Embedded::MemoryStack(cmxBuffer_, TRACKER_SCRATCH_SIZE);
+
             // Do no robot control, just capture a buffer of images and send it to the PC over USB
-            if(!isInitialized_) {
+            if(!isInitialized_) {             
               Init();
+              
+              captureImagesBuffer_.PushBackString("Starting image capture\n");
+              
+              const u8 * bufferStart = reinterpret_cast<const u8*>(captureImagesBuffer_.get_memoryStack().get_validBufferStart(startIndex));
+              const s32 validUsedBytes = captureImagesBuffer_.get_memoryStack().get_usedBytes() - startIndex;
+              
+              for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
+                Anki::Cozmo::HAL::USBPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
+              }
+
+              HAL::USBSendBuffer(bufferStart, validUsedBytes);
+
+              for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
+                Anki::Cozmo::HAL::USBPutChar(Embedded::SERIALIZED_BUFFER_FOOTER[i]);
+              }
+              
+              captureImagesBuffer_ = Embedded::SerializedBuffer(&captureImagesBufferRaw_[0], CAPTURE_IMAGES_BUFFER_SIZE);
             }
 
             VisionSystem::FrameBuffer frame = {
@@ -475,7 +497,11 @@ namespace Anki {
               CameraSetIsEndOfFrame(HAL::CAMERA_FRONT, false);
 
               //frame.timestamp = HAL::GetTimeStamp();              
+              
+              //Embedded::Array<u8> downsampledImage(imageHeight/2, imageWidth/2, scratch);
+              //DownsampleHelper(frame, downsampledImage, HAL::CAMERA_MODE_QVGA, scratch);
             
+              //captureImagesBuffer_.PushBack(downsampledImage);
               captureImagesBuffer_.PushBack(image);
 
               numCapturedImages++;
