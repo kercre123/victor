@@ -74,6 +74,53 @@ Matlab matlab(false);
 
 BUFFER_LOCATION static char buffer[MAX_BYTES];
 
+GTEST_TEST(CoreTech_Common, CompressArray)
+{
+  const s32 arrayHeight = 3;
+  const s32 arrayWidth = 4;
+
+  //printf("Compressor size: %d Decompressor size:%d\n", sizeof(heatshrink_encoder), sizeof(heatshrink_decoder));
+
+  ASSERT_TRUE(buffer != NULL);
+  MemoryStack ms(buffer, MAX_BYTES);
+  ASSERT_TRUE(ms.IsValid());
+
+  Array<s16> original(arrayHeight, arrayWidth, ms);
+
+  const s32 compressedBufferLength = 1000;
+  void * compressedBuffer = ms.Allocate(compressedBufferLength);
+
+  CompressedArray<s16> compressed(compressedBuffer, compressedBufferLength, 0,
+    arrayHeight, arrayWidth, Flags::Buffer());
+
+  for(s32 y=0; y<arrayHeight; y++) {
+    for(s32 x=0; x<arrayWidth; x++) {
+      original[y][x] = static_cast<s16>(10*y + x + 3);
+    }
+  }
+
+  {
+    const Result result = Compress<s16>(original, compressed, ms);
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  original.Print("original");
+
+  {
+    const s32 originalLength = original.get_size(0) * original.get_stride();
+    const s32 compressedLength = compressed.get_compressedBufferUsedLength();
+    printf("Original Length:%d Compressed Length:%d Compression percent size:%f\n", originalLength, compressedLength, 100.0f*f32(compressedLength)/f32(originalLength));
+  }
+
+  Array<s16> decompressed = Decompress<s16>(compressed, ms);
+
+  decompressed.Print("decompressed");
+
+  ASSERT_TRUE(AreElementwiseEqual<s16>(original, decompressed));
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Common, Heatshrink)
 {
   const s32 dataLength = 1000;

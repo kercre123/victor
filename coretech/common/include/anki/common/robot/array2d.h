@@ -112,25 +112,24 @@ namespace Anki
 
       InvalidateArray();
 
-      // I don't have a use case for a pointer passed for a non-fully allocated Array, so memory alignment is always checked
-      //if(flags.get_isFullyAllocated()) {
       AnkiConditionalErrorAndReturn(reinterpret_cast<size_t>(data)%MEMORY_ALIGNMENT == 0,
         "Array::Array", "If fully allocated, data must be %d byte aligned", MEMORY_ALIGNMENT);
-      //}
 
       this->stride = ComputeRequiredStride(numCols, flags);
 
-      AnkiConditionalErrorAndReturn(numCols >= 0 && numRows >= 0 && dataLength >= numRows*this->stride && this->stride == (numCols*static_cast<s32>(sizeof(Type))),
+      AnkiConditionalErrorAndReturn(numCols >= 0 && numRows >= 0 && dataLength >= numRows*this->stride,
         "Array<Type>::Array", "Invalid size");
 
-      AnkiConditionalErrorAndReturn((numCols*sizeof(Type)) % MEMORY_ALIGNMENT == 0,
-        "Array<Type>::Array", "(numCols*sizeof(Type)) mod MEMORY_ALIGNMENT must equal zero");
+      if(flags.get_isFullyAllocated()) {
+        AnkiConditionalErrorAndReturn(this->stride == (numCols*static_cast<s32>(sizeof(Type))),
+          "Array<Type>::Array", "if the data buffer being passed in doesn't contain a raw buffer, the stride must be simple");
 
-      AnkiConditionalErrorAndReturn(reinterpret_cast<size_t>(data) % MEMORY_ALIGNMENT == 0,
-        "Array<Type>::Array", "reinterpret_cast<size_t>(data) mod MEMORY_ALIGNMENT must equal zero");
+        AnkiConditionalErrorAndReturn((numCols*sizeof(Type)) % MEMORY_ALIGNMENT == 0,
+          "Array<Type>::Array", "if the data buffer being passed in doesn't contain a raw buffer, (numCols*sizeof(Type)) mod MEMORY_ALIGNMENT must equal zero");
 
-      AnkiConditionalErrorAndReturn(flags.get_useBoundaryFillPatterns() == false,
-        "Array<Type>::Array", "flags.get_useBoundaryFillPatterns must be false");
+        AnkiConditionalErrorAndReturn(flags.get_useBoundaryFillPatterns() == false,
+          "Array<Type>::Array", "if the data buffer being passed in doesn't contain a raw buffer, flags.get_useBoundaryFillPatterns must be false");
+      }
 
       InitializeBuffer(numRows,
         numCols,
@@ -530,7 +529,7 @@ namespace Anki
         0, "Array<Type>::get_size", "Negative dimension");
 
       if(dimension > 1 || dimension < 0)
-        return 0;
+        return 1;
 
       return size[dimension];
     }
