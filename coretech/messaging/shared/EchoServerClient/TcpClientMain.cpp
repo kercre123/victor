@@ -1,4 +1,5 @@
 #include <iostream>
+#include <unistd.h>
 #include "TcpClient.h"
 
 #define DEFAULT_HOST "127.0.0.1"
