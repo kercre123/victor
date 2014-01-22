@@ -44,7 +44,9 @@ namespace Anki {
         //   by the faster MainExecution.
         //
         
-        const u8 MAX_BLOCK_MARKER_MESSAGES = 32; // max blocks we can see in one image
+        // max vision markers we can see in one image and transmit to the
+        // basestation
+        const u8 MAX_MARKER_MESSAGES = 32;
         
         // Single-message Mailbox Class
         template<typename MsgType>
@@ -82,8 +84,9 @@ namespace Anki {
         
         // Mailboxes for different types of messages that the vision
         // system communicates to main execution:
-        MultiMailbox<Messages::BlockMarkerObserved, MAX_BLOCK_MARKER_MESSAGES> blockMarkerMailbox_;
-        Mailbox<Messages::MatMarkerObserved>    matMarkerMailbox_;
+        //MultiMailbox<Messages::BlockMarkerObserved, MAX_BLOCK_MARKER_MESSAGES> blockMarkerMailbox_;
+        //Mailbox<Messages::MatMarkerObserved>    matMarkerMailbox_;
+        MultiMailbox<Messages::VisionMarker, MAX_MARKER_MESSAGES> visionMarkerMailbox_;
         Mailbox<Messages::DockingErrorSignal>   dockingMailbox_;
         
       } // private namespace
@@ -209,13 +212,14 @@ namespace Anki {
       } // ProcessAbsLocalizationUpdateMessage()
       
       
-      void ProcessBlockMarkerObservedMessage(const BlockMarkerObserved& msg)
+      void ProcessVisionMarkerMessage(const VisionMarker& msg)
       {
-        PRINT("Processing BlockMarker message\n");
+        PRINT("Processing VisionMarker message\n");
         
-        blockMarkerMailbox_.putMessage(msg);
+        visionMarkerMailbox_.putMessage(msg);
         
-        VisionSystem::CheckForDockingBlock(msg.blockType);
+        
+        VisionSystem::CheckForTrackingMarker(msg.code);
       }
       
       void ProcessTotalVisionMarkersSeenMessage(const TotalVisionMarkersSeen& msg)
@@ -225,7 +229,7 @@ namespace Anki {
       
       void ProcessTemplateInitializedMessage(const TemplateInitialized& msg)
       {
-        VisionSystem::SetDockingMode(static_cast<bool>(msg.success));
+        VisionSystem::SetTrackingMode(static_cast<bool>(msg.success));
       }
       
       void ProcessDockingErrorSignalMessage(const DockingErrorSignal& msg)
@@ -264,7 +268,7 @@ namespace Anki {
       
       // TODO: Fill these in once they are needed/used:
       
-      void ProcessVisionMarkerMessage(const VisionMarker& msg) {
+      void ProcessBlockMarkerObservedMessage(const BlockMarkerObserved& msg) {
         PRINT("%s not yet implemented!\n", __PRETTY_FUNCTION__);
       }
       
@@ -306,6 +310,12 @@ namespace Anki {
       
 #pragma mark --- VisionSystem::Mailbox Template Implementations ---
       
+      bool CheckMailbox(VisionMarker& msg)
+      {
+        return visionMarkerMailbox_.getMessage(msg);
+      }
+      
+      /*
       bool CheckMailbox(BlockMarkerObserved& msg)
       {
         return blockMarkerMailbox_.getMessage(msg);
@@ -315,6 +325,7 @@ namespace Anki {
       {
         return matMarkerMailbox_.getMessage(msg);
       }
+       */
       
       bool CheckMailbox(DockingErrorSignal&  msg)
       {

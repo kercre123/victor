@@ -210,6 +210,13 @@ namespace Anki {
         
         // Check for any messages from the vision system and pass them along to
         // the basestation, update the docking controller, etc.
+        Messages::VisionMarker markerMsg;
+        while( Messages::CheckMailbox(markerMsg) )
+        {
+          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::VisionMarker), &markerMsg);
+        }
+        
+        /*
         Messages::MatMarkerObserved matMsg;
         while( Messages::CheckMailbox(matMsg) )
         {
@@ -222,7 +229,7 @@ namespace Anki {
           HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BlockMarkerObserved), &blockMsg);
           
         } // while blockMarkerMailbox has mail
-                
+        */      
         
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates

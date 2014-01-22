@@ -60,8 +60,8 @@ namespace Anki {
         const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 30;
         const u16 DOCK_APPROACH_ACCEL_MMPS2 = 200;
         
-        // Last ID of block we tried to dock to
-        u16 dockBlockId_ = 0;
+        // Code of the VisionMarker we are trying to dock to
+        VisionSystem::MarkerCode dockMarkerCode_;
         
         // TODO: set error tolerances in mm and convert to pixels based on camera resolution?
         const f32 VERTICAL_TARGET_ERROR_TOLERANCE = 1.f;   // in pixels
@@ -364,12 +364,13 @@ namespace Anki {
       }
       
       
-      void StartDocking(u16 blockId, f32 dockOffsetDistX, f32 dockOffsetDistY, f32 dockOffsetAngle)
+      void StartDocking(const VisionSystem::MarkerCode& dockingCode,
+                        f32 dockOffsetDistX, f32 dockOffsetDistY, f32 dockOffsetAngle)
       {
-        dockBlockId_ = blockId;
+        dockMarkerCode_.Set(dockingCode);
         dockOffsetDistX_ = dockOffsetDistX;
         
-        VisionSystem::SetDockingBlock(dockBlockId_);
+        VisionSystem::SetMarkerToTrack(dockMarkerCode_);
         lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
         mode_ = LOOKING_FOR_BLOCK;
         

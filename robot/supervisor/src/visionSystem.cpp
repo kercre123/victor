@@ -33,13 +33,12 @@
 
 namespace Anki {
   namespace Cozmo {
-
+    namespace VisionSystem {
+          
     typedef enum {
       IDLE,
-      LOOKING_FOR_BLOCKS,
-      DOCKING,
-      MAT_LOCALIZATION,
-      VISUAL_ODOMETRY,
+      LOOKING_FOR_MARKERS,
+      TRACKING,
       CAPTURE_IMAGES // Do no robot control, just capture a buffer of images and send it to the PC over USB
     } Mode;
 
@@ -105,8 +104,9 @@ namespace Anki {
       // TODO: need one of these for both mat and head cameras?
       //bool continuousCaptureStarted_ = false;
 
-      u16  dockingBlock_ = 0;
-      bool isDockingBlockFound_ = false;
+      MarkerCode trackingCode_;
+
+      bool isTrackingMarkerFound_ = false;
 
       bool isTemplateInitialized_ = false;
 
@@ -130,9 +130,6 @@ namespace Anki {
 #endif
     } // private namespace
 
-    namespace VisionSystem {
-#pragma mark --- VisionSystem "Private Member Variables" ---
-
       //
       // Forward declarations:
       //
@@ -146,19 +143,15 @@ namespace Anki {
       } FrameBuffer;
 
       ReturnCode CaptureHeadFrame(FrameBuffer &frame);
-      ReturnCode CaptureMatFrame(FrameBuffer &frame);
 
-      ReturnCode LookForBlocks(const FrameBuffer &frame);
-
-      ReturnCode LocalizeWithMat(const FrameBuffer &frame);
+      ReturnCode LookForMarkers(const FrameBuffer &frame);
 
       ReturnCode InitTemplate(const FrameBuffer &frame,
                               Embedded::Quadrilateral<f32>& templateRegion);
 
       ReturnCode TrackTemplate(const FrameBuffer &frame);
 
-      ReturnCode GetRelativeOdometry(const FrameBuffer &frame);
-
+      //ReturnCode GetRelativeOdometry(const FrameBuffer &frame);
 
 #pragma mark --- VisionSystem Method Implementations ---
 
@@ -270,6 +263,9 @@ namespace Anki {
 #endif
 
         isInitialized_ = true;
+        
+        mode_ = LOOKING_FOR_MARKERS;
+        
         return EXIT_SUCCESS;
       }
 
@@ -289,14 +285,16 @@ namespace Anki {
         mode_ = IDLE;
       }
 
-      ReturnCode SetDockingBlock(const u16 blockTypeToDockWith)
+      
+      ReturnCode SetMarkerToTrack(const MarkerCode& codeToTrack)
       {
-        dockingBlock_          = blockTypeToDockWith;
-        isDockingBlockFound_   = false;
+        trackingCode_.Set(codeToTrack);
+        
+        isTrackingMarkerFound_ = false;
         isTemplateInitialized_ = false;
         numTrackFailures_      = 0;
 
-        mode_ = LOOKING_FOR_BLOCKS;
+        mode_ = LOOKING_FOR_MARKERS;
 
 #if USE_OFFBOARD_VISION
         // Let the offboard vision processor know that it should be looking for
@@ -304,36 +302,92 @@ namespace Anki {
         // same frame where it sees the block, instead of needing a second
         // USBSendFrame call.
         HAL::USBSendPacket(HAL::USB_VISION_COMMAND_SETDOCKBLOCK,
-                           &dockingBlock_, sizeof(dockingBlock_));
+                           trackingCode_.GetBits(),
+                           MarkerCode::CODE_LENGTH_IN_BYTES);
 #endif
         return EXIT_SUCCESS;
       }
+      
+      
+      MarkerCode::MarkerCode()
+      : isSet_(false)
+      {
+      
+      }
+      
+      MarkerCode::MarkerCode(const u8* bits)
+      : isSet_(true)
+      {
+        memcpy(this->bits_, bits, CODE_LENGTH_IN_BYTES);
+      }
+      
+      void MarkerCode::Set(const MarkerCode& other)
+      {
+        memcpy(this->bits_, other.bits_, MarkerCode::CODE_LENGTH_IN_BYTES);
+        this->isSet_ = true;
+      }
+      
+      void MarkerCode::Unset()
+      {
+        this->isSet_ = false;
+      }
+      
+      bool MarkerCode::IsSet() const {
+        return this->isSet_;
+      }
+      
+      const u8* MarkerCode::GetBits() const
+      {
+        return this->bits_;
+      }
+      
+      bool MarkerCode::operator==(const u8* otherBits) const
+      {
+        AnkiAssert(otherBits != NULL);
+        bool same = (this->isSet_ && this->bits_[0] == otherBits[0]);
+        for(u8 i=1; same && i < VISION_MARKER_CODE_LENGTH; ++i) {
+          same = this->bits_[i] == otherBits[i];
+        }
+        return same;
+      }
+      
+      bool MarkerCode::operator==(const MarkerCode& other) const
+      {
+        bool same = (this->isSet_ && other.isSet_ &&
+                     this->bits_[0] == other.bits_[0]);
+        
+        for(u8 i=1; same && i<VISION_MARKER_CODE_LENGTH; ++i) {
+          same = this->bits_[i] == other.bits_[i];
+        }
+        
+        return same;
+      }
 
-      void CheckForDockingBlock(const u16 blockType)
+      void CheckForTrackingMarker(const u8* bits)
       {
         // If we have a block to dock with set, see if this was it
-        if(dockingBlock_ > 0 && dockingBlock_ == blockType)
+        if(trackingCode_ == bits)
         {
-          isDockingBlockFound_ = true;
+          isTrackingMarkerFound_ = true;
         }
       }
 
-      void SetDockingMode(const bool isTemplateInitalized)
+      void SetTrackingMode(const bool isTemplateInitalized)
       {
-        if(isTemplateInitalized)
+        if(isTemplateInitalized && isTrackingMarkerFound_)
         {
           PRINT("Tracking template initialized, switching to DOCKING mode.\n");
           isTemplateInitialized_ = true;
-          isDockingBlockFound_   = true;
+          isTrackingMarkerFound_ = true;
 
           // If we successfully initialized a tracking template,
           // switch to docking mode.  Otherwise, we'll keep looking
           // for the block and try again
-          mode_ = DOCKING;
+          mode_ = TRACKING;
         }
         else {
           isTemplateInitialized_ = false;
-          isDockingBlockFound_   = false;
+          isTrackingMarkerFound_ = false;
         }
       }
 
@@ -347,8 +401,8 @@ namespace Anki {
           ++numTrackFailures_;
           if(numTrackFailures_ == MAX_TRACKING_FAILURES) {
 
-            // This resets docking, puttings us back in LOOKING_FOR_BLOCKS mode
-            SetDockingBlock(dockingBlock_);
+            // This resets docking, puttings us back in LOOKING_FOR_MARKERS mode
+            SetMarkerToTrack(trackingCode_);
             numTrackFailures_ = 0;
           }
         }
@@ -396,7 +450,7 @@ namespace Anki {
             // Nothing to do!
             break;
 
-          case LOOKING_FOR_BLOCKS:
+          case LOOKING_FOR_MARKERS:
           {
             FrameBuffer frame = {
               ddrBuffer_,
@@ -408,14 +462,14 @@ namespace Anki {
             // Note that if a docking block was specified and we see it while
             // looking for blocks, a tracking template will be initialized and,
             // if that's successful, we will switch to DOCKING mode.
-            retVal = LookForBlocks(frame);
+            retVal = LookForMarkers(frame);
 #ifdef SIMULATOR
             frameRdyTimeUS_ = HAL::GetMicroCounter() + LOOK_FOR_BLOCK_PERIOD_US;
 #endif
             break;
           }
 
-          case DOCKING:
+          case TRACKING:
           {
             if(not isTemplateInitialized_) {
               PRINT("VisionSystem::Update(): Reached DOCKING mode without "
@@ -562,12 +616,6 @@ namespace Anki {
 
       } // CaptureHeadFrame()
 
-      ReturnCode CaptureMatFrame(FrameBuffer &frame)
-      {
-        PRINT("CaptureMatFrame(): mat camera available yet.\n");
-        return EXIT_FAILURE;
-      }
-
       void DownsampleHelper(const FrameBuffer& frame, Embedded::Array<u8>& image,
                             const HAL::CameraMode outputResolution,
                             Embedded::MemoryStack scratch)
@@ -608,7 +656,7 @@ namespace Anki {
 
       } // DownsampleHelper()
 
-      ReturnCode LookForBlocks(const FrameBuffer &frame)
+      ReturnCode LookForMarkers(const FrameBuffer &frame)
       {
         ReturnCode retVal = EXIT_FAILURE;
 
@@ -793,37 +841,9 @@ namespace Anki {
 
         return retVal;
 
-      } // lookForBlocks()
+      } // LookForMarkers()
 
-
-      ReturnCode LocalizeWithMat(const FrameBuffer &frame)
-      {
-        ReturnCode retVal = -1;
-
-#if USE_OFFBOARD_VISION
-
-        // Send the offboard vision processor the frame, with the command
-        // to do mat localization
-        HAL::USBSendFrame(frame.data, frame.timestamp,
-                          frame.resolution, MAT_LOCALIZATION_RESOLUTION,
-                          HAL::USB_VISION_COMMAND_MATLOCALIZATION);
-
-        Messages::LookForID( GET_MESSAGE_ID(Messages::MatMarkerObserved) );
-
-#else  // if USE_OFFBOARD_VISION
-        /*
-         // TODO: Hook this up to Pete's vision code
-         PRINT("Robot::processMatImage(): embedded vision "
-         "processing not hooked up yet.\n");
-         retVal = -1;
-         */
-#endif // defined(USE_MATLAB_FOR_MAT_CAMERA)
-
-        return retVal;
-
-      } // localizeWithMat()
-
-
+      
       ReturnCode InitTemplate(const FrameBuffer            &frame,
                               Embedded::Quadrilateral<f32> &templateQuad)
       {

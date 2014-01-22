@@ -24,6 +24,12 @@
 
 namespace Anki {
   namespace Cozmo {
+    
+    // Forward declaration
+    namespace VisionSystem {
+      class MarkerCode;
+    }
+    
     namespace PickAndPlaceController {
 
       typedef enum {
@@ -50,9 +56,10 @@ namespace Anki {
 
       // level: 0 = block is at same height as robot (i.e. robot floor height)
       //        1 = block is at one block height above robot floor height.
-      void PickUpBlock(const u16 blockID, const u8 level);
+      void PickUpBlock(const VisionSystem::MarkerCode& blockID, const u8 level);
       
-      void PlaceOnBlock(const u16 blockID, const f32 horizontal_offset, const f32 angular_offset);
+      void PlaceOnBlock(const VisionSystem::MarkerCode& blockID,
+                        const f32 horizontal_offset, const f32 angular_offset);
       
     } // namespace PickAndPlaceController
   } // namespace Cozmo

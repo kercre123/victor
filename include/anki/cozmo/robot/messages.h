@@ -60,8 +60,9 @@ namespace Anki {
       
       // These return true if a mailbox messages was available, and they copy
       // that message into the passed-in message struct.
-      bool CheckMailbox(BlockMarkerObserved& msg);
-      bool CheckMailbox(MatMarkerObserved&   msg);
+      //bool CheckMailbox(BlockMarkerObserved& msg);
+      //bool CheckMailbox(MatMarkerObserved&   msg);
+      bool CheckMailbox(VisionMarker&        msg);
       bool CheckMailbox(DockingErrorSignal&  msg);
       
     } // namespace Messages
