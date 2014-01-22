@@ -60,6 +60,12 @@ classdef VisionMarker
         size;
         
     end % Properties
+    
+    properties(SetAccess = 'protected', Dependent = true)
+        
+        byteArray;
+        
+    end % Dependent, protected properties
             
     methods 
 
@@ -120,6 +126,14 @@ classdef VisionMarker
             pos3d = P.applyTo(canonicalSquare);
             
         end
+        
+        function b = get.byteArray(this)
+            temp = [this.code(:); this.cornerCode(:)];
+            numBytes = ceil(length(temp)/8);
+            temp = [temp; zeros(numBytes*8-length(temp),1)];
+            b = uint8(bin2dec(num2str(reshape(temp, [], 8))));
+        end
+        
     end % Public Methods
     
     
