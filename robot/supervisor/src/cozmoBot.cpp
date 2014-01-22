@@ -1,10 +1,11 @@
 #include "anki/common/robot/config.h"
-#include "anki/cozmo/messages.h"
+#include "anki/cozmo/robot/messages.h"
 
 // TODO: move more of these include files to "src"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
+#include "pickAndPlaceController.h"
 #include "dockingController.h"
 #include "gripController.h"
 #include "headController.h"
@@ -39,12 +40,14 @@ namespace Anki {
         
         // Parameters / Constants:
         
-        // TESTING
+#if(FREE_DRIVE_DUBINS_TEST)
         const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_NONE;
-        
+#else
+        // TESTING
+        // Change this value to run different test modes
+        const TestModeController::TestMode DEFAULT_TEST_MODE = TestModeController::TM_NONE;
+#endif
         Robot::OperationMode mode_ = INITIALIZING;
-        
-        //bool isCarryingBlock_ = false;
         
       } // Robot private namespace
       
@@ -80,17 +83,8 @@ namespace Anki {
       void MotorCalibrationUpdate()
       {
         if (LiftController::IsCalibrated()) {
-#ifndef USE_CAPTURE_IMAGES
           PRINT("Motors calibrated\n");
-#endif
           mode_ = WAITING;
-          
-#if(!FREE_DRIVE_DUBINS_TEST)
-#ifndef USE_CAPTURE_IMAGES
-          PRINT("Starting docking\n");
-#endif
-          DockingController::ResetDocker();
-#endif
         }
       }
       
@@ -101,10 +95,15 @@ namespace Anki {
           return EXIT_FAILURE;
         }
         
+        if (Localization::Init() == EXIT_FAILURE) {
+          PRINT("Localization System init failed.\n");
+          return EXIT_FAILURE;
+        }
+        
         // TODO: Get VisionSystem to work on robot
         if(VisionSystem::Init() == EXIT_FAILURE)
         {
-          PRINT("Vision System initialization failed.");
+          PRINT("Vision System initialization failed.\n");
           return EXIT_FAILURE;
         }
         
@@ -154,9 +153,7 @@ namespace Anki {
         
         // Once initialization is done, broadcast a message that this robot
         // is ready to go
-#ifndef USE_CAPTURE_IMAGES        
         PRINT("Robot broadcasting availability message.\n");
-#endif
         Messages::RobotAvailable msg;
         msg.robotID = HAL::GetRobotID();
         HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotAvailable), &msg);
@@ -225,32 +222,7 @@ namespace Anki {
           HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BlockMarkerObserved), &blockMsg);
           
         } // while blockMarkerMailbox has mail
-        
-        // Get any docking error signal available from the vision system
-        // and update our path accordingly.
-        Messages::DockingErrorSignal dockMsg;
-        while( Messages::CheckMailbox(dockMsg) )
-        {
-          if(dockMsg.didTrackingSucceed) {
-            
-            // Convert from camera coordinates to robot coordinates
-            // (Note that y and angle don't change)
-            dockMsg.x_distErr += HEAD_CAM_POSITION[0]*cosf(HeadController::GetAngleRad()) + NECK_JOINT_POSITION[0];
-            
-            PRINT("Received docking error signal: x_distErr=%f, y_horErr=%f, "
-                  "angleErr=%fdeg\n", dockMsg.x_distErr, dockMsg.y_horErr,
-                  RAD_TO_DEG_F32(dockMsg.angleErr));
-            
-            DockingController::SetRelDockPose(dockMsg.x_distErr,
-                                              dockMsg.y_horErr,
-                                              dockMsg.angleErr);
-          } else {
-            DockingController::ResetDocker();
-           
-          } // IF tracking succeeded
-          
-        } // while dockErrSignalMailbox has mail
-        
+                
         
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates
@@ -261,6 +233,7 @@ namespace Anki {
         GripController::Update();
                 
         PathFollower::Update();
+        PickAndPlaceController::Update();
         DockingController::Update();
         
         //////////////////////////////////////////////////////////////
@@ -274,45 +247,6 @@ namespace Anki {
             MotorCalibrationUpdate(); // switches mode_ to WAITING
             break;
           }
-            /*
-          case PICK_UP_BLOCK:
-          {
-            // Wait for docking controller to finish, then pick up the block
-            if(DockingController::IsDocked())
-            {
-              if(DockingController::DidSucceed())
-              {
-                // TODO: send a message to basestation that we are carrying a block?
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
-                isCarryingBlock_ = true;
-                mode_ = WAITING;
-              } else {
-                // TODO: Back up and try again? Send failure msg to basestation?
-
-              }
-            }
-            break;
-          }
-            
-          case PUT_DOWN_BLOCK:
-          {
-            // Wait for docking controller to finish, then put down the block
-            if(DockingController::IsDocked())
-            {
-              if(DockingController::DidSucceed())
-              {
-                // TODO: switch b/w putting the block down on the ground vs. on another block
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
-                isCarryingBlock_ = false;
-                mode_ = WAITING;
-              } else {
-                // TODO: Back up and try again? Send failure msg to basestation?
-
-              }
-            }
-            break;
-          }
-            */
           case WAITING:
           {
             // Idle.  Nothing to do yet...

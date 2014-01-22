@@ -5,7 +5,7 @@
 // Our Includes
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
-#include "anki/cozmo/messages.h"
+#include "anki/cozmo/robot/messages.h"
 #include "anki/cozmo/robot/wheelController.h"
 #include "cozmo_physics.h"
 
@@ -78,15 +78,15 @@ namespace Anki {
       webots::Node* estPose_;
       //char locStr[MAX_TEXT_DISPLAY_LENGTH];
       
-      // For measuring motor speeds
-      webots::Gyro *leftWheelGyro_;
-      webots::Gyro *rightWheelGyro_;
-      webots::Gyro *liftGyro_;
-      webots::Gyro *headGyro_;
+      // Gyro
+      webots::Gyro* gyro_;
+      f32 gyroValues_[3];
       
       // For tracking wheel distance travelled
       f32 motorPositions_[HAL::MOTOR_COUNT];
       f32 motorPrevPositions_[HAL::MOTOR_COUNT];
+      f32 motorSpeeds_[HAL::MOTOR_COUNT];
+      f32 motorSpeedCoeffs_[HAL::MOTOR_COUNT];
       
       // For communications with basestation
       webots::Emitter *tx_;
@@ -120,12 +120,20 @@ namespace Anki {
       
       void MotorUpdate()
       {
-        // Update position info
+        // Update position and speed info
+        f32 posDelta = 0;
         for(int i = 0; i < HAL::MOTOR_COUNT; i++)
         {
           if (motors_[i]) {
             f32 pos = motors_[i]->getPosition();
-            motorPositions_[i] += pos - motorPrevPositions_[i];
+            posDelta = pos - motorPrevPositions_[i];
+            
+            // Update position
+            motorPositions_[i] += posDelta;
+            
+            // Update speed
+            motorSpeeds_[i] = (posDelta * ONE_OVER_CONTROL_DT) * (1.0 - motorSpeedCoeffs_[i]) + motorSpeeds_[i] * motorSpeedCoeffs_[i];
+            
             motorPrevPositions_[i] = pos;
           }
         }
@@ -209,11 +217,6 @@ namespace Anki {
       matCam_->enable(VISION_TIME_STEP);
       headCam_->enable(VISION_TIME_STEP);
       
-      leftWheelGyro_  = webotRobot_.getGyro("wheel_gyro_fl");
-      rightWheelGyro_ = webotRobot_.getGyro("wheel_gyro_fr");
-      liftGyro_ = webotRobot_.getGyro("lift_gyro");
-      headGyro_ = webotRobot_.getGyro("head_gyro");
-      
       tx_ = webotRobot_.getEmitter("radio_tx");
       rx_ = webotRobot_.getReceiver("radio_rx");
       
@@ -252,6 +255,8 @@ namespace Anki {
       for (int i=0; i < MOTOR_COUNT; ++i) {
         motorPositions_[i] = 0;
         motorPrevPositions_[i] = 0;
+        motorSpeeds_[i] = 0;
+        motorSpeedCoeffs_[i] = 0.2;
       }
       
       // Enable position measurements on head, lift, and wheel motors
@@ -279,11 +284,9 @@ namespace Anki {
       compass_->enable(TIME_STEP);
       estPose_ = webotRobot_.getFromDef("CozmoBotPose");
       
-      // Get speed sensors
-      leftWheelGyro_->enable(TIME_STEP);
-      rightWheelGyro_->enable(TIME_STEP);
-      liftGyro_->enable(TIME_STEP);
-      headGyro_->enable(TIME_STEP);
+      // Gyro
+      gyro_ = webotRobot_.getGyro("gyro");
+      gyro_->enable(TIME_STEP);
       
       if(InitSimRadio(webotRobot_, robotID_) == EXIT_FAILURE) {
         PRINT("Failed to initialize Simulated Radio.\n");
@@ -303,9 +306,6 @@ namespace Anki {
       
       gps_->disable();
       compass_->disable();
-      
-      leftWheelGyro_->disable();
-      rightWheelGyro_->disable();
       
       // Do we care about actually disabling this?  It lives in sim_radio.cpp now...
       //rx_->disable();
@@ -355,6 +355,15 @@ namespace Anki {
     
     
     
+    const f32* HAL::GyroGetSpeed()
+    {
+      gyroValues_[0] = (f32)(gyro_->getValues()[0]);
+      gyroValues_[1] = (f32)(gyro_->getValues()[1]);
+      gyroValues_[2] = (f32)(gyro_->getValues()[2]);
+      return gyroValues_;
+    }
+    
+    
     // Set the motor power in the unitless range [-1.0, 1.0]
     void HAL::MotorSetPower(MotorID motor, f32 power)
     {
@@ -395,7 +404,7 @@ namespace Anki {
       }
       
       motorPositions_[motor] = 0;
-      motorPrevPositions_[motor] = 0;
+      //motorPrevPositions_[motor] = 0;
     }
     
     // Returns units based on the specified motor type:
@@ -404,25 +413,14 @@ namespace Anki {
     {
       switch(motor) {
         case MOTOR_LEFT_WHEEL:
-        {
-          const double* axesSpeeds_rad_per_s = leftWheelGyro_->getValues();
-          float mm_per_s = -axesSpeeds_rad_per_s[1] * WHEEL_RAD_TO_MM;   // true speed
-          //PRINT("LEFT: %f rad/s, %f mm/s\n", -axesSpeeds_rad_per_s[1], mm_per_s);
-          return mm_per_s;
-        }
-
         case MOTOR_RIGHT_WHEEL:
         {
-          const double* axesSpeeds_rad_per_s = rightWheelGyro_->getValues();
-          float mm_per_s = -axesSpeeds_rad_per_s[1] * WHEEL_RAD_TO_MM;   // true speed
-          //PRINT("RIGHT: %f rad/s, %f mm/s\n", -axesSpeeds_rad_per_s[1], mm_per_s);
-          return mm_per_s;
+          return -motorSpeeds_[motor] * WHEEL_RAD_TO_MM;
         }
 
         case MOTOR_LIFT:
         {
-          const double* axesSpeeds_rad_per_s = liftGyro_->getValues();
-          return axesSpeeds_rad_per_s[2];
+          return motorSpeeds_[MOTOR_LIFT];
         }
           
         case MOTOR_GRIP:
@@ -431,8 +429,7 @@ namespace Anki {
           
         case MOTOR_HEAD:
         {
-          const double* axesSpeeds_rad_per_s = headGyro_->getValues();
-          return axesSpeeds_rad_per_s[1];
+          return motorSpeeds_[MOTOR_HEAD];
         }
           
         default:
@@ -449,7 +446,7 @@ namespace Anki {
       switch(motor) {
         case MOTOR_RIGHT_WHEEL:
         case MOTOR_LEFT_WHEEL:
-          return -motorPositions_[motor];
+          return -motorPositions_[motor] * WHEEL_RAD_TO_MM;
         case MOTOR_LIFT:
         case MOTOR_HEAD:
           return motorPositions_[motor];

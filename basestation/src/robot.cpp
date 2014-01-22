@@ -9,12 +9,13 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
+#include "anki/cozmo/basestation/messages.h"
 #include "anki/cozmo/basestation/robot.h"
 
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/robot/cozmoConfig.h"
 
-#include "anki/cozmo/messages.h"
+
 
 namespace Anki {
   namespace Cozmo {
@@ -521,9 +522,9 @@ namespace Anki {
         desiredLiftHeight = face_wrt_world.get_translation().z();
         
         // Compute lift angle to achieve that height
-        Radians desiredLiftAngle = asinf((desiredLiftHeight - LIFT_JOINT_HEIGHT) / LIFT_LENGTH);
+        Radians desiredLiftAngle = asinf((desiredLiftHeight - LIFT_JOINT_HEIGHT) / LIFT_ARM_LENGTH);
         RotationMatrix3d R(desiredLiftAngle, X_AXIS_3D);
-        Vec3f liftVec(0.f, LIFT_LENGTH, 0.f);
+        Vec3f liftVec(0.f, LIFT_ARM_LENGTH, 0.f);
         liftVec = R * liftVec;
       
         Pose3d desiredLiftPose(0.f, X_AXIS_3D, liftVec, &(this->liftBasePose));

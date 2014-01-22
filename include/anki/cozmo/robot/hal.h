@@ -37,7 +37,7 @@
 #include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
 
-#include "anki/cozmo/messages.h"
+#include "anki/cozmo/robot/messages.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 
@@ -55,8 +55,16 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+
 #ifndef SIMULATOR
 #undef printf
+
+#ifdef USE_CAPTURE_IMAGES
+#define printf(...)
+#define PRINT(...)
+#define PERIODIC_PRINT(num_calls_between_prints, ...)
+
+#else // USE_CAPTURE_IMAGES
 
 // PRINT will actually buffer messages, to be sent by long execution "thread"
 #define PUTCHAR_FUNC Anki::Cozmo::HAL::USBBufferChar
@@ -73,6 +81,7 @@ extern "C" {
     cnt = 0; \
   } \
 }
+#endif // USE_CAPTURE_IMAGES
 
 #elif defined(SIMULATOR)
 #define PRINT(...) fprintf(stdout, __VA_ARGS__)
@@ -209,6 +218,9 @@ namespace Anki
       // Send a byte.
       // Prototype matches putc for printf.
       int USBPutChar(int c);
+      
+#pragma mark --- Sensors ---
+      const f32* GyroGetSpeed();
 
 #pragma mark --- Motors ---
       /////////////////////////////////////////////////////////////////////

@@ -13,9 +13,8 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/messages.h"
 #include "anki/cozmo/robot/visionSystem.h"
-
-#include "anki/cozmo/messages.h"
 
 #include "headController.h"
 
@@ -80,6 +79,10 @@ namespace Anki {
 #ifdef SIMULATOR
       char cmxBuffer_[CMX_BUFFER_SIZE];
       u8   ddrBuffer_[DDR_BUFFER_SIZE] ALIGNVARIABLE;
+      
+      u32 frameRdyTimeUS_ = 0;
+      const u32 LOOK_FOR_BLOCK_PERIOD_US = 200000;
+      const u32 TRACK_BLOCK_PERIOD_US = 100000;
 #else
       __attribute__((section(".cmx.bss"))) char cmxBuffer_[CMX_BUFFER_SIZE];
       __attribute__((section(".ddr.bss"))) u8   ddrBuffer_[DDR_BUFFER_SIZE] ALIGNVARIABLE;
@@ -289,7 +292,11 @@ namespace Anki {
       {
 
       }
-
+      
+      void StopTracking()
+      {
+        mode_ = IDLE;
+      }
 
       ReturnCode SetDockingBlock(const u16 blockTypeToDockWith)
       {
@@ -366,7 +373,14 @@ namespace Anki {
         //       processing.  Once the hardware camera supports it, we should
         //       capture at the correct resolution directly and pass that in
         //       (and remove the downsampling from USBSendFrame()
-
+        
+#ifdef SIMULATOR
+        if (HAL::GetMicroCounter() < frameRdyTimeUS_) {
+          return retVal;
+        }
+#endif
+        
+        
 #if USE_OFFBOARD_VISION
 
         //PRINT("VisionSystem::Update(): waiting for processing result.\n");
@@ -404,7 +418,9 @@ namespace Anki {
             // looking for blocks, a tracking template will be initialized and,
             // if that's successful, we will switch to DOCKING mode.
             retVal = LookForBlocks(frame);
-
+#ifdef SIMULATOR
+            frameRdyTimeUS_ = HAL::GetMicroCounter() + LOOK_FOR_BLOCK_PERIOD_US;
+#endif
             break;
           }
 
@@ -467,7 +483,12 @@ namespace Anki {
                 s32 startIndex;
                 const u8 * bufferStart = reinterpret_cast<const u8*>(captureImagesBuffer_.get_memoryStack().get_validBufferStart(startIndex));
                 const s32 validUsedBytes = captureImagesBuffer_.get_memoryStack().get_usedBytes() - startIndex;
-
+                
+                //PRINT("%d %d\n", bufferStart, validUsedBytes);
+#ifdef SIMULATOR
+              frameRdyTimeUS_ = HAL::GetMicroCounter() + TRACK_BLOCK_PERIOD_US;
+#endif
+                
                 for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
                   Anki::Cozmo::HAL::USBPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
                 }

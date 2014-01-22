@@ -192,6 +192,9 @@ namespace Anki
       bool RadioSendMessage(const Messages::ID msgID, const void *message) {return true;}
       Messages::ID RadioGetNextMessage(u8* buffer) {return Messages::NO_MESSAGE_ID;}
       
+      // Gyro
+      static f32 gyroValues_[3] = {0};
+      const f32* GyroGetSpeed() {return gyroValues_;}
       
       // Misc
       //bool IsInitialized();

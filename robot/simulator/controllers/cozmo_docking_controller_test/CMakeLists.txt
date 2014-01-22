@@ -86,6 +86,7 @@ if(NOT WIN32)
     CoreTech_Vision_Robot
     mx 
     eng
+    ${ALL_EMBEDDED_LIBRARIES}
   )
 endif()
 

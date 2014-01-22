@@ -57,8 +57,8 @@ namespace Anki {
       // Send the message header (0xBEEF + robotID + msgID)
       const u8 HEADER_LENGTH = 4;
       const u8 header[HEADER_LENGTH] = {
-        Messages::RADIO_PACKET_HEADER[0],
-        Messages::RADIO_PACKET_HEADER[1],
+        RADIO_PACKET_HEADER[0],
+        RADIO_PACKET_HEADER[1],
         static_cast<u8>(HAL::GetRobotID()),
         static_cast<u8>(msgID)};
       

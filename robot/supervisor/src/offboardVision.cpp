@@ -16,20 +16,20 @@ namespace Anki
     void HAL::USBSendHeader(const u8 packetType)
     {
       using namespace HAL;
-      USBPutChar(Messages::USB_PACKET_HEADER[0]);
-      USBPutChar(Messages::USB_PACKET_HEADER[1]);
-      USBPutChar(Messages::USB_PACKET_HEADER[2]);
-      USBPutChar(Messages::USB_PACKET_HEADER[3]);
+      USBPutChar(USB_PACKET_HEADER[0]);
+      USBPutChar(USB_PACKET_HEADER[1]);
+      USBPutChar(USB_PACKET_HEADER[2]);
+      USBPutChar(USB_PACKET_HEADER[3]);
       USBPutChar(packetType);
     }
     
     void HAL::USBSendFooter(const u8 packetType)
     {
       using namespace HAL;
-      USBPutChar(Messages::USB_PACKET_FOOTER[0]);
-      USBPutChar(Messages::USB_PACKET_FOOTER[1]);
-      USBPutChar(Messages::USB_PACKET_FOOTER[2]);
-      USBPutChar(Messages::USB_PACKET_FOOTER[3]);
+      USBPutChar(USB_PACKET_FOOTER[0]);
+      USBPutChar(USB_PACKET_FOOTER[1]);
+      USBPutChar(USB_PACKET_FOOTER[2]);
+      USBPutChar(USB_PACKET_FOOTER[3]);
       USBPutChar(packetType);
       
 #ifdef SIMULATOR
@@ -169,10 +169,10 @@ namespace Anki
       if(USBGetNumBytesToRead() > 5)
       {
         // Peek at the next four bytes to see if we have a header waiting
-        if(USBPeekChar(0) == Messages::USB_PACKET_HEADER[0] &&
-           USBPeekChar(1) == Messages::USB_PACKET_HEADER[1] &&
-           USBPeekChar(2) == Messages::USB_PACKET_HEADER[2] &&
-           USBPeekChar(3) == Messages::USB_PACKET_HEADER[3])
+        if(USBPeekChar(0) == USB_PACKET_HEADER[0] &&
+           USBPeekChar(1) == USB_PACKET_HEADER[1] &&
+           USBPeekChar(2) == USB_PACKET_HEADER[2] &&
+           USBPeekChar(3) == USB_PACKET_HEADER[3])
         {
           // We have a header, so next byte (which we know is availale since
           // we had 5 bytes to read above) will be the message ID.  We can

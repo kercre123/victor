@@ -73,7 +73,7 @@ namespace Anki
 
     template<typename Type> Result SerializedBuffer::SerializeArray(const Array<Type> &in, void * data, const s32 dataLength)
     {
-      const u32 * dataU32 = reinterpret_cast<const u32*>(data);
+      u32 * dataU32 = reinterpret_cast<u32*>(data);
 
       AnkiConditionalErrorAndReturnValue(in.IsValid(),
         RESULT_FAIL, "SerializedBuffer::SerializeArray", "in Array is not Valid");
