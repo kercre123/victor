@@ -686,6 +686,11 @@ namespace Anki {
        */
     }
     
+    void HAL::CameraSetIsEndOfFrame(CameraID cameraID, bool isEOF)
+    {
+      
+    }
+    
     
     // Get the number of microseconds since boot
     u32 HAL::GetMicroCounter(void)
