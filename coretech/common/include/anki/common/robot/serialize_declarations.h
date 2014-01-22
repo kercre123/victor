@@ -48,7 +48,8 @@ namespace Anki
         DATA_TYPE_UNKNOWN = 0,
         DATA_TYPE_RAW = 1,
         DATA_TYPE_BASIC_TYPE_BUFFER = 2,
-        DATA_TYPE_ARRAY = 3
+        DATA_TYPE_ARRAY = 3,
+        DATA_TYPE_STRING = 4
       };
 
       class EncodedBasicTypeBuffer
