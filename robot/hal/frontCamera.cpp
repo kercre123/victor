@@ -549,11 +549,11 @@ namespace Anki
         const u32 I2C_ADDRESS = (0x42 >> 1);
         const u32 QQVGA_REG_COUNT = 0;
         const bool IS_ACTIVE_LOW = true;
-        
+
 #ifdef USE_QVGA_CAMERA
         const u32 VGA_REG_COUNT = 0; //sizeof(m_OV7725_VGA) / (sizeof(short) * 2);
         const u32 QVGA_REG_COUNT = sizeof(m_OV7725_QVGA) / (sizeof(short) * 2);
-        
+
         CameraInit(&m_handle, CAMERA_FRONT, BAYER_TO_Y, BYTES_PER_PIXEL,
             REFERENCE_FREQUENCY_MHZ, I2C_ADDRESS, &m_i2c, NULL,
             VGA_REG_COUNT, m_OV7725_QVGA, QVGA_REG_COUNT, NULL,
@@ -561,7 +561,7 @@ namespace Anki
 #else
         const u32 VGA_REG_COUNT = sizeof(m_OV7725_VGA) / (sizeof(short) * 2);
         const u32 QVGA_REG_COUNT = 0;
-        
+
         CameraInit(&m_handle, CAMERA_FRONT, BAYER_TO_Y, BYTES_PER_PIXEL,
             REFERENCE_FREQUENCY_MHZ, I2C_ADDRESS, &m_i2c, m_OV7725_VGA,
             VGA_REG_COUNT, NULL, QVGA_REG_COUNT, NULL, QQVGA_REG_COUNT,

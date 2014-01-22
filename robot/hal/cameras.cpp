@@ -180,7 +180,7 @@ namespace Anki
             outCfg = D_CIF_OUTF_FORMAT_444 |
               D_CIF_OUTF_CHROMA_SUB_CO_SITE_CENTER |
               D_CIF_OUTF_STORAGE_PLANAR;
-              
+
 #ifdef USE_QVGA_CAMERA
             inputFormat = D_CIF_INFORM_FORMAT_RGB_BAYER |
               D_CIF_INFORM_DAT_SIZE_16;
