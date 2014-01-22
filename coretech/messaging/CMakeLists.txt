@@ -9,3 +9,5 @@ add_subdirectory(basestation/src)
 
 #add_subdirectory(robot/src)
 #add_subdirectory(robot/test) 
+
+add_subdirectory(shared/src)

@@ -1,4 +1,4 @@
-#include "anki/messaging/TcpClient.h"
+#include "anki/messaging/shared/TcpClient.h"
 
 #include <iostream>
 #include <cstring>      // Needed for memset
