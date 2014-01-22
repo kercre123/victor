@@ -415,7 +415,7 @@ GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
   MemoryStack ms(&cmxBuffer[0], CMX_BUFFER_SIZE);
   ASSERT_TRUE(ms.IsValid());
 
-  const Quadrilateral<f32> initialCorners(Point<f32>(5.0f,5.0f), Point<f32>(100.0f,100.0f), Point<f32>(50.0f,20.0f), Point<f32>(10.0f,0.0f));
+  const Quadrilateral<f32> initialCorners(Point<f32>(5.0f,5.0f), Point<f32>(100.0f,100.0f), Point<f32>(50.0f,20.0f), Point<f32>(10.0f,80.0f));
   const TemplateTracker::PlanarTransformation_f32 transform(TemplateTracker::TRANSFORM_AFFINE, initialCorners, ms);
 
   f32 rel_x, rel_y, rel_rad;
@@ -426,9 +426,9 @@ GTEST_TEST(CoreTech_Vision, ComputeDockingErrorSignalAffine)
   //printf("%f %f %f\n", rel_x, rel_y, rel_rad);
 
   // TODO: manually compute the correct output
-  ASSERT_TRUE(FLT_NEAR(rel_x,35.355339f));
-  ASSERT_TRUE(NEAR(rel_y,229.809707f, 0.1f)); // The Myriad inexact floating point mode is imprecise here
-  ASSERT_TRUE(FLT_NEAR(rel_rad,0.785398f));
+  ASSERT_TRUE(FLT_NEAR(rel_x,2.7116308f));
+  ASSERT_TRUE(NEAR(rel_y,-8.1348925f, 0.1f)); // The Myriad inexact floating point mode is imprecise here
+  ASSERT_TRUE(FLT_NEAR(rel_rad,-0.87467581f));
 
   GTEST_RETURN_HERE;
 }
