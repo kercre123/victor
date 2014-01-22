@@ -157,7 +157,7 @@ namespace Anki
           CameraMode mode, u8* frameBuffer)
       {
         u32 outCfg;
-        u32 inputFormat = 0;
+        u32 inputFormat;
         u32 control = 0;
 
         // Write the setup script to the camera over I2C
@@ -180,15 +180,9 @@ namespace Anki
             outCfg = D_CIF_OUTF_FORMAT_444 |
               D_CIF_OUTF_CHROMA_SUB_CO_SITE_CENTER |
               D_CIF_OUTF_STORAGE_PLANAR;
-              
-#ifdef USE_QVGA_CAMERA
-            inputFormat = D_CIF_INFORM_FORMAT_RGB_BAYER |
-              D_CIF_INFORM_DAT_SIZE_16;
-#else
             inputFormat = D_CIF_INFORM_FORMAT_RGB_BAYER |
               D_CIF_INFORM_BAYER_BGBG_GRGR |
               D_CIF_INFORM_DAT_SIZE_8;
-#endif
             break;
 
           default:
@@ -204,17 +198,10 @@ namespace Anki
         switch (camSpec->type)
         {
           case BAYER:
-#ifdef USE_QVGA_CAMERA
             control =
               D_CIF_CTRL_ENABLE |
               D_CIF_CTRL_RGB_BAYER_EN |
               D_CIF_CTRL_STATISTICS_FULL;
-#else
-            control =
-              D_CIF_CTRL_ENABLE |
-              D_CIF_CTRL_RGB_BAYER_EN |
-              D_CIF_CTRL_STATISTICS_FULL;
-#endif
 
             DrvCifDma0CfgPP(cifBase,
                       (u32)frameBuffer,
@@ -227,19 +214,11 @@ namespace Anki
             break;
 
           case BAYER_TO_Y:
-#ifdef USE_QVGA_CAMERA
-            control =
-              D_CIF_CTRL_ENABLE |
-              //D_CIF_CTRL_RGB_BAYER_EN |
-              //D_CIF_CTRL_CSC_ENABLE |  // Color space conversion
-              D_CIF_CTRL_STATISTICS_FULL;
-#else
             control =
               D_CIF_CTRL_ENABLE |
               D_CIF_CTRL_RGB_BAYER_EN |
               D_CIF_CTRL_CSC_ENABLE |  // Color space conversion
               D_CIF_CTRL_STATISTICS_FULL;
-#endif
 
             // Capture only the Y-channel
             DrvCifDma0CfgPP(cifBase,
