@@ -1,39 +1,31 @@
+/**
+ * File: messages.cpp  (Basestation)
+ *
+ * Author: Andrew Stein
+ * Date:   1/21/2014
+ *
+ * Description: Defines a base Message class from which all the other messages
+ *              inherit.  The inherited classes are auto-generated via multiple
+ *              re-includes of the MessageDefinitions.h file, with specific
+ *              "mode" flags set.
+ *
+ * Copyright: Anki, Inc. 2014
+ **/
+
+#include <cstring> // for memcpy used in the constructor, created by MessageDefinitions
+
+
 #include "anki/cozmo/basestation/messages.h"
 
 
 namespace Anki {
   namespace Cozmo {
-    namespace Messages {
-      
-      // TODO: Fill this in!
-     
-     
-      namespace {
-        
-        // 4. Fill in the message information lookup table:
-        typedef struct {
-          u8 priority;
-          u8 size;
-          void (*dispatchFcn)(const u8* buffer);
-        } TableEntry;
-        
-        // TODO: Would be nice to use NUM_MSG_IDS instead of hard-coded 256 here.
-        TableEntry LookupTable_[256] = {
-          {0,0,0}, // Empty entry for NO_MESSAGE_ID
-#undef  MESSAGE_DEFINITION_MODE
-#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
+    
+    // Define all the message classes's constructors
+#define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_CONSTRUCTOR_MODE
 #include "anki/cozmo/MessageDefinitions.h"
-          {0, 0, 0} // Final dummy entry without comma at end
-        };
-        
-      } // private namespace
-      
-      u8 GetSize(const ID msgID)
-      {
-        return LookupTable_[msgID].size;
-      }
-      
-      
+    
+    /*
       // THese are dummy placeholders to avoid linker errors for now
       
       void ProcessClearPathMessage(const ClearPath&) {}
@@ -67,7 +59,7 @@ namespace Anki {
       void ProcessHeadCameraCalibrationMessage(const HeadCameraCalibration&) {}
       
       void ProcessRobotStateMessage(const RobotState& msg) {}
-      
-    } // namespace Messages
+      */
+
   } // namespace Cozmo
 } // namespace Anki

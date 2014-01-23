@@ -66,10 +66,13 @@ namespace Anki {
       bool hasOutgoingMessages() const;
       void getOutgoingMessage(u8 *msgOut, u8 &msgSize);
       
-      void dockWithBlock(const Block& block);
+      //void dockWithBlock(const Block& block);
+      
+#define MESSAGE_DEFINITION_MODE MESSAGE_ROBOT_PROCESSOR_METHOD_MODE
+#include "anki/cozmo/MessageDefinitions.h"
       
     protected:
-      u32  ID;
+      RobotID_t ID;
       bool addedToWorld;
       
       Pose3d pose;
