@@ -19,8 +19,8 @@ namespace Anki {
           void (*dispatchFcn)(const u8* buffer);
         } TableEntry;
         
-        // TODO: Would be nice to use NUM_MSG_IDS instead of hard-coded 256 here.
-        TableEntry LookupTable_[256] = {
+        const size_t NUM_TABLE_ENTRIES = NUM_MSG_IDS + 1;
+        TableEntry LookupTable_[NUM_TABLE_ENTRIES] = {
           {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
 #undef  MESSAGE_DEFINITION_MODE
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
