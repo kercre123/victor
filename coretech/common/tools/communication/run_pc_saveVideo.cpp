@@ -297,13 +297,13 @@ int main(int argc, char ** argv)
     if(bytesRead > 0) {
       lastUpdateTime = GetTime();
     } else {
-      if((GetTime()-lastUpdateTime) < secondsToWaitBeforeSavingABuffer) {
+      if((GetTime()-lastUpdateTime) > secondsToWaitBeforeSavingABuffer) {
         lastUpdateTime = GetTime();
 
         if(usbBufferIndex > 0) {
           RawBuffer rawBuffer;
           rawBuffer.data = reinterpret_cast<u8*>(usbBuffer);
-          rawBuffer.dataLength = USB_BUFFER_SIZE;
+          rawBuffer.dataLength = usbBufferIndex;
 
           // Use a seperate thread
           /*
