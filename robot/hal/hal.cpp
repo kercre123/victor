@@ -71,8 +71,9 @@ namespace Anki
 
         // Check neck potentiometer here, until radio implements it
         // ...
-
+#ifdef USE_CAPTURE_IMAGES
         Robot::step_MainExecution();
+#endif
 
         static u32 now = 0;
         //if ((HAL::GetMicroCounter() - now) > 5000000)
@@ -159,7 +160,10 @@ namespace Anki
 #endif
 
         FrontCameraInit();
+        
+#ifndef USE_CAPTURE_IMAGES
         MotorInit();
+#endif
       }
 
       // Called from Robot::Init(), but not actually used here.
