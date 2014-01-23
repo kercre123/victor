@@ -114,6 +114,12 @@ void SaveAndFreeBuffer(RawBuffer &buffer, const string outputFilenamePattern)
 
   MemoryStack memory(bigBufferRaw2, BIG_BUFFER_SIZE, Flags::Buffer(false, true, false));
 
+#ifdef PRINTF_ALL_RECEIVED
+  for(s32 i=0; i<buffer.dataLength; i++) {
+    printf("%x ", buffer.data[i]);
+  }
+#endif
+
   s32 usbMessageStartIndex;
   s32 usbMessageEndIndex;
   FindUSBMessage(buffer.data, buffer.dataLength, usbMessageStartIndex, usbMessageEndIndex);
@@ -255,7 +261,7 @@ int main(int argc, char ** argv)
   s32 usbBufferIndex = 0;
 
   s32 comPort = 10;
-  s32 baudRate = 2000000;
+  s32 baudRate = 1152000;
 
   if(argc == 1) {
     // just use defaults, but print the help anyway
@@ -292,27 +298,31 @@ int main(int argc, char ** argv)
       lastUpdateTime = GetTime();
     } else {
       if((GetTime()-lastUpdateTime) < secondsToWaitBeforeSavingABuffer) {
-        RawBuffer rawBuffer;
-        rawBuffer.data = reinterpret_cast<u8*>(usbBuffer);
-        rawBuffer.dataLength = USB_BUFFER_SIZE;
+        lastUpdateTime = GetTime();
 
-        // Use a seperate thread
-        /*
-        DWORD threadId = -1;
-        CreateThread(
-        NULL,        // default security attributes
-        0,           // use default stack size
-        SaveBuffersThread, // thread function name
-        &rawBuffer,    // argument to thread function
-        0,           // use default creation flags
-        &threadId);  // returns the thread identifier
-        */
+        if(usbBufferIndex > 0) {
+          RawBuffer rawBuffer;
+          rawBuffer.data = reinterpret_cast<u8*>(usbBuffer);
+          rawBuffer.dataLength = USB_BUFFER_SIZE;
 
-        // Just call the function
-        SaveAndFreeBuffer(rawBuffer, string(outputFilenamePattern));
+          // Use a seperate thread
+          /*
+          DWORD threadId = -1;
+          CreateThread(
+          NULL,        // default security attributes
+          0,           // use default stack size
+          SaveBuffersThread, // thread function name
+          &rawBuffer,    // argument to thread function
+          0,           // use default creation flags
+          &threadId);  // returns the thread identifier
+          */
 
-        usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
-        usbBufferIndex = 0;
+          // Just call the function
+          SaveAndFreeBuffer(rawBuffer, string(outputFilenamePattern));
+
+          usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
+          usbBufferIndex = 0;
+        }
       } else {
         //Sleep(1);
       }
