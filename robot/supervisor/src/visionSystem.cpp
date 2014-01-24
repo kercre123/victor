@@ -78,7 +78,7 @@ namespace Anki {
       Embedded::SerializedBuffer captureImagesBuffer_;
 
       s32 numCapturedImages = -1;
-      const s32 MAX_IMAGES_TO_CAPTURE = 50;
+      const s32 MAX_IMAGES_TO_CAPTURE = 100;
       bool sentStartingMessage = false;
 #endif
 
@@ -527,7 +527,7 @@ namespace Anki {
 				DisableCamera(HAL::CAMERA_FRONT);
 			  
                 //SendPrintf("Image capture finished");              
-                //SleepMs(550);
+                SleepMs(550);
               
                 s32 startIndex;
                 const u8 * bufferStart = reinterpret_cast<const u8*>(captureImagesBuffer_.get_memoryStack().get_validBufferStart(startIndex));

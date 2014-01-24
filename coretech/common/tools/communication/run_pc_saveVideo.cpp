@@ -29,8 +29,8 @@ _Check_return_opt_ _CRTIMP int __cdecl printf(_In_z_ _Printf_format_string_ cons
 
 #define BIG_BUFFER_SIZE 100000000
 
-const bool swapEndianForHeaders = true;
-const bool swapEndianForContents = true;
+const bool swapEndianForHeaders = false;
+const bool swapEndianForContents = false;
 
 using namespace std;
 
@@ -284,7 +284,7 @@ int main(int argc, char ** argv)
   s32 usbBufferIndex = 0;
 
   s32 comPort = 8;
-  s32 baudRate = 1000000;
+  s32 baudRate = 500000;
 
   if(argc == 1) {
     // just use defaults, but print the help anyway
