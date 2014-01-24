@@ -48,10 +48,10 @@ namespace Anki
 
   typedef s32 ReturnCode;
   
-  // NOTE: changing the basic type of TimeStamp (e.g. to u16 in order to save
+  // NOTE: changing the basic type of TimeStamp_t (e.g. to u16 in order to save
   //       bytes), has implications for message alignment since it currently
   //       comes first in the message structs.  
-  typedef u32 TimeStamp;
+  typedef u32 TimeStamp_t;
   
 #define	EXIT_FAILURE	1
 #define	EXIT_SUCCESS	0

@@ -705,9 +705,9 @@ namespace Anki {
         ;
     }
     
-    TimeStamp HAL::GetTimeStamp(void)
+    TimeStamp_t HAL::GetTimeStamp(void)
     {
-      return static_cast<TimeStamp>(webotRobot_.getTime() * 1000.0);
+      return static_cast<TimeStamp_t>(webotRobot_.getTime() * 1000.0);
     }
     
     s32 HAL::GetRobotID(void)

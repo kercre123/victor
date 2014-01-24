@@ -142,7 +142,7 @@ namespace Anki {
       typedef struct {
         u8* data;
         HAL::CameraMode resolution;
-        TimeStamp  timestamp;
+        TimeStamp_t  timestamp;
       } FrameBuffer;
 
       ReturnCode CaptureHeadFrame(FrameBuffer &frame);

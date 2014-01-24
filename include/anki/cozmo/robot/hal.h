@@ -155,7 +155,7 @@ namespace Anki
       void MicroWait(u32 microseconds);
       
       // Get a sync'd timestamp (e.g. for messages), in milliseconds
-      TimeStamp GetTimeStamp(void);
+      TimeStamp_t GetTimeStamp(void);
 
       s32 GetRobotID(void);
 
@@ -466,7 +466,7 @@ namespace Anki
       // Send a frame at the current frame resolution (last set by
       // a call to SetUSBFrameResolution)
       void USBSendFrame(const u8*        frame,
-                        const TimeStamp  timestamp,
+                        const TimeStamp_t  timestamp,
                         const CameraMode inputResolution,
                         const CameraMode sendResolution,
                         const u8         commandByte);
