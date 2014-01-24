@@ -124,31 +124,28 @@ void SaveAndFreeBuffer(RawBuffer &buffer, const string outputFilenamePattern)
 #endif
 
   s32 bufferDataOffset = 0;
-  bool atLeastOneHeaderFound = false;
-  while(bufferDataOffset < buffer.dataLength)
+  //bool atLeastOneHeaderFound = false;
+  while(bufferDataOffset < (buffer.dataLength - SERIALIZED_BUFFER_HEADER_LENGTH - SERIALIZED_BUFFER_FOOTER_LENGTH))
   {
     s32 usbMessageStartIndex;
     s32 usbMessageEndIndex;
     FindUSBMessage(buffer.data+bufferDataOffset, buffer.dataLength-bufferDataOffset, usbMessageStartIndex, usbMessageEndIndex);
-    
-    if(usbMessageEndIndex < 0) {
-      if(!atLeastOneHeaderFound) {
-        printf("Error: USB footer is missing (%d,%d) in message of size %d bytes, returning...\n", usbMessageStartIndex, usbMessageEndIndex, buffer.dataLength);
-      }
 
-      buffer.data = NULL;
-      free(bufferDataOriginal);
-	    free(shiftedBufferOriginal);
-      return;
+    if(usbMessageEndIndex < 0) {
+      printf("Error: USB footer is missing (%d,%d) with %d total bytes and %d bytes remaining, attempting to parse anyway...\n", usbMessageStartIndex, usbMessageEndIndex, buffer.dataLength, buffer.dataLength-bufferDataOffset);
+      usbMessageEndIndex = buffer.dataLength - 1;
     }
 
     if(usbMessageStartIndex < 0) {
-      printf("Error: USB header is missing (%d,%d) in message of size %d bytes, attempting to continue...\n", usbMessageStartIndex, usbMessageEndIndex, buffer.dataLength);
-      bufferDataOffset = usbMessageEndIndex;
-      continue;
+      printf("Error: USB header is missing (%d,%d) with %d total bytes and %d bytes remaining, returning...\n", usbMessageStartIndex, usbMessageEndIndex, buffer.dataLength, buffer.dataLength-bufferDataOffset);
+
+      buffer.data = NULL;
+      free(bufferDataOriginal);
+      free(shiftedBufferOriginal);
+      return;
     }
 
-    atLeastOneHeaderFound = true;
+    //atLeastOneHeaderFound = true;
 
     usbMessageStartIndex += bufferDataOffset;
     usbMessageEndIndex += bufferDataOffset;
