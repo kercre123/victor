@@ -34,7 +34,7 @@ const bool swapEndianForContents = true;
 
 using namespace std;
 
-const double secondsToWaitBeforeSavingABuffer = 5.0;
+const double secondsToWaitBeforeSavingABuffer = 1.0;
 
 const s32 outputFilenamePatternLength = 1024;
 char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/cozmoShort/cozmo_%04d-%02d-%02d_%02d-%02d-%02d_%d.%s";
@@ -236,7 +236,7 @@ void SaveAndFreeBuffer(RawBuffer &buffer, const string outputFilenamePattern)
 
           frameNumber++;
 
-          printf("Saving to %s\n", outputFilename);
+          printf("Saving to %s", outputFilename);
           const cv::Mat_<u8> &mat = arr.get_CvMat_();
           cv::imwrite(outputFilename, mat);
           //cv::imwrite("c:/tmp/tt.bmp", mat);
@@ -283,7 +283,7 @@ int main(int argc, char ** argv)
   s32 usbBufferIndex = 0;
 
   s32 comPort = 8;
-  s32 baudRate = 500000;
+  s32 baudRate = 1000000;
 
   if(argc == 1) {
     // just use defaults, but print the help anyway
