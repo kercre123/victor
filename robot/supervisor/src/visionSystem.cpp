@@ -78,7 +78,7 @@ namespace Anki {
       Embedded::SerializedBuffer captureImagesBuffer_;
 
       s32 numCapturedImages = -1;
-      const s32 MAX_IMAGES_TO_CAPTURE = 10;
+      const s32 MAX_IMAGES_TO_CAPTURE = 50;
       bool sentStartingMessage = false;
 #endif
 
@@ -491,7 +491,7 @@ namespace Anki {
             if(!sentStartingMessage) {
               sentStartingMessage = true;
 
-              //SendPrintf("Starting image capture (Note: this message should be displayed at the correct time)");              
+              //SendPrintf("Starting image capture");              
               //SleepMs(500);
             } // if(!sentStartingMessage)
 
@@ -524,7 +524,9 @@ namespace Anki {
 
               numCapturedImages++;
               if(numCapturedImages == MAX_IMAGES_TO_CAPTURE) {
-                //SendPrintf("Image capture finished (Note: this message is delayed)");              
+				DisableCamera(HAL::CAMERA_FRONT);
+			  
+                //SendPrintf("Image capture finished");              
                 //SleepMs(550);
               
                 s32 startIndex;
