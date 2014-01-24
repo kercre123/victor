@@ -124,22 +124,31 @@ void SaveAndFreeBuffer(RawBuffer &buffer, const string outputFilenamePattern)
 #endif
 
   s32 bufferDataOffset = 0;
+  bool atLeastOneHeaderFound = false;
   while(bufferDataOffset < buffer.dataLength)
   {
     s32 usbMessageStartIndex;
     s32 usbMessageEndIndex;
     FindUSBMessage(buffer.data+bufferDataOffset, buffer.dataLength-bufferDataOffset, usbMessageStartIndex, usbMessageEndIndex);
-    usbMessageStartIndex += bufferDataOffset;
-    usbMessageEndIndex += bufferDataOffset;
-    bufferDataOffset = usbMessageEndIndex;
-
+    
     if(usbMessageStartIndex < 0 || usbMessageEndIndex < 0) {
-      printf("Error: USB header or footer is missing (%d,%d) in message of size %d bytes\n", usbMessageStartIndex, usbMessageEndIndex, buffer.dataLength);
+      if(atLeastOneHeaderFound) {
+        printf("No more USB headers and footers were found, so returning\n");
+      } else {
+        printf("Error: USB header or footer is missing (%d,%d) in message of size %d bytes\n", usbMessageStartIndex, usbMessageEndIndex, buffer.dataLength);
+      }
+
       buffer.data = NULL;
       free(bufferDataOriginal);
 	  free(shiftedBufferOriginal);
       return;
     }
+
+    atLeastOneHeaderFound = true;
+
+    usbMessageStartIndex += bufferDataOffset;
+    usbMessageEndIndex += bufferDataOffset;
+    bufferDataOffset = usbMessageEndIndex;
 
     const s32 messageLength = usbMessageEndIndex-usbMessageStartIndex+1;
 

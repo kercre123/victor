@@ -423,6 +423,12 @@ namespace Anki
       {
         m_cams[cameraID].isEOF = isEOF;
       }
+	 
+	  void DisableCamera(CameraID cameraID)
+	  {
+		u32 irq = m_cams[cameraID].IRQ_CIF_X;
+        DrvIcbDisableIrq(irq);
+	  }
     }
   }
 }
