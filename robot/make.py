@@ -78,7 +78,7 @@ SHAVE_SOURCE += addSources(SWCOMMON + 'shave_code/' + MV_SOC_PLATFORM + '/myriad
 SHAVE_SOURCE += addSources(SWCOMMON + 'shave_code/' + MV_SOC_PLATFORM + '/myriad1/src')
 
 LEON_ASM_C_CXX_OPT = (
-  '-DDISABLE_LEON_DCACHE '
+#  '-DDISABLE_LEON_DCACHE '
 #  '-DDISABLE_LEON_CACHE '
   '-DROBOT_HARDWARE '
   '-DCOZMO_ROBOT ' # TODO: ROBOT_HARDWARE and COZMO_ROBOT should probably be merged
@@ -407,7 +407,7 @@ if __name__ == '__main__':
     elif arg == 'capture-images':
       target = 'capture-images'
       LEON_ASM_C_CXX_OPT += '-DUSE_OFFBOARD_VISION=0 -DUSE_CAPTURE_IMAGES '
-      LEON_ASM_C_CXX_OPT += '-DDEFAULT_BAUDRATE=500000 '
+      LEON_ASM_C_CXX_OPT += '-DDEFAULT_BAUDRATE=1000000 '
     else:
       print 'Invalid argument: ' + arg
       sys.exit(1)

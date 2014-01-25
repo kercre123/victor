@@ -78,7 +78,7 @@ namespace Anki {
       Embedded::SerializedBuffer captureImagesBuffer_;
 
       s32 numCapturedImages = -1;
-      const s32 MAX_IMAGES_TO_CAPTURE = 100;
+      const s32 MAX_IMAGES_TO_CAPTURE = 50;
       bool sentStartingMessage = false;
 #endif
 

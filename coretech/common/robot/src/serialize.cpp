@@ -288,9 +288,8 @@ namespace Anki
       const u32 computedCrc =  ComputeCRC32_littleEndian(segmentToReturn, segmentLength, 0xFFFFFFFF);
 #endif
 
-      // TODO: add back
-      //AnkiConditionalErrorAndReturnValue(expectedCRC == computedCrc,
-      //  NULL, "SerializedBufferConstIterator::GetNext", "CRCs don't match (%x != %x)", expectedCRC, computedCrc);
+      AnkiConditionalErrorAndReturnValue(expectedCRC == computedCrc,
+        NULL, "SerializedBufferConstIterator::GetNext", "CRCs don't match (%x != %x)", expectedCRC, computedCrc);
 
       dataLength = reinterpret_cast<const u32*>(segmentToReturn)[0];
       type = static_cast<SerializedBuffer::DataType>(reinterpret_cast<const u32*>(segmentToReturn)[1]);

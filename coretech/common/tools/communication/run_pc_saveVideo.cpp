@@ -25,12 +25,12 @@ _Check_return_opt_ _CRTIMP int __cdecl printf(_In_z_ _Printf_format_string_ cons
 
 #include "opencv/cv.h"
 
-//#define PRINTF_ALL_RECEIVED
+#define PRINTF_ALL_RECEIVED
 
 #define BIG_BUFFER_SIZE 100000000
 
-const bool swapEndianForHeaders = false;
-const bool swapEndianForContents = false;
+const bool swapEndianForHeaders = true;
+const bool swapEndianForContents = true;
 
 using namespace std;
 
@@ -117,10 +117,12 @@ void SaveAndFreeBuffer(RawBuffer &buffer, const string outputFilenamePattern)
   MemoryStack memory(bigBufferRaw2, BIG_BUFFER_SIZE, Flags::Buffer(false, true, false));
 
 #ifdef PRINTF_ALL_RECEIVED
+  printf("\n");
   //for(s32 i=0; i<buffer.dataLength; i++) {
   for(s32 i=0; i<500; i++) {
     printf("%x ", buffer.data[i]);
   }
+  printf("\n");
 #endif
 
   s32 bufferDataOffset = 0;
@@ -130,12 +132,7 @@ void SaveAndFreeBuffer(RawBuffer &buffer, const string outputFilenamePattern)
     s32 usbMessageStartIndex;
     s32 usbMessageEndIndex;
     FindUSBMessage(buffer.data+bufferDataOffset, buffer.dataLength-bufferDataOffset, usbMessageStartIndex, usbMessageEndIndex);
-
-    if(usbMessageEndIndex < 0) {
-      printf("Error: USB footer is missing (%d,%d) with %d total bytes and %d bytes remaining, attempting to parse anyway...\n", usbMessageStartIndex, usbMessageEndIndex, buffer.dataLength, buffer.dataLength-bufferDataOffset);
-      usbMessageEndIndex = buffer.dataLength - 1;
-    }
-
+    
     if(usbMessageStartIndex < 0) {
       printf("Error: USB header is missing (%d,%d) with %d total bytes and %d bytes remaining, returning...\n", usbMessageStartIndex, usbMessageEndIndex, buffer.dataLength, buffer.dataLength-bufferDataOffset);
 
@@ -143,6 +140,11 @@ void SaveAndFreeBuffer(RawBuffer &buffer, const string outputFilenamePattern)
       free(bufferDataOriginal);
       free(shiftedBufferOriginal);
       return;
+    }
+
+    if(usbMessageEndIndex < 0) {
+      printf("Error: USB footer is missing (%d,%d) with %d total bytes and %d bytes remaining, attempting to parse anyway...\n", usbMessageStartIndex, usbMessageEndIndex, buffer.dataLength, buffer.dataLength-bufferDataOffset);
+      usbMessageEndIndex = buffer.dataLength - 1;
     }
 
     //atLeastOneHeaderFound = true;
@@ -284,7 +286,7 @@ int main(int argc, char ** argv)
   s32 usbBufferIndex = 0;
 
   s32 comPort = 8;
-  s32 baudRate = 500000;
+  s32 baudRate = 1000000;
 
   if(argc == 1) {
     // just use defaults, but print the help anyway
