@@ -189,7 +189,7 @@ namespace Anki
       // Communications
       //bool IsConnected() {return false;}
       u8 RadioFromBase(u8 buffer[RADIO_BUFFER_SIZE]) {return 0;}
-      bool RadioSendMessage(const Messages::ID msgID, const void *message) {return true;}
+      bool RadioSendMessage(const Messages::ID msgID, const void *message, TimeStamp_t ts) {return true;}
       Messages::ID RadioGetNextMessage(u8* buffer) {return Messages::NO_MESSAGE_ID;}
       
       // Gyro

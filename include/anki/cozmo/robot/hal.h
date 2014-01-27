@@ -95,6 +95,12 @@ extern "C" {
   } \
 }
 
+
+// Whether or not to use TCP server (0) or Webots emitter/receiver (1)
+// as the BTLE channel. (TODO: Phase out webots emitter/receiver)
+#define USE_WEBOTS_TXRX 0
+
+
 #endif  // SIMULATOR
 
 #define REG_WORD(x) *(volatile u32*)(x)
@@ -382,7 +388,7 @@ namespace Anki
       Messages::ID RadioGetNextMessage(u8* buffer);
      
       // Returns true if the message has been sent to the basestation
-      bool RadioSendMessage(const Messages::ID msgID, const void *buffer);
+      bool RadioSendMessage(const Messages::ID msgID, const void *buffer, TimeStamp_t ts = HAL::GetTimeStamp());
 
       /////////////////////////////////////////////////////////////////////
       // POWER MANAGEMENT

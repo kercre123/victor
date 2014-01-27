@@ -23,6 +23,7 @@ namespace Anki {
     // Packet headers/footers:
     // TODO: Do we need this?  Only used in simulation I think? (Add #ifdef SIMULATOR?)
     const u8 RADIO_PACKET_HEADER[2] = {0xBE, 0xEF};
+    const u8 RADIO_PACKET_FOOTER[2] = {0xFF, 0x0F};
     const u8 USB_PACKET_HEADER[4] = {0xBE, 0xEF, 0xF0, 0xFF}; // BEEFF0FF
     const u8 USB_PACKET_FOOTER[4] = {0xFF, 0x0F, 0xFE, 0xEB}; // FF0FFEEB
     
