@@ -19,7 +19,7 @@
 #include "anki/cozmo/robot/wheelController.h"
 #include "anki/cozmo/robot/visionSystem.h"
 
-#include "anki/messaging/robot/utilMessaging.h"
+#include "anki/messaging/shared/utilMessaging.h"
 
 ///////// TESTING //////////
 

@@ -19,13 +19,10 @@ set(SOURCE_FILES
 	blockworld_controller.cpp
 
   ${PROJECT_SOURCE_DIR}/basestation/src/messages.cpp
-
-#	${PROJECT_SOURCE_DIR}/coretech/messaging/robot/TcpSocket/TcpServer.cpp
 )
 
 set(HEADER_FILES
 	CozmoWorldComms.h
-#	${PROJECT_SOURCE_DIR}/coretech/messaging/include/anki/messaging/TcpServer.h
 )
 
 if(NOT WIN32)
@@ -38,6 +35,7 @@ if(NOT WIN32)
     Cozmo_Basestation
     CoreTech_Common_Basestation
     CoreTech_Vision_Basestation
+    CoreTech_Messaging_Shared
   # Controller # Webots C Controller
     CppController # Webots C++ Controller
     ${OPENCV_LIBS}
