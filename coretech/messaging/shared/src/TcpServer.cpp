@@ -138,6 +138,7 @@ bool TcpServer::Accept()
   else
   {
     DEBUG_TCP_SERVER("TcpServer: Connection accepted. Using new socketfd : "  <<  client_sd);
+    set_nonblock(client_sd);
     return true;
   }
 
@@ -176,8 +177,10 @@ int TcpServer::Recv(char* data, int maxSize)
   if (bytes_received <= 0) {
     if (errno != EWOULDBLOCK)
     {
-      DEBUG_TCP_SERVER("receive error!");
+      DEBUG_TCP_SERVER("receive error! " << errno);
       DisconnectClient();
+    } else {
+      bytes_received = 0;
     }
   } else {
     DEBUG_TCP_SERVER("TcpServer: " << bytes_received << " bytes received : " << data);

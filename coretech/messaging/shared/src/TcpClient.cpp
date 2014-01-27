@@ -119,8 +119,7 @@ int TcpClient::Recv(char* data, int maxSize)
     ssize_t bytes_received;
     bytes_received = recv(socketfd, data, maxSize, 0);
     // If no data arrives, the program will just wait here until some data arrives.
-
-
+  
     if (bytes_received <= 0) {
       if (errno != EWOULDBLOCK) {
         #if(DEBUG_TCP_CLIENT)
@@ -128,6 +127,8 @@ int TcpClient::Recv(char* data, int maxSize)
         #endif
         Disconnect();
         return -1;
+      } else {
+        bytes_received = 0;
       }
     }
     else {

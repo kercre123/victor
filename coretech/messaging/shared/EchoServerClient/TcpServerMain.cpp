@@ -12,7 +12,10 @@ int main (int argc, char *argv[])
   char buf[2048];
 
   TcpServer server;
-  server.StartListening(LISTEN_PORT);
+  if (!server.StartListening(LISTEN_PORT)) {
+    printf("Failed to listen on port %s\n", LISTEN_PORT);
+    return -1;
+  }
   std::cout << "Waiting for client...\n";
   
   while (1) {

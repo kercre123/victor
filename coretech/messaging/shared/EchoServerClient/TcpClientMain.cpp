@@ -45,10 +45,12 @@ int main (int argc, char *argv[])
 
     int bytes_received = client.Recv(recvBuf, sizeof(recvBuf));
     if (bytes_received < 0) {
+      cout << "Recv failed\n";
       break;
-    } else {
-      std::cout << "Received: " << recvBuf << "\n";
+    } else if (bytes_received > 0) {
+      cout << "Received: " << recvBuf << "\n";
     }
+    
   }
 
   return(0);
