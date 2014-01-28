@@ -8,7 +8,7 @@
 
 #include <cstdio>
 #include <queue>
-
+#include <unistd.h>
 
 //#include "CozmoWorldComms.h"
 #include <webots/Supervisor.hpp>
@@ -21,6 +21,11 @@
 //#include "anki/messaging/basestation/messagingInterface.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
+
+#include "anki/cozmo/basestation/tcpComms.h"
+
+// TODO: Get rid of this once we're sure it's working with TCP stuff
+#define USE_WEBOTS_TXRX 0
 
 webots::Supervisor commsController;
 
@@ -161,10 +166,15 @@ int main(int argc, char **argv)
   
   const int MAX_ROBOTS = Anki::Cozmo::BlockWorld::MaxRobots;
   
+  // Comms
+  Anki::TCPComms robotComms;
+  
+#if(USE_WEBOTS_TXRX)
   webots::Receiver* rx[MAX_ROBOTS];
   webots::Emitter*  tx[MAX_ROBOTS];
+#endif
   commsController.keyboardEnable(Anki::Cozmo::TIME_STEP);
- 
+
   
   //
   // Initialize the node lists for the world this controller lives in
@@ -179,6 +189,7 @@ int main(int argc, char **argv)
           robotNodes.size(), simBlocks.size());
 
   
+#if(USE_WEBOTS_TXRX)
   //
   // Initialize World Transmitters/Receivers
   // (one for each robot, up to MAX_ROBOTS)
@@ -193,15 +204,34 @@ int main(int argc, char **argv)
     rx[i] = commsController.getReceiver(rxRadioName);
     rx[i]->enable(Anki::Cozmo::TIME_STEP);
   }
- 
+#endif
+  
+  
+  // If not already connected to a robot, connect to the
+  // first one that becomes available.
+  // TODO: Once we have a UI, we can select the one we want to connect to in a more reasonable way.
+  while (robotComms.GetNumConnectedRobots() == 0) {
+    usleep(500000);
+    vector<int> advertisingRobotIDs;
+    if (robotComms.GetAdvertisingRobotIDs(advertisingRobotIDs) > 0) {
+     robotComms.ConnectToRobotByID(advertisingRobotIDs[0]);
+    }
+  };
+  
+  
   //
   // Main Execution loop: step the world forward forever
   //
   while (commsController.step(Anki::Cozmo::TIME_STEP) != -1)
   {
+    // Read messages from all robots
+    robotComms.Update();
+    
+    
     //
     // Check for any incoming messages from each physical robot:
     //
+#if(USE_WEBOTS_TXRX)
     for(int i=0; i<MAX_ROBOTS; ++i)
     {
       int dataSize;
@@ -222,6 +252,15 @@ int main(int argc, char **argv)
       } // while receiver queue not empty
       
     } // for each receiver
+#else
+    Anki::MsgPacket p;
+    while( robotComms.GetNextMsgPacket(p)) {
+      //printf("RECEIVED from robot %d: size %d - ""\n", p.sourceId, p.dataLen);
+      processPacket(p.data, p.dataLen, blockWorld, p.sourceId);
+    }
+
+#endif
+    
     
     //
     // Check for any outgoing messages from each basestation robot:
@@ -232,6 +271,8 @@ int main(int argc, char **argv)
       Anki::Cozmo::Robot& robot = blockWorld.getRobot(i);
       while(robot.hasOutgoingMessages())
       {
+        
+#if(USE_WEBOTS_TXRX)
         // Buffer for the message data we're going to send:
         // (getOutgoingMessage() will copy data into it)
         unsigned char msgData[255];
@@ -241,7 +282,14 @@ int main(int argc, char **argv)
         if(msgSize > 0) {
           tx[i]->send(msgData, msgSize);
         }
-        
+#else
+        Anki::MsgPacket p;
+        p.destId = robot.get_ID();
+        robot.getOutgoingMessage(p.data, p.dataLen);
+        if (p.dataLen > 0) {
+          robotComms.Send(p);
+        }
+#endif
       } // while robot i still has outgoing messages to send
       
     } // for each robot

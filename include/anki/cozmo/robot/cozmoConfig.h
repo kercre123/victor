@@ -26,6 +26,10 @@ namespace Anki {
     const u8 RADIO_PACKET_FOOTER[2] = {0xFF, 0x0F};
     const u8 USB_PACKET_HEADER[4] = {0xBE, 0xEF, 0xF0, 0xFF}; // BEEFF0FF
     const u8 USB_PACKET_FOOTER[4] = {0xFF, 0x0F, 0xFE, 0xEB}; // FF0FFEEB
+
+    // The base listening port for robot TCP server.
+    // Each robot listens on port (ROBOT_RADIO_BASE_PORT + ROBOT_ID)
+    const u16 ROBOT_RADIO_BASE_PORT = 5000;
     
     // Expected message receive latency
     // It is assumed that this value does not fluctuate greatly.
