@@ -5,3 +5,5 @@ groundTruthFilename = 'Z:/Documents/Box Documents/Cozmo SE/cozmoShort/labeledCor
 [trackingImages, centeredImage, tiltedImage, shiftedImage] = loadTestImages();
 
 % test various template sizes
+
+keyboard
