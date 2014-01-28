@@ -51,8 +51,12 @@ function loadConfigFile()
     dataPath = jsonConfigFilename(1:(slashIndexes(end)));
 
     for i = 1:maxSequenceNumber
-        if ~isfield(jsonData.sequences{i}, 'groundTruth')
-            jsonData.sequences{i}.groundTruth = [];
+%         if ~isfield(jsonData.sequences{i}, 'groundTruth')
+%             jsonData.sequences{i}.groundTruth = [];
+%         end
+        
+        if isfield(jsonData.sequences{i}, 'groundTruth') && ~iscell(jsonData.sequences{i}.groundTruth)
+            jsonData.sequences{i}.groundTruth = {jsonData.sequences{i}.groundTruth};
         end
     end
 
@@ -97,6 +101,10 @@ function selectPoints_OpeningFcn(hObject, eventdata, handles, varargin)
 function index = findFrameNumberIndex(jsonData, sequenceNumberIndex, frameNumberIndex)
     index = -1;
 
+    if ~isfield(jsonData.sequences{sequenceNumberIndex}, 'groundTruth')
+        return;
+    end
+    
     for i = 1:length(jsonData.sequences{sequenceNumberIndex}.groundTruth)
         curFrameNumber = jsonData.sequences{sequenceNumberIndex}.groundTruth{i}.frameNumber;
         queryFrameNumber = jsonData.sequences{sequenceNumberIndex}.frameNumbers(frameNumberIndex);
@@ -125,7 +133,7 @@ function previousSequence_Callback(hObject, eventdata, handles) %#ok<*INUSL>
         curSequenceNumber = curSequenceNumber - 1;
     end
 
-    sequenceChanged(handles);
+    sequenceChanged(handles, true);
 
 function nextSequence_Callback(hObject, eventdata, handles)
     global curSequenceNumber;
@@ -137,7 +145,7 @@ function nextSequence_Callback(hObject, eventdata, handles)
         curSequenceNumber = curSequenceNumber + 1;
     end
 
-    sequenceChanged(handles);
+    sequenceChanged(handles, true);
 
 function curSequence_Callback(hObject, eventdata, handles)
     global curSequenceNumber;
@@ -270,8 +278,6 @@ function sequenceChanged(handles, redoZoom)
     curFilename = [dataPath, sprintf(jsonData.sequences{curSequenceNumber}.filenamePattern, jsonData.sequences{curSequenceNumber}.frameNumbers(curFrameNumber))];
     image = imread(curFilename);
 
-    % figure(2); imshow(axes1);
-
     set(handles.curSequence, 'String', num2str(curSequenceNumber))
     set(handles.maxSequence, 'String', num2str(maxSequenceNumber))
     set(handles.curImage, 'String', num2str(curFrameNumber))
@@ -279,29 +285,14 @@ function sequenceChanged(handles, redoZoom)
 
     index = findFrameNumberIndex(jsonData, curSequenceNumber, curFrameNumber);
 
-
-    % figure(get(handles.axes1,'Parent'))
-    % set(get(handles.axes1,'Parent'),'WindowButtonDownFcn',@axes1_ButtonDownFcn)
-    % hold off;
-    % imshow(image);
-    % hold on;
-
     imageFigureHandle = figure(100);
-    % get(imageFigureHandle, 'Position')
-    % set(imageFigureHandle,'WindowButtonDownFcn',@axes1_ButtonDownFcn)
+    
     hold off;
-    % zoom reset
-
-    % axisLimits = get(imageHandle, {'xlim','ylim'});
+    
     originalXlim = xlim();
     originalYlim = ylim();
-    % disp(axisLimits)
 
     imageHandle = imshow(image);
-    % zoom out
-
-    % zoom reset
-    % set(imageHandle, {'xlim','ylim'}, axisLimits)
 
     if ~redoZoom
         xlim(originalXlim);
@@ -328,6 +319,7 @@ function configFilename_CreateFcn(hObject, eventdata, handles)
     end
 
 function axes1_ButtonDownFcn(hObject, eventdata, handles)
+    global jsonConfigFilename;
     global jsonData;
     global dataPath;
     global curSequenceNumber;
@@ -351,6 +343,10 @@ function axes1_ButtonDownFcn(hObject, eventdata, handles)
     index = findFrameNumberIndex(jsonData, curSequenceNumber, curFrameNumber);
 
     if index == -1
+        if ~isfield(jsonData.sequences{curSequenceNumber}, 'groundTruth')
+            jsonData.sequences{curSequenceNumber}.groundTruth = [];
+        end
+        
         allFrameNumbers = jsonData.sequences{curSequenceNumber}.frameNumbers;
         jsonData.sequences{curSequenceNumber}.groundTruth{end+1}.frameNumber = allFrameNumbers(curFrameNumber);
         jsonData.sequences{curSequenceNumber}.groundTruth{end}.corners = [];
@@ -364,6 +360,7 @@ function axes1_ButtonDownFcn(hObject, eventdata, handles)
         newPoint.y = imPosition(2);
 
         jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners{end+1} = newPoint;
+        savejson('',jsonData,jsonConfigFilename);
     elseif strcmp(buttonType, 'alt') % right click
         minDist = Inf;
         minInd = -1;
@@ -377,12 +374,14 @@ function axes1_ButtonDownFcn(hObject, eventdata, handles)
             end
         end
 
-        if minInd ~= -1 && minDist < 2
+        
+        if minInd ~= -1 && minDist < (min(size(image,1),size(image,2))/100)
             newCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners([1:(minInd-1),(minInd+1):end]);
             jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners = newCorners;
+            savejson('',jsonData,jsonConfigFilename);
         end
     end
 
-    sequenceChanged(allHandles, false);
+    sequenceChanged(allHandles);
 
 function figure1_ButtonDownFcn(hObject, eventdata, handles)
