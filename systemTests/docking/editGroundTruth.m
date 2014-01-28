@@ -1,15 +1,15 @@
-% function varargout = selectPoints(varargin)
+% function varargout = editGroundTruth(varargin)
 
-% selectPoints();
+% editGroundTruth();
 
-function varargout = selectPoints(varargin)
+function varargout = editGroundTruth(varargin)
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @selectPoints_OpeningFcn, ...
-                   'gui_OutputFcn',  @selectPoints_OutputFcn, ...
+                   'gui_OpeningFcn', @editGroundTruth_OpeningFcn, ...
+                   'gui_OutputFcn',  @editGroundTruth_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -88,14 +88,14 @@ function loadConfigFile()
 
     sequenceChanged(allHandles, true)
 
-function selectPoints_OpeningFcn(hObject, eventdata, handles, varargin)
-    % Choose default command line output for selectPoints
+function editGroundTruth_OpeningFcn(hObject, eventdata, handles, varargin)
+    % Choose default command line output for editGroundTruth
     handles.output = hObject;
 
     % Update handles structure
     guidata(hObject, handles);
 
-    % UIWAIT makes selectPoints wait for user response (see UIRESUME)
+    % UIWAIT makes editGroundTruth wait for user response (see UIRESUME)
     % uiwait(handles.figure1);
 
     global allHandles;
@@ -124,7 +124,7 @@ function index = findFrameNumberIndex(jsonData, sequenceNumberIndex, frameNumber
 
     return;
 
-function varargout = selectPoints_OutputFcn(hObject, eventdata, handles)
+function varargout = editGroundTruth_OutputFcn(hObject, eventdata, handles)
     % Get default command line output from handles structure
     varargout{1} = handles.output;
 
@@ -403,3 +403,45 @@ function axes1_ButtonDownFcn(hObject, eventdata, handles)
     sequenceChanged(allHandles);
 
 function figure1_ButtonDownFcn(hObject, eventdata, handles)
+
+
+% --- Executes during object creation, after setting all properties.
+function figure1_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+
+% --- Executes during object creation, after setting all properties.
+function previousSequence_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to previousSequence (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+
+% --- Executes during object creation, after setting all properties.
+function nextSequence_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to nextSequence (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+
+% --- Executes during object creation, after setting all properties.
+function previousImage_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to previousImage (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+
+% --- Executes during object creation, after setting all properties.
+function nextImage_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to nextImage (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+
+% --- Executes during object creation, after setting all properties.
+function text3_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to text3 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
