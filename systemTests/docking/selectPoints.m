@@ -304,6 +304,9 @@ function sequenceChanged(handles, redoZoom)
 
     if index ~= -1
         allCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners;
+        if ~iscell(allCorners)
+            allCorners = {allCorners};
+        end
         for i = 1:length(allCorners)
             scatterHandle = scatter(allCorners{i}.x+0.5, allCorners{i}.y+0.5, 'r+');
             set(scatterHandle, 'HitTest', 'off')
@@ -359,6 +362,10 @@ function axes1_ButtonDownFcn(hObject, eventdata, handles)
         newPoint.x = imPosition(1);
         newPoint.y = imPosition(2);
 
+        if ~iscell(jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners)
+            jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners = {jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners};
+        end
+        
         jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners{end+1} = newPoint;
         savejson('',jsonData,jsonConfigFilename);
     elseif strcmp(buttonType, 'alt') % right click
@@ -375,7 +382,7 @@ function axes1_ButtonDownFcn(hObject, eventdata, handles)
         end
 
         
-        if minInd ~= -1 && minDist < (min(size(image,1),size(image,2))/100)
+        if minInd ~= -1 && minDist < (min(size(image,1),size(image,2))/50)
             newCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners([1:(minInd-1),(minInd+1):end]);
             jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners = newCorners;
             savejson('',jsonData,jsonConfigFilename);
