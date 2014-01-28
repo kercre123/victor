@@ -65,26 +65,112 @@ guidata(hObject, handles);
 
 global jsonConfigFilename;
 global jsonData;
-global curSequence;
-global maxSequence;
-global curImage;
-global maxImage;
+global curSequenceNumber;
+global maxSequenceNumber;
+global curFrameNumber;
+global maxFrameNumber;
 global image;
 global dataPath;
 
 jsonConfigFilename = get(handles.configFilename, 'String');
 jsonConfigFilename = strrep(jsonConfigFilename, '\', '/');
 jsonData = loadjson(jsonConfigFilename);
-curSequence = 1;
-maxSequence = length(jsonData.sequences);
-curImage = 1;
-maxImage = 0;
+curSequenceNumber = 1;
+maxSequenceNumber = length(jsonData.sequences);
+curFrameNumber = 1;
+maxFrameNumber = 0;
 image = rand([480,640]);
 
 slashIndexes = strfind(jsonConfigFilename, '/');
 dataPath = jsonConfigFilename(1:(slashIndexes(end)));
 
+for i = 1:maxSequenceNumber
+    if ~isfield(jsonData.sequences{i}, 'groundTruth')
+        jsonData.sequences{i}.groundTruth = [];
+    end
+end
+
+% pointer = nan * ones(16,16);
+% pointer([1,end],1:2:end) = 1;
+% pointer([1,end],2:2:end) = 2;
+% pointer(1:2:end,[1,end]) = 1;
+% pointer(2:2:end,[1,end]) = 2;
+% pointer(5,5:11) = 1;
+% pointer(5:11,5) = 1;
+% pointer(11,5:11) = 1;
+% pointer(5:11,11) = 1;
+% 
+% pointer(8,1:4) = 1;
+% pointer(8,12:15) = 1;
+% pointer(1:4,8) = 1;
+% pointer(12:15,8) = 1;
+
+
+% pointer(4,4:12) = 2;
+% pointer(4:12,4) = 2;
+% pointer(12,4:12) = 2;
+% pointer(4:12,12) = 2;
+
+% pointer = [
+%     nan, nan, nan, nan, 2,   2,   2,   2,   2,   2,   2,   2,   nan, nan, nan, nan;
+%     nan, nan, nan, 2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   nan, nan, nan;
+%     nan, nan, 2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   nan, nan;
+%     nan, 2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   nan;
+%     2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2;
+%     2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2;
+%     2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2;
+%     2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2;
+%     2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2;
+%     2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2;
+%     2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2;    
+%     2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2;
+%     nan, 2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   nan;
+%     nan, nan, 2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   nan, nan;
+%     nan, nan, nan, 2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   nan, nan, nan;
+%     nan, nan, nan, nan, 2,   2,   2,   2,   2,   2,   2,   2,   nan, nan, nan, nan;];
+    
+
+pointer = [
+    nan, nan, nan, nan, 2,   2,   2,   2,   2,   2,   2,   2,   nan, nan, nan, nan;
+    nan, nan, nan, 2,   nan, nan, nan, nan, nan, nan, nan, nan, 2,   nan, nan, nan;
+    nan, nan, 2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2,   nan, nan;
+    nan, 2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2,   nan;
+    2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2;
+    2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2;
+    2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2;
+    2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2;
+    2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2;
+    2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2;
+    2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2;    
+    2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2;
+    nan, 2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2,   nan;
+    nan, nan, 2,   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, 2,   nan, nan;
+    nan, nan, nan, 2,   nan, nan, nan, nan, nan, nan, nan, nan, 2,   nan, nan, nan;
+    nan, nan, nan, nan, 2,   2,   2,   2,   2,   2,   2,   2,   nan, nan, nan, nan;];
+
+% set(gcf,'Pointer','circle')
+%set(hObject,'Pointer','custom','PointerShapeCData',pointer,'PointerShapeHotSpot',(size(pointer)-1)/2)
+set(hObject,'Pointer','custom','PointerShapeCData',pointer,'PointerShapeHotSpot',(size(pointer))/2)
+
 sequenceChanged(handles)
+
+
+function index = findFrameNumberIndex(jsonData, sequenceNumberIndex, frameNumberIndex)
+index = -1;
+
+for i = 1:length(jsonData.sequences{sequenceNumberIndex}.groundTruth)
+    curFrameNumber = jsonData.sequences{sequenceNumberIndex}.groundTruth{i}.frameNumber;
+    queryFrameNumber = jsonData.sequences{sequenceNumberIndex}.frameNumbers(frameNumberIndex);
+    
+%     disp(sprintf('%d) %d %d', i, curFrameNumber, queryFrameNumber));
+    
+    if curFrameNumber == queryFrameNumber
+        index = i;
+        return;
+    end
+end
+
+return;
 
 
 % --- Outputs from this function are returned to the command line.
@@ -103,13 +189,13 @@ function previousSequence_Callback(hObject, eventdata, handles)
 % hObject    handle to previousSequence (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global curSequence;
-global maxSequence;
-global curImage;
-global maxImage;
+global curSequenceNumber;
+global maxSequenceNumber;
+global curFrameNumber;
+global maxFrameNumber;
 
-if curSequence > 1
-    curSequence = curSequence - 1;
+if curSequenceNumber > 1
+    curSequenceNumber = curSequenceNumber - 1;
 end
 
 sequenceChanged(handles);
@@ -119,35 +205,35 @@ function nextSequence_Callback(hObject, eventdata, handles)
 % hObject    handle to nextSequence (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global curSequence;
-global maxSequence;
-global curImage;
-global maxImage;
+global curSequenceNumber;
+global maxSequenceNumber;
+global curFrameNumber;
+global maxFrameNumber;
 
-if curSequence < maxSequence
-    curSequence = curSequence + 1;
+if curSequenceNumber < maxSequenceNumber
+    curSequenceNumber = curSequenceNumber + 1;
 end
 
 sequenceChanged(handles);
 
 
 function curSequence_Callback(hObject, eventdata, handles)
-% hObject    handle to curSequence (see GCBO)
+% hObject    handle to curSequenceNumber (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of curSequence as text
-%        str2double(get(hObject,'String')) returns contents of curSequence as a double
+% Hints: get(hObject,'String') returns contents of curSequenceNumber as text
+%        str2double(get(hObject,'String')) returns contents of curSequenceNumber as a double
 
-global curSequence;
-global maxSequence;
-global curImage;
-global maxImage;
+global curSequenceNumber;
+global maxSequenceNumber;
+global curFrameNumber;
+global maxFrameNumber;
 
-curSequenceNew = str2double(get(hObject,'String'));
+curSequenceNumberNew = str2double(get(hObject,'String'));
 
-if curSequenceNew <= maxSequence && curSequenceNew >= 1
-    curSequence = curSequenceNew;
+if curSequenceNumberNew <= maxSequenceNumber && curSequenceNumberNew >= 1
+    curSequenceNumber = curSequenceNumberNew;
 end
 
 sequenceChanged(handles);
@@ -157,13 +243,13 @@ function previousImage_Callback(hObject, eventdata, handles)
 % hObject    handle to previousImage (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global curSequence;
-global maxSequence;
-global curImage;
-global maxImage;
+global curSequenceNumber;
+global maxSequenceNumber;
+global curFrameNumber;
+global maxFrameNumber;
 
-if curImage > 1
-    curImage = curImage - 1;
+if curFrameNumber > 1
+    curFrameNumber = curFrameNumber - 1;
 end
 
 sequenceChanged(handles);
@@ -173,48 +259,48 @@ function nextImage_Callback(hObject, eventdata, handles)
 % hObject    handle to nextImage (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global curSequence;
-global maxSequence;
-global curImage;
-global maxImage;
+global curSequenceNumber;
+global maxSequenceNumber;
+global curFrameNumber;
+global maxFrameNumber;
 
-if curImage < maxImage
-    curImage = curImage + 1;
+if curFrameNumber < maxFrameNumber
+    curFrameNumber = curFrameNumber + 1;
 end
 
 sequenceChanged(handles);
 
 
 function curImage_Callback(hObject, eventdata, handles)
-% hObject    handle to curImage (see GCBO)
+% hObject    handle to curFrameNumber (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of curImage as text
-%        str2double(get(hObject,'String')) returns contents of curImage as a double
-global curSequence;
-global maxSequence;
-global curImage;
-global maxImage;
+% Hints: get(hObject,'String') returns contents of curFrameNumber as text
+%        str2double(get(hObject,'String')) returns contents of curFrameNumber as a double
+global curSequenceNumber;
+global maxSequenceNumber;
+global curFrameNumber;
+global maxFrameNumber;
 
-curImageNew = str2double(get(hObject,'String'));
+curFrameNumberNew = str2double(get(hObject,'String'));
 
-if curImageNew <= maxSequence && curImageNew >= 1
-    curImage = curImageNew;
+if curFrameNumberNew <= maxSequenceNumber && curFrameNumberNew >= 1
+    curFrameNumber = curFrameNumberNew;
 end
 
 sequenceChanged(handles);
 
 % --- Executes during object creation, after setting all properties.
 function curSequence_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to curSequence (see GCBO)
+% hObject    handle to curSequenceNumber (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-global curSequence;
-global maxSequence;
-global curImage;
-global maxImage;
+global curSequenceNumber;
+global maxSequenceNumber;
+global curFrameNumber;
+global maxFrameNumber;
 
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
@@ -222,18 +308,18 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-set(hObject,'String',num2str(curSequence));
+set(hObject,'String',num2str(curSequenceNumber));
 
 % --- Executes during object creation, after setting all properties.
 function curImage_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to curImage (see GCBO)
+% hObject    handle to curFrameNumber (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-global curSequence;
-global maxSequence;
-global curImage;
-global maxImage;
+global curSequenceNumber;
+global maxSequenceNumber;
+global curFrameNumber;
+global maxFrameNumber;
 
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
@@ -241,34 +327,34 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-set(hObject,'String',num2str(curImage));
+set(hObject,'String',num2str(curFrameNumber));
 
 
 % --- Executes during object creation, after setting all properties.
 function maxSequence_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to maxSequence (see GCBO)
+% hObject    handle to maxSequenceNumber (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-global curSequence;
-global maxSequence;
-global curImage;
-global maxImage;
+global curSequenceNumber;
+global maxSequenceNumber;
+global curFrameNumber;
+global maxFrameNumber;
 
-set(hObject,'String',num2str(maxSequence));
+set(hObject,'String',num2str(maxSequenceNumber));
 
 % --- Executes during object creation, after setting all properties.
 function maxImage_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to maxImage (see GCBO)
+% hObject    handle to maxFrameNumber (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-global curSequence;
-global maxSequence;
-global curImage;
-global maxImage;
+global curSequenceNumber;
+global maxSequenceNumber;
+global curFrameNumber;
+global maxFrameNumber;
 
-set(hObject,'String',num2str(maxImage));
+set(hObject,'String',num2str(maxFrameNumber));
 
 
 % --- Executes during object creation, after setting all properties.
@@ -285,53 +371,57 @@ global image;
 function sequenceChanged(handles)
 global jsonData;
 global dataPath;
-global curSequence;
-global maxSequence;
-global curImage;
-global maxImage;
+global curSequenceNumber;
+global maxSequenceNumber;
+global curFrameNumber;
+global maxFrameNumber;
 global image;
 global allHandles;
 
 allHandles = handles;
 
-if curSequence < 1
-    curSequence = 1;
+if curSequenceNumber < 1
+    curSequenceNumber = 1;
 end
 
-if curSequence > maxSequence
-    curSequence = maxSequence;
+if curSequenceNumber > maxSequenceNumber
+    curSequenceNumber = maxSequenceNumber;
 end
 
-maxImage = length(jsonData.sequences{1}.frameNumbers);
+maxFrameNumber = length(jsonData.sequences{1}.frameNumbers);
 
-if curImage < 1
-    curImage = 1;
+if curFrameNumber < 1
+    curFrameNumber = 1;
 end
 
-if curImage > maxImage
-    curImage = maxImage;
+if curFrameNumber > maxFrameNumber
+    curFrameNumber = maxFrameNumber;
 end
 
-curFilename = [dataPath, sprintf(jsonData.sequences{curSequence}.filenamePattern, curImage)];
+curFilename = [dataPath, sprintf(jsonData.sequences{curSequenceNumber}.filenamePattern, jsonData.sequences{curSequenceNumber}.frameNumbers(curFrameNumber))];
 image = imread(curFilename);
 
 % figure(2); imshow(axes1);
 
-set(handles.curSequence, 'String', num2str(curSequence))
-set(handles.maxSequence, 'String', num2str(maxSequence))
-set(handles.curImage, 'String', num2str(curImage))
-set(handles.maxImage, 'String', num2str(maxImage))
+set(handles.curSequence, 'String', num2str(curSequenceNumber))
+set(handles.maxSequence, 'String', num2str(maxSequenceNumber))
+set(handles.curImage, 'String', num2str(curFrameNumber))
+set(handles.maxImage, 'String', num2str(maxFrameNumber))
 
-%figure(get(handles.axes1, 'IntegerHandle'));
-% try    
-%     figure(handles.axes1);
-    figure(get(handles.axes1,'Parent')) 
-    imshow(image);
-    set(get(handles.axes1,'Parent'),'WindowButtonDownFcn',@axes1_ButtonDownFcn)
-% catch
-% end
-% 
+index = findFrameNumberIndex(jsonData, curSequenceNumber, curFrameNumber);
 
+figure(get(handles.axes1,'Parent')) 
+set(get(handles.axes1,'Parent'),'WindowButtonDownFcn',@axes1_ButtonDownFcn)
+hold off;
+imshow(image);
+hold on;
+
+if index ~= -1
+    allCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners;
+    for i = 1:length(allCorners)
+        scatter(allCorners{i}.x+1, allCorners{i}.y+1, 'r+');
+    end
+end
 
 function configFilename_Callback(hObject, eventdata, handles)
 % hObject    handle to configFilename (see GCBO)
@@ -365,13 +455,20 @@ function axes1_ButtonDownFcn(hObject, eventdata, handles)
 % mousePosition = get(hObject, 'CurrentPoint');
 % disp(mousePosition)
 
-global allHandles;
+global jsonData;
+global dataPath;
+global curSequenceNumber;
+global maxSequenceNumber;
+global curFrameNumber;
+global maxFrameNumber;
 global image;
+global allHandles;
 
 % keyboard
 
 axesPosition = get(allHandles.axes1, 'Position');
 mousePosition = get(hObject, 'CurrentPoint');
+% char = get(allHandles.axes1, 'CurrentCharacter')
 
 imPosition = mousePosition - axesPosition(1:2);
 
@@ -385,9 +482,44 @@ imPosition(2) = axesPosition(4) - imPosition(2);
 imPosition(1) = size(image,2) * imPosition(1) / axesPosition(3);
 imPosition(2) = size(image,1) * imPosition(2) / axesPosition(4);
 
-% percentLocation = 
-disp(axesPosition)
-disp(imPosition)
+% disp(axesPosition)
+% disp(imPosition)
+
+% disp(sprintf('dog: %d %d', curSequenceNumber, curFrameNumber));
+index = findFrameNumberIndex(jsonData, curSequenceNumber, curFrameNumber);
+
+if index == -1
+    allFrameNumbers = jsonData.sequences{curSequenceNumber}.frameNumbers;
+    jsonData.sequences{curSequenceNumber}.groundTruth{end+1}.frameNumber = allFrameNumbers(curFrameNumber);
+    jsonData.sequences{curSequenceNumber}.groundTruth{end}.corners = [];
+    index = length(jsonData.sequences{curSequenceNumber}.groundTruth);
+end
+
+% disp(index)
+buttonType = get(hObject,'selectionType');
+if strcmp(buttonType, 'normal') || strcmp(buttonType, 'open') % left click
+    newPoint.x = imPosition(1);
+    newPoint.y = imPosition(2);
+    jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners{end+1} = newPoint;
+elseif strcmp(buttonType, 'alt') % right click
+    minDist = Inf;
+    minInd = -1;
+    for i = 1:length(jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners)
+        curCorner = jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners{i};
+        dist = sqrt((curCorner.x - imPosition(1))^2 + (curCorner.y - imPosition(2))^2);
+        if dist < minDist
+            minDist = dist;
+            minInd = i;
+        end
+    end
+    
+    if minInd ~= -1 && minDist < 5
+        newCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners([1:(minInd-1),(minInd+1):end]);
+        jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners = newCorners;
+    end
+end
+
+sequenceChanged(allHandles);
 
 % --- Executes on mouse press over figure background.
 function figure1_ButtonDownFcn(hObject, eventdata, handles)
