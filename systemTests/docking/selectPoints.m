@@ -41,6 +41,11 @@ function loadConfigFile()
     jsonConfigFilename = get(allHandles.configFilename, 'String');
     jsonConfigFilename = strrep(jsonConfigFilename, '\', '/');
     jsonData = loadjson(jsonConfigFilename);
+    
+    if ~iscell(jsonData.sequences)
+        jsonData.sequences = {jsonData.sequences};
+    end
+    
     curSequenceNumber = 1;
     maxSequenceNumber = length(jsonData.sequences);
     curFrameNumber = 1;
@@ -303,10 +308,16 @@ function sequenceChanged(handles, redoZoom)
     hold on;
 
     if index ~= -1
-        allCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners;
-        if ~iscell(allCorners)
-            allCorners = {allCorners};
+        if isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners)
+            jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners = {};
         end
+        
+        if ~iscell(jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners)
+            jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners = {jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners};
+        end
+        
+        allCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners;
+        
         for i = 1:length(allCorners)
             scatterHandle = scatter(allCorners{i}.x+0.5, allCorners{i}.y+0.5, 'r+');
             set(scatterHandle, 'HitTest', 'off')
