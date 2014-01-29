@@ -42,6 +42,30 @@ namespace Anki {
     // of the system one message cycle latency in the future. This way, commanded actions are applied
     // at the time they are expected in the physical world.
     const f32 BASESTATION_MODEL_LATENCY_SEC = 2.f*MSG_RECEIVE_LATENCY_SEC;
+  
+
+    
+    // Messages that are purely for advertising when using TCP/UDP. (Maybe belongs somewhere else...)
+    const char* const ROBOT_SIM_WORLD_HOST = "192.168.6.250";  // This should eventually be passed in via the GUI
+    const u32 ROBOT_ADVERTISING_PORT = 5100;
+    const u32 ROBOT_ADVERTISEMENT_REGISTRATION_PORT = 5101;
+    typedef struct {
+      u8 robotID;
+      u8 enableAdvertisement;  // 1 when robot wants to advertise, 0 otherwise.
+      u32 port;                // Port that robot is accepting connections on
+    } RobotAdvertisementRegistration;
+    
+    typedef struct  {
+      u8 robotID;
+      u32 port;
+    } RobotAdvertisement;
+    
+    // If most recent advertisement message is older than this,
+    // then it is no longer considered to be advertising.
+    const u32 ROBOT_ADVERTISING_TIMEOUT_US = 250000;
+
+    // Time in between robot advertisements
+    const u32 ROBOT_ADVERTISING_PERIOD_S = 0.03;
     
     
 #ifdef SIMULATOR

@@ -15,6 +15,7 @@
 #include "anki/cozmo/robot/cozmoConfig.h"
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
 
 namespace Anki {
   
@@ -26,7 +27,12 @@ namespace Anki {
 
   
   TCPComms::TCPComms()
-  {}
+  {
+    advertisingChannelClient_.Connect(Cozmo::ROBOT_SIM_WORLD_HOST, Cozmo::ROBOT_ADVERTISING_PORT);
+    
+    // TODO: Should this be done inside the poorly named Connect()?
+    advertisingChannelClient_.Send("1", 1);  // Send anything just to get recognized as a client for advertising service.
+  }
   
   TCPComms::~TCPComms()
   {
@@ -42,6 +48,9 @@ namespace Anki {
   
   int TCPComms::Send(const MsgPacket &p)
   {
+    // TODO: Instead of sending immediately, maybe we should queue them and send them all at
+    // once to more closely emulate BTLE.
+    
     connectedRobotsIt_t it = connectedRobots_.find(p.sourceId);
     if (it != connectedRobots_.end()) {
       return it->second.client->Send((char*)p.data, p.dataLen);;
@@ -70,13 +79,38 @@ namespace Anki {
     
     
     // Read datagrams and update advertising robots list.
-    // ...
+    Cozmo::RobotAdvertisement advMsg;
+    int bytes_recvd = 0;
+    do {
+      bytes_recvd = advertisingChannelClient_.Recv((char*)&advMsg, sizeof(advMsg));
+      if (bytes_recvd == sizeof(advMsg)) {
+        
+        //DEBUG
+        if (advertisingRobots_.find(advMsg.robotID) == advertisingRobots_.end()) {
+          printf("Detected advertising robot %d on port %d\n", advMsg.robotID, advMsg.port);
+        }
+        
+        
+        advertisingRobots_[advMsg.robotID].robotInfo = advMsg;
+        advertisingRobots_[advMsg.robotID].lastSeenTime = 0;  // TODO: Need to grab current basestation time
+      }
+    } while(bytes_recvd > 0);
+    
+    
     
     // Remove robots from advertising list if they're already connected.
-    // ...
+    /*
+    advertisingRobotsIt_t it = advertisingRobots_.begin();
+    while(it != advertisingRobots_.end()) {
+      if (BaseStationTimer::GetCurrentTimeInSeconds() - it->second.lastSeenTime > Cozmo::ROBOT_ADVERTISING_TIMEOUT_US) {
+        advertisingRobots_.erase(it++);
+      } else {
+        ++it;
+      }
+    }
+    */
     
-    
-    
+    // Read all messages from all connected robots
     ReadAllMsgPackets();
   }
   
@@ -190,8 +224,8 @@ namespace Anki {
       
       TcpClient *client = new TcpClient();
       
-      if (client->Connect(it->second.robotInfo.ipv4_addr, it->second.robotInfo.port)) {
-        printf("Connected to robot %d at %s:%s\n", it->second.robotInfo.robotID, it->second.robotInfo.ipv4_addr, it->second.robotInfo.port);
+      if (client->Connect(Cozmo::ROBOT_SIM_WORLD_HOST, it->second.robotInfo.port)) {
+        printf("Connected to robot %d at %s:%d\n", it->second.robotInfo.robotID, Cozmo::ROBOT_SIM_WORLD_HOST, it->second.robotInfo.port);
         connectedRobots_[robotID].client = client;
         return true;
       }

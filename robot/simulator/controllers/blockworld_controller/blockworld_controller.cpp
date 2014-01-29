@@ -207,17 +207,6 @@ int main(int argc, char **argv)
 #endif
   
   
-  // If not already connected to a robot, connect to the
-  // first one that becomes available.
-  // TODO: Once we have a UI, we can select the one we want to connect to in a more reasonable way.
-  while (robotComms.GetNumConnectedRobots() == 0) {
-    usleep(500000);
-    vector<int> advertisingRobotIDs;
-    if (robotComms.GetAdvertisingRobotIDs(advertisingRobotIDs) > 0) {
-     robotComms.ConnectToRobotByID(advertisingRobotIDs[0]);
-    }
-  };
-  
   
   //
   // Main Execution loop: step the world forward forever
@@ -226,6 +215,19 @@ int main(int argc, char **argv)
   {
     // Read messages from all robots
     robotComms.Update();
+    
+    // If not already connected to a robot, connect to the
+    // first one that becomes available.
+    // TODO: Once we have a UI, we can select the one we want to connect to in a more reasonable way.
+    if (robotComms.GetNumConnectedRobots() == 0) {
+      vector<int> advertisingRobotIDs;
+      if (robotComms.GetAdvertisingRobotIDs(advertisingRobotIDs) > 0) {
+        robotComms.ConnectToRobotByID(advertisingRobotIDs[0]);
+      }
+      continue;
+    };
+    
+
     
     
     //

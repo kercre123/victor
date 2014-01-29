@@ -18,21 +18,15 @@
 #include <vector>
 #include <anki/messaging/basestation/IComms.h>
 #include "anki/messaging/shared/TcpClient.h"
+#include "anki/messaging/shared/UdpClient.h"
+#include "anki/cozmo/robot/cozmoConfig.h"
 
 using namespace std;
 
 namespace Anki {
-  
-  // Todo: Move to shared
-  typedef struct  {
-    unsigned char robotID;
-    char ipv4_addr[16];
-    char port[8];
-  } TcpAdvertisementPacket_t;
-  
-  
+
   typedef struct {
-    TcpAdvertisementPacket_t robotInfo;
+    Cozmo::RobotAdvertisement robotInfo;
     BaseStationTime_t lastSeenTime;
   } RobotConnectionInfo_t;
   
@@ -101,6 +95,9 @@ namespace Anki {
 
     
   private:
+    
+    // Connects to "advertising" server to view available unconnected robots.
+    UdpClient advertisingChannelClient_;
     
     void ReadAllMsgPackets();
     

@@ -18,6 +18,7 @@
 #include <webots/Supervisor.hpp>
 #else
 #include "anki/messaging/shared/TcpServer.h"
+#include "anki/messaging/shared/UdpClient.h"
 #include "anki/messaging/shared/utilMessaging.h"
 #endif
 
@@ -33,12 +34,32 @@ namespace Anki {
       webots::Receiver *rx_;
 #else
       TcpServer server;
+      UdpClient advRegClient;
 #endif
-      bool isConnected_;
       u8 recvBuf_[RECV_BUFFER_SIZE];
       s32 recvBufSize_ = 0;
     }
 
+    // Register robot with advertisement service
+    void RegisterRobot()
+    {
+      RobotAdvertisementRegistration regMsg;
+      regMsg.robotID = HAL::GetRobotID();
+      regMsg.enableAdvertisement = 1;
+      regMsg.port = ROBOT_RADIO_BASE_PORT + regMsg.robotID;
+      advRegClient.Send((char*)&regMsg, sizeof(regMsg));
+    }
+    
+    // Deregister robot with advertisement service
+    void DeregisterRobot()
+    {
+      RobotAdvertisementRegistration regMsg;
+      regMsg.robotID = HAL::GetRobotID();
+      regMsg.enableAdvertisement = 0;
+      advRegClient.Send((char*)&regMsg, sizeof(regMsg));
+    }
+    
+    
 #if(USE_WEBOTS_TXRX)
     ReturnCode InitSimRadio(webots::Robot& webotRobot, s32 robotID)
 #else
@@ -57,12 +78,13 @@ namespace Anki {
       rx_->setChannel(robotID);
       tx_->setChannel(robotID);
 #else
-      // Generate port string
-      char portStr[4];
-      sprintf(portStr, "%d", ROBOT_RADIO_BASE_PORT + robotID);
-      server.StartListening(portStr);
+      server.StartListening(ROBOT_RADIO_BASE_PORT + robotID);
       
-      // TODO... register with advertising service by sending IP and port info
+      // Register with advertising service by sending IP and port info
+      // NOTE: Since there is no ACK robot_advertisement_controller must be running before this happens!
+      advRegClient.Connect(ROBOT_SIM_WORLD_HOST, ROBOT_ADVERTISEMENT_REGISTRATION_PORT);
+      RegisterRobot();
+      
 #endif
       
       recvBufSize_ = 0;
@@ -72,15 +94,16 @@ namespace Anki {
     
     bool HAL::RadioIsConnected(void)
     {
-      return isConnected_;
+      return server.HasClient();
     }
 
 #if(!USE_WEBOTS_TXRX)
     void DisconnectRadio(void)
     {
       server.DisconnectClient();
-      isConnected_ = false;
       recvBufSize_ = 0;
+      
+      RegisterRobot();
     }
 #endif
     
@@ -271,7 +294,7 @@ namespace Anki {
 #if(!USE_WEBOTS_TXRX)
       if(!server.HasClient()) {
         if (server.Accept()) {
-          isConnected_ = true;
+          DeregisterRobot();
         }
       }
 #endif
