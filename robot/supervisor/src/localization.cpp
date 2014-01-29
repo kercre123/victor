@@ -63,6 +63,11 @@ namespace Anki {
         // For initial testing only
         float angle;
         HAL::GetGroundTruthPose(currentMatX_,currentMatY_,angle);
+        
+        // Convert to mm
+        currentMatX_ *= 1000;
+        currentMatY_ *= 1000;
+        
         currentMatHeading_ = angle;
 #else
      

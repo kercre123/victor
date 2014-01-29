@@ -17,8 +17,8 @@ namespace Anki {
 
     const u8 NUM_RADIAL_DISTORTION_COEFFS = 4;
 
-    // Cozmo control loop is 500Hz.
-    const s32 TIME_STEP = 2;
+    // Cozmo control loop is 200Hz.
+    const s32 TIME_STEP = 5;
     
     // Packet headers/footers:
     // TODO: Do we need this?  Only used in simulation I think? (Add #ifdef SIMULATOR?)
