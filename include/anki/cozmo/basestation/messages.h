@@ -30,16 +30,11 @@ namespace Anki {
     {
     public:
       
-      virtual const u8* GetBytes() const {
-        return reinterpret_cast<const u8*>(&members_);
-      }
+      virtual void GetBytes(u8* buffer) const = 0;
       
       virtual ReturnCode SendToRobot(const RobotID_t robotID);
       
-      static u8 GetSize() { return sizeof(MemberStruct); }
-      
-    protected:
-      struct MemberStruct { } members_;
+      static u8 GetSize() { return 0; }
       
     }; // class Message
 
@@ -47,7 +42,8 @@ namespace Anki {
     // 2. Define all the message classes:
 #define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_DEFINITION_MODE
 #include "anki/cozmo/MessageDefinitions.h"
-    
+
+
   } // namespace Cozmo
 } // namespace Anki
 

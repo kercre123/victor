@@ -23,17 +23,18 @@
 #if defined(COZMO_ROBOT)
 
 #define MESSAGE_STRUCT_DEFINITION_MODE 0
-#define MESSAGE_TABLE_DEFINITION_MODE 1
-#define MESSAGE_ENUM_DEFINITION_MODE 2
+#define MESSAGE_TABLE_DEFINITION_MODE  1
+#define MESSAGE_ENUM_DEFINITION_MODE   2
 
 #elif defined(COZMO_BASESTATION)
 
-#define MESSAGE_CLASS_DEFINITION_MODE 0
-#define MESSAGE_CLASS_CONSTRUCTOR_MODE 1
-#define MESSAGE_TABLE_DEFINITION_MODE 2
-#define MESSAGE_ENUM_DEFINITION_MODE 3
-#define MESSAGE_ROBOT_PROCESSOR_METHOD_MODE 4
-#define MESSAGE_PROCESS_BUFFER_METHODS_MODE 5
+#define MESSAGE_CLASS_DEFINITION_MODE        0
+#define MESSAGE_CLASS_CONSTRUCTOR_MODE       1
+#define MESSAGE_CLASS_GETSIZE_MODE           2
+#define MESSAGE_TABLE_DEFINITION_MODE        3
+#define MESSAGE_ENUM_DEFINITION_MODE         4
+#define MESSAGE_ROBOT_PROCESSOR_METHOD_MODE  5
+#define MESSAGE_PROCESS_BUFFER_METHODS_MODE  6
 
 #else
 #error Either COZMO_ROBOT or COZMO_BASESTATION should be defined!
@@ -175,7 +176,7 @@ GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(*reinterpret_cast<const GET_STRUCT_TYPENAME(
 
 // Helper macros
 #define GET_MESSAGE_CLASSNAME(__MSG_TYPE__) Message##__MSG_TYPE__
-#define GET_DISPATCH_FCN_NAME(__MSG_TYPE__) ProcessBufferAs_Message##__MSG_TYPE__
+#define GET_DISPATCH_FCN_NAME(__MSG_TYPE__) ProcessPacketAs_Message##__MSG_TYPE__
 #define GET_MESSAGE_ID(__MSG_TYPE__) __MSG_TYPE__##_ID
 
 // Time-stamped message definiton (for now) just uses regular start-message
@@ -195,14 +196,18 @@ ADD_MESSAGE_MEMBER(TimeStamp, timestamp)
 //        MessageFooBar(const u8 *buffer);
 //
 //        static u8 GetSize() { return sizeof(MemberStruct); }
-//        
+//
+//        void GetBytes(u8* buffer) const;
+//
+//        inline f32 get_foo() const { return foo; }
+//        inline u16 get_bar() const { return bar; }
+//
 //      protected:
-//        struct MemberStruct {
 //          f32 foo;
 //          u16 bar;
-//        } members_;
 //      };
 //
+
 #if MESSAGE_DEFINITION_MODE == MESSAGE_CLASS_DEFINITION_MODE
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
@@ -210,17 +215,20 @@ class GET_MESSAGE_CLASSNAME(__MSG_TYPE__) : public Message \
 { \
 public: \
   GET_MESSAGE_CLASSNAME(__MSG_TYPE__)(const u8* buffer); \
-  static u8 GetSize() { return sizeof(MemberStruct); } \
-\
-protected: \
-  struct MemberStruct {
+  static u8 GetSize(); \
+  virtual void GetBytes(u8* buffer) const;
 
-#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) __TYPE__ __NAME__;
-#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) __TYPE__ __NAME__[__LENGTH__];
+#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) \
+protected: __TYPE__ __NAME__; \
+public:    inline __TYPE__ get_##__NAME__() const { return __NAME__; }
+    
+#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) \
+protected: __TYPE__ __NAME__[__LENGTH__]; \
+public: \
+inline const __TYPE__* get_##__NAME__() const { return __NAME__; } \
+inline u8 get_##__NAME__##Length() const { return __LENGTH__; }
 
-#define END_MESSAGE_DEFINITION(__MSG_TYPE__) \
-  } members_; \
-};
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__) };
 
 
 //
@@ -230,9 +238,9 @@ protected: \
 //
 //    MessageFooBar::MessageFooBar(const u8* buffer);
 //    {
-//      members_.foo = *(reinterpret_cast<const f32*>(buffer));
+//      foo = *(reinterpret_cast<const f32*>(buffer));
 //      buffer += sizeof(f32);
-//      members_.bar = *(reinterpret_cast<const u16*>(buffer));
+//      bar = *(reinterpret_cast<const u16*>(buffer));
 //    }
 //
 #elif MESSAGE_DEFINITION_MODE == MESSAGE_CLASS_CONSTRUCTOR_MODE
@@ -241,14 +249,65 @@ protected: \
 GET_MESSAGE_CLASSNAME(__MSG_TYPE__)::GET_MESSAGE_CLASSNAME(__MSG_TYPE__)(const u8* buffer) { 
 
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) \
-members_.__NAME__ = *(reinterpret_cast<const __TYPE__*>(buffer)); \
+__NAME__ = *(reinterpret_cast<const __TYPE__*>(buffer)); \
 buffer += sizeof(__TYPE__);
 
 #define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) \
-memcpy(members_.__NAME__, buffer, __LENGTH__*sizeof(__TYPE__)); \
+memcpy(__NAME__, buffer, __LENGTH__*sizeof(__TYPE__)); \
 buffer += __LENGTH__*sizeof(__TYPE__);
 
 #define END_MESSAGE_DEFINITION(__MSG_TYPE__) } // close the constructor function
+
+
+//
+// Define Message GetSize() method
+//
+// For example:
+//
+//   u8 MessageFooBar::GetSize() const {
+//     return sizeof(f32) + sizeof(u16) + 0;
+//   }
+//
+#elif MESSAGE_DEFINITION_MODE == MESSAGE_CLASS_GETSIZE_MODE
+
+#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
+u8 GET_MESSAGE_CLASSNAME(__MSG_TYPE__)::GetSize() { \
+return
+
+#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) sizeof(__TYPE__) +
+
+#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) __LENGTH__*sizeof(__TYPE__) +
+
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__) 0; } 
+
+
+//
+// Define GetBytes() method
+//
+// For example:
+//
+//    void MessageFooBar::GetBytes(u8* buffer) const {
+//      *(reinterpret_cast<f32*>(buffer)) = foo;
+//      buffer += sizeof(f32);
+//      *(reinterpret_cast<u16*>(buffer)) = bar;
+//      buffer += sizeof(u16);
+//    }
+//
+#elif MESSAGE_DEFINITION_MODE == MESSAGE_GETBYTES_MODE
+
+#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
+void GET_MESSAGE_CLASSNAME(__MSG_TYPE__)::GetBytes(u8* buffer) const {
+
+#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) \
+*(reinterpret_cast<const __TYPE__*>(buffer)) = __NAME__; \
+buffer += sizeof(__TYPE__);
+
+#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) \
+memcpy(buffer, __NAME__, __LENGTH__*sizeof(__TYPE__)); \
+buffer += __LENGTH__*sizeof(__TYPE__);
+
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__) } // close the GetBytes() function
+
 
 
 //
@@ -290,7 +349,7 @@ ReturnCode ProcessMessage(const GET_MESSAGE_CLASSNAME(__MSG_TYPE__)& msg);
 //
 //  Creates one of these for each message type:
 //
-//   ReturnCode ProcessBufferAs_MessageSetMotion(const RobotID_t robotID, const u8* buffer)
+//   ReturnCode ProcessBufferAs_MessageSetMotion(const RobotID_t robotID, const u8* buffer) const
 //   {
 //      Robot *robot = robotMgr_->getRobotByID(robotID);
 //
@@ -302,9 +361,9 @@ ReturnCode ProcessMessage(const GET_MESSAGE_CLASSNAME(__MSG_TYPE__)& msg);
 #elif MESSAGE_DEFINITION_MODE == MESSAGE_PROCESS_BUFFER_METHODS_MODE
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-ReturnCode GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(const RobotID_t robotID, const u8* buffer) \
+ReturnCode GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(const RobotID_t robotID, const u8* buffer) const \
 { \
-  Robot *robot = robotMgr_->getRobotByID(robotID); \
+  Robot *robot = robotMgr_->GetRobotByID(robotID); \
   const GET_MESSAGE_CLASSNAME(__MSG_TYPE__) msg(buffer); \
   return robot->ProcessMessage(msg); \
 }
@@ -320,11 +379,11 @@ ReturnCode GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(const RobotID_t robotID, const u8
 #error Invalid value for MESSAGE_DEFINITION_MODE
 #endif
 
-// Leave definition mode undefined for next include of MessageDefinitions.h
-#undef MESSAGE_DEFINITION_MODE
-
 #else
 #error Either COZMO_ROBOT or COZMO_BASESTATION should be defined!
 #endif // #if defined(COZMO_ROBOT) or defined(COZMO_BASESTATION)
+
+// Leave definition mode undefined for next include of MessageDefinitions.h
+#undef MESSAGE_DEFINITION_MODE
 
 #endif // #ifndef MESSAGE_DEFINITION_MODE

@@ -21,8 +21,12 @@
 namespace Anki {
   namespace Cozmo {
     
-    // Define all the message classes's constructors
+    // Impelement all the message classes' constructors
 #define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_CONSTRUCTOR_MODE
+#include "anki/cozmo/MessageDefinitions.h"
+    
+    // Implement all the message classes' GetSize() methods
+#define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_GETSIZE_MODE
 #include "anki/cozmo/MessageDefinitions.h"
     
     /*

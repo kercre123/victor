@@ -40,26 +40,44 @@ namespace Anki {
       robotMgr_ = RobotManager::getInstance();
     }
     
-    ReturnCode MessageHandler::ProcessBuffer(const RobotID_t robotID, const u8* buffer, const u8 bufferSize)
+    ReturnCode MessageHandler::ProcessPacket(const Comms::RobotMsgPacket_t& packet) const
     {
       ReturnCode retVal = EXIT_FAILURE;
       
-      const u8 msgID = buffer[0];
+      const u8 msgID = packet.data[0];
       
-      if(lookupTable_[msgID].size != bufferSize-1) {
+      if(lookupTable_[msgID].size != packet.dataLen-1) {
         // TODO: make into "real" error
         fprintf(stderr, "Buffer's size does not match expected size for this message ID.");
         retVal = EXIT_FAILURE;
       } else {
-        // This calls the (macro-generated) ProcessBufferAs_MessageX() method
+        // This calls the (macro-generated) ProcessPacketAs_MessageX() method
         // indicated by the lookup table, which will cast the buffer as the
         // correct message type and call the specified robot's ProcessMessage(MessageX)
         // method.
-        retVal = (*this.*lookupTable_[msgID].ProcessBufferAs)(robotID, buffer+1);
+        retVal = (*this.*lookupTable_[msgID].ProcessPacketAs)(packet.robotID, packet.data+1);
       }
       
       return retVal;
-    }
+    } // ProcessBuffer()
+    
+    ReturnCode MessageHandler::ProcessMessages()
+    {
+      
+      if(!isInitialized_) {
+        return EXIT_FAILURE;
+      }
+      
+      while(comms_->GetNumPendingPackets() > 0)
+      {
+        Comms::RobotMsgPacket_t packet;
+        comms_->GetNextPacket(packet);
+        
+        ProcessPacket(packet);
+      } // while messages are still available from comms
+      
+      return EXIT_SUCCESS;
+    } // ProcessMessages()
     
   } // namespace Cozmo
 } // namespace Anki

@@ -30,11 +30,22 @@ namespace Anki {
   
   // Placeholder until Kevin creates this
   namespace Comms {
+    
+    struct RobotMsgPacket_t {
+      static const u8 MAX_DATA_LEN = 128;
+      u8 data[MAX_DATA_LEN];
+      u8 dataLen;
+      RobotID_t robotID;
+    };
+    
     class CommsManager
     {
     public:
       
       static CommsManager* getInstance();
+      
+      u32  GetNumPendingPackets() const;
+      void GetNextPacket(RobotMsgPacket_t& packet);
       
       bool IsInitialized() const;
       
@@ -86,7 +97,7 @@ namespace Anki {
       
       // Process a raw byte buffer as a message and send it to the specified
       // robot
-      ReturnCode ProcessBuffer(const RobotID_t robotID, const u8* buffer, const u8 bufferSize);
+      ReturnCode ProcessPacket(const Comms::RobotMsgPacket_t& packet) const;
       
       // Create the enumerated message IDs from the MessageDefinitions file:
       typedef enum {
@@ -106,7 +117,7 @@ namespace Anki {
       struct {
         u8 priority;
         u8 size;
-        ReturnCode (MessageHandler::*ProcessBufferAs)(const RobotID_t robotID, const u8* buffer);
+        ReturnCode (MessageHandler::*ProcessPacketAs)(const RobotID_t robotID, const u8* buffer) const;
       } lookupTable_[NUM_MSG_IDS+1] = {
         {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
