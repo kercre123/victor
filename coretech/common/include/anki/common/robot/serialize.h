@@ -108,7 +108,7 @@ namespace Anki
       return RESULT_OK;
     }
 
-    template<typename Type> Result SerializedBuffer::DeserializeArray(const bool swapEndian, const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory)
+    template<typename Type> Result SerializedBuffer::DeserializeArray(const bool swapEndianForHeaders, const bool swapEndianForContents, const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory)
     {
       const u32 * dataU32 = reinterpret_cast<const u32*>(data);
 
@@ -127,7 +127,7 @@ namespace Anki
       bool basicType_isInteger;
       bool basicType_isSigned;
       bool basicType_isFloat;
-      if(SerializedBuffer::DecodeArrayType(swapEndian, code, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat) != RESULT_OK)
+      if(SerializedBuffer::DecodeArrayType(swapEndianForHeaders, code, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat) != RESULT_OK)
         return RESULT_FAIL;
 
       const s32 bytesLeft = dataLength - (EncodedArray::CODE_SIZE * sizeof(u32));
@@ -140,7 +140,15 @@ namespace Anki
 
       out = Array<Type> (height, width, memory);
 
-      memcpy(out.Pointer(0,0), dataU32, bytesLeft);
+      if(swapEndianForContents) {
+        u8 * pOut = out.Pointer(0,0);
+        const u8 * pData = reinterpret_cast<const u8*>(dataU32); // Starts after the data header
+        for(s32 i=0; i<bytesLeft; i++) {
+          pOut[i^3] = pData[i];
+        }
+      } else {
+        memcpy(out.Pointer(0,0), dataU32, bytesLeft);
+      }
 
       return RESULT_OK;
     }

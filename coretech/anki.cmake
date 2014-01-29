@@ -28,10 +28,11 @@ set(DEFAULT_USE_OPENCV 1)
 set(DEFAULT_EMBEDDED_USE_OPENCV 1)
 set(DEFAULT_USE_GTEST 1)
 set(DEFAULT_EMBEDDED_USE_GTEST 1)
+set(DEFAULT_EMBEDDED_USE_HEATSHRINK 1)
 
 set(PKG_OPTIONS
 	USE_MATLAB USE_GTEST USE_OPENCV
-	EMBEDDED_USE_MATLAB EMBEDDED_USE_GTEST EMBEDDED_USE_OPENCV
+	EMBEDDED_USE_MATLAB EMBEDDED_USE_GTEST EMBEDDED_USE_OPENCV EMBEDDED_USE_HEATSHRINK
 )
 foreach(PKG ${PKG_OPTIONS})
 	if(DEFINED ${PKG})
@@ -58,6 +59,7 @@ endif(WIN32)
 # lets not have to hardcode them all over the place:
 set(OPENCV_DIR opencv-2.4.8)
 set(GTEST_DIR gtest-1.7.0)
+set(HEATSHRINK_DIR heatshrink)
 
 # I would love to figure out how to get find_package(OpenCV) to work,
 # but so far, no luck.
@@ -186,6 +188,10 @@ if(${ANKICORETECH_EMBEDDED_USE_GTEST})
 set(ALL_EMBEDDED_LIBRARIES ${ALL_EMBEDDED_LIBRARIES} gtest)
 endif()
 
+if(${ANKICORETECH_EMBEDDED_USE_HEATSHRINK})
+set(ALL_EMBEDDED_LIBRARIES ${ALL_EMBEDDED_LIBRARIES} heatshrink)
+endif()
+
 project(${PROJECT_NAME})
 
 # This is a hack, to get around some new cmake requirements
@@ -218,6 +224,7 @@ include_directories(
 	${EXTERNAL_DIR}/${OPENCV_DIR}/include
         ${EXTERNAL_DIR}/${GTEST_DIR}/include
         ${EXTERNAL_DIR}/jsoncpp
+        ${EXTERNAL_DIR}/heatshrink
 	${MATLAB_INCLUDE_DIR}
 )
 
@@ -259,6 +266,7 @@ link_directories(
 # above, so we'll add link directories for where it put its products)
 if(WIN32)
 	link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/lib/Debug)
+  link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/lib/RelWithDebInfo)
 else()
 	link_directories(${EXTERNAL_DIR}/build/${OPENCV_DIR}/lib)
 endif(WIN32)
@@ -273,7 +281,8 @@ function(fix_opencv_lib_names NAMES)
 
 if(WIN32)
 	foreach(NAME IN LISTS ${NAMES})
-		list(APPEND ${NAMES}_TMP ${NAME}248d)
+		#list(APPEND ${NAMES}_TMP ${NAME}248d)
+    list(APPEND ${NAMES}_TMP ${NAME}248)
 	endforeach()
 
 	set(${NAMES} "${${NAMES}_TMP}" PARENT_SCOPE)

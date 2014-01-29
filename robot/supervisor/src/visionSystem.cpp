@@ -68,17 +68,23 @@ namespace Anki {
       const u32 DDR_BUFFER_SIZE   = FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT;
 
 #ifdef USE_CAPTURE_IMAGES
+      const u32 PRINTF_BUFFER_SIZE = 10000;
+      __attribute__((section(".ddr.bss"))) u8 printfBufferRaw_[PRINTF_BUFFER_SIZE] ALIGNVARIABLE;
+      Embedded::SerializedBuffer printfBuffer_;
+
       const u32 CAPTURE_IMAGES_BUFFER_SIZE = 50000000;
       __attribute__((section(".ddr.bss"))) u8 captureImagesBufferRaw_[CAPTURE_IMAGES_BUFFER_SIZE] ALIGNVARIABLE;
       Embedded::SerializedBuffer captureImagesBuffer_;
+
       s32 numCapturedImages = -1;
-      const s32 MAX_IMAGES_TO_CAPTURE = 5;
+      const s32 MAX_IMAGES_TO_CAPTURE = 50;
+      bool sentStartingMessage = false;
 #endif
 
 #ifdef SIMULATOR
       char cmxBuffer_[CMX_BUFFER_SIZE];
       u8   ddrBuffer_[DDR_BUFFER_SIZE] ALIGNVARIABLE;
-      
+
       u32 frameRdyTimeUS_ = 0;
       const u32 LOOK_FOR_BLOCK_PERIOD_US = 200000;
       const u32 TRACK_BLOCK_PERIOD_US = 100000;
@@ -139,7 +145,7 @@ namespace Anki {
       typedef struct {
         u8* data;
         HAL::CameraMode resolution;
-        TimeStamp  timestamp;
+        TimeStamp_t  timestamp;
       } FrameBuffer;
 
       ReturnCode CaptureHeadFrame(FrameBuffer &frame);
@@ -152,6 +158,10 @@ namespace Anki {
       ReturnCode TrackTemplate(const FrameBuffer &frame);
 
       //ReturnCode GetRelativeOdometry(const FrameBuffer &frame);
+
+      void DownsampleHelper(const FrameBuffer& frame, Embedded::Array<u8>& image,
+                            const HAL::CameraMode outputResolution,
+                            Embedded::MemoryStack scratch);
 
 #pragma mark --- VisionSystem Method Implementations ---
 
@@ -256,10 +266,23 @@ namespace Anki {
 #endif
 
 #ifdef USE_CAPTURE_IMAGES
-      //PRINT("o1\n");
       captureImagesBuffer_ = Embedded::SerializedBuffer(&captureImagesBufferRaw_[0], CAPTURE_IMAGES_BUFFER_SIZE);
       numCapturedImages = 0;
-      //PRINT("o2\n");
+
+      {
+        FrameBuffer frame = {
+          ddrBuffer_,
+          HAL::CAMERA_MODE_VGA
+        };
+
+        const HAL::CameraUpdateMode updateMode = HAL::CAMERA_UPDATE_CONTINUOUS;
+
+        CameraStartFrame(HAL::CAMERA_FRONT, frame.data, frame.resolution,
+                         updateMode, 0, false);
+
+        CameraSetIsEndOfFrame(HAL::CAMERA_FRONT, false);
+      }
+
 #endif
 
         isInitialized_ = true;
@@ -279,7 +302,7 @@ namespace Anki {
       {
 
       }
-      
+
       void StopTracking()
       {
         mode_ = IDLE;
@@ -408,6 +431,28 @@ namespace Anki {
         }
       } // UpdateTrackingStatus()
 
+#ifdef USE_CAPTURE_IMAGES
+      void SendPrintf(const char * string)
+      {
+        printfBuffer_ = Embedded::SerializedBuffer(&printfBufferRaw_[0], PRINTF_BUFFER_SIZE);
+      
+        printfBuffer_.PushBackString(string);
+        
+        s32 startIndex;
+        const u8 * bufferStart = reinterpret_cast<const u8*>(printfBuffer_.get_memoryStack().get_validBufferStart(startIndex));
+        const s32 validUsedBytes = printfBuffer_.get_memoryStack().get_usedBytes() - startIndex;
+
+        for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
+          Anki::Cozmo::HAL::USBPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
+        }
+
+        HAL::USBSendBuffer(bufferStart, validUsedBytes);
+
+        for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
+          Anki::Cozmo::HAL::USBPutChar(Embedded::SERIALIZED_BUFFER_FOOTER[i]);
+        }
+      }
+#endif // #ifdef USE_CAPTURE_IMAGES
 
       ReturnCode Update(void)
       {
@@ -418,14 +463,14 @@ namespace Anki {
         //       processing.  Once the hardware camera supports it, we should
         //       capture at the correct resolution directly and pass that in
         //       (and remove the downsampling from USBSendFrame()
-        
+
 #ifdef SIMULATOR
         if (HAL::GetMicroCounter() < frameRdyTimeUS_) {
           return retVal;
         }
 #endif
-        
-        
+
+
 #if USE_OFFBOARD_VISION
 
         //PRINT("VisionSystem::Update(): waiting for processing result.\n");
@@ -485,6 +530,10 @@ namespace Anki {
 
               CaptureHeadFrame(frame);
 
+#ifdef SIMULATOR
+              frameRdyTimeUS_ = HAL::GetMicroCounter() + TRACK_BLOCK_PERIOD_US;
+#endif
+              
               if(TrackTemplate(frame) == EXIT_FAILURE) {
                 PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
                 retVal = EXIT_FAILURE;
@@ -496,59 +545,75 @@ namespace Anki {
           case CAPTURE_IMAGES:
           {
 #ifdef USE_CAPTURE_IMAGES
+            //Embedded::MemoryStack scratch = Embedded::MemoryStack(cmxBuffer_, TRACKER_SCRATCH_SIZE);
+
             // Do no robot control, just capture a buffer of images and send it to the PC over USB
             if(!isInitialized_) {
               Init();
             }
-            
+
+            if(!sentStartingMessage) {
+              sentStartingMessage = true;
+
+              //SendPrintf("Starting image capture");              
+              //SleepMs(500);
+            } // if(!sentStartingMessage)
+
             VisionSystem::FrameBuffer frame = {
               ddrBuffer_,
               HAL::CAMERA_MODE_VGA
             };
-            
-            CaptureHeadFrame(frame);
-            
+
             if(numCapturedImages < MAX_IMAGES_TO_CAPTURE) {
 
               const s32 imageHeight = HAL::CameraModeInfo[HAL::CAMERA_MODE_VGA].height;
               const s32 imageWidth = HAL::CameraModeInfo[HAL::CAMERA_MODE_VGA].width;
-              //const s32 imageHeight = 480;
-              //const s32 imageWidth = 640;
               Embedded::Array<u8> image(imageHeight, imageWidth, ddrBuffer_, imageHeight*imageWidth);
-              //printf("a\n");
-              //Embedded::Array<u8> image(4, 3, ddrBuffer_, imageHeight*imageWidth, Embedded::Flags::Buffer(false,false,false));
-              //Embedded::Array<u8> image(1, 16, ddrBuffer_, imageHeight*imageWidth, Embedded::Flags::Buffer(false,false,false));
-              //printf("b\n");
-              
+
+              // Wait for the capture of the current frame to finish
+              while (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT))
+              {
+              }
+
+              // TODO: this will be set automatically at some point
+              CameraSetIsEndOfFrame(HAL::CAMERA_FRONT, false);
+
+              //frame.timestamp = HAL::GetTimeStamp();
+
+              //Embedded::Array<u8> downsampledImage(imageHeight/2, imageWidth/2, scratch);
+              //DownsampleHelper(frame, downsampledImage, HAL::CAMERA_MODE_QVGA, scratch);
+
+              //captureImagesBuffer_.PushBack(downsampledImage);
               captureImagesBuffer_.PushBack(image);
-              
-              //printf("c\n");
-              
+
               numCapturedImages++;
               if(numCapturedImages == MAX_IMAGES_TO_CAPTURE) {
-              //printf("d\n");
+				DisableCamera(HAL::CAMERA_FRONT);
+			  
+                //SendPrintf("Image capture finished");              
+                SleepMs(550);
+              
                 s32 startIndex;
                 const u8 * bufferStart = reinterpret_cast<const u8*>(captureImagesBuffer_.get_memoryStack().get_validBufferStart(startIndex));
                 const s32 validUsedBytes = captureImagesBuffer_.get_memoryStack().get_usedBytes() - startIndex;
-                
+
                 //PRINT("%d %d\n", bufferStart, validUsedBytes);
-#ifdef SIMULATOR
-              frameRdyTimeUS_ = HAL::GetMicroCounter() + TRACK_BLOCK_PERIOD_US;
-#endif
-                
+
                 for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
                   Anki::Cozmo::HAL::USBPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
                 }
-                
+
                 HAL::USBSendBuffer(bufferStart, validUsedBytes);
-                
+
                 for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
                   Anki::Cozmo::HAL::USBPutChar(Embedded::SERIALIZED_BUFFER_FOOTER[i]);
                 }
               } // if(numCapturedImages == MAX_IMAGES_TO_CAPTURE)
             } else {
               // We're done, so just spin
-              while(1) {}
+              while(1) {
+                SleepMs(100);              
+              }
             }
 #else
             PRINT("Error: capture images code is not compiled\n");
@@ -610,6 +675,9 @@ namespace Anki {
         while (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT))
         {
         }
+
+        // TODO: this will be set automatically at some point
+        CameraSetIsEndOfFrame(HAL::CAMERA_FRONT, false);
 
         frame.timestamp = HAL::GetTimeStamp();
 

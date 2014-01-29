@@ -59,6 +59,7 @@ SWCOMMON_PLATFORM = SWCOMMON + MV_SOC_PLATFORM + '/'
 BOARD = COMPONENTS + 'Board/leon_code/'
 LIBC = MV_COMMON_BASE + 'libc/leon/'
 CIF_GENERIC = COMPONENTS + 'CifGeneric/leon_code/'
+CORETECH_EXTERNAL_DIRECTORY = '../../coretech-external/'
 
 MOVICOMPILE_LIBRARY_PATH = MV_TOOLS_DIR + MV_TOOLS_VERSION + '/common/moviCompile/libraries/' + MV_SOC_PLATFORM + '/'
 MOVICOMPILE_LIBRARIES = [MOVICOMPILE_LIBRARY_PATH + file for file in ['mlibcxx.a', 'mlibVecUtils.a', 'mlibc.a', 'compiler-rt.a']]
@@ -70,18 +71,24 @@ LEON_SOURCE += addSources(DRIVERS + 'socDrivers');
 LEON_SOURCE += addSources(CIF_GENERIC);
 LEON_SOURCE += addSources(LIBC + 'src');
 LEON_SOURCE += addSources(LIBC + 'src/asm');
+LEON_SOURCE.append(CORETECH_EXTERNAL_DIRECTORY + 'heatshrink/heatshrink_decoder.cpp')
+LEON_SOURCE.append(CORETECH_EXTERNAL_DIRECTORY + 'heatshrink/heatshrink_encoder.cpp')
 
 SHAVE_SOURCE += addSources(SWCOMMON + 'shave_code/' + MV_SOC_PLATFORM + '/myriad1/asm')
 SHAVE_SOURCE += addSources(SWCOMMON + 'shave_code/' + MV_SOC_PLATFORM + '/myriad1/src')
 
 LEON_ASM_C_CXX_OPT = (
-#  '-DDISABLE_LEON_DCACHE -DDISABLE_LEON_CACHE '
+#  '-DDISABLE_LEON_DCACHE '
+#  '-DDISABLE_LEON_CACHE '
   '-DROBOT_HARDWARE '
+  '-DCOZMO_ROBOT ' # TODO: ROBOT_HARDWARE and COZMO_ROBOT should probably be merged
+  '-DANKICORETECH_EMBEDDED_USE_HEATSHRINK '
   '-I ../include '
   '-I supervisor/src '
   '-I ../coretech/common/include '
   '-I ../coretech/messaging/include '
   '-I ../coretech/vision/include '
+  '-I ' + CORETECH_EXTERNAL_DIRECTORY + 'heatshrink '
   '-I' + DRIVERS + 'socDrivers/include '
   '-I' + DRIVERS + 'brdDrivers/include '
   '-I' + DRIVERS + 'icDrivers/include '
@@ -400,6 +407,7 @@ if __name__ == '__main__':
     elif arg == 'capture-images':
       target = 'capture-images'
       LEON_ASM_C_CXX_OPT += '-DUSE_OFFBOARD_VISION=0 -DUSE_CAPTURE_IMAGES '
+      LEON_ASM_C_CXX_OPT += '-DDEFAULT_BAUDRATE=1000000 '
     else:
       print 'Invalid argument: ' + arg
       sys.exit(1)

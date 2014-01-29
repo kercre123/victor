@@ -17,14 +17,19 @@ namespace Anki {
 
     const u8 NUM_RADIAL_DISTORTION_COEFFS = 4;
 
-    // Cozmo control loop is 500Hz.
-    const s32 TIME_STEP = 2;
+    // Cozmo control loop is 200Hz.
+    const s32 TIME_STEP = 5;
     
     // Packet headers/footers:
     // TODO: Do we need this?  Only used in simulation I think? (Add #ifdef SIMULATOR?)
     const u8 RADIO_PACKET_HEADER[2] = {0xBE, 0xEF};
+    const u8 RADIO_PACKET_FOOTER[2] = {0xFF, 0x0F};
     const u8 USB_PACKET_HEADER[4] = {0xBE, 0xEF, 0xF0, 0xFF}; // BEEFF0FF
     const u8 USB_PACKET_FOOTER[4] = {0xFF, 0x0F, 0xFE, 0xEB}; // FF0FFEEB
+
+    // The base listening port for robot TCP server.
+    // Each robot listens on port (ROBOT_RADIO_BASE_PORT + ROBOT_ID)
+    const u16 ROBOT_RADIO_BASE_PORT = 5000;
     
     // Expected message receive latency
     // It is assumed that this value does not fluctuate greatly.
@@ -37,6 +42,37 @@ namespace Anki {
     // of the system one message cycle latency in the future. This way, commanded actions are applied
     // at the time they are expected in the physical world.
     const f32 BASESTATION_MODEL_LATENCY_SEC = 2.f*MSG_RECEIVE_LATENCY_SEC;
+  
+
+    
+    // Messages that are purely for advertising when using TCP/UDP. (Maybe belongs somewhere else...)
+    // This will eventually be passed in via the GUI.
+    // The default 127.0.0.1 works fine for simulated basestation running on the same machine as the simluator.
+    const char* const ROBOT_SIM_WORLD_HOST = "127.0.0.1";
+    
+    // Port on which registered robots advertise.
+    const u32 ROBOT_ADVERTISING_PORT = 5100;
+    
+    // Port on which simulated robot should connect to (de)register for advertisement
+    const u32 ROBOT_ADVERTISEMENT_REGISTRATION_PORT = 5101;
+    
+    typedef struct {
+      u8 robotID;
+      u8 enableAdvertisement;  // 1 when robot wants to advertise, 0 otherwise.
+      u32 port;                // Port that robot is accepting connections on
+    } RobotAdvertisementRegistration;
+    
+    typedef struct  {
+      u8 robotID;
+      u32 port;
+    } RobotAdvertisement;
+    
+    // If most recent advertisement message is older than this,
+    // then it is no longer considered to be advertising.
+    const f32 ROBOT_ADVERTISING_TIMEOUT_S = 0.25;
+
+    // Time in between robot advertisements
+    const f32 ROBOT_ADVERTISING_PERIOD_S = 0.03;
     
     
 #ifdef SIMULATOR

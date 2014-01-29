@@ -86,7 +86,7 @@
 // macro and adds a special timestamp member at the beginning.
 #define START_TIMESTAMPED_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
 START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-ADD_MESSAGE_MEMBER(TimeStamp, timestamp)
+ADD_MESSAGE_MEMBER(TimeStamp_t, timestamp)
 
 //
 // First Mode: Define typedef'd struct and the prototype for a ProcessMessage
@@ -183,7 +183,7 @@ GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(*reinterpret_cast<const GET_STRUCT_TYPENAME(
 // macro and adds a special timestamp member at the beginning.
 #define START_TIMESTAMPED_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
 START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-ADD_MESSAGE_MEMBER(TimeStamp, timestamp)
+ADD_MESSAGE_MEMBER(TimeStamp_t, timestamp)
 
 //
 // Define inherited Message class

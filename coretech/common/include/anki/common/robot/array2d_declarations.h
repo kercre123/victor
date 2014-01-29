@@ -58,8 +58,8 @@ namespace Anki
       // 3. flags.get_useBoundaryFillPatterns == false
       // 4. numRows*numCols*sizeof(Type) <= dataLength
       //
-      // Flags::Buffer.isFullyAllocated doesn't do anything
-      Array(const s32 numRows, const s32 numCols, void * data, const s32 dataLength, const Flags::Buffer flags=Flags::Buffer(false,false,false));
+      // If Flags::Buffer.isFullyAllocated == true, then the input data buffer's stride must be simple
+      Array(const s32 numRows, const s32 numCols, void * data, const s32 dataLength, const Flags::Buffer flags=Flags::Buffer(false,false,true));
 
       // Constructor for a Array, pointing to user-allocated MemoryStack
       // Flags::Buffer.isFullyAllocated doesn't do anything

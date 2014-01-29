@@ -19,15 +19,13 @@
 #include "anki/cozmo/robot/wheelController.h"
 #include "anki/cozmo/robot/visionSystem.h"
 
-#include "anki/messaging/robot/utilMessaging.h"
+#include "anki/messaging/shared/utilMessaging.h"
 
 ///////// TESTING //////////
 
 #if ANKICORETECH_EMBEDDED_USE_MATLAB && USING_MATLAB_VISION
 #include "anki/embeddedCommon/matlabConverters.h"
 #endif
-
-#define DOCKING_TEST 1
 
 ///////// END TESTING //////
 
@@ -234,7 +232,7 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates
         //////////////////////////////////////////////////////////////
-        
+
         HeadController::Update();
         LiftController::Update();
         GripController::Update();

@@ -8,7 +8,7 @@ WorldInfo {
     ""
   ]
   physics "cozmo_physics"
-  basicTimeStep 2
+  basicTimeStep 5
   contactProperties [
     DEF FLOOR_FRONTWHEEL ContactProperties {
       material1 "cmat_floor"

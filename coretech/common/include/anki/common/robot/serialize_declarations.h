@@ -48,7 +48,8 @@ namespace Anki
         DATA_TYPE_UNKNOWN = 0,
         DATA_TYPE_RAW = 1,
         DATA_TYPE_BASIC_TYPE_BUFFER = 2,
-        DATA_TYPE_ARRAY = 3
+        DATA_TYPE_ARRAY = 3,
+        DATA_TYPE_STRING = 4
       };
 
       class EncodedBasicTypeBuffer
@@ -75,7 +76,7 @@ namespace Anki
       static Result DecodeArrayType(const bool swapEndian, const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u8 &basicType_size, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat);
 
       template<typename Type> static Result SerializeArray(const Array<Type> &in, void * data, const s32 dataLength);
-      template<typename Type> static Result DeserializeArray(const bool swapEndian, const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
+      template<typename Type> static Result DeserializeArray(const bool swapEndianForHeaders, const bool swapEndianForContents, const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
 
       SerializedBuffer();
 
@@ -86,6 +87,8 @@ namespace Anki
       void* PushBack(const DataType type, const void * data, s32 dataLength);
       void* PushBack(const void * header, s32 headerLength, const void * data, s32 dataLength);
       void* PushBack(const DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength);
+
+      void* PushBackString(const char * format, ...);
 
       // Note that dataLength should be numel(data)*sizeof(Type)
       // This is to make this call compatible with the standard void* PushBack()
@@ -101,6 +104,9 @@ namespace Anki
 
     protected:
       MemoryStack memoryStack;
+
+      // if scratch != NULL, use compression
+      void* PushBack_Generic(const SerializedBuffer::DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength);
     }; // class SerializedBuffer
 
     class SerializedBufferConstIterator : public MemoryStackConstIterator

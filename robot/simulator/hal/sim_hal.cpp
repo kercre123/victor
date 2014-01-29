@@ -192,7 +192,11 @@ namespace Anki {
 #pragma mark --- Simulated Hardware Method Implementations ---
     
     // Forward Declaration.  This is implemented in sim_radio.cpp
+#if(USE_WEBOTS_TXRX)
     ReturnCode InitSimRadio(webots::Robot& webotRobot, s32 robotID);
+#else
+    ReturnCode InitSimRadio(s32 robotID);
+#endif
     
     ReturnCode HAL::Init()
     {
@@ -287,8 +291,12 @@ namespace Anki {
       // Gyro
       gyro_ = webotRobot_.getGyro("gyro");
       gyro_->enable(TIME_STEP);
-      
+
+#if(USE_WEBOTS_TXRX)
       if(InitSimRadio(webotRobot_, robotID_) == EXIT_FAILURE) {
+#else
+      if(InitSimRadio(robotID_) == EXIT_FAILURE) {
+#endif
         PRINT("Failed to initialize Simulated Radio.\n");
         return EXIT_FAILURE;
       }
@@ -459,8 +467,10 @@ namespace Anki {
       return motorPositions_[motor];
     }
     
-    
-    
+      
+    // Forward declaration
+    void RadioUpdate();
+      
     ReturnCode HAL::Step(void)
     {
 
@@ -468,6 +478,7 @@ namespace Anki {
         return EXIT_FAILURE;
       } else {
         MotorUpdate();
+        RadioUpdate();
         return EXIT_SUCCESS;
       }
       
@@ -686,6 +697,11 @@ namespace Anki {
        */
     }
     
+    void HAL::CameraSetIsEndOfFrame(CameraID cameraID, bool isEOF)
+    {
+      
+    }
+    
     
     // Get the number of microseconds since boot
     u32 HAL::GetMicroCounter(void)
@@ -700,9 +716,9 @@ namespace Anki {
         ;
     }
     
-    TimeStamp HAL::GetTimeStamp(void)
+    TimeStamp_t HAL::GetTimeStamp(void)
     {
-      return static_cast<TimeStamp>(webotRobot_.getTime() * 1000.0);
+      return static_cast<TimeStamp_t>(webotRobot_.getTime() * 1000.0);
     }
     
     s32 HAL::GetRobotID(void)

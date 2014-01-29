@@ -2,7 +2,7 @@
 
 #ifdef USE_TCP_MESSAGING_INTERFACE
 
-#include "anki/messaging/TcpServer.h"
+#include "anki/messaging/shared/TcpServer.h"
 
 namespace Anki {
   

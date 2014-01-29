@@ -16,20 +16,20 @@ namespace Anki
       // "Private member variables"
       namespace {
         CameraMode headCamMode_;
-        
+
         // Whether we've already started continuous mode
         bool m_continuousModeStarted = false;
-        
+
         // Intrinsic calibration parameters for each camera:
         CameraInfo headCamInfo_;
         CameraInfo matCamInfo_;
       }
-      
+
       inline f32 ComputeVerticalFOV(const u16 height, const f32 fy)
       {
         return 2.f * atan_fast(static_cast<f32>(height) / (2.f * fy));
       }
-      
+
       const CameraInfo* GetHeadCamInfo(void)
       {
         headCamInfo_ = {
@@ -43,10 +43,10 @@ namespace Anki
           HEAD_CAM_CALIB_HEIGHT,
           HEAD_CAM_CALIB_WIDTH
         };
-        
+
         return &headCamInfo_;
       }
-      
+
       const CameraInfo* GetMatCamInfo(void)
       {
         matCamInfo_ = {
@@ -60,11 +60,11 @@ namespace Anki
           MAT_CAM_CALIB_HEIGHT,
           MAT_CAM_CALIB_WIDTH
         };
-        
+
         return &matCamInfo_;
       }
-      
-      
+
+
       typedef struct
       {
         const u32 MXI_CAMX_BASE_ADR;
@@ -112,7 +112,7 @@ namespace Anki
       {
         return headCamMode_;
       }
-      
+
       // TODO: there is a copy of this in sim_hal.cpp -- consolidate into one location.
       void SetHeadCamMode(const u8 frameResHeader)
       {
@@ -125,12 +125,12 @@ namespace Anki
             found = true;
           }
         }
-        
+
         if(not found) {
           PRINT("ERROR(SetCameraMode): Unknown frame res: %d", frameResHeader);
         }
       } //SetHeadCamMode()
-      
+
       static CameraHandle* m_handles[CAMERA_COUNT] = {NULL, NULL};
 
       static void CameraIRQ(u32 source);
@@ -394,16 +394,16 @@ namespace Anki
           REG_WORD(address) |=
             D_CIF_DMA_ENABLE |
             D_CIF_DMA_AUTO_RESTART_CONTINUOUS;
-          
+
           m_continuousModeStarted = true;
-          
+
         } else {
           // Otherwise, run a single frame
           REG_WORD(address) &= ~D_CIF_DMA_AUTO_RESTART_CONTINUOUS;
           REG_WORD(address) |=
             D_CIF_DMA_ENABLE |
             D_CIF_DMA_AUTO_RESTART_ONCE_SHADOW;
-          
+
           m_continuousModeStarted = false;
         }
       }
@@ -418,7 +418,17 @@ namespace Anki
       {
         return m_cams[cameraID].isEOF;
       }
-      
+
+      void CameraSetIsEndOfFrame(CameraID cameraID, bool isEOF)
+      {
+        m_cams[cameraID].isEOF = isEOF;
+      }
+	 
+	  void DisableCamera(CameraID cameraID)
+	  {
+		u32 irq = m_cams[cameraID].IRQ_CIF_X;
+        DrvIcbDisableIrq(irq);
+	  }
     }
   }
 }
