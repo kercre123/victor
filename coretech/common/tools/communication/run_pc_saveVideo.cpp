@@ -25,14 +25,14 @@ _Check_return_opt_ _CRTIMP int __cdecl printf(_In_z_ _Printf_format_string_ cons
 
 #include "opencv/cv.h"
 
-//#define PRINTF_ALL_RECEIVED
+#define PRINTF_ALL_RECEIVED
 
 #define BIG_BUFFER_SIZE 100000000
 
-using namespace std;
+const bool swapEndianForHeaders = true;
+const bool swapEndianForContents = true;
 
-volatile double lastUpdateTime;
-volatile HANDLE lastUpdateTime_mutex;
+using namespace std;
 
 const double secondsToWaitBeforeSavingABuffer = 1.0;
 
@@ -40,14 +40,9 @@ const s32 outputFilenamePatternLength = 1024;
 char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/cozmoShort/cozmo_%04d-%02d-%02d_%02d-%02d-%02d_%d.%s";
 
 typedef struct {
-  void * data;
+  u8 * data;
   s32 dataLength;
 } RawBuffer;
-
-typedef struct {
-  ThreadSafeQueue<RawBuffer> *buffers;
-  string outputFilenamePattern;
-} ThreadParameters;
 
 void FindUSBMessage(const void * rawBuffer, const s32 rawBufferLength, s32 &startIndex, s32 &endIndex)
 {
@@ -103,194 +98,174 @@ void FindUSBMessage(const void * rawBuffer, const s32 rawBufferLength, s32 &star
   }
 } // void FindUSBMessage(const void * rawBuffer, s32 &startIndex, s32 &endIndex)
 
-// Based off example at http://msdn.microsoft.com/en-us/library/windows/desktop/ms682516(v=vs.85).aspx
-DWORD WINAPI SaveBuffers(LPVOID lpParam)
+void SaveAndFreeBuffer(RawBuffer &buffer, const string outputFilenamePattern)
 {
-  const bool swapEndianForHeaders = true;
-  const bool swapEndianForContents = true;
-
   const s32 outputFilenameLength = 1024;
   char outputFilename[outputFilenameLength];
 
-  ThreadParameters *params = (ThreadParameters*)lpParam;
-  //ThreadSafeQueue<RawBuffer> *buffers = (ThreadSafeQueue<RawBuffer>*)lpParam;
-  ThreadSafeQueue<RawBuffer> *buffers = params->buffers;
+  u8 * const bufferDataOriginal = buffer.data;
 
-  // The bigBuffer is a 16-bytes aligned version of bigBufferRaw
-  static u8 bigBufferRaw[BIG_BUFFER_SIZE];
   static u8 bigBufferRaw2[BIG_BUFFER_SIZE];
-  static u8 * bigBuffer = reinterpret_cast<u8*>(RoundUp<size_t>(reinterpret_cast<size_t>(&bigBufferRaw[0]), MEMORY_ALIGNMENT));
-  s32 bigBufferIndex = 0;
+  u8 * const shiftedBufferOriginal = reinterpret_cast<u8*>(malloc(BIG_BUFFER_SIZE));
+  u8 * shiftedBuffer = shiftedBufferOriginal;
 
-  memset(&bigBufferRaw[0], 0, BIG_BUFFER_SIZE);
+  const time_t t = time(0);   // get time now
+  const struct tm * currentTime = localtime(&t);
 
+  s32 frameNumber = 0;
+
+  MemoryStack memory(bigBufferRaw2, BIG_BUFFER_SIZE, Flags::Buffer(false, true, false));
+
+#ifdef PRINTF_ALL_RECEIVED
+  printf("\n");
+  //for(s32 i=0; i<buffer.dataLength; i++) {
+  for(s32 i=0; i<500; i++) {
+    printf("%x ", buffer.data[i]);
+  }
+  printf("\n");
+#endif
+
+  s32 bufferDataOffset = 0;
+  //bool atLeastOneHeaderFound = false;
+  while(bufferDataOffset < (buffer.dataLength - SERIALIZED_BUFFER_HEADER_LENGTH - SERIALIZED_BUFFER_FOOTER_LENGTH))
+  {
+    s32 usbMessageStartIndex;
+    s32 usbMessageEndIndex;
+    FindUSBMessage(buffer.data+bufferDataOffset, buffer.dataLength-bufferDataOffset, usbMessageStartIndex, usbMessageEndIndex);
+    
+    if(usbMessageStartIndex < 0) {
+      printf("Error: USB header is missing (%d,%d) with %d total bytes and %d bytes remaining, returning...\n", usbMessageStartIndex, usbMessageEndIndex, buffer.dataLength, buffer.dataLength-bufferDataOffset);
+
+      buffer.data = NULL;
+      free(bufferDataOriginal);
+      free(shiftedBufferOriginal);
+      return;
+    }
+
+    if(usbMessageEndIndex < 0) {
+      printf("Error: USB footer is missing (%d,%d) with %d total bytes and %d bytes remaining, attempting to parse anyway...\n", usbMessageStartIndex, usbMessageEndIndex, buffer.dataLength, buffer.dataLength-bufferDataOffset);
+      usbMessageEndIndex = buffer.dataLength - 1;
+    }
+
+    //atLeastOneHeaderFound = true;
+
+    usbMessageStartIndex += bufferDataOffset;
+    usbMessageEndIndex += bufferDataOffset;
+    bufferDataOffset = usbMessageEndIndex;
+
+    const s32 messageLength = usbMessageEndIndex-usbMessageStartIndex+1;
+
+    // Move this to a memory-aligned start (index 0 of bigBuffer), after the first MemoryStack::HEADER_LENGTH
+    //const s32 bigBuffer_alignedStartIndex = (RoundUp(reinterpret_cast<size_t>(buffer.data), MEMORY_ALIGNMENT) - reinterpret_cast<size_t>(buffer.data)) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH;
+    shiftedBuffer = reinterpret_cast<u8*>( RoundUp(reinterpret_cast<size_t>(shiftedBufferOriginal), MEMORY_ALIGNMENT) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH );
+    memcpy(shiftedBuffer, buffer.data+usbMessageStartIndex, messageLength);
+    //buffer.data += bigBuffer_alignedStartIndex;
+
+    if(swapEndianForHeaders) {
+      for(s32 i=0; i<messageLength; i+=4) {
+        Swap(shiftedBuffer[i], shiftedBuffer[i^3]);
+        Swap(shiftedBuffer[(i+1)], shiftedBuffer[(i+1)^3]);
+      }
+    }
+
+    SerializedBuffer serializedBuffer(shiftedBuffer, messageLength, Anki::Embedded::Flags::Buffer(false, true, true));
+
+    SerializedBufferIterator iterator(serializedBuffer);
+
+    while(iterator.HasNext()) {
+      s32 dataLength;
+      SerializedBuffer::DataType type;
+      u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(swapEndianForHeaders, dataLength, type));
+      u8 * dataSegment = dataSegmentStart;
+
+      if(!dataSegment) {
+        break;
+      }
+
+      printf("Next segment is (%d,%d): ", dataLength, type);
+      if(type == SerializedBuffer::DATA_TYPE_RAW) {
+        printf("Raw segment: ");
+        for(s32 i=0; i<dataLength; i++) {
+          printf("%x ", dataSegment[i]);
+        }
+      } else if(type == SerializedBuffer::DATA_TYPE_BASIC_TYPE_BUFFER) {
+        SerializedBuffer::EncodedBasicTypeBuffer code;
+        for(s32 i=0; i<SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE; i++) {
+          code.code[i] = reinterpret_cast<const u32*>(dataSegment)[i];
+        }
+        dataSegment += SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE * sizeof(u32);
+        const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE * sizeof(u32);
+
+        u8 size;
+        bool isInteger;
+        bool isSigned;
+        bool isFloat;
+        s32 numElements;
+        SerializedBuffer::DecodeBasicTypeBuffer(swapEndianForHeaders, code, size, isInteger, isSigned, isFloat, numElements);
+
+        printf("Basic type buffer segment (%d, %d, %d, %d, %d): ", size, isInteger, isSigned, isFloat, numElements);
+        for(s32 i=0; i<remainingDataLength; i++) {
+          printf("%x ", dataSegment[i]);
+        }
+      } else if(type == SerializedBuffer::DATA_TYPE_ARRAY) {
+        SerializedBuffer::EncodedArray code;
+        for(s32 i=0; i<SerializedBuffer::EncodedArray::CODE_SIZE; i++) {
+          code.code[i] = reinterpret_cast<const u32*>(dataSegment)[i];
+        }
+        dataSegment += SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
+        const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
+
+        s32 height;
+        s32 width;
+        s32 stride;
+        Flags::Buffer flags;
+        u8 basicType_size;
+        bool basicType_isInteger;
+        bool basicType_isSigned;
+        bool basicType_isFloat;
+        SerializedBuffer::DecodeArrayType(swapEndianForHeaders, code, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
+
+        printf("Array: (%d, %d, %d, %d, %d, %d, %d, %d) ", height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
+        //template<typename Type> static Result DeserializeArray(const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
+        if(basicType_size==1 && basicType_isInteger==1 && basicType_isSigned==0 && basicType_isFloat==0) {
+          Array<u8> arr;
+          SerializedBuffer::DeserializeArray(swapEndianForHeaders, swapEndianForContents, dataSegmentStart, dataLength, arr, memory);
+
+          snprintf(&outputFilename[0], outputFilenameLength, outputFilenamePattern.data(),
+            currentTime->tm_year+1900, currentTime->tm_mon+1, currentTime->tm_mday,
+            currentTime->tm_hour, currentTime->tm_min, currentTime->tm_sec,
+            frameNumber,
+            "png");
+
+          frameNumber++;
+
+          printf("Saving to %s", outputFilename);
+          const cv::Mat_<u8> &mat = arr.get_CvMat_();
+          cv::imwrite(outputFilename, mat);
+          //cv::imwrite("c:/tmp/tt.bmp", mat);
+        }
+      } else if(type == SerializedBuffer::DATA_TYPE_STRING) {
+        printf("Board>> %s", dataSegment);
+      }
+
+      printf("\n");
+    } // while(iterator.HasNext())
+  } // while(bufferDataOffset < buffer.dataLength)
+
+  buffer.data = NULL;
+  free(bufferDataOriginal);
+  free(shiftedBufferOriginal);
+  return;
+} // void SaveAndFreeBuffer()
+
+// Based off example at http://msdn.microsoft.com/en-us/library/windows/desktop/ms682516(v=vs.85).aspx
+DWORD WINAPI SaveBuffersThread(LPVOID lpParam)
+{
   SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
 
-  while(true) {
-    WaitForSingleObject(lastUpdateTime_mutex, INFINITE);
-    const double lastUpdateTime_local = lastUpdateTime;
-    ReleaseMutex(lastUpdateTime_mutex);
+  RawBuffer *buffer = (RawBuffer*)lpParam;
 
-    // If we've gone more than a little bit without getting more data, we've probably received the
-    // entire message
-    if((GetTime()-lastUpdateTime_local) >= secondsToWaitBeforeSavingABuffer) {
-      WaitForSingleObject(lastUpdateTime_mutex, INFINITE);
-      lastUpdateTime = GetTime() + 1e10;
-      ReleaseMutex(lastUpdateTime_mutex);
-
-      const time_t t = time(0);   // get time now
-      const struct tm * currentTime = localtime(&t);
-
-      s32 frameNumber = 0;
-
-      MemoryStack memory(bigBufferRaw2, BIG_BUFFER_SIZE, Flags::Buffer(false, true, false));
-
-      s32 usbMessageStartIndex;
-      s32 usbMessageEndIndex;
-      FindUSBMessage(bigBuffer, bigBufferIndex, usbMessageStartIndex, usbMessageEndIndex);
-
-      if(usbMessageStartIndex < 0 || usbMessageEndIndex < 0) {
-        printf("Error: USB header or footer is missing (%d,%d) in message of size %d bytes\n", usbMessageStartIndex, usbMessageEndIndex, bigBufferIndex);
-        bigBufferIndex = 0;
-        bigBuffer = reinterpret_cast<u8*>(RoundUp<size_t>(reinterpret_cast<size_t>(&bigBufferRaw[0]), MEMORY_ALIGNMENT));
-        continue;
-      }
-
-#ifdef PRINTF_ALL_RECEIVED
-      printf("orig: ");
-      for(s32 i=0; i<bigBufferIndex; i++) {
-        printf("%x ", bigBuffer[i]);
-      }
-      printf("\n");
-#endif
-
-      const s32 messageLength = usbMessageEndIndex-usbMessageStartIndex+1;
-
-      // Move this to a memory-aligned start (index 0 of bigBuffer), after the first MemoryStack::HEADER_LENGTH
-      const s32 bigBuffer_alignedStartIndex = MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH;
-      memmove(bigBuffer+bigBuffer_alignedStartIndex, bigBuffer+usbMessageStartIndex, messageLength);
-      bigBuffer += bigBuffer_alignedStartIndex;
-
-      if(swapEndianForHeaders) {
-        for(s32 i=0; i<messageLength; i+=4) {
-          Swap(bigBuffer[i], bigBuffer[i^3]);
-          Swap(bigBuffer[(i+1)], bigBuffer[(i+1)^3]);
-        }
-      }
-
-#ifdef PRINTF_ALL_RECEIVED
-      printf("shifted: ");
-      for(s32 i=0; i<messageLength; i++) {
-        printf("%x ", bigBuffer[i]);
-      }
-      printf("\n");
-#endif
-
-      SerializedBuffer serializedBuffer(bigBuffer, messageLength, Anki::Embedded::Flags::Buffer(false, true, true));
-
-      SerializedBufferIterator iterator(serializedBuffer);
-
-      printf("\n");
-      printf("\n");
-      while(iterator.HasNext()) {
-        s32 dataLength;
-        SerializedBuffer::DataType type;
-        u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(swapEndianForHeaders, dataLength, type));
-        u8 * dataSegment = dataSegmentStart;
-
-        if(!dataSegment) {
-          break;
-        }
-
-        printf("Next segment is (%d,%d)\n", dataLength, type);
-        if(type == SerializedBuffer::DATA_TYPE_RAW) {
-          printf("Raw segment: ");
-          for(s32 i=0; i<dataLength; i++) {
-            printf("%x ", dataSegment[i]);
-          }
-        } else if(type == SerializedBuffer::DATA_TYPE_BASIC_TYPE_BUFFER) {
-          SerializedBuffer::EncodedBasicTypeBuffer code;
-          for(s32 i=0; i<SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE; i++) {
-            code.code[i] = reinterpret_cast<const u32*>(dataSegment)[i];
-          }
-          dataSegment += SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE * sizeof(u32);
-          const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedBasicTypeBuffer::CODE_SIZE * sizeof(u32);
-
-          u8 size;
-          bool isInteger;
-          bool isSigned;
-          bool isFloat;
-          s32 numElements;
-          SerializedBuffer::DecodeBasicTypeBuffer(swapEndianForHeaders, code, size, isInteger, isSigned, isFloat, numElements);
-
-          printf("Basic type buffer segment (%d, %d, %d, %d, %d): ", size, isInteger, isSigned, isFloat, numElements);
-          for(s32 i=0; i<remainingDataLength; i++) {
-            printf("%x ", dataSegment[i]);
-          }
-        } else if(type == SerializedBuffer::DATA_TYPE_ARRAY) {
-          SerializedBuffer::EncodedArray code;
-          for(s32 i=0; i<SerializedBuffer::EncodedArray::CODE_SIZE; i++) {
-            code.code[i] = reinterpret_cast<const u32*>(dataSegment)[i];
-          }
-          dataSegment += SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
-          const s32 remainingDataLength = dataLength - SerializedBuffer::EncodedArray::CODE_SIZE * sizeof(u32);
-
-          s32 height;
-          s32 width;
-          s32 stride;
-          Flags::Buffer flags;
-          u8 basicType_size;
-          bool basicType_isInteger;
-          bool basicType_isSigned;
-          bool basicType_isFloat;
-          SerializedBuffer::DecodeArrayType(swapEndianForHeaders, code, height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
-
-          printf("Array: (%d, %d, %d, %d, %d, %d, %d, %d) ", height, width, stride, flags, basicType_size, basicType_isInteger, basicType_isSigned, basicType_isFloat);
-          //template<typename Type> static Result DeserializeArray(const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
-          if(basicType_size==1 && basicType_isInteger==1 && basicType_isSigned==0 && basicType_isFloat==0) {
-            Array<u8> arr;
-            SerializedBuffer::DeserializeArray(swapEndianForHeaders, swapEndianForContents, dataSegmentStart, dataLength, arr, memory);
-
-            snprintf(&outputFilename[0], outputFilenameLength, params->outputFilenamePattern.data(),
-              currentTime->tm_year+1900, currentTime->tm_mon+1, currentTime->tm_mday,
-              currentTime->tm_hour, currentTime->tm_min, currentTime->tm_sec,
-              frameNumber,
-              "png");
-
-            frameNumber++;
-
-            printf("Saving to %s\n", outputFilename);
-            const cv::Mat_<u8> &mat = arr.get_CvMat_();
-            cv::imwrite(outputFilename, mat);
-            //cv::imwrite("c:/tmp/tt.bmp", mat);
-          }
-        }
-
-        printf("\n");
-      }
-
-      bigBufferIndex = 0;
-      bigBuffer = reinterpret_cast<u8*>(RoundUp<size_t>(reinterpret_cast<size_t>(&bigBufferRaw[0]), MEMORY_ALIGNMENT));
-    }
-
-    if(buffers->IsEmpty()) {
-      Sleep(10);
-      continue;
-    }
-
-    RawBuffer nextPiece = buffers->Pop();
-
-    if((bigBufferIndex+nextPiece.dataLength+2*MEMORY_ALIGNMENT) > BIG_BUFFER_SIZE) {
-      printf("Out of memory in bigBuffer\n");
-      Sleep(10);
-      continue;
-    }
-
-    memcpy(&bigBuffer[0] + bigBufferIndex, nextPiece.data, nextPiece.dataLength);
-    bigBufferIndex += nextPiece.dataLength;
-
-    free(nextPiece.data); nextPiece.data = NULL;
-  } // while(true)
+  SaveAndFreeBuffer(*buffer, string(outputFilenamePattern));
 
   return 0;
 } // DWORD WINAPI PrintfBuffers(LPVOID lpParam)
@@ -304,13 +279,14 @@ void printUsage()
 
 int main(int argc, char ** argv)
 {
-  ThreadSafeQueue<RawBuffer> buffers = ThreadSafeQueue<RawBuffer>();
+  double lastUpdateTime;
   Serial serial;
+  const s32 USB_BUFFER_SIZE = 100000000;
+  u8 *usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
+  s32 usbBufferIndex = 0;
 
-  lastUpdateTime_mutex = CreateMutex(NULL, FALSE, NULL);
-
-  s32 comPort = 10;
-  s32 baudRate = 2000000;
+  s32 comPort = 8;
+  s32 baudRate = 1000000;
 
   if(argc == 1) {
     // just use defaults, but print the help anyway
@@ -319,65 +295,68 @@ int main(int argc, char ** argv)
     sscanf(argv[1], "%d", &comPort);
     sscanf(argv[2], "%d", &baudRate);
     strcpy(outputFilenamePattern, argv[3]);
-    //snprintf(outputFilenamePattern, outputFilenamePatternLength, "%s", argv[3]);
   } else {
     printUsage();
     return -1;
   }
 
   if(serial.Open(comPort, baudRate) != RESULT_OK)
-    return -1;
+    return -2;
 
-  WaitForSingleObject(lastUpdateTime_mutex, INFINITE);
   lastUpdateTime = GetTime() + 10e10;
-  ReleaseMutex(lastUpdateTime_mutex);
 
-  ThreadParameters params;
-  params.buffers = &buffers;
-  params.outputFilenamePattern = string(outputFilenamePattern);
-
-  DWORD threadId = -1;
-  HANDLE threadHandle = CreateThread(
-    NULL,        // default security attributes
-    0,           // use default stack size
-    SaveBuffers, // thread function name
-    &params,    // argument to thread function
-    0,           // use default creation flags
-    &threadId);  // returns the thread identifier
-
-  SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
-
-  const s32 bufferLength = 1024;
-
-  void * buffer = malloc(bufferLength);
+  SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST); // THREAD_PRIORITY_ABOVE_NORMAL
 
   while(true) {
-    if(!buffer) {
-      printf("\n\nCould not allocate buffer\n\n");
-      return -4;
+    if(!usbBuffer) {
+      printf("\n\nCould not allocate usbBuffer\n\n");
+      return -3;
     }
 
     DWORD bytesRead = 0;
-    if(serial.Read(buffer, bufferLength-2, bytesRead) != RESULT_OK)
-      return -3;
+    if(serial.Read(usbBuffer+usbBufferIndex, USB_BUFFER_SIZE-usbBufferIndex-2, bytesRead) != RESULT_OK)
+      return -4;
+
+    usbBufferIndex += bytesRead;
 
     if(bytesRead > 0) {
-      WaitForSingleObject(lastUpdateTime_mutex, INFINITE);
       lastUpdateTime = GetTime();
-      ReleaseMutex(lastUpdateTime_mutex);
+    } else {
+      if((GetTime()-lastUpdateTime) > secondsToWaitBeforeSavingABuffer) {
+        lastUpdateTime = GetTime();
 
-      RawBuffer newBuffer;
-      newBuffer.data = buffer;
-      newBuffer.dataLength = bytesRead;
+        if(usbBufferIndex > 0) {
+          printf("Received %d bytes\n", usbBufferIndex);
+          RawBuffer rawBuffer;
+          rawBuffer.data = reinterpret_cast<u8*>(usbBuffer);
+          rawBuffer.dataLength = usbBufferIndex;
 
-      buffers.Push(newBuffer);
+          // Use a seperate thread
+          /*
+          DWORD threadId = -1;
+          CreateThread(
+          NULL,        // default security attributes
+          0,           // use default stack size
+          SaveBuffersThread, // thread function name
+          &rawBuffer,    // argument to thread function
+          0,           // use default creation flags
+          &threadId);  // returns the thread identifier
+          */
 
-      buffer = malloc(bufferLength);
+          // Just call the function
+          SaveAndFreeBuffer(rawBuffer, string(outputFilenamePattern));
+
+          usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
+          usbBufferIndex = 0;
+        }
+      } else {
+        //Sleep(1);
+      }
     }
   }
 
   if(serial.Close() != RESULT_OK)
-    return -2;
+    return -5;
 
   return 0;
 }

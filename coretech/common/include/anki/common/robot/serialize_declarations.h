@@ -48,7 +48,8 @@ namespace Anki
         DATA_TYPE_UNKNOWN = 0,
         DATA_TYPE_RAW = 1,
         DATA_TYPE_BASIC_TYPE_BUFFER = 2,
-        DATA_TYPE_ARRAY = 3
+        DATA_TYPE_ARRAY = 3,
+        DATA_TYPE_STRING = 4
       };
 
       class EncodedBasicTypeBuffer
@@ -87,6 +88,8 @@ namespace Anki
       void* PushBack(const void * header, s32 headerLength, const void * data, s32 dataLength);
       void* PushBack(const DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength);
 
+      void* PushBackString(const char * format, ...);
+
       // Note that dataLength should be numel(data)*sizeof(Type)
       // This is to make this call compatible with the standard void* PushBack()
       template<typename Type> Type* PushBack(const Type *data, const s32 dataLength);
@@ -101,6 +104,9 @@ namespace Anki
 
     protected:
       MemoryStack memoryStack;
+
+      // if scratch != NULL, use compression
+      void* PushBack_Generic(const SerializedBuffer::DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength);
     }; // class SerializedBuffer
 
     class SerializedBufferConstIterator : public MemoryStackConstIterator

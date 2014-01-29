@@ -225,7 +225,7 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates
         //////////////////////////////////////////////////////////////
-        
+
         HeadController::Update();
         LiftController::Update();
         GripController::Update();

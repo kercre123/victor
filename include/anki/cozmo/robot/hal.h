@@ -426,6 +426,9 @@ namespace Anki
       void IRQDisable();
       void IRQEnable();
       
+	  // TODO: remove when interrupts don't cause problems
+	  void DisableCamera(CameraID cameraID);
+	  
       // Put a byte into a send buffer to be sent by LongExecution()
       // (Using same prototype as putc / USBPutChar for printf.)
       int USBBufferChar(int c);
