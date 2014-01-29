@@ -16,6 +16,8 @@
 
 namespace Anki {
   
+  namespace Vision {
+    
   Camera::Camera(void)
   {
     
@@ -194,5 +196,5 @@ namespace Anki {
     }
   } // project3dPoints(Quads)
 
-  
+  } // namespace Vision
 } // namespace Anki
