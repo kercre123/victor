@@ -401,6 +401,32 @@ namespace Anki {
     return getWithRespectToHelper<Pose3d>(this, otherPose);
   }
   
+  bool Pose3d::IsSameAs(const Pose3d& otherPose,
+                        const float distThreshold,
+                        const Radians angleThreshold) const
+  {
+    bool isSame = false;
+    if(computeDistanceBetween(this->translation, otherPose.translation) < distThreshold)
+    {
+      // TODO: use quaternion difference?  Might be cheaper than the matrix multiplication below
+      //     UnitQuaternion qThis(this->rotationVector), qOther(otherPose.rotationVector);
+      //
+      //
+      // const Radians angleDiff( 2.f*std::acos(std::abs(dot(qThis, qOther))) );
+      //
+      
+      RotationMatrix3d R(this->rotationMatrix);
+      R *= otherPose.rotationMatrix;
+      
+      const Radians angleDiff( 0.5f * std::acos(R.Trace() - 1.f) );
+      if(angleDiff < angleThreshold) {
+        isSame = true;
+      }
+    }
+    
+    return isSame;
+  }
+  
 #pragma mark --- Global Functions ---
   
   float computeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2)
@@ -411,6 +437,9 @@ namespace Anki {
     distVec -= pose2.get_translation();
     return distVec.length();
   }
+
+  
+
 
   
 } // namespace Anki

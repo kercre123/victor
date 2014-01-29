@@ -59,7 +59,7 @@ namespace Anki {
     Radians       get_angle() const;
     const Vec3f&  get_axis()  const;
     void          get_angleAndAxis(Radians &angle, Vec3f &axis) const;
-   
+    
   private:
     Radians angle;
     Vec3f axis; // unit vector
@@ -129,6 +129,8 @@ namespace Anki {
     axis = this->axis;
     angle = this->angle;
   }
+  
+
 
 } // namespace Anki
 

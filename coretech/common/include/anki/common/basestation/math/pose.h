@@ -212,6 +212,10 @@ namespace Anki {
     // respect to the root / world pose.
     Pose3d getWithRespectTo(const Pose3d *otherPose) const;
     
+    bool IsSameAs(const Pose3d& otherPose,
+                  const float   distThreshold,
+                  const Radians angleThreshold) const;
+    
   protected:
     
     RotationVector3d  rotationVector;

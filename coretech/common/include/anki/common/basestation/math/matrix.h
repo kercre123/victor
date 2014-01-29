@@ -90,6 +90,8 @@ namespace Anki {
   : private cv::Matx<T,NROWS,NCOLS> // private inheritance from cv::Matx
 #endif
   {
+    static_assert(NROWS > 0 && NCOLS > 0, "SmallMatrix should not be empty.");
+    
   public:
     // Constructors:
     SmallMatrix();
@@ -151,7 +153,6 @@ namespace Anki {
   class SmallSquareMatrix : public SmallMatrix<DIM,DIM,T>
   {
   public:
-    
     SmallSquareMatrix();
     SmallSquareMatrix(const SmallMatrix<DIM,DIM,T> &M);
     
@@ -170,6 +171,9 @@ namespace Anki {
     // Matrix inversion:
     void Invert(void); // in place
     SmallSquareMatrix<DIM,T> getInverse(void) const;
+    
+    // Compute the trace (sum of diagonal elements)
+    T Trace(void) const;
     
   }; // class SmallSquareMatrix
   
@@ -216,6 +220,16 @@ namespace Anki {
     }
     
     return result;
+  }
+  
+  template<size_t DIM, typename T>
+  T SmallSquareMatrix<DIM,T>::Trace() const
+  {
+    T trace = (*this)(0,0);
+    for(size_t i=1; i<DIM; ++i) {
+      trace += (*this)(i,i);
+    }
+    return trace;
   }
   
 #pragma mark --- Matrix Implementations ---
