@@ -46,9 +46,16 @@ namespace Anki {
 
     
     // Messages that are purely for advertising when using TCP/UDP. (Maybe belongs somewhere else...)
-    const char* const ROBOT_SIM_WORLD_HOST = "192.168.6.250";  // This should eventually be passed in via the GUI
+    // This will eventually be passed in via the GUI.
+    // The default 127.0.0.1 works fine for simulated basestation running on the same machine as the simluator.
+    const char* const ROBOT_SIM_WORLD_HOST = "127.0.0.1";
+    
+    // Port on which registered robots advertise.
     const u32 ROBOT_ADVERTISING_PORT = 5100;
+    
+    // Port on which simulated robot should connect to (de)register for advertisement
     const u32 ROBOT_ADVERTISEMENT_REGISTRATION_PORT = 5101;
+    
     typedef struct {
       u8 robotID;
       u8 enableAdvertisement;  // 1 when robot wants to advertise, 0 otherwise.

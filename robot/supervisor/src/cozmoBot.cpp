@@ -27,8 +27,6 @@
 #include "anki/embeddedCommon/matlabConverters.h"
 #endif
 
-#define DOCKING_TEST 1
-
 ///////// END TESTING //////
 
 namespace Anki {

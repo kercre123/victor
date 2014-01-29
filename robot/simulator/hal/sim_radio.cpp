@@ -82,7 +82,7 @@ namespace Anki {
       
       // Register with advertising service by sending IP and port info
       // NOTE: Since there is no ACK robot_advertisement_controller must be running before this happens!
-      advRegClient.Connect(ROBOT_SIM_WORLD_HOST, ROBOT_ADVERTISEMENT_REGISTRATION_PORT);
+      advRegClient.Connect("127.0.0.1", ROBOT_ADVERTISEMENT_REGISTRATION_PORT);
       RegisterRobot();
       
 #endif
