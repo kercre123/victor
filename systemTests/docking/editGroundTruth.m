@@ -24,46 +24,56 @@ end
 % End initialization code - DO NOT EDIT
 
 function loadConfigFile()
-    global jsonConfigFilename;
-    global jsonData;
+    global jsonAllTestsData;
+    global curTestNumber;
+    global maxTestNumber;
     global curSequenceNumber;
     global maxSequenceNumber;
     global curFrameNumber;
     global maxFrameNumber;
-    global image;
+    global jsonConfigFilename;
+    global jsonData;
     global dataPath;
+    
+    jsonConfigFilename = [dataPath, jsonAllTestsData.tests{curTestNumber}];
+    jsonConfigFilename = strrep(jsonConfigFilename, '\', '/');
+    jsonData = loadjson(jsonConfigFilename);
+
+    slashIndexes = strfind(jsonConfigFilename, '/');
+    dataPath = jsonConfigFilename(1:(slashIndexes(end)));
+    
+    if ~iscell(jsonData.sequences)
+        jsonData.sequences = {jsonData.sequences};
+    end
+        
+function loadAllTestsFile()
+    global jsonAllTestsFilename;
+    global jsonAllTestsData;
+    global curTestNumber;
+    global maxTestNumber;
+    global curSequenceNumber;
+    global maxSequenceNumber;
+    global image;    
     global imageFigureHandle;
     global imageHandle;
     global allHandles;
 
     imageFigureHandle = figure(100);
     
-    jsonConfigFilename = get(allHandles.configFilename, 'String');
-    jsonConfigFilename = strrep(jsonConfigFilename, '\', '/');
-    jsonData = loadjson(jsonConfigFilename);
+    jsonAllTestsFilename = get(allHandles.configFilename, 'String');
+    jsonAllTestsFilename = strrep(jsonAllTestsFilename, '\', '/');
+    jsonAllTestsData = loadjson(jsonAllTestsFilename);
     
-    if ~iscell(jsonData.sequences)
-        jsonData.sequences = {jsonData.sequences};
-    end
+    curTestNumber = 1;
+    maxTestNumber = length(jsonAllTestsData.tests);
     
     curSequenceNumber = 1;
-    maxSequenceNumber = length(jsonData.sequences);
-    curFrameNumber = 1;
-    maxFrameNumber = 0;
-    image = rand([480,640]);
-
-    slashIndexes = strfind(jsonConfigFilename, '/');
-    dataPath = jsonConfigFilename(1:(slashIndexes(end)));
-
-    for i = 1:maxSequenceNumber
-%         if ~isfield(jsonData.sequences{i}, 'groundTruth')
-%             jsonData.sequences{i}.groundTruth = [];
-%         end
-        
-        if isfield(jsonData.sequences{i}, 'groundTruth') && ~iscell(jsonData.sequences{i}.groundTruth)
-            jsonData.sequences{i}.groundTruth = {jsonData.sequences{i}.groundTruth};
-        end
-    end
+    
+    curImageNumber = 1;
+    
+    loadConfigFile();
+    
+    image = rand([480,640]);  
 
     pointer = [
         nan, nan, nan, nan, 2,   2,   2,   2,   2,   2,   2,   2,   nan, nan, nan, nan;
@@ -101,7 +111,7 @@ function editGroundTruth_OpeningFcn(hObject, eventdata, handles, varargin)
     global allHandles;
     allHandles = handles;
     
-    loadConfigFile()
+    loadAllTestsFile()
 
 function index = findFrameNumberIndex(jsonData, sequenceNumberIndex, frameNumberIndex)
     index = -1;
@@ -129,6 +139,8 @@ function varargout = editGroundTruth_OutputFcn(hObject, eventdata, handles)
     varargout{1} = handles.output;
 
 function previousSequence_Callback(hObject, eventdata, handles) %#ok<*INUSL>
+    global curTestNumber;
+    global maxTestNumber;
     global curSequenceNumber;
     global maxSequenceNumber;
     global curFrameNumber;
@@ -141,6 +153,8 @@ function previousSequence_Callback(hObject, eventdata, handles) %#ok<*INUSL>
     sequenceChanged(handles, true);
 
 function nextSequence_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;    
     global curSequenceNumber;
     global maxSequenceNumber;
     global curFrameNumber;
@@ -153,6 +167,8 @@ function nextSequence_Callback(hObject, eventdata, handles)
     sequenceChanged(handles, true);
 
 function curSequence_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;    
     global curSequenceNumber;
     global maxSequenceNumber;
     global curFrameNumber;
@@ -167,6 +183,8 @@ function curSequence_Callback(hObject, eventdata, handles)
     sequenceChanged(handles);
 
 function previousImage_Callback(hObject, eventdata, handles) %#ok<*DEFNU>
+    global curTestNumber;
+    global maxTestNumber;    
     global curSequenceNumber;
     global maxSequenceNumber;
     global curFrameNumber;
@@ -179,6 +197,8 @@ function previousImage_Callback(hObject, eventdata, handles) %#ok<*DEFNU>
     sequenceChanged(handles);
 
 function nextImage_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
     global curSequenceNumber; %#ok<*NUSED>
     global maxSequenceNumber;
     global curFrameNumber;
@@ -191,6 +211,8 @@ function nextImage_Callback(hObject, eventdata, handles)
     sequenceChanged(handles);
 
 function curImage_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
     global curSequenceNumber;
     global maxSequenceNumber;
     global curFrameNumber;
@@ -205,6 +227,8 @@ function curImage_Callback(hObject, eventdata, handles)
     sequenceChanged(handles);
 
 function curSequence_CreateFcn(hObject, eventdata, handles) %#ok<*INUSD>
+    global curTestNumber;
+    global maxTestNumber;    
     global curSequenceNumber;
     global maxSequenceNumber;
     global curFrameNumber;
@@ -217,6 +241,8 @@ function curSequence_CreateFcn(hObject, eventdata, handles) %#ok<*INUSD>
     set(hObject,'String',num2str(curSequenceNumber));
 
 function curImage_CreateFcn(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
     global curSequenceNumber;
     global maxSequenceNumber;
     global curFrameNumber;
@@ -229,6 +255,8 @@ function curImage_CreateFcn(hObject, eventdata, handles)
     set(hObject,'String',num2str(curFrameNumber));
 
 function maxSequence_CreateFcn(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
     global curSequenceNumber;
     global maxSequenceNumber;
     global curFrameNumber;
@@ -237,6 +265,8 @@ function maxSequence_CreateFcn(hObject, eventdata, handles)
     set(hObject,'String',num2str(maxSequenceNumber));
 
 function maxImage_CreateFcn(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
     global curSequenceNumber;
     global maxSequenceNumber;
     global curFrameNumber;
@@ -244,9 +274,11 @@ function maxImage_CreateFcn(hObject, eventdata, handles)
 
     set(hObject,'String',num2str(maxFrameNumber));
 
-function sequenceChanged(handles, redoZoom)
+function sequenceChanged(handles, resetAll)
     global jsonData;
     global dataPath;
+    global curTestNumber;
+    global maxTestNumber;
     global curSequenceNumber;
     global maxSequenceNumber;
     global curFrameNumber;
@@ -255,13 +287,11 @@ function sequenceChanged(handles, redoZoom)
     global allHandles;
     global imageFigureHandle;
     global imageHandle;
-
-    if ~exist('redoZoom', 'var')
-        redoZoom = false;
+            
+    if ~exist('resetAll', 'var')
+        resetAll = false;
     end
-
-    allHandles = handles;
-
+    
     if curSequenceNumber < 1
         curSequenceNumber = 1;
     end
@@ -269,20 +299,35 @@ function sequenceChanged(handles, redoZoom)
     if curSequenceNumber > maxSequenceNumber
         curSequenceNumber = maxSequenceNumber;
     end
+    
+    if resetAll
+        loadConfigFile();
+        
+        maxSequenceNumber = length(jsonData.sequences);
 
-    maxFrameNumber = length(jsonData.sequences{1}.frameNumbers);
-
-    if curFrameNumber < 1
         curFrameNumber = 1;
-    end
+        maxFrameNumber = length(jsonData.sequences{curSequenceNumber}.frameNumbers);
+       
+        for i = 1:maxSequenceNumber
+            if isfield(jsonData.sequences{i}, 'groundTruth') && ~iscell(jsonData.sequences{i}.groundTruth)
+                jsonData.sequences{i}.groundTruth = {jsonData.sequences{i}.groundTruth};
+            end
+        end
+    else
+        if curFrameNumber < 1
+            curFrameNumber = 1;
+        end
 
-    if curFrameNumber > maxFrameNumber
-        curFrameNumber = maxFrameNumber;
+        if curFrameNumber > maxFrameNumber
+            curFrameNumber = maxFrameNumber;
+        end
     end
-
+    
     curFilename = [dataPath, sprintf(jsonData.sequences{curSequenceNumber}.filenamePattern, jsonData.sequences{curSequenceNumber}.frameNumbers(curFrameNumber))];
     image = imread(curFilename);
 
+    set(handles.curTest, 'String', num2str(curTestNumber))
+    set(handles.maxTest, 'String', num2str(maxTestNumber))
     set(handles.curSequence, 'String', num2str(curSequenceNumber))
     set(handles.maxSequence, 'String', num2str(maxSequenceNumber))
     set(handles.curImage, 'String', num2str(curFrameNumber))
@@ -299,7 +344,7 @@ function sequenceChanged(handles, redoZoom)
 
     imageHandle = imshow(image);
 
-    if ~redoZoom
+    if ~resetAll
         xlim(originalXlim);
         ylim(originalYlim);
     end
@@ -325,7 +370,7 @@ function sequenceChanged(handles, redoZoom)
     end
 
 function configFilename_Callback(hObject, eventdata, handles)
-    loadConfigFile()
+    loadAllTestsFile()
 
 function configFilename_CreateFcn(hObject, eventdata, handles)
     if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -373,6 +418,10 @@ function axes1_ButtonDownFcn(hObject, eventdata, handles)
         newPoint.x = imPosition(1);
         newPoint.y = imPosition(2);
 
+        if isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners)
+            jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners = {};
+        end
+        
         if ~iscell(jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners)
             jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners = {jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners};
         end
@@ -404,44 +453,88 @@ function axes1_ButtonDownFcn(hObject, eventdata, handles)
 
 function figure1_ButtonDownFcn(hObject, eventdata, handles)
 
-
-% --- Executes during object creation, after setting all properties.
 function figure1_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to figure1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
 
-
-% --- Executes during object creation, after setting all properties.
 function previousSequence_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to previousSequence (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
 
-
-% --- Executes during object creation, after setting all properties.
 function nextSequence_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to nextSequence (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
 
-
-% --- Executes during object creation, after setting all properties.
 function previousImage_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to previousImage (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
 
-
-% --- Executes during object creation, after setting all properties.
 function nextImage_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to nextImage (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
 
+function configFilenameNoteText_CreateFcn(hObject, eventdata, handles)
 
-% --- Executes during object creation, after setting all properties.
-function text3_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to text3 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
+function previousTest_CreateFcn(hObject, eventdata, handles)
+
+function maxTest_CreateFcn(hObject, eventdata, handles)
+    global maxTestNumber;
+    set(hObject,'String',num2str(maxTestNumber));
+
+function nextTest_CreateFcn(hObject, eventdata, handles)
+
+function curTest_CreateFcn(hObject, eventdata, handles)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+    global curTestNumber;
+    set(hObject,'String',num2str(curTestNumber));
+
+function previousTest_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
+    global curSequenceNumber;
+    global maxSequenceNumber;
+    global curFrameNumber;
+    global maxFrameNumber;
+
+    if curTestNumber > 1
+        curTestNumber = curTestNumber - 1;
+        curSequenceNumber = 1;
+    end
+    
+    sequenceChanged(handles, true);
+    
+function nextTest_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
+    
+    if curTestNumber < maxTestNumber
+        curTestNumber = curTestNumber + 1;
+        curSequenceNumber = 1;
+    end
+
+    sequenceChanged(handles, true);
+
+function curTest_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
+    
+    curTestNumberNew = str2double(get(hObject,'String'));
+
+    if curTestNumberNew <= maxTestNumber && curTestNumberNew >= 1
+        curTestNumber = curTestNumberNew;
+    end
+    
+    curSequenceNumber = 1;
+
+    sequenceChanged(handles, true);
+
+function errorSignalPoints_Callback(hObject, eventdata, handles)
+    global pointsType;
+    if get(hObject,'Value')
+        pointsType = 'errorSignal';
+    end
+    
+    sequenceChanged(handles);
+
+function templatePoints_Callback(hObject, eventdata, handles)
+    global pointsType;
+    if get(hObject,'Value')
+        pointsType = 'template';
+    end
+    
+    sequenceChanged(handles);
+    
+    
