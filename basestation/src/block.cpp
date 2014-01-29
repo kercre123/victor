@@ -13,281 +13,84 @@
 
 namespace Anki {
   namespace Cozmo {
-
-#pragma mark --- BlockMarker2d Dimensions & Layout---
-    
-    
-#pragma mark --- BlockMarker2d Implementations ---
-    const size_t BlockMarker2d::NumCodeSquares = 5;
-    
-    BlockMarker2d::BlockMarker2d(const BlockType         blockTypeIn,
-                                 const FaceType          faceTypeIn,
-                                 const Quad2f&           cornersIn,
-                                 const MarkerUpDirection upDirection,
-                                 const Radians&          headAngleIn,
-                                 Robot&                  seenByIn)
-    : blockType(blockTypeIn), faceType(faceTypeIn),
-      headAngle(headAngleIn), seenBy(seenByIn)
-    {
-      // The assumption is the incoming corners are ordered by their position
-      // in the image.  We want to reorder them with respect to the marker's
-      // orientation.
-      switch(upDirection)
-      {
-          using namespace Quad; // for corner names
-          
-        case MARKER_TOP:
-          // No reordering of the corners is necessary
-          this->corners = cornersIn;
-          break;
-          
-        case MARKER_BOTTOM:
-          this->corners[TopLeft]     = cornersIn[BottomRight];
-          this->corners[BottomRight] = cornersIn[TopLeft];
-          this->corners[TopRight]    = cornersIn[BottomLeft];
-          this->corners[BottomLeft]  = cornersIn[TopRight];
-          break;
-          
-        case MARKER_LEFT:
-          this->corners[TopLeft]     = cornersIn[BottomLeft];
-          this->corners[BottomLeft]  = cornersIn[BottomRight];
-          this->corners[TopRight]    = cornersIn[TopLeft];
-          this->corners[BottomRight] = cornersIn[TopRight];
-          break;
-          
-        case MARKER_RIGHT:
-          this->corners[TopLeft]     = cornersIn[TopRight];
-          this->corners[BottomLeft]  = cornersIn[TopLeft];
-          this->corners[TopRight]    = cornersIn[BottomRight];
-          this->corners[BottomRight] = cornersIn[BottomLeft];
-          break;
-          
-        default:
-          CORETECH_ASSERT(false); // Should never get here
-          
-      } // switch(upDirection)
-      
-    } // BlockMarker2d() Constructor
-    
-    
-#pragma mark --- BlockMarker3d Dimensions & Layout---
-    
-    
-    const float BlockMarker3d::TotalWidth          = 38.f;
-    const float BlockMarker3d::FiducialSquareThickness = 4.f;
-    const float BlockMarker3d::FiducialSpacing     = 3.f;
-    
-    const float BlockMarker3d::SquareWidthOutside =
-    (BlockMarker3d::TotalWidth - 2.f*BlockMarker3d::FiducialSpacing);
-    
-    const float BlockMarker3d::SquareWidthInside =
-    (BlockMarker3d::SquareWidthOutside - 2.f*BlockMarker3d::FiducialSquareThickness);
-    
-#if(BLOCKMARKER3D_USE_OUTSIDE_SQUARE)
-    const float BlockMarker3d::ReferenceWidth = BlockMarker3d::SquareWidthOutside;
-#else
-    const float BlockMarker3d::ReferenceWidth = BlockMarker3d::SquareWidthInside;
-#endif
-    
-    const float BlockMarker3d::CodeSquareSize =
-    (BlockMarker3d::TotalWidth - 4.f*BlockMarker3d::FiducialSpacing -
-     2.f*BlockMarker3d::FiducialSquareThickness) /
-    float(BlockMarker2d::NumCodeSquares);
-    
-    const float BlockMarker3d::DockingDotSpacing =
-    BlockMarker3d::CodeSquareSize/2.f;
-    
-    const float BlockMarker3d::DockingDotWidth =
-    BlockMarker3d::DockingDotSpacing/2.f;
-    
-    
-    Quad3f setCanonicalSquareCorners(const float w)
-    {
-      return Quad3f({-w, 0.f,  w},  // TopLeft
-                    {-w, 0.f, -w},  // BottomLeft
-                    { w, 0.f,  w},  // TopRight
-                    { w, 0.f, -w}); // BottomRight
-    }
-    
-    const Quad3f BlockMarker3d::FiducialSquare =
-    setCanonicalSquareCorners(0.5f * BlockMarker3d::ReferenceWidth);
-    
-    const Quad3f BlockMarker3d::DockingTarget =
-    setCanonicalSquareCorners(0.5f * BlockMarker3d::DockingDotSpacing);
-    
-    const Quad3f BlockMarker3d::DockingBoundingBox =
-    setCanonicalSquareCorners(0.5f * BlockMarker3d::CodeSquareSize);
-    
-    
-#pragma mark --- BlockMarker3d Implementation ---
-    
-    BlockMarker3d::BlockMarker3d(const BlockMarker2d &marker,
-                                 const Camera        &camera)
-    : blockType(marker.get_blockType()),
-      faceType(marker.get_faceType()),
-      pose(camera.computeObjectPose(marker.get_quad(),
-                                    BlockMarker3d::FiducialSquare))
-    {
-
-    } // Constructor: BlockMarker3d(marker2d, camera)
-    
-    
-    BlockMarker3d::BlockMarker3d(const BlockType &blockType_in,
-                                 const FaceType  &faceType_in,
-                                 const Pose3d    &pose_in)
-    : blockType(blockType_in), faceType(faceType_in), pose(pose_in)
-    {
-      
-      
-    } // Constructor: BlockMarker3d(blockType,FaceType,pose)
-    
-    void BlockMarker3d::getSquareCorners(Quad3f &squareCorners,
-                                         const Pose3d *wrtPose) const
-    {
-      Pose3d P = this->pose.getWithRespectTo(wrtPose);
-      P.applyTo(BlockMarker3d::FiducialSquare, squareCorners);
-    }
-    
-    void BlockMarker3d::getDockingTarget(Quad3f &dockingTarget,
-                                         const Pose3d *wrtPose) const
-    {
-      Pose3d P = this->pose.getWithRespectTo(wrtPose);
-      P.applyTo(BlockMarker3d::DockingTarget, dockingTarget);
-    }
-    
-    void BlockMarker3d::getDockingBoundingBox(Quad3f &boundingBox,
-                                              const Pose3d *wrtPose) const
-    {
-      Pose3d P = this->pose.getWithRespectTo(wrtPose);
-      P.applyTo(BlockMarker3d::DockingBoundingBox, boundingBox);
-    }
-    
     
 #pragma mark --- Block Implementation ---
+   
+    // Fill in the static const lookup table of block information from the
+    // BlockDefinitions file, using macros.
+    const Block::BlockInfoTableEntry_t Block::BlockInfoLUT_[Block::NUM_BLOCK_IDS] = {
+      {.name = "UNKNOWN", .color = {0.f, 0.f, 0.f}, .size = {0.f, 0.f, 0.f}}
+#define BLOCK_DEFINITION_MODE BLOCK_LUT_MODE
+#include "anki/cozmo/basestation/BlockDefinitions.h"
+    };
     
     unsigned int Block::numBlocks = 0;
-    
-    Block::Color Block::GetColorFromType(const BlockType type)
+   
+    Block::Block(const ObjectID_t blockID)
+    : blockCorners_(8)
     {
-      // TODO: read block colors from some kind of definition file
+      ID_ = blockID;
       
-      switch(type)
-      {
-        case 60: // Webot Simulated Red 1x1 Block
-          return Block::Color(255, 0, 0);
-          
-        case 65: // Webot Simulated Green 1x1 Block
-          return Block::Color(0, 255, 0);
-          
-        case 70: // Webot Simulated Blue 1x1 Block
-          return Block::Color(0, 0, 255);
-          
-        case 75: // Webot Simulated Purple 2x1 Block
-          return Block::Color(128, 26, 191);
-          
-        default:
-          // TODO: Handle unrecognized blocks more gracefully
-          CORETECH_THROW("Unrecognized Block Type");
-      }
+      color_ = BlockInfoLUT_[ID_].color;
+      size_  = BlockInfoLUT_[ID_].size;
       
-      return Block::Color(0, 0, 0);
-      
-    } // GetColorFromType()
-    
-    Point3f Block::GetSizeFromType(const BlockType type)
-    {
-      // TODO: read block dimensions from some kind of definition file
-      
-      switch(type)
-      {
-
-        case 60:
-        case 65:
-        case 70:
-          // Webot Simulated 1x1 Blocks:
-          return Point3f(60.f, 60.f, 60.f);
-          
-        case 75:
-          // Webot Simulated Purple 2x1 Block
-          return Point3f(120.f, 60.f, 60.f);
-          
-        default:
-          // TODO: Handle unrecognized blocks more gracefully
-          CORETECH_THROW("Unrecognized Block Type");
-      }
-      
-      return Point3f(0, 0, 0);
-      
-    } // GetSizeFromType()
-    
-  
-    Block::Block(const BlockType type_in)
-    : type(type_in),
-      color(Block::GetColorFromType(type)),
-      size(Block::GetSizeFromType(type)),
-      blockCorners(8)
-    {
       ++Block::numBlocks;
       
-      const float halfWidth  = 0.5f * this->get_width();
-      const float halfHeight = 0.5f * this->get_height();
-      const float halfDepth  = 0.5f * this->get_depth();
+      const float halfWidth  = 0.5f * this->GetWidth();
+      const float halfHeight = 0.5f * this->GetHeight();
+      const float halfDepth  = 0.5f * this->GetDepth();
       
       // x, width:  left(-)   / right(+)
       // y, depth:  front(-)  / back(+)
       // z, height: bottom(-) / top(+)
       
-      this->blockCorners[LEFT_FRONT_TOP]     = {-halfWidth,-halfDepth, halfHeight};
-      this->blockCorners[RIGHT_FRONT_TOP]    = { halfWidth,-halfDepth, halfHeight};
-      this->blockCorners[LEFT_FRONT_BOTTOM]  = {-halfWidth,-halfDepth,-halfHeight};
-      this->blockCorners[RIGHT_FRONT_BOTTOM] = { halfWidth,-halfDepth,-halfHeight};
-      this->blockCorners[LEFT_BACK_TOP]      = {-halfWidth, halfDepth, halfHeight};
-      this->blockCorners[RIGHT_BACK_TOP]     = { halfWidth, halfDepth, halfHeight};
-      this->blockCorners[LEFT_BACK_BOTTOM]   = {-halfWidth, halfDepth,-halfHeight};
-      this->blockCorners[RIGHT_BACK_BOTTOM]  = { halfWidth, halfDepth,-halfHeight};
+      blockCorners_[LEFT_FRONT_TOP]     = {-halfWidth,-halfDepth, halfHeight};
+      blockCorners_[RIGHT_FRONT_TOP]    = { halfWidth,-halfDepth, halfHeight};
+      blockCorners_[LEFT_FRONT_BOTTOM]  = {-halfWidth,-halfDepth,-halfHeight};
+      blockCorners_[RIGHT_FRONT_BOTTOM] = { halfWidth,-halfDepth,-halfHeight};
+      blockCorners_[LEFT_BACK_TOP]      = {-halfWidth, halfDepth, halfHeight};
+      blockCorners_[RIGHT_BACK_TOP]     = { halfWidth, halfDepth, halfHeight};
+      blockCorners_[LEFT_BACK_BOTTOM]   = {-halfWidth, halfDepth,-halfHeight};
+      blockCorners_[RIGHT_BACK_BOTTOM]  = { halfWidth, halfDepth,-halfHeight};
       
-      // Create a block marker on each face:
-      // (By using emplace_back, I am required to do these in the enumerated
-      //  order of the face names.  Thus the assertions.)
-      markers.reserve(6);
-      
-      const Vec3f Xaxis(1.f, 0.f, 0.f), Zaxis(0.f, 0.f, 1.f);
-      
-      Pose3d facePose(0, Zaxis, {{0.f, -halfDepth, 0.f}}, &(this->pose));
-      CORETECH_ASSERT(FRONT_FACE==0);
-      markers.emplace_back(this->type, FRONT_FACE+1, facePose);
 
-      facePose.set_rotation(-M_PI_2, Zaxis);
+      // Add a marker for each face, using the static lookup table to get
+      // the marker codes
+      Pose3d facePose(0, X_AXIS_3D, {{0.f, -halfDepth, 0.f}}, &pose_);
+      AddMarker(BlockInfoLUT_[ID_].faceCode[FRONT_FACE], facePose,
+                BlockInfoLUT_[ID_].faceSize[FRONT_FACE]);
+
+      facePose.set_rotation(-M_PI_2, Z_AXIS_3D);
       facePose.set_translation({{-halfWidth, 0.f, 0.f}});
-      CORETECH_ASSERT(LEFT_FACE==1);
-      markers.emplace_back(this->type, LEFT_FACE+1, facePose);
+      AddMarker(BlockInfoLUT_[ID_].faceCode[LEFT_FACE], facePose,
+                BlockInfoLUT_[ID_].faceSize[LEFT_FACE]);
       
-      facePose.set_rotation(M_PI, Zaxis);
+      facePose.set_rotation(M_PI, Z_AXIS_3D);
       facePose.set_translation({{0.f, halfDepth, 0.f}});
-      CORETECH_ASSERT(BACK_FACE==2);
-      markers.emplace_back(this->type, BACK_FACE+1, facePose);
+      AddMarker(BlockInfoLUT_[ID_].faceCode[BACK_FACE], facePose,
+                BlockInfoLUT_[ID_].faceSize[BACK_FACE]);
    
-      facePose.set_rotation(M_PI_2, Zaxis);
+      facePose.set_rotation(M_PI_2, Z_AXIS_3D);
       facePose.set_translation({{halfWidth, 0.f, 0.f}});
-      CORETECH_ASSERT(RIGHT_FACE==3);
-      markers.emplace_back(this->type, RIGHT_FACE+1, facePose);
+      AddMarker(BlockInfoLUT_[ID_].faceCode[RIGHT_FACE], facePose,
+                BlockInfoLUT_[ID_].faceSize[RIGHT_FACE]);
       
-      facePose.set_rotation(-M_PI_2, Xaxis);
+      facePose.set_rotation(-M_PI_2, X_AXIS_3D);
       facePose.set_translation({{0.f, 0.f, halfHeight}});
-      CORETECH_ASSERT(TOP_FACE==4);
-      markers.emplace_back(this->type, TOP_FACE+1, facePose);
+      AddMarker(BlockInfoLUT_[ID_].faceCode[TOP_FACE], facePose,
+                BlockInfoLUT_[ID_].faceSize[TOP_FACE]);
       
-      facePose.set_rotation(M_PI_2, Xaxis);
+      facePose.set_rotation(M_PI_2, X_AXIS_3D);
       facePose.set_translation({{0.f, 0.f, -halfHeight}});
-      CORETECH_ASSERT(BOTTOM_FACE==5);
-      markers.emplace_back(this->type, BOTTOM_FACE+1, facePose);
+      AddMarker(BlockInfoLUT_[ID_].faceCode[BOTTOM_FACE], facePose,
+                BlockInfoLUT_[ID_].faceSize[BOTTOM_FACE]);
       
     } // Constructor: Block(type)
     
     Block::Block(const Block& otherBlock)
-    : Block(otherBlock.type)
+    : Block(otherBlock.ID_)
     {
-      this->pose = otherBlock.pose;
+      this->pose_ = otherBlock.pose_;
     }
      
     Block::~Block(void)

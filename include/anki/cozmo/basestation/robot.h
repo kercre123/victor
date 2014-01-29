@@ -11,9 +11,14 @@
 
 #include <queue>
 
+#include "anki/common/types.h"
 #include "anki/common/basestation/math/pose.h"
+
 #include "anki/vision/basestation/camera.h"
+#include "anki/vision/basestation/visionMarker.h"
+
 #include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/messages.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -32,14 +37,11 @@ namespace Anki {
         DOCK
       };
       
-      Robot();
-      //Robot(BlockWorld &theWorld);
+      Robot(const RobotID_t robotID, BlockWorld& world);
       
-      void addToWorld(const u32 withID);
+      void Update();
       
-      void step();
-      
-      const std::vector<BlockMarker2d>& getVisibleBlockMarkers2d() const;
+      const std::list<Vision::ObservedMarker>& GetObservedVisionMarkers() const;
       
       /*
       // Add observed BlockMarker3d objects to a multimap container, grouped
@@ -49,10 +51,10 @@ namespace Anki {
       void getVisibleBlockMarkers3d(std::multimap<BlockType, BlockMarker3d>& markers) ;
       */
       
-      const u8      get_ID() const;
+      const RobotID_t get_ID() const;
       const Pose3d& get_pose() const;
-      const Camera& get_camDown() const;
-      const Camera& get_camHead() const;
+      const Vision::Camera& get_camDown() const;
+      const Vision::Camera& get_camHead() const;
       OperationMode get_operationMode() const;
       
       //const MatMarker2d* get_matMarker2d() const;
@@ -66,19 +68,22 @@ namespace Anki {
       bool hasOutgoingMessages() const;
       void getOutgoingMessage(u8 *msgOut, u8 &msgSize);
       
-      //void dockWithBlock(const Block& block);
+      void dockWithBlock(const Block& block);
       
 #define MESSAGE_DEFINITION_MODE MESSAGE_ROBOT_PROCESSOR_METHOD_MODE
 #include "anki/cozmo/MessageDefinitions.h"
       
     protected:
-      RobotID_t ID;
-      bool addedToWorld;
+      // The robot's identifier
+      RobotID_t     ID_;
+      
+      // A reference to the BlockWorld the robot lives in
+      BlockWorld*   world_;
       
       Pose3d pose;
       void updatePose();
       
-      Camera camDown, camHead;
+      Vision::Camera camDown, camHead;
       bool camDownCalibSet, camHeadCalibSet;
       const Pose3d neckPose; // joint around which head rotates
       const Pose3d headCamPose; // in canonical (untilted) position w.r.t. neck joint
@@ -93,7 +98,7 @@ namespace Anki {
       
       const MatMarker2d            *matMarker;
       
-      std::vector<BlockMarker2d>   visibleBlockMarkers2d;
+      std::list<Vision::ObservedMarker>   observedVisionMarkers;
       //std::vector<BlockMarker3d*>  visibleFaces;
       //std::vector<Block*>          visibleBlocks;
       
@@ -110,23 +115,23 @@ namespace Anki {
     }; // class Robot
 
     // Inline accessors:
-    inline const u8 Robot::get_ID(void) const
-    { return this->ID; }
+    inline const RobotID_t Robot::get_ID(void) const
+    { return this->ID_; }
     
     inline const Pose3d& Robot::get_pose(void) const
     { return this->pose; }
     
-    inline const Camera& Robot::get_camDown(void) const
+    inline const Vision::Camera& Robot::get_camDown(void) const
     { return this->camDown; }
     
-    inline const Camera& Robot::get_camHead(void) const
+    inline const Vision::Camera& Robot::get_camHead(void) const
     { return this->camHead; }
     
     inline Robot::OperationMode Robot::get_operationMode() const
     { return this->mode; }
     
-    inline const std::vector<BlockMarker2d>& Robot::getVisibleBlockMarkers2d() const
-    { return this->visibleBlockMarkers2d; }
+    inline const std::list<Vision::ObservedMarker>& Robot::GetObservedVisionMarkers() const
+    { return this->observedVisionMarkers; }
     
     /*
     inline const MatMarker2d* Robot::get_matMarker2d() const
@@ -138,6 +143,57 @@ namespace Anki {
     
     inline bool Robot::hasOutgoingMessages() const
     { return not this->messagesOut.empty(); }
+    
+    
+    // Note that this is a singleton
+    class RobotManager
+    {
+    public:
+      
+      // Return singleton instance
+      static RobotManager* getInstance();
+      
+      // Get the list of known robot ID's
+      std::vector<RobotID_t> const& GetRobotIDList() const;
+      
+      // Get a pointer to a robot by ID
+      Robot* GetRobotByID(const RobotID_t robotID);
+      
+      // Check whether a robot exists
+      bool DoesRobotExist(const RobotID_t withID) const;
+      
+      // Add / remove robots
+      void AddRobot(const RobotID_t withID, BlockWorld& toWorld);
+      void RemoveRobot(const RobotID_t withID);
+      
+      // Call each Robot's Update() function
+      void UpdateAllRobots();
+      
+      // Return a
+      // Return the number of availale robots
+      size_t GetNumRobots() const;
+      
+      
+      void GetAllVisionMarkers(std::vector<Vision::Marker>& markers) const;
+      
+    protected:
+      
+      RobotManager(); // protected constructor for singleton class
+      
+      static RobotManager* singletonInstance_;
+      
+      std::map<RobotID_t,Robot*> robots_;
+      std::vector<RobotID_t>     ids_;
+      
+    }; // class RobotManager
+    
+    inline RobotManager* RobotManager::getInstance()
+    {
+      if(0 == singletonInstance_) {
+        singletonInstance_ = new RobotManager();
+      }
+      return singletonInstance_;
+    }
     
   } // namespace Cozmo
 } // namespace Anki

@@ -26,6 +26,8 @@
 #include "anki/common/basestation/exceptions.h"
 
 #include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/robot.h"
+//#include "messageHandler.h"
 
 //#include "anki/messaging/basestation/messagingInterface.h"
 
@@ -36,36 +38,54 @@ namespace Anki
     // Forward declarations:
     class Robot;
     
+    class MessageHandler;
+    
+    class MatPiece : public Vision::ObservableObjectBase<MatPiece>
+    {
+    public:
+      MatPiece(ObjectID_t ID);
+      
+      virtual float GetMinDim() const;
+      
+    };
+    
     class BlockWorld
     {
     public:
-      static const unsigned int MaxBlockTypes = 255;
       static const unsigned int MaxRobots = 4;
       static bool ZAxisPointsUp; // normally true, false for Webots
+
+      static BlockWorld* getInstance();
       
-      // Constructors:
-      BlockWorld(); //MessagingInterface* msgInterface);
-      ~BlockWorld();
+      const std::vector<Block>& get_blocks(const BlockID_t ofType) const;
       
-      void   addRobot(const u32 withID);
-      Robot& getRobot(const u32 ID);
-      size_t getNumRobots() const;
+      void Update(void);
       
-      const std::vector<Block>& get_blocks(const BlockType ofType) const;
+      void QueueVisionMarker(const Vision::Marker& marker);
       
-      void queueMessage(const u8 *);
-      
-      void update(void);
-      
-      void commandRobotToDock(const size_t whichRobot,
-                              const Block& whichBlock);
+      void CommandRobotToDock(const RobotID_t whichRobot,
+                              const Block&    whichBlock);
       
     protected:
       
-      std::queue<const u8 *> messages;
+      static BlockWorld* singletonInstance_;
       
-      // This can point to either a real or a simulated messaging interface
-      //MessagingInterface* msgInterface;
+      BlockWorld(); // protected constructor for singleton
+      
+      RobotManager*    robotMgr_;
+      MessageHandler*  msgHandler_;
+      
+      // Store all known observable objects (these are everything we know about,
+      // separated by type of object, not necessarily what we've actually seen
+      // yet)
+      //Vision::ObservableObjectLibrary objectLibrary_; // not separated by type?
+      Vision::ObservableObjectLibrary blockLibrary_;
+      Vision::ObservableObjectLibrary matLibrary_;
+      Vision::ObservableObjectLibrary otherObjectsLibrary_;
+      
+      // Store all observed objects:
+      std::map<ObjectID_t, std::vector<Block*> > existingBlocks_;
+      std::map<ObjectID_t, std::vector<MatPiece*> > existingMatPieces_;
       
       // Store all the blocks in the world, with a reserved slot for
       // each type of block, and then a list of pointers to each block
@@ -74,39 +94,39 @@ namespace Anki
       //typedef std::map<Block::Type, std::vector<Block*> > BlockList;
       typedef std::vector< std::vector<Block> > BlockList_type;
       BlockList_type blocks;
+
       
-      // Store all the robots in the world:
-      // TODO: should RobotList be a fixed-length array with MaxRobots entries?
-      //typedef std::map<u8, Robot*> RobotList_type;
-      typedef std::vector<Robot> RobotList_type;
-      RobotList_type robots;
-      
-      typedef std::pair<const BlockMarker2d&, Pose3d> MarkerPosePair;
+      typedef std::pair<const Vision::Marker&, Pose3d> MarkerPosePair;
       void clusterBlockPoses(const std::vector<MarkerPosePair>& blockPoses,
                              const f32 distThreshold,
                              std::vector<std::vector<const MarkerPosePair*> >& markerClusters);
       
-      typedef std::multimap<BlockType, BlockMarker2d> BlockMarker2dMultiMap;
-      void computeIndividualBlockPoses(const BlockMarker2dMultiMap& blockMarkers2d,
-                                       const Block&                 B_init,
-                                       std::vector<MarkerPosePair>& blockPoses);
-      void groupPosesIntoBlocks(const std::vector<MarkerPosePair>& blockPoses,
-                                Block&                             B_init,
-                                std::vector<Block>&                blocksSeen);
-      void addAndUpdateBlocks(BlockMarker2dMultiMap& blockMarkers2d);
+      typedef std::multimap<ObjectID_t, Vision::Marker> VisionMarkerMultiMap;
+      
+      void computeIndividualBlockPoses(const VisionMarkerMultiMap&      blockMarkers2d,
+                                       const Vision::ObservableObject&  objInit,
+                                       std::vector<MarkerPosePair>&     blockPoses);
+      
+      void GroupPosesIntoObjects(const std::vector<MarkerPosePair>&      objPoses,
+                                 const Vision::ObservableObject*         objInit,
+                                 std::vector<Vision::ObservableObject*>& objectsSeen);
+      
+      template<class ObjectType>
+      void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*> objectsSeen,
+                               std::map<ObjectID_t, std::vector<ObjectType*> >& objectsExisting);
       
     }; // class BlockWorld
 
-    inline size_t BlockWorld::getNumRobots() const
-    { return this->robots.size(); }
-    
-    inline Robot& BlockWorld::getRobot(const u32 ID)
+    inline BlockWorld* BlockWorld::getInstance()
     {
-      CORETECH_ASSERT(ID < this->getNumRobots());
-      return this->robots[ID];
+      // Instantiate singleton instance if not done already
+      if(singletonInstance_ == 0) {
+        singletonInstance_ = new BlockWorld();
+      }
+      return singletonInstance_;
     }
     
-    inline const std::vector<Block>& BlockWorld::get_blocks(const BlockType ofType) const
+    inline const std::vector<Block>& BlockWorld::get_blocks(const BlockID_t ofType) const
     {
       CORETECH_ASSERT(ofType >= 0 && ofType < this->blocks.size());
       return this->blocks[ofType];

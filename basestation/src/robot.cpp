@@ -20,8 +20,40 @@
 namespace Anki {
   namespace Cozmo {
     
-    Robot::Robot()
-    : addedToWorld(false),
+#pragma mark --- RobotManager Class Implementations ---
+    RobotManager* RobotManager::singletonInstance_ = 0;
+    
+    void RobotManager::AddRobot(const RobotID_t withID, BlockWorld& toWorld)
+    {
+      robots_[withID] = new Robot(withID, toWorld);
+      ids_.push_back(withID);
+    }
+    
+    std::vector<RobotID_t> const& RobotManager::GetRobotIDList() const
+    {
+      return ids_;
+    }
+    
+    size_t RobotManager::GetNumRobots() const
+    {
+      return robots_.size();
+    }
+    
+    bool RobotManager::DoesRobotExist(const RobotID_t withID) const
+    {
+      return robots_.count(withID) > 0;
+    }
+    
+    void RobotManager::GetAllVisionMarkers(std::vector<Vision::Marker>& markers) const
+    {
+
+    }
+    
+    
+#pragma mark --- Robot Class Implementations ---
+    
+    Robot::Robot(const RobotID_t robotID, BlockWorld& world)
+    : ID_(robotID), world_(BlockWorld::getInstance()),
       pose(0.f, Z_AXIS_3D, {{0.f, 0.f, WHEEL_RAD_TO_MM}}),
       camDownCalibSet(false), camHeadCalibSet(false),
     neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &pose),
@@ -41,179 +73,47 @@ namespace Anki {
       this->camDown.set_pose(this->matCamPose);
       
     } // Constructor: Robot
-    
-    void Robot::addToWorld(const u32 withID)
+   
+    // Convert a MessageVisionMarker into a VisionMarker object and hand it off
+    // to the BlockWorld
+    ReturnCode Robot::ProcessMessage(const MessageVisionMarker& msg)
     {
-      this->ID = withID;
+      ReturnCode retVal = EXIT_SUCCESS;
       
-      Messages::RobotAddedToWorld msg;
-      msg.robotID = this->ID;
+      Quad2f corners;
       
-      const u8 *msgData = (const u8 *) &msg;
-      messagesOut.emplace(msgData, msgData+sizeof(msg));
+      corners[Quad::TopLeft].x()     = msg.get_x_imgUpperLeft();
+      corners[Quad::TopLeft].y()     = msg.get_y_imgUpperLeft();
       
-      this->addedToWorld = true;
+      corners[Quad::BottomLeft].x()  = msg.get_x_imgLowerLeft();
+      corners[Quad::BottomLeft].y()  = msg.get_y_imgLowerLeft();
       
-    } // addToWorld()
-
+      corners[Quad::TopRight].x()    = msg.get_x_imgUpperRight();
+      corners[Quad::TopRight].y()    = msg.get_y_imgUpperRight();
+      
+      corners[Quad::BottomRight].x() = msg.get_x_imgLowerRight();
+      corners[Quad::BottomRight].y() = msg.get_y_imgLowerRight();
+      
+      //this->observedVisionMarkers.emplace_back(msg.get_code(), corners, this->ID_);
+      Vision::ObservedMarker marker(msg.get_code(), corners, camHead);
+      
+      // Give this vision marker to BlockWorld for processing
+      //world_->QueueVisionMarker(marker);
+      
+      return retVal;
+    } // ProcessMessage(MessageVisionMarker)
     
-    /*
-    Robot::Robot( BlockWorld &theWorld )
-    : world(theWorld)
-    {
-      // TODO: Compute this from down-camera calibration and position:
-      this->downCamPixPerMM = 15.f;
-      
-    } // Constructor: Robot
-    */
-    
-    /*
-    template<>
-    void Robot::processMessage<BlockObservationMessage>(const BlockObservationMessage *msg)
-    {
-      
-    }
-     */
     
     void Robot::updatePose()
     {
-      if(not this->addedToWorld) {
-        fprintf(stdout, "Robot::updatePose() called before robot was "
-                "added to a world!\n");
-        return;
-      }
       
-      if(not this->camDownCalibSet) {
-        fprintf(stdout, "Robot::updatePose() called before mat camera "
-                "calibration was set.\n");
-        return;
-      }
-      
-      bool poseUpdated = false;
-      
-      // TODO: add motion simulation (for in between messages)
-
-      if(this->matMarker != NULL) {
-        // Convert the MatMarker's image coordinates to a World
-        // coordinates position
-        Point2f centerVec(matMarker->get_imagePose().get_translation());
-        
-        const CameraCalibration& camCalib = camDown.get_calibration();
-        
-        const Point2f& imageCenterPt = camCalib.get_center();
-        /*
-        if(BlockWorld::ZAxisPointsUp) {
-          // xvec = imgCen(1)-xcenIndex;
-          // yvec = imgCen(2)-ycenIndex;
-          
-          centerVec *= -1.f;
-          centerVec += imageCenterPt;
-          
-        } else {*/
-          // xvec = xcenIndex - imgCen(1);
-          // yvec = ycenIndex - imgCen(2);
-          
-          centerVec -= imageCenterPt;
-        //}
-        
-        //xvecRot =  xvec*cos(-marker.upAngle) + yvec*sin(-marker.upAngle);
-        //yvecRot = -xvec*sin(-marker.upAngle) + yvec*cos(-marker.upAngle);
-        // xMat = xvecRot/pixPerMM + marker.X*squareWidth - squareWidth/2 -
-        //          matSize(1)/2;
-        // yMat = yvecRot/pixPerMM + marker.Y*squareWidth - squareWidth/2 -
-        //          matSize(2)/2;
-        RotationMatrix2d R(matMarker->get_upAngle());
-        Point2f matPoint(R*centerVec);
-        
-        // This should have been computed by now
-        CORETECH_ASSERT(this->downCamPixPerMM > 0.f);
-        matPoint *= 1.f / this->downCamPixPerMM;
-        matPoint.x() += matMarker->get_xSquare() * MatMarker2d::SquareWidth;
-        matPoint.y() += matMarker->get_ySquare() * MatMarker2d::SquareWidth;
-        matPoint -= MatMarker2d::SquareWidth * .5f;
-        matPoint.x() -= MatSection::Size.x() * .5f;
-        matPoint.y() -= MatSection::Size.y() * .5f;
-        
-        
-        
-        //fprintf(stdout, "MatMarker image angle = %.1f, upAngle = %.1f\n",
-        //        matMarker->get_imagePose().get_angle().getDegrees(),
-        //        matMarker->get_upAngle().getDegrees());
-        
-        // Using negative angle to switch between Z axis that goes into
-        // the ground (mat camera's Z axis) and one that points up, out
-        // of the ground (our world).
-        Radians angle(matMarker->get_imagePose().get_angle());
-/*
-        // Subtract 90 degrees because the matMarker currently indicates the
-        // direction towards the front of the robot, but in our world
-        // coordinate system, that's in the y direction and we want 0 degrees
-        // not to represent the world y axis direction, but rather the world
-        // x axis direction.
-        angle += M_PI_2;
- 
-        if(not BlockWorld::ZAxisPointsUp) {
-          // TODO: is this correct??
-          matPoint.x() *= -1.f;
-          //matPoint.y() *= -1.f;
-          //angle = -angle;
-        }
-    */
-        // TODO: embed 2D pose in 3D space using its plane
-        //this->pose = Pose3d( Pose2d(angle, matPoint) ); // bad! need to preserve original pose b/c other poses point to it!
-        this->pose.set_rotation(angle, Z_AXIS_3D);
-        this->pose.set_translation({{matPoint.y(), matPoint.x(), WHEEL_RAD_TO_MM}});
-        
-        // Delete the matMarker once we're done with it
-        delete matMarker;
-        matMarker = NULL;
-        
-        poseUpdated = true;
-      } // if we have a matMarker2d
-      
-      if(poseUpdated)
-      {
-        // Send our updated pose to the physical robot:
-        Messages::AbsLocalizationUpdate msg;
-        msg.xPosition = pose.get_translation().x();
-        msg.yPosition = pose.get_translation().y();
-        
-        Radians headingAngle;
-        Vec3f   rotationAxis;
-        pose.get_rotationVector().get_angleAndAxis(headingAngle, rotationAxis);
-        
-        // Angle will always be positive in a rotationVector.  We have to
-        // take the axis into account here because we are using this as a
-        // 2D rotation angle around the *positive* Z axis. So if the rotation
-        // vector is rotating us around the *negative* Z axis, we need to use
-        // the -angle in our message to the robot.
-        if(headingAngle > 0.f) {
-          // TODO: Just assuming axis is in Z direction here...
-          CORETECH_ASSERT(NEAR_ZERO(rotationAxis.x()) &&
-                          NEAR_ZERO(rotationAxis.y()) &&
-                          NEAR(ABS(rotationAxis.z()), 1.f, 1e-6f));
-          if(rotationAxis.z() < 0) {
-            headingAngle = -headingAngle;
-          }
-        }
-        
-        msg.headingAngle = headingAngle.ToFloat();
-        
-        const u8 *msgData = (const u8 *) &msg;
-        messagesOut.emplace(msgData, msgData+sizeof(msg));
-        
-        fprintf(stdout, "Basestation sending updated pose to robot: "
-                "(%.1f, %.1f) at %.1f degrees\n",
-                msg.xPosition, msg.yPosition,
-                msg.headingAngle * (180.f/M_PI));
-      } // if pose was updated
       
     } // updatePose()
     
     
     void Robot::checkMessages()
     {
-      
+     /*
       //
       // Parse Messages
       //
@@ -361,17 +261,20 @@ namespace Anki {
         
       } // while message queue not empty
       
+      */
     } // checkMessages()
     
     
-    void Robot::step(void)
+    void Robot::Update(void)
     {
+      /*
       // Reset what we have available from the physical robot
       if(this->matMarker != NULL) {
         delete this->matMarker;
         this->matMarker = NULL;
       }
       this->visibleBlockMarkers2d.clear();
+      */
       
       checkMessages();
       
@@ -484,7 +387,7 @@ namespace Anki {
     
     void Robot::dockWithBlock(const Block& block)
     {
-      
+     /*
       // Compute the necessary head angle and docking target position for
       // this block
       
@@ -627,6 +530,7 @@ namespace Anki {
       const u8 *msgData = (const u8 *) &msg;
       messagesOut.emplace(msgData, msgData+sizeof(msg));
 #endif
+      */
       
     } // dockWithBlock()
     

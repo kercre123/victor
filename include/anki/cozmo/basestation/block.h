@@ -13,6 +13,8 @@
 #include "anki/common/basestation/math/quad.h"
 
 #include "anki/vision/basestation/marker2d.h"
+#include "anki/vision/basestation/observableObject.h"
+
 #include "anki/cozmo/basestation/messages.h"
 
 namespace Anki {
@@ -25,122 +27,7 @@ namespace Anki {
     // Forward Declarations:
     class Robot;
 
-    typedef u16 BlockType;
     typedef u8  FaceType;
-
-    
-    //
-    // BlockMarker2d Class
-    //
-    //   Stores the representation of an observed BlockMarker in an image.
-    //   Once matched with a BlockMarker3d (below), we can compute a Block or
-    //   Robot's pose in the world.
-    //
-    class BlockMarker2d //: public Marker2d<5,2>
-    {
-    public:
-
-      static const size_t NumCodeSquares;
-      
-      // Constructors:
-      //BlockMarker2d();
-      BlockMarker2d(const BlockType blockType, const FaceType faceType,
-                    const Quad2f&   corners,   const MarkerUpDirection upDirection,
-                    const Radians&  headAngle, Robot& seenBy);
-      
-      // Decoding happens on the physical robot, so don't need these (?)
-      //void encodeIDs(void);
-      //void decodeIDs(const BitString& bitString);
-      
-      // Accessors:
-      BlockType      get_blockType() const;
-      FaceType       get_faceType()  const;
-      Radians        get_headAngle() const;
-      const Quad2f&  get_quad()      const;
-      Robot&         get_seenBy()    const;
-      
-    protected:
-      BlockType blockType;
-      FaceType  faceType;
-      
-      Quad2f corners;
-      
-      Radians headAngle;
-      
-      // Reference to the robot that saw this marker
-      Robot& seenBy;
-      
-    }; // class BlockMarker2d
-    
-    
-    //
-    // BlockMarker3d Class
-    //
-    //   Stores the representation of a physical BlockMarker on the side of a
-    //   3D block in the world. Finding the transformation between the
-    //   corners of the marker's fiducial square and the corners of a
-    //   corresponding BlockMarker2d in an image is what allows us to determine
-    //   Block and Robot poses in BlockWorld.
-    //
-    class BlockMarker3d
-    {
-    public:
-      
-      // Dimensions (all in millimeters):
-      static const float TotalWidth;              // Fiducial square plus spacing
-      static const float FiducialSquareThickness; // Thickness of the square
-      static const float FiducialSpacing;         // Spacing around the square
-      static const float SquareWidthOutside;
-      static const float SquareWidthInside;
-      static const float ReferenceWidth;     // Inside/outside width, depending on tracing algorithm
-      static const float CodeSquareSize;     // Dimensino of single "bit" square
-      static const float DockingDotSpacing;  // b/w center docking dots
-      static const float DockingDotWidth;    // diameter of center docking dots
-      
-      // Constructors:
-      BlockMarker3d(const BlockMarker2d &marker, const Camera &camera);
-      
-      BlockMarker3d(const BlockType &blockType,
-                    const FaceType  &faceType,
-                    const Pose3d    &poseWRTparentBlock);
-      
-      // Accessors:
-      BlockType get_blockType() const;
-      FaceType  get_faceType()  const;
-      
-      const Pose3d& get_pose(void) const;
-      void set_pose(const Pose3d &newPose);
-      
-      // Get the current 3D position of the marker's square corners,
-      // docking target, or docking target bounding box, given its
-      // current pose, and with respect to another pose.
-      void getSquareCorners(Quad3f &squareCorners,
-                            const Pose3d *wrtPose = Pose3d::World) const;
-      
-      void getDockingTarget(Quad3f &dockingTarget,
-                            const Pose3d *wrtPose = Pose3d::World) const;
-      
-      void getDockingBoundingBox(Quad3f &boundingBox,
-                                 const Pose3d *wrtPose = Pose3d::World) const;
-      
-    protected:
-      
-      // Canonical locations of the fiducial square corners, the docking target,
-      // and the docking target's bounding box. These are the same for all
-      // BlockMarker3d's.  The current position of a particular instance's
-      // corners, target, or bounding box is obtained using that instance's
-      // getSquareCorners(), getDockingTarget(), or getDockingBoundingBox()
-      // methods above.
-      static const Quad3f FiducialSquare;
-      static const Quad3f DockingTarget;
-      static const Quad3f DockingBoundingBox;
-      
-      BlockType blockType;
-      FaceType  faceType;
-      
-      Pose3d pose;
-      
-    }; // class BlockMarker3d
     
     
     //
@@ -148,7 +35,7 @@ namespace Anki {
     //
     //   Representation of a physical Block in the world.
     //
-    class Block
+    class Block : public Vision::ObservableObjectBase<Block>
     {
     public:
       typedef Point3<unsigned char> Color;
@@ -178,113 +65,98 @@ namespace Anki {
         RIGHT_BACK_BOTTOM =  7
       };
       
-      Block(const BlockType type);
+      Block(const ObjectID_t blockID);
       Block(const Block& otherBlock);
+      
       ~Block();
       
       static unsigned int get_numBlocks();
       
       // Accessors:
-      BlockType get_type() const;
-      float     get_width() const;
-      float     get_height() const;
-      float     get_depth() const;
-      float     get_minDim() const;
+      float     GetWidth() const;
+      float     GetHeight() const;
+      float     GetDepth() const;
+      float     GetMinDim() const;
+      //using Vision::ObservableObjectBase<Block>::GetMinDim;
       
       const Pose3d& get_pose(void) const;
-      void set_pose(const Pose3d &newPose);
-      
-      size_t get_numMarkers() const;
-      
-      const BlockMarker3d& get_faceMarker(const FaceName faceType) const;
+      void SetPose(const Pose3d &newPose);
       
     protected:
       // A counter for how many blocks are instantiated
       // (A static counter may not be the best way to do this...)
       static unsigned int numBlocks;
       
-      static Color   GetColorFromType(const BlockType type);
-      static Point3f GetSizeFromType(const BlockType type);
+      using Vision::ObservableObjectBase<Block>::ID_;
       
-      BlockType type;
-      Color     color;
-      Point3f   size;
+#include "anki/cozmo/basestation/BlockDefinitions.h"
       
-      std::vector<Point3f> blockCorners;
+      // Enumerated block IDs
+      typedef enum {
+        UNKNOWN_BLOCK_ID = 0,
+#define BLOCK_DEFINITION_MODE BLOCK_ENUM_MODE
+#include "anki/cozmo/basestation/BlockDefinitions.h"
+        NUM_BLOCK_IDS
+      } BlockEnumID_t;
       
-      std::vector<BlockMarker3d> markers;
+      // Static const lookup table for all block specs, by block ID, auto-
+      // generated from the BlockDefinitions.h file using macros
+      typedef struct{
+        std::string          name;
+        Block::Color         color;
+        Point3f              size;
+        Vision::Marker::Code faceCode[6];
+        f32                  faceSize[6];
+      } BlockInfoTableEntry_t;
+      
+      static const BlockInfoTableEntry_t BlockInfoLUT_[NUM_BLOCK_IDS];
+      
+      Color     color_;
+      Point3f   size_;
+      
+      std::vector<Point3f> blockCorners_;
+      
       void addFace(const FaceName whichFace);
-      
-      Pose3d pose;
       
     }; // class Block
     
     
 #pragma mark --- Inline Accessors Implementations ---
     
-    //
-    // BlockMarker2d:
-    //
-    inline BlockType BlockMarker2d::get_blockType() const
-    { return this->blockType; }
-    
-    inline FaceType BlockMarker2d::get_faceType() const
-    { return this->faceType; }
-    
-    inline Radians BlockMarker2d::get_headAngle() const
-    { return this->headAngle; }
-    
-    inline const Quad2f& BlockMarker2d::get_quad() const
-    { return this->corners; }
-    
-    inline Robot& BlockMarker2d::get_seenBy() const
-    { return this->seenBy; }
-    
-    //
-    // BlockMarker3d:
-    //
-    inline BlockType BlockMarker3d::get_blockType() const
-    { return this->blockType; }
-    
-    inline FaceType  BlockMarker3d::get_faceType() const
-    { return this->faceType; }
-    
-    inline const Pose3d& BlockMarker3d::get_pose() const
-    { return this->pose; }
-    
+       
 
     //
     // Block:
     //
-    inline BlockType Block::get_type() const
-    { return this->type; }
+    /*
+    inline BlockID_t Block::GetID() const
+    { return this->blockID_; }
+    */
     
-    inline float Block::get_width() const
-    { return this->size.x(); }
+    inline float Block::GetWidth() const
+    { return this->size_.x(); }
     
-    inline float Block::get_height() const
-    { return this->size.z(); }
+    inline float Block::GetHeight() const
+    { return this->size_.z(); }
     
-    inline float Block::get_depth() const
-    { return this->size.y(); }
+    inline float Block::GetDepth() const
+    { return this->size_.y(); }
     
-    inline float Block::get_minDim() const
+    inline float Block::GetMinDim() const
     {
-      return std::min(this->get_width(),
-                      std::min(this->get_height(), this->get_depth()));
+      return std::min(this->GetWidth(),
+                      std::min(GetHeight(), GetDepth()));
     }
     
-    inline const Pose3d& Block::get_pose(void) const
-    { return this->pose; }
+    /*
+    inline void Block::SetPose(const Pose3d &newPose)
+    { this->pose_ = newPose; }
+    */
     
-    inline void Block::set_pose(const Pose3d &newPose)
-    { this->pose = newPose; }
-    
-    inline size_t Block::get_numMarkers() const
-    { return this->markers.size(); }
-    
+    /*
     inline const BlockMarker3d& Block::get_faceMarker(const FaceName face) const
     { return this->markers[face]; }
+    */
     
     inline Block::FaceName Block::FaceType_to_FaceName(FaceType type)
     {
