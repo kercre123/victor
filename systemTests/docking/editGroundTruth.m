@@ -23,6 +23,12 @@ else
 end
 % End initialization code - DO NOT EDIT
 
+global maxErrorSignalCorners;
+global maxTemplateCorners;
+
+maxErrorSignalCorners = 2;
+maxTemplateCorners = 4;
+
 function loadConfigFile()
     global jsonAllTestsData;
     global curTestNumber;
@@ -34,18 +40,18 @@ function loadConfigFile()
     global jsonConfigFilename;
     global jsonData;
     global dataPath;
-    
+
     jsonConfigFilename = [dataPath, jsonAllTestsData.tests{curTestNumber}];
     jsonConfigFilename = strrep(jsonConfigFilename, '\', '/');
-    
+
     jsonData = loadjson(jsonConfigFilename);
-    
+
     if ~iscell(jsonData.sequences)
         jsonData.sequences = {jsonData.sequences};
     end
-    
+
     return;
-        
+
 function loadAllTestsFile()
     global jsonAllTestsFilename;
     global jsonAllTestsData;
@@ -54,7 +60,7 @@ function loadAllTestsFile()
     global maxTestNumber;
     global curSequenceNumber;
     global maxSequenceNumber;
-    global image;    
+    global image;
     global imageFigureHandle;
     global imageHandle;
     global allHandles;
@@ -62,30 +68,30 @@ function loadAllTestsFile()
     global dataPath;
 
     imageFigureHandle = figure(100);
-    
+
     pointsType = 'errorSignal';
-    
+
     jsonAllTestsFilename = get(allHandles.configFilename, 'String');
     jsonAllTestsFilename = strrep(jsonAllTestsFilename, '\', '/');
-    
+
     try
         jsonAllTestsData = loadjson(jsonAllTestsFilename);
     catch
         disp(sprintf('Could not load all tests json file %s', jsonAllTestsFilename));
         return;
-    end    
-    
+    end
+
     slashIndexes = strfind(jsonAllTestsFilename, '/');
     dataPath = jsonAllTestsFilename(1:(slashIndexes(end)));
-    
+
     curTestNumber = 1;
     maxTestNumber = length(jsonAllTestsData.tests);
-    
+
     curSequenceNumber = 1;
-    
+
     curImageNumber = 1;
-        
-    image = rand([480,640]);  
+
+    image = rand([480,640]);
 
     pointer = [
         nan, nan, nan, nan, 2,   2,   2,   2,   2,   2,   2,   2,   nan, nan, nan, nan;
@@ -105,7 +111,7 @@ function loadAllTestsFile()
         nan, nan, nan, 2,   nan, nan, nan, nan, nan, nan, nan, nan, 2,   nan, nan, nan;
         nan, nan, nan, nan, 2,   2,   2,   2,   2,   2,   2,   2,   nan, nan, nan, nan;];
 
-    
+
     set(imageFigureHandle,'Pointer','custom','PointerShapeCData',pointer,'PointerShapeHotSpot',(size(pointer))/2)
 
     try
@@ -114,7 +120,7 @@ function loadAllTestsFile()
         disp(sprintf('Could not load specific tests json file %s', jsonConfigFilename));
         return;
     end
-    
+
     sequenceChanged(allHandles, true)
 
 function editGroundTruth_OpeningFcn(hObject, eventdata, handles, varargin)
@@ -129,7 +135,7 @@ function editGroundTruth_OpeningFcn(hObject, eventdata, handles, varargin)
 
     global allHandles;
     allHandles = handles;
-    
+
     loadAllTestsFile()
 
 function index = findFrameNumberIndex(jsonData, sequenceNumberIndex, frameNumberIndex)
@@ -138,7 +144,7 @@ function index = findFrameNumberIndex(jsonData, sequenceNumberIndex, frameNumber
     if ~isfield(jsonData.sequences{sequenceNumberIndex}, 'groundTruth')
         return;
     end
-        
+
     for i = 1:length(jsonData.sequences{sequenceNumberIndex}.groundTruth)
         curFrameNumber = jsonData.sequences{sequenceNumberIndex}.groundTruth{i}.frameNumber;
         queryFrameNumber = jsonData.sequences{sequenceNumberIndex}.frameNumbers(frameNumberIndex);
@@ -173,7 +179,7 @@ function previousSequence_Callback(hObject, eventdata, handles) %#ok<*INUSL>
 
 function nextSequence_Callback(hObject, eventdata, handles)
     global curTestNumber;
-    global maxTestNumber;    
+    global maxTestNumber;
     global curSequenceNumber;
     global maxSequenceNumber;
     global curFrameNumber;
@@ -187,7 +193,7 @@ function nextSequence_Callback(hObject, eventdata, handles)
 
 function curSequence_Callback(hObject, eventdata, handles)
     global curTestNumber;
-    global maxTestNumber;    
+    global maxTestNumber;
     global curSequenceNumber;
     global maxSequenceNumber;
     global curFrameNumber;
@@ -203,7 +209,7 @@ function curSequence_Callback(hObject, eventdata, handles)
 
 function previousImage_Callback(hObject, eventdata, handles) %#ok<*DEFNU>
     global curTestNumber;
-    global maxTestNumber;    
+    global maxTestNumber;
     global curSequenceNumber;
     global maxSequenceNumber;
     global curFrameNumber;
@@ -247,7 +253,7 @@ function curImage_Callback(hObject, eventdata, handles)
 
 function curSequence_CreateFcn(hObject, eventdata, handles) %#ok<*INUSD>
     global curTestNumber;
-    global maxTestNumber;    
+    global maxTestNumber;
     global curSequenceNumber;
     global maxSequenceNumber;
     global curFrameNumber;
@@ -294,7 +300,7 @@ function maxImage_CreateFcn(hObject, eventdata, handles)
     set(hObject,'String',num2str(maxFrameNumber));
 
 function sequenceChanged(handles, resetAll)
-    global jsonConfigFilename;    
+    global jsonConfigFilename;
     global jsonData;
     global dataPath;
     global curTestNumber;
@@ -308,11 +314,11 @@ function sequenceChanged(handles, resetAll)
     global imageFigureHandle;
     global imageHandle;
     global pointsType;
-            
+
     if ~exist('resetAll', 'var')
         resetAll = false;
     end
-    
+
     if curSequenceNumber < 1
         curSequenceNumber = 1;
     end
@@ -320,7 +326,7 @@ function sequenceChanged(handles, resetAll)
     if curSequenceNumber > maxSequenceNumber
         curSequenceNumber = maxSequenceNumber;
     end
-    
+
     if resetAll
         try
             loadConfigFile();
@@ -328,12 +334,12 @@ function sequenceChanged(handles, resetAll)
             disp(sprintf('Could not load specific tests json file %s', jsonConfigFilename));
             return;
         end
-        
+
         maxSequenceNumber = length(jsonData.sequences);
 
         curFrameNumber = 1;
         maxFrameNumber = length(jsonData.sequences{curSequenceNumber}.frameNumbers);
-       
+
         for i = 1:maxSequenceNumber
             if isfield(jsonData.sequences{i}, 'groundTruth') && ~iscell(jsonData.sequences{i}.groundTruth)
                 jsonData.sequences{i}.groundTruth = {jsonData.sequences{i}.groundTruth};
@@ -348,7 +354,7 @@ function sequenceChanged(handles, resetAll)
             curFrameNumber = maxFrameNumber;
         end
     end
-    
+
     curFilename = [dataPath, sprintf(jsonData.sequences{curSequenceNumber}.filenamePattern, jsonData.sequences{curSequenceNumber}.frameNumbers(curFrameNumber))];
     image = imread(curFilename);
 
@@ -358,14 +364,14 @@ function sequenceChanged(handles, resetAll)
     set(handles.maxSequence, 'String', num2str(maxSequenceNumber))
     set(handles.curImage, 'String', num2str(curFrameNumber))
     set(handles.maxImage, 'String', num2str(maxFrameNumber))
-    
+
     if curSequenceNumber==1 && curFrameNumber==1
         set(handles.templatePoints, 'Enable', 'on');
     else
         set(handles.templatePoints, 'Enable', 'off');
         pointsType = 'errorSignal';
     end
-    
+
     if strcmp(pointsType, 'errorSignal')
         set(handles.errorSignalPoints, 'Value', 1);
         set(handles.templatePoints, 'Value', 0);
@@ -377,9 +383,9 @@ function sequenceChanged(handles, resetAll)
     index = findFrameNumberIndex(jsonData, curSequenceNumber, curFrameNumber);
 
     imageFigureHandle = figure(100);
-    
+
     hold off;
-    
+
     originalXlim = xlim();
     originalYlim = ylim();
 
@@ -405,6 +411,11 @@ function sequenceChanged(handles, resetAll)
 
             allCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners;
             plotType = 'r+';
+
+            if length(allCorners) == 2
+                plotHandle = plot([allCorners{1}.x,allCorners{2}.x]+0.5, [allCorners{1}.y,allCorners{2}.y]+0.5, 'r');
+                set(plotHandle, 'HitTest', 'off')
+            end
         elseif strcmp(pointsType, 'template')
             if ~isfield(jsonData.sequences{curSequenceNumber}.groundTruth{index}, 'templateCorners') || isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners)
                 jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners = {};
@@ -415,9 +426,36 @@ function sequenceChanged(handles, resetAll)
             end
 
             allCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners;
+
+            if length(allCorners) == 4
+                % first, sort the corners
+                cornersX = [allCorners{1}.x, allCorners{2}.x, allCorners{3}.x, allCorners{4}.x];
+                cornersY = [allCorners{1}.y, allCorners{2}.y, allCorners{3}.y, allCorners{4}.y];
+
+                centerX = mean(cornersX);
+                centerY = mean(cornersY);
+
+                [thetas,~] = cart2pol(cornersX-centerX, cornersY-centerY);
+                [~,sortedIndexes] = sort(thetas);
+                
+                for i = 1:4
+                    jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners{i}.x = cornersX(sortedIndexes(i));
+                    jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners{i}.y = cornersY(sortedIndexes(i));
+                end
+                
+                allCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners;
+                
+                % second, plot the sorted corners
+                plotHandle = plot(...
+                    [allCorners{1}.x,allCorners{2}.x,allCorners{3}.x,allCorners{4}.x,allCorners{1}.x]+0.5,...
+                    [allCorners{1}.y,allCorners{2}.y,allCorners{3}.y,allCorners{4}.y,allCorners{1}.y]+0.5,...
+                    'b');
+                set(plotHandle, 'HitTest', 'off')
+            end
+
             plotType = 'b+';
         end
-        
+
         for i = 1:length(allCorners)
             scatterHandle = scatter(allCorners{i}.x+0.5, allCorners{i}.y+0.5, plotType);
             set(scatterHandle, 'HitTest', 'off')
@@ -445,6 +483,8 @@ function axes1_ButtonDownFcn(hObject, eventdata, handles)
     global imageFigureHandle;
     global imageHandle;
     global pointsType;
+    global maxErrorSignalCorners;
+    global maxTemplateCorners;
 
     axesHandle  = get(imageHandle,'Parent');
     imPosition = get(axesHandle, 'CurrentPoint') - 0.5;
@@ -461,7 +501,7 @@ function axes1_ButtonDownFcn(hObject, eventdata, handles)
         if ~isfield(jsonData.sequences{curSequenceNumber}, 'groundTruth')
             jsonData.sequences{curSequenceNumber}.groundTruth = {};
         end
-        
+
         allFrameNumbers = jsonData.sequences{curSequenceNumber}.frameNumbers;
         jsonData.sequences{curSequenceNumber}.groundTruth{end+1}.frameNumber = allFrameNumbers(curFrameNumber);
 %         jsonData.sequences{curSequenceNumber}.groundTruth{end}.errorSignalCorners = {};
@@ -483,7 +523,11 @@ function axes1_ButtonDownFcn(hObject, eventdata, handles)
                 jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners = {jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners};
             end
 
-            jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners{end+1} = newPoint;
+            if(length(jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners) < maxErrorSignalCorners)
+                jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners{end+1} = newPoint;
+            else
+                disp(sprintf('Cannot add point, because only %d error signal corners are allowed', maxErrorSignalCorners));
+            end
         elseif strcmp(pointsType, 'template')
             if ~isfield(jsonData.sequences{curSequenceNumber}.groundTruth{index}, 'templateCorners') || isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners)
                 jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners = {};
@@ -493,9 +537,13 @@ function axes1_ButtonDownFcn(hObject, eventdata, handles)
                 jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners = {jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners};
             end
 
-            jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners{end+1} = newPoint;
+            if(length(jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners) < maxTemplateCorners)
+                jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners{end+1} = newPoint;
+             else
+                disp(sprintf('Cannot add point, because only %d template corners are allowed', maxTemplateCorners));
+            end
         end
-        
+
         savejson('',jsonData,jsonConfigFilename);
     elseif strcmp(buttonType, 'alt') % right click
         minDist = Inf;
@@ -580,14 +628,14 @@ function previousTest_Callback(hObject, eventdata, handles)
         curTestNumber = curTestNumber - 1;
         curSequenceNumber = 1;
     end
-    
+
     sequenceChanged(handles, true);
-    
+
 function nextTest_Callback(hObject, eventdata, handles)
     global curSequenceNumber;
     global curTestNumber;
     global maxTestNumber;
-    
+
     if curTestNumber < maxTestNumber
         curTestNumber = curTestNumber + 1;
         curSequenceNumber = 1;
@@ -599,13 +647,13 @@ function curTest_Callback(hObject, eventdata, handles)
     global curSequenceNumber;
     global curTestNumber;
     global maxTestNumber;
-    
+
     curTestNumberNew = str2double(get(hObject,'String'));
 
     if curTestNumberNew <= maxTestNumber && curTestNumberNew >= 1
         curTestNumber = curTestNumberNew;
     end
-    
+
     curSequenceNumber = 1;
 
     sequenceChanged(handles, true);
@@ -615,7 +663,7 @@ function errorSignalPoints_Callback(hObject, eventdata, handles)
     if get(hObject,'Value')
         pointsType = 'errorSignal';
     end
-    
+
     sequenceChanged(handles);
 
 function templatePoints_Callback(hObject, eventdata, handles)
@@ -623,7 +671,7 @@ function templatePoints_Callback(hObject, eventdata, handles)
     if get(hObject,'Value')
         pointsType = 'template';
     end
-    
+
     sequenceChanged(handles);
-    
-    
+
+
