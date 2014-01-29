@@ -4,7 +4,7 @@
 
 using namespace std;
 
-#define LISTEN_PORT "5556"
+#define LISTEN_PORT 5556
 
 // Echo server example
 int main (int argc, char *argv[])
@@ -13,7 +13,7 @@ int main (int argc, char *argv[])
 
   TcpServer server;
   if (!server.StartListening(LISTEN_PORT)) {
-    printf("Failed to listen on port %s\n", LISTEN_PORT);
+    printf("Failed to listen on port %d\n", LISTEN_PORT);
     return -1;
   }
   std::cout << "Waiting for client...\n";

@@ -6,6 +6,7 @@
 #include <sys/socket.h> // Needed for the socket functions
 #include <netdb.h>      // Needed for the socket functions
 #include <fcntl.h>
+#include <sys/ioctl.h>
 #include <assert.h>
 #include <errno.h>
 
@@ -26,14 +27,14 @@ TcpServer::~TcpServer()
   }
 }
 
-void set_nonblock(int socket) {
+void TcpServer::set_nonblock(int socket) {
     int flags;
     flags = fcntl(socket,F_GETFL,0);
     assert(flags != -1);
     fcntl(socket, F_SETFL, flags | O_NONBLOCK);
 }
 
-bool TcpServer::StartListening(const char* port)
+bool TcpServer::StartListening(const unsigned short port)
 {
     if (socketfd >= 0) {
 
@@ -57,12 +58,14 @@ bool TcpServer::StartListening(const char* port)
     host_info.ai_flags = AI_PASSIVE;     // IP Wildcard
 
     // Now fill up the linked list of host_info structs with google's address information.
-    status = getaddrinfo(NULL, port, &host_info, &host_info_list);
+    char portStr[8];
+    sprintf(portStr, "%d", port);
+    status = getaddrinfo(NULL, portStr, &host_info, &host_info_list);
     // getaddrinfo returns 0 on succes, or some other value when an error occured.
     // (translated into human readable text by the gai_gai_strerror function).
     if (status != 0)  std::cout << "getaddrinfo error" << gai_strerror(status) ;
 
-    DEBUG_TCP_SERVER("TcpServer: Creating a socket on port " << port);
+    DEBUG_TCP_SERVER("TcpServer: Creating a socket on port " << portStr);
 
     socketfd = socket(host_info_list->ai_family, host_info_list->ai_socktype,
                       host_info_list->ai_protocol);

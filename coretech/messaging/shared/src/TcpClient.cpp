@@ -21,7 +21,7 @@ TcpClient::~TcpClient()
   }
 }
 
-void set_nonblock(int socket) {
+void TcpClient::set_nonblock(int socket) {
     int flags;
     flags = fcntl(socket,F_GETFL,0);
     assert(flags != -1);
@@ -29,12 +29,10 @@ void set_nonblock(int socket) {
 }
 
 
-bool TcpClient::Connect(const char *host_address, const char* port)
+bool TcpClient::Connect(const char *host_address, const unsigned short port)
 {
   if (socketfd >= 0) {
-#if(DEBUG_TCP_CLIENT)
-    std::cout << "TcpClient: Already connected\n";
-#endif
+    DEBUG_TCP_CLIENT("TcpClient: Already connected\n");
     return false;
   }
 
@@ -50,15 +48,15 @@ bool TcpClient::Connect(const char *host_address, const char* port)
   host_info.ai_family = AF_UNSPEC;     // IP version not specified. Can be both.
   host_info.ai_socktype = SOCK_STREAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
 
-  status = getaddrinfo(host_address, port, &host_info, &host_info_list);  
+  char portStr[8];
+  sprintf(portStr, "%d", port);
+  status = getaddrinfo(host_address, portStr, &host_info, &host_info_list);
   if (status != 0) {
     std::cout << "getaddrinfo error" << gai_strerror(status) ;
     return false;
   }
 
-#if(DEBUG_TCP_CLIENT)
-  std::cout << "TcpClient: Creating a socket on port " << port << "\n";
-#endif
+  DEBUG_TCP_CLIENT("TcpClient: Creating a socket on port " << portStr);
   socketfd = socket(host_info_list->ai_family, host_info_list->ai_socktype,
                     host_info_list->ai_protocol);
   if (socketfd == -1) {
@@ -67,9 +65,7 @@ bool TcpClient::Connect(const char *host_address, const char* port)
   }
 
 
-#if(DEBUG_TCP_CLIENT)
-  std::cout << "TcpClient: Connecting to " << host_address << "\n";
-#endif
+  DEBUG_TCP_CLIENT("TcpClient: Connecting to " << host_address << "\n");
   status = connect(socketfd, host_info_list->ai_addr, host_info_list->ai_addrlen);
   if (status == -1) {
     std::cout << "connect error\n" ;
@@ -92,16 +88,12 @@ bool TcpClient::Disconnect()
 
 int TcpClient::Send(const char* data, int size)
 {
-#if(DEBUG_TCP_CLIENT)
-  std::cout << "TcpClient: sending " << size << " bytes: " << data << "\n";
-#endif
-  int bytes_sent = send(socketfd, data, size, 0);
+  DEBUG_TCP_CLIENT("TcpClient: sending " << size << " bytes: " << data << "\n");
 
+  int bytes_sent = send(socketfd, data, size, 0);
   if (bytes_sent <= 0) {
     if (errno != EWOULDBLOCK) {
-      #if(DEBUG_TCP_CLIENT)
-      std::cout << "TcpClient: Send error, disconnecting.\n";
-      #endif
+      DEBUG_TCP_CLIENT("TcpClient: Send error, disconnecting.\n");
       Disconnect();
       return -1;
     }
@@ -112,9 +104,8 @@ int TcpClient::Send(const char* data, int size)
 
 int TcpClient::Recv(char* data, int maxSize)
 {
-#if(DEBUG_TCP_CLIENT)
-    std::cout << "TcpClient: Waiting to recieve data...\n";
-#endif
+    DEBUG_TCP_CLIENT("TcpClient: Waiting to recieve data...\n");
+
     assert(data != NULL);
     ssize_t bytes_received;
     bytes_received = recv(socketfd, data, maxSize, 0);
@@ -122,9 +113,7 @@ int TcpClient::Recv(char* data, int maxSize)
   
     if (bytes_received <= 0) {
       if (errno != EWOULDBLOCK) {
-        #if(DEBUG_TCP_CLIENT)
-        std::cout << "TcpClient: Receive error, disconnecting.\n";
-        #endif
+        DEBUG_TCP_CLIENT("TcpClient: Receive error, disconnecting.\n");
         Disconnect();
         return -1;
       } else {
@@ -132,9 +121,7 @@ int TcpClient::Recv(char* data, int maxSize)
       }
     }
     else {
-#if(DEBUG_TCP_CLIENT)
-      std::cout << "TcpClient: " << bytes_received << " bytes recieved : " << data << "\n";
-#endif
+      DEBUG_TCP_CLIENT("TcpClient: " << bytes_received << " bytes recieved : " << data << "\n");
     }
 
     return bytes_received;
