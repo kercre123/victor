@@ -69,10 +69,10 @@ namespace Anki {
     
     // If most recent advertisement message is older than this,
     // then it is no longer considered to be advertising.
-    const u32 ROBOT_ADVERTISING_TIMEOUT_US = 250000;
+    const f32 ROBOT_ADVERTISING_TIMEOUT_S = 0.25;
 
     // Time in between robot advertisements
-    const u32 ROBOT_ADVERTISING_PERIOD_S = 0.03;
+    const f32 ROBOT_ADVERTISING_PERIOD_S = 0.03;
     
     
 #ifdef SIMULATOR

@@ -24,10 +24,11 @@
 using namespace std;
 
 namespace Anki {
+namespace Cozmo {
 
   typedef struct {
-    Cozmo::RobotAdvertisement robotInfo;
-    BaseStationTime_t lastSeenTime;
+    RobotAdvertisement robotInfo;
+    f32 lastSeenTime;
   } RobotConnectionInfo_t;
   
   
@@ -115,7 +116,8 @@ namespace Anki {
     multimap<TimeStamp_t, MsgPacket> recvdMsgPackets_;
     
   };
-  
+
+}  // namespace Cozmo
 }  // namespace Anki
 
 #endif  // #ifndef BASESTATION_COMMS_TCPCOMMS_H_

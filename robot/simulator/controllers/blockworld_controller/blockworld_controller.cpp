@@ -14,6 +14,8 @@
 #include <webots/Supervisor.hpp>
 
 #include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/utils/timer.h"
+#include "anki/common/basestation/general.h"
 
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/messages.h"
@@ -167,7 +169,7 @@ int main(int argc, char **argv)
   const int MAX_ROBOTS = Anki::Cozmo::BlockWorld::MaxRobots;
   
   // Comms
-  Anki::TCPComms robotComms;
+  Anki::Cozmo::TCPComms robotComms;
   
 #if(USE_WEBOTS_TXRX)
   webots::Receiver* rx[MAX_ROBOTS];
@@ -213,6 +215,10 @@ int main(int argc, char **argv)
   //
   while (commsController.step(Anki::Cozmo::TIME_STEP) != -1)
   {
+    // Update time
+    // (To be done from iOS eventually)
+    Anki::BaseStationTimer::getInstance()->UpdateTime(SEC_TO_NANOS(commsController.getTime()));
+    
     // Read messages from all robots
     robotComms.Update();
     

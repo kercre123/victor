@@ -12,15 +12,18 @@
  **/
 
 #include "anki/cozmo/basestation/tcpComms.h"
+#include "anki/cozmo/basestation/utils/debug.h"
 #include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/common/basestation/utils/timer.h"
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
 
 namespace Anki {
+namespace Cozmo {
   
-  const std::string header(Cozmo::RADIO_PACKET_HEADER, Cozmo::RADIO_PACKET_HEADER + sizeof(Cozmo::RADIO_PACKET_HEADER));
-  const std::string footer(Cozmo::RADIO_PACKET_FOOTER, Cozmo::RADIO_PACKET_FOOTER + sizeof(Cozmo::RADIO_PACKET_FOOTER));
+  const std::string header(RADIO_PACKET_HEADER, RADIO_PACKET_HEADER + sizeof(RADIO_PACKET_HEADER));
+  const std::string footer(RADIO_PACKET_FOOTER, RADIO_PACKET_FOOTER + sizeof(RADIO_PACKET_FOOTER));
   const int HEADER_AND_TS_SIZE = header.length() + sizeof(TimeStamp_t);
   const int FOOTER_SIZE = footer.length();
   
@@ -28,7 +31,7 @@ namespace Anki {
   
   TCPComms::TCPComms()
   {
-    advertisingChannelClient_.Connect(Cozmo::ROBOT_SIM_WORLD_HOST, Cozmo::ROBOT_ADVERTISING_PORT);
+    advertisingChannelClient_.Connect(ROBOT_SIM_WORLD_HOST, ROBOT_ADVERTISING_PORT);
     
     // TODO: Should this be done inside the poorly named Connect()?
     advertisingChannelClient_.Send("1", 1);  // Send anything just to get recognized as a client for advertising service.
@@ -60,55 +63,41 @@ namespace Anki {
   }
   
   
-    void TCPComms::Update()
+  void TCPComms::Update()
   {
-    /*
-    // TESTING
-    // Add hard-coded client to advertising list after
-    static bool connected = false;
-    static int cnt=0;
-    if (!connected && cnt++ == 1000) {
-      printf("TEST: Adding advertising robot\n");
-      advertisingRobots_[1].robotInfo.robotID = 1;
-      sprintf(advertisingRobots_[1].robotInfo.ipv4_addr, "192.168.6.250");
-      sprintf(advertisingRobots_[1].robotInfo.port, "5001");
-      
-      connected = true;
-    }
-    */
-    
     
     // Read datagrams and update advertising robots list.
-    Cozmo::RobotAdvertisement advMsg;
+    RobotAdvertisement advMsg;
     int bytes_recvd = 0;
     do {
       bytes_recvd = advertisingChannelClient_.Recv((char*)&advMsg, sizeof(advMsg));
       if (bytes_recvd == sizeof(advMsg)) {
         
-        //DEBUG
+#if(DEBUG_TCPCOMMS)
         if (advertisingRobots_.find(advMsg.robotID) == advertisingRobots_.end()) {
           printf("Detected advertising robot %d on port %d\n", advMsg.robotID, advMsg.port);
         }
-        
+#endif
         
         advertisingRobots_[advMsg.robotID].robotInfo = advMsg;
-        advertisingRobots_[advMsg.robotID].lastSeenTime = 0;  // TODO: Need to grab current basestation time
+        advertisingRobots_[advMsg.robotID].lastSeenTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       }
     } while(bytes_recvd > 0);
     
     
     
     // Remove robots from advertising list if they're already connected.
-    /*
     advertisingRobotsIt_t it = advertisingRobots_.begin();
     while(it != advertisingRobots_.end()) {
-      if (BaseStationTimer::GetCurrentTimeInSeconds() - it->second.lastSeenTime > Cozmo::ROBOT_ADVERTISING_TIMEOUT_US) {
+      if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - it->second.lastSeenTime > ROBOT_ADVERTISING_TIMEOUT_S) {
+#if(DEBUG_TCPCOMMS)
+        printf("Removing robot %d from advertising list. (Last seen: %f, curr time: %f)\n", it->second.robotInfo.robotID, it->second.lastSeenTime, BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+#endif
         advertisingRobots_.erase(it++);
       } else {
         ++it;
       }
     }
-    */
     
     // Read all messages from all connected robots
     ReadAllMsgPackets();
@@ -117,6 +106,7 @@ namespace Anki {
   
   void TCPComms::PrintRecvBuf(int robotID)
   {
+#if(DEBUG_TCPCOMMS)
     if (connectedRobots_.find(robotID) != connectedRobots_.end()) {
       int numBytes = connectedRobots_[robotID].recvDataSize;
       printf("Robot %d recv buffer (%d bytes): ", robotID, numBytes);
@@ -127,6 +117,7 @@ namespace Anki {
       printf("\n");
 
     }
+#endif
   }
   
   
@@ -148,8 +139,9 @@ namespace Anki {
       }
       if (bytes_recvd < 0) {
         // Disconnect client
+#if(DEBUG_TCPCOMMS)
         printf("TcpRobotMgr: Recv failed. Disconnecting client\n");
-        
+#endif
         c.client->Disconnect();
         delete c.client;
         connectedRobots_.erase(it++);
@@ -224,8 +216,10 @@ namespace Anki {
       
       TcpClient *client = new TcpClient();
       
-      if (client->Connect(Cozmo::ROBOT_SIM_WORLD_HOST, it->second.robotInfo.port)) {
-        printf("Connected to robot %d at %s:%d\n", it->second.robotInfo.robotID, Cozmo::ROBOT_SIM_WORLD_HOST, it->second.robotInfo.port);
+      if (client->Connect(ROBOT_SIM_WORLD_HOST, it->second.robotInfo.port)) {
+#if(DEBUG_TCPCOMMS)
+        printf("Connected to robot %d at %s:%d\n", it->second.robotInfo.robotID, ROBOT_SIM_WORLD_HOST, it->second.robotInfo.port);
+#endif
         connectedRobots_[robotID].client = client;
         return true;
       }
@@ -296,7 +290,7 @@ namespace Anki {
     return false;
   }
   
-  
+}  // namespace Cozmo
 }  // namespace Anki
 
 
