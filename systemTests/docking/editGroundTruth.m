@@ -675,3 +675,252 @@ function templatePoints_Callback(hObject, eventdata, handles)
     sequenceChanged(handles);
 
 
+function nextImage2_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
+    global curSequenceNumber;
+    global maxSequenceNumber;
+    global curFrameNumber;
+    global maxFrameNumber;
+
+    curFrameNumber = curFrameNumber + 5;
+    curFrameNumber = max(1, min(maxFrameNumber, curFrameNumber));
+    sequenceChanged(handles);
+
+function nextImage3_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
+    global curSequenceNumber;
+    global maxSequenceNumber;
+    global curFrameNumber;
+    global maxFrameNumber;
+
+    curFrameNumber = curFrameNumber + 10;
+    curFrameNumber = max(1, min(maxFrameNumber, curFrameNumber));    
+    sequenceChanged(handles);
+
+function nextImage4_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
+    global curSequenceNumber;
+    global maxSequenceNumber;
+    global curFrameNumber;
+    global maxFrameNumber;
+
+    curFrameNumber = curFrameNumber + 25;
+    curFrameNumber = max(1, min(maxFrameNumber, curFrameNumber));
+    sequenceChanged(handles);
+
+function previousImage2_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
+    global curSequenceNumber;
+    global maxSequenceNumber;
+    global curFrameNumber;
+    global maxFrameNumber;
+
+    curFrameNumber = curFrameNumber - 5;
+    curFrameNumber = max(1, min(maxFrameNumber, curFrameNumber));
+    sequenceChanged(handles);
+
+function previousImage3_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
+    global curSequenceNumber;
+    global maxSequenceNumber;
+    global curFrameNumber;
+    global maxFrameNumber;
+
+    curFrameNumber = curFrameNumber - 10;
+    curFrameNumber = max(1, min(maxFrameNumber, curFrameNumber));
+    sequenceChanged(handles);
+
+function previousImage4_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
+    global curSequenceNumber;
+    global maxSequenceNumber;
+    global curFrameNumber;
+    global maxFrameNumber;
+
+    curFrameNumber = curFrameNumber - 25;
+    curFrameNumber = max(1, min(maxFrameNumber, curFrameNumber));
+    sequenceChanged(handles);
+
+function nextSequence2_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
+    global curSequenceNumber;
+    global maxSequenceNumber;
+    global curFrameNumber;
+    global maxFrameNumber;
+
+    curSequenceNumber = curSequenceNumber + 5;
+    curSequenceNumber = max(1, min(maxSequenceNumber, curSequenceNumber));
+    sequenceChanged(handles, true);
+    
+function nextSequence3_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
+    global curSequenceNumber;
+    global maxSequenceNumber;
+    global curFrameNumber;
+    global maxFrameNumber;
+
+    curSequenceNumber = curSequenceNumber + 10;
+    curSequenceNumber = max(1, min(maxSequenceNumber, curSequenceNumber));
+    sequenceChanged(handles, true);
+    
+function nextSequence4_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
+    global curSequenceNumber;
+    global maxSequenceNumber;
+    global curFrameNumber;
+    global maxFrameNumber;
+
+    curSequenceNumber = curSequenceNumber + 25;
+    curSequenceNumber = max(1, min(maxSequenceNumber, curSequenceNumber));
+    sequenceChanged(handles, true);
+    
+function previousSequence2_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
+    global curSequenceNumber;
+    global maxSequenceNumber;
+    global curFrameNumber;
+    global maxFrameNumber;
+
+    curSequenceNumber = curSequenceNumber - 5;
+    curSequenceNumber = max(1, min(maxSequenceNumber, curSequenceNumber));
+    sequenceChanged(handles, true);
+    
+function previousSequence3_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
+    global curSequenceNumber;
+    global maxSequenceNumber;
+    global curFrameNumber;
+    global maxFrameNumber;
+
+    curSequenceNumber = curSequenceNumber - 10;
+    curSequenceNumber = max(1, min(maxSequenceNumber, curSequenceNumber));
+    sequenceChanged(handles, true);
+    
+function previousSequence4_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
+    global curSequenceNumber;
+    global maxSequenceNumber;
+    global curFrameNumber;
+    global maxFrameNumber;
+
+    curSequenceNumber = curSequenceNumber - 25;
+    curSequenceNumber = max(1, min(maxSequenceNumber, curSequenceNumber));
+    sequenceChanged(handles, true);
+    
+function nextTest2_Callback(hObject, eventdata, handles)
+    global curSequenceNumber;
+    global curTestNumber;
+    global maxTestNumber;
+    
+    newTestNumber = curTestNumber + 5;
+    newTestNumber = max(1, min(maxTestNumber, newTestNumber));
+    
+    if newTestNumber ~= curTestNumber
+        curSequenceNumber = 1;
+    end
+    
+    curTestNumber = newTestNumber;
+
+    sequenceChanged(handles, true);
+    
+function nextTest3_Callback(hObject, eventdata, handles)
+    global curSequenceNumber;
+    global curTestNumber;
+    global maxTestNumber;
+
+    newTestNumber = curTestNumber + 10;
+    newTestNumber = max(1, min(maxTestNumber, newTestNumber));
+    
+    if newTestNumber ~= curTestNumber
+        curSequenceNumber = 1;
+    end
+    
+    curTestNumber = newTestNumber;
+
+    sequenceChanged(handles, true);
+    
+function nextTest4_Callback(hObject, eventdata, handles)
+    global curSequenceNumber;
+    global curTestNumber;
+    global maxTestNumber;
+
+    newTestNumber = curTestNumber + 25;
+    newTestNumber = max(1, min(maxTestNumber, newTestNumber));
+    
+    if newTestNumber ~= curTestNumber
+        curSequenceNumber = 1;
+    end
+    
+    curTestNumber = newTestNumber;
+
+    sequenceChanged(handles, true);
+    
+function previousTest2_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
+    global curSequenceNumber;
+    global maxSequenceNumber;
+    global curFrameNumber;
+    global maxFrameNumber;
+
+    newTestNumber = curTestNumber - 5;
+    newTestNumber = max(1, min(maxTestNumber, newTestNumber));
+    
+    if newTestNumber ~= curTestNumber
+        curSequenceNumber = 1;
+    end
+    
+    curTestNumber = newTestNumber;
+
+    sequenceChanged(handles, true);
+
+function previousTest3_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
+    global curSequenceNumber;
+    global maxSequenceNumber;
+    global curFrameNumber;
+    global maxFrameNumber;
+
+    newTestNumber = curTestNumber - 10;
+    newTestNumber = max(1, min(maxTestNumber, newTestNumber));
+    
+    if newTestNumber ~= curTestNumber
+        curSequenceNumber = 1;
+    end
+    
+    curTestNumber = newTestNumber;
+
+    sequenceChanged(handles, true);
+    
+function previousTest4_Callback(hObject, eventdata, handles)
+    global curTestNumber;
+    global maxTestNumber;
+    global curSequenceNumber;
+    global maxSequenceNumber;
+    global curFrameNumber;
+    global maxFrameNumber;
+
+    newTestNumber = curTestNumber - 25;
+    newTestNumber = max(1, min(maxTestNumber, newTestNumber));
+    
+    if newTestNumber ~= curTestNumber
+        curSequenceNumber = 1;
+    end
+    
+    curTestNumber = newTestNumber;
+
+    sequenceChanged(handles, true);
+    
