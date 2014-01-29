@@ -57,8 +57,11 @@ function loadAllTestsFile()
     global imageFigureHandle;
     global imageHandle;
     global allHandles;
+    global pointsType;
 
     imageFigureHandle = figure(100);
+    
+    pointsType = 'errorSignal';
     
     jsonAllTestsFilename = get(allHandles.configFilename, 'String');
     jsonAllTestsFilename = strrep(jsonAllTestsFilename, '\', '/');
@@ -119,7 +122,7 @@ function index = findFrameNumberIndex(jsonData, sequenceNumberIndex, frameNumber
     if ~isfield(jsonData.sequences{sequenceNumberIndex}, 'groundTruth')
         return;
     end
-    
+        
     for i = 1:length(jsonData.sequences{sequenceNumberIndex}.groundTruth)
         curFrameNumber = jsonData.sequences{sequenceNumberIndex}.groundTruth{i}.frameNumber;
         queryFrameNumber = jsonData.sequences{sequenceNumberIndex}.frameNumbers(frameNumberIndex);
@@ -287,6 +290,7 @@ function sequenceChanged(handles, resetAll)
     global allHandles;
     global imageFigureHandle;
     global imageHandle;
+    global pointsType;
             
     if ~exist('resetAll', 'var')
         resetAll = false;
@@ -332,6 +336,21 @@ function sequenceChanged(handles, resetAll)
     set(handles.maxSequence, 'String', num2str(maxSequenceNumber))
     set(handles.curImage, 'String', num2str(curFrameNumber))
     set(handles.maxImage, 'String', num2str(maxFrameNumber))
+    
+    if curSequenceNumber==1 && curFrameNumber==1
+        set(handles.templatePoints, 'Enable', 'on');
+    else
+        set(handles.templatePoints, 'Enable', 'off');
+        pointsType = 'errorSignal';
+    end
+    
+    if strcmp(pointsType, 'errorSignal')
+        set(handles.errorSignalPoints, 'Value', 1);
+        set(handles.templatePoints, 'Value', 0);
+    elseif strcmp(pointsType, 'template')
+        set(handles.errorSignalPoints, 'Value', 0);
+        set(handles.templatePoints, 'Value', 1);
+    end
 
     index = findFrameNumberIndex(jsonData, curSequenceNumber, curFrameNumber);
 
@@ -353,18 +372,32 @@ function sequenceChanged(handles, resetAll)
     hold on;
 
     if index ~= -1
-        if isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners)
-            jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners = {};
+        if strcmp(pointsType, 'errorSignal')
+            if ~isfield(jsonData.sequences{curSequenceNumber}.groundTruth{index}, 'errorSignalCorners') || isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners)
+                jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners = {};
+            end
+
+            if ~iscell(jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners)
+                jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners = {jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners};
+            end
+
+            allCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners;
+            plotType = 'r+';
+        elseif strcmp(pointsType, 'template')
+            if ~isfield(jsonData.sequences{curSequenceNumber}.groundTruth{index}, 'templateCorners') || isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners)
+                jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners = {};
+            end
+
+            if ~iscell(jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners)
+                jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners = {jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners};
+            end
+
+            allCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners;
+            plotType = 'b+';
         end
-        
-        if ~iscell(jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners)
-            jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners = {jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners};
-        end
-        
-        allCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners;
         
         for i = 1:length(allCorners)
-            scatterHandle = scatter(allCorners{i}.x+0.5, allCorners{i}.y+0.5, 'r+');
+            scatterHandle = scatter(allCorners{i}.x+0.5, allCorners{i}.y+0.5, plotType);
             set(scatterHandle, 'HitTest', 'off')
         end
     end
@@ -389,6 +422,7 @@ function axes1_ButtonDownFcn(hObject, eventdata, handles)
     global allHandles;
     global imageFigureHandle;
     global imageHandle;
+    global pointsType;
 
     axesHandle  = get(imageHandle,'Parent');
     imPosition = get(axesHandle, 'CurrentPoint') - 0.5;
@@ -403,12 +437,12 @@ function axes1_ButtonDownFcn(hObject, eventdata, handles)
 
     if index == -1
         if ~isfield(jsonData.sequences{curSequenceNumber}, 'groundTruth')
-            jsonData.sequences{curSequenceNumber}.groundTruth = [];
+            jsonData.sequences{curSequenceNumber}.groundTruth = {};
         end
         
         allFrameNumbers = jsonData.sequences{curSequenceNumber}.frameNumbers;
         jsonData.sequences{curSequenceNumber}.groundTruth{end+1}.frameNumber = allFrameNumbers(curFrameNumber);
-        jsonData.sequences{curSequenceNumber}.groundTruth{end}.corners = [];
+%         jsonData.sequences{curSequenceNumber}.groundTruth{end}.errorSignalCorners = {};
         index = length(jsonData.sequences{curSequenceNumber}.groundTruth);
     end
 
@@ -418,34 +452,65 @@ function axes1_ButtonDownFcn(hObject, eventdata, handles)
         newPoint.x = imPosition(1);
         newPoint.y = imPosition(2);
 
-        if isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners)
-            jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners = {};
+        if strcmp(pointsType, 'errorSignal')
+            if ~isfield(jsonData.sequences{curSequenceNumber}.groundTruth{index}, 'errorSignalCorners') || isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners)
+                jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners = {};
+            end
+
+            if ~iscell(jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners)
+                jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners = {jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners};
+            end
+
+            jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners{end+1} = newPoint;
+        elseif strcmp(pointsType, 'template')
+            if ~isfield(jsonData.sequences{curSequenceNumber}.groundTruth{index}, 'templateCorners') || isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners)
+                jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners = {};
+            end
+
+            if ~iscell(jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners)
+                jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners = {jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners};
+            end
+
+            jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners{end+1} = newPoint;
         end
         
-        if ~iscell(jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners)
-            jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners = {jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners};
-        end
-        
-        jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners{end+1} = newPoint;
         savejson('',jsonData,jsonConfigFilename);
     elseif strcmp(buttonType, 'alt') % right click
         minDist = Inf;
         minInd = -1;
 
-        for i = 1:length(jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners)
-            curCorner = jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners{i};
-            dist = sqrt((curCorner.x - imPosition(1))^2 + (curCorner.y - imPosition(2))^2);
-            if dist < minDist
-                minDist = dist;
-                minInd = i;
+        if strcmp(pointsType, 'errorSignal')
+            for i = 1:length(jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners)
+                curCorner = jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners{i};
+                dist = sqrt((curCorner.x - imPosition(1))^2 + (curCorner.y - imPosition(2))^2);
+                if dist < minDist
+                    minDist = dist;
+                    minInd = i;
+                end
             end
-        end
 
-        
-        if minInd ~= -1 && minDist < (min(size(image,1),size(image,2))/50)
-            newCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners([1:(minInd-1),(minInd+1):end]);
-            jsonData.sequences{curSequenceNumber}.groundTruth{index}.corners = newCorners;
-            savejson('',jsonData,jsonConfigFilename);
+
+            if minInd ~= -1 && minDist < (min(size(image,1),size(image,2))/50)
+                newCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners([1:(minInd-1),(minInd+1):end]);
+                jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners = newCorners;
+                savejson('',jsonData,jsonConfigFilename);
+            end
+        elseif strcmp(pointsType, 'template')
+            for i = 1:length(jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners)
+                curCorner = jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners{i};
+                dist = sqrt((curCorner.x - imPosition(1))^2 + (curCorner.y - imPosition(2))^2);
+                if dist < minDist
+                    minDist = dist;
+                    minInd = i;
+                end
+            end
+
+
+            if minInd ~= -1 && minDist < (min(size(image,1),size(image,2))/50)
+                newCorners = jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners([1:(minInd-1),(minInd+1):end]);
+                jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners = newCorners;
+                savejson('',jsonData,jsonConfigFilename);
+            end
         end
     end
 
@@ -497,6 +562,7 @@ function previousTest_Callback(hObject, eventdata, handles)
     sequenceChanged(handles, true);
     
 function nextTest_Callback(hObject, eventdata, handles)
+    global curSequenceNumber;
     global curTestNumber;
     global maxTestNumber;
     
@@ -508,6 +574,7 @@ function nextTest_Callback(hObject, eventdata, handles)
     sequenceChanged(handles, true);
 
 function curTest_Callback(hObject, eventdata, handles)
+    global curSequenceNumber;
     global curTestNumber;
     global maxTestNumber;
     
