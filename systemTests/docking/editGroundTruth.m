@@ -37,18 +37,19 @@ function loadConfigFile()
     
     jsonConfigFilename = [dataPath, jsonAllTestsData.tests{curTestNumber}];
     jsonConfigFilename = strrep(jsonConfigFilename, '\', '/');
+    
     jsonData = loadjson(jsonConfigFilename);
-
-    slashIndexes = strfind(jsonConfigFilename, '/');
-    dataPath = jsonConfigFilename(1:(slashIndexes(end)));
     
     if ~iscell(jsonData.sequences)
         jsonData.sequences = {jsonData.sequences};
     end
+    
+    return;
         
 function loadAllTestsFile()
     global jsonAllTestsFilename;
     global jsonAllTestsData;
+    global jsonConfigFilename;
     global curTestNumber;
     global maxTestNumber;
     global curSequenceNumber;
@@ -58,6 +59,7 @@ function loadAllTestsFile()
     global imageHandle;
     global allHandles;
     global pointsType;
+    global dataPath;
 
     imageFigureHandle = figure(100);
     
@@ -65,7 +67,16 @@ function loadAllTestsFile()
     
     jsonAllTestsFilename = get(allHandles.configFilename, 'String');
     jsonAllTestsFilename = strrep(jsonAllTestsFilename, '\', '/');
-    jsonAllTestsData = loadjson(jsonAllTestsFilename);
+    
+    try
+        jsonAllTestsData = loadjson(jsonAllTestsFilename);
+    catch
+        disp(sprintf('Could not load all tests json file %s', jsonAllTestsFilename));
+        return;
+    end    
+    
+    slashIndexes = strfind(jsonAllTestsFilename, '/');
+    dataPath = jsonAllTestsFilename(1:(slashIndexes(end)));
     
     curTestNumber = 1;
     maxTestNumber = length(jsonAllTestsData.tests);
@@ -73,9 +84,7 @@ function loadAllTestsFile()
     curSequenceNumber = 1;
     
     curImageNumber = 1;
-    
-    loadConfigFile();
-    
+        
     image = rand([480,640]);  
 
     pointer = [
@@ -99,6 +108,13 @@ function loadAllTestsFile()
     
     set(imageFigureHandle,'Pointer','custom','PointerShapeCData',pointer,'PointerShapeHotSpot',(size(pointer))/2)
 
+    try
+        loadConfigFile();
+    catch
+        disp(sprintf('Could not load specific tests json file %s', jsonConfigFilename));
+        return;
+    end
+    
     sequenceChanged(allHandles, true)
 
 function editGroundTruth_OpeningFcn(hObject, eventdata, handles, varargin)
@@ -278,6 +294,7 @@ function maxImage_CreateFcn(hObject, eventdata, handles)
     set(hObject,'String',num2str(maxFrameNumber));
 
 function sequenceChanged(handles, resetAll)
+    global jsonConfigFilename;    
     global jsonData;
     global dataPath;
     global curTestNumber;
@@ -305,7 +322,12 @@ function sequenceChanged(handles, resetAll)
     end
     
     if resetAll
-        loadConfigFile();
+        try
+            loadConfigFile();
+        catch
+            disp(sprintf('Could not load specific tests json file %s', jsonConfigFilename));
+            return;
+        end
         
         maxSequenceNumber = length(jsonData.sequences);
 
