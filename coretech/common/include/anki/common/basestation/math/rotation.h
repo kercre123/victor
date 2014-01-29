@@ -67,6 +67,14 @@ namespace Anki {
   }; // class RotationVector3d
   
   
+  class UnitQuaternion : public Point<4, float>
+  {
+  public:
+    UnitQuaternion(const RotationVector3d& Rvec);
+    
+  }; // class UnitQuaternion
+  
+  
   class RotationMatrix3d : public Matrix_3x3f
   {
   public:

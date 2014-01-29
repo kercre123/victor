@@ -59,6 +59,18 @@ namespace Anki {
     Rodrigues(Rmat, *this);
   }
   
+  
+  UnitQuaternion::UnitQuaternion(const RotationVector3d& Rvec)
+  {
+    const float halfAngle = Rvec.get_angle().ToFloat() * 0.5f;
+    this->data[0] = std::cos(halfAngle);
+    
+    const float sinHalfAngle = std::sin(halfAngle);
+    this->data[1] = Rvec.get_axis().x() * sinHalfAngle;
+    this->data[2] = Rvec.get_axis().y() * sinHalfAngle;
+    this->data[3] = Rvec.get_axis().z() * sinHalfAngle;
+  }
+  
   RotationMatrix3d::RotationMatrix3d(void)
   {
     (*this)(0,0) = 1.f;
