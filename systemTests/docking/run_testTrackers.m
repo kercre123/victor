@@ -5,17 +5,20 @@
 function run_testTrackers(allTestsFilename)
 
 mainResolution = [480,640];
-downsampleFactor = 2;
+downsampleFactor = 1;
 
-% resolutions = {[480,640], [240,320], [120,160], [60,80], [30,40]};
-resolutions = {[240,320], [120,160], [60,80], [30,40]};
-% maxPyramidLevels = [5, 4, 3, 1, 1, 1];
-maxPyramidLevels = [4, 3, 1, 1, 1];
+resolutions = {[480,640], [240,320], [120,160], [60,80], [30,40]};
+% resolutions = {[240,320], [120,160], [60,80], [30,40]};
+maxPyramidLevels = [5, 4, 3, 1, 1, 1];
+% maxPyramidLevels = [4, 3, 1, 1, 1];
 maxIterations = 50;
 convergenceTolerance = 0.1;
+useUndistortion = false;
 
-load('Z:\Documents\Box Documents\Cozmo SE\calibCozmoProto1_head.mat');
-cam = Camera('calibration', calibCozmoProto1_head);
+if useUndistortion
+    load('Z:\Documents\Box Documents\Cozmo SE\calibCozmoProto1_head.mat');
+    cam = Camera('calibration', calibCozmoProto1_head);
+end
 
 allTests = loadjson(allTestsFilename);
 
@@ -40,8 +43,12 @@ for iTest = 1:length(allTests)
         for iFrame = 1:length(jsonData.sequences{iSequence}.frameNumbers)
             frameNumber = jsonData.sequences{iSequence}.frameNumbers(iFrame);
             img = imresize(imread([dataPath, sprintf(filenamePattern, frameNumber)]), mainResolution/downsampleFactor);
-            imgUndistorted = cam.undistort(img);
-            allImages{end+1} = imgUndistorted;
+            if useUndistortion
+                imgUndistorted = cam.undistort(img);
+                allImages{end+1} = imgUndistorted;
+            else
+                allImages{end+1} = img;
+            end
         end
     end
     
@@ -86,7 +93,7 @@ for iTest = 1:length(allTests)
 %                     disp(lkTracker_projective.tform);
                     plotResults(originalImageResized, newImageResized, templateQuad*scale, lkTracker_projective.tform);
                     
-                    pause(.01);
+                    pause(.05);
 %                     pause();
                 end
                 
@@ -145,12 +152,16 @@ function plotResults(im1, im2, corners, H)
 
     tempx = H(1,1)*(corners(order,1)-cen(1)) + ...
         H(1,2)*(corners(order,2)-cen(2)) + ...
-        H(1,3) + cen(1);
+        H(1,3);
 
     tempy = H(2,1)*(corners(order,1)-cen(1)) + ...
         H(2,2)*(corners(order,2)-cen(2)) + ...
-        H(2,3) + cen(2);
+        H(2,3);
+    
+    tempz = H(3,1)*(corners(order,1)-cen(1)) + ...
+        H(3,2)*(corners(order,2)-cen(2)) + ...
+        H(3,3);
 
-    plot(tempx, tempy, 'r', ...
+    plot((tempx./tempz) + cen(1), (tempy./tempz) + cen(2), 'r', ...
                     'LineWidth', 2, 'Tag', 'TrackRect');
     
