@@ -66,6 +66,10 @@ namespace Anki
         u32 code[EncodedArray::CODE_SIZE];
       };
 
+      //
+      // Various static functions for encoding and decoding serialized objects
+      //
+
       template<typename Type> static Result EncodeBasicType(u32 &code);
       static Result DecodeBasicType(const u32 code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat);
 
@@ -77,6 +81,15 @@ namespace Anki
 
       template<typename Type> static Result SerializeArray(const Array<Type> &in, void * data, const s32 dataLength);
       template<typename Type> static Result DeserializeArray(const bool swapEndianForHeaders, const bool swapEndianForContents, const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
+
+      // Search rawBuffer for the 8-byte serialized buffer headers and footers.
+      // startIndex is the location after the header, or -1 if one is not found
+      // endIndex is the location before the footer, or -1 if one is not found
+      static Result FindSerializedBuffer(const void * rawBuffer, const s32 rawBufferLength, s32 &startIndex, s32 &endIndex);
+
+      //
+      // Non-static functions
+      //
 
       SerializedBuffer();
 

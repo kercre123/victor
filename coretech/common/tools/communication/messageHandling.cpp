@@ -25,60 +25,6 @@ using namespace std;
 #error Currently, only visual c++ is supported
 #endif
 
-void FindSerializedBuffer(const void * rawBuffer, const s32 rawBufferLength, s32 &startIndex, s32 &endIndex)
-{
-  const u8 * rawBufferU8 = reinterpret_cast<const u8*>(rawBuffer);
-
-  s32 state = 0;
-  s32 index = 0;
-
-  startIndex = -1;
-  endIndex = -1;
-
-  // Look for the header
-  while(index < rawBufferLength) {
-    if(state == SERIALIZED_BUFFER_HEADER_LENGTH) {
-      startIndex = index;
-      break;
-    }
-
-    if(rawBufferU8[index] == SERIALIZED_BUFFER_HEADER[state]) {
-      state++;
-    } else if(rawBufferU8[index] == SERIALIZED_BUFFER_HEADER[0]) {
-      state = 1;
-    } else {
-      state = 0;
-    }
-
-    index++;
-  } // while(index < rawBufferLength)
-
-  // Look for the footer
-  state = 0;
-  while(index < rawBufferLength) {
-    if(state == SERIALIZED_BUFFER_FOOTER_LENGTH) {
-      endIndex = index-SERIALIZED_BUFFER_FOOTER_LENGTH-1;
-      break;
-    }
-
-    //printf("%d) %d %x %x\n", index, state, rawBufferU8[index], SERIALIZED_BUFFER_FOOTER[state]);
-
-    if(rawBufferU8[index] == SERIALIZED_BUFFER_FOOTER[state]) {
-      state++;
-    } else if(rawBufferU8[index] == SERIALIZED_BUFFER_FOOTER[0]) {
-      state = 1;
-    } else {
-      state = 0;
-    }
-
-    index++;
-  } // while(index < rawBufferLength)
-
-  if(state == SERIALIZED_BUFFER_FOOTER_LENGTH) {
-    endIndex = index-SERIALIZED_BUFFER_FOOTER_LENGTH-1;
-  }
-} // void FindSerializedBuffer(const void * rawBuffer, s32 &startIndex, s32 &endIndex)
-
 void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, const bool freeBuffer, const BufferAction action)
 {
   const s32 outputFilenameLength = 1024;
@@ -112,7 +58,7 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
   {
     s32 usbMessageStartIndex;
     s32 usbMessageEndIndex;
-    FindSerializedBuffer(buffer.data+bufferDataOffset, buffer.dataLength-bufferDataOffset, usbMessageStartIndex, usbMessageEndIndex);
+    SerializedBuffer::FindSerializedBuffer(buffer.data+bufferDataOffset, buffer.dataLength-bufferDataOffset, usbMessageStartIndex, usbMessageEndIndex);
 
     if(usbMessageStartIndex < 0) {
       printf("Error: USB header is missing (%d,%d) with %d total bytes and %d bytes remaining, returning...\n", usbMessageStartIndex, usbMessageEndIndex, buffer.dataLength, buffer.dataLength-bufferDataOffset);

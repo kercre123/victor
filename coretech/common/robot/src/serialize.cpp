@@ -95,6 +95,71 @@ namespace Anki
       return RESULT_OK;
     }
 
+    Result SerializedBuffer::FindSerializedBuffer(const void * rawBuffer, const s32 rawBufferLength, s32 &startIndex, s32 &endIndex)
+    {
+      startIndex = -1;
+      endIndex = -1;
+
+      AnkiConditionalErrorAndReturnValue(rawBuffer != NULL,
+        RESULT_FAIL_UNINITIALIZED_MEMORY, "SerializedBuffer::FindSerializedBuffer", "rawBuffer is NULL");
+
+      AnkiConditionalErrorAndReturnValue(rawBufferLength >= 0,
+        RESULT_FAIL_INVALID_PARAMETERS, "SerializedBuffer::FindSerializedBuffer", "rawBufferLength is >= 0");
+
+      if(rawBufferLength == 0)
+        return RESULT_OK;
+
+      const u8 * rawBufferU8 = reinterpret_cast<const u8*>(rawBuffer);
+
+      s32 state = 0;
+      s32 index = 0;
+
+      // Look for the header
+      while(index < rawBufferLength) {
+        if(state == SERIALIZED_BUFFER_HEADER_LENGTH) {
+          startIndex = index;
+          break;
+        }
+
+        if(rawBufferU8[index] == SERIALIZED_BUFFER_HEADER[state]) {
+          state++;
+        } else if(rawBufferU8[index] == SERIALIZED_BUFFER_HEADER[0]) {
+          state = 1;
+        } else {
+          state = 0;
+        }
+
+        index++;
+      } // while(index < rawBufferLength)
+
+      // Look for the footer
+      state = 0;
+      while(index < rawBufferLength) {
+        if(state == SERIALIZED_BUFFER_FOOTER_LENGTH) {
+          endIndex = index-SERIALIZED_BUFFER_FOOTER_LENGTH-1;
+          break;
+        }
+
+        //printf("%d) %d %x %x\n", index, state, rawBufferU8[index], SERIALIZED_BUFFER_FOOTER[state]);
+
+        if(rawBufferU8[index] == SERIALIZED_BUFFER_FOOTER[state]) {
+          state++;
+        } else if(rawBufferU8[index] == SERIALIZED_BUFFER_FOOTER[0]) {
+          state = 1;
+        } else {
+          state = 0;
+        }
+
+        index++;
+      } // while(index < rawBufferLength)
+
+      if(state == SERIALIZED_BUFFER_FOOTER_LENGTH) {
+        endIndex = index-SERIALIZED_BUFFER_FOOTER_LENGTH-1;
+      }
+
+      return RESULT_OK;
+    } // void FindSerializedBuffer(const void * rawBuffer, s32 &startIndex, s32 &endIndex)
+
     void* SerializedBuffer::PushBack(const void * data, const s32 dataLength)
     {
       return PushBack_Generic(DATA_TYPE_RAW, NULL, 0, data, dataLength);

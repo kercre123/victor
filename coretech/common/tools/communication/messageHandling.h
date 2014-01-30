@@ -33,11 +33,6 @@ enum BufferAction {
 const bool swapEndianForHeaders = true;
 const bool swapEndianForContents = true;
 
-// Search rawBuffer for the 8-byte serialized buffer headers and footers.
-// startIndex is the location after the header, or -1 if one is not found
-// endIndex is the location before the footer, or -1 if one is not found
-void FindSerializedBuffer(const void * rawBuffer, const s32 rawBufferLength, s32 &startIndex, s32 &endIndex);
-
 // Process the buffer using the BufferAction action. Optionally, free the buffer on completion.
 void ProcessRawBuffer(RawBuffer &buffer, const std::string outputFilenamePattern, const bool freeBuffer, const BufferAction action);
 
