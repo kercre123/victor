@@ -40,7 +40,7 @@ namespace Anki
 
       // The header and footer for individual segments within a SerializedBuffer
       // These only contain data and CRCs
-      static const s32 SERIALIZED_SEGEMENT_HEADER_LENGTH = 8;
+      static const s32 SERIALIZED_SEGMENT_HEADER_LENGTH = 8;
       static const s32 SERIALIZED_SEGMENT_FOOTER_LENGTH = 4;
 
       enum DataType
@@ -96,11 +96,13 @@ namespace Anki
       // If the void* buffer is already allocated, use flags = Flags::Buffer(false,true,true)
       SerializedBuffer(void *buffer, const s32 bufferLength, const Flags::Buffer flags=Flags::Buffer(false,true,false));
 
+      // Push back some raw data and/or a header
       void* PushBack(const void * data, s32 dataLength);
       void* PushBack(const DataType type, const void * data, s32 dataLength);
       void* PushBack(const void * header, s32 headerLength, const void * data, s32 dataLength);
       void* PushBack(const DataType type, const void * header, s32 headerLength, const void * data, s32 dataLength);
 
+      // Push back a null-terminated string. Works like printf().
       void* PushBackString(const char * format, ...);
 
       // Note that dataLength should be numel(data)*sizeof(Type)

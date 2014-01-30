@@ -200,7 +200,7 @@ namespace Anki
 
       const s32 totalLength = RoundUp<s32>(dataLength, 4) + headerLength;
 
-      const s32 bytesRequired = totalLength+SERIALIZED_SEGEMENT_HEADER_LENGTH+SERIALIZED_SEGMENT_FOOTER_LENGTH;
+      const s32 bytesRequired = totalLength+SERIALIZED_SEGMENT_HEADER_LENGTH+SERIALIZED_SEGMENT_FOOTER_LENGTH;
 
       s32 numBytesAllocated = -1;
       u8 * const segmentStart = reinterpret_cast<u8*>( memoryStack.Allocate(bytesRequired, numBytesAllocated) );
@@ -216,12 +216,12 @@ namespace Anki
 
       // TODO: decide if the CRC should be computed on the length (png doesn't do this)
 #ifdef USING_MOVIDIUS_GCC_COMPILER
-      crc =  ComputeCRC32_bigEndian(segmentU32, SERIALIZED_SEGEMENT_HEADER_LENGTH, crc);
+      crc =  ComputeCRC32_bigEndian(segmentU32, SERIALIZED_SEGMENT_HEADER_LENGTH, crc);
 #else
-      crc =  ComputeCRC32_littleEndian(segmentU32, SERIALIZED_SEGEMENT_HEADER_LENGTH, crc);
+      crc =  ComputeCRC32_littleEndian(segmentU32, SERIALIZED_SEGMENT_HEADER_LENGTH, crc);
 #endif
 
-      segmentU32 += (SERIALIZED_SEGEMENT_HEADER_LENGTH>>2);
+      segmentU32 += (SERIALIZED_SEGMENT_HEADER_LENGTH>>2);
 
       if(header != NULL) {
         // Endian-safe copy (it may copy a little extra)
@@ -253,7 +253,7 @@ namespace Anki
           segmentU32[i] = dataU32[i];
         }
 
-        const s32 numBytesToCrc = numBytesAllocated-headerLength-SERIALIZED_SEGEMENT_HEADER_LENGTH-SERIALIZED_SEGMENT_FOOTER_LENGTH;
+        const s32 numBytesToCrc = numBytesAllocated-headerLength-SERIALIZED_SEGMENT_HEADER_LENGTH-SERIALIZED_SEGMENT_FOOTER_LENGTH;
 #ifdef USING_MOVIDIUS_GCC_COMPILER
         crc =  ComputeCRC32_bigEndian(segmentU32, numBytesToCrc, crc);
 #else
@@ -359,7 +359,7 @@ namespace Anki
       dataLength = reinterpret_cast<const u32*>(segmentToReturn)[0];
       type = static_cast<SerializedBuffer::DataType>(reinterpret_cast<const u32*>(segmentToReturn)[1]);
 
-      return reinterpret_cast<const u8*>(segmentToReturn) + SerializedBuffer::SERIALIZED_SEGEMENT_HEADER_LENGTH;
+      return reinterpret_cast<const u8*>(segmentToReturn) + SerializedBuffer::SERIALIZED_SEGMENT_HEADER_LENGTH;
     }
 
     SerializedBufferIterator::SerializedBufferIterator(SerializedBuffer &serializedBuffer)
