@@ -504,6 +504,39 @@ namespace Anki {
               HAL::CAMERA_MODE_VGA
             };
 
+#ifdef USE_STREAM_IMAGES
+            // Stream the images as they come
+            const s32 imageHeight = HAL::CameraModeInfo[HAL::CAMERA_MODE_VGA].height;
+            const s32 imageWidth = HAL::CameraModeInfo[HAL::CAMERA_MODE_VGA].width;
+            Embedded::Array<u8> image(imageHeight, imageWidth, ddrBuffer_, imageHeight*imageWidth);
+
+            // Wait for the capture of the current frame to finish
+            while (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT))
+            {
+            }
+
+            // TODO: this will be set automatically at some point
+            CameraSetIsEndOfFrame(HAL::CAMERA_FRONT, false);
+            
+            captureImagesBuffer_ = Embedded::SerializedBuffer(&captureImagesBufferRaw_[0], CAPTURE_IMAGES_BUFFER_SIZE);     
+            captureImagesBuffer_.PushBack(image);
+            
+            s32 startIndex;
+            const u8 * bufferStart = reinterpret_cast<const u8*>(captureImagesBuffer_.get_memoryStack().get_validBufferStart(startIndex));
+            const s32 validUsedBytes = captureImagesBuffer_.get_memoryStack().get_usedBytes() - startIndex;
+
+            for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_HEADER_LENGTH; i++) {
+              Anki::Cozmo::HAL::USBPutChar(Embedded::SERIALIZED_BUFFER_HEADER[i]);
+            }
+
+            HAL::USBSendBuffer(bufferStart, validUsedBytes);
+
+            for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
+              Anki::Cozmo::HAL::USBPutChar(Embedded::SERIALIZED_BUFFER_FOOTER[i]);
+            }
+            
+#else // #ifdef USE_STREAM_IMAGES
+            // Buffer a lot of images, and send them in one go
             if(numCapturedImages < MAX_IMAGES_TO_CAPTURE) {
 
               const s32 imageHeight = HAL::CameraModeInfo[HAL::CAMERA_MODE_VGA].height;
@@ -528,8 +561,8 @@ namespace Anki {
 
               numCapturedImages++;
               if(numCapturedImages == MAX_IMAGES_TO_CAPTURE) {
-				DisableCamera(HAL::CAMERA_FRONT);
-			  
+                DisableCamera(HAL::CAMERA_FRONT);
+        
                 //SendPrintf("Image capture finished");              
                 SleepMs(550);
               
@@ -555,9 +588,11 @@ namespace Anki {
                 SleepMs(100);              
               }
             }
-#else
+#endif // #ifdef USE_STREAM_IMAGES ... #else
+
+#else // #ifdef USE_CAPTURE_IMAGES
             PRINT("Error: capture images code is not compiled\n");
-#endif
+#endif // #ifdef USE_CAPTURE_IMAGES ... #else
           }
           break;
 /*

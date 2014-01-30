@@ -3,7 +3,7 @@ File: messageHandling.h
 Author: Peter Barnum
 Created: 2013
 
-Simple USB routines to process messages
+Simple routines to process messages made of SerializedBuffer objects
 
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.

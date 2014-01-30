@@ -11,7 +11,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/utilities.h"
-//#include "anki/cozmo/robot/messages.h"
 #include "anki/common/robot/serialize.h"
 
 #include <ctime>
@@ -169,10 +168,15 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
 
           frameNumber++;
 
-          printf("Saving to %s", outputFilename);
-          const cv::Mat_<u8> &mat = arr.get_CvMat_();
-          cv::imwrite(outputFilename, mat);
-          //cv::imwrite("c:/tmp/tt.bmp", mat);
+          if(action == BUFFER_ACTION_SAVE) {
+            printf("Saving to %s", outputFilename);
+            const cv::Mat_<u8> &mat = arr.get_CvMat_();
+            cv::imwrite(outputFilename, mat);
+          } else if(action == BUFFER_ACTION_DISPLAY) {
+            const cv::Mat_<u8> &mat = arr.get_CvMat_();
+            cv::imshow("Robot Image", mat);
+            cv::waitKey(10);
+          }
         }
       } else if(type == SerializedBuffer::DATA_TYPE_STRING) {
         printf("Board>> %s", dataSegment);

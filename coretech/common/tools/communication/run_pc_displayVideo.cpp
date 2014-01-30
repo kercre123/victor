@@ -12,7 +12,6 @@
 
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/utilities.h"
-//#include "anki/cozmo/robot/messages.h"
 #include "anki/common/robot/serialize.h"
 
 #undef printf
@@ -28,13 +27,13 @@ _Check_return_opt_ _CRTIMP int __cdecl printf(_In_z_ _Printf_format_string_ cons
 
 using namespace std;
 
-const double secondsToWaitBeforeSavingABuffer = 1.0;
+const double secondsToWaitBeforeDisplayingABuffer = 0.05;
 
 const s32 outputFilenamePatternLength = 1024;
 char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/cozmoShort/cozmo_%04d-%02d-%02d_%02d-%02d-%02d_%d.%s";
 
 // Based off example at http://msdn.microsoft.com/en-us/library/windows/desktop/ms682516(v=vs.85).aspx
-DWORD WINAPI SaveBuffersThread(LPVOID lpParam)
+DWORD WINAPI DisplayBuffersThread(LPVOID lpParam)
 {
   SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
 
@@ -97,7 +96,7 @@ int main(int argc, char ** argv)
     if(bytesRead > 0) {
       lastUpdateTime = GetTime();
     } else {
-      if((GetTime()-lastUpdateTime) > secondsToWaitBeforeSavingABuffer) {
+      if((GetTime()-lastUpdateTime) > secondsToWaitBeforeDisplayingABuffer) {
         lastUpdateTime = GetTime();
 
         if(usbBufferIndex > 0) {
@@ -106,20 +105,15 @@ int main(int argc, char ** argv)
           rawBuffer.data = reinterpret_cast<u8*>(usbBuffer);
           rawBuffer.dataLength = usbBufferIndex;
 
-          // Use a seperate thread
-          /*
+          //Use a seperate thread
           DWORD threadId = -1;
           CreateThread(
-          NULL,        // default security attributes
-          0,           // use default stack size
-          SaveBuffersThread, // thread function name
-          &rawBuffer,    // argument to thread function
-          0,           // use default creation flags
-          &threadId);  // returns the thread identifier
-          */
-
-          // Just call the function
-          ProcessRawBuffer(rawBuffer, string(outputFilenamePattern), true, BUFFER_ACTION_SAVE);
+            NULL,        // default security attributes
+            0,           // use default stack size
+            DisplayBuffersThread, // thread function name
+            &rawBuffer,    // argument to thread function
+            0,           // use default creation flags
+            &threadId);  // returns the thread identifier
 
           usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
           usbBufferIndex = 0;

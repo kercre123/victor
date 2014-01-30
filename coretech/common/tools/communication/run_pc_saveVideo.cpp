@@ -12,7 +12,6 @@
 
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/utilities.h"
-//#include "anki/cozmo/robot/messages.h"
 #include "anki/common/robot/serialize.h"
 
 #undef printf
