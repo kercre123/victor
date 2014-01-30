@@ -1,8 +1,8 @@
 % function run_testTrackers(allTestsFilename)
 
-% run_testTrackers('C:/Anki/systemTestImages/allDockerTests.json');
+% run_testTrackers('C:/Anki/systemTestImages/allDockerTests.json', 'C:/Anki/systemTestImages/results.mat');
 
-function run_testTrackers(allTestsFilename)
+function run_testTrackers(allTestsFilename, outputFilename)
 
 mainResolution = [480,640];
 downsampleFactor = 1;
@@ -12,6 +12,9 @@ maxPyramidLevels = [5, 4, 3, 1, 1, 1];
 maxIterations = 50;
 convergenceTolerance = 0.1;
 useUndistortion = false;
+
+assert(exist('allTestsFilename', 'var') == 1);
+assert(exist('outputFilename', 'var') == 1);
 
 if useUndistortion
     load('Z:\Documents\Box Documents\Cozmo SE\calibCozmoProto1_head.mat');
@@ -23,20 +26,24 @@ allTests = loadjson(allTestsFilename);
 slashIndexes = strfind(allTestsFilename, '/');
 dataPath = allTestsFilename(1:(slashIndexes(end)));
 
+pointErrors = cell(length(allTests), 1);
+
+fullResultsString = '';
+
 for iTest = 1:length(allTests)
     jsonData = loadjson([dataPath, allTests.tests{iTest}]);
-    
+
     if ~iscell(jsonData.sequences)
         jsonData.sequences = { jsonData.sequences };
     end
-            
+
     allImages = cell(0,3);
-    
+
     for iSequence = 1:length(jsonData.sequences)
         if ~iscell(jsonData.sequences{iSequence}.groundTruth)
             jsonData.sequences{iSequence}.groundTruth = { jsonData.sequences{iSequence}.groundTruth };
         end
-    
+
         filenamePattern = jsonData.sequences{iSequence}.filenamePattern;
         for iFrame = 1:length(jsonData.sequences{iSequence}.frameNumbers)
             frameNumber = jsonData.sequences{iSequence}.frameNumbers(iFrame);
@@ -48,78 +55,108 @@ for iTest = 1:length(allTests)
                 allImages{end+1,1} = img;
             end
             allImages{end,2} = iSequence;
-            
+
             frameIndex = findFrameNumberIndex(jsonData, iSequence, iFrame);
             allImages{end,3} = frameIndex;
         end
     end
-    
+
+    pointErrors{iTest} = cell(length(resolutions), 1);
+
     frameIndex = findFrameNumberIndex(jsonData, 1, 1);
-    
+
     templateCorners = jsonData.sequences{1}.groundTruth{frameIndex}.templateCorners;
     xCoordinates = [templateCorners{1}.x, templateCorners{2}.x, templateCorners{3}.x, templateCorners{4}.x] / downsampleFactor;
     yCoordinates = [templateCorners{1}.y, templateCorners{2}.y, templateCorners{3}.y, templateCorners{4}.y] / downsampleFactor;
     templateQuad = [xCoordinates', yCoordinates'];
-    
+
     errorSignalCorners = jsonData.sequences{1}.groundTruth{frameIndex}.errorSignalCorners;
     esX = [errorSignalCorners{1}.x, errorSignalCorners{2}.x] / downsampleFactor;
     esY = [errorSignalCorners{1}.y, errorSignalCorners{2}.y] / downsampleFactor;
     bottomLine = [esX', esY'];
-    
+
     mask = zeros(size(allImages{1,1}));
     mask = roipoly(mask, xCoordinates, yCoordinates);
 
-    for iOriginalResolution = 2:length(resolutions)
+    for iOriginalResolution = 1:length(resolutions)
         originalResolution = resolutions{iOriginalResolution};
-        
+
         originalImageResized = imresize(allImages{1,1}, originalResolution);
         maskResized = imresize(mask, originalResolution);
-        
+
         scale = originalResolution(1) / mainResolution(1) * downsampleFactor;
-        
+
+        pointErrors{iTest}{iOriginalResolution} = cell(maxPyramidLevels(iOriginalResolution), 1);
+
 %         for iTrackingResolution = iOriginalResolution:length(resolutions)
 %             trackingResolution = resolutions{iTrackingResolution};
-            
+
             for numPyramidLevels = 1:maxPyramidLevels(iOriginalResolution)
-                disp(sprintf('originalRes:(%d,%d) numPyramidLevels:%d', originalResolution(2), originalResolution(1), numPyramidLevels));
-                
+%                 disp(sprintf('originalRes:(%d,%d) numPyramidLevels:%d', originalResolution(2), originalResolution(1), numPyramidLevels));
+
                 lkTracker_projective = LucasKanadeTracker(originalImageResized, maskResized, ...
                     'Type', 'homography', 'DebugDisplay', false, ...
                     'UseBlurring', false, 'UseNormalization', false, ...
                     'NumScales', numPyramidLevels, 'ApproximateGradientMargins', false);
 %                     'TrackingResolution', trackingResolution(2:-1:1));
-                
+
+                pointErrors{iTest}{iOriginalResolution}{numPyramidLevels} = zeros(0, 2);
+
                 warning off
-                
+
                 for iFrame = 2:size(allImages,1)
                     newImageResized = imresize(allImages{iFrame,1}, originalResolution);
-    
+
                     lkTracker_projective.track(newImageResized, 'MaxIterations', maxIterations, 'ConvergenceTolerance', convergenceTolerance);
-                    
+
 %                     disp('Matlab LK projective:');
 %                     disp(lkTracker_projective.tform);
-                    
-                    if (allImages{iFrame,3} > 0) && isfield(jsonData.sequences{allImages{iFrame,2}}.groundTruth{allImages{iFrame,3}}, 'errorSignalCorners') 
+
+                    if (allImages{iFrame,3} > 0) && isfield(jsonData.sequences{allImages{iFrame,2}}.groundTruth{allImages{iFrame,3}}, 'errorSignalCorners')
                         bottomLineGroundTruth = jsonData.sequences{allImages{iFrame,2}}.groundTruth{allImages{iFrame,3}}.errorSignalCorners;
-                        esX = [bottomLineGroundTruth{1}.x, bottomLineGroundTruth{2}.x] / downsampleFactor;
-                        esY = [bottomLineGroundTruth{1}.y, bottomLineGroundTruth{2}.y] / downsampleFactor;
+                        esX = [bottomLineGroundTruth{1}.x, bottomLineGroundTruth{2}.x] / downsampleFactor * scale;
+                        esY = [bottomLineGroundTruth{1}.y, bottomLineGroundTruth{2}.y] / downsampleFactor * scale;
                         bottomLineGroundTruth = [esX', esY'];
+
+                        warpedBottomLine = warpLine(bottomLine*scale, lkTracker_projective.tform, mean(templateQuad*scale, 1));
+                        
+                        bottomLineGroundTruthScaled = bottomLineGroundTruth / scale;
+                        warpedBottomLineScaled = warpedBottomLine / scale;
+                        
+                        distance = sqrt((bottomLineGroundTruthScaled(:,1) - warpedBottomLineScaled(:,1)).^2 + (bottomLineGroundTruthScaled(:,2) - warpedBottomLineScaled(:,2)).^2);
+                        
+                        pointErrors{iTest}{iOriginalResolution}{numPyramidLevels}(end+1, :) = distance;
                     else
                         bottomLineGroundTruth = [];
                     end
 
-                    plotResults(newImageResized, templateQuad*scale, lkTracker_projective.tform, bottomLine*scale, bottomLineGroundTruth*scale);
-                    
-                    pause(.1);
+                    plotResults(newImageResized, templateQuad*scale, lkTracker_projective.tform, bottomLine*scale, bottomLineGroundTruth);
+
+                    pause(.03);
 %                     pause();
                 end
+
                 
+                
+                totalString = sprintf('Results for Test:%d originalResolution:(%d,%d) numPyramidLevels:%d = [', iTest, originalResolution(2), originalResolution(1), numPyramidLevels);
+                maxValues = max(pointErrors{iTest}{iOriginalResolution}{numPyramidLevels}, [], 2);
+                for ii = 1:length(maxValues)
+                    totalString = [totalString, num2str(maxValues(ii)), ', '];
+                end
+                totalString = [totalString(1:(end-2)), ']'];
+                
+                fullResultsString = [fullResultsString, totalString, sprintf('\n')];
+                
+                save(outputFilename, 'pointErrors', 'fullResultsString');
+                
+                disp(totalString);
+
                 warning on
             end % for numPyramidLevels = 1:maxPyramidLevels
 %         end % for iTrackingResolution = iOriginalResolution:length(resolutions)
     end % for iOriginalResolution = 1:length(resolutions)
-    
-    
+
+
     keyboard
 end
 
@@ -129,18 +166,39 @@ end
 
 keyboard
 
+function warpedLine = warpLine(originalLine, H, centerPoint)
+    warpedLineX = ...
+        H(1,1)*(originalLine(:,1)-centerPoint(1)) + ...
+        H(1,2)*(originalLine(:,2)-centerPoint(2)) + ...
+        H(1,3);
+
+    warpedLineY = ...
+        H(2,1)*(originalLine(:,1)-centerPoint(1)) + ...
+        H(2,2)*(originalLine(:,2)-centerPoint(2)) + ...
+        H(2,3);
+
+    warpedLineW = ...
+        H(3,1)*(originalLine(:,1)-centerPoint(1)) + ...
+        H(3,2)*(originalLine(:,2)-centerPoint(2)) + ...
+        H(3,3);
+
+    warpedLineX = (warpedLineX./warpedLineW) + centerPoint(1);
+    warpedLineY = (warpedLineY./warpedLineW) + centerPoint(2);
+
+    warpedLine = [warpedLineX, warpedLineY];
+
+    return;
+
 function index = findFrameNumberIndex(jsonData, sequenceNumberIndex, frameNumberIndex)
     index = -1;
 
     if ~isfield(jsonData.sequences{sequenceNumberIndex}, 'groundTruth')
         return;
     end
-    
+
     for i = 1:length(jsonData.sequences{sequenceNumberIndex}.groundTruth)
         curFrameNumber = jsonData.sequences{sequenceNumberIndex}.groundTruth{i}.frameNumber;
         queryFrameNumber = jsonData.sequences{sequenceNumberIndex}.frameNumbers(frameNumberIndex);
-
-    %     disp(sprintf('%d) %d %d', i, curFrameNumber, queryFrameNumber));
 
         if curFrameNumber == queryFrameNumber
             index = i;
@@ -149,7 +207,7 @@ function index = findFrameNumberIndex(jsonData, sequenceNumberIndex, frameNumber
     end
 
     return;
-    
+
 function plotResults(im, corners, H, bottomLine, bottomLineGroundTruth)
     cen = mean(corners,1);
 
@@ -170,7 +228,7 @@ function plotResults(im, corners, H, bottomLine, bottomLineGroundTruth)
         H(2,1)*(corners(order,1)-cen(1)) + ...
         H(2,2)*(corners(order,2)-cen(2)) + ...
         H(2,3);
-    
+
     tempw = ...
         H(3,1)*(corners(order,1)-cen(1)) + ...
         H(3,2)*(corners(order,2)-cen(2)) + ...
@@ -178,33 +236,14 @@ function plotResults(im, corners, H, bottomLine, bottomLineGroundTruth)
 
     plot((tempx./tempw) + cen(1), (tempy./tempw) + cen(2), 'b', ...
                     'LineWidth', 2, 'Tag', 'TrackRect');
-                
-    bottomLineWarpedX = ...
-        H(1,1)*(bottomLine(:,1)-cen(1)) + ...
-        H(1,2)*(bottomLine(:,2)-cen(2)) + ...
-        H(1,3);
-    
-    bottomLineWarpedY = ...
-        H(2,1)*(bottomLine(:,1)-cen(1)) + ...
-        H(2,2)*(bottomLine(:,2)-cen(2)) + ...
-        H(2,3);                
-    
-    bottomLineWarpedW = ...
-        H(3,1)*(bottomLine(:,1)-cen(1)) + ...
-        H(3,2)*(bottomLine(:,2)-cen(2)) + ...
-        H(3,3);
-    
-    plot((bottomLineWarpedX./bottomLineWarpedW) + cen(1),...
-         (bottomLineWarpedY./bottomLineWarpedW) + cen(2), 'r', ...
-         'LineWidth', 2, 'Tag', 'TrackRect');
-     
-     scatter((bottomLineWarpedX./bottomLineWarpedW) + cen(1),...
-         (bottomLineWarpedY./bottomLineWarpedW) + cen(2), 'ro', ...
-         'LineWidth', 2, 'Tag', 'TrackRect');
-    
+
+    bottomLineWarped = warpLine(bottomLine, H, cen);
+
+    plot(bottomLineWarped(:,1), bottomLineWarped(:,2), 'r', 'LineWidth', 2, 'Tag', 'TrackRect');
+    scatter(bottomLineWarped(:,1), bottomLineWarped(:,2), 'ro', 'LineWidth', 2, 'Tag', 'TrackRect');
+
     if exist('bottomLineGroundTruth', 'var') && ~isempty(bottomLineGroundTruth)
         scatter(bottomLineGroundTruth(:,1), bottomLineGroundTruth(:,2),...
             'g+', 'LineWidth', 2, 'Tag', 'TrackRect');
     end
-     
-     
+
