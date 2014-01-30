@@ -95,6 +95,12 @@ extern "C" {
   } \
 }
 
+
+// Whether or not to use TCP server (0) or Webots emitter/receiver (1)
+// as the BTLE channel. (TODO: Phase out webots emitter/receiver)
+#define USE_WEBOTS_TXRX 0
+
+
 #endif  // SIMULATOR
 
 #define REG_WORD(x) *(volatile u32*)(x)
@@ -155,7 +161,7 @@ namespace Anki
       void MicroWait(u32 microseconds);
       
       // Get a sync'd timestamp (e.g. for messages), in milliseconds
-      TimeStamp GetTimeStamp(void);
+      TimeStamp_t GetTimeStamp(void);
 
       s32 GetRobotID(void);
 
@@ -382,7 +388,7 @@ namespace Anki
       Messages::ID RadioGetNextMessage(u8* buffer);
      
       // Returns true if the message has been sent to the basestation
-      bool RadioSendMessage(const Messages::ID msgID, const void *buffer);
+      bool RadioSendMessage(const Messages::ID msgID, const void *buffer, TimeStamp_t ts = HAL::GetTimeStamp());
 
       /////////////////////////////////////////////////////////////////////
       // POWER MANAGEMENT
@@ -469,7 +475,7 @@ namespace Anki
       // Send a frame at the current frame resolution (last set by
       // a call to SetUSBFrameResolution)
       void USBSendFrame(const u8*        frame,
-                        const TimeStamp  timestamp,
+                        const TimeStamp_t  timestamp,
                         const CameraMode inputResolution,
                         const CameraMode sendResolution,
                         const u8         commandByte);

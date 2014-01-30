@@ -45,8 +45,6 @@ set(SOURCE_FILES
 
   ${COZMO_ROBOT_SUPERVISOR_SRC}
   
-  ${PROJECT_SOURCE_DIR}/coretech/messaging/robot/utilMessaging.c
-
 #	${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_encoders.cpp
 #	${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_motors.cpp
 #	${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_timers.cpp
@@ -74,6 +72,7 @@ if(NOT WIN32)
     CppController
     CoreTech_Common_Robot
     CoreTech_Vision_Robot
+    CoreTech_Messaging_Shared
     mx 
     eng
     ${ALL_EMBEDDED_LIBRARIES}

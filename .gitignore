@@ -62,6 +62,7 @@ world_comms_controller
 robot/simulator/controllers/overlay_display_supervisor/overlay_display_supervisor
 robot/simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
 robot/simulator/controllers/cozmo_c_controller/cozmo_c_controller
+robot/simulator/controllers/robot_advertisement_controller/robot_advertisement_controller
 screenshot.png
 blockworld_controller
 *.mvlib
@@ -74,7 +75,6 @@ ims.mat
 robot/ld/objects.ldscript
 movidiusTests/shaveTests3/output
 interp2InnerLoop.asmgen-1155e305
-cozmo_docking_controller_test
 robot/.settings
 .com.apple.timemachine.supported
 coretech/common/include/anki/common/robot/array2d.h.BACKUP.85552.h

@@ -80,7 +80,7 @@ namespace Anki
     
     // TODO: pull the downsampling out of this function
     void HAL::USBSendFrame(const u8*        frame,
-                           const TimeStamp  timestamp,
+                           const TimeStamp_t  timestamp,
                            const CameraMode inputResolution,
                            const CameraMode sendResolution,
                            const u8         commandByte)
@@ -97,10 +97,10 @@ namespace Anki
       USBPutChar(frameResHeader);
       
       // Send the timestamp
-      static_assert(sizeof(TimeStamp) == 4,
-                    "Currently assuming sizeof(TimeStamp)==4 when sending to "
+      static_assert(sizeof(TimeStamp_t) == 4,
+                    "Currently assuming sizeof(TimeStamp_t)==4 when sending to "
                     "offboard vision processor in Matlab.");
-      USBSendBuffer(reinterpret_cast<const u8*>(&timestamp), sizeof(TimeStamp));
+      USBSendBuffer(reinterpret_cast<const u8*>(&timestamp), sizeof(TimeStamp_t));
       
       const u16 nrows = CameraModeInfo[inputResolution].height;
       const u16 ncols = CameraModeInfo[inputResolution].width;

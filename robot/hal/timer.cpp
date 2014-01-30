@@ -25,7 +25,7 @@ namespace Anki
         return m_microSeconds;
       }
       
-      TimeStamp GetTimeStamp()
+      TimeStamp_t GetTimeStamp()
       {
         // Currently just returning the microcounter/1000
         // TODO: Update to actually return real timestamp

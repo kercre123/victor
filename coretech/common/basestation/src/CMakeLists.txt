@@ -1,7 +1,7 @@
 # coretech/common/basestation/src/CMakeLists.txt
 
 if(NOT WIN32)
-  file(GLOB SOURCE_FILES *.cpp math/*.cpp ../../shared/src/*.cpp)
+  file(GLOB SOURCE_FILES *.cpp math/*.cpp utils/*.cpp ../../shared/src/*.cpp)
 
   file(GLOB HEADER_FILES 
     *.h 

@@ -1,4 +1,4 @@
-#include "anki/messaging/TcpClient.h"
+#include "anki/messaging/shared/UdpClient.h"
 
 #include <iostream>
 #include <cstring>      // Needed for memset
@@ -9,19 +9,19 @@
 #include <errno.h>
 #include <unistd.h>
 
-TcpClient::TcpClient()
+UdpClient::UdpClient()
 {
   socketfd = -1;
 }
 
-TcpClient::~TcpClient()
+UdpClient::~UdpClient()
 {
   if (socketfd > -1) {
     Disconnect();
   }
 }
 
-void set_nonblock(int socket) {
+void UdpClient::set_nonblock(int socket) {
     int flags;
     flags = fcntl(socket,F_GETFL,0);
     assert(flags != -1);
@@ -29,12 +29,10 @@ void set_nonblock(int socket) {
 }
 
 
-bool TcpClient::Connect(const char *host_address, const char* port)
+bool UdpClient::Connect(const char *host_address, const unsigned short port)
 {
   if (socketfd >= 0) {
-#if(DEBUG_TCP_CLIENT)
-    std::cout << "TcpClient: Already connected\n";
-#endif
+    DEBUG_UDP_CLIENT("UdpClient: Already connected\n");
     return false;
   }
 
@@ -48,31 +46,22 @@ bool TcpClient::Connect(const char *host_address, const char* port)
   memset(&host_info, 0, sizeof host_info);
 
   host_info.ai_family = AF_UNSPEC;     // IP version not specified. Can be both.
-  host_info.ai_socktype = SOCK_STREAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
+  host_info.ai_socktype = SOCK_DGRAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
 
-  status = getaddrinfo(host_address, port, &host_info, &host_info_list);  
+  char portStr[8];
+  sprintf(portStr, "%d", port);
+  status = getaddrinfo(host_address, portStr, &host_info, &host_info_list);
   if (status != 0) {
     std::cout << "getaddrinfo error" << gai_strerror(status) ;
     return false;
   }
 
-#if(DEBUG_TCP_CLIENT)
-  std::cout << "TcpClient: Creating a socket on port " << port << "\n";
-#endif
+  DEBUG_UDP_CLIENT("UdpClient: Creating a socket on port " << portStr << "\n");
+
   socketfd = socket(host_info_list->ai_family, host_info_list->ai_socktype,
                     host_info_list->ai_protocol);
   if (socketfd == -1) {
     std::cout << "socket error\n" ;
-    return false;
-  }
-
-
-#if(DEBUG_TCP_CLIENT)
-  std::cout << "TcpClient: Connecting to " << host_address << "\n";
-#endif
-  status = connect(socketfd, host_info_list->ai_addr, host_info_list->ai_addrlen);
-  if (status == -1) {
-    std::cout << "connect error\n" ;
     return false;
   }
 
@@ -81,7 +70,7 @@ bool TcpClient::Connect(const char *host_address, const char* port)
   return true;
 }
 
-bool TcpClient::Disconnect()
+bool UdpClient::Disconnect()
 {
   freeaddrinfo(host_info_list);
   close(socketfd);
@@ -90,18 +79,17 @@ bool TcpClient::Disconnect()
   return true;
 }
 
-int TcpClient::Send(const char* data, int size)
+int UdpClient::Send(const char* data, int size)
 {
-#if(DEBUG_TCP_CLIENT)
-  std::cout << "TcpClient: sending " << size << " bytes: " << data << "\n";
-#endif
-  int bytes_sent = send(socketfd, data, size, 0);
+  DEBUG_UDP_CLIENT("UdpClient: sending " << size << " bytes: " << data << "\n");
+
+  int bytes_sent = sendto(socketfd, data, size, 0,
+                          (struct sockaddr *)(host_info_list->ai_addr),
+                          sizeof(struct sockaddr_in));
 
   if (bytes_sent <= 0) {
     if (errno != EWOULDBLOCK) {
-      #if(DEBUG_TCP_CLIENT)
-      std::cout << "TcpClient: Send error, disconnecting.\n";
-      #endif
+      DEBUG_UDP_CLIENT("UdpClient: Send error, disconnecting (" << errno << ").\n");
       Disconnect();
       return -1;
     }
@@ -110,30 +98,27 @@ int TcpClient::Send(const char* data, int size)
   return bytes_sent;
 }
 
-int TcpClient::Recv(char* data, int maxSize)
+int UdpClient::Recv(char* data, int maxSize)
 {
-#if(DEBUG_TCP_CLIENT)
-    std::cout << "TcpClient: Waiting to recieve data...\n";
-#endif
+
+    DEBUG_UDP_CLIENT( "UdpClient: Waiting to receive data...\n");
+
     assert(data != NULL);
     ssize_t bytes_received;
     bytes_received = recv(socketfd, data, maxSize, 0);
     // If no data arrives, the program will just wait here until some data arrives.
-
-
+  
     if (bytes_received <= 0) {
       if (errno != EWOULDBLOCK) {
-        #if(DEBUG_TCP_CLIENT)
-        std::cout << "TcpClient: Receive error, disconnecting.\n";
-        #endif
+        DEBUG_UDP_CLIENT("UdpClient: Receive error, disconnecting.\n");
         Disconnect();
         return -1;
+      } else {
+        bytes_received = 0;
       }
     }
     else {
-#if(DEBUG_TCP_CLIENT)
-      std::cout << "TcpClient: " << bytes_received << " bytes recieved : " << data << "\n";
-#endif
+      DEBUG_UDP_CLIENT("UdpClient: " << bytes_received << " bytes recieved : " << data << "\n");
     }
 
     return bytes_received;

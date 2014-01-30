@@ -7,7 +7,7 @@ WorldInfo {
     "Date: 02 Aug 2013"
     ""
   ]
-  basicTimeStep 16
+  basicTimeStep 5
   contactProperties [
     DEF FLOOR_FRONTWHEEL ContactProperties {
       material1 "cmat_floor"
@@ -154,6 +154,12 @@ DEF WALL_4 Solid {
   ]
   boundingObject USE WALL_SHAPE
 }
+
+
+RobotAdvertisementService {
+
+}
+
 DEF Cozmo CozmoBot {
   # In front of two green blocks:
   translation 0.286003 0.021 0.0510032
