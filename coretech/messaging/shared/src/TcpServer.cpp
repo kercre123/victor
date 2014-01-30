@@ -207,7 +207,7 @@ void TcpServer::DisconnectClient()
 
 
 
-bool TcpServer::HasClient() 
+bool TcpServer::HasClient() const
 {
   return (client_sd != -1);
 }
