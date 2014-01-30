@@ -132,7 +132,7 @@ namespace Anki
       // Same as the standard MemoryStackConstIterator::GetNext(), plus:
       // 1. Checks the CRC code and returns NULL if it fails
       // 2. dataLength is the number of bytes of the returned buffer
-      const void * GetNext(s32 &dataLength, SerializedBuffer::DataType &type);
+      const void * GetNext(s32 &dataLength, SerializedBuffer::DataType &type, const bool requireCRCmatch=true);
     }; // class MemoryStackConstIterator
 
     class SerializedBufferIterator : public SerializedBufferConstIterator
@@ -143,7 +143,7 @@ namespace Anki
       // Same as the standard MemoryStackIterator::GetNext(), plus:
       // 1. Checks the CRC code and returns NULL if it fails
       // 2. dataLength is the number of bytes of the returned buffer
-      void * GetNext(const bool swapEndian, s32 &dataLength, SerializedBuffer::DataType &type);
+      void * GetNext(const bool swapEndian, s32 &dataLength, SerializedBuffer::DataType &type, const bool requireCRCmatch=true);
     }; // class MemoryStackConstIterator
   } // namespace Embedded
 } //namespace Anki

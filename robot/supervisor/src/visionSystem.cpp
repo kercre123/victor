@@ -376,9 +376,9 @@ namespace Anki {
       void SendPrintf(const char * string)
       {
         printfBuffer_ = Embedded::SerializedBuffer(&printfBufferRaw_[0], PRINTF_BUFFER_SIZE);
-      
+
         printfBuffer_.PushBackString(string);
-        
+
         s32 startIndex;
         const u8 * bufferStart = reinterpret_cast<const u8*>(printfBuffer_.get_memoryStack().get_validBufferStart(startIndex));
         const s32 validUsedBytes = printfBuffer_.get_memoryStack().get_usedBytes() - startIndex;
@@ -473,7 +473,7 @@ namespace Anki {
 #ifdef SIMULATOR
               frameRdyTimeUS_ = HAL::GetMicroCounter() + TRACK_BLOCK_PERIOD_US;
 #endif
-              
+
               if(TrackTemplate(frame) == EXIT_FAILURE) {
                 PRINT("VisionSystem::Update(): TrackTemplate() failed.\n");
                 retVal = EXIT_FAILURE;
@@ -495,7 +495,7 @@ namespace Anki {
             if(!sentStartingMessage) {
               sentStartingMessage = true;
 
-              //SendPrintf("Starting image capture");              
+              //SendPrintf("Starting image capture");
               //SleepMs(500);
             } // if(!sentStartingMessage)
 
@@ -509,6 +509,8 @@ namespace Anki {
             const s32 imageHeight = HAL::CameraModeInfo[HAL::CAMERA_MODE_VGA].height;
             const s32 imageWidth = HAL::CameraModeInfo[HAL::CAMERA_MODE_VGA].width;
             Embedded::Array<u8> image(imageHeight, imageWidth, ddrBuffer_, imageHeight*imageWidth);
+			
+			Embedded::MemoryStack scratch = Embedded::MemoryStack(cmxBuffer_, TRACKER_SCRATCH_SIZE);
 
             // Wait for the capture of the current frame to finish
             while (!HAL::CameraIsEndOfFrame(HAL::CAMERA_FRONT))
@@ -517,10 +519,24 @@ namespace Anki {
 
             // TODO: this will be set automatically at some point
             CameraSetIsEndOfFrame(HAL::CAMERA_FRONT, false);
-            
-            captureImagesBuffer_ = Embedded::SerializedBuffer(&captureImagesBufferRaw_[0], CAPTURE_IMAGES_BUFFER_SIZE);     
-            captureImagesBuffer_.PushBack(image);
-            
+
+            captureImagesBuffer_ = Embedded::SerializedBuffer(&captureImagesBufferRaw_[0], CAPTURE_IMAGES_BUFFER_SIZE);
+			
+			Embedded::Array<u8> downsampledImage(imageHeight/2, imageWidth/2, scratch);
+            DownsampleHelper(frame, downsampledImage, HAL::CAMERA_MODE_QVGA, scratch);
+			
+			for(s32 y=0; y<imageHeight/2; y++) {
+				u8 * restrict pDownsampledImage = downsampledImage.Pointer(y,0);
+				for(s32 x=0; x<imageWidth/2; x+=2) {
+					Embedded::Swap<u8>(pDownsampledImage[x], pDownsampledImage[x+1]);
+					//Embedded::Swap<u8>(pDownsampledImage[x], pDownsampledImage[x+3]);
+					//Embedded::Swap<u8>(pDownsampledImage[x+1], pDownsampledImage[x+2]);
+				}
+			}
+			
+            //captureImagesBuffer_.PushBack(image);
+			captureImagesBuffer_.PushBack(downsampledImage);
+
             s32 startIndex;
             const u8 * bufferStart = reinterpret_cast<const u8*>(captureImagesBuffer_.get_memoryStack().get_validBufferStart(startIndex));
             const s32 validUsedBytes = captureImagesBuffer_.get_memoryStack().get_usedBytes() - startIndex;
@@ -534,7 +550,9 @@ namespace Anki {
             for(s32 i=0; i<Embedded::SERIALIZED_BUFFER_FOOTER_LENGTH; i++) {
               Anki::Cozmo::HAL::USBPutChar(Embedded::SERIALIZED_BUFFER_FOOTER[i]);
             }
-            
+			
+			SleepMs(80);
+
 #else // #ifdef USE_STREAM_IMAGES
             // Buffer a lot of images, and send them in one go
             if(numCapturedImages < MAX_IMAGES_TO_CAPTURE) {
@@ -562,10 +580,10 @@ namespace Anki {
               numCapturedImages++;
               if(numCapturedImages == MAX_IMAGES_TO_CAPTURE) {
                 DisableCamera(HAL::CAMERA_FRONT);
-        
-                //SendPrintf("Image capture finished");              
+
+                //SendPrintf("Image capture finished");
                 SleepMs(550);
-              
+
                 s32 startIndex;
                 const u8 * bufferStart = reinterpret_cast<const u8*>(captureImagesBuffer_.get_memoryStack().get_validBufferStart(startIndex));
                 const s32 validUsedBytes = captureImagesBuffer_.get_memoryStack().get_usedBytes() - startIndex;
@@ -585,7 +603,7 @@ namespace Anki {
             } else {
               // We're done, so just spin
               while(1) {
-                SleepMs(100);              
+                SleepMs(100);
               }
             }
 #endif // #ifdef USE_STREAM_IMAGES ... #else

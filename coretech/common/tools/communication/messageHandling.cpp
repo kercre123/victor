@@ -24,7 +24,7 @@ using namespace std;
 #error Currently, only visual c++ is supported
 #endif
 
-void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, const bool freeBuffer, const BufferAction action)
+void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, const bool freeBuffer, const BufferAction action, const bool swapEndianForHeaders, const bool swapEndianForContents, const bool requireCRCmatch)
 {
   const s32 outputFilenameLength = 1024;
   char outputFilename[outputFilenameLength];
@@ -104,7 +104,7 @@ void ProcessRawBuffer(RawBuffer &buffer, const string outputFilenamePattern, con
     while(iterator.HasNext()) {
       s32 dataLength;
       SerializedBuffer::DataType type;
-      u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(swapEndianForHeaders, dataLength, type));
+      u8 * const dataSegmentStart = reinterpret_cast<u8*>(iterator.GetNext(swapEndianForHeaders, dataLength, type, requireCRCmatch));
       u8 * dataSegment = dataSegmentStart;
 
       if(!dataSegment) {

@@ -39,7 +39,7 @@ DWORD WINAPI SaveBuffersThread(LPVOID lpParam)
 
   RawBuffer *buffer = (RawBuffer*)lpParam;
 
-  ProcessRawBuffer(*buffer, string(outputFilenamePattern), true, BUFFER_ACTION_SAVE);
+  ProcessRawBuffer(*buffer, string(outputFilenamePattern), true, BUFFER_ACTION_SAVE, true, true, true);
 
   return 0;
 } // DWORD WINAPI PrintfBuffers(LPVOID lpParam)
@@ -48,7 +48,7 @@ void printUsage()
 {
   printf(
     "usage: saveVideo <comPort> <baudRate> <outputPatternString>\n"
-    "example: saveVideo 8 1500000 C:/datasets/cozmoShort/cozmo_%%04d-%%02d-%%02d_%%02d-%%02d-%%02d_%%d.%%s\n");
+    "example: saveVideo 8 1000000 C:/datasets/cozmoShort/cozmo_%%04d-%%02d-%%02d_%%02d-%%02d-%%02d_%%d.%%s\n");
 } // void printUsage()
 
 int main(int argc, char ** argv)
@@ -118,7 +118,7 @@ int main(int argc, char ** argv)
           */
 
           // Just call the function
-          ProcessRawBuffer(rawBuffer, string(outputFilenamePattern), true, BUFFER_ACTION_SAVE);
+          ProcessRawBuffer(rawBuffer, string(outputFilenamePattern), true, BUFFER_ACTION_SAVE, true, true, true);
 
           usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
           usbBufferIndex = 0;

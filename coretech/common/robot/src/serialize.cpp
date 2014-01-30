@@ -335,7 +335,7 @@ namespace Anki
     {
     }
 
-    const void * SerializedBufferConstIterator::GetNext(s32 &dataLength, SerializedBuffer::DataType &type)
+    const void * SerializedBufferConstIterator::GetNext(s32 &dataLength, SerializedBuffer::DataType &type, const bool requireCRCmatch)
     {
       s32 segmentLength = -1;
       const void * segmentToReturn = MemoryStackConstIterator::GetNext(segmentLength);
@@ -345,16 +345,18 @@ namespace Anki
 
       segmentLength -= SerializedBuffer::SERIALIZED_SEGMENT_FOOTER_LENGTH;
 
-      const u32 expectedCRC = reinterpret_cast<const u32*>(reinterpret_cast<const u8*>(segmentToReturn)+segmentLength)[0];
+      if(requireCRCmatch) {
+        const u32 expectedCRC = reinterpret_cast<const u32*>(reinterpret_cast<const u8*>(segmentToReturn)+segmentLength)[0];
 
 #ifdef USING_MOVIDIUS_GCC_COMPILER
-      const u32 computedCrc =  ComputeCRC32_bigEndian(segmentToReturn, segmentLength, 0xFFFFFFFF);
+        const u32 computedCrc =  ComputeCRC32_bigEndian(segmentToReturn, segmentLength, 0xFFFFFFFF);
 #else
-      const u32 computedCrc =  ComputeCRC32_littleEndian(segmentToReturn, segmentLength, 0xFFFFFFFF);
+        const u32 computedCrc =  ComputeCRC32_littleEndian(segmentToReturn, segmentLength, 0xFFFFFFFF);
 #endif
 
-      AnkiConditionalErrorAndReturnValue(expectedCRC == computedCrc,
-        NULL, "SerializedBufferConstIterator::GetNext", "CRCs don't match (%x != %x)", expectedCRC, computedCrc);
+        AnkiConditionalErrorAndReturnValue(expectedCRC == computedCrc,
+          NULL, "SerializedBufferConstIterator::GetNext", "CRCs don't match (%x != %x)", expectedCRC, computedCrc);
+      } // if(requireCRCmatch)
 
       dataLength = reinterpret_cast<const u32*>(segmentToReturn)[0];
       type = static_cast<SerializedBuffer::DataType>(reinterpret_cast<const u32*>(segmentToReturn)[1]);
@@ -367,11 +369,11 @@ namespace Anki
     {
     }
 
-    void * SerializedBufferIterator::GetNext(const bool swapEndian, s32 &dataLength, SerializedBuffer::DataType &type)
+    void * SerializedBufferIterator::GetNext(const bool swapEndian, s32 &dataLength, SerializedBuffer::DataType &type, const bool requireCRCmatch)
     {
       // To avoid code duplication, we'll use the const version of GetNext(), though our MemoryStack is not const
 
-      u8 * segment = reinterpret_cast<u8*>(const_cast<void*>(SerializedBufferConstIterator::GetNext(dataLength, type)));
+      u8 * segment = reinterpret_cast<u8*>(const_cast<void*>(SerializedBufferConstIterator::GetNext(dataLength, type, requireCRCmatch)));
 
       AnkiConditionalErrorAndReturnValue(segment != NULL,
         NULL, "SerializedBufferIterator::GetNext", "segment is NULL");

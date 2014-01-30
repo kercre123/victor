@@ -26,14 +26,13 @@ enum BufferAction {
   BUFFER_ACTION_DISPLAY
 };
 
-#define PRINTF_ALL_RECEIVED
+//#define PRINTF_ALL_RECEIVED
 
 #define BIG_BUFFER_SIZE 100000000
 
-const bool swapEndianForHeaders = true;
-const bool swapEndianForContents = true;
+
 
 // Process the buffer using the BufferAction action. Optionally, free the buffer on completion.
-void ProcessRawBuffer(RawBuffer &buffer, const std::string outputFilenamePattern, const bool freeBuffer, const BufferAction action);
+void ProcessRawBuffer(RawBuffer &buffer, const std::string outputFilenamePattern, const bool freeBuffer, const BufferAction action, const bool swapEndianForHeaders, const bool swapEndianForContents, const bool requireCRCmatch);
 
 #endif // #ifndef _MESSAGE_HANDLING_H_

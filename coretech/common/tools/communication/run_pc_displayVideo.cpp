@@ -39,7 +39,7 @@ DWORD WINAPI DisplayBuffersThread(LPVOID lpParam)
 
   RawBuffer *buffer = (RawBuffer*)lpParam;
 
-  ProcessRawBuffer(*buffer, string(outputFilenamePattern), true, BUFFER_ACTION_SAVE);
+  ProcessRawBuffer(*buffer, string(outputFilenamePattern), true, BUFFER_ACTION_DISPLAY, true, false, false);
 
   return 0;
 } // DWORD WINAPI PrintfBuffers(LPVOID lpParam)
@@ -47,8 +47,8 @@ DWORD WINAPI DisplayBuffersThread(LPVOID lpParam)
 void printUsage()
 {
   printf(
-    "usage: saveVideo <comPort> <baudRate> <outputPatternString>\n"
-    "example: saveVideo 8 1500000 C:/datasets/cozmoShort/cozmo_%%04d-%%02d-%%02d_%%02d-%%02d-%%02d_%%d.%%s\n");
+    "usage: displayVideo <comPort> <baudRate>\n"
+    "example: displayVideo 8 1000000 \n");
 } // void printUsage()
 
 int main(int argc, char ** argv)
@@ -106,6 +106,7 @@ int main(int argc, char ** argv)
           rawBuffer.dataLength = usbBufferIndex;
 
           //Use a seperate thread
+          /*
           DWORD threadId = -1;
           CreateThread(
             NULL,        // default security attributes
@@ -114,6 +115,8 @@ int main(int argc, char ** argv)
             &rawBuffer,    // argument to thread function
             0,           // use default creation flags
             &threadId);  // returns the thread identifier
+            */
+          ProcessRawBuffer(rawBuffer, string(outputFilenamePattern), true, BUFFER_ACTION_DISPLAY, true, false, false);
 
           usbBuffer = reinterpret_cast<u8*>(malloc(USB_BUFFER_SIZE));
           usbBufferIndex = 0;
