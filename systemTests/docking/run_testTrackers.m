@@ -4,10 +4,18 @@
 
 function run_testTrackers(allTestsFilename)
 
-resolutions = {[480,640], [240,320], [120,160], [60,80], [30,40]};
-maxPyramidLevels = [5, 4, 3, 1, 1, 1];
+mainResolution = [480,640];
+downsampleFactor = 2;
+
+% resolutions = {[480,640], [240,320], [120,160], [60,80], [30,40]};
+resolutions = {[240,320], [120,160], [60,80], [30,40]};
+% maxPyramidLevels = [5, 4, 3, 1, 1, 1];
+maxPyramidLevels = [4, 3, 1, 1, 1];
 maxIterations = 50;
-convergenceTolerance = 0.25;
+convergenceTolerance = 0.1;
+
+load('Z:\Documents\Box Documents\Cozmo SE\calibCozmoProto1_head.mat');
+cam = Camera('calibration', calibCozmoProto1_head);
 
 allTests = loadjson(allTestsFilename);
 
@@ -24,18 +32,24 @@ for iTest = 1:length(allTests)
     allImages = {};
     
     for iSequence = 1:length(jsonData.sequences)
+        if ~iscell(jsonData.sequences{iSequence}.groundTruth)
+            jsonData.sequences{iSequence}.groundTruth = { jsonData.sequences{iSequence}.groundTruth };
+        end
+    
         filenamePattern = jsonData.sequences{iSequence}.filenamePattern;
         for iFrame = 1:length(jsonData.sequences{iSequence}.frameNumbers)
             frameNumber = jsonData.sequences{iSequence}.frameNumbers(iFrame);
-            allImages{end+1} = imread([dataPath, sprintf(filenamePattern, frameNumber)]);
+            img = imresize(imread([dataPath, sprintf(filenamePattern, frameNumber)]), mainResolution/downsampleFactor);
+            imgUndistorted = cam.undistort(img);
+            allImages{end+1} = imgUndistorted;
         end
     end
     
     frameIndex = findFrameNumberIndex(jsonData, 1, 1);
     
     templateCorners = jsonData.sequences{1}.groundTruth{frameIndex}.templateCorners;
-    xCoordinates = [templateCorners{1}.x, templateCorners{2}.x, templateCorners{3}.x, templateCorners{4}.x];
-    yCoordinates = [templateCorners{1}.y, templateCorners{2}.y, templateCorners{3}.y, templateCorners{4}.y];
+    xCoordinates = [templateCorners{1}.x, templateCorners{2}.x, templateCorners{3}.x, templateCorners{4}.x] / downsampleFactor;
+    yCoordinates = [templateCorners{1}.y, templateCorners{2}.y, templateCorners{3}.y, templateCorners{4}.y] / downsampleFactor;
     templateQuad = [xCoordinates', yCoordinates'];
     
     mask = zeros(size(allImages{1}));
@@ -47,7 +61,7 @@ for iTest = 1:length(allTests)
         originalImageResized = imresize(allImages{1}, originalResolution);
         maskResized = imresize(mask, originalResolution);
         
-        scale = originalResolution(1) / 480;
+        scale = originalResolution(1) / mainResolution(1) * downsampleFactor;
         
 %         for iTrackingResolution = iOriginalResolution:length(resolutions)
 %             trackingResolution = resolutions{iTrackingResolution};
@@ -73,6 +87,7 @@ for iTest = 1:length(allTests)
                     plotResults(originalImageResized, newImageResized, templateQuad*scale, lkTracker_projective.tform);
                     
                     pause(.01);
+%                     pause();
                 end
                 
                 warning on
@@ -96,7 +111,7 @@ function index = findFrameNumberIndex(jsonData, sequenceNumberIndex, frameNumber
     if ~isfield(jsonData.sequences{sequenceNumberIndex}, 'groundTruth')
         return;
     end
-
+    
     for i = 1:length(jsonData.sequences{sequenceNumberIndex}.groundTruth)
         curFrameNumber = jsonData.sequences{sequenceNumberIndex}.groundTruth{i}.frameNumber;
         queryFrameNumber = jsonData.sequences{sequenceNumberIndex}.frameNumbers(frameNumberIndex);
