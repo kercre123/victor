@@ -29,16 +29,22 @@ function editGroundTruth_OpeningFcn(hObject, eventdata, handles, varargin)
     global curDisplayType;
     global maxDisplayType;
     global savedDisplayParameters;
+    global resolutionHorizontal;
+    global resolutionVertical;
 
     maxErrorSignalCorners = 2;
     maxTemplateCorners = 4;
-    curDisplayType = 1;
-    maxDisplayType = 3;
-    savedDisplayParameters = cell(2,1);
+    curDisplayType = 5;
+    maxDisplayType = 5;
+    savedDisplayParameters = cell(5,1);
     savedDisplayParameters{1} = zeros(4,1);
     savedDisplayParameters{2} = [5, 1.5, 0, 0];
     savedDisplayParameters{3} = [5, 1.5, 0, 0];
-    
+    savedDisplayParameters{4} = [0, 0, 0, 0];
+    savedDisplayParameters{5} = [5, 1.5, 0, 0];
+    resolutionHorizontal = 640;
+    resolutionVertical = 480;
+
     setSavedDisplayParameters();
 
     % Choose default command line output for editGroundTruth
@@ -57,8 +63,8 @@ function editGroundTruth_OpeningFcn(hObject, eventdata, handles, varargin)
 
 function varargout = editGroundTruth_OutputFcn(hObject, eventdata, handles)
     % Get default command line output from handles structure
-    varargout{1} = handles.output;    
-    
+    varargout{1} = handles.output;
+
 %
 % Create Functions
 %
@@ -168,8 +174,26 @@ function displayParameter4_CreateFcn(hObject, eventdata, handles)
         set(hObject,'BackgroundColor','white');
     end
 
-    set(hObject,'String',num2str(displayParameter4));   
+    set(hObject,'String',num2str(displayParameter4));
+    
+function resolutionHorizontal_CreateFcn(hObject, eventdata, handles)
+    global resolutionHorizontal;
+    
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+    
+    set(hObject,'String',num2str(resolutionHorizontal));
 
+function resolutionVertical_CreateFcn(hObject, eventdata, handles)
+    global resolutionVertical;
+
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+    
+    set(hObject,'String',num2str(resolutionVertical));
+    
 %
 % End Create Functions
 %
@@ -496,18 +520,18 @@ function previousDisplayType_Callback(hObject, eventdata, handles)
     global displayParameter3;
     global displayParameter4;
     global savedDisplayParameters;
-    
+
     savedDisplayParameters{curDisplayType}(1) = displayParameter1;
     savedDisplayParameters{curDisplayType}(2) = displayParameter2;
     savedDisplayParameters{curDisplayType}(3) = displayParameter3;
     savedDisplayParameters{curDisplayType}(4) = displayParameter4;
-    
+
     if curDisplayType > 1
         curDisplayType = curDisplayType - 1;
     end
 
     setSavedDisplayParameters();
-    
+
     sequenceChanged(handles);
 
 function nextDisplayType_Callback(hObject, eventdata, handles)
@@ -517,17 +541,17 @@ function nextDisplayType_Callback(hObject, eventdata, handles)
     global displayParameter2;
     global displayParameter3;
     global displayParameter4;
-    global savedDisplayParameters;    
-    
+    global savedDisplayParameters;
+
     savedDisplayParameters{curDisplayType}(1) = displayParameter1;
     savedDisplayParameters{curDisplayType}(2) = displayParameter2;
     savedDisplayParameters{curDisplayType}(3) = displayParameter3;
     savedDisplayParameters{curDisplayType}(4) = displayParameter4;
-    
+
     if curDisplayType < maxDisplayType
         curDisplayType = curDisplayType + 1;
     end
-    
+
     setSavedDisplayParameters();
 
     sequenceChanged(handles);
@@ -540,50 +564,64 @@ function curDisplayType_Callback(hObject, eventdata, handles)
     global displayParameter3;
     global displayParameter4;
     global savedDisplayParameters;
-    
+
     savedDisplayParameters{curDisplayType}(1) = displayParameter1;
     savedDisplayParameters{curDisplayType}(2) = displayParameter2;
     savedDisplayParameters{curDisplayType}(3) = displayParameter3;
     savedDisplayParameters{curDisplayType}(4) = displayParameter4;
-    
+
     curDisplayTypeNew = str2double(get(hObject,'String'));
 
     if curDisplayTypeNew <= maxDisplayType && curDisplayTypeNew >= 1
         curDisplayType = curDisplayTypeNew;
     end
-    
+
     setSavedDisplayParameters();
 
     sequenceChanged(handles);
 
 function displayParameter1_Callback(hObject, eventdata, handles)
     global displayParameter1;
-    
+
     displayParameter1 = str2double(get(hObject,'String'));
-    
+
     sequenceChanged(handles);
 
 function displayParameter2_Callback(hObject, eventdata, handles)
     global displayParameter2;
-    
+
     displayParameter2 = str2double(get(hObject,'String'));
-    
+
     sequenceChanged(handles);
 
 function displayParameter3_Callback(hObject, eventdata, handles)
     global displayParameter3;
-    
+
     displayParameter3 = str2double(get(hObject,'String'));
-    
+
     sequenceChanged(handles);
 
 function displayParameter4_Callback(hObject, eventdata, handles)
     global displayParameter4;
-    
+
     displayParameter4 = str2double(get(hObject,'String'));
-    
+
     sequenceChanged(handles);
 
+function resolutionHorizontal_Callback(hObject, eventdata, handles)
+    global resolutionHorizontal;
+    
+    resolutionHorizontal = str2double(get(hObject,'String'));
+    
+    sequenceChanged(handles, false, true);
+    
+function resolutionVertical_Callback(hObject, eventdata, handles)
+    global resolutionVertical;
+    
+    resolutionVertical = str2double(get(hObject,'String'));
+    
+    sequenceChanged(handles, false, true);
+    
 %
 % End Callback Functions
 %
@@ -595,12 +633,12 @@ function setSavedDisplayParameters()
     global displayParameter3;
     global displayParameter4;
     global savedDisplayParameters;
-    
+
     displayParameter1 = savedDisplayParameters{curDisplayType}(1);
     displayParameter2 = savedDisplayParameters{curDisplayType}(2);
     displayParameter3 = savedDisplayParameters{curDisplayType}(3);
     displayParameter4 = savedDisplayParameters{curDisplayType}(4);
-        
+
 function loadConfigFile()
     global jsonAllTestsData;
     global curTestNumber;
@@ -707,7 +745,7 @@ function index = findFrameNumberIndex(jsonData, sequenceNumberIndex, frameNumber
 
     return;
 
-function sequenceChanged(handles, resetAll)
+function sequenceChanged(handles, resetAll, resetZoomOnly)
     global jsonConfigFilename;
     global jsonData;
     global dataPath;
@@ -727,9 +765,15 @@ function sequenceChanged(handles, resetAll)
     global imageFigureHandle;
     global imageHandle;
     global pointsType;
+    global resolutionHorizontal;
+    global resolutionVertical;
 
     if ~exist('resetAll', 'var')
         resetAll = false;
+    end
+    
+    if ~exist('resetZoomOnly', 'var')
+        resetZoomOnly = false;
     end
 
     if curSequenceNumber < 1
@@ -783,6 +827,8 @@ function sequenceChanged(handles, resetAll)
     set(handles.displayParameter2, 'String', num2str(displayParameter2))
     set(handles.displayParameter3, 'String', num2str(displayParameter3))
     set(handles.displayParameter4, 'String', num2str(displayParameter4))
+    set(handles.resolutionHorizontal, 'String', num2str(resolutionHorizontal))
+    set(handles.resolutionVertical, 'String', num2str(resolutionVertical))
 
     if curSequenceNumber==1 && curFrameNumber==1
         set(handles.templatePoints, 'Enable', 'on');
@@ -808,7 +854,13 @@ function sequenceChanged(handles, resetAll)
     originalXlim = xlim();
     originalYlim = ylim();
 
-    if curDisplayType == 1       
+    if resolutionHorizontal ~= size(image,2) || resolutionVertical ~= size(image,1)
+        imageResized = imresize(image, [resolutionVertical,resolutionHorizontal], 'nearest');
+    else
+        imageResized = image;
+    end    
+    
+    if curDisplayType == 1
         % original image
         set(handles.panelDisplayType, 'Title', 'Display Type: Original')
         set(handles.textDisplayParameter1, 'String', 'NULL')
@@ -822,13 +874,13 @@ function sequenceChanged(handles, resetAll)
         set(handles.textDisplayParameter2, 'String', 'sigma')
         set(handles.textDisplayParameter3, 'String', 'NULL')
         set(handles.textDisplayParameter4, 'String', 'NULL')
-        
+
 %         kernel = fspecial('gaussian',[5 1],1.5); % the default kernel
         kernel = fspecial('gaussian',[displayParameter1 1], displayParameter2);
-        c = cornermetric(image, 'Harris', 'FilterCoefficients', kernel);
+        c = cornermetric(imageResized, 'Harris', 'FilterCoefficients', kernel);
         cp = c - min(c(:));
         cp = cp / max(cp(:));
-        image = cp;
+        imageResized = cp;
     elseif curDisplayType == 3
         % Shi-Tomasi corner detected
         set(handles.panelDisplayType, 'Title', 'Display Type: Shi-Tomasi')
@@ -836,18 +888,100 @@ function sequenceChanged(handles, resetAll)
         set(handles.textDisplayParameter2, 'String', 'sigma')
         set(handles.textDisplayParameter3, 'String', 'NULL')
         set(handles.textDisplayParameter4, 'String', 'NULL')
-        
+
 %         kernel = fspecial('gaussian',[5 1],1.5); % the default kernel
         kernel = fspecial('gaussian',[displayParameter1 1], displayParameter2);
-        c = cornermetric(image, 'MinimumEigenvalue', 'FilterCoefficients', kernel);
+        c = cornermetric(imageResized, 'MinimumEigenvalue', 'FilterCoefficients', kernel);
         cp = c - min(c(:));
         cp = cp / max(cp(:));
-        image = cp;        
+        imageResized = cp;
+    elseif curDisplayType == 4
+        % Quad-box template detected
+        set(handles.panelDisplayType, 'Title', 'Display Type: Quad-Box')
+        set(handles.textDisplayParameter1, 'String', 'kernel width')
+        set(handles.textDisplayParameter2, 'String', 'sigma')
+        set(handles.textDisplayParameter3, 'String', 'NULL')
+        set(handles.textDisplayParameter4, 'String', 'NULL')
+
+%         kernel = fspecial('gaussian',[5 1],1.5); % the default kernel
+        h = 11;
+        h2 = floor(h/2);
+        
+        % normal +-1 filter
+%         kernel = ones(h,h);
+%         kernel(h2:end, h2:end) = -1;
+%         kernel = kernel / sum(kernel(:));
+% 
+%         imageResized = imfilter(double(imageResized), kernel);
+%         imageResized = imageResized - min(imageResized(:));
+%         imageResized = imageResized / max(imageResized(:));
+%         imageResized = 500.^(imageResized);
+%         imageResized = imageResized / max(imageResized(:));
+
+        % template
+        
+        kernel = 220*ones(h,h);
+        kernel(h2:end, h2:end) = 40;
+        
+        imageResized = double(imageResized);
+        
+        filteredImageA = zeros(size(imageResized));
+        for y = (1+h2):(size(imageResized,1)-h2)
+            for x = (1+h2):(size(imageResized,2)-h2)
+                sad = sum(sum(abs(imageResized((y-h2):(y+h2), (x-h2):(x+h2)) - kernel)));
+                filteredImageA(y,x) = sad;
+            end
+        end
+        
+        kernel = imrotate(kernel, 270);
+        filteredImageB = zeros(size(imageResized));
+        for y = (1+h2):(size(imageResized,1)-h2)
+            for x = (1+h2):(size(imageResized,2)-h2)
+                sad = sum(sum(abs(imageResized((y-h2):(y+h2), (x-h2):(x+h2)) - kernel)));
+                filteredImageB(y,x) = sad;
+            end
+        end
+        
+        filteredImage = min(filteredImageA, filteredImageB);
+        
+        imageResized = filteredImage;
+        imageResized = imageResized / max(imageResized(:));
+        imageResized = 10.^(imageResized);
+        imageResized = imageResized / max(imageResized(:))*3;
+%         imageResized = imageResized - .26;
+%         imageResized = imageResized * 100;
+    elseif curDisplayType == 5
+        kernel = ones(5,5);
+        kernel = kernel / sum(kernel(:));
+        
+        filteredImage = imfilter(imageResized, kernel);
+        
+        ulImage = zeros(size(imageResized));
+        offset = 5;
+        for y = (1+offset):(size(imageResized,1)-offset)
+            for x = (1+offset):(size(imageResized,2)-offset)
+                ulImage(y,x) = filteredImage(y-offset, x-offset)/3 +...
+                               filteredImage(y-offset, x)/3 +...
+                               filteredImage(y, x-offset)/3 -...
+                               filteredImage(y, x);
+            end
+        end
+        
+        ulImage = ulImage / 255;
+        
+        figure(1); imshow(ulImage);
+        
+        figure(100);
+        kernel = fspecial('gaussian',[displayParameter1 1], displayParameter2);
+        c = cornermetric(imageResized, 'Harris', 'FilterCoefficients', kernel);
+        cp = c - min(c(:));
+        cp = cp / max(cp(:));
+        imageResized = cp;
     end
+    
+    imageHandle = imshow(imageResized);
 
-    imageHandle = imshow(image);
-
-    if ~resetAll
+    if ~resetAll && ~resetZoomOnly
         xlim(originalXlim);
         ylim(originalYlim);
     end
@@ -856,6 +990,9 @@ function sequenceChanged(handles, resetAll)
     hold on;
 
     if index ~= -1
+        xScaleInv = resolutionHorizontal / size(image,2);
+        yScaleInv = resolutionVertical / size(image,1);
+        
         if strcmp(pointsType, 'errorSignal')
             if ~isfield(jsonData.sequences{curSequenceNumber}.groundTruth{index}, 'errorSignalCorners') || isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners)
                 jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners = {};
@@ -869,7 +1006,7 @@ function sequenceChanged(handles, resetAll)
             plotType = 'r+';
 
             if length(allCorners) == 2
-                plotHandle = plot([allCorners{1}.x,allCorners{2}.x]+0.5, [allCorners{1}.y,allCorners{2}.y]+0.5, 'r');
+                plotHandle = plot(xScaleInv*([allCorners{1}.x,allCorners{2}.x]+0.5), yScaleInv*([allCorners{1}.y,allCorners{2}.y]+0.5), 'r');
                 set(plotHandle, 'HitTest', 'off')
             end
         elseif strcmp(pointsType, 'template')
@@ -903,8 +1040,8 @@ function sequenceChanged(handles, resetAll)
 
                 % second, plot the sorted corners
                 plotHandle = plot(...
-                    [allCorners{1}.x,allCorners{2}.x,allCorners{3}.x,allCorners{4}.x,allCorners{1}.x]+0.5,...
-                    [allCorners{1}.y,allCorners{2}.y,allCorners{3}.y,allCorners{4}.y,allCorners{1}.y]+0.5,...
+                    xScaleInv*([allCorners{1}.x,allCorners{2}.x,allCorners{3}.x,allCorners{4}.x,allCorners{1}.x]+0.5),...
+                    yScaleInv*([allCorners{1}.y,allCorners{2}.y,allCorners{3}.y,allCorners{4}.y,allCorners{1}.y]+0.5),...
                     'b');
                 set(plotHandle, 'HitTest', 'off')
             end
@@ -913,7 +1050,7 @@ function sequenceChanged(handles, resetAll)
         end
 
         for i = 1:length(allCorners)
-            scatterHandle = scatter(allCorners{i}.x+0.5, allCorners{i}.y+0.5, plotType);
+            scatterHandle = scatter(xScaleInv*(allCorners{i}.x+0.5), yScaleInv*(allCorners{i}.y+0.5), plotType);
             set(scatterHandle, 'HitTest', 'off')
         end
     end
@@ -930,7 +1067,9 @@ function ButtonClicked(hObject, eventdata, handles)
     global pointsType;
     global maxErrorSignalCorners;
     global maxTemplateCorners;
-
+    global resolutionHorizontal;
+    global resolutionVertical;
+    
     axesHandle  = get(imageHandle,'Parent');
     imPosition = get(axesHandle, 'CurrentPoint') - 0.5;
 
@@ -956,9 +1095,12 @@ function ButtonClicked(hObject, eventdata, handles)
     % disp(index)
     buttonType = get(imageFigureHandle,'selectionType');
     if strcmp(buttonType, 'normal') % left click
-        newPoint.x = imPosition(1);
-        newPoint.y = imPosition(2);
-
+        xScale = size(image,2) / resolutionHorizontal;
+        yScale = size(image,1) / resolutionVertical;
+        
+        newPoint.x = imPosition(1) * xScale;
+        newPoint.y = imPosition(2) * yScale;
+    
         if strcmp(pointsType, 'errorSignal')
             if ~isfield(jsonData.sequences{curSequenceNumber}.groundTruth{index}, 'errorSignalCorners') || isempty(jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners)
                 jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners = {};
@@ -991,13 +1133,16 @@ function ButtonClicked(hObject, eventdata, handles)
 
         savejson('',jsonData,jsonConfigFilename);
     elseif strcmp(buttonType, 'alt') % right click
+        xScaleInv = resolutionHorizontal / size(image,2);
+        yScaleInv = resolutionVertical / size(image,1);
+        
         minDist = Inf;
         minInd = -1;
 
         if strcmp(pointsType, 'errorSignal')
             for i = 1:length(jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners)
                 curCorner = jsonData.sequences{curSequenceNumber}.groundTruth{index}.errorSignalCorners{i};
-                dist = sqrt((curCorner.x - imPosition(1))^2 + (curCorner.y - imPosition(2))^2);
+                dist = sqrt((curCorner.x*xScaleInv - imPosition(1))^2 + (curCorner.y*yScaleInv - imPosition(2))^2);
                 if dist < minDist
                     minDist = dist;
                     minInd = i;
@@ -1013,7 +1158,7 @@ function ButtonClicked(hObject, eventdata, handles)
         elseif strcmp(pointsType, 'template')
             for i = 1:length(jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners)
                 curCorner = jsonData.sequences{curSequenceNumber}.groundTruth{index}.templateCorners{i};
-                dist = sqrt((curCorner.x - imPosition(1))^2 + (curCorner.y - imPosition(2))^2);
+                dist = sqrt((curCorner.x*xScaleInv - imPosition(1))^2 + (curCorner.y*yScaleInv - imPosition(2))^2);
                 if dist < minDist
                     minDist = dist;
                     minInd = i;
@@ -1030,5 +1175,12 @@ function ButtonClicked(hObject, eventdata, handles)
     end
 
     sequenceChanged(allHandles);
+
+
+
+
+
+
+
 
 
