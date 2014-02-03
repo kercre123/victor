@@ -79,9 +79,6 @@ namespace Anki {
       float     GetMinDim() const;
       //using Vision::ObservableObjectBase<Block>::GetMinDim;
       
-      const Pose3d& get_pose(void) const;
-      void SetPose(const Pose3d &newPose);
-      
     protected:
       // A counter for how many blocks are instantiated
       // (A static counter may not be the best way to do this...)

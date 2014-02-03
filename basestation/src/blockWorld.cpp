@@ -32,7 +32,7 @@ namespace Anki
       // TODO: Read known mat pieces from config, or from MatPieceDefinitions.h
       
       blockLibrary_.AddObject(new Block(1));
-      blockLibrary_.AddObject(new Block(2));
+//      blockLibrary_.AddObject(new Block(2));
       
       matLibrary_.AddObject(new MatPiece(1));
     }

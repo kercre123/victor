@@ -23,6 +23,11 @@ namespace Anki {
 #pragma mark --- RobotManager Class Implementations ---
     RobotManager* RobotManager::singletonInstance_ = 0;
     
+    RobotManager::RobotManager()
+    {
+      
+    }
+    
     void RobotManager::AddRobot(const RobotID_t withID, BlockWorld& toWorld)
     {
       robots_[withID] = new Robot(withID, toWorld);
@@ -32,6 +37,16 @@ namespace Anki {
     std::vector<RobotID_t> const& RobotManager::GetRobotIDList() const
     {
       return ids_;
+    }
+    
+    // Get a pointer to a robot by ID
+    Robot* RobotManager::GetRobotByID(const RobotID_t robotID)
+    {
+      if (robots_.find(robotID) != robots_.end()) {
+        return robots_[robotID];
+      }
+      
+      return NULL;
     }
     
     size_t RobotManager::GetNumRobots() const
@@ -47,6 +62,11 @@ namespace Anki {
     void RobotManager::GetAllVisionMarkers(std::vector<Vision::Marker>& markers) const
     {
 
+    }
+    
+    void RobotManager::UpdateAllRobots()
+    {
+      // TODO
     }
     
     
@@ -533,6 +553,29 @@ namespace Anki {
       */
       
     } // dockWithBlock()
+
+    
+    // STUBS:
+    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageClearPath const&){return EXIT_FAILURE;}
+    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageSetMotion const&){return EXIT_FAILURE;}
+    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageRobotState const&){return EXIT_FAILURE;}
+    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageRobotAvailable const&){return EXIT_FAILURE;}
+    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageMatMarkerObserved const&){return EXIT_FAILURE;}
+    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageRobotAddedToWorld const&){return EXIT_FAILURE;}
+    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageSetPathSegmentArc const&){return EXIT_FAILURE;}
+    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageDockingErrorSignal const&){return EXIT_FAILURE;}
+    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageSetPathSegmentLine const&){return EXIT_FAILURE;}
+    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageBlockMarkerObserved const&){return EXIT_FAILURE;}
+    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageTemplateInitialized const&){return EXIT_FAILURE;}
+    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageMatCameraCalibration const&){return EXIT_FAILURE;}
+    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageAbsLocalizationUpdate const&){return EXIT_FAILURE;}
+    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageHeadCameraCalibration const&){return EXIT_FAILURE;}
+    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageTotalVisionMarkersSeen const&){return EXIT_FAILURE;}
+
+
+    
+
+    
     
   } // namespace Cozmo
 } // namespace Anki

@@ -25,41 +25,9 @@
 
 #include "anki/cozmo/basestation/messages.h"
 #include "anki/cozmo/basestation/robot.h" 
+#include "anki/messaging/basestation/IComms.h"
 
 namespace Anki {
-  
-  // Placeholder until Kevin creates this
-  namespace Comms {
-    
-    struct RobotMsgPacket_t {
-      static const u8 MAX_DATA_LEN = 128;
-      u8 data[MAX_DATA_LEN];
-      u8 dataLen;
-      RobotID_t robotID;
-    };
-    
-    class CommsManager
-    {
-    public:
-      
-      static CommsManager* getInstance();
-      
-      u32  GetNumPendingPackets() const;
-      void GetNextPacket(RobotMsgPacket_t& packet);
-      
-      bool IsInitialized() const;
-      
-    protected:
-      
-      static CommsManager* singletonInstance_;
-      
-      CommsManager() : isInitialized_(false) { }
-      
-      bool isInitialized_;
-      
-    }; // class CommsManager
-  }
-  
   namespace Cozmo {
     
 #include "anki/cozmo/MessageDefinitions.h"
@@ -70,7 +38,7 @@ namespace Anki {
     public:
       
       // Set the message handler's communications manager
-      ReturnCode Init(Comms::CommsManager* comms);
+      ReturnCode Init(Comms::IComms* comms);
       
       // Get a pointer to the singleton instance
       inline static MessageHandler* getInstance();
@@ -93,11 +61,11 @@ namespace Anki {
       RobotManager* robotMgr_;
       
       bool isInitialized_;
-      Comms::CommsManager* comms_;
+      Comms::IComms* comms_;
       
       // Process a raw byte buffer as a message and send it to the specified
       // robot
-      ReturnCode ProcessPacket(const Comms::RobotMsgPacket_t& packet) const;
+      ReturnCode ProcessPacket(const Comms::MsgPacket& packet) const;
       
       // Create the enumerated message IDs from the MessageDefinitions file:
       typedef enum {

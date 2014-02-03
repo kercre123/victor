@@ -28,6 +28,11 @@ namespace Anki {
     // Implement all the message classes' GetSize() methods
 #define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_GETSIZE_MODE
 #include "anki/cozmo/MessageDefinitions.h"
+
+    // Implement all the message classes' GetBytes() methods
+#define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_GETBYTES_MODE
+#include "anki/cozmo/MessageDefinitions.h"
+
     
     /*
       // THese are dummy placeholders to avoid linker errors for now

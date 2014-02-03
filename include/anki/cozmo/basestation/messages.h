@@ -32,8 +32,6 @@ namespace Anki {
       
       virtual void GetBytes(u8* buffer) const = 0;
       
-      virtual ReturnCode SendToRobot(const RobotID_t robotID);
-      
       static u8 GetSize() { return 0; }
       
     }; // class Message
