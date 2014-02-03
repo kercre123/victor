@@ -114,6 +114,14 @@ namespace Anki {
     } // CreateObjectsFromMarkers()
     
     
+    std::vector<const ObservableObject*> const* ObservableObjectLibrary::GetObjectsWithMarker(const Marker& marker) const
+    {
+      printf("ERROR: ObservableObjectLibrary::GetObjectsWithMarker() UNDEFINED\n");
+      return NULL;
+    }
+    
+    
+    
     void ObservableObjectLibrary::
     ClusterObjectPoses(const std::vector<std::vector<MatchWithPose> >& poseMatches,
                        const f32 distThreshold, const Radians angleThreshold,

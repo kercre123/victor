@@ -15,20 +15,20 @@ namespace Anki {
     {
     public:
       // Do we want to be req'd to instantiate with all codes up front?
-      ObservableObject();
+      ObservableObject(){};
       
       ObservableObject(ObjectID_t ID);
       
       ObservableObject(const std::vector<std::pair<Marker::Code,Pose3d> >& codesAndPoses);
       
-      virtual ~ObservableObject();
+      virtual ~ObservableObject(){};
       
       // Specify the extistence of a marker with the given code at the given
       // pose (relative to the object's origin), and the specfied size in mm
       void AddMarker(const Marker::Code& withCode, const Pose3d& atPose,
                      const f32 size_mm);
       
-      std::list<KnownMarker> const& GetMarkers() const;
+      std::list<KnownMarker> const& GetMarkers() const {return markers_;}
       
       // Return a pointer to a vector all this object's Markers with the
       // specified code. A NULL pointer is returned if there are no markers
@@ -42,11 +42,11 @@ namespace Anki {
                       const Camera& camera);
       
       // Accessors:
-      ObjectID_t    GetID() const;
+      ObjectID_t    GetID() const {return ID_;}
       virtual float GetMinDim() const = 0;
-      const Pose3d& GetPose() const;
+      const Pose3d& GetPose() const {return pose_;}
       
-      void SetPose(const Pose3d& newPose);
+      void SetPose(const Pose3d& newPose) {pose_ = newPose;}
       
       // For creating derived objects from a pointer to this base class, see
       // ObservableObjectBase below
@@ -93,7 +93,7 @@ namespace Anki {
     {
     public:
       
-      ObservableObjectLibrary();
+      ObservableObjectLibrary(){};
       
       u32 GetNumObjects() const;
       
