@@ -40,12 +40,23 @@ namespace Anki
     
     class MessageHandler;
     
-    class MatPiece : public Vision::ObservableObjectBase<MatPiece>
+    class MatPiece : public Vision::ObservableObject //Base<MatPiece>
     {
     public:
       MatPiece(ObjectID_t ID){};
       
       virtual float GetMinDim() const {return 0;}
+      
+      virtual ObservableObject* Clone() const
+      {
+        // Call the copy constructor
+        return new MatPiece(static_cast<const MatPiece&>(*this));
+      }
+      
+      virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
+      
+    protected:
+      static const std::vector<RotationMatrix3d> rotationAmbiguities_;
       
     };
     

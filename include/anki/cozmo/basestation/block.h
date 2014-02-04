@@ -35,7 +35,7 @@ namespace Anki {
     //
     //   Representation of a physical Block in the world.
     //
-    class Block : public Vision::ObservableObjectBase<Block>
+    class Block : public Vision::ObservableObject //Base<Block>
     {
     public:
       typedef Point3<unsigned char> Color;
@@ -84,7 +84,7 @@ namespace Anki {
       // (A static counter may not be the best way to do this...)
       static unsigned int numBlocks;
       
-      using Vision::ObservableObjectBase<Block>::ID_;
+      using Vision::ObservableObject::ID_;
       
 #include "anki/cozmo/basestation/BlockDefinitions.h"
       
@@ -124,6 +124,12 @@ namespace Anki {
       
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
       
+      virtual ObservableObject* Clone() const
+      {
+        // Call the copy constructor
+        return new Block_Cube1x1(static_cast<const Block_Cube1x1&>(*this));
+      }
+      
     protected:
       static const std::vector<RotationMatrix3d> rotationAmbiguities_;
       
@@ -138,6 +144,12 @@ namespace Anki {
       Block_2x1(const ObjectID_t ID);
       
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
+      
+      virtual ObservableObject* Clone() const
+      {
+        // Call the copy constructor
+        return new Block_2x1(static_cast<const Block_2x1&>(*this));
+      }
       
     protected:
       static const std::vector<RotationMatrix3d> rotationAmbiguities_;
