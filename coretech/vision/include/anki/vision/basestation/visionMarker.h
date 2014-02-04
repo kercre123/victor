@@ -97,6 +97,14 @@ namespace Anki {
 
       Pose3d EstimateObservedPose(const ObservedMarker& obsMarker) const;
       
+      // Update this marker's pose and, in turn, its 3d corners' locations.
+      //
+      // Note that it is your responsibility to make sure the new pose has the
+      // parent you intend! To preserve an existing parent, you may want to do
+      // something like:
+      //   newPose.set_parent(marker.get_parent());
+      //   marker.SetPose(newPose);
+      //
       void SetPose(const Pose3d& newPose);
       
       // Accessors

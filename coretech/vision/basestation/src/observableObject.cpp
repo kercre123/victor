@@ -5,6 +5,12 @@
 namespace Anki {
   namespace Vision {
     
+    ObservableObject::ObservableObject(ObjectID_t ID)
+    : ID_(ID)
+    {
+      
+    }
+    
     void ObservableObject::AddMarker(const Marker::Code&  withCode,
                                      const Pose3d&        atPose,
                                      const f32            size_mm)
@@ -29,6 +35,32 @@ namespace Anki {
       }
     }
     
+    bool ObservableObject::IsSameAs(const ObservableObject&  otherObject,
+                                    const float              distThreshold,
+                                    const Radians            angleThreshold,
+                                    Pose3d&                  P_diff) const
+    {
+      bool isSame = this->ID_ == otherObject.ID_;
+      
+      if(isSame) {
+        if(this->GetRotationAmbiguities().empty()) {
+          isSame = this->pose_.IsSameAs(otherObject.GetPose(),
+                                        distThreshold, angleThreshold, P_diff);
+        }
+        else {
+          isSame = this->pose_.IsSameAs_WithAmbiguity(otherObject.GetPose(),
+                                                      this->GetRotationAmbiguities(),
+                                                      distThreshold, angleThreshold,
+                                                      true, P_diff);
+        } // if/else there are ambiguities
+      }
+      
+      return isSame;
+      
+    } // ObservableObject::IsSameAs()
+
+    
+    
     const ObservableObject* ObservableObjectLibrary::GetObjectWithID(const ObjectID_t ID) const
     {
       auto obj = knownObjects_.find(ID);
@@ -50,6 +82,8 @@ namespace Anki {
     }
     
     
+    // Input:   list of observed markers
+    // Outputs: the objects seen and the unused markers
     void ObservableObjectLibrary::CreateObjectsFromMarkers(std::list<ObservedMarker>& markers,
                                                            std::vector<ObservableObject*> objectsSeen) const
     {
@@ -76,35 +110,56 @@ namespace Anki {
         
       } // For each marker we saw
       
-      // Now go through each object ID we saw a marker for, and create an
-      // instance of that object with the pose implied by where we saw the marker.
-      // Then, cluster the observations and add one or more objects of that
-      // type to the "objectsSeen" vector.
+      // Now go through each object ID we saw a marker for, and use the
+      // corresponding observed markers to create a list of possible poses
+      // for that object. Then cluster the possible poses into one or more
+      // object instances of that ID, returned in the "objectsSeen" vector.
       for(auto & objIdMarkersPair : markersWithObjectID)
       {
-        // A place to store all computed poses for this object
-        std::vector<std::vector<MatchWithPose> > possibleObjPoses;
-        //std::map<const Marker*, std::vector<Pose3d> > objPoses;
+        // A place to store the possible poses together with the observed/known
+        // markers that implied them
+        std::vector<PoseMatchPair> possiblePoses;
         
         const Vision::ObservableObject* libObject = GetObjectWithID(objIdMarkersPair.first);
         
-        for(auto marker : objIdMarkersPair.second)
+        for(auto obsMarker : objIdMarkersPair.second)
         {
-          // We will compute possible poses from each observed marker, paired
-          // with a reference to that marker.  (This is so we can recompute
-          // object pose from clusters of markers later, without having to
-          // reassociate them.) Note that each marker can generate multiple
-          // poses because an object may have the same marker on it several
-          // times.
-          //objPoses[marker] = std::vector<Pose3d>();
-          possibleObjPoses.emplace_back();
-          ComputeObjectPoses(marker, libObject, possibleObjPoses.back());
+          // For each observed marker, we add to the list of possible poses
+          // (each paired with the observed/known marker match from which the
+          // pose was computed).
+          // (This is all so we can recompute object pose later from clusters of
+          // markers, without having to reassociate observed and known markers.)
+          // reassociate them.)
+          // Note that each observed marker can generate multiple poses because
+          // an object may have the same known marker on it several times.
+
+          libObject->ComputePossiblePoses(obsMarker, possiblePoses);
           
-        } // FOR each marker
+        } // FOR each observed marker
         
-        // Group individual poses into objects of this ID actually seen,
-        // clustering as needed
-        GroupPosesIntoObjects(possibleObjPoses, libObject, objectsSeen);
+        // Now we have a list of poses, each paired with the matched marker pair
+        // that generated it.  We will now cluster those individual poses which
+        // are the "same" according to the object's matching function (which will
+        // internally take symmetry ambiguities into account during matching
+        // and adjust the known markers' poses accordingly)
+        // TODO: make the distance/angle thresholds parameters or else object-type-specific
+        std::vector<PoseCluster> poseClusters;
+        ClusterObjectPoses(possiblePoses, libObject,
+                           0.5f*libObject->GetMinDim(), 5.f*M_PI/180.f, poseClusters);
+        
+        // Recompute the pose for any cluster which had multiple matches in it,
+        // using all of its matches simultaneously, and then add it as a new
+        // object seen
+        for(auto & poseCluster : poseClusters) {
+          CORETECH_ASSERT(poseCluster.GetSize() > 0);
+          
+          // NOTE: this does nothing for singleton clusters
+          poseCluster.RecomputePose();
+          
+          objectsSeen.push_back(libObject->clone());
+          objectsSeen.back()->SetPose(poseCluster.GetPose());
+          
+        } // FOR each pose cluster
         
       } // FOR each objectID
       
@@ -114,10 +169,145 @@ namespace Anki {
     } // CreateObjectsFromMarkers()
     
     
+    ObservableObjectLibrary::PoseCluster::PoseCluster(const PoseMatchPair& match)
+    : pose_(match.first)
+    {
+      matches_.emplace_back(match.second.first, *match.second.second);
+    }
+    
+    bool ObservableObjectLibrary::PoseCluster::TryToAddMatch(const PoseMatchPair& match,
+                                                             const float distThreshold,
+                                                             const Radians angleThreshold,
+                                                             const std::vector<RotationMatrix3d>& R_ambiguities)
+    {
+      bool wasAdded = false;
+      const Pose3d& P_other = match.first;
+      Pose3d P_diff;
+      if(R_ambiguities.empty()) {
+        wasAdded = pose_.IsSameAs(P_other, distThreshold, angleThreshold, P_diff);
+      }
+      else {
+        wasAdded = pose_.IsSameAs_WithAmbiguity(P_other, R_ambiguities,
+                                                distThreshold, angleThreshold, true, P_diff);
+      } // if/else the ambiguities list is empty
+      
+      if(wasAdded) {
+        // Create a match between the original observed marker pointer
+        // and a copy of the original KnownMarker.
+        matches_.emplace_back(match.second.first, *match.second.second);
+        
+        // If there were rotation ambiguities to look for, modify
+        // the original (canonical) KnownMarker's pose based on P_diff
+        // so that all cluster members' KnownMarkers will be in the same
+        // coordinate frame and we can use them later to recompute this
+        // cluster's pose based on all its member matches.
+        if(not R_ambiguities.empty()) {
+          Pose3d newPose(matches_.back().second.GetPose());
+          newPose.preComposeWith(P_diff);
+          
+          // This should preserve the pose tree (i.e. parent relationship
+          // of the KnownMarker to its parent object's pose)
+          //CORETECH_ASSERT(newPose.get_parent() == &libObject->GetPose());
+          
+          matches_.back().second.SetPose(newPose);
+        } // if there were rotation ambiguities
+      }
+      
+      return wasAdded;
+    } // TryToAddMatch()
+    
+    void ObservableObjectLibrary::PoseCluster::RecomputePose()
+    {
+      if(GetSize() > 1) {
+        fprintf(stdout, "Re-computing pose from all memers of cluster.\n");
+        
+        std::vector<Point2f> imgPoints;
+        std::vector<Point3f> objPoints;
+        imgPoints.reserve(4*GetSize());
+        objPoints.reserve(4*GetSize());
+        
+        // TODO: Implement ability to estimate object pose with markers seen by different cameras
+        const Camera* camera = &matches_.front().first->GetSeenBy();
+        
+        for(auto & match : matches_)
+        {
+          const Vision::ObservedMarker* obsMarker = match.first;
+          
+          if(&obsMarker->GetSeenBy() == camera)
+          {
+            const Vision::KnownMarker* libMarker = &match.second;
+            
+            const Quad2f& imgCorners2d = obsMarker->GetImageCorners();
+            const Quad3f& objCorners3d = libMarker->Get3dCorners();
+            
+            for(Quad::CornerName i_corner=Quad::FirstCorner;
+                i_corner < Quad::NumCorners; ++i_corner)
+            {
+              imgPoints.push_back(imgCorners2d[i_corner]);
+              objPoints.push_back(objCorners3d[i_corner]);
+            }
+          }
+          else {
+            fprintf(stdout, "Ability to re-estimate single object's "
+                    "pose from markers seen by two different cameras "
+                    "not yet implemented. Will just use markers from "
+                    "first camera in the cluster.\n");
+          }
+          
+        } // for each cluster member
+        
+        // Compute the object pose from all the corresponding 2d (image)
+        // and 3d (object) points
+        pose_ = camera->computeObjectPose(imgPoints, objPoints);
+      
+      } // IF more than one member
+      
+    } // RecomputePose()
+    
+    void ObservableObjectLibrary::ClusterObjectPoses(const std::vector<PoseMatchPair>& possiblePoses,
+                                                     const ObservableObject*         libObject,
+                                                     const float distThreshold, const Radians angleThreshold,
+                                                     std::vector<PoseCluster>& poseClusters) const
+    {
+      std::vector<bool> assigned(possiblePoses.size(), false);
+
+      const std::vector<RotationMatrix3d>& R_amb = libObject->GetRotationAmbiguities();
+      
+      for(size_t i_pose=0; i_pose<possiblePoses.size(); ++i_pose)
+      {
+        if(not assigned[i_pose])
+        {
+          // Create a new cluster from this pose, and mark it as assigned
+          assigned[i_pose] = true;
+          
+          poseClusters.emplace_back(possiblePoses[i_pose]);
+          
+          // Now look through all other unassigned pose/match pairs to see if
+          // they can be added to this cluster
+          for(size_t i_other=(i_pose+1); i_other<possiblePoses.size(); ++i_other)
+          {
+            if(not assigned[i_other])
+            {
+              if(poseClusters.back().TryToAddMatch(possiblePoses[i_other],
+                                                   distThreshold,
+                                                   angleThreshold,
+                                                   R_amb))
+              {
+                assigned[i_other] = true;
+              }
+                
+            } // IF other pose not assigned
+          } // FOR each other pose
+        } // IF this pose not assigned
+      } // FOR each pose
+      
+    } // ClusterObjectPoses()
+    
+    /*
     void ObservableObjectLibrary::
-    ClusterObjectPoses(const std::vector<std::vector<MatchWithPose> >& poseMatches,
-                       const f32 distThreshold, const Radians angleThreshold,
-                       std::vector<std::vector<MatchWithPose> >& markerClusters) const
+    ClusterObjectPoses(const std::list<PoseMatchPair>& individualPoses,
+                            const f32 distThreshold, const Radians angleThreshold,
+                            std::list<PoseMatchListPair>& poseClusters) const
     {
       
       
@@ -200,8 +390,31 @@ namespace Anki {
       }
       
     } // ClusterObjectPoses()
+    */
     
+    void ObservableObject::ComputePossiblePoses(const ObservedMarker*     obsMarker,
+                                                std::vector<PoseMatchPair>& possiblePoses) const
+    {
+      auto matchingMarkers = markersWithCode_.find(obsMarker->GetCode());
+      
+      if(matchingMarkers != markersWithCode_.end()) {
+        
+        for(auto matchingMarker : matchingMarkers->second) {
+          // Note that the known marker's pose, and thus its 3d corners, are
+          // defined in the coordinate frame of parent object, so computing its
+          // pose here _is_ the pose of the parent object.
+          Pose3d markerPoseWrtCamera( matchingMarker->EstimateObservedPose(*obsMarker) );
+          
+          // Store the pose in the world coordinate frame, along with the pair
+          // of markers that generated it
+          possiblePoses.emplace_back(markerPoseWrtCamera.getWithRespectTo(Pose3d::World),
+                                     MarkerMatch(obsMarker, matchingMarker));
+        }
+      }
+      
+    }
     
+    /*
     void ObservableObjectLibrary::ComputeObjectPoses(const ObservedMarker* obsMarker,
                                                      const ObservableObject* libObject,
                                                      std::vector<MatchWithPose>& objPoses) const
@@ -212,9 +425,9 @@ namespace Anki {
 
       // If there are any matching markers...
       if(libMarkers != NULL) {
-        // ...estimate the pose of the library marker if it was seen by the
+        // ...estimate the pose of each library marker if it was seen by the
         // camera that saw the observed marker, and add that to the list of
-        // possible object poses.
+        // possible object poses for this observed/known marker match.
         for(auto libMarker : *libMarkers)
         {
           // Add this pairing of observed and library markers to the return
@@ -229,22 +442,25 @@ namespace Anki {
     
     
     void ObservableObjectLibrary::
-    GroupPosesIntoObjects(const std::vector<std::vector<MatchWithPose> >&  objPoses,
-                          const ObservableObject*                          libObject,
-                          std::vector<ObservableObject*>&                  objectsSeen) const
+    GroupPosesIntoObjects(const std::list<MatchedMarkerPosesPair>&  objPoses,
+                          const ObservableObject*                   libObject,
+                          std::vector<ObservableObject*>&           objectsSeen) const
     {
       // TODO: Make this a parameter somewhere
       const Radians angleDiffThreshold = 0.5f*M_PI_4;
       
-      // Group markers which could be part of the same object (i.e. those
+      // TODO: Maybe get rid of GetMinDim() usage here?
+      const float distThreshold = 0.5f*libObject->GetMinDim();
+      
+      // Group markers which could be part of the same physical object (i.e. those
       // whose poses are colocated, noting that the pose is relative to
       // the center of the object)
-      std::vector<std::vector<MatchWithPose> > markerClusters;
-      ClusterObjectPoses(objPoses, 0.5f*libObject->GetMinDim(),
-                         angleDiffThreshold, markerClusters);
+      std::list<PoseCluster> poseClusters;
+      ClusterObjectPoses(objPoses, distThreshold,
+                         angleDiffThreshold, poseClusters);
       
       fprintf(stdout, "Grouping %lu observed 2D markers of type %d into %lu objects.\n",
-              objPoses.size(), libObject->GetID(), markerClusters.size());
+              objPoses.size(), libObject->GetID(), poseClusters.size());
       
       
       // For each new object, re-estimate the pose based on all markers that
@@ -313,6 +529,7 @@ namespace Anki {
       } // for each cluster
       
     } // GroupPosesIntoObjects()
+    */
     
   } // namespace Vision
 } // namespace Anki
