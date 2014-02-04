@@ -20,19 +20,7 @@ imgBlur = cell(1, this.numScales);
 imgBlur{1} = nextImg;
 prevSigma = 0;
 
-if this.useBlurring
-    for i_scale = 2:this.numScales
-        % Pixel spacing for this scale
-        spacing = 2^(i_scale-1);
-        
-        sigma = spacing/3;
-        addlSigma = sqrt(sigma^2 - prevSigma^2);
-        
-        imgBlur{i_scale} = mexGaussianBlur(imgBlur{i_scale-1}, addlSigma, 2);
-    end
-else
-    [imgBlur{:}] = deal(nextImg);
-end
+[imgBlur{:}] = deal(nextImg);
 
 for i_scale = this.numScales:-1:this.finestScale
     % TODO: just blur previously-blurred image

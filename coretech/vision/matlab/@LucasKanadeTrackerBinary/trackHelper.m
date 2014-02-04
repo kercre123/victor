@@ -29,8 +29,8 @@ while iteration < this.maxIterations
         imgi = (imgi - mean(imgi(inBounds)))/std(imgi(inBounds));
     end
     
-    figure(3); imshow(this.target{i_scale});
-    figure(4); imshow(interp2(img, xi, yi, 'linear'));
+%     figure(3); imshow(this.target{i_scale});
+%     figure(4); imshow(interp2(img, xi, yi, 'linear'));
     It = imgi - this.target{i_scale}(:);
     
     %It(isnan(It)) = 0;
@@ -132,7 +132,7 @@ while iteration < this.maxIterations
         this.tform(1:2,3) = this.tform(1:2,3) - update;
     end
     
-    disp(this.tform)
+%     disp(this.tform)
     
     iteration = iteration + 1;
     
