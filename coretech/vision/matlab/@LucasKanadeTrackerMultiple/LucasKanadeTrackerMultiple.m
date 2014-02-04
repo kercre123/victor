@@ -1,4 +1,4 @@
-classdef LucasKanadeTrackerBinary < handle
+classdef LucasKanadeTrackerMultiple < handle
 
     properties(SetAccess = 'protected', Dependent = true)
         corners;
@@ -53,7 +53,7 @@ classdef LucasKanadeTrackerBinary < handle
 
     methods % public methods
 
-        function this = LucasKanadeTrackerBinary(firstImages, targetMask, varargin)
+        function this = LucasKanadeTrackerMultiple(firstImages, targetMask, varargin)
 
             assert(iscell(firstImages))
             
@@ -304,4 +304,4 @@ classdef LucasKanadeTrackerBinary < handle
 
     end % protected methods
 
-end % CLASSDEF LucasKanadeTrackerBinary
+end % CLASSDEF LucasKanadeTrackerMultiple
