@@ -245,9 +245,9 @@ namespace Anki
             {
               // TODO: smarter block pose comparison
               const float minDist = 0.5f*std::min(minDimSeen, objExist->GetMinDim());
-              if( computeDistanceBetween(objSeen->GetPose(),
-                                         objExist->GetPose()) < minDist )
-              {
+              const Radians angleThresh( 5.f*M_PI/180.f ); // TODO: make parameter
+              Pose3d P_diff;
+              if( objExist->IsSameAs(*objSeen, minDist, angleThresh, P_diff) ) {
                 overlappingObjects.push_back(objExist);
               }
               
@@ -293,32 +293,36 @@ namespace Anki
     {
       robotMgr_->UpdateAllRobots();
       
-      std::list<Vision::ObservedMarker> obsMarkers;
-      for(RobotID_t id : robotMgr_->GetRobotIDList())
-      {
-        Robot* robot = robotMgr_->GetRobotByID(id);
-  
-        for(auto marker : robot->GetObservedVisionMarkers()) {
-          obsMarkers.emplace_back(marker);
-        }
-      }
-      
+      //
       // Find any observed Mat objects
+      //
       std::vector<Vision::ObservableObject*> matsSeen;
-      matLibrary_.CreateObjectsFromMarkers(obsMarkers, matsSeen);
+      matLibrary_.CreateObjectsFromMarkers(obsMarkers_, matsSeen);
       
-      // Use them to localize the robots
+      // TODO: Use them to localize the robots
       
-      
+      //
       // Find any observed blocks from the remaining markers
+      //
       std::vector<Vision::ObservableObject*> blocksSeen;
-      blockLibrary_.CreateObjectsFromMarkers(obsMarkers, blocksSeen);
+      blockLibrary_.CreateObjectsFromMarkers(obsMarkers_, blocksSeen);
       
       // Use them to add or update existing blocks in our world
       AddAndUpdateObjects(blocksSeen, existingBlocks_);
       
-    } // update()
+      // TODO: Deal with unknown markers?
+      
+      // Toss any remaining markers?
+      // TODO: Print message telling number of unused observed markers?
+      obsMarkers_.clear();
+      
+    } // Update()
     
+    
+    void BlockWorld::QueueObservedMarker(const Vision::ObservedMarker& marker)
+    {
+      obsMarkers_.emplace_back(marker);
+    }
     
     void BlockWorld::CommandRobotToDock(const RobotID_t whichRobot,
                                         const Block&    whichBlock)
