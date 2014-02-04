@@ -53,10 +53,24 @@ namespace Cozmo {
   {
     // TODO: Instead of sending immediately, maybe we should queue them and send them all at
     // once to more closely emulate BTLE.
+
     
-    connectedRobotsIt_t it = connectedRobots_.find(p.sourceId);
+    connectedRobotsIt_t it = connectedRobots_.find(p.destId);
     if (it != connectedRobots_.end()) {
-      return it->second.client->Send((char*)p.data, p.dataLen);;
+      
+      // Wrap message in header/footer
+      // TODO: Include timestamp too?
+      char sendBuf[128];
+      int sendBufLen = 0;
+      memcpy(sendBuf, RADIO_PACKET_HEADER, sizeof(RADIO_PACKET_HEADER));
+      sendBufLen += sizeof(RADIO_PACKET_HEADER);
+      memcpy(sendBuf + sendBufLen, p.data, p.dataLen);
+      sendBufLen += p.dataLen;
+      memcpy(sendBuf + sendBufLen, RADIO_PACKET_FOOTER, sizeof(RADIO_PACKET_FOOTER));
+      sendBufLen += sizeof(RADIO_PACKET_FOOTER);
+
+      
+      return it->second.client->Send(sendBuf, sendBufLen);
     }
     return -1;
     
