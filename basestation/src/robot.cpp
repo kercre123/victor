@@ -94,35 +94,6 @@ namespace Anki {
       
     } // Constructor: Robot
    
-    // Convert a MessageVisionMarker into a VisionMarker object and hand it off
-    // to the BlockWorld
-    ReturnCode Robot::ProcessMessage(const MessageVisionMarker& msg)
-    {
-      ReturnCode retVal = EXIT_SUCCESS;
-      
-      Quad2f corners;
-      
-      corners[Quad::TopLeft].x()     = msg.get_x_imgUpperLeft();
-      corners[Quad::TopLeft].y()     = msg.get_y_imgUpperLeft();
-      
-      corners[Quad::BottomLeft].x()  = msg.get_x_imgLowerLeft();
-      corners[Quad::BottomLeft].y()  = msg.get_y_imgLowerLeft();
-      
-      corners[Quad::TopRight].x()    = msg.get_x_imgUpperRight();
-      corners[Quad::TopRight].y()    = msg.get_y_imgUpperRight();
-      
-      corners[Quad::BottomRight].x() = msg.get_x_imgLowerRight();
-      corners[Quad::BottomRight].y() = msg.get_y_imgLowerRight();
-      
-      //this->observedVisionMarkers.emplace_back(msg.get_code(), corners, this->ID_);
-      Vision::ObservedMarker marker(msg.get_code(), corners, camHead);
-      
-      // Give this vision marker to BlockWorld for processing
-      //world_->QueueVisionMarker(marker);
-      
-      return retVal;
-    } // ProcessMessage(MessageVisionMarker)
-    
     
     void Robot::updatePose()
     {
@@ -555,22 +526,7 @@ namespace Anki {
     } // dockWithBlock()
 
     
-    // STUBS:
-    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageClearPath const&){return EXIT_FAILURE;}
-    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageSetMotion const&){return EXIT_FAILURE;}
-    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageRobotState const&){return EXIT_FAILURE;}
-    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageRobotAvailable const&){return EXIT_FAILURE;}
-    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageMatMarkerObserved const&){return EXIT_FAILURE;}
-    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageRobotAddedToWorld const&){return EXIT_FAILURE;}
-    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageSetPathSegmentArc const&){return EXIT_FAILURE;}
-    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageDockingErrorSignal const&){return EXIT_FAILURE;}
-    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageSetPathSegmentLine const&){return EXIT_FAILURE;}
-    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageBlockMarkerObserved const&){return EXIT_FAILURE;}
-    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageTemplateInitialized const&){return EXIT_FAILURE;}
-    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageMatCameraCalibration const&){return EXIT_FAILURE;}
-    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageAbsLocalizationUpdate const&){return EXIT_FAILURE;}
-    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageHeadCameraCalibration const&){return EXIT_FAILURE;}
-    ReturnCode Robot::ProcessMessage(Anki::Cozmo::MessageTotalVisionMarkersSeen const&){return EXIT_FAILURE;}
+ 
 
 
     

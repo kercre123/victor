@@ -10,6 +10,8 @@
  * Copyright: Anki, Inc. 2014
  **/
 
+#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "messageHandler.h"
 
 namespace Anki {
@@ -40,7 +42,7 @@ namespace Anki {
       robotMgr_ = RobotManager::getInstance();
     }
     
-    ReturnCode MessageHandler::ProcessPacket(const Comms::MsgPacket& packet) const
+    ReturnCode MessageHandler::ProcessPacket(const Comms::MsgPacket& packet)
     {
       ReturnCode retVal = EXIT_FAILURE;
       
@@ -78,6 +80,55 @@ namespace Anki {
       
       return EXIT_SUCCESS;
     } // ProcessMessages()
+    
+    
+    // Convert a MessageVisionMarker into a VisionMarker object and hand it off
+    // to the BlockWorld
+    ReturnCode MessageHandler::ProcessMessage(const RobotID_t robotID, const MessageVisionMarker& msg)
+    {
+      ReturnCode retVal = EXIT_SUCCESS;
+      
+      Quad2f corners;
+      
+      corners[Quad::TopLeft].x()     = msg.get_x_imgUpperLeft();
+      corners[Quad::TopLeft].y()     = msg.get_y_imgUpperLeft();
+      
+      corners[Quad::BottomLeft].x()  = msg.get_x_imgLowerLeft();
+      corners[Quad::BottomLeft].y()  = msg.get_y_imgLowerLeft();
+      
+      corners[Quad::TopRight].x()    = msg.get_x_imgUpperRight();
+      corners[Quad::TopRight].y()    = msg.get_y_imgUpperRight();
+      
+      corners[Quad::BottomRight].x() = msg.get_x_imgLowerRight();
+      corners[Quad::BottomRight].y() = msg.get_y_imgLowerRight();
+      
+      //this->observedVisionMarkers.emplace_back(msg.get_code(), corners, this->ID_);
+      const Vision::Camera& camera = RobotManager::getInstance()->GetRobotByID(robotID)->get_camHead();
+      Vision::ObservedMarker marker(msg.get_code(), corners, camera);
+      
+      // Give this vision marker to BlockWorld for processing
+      BlockWorld::getInstance()->QueueObservedMarker(marker);
+      
+      return retVal;
+    } // ProcessMessage(MessageVisionMarker)
+    
+    
+    // STUBS:
+    ReturnCode MessageHandler::ProcessMessage(const RobotID_t, MessageClearPath const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(const RobotID_t, MessageSetMotion const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(const RobotID_t, MessageRobotState const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(const RobotID_t, MessageRobotAvailable const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(const RobotID_t, MessageMatMarkerObserved const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(const RobotID_t, MessageRobotAddedToWorld const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(const RobotID_t, MessageSetPathSegmentArc const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(const RobotID_t, MessageDockingErrorSignal const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(const RobotID_t, MessageSetPathSegmentLine const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(const RobotID_t, MessageBlockMarkerObserved const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(const RobotID_t, MessageTemplateInitialized const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(const RobotID_t, MessageMatCameraCalibration const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(const RobotID_t, MessageAbsLocalizationUpdate const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(const RobotID_t, MessageHeadCameraCalibration const&){return EXIT_FAILURE;}
+    ReturnCode MessageHandler::ProcessMessage(const RobotID_t, MessageTotalVisionMarkersSeen const&){return EXIT_FAILURE;}
     
   } // namespace Cozmo
 } // namespace Anki

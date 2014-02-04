@@ -34,8 +34,7 @@
 #define MESSAGE_CLASS_GETBYTES_MODE          3
 #define MESSAGE_TABLE_DEFINITION_MODE        4
 #define MESSAGE_ENUM_DEFINITION_MODE         5
-#define MESSAGE_ROBOT_PROCESSOR_METHOD_MODE  6
-#define MESSAGE_PROCESS_BUFFER_METHODS_MODE  7
+#define MESSAGE_PROCESS_METHODS_MODE         6
 
 #else
 #error Either COZMO_ROBOT or COZMO_BASESTATION should be defined!
@@ -332,41 +331,30 @@ buffer += __LENGTH__*sizeof(__TYPE__);
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__)
 #define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__)
 
-//
-// Define robot message processor prototypes
-//
-#elif MESSAGE_DEFINITION_MODE == MESSAGE_ROBOT_PROCESSOR_METHOD_MODE
-
-#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-ReturnCode ProcessMessage(const GET_MESSAGE_CLASSNAME(__MSG_TYPE__)& msg);
-
-#define END_MESSAGE_DEFINITION(__MSG_TYPE__)
-#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__)
-#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__)
-
 
 //
-// Create ProcessBufferAs_MessageX methods in MessageHandler class
+// Create ProcessBufferAs_MessageX wrapper in MessageHandler class, which
+// just calls the corresponding ProcessMessage(MessageX method)
 //
-//  Creates one of these for each message type:
+//  Creates both of these for each message type:
 //
-//   ReturnCode ProcessBufferAs_MessageSetMotion(const RobotID_t robotID, const u8* buffer) const
+//   ReturnCode ProcessMessage(const RobotID_t robotID, const MessageFooBar& msg);
+//
+//   inline ReturnCode MessageHandler::ProcessBufferAs_MessageFooBar(const RobotID_t robotID,
+//                                                                   const u8* buffer)
 //   {
-//      Robot *robot = robotMgr_->getRobotByID(robotID);
-//
-//      const MessageSetMotion msg(buffer);
-//
-//      return robot->ProcessMessage(msg);
+//      const MessageFooBar msg(buffer);
+//      return ProcessMessage(robotID, msg);
 //   }
 //
-#elif MESSAGE_DEFINITION_MODE == MESSAGE_PROCESS_BUFFER_METHODS_MODE
+#elif MESSAGE_DEFINITION_MODE == MESSAGE_PROCESS_METHODS_MODE
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-ReturnCode GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(const RobotID_t robotID, const u8* buffer) const \
+ReturnCode ProcessMessage(const RobotID_t robotID, const GET_MESSAGE_CLASSNAME(__MSG_TYPE__)& msg); \
+inline ReturnCode GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(const RobotID_t robotID, const u8* buffer) \
 { \
-  Robot *robot = robotMgr_->GetRobotByID(robotID); \
   const GET_MESSAGE_CLASSNAME(__MSG_TYPE__) msg(buffer); \
-  return robot->ProcessMessage(msg); \
+  return ProcessMessage(robotID, msg); \
 }
 
 #define END_MESSAGE_DEFINITION(__MSG_TYPE__)

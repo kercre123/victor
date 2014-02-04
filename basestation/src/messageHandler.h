@@ -65,7 +65,7 @@ namespace Anki {
       
       // Process a raw byte buffer as a message and send it to the specified
       // robot
-      ReturnCode ProcessPacket(const Comms::MsgPacket& packet) const;
+      ReturnCode ProcessPacket(const Comms::MsgPacket& packet);
       
       // Create the enumerated message IDs from the MessageDefinitions file:
       typedef enum {
@@ -76,7 +76,7 @@ namespace Anki {
       } ID;
       
       // Auto-gen the ProcessBufferAs_MessageX() method prototypes using macros:
-#define MESSAGE_DEFINITION_MODE MESSAGE_PROCESS_BUFFER_METHODS_MODE
+#define MESSAGE_DEFINITION_MODE MESSAGE_PROCESS_METHODS_MODE
 #include "anki/cozmo/MessageDefinitions.h"
       
       // Fill in the message information lookup table for getting size and
@@ -85,7 +85,7 @@ namespace Anki {
       struct {
         u8 priority;
         u8 size;
-        ReturnCode (MessageHandler::*ProcessPacketAs)(const RobotID_t robotID, const u8* buffer) const;
+        ReturnCode (MessageHandler::*ProcessPacketAs)(const RobotID_t robotID, const u8* buffer);
       } lookupTable_[NUM_MSG_IDS+1] = {
         {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE

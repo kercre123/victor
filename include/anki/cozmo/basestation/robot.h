@@ -70,9 +70,6 @@ namespace Anki {
       
       void dockWithBlock(const Block& block);
       
-#define MESSAGE_DEFINITION_MODE MESSAGE_ROBOT_PROCESSOR_METHOD_MODE
-#include "anki/cozmo/MessageDefinitions.h"
-      
     protected:
       // The robot's identifier
       RobotID_t     ID_;
