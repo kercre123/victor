@@ -78,7 +78,7 @@ namespace Anki {
       
       // For creating derived objects from a pointer to this base class, see
       // ObservableObjectBase below
-      virtual ObservableObject* clone() const = 0;
+      virtual ObservableObject* Clone() const = 0;
       
     protected:
       
@@ -115,7 +115,7 @@ namespace Anki {
       */
     };
     
-    
+    /*
     // Derive specific observable objects from this class to get a clone method,
     // without having to specifically write one in each derived class.
     //
@@ -134,7 +134,7 @@ namespace Anki {
         return new Derived(static_cast<const Derived&>(*this));
       }
     };
-    
+    */
     
     class ObservableObjectLibrary
     {

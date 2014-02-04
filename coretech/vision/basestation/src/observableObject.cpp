@@ -72,6 +72,23 @@ namespace Anki {
       }
     }
     
+    
+    std::vector<const ObservableObject*> const* ObservableObjectLibrary::GetObjectsWithCode(const Marker::Code& code) const
+    {
+      auto temp = objectsWithCode_.find(code);
+      if(temp != objectsWithCode_.end()) {
+        return &temp->second;
+      }
+      else {
+        return NULL;
+      }
+    }
+    
+    std::vector<const ObservableObject*> const* ObservableObjectLibrary::GetObjectsWithMarker(const Marker& marker) const
+    {
+      return GetObjectsWithCode(marker.GetCode());
+    }
+    
     void ObservableObjectLibrary::AddObject(const ObservableObject* object)
     {
       // TODO: Warn/error if we are overwriting an existing object with this ID?
@@ -156,7 +173,7 @@ namespace Anki {
           // NOTE: this does nothing for singleton clusters
           poseCluster.RecomputePose();
           
-          objectsSeen.push_back(libObject->clone());
+          objectsSeen.push_back(libObject->Clone());
           objectsSeen.back()->SetPose(poseCluster.GetPose());
           
         } // FOR each pose cluster
