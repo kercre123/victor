@@ -28,13 +28,18 @@ end
 % VisionMarkers
 B = Block(name, 'faceImages', markerImg);
 
+outputDir = fullfile(rootPath, 'blocks', name);
+if ~isdir(outputDir)
+    mkdir(outputDir);
+end
+
 for i = 1:B.numMarkers
     % Add each face's marker to the library
     markerLibrary.AddMarker(B.markers{i});
     
     % Save the marker image
     imwrite(imresize(markerImg{i}, [512 512]), ...
-        fullfile(rootPath, 'blocks', name, sprintf('face%d.png',i)));
+        fullfile(outputDir, sprintf('face%d.png',i)));
 end
 
 % Save the updated marker library
