@@ -128,6 +128,17 @@ namespace Anki {
       return Block_2x1::rotationAmbiguities_;
     }
     
+    Block_Cube1x1::Block_Cube1x1(const ObjectID_t ID)
+    : Block(ID)
+    {
+      
+    }
+    
+    Block_2x1::Block_2x1(const ObjectID_t ID)
+    : Block(ID)
+    {
+      
+    }
 
     
   } // namespace Cozmo
