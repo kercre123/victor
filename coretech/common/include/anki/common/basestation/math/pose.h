@@ -212,9 +212,22 @@ namespace Anki {
     // respect to the root / world pose.
     Pose3d getWithRespectTo(const Pose3d *otherPose) const;
     
-    bool IsSameAs(const Pose3d& otherPose,
+    // Check to see if two poses are the same.  Return true if so.  P_diff will
+    // contain the transformation from this pose to P_other.
+    bool IsSameAs(const Pose3d& P_other,
                   const float   distThreshold,
-                  const Radians angleThreshold) const;
+                  const Radians angleThreshold,
+                  Pose3d& P_diff) const;
+    
+    // Same as above, but with a list of rotational ambiguities to ignore.
+    // True will be returned so long as the difference from P_other is
+    // one of the given rotations.
+    bool IsSameAs_WithAmbiguity(const Pose3d& P_other,
+                                const std::vector<RotationMatrix3d>& R_ambiguities,
+                                const float   distThreshold,
+                                const Radians angleThreshold,
+                                const bool    useAbsRotation,
+                                Pose3d& P_diff) const;
     
   protected:
     

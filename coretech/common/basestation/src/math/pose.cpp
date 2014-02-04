@@ -188,6 +188,7 @@ namespace Anki {
   void Pose3d::preComposeWith(const Pose3d &other)
   {
     this->rotationMatrix.preMultiplyBy(other.rotationMatrix);
+    this->set_rotation(this->rotationMatrix); // keep Rvec and Rmat in sync
     this->translation = other.rotationMatrix * this->translation;
     this->translation += other.translation;
   }
@@ -401,31 +402,105 @@ namespace Anki {
     return getWithRespectToHelper<Pose3d>(this, otherPose);
   }
   
-  bool Pose3d::IsSameAs(const Pose3d& otherPose,
+  bool Pose3d::IsSameAs(const Pose3d& P_other,
                         const float distThreshold,
-                        const Radians angleThreshold) const
+                        const Radians angleThreshold,
+                        Pose3d& P_diff) const
   {
     bool isSame = false;
-    if(computeDistanceBetween(this->translation, otherPose.translation) < distThreshold)
-    {
-      // TODO: use quaternion difference?  Might be cheaper than the matrix multiplication below
-      //     UnitQuaternion qThis(this->rotationVector), qOther(otherPose.rotationVector);
-      //
-      //
-      // const Radians angleDiff( 2.f*std::acos(std::abs(dot(qThis, qOther))) );
-      //
+    
+    // Compute the transformation that takes P1 to P2
+    // Pdiff = P_other * inv(P_this)
+    P_diff = this->getInverse();
+    P_diff.preComposeWith(P_other);
+    
+    // First, check to see if the translational difference between the two
+    // poses is small enough to call them a match
+    if(P_diff.get_translation().length() < distThreshold) {
       
-      RotationMatrix3d R(this->rotationMatrix);
-      R *= otherPose.rotationMatrix;
-      
-      const Radians angleDiff( 0.5f * std::acos(R.Trace() - 1.f) );
-      if(angleDiff < angleThreshold) {
+      // Next check to see if the rotational difference is small
+      if(P_diff.get_rotationAngle() < angleThreshold) {
         isSame = true;
       }
-    }
+
+    } // if translation component is small enough
     
     return isSame;
-  }
+
+  } // IsSameAs()
+  
+  
+  bool Pose3d::IsSameAs_WithAmbiguity(const Pose3d& P_other,
+                                      const std::vector<RotationMatrix3d>& R_ambiguities,
+                                      const float   distThreshold,
+                                      const Radians angleThreshold,
+                                      const bool    useAbsRotation,
+                                      Pose3d& P_diff) const
+  {
+    bool isSame = false;
+    /*
+    // Compute the transformation that takes P1 to P2
+    // Pdiff = P_this * inv(P_other)
+    P_diff = this->getInverse();
+    P_diff.preComposeWith(P_other);
+    */
+    // P_this represents the canonical/reference pose after some arbitrary
+    // transformation, T:
+    //    P_this = T * P_ref
+    //
+    // If P_other is another ambigously-transformed version of this canonical pose
+    // that has undergone the same transformation, T, then, it is:
+    //    P_other = T * [R_amb | 0] * P_ref
+    //
+    // So we compute P_diff = inv(P_this) * P_other.  If the above is true, then
+    // P_diff is equivalent to:
+    //    P_diff = inv(P_ref) * inv(T) * T * P_amb * P_ref
+    //           = inv(P_ref) * [R_amb | 0] * P_ref
+    //
+    // Without loss of generality, we can assume P_ref is the identity
+    // transformation (or, equivalently, that the input poses -- this and other
+    // have been pre-adjusted by inv(P_ref) before calling this function). In
+    // that case, P_diff = [R_amb | 0].  
+    //
+    
+    P_diff = this->getInverse();
+    P_diff *= P_other;
+    
+    // First, check to see if the translational difference between the two
+    // poses is small enough to call them a match
+    if(P_diff.get_translation().length() < distThreshold) {
+      
+      // Next check to see if the rotational difference is small
+      
+      if(P_diff.get_rotationAngle() < angleThreshold) {
+        // Rotation is same, without even considering the ambiguities
+        isSame = true;
+      }
+      else {
+        // Need to consider ambiguities...
+        
+        RotationMatrix3d R(P_diff.get_rotationMatrix());
+        
+        if(useAbsRotation) {
+          // The ambiguities are assumed to be defined up various sign flips
+          R.abs();
+        }
+        
+        // Check to see if the rotational part of the pose difference is
+        // similar enough to one of the rotational ambiguities
+        for(auto R_ambiguity : R_ambiguities) {
+          if(R.GetAngleDiffFrom(R_ambiguity) < angleThreshold) {
+            isSame = true;
+            break;
+          }
+        }
+      }
+    } // if translation component is small enough
+    
+    return isSame;
+    
+  } // IsSameAs_WithAmbiguity()
+  
   
 #pragma mark --- Global Functions ---
   

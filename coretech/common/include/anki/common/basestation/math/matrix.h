@@ -96,11 +96,18 @@ namespace Anki {
     // Constructors:
     SmallMatrix();
     SmallMatrix(const T* vals); // *assumes* vals is NROWS*NCOLS long
+    SmallMatrix(std::initializer_list<T>);
     SmallMatrix(const SmallMatrix<NROWS,NCOLS,T> &M);
+    
+    //SmallMatrix<NROWS,NCOLS,T>& operator=(const SmallMatrix& other);
     
     // Matrix element access:
     T&       operator() (unsigned int i, unsigned int j);
     const T& operator() (unsigned int i, unsigned int j) const;
+
+    // Extract a single row or column as a point
+    Point<NCOLS,T> getRow(const unsigned int i) const;
+    Point<NROWS,T> getColumn(const unsigned int j) const;
     
     // Matrix multiplication:
     // Matrix[MxN] * Matrix[NxK] = Matrix[MxK]
@@ -109,6 +116,9 @@ namespace Anki {
     
     // Matrix transpose:
     SmallMatrix<NCOLS,NROWS,T> getTranspose(void) const;
+    
+    // Take absolute value of all elements (return reference to self)
+    SmallMatrix<NROWS,NCOLS,T>& abs();
     
     // TODO: Add explicit pseudo-inverse? (inv(A'A)*A')
     // SmallMatrix<T,NCOLS,NROWS> getPsuedoInverse(void) const;
@@ -138,7 +148,7 @@ namespace Anki {
 
   }; // class SmallMatrix
   
-  // Comparisons for equalit and near-equality:
+  // Comparisons for equality and near-equality:
   template<size_t NROWS, size_t NCOLS, typename T>
   bool operator==(const SmallMatrix<NROWS,NCOLS,T> &M1,
                   const SmallMatrix<NROWS,NCOLS,T> &M2);
@@ -147,6 +157,10 @@ namespace Anki {
   bool nearlyEqual(const SmallMatrix<NROWS,NCOLS,T> &M1,
                    const SmallMatrix<NROWS,NCOLS,T> &M2,
                    const T eps = std::numeric_limits<T>::epsilon());
+  
+  // Absolute value of all elements
+  template<size_t NROWS, size_t NCOLS, typename T>
+  SmallMatrix<NROWS,NCOLS,T> abs(const SmallMatrix<NROWS,NCOLS,T>& M);
   
   // An extension of the SmallMatrix class for square matrices
   template<size_t DIM, typename T>
@@ -423,6 +437,24 @@ namespace Anki {
   }
   
   template<size_t NROWS, size_t NCOLS, typename T>
+  SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(std::initializer_list<T> valsList)
+  {
+    CORETECH_ASSERT(valsList.size() == NROWS*NCOLS);
+    
+#if ANKICORETECH_USE_OPENCV
+    T vals[NROWS*NCOLS];
+    size_t i=0;
+    for(auto listItem = valsList.begin(); i<NROWS*NCOLS; ++listItem, ++i ) {
+      vals[i] = *listItem;
+    }
+    *this = cv::Matx<T,NROWS,NCOLS>(vals);
+#else
+    assert(false);
+    // TODO: Define our own opencv-free constructor?
+#endif
+  }
+  
+  template<size_t NROWS, size_t NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(const SmallMatrix<NROWS,NCOLS,T> &M)
 #if ANKICORETECH_USE_OPENCV
   : cv::Matx<T,NROWS,NCOLS>(M)
@@ -463,7 +495,45 @@ namespace Anki {
     
     return cv::Matx<T,NROWS,NCOLS>::operator()(i,j);
   }
+
   
+  template<size_t NROWS, size_t NCOLS, typename T>
+  Point<NCOLS,T> SmallMatrix<NROWS,NCOLS,T>::getRow(const unsigned int i) const
+  {
+    CORETECH_THROW_IF(i >= NROWS);
+    
+    Point<NCOLS,T> row;
+    for(unsigned int j=0; j<NCOLS; ++j) {
+      row[j] = cv::Matx<T,NROWS,NCOLS>::operator()(i,j);
+    }
+    
+    return row;
+  }
+  
+  template<size_t NROWS, size_t NCOLS, typename T>
+  Point<NROWS,T> SmallMatrix<NROWS,NCOLS,T>::getColumn(const unsigned int j) const
+  {
+    CORETECH_THROW_IF(j >= NCOLS);
+    
+    Point<NROWS,T> column;
+    for(unsigned int i=0; i<NROWS; ++i) {
+      column[i] = cv::Matx<T,NROWS,NCOLS>::operator()(i,j);
+    }
+    
+    return column;
+  }
+  
+  /*
+  template<size_t NROWS, size_t NCOLS, typename T>
+  SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::operator=(const SmallMatrix& other)
+  {
+    if(this != &other) {
+      *this = SmallMatrix(other);
+    }
+    return *this;
+  }
+   */
+
   // Matrix multiplication:
   // Matrix[MxN] * Matrix[NxK] = Matrix[MxK]
   template<size_t NROWS, size_t NCOLS, typename T>
@@ -494,6 +564,16 @@ namespace Anki {
 #endif
   }
   
+  template<size_t NROWS, size_t NCOLS, typename T>
+  SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::abs()
+  {
+    for(size_t i=0; i<NROWS; ++i) {
+      for(size_t j=0; j<NCOLS; ++j) {
+        (*this)(i,j) = std::abs((*this)(i,j));
+      }
+    }
+    return *this;
+  }
   
   template<size_t NROWS, size_t NCOLS, typename T>
   unsigned int SmallMatrix<NROWS,NCOLS,T>::numRows() const
@@ -539,6 +619,13 @@ namespace Anki {
     return true;
   } // nearlyEqual(SmallMatrix,SmallMatrix)
   
+  
+  template<size_t NROWS, size_t NCOLS, typename T>
+  SmallMatrix<NROWS,NCOLS,T> abs(const SmallMatrix<NROWS,NCOLS,T>& M)
+  {
+    SmallMatrix<NROWS,NCOLS,T> Mcopy(M);
+    return Mcopy.abs();
+  } // abs()
   
 #if ANKICORETECH_USE_OPENCV
   template<size_t NROWS, size_t NCOLS, typename T>
