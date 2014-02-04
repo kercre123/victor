@@ -82,6 +82,8 @@ namespace Anki {
       const Pose3d& get_pose(void) const;
       void SetPose(const Pose3d &newPose);
       
+      
+      
     protected:
       // A counter for how many blocks are instantiated
       // (A static counter may not be the best way to do this...)
@@ -120,7 +122,32 @@ namespace Anki {
       
     }; // class Block
     
+    class Block_Cube1x1 : public Block
+    {
+    public:
+      Block_Cube1x1(const ObjectID_t ID);
+      
+      virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
+      
+    protected:
+      static const std::vector<RotationMatrix3d> rotationAmbiguities_;
+      
+    };
     
+    // Long dimension is along the x axis (so one unique face has x axis
+    // sticking out of it, the other unique face type has y and z axes sticking
+    // out of it)
+    class Block_2x1 : public Block
+    {
+    public:
+      Block_2x1(const ObjectID_t ID);
+      
+      virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
+      
+    protected:
+      static const std::vector<RotationMatrix3d> rotationAmbiguities_;
+      
+    };
 #pragma mark --- Inline Accessors Implementations ---
     
        

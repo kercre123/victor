@@ -103,5 +103,32 @@ namespace Anki {
       return Block::numBlocks;
     }
     
+    
+    const std::vector<RotationMatrix3d> Block_Cube1x1::rotationAmbiguities_ = {
+      RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
+      RotationMatrix3d({0,1,0,  1,0,0,  0,0,1}),
+      RotationMatrix3d({0,1,0,  0,0,1,  1,0,0}),
+      RotationMatrix3d({0,0,1,  0,1,0,  1,0,0}),
+      RotationMatrix3d({0,0,1,  1,0,0,  0,1,0}),
+      RotationMatrix3d({1,0,0,  0,0,1,  0,1,0})
+    };
+    
+    std::vector<RotationMatrix3d> const& Block_Cube1x1::GetRotationAmbiguities() const
+    {
+      return Block_Cube1x1::rotationAmbiguities_;
+    }
+    
+    const std::vector<RotationMatrix3d> Block_2x1::rotationAmbiguities_ = {
+      RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
+      RotationMatrix3d({1,0,0,  0,0,1,  0,1,0})
+    };
+    
+    std::vector<RotationMatrix3d> const& Block_2x1::GetRotationAmbiguities() const
+    {
+      return Block_2x1::rotationAmbiguities_;
+    }
+    
+
+    
   } // namespace Cozmo
 } // namespace Anki

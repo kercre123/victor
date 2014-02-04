@@ -31,8 +31,8 @@ namespace Anki
       // TODO: Read known blocks from config, or from BlockDefinitions.h
       // TODO: Read known mat pieces from config, or from MatPieceDefinitions.h
       
-      blockLibrary_.AddObject(new Block(1));
-      blockLibrary_.AddObject(new Block(2));
+      blockLibrary_.AddObject(new Block_Cube1x1(1));
+      blockLibrary_.AddObject(new Block_2x1(2));
       
       matLibrary_.AddObject(new MatPiece(1));
     }
