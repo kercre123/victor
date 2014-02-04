@@ -131,7 +131,7 @@ for iTest = 1:length(allTests)
                     newImageResized = imresize(allImages{iFrame,1}, originalResolution);
 
                     disp('normal LK');
-                    lkTracker_projective.track(newImageResized, 'MaxIterations', maxIterations, 'ConvergenceTolerance', convergenceTolerance);
+                    lkTracker_projective.track({newImageResized}, 'MaxIterations', maxIterations, 'ConvergenceTolerance', convergenceTolerance);
                     
                     binaryLK_newImageResized = computeBinaryExtrema(newImageResized, binaryLK_extremaFilterWidth, binaryLK_extremaFilterSigma, binaryLK_extremaDerivativeThreshold, true, true, true, binaryLK_matchingFilterWidth, binaryLK_matchingFilterSigma);
 %                     g = fspecial('gaussian',[binaryLK_matchingFilterWidth, 1], binaryLK_matchingFilterSigma);
@@ -139,7 +139,7 @@ for iTest = 1:length(allTests)
 %                     binaryLK_newImageResized = imfilter(imfilter(binaryLK_newImageResized, g), gs');
 
                     disp('binary LK');
-                    lkTracker_binary_projective.track(binaryLK_newImageResized, 'MaxIterations', maxIterations, 'ConvergenceTolerance', convergenceTolerance);
+                    lkTracker_binary_projective.track({binaryLK_newImageResized}, 'MaxIterations', maxIterations, 'ConvergenceTolerance', convergenceTolerance);
 
 %                     disp('Matlab LK projective:');
 %                     disp(lkTracker_projective.tform);

@@ -1,5 +1,8 @@
-function converged = trackHelper(this, img, i_scale, translationDone)
+function converged = trackHelper(this, images, i_scale, translationDone)
 % Protected helper to do actual tracking optimization at a specified scale.
+
+assert(iscell(images));
+assert(length(images) == size(this.target,1));
 
 spacing = 2^(i_scale-1);
 
@@ -22,65 +25,56 @@ while iteration < this.maxIterations
         break;
     end
     
-    imgi = interp2(img, xi(:), yi(:), 'linear');
-    inBounds = ~isnan(imgi);
-    
-    if this.useNormalization
-        imgi = (imgi - mean(imgi(inBounds)))/std(imgi(inBounds));
-    end
-    
-%     figure(3); imshow(this.target{i_scale});
-%     figure(4); imshow(interp2(img, xi, yi, 'linear'));
-    It = imgi - this.target{i_scale}(:);
-    
-    %It(isnan(It)) = 0;
-    %inBounds = true(size(It));
-    
-    if numel(inBounds) < 16
-        warning('Template drifted too far out of image.');
-        break;
-    end
-    
-    this.err = mean(abs(It(inBounds)));
-    
-    
-    %namedFigure('It')
-    %imagesc(reshape(It, size(this.xgrid{i_scale}))), axis image,
-    %title(sprintf('Error=%.3f, Previous=%.3f, AbsDiff=%.3f', ...
-    %    this.err, prevErr, abs(err-prevErr))), pause(.1)
-    
-    
-    %hold off, imagesc(img), axis image, hold on
-    %plot(xi, yi, 'rx'); drawnow
-    % %                 [nrows,ncols] = size(img);
-    % %                 temp = zeros(nrows,ncols);
-    % %                 temp(sub2ind([nrows ncols], ...
-    % %                     max(1,min(nrows,round(yi))), ...
-    % %                     max(1,min(ncols,round(xi))))) = It;
-    % %                 hold off, imagesc(temp), axis image, drawnow
-    
     
     if translationDone
-        A = this.A_full{i_scale};
-        %{
-                    AtWA = this.A_scale{i_scale}(inBounds,:)'*(this.W{i_scale}(:,ones(1,3)).*this.A_scale{i_scale}(inBo
-                    AtWA = this.AtWA_scale{i_scale};
-                    AtW = this.AtW_scale{i_scale};
-        %}
+        numDof = size(this.A_full{1},2);   
     else
-        A = this.A_trans{i_scale};
-        %{
-                    AtWA = this.AtWA_trans{i_scale};
-                    AtW = this.AtW_trans{i_scale};
-        %}
+        numDof = size(this.A_trans{1},2);
     end
     
-    AtW = (A(inBounds,:).*this.W{i_scale}(inBounds,ones(1,size(A,2))))';
-    AtWA = AtW*A(inBounds,:) + diag(this.ridgeWeight*ones(1,size(A,2)));
+    all_AtWA = zeros(numDof, numDof);
+    all_b = zeros(numDof, 1);    
     
-    b = AtW*It(inBounds);
+    for i_image = 1:length(images)
+        imgi = interp2(images{i_image}, xi(:), yi(:), 'linear');
+        inBounds = ~isnan(imgi);
+
+        if this.useNormalization
+            imgi = (imgi - mean(imgi(inBounds)))/std(imgi(inBounds));
+        end
+
+    %     figure(3); imshow(this.target{i_scale});
+    %     figure(4); imshow(interp2(img, xi, yi, 'linear'));
+        It = imgi - this.target{i_image, i_scale}(:);
+
+        %It(isnan(It)) = 0;
+        %inBounds = true(size(It));
+
+        if numel(inBounds) < 16
+            warning('Template drifted too far out of image.');
+            break;
+        end
+
+        this.err = mean(abs(It(inBounds)));
+
+        if translationDone
+            A = this.A_full{i_image, i_scale};
+        else
+            A = this.A_trans{i_image, i_scale};
+        end
+
+        AtW = (A(inBounds,:).*this.W{i_scale}(inBounds,ones(1,size(A,2))))';
+        AtWA = AtW*A(inBounds,:) + diag(this.ridgeWeight*ones(1,size(A,2)));
+
+        b = AtW*It(inBounds);
+        
+        all_AtWA = all_AtWA + AtWA;
+        all_b = all_b + b;
+    end % for i_image = 1:length(firstImages)
     
-    update = AtWA\b;
+%     update = AtWA\b;
+    update = all_AtWA \ all_b;
+
     %update = least_squares_norm(AtWA, b);
     %update = robust_least_squares(AtWA, b);
     
