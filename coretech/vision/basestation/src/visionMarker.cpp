@@ -11,6 +11,28 @@
 
 namespace Anki {
   namespace Vision{
+
+    Marker::Code::Code()
+    {
+      memset(byteArray_,0,NUM_BYTES);
+    }
+  
+    Marker::Code::Code(const u8* bytes)
+    {
+      memcpy(byteArray_,bytes,NUM_BYTES);
+    }
+    
+    Marker::Code::Code(std::initializer_list<u8> args)
+    {
+      std::initializer_list<u8>::iterator it;
+      u8 numBytes = 0;
+      for(it = args.begin(); it != args.end() && numBytes < NUM_BYTES; ++it)
+      {
+        byteArray_[numBytes++] = *it;
+      }
+    }
+
+    
     
     Marker::Marker(const Code& withCode)
     : code_(withCode)

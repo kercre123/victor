@@ -47,6 +47,8 @@ namespace Anki {
       regMsg.robotID = HAL::GetRobotID();
       regMsg.enableAdvertisement = 1;
       regMsg.port = ROBOT_RADIO_BASE_PORT + regMsg.robotID;
+      
+      PRINT("sim_radio: Sending registration for robot %d on port %d\n", regMsg.robotID, regMsg.port);
       advRegClient.Send((char*)&regMsg, sizeof(regMsg));
     }
     
@@ -56,6 +58,8 @@ namespace Anki {
       RobotAdvertisementRegistration regMsg;
       regMsg.robotID = HAL::GetRobotID();
       regMsg.enableAdvertisement = 0;
+      
+      PRINT("sim_radio: Sending deregistration for robot %d\n", regMsg.robotID);
       advRegClient.Send((char*)&regMsg, sizeof(regMsg));
     }
     
@@ -116,8 +120,8 @@ namespace Anki {
         const u8 header[HEADER_LENGTH] = {
           RADIO_PACKET_HEADER[0],
           RADIO_PACKET_HEADER[1],
-          static_cast<u8>(HAL::GetRobotID()),
-          static_cast<u8>(msgID)};
+          static_cast<u8>(msgID),
+          static_cast<u8>(HAL::GetRobotID())};
         
         // Send the actual message
         const u8 size = Messages::GetSize(msgID);
@@ -129,13 +133,12 @@ namespace Anki {
         // Send the message header (0xBEEF + timestamp + robotID + msgID)
         // For TCP comms, send timestamp immediately after the header.
         // This is needed on the basestation side to properly order messages.
-        const u8 HEADER_LENGTH = 8;
+        const u8 HEADER_LENGTH = 7;
         u8 header[HEADER_LENGTH];
-        UtilMsgError packRes = UtilMsgPack(header, HEADER_LENGTH, NULL, "ccicc",
+        UtilMsgError packRes = UtilMsgPack(header, HEADER_LENGTH, NULL, "ccic",
                     RADIO_PACKET_HEADER[0],
                     RADIO_PACKET_HEADER[1],
                     ts,
-                    HAL::GetRobotID(),
                     msgID);
         
         assert (packRes == UTILMSG_OK);

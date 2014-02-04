@@ -43,9 +43,9 @@ namespace Anki
     class MatPiece : public Vision::ObservableObjectBase<MatPiece>
     {
     public:
-      MatPiece(ObjectID_t ID);
+      MatPiece(ObjectID_t ID){};
       
-      virtual float GetMinDim() const;
+      virtual float GetMinDim() const {return 0;}
       
     };
     

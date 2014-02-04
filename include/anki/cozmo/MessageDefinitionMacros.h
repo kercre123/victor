@@ -31,10 +31,11 @@
 #define MESSAGE_CLASS_DEFINITION_MODE        0
 #define MESSAGE_CLASS_CONSTRUCTOR_MODE       1
 #define MESSAGE_CLASS_GETSIZE_MODE           2
-#define MESSAGE_TABLE_DEFINITION_MODE        3
-#define MESSAGE_ENUM_DEFINITION_MODE         4
-#define MESSAGE_ROBOT_PROCESSOR_METHOD_MODE  5
-#define MESSAGE_PROCESS_BUFFER_METHODS_MODE  6
+#define MESSAGE_CLASS_GETBYTES_MODE          3
+#define MESSAGE_TABLE_DEFINITION_MODE        4
+#define MESSAGE_ENUM_DEFINITION_MODE         5
+#define MESSAGE_ROBOT_PROCESSOR_METHOD_MODE  6
+#define MESSAGE_PROCESS_BUFFER_METHODS_MODE  7
 
 #else
 #error Either COZMO_ROBOT or COZMO_BASESTATION should be defined!
@@ -293,13 +294,13 @@ return
 //      buffer += sizeof(u16);
 //    }
 //
-#elif MESSAGE_DEFINITION_MODE == MESSAGE_GETBYTES_MODE
+#elif MESSAGE_DEFINITION_MODE == MESSAGE_CLASS_GETBYTES_MODE
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
 void GET_MESSAGE_CLASSNAME(__MSG_TYPE__)::GetBytes(u8* buffer) const {
 
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) \
-*(reinterpret_cast<const __TYPE__*>(buffer)) = __NAME__; \
+*(reinterpret_cast<__TYPE__*>(buffer)) = __NAME__; \
 buffer += sizeof(__TYPE__);
 
 #define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) \

@@ -17,7 +17,7 @@ namespace Anki {
     
     MessageHandler* MessageHandler::singletonInstance_ = 0;
     
-    ReturnCode MessageHandler::Init(Comms::CommsManager* comms)
+    ReturnCode MessageHandler::Init(Comms::IComms* comms)
     {
       ReturnCode retVal = EXIT_FAILURE;
       
@@ -40,7 +40,7 @@ namespace Anki {
       robotMgr_ = RobotManager::getInstance();
     }
     
-    ReturnCode MessageHandler::ProcessPacket(const Comms::RobotMsgPacket_t& packet) const
+    ReturnCode MessageHandler::ProcessPacket(const Comms::MsgPacket& packet) const
     {
       ReturnCode retVal = EXIT_FAILURE;
       
@@ -55,7 +55,7 @@ namespace Anki {
         // indicated by the lookup table, which will cast the buffer as the
         // correct message type and call the specified robot's ProcessMessage(MessageX)
         // method.
-        retVal = (*this.*lookupTable_[msgID].ProcessPacketAs)(packet.robotID, packet.data+1);
+        retVal = (*this.*lookupTable_[msgID].ProcessPacketAs)(packet.sourceId, packet.data+1);
       }
       
       return retVal;
@@ -68,10 +68,10 @@ namespace Anki {
         return EXIT_FAILURE;
       }
       
-      while(comms_->GetNumPendingPackets() > 0)
+      while(comms_->GetNumPendingMsgPackets() > 0)
       {
-        Comms::RobotMsgPacket_t packet;
-        comms_->GetNextPacket(packet);
+        Comms::MsgPacket packet;
+        comms_->GetNextMsgPacket(packet);
         
         ProcessPacket(packet);
       } // while messages are still available from comms

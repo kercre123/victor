@@ -49,7 +49,7 @@ namespace Cozmo {
     return true;
   }
   
-  int TCPComms::Send(const MsgPacket &p)
+  int TCPComms::Send(const Comms::MsgPacket &p)
   {
     // TODO: Instead of sending immediately, maybe we should queue them and send them all at
     // once to more closely emulate BTLE.
@@ -182,12 +182,12 @@ namespace Cozmo {
           TimeStamp_t *ts = (TimeStamp_t*)&(c.recvBuf[header.length()]);
           
           // Create RobotMsgPacket
-          MsgPacket p;
+          Comms::MsgPacket p;
           p.sourceId = it->first;
           p.dataLen = n - HEADER_AND_TS_SIZE;
           memcpy(p.data, &c.recvBuf[HEADER_AND_TS_SIZE], p.dataLen);
           
-          recvdMsgPackets_.insert(std::pair<TimeStamp_t,MsgPacket>(*ts, p) );
+          recvdMsgPackets_.insert(std::pair<TimeStamp_t,Comms::MsgPacket>(*ts, p) );
           
           // Shift recvBuf contents down
           memcpy(c.recvBuf, c.recvBuf + n + FOOTER_SIZE, c.recvDataSize - p.dataLen - HEADER_AND_TS_SIZE - FOOTER_SIZE);
@@ -278,8 +278,8 @@ namespace Cozmo {
   }
   
   
-  // Returns true if a RobotMsgPacket was successfully gotten
-  bool TCPComms::GetNextMsgPacket(MsgPacket& p)
+  // Returns true if a MsgPacket was successfully gotten
+  bool TCPComms::GetNextMsgPacket(Comms::MsgPacket& p)
   {
     if (!recvdMsgPackets_.empty()) {
       p = recvdMsgPackets_.begin()->second;

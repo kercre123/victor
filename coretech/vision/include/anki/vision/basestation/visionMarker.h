@@ -44,7 +44,7 @@ namespace Anki {
         
         Code();
         Code(const u8* bytes);
-        Code(std::initializer_list<u8>);
+        Code(std::initializer_list<u8> args);
         
         const u8* GetBytes() const;
         

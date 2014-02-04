@@ -1,28 +1,31 @@
 # products-cozmo/robot/simulator/controllers/blockworld_controller/CMakeLists.txt
 
+remove_definitions(-DCOZMO_ROBOT)
+add_definitions(-DCOZMO_BASESTATION)
+
 # Include paths
   include_directories(
-#  ${WEBOTS_C_INCLUDE_DIR}
   ${WEBOTS_CPP_INCLUDE_DIR}
   ${PROJECT_SOURCE_DIR}/basestation/src
 )
+
+file(GLOB COZMO_BASESTATION_SRC ${PROJECT_SOURCE_DIR}/basestation/src/*.c*)
 
 
 # Link paths
 link_directories( ${WEBOTS_LIB_DIR} )
 
-# TODO: I should link against coretech/messaging instead of pulling source directly!
 
 # Source files
 set(SOURCE_FILES
 #	CozmoWorldComms.cpp
 	blockworld_controller.cpp
-
-  ${PROJECT_SOURCE_DIR}/basestation/src/messages.cpp
+	${COZMO_BASESTATION_SRC}
+#  ${PROJECT_SOURCE_DIR}/basestation/src/messages.cpp
 )
 
 set(HEADER_FILES
-	CozmoWorldComms.h
+#	CozmoWorldComms.h
 )
 
 if(NOT WIN32)
@@ -36,7 +39,6 @@ if(NOT WIN32)
     CoreTech_Common_Basestation
     CoreTech_Vision_Basestation
     CoreTech_Messaging_Shared
-  # Controller # Webots C Controller
     CppController # Webots C++ Controller
     ${OPENCV_LIBS}
   )
