@@ -102,7 +102,7 @@ if blurResult
         x = indsx(i);
         y = indsy(i);
         extrema((y-blurWidth2):(y+blurWidth2), x) = max(filter, extrema((y-blurWidth2):(y+blurWidth2), x));
-        verticalExtremaBlurred(y, (x-blurWidth2):(x+blurWidth2)) = max(filter', verticalExtremaBlurred(y, (x-blurWidth2):(x+blurWidth2)));
+        verticalExtremaBlurred((y-blurWidth2):(y+blurWidth2), x) = max(filter, verticalExtremaBlurred((y-blurWidth2):(y+blurWidth2), x));
     end
 %     toc
     

@@ -13,19 +13,23 @@ resolutions = {[240,320], [120,160], [60,80]};
 % maxPyramidLevels = [4, 3, 1, 1];
 maxPyramidLevels = [3, 2, 1];
 % maxPyramidLevels = [5, 4, 3];
-maxIterations = 50;
+maxIterations = 20;
 convergenceTolerance = 0.1;
 useUndistortion = false;
 
 binaryLK_extremaFilterWidth = 3;
 binaryLK_extremaFilterSigma = 1.0;
 binaryLK_extremaDerivativeThreshold = 255;
-binaryLK_matchingFilterWidth = 7;
-binaryLK_matchingFilterSigma = 2.0;
+% binaryLK_matchingFilterWidth = 7;
+% binaryLK_matchingFilterSigma = 2.0;
 % binaryLK_matchingFilterWidth = 3;
 % binaryLK_matchingFilterSigma = 1.0;
-% binaryLK_matchingFilterWidth = 15;
-% binaryLK_matchingFilterSigma = 5.0;
+binaryLK_matchingFilterWidth = 15;
+binaryLK_matchingFilterSigma = 5.0;
+% binaryLK_matchingFilterWidth = 21;
+% binaryLK_matchingFilterSigma = 7.0;
+
+
 
 assert(exist('allTestsFilename', 'var') == 1);
 assert(exist('outputFilename', 'var') == 1);
@@ -114,14 +118,14 @@ for iTest = 1:length(allTests)
             for numPyramidLevels = 1:maxPyramidLevels(iOriginalResolution)
 %                 disp(sprintf('originalRes:(%d,%d) numPyramidLevels:%d', originalResolution(2), originalResolution(1), numPyramidLevels));
 
-                lkTracker_projective = LucasKanadeTrackerBinary({originalImageResized,originalImageResized}, maskResized, ...
+                lkTracker_projective = LucasKanadeTrackerBinary({originalImageResized}, maskResized, ...
                     'Type', 'homography', 'DebugDisplay', false, ...%                     'UseBlurring', false, ... , 'ApproximateGradientMargins', false
                     'UseNormalization', false, ...
                     'NumScales', numPyramidLevels);
 %                     'TrackingResolution', trackingResolution(2:-1:1));
 
                 binaryLK_originalImageResized = computeBinaryExtrema(originalImageResized, binaryLK_extremaFilterWidth, binaryLK_extremaFilterSigma, binaryLK_extremaDerivativeThreshold, true, true);
-                lkTracker_binary_projective = LucasKanadeTrackerBinary({binaryLK_originalImageResized,binaryLK_originalImageResized}, maskResized, ...
+                lkTracker_binary_projective = LucasKanadeTrackerBinary({binaryLK_originalImageResized}, maskResized, ...
                     'Type', 'homography', 'DebugDisplay', false, ...
                     'UseNormalization', false, ...
                     'NumScales', numPyramidLevels);
@@ -146,11 +150,11 @@ for iTest = 1:length(allTests)
                     newImageResized = imresize(allImages{iFrame,1}, originalResolution);
 
 %                     disp('normal LK');
-                    lkTracker_projective.track({newImageResized,newImageResized}, 'MaxIterations', maxIterations, 'ConvergenceTolerance', convergenceTolerance);
+                    lkTracker_projective.track({newImageResized}, 'MaxIterations', maxIterations, 'ConvergenceTolerance', convergenceTolerance);
                     
                     binaryLK_newImageResized = computeBinaryExtrema(newImageResized, binaryLK_extremaFilterWidth, binaryLK_extremaFilterSigma, binaryLK_extremaDerivativeThreshold, true, true, true, binaryLK_matchingFilterWidth, binaryLK_matchingFilterSigma);
 %                     disp('binary LK');
-                    lkTracker_binary_projective.track({binaryLK_newImageResized,binaryLK_newImageResized}, 'MaxIterations', maxIterations, 'ConvergenceTolerance', convergenceTolerance);
+                    lkTracker_binary_projective.track({binaryLK_newImageResized}, 'MaxIterations', maxIterations, 'ConvergenceTolerance', convergenceTolerance);
                     
                     [~, binarySplitLK_newImageXminima, binarySplitLK_newImageYminima] = computeBinaryExtrema(newImageResized, binaryLK_extremaFilterWidth, binaryLK_extremaFilterSigma, binaryLK_extremaDerivativeThreshold, true, false, true, binaryLK_matchingFilterWidth, binaryLK_matchingFilterSigma);
                     [~, binarySplitLK_newImageXmaxima, binarySplitLK_newImageYmaxima] = computeBinaryExtrema(newImageResized, binaryLK_extremaFilterWidth, binaryLK_extremaFilterSigma, binaryLK_extremaDerivativeThreshold, false, true, true, binaryLK_matchingFilterWidth, binaryLK_matchingFilterSigma);
@@ -162,14 +166,17 @@ for iTest = 1:length(allTests)
 
                     if (allImages{iFrame,3} > 0) && isfield(jsonData.sequences{allImages{iFrame,2}}.groundTruth{allImages{iFrame,3}}, 'errorSignalCorners')
                         bottomLineGroundTruth = jsonData.sequences{allImages{iFrame,2}}.groundTruth{allImages{iFrame,3}}.errorSignalCorners;
-                        esX = [bottomLineGroundTruth{1}.x, bottomLineGroundTruth{2}.x] / downsampleFactor * scale;
-                        esY = [bottomLineGroundTruth{1}.y, bottomLineGroundTruth{2}.y] / downsampleFactor * scale;
-                        bottomLineGroundTruth = [esX', esY'];
-                        
-                        pointErrors_projectiveLK{iTest}{iOriginalResolution}{numPyramidLevels}(end+1, :) = computeGroundTruthLineDifference(bottomLine, lkTracker_projective.tform, templateQuad, scale, bottomLineGroundTruth);
-                        pointErrors_binaryProjectiveLK{iTest}{iOriginalResolution}{numPyramidLevels}(end+1, :) = computeGroundTruthLineDifference(bottomLine, lkTracker_binary_projective.tform, templateQuad, scale, bottomLineGroundTruth);
-                        pointErrors_splitBinaryProjectiveLK{iTest}{iOriginalResolution}{numPyramidLevels}(end+1, :) = computeGroundTruthLineDifference(bottomLine, lkTracker_split_binary_projective.tform, templateQuad, scale, bottomLineGroundTruth);                        
-                        
+                        if isempty(bottomLineGroundTruth)
+                            bottomLineGroundTruth = [];
+                        else
+                            esX = [bottomLineGroundTruth{1}.x, bottomLineGroundTruth{2}.x] / downsampleFactor * scale;
+                            esY = [bottomLineGroundTruth{1}.y, bottomLineGroundTruth{2}.y] / downsampleFactor * scale;
+                            bottomLineGroundTruth = [esX', esY'];
+
+                            pointErrors_projectiveLK{iTest}{iOriginalResolution}{numPyramidLevels}(end+1, :) = computeGroundTruthLineDifference(bottomLine, lkTracker_projective.tform, templateQuad, scale, bottomLineGroundTruth);
+                            pointErrors_binaryProjectiveLK{iTest}{iOriginalResolution}{numPyramidLevels}(end+1, :) = computeGroundTruthLineDifference(bottomLine, lkTracker_binary_projective.tform, templateQuad, scale, bottomLineGroundTruth);
+                            pointErrors_splitBinaryProjectiveLK{iTest}{iOriginalResolution}{numPyramidLevels}(end+1, :) = computeGroundTruthLineDifference(bottomLine, lkTracker_split_binary_projective.tform, templateQuad, scale, bottomLineGroundTruth);                        
+                        end
                     else
                         bottomLineGroundTruth = [];
                     end
@@ -181,7 +188,8 @@ for iTest = 1:length(allTests)
                     if iFrame < 20
                         pause(.03);
                     else
-                        pause();
+                        pause(.03);
+%                         pause();
                     end
                 end
                 

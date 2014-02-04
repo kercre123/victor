@@ -32,7 +32,7 @@ while iteration < this.maxIterations
         numDof = size(this.A_trans{1},2);
     end
     
-    all_AtWA = zeros(numDof, numDof);
+    all_AtWA = zeros(numDof, numDof); 
     all_b = zeros(numDof, 1);    
     
     for i_image = 1:length(images)
@@ -43,8 +43,8 @@ while iteration < this.maxIterations
             imgi = (imgi - mean(imgi(inBounds)))/std(imgi(inBounds));
         end
 
-    %     figure(3); imshow(this.target{i_scale});
-    %     figure(4); imshow(interp2(img, xi, yi, 'linear'));
+%         figure(4); imshow(this.target{i_image, i_scale});
+%         figure(5); imshow(interp2(images{i_image}, xi, yi, 'linear'));
         It = imgi - this.target{i_image, i_scale}(:);
 
         %It(isnan(It)) = 0;
