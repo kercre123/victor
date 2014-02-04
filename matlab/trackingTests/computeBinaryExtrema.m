@@ -80,9 +80,11 @@ if blurResult
     
     extrema = zeros(size(horizontalExtrema));
     
+    horizontalExtremaBlurred = zeros(size(horizontalExtrema));
     horizontalExtrema([1:(blurWidth2+1), (end-blurWidth2):end], :) = 0;
     horizontalExtrema(:, [1:(blurWidth2+1), (end-blurWidth2):end]) = 0;
     
+    verticalExtremaBlurred = zeros(size(horizontalExtrema));
     verticalExtrema([1:(blurWidth2+1), (end-blurWidth2):end], :) = 0;
     verticalExtrema(:, [1:(blurWidth2+1), (end-blurWidth2):end]) = 0;
     
@@ -92,6 +94,7 @@ if blurResult
         x = indsx(i);
         y = indsy(i);
         extrema(y, (x-blurWidth2):(x+blurWidth2)) = max(filter', extrema(y, (x-blurWidth2):(x+blurWidth2)));
+        horizontalExtremaBlurred(y, (x-blurWidth2):(x+blurWidth2)) = max(filter', horizontalExtremaBlurred(y, (x-blurWidth2):(x+blurWidth2)));
     end
     
 	[indsy, indsx] = find(verticalExtrema ~= 0);
@@ -99,9 +102,13 @@ if blurResult
         x = indsx(i);
         y = indsy(i);
         extrema((y-blurWidth2):(y+blurWidth2), x) = max(filter, extrema((y-blurWidth2):(y+blurWidth2), x));
+        verticalExtremaBlurred(y, (x-blurWidth2):(x+blurWidth2)) = max(filter', verticalExtremaBlurred(y, (x-blurWidth2):(x+blurWidth2)));
     end
 %     toc
     
+    horizontalExtrema = horizontalExtremaBlurred;
+    verticalExtrema = verticalExtremaBlurred;
+
 %     tic
 %     for y = (1+blurWidth2):(size(horizontalExtrema,1)-blurWidth2)
 %         for x = (1+blurWidth2):(size(horizontalExtrema,2)-blurWidth2)
