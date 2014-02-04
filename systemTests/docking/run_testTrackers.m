@@ -7,11 +7,24 @@ function run_testTrackers(allTestsFilename, outputFilename)
 mainResolution = [480,640];
 downsampleFactor = 1;
 
-resolutions = {[480,640], [240,320], [120,160], [60,80], [30,40]};
-maxPyramidLevels = [5, 4, 3, 1, 1, 1];
-maxIterations = 50;
+% resolutions = {[480,640], [240,320], [120,160], [60,80], [30,40]};
+resolutions = {[240,320], [120,160], [60,80]};
+% maxPyramidLevels = [5, 4, 3, 1, 1, 1];
+% maxPyramidLevels = [4, 3, 1, 1];
+maxPyramidLevels = [3, 2, 1];
+maxIterations = 10;
 convergenceTolerance = 0.1;
 useUndistortion = false;
+
+binaryLK_extremaFilterWidth = 3;
+binaryLK_extremaFilterSigma = 1.0;
+binaryLK_extremaDerivativeThreshold = 255;
+% binaryLK_matchingFilterWidth = 7;
+% binaryLK_matchingFilterSigma = 2.0;
+% binaryLK_matchingFilterWidth = 3;
+% binaryLK_matchingFilterSigma = 1.0;
+binaryLK_matchingFilterWidth = 15;
+binaryLK_matchingFilterSigma = 5.0;
 
 assert(exist('allTestsFilename', 'var') == 1);
 assert(exist('outputFilename', 'var') == 1);
@@ -26,7 +39,8 @@ allTests = loadjson(allTestsFilename);
 slashIndexes = strfind(allTestsFilename, '/');
 dataPath = allTestsFilename(1:(slashIndexes(end)));
 
-pointErrors = cell(length(allTests), 1);
+pointErrors_projectiveLK = cell(length(allTests), 1);
+pointErrors_binaryProjectiveLK = cell(length(allTests), 1);
 
 fullResultsString = '';
 
@@ -61,7 +75,8 @@ for iTest = 1:length(allTests)
         end
     end
 
-    pointErrors{iTest} = cell(length(resolutions), 1);
+    pointErrors_projectiveLK{iTest} = cell(length(resolutions), 1);
+    pointErrors_binaryProjectiveLK{iTest} = cell(length(resolutions), 1);
 
     frameIndex = findFrameNumberIndex(jsonData, 1, 1);
 
@@ -86,7 +101,8 @@ for iTest = 1:length(allTests)
 
         scale = originalResolution(1) / mainResolution(1) * downsampleFactor;
 
-        pointErrors{iTest}{iOriginalResolution} = cell(maxPyramidLevels(iOriginalResolution), 1);
+        pointErrors_projectiveLK{iTest}{iOriginalResolution} = cell(maxPyramidLevels(iOriginalResolution), 1);
+        pointErrors_binaryProjectiveLK{iTest}{iOriginalResolution} = cell(maxPyramidLevels(iOriginalResolution), 1);
 
 %         for iTrackingResolution = iOriginalResolution:length(resolutions)
 %             trackingResolution = resolutions{iTrackingResolution};
@@ -100,14 +116,30 @@ for iTest = 1:length(allTests)
                     'NumScales', numPyramidLevels, 'ApproximateGradientMargins', false);
 %                     'TrackingResolution', trackingResolution(2:-1:1));
 
-                pointErrors{iTest}{iOriginalResolution}{numPyramidLevels} = zeros(0, 2);
+                binaryLK_originalImageResized = computeBinaryExtrema(originalImageResized, binaryLK_extremaFilterWidth, binaryLK_extremaFilterSigma, binaryLK_extremaDerivativeThreshold, true, true);
+                lkTracker_binary_projective = LucasKanadeTracker(binaryLK_originalImageResized, maskResized, ...
+                    'Type', 'homography', 'DebugDisplay', false, ...
+                    'UseBlurring', false, 'UseNormalization', false, ...
+                    'NumScales', numPyramidLevels, 'ApproximateGradientMargins', false);
+
+                pointErrors_projectiveLK{iTest}{iOriginalResolution}{numPyramidLevels} = zeros(0, 2);
+                pointErrors_binaryProjectiveLK{iTest}{iOriginalResolution}{numPyramidLevels} = zeros(0, 2);                
 
                 warning off
 
                 for iFrame = 2:size(allImages,1)
                     newImageResized = imresize(allImages{iFrame,1}, originalResolution);
 
+                    disp('normal LK');
                     lkTracker_projective.track(newImageResized, 'MaxIterations', maxIterations, 'ConvergenceTolerance', convergenceTolerance);
+                    
+                    binaryLK_newImageResized = computeBinaryExtrema(newImageResized, binaryLK_extremaFilterWidth, binaryLK_extremaFilterSigma, binaryLK_extremaDerivativeThreshold, true, true, true, binaryLK_matchingFilterWidth, binaryLK_matchingFilterSigma);
+%                     g = fspecial('gaussian',[binaryLK_matchingFilterWidth, 1], binaryLK_matchingFilterSigma);
+%                     gs = g / max(g(:));   
+%                     binaryLK_newImageResized = imfilter(imfilter(binaryLK_newImageResized, g), gs');
+
+                    disp('binary LK');
+                    lkTracker_binary_projective.track(binaryLK_newImageResized, 'MaxIterations', maxIterations, 'ConvergenceTolerance', convergenceTolerance);
 
 %                     disp('Matlab LK projective:');
 %                     disp(lkTracker_projective.tform);
@@ -117,45 +149,33 @@ for iTest = 1:length(allTests)
                         esX = [bottomLineGroundTruth{1}.x, bottomLineGroundTruth{2}.x] / downsampleFactor * scale;
                         esY = [bottomLineGroundTruth{1}.y, bottomLineGroundTruth{2}.y] / downsampleFactor * scale;
                         bottomLineGroundTruth = [esX', esY'];
-
-                        warpedBottomLine = warpLine(bottomLine*scale, lkTracker_projective.tform, mean(templateQuad*scale, 1));
                         
-                        bottomLineGroundTruthScaled = bottomLineGroundTruth / scale;
-                        warpedBottomLineScaled = warpedBottomLine / scale;
-                        
-                        distance = sqrt((bottomLineGroundTruthScaled(:,1) - warpedBottomLineScaled(:,1)).^2 + (bottomLineGroundTruthScaled(:,2) - warpedBottomLineScaled(:,2)).^2);
-                        
-                        pointErrors{iTest}{iOriginalResolution}{numPyramidLevels}(end+1, :) = distance;
+                        pointErrors_projectiveLK{iTest}{iOriginalResolution}{numPyramidLevels}(end+1, :) = computeGroundTruthLineDifference(bottomLine, lkTracker_projective.tform, templateQuad, scale, bottomLineGroundTruth);
+                        pointErrors_binaryProjectiveLK{iTest}{iOriginalResolution}{numPyramidLevels}(end+1, :) = computeGroundTruthLineDifference(bottomLine, lkTracker_binary_projective.tform, templateQuad, scale, bottomLineGroundTruth);
                     else
                         bottomLineGroundTruth = [];
                     end
 
-                    plotResults(newImageResized, templateQuad*scale, lkTracker_projective.tform, bottomLine*scale, bottomLineGroundTruth);
+                    figure(1); plotResults(newImageResized, templateQuad*scale, lkTracker_projective.tform, bottomLine*scale, bottomLineGroundTruth); title(sprintf('lkTracker projective %dx%d %d %d', originalResolution(2), originalResolution(1), numPyramidLevels, iFrame));
+                    figure(2); plotResults(newImageResized, templateQuad*scale, lkTracker_binary_projective.tform, bottomLine*scale, bottomLineGroundTruth); title(sprintf('lkTracker binary projective %dx%d %d %d', originalResolution(2), originalResolution(1), numPyramidLevels, iFrame));
 
                     pause(.03);
 %                     pause();
                 end
-
                 
+                totalString_projectiveLK = createOutputString('projectiveLK', iTest, originalResolution, numPyramidLevels, pointErrors_projectiveLK{iTest}{iOriginalResolution}{numPyramidLevels});
+                totalString_binaryProjectiveLK = createOutputString('binaryProjectiveLK', iTest, originalResolution, numPyramidLevels, pointErrors_binaryProjectiveLK{iTest}{iOriginalResolution}{numPyramidLevels});
+                                
+                fullResultsString = [fullResultsString, totalString_projectiveLK, sprintf('\n'), totalString_binaryProjectiveLK, sprintf('\n')];
                 
-                totalString = sprintf('Results for Test:%d originalResolution:(%d,%d) numPyramidLevels:%d = [', iTest, originalResolution(2), originalResolution(1), numPyramidLevels);
-                maxValues = max(pointErrors{iTest}{iOriginalResolution}{numPyramidLevels}, [], 2);
-                for ii = 1:length(maxValues)
-                    totalString = [totalString, num2str(maxValues(ii)), ', '];
-                end
-                totalString = [totalString(1:(end-2)), ']'];
+                save(outputFilename, 'pointErrors_*', 'fullResultsString');
                 
-                fullResultsString = [fullResultsString, totalString, sprintf('\n')];
-                
-                save(outputFilename, 'pointErrors', 'fullResultsString');
-                
-                disp(totalString);
+                disp([totalString_projectiveLK, totalString_binaryProjectiveLK]);
 
                 warning on
             end % for numPyramidLevels = 1:maxPyramidLevels
 %         end % for iTrackingResolution = iOriginalResolution:length(resolutions)
     end % for iOriginalResolution = 1:length(resolutions)
-
 
     keyboard
 end
@@ -247,3 +267,19 @@ function plotResults(im, corners, H, bottomLine, bottomLineGroundTruth)
             'g+', 'LineWidth', 2, 'Tag', 'TrackRect');
     end
 
+function distance = computeGroundTruthLineDifference(bottomLine, homography, templateQuad, scale, bottomLineGroundTruth)
+    warpedBottomLine = warpLine(bottomLine*scale, homography, mean(templateQuad*scale, 1));                        
+    bottomLineGroundTruthScaled = bottomLineGroundTruth / scale;
+    warpedBottomLineScaled = warpedBottomLine / scale;                        
+    distance = sqrt((bottomLineGroundTruthScaled(:,1) - warpedBottomLineScaled(:,1)).^2 + (bottomLineGroundTruthScaled(:,2) - warpedBottomLineScaled(:,2)).^2);
+    
+function totalString = createOutputString(testName, iTest, originalResolution, numPyramidLevels, pointErrors)
+    totalString = sprintf('Results for Test %s:%d originalResolution:(%d,%d) numPyramidLevels:%d = [', testName, iTest, originalResolution(2), originalResolution(1), numPyramidLevels);
+    maxValues = max(pointErrors, [], 2);
+    for ii = 1:length(maxValues)
+        totalString = [totalString, num2str(maxValues(ii)), ', '];
+    end
+    totalString = [totalString(1:(end-2)), ']'];
+    
+    
+    
