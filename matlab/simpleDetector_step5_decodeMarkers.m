@@ -52,7 +52,10 @@ if ~isempty(quads)
 %             markers{end+1} = marker; %#ok<AGROW>
 %         end
         
-markers{end+1} = VisionMarker(img, 'Corners', corners); %#ok<AGROW>
+marker = VisionMarker(img, 'Corners', corners); 
+if marker.isValid
+    markers{end+1} = marker; %#ok<AGROW>
+end
 
         if DEBUG_DISPLAY
             if markers{end}.isValid
