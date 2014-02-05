@@ -155,7 +155,7 @@ namespace Anki {
       // removed from the input list, so markers referring to objects unknown
       // to this library will remain.
       void CreateObjectsFromMarkers(std::list<ObservedMarker>& markers,
-                                    std::vector<ObservableObject*> objectsSeen) const;
+                                    std::vector<ObservableObject*>& objectsSeen) const;
       
       const ObservableObject* GetObjectWithID(const ObjectID_t ID) const;
       

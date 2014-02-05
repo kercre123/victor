@@ -102,7 +102,7 @@ namespace Anki {
     // Input:   list of observed markers
     // Outputs: the objects seen and the unused markers
     void ObservableObjectLibrary::CreateObjectsFromMarkers(std::list<ObservedMarker>& markers,
-                                                           std::vector<ObservableObject*> objectsSeen) const
+                                                           std::vector<ObservableObject*>& objectsSeen) const
     {
       // Group the markers by object ID
       std::map<ObjectID_t, std::vector<const ObservedMarker*>> markersWithObjectID;
