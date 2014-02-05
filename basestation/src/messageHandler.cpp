@@ -86,7 +86,7 @@ namespace Anki {
     // to the BlockWorld
     ReturnCode MessageHandler::ProcessMessage(const RobotID_t robotID, const MessageVisionMarker& msg)
     {
-      ReturnCode retVal = EXIT_SUCCESS;
+      ReturnCode retVal = EXIT_FAILURE;
       
       Quad2f corners;
       
@@ -103,11 +103,21 @@ namespace Anki {
       corners[Quad::BottomRight].y() = msg.get_y_imgLowerRight();
       
       //this->observedVisionMarkers.emplace_back(msg.get_code(), corners, this->ID_);
-      const Vision::Camera& camera = RobotManager::getInstance()->GetRobotByID(robotID)->get_camHead();
-      Vision::ObservedMarker marker(msg.get_code(), corners, camera);
-      
-      // Give this vision marker to BlockWorld for processing
-      BlockWorld::getInstance()->QueueObservedMarker(marker);
+      const Robot* robot = RobotManager::getInstance()->GetRobotByID(robotID);
+      if(robot != NULL) {
+        const Vision::Camera& camera = robot->get_camHead();
+        Vision::ObservedMarker marker(msg.get_code(), corners, camera);
+        
+        // Give this vision marker to BlockWorld for processing
+        BlockWorld::getInstance()->QueueObservedMarker(marker);
+        retVal = EXIT_SUCCESS;
+      }
+      else {
+        // Error?
+        PRINT_NAMED_WARNING("RobotNoExist",
+                            "Received VisionMarker from Robot %d, but no such "
+                            "robot exists in RobotManager.", robotID);
+      }
       
       return retVal;
     } // ProcessMessage(MessageVisionMarker)
