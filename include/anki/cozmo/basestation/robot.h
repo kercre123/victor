@@ -63,6 +63,7 @@ namespace Anki {
       
       void set_pose(const Pose3d &newPose);
       void set_headAngle(const Radians& angle);
+      void set_camCalibration(const Vision::CameraCalibration& calib);
       
       void queueIncomingMessage(const u8 *msg, const u8 msgSize);
       bool hasOutgoingMessages() const;
@@ -129,6 +130,10 @@ namespace Anki {
     
     inline const std::list<Vision::ObservedMarker>& Robot::GetObservedVisionMarkers() const
     { return this->observedVisionMarkers; }
+    
+    inline void Robot::set_camCalibration(const Vision::CameraCalibration& calib) {
+      this->camHead.set_calibration(calib);
+    }
     
     /*
     inline const MatMarker2d* Robot::get_matMarker2d() const

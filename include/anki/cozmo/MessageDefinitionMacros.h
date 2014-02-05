@@ -338,23 +338,23 @@ buffer += __LENGTH__*sizeof(__TYPE__);
 //
 //  Creates both of these for each message type:
 //
-//   ReturnCode ProcessMessage(const RobotID_t robotID, const MessageFooBar& msg);
+//   ReturnCode ProcessMessage(Robot* robot, const MessageFooBar& msg);
 //
-//   inline ReturnCode MessageHandler::ProcessBufferAs_MessageFooBar(const RobotID_t robotID,
+//   inline ReturnCode MessageHandler::ProcessBufferAs_MessageFooBar(Robot* robot,
 //                                                                   const u8* buffer)
 //   {
 //      const MessageFooBar msg(buffer);
-//      return ProcessMessage(robotID, msg);
+//      return ProcessMessage(robot, msg);
 //   }
 //
 #elif MESSAGE_DEFINITION_MODE == MESSAGE_PROCESS_METHODS_MODE
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-ReturnCode ProcessMessage(const RobotID_t robotID, const GET_MESSAGE_CLASSNAME(__MSG_TYPE__)& msg); \
-inline ReturnCode GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(const RobotID_t robotID, const u8* buffer) \
+ReturnCode ProcessMessage(Robot* robot, const GET_MESSAGE_CLASSNAME(__MSG_TYPE__)& msg); \
+inline ReturnCode GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(Robot* robot, const u8* buffer) \
 { \
   const GET_MESSAGE_CLASSNAME(__MSG_TYPE__) msg(buffer); \
-  return ProcessMessage(robotID, msg); \
+  return ProcessMessage(robot, msg); \
 }
 
 #define END_MESSAGE_DEFINITION(__MSG_TYPE__)

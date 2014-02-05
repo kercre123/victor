@@ -85,7 +85,7 @@ namespace Anki {
       struct {
         u8 priority;
         u8 size;
-        ReturnCode (MessageHandler::*ProcessPacketAs)(const RobotID_t robotID, const u8* buffer);
+        ReturnCode (MessageHandler::*ProcessPacketAs)(Robot*, const u8*);
       } lookupTable_[NUM_MSG_IDS+1] = {
         {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE

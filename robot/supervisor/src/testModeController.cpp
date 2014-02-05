@@ -674,7 +674,7 @@ namespace Anki {
       ReturnCode Update()
       {
         // Don't run Update until robot is finished initializing
-        if (Robot::GetOperationMode() != Robot::INITIALIZING) {
+        if (Robot::GetOperationMode() == Robot::WAITING) {
           if (updateFunc) {
             return updateFunc();
           }
