@@ -213,6 +213,11 @@ DEF FuelBlock Block1x1 {
     "textures/batteryMarker.png"
   ]
 }
+
+RobotAdvertisementService {
+
+}
+
 DEF Cozmo CozmoBot {
   name "CozmoBot_1"
   commsChannel 1
@@ -225,6 +230,10 @@ DEF Cozmo CozmoBot {
 DEF OffboardVisionProcessor USBConnection {
   controller "offboard_vision_processor"
   usbChannel 10
+}
+
+BlockWorldComms {
+
 }
 
 #DEF CozmoBotPose Robot {
