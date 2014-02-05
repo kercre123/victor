@@ -154,6 +154,7 @@ namespace Anki {
       
     protected:
       CameraCalibration  calibration;
+      bool               isCalibrationSet;
       Pose3d             pose;
       
       // TODO: Include const reference or pointer to a parent Robot object?
@@ -174,7 +175,7 @@ namespace Anki {
     { return this->calibration; }
     
     inline void Camera::set_calibration(const CameraCalibration &calib)
-    { this->calibration = calib; }
+    { this->calibration = calib; this->isCalibrationSet = true; }
     
     inline void Camera::set_pose(const Pose3d& newPose)
     { this->pose = newPose; }

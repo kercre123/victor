@@ -19,13 +19,14 @@ namespace Anki {
   namespace Vision {
     
   Camera::Camera(void)
+  : isCalibrationSet(false)
   {
     
   } // Constructor: Camera()
   
   Camera::Camera(const CameraCalibration &calib_in,
                  const Pose3d& pose_in)
-  : calibration(calib_in), pose(pose_in)
+  : calibration(calib_in), isCalibrationSet(true), pose(pose_in)
   {
     
   } // Constructor: Camera(calibration, pose)
@@ -99,7 +100,10 @@ namespace Anki {
   Pose3d Camera::computeObjectPose(const std::vector<Point2f>& imgPoints,
                                    const std::vector<Point3f>& objPoints) const
   {
-    
+    if(not isCalibrationSet) {
+      CORETECH_THROW("Camera::computeObjectPose() called before calibration set.");
+    }
+
 #if ANKICORETECH_USE_OPENCV
     std::vector<cv::Point2f> cvImagePoints;
     std::vector<cv::Point3f> cvObjPoints;
@@ -125,6 +129,10 @@ namespace Anki {
   Pose3d Camera::computeObjectPose(const Quad2f& imgPoints,
                                    const Quad3f& objPoints) const
   {
+    if(not isCalibrationSet) {
+      CORETECH_THROW("Camera::computeObjectPose() called before calibration set.");
+    }
+    
 #if ANKICORETECH_USE_OPENCV
     std::vector<cv::Point2f> cvImagePoints;
     std::vector<cv::Point3f> cvObjPoints;
@@ -152,6 +160,10 @@ namespace Anki {
   void  Camera::project3dPoint(const Point3f& objPoint,
                                Point2f&       imgPoint) const
   {
+    if(not isCalibrationSet) {
+      CORETECH_THROW("Camera::project3dPoint() called before calibration set.");
+    }
+    
     const f32 BEHIND_CAM = std::numeric_limits<f32>::quiet_NaN();
     
     if(objPoint.z() <= 0.f)
