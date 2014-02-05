@@ -59,6 +59,8 @@ classdef VisionMarker
         pose;
         size;
         
+        isValid;
+        
     end % Properties
     
     properties(SetAccess = 'protected', Dependent = true)
@@ -81,6 +83,8 @@ classdef VisionMarker
             
             [this.code, this.corners, this.cornerCode, this.H] = ...
                 VisionMarker.ProbeImage(img, Corners, RefineCorners);
+            
+            this.isValid = ~isempty(this.code);
             
             this.pose = Pose;
             this.name = Name;
@@ -128,7 +132,11 @@ classdef VisionMarker
         end
         
         function b = get.byteArray(this)
-            temp = [this.code(:); this.cornerCode(:)];
+            if this.isValid
+                temp = [this.code(:); this.cornerCode(:)];
+            else
+                temp = zeros(VisionMarker.ProbeParameters.Number^2 + 4, 1);
+            end
             numBytes = ceil(length(temp)/8);
             temp = [temp; zeros(numBytes*8-length(temp),1)];
             b = uint8(bin2dec(num2str(reshape(temp, [], 8))));
