@@ -27,14 +27,89 @@ namespace Anki
     : robotMgr_(RobotManager::getInstance()),
       msgHandler_(MessageHandler::getInstance())
     {
+      // TODO: Create each known block / matpiece from a configuration/definitions file
       
-      // TODO: Read known blocks from config, or from BlockDefinitions.h
-      // TODO: Read known mat pieces from config, or from MatPieceDefinitions.h
+      // Increment the ID counter each time we define a block
+      ObjectID_t blockID=0;
       
-      blockLibrary_.AddObject(new Block_Cube1x1(1));
-      blockLibrary_.AddObject(new Block_2x1(2));
+      //
+      // 1x1 Cubes
+      //
       
-      matLibrary_.AddObject(new MatPiece(1));
+      // "FUEL"
+      {
+        Block_Cube1x1* block = new Block_Cube1x1(++blockID);
+        block->AddFace(Block::FRONT_FACE,
+                       {115, 117, 167, 238, 206, 221, 156, 168,  58, 114, 118},
+                       32.f);
+        block->SetColor(1.f, 0.f, 0.f);
+        block->SetSize(60.f, 60.f, 60.f);
+        block->SetName("FUEL");
+        
+        //float temp = block->GetMinDim();
+        blockLibrary_.AddObject(block);
+      }
+      
+      
+      //
+      // 2x1
+      //
+      
+      // "TEMP2x1"
+      {/*
+        Block_2x1* block = new Block_2x1(++blockID);
+        block->AddFace(Block::FRONT_FACE,
+                       {115, 117, 167, 238, 206, 221, 156, 168,  58, 114, 118},
+                       32.f);
+        block->AddFace(Block::LEFT_FACE,
+                       {32, 115, 117, 167, 238, 206, 221, 156, 168,  58, 114, 118},
+                       32.f);
+        block->SetColor(0.f, 0.f, 1.f);
+        block->SetSize(120.f, 60.f, 60.f);
+        block->SetName("TEMP2x1");
+        blockLibrary_.AddObject(block);
+        */
+      }
+      
+      //
+      //
+      //
+      ObjectID_t matID=0;
+      
+      // Webots mat:
+      {
+        MatPiece* mat = new MatPiece(++matID);
+        mat->AddMarker({24, 24, 24, 16, 25, 49, 56, 9, 56, 48, 32},
+                       Pose3d(2.094395, {0.577350,-0.577350,-0.577350}, {-250.000000,-250.000000,-15.000000}),
+                       90.000000);
+        mat->AddMarker({35, 64, 70, 196, 140, 137, 8, 1, 48, 32, 34},
+                       Pose3d(2.094395, {0.577350,-0.577350,-0.577350}, {-250.000000,-250.000000,-15.000000}),
+                       90.000000);
+        mat->AddMarker({35, 64, 70, 196, 141, 137, 8, 1, 48, 32, 34},
+                       Pose3d(2.094395, {0.577350,-0.577350,-0.577350}, {-250.000000,-250.000000,-15.000000}),
+                       90.000000);
+        mat->AddMarker({24, 24, 24, 16, 24, 49, 56, 9, 56, 48, 32},
+                       Pose3d(2.094395, {0.577350,-0.577350,-0.577350}, {-250.000000,-250.000000,-15.000000}),
+                       90.000000);
+        mat->AddMarker({35, 98, 2, 196, 136, 9, 24, 0, 32, 34, 98},
+                       Pose3d(2.094395, {0.577350,-0.577350,-0.577350}, {-250.000000,-250.000000,-15.000000}),
+                       90.000000);
+        mat->AddMarker({8, 24, 24, 24, 8, 25, 56, 33, 56, 24, 48},
+                       Pose3d(2.094395, {0.577350,-0.577350,-0.577350}, {-250.000000,-250.000000,-15.000000}),
+                       90.000000);
+        mat->AddMarker({35, 98, 2, 196, 137, 9, 24, 1, 32, 34, 98},
+                       Pose3d(2.094395, {0.577350,-0.577350,-0.577350}, {-250.000000,-250.000000,-15.000000}),
+                       90.000000);
+        mat->AddMarker({35, 98, 2, 196, 136, 9, 24, 1, 32, 34, 98},
+                       Pose3d(2.094395, {0.577350,-0.577350,-0.577350}, {-250.000000,-250.000000,-15.000000}),
+                       90.000000);
+        mat->AddMarker({8, 24, 24, 24, 9, 25, 56, 33, 56, 24, 48},
+                       Pose3d(2.094395, {0.577350,-0.577350,-0.577350}, {-250.000000,-250.000000,-15.000000}),
+                       90.000000);
+
+        matLibrary_.AddObject(mat);
+      }
+
     }
     
     /*
@@ -227,16 +302,16 @@ namespace Anki
     } // groupBlockPoses()
     */
     
-    template<class ObjectType>
+    //template<class ObjectType>
     void BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*> objectsSeen,
-                                         std::map<ObjectID_t, std::vector<ObjectType*> >& objectsExisting)
+                                         std::map<ObjectID_t, std::vector<Vision::ObservableObject*> >& objectsExisting)
     {
       for(auto objSeen : objectsSeen) {
         
-        const float minDimSeen = objSeen->GetMinDim();
+        //const float minDimSeen = objSeen->GetMinDim();
         
         // Store pointers to any existing blocks that overlap with this one
-        std::vector<ObjectType*> overlappingObjects;
+        std::vector<Vision::ObservableObject*> overlappingObjects;
         
         auto objectsExistingIter = objectsExisting.find(objSeen->GetID());
         if(objectsExistingIter != objectsExisting.end())
@@ -244,7 +319,7 @@ namespace Anki
             for(auto objExist : objectsExistingIter->second)
             {
               // TODO: smarter block pose comparison
-              const float minDist = 0.5f*std::min(minDimSeen, objExist->GetMinDim());
+              const float minDist = 5.f; // TODO: make parameter ... 0.5f*std::min(minDimSeen, objExist->GetMinDim());
               const Radians angleThresh( 5.f*M_PI/180.f ); // TODO: make parameter
               Pose3d P_diff;
               if( objExist->IsSameAs(*objSeen, minDist, angleThresh, P_diff) ) {
@@ -264,7 +339,7 @@ namespace Anki
                   objSeen->GetPose().get_translation().y(),
                   objSeen->GetPose().get_translation().z());
           
-          objectsExisting[objSeen->GetID()].push_back(dynamic_cast<ObjectType*>(objSeen));
+          objectsExisting[objSeen->GetID()].push_back(objSeen);
           
         }
         else {

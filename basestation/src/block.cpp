@@ -16,6 +16,7 @@ namespace Anki {
     
 #pragma mark --- Block Implementation ---
    
+    /*
     // Fill in the static const lookup table of block information from the
     // BlockDefinitions file, using macros.
     const Block::BlockInfoTableEntry_t Block::BlockInfoLUT_[Block::NUM_BLOCK_IDS] = {
@@ -23,6 +24,52 @@ namespace Anki {
 #define BLOCK_DEFINITION_MODE BLOCK_LUT_MODE
 #include "anki/cozmo/basestation/BlockDefinitions.h"
     };
+     */
+    
+    void Block::AddFace(const FaceName whichFace,
+                        const Vision::Marker::Code &code,
+                        const float markerSize_mm)
+    {
+      Pose3d facePose;
+      
+      const float halfWidth  = 0.5f * this->GetWidth();   // y
+      const float halfHeight = 0.5f * this->GetHeight();  // z
+      const float halfDepth  = 0.5f * this->GetDepth();   // x
+      
+      switch(whichFace)
+      {
+        case FRONT_FACE:
+          //facePose = Pose3d(0,       X_AXIS_3D, {{0.f, -halfDepth, 0.f}},  &pose_);
+          facePose = Pose3d(0,       Z_AXIS_3D, {{-halfDepth, 0.f, 0.f}},  &pose_);
+          break;
+          
+        case LEFT_FACE:
+          facePose = Pose3d(-M_PI_2, Z_AXIS_3D, {{0.f, -halfWidth, 0.f}},  &pose_);
+          break;
+          
+        case BACK_FACE:
+          facePose = Pose3d(M_PI,    Z_AXIS_3D, {{halfDepth, 0.f, 0.f}},   &pose_);
+          break;
+          
+        case RIGHT_FACE:
+          facePose = Pose3d(M_PI_2,  Z_AXIS_3D, {{0.f, halfWidth, 0.f}},   &pose_);
+          break;
+          
+        case TOP_FACE:
+          facePose = Pose3d(M_PI_2,  Y_AXIS_3D, {{0.f, 0.f, halfHeight}},  &pose_);
+          break;
+          
+        case BOTTOM_FACE:
+          facePose = Pose3d(-M_PI_2, Y_AXIS_3D, {{0.f, 0.f, -halfHeight}}, &pose_);
+          break;
+          
+        default:
+          CORETECH_THROW("Unknown block face.\n");
+      }
+      
+      AddMarker(code, facePose, markerSize_mm);
+      
+    } // AddFace()
     
     unsigned int Block::numBlocks = 0;
    
@@ -31,8 +78,8 @@ namespace Anki {
     {
       ID_ = blockID;
       
-      color_ = BlockInfoLUT_[ID_].color;
-      size_  = BlockInfoLUT_[ID_].size;
+      //color_ = BlockInfoLUT_[ID_].color;
+      //size_  = BlockInfoLUT_[ID_].size;
       
       ++Block::numBlocks;
       
@@ -54,36 +101,13 @@ namespace Anki {
       blockCorners_[RIGHT_BACK_BOTTOM]  = { halfWidth, halfDepth,-halfHeight};
       
 
+      /*
       // Add a marker for each face, using the static lookup table to get
       // the marker codes
-      Pose3d facePose(0, X_AXIS_3D, {{0.f, -halfDepth, 0.f}}, &pose_);
-      AddMarker(BlockInfoLUT_[ID_].faceCode[FRONT_FACE], facePose,
-                BlockInfoLUT_[ID_].faceSize[FRONT_FACE]);
-
-      facePose.set_rotation(-M_PI_2, Z_AXIS_3D);
-      facePose.set_translation({{-halfWidth, 0.f, 0.f}});
-      AddMarker(BlockInfoLUT_[ID_].faceCode[LEFT_FACE], facePose,
-                BlockInfoLUT_[ID_].faceSize[LEFT_FACE]);
-      
-      facePose.set_rotation(M_PI, Z_AXIS_3D);
-      facePose.set_translation({{0.f, halfDepth, 0.f}});
-      AddMarker(BlockInfoLUT_[ID_].faceCode[BACK_FACE], facePose,
-                BlockInfoLUT_[ID_].faceSize[BACK_FACE]);
-   
-      facePose.set_rotation(M_PI_2, Z_AXIS_3D);
-      facePose.set_translation({{halfWidth, 0.f, 0.f}});
-      AddMarker(BlockInfoLUT_[ID_].faceCode[RIGHT_FACE], facePose,
-                BlockInfoLUT_[ID_].faceSize[RIGHT_FACE]);
-      
-      facePose.set_rotation(-M_PI_2, X_AXIS_3D);
-      facePose.set_translation({{0.f, 0.f, halfHeight}});
-      AddMarker(BlockInfoLUT_[ID_].faceCode[TOP_FACE], facePose,
-                BlockInfoLUT_[ID_].faceSize[TOP_FACE]);
-      
-      facePose.set_rotation(M_PI_2, X_AXIS_3D);
-      facePose.set_translation({{0.f, 0.f, -halfHeight}});
-      AddMarker(BlockInfoLUT_[ID_].faceCode[BOTTOM_FACE], facePose,
-                BlockInfoLUT_[ID_].faceSize[BOTTOM_FACE]);
+      for(auto & face : BlockInfoLUT_.faces.size()) {
+        AddMarker(face.code, GetFacePose(face.whichFace), face.size);
+      }
+       */
       
     } // Constructor: Block(type)
     

@@ -76,8 +76,16 @@ namespace Anki {
       float     GetWidth() const;
       float     GetHeight() const;
       float     GetDepth() const;
-      float     GetMinDim() const;
+      //virtual float GetMinDim() const;
       //using Vision::ObservableObjectBase<Block>::GetMinDim;
+      
+      void SetSize(const float width, const float height, const float depth);
+      void SetColor(const float red, const float green, const float blue);
+      void SetName(const std::string name);
+      
+      void AddFace(const FaceName whichFace,
+                   const Vision::Marker::Code& code,
+                   const float markerSize_mm);
       
     protected:
       // A counter for how many blocks are instantiated
@@ -86,6 +94,10 @@ namespace Anki {
       
       using Vision::ObservableObject::ID_;
       
+      // Make this protected so we have to use public AddFace() method
+      using Vision::ObservableObject::AddMarker;
+      
+      /*
 #include "anki/cozmo/basestation/BlockDefinitions.h"
       
       // Enumerated block IDs
@@ -98,22 +110,28 @@ namespace Anki {
       
       // Static const lookup table for all block specs, by block ID, auto-
       // generated from the BlockDefinitions.h file using macros
-      typedef struct{
+      typedef struct {
+        FaceName             whichFace;
+        Vision::Marker::Code code;
+        f32                  size;
+      } BlockFaceDef_t;
+      
+      typedef struct {
         std::string          name;
         Block::Color         color;
         Point3f              size;
-        Vision::Marker::Code faceCode[6];
-        f32                  faceSize[6];
+        std::vector<BlockFaceDef_t> faces;
       } BlockInfoTableEntry_t;
       
+            
       static const BlockInfoTableEntry_t BlockInfoLUT_[NUM_BLOCK_IDS];
+      */
       
-      Color     color_;
-      Point3f   size_;
+      Color       color_;
+      Point3f     size_;
+      std::string name_;
       
       std::vector<Point3f> blockCorners_;
-      
-      void addFace(const FaceName whichFace);
       
     }; // class Block
     
@@ -168,18 +186,38 @@ namespace Anki {
     */
     
     inline float Block::GetWidth() const
-    { return this->size_.x(); }
+    { return this->size_.y(); }
     
     inline float Block::GetHeight() const
     { return this->size_.z(); }
     
     inline float Block::GetDepth() const
-    { return this->size_.y(); }
+    { return this->size_.x(); }
     
+    /*
     inline float Block::GetMinDim() const
     {
-      return std::min(this->GetWidth(),
-                      std::min(GetHeight(), GetDepth()));
+      return std::min(GetWidth(), std::min(GetHeight(), GetDepth()));
+    }
+     */
+    
+    inline void Block::SetSize(const float width,
+                               const float height,
+                               const float depth)
+    {
+      this->size_ = {width, height, depth};
+    }
+    
+    inline void Block::SetColor(const float red,
+                                const float green,
+                                const float blue)
+    {
+      this->color_ = {red, green, blue};
+    }
+    
+    inline void Block::SetName(const std::string name)
+    {
+      this->name_ = name;
     }
     
     /*

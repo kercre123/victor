@@ -43,9 +43,9 @@ namespace Anki
     class MatPiece : public Vision::ObservableObject //Base<MatPiece>
     {
     public:
-      MatPiece(ObjectID_t ID){};
+      MatPiece(ObjectID_t ID) : Vision::ObservableObject(ID) {};
       
-      virtual float GetMinDim() const {return 0;}
+      //virtual float GetMinDim() const {return 0;}
       
       virtual ObservableObject* Clone() const
       {
@@ -97,8 +97,8 @@ namespace Anki
       Vision::ObservableObjectLibrary otherObjectsLibrary_;
       
       // Store all observed objects:
-      std::map<ObjectID_t, std::vector<Block*> > existingBlocks_;
-      std::map<ObjectID_t, std::vector<MatPiece*> > existingMatPieces_;
+      std::map<ObjectID_t, std::vector<Vision::ObservableObject*> > existingBlocks_;
+      std::map<ObjectID_t, std::vector<Vision::ObservableObject*> > existingMatPieces_;
       
       // Store all the blocks in the world, with a reserved slot for
       // each type of block, and then a list of pointers to each block
@@ -124,9 +124,9 @@ namespace Anki
                                  const Vision::ObservableObject*         objInit,
                                  std::vector<Vision::ObservableObject*>& objectsSeen);
       
-      template<class ObjectType>
+      //template<class ObjectType>
       void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*> objectsSeen,
-                               std::map<ObjectID_t, std::vector<ObjectType*> >& objectsExisting);
+                               std::map<ObjectID_t, std::vector<Vision::ObservableObject*> >& objectsExisting);
       
     }; // class BlockWorld
 
