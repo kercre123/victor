@@ -92,22 +92,27 @@ int main(int argc, char **argv)
     if (robotComms.GetNumConnectedRobots() == 0) {
       vector<int> advertisingRobotIDs;
       if (robotComms.GetAdvertisingRobotIDs(advertisingRobotIDs) > 0) {
-        robotComms.ConnectToRobotByID(advertisingRobotIDs[0]);
+        for(auto robotID : advertisingRobotIDs) {
+          printf("RobotComms connecting to robot %d.\n", robotID);
+          robotComms.ConnectToRobotByID(robotID);
+          RobotManager::getInstance()->AddRobot(robotID, *BlockWorld::getInstance());
+        }
       }
-      continue;
-    };
+    }
     
+    // If we still don't have any connected robots, don't proceed
+    if (robotComms.GetNumConnectedRobots() == 0) {
+      continue;
+    }
 
     MessageHandler::getInstance()->ProcessMessages();
-
     
     //
     // Check for any outgoing messages from each basestation robot:
     //
-    for(int i=0; i<RobotManager::getInstance()->GetNumRobots(); ++i)
+    for(auto robotiD : RobotManager::getInstance()->GetRobotIDList())
     {
-      CORETECH_ASSERT(i < MAX_ROBOTS);
-      Anki::Cozmo::Robot* robot = RobotManager::getInstance()->GetRobotByID(i);
+      Anki::Cozmo::Robot* robot = RobotManager::getInstance()->GetRobotByID(robotiD);
       while(robot->hasOutgoingMessages())
       {
         
