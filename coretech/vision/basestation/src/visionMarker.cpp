@@ -90,21 +90,29 @@ namespace Anki {
     */
     
     
-    /*
-    // Canonical markers in X-Y (e.g. image) plane
-    const Quad3f KnownMarker::canonicalCorners3d_ = Quad3f(Point3f(-.5f, -.5f, 0.f),
-                                                      Point3f(-.5f,  .5f, 0.f),
-                                                      Point3f( .5f, -.5f, 0.f),
-                                                      Point3f( .5f,  .5f, 0.f));
-     */
     
-    // Canonical corners in 3D are in the X-Z plane
+    // Canonical 3D corners in camera coordinate system (where Z is depth)
     const Quad3f KnownMarker::canonicalCorners3d_ = {
-      {-.5f, 0.f,  .5f},  // TopLeft
-      {-.5f, 0.f, -.5f},  // BottomLeft
-      { .5f, 0.f,  .5f},  // TopRight
-      { .5f, 0.f, -.5f}   // BottomRight
+      {-.5f, -.5f, 0.f},
+      {-.5f,  .5f, 0.f},
+      { .5f, -.5f, 0.f},
+      { .5f,  .5f, 0.f}
     };
+    
+    
+    /*
+    // Canonical corners in 3D are in the Y-Z plane, with X pointed away
+    // (like the robot coordinate system: so if a robot is at the origin,
+    //  pointed along the +x axis, then this marker would appear parallel
+    //  to a forward-facing camera)
+    const Quad3f KnownMarker::canonicalCorners3d_ = {
+      { 0.f,  .5f,  .5f},  // TopLeft
+      { 0.f,  .5f, -.5f},  // BottomLeft
+      { 0.f, -.5f,  .5f},  // TopRight
+      { 0.f, -.5f, -.5f}   // BottomRight
+    };
+    */
+    
 
     void KnownMarker::SetPose(const Pose3d& newPose)
     {

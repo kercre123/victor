@@ -116,9 +116,17 @@ namespace Anki {
         // ...if there are any, add this marker to the list of observed markers
         // that corresponds to this object ID.
         if(objectsWithMarker != NULL) {
-          for(auto object : *objectsWithMarker) {
-            markersWithObjectID[object->GetID()].push_back(&marker);
+          if(objectsWithMarker->size() > 1) {
+            CORETECH_THROW("Having multiple objects in the library with the "
+                           "same marker is not yet supported.");
+            
+            /*
+             for(auto object : *objectsWithMarker) {
+             markersWithObjectID[object->GetID()].push_back(&marker);
+             }
+             */
           }
+          markersWithObjectID[objectsWithMarker->front()->GetID()].push_back(&marker);
         }
         else {
           // Keep track of which markers went unused
@@ -162,7 +170,7 @@ namespace Anki {
         // TODO: make the distance/angle thresholds parameters or else object-type-specific
         std::vector<PoseCluster> poseClusters;
         ClusterObjectPoses(possiblePoses, libObject,
-                           0.5f*libObject->GetMinDim(), 5.f*M_PI/180.f, poseClusters);
+                           5.f, 5.f*M_PI/180.f, poseClusters);
         
         // Recompute the pose for any cluster which had multiple matches in it,
         // using all of its matches simultaneously, and then add it as a new

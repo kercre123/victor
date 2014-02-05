@@ -61,7 +61,7 @@ namespace Anki {
       
       // Accessors:
       ObjectID_t    GetID() const {return ID_;}
-      virtual float GetMinDim() const = 0;
+      //virtual float GetMinDim() const = 0;
       const Pose3d& GetPose() const {return pose_;}
       
       void SetPose(const Pose3d& newPose) {pose_ = newPose;}
