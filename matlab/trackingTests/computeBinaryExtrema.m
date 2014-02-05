@@ -1,9 +1,13 @@
-% function [horizontalExtrema, verticalExtrema] = computeBinaryExtrema(im, getMinima, getMaxima)
+% function [extrema, horizontalExtrema, verticalExtrema] = computeBinaryExtrema(im, extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, getMinima, getMaxima, blurWithMatchingFilter, matchingFilterWidth, matchingFilterSigma)
 
-function [extrema, horizontalExtrema, verticalExtrema] = computeBinaryExtrema(im, filterWidth, filterSigma, derivativeThreshold, getMinima, getMaxima, blurResult, blurWidth, blurSigma)
+function [extrema, horizontalExtrema, verticalExtrema] = computeBinaryExtrema(...
+    im,...
+    extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, ...
+    getMinima, getMaxima, ...
+    blurWithMatchingFilter, matchingFilterWidth, matchingFilterSigma)
 
-if ~exist('blurResult', 'var')
-    blurResult = false;
+if ~exist('blurWithMatchingFilter', 'var')
+    blurWithMatchingFilter = false;
 end
 
 im = double(im);
@@ -12,7 +16,7 @@ f = [-3  0 3 ;
      -10 0 10;
      -3  0 3 ];
 
-g = fspecial('gaussian',[filterWidth, 1], filterSigma);
+g = fspecial('gaussian',[extremaFilterWidth, 1], extremaFilterSigma);
 g = g / sum(g(:));
 
 imf = imfilter(imfilter(im, g), g');
@@ -29,12 +33,12 @@ iy(:, [1,end]) = 0;
 horizontalExtrema = zeros(size(ix));
 verticalExtrema = zeros(size(iy));
 
-%     derivativeThreshold = 1*255;
+%     extremaDerivativeThreshold = 1*255;
 
 for y = 4:(size(im,1)-3)
     for x = 4:(size(im,2)-3)
         if getMaxima
-            if ix(y,x) > derivativeThreshold                
+            if ix(y,x) > extremaDerivativeThreshold                
                 if ix(y, x-1) < ix(y, x) && ix(y, x+1) < ix(y, x)
                     horizontalExtrema(y,x) = 1;
                 end
@@ -42,7 +46,7 @@ for y = 4:(size(im,1)-3)
         end
 
         if getMinima
-            if ix(y,x) < -derivativeThreshold
+            if ix(y,x) < -extremaDerivativeThreshold
                 if ix(y, x-1) > ix(y, x) && ix(y, x+1) > ix(y, x)
                     horizontalExtrema(y,x) = 1;
                 end
@@ -54,7 +58,7 @@ end
 for x = 4:(size(im,2)-3)
     for y = 4:(size(im,1)-3)
         if getMaxima
-            if iy(y,x) > derivativeThreshold
+            if iy(y,x) > extremaDerivativeThreshold
                 if iy(y-1, x) < iy(y, x) && iy(y+1, x) < iy(y, x)
                     verticalExtrema(y,x) = 1;
                 end
@@ -62,7 +66,7 @@ for x = 4:(size(im,2)-3)
         end
 
         if getMinima
-            if iy(y,x) < -derivativeThreshold
+            if iy(y,x) < -extremaDerivativeThreshold
                 if iy(y-1, x) > iy(y, x) && iy(y+1, x) > iy(y, x)
                     verticalExtrema(y,x) = 1;
                 end
@@ -71,38 +75,42 @@ for x = 4:(size(im,2)-3)
     end
 end
 
-if blurResult
-    blurWidth2 = floor(blurWidth/2);
-    blurWidth = 2*blurWidth2 + 1;
+if blurWithMatchingFilter
+    matchingFilterWidth2 = floor(matchingFilterWidth/2);
+    matchingFilterWidth = 2*matchingFilterWidth2 + 1;
     
-    filter = fspecial('gaussian', [blurWidth,1], blurSigma);
+    filter = fspecial('gaussian', [matchingFilterWidth,1], matchingFilterSigma);
     filter = filter / max(filter(:));
     
     extrema = zeros(size(horizontalExtrema));
     
     horizontalExtremaBlurred = zeros(size(horizontalExtrema));
-    horizontalExtrema([1:(blurWidth2+1), (end-blurWidth2):end], :) = 0;
-    horizontalExtrema(:, [1:(blurWidth2+1), (end-blurWidth2):end]) = 0;
+    horizontalExtrema([1:(matchingFilterWidth2+1), (end-matchingFilterWidth2):end], :) = 0;
+    horizontalExtrema(:, [1:(matchingFilterWidth2+1), (end-matchingFilterWidth2):end]) = 0;
     
     verticalExtremaBlurred = zeros(size(horizontalExtrema));
-    verticalExtrema([1:(blurWidth2+1), (end-blurWidth2):end], :) = 0;
-    verticalExtrema(:, [1:(blurWidth2+1), (end-blurWidth2):end]) = 0;
+    verticalExtrema([1:(matchingFilterWidth2+1), (end-matchingFilterWidth2):end], :) = 0;
+    verticalExtrema(:, [1:(matchingFilterWidth2+1), (end-matchingFilterWidth2):end]) = 0;
     
 %     tic
     [indsy, indsx] = find(horizontalExtrema ~= 0);
     for i = 1:length(indsy)
         x = indsx(i);
         y = indsy(i);
-        extrema(y, (x-blurWidth2):(x+blurWidth2)) = max(filter', extrema(y, (x-blurWidth2):(x+blurWidth2)));
-        horizontalExtremaBlurred(y, (x-blurWidth2):(x+blurWidth2)) = max(filter', horizontalExtremaBlurred(y, (x-blurWidth2):(x+blurWidth2)));
+%         extrema(y, (x-matchingFilterWidth2):(x+matchingFilterWidth2)) = max(filter', extrema(y, (x-matchingFilterWidth2):(x+matchingFilterWidth2)));
+%         horizontalExtremaBlurred(y, (x-matchingFilterWidth2):(x+matchingFilterWidth2)) = max(filter', horizontalExtremaBlurred(y, (x-matchingFilterWidth2):(x+matchingFilterWidth2)));
+        extrema(y, (x-matchingFilterWidth2):(x+matchingFilterWidth2)) = filter';
+        horizontalExtremaBlurred(y, (x-matchingFilterWidth2):(x+matchingFilterWidth2)) = filter';
     end
     
 	[indsy, indsx] = find(verticalExtrema ~= 0);
     for i = 1:length(indsy)
         x = indsx(i);
         y = indsy(i);
-        extrema((y-blurWidth2):(y+blurWidth2), x) = max(filter, extrema((y-blurWidth2):(y+blurWidth2), x));
-        verticalExtremaBlurred((y-blurWidth2):(y+blurWidth2), x) = max(filter, verticalExtremaBlurred((y-blurWidth2):(y+blurWidth2), x));
+%         extrema((y-matchingFilterWidth2):(y+matchingFilterWidth2), x) = max(filter, extrema((y-matchingFilterWidth2):(y+matchingFilterWidth2), x));
+%         verticalExtremaBlurred((y-matchingFilterWidth2):(y+matchingFilterWidth2), x) = max(filter, verticalExtremaBlurred((y-matchingFilterWidth2):(y+matchingFilterWidth2), x));
+        extrema((y-matchingFilterWidth2):(y+matchingFilterWidth2), x) = filter;
+        verticalExtremaBlurred((y-matchingFilterWidth2):(y+matchingFilterWidth2), x) = filter;
     end
 %     toc
     
@@ -110,14 +118,14 @@ if blurResult
     verticalExtrema = verticalExtremaBlurred;
 
 %     tic
-%     for y = (1+blurWidth2):(size(horizontalExtrema,1)-blurWidth2)
-%         for x = (1+blurWidth2):(size(horizontalExtrema,2)-blurWidth2)
+%     for y = (1+matchingFilterWidth2):(size(horizontalExtrema,1)-matchingFilterWidth2)
+%         for x = (1+matchingFilterWidth2):(size(horizontalExtrema,2)-matchingFilterWidth2)
 %             if horizontalExtrema(y,x) ~= 0
-%                 extrema(y, (x-blurWidth2):(x+blurWidth2)) = filter;
+%                 extrema(y, (x-matchingFilterWidth2):(x+matchingFilterWidth2)) = filter;
 %             end
 %             
 %             if verticalExtrema(y,x) ~= 0
-%                 extrema((y-blurWidth2):(y+blurWidth2), x) = filter;
+%                 extrema((y-matchingFilterWidth2):(y+matchingFilterWidth2), x) = filter;
 %             end
 %         end
 %     end
