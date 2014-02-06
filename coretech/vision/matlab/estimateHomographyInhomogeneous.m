@@ -1,5 +1,9 @@
 % function homography = estimateHomographyInhomogeneous(originalPoints, transformedPoints)
 
+% originalPoints = [0,0;1,0;0,1;1,1];
+% transformedPoints = 2*originalPoints;
+% homography = estimateHomographyInhomogeneous(originalPoints, transformedPoints)
+
 function homography = estimateHomographyInhomogeneous(originalPoints, transformedPoints)
 
 assert(size(originalPoints,2) == 2);

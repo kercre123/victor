@@ -1,80 +1,210 @@
 
 % function lucasKanadeBinary_computeUpdate()
 
+% updateType in {'translation', 'projective'}
+
+% real images
 % im1 = imread('C:/Anki/systemTestImages/cozmo_2014-01-29_11-41-05_0.png');
 % im2 = imread('C:/Anki/systemTestImages/cozmo_2014-01-29_11-41-05_5.png');
+% extremaDerivativeThreshold = 255.0;
 
-% lucasKanadeBinary_computeUpdate(im1, im2, eye(3), 1.0, 3, 1.0, 255, 15, 5.0);
+% Horizontal-only shift
+% im1 = zeros([480,640]); im1(50:100,50:150) = 1; im1(60:90,60:140) = 0;
+% im2 = zeros([480,640]); im2(50:100,5+(50:150)) = 1; im2(60:90,5+(60:140)) = 0;
+% extremaDerivativeThreshold = 0.5;
 
-function lucasKanadeBinary_computeUpdate(...
-    image1, image2,...
+% updatedHomography = lucasKanadeBinary_computeUpdate(im1, ones(size(im1)), im2, eye(3), 1.0, 5, 1.0, extremaDerivativeThreshold, 15, 'translation')
+
+function updatedHomography = lucasKanadeBinary_computeUpdate(...
+    templateImage, templateMask,...
+    newImage,...
     initialHomography, scale,...
     extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold,...
-    matchingFilterWidth, matchingFilterSigma)
+    maxMatchingDistance,...
+    updateType)
 
-assert(size(image1,1) == size(image2,1));
-assert(size(image1,2) == size(image2,2));
-assert(size(image1,3) == 1);
-assert(size(image2,3) == 1);
+assert(size(templateImage,1) == size(newImage,1));
+assert(size(templateImage,2) == size(newImage,2));
+assert(size(templateImage,1) == size(templateMask,1));
+assert(size(templateImage,2) == size(templateMask,2));
+assert(size(templateImage,3) == 1);
+assert(size(templateMask,3) == 1);
+assert(size(newImage,3) == 1);
+assert(mod(maxMatchingDistance,2) == 1);
 
-imageHeight = size(image1, 1);
-imageWidth = size(image1, 2);
+imageHeight = size(templateImage, 1);
+imageWidth = size(templateImage, 2);
 
-imageResizedHeight = imageHeight / scale;
-imageResizedWidth = imageWidth / scale;
+imageResizedHeight = imageHeight * scale;
+imageResizedWidth = imageWidth * scale;
 
-image1resized = imresize(image1, [imageResizedHeight, imageResizedWidth]);
-image2resized = imresize(image2, [imageResizedHeight, imageResizedWidth]);
+templateImageResized = imresize(templateImage, [imageResizedHeight, imageResizedWidth]);
+newImageResized = imresize(newImage, [imageResizedHeight, imageResizedWidth]);
 
-[~, xMinima1, yMinima1] = computeBinaryExtrema(...
-    image1, extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, true, false,...
-    true, matchingFilterWidth, matchingFilterSigma);
+[~, xMinima1Image, yMinima1Image] = computeBinaryExtrema(...
+    templateImageResized, extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, true, false);
 
-[~, xMaxima1, yMaxima1] = computeBinaryExtrema(...
-    image1, extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, false, true,...
-    true, matchingFilterWidth, matchingFilterSigma);
+[~, xMaxima1Image, yMaxima1Image] = computeBinaryExtrema(...
+    templateImageResized, extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, false, true);
+
+xMinima1Image(~templateMask) = 0;
+yMinima1Image(~templateMask) = 0;
+xMaxima1Image(~templateMask) = 0;
+yMaxima1Image(~templateMask) = 0;
+
+[~, xMinima2Image, yMinima2Image] = computeBinaryExtrema(...
+    newImageResized, extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, true, false);
+
+[~, xMaxima2Image, yMaxima2Image] = computeBinaryExtrema(...
+    newImageResized, extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, false, true);
+
+homographyOffset = [(imageWidth-1)/2, (imageHeight-1)/2];
+
+[xGrid, yGrid] = meshgrid(...
+    linspace(-homographyOffset(1), homographyOffset(1), imageResizedWidth), ...
+    linspace(-homographyOffset(2), homographyOffset(2), imageResizedHeight));
+
+xMinima1Inds = find(xMinima1Image ~= 0);
+yMinima1Inds = find(yMinima1Image ~= 0);
+xMaxima1Inds = find(xMaxima1Image ~= 0);
+yMaxima1Inds = find(yMaxima1Image ~= 0);
+
+xMinima1List_x = xGrid(xMinima1Inds);
+xMinima1List_y = yGrid(xMinima1Inds);
+
+yMinima1List_x = xGrid(yMinima1Inds);
+yMinima1List_y = yGrid(yMinima1Inds);
+
+xMaxima1List_x = xGrid(xMaxima1Inds);
+xMaxima1List_y = yGrid(xMaxima1Inds);
+
+yMaxima1List_x = xGrid(yMaxima1Inds);
+yMaxima1List_y = yGrid(yMaxima1Inds);
+
+% xMinima2Image(5,5) = 1;
+% figure(1);
+% hold off;
+% imshow(xMinima2Image);
+% hold on;
+% scatter(xMinima2List_x+imageWidth/2+0.5, xMinima2List_y+imageHeight/2+0.5);
+% scatter(5,5, 'r+')
+
+correspondences_xMinima = findCorrespondences(xMinima1List_x, xMinima1List_y, xMinima2Image, initialHomography, homographyOffset, maxMatchingDistance, false);
+correspondences_xMaxima = findCorrespondences(xMaxima1List_x, xMaxima1List_y, xMaxima2Image, initialHomography, homographyOffset, maxMatchingDistance, false);
+correspondences_yMinima = findCorrespondences(yMinima1List_x, yMinima1List_y, yMinima2Image, initialHomography, homographyOffset, maxMatchingDistance, true);
+correspondences_yMaxima = findCorrespondences(yMaxima1List_x, yMaxima1List_y, yMaxima2Image, initialHomography, homographyOffset, maxMatchingDistance, true);
+
+allCorrespondences = [correspondences_xMinima, correspondences_xMaxima, correspondences_yMinima, correspondences_yMaxima];
+% allCorrespondences = [correspondences_yMinima, correspondences_yMaxima];
+
+updatedHomography = updateHomography(initialHomography, allCorrespondences, updateType);
+
+keyboard
+% allCorrespondences =
+
+function correspondences = findCorrespondences(templateExtremaList_x, templateExtremaList_y, newExtremaImage, homography, homographyOffset, maxMatchingDistance, isVerticalSearch)
+    % TODO: bilinear interpolation, instead of nearest neighbor
+
+%     matchingFilterHalfWidth = floor(maxMatchingDistance / 2);
+
+    offsets = (-maxMatchingDistance):maxMatchingDistance;
+
+    points = [templateExtremaList_x, templateExtremaList_y, ones(length(templateExtremaList_y),1)]';
+
+    warpedPoints = homography*points;
+    warpedPoints = warpedPoints(1:2,:) ./ repmat(warpedPoints(3,:), [2,1]);
+
+    correspondences = zeros(6,0);
+    
+    for iPoint = 1:size(warpedPoints,2)
+        x = points(1, iPoint);
+        y = points(2, iPoint);
+
+        warpedX = warpedPoints(1, iPoint);
+        warpedY = warpedPoints(2, iPoint);
+        
+        warpedXrounded = round(warpedX + homographyOffset(1) + 0.5);
+        warpedYrounded = round(warpedY + homographyOffset(2) + 0.5);
+
+        if warpedXrounded > maxMatchingDistance && warpedXrounded <= (size(newExtremaImage,2)-maxMatchingDistance) &&...
+           warpedYrounded > maxMatchingDistance && warpedYrounded <= (size(newExtremaImage,1)-maxMatchingDistance)
+
+            if isVerticalSearch
+                for iOffset = 1:length(offsets)
+                    xp = warpedX;
+                    yp = warpedY + offsets(iOffset);
+                    
+                    xpRounded = warpedXrounded;
+                    ypRounded = warpedYrounded + offsets(iOffset);
+
+                    if newExtremaImage(ypRounded,xpRounded) ~= 0
+                        correspondences(:,end+1) = [x, y, warpedX, warpedY, xp, yp];
+                    end
+                end
+            else
+                for iOffset = 1:length(offsets)
+                    xp = warpedX + offsets(iOffset);
+                    yp = warpedY;
+                    
+                    xpRounded = warpedXrounded + offsets(iOffset);
+                    ypRounded = warpedYrounded;
+                    
+                    if newExtremaImage(ypRounded,xpRounded) ~= 0
+                        correspondences(:,end+1) = [x, y, warpedX, warpedY, xp, yp];
+                    end
+                end
+
+            end
+        end % if point is in bounds
+    end % for iPoint = 1:size(warpedPoints,2)
+
+function updatedHomography = updateHomography(initialHomography, correspondences, updateType)
+
+    if strcmpi(updateType, 'translation')
+        update = [mean(correspondences(5,:) - correspondences(3,:)), mean(correspondences(6,:) - correspondences(4,:))];
+        
+        updatedHomography = initialHomography;
+        updatedHomography(1:2,3) = updatedHomography(1:2,3) + [update(1); update(2)];
+
+    elseif strcmpi(updateType, 'projective')
+        numPoints = size(correspondences,2);
+
+        A = zeros(2*numPoints, 8);
+        b = zeros(8, 1);
+
+        for i = 1:numPoints
+            xi = correspondences(1,i);
+            yi = correspondences(2,i);
+
+            xp = correspondences(5,i);
+            yp = correspondences(6,i);
+
+            A(2*(i-1) + 1, :) = [ 0,  0, 0, -xi, -yi, -1,  xi*yp,  yi*yp];
+            A(2*(i-1) + 2, :) = [xi, yi, 1,   0,  0,   0, -xi*xp, -yi*xp];
+
+            b(2*(i-1) + 1) = -yp;
+            b(2*(i-1) + 2) = xp;
+        end
+        
+        % The direct solution
+        % homography = A \ b;
+
+        % The cholesky solution
+        AtA = A'*A;
+        Atb = A'*b;
+
+        L = chol(AtA);
+
+        homography = L \ (L' \ Atb);
+        homography(9) = 1;
+
+        updatedHomography = reshape(homography, [3,3])';
+    end
+
+    keyboard
 
 
-[~, xMinima2, yMinima2] = computeBinaryExtrema(...
-    image2, extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, true, false);
-
-[~, xMaxima2, yMaxima2] = computeBinaryExtrema(...
-    image2, extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, false, true);
-
-[xgrid, ygrid] = meshgrid( ...
-    linspace(-(imageWidth-1)/2,  (imageWidth-1)/2,  imageResizedWidth), ...
-    linspace(-(imageHeight-1)/2, (imageHeight-1)/2, imageResizedHeight));
-
-% [xMinima2List_y, xMinima2List_x] = find(xMinima2 ~= 0);
-% [yMinima2List_y, yMinima2List_x] = find(yMinima2 ~= 0);
-% [xMaxima2List_y, xMaxima2List_x] = find(xMaxima2 ~= 0);
-% [yMaxima2List_y, yMaxima2List_x] = find(yMaxima2 ~= 0);
-
-xMinima2inds = find(xMinima2 ~= 0);
-yMinima2inds = find(yMinima2 ~= 0);
-xMaxima2inds = find(xMaxima2 ~= 0);
-yMaxima2inds = find(yMaxima2 ~= 0);
-
-xMinima2List_y = ygrid(xMinima2inds);
-xMinima2List_x = xgrid(xMinima2inds);
-
-yMinima2List_y = ygrid(yMinima2inds);
-yMinima2List_x = xgrid(yMinima2inds);
-
-xMaxima2List_y = ygrid(xMaxima2inds);
-xMaxima2List_x = xgrid(xMaxima2inds);
-
-yMaxima2List_y = ygrid(yMaxima2inds);
-yMaxima2List_x = xgrid(yMaxima2inds);
 
 
-xMinima2(5,5) = 1;
-figure(1);
-hold off;
-imshow(xMinima2);
-hold on;
-scatter(xMinima2List_x+imageWidth/2+0.5, xMinima2List_y+imageHeight/2+0.5);
-
-scatter(5,5, 'r+')
 
 
