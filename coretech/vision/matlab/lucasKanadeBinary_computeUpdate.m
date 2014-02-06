@@ -99,6 +99,8 @@ allCorrespondences = [correspondences_xMinima, correspondences_xMaxima, correspo
 % allCorrespondences = [correspondences_yMinima, correspondences_yMaxima];
 % allCorrespondences = [correspondences_xMinima, correspondences_xMaxima];
 
+%allCorrespondences = allCorrespondences(:,1:527);
+
 updatedHomography = updateHomography(initialHomography, allCorrespondences, updateType);
 
 keyboard
@@ -174,21 +176,22 @@ function updatedHomography = updateHomography(initialHomography, correspondences
     elseif strcmpi(updateType, 'projective')
         numPoints = size(correspondences,2);
 
-        A = zeros(2*numPoints, 8);
+        A = zeros(numPoints, 8);
         b = zeros(8, 1);
 
         for i = 1:numPoints
             xi = correspondences(1,i);
             yi = correspondences(2,i);
 
-            xp = correspondences(5,i);
-            yp = correspondences(6,i);
-
-            A(2*(i-1) + 1, :) = [ 0,  0, 0, -xi, -yi, -1,  xi*yp,  yi*yp];
-            A(2*(i-1) + 2, :) = [xi, yi, 1,   0,  0,   0, -xi*xp, -yi*xp];
-
-            b(2*(i-1) + 1) = -yp;
-            b(2*(i-1) + 2) = xp;
+            if correspondences(7,i) == true
+                yp = correspondences(6,i);
+                A(i, :) = [ 0,  0, 0, -xi, -yi, -1,  xi*yp,  yi*yp];
+                b(i) = -yp;
+            else
+                xp = correspondences(5,i);
+                A(i, :) = [xi, yi, 1,   0,  0,   0, -xi*xp, -yi*xp];
+                b(i) = xp;
+            end
         end
         
         % The direct solution
@@ -205,8 +208,10 @@ function updatedHomography = updateHomography(initialHomography, correspondences
 
         updatedHomography = reshape(homography, [3,3])';
     end
+    
+    updatedHomography
 
-    keyboard
+%     keyboard
 
 
 
