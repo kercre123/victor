@@ -6,15 +6,41 @@
 % real images
 % im1 = imread('C:/Anki/systemTestImages/cozmo_2014-01-29_11-41-05_0.png');
 % im2 = imread('C:/Anki/systemTestImages/cozmo_2014-01-29_11-41-05_5.png');
+% mask1 = imread('C:/Anki/systemTestImages/cozmo_2014-01-29_11-41-05_0_mask.png');
+% extremaDerivativeThreshold = 255.0;
+
+% im1 = imread('C:/Anki/systemTestImages/cozmo_2014-01-29_11-41-05_10.png');
+% im2 = imread('C:/Anki/systemTestImages/cozmo_2014-01-29_11-41-05_12.png');
+% mask1 = imread('C:/Anki/systemTestImages/cozmo_2014-01-29_11-41-05_12_mask.png');
 % extremaDerivativeThreshold = 255.0;
 
 % Horizontal-only shift
 % im1 = zeros([480,640]); im1(50:100,50:150) = 1; im1(60:90,60:140) = 0;
 % im2 = zeros([480,640]); im2(50:100,5+(50:150)) = 1; im2(60:90,5+(60:140)) = 0;
+% mask1 = ones(size(im1));
 % extremaDerivativeThreshold = 0.5;
 
-% updatedHomography = lucasKanadeBinary_computeUpdate(im1, ones(size(im1)), im2, eye(3), 1.0, 5, 1.0, extremaDerivativeThreshold, 15, 'translation')
-% updatedHomography = lucasKanadeBinary_computeUpdate(im1, ones(size(im1)), im2, eye(3), 1.0, 5, 1.0, extremaDerivativeThreshold, 15, 'projective')
+% updatedHomography = lucasKanadeBinary_computeUpdate(im1, mask1, im2, eye(3), 1.0, 5, 1.0, extremaDerivativeThreshold, 15, 'translation')
+% updatedHomography = lucasKanadeBinary_computeUpdate(im1, mask1, im2, eye(3), 1.0, 5, 1.0, extremaDerivativeThreshold, 15, 'projective')
+
+% homography = eye(3);
+% for i = 1:10
+%   maxMatchingDistance = floor(14/i);
+%   maxMatchingDistance = maxMatchingDistance + (1-mod(maxMatchingDistance,2));
+%   homography = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography, 1.0, 5, 1.0, extremaDerivativeThreshold, maxMatchingDistance, 'translation')
+% end
+
+% homography1 = eye(3);
+% im1w1 = lucasKanadeBinary_warpWithHomography(im1, homography1);
+% homography2 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography1, 1.0, 5, 1.0, extremaDerivativeThreshold, 15, 'translation')
+% im1w2 = lucasKanadeBinary_warpWithHomography(im1, homography2);
+% homography3 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography2, 1.0, 5, 1.0, extremaDerivativeThreshold, 3, 'translation')
+% im1w3 = lucasKanadeBinary_warpWithHomography(im1, homography3);
+% homography4 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography3, 1.0, 5, 1.0, extremaDerivativeThreshold, 15, 'projective')
+% im1w4 = lucasKanadeBinary_warpWithHomography(im1, homography4);
+% homography5 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography4, 1.0, 5, 1.0, extremaDerivativeThreshold, 5, 'projective')
+% im1w5 = lucasKanadeBinary_warpWithHomography(im1, homography5); 
+% imshows(im1, im2, uint8(im1w2), uint8(im1w3), uint8(im1w4), uint8(im1w5));
 
 function updatedHomography = lucasKanadeBinary_computeUpdate(...
     templateImage, templateMask,...
@@ -103,7 +129,7 @@ allCorrespondences = [correspondences_xMinima, correspondences_xMaxima, correspo
 
 updatedHomography = updateHomography(initialHomography, allCorrespondences, updateType);
 
-keyboard
+% keyboard
 % allCorrespondences =
 
 function correspondences = findCorrespondences(templateExtremaList_x, templateExtremaList_y, newExtremaImage, homography, homographyOffset, maxMatchingDistance, isVerticalSearch)
@@ -173,24 +199,46 @@ function updatedHomography = updateHomography(initialHomography, correspondences
         updatedHomography = initialHomography;
         updatedHomography(1:2,3) = updatedHomography(1:2,3) + [update(1); update(2)];
 
-    elseif strcmpi(updateType, 'projective')
-        numPoints = size(correspondences,2);
+    else
+        if strcmpi(updateType, 'projective')
+            numPoints = size(correspondences,2);
 
-        A = zeros(numPoints, 8);
-        b = zeros(8, 1);
+            A = zeros(numPoints, 8);
+            b = zeros(8, 1);
 
-        for i = 1:numPoints
-            xi = correspondences(1,i);
-            yi = correspondences(2,i);
+            for i = 1:numPoints
+                xi = correspondences(1,i);
+                yi = correspondences(2,i);
 
-            if correspondences(7,i) == true
-                yp = correspondences(6,i);
-                A(i, :) = [ 0,  0, 0, -xi, -yi, -1,  xi*yp,  yi*yp];
-                b(i) = -yp;
-            else
-                xp = correspondences(5,i);
-                A(i, :) = [xi, yi, 1,   0,  0,   0, -xi*xp, -yi*xp];
-                b(i) = xp;
+                if correspondences(7,i) == true
+                    yp = correspondences(6,i);
+                    A(i, :) = [ 0,  0, 0, -xi, -yi, -1,  xi*yp,  yi*yp];
+                    b(i) = -yp;
+                else
+                    xp = correspondences(5,i);
+                    A(i, :) = [xi, yi, 1,   0,  0,   0, -xi*xp, -yi*xp];
+                    b(i) = xp;
+                end
+            end
+        elseif strcmpi(updateType, 'affine')
+            numPoints = size(correspondences,2);
+
+            A = zeros(numPoints, 6);
+            b = zeros(6, 1);
+
+            for i = 1:numPoints
+                xi = correspondences(1,i);
+                yi = correspondences(2,i);
+
+                if correspondences(7,i) == true
+                    yp = correspondences(6,i);
+                    A(i, :) = [ 0,  0, 0, -xi, -yi, -1];
+                    b(i) = -yp;
+                else
+                    xp = correspondences(5,i);
+                    A(i, :) = [xi, yi, 1,   0,  0,   0];
+                    b(i) = xp;
+                end
             end
         end
         
@@ -209,7 +257,7 @@ function updatedHomography = updateHomography(initialHomography, correspondences
         updatedHomography = reshape(homography, [3,3])';
     end
     
-    updatedHomography
+%     updatedHomography
 
 %     keyboard
 
