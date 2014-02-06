@@ -14,6 +14,7 @@
 % extremaDerivativeThreshold = 0.5;
 
 % updatedHomography = lucasKanadeBinary_computeUpdate(im1, ones(size(im1)), im2, eye(3), 1.0, 5, 1.0, extremaDerivativeThreshold, 15, 'translation')
+% updatedHomography = lucasKanadeBinary_computeUpdate(im1, ones(size(im1)), im2, eye(3), 1.0, 5, 1.0, extremaDerivativeThreshold, 15, 'projective')
 
 function updatedHomography = lucasKanadeBinary_computeUpdate(...
     templateImage, templateMask,...
@@ -96,6 +97,7 @@ correspondences_yMaxima = findCorrespondences(yMaxima1List_x, yMaxima1List_y, yM
 
 allCorrespondences = [correspondences_xMinima, correspondences_xMaxima, correspondences_yMinima, correspondences_yMaxima];
 % allCorrespondences = [correspondences_yMinima, correspondences_yMaxima];
+% allCorrespondences = [correspondences_xMinima, correspondences_xMaxima];
 
 updatedHomography = updateHomography(initialHomography, allCorrespondences, updateType);
 
@@ -114,7 +116,7 @@ function correspondences = findCorrespondences(templateExtremaList_x, templateEx
     warpedPoints = homography*points;
     warpedPoints = warpedPoints(1:2,:) ./ repmat(warpedPoints(3,:), [2,1]);
 
-    correspondences = zeros(6,0);
+    correspondences = zeros(7,0);
     
     for iPoint = 1:size(warpedPoints,2)
         x = points(1, iPoint);
@@ -138,7 +140,7 @@ function correspondences = findCorrespondences(templateExtremaList_x, templateEx
                     ypRounded = warpedYrounded + offsets(iOffset);
 
                     if newExtremaImage(ypRounded,xpRounded) ~= 0
-                        correspondences(:,end+1) = [x, y, warpedX, warpedY, xp, yp];
+                        correspondences(:,end+1) = [x, y, warpedX, warpedY, xp, yp, true];
                     end
                 end
             else
@@ -150,7 +152,7 @@ function correspondences = findCorrespondences(templateExtremaList_x, templateEx
                     ypRounded = warpedYrounded;
                     
                     if newExtremaImage(ypRounded,xpRounded) ~= 0
-                        correspondences(:,end+1) = [x, y, warpedX, warpedY, xp, yp];
+                        correspondences(:,end+1) = [x, y, warpedX, warpedY, xp, yp, false];
                     end
                 end
 
@@ -161,7 +163,10 @@ function correspondences = findCorrespondences(templateExtremaList_x, templateEx
 function updatedHomography = updateHomography(initialHomography, correspondences, updateType)
 
     if strcmpi(updateType, 'translation')
-        update = [mean(correspondences(5,:) - correspondences(3,:)), mean(correspondences(6,:) - correspondences(4,:))];
+        verticalInds = correspondences(7,:) == true;
+        horizontalInds = correspondences(7,:) == false;
+        
+        update = [mean(correspondences(5,horizontalInds) - correspondences(3,horizontalInds)), mean(correspondences(6,verticalInds) - correspondences(4,verticalInds))];
         
         updatedHomography = initialHomography;
         updatedHomography(1:2,3) = updatedHomography(1:2,3) + [update(1); update(2)];
