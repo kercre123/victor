@@ -347,6 +347,9 @@ namespace Anki {
       {
         CORETECH_ASSERT(from->parent != NULL);
         
+        P_from.preComposeWith( *(from->parent) );
+        from = from->parent;
+        
         if(from->parent == to) {
           // We bumped into the "to" pose on the way up to the common parent, so
           // we've got the the chained transform ready to go, and there's no
@@ -357,9 +360,6 @@ namespace Anki {
           return P_from;
         }
         
-        P_from.preComposeWith( *(from->parent) );
-        from = from->parent;
-        
         --depthDiff;
       }
       
@@ -367,6 +367,9 @@ namespace Anki {
       {
         CORETECH_ASSERT(to->parent != NULL);
 
+        P_to.preComposeWith( *(to->parent) );
+        to = to->parent;
+        
         if(to->parent == from) {
           // We bumped into the "from" pose on the way up to the common parent,
           // so we've got the the (inverse of the) chained transform ready to
@@ -378,9 +381,6 @@ namespace Anki {
           P_to.parent = newParent;
           return P_to;
         }
-        
-        P_to.preComposeWith( *(to->parent) );
-        to = to->parent;
         
         --depthDiff;
       }
