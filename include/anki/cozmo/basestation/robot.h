@@ -25,7 +25,6 @@ namespace Anki {
     
     // Forward declarations:
     class BlockWorld;
-    class MatMarker2d;
     
     class Robot
     {
@@ -94,7 +93,7 @@ namespace Anki {
       bool setOperationMode(OperationMode newMode);
       bool isCarryingBlock;
       
-      const MatMarker2d            *matMarker;
+      //const MatMarker2d            *matMarker;
       
       std::list<Vision::ObservedMarker>   observedVisionMarkers;
       //std::vector<BlockMarker3d*>  visibleFaces;

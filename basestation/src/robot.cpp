@@ -74,19 +74,18 @@ namespace Anki {
     
     Robot::Robot(const RobotID_t robotID, BlockWorld& world)
     : ID_(robotID), world_(BlockWorld::getInstance()),
-      pose(0.f, Z_AXIS_3D, {{0.f, 0.f, WHEEL_RAD_TO_MM}}),
+      pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, WHEEL_RAD_TO_MM}}),
       camDownCalibSet(false), camHeadCalibSet(false),
-    neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &pose),
+      neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &pose),
       headCamPose(2.094395102393196, // Rotate -90deg around Y, then 90deg around Z
                   {{-sqrtf(3.f)/3.f, sqrtf(3.f)/3.f, -sqrtf(3.f)/3.f}},
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &neckPose),
-    liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &pose),
+      liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &pose),
       matCamPose(M_PI, // Rotate 180deg around Y, then 90deg around Z
                  {{sqrtf(2.f)/2.f, -sqrtf(2.f)/2.f, 0.f}},
                  {{MAT_CAM_POSITION[0], MAT_CAM_POSITION[1], MAT_CAM_POSITION[2]}}, &pose),
       currentHeadAngle(DEG_TO_RAD(-14.4f)),
       isCarryingBlock(false),
-      matMarker(NULL)
     {
       this->set_headAngle(currentHeadAngle);
       
