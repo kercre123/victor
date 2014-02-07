@@ -40,25 +40,11 @@ namespace Anki {
       
       void Update();
       
-      const std::list<Vision::ObservedMarker>& GetObservedVisionMarkers() const;
-      
-      /*
-      // Add observed BlockMarker3d objects to a multimap container, grouped
-      // by BlockType.
-      // (It will be the world's job to take all of these from all
-      //  robots and update the world state)
-      void getVisibleBlockMarkers3d(std::multimap<BlockType, BlockMarker3d>& markers) ;
-      */
-      
       const RobotID_t get_ID() const;
       const Pose3d& get_pose() const;
       const Vision::Camera& get_camDown() const;
       const Vision::Camera& get_camHead() const;
       OperationMode get_operationMode() const;
-      
-      //const MatMarker2d* get_matMarker2d() const;
-      
-      //float get_downCamPixPerMM() const;
       
       void set_pose(const Pose3d &newPose);
       void set_headAngle(const Radians& angle);
@@ -80,46 +66,37 @@ namespace Anki {
       Pose3d pose;
       void updatePose();
       
-      Vision::Camera camDown, camHead;
-      bool camDownCalibSet, camHeadCalibSet;
+      Vision::Camera camHead;
+
       const Pose3d neckPose; // joint around which head rotates
       const Pose3d headCamPose; // in canonical (untilted) position w.r.t. neck joint
       const Pose3d liftBasePose; // around which the base rotates/lifts
-      const Pose3d matCamPose; 
+
       Radians currentHeadAngle;
-      
       
       OperationMode mode, nextMode;
       bool setOperationMode(OperationMode newMode);
       bool isCarryingBlock;
       
-      //const MatMarker2d            *matMarker;
-      
-      std::list<Vision::ObservedMarker>   observedVisionMarkers;
       //std::vector<BlockMarker3d*>  visibleFaces;
       //std::vector<Block*>          visibleBlocks;
-      
-      // TODO: compute this from down-camera calibration data
-      float downCamPixPerMM = -1.f;
       
       // Message handling
       typedef std::vector<u8> MessageType;
       typedef std::queue<MessageType> MessageQueue;
-      MessageQueue messagesIn;
       MessageQueue messagesOut;
-      void checkMessages();
+      
             
     }; // class Robot
 
+    //
     // Inline accessors:
+    //
     inline const RobotID_t Robot::get_ID(void) const
     { return this->ID_; }
     
     inline const Pose3d& Robot::get_pose(void) const
     { return this->pose; }
-    
-    inline const Vision::Camera& Robot::get_camDown(void) const
-    { return this->camDown; }
     
     inline const Vision::Camera& Robot::get_camHead(void) const
     { return this->camHead; }
@@ -127,25 +104,16 @@ namespace Anki {
     inline Robot::OperationMode Robot::get_operationMode() const
     { return this->mode; }
     
-    inline const std::list<Vision::ObservedMarker>& Robot::GetObservedVisionMarkers() const
-    { return this->observedVisionMarkers; }
-    
-    inline void Robot::set_camCalibration(const Vision::CameraCalibration& calib) {
-      this->camHead.set_calibration(calib);
-    }
-    
-    /*
-    inline const MatMarker2d* Robot::get_matMarker2d() const
-    { return this->matMarker; }
-    
-    inline float Robot::get_downCamPixPerMM() const
-    { return this->downCamPixPerMM; }
-    */
+    inline void Robot::set_camCalibration(const Vision::CameraCalibration& calib)
+    { this->camHead.set_calibration(calib); }
     
     inline bool Robot::hasOutgoingMessages() const
     { return not this->messagesOut.empty(); }
     
     
+    //
+    // RobotManager class for keeping up with available robots, by their ID
+    //
     // Note that this is a singleton
     class RobotManager
     {
@@ -173,9 +141,6 @@ namespace Anki {
       // Return a
       // Return the number of availale robots
       size_t GetNumRobots() const;
-      
-      
-      void GetAllVisionMarkers(std::vector<Vision::Marker>& markers) const;
       
     protected:
       

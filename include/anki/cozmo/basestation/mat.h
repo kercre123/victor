@@ -1,69 +1,31 @@
 #ifndef __Products_Cozmo__Mat__
 #define __Products_Cozmo__Mat__
 
-#include "anki/cozmo/basestation/messages.h"
-
-#include "anki/common/basestation/math/pose.h"
-#include "anki/vision/basestation/marker2d.h"
+#include "anki/vision/basestation/observableObject.h"
 
 namespace Anki {
   
   namespace Cozmo {
 
-    //class RobotMessage;
-    
-    class MatSection
+    class MatPiece : public Vision::ObservableObject //Base<MatPiece>
     {
     public:
-      static const Point2f Size;
+      MatPiece(ObjectID_t ID) : Vision::ObservableObject(ID) {};
       
-    }; // class Mat
-    
-    
-    class MatMarker2d //: public Marker2d<5,2>
-    {
-    public:
-      static const float SquareWidth;
-            
-      //using Marker2d<5,2>::BitString;
+      //virtual float GetMinDim() const {return 0;}
       
-      // For if/when we want to actually decode a string:
-      //MatMarker2d(const BitString &str, const Quad2f &corners);
+      virtual ObservableObject* Clone() const
+      {
+        // Call the copy constructor
+        return new MatPiece(static_cast<const MatPiece&>(*this));
+      }
       
-      //MatMarker2d(const RobotMessage &msg);
-      MatMarker2d(const u16 xSquare, const u16 ySquare,
-                  const Pose2d& imgPose,
-                  const MarkerUpDirection upDirection);
-      
-      //void encodeIDs(void);
-      //void decodeIDs(const BitString &bitString);
-      int     get_xSquare() const;
-      int     get_ySquare() const;
-      Radians get_upAngle() const;
-      
-      const Pose2d& get_imagePose() const;
+      virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
       
     protected:
+      static const std::vector<RotationMatrix3d> rotationAmbiguities_;
       
-      int xSquare, ySquare;
-      
-      Radians upAngle;
-      
-      Pose2d imgPose; // x,y,angle in image coordinates
-      
-    }; // class MatMarker2d
-    
-    inline int MatMarker2d::get_xSquare() const
-    { return this->xSquare; }
-    
-    inline int MatMarker2d::get_ySquare() const
-    { return this->ySquare; }
-    
-    inline Radians MatMarker2d::get_upAngle() const
-    { return this->upAngle; }
-    
-    inline const Pose2d& MatMarker2d::get_imagePose() const
-    { return this->imgPose; }
+    };
     
     
   } // namespace Cozmo

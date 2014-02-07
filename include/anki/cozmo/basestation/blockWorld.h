@@ -26,39 +26,17 @@
 #include "anki/common/basestation/exceptions.h"
 
 #include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/robot.h"
-//#include "messageHandler.h"
 
-//#include "anki/messaging/basestation/messagingInterface.h"
 
 namespace Anki
 {
   namespace Cozmo
   {
     // Forward declarations:
-    class Robot;
-    
+    class Robot;    
     class MessageHandler;
-    
-    class MatPiece : public Vision::ObservableObject //Base<MatPiece>
-    {
-    public:
-      MatPiece(ObjectID_t ID) : Vision::ObservableObject(ID) {};
-      
-      //virtual float GetMinDim() const {return 0;}
-      
-      virtual ObservableObject* Clone() const
-      {
-        // Call the copy constructor
-        return new MatPiece(static_cast<const MatPiece&>(*this));
-      }
-      
-      virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
-      
-    protected:
-      static const std::vector<RotationMatrix3d> rotationAmbiguities_;
-      
-    };
     
     class BlockWorld
     {
@@ -105,10 +83,7 @@ namespace Anki
       // Store all the blocks in the world, with a reserved slot for
       // each type of block, and then a list of pointers to each block
       // of that type we've actually seen.
-      // TODO: inner vector could actual blocks instead of pointers?
-      //typedef std::map<Block::Type, std::vector<Block*> > BlockList;
-      typedef std::vector< std::vector<Block> > BlockList_type;
-      BlockList_type blocks;
+      std::vector< std::vector<Block> > blocks;
 
       
       typedef std::pair<const Vision::Marker&, Pose3d> MarkerPosePair;

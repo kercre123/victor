@@ -14,17 +14,7 @@
 namespace Anki {
   namespace Cozmo {
     
-#pragma mark --- Block Implementation ---
-   
-    /*
-    // Fill in the static const lookup table of block information from the
-    // BlockDefinitions file, using macros.
-    const Block::BlockInfoTableEntry_t Block::BlockInfoLUT_[Block::NUM_BLOCK_IDS] = {
-      {.name = "UNKNOWN", .color = {0.f, 0.f, 0.f}, .size = {0.f, 0.f, 0.f}}
-#define BLOCK_DEFINITION_MODE BLOCK_LUT_MODE
-#include "anki/cozmo/basestation/BlockDefinitions.h"
-    };
-     */
+#pragma mark --- Generic Block Implementation ---
     
     void Block::AddFace(const FaceName whichFace,
                         const Vision::Marker::Code &code,
@@ -100,15 +90,6 @@ namespace Anki {
       blockCorners_[LEFT_BACK_BOTTOM]   = {-halfWidth, halfDepth,-halfHeight};
       blockCorners_[RIGHT_BACK_BOTTOM]  = { halfWidth, halfDepth,-halfHeight};
       
-
-      /*
-      // Add a marker for each face, using the static lookup table to get
-      // the marker codes
-      for(auto & face : BlockInfoLUT_.faces.size()) {
-        AddMarker(face.code, GetFacePose(face.whichFace), face.size);
-      }
-       */
-      
     } // Constructor: Block(type)
     
     Block::Block(const Block& otherBlock)
@@ -127,6 +108,8 @@ namespace Anki {
       return Block::numBlocks;
     }
     
+   
+#pragma mark ---  Block_Cube1x1 Implementation ---
     
     const std::vector<RotationMatrix3d> Block_Cube1x1::rotationAmbiguities_ = {
       RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
@@ -142,6 +125,15 @@ namespace Anki {
       return Block_Cube1x1::rotationAmbiguities_;
     }
     
+    Block_Cube1x1::Block_Cube1x1(const ObjectID_t ID)
+    : Block(ID)
+    {
+      
+    }
+    
+    
+#pragma mark ---  Block_2x1 Implementation ---
+    
     const std::vector<RotationMatrix3d> Block_2x1::rotationAmbiguities_ = {
       RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
       RotationMatrix3d({1,0,0,  0,0,1,  0,1,0})
@@ -150,12 +142,6 @@ namespace Anki {
     std::vector<RotationMatrix3d> const& Block_2x1::GetRotationAmbiguities() const
     {
       return Block_2x1::rotationAmbiguities_;
-    }
-    
-    Block_Cube1x1::Block_Cube1x1(const ObjectID_t ID)
-    : Block(ID)
-    {
-      
     }
     
     Block_2x1::Block_2x1(const ObjectID_t ID)

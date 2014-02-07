@@ -384,30 +384,7 @@ namespace Anki
       {
         Robot* robot = robotMgr_->GetRobotByID(robotID);
         
-        /*
-        // See if there were any markers seen by this robot
-        auto thisRobotsMarkers = obsMarkersByRobot_.find(robot);
-        if(thisRobotsMarkers != obsMarkersByRobot_.end()) {
-          // if so, look through each of them
-          for(auto markerPtr : thisRobotsMarkers->second) {
-            // see if any correspond to mat objects
-            const std::vector<const Vision::ObservableObject*>* matObjects = matLibrary_.GetObjectsWithMarker(*markerPtr);
-            
-            if(matObjects != NULL) {
-              
-              for(auto libMatObject : matObjects)
-              
-              // First see if this is a mat object already in our world
-              if(
-              
-            }
-          }
-        }
-
-        matLibrary_.GetObjectsWithMarker(<#const Anki::Vision::Marker &marker#>)
-        */
-        
-        // Get all mat objects seen by this robot
+        // Get all mat objects *seen by this robot's camera*
         matsSeen.clear();
         matLibrary_.CreateObjectsFromMarkers(obsMarkers_, matsSeen,
                                              &robot->get_camHead());
@@ -481,8 +458,11 @@ namespace Anki
       // TODO: Deal with unknown markers?
       
       // Toss any remaining markers?
-      // TODO: Print message telling number of unused observed markers?
-      obsMarkers_.clear();
+      if(not obsMarkers_.empty()) {
+        PRINT_INFO("%lu messages did not match any known objects and went unused.\n",
+                   obsMarkers_.size());
+        obsMarkers_.clear();
+      }
       
     } // Update()
     
@@ -514,70 +494,7 @@ namespace Anki
     {
       return MatPiece::rotationAmbiguities_;
     }
-    
-    /*
-    void BlockWorld::updateRobotPose(Robot *robot)
-    {
-      // TODO: Can the robot do this for itself?
-      
-      // Use the robot's current MatMarker (if there is one) to update its
-      // pose
-      const MatMarker2d* matMarker = robot->get_matMarker2d();
-      if(matMarker != NULL)
-      {
-        // Convert the MatMarker's image coordinates to a World
-        // coordinates position
-        Point2f centerVec(matMarker->get_imagePose().get_translation());
-        
-        const CameraCalibration& camCalib = robot->get_camDown().get_calibration();
-        
-        const Point2f imageCenterPt(camCalib.get_center_pt());
-        
-        if(this->zAxisPointsUp) {
-          // xvec = imgCen(1)-xcenIndex;
-          // yvec = imgCen(2)-ycenIndex;
 
-          centerVec *= -1.f;
-          centerVec += imageCenterPt;
-          
-        } else {
-          // xvec = xcenIndex - imgCen(1);
-          // yvec = ycenIndex - imgCen(2);
-         
-          centerVec -= imageCenterPt;
-        }
-        
-        //xvecRot =  xvec*cos(-marker.upAngle) + yvec*sin(-marker.upAngle);
-        //yvecRot = -xvec*sin(-marker.upAngle) + yvec*cos(-marker.upAngle);
-        // xMat = xvecRot/pixPerMM + marker.X*squareWidth - squareWidth/2 -
-        //          matSize(1)/2;
-        // yMat = yvecRot/pixPerMM + marker.Y*squareWidth - squareWidth/2 -
-        //          matSize(2)/2;
-        RotationMatrix2d R(matMarker->get_upAngle());
-        Point2f matPoint(R*centerVec);
-        matPoint *= 1.f / robot->get_downCamPixPerMM();
-        matPoint.x() += matMarker->get_xSquare() * MatMarker2d::SquareWidth;
-        matPoint.y() += matMarker->get_ySquare() * MatMarker2d::SquareWidth;
-        matPoint -= MatMarker2d::SquareWidth * .5f;
-        matPoint.x() -= MatSection::Size.x() * .5f;
-        matPoint.x() -= MatSection::Size.y() * .5f;
-        
-        if(not this->zAxisPointsUp) {
-          matPoint.x() *= -1.f;
-        }
-        
-        // orient1 = orient1 + marker.upAngle;
-        Radians angle( matMarker->get_imagePose().get_angle()
-                       + matMarker->get_upAngle() );
-        
-        Pose3d robotPose( Pose2d(angle, matPoint) );
-        
-        robot->set_pose( robotPose );
-        
-      } // if matMarker not NULL
-      
-    } // updateRobotPose()
-    */
     
   } // namespace Cozmo
 } // namespace Anki

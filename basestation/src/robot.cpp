@@ -8,13 +8,11 @@
 
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/messages.h"
 #include "anki/cozmo/basestation/robot.h"
 
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/robot/cozmoConfig.h"
-
 
 
 namespace Anki {
@@ -58,11 +56,7 @@ namespace Anki {
     {
       return robots_.count(withID) > 0;
     }
-    
-    void RobotManager::GetAllVisionMarkers(std::vector<Vision::Marker>& markers) const
-    {
 
-    }
     
     void RobotManager::UpdateAllRobots()
     {
@@ -75,21 +69,14 @@ namespace Anki {
     Robot::Robot(const RobotID_t robotID, BlockWorld& world)
     : ID_(robotID), world_(BlockWorld::getInstance()),
       pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, WHEEL_RAD_TO_MM}}),
-      camDownCalibSet(false), camHeadCalibSet(false),
       neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &pose),
-      headCamPose(2.094395102393196, // Rotate -90deg around Y, then 90deg around Z
-                  {{-sqrtf(3.f)/3.f, sqrtf(3.f)/3.f, -sqrtf(3.f)/3.f}},
+      headCamPose({0,0,1,  -1,0,0,  0,-1,0},
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &neckPose),
       liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &pose),
-      matCamPose(M_PI, // Rotate 180deg around Y, then 90deg around Z
-                 {{sqrtf(2.f)/2.f, -sqrtf(2.f)/2.f, 0.f}},
-                 {{MAT_CAM_POSITION[0], MAT_CAM_POSITION[1], MAT_CAM_POSITION[2]}}, &pose),
       currentHeadAngle(DEG_TO_RAD(-14.4f)),
       isCarryingBlock(false)
     {
       this->set_headAngle(currentHeadAngle);
-      
-      this->camDown.set_pose(this->matCamPose);
       
     } // Constructor: Robot
    
@@ -99,184 +86,14 @@ namespace Anki {
       
       
     } // updatePose()
-    
-    
-    void Robot::checkMessages()
-    {
-     /*
-      //
-      // Parse Messages
-      //
-      //   Loop over all available messages from the physical robot
-      //   and update any markers we saw
-      //
-      while(not this->messagesIn.empty())
-      {
-        MessageType& msg = messagesIn.front();
-        
-        //const u8 msgSize = msg[0];
-        const Messages::ID msgID = static_cast<Messages::ID>(msg[0]);
-        
-        // TODO: Update to use dispatch functions instead of a switch
-        switch(msgID)
-        {
-          case Messages::HeadCameraCalibration_ID:
-          {
-            const Messages::HeadCameraCalibration *calibMsg = reinterpret_cast<const Messages::HeadCameraCalibration*>(&(msg[0]));
-            
-            Anki::CameraCalibration calib(calibMsg->nrows,
-                                          calibMsg->ncols,
-                                          calibMsg->focalLength_x,
-                                          calibMsg->focalLength_y,
-                                          calibMsg->center_x,
-                                          calibMsg->center_y,
-                                          calibMsg->skew);
-            
-            fprintf(stdout,
-                    "Basestation robot received head camera calibration.\n");
-            this->camHead.set_calibration(calib);
-            this->camHeadCalibSet = true;
-
-            break;
-          }
-          case Messages::MatCameraCalibration_ID:
-          {
-            const Messages::MatCameraCalibration *calibMsg = reinterpret_cast<const Messages::MatCameraCalibration*>(&(msg[0]));
-            
-            Anki::CameraCalibration calib(calibMsg->nrows,
-                                          calibMsg->ncols,
-                                          calibMsg->focalLength_x,
-                                          calibMsg->focalLength_y,
-                                          calibMsg->center_x,
-                                          calibMsg->center_y,
-                                          calibMsg->skew);
-            
-            fprintf(stdout,
-                    "Basestation robot received mat camera calibration.\n");
-            this->camDown.set_calibration(calib);
-            this->camDownCalibSet = true;
-            
-            // Compute the resolution of the mat camera from its FOV and height
-            // off the mat:
-            f32 matCamHeightInPix = ((static_cast<f32>(calibMsg->nrows)*.5f) /
-                                     tanf(calibMsg->fov * .5f));
-            this->downCamPixPerMM = matCamHeightInPix / MAT_CAM_HEIGHT_FROM_GROUND_MM;
-            fprintf(stdout, "Computed mat cam's pixPerMM = %.1f\n",
-                    this->downCamPixPerMM);
-            
-            
-            break;
-          } // camera calibration case
-            
-          case Messages::BlockMarkerObserved_ID:
-          {
-            // TODO: store observations from the same frame together
-            
-            // Translate the raw message into a BlockMarker2d object:
-            const Messages::BlockMarkerObserved* blockMsg = reinterpret_cast<const Messages::BlockMarkerObserved*>(&(msg[0]));
-            
-            fprintf(stdout,
-                    "Basestation Robot received ObservedBlockMarker message: "
-                    "saw Block %d, Face %d at [(%.1f,%.1f), (%.1f,%.1f), "
-                    "(%.1f,%.1f), (%.1f,%.1f)] with upDirection=%d and "
-                    "headAngle=%.1fdeg\n",
-                    blockMsg->blockType,       blockMsg->faceType,
-                    blockMsg->x_imgUpperLeft,  blockMsg->y_imgUpperLeft,
-                    blockMsg->x_imgLowerLeft,  blockMsg->y_imgLowerLeft,
-                    blockMsg->x_imgUpperRight, blockMsg->y_imgUpperRight,
-                    blockMsg->x_imgLowerRight, blockMsg->y_imgLowerRight,
-                    blockMsg->upDirection,     blockMsg->headAngle*180.f/M_PI);
-            
-            Quad2f corners;
-            
-            corners[Quad::TopLeft].x()     = blockMsg->x_imgUpperLeft;
-            corners[Quad::TopLeft].y()     = blockMsg->y_imgUpperLeft;
-            
-            corners[Quad::BottomLeft].x()  = blockMsg->x_imgLowerLeft;
-            corners[Quad::BottomLeft].y()  = blockMsg->y_imgLowerLeft;
-            
-            corners[Quad::TopRight].x()    = blockMsg->x_imgUpperRight;
-            corners[Quad::TopRight].y()    = blockMsg->y_imgUpperRight;
-            
-            corners[Quad::BottomRight].x() = blockMsg->x_imgLowerRight;
-            corners[Quad::BottomRight].y() = blockMsg->y_imgLowerRight;
-            
-            MarkerUpDirection upDir = static_cast<MarkerUpDirection>(blockMsg->upDirection);
-            
-            // Construct a new BlockMarker2d at the end of the list
-            this->visibleBlockMarkers2d.emplace_back(blockMsg->blockType,
-                                                     blockMsg->faceType,
-                                                     corners, upDir,
-                                                     blockMsg->headAngle,
-                                                     *this);
-            
-            break;
-          }
-          case Messages::MatMarkerObserved_ID:
-          {
-            // Translate the raw message into a MatMarker2d object:
-            const Messages::MatMarkerObserved* matMsg = reinterpret_cast<const Messages::MatMarkerObserved*>(&(msg[0]));
-            
-            fprintf(stdout,
-                    "Basestation robot received ObservedMatMarker message: "
-                    "at mat square (%d,%d) seen at (%.1f,%.1f) "
-                    "with orientation %.1f and upDirection=%d\n",
-                    matMsg->x_MatSquare, matMsg->y_MatSquare,
-                    matMsg->x_imgCenter, matMsg->y_imgCenter,
-                    matMsg->angle * (180.f/M_PI), matMsg->upDirection);
-            
-            if(this->matMarker != NULL) {
-              // We have two messages indicating a MatMarker was observed,
-              // just use the last one?
-              delete this->matMarker;
-              
-              // TODO: Issue a warning?
-            }
-            
-            Pose2d imgPose(matMsg->angle, matMsg->x_imgCenter, matMsg->y_imgCenter);
-            MarkerUpDirection upDir = static_cast<MarkerUpDirection>(matMsg->upDirection);
-            
-            this->matMarker = new MatMarker2d(matMsg->x_MatSquare,
-                                              matMsg->y_MatSquare,
-                                              imgPose, upDir);
-            
-            break;
-          }
-          default:
-            CORETECH_THROW("Unrecognized RobotMessage type.");
-            
-        } // switch(msg type)
-        
-        this->messagesIn.pop();
-        
-      } // while message queue not empty
-      
-      */
-    } // checkMessages()
+  
     
     
     void Robot::Update(void)
     {
-      /*
-      // Reset what we have available from the physical robot
-      if(this->matMarker != NULL) {
-        delete this->matMarker;
-        this->matMarker = NULL;
-      }
-      this->visibleBlockMarkers2d.clear();
-      */
-      
-      checkMessages();
-      
-      updatePose();
       
     } // step()
 
-    void Robot::queueIncomingMessage(const u8 *msg, const u8 msgSize)
-    {
-      // Copy the incoming message into our queue
-      this->messagesIn.emplace(msg, msg+msgSize); // C++11: no copy
-    }
     
     void Robot::getOutgoingMessage(u8 *msgOut, u8 &msgSize)
     {
@@ -292,54 +109,7 @@ namespace Anki {
       
       this->messagesOut.pop();
     }
-    
-          /*
-    void Robot::checkMessages(std::queue<RobotMessage> &messageQueue)
-    {
-      // Translate available messages and push onto the given queue.
-      
-      // TODO: add code to talk to Webots / Matlab / a real robot (BTLE)
-      // TODO: much of this should probably live in coretech-communications
-      
-      
-      // TEST!!!
 
-      // "BlockType:FaceType:upperLeftX,upperLeftY:lowerLeftX,lowerLeftY:
-      //   upperRightX,upperRightY:lowerRightX,lowerRightY"
-      messageQueue.emplace(RobotMessage::BlockMarkerObservation,
-                           "65:1:100,100:110,200:205,105:200,215");
-      
-      // "XsquareID:YsquareID:imgPosX,imgPosY,imgAngleDegrees:UpSide"
-      messageQueue.emplace(RobotMessage::MatMarkerObservation,
-                           "42:57:150,200:34:TOP");
-      
-    } // checkMessages()
-         */
-    
-    
-    /*
-    
-    void Robot::getVisibleBlockMarkers3d(std::multimap<BlockType, BlockMarker3d>& markers3d) const
-    {
-      if(not this->camHeadCalibSet) {
-        fprintf(stdout, "Robot::getVisibleBlockMarkers3d() called before "
-                "head camera calibration was set.\n");
-        return;
-      }
-      
-      // Estimate the pose of each observed BlockMarkers
-      for(const BlockMarker2d& marker2d : this->visibleBlockMarkers2d)
-      {
-        // Create a BlockMarker3d from this marker2d, estimating its
-        // Pose from the robot's head camera, and place in the map according
-        // to its block type:
-        markers3d.emplace(marker2d.get_blockType(),
-                          BlockMarker3d(marker2d, this->camHead));
-        
-      } // FOR each marker2d
-      
-    } // getVisibleBlockMarkers3d()
-    */
     
     void Robot::set_pose(const Pose3d &newPose)
     {
@@ -523,12 +293,6 @@ namespace Anki {
       */
       
     } // dockWithBlock()
-
-    
- 
-
-
-    
 
     
     
