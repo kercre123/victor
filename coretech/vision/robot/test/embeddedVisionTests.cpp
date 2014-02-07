@@ -94,6 +94,131 @@ Matlab matlab(false);
 DDR_BUFFER_LOCATION char ddrBuffer[DDR_BUFFER_SIZE];
 CMX_BUFFER_LOCATION char cmxBuffer[CMX_BUFFER_SIZE];
 
+GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
+{
+  const u8 grayvalueThreshold = 128;
+  const s32 minComponentWidth = 3;
+  const s32 maxExtrema = 500;
+
+  MemoryStack scratch_CMX(&cmxBuffer[0], CMX_BUFFER_SIZE);
+  ASSERT_TRUE(scratch_CMX.IsValid());
+
+  Array<u8> image(48, 64, scratch_CMX);
+
+  FixedLengthList<Point<s16> > xDecreasing(maxExtrema, scratch_CMX);
+  FixedLengthList<Point<s16> > xIncreasing(maxExtrema, scratch_CMX);
+  FixedLengthList<Point<s16> > yDecreasing(maxExtrema, scratch_CMX);
+  FixedLengthList<Point<s16> > yIncreasing(maxExtrema, scratch_CMX);
+
+  for(s32 y=0; y<24; y++) {
+    for(s32 x=0; x<32; x++) {
+      image[y][x] = (y)*8;
+    }
+  }
+
+  for(s32 y=24; y<48; y++) {
+    for(s32 x=0; x<32; x++) {
+      image[y][x] = 250 - (((y)*4));
+    }
+  }
+
+  for(s32 x=31; x<48; x++) {
+    for(s32 y=0; y<48; y++) {
+      image[y][x] = (x-31)*10;
+    }
+  }
+  for(s32 x=48; x<64; x++) {
+    for(s32 y=0; y<48; y++) {
+      image[y][x] = 250 - (((x-31)*6) - (x+1)/2);
+    }
+  }
+
+  //image.Print("image");
+
+  //image.Show("image", true);
+
+  const Result result = DetectBlurredEdge(image, grayvalueThreshold, minComponentWidth, xDecreasing, xIncreasing, yDecreasing, yIncreasing);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  //xDecreasing.Print("xDecreasing");
+  //xIncreasing.Print("xIncreasing");
+  //yDecreasing.Print("yDecreasing");
+  //yIncreasing.Print("yIncreasing");
+
+  ASSERT_TRUE(xDecreasing.get_size() == 62);
+  ASSERT_TRUE(xIncreasing.get_size() == 48);
+  ASSERT_TRUE(yDecreasing.get_size() == 31);
+  ASSERT_TRUE(yIncreasing.get_size() == 31);
+
+  for(s32 i=0; i<=47; i++) {
+    bool valueFound = false;
+
+    for(s32 j=0; j<62; j++) {
+      if(xDecreasing[j] == Point<s16>(56,i)) {
+        valueFound = true;
+        break;
+      }
+    }
+
+    ASSERT_TRUE(valueFound == true);
+  }
+
+  for(s32 i=17; i<=30; i++) {
+    bool valueFound = false;
+
+    for(s32 j=0; j<62; j++) {
+      if(xDecreasing[j] == Point<s16>(31,i)) {
+        valueFound = true;
+        break;
+      }
+    }
+
+    ASSERT_TRUE(valueFound == true);
+  }
+
+  for(s32 i=0; i<=47; i++) {
+    bool valueFound = false;
+
+    for(s32 j=0; j<48; j++) {
+      if(xIncreasing[j] == Point<s16>(44,i)) {
+        valueFound = true;
+        break;
+      }
+    }
+
+    ASSERT_TRUE(valueFound == true);
+  }
+
+  for(s32 i=0; i<=30; i++) {
+    bool valueFound = false;
+
+    for(s32 j=0; j<31; j++) {
+      if(yDecreasing[j] == Point<s16>(i,31)) {
+        valueFound = true;
+        break;
+      }
+    }
+
+    ASSERT_TRUE(valueFound == true);
+  }
+
+  for(s32 i=0; i<=30; i++) {
+    bool valueFound = false;
+
+    for(s32 j=0; j<31; j++) {
+      if(yIncreasing[j] == Point<s16>(i,16)) {
+        valueFound = true;
+        break;
+      }
+    }
+
+    ASSERT_TRUE(valueFound == true);
+  }
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Vision, IsDDROkay)
 {
   printf("Starting DDR test\n");
@@ -2743,6 +2868,8 @@ int RUN_ALL_TESTS()
 {
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
+
+  CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge);
 
 #ifdef BENCHMARK_AFFINE
   CALL_GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_BenchmarkAffine);

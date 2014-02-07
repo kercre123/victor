@@ -17,13 +17,13 @@ namespace Anki
   {
     static Result lastResult;
 
-    Result ComputeLocalExtrema(const Array<u8> &image, const u8 grayvalueThreshold, const s32 minComponentWidth, FixedLengthList<Point<s16> > &xMinima, FixedLengthList<Point<s16> > &xMaxima, FixedLengthList<Point<s16> > &yMinima, FixedLengthList<Point<s16> > &yMaxima)
+    Result DetectBlurredEdge(const Array<u8> &image, const u8 grayvalueThreshold, const s32 minComponentWidth, FixedLengthList<Point<s16> > &xDecreasing, FixedLengthList<Point<s16> > &xIncreasing, FixedLengthList<Point<s16> > &yDecreasing, FixedLengthList<Point<s16> > &yIncreasing)
     {
-      AnkiConditionalErrorAndReturnValue(image.IsValid() && xMinima.IsValid() && xMaxima.IsValid() && yMinima.IsValid() && yMaxima.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "ComputeLocalExtrema", "Arrays are not valid");
+      AnkiConditionalErrorAndReturnValue(image.IsValid() && xDecreasing.IsValid() && xIncreasing.IsValid() && yDecreasing.IsValid() && yIncreasing.IsValid(),
+        RESULT_FAIL_INVALID_OBJECT, "DetectBlurredEdge", "Arrays are not valid");
 
       AnkiConditionalErrorAndReturnValue(minComponentWidth > 0,
-        RESULT_FAIL_INVALID_SIZE, "ComputeLocalExtrema", "minComponentWidth is too small");
+        RESULT_FAIL_INVALID_SIZE, "DetectBlurredEdge", "minComponentWidth is too small");
 
       enum State
       {
@@ -33,9 +33,10 @@ namespace Anki
 
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
+      const s32 imageStride = image.get_stride();
 
       //
-      // Detect horizontal minima and maxima
+      // Detect horizontal minima and positive
       //
 
       for(s32 y=0; y<imageHeight; y++) {
@@ -53,6 +54,8 @@ namespace Anki
         s32 x = 0;
         while(x < imageWidth) {
           if(curState == ON_WHITE) {
+            // If on white
+
             while( (x < imageWidth) && (pImage[x] > grayvalueThreshold)) {
               x++;
             }
@@ -63,12 +66,14 @@ namespace Anki
               const s32 componentWidth = x - lastSwitchX;
 
               if(componentWidth >= minComponentWidth) {
-                xMinima.PushBack(Point<s16>(x,y));
+                xDecreasing.PushBack(Point<s16>(x,y));
               }
 
               lastSwitchX = x;
             } // if(x < (imageWidth-1)
-          } else { // if(curState == ON_WHITE)
+          } else {
+            // If on black
+
             while( (x < imageWidth) && (pImage[x] < grayvalueThreshold)) {
               x++;
             }
@@ -79,7 +84,7 @@ namespace Anki
               const s32 componentWidth = x - lastSwitchX;
 
               if(componentWidth >= minComponentWidth) {
-                xMaxima.PushBack(Point<s16>(x,y));
+                xIncreasing.PushBack(Point<s16>(x,y));
               }
 
               lastSwitchX = x;
@@ -91,7 +96,7 @@ namespace Anki
       } // for(s32 y=0; y<imageHeight; y++)
 
       //
-      //  Detect vertical minima and maxima
+      //  Detect vertical negative and maxima
       //
 
       for(s32 x=0; x<imageWidth; x++) {
@@ -105,51 +110,55 @@ namespace Anki
         else
           curState = ON_BLACK;
 
-        //s32 lastSwitchX = 0;
-        //s32 x = 0;
-
         s32 lastSwitchY = 0;
         s32 y = 0;
-        //while y <= imageHeight
-        //  if curState == ON_WHITE
-        //    while (y <= imageHeight) && (image(y,x) > grayvalueThreshold)
-        //      y++;
-        //end
+        while(y < imageHeight) {
+          if(curState == ON_WHITE) {
+            // If on white
 
-        //  curState = 2;
+            while( (y < imageHeight) && (pImage[0] > grayvalueThreshold) ){
+              y++;
+              pImage += imageStride;
+            }
 
-        //if y ~= imageHeight
-        //  componentWidth = y - lastSwitchY;
+            curState = ON_BLACK;
 
-        //if componentWidth >= minComponentWidth
-        //  yMinima1Image(y,x) = 1;
-        //end
+            if(y < (imageHeight-1)) {
+              const s32 componentWidth = y - lastSwitchY;
 
-        //  lastSwitchY = y;
-        //end
-        //else
-        //while (y <= imageHeight) && (image(y,x) < grayvalueThreshold)
-        //  y++;
-        //end
+              if(componentWidth >= minComponentWidth) {
+                yDecreasing.PushBack(Point<s16>(x,y));
+              }
 
-        //  curState = 1;
+              lastSwitchY = y;
+            } // if(y < (imageHeight-1)
+          } else {
+            // If on black
 
-        //if y ~= imageHeight
-        //  componentWidth = y - lastSwitchY;
+            while( (y < imageHeight) && (pImage[0] < grayvalueThreshold) ) {
+              y++;
+              pImage += imageStride;
+            }
 
-        //if componentWidth >= minComponentWidth
-        //  yMaxima1Image(y,x) = 1;
-        //end
+            curState = ON_WHITE;
 
-        //  lastSwitchY = y;
-        //end
-        //  end
+            if(y < (imageHeight-1)) {
+              const s32 componentWidth = y - lastSwitchY;
 
-        //  y++;
-        //end
+              if(componentWidth >= minComponentWidth) {
+                yIncreasing.PushBack(Point<s16>(x,y));
+              }
+
+              lastSwitchY = y;
+            } // if(y < (imageHeight-1)
+          } // if(curState == ON_WHITE) ... else
+
+            y++;
+            pImage += imageStride;
+        } // while(y < imageHeight)
       } // for(s32 x=0; x<imageWidth; x++)
 
       return RESULT_OK;
-    } // Result ComputeLocalExtrema()
+    } // Result DetectBlurredEdge()
   } // namespace Embedded
 } // namespace Anki
