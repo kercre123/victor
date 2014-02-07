@@ -57,7 +57,8 @@ namespace Anki {
       protected:
         
         // TODO: Consider storing this as a std::array<u8, NUM_BYTES> ?
-        u8 byteArray_[NUM_BYTES];
+        //u8 byteArray_[NUM_BYTES];
+        std::array<u8,NUM_BYTES> byteArray_;
         
       }; // class Marker::Code
 

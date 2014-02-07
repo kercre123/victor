@@ -14,22 +14,20 @@ namespace Anki {
 
     Marker::Code::Code()
     {
-      memset(byteArray_,0,NUM_BYTES);
+      //memset(byteArray_,0,NUM_BYTES);
+      byteArray_.fill(0);
     }
   
     Marker::Code::Code(const u8* bytes)
     {
-      memcpy(byteArray_,bytes,NUM_BYTES);
+      //memcpy(byteArray_,bytes,NUM_BYTES);
+      std::copy(bytes, bytes+NUM_BYTES, byteArray_.begin());
     }
     
     Marker::Code::Code(std::initializer_list<u8> args)
     {
-      std::initializer_list<u8>::iterator it;
-      u8 numBytes = 0;
-      for(it = args.begin(); it != args.end() && numBytes < NUM_BYTES; ++it)
-      {
-        byteArray_[numBytes++] = *it;
-      }
+      CORETECH_ASSERT(args.size() == NUM_BYTES);
+      std::copy(args.begin(), args.end(), byteArray_.begin());
     }
 
     
@@ -91,6 +89,7 @@ namespace Anki {
     
     
     
+    /*
     // Canonical 3D corners in camera coordinate system (where Z is depth)
     const Quad3f KnownMarker::canonicalCorners3d_ = {
       {-.5f, -.5f, 0.f},
@@ -98,7 +97,8 @@ namespace Anki {
       { .5f, -.5f, 0.f},
       { .5f,  .5f, 0.f}
     };
-    
+    */
+   
     
     /*
     // Canonical corners in 3D are in the Y-Z plane, with X pointed away
@@ -113,6 +113,13 @@ namespace Anki {
     };
     */
     
+    // Canonical corners in X-Z plane
+    const Quad3f KnownMarker::canonicalCorners3d_ = {
+      {-.5f, 0.f, .5f},
+      {-.5f, 0.f,-.5f},
+      { .5f, 0.f, .5f},
+      { .5f, 0.f,-.5f}
+    };
 
     void KnownMarker::SetPose(const Pose3d& newPose)
     {
@@ -133,6 +140,7 @@ namespace Anki {
       
       // Transform the canonical corners to this new pose
       pose_.applyTo(corners3d_, corners3d_);
+      
     }
     
     
@@ -156,12 +164,7 @@ namespace Anki {
     
     bool Marker::Code::operator<(const Code& otherCode) const
     {
-      bool isLess = otherCode.byteArray_[0] < this->byteArray_[0];
-      for(u8 i=0; isLess && i<NUM_BYTES; ++i) {
-        isLess = otherCode.byteArray_[i] < this->byteArray_[i];
-      }
-      
-      return isLess;
+      return this->byteArray_ < otherCode.byteArray_;
     }
     
 
