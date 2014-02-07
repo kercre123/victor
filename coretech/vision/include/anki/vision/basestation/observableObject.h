@@ -184,38 +184,8 @@ namespace Anki {
       // method to get the list of markers on each object.
       std::map<Marker::Code, std::vector<const ObservableObject*> > objectsWithCode_;
       
-      /*
-      struct MarkerMatch {
-        const Vision::ObservedMarker* obsMarker;
-        const Vision::KnownMarker*    libMarker;
-        
-        MarkerMatch(const Vision::ObservedMarker* obs=NULL,
-                    const Vision::KnownMarker*    lib=NULL)
-        : obsMarker(obs), libMarker(lib)
-        {
-          
-        }
-      };
-      typedef std::pair<MarkerMatch, Pose3d> MatchWithPose;
-      */
-   
-      /*
-      typedef std::pair<const KnownMarker*, Pose3d> KnownMarkerPosePair;
-      
-      // Pairing of an observed marker with all the known markers it matches
-      // and the poses those matches imply
-      typedef std::pair<const ObservedMarker*, std::list< KnownMarkerPosePair > > MatchedMarkerPosesPair;
-      */
-
-      
-      // Pairing of a pose and the list of matches which implied it (e.g.,
-      // after clustering a list of PoseMatchPairs by pose
-      typedef std::pair<Pose3d, std::list<MarkerMatch> > PoseMatchListPair;
-      
       // A PoseCluster is a pairing of a single pose and all the marker matches
       // that imply that pose
-      //typedef std::pair<Pose3d, std::list<MarkerMatch> > PoseCluster;
-      //typedef std::pair<Pose3d, std::list<std::pair<const ObservedMarker*, KnownMarker> > > PoseCluster;
       class PoseCluster
       {
       public:
@@ -243,39 +213,13 @@ namespace Anki {
         MatchList matches_;
       };
       
-      /*
-      void ComputeObjectPoses(const ObservedMarker* obsMarker,
-                              const ObservableObject* libObject,
-                              std::vector<MatchWithPose>& objPoses) const;
-      
-      void GroupPosesIntoObjects(const std::list  objPoses,
-                                 const ObservableObject*                libObject,
-                                 std::vector<ObservableObject*>&        objectsSeen) const;
-      
-      void ClusterObjectPoses(const std::list<PoseMatchPair>& individualPoses,
-                              const f32 distThreshold, const Radians angleThreshold,
-                              std::list<PoseMatchListPair>& poseClusters) const;
-    */
       void ClusterObjectPoses(const std::vector<PoseMatchPair>& possiblePoses,
                               const ObservableObject*         libObject,
                               const float distThreshold, const Radians angleThreshold,
                               std::vector<PoseCluster>& poseClusters) const;
-      // One-to-one mapping for looking up a known Marker by its code
-      //std::map<Marker::Code, Marker> knownMarkers_;
       
     }; // class ObservableObjectLibrary
     
-    
-    /* NEEDED?
-    // Specialization of an ObservableObject that exists in a fixed, known
-    // location relative to the world (or some other object?)
-    class ObservableObjectFixed : public ObservableObject
-    {
-    public:
-      ObservableObjectFixed(const Pose3d& fixedPose);
-      
-    }; // class ObservableObjectFixed
-    */
     
   } // namespace Vision
 } // namespace Anki

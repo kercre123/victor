@@ -53,43 +53,6 @@ namespace Anki {
     }
     
     /*
-    void Marker::Init()
-    {
-      // If this is a known code, set the size and name
-      auto knownInfo = Marker::library_.find(code_);
-      
-      isKnown_ = knownInfo != Marker::library_.end();
-      if(isKnown_) {
-        name_ = knownInfo->second.name;
-        size_ = knownInfo->second.size;
-      }
-    }
-     */
-    
-    /*
-    std::map<Marker::Code, Marker::MarkerInfo> Marker::InitLibrary()
-    {
-      // TODO: Read this from config somehow?
-      std::map<Code, MarkerInfo> lib;
-     
-      Code code({0,0,0,0,0,0,0,0,0,0,0});
-      lib[code] = {.size = 32.f, .name = "UNKNOWN"};
-      
-      return lib;
-    }
-    
-    std::map<Marker::Code, Marker::MarkerInfo> Marker::library_ = Marker::InitLibrary();
-    */
-    
-    /*
-    std::map<Marker::Code, Marker::MarkerInfo> Marker::library_ = {
-      {{0,0,0,0,0,0,0,0,0,0,0}, {.size = 32.f, .name = "UNKNOWN"}} // each entry can be added like this
-    };
-    */
-    
-    
-    
-    /*
     // Canonical 3D corners in camera coordinate system (where Z is depth)
     const Quad3f KnownMarker::canonicalCorners3d_ = {
       {-.5f, -.5f, 0.f},
@@ -98,7 +61,6 @@ namespace Anki {
       { .5f,  .5f, 0.f}
     };
     */
-   
     
     /*
     // Canonical corners in 3D are in the Y-Z plane, with X pointed away
@@ -166,25 +128,6 @@ namespace Anki {
     {
       return this->byteArray_ < otherCode.byteArray_;
     }
-    
-
-#pragma mark --- Static functions for working with a known marker library ---
-  
-    /*
-    void Marker::DefineKnown(const Code &code, const f32 size_mm,
-                             const std::string &name)
-    {
-      library_[code] = {.size = size_mm, .name = name};
-    }
-     */
-    
-    /*
-    bool Marker::IsKnown(const Code &code)
-    {
-      return library_.count(code) > 0;
-    }
-     */
-    
     
   } // namespace Vision
 } // namespace Anki

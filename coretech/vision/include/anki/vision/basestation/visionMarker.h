@@ -23,15 +23,8 @@ namespace Anki {
     class ObservableObject;
     class Camera;
     
-    
-    
-    
-   
-    
-    
     //
-    // A Vision "Marker" is a square fiducial surrounding a binary code, with
-    // a known physical size.
+    // A Vision "Marker" is a square fiducial surrounding a binary code
     //
     class Marker
     {
@@ -56,8 +49,6 @@ namespace Anki {
         
       protected:
         
-        // TODO: Consider storing this as a std::array<u8, NUM_BYTES> ?
-        //u8 byteArray_[NUM_BYTES];
         std::array<u8,NUM_BYTES> byteArray_;
         
       }; // class Marker::Code
@@ -88,7 +79,8 @@ namespace Anki {
       Quad2f         imgCorners_;
       Camera const&  seenBy_;
       
-    };
+    }; // class ObservedMarker
+    
     
     class KnownMarker : public Marker
     {
@@ -120,7 +112,8 @@ namespace Anki {
       f32    size_; // in mm
       Quad3f corners3d_;
 
-    };
+    }; // class KnownMarker
+    
     
     inline Quad2f const& ObservedMarker::GetImageCorners() const {
       return imgCorners_;
@@ -142,17 +135,7 @@ namespace Anki {
       return seenBy_;
     }
     
-    /*
-    class MarkerLibrary
-    {
-    public:
-      
-    protected:
-      std::map<Marker::Code, Marker> knownMarkers;
-      
-    }; // class MarkerLibrary
-    */
-    
+
   } // namespace Vision
 } // namespace Anki
 
