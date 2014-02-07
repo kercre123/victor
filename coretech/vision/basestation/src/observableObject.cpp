@@ -102,7 +102,8 @@ namespace Anki {
     // Input:   list of observed markers
     // Outputs: the objects seen and the unused markers
     void ObservableObjectLibrary::CreateObjectsFromMarkers(std::list<ObservedMarker>& markers,
-                                                           std::vector<ObservableObject*>& objectsSeen) const
+                                                           std::vector<ObservableObject*>& objectsSeen,
+                                                           const Camera* seenOnlyBy) const
     {
       // Group the markers by object ID
       std::map<ObjectID_t, std::vector<const ObservedMarker*>> markersWithObjectID;
@@ -110,25 +111,34 @@ namespace Anki {
       
       for(auto & marker : markers) {
         
-        // Find all objects which use this marker...
-        std::vector<const ObservableObject*> const* objectsWithMarker = GetObjectsWithMarker(marker);
+        bool used = false;
         
-        // ...if there are any, add this marker to the list of observed markers
-        // that corresponds to this object ID.
-        if(objectsWithMarker != NULL) {
-          if(objectsWithMarker->size() > 1) {
-            CORETECH_THROW("Having multiple objects in the library with the "
-                           "same marker is not yet supported.");
-            
-            /*
-             for(auto object : *objectsWithMarker) {
-             markersWithObjectID[object->GetID()].push_back(&marker);
-             }
-             */
-          }
-          markersWithObjectID[objectsWithMarker->front()->GetID()].push_back(&marker);
-        }
-        else {
+        // If seenOnlyBy was specified, make sure this marker was seen by that
+        // camera
+        if(seenOnlyBy == NULL || &marker.GetSeenBy() == seenOnlyBy)
+        {
+          // Find all objects which use this marker...
+          std::vector<const ObservableObject*> const* objectsWithMarker = GetObjectsWithMarker(marker);
+          
+          // ...if there are any, add this marker to the list of observed markers
+          // that corresponds to this object ID.
+          if(objectsWithMarker != NULL) {
+            if(objectsWithMarker->size() > 1) {
+              CORETECH_THROW("Having multiple objects in the library with the "
+                             "same marker is not yet supported.");
+              
+              /*
+               for(auto object : *objectsWithMarker) {
+               markersWithObjectID[object->GetID()].push_back(&marker);
+               }
+               */
+            }
+            markersWithObjectID[objectsWithMarker->front()->GetID()].push_back(&marker);
+            used = true;
+          } // IF objectsWithMarker != NULL
+        } // IF seenOnlyBy
+        
+        if(not used) {
           // Keep track of which markers went unused
           markersUnused.push_back(marker);
         }
@@ -167,6 +177,14 @@ namespace Anki {
         // are the "same" according to the object's matching function (which will
         // internally take symmetry ambiguities into account during matching
         // and adjust the known markers' poses accordingly)
+        if(seenOnlyBy == NULL) {
+          // First put them all in a common World coordinate frame if multiple
+          // observers are possible.  Otherwise they'll be clustered in the
+          // coordinate frame of the (single) observer.
+          for(auto & poseMatch : possiblePoses) {
+            poseMatch.first = poseMatch.first.getWithRespectTo(Pose3d::World);
+          }
+        }
         // TODO: make the distance/angle thresholds parameters or else object-type-specific
         std::vector<PoseCluster> poseClusters;
         ClusterObjectPoses(possiblePoses, libObject,
@@ -430,9 +448,9 @@ namespace Anki {
           // pose here _is_ the pose of the parent object.
           Pose3d markerPoseWrtCamera( matchingMarker->EstimateObservedPose(*obsMarker) );
           
-          // Store the pose in the world coordinate frame, along with the pair
+          // Store the pose in the camera's coordinate frame, along with the pair
           // of markers that generated it
-          possiblePoses.emplace_back(markerPoseWrtCamera.getWithRespectTo(Pose3d::World),
+          possiblePoses.emplace_back(markerPoseWrtCamera,
                                      MarkerMatch(obsMarker, matchingMarker));
         }
       }

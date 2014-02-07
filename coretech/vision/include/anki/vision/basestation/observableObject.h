@@ -50,19 +50,10 @@ namespace Anki {
       void ComputePossiblePoses(const ObservedMarker*     obsMarker,
                                 std::vector<PoseMatchPair>& possiblePoses) const;
       
-      // Attempt to merge this object with another, based on their lists of
-      // possible poses. If successful, true is returned, and this object's
-      // list of possible poses will be updated.  If this new observation
-      // reduced the ambiguity of the pose, the list of possible poses will
-      // be shorter.
-      bool MergeWith(const ObservableObject& otherObject,
-                     const float distThreshold,
-                     const Radians angleThreshold);
-      
       // Accessors:
-      ObjectID_t    GetID() const {return ID_;}
+      ObjectID_t    GetID() const;
       //virtual float GetMinDim() const = 0;
-      const Pose3d& GetPose() const {return pose_;}
+      const Pose3d& GetPose() const;
       
       void SetPose(const Pose3d& newPose) {pose_ = newPose;}
       
@@ -115,6 +106,23 @@ namespace Anki {
       */
     };
     
+    //
+    // Inline accessors
+    //
+    /*
+    inline std::set<const Camera*> const& ObservableObject::GetObserver() const {
+      return observers_;
+    }
+     */
+    
+    inline ObjectID_t ObservableObject::GetID() const {
+      return ID_;
+    }
+    //virtual float GetMinDim() const = 0;
+    inline const Pose3d& ObservableObject::GetPose() const {
+      return pose_;
+    }
+    
     /*
     // Derive specific observable objects from this class to get a clone method,
     // without having to specifically write one in each derived class.
@@ -155,7 +163,8 @@ namespace Anki {
       // removed from the input list, so markers referring to objects unknown
       // to this library will remain.
       void CreateObjectsFromMarkers(std::list<ObservedMarker>& markers,
-                                    std::vector<ObservableObject*>& objectsSeen) const;
+                                    std::vector<ObservableObject*>& objectsSeen,
+                                    const Camera* seenOnlyBy = NULL) const;
       
       const ObservableObject* GetObjectWithID(const ObjectID_t ID) const;
       
@@ -210,6 +219,8 @@ namespace Anki {
       class PoseCluster
       {
       public:
+        typedef std::list<std::pair<const ObservedMarker*, KnownMarker> > MatchList;
+        
         PoseCluster(const PoseMatchPair& match);
         
         // Returns true if match was added
@@ -220,6 +231,8 @@ namespace Anki {
         const Pose3d& GetPose() const { return pose_; }
         const size_t  GetSize() const { return matches_.size(); }
         
+        const MatchList& GetMatches() const;
+        
         // Updates pose based on all member matches. Does nothing if there is
         // only one member.
         void RecomputePose();
@@ -227,7 +240,7 @@ namespace Anki {
       protected:
         Pose3d pose_;
         
-        std::list<std::pair<const ObservedMarker*, KnownMarker> > matches_;
+        MatchList matches_;
       };
       
       /*
