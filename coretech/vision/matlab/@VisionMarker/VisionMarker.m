@@ -20,6 +20,10 @@ classdef VisionMarker
         XProbes = VisionMarker.CreateProbes('X');
         YProbes = VisionMarker.CreateProbes('Y');
         
+        % X-Z Plane: 
+        Canonical3dCorners = [-1 0 1; -1 0 -1; 1 0 1; 1 0 -1];
+        % X-Y Plane: Canonical3dCorners = [-1 -1 0; -1 1 0; 1 -1 0; 1 1 0];
+        
     end % Constant Properties
     
     methods(Static = true)
@@ -120,7 +124,7 @@ classdef VisionMarker
         function pos3d = GetPosition(this, wrtPose)
            
             % A square with corners (+/- 1, +/- 1):
-            canonicalSquare = this.size/2 * [-1 0 1; -1 0 -1; 1 0 1; 1 0 -1];
+            canonicalSquare = this.size/2 * VisionMarker.Canonical3dCorners;
             if nargin < 2
                 P = this.pose;
             else
