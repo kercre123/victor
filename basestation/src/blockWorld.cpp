@@ -80,31 +80,31 @@ namespace Anki
       {
         MatPiece* mat = new MatPiece(++matID);
         mat->AddMarker({24, 24, 24, 16, 25, 49, 56, 9, 56, 48, 32},
-                       Pose3d(2.094395, {0.577350,-0.577350,-0.577350}, {-250.000000,-250.000000,-15.000000}),
+                       Pose3d(2.094395, {-0.577350,0.577350,-0.577350}, {-250.000000,250.000000,0.000000}),
                        90.000000);
         mat->AddMarker({35, 64, 70, 196, 140, 137, 8, 1, 48, 32, 34},
-                       Pose3d(2.094395, {0.577350,-0.577350,-0.577350}, {-250.000000,-250.000000,-15.000000}),
+                       Pose3d(-3.141593, {1.000000,0.000000,0.000000}, {0.000000,250.000000,0.000000}),
                        90.000000);
         mat->AddMarker({35, 64, 70, 196, 141, 137, 8, 1, 48, 32, 34},
-                       Pose3d(2.094395, {0.577350,-0.577350,-0.577350}, {-250.000000,-250.000000,-15.000000}),
+                       Pose3d(-3.141593, {1.000000,0.000000,0.000000}, {250.000000,250.000000,0.000000}),
                        90.000000);
         mat->AddMarker({24, 24, 24, 16, 24, 49, 56, 9, 56, 48, 32},
-                       Pose3d(2.094395, {0.577350,-0.577350,-0.577350}, {-250.000000,-250.000000,-15.000000}),
+                       Pose3d(2.094395, {-0.577350,0.577350,-0.577350}, {-250.000000,0.000000,0.000000}),
                        90.000000);
         mat->AddMarker({35, 98, 2, 196, 136, 9, 24, 0, 32, 34, 98},
-                       Pose3d(2.094395, {0.577350,-0.577350,-0.577350}, {-250.000000,-250.000000,-15.000000}),
+                       Pose3d(1.570796, {-1.000000,0.000000,0.000000}, {0.000000,0.000000,0.000000}),
                        90.000000);
         mat->AddMarker({8, 24, 24, 24, 8, 25, 56, 33, 56, 24, 48},
-                       Pose3d(2.094395, {0.577350,-0.577350,-0.577350}, {-250.000000,-250.000000,-15.000000}),
+                       Pose3d(2.094395, {-0.577350,-0.577350,0.577350}, {250.000000,0.000000,0.000000}),
                        90.000000);
         mat->AddMarker({35, 98, 2, 196, 137, 9, 24, 1, 32, 34, 98},
-                       Pose3d(2.094395, {0.577350,-0.577350,-0.577350}, {-250.000000,-250.000000,-15.000000}),
+                       Pose3d(1.570796, {-1.000000,0.000000,0.000000}, {-250.000000,-250.000000,0.000000}),
                        90.000000);
         mat->AddMarker({35, 98, 2, 196, 136, 9, 24, 1, 32, 34, 98},
-                       Pose3d(2.094395, {0.577350,-0.577350,-0.577350}, {-250.000000,-250.000000,-15.000000}),
+                       Pose3d(1.570796, {-1.000000,0.000000,0.000000}, {0.000000,-250.000000,0.000000}),
                        90.000000);
         mat->AddMarker({8, 24, 24, 24, 9, 25, 56, 33, 56, 24, 48},
-                       Pose3d(2.094395, {0.577350,-0.577350,-0.577350}, {-250.000000,-250.000000,-15.000000}),
+                       Pose3d(2.094395, {-0.577350,-0.577350,0.577350}, {250.000000,-250.000000,0.000000}),
                        90.000000);
 
         matLibrary_.AddObject(mat);
@@ -303,6 +303,29 @@ namespace Anki
     */
     
     //template<class ObjectType>
+    void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
+                                const std::map<ObjectID_t, std::vector<Vision::ObservableObject*> >& objectsExisting,
+                                std::vector<Vision::ObservableObject*>& overlappingExistingObjects)
+    {
+      auto objectsExistingIter = objectsExisting.find(objectSeen->GetID());
+      if(objectsExistingIter != objectsExisting.end())
+      {
+        for(auto objExist : objectsExistingIter->second)
+        {
+          // TODO: smarter block pose comparison
+          const float minDist = 5.f; // TODO: make parameter ... 0.5f*std::min(minDimSeen, objExist->GetMinDim());
+          const Radians angleThresh( 5.f*M_PI/180.f ); // TODO: make parameter
+          Pose3d P_diff;
+          if( objExist->IsSameAs(*objectSeen, minDist, angleThresh, P_diff) ) {
+            overlappingExistingObjects.push_back(objExist);
+          }
+          
+        } // for each existing object of this type
+      }
+      
+    } // FindOverlappingObjects()
+    
+    
     void BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*> objectsSeen,
                                          std::map<ObjectID_t, std::vector<Vision::ObservableObject*> >& objectsExisting)
     {
@@ -312,22 +335,7 @@ namespace Anki
         
         // Store pointers to any existing blocks that overlap with this one
         std::vector<Vision::ObservableObject*> overlappingObjects;
-        
-        auto objectsExistingIter = objectsExisting.find(objSeen->GetID());
-        if(objectsExistingIter != objectsExisting.end())
-        {
-            for(auto objExist : objectsExistingIter->second)
-            {
-              // TODO: smarter block pose comparison
-              const float minDist = 5.f; // TODO: make parameter ... 0.5f*std::min(minDimSeen, objExist->GetMinDim());
-              const Radians angleThresh( 5.f*M_PI/180.f ); // TODO: make parameter
-              Pose3d P_diff;
-              if( objExist->IsSameAs(*objSeen, minDist, angleThresh, P_diff) ) {
-                overlappingObjects.push_back(objExist);
-              }
-              
-            } // for each existing object of this type
-        }
+        FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
         
         if(overlappingObjects.empty()) {
           // no existing blocks overlapped with the block we saw, so add it
@@ -369,12 +377,93 @@ namespace Anki
       robotMgr_->UpdateAllRobots();
       
       //
-      // Find any observed Mat objects
+      // Localize robots using mat observations
       //
       std::vector<Vision::ObservableObject*> matsSeen;
-      matLibrary_.CreateObjectsFromMarkers(obsMarkers_, matsSeen);
+      for(auto robotID : robotMgr_->GetRobotIDList())
+      {
+        Robot* robot = robotMgr_->GetRobotByID(robotID);
+        
+        /*
+        // See if there were any markers seen by this robot
+        auto thisRobotsMarkers = obsMarkersByRobot_.find(robot);
+        if(thisRobotsMarkers != obsMarkersByRobot_.end()) {
+          // if so, look through each of them
+          for(auto markerPtr : thisRobotsMarkers->second) {
+            // see if any correspond to mat objects
+            const std::vector<const Vision::ObservableObject*>* matObjects = matLibrary_.GetObjectsWithMarker(*markerPtr);
+            
+            if(matObjects != NULL) {
+              
+              for(auto libMatObject : matObjects)
+              
+              // First see if this is a mat object already in our world
+              if(
+              
+            }
+          }
+        }
+
+        matLibrary_.GetObjectsWithMarker(<#const Anki::Vision::Marker &marker#>)
+        */
+        
+        // Get all mat objects seen by this robot
+        matsSeen.clear();
+        matLibrary_.CreateObjectsFromMarkers(obsMarkers_, matsSeen,
+                                             &robot->get_camHead());
+        
+        // TODO: what to do when a robot sees multiple mat pieces at the same time
+        if(not matsSeen.empty()) {
+          if(matsSeen.size() > 1) {
+            PRINT_NAMED_WARNING("MultipleMatPiecesObserved",
+                                "Robot %d observed more than one mat pieces at "
+                                "the same time; will only use first for now.");
+          }
+          
+          // At this point the mat's pose should be relative to the robot's
+          // camera's pose
+          const Pose3d* matWrtCamera = &(matsSeen[0]->GetPose());
+          CORETECH_ASSERT(matWrtCamera->get_parent() ==
+                          &(robot->get_camHead().get_pose())); // MatPose's parent is camera
+          /*
+          PRINT_INFO("Observed mat w.r.t. camera is (%f,%f,%f)\n",
+                     matWrtCamera->get_translation().x(),
+                     matWrtCamera->get_translation().y(),
+                     matWrtCamera->get_translation().z());
+          */
+          
+          // Now get the pose of the robot relative to the mat, using the pose
+          // tree
+          CORETECH_ASSERT(matWrtCamera->get_parent()->get_parent()->get_parent() ==
+                          &(robot->get_pose())); // Robot pose is just a couple more up the pose chain
+          
+          Pose3d newPose( robot->get_pose().getWithRespectTo(matWrtCamera) );
+          /*
+          Pose3d P_diff;
+          CORETECH_ASSERT( newPose.IsSameAs((*(robot->get_camHead().get_pose().get_parent()) *
+                                             robot->get_camHead().get_pose() *
+                                             (*matWrtCamera)).getInverse(),
+                                            5.f, 5*M_PI/180.f, P_diff) );
+           */
+          
+          /*
+          Pose3d newPose( (*(robot->get_camHead().get_pose().get_parent()) *
+                           robot->get_camHead().get_pose() *
+                           (*matWrtCamera)).getInverse() );
+          */
+          newPose.set_parent( Pose3d::World); // robot->get_pose().get_parent() );
+          robot->set_pose(newPose);
+          
+          PRINT_INFO("Using mat %d to localize robot %d at (%f,%f,%f)\n",
+                     matsSeen[0]->GetID(), robotID,
+                     robot->get_pose().get_translation().x(),
+                     robot->get_pose().get_translation().y(),
+                     robot->get_pose().get_translation().z());
+
+        } // IF any mat piece was seen
+        
+      } // FOR each robotID
       
-      // TODO: Use them to localize the robots
       
       //
       // Find any observed blocks from the remaining markers
