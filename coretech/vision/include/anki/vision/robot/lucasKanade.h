@@ -117,7 +117,7 @@ namespace Anki
         // 600kb for an 80x60 input).
 
       public:
-        LucasKanadeTracker_f32(void) : isValid(false), isInitialized(false) { }
+        LucasKanadeTracker_f32();
         LucasKanadeTracker_f32(const Array<u8> &templateImage, const Quadrilateral<f32> &templateRegion, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory);
 
         Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, const bool useWeights, bool& converged, MemoryStack scratch);
@@ -171,8 +171,7 @@ namespace Anki
         // LucasKanadeTracker, this version uses much less memory, and will eventually be better optimized.
 
       public:
-        LucasKanadeTrackerFast(void) : isValid(false) { }
-
+        LucasKanadeTrackerFast();
         LucasKanadeTrackerFast(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory);
 
         Result UpdateTrack(const Array<u8> &nextImage, const s32 maxIterations, const f32 convergenceTolerance, bool& converged, MemoryStack scratch);
@@ -213,6 +212,51 @@ namespace Anki
         Result IterativelyRefineTrack_Translation(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
         Result IterativelyRefineTrack_Affine(const Array<u8> &nextImage, const s32 maxIterations, const s32 whichScale, const f32 convergenceTolerance, bool &converged, MemoryStack scratch);
       }; // class LucasKanadeTrackerFast
+
+      class LucasKanadeTrackerBinary
+      {
+        // A binary-image LucasKanade tracker. This is liable to be much faster than the standard
+        // LucasKanadeTracker or LucasKanadeTrackerFast, but is also liable to be less accurate and
+        // more jittery.
+        //
+        // Also different, is that the user should call UpdateTrackOnce as many times as desired. There
+        // is no iteration within.
+
+      public:
+        LucasKanadeTrackerBinary();
+
+        // the real max number of edge pixels is maxEdgePixelsPerType*4, for each of the four edge types
+        LucasKanadeTrackerBinary(
+          const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad,
+          const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
+          MemoryStack &memory);
+
+        Result UpdateTrackOnce(
+          const Array<u8> &nextImage,
+          const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
+          const s32 maxMatchingDistance,
+          const TransformType updateType,
+          MemoryStack scratch);
+
+        bool IsValid() const;
+
+        Result set_transformation(const PlanarTransformation_f32 &transformation);
+
+        PlanarTransformation_f32 get_transformation() const;
+
+      protected:
+        Array<u8> templateImage;
+        Quadrilateral<f32> templateQuad;
+
+        FixedLengthList<Point<s16> > template_xDecreasing;
+        FixedLengthList<Point<s16> > template_xIncreasing;
+        FixedLengthList<Point<s16> > template_yDecreasing;
+        FixedLengthList<Point<s16> > template_yIncreasing;
+
+        PlanarTransformation_f32 transformation;
+
+        bool isValid;
+      }; // class LucasKanadeTrackerBinary
     } // namespace TemplateTracker
   } // namespace Embedded
 } //namespace Anki

@@ -361,6 +361,11 @@ namespace Anki
         return RESULT_OK;
       }
 
+      LucasKanadeTracker_f32::LucasKanadeTracker_f32()
+        : isValid(false), isInitialized(false)
+      {
+      }
+
       LucasKanadeTracker_f32::LucasKanadeTracker_f32(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &memory)
         : numPyramidLevels(numPyramidLevels), templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), ridgeWeight(ridgeWeight), isValid(false), isInitialized(false)
       {
@@ -1039,6 +1044,11 @@ namespace Anki
         return transformation;
       }
 
+      LucasKanadeTrackerFast::LucasKanadeTrackerFast()
+        : isValid(false)
+      {
+      }
+
       LucasKanadeTrackerFast::LucasKanadeTrackerFast(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const s32 numPyramidLevels, const TransformType transformType, const f32 ridgeWeight, MemoryStack &scratch)
         : numPyramidLevels(numPyramidLevels), templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), ridgeWeight(ridgeWeight), isValid(false)
       {
@@ -1713,6 +1723,52 @@ namespace Anki
       PlanarTransformation_f32 LucasKanadeTrackerFast::get_transformation() const
       {
         return transformation;
+      }
+
+      LucasKanadeTrackerBinary::LucasKanadeTrackerBinary()
+        : isValid(false)
+      {
+      }
+
+      LucasKanadeTrackerBinary::LucasKanadeTrackerBinary(
+        const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad,
+        const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
+        MemoryStack &memory)
+        : isValid(false)
+      {
+        const s32 templateImageHeight = templateImage.get_size(0);
+        const s32 templateImageWidth = templateImage.get_size(1);
+
+        AnkiConditionalErrorAndReturn(templateImageHeight > 0 && templateImageWidth > 0,
+          "LucasKanadeTrackerBinary::LucasKanadeTrackerBinary", "template widths and heights must be greater than zero");
+
+        AnkiConditionalErrorAndReturn(templateImage.IsValid(),
+          "LucasKanadeTrackerBinary::LucasKanadeTrackerBinary", "templateImage is not valid");
+
+        this->templateImage = Array<u8>(templateImageHeight, templateImageWidth, memory);
+        this->templateQuad = templateQuad;
+
+        this->template_xDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
+        this->template_xIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
+        this->template_yDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
+        this->template_yIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
+
+        AnkiConditionalErrorAndReturn(this->templateImage.IsValid() &&
+          this->template_xDecreasing.IsValid() && this->template_xIncreasing.IsValid() &&
+          this->template_yDecreasing.IsValid() && this->template_yIncreasing.IsValid(),
+          "LucasKanadeTrackerBinary::LucasKanadeTrackerBinary", "Could not allocate local memory");
+
+        this->templateImage.Set(templateImage);
+
+        const Rectangle<f32> templateRectRaw = templateQuad.ComputeBoundingRectangle();
+        const Rectangle<s32> templateRect(static_cast<s32>(templateRectRaw.left), static_cast<s32>(templateRectRaw.right), static_cast<s32>(templateRectRaw.top), static_cast<s32>(templateRectRaw.bottom));
+
+        const Result result = DetectBlurredEdge(this->templateImage, templateRect, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, template_xDecreasing, template_xIncreasing, template_yDecreasing, template_yIncreasing);
+
+        AnkiConditionalErrorAndReturn(result == RESULT_OK,
+          "LucasKanadeTrackerBinary::LucasKanadeTrackerBinary", "DetectBlurredEdge failed");
+
+        this->isValid = true;
       }
     } // namespace TemplateTracker
   } // namespace Embedded

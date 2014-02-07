@@ -142,6 +142,9 @@ namespace Anki
 
     // Calculate local extrema (edges) in an image. Returns four list for the four directions of change.
     Result DetectBlurredEdge(const Array<u8> &image, const u8 grayvalueThreshold, const s32 minComponentWidth, FixedLengthList<Point<s16> > &xDecreasing, FixedLengthList<Point<s16> > &xIncreasing, FixedLengthList<Point<s16> > &yDecreasing, FixedLengthList<Point<s16> > &yIncreasing);
+
+    // With region of interest
+    Result DetectBlurredEdge(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, FixedLengthList<Point<s16> > &xDecreasing, FixedLengthList<Point<s16> > &xIncreasing, FixedLengthList<Point<s16> > &yDecreasing, FixedLengthList<Point<s16> > &yIncreasing);
   } // namespace Embedded
 } // namespace Anki
 
