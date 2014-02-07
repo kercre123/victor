@@ -438,13 +438,13 @@ namespace Anki
                           &(robot->get_pose())); // Robot pose is just a couple more up the pose chain
           
           Pose3d newPose( robot->get_pose().getWithRespectTo(matWrtCamera) );
-          /*
+          
           Pose3d P_diff;
           CORETECH_ASSERT( newPose.IsSameAs((*(robot->get_camHead().get_pose().get_parent()) *
                                              robot->get_camHead().get_pose() *
                                              (*matWrtCamera)).getInverse(),
                                             5.f, 5*M_PI/180.f, P_diff) );
-           */
+          
           
           /*
           Pose3d newPose( (*(robot->get_camHead().get_pose().get_parent()) *
@@ -454,11 +454,15 @@ namespace Anki
           newPose.set_parent( Pose3d::World); // robot->get_pose().get_parent() );
           robot->set_pose(newPose);
           
-          PRINT_INFO("Using mat %d to localize robot %d at (%f,%f,%f)\n",
+          PRINT_INFO("Using mat %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
                      matsSeen[0]->GetID(), robotID,
                      robot->get_pose().get_translation().x(),
                      robot->get_pose().get_translation().y(),
-                     robot->get_pose().get_translation().z());
+                     robot->get_pose().get_translation().z(),
+                     robot->get_pose().get_rotationAngle().getDegrees(),
+                     robot->get_pose().get_rotationAxis().x(),
+                     robot->get_pose().get_rotationAxis().y(),
+                     robot->get_pose().get_rotationAxis().z());
 
         } // IF any mat piece was seen
         

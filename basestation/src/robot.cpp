@@ -85,7 +85,7 @@ namespace Anki {
                  {{sqrtf(2.f)/2.f, -sqrtf(2.f)/2.f, 0.f}},
                  {{MAT_CAM_POSITION[0], MAT_CAM_POSITION[1], MAT_CAM_POSITION[2]}}, &pose),
       currentHeadAngle(DEG_TO_RAD(-14.4f)),
-      isCarryingBlock(false),
+      isCarryingBlock(false)
     {
       this->set_headAngle(currentHeadAngle);
       
