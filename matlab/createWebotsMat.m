@@ -66,7 +66,7 @@ for i = 1:numel(images)
         'ForegroundColor', ForegroundColor, ...
         'BackgroundColor', BackgroundColor);
     
-    % Need this initial rotation b/c canonical VisionMarker orientation is
+    % Need this initial rotation b/c canonical VisionMarker orientation in
     % 3D is vertical, i.e. in the X-Z plane, for historical reasons.
     R_to_flat = rodrigues(-pi/2*[1 0 0]);
     
