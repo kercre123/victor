@@ -54,6 +54,9 @@ fprintf(fid, '        size 1 0.005 1\n');
 fprintf(fid, '      }\n');
 fprintf(fid, '    }\n');
 
+
+set(gcf, 'Pos', [100 100 800 650]);
+
 for i = 1:numel(images)
         
     markerImg = VisionMarker.DrawFiducial( ...
@@ -65,7 +68,7 @@ for i = 1:numel(images)
     
     % Need this initial rotation b/c canonical VisionMarker orientation is
     % 3D is vertical, i.e. in the X-Z plane, for historical reasons.
-    R_to_flat = rodrigues(pi/2*[1 0 0]);
+    R_to_flat = rodrigues(-pi/2*[1 0 0]);
     
     pose = Pose(rodrigues(angles(i)*pi/180*[0 0 1])*R_to_flat, ...
         [xgrid(i) ygrid(i) -CozmoVisionProcessor.WHEEL_RADIUS]');
@@ -79,7 +82,7 @@ for i = 1:numel(images)
     imwrite(imresize(markerImg, [512 512]), fullfile(WorldDir, filename));
     
     fprintf(fid, '    Solid {\n');
-    fprintf(fid, '	    translation %.4f 0.0025 %.4f\n', xgrid(i)/1000, ygrid(i)/1000);
+    fprintf(fid, '	    translation %.4f 0.0025 %.4f\n', xgrid(i)/1000, -ygrid(i)/1000);
     fprintf(fid, '	    rotation 0 1 0 %f\n', angles(i)*pi/180);
     fprintf(fid, '	    children [\n');
     fprintf(fid, '		  Shape {\n');

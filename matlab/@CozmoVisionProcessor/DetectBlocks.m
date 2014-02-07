@@ -78,7 +78,7 @@ for i = 1:length(markers)
                
                markerCornersWorld = match.GetPosition('World');
                
-               if true % in simulator
+               if false % in simulator
                    markerCornersWorld(:,2) = -markerCornersWorld(:,2);
                end
                
