@@ -314,6 +314,10 @@ namespace Anki {
     
     POSE *P_wrt_other = NULL;
     
+    // "to" can get changed below, but we want to set the returned pose's
+    // parent to it, so we keep a copy here.
+    const POSE *newParent = to;
+    
     if(to == POSE::World) {
       
       // Special (but common!) case: get with respect to the
@@ -337,24 +341,52 @@ namespace Anki {
       // along the way. (NITE: Only one of the following two while loops should
       // run, depending on which node is deeper in the tree)
       
-      while(from->getTreeDepth() > to->getTreeDepth())
+      int depthDiff = from->getTreeDepth() - to->getTreeDepth();
+
+      while(depthDiff > 0)
       {
         CORETECH_ASSERT(from->parent != NULL);
+        
+        if(from->parent == to) {
+          // We bumped into the "to" pose on the way up to the common parent, so
+          // we've got the the chained transform ready to go, and there's no
+          // need to walk past the "to" pose, up to the common parent, and right
+          // back down, which would unnecessarily compose two more poses which
+          // are the inverse of one another by construction.
+          P_from.parent = newParent;
+          return P_from;
+        }
         
         P_from.preComposeWith( *(from->parent) );
         from = from->parent;
         
+        --depthDiff;
       }
       
-      while(to->getTreeDepth() > from->getTreeDepth())
+      while(depthDiff < 0)
       {
         CORETECH_ASSERT(to->parent != NULL);
+
+        if(to->parent == from) {
+          // We bumped into the "from" pose on the way up to the common parent,
+          // so we've got the the (inverse of the) chained transform ready to
+          // go, and there's no need to walk past the "from" pose, up to the
+          // common parent, and right back down, which would unnecessarily
+          // compose two more poses which are the inverse of one another by
+          // construction.
+          P_to.Invert();
+          P_to.parent = newParent;
+          return P_to;
+        }
         
         P_to.preComposeWith( *(to->parent) );
         to = to->parent;
+        
+        --depthDiff;
       }
       
       // Treedepths should now match:
+      CORETECH_ASSERT(depthDiff == 0);
       CORETECH_ASSERT(to->getTreeDepth() == from->getTreeDepth());
       
       // Now that we are pointing to the nodes of the same depth, keep moving up
@@ -384,7 +416,7 @@ namespace Anki {
     
     // The Pose we are about to return is w.r.t. the "other" pose provided (that
     // was the whole point of the exercise!), so set its parent accordingly:
-    P_wrt_other->parent = to;
+    P_wrt_other->parent = newParent;
     
     CORETECH_ASSERT(P_wrt_other != NULL);
     
