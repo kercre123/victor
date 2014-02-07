@@ -397,6 +397,7 @@ namespace Anki
     void BlockWorld::QueueObservedMarker(const Vision::ObservedMarker& marker)
     {
       obsMarkers_.emplace_back(marker);
+      //obsMarkersByRobot_[seenByRobot].push_back(&obsMarkers_.back());
     }
     
     void BlockWorld::CommandRobotToDock(const RobotID_t whichRobot,

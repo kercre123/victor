@@ -73,6 +73,7 @@ namespace Anki
       void Update(void);
       
       void QueueObservedMarker(const Vision::ObservedMarker& marker);
+                               //Robot* seenByRobot);
       
       void CommandRobotToDock(const RobotID_t whichRobot,
                               const Block&    whichBlock);
@@ -87,6 +88,7 @@ namespace Anki
       MessageHandler*  msgHandler_;
       
       std::list<Vision::ObservedMarker> obsMarkers_;
+      //std::map<Robot*, std::list<Vision::ObservedMarker*> > obsMarkersByRobot_;
       
       // Store all known observable objects (these are everything we know about,
       // separated by type of object, not necessarily what we've actually seen
