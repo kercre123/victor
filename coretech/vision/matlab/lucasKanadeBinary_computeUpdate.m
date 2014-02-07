@@ -20,6 +20,14 @@
 % mask1 = ones(size(im1));
 % extremaDerivativeThreshold = 0.5;
 
+% im1 = imresize(im1, [240,320]);
+% im2 = imresize(im2, [240,320]);
+% mask1 = imresize(mask1, [240,320]);
+
+% im1 = imresize(im1, [120,160]);
+% im2 = imresize(im2, [120,160]);
+% mask1 = imresize(mask1, [120,160]);
+
 % updatedHomography = lucasKanadeBinary_computeUpdate(im1, mask1, im2, eye(3), 1.0, 5, 1.0, extremaDerivativeThreshold, 15, 'translation')
 % updatedHomography = lucasKanadeBinary_computeUpdate(im1, mask1, im2, eye(3), 1.0, 5, 1.0, extremaDerivativeThreshold, 15, 'projective')
 
@@ -32,15 +40,23 @@
 
 % homography1 = eye(3);
 % im1w1 = lucasKanadeBinary_warpWithHomography(im1, homography1);
-% homography2 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography1, 1.0, 5, 1.0, extremaDerivativeThreshold, 15, 'translation')
+% homography2 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography1, 1.0, 5, 1.0, extremaDerivativeThreshold, 7, 'translation')
 % im1w2 = lucasKanadeBinary_warpWithHomography(im1, homography2);
 % homography3 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography2, 1.0, 5, 1.0, extremaDerivativeThreshold, 3, 'translation')
 % im1w3 = lucasKanadeBinary_warpWithHomography(im1, homography3);
-% homography4 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography3, 1.0, 5, 1.0, extremaDerivativeThreshold, 15, 'projective')
+% homography4 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography3, 1.0, 5, 1.0, extremaDerivativeThreshold, 7, 'projective')
 % im1w4 = lucasKanadeBinary_warpWithHomography(im1, homography4);
 % homography5 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography4, 1.0, 5, 1.0, extremaDerivativeThreshold, 5, 'projective')
 % im1w5 = lucasKanadeBinary_warpWithHomography(im1, homography5); 
-% imshows(im1, im2, uint8(im1w2), uint8(im1w3), uint8(im1w4), uint8(im1w5));
+% imshows(im1, im2, uint8(im1w2), uint8(im1w3), uint8(im1w4), uint8(im1w5), 'maximize');
+
+% homography1 = eye(3);
+% im1w1 = lucasKanadeBinary_warpWithHomography(im1, homography1);
+% homography2 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography1, 1.0, 5, 1.0, extremaDerivativeThreshold, 7, 'translation')
+% im1w2 = lucasKanadeBinary_warpWithHomography(im1, homography2);
+% homography3 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography2, 1.0, 5, 1.0, extremaDerivativeThreshold, 7, 'projective')
+% im1w3 = lucasKanadeBinary_warpWithHomography(im1, homography3);
+% imshows(im1, im2, uint8(im1w2), uint8(im1w3), 'maximize');
 
 function updatedHomography = lucasKanadeBinary_computeUpdate(...
     templateImage, templateMask,...
