@@ -338,7 +338,7 @@ namespace Anki {
       // which is the only way they could possibly share the same parent.
       // Until that's true, walk the deeper node up until it is at the same
       // depth as the shallower node, keeping track of the total transformation
-      // along the way. (NITE: Only one of the following two while loops should
+      // along the way. (NOTE: Only one of the following two while loops should
       // run, depending on which node is deeper in the tree)
       
       int depthDiff = from->getTreeDepth() - to->getTreeDepth();
@@ -470,18 +470,13 @@ namespace Anki {
                                       Pose3d& P_diff) const
   {
     bool isSame = false;
-    /*
-    // Compute the transformation that takes P1 to P2
-    // Pdiff = P_this * inv(P_other)
-    P_diff = this->getInverse();
-    P_diff.preComposeWith(P_other);
-    */
+
     // P_this represents the canonical/reference pose after some arbitrary
     // transformation, T:
     //    P_this = T * P_ref
     //
-    // If P_other is another ambigously-transformed version of this canonical pose
-    // that has undergone the same transformation, T, then, it is:
+    // If P_other is another ambigously-rotated version of this canonical pose
+    // that has undergone the same transformation, T, then it is:
     //    P_other = T * [R_amb | 0] * P_ref
     //
     // So we compute P_diff = inv(P_this) * P_other.  If the above is true, then

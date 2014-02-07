@@ -40,7 +40,7 @@
 namespace Anki {
 
   // Forward declarations of types used below:
-//  typedef Point3f Vec3f;
+  //  typedef Point3f Vec3f;
   //template<typename T> class Matrix;
   
 
