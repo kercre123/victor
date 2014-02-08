@@ -2,8 +2,8 @@
 
 PROTO Block1x1 [
   field SFString name "Block000"
-  field SFVec3f translation 0 0.03 0
-  field SFRotation rotation 0 1 0 0
+  field SFVec3f translation 0 0 0.03
+  field SFRotation rotation 0 0 1 0
   field SFFloat density 1000
   field SFColor blockColor 1 0 0
 
@@ -18,7 +18,7 @@ PROTO Block1x1 [
   field SFColor obsColor 1 1 0
   field SFFloat obsTransparency 1.0 # initially invisible
   field SFVec3f obsTranslation 0 0 0
-  field SFRotation obsRotation 0 1 0 0 
+  field SFRotation obsRotation 0  0 1 0 
 ]
 {
 Robot {

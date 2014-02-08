@@ -5,12 +5,11 @@ markers = simpleDetector(img);
 delete(findobj(this.h_axes, 'Tag', 'DetectedMarkers'));
 
 cozmoNode = wb_supervisor_node_get_from_def('Cozmo');
-T = wb_supervisor_field_get_sf_vec3f(wb_supervisor_node_get_field(cozmoNode, 'translation'));
-T = 1000*[T(1) -T(3) T(2)];
+T = 1000*wb_supervisor_field_get_sf_vec3f(wb_supervisor_node_get_field(cozmoNode, 'translation'));
 R_true = wb_supervisor_field_get_sf_rotation(wb_supervisor_node_get_field(cozmoNode, 'rotation'));
 wb_supervisor_set_label(1, ...
     sprintf('True Pose (mm): (%.1f, %.1f, %.1f), %.1fdeg@(%.1f,%.1f,%.1f)', ...
-    T(1), T(2), T(3), R_true(4)*180/pi, R_true(1), -R_true(3), R_true(2)), ...
+    T(1), T(2), T(3), R_true(4)*180/pi, R_true(1), R_true(2), R_true(3)), ...
     .5, 0.09, 0.08, [1 0 0], 0);
 x_true = [get(this.h_path(1), 'XData') T(1)];
 y_true = [get(this.h_path(1), 'YData') T(2)];

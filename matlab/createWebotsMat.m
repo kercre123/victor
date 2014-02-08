@@ -41,7 +41,7 @@ fprintf(fid, ']\n');
 fprintf(fid, '{\n');
 fprintf(fid, 'Solid {\n');
 fprintf(fid, '  rotation 0 1 0 0\n');
-fprintf(fid, '  translation 0 -0.0025 0\n');
+fprintf(fid, '  translation 0 0 -0.0025\n');
 fprintf(fid, '  children [\n');
 fprintf(fid, '    Shape {\n');
 fprintf(fid, '      appearance Appearance {\n');
@@ -50,7 +50,7 @@ fprintf(fid, '		   diffuseColor IS Color\n');
 fprintf(fid, '         }\n');
 fprintf(fid, '      }\n');
 fprintf(fid, '      geometry Box {\n');
-fprintf(fid, '        size 1 0.005 1\n');
+fprintf(fid, '        size 1 1 0.005\n');
 fprintf(fid, '      }\n');
 fprintf(fid, '    }\n');
 
@@ -82,8 +82,8 @@ for i = 1:numel(images)
     imwrite(imresize(markerImg, [512 512]), fullfile(WorldDir, filename));
     
     fprintf(fid, '    Solid {\n');
-    fprintf(fid, '	    translation %.4f 0.0025 %.4f\n', xgrid(i)/1000, -ygrid(i)/1000);
-    fprintf(fid, '	    rotation 0 1 0 %f\n', angles(i)*pi/180);
+    fprintf(fid, '	    translation %.4f %.4f 0.0025\n', xgrid(i)/1000, ygrid(i)/1000);
+    fprintf(fid, '	    rotation 0 0 1 %f\n', angles(i)*pi/180);
     fprintf(fid, '	    children [\n');
     fprintf(fid, '		  Shape {\n');
     fprintf(fid, '		    appearance Appearance {\n');
@@ -91,7 +91,7 @@ for i = 1:numel(images)
     fprintf(fid, '			  material Material { diffuseColor 1 1 1 }\n');
     fprintf(fid, '		    }\n');
     fprintf(fid, '		    geometry Box {\n');
-    fprintf(fid, '            size %f 0.00001 %f\n', sizes(i)/1000, sizes(i)/1000 );
+    fprintf(fid, '            size %f %f 0.00001\n', sizes(i)/1000, sizes(i)/1000 );
     fprintf(fid, '  		}\n');
     fprintf(fid, '		  }\n');
     fprintf(fid, '	    ]\n');
@@ -99,10 +99,55 @@ for i = 1:numel(images)
     
 end % FOR each marker
 
+% Add walls
+fprintf(fid, 'DEF WALL_1 Solid {\n');
+fprintf(fid, '  translation 0.51 0 0.025\n');
+fprintf(fid, '  children [\n');
+fprintf(fid, '    DEF WALL_SHAPE Shape {\n');
+fprintf(fid, '      appearance Appearance {\n');
+fprintf(fid, '        material Material {\n');
+fprintf(fid, '          diffuseColor 0.12549 0.368627 0.729412\n');
+fprintf(fid, '        }\n');
+fprintf(fid, '      }\n');
+fprintf(fid, '      geometry Box {\n');
+fprintf(fid, '        size 0.02 1 0.05\n');
+fprintf(fid, '      }\n');
+fprintf(fid, '    }\n');
+fprintf(fid, '  ]\n');
+fprintf(fid, '  boundingObject USE WALL_SHAPE\n');
+fprintf(fid, '}\n\n');
+
+fprintf(fid, 'DEF WALL_2 Solid {\n');
+fprintf(fid, '  translation -0.51 0 0.025\n');
+fprintf(fid, '  children [\n');
+fprintf(fid, '    USE WALL_SHAPE\n');
+fprintf(fid, '  ]\n');
+fprintf(fid, '  boundingObject USE WALL_SHAPE\n');
+fprintf(fid, '}\n\n');
+
+fprintf(fid, 'DEF WALL_3 Solid {\n');
+fprintf(fid, '  translation 0 -0.51 0.025\n');
+fprintf(fid, '  rotation 0 0 1 1.5708\n');
+fprintf(fid, '  children [\n');
+fprintf(fid, '    USE WALL_SHAPE\n');
+fprintf(fid, '  ]\n');
+fprintf(fid, '  boundingObject USE WALL_SHAPE\n');
+fprintf(fid, '}\n\n');
+
+fprintf(fid, 'DEF WALL_4 Solid {\n');
+fprintf(fid, '  translation 0 0.51 0.025\n');
+fprintf(fid, '  rotation 0 0 1 1.5708\n');
+fprintf(fid, '  children [\n');
+fprintf(fid, '    USE WALL_SHAPE\n');
+fprintf(fid, '  ]\n');
+fprintf(fid, '  boundingObject USE WALL_SHAPE\n');
+fprintf(fid, '}\n\n');
+
 fprintf(fid, '  ] # Solid children\n\n');
 fprintf(fid, '  contactMaterial "cmat_floor"\n');
 fprintf(fid, '  boundingObject Transform {\n');
-fprintf(fid, '    translation 0.5 0 0.5\n');
+fprintf(fid, '    rotation 1 0 0 1.5708\n');
+fprintf(fid, '    translation 0.5 0.5 0\n');
 fprintf(fid, '    children [\n');
 fprintf(fid, '      Plane {\n');
 fprintf(fid, '      }\n');
