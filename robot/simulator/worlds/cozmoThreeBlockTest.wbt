@@ -7,6 +7,7 @@ WorldInfo {
     "Date: 02 Aug 2013"
     ""
   ]
+  physics "cozmo_physics"
   basicTimeStep 5
   gravity 0 0 -9.81
   contactProperties [
