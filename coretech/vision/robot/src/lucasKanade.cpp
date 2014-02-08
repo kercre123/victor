@@ -1855,59 +1855,61 @@ namespace Anki
         const s32 maxY = yStartIndexes.get_size(1) - 1;
         const s32 numPoints = points.get_size();
 
-        //pIndexes[0] = 0;
-
-        s32 curY = 0;
         s32 iPoint = 0;
-        s32 lastMatchedPoint = 0;
+        s32 lastY = -1;
 
-        //for(s32 y=0; y<maxY; y++) {
-        //  if(pPoints[iPoint].y > y) {
-        //    pIndexes[y] = lastMatchedPoint;
-        //  }
+        while(iPoint < numPoints) {
+          while((iPoint < numPoints) && (pPoints[iPoint].y == lastY)) {
+            iPoint++;
+          }
 
-        //  pIndexes[y] = iPoint;
-        //  lastMatchedPoint = y;
-        //  iPoint++;
-        //}
+          for(s32 y=lastY+1; y<=pPoints[iPoint].y; y++) {
+            pIndexes[y] = iPoint;
+          }
 
-        //while(iPoint < numPoints) {
-        //  if(pPoints[iPoint].y < curY) {
-        //  }
+          lastY = pPoints[iPoint].y;
+        }
 
-        //  //for(s32 y=curY; y<maxY; y++) {
-        //  //  if(pPoints[iPoint].y > y) {
-        //  //    pIndexes[y] = pIndexes[y-1];
-        //  //    curY++;
-        //  //  } else {
-        //  //    pIndexes[y] = y;
-        //  //    break;
-        //  //  }
-        //  //}
+        lastY = pPoints[numPoints-1].y;
 
-        //  //while(pPoints[iPoint].y < curY) {
-        //  //}
-
-        //  //while(pPoints[iPoint].y > curY) {
-        //  //  pIndexes[curY] = maxY + 1;
-        //  //  curY++;
-        //  //}
-
-        //  //pIndexes[curY] = iPoint;
-
-        //  //curY++;
-        //  //iPoint++;
-        //}
-
-        pIndexes[yStartIndexes.get_size(1) - 1] = numPoints;
+        for(s32 y=lastY+1; y<=maxY; y++) {
+          pIndexes[y] = numPoints;
+        }
 
         return RESULT_OK;
       }
 
-      //Result LucasKanadeTrackerBinary::ComputeIndexLimitsHorizontal(const FixedLengthList<Point<s16> > &points, Array<s32> &indexes)
-      //{
-      //  return RESULT_OK;
-      //}
+      Result LucasKanadeTrackerBinary::ComputeIndexLimitsHorizontal(const FixedLengthList<Point<s16> > &points, Array<s32> &xStartIndexes)
+      {
+        const Point<s16> * restrict pPoints = points.Pointer(0);
+        s32 * restrict pIndexes = xStartIndexes.Pointer(0,0);
+
+        const s32 maxX = xStartIndexes.get_size(1) - 1;
+        const s32 numPoints = points.get_size();
+
+        s32 iPoint = 0;
+        s32 lastX = -1;
+
+        while(iPoint < numPoints) {
+          while((iPoint < numPoints) && (pPoints[iPoint].x == lastX)) {
+            iPoint++;
+          }
+
+          for(s32 x=lastX+1; x<=pPoints[iPoint].x; x++) {
+            pIndexes[x] = iPoint;
+          }
+
+          lastX = pPoints[iPoint].x;
+        }
+
+        lastX = pPoints[numPoints-1].x;
+
+        for(s32 x=lastX+1; x<=maxX; x++) {
+          pIndexes[x] = numPoints;
+        }
+
+        return RESULT_OK;
+      }
     } // namespace TemplateTracker
   } // namespace Embedded
 } // namespace Anki

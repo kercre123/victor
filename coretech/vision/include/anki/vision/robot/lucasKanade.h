@@ -226,6 +226,7 @@ namespace Anki
 
       public:
         static Result ComputeIndexLimitsVertical(const FixedLengthList<Point<s16> > &points, Array<s32> &yStartIndexes);
+        static Result ComputeIndexLimitsHorizontal(const FixedLengthList<Point<s16> > &points, Array<s32> &xStartIndexes);
 
         LucasKanadeTrackerBinary();
 

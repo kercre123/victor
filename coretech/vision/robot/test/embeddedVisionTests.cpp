@@ -94,7 +94,7 @@ Matlab matlab(false);
 DDR_BUFFER_LOCATION char ddrBuffer[DDR_BUFFER_SIZE];
 CMX_BUFFER_LOCATION char cmxBuffer[CMX_BUFFER_SIZE];
 
-GTEST_TEST(CoreTech_Vision, ComputeIndexLimitsVertical)
+GTEST_TEST(CoreTech_Vision, ComputeIndexLimits)
 {
   MemoryStack scratch_CMX(&cmxBuffer[0], CMX_BUFFER_SIZE);
   ASSERT_TRUE(scratch_CMX.IsValid());
@@ -109,11 +109,37 @@ GTEST_TEST(CoreTech_Vision, ComputeIndexLimitsVertical)
   points.PushBack(Point<s16>(4,5));
   points.PushBack(Point<s16>(6,479));
 
-  const Result result = TemplateTracker::LucasKanadeTrackerBinary::ComputeIndexLimitsVertical(points, yStartIndexes);
+  {
+    const Result result = TemplateTracker::LucasKanadeTrackerBinary::ComputeIndexLimitsHorizontal(points, xStartIndexes);
+    ASSERT_TRUE(result == RESULT_OK);
+  }
 
-  ASSERT_TRUE(result == RESULT_OK);
+  //xStartIndexes.Print("xStartIndexes");
 
-  yStartIndexes.Print("yStartIndexes");
+  for(s32 x=0; x<=1; x++) {
+    ASSERT_TRUE(xStartIndexes[0][x] == 0);
+  }
+
+  ASSERT_TRUE(xStartIndexes[0][2] == 1);
+
+  for(s32 x=3; x<=4; x++) {
+    ASSERT_TRUE(xStartIndexes[0][x] == 2);
+  }
+
+  for(s32 x=5; x<=6; x++) {
+    ASSERT_TRUE(xStartIndexes[0][x] == 4);
+  }
+
+  for(s32 x=7; x<=640; x++) {
+    ASSERT_TRUE(xStartIndexes[0][x] == 5);
+  }
+
+  {
+    const Result result = TemplateTracker::LucasKanadeTrackerBinary::ComputeIndexLimitsVertical(points, yStartIndexes);
+    ASSERT_TRUE(result == RESULT_OK);
+  }
+
+  //yStartIndexes.Print("yStartIndexes");
 
   ASSERT_TRUE(yStartIndexes[0][0] == 0);
 
@@ -2907,6 +2933,7 @@ int RUN_ALL_TESTS()
   s32 numPassedTests = 0;
   s32 numFailedTests = 0;
 
+  CALL_GTEST_TEST(CoreTech_Vision, ComputeIndexLimits);
   CALL_GTEST_TEST(CoreTech_Vision, DetectBlurredEdge);
 
 #ifdef BENCHMARK_AFFINE
