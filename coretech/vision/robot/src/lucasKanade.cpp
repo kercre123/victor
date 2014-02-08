@@ -203,6 +203,23 @@ namespace Anki
         return out;
       }
 
+      Result PlanarTransformation_f32::Set(const PlanarTransformation_f32 &newTransformation)
+      {
+        const TransformType originalType = this->get_transformType();
+
+        if((lastResult = this->set_transformType(newTransformation.get_transformType())) != RESULT_OK) {
+          this->set_transformType(originalType);
+          return lastResult;
+        }
+
+        if((lastResult = this->set_homography(newTransformation.get_homography())) != RESULT_OK) {
+          this->set_transformType(originalType);
+          return lastResult;
+        }
+
+        return RESULT_OK;
+      }
+
       Result PlanarTransformation_f32::set_transformType(const TransformType transformType)
       {
         if(transformType == TRANSFORM_TRANSLATION || transformType == TRANSFORM_AFFINE || transformType == TRANSFORM_PROJECTIVE) {
@@ -1024,19 +1041,7 @@ namespace Anki
 
       Result LucasKanadeTracker_f32::set_transformation(const PlanarTransformation_f32 &transformation)
       {
-        const TransformType originalType = this->transformation.get_transformType();
-
-        if((lastResult = this->transformation.set_transformType(transformation.get_transformType())) != RESULT_OK) {
-          this->transformation.set_transformType(originalType);
-          return lastResult;
-        }
-
-        if((lastResult = this->transformation.set_homography(transformation.get_homography())) != RESULT_OK) {
-          this->transformation.set_transformType(originalType);
-          return lastResult;
-        }
-
-        return RESULT_OK;
+        return this->transformation.Set(transformation);
       }
 
       PlanarTransformation_f32 LucasKanadeTracker_f32::get_transformation() const
@@ -1770,6 +1775,139 @@ namespace Anki
 
         this->isValid = true;
       }
+
+      bool LucasKanadeTrackerBinary::IsValid() const
+      {
+        if(!this->isValid)
+          return false;
+
+        if(!templateImage.IsValid())
+          return false;
+
+        if(!template_xDecreasing.IsValid())
+          return false;
+
+        if(!template_xIncreasing.IsValid())
+          return false;
+
+        if(!template_yDecreasing.IsValid())
+          return false;
+
+        if(!template_yIncreasing.IsValid())
+          return false;
+
+        return true;
+      }
+
+      Result LucasKanadeTrackerBinary::set_transformation(const PlanarTransformation_f32 &transformation)
+      {
+        return this->transformation.Set(transformation);
+      }
+
+      PlanarTransformation_f32 LucasKanadeTrackerBinary::get_transformation() const
+      {
+        return transformation;
+      }
+
+      Result LucasKanadeTrackerBinary::UpdateTrackOnce(
+        const Array<u8> &nextImage,
+        const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
+        const s32 maxMatchingDistance,
+        const TransformType updateType,
+        MemoryStack scratch)
+      {
+        const s32 nextImageHeight = nextImage.get_size(0);
+        const s32 nextImageWidth = nextImage.get_size(1);
+
+        AnkiConditionalErrorAndReturnValue(updateType==TRANSFORM_TRANSLATION || updateType == TRANSFORM_PROJECTIVE,
+          RESULT_FAIL_INVALID_PARAMETERS, "LucasKanadeTrackerBinary::UpdateTrackOnce", "Only TRANSFORM_TRANSLATION or TRANSFORM_PROJECTIVE are supported");
+
+        AnkiConditionalErrorAndReturnValue(templateImage.IsValid(),
+          RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTrackerBinary::UpdateTrackOnce", "nextImage is not valid");
+
+        FixedLengthList<Point<s16> > next_xDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
+        FixedLengthList<Point<s16> > next_xIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
+        FixedLengthList<Point<s16> > next_yDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
+        FixedLengthList<Point<s16> > next_yIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
+
+        Array<s32> next_xDecreasingIndexes(1, nextImageHeight, scratch);
+        Array<s32> next_xIncreasingIndexes(1, nextImageHeight, scratch);
+        Array<s32> next_yDecreasingIndexes(1, nextImageWidth, scratch);
+        Array<s32> next_yIncreasingIndexes(1, nextImageWidth, scratch);
+
+        AnkiConditionalErrorAndReturnValue(next_xDecreasing.IsValid() && next_xIncreasing.IsValid() && next_yDecreasing.IsValid() && next_yIncreasing.IsValid() &&
+          next_xDecreasingIndexes.IsValid() && next_xIncreasingIndexes.IsValid() && next_yDecreasingIndexes.IsValid() && next_yIncreasingIndexes.IsValid(),
+          RESULT_FAIL_OUT_OF_MEMORY, "LucasKanadeTrackerBinary::UpdateTrackOnce", "Could not allocate local scratch");
+
+        const Result result = DetectBlurredEdge(nextImage, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, next_xDecreasing, next_xIncreasing, next_yDecreasing, next_yIncreasing);
+
+        AnkiConditionalErrorAndReturnValue(result == RESULT_OK,
+          result, "LucasKanadeTrackerBinary::UpdateTrackOnce", "DetectBlurredEdge failed");
+
+        return RESULT_OK;
+      }
+
+      Result LucasKanadeTrackerBinary::ComputeIndexLimitsVertical(const FixedLengthList<Point<s16> > &points, Array<s32> &yStartIndexes)
+      {
+        const Point<s16> * restrict pPoints = points.Pointer(0);
+        s32 * restrict pIndexes = yStartIndexes.Pointer(0,0);
+
+        const s32 maxY = yStartIndexes.get_size(1) - 1;
+        const s32 numPoints = points.get_size();
+
+        //pIndexes[0] = 0;
+
+        s32 curY = 0;
+        s32 iPoint = 0;
+        s32 lastMatchedPoint = 0;
+
+        //for(s32 y=0; y<maxY; y++) {
+        //  if(pPoints[iPoint].y > y) {
+        //    pIndexes[y] = lastMatchedPoint;
+        //  }
+
+        //  pIndexes[y] = iPoint;
+        //  lastMatchedPoint = y;
+        //  iPoint++;
+        //}
+
+        //while(iPoint < numPoints) {
+        //  if(pPoints[iPoint].y < curY) {
+        //  }
+
+        //  //for(s32 y=curY; y<maxY; y++) {
+        //  //  if(pPoints[iPoint].y > y) {
+        //  //    pIndexes[y] = pIndexes[y-1];
+        //  //    curY++;
+        //  //  } else {
+        //  //    pIndexes[y] = y;
+        //  //    break;
+        //  //  }
+        //  //}
+
+        //  //while(pPoints[iPoint].y < curY) {
+        //  //}
+
+        //  //while(pPoints[iPoint].y > curY) {
+        //  //  pIndexes[curY] = maxY + 1;
+        //  //  curY++;
+        //  //}
+
+        //  //pIndexes[curY] = iPoint;
+
+        //  //curY++;
+        //  //iPoint++;
+        //}
+
+        pIndexes[yStartIndexes.get_size(1) - 1] = numPoints;
+
+        return RESULT_OK;
+      }
+
+      //Result LucasKanadeTrackerBinary::ComputeIndexLimitsHorizontal(const FixedLengthList<Point<s16> > &points, Array<s32> &indexes)
+      //{
+      //  return RESULT_OK;
+      //}
     } // namespace TemplateTracker
   } // namespace Embedded
 } // namespace Anki

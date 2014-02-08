@@ -75,6 +75,8 @@ namespace Anki
           MemoryStack scratch,
           const f32 scale=1.0f) const;
 
+        Result Set(const PlanarTransformation_f32 &newTransformation);
+
         Result set_transformType(const TransformType transformType);
 
         TransformType get_transformType() const;
@@ -223,6 +225,8 @@ namespace Anki
         // is no iteration within.
 
       public:
+        static Result ComputeIndexLimitsVertical(const FixedLengthList<Point<s16> > &points, Array<s32> &yStartIndexes);
+
         LucasKanadeTrackerBinary();
 
         // the real max number of edge pixels is maxEdgePixelsPerType*4, for each of the four edge types
@@ -256,6 +260,8 @@ namespace Anki
         PlanarTransformation_f32 transformation;
 
         bool isValid;
+
+        //Result ComputeIndexLimitsHorizontal(const FixedLengthList<Point<s16> > &points, Array<s32> &indexes);
       }; // class LucasKanadeTrackerBinary
     } // namespace TemplateTracker
   } // namespace Embedded

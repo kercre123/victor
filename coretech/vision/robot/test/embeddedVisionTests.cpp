@@ -94,6 +94,44 @@ Matlab matlab(false);
 DDR_BUFFER_LOCATION char ddrBuffer[DDR_BUFFER_SIZE];
 CMX_BUFFER_LOCATION char cmxBuffer[CMX_BUFFER_SIZE];
 
+GTEST_TEST(CoreTech_Vision, ComputeIndexLimitsVertical)
+{
+  MemoryStack scratch_CMX(&cmxBuffer[0], CMX_BUFFER_SIZE);
+  ASSERT_TRUE(scratch_CMX.IsValid());
+
+  FixedLengthList<Point<s16> > points(5, scratch_CMX);
+  Array<s32> xStartIndexes(1, 641, scratch_CMX);
+  Array<s32> yStartIndexes(1, 481, scratch_CMX);
+
+  points.PushBack(Point<s16>(1,0));
+  points.PushBack(Point<s16>(2,4));
+  points.PushBack(Point<s16>(4,4));
+  points.PushBack(Point<s16>(4,5));
+  points.PushBack(Point<s16>(6,479));
+
+  const Result result = TemplateTracker::LucasKanadeTrackerBinary::ComputeIndexLimitsVertical(points, yStartIndexes);
+
+  ASSERT_TRUE(result == RESULT_OK);
+
+  yStartIndexes.Print("yStartIndexes");
+
+  ASSERT_TRUE(yStartIndexes[0][0] == 0);
+
+  for(s32 y=1; y<=4; y++) {
+    ASSERT_TRUE(yStartIndexes[0][y] == 1);
+  }
+
+  ASSERT_TRUE(yStartIndexes[0][5] == 3);
+
+  for(s32 y=6; y<=479; y++) {
+    ASSERT_TRUE(yStartIndexes[0][y] == 4);
+  }
+
+  ASSERT_TRUE(yStartIndexes[0][480] == 5);
+
+  GTEST_RETURN_HERE;
+}
+
 GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
 {
   const u8 grayvalueThreshold = 128;
