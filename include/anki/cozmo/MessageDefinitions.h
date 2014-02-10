@@ -1,6 +1,6 @@
 // All message definitions should look like this:
 //
-//   START_MESSAGE_DEFINITION(MessageTypeName, Priority, DispatchFunctionPtr)
+//   START_MESSAGE_DEFINITION(MessageTypeName, Priority)
 //   ADD_MESSAGE_MEMBER(MemberType, MemberName)
 //   ADD_MESSAGE_MEMBER(MemberType, MemberName)
 //   ...
@@ -8,7 +8,7 @@
 //
 // For example:
 //
-//   START_MESSAGE_DEFINITION(CozmoMsg_Foo, 1, ProcessFoo)
+//   START_MESSAGE_DEFINITION(CozmoMsg_Foo, 1)
 //   ADD_MESSAGE_MEMBER(f32, fooMember1)
 //   ADD_MESSAGE_MEMBER(u16, fooMember2)
 //   ADD_MESSAGE_MEMBER(u8,  fooMember3)
@@ -26,8 +26,14 @@
 // This file is not specific to robot or basestation, as it defines the common
 // message protocol between them.  However, the macros used to generate actual
 // code based on the definitions below *is* specific to the two platforms.
-// Define those macros elsewhere:
-#include "anki/cozmo/MessageDefinitionMacros.h"
+// Include the correct one based on the definition of COZMO_ROBOT / COZMO_BASESTATION
+#if defined(COZMO_ROBOT)
+#include "anki/cozmo/MessageDefMacros_Robot.h"
+#elif defined(COZMO_BASESTATION)
+#include "anki/cozmo/MessageDefMacros_Basestation.h"
+#else
+#error Either COZMO_ROBOT or COZMO_BASESTATION should be defined.
+#endif
 
 #if 0 // EXAMPLE
 // Foo message
