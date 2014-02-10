@@ -51,12 +51,16 @@
 % imshows(im1, im2, uint8(im1w2), uint8(im1w3), uint8(im1w4), uint8(im1w5), 'maximize');
 
 % homography1 = eye(3);
-% im1w1 = lucasKanadeBinary_warpWithHomography(im1, homography1);
 % homography2 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography1, 1.0, 5, 1.0, extremaDerivativeThreshold, 7, 'translation')
-% im1w2 = lucasKanadeBinary_warpWithHomography(im1, homography2);
+% im1w2a = lucasKanadeBinary_warpWithHomography(im1, homography2);
 % homography3 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography2, 1.0, 5, 1.0, extremaDerivativeThreshold, 7, 'projective')
-% im1w3 = lucasKanadeBinary_warpWithHomography(im1, homography3);
-% imshows(im1, im2, uint8(im1w2), uint8(im1w3), 'maximize');
+% im1w3a = lucasKanadeBinary_warpWithHomography(im1, homography3);
+% homography1 = eye(3);
+% homography2 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography1, 1.0, 5, 1.0, extremaDerivativeThreshold, 7, 'translation')
+% im1w2b = lucasKanadeBinary_warpWithHomography(im1, homography2);
+% homography3 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography2, 1.0, 5, 1.0, extremaDerivativeThreshold, 7, 'projective')
+% im1w3b = lucasKanadeBinary_warpWithHomography(im1, homography3);
+% imshows(im1, im2, uint8(im1w2a), uint8(im1w3a), uint8(im1w2b), uint8(im1w3b), 'maximize');
 
 function updatedHomography = lucasKanadeBinary_computeUpdate(...
     templateImage, templateMask,...
@@ -64,7 +68,14 @@ function updatedHomography = lucasKanadeBinary_computeUpdate(...
     initialHomography, scale,...
     extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold,...
     maxMatchingDistance,...
-    updateType)
+    updateType, binarizeWithAutomata)
+
+if ~exist('binarizeWithAutomata', 'var')
+    binarizeWithAutomata = false;
+end
+
+grayvalueThreshold = 100;
+minComponentWidth = 2;
 
 assert(size(templateImage,1) == size(newImage,1));
 assert(size(templateImage,2) == size(newImage,2));
@@ -84,22 +95,32 @@ imageResizedWidth = imageWidth * scale;
 templateImageResized = imresize(templateImage, [imageResizedHeight, imageResizedWidth]);
 newImageResized = imresize(newImage, [imageResizedHeight, imageResizedWidth]);
 
-[~, xMinima1Image, yMinima1Image] = computeBinaryExtrema(...
-    templateImageResized, extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, true, false);
+if binarizeWithAutomata
+    [xMinima1Image, xMaxima1Image, yMinima1Image, yMaxima1Image] = lucasKandeBinary_binarizeWithAutomata(templateImageResized, grayvalueThreshold, minComponentWidth);
+else
+    [~, xMinima1Image, yMinima1Image] = computeBinaryExtrema(...
+        templateImageResized, extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, true, false);
 
-[~, xMaxima1Image, yMaxima1Image] = computeBinaryExtrema(...
-    templateImageResized, extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, false, true);
+    [~, xMaxima1Image, yMaxima1Image] = computeBinaryExtrema(...
+        templateImageResized, extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, false, true);
+end
+
+keyboard
 
 xMinima1Image(~templateMask) = 0;
 yMinima1Image(~templateMask) = 0;
 xMaxima1Image(~templateMask) = 0;
 yMaxima1Image(~templateMask) = 0;
 
-[~, xMinima2Image, yMinima2Image] = computeBinaryExtrema(...
-    newImageResized, extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, true, false);
+if binarizeWithAutomata
+    [xMinima2Image, xMaxima2Image, yMinima2Image, yMaxima2Image] = lucasKandeBinary_binarizeWithAutomata(newImageResized, grayvalueThreshold, minComponentWidth);
+else
+    [~, xMinima2Image, yMinima2Image] = computeBinaryExtrema(...
+        newImageResized, extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, true, false);
 
-[~, xMaxima2Image, yMaxima2Image] = computeBinaryExtrema(...
-    newImageResized, extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, false, true);
+    [~, xMaxima2Image, yMaxima2Image] = computeBinaryExtrema(...
+        newImageResized, extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, false, true);
+end
 
 homographyOffset = [(imageWidth-1)/2, (imageHeight-1)/2];
 

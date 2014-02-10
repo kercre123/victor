@@ -253,16 +253,30 @@ namespace Anki
         Array<u8> templateImage;
         Quadrilateral<f32> templateQuad;
 
-        FixedLengthList<Point<s16> > template_xDecreasing;
-        FixedLengthList<Point<s16> > template_xIncreasing;
-        FixedLengthList<Point<s16> > template_yDecreasing;
-        FixedLengthList<Point<s16> > template_yIncreasing;
+        // The indexes of the detected edges
+        FixedLengthList<Point<s16> > template_xDecreasingIndexes;
+        FixedLengthList<Point<s16> > template_xIncreasingIndexes;
+        FixedLengthList<Point<s16> > template_yDecreasingIndexes;
+        FixedLengthList<Point<s16> > template_yIncreasingIndexes;
+
+        // The floating point coordinate of each detected edge
+        FixedLengthList<Point<f32> > template_xDecreasingGrid;
+        FixedLengthList<Point<f32> > template_xIncreasingGrid;
+        FixedLengthList<Point<f32> > template_yDecreasingGrid;
+        FixedLengthList<Point<f32> > template_yIncreasingGrid;
+
+        f32 homographyOffsetX;
+        f32 homographyOffsetY;
+
+        Meshgrid<f32> grid;
+        Array<f32> xGrid;
+        Array<f32> yGrid;
 
         PlanarTransformation_f32 transformation;
 
         bool isValid;
 
-        //Result ComputeIndexLimitsHorizontal(const FixedLengthList<Point<s16> > &points, Array<s32> &indexes);
+        static FixedLengthList<Point<f32> > TransformIndexesToGrid(const FixedLengthList<Point<s16> > &pointIndexes, const Array<f32> &xGrid, const Array<f32> &yGrid, MemoryStack &memory);
       }; // class LucasKanadeTrackerBinary
     } // namespace TemplateTracker
   } // namespace Embedded

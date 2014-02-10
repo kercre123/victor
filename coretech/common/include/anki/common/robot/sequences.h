@@ -187,6 +187,11 @@ namespace Anki
       return sequence;
     }
 
+    template<typename Type> Meshgrid<Type>::Meshgrid()
+      : xGridVector(), yGridVector()
+    {
+    }
+
     template<typename Type> Meshgrid<Type>::Meshgrid(const LinearSequence<Type> xGridVector, const LinearSequence<Type> yGridVector)
       : xGridVector(xGridVector), yGridVector(yGridVector)
     {

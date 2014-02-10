@@ -86,6 +86,8 @@ namespace Anki
     template<typename Type> class Meshgrid
     {
     public:
+      Meshgrid();
+
       // Matlab equivalent: meshgrid(xGridVector, yGridVector)
       Meshgrid(const LinearSequence<Type> xGridVector, const LinearSequence<Type> yGridVector);
 

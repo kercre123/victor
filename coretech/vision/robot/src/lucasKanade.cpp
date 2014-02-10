@@ -1753,14 +1753,14 @@ namespace Anki
         this->templateImage = Array<u8>(templateImageHeight, templateImageWidth, memory);
         this->templateQuad = templateQuad;
 
-        this->template_xDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
-        this->template_xIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
-        this->template_yDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
-        this->template_yIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
+        this->template_xDecreasingIndexes = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
+        this->template_xIncreasingIndexes = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
+        this->template_yDecreasingIndexes = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
+        this->template_yIncreasingIndexes = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
 
         AnkiConditionalErrorAndReturn(this->templateImage.IsValid() &&
-          this->template_xDecreasing.IsValid() && this->template_xIncreasing.IsValid() &&
-          this->template_yDecreasing.IsValid() && this->template_yIncreasing.IsValid(),
+          this->template_xDecreasingIndexes.IsValid() && this->template_xIncreasingIndexes.IsValid() &&
+          this->template_yDecreasingIndexes.IsValid() && this->template_yIncreasingIndexes.IsValid(),
           "LucasKanadeTrackerBinary::LucasKanadeTrackerBinary", "Could not allocate local memory");
 
         this->templateImage.Set(templateImage);
@@ -1768,12 +1768,57 @@ namespace Anki
         const Rectangle<f32> templateRectRaw = templateQuad.ComputeBoundingRectangle();
         const Rectangle<s32> templateRect(static_cast<s32>(templateRectRaw.left), static_cast<s32>(templateRectRaw.right), static_cast<s32>(templateRectRaw.top), static_cast<s32>(templateRectRaw.bottom));
 
-        const Result result = DetectBlurredEdge(this->templateImage, templateRect, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, template_xDecreasing, template_xIncreasing, template_yDecreasing, template_yIncreasing);
+        const Result result = DetectBlurredEdge(this->templateImage, templateRect, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, template_xDecreasingIndexes, template_xIncreasingIndexes, template_yDecreasingIndexes, template_yIncreasingIndexes);
 
         AnkiConditionalErrorAndReturn(result == RESULT_OK,
           "LucasKanadeTrackerBinary::LucasKanadeTrackerBinary", "DetectBlurredEdge failed");
 
+        this->homographyOffsetX = (static_cast<f32>(templateImageWidth)-1.0f) / 2.0f;
+        this->homographyOffsetY = (static_cast<f32>(templateImageHeight)-1.0f) / 2.0f;
+
+        this->grid = Meshgrid<f32>(
+          Linspace(-homographyOffsetX, homographyOffsetX, static_cast<s32>(FLT_FLOOR(templateImageWidth))),
+          Linspace(-homographyOffsetY, homographyOffsetY, static_cast<s32>(FLT_FLOOR(templateImageHeight))));
+
+        // Update the points in the lists to use the meshgrid coordinates
+
+        this->xGrid = this->grid.get_xGridVector().Evaluate(memory);
+        this->yGrid = this->grid.get_yGridVector().Evaluate(memory);
+
+        this->template_xDecreasingGrid = LucasKanadeTrackerBinary::TransformIndexesToGrid(this->template_xDecreasingIndexes, this->xGrid, this->yGrid, memory);
+        this->template_xIncreasingGrid = LucasKanadeTrackerBinary::TransformIndexesToGrid(this->template_xIncreasingIndexes, this->xGrid, this->yGrid, memory);
+        this->template_yDecreasingGrid = LucasKanadeTrackerBinary::TransformIndexesToGrid(this->template_yDecreasingIndexes, this->xGrid, this->yGrid, memory);
+        this->template_yIncreasingGrid = LucasKanadeTrackerBinary::TransformIndexesToGrid(this->template_yIncreasingIndexes, this->xGrid, this->yGrid, memory);
+
+        AnkiConditionalErrorAndReturn(
+          this->template_xDecreasingGrid.IsValid() && this->template_xIncreasingGrid.IsValid() &&
+          this->template_yDecreasingGrid.IsValid() && this->template_yIncreasingGrid.IsValid(),
+          "LucasKanadeTrackerBinary::LucasKanadeTrackerBinary", "Could not allocate local memory");
+
         this->isValid = true;
+      }
+
+      FixedLengthList<Point<f32> > LucasKanadeTrackerBinary::TransformIndexesToGrid(const FixedLengthList<Point<s16> > &pointIndexes, const Array<f32> &xGrid, const Array<f32> &yGrid, MemoryStack &memory)
+      {
+        const s32 numIndexes = pointIndexes.get_size();
+
+        FixedLengthList<Point<f32> > pointGrid(numIndexes, memory);
+
+        AnkiConditionalErrorAndReturnValue(pointGrid.IsValid(),
+          pointGrid, "LucasKanadeTrackerBinary::TransformIndexesToGrid", "Could not allocate local memory");
+
+        const f32 * restrict pXGrid = xGrid.Pointer(0,0);
+        const f32 * restrict pYGrid = yGrid.Pointer(0,0);
+
+        const Point<s16> * restrict pPointIndexes = pointIndexes.Pointer(0);
+        Point<f32> * restrict pPointGrid = pointGrid.Pointer(0);
+
+        for(s32 i=0; i<numIndexes; i++) {
+          pPointGrid[i].x = pXGrid[pPointIndexes[i].x];
+          pPointGrid[i].y = pXGrid[pPointIndexes[i].y];
+        }
+
+        return pointGrid;
       }
 
       bool LucasKanadeTrackerBinary::IsValid() const
@@ -1784,16 +1829,28 @@ namespace Anki
         if(!templateImage.IsValid())
           return false;
 
-        if(!template_xDecreasing.IsValid())
+        if(!template_xDecreasingIndexes.IsValid())
           return false;
 
-        if(!template_xIncreasing.IsValid())
+        if(!template_xIncreasingIndexes.IsValid())
           return false;
 
-        if(!template_yDecreasing.IsValid())
+        if(!template_yDecreasingIndexes.IsValid())
           return false;
 
-        if(!template_yIncreasing.IsValid())
+        if(!template_yIncreasingIndexes.IsValid())
+          return false;
+
+        if(!template_xDecreasingGrid.IsValid())
+          return false;
+
+        if(!template_xIncreasingGrid.IsValid())
+          return false;
+
+        if(!template_yDecreasingGrid.IsValid())
+          return false;
+
+        if(!template_yIncreasingGrid.IsValid())
           return false;
 
         return true;
@@ -1825,24 +1882,28 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(templateImage.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTrackerBinary::UpdateTrackOnce", "nextImage is not valid");
 
-        FixedLengthList<Point<s16> > next_xDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
-        FixedLengthList<Point<s16> > next_xIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
-        FixedLengthList<Point<s16> > next_yDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
-        FixedLengthList<Point<s16> > next_yIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
+        FixedLengthList<Point<s16> > next_xDecreasingIndexes = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
+        FixedLengthList<Point<s16> > next_xIncreasingIndexes = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
+        FixedLengthList<Point<s16> > next_yDecreasingIndexes = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
+        FixedLengthList<Point<s16> > next_yIncreasingIndexes = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
 
-        Array<s32> next_xDecreasingIndexes(1, nextImageHeight, scratch);
-        Array<s32> next_xIncreasingIndexes(1, nextImageHeight, scratch);
-        Array<s32> next_yDecreasingIndexes(1, nextImageWidth, scratch);
-        Array<s32> next_yIncreasingIndexes(1, nextImageWidth, scratch);
-
-        AnkiConditionalErrorAndReturnValue(next_xDecreasing.IsValid() && next_xIncreasing.IsValid() && next_yDecreasing.IsValid() && next_yIncreasing.IsValid() &&
+        AnkiConditionalErrorAndReturnValue(next_xDecreasingIndexes.IsValid() && next_xIncreasingIndexes.IsValid() && next_yDecreasingIndexes.IsValid() && next_yIncreasingIndexes.IsValid() &&
           next_xDecreasingIndexes.IsValid() && next_xIncreasingIndexes.IsValid() && next_yDecreasingIndexes.IsValid() && next_yIncreasingIndexes.IsValid(),
           RESULT_FAIL_OUT_OF_MEMORY, "LucasKanadeTrackerBinary::UpdateTrackOnce", "Could not allocate local scratch");
 
-        const Result result = DetectBlurredEdge(nextImage, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, next_xDecreasing, next_xIncreasing, next_yDecreasing, next_yIncreasing);
+        const Result result = DetectBlurredEdge(nextImage, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, next_xDecreasingIndexes, next_xIncreasingIndexes, next_yDecreasingIndexes, next_yIncreasingIndexes);
 
         AnkiConditionalErrorAndReturnValue(result == RESULT_OK,
           result, "LucasKanadeTrackerBinary::UpdateTrackOnce", "DetectBlurredEdge failed");
+
+        FixedLengthList<Point<f32> > next_xDecreasingGrid = LucasKanadeTrackerBinary::TransformIndexesToGrid(next_xDecreasingIndexes, this->xGrid, this->yGrid, scratch);
+        FixedLengthList<Point<f32> > next_xIncreasingGrid = LucasKanadeTrackerBinary::TransformIndexesToGrid(next_xIncreasingIndexes, this->xGrid, this->yGrid, scratch);
+        FixedLengthList<Point<f32> > next_yDecreasingGrid = LucasKanadeTrackerBinary::TransformIndexesToGrid(next_yDecreasingIndexes, this->xGrid, this->yGrid, scratch);
+        FixedLengthList<Point<f32> > next_yIncreasingGrid = LucasKanadeTrackerBinary::TransformIndexesToGrid(next_yIncreasingIndexes, this->xGrid, this->yGrid, scratch);
+
+        AnkiConditionalErrorAndReturnValue(
+          next_xDecreasingGrid.IsValid() && next_xIncreasingGrid.IsValid() && next_yDecreasingGrid.IsValid() && next_yIncreasingGrid.IsValid(),
+          RESULT_FAIL_OUT_OF_MEMORY, "LucasKanadeTrackerBinary::UpdateTrackOnce", "Could not allocate local memory");
 
         return RESULT_OK;
       }
