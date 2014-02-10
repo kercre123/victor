@@ -22,6 +22,7 @@ namespace Anki
   {
     namespace InterpolateOperation
     {
+      // Functor for 6 degree-of-freedom (6-DOF) affine interpolation
       template<typename Type> class Affine {
       public:
         Affine(const Array<Type> &homography);
@@ -32,6 +33,7 @@ namespace Anki
         const Type h00, h01, h02, h10, h11, h12;
       };
 
+      // Functor for 8 degree-of-freedom (8-DOF) projective interpolation
       template<typename Type> class Projective {
       public:
         Projective(const Array<Type> &homography);

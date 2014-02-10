@@ -5,6 +5,12 @@ Created: 2013
 
 Low-overhead benchmarking, based on a list of start and end events.
 
+The basic use of this benchmarking utility is as follows:
+1. InitBenchmarking()
+2. At the beginning of the section you want to benchmark, put BeginBenchmark("event type");
+3. At the end of the section you want to benchmark, put EndBenchmark("event type");
+4. When you're done running the program, call PrintBenchmarkResults() to print the results
+
 Copyright Anki, Inc. 2013
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
@@ -14,48 +20,28 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/config.h"
 
-#define NUM_BENCHMARK_EVENTS 0xFFFF
+#define MAX_BENCHMARK_EVENTS 0xFFFF
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-  typedef enum
-  {
-    BENCHMARK_EVENT_BEGIN,
-    BENCHMARK_EVENT_END
-  } BenchmarkEventType;
-
-  typedef struct
-  {
-    const char * name; // Warning: name must be in globally available memory
-    unsigned long long time;
-    BenchmarkEventType type;
-  } BenchmarkEvent;
-
-  typedef enum
-  {
-    BENCHMARK_PRINT_ALL,
-    BENCHMARK_PRINT_TOTALS,
-  } BenchmarkPrintType;
-
-  extern BenchmarkEvent benchmarkEvents[];
-  extern int currentBenchmarkEvent;
-
+  // Call this before doing an benchmarking, to clear the buffer of benchmarkEvents.
+  // Can be called multiple times.
   void InitBenchmarking();
 
-  // Warning: name must be in globally available memory
+  // Use these functions to add a new event to the list. These functions are very fast.
   //
-  // Warning: nesting BeginBenchmark() and EndBenchmark() events that have the same name won't work.
+  // WARNING: name must be in globally available memory
+  //
+  // WARNING: nesting BeginBenchmark() and EndBenchmark() events that have the same name won't work.
   // This is okay: BeginBenchmark("a"); BeginBenchmark("b"); EndBenchmark("b"); EndBenchmark("a");
   // This is not okay: BeginBenchmark("a"); BeginBenchmark("a"); EndBenchmark("a"); EndBenchmark("a");
   void BeginBenchmark(const char *name);
   void EndBenchmark(const char *name);
-  void AddBenchmarkEvent(const char *name, unsigned long long time, BenchmarkEventType type);
 
-  void PrintBenchmarkResults(const BenchmarkPrintType printType);
-
-#pragma mark --- Implementations ---
+  // Compile and print out all the benchmark events that were recorded
+  void PrintBenchmarkResults_All();
+  void PrintBenchmarkResults_OnlyTotals();
 
 #ifdef __cplusplus
 }

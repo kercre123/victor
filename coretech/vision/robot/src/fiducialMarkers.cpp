@@ -331,7 +331,7 @@ namespace Anki
       FixedLengthList<u8> bitReadingOrder(meanValues.get_size(), scratch);
       bitReadingOrder.set_size(meanValues.get_size());
 
-      // Note: this won't find ties, but that should be rare
+      // NOTE: this won't find ties, but that should be rare
       if(upBitValue == maxValue) {
         marker.orientation = BlockMarker::ORIENTATION_UP;
         darkValue = (downBitValue + leftBitValue + rightBitValue) / 3;

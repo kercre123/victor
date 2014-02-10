@@ -33,7 +33,7 @@ namespace Anki
     static const u32 SERIALIZED_BUFFER_FOOTER[SERIALIZED_BUFFER_FOOTER_LENGTH] = {0xFE, 0x00, 0xFD, 0x02, 0xFC, 0x03, 0x04, 0xFB};
 
     // A SerializedBuffer is used to store data
-    // Use a MemoryStackIterator to read out the data
+    // Use a SerializedBufferIterator to read out the data
     class SerializedBuffer
     {
     public:
@@ -52,6 +52,7 @@ namespace Anki
         DATA_TYPE_STRING = 4
       };
 
+      // Stores the eight-byte code of a basic data type buffer (like a buffer of unsigned shorts)
       class EncodedBasicTypeBuffer
       {
       public:
@@ -59,6 +60,7 @@ namespace Anki
         u32 code[EncodedBasicTypeBuffer::CODE_SIZE];
       };
 
+      // Stores the forty-byte code for an Array
       class EncodedArray
       {
       public:
@@ -70,15 +72,19 @@ namespace Anki
       // Various static functions for encoding and decoding serialized objects
       //
 
+      // Encode or decode the four-byte code of a basic data type (like a single unsigned shorts)
       template<typename Type> static Result EncodeBasicType(u32 &code);
       static Result DecodeBasicType(const u32 code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat);
 
+      // Encode or decode the eight-byte code of a basic data type buffer (like a buffer of unsigned shorts)
       template<typename Type> static Result EncodeBasicTypeBuffer(const s32 numElements, EncodedBasicTypeBuffer &code);
       static Result DecodeBasicTypeBuffer(const bool swapEndian, const EncodedBasicTypeBuffer &code, u8 &size, bool &isInteger, bool &isSigned, bool &isFloat, s32 &numElements);
 
+      // Encode or decode the forty-byte code of an Array
       template<typename Type> static Result EncodeArrayType(const Array<Type> &in, EncodedArray &code);
       static Result DecodeArrayType(const bool swapEndian, const EncodedArray &code, s32 &height, s32 &width, s32 &stride, Flags::Buffer &flags, u8 &basicType_size, bool &basicType_isInteger, bool &basicType_isSigned, bool &basicType_isFloat);
 
+      // Helper functions to serialize or deserialize an array
       template<typename Type> static Result SerializeArray(const Array<Type> &in, void * data, const s32 dataLength);
       template<typename Type> static Result DeserializeArray(const bool swapEndianForHeaders, const bool swapEndianForContents, const void * data, const s32 dataLength, Array<Type> &out, MemoryStack &memory);
 

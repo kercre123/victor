@@ -843,7 +843,7 @@ namespace Anki
 
           BeginBenchmark("IterativelyRefineTrack.getNumMatches");
           // inBounds = ~isnan(imgi);
-          // Warning: this is also treating real zeros as invalid, but this should not be a big problem
+          // WARNING: this is also treating real zeros as invalid, but this should not be a big problem
           Find<f32, Comparison::GreaterThanOrEqual<f32,f32>, f32> inBounds(nextImageTransformed, 0.0f);
           const s32 numInBounds = inBounds.get_numMatches();
 
@@ -1802,7 +1802,7 @@ namespace Anki
       {
         const s32 numIndexes = pointIndexes.get_size();
 
-        FixedLengthList<Point<f32> > pointGrid(numIndexes, memory);
+        FixedLengthList<Point<f32> > pointGrid(numIndexes, memory, Flags::Buffer(false, false, true));
 
         AnkiConditionalErrorAndReturnValue(pointGrid.IsValid(),
           pointGrid, "LucasKanadeTrackerBinary::TransformIndexesToGrid", "Could not allocate local memory");

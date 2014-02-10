@@ -25,8 +25,15 @@ namespace Anki
     template<typename Type> class ArraySlice;
     template<typename Type> class ConstArraySliceExpression;
 
+    // An ArraySlice is a simple indexing wrapper on top of an Array. The slice of an Array could be
+    // a sub-rectangle of an array and/or skip every n-th element.
+    //
+    // For example, Array(0,3,-1,1,2,4) is the same as Matlab's array(1:3:end, 2:2:5).
+    // (The Array indexing starts from zero vs Matlab's one, hence the different numbers).
+    //
     // TODO: support non-int indexes
-    // TODO: is there a better way of doing this than a completely different class, different only by const?
+    // TODO: is there a better way of doing this than a completely different class, different only
+    //       by const?
     template<typename Type> class ConstArraySlice
     {
     public:
@@ -45,6 +52,8 @@ namespace Anki
 
       const LinearSequence<s32>& get_xSlice() const;
 
+      // Get the raw Array from the Slice. This is mainly useful for interfacing with functions that
+      // don't support the full ArraySlice type, and should be used with caution.
       const Array<Type>& get_array() const;
 
     protected:
@@ -54,8 +63,9 @@ namespace Anki
       Array<Type> array;
     }; // template<typename Type> class ArraySlice
 
-    // A non-const version of ConstArraySlice
-    // Warning: A "const ArraySlice" doesn't have a const Array. Only ConstArraySlice has a const
+    // A non-const version of ConstArraySlice, see ConstArraySlice for details
+    //
+    // WARNING: A "const ArraySlice" doesn't have a const Array. Only ConstArraySlice has a const
     //          Array. This allows for implicit conversion to non-const function parameters.
     template<typename Type> class ArraySlice : public ConstArraySlice<Type>
     {
@@ -70,14 +80,22 @@ namespace Anki
       // The Array parameter is not a reference, to allow for implicit conversion
       ArraySlice(Array<Type> array, const LinearSequence<s32> &ySlice, const LinearSequence<s32> &xSlice);
 
-      // If automaticTranspose==true, then you can set a MxN slice with a NxM input
-      // Matlab allows this for vectors, though this will also work for arbitrary-sized arrays
+      // If automaticTranspose==true, then you can set a MxN slice with a NxM input.
+      // Matlab allows this for vectors, though this method will also work for
+      // arbitrary-sized arrays.
       s32 Set(const ConstArraySliceExpression<Type> &input, bool automaticTranspose=true);
 
+      // Explicitly evaluate the input LinearSequence into this ArraySlice
       s32 Set(const LinearSequence<Type> &input);
 
+      // Set all values of this slice to the given value.
+      //
+      // For example, "slice = array(0,-1,1,4); slice.Set(5);" is the same as
+      // Matlab's array(1:end, 2:5) = 5;
       s32 Set(const Type value);
 
+      // Get the raw Array from the Slice. This is mainly useful for interfacing with functions that
+      // don't support the full ArraySlice type, and should be used with caution.
       Array<Type>& get_array();
     }; // template<typename Type> class ArraySlice
 

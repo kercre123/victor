@@ -109,7 +109,7 @@ namespace Anki
 
       this->components = FixedLengthList<ConnectedComponentSegment>(maxComponentSegments, memory);
 
-      // Note: these are really only needed for the Extract2dComponents methods, so if the scratch
+      // NOTE: these are really only needed for the Extract2dComponents methods, so if the scratch
       //       memory is needed, these could be allocated later.
       this->previousComponents1d = FixedLengthList<ConnectedComponentSegment>(maxImageWidth, memory);
       this->currentComponents1d = FixedLengthList<ConnectedComponentSegment>(maxImageWidth, memory);
@@ -354,7 +354,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      // Note: this could use a lot of space numValidComponentSegments*sizeof(ConnectedComponentSegment) = numValidComponentSegments*8
+      // NOTE: this could use a lot of space numValidComponentSegments*sizeof(ConnectedComponentSegment) = numValidComponentSegments*8
       FixedLengthList<ConnectedComponentSegment> componentsTmp(numValidComponentSegments, scratch);
 
       // Could fail if we don't have enough scratch space
@@ -410,7 +410,7 @@ namespace Anki
 
     // Iterate through components, and compute the number of pixels for each
     // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes
-    // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+    // NOTE: this is probably inefficient, compared with interlacing the loops in a kernel
     Result ConnectedComponents::ComputeComponentSizes(FixedLengthList<s32> &componentSizes)
     {
       AnkiConditionalErrorAndReturnValue(componentSizes.IsValid(), RESULT_FAIL_INVALID_OBJECT, "ComputeComponentSizes", "componentSizes is not valid");
@@ -436,10 +436,10 @@ namespace Anki
 
     // Iterate through components, and compute the centroid of each component componentCentroids
     // must be at least sizeof(Point<s16>)*(maximumdId+1) bytes
-    // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+    // NOTE: this is probably inefficient, compared with interlacing the loops in a kernel
     // Iterate through components, and compute the centroid of each component componentCentroids
     // must be at least sizeof(Point<s16>)*(maximumdId+1) bytes
-    // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+    // NOTE: this is probably inefficient, compared with interlacing the loops in a kernel
     //
     // For a ConnectedComponent that has a maximum id of N, this function requires
     // 12n + 12 bytes of scratch.
@@ -497,7 +497,7 @@ namespace Anki
 
     // Iterate through components, and compute bounding box for each component
     // componentBoundingBoxes must be at least sizeof(Rectangle<s16>)*(maximumdId+1) bytes
-    // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+    // NOTE: this is probably inefficient, compared with interlacing the loops in a kernel
     Result ConnectedComponents::ComputeComponentBoundingBoxes(FixedLengthList<Rectangle<s16> > &componentBoundingBoxes)
     {
       AnkiConditionalErrorAndReturnValue(componentBoundingBoxes.IsValid(), RESULT_FAIL_INVALID_OBJECT, "ComputeComponentSizes", "componentBoundingBoxes is not valid");
@@ -535,7 +535,7 @@ namespace Anki
 
     // Iterate through components, and compute the number of componentSegments that have each id
     // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes
-    // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+    // NOTE: this is probably inefficient, compared with interlacing the loops in a kernel
     Result ConnectedComponents::ComputeNumComponentSegmentsForEachId(FixedLengthList<s32> &numComponentSegments)
     {
       AnkiConditionalErrorAndReturnValue(numComponentSegments.IsValid(), RESULT_FAIL_INVALID_OBJECT, "ComputeComponentSizes", "numComponentSegments is not valid");
@@ -669,7 +669,7 @@ namespace Anki
     // "solidMultiplyThreshold*numPixels > boundingWidth*boundingHeight".
     // A resonable value is between 1.5*pow(2,5) = 48 and 5<<5 = 160.
     //
-    // Note: This can overflow if the number of pixels is greater than 2^26 (a bit more Ultra-HD resolution)
+    // NOTE: This can overflow if the number of pixels is greater than 2^26 (a bit more Ultra-HD resolution)
     //
     // For a ConnectedComponent that has a maximum id of N, this function requires
     // 8N + 8 bytes of scratch.

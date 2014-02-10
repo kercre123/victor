@@ -24,6 +24,7 @@ namespace Anki
     template<typename Type> class ConstArraySlice;
     template<typename Type> class ConstArraySliceExpression;
 
+    // A Comparison is a simple functor that compares the equality of two operands.
     namespace Comparison
     {
       template<typename Type1, typename Type2> class Equal {
@@ -58,10 +59,12 @@ namespace Anki
     } // namepace Comparison
 
 #pragma mark --- Declarations ---
+
+    // Find acts similar to the Matlab find(). It is useful for quick prototyping of Matlab-like c++ code.
     template<typename Type1, typename Operator, typename Type2> class Find
     {
     public:
-      // Warning: This evaluation is lazy, so it depends on the value of array1 and array2 at the
+      // WARNING: This evaluation is lazy, so it depends on the value of array1 and array2 at the
       //          time of evaluation, NOT at the time the constructor is called. If they are changed
       //          between the constructor and the evaluation, the ouput won't be correct.
       Find(const Array<Type1> &array1, const Array<Type2> &array2);

@@ -82,12 +82,12 @@ namespace Anki
 
       // Iterate through components, and compute the number of pixels for each component
       // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes
-      // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+      // NOTE: this is probably inefficient, compared with interlacing the loops in a kernel
       Result ComputeComponentSizes(FixedLengthList<s32> &componentSizes);
 
       // Iterate through components, and compute the centroid of each component componentCentroids
       // must be at least sizeof(Point<s16>)*(maximumdId+1) bytes
-      // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+      // NOTE: this is probably inefficient, compared with interlacing the loops in a kernel
       //
       // For a ConnectedComponent that has a maximum id of N, this function requires
       // 4n + 4 bytes of scratch.
@@ -95,12 +95,12 @@ namespace Anki
 
       // Iterate through components, and compute bounding box for each component
       // componentBoundingBoxes must be at least sizeof(Rectangle<s16>)*(maximumdId+1) bytes
-      // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+      // NOTE: this is probably inefficient, compared with interlacing the loops in a kernel
       Result ComputeComponentBoundingBoxes(FixedLengthList<Rectangle<s16> > &componentBoundingBoxes);
 
       // Iterate through components, and compute the number of componentSegments that have each id
       // componentSizes must be at least sizeof(s32)*(maximumdId+1) bytes
-      // Note: this is probably inefficient, compared with interlacing the loops in a kernel
+      // NOTE: this is probably inefficient, compared with interlacing the loops in a kernel
       Result ComputeNumComponentSegmentsForEachId(FixedLengthList<s32> &numComponentSegments);
 
       // Goes through the list components, and computes the number of pixels for each.
@@ -123,7 +123,7 @@ namespace Anki
       // "solidMultiplyThreshold*numPixels > boundingWidth*boundingHeight". A resonable value is
       // between 1.5*pow(2,5) = 48 and 5<<5 = 160.
       //
-      // Note: This can overflow if the number of pixels is greater than 2^26 (a bit more Ultra-HD
+      // NOTE: This can overflow if the number of pixels is greater than 2^26 (a bit more Ultra-HD
       //       resolution)
       //
       // For a ConnectedComponent that has a maximum id of N, this function requires 8N + 8 bytes
