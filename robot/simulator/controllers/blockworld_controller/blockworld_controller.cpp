@@ -21,6 +21,7 @@
 #include "messageHandler.h"
 #include "anki/cozmo/basestation/robot.h"
 //#include "anki/messaging/basestation/messagingInterface.h"
+#include "vizManager.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
 
@@ -45,6 +46,7 @@ int main(int argc, char **argv)
   // Comms
   Anki::Cozmo::TCPComms robotComms;
   MessageHandler::getInstance()->Init(&robotComms);
+  VizManager::getInstance()->Init();
   
   
 #if(USE_WEBOTS_TXRX)
