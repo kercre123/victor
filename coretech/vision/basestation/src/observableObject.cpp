@@ -7,10 +7,12 @@ namespace Anki {
     
 #pragma mark --- ObservableObject Implementations ---
     
-    ObservableObject::ObservableObject(ObjectID_t ID)
-    : ID_(ID)
+    //ObjectID_t ObservableObject::ObjectCounter = 0;
+    
+    ObservableObject::ObservableObject(ObjectType_t objType)
+    : type_(objType), ID_(0)
     {
-      
+      //ID_ = ObservableObject::ObjectCounter++;
     }
     
     void ObservableObject::AddMarker(const Marker::Code&  withCode,
@@ -42,7 +44,8 @@ namespace Anki {
                                     const Radians            angleThreshold,
                                     Pose3d&                  P_diff) const
     {
-      bool isSame = this->ID_ == otherObject.ID_;
+      // The two objects can't be the same if they aren't the same type!
+      bool isSame = this->type_ == otherObject.type_;
       
       if(isSame) {
         if(this->GetRotationAmbiguities().empty()) {
@@ -86,9 +89,9 @@ namespace Anki {
     
 #pragma mark --- ObservableObjectLibrary Implementations ---
     
-    const ObservableObject* ObservableObjectLibrary::GetObjectWithID(const ObjectID_t ID) const
+    const ObservableObject* ObservableObjectLibrary::GetObjectWithType(const ObjectType_t type) const
     {
-      auto obj = knownObjects_.find(ID);
+      auto obj = knownObjects_.find(type);
       if(obj != knownObjects_.end()) {
         return obj->second;
       }
@@ -116,8 +119,8 @@ namespace Anki {
     
     void ObservableObjectLibrary::AddObject(const ObservableObject* object)
     {
-      // TODO: Warn/error if we are overwriting an existing object with this ID?
-      knownObjects_[object->GetID()] = object;
+      // TODO: Warn/error if we are overwriting an existing object with this type?
+      knownObjects_[object->GetType()] = object;
       for(auto marker : object->GetMarkers()) {
         objectsWithCode_[marker.GetCode()].push_back(object);
       }
@@ -130,8 +133,8 @@ namespace Anki {
                                                            std::vector<ObservableObject*>& objectsSeen,
                                                            const Camera* seenOnlyBy) const
     {
-      // Group the markers by object ID
-      std::map<ObjectID_t, std::vector<const ObservedMarker*>> markersWithObjectID;
+      // Group the markers by object type
+      std::map<ObjectType_t, std::vector<const ObservedMarker*>> markersWithObjectType;
       std::list<ObservedMarker> markersUnused;
       
       for(auto & marker : markers) {
@@ -146,7 +149,7 @@ namespace Anki {
           std::vector<const ObservableObject*> const* objectsWithMarker = GetObjectsWithMarker(marker);
           
           // ...if there are any, add this marker to the list of observed markers
-          // that corresponds to this object ID.
+          // that corresponds to this object type.
           if(objectsWithMarker != NULL) {
             if(objectsWithMarker->size() > 1) {
               CORETECH_THROW("Having multiple objects in the library with the "
@@ -158,7 +161,7 @@ namespace Anki {
                }
                */
             }
-            markersWithObjectID[objectsWithMarker->front()->GetID()].push_back(&marker);
+            markersWithObjectType[objectsWithMarker->front()->GetType()].push_back(&marker);
             used = true;
           } // IF objectsWithMarker != NULL
         } // IF seenOnlyBy
@@ -170,19 +173,19 @@ namespace Anki {
         
       } // For each marker we saw
       
-      // Now go through each object ID we saw a marker for, and use the
+      // Now go through each object type we saw a marker for, and use the
       // corresponding observed markers to create a list of possible poses
       // for that object. Then cluster the possible poses into one or more
-      // object instances of that ID, returned in the "objectsSeen" vector.
-      for(auto & objIdMarkersPair : markersWithObjectID)
+      // object instances of that type, returned in the "objectsSeen" vector.
+      for(auto & objTypeMarkersPair : markersWithObjectType)
       {
         // A place to store the possible poses together with the observed/known
         // markers that implied them
         std::vector<PoseMatchPair> possiblePoses;
         
-        const Vision::ObservableObject* libObject = GetObjectWithID(objIdMarkersPair.first);
+        const Vision::ObservableObject* libObject = GetObjectWithType(objTypeMarkersPair.first);
         
-        for(auto obsMarker : objIdMarkersPair.second)
+        for(auto obsMarker : objTypeMarkersPair.second)
         {
           // For each observed marker, we add to the list of possible poses
           // (each paired with the observed/known marker match from which the
@@ -229,7 +232,7 @@ namespace Anki {
           
         } // FOR each pose cluster
         
-      } // FOR each objectID
+      } // FOR each objectType
       
       // Return the unused markers
       std::swap(markers, markersUnused);
@@ -287,7 +290,8 @@ namespace Anki {
     void ObservableObjectLibrary::PoseCluster::RecomputePose()
     {
       if(GetSize() > 1) {
-        fprintf(stdout, "Re-computing pose from all memers of cluster.\n");
+        fprintf(stdout, "Re-computing pose from all %zu members of cluster.\n",
+                GetSize());
         
         std::vector<Point2f> imgPoints;
         std::vector<Point3f> objPoints;

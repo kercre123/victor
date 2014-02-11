@@ -24,7 +24,7 @@ namespace Anki {
       // Do we want to be req'd to instantiate with all codes up front?
       ObservableObject(){};
       
-      ObservableObject(ObjectID_t ID);
+      ObservableObject(ObjectType_t type);
       
       //ObservableObject(const std::vector<std::pair<Marker::Code,Pose3d> >& codesAndPoses);
       
@@ -51,11 +51,13 @@ namespace Anki {
                                 std::vector<PoseMatchPair>& possiblePoses) const;
       
       // Accessors:
-      ObjectID_t    GetID() const;
+      ObjectID_t      GetID()     const;
+      ObjectType_t    GetType()   const;
+      const Pose3d&   GetPose()   const;
       //virtual float GetMinDim() const = 0;
-      const Pose3d& GetPose() const;
       
-      void SetPose(const Pose3d& newPose) {pose_ = newPose;}
+      void SetID(const ObjectID_t newID);
+      void SetPose(const Pose3d& newPose);
       
       // Return true if this object is the same as the other. Sub-classes can
       // overload this function to provide for rotational ambiguity when
@@ -75,7 +77,8 @@ namespace Anki {
       
       //static const std::vector<RotationMatrix3d> rotationAmbiguities_;
       
-      ObjectID_t ID_;
+      ObjectType_t type_;
+      ObjectID_t   ID_;
       
       // Using a list here so that adding new markers does not affect references
       // to pre-existing markers
@@ -118,9 +121,22 @@ namespace Anki {
     inline ObjectID_t ObservableObject::GetID() const {
       return ID_;
     }
+    
+    inline ObjectType_t ObservableObject::GetType() const {
+      return type_;
+    }
+    
     //virtual float GetMinDim() const = 0;
     inline const Pose3d& ObservableObject::GetPose() const {
       return pose_;
+    }
+    
+    inline void ObservableObject::SetID(const ObjectID_t newID) {
+      ID_ = newID;
+    }
+  
+    inline void ObservableObject::SetPose(const Pose3d& newPose) {
+      pose_ = newPose;
     }
     
     /*
@@ -166,7 +182,8 @@ namespace Anki {
                                     std::vector<ObservableObject*>& objectsSeen,
                                     const Camera* seenOnlyBy = NULL) const;
       
-      const ObservableObject* GetObjectWithID(const ObjectID_t ID) const;
+      // Only one object in a library can have each type
+      const ObservableObject* GetObjectWithType(const ObjectType_t type) const;
       
       // Return a pointer to a vector of pointers to known objects with at
       // least one of the specified markers or codes on it. If  there is no
@@ -177,7 +194,7 @@ namespace Anki {
     protected:
       
       //std::list<const ObservableObject*> knownObjects_;
-      std::map<ObjectID_t, const ObservableObject*> knownObjects_;
+      std::map<ObjectType_t, const ObservableObject*> knownObjects_;
       
       // Store a list of pointers to all objects that have at least one marker
       // with that code.  You can then use the objects' GetMarkersWithCode()
