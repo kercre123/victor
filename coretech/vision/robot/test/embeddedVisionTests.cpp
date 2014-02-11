@@ -67,6 +67,9 @@ Matlab matlab(false);
 #ifdef RUN_TRACKER_TESTS   // This prevents the .elf from loading
 #include "../../blockImages/blockImages00189_80x60.h"
 #include "../../blockImages/blockImages00190_80x60.h"
+
+#include "../../../systemTestImages/cozmo_2014_01_29_11_41_05_10_320x240.h"
+#include "../../../systemTestImages/cozmo_2014_01_29_11_41_05_12_320x240.h"
 #endif
 
 #ifdef RUN_ALL_BIG_MEMORY_TESTS
@@ -94,7 +97,32 @@ Matlab matlab(false);
 DDR_BUFFER_LOCATION char ddrBuffer[DDR_BUFFER_SIZE];
 CMX_BUFFER_LOCATION char cmxBuffer[CMX_BUFFER_SIZE];
 
-GTEST_TEST(CoreTech_Vision, ComputeIndexLimits)
+GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary_ComputeIndexLimitsVertical)
+{
+  MemoryStack scratch_CMX(&cmxBuffer[0], CMX_BUFFER_SIZE);
+  ASSERT_TRUE(scratch_CMX.IsValid());
+
+  Array<u8> templateImage(cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_10_320x240_WIDTH, scratch_CMX);
+  Array<u8> nextImage(cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT, cozmo_2014_01_29_11_41_05_12_320x240_WIDTH, scratch_CMX);
+
+  const Quadrilateral<f32> templateQuad(Point<f32>(128,78), Point<f32>(220,74), Point<f32>(229,167), Point<f32>(127,171));
+  const u8 edgeDetection_grayvalueThreshold = 100;
+  const s32 edgeDetection_minComponentWidth = 2;
+  const s32 edgeDetection_maxDetectionsPerType = 3000;
+
+  templateImage.Set(&cozmo_2014_01_29_11_41_05_10_320x240[0], cozmo_2014_01_29_11_41_05_10_320x240_WIDTH*cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT);
+  nextImage.Set(&cozmo_2014_01_29_11_41_05_12_320x240[0], cozmo_2014_01_29_11_41_05_12_320x240_WIDTH*cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT);
+
+  templateImage.Show("templateImage", false, false, true);
+  nextImage.Show("nextImage", true, false, true);
+
+  TemplateTracker::LucasKanadeTrackerBinary lktb(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, scratch_CMX);
+  lktb.ShowTemplate(true, true);
+
+  GTEST_RETURN_HERE;
+}
+
+GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary_ComputeIndexLimits)
 {
   MemoryStack scratch_CMX(&cmxBuffer[0], CMX_BUFFER_SIZE);
   ASSERT_TRUE(scratch_CMX.IsValid());

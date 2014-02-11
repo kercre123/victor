@@ -29,6 +29,9 @@ namespace Anki
     // DrawExampleSquaresImage(testSquaresImage);
     // testSquaresImage.Show("testSquaresImage", true);
     template<typename Type> Result DrawExampleSquaresImage(Array<Type> &image);
+
+    // points is a list of point coordinates. DrawPoints draws them on image.
+    template<typename Type> Result DrawPoints(const FixedLengthList<Point<Type> > &points, const u8 grayvalue, Array<u8> &image);
   } // namespace Embedded
 } // namespace Anki
 

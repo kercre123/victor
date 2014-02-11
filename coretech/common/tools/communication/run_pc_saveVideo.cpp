@@ -30,7 +30,8 @@ using namespace std;
 const double secondsToWaitBeforeSavingABuffer = 1.0;
 
 const s32 outputFilenamePatternLength = 1024;
-char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/cozmoShort/cozmo_%04d-%02d-%02d_%02d-%02d-%02d_%d.%s";
+//char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/cozmoShort/cozmo_%04d-%02d-%02d_%02d-%02d-%02d_%d.%s";
+char outputFilenamePattern[outputFilenamePatternLength] = "C:/datasets/cozmoShort/cozmo_date%04d_%02d_%02d_time%02d_%02d_%02d_frame%d.%s";
 
 // Based off example at http://msdn.microsoft.com/en-us/library/windows/desktop/ms682516(v=vs.85).aspx
 DWORD WINAPI SaveBuffersThread(LPVOID lpParam)

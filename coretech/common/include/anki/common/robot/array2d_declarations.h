@@ -126,7 +126,7 @@ namespace Anki
       cv::Mat_<Type>& get_CvMat_();
 
       // Use the simple OpenCV gui to display this array as an image
-      void Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues=false) const;
+      void Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues=false, const bool fitImageToWindow=false) const;
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
       // Print out the contents of this Array

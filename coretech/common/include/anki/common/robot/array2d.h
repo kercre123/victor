@@ -293,11 +293,17 @@ namespace Anki
     }
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
 
-    template<typename Type> void Array<Type>::Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues) const
+    template<typename Type> void Array<Type>::Show(const char * const windowName, const bool waitForKeypress, const bool scaleValues, const bool fitImageToWindow) const
     {
       // If opencv is not used, just do nothing
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       AnkiConditionalError(this->IsValid(), "Array<Type>::Show", "Array<Type> is not valid");
+
+      if(fitImageToWindow) {
+        cv::namedWindow(windowName, CV_WINDOW_NORMAL);
+      } else {
+        cv::namedWindow(windowName, CV_WINDOW_AUTOSIZE);
+      }
 
       if(scaleValues) {
         cv::Mat_<f64> scaledArray(this->get_size(0), this->get_size(1));

@@ -230,8 +230,27 @@ namespace Anki
         // is no iteration within.
 
       public:
+        class Correspondence
+        {
+        public:
+          Point<f32> originalTemplatePoint;
+          Point<f32> warpedTemplatePoint;
+          Point<f32> matchedPoint;
+          bool isVerticalMatch;
+        };
+
         static Result ComputeIndexLimitsVertical(const FixedLengthList<Point<s16> > &points, Array<s32> &yStartIndexes);
         static Result ComputeIndexLimitsHorizontal(const FixedLengthList<Point<s16> > &points, Array<s32> &xStartIndexes);
+
+        static Result FindVerticalCorrespondences(
+          const s32 maxMatchingDistance,
+          const PlanarTransformation_f32 &transformation,
+          const FixedLengthList<Point<s16> > &templatePoints,
+          const FixedLengthList<Point<s16> > &newPoints,
+          const s32 imageHeight,
+          const s32 imageWidth,
+          FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
+          MemoryStack scratch);
 
         LucasKanadeTrackerBinary();
 
@@ -250,6 +269,8 @@ namespace Anki
 
         bool IsValid() const;
 
+        Result ShowTemplate(const bool waitForKeypress, const bool fitImageToWindow) const;
+
         Result set_transformation(const PlanarTransformation_f32 &transformation);
         PlanarTransformation_f32 get_transformation() const;
 
@@ -263,12 +284,6 @@ namespace Anki
         FixedLengthList<Point<s16> > template_yDecreasingIndexes;
         FixedLengthList<Point<s16> > template_yIncreasingIndexes;
 
-        // The floating point coordinate of each detected edge
-        FixedLengthList<Point<f32> > template_xDecreasingGrid;
-        FixedLengthList<Point<f32> > template_xIncreasingGrid;
-        FixedLengthList<Point<f32> > template_yDecreasingGrid;
-        FixedLengthList<Point<f32> > template_yIncreasingGrid;
-
         f32 homographyOffsetX;
         f32 homographyOffsetY;
 
@@ -280,7 +295,15 @@ namespace Anki
 
         bool isValid;
 
-        static FixedLengthList<Point<f32> > TransformIndexesToGrid(const FixedLengthList<Point<s16> > &pointIndexes, const Array<f32> &xGrid, const Array<f32> &yGrid, MemoryStack &memory);
+#ifdef ANKICORETECH_EMBEDDED_USE_OPENCV
+        // Allocates the returned cv::Mat on the heap
+        static cv::Mat LucasKanadeTrackerBinary::DrawIndexes(
+          const s32 imageHeight, const s32 imageWidth,
+          const FixedLengthList<Point<s16> > &indexPoints1,
+          const FixedLengthList<Point<s16> > &indexPoints2,
+          const FixedLengthList<Point<s16> > &indexPoints3,
+          const FixedLengthList<Point<s16> > &indexPoints4);
+#endif
       }; // class LucasKanadeTrackerBinary
     } // namespace TemplateTracker
   } // namespace Embedded
