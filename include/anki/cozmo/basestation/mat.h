@@ -10,7 +10,7 @@ namespace Anki {
     class MatPiece : public Vision::ObservableObject //Base<MatPiece>
     {
     public:
-      MatPiece(ObjectID_t ID) : Vision::ObservableObject(ID) {};
+      MatPiece(ObjectType_t type) : Vision::ObservableObject(type) {};
       
       //virtual float GetMinDim() const {return 0;}
       

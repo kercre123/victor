@@ -29,6 +29,14 @@
 #endif
 
 // Define the available modes
+#undef MESSAGE_CLASS_DEFINITION_MODE
+#undef MESSAGE_CLASS_CONSTRUCTOR_MODE
+#undef MESSAGE_CLASS_GETSIZE_MODE
+#undef MESSAGE_CLASS_GETBYTES_MODE
+#undef MESSAGE_TABLE_DEFINITION_MODE
+#undef MESSAGE_ENUM_DEFINITION_MODE
+#undef MESSAGE_PROCESS_METHODS_MODE
+
 #define MESSAGE_CLASS_DEFINITION_MODE        0
 #define MESSAGE_CLASS_CONSTRUCTOR_MODE       1
 #define MESSAGE_CLASS_GETSIZE_MODE           2
@@ -46,6 +54,9 @@
 #else // We have a message definition mode set
 
 // Helper macros
+#undef GET_MESSAGE_CLASSNAME
+#undef GET_DISPATCH_FCN_NAME
+#undef GET_MESSAGE_ID
 #define GET_MESSAGE_CLASSNAME(__MSG_TYPE__) Message##__MSG_TYPE__
 #define GET_DISPATCH_FCN_NAME(__MSG_TYPE__) ProcessPacketAs_Message##__MSG_TYPE__
 #define GET_MESSAGE_ID(__MSG_TYPE__) __MSG_TYPE__##_ID

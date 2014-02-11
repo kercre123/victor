@@ -89,8 +89,8 @@ Background {
   ]
 }
 DirectionalLight {
-  ambientIntensity 0.5
-  direction 1 1 -2
+  ambientIntensity 0.75
+  direction -1 -1 -2
   castShadows TRUE
 }
 
@@ -135,15 +135,11 @@ DEF Cozmo CozmoBot {
   controller "cozmo_c_controller"
 }
 
-DEF CozmoBotPose Robot {
-
-}
-
 DEF WorldComms BlockWorldComms {
 
 }
 
-OverlayDisplay {
-
-}
+#OverlayDisplay {
+#
+#}
 

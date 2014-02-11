@@ -38,7 +38,10 @@ namespace Anki {
       // Sets the id objectID to correspond to a drawable object of
       // type objectTypeID located at the specified pose.
       // The object will be the
-      void SetVizObject(u32 objectID, u32 objectTypeID, const Anki::Pose3d &pose, u32 colorID = DEFAULT_COLOR_ID);
+      void SetVizObject(u32 objectID, u32 objectTypeID,
+                        const Anki::Point3f &size,
+                        const Anki::Pose3d &pose,
+                        u32 colorID = DEFAULT_COLOR_ID);
       
       // Erases the object corresponding to the objectID
       void EraseVizObject(u32 objectID);

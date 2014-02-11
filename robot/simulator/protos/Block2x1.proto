@@ -7,18 +7,18 @@ PROTO Block2x1 [
   field SFFloat density 500
   field SFColor blockColor 1 0 0
 
-  field MFString facemarker1 "textures/code1x1.png"
-  field MFString facemarker2 "textures/code1x1.png"
-  field MFString facemarker3 "textures/code1x1.png"
-  field MFString facemarker4 "textures/code1x1.png"
-  field MFString facemarker5 "textures/code1x1.png"
-  field MFString facemarker6 "textures/code1x1.png"
+  field MFString facemarkerFront  "textures/code1x1.png"
+  field MFString facemarkerBack   "textures/code1x1.png"
+  field MFString facemarkerLeft   "textures/code1x1.png"
+  field MFString facemarkerRight  "textures/code1x1.png"
+  field MFString facemarkerTop    "textures/code1x1.png"
+  field MFString facemarkerBottom "textures/code1x1.png"
   
   # Observation
-  field SFColor obsColor 1 1 0
-  field SFFloat obsTransparency 1.0 # initially invisible
-  field SFVec3f obsTranslation 0 0 0
-  field SFRotation obsRotation 0 0 1 0 
+  #field SFColor obsColor 1 1 0
+  #field SFFloat obsTransparency 1.0 # initially invisible
+  #field SFVec3f obsTranslation 0 0 0
+  #field SFRotation obsRotation 0 0 1 0 
 ]
 {
 Robot {
@@ -74,7 +74,7 @@ Robot {
           autoLock TRUE
         }
         
-        # Face 1: (Matlab "Front")
+        # Front Face
         Transform {
           translation -0.03 0 0
           children [
@@ -83,7 +83,7 @@ Robot {
 	  
               appearance Appearance {
                 texture ImageTexture {
-                  url IS facemarker1
+                  url IS facemarkerFront
                 }
               }
               geometry Box {
@@ -93,7 +93,7 @@ Robot {
           ] 
         }
         
-        # Face 2: (Matlab "Back")
+        # Back Face
         Transform {
           translation 0.03 0 0
           children [
@@ -102,7 +102,7 @@ Robot {
 	  
               appearance Appearance {
                 texture ImageTexture {
-                  url IS facemarker2
+                  url IS facemarkerBack
                 }
               }
               geometry Box {
@@ -112,7 +112,7 @@ Robot {
           ] 
         }
         
-        # Face 3: (Matlab "Top")
+        # Left Face
         Transform {
           translation 0 0.015 0
           children [
@@ -121,7 +121,7 @@ Robot {
 	  
               appearance Appearance {
                 texture ImageTexture {
-                  url IS facemarker3
+                  url IS facemarkerLeft
                 }
               }
               geometry Box {
@@ -131,7 +131,7 @@ Robot {
           ] 
         }
         
-       # Face 4: (Matlab "Bottom")
+       # Right Face
        Transform {
           translation 0 -0.015 0
           children [
@@ -140,7 +140,7 @@ Robot {
 	  
               appearance Appearance {
                 texture ImageTexture {
-                  url IS facemarker4
+                  url IS facemarkerRight
                 }
               }
               geometry Box {
@@ -150,7 +150,7 @@ Robot {
           ] 
         }
 
-        # Face 5: (Matlab "left")
+        # Bottom Face
         Transform {
           translation 0 0 -0.015
           children [
@@ -159,7 +159,7 @@ Robot {
 	  
               appearance Appearance {
                 texture ImageTexture {
-                  url IS facemarker5
+                  url IS facemarkerBottom
                 }
               }
               geometry Box {
@@ -169,7 +169,7 @@ Robot {
           ] 
         }
         
-        # Face 6: (Matlab "right")
+        # Top Face
         Transform {
           translation 0 0 0.015
           children [
@@ -178,7 +178,7 @@ Robot {
 	  
               appearance Appearance {
                 texture ImageTexture {
-                  url IS facemarker6
+                  url IS facemarkerTop
                 }
               }
               geometry Box {
@@ -200,42 +200,7 @@ Robot {
         size 0.12 0.06 0.06
       }
     }
-    
-    
-    DEF Observation Solid {
-      name "Observation"
-      translation IS obsTranslation
-      rotation IS obsRotation
-      children [
-        Shape {
-          appearance Appearance {
-            material Material {
-              emissiveColor IS obsColor
-              transparency IS obsTransparency
-            }
-          }
-          geometry IndexedLineSet {
-            coord Coordinate {
-              point [
-                -0.0605 -0.0305 -0.0305
-                 0.0605 -0.0305 -0.0305
-                -0.0605  0.0305 -0.0305
-                 0.0605  0.0305 -0.0305
-                -0.0605 -0.0305  0.0305
-                 0.0605 -0.0305  0.0305
-                -0.0605  0.0305  0.0305
-                 0.0605  0.0305  0.0305
-              ]
-            }
-            coordIndex [
-              0 1 3 2 0 -1 4 5 7 6 4 -1 
-              0 4 -1 1 5 -1 2 6 -1 3 7 -1
-            ]
-          }
-        }
-      ] # Observation Children
-    } # Observation
-
+   
   ] # Block Children
   
   boundingObject USE Block2x1Shape

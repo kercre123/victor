@@ -5,6 +5,7 @@
 #include "anki/cozmo/basestation/messages.h"
 
 #include "messageHandler.h"
+#include "vizManager.h"
 
 namespace Anki
 {
@@ -29,27 +30,24 @@ namespace Anki
     {
       // TODO: Create each known block / matpiece from a configuration/definitions file
       
-      // Increment the ID counter each time we define a block
-      ObjectID_t blockID=0;
-      
       //
       // 1x1 Cubes
       //
       
       // "FUEL"
       {
-        Block_Cube1x1* block = new Block_Cube1x1(++blockID);
-        block->AddFace(Block::FRONT_FACE,
-                       {115, 117, 167, 238, 206, 221, 156, 168,  58, 114, 118},
-                       32.f);
+        Block_Cube1x1* block = new Block_Cube1x1();
         block->SetColor(1.f, 0.f, 0.f);
         block->SetSize(60.f, 60.f, 60.f);
         block->SetName("FUEL");
+        block->AddFace(Block::FRONT_FACE,
+                       {115, 117, 167, 238, 206, 221, 156, 168,  58, 114, 118},
+                       32.f);
+
         
         //float temp = block->GetMinDim();
         blockLibrary_.AddObject(block);
       }
-      
       
       //
       // 2x1
@@ -74,11 +72,11 @@ namespace Anki
       //
       //
       //
-      ObjectID_t matID=0;
+      ObjectType_t matType=0;
       
       // Webots mat:
       {
-        MatPiece* mat = new MatPiece(++matID);
+        MatPiece* mat = new MatPiece(++matType);
         mat->AddMarker({24, 24, 24, 16, 25, 49, 56, 9, 56, 48, 32},
                        Pose3d(2.094395, {-0.577350,0.577350,-0.577350}, {-250.000000,250.000000,0.000000}),
                        90.000000);
@@ -110,204 +108,24 @@ namespace Anki
         matLibrary_.AddObject(mat);
       }
 
-    }
+    } // BlockWorld() Constructor
     
-    /*
-    void getCorrespondingCorners(const BlockMarker2d& marker2d,
-                                 const Block&         block,
-                                 Quad3f&              corners3d)
+    BlockWorld::~BlockWorld()
     {
-      const Block::FaceName whichFace = Block::FaceType_to_FaceName(marker2d.get_faceType());
-      const BlockMarker3d& marker3d = block.get_faceMarker(whichFace);
-      
-      // First update the head pose according to the blockMarker
-      // TODO: this should probably not actually rotate the head but instead
-      //       use the head angle from the correct timestamped state history?
-      //       (doing it this way prevents this method from being const since
-      //        it changes the robot for each marker)
-      Robot& robot = marker2d.get_seenBy();
-      robot.set_headAngle(marker2d.get_headAngle());
-      
-      // Figure out where the marker we saw is in 3D space, in camera's
-      // coordinate frame. (Since the marker's coordinates relative to
-      // the block are used here, the computed pose will be the blockPose
-      // we want -- still relative to the camera however.)
-      marker3d.getSquareCorners(corners3d, &(block.get_pose())); // corners3d relative to (canonical) Block pose
-      
-    } // getCorrespondingCorners()
-    
-    
-    void BlockWorld::clusterBlockPoses(const std::vector<MarkerPosePair>& blockPoses,
-                                       const f32 distThreshold,
-                                       std::vector<std::vector<const MarkerPosePair*> >& markerClusters)
-    {
-      std::vector<bool> assigned(blockPoses.size(), false);
-      
-      for(size_t i_pose=0; i_pose < blockPoses.size(); ++i_pose)
-      {
-        if(not assigned[i_pose])
-        {
-          // Start a new block with this marker and mark it as assigned
-          // to a block
-          markerClusters.emplace_back(); // adds new cluster
-          markerClusters.back().emplace_back(&(blockPoses[i_pose])); // add this marker to that cluster
-          assigned[i_pose] = true;
-          
-          // See how far unassigned marker's poses are from this one:
-          for(size_t i_other=0; i_other < blockPoses.size(); ++i_other)
-          {
-            if(not assigned[i_other])
-            {
-              f32 dist = computeDistanceBetween(blockPoses[i_pose].second,
-                                                blockPoses[i_other].second);
-              
-              // If close enough, add it to the current cluster
-              if(dist < distThreshold) {
-                markerClusters.back().emplace_back(&(blockPoses[i_other]));
-              }
-            } // if not assigned
-          } // for each other blockPose
-        } // if not assigned
-      } // for each blockPose
-      
-      // Sanity check:
-      for(bool each_assigned : assigned)
-      {
-        // All markers should have been assigned a block
-        CORETECH_ASSERT(each_assigned);
+      for(auto blockTypes : existingBlocks_) {
+        for(auto blockIDs : blockTypes.second) {
+          delete blockIDs.second;
+        }
       }
-      
-    } // clusterBlockPoses()
-    
-    void BlockWorld::computeIndividualBlockPoses(const VisionMarkerMultiMap&      markers,
-                                                 const Vision::ObservableObject&  objInit,
-                                                 std::vector<MarkerPosePair>&     objPoses)
-    {
-      // Get the range of iterators into the multimap with the current BlockType
-      auto range = markers.equal_range(objInit.GetID());
-      
-      // This FOR loop iterates over each marker with this BlockType,
-      // using the range we just got from equal_range.
-      for(auto markerIter=range.first; markerIter != range.second; ++markerIter)
-      {
-        const Vision::Marker& marker2d = markerIter->second;
         
-        // Inside this loop, all markers we consider should have the same
-        // type as the Block we instantiated above.
-//        CORETECH_ASSERT(marker2d() == B_init.get_type());
-        
-        Quad3f corners3d;
-        //Pose3d blockPose( marker2d.EstimatePose(<#const Anki::Vision::Camera &wrtCamera#>))
-        getCorrespondingCorners(marker2d, objInit, corners3d);
-        const Vision::Camera* cam = marker2d.GetSeenBy();
-        Pose3d objPose(cam->computeObjectPose(marker2d.GetCorners(), corners3d));
-        
-        // Now get the block pose in World coordinates using the pose tree,
-        // instead of being in camera-centric coordinates, and add it to the
-        // list of computed poses for this block type
-        objPoses.emplace_back(marker2d, objPose.getWithRespectTo(Pose3d::World));
-        
-      } // for each marker with current blockType
-    } // computeIndividualBlockPoses
-    
-    
-    void BlockWorld::GroupPosesIntoObjects(const std::vector<MarkerPosePair>&      objPoses,
-                                           const Vision::ObservableObject*         objInit,
-                                           std::vector<Vision::ObservableObject*>& objectsSeen)
-    {
-      
-      if(objPoses.size() > 1) {
-        
-        // Group markers which could be part of the same block (i.e. those
-        // whose poses are colocated, noting that the pose is relative to
-        // the center of the block)
-        std::vector<std::vector<const MarkerPosePair*> > markerClusters;
-        clusterBlockPoses(objPoses, 0.5f*objInit->GetMinDim(),
-                          markerClusters);
-        
-        fprintf(stdout, "Grouping %lu observed 2D markers of type %d into %lu blocks.\n",
-                objPoses.size(), objInit->GetID(), markerClusters.size());
-        
-        
-        // For each new block, re-estimate the pose based on all markers that
-        // were assigned to it
-        for(auto & cluster : markerClusters)
-        {
-          CORETECH_ASSERT(not cluster.empty());
-          
-          if(cluster.size() == 1) {
-            fprintf(stdout, "Singleton cluster: using already-computed pose.\n");
-            
-            // No need to re-estimate, just use the one marker we saw.
-            objectsSeen.push_back(objInit->clone());
-            objectsSeen.back()->SetPose(cluster[0]->second);
-          }
-          else {
-            fprintf(stdout, "Re-computing pose from all memers of cluster.\n");
-            
-            std::vector<Point2f> imgPoints;
-            std::vector<Point3f> objPoints;
-            imgPoints.reserve(4*cluster.size());
-            objPoints.reserve(4*cluster.size());
-            
-            // TODO: Implement ability to estimate block pose with markers seen by different robots
-            const Vision::Camera* camera = cluster[0]->first.GetSeenBy();
-            
-            for(auto & clusterMember : cluster)
-            {
-              const Vision::Marker& marker2d = clusterMember->first;
-              
-              if(marker2d.GetSeenBy() == camera)
-              {
-                Quad3f corners3d;
-                getCorrespondingCorners(marker2d, objInit, corners3d);
-                
-                for(Quad::CornerName i_face=Quad::FirstCorner;
-                    i_face < Quad::NumCorners; ++i_face)
-                {
-                  imgPoints.push_back(marker2d.GetCorners()[i_face]);
-                  objPoints.push_back(corners3d[i_face]);
-                }
-              }
-              else {
-                fprintf(stdout, "Ability to re-estimate single block's "
-                        "pose from markers seen by two different robots "
-                        "not yet implemented. Will just use markers from "
-                        "first robot in the cluster.\n");
-              }
-              
-            } // for each cluster member
-            
-            // Compute the block pose from all the corresponding 2d (image)
-            // and 3d (object) points
-            Pose3d objPose(camera->computeObjectPose(imgPoints, objPoints));
-            
-            // Now get the block pose in World coordinates using the pose
-            // tree, instead of being in camera-centric coordinates, and
-            // assign that pose to the temporary Block of this type
-            objectsSeen.push_back(objInit->clone());
-            objectsSeen.back()->SetPose(objPose.getWithRespectTo(Pose3d::World));
-            
-          } // if 1 or more members in this cluster
-          
-        } // for each cluster
-        
-      } else {
-        CORETECH_ASSERT(not objPoses.empty());
-        
-        // Just have one marker of this block type
-        objectsSeen.push_back(objInit->clone());
-        objectsSeen.back()->SetPose(objPoses[0].second);
-      }
-    } // groupBlockPoses()
-    */
+    } // ~BlockWorld() Destructor
     
     //template<class ObjectType>
-    void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
-                                const std::map<ObjectID_t, std::vector<Vision::ObservableObject*> >& objectsExisting,
-                                std::vector<Vision::ObservableObject*>& overlappingExistingObjects)
+    void BlockWorld::FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
+                                            const ObjectsMap_t& objectsExisting,
+                                            std::vector<Vision::ObservableObject*>& overlappingExistingObjects) const
     {
-      auto objectsExistingIter = objectsExisting.find(objectSeen->GetID());
+      auto objectsExistingIter = objectsExisting.find(objectSeen->GetType());
       if(objectsExistingIter != objectsExisting.end())
       {
         for(auto objExist : objectsExistingIter->second)
@@ -316,8 +134,8 @@ namespace Anki
           const float minDist = 5.f; // TODO: make parameter ... 0.5f*std::min(minDimSeen, objExist->GetMinDim());
           const Radians angleThresh( 5.f*M_PI/180.f ); // TODO: make parameter
           Pose3d P_diff;
-          if( objExist->IsSameAs(*objectSeen, minDist, angleThresh, P_diff) ) {
-            overlappingExistingObjects.push_back(objExist);
+          if( objExist.second->IsSameAs(*objectSeen, minDist, angleThresh, P_diff) ) {
+            overlappingExistingObjects.push_back(objExist.second);
           }
           
         } // for each existing object of this type
@@ -327,7 +145,7 @@ namespace Anki
     
     
     void BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*> objectsSeen,
-                                         std::map<ObjectID_t, std::vector<Vision::ObservableObject*> >& objectsExisting)
+                                         ObjectsMap_t& objectsExisting)
     {
       for(auto objSeen : objectsSeen) {
         
@@ -341,14 +159,14 @@ namespace Anki
           // no existing blocks overlapped with the block we saw, so add it
           // as a new block
           
-          fprintf(stdout, "Adding new block %hu at (%.1f, %.1f, %.1f)\n",
-                  objSeen->GetID(),
+          objectsExisting[objSeen->GetType()][objSeen->GetID()] = objSeen;
+          objSeen->SetID(objectsExisting[objSeen->GetType()].size());
+          
+          fprintf(stdout, "Adding new block with type=%hu and ID=%hu at (%.1f, %.1f, %.1f)\n",
+                  objSeen->GetType(), objSeen->GetID(),
                   objSeen->GetPose().get_translation().x(),
                   objSeen->GetPose().get_translation().y(),
                   objSeen->GetPose().get_translation().z());
-          
-          objectsExisting[objSeen->GetID()].push_back(objSeen);
-          
         }
         else {
           if(overlappingObjects.size() > 1) {
@@ -356,8 +174,8 @@ namespace Anki
             // TODO: do something smarter here?
           }
           
-          fprintf(stdout, "Merging observation of block %hu at (%.1f, %.1f, %.1f)\n",
-                  objSeen->GetID(),
+          fprintf(stdout, "Merging observation of block type=%hu, ID=%hu at (%.1f, %.1f, %.1f)\n",
+                  objSeen->GetType(), objSeen->GetID(),
                   objSeen->GetPose().get_translation().x(),
                   objSeen->GetPose().get_translation().y(),
                   objSeen->GetPose().get_translation().z());
@@ -365,8 +183,12 @@ namespace Anki
           // TODO: better way of merging existing/observed block pose
           overlappingObjects[0]->SetPose( objSeen->GetPose() );
           
+          // Now that we've merged in objSeen, we can delete it because we
+          // will no longer be using it.  Otherwise, we'd leak.
+          delete objSeen;
+          
         } // if/else overlapping existing blocks found
-        
+     
       } // for each block seen
 
     } // AddAndUpdateObjects()
@@ -464,6 +286,25 @@ namespace Anki
         obsMarkers_.clear();
       }
       
+      //
+      // Update visualization:
+      //
+      
+      // Draw all blocks we know about
+      VizManager::getInstance()->EraseAllVizObjects();
+      for(auto blocksByType : existingBlocks_) {
+        for(auto blocksByID : blocksByType.second) {
+          
+          const Block* block = dynamic_cast<Block*>(blocksByID.second);
+          VizManager::getInstance()->SetVizObject(block->GetID(),
+                                                  block->GetType(),
+                                                  block->GetSize(),
+                                                  block->GetPose());
+
+        } // FOR each ID of this type
+      } // FOR each type
+      
+      
     } // Update()
     
     
@@ -485,15 +326,6 @@ namespace Anki
         fprintf(stdout, "Invalid robot commanded to Dock.\n");
       }
     } // commandRobotToDock()
-    
-    // MatPiece has no rotation ambiguities but we still need to define this
-    // static const here to instatiate an empty list.
-    const std::vector<RotationMatrix3d> MatPiece::rotationAmbiguities_;
-    
-    std::vector<RotationMatrix3d> const& MatPiece::GetRotationAmbiguities() const
-    {
-      return MatPiece::rotationAmbiguities_;
-    }
 
     
   } // namespace Cozmo

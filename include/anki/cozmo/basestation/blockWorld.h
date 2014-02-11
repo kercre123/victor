@@ -56,6 +56,8 @@ namespace Anki
       void CommandRobotToDock(const RobotID_t whichRobot,
                               const Block&    whichBlock);
       
+      ~BlockWorld();
+      
     protected:
       
       static BlockWorld* singletonInstance_;
@@ -76,34 +78,25 @@ namespace Anki
       Vision::ObservableObjectLibrary matLibrary_;
       Vision::ObservableObjectLibrary otherObjectsLibrary_;
       
-      // Store all observed objects:
-      std::map<ObjectID_t, std::vector<Vision::ObservableObject*> > existingBlocks_;
-      std::map<ObjectID_t, std::vector<Vision::ObservableObject*> > existingMatPieces_;
+      // Store all observed objects, indexed first by Type, then by ID
+      typedef std::map<ObjectType_t, std::map<ObjectID_t, Vision::ObservableObject*> > ObjectsMap_t;
+      ObjectsMap_t existingBlocks_;
+      ObjectsMap_t existingMatPieces_;
       
       // Store all the blocks in the world, with a reserved slot for
       // each type of block, and then a list of pointers to each block
       // of that type we've actually seen.
       std::vector< std::vector<Block> > blocks;
-
       
-      typedef std::pair<const Vision::Marker&, Pose3d> MarkerPosePair;
-      void clusterBlockPoses(const std::vector<MarkerPosePair>& blockPoses,
-                             const f32 distThreshold,
-                             std::vector<std::vector<const MarkerPosePair*> >& markerClusters);
       
-      typedef std::multimap<ObjectID_t, Vision::Marker> VisionMarkerMultiMap;
+      void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
+                                  const ObjectsMap_t& objectsExisting,
+                                  std::vector<Vision::ObservableObject*>& overlappingExistingObjects) const;
       
-      void computeIndividualBlockPoses(const VisionMarkerMultiMap&      blockMarkers2d,
-                                       const Vision::ObservableObject&  objInit,
-                                       std::vector<MarkerPosePair>&     blockPoses);
-      
-      void GroupPosesIntoObjects(const std::vector<MarkerPosePair>&      objPoses,
-                                 const Vision::ObservableObject*         objInit,
-                                 std::vector<Vision::ObservableObject*>& objectsSeen);
       
       //template<class ObjectType>
       void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*> objectsSeen,
-                               std::map<ObjectID_t, std::vector<Vision::ObservableObject*> >& objectsExisting);
+                               ObjectsMap_t& objectsExisting);
       
     }; // class BlockWorld
 

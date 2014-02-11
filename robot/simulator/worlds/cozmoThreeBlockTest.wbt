@@ -89,8 +89,8 @@ Background {
   ]
 }
 DirectionalLight {
-  ambientIntensity 0.5
-  direction 1 1 -2
+  ambientIntensity 0.75
+  direction -1 -1 -2
   castShadows TRUE
 }
 
@@ -112,6 +112,7 @@ DEF Cozmo CozmoBot {
   rotation 0 0 1 -0.7071  
   name "CozmoBot_1"
   commsChannel 1
+  usbChannel 10
   controller "cozmo_c_controller"
   # In front of 2x1 purple block
   #translation -0.07 0.014 -0.21
@@ -122,31 +123,43 @@ BlockWorldComms {
 
 }
 
-OverlayDisplay {
-
+DEF OffboardVisionProcessor USBConnection {
+  controller "offboard_vision_processor"
+  usbChannel 10
 }
+
+#OverlayDisplay {
+#
+#}
 
 Block1x1 {
   name "Block060_1"
   translation -0.183  -0.051  0.0299152
   rotation 1 0 0 0
-  facemarker1 [
-    "textures/Block060_Face01.png"
+  
+  facemarkerFront [
+    #"textures/Block060_Face01.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker2 [
-    "textures/Block060_Face02.png"
+  facemarkerBack [
+    #"textures/Block060_Face02.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker3 [
-    "textures/Block060_Face03.png"
+  facemarkerLeft [
+    #"textures/Block060_Face03.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker4 [
-    "textures/Block060_Face04.png"
+  facemarkerRight [
+    #"textures/Block060_Face04.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker5 [
-    "textures/Block060_Face05.png"
+  facemarkerTop [
+    #"textures/Block060_Face05.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker6 [
-    "textures/Block060_Face06.png"
+  facemarkerBottom [
+    #"textures/Block060_Face06.png"
+    "textures/batteryMarker.png"
   ]
 }
 Block1x1 {
@@ -155,23 +168,29 @@ Block1x1 {
   rotation 0 0 1 0.3927
   blockColor 0 1 0
   
-  facemarker1 [
-    "textures/Block065_Face01.png"
+  facemarkerFront [
+    #"textures/Block060_Face01.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker2 [
-    "textures/Block065_Face02.png"
+  facemarkerBack [
+    #"textures/Block060_Face02.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker3 [
-    "textures/Block065_Face03.png"
+  facemarkerLeft [
+    #"textures/Block060_Face03.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker4 [
-    "textures/Block065_Face04.png"
+  facemarkerRight [
+    #"textures/Block060_Face04.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker5 [
-    "textures/Block065_Face05.png"
+  facemarkerTop [
+    #"textures/Block060_Face05.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker6 [
-    "textures/Block065_Face06.png"
+  facemarkerBottom [
+    #"textures/Block060_Face06.png"
+    "textures/batteryMarker.png"
   ]
 }
 Block1x1 {
@@ -180,23 +199,29 @@ Block1x1 {
   rotation 0 0 1 0.43
   blockColor 0 1 0
   
-  facemarker1 [
-    "textures/Block065_Face01.png"
+ facemarkerFront [
+    #"textures/Block060_Face01.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker2 [
-    "textures/Block065_Face02.png"
+  facemarkerBack [
+    #"textures/Block060_Face02.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker3 [
-    "textures/Block065_Face03.png"
+  facemarkerLeft [
+    #"textures/Block060_Face03.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker4 [
-    "textures/Block065_Face04.png"
+  facemarkerRight [
+    #"textures/Block060_Face04.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker5 [
-    "textures/Block065_Face05.png"
+  facemarkerTop [
+    #"textures/Block060_Face05.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker6 [
-    "textures/Block065_Face06.png"
+  facemarkerBottom [
+    #"textures/Block060_Face06.png"
+    "textures/batteryMarker.png"
   ]
 }
 Block1x1 {
@@ -205,23 +230,29 @@ Block1x1 {
   rotation 0 0 1 1.24
   blockColor 0 1 0
   
-  facemarker1 [
-    "textures/Block065_Face01.png"
+  facemarkerFront [
+    #"textures/Block060_Face01.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker2 [
-    "textures/Block065_Face02.png"
+  facemarkerBack [
+    #"textures/Block060_Face02.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker3 [
-    "textures/Block065_Face03.png"
+  facemarkerLeft [
+    #"textures/Block060_Face03.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker4 [
-    "textures/Block065_Face04.png"
+  facemarkerRight [
+    #"textures/Block060_Face04.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker5 [
-    "textures/Block065_Face05.png"
+  facemarkerTop [
+    #"textures/Block060_Face05.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker6 [
-    "textures/Block065_Face06.png"
+  facemarkerBottom [
+    #"textures/Block060_Face06.png"
+    "textures/batteryMarker.png"
   ]
 }
 Block1x1 {
@@ -230,23 +261,29 @@ Block1x1 {
   rotation 0 0 1 -0.1309
   blockColor 0 0 1
   
-  facemarker1 [
-    "textures/Block070_Face01.png"
+  facemarkerFront [
+    #"textures/Block060_Face01.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker2 [
-    "textures/Block070_Face02.png"
+  facemarkerBack [
+    #"textures/Block060_Face02.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker3 [
-    "textures/Block070_Face03.png"
+  facemarkerLeft [
+    #"textures/Block060_Face03.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker4 [
-    "textures/Block070_Face04.png"
+  facemarkerRight [
+    #"textures/Block060_Face04.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker5 [
-    "textures/Block070_Face05.png"
+  facemarkerTop [
+    #"textures/Block060_Face05.png"
+    "textures/batteryMarker.png"
   ]
-  facemarker6 [
-    "textures/Block070_Face06.png"
+  facemarkerBottom [
+    #"textures/Block060_Face06.png"
+    "textures/batteryMarker.png"
   ]
 }
 Block2x1 {

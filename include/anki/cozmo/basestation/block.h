@@ -41,7 +41,6 @@ namespace Anki {
       typedef Point3<unsigned char> Color;
       
       enum FaceName {
-        FIRST_FACE  = 0,
         FRONT_FACE  = 0,
         LEFT_FACE   = 1,
         BACK_FACE   = 2,
@@ -52,7 +51,7 @@ namespace Anki {
       };
       
       // "Safe" conversion from FaceType to enum FaceName (at least in Debug mode)
-      static FaceName FaceType_to_FaceName(FaceType type);
+      //static FaceName FaceType_to_FaceName(FaceType type);
       
       enum Corners {
         LEFT_FRONT_TOP =     0,
@@ -65,20 +64,21 @@ namespace Anki {
         RIGHT_BACK_BOTTOM =  7
       };
       
-      Block(const ObjectID_t blockID);
-      Block(const Block& otherBlock);
+      Block(const ObjectType_t type);
       
       ~Block();
       
-      static unsigned int get_numBlocks();
+      //static unsigned int get_numBlocks();
       
       // Accessors:
-      float     GetWidth() const;
-      float     GetHeight() const;
-      float     GetDepth() const;
+      Point3f const& GetSize() const;
+      float      GetWidth()  const;
+      float      GetHeight() const;
+      float      GetDepth()  const;
       //virtual float GetMinDim() const;
       //using Vision::ObservableObjectBase<Block>::GetMinDim;
-      
+
+
       void SetSize(const float width, const float height, const float depth);
       void SetColor(const float red, const float green, const float blue);
       void SetName(const std::string name);
@@ -88,11 +88,8 @@ namespace Anki {
                    const float markerSize_mm);
       
     protected:
-      // A counter for how many blocks are instantiated
-      // (A static counter may not be the best way to do this...)
-      static unsigned int numBlocks;
       
-      using Vision::ObservableObject::ID_;
+      static ObjectType_t NumTypes;
       
       // Make this protected so we have to use public AddFace() method
       using Vision::ObservableObject::AddMarker;
@@ -135,20 +132,22 @@ namespace Anki {
       
     }; // class Block
     
+    
     class Block_Cube1x1 : public Block
     {
     public:
-      Block_Cube1x1(const ObjectID_t ID);
+      Block_Cube1x1();
       
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
       
-      virtual ObservableObject* Clone() const
+      virtual Block* Clone() const
       {
         // Call the copy constructor
-        return new Block_Cube1x1(static_cast<const Block_Cube1x1&>(*this));
+        return new Block_Cube1x1(*this);
       }
       
     protected:
+      static const ObjectType_t BlockType;
       static const std::vector<RotationMatrix3d> rotationAmbiguities_;
       
     };
@@ -159,17 +158,18 @@ namespace Anki {
     class Block_2x1 : public Block
     {
     public:
-      Block_2x1(const ObjectID_t ID);
+      Block_2x1();
       
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
       
-      virtual ObservableObject* Clone() const
+      virtual Block* Clone() const
       {
         // Call the copy constructor
-        return new Block_2x1(static_cast<const Block_2x1&>(*this));
+        return new Block_2x1(*this);
       }
       
     protected:
+      static const ObjectType_t BlockType;
       static const std::vector<RotationMatrix3d> rotationAmbiguities_;
       
     };
@@ -184,6 +184,9 @@ namespace Anki {
     inline BlockID_t Block::GetID() const
     { return this->blockID_; }
     */
+    
+    inline Point3f const& Block::GetSize() const
+    { return this->size_; }
     
     inline float Block::GetWidth() const
     { return this->size_.y(); }
@@ -230,11 +233,13 @@ namespace Anki {
     { return this->markers[face]; }
     */
     
+    /*
     inline Block::FaceName Block::FaceType_to_FaceName(FaceType type)
     {
       CORETECH_ASSERT(type > 0 && type < NUM_FACES+1);
       return static_cast<FaceName>(type-1);
     }
+     */
     
   } // namespace Cozmo
 } // namespace Anki

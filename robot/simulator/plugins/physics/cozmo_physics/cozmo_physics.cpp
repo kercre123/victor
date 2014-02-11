@@ -23,6 +23,7 @@
 #include "anki/messaging/shared/UdpServer.h"
 
 
+#define DEBUG_COZMO_PHYSICS 0
     
 // Types for paths
 typedef std::vector<float> PathVertex_t;
@@ -61,8 +62,11 @@ static float arcRes_rad = 0.2;
 const int SIZEOF_FLOAT = sizeof(float);
 
 
+#if DEBUG_COZMO_PHYSICS
 #define PRINT(...) dWebotsConsolePrintf(__VA_ARGS__)
-
+#else
+#define PRINT(...)
+#endif
 
 /*
  * Note: This plugin will become operational only after it was compiled and associated with the current world (.wbt).
@@ -351,16 +355,20 @@ void webots_physics_draw(int pass, const char *view) {
       glTranslatef(obj->x_trans_m, obj->y_trans_m, obj->z_trans_m);
       glRotatef(obj->rot_deg, obj->rot_axis_x, obj->rot_axis_y, obj->rot_axis_z);
 
+      // For now, all objects are just bounding boxes
+      draw_cuboid(obj->x_size_m, obj->y_size_m, obj->z_size_m);
       
+      // TODO: use objectType-specific drawing functions
+      /*
       switch(obj->objectTypeID) {
         case 0:
-          // TODO Get dimensions from BlockDefinitions.h
-          draw_cuboid(0.06, 0.06, 0.06);
+          
           break;
         default:
           PRINT("Unknown objectTypeID %d\n", obj->objectTypeID);
           break;
       }
+       */
       
       glPopMatrix();
       
@@ -410,7 +418,7 @@ namespace Anki {
              msg.x_trans_m, msg.y_trans_m, msg.z_trans_m,
              msg.rot_deg, msg.rot_axis_x, msg.rot_axis_y, msg.rot_axis_z,
              msg.color);
-      
+
       objectMap_[msg.objectID] = msg;
     }
 

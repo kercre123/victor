@@ -89,8 +89,8 @@ Background {
   ]
 }
 DirectionalLight {
-  ambientIntensity 0.5
-  direction 1 1 -2
+  ambientIntensity 0.75
+  direction -1 -1 -2
   castShadows TRUE
 }
 
@@ -108,27 +108,27 @@ DEF FuelBlock Block1x1 {
   rotation 0 0 1 0
   blockColor 0.5 0.1 0.75
   
-  facemarker1 [
+  facemarkerFront [
     #"textures/Block060_Face01.png"
     "textures/batteryMarker.png"
   ]
-  facemarker2 [
+  facemarkerBack [
     #"textures/Block060_Face02.png"
     "textures/batteryMarker.png"
   ]
-  facemarker3 [
+  facemarkerLeft [
     #"textures/Block060_Face03.png"
     "textures/batteryMarker.png"
   ]
-  facemarker4 [
+  facemarkerRight [
     #"textures/Block060_Face04.png"
     "textures/batteryMarker.png"
   ]
-  facemarker5 [
+  facemarkerTop [
     #"textures/Block060_Face05.png"
     "textures/batteryMarker.png"
   ]
-  facemarker6 [
+  facemarkerBottom [
     #"textures/Block060_Face06.png"
     "textures/batteryMarker.png"
   ]
@@ -155,14 +155,6 @@ DEF OffboardVisionProcessor USBConnection {
 BlockWorldComms {
 
 }
-
-#DEF CozmoBotPose Robot {
-#
-#}
-
-#DEF WorldComms BlockWorldComms {
-#
-#}
 
 #OverlayDisplay {
 #

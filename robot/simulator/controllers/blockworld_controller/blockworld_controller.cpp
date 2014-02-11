@@ -30,7 +30,7 @@
 // TODO: Get rid of this once we're sure it's working with TCP stuff
 #define USE_WEBOTS_TXRX 0
 
-webots::Supervisor commsController;
+webots::Supervisor basestationController;
 
 
 //
@@ -41,7 +41,6 @@ using namespace Anki::Cozmo;
 
 int main(int argc, char **argv)
 {
-  const int MAX_ROBOTS = Anki::Cozmo::BlockWorld::MaxRobots;
   
   // Comms
   Anki::Cozmo::TCPComms robotComms;
@@ -50,10 +49,11 @@ int main(int argc, char **argv)
   
   
 #if(USE_WEBOTS_TXRX)
+  const int MAX_ROBOTS = Anki::Cozmo::BlockWorld::MaxRobots;
   webots::Receiver* rx[MAX_ROBOTS];
   webots::Emitter*  tx[MAX_ROBOTS];
 #endif
-  commsController.keyboardEnable(Anki::Cozmo::TIME_STEP);
+  basestationController.keyboardEnable(Anki::Cozmo::TIME_STEP);
 
 
   
@@ -68,22 +68,20 @@ int main(int argc, char **argv)
     snprintf(rxRadioName, 11, "radio_rx_%d", i+1);
     snprintf(txRadioName, 11, "radio_tx_%d", i+1);
     
-    tx[i] = commsController.getEmitter(txRadioName);
-    rx[i] = commsController.getReceiver(rxRadioName);
+    tx[i] = basestationController.getEmitter(txRadioName);
+    rx[i] = basestationController.getReceiver(rxRadioName);
     rx[i]->enable(Anki::Cozmo::TIME_STEP);
   }
 #endif
   
-  
-  
   //
   // Main Execution loop: step the world forward forever
   //
-  while (commsController.step(Anki::Cozmo::TIME_STEP) != -1)
+  while (basestationController.step(Anki::Cozmo::TIME_STEP) != -1)
   {
     // Update time
     // (To be done from iOS eventually)
-    Anki::BaseStationTimer::getInstance()->UpdateTime(SEC_TO_NANOS(commsController.getTime()));
+    Anki::BaseStationTimer::getInstance()->UpdateTime(SEC_TO_NANOS(basestationController.getTime()));
     
     // Read messages from all robots
     robotComms.Update();

@@ -23,11 +23,8 @@
 //                  or casts later.)
 //
 
-// This file is not specific to robot or basestation, as it defines the common
-// message protocol between them.  However, the macros used to generate actual
-// code based on the definitions below *is* specific to the two platforms.
-// Define those macros elsewhere:
-#include "anki/cozmo/MessageDefinitionMacros.h"
+// For now at least, Viz uses Robot-style message structures
+#include "anki/cozmo/MessageDefMacros_Robot.h"
 
 
 // VizObject
@@ -35,6 +32,9 @@ START_MESSAGE_DEFINITION(VizObject, 1)
 ADD_MESSAGE_MEMBER(u32, objectID)
 ADD_MESSAGE_MEMBER(u32, objectTypeID)
 ADD_MESSAGE_MEMBER(u32, color)
+ADD_MESSAGE_MEMBER(f32, x_size_m)
+ADD_MESSAGE_MEMBER(f32, y_size_m)
+ADD_MESSAGE_MEMBER(f32, z_size_m)
 ADD_MESSAGE_MEMBER(f32, x_trans_m)
 ADD_MESSAGE_MEMBER(f32, y_trans_m)
 ADD_MESSAGE_MEMBER(f32, z_trans_m)

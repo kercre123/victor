@@ -33,11 +33,18 @@ namespace Anki {
       isInitialized_ = false;
     }
     
-    void VizManager::SetVizObject(u32 objectID, u32 objectTypeID, const Anki::Pose3d &pose, u32 colorID)
+    void VizManager::SetVizObject(u32 objectID, u32 objectTypeID,
+                                  const Anki::Point3f &size_mm,
+                                  const Anki::Pose3d &pose, u32 colorID)
     {
       VizObject v;
       v.objectID = objectID;
       v.objectTypeID = objectTypeID;
+      
+      v.x_size_m = MM_TO_M(size_mm.x());
+      v.y_size_m = MM_TO_M(size_mm.y());
+      v.z_size_m = MM_TO_M(size_mm.z());
+      
       v.x_trans_m = MM_TO_M(pose.get_translation().x());
       v.y_trans_m = MM_TO_M(pose.get_translation().y());
       v.z_trans_m = MM_TO_M(pose.get_translation().z());
@@ -51,8 +58,7 @@ namespace Anki {
       
       v.color = colorID;
 
-      printf("Sending msg %d with %d bytes\n", VizObject_ID, (int)(sizeof(v) + 1));
-      
+      //printf("Sending msg %d with %d bytes\n", VizObject_ID, (int)(sizeof(v) + 1));
       
       // TODO: Does this work for poorly packed structs?  Just use Andrew's message class creator?
       sendBuf[0] = VizObject_ID;

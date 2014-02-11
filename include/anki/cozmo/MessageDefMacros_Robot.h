@@ -25,11 +25,14 @@
 
 // Make sure the Robot vs. Basestation #defines are as expected
 #if !defined(COZMO_ROBOT) || defined(COZMO_BASESTATION)
-#error If __FILENAME__ is included, COZMO_ROBOT should \
+#error If MessageDefMacros_Robot.h is included, COZMO_ROBOT should \
        be defined and COZMO_BASESTATION should not.
 #endif
 
 // Define the available modes
+#undef MESSAGE_STRUCT_DEFINITION_MODE
+#undef MESSAGE_TABLE_DEFINITION_MODE
+#undef MESSAGE_ENUM_DEFINITION_MODE
 #define MESSAGE_STRUCT_DEFINITION_MODE 0
 #define MESSAGE_TABLE_DEFINITION_MODE  1
 #define MESSAGE_ENUM_DEFINITION_MODE   2
@@ -43,6 +46,10 @@
 #else
 
 // Helper macros
+#undef GET_DISPATCH_FCN_NAME
+#undef GET_STRUCT_TYPENAME
+#undef GET_MESSAGE_ID
+
 #define GET_DISPATCH_FCN_NAME(__MSG_TYPE__) Process##__MSG_TYPE__##Message
 #define GET_STRUCT_TYPENAME(__MSG_TYPE__) __MSG_TYPE__
 #define GET_MESSAGE_ID(__MSG_TYPE__) __MSG_TYPE__##_ID
