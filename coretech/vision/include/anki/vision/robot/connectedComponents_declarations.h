@@ -37,6 +37,9 @@ namespace Anki
       bool operator== (const ConnectedComponentSegment &component2) const;
     }; // class ConnectedComponentSegment
 
+    // A ConnectedComponents class holds a list of ConnectedComponentSegment objects
+    // It can incrementally parse an input binary image per-row, updating its global list as it goes
+    // It also contains various utilities to remove poor-quality components
     class ConnectedComponents
     {
     public:
@@ -45,7 +48,6 @@ namespace Anki
       // TODO: Doublecheck that this is correct for corner cases
       static inline s64 CompareConnectedComponentSegments(const ConnectedComponentSegment &a, const ConnectedComponentSegment &b);
 
-      // TODO: when this class is converted to accept single scanlines as input, this will be significantly refactored
       static Result Extract1dComponents(const u8 * restrict binaryImageRow, const s16 binaryImageWidth, const s16 minComponentWidth, const s16 maxSkipDistance, FixedLengthList<ConnectedComponentSegment> &extractedComponents);
 
       ConnectedComponents();
@@ -57,6 +59,7 @@ namespace Anki
       // single list of ComponentSegments
       Result Extract2dComponents_FullImage(const Array<u8> &binaryImage, const s16 minComponentWidth, const s16 maxSkipDistance);
 
+      // Methods to parse an input binary image per-row, updating this object's global list as it goes
       Result Extract2dComponents_PerRow_Initialize();
       Result Extract2dComponents_PerRow_NextRow(const u8 * restrict binaryImageRow, const s32 imageWidth, const s16 whichRow, const s16 minComponentWidth, const s16 maxSkipDistance);
       Result Extract2dComponents_PerRow_Finalize();

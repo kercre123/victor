@@ -37,13 +37,12 @@ namespace Anki
 
       const s32 NUM_PREVIOUS_QUADS_TO_COMPARE = 2;
 
+      // A PlanarTransformation object can do the following:
+      // 1. Hold the current planar transformation, and optionally the initial extents of the quadrilateral
+      // 2. Update the planar transformation with an update delta
+      // 3. Transform a set of points or a quadrilateral to the new coordinate frame
       class PlanarTransformation_f32
       {
-        // A PlanarTransformation object can do the following:
-        // 1. Hold the current planar transformation, and optionally the initial extents of the plane segment quadrilateral
-        // 2. Update the planar transformation with an update delta
-        // 3. Transform a set of points or a quadrilateral to the new coordinate frame
-
       public:
 
         PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, MemoryStack &memory);
@@ -71,35 +70,39 @@ namespace Anki
 
         Result Print(const char * const variableName = "Transformation");
 
+        // Transform the input Quadrilateral, using this object's transformation
         Quadrilateral<f32> TransformQuadrilateral(const Quadrilateral<f32> &in,
           MemoryStack scratch,
           const f32 scale=1.0f) const;
 
+        // Set this object's transformType, centerOffset, initialCorners, and homography
         Result Set(const PlanarTransformation_f32 &newTransformation);
 
         Result set_transformType(const TransformType transformType);
-
         TransformType get_transformType() const;
 
         Result set_homography(const Array<f32>& in);
-
         const Array<f32>& get_homography() const;
 
         Result set_initialCorners(const Quadrilateral<f32> &initialCorners);
-
         const Quadrilateral<f32>& get_initialCorners() const;
 
         const Point<f32>& get_centerOffset() const;
 
+        // Transform this object's initialCorners, based on it's current homography
         Quadrilateral<f32> get_transformedCorners(MemoryStack scratch) const;
 
       protected:
         TransformType transformType;
 
-        Array<f32> homography; // All types of plane transformations are stored in a 3x3 homography matrix, though some values may be zero (or ones for diagonals)
+        // All types of plane transformations are stored in a 3x3 homography matrix, though some values may be zero (or ones for diagonals)
+        Array<f32> homography;
 
-        Quadrilateral<f32> initialCorners; // The initial corners of the valid region
+        // The initial corners of the valid region
+        Quadrilateral<f32> initialCorners;
 
+        // The offset applied to an image, so that origin of the coordinate system is at the center
+        // of the quadrilateral
         Point<f32> centerOffset;
 
         static Result TransformPointsStatic(
@@ -115,8 +118,10 @@ namespace Anki
       {
         // The generic LucasKanadeTracker class can track a template with the Lucas-Kanade method,
         // either with translation-only, affine, or projective updates. The two main steps are
-        // initialization and update. Note that this class uses a lot of memory (on the order of
-        // 600kb for an 80x60 input).
+        // initialization and update.
+        //
+        // NOTE:
+        // This class uses a lot of memory (on the order of 600kb for an 80x60 input).
 
       public:
         LucasKanadeTracker_f32();
@@ -170,7 +175,7 @@ namespace Anki
       class LucasKanadeTrackerFast
       {
         // An Translation-only or Affine-plus-translation LucasKanadeTracker. Unlike the general
-        // LucasKanadeTracker, this version uses much less memory, and will eventually be better optimized.
+        // LucasKanadeTracker, this version uses much less memory, and could be better optimized.
 
       public:
         LucasKanadeTrackerFast();
@@ -246,7 +251,6 @@ namespace Anki
         bool IsValid() const;
 
         Result set_transformation(const PlanarTransformation_f32 &transformation);
-
         PlanarTransformation_f32 get_transformation() const;
 
       protected:

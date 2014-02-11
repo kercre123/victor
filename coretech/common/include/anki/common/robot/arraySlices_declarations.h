@@ -90,8 +90,8 @@ namespace Anki
 
       // Set all values of this slice to the given value.
       //
-      // For example, "slice = array(0,-1,1,4); slice.Set(5);" is the same as
-      // Matlab's array(1:end, 2:5) = 5;
+      // For example, "array(0,-1,1,4).Set(5);" is the same as
+      // Matlab's "array(1:end, 2:5) = 5;"
       s32 Set(const Type value);
 
       // Get the raw Array from the Slice. This is mainly useful for interfacing with functions that

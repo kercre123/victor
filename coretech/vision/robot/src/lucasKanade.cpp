@@ -217,6 +217,10 @@ namespace Anki
           return lastResult;
         }
 
+        this->centerOffset = newTransformation.get_centerOffset();
+
+        this->initialCorners = initialCorners;
+
         return RESULT_OK;
       }
 
