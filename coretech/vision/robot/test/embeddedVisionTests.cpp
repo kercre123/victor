@@ -119,21 +119,48 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary_ComputeIndexLimitsVertical)
 
   TemplateTracker::LucasKanadeTrackerBinary lktb(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, scratch_CMX);
 
-  lktb.UpdateTrackOnce(nextImage,
-    edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType,
-    matching_maxDistance, matching_maxCorrespondences, TemplateTracker::TRANSFORM_TRANSLATION, scratch_CMX);
+  {
+    PUSH_MEMORY_STACK(scratch_CMX);
 
-  lktb.UpdateTrackOnce(nextImage,
-    edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType,
-    matching_maxDistance, matching_maxCorrespondences, TemplateTracker::TRANSFORM_PROJECTIVE, scratch_CMX);
+    const Result result = lktb.UpdateTrackOnce(nextImage,
+      edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType,
+      matching_maxDistance, matching_maxCorrespondences, TemplateTracker::TRANSFORM_TRANSLATION, scratch_CMX);
 
-  lktb.get_transformation().TransformArray(templateImage, warpedTemplateImage, scratch_CMX, 1.0f);
+    ASSERT_TRUE(result == RESULT_OK);
 
-  templateImage.Show("templateImage", false, false, true);
-  nextImage.Show("nextImage", false, false, true);
-  warpedTemplateImage.Show("warpedTemplateImage", false, false, true);
-  lktb.ShowTemplate(false, true);
-  cv::waitKey();
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch_CMX);
+    transform_groundTruth[0][2] = 2.3691f;
+    transform_groundTruth[1][2] = -3.5082f;
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+  }
+
+  {
+    PUSH_MEMORY_STACK(scratch_CMX);
+
+    const Result result = lktb.UpdateTrackOnce(nextImage,
+      edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType,
+      matching_maxDistance, matching_maxCorrespondences, TemplateTracker::TRANSFORM_PROJECTIVE, scratch_CMX);
+
+    ASSERT_TRUE(result == RESULT_OK);
+
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratch_CMX);
+    transform_groundTruth[0][0] = 1.0693f;  transform_groundTruth[0][1] = 0.0008f; transform_groundTruth[0][2] = 2.2256f;
+    transform_groundTruth[1][0] = 0.0010f;  transform_groundTruth[1][1] = 1.0604f; transform_groundTruth[1][2] = -4.1188f;
+    transform_groundTruth[2][0] = -0.0001f; transform_groundTruth[2][1] = 0.0f;    transform_groundTruth[2][2] = 1.0f;
+
+    //lktb.get_transformation().get_homography().Print("h");
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(lktb.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+  }
+
+  //lktb.get_transformation().TransformArray(templateImage, warpedTemplateImage, scratch_CMX, 1.0f);
+
+  //templateImage.Show("templateImage", false, false, true);
+  //nextImage.Show("nextImage", false, false, true);
+  //warpedTemplateImage.Show("warpedTemplateImage", false, false, true);
+  //lktb.ShowTemplate(false, true);
+  //cv::waitKey();
 
   GTEST_RETURN_HERE;
 }

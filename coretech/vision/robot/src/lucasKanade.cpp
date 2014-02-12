@@ -2411,7 +2411,7 @@ namespace Anki
           update[0][0] = -sumX / f32(numX);
           update[0][1] = -sumY / f32(numY);
 
-          update.Print("update");
+          //update.Print("update");
 
           this->transformation.Update(update, scratch, TRANSFORM_TRANSLATION);
         } else if(updateType == TRANSFORM_PROJECTIVE) {
@@ -2477,7 +2477,7 @@ namespace Anki
 
           lastResult = Matrix::SolveLeastSquaresWithCholesky<f32>(AtA, Atb_t, false);
 
-          Atb_t.Print("result");
+          //Atb_t.Print("result");
 
           AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
             lastResult, "LucasKanadeTrackerBinary::UpdateTransformation", "SolveLeastSquaresWithCholesky failed");
@@ -2488,7 +2488,7 @@ namespace Anki
           newHomography[1][0] = pAtb_t[3]; newHomography[1][1] = pAtb_t[4]; newHomography[1][2] = pAtb_t[5];
           newHomography[2][0] = pAtb_t[6]; newHomography[2][1] = pAtb_t[7]; newHomography[2][2] = 1.0f;
 
-          newHomography.Print("newHomography");
+          //newHomography.Print("newHomography");
 
           this->transformation.set_homography(newHomography);
         }
