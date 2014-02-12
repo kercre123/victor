@@ -105,8 +105,6 @@ else
         templateImageResized, extremaFilterWidth, extremaFilterSigma, extremaDerivativeThreshold, false, true);
 end
 
-keyboard
-
 xMinima1Image(~templateMask) = 0;
 yMinima1Image(~templateMask) = 0;
 xMaxima1Image(~templateMask) = 0;

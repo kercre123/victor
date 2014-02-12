@@ -239,10 +239,25 @@ namespace Anki
           bool isVerticalMatch;
         };
 
+        // Find the min and max indexes of point with a given Y location
+        // The list of points must be sorted in Y, from low to high
         static Result ComputeIndexLimitsVertical(const FixedLengthList<Point<s16> > &points, Array<s32> &yStartIndexes);
+
+        // Find the min and max indexes of point with a given X location
+        // The list of points must be sorted in X, from low to high
         static Result ComputeIndexLimitsHorizontal(const FixedLengthList<Point<s16> > &points, Array<s32> &xStartIndexes);
 
         static Result FindVerticalCorrespondences(
+          const s32 maxMatchingDistance,
+          const PlanarTransformation_f32 &transformation,
+          const FixedLengthList<Point<s16> > &templatePoints,
+          const FixedLengthList<Point<s16> > &newPoints,
+          const s32 imageHeight,
+          const s32 imageWidth,
+          FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
+          MemoryStack scratch);
+
+        Result FindHorizontalCorrespondences(
           const s32 maxMatchingDistance,
           const PlanarTransformation_f32 &transformation,
           const FixedLengthList<Point<s16> > &templatePoints,
@@ -263,7 +278,7 @@ namespace Anki
         Result UpdateTrackOnce(
           const Array<u8> &nextImage,
           const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
-          const s32 maxMatchingDistance,
+          const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
           const TransformType updateType,
           MemoryStack scratch);
 
@@ -304,6 +319,8 @@ namespace Anki
           const FixedLengthList<Point<s16> > &indexPoints3,
           const FixedLengthList<Point<s16> > &indexPoints4);
 #endif
+
+        Result UpdateTransformation(const FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences, const TransformType updateType, MemoryStack scratch);
       }; // class LucasKanadeTrackerBinary
     } // namespace TemplateTracker
   } // namespace Embedded

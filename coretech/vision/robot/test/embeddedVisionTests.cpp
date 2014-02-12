@@ -88,7 +88,7 @@ Matlab matlab(false);
 #if (defined(RUN_LOW_MEMORY_IMAGE_TESTS) || defined(RUN_TRACKER_TESTS)) &&\
   !defined(RUN_MAIN_BIG_MEMORY_TESTS) && !defined(RUN_ALL_BIG_MEMORY_TESTS)
 #define DDR_BUFFER_SIZE 320000
-#define CMX_BUFFER_SIZE 600000
+#define CMX_BUFFER_SIZE 6000000 // TODO: switch back to 600k
 #else
 #define DDR_BUFFER_SIZE 4000000
 #define CMX_BUFFER_SIZE 6000000
@@ -110,14 +110,22 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary_ComputeIndexLimitsVertical)
   const s32 edgeDetection_minComponentWidth = 2;
   const s32 edgeDetection_maxDetectionsPerType = 3000;
 
+  const s32 matching_maxDistance = 7;
+  const s32 matching_maxCorrespondences = 10000;
+
   templateImage.Set(&cozmo_2014_01_29_11_41_05_10_320x240[0], cozmo_2014_01_29_11_41_05_10_320x240_WIDTH*cozmo_2014_01_29_11_41_05_10_320x240_HEIGHT);
   nextImage.Set(&cozmo_2014_01_29_11_41_05_12_320x240[0], cozmo_2014_01_29_11_41_05_12_320x240_WIDTH*cozmo_2014_01_29_11_41_05_12_320x240_HEIGHT);
 
-  templateImage.Show("templateImage", false, false, true);
-  nextImage.Show("nextImage", true, false, true);
-
   TemplateTracker::LucasKanadeTrackerBinary lktb(templateImage, templateQuad, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType, scratch_CMX);
-  lktb.ShowTemplate(true, true);
+
+  lktb.UpdateTrackOnce(nextImage,
+    edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType,
+    matching_maxDistance, matching_maxCorrespondences, TemplateTracker::TRANSFORM_TRANSLATION, scratch_CMX);
+
+  templateImage.Show("templateImage", false, false, true);
+  nextImage.Show("nextImage", false, false, true);
+  lktb.ShowTemplate(false, true);
+  cv::waitKey();
 
   GTEST_RETURN_HERE;
 }

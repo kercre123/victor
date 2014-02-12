@@ -1755,6 +1755,8 @@ namespace Anki
         AnkiConditionalErrorAndReturn(templateImage.IsValid(),
           "LucasKanadeTrackerBinary::LucasKanadeTrackerBinary", "templateImage is not valid");
 
+        this->transformation = PlanarTransformation_f32(TRANSFORM_PROJECTIVE, templateQuad, memory);
+
         this->templateImage = Array<u8>(templateImageHeight, templateImageWidth, memory);
         this->templateQuad = templateQuad;
 
@@ -1936,10 +1938,12 @@ namespace Anki
       Result LucasKanadeTrackerBinary::UpdateTrackOnce(
         const Array<u8> &nextImage,
         const u8 edgeDetection_grayvalueThreshold, const s32 edgeDetection_minComponentWidth, const s32 edgeDetection_maxDetectionsPerType,
-        const s32 maxMatchingDistance,
+        const s32 matching_maxDistance, const s32 matching_maxCorrespondences,
         const TransformType updateType,
         MemoryStack scratch)
       {
+        Result lastResult;
+
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
 
@@ -1958,19 +1962,74 @@ namespace Anki
           next_xDecreasingIndexes.IsValid() && next_xIncreasingIndexes.IsValid() && next_yDecreasingIndexes.IsValid() && next_yIncreasingIndexes.IsValid(),
           RESULT_FAIL_OUT_OF_MEMORY, "LucasKanadeTrackerBinary::UpdateTrackOnce", "Could not allocate local scratch");
 
-        const Result result = DetectBlurredEdge(nextImage, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, next_xDecreasingIndexes, next_xIncreasingIndexes, next_yDecreasingIndexes, next_yIncreasingIndexes);
+        lastResult = DetectBlurredEdge(nextImage, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, next_xDecreasingIndexes, next_xIncreasingIndexes, next_yDecreasingIndexes, next_yIncreasingIndexes);
 
-        AnkiConditionalErrorAndReturnValue(result == RESULT_OK,
-          result, "LucasKanadeTrackerBinary::UpdateTrackOnce", "DetectBlurredEdge failed");
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "LucasKanadeTrackerBinary::UpdateTrackOnce", "DetectBlurredEdge failed");
 
-        //FixedLengthList<Point<f32> > next_xDecreasingGrid = LucasKanadeTrackerBinary::TransformIndexesToGrid(next_xDecreasingIndexes, this->xGrid, this->yGrid, scratch);
-        //FixedLengthList<Point<f32> > next_xIncreasingGrid = LucasKanadeTrackerBinary::TransformIndexesToGrid(next_xIncreasingIndexes, this->xGrid, this->yGrid, scratch);
-        //FixedLengthList<Point<f32> > next_yDecreasingGrid = LucasKanadeTrackerBinary::TransformIndexesToGrid(next_yDecreasingIndexes, this->xGrid, this->yGrid, scratch);
-        //FixedLengthList<Point<f32> > next_yIncreasingGrid = LucasKanadeTrackerBinary::TransformIndexesToGrid(next_yIncreasingIndexes, this->xGrid, this->yGrid, scratch);
+        //next_xDecreasingIndexes.Print("next_xDecreasingIndexes");
+        //next_xIncreasingIndexes.Print("next_xIncreasingIndexes");
+        //next_yDecreasingIndexes.Print("next_yDecreasingIndexes");
+        //next_yIncreasingIndexes.Print("next_yIncreasingIndexes");
 
-        //AnkiConditionalErrorAndReturnValue(
-        //  next_xDecreasingGrid.IsValid() && next_xIncreasingGrid.IsValid() && next_yDecreasingGrid.IsValid() && next_yIncreasingGrid.IsValid(),
-        //  RESULT_FAIL_OUT_OF_MEMORY, "LucasKanadeTrackerBinary::UpdateTrackOnce", "Could not allocate local memory");
+        FixedLengthList<LucasKanadeTrackerBinary::Correspondence> correspondences(matching_maxCorrespondences, scratch);
+
+        lastResult = LucasKanadeTrackerBinary::FindHorizontalCorrespondences(
+          matching_maxDistance,
+          this->transformation,
+          this->template_xDecreasingIndexes,
+          next_xDecreasingIndexes,
+          nextImage.get_size(0),
+          nextImage.get_size(1),
+          correspondences,
+          scratch);
+
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "LucasKanadeTrackerBinary::UpdateTrackOnce", "FindHorizontalCorrespondences 1 failed");
+
+        lastResult = LucasKanadeTrackerBinary::FindHorizontalCorrespondences(
+          matching_maxDistance,
+          this->transformation,
+          this->template_xIncreasingIndexes,
+          next_xIncreasingIndexes,
+          nextImage.get_size(0),
+          nextImage.get_size(1),
+          correspondences,
+          scratch);
+
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "LucasKanadeTrackerBinary::UpdateTrackOnce", "FindHorizontalCorrespondences 2 failed");
+
+        lastResult = LucasKanadeTrackerBinary::FindVerticalCorrespondences(
+          matching_maxDistance,
+          this->transformation,
+          this->template_yDecreasingIndexes,
+          next_yDecreasingIndexes,
+          nextImage.get_size(0),
+          nextImage.get_size(1),
+          correspondences,
+          scratch);
+
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "LucasKanadeTrackerBinary::UpdateTrackOnce", "FindVerticalCorrespondences 1 failed");
+
+        lastResult = LucasKanadeTrackerBinary::FindVerticalCorrespondences(
+          matching_maxDistance,
+          this->transformation,
+          this->template_yIncreasingIndexes,
+          next_yIncreasingIndexes,
+          nextImage.get_size(0),
+          nextImage.get_size(1),
+          correspondences,
+          scratch);
+
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "LucasKanadeTrackerBinary::UpdateTrackOnce", "FindVerticalCorrespondences 2 failed");
+
+        lastResult = this->UpdateTransformation(correspondences, updateType, scratch);
+
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "LucasKanadeTrackerBinary::UpdateTrackOnce", "UpdateTransformation failed");
 
         return RESULT_OK;
       }
@@ -2039,15 +2098,6 @@ namespace Anki
         return RESULT_OK;
       }
 
-      //class Correspondence
-      //{
-      //public:
-      //  Point<f32> originalTemplatePoint;
-      //  Point<f32> warpedTemplatePoint;
-      //  Point<f32> matchedPoint;
-      //  bool isVerticalMatch;
-      //};
-
       Result LucasKanadeTrackerBinary::FindVerticalCorrespondences(
         const s32 maxMatchingDistance,
         const PlanarTransformation_f32 &transformation,
@@ -2083,23 +2133,20 @@ namespace Anki
         const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
         const s32 * restrict pYStartIndexes = yStartIndexes.Pointer(0,0);
 
-        correspondences.Clear();
-
         for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++) {
-          const f32 x = static_cast<f32>(pTemplatePoints[iPoint].x);
-          const f32 y = static_cast<f32>(pTemplatePoints[iPoint].y);
+          const f32 xr = static_cast<f32>(pTemplatePoints[iPoint].x);
+          const f32 yr = static_cast<f32>(pTemplatePoints[iPoint].y);
 
           //
           // Warp x and y based on the current homography
           //
 
-          const f32 wpi = 1.0f / (h20*x + h21*y + h22);
-
           // Subtract the center offset
-          const f32 xc = x - centerOffset.x;
-          const f32 yc = y - centerOffset.y;
+          const f32 xc = xr - centerOffset.x;
+          const f32 yc = yr - centerOffset.y;
 
           // Projective warp
+          const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
           const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
           const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
 
@@ -2118,7 +2165,7 @@ namespace Anki
                   Correspondence cor;
                   cor.originalTemplatePoint = Point<f32>(xc, yc);
                   cor.warpedTemplatePoint = Point<f32>(warpedX, warpedY);
-                  cor.matchedPoint = Point<f32>(static_cast<f32>(xpRounded), static_cast<f32>(ypRounded));
+                  cor.matchedPoint = Point<f32>(warpedX, warpedY+static_cast<f32>(offset));
                   cor.isVerticalMatch = true;
 
                   correspondences.PushBack(cor);
@@ -2127,6 +2174,126 @@ namespace Anki
             } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
           } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
         } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
+
+        return RESULT_OK;
+      } // Result LucasKanadeTrackerBinary::FindVerticalCorrespondences()
+
+      Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences(
+        const s32 maxMatchingDistance,
+        const PlanarTransformation_f32 &transformation,
+        const FixedLengthList<Point<s16> > &templatePoints,
+        const FixedLengthList<Point<s16> > &newPoints,
+        const s32 imageHeight,
+        const s32 imageWidth,
+        FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
+        MemoryStack scratch)
+      {
+        Result lastResult;
+
+        const s32 numTemplatePoints = templatePoints.get_size();
+        const s32 numNewPoints = newPoints.get_size();
+
+        Array<s32> xStartIndexes(1, imageWidth+1, scratch);
+
+        lastResult = ComputeIndexLimitsHorizontal(newPoints, xStartIndexes);
+
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+          lastResult, "LucasKanadeTrackerBinary::FindHorizontalCorrespondences", "ComputeIndexLimitsHorizontal failed");
+
+        xStartIndexes.Print("xStartIndexes");
+
+        const Array<f32> &homography = transformation.get_homography();
+        const Point<f32> &centerOffset = transformation.get_centerOffset();
+
+        const f32 h00 = homography[0][0]; const f32 h01 = homography[0][1]; const f32 h02 = homography[0][2];
+        const f32 h10 = homography[1][0]; const f32 h11 = homography[1][1]; const f32 h12 = homography[1][2];
+        const f32 h20 = homography[2][0]; const f32 h21 = homography[2][1]; const f32 h22 = 1.0f;
+
+        AnkiAssert(FLT_NEAR(homography[2][2], 1.0f));
+
+        const Point<s16> * restrict pTemplatePoints = templatePoints.Pointer(0);
+        const Point<s16> * restrict pNewPoints = newPoints.Pointer(0);
+        const s32 * restrict pXStartIndexes = xStartIndexes.Pointer(0,0);
+
+        for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++) {
+          const f32 xr = static_cast<f32>(pTemplatePoints[iPoint].x);
+          const f32 yr = static_cast<f32>(pTemplatePoints[iPoint].y);
+
+          //
+          // Warp x and y based on the current homography
+          //
+
+          // Subtract the center offset
+          const f32 xc = xr - centerOffset.x;
+          const f32 yc = yr - centerOffset.y;
+
+          // Projective warp
+          const f32 wpi = 1.0f / (h20*xc + h21*yc + h22);
+          const f32 warpedX = (h00*xc + h01*yc + h02) * wpi;
+          const f32 warpedY = (h10*xc + h11*yc + h12) * wpi;
+
+          // TODO: verify the -0.5f is correct
+          const s32 warpedXrounded = static_cast<s32>(Roundf(warpedX + centerOffset.x - 0.5f));
+          const s32 warpedYrounded = static_cast<s32>(Roundf(warpedY + centerOffset.y - 0.5f));
+
+          if(warpedXrounded >= maxMatchingDistance && warpedXrounded < (imageWidth-maxMatchingDistance)) {
+            for(s32 offset=-maxMatchingDistance; offset<=maxMatchingDistance; offset++) {
+              const s32 xpRounded = warpedXrounded + offset;
+              const s32 ypRounded = warpedYrounded;
+
+              // TODO: make a binary search?
+              for(s32 iMatch=pXStartIndexes[xpRounded]; iMatch<pXStartIndexes[xpRounded+1]; iMatch++) {
+                if(ypRounded == pNewPoints[iMatch].y) {
+                  Correspondence cor;
+                  cor.originalTemplatePoint = Point<f32>(xc, yc);
+                  cor.warpedTemplatePoint = Point<f32>(warpedX, warpedY);
+                  cor.matchedPoint = Point<f32>(warpedX+static_cast<f32>(offset), warpedY);
+                  cor.isVerticalMatch = false;
+
+                  correspondences.PushBack(cor);
+                }
+              }
+            } // for(s32 iOffset=-maxMatchingDistance; iOffset<=maxMatchingDistance; iOffset++)
+          } // if(warpedYrounded >= maxMatchingDistance && warpedYrounded < (imageHeight-maxMatchingDistance))
+        } // for(s32 iPoint=0; iPoint<numTemplatePoints; iPoint++)
+
+        return RESULT_OK;
+      } // Result LucasKanadeTrackerBinary::FindHorizontalCorrespondences()
+
+      Result LucasKanadeTrackerBinary::UpdateTransformation(const FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences, const TransformType updateType, MemoryStack scratch)
+      {
+        if(updateType == TRANSFORM_TRANSLATION) {
+          f64 sumX = 0.0;
+          f64 sumY = 0.0;
+
+          s32 numX = 0;
+          s32 numY = 0;
+
+          const s32 numCorrespondences = correspondences.get_size();
+
+          const Correspondence * restrict pCorrespondences = correspondences.Pointer(0);
+
+          for(s32 iCor=0; iCor<numCorrespondences; iCor++) {
+            if(pCorrespondences[iCor].isVerticalMatch) {
+              sumY += (pCorrespondences[iCor].matchedPoint.y - pCorrespondences[iCor].warpedTemplatePoint.y);
+              numY++;
+            } else {
+              sumX += (pCorrespondences[iCor].matchedPoint.x - pCorrespondences[iCor].warpedTemplatePoint.x);
+              numX++;
+            }
+          }
+
+          Array<f32> update(1,2,scratch);
+
+          update[0][0] = sumX / f64(numX);
+          update[0][1] = sumY / f64(numY);
+
+          update.Print("update");
+
+          this->transformation.Update(update, scratch, TRANSFORM_TRANSLATION);
+        } else if(updateType == TRANSFORM_PROJECTIVE) {
+          return RESULT_FAIL;
+        }
 
         return RESULT_OK;
       }

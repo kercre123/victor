@@ -43,7 +43,7 @@ namespace Anki
       const s32 imageStride = image.get_stride();
 
       //
-      // Detect horizontal minima and positive
+      // Detect horizontal positive and negative transitions
       //
 
       for(s32 y=imageRegionOfInterest.top; y<imageRegionOfInterest.bottom; y++) {
@@ -103,7 +103,7 @@ namespace Anki
       } // for(s32 y=0; y<imageRegionOfInterest.bottom; y++)
 
       //
-      //  Detect vertical negative and maxima
+      //  Detect vertical positive and negative transitions
       //
 
       for(s32 x=imageRegionOfInterest.left; x<imageRegionOfInterest.right; x++) {
