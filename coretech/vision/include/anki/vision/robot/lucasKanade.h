@@ -40,14 +40,17 @@ namespace Anki
       // A PlanarTransformation object can do the following:
       // 1. Hold the current planar transformation, and optionally the initial extents of the quadrilateral
       // 2. Update the planar transformation with an update delta
-      // 3. Transform a set of points or a quadrilateral to the new coordinate frame
+      // 3. Transform a set of points, quadrilateral, or image to the new coordinate frame
       class PlanarTransformation_f32
       {
       public:
 
+        // Initialize with input corners and homography
+        // The input corners and homography are copied to object-local copies
         PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, MemoryStack &memory);
 
         // Initialize with an identity homography
+        // The input corners are copied to an object-local copy
         PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, MemoryStack &memory);
 
         // Initialize with an identity homography and corners with all zero coordinates
@@ -66,6 +69,8 @@ namespace Anki
 
         // Update the transformation. The format of the update should be as follows:
         // TRANSFORM_TRANSLATION: [-dx, -dy]
+        // TRANSFORM_AFFINE: [h00, h01, h02, h10, h11, h12]
+        // TRANSFORM_PROJECTIVE: [h00, h01, h02, h10, h11, h12, h20, h21]
         Result Update(const Array<f32> &update, MemoryStack scratch, TransformType updateType=TRANSFORM_UNKNOWN);
 
         Result Print(const char * const variableName = "Transformation");
@@ -75,6 +80,7 @@ namespace Anki
           MemoryStack scratch,
           const f32 scale=1.0f) const;
 
+        // Transform an array (like an image)
         Result TransformArray(const Array<u8> &in,
           Array<u8> &out,
           MemoryStack scratch,
@@ -94,7 +100,7 @@ namespace Anki
 
         const Point<f32>& get_centerOffset() const;
 
-        // Transform this object's initialCorners, based on it's current homography
+        // Transform this object's initialCorners, based on its current homography
         Quadrilateral<f32> get_transformedCorners(MemoryStack scratch) const;
 
       protected:
@@ -262,7 +268,7 @@ namespace Anki
           FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences,
           MemoryStack scratch);
 
-        Result FindHorizontalCorrespondences(
+        static Result FindHorizontalCorrespondences(
           const s32 maxMatchingDistance,
           const PlanarTransformation_f32 &transformation,
           const FixedLengthList<Point<s16> > &templatePoints,

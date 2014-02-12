@@ -121,6 +121,10 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTrackerBinary_ComputeIndexLimitsVertical)
 
   lktb.UpdateTrackOnce(nextImage,
     edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType,
+    matching_maxDistance, matching_maxCorrespondences, TemplateTracker::TRANSFORM_PROJECTIVE, scratch_CMX);
+
+  lktb.UpdateTrackOnce(nextImage,
+    edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, edgeDetection_maxDetectionsPerType,
     matching_maxDistance, matching_maxCorrespondences, TemplateTracker::TRANSFORM_TRANSLATION, scratch_CMX);
 
   lktb.get_transformation().TransformArray(templateImage, warpedTemplateImage, scratch_CMX, 1.0f);

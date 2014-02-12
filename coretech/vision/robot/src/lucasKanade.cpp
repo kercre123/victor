@@ -2306,16 +2306,15 @@ namespace Anki
 
       Result LucasKanadeTrackerBinary::UpdateTransformation(const FixedLengthList<LucasKanadeTrackerBinary::Correspondence> &correspondences, const TransformType updateType, MemoryStack scratch)
       {
+        const s32 numCorrespondences = correspondences.get_size();
+        const Correspondence * restrict pCorrespondences = correspondences.Pointer(0);
+
         if(updateType == TRANSFORM_TRANSLATION) {
           f32 sumX = 0.0;
           f32 sumY = 0.0;
 
           s32 numX = 0;
           s32 numY = 0;
-
-          const s32 numCorrespondences = correspondences.get_size();
-
-          const Correspondence * restrict pCorrespondences = correspondences.Pointer(0);
 
           for(s32 iCor=0; iCor<numCorrespondences; iCor++) {
             if(pCorrespondences[iCor].isVerticalMatch) {
@@ -2336,7 +2335,82 @@ namespace Anki
 
           this->transformation.Update(update, scratch, TRANSFORM_TRANSLATION);
         } else if(updateType == TRANSFORM_PROJECTIVE) {
-          return RESULT_FAIL;
+          const s32 numTransformationParameters = updateType >> 8;
+
+          Array<f32> At(numTransformationParameters, numCorrespondences, scratch);
+          Array<f32> bt(1, numCorrespondences, scratch);
+
+          Array<f32> AtA(numTransformationParameters, numTransformationParameters, scratch);
+          Array<f32> Atb(numTransformationParameters, 1, scratch);
+          Array<f32> Atb_t(1, numTransformationParameters, scratch);
+
+          Array<f32> newHomography(3, 3, scratch);
+
+          AnkiConditionalErrorAndReturnValue(At.IsValid() && bt.IsValid() && AtA.IsValid() && Atb.IsValid() && Atb_t.IsValid() && newHomography.IsValid(),
+            RESULT_FAIL_OUT_OF_MEMORY, "LucasKanadeTrackerBinary::UpdateTransformation", "Could not allocate local memory");
+
+          f32 * restrict pBt = bt.Pointer(0,0);
+
+          for(s32 i=0; i<numCorrespondences; i++) {
+            const f32 xi = pCorrespondences[i].originalTemplatePoint.x;
+            const f32 yi = pCorrespondences[i].originalTemplatePoint.y;
+
+            if( pCorrespondences[i].isVerticalMatch) {
+              const f32 yp = pCorrespondences[i].matchedPoint.y;
+
+              *At.Pointer(3,i) = -xi;
+              *At.Pointer(4,i) = -yi;
+              *At.Pointer(5,i) = -1;
+              *At.Pointer(6,i) = xi*yp;
+              *At.Pointer(7,i) = yi*yp;
+
+              pBt[i] = -yp;
+            } else {
+              const f32 xp = pCorrespondences[i].matchedPoint.x;
+              *At.Pointer(0,i) = xi;
+              *At.Pointer(1,i) = yi;
+              *At.Pointer(2,i) = 1;
+              *At.Pointer(6,i) = -xi*xp;
+              *At.Pointer(7,i) = -yi*xp;
+
+              pBt[i] = xp;
+            }
+          }
+
+          /*{
+          PUSH_MEMORY_STACK(scratch);
+          Array<f32> A(numCorrespondences, numTransformationParameters, scratch);
+          Matrix::Transpose(At, A);
+          A.Print("A");
+          }*/
+
+          //At.Print("At");
+          //bt.Print("bt");
+
+          Matrix::MultiplyTranspose(At, At, AtA);
+          Matrix::MultiplyTranspose(At, bt, Atb);
+
+          //AtA.Print("AtA");
+          //Atb.Print("Atb");
+
+          Matrix::Transpose(Atb, Atb_t);
+
+          lastResult = Matrix::SolveLeastSquaresWithCholesky<f32>(AtA, Atb_t, false);
+
+          Atb_t.Print("result");
+
+          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
+            lastResult, "LucasKanadeTrackerBinary::UpdateTransformation", "SolveLeastSquaresWithCholesky failed");
+
+          const f32 * restrict pAtb_t = Atb_t.Pointer(0,0);
+
+          newHomography[0][0] = pAtb_t[0]; newHomography[0][1] = pAtb_t[1]; newHomography[0][2] = pAtb_t[2];
+          newHomography[1][0] = pAtb_t[3]; newHomography[1][1] = pAtb_t[4]; newHomography[1][2] = pAtb_t[5];
+          newHomography[2][0] = pAtb_t[6]; newHomography[2][1] = pAtb_t[7]; newHomography[2][2] = 1.0f;
+
+          newHomography.Print("newHomography");
+
+          this->transformation.set_homography(newHomography);
         }
 
         return RESULT_OK;
