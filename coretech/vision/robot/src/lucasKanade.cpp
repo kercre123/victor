@@ -30,16 +30,64 @@ namespace Anki
       static Result lastResult;
 
       PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, MemoryStack &memory)
-        : transformType(transformType), initialCorners(initialCorners),
-        centerOffset(initialCorners.ComputeCenter())
       {
-        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
-          "PlanarTransformation_f32::PlanarTransformation_f32", "Invalid transformType %d", transformType);
+        this->centerOffset = initialCorners.ComputeCenter();
+
+        this->Init(transformType, initialCorners, initialHomography, centerOffset, memory);
+      }
+
+      PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, MemoryStack &memory)
+      {
+        this->homography = Array<f32>();
+        this->centerOffset = initialCorners.ComputeCenter();
+
+        this->Init(transformType, initialCorners, homography, centerOffset, memory);
+      }
+
+      PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, MemoryStack &memory)
+      {
+        this->homography = Array<f32>();
+        this->initialCorners = Quadrilateral<f32>(Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f));
+        this->centerOffset = initialCorners.ComputeCenter();
+
+        this->Init(transformType, initialCorners, homography, centerOffset, memory);
+      }
+
+      PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, const Point<f32> &centerOffset, MemoryStack &memory)
+      {
+        this->Init(transformType, initialCorners, initialHomography, centerOffset, memory);
+      }
+
+      PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Point<f32> &centerOffset, MemoryStack &memory)
+      {
+        this->homography = Array<f32>();
+
+        this->Init(transformType, initialCorners, homography, centerOffset, memory);
+      }
+
+      PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, const Point<f32> &centerOffset, MemoryStack &memory)
+      {
+        this->homography = Array<f32>();
+        this->initialCorners = Quadrilateral<f32>(Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f), Point<f32>(0.0f,0.0f));
+
+        this->Init(transformType, initialCorners, homography, centerOffset, memory);
+      }
+
+      Result PlanarTransformation_f32::Init(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, const Point<f32> &centerOffset, MemoryStack &memory)
+      {
+        this->isValid = false;
+
+        AnkiConditionalErrorAndReturnValue(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
+          RESULT_FAIL_INVALID_PARAMETERS, "PlanarTransformation_f32::Init", "Invalid transformType %d", transformType);
+
+        this->transformType = transformType;
+        this->centerOffset = centerOffset;
+        this->initialCorners = initialCorners;
 
         // Store the initial quad recentered around the centerOffset.
         // get_transformedCorners() will add it back
-        for(s32 i_pt=0; i_pt<4; ++i_pt) {
-          this->initialCorners[i_pt] -= this->centerOffset;
+        for(s32 iPoint=0; iPoint<4; iPoint++) {
+          this->initialCorners[iPoint] -= this->centerOffset;
         }
 
         this->homography = Eye<f32>(3, 3, memory);
@@ -47,49 +95,15 @@ namespace Anki
         if(initialHomography.IsValid()) {
           this->homography.Set(initialHomography);
         }
-      }
 
-      PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, MemoryStack &memory)
-        : transformType(transformType), initialCorners(initialCorners),
-        centerOffset(initialCorners.ComputeCenter())
-      {
-        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
-          "PlanarTransformation_f32::PlanarTransformation_f32", "Invalid transformType %d", transformType);
+        this->isValid = true;
 
-        // Store the initial quad recentered around the centerOffset.
-        // get_transformedCorners() will add it back
-        for(s32 i_pt=0; i_pt<4; ++i_pt) {
-          this->initialCorners[i_pt] -= this->centerOffset;
-        }
-
-        this->homography = Eye<f32>(3, 3, memory);
-      }
-
-      PlanarTransformation_f32::PlanarTransformation_f32(const TransformType transformType, MemoryStack &memory)
-      {
-        AnkiConditionalErrorAndReturn(transformType==TRANSFORM_TRANSLATION || transformType==TRANSFORM_AFFINE || transformType==TRANSFORM_PROJECTIVE,
-          "PlanarTransformation_f32::PlanarTransformation_f32", "Invalid transformType %d", transformType);
-
-        this->transformType = transformType;
-        initialCorners = Quadrilateral<f32>(Point<f32>(0.0f,0.0f),
-          Point<f32>(0.0f,0.0f),
-          Point<f32>(0.0f,0.0f),
-          Point<f32>(0.0f,0.0f));
-        centerOffset = initialCorners.ComputeCenter();
-
-        // Store the initial quad recentered around the centerOffset.
-        // get_transformedCorners() will add it back
-        for(s32 i_pt=0; i_pt<4; ++i_pt) {
-          this->initialCorners[i_pt] -= this->centerOffset;
-        }
-
-        this->homography = Eye<f32>(3, 3, memory);
+        return RESULT_OK;
       }
 
       PlanarTransformation_f32::PlanarTransformation_f32()
       {
-        initialCorners = Quadrilateral<f32>(Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f));
-        centerOffset = initialCorners.ComputeCenter();
+        this->isValid = false;
       }
 
       Result PlanarTransformation_f32::TransformPoints(
@@ -259,6 +273,17 @@ namespace Anki
           return lastResult;
 
         return RESULT_OK;
+      }
+
+      bool PlanarTransformation_f32::IsValid() const
+      {
+        if(!this->isValid)
+          return false;
+
+        if(!this->homography.IsValid())
+          return false;
+
+        return true;
       }
 
       Result PlanarTransformation_f32::Set(const PlanarTransformation_f32 &newTransformation)

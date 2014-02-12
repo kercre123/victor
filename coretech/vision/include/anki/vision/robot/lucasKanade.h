@@ -45,16 +45,16 @@ namespace Anki
       {
       public:
 
-        // Initialize with input corners and homography
-        // The input corners and homography are copied to object-local copies
+        // Initialize with input corners and homography, or if not input, set to zero or identity
+        // If the input corners and homography are input, they are copied to object-local copies
         PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, MemoryStack &memory);
-
-        // Initialize with an identity homography
-        // The input corners are copied to an object-local copy
         PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, MemoryStack &memory);
-
-        // Initialize with an identity homography and corners with all zero coordinates
         PlanarTransformation_f32(const TransformType transformType, MemoryStack &memory);
+
+        // Same as the above, but explicitly sets the center of the transformation
+        PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, const Point<f32> &centerOffset, MemoryStack &memory);
+        PlanarTransformation_f32(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Point<f32> &centerOffset, MemoryStack &memory);
+        PlanarTransformation_f32(const TransformType transformType, const Point<f32> &centerOffset, MemoryStack &memory);
 
         // Initialize as invalid
         PlanarTransformation_f32();
@@ -86,6 +86,8 @@ namespace Anki
           MemoryStack scratch,
           const f32 scale=1.0f) const;
 
+        bool IsValid() const;
+
         // Set this object's transformType, centerOffset, initialCorners, and homography
         Result Set(const PlanarTransformation_f32 &newTransformation);
 
@@ -104,6 +106,8 @@ namespace Anki
         Quadrilateral<f32> get_transformedCorners(MemoryStack scratch) const;
 
       protected:
+        bool isValid;
+
         TransformType transformType;
 
         // All types of plane transformations are stored in a 3x3 homography matrix, though some values may be zero (or ones for diagonals)
@@ -123,6 +127,8 @@ namespace Anki
           Array<f32> &xOut, Array<f32> &yOut,
           const TransformType transformType,
           const Array<f32> &homography);
+
+        Result Init(const TransformType transformType, const Quadrilateral<f32> &initialCorners, const Array<f32> &initialHomography, const Point<f32> &centerOffset, MemoryStack &memory);
       };
 
       class LucasKanadeTracker_f32
