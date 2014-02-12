@@ -44,7 +44,7 @@ for y = 1:size(image,1)
             
             curState = 2;
             
-            if x ~= size(image,2)
+            if x < size(image,2)
                 componentWidth = x - lastSwitchX;
                 
                 if componentWidth >= minComponentWidth
@@ -60,7 +60,7 @@ for y = 1:size(image,1)
             
             curState = 1;
             
-            if x ~= size(image,2)
+            if x < size(image,2)
                 componentWidth = x - lastSwitchX;
                 
                 if componentWidth >= minComponentWidth
@@ -97,7 +97,7 @@ for x = 1:size(image,2)
             
             curState = 2;
             
-            if y ~= size(image,1)
+            if y < size(image,1)
                 componentWidth = y - lastSwitchY;
                 
                 if componentWidth >= minComponentWidth
@@ -113,7 +113,7 @@ for x = 1:size(image,2)
             
             curState = 1;
             
-            if y ~= size(image,1)
+            if y < size(image,1)
                 componentWidth = y - lastSwitchY;
                 
                 if componentWidth >= minComponentWidth

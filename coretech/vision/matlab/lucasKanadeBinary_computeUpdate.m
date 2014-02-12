@@ -71,7 +71,7 @@ function updatedHomography = lucasKanadeBinary_computeUpdate(...
     updateType, binarizeWithAutomata)
 
 if ~exist('binarizeWithAutomata', 'var')
-    binarizeWithAutomata = false;
+    binarizeWithAutomata = true;
 end
 
 grayvalueThreshold = 100;
@@ -91,6 +91,12 @@ imageWidth = size(templateImage, 2);
 
 imageResizedHeight = imageHeight * scale;
 imageResizedWidth = imageWidth * scale;
+
+% Make the mask its bounding rectangle
+[indsY, indsX] = find(templateMask ~= 0);
+templateMask(:,:) = 0;
+maskLimits = [min(indsX(:)), max(indsX(:)), min(indsY(:)), max(indsY(:))];
+templateMask(maskLimits(3):maskLimits(4), maskLimits(1):maskLimits(2)) = 1;
 
 templateImageResized = imresize(templateImage, [imageResizedHeight, imageResizedWidth]);
 newImageResized = imresize(newImage, [imageResizedHeight, imageResizedWidth]);

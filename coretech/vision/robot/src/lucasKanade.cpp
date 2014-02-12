@@ -19,6 +19,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/miscVisionKernels.h"
 #include "anki/vision/robot/imageProcessing.h"
 
+#define SEND_BINARY_IMAGES_TO_MATLAB
+
 namespace Anki
 {
   namespace Embedded
@@ -1835,6 +1837,32 @@ namespace Anki
         AnkiConditionalErrorAndReturn(result == RESULT_OK,
           "LucasKanadeTrackerBinary::LucasKanadeTrackerBinary", "DetectBlurredEdge failed");
 
+#ifdef SEND_BINARY_IMAGES_TO_MATLAB
+        {
+          PUSH_MEMORY_STACK(memory);
+
+          Matlab matlab(false);
+
+          Array<u8> rendered(templateImageHeight, templateImageWidth, memory);
+
+          rendered.SetZero();
+          DrawPoints(this->template_xDecreasingIndexes, 1, rendered);
+          matlab.PutArray(rendered, "template_xDecreasingIndexes");
+
+          rendered.SetZero();
+          DrawPoints(this->template_xIncreasingIndexes, 1, rendered);
+          matlab.PutArray(rendered, "template_xIncreasingIndexes");
+
+          rendered.SetZero();
+          DrawPoints(this->template_yDecreasingIndexes, 1, rendered);
+          matlab.PutArray(rendered, "template_yDecreasingIndexes");
+
+          rendered.SetZero();
+          DrawPoints(this->template_yIncreasingIndexes, 1, rendered);
+          matlab.PutArray(rendered, "template_yIncreasingIndexes");
+        }
+#endif // #ifdef SEND_BINARY_IMAGES_TO_MATLAB
+
         this->homographyOffsetX = (static_cast<f32>(templateImageWidth)-1.0f) / 2.0f;
         this->homographyOffsetY = (static_cast<f32>(templateImageHeight)-1.0f) / 2.0f;
 
@@ -2014,6 +2042,32 @@ namespace Anki
         //next_xIncreasingIndexes.Print("next_xIncreasingIndexes");
         //next_yDecreasingIndexes.Print("next_yDecreasingIndexes");
         //next_yIncreasingIndexes.Print("next_yIncreasingIndexes");
+
+#ifdef SEND_BINARY_IMAGES_TO_MATLAB
+        {
+          PUSH_MEMORY_STACK(scratch);
+
+          Matlab matlab(false);
+
+          Array<u8> rendered(nextImageHeight, nextImageWidth, scratch);
+
+          rendered.SetZero();
+          DrawPoints(next_xDecreasingIndexes, 1, rendered);
+          matlab.PutArray(rendered, "next_xDecreasingIndexes");
+
+          rendered.SetZero();
+          DrawPoints(next_xIncreasingIndexes, 1, rendered);
+          matlab.PutArray(rendered, "next_xIncreasingIndexes");
+
+          rendered.SetZero();
+          DrawPoints(next_yDecreasingIndexes, 1, rendered);
+          matlab.PutArray(rendered, "next_yDecreasingIndexes");
+
+          rendered.SetZero();
+          DrawPoints(next_yIncreasingIndexes, 1, rendered);
+          matlab.PutArray(rendered, "next_yIncreasingIndexes");
+        }
+#endif // #ifdef SEND_BINARY_IMAGES_TO_MATLAB
 
         FixedLengthList<LucasKanadeTrackerBinary::Correspondence> correspondences(matching_maxCorrespondences, scratch);
 
