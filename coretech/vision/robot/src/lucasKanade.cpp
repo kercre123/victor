@@ -238,10 +238,10 @@ namespace Anki
         Array<f32> homographyInv(3,3,scratch);
         homographyInv.Set(this->homography);
 
-        //Invert3x3(
-        //  homographyInv[0][0], homographyInv[0][1], homographyInv[0][2],
-        //  homographyInv[1][0], homographyInv[1][1], homographyInv[1][2],
-        //  homographyInv[2][0], homographyInv[2][1], homographyInv[2][2]);
+        Invert3x3(
+          homographyInv[0][0], homographyInv[0][1], homographyInv[0][2],
+          homographyInv[1][0], homographyInv[1][1], homographyInv[1][2],
+          homographyInv[2][0], homographyInv[2][1], homographyInv[2][2]);
 
         //const s32 numPoints = in.get_size(0) * in.get_size(1);
 
@@ -261,7 +261,7 @@ namespace Anki
           }
         }
 
-        TransformPointsStatic(xIn, yIn, scale, this->centerOffset, xTransformed, yTransformed, this->get_transformType(), this->get_homography());
+        TransformPointsStatic(xIn, yIn, scale, this->centerOffset, xTransformed, yTransformed, this->get_transformType(), homographyInv);
 
         /*xIn.Print("xIn", 0,10,0,10);
         yIn.Print("yIn", 0,10,0,10);
@@ -1837,7 +1837,8 @@ namespace Anki
         AnkiConditionalErrorAndReturn(templateImage.IsValid(),
           "LucasKanadeTrackerBinary::LucasKanadeTrackerBinary", "templateImage is not valid");
 
-        this->transformation = PlanarTransformation_f32(TRANSFORM_PROJECTIVE, templateQuad, memory);
+        Point<f32> centerOffset((templateImage.get_size(1)-1) / 2.0f, (templateImage.get_size(0)-1) / 2.0f);
+        this->transformation = PlanarTransformation_f32(TRANSFORM_PROJECTIVE, templateQuad, centerOffset, memory);
 
         this->templateImage = Array<u8>(templateImageHeight, templateImageWidth, memory);
         this->templateQuad = templateQuad;
@@ -2407,8 +2408,8 @@ namespace Anki
 
           Array<f32> update(1,2,scratch);
 
-          update[0][0] = sumX / f32(numX);
-          update[0][1] = sumY / f32(numY);
+          update[0][0] = -sumX / f32(numX);
+          update[0][1] = -sumY / f32(numY);
 
           update.Print("update");
 

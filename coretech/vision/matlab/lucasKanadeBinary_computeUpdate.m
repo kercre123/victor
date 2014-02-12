@@ -55,12 +55,7 @@
 % im1w2a = lucasKanadeBinary_warpWithHomography(im1, homography2);
 % homography3 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography2, 1.0, 5, 1.0, extremaDerivativeThreshold, 7, 'projective')
 % im1w3a = lucasKanadeBinary_warpWithHomography(im1, homography3);
-% homography1 = eye(3);
-% homography2 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography1, 1.0, 5, 1.0, extremaDerivativeThreshold, 7, 'translation')
-% im1w2b = lucasKanadeBinary_warpWithHomography(im1, homography2);
-% homography3 = lucasKanadeBinary_computeUpdate(im1, mask1, im2, homography2, 1.0, 5, 1.0, extremaDerivativeThreshold, 7, 'projective')
-% im1w3b = lucasKanadeBinary_warpWithHomography(im1, homography3);
-% imshows(im1, im2, uint8(im1w2a), uint8(im1w3a), uint8(im1w2b), uint8(im1w3b), 'maximize');
+% imshows(im1, im2, uint8(im1w2a), uint8(im1w3a), 'maximize');
 
 function updatedHomography = lucasKanadeBinary_computeUpdate(...
     templateImage, templateMask,...
@@ -128,26 +123,33 @@ end
 
 homographyOffset = [(imageWidth-1)/2, (imageHeight-1)/2];
 
-[xGrid, yGrid] = meshgrid(...
-    linspace(-homographyOffset(1), homographyOffset(1), imageResizedWidth), ...
-    linspace(-homographyOffset(2), homographyOffset(2), imageResizedHeight));
+% [xGrid, yGrid] = meshgrid(...
+%     linspace(-homographyOffset(1), homographyOffset(1), imageResizedWidth), ...
+%     linspace(-homographyOffset(2), homographyOffset(2), imageResizedHeight));
 
-xMinima1Inds = find(xMinima1Image ~= 0);
+[xGrid, yGrid] = meshgrid(...
+    linspace(0, 319, imageResizedWidth), ...
+    linspace(0, 239, imageResizedHeight));
+
+xMinima1Inds = find(xMinima1Image' ~= 0);
 yMinima1Inds = find(yMinima1Image ~= 0);
-xMaxima1Inds = find(xMaxima1Image ~= 0);
+xMaxima1Inds = find(xMaxima1Image' ~= 0);
 yMaxima1Inds = find(yMaxima1Image ~= 0);
 
-xMinima1List_x = xGrid(xMinima1Inds);
-xMinima1List_y = yGrid(xMinima1Inds);
+xGridTransposed = xGrid';
+yGridTransposed = yGrid';
 
-yMinima1List_x = xGrid(yMinima1Inds);
-yMinima1List_y = yGrid(yMinima1Inds);
+xMinima1List_x = xGridTransposed(xMinima1Inds) - homographyOffset(1);
+xMinima1List_y = yGridTransposed(xMinima1Inds) - homographyOffset(2);
 
-xMaxima1List_x = xGrid(xMaxima1Inds);
-xMaxima1List_y = yGrid(xMaxima1Inds);
+yMinima1List_x = xGrid(yMinima1Inds) - homographyOffset(1);
+yMinima1List_y = yGrid(yMinima1Inds) - homographyOffset(2);
 
-yMaxima1List_x = xGrid(yMaxima1Inds);
-yMaxima1List_y = yGrid(yMaxima1Inds);
+xMaxima1List_x = xGridTransposed(xMaxima1Inds) - homographyOffset(1);
+xMaxima1List_y = yGridTransposed(xMaxima1Inds) - homographyOffset(2);
+
+yMaxima1List_x = xGrid(yMaxima1Inds) - homographyOffset(1);
+yMaxima1List_y = yGrid(yMaxima1Inds) - homographyOffset(2);
 
 % xMinima2Image(5,5) = 1;
 % figure(1);
