@@ -240,10 +240,12 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
 
   Array<u8> image(48, 64, scratch_CMX);
 
-  FixedLengthList<Point<s16> > xDecreasing(maxExtrema, scratch_CMX);
-  FixedLengthList<Point<s16> > xIncreasing(maxExtrema, scratch_CMX);
-  FixedLengthList<Point<s16> > yDecreasing(maxExtrema, scratch_CMX);
-  FixedLengthList<Point<s16> > yIncreasing(maxExtrema, scratch_CMX);
+  EdgeLists edges;
+
+  edges.xDecreasing = FixedLengthList<Point<s16> >(maxExtrema, scratch_CMX);
+  edges.xIncreasing = FixedLengthList<Point<s16> >(maxExtrema, scratch_CMX);
+  edges.yDecreasing = FixedLengthList<Point<s16> >(maxExtrema, scratch_CMX);
+  edges.yIncreasing = FixedLengthList<Point<s16> >(maxExtrema, scratch_CMX);
 
   for(s32 y=0; y<24; y++) {
     for(s32 x=0; x<32; x++) {
@@ -272,7 +274,7 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
 
   //image.Show("image", true);
 
-  const Result result = DetectBlurredEdge(image, grayvalueThreshold, minComponentWidth, xDecreasing, xIncreasing, yDecreasing, yIncreasing);
+  const Result result = DetectBlurredEdges(image, grayvalueThreshold, minComponentWidth, edges);
 
   ASSERT_TRUE(result == RESULT_OK);
 
@@ -281,16 +283,16 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
   //yDecreasing.Print("yDecreasing");
   //yIncreasing.Print("yIncreasing");
 
-  ASSERT_TRUE(xDecreasing.get_size() == 62);
-  ASSERT_TRUE(xIncreasing.get_size() == 48);
-  ASSERT_TRUE(yDecreasing.get_size() == 31);
-  ASSERT_TRUE(yIncreasing.get_size() == 31);
+  ASSERT_TRUE(edges.xDecreasing.get_size() == 62);
+  ASSERT_TRUE(edges.xIncreasing.get_size() == 48);
+  ASSERT_TRUE(edges.yDecreasing.get_size() == 31);
+  ASSERT_TRUE(edges.yIncreasing.get_size() == 31);
 
   for(s32 i=0; i<=47; i++) {
     bool valueFound = false;
 
     for(s32 j=0; j<62; j++) {
-      if(xDecreasing[j] == Point<s16>(56,i)) {
+      if(edges.xDecreasing[j] == Point<s16>(56,i)) {
         valueFound = true;
         break;
       }
@@ -303,7 +305,7 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
     bool valueFound = false;
 
     for(s32 j=0; j<62; j++) {
-      if(xDecreasing[j] == Point<s16>(31,i)) {
+      if(edges.xDecreasing[j] == Point<s16>(31,i)) {
         valueFound = true;
         break;
       }
@@ -316,7 +318,7 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
     bool valueFound = false;
 
     for(s32 j=0; j<48; j++) {
-      if(xIncreasing[j] == Point<s16>(44,i)) {
+      if(edges.xIncreasing[j] == Point<s16>(44,i)) {
         valueFound = true;
         break;
       }
@@ -329,7 +331,7 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
     bool valueFound = false;
 
     for(s32 j=0; j<31; j++) {
-      if(yDecreasing[j] == Point<s16>(i,31)) {
+      if(edges.yDecreasing[j] == Point<s16>(i,31)) {
         valueFound = true;
         break;
       }
@@ -342,7 +344,7 @@ GTEST_TEST(CoreTech_Vision, DetectBlurredEdge)
     bool valueFound = false;
 
     for(s32 j=0; j<31; j++) {
-      if(yIncreasing[j] == Point<s16>(i,16)) {
+      if(edges.yIncreasing[j] == Point<s16>(i,16)) {
         valueFound = true;
         break;
       }

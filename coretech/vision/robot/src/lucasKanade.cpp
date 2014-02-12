@@ -1843,14 +1843,14 @@ namespace Anki
         this->templateImage = Array<u8>(templateImageHeight, templateImageWidth, memory);
         this->templateQuad = templateQuad;
 
-        this->template_xDecreasingIndexes = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
-        this->template_xIncreasingIndexes = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
-        this->template_yDecreasingIndexes = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
-        this->template_yIncreasingIndexes = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
+        this->templateEdges.xDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
+        this->templateEdges.xIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
+        this->templateEdges.yDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
+        this->templateEdges.yIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, memory);
 
         AnkiConditionalErrorAndReturn(this->templateImage.IsValid() &&
-          this->template_xDecreasingIndexes.IsValid() && this->template_xIncreasingIndexes.IsValid() &&
-          this->template_yDecreasingIndexes.IsValid() && this->template_yIncreasingIndexes.IsValid(),
+          this->templateEdges.xDecreasing.IsValid() && this->templateEdges.xIncreasing.IsValid() &&
+          this->templateEdges.yDecreasing.IsValid() && this->templateEdges.yIncreasing.IsValid(),
           "LucasKanadeTrackerBinary::LucasKanadeTrackerBinary", "Could not allocate local memory");
 
         this->templateImage.Set(templateImage);
@@ -1858,7 +1858,7 @@ namespace Anki
         const Rectangle<f32> templateRectRaw = templateQuad.ComputeBoundingRectangle();
         const Rectangle<s32> templateRect(static_cast<s32>(templateRectRaw.left), static_cast<s32>(templateRectRaw.right), static_cast<s32>(templateRectRaw.top), static_cast<s32>(templateRectRaw.bottom));
 
-        const Result result = DetectBlurredEdge(this->templateImage, templateRect, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, template_xDecreasingIndexes, template_xIncreasingIndexes, template_yDecreasingIndexes, template_yIncreasingIndexes);
+        const Result result = DetectBlurredEdges(this->templateImage, templateRect, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, this->templateEdges);
 
         AnkiConditionalErrorAndReturn(result == RESULT_OK,
           "LucasKanadeTrackerBinary::LucasKanadeTrackerBinary", "DetectBlurredEdge failed");
@@ -1872,20 +1872,20 @@ namespace Anki
           Array<u8> rendered(templateImageHeight, templateImageWidth, memory);
 
           rendered.SetZero();
-          DrawPoints(this->template_xDecreasingIndexes, 1, rendered);
-          matlab.PutArray(rendered, "template_xDecreasingIndexes");
+          DrawPoints(this->templateEdges.xDecreasing, 1, rendered);
+          matlab.PutArray(rendered, "templateEdges.xDecreasing");
 
           rendered.SetZero();
-          DrawPoints(this->template_xIncreasingIndexes, 1, rendered);
-          matlab.PutArray(rendered, "template_xIncreasingIndexes");
+          DrawPoints(this->templateEdges.xIncreasing, 1, rendered);
+          matlab.PutArray(rendered, "templateEdges.xIncreasing");
 
           rendered.SetZero();
-          DrawPoints(this->template_yDecreasingIndexes, 1, rendered);
-          matlab.PutArray(rendered, "template_yDecreasingIndexes");
+          DrawPoints(this->templateEdges.yDecreasing, 1, rendered);
+          matlab.PutArray(rendered, "templateEdges.yDecreasing");
 
           rendered.SetZero();
-          DrawPoints(this->template_yIncreasingIndexes, 1, rendered);
-          matlab.PutArray(rendered, "template_yIncreasingIndexes");
+          DrawPoints(this->templateEdges.yIncreasing, 1, rendered);
+          matlab.PutArray(rendered, "templateEdges.yIncreasing");
         }
 #endif // #ifdef SEND_BINARY_IMAGES_TO_MATLAB
 
@@ -1914,7 +1914,7 @@ namespace Anki
 
         cv::Mat toShow = LucasKanadeTrackerBinary::DrawIndexes(
           templateImage.get_size(0), templateImage.get_size(1),
-          template_xDecreasingIndexes, template_xIncreasingIndexes, template_yDecreasingIndexes, template_yIncreasingIndexes);
+          templateEdges.xDecreasing, templateEdges.xIncreasing, templateEdges.yDecreasing, templateEdges.yIncreasing);
 
         if(fitImageToWindow) {
           cv::namedWindow(windowName, CV_WINDOW_NORMAL);
@@ -2007,16 +2007,16 @@ namespace Anki
         if(!templateImage.IsValid())
           return false;
 
-        if(!template_xDecreasingIndexes.IsValid())
+        if(!templateEdges.xDecreasing.IsValid())
           return false;
 
-        if(!template_xIncreasingIndexes.IsValid())
+        if(!templateEdges.xIncreasing.IsValid())
           return false;
 
-        if(!template_yDecreasingIndexes.IsValid())
+        if(!templateEdges.yDecreasing.IsValid())
           return false;
 
-        if(!template_yIncreasingIndexes.IsValid())
+        if(!templateEdges.yIncreasing.IsValid())
           return false;
 
         return true;
@@ -2050,24 +2050,20 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(templateImage.IsValid(),
           RESULT_FAIL_INVALID_OBJECT, "LucasKanadeTrackerBinary::UpdateTrackOnce", "nextImage is not valid");
 
-        FixedLengthList<Point<s16> > next_xDecreasingIndexes = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
-        FixedLengthList<Point<s16> > next_xIncreasingIndexes = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
-        FixedLengthList<Point<s16> > next_yDecreasingIndexes = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
-        FixedLengthList<Point<s16> > next_yIncreasingIndexes = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
+        EdgeLists nextImageEdges;
 
-        AnkiConditionalErrorAndReturnValue(next_xDecreasingIndexes.IsValid() && next_xIncreasingIndexes.IsValid() && next_yDecreasingIndexes.IsValid() && next_yIncreasingIndexes.IsValid() &&
-          next_xDecreasingIndexes.IsValid() && next_xIncreasingIndexes.IsValid() && next_yDecreasingIndexes.IsValid() && next_yIncreasingIndexes.IsValid(),
+        nextImageEdges.xDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
+        nextImageEdges.xIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
+        nextImageEdges.yDecreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
+        nextImageEdges.yIncreasing = FixedLengthList<Point<s16> >(edgeDetection_maxDetectionsPerType, scratch);
+
+        AnkiConditionalErrorAndReturnValue(nextImageEdges.xDecreasing.IsValid() && nextImageEdges.xIncreasing.IsValid() && nextImageEdges.yDecreasing.IsValid() && nextImageEdges.yIncreasing.IsValid(),
           RESULT_FAIL_OUT_OF_MEMORY, "LucasKanadeTrackerBinary::UpdateTrackOnce", "Could not allocate local scratch");
 
-        lastResult = DetectBlurredEdge(nextImage, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, next_xDecreasingIndexes, next_xIncreasingIndexes, next_yDecreasingIndexes, next_yIncreasingIndexes);
+        lastResult = DetectBlurredEdges(nextImage, edgeDetection_grayvalueThreshold, edgeDetection_minComponentWidth, nextImageEdges);
 
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK,
           lastResult, "LucasKanadeTrackerBinary::UpdateTrackOnce", "DetectBlurredEdge failed");
-
-        //next_xDecreasingIndexes.Print("next_xDecreasingIndexes");
-        //next_xIncreasingIndexes.Print("next_xIncreasingIndexes");
-        //next_yDecreasingIndexes.Print("next_yDecreasingIndexes");
-        //next_yIncreasingIndexes.Print("next_yIncreasingIndexes");
 
 #ifdef SEND_BINARY_IMAGES_TO_MATLAB
         {
@@ -2078,20 +2074,20 @@ namespace Anki
           Array<u8> rendered(nextImageHeight, nextImageWidth, scratch);
 
           rendered.SetZero();
-          DrawPoints(next_xDecreasingIndexes, 1, rendered);
-          matlab.PutArray(rendered, "next_xDecreasingIndexes");
+          DrawPoints(nextImageEdges.xDecreasing, 1, rendered);
+          matlab.PutArray(rendered, "nextImageEdges.xDecreasing");
 
           rendered.SetZero();
-          DrawPoints(next_xIncreasingIndexes, 1, rendered);
-          matlab.PutArray(rendered, "next_xIncreasingIndexes");
+          DrawPoints(nextImageEdges.xIncreasing, 1, rendered);
+          matlab.PutArray(rendered, "nextImageEdges.xIncreasing");
 
           rendered.SetZero();
-          DrawPoints(next_yDecreasingIndexes, 1, rendered);
-          matlab.PutArray(rendered, "next_yDecreasingIndexes");
+          DrawPoints(nextImageEdges.yDecreasing, 1, rendered);
+          matlab.PutArray(rendered, "nextImageEdges.yDecreasing");
 
           rendered.SetZero();
-          DrawPoints(next_yIncreasingIndexes, 1, rendered);
-          matlab.PutArray(rendered, "next_yIncreasingIndexes");
+          DrawPoints(nextImageEdges.yIncreasing, 1, rendered);
+          matlab.PutArray(rendered, "nextImageEdges.yIncreasing");
         }
 #endif // #ifdef SEND_BINARY_IMAGES_TO_MATLAB
 
@@ -2100,8 +2096,8 @@ namespace Anki
         lastResult = LucasKanadeTrackerBinary::FindHorizontalCorrespondences(
           matching_maxDistance,
           this->transformation,
-          this->template_xDecreasingIndexes,
-          next_xDecreasingIndexes,
+          this->templateEdges.xDecreasing,
+          nextImageEdges.xDecreasing,
           nextImage.get_size(0),
           nextImage.get_size(1),
           correspondences,
@@ -2113,8 +2109,8 @@ namespace Anki
         lastResult = LucasKanadeTrackerBinary::FindHorizontalCorrespondences(
           matching_maxDistance,
           this->transformation,
-          this->template_xIncreasingIndexes,
-          next_xIncreasingIndexes,
+          this->templateEdges.xIncreasing,
+          nextImageEdges.xIncreasing,
           nextImage.get_size(0),
           nextImage.get_size(1),
           correspondences,
@@ -2126,8 +2122,8 @@ namespace Anki
         lastResult = LucasKanadeTrackerBinary::FindVerticalCorrespondences(
           matching_maxDistance,
           this->transformation,
-          this->template_yDecreasingIndexes,
-          next_yDecreasingIndexes,
+          this->templateEdges.yDecreasing,
+          nextImageEdges.yDecreasing,
           nextImage.get_size(0),
           nextImage.get_size(1),
           correspondences,
@@ -2139,8 +2135,8 @@ namespace Anki
         lastResult = LucasKanadeTrackerBinary::FindVerticalCorrespondences(
           matching_maxDistance,
           this->transformation,
-          this->template_yIncreasingIndexes,
-          next_yIncreasingIndexes,
+          this->templateEdges.yIncreasing,
+          nextImageEdges.yIncreasing,
           nextImage.get_size(0),
           nextImage.get_size(1),
           correspondences,

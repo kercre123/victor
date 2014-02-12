@@ -13,9 +13,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define _ANKICORETECHEMBEDDED_VISION_LUCAS_KANADE_H_
 
 #include "anki/common/robot/config.h"
-#include "anki/common/robot/array2d.h"
-#include "anki/common/robot/fixedLengthList.h"
-#include "anki/common/robot/geometry.h"
+#include "anki/vision/robot/edgeDetection.h"
 
 namespace Anki
 {
@@ -247,14 +245,14 @@ namespace Anki
         // is no iteration within.
 
       public:
-        class Correspondence
+
+        typedef struct
         {
-        public:
           Point<f32> originalTemplatePoint;
           Point<f32> warpedTemplatePoint;
           Point<f32> matchedPoint;
           bool isVerticalMatch;
-        };
+        } Correspondence;
 
         // Find the min and max indexes of point with a given Y location
         // The list of points must be sorted in Y, from low to high
@@ -311,10 +309,11 @@ namespace Anki
         Quadrilateral<f32> templateQuad;
 
         // The indexes of the detected edges
-        FixedLengthList<Point<s16> > template_xDecreasingIndexes;
-        FixedLengthList<Point<s16> > template_xIncreasingIndexes;
-        FixedLengthList<Point<s16> > template_yDecreasingIndexes;
-        FixedLengthList<Point<s16> > template_yIncreasingIndexes;
+        EdgeLists templateEdges;
+        //FixedLengthList<Point<s16> > template_xDecreasingIndexes;
+        //FixedLengthList<Point<s16> > template_xIncreasingIndexes;
+        //FixedLengthList<Point<s16> > template_yDecreasingIndexes;
+        //FixedLengthList<Point<s16> > template_yIncreasingIndexes;
 
         f32 homographyOffsetX;
         f32 homographyOffsetY;

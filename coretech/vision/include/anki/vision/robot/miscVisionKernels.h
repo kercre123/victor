@@ -139,12 +139,6 @@ namespace Anki
 
     // Compute the homography from the input quad. The input quad point should be ordered in the non-rotated, corner-opposite format
     Result ComputeHomographyFromQuad(const Quadrilateral<s16> &quad, Array<f64> &homography, MemoryStack scratch);
-
-    // Calculate local extrema (edges) in an image. Returns four list for the four directions of change.
-    Result DetectBlurredEdge(const Array<u8> &image, const u8 grayvalueThreshold, const s32 minComponentWidth, FixedLengthList<Point<s16> > &xDecreasing, FixedLengthList<Point<s16> > &xIncreasing, FixedLengthList<Point<s16> > &yDecreasing, FixedLengthList<Point<s16> > &yIncreasing);
-
-    // DetectBlurredEdge, with a region of interest
-    Result DetectBlurredEdge(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, FixedLengthList<Point<s16> > &xDecreasing, FixedLengthList<Point<s16> > &xIncreasing, FixedLengthList<Point<s16> > &yDecreasing, FixedLengthList<Point<s16> > &yIncreasing);
   } // namespace Embedded
 } // namespace Anki
 

@@ -3,13 +3,11 @@ File: edgeDetection.cpp
 Author: Peter Barnum
 Created: 2014-02-06
 
-Computes local edges from an image
-
 Copyright Anki, Inc. 2014
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
-#include "anki/vision/robot/miscVisionKernels.h"
+#include "anki/vision/robot/edgeDetection.h"
 
 namespace Anki
 {
@@ -17,20 +15,20 @@ namespace Anki
   {
     static Result lastResult;
 
-    Result DetectBlurredEdge(const Array<u8> &image, const u8 grayvalueThreshold, const s32 minComponentWidth, FixedLengthList<Point<s16> > &xDecreasing, FixedLengthList<Point<s16> > &xIncreasing, FixedLengthList<Point<s16> > &yDecreasing, FixedLengthList<Point<s16> > &yIncreasing)
+    Result DetectBlurredEdges(const Array<u8> &image, const u8 grayvalueThreshold, const s32 minComponentWidth, EdgeLists &edgeLists)
     {
       Rectangle<s32> imageRegionOfInterest(0, image.get_size(1), 0, image.get_size(0));
 
-      return DetectBlurredEdge(image, imageRegionOfInterest, grayvalueThreshold, minComponentWidth, xDecreasing, xIncreasing, yDecreasing, yIncreasing);
+      return DetectBlurredEdges(image, imageRegionOfInterest, grayvalueThreshold, minComponentWidth, edgeLists);
     }
 
-    Result DetectBlurredEdge(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, FixedLengthList<Point<s16> > &xDecreasing, FixedLengthList<Point<s16> > &xIncreasing, FixedLengthList<Point<s16> > &yDecreasing, FixedLengthList<Point<s16> > &yIncreasing)
+    Result DetectBlurredEdges(const Array<u8> &image, const Rectangle<s32> &imageRegionOfInterest, const u8 grayvalueThreshold, const s32 minComponentWidth, EdgeLists &edgeLists)
     {
-      AnkiConditionalErrorAndReturnValue(image.IsValid() && xDecreasing.IsValid() && xIncreasing.IsValid() && yDecreasing.IsValid() && yIncreasing.IsValid(),
-        RESULT_FAIL_INVALID_OBJECT, "DetectBlurredEdge", "Arrays are not valid");
+      AnkiConditionalErrorAndReturnValue(image.IsValid() && edgeLists.xDecreasing.IsValid() && edgeLists.xIncreasing.IsValid() && edgeLists.yDecreasing.IsValid() && edgeLists.yIncreasing.IsValid(),
+        RESULT_FAIL_INVALID_OBJECT, "DetectBlurredEdges", "Arrays are not valid");
 
       AnkiConditionalErrorAndReturnValue(minComponentWidth > 0,
-        RESULT_FAIL_INVALID_SIZE, "DetectBlurredEdge", "minComponentWidth is too small");
+        RESULT_FAIL_INVALID_SIZE, "DetectBlurredEdges", "minComponentWidth is too small");
 
       enum State
       {
@@ -76,7 +74,7 @@ namespace Anki
               const s32 componentWidth = x - lastSwitchX;
 
               if(componentWidth >= minComponentWidth) {
-                xDecreasing.PushBack(Point<s16>(x,y));
+                edgeLists.xDecreasing.PushBack(Point<s16>(x,y));
               }
 
               lastSwitchX = x;
@@ -94,7 +92,7 @@ namespace Anki
               const s32 componentWidth = x - lastSwitchX;
 
               if(componentWidth >= minComponentWidth) {
-                xIncreasing.PushBack(Point<s16>(x,y));
+                edgeLists.xIncreasing.PushBack(Point<s16>(x,y));
               }
 
               lastSwitchX = x;
@@ -137,7 +135,7 @@ namespace Anki
               const s32 componentWidth = y - lastSwitchY;
 
               if(componentWidth >= minComponentWidth) {
-                yDecreasing.PushBack(Point<s16>(x,y));
+                edgeLists.yDecreasing.PushBack(Point<s16>(x,y));
               }
 
               lastSwitchY = y;
@@ -156,7 +154,7 @@ namespace Anki
               const s32 componentWidth = y - lastSwitchY;
 
               if(componentWidth >= minComponentWidth) {
-                yIncreasing.PushBack(Point<s16>(x,y));
+                edgeLists.yIncreasing.PushBack(Point<s16>(x,y));
               }
 
               lastSwitchY = y;
@@ -169,6 +167,6 @@ namespace Anki
       } // for(s32 x=0; x<imageRegionOfInterest.right; x++)
 
       return RESULT_OK;
-    } // Result DetectBlurredEdge()
+    } // Result DetectBlurredEdges()
   } // namespace Embedded
 } // namespace Anki
